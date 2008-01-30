@@ -616,8 +616,8 @@ KNIDECL(com_sun_j2me_content_RegistryStore_findHandler0) {
 
     } while (0);
 
-    FREE(value);
-    FREE(callerId);
+    if( value != NULL ) FREE(value);
+    if( callerId != NULL ) FREE(callerId);
     result2string(KNIPASSARGS  result, valueObj);
 
     KNI_EndHandlesAndReturnObject(valueObj);

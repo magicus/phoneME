@@ -245,7 +245,7 @@ jsr211_result jsr211_find_handler(javacall_const_utf16_string caller_id,
 
 	javacall_chapi_enum_finish(pos);
 
-	if (!buffer) return JSR211_FAILED; //out of memory
+	if (buffer == NULL) return JSR211_FAILED; //out of memory
 	FREE(buffer);
 
 	return (res==JAVACALL_CHAPI_ERROR_NO_MORE_ELEMENTS)?JSR211_OK:JSR211_FAILED;

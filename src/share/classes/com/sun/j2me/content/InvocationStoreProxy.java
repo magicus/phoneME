@@ -120,7 +120,7 @@ public final class InvocationStoreProxy {
             // so we will start only one new midlet
             done = done || (launchedMidletsCount > 0);
         }
-        if(DEBUG_OUT!=null) DEBUG_OUT.println( InvocationStore.class.getName() + ".invokeNext() called. Started midlets = " + launchedMidletsCount);
+        if(DEBUG_OUT!=null) DEBUG_OUT.println( InvocationStore.class.getName() + ".invokeNext() finished: started midlets = " + launchedMidletsCount);
         return launchedMidletsCount > 0;
     }
 

@@ -465,6 +465,8 @@ class AppProxy {
      * @return <code>true</code> if the application is started.
      */
     boolean launch(String displayName) {
+        if( MIDletStateHandler.getMidletStateHandler().isRunning(classname) )
+        	return true;
         return MIDletSuiteUtils.execute(classSecurityToken,
                                           storageId,
                                           classname, displayName);

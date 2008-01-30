@@ -41,6 +41,7 @@
  * <br>
  */
 
+#include <memory.h>
 #include <kni.h>
 #include <sni.h>
 
@@ -543,18 +544,12 @@ static int copyOut(StoredInvoc *invoc, int mode,
           storeField(&invoc->type, invocObj, typeFid, obj) &&
           storeField(&invoc->action, invocObj, actionFid, obj) &&
           storeField(&invoc->ID, invocObj, IDFid, obj) &&
-          storeField(&invoc->invokingClassname, 
-                 invocObj, invokingClassnameFid, obj) &&
-          storeField(&invoc->invokingAuthority,
-                 invocObj, invokingAuthorityFid, obj) &&
-          storeField(&invoc->invokingAppName,
-                 invocObj, invokingAppNameFid, obj) &&
-          storeField(&invoc->invokingID,
-                 invocObj, invokingIDFid, obj) &&
-          storeField(&invoc->username,
-                 invocObj, usernameFid, obj) &&
-          storeField(&invoc->password,
-                 invocObj, passwordFid, obj))) {
+          storeField(&invoc->invokingClassname, invocObj, invokingClassnameFid, obj) &&
+          storeField(&invoc->invokingAuthority, invocObj, invokingAuthorityFid, obj) &&
+          storeField(&invoc->invokingAppName, invocObj, invokingAppNameFid, obj) &&
+          storeField(&invoc->invokingID, invocObj, invokingIDFid, obj) &&
+          storeField(&invoc->username, invocObj, usernameFid, obj) &&
+          storeField(&invoc->password, invocObj, passwordFid, obj))) {
         /* Some String allocation failed. */
         return 0;
     }
@@ -843,45 +838,28 @@ Java_com_sun_j2me_content_InvocationStore_put0(void) {
             break;
     
         invoc->previousTid = KNI_GetIntField(invocObj, previousTidFid);
-    
         invoc->status = KNI_GetIntField(invocObj, statusFid);
-        invoc->responseRequired =
-            KNI_GetBooleanField(invocObj, responseRequiredFid);
-    
+        invoc->responseRequired = KNI_GetBooleanField(invocObj, responseRequiredFid);
         invoc->suiteId = KNI_GetIntField(invocObj, suiteIdFid);
+
+#define GET_STRING(name) \
+        KNI_GetObjectField(invocObj, name##Fid, str); \
+        if (PCSL_STRING_OK != midp_jstring_to_pcsl_string(str, &invoc->name)) \
+            break; \
+        printf( "invoc %s value '%ls'\n", #name, invoc->name.data ); \
     
-        KNI_GetObjectField(invocObj, classnameFid, str);
-        if (PCSL_STRING_OK != midp_jstring_to_pcsl_string(str, &invoc->classname))
-            break;
-    
-        KNI_GetObjectField(invocObj, invokingAuthorityFid, str);
-        if (PCSL_STRING_OK != midp_jstring_to_pcsl_string(str, 
-                                                    &invoc->invokingAuthority))
-            break;
-    
-        KNI_GetObjectField(invocObj, invokingAppNameFid, str);
-        if (PCSL_STRING_OK != midp_jstring_to_pcsl_string(str, 
-                                                    &invoc->invokingAppName))
-            break;
-    
+        GET_STRING(classname)
+        GET_STRING(invokingAuthority)
+        GET_STRING(invokingAppName)
+
         invoc->invokingSuiteId = KNI_GetIntField(invocObj, invokingSuiteIdFid);
     
-        KNI_GetObjectField(invocObj, invokingClassnameFid, str);
-        if (PCSL_STRING_OK != midp_jstring_to_pcsl_string(str, 
-                                                    &invoc->invokingClassname))
-            break;
-    
-        KNI_GetObjectField(invocObj, invokingIDFid, str);
-        if (PCSL_STRING_OK != midp_jstring_to_pcsl_string(str, &invoc->invokingID))
-            break;
-    
-        KNI_GetObjectField(invocObj, usernameFid, str);
-        if (PCSL_STRING_OK != midp_jstring_to_pcsl_string(str, &invoc->username))
-            break;
-    
-        KNI_GetObjectField(invocObj, passwordFid, str);
-        if (PCSL_STRING_OK != midp_jstring_to_pcsl_string(str, &invoc->password))
-            break;
+        GET_STRING(invokingClassname)
+        GET_STRING(invokingID)
+        GET_STRING(username)
+        GET_STRING(password)
+
+#undef GET_STRING
     
         /* Insert the new Invocation at the end of the queue */
         if (!invocPut(invoc))
@@ -947,8 +925,7 @@ Java_com_sun_j2me_content_InvocationStore_setStatus0(void) {
              */
             if (invoc->responseRequired) {
                 /* Swap the source and target suite and classname */
-                SuiteIdType tmpSuiteId = invoc->invokingSuiteId;
-                SuiteIdType tmpSuiteId2;
+                SuiteIdType tmpSuiteId = invoc->invokingSuiteId, tmpSuiteId2;
                 pcsl_string tmpClassname = invoc->invokingClassname;
                 invoc->invokingSuiteId = invoc->suiteId;
                 invoc->invokingClassname = invoc->classname;
@@ -1692,8 +1669,14 @@ javacall_result javanotify_chapi_platform_finish(int invoc_id,
 
         if (result != JAVACALL_OK)
             invoc->status = STATUS_ERROR;
-        invoc->suiteId = invoc->invokingSuiteId;
-        invoc->classname = invoc->invokingClassname;
+        { /* swap invokee - invoker fields */
+            SuiteIdType tmpSuiteId = invoc->suiteId;
+            pcsl_string tmpClassname = invoc->classname;
+            invoc->suiteId = invoc->invokingSuiteId;
+            invoc->invokingSuiteId = tmpSuiteId;
+            invoc->classname = invoc->invokingClassname;
+            invoc->invokingClassname = tmpClassname;
+        }
         /* Unmark the response since it is "new" to the target */
         invoc->cleanup = KNI_FALSE;
         invoc->notified = KNI_FALSE;
@@ -1773,18 +1756,17 @@ javacall_result javanotify_chapi_java_invoke(
         return JAVACALL_INVALID_ARGUMENT;
     }
 
-    invoc = (StoredInvoc*) CALLOC(1, sizeof (StoredInvoc));
+    invoc =  (StoredInvoc*) newStoredInvoc();
     if (invoc == NULL) {
         FREE(classname);
         return JAVACALL_OUT_OF_MEMORY;
     }
 
-    memset (&invoc, '\0', sizeof(invoc));
     /* Assign a new transaction id and set it */
     invoc->tid = invocNextTid();
     invoc->status = STATUS_INIT;
     invoc->suiteId = suite_id;
-    invoc->invokingSuiteId = INVALID_SUITE_ID;
+    invoc->invokingSuiteId = UNUSED_SUITE_ID;
 
     if (PCSL_STRING_OK != pcsl_string_convert_from_utf16(handler_id, javacall_string_len(handler_id), &invoc->ID))
         res = JAVACALL_FAIL;
