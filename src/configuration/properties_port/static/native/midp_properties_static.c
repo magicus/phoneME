@@ -263,8 +263,10 @@ finalizeProp(Property** propertySet) {
  */
 int
 initializeConfig(void) {
-    initializeProp(&internalPropertySet, midp_internalKey, midp_internalValue);
-    initializeProp(&systemPropertySet, midp_systemKey, midp_systemValue);
+    initializeProp(&internalPropertySet, (const char*)midp_internalKey,
+        midp_internalValue);
+    initializeProp(&systemPropertySet, (const char*)midp_systemKey,
+        midp_systemValue);
 
     return 0;
 }
