@@ -73,6 +73,9 @@ static char urlAddress[BINARY_BUFFER_MAX_LEN];
 #define MAX_PHONE_NUMBER_LENGTH 48
 static char selectedNumber[MAX_PHONE_NUMBER_LENGTH];
 
+#define MAX_DOMAIN_LEN 50
+static char domainName[MAX_DOMAIN_LEN];
+
 /**
  * A helper function to 
  * @param event a pointer to midp_javacall_event_union
@@ -234,12 +237,16 @@ void javanotify_start_local(char* classname, char* descriptor,
  *            the url should be of the form: "http://host:port"
  * @param domain the TCK execution domain
  */
-void javanotify_start_tck(char *tckUrl, javacall_lifecycle_tck_domain domain_type) {
+void javanotify_start_tck(char *tckUrl, char *domain) {
     int length;
     midp_jc_event_union e;
     midp_jc_event_start_arbitrary_arg *data = &e.data.startMidletArbitraryArgEvent;
 
     REPORT_INFO2(LC_CORE,"javanotify_start_tck() >> tckUrl=%s, domain_type=%d \n",tckUrl,domain_type);
+
+    if(domain == NULL) {
+        domain = "untrusted"; /* Set default */
+    }
 
     e.eventType = MIDP_JC_EVENT_START_ARBITRARY_ARG;
 
@@ -258,18 +265,14 @@ void javanotify_start_tck(char *tckUrl, javacall_lifecycle_tck_domain domain_typ
         data->argv[data->argc++] = urlAddress;
     }
 
-
-    if (domain_type == JAVACALL_LIFECYCLE_TCK_DOMAIN_UNTRUSTED) {
-        data->argv[data->argc++] = "untrusted";
-    } else if (domain_type == JAVACALL_LIFECYCLE_TCK_DOMAIN_TRUSTED) {
-        data->argv[data->argc++] = "trusted";
-    } else if (domain_type == JAVACALL_LIFECYCLE_TCK_DOMAIN_UNTRUSTED_MIN) {
-        data->argv[data->argc++] = "minimum";
-    } else if (domain_type == JAVACALL_LIFECYCLE_TCK_DOMAIN_UNTRUSTED_MAX) {
-        data->argv[data->argc++] = "maximum";
-    } else {
+    length = strlen(domain);
+    if (length >= MAX_DOMAIN_LEN)
         return;
-    }
+
+    memset(domainName, 0, MAX_DOMAIN_LEN);
+    memcpy(domainName, domain, length);
+
+    data->argv[data->argc++] = domainName;
 
     midp_jc_event_send(&e);
 }
@@ -1530,8 +1533,7 @@ void /* OPTIONAL */ javanotify_textfield_phonenumber_selection(char* phoneNumber
 
 void /* OPTIONAL */ javanotify_rotation() {
      midp_jc_event_union e;
-     int length;
-  
+ 
      e.eventType = MIDP_JC_EVENT_ROTATION;
      midp_jc_event_send(&e);
 }
