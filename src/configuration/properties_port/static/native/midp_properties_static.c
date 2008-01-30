@@ -1,22 +1,22 @@
 /*
  * Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
- * 
+ *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
  * 2 only, as published by the Free Software Foundation.
- * 
+ *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
  * included at /legal/license.txt).
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA
- * 
+ *
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
  * information or have any questions.
@@ -200,7 +200,7 @@ getProp(Property** propertySet, const char* key) {
     while (p) {
         if (strcmp(key, p->key) == 0) {
             if (NULL == p->value) {
-                return doCallout(p->key); 
+                return doCallout(p->key);
             }
             return (p->value);
         }
@@ -263,9 +263,9 @@ finalizeProp(Property** propertySet) {
  */
 int
 initializeConfig(void) {
-    initializeProp(&internalPropertySet, (const char*)midp_internalKey,
+    initializeProp(&internalPropertySet, (const char**)midp_internalKey,
         midp_internalValue);
-    initializeProp(&systemPropertySet, (const char*)midp_systemKey,
+    initializeProp(&systemPropertySet, (const char**)midp_systemKey,
         midp_systemValue);
 
     return 0;
@@ -319,7 +319,7 @@ getInternalProperty(const char* key) {
  * Gets the integer value of the specified property key in the internal
  * property set. If the key is not found in the internal property
  * set, the application and afterwards the dynamic property sets
- * are searched.  
+ * are searched.
  *
  * @param key The key to search for
  *
@@ -327,9 +327,9 @@ getInternalProperty(const char* key) {
  *         <tt>0</tt>
  */
 int getInternalPropertyInt(const char* key) {
-    const char *tmp;    
+    const char *tmp;
 
-    tmp = getInternalProperty(key); 
+    tmp = getInternalProperty(key);
 
     return(NULL == tmp) ? 0 : atoi(tmp);
 }
