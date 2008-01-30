@@ -224,7 +224,8 @@ public abstract class Configuration {
      * @return                The supportedProtocols value
      */
     public String[] getSupportedProtocols(String content_types) {
-        if (content_types!= null && content_types.equals(MIME_IMAGE_GIF)) {
+        if ((content_types == null) || 
+            (content_types!= null && content_types.equals(MIME_IMAGE_GIF))) {
             return INTERNAL_PROTOCOLS;
         }
         return new String[0];

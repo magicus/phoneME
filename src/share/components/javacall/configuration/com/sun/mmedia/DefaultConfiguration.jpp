@@ -59,6 +59,7 @@ public class DefaultConfiguration extends Configuration {
     // #endif ]
 
     public final static String maps[][] = {
+        {"MS_PCM", "com.sun.mmedia.DirectPlayer"}, 
         {Manager.TONE_DEVICE_LOCATOR, "com.sun.mmedia.DirectTone"},
     // #ifdef MIDI_CONTROL [
         {Manager.MIDI_DEVICE_LOCATOR, "com.sun.mmedia.DirectMIDI"},

@@ -587,6 +587,7 @@ public final class Manager {
      */
     public static Player createPlayer(String locator)
          throws IOException, MediaException {
+System.out.println("Manager createPlayer for " + locator);
 
         if (locator == null) {
             throw new IllegalArgumentException();
@@ -665,10 +666,13 @@ public final class Manager {
                 throw new MediaException("Malformed locator");
         }
 
+System.out.println("Manager createPlayer for protocol:" + theProtocol);
         String[] supported = getSupportedProtocols(null);
         boolean found = false;
         for (int i = 0; i < supported.length; i++) {
+System.out.println("Manager createPlayer verify protocols with :" + supported[i]);
             if (theProtocol.equals(supported[i])) {
+System.out.println("Manager createPlayer protocol found for " + supported[i]);
                 found = true;
                 break;
             }
@@ -682,6 +686,7 @@ public final class Manager {
         Player pp = null;
 
         try {
+System.out.println("Manager createPlayer for DS");
             pp = createPlayer(ds);
         } catch (MediaException ex) {
             ds.disconnect();
@@ -842,8 +847,10 @@ public final class Manager {
         if (source == null) {
             throw new IllegalArgumentException();
         }
+System.out.println("Manager createPlayer for DS start");
 
         PlayerImpl p = new PlayerImpl(source);
+System.out.println("Manager createPlayer for DS ok for " + p);
 
         return p;
     }
@@ -873,7 +880,9 @@ public final class Manager {
     private static DataSource createDataSource(String locator)
          throws IOException, MediaException {
 
+System.out.println("Manager createDataSource " + locator);
         String className = config.getHandler(BasicDS.getProtocol(locator));
+System.out.println("Manager createDataSource className = " + className);
 
         if (className == null) {
             throw new MediaException(DS_ERR + locator);
@@ -886,11 +895,12 @@ public final class Manager {
             DataSource source = (DataSource) protoClass.newInstance();
             // ... and get it connected ....
             ((BasicDS) source).setLocator(locator);
-            source.connect();
+//            source.connect();
+System.out.println("Manager createDataSource className = " + className);
 
             return source;
-        } catch (IOException e) {
-            throw e;
+//        } catch (IOException e) {
+//            throw e;
         } catch (MediaException e) {
             throw e;
         } catch (Exception e) {

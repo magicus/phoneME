@@ -29,6 +29,7 @@ import  javax.microedition.media.control.*;
 import  javax.microedition.media.protocol.SourceStream;
 import  java.util.Enumeration;
 import  java.util.Hashtable;
+import  java.util.Vector;
 import  com.sun.j2me.app.AppPackage;
 
 
@@ -52,6 +53,10 @@ public class PlayerImpl implements Player {
     private String  mediaFormat = null;
     private boolean handledByDevice = false;
     private int hNative;      // handle of native API library 
+
+
+    private int loopCount = 0; /* if set in unrealized state */
+    private Vector listeners = new Vector(2);
 
     /**
      * hastable to map playerID to instances
@@ -116,6 +121,7 @@ public class PlayerImpl implements Player {
     private PlayerImpl() {};
 
     public PlayerImpl(DataSource source) throws MediaException, IOException {
+System.out.println("PlayerImpl constructor");
         // Get current application ID to support MVM
         int appId = AppPackage.getInstance().getId();
 
@@ -131,11 +137,13 @@ public class PlayerImpl implements Player {
         }
 
         mediaFormat     = nGetMediaFormat(hNative);
+System.out.println("PlayerImpl constructor format=" + mediaFormat);
         if (mediaFormat.equals(MEDIA_FORMAT_UNSUPPORTED)) {
             throw new MediaException("Unsupported Media Format");
         }
         handledByDevice = nIsHandledByDevice(hNative);
         this.source     = source;
+System.out.println("PlayerImpl constructor handledByDevice=" + handledByDevice);
 
         if (!handledByDevice) {
             source.connect();
@@ -169,12 +177,18 @@ public class PlayerImpl implements Player {
      */
     public void realize() throws MediaException {
         /* realize native player */
+System.out.println("PlayerImpl Realize");
+
         nRealize(hNative, null);
+System.out.println("PlayerImpl nRealize completed");
 
         if (mediaFormat.equals(MEDIA_FORMAT_UNKNOWN)) {
+System.out.println("PlayerImpl nRealize mediaFormatUnknown");
             /* ask media format if unknown */
             mediaFormat     = nGetMediaFormat(hNative);
+System.out.println("PlayerImpl nRealize mediaFormat=" + mediaFormat);
             if (handledByDevice) {
+System.out.println("PlayerImpl nRealize handledByDevice");
                 /* In case of handledByDevice media format
                  * should be known on this stage 
                  */
@@ -185,6 +199,7 @@ public class PlayerImpl implements Player {
                     throw new MediaException("Unsupported Media Format");
                 }
             } else {
+System.out.println("PlayerImpl nRealize !handledByDevice");
                 /* predownload media data to determine media format */
                 if (mediaFormat.equals(MEDIA_FORMAT_UNKNOWN)) {
                     /* first loop - allocate java buffer*/
@@ -194,25 +209,18 @@ public class PlayerImpl implements Player {
                         javaBufSize = 1024;
                         packetSize = 1024;
                     }
+System.out.println("PlayerImpl nRealize javaBufSize=" + javaBufSize + " packetSize=" + packetSize);
                     byte[] buffer = new byte[(int)javaBufSize];
 
                     do {
-                        if (javaBufSize == 0) {
-                            /* first loop - allocate java buffer*/
-                            javaBufSize = nGetJavaBufferSize(hNative);
-                            packetSize = nGetFirstPacketSize(hNative);
-                            if (javaBufSize <= 0) {
-                                javaBufSize = 1024;
-                                packetSize = 1024;
-                            }
-                            buffer = new byte[(int)javaBufSize];
-                        } 
                         int num_read = 0;
                         int ret;
                         do {
                             try {
+System.out.println("PlayerImpl nRealize stream.read start:"+packetSize+ " " + num_read);
                                 // read from source stream
                                 ret = stream.read(buffer, num_read, packetSize - num_read);
+System.out.println("PlayerImpl nRealize stream.read ret=" + ret);
                             } catch(IOException e) {
                                 throw new MediaException("Read from source error");
                             }
@@ -223,17 +231,23 @@ public class PlayerImpl implements Player {
                                 break;
                             }
                         } while(num_read < packetSize);
+System.out.println("PlayerImpl nRealize stream.read stop num_read = " + num_read + " packetSize =" + packetSize);
                         if(num_read < packetSize) {
+System.out.println("PlayerImpl nRealize nBuffering start");
                             nBuffering(hNative, buffer, num_read);
+System.out.println("PlayerImpl nRealize nBuffering stop");
                             /* end of media */
                             nBuffering(hNative, null, -1);
+System.out.println("PlayerImpl nRealize nBuffering -1");
                             mediaFormat     = nGetMediaFormat(hNative);
                             break;
                         } else {
                             packetSize = nBuffering(hNative, buffer, num_read);
+System.out.println("PlayerImpl nRealize nBuffering nextacketsize=" + packetSize);
                             /* ask media format */
                             mediaFormat     = nGetMediaFormat(hNative);
                         }
+System.out.println("PlayerImpl nRealize mediaFormat=" + mediaFormat);
                     } while(mediaFormat.equals(MEDIA_FORMAT_UNKNOWN));
                 }
 
@@ -246,15 +260,28 @@ public class PlayerImpl implements Player {
             }
         }
         /* create Implementation Player */
+System.out.println("PlayerImpl getPlayerFromType(" + mediaFormat + ")");
         playerInst = getPlayerFromType(mediaFormat);
-        playerInst.doRealize();
+System.out.println("PlayerImpl getPlayerFromType return=" + playerInst);
 
         playerInst.hNative            = hNative;
         playerInst.mediaFormat        = mediaFormat;
         playerInst.handledByDevice    = handledByDevice;
         playerInst.pID                = pID;
 
+        playerInst.setSource(source);
+
+        if (loopCount != 0) {
+            playerInst.setLoopCount(loopCount);
+        }
+        if (listeners.size() > 0) {
+            for(int i=0; i<listeners.size(); i++)
+                playerInst.addPlayerListener((PlayerListener)listeners.elementAt(i));
+            listeners.removeAllElements();
+        }
         mplayers.put(new Integer(pID), playerInst);
+
+        playerInst.realize();
     };
 
     /**
@@ -269,7 +296,9 @@ public class PlayerImpl implements Player {
         String className;
 
         className = Configuration.getConfiguration().getHandler(type);
-               if ((type == null) || className == null) {
+System.out.println("PlayerImpl getPlayerFromType className=" + className);
+
+        if ((type == null) || className == null) {
             throw new MediaException(PL_ERR_SH + "MediaFormat " + type + " is not supported");
         }
 
@@ -285,6 +314,7 @@ public class PlayerImpl implements Player {
             if(debug) System.out.println("Class not found " + className);
             throw new MediaException(PL_ERR_SH + e.getMessage());
         }
+System.out.println("PlayerImpl getPlayerFromType class=" + p);
         return p;
     }
 
@@ -327,8 +357,11 @@ public class PlayerImpl implements Player {
      *
      */
     public void prefetch() throws MediaException {
+System.out.println("PlayerImpl prefetch start");
         if (playerInst != null) {
+System.out.println("PlayerImpl prefetch chkClosed");
             playerInst.chkClosed(false);
+System.out.println("PlayerImpl prefetch chkClosed complete");
 
             if (vmPaused) {
                 if (debug)
@@ -336,8 +369,11 @@ public class PlayerImpl implements Player {
                 return;
             }        
 
+System.out.println("PlayerImpl call direct prefetch");
             playerInst.prefetch();
+System.out.println("PlayerImpl call direct prefetch ok");
         }
+System.out.println("PlayerImpl prefetch stop");
     };
 
     /**
@@ -375,7 +411,15 @@ public class PlayerImpl implements Player {
      * have security permission to start the <code>Player</code>.
      */
     public void start() throws MediaException {
+System.out.println("PlayerImpl start start");
+        if (playerInst == null) {
+System.out.println("PlayerImpl start call realize");
+            realize();
+System.out.println("PlayerImpl start call realize OK");
+        }
+System.out.println("PlayerImpl start start");
         if (playerInst != null) {
+System.out.println("PlayerImpl start chkClosed");
             playerInst.chkClosed(false);
 
             if (vmPaused) {
@@ -383,8 +427,11 @@ public class PlayerImpl implements Player {
                     System.out.println("ERROR: Try to start player during paused state");
                 return;
             }
+System.out.println("PlayerImpl start call direct start");
             playerInst.start();
+System.out.println("PlayerImpl start call direct start OK");
         }
+System.out.println("PlayerImpl start stop");
     };
 
     /**
@@ -552,8 +599,9 @@ public class PlayerImpl implements Player {
     public long getMediaTime() {
         if (playerInst != null) {
             return playerInst.getMediaTime();
+        } else {
+            return Player.TIME_UNKNOWN;
         }
-        throw new IllegalStateException();
     };
 
     /**
@@ -586,8 +634,9 @@ public class PlayerImpl implements Player {
     public long getDuration() {
         if (playerInst != null) {
             return playerInst.getDuration();
+        } else {
+            return Player.TIME_UNKNOWN;
         }
-        throw new IllegalStateException();
     };
 
     /**
@@ -659,7 +708,11 @@ public class PlayerImpl implements Player {
         if (playerInst != null) {
             playerInst.setLoopCount(count);
         } else {
-            throw new IllegalStateException();
+            if (loopCount != 0) {
+                loopCount = count;
+            } else {
+                throw new IllegalArgumentException();
+            }
         }
     };
 
@@ -676,7 +729,9 @@ public class PlayerImpl implements Player {
         if (playerInst != null) {
             playerInst.addPlayerListener(playerListener);
         } else {
-            throw new IllegalStateException();
+            if (playerListener != null) {
+                listeners.addElement(playerListener);
+            }
         }
     };
 
@@ -695,7 +750,7 @@ public class PlayerImpl implements Player {
         if (playerInst != null) {
             playerInst.removePlayerListener(playerListener);
         } else {
-            throw new IllegalStateException();
+            listeners.removeElement(playerListener);
         }
     };
 

@@ -518,3 +518,224 @@ UnlockAudioMutex();
     }
     KNI_ReturnVoid();
 }
+
+/*  protected native boolean nIsFramePositioningControlSupported ( int handle ) ; */
+KNIEXPORT KNI_RETURNTYPE_BOOLEAN
+KNIDECL(com_sun_mmedia_DirectPlayer_nIsFramePositioningControlSupported) {
+    jint handle = KNI_GetParameterAsInt(1);
+    KNIPlayerInfo* pKniInfo = (KNIPlayerInfo*)handle;
+    jboolean returnValue = KNI_FALSE;
+
+    int controls;
+
+    if (pKniInfo && pKniInfo->pNativeHandle) {
+        if (JAVACALL_OK == javacall_media_get_player_controls(pKniInfo->pNativeHandle, &controls)) {
+            if (controls & JAVACALL_MEDIA_CTRL_FRAME_POSITIONING) {
+                returnValue = KNI_TRUE;
+            }
+        }
+    }
+
+    KNI_ReturnBoolean(returnValue);
+}
+
+/*  protected native boolean nIsMetaDataControlSupported ( int handle ) ; */
+KNIEXPORT KNI_RETURNTYPE_BOOLEAN
+KNIDECL(com_sun_mmedia_DirectPlayer_nIsMetaDataControlSupported) {
+    jint handle = KNI_GetParameterAsInt(1);
+    KNIPlayerInfo* pKniInfo = (KNIPlayerInfo*)handle;
+    jboolean returnValue = KNI_FALSE;
+
+    int controls;
+
+    if (pKniInfo && pKniInfo->pNativeHandle) {
+        if (JAVACALL_OK == javacall_media_get_player_controls(pKniInfo->pNativeHandle, &controls)) {
+            if (controls & JAVACALL_MEDIA_CTRL_METADATA) {
+                returnValue = KNI_TRUE;
+            }
+        }
+    }
+
+    KNI_ReturnBoolean(returnValue);
+}
+
+/*  protected native boolean nIsMIDIControlSupported ( int handle ) ; */
+KNIEXPORT KNI_RETURNTYPE_BOOLEAN
+KNIDECL(com_sun_mmedia_DirectPlayer_nIsMIDIControlSupported) {
+    jint handle = KNI_GetParameterAsInt(1);
+    KNIPlayerInfo* pKniInfo = (KNIPlayerInfo*)handle;
+    jboolean returnValue = KNI_FALSE;
+
+    int controls;
+
+    if (pKniInfo && pKniInfo->pNativeHandle) {
+        if (JAVACALL_OK == javacall_media_get_player_controls(pKniInfo->pNativeHandle, &controls)) {
+            if (controls & JAVACALL_MEDIA_CTRL_MIDI) {
+                returnValue = KNI_TRUE;
+            }
+        }
+    }
+
+    KNI_ReturnBoolean(returnValue);
+}
+
+/*  protected native boolean nIsPitchControlSupported ( int handle ) ; */
+KNIEXPORT KNI_RETURNTYPE_BOOLEAN
+KNIDECL(com_sun_mmedia_DirectPlayer_nIsPitchControlSupported) {
+    jint handle = KNI_GetParameterAsInt(1);
+    KNIPlayerInfo* pKniInfo = (KNIPlayerInfo*)handle;
+    jboolean returnValue = KNI_FALSE;
+
+    int controls;
+
+    if (pKniInfo && pKniInfo->pNativeHandle) {
+        if (JAVACALL_OK == javacall_media_get_player_controls(pKniInfo->pNativeHandle, &controls)) {
+            if (controls & JAVACALL_MEDIA_CTRL_PITCH) {
+                returnValue = KNI_TRUE;
+            }
+        }
+    }
+
+    KNI_ReturnBoolean(returnValue);
+}
+
+/*  protected native boolean nIsRateControlSupported ( int handle ) ; */
+KNIEXPORT KNI_RETURNTYPE_BOOLEAN
+KNIDECL(com_sun_mmedia_DirectPlayer_nIsRateControlSupported) {
+    jint handle = KNI_GetParameterAsInt(1);
+    KNIPlayerInfo* pKniInfo = (KNIPlayerInfo*)handle;
+    jboolean returnValue = KNI_FALSE;
+
+    int controls;
+
+    if (pKniInfo && pKniInfo->pNativeHandle) {
+        if (JAVACALL_OK == javacall_media_get_player_controls(pKniInfo->pNativeHandle, &controls)) {
+            if (controls & JAVACALL_MEDIA_CTRL_RATE) {
+                returnValue = KNI_TRUE;
+            }
+        }
+    }
+
+    KNI_ReturnBoolean(returnValue);
+}
+
+/*  protected native boolean nIsRecordControlSupported ( int handle ) ; */
+KNIEXPORT KNI_RETURNTYPE_BOOLEAN
+KNIDECL(com_sun_mmedia_DirectPlayer_nIsRecordControlSupported) {
+    jint handle = KNI_GetParameterAsInt(1);
+    KNIPlayerInfo* pKniInfo = (KNIPlayerInfo*)handle;
+    jboolean returnValue = KNI_FALSE;
+
+    int controls;
+
+    if (pKniInfo && pKniInfo->pNativeHandle) {
+        if (JAVACALL_OK == javacall_media_get_player_controls(pKniInfo->pNativeHandle, &controls)) {
+            if (controls & JAVACALL_MEDIA_CTRL_RECORD) {
+                returnValue = KNI_TRUE;
+            }
+        }
+    }
+
+    KNI_ReturnBoolean(returnValue);
+}
+
+/*  protected native boolean nIsStopTimeControlSupported ( int handle ) ; */
+KNIEXPORT KNI_RETURNTYPE_BOOLEAN
+KNIDECL(com_sun_mmedia_DirectPlayer_nIsStopTimeControlSupported) {
+    jint handle = KNI_GetParameterAsInt(1);
+    KNIPlayerInfo* pKniInfo = (KNIPlayerInfo*)handle;
+    jboolean returnValue = KNI_FALSE;
+
+    int controls;
+
+    if (pKniInfo && pKniInfo->pNativeHandle) {
+        if (JAVACALL_OK == javacall_media_get_player_controls(pKniInfo->pNativeHandle, &controls)) {
+            if (controls & JAVACALL_MEDIA_CTRL_STOPTIME) {
+                returnValue = KNI_TRUE;
+            }
+        }
+    }
+
+    KNI_ReturnBoolean(returnValue);
+}
+
+/*  protected native boolean nIsTempoControlSupported ( int handle ) ; */
+KNIEXPORT KNI_RETURNTYPE_BOOLEAN
+KNIDECL(com_sun_mmedia_DirectPlayer_nIsTempoControlSupported) {
+    jint handle = KNI_GetParameterAsInt(1);
+    KNIPlayerInfo* pKniInfo = (KNIPlayerInfo*)handle;
+    jboolean returnValue = KNI_FALSE;
+
+    int controls;
+
+    if (pKniInfo && pKniInfo->pNativeHandle) {
+        if (JAVACALL_OK == javacall_media_get_player_controls(pKniInfo->pNativeHandle, &controls)) {
+            if (controls & JAVACALL_MEDIA_CTRL_TEMPO) {
+                returnValue = KNI_TRUE;
+            }
+        }
+    }
+
+    KNI_ReturnBoolean(returnValue);
+}
+
+/*  protected native boolean nIsVideoControlSupported ( int handle ) ; */
+KNIEXPORT KNI_RETURNTYPE_BOOLEAN
+KNIDECL(com_sun_mmedia_DirectPlayer_nIsVideoControlSupported) {
+    jint handle = KNI_GetParameterAsInt(1);
+    KNIPlayerInfo* pKniInfo = (KNIPlayerInfo*)handle;
+    jboolean returnValue = KNI_FALSE;
+
+    int controls;
+
+    if (pKniInfo && pKniInfo->pNativeHandle) {
+        if (JAVACALL_OK == javacall_media_get_player_controls(pKniInfo->pNativeHandle, &controls)) {
+            if (controls & JAVACALL_MEDIA_CTRL_VIDEO) {
+                returnValue = KNI_TRUE;
+            }
+        }
+    }
+
+    KNI_ReturnBoolean(returnValue);
+}
+
+/*  protected native boolean nIsToneControlSupported ( int handle ) ; */
+KNIEXPORT KNI_RETURNTYPE_BOOLEAN
+KNIDECL(com_sun_mmedia_DirectPlayer_nIsToneControlSupported) {
+    jint handle = KNI_GetParameterAsInt(1);
+    KNIPlayerInfo* pKniInfo = (KNIPlayerInfo*)handle;
+    jboolean returnValue = KNI_FALSE;
+
+    int controls;
+
+    if (pKniInfo && pKniInfo->pNativeHandle) {
+        if (JAVACALL_OK == javacall_media_get_player_controls(pKniInfo->pNativeHandle, &controls)) {
+            if (controls & JAVACALL_MEDIA_CTRL_TONE) {
+                returnValue = KNI_TRUE;
+            }
+        }
+    }
+
+    KNI_ReturnBoolean(returnValue);
+}
+
+/*  protected native boolean nIsVolumeControlSupported ( int handle ) ; */
+KNIEXPORT KNI_RETURNTYPE_BOOLEAN
+KNIDECL(com_sun_mmedia_DirectPlayer_nIsVolumeControlSupported) {
+    jint handle = KNI_GetParameterAsInt(1);
+    KNIPlayerInfo* pKniInfo = (KNIPlayerInfo*)handle;
+    jboolean returnValue = KNI_FALSE;
+
+    int controls;
+
+    if (pKniInfo && pKniInfo->pNativeHandle) {
+        if (JAVACALL_OK == javacall_media_get_player_controls(pKniInfo->pNativeHandle, &controls)) {
+            if (controls & JAVACALL_MEDIA_CTRL_VOLUME) {
+                returnValue = KNI_TRUE;
+            }
+        }
+    }
+
+    KNI_ReturnBoolean(returnValue);
+}
+

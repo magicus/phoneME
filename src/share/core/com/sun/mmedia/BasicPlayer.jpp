@@ -1010,11 +1010,10 @@ public abstract class BasicPlayer implements Player
      * Sets the media source
      *
      * @param  source              The new source value
-     * @exception  IOException     Description of the Exception
      * @exception  MediaException  Description of the Exception
      */
     public void setSource(DataSource source)
-         throws IOException, MediaException {
+         throws MediaException {
         this.source = source;
     }
 
