@@ -84,7 +84,7 @@ KNIDECL(com_sun_mmedia_DirectPlayer_nInit) {
     KNIPlayerInfo* pKniInfo;
     javacall_result res;
 
-    MMP_DEBUG_STR2("+nInit isolate=%d, player=%d\n", isolateId, playerId);
+    MMP_DEBUG_STR2("+nInit isolate=%d, player=%d\n", appId, playerId);
 
     KNI_StartHandles(2);
     KNI_DeclareHandle(mimeType);
