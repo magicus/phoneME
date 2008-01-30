@@ -137,8 +137,8 @@ char* getMidpHome(char *cmd,char *dirBuffer) {
         return NULL;
     }
 
-    /* strip off APPDB_DIR from the path */
-    *(strrchr(dirBuffer, (int) *filesep)) = '\0';
+    /* strip off APPDB_DIR from the path, keep the last seperator */
+    *(strrchr(dirBuffer, (int) *filesep)+1) = '\0';
 
     return dirBuffer;
 }
