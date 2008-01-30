@@ -30,8 +30,7 @@ import com.sun.midp.io.j2me.ProtocolBase;
 
 import com.sun.midp.io.j2me.sms.TextEncoder;
 
-//import com.sun.midp.security.Permissions;
-import com.sun.j2me.security.Permission;
+import com.sun.j2me.security.WMAPermission;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.InputStream;
@@ -223,7 +222,7 @@ public class Protocol extends ProtocolBase {
         /* Check if we have permission to receive. */
         if (readPermission == false) {
             try {
-		appPackage.checkForPermission(new Permission("CBS_RECEIVE", "cbs:receive"));
+                appPackage.checkForPermission(WMAPermission.CBS_RECEIVE);
                 readPermission = true;
             } catch (InterruptedException ie) {
                 throw new InterruptedIOException("Interrupted while trying " +
@@ -687,7 +686,7 @@ public class Protocol extends ProtocolBase {
          */
         if (openPermission == false) {
             try {
-                appPackage.checkForPermission(new Permission("CBS_SERVER", "cbs:open"));
+                appPackage.checkForPermission(WMAPermission.CBS_SERVER);
                 openPermission = true;
             } catch (InterruptedException ie) {
                 throw new InterruptedIOException("Interrupted while trying " +
