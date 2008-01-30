@@ -1436,7 +1436,7 @@ javacall_bool javacall_lcd_get_reverse_orientation() {
  * @retval JAVACALL_TRUE   implementation supports native softbutton layer
  * @retval JAVACALL_FALSE  implementation does not support native softbutton layer
  */
-javacall_bool javacall_lcd_is_native_softbutton_label () {
+javacall_bool javacall_lcd_is_native_softbutton_layer_supported () {
     return JAVACALL_FALSE;
 }
 
