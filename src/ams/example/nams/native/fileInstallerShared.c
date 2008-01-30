@@ -71,7 +71,7 @@ PCSL_DEFINE_STATIC_ASCII_STRING_LITERAL_START(class_suffix)
     {'.','c','l','a','s','s', '\0'}
 PCSL_DEFINE_STATIC_ASCII_STRING_LITERAL_END(class_suffix);
 
-extern char* midpFixMidpHome(char *cmd);
+extern char* getApplicationDir(char *cmd);
 
 PCSL_DEFINE_ASCII_STRING_LITERAL_START(ENTRY_NAME)
     {'M', 'E', 'T', 'A', '-', 'I', 'N', 'F', '/',
@@ -870,7 +870,7 @@ int fileInstaller(int argc, char* argv[]) {
     int verifyHashLen = 0;
 #endif
 
-    char* midpHome = NULL;
+    char* appDir = NULL;
     PCSL_DEFINE_ASCII_STRING_LITERAL_START(domain)
         {'o', 'p', 'e', 'r', 'a', 't', 'o', 'r', '\0'}
     PCSL_DEFINE_ASCII_STRING_LITERAL_END(domain);
@@ -885,12 +885,12 @@ int fileInstaller(int argc, char* argv[]) {
     REPORT_INFO2(LC_AMS, "argv[0] = %s, argv[1] = %s", argv[0], argv[1]);
 
     /* get midp home directory, set it */
-    midpHome = midpFixMidpHome(argv[0]);
-    if (midpHome == NULL) {
+    appDir = getApplicationDir(argv[0]);
+    if (appDir == NULL) {
         return -1;
     }
-    /* set up midpHome before calling initialize */
-    midpSetHomeDir(midpHome);
+    /* set up appDir before calling initialize */
+    midpSetAppDir(appDir);
 
     if (midpInitialize() != 0) {
         REPORT_ERROR(LC_AMS, "Not enough memory");

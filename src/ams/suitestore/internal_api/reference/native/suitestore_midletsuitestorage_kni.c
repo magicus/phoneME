@@ -618,7 +618,7 @@ KNIDECL(com_sun_midp_midletsuite_MIDletSuiteStorage_getNumberOfSuites) {
     int numberOfSuites;
     MIDPError status = midp_get_number_of_suites(&numberOfSuites);
     if (status != ALL_OK) {
-        numberOfSuites = -1;
+        numberOfSuites = status;
     }
 
     KNI_ReturnInt(numberOfSuites);

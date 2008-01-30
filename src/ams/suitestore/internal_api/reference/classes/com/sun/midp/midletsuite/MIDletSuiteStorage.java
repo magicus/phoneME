@@ -628,7 +628,7 @@ public class MIDletSuiteStorage {
         if (n < 0) {
             if (Logging.REPORT_LEVEL <= Logging.ERROR) {
                 Logging.report(Logging.ERROR, LogChannels.LC_AMS,
-                    "Error in getNumberOfSuites0(): returned -1!");
+                    "Error in getNumberOfSuites(): returned " + n);
             }
             n = 0;
         }
