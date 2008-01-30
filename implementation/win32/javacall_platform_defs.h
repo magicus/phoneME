@@ -134,6 +134,22 @@ typedef const javacall_utf16* javacall_const_filename_string;
 #define JAVACALL_MAX_LOCALIZED_DIR_NAME_LENGTH    512
 
 /**
+ * @def JAVACALL_PIM_MAX_ARRAY_ELEMENTS
+ * 
+ */
+#define JAVACALL_PIM_MAX_ARRAY_ELEMENTS (10)   
+/**
+ * @def JAVACALL_PIM_MAX_ATTRIBUTES
+ * 
+ */
+#define JAVACALL_PIM_MAX_ATTRIBUTES     (15)
+/**
+ * @def JAVACALL_PIM_MAX_FIELDS
+ * 
+ */
+#define JAVACALL_PIM_MAX_FIELDS         (19)
+
+/**
  * @}
  */
 
