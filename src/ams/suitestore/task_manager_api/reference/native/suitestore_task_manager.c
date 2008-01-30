@@ -409,159 +409,153 @@ midp_remove_suite(SuiteIdType suiteId) {
 MIDPError
 midp_change_suite_storage(SuiteIdType suiteId, StorageIdType newStorageId) {
 
-    pcsl_string suiteRoot;
-    MidletSuiteData* pData = NULL;
-    int status;
-    void* fileIteratorHandle = NULL;
-    lockStorageList *node = NULL;
-    
-    if ((UNUSED_STORAGE_ID == newStorageId) ||
-        (newStorageId >= MAX_STORAGE_NUM)) {
-        return BAD_PARAMS;
-    }
+#ifndef VERIFY_ONCE
+    (void)suiteId;
+    (void)newStorageId;
+    return GENERAL_ERROR;
+#endif
 
-    node = find_storage_lock(suiteId);
-    if (node != NULL) {
-        if (node->update != KNI_TRUE) {
-            return SUITE_LOCKED;
-        }
-    }
+   /*
+    * if VERIFY_ONCE is enabled then MONET is disabled
+    * so we don't have to check ENABLE_MONET.
+    */
 
-     /*
-      * This is a public API which can be called without the VM running
-      * so we need automatically init anything needed, to make the
-      * caller's code less complex.
-      *
-      * Initialization is performed in steps so that we do use any
-      * extra resources such as the VM for the operation being performed.
-      */
-    if (midpInit(REMOVE_LEVEL) != 0) {
-        remove_storage_lock(suiteId);
-        return OUT_OF_MEMORY;
-    }
+    {
+        pcsl_string suiteRoot;
+        MidletSuiteData* pData = NULL;
+        int status;
+        void* fileIteratorHandle = NULL;
+        lockStorageList *node = NULL;
 
-    /* check that the suite exists and it is not a preloaded one */
-    pData = get_suite_data(suiteId);
-
-    if (pData == NULL) {
-        remove_storage_lock(suiteId);
-        return NOT_FOUND;
-    }
-
-    if (pData->storageId == newStorageId) {
-        remove_storage_lock(suiteId);
-        return BAD_PARAMS;
-    }
-
-    if (pData->isPreinstalled) {
-        remove_storage_lock(suiteId);
-        return BAD_PARAMS;
-    }
-
-    do {
-        int rc; /* return code for storage_get_next_file_in_iterator */
-        jsize oldRootLength;
-        jsize newRootLength;
-        const pcsl_string* newRoot;
-        const pcsl_string* oldRoot;
-        char* pszError = NULL;
-
-        status = begin_transaction(TRANSACTION_CHANGE_STORAGE, suiteId, NULL);
-        if (status != ALL_OK) {
-            break;
+        if ((UNUSED_STORAGE_ID == newStorageId) ||
+            (newStorageId >= MAX_STORAGE_NUM)) {
+            return BAD_PARAMS;
         }
 
-        if ((status = get_suite_storage_root(suiteId, &suiteRoot)) != ALL_OK) {
-            break;
+        /*
+         * IMPL Note: for security reasons we allow to move suite
+         * only to the internal storage.
+         */
+        if (newStorageId != INTERNAL_STORAGE_ID) {
+            return BAD_PARAMS;
         }
 
-        fileIteratorHandle = storage_open_file_iterator(&suiteRoot);
-        if (!fileIteratorHandle) {
-            status = IO_ERROR;
-            break;
+        node = find_storage_lock(suiteId);
+        if (node != NULL) {
+            if (node->update != KNI_TRUE) {
+                return SUITE_LOCKED;
+            }
         }
 
-        #if ENABLE_ICON_CACHE
-        /* we don't have to move icons as they are always
-           stored in the internal storage.*/
-        #endif
+         /*
+          * This is a public API which can be called without the VM running
+          * so we need automatically init anything needed, to make the
+          * caller's code less complex.
+          *
+          * Initialization is performed in steps so that we do use any
+          * extra resources such as the VM for the operation being performed.
+          */
+        if (midpInit(REMOVE_LEVEL) != 0) {
+            remove_storage_lock(suiteId);
+            return OUT_OF_MEMORY;
+        }
 
-        newRoot = storage_get_root(newStorageId);
-        oldRoot = storage_get_root(pData->storageId);
-        newRootLength = pcsl_string_length(newRoot);
-        oldRootLength = pcsl_string_length(oldRoot);
+        /* check that the suite exists and it is not a preloaded one */
+        pData = get_suite_data(suiteId);
 
-        status = ALL_OK;
-            
-        for (;;) {
+        if (pData == NULL) {
+            remove_storage_lock(suiteId);
+            return NOT_FOUND;
+        }
+
+        if (pData->storageId == newStorageId) {
+            remove_storage_lock(suiteId);
+            return BAD_PARAMS;
+        }
+
+        if (pData->isPreinstalled) {
+            remove_storage_lock(suiteId);
+            return BAD_PARAMS;
+        }
+
+        do {
+            jsize oldRootLength;
+            jsize newRootLength;
+            const pcsl_string* newRoot;
+            const pcsl_string* oldRoot;
+            char* pszError = NULL;
             pcsl_string filePath;
-            pcsl_string fileName;
-            pcsl_string newFilePath = PCSL_STRING_NULL;
-            jsize filePathLength;
-            rc = storage_get_next_file_in_iterator(&suiteRoot,
-                fileIteratorHandle, &filePath);
-            if (0 != rc) {
+            pcsl_string newFilePath;
+
+
+            status = begin_transaction(TRANSACTION_CHANGE_STORAGE, suiteId, NULL);
+            if (status != ALL_OK) {
                 break;
             }
-            /* construct new file name. */
-            filePathLength = pcsl_string_length(&filePath);
-            pcsl_string_predict_size(&fileName, filePathLength - oldRootLength);
-            if (PCSL_STRING_OK != pcsl_string_substring(&filePath,
-                    oldRootLength, filePathLength, &fileName)) {
-                pcsl_string_free(&filePath);
-                status = OUT_OF_MEMORY;
+
+            if ((status = get_suite_storage_root(suiteId, &suiteRoot)) != ALL_OK) {
                 break;
             }
-            pcsl_string_predict_size(&newFilePath, newRootLength + pcsl_string_length(&fileName));
-            if (PCSL_STRING_OK != pcsl_string_append(&newFilePath, newRoot)) {
-                pcsl_string_free(&filePath);
-                pcsl_string_free(&fileName);
-                status = OUT_OF_MEMORY;
+
+            fileIteratorHandle = storage_open_file_iterator(&suiteRoot);
+            if (!fileIteratorHandle) {
+                status = IO_ERROR;
                 break;
             }
-            if (PCSL_STRING_OK != pcsl_string_append(&newFilePath,
-                    (const pcsl_string*)&fileName)) {
-                pcsl_string_free(&filePath);
-                pcsl_string_free(&fileName);
-                pcsl_string_free(&newFilePath);
-                status = OUT_OF_MEMORY;
+
+            newRoot = storage_get_root(newStorageId);
+            oldRoot = storage_get_root(pData->storageId);
+            newRootLength = pcsl_string_length(newRoot);
+            oldRootLength = pcsl_string_length(oldRoot);
+
+            status = ALL_OK;
+
+            if ((status = midp_suite_get_class_path(suiteId,
+                pData->storageId, KNI_FALSE, &filePath)) != ALL_OK) {
                 break;
             }
-            /* rename file */
+
+            if ((status = midp_suite_get_class_path(suiteId,
+                newStorageId, KNI_FALSE, &newFilePath)) != ALL_OK) {
+                break;
+            }
+
             storage_rename_file(&pszError, &filePath, &newFilePath);
-            pcsl_string_free(&filePath);
-            pcsl_string_free(&fileName);
-            pcsl_string_free(&newFilePath);
             if (pszError != NULL) {
                 status = IO_ERROR;
                 storageFreeError(pszError);
+                pcsl_string_free(&filePath);
+                pcsl_string_free(&newFilePath);
                 break;
             }
-        }
+
+            pcsl_string_free(&filePath);
+            pcsl_string_free(&newFilePath);
+
+#if ENABLE_IMAGE_CACHE
+            moveImageCache(suiteId, pData->storageId, newStorageId);
+#endif
+
+            pData->storageId = newStorageId;
+
+            status = write_suites_data(&pszError);
+            storageFreeError(pszError);
+
+        } while (0);
+
+        pcsl_string_free(&suiteRoot);
+        storageCloseFileIterator(fileIteratorHandle);
 
         if (status != ALL_OK) {
-            break;
+            (void)rollback_transaction();
+        } else {
+            (void)finish_transaction();
         }
-        
-        pData->storageId = newStorageId;
 
-        status = write_suites_data(&pszError);
-        storageFreeError(pszError);
-        
-    } while (0);
+        remove_storage_lock(suiteId);
 
-    pcsl_string_free(&suiteRoot);
-    storageCloseFileIterator(fileIteratorHandle);
-
-    if (status != ALL_OK) {
-        (void)rollback_transaction();
-    } else {
-        (void)finish_transaction();
+        return status;
     }
-
-    remove_storage_lock(suiteId);
-
-    return status;
  }
 
 

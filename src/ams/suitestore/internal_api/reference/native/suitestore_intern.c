@@ -816,20 +816,12 @@ get_suite_filename(SuiteIdType suiteId, const pcsl_string* filename,
                    pcsl_string* sRoot) {
   int sRoot_len;
   const pcsl_string* root;
-  StorageIdType storageId;
-  MIDPError status;
 
-  /* get an id of the storage where the suite is located */
-  status = midp_suite_get_suite_storage(suiteId, &storageId);
-  if (status != ALL_OK) {
-      return status;
-  }
-
-  root = storage_get_root(storageId);
+  root = storage_get_root(INTERNAL_STORAGE_ID);
 
   *sRoot = PCSL_STRING_EMPTY;
 
-  sRoot_len = pcsl_string_length(root)
+  sRoot_len = pcsl_string_length(root)      
             + GET_SUITE_ID_LEN(suiteId)
             + pcsl_string_length(filename);
   pcsl_string_predict_size(sRoot, sRoot_len);

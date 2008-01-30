@@ -121,7 +121,7 @@ public class AlertLayer extends BodyLayer {
             } 
             break;
         case Graphics.VCENTER:
-            bounds[Y] = ScreenSkin.HEIGHT - SoftButtonSkin.HEIGHT - bounds[H];
+            bounds[Y] = ScreenSkin.HEIGHT -  SoftButtonSkin.HEIGHT - bounds[H];
             if (alert != null && alert.getTicker() != null) {
                 bounds[Y] -= TickerSkin.HEIGHT;
             }

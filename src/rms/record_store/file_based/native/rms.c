@@ -327,6 +327,7 @@ rmsdb_get_unique_id_path(SuiteIdType suiteId, StorageIdType storageId,
         return MIDP_ERROR_ILLEGAL_ARGUMENT;
     }
 
+
     midpErr = midp_suite_get_rms_filename(suiteId, storageId,
                                           (extension == IDX_EXTENSION_INDEX
                                           ? MIDP_RMS_IDX_EXT : MIDP_RMS_DB_EXT),
@@ -369,20 +370,13 @@ int rmsdb_record_store_exists(SuiteIdType suiteId,
                               int extension) {
     pcsl_string filename;
     int intStatus;
-    StorageIdType storageId;
-    MIDPError status;
 
     /*
-     * IMPL Note: here is assumed that the record store is located in the same
-     * storage as the midlet suite. This may not be true.
+     * IMPL Note: for security reasons the record store is always
+     * located in the internal storage.
      */
-    status = midp_suite_get_suite_storage(suiteId, &storageId);
-    if (status != ALL_OK) {
-        return 0;
-    }
-
     if (MIDP_ERROR_NONE != rmsdb_get_unique_id_path(suiteId,
-            storageId, name, extension, &filename)) {
+            INTERNAL_STORAGE_ID, name, extension, &filename)) {
         return 0;
     }
     if (pcsl_string_is_null(&filename)) {
@@ -417,8 +411,6 @@ rmsdb_record_store_delete(char** ppszError,
                           SuiteIdType suiteId,
                           const pcsl_string* name_str,
                           int extension) {
-    StorageIdType storageId;
-    MIDPError status;
     pcsl_string filename_str;
     lockFileList* searchedNodePtr = NULL;
 
@@ -435,15 +427,10 @@ rmsdb_record_store_delete(char** ppszError,
     }
 
     /*
-     * IMPL Note: here is assumed that the record store is located in the same
-     * storage as the midlet suite. This may not be true.
+     * IMPL Note: for security reasons the record store is always
+     * located in the internal storage.
      */
-    status = midp_suite_get_suite_storage(suiteId, &storageId);
-    if (status != ALL_OK) {
-        return 0;
-    }
-
-    if (MIDP_ERROR_NONE != rmsdb_get_unique_id_path(suiteId, storageId,
+    if (MIDP_ERROR_NONE != rmsdb_get_unique_id_path(suiteId, INTERNAL_STORAGE_ID,
             name_str, extension, &filename_str)) {
         return -2;
     }
@@ -507,18 +494,12 @@ rmsdb_get_number_of_record_stores(SuiteIdType suiteId) {
     pcsl_string root = PCSL_STRING_NULL;
     int numberOfStores;
     MIDPError status;
-    StorageIdType storageId;
 
     /*
-     * IMPL Note: here is assumed that the record store is located in the same
-     * storage as the midlet suite. This may not be true.
+     * IMPL Note: for security reasons the record store is always
+     * located in the internal storage.
      */
-    status = midp_suite_get_suite_storage(suiteId, &storageId);
-    if (status != ALL_OK) {
-        return OUT_OF_MEM_LEN;
-    }
-
-    status = midp_suite_get_rms_filename(suiteId, storageId, -1,
+    status = midp_suite_get_rms_filename(suiteId, INTERNAL_STORAGE_ID, -1,
                                          &PCSL_STRING_EMPTY, &root);
     if (status != ALL_OK) {
       return OUT_OF_MEM_LEN;
@@ -556,22 +537,16 @@ rmsdb_get_record_store_list(SuiteIdType suiteId, pcsl_string* *const ppNames) {
     MIDPError status;
     int f_errc;
     pcsl_string_status s_errc;
-    StorageIdType storageId;
     /* IMPL_NOTE: how can we get it statically? */
     const int dbext_len = pcsl_string_length(&DB_EXTENSION);
 
     *ppNames = NULL;
 
     /*
-     * IMPL Note: here is assumed that the record store is located in the same
-     * storage as the midlet suite. This may not be true.
+     * IMPL Note: for security reasons the record store is always
+     * located in the internal storage.
      */
-    status = midp_suite_get_suite_storage(suiteId, &storageId);
-    if (status != ALL_OK) {
-        return OUT_OF_MEM_LEN;
-    }
-
-    status = midp_suite_get_rms_filename(suiteId, storageId, -1,
+    status = midp_suite_get_rms_filename(suiteId, INTERNAL_STORAGE_ID, -1,
                                          &PCSL_STRING_EMPTY, &root);
     if (status != ALL_OK) {
         return OUT_OF_MEM_LEN;
@@ -761,8 +736,6 @@ rmsdb_get_new_record_store_space_available(SuiteIdType id) {
 int
 rmsdb_record_store_open(char** ppszError, SuiteIdType suiteId,
                         const pcsl_string * name_str, int extension) {
-    StorageIdType storageId;
-    MIDPError status;
     pcsl_string filename_str;
     int handle;
     lockFileList* searchedNodePtr = NULL;
@@ -783,19 +756,14 @@ rmsdb_record_store_open(char** ppszError, SuiteIdType suiteId,
     }
 
     /*
-     * IMPL Note: here is assumed that the record store is located in the same
-     * storage as the midlet suite. This may not be true.
+     * IMPL Note: for security reasons the record store is always
+     * located in the internal storage.
      */
-    status = midp_suite_get_suite_storage(suiteId, &storageId);
-    if (status != ALL_OK) {
-        return 0;
-    }
-
-    if (MIDP_ERROR_NONE != rmsdb_get_unique_id_path(suiteId, storageId,
+    if (MIDP_ERROR_NONE != rmsdb_get_unique_id_path(suiteId, INTERNAL_STORAGE_ID,
             name_str, extension, &filename_str)) {
         return -1;
     }
-    handle = midp_file_cache_open(ppszError, storageId,
+    handle = midp_file_cache_open(ppszError, INTERNAL_STORAGE_ID,
                                   &filename_str, OPEN_READ_WRITE);
 
     pcsl_string_free(&filename_str);
@@ -843,9 +811,9 @@ rmsdb_get_record_store_space_available(int handle, SuiteIdType id) {
     (void)id; /* Avoid compiler warnings */
 
     /*
-     * IMPL_NOTE: here we introduce a limitation that the suite's RMS
-     * must be located at the same storage as the midlet suite.
-     * This is done because the public RecordStore API doesn't support
+     * IMPL_NOTE: for security reasons we introduce a limitation that the
+     * suite's RMS must be located at the internal storage.
+     * Note that the public RecordStore API doesn't support
      * a storageId parameter.
      * There is a plan to get rid of such limitation by introducing a
      * function that will return a storage ID by the suite ID and RMS name.

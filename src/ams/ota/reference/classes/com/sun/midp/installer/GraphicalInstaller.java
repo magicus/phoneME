@@ -495,7 +495,11 @@ public class GraphicalInstaller extends MIDlet implements CommandListener {
             storageListBox.append(storagePrefix + i, (Image)null);
         }
 
-        if (validStorageCnt > 1) {
+        /*
+         * if VERIFY_ONCE is enabled then MONET is disabled
+         * so we don't have to check MONET_ENABLED.
+         */
+        if (Constants.VERIFY_ONCE && (validStorageCnt > 1)) {
             // select storage
             storageListBox.addCommand(cancelCmd);
             storageListBox.addCommand(storeSelectCmd);
