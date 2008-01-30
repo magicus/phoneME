@@ -34,7 +34,7 @@ public class WMAPermission extends Permission {
     static public WMAPermission SMS_SERVER = new WMAPermission(
         Permissions.getName(Permissions.SMS_SERVER), "sms:open");
 
-    static public WMAPermission sms_send_permission(String host, int numSeg) {
+    static public WMAPermission getSmsSendPermission(String host, int numSeg) {
         return new WMAPermission(
             Permissions.getName(Permissions.SMS_SEND), host);
     }
@@ -42,10 +42,18 @@ public class WMAPermission extends Permission {
     static public WMAPermission SMS_RECEIVE = new WMAPermission(
         Permissions.getName(Permissions.SMS_RECEIVE), "sms:receive");
 
+
+    static public WMAPermission CBS_SERVER = new WMAPermission(
+        Permissions.getName(Permissions.CBS_SERVER), "cbs:open");
+
+    static public WMAPermission CBS_RECEIVE = new WMAPermission(
+        Permissions.getName(Permissions.CBS_RECEIVE), "cbs:receive");
+
+
     static public WMAPermission MMS_SERVER = new WMAPermission(
         Permissions.getName(Permissions.MMS_SERVER), "mms:open");
 
-    static public WMAPermission mms_send_permission(String addresses, String numSeg) {
+    static public WMAPermission getMmsSendPermission(String addresses, String numSeg) {
         return new WMAPermission(
             Permissions.getName(Permissions.MMS_SEND), addresses);
     }
