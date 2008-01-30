@@ -94,7 +94,7 @@ javacall_result javacall_get_property(const char* key,
     char* value = NULL;
     char* joined_key = NULL;
 
-    /*protection against access to uninitialized properties*/
+    /* protection against access to uninitialized properties */
     if (JAVACALL_FAIL == javacall_initialize_configurations()) {
         return JAVACALL_FAIL;
     }
@@ -140,7 +140,7 @@ javacall_result javacall_set_property(const char* key,
                                       javacall_property_type type) {
     char* joined_key = NULL;
 
-    /*protection against access to uninitialized properties*/
+    /* protection against access to uninitialized properties */
     if (JAVACALL_FAIL == javacall_initialize_configurations()) {
         return JAVACALL_FAIL;
     }
