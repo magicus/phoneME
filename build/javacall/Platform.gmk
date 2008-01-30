@@ -31,16 +31,6 @@ ifeq ($(JAVACALL_PLATFORM),)
 $(error JAVACALL_PLATFORM is not set)
 endif
 
-ifeq ($(USE_STATIC_PROPERTIES), true)
-ifeq ($(wildcard $(JAVACALL_OUTPUT_DIR)/javacall_static_properties.c),)
-$(error USE_STATIC_PROPERTIES setting in MIDP and JavaCall do not match)
-endif
-else
-ifeq ($(wildcard $(JAVACALL_OUTPUT_DIR)/jwc_properties.ini),)
-$(error USE_STATIC_PROPERTIES setting in MIDP and JavaCall do not match)
-endif
-endif
-
 # Include JavaCall set of properties
 SUBSYSTEM_CONFIGURATION_INPUT_FILES += \
     $(JAVACALL_OUTPUT_DIR)/properties.xml
