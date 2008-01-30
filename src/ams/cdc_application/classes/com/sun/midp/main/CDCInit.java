@@ -78,14 +78,14 @@ public class CDCInit {
      * @param midpHome root directory of the MIDP working files
      * @param storageHome MIDP application database directory to be used
      *                    instead of "midpHome/appdb", directory must be secure
-         */
+     */
     public static void init(String midpHome, String storageHome) {
         // Only System.getProperty(String) looks in the MIDP property list.
         String nativeLib = System.getProperty("sun.midp.library.name");
 
         if (nativeLib == null) {
             nativeLib = "midp";
-    }
+        }
 
         init(midpHome, storageHome, nativeLib);
     }
@@ -104,6 +104,7 @@ public class CDCInit {
     public static void init(String midpHome) {
         // Only System.getProperty(String) looks in the MIDP property list.
         String storagePath = System.getProperty("sun.midp.storage.path");
+
         if (storagePath == null) {
             storagePath = midpHome + File.separator + "appdb";
         } 
@@ -134,7 +135,7 @@ public class CDCInit {
             if (home == null) {
                 home = "." + File.separator + "midp" + File.separator +
                     "midp_linux_gci";
-    }
+            }
         }
 
         init(home);

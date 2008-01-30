@@ -153,6 +153,7 @@ static int max_isolates = 0;
  */
 static void initResourceLimit() {
     int i, j;
+
 #if ENABLE_CDC
     // CDC does not have isolates.
     max_isolates = 1;
@@ -200,18 +201,11 @@ static void initResourceLimit() {
 static _IsolateResourceUsage *findIsolateResourceUsageStruct(int isolateId) {
     int i;
 
-    if (0 == max_isolates) {
-        REPORT_ERROR(LC_AMS, "MAX_ISOLATES property not set");
-        /*get hard-coded property*/
-        max_isolates = MAX_ISOLATES;
-    }
-
-
     if (!isInitialized) {
         initResourceLimit();
         if (!isInitialized) {
             return;
-    }
+        }
     }
 
     /* the first entry is the ams */
@@ -443,12 +437,6 @@ int midpAllocateReservedResources() {
     int i = 0, idx;
     int status = KNI_TRUE;
 
-    if (0 == max_isolates) {
-        REPORT_ERROR(LC_AMS, "MAX_ISOLATES property not set");
-        max_isolates = MAX_ISOLATES;
-    }
-
-
     REPORT_INFO1(LC_CORE, "RESOURCES [%d] midpAllocateReservedResources()\n", 
                  isolateId);
 
@@ -456,7 +444,7 @@ int midpAllocateReservedResources() {
         initResourceLimit();
         if (!isInitialized) {
             return;
-    }
+        }
     }
 
     /* do not allocate the ams again */
@@ -520,13 +508,6 @@ void midpFreeReservedResources() {
     int isolateId = getCurrentIsolateId();
     int idx, i;
 
-    int max_isolates = getInternalPropertyInt("MAX_ISOLATES");
-    if (0 == max_isolates) {
-        REPORT_ERROR(LC_AMS, "MAX_ISOLATES property not set");
-        max_isolates = MAX_ISOLATES;
-    }
-
-
     REPORT_INFO1(LC_CORE, "RESOURCES [%d] midpFreeReservedResources()\n", 
                  isolateId);
 
@@ -534,7 +515,7 @@ void midpFreeReservedResources() {
         initResourceLimit();
         if (!isInitialized) {
             return;
-    }
+        }
     }
 
     /* do not free the AMS entry */

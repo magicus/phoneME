@@ -132,36 +132,6 @@ midpInitializeUI(void) {
      * function. e.g. initLocaleMethod();
      */
 
-    /*
-     * Set AMS memory limits
-     */
-#if ENABLE_MULTIPLE_ISOLATES
-    {
-        int reserved = getInternalPropertyInt("AMS_MEMORY_RESERVED_MVM");
-        int limit = getInternalPropertyInt("AMS_MEMORY_LIMIT_MVM");
-
-        if (0 == reserved) {
-            perror("property AMS_MEMORY_RESERVED_MVM not found!");
-            reserved = AMS_MEMORY_RESERVED_MVM;
-        }
-
-        if (0 == limit) {
-            REPORT_ERROR(LC_AMS, "AMS_MEMORY_LIMIT_MVM property not set");
-            limit = AMS_MEMORY_LIMIT_MVM;
-        }
-
-        reserved = reserved * 1024;
-        JVM_SetConfig(JVM_CONFIG_FIRST_ISOLATE_RESERVED_MEMORY, reserved);
-
-        if (limit <= 0) {
-            limit = 0x7FFFFFFF;  /* MAX_INT */
-        } else {
-            limit = limit * 1024;
-        }
-        JVM_SetConfig(JVM_CONFIG_FIRST_ISOLATE_TOTAL_MEMORY, limit);
-    }
-#endif
-
 #if ENABLE_JAVA_DEBUGGER
     {
         char* argv[2];
