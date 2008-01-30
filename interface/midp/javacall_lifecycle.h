@@ -171,18 +171,6 @@ void javanotify_install_content(const char * httpUrl,
 void javanotify_install_midlet_from_filesystem(const javacall_utf16* jadFilePath,
                                                int jadFilePathLen,
                                                int userWasAsked);
-
-/**
- * @enum javacall_lifecycle_state
- * @brief TCK domain type
- */
-typedef enum {
-    JAVACALL_LIFECYCLE_TCK_DOMAIN_UNTRUSTED,
-    JAVACALL_LIFECYCLE_TCK_DOMAIN_UNTRUSTED_MIN,
-    JAVACALL_LIFECYCLE_TCK_DOMAIN_UNTRUSTED_MAX,
-    JAVACALL_LIFECYCLE_TCK_DOMAIN_TRUSTED
-} javacall_lifecycle_tck_domain;
-
 /**
  * The platform should invoke this function in platform context to start
  * the Java VM and run TCK.
@@ -191,7 +179,7 @@ typedef enum {
  *            the url should be of the form: "http://host:port"
  * @param domain the TCK execution domain
  */
-void javanotify_start_tck(char* url, javacall_lifecycle_tck_domain domain);
+void javanotify_start_tck(char* url, char *domain);
 
 /**
  * The platform should invoke this function in platform context to start
