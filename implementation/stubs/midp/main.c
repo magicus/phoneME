@@ -35,7 +35,7 @@ int lifecycle_shutdown_event;
 
 int main(int argc, char *argv[]) {
 
-    /*Load properties from file*/
+    /* Load properties from file */
     javacall_initialize_configurations();
 
     return 1;
