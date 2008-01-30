@@ -61,7 +61,7 @@ JAVACALL_INCLUDE_SOURCE_FILES_SET+= $(JAVACALL_DIR)/implementation/share/propert
 ifneq ($(UTILITIES)x, x)
 VPATH+=$(JAVACALL_DIR)/implementation/share/utils
 JAVACALL_INCLUDE_SOURCE_FILES_SET+= $(foreach util,$(UTILITIES),$(JAVACALL_DIR)/implementation/share/utils/inc/$(util).h)
-SOURCE_OUTPUT_LIST += $(JAVACALL_DIR)/implementation/share/utils javacall/implementation
+SOURCE_OUTPUT_LIST += $(JAVACALL_DIR)/implementation/share/utils javacall/implementation/share
 endif
 
 # All the property stuff
