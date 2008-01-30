@@ -47,6 +47,8 @@ typedef struct JAVACALL_FIND_DATA {
 
 #define DEFAULT_MAX_JAVA_SPACE (8*1024*1024) 
 #define EMPTY_DIRECTORY_HANDLE NULL
+#define APPDB_DIR L"appdb"
+#define CONFIG_DIR L"lib"
 
 /**
  * Returns file separator character used by the underlying file system
@@ -208,7 +210,7 @@ javacall_int64 javacall_dir_get_free_space_for_java(void)
 
 
 /**
- * Returns the root path of java's home directory.
+ * Returns the path of java's home directory, in which appdb and lib reside
  *
  * @param rootPath returned value: pointer to unicode buffer, allocated
  *        by the VM, to be filled with the root path.
@@ -218,8 +220,8 @@ javacall_int64 javacall_dir_get_free_space_for_java(void)
  *         <tt>JAVACALL_FAIL</tt> if an error occured
  */
 #ifdef UNDER_CE
-javacall_result javacall_dir_get_root_path(javacall_utf16* /* OUT */ rootPath, 
-                                           int* /* IN | OUT */ rootPathLen)
+javacall_result helper_dir_get_home_path(javacall_utf16* /* OUT */ rootPath, 
+                                                    int* /* IN | OUT */ rootPathLen)
 {
     int i;
     static BOOL bCreated = FALSE;
@@ -247,7 +249,7 @@ javacall_result javacall_dir_get_root_path(javacall_utf16* /* OUT */ rootPath,
     return JAVACALL_OK;
 }
 #else /* !UNDER_CE */
-javacall_result javacall_dir_get_root_path(javacall_utf16* /* OUT */ rootPath, 
+javacall_result helper_dir_get_home_path(javacall_utf16* /* OUT */ rootPath, 
                                            int* /* IN | OUT */ rootPathLen)
 {
     wchar_t dirBuffer[JAVACALL_MAX_ROOT_PATH_LENGTH + 1];
@@ -305,7 +307,7 @@ javacall_result javacall_dir_get_root_path(javacall_utf16* /* OUT */ rootPath,
                 wcscat(dirBuffer, filesep);
             }
 
-            wcscat(dirBuffer, L"appdb");
+            wcscat(dirBuffer, APPDB_DIR);
             i = 0;
 
             /* try to search for "appdb" 3 times only (see above) */
@@ -320,7 +322,7 @@ javacall_result javacall_dir_get_root_path(javacall_utf16* /* OUT */ rootPath,
                 wcscat(dirBuffer, filesep);
                 wcscat(dirBuffer, L"..");
                 wcscat(dirBuffer, filesep);
-                wcscat(dirBuffer, L"appdb");
+                wcscat(dirBuffer, APPDB_DIR);
 
                 i++;
             } /* end while (i < 3) */
@@ -347,3 +349,72 @@ javacall_result javacall_dir_get_root_path(javacall_utf16* /* OUT */ rootPath,
     }
 }
 #endif /* UNDER_CE */
+
+
+/**
+ * Returns the path of java's application directory.
+ *
+ * @param rootPath returned value: pointer to unicode buffer, allocated
+ *        by the VM, to be filled with the root path.
+ * @param rootPathLen IN  : lenght of max rootPath buffer
+ *                    OUT : lenght of set rootPath
+ * @return <tt>JAVACALL_OK</tt> if operation completed successfully
+ *         <tt>JAVACALL_FAIL</tt> if an error occured
+ */
+javacall_result javacall_dir_get_root_path(javacall_utf16* /* OUT */ rootPath, 
+                                           int* /* IN | OUT */ rootPathLen)
+{
+    wchar_t chSep = javacall_get_file_separator();
+    wchar_t filesep[2] = {chSep, (wchar_t)0};
+    int len;
+
+    javacall_result res = helper_dir_get_root_path(rootPath,&len);
+
+    if (res != JAVACALL_OK) {
+        return res;
+    }
+
+    if (len + wcslen(APPDB_DIR) >= rootPathLen)
+        return JAVACALL_FAIL;
+
+    wcscat(rootPath, filesep);
+    wcscat(rootPath, APPDB_DIR);
+    *rootPathLen = wcslen(rootPath);
+
+    return JAVACALL_OK;
+}
+
+
+/**
+ * Returns the path of java's configuration directory.
+ *
+ * @param configPath returned value: pointer to unicode buffer, allocated
+ *        by the VM, to be filled with the root path.
+ * @param configPathLen IN  : lenght of max configPath buffer
+ *                    OUT : lenght of set configPath
+ * @return <tt>JAVACALL_OK</tt> if operation completed successfully
+ *         <tt>JAVACALL_FAIL</tt> if an error occured
+ */
+javacall_result javacall_dir_get_configuration_path(javacall_utf16* /* OUT */ configPath, 
+                                                    int* /* IN | OUT */ configPathLen)
+{
+    wchar_t chSep = javacall_get_file_separator();
+    wchar_t filesep[2] = {chSep, (wchar_t)0};
+    int len;
+    javacall_result res = helper_dir_get_root_path(configPath,&len);
+
+
+    if (res != JAVACALL_OK) {
+        return res;
+    }
+
+    if (len + wcslen(CONFIG_DIR) >= rootPathLen)
+        return JAVACALL_FAIL;
+
+    wcscat(configPath, filesep);
+    wcscat(configPath, CONFIG_DIR);
+    *configPathLen = wcslen(configPath);
+
+    return JAVACALL_OK;
+}
+

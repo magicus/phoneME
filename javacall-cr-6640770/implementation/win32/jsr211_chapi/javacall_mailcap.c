@@ -30,6 +30,8 @@
  */
 
 
+// #define DEBUG_OUTPUT 1
+
 #include "javacall_chapi_registry.h"
 #include "javacall_chapi_invoke.h"
 #include "inc/javautil_str.h"
@@ -40,9 +42,6 @@
 #include <memory.h>
 #include <string.h>
 
-#ifdef _DEBUG
-#define DEBUG_OUTPUT 1
-#endif
 
 #define CHAPI_MALLOC(x) malloc(x)
 #define CHAPI_CALLOC(x,s) calloc(x,s)
@@ -97,7 +96,11 @@ typedef struct _handler_info{
 		short* classname;
 		short* appname;
 	};
+#ifdef SUITE_ID_STRING
 	short* suite_id;
+#else
+	int suite_id;
+#endif
 	int jflag;
 	short** access_list;
 } handler_info;
@@ -256,7 +259,9 @@ static handler_info* new_handler_info(short* handler_id){
 static void free_handler_info(handler_info* info){
 	if (info->handler_id) CHAPI_FREE(info->handler_id);
 	if (info->classname) CHAPI_FREE(info->classname);
+#ifdef SUITE_ID_STRING
 	if (info->suite_id) CHAPI_FREE(info->suite_id);
+#endif
 	if (info->flag & TYPE_INFO_JAVA_HANDLER){
 		if (info->handler_friendly_name) CHAPI_FREE(info->handler_friendly_name);
 		//on not-java handlers handler_friendly_name refers to appname
@@ -1026,7 +1031,11 @@ int read_caps(){
 					action->flag |= TYPE_INFO_JAVA_HANDLER;
 					continue;
 				}
+#ifdef SUITE_ID_STRING
 				if (match(ks, ke,L"x-suiteid") && !handler->suite_id) {handler->suite_id = substring_unquote(vs,ve);continue;}
+#else
+				if (match(ks, ke,L"x-suiteid") && !handler->suite_id) {handler->suite_id = get_integer(vs,ve);continue;}
+#endif
 				if (match(ks, ke,L"x-flag")) {handler->jflag = get_integer(vs,ve);continue;}
 				if (match(ks, ke,L"x-classname") && !handler->classname) {handler->classname = substring_unquote(vs,ve);continue;}
 				if (match(ks, ke,L"x-suffixes") && !type->suffixes) {type->suffixes = substringarray(vs,ve,0);continue;}
@@ -1303,7 +1312,11 @@ void javacall_chapi_finalize_registry(void){
 javacall_result javacall_chapi_register_handler(
         javacall_const_utf16_string content_handler_id,
         javacall_const_utf16_string content_handler_friendly_appname,
+#ifdef SUITE_ID_STRING
         javacall_const_utf16_string suite_id,
+#else
+       int suite_id,
+#endif
         javacall_const_utf16_string class_name,
         javacall_chapi_handler_registration_type flag,
         javacall_const_utf16_string* content_types,     int nTypes,
@@ -1321,7 +1334,11 @@ javacall_result javacall_chapi_register_handler(
 	int idQuoted;
 
 #ifdef DEBUG_OUTPUT
+#ifdef SUITE_ID_STRING
+	wprintf(L"JAVACALL::javacall_chapi_register_handler(%s,%s,%s)\n",content_handler_id,suite_id,class_name);
+#else
 	wprintf(L"JAVACALL::javacall_chapi_register_handler(%s,%d,%s)\n",content_handler_id,suite_id,class_name);
+#endif
 #endif
 
 	result = open_db(MAILCAP_INDEX,&file,CHAPI_APPEND);
@@ -1339,9 +1356,13 @@ javacall_result javacall_chapi_register_handler(
 		*b++ = ';';
 	
 		// default action
+#ifdef SUITE_ID_STRING
 		b += sprintf(b,"%s -suite \'",java_invoker);
 		b += append_string(b,suite_id);
 		b += sprintf(b,"\' -class \'");
+#else
+		b += sprintf(b,"%s -suite \'%d\' -class \'",java_invoker,suite_id);
+#endif
 		b += append_string(b,class_name);
 		b += sprintf(b,"\' \'%%s\';");
 
@@ -1374,9 +1395,13 @@ javacall_result javacall_chapi_register_handler(
 
 			//regular mailcap action
 			if (taction) { 
+#ifdef SUITE_ID_STRING
 		b += sprintf(b,"%s=%s -suite \'",taction,java_invoker);
 		b += append_string(b,suite_id);
 		b += sprintf(b,"\' -class \'");
+#else
+		b += sprintf(b,"%s=%s -suite \'%d\' -class \'",taction,java_invoker,suite_id);
+#endif
 				b += append_string(b,class_name);
 				b += sprintf(b,"\' -action '");
 				b += append_string(b, action);
@@ -1394,9 +1419,13 @@ javacall_result javacall_chapi_register_handler(
 		if (idQuoted) *b++ = '\'';
 		*b++ = ';';
 		
+#ifdef SUITE_ID_STRING
 		b += sprintf(b,"x-suiteid=\'");
 		b += append_string(b,suite_id);
 		b += sprintf(b,"\';");
+#else
+		b += sprintf(b,"x-suiteid=%d;",suite_id);
+#endif
 
 		b += sprintf(b,"x-classname='");
 		b += append_string(b, class_name);
@@ -1652,7 +1681,11 @@ javacall_result javacall_chapi_enum_handlers_by_action(javacall_const_utf16_stri
 }
 
 javacall_result javacall_chapi_enum_handlers_by_suite_id(
+#ifdef SUITE_ID_STRING
         javacall_const_utf16_string suite_id,
+#else
+        int suite_id,
+#endif
         int* pos_id, 
         /*OUT*/ javacall_utf16*  buffer,
         int* length){
@@ -1660,7 +1693,11 @@ javacall_result javacall_chapi_enum_handlers_by_suite_id(
 	int index=*pos_id;
 
 #ifdef DEBUG_OUTPUT
+#ifdef SUITE_ID_STRING
 	wprintf(L"JAVACALL::javacall_chapi_enum_handlers_by_suite_id(%s,%d)\n",suite_id,*pos_id);
+#else
+	wprintf(L"JAVACALL::javacall_chapi_enum_handlers_by_suite_id(%d,%d)\n",suite_id,*pos_id);
+#endif
 #endif
 
 	if (!index){
@@ -1669,7 +1706,11 @@ javacall_result javacall_chapi_enum_handlers_by_suite_id(
 	}
 
 	while (index < g_handler_infos_used){
+#ifdef SUITE_ID_STRING
 		if ((g_handler_infos[index]->flag & TYPE_INFO_JAVA_HANDLER) && !javautil_str_wcscmp(g_handler_infos[index]->suite_id,suite_id)){
+#else
+		if ((g_handler_infos[index]->flag & TYPE_INFO_JAVA_HANDLER) && g_handler_infos[index]->suite_id == suite_id){
+#endif
 			result=get_id(g_handler_infos[index],buffer,length);
 			if (!result){
 				*pos_id = index+1;
@@ -2015,40 +2056,50 @@ javacall_result javacall_chapi_get_content_handler_friendly_appname(javacall_con
 
 javacall_result javacall_chapi_get_handler_info(javacall_const_utf16_string content_handler_id,
 				   /*OUT*/
+#ifdef SUITE_ID_STRING
 				   javacall_utf16*  suite_id_out, int* suite_id_len,
-				   javacall_utf16*  classname_out, int* classname_len,
-				   javacall_chapi_handler_registration_type *flag_out){
-    handler_info* info;
-    int i;
-    int res;
-
-#ifdef DEBUG_OUTPUT
-    wprintf(L"JAVACALL::javacall_chapi_get_handler_info(%s)\n",content_handler_id);
+#else
+				   int*  suite_id_out,
 #endif
 
-    res = update_registry();
-    if (res) return res;
+				   javacall_utf16*  classname_out, int* classname_len,
+				   javacall_chapi_handler_registration_type *flag_out){
+handler_info* info;
+int i;
+int res;
+
+#ifdef DEBUG_OUTPUT
+wprintf(L"JAVACALL::javacall_chapi_get_handler_info(%s)\n",content_handler_id);
+#endif
+
+res = update_registry();
+if (res) return res;
 
 	for (i=0;i<g_handler_infos_used;++i){
 		if (!javautil_str_wcscmp(g_handler_infos[i]->handler_id,content_handler_id)){
 			info = g_handler_infos[i];
 			if (info->flag & TYPE_INFO_JAVA_HANDLER){
+#ifdef SUITE_ID_STRING
 				if (suite_id_out) {
 					res = copy_string(info->suite_id,suite_id_out,suite_id_len);
 					if (res) return res;
 				}
+#else
+				if (suite_id_out) *suite_id_out = info->suite_id;
+#endif
 				if (flag_out) *flag_out = info->jflag;
 				if (classname_out) {
 					res = copy_string(info->classname,classname_out,classname_len);
 				}
-            } else {
-			    if (suite_id_out) *suite_id_out = 0;
-			    if (flag_out) *flag_out = 0;
-			    if (classname_out) {
-				    res = copy_string(info->appname,classname_out,classname_len);
-			    }
-            }
-			return res;
+				return res;
+			} else {
+				if (suite_id_out) *suite_id_out = 0;
+				if (flag_out) *flag_out = 0;
+				if (classname_out) {
+					res = copy_string(info->appname,classname_out,classname_len);
+				}
+				return res;
+			}
 		}
 	}
 	return JAVACALL_CHAPI_ERROR_NOT_FOUND;

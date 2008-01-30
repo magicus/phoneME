@@ -1,6 +1,5 @@
 #   
-#
-# Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+# Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
 # 
 # This program is free software; you can redistribute it and/or
@@ -27,11 +26,18 @@ ifeq ($(JAVACALL_DIR),)
 $(error JAVACALL_DIR is not set.)
 endif
 
+ifeq ($(TOOLS_DIR),)
+$(error TOOLS_DIR is not set.)
+endif
+
+include $(TOOLS_DIR)/tools.gmk
+
 include $(JAVACALL_DIR)/build/list.gmk
 
-.PHONY: javacall_common create_output_dirs copy_include_files clean doxygen
+.PHONY: javacall_common create_output_dirs copy_include_files \
+    output_properties_files clean doxygen
 
-javacall_common: create_output_dirs copy_include_files
+javacall_common: create_output_dirs copy_include_files output_properties_files
 
 PREFIX_true=1
 
@@ -63,9 +69,38 @@ vpath %.c $(JAVACALL_DIR)/implementation/share/properties
 VPATH+=$(JAVACALL_DIR)/implementation/share/properties
 PROPERTY_FILES = javacall_properties \
 		 javacall_config_db \
-		 javacall_db \
-		 javacall_static_properties
-		 
+		 javacall_db
+
+JAVACALL_PROPERTIES_TARGET_FILE = $(JAVACALL_OUTPUT_DIR)/properties.xml
+
+ifeq ($(USE_STATIC_PROPERTIES), true)
+STATIC_PROPERTIES_C = $(JAVACALL_OUTPUT_DIR)/javacall_static_properties.c
+PROPERTY_FILES += javacall_static_properties
+
+output_properties_files:
+
+$(STATIC_PROPERTIES_C): $(CONFIGURATOR_JAR_FILE) \
+    $(JAVACALL_PROPERTIES_TARGET_FILE)
+	@$(call runJarFile,$(CONFIGURATOR_JAR_FILE),\
+		-xml $(JAVACALL_PROPERTIES_TARGET_FILE) \
+		-xsl $(CONFIGURATOR_DIR)/xsl/cldc/propertiesNative.xsl \
+		-params arrayNamePrefix javacall \
+		-out $@)
+
+else
+DYNAMIC_PROPERTIES_INI = $(JAVACALL_OUTPUT_DIR)/jwc_properties.ini
+
+output_properties_files: $(DYNAMIC_PROPERTIES_INI)
+
+$(DYNAMIC_PROPERTIES_INI): $(CONFIGURATOR_JAR_FILE) \
+    $(JAVACALL_PROPERTIES_TARGET_FILE)
+	@$(call runJarFile,$(CONFIGURATOR_JAR_FILE)\
+		-xml $(JAVACALL_PROPERTIES_TARGET_FILE) \
+		-xsl $(CONFIGURATOR_DIR)/xsl/cldc/propertiesIni.xsl \
+		-out $@)
+
+endif
+
 
 # In case using of the javacall functions wrappers, set the USE_JAVACALL_WRAPPERS variable
 ifeq ($(USE_JAVACALL_WRAPPERS),true)
@@ -102,9 +137,14 @@ JAVACALL_OUTPUT_OBJ_DIR:=$(JAVACALL_OUTPUT_DIR)/obj$(BUILD_EXT)
 JAVACALL_OUTPUT_LIB_DIR:=$(JAVACALL_OUTPUT_DIR)/lib
 JAVACALL_OUTPUT_EXT_LIB_DIR:=$(JAVACALL_OUTPUT_DIR)/ext_lib
 
-JAVACALL_SHARE_CONFIG_DIR=$(JAVACALL_DIR)/configuration/phoneMEFeature/share
-
 JAVACALL_INCLUDE_TARGET_FILES_SET:=$(foreach file,$(JAVACALL_INCLUDE_SOURCE_FILES_SET),$(JAVACALL_OUTPUT_INCLUDE_DIR)/$(notdir $(file)))
+
+$(JAVACALL_PROPERTIES_TARGET_FILE): $(CONFIGURATION_PROPERTIES_FILE) \
+    $(JAVACALL_DIR)/build/configuration.dtd $(JAVACALL_OUTPUT_DIR)
+	@echo Copying property definitions...
+	@cp -u $(CONFIGURATION_PROPERTIES_FILE) \
+		$(JAVACALL_PROPERTIES_TARGET_FILE)
+	@cp -u $(JAVACALL_DIR)/build/configuration.dtd $(JAVACALL_OUTPUT_DIR)
 
 $(JAVACALL_INCLUDE_TARGET_FILES_SET): $(JAVACALL_INCLUDE_SOURCE_FILES_SET)
 	@echo Copying include files...
@@ -118,7 +158,7 @@ create_output_dirs: $(JAVACALL_OUTPUT_DIR) $(JAVACALL_OUTPUT_INCLUDE_DIR) $(JAVA
 
 copy_include_files: $(JAVACALL_INCLUDE_TARGET_FILES_SET)
 
-clean:
+clean::
 	@rm -rf $(JAVACALL_OUTPUT_DIR)
 
 include $(JAVACALL_DIR)/build/docs.gmk

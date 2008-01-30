@@ -23,6 +23,7 @@
 # information or have any questions.
 #
 
+
 ifeq ($(JAVACALL_DIR),)
 $(error JAVACALL_DIR is not set.)
 endif
@@ -35,7 +36,4 @@ include $(JAVACALL_DIR)/build/vc/rules.gmk
 #Specific targets can be achieved before and after achievement of common targets
 #Specify these targets after including 'rules.gmk' file.
 pre_target:
-post_target: $(JAVACALL_OUTPUT_LIB_DIR)/emulator.res copy_configuration_file
-
-copy_configuration_file:
-	cp -u $(JAVACALL_DIR)/configuration/phoneMEFeature/share/jwc_properties.ini $(JAVACALL_OUTPUT_DIR)
+post_target: $(JAVACALL_OUTPUT_LIB_DIR)/emulator.res copy_javacall_configuration_file
