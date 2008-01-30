@@ -58,6 +58,8 @@ JAVACALL_INCLUDE_SOURCE_FILES_SET+= $(JAVACALL_PLATFORM_DEFS_DIR)/javacall_platf
 JAVACALL_INCLUDE_SOURCE_FILES_SET+= $(JAVACALL_DIR)/interface/javacall_defs.h
 JAVACALL_INCLUDE_SOURCE_FILES_SET+= $(JAVACALL_DIR)/implementation/share/properties/inc/javacall_properties.h
 
+UTILITIES+= javautil_printf
+
 ifneq ($(UTILITIES)x, x)
 VPATH+=$(JAVACALL_DIR)/implementation/utils
 JAVACALL_INCLUDE_SOURCE_FILES_SET+= $(foreach util,$(UTILITIES),$(JAVACALL_DIR)/implementation/utils/inc/$(util).h)

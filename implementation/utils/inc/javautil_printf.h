@@ -1,6 +1,6 @@
 /*
  *
- * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
@@ -24,11 +24,28 @@
  */
 
 
-#ifndef __DEFS_H
-#define __DEFS_H
+#ifndef JAVAUTIL_PRINTF_INCLUDED
+#define JAVAUTIL_PRINTF_INCLUDED
 
-static char print_buffer[256];
+#include <stdarg.h>
 
-#endif /* __DEFS_H */
 
+/*
+ * Not all compilers provide printf function, so we have 
+ * to use workaround. This function is to be used from javacall.
+ */
+
+void javautil_printf(int severity, int channelID, char *message, ...);
+
+/*
+ * Not all compilers provide vprintf function, so we have 
+ * to use workaround. This function is to be used from midp.
+ * Prints out thr DEBUG message in the following format:
+ *  elapsed time in milliseconds|severiry|channel ID|isolate ID|message
+ */
+
+void javautil_vprintf(int severity, int channelID, int isolateID, char *szTypes, va_list vl);
+
+
+#endif /* of JAVAUTIL_PRINTF_INCLUDED */
 
