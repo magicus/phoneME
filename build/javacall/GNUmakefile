@@ -28,7 +28,6 @@
 ######################################################################
 
 USE_JAVACALL=true
-USE_JAVAUTIL_LOG_IMPLEMENTATION=true
 
 JAVACALL_INCLUDE_DIR=$(JAVACALL_OUTPUT_DIR)/inc
 JAVACALL_LIB_DIR=$(JAVACALL_OUTPUT_DIR)/lib
@@ -50,6 +49,9 @@ include Options.gmk
 
 # All rules are defined in shared makefiles
 include $(MIDP_DIR)/build/common/Top.gmk
+
+#overwrite  USE_JAVAUTIL_LOG_IMPLEMENTATION=false from Top.gmk
+USE_JAVAUTIL_LOG_IMPLEMENTATION=true
 
 # Including the part that should appear after Top.gmk
 include Platform_post.gmk
