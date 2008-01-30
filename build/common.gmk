@@ -59,8 +59,8 @@ JAVACALL_INCLUDE_SOURCE_FILES_SET+= $(JAVACALL_DIR)/interface/javacall_defs.h
 JAVACALL_INCLUDE_SOURCE_FILES_SET+= $(JAVACALL_DIR)/implementation/share/properties/inc/javacall_properties.h
 
 ifneq ($(UTILITIES)x, x)
-VPATH+=$(JAVACALL_DIR)/implementation/utils
-JAVACALL_INCLUDE_SOURCE_FILES_SET+= $(foreach util,$(UTILITIES),$(JAVACALL_DIR)/implementation/utils/inc/$(util).h)
+VPATH+=$(JAVACALL_DIR)/implementation/share/utils
+JAVACALL_INCLUDE_SOURCE_FILES_SET+= $(foreach util,$(UTILITIES),$(JAVACALL_DIR)/implementation/share/utils/inc/$(util).h)
 SOURCE_OUTPUT_LIST += $(JAVACALL_DIR)/implementation/utils javacall/implementation
 endif
 
@@ -107,7 +107,7 @@ ifeq ($(USE_JAVACALL_WRAPPERS),true)
 UTILITIES+= wrappers
 CFLAGS += -DUSE_JAVACALL_WRAPPERS
 ifeq ($(UTILITIES)x, x)
-VPATH+=$(JAVACALL_DIR)/implementation/utils
+VPATH+=$(JAVACALL_DIR)/implementation/share/utils
 endif
 endif
 
