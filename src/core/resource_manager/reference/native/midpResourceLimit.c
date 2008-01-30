@@ -203,9 +203,6 @@ static _IsolateResourceUsage *findIsolateResourceUsageStruct(int isolateId) {
 
     if (!isInitialized) {
         initResourceLimit();
-        if (!isInitialized) {
-            return;
-        }
     }
 
     /* the first entry is the ams */
@@ -411,9 +408,6 @@ int midpCheckReservedResources() {
 
     if (!isInitialized) {
         initResourceLimit();
-        if (!isInitialized) {
-            return;
-    }
     }
 
     /* check if the reserved resources are available for each resource type */
@@ -442,9 +436,6 @@ int midpAllocateReservedResources() {
 
     if (!isInitialized) {
         initResourceLimit();
-        if (!isInitialized) {
-            return;
-        }
     }
 
     /* do not allocate the ams again */

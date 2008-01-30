@@ -153,7 +153,7 @@ char* getApplicationDir(char *cmd) {
 
 char* getConfigurationDir(char *cmd) {
 
-    getMidpHome(cmd,confDirBuffer)
+    getMidpHome(cmd,confDirBuffer);
     strcat(confDirBuffer,CONFIG_DIR);
 
     return confDirBuffer;
