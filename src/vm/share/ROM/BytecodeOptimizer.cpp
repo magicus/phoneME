@@ -164,6 +164,10 @@ bool BytecodeOptimizer::has_static_arrays(Method *method, int& new_method_size) 
     }
     old_bci += len;
   }
+  // Mark the address of code[code_length] so that we can rewrite the
+  // exception header correctly.  The end_pc of an exception range is one
+  // beyond the last pc that could cause an exception
+  _owner->_new_bytecode_address.short_at_put(old_bci, new_bci);
   
   new_method_size = new_bci;
   return result;  
