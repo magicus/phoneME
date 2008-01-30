@@ -1,5 +1,6 @@
 /*
  *
+ *
  * Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
@@ -24,7 +25,7 @@
  */
 
 package com.sun.midp.log;
-
+import com.sun.midp.main.MIDletSuiteUtils;
 import com.sun.midp.configurator.Constants;
 
 /**
@@ -41,53 +42,65 @@ import com.sun.midp.configurator.Constants;
  * This class consists of the Java interface to the functionality
  * of the logging service.
  */
-public class LoggingBase {
+public class Logging extends LoggingBase {
 
     /**
-     * A default reporting severity level. This level is the lowest
-     * standard message reporting severity. It represents general
-     * reporting information and is typically not associated with any
-     * significant condition.
+     * Flag allowing client code with reporting levels less
+     * than this to be compiled out of the build.  Callers
+     * should use this flag as a way to remove bytecodes
+     * related to unneeded levels of reporting from the
+     * resulting classfiles.
+     * For Example:
+     * <pre><code>
+     *     if (Logging.REPORT_LEVEL &lt;= severity) {
+     *         Logging.report(Logging.&lt;severity&gt;,
+     *                        LogChannels.&lt;channel&gt;,
+     *                        "[meaningful message]");
+     *     }
+     * </code></pre>
      */
-    public static final int INFORMATION = Constants.LOG_INFORMATION;
+    public static int REPORT_LEVEL = Constants.REPORT_LEVEL;
 
     /**
-     * A reporting severity level. This level represents a warning
-     * severity, indicating an unexpected condition which is typically
-     * fully recoverable. Some action may be appropriate to correct
-     * the condition.
+     * Flag allowing client code with assert statements
+     * to be compiled out of a production build.  Clients of
+     * the assertion service should wrap calls to the
+     * <code>assert()</code> method to enable them to be
+     * removed from builds when desired
+     * <pre><code>
+     *      if (Logging.ASSERT_ENABLED) {
+     *          Logging.assertTrue([eval to boolean], "message");
+     *      }
+     * </code></pre>
      */
-    public static final int WARNING     = Constants.LOG_WARNING;
+    public static boolean ASSERT_ENABLED = Constants.ASSERT_ENABLED;
 
     /**
-     * A reporting severity level. This level represents an error
-     * severity, indicating an unexpected condition which is typically
-     * at least partially recoverable. Some action is expected to correct
-     * the condition.
+     * Flag to indicate whether tracing is enabled in the
+     * Logging service. If the flag is <code>false</code>,
+     * calls to the <code>trace()</code> method will have
+     * no effect. Callers should use this flag as a type of
+     * compile option to remove unnecessary bytecodes from
+     * resulting classfiles.
+     *
+     * For example:
+     * <code><pre>
+     * } catch (Throwable t) {
+     *     if (Logging.TRACE_ENABLED) {
+     *         Logging.trace(t, "[meaningful message]");
+     *     }
+     * }
+     * </pre></code>
      */
-    public static final int ERROR       = Constants.LOG_ERROR;
+    public static boolean TRACE_ENABLED  = Constants.TRACE_ENABLED;
 
     /**
-     * A reporting severity level. This level represents the most
-     * severe error occurrence, indicating an unexpected condition which
-     * is typically not recoverable or catastrophic to the system in some
-     * way. Some action is required to correct the condition.
+     * Loads the logging settings for the specified suite.
+     *
+     * @param suiteId ID of the suite for which the settings must be loaded
      */
-    public static final int CRITICAL    = Constants.LOG_CRITICAL;
-
-    /**
-     * A reporting severity level that should be used to disable all
-     * reporting output and allow all bytecodes relating to the
-     * report() method reporting to be compiled out of the build.
-     */
-    public static final int DISABLED   = Constants.LOG_DISABLED;
-
-    /**
-     * Current reporting severity level. When used as an argument to
-     * setReportLevel(), indicates that the current log level should
-     * not be changed.
-     */
-    public static final int CURRENT    = Constants.LOG_CURRENT;
+    public static void initLogSettings(int suiteId) {
+    }
 
     /**
      * Report a message to the Logging service. The message string should
@@ -120,39 +133,55 @@ public class LoggingBase {
      * @param severity severity level of report
      * @param channelID area report relates to, from LogChannels.java
      * @param message message to go with the report
-     */
-    public static native void report(int severity, int channelID,
-				     String message);
+       */
+   
+    public static void report(int severity, int channelID, String message) {
 
+        int isolateID = MIDletSuiteUtils.getIsolateId();
 
-    /**
-     * Obtain a stack trace from the Logging service, and report a message
-     * to go along with it.  The message string should
-     * include enough description that someone reading the message will
-     * have enough context to diagnose and solve any problems if necessary.
-     * A use example:
-     * <code><pre>
-     * } catch (Throwable t) {
-     *     if (Logging.TRACE_ENABLED) {
-     *         Logging.trace(t, "[meaningful message]");
-     *     }
-     * }
-     * </pre></code>
-     *
-     * This method does nothing if either <code>t</code>
-     * or <code>message</code> is null.
-     *
-     * @param t throwable causing this trace call
-     * @param message detail message for the trace log
-     */
-    public static void trace(Throwable t, String message) {
+        if(getAllowedSeverity(channelID) <= severity) {
+            report0(severity, channelID, isolateID, message);
+        }
 
-	if (t != null) {
-	    System.out.println("TRACE: <at " + t.toString() + ">, " + message);
-	    t.printStackTrace();
-	}
     }
 
+    /**
+     * Report a message to the Logging service. The message string should
+     * include enough description that someone reading the message will
+     * have enough context to diagnose and solve any problems if necessary.
+     * The severity level should be one of:
+     * <ul>
+     *  <li>INFORMATION</li>
+     *  <li>WARNING</li>
+     *  <li>ERROR</li>
+     *  <li>CRITICAL</li>
+     * </ul>
+     * and should properly reflect the severity of the message. The channel
+     * identifier should be one of the pre defined channels listed in
+     * the LogChannels.java file.
+     * <ul>
+     * </ul>
+     *
+     *
+     * No output will occur if <code>message</code> is null.
+     *
+     * @param severity severity level of report
+     * @param channelID area report relates to, from LogChannels.java
+     * @param isolateID, isolase's id number
+     * @param message message to go with the report
+     */
+
+    private static native void report0(int severity, 
+                                       int channelID, 
+                                       int isolateID, 
+                                       String message);
+
+
+    /*
+    * Gets the severity per channel using the property mechanism.
+    */
+    private native static int getAllowedSeverity(int channelID);
+        
     /**
      * Report a message to the Logging service in the event that
      * <code>condition</code> is false. The message string should
@@ -173,10 +202,11 @@ public class LoggingBase {
      * @param message message to go with the report if the assert fails
      *                (when <code>condition</code> is false.
      */
+
     public static void assertTrue(boolean condition, String message) {
-        if (!condition) {
+        if(!condition) {
             report(Logging.ERROR, LogChannels.LC_NONE, "ASSERT FAILED: "
-            + message);
+                   + message);
         }
     }
 }

@@ -1,7 +1,7 @@
 #
-#   
+#  
 #
-# Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
+# Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
 # 
 # This program is free software; you can redistribute it and/or
@@ -33,26 +33,20 @@
 # other def. (like VPATH)
 ######################################################################
 
-LOG_LIB = log
-LIB_SET += $(LOG_LIB)
+# Java files for the ( log ) subsystem
+#
+SUBSYSTEM_LOG_JAVA_FILES += \
+    $(LOG_DIR)/javacall/classes/com/sun/midp/log/Logging.java
+
+# vpath for ( log ) subsystem
+#
+vpath % $(LOG_DIR)/javacall/native
+
+SUBSYSTEM_LOG_NATIVE_FILES += \
+    midp_logging_kni.c \
+    midp_logging.c
 
 
+SUBSYSTEM_LOG_EXTRA_INCLUDES += \
+    -I$(LOG_DIR)/javacall/include
 
-ifeq ($(USE_JAVAUTIL_LOG_IMPLEMENTATION),true)
-	LOG_IMPL = javacall
-else
-
-ifeq ($(USE_CONTROL_ARGS_FROM_JAD), true)
-    LOG_IMPL = dynamic
-else
-    LOG_IMPL = static
-endif
-
-endif
-
-LOG_DIR = $(SUBSYSTEM_CORE_DIR)/$(LOG_LIB)
-
-# Javadoc source path
-SUBSYSTEM_LOG_SOURCEPATH += $(LOG_DIR)/$(LOG_IMPL)/classes
-
-include $(LOG_DIR)/$(LOG_IMPL)/lib.gmk
