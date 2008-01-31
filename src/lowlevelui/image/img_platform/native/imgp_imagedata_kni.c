@@ -115,6 +115,7 @@ KNIDECL(javax_microedition_lcdui_ImageData_getRGB) {
     int *rgbBuffer;
     java_imagedata *srcImageDataPtr;
     gxpport_mutableimage_native_handle srcImageNativeData;
+    img_native_error_codes error = IMG_NATIVE_IMAGE_NO_ERROR;
 
     KNI_StartHandles(2);
     KNI_DeclareHandle(rgbData);
@@ -123,8 +124,6 @@ KNIDECL(javax_microedition_lcdui_ImageData_getRGB) {
     KNI_GetParameterAsObject(1, rgbData);
     KNI_GetThisPointer(thisObject);
 
-
-    img_native_error_codes error = IMG_NATIVE_IMAGE_NO_ERROR;
 
     SNI_BEGIN_RAW_POINTERS;
     

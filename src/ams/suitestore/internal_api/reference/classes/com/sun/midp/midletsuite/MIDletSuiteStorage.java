@@ -157,6 +157,7 @@ public class MIDletSuiteStorage {
      * @exception MIDletSuiteLockedException is thrown, if the MIDletSuite is
      * locked; MIDletSuiteCorruptedException is thrown if the MIDletSuite is
      * corrupted
+     * @exception MIDletSuiteCorruptedException if the suite is corrupted
      *
      * @return MIDlet Suite reference
      */
@@ -508,9 +509,32 @@ public class MIDletSuiteStorage {
      * invalid storage ID specified 
      * @exception MIDletSuiteLockedException is thrown, if the MIDletSuite is
      * locked
+     * @exception IOException if an I/O error occurred
+     * @exception OutOfMemoryError if out of memory
      */
     public native void changeStorage(int suiteId, int newStorageId)
-            throws MIDletSuiteLockedException;
+            throws IllegalArgumentException, MIDletSuiteLockedException,
+                   IOException, OutOfMemoryError;
+
+    /**
+     * Native method void moveSuiteToFolder(...) of
+     * com.sun.midp.midletsuite.MIDletSuiteStorage.
+     * <p>
+     * Moves a software package with given suite ID to the specified folder.
+     *
+     * @param suiteId suite ID for the installed package
+     * @param newFolderId folder ID
+     *
+     * @exception IllegalArgumentException if the suite cannot be found or
+     *                                     invalid folder ID specified
+     * @exception MIDletSuiteLockedException is thrown, if the MIDletSuite is
+     *                                       locked
+     * @exception IOException if an I/O error occurred
+     * @exception OutOfMemoryError if out of memory
+     */
+    public native void moveSuiteToFolder(int suiteId, int newFolderId)
+            throws IllegalArgumentException, MIDletSuiteLockedException,
+                   IOException, OutOfMemoryError;
 
     /**
      * Stores or updates a midlet suite.

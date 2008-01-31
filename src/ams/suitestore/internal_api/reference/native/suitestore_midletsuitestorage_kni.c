@@ -393,6 +393,33 @@ KNIDECL(com_sun_midp_midletsuite_MIDletSuiteStorage_getMidletSuiteStorageId) {
 }
 
 /**
+ * Get the folder id for a suite.
+ *
+ * @param suiteId unique ID of the suite
+ *
+ * @return folder id or -1 if the suite does not exist
+ */
+KNIEXPORT KNI_RETURNTYPE_INT
+KNIDECL(com_sun_midp_midletsuite_MIDletSuiteStorage_getMidletSuiteFolderId) {
+    SuiteIdType suiteId;
+    FolderIdType folderId;
+    MIDPError errorCode;
+
+    suiteId = KNI_GetParameterAsInt(1);
+
+    do {
+        errorCode = midp_suite_get_suite_folder(suiteId, &folderId);
+        if (errorCode != ALL_OK) {
+            /* the suite was not found */
+            folderId = -1;
+            break;
+        }
+    } while (0);
+
+    KNI_ReturnInt(folderId);
+}
+
+/**
  * Native method String getSuiteID(String, String) of
  * com.sun.midp.midletsuite.MIDletSuiteStorage.
  * <p>
@@ -1265,6 +1292,54 @@ KNIDECL(com_sun_midp_midletsuite_MIDletSuiteStorage_changeStorage) {
 }
 
 /**
+ * Native method void moveSuiteToFolder(...) of
+ * com.sun.midp.midletsuite.MIDletSuiteStorage.
+ * <p>
+ * Moves a software package with given suite ID to the specified folder.
+ *
+ * @param suiteId suite ID for the installed package
+ * @param newFolderId folder ID
+ *
+ * @exception IllegalArgumentException if the suite cannot be found or
+ *                                     invalid folder ID specified
+ * @exception MIDletSuiteLockedException is thrown, if the MIDletSuite is
+ *                                       locked
+ */
+KNIEXPORT KNI_RETURNTYPE_VOID
+KNIDECL(com_sun_midp_midletsuite_MIDletSuiteStorage_moveSuiteToFolder) {
+
+    MIDPError status;
+    SuiteIdType suiteId = KNI_GetParameterAsInt(1);
+    FolderIdType newFolderId = KNI_GetParameterAsInt(2);
+
+    status = midp_move_suite_to_folder(suiteId, newFolderId);
+
+    switch (status) {
+        case ALL_OK:
+            break;
+        case OUT_OF_MEMORY:
+            KNI_ThrowNew(midpOutOfMemoryError, NULL);
+            break;
+        case SUITE_LOCKED:
+            KNI_ThrowNew(midletsuiteLocked, NULL);
+            break;
+        case IO_ERROR:
+            KNI_ThrowNew(midpIOException, NULL);
+            break;
+        case NOT_FOUND:
+            KNI_ThrowNew(midpIllegalArgumentException, "bad suite ID");
+            break;
+        case BAD_PARAMS:
+            KNI_ThrowNew(midpIllegalArgumentException, "bad suite or folder ID");
+            break;
+        default:
+            KNI_ThrowNew(midpRuntimeException, NULL);
+    }
+
+    KNI_ReturnVoid();
+}
+
+/**
  * Native method void nativeStoreSuite(...) of
  * com.sun.midp.midletsuite.MIDletSuiteStorage.
  * <p>
@@ -1424,6 +1499,8 @@ KNIDECL(com_sun_midp_midletsuite_MIDletSuiteStorage_nativeStoreSuite) {
 
         KNI_SAVE_INT_FIELD(javaSuiteData, clazz, "storageId",
                            suiteData.storageId);
+        KNI_SAVE_INT_FIELD(javaSuiteData, clazz, "folderId",
+                           suiteData.folderId);
         KNI_SAVE_INT_FIELD(javaSuiteData, clazz, "numberOfMidlets",
                            suiteData.numberOfMidlets);
         KNI_SAVE_PCSL_STRING_FIELD(javaSuiteData, clazz, "displayName",
@@ -1607,6 +1684,7 @@ KNIDECL(com_sun_midp_midletsuite_MIDletSuiteStorage_getMIDletSuiteInfoImpl0) {
             &(pData->varSuiteData.midletClassName), tmpHandle);
 
         KNI_RESTORE_INT_FIELD(msi, clazz, "storageId", pData->storageId);
+        KNI_RESTORE_INT_FIELD(msi, clazz, "folderId",  pData->folderId);
         KNI_RESTORE_INT_FIELD(msi, clazz, "numberOfMidlets",
             pData->numberOfMidlets);
         KNI_RESTORE_BOOLEAN_FIELD(msi, clazz, "enabled", pData->isEnabled);

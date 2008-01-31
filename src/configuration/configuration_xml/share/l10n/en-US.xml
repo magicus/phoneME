@@ -41,6 +41,8 @@
                 Value="Exit"/>
 <localized_string Key="OK"
                 Value="OK"/>
+<localized_string Key="SELECT"
+                Value="Select"/>
 <localized_string Key="YES"
                 Value="Yes"/>
 <localized_string Key="NO"
@@ -230,6 +232,10 @@
                 Value="predict"/>
 <localized_string Key="LCDUI_TF_CAPS_ON_LB_PTI"
                 Value="PREDICT"/>
+<localized_string Key="AMS_SELECT_FOLDER"
+                Value="Select folder"/>
+<localized_string Key="AMS_CHANGE_FOLDER"
+                Value="Change folder"/>
 <localized_string Key="AMS_NO_CA_FOUND"
                 Value="No certificate authorities found."/>
 <localized_string Key="AMS_COPYRIGHT_SHORT"
