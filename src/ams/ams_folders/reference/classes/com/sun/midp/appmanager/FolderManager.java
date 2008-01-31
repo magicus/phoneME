@@ -32,6 +32,15 @@ import java.util.Vector;
  * Provides functionality to manage folders.
  */
 public class FolderManager {
+    /** Folder ID that is never used. */
+    public static final int UNUSED_FOLDER_ID  = -1;
+
+    /**
+     * ID of the folder where user applications
+     * will be installed by default.
+     */
+    public static final int DEFAULT_FOLDER_ID = 1;
+
     private static Vector foldersVector = new Vector(5);
     private static int defaultFolderId;
 
@@ -91,6 +100,10 @@ public class FolderManager {
      * @param f folder to create
      */
     public static void createFolder(Folder f) {
+        /*
+         * IMPL_NOTE: our current implementation doesn't support
+         *            creation of user folders.
+         */
     }
 
     /**
@@ -99,15 +112,19 @@ public class FolderManager {
      * @param f folder to delete
      */
     public static void deleteFolder(Folder f) {
+        /*
+         * IMPL_NOTE: our current implementation doesn't support
+         *            user folders.
+         */
     }
 
     /**
      * Loads information about folders present in the system.
      */
     private static void loadFoldersInfo0() {
-        /* temporary hardcoded */
-        foldersVector.addElement(new Folder(0, -1, "preinstalled apps", null));
-        foldersVector.addElement(new Folder(1, -1, "other apps", null));
+        /* IMPL_NOTE: temporary hardcoded, should be moved to an xml */
+        foldersVector.addElement(new Folder(0, -1, "Preinstalled apps", null));
+        foldersVector.addElement(new Folder(1, -1, "Other apps", null));
         defaultFolderId = 1;
     }
 }
