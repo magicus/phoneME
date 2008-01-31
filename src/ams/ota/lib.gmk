@@ -66,11 +66,11 @@ INT_INPUT_OTA_IMAGES_DIR = \
 ifeq ($(USE_FILE_SYSTEM), true)
 
 ifeq ($(USE_RAW_AMS_IMAGES), false)
-ota_resources: $(STORAGEDIR)
+ota_resources: $(STORAGEDIR) $(EXTSTORAGEDIR)
 	-@(cp -f $(INT_INPUT_OTA_IMAGES_DIR)/*.png \
 	    $(STORAGEDIR)) $(LOG)
 else
-ota_resources: $(STORAGEDIR) $(IMAGE2RAW_JAR_FILE) \
+ota_resources: $(STORAGEDIR) $(EXTSTORAGEDIR) $(IMAGE2RAW_JAR_FILE) \
 	       $(SUBSYSTEM_CONFIGURATION_MERGED_FILE)
 	@echo " ... converting OTA images to raw format" $(LOG)
 	@$(call convert_images_to_raw,$(INT_INPUT_OTA_IMAGES_DIR))

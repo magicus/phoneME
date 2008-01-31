@@ -314,5 +314,21 @@ public final class EventTypes {
      * JSR-256 sensor notification event.
      */
     public static final int SENSOR_EVENT = 48;
-    
+
+    /**
+     * If USE_ON_DEVICE_DEBUG=true build option was given, when a special
+     * key sequence is detected, the system sends this event to AMS to
+     * enable On Device Debugging.
+     */
+    public static final int MIDP_ENABLE_ODD_EVENT = 49;
+
+    /**
+     * Request to start a new midlet from the debug agent to AMS.
+     */
+    public static final int MIDP_ODD_START_MIDLET_EVENT = 50;
+
+    /**
+     * Notification sent by AMS to the debug agent.
+     */
+    public static final int MIDP_ODD_MIDLET_EXITED_EVENT = 51;
 }

@@ -114,6 +114,8 @@ public class AmsUtil {
      *                 &lt;= 0 if not used
      * @param profileName name of the profile to set for the new isolate;
      *                    null if not used
+     * @param isDebugMode true if the new midlet must be started in debug
+     *                    mode, false otherwise
      *
      * @return false to signal that the MIDlet suite does not have to exit
      * before the MIDlet is run
@@ -122,7 +124,7 @@ public class AmsUtil {
             int externalAppId, int id, String midlet,
             String displayName, String arg0, String arg1, String arg2,
             int memoryReserved, int memoryTotal, int priority,
-            String profileName) {
+            String profileName, boolean isDebugMode) {
 
         if (id == MIDletSuite.UNUSED_SUITE_ID) {
             // this was just a cancel request meant for SVM mode
@@ -143,7 +145,7 @@ public class AmsUtil {
                 midlet, displayName,
                 arg0, arg1, arg2,
                 memoryReserved, memoryTotal, priority,
-                profileName
+                profileName, isDebugMode
             );
             return false;
         }
@@ -157,7 +159,7 @@ public class AmsUtil {
             startMidletCommon(midletSuiteStorage, externalAppId, id, midlet,
                               displayName, arg0, arg1, arg2,
                               memoryReserved, memoryTotal, priority,
-                              profileName);
+                              profileName, isDebugMode);
         } catch (Throwable t) {
             /*
              * This method does not throw exceptions for start errors,
@@ -189,7 +191,7 @@ public class AmsUtil {
         // Note: getMIDletSuiteStorage performs an AMS permission check
         return startMidletCommon(MIDletSuiteStorage.getMIDletSuiteStorage(),
             0, id, midlet, displayName, arg0, arg1, arg2,
-            -1, -1, Isolate.MIN_PRIORITY - 1, null);
+            -1, -1, Isolate.MIN_PRIORITY - 1, null, false);
     }
 
     /**
@@ -218,6 +220,8 @@ public class AmsUtil {
      *                 &lt;= 0 if not used
      * @param profileName name of the profile to set for the new isolate;
      *                    null if not used
+     * @param isDebugMode true if the new isolate must be started in debug
+     *                    mode, false otherwise
      *
      * @return Isolate that the MIDlet suite was started in;
      *             <code>null</code> if the MIDlet is already running
@@ -226,10 +230,12 @@ public class AmsUtil {
             midletSuiteStorage, int externalAppId, int id, String midlet,
             String displayName, String arg0, String arg1, String arg2,
             int memoryReserved, int memoryTotal,
-            int priority, String profileName) {
+            int priority, String profileName,
+            boolean isDebugMode) {
         Isolate isolate;
         String[] args = {Integer.toString(id), midlet, displayName, arg0,
-                         arg1, arg2, Integer.toString(externalAppId)};
+                         arg1, arg2, Integer.toString(externalAppId),
+                         isDebugMode ? "1" : "0"};
         String[] classpath = midletSuiteStorage.getMidletSuiteClassPath(id);
 
         if (classpath[0] == null) {
@@ -291,6 +297,8 @@ public class AmsUtil {
             if (profileName != null) {
                 IsolateUtil.setProfile(isolate, profileName);
             }
+
+            isolate.setDebug(isDebugMode);
 
             isolate.setAPIAccess(true);
             isolate.start();

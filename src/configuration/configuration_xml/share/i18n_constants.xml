@@ -120,7 +120,10 @@
   <constant Type="int"
             Name="INSTALL_APPLICATION"
             Comment="Abstract Commands and other general strings"/>
-<constant Type="int"
+  <constant Type="int"
+            Name="ODT_AGENT_MIDLET"
+            Comment="Abstract Commands and other general strings"/>
+  <constant Type="int"
             Name="CLASS_VERIFIER_APPLICATION"
             Comment="Abstract Commands and other general strings"/>
   <constant Type="int"
@@ -394,6 +397,15 @@
             Name="AMS_SUITES_TO_BE_DISABLED"
             Comment="AMS: general"/>
   <constant Type="int"
+            Name="AMS_INTERNAL_STORAGE_NAME"
+            Comment="AMS: general"/>
+  <constant Type="int"
+            Name="AMS_MOVE_TO_INTERNAL_STORAGE"
+            Comment="AMS: general"/>
+  <constant Type="int"
+            Name="AMS_EXTRENAL_STORAGE_NAME"
+            Comment="AMS: general"/>
+  <constant Type="int"
             Name="AMS_MGR_TITLE"
             Comment="AMS: com.sun.midp.appmanager.Manager"/>
   <constant Type="int"
@@ -595,6 +607,9 @@
             Name="AMS_MGR_RUN_THE_NEW_SUITE"
             Comment="AMS: com.sun.midp.appmanager.AppManagerUI"/>
   <constant Type="int"
+            Name="AMS_MGR_SUCC_SUITE_STORAGE_CHANGED"
+            Comment="AMS: com.sun.midp.appmanager.AppManagerUI"/>
+  <constant Type="int"
             Name="AMS_DISC_APP_WEBSITE_INSTALL"
             Comment="AMS: com.sun.midp.installer.DiscoveryApp"/>
   <constant Type="int"
@@ -618,6 +633,9 @@
   <constant Type="int"
             Name="AMS_DISC_APP_LOCKED"
             Comment="AMS: com.sun.midp.installer.DiscoveryApp"/>
+  <constant Type="int"
+            Name="AMS_GRA_INTLR_SELECT_STORAGE"
+            Comment="AMS: com.sun.midp.installer.GraphicalInstaller"/>
   <constant Type="int"
             Name="AMS_GRA_INTLR_UPD_CAN"
             Comment="AMS: com.sun.midp.installer.GraphicalInstaller"/>

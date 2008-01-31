@@ -48,6 +48,11 @@
  * command manager.
  */
 
+#if ENABLE_ON_DEVICE_DEBUG
+static const char pStartOddKeySequence[] = "#1*2";
+static int posInSequence = 0;
+#endif
+
 /**
   * Indicates screen orientation state,
   * true for rotated screen, false for normal orientation
@@ -272,6 +277,22 @@ void fbapp_map_keycode_to_event(
         break;
 
     default:
+#if ENABLE_ON_DEVICE_DEBUG
+        if (isPressed) {
+            /* assert(posInSequence == sizeof(pStartOddKeySequence) - 1) */
+            if (pStartOddKeySequence[posInSequence] == midpKeyCode) {
+                posInSequence++;
+                if (posInSequence == sizeof(pStartOddKeySequence) - 1) {
+                    posInSequence = 0;
+                    pNewSignal->waitingFor = AMS_SIGNAL;
+                    pNewMidpEvent->type = MIDP_ENABLE_ODD_EVENT;
+                    break;
+                }
+            } else {
+                posInSequence = 0;
+            }
+        }
+#endif
         pNewSignal->waitingFor = UI_SIGNAL;
         pNewMidpEvent->type = MIDP_KEY_EVENT;
         pNewMidpEvent->CHR = midpKeyCode;

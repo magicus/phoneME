@@ -114,24 +114,33 @@ runMidlet(int argc, char** commandlineArgs) {
     int i, used;
     int debugOption = MIDP_NO_DEBUG;
     char *progName = commandlineArgs[0];
-    char* midpHome = NULL;
+    char* appDir = NULL;
+    char* confDir = NULL;
     char* additionalPath;
     SuiteIdType* pSuites = NULL;
     int numberOfSuites = 0;
     int ordinalSuiteNumber = -1;
     char* chSuiteNum = NULL;
     int midp_heap_requirement;
-
+    
     JVM_Initialize(); /* It's OK to call this more than once */
 
-
     midp_heap_requirement = getHeapRequirement();
-
 
     /*
      * Set Java heap capacity now so it can been overridden from command line.
      */
     JVM_SetConfig(JVM_CONFIG_HEAP_CAPACITY, midp_heap_requirement);
+
+#if !ENABLE_ON_DEVICE_DEBUG
+    if (midpRemoveOptionFlag("-port", commandlineArgs, &argc) != NULL) {
+        char* pMsg = "WARNING: -port option has no effect, "
+                     "set VmDebuggerPort property instead.\n";
+        REPORT_ERROR(LC_AMS, pMsg);
+        fprintf(stderr, pMsg);
+        return -1;
+    }
+#endif    
 
     /*
      * Parse options for the VM. This is desirable on a 'development' platform
@@ -170,6 +179,10 @@ runMidlet(int argc, char** commandlineArgs) {
         argv[i] = commandlineArgs[i];
     }
 
+    /*
+     * IMPL_NOTE: "-debug" option was already parsed by the VM, so
+     *            argv doesn't contain it at this point. Remove?
+     */
     if (midpRemoveOptionFlag("-debug", argv, &argc) != NULL) {
         debugOption = MIDP_DEBUG_SUSPEND;
     }
@@ -205,13 +218,20 @@ runMidlet(int argc, char** commandlineArgs) {
     }
 
     /* get midp home directory, set it */
-    midpHome = midpFixMidpHome(argv[0]);
-    if (midpHome == NULL) {
+    appDir = getApplicationDir(argv[0]);
+    if (appDir == NULL) {
+        return -1;
+    }
+
+    midpSetAppDir(appDir);
+
+    /* get midp home directory, set it */
+    confDir = getConfigurationDir(argv[0]);
+    if (confDir == NULL) {
         return -1;
     }
     
-    /* set up midpHome before calling initialize */
-    midpSetHomeDir(midpHome);
+    midpSetConfigDir(confDir);
 
     if (midpInitialize() != 0) {
         REPORT_ERROR(LC_AMS, "Not enough memory");

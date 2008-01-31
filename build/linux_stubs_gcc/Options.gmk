@@ -77,6 +77,7 @@ USE_NATIVE_PTI          = false
 USE_GCI                 = false
 USE_DIRECTDRAW          = false
 USE_FILE_SYSTEM         = true
+USE_ON_DEVICE_DEBUG     = false
 
 # DEBUG
 USE_DEBUG               = false

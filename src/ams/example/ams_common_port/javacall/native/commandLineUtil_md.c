@@ -38,7 +38,7 @@
 #define MAX_PATH_LEN JAVACALL_MAX_ROOT_PATH_LENGTH
 
 /**
- * Generates a correct MIDP home directory based on several rules. If
+ * Generates a correct application directory based on several rules. If
  * the <tt>MIDP_HOME</tt> environment variable is set, its value is used
  * unmodified. Otherwise, this function will search for the <tt>appdb</tt>
  * directory in the following order:
@@ -61,10 +61,10 @@
  *         <tt>NULL</tt>, this will be a static buffer, so that it safe
  *       to call this function before midpInitialize, don't free it
  */
-char* midpFixMidpHome(char *cmd) {
+char* getApplicationDir(char *cmd) {
 
     static javacall_utf16 path[MAX_PATH_LEN];
-    static char midpRealHome[MAX_PATH_LEN];
+    static char midpAppDir[MAX_PATH_LEN];
     javacall_result ret;
     int len = MAX_PATH_LEN - 1;
     pcsl_string str = PCSL_STRING_NULL_INITIALIZER;
@@ -73,31 +73,72 @@ char* midpFixMidpHome(char *cmd) {
     ret = javacall_dir_get_root_path (path, &len);
 
     if ( ret != JAVACALL_OK ) {
-        REPORT_ERROR(LC_AMS,"midpFixMidpHome() << Root path query failed.");
+        REPORT_ERROR(LC_AMS,"getApplicationDir() << Root path query failed.");
         return NULL;
     }
 
     if (PCSL_STRING_OK != pcsl_string_convert_from_utf16 (path, len, &str)) {
-        REPORT_ERROR(LC_AMS,"midpFixMidpHome() << pcsl_string conversion operation failed.");
+        REPORT_ERROR(LC_AMS,"getApplicationDir() << pcsl_string conversion operation failed.");
         return NULL;
     }
 
     if (pcsl_string_utf8_length (&str) >= MAX_PATH_LEN) {
-        REPORT_ERROR(LC_AMS,"midpFixMidpHome() << Root path length is too large.");
+        REPORT_ERROR(LC_AMS,"getApplicationDir() << Root path length is too large.");
         pcsl_string_free (&str);
         return NULL;
     }
 
     if (PCSL_STRING_OK != pcsl_string_convert_to_utf8 (&str,
-                                                       (jbyte *)midpRealHome,
+                                                       (jbyte *)midpAppDir,
                                                        MAX_PATH_LEN-1,
                                                        &len)) {
-        REPORT_ERROR(LC_AMS,"midpFixMidpHome() << pcsl_string conversion operation failed.");
+        REPORT_ERROR(LC_AMS,"getApplicationDir() << pcsl_string conversion operation failed.");
         pcsl_string_free (&str);
         return NULL;
     };
     pcsl_string_free (&str);
 
-    midpRealHome[len] = 0;
-    return midpRealHome;
+    midpAppDir[len] = 0;
+    return midpAppDir;
+}
+
+char* getConfigurationDir(char *cmd) {
+
+    static javacall_utf16 path[MAX_PATH_LEN];
+    static char midpConfigDir[MAX_PATH_LEN];
+    javacall_result ret;
+    int len = MAX_PATH_LEN - 1;
+    pcsl_string str = PCSL_STRING_NULL_INITIALIZER;
+
+
+    ret = javacall_dir_get_config_path (path, &len);
+
+    if ( ret != JAVACALL_OK ) {
+        REPORT_ERROR(LC_AMS,"getConfigurationDir() << Root path query failed.");
+        return NULL;
+    }
+
+    if (PCSL_STRING_OK != pcsl_string_convert_from_utf16 (path, len, &str)) {
+        REPORT_ERROR(LC_AMS,"getConfigurationDir() << pcsl_string conversion operation failed.");
+        return NULL;
+    }
+
+    if (pcsl_string_utf8_length (&str) >= MAX_PATH_LEN) {
+        REPORT_ERROR(LC_AMS,"getConfigurationDir() << Root path length is too large.");
+        pcsl_string_free (&str);
+        return NULL;
+    }
+
+    if (PCSL_STRING_OK != pcsl_string_convert_to_utf8 (&str,
+                                                       (jbyte *)midpConfigDir,
+                                                       MAX_PATH_LEN-1,
+                                                       &len)) {
+        REPORT_ERROR(LC_AMS,"getConfigurationDir() << pcsl_string conversion operation failed.");
+        pcsl_string_free (&str);
+        return NULL;
+    };
+    pcsl_string_free (&str);
+
+    midpConfigDir[len] = 0;
+    return midpConfigDir;
 }

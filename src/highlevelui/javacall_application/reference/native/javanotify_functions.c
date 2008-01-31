@@ -67,6 +67,9 @@
 #ifdef ENABLE_JSR_179
 #include <javacall_location.h>
 #endif
+#ifdef ENABLE_ON_DEVICE_DEBUG
+#include <javacall_odd.h>
+#endif /* ENABLE_ON_DEVICE_DEBUG */
 
 static char urlAddress[BINARY_BUFFER_MAX_LEN];
 
@@ -1232,7 +1235,7 @@ void javanotify_on_amms_notification(javacall_amms_notification_type type,
 
     e.eventType = MIDP_JC_EVENT_ADVANCED_MULTIMEDIA;
     e.data.multimediaEvent.mediaType = type;
-    e.data.multimediaEvent.isolateId = (int)((processorId >> 32) & 0xFFFF);
+    e.data.multimediaEvent.appId = (int)((processorId >> 32) & 0xFFFF);
     e.data.multimediaEvent.playerId = (int)(processorId & 0xFFFF);
     e.data.multimediaEvent.data = (int) data;
 
@@ -1535,3 +1538,16 @@ void /* OPTIONAL */ javanotify_rotation() {
      e.eventType = MIDP_JC_EVENT_ROTATION;
      midp_jc_event_send(&e);
 }
+
+#if ENABLE_ON_DEVICE_DEBUG
+/**
+ * The platform calls this function to inform VM that
+ * ODTAgent midlet must be enabled.
+ */
+void javanotify_enable_odd() {
+     midp_jc_event_union e;
+
+     e.eventType = MIDP_JC_ENABLE_ODD_EVENT;    
+     midp_jc_event_send(&e);
+}
+#endif

@@ -46,6 +46,6 @@ EXTRA_CPPFLAGS += /Zm400
 
 # Platform-specific linker flags and libraries
 LD_FLAGS+=-nodefaultlib:libcmt.lib
-LIBS += $(JAVACALL_LIB_DIR)/javacall$(g).lib 
+LIBS += $(wildcard $(JAVACALL_LIB_DIR)/*.lib) 
 LIBS += $(wildcard $(JAVACALL_LIB_DIR)/*.res)
-LIBS += Comdlg32.lib shell32.lib advapi32.lib 
+LIBS += Comdlg32.lib shell32.lib advapi32.lib

@@ -35,6 +35,7 @@
 #
 ######################################################################
 
+USE_JAVAUTIL_LOG_IMPLEMENTATION=false
 
 ifndef JWC_WORK_SPACE
 JWC_WORK_SPACE=$(MIDP_DIR)

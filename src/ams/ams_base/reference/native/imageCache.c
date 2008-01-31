@@ -67,27 +67,27 @@
 
 /**
  * Holds the suite ID. It is initialized during createImageCache() call
- * and used in png_action() to avoid passing an additional parameter to it
+ * and used in png_cache_action() to avoid passing an additional parameter to it
  * because this function is called for each image entry in the suite's jar file.
  */
 static SuiteIdType globalSuiteId;
 
 /**
  * Holds the storage ID where the cached images will be saved. It is initialized
- * during createImageCache() call and used in png_action() to avoid passing
+ * during createImageCache() call and used in png_cache_action() to avoid passing
  * an additional parameter to it.
  */
 static StorageIdType globalStorageId;
 
 /**
  * Handle to the opened jar file with the midlet suite. It is used to
- * passing an additional parameter to png_action().
+ * passing an additional parameter to png_cache_action().
  */
 static void *handle;
 
 /**
  * Holds the amount of free space in the storage. It is initialized during
- * createImageCache() call and used in png_action() to avoid passing
+ * createImageCache() call and used in png_cache_action() to avoid passing
  * an additional parameter to it.
  */
 static long remainingSpace;
@@ -123,7 +123,7 @@ static jboolean png_filter(const pcsl_string * entry) {
 /**
  * Loads PNG image from JAR, decodes it and writes as native
  */
-static jboolean png_action(const pcsl_string * entry) {
+static jboolean png_cache_action(const pcsl_string * entry) {
     unsigned char *pngBufPtr = NULL;
     unsigned int pngBufLen = 0;
     unsigned char *nativeBufPtr = NULL;
@@ -211,7 +211,7 @@ static void deleteImageCache(SuiteIdType suiteId, StorageIdType storageId) {
         return;
     }
 
-    errorCode = midp_suite_get_cached_resource_filename(suiteId, storageId,
+    errorCode =     midp_suite_get_cached_resource_filename(suiteId, storageId,
                                                         &PCSL_STRING_EMPTY,
                                                         &root);
     if (errorCode != MIDP_ERROR_NONE) {
@@ -288,7 +288,7 @@ void createImageCache(SuiteIdType suiteId, StorageIdType storageId) {
 
     result = loadAndCacheJarFileEntries(&jarFileName,
         (jboolean (*)(const pcsl_string *))&png_filter,
-        (jboolean (*)(const pcsl_string *))&png_action);
+        (jboolean (*)(const pcsl_string *))&png_cache_action);
 
     /* If something went wrong then clean up anything that was created */
     if (result != 1) {
@@ -301,6 +301,101 @@ void createImageCache(SuiteIdType suiteId, StorageIdType storageId) {
     pcsl_string_free(&jarFileName);
 
 }
+
+/**
+ * Moves cached native images from ome storage to another.
+ * For security reasons we allow to move cache only to the
+ * internal storage.
+ *
+ * @param suiteId The suite ID
+ * @param storageIdFrom ID of the storage where images are cached
+ * @param storageIdTo ID of the storage where to move the cache
+ */
+void moveImageCache(SuiteIdType suiteId, StorageIdType storageIdFrom, StorageIdType storageIdTo) {
+    pcsl_string root;
+    pcsl_string filePath;
+    char*  pszError;
+    void*  handle = NULL;
+    jint errorCode;
+    jsize oldRootLength;
+    jsize newRootLength;
+    const pcsl_string* newRoot;
+
+
+    if (suiteId == UNUSED_SUITE_ID) {
+        return;
+    }
+
+    /*
+     * IMPL_NOTE: for security reasons we allow to move cache
+     * only to the internal storage.
+     */
+    if (storageIdTo != INTERNAL_STORAGE_ID) {
+        return;
+    }
+
+    errorCode = midp_suite_get_cached_resource_filename(suiteId, storageIdFrom,
+                                                        &PCSL_STRING_EMPTY,
+                                                        &root);
+    if (errorCode != MIDP_ERROR_NONE) {
+        return;
+    }
+
+    handle = storage_open_file_iterator(&root);
+    if (handle == NULL) {
+        pcsl_string_free(&root);
+        return;
+    }
+
+    newRoot = storage_get_root(storageIdTo);
+    newRootLength = pcsl_string_length(newRoot);
+    oldRootLength = pcsl_string_length(storage_get_root(storageIdFrom));
+
+    /* Move all files that start with suite Id and end with TMP_EXT to new storage */
+    for (;;) {
+        pcsl_string fileName;
+        pcsl_string newFilePath = PCSL_STRING_NULL;
+        jsize filePathLength;
+        
+        if (0 != storage_get_next_file_in_iterator(&root, handle, &filePath)) {
+            break;
+        }
+        if (pcsl_string_ends_with(&filePath, &TMP_EXT)) {
+            /* construct new file name. */
+            filePathLength = pcsl_string_length(&filePath);
+            pcsl_string_predict_size(&fileName, filePathLength - oldRootLength);
+            if (PCSL_STRING_OK != pcsl_string_substring(&filePath,
+                    oldRootLength, filePathLength, &fileName)) {
+                break;
+            }
+            pcsl_string_predict_size(&newFilePath, newRootLength + pcsl_string_length(&fileName));
+            if (PCSL_STRING_OK != pcsl_string_append(&newFilePath, newRoot)) {
+                pcsl_string_free(&fileName);
+                break;
+            }
+            if (PCSL_STRING_OK != pcsl_string_append(&newFilePath,
+                    (const pcsl_string*)&fileName)) {
+                pcsl_string_free(&fileName);
+                pcsl_string_free(&newFilePath);
+                break;
+            }
+            /* rename file. */
+            storage_rename_file(&pszError, &filePath, &newFilePath);
+            pcsl_string_free(&fileName);
+            pcsl_string_free(&newFilePath);
+            
+            if (pszError != NULL) {
+                storageFreeError(pszError);
+            }
+        }
+
+        pcsl_string_free(&filePath);
+    }
+
+    storageCloseFileIterator(handle);
+    pcsl_string_free(&root);
+}
+
 
 /**
  * Store a native image to cache.

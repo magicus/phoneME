@@ -778,8 +778,8 @@ public class Form extends Screen {
      */
     public int size() {
         synchronized (Display.LCDUILock) {
-	    return numOfItems;
-	}
+	        return numOfItems;
+	    }
     }
 
     /**
@@ -791,9 +791,9 @@ public class Form extends Screen {
      * @return the width of the <code>Form</code> in pixels
      */
     public int getWidth() {
-	synchronized (Display.LCDUILock) {
-	    return formLF.lGetWidth();
-	}
+        synchronized (Display.LCDUILock) {
+            return formLF.lGetWidth();
+        }
     } 
 
     /**
