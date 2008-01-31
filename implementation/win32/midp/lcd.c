@@ -1454,6 +1454,34 @@ javacall_bool javacall_lcd_get_reverse_orientation() {
 }
 
 /**
+ * checks the implementation supports native softbutton label.
+ * 
+ * @retval JAVACALL_TRUE   implementation supports native softbutton layer
+ * @retval JAVACALL_FALSE  implementation does not support native softbutton layer
+ */
+javacall_bool javacall_lcd_is_native_softbutton_layer_supported () {
+    return JAVACALL_FALSE;
+}
+
+
+/**
+ * The following function is used to set the softbutton label in the native
+ * soft button layer.
+ * 
+ * @param label the label for the softbutton
+ * @param len the length of the label
+ * @param index the corresponding index of the command
+ * 
+ * @retval JAVACALL_OK      success
+ * @retval JAVACALL_FAIL    fail
+ */
+javacall_result javacall_lcd_set_native_softbutton_label(const javacall_utf16* label,
+                                                         int len,
+                                                         int index){
+     return JAVACALL_FAIL;
+}
+
+/**
  * Returns available display width
  */
 int javacall_lcd_get_screen_width() {
