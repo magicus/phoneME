@@ -150,9 +150,9 @@ public class DirectPlayer extends BasicPlayer
     private native boolean nPcmAudioPlayback(int hNative);
 
     // Start Prefetch of Native Player
-    private native void nPrefetch(int hNative);
+    protected native void nPrefetch(int hNative);
     // Provide whole media content size, if known
-    private native void nSetWholeContentSize(int hNative, long contentSize);
+    protected native void nSetWholeContentSize(int hNative, long contentSize);
     // Is Control supported by native or not
     protected static native boolean nIsFramePositioningControlSupported(int hNative);
     protected static native boolean nIsMetaDataControlSupported(int hNative);
@@ -392,7 +392,7 @@ System.out.println("DirectPlayer.doPostStart completed ");
                 "DirectPlayer.doStart");
         }
         
-        if (isFirstStart) {
+        if (isFirstStart || (0 == getMediaTime())) {
 System.out.println("DirectPlayer.doStart call nStart ");
             ret = nStart(hNative);
             isFirstStart = false;
