@@ -47,12 +47,10 @@ KNIDECL(com_sun_mmedia_PlayerImpl_nInit) {
     jchar* pszURI = NULL;
     KNIPlayerInfo* pKniInfo;
     javacall_result res;
-    /*
     __asm
     {
     int 3h
     }
-    */
     MMP_DEBUG_STR2("+nInit isolate=%d, player=%d\n", isolateId, playerId);
 
     KNI_StartHandles(1);
@@ -264,7 +262,8 @@ LockAudioMutex();
             }
         } else if (pKniInfo && pKniInfo->pNativeHandle) {
             /* Indicate end of buffering by using NULL buffer */
-            ret = javacall_media_do_buffering(pKniInfo->pNativeHandle, NULL, 0, &need_more_data, &min_data_size);
+            length = 0;
+            ret = javacall_media_do_buffering(pKniInfo->pNativeHandle, NULL, &length, &need_more_data, &min_data_size);
             if (ret == JAVACALL_OK) {
                 returnValue = 0;
             }

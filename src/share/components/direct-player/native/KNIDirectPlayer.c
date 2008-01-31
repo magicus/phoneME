@@ -498,6 +498,7 @@ KNIDECL(com_sun_mmedia_DirectPlayer_nPrefetch) {
     if (pKniInfo && pKniInfo->pNativeHandle) {
 LockAudioMutex();
         javacall_media_prefetch(pKniInfo->pNativeHandle);
+        pKniInfo->isAcquire = JAVACALL_TRUE;
 UnlockAudioMutex();            
     }
     KNI_ReturnVoid();

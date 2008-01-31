@@ -202,6 +202,8 @@ System.out.println("PlayerImpl nRealize handledByDevice");
 System.out.println("PlayerImpl nRealize !handledByDevice");
                 /* predownload media data to determine media format */
                 if (mediaFormat.equals(MEDIA_FORMAT_UNKNOWN)) {
+                    long contLength = stream.getContentLength();
+                    boolean need_more = true;
                     /* first loop - allocate java buffer*/
                     int javaBufSize = nGetJavaBufferSize(hNative);
                     int packetSize  = nGetFirstPacketSize(hNative);
@@ -232,23 +234,15 @@ System.out.println("PlayerImpl nRealize stream.read ret=" + ret);
                             }
                         } while(num_read < packetSize);
 System.out.println("PlayerImpl nRealize stream.read stop num_read = " + num_read + " packetSize =" + packetSize);
-                        if(num_read < packetSize) {
-System.out.println("PlayerImpl nRealize nBuffering start");
-                            nBuffering(hNative, buffer, num_read);
-System.out.println("PlayerImpl nRealize nBuffering stop");
+                        packetSize = nBuffering(hNative, buffer, num_read);
+                        if ((contLength) != -1 && (contLength == stream.tell())) {
                             /* end of media */
-                            nBuffering(hNative, null, -1);
-System.out.println("PlayerImpl nRealize nBuffering -1");
-                            mediaFormat     = nGetMediaFormat(hNative);
-                            break;
-                        } else {
-                            packetSize = nBuffering(hNative, buffer, num_read);
-System.out.println("PlayerImpl nRealize nBuffering nextacketsize=" + packetSize);
-                            /* ask media format */
-                            mediaFormat     = nGetMediaFormat(hNative);
+                            nBuffering(hNative, null, 0);
+                            need_more = false;
                         }
+                        mediaFormat     = nGetMediaFormat(hNative);
 System.out.println("PlayerImpl nRealize mediaFormat=" + mediaFormat);
-                    } while(mediaFormat.equals(MEDIA_FORMAT_UNKNOWN));
+                    } while(mediaFormat.equals(MEDIA_FORMAT_UNKNOWN) && need_more);
                 }
 
                 if (mediaFormat.equals(MEDIA_FORMAT_UNSUPPORTED)) {
