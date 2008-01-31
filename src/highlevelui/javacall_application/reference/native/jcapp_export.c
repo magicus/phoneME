@@ -159,3 +159,26 @@ int jcapp_get_screen_width() {
 int jcapp_get_screen_height() {
     return javacall_lcd_get_screen_height();
 }
+
+/**
+ * Checks if soft button layer is supported
+ * 
+ * @return KNI_TRUE if native softbutton is supported, KNI_FALSE - otherwise
+ */
+jboolean jcapp_is_native_softbutton_layer_supported() {
+    return javacall_lcd_is_native_softbutton_layer_supported();
+}
+
+/**
+ * Paints the Soft Buttons when using a native layer
+ * acts as intermidiate layer between kni and javacall 
+ * 
+ * @param label Label to draw (UTF16)
+ * @param len Length of the lable (0 will cause removal of current label)
+ * @param index Index of the soft button in the soft button bar.
+ */
+ void jcapp_set_softbutton_label_on_native_layer(unsigned short *label, int len,int index) {
+	javacall_lcd_set_native_softbutton_label(label, len, index);
+}
+
+
