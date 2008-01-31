@@ -31,7 +31,7 @@ import javax.microedition.lcdui.Image;
 /**
  * Represents Folder object.
  */
-public class Folder {
+class Folder {
     private int folderId;
 
     private int parentFolderId;
@@ -43,10 +43,10 @@ public class Folder {
     /**
      * Constructor.
      *
-     * @param id
-     * @param parentId
-     * @param name
-     * @param icon
+     * @param id folder ID
+     * @param parentId parent folder ID
+     * @param name folder's name
+     * @param icon folder's icon
      */
     Folder(int id, int parentId, String name, Image icon) {
         folderId = id;

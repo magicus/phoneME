@@ -31,7 +31,7 @@ import java.util.Vector;
 /**
  * Provides functionality to manage folders.
  */
-public class FolderManager {
+class FolderManager {
     /** Folder ID that is never used. */
     public static final int UNUSED_FOLDER_ID  = -1;
 

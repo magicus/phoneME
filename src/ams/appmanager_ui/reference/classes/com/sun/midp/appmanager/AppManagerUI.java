@@ -685,8 +685,10 @@ class AppManagerUI extends Form
                 midletSuiteStorage.changeStorage(msi.suiteId,
                         Constants.INTERNAL_STORAGE_ID);
                 
-                /* According to MIDP Spec security requirements we don't allow
-                   to copy non DRM-protected MIDlet suite to external storage */
+                /*
+                 * According to MIDP Spec security requirements we don't allow
+                 *  to copy non DRM-protected MIDlet suite to external storage.
+                 */
                 
                 ((MidletCustomItem)item).removeCommand(moveToInternalStorageCmd);
                 msi.storageId = Constants.INTERNAL_STORAGE_ID;
