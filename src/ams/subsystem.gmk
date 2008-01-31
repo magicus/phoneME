@@ -76,6 +76,13 @@ include $(SUBSYSTEM_AMS_DIR)/verifier/lib.gmk
 include $(SUBSYSTEM_AMS_DIR)/midlet_selector_base/lib.gmk
 include $(SUBSYSTEM_AMS_DIR)/midlet_selector/lib.gmk
 
+ifeq ($(USE_ON_DEVICE_DEBUG), true)
+include $(PROJECT_MIDP_DIR)/src/ams/on_device_debug_base/lib.gmk
+include $(PROJECT_MIDP_DIR)/src/ams/on_device_debug/lib.gmk
+else
+include $(SUBSYSTEM_AMS_DIR)/on_device_debug/lib.gmk
+endif
+
 ifeq ($(USE_NATIVE_AMS), false)
     include $(SUBSYSTEM_AMS_DIR)/appmanager_ui_resources/lib.gmk
     include $(SUBSYSTEM_AMS_DIR)/appmanager_ui/lib.gmk

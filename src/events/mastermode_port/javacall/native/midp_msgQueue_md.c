@@ -109,6 +109,13 @@ void checkForSystemSignal(MidpReentryData* pNewSignal,
         pNewMidpEvent->type    = ROTATION_EVENT;
         break;
 
+#if ENABLE_ON_DEVICE_DEBUG
+    case MIDP_JC_ENABLE_ODD_EVENT:
+        pNewSignal->waitingFor = AMS_SIGNAL;
+        pNewMidpEvent->type = MIDP_ENABLE_ODD_EVENT;
+        break;
+#endif
+
 #ifdef ENABLE_JSR_75
     case JSR75_FC_JC_EVENT_ROOTCHANGED:
         notifyDisksChanged();

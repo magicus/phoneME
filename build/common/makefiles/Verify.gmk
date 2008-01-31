@@ -377,7 +377,8 @@ BOOLEAN_OPTIONS = \
 	USE_VERIFY_ONCE \
 	USE_VM_PROFILES \
 	USE_SERVER_SOCKET \
-	USE_LINKS
+	USE_LINKS \
+	USE_ON_DEVICE_DEBUG
 
 $(BOOLEAN_OPTIONS)::
 	@echo +++ Verify option \"$@\" $(LOG_ONLY)
@@ -398,6 +399,18 @@ USE_VERIFY_ONCE::
 	@if [ "$(USE_VERIFY_ONCE)" = "true" ]; then \
 	  if [ "$(USE_MONET)" = "true" ]; then \
 	    echo "ERROR: USE_VERIFY and USE_MONET options are mutually exclusive"; \
+	    exit -1; \
+	  fi; \
+	fi
+
+USE_ON_DEVICE_DEBUG::
+	@if [ "$(USE_ON_DEVICE_DEBUG)" = "true" ]; then \
+	  if [ -z "$(PROJECT_MIDP_DIR)" ]; then \
+	    echo "ERROR: PROJECT_MIDP_DIR must be set when USE_ON_DEVICE_DEBUG is true"; \
+	    exit -1; \
+	  fi; \
+	  if [ -z "$(SDK_ODD_DIR)" ]; then \
+	    echo "ERROR: SDK_ODD_DIR must be set when USE_ON_DEVICE_DEBUG is true"; \
 	    exit -1; \
 	  fi; \
 	fi

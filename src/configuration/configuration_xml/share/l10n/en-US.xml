@@ -89,6 +89,8 @@
                 Value="Applications"/>
 <localized_string Key="INSTALL_APPLICATION"
                 Value="Install Application"/>
+<localized_string Key="ODT_AGENT_MIDLET"
+                Value="ODT Agent"/>
 <localized_string Key="CLASS_VERIFIER_APPLICATION"
                 Value="Class Verifier Application"/>
 <localized_string Key="CA_MANAGER_APP"

@@ -123,17 +123,24 @@ runMidlet(int argc, char** commandlineArgs) {
     char* chSuiteNum = NULL;
     int midp_heap_requirement;
     
-
     JVM_Initialize(); /* It's OK to call this more than once */
 
-
     midp_heap_requirement = getHeapRequirement();
-
 
     /*
      * Set Java heap capacity now so it can been overridden from command line.
      */
     JVM_SetConfig(JVM_CONFIG_HEAP_CAPACITY, midp_heap_requirement);
+
+#if !ENABLE_ON_DEVICE_DEBUG
+    if (midpRemoveOptionFlag("-port", commandlineArgs, &argc) != NULL) {
+        char* pMsg = "WARNING: -port option has no effect, "
+                     "set VmDebuggerPort property instead.\n";
+        REPORT_ERROR(LC_AMS, pMsg);
+        fprintf(stderr, pMsg);
+        return -1;
+    }
+#endif    
 
     /*
      * Parse options for the VM. This is desirable on a 'development' platform
@@ -172,6 +179,10 @@ runMidlet(int argc, char** commandlineArgs) {
         argv[i] = commandlineArgs[i];
     }
 
+    /*
+     * IMPL_NOTE: "-debug" option was already parsed by the VM, so
+     *            argv doesn't contain it at this point. Remove?
+     */
     if (midpRemoveOptionFlag("-debug", argv, &argc) != NULL) {
         debugOption = MIDP_DEBUG_SUSPEND;
     }
