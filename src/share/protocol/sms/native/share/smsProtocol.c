@@ -589,7 +589,7 @@ KNIDECL(com_sun_midp_io_j2me_sms_Protocol_waitUntilMessageAvailable0) {
             } else {
                 /* Check needStopReceiver value to minimise deadlock risk */
                 jboolean needStopReceiver = KNI_GetBooleanField(this, KNI_GetFieldID(thisClass, "needStopReceiver", "Z"));
-                if (!needStopReceiver) {
+                if (needStopReceiver == KNI_FALSE) {
 #if ENABLE_REENTRY
                     if (!info) {
                         /* Block and wait for a message. */
