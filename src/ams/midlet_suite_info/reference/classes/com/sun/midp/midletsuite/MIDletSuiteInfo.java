@@ -36,8 +36,6 @@ public class MIDletSuiteInfo {
     public int suiteId;
     /** ID of the storage where the MIDlet is installed. */
     public int storageId = Constants.INTERNAL_STORAGE_ID;
-    /** ID of the folder where the MIDlet resides. */
-    public int folderId = 1;
     /** Display name of the MIDlet suite. */
     public String displayName = null;
     /** Name of the MIDlet to run. */
@@ -133,7 +131,6 @@ public class MIDletSuiteInfo {
     public String toString() {
         StringBuffer b = new StringBuffer();
         b.append("suiteId = " + suiteId);
-        b.append("folderId = " + folderId);
         b.append(", midletToRun = " + midletToRun);
         return b.toString();
     }
