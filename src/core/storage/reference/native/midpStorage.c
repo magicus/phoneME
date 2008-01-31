@@ -53,6 +53,7 @@
 #include <pcsl_file.h>
 #include <pcsl_string.h>
 #include <pcsl_string_status.h>
+#include <pcsl_memory.h>
 
 /* local prototypes */
 static int initializeConfigRoot (char*);
@@ -67,6 +68,23 @@ static const char* const FILE_LIMIT_ERROR =
     "Resource limit exceeded for file handles";
 static const char* const STRING_CORRUPT_ERROR =
     "string data corrupt or invalid, cannot perform i/o operation";
+
+/*
+ * Name of the storage directory.
+ */
+PCSL_DEFINE_STATIC_ASCII_STRING_LITERAL_START(APP_DIR)
+    {'a', 'p', 'p', 'd', 'b', '\0'}
+PCSL_DEFINE_STATIC_ASCII_STRING_LITERAL_END(APP_DIR);
+/*
+ * Name of the external storage directory.
+ */
+PCSL_DEFINE_STATIC_ASCII_STRING_LITERAL_START(MEMORY_CARD_DIR)
+    {'m', 'e', 'm', 'o', 'r', 'y', '_', 'c', 'a', 'r', 'd', '\0'}
+PCSL_DEFINE_STATIC_ASCII_STRING_LITERAL_END(MEMORY_CARD_DIR);
+
+PCSL_DEFINE_STATIC_ASCII_STRING_LITERAL_START(CONFIG_SUBDIR)
+    {'l', 'i', 'b', '\0'}
+PCSL_DEFINE_STATIC_ASCII_STRING_LITERAL_END(CONFIG_SUBDIR);
 
 #if REPORT_LEVEL <= LOG_INFORMATION
 #define DEBUGP2F(x, y) { \
@@ -92,23 +110,11 @@ static const char* const STRING_CORRUPT_ERROR =
  */
 #define DEFAULT_TOTAL_SPACE (4 * 1024 * 1024) /* 4 Meg. */
 
-/*
- * Number of the supported storages: 2 for internal and only one external.
- * This value should be changed if more than one external storage is supported.
- */
-#define MAX_STORAGE_NUM 2
-
 /* Local variables */
 static long totalSpace = DEFAULT_TOTAL_SPACE;
 
-static pcsl_string sRoot[MAX_STORAGE_NUM] = {
-    PCSL_STRING_NULL_INITIALIZER,
-    PCSL_STRING_NULL_INITIALIZER
-};
-static pcsl_string configRoot[MAX_STORAGE_NUM] = {
-    PCSL_STRING_NULL_INITIALIZER,
-    PCSL_STRING_NULL_INITIALIZER
-};
+static pcsl_string sRoot[MAX_STORAGE_NUM];
+static pcsl_string configRoot[MAX_STORAGE_NUM];
 static int storageInitDone = 0;
 
 #define MAX_ERROR_LEN 159
@@ -124,7 +130,7 @@ static char errorBuffer[MAX_ERROR_LEN + 1] = {0};
  * @return 0 for success, non-zero for out of memory
  */
 int
-storageInitialize(char *config_home, char *midp_home) {
+storageInitialize(char *config_home, char *app_dir) {
     jchar fsep = storageGetFileSeparator();
 
     if (storageInitDone) {
@@ -143,7 +149,7 @@ storageInitialize(char *config_home, char *midp_home) {
     }
 
     /* set up a path to the internal storage */
-    if (PCSL_STRING_OK != pcsl_string_from_chars(midp_home, &sRoot[0])) {
+    if (PCSL_STRING_OK != pcsl_string_from_chars(app_dir, &sRoot[0])) {
         REPORT_ERROR(LC_CORE, "Error: out of memory.\n");
         storageFinalize();
         return -1;
@@ -153,6 +159,67 @@ storageInitialize(char *config_home, char *midp_home) {
         REPORT_ERROR(LC_CORE, "Error: out of memory.\n");
         storageFinalize();
         return -1;
+    }
+
+    if (MAX_STORAGE_NUM > 1) {
+        int i;
+        char* midp_home = NULL;
+        char* sep_pos = NULL;
+
+        /*
+         * this is sample implementation and should
+         * be rewritten for the real platforms
+         */
+         
+        /* IMPL_NOTE: work around - restore midp home from appdb directory path */
+
+        midp_home = (char*)pcsl_mem_malloc(strlen(app_dir) + 1);
+        if (NULL == midp_home) {
+            REPORT_ERROR(LC_CORE, "Error: out of memory.\n");
+            storageFinalize();
+            return -1;
+        }
+        sep_pos = strrchr(app_dir, fsep);
+        if (NULL == sep_pos) {
+            REPORT_ERROR(LC_CORE, "Error: bad application dir.\n");
+            pcsl_mem_free(midp_home);
+            storageFinalize();
+            return -1;
+        }
+
+        i = (int)(sep_pos - app_dir) + 1;
+        strncpy(midp_home, app_dir, i);
+        midp_home[i] = 0;
+
+        if (PCSL_STRING_OK != pcsl_string_from_chars(midp_home, &sRoot[1])) {
+            REPORT_ERROR(LC_CORE, "Error: out of memory.\n");
+            pcsl_mem_free(midp_home);
+            storageFinalize();
+            return -1;
+        }
+        pcsl_mem_free(midp_home);
+        
+        pcsl_string_predict_size(&sRoot[1], pcsl_string_length(&sRoot[1]) + 2
+                                        + PCSL_STRING_LITERAL_LENGTH(MEMORY_CARD_DIR));
+        if (PCSL_STRING_OK != pcsl_string_append_char(&sRoot[1], fsep)
+         || PCSL_STRING_OK != pcsl_string_append(&sRoot[1], &MEMORY_CARD_DIR)
+         || PCSL_STRING_OK != pcsl_string_append_char(&sRoot[1], fsep)) {
+            REPORT_ERROR(LC_CORE, "Error: out of memory.\n");
+            storageFinalize();
+            return -1;
+        }
+    
+        /*
+         * If more than one external storage is needed, write extra initialization here. 
+         * By default we just redirect all to internal storage.
+         */
+
+        for (i = 2; i < MAX_STORAGE_NUM; i++) {
+            if (PCSL_STRING_OK != pcsl_string_dup(&sRoot[0], &sRoot[i])) {
+                storageFinalize();
+                return -1;
+            }
+         }
     }
 
     if (0 != initializeConfigRoot(config_home)) {
@@ -167,6 +234,7 @@ storageInitialize(char *config_home, char *midp_home) {
 static int
 initializeConfigRoot(char* config_home) {
     jchar fileSep = storageGetFileSeparator();
+    int i;
 
     if (PCSL_STRING_OK != pcsl_string_from_chars(config_home, &configRoot[0])) {
         return -1;
@@ -174,6 +242,12 @@ initializeConfigRoot(char* config_home) {
     if (PCSL_STRING_OK != pcsl_string_append_char(&configRoot[0], fileSep)) {
         pcsl_string_free(&configRoot[0]);
         return -1;
+    }
+    
+    for (i = 1; i < MAX_STORAGE_NUM; i++) {
+        if (PCSL_STRING_OK != pcsl_string_dup(&configRoot[0], &configRoot[i])) {
+            return -1;        
+        }
     }
 
     return 0;
@@ -224,7 +298,6 @@ storageFinalize() {
 const pcsl_string*
 storage_get_root(StorageIdType storageId) {
     /*
-     * Our implementation supports only 2 storages: internal and one external.
      * Change MAX_STORAGE_NUM value if you want to have more than one
      * external storage. This will also require modification of the functions
      * initializing and returning sRoot[<index>] and configRoot[<index>], namely
@@ -233,8 +306,15 @@ storage_get_root(StorageIdType storageId) {
     pcsl_string* pRes;
     if (storageId == INTERNAL_STORAGE_ID) {
         pRes = &sRoot[0];
+    } else if ((storageId >= 0)
+            && (storageId < MAX_STORAGE_NUM)) {
+        pRes = &sRoot[storageId];
     } else {
-        pRes = &sRoot[1];
+        /*
+         * IMPL_NOTE: if invalid storage id is specified
+         * we return internal storage
+         */
+        pRes = &sRoot[0];
     }
 
     return pRes;
@@ -259,8 +339,15 @@ storage_get_config_root(StorageIdType storageId) {
     pcsl_string* pRes;
     if (storageId == INTERNAL_STORAGE_ID) {
         pRes = &configRoot[0];
+    } else if ((storageId >= 0)
+            && (storageId < MAX_STORAGE_NUM)) {
+        pRes = &configRoot[storageId];
     } else {
-        pRes = &configRoot[1];
+        /*
+         * IMPL_NOTE: if invalid storage id is specified
+         * we return internal storage
+         */
+        pRes = &configRoot[0];
     }
 
     return pRes;
@@ -860,5 +947,5 @@ storage_write_utf16_string(char** ppszError, int handle, const pcsl_string* str)
     }
   }
 }
-
+                        
 

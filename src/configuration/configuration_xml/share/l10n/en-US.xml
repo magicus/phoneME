@@ -270,8 +270,14 @@
                 Value="This application is disabled because the authority that certifies it is disabled."/>
 <localized_string Key="AMS_SUITES_TO_BE_DISABLED"
                 Value="This action will disable these applications:&#010;&#010;"/>
+<localized_string Key="AMS_INTERNAL_STORAGE_NAME"
+                Value="Phone memory"/>
+<localized_string Key="AMS_MOVE_TO_INTERNAL_STORAGE"
+                Value="Move to phone"/>
+<localized_string Key="AMS_EXTRENAL_STORAGE_NAME"
+                Value="Memory card "/>
 <localized_string Key="AMS_MGR_TITLE"
-                  Value="Java MIDlets"/>
+                 Value="Java MIDlets"/>
 <localized_string Key="AMS_MGR_SETTINGS"
                 Value="Settings"/>
 <localized_string Key="AMS_MGR_PREFERENCES"
@@ -405,6 +411,8 @@
                 Value="Launch"/>
 <localized_string Key="AMS_MGR_RUN_THE_NEW_SUITE"
                 Value="A new midlet suite was installed. Do you want to launch it now?"/>
+<localized_string Key="AMS_MGR_SUCC_SUITE_STORAGE_CHANGED"
+                Value=" was successfully moved to phone memory"/>
 <localized_string Key="AMS_DISC_APP_WEBSITE_INSTALL"
                 Value="Enter a website to Install From:"/>
 <localized_string Key="AMS_DISC_APP_SELECT_INSTALL"
@@ -421,6 +429,8 @@
                 Value="Downloading..."/>
 <localized_string Key="AMS_DISC_APP_LOCKED"
                 Value="The application you are installing, %1, is already installed and already running on this phone. Installation can not proceed unless the application is not running. Please exit %1 and start the installation again."/>
+<localized_string Key="AMS_GRA_INTLR_SELECT_STORAGE"
+                Value="Select storage"/>
 <localized_string Key="AMS_GRA_INTLR_UPD_CAN"
                 Value="Update cancelled."/>
 <localized_string Key="AMS_GRA_INTLR_FIN_UPD"

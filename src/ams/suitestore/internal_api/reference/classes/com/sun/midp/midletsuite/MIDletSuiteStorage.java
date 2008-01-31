@@ -308,6 +308,16 @@ public class MIDletSuiteStorage {
     public synchronized native String getMidletSuiteJarPath(int id);
 
     /**
+     * Get the storage id for a suite.
+     *
+     * @param id unique ID of the suite
+     *
+     * @return storage id or null if the suite does not exist
+     */
+    public native static int getMidletSuiteStorageId(int id);
+
+
+    /**
      * Gets the unique identifier of MIDlet suite.
      *
      * @param vendor name of the vendor that created the application, as
@@ -487,6 +497,20 @@ public class MIDletSuiteStorage {
          */
         CHManager.getManager(classSecurityToken).uninstall(id);
     }
+
+    /**
+     * Moves a software package with given suite ID to the specified storage.
+     *
+     * @param suiteId suite ID for the installed package
+     * @param newStorageId new storage ID
+     *
+     * @exception IllegalArgumentException if the suite cannot be found or
+     * invalid storage ID specified 
+     * @exception MIDletSuiteLockedException is thrown, if the MIDletSuite is
+     * locked
+     */
+    public native void changeStorage(int suiteId, int newStorageId)
+            throws MIDletSuiteLockedException;
 
     /**
      * Stores or updates a midlet suite.

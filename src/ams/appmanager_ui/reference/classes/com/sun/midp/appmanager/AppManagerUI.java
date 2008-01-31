@@ -234,6 +234,11 @@ class AppManagerUI extends Form
         new Command(Resource.
                     getString(ResourceConstants.APPLICATION_SETTINGS),
                     Command.ITEM, 5);
+    /** Command object for moving to internal storage. */
+    private Command moveToInternalStorageCmd =
+        new Command(Resource.
+                    getString(ResourceConstants.AMS_MOVE_TO_INTERNAL_STORAGE),
+                    Command.ITEM, 6);
 
 
     /** Command object for "Cancel" command for the remove form. */
@@ -551,6 +556,21 @@ class AppManagerUI extends Form
                                                           displayError, this);
                 display.setCurrent(appSettings);
 
+            } catch (Throwable t) {
+                displayError.showErrorAlert(msi.displayName, t, null, null);
+            }
+        } else if (c == moveToInternalStorageCmd) {
+            try {
+                midletSuiteStorage.changeStorage(msi.suiteId,
+                        Constants.INTERNAL_STORAGE_ID);
+                
+                /* According to MIDP Spec security requirements we don't allow
+                   to copy non DRM-protected MIDlet suite to external storage */
+                
+                ((MidletCustomItem)item).removeCommand(moveToInternalStorageCmd);
+                msi.storageId = Constants.INTERNAL_STORAGE_ID;
+                displaySuccessMessage(Resource.getString(ResourceConstants.APPLICATION) +
+                        Resource.getString(ResourceConstants.AMS_MGR_SUCC_SUITE_STORAGE_CHANGED));
             } catch (Throwable t) {
                 displayError.showErrorAlert(msi.displayName, t, null, null);
             }
@@ -974,7 +994,9 @@ class AppManagerUI extends Form
             ci.addCommand(removeCmd);
             ci.addCommand(updateCmd);
             ci.addCommand(appSettingsCmd);
-
+            if (suiteInfo.storageId != Constants.INTERNAL_STORAGE_ID) {
+                ci.addCommand(moveToInternalStorageCmd);
+            }
             if (suiteInfo.enabled) {
                 // setDefaultCommand will add default command first
                 ci.setDefaultCommand(launchCmd);

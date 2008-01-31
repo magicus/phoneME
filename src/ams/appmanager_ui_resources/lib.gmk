@@ -58,13 +58,13 @@ include $(APPMANAGER_UI_RESOURCE_DIR)/$(PLATFORM)/lib.gmk
 ifeq ($(USE_FILE_SYSTEM), true)
 
 ifeq ($(USE_RAW_AMS_IMAGES), false)
-app_manager_resources: $(STORAGEDIR)
+app_manager_resources: $(STORAGEDIR) $(EXTSTORAGEDIR)
 	-@(cp -f $(INT_INPUT_AMS_SHARE_IMAGES_DIR)/*.png \
 	    $(STORAGEDIR)) $(LOG)
 	-@(cp -f $(INT_INPUT_AMS_IMAGES_DIR)/*.png \
 	    $(STORAGEDIR)) $(LOG)
 else
-app_manager_resources: $(STORAGEDIR) $(IMAGE2RAW_JAR_FILE) \
+app_manager_resources: $(STORAGEDIR) $(EXTSTORAGEDIR) $(IMAGE2RAW_JAR_FILE) \
 		       $(SUBSYSTEM_CONFIGURATION_MERGED_FILE)
 	@echo " ... converting AMS images to raw format" $(LOG)
 	@$(call convert_images_to_raw,$(INT_INPUT_AMS_SHARE_IMAGES_DIR))

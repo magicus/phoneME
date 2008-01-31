@@ -117,6 +117,8 @@ public class GraphicalInstaller extends MIDlet implements CommandListener {
     private String cancelledMessage;
     /** What to display to the user when the current action is finishing. */
     private String finishingMessage;
+    /** Displays a list of storages to install to. */
+    private List storageListBox;    
     /** ID of the storage where the new midlet suite will be installed. */
     private int storageId = Constants.INTERNAL_STORAGE_ID;
 
@@ -136,6 +138,10 @@ public class GraphicalInstaller extends MIDlet implements CommandListener {
     private Command continueCmd =
         new Command(Resource.getString(ResourceConstants.INSTALL),
                     Command.OK, 1);
+    /** Command object for "Next" command for storage select list. */
+    private Command storeSelectCmd =
+            new Command(Resource.getString(ResourceConstants.NEXT),
+                        Command.OK, 1);
     /** Command object for "Next" command for password form. */
     private Command nextCmd =
         new Command(Resource.getString(ResourceConstants.NEXT),
@@ -152,6 +158,15 @@ public class GraphicalInstaller extends MIDlet implements CommandListener {
     private Command removeRMSCmd =
         new Command(Resource.getString(ResourceConstants.NO),
                     Command.CANCEL, 1);
+
+    /* Suite name */
+    private String label;
+    /* Url to install from */
+    private String url;
+    /* true if update should be forced without user confirmation */
+    private boolean forceUpdate = false;
+    /* true if user confirmation should be presented */
+    private boolean noConfirmation = false;
 
     /**
      * Gets an image from the internal storage.
@@ -393,16 +408,8 @@ public class GraphicalInstaller extends MIDlet implements CommandListener {
      * update a currently installed suite.
      */
     public GraphicalInstaller() {
-        int    suiteId;
+
         String arg0;
-        String label;
-        String url;
-
-        /* true if update should be forced without user confirmation */
-        boolean forceUpdate = false;
-
-        /* true if user confirmation should be presented */
-        boolean noConfirmation = false; 
 
         installer = new HttpInstaller();
         display = Display.getDisplay(this);
@@ -416,62 +423,93 @@ public class GraphicalInstaller extends MIDlet implements CommandListener {
         url = chmanager.getInstallURL(this);
         if (url != null) {
             label = Resource.getString(ResourceConstants.APPLICATION);
-            installSuite(label, url, false, false);
-            return;
-        }
-
-        arg0 = getAppProperty("arg-0");
-        if (arg0 == null) {
-            // goto back to the discovery midlet
-            exit(false);
-            return;
-        }
-
-        if ("U".equals(arg0)) {
-            String strSuiteID = getAppProperty("arg-1");
-            suiteId = MIDletSuite.UNUSED_SUITE_ID;
-
-            if (strSuiteID != null) {
-              try {
-                  suiteId = Integer.parseInt(strSuiteID);
-              } catch (NumberFormatException nfe) {
-                  // Intentionally ignored
-              }
-            }
-
-            if (suiteId == MIDletSuite.UNUSED_SUITE_ID) {
+            forceUpdate = false;
+            noConfirmation = false;
+        } else {
+            arg0 = getAppProperty("arg-0");
+            if (arg0 == null) {
                 // goto back to the discovery midlet
                 exit(false);
                 return;
             }
 
-            updateSuite(suiteId);
-            return;
-        } else if("FI".equals(arg0)) {
-            /* force installation without user confirmation */
-            noConfirmation = true;
-            /* force installation without user confirmation and force update */
-            forceUpdate = false;
-        } else if("FU".equals(arg0)) {
-            /* force installation without user confirmation */
-            noConfirmation = true;
-            /* force installation without user confirmation and force update */
-            forceUpdate = true;
+            if ("U".equals(arg0)) {
+                String strSuiteID = getAppProperty("arg-1");
+                int suiteId = MIDletSuite.UNUSED_SUITE_ID;
+
+                if (strSuiteID != null) {
+                  try {
+                      suiteId = Integer.parseInt(strSuiteID);
+                  } catch (NumberFormatException nfe) {
+                      // Intentionally ignored
+                  }
+                }
+
+                if (suiteId == MIDletSuite.UNUSED_SUITE_ID) {
+                    // goto back to the discovery midlet
+                    exit(false);
+                    return;
+                }
+
+                updateSuite(suiteId);
+                return;
+            } else if("FI".equals(arg0)) {
+                /* force installation without user confirmation */
+                noConfirmation = true;
+                /* force installation without user confirmation and force update */
+                forceUpdate = false;
+            } else if("FU".equals(arg0)) {
+                /* force installation without user confirmation */
+                noConfirmation = true;
+                /* force installation without user confirmation and force update */
+                forceUpdate = true;
+            }
+
+            url = getAppProperty("arg-1");
+            if (url == null) {
+                // goto back to the discovery midlet
+                exit(false);
+                return;
+            }
+
+            label = getAppProperty("arg-2");
+            if (label == null || label.length() == 0) {
+                label = Resource.getString(ResourceConstants.APPLICATION);
+            }
+        }
+        
+        cancelledMessage =
+            Resource.getString(ResourceConstants.AMS_GRA_INTLR_INST_CAN);
+
+        storageListBox = new List(Resource.getString(
+                ResourceConstants.AMS_GRA_INTLR_SELECT_STORAGE), Choice.IMPLICIT);
+        storageListBox.append(Resource.getString(
+                ResourceConstants.AMS_INTERNAL_STORAGE_NAME), (Image)null);
+
+        String storagePrefix = Resource.getString(ResourceConstants.AMS_EXTRENAL_STORAGE_NAME);
+
+        int validStorageCnt = Constants.MAX_STORAGE_NUM;
+        for (int i = 1; i < Constants.MAX_STORAGE_NUM; i++) {
+            /* IMPL_NOTE: here we should check if storage is accessible and
+               update validStorageCnt accordingly */
+            storageListBox.append(storagePrefix + i, (Image)null);
         }
 
-        url = getAppProperty("arg-1");
-        if (url == null) {
-            // goto back to the discovery midlet
-            exit(false);
-            return;
+        /*
+         * if VERIFY_ONCE is enabled then MONET is disabled
+         * so we don't have to check MONET_ENABLED.
+         */
+        if (Constants.VERIFY_ONCE && (validStorageCnt > 1)) {
+            // select storage
+            storageListBox.addCommand(cancelCmd);
+            storageListBox.addCommand(storeSelectCmd);
+            storageListBox.setSelectCommand(storeSelectCmd);
+            storageListBox.setCommandListener(this);
+            display.setCurrent(storageListBox);
+        } else {
+            // use default storage
+            installSuite(label, url, storageId, forceUpdate, noConfirmation);
         }
-
-        label = getAppProperty("arg-2");
-        if (label == null || label.length() == 0) {
-            label = Resource.getString(ResourceConstants.APPLICATION);
-        }
-
-        installSuite(label, url, forceUpdate, noConfirmation);
     }
 
     /**
@@ -523,6 +561,9 @@ public class GraphicalInstaller extends MIDlet implements CommandListener {
         if (c == nextCmd) {
             // the user has entered a username and password
             resumeInstallWithPassword();
+        } else if (c == storeSelectCmd) {
+            storageId = this.storageListBox.getSelectedIndex();
+            installSuite(label, url, storageId, forceUpdate, noConfirmation);
         } else if (c == okCmd) {
             resumeInstallAfterWarning();
         } else if (c == continueCmd) {
@@ -676,6 +717,7 @@ public class GraphicalInstaller extends MIDlet implements CommandListener {
                                (ResourceConstants.AMS_GRA_INTLR_UPDATING),
                                name,
                                installInfo.getDownloadUrl(),
+                               MIDletSuiteStorage.getMidletSuiteStorageId(id),
                                name + Resource.getString
                                (ResourceConstants.AMS_GRA_INTLR_SUCC_UPDATED),
                                true, false);
@@ -706,10 +748,11 @@ public class GraphicalInstaller extends MIDlet implements CommandListener {
      *
      * @param label label of the URL link
      * @param url HTTP/S URL of the suite to update
+     * @param storageId id of the storage
      * @param forceUpdate no user confirmation for update 
      * @param noConfirmation no user confirmation
      */
-    private void installSuite(String label, String url,
+    private void installSuite(String label, String url, int storageId,
                               boolean forceUpdate, boolean noConfirmation) {
         cancelledMessage =
             Resource.getString(ResourceConstants.AMS_GRA_INTLR_INST_CAN);
@@ -717,7 +760,7 @@ public class GraphicalInstaller extends MIDlet implements CommandListener {
             Resource.getString(ResourceConstants.AMS_GRA_INTLR_FIN_INST);
         installSuiteCommon(Resource.getString
                            (ResourceConstants.AMS_GRA_INTLR_INSTALLING),
-                           label, url,
+                           label, url, storageId,
                            label + Resource.getString
                            (ResourceConstants.AMS_GRA_INTLR_SUCC_INSTALLED),
                            forceUpdate, noConfirmation);
@@ -729,17 +772,18 @@ public class GraphicalInstaller extends MIDlet implements CommandListener {
      * @param action action to put in the form's title
      * @param name name to in the form's title
      * @param url URL of a JAD
+     * @param storageId id of the storage
      * @param successMessage message to display to user upon success
      * @param updateFlag if true the current suite is being updated
      * @param noConfirmation no user confirmation
      */
-    private void installSuiteCommon(String action, String name, String url,
+    private void installSuiteCommon(String action, String name, String url, int storageId,
             String successMessage, boolean updateFlag, boolean noConfirmation) {
         try {
             createProgressForm(action, name, url, 0,
                         Resource.getString(
                             ResourceConstants.AMS_GRA_INTLR_CONN_GAUGE_LABEL));
-            backgroundInstaller = new BackgroundInstaller(this, url, name,
+            backgroundInstaller = new BackgroundInstaller(this, url, name, storageId,
                                       successMessage, updateFlag, noConfirmation);
             new Thread(backgroundInstaller).start();
         } catch (Exception ex) {
@@ -1514,6 +1558,9 @@ public class GraphicalInstaller extends MIDlet implements CommandListener {
         private String url;
         /** Name of MIDlet suite. */
         private String name;
+        /** ID of the storage where the new midlet suite will be installed. */
+        private int storageId;
+
         /**
          * Message for the user after the current install completes
          * successfully.
@@ -1538,18 +1585,21 @@ public class GraphicalInstaller extends MIDlet implements CommandListener {
          * @param theParent parent installer of this object
          * @param theJadUrl where to get the JAD.
          * @param theName name of the MIDlet suite
+         * @param theStorageId id of the storage to install to
          * @param theSuccessMessage message to display to user upon success
          * @param updateFlag if true the current suite should be
          *                      overwritten without asking the user.
-         * @param noConfirmation if true the current suite should be
+         * @param noConfirmationFlag if true the current suite should be
          *                      installed without asking the user.
          */
         private BackgroundInstaller(GraphicalInstaller theParent,
-                String theJadUrl, String theName, String theSuccessMessage,
-                boolean updateFlag, boolean noConfirmationFlag) {
+                String theJadUrl, String theName, int theStorageId,
+                String theSuccessMessage, boolean updateFlag,
+                boolean noConfirmationFlag) {
             parent = theParent;
             url = theJadUrl;
             name = theName;
+            storageId = theStorageId;
             successMessage = theSuccessMessage;
             update = updateFlag;
             noConfirmation = noConfirmationFlag;
