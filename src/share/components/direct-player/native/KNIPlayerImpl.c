@@ -47,7 +47,12 @@ KNIDECL(com_sun_mmedia_PlayerImpl_nInit) {
     jchar* pszURI = NULL;
     KNIPlayerInfo* pKniInfo;
     javacall_result res;
-
+    /*
+    __asm
+    {
+    int 3h
+    }
+    */
     MMP_DEBUG_STR2("+nInit isolate=%d, player=%d\n", isolateId, playerId);
 
     KNI_StartHandles(1);
@@ -60,9 +65,10 @@ KNIDECL(com_sun_mmedia_PlayerImpl_nInit) {
     if (-1 == (URILength = KNI_GetStringLength(URI))) {
         pszURI = NULL;
     } else {
-        pszURI = MMP_MALLOC(URILength * sizeof(jchar));
+        pszURI = MMP_MALLOC((URILength+1) * sizeof(jchar));
         if (pszURI) {
             KNI_GetStringRegion(URI, 0, URILength, pszURI);
+            pszURI[URILength] = 0;
         }
     }
 
@@ -157,9 +163,10 @@ KNIDECL(com_sun_mmedia_PlayerImpl_nRealize) {
         pszMime = NULL;
         mimeLength = 0;
     } else {
-        pszMime = MMP_MALLOC(mimeLength * sizeof(jchar));
+        pszMime = MMP_MALLOC((mimeLength+1) * sizeof(jchar));
         if (pszMime) {
             KNI_GetStringRegion(mime, 0, mimeLength, pszMime);
+            pszMime[mimeLength] = 0;
         } else {
             mimeLength = 0;
         }
