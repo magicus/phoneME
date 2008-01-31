@@ -42,9 +42,9 @@
 #include <midp_logging.h>
 #include <midpMalloc.h>
 #include <midp_properties_port.h>
+#include <stdio.h>
 
 #if 0 /* for local debug */
-#include <stdio.h>
 #define REPORT_INFO(a,b)  printf(b)
 #define REPORT_INFO1(a,b,c)  printf(b,c)
 #define REPORT_INFO2(a,b,c,d)  printf(b,c,d)
