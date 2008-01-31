@@ -466,8 +466,10 @@ class AppProxy {
      * @return <code>true</code> if the application is started.
      */
     boolean launch(String displayName) {
-    	if( MIDletProxyList.getMIDletProxyList(classSecurityToken).
-    								isMidletInList(storageId, classname) )
+    	MIDletProxyList mpList = 
+    		MIDletProxyList.getMIDletProxyList(classSecurityToken);
+    	if( mpList == null ) return false;
+    	if( mpList.isMidletInList(storageId, classname) )
         	return true;
         return MIDletSuiteUtils.execute(classSecurityToken,
                                  	storageId, classname, displayName);

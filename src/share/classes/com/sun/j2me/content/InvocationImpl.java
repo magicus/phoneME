@@ -44,7 +44,7 @@ import javax.microedition.io.ConnectionNotFoundException;
  * of the class MUST be package private.
  */
 public final class InvocationImpl {
-	static public final java.io.PrintStream DEBUG_OUT = System.out; 
+	static public final java.io.PrintStream DEBUG_OUT = null; //System.out; 
 	
     /**
      * The Invocation delegating to this instance.

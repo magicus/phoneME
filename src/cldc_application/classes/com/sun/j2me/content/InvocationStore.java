@@ -40,7 +40,7 @@ package com.sun.j2me.content;
  * requests but blocks, if requested, until it is unblocked.
  */
 public class InvocationStore {
-	protected static final java.io.PrintStream DEBUG_OUT = System.out;
+	protected static final java.io.PrintStream DEBUG_OUT = null; //System.out;
 
     /**
      * The count of cancel requests; access is not synchronized because

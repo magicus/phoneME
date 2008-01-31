@@ -4,7 +4,7 @@ import javax.microedition.content.ContentHandlerException;
 import javax.microedition.content.Invocation;
 
 public final class InvocationStoreProxy {
-	protected static final java.io.PrintStream DEBUG_OUT = System.out;
+	protected static final java.io.PrintStream DEBUG_OUT = null; //System.out;
 
 	static final public int LIT_MIDLET_START_FAILED = 0;
 	static final public int LIT_MIDLET_STARTED = 1;
@@ -20,7 +20,7 @@ public final class InvocationStoreProxy {
         ContentHandlerImpl handler = null;
         if( invoc.ID != null )
             handler = RegistryStore.getHandler(null, invoc.ID, RegistryStore.SEARCH_EXACT);
-		if( DEBUG_OUT != null ) DEBUG_OUT.println( "handler: " + handler.toString() ); 
+		if( DEBUG_OUT != null ) DEBUG_OUT.println( "handler: " + handler ); 
         	
         // check if it is native handler
         if (handler != null && 

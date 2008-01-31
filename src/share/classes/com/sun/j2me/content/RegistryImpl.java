@@ -50,7 +50,7 @@ import com.sun.midp.security.SecurityToken;
  */
 public final class RegistryImpl {
 
-	protected static final java.io.PrintStream DEBUG_OUT = System.out;
+	protected static final java.io.PrintStream DEBUG_OUT = null; //System.out;
 	
     /**
      * Inner class to request security token from SecurityInitializer.
