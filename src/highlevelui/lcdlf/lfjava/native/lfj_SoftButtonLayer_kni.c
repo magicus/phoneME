@@ -43,7 +43,7 @@
  */
  
 KNI_RETURNTYPE_BOOLEAN
-KNIEDECL(com_sun_midp_chameleon_layers_SoftButtonLayer_isNativeSoftButtonLayerSupported0) {
+KNIDECL(com_sun_midp_chameleon_layers_SoftButtonLayer_isNativeSoftButtonLayerSupported0) {
     KNI_ReturnBoolean(lcdlf_is_native_softbutton_layer_supported());
 }
 
