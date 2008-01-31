@@ -48,6 +48,9 @@
   <constant Type="int"
             Name="OK"
             Comment="Abstract Commands and other general strings"/>
+ <constant Type="int"
+            Name="SELECT"
+            Comment="Abstract Commands and other general strings"/>
   <constant Type="int"
             Name="YES"
             Comment="Abstract Commands and other general strings"/>
@@ -330,6 +333,12 @@
   <constant Type="int"
             Name="LCDUI_TF_CAPS_ON_LB_PTI"
             Comment="Input Methods: Lable name for 'PTI' caps on"/>
+  <constant Type="int"
+            Name="AMS_SELECT_FOLDER"
+            Comment="AMS: general"/>
+  <constant Type="int"
+            Name="AMS_CHANGE_FOLDER"
+            Comment="AMS: general"/>
   <constant Type="int"
             Name="AMS_NO_CA_FOUND"
             Comment="AMS: general"/>

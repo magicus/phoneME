@@ -276,6 +276,11 @@ class AppManagerUI extends Form
                                            (ResourceConstants.NO),
                                            Command.BACK, 1);
 
+    /** Command object for "Select" command in folder list. */
+    private Command selectFolderCmd = new Command(Resource.getString
+                                           (ResourceConstants.SELECT),
+                                           Command.OK, 1);
+
     /** Display for the Manager MIDlet. */
     ApplicationManager manager;
 
@@ -294,6 +299,9 @@ class AppManagerUI extends Form
     /** last Item that was selected */
     private RunningMIDletSuiteInfo lastSelectedMsi;
 
+   /** vector of existing MidletCustomItems */
+    private Vector mciVector;
+
     /**
      * There are several Application Manager
      * midlets from the same "internal" midlet suite
@@ -311,6 +319,15 @@ class AppManagerUI extends Form
 
     private MIDletSwitcher midletSwitcher;
 
+    /** List of available folders */
+    private FolderList folderList;
+
+    /** currently selected folder */
+    private Folder currentFolder;
+
+    /** If there are folders */
+    private boolean foldersOn;
+
     /**
      * Creates and populates the Application Selector Screen.
      * @param manager - The application manager that invoked it
@@ -326,6 +343,8 @@ class AppManagerUI extends Form
                  DisplayError displayError, boolean first,
                  MIDletSuiteInfo ms) {
         super(null);
+
+        mciVector = new Vector();
 
         try {
             caManagerIncluded = Class.forName(CA_MANAGER) != null;
@@ -344,11 +363,27 @@ class AppManagerUI extends Form
         setTitle(Resource.getString(ResourceConstants.AMS_MGR_TITLE));
         updateContent();
 
-        addCommand(exitCmd);
+        folderList = new FolderList();
+        folderList.addCommand(exitCmd);
+        folderList.addCommand(selectFolderCmd);
+        folderList.setSelectCommand(selectFolderCmd);
+        folderList.setCommandListener(this);
+        foldersOn = folderList.hasItems();
+
+        if (foldersOn) {
+            addCommand(backCmd);
+        } else {
+            addCommand(exitCmd);
+        }
+        
         setCommandListener(this);
 
         if (first) {
-            display.setCurrent(new SplashScreen(display, this));
+            if (foldersOn) {
+                display.setCurrent(new SplashScreen(display, folderList));
+            } else {
+                display.setCurrent(new SplashScreen(display, this));
+            }
         } else {
             // if a MIDlet was just installed
             // getLastInstalledMidletItem() will return MidletCustomItem
@@ -362,19 +397,19 @@ class AppManagerUI extends Form
                 if (ms != null) {
                     // Find item to select
                     if (ms.suiteId == MIDletSuite.INTERNAL_SUITE_ID) {
-                        for (int i = 0; i < size(); i++) {
-                            MidletCustomItem mi = (MidletCustomItem)get(i);
+                        for (int i = 0; i < mciVector.size(); i++) {
+                            MidletCustomItem mi = (MidletCustomItem)mciVector.elementAt(i);
                             if ((mi.msi.suiteId == MIDletSuite.INTERNAL_SUITE_ID)
                                 && (mi.msi.midletToRun.equals(ms.midletToRun))) {
-                                display.setCurrentItem(mi);
+                                selectItem(mi);
                                 break;
                             }
                         }
                     } else {
-                        for (int i = 0; i < size(); i++) {
-                            MidletCustomItem mi = (MidletCustomItem)get(i);
+                        for (int i = 0; i < mciVector.size(); i++) {
+                            MidletCustomItem mi = (MidletCustomItem)mciVector.elementAt(i);
                             if (mi.msi.suiteId == ms.suiteId) {
-                                display.setCurrentItem(mi);
+                                selectItem(mi);
                                 break;
                             }
                         }
@@ -384,6 +419,40 @@ class AppManagerUI extends Form
         }
     }
 
+
+    /**
+     * Selects specified item. If necessary changes folder to items folder. 
+     */
+    private void selectItem(MidletCustomItem mi) {
+        if (foldersOn) {
+            if (currentFolder.getId() != mi.msi.folderId) {
+                setFolder(FolderManager.getFolderById(mi.msi.folderId));
+            }
+        }
+        display.setCurrentItem(mi);
+    }
+
+    private void setFolder(Folder f) {
+        if (!foldersOn) {
+            return;
+        }
+        if (currentFolder == f) {
+            return;
+        }
+        currentFolder = f;
+        deleteAll();
+        int newFolderId = currentFolder.getId(); 
+
+        for (int i = 0; i < mciVector.size(); i++) {
+            MidletCustomItem mci = (MidletCustomItem)mciVector.elementAt(i);
+            if (newFolderId != mci.msi.folderId) {
+                mci.index = -1;
+            } else {
+                mci.index = append(mci);
+            }
+        }
+    }
+    
     /**
      * Shows ODT Agent midlet in the midlet list. 
      */
@@ -433,7 +502,7 @@ class AppManagerUI extends Form
     public void commandAction(Command c, Displayable s) {
 
         if (c == exitCmd) {
-            if (s == this) {
+            if ((s == this) || s == folderList) {
                 manager.shutDown();
             }
             return;
@@ -484,7 +553,15 @@ class AppManagerUI extends Form
                 return;
             }
 
-        } else if (c != backCmd) {
+        } else if (c == selectFolderCmd) {
+            Folder f = folderList.getSelectedFolder();
+            setFolder(f);
+        } else if (c == backCmd) {
+            if (display.getCurrent() == this) {
+                display.setCurrent(folderList);
+                return;
+            }
+        } else {
             return;
         }
 
@@ -607,8 +684,8 @@ class AppManagerUI extends Form
             appManagerMidlet = midlet;
         } else {
             MidletCustomItem ci;
-            for (int i = 0; i < size(); i++) {
-                ci = (MidletCustomItem)get(i);
+            for (int i = 0; i < mciVector.size(); i++) {
+                ci = (MidletCustomItem)mciVector.elementAt(i);
 
                 if (ci.msi.equals(midlet)) {
                     ci.removeCommand(launchCmd);
@@ -643,8 +720,8 @@ class AppManagerUI extends Form
     void notifyMidletStateChanged(MIDletProxy midlet) {
         MidletCustomItem mci = null;
 
-        for (int i = 0; i < size(); i++) {
-            mci = (MidletCustomItem)get(i);
+        for (int i = 0; i < mciVector.size(); i++) {
+            mci = (MidletCustomItem)mciVector.elementAt(i);
             if (mci.msi.proxy == midlet) {
                 mci.update();
             }
@@ -668,8 +745,8 @@ class AppManagerUI extends Form
         } else {
             MidletCustomItem ci;
 
-            for (int i = 0; i < size(); i++) {
-                ci = (MidletCustomItem)get(i);
+            for (int i = 0; i < mciVector.size(); i++) {
+                ci = (MidletCustomItem)mciVector.elementAt(i);
 
                 if (ci.msi.equals(midlet)) {
                     ci.removeCommand(fgCmd);
@@ -823,11 +900,17 @@ class AppManagerUI extends Form
         RunningMIDletSuiteInfo msi = null;
         boolean newlyAdded;
 
+        if (foldersOn) {
+            if (null == currentFolder) {
+
+            }
+        }
+
         suiteIds = midletSuiteStorage.getListOfSuites();
 
         // Add the Installer as the first installed midlet
-        if (size() > 0) {
-            msi = ((MidletCustomItem)get(0)).msi;
+        if (mciVector.size() > 0) {
+            msi = ((MidletCustomItem)mciVector.elementAt(0)).msi;
         }
 
         if (msi == null || msi.midletToRun == null ||
@@ -862,8 +945,8 @@ class AppManagerUI extends Form
 
         if (caManagerIncluded) {
             // Add the CA manager as the second installed midlet
-            if (size() > 1) {
-                msi = ((MidletCustomItem)get(1)).msi;
+            if (mciVector.size() > 1) {
+                msi = ((MidletCustomItem)mciVector.elementAt(1)).msi;
             }
 
             if (msi == null || msi.midletToRun == null ||
@@ -877,8 +960,8 @@ class AppManagerUI extends Form
 
         if (oddEnabled) {
             // Add the ODT Agent midlet as the third installed midlet
-            if (size() > 2) {
-                msi = ((MidletCustomItem)get(2)).msi;
+            if (mciVector.size() > 2) {
+                msi = ((MidletCustomItem)mciVector.elementAt(2)).msi;
             }
 
             if (msi == null || msi.midletToRun == null ||
@@ -909,8 +992,8 @@ class AppManagerUI extends Form
                     new RunningMIDletSuiteInfo(temp, midletSuiteStorage);
 
                 newlyAdded = true;
-                for (int k = 0; k < size(); k++) {
-                    MidletCustomItem mci = (MidletCustomItem)get(k);
+                for (int k = 0; k < mciVector.size(); k++) {
+                    MidletCustomItem mci = (MidletCustomItem)mciVector.elementAt(k);
 
                     if (suiteIds[lowest] == mci.msi.suiteId) {
                         newlyAdded = false;
@@ -976,6 +1059,7 @@ class AppManagerUI extends Form
      *                  of the recently started midlet
      */
     private void append(RunningMIDletSuiteInfo suiteInfo) {
+    
         MidletCustomItem ci = new MidletCustomItem(suiteInfo);
 
         if (suiteInfo.midletToRun != null &&
@@ -1003,9 +1087,26 @@ class AppManagerUI extends Form
             }
         }
 
-        ci.setItemCommandListener(this);
-        append(ci);
-        ci.setOwner(this);
+        ci.index = -1;
+        mciVector.addElement(ci);
+
+        if (foldersOn) {
+            /* check if suiteInfo corresponds to current folder */
+            if (null == currentFolder) {
+                /* no selected folder */
+                return;
+            } else {
+                if (currentFolder.getId() == suiteInfo.folderId) {
+                    ci.setItemCommandListener(this);
+                    append(ci);
+                    ci.setOwner(this);
+                }
+            }
+        }  else {
+            ci.setItemCommandListener(this);
+            ci.index = append(ci);
+            ci.setOwner(this);
+        }
     }
 
     /**
@@ -1022,13 +1123,13 @@ class AppManagerUI extends Form
         }
 
         // the last item in AppSelector is time
-        for (int i = 0; i < size(); i++) {
-            msi = (RunningMIDletSuiteInfo)((MidletCustomItem)get(i)).msi;
-            if (msi == suiteInfo) {
+        for (int i = 0; i < mciVector.size(); i++) {
+            MidletCustomItem mci = (MidletCustomItem)mciVector.elementAt(i); 
+            if (mci.msi == suiteInfo) {
                 PAPICleanUp.removeMissedTransaction(suiteInfo.suiteId);
 
-                if (msi.proxy != null) {
-                    msi.proxy.destroyMidlet();
+                if (mci.msi.proxy != null) {
+                    mci.msi.proxy.destroyMidlet();
                 }
 
                 try {
@@ -1062,7 +1163,8 @@ class AppManagerUI extends Form
                     // we can't do anything meaningful at this point.
                 }
 
-                delete(i);
+                delete(mci.index);
+                mciVector.removeElementAt(i--);
                 removeMsi = null;
                 break;
             }
@@ -1295,8 +1397,8 @@ class AppManagerUI extends Form
 
         if (installedMidlet != MIDletSuite.UNUSED_SUITE_ID &&
                 installedMidlet != MIDletSuite.INTERNAL_SUITE_ID) {
-            for (int i = 0; i < size(); i++) {
-                MidletCustomItem ci = (MidletCustomItem)get(i);
+            for (int i = 0; i < mciVector.size(); i++) {
+                MidletCustomItem ci = (MidletCustomItem)mciVector.elementAt(i);
                 if (ci.msi.suiteId == installedMidlet) {
                     return ci;
                 }
@@ -1372,8 +1474,8 @@ class AppManagerUI extends Form
         MidletCustomItem ci;
         RunningMIDletSuiteInfo msi;
 
-        for (int i = 0; i < size(); i++) {
-            ci = (MidletCustomItem)get(i);
+        for (int i = 0; i < mciVector.size(); i++) {
+            ci = (MidletCustomItem)mciVector.elementAt(i);
             msi = ci.msi;
             if (msi.suiteId == MIDletSuite.INTERNAL_SUITE_ID &&
                 msi.proxy != null && (DISCOVERY_APP.equals(msi.midletToRun) ||
@@ -1764,6 +1866,9 @@ class AppManagerUI extends Form
         Image icon; // = null
         /** current default command */
         Command default_command; // = null
+
+        /** xurrent index of the item on a form or -1 if it is not there */
+        int index;
     }
 }
 

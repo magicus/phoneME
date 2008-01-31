@@ -50,6 +50,7 @@ MIDP_JAVADOC_SOURCEPATH += $(APPMANAGER_UI_DIR)/classes
 SUBSYSTEM_AMS_JAVA_FILES += \
     $(APPMANAGER_UI_DIR)/classes/com/sun/midp/appmanager/AppInfo.java \
     $(APPMANAGER_UI_DIR)/classes/com/sun/midp/appmanager/AppManagerUI.java \
+    $(APPMANAGER_UI_DIR)/classes/com/sun/midp/appmanager/FolderList.java \
     $(APPMANAGER_UI_DIR)/classes/com/sun/midp/appmanager/AppSettings.java \
     $(APPMANAGER_UI_DIR)/classes/com/sun/midp/appmanager/DisplayError.java \
     $(APPMANAGER_UI_DIR)/classes/com/sun/midp/appmanager/MIDletSelector.java \

@@ -34,6 +34,8 @@ import com.sun.midp.configurator.Constants;
 public class MIDletSuiteInfo {
     /** ID of the MIDlet suite. */
     public int suiteId;
+    
+    public int folderId;
     /** ID of the storage where the MIDlet is installed. */
     public int storageId = Constants.INTERNAL_STORAGE_ID;
     /** Display name of the MIDlet suite. */
