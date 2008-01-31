@@ -281,6 +281,16 @@ class AppManagerUI extends Form
                                            (ResourceConstants.SELECT),
                                            Command.OK, 1);
 
+    /** Command object for "Select" command in folder list. */
+    private Command selectItemFolderCmd = new Command(Resource.getString
+                                           (ResourceConstants.SELECT),
+                                           Command.OK, 1);
+
+    /** Command object for "Change folder" command. */
+    private Command changeFolderCmd = new Command(Resource.getString
+                                           (ResourceConstants.AMS_CHANGE_FOLDER),
+                                           Command.ITEM, 1);
+
     /** Display for the Manager MIDlet. */
     ApplicationManager manager;
 
@@ -322,11 +332,18 @@ class AppManagerUI extends Form
     /** List of available folders */
     private FolderList folderList;
 
-    /** currently selected folder */
-    private Folder currentFolder;
+    /** List of available folders */
+    private FolderList itemFolderList;
+
+    /** currently selected folder' id */
+    private int currentFolderId;
 
     /** If there are folders */
     private boolean foldersOn;
+
+    /** custom item for which command to change folder was activated */
+    private MidletCustomItem mciToChangeFolder;
+
 
     /**
      * Creates and populates the Application Selector Screen.
@@ -343,6 +360,22 @@ class AppManagerUI extends Form
                  DisplayError displayError, boolean first,
                  MIDletSuiteInfo ms) {
         super(null);
+
+        mciToChangeFolder = null;
+        
+        folderList = new FolderList();
+        folderList.addCommand(exitCmd);
+        folderList.addCommand(selectFolderCmd);
+        folderList.setSelectCommand(selectFolderCmd);
+        folderList.setCommandListener(this);
+        foldersOn = folderList.hasItems();
+        /* IMPL_NOTE: optimization possible: use onre Folder List for ams and
+         * for items.
+         */
+        itemFolderList = new FolderList();
+        itemFolderList.addCommand(selectItemFolderCmd);
+        itemFolderList.setSelectCommand(selectItemFolderCmd);
+        itemFolderList.setCommandListener(this);
 
         mciVector = new Vector();
 
@@ -362,13 +395,6 @@ class AppManagerUI extends Form
 
         setTitle(Resource.getString(ResourceConstants.AMS_MGR_TITLE));
         updateContent();
-
-        folderList = new FolderList();
-        folderList.addCommand(exitCmd);
-        folderList.addCommand(selectFolderCmd);
-        folderList.setSelectCommand(selectFolderCmd);
-        folderList.setCommandListener(this);
-        foldersOn = folderList.hasItems();
 
         if (foldersOn) {
             addCommand(backCmd);
@@ -425,27 +451,20 @@ class AppManagerUI extends Form
      */
     private void selectItem(MidletCustomItem mi) {
         if (foldersOn) {
-            if (currentFolder.getId() != mi.msi.folderId) {
-                setFolder(FolderManager.getFolderById(mi.msi.folderId));
+            if (currentFolderId != mi.msi.folderId) {
+                setFolder(mi.msi.folderId);
             }
         }
         display.setCurrentItem(mi);
     }
 
-    private void setFolder(Folder f) {
-        if (!foldersOn) {
-            return;
-        }
-        if (currentFolder == f) {
-            return;
-        }
-        currentFolder = f;
+    private void setFolder(int fid) {
+        currentFolderId = fid;
         deleteAll();
-        int newFolderId = currentFolder.getId(); 
 
         for (int i = 0; i < mciVector.size(); i++) {
             MidletCustomItem mci = (MidletCustomItem)mciVector.elementAt(i);
-            if (newFolderId != mci.msi.folderId) {
+            if (currentFolderId != mci.msi.folderId) {
                 mci.index = -1;
             } else {
                 mci.index = append(mci);
@@ -554,10 +573,35 @@ class AppManagerUI extends Form
             }
 
         } else if (c == selectFolderCmd) {
-            Folder f = folderList.getSelectedFolder();
-            setFolder(f);
+            if (foldersOn) {
+                Folder f = folderList.getSelectedFolder();
+                setFolder(f.getId());
+            }
+        } else if (c == selectItemFolderCmd) {
+            if (foldersOn && (null != mciToChangeFolder)) {
+                Folder f = itemFolderList.getSelectedFolder();
+                int folderId = f.getId();
+
+                if (mciToChangeFolder.msi.folderId != folderId) {
+                    try {
+                        midletSuiteStorage.moveSuiteToFolder(mciToChangeFolder.msi.suiteId,folderId);
+                        mciToChangeFolder.msi.folderId = folderId;
+                        if (currentFolderId != folderId) {
+                            /*
+                             * IMPL_NOTE: optimization possible - we can remove only
+                             *  one item and avoid full refresh
+                             */
+                            setFolder(currentFolderId);
+                        }
+                    } catch (Throwable t) {
+                        displayError.showErrorAlert(mciToChangeFolder.msi.displayName, t, null, null);
+                    }
+                    mciToChangeFolder = null;
+                }
+            }
+            display.setCurrent(this);
         } else if (c == backCmd) {
-            if (display.getCurrent() == this) {
+            if ((display.getCurrent() == this) && foldersOn) {
                 display.setCurrent(folderList);
                 return;
             }
@@ -660,6 +704,11 @@ class AppManagerUI extends Form
         } else if (c == endCmd) {
             manager.exitMidlet(msi);
             display.setCurrent(this);
+        } else if (c == changeFolderCmd) {
+            mciToChangeFolder = (MidletCustomItem)item;
+            if (foldersOn) {
+                display.setCurrent(itemFolderList);
+            }
 
         }
     }
@@ -900,12 +949,6 @@ class AppManagerUI extends Form
         RunningMIDletSuiteInfo msi = null;
         boolean newlyAdded;
 
-        if (foldersOn) {
-            if (null == currentFolder) {
-
-            }
-        }
-
         suiteIds = midletSuiteStorage.getListOfSuites();
 
         // Add the Installer as the first installed midlet
@@ -1085,22 +1128,21 @@ class AppManagerUI extends Form
                 // setDefaultCommand will add default command first
                 ci.setDefaultCommand(launchCmd);
             }
+            if (foldersOn) {
+                ci.addCommand(changeFolderCmd);
+            }
         }
 
         ci.index = -1;
+
         mciVector.addElement(ci);
 
         if (foldersOn) {
             /* check if suiteInfo corresponds to current folder */
-            if (null == currentFolder) {
-                /* no selected folder */
-                return;
-            } else {
-                if (currentFolder.getId() == suiteInfo.folderId) {
-                    ci.setItemCommandListener(this);
-                    append(ci);
-                    ci.setOwner(this);
-                }
+            if (currentFolderId == suiteInfo.folderId) {
+                ci.setItemCommandListener(this);
+                append(ci);
+                ci.setOwner(this);
             }
         }  else {
             ci.setItemCommandListener(this);
@@ -1167,6 +1209,14 @@ class AppManagerUI extends Form
                 mciVector.removeElementAt(i--);
                 removeMsi = null;
                 break;
+            }
+            if (foldersOn) {
+               /*
+                * IMPL_NOTE: if delete happened, mci.index are broken
+                * and we have to restore them. At the moment it is done
+                * by full refresh, but optimization is possible here
+                */
+                setFolder(currentFolderId);
             }
         }
 
