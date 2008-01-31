@@ -449,14 +449,14 @@ midp_change_suite_storage(SuiteIdType suiteId, StorageIdType newStorageId) {
             }
         }
 
-         /*
-          * This is a public API which can be called without the VM running
-          * so we need automatically init anything needed, to make the
-          * caller's code less complex.
-          *
-          * Initialization is performed in steps so that we do use any
-          * extra resources such as the VM for the operation being performed.
-          */
+        /*
+         * This is a public API which can be called without the VM running
+         * so we need automatically init anything needed, to make the
+         * caller's code less complex.
+         *
+         * Initialization is performed in steps so that we do use any
+         * extra resources such as the VM for the operation being performed.
+         */
         if (midpInit(REMOVE_LEVEL) != 0) {
             remove_storage_lock(suiteId);
             return OUT_OF_MEMORY;
@@ -560,6 +560,71 @@ midp_change_suite_storage(SuiteIdType suiteId, StorageIdType newStorageId) {
     }
  }
 
+/**
+ * Moves the given midlet suite to another folder.
+ *
+ * @param suiteId ID of the suite
+ * @param newFolderId ID of the folder where the suite must be moved
+ *
+ * @return ALL_OK if no errors or an error code
+ */
+MIDPError midp_move_suite_to_folder(SuiteIdType suiteId,
+                                    FolderIdType newFolderId) {
+    MIDPError status = ALL_OK;
+    char* pszError = NULL;
+    lockStorageList *node = NULL;
+    MidletSuiteData* pSuiteData;
+    FolderIdType oldFolderId;
+
+    /*
+     * This is a public API which can be called without the VM running
+     * so we need automatically init anything needed, to make the
+     * caller's code less complex.
+     *
+     * Initialization is performed in steps so that we do use any
+     * extra resources such as the VM for the operation being performed.
+     */
+    if (midpInit(REMOVE_LEVEL) != 0) {
+        return OUT_OF_MEMORY;
+    }
+
+    /* load _suites.dat */
+    status = read_suites_data(&pszError);
+    storageFreeError(pszError);
+
+    if (status != ALL_OK) {
+        return status;
+    }
+
+    node = find_storage_lock(suiteId);
+    if (node != NULL) {
+        if (node->update != KNI_TRUE) {
+            return SUITE_LOCKED;
+        }
+    }
+
+    pSuiteData = get_suite_data(suiteId);
+    if (pSuiteData == NULL) {
+        remove_storage_lock(suiteId);
+        return NOT_FOUND;
+    }
+
+    oldFolderId = pSuiteData->folderId;
+    pSuiteData->folderId = newFolderId;
+
+    status = begin_transaction(TRANSACTION_MOVE_TO_FOLDER, suiteId, NULL);
+
+    if (status != ALL_OK) {
+        pSuiteData->folderId = oldFolderId;
+        (void)rollback_transaction();
+    } else {
+        (void)finish_transaction();
+    }
+
+    remove_storage_lock(suiteId);
+
+    return status;
+}
 
 /**
  * Gets the amount of storage on the device that this suite is using.

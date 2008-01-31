@@ -50,6 +50,11 @@ extern "C" {
 typedef jint SuiteIdType;
 
 /**
+ * Type of the AMS folder ID.
+ */
+typedef jint FolderIdType;
+
+/**
  * Predefined suite IDs.
  */
 #define UNUSED_SUITE_ID     0
@@ -161,6 +166,11 @@ typedef struct _midletSuiteData {
      * or another value for external storages).
      */
     jint storageId;
+
+    /**
+     * ID of the folder (see src/ams/ams_folders library for more info).
+     */
+    jint folderId;
 
     /** True if the suite enabled, false otherwise. */
     jboolean isEnabled;
@@ -335,6 +345,18 @@ midp_suite_get_cached_resource_filename(SuiteIdType suiteId,
  */
 MIDPError
 midp_suite_get_suite_storage(SuiteIdType suiteId, StorageIdType* pStorageId);
+
+/**
+ * Retrieves an ID of the folder where the midlet suite with the given suite ID
+ * is stored.
+ *
+ * @param suiteId The application suite ID
+ * @param pFolderId [out] receives an ID of the folder where the suite is stored
+ *
+ * @return error code (ALL_OK if successful)
+ */
+MIDPError
+midp_suite_get_suite_folder(SuiteIdType suiteId, FolderIdType* pFolderId);
 
 /**
  * If the suite exists, this function returns a unique identifier of

@@ -34,10 +34,10 @@ import com.sun.midp.configurator.Constants;
 public class MIDletSuiteInfo {
     /** ID of the MIDlet suite. */
     public int suiteId;
-    
-    public int folderId;
     /** ID of the storage where the MIDlet is installed. */
     public int storageId = Constants.INTERNAL_STORAGE_ID;
+    /** ID of the folder where the MIDlet resides. */
+    public int folderId = 0;
     /** Display name of the MIDlet suite. */
     public String displayName = null;
     /** Name of the MIDlet to run. */
@@ -60,8 +60,6 @@ public class MIDletSuiteInfo {
      */
     public MIDletSuiteInfo(int theID) {
         suiteId = theID;
-        //tmp
-        folderId = 0;
     }
 
     /**
@@ -78,8 +76,6 @@ public class MIDletSuiteInfo {
         midletToRun = theMidletToRun;
         displayName = theDisplayName;
         enabled = isEnabled;
-        //tmp
-        folderId = 0;
     }
 
     /**
@@ -118,8 +114,6 @@ public class MIDletSuiteInfo {
         suiteId = theID;
 
         enabled = theMidletSuite.isEnabled();
-        //tmp
-        folderId = 0;
     }
 
     /**
@@ -138,7 +132,8 @@ public class MIDletSuiteInfo {
      */
     public String toString() {
         StringBuffer b = new StringBuffer();
-        b.append("id = " + suiteId);
+        b.append("suiteId  = " + suiteId);
+        b.append("folderId = " + folderId);
         b.append(", midletToRun = " + midletToRun);
         return b.toString();
     }

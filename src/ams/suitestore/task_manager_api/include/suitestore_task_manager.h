@@ -135,7 +135,19 @@ MIDPError midp_remove_suite(SuiteIdType suiteId);
  * to move suite to the external storage, GENERAL_ERROR if
  * VERIFY_ONCE is not enabled and if MONET is enabled
  */
-MIDPError midp_change_suite_storage(SuiteIdType suiteId, StorageIdType newStorageId);
+MIDPError midp_change_suite_storage(SuiteIdType suiteId,
+                                    StorageIdType newStorageId);
+
+/**
+ * Moves the given midlet suite to another folder.
+ *
+ * @param suiteId ID of the suite
+ * @param newFolderId ID of the folder where the suite must be moved
+ *
+ * @return ALL_OK if no errors or an error code
+ */
+MIDPError midp_move_suite_to_folder(SuiteIdType suiteId,
+                                    FolderIdType newFolderId);
 
 /**
  * Gets the amount of storage on the device that this suite is using.

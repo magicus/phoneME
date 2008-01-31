@@ -157,6 +157,7 @@ public class MIDletSuiteStorage {
      * @exception MIDletSuiteLockedException is thrown, if the MIDletSuite is
      * locked; MIDletSuiteCorruptedException is thrown if the MIDletSuite is
      * corrupted
+     * @exception MIDletSuiteCorruptedException if the suite is corrupted
      *
      * @return MIDlet Suite reference
      */
