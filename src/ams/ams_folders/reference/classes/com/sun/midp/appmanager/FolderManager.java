@@ -42,7 +42,6 @@ public class FolderManager {
     public static final int DEFAULT_FOLDER_ID = 1;
 
     private static Vector foldersVector = new Vector(5);
-    private static int defaultFolderId;
 
     /**
      * Initialization.
@@ -69,8 +68,14 @@ public class FolderManager {
         return foldersVector;
     }
 
+    /**
+     * Returns an ID of the folder where user applications
+     * are installed by default. 
+     *
+     * @return ID of the folder where user applications are installed by default
+     */
     public static int getDefaultFolderId() {
-        return defaultFolderId;
+        return DEFAULT_FOLDER_ID;
     }
 
     /**
@@ -124,7 +129,7 @@ public class FolderManager {
     private static void loadFoldersInfo0() {
         /* IMPL_NOTE: temporary hardcoded, should be moved to an xml */
         foldersVector.addElement(new Folder(0, -1, "Preinstalled apps", null));
-        foldersVector.addElement(new Folder(1, -1, "Other apps", null));
-        defaultFolderId = 1;
+        foldersVector.addElement(new Folder(DEFAULT_FOLDER_ID,
+                                            -1, "Other apps", null));
     }
 }
