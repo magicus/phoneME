@@ -609,10 +609,17 @@ MIDPError midp_move_suite_to_folder(SuiteIdType suiteId,
         return NOT_FOUND;
     }
 
+    status = begin_transaction(TRANSACTION_MOVE_TO_FOLDER, suiteId, NULL);
+    if (status != ALL_OK) {
+        remove_storage_lock(suiteId);
+        return status;
+    }
+
     oldFolderId = pSuiteData->folderId;
     pSuiteData->folderId = newFolderId;
 
-    status = begin_transaction(TRANSACTION_MOVE_TO_FOLDER, suiteId, NULL);
+    status = write_suites_data(&pszError);
+    storageFreeError(pszError);
 
     if (status != ALL_OK) {
         pSuiteData->folderId = oldFolderId;
