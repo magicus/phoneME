@@ -348,7 +348,7 @@ endif
 # Description: JSR 184: Mobile 3D Graphics
 #####################################################################
 ifeq ($(USE_JSR_184), true)
-include $(JSR_184_DIR)/src/config/$(SUBSYSTEM_MAKE_FILE)
+include $(JSR_184_DIR)/build/$(SUBSYSTEM_MAKE_FILE)
 endif
 
 #####################################################################
