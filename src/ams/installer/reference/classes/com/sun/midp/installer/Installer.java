@@ -63,6 +63,7 @@ import com.sun.midp.log.Logging;
 import com.sun.midp.log.LogChannels;
 
 import com.sun.midp.configurator.Constants;
+import com.sun.midp.appmanager.FolderManager;
 
 /**
  * An Installer manages MIDlet suites and libraries
@@ -1218,6 +1219,7 @@ public abstract class Installer {
             msi.preinstalled = false;
             msi.iconName = iconName;
             msi.storageId = state.storageId;
+            msi.folderId = FolderManager.getDefaultFolderId();
 
             state.midletSuiteStorage.storeSuite(info, settings, msi,
                                                 state.jadProps, state.jarProps);

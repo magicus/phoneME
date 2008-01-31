@@ -33,6 +33,7 @@ import java.util.Vector;
  */
 public class FolderManager {
     private static Vector foldersVector = new Vector(5);
+    private static int defaultFolderId;
 
     /**
      * Initialization.
@@ -57,6 +58,10 @@ public class FolderManager {
      */
     public static Vector getFolders() {
         return foldersVector;
+    }
+
+    public static int getDefaultFolderId() {
+        return defaultFolderId;
     }
 
     /**
@@ -99,5 +104,10 @@ public class FolderManager {
     /**
      * Loads information about folders present in the system.
      */
-    private static void loadFoldersInfo0() {}
+    private static void loadFoldersInfo0() {
+        /* temporary hardcoded */
+        foldersVector.addElement(new Folder(0, -1, "preinstalled apps", null));
+        foldersVector.addElement(new Folder(1, -1, "other apps", null));
+        defaultFolderId = 1;
+    }
 }

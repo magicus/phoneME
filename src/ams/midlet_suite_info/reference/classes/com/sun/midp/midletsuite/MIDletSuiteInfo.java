@@ -60,6 +60,8 @@ public class MIDletSuiteInfo {
      */
     public MIDletSuiteInfo(int theID) {
         suiteId = theID;
+        //tmp
+        folderId = 0;
     }
 
     /**
@@ -76,6 +78,8 @@ public class MIDletSuiteInfo {
         midletToRun = theMidletToRun;
         displayName = theDisplayName;
         enabled = isEnabled;
+        //tmp
+        folderId = 0;
     }
 
     /**
@@ -114,6 +118,8 @@ public class MIDletSuiteInfo {
         suiteId = theID;
 
         enabled = theMidletSuite.isEnabled();
+        //tmp
+        folderId = 0;
     }
 
     /**
