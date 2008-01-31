@@ -292,11 +292,22 @@ System.out.println("PlayerImpl getPlayerFromType return=" + playerInst);
      * @exception  IOException     Description of the Exception
      * @exception  MediaException  Description of the Exception
      */
-    private static BasicPlayer getPlayerFromType(String type) throws MediaException {
+    private BasicPlayer getPlayerFromType(String type) throws MediaException {
         String className;
 
         className = Configuration.getConfiguration().getHandler(type);
 System.out.println("PlayerImpl getPlayerFromType className=" + className);
+        if (className == null) {
+            if (DirectPlayer.nIsVideoControlSupported(hNative)) {
+                className = "com.sun.mmedia.DirectVideo";
+            } else if (DirectPlayer.nIsToneControlSupported(hNative)) {
+                className = "com.sun.mmedia.DirectTone";
+            } else if (DirectPlayer.nIsMIDIControlSupported(hNative)) {
+                className = "com.sun.mmedia.DirectMIDI";
+            } else {
+                className = "com.sun.mmedia.DirectPlayer";
+            }              
+        }
 
         if ((type == null) || className == null) {
             throw new MediaException(PL_ERR_SH + "MediaFormat " + type + " is not supported");

@@ -156,17 +156,17 @@ public class DirectPlayer extends BasicPlayer
     // Provide whole media content size, if known
     private native void nSetWholeContentSize(int hNative, long contentSize);
     // Is Control supported by native or not
-    private static native boolean nIsFramePositioningControlSupported(int hNative);
-    private static native boolean nIsMetaDataControlSupported(int hNative);
-    private static native boolean nIsMIDIControlSupported(int hNative);
-    private static native boolean nIsPitchControlSupported(int hNative);
-    private static native boolean nIsRateControlSupported(int hNative);
-    private static native boolean nIsRecordControlSupported(int hNative);
-    private static native boolean nIsStopTimeControlSupported(int hNative);
-    private static native boolean nIsTempoControlSupported(int hNative);
-    private static native boolean nIsVideoControlSupported(int hNative);
-    private static native boolean nIsToneControlSupported(int hNative);
-    private static native boolean nIsVolumeControlSupported(int hNative);
+    protected static native boolean nIsFramePositioningControlSupported(int hNative);
+    protected static native boolean nIsMetaDataControlSupported(int hNative);
+    protected static native boolean nIsMIDIControlSupported(int hNative);
+    protected static native boolean nIsPitchControlSupported(int hNative);
+    protected static native boolean nIsRateControlSupported(int hNative);
+    protected static native boolean nIsRecordControlSupported(int hNative);
+    protected static native boolean nIsStopTimeControlSupported(int hNative);
+    protected static native boolean nIsTempoControlSupported(int hNative);
+    protected static native boolean nIsVideoControlSupported(int hNative);
+    protected static native boolean nIsToneControlSupported(int hNative);
+    protected static native boolean nIsVolumeControlSupported(int hNative);
 
     // Member functions /////////////////////////////////////////////////
 
