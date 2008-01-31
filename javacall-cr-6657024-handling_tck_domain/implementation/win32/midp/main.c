@@ -118,7 +118,7 @@ javacall_bool mainArgumentsHandle(int argc, char *argv[]) {
 
         /* installer.AutoTester */
         javacall_print("main() Starting AutoTester without url\n");
-        javanotify_start_tck("none", JAVACALL_LIFECYCLE_TCK_DOMAIN_UNTRUSTED_MAX);
+        javanotify_start_tck("none", "maximum");
 
     } else if(((argc == 3) || (argc == 4)) && (strcmp(argv[1], "tck") == 0)) {
 
@@ -126,41 +126,13 @@ javacall_bool mainArgumentsHandle(int argc, char *argv[]) {
 
         if(argc == 3) {
             javacall_print("main() Starting AutoTester with url and default domain.\n");
-            //javanotify_start_tck(argv[2], JAVACALL_LIFECYCLE_TCK_DOMAIN_UNTRUSTED_MAX);
-//## here is a stub.
-//## actually JAVACALL_LIFECYCLE_TCK_DOMAIN_IDENTIFIED should be added accordingly to com/sun/midp/security/Permissions.java
-//## None of trusted/untrusted/maximum/minimum permits midlet to use wma2.0 (MMS_SERVER permission)
-            javanotify_start_tck(argv[2], -1);
+            javanotify_start_tck(argv[2], "maximum:all");
         } else if(argc == 4){
 
-            javacall_print("main() Starting AutoTester with url and ");
+            javacall_print("main() Starting AutoTester ");
 
-            if((strcmp(argv[3], "trusted")) == 0) {
+            javanotify_start_tck(argv[2], argv[3]);
 
-                javacall_print("trusted domain.\n");
-                javanotify_start_tck(argv[2], JAVACALL_LIFECYCLE_TCK_DOMAIN_TRUSTED);
-
-            } else if((strcmp(argv[3], "untrusted")) == 0) {
-
-                javacall_print("untrusted domain.\n");
-                javanotify_start_tck(argv[2], JAVACALL_LIFECYCLE_TCK_DOMAIN_UNTRUSTED);
-
-            } else if((strcmp(argv[3], "maximum")) == 0) {
-
-                javacall_print("maximum domain.\n");
-                javanotify_start_tck(argv[2], JAVACALL_LIFECYCLE_TCK_DOMAIN_UNTRUSTED_MAX);
-
-            } else if((strcmp(argv[3], "minimum")) == 0) {
-
-                javacall_print("minimum domain.\n");
-                javanotify_start_tck(argv[2], JAVACALL_LIFECYCLE_TCK_DOMAIN_UNTRUSTED_MIN);
-
-            } else {
-
-                javacall_print("no domain defined. Use system default\n");
-                javanotify_start_tck(argv[2], JAVACALL_LIFECYCLE_TCK_DOMAIN_UNTRUSTED_MAX);
-
-            }
         } /* end of else if */
 
     } else if((argc == 3) && (strcmp(argv[1], "install_url") == 0)) {
