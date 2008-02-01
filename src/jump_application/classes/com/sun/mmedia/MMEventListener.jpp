@@ -101,7 +101,7 @@ class MMEventListener implements JUMPMessageHandler {
         MMNativeEventImpl nEvent = new MMNativeEventImpl();
 
         parseNativeEvent(data, nEvent);
-        BasicPlayer p = BasicPlayer.get(nEvent.playerId);
+        BasicPlayer p = PlayerImpl.get(nEvent.playerId);
         switch(nEvent.eventId) {
             case MMNativeEventImpl.EOM_EVENT:
                 p.sendEvent(PlayerListener.END_OF_MEDIA, new Long(nEvent.value));

@@ -59,36 +59,8 @@ public class DefaultConfiguration extends Configuration {
     // #endif ]
 
     public final static String maps[][] = {
-        {Manager.TONE_DEVICE_LOCATOR, "com.sun.mmedia.DirectTone"},
-    // #ifdef MIDI_CONTROL [
-        {Manager.MIDI_DEVICE_LOCATOR, "com.sun.mmedia.DirectMIDI"},
-    // #endif ]
-        {MIME_AUDIO_TONE, "com.sun.mmedia.DirectTone"},
-        {MIME_AUDIO_AMR, "com.sun.mmedia.DirectPlayer"},
-        {MIME_AUDIO_AMR_WB, "com.sun.mmedia.DirectPlayer"},
-        {MIME_AUDIO_WAV, "com.sun.mmedia.DirectPlayer"},
-        {MIME_AUDIO_WAV_2, "com.sun.mmedia.DirectPlayer"},
-        {MIME_AUDIO_MIDI, "com.sun.mmedia.DirectPlayer"},
-        {MIME_AUDIO_MIDI_2, "com.sun.mmedia.DirectPlayer"},
-        {MIME_AUDIO_SP_MIDI, "com.sun.mmedia.DirectPlayer"},
-    // #ifndef ABB [
-
-        {MIME_AUDIO_MP3, "com.sun.mmedia.DirectPlayer"},
-        {MIME_AUDIO_MP3_2, "com.sun.mmedia.DirectPlayer"},
-        {MIME_AUDIO_MP4, "com.sun.mmedia.DirectPlayer"},
-        {MIME_AUDIO_MP4_2, "com.sun.mmedia.DirectPlayer"},
-        {MIME_AUDIO_AAC, "com.sun.mmedia.DirectPlayer"},
-        {MIME_AUDIO_QCELP, "com.sun.mmedia.DirectPlayer"},
-        {MIME_AUDIO_QCELP_2, "com.sun.mmedia.DirectPlayer"},
-        {MIME_VIDEO_3GPP, "com.sun.mmedia.DirectVideo"},
-        {MIME_VIDEO_3GPP_2, "com.sun.mmedia.DirectVideo"},
-        {MIME_VIDEO_MPEG, "com.sun.mmedia.DirectVideo"},
-        {MIME_VIDEO_MPEG4, "com.sun.mmedia.DirectVideo"},
-        {MIME_VIDEO_AVI, "com.sun.mmedia.DirectVideo"},
-        {MIME_VIDEO_WMV, "com.sun.mmedia.DirectVideo"},
-
 // #ifdef ENABLE_INDIRECT_VIDEO [        
-        {MIME_IMAGE_GIF, "com.sun.mmedia.GIFPlayer"},
+        {"GIF", "com.sun.mmedia.GIFPlayer"},
 // #endif ]        
 // #ifdef VIDEO_CAPTURE [
         {VIDEO_CAPTURE_LOCATOR, "com.sun.mmedia.DirectCamera"},
@@ -96,7 +68,6 @@ public class DefaultConfiguration extends Configuration {
 // #ifdef AUDIO_CAPTURE [
         {AUDIO_CAPTURE_LOCATOR, "com.sun.mmedia.DirectPlayer"},
 // #endif ]
-    // #endif ]
     };
 
 // #ifdef ENABLE_INDIRECT_VIDEO [
@@ -125,6 +96,9 @@ public class DefaultConfiguration extends Configuration {
         for (int i = 0; i < maps.length; ++i) {
             handlers.put(maps[i][0], maps[i][1]);
         }
+
+        // Mime types
+        mFormats.put("gif", "GIF");
 
         // Mime types
         mimeTypes.put("jts", MIME_AUDIO_TONE);

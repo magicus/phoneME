@@ -26,26 +26,6 @@
 #include "KNICommon.h"
 #include "jsrop_exceptions.h"
 
-/*  protected native boolean nIsSupportRecording ( int handle ) ; */
-KNIEXPORT KNI_RETURNTYPE_BOOLEAN
-KNIDECL(com_sun_mmedia_DirectPlayer_nIsSupportRecording) {
-    jint handle = KNI_GetParameterAsInt(1);
-    KNIPlayerInfo* pKniInfo = (KNIPlayerInfo*)handle;
-    jboolean returnValue = KNI_FALSE;
-
-    int controls;
-
-    if (pKniInfo && pKniInfo->pNativeHandle) {
-        if (JAVACALL_OK == javacall_media_get_player_controls(pKniInfo->pNativeHandle, &controls)) {
-            if (controls & JAVACALL_MEDIA_CTRL_RECORD) {
-                returnValue = KNI_TRUE;
-            }
-        }
-    }
-
-    KNI_ReturnBoolean(returnValue);
-}
-
 /*  private native int nSetLocator ( int handle , String locator ) ; */
 KNIEXPORT KNI_RETURNTYPE_INT
 KNIDECL(com_sun_mmedia_DirectRecord_nSetLocator) {

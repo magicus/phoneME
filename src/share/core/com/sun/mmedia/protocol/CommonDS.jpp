@@ -93,20 +93,10 @@ public class CommonDS extends BasicDS implements SourceStream {
             throw (new IOException(this + ": connect() failed"));
         }
 
-        contentType = null;
         String fileName = getRemainder(locator);
 
         if (fileName == null) {
             throw new IOException("bad url");
-        }
-        int i = fileName.lastIndexOf((int)('.'));
-        if ( i != -1 ) {
-            String ext = fileName.substring(i+1).toLowerCase();
-            contentType = Configuration.getConfiguration().ext2Mime(ext);
-        }
-
-        if (contentType == null) {
-            contentType = "unknown";
         }
 
         try {
@@ -123,12 +113,6 @@ public class CommonDS extends BasicDS implements SourceStream {
                 } else {
                     inputStream = httpCon.openInputStream();
                     contentLength = httpCon.getLength();
-                    String ct = httpCon.getType();
-                    if ( contentType.equals("unknown") && ct != null ) {
-                        contentType = 
-                            Configuration.getConfiguration().ext2Mime( 
-                                ct.toLowerCase() );
-                    }
                     httpCon.close();
                     goodurl = true;
                 }
@@ -144,12 +128,6 @@ public class CommonDS extends BasicDS implements SourceStream {
                 } else {
                     inputStream = httpsCon.openInputStream();
                     contentLength = httpsCon.getLength();
-                    String ct = httpsCon.getType();
-                    if ( contentType.equals("unknown") && ct != null ) {
-                        contentType = 
-                            Configuration.getConfiguration().ext2Mime(
-                                ct.toLowerCase() );
-                    }
                     httpsCon.close();
                     goodurl = true;
                 }

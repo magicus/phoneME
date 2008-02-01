@@ -163,6 +163,11 @@ public abstract class Configuration {
     protected Hashtable mimeTypes;
 
     /**
+     * A table of media formats supported by Jave.
+     */
+    protected Hashtable mFormats;
+
+    /**
      *  The current configuration object.
      */
     private static Configuration config;
@@ -188,6 +193,7 @@ public abstract class Configuration {
         handlers = new Hashtable();
         processors = new Hashtable();
         mimeTypes = new Hashtable();
+        mFormats = new Hashtable();
         properties = new Hashtable();
         try {
             String value = System.getProperty("microedition.amms.version");
@@ -224,7 +230,8 @@ public abstract class Configuration {
      * @return                The supportedProtocols value
      */
     public String[] getSupportedProtocols(String content_types) {
-        if (content_types!= null && content_types.equals(MIME_IMAGE_GIF)) {
+        if ((content_types == null) || 
+            (content_types!= null && content_types.equals(MIME_IMAGE_GIF))) {
             return INTERNAL_PROTOCOLS;
         }
         return new String[0];
@@ -288,16 +295,14 @@ public abstract class Configuration {
      */
     public abstract TonePlayer getTonePlayer();
 
-    //public abstract MIDIRenderer getMIDIRenderer();
-
     /**
-     * Convert from the name of a file to its corresponding Mime
-     * type based on the extension.
+     * Convert from the name of a file to its corresponding mediaFormat
+     * format based on the extension for Java Players.
      *
      * @param  name  file's pathname
-     * @return       Mime type for this name or null, if couldn't be determined
+     * @return       media Format for this name or null, if couldn't be determined
      */
-    public String ext2Mime(String name) {
+    public String ext2Format(String name) {
         int idx = name.lastIndexOf('.');
         String ext;
         if (idx != -1) {
@@ -305,9 +310,8 @@ public abstract class Configuration {
         } else {
             ext = name.toLowerCase();
         }
-        return (String) mimeTypes.get(ext);
+        return (String) mFormats.get(ext);
     }
-
 
     /**
      *  Gets the handler attribute of the Configuration object
