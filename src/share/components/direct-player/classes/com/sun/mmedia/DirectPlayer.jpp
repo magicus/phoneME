@@ -112,8 +112,6 @@ public class DirectPlayer extends BasicPlayer
 
     // Native functions /////////////////////////////////////////////////
     
-    // Terminate native library
-    protected native int nTerm(int handle);
     // Device is available?
     protected native boolean nAcquireDevice(int handle);
     // Relase device reference
@@ -516,7 +514,7 @@ System.out.println("DirectPlayer.doStart completed=" + ret);
             if ( true == nIsNeedBuffering(hNative) ) {
                 nFlushBuffer(hNative);
             }
-            nTerm(hNative);
+            PlayerImpl.nTerm(hNative);
             hNative = 0;
         }
     }

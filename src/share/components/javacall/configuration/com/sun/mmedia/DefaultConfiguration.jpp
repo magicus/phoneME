@@ -98,6 +98,9 @@ public class DefaultConfiguration extends Configuration {
         }
 
         // Mime types
+        mFormats.put("gif", "GIF");
+
+        // Mime types
         mimeTypes.put("jts", MIME_AUDIO_TONE);
         mimeTypes.put("mid", MIME_AUDIO_MIDI);
         mimeTypes.put("midi", MIME_AUDIO_MIDI);

@@ -52,6 +52,7 @@ public class PlayerImpl implements Player {
 
     private String  mediaFormat = null;
     private boolean handledByDevice = false;
+    private boolean handledByJava = false;
     private int hNative;      // handle of native API library 
 
 
@@ -92,6 +93,8 @@ public class PlayerImpl implements Player {
 
     // Init native library
     protected native int nInit(int appId, int pID, String URI);
+    // Terminate native library
+    protected static native int nTerm(int handle);
     // Get Media Format
     protected native String nGetMediaFormat(int handle);
     // Need media Download in Java side?
@@ -139,9 +142,18 @@ System.out.println("PlayerImpl constructor");
         mediaFormat     = nGetMediaFormat(hNative);
 System.out.println("PlayerImpl constructor format=" + mediaFormat);
         if (mediaFormat.equals(MEDIA_FORMAT_UNSUPPORTED)) {
-            throw new MediaException("Unsupported Media Format");
+            /* verify if handled by Java */
+            mediaFormat = Configuration.getConfiguration().ext2Format(source.getLocator());
+            if (mediaFormat == null || mediaFormat.equals(MEDIA_FORMAT_UNSUPPORTED)) {
+                nTerm(hNative);
+                throw new MediaException("Unsupported Media Format");
+            } else {
+                handledByJava = true;
+            }
         }
-        handledByDevice = nIsHandledByDevice(hNative);
+        if (!handledByJava) {
+            handledByDevice = nIsHandledByDevice(hNative);
+        }
         this.source     = source;
 System.out.println("PlayerImpl constructor handledByDevice=" + handledByDevice);
 
@@ -248,7 +260,7 @@ System.out.println("PlayerImpl nRealize mediaFormat=" + mediaFormat);
                 if (mediaFormat.equals(MEDIA_FORMAT_UNSUPPORTED)) {
                     throw new MediaException("Unsupported Media Format");
                 }
-                if (mediaFormat.equals(MEDIA_FORMAT_UNSUPPORTED)) {
+                if (mediaFormat.equals(MEDIA_FORMAT_UNKNOWN)) {
                     throw new MediaException("Unknown media Format");
                 }
             }
@@ -363,6 +375,11 @@ System.out.println("PlayerImpl getPlayerFromType class=" + p);
      */
     public void prefetch() throws MediaException {
 System.out.println("PlayerImpl prefetch start");
+        if (playerInst == null) {
+System.out.println("PlayerImpl prefetch call realize");
+            realize();
+System.out.println("PlayerImpl prefetch call realize OK");
+        }
         if (playerInst != null) {
 System.out.println("PlayerImpl prefetch chkClosed");
             playerInst.chkClosed(false);
@@ -508,6 +525,9 @@ System.out.println("PlayerImpl start stop");
         if (playerInst != null) {
             playerInst.close();
             mplayers.remove(new Integer(pID));
+        } else {
+            /* close native part of unrealized player */
+            nTerm(hNative);
         }
     }
     

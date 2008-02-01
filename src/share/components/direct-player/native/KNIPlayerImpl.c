@@ -50,7 +50,7 @@ KNIDECL(com_sun_mmedia_PlayerImpl_nInit) {
 /*    __asm
     {
     int 3h
-    }*/
+    } */
     MMP_DEBUG_STR2("+nInit isolate=%d, player=%d\n", isolateId, playerId);
 
     KNI_StartHandles(1);
@@ -94,6 +94,39 @@ UnlockAudioMutex();
     if (pszURI)      { MMP_FREE(pszURI); }
     
     MMP_DEBUG_STR1("-nInit return=%d\n", returnValue);
+
+    KNI_EndHandles();
+    KNI_ReturnInt(returnValue);
+}
+
+/*  protected native int nTerm ( int handle ) ; */
+KNIEXPORT KNI_RETURNTYPE_INT
+KNIDECL(com_sun_mmedia_PlayerImpl_nTerm) {
+
+    jint handle = KNI_GetParameterAsInt(1);
+    KNIPlayerInfo* pKniInfo = (KNIPlayerInfo*)handle;
+    jint returnValue = 1;
+    
+    KNI_StartHandles(2);
+    KNI_DeclareHandle(instance);
+    KNI_DeclareHandle(clazz);
+    
+    /* Get this object instance and clazz */
+    KNI_GetThisPointer(instance);
+    KNI_GetObjectClass(instance, clazz);
+LockAudioMutex();            
+ 
+    if (pKniInfo && pKniInfo->pNativeHandle) {
+        if (JAVACALL_FAIL == javacall_media_close(pKniInfo->pNativeHandle)) {
+            returnValue = 0;
+        }
+    }
+UnlockAudioMutex();            
+
+    if (pKniInfo) {
+        MMP_FREE(pKniInfo);
+        KNI_SetIntField(instance, KNI_GetFieldID(clazz, "hNative", "I"), 0);
+    }
 
     KNI_EndHandles();
     KNI_ReturnInt(returnValue);
