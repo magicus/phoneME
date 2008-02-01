@@ -87,6 +87,7 @@ $(MIDP_CLASSES_ZIP): $(MIDP_CLASSESZIP_DEPS) force_midp_build
 	             PERMISSION_EXTENSIONS_LIST="$(PERMISSION_EXTENSIONS_LIST)" \
 	             COMPONENTS_DIR=$(COMPONENTS_DIR) \
 	             PROJECT_MIDP_DIR=$(PROJECT_MIDP_DIR) \
+	             JSR_CONFIGURATION_INPUT_FILES="$(JSR_CONFIGURATION_INPUT_FILES)" \
 	             rom -C $(MIDP_DIR)/$(MIDP_MAKEFILE_DIR)
 	@echo "<==== end building MIDP classes"
 
