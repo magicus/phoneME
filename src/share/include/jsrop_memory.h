@@ -28,6 +28,8 @@
  *  The following macroses are defined in the <platform>/native/include/jsrop_memory_md.h file
  *  #define MALLOC(size)
  *  #define FREE(addr)
+ *  #define CALLOC(sizex, sizey)
+ *  #define REALLOC(addr, size)
  */
 #include <jsrop_memory_md.h>
 
