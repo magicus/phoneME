@@ -36,7 +36,7 @@
 
 /*
  * Support Simple Sync methods if we do fast locking with spinlock microlocks
- * or with atomic ops unless the platform has told us not to be #defining
+ * or with atomic ops unless the platform has told us not to by #defining
  * CVMCPU_NO_SIMPLE_SYNC_METHODS.
  */
 #if defined(CVMJIT_INTRINSICS) && !defined(CVMCPU_NO_SIMPLE_SYNC_METHODS)
