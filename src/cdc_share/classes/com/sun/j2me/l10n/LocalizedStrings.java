@@ -22,22 +22,10 @@
  * information or have any questions.
  */
 
-package com.sun.j2me.i18n;
+package com.sun.j2me.l10n;
 
 /**
  * Intermediate class for logging facilities
  */
-public class Resource {
-
-    private Resource() {
-    }
-    
-    /**
-     * Returns a localized string for the integer key.
-     * @param key used to search the value pair.
-     * @return the requested localized resource string.
-     */
-    public static String getString(int key) {
-        return "Temp";
-    }
+public class LocalizedStrings extends com.sun.j2me.proxy.l10n.LocalizedStrings {
 }

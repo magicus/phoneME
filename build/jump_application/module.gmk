@@ -50,8 +50,6 @@ ABSTRACTIONS_CLASSES = \
     $(ABSTRACTIONS_JAVASRCDIRS)/com/sun/j2me/app/AppIsolate.java \
     $(ABSTRACTIONS_JAVASRCDIRS)/com/sun/j2me/app/AppModel.java \
     $(ABSTRACTIONS_JAVASRCDIRS)/com/sun/j2me/main/Configuration.java \
-    $(ABSTRACTIONS_JAVASRCDIRS)/com/sun/j2me/i18n/Resource.java \
-    $(ABSTRACTIONS_JAVASRCDIRS)/com/sun/j2me/i18n/ResourceConstants.java \
     $(ABSTRACTIONS_JAVASRCDIRS)/com/sun/j2me/i18n/StreamWriter.java \
     $(ABSTRACTIONS_JAVASRCDIRS)/com/sun/j2me/i18n/StreamReader.java
     
