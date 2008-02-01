@@ -104,7 +104,7 @@ class AppProxy {
     private static AppProxy currentApp;
 
     /** The log flag to enable informational messages. */
-    static final boolean LOG_INFO = true;
+    static final boolean LOG_INFO = false;
 
     /** The known AppProxy instances. Key is classname. */
     protected Hashtable appmap;
