@@ -37,7 +37,7 @@
 SUBSYSTEMS += on_device_debug
 
 # Local module directory
-ON_DEVICE_DEBUG_DIR = $(SUBSYSTEM_AMS_DIR)/on_device_debug/reference
+ON_DEVICE_DEBUG_DIR = $(SUBSYSTEM_AMS_DIR)/on_device_debug_stubs/reference
 
 # Javadoc source path
 MIDP_JAVADOC_SOURCEPATH += $(ON_DEVICE_DEBUG_DIR)/classes

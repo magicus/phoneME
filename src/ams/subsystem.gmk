@@ -81,7 +81,7 @@ ifeq ($(USE_ON_DEVICE_DEBUG), true)
 include $(PROJECT_MIDP_DIR)/src/ams/on_device_debug_base/lib.gmk
 include $(PROJECT_MIDP_DIR)/src/ams/on_device_debug/lib.gmk
 else
-include $(SUBSYSTEM_AMS_DIR)/on_device_debug/lib.gmk
+include $(SUBSYSTEM_AMS_DIR)/on_device_debug_stubs/lib.gmk
 endif
 
 ifeq ($(USE_NATIVE_AMS), false)
