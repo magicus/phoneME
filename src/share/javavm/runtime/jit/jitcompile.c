@@ -1040,7 +1040,10 @@ CVMJITdecompileMethod(CVMExecEnv* ee, CVMMethodBlock* mb)
 		       CVMmbClassBlock(mb), mb));
 
 #ifdef CVM_JIT_PATCHED_METHOD_INVOCATIONS
-    CVMJITPMIhandleDecompilation(mb);
+    /* If the ee is NULL then the vm is shutting down */
+    if (ee != NULL) {
+        CVMJITPMIhandleDecompilation(mb);
+    }
 #endif
 
     /* The ee is NULL during VM shutdown, in which case jitLock is gone. */
