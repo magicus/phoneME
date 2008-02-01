@@ -62,18 +62,7 @@ int midp_snprintf(char* buffer, int bufferSize, const char* format, ...) {
 int midp_vsnprintf(char *buffer, int bufferSize, 
         const char* format, va_list argptr) {
 
-    int rv;
-    
-    buffer[bufferSize-1] = '\0';
-    rv = vsprintf(buffer, format, argptr);
-
-    if (buffer[bufferSize-1] != '\0') {
-        buffer[bufferSize-1] = '\0';
-        REPORT_CRIT2(LC_CORE, "Buffer %p overflow detected at %p !!!",
-                buffer, buffer + bufferSize);
-    }
-
-    return rv;
+    return _vsnprintf(buffer, bufferSize, format, argptr);
 }
 #endif /* ENABLE_DEBUG */
 
