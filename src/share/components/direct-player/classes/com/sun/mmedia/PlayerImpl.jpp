@@ -94,7 +94,7 @@ public class PlayerImpl implements Player {
     // Init native library
     protected native int nInit(int appId, int pID, String URI);
     // Terminate native library
-    protected static native int nTerm(int handle);
+    protected native int nTerm(int handle);
     // Get Media Format
     protected native String nGetMediaFormat(int handle);
     // Need media Download in Java side?
@@ -527,7 +527,8 @@ System.out.println("PlayerImpl start stop");
             mplayers.remove(new Integer(pID));
         } else {
             /* close native part of unrealized player */
-            nTerm(hNative);
+            if(hNative != 0)
+                nTerm(hNative);
         }
     }
     
