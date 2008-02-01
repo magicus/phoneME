@@ -750,7 +750,7 @@ KNIDECL(com_sun_j2me_content_RegistryStore_getHandler0) {
         KNI_GetParameterAsObject(1, callerObj);
         KNI_GetParameterAsObject(2, handlerObj);
         if (JAVACALL_OK != jsrop_jstring_to_utf16_string(callerObj, &callerId) ||
-            JAVACALL_OK != jsrop_jstring_to_utf16_string(handlerObj, &id)) {
+                JAVACALL_OK != jsrop_jstring_to_utf16_string(handlerObj, &id)) {
             KNI_ThrowNew(jsropOutOfMemoryError, 
                    "RegistryStore_getHandler0 no memory for string arguments");
             break;

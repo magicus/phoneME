@@ -41,7 +41,7 @@ import com.sun.midp.installer.InvalidJadException;
  */
 final class RegistryInstaller {
 	
-	protected static final java.io.PrintStream DEBUG_OUT = System.out;
+	protected static final java.io.PrintStream DEBUG_OUT = null; //System.out;
 	
     /** Attribute prefix for ContentHandler attributes. */
     private static final String CH_PREFIX = "MicroEdition-Handler-";

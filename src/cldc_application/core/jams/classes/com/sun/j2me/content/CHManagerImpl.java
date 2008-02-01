@@ -64,7 +64,7 @@ import com.sun.midp.midlet.MIDletSuite;
 public class CHManagerImpl extends com.sun.midp.content.CHManager
     								implements MIDletProxyListListener {
 	
-	protected static final java.io.PrintStream DEBUG_OUT = System.out;
+	protected static final java.io.PrintStream DEBUG_OUT = null; //System.out;
 	
     /**
      * Inner class to request security token from SecurityInitializer.

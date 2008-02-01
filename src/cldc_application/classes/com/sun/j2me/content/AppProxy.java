@@ -33,6 +33,7 @@ import com.sun.midp.security.Permissions;
 import com.sun.midp.security.SecurityToken;
 
 import com.sun.midp.midlet.MIDletSuite;
+import com.sun.midp.main.MIDletProxyList;
 import com.sun.midp.main.MIDletSuiteUtils;
 import com.sun.midp.midlet.MIDletStateHandler;
 import com.sun.midp.midletsuite.MIDletSuiteImpl;
@@ -103,7 +104,7 @@ class AppProxy {
     private static AppProxy currentApp;
 
     /** The log flag to enable informational messages. */
-    static final boolean LOG_INFO = true;
+    static final boolean LOG_INFO = false;
 
     /** The known AppProxy instances. Key is classname. */
     protected Hashtable appmap;
@@ -465,11 +466,13 @@ class AppProxy {
      * @return <code>true</code> if the application is started.
      */
     boolean launch(String displayName) {
-        if( MIDletStateHandler.getMidletStateHandler().isRunning(classname) )
+    	MIDletProxyList mpList = 
+    		MIDletProxyList.getMIDletProxyList(classSecurityToken);
+    	if( mpList == null ) return false;
+    	if( mpList.isMidletInList(storageId, classname) )
         	return true;
         return MIDletSuiteUtils.execute(classSecurityToken,
-                                          storageId,
-                                          classname, displayName);
+                                 	storageId, classname, displayName);
     }
 
 
