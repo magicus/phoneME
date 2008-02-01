@@ -124,7 +124,6 @@ public class PlayerImpl implements Player {
     private PlayerImpl() {};
 
     public PlayerImpl(DataSource source) throws MediaException, IOException {
-System.out.println("PlayerImpl constructor");
         // Get current application ID to support MVM
         int appId = AppPackage.getInstance().getId();
 
@@ -140,7 +139,6 @@ System.out.println("PlayerImpl constructor");
         }
 
         mediaFormat     = nGetMediaFormat(hNative);
-System.out.println("PlayerImpl constructor format=" + mediaFormat);
         if (mediaFormat.equals(MEDIA_FORMAT_UNSUPPORTED)) {
             /* verify if handled by Java */
             mediaFormat = Configuration.getConfiguration().ext2Format(source.getLocator());
@@ -155,7 +153,6 @@ System.out.println("PlayerImpl constructor format=" + mediaFormat);
             handledByDevice = nIsHandledByDevice(hNative);
         }
         this.source     = source;
-System.out.println("PlayerImpl constructor handledByDevice=" + handledByDevice);
 
         if (!handledByDevice) {
             source.connect();
@@ -189,18 +186,12 @@ System.out.println("PlayerImpl constructor handledByDevice=" + handledByDevice);
      */
     public void realize() throws MediaException {
         /* realize native player */
-System.out.println("PlayerImpl Realize");
-
         nRealize(hNative, null);
-System.out.println("PlayerImpl nRealize completed");
 
         if (mediaFormat.equals(MEDIA_FORMAT_UNKNOWN)) {
-System.out.println("PlayerImpl nRealize mediaFormatUnknown");
             /* ask media format if unknown */
             mediaFormat     = nGetMediaFormat(hNative);
-System.out.println("PlayerImpl nRealize mediaFormat=" + mediaFormat);
             if (handledByDevice) {
-System.out.println("PlayerImpl nRealize handledByDevice");
                 /* In case of handledByDevice media format
                  * should be known on this stage 
                  */
@@ -211,7 +202,6 @@ System.out.println("PlayerImpl nRealize handledByDevice");
                     throw new MediaException("Unsupported Media Format");
                 }
             } else {
-System.out.println("PlayerImpl nRealize !handledByDevice");
                 /* predownload media data to determine media format */
                 if (mediaFormat.equals(MEDIA_FORMAT_UNKNOWN)) {
                     long contLength = stream.getContentLength();
@@ -223,7 +213,6 @@ System.out.println("PlayerImpl nRealize !handledByDevice");
                         javaBufSize = 1024;
                         packetSize = 1024;
                     }
-System.out.println("PlayerImpl nRealize javaBufSize=" + javaBufSize + " packetSize=" + packetSize);
                     byte[] buffer = new byte[(int)javaBufSize];
 
                     do {
@@ -231,10 +220,8 @@ System.out.println("PlayerImpl nRealize javaBufSize=" + javaBufSize + " packetSi
                         int ret;
                         do {
                             try {
-System.out.println("PlayerImpl nRealize stream.read start:"+packetSize+ " " + num_read);
                                 // read from source stream
                                 ret = stream.read(buffer, num_read, packetSize - num_read);
-System.out.println("PlayerImpl nRealize stream.read ret=" + ret);
                             } catch(IOException e) {
                                 throw new MediaException("Read from source error");
                             }
@@ -245,7 +232,6 @@ System.out.println("PlayerImpl nRealize stream.read ret=" + ret);
                                 break;
                             }
                         } while(num_read < packetSize);
-System.out.println("PlayerImpl nRealize stream.read stop num_read = " + num_read + " packetSize =" + packetSize);
                         packetSize = nBuffering(hNative, buffer, num_read);
                         if ((contLength) != -1 && (contLength == stream.tell())) {
                             /* end of media */
@@ -253,7 +239,6 @@ System.out.println("PlayerImpl nRealize stream.read stop num_read = " + num_read
                             need_more = false;
                         }
                         mediaFormat     = nGetMediaFormat(hNative);
-System.out.println("PlayerImpl nRealize mediaFormat=" + mediaFormat);
                     } while(mediaFormat.equals(MEDIA_FORMAT_UNKNOWN) && need_more);
                 }
 
@@ -266,9 +251,7 @@ System.out.println("PlayerImpl nRealize mediaFormat=" + mediaFormat);
             }
         }
         /* create Implementation Player */
-System.out.println("PlayerImpl getPlayerFromType(" + mediaFormat + ")");
         playerInst = getPlayerFromType(mediaFormat);
-System.out.println("PlayerImpl getPlayerFromType return=" + playerInst);
 
         playerInst.hNative            = hNative;
         playerInst.mediaFormat        = mediaFormat;
@@ -302,7 +285,6 @@ System.out.println("PlayerImpl getPlayerFromType return=" + playerInst);
         String className;
 
         className = Configuration.getConfiguration().getHandler(type);
-System.out.println("PlayerImpl getPlayerFromType className=" + className);
         if (className == null) {
             if (DirectPlayer.nIsVideoControlSupported(hNative)) {
                 className = "com.sun.mmedia.DirectVideo";
@@ -331,7 +313,6 @@ System.out.println("PlayerImpl getPlayerFromType className=" + className);
             if(debug) System.out.println("Class not found " + className);
             throw new MediaException(PL_ERR_SH + e.getMessage());
         }
-System.out.println("PlayerImpl getPlayerFromType class=" + p);
         return p;
     }
 
@@ -374,16 +355,11 @@ System.out.println("PlayerImpl getPlayerFromType class=" + p);
      *
      */
     public void prefetch() throws MediaException {
-System.out.println("PlayerImpl prefetch start");
         if (playerInst == null) {
-System.out.println("PlayerImpl prefetch call realize");
             realize();
-System.out.println("PlayerImpl prefetch call realize OK");
         }
         if (playerInst != null) {
-System.out.println("PlayerImpl prefetch chkClosed");
             playerInst.chkClosed(false);
-System.out.println("PlayerImpl prefetch chkClosed complete");
 
             if (vmPaused) {
                 if (debug)
@@ -391,11 +367,8 @@ System.out.println("PlayerImpl prefetch chkClosed complete");
                 return;
             }        
 
-System.out.println("PlayerImpl call direct prefetch");
             playerInst.prefetch();
-System.out.println("PlayerImpl call direct prefetch ok");
         }
-System.out.println("PlayerImpl prefetch stop");
     };
 
     /**
@@ -433,15 +406,10 @@ System.out.println("PlayerImpl prefetch stop");
      * have security permission to start the <code>Player</code>.
      */
     public void start() throws MediaException {
-System.out.println("PlayerImpl start start");
         if (playerInst == null) {
-System.out.println("PlayerImpl start call realize");
             realize();
-System.out.println("PlayerImpl start call realize OK");
         }
-System.out.println("PlayerImpl start start");
         if (playerInst != null) {
-System.out.println("PlayerImpl start chkClosed");
             playerInst.chkClosed(false);
 
             if (vmPaused) {
@@ -449,11 +417,8 @@ System.out.println("PlayerImpl start chkClosed");
                     System.out.println("ERROR: Try to start player during paused state");
                 return;
             }
-System.out.println("PlayerImpl start call direct start");
             playerInst.start();
-System.out.println("PlayerImpl start call direct start OK");
         }
-System.out.println("PlayerImpl start stop");
     };
 
     /**

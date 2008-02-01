@@ -334,17 +334,13 @@ public class DirectPlayer extends BasicPlayer
     // #endif ]
 	
     protected void doPostStart() {
-System.out.println("DirectPlayer.doPostStart start ");
         if (vc != null) {
-System.out.println("DirectPlayer.doPostStart vc.setToThisPlayerLevel() ");
             vc.setToThisPlayerLevel();     /* set to this player's volume level */
-System.out.println("DirectPlayer.doPostStart vc.setToPlayerMute() ");
             vc.setToPlayerMute();          /* set to this player's mute state */
         }
 
         // #ifndef ABB [
         if (stopTime != StopTimeControl.RESET) {
-System.out.println("DirectPlayer.doPostStart stopTime ");
             if (debug) {
                 Logging.report(Logging.INFORMATION, LogChannels.LC_MMAPI, 
                     "Start stopTimer from start() stopTime=" + stopTime);
@@ -359,7 +355,6 @@ System.out.println("DirectPlayer.doPostStart stopTime ");
             }
             stopTimer = new Timer();
             stopTimer.schedule(new StopTimeController(), scheduleTime );
-System.out.println("DirectPlayer.doPostStart stopTime OK ");
         }
         // #endif ]
 
@@ -374,7 +369,6 @@ System.out.println("DirectPlayer.doPostStart stopTime OK ");
             midiControl.playerStarted();
         }
         // #endif ]
-System.out.println("DirectPlayer.doPostStart completed ");
     }
     
     /**
@@ -393,15 +387,12 @@ System.out.println("DirectPlayer.doPostStart completed ");
         }
         
         if (isFirstStart || (0 == getMediaTime())) {
-System.out.println("DirectPlayer.doStart call nStart ");
             ret = nStart(hNative);
             isFirstStart = false;
         } else {
-System.out.println("DirectPlayer.doStart call nResume ");
             ret = nResume(hNative);    
         }
 
-System.out.println("DirectPlayer.doStart completed=" + ret);
         return ret;
     }
     

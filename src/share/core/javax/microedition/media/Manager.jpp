@@ -587,7 +587,6 @@ public final class Manager {
      */
     public static Player createPlayer(String locator)
          throws IOException, MediaException {
-System.out.println("Manager createPlayer for " + locator);
 
         if (locator == null) {
             throw new IllegalArgumentException();
@@ -666,13 +665,10 @@ System.out.println("Manager createPlayer for " + locator);
                 throw new MediaException("Malformed locator");
         }
 
-System.out.println("Manager createPlayer for protocol:" + theProtocol);
         String[] supported = getSupportedProtocols(null);
         boolean found = false;
         for (int i = 0; i < supported.length; i++) {
-System.out.println("Manager createPlayer verify protocols with :" + supported[i]);
             if (theProtocol.equals(supported[i])) {
-System.out.println("Manager createPlayer protocol found for " + supported[i]);
                 found = true;
                 break;
             }
@@ -686,7 +682,6 @@ System.out.println("Manager createPlayer protocol found for " + supported[i]);
         Player pp = null;
 
         try {
-System.out.println("Manager createPlayer for DS");
             pp = createPlayer(ds);
         } catch (MediaException ex) {
             ds.disconnect();
@@ -783,8 +778,8 @@ System.out.println("Manager createPlayer for DS");
         if (note < 0 || note > 127 || duration <= 0) {
             if (debug) {
                 Logging.report(Logging.ERROR, LogChannels.LC_MMAPI,
-                    "playTone note(" + note + ") or duration("
-+ duration + ") value is invalid");
+                    "playTone note(" + note + ") or duration(" +
+                                 duration + ") value is invalid");
             }        
             throw new IllegalArgumentException("bad param");
         }
@@ -847,10 +842,8 @@ System.out.println("Manager createPlayer for DS");
         if (source == null) {
             throw new IllegalArgumentException();
         }
-System.out.println("Manager createPlayer for DS start");
 
         PlayerImpl p = new PlayerImpl(source);
-System.out.println("Manager createPlayer for DS ok for " + p);
 
         return p;
     }
@@ -880,9 +873,7 @@ System.out.println("Manager createPlayer for DS ok for " + p);
     private static DataSource createDataSource(String locator)
          throws IOException, MediaException {
 
-System.out.println("Manager createDataSource " + locator);
         String className = config.getHandler(BasicDS.getProtocol(locator));
-System.out.println("Manager createDataSource className = " + className);
 
         if (className == null) {
             throw new MediaException(DS_ERR + locator);
@@ -896,7 +887,6 @@ System.out.println("Manager createDataSource className = " + className);
             // ... and get it connected ....
             ((BasicDS) source).setLocator(locator);
 //            source.connect();
-System.out.println("Manager createDataSource className = " + className);
 
             return source;
 //        } catch (IOException e) {

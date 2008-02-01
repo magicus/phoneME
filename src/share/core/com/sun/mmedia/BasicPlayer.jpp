@@ -483,22 +483,18 @@ public abstract class BasicPlayer implements Player
      */
     public synchronized void start() throws MediaException {
 
-System.out.println("DirectPlayer.start in state " + state);
         if (state >= STARTED) {
             return;
         }
 
         if (state < REALIZED) {
-System.out.println("DirectPlayer.start call Realize ");
             realize();
         }
 
         if (state < PREFETCHED) {
-System.out.println("DirectPlayer.start call Prefetch ");
             prefetch();
         }
 
-System.out.println("DirectPlayer.start call updateTimeBase ");
         // Update the time base to use the player's
         // media time before starting.
         updateTimeBase(true);
@@ -507,7 +503,6 @@ System.out.println("DirectPlayer.start call updateTimeBase ");
         // Check for any preset stop time.
         if (stopTime != StopTimeControl.RESET) {
             if (stopTime <= getMediaTime()) {
-System.out.println("DirectPlayer.start call satev ");
                 satev();
                 // Send STOPPED_AT_TIME event
                 return;
@@ -519,23 +514,19 @@ System.out.println("DirectPlayer.start call satev ");
         // loop back to the beginning.
         if (EOM) {
             try {
-System.out.println("DirectPlayer.start EOM call setMediaTime(0) ");
             setMediaTime(0);
             } catch(Exception e) {
                 // do nothing...
             }
         }
 
-System.out.println("DirectPlayer.start call doStart ");
         if (!doStart()) {
-System.out.println("DirectPlayer.start call doStart -> MediaException");
             throw new MediaException("start");
         }
 
         state = STARTED;
         sendEvent(PlayerListener.STARTED, new Long(getMediaTime()));
 
-System.out.println("DirectPlayer.start call doPostStart");
         // Finish any pending startup stuff in subclass
         // Typically used to start any threads that might potentially
         // generate events before the STARTED event is delivered
@@ -547,11 +538,8 @@ System.out.println("DirectPlayer.start call doPostStart");
         
         if( !this.hasDataSource && !hasToneSequenceSet && !has_capture_locator ) {
 	        sendEvent(PlayerListener.END_OF_MEDIA, new Long(getMediaTime()));
-System.out.println("DirectPlayer.start call stop");
                 stop();
         }
-System.out.println("DirectPlayer.start completed");
-
     }
 
 
