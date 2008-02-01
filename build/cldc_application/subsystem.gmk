@@ -32,6 +32,12 @@
 #
 ######################################################################
 
+# Include jsr 177 common properties in Configuration
+#
+JSR_177_PROPERTY_FILES += \
+	$(INTERNAL_JSR_177_CONFIG_DIR)/common/i18n_constants_jsr177.xml \
+	$(INTERNAL_JSR_177_CONFIG_DIR)/common/l10n/en-US_jsr177.xml \
+
 # Source files for the ( satsa ) module
 #
 MODULE_SATSA_COMMON_JAVA_FILES += \
