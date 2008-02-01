@@ -1638,7 +1638,11 @@ ReturnOop Universe::new_string(CharacterStream* stream, int lead_spaces,
                                int trail_spaces JVM_TRAPS) {
   UsingFastOops fast_oops;
   String::Fast s = new_instance(string_class() JVM_CHECK_0);
-  jint length = stream->length() + lead_spaces + trail_spaces;
+  const jint stream_length = stream->length();
+  GUARANTEE(stream_length >= 0 || stream_length == UTF8Stream::UTF8_ERROR,
+            "Unexpected length value");
+  const jint length = (stream_length != UTF8Stream::UTF8_ERROR) ? 
+    stream_length + lead_spaces + trail_spaces : 0;
   s().set_offset(0);
   s().set_count(length);
   TypeArray::Fast t = new_char_array(length JVM_CHECK_0);
