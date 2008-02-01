@@ -1323,12 +1323,12 @@ CVMgcUnsafeFillInStackTrace(CVMExecEnv *ee, CVMThrowableICell* throwableICell)
     /* 
      * Fill in the pcArray, isCompiledArray, and the backtrace array.
      */
+    noMoreFrameSkips = CVM_FALSE;
     count = 0;
     CVMframeIterateInit(&iter, startFrame);
     while (CVMframeIterateNext(&iter)) {
 	CVMMethodBlock* mb = CVMframeIterateGetMb(&iter);
 	CVMJavaInt lineno;
-	noMoreFrameSkips = CVM_FALSE;
 
 	/* ignore all frames that are just part of the <init> of
 	 * the throwable object. */
