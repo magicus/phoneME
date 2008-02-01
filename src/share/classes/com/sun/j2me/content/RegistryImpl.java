@@ -39,6 +39,7 @@ import javax.microedition.content.ResponseListener;
 import com.sun.j2me.security.Token;
 import com.sun.j2me.security.TrustedClass;
 import com.sun.jsr211.security.SecurityInitializer;
+import com.sun.midp.security.SecurityToken;
 
 /**
  * Implementation of Content Handler registry.  It maintains
@@ -49,6 +50,8 @@ import com.sun.jsr211.security.SecurityInitializer;
  */
 public final class RegistryImpl {
 
+	protected static final java.io.PrintStream DEBUG_OUT = System.out;
+	
     /**
      * Inner class to request security token from SecurityInitializer.
      * SecurityInitializer should be able to check this inner class name.
@@ -119,10 +122,9 @@ public final class RegistryImpl {
      *       <code>null</code>
      */
     public static RegistryImpl getRegistryImpl(String classname,
-                           Object token)
-    throws ContentHandlerException
+    					SecurityToken token) throws ContentHandlerException
     {
-    AppProxy.checkAPIPermission(token);
+    	AppProxy.checkAPIPermission(token);
         return getRegistryImpl(classname);
     }
 
@@ -201,7 +203,7 @@ public final class RegistryImpl {
      * @exception NullPointerException if <code>classname</code>
      *  is <code>null</code>
      * @exception SecurityException is thrown if the caller
-     *  does not have the correct permision
+     *  does not have the correct permission
      */
     private RegistryImpl(String classname)
         throws ContentHandlerException
@@ -466,6 +468,10 @@ public final class RegistryImpl {
         throws SecurityException, IllegalArgumentException,
                ClassNotFoundException, ContentHandlerException
     {
+        if(DEBUG_OUT != null){
+			DEBUG_OUT.println( getClass().getName() + ".register '" + classname + "'" );
+        }
+        
         application.checkRegisterPermission("register");
 
         // May throw ClassNotFoundException or IllegalArgumentException
@@ -476,7 +482,8 @@ public final class RegistryImpl {
             ContentHandlerImpl handler =
                 newHandler(classname, types, suffixes, actions,
                            actionnames, id, accessRestricted, appl);
-            handler.registrationMethod = ContentHandlerImpl.REGISTERED_DYNAMIC;
+            handler.registrationMethod = // non-native, dynamically registered 
+            	~ContentHandlerImpl.REGISTERED_STATIC_FLAG & ContentHandlerImpl.REGISTERED_STATIC_FLAG;
 
             ContentHandlerImpl conflict = checkConflicts(handler);
             if (conflict != null) {
@@ -487,8 +494,7 @@ public final class RegistryImpl {
             setServer(handler);
 
             if (AppProxy.LOG_INFO) {
-                appl.logInfo("Register: " + classname +
-                             ", id: " + handler.getID());
+                appl.logInfo("Register: " + classname + ", id: " + handler.getID());
             }
 
             return handler;
@@ -534,7 +540,8 @@ public final class RegistryImpl {
                 case 0:
                     break;
                 case 1:
-                    if (handler.classname.equals(handlers[0].classname)) {
+                    if (handler.storageId == handlers[0].storageId &&
+                    		handler.classname.equals(handlers[0].classname)) {
                         existing = handlers[0];
                         break;
                     }
@@ -620,11 +627,11 @@ public final class RegistryImpl {
      * <code>null</code>
      */
     public boolean unregister(String classname) {
-        if (classname == null) {
-            throw new NullPointerException(
-                               "classname argument can not be null");
-        }
+    	classname.length(); // NullPointer check
 
+    	if(DEBUG_OUT != null){
+    		DEBUG_OUT.println( "unregister '" + classname + "'" );
+    	}
         synchronized (mutex) {
 
             ContentHandlerImpl curr = null;
@@ -858,7 +865,7 @@ public final class RegistryImpl {
      *
      * @return the next pending response Invocation or <code>null</code>
      *  if the timeout expires and no Invocation is available or
-     *  if cancelled with {@link #cancelGetResponse}
+     *  if canceled with {@link #cancelGetResponse}
      * @see #invoke
      * @see #cancelGetResponse
      */
@@ -895,7 +902,7 @@ public final class RegistryImpl {
                 existing.url = invoc.url;
                 existing.type = invoc.type;
                 existing.action = invoc.action;
-                existing.status = invoc.status;
+                existing.setStatus(invoc.getStatus());
                 invoc = existing;
             } else {
                 // If there is a previousTid then restore the previous
@@ -908,15 +915,14 @@ public final class RegistryImpl {
                         InvocationStore.getByTid(invoc.previousTid, 0);
                 }
             }
-            if (invoc.previous != null &&
-                invoc.previous.status == Invocation.HOLD) {
+            if (invoc.previous != null && invoc.previous.getStatus() == Invocation.HOLD) {
                 // Restore ACTIVE status to a previously HELD Invocation
                 invoc.previous.setStatus(Invocation.ACTIVE);
             }
 
             // Make an attempt to gain the foreground
             if (invoc.invokingSuiteId != AppProxy.INVALID_STORAGE_ID &&
-                invoc.invokingClassname != null) {
+                    invoc.invokingClassname != null) {
 
                 // Strong FG transition requested
             	AppProxy.requestForeground(invoc.invokingSuiteId,
@@ -1282,7 +1288,7 @@ public final class RegistryImpl {
 
     /**
      * Remove an Invocation from the set of active Invocations.
-     * @param invoc an Invocation to remvoe
+     * @param invoc an Invocation to remove
      * @return the active Invocation or null if not found
      */
     private InvocationImpl removeActive(InvocationImpl invoc) {

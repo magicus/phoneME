@@ -32,9 +32,8 @@ import com.sun.j2me.content.InvocationImpl;
 /**
  * The internal structure of a registered content handler.
  */
-final class ContentHandlerServerImpl
-    extends ContentHandlerImpl
-    implements ContentHandlerServer
+final class ContentHandlerServerImpl extends ContentHandlerImpl
+    			implements ContentHandlerServer
 {
 
     /** The listener to notify. */
@@ -46,7 +45,7 @@ final class ContentHandlerServerImpl
      * @param handler the ContentHandlerImpl to clone
      */
     ContentHandlerServerImpl(ContentHandlerImpl handler) {
-	super(handler);
+    	super(handler);
     }
     
     /**
@@ -63,17 +62,17 @@ final class ContentHandlerServerImpl
      *
      * @return the next pending Invocation or <code>null</code>
      *  if no Invocation is available; <code>null</code>
-     *  if cancelled with {@link #cancelGetRequest cancelGetRequest}
+     *  if canceled with {@link #cancelGetRequest cancelGetRequest}
      * @see javax.microedition.content.Registry#invoke
      * @see javax.microedition.content.ContentHandlerServer#finish
      */
     public Invocation getRequest(boolean wait) {
-	Invocation request = new Invocation((InvocationImpl)null);
+    	Invocation request = new Invocation((InvocationImpl)null);
         InvocationImpl invoc = super.getRequest(wait, request);
         if (invoc != null) {
-	    // Wrap it in an Invocation instance
-	    request.setInvocImpl(invoc);
-	    return request;
+		    // Wrap it in an Invocation instance
+		    request.setInvocImpl(invoc);
+		    return request;
         }
         return null;
     }
@@ -107,7 +106,7 @@ final class ContentHandlerServerImpl
      * @exception NullPointerException if the invocation is <code>null</code>
      */
     public boolean finish(Invocation invoc, int status) {
-	return finish(invoc.getInvocImpl(), status);
+    	return finish(invoc.getInvocImpl(), status);
     }
     
 
@@ -120,19 +119,19 @@ final class ContentHandlerServerImpl
      *   <code>null</code> to remove the listener.
      */
     public void setListener(RequestListener listener) {
-	// Start/set the thread needed to monitor the InvocationStore
-	this.listener = listener;
-	super.setListener(listener);
+		// Start/set the thread needed to monitor the InvocationStore
+		this.listener = listener;
+		super.setListener(listener);
     }
 
     /**
      * Notify the listener of a pending Request.
      */
     protected void requestNotify() {
-	RequestListener l = listener;
-	if (l != null) {
-	    l.invocationRequestNotify(this);
-	}
+		RequestListener l = listener;
+		if (l != null) {
+		    l.invocationRequestNotify(this);
+		}
     }
 
 }

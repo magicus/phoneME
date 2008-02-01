@@ -26,8 +26,6 @@
 
 package com.sun.j2me.content;
 
-import com.sun.midp.midlet.MIDletSuite;
-
 /**
  * The store for pending Invocations.
  * New Invocations are queued with {@link #put} method and
@@ -42,10 +40,11 @@ import com.sun.midp.midlet.MIDletSuite;
  * requests but blocks, if requested, until it is unblocked.
  */
 public class InvocationStore {
+	protected static final java.io.PrintStream DEBUG_OUT = System.out;
 
     /**
      * The count of cancel requests; access is not synchronized because
-     * it is only incrementes in one place and it does not matter if it is
+     * it is only increments in one place and it does not matter if it is
      * incremented once or twice.  A new cancel has occurred if
      * the value has been incremented since an operation was started.
      */
@@ -69,7 +68,7 @@ public class InvocationStore {
     /** The mode for get to retrieve a new ACTIVE, HOLD, or WAITING request. */
     // private static final int MODE_PENDING = 5;
 
-    /** The mode for get to retreive byte <code>tid</code>. */
+    /** The mode for get to retrieve byte <code>tid</code>. */
     private static final int MODE_TID = 6;
 
     /** The mode to get the Invocation after <code>tid</code>. */
@@ -100,9 +99,9 @@ public class InvocationStore {
             throw new NullPointerException();
         }
         put0(invoc);
-	if (AppProxy.LOG_INFO) {
-	    AppProxy.getCurrent().logInfo("Store put0: " + invoc);
-	}
+    	if (AppProxy.LOG_INFO) {
+    	    AppProxy.getCurrent().logInfo("Store put0: " + invoc);
+    	}
     }
 
     /**
@@ -122,8 +121,11 @@ public class InvocationStore {
      */
     static InvocationImpl getRequest(int suiteId, String classname,
                                      boolean shouldBlock) {
+    	if( DEBUG_OUT != null )
+    		DEBUG_OUT.println( "InvocationStore.getRequest: suite = " + suiteId +
+    								", classname = '" + classname + "'" );
         InvocationImpl invoc = new InvocationImpl();
-        if (suiteId == MIDletSuite.UNUSED_SUITE_ID || classname == null) {
+        if (suiteId == AppProxy.INVALID_STORAGE_ID || classname == null) {
             throw new NullPointerException();
         }
         invoc.suiteId = suiteId;
@@ -147,13 +149,15 @@ public class InvocationStore {
      *  the same MIDlet suiteId and classname if one was requested;
      *  <code>null</code> is returned if there is no matching Invocation
      */
-    static InvocationImpl getResponse(InvocationImpl invoc,
-                                      int suiteId, String classname,
-                                      boolean shouldBlock) {
+    static InvocationImpl getResponse(InvocationImpl invoc, int suiteId, 
+                                        String classname, boolean shouldBlock) {
+    	if( DEBUG_OUT != null )
+    		DEBUG_OUT.println( "InvocationStore.getResponse: suite = " + suiteId +
+    								", classname = '" + classname + "'" );
         invoc.suiteId = suiteId;
         invoc.classname = classname;
 
-	return get(invoc, MODE_RESPONSE, shouldBlock);
+        return get(invoc, MODE_RESPONSE, shouldBlock);
     }
 
     /**
@@ -169,7 +173,7 @@ public class InvocationStore {
      * <li>INIT Invocations are requeued to the invoking application
      *    with ERROR status. </li>
      * <li>OK, CANCELLED, ERROR, or INITIATED Invocations are
-     *    discrded.</li>
+     *    discarded.</li>
      * <li>HOLD status Invocations are retained pending
      *    completion of previous Invocation.  TBD: Chained HOLDs...</li>
      * </ul>
@@ -186,7 +190,7 @@ public class InvocationStore {
         invoc.suiteId = suiteId;
         invoc.classname = classname;
 
-	return get(invoc, MODE_CLEANUP, false);
+        return get(invoc, MODE_CLEANUP, false);
     }
 
     /**
@@ -211,7 +215,7 @@ public class InvocationStore {
                 mode = MODE_TID_NEXT;
             }
         }
-        invoc.suiteId = MIDletSuite.UNUSED_SUITE_ID;
+        invoc.suiteId = AppProxy.INVALID_STORAGE_ID;
         invoc.classname = null;
         invoc.tid = tid;
         return get(invoc, mode, false);
@@ -236,45 +240,45 @@ public class InvocationStore {
      */
     private static InvocationImpl get(InvocationImpl invoc,
 				      int mode, boolean shouldBlock) {
-	String classname = invoc.classname;
-	invoc.setArgs(null);
-	invoc.setData(null);
-
-	int s = 0;
-	int oldCancelCount = cancelCount;
-	while ((s = get0(invoc, invoc.suiteId, invoc.classname,
-			 mode, shouldBlock)) != 1) {
-	    if (s == -1) {
-		/*
-		 * Sizes of arguments and data buffers were insufficient
-		 * reallocate and retry.
-		 */
-		invoc.setArgs(new String[invoc.argsLen]);
-		invoc.setData(new byte[invoc.dataLen]);
-		continue;
-	    }
-	    // Don't wait unless requested
-	    if (!shouldBlock) {
-		break;
-	    }
-	    // No matching request; retry unless cancelled
-	    if (cancelCount > oldCancelCount) {
-		// Was cancelled; s == 0 -> no Invocation
-		break;
-	    }
-	}
-
-	// Update the return if no invocation
-	if (s == 0) {
-	    invoc = null;
-	}
-
-	if (AppProxy.LOG_INFO) {
-	    AppProxy.getCurrent().logInfo("Store get: " +
-					  classname +
-					  ", mode: " + mode +
-					  ", " + invoc);
-	}
+    	String classname = invoc.classname;
+    	invoc.setArgs(null);
+    	invoc.setData(null);
+    
+    	int s = 0;
+    	int oldCancelCount = cancelCount;
+    	while ((s = get0(invoc, invoc.suiteId, invoc.classname,
+    			 mode, shouldBlock)) != 1) {
+    	    if (s == -1) {
+        		/*
+        		 * Sizes of arguments and data buffers were insufficient
+        		 * reallocate and retry.
+        		 */
+        		invoc.setArgs(new String[invoc.argsLen]);
+        		invoc.setData(new byte[invoc.dataLen]);
+        		continue;
+    	    }
+    	    // Don't wait unless requested
+    	    if (!shouldBlock) {
+                break;
+    	    }
+    	    // No matching request; retry unless canceled
+    	    if (cancelCount - oldCancelCount > 0) {
+        		// Was canceled; s == 0 -> no Invocation
+        		break;
+    	    }
+    	}
+    
+    	// Update the return if no invocation
+    	if (s == 0) {
+    	    invoc = null;
+    	}
+    
+    	if (AppProxy.LOG_INFO) {
+    	    AppProxy.getCurrent().logInfo("Store get: " +
+    					  classname +
+    					  ", mode: " + mode +
+    					  ", " + invoc);
+    	}
         return invoc;
     }
 
@@ -289,10 +293,10 @@ public class InvocationStore {
      * @param invoc an InvocationImpl previously retrieved with get
      */
     static void setStatus(InvocationImpl invoc) {
-	setStatus0(invoc);
-	if (AppProxy.LOG_INFO) {
-	    AppProxy.getCurrent().logInfo("Store setStatus0: " + invoc);
-	}
+    	setStatus0(invoc);
+    	if (AppProxy.LOG_INFO) {
+    	    AppProxy.getCurrent().logInfo("Store setStatus0: " + invoc);
+    	}
     }
 
     /**
@@ -303,10 +307,10 @@ public class InvocationStore {
      * @param invoc an InvocationImpl previously retrieved with get
      */
     static void setParams(InvocationImpl invoc) {
-	setParams0(invoc);
-	if (AppProxy.LOG_INFO) {
-	    AppProxy.getCurrent().logInfo("Store setParams0: " + invoc);
-	}
+    	setParams0(invoc);
+    	if (AppProxy.LOG_INFO) {
+    	    AppProxy.getCurrent().logInfo("Store setParams0: " + invoc);
+    	}
     }
 
     /**
@@ -326,19 +330,18 @@ public class InvocationStore {
      */
     static boolean listen(int suiteId, String classname,
                           boolean request, boolean shouldBlock) {
-        if (suiteId == MIDletSuite.UNUSED_SUITE_ID || classname == null) {
+        if (suiteId == AppProxy.INVALID_STORAGE_ID || classname == null) {
             throw new NullPointerException();
         }
         int mode = (request ? MODE_LREQUEST : MODE_LRESPONSE);
         boolean pending = false;
 
         int oldCancelCount = cancelCount;
-        while ((pending = listen0(suiteId, classname,
-                                  mode, shouldBlock)) == false &&
-                                  shouldBlock) {
-            // No pending request; retry unless cancelled
-            if (cancelCount > oldCancelCount) {
-                // Was cancelled; s == 0 -> no Invocation
+        while ((pending = listen0(suiteId, classname,mode, shouldBlock)) == false &&
+                    shouldBlock) {
+            // No pending request; retry unless canceled
+            if (cancelCount - oldCancelCount > 0) {
+                // Was canceled; s == 0 -> no Invocation
                 break;
             }
         }
@@ -364,7 +367,7 @@ public class InvocationStore {
      */
     static void setListenNotify(int suiteId, String classname,
                                 boolean request) {
-        if (suiteId == MIDletSuite.UNUSED_SUITE_ID || classname == null) {
+        if (suiteId == AppProxy.INVALID_STORAGE_ID || classname == null) {
             throw new NullPointerException();
         }
 
@@ -383,8 +386,8 @@ public class InvocationStore {
      * method if it is blocked in the native code.
      */
     static void cancel() {
-	cancelCount++;
-	cancel0();
+    	cancelCount++;
+    	cancel0();
     }
 
     /**
@@ -441,11 +444,8 @@ public class InvocationStore {
      *    -1 if the sizes of the arguments or parameter array were wrong
      * @see #get
      */
-    private static native int get0(InvocationImpl invoc,
-                                   int suiteId,
-                                   String classname,
-                                   int mode,
-                                   boolean shouldBlock);
+    private static native int get0(InvocationImpl invoc, int suiteId, String classname, 
+                                    int mode, boolean shouldBlock);
 
     /**
      * Sets the status of an existing Invocation

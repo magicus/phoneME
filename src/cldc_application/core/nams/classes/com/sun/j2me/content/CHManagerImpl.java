@@ -26,8 +26,6 @@
 
 package com.sun.j2me.content;
 
-import javax.microedition.content.Invocation;
-
 import com.sun.midp.main.MIDletProxy;
 import com.sun.midp.main.MIDletProxyList;
 import com.sun.midp.main.MIDletProxyListListener;
@@ -111,7 +109,7 @@ public class CHManagerImpl
         RegistryImpl.cleanup(midlet.getSuiteId(), midlet.getClassName());
 
         // Check for and execute a pending MIDlet suite
-        InvocationImpl.invokeNext();
+        InvocationStoreProxy.invokeNext();
     }
 
     /**

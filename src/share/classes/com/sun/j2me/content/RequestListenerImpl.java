@@ -54,7 +54,7 @@ class RequestListenerImpl implements Runnable {
 
     /**
      * Set the listener to be notified and start/stop the monitoring
-     * thread as necesary.
+     * thread as necessary.
      * If the listener is non-null make sure there is a thread active
      * to monitor it.
      * If there is no listener, then stop the monitor thread.

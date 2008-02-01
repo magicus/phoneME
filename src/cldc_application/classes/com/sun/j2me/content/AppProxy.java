@@ -29,8 +29,6 @@ package com.sun.j2me.content;
 import java.util.Vector;
 import java.util.Hashtable;
 
-import com.sun.j2me.security.Permission;
-import com.sun.j2me.security.Token;
 import com.sun.midp.security.Permissions;
 import com.sun.midp.security.SecurityToken;
 
@@ -52,7 +50,7 @@ import com.sun.midp.io.Util;
  * Each AppProxy instance provides access to the AMS information
  * and functions for a running or installed application.
  * This class must be replaced for each platform/profile combination and
- * be integrated with the appropriate Applicaiton Management Software.
+ * be integrated with the appropriate Application Management Software.
  * <p>
  * The AppProxy class is *only* available within
  * this package for security purposes.
@@ -105,20 +103,7 @@ class AppProxy {
     private static AppProxy currentApp;
 
     /** The log flag to enable informational messages. */
-    static final boolean LOG_INFO = false;
-
-    /**
-     * This global state is <code>true</code> if an application
-     * has been executed and this application should be exiting
-     * to let it run. For SVM, this is set true by {@link #launch }
-     * and stays that way.
-     * For MVM, it is cleared if the VM allows the execute to occur.
-     * At MIDlet exit, {@link InvocationImpl#invokeNext} checks to see
-     * if another application Invoction is pending and invokes it.
-     * If this application has NOT invoked anything then the
-     * chosen app will be invoked.
-     */
-    private static boolean oneExecute;
+    static final boolean LOG_INFO = true;
 
     /** The known AppProxy instances. Key is classname. */
     protected Hashtable appmap;
@@ -153,7 +138,7 @@ class AppProxy {
     static final int INVALID_STORAGE_ID = MIDletSuite.UNUSED_SUITE_ID;
 
     /**
-     * Sets the security token used for priveleged operations.
+     * Sets the security token used for privileged operations.
      * The token may only be set once.
      * @param token a Security token
      */
@@ -408,10 +393,9 @@ class AppProxy {
      * @param securityToken a generic security token
      * @exception SecurityException thrown if internal API use not allowed
      */
-    final static void checkAPIPermission(Object securityToken) {
+    final static void checkAPIPermission(SecurityToken securityToken) {
         if (securityToken != null) {
-            ((Token)securityToken).
-                checkIfPermissionAllowed(new Permission(null, null, Permissions.MIDP));
+            securityToken.checkIfPermissionAllowed(Permissions.MIDP);
         } else {
             MIDletSuite msuite =
                 MIDletStateHandler.getMidletStateHandler().getMIDletSuite();
@@ -478,32 +462,14 @@ class AppProxy {
      * application will be selected from those pending.
      *
      * @param displayName name to show to the user of what to launch
-     * @return <code>true</code> if the application must exist
-     *  before the target application can proceed.
+     * @return <code>true</code> if the application is started.
      */
     boolean launch(String displayName) {
-        /*
-         * If an execute has been queued already; don't queue another
-         */
-        if (oneExecute) {
-            // launched something previously and app should exit.
-            if (LOG_INFO) {
-                logInfo("Launch skipped: " + classname +
-                        ", oneExecute: " + oneExecute);
-            }
-            return true;
-        } else {
-            /* Invoke the target application */
-            oneExecute =
-                MIDletSuiteUtils.execute(classSecurityToken,
+        if( MIDletStateHandler.getMidletStateHandler().isRunning(classname) )
+        	return true;
+        return MIDletSuiteUtils.execute(classSecurityToken,
                                           storageId,
                                           classname, displayName);
-            if (LOG_INFO) {
-                logInfo("Launch: " + classname +
-                        ", oneExecute: " + oneExecute);
-            }
-            return oneExecute;
-        }
     }
 
 
@@ -523,8 +489,9 @@ class AppProxy {
         Class appClass = Class.forName(classname);
         Class midletClass = Class.forName("javax.microedition.midlet.MIDlet");
         if ((!midletClass.isAssignableFrom(appClass)) ||
-            appClass == midletClass) {
-            throw new IllegalArgumentException("not a MIDlet");
+        		appClass == midletClass) {
+            throw new IllegalArgumentException("Class '" + classname + 
+            							"' is not a MIDlet");
         }
     }
 

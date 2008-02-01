@@ -38,6 +38,8 @@
 #define _JSR211_INVOCATION_H_
 
 #include <pcsl_string.h>
+#include "jsr211_result.h"
+#include "jsr211_registry.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -54,15 +56,66 @@ typedef enum {
   JSR211_WAIT_NATIVE        = 0x20
 } jsr211_wait_status;
 
+/* invocation statuses: */
+/*
+ * This Invocation was just constructed and is being initialized.
+ */
+#define STATUS_INIT 1
+
+/*
+ * This Invocation is a new request and is being handled by the content handler.
+ */
+#define STATUS_ACTIVE 2
+
+/*
+ * This Invocation has been invoked and is waiting to be complete.
+ */
+#define STATUS_WAITING 3
+
+/*
+ * This Invocation is on hold until a chained Invocation is completed.
+ */
+#define STATUS_HOLD 4
+
+/*
+ * The content handler successfully completed processing the Invocation.
+ */
+#define STATUS_OK 5
+
+/*
+ * The processing of the Invocation was cancelled by the ContentHandler.
+ */
+#define STATUS_CANCELLED 6
+
+/*
+ * The content handler failed to correctly process the Invocation request.
+ */
+#define STATUS_ERROR 7
+
+/*
+ * The processing of the Invocation has been initiated and will
+ * continue. This status is only appropriate when the content
+ * handler can not provide a response when it is finished.
+ */
+#define STATUS_INITIATED 8
+
+/*
+ * The DISPOSE status is used with {@link #setStatus setStatus}
+ * to discard the native Invocation. It must not overlap with
+ * Status values defined in the Invocation class and must match
+ * STATUS_DISPOSE defined in invocStore.c and InvocationImpl.
+ */
+#define STATUS_DISPOSE 100
+
 /**
  * Stored InvocationImpl.
  */
 typedef struct _StoredInvoc {
-    jint     status;        /**< The current status */
+    jint        status;        /**< The current status */
     jboolean    notified;    /**< Invocation has been notified */
     jboolean    cleanup;    /**< true to cleanup on application exit */
     jboolean    responseRequired; /**< True if a response is required */
-    jint    tid;        /**< The assigned transaction id */
+    jint        tid;        /**< The assigned transaction id */
     jint        previousTid;    /**< The tid of a previous Invocation */
     pcsl_string url;        /**< The URL of the request */
     pcsl_string type;        /**< The type of the request */
@@ -71,7 +124,7 @@ typedef struct _StoredInvoc {
 #ifdef SUITE_ID_STRING
     pcsl_string suiteID;    /**< The target MIDlet suiteID */
 #else
-    int suiteId;    /**< The target MIDlet suiteID */
+    javacall_suite_id suiteId;    /**< The target MIDlet suiteID */
 #endif
     pcsl_string classname;    /**< The target classname */
     pcsl_string invokingAuthority; /**< The invoking authority string */
@@ -79,7 +132,7 @@ typedef struct _StoredInvoc {
 #ifdef SUITE_ID_STRING
     pcsl_string invokingSuiteID;    /**< The target MIDlet suiteID */
 #else
-    int invokingSuiteId; /**< The invoking MIDlet suiteID */
+    javacall_suite_id invokingSuiteId; /**< The invoking MIDlet suiteID */
 #endif
     pcsl_string invokingClassname; /**< The invoking MIDlet classname */
     pcsl_string invokingID;    /**< The invoking Application ID */
@@ -100,8 +153,28 @@ typedef struct _StoredInvoc {
  *
  * @return the found invocation, or NULL if no matched invocation.
  */
-StoredInvoc* jsr211_get_invocation(const pcsl_string* handlerID);
+StoredInvoc* jsr211_get_invocation(javacall_const_utf16_string handlerID);
 
+/**
+ * Executes specified non-java content handler.
+ * @param handler_id content handler ID
+ * @return codes are following
+ * <ul>
+ * <li> JSR211_LAUNCH_OK or JSR211_LAUNCH_OK_SHOULD_EXIT if content handler 
+ *   started successfully
+ * <li> other code from the enum according to error codition
+ * </ul>
+ */
+jsr211_launch_result jsr211_execute_handler(javacall_const_utf16_string handler_id);
+
+/**
+ * informs platform about finishing platform's request
+ * returns should_exit flag for content handler that has processed request
+ * @param tid Invocation (transaction) identifier
+ * @should_exit flag for the invocation handler
+ * @return true in case of success, false otherwise
+ */
+jsr211_boolean jsr211_platform_finish(int tid, jsr211_boolean *should_exit);
 
 #ifdef __cplusplus
 }

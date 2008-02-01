@@ -135,12 +135,10 @@ public class ContentHandlerImpl implements ContentHandler {
      */
     int registrationMethod;
 
-    /** Content handler statically registered during installation */
-    final static int REGISTERED_STATIC = 0;
-    /** Dynamically registered content handler via API */
-    final static int REGISTERED_DYNAMIC = 1;
+    /** Content handler statically/dynamically registered during installation */
+    final static int REGISTERED_STATIC_FLAG = 0x0001; // if set => statically
     /** Native platform content handler  */
-    final static int REGISTERED_NATIVE  = 2;
+    final static int REGISTERED_NATIVE_FLAG = 0x0002; // if set => native 
 
     /** Count of requests retrieved via {@link #getRequest}. */
     int requestCalls;
@@ -262,6 +260,7 @@ public class ContentHandlerImpl implements ContentHandler {
      */
     ContentHandlerImpl() {
         seqno = nextSeqno++;
+        registrationMethod = REGISTERED_STATIC_FLAG; // non-native, statically registered 
     }
 
     /**
@@ -270,8 +269,8 @@ public class ContentHandlerImpl implements ContentHandler {
      * is an empty array the default ZERO length string array is used.
      *
      * @param strings array to check for null and length == 0
-     * @param caseSens assume case sensetivity when check for duplicates
-     * @param skipDuplicates chaeck for duplicates and skip them 
+     * @param caseSens assume case sensitivity when check for duplicates
+     * @param skipDuplicates check for duplicates and skip them 
      * @return a non-null array of strings; an empty array replaces null
      * @exception NullPointerException if any string ref is null
      * @exception IllegalArgumentException if any string
@@ -336,7 +335,7 @@ public class ContentHandlerImpl implements ContentHandler {
 
     /**
      * Copy an array of ContentHandlers making a new ContentHandler
-     * for each ContentHandler.  Make copies of any mutiple object.
+     * for each ContentHandler.  Make copies of any multiple object.
      * @param handlers the array of handlers duplicate
      * @return the new array of content handlers
      */
@@ -546,7 +545,7 @@ public class ContentHandlerImpl implements ContentHandler {
      * not found, then the locale string is shortened and retried
      * if either of the "_" or "-" delimiters is present.
      * The locale is shortened by retaining only the characters up to
-     * but not including the last occurence of the delimiter
+     * but not including the last occurrence of the delimiter
      * (either "_" or "-").
      * The shortening and matching is repeated as long as the string
      * contains one of the delimiters.
@@ -672,7 +671,7 @@ public class ContentHandlerImpl implements ContentHandler {
      * Gets the name of the authority that authorized this application.
      * This value MUST be <code>null</code> unless the device has been
      * able to authenticate this application.
-     * If <code>non-null</code>, it is the string identifiying the
+     * If <code>non-null</code>, it is the string identifying the
      * authority.  For example,
      * if the application was a signed MIDlet, then this is the
      * "subject" of the certificate used to sign the application.
@@ -793,7 +792,7 @@ public class ContentHandlerImpl implements ContentHandler {
      * the result; if any
      * @return the next pending Invocation or <code>null</code>
      *  if no Invocation is available; <code>null</code>
-     *  if cancelled with {@link #cancelGetRequest cancelGetRequest}
+     *  if canceled with {@link #cancelGetRequest cancelGetRequest}
      * @see javax.microedition.content.Registry#invoke
      * @see javax.microedition.content.ContentHandlerServer#finish
      */
@@ -857,13 +856,13 @@ public class ContentHandlerImpl implements ContentHandler {
      * @exception NullPointerException if the invocation is <code>null</code>
      */
     protected boolean finish(InvocationImpl invoc, int status) {
-        int currst = invoc.getStatus();
-          if (currst != Invocation.ACTIVE && currst != Invocation.HOLD) {
-             throw new IllegalStateException("Status already set");
-         }
-        // If ACTIVE or HOLD it must be an InvocationImpl
-        return invoc.finish(status);
-    }
+		int currst = invoc.getStatus();
+		if (currst != Invocation.ACTIVE && currst != Invocation.HOLD) {
+			throw new IllegalStateException("Status already set");
+		}
+		// If ACTIVE or HOLD it must be an InvocationImpl
+		return invoc.finish(status);
+	}
 
     /**
      * Set the listener to be notified when a new request is
@@ -949,7 +948,7 @@ public class ContentHandlerImpl implements ContentHandler {
     }
 
     /**
-     * Append all of the strings inthe array to the string buffer.
+     * Append all of the strings in the array to the string buffer.
      * @param sb a StringBuffer to append to
      * @param strings an array of strings.
      */
