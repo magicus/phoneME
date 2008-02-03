@@ -106,3 +106,19 @@ jsrop_jstring_from_utf16_string(KNIDECLARGS const javacall_utf16_string utf16_st
     return res;
 }
 
+/**
+ * Create Java platform String object from the specified javacall_utf16_string.
+ * exactly utf16_chars_n characters are copied
+ * utf16_str can contain any number of zero characters in it
+ *
+ * @param utf16_str pointer to the javacall_utf16_string instance
+ * @param utf16_chars_n number of utf16 characters to copy.. 
+ * @param java_str pointer to the Java platform String instance
+ * @return status of the operation
+ */
+javacall_result
+jsrop_jstring_from_utf16_string_n(KNIDECLARGS const javacall_utf16_string utf16_str, int utf16_chars_n,
+						 jstring java_str) {
+    KNI_NewString(utf16_str, utf16_chars_n, java_str);
+    return JAVACALL_OK;
+}
