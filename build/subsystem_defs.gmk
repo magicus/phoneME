@@ -85,7 +85,6 @@ SUBSYSTEM_CONFIGURATION_INPUT_FILES += \
 #
 INTERNAL_JSR_172_JAVA_FILES_JAXP_RI_FILES +=
 
-ifneq ($(USE_JSR_280), true)
 INTERNAL_JSR_172_JAVA_FILES_JAXP_RI_FILES += \
         $(INTERNAL_JSR_172_RI_DIR)/jaxp/org/xml/sax/helpers/DefaultHandler.java \
         $(INTERNAL_JSR_172_RI_DIR)/jaxp/org/xml/sax/InputSource.java \
@@ -106,7 +105,6 @@ INTERNAL_JSR_172_JAVA_FILES_JAXP_RI_FILES += \
         $(INTERNAL_JSR_172_RI_DIR)/jaxp/com/sun/ukit/jaxp/Pair.java \
         $(INTERNAL_JSR_172_RI_DIR)/jaxp/com/sun/ukit/jaxp/Parser.java \
         $(INTERNAL_JSR_172_RI_DIR)/jaxp/com/sun/ukit/jaxp/Attrs.java
-endif
 
 # ri_jaxrpc
 #
