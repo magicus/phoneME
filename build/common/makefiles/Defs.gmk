@@ -398,6 +398,9 @@ OBJ_FILES += $(patsubst %.cpp,$(OBJ_DIR)/%.o,$(filter %.cpp,$(JTWI_NATIVE_FILES)
 # subsystem)
 #
 override REBUILD_JAVA_LIST=$(MIDP_OUTPUT_DIR)/javalist.txt
+override SUBSET_API_JAVA_LIST=$(MIDP_OUTPUT_DIR)/subsetjavalist.txt
+override SUPERSET_API_JAVA_LIST=$(MIDP_OUTPUT_DIR)/supersetjavalist.txt
+
 override GENERATED_JAVA_LIST=$(MIDP_OUTPUT_DIR)/genjavalist.txt
 
 # Add changed java files to REBUILD_JAVA_LIST
@@ -424,11 +427,43 @@ define appendjavafiles
     fi )
 endef
 
+define appendsubsetjavafiles
+    @if [ $(words $?) -gt 200 ]; then \
+        echo "ERROR: Java files list exceeds 200 words limit."; \
+        echo "To increase the limit, edit appendsubsetjavafiles variable definition in Defs.gmk"; \
+        exit 1; \
+    fi
+    @_javalist="$(wordlist 1,100,$?)"; ( \
+    if [ -n "$$_javalist" ]; then \
+        echo "$$_javalist" >> $(SUBSET_API_JAVA_LIST); \
+    fi )
+    @_javalist="$(wordlist 101,200,$?)"; ( \
+    if [ -n "$$_javalist" ]; then \
+        echo "$$_javalist" >> $(SUBSET_API_JAVA_LIST); \
+    fi )
+endef
+
+define appendsupersetjavafiles
+    @if [ $(words $?) -gt 200 ]; then \
+        echo "ERROR: Java files list exceeds 200 words limit."; \
+        echo "To increase the limit, edit appendsupersetjavafiles variable definition in Defs.gmk"; \
+        exit 1; \
+    fi
+    @_javalist="$(wordlist 1,100,$?)"; ( \
+    if [ -n "$$_javalist" ]; then \
+        echo "$$_javalist" >> $(SUPERSET_API_JAVA_LIST); \
+    fi )
+    @_javalist="$(wordlist 101,200,$?)"; ( \
+    if [ -n "$$_javalist" ]; then \
+        echo "$$_javalist" >> $(SUPERSET_API_JAVA_LIST); \
+    fi )
+endef
+
 # Distinguish between normal java files from generated one 
 #
 define countjavafiles
 if [ -f $(REBUILD_JAVA_LIST) ]; then \
-   num1=`cat $(REBUILD_JAVA_LIST) | wc -w`; \
+   num1=`cat $(REBUILD_JAVA_LIST) $(SUBSET_API_JAVA_LIST) $(SUPERSET_API_JAVA_LIST) | wc -w`; \
  else \
    num1=0; \
  fi; \
@@ -457,7 +492,9 @@ define compilefiles
 		rm -rf $(VERIFYDIR); \
 		mkdir $(VERIFYDIR); \
 	fi $(LOG)
-	$(A)(if [ -f $(REBUILD_JAVA_LIST) -o -f $(GENERATED_JAVA_LIST) ]; then\
+	$(A)(if [ -f $(REBUILD_JAVA_LIST) -o -f $(GENERATED_JAVA_LIST) \
+					  -o -f $(SUBSET_API_JAVA_LIST)  \
+					  -o -f $(SUPERSET_API_JAVA_LIST) ]; then\
 		if test "$(TARGET_VM)" = "cldc_vm"; then \
 			chmod +x $(PREVERIFY_CMD); \
 		fi; \
@@ -472,9 +509,20 @@ define compilefiles
 		else \
 			f2= ; \
 		fi ; \
+		if [ -f $(SUBSET_API_JAVA_LIST) ] ; then \
+			f3=@$(SUBSET_API_JAVA_LIST) ; \
+		else \
+			f3= ; \
+		fi ; \
 		$(JAVAC_CMD) -g$(JAVAC_DEBUG) -d $(JAVAC_OUT_DIR) \
 			-bootclasspath "$(BOOTCLASSPATH)" \
-			-classpath $(CLASSBINDIR) $$f1 $$f2 || exit 1; \
+			-classpath $(CLASSBINDIR) $$f1 $$f2 $$f3 || exit 1; \
+		if [ -f $(SUPERSET_API_JAVA_LIST) ] ; then \
+			f4=@$(SUPERSET_API_JAVA_LIST) ; \
+			$(JAVAC_CMD) -g$(JAVAC_DEBUG) -d $(JAVAC_OUT_DIR) \
+				-bootclasspath "$(BOOTCLASSPATH)" \
+				-classpath $(CLASSBINDIR) $$f1 $$f2 $$f4 || exit 1; \
+		fi ; \
 		if test "$(TARGET_VM)" = "cldc_vm"; then \
 		    num=`find $(VERIFYDIR) -type f -print | wc -l`; \
 		    num=`echo $$num | cut -f1 -d' '` ; \
@@ -531,7 +579,7 @@ endif
 # Macro to clean up file list
 #
 define remove_filelist
-	-@(rm -f $(REBUILD_JAVA_LIST)) $(LOG)
+	-@(rm -f $(REBUILD_JAVA_LIST) $(SUBSET_API_JAVA_LIST) $(SUPERSET_API_JAVA_LIST))  $(LOG)
 endef
 
 # Macro to clean up generated file list
