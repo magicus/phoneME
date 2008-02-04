@@ -158,3 +158,5 @@ ifdef SUBSYSTEM_EVENTS_MODULES
 else
    PORTING_SOURCE+=events.c
 endif
+
+CONFIGURATION_PROPERTIES_FILE = properties.xml
