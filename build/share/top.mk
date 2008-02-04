@@ -328,9 +328,14 @@ PROFILE_DIR ?= $(COMPONENTS_DIR)/cvmjavase
 include $(PROFILE_DIR)/build/share/top_javase.mk
 endif
 
+CDC_OS_COMPONENT_DIR      ?= $(CVM_TOP)
+CDC_CPU_COMPONENT_DIR     ?= $(CVM_TOP)
+CDC_OSCPU_COMPONENT_DIR   ?= $(CVM_TOP)
+CDC_DEVICE_COMPONENT_DIR  ?= $(CVM_TOP)
+
 # Include any existing platform defs first
 ifneq ($(J2ME_PLATFORM),)
-include ../share/defs_$(J2ME_PLATFORM).mk
+include $(CDC_DIR)/build/share/defs_$(J2ME_PLATFORM).mk
 endif
 
 # If CVM_BUILD_SUBDIR_NAME was specified, then it is reasonable to assume
@@ -403,14 +408,14 @@ endif   # USE_JUMP
 all:: printconfig checkconfig $(J2ME_CLASSLIB) tools
 
 # Include TARGET top.mk
-include ../$(TARGET_OS)/top.mk
+include $(CDC_OS_COMPONENT_DIR)/build/$(TARGET_OS)/top.mk
 
 # Include all defs makefiles.
-include  ../share/defs.mk
--include ../share/defs_midp.mk
--include ../share/defs_jump.mk
--include ../share/defs_gci.mk
--include ../share/defs_op.mk
+include  $(CDC_DIR)/build/share/defs.mk
+-include $(CDC_DIR)/build/share/defs_midp.mk
+-include $(CDC_DIR)/build/share/defs_jump.mk
+-include $(CDC_DIR)/build/share/defs_gci.mk
+-include $(CDC_DIR)/build/share/defs_op.mk
 include $(PROFILE_DIR)/build/share/defs_$(J2ME_CLASSLIB).mk
 ifneq ($(OPT_PKGS_DEFS_FILES),)
 include $(OPT_PKGS_DEFS_FILES)
@@ -423,10 +428,10 @@ endif
 
 # Include all rule makefiles. Since variables in rules are expanded
 # eagerly, they must be included after defs makefiles.
-include  ../share/rules.mk
--include ../share/rules_midp.mk
--include ../share/rules_jump.mk
--include ../share/rules_gci.mk
+include  $(CDC_DIR)/build/share/rules.mk
+-include $(CDC_DIR)/build/share/rules_midp.mk
+-include $(CDC_DIR)/build/share/rules_jump.mk
+-include $(CDC_DIR)/build/share/rules_gci.mk
 include $(PROFILE_DIR)/build/share/rules_$(J2ME_CLASSLIB).mk
 ifneq ($(J2ME_PLATFORM),)
 include $(PROFILE_DIR)/build/share/rules_$(J2ME_PLATFORM).mk
@@ -445,17 +450,17 @@ ifeq ($(CVM_TOOLS_BUILD),true)
 # Include the makefiles for tool libraries to build here:
 # NOTE: For jcov and hprof, the platform specific makefiles need to be
 #       included first.
--include ../$(TARGET_OS)/jcov.mk
--include ../share/jcov.mk
--include  ../$(TARGET_OS)/hprof.mk
--include  ../share/hprof.mk
--include  ../$(TARGET_OS)/jvmti_crw.mk
--include  ../share/jvmti_crw.mk
--include  ../$(TARGET_OS)/jvmti_hprof.mk
--include  ../share/jvmti_hprof.mk
--include  ../$(TARGET_OS)/jdwp.mk
--include  ../share/jdwp.mk
--include  ../$(TARGET_OS)/cvmc.mk
--include  ../share/cvmc.mk
+-include $(CDC_OS_COMPONENT_DIR)/build/jcov.mk
+-include $(CDC_DIR)/build/share/jcov.mk
+-include $(CDC_OS_COMPONENT_DIR)/build/hprof.mk
+-include $(CDC_DIR)/build/share/hprof.mk
+-include $(CDC_OS_COMPONENT_DIR)/build/jvmti_crw.mk
+-include $(CDC_DIR)/build/share/jvmti_crw.mk
+-include $(CDC_OS_COMPONENT_DIR)/build/jvmti_hprof.mk
+-include $(CDC_DIR)/build/share/jvmti_hprof.mk
+-include $(CDC_OS_COMPONENT_DIR)/build/jdwp.mk
+-include $(CDC_DIR)/build/share/jdwp.mk
+-include $(CDC_OS_COMPONENT_DIR)/build/cvmc.mk
+-include $(CDC_DIR)/build/share/cvmc.mk
 endif
 

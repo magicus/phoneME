@@ -276,7 +276,7 @@ $(CVM_BUILDTIME_CLASSESDIR)/%.class: %.java
 #	$(appendjavafiles)
 
 # Include Optional packages rules
--include ../share/rules_op.mk
+-include $(CDC_DIR)/build/share/rules_op.mk
 
 # Test classes
 $(CVM_TEST_CLASSESDIR)/%.class: %.java
@@ -481,9 +481,9 @@ endif
 # include jcc and jcs makefiles
 #####################################
 
-include ../share/jcc.mk
+include $(CDC_DIR)/build/share/jcc.mk
 ifeq ($(CVM_JIT),true)
-include ../share/jcs.mk
+include $(CDC_DIR)/build/share/jcs.mk
 endif
 
 #####################################
@@ -595,7 +595,7 @@ CVM_BUILD_DEFS_FLAGS += \
 CVM_BUILD_DEFS_VARS += \
 	$(foreach flag,$(strip $(CVM_BUILD_DEF_VARS)), '$(flag)	$($(flag))')
 
-$(CVM_BUILD_DEFS_H): $(wildcard ${CVM_BUILD_TOP}/../share/id*.mk)
+$(CVM_BUILD_DEFS_H): $(wildcard $(CDC_DIR)/build/share/id*.mk)
 	@echo ... generating $@
 	@echo "/*** Definitions generated at build time ***/" > $@
 	@echo "#ifndef _BUILD_DEFS_H" >> $@
@@ -1158,10 +1158,10 @@ endif
 # Include target makefiles last
 ################################################
 
--include ../$(TARGET_OS)/rules.mk
--include ../$(TARGET_CPU_FAMILY)/rules.mk
--include ../$(TARGET_OS)-$(TARGET_CPU_FAMILY)/rules.mk
--include ../$(TARGET_OS)-$(TARGET_CPU_FAMILY)-$(TARGET_DEVICE)/rules.mk
+-include $(CDC_OS_COMPONENT_DIR)/build/$(TARGET_OS)/rules.mk
+-include $(CDC_CPU_COMPONENT_DIR)/build/$(TARGET_CPU_FAMILY)/rules.mk
+-include $(CDC_OSCPU_COMPONENT_DIR)/build/$(TARGET_OS)-$(TARGET_CPU_FAMILY)/rules.mk
+-include $(CDC_DEVICE_COMPONENT_DIR)/build/$(TARGET_OS)-$(TARGET_CPU_FAMILY)-$(TARGET_DEVICE)/rules.mk
 
 
 ######################################
@@ -1234,7 +1234,6 @@ ifneq ($(CDC_10),true)
 #
 # The value of this field corresponds to CVM_DEBUG_ASSERTS.
 #
-
 BUIDLFLAGS_JAVA_TMP = $(CVM_DERIVEDROOT)/.BuildFlags.java
 BUILDFLAGS_JAVA = $(CVM_DERIVEDROOT)/classes/sun/misc/BuildFlags.java
 $(BUILDFLAGS_JAVA): 

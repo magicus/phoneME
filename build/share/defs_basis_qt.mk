@@ -24,11 +24,11 @@
 
 
 # Include target specific makefiles first
--include ../$(TARGET_OS)/defs_basis_$(AWT_IMPLEMENTATION).mk
--include ../$(TARGET_OS)-$(TARGET_CPU_FAMILY)-$(TARGET_DEVICE)/defs_basis_$(AWT_IMPLEMENTATION).mk
+-include $(CDC_OS_COMPONENT_DIR)/build/$(TARGET_OS)/defs_basis_$(AWT_IMPLEMENTATION).mk
+-include $(CDC_DEVICE_COMPONENT_DIR)/build/$(TARGET_OS)-$(TARGET_CPU_FAMILY)-$(TARGET_DEVICE)/defs_basis_$(AWT_IMPLEMENTATION).mk
 
 # setup qt tools, includes, and libs
-include ../share/defs_qt.mk
+include $(CDC_DIR)/build/share/defs_qt.mk
 
 TOOLKIT_CLASS = java.awt.QtToolkit
 

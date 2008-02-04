@@ -25,9 +25,9 @@
 #
 
 # Include target specific makefiles first
--include ../$(TARGET_CPU_FAMILY)/defs_basis.mk
--include ../$(TARGET_OS)/defs_basis.mk
--include ../$(TARGET_OS)-$(TARGET_CPU_FAMILY)-$(TARGET_DEVICE)/defs_basis.mk
+-include $(CDC_CPU_COMPONENT_DIR)/build/$(TARGET_CPU_FAMILY)/defs_basis.mk
+-include $(CDC_OS_COMPONENT_DIR)/build/$(TARGET_OS)/defs_basis.mk
+-include $(CDC_DEVICE_COMPONENT_DIR)/build/$(TARGET_OS)-$(TARGET_CPU_FAMILY)-$(TARGET_DEVICE)/defs_basis.mk
 
 #
 # Assume we are building a qt based implementation of AWT for
@@ -547,7 +547,7 @@ CVM_TESTCLASSES_SRCDIRS += \
 
 # Include profile specific gunit defs, if it exists
 ifeq ($(CVM_GUNIT_TESTS), true)
--include ../share/defs_$(J2ME_CLASSLIB)_gunit.mk
+-include $(CDC_DIR)/build/share/defs_$(J2ME_CLASSLIB)_gunit.mk
 endif
 
 CVM_TEST_CLASSES += \
@@ -559,4 +559,4 @@ CVM_TEST_CLASSES += \
 # Basis profile sits on top of foundation so we need to include 
 # foundation definitions.
 #
-include ../share/defs_foundation.mk
+include $(CDC_DIR)/build/share/defs_foundation.mk

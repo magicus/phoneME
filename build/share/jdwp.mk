@@ -255,5 +255,5 @@ $(CVM_JDWP_OBJDIR)/%.o: %.S
 	@echo "... $@"
 	$(SO_ASM_CMD)
 
--include  ../$(TARGET_OS)/jdwp_transport.mk
--include  ../share/jdwp_transport.mk
+-include $(CDC_OS_COMPONENT_DIR)/build/$(TARGET_OS)/jdwp_transport.mk
+-include $(CDC_DIR)/build/share/jdwp_transport.mk

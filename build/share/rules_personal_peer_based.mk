@@ -30,11 +30,11 @@ printconfig::
 #
 # Include any peerset-specific, target-specific rules file.
 #
--include ../$(TARGET_OS)-$(TARGET_CPU_FAMILY)-$(TARGET_DEVICE)/rules_$(J2ME_CLASSLIB)_$(AWT_PEERSET).mk
--include ../$(TARGET_OS)/rules_personal_$(AWT_PEERSET).mk
+-include $(CDC_DEVICE_COMPONENT_DIR)/build/$(TARGET_OS)-$(TARGET_CPU_FAMILY)-$(TARGET_DEVICE)/rules_$(J2ME_CLASSLIB)_$(AWT_PEERSET).mk
+-include $(CDC_OS_COMPONENT_DIR)/build/$(TARGET_OS)/rules_personal_$(AWT_PEERSET).mk
 
 #
 # Include shared awt peerset specific makefile
 #
--include ../share/rules_personal_$(AWT_PEERSET).mk
+-include $(CDC_DIR)/build/share/rules_personal_$(AWT_PEERSET).mk
 

@@ -33,8 +33,8 @@ AWT_IMPLEMENTATION ?= peer_based
 #
 # Do OS and Device defs_personal.mk first so AWT_IMPLEMENTATION can be changed.
 #
--include ../$(TARGET_OS)/defs_personal.mk
--include ../$(TARGET_OS)-$(TARGET_CPU_FAMILY)-$(TARGET_DEVICE)/defs_personal.mk
+-include $(CDC_OS_COMPONENT_DIR)/build/$(TARGET_OS)/defs_personal.mk
+-include $(CDC_DEVICE_COMPONENT_DIR)/build/$(TARGET_OS)-$(TARGET_CPU_FAMILY)-$(TARGET_DEVICE)/defs_personal.mk
 
 #
 # Personal Profile class directories
@@ -483,7 +483,7 @@ endif
 # Personal profile sits on top of Basis so we need to include 
 # Basis definitions.
 #
-include ../share/defs_basis.mk
+include $(CDC_DIR)/build/share/defs_basis.mk
 
 # Define system properties from makefile settings.
 # "isRestricted" values that are set to 'true' in the

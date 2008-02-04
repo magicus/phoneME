@@ -25,7 +25,7 @@
 #
 
 # Include target specific makefiles first
-include ../$(TARGET_OS)/defs_foundation.mk
+include $(CDC_OS_COMPONENT_DIR)/build/$(TARGET_OS)/defs_foundation.mk
 
 PROFILE_SRCDIRS += \
    $(CVM_SHAREROOT)/foundation/classes
@@ -418,4 +418,4 @@ JAVADOC_FOUNDATION_SRCPATH     = $(PROFILE_SRCDIRS):$(CVM_SHAREDCLASSES_SRCDIR):
 -include defs_foundation_commercial.mk
 
 # Do this last so this makefile can override source files on the vpath.
-include ../share/defs_cdc.mk
+include $(CDC_DIR)/build/share/defs_cdc.mk

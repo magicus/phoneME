@@ -27,9 +27,9 @@ CVM_MIDP_BUILDDIR	= $(CDC_DIST_DIR)/midp
 ifeq ($(USE_MIDP),true)
 
 # Include target specific makefiles first
--include ../$(TARGET_CPU_FAMILY)/defs_midp.mk
--include ../$(TARGET_OS)/defs_midp.mk
--include ../$(TARGET_OS)-$(TARGET_CPU_FAMILY)-$(TARGET_DEVICE)/defs_midp.mk
+-include $(CDC_CPU_COMPONENT_DIR)/build/$(TARGET_CPU_FAMILY)/defs_midp.mk
+-include $(CDC_OS_COMPONENT_DIR)/build/$(TARGET_OS)/defs_midp.mk
+-include $(CDC_DEVICE_COMPONENT_DIR)/build/$(TARGET_OS)-$(TARGET_CPU_FAMILY)-$(TARGET_DEVICE)/defs_midp.mk
 
 ifeq ($(USE_GCI), true)
     MIDP_PLATFORM = linux_gci

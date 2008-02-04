@@ -163,7 +163,7 @@ $(eval EVAL_SUPPORTED=true)
 # Set overriding values:
 
 # Figure out if this is a CDC 1.0 source base or not
-ifeq ($(wildcard ../share/defs_zoneinfo.mk),)
+ifeq ($(wildcard $(CDC_DIR)/build/share/defs_zoneinfo.mk),)
 	override CDC_10 = true
 else
 	override CDC_10 = false
@@ -372,15 +372,15 @@ LIB_POSTFIX = $(DEBUG_POSTFIX).so
 #
 # All build directories relative to CVM_BUILD_TOP
 #
-CVM_TOP       := ../..
-CVM_BUILD_TOP := $(CVM_TOP)/build/$(CVM_TARGET)/$(CVM_BUILD_SUBDIR_NAME)
+CVM_TOP       := $(CDC_DIR)
+CVM_BUILD_TOP := $(CDC_DEVICE_COMPONENT_DIR)/build/$(CVM_TARGET)/$(CVM_BUILD_SUBDIR_NAME)
 CVM_LIBDIR    := $(CVM_BUILD_TOP)/lib
 
 CVM_TOP_ABS	  := $(call ABSPATH,$(CVM_TOP))
 CVM_BUILD_TOP_ABS := $(call ABSPATH,$(CVM_BUILD_TOP))
 CVM_LIBDIR_ABS    := $(CVM_BUILD_TOP_ABS)/lib
 
-PROFILE_DIR       ?= $(CVM_TOP)
+PROFILE_DIR       ?= $(CDC_DIR)
 
 
 # Locate the cdc-com component
@@ -417,7 +417,7 @@ ifneq ($(J2ME_PLATFORM),)
 -include $(PROFILE_DIR)/build/share/id_$(J2ME_PLATFORM).mk
 endif 
 # This is for identifying binary products, like Personal Profile for Zaurus
--include ../$(TARGET_OS)-$(TARGET_CPU_FAMILY)-$(TARGET_DEVICE)/id_$(J2ME_CLASSLIB).mk
+-include $(CDC_DEVICE_COMPONENT_DIR)/build/$(TARGET_OS)-$(TARGET_CPU_FAMILY)-$(TARGET_DEVICE)/id_$(J2ME_CLASSLIB).mk
 
 ifeq ($(CVM_CREATE_RTJAR),true)
 CVM_RT_JAR_NAME		= "rt.jar"
@@ -1180,7 +1180,7 @@ CVM_SHAREROOT  		 = $(CVM_TOP)/src/share
 # Full path for current build directory
 CDC_CUR_DIR	:= $(call ABSPATH,.)
 # Full path for the cdc component directory
-export CDC_DIR	:= $(CVM_TOP_ABS)
+export CDC_DIR	?:= $(CVM_TOP_ABS)
 # directory where cdc build is located.
 export CDC_DIST_DIR := $(CVM_BUILD_TOP_ABS)
 # Directory where javadocs, source bundles, and binary bundle get installed.
@@ -1250,7 +1250,7 @@ DEFAULTLOCALELIST_JAVA = \
     $(CVM_DERIVEDROOT)/classes/sun/misc/DefaultLocaleList.java
 
 ifeq ($(CVM_TEST_GC), true)
-include ../share/testgc.mk
+include $(CDC_DIR)/build/share/testgc.mk
 endif
 
 ifeq ($(CVM_TEST_GENERATION_GC), true)
@@ -2237,10 +2237,10 @@ include $(TOOLS_DIR)/tools.gmk
 # set in the global flags. We should consider doing the separation
 # of the defs from the building of the object file lists.
 #
--include ../$(TARGET_CPU_FAMILY)/defs.mk
--include ../$(TARGET_OS)/defs.mk
--include ../$(TARGET_OS)-$(TARGET_CPU_FAMILY)/defs.mk
--include ../$(TARGET_OS)-$(TARGET_CPU_FAMILY)-$(TARGET_DEVICE)/defs.mk
+-include $(CDC_CPU_COMPONENT_DIR)/build/$(TARGET_CPU_FAMILY)/defs.mk
+-include $(CDC_OS_COMPONENT_DIR)/build/$(TARGET_OS)/defs.mk
+-include $(CDC_OSCPU_COMPONENT_DIR)/build/$(TARGET_OS)-$(TARGET_CPU_FAMILY)/defs.mk
+-include $(CDC_DEVICE_COMPONENT_DIR)/build/$(TARGET_OS)-$(TARGET_CPU_FAMILY)-$(TARGET_DEVICE)/defs.mk
 
 # Root directory for unittests reports
 REPORTS_DIR ?= $(call POSIX2HOST,$(CDC_DIST_DIR)/reports)
