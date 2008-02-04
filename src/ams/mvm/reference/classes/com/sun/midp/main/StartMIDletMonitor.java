@@ -121,36 +121,35 @@ class StartMIDletMonitor implements MIDletProxyListListener {
      *    null if the MIDlet is already active or being started
      */
     static StartMIDletMonitor okToStart(int id, String midletClassName) {
-	synchronized (startPending) {
+        synchronized (startPending) {
+            // Verify that the requested MIDlet is not already running
+            // (is not in the MIDletProxyList)
+            if (midletProxyList.isMidletInList(id, midletClassName)) {
+                if (Logging.REPORT_LEVEL <= Logging.WARNING) {
+                    Logging.report(Logging.WARNING, LogChannels.LC_CORE,
+                           "MIDlet already running; execute ignored");
+                }
+                return null;
+            }
 
-	    // Verify that the requested MIDlet is not already running
-	    // (is not in the MIDletProxyList)
-	    if (midletProxyList.isMidletInList(id, midletClassName)) {
-		if (Logging.REPORT_LEVEL <= Logging.WARNING) {
-		    Logging.report(Logging.WARNING, LogChannels.LC_CORE,
-				   "MIDlet already running; execute ignored");
-		}
-		return null;
-	    }
-
-	    /*
-	     * Find the StartMIDletMonitor instance
-	     * to track the startup, (if any)
-	     */
-	    StartMIDletMonitor start = findMonitor(id, midletClassName);
-	    if (start == null) {
-		// Not already starting; register new start
-		start = new StartMIDletMonitor(id, midletClassName);
-	    } else {
-		// MIDlet is already started; return null
-		start = null;
-		if (Logging.REPORT_LEVEL <= Logging.WARNING) {
-		    Logging.report(Logging.WARNING, LogChannels.LC_CORE,
-				   "MIDlet already started; execute ignored");
-		}
-	    }
-	    return start;
-	}
+            /*
+             * Find the StartMIDletMonitor instance
+             * to track the startup, (if any)
+             */
+            StartMIDletMonitor start = findMonitor(id, midletClassName);
+            if (start == null) {
+                // Not already starting; register new start
+                start = new StartMIDletMonitor(id, midletClassName);
+            } else {
+                // MIDlet is already started; return null
+                start = null;
+                if (Logging.REPORT_LEVEL <= Logging.WARNING) {
+                    Logging.report(Logging.WARNING, LogChannels.LC_CORE,
+                           "MIDlet already started; execute ignored");
+                }
+            }
+            return start;
+        }
     }
 
     /**

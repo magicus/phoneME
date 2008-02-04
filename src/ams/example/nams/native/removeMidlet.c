@@ -73,7 +73,7 @@ static const char* const removeUsageText =
  */
 int removeMidlet(int argc, char* argv[]) {
     int   status = -1;
-    char* midpHome = NULL;
+    char* appDir = NULL;
 
     if (argc == 1) {
         fprintf(stderr, removeUsageText);
@@ -87,12 +87,12 @@ int removeMidlet(int argc, char* argv[]) {
     }
 
     /* get midp home directory, set it */
-    midpHome = midpFixMidpHome(argv[0]);
-    if (midpHome == NULL) {
+    appDir = getApplicationDir(argv[0]);
+    if (appDir == NULL) {
         return -1;
     }
-    /* set up midpHome before calling initialize */
-    midpSetHomeDir(midpHome);
+    /* set up appDir before calling initialize */
+    midpSetAppDir(appDir);
 
     if (midpInitialize() != 0) {
         REPORT_ERROR(LC_AMS, "Not enough memory");

@@ -67,6 +67,9 @@
 #ifdef ENABLE_JSR_179
 #include <javacall_location.h>
 #endif
+#ifdef ENABLE_ON_DEVICE_DEBUG
+#include <javacall_odd.h>
+#endif /* ENABLE_ON_DEVICE_DEBUG */
 
 static char urlAddress[BINARY_BUFFER_MAX_LEN];
 
@@ -1190,27 +1193,26 @@ void javanotify_datagram_event(javacall_datagram_callback_type type,
  * Post native media event to Java event handler
  * 
  * @param type          Event type
- * @param playerId      Player ID that came from javacall_media_create function
+ * @param appId         Application ID
+ * @param playerId      Player ID
+ * @param status        Event status
  * @param data          Data for this event type
  */
 void javanotify_on_media_notification(javacall_media_notification_type type,
-                                      javacall_int64 playerId,
+                                      int appId,
+                                      int playerId, 
+                                      javacall_result status,
                                       void *data) {
 #if ENABLE_JSR_135
-    extern int g_currentPlayer;
-
     midp_jc_event_union e;
 
-    if (-1 == playerId) {
-        playerId = g_currentPlayer;
-    }
-
-    REPORT_INFO2(LC_MMAPI, "javanotify_on_media_notification type=%d id=%d\n", type, (int)(playerId & 0xFFFFFFFF));
+    REPORT_INFO4(LC_MMAPI, "javanotify_on_media_notification type=%d appId=%d playerId%d status=%d\n", type, appId, playerId, status);
 
     e.eventType = MIDP_JC_EVENT_MULTIMEDIA;
     e.data.multimediaEvent.mediaType = type;
-    e.data.multimediaEvent.isolateId = (int)((playerId >> 32) & 0xFFFF);
-    e.data.multimediaEvent.playerId = (int)(playerId & 0xFFFF);
+    e.data.multimediaEvent.appId = appId;
+    e.data.multimediaEvent.playerId = playerId;
+    e.data.multimediaEvent.status = (int) status;
     e.data.multimediaEvent.data = (int) data;
 
     midp_jc_event_send(&e);
@@ -1233,7 +1235,7 @@ void javanotify_on_amms_notification(javacall_amms_notification_type type,
 
     e.eventType = MIDP_JC_EVENT_ADVANCED_MULTIMEDIA;
     e.data.multimediaEvent.mediaType = type;
-    e.data.multimediaEvent.isolateId = (int)((processorId >> 32) & 0xFFFF);
+    e.data.multimediaEvent.appId = (int)((processorId >> 32) & 0xFFFF);
     e.data.multimediaEvent.playerId = (int)(processorId & 0xFFFF);
     e.data.multimediaEvent.data = (int) data;
 
@@ -1535,3 +1537,16 @@ void /* OPTIONAL */ javanotify_rotation() {
     e.eventType = MIDP_JC_EVENT_ROTATION;
     midp_jc_event_send(&e);
 }
+
+#if ENABLE_ON_DEVICE_DEBUG
+/**
+ * The platform calls this function to inform VM that
+ * ODTAgent midlet must be enabled.
+ */
+void javanotify_enable_odd() {
+     midp_jc_event_union e;
+
+     e.eventType = MIDP_JC_ENABLE_ODD_EVENT;    
+     midp_jc_event_send(&e);
+}
+#endif

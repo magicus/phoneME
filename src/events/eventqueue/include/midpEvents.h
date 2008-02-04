@@ -135,6 +135,23 @@ extern "C" {
 /** JSR-256 event */
 #define SENSOR_EVENT                    48
 
+/**
+ * If USE_ON_DEVICE_DEBUG=true build option was given, when a special
+ * key sequence is detected, the system sends this event to AMS to
+ * enable On Device Debugging.
+ */
+#define MIDP_ENABLE_ODD_EVENT           49
+
+/**
+ * Request to start a new midlet from the debug agent to AMS.
+ */
+#define MIDP_ODD_START_MIDLET_EVENT     50
+
+/**
+ * Notification sent by AMS to the debug agent.
+ */
+#define MIDP_ODD_MIDLET_EXITED_EVENT    51
+
 /** @} */
 
 /**
@@ -156,6 +173,7 @@ extern "C" {
 #define MM_DATA         intParam2
 #define MM_ISOLATE      intParam3
 #define MM_EVT_TYPE     intParam4
+#define MM_EVT_STATUS   intParam5
 /** @} */
 
 /**

@@ -40,7 +40,9 @@ vpath % $(SUBSYSTEM_DIR)/configuration/properties_port/javacall/native
 
 # Native files 
 #
-JAVACALL_PROPERTIES_PORT_NATIVE_FILES = midp_properties_javacall.c
+JAVACALL_PROPERTIES_PORT_NATIVE_FILES = \
+    midp_properties_javacall.c \
+    properties_static_data.c
 
 # Include files
 # 
@@ -56,3 +58,9 @@ SUBSYSTEM_PROPERTIES_PORT_NATIVE_FILES += \
 
 SUBSYSTEM_CONFIGURATION_CONFIG_FILES = \
         $(INT_CONFIGURATION_CONFIG_FILES)
+
+$(OBJ_DIR)/properties_static_data.o: $(GENERATED_DIR)/properties_static_data.c
+	@echo " ... $@" $(LOG)
+	@echo +++ $(CC) $(CFLAGS) -c $(CC_OUTPUT)$@ `$(call fixcygpath, $<)` \
+		$(LOG_ONLY)
+	@$(CC) $(CFLAGS) -c $(CC_OUTPUT)$@ `$(call fixcygpath, $<)` $(LOG)

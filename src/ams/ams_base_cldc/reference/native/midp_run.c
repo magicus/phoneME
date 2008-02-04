@@ -402,6 +402,34 @@ midpInitializeUI(void) {
     }
 #endif
 
+#if ENABLE_ON_DEVICE_DEBUG
+    {
+#if ENABLE_MULTIPLE_ISOLATES
+    #define OPT_NUM 3
+#else
+    #define OPT_NUM 2
+#endif
+
+        char* argv[OPT_NUM] = {
+            "-nosuspend", "-debugger"
+#if ENABLE_MULTIPLE_ISOLATES
+            , "-debug_isolate"
+#endif
+        };
+        int i;
+
+        for (i = 0; i < OPT_NUM; i++) {
+            (void)JVM_ParseOneArg(1, &argv[i]);
+        }
+#undef OPT_NUM
+        
+        /*
+         * Use the default port: 2800.
+         * To redefine it, "-port <n>" option can be used.
+         */
+     }
+#else
+
 #if ENABLE_JAVA_DEBUGGER
     {
         char* argv[2];
@@ -414,6 +442,8 @@ midpInitializeUI(void) {
         }
     }
 #endif
+
+#endif /* ENABLE_ON_DEVICE_DEBUG */
 
     if (pushopen() != 0) {
         return -1;
@@ -481,6 +511,38 @@ putClassPathExtToSysProperty(char* classPathExt) {
         }
     }
 }
+
+#if ENABLE_JAVA_DEBUGGER
+
+/**
+ * Passes an argument corresponding to the given debug option to the VM.
+ *
+ * @param debugOption debug option to pass to the VM
+ */
+static void setDebugOption(int debugOption) {
+    char* argv[1];
+
+    if (debugOption > MIDP_NO_DEBUG) {
+        argv[0] = "-debugger";
+        (void)JVM_ParseOneArg(1, argv);
+
+#if ENABLE_MULTIPLE_ISOLATES
+        argv[0] = "-debug_isolate";
+        (void)JVM_ParseOneArg(1, argv);
+#endif
+        
+        if (debugOption == MIDP_DEBUG_SUSPEND) {
+            argv[0] = "-suspend";
+            (void)JVM_ParseOneArg(1, argv);
+        } else if (debugOption == MIDP_DEBUG_NO_SUSPEND) {
+            argv[0] = "-nosuspend";
+            (void)JVM_ParseOneArg(1, argv);
+        }
+    }
+}
+
+#endif
+
 
 /**
  * Runs the given MIDlet from the specified MIDlet suite with the
@@ -577,21 +639,7 @@ midp_run_midlet_with_args_cp(SuiteIdType suiteId,
     }
 
 #if ENABLE_JAVA_DEBUGGER
-    {
-        char* argv[1];
-
-        if (debugOption > MIDP_NO_DEBUG) {
-            argv[0] = "-debugger";
-            (void)JVM_ParseOneArg(1, argv);
-            if (debugOption == MIDP_DEBUG_SUSPEND) {
-                argv[0] = "-suspend";
-                (void)JVM_ParseOneArg(1, argv);
-            } else if (debugOption == MIDP_DEBUG_NO_SUSPEND) {
-                argv[0] = "-nosuspend";
-                (void)JVM_ParseOneArg(1, argv);
-            }
-        }
-    }
+    setDebugOption(debugOption);
 #else
     (void)debugOption;
 #endif
@@ -736,6 +784,13 @@ midp_run_midlet_with_args_cp(SuiteIdType suiteId,
             vmStatus = MIDP_SHUTDOWN_STATUS;
             break;
         }
+
+#if ENABLE_ON_DEVICE_DEBUG
+        if (commandState->isDebugMode) {
+            commandState->isDebugMode = 0;
+            setDebugOption(MIDP_DEBUG_SUSPEND);
+        }
+#endif
     } while (commandState->suiteId != UNUSED_SUITE_ID);
 
     pushcheckinall();

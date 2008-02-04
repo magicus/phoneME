@@ -157,6 +157,7 @@ public class MIDletSuiteStorage {
      * @exception MIDletSuiteLockedException is thrown, if the MIDletSuite is
      * locked; MIDletSuiteCorruptedException is thrown if the MIDletSuite is
      * corrupted
+     * @exception MIDletSuiteCorruptedException if the suite is corrupted
      *
      * @return MIDlet Suite reference
      */
@@ -306,6 +307,16 @@ public class MIDletSuiteStorage {
      * @return class path or null if the suite does not exist
      */
     public synchronized native String getMidletSuiteJarPath(int id);
+
+    /**
+     * Get the storage id for a suite.
+     *
+     * @param id unique ID of the suite
+     *
+     * @return storage id or null if the suite does not exist
+     */
+    public native static int getMidletSuiteStorageId(int id);
+
 
     /**
      * Gets the unique identifier of MIDlet suite.
@@ -489,6 +500,43 @@ public class MIDletSuiteStorage {
     }
 
     /**
+     * Moves a software package with given suite ID to the specified storage.
+     *
+     * @param suiteId suite ID for the installed package
+     * @param newStorageId new storage ID
+     *
+     * @exception IllegalArgumentException if the suite cannot be found or
+     * invalid storage ID specified 
+     * @exception MIDletSuiteLockedException is thrown, if the MIDletSuite is
+     * locked
+     * @exception IOException if an I/O error occurred
+     * @exception OutOfMemoryError if out of memory
+     */
+    public native void changeStorage(int suiteId, int newStorageId)
+            throws IllegalArgumentException, MIDletSuiteLockedException,
+                   IOException, OutOfMemoryError;
+
+    /**
+     * Native method void moveSuiteToFolder(...) of
+     * com.sun.midp.midletsuite.MIDletSuiteStorage.
+     * <p>
+     * Moves a software package with given suite ID to the specified folder.
+     *
+     * @param suiteId suite ID for the installed package
+     * @param newFolderId folder ID
+     *
+     * @exception IllegalArgumentException if the suite cannot be found or
+     *                                     invalid folder ID specified
+     * @exception MIDletSuiteLockedException is thrown, if the MIDletSuite is
+     *                                       locked
+     * @exception IOException if an I/O error occurred
+     * @exception OutOfMemoryError if out of memory
+     */
+    public native void moveSuiteToFolder(int suiteId, int newFolderId)
+            throws IllegalArgumentException, MIDletSuiteLockedException,
+                   IOException, OutOfMemoryError;
+
+    /**
      * Stores or updates a midlet suite.
      *
      * @param installInfo structure containing the following information:<br>
@@ -628,7 +676,7 @@ public class MIDletSuiteStorage {
         if (n < 0) {
             if (Logging.REPORT_LEVEL <= Logging.ERROR) {
                 Logging.report(Logging.ERROR, LogChannels.LC_AMS,
-                    "Error in getNumberOfSuites0(): returned -1!");
+                    "Error in getNumberOfSuites(): returned " + n);
             }
             n = 0;
         }

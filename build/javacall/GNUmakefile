@@ -1,5 +1,5 @@
 #
-# Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+# Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
 # 
 # This program is free software; you can redistribute it and/or
@@ -49,6 +49,9 @@ include Options.gmk
 
 # All rules are defined in shared makefiles
 include $(MIDP_DIR)/build/common/Top.gmk
+
+#overwrite  USE_JAVAUTIL_LOG_IMPLEMENTATION=false from Top.gmk
+USE_JAVAUTIL_LOG_IMPLEMENTATION=true
 
 # Including the part that should appear after Top.gmk
 include Platform_post.gmk

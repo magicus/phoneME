@@ -109,6 +109,13 @@ void checkForSystemSignal(MidpReentryData* pNewSignal,
         pNewMidpEvent->type    = ROTATION_EVENT;
         break;
 
+#if ENABLE_ON_DEVICE_DEBUG
+    case MIDP_JC_ENABLE_ODD_EVENT:
+        pNewSignal->waitingFor = AMS_SIGNAL;
+        pNewMidpEvent->type = MIDP_ENABLE_ODD_EVENT;
+        break;
+#endif
+
 #ifdef ENABLE_JSR_75
     case JSR75_FC_JC_EVENT_ROOTCHANGED:
         notifyDisksChanged();
@@ -147,8 +154,8 @@ void checkForSystemSignal(MidpReentryData* pNewSignal,
 
         if( JAVACALL_EVENT_MEDIA_SNAPSHOT_FINISHED == event->data.multimediaEvent.mediaType ) {
             pNewSignal->waitingFor = MEDIA_SNAPSHOT_SIGNAL;
-            pNewSignal->descriptor = (((event->data.multimediaEvent.isolateId & 0xFFFF) << 16) 
-                                     | (event->data.multimediaEvent.playerId & 0xFFFF));
+//            pNewSignal->descriptor = (((event->data.multimediaEvent.isolateId & 0xFFFF) << 16) 
+//                                     | (event->data.multimediaEvent.playerId & 0xFFFF));
 
             REPORT_CALL_TRACE1(LC_NONE, "[media event] JAVACALL_EVENT_MEDIA_SNAPSHOT_FINISHED %d\n",
                                pNewSignal->descriptor);
@@ -161,8 +168,9 @@ void checkForSystemSignal(MidpReentryData* pNewSignal,
         pNewMidpEvent->type         = MMAPI_EVENT;
         pNewMidpEvent->MM_PLAYER_ID = event->data.multimediaEvent.playerId;
         pNewMidpEvent->MM_DATA      = event->data.multimediaEvent.data;
-        pNewMidpEvent->MM_ISOLATE   = event->data.multimediaEvent.isolateId;
+        pNewMidpEvent->MM_ISOLATE   = event->data.multimediaEvent.appId;
         pNewMidpEvent->MM_EVT_TYPE  = event->data.multimediaEvent.mediaType;
+        pNewMidpEvent->MM_EVT_STATUS= event->data.multimediaEvent.status;
 
         /* VOLUME_CHANGED event must be sent to all players.             */
         /* MM_ISOLATE = -1 causes bradcast by StoreMIDPEventInVmThread() */
@@ -171,7 +179,7 @@ void checkForSystemSignal(MidpReentryData* pNewSignal,
 
         REPORT_CALL_TRACE4(LC_NONE, "[media event] External event recevied %d %d %d %d\n",
                 pNewMidpEvent->type, 
-                event->data.multimediaEvent.isolateId, 
+                event->data.multimediaEvent.appId, 
                 pNewMidpEvent->MM_PLAYER_ID, 
                 pNewMidpEvent->MM_DATA);
 #endif
@@ -184,12 +192,12 @@ void checkForSystemSignal(MidpReentryData* pNewSignal,
         pNewMidpEvent->type         = AMMS_EVENT;
         pNewMidpEvent->MM_PLAYER_ID = event->data.multimediaEvent.playerId;
         pNewMidpEvent->MM_DATA      = event->data.multimediaEvent.data;
-        pNewMidpEvent->MM_ISOLATE   = event->data.multimediaEvent.isolateId;
+        pNewMidpEvent->MM_ISOLATE   = event->data.multimediaEvent.appId;
         pNewMidpEvent->MM_EVT_TYPE  = event->data.multimediaEvent.mediaType;
 
         REPORT_CALL_TRACE4(LC_NONE, "[jsr234 event] External event recevied %d %d %d %d\n",
             pNewMidpEvent->type, 
-            event->data.multimediaEvent.isolateId, 
+            event->data.multimediaEvent.appId, 
             pNewMidpEvent->MM_PLAYER_ID, 
             pNewMidpEvent->MM_DATA);
 

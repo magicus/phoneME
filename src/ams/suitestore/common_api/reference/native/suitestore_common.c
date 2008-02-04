@@ -325,27 +325,31 @@ midp_suite_get_cached_resource_filename(SuiteIdType suiteId,
 }
 
 /**
- * Retrieves an ID of the storage where the midlet suite with the given suite ID
- * is stored.
+ * Retrieves an ID of the requested type for the given suite.
  *
  * @param suiteId The application suite ID
- * @param pSuiteId [out] receives an ID of the storage where the suite is stored
+ * @param resultType 0 to return suite storage ID, 1 - suite folder ID
+ * @param pResult [out] receives the requested ID
  *
  * @return error code (ALL_OK if successful)
  */
-MIDPError
-midp_suite_get_suite_storage(SuiteIdType suiteId, StorageIdType* pStorageId) {
+static MIDPError
+get_suite_int_impl(SuiteIdType suiteId, int resultType, void* pResult) {
     MIDPError status;
     MidletSuiteData* pData;
     char* pszError;
 
-    if (pStorageId == NULL) {
+    if (pResult == NULL) {
         return BAD_PARAMS;
     }
 
     if (suiteId == INTERNAL_SUITE_ID) {
         /* handle a special case: predefined suite ID is given */
-        *pStorageId = INTERNAL_STORAGE_ID;
+        if (resultType) {
+            *(FolderIdType*)pResult  = 0;
+        } else {
+            *(StorageIdType*)pResult = INTERNAL_STORAGE_ID;
+        }
         return ALL_OK;
     }
 
@@ -356,14 +360,51 @@ midp_suite_get_suite_storage(SuiteIdType suiteId, StorageIdType* pStorageId) {
     if (status == ALL_OK) {
         pData = get_suite_data(suiteId);
         if (pData) {
-            *pStorageId = pData->storageId;
+            if (resultType) {
+                *(FolderIdType*)pResult  = pData->folderId;
+            } else {
+                *(StorageIdType*)pResult = pData->storageId;
+            }
         } else {
-            *pStorageId = UNUSED_STORAGE_ID;
+            if (resultType) {
+                *(FolderIdType*)pResult  = -1;
+            } else {
+                *(StorageIdType*)pResult = UNUSED_STORAGE_ID;
+            }
             status = NOT_FOUND;
         }
     }
 
     return status;
+}
+
+/**
+ * Retrieves an ID of the storage where the midlet suite with the given suite ID
+ * is stored.
+ *
+ * @param suiteId The application suite ID
+ * @param pStorageId [out] receives an ID of the storage where
+ *                         the suite is stored
+ *
+ * @return error code (ALL_OK if successful)
+ */
+MIDPError
+midp_suite_get_suite_storage(SuiteIdType suiteId, StorageIdType* pStorageId) {
+    return get_suite_int_impl(suiteId, 0, (void*)pStorageId);
+}
+
+/**
+ * Retrieves an ID of the folder where the midlet suite with the given suite ID
+ * is stored.
+ *
+ * @param suiteId The application suite ID
+ * @param pFolderId [out] receives an ID of the folder where the suite is stored
+ *
+ * @return error code (ALL_OK if successful)
+ */
+MIDPError
+midp_suite_get_suite_folder(SuiteIdType suiteId, FolderIdType* pFolderId) {
+    return get_suite_int_impl(suiteId, 0, (void*)pFolderId);
 }
 
 /**

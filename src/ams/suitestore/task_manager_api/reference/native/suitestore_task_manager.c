@@ -397,6 +397,243 @@ midp_remove_suite(SuiteIdType suiteId) {
 }
 
 /**
+ * Moves a software package with given suite ID to the specified storage.
+ *
+ * @param suiteId suite ID for the installed package
+ * @param storageId new storage ID
+ *
+ * @return SUITE_LOCKED if the
+ * suite is locked, NOT_FOUND if the suite cannot be found or
+ * invalid storage ID specified, BAD_PARAMS if attempt is made
+ * to move suite to the external storage, GENERAL_ERROR if
+ * VERIFY_ONCE is not enabled and if MONET is enabled
+ */
+MIDPError
+midp_change_suite_storage(SuiteIdType suiteId, StorageIdType newStorageId) {
+
+#ifndef VERIFY_ONCE
+    (void)suiteId;
+    (void)newStorageId;
+    return GENERAL_ERROR;
+#endif
+
+   /*
+    * if VERIFY_ONCE is enabled then MONET is disabled
+    * so we don't have to check ENABLE_MONET.
+    */
+
+    {
+        pcsl_string suiteRoot;
+        MidletSuiteData* pData = NULL;
+        int status;
+        void* fileIteratorHandle = NULL;
+        lockStorageList *node = NULL;
+
+        if ((UNUSED_STORAGE_ID == newStorageId) ||
+            (newStorageId >= MAX_STORAGE_NUM)) {
+            return BAD_PARAMS;
+        }
+
+        /*
+         * IMPL_NOTE: for security reasons we allow to move suite
+         * only to the internal storage.
+         */
+        if (newStorageId != INTERNAL_STORAGE_ID) {
+            return BAD_PARAMS;
+        }
+
+        node = find_storage_lock(suiteId);
+        if (node != NULL) {
+            if (node->update != KNI_TRUE) {
+                return SUITE_LOCKED;
+            }
+        }
+
+        /*
+         * This is a public API which can be called without the VM running
+         * so we need automatically init anything needed, to make the
+         * caller's code less complex.
+         *
+         * Initialization is performed in steps so that we do use any
+         * extra resources such as the VM for the operation being performed.
+         */
+        if (midpInit(REMOVE_LEVEL) != 0) {
+            remove_storage_lock(suiteId);
+            return OUT_OF_MEMORY;
+        }
+
+        /* check that the suite exists and it is not a preloaded one */
+        pData = get_suite_data(suiteId);
+
+        if (pData == NULL) {
+            remove_storage_lock(suiteId);
+            return NOT_FOUND;
+        }
+
+        if (pData->storageId == newStorageId) {
+            remove_storage_lock(suiteId);
+            return BAD_PARAMS;
+        }
+
+        if (pData->isPreinstalled) {
+            remove_storage_lock(suiteId);
+            return BAD_PARAMS;
+        }
+
+        do {
+            jsize oldRootLength;
+            jsize newRootLength;
+            const pcsl_string* newRoot;
+            const pcsl_string* oldRoot;
+            char* pszError = NULL;
+            pcsl_string filePath;
+            pcsl_string newFilePath;
+
+
+            status = begin_transaction(TRANSACTION_CHANGE_STORAGE, suiteId, NULL);
+            if (status != ALL_OK) {
+                break;
+            }
+
+            if ((status = get_suite_storage_root(suiteId, &suiteRoot)) != ALL_OK) {
+                break;
+            }
+
+            fileIteratorHandle = storage_open_file_iterator(&suiteRoot);
+            if (!fileIteratorHandle) {
+                status = IO_ERROR;
+                break;
+            }
+
+            newRoot = storage_get_root(newStorageId);
+            oldRoot = storage_get_root(pData->storageId);
+            newRootLength = pcsl_string_length(newRoot);
+            oldRootLength = pcsl_string_length(oldRoot);
+
+            status = ALL_OK;
+
+            if ((status = midp_suite_get_class_path(suiteId,
+                pData->storageId, KNI_FALSE, &filePath)) != ALL_OK) {
+                break;
+            }
+
+            if ((status = midp_suite_get_class_path(suiteId,
+                newStorageId, KNI_FALSE, &newFilePath)) != ALL_OK) {
+                break;
+            }
+
+            storage_rename_file(&pszError, &filePath, &newFilePath);
+            if (pszError != NULL) {
+                status = IO_ERROR;
+                storageFreeError(pszError);
+                pcsl_string_free(&filePath);
+                pcsl_string_free(&newFilePath);
+                break;
+            }
+
+            pcsl_string_free(&filePath);
+            pcsl_string_free(&newFilePath);
+
+#if ENABLE_IMAGE_CACHE
+            moveImageCache(suiteId, pData->storageId, newStorageId);
+#endif
+
+            pData->storageId = newStorageId;
+
+            status = write_suites_data(&pszError);
+            storageFreeError(pszError);
+
+        } while (0);
+
+        pcsl_string_free(&suiteRoot);
+        storageCloseFileIterator(fileIteratorHandle);
+
+        if (status != ALL_OK) {
+            (void)rollback_transaction();
+        } else {
+            (void)finish_transaction();
+        }
+
+        remove_storage_lock(suiteId);
+
+        return status;
+    }
+ }
+
+/**
+ * Moves the given midlet suite to another folder.
+ *
+ * @param suiteId ID of the suite
+ * @param newFolderId ID of the folder where the suite must be moved
+ *
+ * @return ALL_OK if no errors or an error code
+ */
+MIDPError midp_move_suite_to_folder(SuiteIdType suiteId,
+                                    FolderIdType newFolderId) {
+    MIDPError status = ALL_OK;
+    char* pszError = NULL;
+    lockStorageList *node = NULL;
+    MidletSuiteData* pSuiteData;
+    FolderIdType oldFolderId;
+
+    /*
+     * This is a public API which can be called without the VM running
+     * so we need automatically init anything needed, to make the
+     * caller's code less complex.
+     *
+     * Initialization is performed in steps so that we do use any
+     * extra resources such as the VM for the operation being performed.
+     */
+    if (midpInit(REMOVE_LEVEL) != 0) {
+        return OUT_OF_MEMORY;
+    }
+
+    /* load _suites.dat */
+    status = read_suites_data(&pszError);
+    storageFreeError(pszError);
+
+    if (status != ALL_OK) {
+        return status;
+    }
+
+    node = find_storage_lock(suiteId);
+    if (node != NULL) {
+        if (node->update != KNI_TRUE) {
+            return SUITE_LOCKED;
+        }
+    }
+
+    pSuiteData = get_suite_data(suiteId);
+    if (pSuiteData == NULL) {
+        remove_storage_lock(suiteId);
+        return NOT_FOUND;
+    }
+
+    status = begin_transaction(TRANSACTION_MOVE_TO_FOLDER, suiteId, NULL);
+    if (status != ALL_OK) {
+        remove_storage_lock(suiteId);
+        return status;
+    }
+
+    oldFolderId = pSuiteData->folderId;
+    pSuiteData->folderId = newFolderId;
+
+    status = write_suites_data(&pszError);
+    storageFreeError(pszError);
+
+    if (status != ALL_OK) {
+        pSuiteData->folderId = oldFolderId;
+        (void)rollback_transaction();
+    } else {
+        (void)finish_transaction();
+    }
+
+    remove_storage_lock(suiteId);
+
+    return status;
+}
+
+/**
  * Gets the amount of storage on the device that this suite is using.
  * This includes the JAD, JAR, management data, and RMS.
  *

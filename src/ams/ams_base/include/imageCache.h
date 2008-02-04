@@ -65,6 +65,15 @@ int loadImageFromCache(SuiteIdType suiteID, const pcsl_string * resName,
  */
 void createImageCache(SuiteIdType suiteID, StorageIdType storageId);
 
+/**
+ * Moves cached native images from ome storage to another.
+ *
+ * @param suiteId The suite ID
+ * @param storageIdFrom ID of the storage where images are cached
+ * @param storageIdTo ID of the storage where to move the cache
+ */
+void moveImageCache(SuiteIdType suiteID, StorageIdType storageIdFrom, StorageIdType storageIdTo);
+
 #ifdef __cplusplus
 }
 #endif

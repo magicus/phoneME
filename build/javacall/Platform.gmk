@@ -1,7 +1,5 @@
 #
-#
-#
-# Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+# Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
 # 
 # This program is free software; you can redistribute it and/or
@@ -32,5 +30,9 @@
 ifeq ($(JAVACALL_PLATFORM),)
 $(error JAVACALL_PLATFORM is not set)
 endif
+
+# Include JavaCall set of properties
+SUBSYSTEM_CONFIGURATION_INPUT_FILES += \
+    $(JAVACALL_OUTPUT_DIR)/properties.xml
 
 include $(JAVACALL_PLATFORM).gmk

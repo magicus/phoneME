@@ -1,7 +1,5 @@
 #
-#
-#
-# Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+# Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
 # 
 # This program is free software; you can redistribute it and/or
@@ -207,6 +205,18 @@ parallel_all:: $(VERIFY_BUILD_ENV) $(DISPLAY_BUILD_ENV) rom
 # copy the config files with properties for dynamic usage.
 #
 ifeq ($(USE_STATIC_PROPERTIES), false)
+ifeq ($(USE_JAVACALL_PROPERTIES), true)
+
+MIDP_DEPS += $(BINDIR)/jwc_properties.ini
+
+$(BINDIR)/jwc_properties.ini: $(BINDIR) $(SUBSYSTEM_CONFIGURATION_CONFIG_FILES)
+	if [ -f $@ ];then \
+		rm -f $@; \
+	fi $(LOG)
+	-(cp $(GENERATED_DIR)/jwc_properties.ini $@) $(LOG)
+	-(chmod +w $@) $(LOG)
+
+else
 MIDP_DEPS += $(LIBDIR)/internal.config $(LIBDIR)/system.config
 
 $(LIBDIR)/internal.config $(LIBDIR)/system.config: $(LIBDIR) $(SUBSYSTEM_CONFIGURATION_CONFIG_FILES)
@@ -215,6 +225,8 @@ $(LIBDIR)/internal.config $(LIBDIR)/system.config: $(LIBDIR) $(SUBSYSTEM_CONFIGU
 	fi $(LOG)
 	-(cp $(GENERATED_DIR)/$(subst $(MIDP_OUTPUT_DIR),,$@) $@) $(LOG)
 	-(chmod +w $@) $(LOG)
+
+endif
 endif
 
 ifeq ($(TARGET_VM), cdc_vm)
@@ -243,7 +255,7 @@ $(OBJ_DIR)/%.o: %.cpp
 	@echo " ... $@" $(LOG)
 	$(A)$(CPP) $(CPPFLAGS) -c $(CC_OUTPUT)$@ `$(call fixcygpath, $<)` $(LOG)
 
-$(MIDP_OUTPUT_DIR) $(OBJ_DIR) $(CLASSBINDIR) $(BINDIR) $(LIBDIR) $(VERIFYDIR) $(STORAGEDIR) $(CLASSBINDIR)/icons $(CLASSBINDIR)/audio:
+$(MIDP_OUTPUT_DIR) $(OBJ_DIR) $(CLASSBINDIR) $(BINDIR) $(LIBDIR) $(VERIFYDIR) $(STORAGEDIR) $(EXTSTORAGEDIR) $(CLASSBINDIR)/icons $(CLASSBINDIR)/audio:
 	@echo " ... creating directories $@ " $(LOG)
 	$(A)mkdir -p $@ $(LOG)
 

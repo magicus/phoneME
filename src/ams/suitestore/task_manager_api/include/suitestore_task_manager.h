@@ -124,6 +124,32 @@ MIDPError midp_enable_suite(SuiteIdType suiteId);
 MIDPError midp_remove_suite(SuiteIdType suiteId);
 
 /**
+ * Moves a software package with given suite ID to the specified storage.
+ *
+ * @param suiteId suite ID for the installed package
+ * @param newStorageId new storage ID
+ *
+ * @return SUITE_LOCKED if the
+ * suite is locked, NOT_FOUND if the suite cannot be found or
+ * invalid storage ID specified, BAD_PARAMS if attempt is made
+ * to move suite to the external storage, GENERAL_ERROR if
+ * VERIFY_ONCE is not enabled and if MONET is enabled
+ */
+MIDPError midp_change_suite_storage(SuiteIdType suiteId,
+                                    StorageIdType newStorageId);
+
+/**
+ * Moves the given midlet suite to another folder.
+ *
+ * @param suiteId ID of the suite
+ * @param newFolderId ID of the folder where the suite must be moved
+ *
+ * @return ALL_OK if no errors or an error code
+ */
+MIDPError midp_move_suite_to_folder(SuiteIdType suiteId,
+                                    FolderIdType newFolderId);
+
+/**
  * Gets the amount of storage on the device that this suite is using.
  * This includes the JAD, JAR, management data, and RMS.
  *

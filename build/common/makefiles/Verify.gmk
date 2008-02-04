@@ -111,15 +111,6 @@ endef
 define verify_jsr_184_directory
     if [ "$(USE_JSR_184)" = "true" ]; then \
         $(verify_directory); \
-       if [ -z "$(SWERVE_DIR)" ]; then \
-	   echo "ERROR: SWERVE_DIR must be set"; \
-	   exit -1; \
-       else \
-	   if [ ! -d "$(SWERVE_DIR)" ]; then \
-	       echo "ERROR: JSR_184: $(SWERVE_DIR) does not point to a valid directory"; \
-	       exit -1; \
-	   fi \
-       fi \
     fi
 endef
 
@@ -289,6 +280,22 @@ define ensure_cygwin_tmp
     fi
 endef
 
+# Verify that USE_STATIC_PROPERTIES setting is consistent between MIDP and JavaCall
+#
+define verify_javacall_properties
+    if [ "$(USE_STATIC_PROPERTIES)" = "true" ]; then \
+        if [ ! -f "$(JAVACALL_OUTPUT_DIR)/javacall_static_properties.c" ]; then \
+            echo "ERROR: No javacall_static_properties.c found in JAVACALL_OUTPUT_DIR while USE_STATIC_PROPERTIES=true"; \
+            exit -1; \
+        fi; \
+    else \
+        if [ ! -f "$(JAVACALL_OUTPUT_DIR)/jwc_properties.ini" ]; then \
+            echo "ERROR: No jwc_properties.ini found in JAVACALL_OUTPUT_DIR while USE_STATIC_PROPERTIES=false"; \
+            exit -1; \
+        fi; \
+    fi
+endef
+
 #
 # The master list of boolean options.
 #
@@ -361,7 +368,9 @@ BOOLEAN_OPTIONS = \
 	USE_VERIFY_ONCE \
 	USE_VM_PROFILES \
 	USE_SERVER_SOCKET \
-	USE_LINKS
+	USE_LINKS \
+	USE_ON_DEVICE_DEBUG \
+	USE_AMS_FOLDERS
 
 $(BOOLEAN_OPTIONS)::
 	@echo +++ Verify option \"$@\" $(LOG_ONLY)
@@ -382,6 +391,18 @@ USE_VERIFY_ONCE::
 	@if [ "$(USE_VERIFY_ONCE)" = "true" ]; then \
 	  if [ "$(USE_MONET)" = "true" ]; then \
 	    echo "ERROR: USE_VERIFY and USE_MONET options are mutually exclusive"; \
+	    exit -1; \
+	  fi; \
+	fi
+
+USE_ON_DEVICE_DEBUG::
+	@if [ "$(USE_ON_DEVICE_DEBUG)" = "true" ]; then \
+	  if [ -z "$(PROJECT_MIDP_DIR)" ]; then \
+	    echo "ERROR: PROJECT_MIDP_DIR must be set when USE_ON_DEVICE_DEBUG is true"; \
+	    exit -1; \
+	  fi; \
+	  if [ -z "$(SDK_ODD_DIR)" ]; then \
+	    echo "ERROR: SDK_ODD_DIR must be set when USE_ON_DEVICE_DEBUG is true"; \
 	    exit -1; \
 	  fi; \
 	fi
@@ -552,6 +573,7 @@ JAVACALL_OUTPUT_DIR:
 	@$(verify_directory) $(LOG)
 	@if [ ! -d "$(JAVACALL_OUTPUT_DIR)/inc" ]; then $(INVALID_JAVACALL_OUTPUT_DIR); fi
 	@if [ ! -d "$(JAVACALL_OUTPUT_DIR)/lib" ]; then $(INVALID_JAVACALL_OUTPUT_DIR); fi
+	@$(verify_javacall_properties) $(LOG)
 else
 JAVACALL_OUTPUT_DIR:
 endif
@@ -671,4 +693,4 @@ print-subsystem-module-list:
 	@$(foreach S, $(SUBSYSTEMSUC), $(PRINTMODULESLIST))
 
 
-.PHONY: verify display $(BOOLEAN_OPTIONS) CYGWIN_TMP_DIR MIDP_DIR JDK_DIR RESTRICTED_CRYPTO_DIR JSR_177_DIR JSR_211_DIR PCSL_OUTPUT_DIR  CLDC_DIST_DIR
+.PHONY: verify display $(BOOLEAN_OPTIONS) CYGWIN_TMP_DIR MIDP_DIR JDK_DIR RESTRICTED_CRYPTO_DIR JSR_177_DIR JSR_211_DIR PCSL_OUTPUT_DIR  CLDC_DIST_DIR JAVACALL_OUTPUT_DIR

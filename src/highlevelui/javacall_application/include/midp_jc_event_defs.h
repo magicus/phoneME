@@ -57,6 +57,7 @@ extern "C" {
 
 #ifdef ENABLE_JSR_135
 #include <javacall_multimedia.h>
+#include <javanotify_multimedia.h>
 #endif
 #include <javacall_keypress.h>
 #include <javacall_penevent.h>
@@ -125,7 +126,10 @@ typedef enum {
 #if ENABLE_JSR_234
     MIDP_JC_EVENT_ADVANCED_MULTIMEDIA  ,
 #endif /*ENABLE_JSR_234*/
-    JSR75_FC_JC_EVENT_ROOTCHANGED      , 
+    JSR75_FC_JC_EVENT_ROOTCHANGED      ,
+#if ENABLE_ON_DEVICE_DEBUG
+    MIDP_JC_ENABLE_ODD_EVENT           ,
+#endif /* ENABLE_ON_DEVICE_DEBUG */
     MIDP_JC_EVENT_ROTATION             ,
     MIDP_JC_EVENT_SET_VM_ARGS          ,
     MIDP_JC_EVENT_SET_HEAP_SIZE        ,
@@ -218,8 +222,9 @@ typedef struct {
 #ifdef ENABLE_JSR_135
 typedef struct {
     javacall_media_notification_type mediaType;
-    int isolateId;
+    int appId;
     int playerId;
+    int status;
     long data;
 } midp_jc_event_multimedia;
 #endif

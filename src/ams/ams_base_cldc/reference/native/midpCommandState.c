@@ -75,6 +75,7 @@ MIDPCommandState* midpGetCommandState() {
          * is used instead.
          */
         MidpCommandState.runtimeInfo.profileName    = NULL;
+        MidpCommandState.isDebugMode = 0;
         state_initialized = KNI_TRUE;
     }
 
@@ -124,13 +125,15 @@ KNIDECL(com_sun_midp_main_CommandState_restoreCommandState) {
     KNI_RESTORE_INT_FIELD(commandState, clazz, "status",
                           MidpCommandState.status);
     KNI_RESTORE_BOOLEAN_FIELD(commandState, clazz, "logoDisplayed",
-                              (jboolean)MidpCommandState.logoDisplayed);
+                              MidpCommandState.logoDisplayed);
     KNI_RESTORE_PCSL_STRING_FIELD(commandState, clazz, "midletClassName",
                                   &MidpCommandState.midletClassName, string);
     KNI_RESTORE_INT_FIELD(commandState, clazz, "suiteId",
                           MidpCommandState.suiteId);
     KNI_RESTORE_INT_FIELD(commandState, clazz, "lastSuiteId",
                           MidpCommandState.lastSuiteId);
+    KNI_RESTORE_BOOLEAN_FIELD(commandState, clazz, "isDebugMode",
+                              MidpCommandState.isDebugMode);
 
     KNI_RESTORE_INT_FIELD(runtimeInfo, rtiClazz, "memoryReserved",
                           MidpCommandState.runtimeInfo.memoryReserved);
@@ -191,6 +194,8 @@ KNIDECL(com_sun_midp_main_CommandState_saveCommandState) {
                        MidpCommandState.lastSuiteId);
     KNI_SAVE_BOOLEAN_FIELD(commandState, clazz, "logoDisplayed",
                            MidpCommandState.logoDisplayed);
+    KNI_SAVE_BOOLEAN_FIELD(commandState, clazz, "isDebugMode",
+                           MidpCommandState.isDebugMode);
 
     KNI_SAVE_INT_FIELD(runtimeInfo, rtiClazz, "memoryReserved",
                        MidpCommandState.runtimeInfo.memoryReserved);

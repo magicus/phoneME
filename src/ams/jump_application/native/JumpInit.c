@@ -28,6 +28,11 @@
 #include <midpStorage.h>
 #include <suitestore_common.h>
 
+
+#define MAX_PATH_LEN 1024
+#define APP_DIR "appdb"
+#define CONFIG_DIR "lib"
+
 /**
  * Initializes the midp storage.
  *
@@ -37,34 +42,48 @@
 
 KNIEXPORT KNI_RETURNTYPE_BOOLEAN
 KNIDECL(com_sun_midp_jump_JumpInit_initMidpStorage) {
-    jchar jbuff[1024];
-    char cbuff[1024];
-    int max = sizeof(cbuff) - 1;
+    /* These need to static for midpSetAppDir and midpSetConfigDir. */
+    static char appDir[MAX_PATH_LEN];
+    static char configDir[MAX_PATH_LEN];
+
+    jchar jbuff[MAX_PATH_LEN];
+    char cbuff[MAX_PATH_LEN];
+    int max = MAX_PATH_LEN - strlen(APP_DIR) - 2 /* fsep + terminator */;
     int len, i, err;
-    MIDPError status;
+    MIDPError status = OUT_OF_MEMORY;
 
     KNI_StartHandles(1);
     KNI_DeclareHandle(home);
     KNI_GetParameterAsObject(1, home);
-                                                                                   
+
     len = KNI_GetStringLength(home);
-    if (len > max) {
-        len = max;
-    }
-                                                                                   
-    KNI_GetStringRegion(home, 0, len, jbuff);
-    for (i=0; i<len; i++) {
-        cbuff[i] = (char)jbuff[i];
-    }
-    cbuff[len] = 0;
+    if (len <= max) {
+        KNI_GetStringRegion(home, 0, len, jbuff);
 
-    midpSetHomeDir(cbuff);
-    err = storageInitialize(cbuff, cbuff);
+        for (i = 0; i < len; i++) {
+            cbuff[i] = (char)jbuff[i];
+        }
 
-    if (err == 0) {
-         status = midp_suite_storage_init();
-    } else {
-         status = OUT_OF_MEMORY;
+        cbuff[len] = (char)storageGetFileSeparator();
+        cbuff[len + 1] = 0;
+
+        strcpy(appDir, cbuff);
+        strcat(appDir, APP_DIR);
+
+        midpSetAppDir(appDir);
+
+        strcpy(configDir, cbuff);
+        strcat(configDir, CONFIG_DIR);
+
+        midpSetConfigDir(configDir);
+
+        err = storageInitialize(appDir, configDir);
+
+        if (err == 0) {
+            status = midp_suite_storage_init();
+        } else {
+            status = OUT_OF_MEMORY;
+        }
     }
 
     KNI_EndHandles();
