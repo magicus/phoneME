@@ -27,22 +27,25 @@
 #include <string.h>
 #include <kni.h>
 #include <sni.h>
-
-#ifdef ENABLE_MIDP
-#if (ENABLE_CDC != 1) 
-  #include <midp_thread.h> // midp_thread_unblock
-  #include <push_server_resource_mgmt.h> // pushsetcachedflag, pushgetfilter
-#endif
+#if (ENABLE_CDC != 1)
+//#include <commonKNIMacros.h>
+//#include <ROMStructs.h>
+  // #include <midp_thread.h>
   #include <midpServices.h>
-  #include <push_server_export.h>  // findPushBlockedHandle
+  #include <push_server_export.h>
 #else
-  #include "wmaInterface.h"
+typedef enum midp_SignalType {
+  WMA_CBS_READ_SIGNAL = 4,
+  PUSH_SIGNAL = 2
+};
 #endif
+
+#include <app_package.h>
 
 #if (ENABLE_CDC == 1)
 #ifdef JSR_120_ENABLE_JUMPDRIVER
-  #include <jsr120_jumpdriver.h>
-  #include <JUMPEvents.h>
+#include <jsr120_jumpdriver.h>
+#include <JUMPEvents.h>
 #else
   #include "jsr120_signals.h"
 #endif
@@ -52,8 +55,7 @@
 #include <jsr120_cbs_pool.h>
 #include <jsr120_cbs_listeners.h>
 #include <jsr120_cbs_protocol.h>
-#include <app_package.h>
-#include <wmaPushRegistry.h> // jsr120_check_filter
+//#include <push_server_resource_mgmt.h>
 
 /*
  * Listeners registered by a currently running midlet
@@ -69,6 +71,31 @@ static ListElement* cbs_push_listeners = NULL;
  * General form of a CBS listener.
  */
 typedef WMA_STATUS cbs_listener_t(CbsMessage* message, void* userData);
+
+/*
+ * private methods
+ */
+static WMA_STATUS jsr120_cbs_midlet_listener(CbsMessage *message,
+    void* userData);
+static WMA_STATUS jsr120_cbs_push_listener(CbsMessage *message,
+    void* userData);
+static WMA_STATUS jsr120_cbs_invoke_listeners(CbsMessage* message,
+    ListElement *listeners);
+#if (ENABLE_CDC != 1)
+static JVMSPI_ThreadID jsr120_cbs_get_blocked_thread_from_handle(long handle,
+    jint waitingFor);
+#endif
+static WMA_STATUS jsr120_cbs_is_listener_registered(jchar msgID,
+    ListElement *listeners);
+static WMA_STATUS jsr120_cbs_register_listener(jchar msgID, AppIdType msid,
+    cbs_listener_t* listener, void* userData, ListElement **listeners,
+    jboolean registerMsgID);
+static WMA_STATUS jsr120_cbs_unregister_listener(jchar msgID,
+    cbs_listener_t* listener, ListElement **listeners,
+    jboolean unregisterMsgID);
+static void jsr120_cbs_delete_all_msgs(AppIdType msid, ListElement* head);
+static WMA_STATUS jsr120_cbs_is_listener_registered_by_msid(jchar msgID,
+    ListElement *listeners, AppIdType msid);
 
 /**
  * Invoke registered listeners that match the msgID specified in the CBS
@@ -89,9 +116,9 @@ static WMA_STATUS jsr120_cbs_invoke_listeners(CbsMessage* message,
     WMA_STATUS unblocked = WMA_ERR;
 
     /* Notify all listeners that match the given port (Message ID) */
-    for(callback = jsr120_list_get_by_number(listeners, message->msgID);
-	callback != NULL;
-	callback = jsr120_list_get_by_number(callback->next, message->msgID)) {
+    for(callback=jsr120_list_get_by_number(listeners, message->msgID);
+	callback!=NULL;
+	callback=jsr120_list_get_by_number(callback->next, message->msgID)) {
 
 	/* Pick up the listener */
 	cbs_listener_t* listener=(cbs_listener_t*)(callback->userDataCallback);
@@ -150,22 +177,6 @@ WMA_STATUS jsr120_cbs_is_message_expected(jchar msgID) {
     return WMA_ERR;
 }
 
-/**
- * Check if a message identifier is currently registered.
- *
- * @param msgID	The message identifier to be matched.
- * @param listeners List of listeners to check.
- *
- * @return <code>WMA_OK</code> if the message identifier has an associated
- *     listener; <code>WMA_ERR</code>, otherwise.
- *
- */
-static WMA_STATUS jsr120_cbs_is_listener_registered(jchar msgID,
-    ListElement *listeners) {
-
-    return jsr120_list_get_by_number(listeners, msgID) != NULL ? WMA_OK : WMA_ERR;
-}
-
 /*
  * See jsr120_cbs_listeners.h for documentation
  */
@@ -192,52 +203,83 @@ WMA_STATUS jsr120_cbs_is_listener_registered_by_msid(jchar msgID,
     return entry != NULL && entry->msid == msid ? WMA_OK : WMA_ERR;
 }
 
-#if (ENABLE_CDC != 1)
-
-/**
- * See implementation in jsr120_sms_listeners.c
+/*
+ * See jsr120_cbs_listeners.h for documentation
  */
-extern WMA_STATUS jsr120_unblock_midp_threads(long handle, jint waitingFor, WMA_STATUS status);
+WMA_STATUS jsr120_cbs_register_midlet_listener(jchar msgID,
+    AppIdType msid, jint handle) {
 
-/**
- * Ublock threads waiting for these signals:
- *   WMA_CBS_READ_SIGNAL
- *   PUSH_SIGNAL
- *
- * @param handle Platform specific handle
- * @param signalType Enumerated signal type
- *
- * @result returns <code>WMA_STATUS</code> if waiting threads was
- *         successfully unblocked
- */
-static WMA_STATUS jsr120_unblock_cbs_read_threads(long handle, jint waitingFor) {
-    WMA_STATUS ok = WMA_ERR;
+    jboolean isPushRegistered = jsr120_cbs_is_listener_registered_by_msid(
+        msgID, cbs_push_listeners, msid) == WMA_OK;
 
-    if (waitingFor == WMA_CBS_READ_SIGNAL) {
-        ok = jsr120_unblock_midp_threads(handle, waitingFor, WMA_OK);
-    }
-
-    if (ok == WMA_OK) {
-        return ok; 
-    }
-
-    if (waitingFor == PUSH_SIGNAL) {
-        if (findPushBlockedHandle(handle) != 0) {
-            ok = jsr120_unblock_midp_threads(0, waitingFor, WMA_OK);
-        }
-    }
-
-    return ok;
+    return jsr120_cbs_register_listener(msgID, msid, jsr120_cbs_midlet_listener,
+                                        (void *)handle, &cbs_midlet_listeners,
+                                        !isPushRegistered);
 }
-#endif
+
+/*
+ * See jsr120_cbs_listeners.h for documentation
+ */
+WMA_STATUS jsr120_cbs_unregister_midlet_listener(jchar msgID) {
+    /*
+     * As there was open connection push can be registered only for current suite
+     * thus no need to check for suite ID
+     */
+    jboolean hasNoPushRegistration = jsr120_cbs_is_push_listener_registered(msgID) == WMA_ERR;
+    
+    return jsr120_cbs_unregister_listener(msgID, jsr120_cbs_midlet_listener,
+                                          &cbs_midlet_listeners, hasNoPushRegistration);
+}
+
+/*
+ * See jsr120_cbs_listeners.h for documentation
+ */
+WMA_STATUS jsr120_cbs_is_push_listener_registered(jchar msgID) {
+    return jsr120_cbs_is_listener_registered(msgID, cbs_push_listeners);
+}
+
+/*
+ * See jsr120_cbs_listeners.h for documentation
+ */
+WMA_STATUS jsr120_cbs_register_push_listener(jchar msgID, AppIdType msid,
+    jint handle) {
+
+    jboolean isMIDletRegistered = jsr120_cbs_is_listener_registered_by_msid(
+        msgID, cbs_midlet_listeners, msid) == WMA_OK;
+
+
+    return jsr120_cbs_register_listener(msgID, msid, jsr120_cbs_push_listener,
+                                        (void *)handle, &cbs_push_listeners,
+                                        !isMIDletRegistered);
+}
+
+/*
+ * See jsr120_cbs_listeners.h for documentation
+ */
+WMA_STATUS jsr120_cbs_unregister_push_listener(jchar msgID) {
+    /*
+     * As there was push push registration connection can be open only for current suite
+     * thus no need to check for suite ID
+     */
+    jboolean hasNoConnection = jsr120_cbs_is_midlet_listener_registered(msgID) == WMA_ERR;
+
+    return jsr120_cbs_unregister_listener(msgID, jsr120_cbs_push_listener,
+                                          &cbs_push_listeners, hasNoConnection);
+}
 
 /*
  * See jsr120_cbs_listeners.h for documentation
  */
 WMA_STATUS jsr120_cbs_unblock_thread(jint handle, jint waitingFor) {
 #if (ENABLE_CDC != 1)
-    return jsr120_unblock_cbs_read_threads(handle, waitingFor);
+    JVMSPI_ThreadID id =
+        jsr120_cbs_get_blocked_thread_from_handle((long)handle, waitingFor);
+    if (id != 0) {
+	midp_thread_unblock(id);
+	return WMA_OK;
+    }
 #else
+/* IMPL NOTE implement this */
 #ifdef JSR_120_ENABLE_JUMPDRIVER
     JUMPEvent evt = (JUMPEvent) handle;
     if (jumpEventHappens(evt) >= 0) {
@@ -249,6 +291,53 @@ WMA_STATUS jsr120_cbs_unblock_thread(jint handle, jint waitingFor) {
 #endif
     return WMA_ERR;
 }
+
+#if (ENABLE_CDC != 1)
+/**
+ * Find a first thread that can be unblocked for a given handle and signal type.
+ *
+ * @param handle Platform-specific handle.
+ * @param signalType Enumerated signal type.
+ *
+ * @return JVMSPI_ThreadID Java thread id than can be unblocked
+ *         0 if no matching thread can be found
+ *
+ */
+static JVMSPI_ThreadID
+jsr120_cbs_get_blocked_thread_from_handle(long handle, jint waitingFor) {
+    JVMSPI_BlockedThreadInfo *blocked_threads;
+    int n;
+    int i;
+
+    blocked_threads = SNI_GetBlockedThreads(&n);
+
+    for (i = 0; i < n; i++) {
+	MidpReentryData *p =
+            (MidpReentryData*)(blocked_threads[i].reentry_data);
+	if (p != NULL) {
+
+	    /* wait policy: 1. threads waiting for network reads
+                            2. threads waiting for network writes
+         	            3. threads waiting for network push event*/
+	    if ((waitingFor == WMA_CBS_READ_SIGNAL) &&
+                (waitingFor == (int)p->waitingFor) &&
+         	(p->descriptor == handle)) {
+		return blocked_threads[i].thread_id;
+            }
+
+            if ((waitingFor == PUSH_SIGNAL) &&
+                (waitingFor == (int)p->waitingFor) &&
+                (findPushBlockedHandle(handle) != 0)) {
+                return blocked_threads[i].thread_id;
+	    }
+
+	}
+
+    }
+
+    return 0;
+}
+#endif
 
 /*
  * The listener that should be called when a CBS message is added to the in-box.
@@ -337,20 +426,6 @@ static WMA_STATUS jsr120_cbs_register_listener(jchar msgID,
     return ok;
 }
 
-/*
- * See jsr120_cbs_listeners.h for documentation
- */
-WMA_STATUS jsr120_cbs_register_midlet_listener(jchar msgID,
-    AppIdType msid, jint handle) {
-
-    jboolean isPushRegistered = jsr120_cbs_is_listener_registered_by_msid(
-        msgID, cbs_push_listeners, msid) == WMA_OK;
-
-    return jsr120_cbs_register_listener(msgID, msid, jsr120_cbs_midlet_listener,
-                                        (void *)handle, &cbs_midlet_listeners,
-                                        !isPushRegistered);
-}
-
 /**
  * Stop listening for CBS messages that match a message ID. The native API is
  * called to stop listening for incoming CBS messages, and the registered
@@ -383,54 +458,40 @@ static WMA_STATUS jsr120_cbs_unregister_listener(jchar msgID,
     return ok;
 }
 
-/*
- * See jsr120_cbs_listeners.h for documentation
+/**
+ * Check if a message identifier is currently registered.
+ *
+ * @param msgID	The message identifier to be matched.
+ * @param listeners List of listeners to check.
+ *
+ * @return <code>WMA_OK</code> if the message identifier has an associated
+ *     listener; <code>WMA_ERR</code>, otherwise.
+ *
  */
-WMA_STATUS jsr120_cbs_unregister_midlet_listener(jchar msgID) {
-    /*
-     * As there was open connection push can be registered only for current suite
-     * thus no need to check for suite ID
-     */
-    jboolean hasNoPushRegistration = jsr120_cbs_is_push_listener_registered(msgID) == WMA_ERR;
-    
-    return jsr120_cbs_unregister_listener(msgID, jsr120_cbs_midlet_listener,
-                                          &cbs_midlet_listeners, hasNoPushRegistration);
+static WMA_STATUS jsr120_cbs_is_listener_registered(jchar msgID,
+    ListElement *listeners) {
+
+    return jsr120_list_get_by_number(listeners, msgID) != NULL ? WMA_OK : WMA_ERR;
 }
 
-/*
- * See jsr120_cbs_listeners.h for documentation
+/**
+ * Deletes all CBS messages cached in the pool that match the MIDlet suite
+ * identifier.
+ *
+ * @param msid The MIDlet suite identifier.
  */
-WMA_STATUS jsr120_cbs_is_push_listener_registered(jchar msgID) {
-    return jsr120_cbs_is_listener_registered(msgID, cbs_push_listeners);
+void jsr120_cbs_delete_midlet_suite_msg(AppIdType msid) {
+    jsr120_cbs_delete_all_msgs(msid, cbs_midlet_listeners);
 }
 
-/*
- * See jsr120_cbs_listeners.h for documentation
+/**
+ * Deletes all CBS messages cached in the pool by the push subsystem, that match
+ * the MIDlet suite identifier.
+ *
+ * @param msid The MIDlet suite identifier.
  */
-WMA_STATUS jsr120_cbs_register_push_listener(jchar msgID, AppIdType msid,
-    jint handle) {
-
-    jboolean isMIDletRegistered = jsr120_cbs_is_listener_registered_by_msid(
-        msgID, cbs_midlet_listeners, msid) == WMA_OK;
-
-
-    return jsr120_cbs_register_listener(msgID, msid, jsr120_cbs_push_listener,
-                                        (void *)handle, &cbs_push_listeners,
-                                        !isMIDletRegistered);
-}
-
-/*
- * See jsr120_cbs_listeners.h for documentation
- */
-WMA_STATUS jsr120_cbs_unregister_push_listener(jchar msgID) {
-    /*
-     * As there was push push registration connection can be open only for current suite
-     * thus no need to check for suite ID
-     */
-    jboolean hasNoConnection = jsr120_cbs_is_midlet_listener_registered(msgID) == WMA_ERR;
-
-    return jsr120_cbs_unregister_listener(msgID, jsr120_cbs_push_listener,
-                                          &cbs_push_listeners, hasNoConnection);
+void jsr120_cbs_delete_push_msg(AppIdType msid) {
+    jsr120_cbs_delete_all_msgs(msid, cbs_push_listeners);
 }
 
 /**
@@ -456,26 +517,4 @@ static void jsr120_cbs_delete_all_msgs(AppIdType msid, ListElement* head) {
         }
     }
 }
-
-/**
- * Deletes all CBS messages cached in the pool that match the MIDlet suite
- * identifier.
- *
- * @param msid The MIDlet suite identifier.
- */
-void jsr120_cbs_delete_midlet_suite_msg(AppIdType msid) {
-    jsr120_cbs_delete_all_msgs(msid, cbs_midlet_listeners);
-}
-
-/**
- * Deletes all CBS messages cached in the pool by the push subsystem, that match
- * the MIDlet suite identifier.
- *
- * @param msid The MIDlet suite identifier.
- */
-void jsr120_cbs_delete_push_msg(AppIdType msid) {
-    jsr120_cbs_delete_all_msgs(msid, cbs_push_listeners);
-}
-
-
 
