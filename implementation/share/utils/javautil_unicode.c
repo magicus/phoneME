@@ -52,10 +52,10 @@
 javacall_result javautil_unicode_codepoint_to_utf16codeunit(const javacall_int32 code_point,
                                                             /*OUT*/ javacall_utf16 code_unit[2], 
                                                             /*OUT*/ javacall_int32* unit_length) {
-    if (unit_length == NULL || code_unit == NULL) {
+    if(unit_length == NULL || code_unit == NULL) {
         return JAVACALL_FAIL;
     }
-
+                                                                
     if (IS_BMP_CODE_POINT(code_point)) {
         if (IS_SURROGATE_CODE_POINT(code_point)) {
             return JAVACALL_INVALID_ARGUMENT;
@@ -65,14 +65,16 @@ javacall_result javautil_unicode_codepoint_to_utf16codeunit(const javacall_int32
         *unit_length = 1;
         code_unit[0] = (javacall_utf16)(code_point & 0xffff);
         return JAVACALL_OK;
-    } else {
+    }
+    else{
         if (IS_UNICODE_CODE_POINT(code_point)) {                                                                
             const javacall_int32 offset = code_point - 0x10000;
             code_unit[0] = (javacall_utf16)((offset >> 10) + 0xd800);
             code_unit[1] = (javacall_utf16)((offset & 0x3ff) + 0xdc00);
             *unit_length = 2;
             return JAVACALL_OK;
-        } else {
+        }
+        else {
             return JAVACALL_INVALID_ARGUMENT;
         }
     }
@@ -96,7 +98,7 @@ javacall_result javautil_unicode_utf16_ulength(javacall_const_utf16_string str,
         return JAVACALL_FAIL;
     }
 
-    for (ptr = str; *ptr != 0; ptr++) {
+    for(ptr = str; *ptr != 0; ptr++) {
     }
 
     *length = ptr-str;
@@ -124,7 +126,7 @@ javacall_result javautil_unicode_utf16_chlength(javacall_const_utf16_string str,
         return JAVACALL_FAIL;
     }
 
-    for (len = 0; *str != 0; len++) {
+    for(len = 0; *str != 0; len++) {
         input_char = *str++;
         if (input_char >= 0xd800 && input_char <= 0xdfff) {
             if (input_char > 0xdbff) {
@@ -211,21 +213,23 @@ javacall_result javautil_unicode_utf16_to_utf8(const javacall_utf16* pUtf16,
         if (current < 0x80) {
             /* binary 0xxxxxxx where x is a char bit */
             output[0] = (unsigned char)current;
-            count = 1;
-        } else {
+            count = 1;            
+        }
+        else{
             if (current < 0x800) {
                 /* binary 110xxxxx 10xxxxxx where x is a char bit */
                 output[0] = (unsigned char)(0xC0 | ((current >> 6) & 0x1F));
                 output[1] = (unsigned char)(0x80 | (current & 0x3F));
                 count = 2;                
-            } else {
+            }
+            else{
                 /* Part for UTF-16, not for UCS-2 */
                 if (current >= 0xd800 && current <= 0xdfff) {
                     if (current > 0xdbff) {
                         return JAVACALL_INVALID_ARGUMENT;
                     }
                     
-                    /* this is <high-half zone code> in UTF-16 */
+                    /* this is <high-half zone code> in UTF-16 */            
                     {
                         javacall_utf16 low_char;
                         if (++i == utf16Len) {
@@ -233,7 +237,7 @@ javacall_result javautil_unicode_utf16_to_utf8(const javacall_utf16* pUtf16,
                         }
                         low_char = pUtf16[i];
 
-                        /* check next char is valid <low-half zone code> */
+                        /* check next char is valid <low-half zone code> */            
                         if (low_char < 0xdc00 || low_char > 0xdfff) {
                             return JAVACALL_INVALID_ARGUMENT;
                         }
@@ -249,7 +253,8 @@ javacall_result javautil_unicode_utf16_to_utf8(const javacall_utf16* pUtf16,
                             count = 4;
                         }
                     }
-                } else {
+                }
+                else{
                     /* binary 1110xxxx 10xxxxxx 10xxxxxx where x is a char bit */
                     output[0] = (unsigned char)(0xE0 | ((current >> 12) & 0x0F));
                     output[1] = (unsigned char)(0x80 | ((current >> 6) & 0x3F));
@@ -262,7 +267,7 @@ javacall_result javautil_unicode_utf16_to_utf8(const javacall_utf16* pUtf16,
         if (pUtf8 != NULL) {
             if (len + count > utf8Len) {
                 /* Can't continue, result buffer too small */
-                return JAVACALL_FAIL;
+                return JAVACALL_FAIL;                
             } else {
                 int j;
                 for (j = 0; j < count; j++) {
@@ -320,7 +325,8 @@ javacall_result javautil_unicode_utf8_to_utf16(const unsigned char* pUtf8,
             /* binary 0xxxxxxx where x is a char bit */
             output[0] = (javacall_utf16)current;
             count = 1;
-        } else {
+        }
+        else{
             if ((current & 0xE0) == 0xC0) {
                 /* binary 110xxxxx 10xxxxxx where x is a char bit */
                 if (j >= utf8Len) {
@@ -336,7 +342,8 @@ javacall_result javautil_unicode_utf8_to_utf16(const unsigned char* pUtf8,
                 output[0] = (javacall_utf16)(((current & 0x1F) << 6) |
                                              (byte2 & 0x3F));
                 count = 1;
-            } else {
+            }
+            else{
                 if ((current & 0xF0) == 0xE0) {
                     /* binary 1110xxxx 10xxxxxx 10xxxxxx where x is a char bit */
                     if ((j+1) >= utf8Len) {
@@ -355,7 +362,8 @@ javacall_result javautil_unicode_utf8_to_utf16(const unsigned char* pUtf8,
                                                  ((byte2 & 0x3F) << 6)|
                                                    (byte3 & 0x3F));
                     count = 1; 
-                } else {
+                }
+                else{
                     /* Part for UTF-16, not for UCS-2 */
                     if ((current & 0xF8) == 0xF0) {
                         /* binary 11110xxx 10xxxxxx 10xxxxxx 10xxxxxx where x is a char bit */
@@ -384,7 +392,8 @@ javacall_result javautil_unicode_utf8_to_utf16(const unsigned char* pUtf8,
                             output[1] = (javacall_utf16)((ucs4 - 0x10000) % 0x400 + 0xdc00);
                             count = 2;
                         }
-                    } else {
+                    }
+                    else{
                         /* Not a proper UTF-16 char sequence */
                         return JAVACALL_INVALID_ARGUMENT;
                     }
@@ -395,7 +404,7 @@ javacall_result javautil_unicode_utf8_to_utf16(const unsigned char* pUtf8,
         if (pUtf16 != NULL) {
             if (len + count > utf16Len) {
                 /* Can't continue, result buffer too small */
-                return JAVACALL_FAIL;
+                return JAVACALL_FAIL;                
             } else {
                 int i;
                 for (i = 0; i < count; i++) {
@@ -428,16 +437,17 @@ javacall_bool javautil_unicode_equals(javacall_const_utf16_string str1,
     if (str1 == NULL || str2 == NULL) {
         return JAVACALL_FALSE;
     }
-
-    do {
+                                          
+    do{
         if (*str1 != *str2) {
             return JAVACALL_FALSE;
         }
         str1++;
         str2++;
-    } while (*str1 || *str2);
+    }
+    while (*str1 || *str2);
 
-    return JAVACALL_TRUE;
+    return JAVACALL_TRUE;    
 }
 
 /**
@@ -470,7 +480,7 @@ javacall_result javautil_unicode_cmp(javacall_const_utf16_string str1,
     }
 
     *comparison = 0;
-    do {
+    do{
         ch1 = (javacall_utf16) *str1++;
         ch2 = (javacall_utf16) *str2++;
 
@@ -509,24 +519,29 @@ javacall_result javautil_unicode_cmp(javacall_const_utf16_string str1,
             if (ucs4_2 != 0xFFFFFFFF) { /* ch2 is not 16-unit symbol */
                 if (ucs4_1 != 0xFFFFFFFF) { /* ch1 is not 16-unit symbol */
                     *comparison = ucs4_1 - ucs4_2;
-                } else { /* ch1 is 16-unit symbol */
+                }
+                else{/* ch1 is 16-unit symbol */
                     *comparison = (javacall_int32)ch1 - ucs4_2;
                 }
-            } else {
+            }
+            else{
                 if (ucs4_1 != 0xFFFFFFFF) { /* ch1 is not 16-unit symbol */
                     *comparison = ucs4_1 - (javacall_int32)ch2;
-                } else { /* ch1 is 16-unit symbol */
+                }
+                else{ /* ch1 is 16-unit symbol */
                     *comparison = (javacall_int32)ch1 - (javacall_int32)ch2;
                 }
             }
             break;
-        } else {
+        }
+        else{
             if (ucs4_1 != ucs4_1) {
                 *comparison = ucs4_1 - ucs4_2;
                 break;
             }
         }
-    } while (ch1 && ch2);
+    }
+    while (ch1 && ch2);
     
     return JAVACALL_OK;
 }
@@ -563,7 +578,7 @@ javacall_result javautil_unicode_ncmp(javacall_const_utf16_string str1,
     }
 
     *comparison = 0;
-    do {
+    do{
         if (number-- == 0) {
             return JAVACALL_OK;
         }
@@ -606,24 +621,29 @@ javacall_result javautil_unicode_ncmp(javacall_const_utf16_string str1,
             if (ucs4_2 != 0xFFFFFFFF) { /* ch2 is not 16-unit symbol */
                 if (ucs4_1 != 0xFFFFFFFF) { /* ch1 is not 16-unit symbol */
                     *comparison = ucs4_1 - ucs4_2;
-                } else { /* ch1 is 16-unit symbol */
+                }
+                else{/* ch1 is 16-unit symbol */
                     *comparison = (javacall_int32)ch1 - ucs4_2;
                 }
-            } else {
+            }
+            else{
                 if (ucs4_1 != 0xFFFFFFFF) { /* ch1 is not 16-unit symbol */
                     *comparison = ucs4_1 - (javacall_int32)ch2;
-                } else { /* ch1 is 16-unit symbol */
+                }
+                else{ /* ch1 is 16-unit symbol */
                     *comparison = (javacall_int32)ch1 - (javacall_int32)ch2;
                 }
             }
             break;
-        } else {
+        }
+        else{
             if (ucs4_1 != ucs4_1) {
                 *comparison = ucs4_1 - ucs4_2;
                 break;
             }
         }
-    } while (ch1 && ch2);
+    }
+    while (ch1 && ch2);
     
     return JAVACALL_OK;
 }
@@ -659,7 +679,7 @@ javacall_result javautil_unicode_icmp(javacall_const_utf16_string str1,
     }
 
     *comparison = 0;
-    do {
+    do{
         ch1 = (javacall_utf16) *str1++;
         ch2 = (javacall_utf16) *str2++;
 
@@ -670,7 +690,7 @@ javacall_result javautil_unicode_icmp(javacall_const_utf16_string str1,
             if (ch1 > 0xdbff) {
                 return JAVACALL_INVALID_ARGUMENT;
             }
-
+            
             {
                 javacall_utf16 low_char = *str1++;
                 if (low_char < 0xdc00 || low_char > 0xdfff) {
@@ -684,7 +704,7 @@ javacall_result javautil_unicode_icmp(javacall_const_utf16_string str1,
             if (ch2 > 0xdbff) {
                 return JAVACALL_INVALID_ARGUMENT;
             }
-
+            
             {
                 javacall_utf16 low_char = *str2++;
                 if (low_char < 0xdc00 || low_char > 0xdfff) {
@@ -698,29 +718,34 @@ javacall_result javautil_unicode_icmp(javacall_const_utf16_string str1,
             if (ucs4_2 != 0xFFFFFFFF) { /* ch2 is not 16-unit symbol */
                 if (ucs4_1 != 0xFFFFFFFF) { /* ch1 is not 16-unit symbol */
                     *comparison = ucs4_1 - ucs4_2;
-                } else { /* ch1 is 16-unit symbol */
+                }
+                else{/* ch1 is 16-unit symbol */
                     *comparison = (javacall_int32)ch1 - ucs4_2;
                 }
-            } else {
+            }
+            else{
                 if (ucs4_1 != 0xFFFFFFFF) { /* ch1 is not 16-unit symbol */
                     *comparison = ucs4_1 - (javacall_int32)ch2;
-                } else { /* ch1 is 16-unit symbol */
+                }
+                else{ /* ch1 is 16-unit symbol */
                     if (((ch1 ^ ch2) != 0x20) || !ISALFA(ch1))  {
                         *comparison = (javacall_int32)ch1 - (javacall_int32)ch2;
-                    } else {
+                    }    
+                    else{
                         continue;
                     }
                 }
             }
             break;
         }
-
+        
         if (ucs4_1 != ucs4_1) {
             *comparison = ucs4_1 - ucs4_2;
             break;
         }
-    } while (ch1 && ch2);
-
+    }
+    while (ch1 && ch2);
+    
     return JAVACALL_OK;
 }
 
@@ -756,7 +781,7 @@ javacall_result javautil_unicode_nicmp(javacall_const_utf16_string str1,
     }
 
     *comparison = 0;
-    do {
+    do{
         if (number-- == 0) {
             return JAVACALL_OK;
         }
@@ -799,28 +824,34 @@ javacall_result javautil_unicode_nicmp(javacall_const_utf16_string str1,
             if (ucs4_2 != 0xFFFFFFFF) { /* ch2 is not 16-unit symbol */
                 if (ucs4_1 != 0xFFFFFFFF) { /* ch1 is not 16-unit symbol */
                     *comparison = ucs4_1 - ucs4_2;
-                } else { /* ch1 is 16-unit symbol */
+                }
+                else{/* ch1 is 16-unit symbol */
                     *comparison = (javacall_int32)ch1 - ucs4_2;
                 }
-            } else {
+            }
+            else{
                 if (ucs4_1 != 0xFFFFFFFF) { /* ch1 is not 16-unit symbol */
                     *comparison = ucs4_1 - (javacall_int32)ch2;
-                } else { /* ch1 is 16-unit symbol */
+                }
+                else{ /* ch1 is 16-unit symbol */
                     if (((ch1 ^ ch2) != 0x20) || !ISALFA(ch1))  {
                         *comparison = (javacall_int32)ch1 - (javacall_int32)ch2;
-                    } else {
+                    }    
+                    else{
                         continue;
                     }
                 }
             }
             break;
-        } else {
+        }
+        else{
             if (ucs4_1 != ucs4_1) {
                 *comparison = ucs4_1 - ucs4_2;
                 break;
             }
         }
-    } while (ch1 && ch2);
+    }
+    while (ch1 && ch2);
     
     return JAVACALL_OK;
 }
@@ -844,7 +875,7 @@ javacall_result javautil_unicode_cat(javacall_const_utf16_string str1,
                                      javacall_const_utf16_string str2,
                                      /*OUT*/ javacall_utf16_string dst,
                                      javacall_int32 dstLen) {
-    javacall_int32 length1, length2, length;
+    javacall_int32 length1, length2, length;                                         
 
     if (dst == NULL) {
         return JAVACALL_FAIL;
@@ -853,7 +884,7 @@ javacall_result javautil_unicode_cat(javacall_const_utf16_string str1,
     if (javautil_unicode_utf16_ulength(str1, &length1) != JAVACALL_OK) {
         length1 = 0;
     }
-
+    
     if (javautil_unicode_utf16_ulength(str2, &length2) != JAVACALL_OK) {
         length2 = 0;
     }
@@ -871,7 +902,7 @@ javacall_result javautil_unicode_cat(javacall_const_utf16_string str1,
     if (length1 > 0) {
         memcpy(dst, str1, length1 * sizeof(javacall_utf16));
     }
-
+    
     if (length2 > 0) {
         memcpy(dst + length1, str2, length2 * sizeof(javacall_utf16));
     }
@@ -914,11 +945,11 @@ javacall_result javautil_unicode_to_int32(javacall_const_utf16_string str,
 
     /* maybe first symbol is '-' or '+' */
     switch (str[0]) {
-    case '-':
-        isNegative = 1;
-    case '+':
-        str++;
-        length--;
+        case '-':
+            isNegative = 1;
+        case '+':
+            str++;
+            length--;
     }
 
     for (i = length-1, res = 0; i >= 0; i--) {
@@ -935,7 +966,8 @@ javacall_result javautil_unicode_to_int32(javacall_const_utf16_string str,
 
     if (isNegative) {
         res = - res;
-    } else {
+    }
+    else{
         if (res == MIN_INT) {
             /* arithmetic overflow */
             return JAVACALL_INVALID_ARGUMENT;
@@ -980,7 +1012,7 @@ javacall_result javautil_unicode_from_int32(javacall_int32 number,
         if (isNegative) {
             number = -number;
         }
-
+        
         /* Trailing 0 */
         buf[charPos--] = 0;
         while (number >= RADIX) {
@@ -988,11 +1020,12 @@ javacall_result javautil_unicode_from_int32(javacall_int32 number,
             number /= RADIX;
         }
         buf[charPos] = (javacall_utf16) DIGIT(number);
-
+        
         if (isNegative) {
              buf[--charPos] = '-';
         }
-    } else {
+    }
+    else{
         charPos = 0;
     }
 
@@ -1000,7 +1033,7 @@ javacall_result javautil_unicode_from_int32(javacall_int32 number,
     if (strLen < length) {
         return JAVACALL_OUT_OF_MEMORY;
     }
-
+    
     /* Filling the buffer */
     memcpy(str, &buf[charPos], length * sizeof(javacall_utf16));
     return JAVACALL_OK;
@@ -1015,7 +1048,7 @@ javacall_result javautil_unicode_from_int32(javacall_int32 number,
  */
 javacall_result javautil_unicode_trim(javacall_utf16_string str) {
     javacall_int32 length;
-
+    
     if (str == NULL) {
         return JAVACALL_FAIL;
     }
@@ -1059,7 +1092,7 @@ javacall_result javautil_unicode_substring(javacall_const_utf16_string src,
                                            javacall_int32 end,
                                            /*OUT*/ javacall_utf16_string dest,
                                            javacall_int32 destLen) {
-    javacall_int32 startUnit = 0;
+    javacall_int32 startUnit;
     javacall_int32 temp;
     javacall_int32 dstLen;
     javacall_const_utf16_string ptr;
@@ -1069,11 +1102,11 @@ javacall_result javautil_unicode_substring(javacall_const_utf16_string src,
         return JAVACALL_FAIL;
     }
     
-    if ((begin < 0) || (begin >= end)) {
+    if ((begin < 0) || (begin >= end)) {        
         return JAVACALL_INVALID_ARGUMENT;
     }
 
-    for (ptr = src, temp = 0; *ptr != 0; temp++) {
+    for(ptr = src, temp = 0; *ptr != 0; temp++) {
         input_char = *ptr++;
         if (input_char >= 0xd800 && input_char <= 0xdfff) {
             if (input_char > 0xdbff) {
@@ -1097,18 +1130,19 @@ javacall_result javautil_unicode_substring(javacall_const_utf16_string src,
                     break;
                 }
             }
-        } else {
-            if (temp == begin) {
+        }
+        else{
+            if (temp == begin){
                 startUnit = ptr - src - 1;
             }
 
-            if (temp == end) {
+            if (temp == end){
                 break;
             }
         }
     }
     
-    if (temp != end) {
+    if (temp != end){
         return JAVACALL_INVALID_ARGUMENT;
     }
     
@@ -1153,8 +1187,8 @@ javacall_result javautil_unicode_index_of(javacall_const_utf16_string str,
         JAVACALL_OK) {
         return JAVACALL_INVALID_ARGUMENT;
     }
-
-    for (len = 0; *str != 0; len++) {
+    
+    for(len = 0; *str != 0; len++) {
         input_char = *str++;
         if (input_char >= 0xd800 && input_char <= 0xdfff) {
             if (input_char > 0xdbff) {
@@ -1175,14 +1209,15 @@ javacall_result javautil_unicode_index_of(javacall_const_utf16_string str,
                     break;
                 }
             }
-        } else {
+        }
+        else {
             if ((unit_length == 1) && (input_char == code_unit[0])) {
                 break;
             }
         }
     }
-
-    if (*str == 0) {
+    
+    if(*str == 0) {
         return JAVACALL_FAIL;
     }
 
@@ -1222,7 +1257,7 @@ javacall_result javautil_unicode_last_index_of(javacall_const_utf16_string str,
     }
     
     *index = 0xFFFFFFFF;
-    for (len = 0; *str != 0; len++) {
+    for(len = 0; *str != 0; len++) {
         input_char = *str++;
         if (input_char >= 0xd800 && input_char <= 0xdfff) {
             if (input_char > 0xdbff) {
@@ -1243,16 +1278,17 @@ javacall_result javautil_unicode_last_index_of(javacall_const_utf16_string str,
                     *index = len;
                 }
             }
-        } else {
+        }
+        else {
             if ((unit_length == 1) && (input_char == code_unit[0])) {
                 *index = len;
             }
         }
     }
     
-    if (*index == 0xFFFFFFFF) {
+    if(*index == 0xFFFFFFFF) {
         return JAVACALL_FAIL;
     }
 
-    return JAVACALL_OK;
+    return JAVACALL_OK;      
 }

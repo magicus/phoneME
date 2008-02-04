@@ -1,6 +1,5 @@
-#   
 #
-# Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+# Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
 # 
 # This program is free software; you can redistribute it and/or
@@ -33,6 +32,7 @@
 #
 #For 'midp' USE_MIDP and MIDP_JC_IMPL_PATH variables are used
 #For 'nams' USE_NATIVE_AMS_JC and NATIVE_AMS_JC_IMPL_PATH variables are used
+#To enable on device debug, specify USE_ON_DEVICE_DEBUG
 
 JSR_LIST = COMMON MIDP JSR_120 JSR_135 JSR_177 JSR_211
 
@@ -50,11 +50,21 @@ JSR_177_JC_IMPL_PATH=$(JAVACALL_DIR)/implementation/win32
 
 JSR_211_JC_IMPL_PATH=$(JAVACALL_DIR)/implementation/win32
 
+ifeq ($(USE_ON_DEVICE_DEBUG),)
+USE_ON_DEVICE_DEBUG=false
+endif
+
+ifeq ($(USE_ON_DEVICE_DEBUG),true)
+SPECIFIC_DEFINITIONS += -DENABLE_ON_DEVICE_DEBUG=1
+else
+SPECIFIC_DEFINITIONS += -DENABLE_ON_DEVICE_DEBUG=0
+endif
+
 ifeq ($(USE_NATIVE_AMS_JC),)
 USE_NATIVE_AMS_JC=false
 endif
 
-ifeq ($(USE_PROPERTIES_FROM_FS),true)
+ifneq ($(USE_STATIC_PROPERTIES),true)
 SPECIFIC_DEFINITIONS += -DUSE_PROPERTIES_FROM_FS
 endif
 
@@ -128,11 +138,6 @@ else
 SOURCE_CLEANUP_LIST += javacall/implementation/win32/midp/res/images 
 endif
 
-# NEED REVISIT: provide pure solution without hidden dependencies
-ifeq ($(ENABLE_HIDDEN_DEP_FEATURES),true)
-SPECIFIC_DEFINITIONS+=-DENABLE_HIDDEN_DEP_FEATURES
-endif # ifeq ($(ENABLE_HIDDEN_DEP_FEATURES),true)
-
 #Porting objects that are added to PORTING_OBJECTS by default rules can be excluded
 #from the javacall library by setting FILTER_OBJECTS variable
 
@@ -148,3 +153,4 @@ ifdef SUBSYSTEM_EVENTS_MODULES
 else
    PORTING_SOURCE+=events.c
 endif
+

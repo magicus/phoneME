@@ -110,7 +110,7 @@ javacall_result javautil_get_jar_url_from_jad(const javacall_utf16* jadPath,
     jadSize = javautil_read_jad_file(jadPath, jadPathLen, &jadBuffer);
     if (jadSize <= 0 || jadBuffer == NULL) {
         *status = JAVACALL_PARSE_CANT_READ_JAD_FILE;
-        return JAVACALL_FAIL;
+        return jadSize;
     }
     jadBufferStart = jadBuffer;
 
@@ -121,7 +121,7 @@ javacall_result javautil_get_jar_url_from_jad(const javacall_utf16* jadPath,
         return res;
     }
 
-    /* check if all required properties are present */
+    // check if all required properties are present
     res = javautil_check_must_properties(jadProps, status);
     if (res != JAVACALL_OK) {
         return res;
@@ -142,10 +142,10 @@ javacall_result javautil_get_jar_url_from_jad(const javacall_utf16* jadPath,
         return JAVACALL_FAIL;
     }
 
-    /* return Jar URL to the platform */
+    // return Jar URL to the platform
     res = javautil_create_jar_url(jadUrl, jadProps, jarUrl);
 
-    /* free all resources */
+    // free all resources
     javacall_free(jadBufferStart);
     javacall_free(jadProps.midletName);
     javacall_free(jadProps.midletVersion);
@@ -180,27 +180,27 @@ long javautil_read_jad_file(const javacall_utf16* jadPath,
 
     *destBuf = NULL;
 
-    /* check if file name is valid */
+    // check if file name is valid
     if (jadPath == NULL) {
         return JAVACALL_BAD_FILE_NAME;
     }
 
-    /* open the jad file in read-only mode */
+    // open the jad file in read-only mode
     res = javacall_file_open(jadPath, jadPathLen,
                              JAVACALL_FILE_O_RDONLY, &jadHandle);
     if (res != JAVACALL_OK) {
         return JAVACALL_FILE_NOT_FOUND;
     }
 
-    /* get the open jad file size */
+    // get the open jad file size
     jadSize = (long)javacall_file_sizeofopenfile(jadHandle);
     if (-1L == jadSize) {
         javacall_file_close(jadHandle);
         return JAVACALL_IO_ERROR;
     }
 
-    /* allocate a buffer to hold the jad file contents
-     * NEED REVISIT: SHOULD USE pcsl_mem_malloc() ? */
+    // allocate a buffer to hold the jad file contents
+    // NEED REVISIT: SHOULD USE pcsl_mem_malloc() ?
     jadBuf = (char*)javacall_malloc(jadSize+1);
     if (jadBuf == NULL) {
         javacall_file_close(jadHandle);
@@ -208,7 +208,7 @@ long javautil_read_jad_file(const javacall_utf16* jadPath,
     }
     memset(jadBuf, 0, (jadSize+1));
 
-    /* read the entire jad file into the allocated buffer */
+    // read the entire jad file into the allocated buffer
     bytesRead = javacall_file_read(jadHandle, (unsigned char*)jadBuf, jadSize);
     if ((bytesRead <= 0) || (bytesRead != jadSize)) {
         javacall_free(jadBuf);
@@ -216,7 +216,7 @@ long javautil_read_jad_file(const javacall_utf16* jadPath,
         return JAVACALL_IO_ERROR;
     }
 
-    /* close the file and return the required information */
+    // close the file and return the required information
     javacall_file_close(jadHandle);
 
     *destBuf = jadBuf;
@@ -263,7 +263,7 @@ javacall_result javautil_parse_jad(char** jadBuffer,
     }
 
     for (i=0; i<propsNum; i++) {
-        /* read a line from the jad file. */
+        // read a line from the jad file.
         res = javautil_read_jad_line(jadBuffer, &jadLine, &jadLineSize);
         if (res == JAVACALL_END_OF_FILE) {
             break;
@@ -273,14 +273,14 @@ javacall_result javautil_parse_jad(char** jadBuffer,
             return JAVACALL_FAIL;
         }
 
-        /* find the index of ':' */
+        // find the index of ':'
         res = javautil_string_index_of(jadLine, COLON, &index);
         if ((res != JAVACALL_OK) || (index <= 0)) {
             javacall_free(jadLine);
             continue;
         }
 
-        /* get sub string of jad property name */
+        // get sub string of jad property name
         res = javautil_string_substring(jadLine, 0, index, &jadPropName);
         if (res == JAVACALL_OUT_OF_MEMORY) {
             javacall_free(jadLine);
@@ -298,12 +298,12 @@ javacall_result javautil_parse_jad(char** jadBuffer,
             continue;
         }
 
-        /* skip white space between jad property name and value */
+        // skip white space between jad property name and value
         while (*(jadLine+index+1) == SPACE) {
             index++;
         }
 
-        /* get sub string of jad property value */
+        // get sub string of jad property value
         res = javautil_string_substring(jadLine, index+1, jadLineSize, &jadPropValue);
         if (res == JAVACALL_OUT_OF_MEMORY) {
             javacall_free(jadLine);
@@ -337,7 +337,7 @@ javacall_result javautil_parse_jad(char** jadBuffer,
         /* jad property value is stored, can free the property name */
         javacall_free(jadPropName);
 
-    } /* end of for loop */
+    } // end of for loop
 
     return JAVACALL_OK;
 }
@@ -437,10 +437,10 @@ javacall_result javautil_read_jad_line(char** jadBuffer,
     while ((*pJadBuf == POUND) || (javautil_is_new_line(pJadBuf))) {
 
         while (!javautil_is_new_line(pJadBuf)) {
-            pJadBuf++; /* skip commented out line */
+            pJadBuf++; // skip commented out line
         }
         while (javautil_is_new_line(pJadBuf)) {
-            pJadBuf++; /* skip blank lines */
+            pJadBuf++; // skip blank lines
         }
     }
 
@@ -460,7 +460,7 @@ javacall_result javautil_read_jad_line(char** jadBuffer,
         }
     }
 
-    *jadBuffer = pJadBuf; /* jadBuffer points to the next jad line */
+    *jadBuffer = pJadBuf; // jadBuffer points to the next jad line
 
     line = (char*)javacall_malloc(charCount + 1);
     if (line == NULL) {
