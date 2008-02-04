@@ -1686,6 +1686,13 @@ inline void ClassFileParser::clone_invoke_special_virtual_conflicts(
     for (int i = 0; i < methods_length; i++) {
       Method::Raw method = methods().obj_at(i);
       if (method.is_null()) continue;
+      if (!old_cp->equals(method().constants())) {
+        GUARANTEE(method().is_native() &&
+                  method().get_native_code() ==
+                  (address)Java_abstract_method_execution,
+                  "Must be a miranda method");
+        continue;
+      }
       method().set_constants(new_cp);
       const int code_length = method().code_size();
       for( int bci = 0; bci < code_length; ) {

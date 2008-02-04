@@ -101,6 +101,9 @@ public:
   }
 
   virtual void handle_matching_method(Method *m JVM_TRAPS) {
+    if (m->is_quick_native()) {
+      return;
+    }
     if (!m->is_native()) {
       return;
     }
