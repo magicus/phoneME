@@ -508,7 +508,7 @@ putClassPathExtToSysProperty(char* classPathExt) {
     }
 }
 
-#ifdef ENABLE_JAVA_DEBUGGER
+#if ENABLE_JAVA_DEBUGGER
 
 /**
  * Passes an argument corresponding to the given debug option to the VM.
