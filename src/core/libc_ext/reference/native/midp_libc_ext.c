@@ -62,7 +62,14 @@ int midp_snprintf(char* buffer, int bufferSize, const char* format, ...) {
 int midp_vsnprintf(char *buffer, int bufferSize, 
         const char* format, va_list argptr) {
 
-    return _vsnprintf(buffer, bufferSize, format, argptr);
+    return 
+#if defined(WIN32)
+		_vsnprintf(buffer, bufferSize, format, argptr);
+#elif defined(UNIX)
+		vsnprintf(buffer, bufferSize, format, argptr);
+#else
+		0;
+#endif
 }
 #endif /* ENABLE_DEBUG */
 
