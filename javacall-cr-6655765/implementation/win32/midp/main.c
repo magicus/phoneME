@@ -70,7 +70,6 @@ static char controlLoopInfo[] = "\t To control:\n"
                                 "\t \n"
                                 "\t '0' to quit";
                                 
-// unsigned char enable_java_debugger = 0;
 
 /* forward declaration */
 void main_install_content(int argc, char *argv[]);
@@ -330,7 +329,6 @@ int main(int argc, char *main_argv[]) {
         } else 
         */
         if (1 < argc && 0 == strcmp(argv[1], "debug")) {
-            // enable_java_debugger = 1;
             argc -= 1;
             argv += 1;
             continue;
