@@ -1,23 +1,22 @@
 /*
- *
- * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
- * 
+ *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
  * 2 only, as published by the Free Software Foundation.
- * 
+ *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
  * included at /legal/license.txt).
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA
- * 
+ *
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
  * information or have any questions.
@@ -37,6 +36,7 @@ static unsigned short property_file_name[] = {'j','w','c','_','p','r','o','p','e
 
 static javacall_handle handle = NULL;
 static int property_was_updated = 0;
+static int init_done = 0;
 
 static const char application_prefix[] = "application:";
 static const char internal_prefix[] = "internal:";
@@ -48,12 +48,17 @@ static const char internal_prefix[] = "internal:";
  */
 javacall_result javacall_initialize_configurations(void) {
     int file_name_len = sizeof(property_file_name)/sizeof(unsigned short);
+    if (init_done) {
+        return JAVACALL_OK;
+    }
+
     property_was_updated = 0;
 
     handle = javacall_configdb_load(property_file_name, file_name_len);
     if (handle == NULL) {
         return JAVACALL_FAIL;
     }
+    init_done = 1;
     return JAVACALL_OK;
 }
 
@@ -65,13 +70,17 @@ void javacall_finalize_configurations(void) {
     int file_name_len = sizeof(property_file_name)/sizeof(unsigned short);
 #endif //USE_PROPERTIES_FROM_FS
 
+    if (!init_done) {
+        return;
+    }
+
     if (property_was_updated != 0) {
 #ifdef USE_PROPERTIES_FROM_FS
         javacall_configdb_dump_ini(handle, property_file_name, file_name_len);
 #endif //USE_PROPERTIES_FROM_FS
     }
     javacall_configdb_free(handle);
-    handle = NULL; 
+    handle = NULL;
 }
 
 /**
@@ -79,16 +88,21 @@ void javacall_finalize_configurations(void) {
  * property set.
  *
  * @param key The key to search for
- * @param type The property type 
+ * @param type The property type
  * @param result Where to put the result
  *
  * @return If found: <tt>JAVACALL_OK</tt>, otherwise
  *         <tt>JAVACALL_FAIL</tt>
  */
-javacall_result javacall_get_property(const char* key, 
+javacall_result javacall_get_property(const char* key,
                                       javacall_property_type type,
                                       char** result) {
     char* joined_key = NULL;
+
+    /* protection against access to uninitialized properties */
+    if (JAVACALL_FAIL == javacall_initialize_configurations()) {
+        return JAVACALL_FAIL;
+    }
 
     if (JAVACALL_APPLICATION_PROPERTY == type) {
         joined_key = javautil_string_strcat(application_prefix, key);
@@ -98,12 +112,12 @@ javacall_result javacall_get_property(const char* key,
 
     if (joined_key == NULL) {
         *result = NULL;
-        return JAVACALL_FAIL;       
+        return JAVACALL_FAIL;
     }
 
     if (JAVACALL_OK == javacall_configdb_getstring(handle, joined_key, NULL, result)) {
         javacall_free(joined_key);
-        return JAVACALL_OK; 
+        return JAVACALL_OK;
     } else {
         javacall_free(joined_key);
         *result = NULL;
@@ -119,16 +133,21 @@ javacall_result javacall_get_property(const char* key,
  * @param value The value to set <tt>key</tt> to
  * @param replace_if_exist The value to decide if it's needed to replace
  * the existing value corresponding to the key if already defined
- * @param type The property type 
- * 
+ * @param type The property type
+ *
  * @return Upon success <tt>JAVACALL_OK</tt>, otherwise
  *         <tt>JAVACALL_FAIL</tt>
  */
-javacall_result javacall_set_property(const char* key, 
-                                      const char* value, 
+javacall_result javacall_set_property(const char* key,
+                                      const char* value,
                                       int replace_if_exist,
                                       javacall_property_type type) {
     char* joined_key = NULL;
+
+    /* protection against access to uninitialized properties */
+    if (JAVACALL_FAIL == javacall_initialize_configurations()) {
+        return JAVACALL_FAIL;
+    }
 
     if (JAVACALL_APPLICATION_PROPERTY == type) {
         joined_key = javautil_string_strcat(application_prefix, key);
@@ -137,7 +156,7 @@ javacall_result javacall_set_property(const char* key,
     }
 
     if (joined_key == NULL) {
-        return JAVACALL_FAIL;       
+        return JAVACALL_FAIL;
     }
 
     if (replace_if_exist == 0) { /* don't replace existing value */

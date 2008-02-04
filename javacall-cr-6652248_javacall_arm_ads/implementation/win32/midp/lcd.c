@@ -47,8 +47,9 @@
 #include "skins.h"
 #include "local_defs.h"
 
-
-
+#if ENABLE_ON_DEVICE_DEBUG
+#include "javacall_odd.h"
+#endif
 
 #define UNTRANSLATED_SCREEN_BITMAP (void*)0xffffffff
 
@@ -160,6 +161,10 @@ static javacall_bool topBarOn = JAVACALL_TRUE;
 /* current skin*/
 static ESkin* currentSkin;// = VSkin;
 
+#if ENABLE_ON_DEVICE_DEBUG
+static const char pStartOddKeySequence[] = "#1*2";
+static int posInSequence = 0;
+#endif
 
 /* global variables to record the midpScreen window inside the win32 main window */
 XRectangle midpScreen_bounds;
@@ -691,6 +696,24 @@ WndProc (HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam) {
            return 0;
            */
         default:
+#if ENABLE_ON_DEVICE_DEBUG
+            if (lParam & 0xf0000000) {
+                /* ignore if the key is repeated */
+                break;
+            }
+
+            /* assert(posInSequence == sizeof(pStartOddKeySequence) - 1) */
+            if (pStartOddKeySequence[posInSequence] == key) {
+                posInSequence++;
+                if (posInSequence == sizeof(pStartOddKeySequence) - 1) {
+                    posInSequence = 0;
+                    javanotify_enable_odd();
+                    break;
+                }
+            } else {
+                posInSequence = 0;
+            }
+#endif
             break;
         }
 
@@ -1428,6 +1451,34 @@ javacall_bool javacall_lcd_reverse_orientation() {
 javacall_bool javacall_lcd_get_reverse_orientation() {
 
      return reverse_orientation;
+}
+
+/**
+ * checks the implementation supports native softbutton label.
+ * 
+ * @retval JAVACALL_TRUE   implementation supports native softbutton layer
+ * @retval JAVACALL_FALSE  implementation does not support native softbutton layer
+ */
+javacall_bool javacall_lcd_is_native_softbutton_layer_supported () {
+    return JAVACALL_FALSE;
+}
+
+
+/**
+ * The following function is used to set the softbutton label in the native
+ * soft button layer.
+ * 
+ * @param label the label for the softbutton
+ * @param len the length of the label
+ * @param index the corresponding index of the command
+ * 
+ * @retval JAVACALL_OK      success
+ * @retval JAVACALL_FAIL    fail
+ */
+javacall_result javacall_lcd_set_native_softbutton_label(const javacall_utf16* label,
+                                                         int len,
+                                                         int index){
+     return JAVACALL_FAIL;
 }
 
 /**

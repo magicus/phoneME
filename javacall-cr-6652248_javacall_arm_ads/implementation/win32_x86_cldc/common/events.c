@@ -142,7 +142,7 @@ javacall_result javacall_events_init(void) {
  * @return <tt>JAVACALL_OK</tt> on success,
  *         <tt>JAVACALL_FAIL</tt> otherwise
  */
-javacall_bool javacall_events_finalize(void) {
+javacall_result javacall_events_finalize(void) {
 
 #if !ENABLE_MULTIPLE_INSTANCES
     if (events_shared!=NULL) {
