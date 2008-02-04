@@ -530,7 +530,7 @@ read_suites_data(char** ppszError) {
     /* check the integrity of the suite database */
     pos = 0;
 
-    realCrc = midpCRC32Init(buffer + sizeof(unsigned long),
+    realCrc = midpCRC32Init((unsigned char *)buffer + sizeof(unsigned long),
                             bufferLen - sizeof(unsigned long));
     realCrc = midpCRC32Finalize(realCrc);
     storedCrc = *(unsigned long*)buffer;
@@ -786,7 +786,8 @@ write_suites_data(char** ppszError) {
     if (status == ALL_OK) {
         /* calculate CRC of data in the buffer */
         unsigned long crcToStore = midpCRC32Init(
-            buffer + sizeof(unsigned long), pos - sizeof(unsigned long));
+            (unsigned char *)buffer + sizeof(unsigned long), 
+            pos - sizeof(unsigned long));
         crcToStore = midpCRC32Finalize(crcToStore);
         *(unsigned long*)pCrc = crcToStore;
 
