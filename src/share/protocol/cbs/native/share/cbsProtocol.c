@@ -46,6 +46,9 @@
 #include <midp_properties_port.h>
 #include <midp_logging.h>
 #include <midpResourceLimit.h>
+#else
+  #include "jsr120_signals.h"
+  #include "wmaInterface.h"
 #endif
 
 #ifdef ENABLE_PCSL
