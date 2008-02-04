@@ -47,11 +47,8 @@ KNIDECL(com_sun_mmedia_PlayerImpl_nInit) {
     jchar* pszURI = NULL;
     KNIPlayerInfo* pKniInfo;
     javacall_result res;
-/*    __asm
-    {
-    int 3h
-    } */
-    MMP_DEBUG_STR2("+nInit isolate=%d, player=%d\n", isolateId, playerId);
+
+    MMP_DEBUG_STR2("+nInit application=%d, player=%d\n", appId, playerId);
 
     KNI_StartHandles(1);
     KNI_DeclareHandle(URI);
