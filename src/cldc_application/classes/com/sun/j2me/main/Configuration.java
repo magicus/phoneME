@@ -33,7 +33,7 @@ public class Configuration {
     private Configuration() {
     }
 
-    /*
+    /**
      * Returns internal property value by key
      * @param key property key
      * @return property value
@@ -61,5 +61,15 @@ public class Configuration {
      */
     public static int getIntProperty(String key, int def) {
         return com.sun.midp.main.Configuration.getIntProperty(key, def);        
+    }
+
+    /**
+     * Returns system property value by the given key using a privileged call.
+     *
+     * @param key property key
+     * @return property value
+     */
+    public static String getSystemProperty(String key) {
+        return System.getProperty(key);
     }
 }
