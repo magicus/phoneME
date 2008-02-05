@@ -514,7 +514,7 @@ int handleNetworkDatagramEvents(WPARAM wParam,LPARAM lParam) {
 #endif
         return 0;
     case FD_READ:
-#ifdef ENABLE_JSR_120
+#if ENABLE_JSR_120
         if (JAVACALL_FALSE != try_process_wma_emulator((javacall_handle)wParam)) {
             return 0;
         }
