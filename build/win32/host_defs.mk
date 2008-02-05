@@ -49,7 +49,7 @@ override GENERATEMAKEFILES = false
 TARGET_LD		= $(TARGET_LINK)
 TARGET_LINK		= LINK.EXE
 TARGET_AR		= $(TARGET_LINK) -lib /nologo
-TARGET_AR_CREATE	= $(TARGET_AR) /out:$(1)
+TARGET_AR_CREATE	= $(TARGET_AR) /out:$(call POSIX2HOST, $(1))
 TARGET_AR_UPDATE	= true $(TARGET_AR_CREATE)
 
 # Override the default TARGET_CC_VERSION, since it relies on the gcc
@@ -169,14 +169,15 @@ CC_CMD_FDLIB	= $(call compileCC,$(CFLAGS_FDLIB),$@,$<)
 LINK_MANIFEST = \
 	if [ -f $@.manifest ] ; then \
 	    echo "   Linking in manifest file $(notdir $@.manifest)"; \
-	    mt.exe -nologo -manifest $@.manifest "-outputresource:$@;\#2" ;\
+	    mt.exe -nologo -manifest $(call POSIX2HOST,$@).manifest \
+		"-outputresource:$(call POSIX2HOST,$@);\#2" ;\
 	fi;
 
 # LINK_CMD(extraLibs)
 LINK_CMD	= $(AT)\
 	$(eval OUT := $(call POSIX2HOST,$@)) \
 	$(call POSIX2HOST_CMD,$^) > $(OUT).lst; \
-	$(TARGET_LINK) $(LINKCVM_FLAGS) /out:$(OUT) @$(OUT).lst $(1); \
+	$(TARGET_LINK) $(LINKCVM_FLAGS) /out:$(OUT) @$(OUT).lst $(call POSIX2HOST,$(1)); \
 	$(LINK_MANIFEST)
 
 SO_CC_CMD	= $(AT)$(TARGET_CC) $(SO_CFLAGS) /Fo$(call POSIX2HOST,$@) $(call POSIX2HOST,$<)
@@ -186,7 +187,7 @@ SO_LINK_CMD	= $(AT)\
 	$(eval OUT := $(call POSIX2HOST,$@)) \
 	$(call POSIX2HOST_CMD,$^) > $(OUT).lst; \
 	$(TARGET_LD) $(SO_LINKFLAGS) /out:$(OUT) @$(OUT).lst \
-		$(SO_LINKLIBS) $(1); \
+		$(SO_LINKLIBS) $(call POSIX2HOST,$(1)); \
 	$(LINK_MANIFEST)
 
 # Don't let the default compiler compatibility check be done

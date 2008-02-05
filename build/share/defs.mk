@@ -372,11 +372,9 @@ LIB_POSTFIX = $(DEBUG_POSTFIX).so
 #
 # All build directories relative to CVM_BUILD_TOP
 #
-CVM_TOP       := $(CDC_DIR)
 CVM_BUILD_TOP := $(CDC_DEVICE_COMPONENT_DIR)/build/$(CVM_TARGET)/$(CVM_BUILD_SUBDIR_NAME)
 CVM_LIBDIR    := $(CVM_BUILD_TOP)/lib
 
-CVM_TOP_ABS	  := $(call ABSPATH,$(CVM_TOP))
 CVM_BUILD_TOP_ABS := $(call ABSPATH,$(CVM_BUILD_TOP))
 CVM_LIBDIR_ABS    := $(CVM_BUILD_TOP_ABS)/lib
 
@@ -1179,8 +1177,6 @@ CVM_SHAREROOT  		 = $(CVM_TOP)/src/share
 
 # Full path for current build directory
 CDC_CUR_DIR	:= $(call ABSPATH,.)
-# Full path for the cdc component directory
-export CDC_DIR	?:= $(CVM_TOP_ABS)
 # directory where cdc build is located.
 export CDC_DIST_DIR := $(CVM_BUILD_TOP_ABS)
 # Directory where javadocs, source bundles, and binary bundle get installed.

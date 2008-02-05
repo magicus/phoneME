@@ -328,10 +328,19 @@ PROFILE_DIR ?= $(COMPONENTS_DIR)/cvmjavase
 include $(PROFILE_DIR)/build/share/top_javase.mk
 endif
 
-CDC_OS_COMPONENT_DIR      ?= $(CVM_TOP)
-CDC_CPU_COMPONENT_DIR     ?= $(CVM_TOP)
-CDC_OSCPU_COMPONENT_DIR   ?= $(CVM_TOP)
-CDC_DEVICE_COMPONENT_DIR  ?= $(CVM_TOP)
+# Full path for the cdc component directory
+CDC_DIR ?= $(call ABSPATH, ../..)
+export CDC_DIR := $(CDC_DIR)
+
+CVM_TOP       := $(CDC_DIR)
+CVM_TOP_ABS   := $(CDC_DIR)
+
+# Paths to os, cpu, os-cpu, and os-cpu-device ports. They default
+# to being in the cdc component, but can be setup to point elsewhere.
+CDC_OS_COMPONENT_DIR      ?= $(CDC_DIR)
+CDC_CPU_COMPONENT_DIR     ?= $(CDC_DIR)
+CDC_OSCPU_COMPONENT_DIR   ?= $(CDC_DIR)
+CDC_DEVICE_COMPONENT_DIR  ?= $(CDC_DIR)
 
 # Include any existing platform defs first
 ifneq ($(J2ME_PLATFORM),)

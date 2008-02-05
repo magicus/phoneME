@@ -766,7 +766,7 @@ endif
 
 $(CVM_FDLIB): $(CVM_FDLIB_FILES)
 	@echo lib $@
-	$(AT)$(call TARGET_AR_CREATE,$@) $^
+	$(AT)$(call TARGET_AR_CREATE,$@) $(call POSIX2HOST,$^)
 	$(AT)$(call TARGET_AR_UPDATE,$@)
 endif
 

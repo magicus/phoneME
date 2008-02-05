@@ -117,6 +117,6 @@ $(CVM_EXE) : MT_FLAGS = $(MT_EXE_FLAGS)
 
 $(CVM_EXE) : $(patsubst %,$(CVM_OBJDIR)/%,$(CVMEXE_OBJS))
 	@echo "Linking $@"
-	$(AT)$(TARGET_LINK) $(LINKFLAGS) $(LINKEXE_FLAGS) /out:$@ $^ \
-		$(LINKEXE_LIBS) $(LINKCVMEXE_LIBS)
+	$(AT)$(TARGET_LINK) $(LINKFLAGS) $(LINKEXE_FLAGS) /out:$@ \
+		$(call POSIX2HOST,$^) $(LINKEXE_LIBS) $(LINKCVMEXE_LIBS)
 endif
