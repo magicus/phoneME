@@ -40,7 +40,7 @@ import java.io.Reader;
 	/** The entity public identifier or null. */
 	public String  pubid;
 
-	/** The entity systen identifier or null. */
+	/** The entity system identifier or null. */
 	public String  sysid;
 
 	/** The entity reader. */
@@ -65,8 +65,7 @@ import java.io.Reader;
 	 */
 	public Input(int buffsize)
 	{
-		chars = new char[buffsize];
-		chLen = chars.length;
+		this(new char[buffsize]);
 	}
 
 	/**

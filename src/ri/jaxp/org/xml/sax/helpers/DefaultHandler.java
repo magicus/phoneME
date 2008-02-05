@@ -71,7 +71,7 @@ public class DefaultHandler
      * in a subclass to do special translations such as catalog lookups
      * or URI redirection.</p>
      *
-     * @param publicId The public identifer, or null if none is
+     * @param publicId The public identifier, or null if none is
      *                 available.
      * @param systemId The system identifier provided in the XML
      *                 document.
@@ -183,7 +183,7 @@ public class DefaultHandler
      *
      * <p>By default, do nothing.  Application writers may override this
      * method in a subclass to take specific actions at the end
-     * of a document (such as finalising a tree or closing an output
+     * of a document (such as finalizing a tree or closing an output
      * file).</p>
      *
      * @exception org.xml.sax.SAXException Any SAX exception, possibly
@@ -268,7 +268,7 @@ public class DefaultHandler
      *
      * <p>By default, do nothing.  Application writers may override this
      * method in a subclass to take specific actions at the end of
-     * each element (such as finalising a tree node or writing
+     * each element (such as finalizing a tree node or writing
      * output to a file).</p>
      *
      * @param uri The Namespace URI, or the empty string if the
