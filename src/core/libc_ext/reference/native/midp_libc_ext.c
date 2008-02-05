@@ -53,40 +53,6 @@ int midp_snprintf(char* buffer, int bufferSize, const char* format, ...) {
     return rv;
 }
 
-#if ENABLE_DEBUG
-
-#include <stdlib.h>
-#include <string.h>
-
-#define DEBUG_OUTPUT_BUFFER 3000
-/**
- * Same as for midp_snprintf. Not all compilers provide vsnprintf 
- * function, so we have to use workaround. In debug mode it does 
- * buffer overflow checking, and in release mode it works as vsprintf.
- */
-int midp_vsnprintf(char *buffer, int bufferSize, 
-        const char* format, va_list argptr) {
- 
-    int rv = 0;
-    char *debugOutput = (char*)malloc(DEBUG_OUTPUT_BUFFER);
-
-	if (debugOutput != NULL) {
-	    vsprintf(debugOutput, format, argptr);
-		rv = strlen(debugOutput);
-		if (rv + 1 > bufferSize) {
-			*(debugOutput + bufferSize) = 0;
-			rv = bufferSize;
-            REPORT_CRIT2(LC_CORE, "Buffer %p overflow detected at %p !!!",
-                buffer, buffer + bufferSize);
-		}
-		strcpy(buffer, debugOutput);
-		free(debugOutput);
-	}
- 
-    return rv;
-}
-#endif /* ENABLE_DEBUG */
-
 /**
  * Not all compilers provide the POSIX function strcasesmp, so we need to
  * use workaround for it. The function compares to strings ignoring the

@@ -47,3 +47,9 @@ vpath % $(LIBCEXT_DIR)/reference/native
 
 SUBSYSTEM_LIBCEXT_NATIVE_FILES += \
     midp_libc_ext.c
+
+ifeq ($(HOST_PLATFORM), win32)
+vpath % $(LIBCEXT_DIR)/reference/native/win32
+SUBSYSTEM_LIBCEXT_NATIVE_FILES += \
+    midp_vsnprintf_win32.c
+endif

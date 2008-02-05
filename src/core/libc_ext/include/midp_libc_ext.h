@@ -56,17 +56,13 @@ extern int midp_snprintf(char* buffer, int bufferSize,
         const char* format, ...);
 
 /**
- * Same as for snprintf. Not all compilers provide vsnprintf function, 
- * so we have to use workaround. In debug mode it does buffer 
- * overflow checking, and in release mode it works as vsprintf.
+ * Same as for snprintf. When vsnprintf function is not
+ * supported by platform this function need be replaced
+ * to vsprintf(...). This way is potentially dangerous
+ * and should be excluded from the product build.
  */
-#if ENABLE_DEBUG
-extern int midp_vsnprintf(char *buffer, int bufferSize, 
-        const char* format, va_list argptr);
-#else
 #define midp_vsnprintf(buffer, bufferSize, format, argptr) \
-    vsprintf(buffer, format, argptr)
-#endif
+    vsnprintf(buffer, bufferSize, format, argptr)
 
 /**
  * Not all compilers provide the POSIX function strcasesmp, so we need to
