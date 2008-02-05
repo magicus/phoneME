@@ -99,6 +99,3 @@ $(JAVACALL_OUTPUT_LIB_DIR)/notifiers$(BUILD_EXT).lib: \
 	@echo "...Generating Library: $@"
 	@$(AR) `$(call fixcygpath, $@)` $(ARFLAGS) `$(call fixcygpath, $^)`
 
-
-copy_javacall_configuration_file:
-	cp -u  $(JAVACALL_SHARE_CONFIG_DIR)/jwc_properties.ini $(JAVACALL_OUTPUT_DIR)
