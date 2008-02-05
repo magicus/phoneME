@@ -113,6 +113,8 @@ VPATH+=$(JAVACALL_DIR)/implementation/share/utils
 endif
 endif
 
+SPECIFIC_DEFINITIONS+=$(filter -DENABLE_JSR%, $(foreach jsr,$(JSR_LIST), $(if $(PREFIX_$(USE_$(jsr))), -DENABLE_$(jsr)=1)))
+
 ifeq ($(USE_DEBUG),true)
 BUILD=debug
 CFLAGS += -DENABLE_JAVACALL_DEBUG
