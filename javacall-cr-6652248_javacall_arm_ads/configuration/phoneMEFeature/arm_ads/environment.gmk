@@ -23,6 +23,10 @@
 # information or have any questions.
 #
 
+ifeq ($(JAVACALL_DIR),)
+$(error JAVACALL_DIR is not set.)
+endif
+
 #Flag USE_JSR_XX means that JSR_XX will be included to the javacall library if the flag
 #is set to 'true' (example: USE_JSR_XX=true). JSR_XX will not be included to the javacall
 #library if the flag USE_JSR_XX is not 'true' (example: USE_JSR_XX=false). 
@@ -54,7 +58,7 @@ ifeq ($(USE_NATIVE_AMS_JC),)
 USE_NATIVE_AMS_JC=false
 endif
 
-ifeq ($(USE_PROPERTIES_FROM_FS),true)
+ifneq ($(USE_STATIC_PROPERTIES),true)
 SPECIFIC_DEFINITIONS += -DUSE_PROPERTIES_FROM_FS
 endif
 
@@ -94,23 +98,6 @@ UTILITIES = \
 SPECIFIC_DEFINITIONS+=-I$(COMMON_JC_IMPL_PATH)/$(COMMON_JC_DIR)/
 SPECIFIC_DEFINITIONS+=-I$(MIDP_JC_IMPL_PATH)/$(MIDP_JC_DIR)/
 
-ifeq ($(USE_JSR_135),true)
-SPECIFIC_DEFINITIONS+=-I$(JSR_135_JC_IMPL_PATH)/$(JSR_135_JC_DIR)/
-endif
-
-ifeq ($(USE_JSR_120),true)
-SPECIFIC_DEFINITIONS+= -DENABLE_JSR_120=1 
-endif
-
-ifeq ($(USE_JSR_211),true)
-SPECIFIC_DEFINITIONS+=-I$(JSR_211_JC_IMPL_PATH)/$(JSR_211_JC_DIR)/inc/
-endif
-
-# NEED REVISIT: provide pure solution without hidden dependencies
-ifeq ($(ENABLE_HIDDEN_DEP_FEATURES),true)
-SPECIFIC_DEFINITIONS+=-DENABLE_HIDDEN_DEP_FEATURES
-endif
-
 #Porting objects that are added to PORTING_OBJECTS by default rules can be excluded
 #from the javacall library by setting FILTER_OBJECTS variable
 
@@ -126,3 +113,5 @@ ifdef SUBSYSTEM_EVENTS_MODULES
 else
    PORTING_SOURCE+=events.c
 endif
+
+CONFIGURATION_PROPERTIES_FILE = $(JAVACALL_DIR)/configuration/phoneMEFeature/arm_ads/properties.xml

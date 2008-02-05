@@ -35,4 +35,4 @@ include $(JAVACALL_DIR)/build/ads/rules.gmk
 #Specific targets can be achieved before and after achievement of common targets
 #Specify these targets after including 'rules.gmk' file.
 pre_target:
-post_target: copy_javacall_configuration_file
+post_target:
