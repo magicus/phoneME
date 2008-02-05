@@ -53,7 +53,9 @@ endif
 # command for assembling
 ASM_ARCH_FLAGS += /nologo /c
 define ASM_CMD
-    $(AT)$(TARGET_CC) -D_ASM $(CPPFLAGS) /nologo -TC -P -EP $<
-    $(AT)$(TARGET_AS) -D_ASM $(CPPFLAGS) $(ASM_FLAGS) /Fo$@ $<
+    $(AT)$(TARGET_CC) -D_ASM $(CPPFLAGS) /nologo -TC -P -EP  \
+        $(call POSIX2HOST,$<)
+    $(AT)$(TARGET_AS) -D_ASM $(CPPFLAGS) $(ASM_FLAGS) \
+        /Fo$(call POSIX2HOST,$@) $(call POSIX2HOST,$<)
     @rm $*.i
 endef
