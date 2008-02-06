@@ -57,7 +57,11 @@ else
            ifeq ($(PLATFORM), javacall)
                include $(EVENTQUEUE_PORT_DIR)/stubs/lib.gmk
            else 
-              include $(EVENTQUEUE_PORT_DIR)/$(PLATFORM)/lib.gmk
+               ifeq ($(PLATFORM), win32_gci)
+                   include $(EVENTQUEUE_PORT_DIR)/stubs/lib.gmk
+               else
+                   include $(EVENTQUEUE_PORT_DIR)/$(PLATFORM)/lib.gmk
+               endif
            endif
        endif
    endif

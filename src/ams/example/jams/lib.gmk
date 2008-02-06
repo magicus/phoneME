@@ -126,6 +126,10 @@ ifeq ($(PLATFORM), win32)
   INCLUDE_SHELL_SCRIPTS = true
 endif
 
+ifeq ($(PLATFORM), win32_gci)
+  INCLUDE_SHELL_SCRIPTS = true
+endif
+
 ifeq ($(PLATFORM), wince)
   INCLUDE_SHELL_SCRIPTS = true
 endif

@@ -50,5 +50,9 @@ SUBSYSTEM_ANNUNCIATOR_EXTRA_INCLUDES += -I$(ANC_DIR)/include
 ifeq ($(PLATFORM), linux_gci)
     include $(ANC_DIR)/stubs/lib.gmk
 else
-    include $(ANC_DIR)/$(PLATFORM)/lib.gmk
+    ifeq ($(PLATFORM), win32_gci)
+        include $(ANC_DIR)/stubs/lib.gmk
+    else
+        include $(ANC_DIR)/$(PLATFORM)/lib.gmk
+    endif
 endif
