@@ -170,11 +170,11 @@ typedef enum {
     KEY_POWER    = -12,
     KEY_INVALID  = 0,
 
-//#ifdef ENABLE_JSR_75
-	/* File connection Events */
-	FILE_SYSTEM_MOUNTED = 6000,
+#if ENABLE_JSR_75
+    /* File connection Events */
+    FILE_SYSTEM_MOUNTED = 6000,
     FILE_SYSTEM_UNMOUNTED = 6001,
-//#endif
+#endif
 
     /* Values copied from EventHandler */
     VK_SUSPEND_ALL      = 1,

@@ -28,7 +28,9 @@
 #include "javacall_events.h"
 #include "javacall_logging.h"
 
+#if ENABLE_JSR_120
 extern javacall_result finalize_wma_emulator();
+#endif
 extern void javanotify_set_vm_args(int argc, char* argv[]);
 extern void javanotify_set_heap_size(int heapsize);
 extern int isNetworkMonitorActive();
@@ -46,7 +48,7 @@ extern void FinalizeLimeEvents();
 
 
 /** Usage text for the run emulator executable. */
-// IMPL_NOTE: Update usage according to main(...) func
+/* IMPL_NOTE: Update usage according to main(...) func */
 static const char* const emulatorUsageText =
             "\n"
             "Syntax:\n"
@@ -107,7 +109,8 @@ typedef enum {
     STORAGE_NAMES
 } execution_parameter;
 
-// global varaiable to determine if the application is running locally or via OTA
+/* global varaiable to determine if the application
+ * is running locally or via OTA */
 javacall_bool isRunningLocal = JAVACALL_FALSE;
 
 main(int argc, char *argv[]) {
@@ -126,7 +129,7 @@ main(int argc, char *argv[]) {
     char *debugPort        = NULL;
 
     /* uncomment this like to force the debugger to start */
-    //_asm int 3;
+    /* _asm int 3; */
 
     javacall_initialize_configurations();
 
@@ -167,50 +170,49 @@ main(int argc, char *argv[]) {
                 executionMode = RUN_LOCAL;
             }
         } else if (strncmp(argv[i],"-D", 2) == 0) {
-                /* It is a CLDC arg, add to CLDC arguments list */
-                //vmArgv[vmArgc++] = argv[i];
-                /* set system property */
-                char *key;
-                char *value;
-                javacall_property_type property_type = JAVACALL_APPLICATION_PROPERTY;
+            /* It is a CLDC arg, add to CLDC arguments list */
+            /* vmArgv[vmArgc++] = argv[i]; */
+            /* set system property */
+            char *key;
+            char *value;
+            javacall_property_type property_type = JAVACALL_APPLICATION_PROPERTY;
 
-                key = argv[i] + 2;
-                for (value = key; *value ; value++) {
-                    if (*value == '=') {
-                        *value++ = 0;
-                        break;
-                    }
+            key = argv[i] + 2;
+            for (value = key; *value ; value++) {
+                if (*value == '=') {
+                    *value++ = 0;
+                    break;
                 }
+            }
 
-               /* ignore microedition.encoding for now,
-                * since only ISO8859_1 encoding is currently supported */
-                if (strcmp(key,"microedition.encoding") == 0) {
-                    continue;
-                }
+            /* ignore microedition.encoding for now,
+             * since only ISO8859_1 encoding is currently supported */
+            if (strcmp(key,"microedition.encoding") == 0) {
+                continue;
+            }
 
-                // Use the key name used in JSR177 implementation
-                if(strcmp(key,"com.sun.midp.io.j2me.apdu.hostsandports") == 0 ) {
-                      key = "com.sun.io.j2me.apdu.hostsandports";
-                      property_type = JAVACALL_INTERNAL_PROPERTY;
-                }
-                javacall_set_property(key, value, JAVACALL_TRUE,property_type);
+            /* Use the key name used in JSR177 implementation */
+            if (strcmp(key,"com.sun.midp.io.j2me.apdu.hostsandports") == 0 ) {
+                key = "com.sun.io.j2me.apdu.hostsandports";
+                property_type = JAVACALL_INTERNAL_PROPERTY;
+            }
+            javacall_set_property(key, value, JAVACALL_TRUE,property_type);
         } else if (strcmp(argv[i], "-monitormemory") == 0) {
-
             /* old argument  - ignore it */
         } else if (strcmp(argv[i], "-memory_profiler") == 0) {
-
+            
             /* It is a CLDC arg, add to CLDC arguments list */
-            vmArgv[vmArgc++] = argv[i++]; //-memory_profiler
-            vmArgv[vmArgc++] = argv[i++]; //-port
-            vmArgv[vmArgc++] = argv[i]; //port number
+            vmArgv[vmArgc++] = argv[i++]; /* -memory_profiler */
+            vmArgv[vmArgc++] = argv[i++]; /* -port */
+            vmArgv[vmArgc++] = argv[i]; /* port number */
         } else if (strcmp(argv[i], "-jprof") == 0) {
 
             /* It is a CLDC arg, add to CLDC arguments list */
             vmArgv[vmArgc++] = "+UseExactProfiler";
             i++;
             javacall_set_property("profiler.filename",
-                                              argv[i], JAVACALL_TRUE,
-                                              JAVACALL_APPLICATION_PROPERTY);
+                                  argv[i], JAVACALL_TRUE,
+                                  JAVACALL_APPLICATION_PROPERTY);
             i++;
         } else if (strcmp(argv[i], "-tracegarbagecollection") == 0) {
 
@@ -303,17 +305,17 @@ main(int argc, char *argv[]) {
 
             /* debug an application */
             /* It is a CLDC arg, add to CLDC arguments list */
-            //vmArgv[vmArgc++] = argv[i];
+            /* vmArgv[vmArgc++] = argv[i]; */
             i++;
             if (strcmp(argv[i],"-port") == 0) {
                 /* It is a CLDC arg, add to CLDC arguments list */
-                //vmArgv[vmArgc++] = argv[i];
+                /* vmArgv[vmArgc++] = argv[i]; */
                 i++;
                 /* It is a CLDC arg, add to CLDC arguments list */
-                //vmArgv[vmArgc++] = argv[i];
+                /* vmArgv[vmArgc++] = argv[i]; */
                 javacall_set_property("vmdebuggerport",
-                                                  argv[i], JAVACALL_TRUE,
-                                                  JAVACALL_APPLICATION_PROPERTY);
+                                      argv[i], JAVACALL_TRUE,
+                                      JAVACALL_APPLICATION_PROPERTY);
                 debugPort = malloc(sizeof(char)*(strlen(argv[i])+1));
                 strcpy(debugPort, argv[i]);
             }
@@ -325,7 +327,7 @@ main(int argc, char *argv[]) {
             token = strstr(argv[i], "kB");
             if (token != NULL) {
                 token = strtok(argv[i], "kB");
-                heapsize = atoi(token)*1024; //convert Killo Bytes to bytes
+                heapsize = atoi(token)*1024; /* convert KiloBytes to bytes */
             } else {
                 heapsize = atoi(argv[i]);
             }
@@ -365,35 +367,38 @@ main(int argc, char *argv[]) {
      */
     if (isNetworkMonitorActive()) {
         javacall_set_property("javax.microedition.io.Connector.protocolpath",
-                                          "com.sun.kvem.io",
-                                          JAVACALL_TRUE,
-                                          JAVACALL_APPLICATION_PROPERTY);
+                              "com.sun.kvem.io",
+                              JAVACALL_TRUE,
+                              JAVACALL_APPLICATION_PROPERTY);
     } else {
         javacall_set_property("javax.microedition.io.Connector.protocolpath",
-                                          "com.sun.midp.io",
-                                          JAVACALL_TRUE,
-                                          JAVACALL_APPLICATION_PROPERTY);
+                              "com.sun.midp.io",
+                              JAVACALL_TRUE,
+                              JAVACALL_APPLICATION_PROPERTY);
     }
 
     javacall_set_property("running_local",
-                                      "false",
-                                      JAVACALL_TRUE,
-                                      JAVACALL_APPLICATION_PROPERTY);
+                          "false",
+                          JAVACALL_TRUE,
+                          JAVACALL_APPLICATION_PROPERTY);
     /* check executionMode and call appropriate javanotify function */
     if (executionMode == RUN_LOCAL) {
-        // set property so we know we run in local mode and not in ota mode.
+        /* set property so we know we run in local mode and not in ota mode. */
         isRunningLocal = JAVACALL_TRUE;
         javacall_set_property("running_local",
-                                          "true",
-                                          JAVACALL_TRUE,
-                                          JAVACALL_APPLICATION_PROPERTY);
+                              "true",
+                              JAVACALL_TRUE,
+                              JAVACALL_APPLICATION_PROPERTY);
         if (debugPort != NULL) {
-            javanotify_start_local(className, descriptor, classPath, JAVACALL_TRUE);
+            javanotify_start_local(className, descriptor,
+                                   classPath, JAVACALL_TRUE);
         } else {
-            javanotify_start_local(className, descriptor, classPath, JAVACALL_FALSE);
+            javanotify_start_local(className, descriptor,
+                                   classPath, JAVACALL_FALSE);
         }
     } else if (executionMode == RUN_OTA) {
-        /* check the executionParameter and call the appropriate javanotify function */
+        /* check the executionParameter and call the
+         * appropriate javanotify function */
         switch (executionParameter) {
         case RUN:
             {
@@ -438,17 +443,17 @@ main(int argc, char *argv[]) {
         }
 
     } else if (executionMode == AUTOTEST) {
-        char *argv1[5] = {"runMidlet", "-1", "com.sun.midp.installer.AutoTester", url, domainStr};
+        char *argv1[5] = {"runMidlet", "-1", 
+            "com.sun.midp.installer.AutoTester", url, domainStr};
         int numargs = (domainStr!=NULL) ? 5 : 4;
         javanotify_start_java_with_arbitrary_args(numargs, argv1);
     } else { /* no execution mode, invalid arguments */
         javanotify_start();
     }
 
-    //TODO - set ifdef
-    //#ifdef ENABLED_JSR_120
-    //  initializeWMASupport();
-    //#endif
+#if ENABLE_JSR_120
+    /* initializeWMASupport(); */
+#endif
 
     InitializeLimeEvents();
 
@@ -456,10 +461,9 @@ main(int argc, char *argv[]) {
 
     javacall_events_finalize();
 
-    //TODO - set ifdef
-    //#ifdef ENABLED_JSR_120
+#if ENABLE_JSR_120
     finalize_wma_emulator();
-    //#endif
+#endif
 
     /* free allocated memory */
     free(descriptor);

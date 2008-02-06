@@ -31,7 +31,7 @@
 static javacall_media_caps g_caps[] = 
 {
 //    mediaFormat,                   contentTypes,           'whole' protocols,              streaming protocols
-    { JAVACALL_MEDIA_FORMAT_MS_PCM,  "audio/x-wav",          JAVACALL_MEDIA_MEMORY_PROTOCOL, 0 },
+    { JAVACALL_MEDIA_FORMAT_MS_PCM,  "audio/x-wav audio/wav",JAVACALL_MEDIA_MEMORY_PROTOCOL, 0 },
     { JAVACALL_MEDIA_FORMAT_MIDI,    "audio/midi audio/mid", JAVACALL_MEDIA_MEMORY_PROTOCOL, 0 },
     { JAVACALL_MEDIA_FORMAT_SP_MIDI, "audio/sp-midi",        JAVACALL_MEDIA_MEMORY_PROTOCOL, 0 },
     { JAVACALL_MEDIA_FORMAT_TONE,    "audio/x-tone-seq",     JAVACALL_MEDIA_MEMORY_PROTOCOL, 0 },
@@ -42,8 +42,8 @@ static javacall_media_configuration g_cfg;
 
 javacall_result javacall_media_get_configuration(const javacall_media_configuration** cfg)
 {
-    g_cfg.audioEncoding         = "";
-    g_cfg.videoEncoding         = "";
+    g_cfg.audioEncoding         = "encoding=pcm&rate=22050&bits=16&channels=1";
+    g_cfg.videoEncoding         = NULL;
     g_cfg.videoSnapshotEncoding = "encoding=jpeg";
 
     g_cfg.supportMixing         = JAVACALL_TRUE;
@@ -159,7 +159,7 @@ javacall_media_format_type fmt_enum2str( jc_fmt fmt )
     return g_fmt[ fmt ];
 }
 
-jc_fmt fmt_mime2enum( const char* mime )
+javacall_media_format_type fmt_mime2str( const char* mime )
 {
     int          idx;
     unsigned int mimelen = strlen( mime );
@@ -171,16 +171,17 @@ jc_fmt fmt_mime2enum( const char* mime )
 
         while( NULL != ct && strlen( ct ) >= mimelen )
         {
-            if( '\0' == ct[ mimelen + 1 ] || ' ' == ct[ mimelen + 1 ] )
+            if( '\0' == ct[ mimelen ] || ' ' == ct[ mimelen ] )
             {
-                if( 0 == _strnicmp( ct, mime, mimelen ) ) return (jc_fmt)idx;
+                if( 0 == _strnicmp( ct, mime, mimelen ) )
+                    return g_caps[ idx ].mediaFormat;
             }
             ct = strchr( ct, ' ' );
             if( NULL != ct ) ct++;
         }
     }
 
-    return JC_FMT_UNKNOWN;
+    return JAVACALL_MEDIA_FORMAT_UNKNOWN;;
 }
 
 //=============================================================================
@@ -355,25 +356,25 @@ javacall_result javacall_media_create(int appId,
         if( 0 == _wcsnicmp( uri, AUDIO_CAPTURE_LOCATOR, 
                            min( (long)wcslen( AUDIO_CAPTURE_LOCATOR ), uriLength ) ) )
         {
-            pPlayer->mediaType   = JAVACALL_MEDIA_FORMAT_MS_PCM;
+            pPlayer->mediaType   = JAVACALL_MEDIA_FORMAT_CAPTURE_AUDIO;
             pPlayer->mediaItfPtr = &g_record_itf;
         }
         else if( 0 == _wcsnicmp( uri, VIDEO_CAPTURE_LOCATOR, 
                            min( (long)wcslen( VIDEO_CAPTURE_LOCATOR ), uriLength ) ) )
         {
-            //pPlayer->mediaType   = JAVACALL_MEDIA_FORMAT_???;
+            pPlayer->mediaType   = JAVACALL_MEDIA_FORMAT_CAPTURE_VIDEO;
             pPlayer->mediaItfPtr = &g_camera_itf;
         }
         else if( 0 == _wcsnicmp( uri, DEVICE_TONE_LOCATOR, 
                            min( (long)wcslen( DEVICE_TONE_LOCATOR ), uriLength ) ) )
         {
-            pPlayer->mediaType   = JAVACALL_MEDIA_FORMAT_TONE;
+            pPlayer->mediaType   = JAVACALL_MEDIA_FORMAT_DEVICE_TONE;
             pPlayer->mediaItfPtr = &g_qsound_itf;
         }
         else if( 0 == _wcsnicmp( uri, DEVICE_MIDI_LOCATOR, 
                            min( (long)wcslen( DEVICE_MIDI_LOCATOR ), uriLength ) ) )
         {
-            pPlayer->mediaType   = JAVACALL_MEDIA_FORMAT_MIDI;
+            pPlayer->mediaType   = JAVACALL_MEDIA_FORMAT_DEVICE_MIDI;
             pPlayer->mediaItfPtr = &g_qsound_interactive_midi_itf;
         }
         else
@@ -435,7 +436,8 @@ javacall_result javacall_media_realize(javacall_handle handle,
                                                 cmime, mimeLength + 1, NULL, NULL );
                 if( wres )
                 {
-                    pPlayer->mediaType = fmt_enum2str( fmt_mime2enum( cmime ) );
+                    cmime[ mimeLength ] = '\0';
+                    pPlayer->mediaType = fmt_mime2str( cmime );
                 }
 
                 FREE( cmime );

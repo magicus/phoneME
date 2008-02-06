@@ -27,11 +27,14 @@
 #include "defaultLCDUI.h"
 #include "javacall_keypress.h"
 #include "javacall_lifecycle.h"
-#ifdef ENABLE_JSR_179
+#if ENABLE_JSR_179
 #include "javacall_location.h"
 #endif
 #include "javacall_logging.h"
 #include "javacall_penevent.h"
+#if ENABLE_JSR_75
+#include "javanotify_fileconnection.h"
+#endif
 
 #if ENABLE_ON_DEVICE_DEBUG
 #include "javacall_odd.h"
@@ -40,14 +43,12 @@
 #define LIME_PACKAGE "com.sun.kvem.midp"
 #define LIME_EVENT_CLASS "EventBridge"
 
-//extern char *senderPhoneNumber;
-
 #define EVENT_BUFFER_SIZE 64
 #define EVENT_SIZE 4
 
-// Can't use javacall_debug, as it is not thread safe,
-// Use this flag if needed
-//#define DEBUG_LIME_EVENTS
+/* Can't use javacall_debug, as it is not thread safe,
+ * Use this flag if needed
+#define DEBUG_LIME_EVENTS */
 
 #ifdef DEBUG_LIME_EVENTS
 #define LIME_DEBUG_PRINTF javautil_printf_lime
@@ -62,14 +63,16 @@ extern void ParseLocationData(char *data);
 extern void HandleProximityLocationEvent();
 extern void HandleProximityStateEvent();
 
-#ifdef USE_JSR_179
+#if ENABLE_JSR_179
 extern javacall_location_state provider_state[];
+extern char *ExtractEventData(javacall_utf16_string event_name);
 #endif
 
 void SendEvent(KVMEventType *evt);
 javacall_bool generateSoftButtonKeys(int x, int y, javacall_penevent_type pentype);
 
-// global varaiable to determine if the application is running locally or via OTA
+/* global varaiable to determine if the application 
+ * is running locally or via OTA */
 extern javacall_bool isRunningLocal;
 
 #if ENABLE_ON_DEVICE_DEBUG
@@ -215,15 +218,15 @@ void SendEvent (KVMEventType *evt) {
         if ((evt->chr != KEY_END)) {
 #ifdef USE_KEYTYPED_VM_EVENTS
             if ((evt->chr >= ' ') && (evt->chr < 127)) {
-                // Send Key events received from the keyboard
-                // usimg the MIDP IME mechanism (Only for regular keys)
+                /* Send Key events received from the keyboard
+                 * using the MIDP IME mechanism (Only for regular keys) */
                 javanotify_key_event(evt->chr, JAVACALL_KEYTYPED);
-            } else if (evt->chr == 127) { // for the delete key
+            } else if (evt->chr == 127) { /* for the delete key */
                 javanotify_key_event(evt->chr, JAVACALL_KEYPRESSED);
                 javanotify_key_event(evt->chr, JAVACALL_KEYRELEASED);
             }
-#else // Temporary solution, will not work on all cases but provides
-      // a solution for text entry
+#else /* Temporary solution, will not work on all cases but provides
+       * a solution for text entry */
             if (evt->chr != 8) {
                 javanotify_key_event(evt->chr, JAVACALL_KEYPRESSED);
                 javanotify_key_event(evt->chr, JAVACALL_KEYRELEASED);
@@ -238,19 +241,19 @@ void SendEvent (KVMEventType *evt) {
 
 #ifdef INCLUDE_I18N
     case imeKVMEvent: {
-            //StoreKVMEvent(MIDP_KEY_EVENT, 2, IME,
-            //              instantiateStringFromUnicode(evt->str, evt->len));
-            //midpFree(evt->str);
+            /*StoreKVMEvent(MIDP_KEY_EVENT, 2, IME,
+                          instantiateStringFromUnicode(evt->str, evt->len));
+            midpFree(evt->str); */
             break;
         }
 #endif
 
     case commandKVMEvent:
-        //StoreKVMEvent(MIDP_COMMAND_EVENT, 1, evt->chr);
+        /* StoreKVMEvent(MIDP_COMMAND_EVENT, 1, evt->chr); */
         break;
 
     case mmEOMEvent:
-        //StoreKVMEvent(MM_EOM_EVENT, 2, (int)evt->screenX, evt->chr);
+        /* StoreKVMEvent(MM_EOM_EVENT, 2, (int)evt->screenX, evt->chr); */
         break;
 
     case systemKVMEvent:
@@ -265,7 +268,7 @@ void SendEvent (KVMEventType *evt) {
             javanotify_shutdown();
             break;
 
-#ifdef ENABLE_JSR_179
+#if ENABLE_JSR_179
         case STATE_AVAILABLE:
             provider_state[0] = JAVACALL_LOCATION_AVAILABLE;
             HandleProximityLocationEvent();
@@ -294,9 +297,9 @@ void SendEvent (KVMEventType *evt) {
             if (event_data)
                 ParseAccuracyData(event_data);
             break;
-#endif //#ifdef ENABLE_JSR_179
+#endif
 
-#ifdef ENABLE_JSR_75
+#if ENABLE_JSR_75
         case FILE_SYSTEM_MOUNTED:
             javanotify_fileconnection_root_changed();
             break;
@@ -307,9 +310,9 @@ void SendEvent (KVMEventType *evt) {
 
         default:
             break;
-        } //switch(evt->chr)
+        } /* switch(evt->chr) */
 
     default: /* do nothing, but continue in loop */
         break;
-    } //switch (evt->type)
+    } /* switch (evt->type) */
 }
