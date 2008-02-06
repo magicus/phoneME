@@ -186,7 +186,7 @@ public class PlayerImpl implements Player {
      */
     public void realize() throws MediaException {
         /* realize native player */
-        nRealize(hNative, null);
+        nRealize(hNative, source.getContentType());
 
         if (mediaFormat.equals(MEDIA_FORMAT_UNKNOWN)) {
             /* ask media format if unknown */
@@ -253,6 +253,7 @@ public class PlayerImpl implements Player {
         /* create Implementation Player */
         playerInst = getPlayerFromType(mediaFormat);
 
+        playerInst.notificationSource = this;
         playerInst.hNative            = hNative;
         playerInst.mediaFormat        = mediaFormat;
         playerInst.handledByDevice    = handledByDevice;

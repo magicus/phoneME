@@ -594,10 +594,12 @@ public final class Manager {
 
         String locStr = locator.toLowerCase();
         String validLoc;
-        BasicPlayer p;
 
         if (debug)
             System.out.println("[mmapi] createPlayer with " + locator);
+
+        DataSource ds = null;
+        Player     pp = null;
 
         /*
          * TBD: in general all capture devices 
@@ -612,18 +614,20 @@ public final class Manager {
          * <scheme>://<device> part is case incensitive,
          * but others (media encodings in our case) are case sensitive...
          */
+
         if (
             locStr.equals(validLoc = TONE_DEVICE_LOCATOR)
             // #ifndef ABB [
             || locStr.equals(validLoc = MIDI_DEVICE_LOCATOR)
-            || locStr.startsWith(validLoc = DefaultConfiguration.VIDEO_CAPTURE_LOCATOR)
-            || locStr.startsWith(validLoc = DefaultConfiguration.AUDIO_CAPTURE_LOCATOR)
+            || locStr.startsWith(validLoc = Configuration.VIDEO_CAPTURE_LOCATOR)
+            || locStr.startsWith(validLoc = Configuration.AUDIO_CAPTURE_LOCATOR)
             // #endif ]
             ) 
         {
             // separate device & encodings
             int encInd = locator.indexOf('?');
             String encStr = null;
+
             if (encInd > 0) {
                 encStr = locator.substring(encInd + 1);
                 locStr = locStr.substring(0, encInd);
@@ -636,50 +640,43 @@ public final class Manager {
                  * detect invalid locator case: 
                  * if no '?' found then locStr & validLoc shall be 
                  * equivalent strings, but since they have already passed 
-                 * char-to-char comparison, we to check lengths only...
+                 * char-to-char comparison, we have to check lengths only...
                  */
                 if (locStr.length() != validLoc.length())
                     throw new MediaException("Malformed locator");
                 encStr = "";
             }
-            String className = config.getHandler(locStr);
-
-            try {
-                // Try and instance the player ....
-                Class protoClass = Class.forName(className);
-                p = (BasicPlayer) protoClass.newInstance();
-                p.setLocator(locator.toLowerCase());
-                return p;
-            } catch (Exception e) {
-                throw new MediaException("Failed to create Player: " + e.getMessage());
-            }
-        } else {
-            // not in the list of predefined locators, 
+            
+            ds = new CommonDS();
+            ((CommonDS)ds).setLocator(locator);
+            
+        } else {  // not in the list of predefined locators
+        
             // find handler by extension
-        String theProtocol = null;
-        int idx = locStr.indexOf(':');
+            String theProtocol = null;
+            int idx = locStr.indexOf(':');
 
-        if (idx != -1) {
-                theProtocol = locStr.substring(0, idx);
-        } else {
+            if (idx != -1) {
+                 theProtocol = locStr.substring(0, idx);
+            } else {
                 throw new MediaException("Malformed locator");
-        }
-
-        String[] supported = getSupportedProtocols(null);
-        boolean found = false;
-        for (int i = 0; i < supported.length; i++) {
-            if (theProtocol.equals(supported[i])) {
-                found = true;
-                break;
             }
-        }
 
-        if (!found) {
-                throw new MediaException("Player cannot be created for " + locator);
-        }
+            String[] supported = getSupportedProtocols(null);
+            boolean found = false;
+            for (int i = 0; i < supported.length; i++) {
+                if (theProtocol.equals(supported[i])) {
+                    found = true;
+                    break;
+                }
+            }
 
-        DataSource ds = createDataSource(locator);
-        Player pp = null;
+            if (!found) {
+                    throw new MediaException("Player cannot be created for " + locator);
+            }
+
+            ds = createDataSource(locator);
+        }
 
         try {
             pp = createPlayer(ds);
@@ -692,7 +689,6 @@ public final class Manager {
         }
 
         return pp;
-    }
     }
 
 
