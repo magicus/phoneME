@@ -368,7 +368,7 @@ else
 endif
 
 ifeq ($(CVM_BUILD_SUBDIR), true)
-CVM_BUILD_SUBDIR_UP = ../
+CVM_BUILD_SUBDIR_UP = "Do not use CVM_BUILD_SUBDIR_UP"
 endif
 
 CVM_BUILD_FLAGS_FILE=$(CVM_BUILD_SUBDIR_NAME)/.previous.build.flags
@@ -459,17 +459,17 @@ ifeq ($(CVM_TOOLS_BUILD),true)
 # Include the makefiles for tool libraries to build here:
 # NOTE: For jcov and hprof, the platform specific makefiles need to be
 #       included first.
--include $(CDC_OS_COMPONENT_DIR)/build/jcov.mk
+-include $(CDC_OS_COMPONENT_DIR)/build/$(TARGET_OS)/jcov.mk
 -include $(CDC_DIR)/build/share/jcov.mk
--include $(CDC_OS_COMPONENT_DIR)/build/hprof.mk
+-include $(CDC_OS_COMPONENT_DIR)/build/$(TARGET_OS)/hprof.mk
 -include $(CDC_DIR)/build/share/hprof.mk
--include $(CDC_OS_COMPONENT_DIR)/build/jvmti_crw.mk
+-include $(CDC_OS_COMPONENT_DIR)/build/$(TARGET_OS)/jvmti_crw.mk
 -include $(CDC_DIR)/build/share/jvmti_crw.mk
--include $(CDC_OS_COMPONENT_DIR)/build/jvmti_hprof.mk
+-include $(CDC_OS_COMPONENT_DIR)/build/$(TARGET_OS)/jvmti_hprof.mk
 -include $(CDC_DIR)/build/share/jvmti_hprof.mk
--include $(CDC_OS_COMPONENT_DIR)/build/jdwp.mk
+-include $(CDC_OS_COMPONENT_DIR)/build/$(TARGET_OS)/jdwp.mk
 -include $(CDC_DIR)/build/share/jdwp.mk
--include $(CDC_OS_COMPONENT_DIR)/build/cvmc.mk
+-include $(CDC_OS_COMPONENT_DIR)/build/$(TARGET_OS)/cvmc.mk
 -include $(CDC_DIR)/build/share/cvmc.mk
 endif
 
