@@ -77,7 +77,8 @@ static void MQ234_CALLBACK set_done_trigger(void *userData)
         break;
 
         default:
-            OutputDebugString("Unexpected mediaType in trigger");
+            JC_MM_DEBUG_ERROR_PRINT("Unexpected mediaType in trigger");
+            JC_MM_ASSERT( FALSE );
     }
 }
 
@@ -151,8 +152,9 @@ static void* getNextSamples(void* userData, int bytesCnt, int* pBytesGet)
          break;
 
         default:
-            OutputDebugString("Unknown mediaType for stream read");
-        return NULL;
+            JC_MM_DEBUG_ERROR_PRINT("Unknown mediaType for stream read");
+            JC_MM_ASSERT( FALSE );
+            return NULL;
     }
 
     return pSB;
@@ -179,7 +181,7 @@ static void MQ234_CALLBACK fill_pcm_2c_16b(void* userData,
     {
         char msg[256];
         sprintf(msg, "filln2c16b: bytes=%d nread=%d\n", bytesGet, samples*4);
-        OutputDebugString(msg);
+        JC_MM_DEBUG_ERROR_PRINT(msg);
     }
 */
 
@@ -206,7 +208,7 @@ static void MQ234_CALLBACK fill_pcm_1c_16b(void* userData,
     {
         char msg[256];
         sprintf(msg, "filln1c16b: bytes=%d nread=%d\n", bytesGet, samples*2);
-        OutputDebugString(msg);
+        JC_MM_DEBUG_ERROR_PRINT(msg);
     }
 */
 }
@@ -241,7 +243,7 @@ static void MQ234_CALLBACK fill_pcm_2c_8b(void* userData,
         char msg[256];
         sprintf(msg, "filln2c8b: bytesIn=%d bytesOut=%d nread=%d\n",
             bytesGet, bytesCnt*2, samples*1);
-        OutputDebugString(msg);
+        JC_MM_DEBUG_ERROR_PRINT(msg);
     }
 */
 
@@ -276,7 +278,7 @@ static void MQ234_CALLBACK fill_pcm_1c_8b(void* userData,
         char msg[256];
         sprintf(msg, "filln2c8b: bytesIn=%d bytesOut=%d nread=%d\n",
             bytesGet, bytesCnt*2, samples*1);
-        OutputDebugString(msg);
+        JC_MM_DEBUG_ERROR_PRINT(msg);
     }
 */
 
@@ -314,7 +316,7 @@ static void MQ234_CALLBACK fill_pcm_2c_24b(void* userData,
         char msg[256];
         sprintf(msg, "filln2c8b: bytesIn=%d bytesOut=%d nread=%d\n",
             bytesGet, bytesCnt*2, samples*1);
-        OutputDebugString(msg);
+        JC_MM_DEBUG_ERROR_PRINT(msg);
     }
 */
 
@@ -353,7 +355,7 @@ static void MQ234_CALLBACK fill_pcm_1c_24b(void* userData,
         char msg[256];
         sprintf(msg, "filln2c8b: bytesIn=%d bytesOut=%d nread=%d\n",
             bytesGet, bytesCnt*2, samples*1);
-        OutputDebugString(msg);
+        JC_MM_DEBUG_ERROR_PRINT(msg);
     }
 */
 
@@ -443,11 +445,7 @@ static int gmInit(int isolateID, int gmIdx)
     err = mQ234_Create(&(g_QSoundGM[gmIdx].gm), &opts, sizeof(opts));
     JC_MM_ASSERT(err==MQ234_ERROR_NO_ERROR);
 
-    {
-        char msg[256];
-        sprintf(msg, "Created GM: %d\n", g_QSoundGM[gmIdx].gm);
-        OutputDebugString(msg);
-    }
+    JC_MM_DEBUG_INFO_PRINT1("Created GM: %d\n",g_QSoundGM[gmIdx].gm);
 
     err = mQ234_SetupOutput( g_QSoundGM[gmIdx].gm,
                              MQ234_SPEAKERS,                  /*MQ234_HEADPHONES*/
@@ -689,8 +687,7 @@ int mmaudio_tone_note(long isolateid, long note, long dur, long vol)
  */
 static javacall_handle audio_qs_create(int appId, int playerId,
                                        jc_fmt mediaType,
-                                       const javacall_utf16* URI,
-                                       long uriLength)
+                                       const javacall_utf16_string URI)
 {
     ah *newHandle = NULL;
     int isolateId = appId;
@@ -701,6 +698,7 @@ static javacall_handle audio_qs_create(int appId, int playerId,
     {
         case JC_FMT_TONE:
         case JC_FMT_MIDI:
+        case JC_FMT_SP_MIDI:
         {
             MQ234_ERROR e;
             IPlayControl* synth;
@@ -714,10 +712,11 @@ static javacall_handle audio_qs_create(int appId, int playerId,
             e = mQ234_AttachSynthPlayer(g_QSoundGM[gmIdx].gm, synth, 0);
             JC_MM_ASSERT(e==MQ234_ERROR_NO_ERROR);
 
-            newHandle->hdr.mediaType = mediaType;
-            newHandle->hdr.isolateID = isolateId;
-            newHandle->hdr.playerID  = playerId;
-            newHandle->hdr.gmIdx     = gmIdx;
+            newHandle->hdr.mediaType        = mediaType;
+            newHandle->hdr.isolateID        = isolateId;
+            newHandle->hdr.playerID         = playerId;
+            newHandle->hdr.gmIdx            = gmIdx;
+            newHandle->hdr.wholeContentSize = -1;
 
             newHandle->hdr.controls[CON135_METADATA] =
                 (IControl*)mQ234_PlayControl_getMetaDataControl(synth);
@@ -733,7 +732,7 @@ static javacall_handle audio_qs_create(int appId, int playerId,
             // From some reason TCK requires default tempo to be 120000, in fact 160000 returned
             // so set it manually, it set twice because when buffereing used than it should be set when 
             // buffering ends, and here in case protocol handles by device, so no buffering
-            if(mediaType == JC_FMT_MIDI) {
+            if(mediaType != JC_FMT_TONE) {
                 long tempo = mQ135_Tempo_SetTempo((ITempoControl*)newHandle->hdr.controls[CON135_TEMPO], 100000);
             }
 
@@ -751,10 +750,11 @@ static javacall_handle audio_qs_create(int appId, int playerId,
             newHandle = MALLOC(sizeof(ah_wav));
             memset(newHandle, '\0', sizeof(ah_wav));
 
-            newHandle->hdr.mediaType = mediaType;
-            newHandle->hdr.isolateID = isolateId;
-            newHandle->hdr.playerID  = playerId;
-            newHandle->hdr.gmIdx     = gmIdx;
+            newHandle->hdr.mediaType        = mediaType;
+            newHandle->hdr.isolateID        = isolateId;
+            newHandle->hdr.playerID         = playerId;
+            newHandle->hdr.gmIdx            = gmIdx;
+            newHandle->hdr.wholeContentSize = -1;
 
             ef = g_QSoundGM[gmIdx].EM135;
 
@@ -771,14 +771,11 @@ static javacall_handle audio_qs_create(int appId, int playerId,
 
         default:
             JC_MM_DEBUG_PRINT1("[jc-media] Unsupported media type %d\n", mediaType);
+            JC_MM_ASSERT( FALSE );
     }
 
-    {
-        char msg[256];
-        sprintf(msg, "audio_create: mt:%d nh:%d gmi:%d\n",
-                mediaType, (int)newHandle, gmIdx);
-        OutputDebugString(msg);
-    }
+    JC_MM_DEBUG_INFO_PRINT3("audio_create: mt:%d nh:%d gmi:%d\n",
+                            mediaType, (int)newHandle, gmIdx);
 
     return (javacall_handle)newHandle;
 }
@@ -798,6 +795,7 @@ static javacall_result audio_qs_destroy(javacall_handle handle)
     {
         case JC_FMT_TONE:
         case JC_FMT_MIDI:
+        case JC_FMT_SP_MIDI:
         {
 
             if(h->midi.doneCallback != NULL)
@@ -848,6 +846,7 @@ static javacall_result audio_qs_destroy(javacall_handle handle)
 
         default:
             JC_MM_DEBUG_PRINT1("[jc-media] Trying to close unsupported media type %d\n", h->hdr.mediaType);
+            JC_MM_ASSERT( FALSE );
     }
 
     return r;
@@ -859,17 +858,13 @@ static javacall_result audio_qs_close(javacall_handle handle){
     javacall_result r = JAVACALL_FAIL;
     int gmIdx         = h->hdr.gmIdx;
 
-    {
-        char msg[256];
-        sprintf(msg, "audio_close: h:%d  mt:%d\n", (int)handle, h->hdr.mediaType);
-        OutputDebugString(msg);
-    }
-    JC_MM_DEBUG_PRINT1("audio_close %s\n",__FILE__);
+    JC_MM_DEBUG_PRINT2("audio_close: h:%d  mt:%d\n", (int)handle, h->hdr.mediaType);
 
     switch(h->hdr.mediaType)
     {
         case JC_FMT_TONE:
         case JC_FMT_MIDI:
+        case JC_FMT_SP_MIDI:
         {
             MQ234_ERROR e = mQ234_DetachSynthPlayer(g_QSoundGM[gmIdx].gm, h->midi.synth);
             JC_MM_ASSERT(e == MQ234_ERROR_NO_ERROR);
@@ -889,9 +884,47 @@ static javacall_result audio_qs_close(javacall_handle handle){
 
         default:
             JC_MM_DEBUG_PRINT1("[jc-media] Trying to close unsupported media type %d\n", h->hdr.mediaType);
+            JC_MM_ASSERT( FALSE );
     }
 
     return r;
+}
+
+static javacall_result audio_qs_get_player_controls(javacall_handle handle,
+                                                    int* controls)
+{
+    ah* h = (ah*)handle;
+
+    *controls = JAVACALL_MEDIA_CTRL_VOLUME;
+
+    switch(h->hdr.mediaType)
+    {
+        case JC_FMT_TONE:
+            *controls |= JAVACALL_MEDIA_CTRL_TONE;
+            *controls |= JAVACALL_MEDIA_CTRL_METADATA;
+            *controls |= JAVACALL_MEDIA_CTRL_TEMPO;
+            *controls |= JAVACALL_MEDIA_CTRL_RATE;
+            *controls |= JAVACALL_MEDIA_CTRL_PITCH;
+            break;
+        case JC_FMT_MIDI:
+        case JC_FMT_SP_MIDI:
+            *controls |= JAVACALL_MEDIA_CTRL_METADATA;
+            *controls |= JAVACALL_MEDIA_CTRL_MIDI;
+            *controls |= JAVACALL_MEDIA_CTRL_TEMPO;
+            *controls |= JAVACALL_MEDIA_CTRL_RATE;
+            *controls |= JAVACALL_MEDIA_CTRL_PITCH;
+            break;
+        case JC_FMT_MS_PCM:
+        case JC_FMT_AMR:
+            *controls |= JAVACALL_MEDIA_CTRL_RATE;
+            break;
+        default:
+            JC_MM_DEBUG_PRINT1("[jc-media] get_player_controls: unsupported media type %d\n", h->hdr.mediaType);
+            JC_MM_ASSERT( FALSE );
+            break;
+    }
+
+    return JAVACALL_OK;
 }
 
 /**
@@ -912,6 +945,23 @@ static javacall_result audio_qs_get_java_buffer_size(javacall_handle handle,
                                                      long* java_buffer_size,
                                                      long* first_data_size)
 {
+    ah* h = (ah*)handle;
+
+    JC_MM_ASSERT( -1 != h->hdr.wholeContentSize );
+
+    *java_buffer_size = h->hdr.wholeContentSize;
+    *first_data_size  = h->hdr.wholeContentSize;
+
+    return JAVACALL_OK;
+}
+
+static javacall_result audio_qs_set_whole_content_size(javacall_handle handle,
+                                                       long whole_content_size)
+{
+    ah* h = (ah*)handle;
+
+    h->hdr.wholeContentSize = whole_content_size;
+
     return JAVACALL_OK;
 }
 
@@ -926,10 +976,22 @@ static javacall_result audio_qs_get_buffer_address(javacall_handle handle,
     {
         case JC_FMT_TONE:
         case JC_FMT_MIDI:
+        case JC_FMT_SP_MIDI:
+            h->midi.midiBuffer    = MALLOC( h->hdr.wholeContentSize );
+            h->midi.midiBufferLen = h->hdr.wholeContentSize;
+            *buffer               = h->midi.midiBuffer;
+            *max_size             = h->midi.midiBufferLen;
             break;
         case JC_FMT_MS_PCM:
-            break;
         case JC_FMT_AMR:
+            h->wav.originalData    = MALLOC( h->hdr.wholeContentSize );
+            h->wav.originalDataLen = h->hdr.wholeContentSize;
+            *buffer                = h->wav.originalData;
+            *max_size              = h->wav.originalDataLen;
+            break;
+        default:
+            JC_MM_DEBUG_PRINT1("[jc-media] get_buffer_address: unsupported media type %d\n", h->hdr.mediaType);
+            JC_MM_ASSERT( FALSE );
             break;
     }
     return JAVACALL_OK;
@@ -956,25 +1018,11 @@ static javacall_result audio_qs_do_buffering(
     {
         case JC_FMT_TONE:
         case JC_FMT_MIDI:
+        case JC_FMT_SP_MIDI:
         {
             if( NULL != buffer )
             {
-                if(h->midi.midiBuffer == NULL)
-                {
-                    h->midi.midiBuffer = MALLOC(*length);
-                    memcpy(h->midi.midiBuffer, buffer, *length);
-                    h->midi.midiBufferLen = *length;
-                    r = *length;
-                }
-                else
-                {
-                    h->midi.midiBuffer =
-                        REALLOC(h->midi.midiBuffer, h->midi.midiBufferLen+*length);
-                    memcpy(h->midi.midiBuffer+h->midi.midiBufferLen,
-                        buffer, *length);
-                    h->midi.midiBufferLen += *length;
-                    r = *length;
-                }
+                JC_MM_ASSERT( buffer == h->midi.midiBuffer );
             }
             else
             {
@@ -1033,17 +1081,21 @@ static javacall_result audio_qs_do_buffering(
 
                     /* NB: r==-1 here may mean that the buffered Tone Sequence
                        was invalid */
-                }
+                    if( -1 == r )
+                    {
+                        JC_MM_DEBUG_PRINT("Synth data NOT set!\n");
+                    }
+                    else
+                    {
+                        JC_MM_DEBUG_PRINT("Synth data set.\n");
 
-                if(r==-1){
-                    JC_MM_DEBUG_PRINT("Synth data NOT set!\n");
-                }else{
-                    JC_MM_DEBUG_PRINT("Synth data set.\n");
-                    // From some reason TCK requires default tempo to be 120000, in fact 160000 returned
-                    // so set it manually, it set twice because when buffereing used than it should be set when 
-                    // buffering ends, and here in case protocol handles by device, so no buffering
-                    if(h->hdr.mediaType == JC_FMT_MIDI) {
-                        long tempo = mQ135_Tempo_SetTempo((ITempoControl*)h->hdr.controls[CON135_TEMPO], 120000);
+                        // From some reason TCK requires default tempo to be 120000, in fact 160000 returned
+                        // so set it manually, it set twice because when buffereing used than it should be set when 
+                        // buffering ends, and here in case protocol handles by device, so no buffering
+                        if(h->hdr.mediaType != JC_FMT_TONE)
+                        {
+                            long tempo = mQ135_Tempo_SetTempo((ITempoControl*)h->hdr.controls[CON135_TEMPO], 120000);
+                        }
                     }
                 }
             }
@@ -1054,11 +1106,7 @@ static javacall_result audio_qs_do_buffering(
         {
             if( NULL != buffer )
             {
-                h->wav.originalData =
-                    REALLOC(h->wav.originalData, h->wav.originalDataLen+*length);
-                memcpy(h->wav.originalData+h->wav.originalDataLen, buffer, *length);
-                h->wav.originalDataLen += *length;
-                r = *length;
+                JC_MM_ASSERT( buffer == h->wav.originalData );
             }
             else
             {
@@ -1115,8 +1163,6 @@ static javacall_result audio_qs_do_buffering(
                     h->wav.stream = NULL;
                 }
 
-                r = (h->wav.stream != NULL) ? *length : -1;
-
                 if (h->wav.originalData != NULL) FREE(h->wav.originalData);
 
                 h->wav.originalData    = NULL;
@@ -1130,14 +1176,10 @@ static javacall_result audio_qs_do_buffering(
                         g_QSoundGM[gmIdx].EM135, h->wav.stream);
                 }
 
-                {
-                    char msg[256];
-                    sprintf(msg, "wavBuffered: bytes=%d stream=%d " \
-                        "rate=%d channels=%d bits=%d\n",
-                        h->wav.streamBufferLen, h->wav.stream,
-                        h->wav.rate, h->wav.channels, h->wav.bits);
-                    OutputDebugString(msg);
-                }
+                JC_MM_DEBUG_PRINT4( 
+                    "wavBuffered: bytes=%d rate=%d channels=%d bits=%d\n",
+                    h->wav.streamBufferLen, h->wav.rate,
+                    h->wav.channels, h->wav.bits);
             }
         }
         break;
@@ -1146,11 +1188,7 @@ static javacall_result audio_qs_do_buffering(
         {
             if( NULL != buffer )
             {
-                //printf( "audio_qs_do_buffering AMR: adding %ld bytes to originalData\n", length );
-                h->wav.originalData = REALLOC(h->wav.originalData, h->wav.originalDataLen+*length);
-                memcpy(h->wav.originalData+h->wav.originalDataLen, buffer, *length);
-                h->wav.originalDataLen += *length;
-                r = *length;
+                JC_MM_ASSERT( buffer == h->wav.originalData );
             }
             else
             {
@@ -1171,8 +1209,6 @@ static javacall_result audio_qs_do_buffering(
                     h->wav.stream = NULL;
                     break;
                 }
-
-                r = (h->wav.stream != NULL) ? *length : -1;
 
                 if( NULL != h->wav.originalData )
                 {
@@ -1200,9 +1236,10 @@ static javacall_result audio_qs_do_buffering(
             JC_MM_DEBUG_PRINT1(
                 "[jc-media] Trying to play unsupported media type %d\n",
                 h->hdr.mediaType);
+            JC_MM_ASSERT( FALSE );
     }
 
-    *need_more_data = JAVACALL_TRUE;
+    *need_more_data = JAVACALL_FALSE;
     *min_data_size  = 0;
     
     return JAVACALL_OK;
@@ -1216,12 +1253,13 @@ static javacall_result audio_qs_clear_buffer(javacall_handle handle){
     javacall_result r = JAVACALL_FAIL;
     ah *h = (ah*)handle;
 
-    OutputDebugString("audio_qs_clear_buffer\n");
+    JC_MM_DEBUG_PRINT("audio_qs_clear_buffer\n");
 
     switch(h->hdr.mediaType)
     {
         case JC_FMT_TONE:
         case JC_FMT_MIDI:
+        case JC_FMT_SP_MIDI:
         {
             if( h->midi.midiBuffer != NULL )
             {
@@ -1258,6 +1296,7 @@ static javacall_result audio_qs_clear_buffer(javacall_handle handle){
             JC_MM_DEBUG_PRINT1(
                 "[jc-media] Trying to clear unsupported media type %d\n",
                 h->hdr.mediaType);
+            JC_MM_ASSERT( FALSE );
     }
 
     return r;
@@ -1286,6 +1325,7 @@ static javacall_result audio_qs_start(javacall_handle handle){
 
         case JC_FMT_TONE:
         case JC_FMT_MIDI:
+        case JC_FMT_SP_MIDI:
         {
             //printf("audio_start MIDI/TONE\n");
             mQ234_PlayControl_Play(h->midi.synth, TRUE);
@@ -1298,6 +1338,7 @@ static javacall_result audio_qs_start(javacall_handle handle){
             JC_MM_DEBUG_PRINT1(
                 "[jc-media] Trying to play unsupported media type %d\n",
                 h->hdr.mediaType);
+            JC_MM_ASSERT( FALSE );
     }
 
     //printf( "...audio_start: h=0x%08X\n", (int)handle);
@@ -1327,6 +1368,7 @@ static javacall_result audio_qs_stop(javacall_handle handle){
 
         case JC_FMT_TONE:
         case JC_FMT_MIDI:
+        case JC_FMT_SP_MIDI:
         {
             mQ234_PlayControl_Play(h->midi.synth, FALSE);
 
@@ -1338,13 +1380,10 @@ static javacall_result audio_qs_stop(javacall_handle handle){
             JC_MM_DEBUG_PRINT1(
                 "[jc-media] Trying to stop unsupported media type %d\n",
                 h->hdr.mediaType);
+            JC_MM_ASSERT( FALSE );
     }
 
-    {
-        char msg[256];
-        sprintf(msg, "audio_stop: h=0x%08X\n", (int)handle);
-        OutputDebugString(msg);
-    }
+    JC_MM_DEBUG_PRINT1("audio_stop: h=0x%08X\n", (int)handle);
 
     return r;
 }
@@ -1368,6 +1407,7 @@ static javacall_result audio_qs_pause(javacall_handle handle){
 
         case JC_FMT_TONE:
         case JC_FMT_MIDI:
+        case JC_FMT_SP_MIDI:
         {
             mQ234_PlayControl_Play(h->midi.synth, FALSE);
 
@@ -1379,9 +1419,10 @@ static javacall_result audio_qs_pause(javacall_handle handle){
             JC_MM_DEBUG_PRINT1(
                 "[jc-media] Trying to stop unsupported media type %d\n",
                 h->hdr.mediaType);
+            JC_MM_ASSERT( FALSE );
     }
 
-    OutputDebugString("audio_pause\n");
+    JC_MM_DEBUG_PRINT("audio_pause\n");
 
     return r;
 }
@@ -1405,6 +1446,7 @@ static javacall_result audio_qs_resume(javacall_handle handle){
 
         case JC_FMT_TONE:
         case JC_FMT_MIDI:
+        case JC_FMT_SP_MIDI:
         {
             mQ234_PlayControl_Play(h->midi.synth, TRUE);
 
@@ -1416,9 +1458,10 @@ static javacall_result audio_qs_resume(javacall_handle handle){
             JC_MM_DEBUG_PRINT1(
                 "[jc-media] Trying to play unsupported media type %d\n",
                 h->hdr.mediaType);
+            JC_MM_ASSERT( FALSE );
     }
 
-    OutputDebugString("audio_resume\n");
+    JC_MM_DEBUG_PRINT("audio_resume\n");
 
     return r;
 }
@@ -1444,6 +1487,7 @@ static javacall_result audio_qs_get_time(javacall_handle handle, long* ms){
 
         case JC_FMT_TONE:
         case JC_FMT_MIDI:
+        case JC_FMT_SP_MIDI:
         {
             long pos = mQ234_PlayControl_GetPosition(h->midi.synth);
 
@@ -1455,6 +1499,7 @@ static javacall_result audio_qs_get_time(javacall_handle handle, long* ms){
             JC_MM_DEBUG_PRINT1(
                 "[jc-media] Trying to get time for unsupported media type %d\n",
                 h->hdr.mediaType);
+            JC_MM_ASSERT( FALSE );
     }
 
     return JAVACALL_OK;
@@ -1472,6 +1517,7 @@ static javacall_result audio_qs_set_time(javacall_handle handle, long* ms){
     {
         case JC_FMT_TONE:
         case JC_FMT_MIDI:
+        case JC_FMT_SP_MIDI:
         {
            currtime = mQ234_PlayControl_SetPosition(h->midi.synth, (*ms)*10) != 0 ?
            mQ234_PlayControl_GetPosition(h->midi.synth)/10 : 0;
@@ -1498,13 +1544,10 @@ static javacall_result audio_qs_set_time(javacall_handle handle, long* ms){
             JC_MM_DEBUG_PRINT1(
                 "[jc-media] Trying to set time for unsupported media type %d\n",
                 h->hdr.mediaType);
+            JC_MM_ASSERT( FALSE );
     }
 
-    {
-        char msg[256];
-        sprintf(msg, "audio_set_time: h=0x%08X ms:%ld ct:%ld\n", (int)handle, *ms, currtime);
-        OutputDebugString(msg);
-    }
+    JC_MM_DEBUG_PRINT3("audio_set_time: h=0x%08X ms:%ld ct:%ld\n", (int)handle, *ms, currtime);
 
     *ms = currtime;
 
@@ -1522,6 +1565,7 @@ static javacall_result audio_qs_get_duration(javacall_handle handle, long* ms) {
     {
         case JC_FMT_TONE:
         case JC_FMT_MIDI:
+        case JC_FMT_SP_MIDI:
         {
             long dur = mQ234_PlayControl_GetDuration(h->midi.synth);
             if(dur > 0) *ms = dur / 10;// + 1600;
@@ -1544,13 +1588,10 @@ static javacall_result audio_qs_get_duration(javacall_handle handle, long* ms) {
                 "[jc-media] Trying to get duration for " \
                 "unsupported media type %d\n",
                 h->hdr.mediaType);
+            JC_MM_ASSERT( FALSE );
     }
 
-    {
-        char msg[256];
-        sprintf(msg, "audio_duration: h=0x%08X dur=%ld\n", (int)handle, *ms);
-        OutputDebugString(msg);
-    }
+    JC_MM_DEBUG_PRINT2("audio_duration: h=0x%08X dur=%ld\n", (int)handle, *ms);
 
     return JAVACALL_OK;
 }
@@ -1587,6 +1628,7 @@ static javacall_result audio_qs_get_volume(javacall_handle handle, long* level) 
     {
         case JC_FMT_TONE:
         case JC_FMT_MIDI:
+        case JC_FMT_SP_MIDI:
         case JC_FMT_MS_PCM:
         case JC_FMT_AMR:
         {
@@ -1600,6 +1642,7 @@ static javacall_result audio_qs_get_volume(javacall_handle handle, long* level) 
             JC_MM_DEBUG_PRINT1(
                 "[jc-media] Trying to get volume for unsupported media type %d\n",
                 h->hdr.mediaType);
+            JC_MM_ASSERT( FALSE );
     }
 
     return r;
@@ -1618,6 +1661,7 @@ static javacall_result audio_qs_set_volume(javacall_handle handle, long* level) 
     {
         case JC_FMT_TONE:
         case JC_FMT_MIDI:
+        case JC_FMT_SP_MIDI:
         case JC_FMT_MS_PCM:
         case JC_FMT_AMR:
         {
@@ -1632,6 +1676,7 @@ static javacall_result audio_qs_set_volume(javacall_handle handle, long* level) 
                 "[jc-media] Trying to set volume for " \
                 "unsupported media type %d\n",
                 h->hdr.mediaType);
+            JC_MM_ASSERT( FALSE );
     }
 
     return r;
@@ -1650,6 +1695,7 @@ static javacall_result audio_qs_is_mute(javacall_handle handle, javacall_bool* m
     {
         case JC_FMT_TONE:
         case JC_FMT_MIDI:
+        case JC_FMT_SP_MIDI:
         case JC_FMT_MS_PCM:
         case JC_FMT_AMR:
         {
@@ -1663,6 +1709,7 @@ static javacall_result audio_qs_is_mute(javacall_handle handle, javacall_bool* m
             JC_MM_DEBUG_PRINT1(
                 "[jc-media] Trying to get mute for unsupported media type %d\n",
                 h->hdr.mediaType);
+            JC_MM_ASSERT( FALSE );
     }
 
     *mute = (muted == 0) ? JAVACALL_FALSE : JAVACALL_TRUE;
@@ -1683,6 +1730,7 @@ static javacall_result audio_qs_set_mute(javacall_handle handle,
     {
         case JC_FMT_TONE:
         case JC_FMT_MIDI:
+        case JC_FMT_SP_MIDI:
         case JC_FMT_MS_PCM:
         case JC_FMT_AMR:
         {
@@ -1697,6 +1745,7 @@ static javacall_result audio_qs_set_mute(javacall_handle handle,
             JC_MM_DEBUG_PRINT1(
                 "[jc-media] Trying to set mute for unsupported media type %d\n",
                 h->hdr.mediaType);
+            JC_MM_ASSERT( FALSE );
     }
 
     return r;
@@ -1716,6 +1765,7 @@ static javacall_result audio_qs_get_channel_volume(javacall_handle handle,
     {
         case JC_FMT_TONE:
         case JC_FMT_MIDI:
+        case JC_FMT_SP_MIDI:
         {
             while( g_QSoundGM[gmIdx].bDelayedMIDI ) Sleep( 0 );
 
@@ -1731,6 +1781,7 @@ static javacall_result audio_qs_get_channel_volume(javacall_handle handle,
                 "[jc-media] Trying to get channel volume " \
                 "for unsupported media type %d\n",
                 h->hdr.mediaType);
+            JC_MM_ASSERT( FALSE );
     }
 
     return r;
@@ -1746,6 +1797,7 @@ static javacall_result audio_qs_set_channel_volume(javacall_handle handle,
     {
         case JC_FMT_TONE:
         case JC_FMT_MIDI:
+        case JC_FMT_SP_MIDI:
         {
             int tries;
             int v = -1;
@@ -1792,6 +1844,7 @@ static javacall_result audio_qs_set_channel_volume(javacall_handle handle,
                 "[jc-media] Trying to set channel volume for " \
                 "unsupported media type %d\n",
                 h->hdr.mediaType);
+            JC_MM_ASSERT( FALSE );
     }
 
     return r;
@@ -1806,6 +1859,7 @@ static javacall_result audio_qs_set_program(javacall_handle handle,
     {
         case JC_FMT_TONE:
         case JC_FMT_MIDI:
+        case JC_FMT_SP_MIDI:
         {
             int             b, p, retry;
             JSR135ErrorCode e;
@@ -1841,6 +1895,7 @@ static javacall_result audio_qs_set_program(javacall_handle handle,
                 "[jc-media] Trying to set program for " \
                 "unsupported media type %d\n",
                 h->hdr.mediaType);
+            JC_MM_ASSERT( FALSE );
             return JAVACALL_FAIL;
     }
 }
@@ -1856,6 +1911,7 @@ static javacall_result audio_qs_short_midi_event(javacall_handle handle,
     {
         case JC_FMT_TONE:
         case JC_FMT_MIDI:
+        case JC_FMT_SP_MIDI:
         {
             if( WAIT_OBJECT_0 == WaitForSingleObject( g_QSoundGM[gmIdx].hMutexREAD, 500 ) )
             {
@@ -1877,6 +1933,7 @@ static javacall_result audio_qs_short_midi_event(javacall_handle handle,
                 "[jc-media] Trying to short midi event for " \
                 "unsupported media type %d\n",
                 h->hdr.mediaType);
+            JC_MM_ASSERT( FALSE );
     }
 
     return r;
@@ -1895,6 +1952,7 @@ static javacall_result audio_qs_long_midi_event(javacall_handle handle,
     {
         case JC_FMT_TONE:
         case JC_FMT_MIDI:
+        case JC_FMT_SP_MIDI:
         {
             if( WAIT_OBJECT_0 == WaitForSingleObject( g_QSoundGM[gmIdx].hMutexREAD, 500 ) )
             {
@@ -1917,6 +1975,7 @@ static javacall_result audio_qs_long_midi_event(javacall_handle handle,
                 "[jc-media] Trying to long midi event for " \
                 "unsupported media type %d\n",
                 h->hdr.mediaType);
+            JC_MM_ASSERT( FALSE );
     }
 
     return r;
@@ -1934,12 +1993,14 @@ static javacall_result audio_qs_get_metadata_key_counts(javacall_handle handle,
     {
         case JC_FMT_TONE:
         case JC_FMT_MIDI:
+        case JC_FMT_SP_MIDI:
         {
+            IMetaDataControl* mdc 
+                = (IMetaDataControl*)( h->hdr.controls[CON135_METADATA] );
+
             char *keys[50];
             int i = 0;
-
-            // mQ135_MetaData_getKeys(
-            // (IMetaDataControl*)ah->hdr.controls[CON135_METADATA], keys, 50);
+            mQ135_MetaData_getKeys(mdc, keys, 50);
             while(keys[i] != NULL) i++;
             *keyCounts = (long)i;
         }
@@ -1950,6 +2011,7 @@ static javacall_result audio_qs_get_metadata_key_counts(javacall_handle handle,
                 "[jc-media] Trying to get key counts for " \
                 "unsupported media type %d\n",
                 h->hdr.mediaType);
+            JC_MM_ASSERT( FALSE );
     }
 
     return r;
@@ -1968,9 +2030,12 @@ static javacall_result audio_qs_get_metadata_key(javacall_handle handle,
     {
         case JC_FMT_TONE:
         case JC_FMT_MIDI:
+        case JC_FMT_SP_MIDI:
         {
-            mQ135_MetaData_getKeys(
-                (IMetaDataControl*)h->hdr.controls[CON135_METADATA], keys, 50);
+            IMetaDataControl* mdc 
+                = (IMetaDataControl*)( h->hdr.controls[CON135_METADATA] );
+
+            mQ135_MetaData_getKeys( mdc, keys, 50);
             l = strlen(keys[index]);
             memset(buf, '\0', bufLength);
             memcpy(buf, keys[index], bufLength < l ? bufLength : l);
@@ -1982,6 +2047,7 @@ static javacall_result audio_qs_get_metadata_key(javacall_handle handle,
                 "[jc-media] Trying to get key index for " \
                 "unsupported media type %d\n",
                 h->hdr.mediaType);
+            JC_MM_ASSERT( FALSE );
     }
 
     return r;
@@ -1998,11 +2064,13 @@ static javacall_result audio_qs_get_metadata(javacall_handle handle,
     {
         case JC_FMT_TONE:
         case JC_FMT_MIDI:
+        case JC_FMT_SP_MIDI:
         {
+            IMetaDataControl* mdc 
+                = (IMetaDataControl*)( h->hdr.controls[CON135_METADATA] );
+
             memset(buf, '\0', bufLength);
-            mQ135_MetaData_getKeyValue(
-                (IMetaDataControl*)h->hdr.controls[CON135_METADATA],
-                key, buf, bufLength);
+            mQ135_MetaData_getKeyValue(mdc, key, buf, bufLength);
         }
         break;
 
@@ -2011,6 +2079,7 @@ static javacall_result audio_qs_get_metadata(javacall_handle handle,
                 "[jc-media] Trying to get key index for " \
                 "unsupported media type %d\n",
                 h->hdr.mediaType);
+            JC_MM_ASSERT( FALSE );
     }
 
     return r;
@@ -2027,6 +2096,7 @@ static javacall_result audio_qs_get_max_rate(javacall_handle handle, long *maxRa
     {
         case JC_FMT_TONE:
         case JC_FMT_MIDI:
+        case JC_FMT_SP_MIDI:
         case JC_FMT_MS_PCM:
         case JC_FMT_AMR:
         {
@@ -2040,6 +2110,7 @@ static javacall_result audio_qs_get_max_rate(javacall_handle handle, long *maxRa
                 "[jc-media] Trying to get max rate for "\
                 " unsupported media type %d\n",
                 h->hdr.mediaType);
+            JC_MM_ASSERT( FALSE );
     }
 
     return r;
@@ -2053,6 +2124,7 @@ static javacall_result audio_qs_get_min_rate(javacall_handle handle, long *minRa
     {
         case JC_FMT_TONE:
         case JC_FMT_MIDI:
+        case JC_FMT_SP_MIDI:
         case JC_FMT_MS_PCM:
         case JC_FMT_AMR:
         {
@@ -2066,6 +2138,7 @@ static javacall_result audio_qs_get_min_rate(javacall_handle handle, long *minRa
                 "[jc-media] Trying to get min rate for " \
                 "unsupported media type %d\n",
                 h->hdr.mediaType);
+            JC_MM_ASSERT( FALSE );
     }
     return r;
 }
@@ -2079,6 +2152,7 @@ static javacall_result audio_qs_set_rate(javacall_handle handle, long rate)
     {
         case JC_FMT_TONE:
         case JC_FMT_MIDI:
+        case JC_FMT_SP_MIDI:
         case JC_FMT_MS_PCM:
         case JC_FMT_AMR:
         {
@@ -2091,6 +2165,7 @@ static javacall_result audio_qs_set_rate(javacall_handle handle, long rate)
             JC_MM_DEBUG_PRINT1(
                 "[jc-media] Trying to set rate for unsupported media type %d\n",
                 h->hdr.mediaType);
+            JC_MM_ASSERT( FALSE );
     }
     return r;
 }
@@ -2103,6 +2178,7 @@ static javacall_result audio_qs_get_rate(javacall_handle handle, long* rate)
     {
         case JC_FMT_TONE:
         case JC_FMT_MIDI:
+        case JC_FMT_SP_MIDI:
         case JC_FMT_MS_PCM:
         case JC_FMT_AMR:
         {
@@ -2115,6 +2191,7 @@ static javacall_result audio_qs_get_rate(javacall_handle handle, long* rate)
             JC_MM_DEBUG_PRINT1(
                 "[jc-media] Trying to get rate for unsupported media type %d\n",
                 h->hdr.mediaType);
+            JC_MM_ASSERT( FALSE );
     }
     return r;
 }
@@ -2129,6 +2206,7 @@ static javacall_result audio_qs_get_tempo(javacall_handle handle, long *tempo)
     {
         case JC_FMT_TONE:
         case JC_FMT_MIDI:
+        case JC_FMT_SP_MIDI:
         {
             *tempo = mQ135_Tempo_GetTempo(
                 (ITempoControl*)h->hdr.controls[CON135_TEMPO]);
@@ -2139,13 +2217,10 @@ static javacall_result audio_qs_get_tempo(javacall_handle handle, long *tempo)
             JC_MM_DEBUG_PRINT1(
                 "[jc-media] Trying to get tempo for unsupported media type %d\n",
                 h->hdr.mediaType);
+            JC_MM_ASSERT( FALSE );
     }
 
-    {
-        char msg[256];
-        sprintf(msg, "audio_get_tempo: rate:%ld\n", *tempo);
-        OutputDebugString(msg);
-    }
+    JC_MM_DEBUG_PRINT1("audio_get_tempo: rate:%ld\n", *tempo);
 
     return r;
 }
@@ -2156,16 +2231,13 @@ static javacall_result audio_qs_set_tempo(javacall_handle handle, long tempo)
     javacall_result r = JAVACALL_OK;
     long setTempo;
 
-    {
-        char msg[256];
-        sprintf(msg, "audio_set_tempo: rate:%ld\n", tempo);
-        OutputDebugString(msg);
-    }
+    JC_MM_DEBUG_PRINT1("audio_set_tempo: rate:%ld\n", tempo);
 
     switch(h->hdr.mediaType)
     {
         case JC_FMT_TONE:
         case JC_FMT_MIDI:
+        case JC_FMT_SP_MIDI:
         {
             setTempo = mQ135_Tempo_SetTempo(
                 (ITempoControl*)h->hdr.controls[CON135_TEMPO], tempo);
@@ -2176,6 +2248,7 @@ static javacall_result audio_qs_set_tempo(javacall_handle handle, long tempo)
             JC_MM_DEBUG_PRINT1(
                 "[jc-media] Trying to set tempo for unsupported media type %d\n",
                 h->hdr.mediaType);
+            JC_MM_ASSERT( FALSE );
     }
 
     return r;
@@ -2194,6 +2267,7 @@ static javacall_result audio_qs_get_max_pitch(javacall_handle handle,
     {
         case JC_FMT_TONE:
         case JC_FMT_MIDI:
+        case JC_FMT_SP_MIDI:
         {
             *maxPitch = mQ135_Pitch_GetMaxPitch(
                 (IPitchControl*)h->hdr.controls[CON135_PITCH]);
@@ -2205,6 +2279,7 @@ static javacall_result audio_qs_get_max_pitch(javacall_handle handle,
                 "[jc-media] Trying to get max pitch for " \
                 "unsupported media type %d\n",
                 h->hdr.mediaType);
+            JC_MM_ASSERT( FALSE );
     }
 
     return r;
@@ -2220,6 +2295,7 @@ static javacall_result audio_qs_get_min_pitch(javacall_handle handle,
     {
         case JC_FMT_TONE:
         case JC_FMT_MIDI:
+        case JC_FMT_SP_MIDI:
         {
             *minPitch = mQ135_Pitch_GetMinPitch(
                 (IPitchControl*)h->hdr.controls[CON135_PITCH]);
@@ -2231,6 +2307,7 @@ static javacall_result audio_qs_get_min_pitch(javacall_handle handle,
                 "[jc-media] Trying to get min pitch for " \
                 "unsupported media type %d\n",
                 h->hdr.mediaType);
+            JC_MM_ASSERT( FALSE );
     }
 
     return r;
@@ -2246,6 +2323,7 @@ static javacall_result audio_qs_set_pitch(javacall_handle handle, long pitch)
     {
         case JC_FMT_TONE:
         case JC_FMT_MIDI:
+        case JC_FMT_SP_MIDI:
         {
             setPitch = mQ135_Pitch_SetPitch(
                 (IPitchControl*)h->hdr.controls[CON135_PITCH], pitch);
@@ -2256,6 +2334,7 @@ static javacall_result audio_qs_set_pitch(javacall_handle handle, long pitch)
             JC_MM_DEBUG_PRINT1(
                 "[jc-media] Trying to set pitch for unsupported media type %d\n",
                 h->hdr.mediaType);
+            JC_MM_ASSERT( FALSE );
     }
 
     return r;
@@ -2270,6 +2349,7 @@ static javacall_result audio_qs_get_pitch(javacall_handle handle, long* pitch)
     {
         case JC_FMT_TONE:
         case JC_FMT_MIDI:
+        case JC_FMT_SP_MIDI:
         {
             *pitch = mQ135_Pitch_GetPitch(
                 (IPitchControl*)h->hdr.controls[CON135_PITCH]);
@@ -2280,6 +2360,7 @@ static javacall_result audio_qs_get_pitch(javacall_handle handle, long* pitch)
             JC_MM_DEBUG_PRINT1(
                 "[jc-media] Trying to get pitch for unsupported media type %d\n",
                 h->hdr.mediaType);
+            JC_MM_ASSERT( FALSE );
     }
 
     return r;
@@ -2299,6 +2380,7 @@ static javacall_result audio_qs_is_bank_query_supported(javacall_handle handle,
     {
         case JC_FMT_TONE:
         case JC_FMT_MIDI:
+        case JC_FMT_SP_MIDI:
         {
             *supported = mQ135_MIDI_IsBankQuerySupported(
                 (IMIDIControl*)h->hdr.controls[CON135_MIDI]);
@@ -2310,6 +2392,7 @@ static javacall_result audio_qs_is_bank_query_supported(javacall_handle handle,
                 "[jc-media] Trying to query bank support for " \
                 "unsupported media type %d\n",
                 h->hdr.mediaType);
+            JC_MM_ASSERT( FALSE );
     }
 
     return r;
@@ -2326,6 +2409,7 @@ static javacall_result audio_qs_get_bank_list(javacall_handle handle,
     {
         case JC_FMT_TONE:
         case JC_FMT_MIDI:
+        case JC_FMT_SP_MIDI:
         {
             JSR135ErrorCode e = mQ135_MIDI_GetBankList(
                 (IMIDIControl*)h->hdr.controls[CON135_MIDI],
@@ -2339,6 +2423,7 @@ static javacall_result audio_qs_get_bank_list(javacall_handle handle,
                 "[jc-media] Trying to get bank list for " \
                 "unsupported media type %d\n",
                 h->hdr.mediaType);
+            JC_MM_ASSERT( FALSE );
     }
 
     return r;
@@ -2356,6 +2441,7 @@ static javacall_result audio_qs_get_key_name(javacall_handle handle,
     {
         case JC_FMT_TONE:
         case JC_FMT_MIDI:
+        case JC_FMT_SP_MIDI:
         {
             JSR135ErrorCode e;
 
@@ -2378,6 +2464,7 @@ static javacall_result audio_qs_get_key_name(javacall_handle handle,
                 "[jc-media] Trying to get key name for " \
                 "unsupported media type %d\n",
                 h->hdr.mediaType);
+            JC_MM_ASSERT( FALSE );
     }
 
     return r;
@@ -2394,6 +2481,7 @@ static javacall_result audio_qs_get_program_name(javacall_handle handle,
     {
         case JC_FMT_TONE:
         case JC_FMT_MIDI:
+        case JC_FMT_SP_MIDI:
         {
             JSR135ErrorCode e;
 
@@ -2414,6 +2502,7 @@ static javacall_result audio_qs_get_program_name(javacall_handle handle,
                 "[jc-media] Trying to get program name for " \
                 " unsupported media type %d\n",
                 h->hdr.mediaType);
+            JC_MM_ASSERT( FALSE );
     }
 
     return r;
@@ -2430,6 +2519,7 @@ static javacall_result audio_qs_get_program_list(javacall_handle handle,
     {
         case JC_FMT_TONE:
         case JC_FMT_MIDI:
+        case JC_FMT_SP_MIDI:
         {
             JSR135ErrorCode e;
 
@@ -2447,6 +2537,7 @@ static javacall_result audio_qs_get_program_list(javacall_handle handle,
                 "[jc-media] Trying to get program name for " \
                 "unsupported media type %d\n",
                 h->hdr.mediaType);
+            JC_MM_ASSERT( FALSE );
     }
 
     return r;
@@ -2464,6 +2555,7 @@ static javacall_result audio_qs_get_program(javacall_handle handle,
     {
         case JC_FMT_TONE:
         case JC_FMT_MIDI:
+        case JC_FMT_SP_MIDI:
         {
             while( g_QSoundGM[gmIdx].bDelayedMIDI ) Sleep( 0 );
 
@@ -2481,6 +2573,7 @@ static javacall_result audio_qs_get_program(javacall_handle handle,
                 "[jc-media] Trying to query bank support for " \
                 "unsupported media type %d\n",
                 h->hdr.mediaType);
+            JC_MM_ASSERT( FALSE );
     }
 
     return r;
@@ -2495,7 +2588,7 @@ static javacall_result audio_qs_get_program(javacall_handle handle,
 static media_basic_interface _audio_qs_basic_itf = {
     audio_qs_create,
     NULL,
-    NULL,
+    audio_qs_get_player_controls,
     audio_qs_close,
     audio_qs_destroy,
     audio_qs_acquire_device,
@@ -2507,7 +2600,7 @@ static media_basic_interface _audio_qs_basic_itf = {
     audio_qs_pause,
     audio_qs_resume,
     audio_qs_get_java_buffer_size,
-    NULL,
+    audio_qs_set_whole_content_size,
     audio_qs_get_buffer_address,
     audio_qs_do_buffering,
     audio_qs_clear_buffer,

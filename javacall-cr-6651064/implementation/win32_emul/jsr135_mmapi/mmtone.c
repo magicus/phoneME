@@ -66,14 +66,14 @@ typedef struct {
     int             offset;                   /* stopped offset */
     int             stack[ JTS_STACK_SIZE ];  /* return stack for blocks */
     int             sp;                       /* return stack pointer */
-} tone_handle;
+} tone_player;
 
 #define TONE_BASE_VOLUME (80) //default playback volume
 #define SLEEP_TIME_SLICE 100
 
 /**********************************************************************************/
 
-static int async_sleep(int time, tone_handle* pHandle)
+static int async_sleep(int time, tone_player* pPlayer)
 {
     while (time > 0) {
         if (time > SLEEP_TIME_SLICE) {
@@ -83,7 +83,7 @@ static int async_sleep(int time, tone_handle* pHandle)
             Sleep(time);
             time = 0;
         }
-        if (JAVACALL_TRUE == pHandle->stopPlaying) {
+        if (JAVACALL_TRUE == pPlayer->stopPlaying) {
             return JAVACALL_TRUE;
         }
     }
@@ -92,54 +92,54 @@ static int async_sleep(int time, tone_handle* pHandle)
 /**
  * Play tone by using MIDI short message
  */
-static int tone_play_sync(int appId, int note, int duration, int volume, tone_handle* pHandle)
+static int tone_play_sync(int appId, int note, int duration, int volume, tone_player* pPlayer)
 {
     javacall_media_play_tone(appId, note, duration, volume);
-    return async_sleep(duration, pHandle);
+    return async_sleep(duration, pPlayer);
 }
 /**
  * Play dusltone by using MIDI short message
  */
-static int dualtone_play_sync(int appId, int noteA, int noteB, int duration, int volume, tone_handle* pHandle)
+static int dualtone_play_sync(int appId, int noteA, int noteB, int duration, int volume, tone_player* pPlayer)
 {
     javacall_media_play_dualtone(appId, noteA, noteB, duration, volume);
-    return async_sleep(duration, pHandle);
+    return async_sleep(duration, pPlayer);
 }
 
 /**
  * JTS playing thread
  */
-static javacall_result tone_play(tone_handle* pHandle, javacall_bool seek_mode, int ms)
+static javacall_result tone_play(tone_player* pPlayer, javacall_bool seek_mode, int ms)
 {
     static long volume = TONE_BASE_VOLUME;   /* to reserve last volume */
     int  i, k, note, parm, duration, repcnt;
     int noteA, noteB;
     BOOL defining_block;
     /* Tone data is integer array */
-    javacall_int8* pTone = pHandle->pToneBuffer;
+    javacall_int8* pTone = pPlayer->pToneBuffer;
     
     if (seek_mode) {
-        pHandle->offset = 0;
-        pHandle->currentTime = 0;
-        pHandle->tempo      = DEF_TEMPO;
-        pHandle->resolution = DEF_RESOLUTION;
-        pHandle->sp         = 0;
+        pPlayer->offset = 0;
+        pPlayer->currentTime = 0;
+        pPlayer->tempo      = DEF_TEMPO;
+        pPlayer->resolution = DEF_RESOLUTION;
+        pPlayer->sp         = 0;
     }
     
     defining_block = FALSE;
-    i = pHandle->offset;
+    i = pPlayer->offset;
 
     /* Initialize */
-    volume = (pHandle->isMute? 0:pHandle->volume);
-    pHandle->volumeChanged = JAVACALL_FALSE;
-    pHandle->muteChanged = JAVACALL_FALSE;
+    volume = (pPlayer->isMute? 0:pPlayer->volume);
+    pPlayer->volumeChanged = JAVACALL_FALSE;
+    pPlayer->muteChanged = JAVACALL_FALSE;
     
-    while( i < pHandle->toneDataSize ) {
-        if (seek_mode && (ms >= 0) && (pHandle->currentTime >= ms)) {
+    while( i < pPlayer->toneDataSize ) {
+        if (seek_mode && (ms >= 0) && (pPlayer->currentTime >= ms)) {
             break;
         }
         /* JTS playing stopped by external force */
-        if (JAVACALL_TRUE == pHandle->stopPlaying) {
+        if (JAVACALL_TRUE == pPlayer->stopPlaying) {
             /* Store stopped offset to start from stopped position later */
             break;
         }
@@ -150,29 +150,29 @@ static javacall_result tone_play(tone_handle* pHandle, javacall_bool seek_mode, 
         case JTS_VERSION:
             break;
         case JTS_TEMPO:
-            pHandle->tempo = parm*4;
+            pPlayer->tempo = parm*4;
             break;
         case JTS_RESOLUTION:
-            pHandle->resolution = parm;
+            pPlayer->resolution = parm;
             break;
         case JTS_BLOCK_START:
             //JC_MM_ASSERT( !defining_block );
             defining_block = TRUE;
-            pHandle->blk[ parm ] = i;
+            pPlayer->blk[ parm ] = i;
             break;
         case JTS_BLOCK_END:
-            if( pHandle->sp > 0 ) /* playing block */
+            if( pPlayer->sp > 0 ) /* playing block */
             {
-                i = pHandle->stack[ --pHandle->sp ];
+                i = pPlayer->stack[ --pPlayer->sp ];
             } else { /* defining block */
                 //JC_MM_ASSERT( defining_block );
                 defining_block = FALSE;
             }
             break;
         case JTS_PLAY_BLOCK:
-            if( !defining_block && pHandle->sp < JTS_STACK_SIZE ) {
-                pHandle->stack[ pHandle->sp++ ] = i;
-                i = pHandle->blk[ parm ];
+            if( !defining_block && pPlayer->sp < JTS_STACK_SIZE ) {
+                pPlayer->stack[ pPlayer->sp++ ] = i;
+                i = pPlayer->blk[ parm ];
             }
             break;
         case JTS_SET_VOLUME:
@@ -182,27 +182,27 @@ static javacall_result tone_play(tone_handle* pHandle, javacall_bool seek_mode, 
             repcnt = parm;
             note = pTone[ i++ ];
             parm = pTone[ i++ ];
-            duration = (parm * 240000 / (pHandle->resolution * pHandle->tempo));
-            pHandle->currentTime += duration;
+            duration = (parm * 240000 / (pPlayer->resolution * pPlayer->tempo));
+            pPlayer->currentTime += duration;
             
             for( k = 0; !seek_mode && (k < repcnt); k++ ) {
-                tone_play_sync( pHandle->isolateId, note, duration, pHandle->volume, pHandle );
+                tone_play_sync( pPlayer->isolateId, note, duration, pPlayer->volume, pPlayer );
             }
             break;
         case JTS_SILENCE:
-            duration = (parm * 240000 / (pHandle->resolution * pHandle->tempo));
-            pHandle->currentTime += duration;
+            duration = (parm * 240000 / (pPlayer->resolution * pPlayer->tempo));
+            pPlayer->currentTime += duration;
             if (!seek_mode) {
-                async_sleep(duration, pHandle);
+                async_sleep(duration, pPlayer);
             }
             break;
         case JTS_DUALTONE:
-            duration = ((parm * 240000) / (pHandle->resolution * pHandle->tempo));
-            pHandle->currentTime += duration;
+            duration = ((parm * 240000) / (pPlayer->resolution * pPlayer->tempo));
+            pPlayer->currentTime += duration;
             noteA = pTone[ i++ ];
             noteB = pTone[ i++ ];
             if (!seek_mode) {
-                dualtone_play_sync( pHandle->isolateId, noteA, noteB, duration, pHandle->volume, pHandle );
+                dualtone_play_sync( pPlayer->isolateId, noteA, noteB, duration, pPlayer->volume, pPlayer );
             }
             break;
         /* Note */
@@ -210,27 +210,27 @@ static javacall_result tone_play(tone_handle* pHandle, javacall_bool seek_mode, 
             if (!defining_block) {
                 if (note < 0) note = 0;
                 if (note > 127) note = 127;
-                duration = (parm * 240000 / (pHandle->resolution * pHandle->tempo));
-                pHandle->currentTime += duration;
+                duration = (parm * 240000 / (pPlayer->resolution * pPlayer->tempo));
+                pPlayer->currentTime += duration;
                 if (!seek_mode) {
-                    if (InterlockedCompareExchange(&(pHandle->volumeChanged), JAVACALL_FALSE, JAVACALL_TRUE)) {
-                        volume = pHandle->volume;
+                    if (InterlockedCompareExchange(&(pPlayer->volumeChanged), JAVACALL_FALSE, JAVACALL_TRUE)) {
+                        volume = pPlayer->volume;
                     }
-                    if (InterlockedCompareExchange(&(pHandle->muteChanged), JAVACALL_FALSE, JAVACALL_TRUE)) {
-                        if (pHandle->isMute) {
-                            pHandle->volume = volume; //backup current volume
+                    if (InterlockedCompareExchange(&(pPlayer->muteChanged), JAVACALL_FALSE, JAVACALL_TRUE)) {
+                        if (pPlayer->isMute) {
+                            pPlayer->volume = volume; //backup current volume
                         } else {
-                            volume = pHandle->volume; //restore the old volume
+                            volume = pPlayer->volume; //restore the old volume
                         }
                     }
-                    if (pHandle->isMute)  volume = 0;
-                    tone_play_sync(pHandle->isolateId, note, duration, volume, pHandle);
+                    if (pPlayer->isMute)  volume = 0;
+                    tone_play_sync(pPlayer->isolateId, note, duration, volume, pPlayer);
                 }
             }
             break;
         }
-        pHandle->offset = i;
-        if (!pHandle->isMute) pHandle->volume = volume;
+        pPlayer->offset = i;
+        if (!pPlayer->isMute) pPlayer->volume = volume;
     }
     return JAVACALL_OK;
 }
@@ -240,20 +240,20 @@ static javacall_result tone_play(tone_handle* pHandle, javacall_bool seek_mode, 
  */
 static DWORD WINAPI tone_jts_player(void* pArg)
 {
-    tone_handle* pHandle = (tone_handle*)pArg;
-    tone_play(pHandle, JAVACALL_FALSE, 0);
+    tone_player* pPlayer = (tone_player*)pArg;
+    tone_play(pPlayer, JAVACALL_FALSE, 0);
 
-    JC_MM_DEBUG_PRINT2("tone_jts_player END id=%d stopped=%d\n", pHandle->playerId, pHandle->stopPlaying);
+    JC_MM_DEBUG_PRINT2("tone_jts_player END id=%d stopped=%d\n", pPlayer->playerId, pPlayer->stopPlaying);
 
     /* JTS loop ended not by stop => Post EOM event */
-    if (JAVACALL_FALSE == pHandle->stopPlaying) {
-        javanotify_on_media_notification(JAVACALL_EVENT_MEDIA_END_OF_MEDIA, pHandle->isolateId, pHandle->playerId, 
-                                         JAVACALL_OK, (void*)pHandle->currentTime);
-        pHandle->offset = 0;
+    if (JAVACALL_FALSE == pPlayer->stopPlaying) {
+        javanotify_on_media_notification(JAVACALL_EVENT_MEDIA_END_OF_MEDIA, pPlayer->isolateId, pPlayer->playerId, 
+                                         JAVACALL_OK, (void*)pPlayer->currentTime);
+        pPlayer->offset = 0;
     }
     
-    pHandle->stopPlaying = JAVACALL_FALSE;
-    pHandle->isPlaying = JAVACALL_FALSE;  /* Now, stopped */
+    pPlayer->stopPlaying = JAVACALL_FALSE;
+    pPlayer->isPlaying = JAVACALL_FALSE;  /* Now, stopped */
 
     return 0;
 }
@@ -263,43 +263,43 @@ static DWORD WINAPI tone_jts_player(void* pArg)
 /**
  * Create tone native player handle
  */
-static javacall_handle tone_create(int appId, int playerId, jc_fmt mediaType, const javacall_utf16* URI, long uriLength)
+static javacall_handle tone_create(int appId, int playerId, jc_fmt mediaType, const javacall_utf16_string URI)
 {
-    tone_handle* pHandle = (tone_handle*)MALLOC(sizeof(tone_handle));
-    if (NULL == pHandle) {
+    tone_player* pPlayer = (tone_player*)MALLOC(sizeof(tone_player));
+    if (NULL == pPlayer) {
         JC_MM_DEBUG_PRINTF("tone_create() playerId=0x%X, ERROR! allocating handle!\n", playerId);
         return NULL;
     }
 
-    JC_MM_DEBUG_PRINTF("tone_create() playerId=0x%X, mediaType=%d, URI=0x%X, pHandle=0x%X\n", 
-        (int)playerId, mediaType, URI, pHandle);
+    JC_MM_DEBUG_PRINTF("tone_create() playerId=0x%X, mediaType=%d, URI=0x%X, pPlayer=0x%X\n", 
+        (int)playerId, mediaType, URI, pPlayer);
 
-    pHandle->isolateId     = appId;
-    pHandle->playerId      = playerId;
-    pHandle->currentTime   = 0;
-    pHandle->offset        = 0;
-    pHandle->pToneBuffer   = NULL;
-    pHandle->toneDataSize  = 0;
-    pHandle->isPlaying     = JAVACALL_FALSE;
-    pHandle->isForeground  = JAVACALL_TRUE;
-    pHandle->stopPlaying   = JAVACALL_FALSE;
-    pHandle->volumeChanged = JAVACALL_FALSE;
-    pHandle->muteChanged   = JAVACALL_FALSE;
+    pPlayer->isolateId     = appId;
+    pPlayer->playerId      = playerId;
+    pPlayer->currentTime   = 0;
+    pPlayer->offset        = 0;
+    pPlayer->pToneBuffer   = NULL;
+    pPlayer->toneDataSize  = -1;
+    pPlayer->isPlaying     = JAVACALL_FALSE;
+    pPlayer->isForeground  = JAVACALL_TRUE;
+    pPlayer->stopPlaying   = JAVACALL_FALSE;
+    pPlayer->volumeChanged = JAVACALL_FALSE;
+    pPlayer->muteChanged   = JAVACALL_FALSE;
 
-    pHandle->isMute        = JAVACALL_FALSE;
-    pHandle->volume        = TONE_BASE_VOLUME;
+    pPlayer->isMute        = JAVACALL_FALSE;
+    pPlayer->volume        = TONE_BASE_VOLUME;
 
-    //if (MMSYSERR_NOERROR == waveOutGetVolume(hWaveOut, &(pHandle->volume))){
-    //    pHandle->isMute = (pHandle->volume == 0) ? JAVACALL_TRUE : JAVACALL_FALSE;
-    //    pHandle->volume = ((pHandle->volume & 0xFFFF) * 100)/0xFFFF; //convert to java range
+    //if (MMSYSERR_NOERROR == waveOutGetVolume(hWaveOut, &(pPlayer->volume))){
+    //    pPlayer->isMute = (pPlayer->volume == 0) ? JAVACALL_TRUE : JAVACALL_FALSE;
+    //    pPlayer->volume = ((pPlayer->volume & 0xFFFF) * 100)/0xFFFF; //convert to java range
     //}
 
-    pHandle->tempo      = DEF_TEMPO;
-    pHandle->resolution = DEF_RESOLUTION;
-    pHandle->offset     = 0;
-    pHandle->sp         = 0;
+    pPlayer->tempo      = DEF_TEMPO;
+    pPlayer->resolution = DEF_RESOLUTION;
+    pPlayer->offset     = 0;
+    pPlayer->sp         = 0;
 
-    return pHandle;
+    return pPlayer;
 }
 
 /**
@@ -307,22 +307,22 @@ static javacall_handle tone_create(int appId, int playerId, jc_fmt mediaType, co
  */
 static javacall_result tone_close(javacall_handle handle)
 {
-    tone_handle* pHandle = (tone_handle*)handle;
+    tone_player* pPlayer = (tone_player*)handle;
 
     JC_MM_DEBUG_PRINTF("tone_close() handle=0x%X\n", handle);
 
-    if (pHandle->pToneBuffer) {
-        FREE(pHandle->pToneBuffer);
-        pHandle->pToneBuffer = NULL;
+    if (pPlayer->pToneBuffer) {
+        FREE(pPlayer->pToneBuffer);
+        pPlayer->pToneBuffer = NULL;
     }
-    pHandle->toneDataSize = 0;
-    pHandle->offset = 0;
-    pHandle->currentTime = 0;
-    pHandle->tempo      = DEF_TEMPO;
-    pHandle->resolution = DEF_RESOLUTION;
-    pHandle->sp         = 0;
+    pPlayer->toneDataSize = -1;
+    pPlayer->offset       = 0;
+    pPlayer->currentTime  = 0;
+    pPlayer->tempo        = DEF_TEMPO;
+    pPlayer->resolution   = DEF_RESOLUTION;
+    pPlayer->sp           = 0;
     
-    FREE(pHandle);
+    FREE(pPlayer);
 
     return JAVACALL_OK;
 }
@@ -340,7 +340,17 @@ static javacall_result tone_acquire_device(javacall_handle handle)
  */
 static javacall_result tone_release_device(javacall_handle handle)
 {
-    tone_handle* pHandle = (tone_handle*)handle;
+    tone_player* pPlayer = (tone_player*)handle;
+
+    return JAVACALL_OK;
+}
+
+static javacall_result tone_set_whole_content_size(javacall_handle handle,
+                                                   long whole_content_size)
+{
+    tone_player* pPlayer = (tone_player*)handle;
+
+    pPlayer->toneDataSize = whole_content_size;
 
     return JAVACALL_OK;
 }
@@ -356,20 +366,20 @@ static javacall_result tone_get_buffer_address(javacall_handle handle,
                                                const void** buffer,
                                                long* max_size)
 {
-    tone_handle* pHandle = (tone_handle*)handle;
+    tone_player* pPlayer = (tone_player*)handle;
 
-    // POKR: we assume that pHandle->toneDataSize contains valid value at this point
+    JC_MM_ASSERT( -1 != pPlayer->toneDataSize );
 
-    pHandle->pToneBuffer = (javacall_int8*)MALLOC( pHandle->toneDataSize );
-    if( NULL == pHandle->pToneBuffer )
+    pPlayer->pToneBuffer = (javacall_int8*)MALLOC( pPlayer->toneDataSize );
+    if( NULL == pPlayer->pToneBuffer )
     {
         JC_MM_DEBUG_PRINTF( "tone_get_buffer_address: cannot allocate %d bytes for tone buffer!\n", 
-                            pHandle->toneDataSize );
+                            pPlayer->toneDataSize );
         return JAVACALL_OUT_OF_MEMORY;
     }
 
-    *buffer   = pHandle->pToneBuffer;
-    *max_size = pHandle->toneDataSize;
+    *buffer   = pPlayer->pToneBuffer;
+    *max_size = pPlayer->toneDataSize;
 
     return JAVACALL_OK;
 }
@@ -378,7 +388,7 @@ javacall_result tone_do_buffering(javacall_handle handle, const void* buffer,
                                   long *length, javacall_bool *need_more_data,
                                   long *min_data_size)
 {
-    tone_handle* pHandle = (tone_handle*)handle;
+    tone_player* pPlayer = (tone_player*)handle;
 
     JC_MM_DEBUG_PRINTF("tone_do_buffering() handle=0x%X, buffer=0x%X, length=%d\n", handle, buffer, length);
 
@@ -386,7 +396,7 @@ javacall_result tone_do_buffering(javacall_handle handle, const void* buffer,
         return 0;
     }
 
-    JC_MM_ASSERT( buffer == pHandle->pToneBuffer );
+    JC_MM_ASSERT( buffer == pPlayer->pToneBuffer );
 
     *min_data_size  = 0;
     *need_more_data = JAVACALL_FALSE;
@@ -396,15 +406,15 @@ javacall_result tone_do_buffering(javacall_handle handle, const void* buffer,
 
 javacall_result tone_clear_buffer(javacall_handle handle)
 {
-    tone_handle* pHandle = (tone_handle*)handle;
+    tone_player* pPlayer = (tone_player*)handle;
 
     JC_MM_DEBUG_PRINTF("tone_clear_buffer() handle=0x%X\n", handle);
-    if (pHandle->pToneBuffer) {
-        FREE(pHandle->pToneBuffer);
-        pHandle->pToneBuffer = NULL;
-        pHandle->toneDataSize = 0;
-        pHandle->offset = 0;
-        pHandle->currentTime = 0;
+    if (pPlayer->pToneBuffer) {
+        FREE(pPlayer->pToneBuffer);
+        pPlayer->pToneBuffer  = NULL;
+        pPlayer->toneDataSize = -1;
+        pPlayer->offset       = 0;
+        pPlayer->currentTime  = 0;
     }
 
     return JAVACALL_OK;
@@ -415,21 +425,21 @@ javacall_result tone_clear_buffer(javacall_handle handle)
  */
 static javacall_result tone_start(javacall_handle handle)
 {
-    tone_handle* pHandle = (tone_handle*)handle;
+    tone_player* pPlayer = (tone_player*)handle;
 
     JC_MM_DEBUG_PRINTF("tone_start() handle=0x%X\n", handle);
 
     /* Fake playing */
-    if (JAVACALL_FALSE == pHandle->isForeground) {
+    if (JAVACALL_FALSE == pPlayer->isForeground) {
         return JAVACALL_OK;
     }
 
     /* Create Win32 thread to play JTS data - non blocking */
-    if (pHandle->toneDataSize) {
-        pHandle->stopPlaying = JAVACALL_FALSE;
-        if (NULL != CreateThread(NULL, 0, tone_jts_player, pHandle, 0, NULL)) {
-            JC_MM_DEBUG_PRINTF("tone_start started id=%d\n", (int)pHandle->playerId);
-            pHandle->isPlaying = JAVACALL_TRUE;
+    if (pPlayer->toneDataSize) {
+        pPlayer->stopPlaying = JAVACALL_FALSE;
+        if (NULL != CreateThread(NULL, 0, tone_jts_player, pPlayer, 0, NULL)) {
+            JC_MM_DEBUG_PRINTF("tone_start started id=%d\n", (int)pPlayer->playerId);
+            pPlayer->isPlaying = JAVACALL_TRUE;
             return JAVACALL_OK;
         }
         else
@@ -442,7 +452,7 @@ static javacall_result tone_start(javacall_handle handle)
     {
         JC_MM_DEBUG_PRINTF("tone_start: no data\n");
         javanotify_on_media_notification(JAVACALL_EVENT_MEDIA_END_OF_MEDIA, 
-                        pHandle->isolateId, pHandle->playerId, 
+                        pPlayer->isolateId, pPlayer->playerId, 
                         JAVACALL_OK, (void*)0);
     }
     
@@ -454,20 +464,20 @@ static javacall_result tone_start(javacall_handle handle)
  */
 static javacall_result tone_stop(javacall_handle handle)
 {
-    tone_handle* pHandle = (tone_handle*)handle;
+    tone_player* pPlayer = (tone_player*)handle;
     
     JC_MM_DEBUG_PRINTF("tone_stop() handle=0x%X\n", handle);
 
-    if (JAVACALL_FALSE == pHandle->isPlaying) {
+    if (JAVACALL_FALSE == pPlayer->isPlaying) {
         return JAVACALL_OK;
     }
 
     /* Stop playing */
-    pHandle->stopPlaying = JAVACALL_TRUE;
+    pPlayer->stopPlaying = JAVACALL_TRUE;
 
     /* Wait until thread exit */
     while(1) {
-        if (JAVACALL_FALSE == pHandle->isPlaying) {
+        if (JAVACALL_FALSE == pPlayer->isPlaying) {
             break;
         }
         Sleep(100);  /* Wait 100 ms */
@@ -499,9 +509,9 @@ static javacall_result tone_resume(javacall_handle handle)
  */
 static javacall_result tone_get_time(javacall_handle handle, long* ms)
 {
-    tone_handle* pHandle = (tone_handle*)handle;
-    JC_MM_DEBUG_PRINTF("tone_get_time() handle=0x%X, currentTime=%d\n", handle, handle==NULL?-1:pHandle->currentTime);
-    *ms = pHandle->currentTime;
+    tone_player* pPlayer = (tone_player*)handle;
+    JC_MM_DEBUG_PRINTF("tone_get_time() handle=0x%X, currentTime=%d\n", handle, handle==NULL?-1:pPlayer->currentTime);
+    *ms = pPlayer->currentTime;
     return JAVACALL_OK;
 }
 
@@ -510,31 +520,31 @@ static javacall_result tone_get_time(javacall_handle handle, long* ms)
  */
 static javacall_result tone_set_time(javacall_handle handle, long* ms)
 {
-    tone_handle* pHandle = (tone_handle*)handle;
+    tone_player* pPlayer = (tone_player*)handle;
     javacall_bool needRestart = JAVACALL_FALSE;
 
     JC_MM_DEBUG_PRINTF("tone_set_time() handle=0x%X, ms=%d\n", handle, *ms);
 
     /* There is no tone data */
-    if (0 == pHandle->toneDataSize) {
+    if (0 == pPlayer->toneDataSize) {
         *ms = -1;
         return JAVACALL_OK;
     }
 
     /* If playing, stop it */
-    if (JAVACALL_TRUE == pHandle->isPlaying) {
+    if (JAVACALL_TRUE == pPlayer->isPlaying) {
         tone_stop(handle);
         needRestart = JAVACALL_TRUE;
     }
 
-    tone_play(pHandle, JAVACALL_TRUE, *ms);
+    tone_play(pPlayer, JAVACALL_TRUE, *ms);
 
     /* Restart? */
     if (JAVACALL_TRUE == needRestart) {
         tone_start(handle);
     }
 
-    *ms = pHandle->currentTime;
+    *ms = pPlayer->currentTime;
     return JAVACALL_OK;
 }
  
@@ -543,8 +553,8 @@ static javacall_result tone_set_time(javacall_handle handle, long* ms)
  */
 static javacall_result tone_get_duration(javacall_handle handle, long* ms)
 {
-    tone_handle temp;
-    memcpy(&temp, handle, sizeof(tone_handle));
+    tone_player temp;
+    memcpy(&temp, handle, sizeof(tone_player));
     tone_play(&temp, JAVACALL_TRUE, -1);
 
     *ms = temp.currentTime;
@@ -556,8 +566,8 @@ static javacall_result tone_get_duration(javacall_handle handle, long* ms)
  * Now, switch to foreground
  */
 static javacall_result tone_switch_to_foreground(javacall_handle handle, int options) {
-    tone_handle* pHandle = (tone_handle*)handle;
-    pHandle->isForeground = JAVACALL_TRUE;
+    tone_player* pPlayer = (tone_player*)handle;
+    pPlayer->isForeground = JAVACALL_TRUE;
 
     return JAVACALL_OK;
 }
@@ -566,8 +576,8 @@ static javacall_result tone_switch_to_foreground(javacall_handle handle, int opt
  * Now, switch to background
  */
 static javacall_result tone_switch_to_background(javacall_handle handle, int options) {
-    tone_handle* pHandle = (tone_handle*)handle;
-    pHandle->isForeground = JAVACALL_FALSE;
+    tone_player* pPlayer = (tone_player*)handle;
+    pPlayer->isForeground = JAVACALL_FALSE;
 
     /* Stop the current playing */
     tone_stop(handle);
@@ -582,8 +592,8 @@ static javacall_result tone_switch_to_background(javacall_handle handle, int opt
  */
 static javacall_result tone_get_volume(javacall_handle handle, long* level)
 {
-    tone_handle* pHandle = (tone_handle*) handle;
-    *level = pHandle->volume;
+    tone_player* pPlayer = (tone_player*) handle;
+    *level = pPlayer->volume;
     return JAVACALL_OK;
 }
 
@@ -592,11 +602,11 @@ static javacall_result tone_get_volume(javacall_handle handle, long* level)
  */
 static javacall_result tone_set_volume(javacall_handle handle, long* level)
 {
-    tone_handle* pHandle = (tone_handle*) handle;
+    tone_player* pPlayer = (tone_player*) handle;
 
-    pHandle->volume = *level;
+    pPlayer->volume = *level;
      //atomically set value as it may be changed in another thread tone_jts_player()
-    InterlockedExchange(&(pHandle->volumeChanged), JAVACALL_TRUE);
+    InterlockedExchange(&(pPlayer->volumeChanged), JAVACALL_TRUE);
 
     return JAVACALL_OK;
 }
@@ -606,8 +616,8 @@ static javacall_result tone_set_volume(javacall_handle handle, long* level)
  */
 static javacall_result tone_is_mute(javacall_handle handle, javacall_bool* mute)
 {
-    tone_handle* pHandle = (tone_handle*) handle;
-    *mute = pHandle->isMute;
+    tone_player* pPlayer = (tone_player*) handle;
+    *mute = pPlayer->isMute;
     return JAVACALL_OK;
 }
 
@@ -616,12 +626,12 @@ static javacall_result tone_is_mute(javacall_handle handle, javacall_bool* mute)
  */
 static javacall_result tone_set_mute(javacall_handle handle, javacall_bool mute)
 {
-    tone_handle* pHandle = (tone_handle*) handle;
+    tone_player* pPlayer = (tone_player*) handle;
 
-    if (pHandle->isMute != mute) {
-        pHandle->isMute = mute;
+    if (pPlayer->isMute != mute) {
+        pPlayer->isMute = mute;
         //atomically set value as it may be changed in another thread tone_jts_player()
-        InterlockedExchange(&(pHandle->muteChanged), JAVACALL_TRUE);
+        InterlockedExchange(&(pPlayer->muteChanged), JAVACALL_TRUE);
     }
     
     return JAVACALL_OK;
@@ -647,7 +657,7 @@ static media_basic_interface _tone_basic_itf = {
     tone_pause,
     tone_resume,
     tone_get_java_buffer_size,
-    NULL,
+    tone_set_whole_content_size,
     tone_get_buffer_address,
     tone_do_buffering,
     tone_clear_buffer,

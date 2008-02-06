@@ -25,9 +25,25 @@
 #include "lime.h"
 #include "windows.h"
 #include "javacall_properties.h"
+#include "javacall_events.h"
 #include "javacall_logging.h"
 
 extern javacall_result finalize_wma_emulator();
+extern void javanotify_set_vm_args(int argc, char* argv[]);
+extern void javanotify_set_heap_size(int heapsize);
+extern int isNetworkMonitorActive();
+extern void javanotify_start_local(char* classname, char* descriptor,
+                            char* classpath, javacall_bool debug);
+extern void javanotify_start_suite(char* suiteId);
+extern void javanotify_install_midlet_wparams(const char* httpUrl,
+                                       int silentInstall, int forceUpdate);
+extern void javanotify_remove_suite(char* suite_id);
+extern void javanotify_transient(char* url);
+extern void javanotify_list_midlets(void);
+extern void javanotify_list_storageNames(void);
+extern void InitializeLimeEvents();
+extern void FinalizeLimeEvents();
+
 
 /** Usage text for the run emulator executable. */
 // IMPL_NOTE: Update usage according to main(...) func

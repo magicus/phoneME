@@ -37,8 +37,7 @@ typedef struct javacall_interactive_midi_s {
  */
 static javacall_handle interactive_midi_create(int isolateId, int playerId, 
                                                jc_fmt mediaType, 
-                                               const javacall_utf16* URI,
-                                               long uriLength)
+                                               const javacall_utf16_string URI)
 {
     javacall_interactive_midi_s* pIM = 
         MALLOC(sizeof(javacall_interactive_midi_s));

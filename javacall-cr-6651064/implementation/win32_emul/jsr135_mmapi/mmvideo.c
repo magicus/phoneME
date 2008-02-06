@@ -76,13 +76,13 @@ extern javacall_result audio_get_rate(javacall_handle handle, long* rate);
  */
 static javacall_handle video_create(int appId, int playerId, 
                                     jc_fmt mediaType, 
-                                    const javacall_utf16* URI, 
-                                    long uriLength)
+                                    const javacall_utf16_string URI)
 {
     static LimeFunction *f = NULL;
     javacall_int64 res;
     audio_handle* pHandle = MALLOC(sizeof(audio_handle));
     char * media_mime_type;
+    size_t uriLength = ( NULL != URI ) ? wcslen(URI) : 0;
 
     javacall_utf16 *mediaTypeWide;
     int mediaTypeWideLen;

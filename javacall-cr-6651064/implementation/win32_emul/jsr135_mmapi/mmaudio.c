@@ -181,13 +181,14 @@ static void CALLBACK audio_timer_callback(UINT uID, UINT uMsg,
  */
 static javacall_handle audio_create(int appId, int playerId, 
                              jc_fmt mediaType, 
-                             const javacall_utf16* URI,
-                             long uriLength) {
+                             const javacall_utf16_string URI) {
 
     char * media_mime_type;
     javacall_utf16 *mediaTypeWide;
     int mediaTypeWideLen;
     static LimeFunction *f = NULL;
+
+    size_t uriLength = ( NULL != URI ) ? wcslen(URI) : 0;
 
     javacall_int64 res;
     audio_handle* pHandle = MALLOC(sizeof(audio_handle));

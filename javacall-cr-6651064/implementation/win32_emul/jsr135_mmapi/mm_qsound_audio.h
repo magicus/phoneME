@@ -54,6 +54,7 @@ typedef struct {
     int                     isolateID;
     int                     playerID;
     int                     gmIdx;
+    long                    wholeContentSize;
     IControl*               controls[CONT_MAX];
 } ah_hdr;
 

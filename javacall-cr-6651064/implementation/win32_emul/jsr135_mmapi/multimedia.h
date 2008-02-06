@@ -70,7 +70,7 @@ extern "C" {
 //=============================================================================
 
 typedef enum _jc_fmt {
-    JC_FMT_MPEG1_LAYER2      ,
+    JC_FMT_MPEG1_LAYER2 = 0  ,
     JC_FMT_MPEG1_LAYER3      ,
     JC_FMT_MPEG1_LAYER3_PRO  ,
     JC_FMT_MPEG2_AAC         ,
@@ -135,7 +135,6 @@ javacall_media_format_type fmt_enum2str( jc_fmt                     fmt );
 extern HWND midpGetWindowHandle();
 
 //=============================================================================
-//=============================================================================
 
 /**
  * Win32 native player's handle information
@@ -153,7 +152,7 @@ typedef struct {
  * function pointer vector table for basic media functions
  */
 typedef struct {
-    javacall_handle (*create)(int appId, int playerId, jc_fmt mediaType, const javacall_utf16* URI, long uriLength);
+    javacall_handle (*create)(int appId, int playerId, jc_fmt mediaType, const javacall_utf16_string URI);
     javacall_result (*get_format)(javacall_handle handle, jc_fmt* fmt);
     javacall_result (*get_player_controls)(javacall_handle handle, int* controls);
     javacall_result (*close)(javacall_handle handle);
@@ -308,9 +307,14 @@ typedef struct {
     media_fposition_interface*  vptrFposition;
 } media_interface;
 
-//javacall_media_format_type javautil_media_mime_to_type(const javacall_utf16* mime, long length);
-
-//char * javautil_media_type_to_mime(javacall_media_format_type media_type);
+typedef struct {
+    int                        appId;
+    int                        playerId;
+    javacall_utf16_string      uri;
+    javacall_media_format_type mediaType;
+    javacall_handle            mediaHandle;
+    media_interface*           mediaItfPtr;
+} javacall_impl_player;
 
 typedef struct {
     long                hWnd;
