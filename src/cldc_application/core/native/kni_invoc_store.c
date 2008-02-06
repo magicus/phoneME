@@ -41,7 +41,6 @@
  * <br>
  */
 
-#include <memory.h>
 #include <kni.h>
 #include <sni.h>
 
