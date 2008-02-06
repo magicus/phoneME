@@ -197,6 +197,9 @@ public class CommonDS extends BasicDS implements SourceStream {
      * @return    The streams value
      */
     public SourceStream[] getStreams() {
+        if (inputStream == null) {
+            return new SourceStream [] { null };
+        }
         return new SourceStream [] { this };
     }
 

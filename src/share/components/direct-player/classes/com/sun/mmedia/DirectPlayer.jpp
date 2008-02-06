@@ -266,16 +266,16 @@ public class DirectPlayer extends BasicPlayer
         /* prefetch native player */
         nPrefetch(hNative);
 
-        long contentSize = stream.getContentLength();
-        if (contentSize > 0) {
-            nSetWholeContentSize(hNative, contentSize);
-        }
-
         if (!handledByDevice) {
             /* predownload media data to fill native buffers */
             int    javaBufSize = 0;
             int    packetSize = 0;
             boolean needMoreData = false;
+
+            long contentSize = stream.getContentLength();
+            if (contentSize > 0) {
+                nSetWholeContentSize(hNative, contentSize);
+            }
 
             javaBufSize = PlayerImpl.nGetJavaBufferSize(hNative);
             packetSize = PlayerImpl.nGetFirstPacketSize(hNative);
@@ -312,6 +312,8 @@ public class DirectPlayer extends BasicPlayer
                 }
             } while(needMoreData);
         }
+
+        nAcquireDevice(hNative);
 
         if (nPcmAudioPlayback(hNative)) {
             AudioTunnel.getInstance().start();
