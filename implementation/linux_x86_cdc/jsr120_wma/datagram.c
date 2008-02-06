@@ -325,7 +325,7 @@ int addUDPSocket(fd_set* fds, int* maxPort, int port) {
 
 extern int smsDatagramSocketHandle, cbsDatagramSocketHandle;
 
-#ifdef ENABLE_JSR_205
+#if ENABLE_JSR_205
 extern int mmsDatagramSocketHandle;
 #endif
 
@@ -336,7 +336,7 @@ void listen_sockets() {
     int fd = 0;
     int host_port1 = 11100;
     int host_port2 = 22200;
-#ifdef ENABLE_JSR_205
+#if ENABLE_JSR_205
     int host_port3 = 33300;
 #endif
     int max = 0;
@@ -347,14 +347,14 @@ void listen_sockets() {
 
     smsDatagramSocketHandle = addUDPSocket(&fds, &max, host_port1);
     cbsDatagramSocketHandle = addUDPSocket(&fds, &max, host_port2);
-#ifdef ENABLE_JSR_205
+#if ENABLE_JSR_205
     mmsDatagramSocketHandle = addUDPSocket(&fds, &max, host_port3);
 #endif
 
     while (1) {
         FD_SET(smsDatagramSocketHandle, &fds); //need to reset each time
         FD_SET(cbsDatagramSocketHandle, &fds);
-#ifdef ENABLE_JSR_205
+#if ENABLE_JSR_205
         FD_SET(mmsDatagramSocketHandle, &fds);
 #endif
 
@@ -364,7 +364,7 @@ void listen_sockets() {
 
         fd = (FD_ISSET(smsDatagramSocketHandle, &fds)) ? smsDatagramSocketHandle :
              (FD_ISSET(cbsDatagramSocketHandle, &fds)) ? cbsDatagramSocketHandle : -1;
-#ifdef ENABLE_JSR_205
+#if ENABLE_JSR_205
         if (fd == -1) {
             fd = FD_ISSET(mmsDatagramSocketHandle, &fds) ? 
                                                   mmsDatagramSocketHandle : -1;
@@ -376,7 +376,7 @@ void listen_sockets() {
 
     //close(smsDatagramSocketHandle);
     //close(cbsDatagramSocketHandle);
-#ifdef ENABLE_JSR_205
+#if ENABLE_JSR_205
     //close(mmsDatagramSocketHandle);
 #endif
 }
