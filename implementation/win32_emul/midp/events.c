@@ -45,7 +45,9 @@ extern "C" {
 #include <windows.h>
 #endif
 
+#if ENABLE_JSR_120
 extern javacall_result try_process_wma_emulator(javacall_handle handle);
+#endif
 
 typedef struct EventMessage_ {
     struct EventMessage_* next;
@@ -507,11 +509,11 @@ WndProc (HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam) {
 #endif
 	            return 0;
 	        case FD_READ:
-
+#if ENABLE_JSR_120
 				if (JAVACALL_OK == try_process_wma_emulator((javacall_handle)wParam)) {
                    return 0;
 				}
-
+#endif
 				javanotify_datagram_event(
 						   JAVACALL_EVENT_DATAGRAM_RECVFROM_COMPLETED,
 						   (javacall_handle)wParam,

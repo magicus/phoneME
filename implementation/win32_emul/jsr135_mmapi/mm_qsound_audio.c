@@ -68,6 +68,8 @@ static void MQ234_CALLBACK set_done_trigger(void *userData)
         case JC_FMT_TONE:
         case JC_FMT_MIDI:
         case JC_FMT_SP_MIDI:
+        case JC_FMT_DEVICE_TONE:
+        case JC_FMT_DEVICE_MIDI:
         {
             ah_midi* hm = (ah_midi*)userData;
             // needs to be in milliseconds, so dive by 10
@@ -699,6 +701,8 @@ static javacall_handle audio_qs_create(int appId, int playerId,
         case JC_FMT_TONE:
         case JC_FMT_MIDI:
         case JC_FMT_SP_MIDI:
+        case JC_FMT_DEVICE_TONE:
+        case JC_FMT_DEVICE_MIDI:
         {
             MQ234_ERROR e;
             IPlayControl* synth;
@@ -732,7 +736,7 @@ static javacall_handle audio_qs_create(int appId, int playerId,
             // From some reason TCK requires default tempo to be 120000, in fact 160000 returned
             // so set it manually, it set twice because when buffereing used than it should be set when 
             // buffering ends, and here in case protocol handles by device, so no buffering
-            if(mediaType != JC_FMT_TONE) {
+            if(mediaType != JC_FMT_TONE && mediaType != JC_FMT_DEVICE_TONE) {
                 long tempo = mQ135_Tempo_SetTempo((ITempoControl*)newHandle->hdr.controls[CON135_TEMPO], 100000);
             }
 
@@ -796,6 +800,8 @@ static javacall_result audio_qs_destroy(javacall_handle handle)
         case JC_FMT_TONE:
         case JC_FMT_MIDI:
         case JC_FMT_SP_MIDI:
+        case JC_FMT_DEVICE_TONE:
+        case JC_FMT_DEVICE_MIDI:
         {
 
             if(h->midi.doneCallback != NULL)
@@ -865,6 +871,8 @@ static javacall_result audio_qs_close(javacall_handle handle){
         case JC_FMT_TONE:
         case JC_FMT_MIDI:
         case JC_FMT_SP_MIDI:
+        case JC_FMT_DEVICE_TONE:
+        case JC_FMT_DEVICE_MIDI:
         {
             MQ234_ERROR e = mQ234_DetachSynthPlayer(g_QSoundGM[gmIdx].gm, h->midi.synth);
             JC_MM_ASSERT(e == MQ234_ERROR_NO_ERROR);
@@ -900,6 +908,7 @@ static javacall_result audio_qs_get_player_controls(javacall_handle handle,
     switch(h->hdr.mediaType)
     {
         case JC_FMT_TONE:
+        case JC_FMT_DEVICE_TONE:
             *controls |= JAVACALL_MEDIA_CTRL_TONE;
             *controls |= JAVACALL_MEDIA_CTRL_METADATA;
             *controls |= JAVACALL_MEDIA_CTRL_TEMPO;
@@ -908,6 +917,7 @@ static javacall_result audio_qs_get_player_controls(javacall_handle handle,
             break;
         case JC_FMT_MIDI:
         case JC_FMT_SP_MIDI:
+        case JC_FMT_DEVICE_MIDI:
             *controls |= JAVACALL_MEDIA_CTRL_METADATA;
             *controls |= JAVACALL_MEDIA_CTRL_MIDI;
             *controls |= JAVACALL_MEDIA_CTRL_TEMPO;
@@ -977,6 +987,8 @@ static javacall_result audio_qs_get_buffer_address(javacall_handle handle,
         case JC_FMT_TONE:
         case JC_FMT_MIDI:
         case JC_FMT_SP_MIDI:
+        case JC_FMT_DEVICE_TONE:
+        case JC_FMT_DEVICE_MIDI:
             h->midi.midiBuffer    = MALLOC( h->hdr.wholeContentSize );
             h->midi.midiBufferLen = h->hdr.wholeContentSize;
             *buffer               = h->midi.midiBuffer;
@@ -1019,6 +1031,8 @@ static javacall_result audio_qs_do_buffering(
         case JC_FMT_TONE:
         case JC_FMT_MIDI:
         case JC_FMT_SP_MIDI:
+        case JC_FMT_DEVICE_TONE:
+        case JC_FMT_DEVICE_MIDI:
         {
             if( NULL != buffer )
             {
@@ -1092,7 +1106,7 @@ static javacall_result audio_qs_do_buffering(
                         // From some reason TCK requires default tempo to be 120000, in fact 160000 returned
                         // so set it manually, it set twice because when buffereing used than it should be set when 
                         // buffering ends, and here in case protocol handles by device, so no buffering
-                        if(h->hdr.mediaType != JC_FMT_TONE)
+                        if(h->hdr.mediaType != JC_FMT_TONE && h->hdr.mediaType != JC_FMT_DEVICE_TONE)
                         {
                             long tempo = mQ135_Tempo_SetTempo((ITempoControl*)h->hdr.controls[CON135_TEMPO], 120000);
                         }
@@ -1260,6 +1274,8 @@ static javacall_result audio_qs_clear_buffer(javacall_handle handle){
         case JC_FMT_TONE:
         case JC_FMT_MIDI:
         case JC_FMT_SP_MIDI:
+        case JC_FMT_DEVICE_TONE:
+        case JC_FMT_DEVICE_MIDI:
         {
             if( h->midi.midiBuffer != NULL )
             {
@@ -1326,6 +1342,8 @@ static javacall_result audio_qs_start(javacall_handle handle){
         case JC_FMT_TONE:
         case JC_FMT_MIDI:
         case JC_FMT_SP_MIDI:
+        case JC_FMT_DEVICE_TONE:
+        case JC_FMT_DEVICE_MIDI:
         {
             //printf("audio_start MIDI/TONE\n");
             mQ234_PlayControl_Play(h->midi.synth, TRUE);
@@ -1369,6 +1387,8 @@ static javacall_result audio_qs_stop(javacall_handle handle){
         case JC_FMT_TONE:
         case JC_FMT_MIDI:
         case JC_FMT_SP_MIDI:
+        case JC_FMT_DEVICE_TONE:
+        case JC_FMT_DEVICE_MIDI:
         {
             mQ234_PlayControl_Play(h->midi.synth, FALSE);
 
@@ -1408,6 +1428,8 @@ static javacall_result audio_qs_pause(javacall_handle handle){
         case JC_FMT_TONE:
         case JC_FMT_MIDI:
         case JC_FMT_SP_MIDI:
+        case JC_FMT_DEVICE_TONE:
+        case JC_FMT_DEVICE_MIDI:
         {
             mQ234_PlayControl_Play(h->midi.synth, FALSE);
 
@@ -1447,6 +1469,8 @@ static javacall_result audio_qs_resume(javacall_handle handle){
         case JC_FMT_TONE:
         case JC_FMT_MIDI:
         case JC_FMT_SP_MIDI:
+        case JC_FMT_DEVICE_TONE:
+        case JC_FMT_DEVICE_MIDI:
         {
             mQ234_PlayControl_Play(h->midi.synth, TRUE);
 
@@ -1488,6 +1512,8 @@ static javacall_result audio_qs_get_time(javacall_handle handle, long* ms){
         case JC_FMT_TONE:
         case JC_FMT_MIDI:
         case JC_FMT_SP_MIDI:
+        case JC_FMT_DEVICE_TONE:
+        case JC_FMT_DEVICE_MIDI:
         {
             long pos = mQ234_PlayControl_GetPosition(h->midi.synth);
 
@@ -1518,6 +1544,8 @@ static javacall_result audio_qs_set_time(javacall_handle handle, long* ms){
         case JC_FMT_TONE:
         case JC_FMT_MIDI:
         case JC_FMT_SP_MIDI:
+        case JC_FMT_DEVICE_TONE:
+        case JC_FMT_DEVICE_MIDI:
         {
            currtime = mQ234_PlayControl_SetPosition(h->midi.synth, (*ms)*10) != 0 ?
            mQ234_PlayControl_GetPosition(h->midi.synth)/10 : 0;
@@ -1566,6 +1594,8 @@ static javacall_result audio_qs_get_duration(javacall_handle handle, long* ms) {
         case JC_FMT_TONE:
         case JC_FMT_MIDI:
         case JC_FMT_SP_MIDI:
+        case JC_FMT_DEVICE_TONE:
+        case JC_FMT_DEVICE_MIDI:
         {
             long dur = mQ234_PlayControl_GetDuration(h->midi.synth);
             if(dur > 0) *ms = dur / 10;// + 1600;
@@ -1631,6 +1661,8 @@ static javacall_result audio_qs_get_volume(javacall_handle handle, long* level) 
         case JC_FMT_SP_MIDI:
         case JC_FMT_MS_PCM:
         case JC_FMT_AMR:
+        case JC_FMT_DEVICE_TONE:
+        case JC_FMT_DEVICE_MIDI:
         {
             *level = (long) mQ135_Volume_GetLevel(
                 (IVolumeControl*)h->hdr.controls[CON135_VOLUME]);
@@ -1664,6 +1696,8 @@ static javacall_result audio_qs_set_volume(javacall_handle handle, long* level) 
         case JC_FMT_SP_MIDI:
         case JC_FMT_MS_PCM:
         case JC_FMT_AMR:
+        case JC_FMT_DEVICE_TONE:
+        case JC_FMT_DEVICE_MIDI:
         {
             *level = (long) mQ135_Volume_SetLevel(
                 (IVolumeControl*)h->hdr.controls[CON135_VOLUME], (int)(*level));
@@ -1698,6 +1732,8 @@ static javacall_result audio_qs_is_mute(javacall_handle handle, javacall_bool* m
         case JC_FMT_SP_MIDI:
         case JC_FMT_MS_PCM:
         case JC_FMT_AMR:
+        case JC_FMT_DEVICE_TONE:
+        case JC_FMT_DEVICE_MIDI:
         {
             muted = (long) mQ135_Volume_IsMuted(
                 (IVolumeControl*)h->hdr.controls[CON135_VOLUME]);
@@ -1733,6 +1769,8 @@ static javacall_result audio_qs_set_mute(javacall_handle handle,
         case JC_FMT_SP_MIDI:
         case JC_FMT_MS_PCM:
         case JC_FMT_AMR:
+        case JC_FMT_DEVICE_TONE:
+        case JC_FMT_DEVICE_MIDI:
         {
             mQ135_Volume_SetMute(
                 (IVolumeControl*)h->hdr.controls[CON135_VOLUME],
@@ -1766,6 +1804,8 @@ static javacall_result audio_qs_get_channel_volume(javacall_handle handle,
         case JC_FMT_TONE:
         case JC_FMT_MIDI:
         case JC_FMT_SP_MIDI:
+        case JC_FMT_DEVICE_TONE:
+        case JC_FMT_DEVICE_MIDI:
         {
             while( g_QSoundGM[gmIdx].bDelayedMIDI ) Sleep( 0 );
 
@@ -1798,6 +1838,8 @@ static javacall_result audio_qs_set_channel_volume(javacall_handle handle,
         case JC_FMT_TONE:
         case JC_FMT_MIDI:
         case JC_FMT_SP_MIDI:
+        case JC_FMT_DEVICE_TONE:
+        case JC_FMT_DEVICE_MIDI:
         {
             int tries;
             int v = -1;
@@ -1860,6 +1902,8 @@ static javacall_result audio_qs_set_program(javacall_handle handle,
         case JC_FMT_TONE:
         case JC_FMT_MIDI:
         case JC_FMT_SP_MIDI:
+        case JC_FMT_DEVICE_TONE:
+        case JC_FMT_DEVICE_MIDI:
         {
             int             b, p, retry;
             JSR135ErrorCode e;
@@ -1953,6 +1997,8 @@ static javacall_result audio_qs_long_midi_event(javacall_handle handle,
         case JC_FMT_TONE:
         case JC_FMT_MIDI:
         case JC_FMT_SP_MIDI:
+        case JC_FMT_DEVICE_TONE:
+        case JC_FMT_DEVICE_MIDI:
         {
             if( WAIT_OBJECT_0 == WaitForSingleObject( g_QSoundGM[gmIdx].hMutexREAD, 500 ) )
             {
@@ -1994,6 +2040,8 @@ static javacall_result audio_qs_get_metadata_key_counts(javacall_handle handle,
         case JC_FMT_TONE:
         case JC_FMT_MIDI:
         case JC_FMT_SP_MIDI:
+        case JC_FMT_DEVICE_TONE:
+        case JC_FMT_DEVICE_MIDI:
         {
             IMetaDataControl* mdc 
                 = (IMetaDataControl*)( h->hdr.controls[CON135_METADATA] );
@@ -2031,6 +2079,8 @@ static javacall_result audio_qs_get_metadata_key(javacall_handle handle,
         case JC_FMT_TONE:
         case JC_FMT_MIDI:
         case JC_FMT_SP_MIDI:
+        case JC_FMT_DEVICE_TONE:
+        case JC_FMT_DEVICE_MIDI:
         {
             IMetaDataControl* mdc 
                 = (IMetaDataControl*)( h->hdr.controls[CON135_METADATA] );
@@ -2065,6 +2115,8 @@ static javacall_result audio_qs_get_metadata(javacall_handle handle,
         case JC_FMT_TONE:
         case JC_FMT_MIDI:
         case JC_FMT_SP_MIDI:
+        case JC_FMT_DEVICE_TONE:
+        case JC_FMT_DEVICE_MIDI:
         {
             IMetaDataControl* mdc 
                 = (IMetaDataControl*)( h->hdr.controls[CON135_METADATA] );
@@ -2099,6 +2151,8 @@ static javacall_result audio_qs_get_max_rate(javacall_handle handle, long *maxRa
         case JC_FMT_SP_MIDI:
         case JC_FMT_MS_PCM:
         case JC_FMT_AMR:
+        case JC_FMT_DEVICE_TONE:
+        case JC_FMT_DEVICE_MIDI:
         {
             *maxRate = mQ135_Rate_GetMaxRate((
                 IRateControl*)h->hdr.controls[CON135_RATE]);
@@ -2127,6 +2181,8 @@ static javacall_result audio_qs_get_min_rate(javacall_handle handle, long *minRa
         case JC_FMT_SP_MIDI:
         case JC_FMT_MS_PCM:
         case JC_FMT_AMR:
+        case JC_FMT_DEVICE_TONE:
+        case JC_FMT_DEVICE_MIDI:
         {
             *minRate = mQ135_Rate_GetMinRate(
                 (IRateControl*)h->hdr.controls[CON135_RATE]);
@@ -2155,6 +2211,8 @@ static javacall_result audio_qs_set_rate(javacall_handle handle, long rate)
         case JC_FMT_SP_MIDI:
         case JC_FMT_MS_PCM:
         case JC_FMT_AMR:
+        case JC_FMT_DEVICE_TONE:
+        case JC_FMT_DEVICE_MIDI:
         {
             setRate = mQ135_Rate_SetRate(
                 (IRateControl*)h->hdr.controls[CON135_RATE], rate);
@@ -2181,6 +2239,8 @@ static javacall_result audio_qs_get_rate(javacall_handle handle, long* rate)
         case JC_FMT_SP_MIDI:
         case JC_FMT_MS_PCM:
         case JC_FMT_AMR:
+        case JC_FMT_DEVICE_TONE:
+        case JC_FMT_DEVICE_MIDI:
         {
             *rate = mQ135_Rate_GetRate(
                 (IRateControl*)h->hdr.controls[CON135_RATE]);
@@ -2207,6 +2267,8 @@ static javacall_result audio_qs_get_tempo(javacall_handle handle, long *tempo)
         case JC_FMT_TONE:
         case JC_FMT_MIDI:
         case JC_FMT_SP_MIDI:
+        case JC_FMT_DEVICE_TONE:
+        case JC_FMT_DEVICE_MIDI:
         {
             *tempo = mQ135_Tempo_GetTempo(
                 (ITempoControl*)h->hdr.controls[CON135_TEMPO]);
@@ -2238,6 +2300,8 @@ static javacall_result audio_qs_set_tempo(javacall_handle handle, long tempo)
         case JC_FMT_TONE:
         case JC_FMT_MIDI:
         case JC_FMT_SP_MIDI:
+        case JC_FMT_DEVICE_TONE:
+        case JC_FMT_DEVICE_MIDI:
         {
             setTempo = mQ135_Tempo_SetTempo(
                 (ITempoControl*)h->hdr.controls[CON135_TEMPO], tempo);
@@ -2268,6 +2332,8 @@ static javacall_result audio_qs_get_max_pitch(javacall_handle handle,
         case JC_FMT_TONE:
         case JC_FMT_MIDI:
         case JC_FMT_SP_MIDI:
+        case JC_FMT_DEVICE_TONE:
+        case JC_FMT_DEVICE_MIDI:
         {
             *maxPitch = mQ135_Pitch_GetMaxPitch(
                 (IPitchControl*)h->hdr.controls[CON135_PITCH]);
@@ -2296,6 +2362,8 @@ static javacall_result audio_qs_get_min_pitch(javacall_handle handle,
         case JC_FMT_TONE:
         case JC_FMT_MIDI:
         case JC_FMT_SP_MIDI:
+        case JC_FMT_DEVICE_TONE:
+        case JC_FMT_DEVICE_MIDI:
         {
             *minPitch = mQ135_Pitch_GetMinPitch(
                 (IPitchControl*)h->hdr.controls[CON135_PITCH]);
@@ -2324,6 +2392,8 @@ static javacall_result audio_qs_set_pitch(javacall_handle handle, long pitch)
         case JC_FMT_TONE:
         case JC_FMT_MIDI:
         case JC_FMT_SP_MIDI:
+        case JC_FMT_DEVICE_TONE:
+        case JC_FMT_DEVICE_MIDI:
         {
             setPitch = mQ135_Pitch_SetPitch(
                 (IPitchControl*)h->hdr.controls[CON135_PITCH], pitch);
@@ -2350,6 +2420,8 @@ static javacall_result audio_qs_get_pitch(javacall_handle handle, long* pitch)
         case JC_FMT_TONE:
         case JC_FMT_MIDI:
         case JC_FMT_SP_MIDI:
+        case JC_FMT_DEVICE_TONE:
+        case JC_FMT_DEVICE_MIDI:
         {
             *pitch = mQ135_Pitch_GetPitch(
                 (IPitchControl*)h->hdr.controls[CON135_PITCH]);
@@ -2381,6 +2453,8 @@ static javacall_result audio_qs_is_bank_query_supported(javacall_handle handle,
         case JC_FMT_TONE:
         case JC_FMT_MIDI:
         case JC_FMT_SP_MIDI:
+        case JC_FMT_DEVICE_TONE:
+        case JC_FMT_DEVICE_MIDI:
         {
             *supported = mQ135_MIDI_IsBankQuerySupported(
                 (IMIDIControl*)h->hdr.controls[CON135_MIDI]);
@@ -2410,6 +2484,8 @@ static javacall_result audio_qs_get_bank_list(javacall_handle handle,
         case JC_FMT_TONE:
         case JC_FMT_MIDI:
         case JC_FMT_SP_MIDI:
+        case JC_FMT_DEVICE_TONE:
+        case JC_FMT_DEVICE_MIDI:
         {
             JSR135ErrorCode e = mQ135_MIDI_GetBankList(
                 (IMIDIControl*)h->hdr.controls[CON135_MIDI],
@@ -2442,6 +2518,8 @@ static javacall_result audio_qs_get_key_name(javacall_handle handle,
         case JC_FMT_TONE:
         case JC_FMT_MIDI:
         case JC_FMT_SP_MIDI:
+        case JC_FMT_DEVICE_TONE:
+        case JC_FMT_DEVICE_MIDI:
         {
             JSR135ErrorCode e;
 
@@ -2482,6 +2560,8 @@ static javacall_result audio_qs_get_program_name(javacall_handle handle,
         case JC_FMT_TONE:
         case JC_FMT_MIDI:
         case JC_FMT_SP_MIDI:
+        case JC_FMT_DEVICE_TONE:
+        case JC_FMT_DEVICE_MIDI:
         {
             JSR135ErrorCode e;
 
@@ -2520,6 +2600,8 @@ static javacall_result audio_qs_get_program_list(javacall_handle handle,
         case JC_FMT_TONE:
         case JC_FMT_MIDI:
         case JC_FMT_SP_MIDI:
+        case JC_FMT_DEVICE_TONE:
+        case JC_FMT_DEVICE_MIDI:
         {
             JSR135ErrorCode e;
 
@@ -2556,6 +2638,8 @@ static javacall_result audio_qs_get_program(javacall_handle handle,
         case JC_FMT_TONE:
         case JC_FMT_MIDI:
         case JC_FMT_SP_MIDI:
+        case JC_FMT_DEVICE_TONE:
+        case JC_FMT_DEVICE_MIDI:
         {
             while( g_QSoundGM[gmIdx].bDelayedMIDI ) Sleep( 0 );
 
