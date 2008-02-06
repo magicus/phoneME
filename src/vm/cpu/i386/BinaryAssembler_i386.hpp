@@ -431,8 +431,6 @@ class BinaryAssembler: public BinaryAssemblerCommon {
 
   static bool is_signed_byte  ( const int data );
   static bool is_unsigned_byte( const int data );
-
-  friend class RelocationWriter;
 #endif
 };
 

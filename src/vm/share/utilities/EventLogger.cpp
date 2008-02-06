@@ -243,7 +243,7 @@ static jboolean JVM_LogEvent(int type, EventLogger::EventKind kind) {
 }
 #endif // USE_EVENT_LOGGER
 
-jboolean JVM_LogEventStart(int type) {
+extern "C" jboolean JVM_LogEventStart(int type) {
 #if USE_EVENT_LOGGER
   return JVM_LogEvent( type, EventLogger::START );
 #else
@@ -251,7 +251,7 @@ jboolean JVM_LogEventStart(int type) {
 #endif
 }
 
-jboolean JVM_LogEventEnd(int type) {
+extern "C" jboolean JVM_LogEventEnd(int type) {
 #if USE_EVENT_LOGGER
   return JVM_LogEvent( type, EventLogger::END );
 #else
@@ -259,7 +259,7 @@ jboolean JVM_LogEventEnd(int type) {
 #endif
 }
 
-int JVM_RegisterEventType(const char* name) {
+extern "C" int JVM_RegisterEventType(const char* name) {
 #if USE_EVENT_LOGGER && ENABLE_EXTENDED_EVENT_LOGGER
   return EventLogger::add_event_type( name );
 #else
