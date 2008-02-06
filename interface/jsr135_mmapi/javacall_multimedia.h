@@ -190,6 +190,12 @@ extern "C" {
 /** Interactive midi, device/midi */
 #define JAVACALL_MEDIA_FORMAT_DEVICE_MIDI       "DEVICE_MIDI"
 
+/** Capture formats section */
+/** Capture audio, capture/audio */
+#define JAVACALL_MEDIA_FORMAT_CAPTURE_AUDIO     "CAPTURE_AUDIO"
+/** Capture video, capture/video */
+#define JAVACALL_MEDIA_FORMAT_CAPTURE_VIDEO     "CAPTURE_VIDEO"
+
 /** Unknown format */
 #define JAVACALL_MEDIA_FORMAT_UNKNOWN           "UNKNOWN"
 /** Unsupported format */
