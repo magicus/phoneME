@@ -177,7 +177,7 @@ LINK_MANIFEST = \
 LINK_CMD	= $(AT)\
 	$(eval OUT := $(call POSIX2HOST,$@)) \
 	$(call POSIX2HOST_CMD,$^) > $(OUT).lst; \
-	$(TARGET_LINK) $(LINKCVM_FLAGS) /out:$(OUT) @$(OUT).lst $(call POSIX2HOST,$(1)); \
+	$(TARGET_LINK) $(LINKCVM_FLAGS) /out:$(OUT) @$(OUT).lst $(1); \
 	$(LINK_MANIFEST)
 
 SO_CC_CMD	= $(AT)$(TARGET_CC) $(SO_CFLAGS) /Fo$(call POSIX2HOST,$@) $(call POSIX2HOST,$<)
@@ -187,7 +187,7 @@ SO_LINK_CMD	= $(AT)\
 	$(eval OUT := $(call POSIX2HOST,$@)) \
 	$(call POSIX2HOST_CMD,$^) > $(OUT).lst; \
 	$(TARGET_LD) $(SO_LINKFLAGS) /out:$(OUT) @$(OUT).lst \
-		$(SO_LINKLIBS) $(call POSIX2HOST,$(1)); \
+		$(SO_LINKLIBS) $(1); \
 	$(LINK_MANIFEST)
 
 # Don't let the default compiler compatibility check be done
