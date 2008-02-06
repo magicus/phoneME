@@ -53,29 +53,48 @@ int midp_snprintf(char* buffer, int bufferSize, const char* format, ...) {
     return rv;
 }
 
-#if ENABLE_DEBUG
 /**
- * Same as for midp_snprintf. Not all compilers provide vsnprintf 
- * function, so we have to use workaround. In debug mode it does 
- * buffer overflow checking, and in release mode it works as vsprintf.
+ * Same as for snprintf. Not all compilers provide vsnprintf function, 
+ * so we have to use workaround. Platform's vsnprintf function can be used
+ * instead of midp_vsnprintf when it is supported.
+ * 
  */
+#define VSPRINTF_BUFFER_SIZE 1024
 int midp_vsnprintf(char *buffer, int bufferSize, 
         const char* format, va_list argptr) {
 
-    int rv;
-    
-    buffer[bufferSize-1] = '\0';
-    rv = vsprintf(buffer, format, argptr);
+	int rv, num;
+    char vsprintf_buffer[VSPRINTF_BUFFER_SIZE];
 
-    if (buffer[bufferSize-1] != '\0') {
-        buffer[bufferSize-1] = '\0';
-        REPORT_CRIT2(LC_CORE, "Buffer %p overflow detected at %p !!!",
-                buffer, buffer + bufferSize);
+    /* Fill num as minimum of bufferSize and VSPRINTF_BUFFER_SIZE */
+	if (bufferSize > VSPRINTF_BUFFER_SIZE) {
+        num = VSPRINTF_BUFFER_SIZE;
+		REPORT_WARN1(LC_CORE,
+            "Internal buffer is smaller than %d, data truncated", bufferSize);
+	} else 
+        num = bufferSize;
+ 
+   /* IMPL_NOTE: using vsprintf function is not safely because it can
+    * overflow output buffer. The javacall implementation will support
+	* size limit format output and this function will be used here.
+    * Current implementation detects buffer overflow by checking the last
+	* byte and reports about it. In this case the VSPRINTF_BUFFER_SIZE
+    * value need be increased.
+    */
+    rv = vsprintf(vsprintf_buffer, format, argptr);
+    if (rv > VSPRINTF_BUFFER_SIZE - 1) {
+		REPORT_CRIT2(LC_CORE, "Internal buffer %p overflow detected at %p !!!",
+            vsprintf_buffer, vsprintf_buffer + VSPRINTF_BUFFER_SIZE);
     }
+    if (num  > rv + 1) {
+		num = rv + 1;
+	} else 
+        vsprintf_buffer[num - 1] = 0;
+
+    memcpy(buffer, vsprintf_buffer, num);
 
     return rv;
 }
-#endif /* ENABLE_DEBUG */
 
 /**
  * Not all compilers provide the POSIX function strcasesmp, so we need to
