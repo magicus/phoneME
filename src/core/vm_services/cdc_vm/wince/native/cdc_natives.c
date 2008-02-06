@@ -197,19 +197,15 @@ KNIDECL(com_sun_midp_main_CDCInit_initMidpNativeStates) {
         len = max;
     }
     KNI_GetStringRegion(config, 0, len, jbuff);
-    for (i=0; i<len; i++) {
-        conf_buff[i] = (char)jbuff[i];
-    }
-    conf_buff[len] = 0;
+    jbuff[len]=0;
+    convertWtoU8(conf_buff, jbuff);
     len = KNI_GetStringLength(storage);
     if (len > max) {
         len = max;
     }
     KNI_GetStringRegion(storage, 0, len, jbuff);
-    for (i=0; i<len; i++) {
-        store_buff[i] = (char)jbuff[i];
-    }
-    store_buff[len] = 0;
+    jbuff[len]=0;
+    convertWtoU8(store_buff, jbuff);
 
     initCDCEvents();
 
