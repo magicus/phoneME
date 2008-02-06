@@ -462,6 +462,8 @@ public class Protocol extends ProtocolBase {
 
 	ensureOpen();
 
+        checkHostAddressSyntax(url.host);
+
 	if ((m_mode & Connector.WRITE) == 0) {
 
 	    throw new IOException("Invalid mode");
@@ -770,6 +772,40 @@ public class Protocol extends ProtocolBase {
 	throw new IllegalArgumentException("Not supported");
     }
 
+    /**
+     * Checks host address accordingly to spec rules:
+     *   msisdn ::== "+" digits | digits
+     *   digit ::== "0" | "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9"
+     *   digits ::== digit | digit digits
+     */
+    static void checkHostAddressSyntax(String msisdn) 
+             throws IllegalArgumentException {
+
+        if (msisdn == null) {
+            throw new IllegalArgumentException("Empty host address");
+        }
+
+        int len = msisdn.length();
+        if (len == 0) {
+            throw new IllegalArgumentException("Empty host address");
+        }
+
+        /* Only '+' followed by 0-9 are allowed in the host field. */
+        int offset = (msisdn.charAt(0) == '+') ? 1 : 0;
+
+        if (offset == len) {
+            /* '+' not followed by digits */
+            throw new IllegalArgumentException("Empty host address");
+        }
+
+        for (; offset < msisdn.length(); offset++) {
+            char c = msisdn.charAt(offset);
+            if ((c < '0') || (c > '9')) {
+                throw new IllegalArgumentException(
+                    "Wrong host format: " + msisdn);
+            }
+        }
+    }
 
     /*
      * Protocol members
@@ -824,27 +860,11 @@ public class Protocol extends ProtocolBase {
 	    }
 	}
 
-	if (host != null) {
-	    int offset = 0;
-	    int len = host.length();
-	    char c = '\0';
-	    /* Only '+' followed by 0-9 are allowed in the host field. */
-	    if (len > 0) {
-		c = host.charAt(0);
-		if (c == '+') {
-		    offset = 1;
-		}
-		for (int i = offset; i < host.length(); i++) {
-		    c = host.charAt(i);
-		    if ('0' <= c && c <= '9') {
-
-			continue;
-		    } else {
-			throw new IllegalArgumentException("Host format");
-		    }
-		}
-	    }
-	}
+        if (host != null) {
+            if (!host.equals("")) {
+                checkHostAddressSyntax(host);
+            }
+        }
 
         int portNumber = 0;
         m_iport = 0;
