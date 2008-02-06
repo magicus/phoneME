@@ -106,7 +106,7 @@ CVM_TARGETOBJS_SPACE += \
         memory_md.o
 
 # objects that always link with cvm.exe, even if we build cvmi.dll
-CVMEXE_OBJS = ansi_java_md.o java_md.o
+CVMEXE_OBJS = ansi_java_md.o java_md.o tchar.o
 
 # If we are not building a dll, then CVMEXE_OBJS need to be part of the
 # main cvm link command (the standalone cvm.exe).

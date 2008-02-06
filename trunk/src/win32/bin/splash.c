@@ -38,6 +38,8 @@ int splashX = 0, splashY = 0;
 HBITMAP g_hB;
 HWND g_hWnd;
 HDC g_dcBitmap = NULL;
+/* If true than call exit after destroying the splash window */
+BOOL g_bExitAfterSplash = FALSE;
 
 DWORD WINAPI MessageLoop( LPVOID lpParam )
 {
@@ -56,6 +58,9 @@ DWORD WINAPI MessageLoop( LPVOID lpParam )
             TranslateMessage(&msg);
             DispatchMessage(&msg);
         }
+    }
+    if (g_bExitAfterSplash) {
+        exit((int) msg.wParam);
     }
     return (int) msg.wParam;
 }
@@ -81,8 +86,8 @@ ATOM MyRegisterClass(HINSTANCE hInstance, LPTSTR szWindowClass)
     wc.lpszClassName = szWindowClass;
 
     if (!RegisterClass(&wc)) {
-	fprintf(stderr, "RegisterClass failed. err=0x%x\n", GetLastError());
-	return FALSE;
+        fprintf(stderr, "RegisterClass failed. err=0x%x\n", GetLastError());
+        return FALSE;
     }
     return TRUE;
 }
@@ -99,8 +104,7 @@ BOOL myInit()
     /* Store instance handle in our global variable */
     hInst = GetModuleHandle(NULL);
 
-    if (!MyRegisterClass(hInst, _T("JavaSplash")))
-    {
+    if (!MyRegisterClass(hInst, _T("JavaSplash"))) {
         return FALSE;
     }
 
@@ -117,7 +121,7 @@ BOOL myInit()
     g_hWnd = hWnd;
     g_hB = LoadBitmap(hInst, (LPCTSTR)IDB_SPLASH);
     if (g_hB == NULL) {
-	fprintf(stderr,"LoadBitmap failed\n");
+        fprintf(stderr,"LoadBitmap failed\n");
         return FALSE;
     }
 
@@ -130,16 +134,15 @@ BOOL myInit()
 
 void OnPaint(HWND hWnd, HDC hdc)
 {
-	RECT rect, rect1;
-	int width, height;
-	SystemParametersInfo(SPI_GETWORKAREA, 0, &rect, FALSE);
-	width = rect.right-rect.left;
-	height = rect.bottom-rect.top;
-    if (!g_dcBitmap)
-	{
-		g_dcBitmap = CreateCompatibleDC(hdc);
-	    SelectObject(g_dcBitmap, (HGDIOBJ)g_hB);
-	}
+    RECT rect, rect1;
+    int width, height;
+    SystemParametersInfo(SPI_GETWORKAREA, 0, &rect, FALSE);
+    width = rect.right-rect.left;
+    height = rect.bottom-rect.top;
+    if (!g_dcBitmap) {
+        g_dcBitmap = CreateCompatibleDC(hdc);
+        SelectObject(g_dcBitmap, (HGDIOBJ)g_hB);
+    }
     BitBlt(hdc, splashX, splashY, splashWidth, splashHeight, g_dcBitmap,
         0, 0, SRCCOPY);
 }
@@ -150,22 +153,24 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
     HDC hdc;
     switch (message)
     {
-        case WM_CLOSE:
-            break;
-        case WM_SETFOCUS:
-        	SHFullScreen(hWnd, SHFS_HIDETASKBAR | SHFS_HIDESTARTICON | SHFS_HIDESIPBUTTON);
-        	break;
-        case WM_PAINT:
-            hdc = BeginPaint(hWnd, &ps);
-            OnPaint(hWnd, hdc);
-            EndPaint(hWnd, &ps);
-            break;
-        case WM_DESTROY:
-            PostQuitMessage(0);
-            break;
+    case WM_CLOSE:
+        g_bExitAfterSplash = TRUE;
+        PostQuitMessage(0);
+        break;
+    case WM_SETFOCUS:
+        SHFullScreen(hWnd, SHFS_HIDETASKBAR | SHFS_HIDESTARTICON | SHFS_HIDESIPBUTTON);
+        break;
+    case WM_PAINT:
+        hdc = BeginPaint(hWnd, &ps);
+        OnPaint(hWnd, hdc);
+        EndPaint(hWnd, &ps);
+        break;
+    case WM_DESTROY:
+        PostQuitMessage(0);
+        break;
 
-        default:
-            return DefWindowProc(hWnd, message, wParam, lParam);
+    default:
+        return DefWindowProc(hWnd, message, wParam, lParam);
     }
     return 0;
 }
