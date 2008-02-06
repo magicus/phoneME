@@ -483,6 +483,10 @@ public class Protocol extends ProtocolBase {
             }
         }
 
+        if (url.port > 65535) {
+            throw new IllegalArgumentException("Port is out of range: " + url.port);
+        }
+
 	int messageType = GSM_BINARY;
 	byte[] msgBuffer = null;
 
