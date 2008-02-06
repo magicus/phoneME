@@ -1,6 +1,4 @@
 /*
- * @(#)tchar.c	1.4 06/10/10
- *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.  
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER  
  *   
@@ -35,43 +33,18 @@
 #ifdef _UNICODE
 
 JAVAI_API TCHAR *createTCHAR(const char *s) {
-    int len;
-    TCHAR *tcs;
-    int nChars;
-
-    len = strlen(s);
-    tcs = (TCHAR *) malloc(sizeof(TCHAR) * (len + 1));
-    nChars = mbstowcs(tcs, s, len);
-    if (nChars < 0) {
-        nChars = 0;
-    }
-    tcs[nChars] = 0;
-    return tcs;
+    return createWCHAR(s);
 }
 
 JAVAI_API void freeTCHAR(TCHAR *p) {
     free(p);
 }
 
+/* converting UCS-2 to UTF-8 */
 JAVAI_API
 char *createMCHAR(const TCHAR *tcs)
 {
-    int len = _tcslen(tcs);
-    char *s;
-    int nChars;
-
-    if (len < 0)
-        len = 0;
-
-    s = (char *) malloc(len + 1);
-    nChars = wcstombs(s, tcs, len);
-
-    if (nChars < 0) {
-        nChars = 0;
-    }
-    s[nChars] = 0;
-
-    return s;
+    return convertWtoU8(NULL, tcs);
 }
 
 JAVAI_API void freeMCHAR(char *p) {
@@ -80,21 +53,30 @@ JAVAI_API void freeMCHAR(char *p) {
 
 #endif
 
+/* converting UTF-8 to UCS-2*/
 JAVAI_API
 WCHAR *createWCHAR(const char *string)
 {
-    int len;
-    WCHAR *wc;
-    int nChars;
-
-    len = strlen(string);
-    wc = (WCHAR *)malloc(sizeof(WCHAR) * (len + 1));
-    nChars = mbstowcs(wc, string, len);
-    if (nChars < 0)
-        nChars = 0;
-
-    wc[nChars] = 0;
-    return wc;
+    int size;
+    int err;
+    LPWSTR ws_temp;
+    /* calculating the required buffer size */
+    size = MultiByteToWideChar(CP_UTF8, 0,
+            string, -1,
+            NULL, 0);
+    if (size == 0) {
+        return NULL;
+    }
+    ws_temp = malloc(size * sizeof(WCHAR));
+    /* converting from local to wide string */
+    size = MultiByteToWideChar(CP_UTF8, 0,
+            string, -1,
+            ws_temp, size);
+    if (size == 0) {
+        free(ws_temp);
+        return NULL;
+    }
+    return ws_temp;
 }
 
 JAVAI_API
@@ -112,12 +94,18 @@ int copyToMCHAR(char *s, const TCHAR *tcs, int sLength)
     }
 
 #ifdef _UNICODE
-    nChars = wcstombs(s, tcs, len);
+    /* converting from wide string to UTF-8 */
+    nChars = WideCharToMultiByte(
+            CP_UTF8, 0,
+            tcs, -1,
+            s, len, NULL, NULL);
+    if (nChars == 0) {
+        return len+1;
+    }
 
     if (nChars < 0) {
         nChars = 0;
     }
-    s[nChars] = 0;
 #else
     strcpy(s, tcs);
 #endif
@@ -126,7 +114,8 @@ int copyToMCHAR(char *s, const TCHAR *tcs, int sLength)
 }
 
 JAVAI_API
-TCHAR *createTCHARfromJString(JNIEnv *env, jstring jstr) {
+TCHAR *createTCHARfromJString(JNIEnv *env, jstring jstr)
+{
     int i;
     TCHAR *result;
     jint len = (*env)->GetStringLength(env, jstr);
@@ -135,7 +124,7 @@ TCHAR *createTCHARfromJString(JNIEnv *env, jstring jstr) {
 
     if (result == NULL) {
         (*env)->ReleaseStringCritical(env, jstr, str);
-	return NULL;
+        return NULL;
     }
 
     for (i = 0; i < len; i++) {
@@ -146,4 +135,91 @@ TCHAR *createTCHARfromJString(JNIEnv *env, jstring jstr) {
     return result;
 }
 
+/* converting from wide string to UTF-8.
+ * mallocates memory if first argument is NULL. Writes to the passed
+ * address otherwise.
+ */
+JAVAI_API
+char* convertWtoU8(char* astring, const WCHAR* u16string)
+{
+    int size;
+    /* calculating the required buffer size */
+    size = WideCharToMultiByte(
+            CP_UTF8, 0,
+            u16string, -1,
+            NULL, 0, NULL, NULL);
+    if (size == 0) {
+        return NULL;
+    }
+    if (astring == NULL) {
+        astring = malloc(size*sizeof(char));
+    }
+    /* converting from wide string to UTF-8 */
+    size = WideCharToMultiByte(
+            CP_UTF8, 0,
+            u16string, -1,
+            astring, size, NULL, NULL);
+    if (size == 0) {
+        free(astring);
+        return NULL;
+    }
+    return astring;
+}
 
+/* converting from wide string to locale encoding.
+ * mallocates memory if first argument is NULL. Writes to the passed
+ * address otherwise.
+ */
+JAVAI_API
+char* convertWtoA(char* astring, const WCHAR* u16string)
+{
+    int size;
+    /* calculating the required buffer size */
+    size = WideCharToMultiByte(
+            CP_ACP, MB_PRECOMPOSED,
+            u16string, -1,
+            NULL, 0, NULL, NULL);
+    if (size == 0) {
+        return NULL;
+    }
+    if (astring == NULL) {
+        astring = malloc(size*sizeof(char));
+    }
+    /* converting from wide string to UTF-8 */
+    size = WideCharToMultiByte(
+            CP_ACP, MB_PRECOMPOSED,
+            u16string, -1,
+            astring, size, NULL, NULL);
+    if (size == 0) {
+        free(astring);
+        return NULL;
+    }
+    return astring;
+}
+
+/* converting ASCII string to UTF8 string through UTF-16.
+ * mallocates memory for u8string
+ */
+JAVAI_API
+char* createU8fromA(const char* astring)
+{
+    int size;
+    LPWSTR ws_temp;
+    char* u8string;
+    /* calculating the required buffer size */
+    size = MultiByteToWideChar(CP_ACP, MB_PRECOMPOSED,
+            astring, -1,
+            NULL, 0);
+    ws_temp = malloc(size * sizeof(WCHAR));
+    /* converting from local to wide string */
+    size = MultiByteToWideChar(CP_ACP, MB_PRECOMPOSED,
+            astring, -1,
+            ws_temp, size);
+    if (size == 0) {
+        free(ws_temp);
+        return NULL;
+    }
+    u8string = createMCHAR(ws_temp);
+    free(ws_temp);
+    return u8string;
+}
