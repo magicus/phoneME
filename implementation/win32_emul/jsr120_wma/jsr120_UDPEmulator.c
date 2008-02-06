@@ -151,7 +151,7 @@ int* msgLength, char** msg) {
 
         }else if (strcmp("Date:", pch)==0){
             pch = strtok(NULL, "\n");
-            *timeStamp = (javacall_int64*)pch;
+            *timeStamp = *((javacall_int64*)pch);
         }else if (strcmp("Buffer:", pch)==0){
 	       pchLen = strlen("Buffer :\n");
 		pch = pch + pchLen;/// strtok(NULL, "\n");
@@ -331,11 +331,11 @@ void **pContext) {
 
     char* ptr = buffer;
     int segments;
-    char address;
+    char *address;
     char * t_pch;
 
 
-    if (pBytesRead > 12) {
+    if (*pBytesRead > 12) {
 
         char * pch;
         pch = strtok(ptr, " \n");

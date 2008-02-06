@@ -343,8 +343,7 @@ static javacall_result add_input_buffer(recorder_handle* hRecord, WAVEFORMATEX* 
  */
 static javacall_handle recorder_create(int appId, int playerId, 
                                        jc_fmt mediaType, 
-                                       const javacall_utf16* URI,
-                                       long uriLength)
+                                       const javacall_utf16_string URI)
 {
     recorder_handle* hRecorder = (recorder_handle*)LocalAlloc(LPTR, sizeof(recorder_handle));
 

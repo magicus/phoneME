@@ -43,7 +43,7 @@ static HFONT util_getFont(javacall_font_face face,
 	static LimeFunction *f = NULL;
 	unsigned short* res;
     unsigned short tempKey[100];
-	int resLen, keyLen, height;
+	int resLen, height;
 	unsigned short system[8]={'s','y','s','t','e','m','.',0};
 	unsigned short monospace[11]={'m','o','n','o','s','p','a','c','e','.',0};
 	unsigned short proportional[14]={'p','r','o','p','o','r','t','i','o','n','a','l','.',0};
@@ -56,8 +56,9 @@ static HFONT util_getFont(javacall_font_face face,
 	unsigned short large[6]={'l','a','r','g','e',0};
 	unsigned short dot[2]={'.',0};
 	unsigned short key[100];
+    const javacall_utf16 sep[] = {'-', 0};
 
-	unsigned short * token;
+	unsigned short* token;
 
     static LOGFONTW newFont = {0};
 
@@ -135,14 +136,14 @@ static HFONT util_getFont(javacall_font_face face,
     wcscpy(tempKey,fontNameHash[face+style+size]);
 
 	/* Parse the font intormation face-style-height , for example SansSerif-bold-9 */
-	token = wcstok( tempKey, "-" );	 /* the font face */
+	token = wcstok( tempKey, sep);	 /* the font face */
 	if (token != NULL) {
 		memset(newFont.lfFaceName, 0, wcslen(newFont.lfFaceName));
 		wcscpy(newFont.lfFaceName, token);
 	}
 
-	token = wcstok( NULL, "-" ); /* Get next token - the font style */
-	token = wcstok( NULL, "-" ); /* Get next token - the font height */
+	token = wcstok( NULL, sep ); /* Get next token - the font style */
+	token = wcstok( NULL, sep ); /* Get next token - the font height */
 	if (token != NULL) {
 		height = _wtoi(token);
 		newFont.lfHeight = -MulDiv(height, GetDeviceCaps(hdc, LOGPIXELSY), 72);

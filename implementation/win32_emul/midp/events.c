@@ -39,11 +39,13 @@ extern "C" {
 #include "javacall_network.h"
 #include "javacall_datagram.h"
 #include "javacall_logging.h"
+#include "javacall_lifecycle.h"
 
 #ifdef WIN32
 #include <windows.h>
 #endif
 
+extern javacall_result try_process_wma_emulator(javacall_handle handle);
 
 typedef struct EventMessage_ {
     struct EventMessage_* next;

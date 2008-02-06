@@ -246,7 +246,7 @@ javacall_result javacall_image_decode_finish(javacall_handle handle,
 
     int i;
     for (i=0;i<alphaBufSize;i++) {//initialize alpha buffer
-        alphaBuf[i]=0xFF;
+        alphaBuf[i]=(char)0xFF;
     }
     if (headerMatch(jpegHeader,jpegHeaderSize,image->pixelData,image->pixelDataSize)== JAVACALL_OK) {
         info = JPEG_To_RGB_init();

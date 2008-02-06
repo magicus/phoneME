@@ -82,7 +82,6 @@ typedef enum {
  *
  */
 javacall_result javacall_annunciator_vibrate(javacall_bool duration) {
-    int result;
     bool_t res;
 
     static LimeFunction *f = NULL;
@@ -225,7 +224,7 @@ javacall_result javacall_annunciator_display_network_icon(javacall_bool enableNe
 javacall_result javacall_annunciator_display_input_mode_icon(javacall_input_mode_type mode) {
 
 	static LimeFunction *f = NULL;
-    char *type;
+    javacall_input_mode_type type;
 
     switch (mode) {
     case JAVACALL_INPUT_MODE_LATIN_CAPS:

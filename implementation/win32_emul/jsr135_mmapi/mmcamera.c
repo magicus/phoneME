@@ -277,8 +277,7 @@ static HWND camera_set_preview_window(javacall_handle handle, int x, int y, int 
  */
 static javacall_handle camera_create(int appId, int playerId, 
                              jc_fmt mediaType, 
-                             const javacall_utf16* URI,
-                             long uriLength)
+                             const javacall_utf16_string URI)
 {
     camera_handle* pHandle = MALLOC(sizeof(camera_handle));
     if (NULL == pHandle) return NULL;
