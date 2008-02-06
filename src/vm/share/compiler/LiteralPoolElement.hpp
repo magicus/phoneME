@@ -86,6 +86,10 @@ public:
   void set_literal_oop(const Oop *oop) {
     set_literal_oop( oop->obj() );
   }
+
+  void oops_do( void do_oop(OopDesc**) ) {
+    do_oop( &_literal_oop );
+  }
   
   static LiteralPoolElement* allocate(OopDesc* obj, int imm32 JVM_TRAPS) {
     LiteralPoolElement* literal = COMPILER_OBJECT_ALLOCATE(LiteralPoolElement);

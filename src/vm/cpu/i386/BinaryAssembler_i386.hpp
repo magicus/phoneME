@@ -415,13 +415,6 @@ class BinaryAssembler: public BinaryAssemblerCommon {
   void emit_data(int data,
                  Relocation::Kind reloc = Relocation::no_relocation);
 
-  BinaryAssembler(CompiledMethod* compiled_method):
-    BinaryAssemblerCommon(compiled_method) {}
-
-  BinaryAssembler(CompilerState* compiler_state, 
-                  CompiledMethod* compiled_method):
-    BinaryAssemblerCommon(compiler_state, compiled_method) {}
-
   // Returns the code size in bytes
 
   void generate_sentinel() {
@@ -438,6 +431,8 @@ class BinaryAssembler: public BinaryAssemblerCommon {
 
   static bool is_signed_byte  ( const int data );
   static bool is_unsigned_byte( const int data );
+
+  friend class RelocationWriter;
 #endif
 };
 

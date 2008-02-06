@@ -134,7 +134,6 @@ CallInfo.hpp                     Top.hpp
 CallInfo.cpp                     TypeArray.hpp
 CallInfo.cpp                     CallInfo.hpp
 CallInfo.cpp                     OopDesc.inline.hpp
-CallInfo.cpp                     CodeGenerator.hpp
 CallInfo.cpp                     Compiler.hpp
 
 
@@ -644,9 +643,9 @@ BytecodeClosure.cpp              Symbol.hpp
 BytecodeClosure.cpp              Thread.hpp
 BytecodeClosure.cpp              ObjectHeap_<iarch>.hpp
 
+CallInfo.hpp                     Relocation.hpp
 CallInfo.cpp                     CallInfo.hpp
 
-CallInfo.hpp                     Relocation.hpp
 
 CompiledMethod.cpp               OopVisitor.hpp
 CompiledMethod.cpp               Method.hpp
@@ -674,20 +673,18 @@ CodeOptimizer_<carch>.cpp        Thread.hpp
 CodeOptimizer_<carch>.cpp        Compiler.hpp
 
 Addressing.hpp                   BinaryAssembler_<carch>.hpp
+Addressing.hpp                   Value.hpp
 Addressing.hpp                   Method.hpp
-Addressing.hpp                   VirtualStackFrame.hpp
 Addressing.cpp                   Compiler.hpp
 Addressing.cpp                   Addressing.hpp
 
 Addressing_<carch>.hpp           Addressing.hpp
 Addressing_<carch>.cpp           Compiler.hpp
-Addressing_<carch>.cpp           Addressing.hpp
 Addressing_<carch>.cpp           ObjectHeap_<iarch>.hpp
 
 CodeGenerator.hpp                Addressing_<carch>.hpp
 CodeGenerator.hpp                Value.hpp
 CodeGenerator.hpp                BinaryAssembler_<carch>.hpp
-CodeGenerator.hpp                VirtualStackFrame.hpp
 CodeGenerator.hpp                BytecodeClosure.hpp
 CodeGenerator.cpp                Compiler.hpp
 CodeGenerator.cpp                Throw.hpp
@@ -738,7 +735,7 @@ FPURegisterMap_<carch>.hpp       Assembler_<carch>.hpp
 FPURegisterMap_<carch>.cpp       Compiler.hpp
 FPURegisterMap_<carch>.cpp       RegisterAllocator.hpp
 
-VirtualStackFrame.hpp            CompilerObject.hpp
+VirtualStackFrame.hpp            CodeGenerator.hpp
 VirtualStackFrame.hpp            FPURegisterMap_<carch>.hpp
 VirtualStackFrame.hpp            Method.hpp
 VirtualStackFrame.hpp            Value.hpp
@@ -771,19 +768,16 @@ Location.cpp                     Location.hpp
 Location.cpp                     Compiler.hpp
 
 Value.hpp                        GlobalDefinitions.hpp
-Value.hpp                        RegisterAllocator.hpp
+Value.hpp                        InstanceClass.hpp
 Value.hpp                        ObjArrayClass.hpp
-Value.cpp                        InstanceClass.hpp
+Value.hpp                        RegisterAllocator.hpp
 Value.cpp                        Value.hpp
 Value.cpp                        Compiler.hpp
 Value.cpp                        Field.hpp
 Value.cpp                        InstanceClass.hpp
 
 Relocation.hpp                   CompiledMethod.hpp
-Relocation.hpp                   CompilerState.hpp
 Relocation.cpp                   Relocation.hpp
-
-CompilerState.hpp                LiteralPoolElement.hpp
 
 Compiler.hpp                     CompilationQueue.hpp
 Compiler.hpp                     Method.hpp
@@ -1198,6 +1192,7 @@ Assembler_<iarch>.hpp            Assembler_armthumb.hpp
 Assembler_<iarch>.hpp            Allocation.hpp
 Assembler_<iarch>.hpp            Bytecodes.hpp
 Assembler_<iarch>.hpp            Globals.hpp
+Assembler_<iarch>.hpp            CompilerObject.hpp
 Assembler_<iarch>.cpp            Assembler_<iarch>.hpp
 #endif
 
@@ -1237,6 +1232,7 @@ SourceAssembler_<iarch>.cpp      GPTableGenerator_<iarch>.hpp
 
 BinaryAssemblerCommon.hpp        Assembler_<carch>.hpp
 BinaryAssemblerCommon.hpp        CompiledMethod.hpp
+BinaryAssemblerCommon.hpp        LiteralPoolElement.hpp
 BinaryAssemblerCommon.hpp        ObjectHeap.hpp
 BinaryAssemblerCommon.hpp        Relocation.hpp
 BinaryAssemblerCommon.cpp        BinaryAssemblerCommon.hpp

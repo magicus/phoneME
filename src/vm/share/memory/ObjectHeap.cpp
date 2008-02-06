@@ -972,7 +972,7 @@ OopDesc* ObjectHeap::allocate(size_t size JVM_TRAPS) {
 //     [temp object#...]
 //     [temp object#2]
 //     [temp object#1]
-//     [temp object#0]
+//     [temp object#0]: CodeGenerator
 //     <--------------------_compiler_area_top == _heap_top
 //
 // Note that in case [2], the temp objects are allocated from the top of
@@ -983,11 +983,13 @@ OopDesc* ObjectHeap::allocate(size_t size JVM_TRAPS) {
 OopDesc* ObjectHeap::compiler_area_allocate_code(const int size JVM_TRAPS) {
   GUARANTEE(_compiler_area_temp_bottom == NULL, 
             "no temp objects can be alive when allocating new compiled code");
-  const int free_bytes = DISTANCE(_compiler_area_top, compiler_area_end());
-  if (free_bytes < size) {
-    const size_t slack = _heap_size / 32 + 4 * 1024;
-    if (compiler_area_soft_collect(size + slack) < size) {
-      Throw::out_of_memory_error(JVM_SINGLE_ARG_THROW_0);
+  {
+    const int free_bytes = DISTANCE(_compiler_area_top, compiler_area_end());
+    if( free_bytes < size ) {
+      const size_t slack = _heap_size / 32 + 4 * 1024;
+      if( compiler_area_soft_collect(size + slack) < size ) {
+        Throw::out_of_memory_error(JVM_SINGLE_ARG_THROW_0);
+      }
     }
   }
 
@@ -1733,10 +1735,12 @@ void ObjectHeap::roots_do_to( void do_oop(OopDesc**), const bool young_only,
     // We ignore the only_young flag here -- all pointers from
     // the compiled methods are scanned. This is safe, just not the fastest.
     CompiledMethodDesc* cm  = (CompiledMethodDesc*)_compiler_area_start;
-    CompiledMethodDesc* end = (CompiledMethodDesc*)
-      Compiler::current_compiled_method()->obj();
-    if( !end ) {
-      end = (CompiledMethodDesc*)_compiler_area_top;
+    CompiledMethodDesc* end = (CompiledMethodDesc*)_compiler_area_top;
+    {
+      const CodeGenerator* gen = _compiler_code_generator;
+      if( gen ) {
+        end = (CompiledMethodDesc*)gen->compiled_method()->obj();
+      }
     }
     while (cm < end) {
       const FarClassDesc* far_class = decode_far_class(cm);
@@ -1757,10 +1761,9 @@ void ObjectHeap::roots_do_to( void do_oop(OopDesc**), const bool young_only,
     }
   }
   {
-    CompiledMethodDesc* p =
-      (CompiledMethodDesc*) Compiler::current_compiled_method()->obj();
-    if( p ) {
-      p->oops_do( do_oop );
+    const CodeGenerator* gen = CodeGenerator::current();
+    if( gen ) {
+      gen->compiled_method()->obj()->oops_do( do_oop );
     }
   }
 #endif
@@ -4035,8 +4038,9 @@ void ObjectHeap::iterate(ObjectHeapVisitor* visitor) {
     }
   }
 
-  if( Compiler::current_compiled_method()->not_null() ) {
-    visitor->do_obj( Compiler::current_compiled_method() );
+  CodeGenerator* gen = CodeGenerator::current();
+  if( gen ) {
+    visitor->do_obj( gen->compiled_method() );
   }
 #endif
 }

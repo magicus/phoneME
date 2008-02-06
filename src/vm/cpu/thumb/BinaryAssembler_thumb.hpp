@@ -142,18 +142,8 @@ protected:
   CodeInterleaver*    _interleaver;
 
  protected:
-  void initialize( CompiledMethod* compiled_method ) {
+  void initialize( OopDesc* compiled_method ) {
     BinaryAssemblerCommon::initialize( compiled_method );
-    CodeInterleaver::initialize(this);
-  }      
-  BinaryAssembler( void ) {}
-  BinaryAssembler(CompiledMethod* compiled_method) {
-    initialize( compiled_method );
-  }
-  // support for suspending compilation
-  BinaryAssembler(const CompilerState* compiler_state, 
-                  CompiledMethod* compiled_method):
-    BinaryAssemblerCommon( compiler_state, compiled_method ) {
     CodeInterleaver::initialize(this);
   }      
  public:

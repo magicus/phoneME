@@ -37,16 +37,31 @@
 
 class CodeGenerator: public BinaryAssembler {
  public:
-  // construct a code generator given a compiled method and the 
-  // current compiler
-  CodeGenerator(Compiler* compiler);
-
-  // construct a code generator for resuming a suspended compilation.
-  CodeGenerator(Compiler* compiler, CompilerState* compiler_state);
-
-#if ENABLE_INLINE
-  void restore_state(CompilerState *compiler_state);
+  static CodeGenerator* allocate( const int size JVM_TRAPS ) {
+    OopDesc* compiled_method = Universe::new_compiled_method(size JVM_NO_CHECK);
+    if( compiled_method ) {
+#ifdef PRODUCT
+      CodeGenerator* gen = COMPILER_OBJECT_ALLOCATE( CodeGenerator );
+      if( gen )
+#else
+      static CodeGenerator _code_generator;
+      CodeGenerator* gen = &_code_generator;
 #endif
+      {
+        _compiler_code_generator = gen;
+        gen->initialize( compiled_method );
+        return gen;
+      }
+    }
+    return NULL;
+  }
+  static void terminate( void ) {
+    _compiler_code_generator = NULL;
+  }
+  static CodeGenerator* current( void ) {
+    return _compiler_code_generator;
+  }
+
   // generate the jmp to interpreter_method_entry for overflow
   void overflow(const Assembler::Register&, const Assembler::Register&);
   // generate the code for the method entry of the given method
@@ -63,9 +78,7 @@ class CodeGenerator: public BinaryAssembler {
   // load/store value from/to the location at the specified index
   void load_from_address  (Value& result, BasicType type,
                             MemoryAddress& address, Condition cond = always);
-  NOT_PRODUCT(virtual)
   void load_from_location (Value& result, jint index, Condition cond = always);
-  NOT_PRODUCT(virtual)
   void store_to_location  (Value& value,  jint index);
 
   // load/store value from/to given object at the specified offset
@@ -138,11 +151,9 @@ public:
   void ensure_sufficient_stack_for(int index, BasicType kind);
 
   // platform independent move operations
-  NOT_PRODUCT(virtual)
   void move(const Value& dst, const Value& src, const Condition cond = always);
   void move(Value& dst, ExtendedValue& src, Condition cond = always);
   void move(Value& dst, Oop* obj,    Condition cond = always);
-  NOT_PRODUCT(virtual)
   void move(Assembler::Register dst, Assembler::Register src,
                                      Condition cond = always);
 
@@ -335,6 +346,8 @@ public:
   void bytecode_prolog();
   void flush_epilogue(JVM_SINGLE_ARG_TRAPS);
 
+  OopDesc* finish( void );
+
  protected:
   // Generic binary operations.
   // NOTE: result must be uninitialized when this routine is called;
@@ -466,8 +479,17 @@ public:
   void flush_frame(JVM_SINGLE_ARG_TRAPS);
 
 #if ENABLE_APPENDED_CALLINFO
+  CallInfoWriter _callinfo_writer;
+  CallInfoWriter* callinfo_writer( void ) { return &_callinfo_writer; }
   void append_callinfo_record(const int code_offset JVM_TRAPS);
 #endif
+
+  void initialize( OopDesc* compiled_method ) {
+    BinaryAssemblerCommon::initialize( compiled_method );
+#if ENABLE_APPENDED_CALLINFO
+    _callinfo_writer.initialize( this->compiled_method() );
+#endif
+  }
 
   // Platform dependent stuff
 #include "incls/_CodeGenerator_pd.hpp.incl"

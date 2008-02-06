@@ -60,7 +60,7 @@ inline bool Method::resume_compilation(JVM_SINGLE_ARG_TRAPS) {
   // IMPL_NOTE: It is not usual to allocate anything in general Heap
   // (not CompilerArea) during compilation, but in this case only
   // a few OopCons objects can be created, and that is considered to be OK
-  TaskAllocationContext tmp(Compiler::suspended_compiler_state()->task_id());
+  TaskAllocationContext tmp( _compiler_code_generator->task_id() );
 #endif
   bool status = (bool)Compiler::resume_compilation(this JVM_MUST_SUCCEED);
   return status;
@@ -714,12 +714,9 @@ void Method::unlink_direct_callers() const {
   {
     Method::Raw current_compiling;
 
-    if (Compiler::is_suspended()) {
-      CompiledMethod::Raw suspended_compiled_method = 
-        Compiler::current_compiled_method();
-      if (suspended_compiled_method.not_null()) {
-        current_compiling = suspended_compiled_method().method();
-      }
+    const CodeGenerator* gen = _compiler_code_generator;
+    if( gen ) {
+      current_compiling = gen->compiled_method()->method();
     }
 
     GUARANTEE(reader.has_next(), "Must have one");

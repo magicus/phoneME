@@ -247,9 +247,7 @@ public:
 
  private:
   inline Actions merge_actions( const RawLocation* other ) const;
-  static inline CodeGenerator* code_generator( void ) {
-    return jvm_fast_globals.compiler_code_generator;
-  }
+  static inline CodeGenerator* code_generator( void );
 
   RawLocation *next_location(void) {
     return this + 1;

@@ -34,7 +34,8 @@
   template( Entry                   ) \
   template( CompilationQueueElement ) \
   template( VirtualStackFrame       ) \
-  template( LiteralPoolElement      )
+  template( LiteralPoolElement      ) \
+  template( CodeGenerator           )
 
 #define USE_COMPILER_OBJECT_HEADER 1
 
@@ -47,6 +48,8 @@ public:
     number_of_compiler_object_types,
   };
 private:
+ PRODUCT_ONLY( CompilerObject( void ) {} )
+
 #if USE_COMPILER_OBJECT_HEADER
   enum {
     size_bits = 24,

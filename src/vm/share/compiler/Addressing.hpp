@@ -39,10 +39,10 @@ class GenericAddress: public StackObj {
   static inline VirtualStackFrame* frame ( void );
 
   static inline CodeGenerator* code_generator ( void ) {
-    return jvm_fast_globals.compiler_code_generator;
+    return _compiler_code_generator;
   }
   static inline Method* method ( void ) {
-    return jvm_fast_globals.compiler_method;
+    return _compiler_method;
   }
 
   // default offsets to the low and high parts of the generic address

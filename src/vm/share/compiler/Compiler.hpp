@@ -45,9 +45,7 @@ class CompilerContextPointers {
 
 public:
   COMPILER_CONTEXT_HANDLES
-
   #undef FIELD
-  #undef DEF
 
   static int pointer_count( void ) {
     return sizeof(CompilerContextPointers) / sizeof(OopDesc*);
@@ -55,26 +53,29 @@ public:
 };
 
 #define GENERIC_COMPILER_CONTEXT_FIELDS_DO(template)\
-  template( Compiler*,          parent                      ) \
-  template( CompilerByteArray*, entry_counts_table          ) \
-  template( CompilerByteArray*, bci_flags_table             ) \
-  template( int,                saved_bci                   ) \
-  template( int,                saved_num_stack_lock_words  ) \
-  template( int,                local_base                  ) \
-  template( bool,               in_loop                     ) \
-  template( bool,               has_loops                   )
+  template( CompilationQueueElement*, compilation_queue              )\
+  template( CompilationQueueElement*, current_element                )\
+  template( EntryTableType*,          entry_table                    )\
+  template( Compiler*,                parent                         )\
+  template( CompilerByteArray*,       entry_counts_table             )\
+  template( CompilerByteArray*,       bci_flags_table                )\
+  template( int,                      saved_bci                      )\
+  template( int,                      saved_num_stack_lock_words     )\
+  template( int,                      local_base                     )\
+  template( bool,                     in_loop                        )\
+  template( bool,                     has_loops                      )
 
 #if ENABLE_INLINE
 #define INLINER_COMPILER_CONTEXT_FIELDS_DO(template)  \
-        template( int, inline_return_label_encoding )
+  template( int, inline_return_label_encoding )
 #else
 #define INLINER_COMPILER_CONTEXT_FIELDS_DO(template)
 #endif
 
 #if ENABLE_CODE_OPTIMIZER && ENABLE_NPCE
 #define SCHEDULER_COMPILER_CONTEXT_FIELDS_DO(template) \
-  template( CompilerIntArray*,  null_point_exception_ins_table       ) \
-  template( int,                codes_can_throw_null_point_exception ) \
+  template( CompilerIntArray*,  null_point_exception_ins_table       )\
+  template( int,                codes_can_throw_null_point_exception )\
   template( int,                null_point_record_counter            )
 #else
 #define SCHEDULER_COMPILER_CONTEXT_FIELDS_DO(template) 
@@ -87,42 +88,16 @@ public:
 
 class CompilerContext: public CompilerContextPointers {
 public:
+  typedef EntryArray EntryTableType;
+
   #define FIELD( type, name ) \
     type _##name;             \
-    type name         ( void ) const { return _##name; } \
-    void set_##name   ( type val ) { _##name = val;  }
+    type name         ( void ) const { return _##name;  }\
+    void set_##name   ( type val )   { _##name = val;   }\
+    void clear_##name ( void )       { set_##name( 0 ); }
 
   COMPILER_CONTEXT_FIELDS_DO(FIELD)
-
   #undef FIELD
-
-  typedef EntryArray EntryTableType;
-  EntryTableType* _entry_table;
-  EntryTableType* entry_table( void ) const { return _entry_table; }
-  void set_entry_table( EntryTableType* value ) { _entry_table = value; }
-  void clear_entry_table( void ) { _entry_table = NULL; }
-
-  CompilationQueueElement* _compilation_queue;
-  CompilationQueueElement* compilation_queue ( void ) const {
-    return _compilation_queue;
-  }
-  void clear_compilation_queue ( void ) {
-    _compilation_queue = NULL;
-  }
-  void set_compilation_queue ( CompilationQueueElement* val ) {
-    _compilation_queue = val;
-  }
-
-  CompilationQueueElement* _current_element;
-  CompilationQueueElement* current_element ( void ) const {
-    return _current_element;
-  }
-  void clear_current_element ( void ) {
-    _current_element = NULL;
-  }
-  void set_current_element ( CompilationQueueElement* val ) {
-    _current_element = val;
-  }
 
   bool valid ( void ) const { return method()->not_null(); }
 
@@ -134,39 +109,15 @@ public:
 #endif
 };
 
-#define COMPILER_STATIC_HANDLES  \
-  FIELD( CompiledMethod,          current_compiled_method ) \
-
-class CompilerStaticPointers {
-public:
-  #define FIELD( type, name )  \
-    type##Desc* _##name;       \
-    type* name        ( void )            { return (type*)&_##name;     } \
-    void clear_##name ( void )            { _##name = NULL;             } \
-    void set_##name   ( OopDesc* val )    { _##name = (type##Desc*)val; } \
-    void set_##name   ( const type* val ) { set_##name( val->obj() );   }
-
-  COMPILER_STATIC_HANDLES
-  #undef FIELD
-
-  static int pointer_count( void ) {
-    return sizeof(CompilerStaticPointers) / sizeof(OopDesc*);
-  }
-
-  bool valid ( void ) const { return _current_compiled_method != NULL; }
-
-  void oops_do( void do_oop(OopDesc**) );
-};
-
 #define COMPILER_STATIC_FIELDS_DO(template)\
   template( VirtualStackFrame*, frame                   )\
   template( VirtualStackFrame*, conforming_frame        )\
   template( VirtualStackFrame*, cached_preserved_frame  )\
-  template( Compiler*, root                             )\
-  template( Compiler*, current                          )\
-  template( bool,      omit_stack_frame                 )
+  template( Compiler*,          root                    )\
+  template( Compiler*,          current                 )\
+  template( bool,               omit_stack_frame        )
 
-class CompilerStatic: public CompilerStaticPointers {
+class CompilerStatic {
  public:
   #define DECLARE_FIELD( type, name ) type _##name;
   COMPILER_STATIC_FIELDS_DO(DECLARE_FIELD)
@@ -189,29 +140,20 @@ class Compiler: public StackObj {
   static jlong          _last_frame_time_stamp;
 
  public:
+  typedef CompilerContext::EntryTableType EntryTableType;
+
   #define DEFINE_ACCESSOR( type, name ) \
     static type name       ( void )          { return _state._##name;    } \
     static void set_##name ( type name )     { _state._##name = name;    }
   COMPILER_STATIC_FIELDS_DO(DEFINE_ACCESSOR)
-
   #undef DEFINE_ACCESSOR
-
-  #define FIELD( type, name ) \
-    static type* name       ( void )         { return _state.name();     } \
-    static void clear_##name( void )         { _state.clear_##name();    } \
-    static void set_##name( OopDesc* val )   { _state.set_##name( val ); } \
-    static void set_##name( const type* val ){ _state.set_##name( val ); }
-
-  COMPILER_STATIC_HANDLES
-
-  #undef FIELD
 
   #define DEFINE_ACCESSOR( type, name ) \
     type name                  ( void ) const { return _context.name();   } \
     void set_##name            ( type name )  { _context.set_##name(name);} \
+    void clear_##name          ( void )       { _context.clear_##name();  } \
     static type current_##name ( void )       { return current()->name(); }
   COMPILER_CONTEXT_FIELDS_DO(DEFINE_ACCESSOR)
-
   #undef DEFINE_ACCESSOR
 
   #define FIELD( type, name ) \
@@ -222,38 +164,6 @@ class Compiler: public StackObj {
     static type* current_##name ( void ) { return current()->name();   }
   COMPILER_CONTEXT_HANDLES
   #undef FIELD
-
-  typedef CompilerContext::EntryTableType EntryTableType;
-  EntryTableType* entry_table( void ) const {
-    return _context.entry_table();
-  }
-  void clear_entry_table ( void )        { _context.clear_entry_table();    }
-  void set_entry_table   ( EntryTableType* val ) {
-    _context.set_entry_table( val );
-  }
-  static EntryTableType* current_entry_table( void ) {
-    return current()->entry_table();
-  }
-
-  CompilationQueueElement* compilation_queue ( void ) const {
-    return _context.compilation_queue();
-  }
-  void clear_compilation_queue ( void ) {
-    _context.clear_compilation_queue();
-  }
-  void set_compilation_queue ( CompilationQueueElement* val ) {
-    _context.set_compilation_queue( val );
-  }
-
-  CompilationQueueElement* current_element ( void ) const {
-    return _context.current_element();
-  }
-  void clear_current_element ( void ) {
-    _context.clear_current_element();
-  }
-  void set_current_element ( CompilationQueueElement* val ) {
-    _context.set_current_element( val );
-  }
 
   // Constructor and deconstructor.
   Compiler( Method* method, const int active_bci );
@@ -266,7 +176,7 @@ class Compiler: public StackObj {
   ~Compiler();
 
   // Called during VM start-up
-  static void initialize();
+  static void initialize( void );
 
   // Compiles the method and returns the result.
   // ^CompiledMethod
@@ -285,12 +195,11 @@ class Compiler: public StackObj {
   static void abort_active_compilation(bool is_permanent JVM_TRAPS);
 
   static CodeGenerator* code_generator( void ) {
-    return jvm_fast_globals.compiler_code_generator;
+    return _compiler_code_generator;
   }
 
-  void set_code_generator(CodeGenerator* value) {
-    _closure.set_code_generator(value);
-    jvm_fast_globals.compiler_code_generator = value;
+  static CompiledMethod* current_compiled_method( void ) {
+    return code_generator()->compiled_method();
   }
 
   static BytecodeCompileClosure* closure( void ) {
@@ -518,7 +427,6 @@ class Compiler: public StackObj {
   static void print_compilation_history() PRODUCT_RETURN;
 
  private:
-  static CompilerState _suspended_compiler_state;
   static CompilerContext _suspended_compiler_context;
  public:
   static void on_timer_tick(bool is_real_time_tick JVM_TRAPS);
@@ -529,14 +437,11 @@ class Compiler: public StackObj {
     return !is_inlining() &&
            (ExcessiveSuspendCompilation || Os::check_compiler_timer());
   }
-  static CompilerState* suspended_compiler_state( void ) {
-    return &_suspended_compiler_state;
-  }
   static CompilerContext* suspended_compiler_context( void ) {
     return &_suspended_compiler_context;
   }
   static bool is_suspended ( void ) {
-    return suspended_compiler_state()->valid();
+    return _compiler_code_generator != NULL;
   }
 
   static void oops_do( void do_oop(OopDesc**) );
@@ -726,7 +631,6 @@ class Compiler: public StackObj {
   ReturnOop allocate_and_compile( const int compiled_code_factor JVM_TRAPS );
 
   inline void check_free_space ( JVM_SINGLE_ARG_TRAPS ) const;
-  void internal_compile        ( JVM_SINGLE_ARG_TRAPS );
   void begin_compile           ( JVM_SINGLE_ARG_TRAPS );
   void suspend                 ( void );
   void restore_and_compile     ( JVM_SINGLE_ARG_TRAPS );
@@ -736,9 +640,16 @@ class Compiler: public StackObj {
   void process_compilation_queue ( JVM_SINGLE_ARG_TRAPS );
   static void terminate ( OopDesc* result );
   bool reserve_compiler_area(size_t compiled_method_size);
-
   void handle_out_of_memory( void );
   static void set_impossible_to_compile(Method *method, const char why[]);
+
+  void set_code_generator( CodeGenerator* gen ) {
+    _closure.set_code_generator( gen );
+  }
+  void set_code_generator( void ) {
+    set_code_generator( _compiler_code_generator );
+  }
+
 #if ENABLE_PERFORMANCE_COUNTERS
   void init_performance_counters(bool is_resume);
   void update_performance_counters(bool is_resume, OopDesc* result);
@@ -771,11 +682,6 @@ class Compiler: public StackObj {
 #endif
 
 private:
-#if ENABLE_APPENDED_CALLINFO
-  static CallInfoWriter _callinfo_writer;
-
-  static CallInfoWriter* callinfo_writer() { return &_callinfo_writer; }
-#endif
 
 #if ENABLE_CODE_PATCHING
 public:

@@ -116,7 +116,6 @@
 #define CompiledMethodDesc  JVMCompiledMethodDesc
 #define Compiler  JVMCompiler
 #define CompilerLiteralAccessor  JVMCompilerLiteralAccessor
-#define CompilerState  JVMCompilerState
 #define CompilerStatePointers  JVMCompilerStatePointers
 #define CompilerStatic  JVMCompilerStatic
 #define CompilerStaticPointers  JVMCompilerStaticPointers
@@ -497,7 +496,6 @@ class CompilationQueueElement;
 class CompiledMethod;
 class CompiledMethodDesc;
 class Compiler;
-class CompilerState;
 class CodeGenerator;
 class ConstantPool;
 class ConstantPoolDesc;

@@ -90,88 +90,29 @@ class Relocation {
 };
 
 class RelocationStream : public Relocation {
- public:
-  CompiledMethod* compiled_method( void ) const {
-    return _compiled_method;
-  }
-  jint current_relocation_offset( void ) const {
-    return _current_relocation_offset;
-  }
-
-  jushort* current_address( void ) const {
-    return _compiled_method->obj()->
-           ushort_field_addr(_current_relocation_offset);
-  }
-  
-  void save_state(CompilerState* compiler_state) const {
-    compiler_state->set_current_relocation_offset(_current_relocation_offset);
-    compiler_state->set_current_code_offset      (_current_code_offset);
-    compiler_state->set_current_oop_relocation_offset(_current_oop_relocation_offset);
-    compiler_state->set_current_oop_code_offset  (_current_oop_code_offset);
-  }
-
-#if ENABLE_INLINE
-  void restore_state(const CompilerState* compiler_state) {
-    _current_relocation_offset      = compiler_state->current_relocation_offset();
-    _current_code_offset            = compiler_state->current_code_offset();
-    _current_oop_relocation_offset  = compiler_state->current_oop_relocation_offset();
-    _current_oop_code_offset        = compiler_state->current_oop_code_offset();
-  }
-
-  void set_compiled_method(CompiledMethod* method) {
-   _compiled_method = method;
-  }
-#endif
-
-  // This is called after the compiled method has been expanded in-place
-  // (by moving the relocation data to higher address)
-  void move(int delta) {
-    _current_relocation_offset += delta;
-    GUARANTEE(_current_relocation_offset >= 0, "sanity");
-    GUARANTEE(_current_relocation_offset < 
-              (int)_compiled_method->object_size(), "sanity");
-    _current_oop_relocation_offset += delta;
-    GUARANTEE(_current_oop_relocation_offset >= 0, "sanity");
-    GUARANTEE(_current_oop_relocation_offset < 
-              (int)_compiled_method->object_size(), "sanity");
-  }
-
  protected:
   RelocationStream(void) {}
-  RelocationStream(CompiledMethod* compiled_method) {
-    initialize(compiled_method);
-  }
-  RelocationStream(const CompilerState* compiler_state,
-                   CompiledMethod* compiled_method) {
-    initialize(compiler_state, compiled_method);    
-  }
 
   void initialize(CompiledMethod* compiled_method) {
-    _compiled_method            = compiled_method;
     _current_relocation_offset  = compiled_method->end_offset();
     decrement();
     _current_code_offset        = 0;
     _current_oop_relocation_offset = _current_relocation_offset;
     _current_oop_code_offset    = 0;
   }
-  void initialize(const CompilerState* compiler_state,
-                  CompiledMethod* compiled_method) {
-    _compiled_method                = compiled_method;
-    _current_relocation_offset      = compiler_state->current_relocation_offset();
-    _current_code_offset            = compiler_state->current_code_offset();
-    _current_oop_relocation_offset  = compiler_state->current_oop_relocation_offset();
-    _current_oop_code_offset        = compiler_state->current_oop_code_offset();
-  }
 
   void decrement(const jint items = 1) {
     _current_relocation_offset -= items * sizeof(jushort);
   }
 
-  CompiledMethod* _compiled_method;
-  jint            _current_relocation_offset;
-  jint            _current_code_offset;
-  jint            _current_oop_relocation_offset;
-  jint            _current_oop_code_offset;
+  jushort* current_address( OopDesc* method ) const {
+    return method->ushort_field_addr(_current_relocation_offset);
+  }
+
+  jint _current_relocation_offset;
+  jint _current_code_offset;
+  jint _current_oop_relocation_offset;
+  jint _current_oop_code_offset;
 
   friend class BinaryAssemblerCommon;
 };
@@ -182,7 +123,9 @@ inline int sign_extend(int x, int field_length) {
 
 class RelocationReader: public RelocationStream {
  private: 
-  void update_current() {
+  CompiledMethod* _compiled_method;
+
+  void update_current( void ) {
     _current_code_offset += 
       sign_extend(bitfield(current(), 0, offset_width), offset_width);
   }
@@ -191,8 +134,9 @@ class RelocationReader: public RelocationStream {
   void skip_callinfo();
 #endif
  public:
-  RelocationReader(CompiledMethod* compiled_method)
-      : RelocationStream(compiled_method) {
+  RelocationReader(CompiledMethod* compiled_method) {
+    _compiled_method = compiled_method;
+    initialize( compiled_method );
 #if ENABLE_APPENDED_CALLINFO
     skip_callinfo();
 #endif
@@ -206,23 +150,23 @@ class RelocationReader: public RelocationStream {
 #endif
 
   // Tells whether we are at the end of the stream.
-  bool at_end() const {
+  bool at_end( void ) const {
     return current() == 0;
   }
 
   // Accessors for current relocation pair
-  Kind kind() const {
+  Kind kind( void ) const {
     return (Kind) bitfield(current(), offset_width, type_width);
   }
-  int code_offset() {
+  int code_offset( void ) {
     return _current_code_offset;
   }
 
   // Advance to next relocation pair
-  void advance();
+  void advance( void );
 
-  jushort current(jint offset = 0) const {
-    return current_address()[-offset];
+  jushort current(const jint offset = 0) const {
+    return current_address( _compiled_method->obj() )[-offset];
   }
 
   void print_comment_on(Stream* st) {

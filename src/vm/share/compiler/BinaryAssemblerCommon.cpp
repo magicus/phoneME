@@ -31,8 +31,7 @@
 
 void BinaryAssemblerCommon::emit_ushort(const jushort value) {
   if( has_room_for(sizeof(jushort)) ) {
-    compiled_method()->ushort_field_put(_relocation.current_relocation_offset(),
-                                        value);
+    compiled_method()->ushort_field_put(current_relocation_offset(), value);
   } 
   // IMPL_NOTE: This code looks bogus and should be fixed. However, don't
   // just move this decrement() into the "if" block above. Some code may depend on
@@ -220,7 +219,7 @@ void BinaryAssemblerCommon::emit_vsf(const VirtualStackFrame* frame) {
   // Signal overflow if there's not enough space in compiled code
   const int items_required = - reg_location[Assembler::number_of_registers];
   ensure_compiled_method_space(2 * items_required);
-  jushort* pool = _relocation.current_address() + 1;
+  jushort* pool = _relocation.current_address(_compiled_method) + 1;
   _relocation.decrement(items_required);
 
   // 2nd pass: fill in the map
@@ -287,7 +286,14 @@ void BinaryAssemblerCommon::ensure_compiled_method_space( int delta ) {
     delta = align_allocation_size(delta + (1024 - 256));
     if( compiled_method()->expand_compiled_code_space(delta,
                                                       relocation_size())) {
-      _relocation.move(delta);
+      _relocation._current_relocation_offset += delta;
+      GUARANTEE(_relocation._current_relocation_offset >= 0, "sanity");
+      GUARANTEE(_relocation._current_relocation_offset < 
+              (int)compiled_method()->object_size(), "sanity");
+      _relocation._current_oop_relocation_offset += delta;
+      GUARANTEE(_relocation._current_oop_relocation_offset >= 0, "sanity");
+      GUARANTEE(_relocation._current_oop_relocation_offset < 
+              (int)compiled_method()->object_size(), "sanity");
     }
   }
 }

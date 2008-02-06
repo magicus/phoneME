@@ -34,38 +34,11 @@
 
 #if ENABLE_COMPILER
 
-PRODUCT_ONLY(inline)
-CodeGenerator::CodeGenerator(Compiler* compiler)
-  : BinaryAssembler(compiler->current_compiled_method())
-{
-  compiler->set_code_generator(this);
-}
-
-PRODUCT_ONLY(inline)
-CodeGenerator::CodeGenerator(Compiler* compiler,
-                                    CompilerState* compiler_state)
-  : BinaryAssembler(compiler_state, compiler->current_compiled_method())
-{
-  compiler->set_code_generator(this);
-}
-
 CompilerStatic  Compiler::_state;
-CompilerState   Compiler::_suspended_compiler_state;
 CompilerContext Compiler::_suspended_compiler_context;
 
-inline void CompilerStaticPointers::oops_do( void do_oop(OopDesc**) ) {
-  if( valid() ) {
-    OopDesc** p = (OopDesc**) this;
-    for( int i = pointer_count(); --i >= 0; p++ ) {
-      do_oop( p );
-    }
-  }
-}
-
 inline void CompilerStatic::cleanup( void ) {
-  if( valid() ) {
-    jvm_memset( this, 0, sizeof *this );
-  }
+  jvm_memset( this, 0, sizeof *this );
 }
 
 inline void CompilerContext::oops_do( void do_oop(OopDesc**) ) {
@@ -82,9 +55,6 @@ inline void CompilerContext::oops_do( void do_oop(OopDesc**) ) {
 
 inline void CompilerContext::cleanup( void ) {
   if( valid() ) {
-    if (parent() != NULL) {
-      parent()->context()->cleanup();
-    }
     jvm_memset( this, 0, sizeof *this );
   }
 }
@@ -95,10 +65,6 @@ Compiler::CompilationFailure    Compiler::_failure;
 #ifndef PRODUCT
 Compiler::CompilationHistory*   Compiler::_history_head;
 Compiler::CompilationHistory*   Compiler::_history_tail;
-#endif
-
-#if ENABLE_APPENDED_CALLINFO
-CallInfoWriter Compiler::_callinfo_writer;
 #endif
 
 Compiler::Compiler( Method* method, const int active_bci ) {
@@ -170,7 +136,6 @@ Compiler::~Compiler() {
       parent_compiler->saved_num_stack_lock_words();
   } else {
     set_root(NULL);
-    set_code_generator( NULL ); // in globals for GC
   }
   set_current(parent_compiler);
 }
@@ -178,7 +143,6 @@ Compiler::~Compiler() {
 // Called during VM start-up
 void Compiler::initialize() {
   jvm_memset(&_state, 0, sizeof(_state));
-  jvm_memset(&_suspended_compiler_state, 0, sizeof(_suspended_compiler_state));
   jvm_memset(&_suspended_compiler_context, 0, 
              sizeof(_suspended_compiler_context));
 #if ENABLE_PERFORMANCE_COUNTERS && ENABLE_DETAILED_PERFORMANCE_COUNTERS
@@ -298,8 +262,6 @@ void Compiler::on_timer_tick(bool is_real_time_tick JVM_TRAPS) {
         && current_compiling.obj() == frame.method() ) {
       frame.osr_replace_frame(bci);
     }
-    GUARANTEE( Compiler::is_suspended() ==
-               Compiler::current_compiled_method()->not_null(), "sanity");
   }
 }
 
@@ -366,25 +328,11 @@ void Compiler::process_interpretation_log() {
 
 
 void Compiler::oops_do( void do_oop(OopDesc**) ) {
-  _state.oops_do( do_oop );
   _suspended_compiler_context.oops_do( do_oop );
   if (is_active()) {
     current()->context()->oops_do( do_oop );
   }
-#if USE_LITERAL_POOL
-  {
-    const CodeGenerator* gen = code_generator();
-    if( gen || _suspended_compiler_state.valid() ) {
-      LiteralPoolElement* p = _suspended_compiler_state.first_literal();
-      if( gen ) {
-        p = gen->_first_literal;
-      }
-      for( ; p != NULL; p = p->_next ) {
-        do_oop( &p->_literal_oop );
-      }
-    }
-  }
-#endif
+  code_generator()->oops_do( do_oop );
 }
 
 void Compiler::terminate ( OopDesc* result ) {
@@ -405,7 +353,7 @@ void Compiler::terminate ( OopDesc* result ) {
     }
 #endif
   }
-  _suspended_compiler_state.dispose();
+  CodeGenerator::terminate();
   _state.cleanup();
   _suspended_compiler_context.cleanup();
   ObjectHeap::update_compiler_area_top( result );
@@ -444,7 +392,7 @@ ReturnOop Compiler::allocate_and_compile(const int compiled_code_factor
   }
 #endif
 
-  set_code_generator( NULL ); // reserve_compiler_area() may cause a GC
+  jvm_fast_globals.compiler_code_generator = NULL;
 
   const jint size = align_allocation_size(1024 + (method()->code_size() *
                                             compiled_code_factor));
@@ -455,11 +403,6 @@ ReturnOop Compiler::allocate_and_compile(const int compiled_code_factor
     return NULL;
   }
 
-  if( TraceCompiledMethodCache ) {
-    TTY_TRACE_CR(( "allocation size: %d, CompiledCodeFactor: %d",
-        size, compiled_code_factor ));
-  };
-
   if( CompiledMethodCache::alloc() == CompiledMethodCache::UndefIndex ) {
     if( TraceCompiledMethodCache ) {
       TTY_TRACE_CR(("out of cache indices"));
@@ -467,22 +410,23 @@ ReturnOop Compiler::allocate_and_compile(const int compiled_code_factor
     return NULL;
   }
 
+  if( TraceCompiledMethodCache ) {
+    TTY_TRACE_CR(( "allocation size: %d, CompiledCodeFactor: %d",
+        size, compiled_code_factor ));
+  };
+
   set_bci(0);
 
   // Allocate a compiled method.
-  UsingFastOops fast_oops;
-  CompiledMethod::Fast result =Universe::new_compiled_method(size JVM_NO_CHECK);
-  if (CURRENT_HAS_PENDING_EXCEPTION) {
+  CodeGenerator* gen = CodeGenerator::allocate(size JVM_NO_CHECK);
+  if( gen == NULL ) {
     if( TraceCompiledMethodCache ) {
       TTY_TRACE_CR(( "Compilation FAILED - out of memory" ));
     }
     return NULL;
   }
-  *current_compiled_method() = result;
-  result().set_method(method());
-#if ENABLE_APPENDED_CALLINFO
-  _callinfo_writer.initialize(current_compiled_method());
-#endif
+  set_code_generator();
+  current_compiled_method()->set_method(method());
 
 #if USE_COMPILER_COMMENTS
   if (PrintCompilation || PrintCompiledCode || PrintCompiledCodeAsYouGo) {
@@ -498,9 +442,15 @@ ReturnOop Compiler::allocate_and_compile(const int compiled_code_factor
   }
 #endif
 
-  // Instantiate a code generator.
-  CodeGenerator code_generator(this);
-  internal_compile( JVM_SINGLE_ARG_NO_CHECK );
+  begin_compile( JVM_SINGLE_ARG_NO_CHECK );
+  if( CURRENT_HAS_PENDING_EXCEPTION ) {
+    handle_out_of_memory();
+  } else {
+    process_compilation_queue( JVM_SINGLE_ARG_NO_CHECK );
+  }
+
+  UsingFastOops fast_oops;
+  CompiledMethod::Fast result = current_compiled_method();
   switch( _failure ) {
     default:
       // Zap the unused contents in order not to confuse ObjectHeap::verify()
@@ -523,13 +473,11 @@ ReturnOop Compiler::allocate_and_compile(const int compiled_code_factor
 
 /*
  * The chain of command:
- *       Compiler::compile()
+ * Compiler::compile()
  *  calls Compiler::try_to_compile()
  *   calls Compiler::allocate_and_compile()
- *    calls Compiler::internal_compile()
- *     calls - begin_compile()
- *           - process_compilation_queue()
- *           - end_compile()
+ *    calls - begin_compile()
+ *          - process_compilation_queue()
  */
 ReturnOop Compiler::compile(Method* method, int active_bci JVM_TRAPS) {
   // Bail out if the method is impossible to compile
@@ -654,22 +602,7 @@ inline void Compiler::handle_out_of_memory( void ) {
   method()->set_double_size();
 }
 
-inline void Compiler::internal_compile( JVM_SINGLE_ARG_TRAPS ) {
-  begin_compile( JVM_SINGLE_ARG_NO_CHECK );
-  if( CURRENT_HAS_PENDING_EXCEPTION ) {
-    handle_out_of_memory();
-    return;
-  }
-  process_compilation_queue( JVM_SINGLE_ARG_NO_CHECK );
-}
-
 inline void Compiler::suspend( void ) {
-  CompilerState* suspended_state = &_suspended_compiler_state;
-  suspended_state->allocate();
-#if ENABLE_ISOLATES
-  suspended_state->set_task_id(Task::current_id());
-#endif
-  code_generator()->save_state( suspended_state );
   GUARANTEE(parent() == NULL, "Cannot suspend while inlining");
   _suspended_compiler_context = *context();
 }
@@ -859,48 +792,7 @@ void Compiler::process_compilation_queue( JVM_SINGLE_ARG_TRAPS ) {
     return;
   }
 
-  {
-    COMPILER_PERFORMANCE_COUNTER_IN_BLOCK(sentinel);
-    // Insert terminating sentinel.
-    code_generator()->generate_sentinel();
-  }
-
-  check_free_space( JVM_SINGLE_ARG_NO_CHECK );
-  if( CURRENT_HAS_PENDING_EXCEPTION ) {
-    goto Failure;
-  }
-
-#if ENABLE_APPENDED_CALLINFO
-  _callinfo_writer.commit_table();
-#endif
-
-  {
-    // Shrink compiled method object to correct size
-    const jint code_size = code_generator()->code_size();
-    const jint relocation_size = code_generator()->relocation_size();
-
-    INCREMENT_COMPILER_PERFORMANCE_COUNTER(relocation, relocation_size);
-    result = current_compiled_method();
-    result().shrink(code_size, relocation_size);
-#if ENABLE_TTY_TRACE
-    if( Verbose || PrintCompilation ) {
-      if (VerbosePointers) {
-        TTY_TRACE_CR((" [compiled method (0x%x) size=%d, code=%d, reloc=%d, "
-                      "entry=0x%x]",
-          result().obj(), result().object_size(), code_size, relocation_size,
-          result().entry() ));
-      } else {
-        TTY_TRACE_CR((" [compiled method size=%d, code=%d, reloc=%d]",
-          result().object_size(), code_size, relocation_size ));
-      }
-    }
-
-    if( PrintCompiledCode && OptimizeCompiledCodeVerbose ) {
-      tty->print_cr("Before Optimization:");
-      result().print_code_on(tty);
-    }
-#endif
-  }
+  result = code_generator()->finish();
 
 #if !ENABLE_INTERNAL_CODE_OPTIMIZER
   optimize_code(JVM_SINGLE_ARG_NO_CHECK);
@@ -961,7 +853,6 @@ void Compiler::process_compilation_queue( JVM_SINGLE_ARG_TRAPS ) {
   //
   Compiler::update_checkpoints_table(&result);
 #endif
-
   _failure = none;
   return;
 
@@ -1024,15 +915,7 @@ ReturnOop Compiler::try_to_compile(Method* method, const int active_bci,
     Thread::clear_current_pending_exception();
   }
 
-  if (!is_suspended()) {
-    // At this point, no handles and no heap objects should point to
-    // any space higher than <result> (where temporary objects such as
-    // CompilationQueueElements were allocated during
-    // compilation). The following call will update
-    // ObjectHeap::_compiler_area_top and effectively discard all such
-    // temporary objects. If the compilation failed (result=0)
-    // _compiler_area_top will be restored to the value before the
-    // last compilation started.
+  if( _failure != out_of_time ) {
     terminate( result );
   }
   return result;
@@ -1120,8 +1003,7 @@ void Compiler::abort_active_compilation(bool is_permanent JVM_TRAPS) {
 }
 
 inline void Compiler::restore_and_compile( JVM_SINGLE_ARG_TRAPS ) {
-  CodeGenerator code_generator(this, suspended_compiler_state() );
-  suspended_compiler_state()->dispose();  
+  set_code_generator();
   *context() = _suspended_compiler_context;
   GUARANTEE(parent() == NULL, "Cannot suspend while inlining");
   process_compilation_queue( JVM_SINGLE_ARG_NO_CHECK );

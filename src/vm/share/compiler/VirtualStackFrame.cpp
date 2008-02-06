@@ -1760,6 +1760,7 @@ void VirtualStackFrame::verify_conform_to(VirtualStackFrame* other) {
   }
 #endif
 
+#if ENABLE_VSF_MERGE_TEST
   {
 #if ENABLE_TTY_TRACE
     TemporaryModifyGlobal print(&PrintCompiledCodeAsYouGo, VerboseVSFMerge);
@@ -1768,6 +1769,7 @@ void VirtualStackFrame::verify_conform_to(VirtualStackFrame* other) {
     SETUP_ERROR_CHECKER_ARG;
     VSFMergeTest::verify_merge(this, other JVM_CHECK);
   }
+#endif
 }
 #endif // PRODUCT
 

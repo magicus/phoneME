@@ -457,6 +457,7 @@ void CompilerTest::print_summary() {
   template(VSF_MERGE_SUITE)                                 
 
 void CompilerTest::run_test_cases() {
+#if ENABLE_VSF_MERGE_TEST
   const JvmPathChar * const config_file_name = 
     Arguments::compiler_test_config_file();
   if (config_file_name == NULL) {
@@ -537,6 +538,7 @@ void CompilerTest::run_test_cases() {
   }
 
   OsFile_close(config_file);
+#endif
 }
 
 int CompilerTest::read_line(OsFile_Handle file, char buffer[], size_t length) {

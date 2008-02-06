@@ -544,13 +544,17 @@ void vsf() {
 }
 
 void dis() {
-  DebugHandleMarker debug_handle_marker;
-  CompiledMethod* compiled_method = 
-      Compiler::code_generator()->compiled_method();
-  compiled_method->print_name_on(tty);
-  compiled_method->print_code_on(tty);
-  VirtualStackFrame* frame = Compiler::current()->frame();
-  frame->dump_fp_registers(false);
+  CodeGenerator* gen = CodeGenerator::current();
+  if( !gen ) {
+    DebugHandleMarker debug_handle_marker;
+    CompiledMethod* compiled_method = gen->compiled_method();
+    compiled_method->print_name_on(tty);
+    compiled_method->print_code_on(tty);
+    VirtualStackFrame* frame = Compiler::current()->frame();
+    frame->dump_fp_registers(false);
+  } else {
+    tty->print_cr("  (compiler not active)");
+  }
 }
 
 void fpu() {

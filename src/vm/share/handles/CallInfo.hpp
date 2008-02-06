@@ -87,7 +87,15 @@ class CallInfoWriter {
     EXPANSION_DELTA = 256
   };
  public:
-  void initialize(CompiledMethod * const compiled_method);
+  void initialize(CompiledMethod * const compiled_method) {
+    _compiled_method = compiled_method;
+    _current_callinfo_code_offset = 0;
+    _current_record_offset = 0;
+    _compressed_stackmap_length = 0;
+    _previous_stackmap_offset = 0;
+    _previous_stackmap_size = 0;
+  }
+
   // Returns false if failed to allocate a new record in the table.
   void start_record(int code_offset, int bci, int stackmap_size JVM_TRAPS);
   void write_oop_tag_at(const int index);

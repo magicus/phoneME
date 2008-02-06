@@ -28,9 +28,17 @@
 
 class BinaryAssemblerCommon: public Macros {
  private:
-  RelocationStream _relocation;
+  RelocationStream    _relocation;
+  OopDesc*            _compiled_method;
+#if ENABLE_ISOLATES
+  // The ID of the task that started this compilation. Compilation uses
+  // information that are specific to a task's context -- for example, 
+  // class_ids. Hence, a compilation must be resumed under the correct 
+  // task context.
+  int                 _task_id;
+#endif
  protected:
-  jint             _code_offset;
+  jint                _code_offset;
 #if USE_LITERAL_POOL
   LiteralPoolElement* _first_literal;
   LiteralPoolElement* _first_unbound_literal;
@@ -48,45 +56,26 @@ class BinaryAssemblerCommon: public Macros {
 #if ENABLE_THUMB_COMPILER
   int                 _unbound_branch_literal_count;
 #endif
-  friend class Compiler; // for oops_do only
 #endif
 
-  void initialize( CompiledMethod* compiled_method ) {
-    _relocation.initialize( compiled_method );
-    _code_offset     = 0;
+  void initialize( OopDesc* compiled_method ) {
+    set_compiled_method( compiled_method );
+    _relocation.initialize( this->compiled_method() );
+#if ENABLE_ISOLATES
+    _task_id = Task::current_id();
+#endif
+    // In PRODUCT CompilerObject is filled with zeroes
+    NOT_PRODUCT( _code_offset                   = 0;    )
 #if USE_LITERAL_POOL
-    _first_literal         = NULL;
-    _first_unbound_literal = NULL;
-    _last_literal          = NULL;
+    NOT_PRODUCT( _first_literal                 = NULL; )
+    NOT_PRODUCT( _first_unbound_literal         = NULL; )
+    NOT_PRODUCT( _last_literal                  = NULL; )
 #if ENABLE_THUMB_COMPILER
-    _first_unbound_branch_literal = NULL;
-    _last_unbound_branch_literal  = NULL;
-    _unbound_branch_literal_count = 0;
+    NOT_PRODUCT( _first_unbound_branch_literal  = NULL; )
+    NOT_PRODUCT( _last_unbound_branch_literal   = NULL; )
+    NOT_PRODUCT( _unbound_branch_literal_count  = 0;    )
 #endif
     zero_literal_count();
-#endif
-  }
-  BinaryAssemblerCommon( void ) {}
-  BinaryAssemblerCommon(CompiledMethod* compiled_method) {
-    initialize( compiled_method );
-  }
-  BinaryAssemblerCommon(const CompilerState* compiler_state,
-                        CompiledMethod* compiled_method)
-    : _relocation( compiler_state, compiled_method ) {
-    _code_offset     = compiler_state->code_size();
-#if USE_LITERAL_POOL
-    _first_literal         = compiler_state->first_literal();
-    _first_unbound_literal = compiler_state->first_unbound_literal();
-    _last_literal          = compiler_state->last_literal();
-#if ENABLE_THUMB_COMPILER
-    _first_unbound_branch_literal = compiler_state->first_unbound_branch_literal();
-    _last_unbound_branch_literal  = compiler_state->last_unbound_branch_literal();
-    _unbound_branch_literal_count = compiler_state->unbound_branch_literal_count();
-#endif
-
-    _unbound_literal_count                     = compiler_state->unbound_literal_count();
-    _code_offset_to_force_literals             = compiler_state->code_offset_to_force_literals();
-    _code_offset_to_desperately_force_literals = compiler_state->code_offset_to_desperately_force_literals();
 #endif
   }
 
@@ -126,33 +115,33 @@ class BinaryAssemblerCommon: public Macros {
   void emit_osr_entry(const jint bci) { 
     emit_relocation(Relocation::osr_stub_type, _code_offset, bci); 
   }
-
-  void save_state( CompilerState* compiler_state ) const {
-    compiler_state->set_code_size(_code_offset);
-    _relocation.save_state(compiler_state);
-#if USE_LITERAL_POOL
-    compiler_state->set_first_literal        ( _first_literal );
-    compiler_state->set_first_unbound_literal( _first_unbound_literal );
-    compiler_state->set_last_literal         ( _last_literal );
-
-#if ENABLE_THUMB_COMPILER
-    compiler_state->set_first_unbound_branch_literal(_first_unbound_branch_literal);
-    compiler_state->set_last_unbound_branch_literal(_last_unbound_branch_literal);
-    compiler_state->set_unbound_branch_literal_count(_unbound_branch_literal_count);
-#endif
-
-    compiler_state->set_unbound_literal_count( _unbound_literal_count );
-    compiler_state->set_code_offset_to_force_literals( _code_offset_to_force_literals );
-    compiler_state->set_code_offset_to_desperately_force_literals( _code_offset_to_desperately_force_literals );
-#endif
-  }
-
   BinaryAssembler* assembler( void ) { return (BinaryAssembler*)this; }
-        
+
   CompiledMethod* compiled_method( void ) const {
-    return _relocation.compiled_method();
+    return (CompiledMethod*) &_compiled_method;
+  }
+  void set_compiled_method(OopDesc* method) {
+    _compiled_method = method;
+  }
+  void set_compiled_method(CompiledMethod* method) {
+    set_compiled_method( method->obj() );
   }
 
+#if ENABLE_ISOLATES
+  int task_id( void ) const { return _task_id; }
+#endif
+
+  void oops_do( void do_oop(OopDesc**) ) {
+    if( this ) {
+      do_oop( &_compiled_method );
+#if USE_LITERAL_POOL
+      for( LiteralPoolElement* p = _first_literal; p != NULL; p = p->next() ) {
+        p->oops_do( do_oop );
+      }
+#endif
+    }
+  }
+        
   jint code_size      ( void ) const { return _code_offset; }
   jint code_end_offset( void ) const { return offset_at(code_size()); }
 
@@ -215,7 +204,7 @@ class BinaryAssemblerCommon: public Macros {
 
   // Returns the remaining free space in the compiled method.
   jint free_space( void ) const {
-    return (_relocation.current_relocation_offset() + sizeof(jushort)) - 
+    return (current_relocation_offset() + sizeof(jushort)) - 
             offset_at(code_size());
   }
 

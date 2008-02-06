@@ -154,7 +154,7 @@ int RelocationReader::code_length(CompiledMethod* cm) {
   while (!stream.at_end()) { 
     stream.advance();
   }
-  return stream.current_relocation_offset() - CompiledMethod::base_offset();
+  return stream._current_relocation_offset - CompiledMethod::base_offset();
 }
 #endif
 

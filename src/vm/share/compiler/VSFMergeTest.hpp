@@ -25,7 +25,7 @@
  */
 
 #ifndef PRODUCT
-#if ENABLE_COMPILER
+#if ENABLE_COMPILER && ENABLE_VSF_MERGE_TEST
 
 class VSFMergeTest : public AllStatic {
  public:

@@ -65,15 +65,6 @@
  *   <end bit:7-bit chunk>*
  *  The end bit indicates the end of sequence, it is set only in the last byte.
  */
-void CallInfoWriter::initialize(CompiledMethod * const compiled_method) {
-  _compiled_method = compiled_method;
-  _current_callinfo_code_offset = 0;
-  _current_record_offset = 0;
-  _compressed_stackmap_length = 0;
-  _previous_stackmap_offset = 0;
-  _previous_stackmap_size = 0;
-}
-
 void CallInfoWriter::allocate_record(size_t record_size JVM_TRAPS) {
   const int delta = 
     record_size + CallInfoRecord::table_header_size - current_record_offset();

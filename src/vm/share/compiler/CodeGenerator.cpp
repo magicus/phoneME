@@ -757,25 +757,59 @@ void CodeGenerator::conditional_jump(const BytecodeClosure::cond_op condition,
 void CodeGenerator::append_callinfo_record(const int code_offset
                                            JVM_TRAPS) {
   const int number_of_tags = frame()->virtual_stack_pointer() + 1;
-
-  CallInfoWriter * const callinfo_writer = Compiler::callinfo_writer();
-  
   const int root_bci = Compiler::root()->compiler_bci();
 
-  callinfo_writer->start_record(code_offset, root_bci, 
+  callinfo_writer()->start_record(code_offset, root_bci, 
                                 number_of_tags JVM_CHECK);
-
-  frame()->fill_callinfo_record(callinfo_writer);
-  callinfo_writer->commit_record();
+  frame()->fill_callinfo_record(callinfo_writer());
+  callinfo_writer()->commit_record();
 
 #ifdef AZZERT
   // Read back and verify this record.
-  const CompiledMethod * const cm = Compiler::current_compiled_method();
+  const CompiledMethod * const cm = compiled_method();
   CallInfoRecord callinfo(cm, (address)cm->entry() + code_offset);
   GUARANTEE(callinfo.bci() == root_bci, "Sanity");
 #endif
 }
 #endif // ENABLE_APPENDED_CALLINFO
+
+OopDesc* CodeGenerator::finish( void ) {
+  {
+    // Insert terminating sentinel.
+    COMPILER_PERFORMANCE_COUNTER_IN_BLOCK(sentinel);
+    generate_sentinel();
+  }
+
+#if ENABLE_APPENDED_CALLINFO
+  _callinfo_writer.commit_table();
+#endif
+  // Shrink compiled method object to correct size
+  const jint code_size = this->code_size();
+  const jint relocation_size = this->relocation_size();
+  INCREMENT_COMPILER_PERFORMANCE_COUNTER(relocation, relocation_size);
+
+  CompiledMethod::Raw cm( compiled_method() );
+  cm().shrink(code_size, relocation_size);
+#if ENABLE_TTY_TRACE
+  if( Verbose || PrintCompilation ) {
+    if (VerbosePointers) {
+      TTY_TRACE_CR((" [compiled method (0x%x) size=%d, code=%d, reloc=%d, "
+                    "entry=0x%x]",
+        cm().obj(), cm().object_size(), code_size, relocation_size,
+        cm().entry() ));
+    } else {
+      TTY_TRACE_CR((" [compiled method size=%d, code=%d, reloc=%d]",
+        cm().object_size(), code_size, relocation_size ));
+    }
+  }
+
+  if( PrintCompiledCode && OptimizeCompiledCodeVerbose ) {
+    tty->print_cr("Before Optimization:");
+    cm().print_code_on(tty);
+  }
+#endif  
+  return cm;
+}
 
 class ForwardBranchOptimizer : public BytecodeClosure {
   CodeGenerator* _cg;

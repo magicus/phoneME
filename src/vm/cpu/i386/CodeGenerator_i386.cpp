@@ -2675,8 +2675,7 @@ void CodeGenerator::init_static_array(Value& array JVM_TRAPS) {
   movl(edi, array.lo_register());
 
   // Load the address of init_static_array bc into ESI.
-  Method::Raw cur_method = 
-    Compiler::current()->current_compiled_method()->method();
+  Method::Raw cur_method = compiled_method()->method();
   movl(esi, &cur_method);
   addl(esi, Method::base_offset() + bci());
   

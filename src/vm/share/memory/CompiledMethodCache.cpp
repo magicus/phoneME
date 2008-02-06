@@ -215,7 +215,8 @@ void CompiledMethodCache::lock_unevictable ( void ) {
   {
     OopDesc* const compiled_method_class =
       Universe::compiled_method_class()->prototypical_near();
-    OopDesc* const current = Compiler::current_compiled_method()->obj();
+    CodeGenerator* gen = CodeGenerator::current();
+    OopDesc* const current = gen ? gen->compiled_method()->obj() : NULL;
     ForAllHandles( handle ) {
       OopDesc* const p = handle->obj();
       if( p && p->klass() == compiled_method_class && p != current ) {

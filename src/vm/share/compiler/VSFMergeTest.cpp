@@ -28,7 +28,7 @@
 #include "incls/_VSFMergeTest.cpp.incl"
 
 #ifndef PRODUCT
-#if ENABLE_COMPILER
+#if ENABLE_COMPILER && ENABLE_VSF_MERGE_TEST
 
 #if ENABLE_PERFORMANCE_COUNTERS
 void VSFMergeTest::run(OsFile_Handle config_file) {
@@ -50,8 +50,8 @@ void VSFMergeTest::run(OsFile_Handle config_file) {
 
   compiler->set_current_compiled_method(&compiled_method);
 
-  CodeGenerator code_generator(compiler);
-
+  CodeGenerator code_generator( &compiled_method );
+  compiler->set_code_generator( &code_generator  );
   execute_test_cases(config_file JVM_NO_CHECK_AT_BOTTOM);
 }
 
@@ -432,6 +432,8 @@ void VSFMergeTest::verify_merge(VirtualStackFrame* src_frame,
 
   compiler->set_frame( saved_src_frame );
   compiler->set_code_generator( saved_code_generator );
+  jvm_fast_globals.compiler_code_generator = saved_code_generator;
+
 }  
 
 bool VSFMergeTest::_initialized = false;
@@ -484,12 +486,12 @@ int VSFMergeTester::_register_hi_values[Assembler::number_of_registers];
 VSFMergeTester::VSFMergeTester(VirtualStackFrame* src_frame, 
                                VirtualStackFrame* dst_frame,
                                CompilerState* state) :
- CodeGenerator(Compiler::current(), state), 
+ CodeGenerator( state, Compiler::current()->current_compiled_method() ), 
  _src_frame(src_frame), _dst_frame(dst_frame), _state(state) {
-
   if (src_frame->virtual_stack_pointer() + 1 > MAX_STACK_LOCATIONS) {
     return;
   }
+  Compiler::current()->set_code_generator(this);
 
   VSFMergeTest::initialize();
 
