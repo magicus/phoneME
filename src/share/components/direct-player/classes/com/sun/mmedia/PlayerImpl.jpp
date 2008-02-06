@@ -49,6 +49,7 @@ public class PlayerImpl implements Player {
     protected BasicPlayer playerInst = null;
     protected DataSource  source;
     protected SourceStream stream;
+    private boolean isClosed = false;
 
     private String  mediaFormat = null;
     private boolean handledByDevice = false;
@@ -205,6 +206,12 @@ public class PlayerImpl implements Player {
      *
      */
     public void realize() throws MediaException {
+        if (playerInst != null) {
+            if (isClosed) {
+                throw new IllegalStateException();
+            }
+            return;
+        }
         /* realize native player */
         nRealize(hNative, source.getContentType());
 
@@ -375,6 +382,9 @@ public class PlayerImpl implements Player {
      *
      */
     public void prefetch() throws MediaException {
+        if (isClosed) {
+            throw new IllegalStateException();
+        }
         if (playerInst == null) {
             realize();
         }
@@ -426,6 +436,9 @@ public class PlayerImpl implements Player {
      * have security permission to start the <code>Player</code>.
      */
     public void start() throws MediaException {
+        if (isClosed) {
+            throw new IllegalStateException();
+        }
         if (playerInst == null) {
             realize();
         }
@@ -459,6 +472,9 @@ public class PlayerImpl implements Player {
      * cannot be stopped.
      */
     public void stop() throws MediaException {
+        if (isClosed) {
+            throw new IllegalStateException();
+        }
         if (playerInst != null) {
             playerInst.stop();
         }
@@ -492,6 +508,11 @@ public class PlayerImpl implements Player {
     public void deallocate() {
         if (playerInst != null) {
             playerInst.deallocate();
+        } else {
+            // Player in the UNREALIZED or CLOSED state
+            if (isClosed) {
+                throw new IllegalStateException();
+            }
         }
     };
 
@@ -511,10 +532,14 @@ public class PlayerImpl implements Player {
             playerInst.close();
             mplayers.remove(new Integer(pID));
         } else {
-            /* close native part of unrealized player */
-            if(hNative != 0)
-                nTerm(hNative);
+            if (!isClosed) {
+                /* close native part of unrealized player */
+                if(hNative != 0) {
+                    nTerm(hNative);
+                }
+            }
         }
+        isClosed = true;
     }
     
     // #ifndef ABB [
@@ -539,6 +564,9 @@ public class PlayerImpl implements Player {
     public void setTimeBase(TimeBase master) throws MediaException {
         if (playerInst != null) {
             playerInst.setTimeBase(master);
+        } else {
+            // Player in the UNREALIZED or CLOSED state
+            throw new IllegalStateException();
         }
     };
     // #endif ]
@@ -556,7 +584,8 @@ public class PlayerImpl implements Player {
         if (playerInst != null) {
             return playerInst.getTimeBase();
         }
-        return null;
+        // Player in the UNREALIZED or CLOSED state
+        throw new IllegalStateException();
     };
     // #endif ]
 
@@ -585,6 +614,9 @@ public class PlayerImpl implements Player {
      * @see #getMediaTime
      */
     public long setMediaTime(long now) throws MediaException {
+        if (isClosed) {
+            throw new IllegalStateException();
+        }
         if (playerInst != null) {
             return playerInst.setMediaTime(now);
         }
@@ -608,6 +640,9 @@ public class PlayerImpl implements Player {
      * @see #setMediaTime
      */
     public long getMediaTime() {
+        if (isClosed) {
+            throw new IllegalStateException();
+        }
         if (playerInst != null) {
             return playerInst.getMediaTime();
         } else {
@@ -626,7 +661,7 @@ public class PlayerImpl implements Player {
         if (playerInst != null) {
             return playerInst.getState();
         }
-        return Player.UNREALIZED;
+        return isClosed ? Player.CLOSED : Player.UNREALIZED;
     };
 
     /**
@@ -643,6 +678,9 @@ public class PlayerImpl implements Player {
      * is in the <i>CLOSED</i> state.
      */
     public long getDuration() {
+        if (isClosed) {
+            throw new IllegalStateException();
+        }
         if (playerInst != null) {
             return playerInst.getDuration();
         } else {
@@ -716,6 +754,9 @@ public class PlayerImpl implements Player {
      */
 
     public void setLoopCount(int count) {
+        if (isClosed) {
+            throw new IllegalStateException();
+        }
         if (playerInst != null) {
             playerInst.setLoopCount(count);
         } else {
@@ -737,6 +778,9 @@ public class PlayerImpl implements Player {
      * @see #removePlayerListener
      */
     public void addPlayerListener(PlayerListener playerListener) {
+        if (isClosed) {
+            throw new IllegalStateException();
+        }
         if (playerInst != null) {
             playerInst.addPlayerListener(playerListener);
         } else {
@@ -758,6 +802,9 @@ public class PlayerImpl implements Player {
      * @see #addPlayerListener
      */
     public void removePlayerListener(PlayerListener playerListener) {
+        if (isClosed) {
+            throw new IllegalStateException();
+        }
         if (playerInst != null) {
             playerInst.removePlayerListener(playerListener);
         } else {
