@@ -137,6 +137,7 @@ public abstract class Configuration {
 // #ifndef ABB [
     public final static String MIDI_DEVICE_LOCATOR = javax.microedition.media.Manager.MIDI_DEVICE_LOCATOR; //"device://midi";
 // #endif ]
+    public final static String CAPTURE_LOCATOR = "capture://";
     public final static String RADIO_CAPTURE_LOCATOR = "capture://radio";
     public final static String AUDIO_CAPTURE_LOCATOR = "capture://audio";
     public final static String VIDEO_CAPTURE_LOCATOR = "capture://video";

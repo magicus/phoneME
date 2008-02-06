@@ -593,8 +593,8 @@ public final class Manager {
         }
 
         String locStr = locator.toLowerCase();
-        String validLoc;
         BasicPlayer p;
+        boolean found = false;
 
         if (debug)
             System.out.println("[mmapi] createPlayer with " + locator);
@@ -613,13 +613,16 @@ public final class Manager {
          * but others (media encodings in our case) are case sensitive...
          */
         if (
-            locStr.equals(validLoc = TONE_DEVICE_LOCATOR)
+            locStr.equals(TONE_DEVICE_LOCATOR)
             // #ifndef ABB [
-            || locStr.equals(validLoc = MIDI_DEVICE_LOCATOR)
-            || locStr.startsWith(validLoc = DefaultConfiguration.VIDEO_CAPTURE_LOCATOR)
-            || locStr.startsWith(validLoc = DefaultConfiguration.AUDIO_CAPTURE_LOCATOR)
+            || locStr.equals(MIDI_DEVICE_LOCATOR)
             // #endif ]
-            ) 
+           )
+        {
+            locator = locStr;
+            found = true;
+        // #ifndef ABB [
+        } else if (locStr.startsWith(DefaultConfiguration.CAPTURE_LOCATOR))
         {
             // separate device & encodings
             int encInd = locator.indexOf('?');
@@ -627,50 +630,45 @@ public final class Manager {
             if (encInd > 0) {
                 encStr = locator.substring(encInd + 1);
                 locStr = locStr.substring(0, encInd);
-                /* 
-                 * TBD: check case when '?' is the last Locator symbol:
-                 *Will encStr be == "", or it will be == null ?
-                 */
+            }
+            String supported = null;
+            String encodings = null;
+            if (locStr.equals(DefaultConfiguration.AUDIO_CAPTURE_LOCATOR)) {
+                supported = System.getProperty("supports.audio.capture");
+                if (supported != null && supported.equals("true")) {
+                    encodings = System.getProperty("audio.encodings");
+                    /* verify encodiing parameters */
+                    found = true;
+                }
+            } else if (locStr.equals(DefaultConfiguration.VIDEO_CAPTURE_LOCATOR)) {
+                supported = System.getProperty("supports.video.capture");
+                if (supported != null && supported.equals("true")) {
+                    encodings = System.getProperty("video.encodings");
+                    /* verify encodiing parameters */
+                    found = true;
+                }
             } else {
-                /*
-                 * detect invalid locator case: 
-                 * if no '?' found then locStr & validLoc shall be 
-                 * equivalent strings, but since they have already passed 
-                 * char-to-char comparison, we to check lengths only...
-                 */
-                if (locStr.length() != validLoc.length())
-                    throw new MediaException("Malformed locator");
-                encStr = "";
+                found = true;
             }
-            String className = config.getHandler(locStr);
-
-            try {
-                // Try and instance the player ....
-                Class protoClass = Class.forName(className);
-                p = (BasicPlayer) protoClass.newInstance();
-                p.setLocator(locator.toLowerCase());
-                return p;
-            } catch (Exception e) {
-                throw new MediaException("Failed to create Player: " + e.getMessage());
-            }
+        // #endif ]
         } else {
             // not in the list of predefined locators, 
             // find handler by extension
-        String theProtocol = null;
-        int idx = locStr.indexOf(':');
+            String theProtocol = null;
+            int idx = locStr.indexOf(':');
 
-        if (idx != -1) {
+            if (idx != -1) {
                 theProtocol = locStr.substring(0, idx);
-        } else {
+            } else {
                 throw new MediaException("Malformed locator");
-        }
+            }
 
-        String[] supported = getSupportedProtocols(null);
-        boolean found = false;
-        for (int i = 0; i < supported.length; i++) {
-            if (theProtocol.equals(supported[i])) {
-                found = true;
-                break;
+            String[] supported = getSupportedProtocols(null);
+            for (int i = 0; i < supported.length; i++) {
+                if (theProtocol.equals(supported[i])) {
+                    found = true;
+                    break;
+                }
             }
         }
 
@@ -692,7 +690,6 @@ public final class Manager {
         }
 
         return pp;
-    }
     }
 
 
@@ -886,11 +883,8 @@ public final class Manager {
             DataSource source = (DataSource) protoClass.newInstance();
             // ... and get it connected ....
             ((BasicDS) source).setLocator(locator);
-//            source.connect();
 
             return source;
-//        } catch (IOException e) {
-//            throw e;
         } catch (MediaException e) {
             throw e;
         } catch (Exception e) {

@@ -92,6 +92,9 @@ public class DefaultConfiguration extends Configuration {
         handlers.put("rtsp", "com.sun.mmedia.protocol.CommonDS");
         handlers.put("rtp", "com.sun.mmedia.protocol.CommonDS");
 
+        handlers.put("device", "com.sun.mmedia.protocol.CommonDS");
+        handlers.put("capture", "com.sun.mmedia.protocol.CommonDS");
+
         // Content handlers.
         for (int i = 0; i < maps.length; ++i) {
             handlers.put(maps[i][0], maps[i][1]);

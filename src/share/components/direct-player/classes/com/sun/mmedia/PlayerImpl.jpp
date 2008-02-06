@@ -115,6 +115,10 @@ public class PlayerImpl implements Player {
     static final String MEDIA_FORMAT_UNKNOWN = "UNKNOWN";
     /** Unsupported media format */
     static final String MEDIA_FORMAT_UNSUPPORTED = "UNSUPPORTED";
+    /** Device Tone format */
+    static final String MEDIA_FORMAT_DEVICE_TONE = "DEVICE_TONE";
+    /** Device MIDI format */
+    static final String MEDIA_FORMAT_DEVICE_MIDI = "DEVICE_MIDI";
 
     private static String PL_ERR_SH = "Cannot create a Player: ";
     
@@ -132,7 +136,8 @@ public class PlayerImpl implements Player {
             pID = pcount;
         }
 
-        hNative = nInit(appId, pID, source.getLocator());
+        String locator = source.getLocator();
+        hNative = nInit(appId, pID, locator);
 
         if (0 == hNative) {
             throw new MediaException("Unable to create");
@@ -149,7 +154,22 @@ public class PlayerImpl implements Player {
                 handledByJava = true;
             }
         }
-        if (!handledByJava) {
+
+        if (locator != null && mediaFormat.equals(MEDIA_FORMAT_UNKNOWN)) {
+            if (locator.equals(Manager.TONE_DEVICE_LOCATOR)) {
+                mediaFormat = MEDIA_FORMAT_DEVICE_TONE;
+            } else if (locator.equals(Manager.MIDI_DEVICE_LOCATOR)) {
+                mediaFormat = MEDIA_FORMAT_DEVICE_MIDI;
+            }
+        } else if (locator != null && locator.startsWith(DefaultConfiguration.CAPTURE_LOCATOR)) {
+            handledByDevice = true;
+        }
+
+        if (mediaFormat.equals(MEDIA_FORMAT_DEVICE_TONE) || mediaFormat.equals(MEDIA_FORMAT_DEVICE_MIDI)) {
+            handledByDevice = true;
+        }
+
+        if (!handledByJava && !handledByDevice) {
             handledByDevice = nIsHandledByDevice(hNative);
         }
         this.source     = source;
@@ -186,7 +206,7 @@ public class PlayerImpl implements Player {
      */
     public void realize() throws MediaException {
         /* realize native player */
-        nRealize(hNative, null);
+        nRealize(hNative, source.getContentType());
 
         if (mediaFormat.equals(MEDIA_FORMAT_UNKNOWN)) {
             /* ask media format if unknown */
@@ -221,7 +241,7 @@ public class PlayerImpl implements Player {
                         do {
                             try {
                                 // read from source stream
-                                ret = stream.read(buffer, num_read, packetSize - num_read);
+                                ret = stream.read(buffer, 0, packetSize - num_read);
                             } catch(IOException e) {
                                 throw new MediaException("Read from source error");
                             }
@@ -699,7 +719,7 @@ public class PlayerImpl implements Player {
         if (playerInst != null) {
             playerInst.setLoopCount(count);
         } else {
-            if (loopCount != 0) {
+            if (count != 0) {
                 loopCount = count;
             } else {
                 throw new IllegalArgumentException();
