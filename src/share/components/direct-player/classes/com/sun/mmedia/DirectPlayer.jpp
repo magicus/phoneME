@@ -313,6 +313,8 @@ public class DirectPlayer extends BasicPlayer
             } while(needMoreData);
         }
 
+        nAcquireDevice(hNative);
+
         if (nPcmAudioPlayback(hNative)) {
             AudioTunnel.getInstance().start();
         }
