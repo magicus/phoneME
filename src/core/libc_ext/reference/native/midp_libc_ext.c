@@ -68,12 +68,11 @@ int midp_vsnprintf(char *buffer, int bufferSize,
 
     /* Fill num as minimum of bufferSize and VSPRINTF_BUFFER_SIZE */
 	if (bufferSize > VSPRINTF_BUFFER_SIZE) {
-        num = VSPRINTF_BUFFER_SIZE - 1;
+        num = VSPRINTF_BUFFER_SIZE;
 		REPORT_WARN1(LC_CORE,
             "Internal buffer is smaller than %d, data truncated", bufferSize);
 	} else 
         num = bufferSize; /* Posix spec: bufferSize doesn't include null symbol */
-	num++; /* Add terminate symbol */
  
    /* IMPL_NOTE: using vsprintf function is not safely because it can
     * overflow output buffer. The javacall implementation will support
