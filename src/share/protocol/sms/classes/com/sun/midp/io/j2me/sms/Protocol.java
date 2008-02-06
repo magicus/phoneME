@@ -227,7 +227,6 @@ public class Protocol extends ProtocolBase {
     public Message newMessage(String type) {
 	String address = null;
 
-System.out.println("sms.Protocol.newMessage, type = " + type);
 	/*
          * Provide the default address from the original open.
          */
