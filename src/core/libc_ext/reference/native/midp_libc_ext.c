@@ -53,29 +53,39 @@ int midp_snprintf(char* buffer, int bufferSize, const char* format, ...) {
     return rv;
 }
 
-#if ENABLE_DEBUG
 /**
  * Same as for midp_snprintf. Not all compilers provide vsnprintf 
  * function, so we have to use workaround. In debug mode it does 
  * buffer overflow checking, and in release mode it works as vsprintf.
+ * IMPL_NOTE: when length of output string is more than VSPRINTF_BUFFER_SIZE,
+ * utput buffer will be overflow. In this case the VSPRINTF_BUFFER_SIZE
+ * value need be increased. This problem will be fixed when vsnprintf
+ * function is implemented on javacall layer.
  */
-int midp_vsnprintf(char *buffer, int bufferSize, 
+#define VSPRINTF_BUFFER_SIZE 1024
+int midp_vsn_printf(char *buffer, int bufferSize, 
         const char* format, va_list argptr) {
 
-    int rv;
-    
-    buffer[bufferSize-1] = '\0';
-    rv = vsprintf(buffer, format, argptr);
+	int num;
+    char vsprintf_buffer[VSPRINTF_BUFFER_SIZE];
 
-    if (buffer[bufferSize-1] != '\0') {
-        buffer[bufferSize-1] = '\0';
-        REPORT_CRIT2(LC_CORE, "Buffer %p overflow detected at %p !!!",
-                buffer, buffer + bufferSize);
+    if (bufferSize > VSPRINTF_BUFFER_SIZE) {
+        REPORT_WARN1(LC_CORE,
+            "Internal buffer is smaller than %d, data truncated", bufferSize);
+    }
+ 
+    num = vsprintf(vsprintf_buffer, format, argptr) + 1;
+    if (num  > VSPRINTF_BUFFER_SIZE) {
+        num = VSPRINTF_BUFFER_SIZE;
+        vsprintf_buffer[VSPRINTF_BUFFER_SIZE - 1] = 0;
+		REPORT_CRIT2(LC_CORE, "Internal buffer %p overflow detected at %p !!!",
+            vsprintf_buffer, vsprintf_buffer + VSPRINTF_BUFFER_SIZE);
     }
 
-    return rv;
+    memcpy(buffer, vsprintf_buffer, num);
+
+    return num - 1;
 }
-#endif /* ENABLE_DEBUG */
 
 /**
  * Not all compilers provide the POSIX function strcasesmp, so we need to
