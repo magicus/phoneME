@@ -31,12 +31,13 @@
  * KNI function implementation                           *
  *********************************************************/
 
-/*  private native int nPlayTone ( int note , int dur , int vol ) ; */
+/*  private native int nPlayTone ( int appId, int note , int dur , int vol ) ; */
 KNIEXPORT KNI_RETURNTYPE_BOOLEAN
 KNIDECL(com_sun_mmedia_NativeTonePlayer_nPlayTone) {
-    jint note = KNI_GetParameterAsInt(1);
-    jint dur = KNI_GetParameterAsInt(2);
-    jint vol = KNI_GetParameterAsInt(3);
+    jint appId = KNI_GetParameterAsInt(1);
+    jint note = KNI_GetParameterAsInt(2);
+    jint dur = KNI_GetParameterAsInt(3);
+    jint vol = KNI_GetParameterAsInt(4);
     jboolean returnValue = KNI_TRUE;
 
     if (vol < 0) {
@@ -46,18 +47,20 @@ KNIDECL(com_sun_mmedia_NativeTonePlayer_nPlayTone) {
     }
 
     if (note >= 0 && note <= 127) {
-        if (JAVACALL_FAIL == javacall_media_play_tone(note, dur, vol)) {
+        if (JAVACALL_FAIL == javacall_media_play_tone(appId, note, dur, vol)) {
             returnValue = KNI_FALSE;
         }
     }
     KNI_ReturnBoolean(returnValue);
 }
 
+/*  private native int nStopTone ( int appId) ; */
 KNIEXPORT KNI_RETURNTYPE_BOOLEAN
 KNIDECL(com_sun_mmedia_NativeTonePlayer_nStopTone) {
+    jint appId = KNI_GetParameterAsInt(1);
     jboolean returnValue = KNI_TRUE;
 
-    if (JAVACALL_FAIL == javacall_media_stop_tone()) {
+    if (JAVACALL_FAIL == javacall_media_stop_tone(appId)) {
         returnValue = KNI_FALSE;
     }
     KNI_ReturnBoolean(returnValue);
@@ -69,6 +72,7 @@ KNIDECL(com_sun_mmedia_NativeTonePlayer_nStopTone) {
 KNIEXPORT KNI_RETURNTYPE_VOID
 KNIDECL(com_sun_mmedia_NativeTonePlayer_finalize) {
 
-    javacall_media_stop_tone();
+/* commeted out because of appId is unknown */
+/*    javacall_media_stop_tone();*/
     KNI_ReturnVoid();
 }

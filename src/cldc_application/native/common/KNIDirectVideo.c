@@ -136,9 +136,7 @@ KNIDECL(com_sun_mmedia_DirectVideo_nSnapShot) {
                 if (NULL != info) {
                     /* IMPL NOTE - Compose 16 bit of isolate ID and 16 bit of player ID 
                        to generate descriptor */
-                    int isolateId = (int)(pKniInfo->uniqueId >> 32);
-                    int playerId = (int)(pKniInfo->uniqueId & 0xFFFFFFFF);
-                    info->descriptor = (((isolateId & 0xFFFF) << 16) | (playerId & 0xFFFF));
+//                    info->descriptor = (((appId & 0xFFFF) << 16) | (playerId & 0xFFFF));
                     info->pResult = (void*)pKniInfo;
                     info->waitingFor = MEDIA_SNAPSHOT_SIGNAL;
 
@@ -232,14 +230,19 @@ Java_com_sun_mmedia_DirectVideo_nGetScreenWidth() {
 KNIEXPORT KNI_RETURNTYPE_INT
 Java_com_sun_mmedia_DirectVideo_nSetAlpha() {
 
-    jboolean isOn = KNI_GetParameterAsBoolean(1);
-    jint color = KNI_GetParameterAsInt(2);
-    javacall_result ret;
+    jint handle = KNI_GetParameterAsInt(1);
+    jboolean isOn = KNI_GetParameterAsBoolean(2);
+    jint color = KNI_GetParameterAsInt(3);
+    javacall_result ret = JAVACALL_FAIL;
+    KNIPlayerInfo* pKniInfo = (KNIPlayerInfo*)handle;
 
     MMP_DEBUG_STR2("[kni_video] +nSetAlpha on=%d alpha=%d\n", isOn, color);
 
-    ret = javacall_media_set_video_alpha(KNI_TRUE == isOn ? JAVACALL_TRUE : JAVACALL_FALSE, 
+    if (pKniInfo && pKniInfo->pNativeHandle ) {
+        ret = javacall_media_set_video_color_key(pKniInfo->pNativeHandle, 
+					KNI_TRUE == isOn ? JAVACALL_TRUE : JAVACALL_FALSE, 
                                          (javacall_pixel)color);
+    }
 
     MMP_DEBUG_STR1("[kni_video] -nSetAlpha ret %d\n", ret);
 

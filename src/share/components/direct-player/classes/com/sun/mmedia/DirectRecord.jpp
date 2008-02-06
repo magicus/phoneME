@@ -58,7 +58,6 @@ public final class DirectRecord implements RecordControl, DirectControls {
     private native int nReset(int handle);
     private native int nClose(int handle);
     private native int nSetSizeLimit(int handle, int size);
-    private native boolean nSetSizeLimitIsSupported(int handle);
     private native int nGetRecordedSize(int handle);
     private native int nGetRecordedData(int handle, int offset, int size, byte[] buffer);
     private native String nGetRecordedType(int handle);
@@ -372,15 +371,20 @@ public final class DirectRecord implements RecordControl, DirectControls {
      * Set record size limit
      */
     public synchronized int setRecordSizeLimit(int size) throws MediaException {
-        if (false == nSetSizeLimitIsSupported(player.hNative)) {
-            throw new MediaException("Setting the record size limit is not supported");
-        }
-        
         if (player == null)
             return 0;
 
         if (size <= 0)
             throw new IllegalArgumentException("Given size is invalid");
+
+        if (Integer.MAX_VALUE == size) {
+            nSetSizeLimit(player.hNative, -1);
+        } else {
+            size = nSetSizeLimit(player.hNative, size);
+            if (size == 0) {
+                throw new MediaException("Setting the record size limit is not supported");
+            }
+        }
 
         // If the requested size is less than the already recorded size, commit
         if (recording == true) {
@@ -391,15 +395,6 @@ public final class DirectRecord implements RecordControl, DirectControls {
                 } catch(IOException e) {
                     // Nothing to do
                 }
-            }
-        }
-
-        if (Integer.MAX_VALUE == size) {
-            nSetSizeLimit(player.hNative, -1);
-        } else {
-            size = nSetSizeLimit(player.hNative, size);
-            if (size == 0) {
-                throw new MediaException("Setting the record size limit is not supported");
             }
         }
 

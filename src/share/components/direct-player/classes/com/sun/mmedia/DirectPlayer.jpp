@@ -37,7 +37,6 @@ package com.sun.mmedia;
 
 import java.io.IOException;
 import java.util.*;
-import com.sun.j2me.app.AppIsolate;
 import com.sun.j2me.log.Logging;
 import com.sun.j2me.log.LogChannels;
 
@@ -76,8 +75,7 @@ public class DirectPlayer extends BasicPlayer
 	public PlayerStateSubscriber state_subscriber = null;
 
     // Temp buffer shared by all of Player from the same isolate
-    private final static int BUFFER_SIZE = 1024 * 50;
-    private static byte[] buffer = new byte[BUFFER_SIZE];    
+    private static byte[] buffer;    
     
 	// #ifdef MIDI_CONTROL [
 	final static boolean SUPPORT_MIDI_CONTROL = true;
@@ -87,8 +85,6 @@ public class DirectPlayer extends BasicPlayer
 	// #endif ]
 
     // Package variables
-    int hNative;      // handle of native API library 
-    int mediaType;
     DirectVolume vc;
 
     private long remained;      // remained content length
@@ -111,19 +107,17 @@ public class DirectPlayer extends BasicPlayer
     
     private boolean isStreaming = false;
     private boolean isFirstStart = true;
-    
+
+    protected boolean wholeDataDownloaded = false;
+
     // Native functions /////////////////////////////////////////////////
     
-    // Init native library
-    protected native int nInit(int isolateId, int pID, String mimeType, String URI, long contentLength);
     // Terminate native library
     protected native int nTerm(int handle);
     // Device is available?
     protected native boolean nAcquireDevice(int handle);
     // Relase device reference
     protected native void nReleaseDevice(int handle);
-    // Do buffering of media data
-    protected native int nBuffering(int handle, Object buffer, long bytes);
     // Clear buffered data
     protected native boolean nFlushBuffer(int handle);
     // Start playing
@@ -142,9 +136,6 @@ public class DirectPlayer extends BasicPlayer
     protected native boolean nResume(int handle);
     // Need buffering from Java side?
     protected native boolean nIsNeedBuffering(int handle);
-    // #ifdef RECORD [
-    protected native boolean nIsSupportRecording(int handle);
-    // #endif ]
     // Switch to foreground
     private native boolean nSwitchToForeground(int hNative, int options);
     // Switch to background
@@ -157,7 +148,23 @@ public class DirectPlayer extends BasicPlayer
 // #endif ]    
     // Ask for PcmAudio support
     private native boolean nPcmAudioPlayback(int hNative);
-    
+
+    // Start Prefetch of Native Player
+    protected native void nPrefetch(int hNative);
+    // Provide whole media content size, if known
+    protected native void nSetWholeContentSize(int hNative, long contentSize);
+    // Is Control supported by native or not
+    protected static native boolean nIsFramePositioningControlSupported(int hNative);
+    protected static native boolean nIsMetaDataControlSupported(int hNative);
+    protected static native boolean nIsMIDIControlSupported(int hNative);
+    protected static native boolean nIsPitchControlSupported(int hNative);
+    protected static native boolean nIsRateControlSupported(int hNative);
+    protected static native boolean nIsRecordControlSupported(int hNative);
+    protected static native boolean nIsStopTimeControlSupported(int hNative);
+    protected static native boolean nIsTempoControlSupported(int hNative);
+    protected static native boolean nIsVideoControlSupported(int hNative);
+    protected static native boolean nIsToneControlSupported(int hNative);
+    protected static native boolean nIsVolumeControlSupported(int hNative);
 
     // Member functions /////////////////////////////////////////////////
 
@@ -216,71 +223,17 @@ public class DirectPlayer extends BasicPlayer
     // #endif ]
 
     /**
-     * 1. Initialize native library.
-     * 2. Read header information from media data
-     *    And, store header information to internal cache
+     * Read header information from media data and determine media Format
      *
      * @exception  MediaException  Description of the Exception
      */
     protected void doRealize() throws MediaException {
-        long contentLength; 
-        String mimeType;
-
-        if (source != null) {
-            mimeType = source.getContentType();
-        } else {
-            mimeType = this.locator;
-            if (mimeType != null) {
-                int encInd = mimeType.indexOf('?');
-                if (encInd > 0) {
-                    mimeType = mimeType.substring(0, encInd);
-                }
-            }
-        }
-
-        if (stream != null) {
-            contentLength = stream.getContentLength();
-        } else {
-            contentLength = 0;
-        }
 
         if (debug) 
-            System.out.println("[direct] DirectPlayer.doRealize " + mimeType + ", " + contentLength);
-
-        // Set-up remained length of source stream
-        if (contentLength == -1) {
-            remained = Long.MAX_VALUE;
-        } else {
-            remained = contentLength;
-        }
-        
-        // Get current isolate ID to support MVM
-        // in case of SVM it will return AMS isolate ID
-        int isolateId = AppIsolate.getIsolateId();
-
-        if (source != null) {
-            hNative = nInit(isolateId, pID, mimeType, source.getLocator(), contentLength);
-        } else {
-            hNative = nInit(isolateId, pID, mimeType, this.locator, contentLength);
-        }
-
-        if (0 == hNative) {
-            throw new MediaException("Unable to realize - initialize fail");
-        }
+            System.out.println("[direct] DirectPlayer.doRealize " + mediaFormat);
 
 		if( null != state_subscriber )
 			state_subscriber.PlayerRealized( this );
-
-        // Do buffering
-        if ( true == nIsNeedBuffering(hNative)) {
-            if (-1 == readAndBuffering(remained, 1)) {
-                throw new MediaException("Unable to realize - buffering fail");
-            }
-        }
-        else { 
-            if (source != null)
-                source.disconnect();
-        }
 
         // #ifdef ENABLE_MULTIPLE_ISOLATES [
         // Add to media tunnel as event consumer
@@ -308,12 +261,58 @@ public class DirectPlayer extends BasicPlayer
      * @exception  MediaException  Description of the Exception
      */
     protected void doPrefetch() throws MediaException {
-        if (debug) System.out.println("[direct] DirectPlayer.doPrefetch");
+        if (debug) System.out.println("[direct] DirectPlayer.doPrefetch for " + hNative + " " + mediaFormat);
 
-        // acquire device
-        if (false == nAcquireDevice(hNative)) {
-            throw new MediaException("Unable to prefetch - can't acquire device");
+        /* prefetch native player */
+        nPrefetch(hNative);
+
+        long contentSize = stream.getContentLength();
+        if (contentSize > 0) {
+            nSetWholeContentSize(hNative, contentSize);
         }
+
+        if (!handledByDevice) {
+            /* predownload media data to fill native buffers */
+            int    javaBufSize = 0;
+            int    packetSize = 0;
+            boolean needMoreData = false;
+
+            javaBufSize = PlayerImpl.nGetJavaBufferSize(hNative);
+            packetSize = PlayerImpl.nGetFirstPacketSize(hNative);
+            if (javaBufSize <= 0) {
+                javaBufSize = 1024;
+                packetSize = 1024;
+            }
+            buffer = new byte[(int)javaBufSize];
+
+            do {
+                int num_read = 0;
+                int ret;
+                do {
+                    try {
+                        // read from source stream
+                        ret = stream.read(buffer, num_read, packetSize - num_read);
+                    } catch(IOException e) {
+                        throw new MediaException("Read from source error");
+                    }
+                    if (ret > 0) {
+                        num_read += ret;
+                    }
+                    if (ret == -1) {
+                        break;
+                    }
+                } while(num_read < packetSize);
+
+                packetSize = PlayerImpl.nBuffering(hNative, buffer, num_read);
+                needMoreData = PlayerImpl.nNeedMoreDataImmediatelly(hNative);
+
+                if (contentSize == stream.tell()) {
+                    PlayerImpl.nBuffering(hNative, null, 0);
+                    needMoreData = false;                    
+                }
+            } while(needMoreData);
+        }
+
         if (nPcmAudioPlayback(hNative)) {
             AudioTunnel.getInstance().start();
         }
@@ -387,7 +386,7 @@ public class DirectPlayer extends BasicPlayer
                 "DirectPlayer.doStart");
         }
         
-        if (isFirstStart) {
+        if (isFirstStart || (0 == getMediaTime())) {
             ret = nStart(hNative);
             isFirstStart = false;
         } else {
@@ -568,70 +567,73 @@ public class DirectPlayer extends BasicPlayer
      * name.
      */
     protected Control doGetControl(String type) {
+
         if (debug) System.out.println("[direct] DirectPlayer.doGetControl " + type);
 
         String prefix = "javax.microedition.media.control.";
-        
-        String mimeType;
-        if (source != null) {
-            mimeType = source.getContentType();
-        } else {
-            mimeType = this.locator;
+        String shortType = type;
+
+        if (type.startsWith(prefix)) {
+            shortType = type.substring(prefix.length());
         }
-        
-        if (type.equals(prefix + vocName)) { // VolumeControl
 
-            if(mimeType.startsWith(Configuration.AUDIO_CAPTURE_LOCATOR))
-                return null;
-                
-            if(mimeType.startsWith(Configuration.VIDEO_CAPTURE_LOCATOR))
-                return null;
-
-            if (vc == null) {
-                vc = new DirectVolume(this, hNative);
+        if (shortType.equals(fpcName)) {
+//            if (nIsFramePositioningControlSupported(hNative)) {
+//            }
+        } else if (shortType.equals(mdcName)) {
+//            if (nIsMetaDataControlSupported(hNative)) {
+//            }
+        } else if (shortType.equals(micName)) {
+            if (nIsMIDIControlSupported(hNative)) {
+                if (midiControl == null) 
+                    midiControl = new DirectMIDIControl(this);
+                return midiControl;
             }
-            return vc;
-        } else if (type.equals(prefix + stcName)) { // StopTimeControl
-            // #ifndef ABB [
-            return (Control)this;
-            // #else ][
-            return null;
-            // #endif ]
-        } 
-        // #ifdef RECORD [
-        else if (type.equals(prefix + recName)) {
-            if (true == nIsSupportRecording(hNative)) {
+        } else if (shortType.equals(picName)) {
+            if (nIsPitchControlSupported(hNative)) {
+                if (midiControl == null) 
+                    midiControl = new DirectMIDIControl(this);
+                return midiControl;
+            }
+        } else if (shortType.equals(racName)) {
+            if (nIsRateControlSupported(hNative)) {
+                if (midiControl == null) 
+                    midiControl = new DirectMIDIControl(this);
+                return midiControl;
+            }
+        } else if (shortType.equals(recName)) {
+            if (nIsRecordControlSupported(hNative)) {
                 if (recordControl == null) {
                     recordControl = new DirectRecord(this);
                 }
                 return recordControl;
             }
-        }
-        // #endif ]
-        // #ifdef MIDI_CONTROL [
-        if (mimeType.equals(Configuration.MIME_AUDIO_MIDI) || 
-            mimeType.equals(Configuration.MIME_AUDIO_MIDI_2) ||
-            mimeType.equals(Configuration.MIME_AUDIO_SP_MIDI)) {
-            if (type.equals(prefix + micName) && SUPPORT_MIDI_CONTROL) {
-                if (midiControl == null) 
-                    midiControl = new DirectMIDIControl(this);
-                return midiControl;
-            } else if (type.equals(prefix + picName) && SUPPORT_PITCH_CONTROL) {
-                if (midiControl == null) 
-                    midiControl = new DirectMIDIControl(this);
-                return midiControl;
-            } else if (type.equals(prefix + racName) && SUPPORT_RATE_CONTROL) {
-                if (midiControl == null) 
-                    midiControl = new DirectMIDIControl(this);
-                return midiControl;
-            } else if (type.equals(prefix + tecName) && SUPPORT_TEMPO_CONTROL) {
+        } else if (shortType.equals(stcName)) {
+//            if (nIsStopTimeControlSupported(hNative)) {
+//            }
+              return this;
+        } else if (shortType.equals(tecName)) {
+            if (nIsTempoControlSupported(hNative)) {
                 if (midiControl == null) 
                     midiControl = new DirectMIDIControl(this);
                 return midiControl;
             }
+        } else if (shortType.equals(vicName)) {
+//            if (nIsVideoControlSupported(hNative)) {
+//            }
+        } else if (shortType.equals(tocName)) {
+//            if (nIsToneControlSupported(hNative)) {
+//            }
+        } else if (shortType.equals(vocName)) {
+            if (nIsVolumeControlSupported(hNative)) {
+                if (vc == null) {
+                    vc = new DirectVolume(this, hNative);
+                }
+                return vc;
+            }
         }
-        // #endif
 
+        if (debug) System.out.println("[direct] DirectPlayer.doGetControl " + type + " return null");
         return null;
     }
 
@@ -683,68 +685,10 @@ public class DirectPlayer extends BasicPlayer
                         ds.setContentType(Configuration.MIME_AUDIO_SP_MIDI);
                         return;
                     }
-                
             }
         }
     }
     
-    /**
-     * Read bytes from stream and do buffering
-     * 
-     * @param   Bytes to read
-     * @return  Actual read bytes or -1 if error occured
-     */
-    private int readAndBuffering(long length, int headerProcessingCnt) {
-        if (debug) System.out.println("[direct] DirectPlayer.readAndBuffering " + length);
-
-        int actualRead = 0;
-        int readSize;
-        int ret;
-
-        if (length > remained) {
-            length = remained;
-        }
-
-        while (true) {
-        synchronized(buffer) {
-            readSize = (int)((length > BUFFER_SIZE) ? BUFFER_SIZE : length);
-            if (readSize <= 0) {
-                nBuffering(hNative, buffer, -1);
-                break;
-            }
-            try {
-                // read from source stream
-                ret = stream.read(buffer, 0, readSize);
-            } catch(IOException e) {
-                if (debug) System.out.println("[direct] readAndBuffering IOException");
-                return -1;
-            }
-            
-            if (headerProcessingCnt > 0) {
-                processHeader(buffer, ret);
-                headerProcessingCnt--;
-            }
-                
-            if (ret == -1) {
-                if (debug) System.out.println("[direct] stream.read return -1");
-                nBuffering(hNative, buffer, -1);
-                break;
-            }
-            // buffering
-            if (-1 == nBuffering(hNative, buffer, ret)) {
-                if (debug) System.out.println("[direct] nBuffering return -1");
-                return -1;
-            }
-            // calculate values
-            length -= ret;
-            remained -= ret;
-            actualRead += ret;
-        }
-        }
-
-        return actualRead;
-    }
-
     // #ifndef ABB [
     /**
      * Inner class that support StopTimeControl

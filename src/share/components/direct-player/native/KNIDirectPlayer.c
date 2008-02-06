@@ -31,8 +31,6 @@
 
 /* Global Variables ************************************************************************/
 
-javacall_int64 g_currentPlayer = -1;
-
 /* Externs **********************************************************************************/
 
 extern int unicodeToNative(const jchar *ustr, int ulen, unsigned char *bstr, int blen);
@@ -61,15 +59,6 @@ static javacall_bool jmmpCheckCondition(KNIPlayerInfo* pKniInfo, int conditions)
             return JAVACALL_FALSE;
         }
     }
-
-#if 0
-    if ((conditions & CHECK_CURRENT_PLAYER) == CHECK_CURRENT_PLAYER) {
-        if (pKniInfo->uniqueId != g_currentPlayer) {
-            MMP_DEBUG_STR("[KNIDirectPlayer] CHECK_CURRENT_PLAYER fail\n");
-            return JAVACALL_FALSE;
-        }
-    }
-#endif
 
     if ((conditions & CHECK_ACQUIRE_RESOURCE) == CHECK_ACQUIRE_RESOURCE) {
         if (!pKniInfo->isAcquire) {
@@ -154,47 +143,6 @@ UnlockAudioMutex();
     KNI_ReturnVoid();
 }
 
-/*  protected native int nBuffering ( int handle , Object buffer, long length ) ; */
-KNIEXPORT KNI_RETURNTYPE_INT
-KNIDECL(com_sun_mmedia_DirectPlayer_nBuffering) {
-
-    jint handle = KNI_GetParameterAsInt(1);
-    jlong length = KNI_GetParameterAsLong(3);
-    jint returnValue = -1;
-    KNIPlayerInfo* pKniInfo = (KNIPlayerInfo*)handle;
-
-    KNI_StartHandles(1);
-    KNI_DeclareHandle(bufferHandle);
-    KNI_GetParameterAsObject(2, bufferHandle);
-    
-LockAudioMutex();            
-    if (pKniInfo && pKniInfo->pNativeHandle && length > 0) {
-        int ret;
-        jbyte *tmpArray = MMP_MALLOC((unsigned int)length);
-        if (tmpArray != NULL) {
-            MMP_DEBUG_STR2("+nBuffering length=%d offset=%d\n", length, pKniInfo->offset);
-            KNI_GetRawArrayRegion(bufferHandle, 0, (int)length, (jbyte*)tmpArray);
-            ret = javacall_media_do_buffering(pKniInfo->pNativeHandle, 
-                (const char*)tmpArray, (int)length, pKniInfo->offset);
-            MMP_FREE(tmpArray);
-            if (ret > 0) {
-                pKniInfo->offset += ret;
-                returnValue = ret;
-            }
-        } else {
-            REPORT_ERROR(LC_MMAPI, "[kni_player] nBuffering allocation fail\n");                
-            KNI_ThrowNew(jsropOutOfMemoryError, NULL);
-        }
-    } else if (pKniInfo && pKniInfo->pNativeHandle) {
-        /* Indicate end of buffering by using NULL buffer */
-        returnValue = javacall_media_do_buffering(pKniInfo->pNativeHandle, NULL, -1, -1);
-    }
-UnlockAudioMutex();            
-
-    KNI_EndHandles();
-    KNI_ReturnInt(returnValue);
-}
-
 /*  protected native boolean nFlushBuffer ( int handle ) ; */
 KNIEXPORT KNI_RETURNTYPE_BOOLEAN
 KNIDECL(com_sun_mmedia_DirectPlayer_nFlushBuffer) {
@@ -232,7 +180,6 @@ KNIDECL(com_sun_mmedia_DirectPlayer_nStart) {
     
 LockAudioMutex();            
     if (pKniInfo && pKniInfo->pNativeHandle && JAVACALL_OK == javacall_media_start(pKniInfo->pNativeHandle)) {
-        g_currentPlayer = pKniInfo->uniqueId;    /* set the current player */
         returnValue = KNI_TRUE;
     }
 UnlockAudioMutex();            
@@ -269,16 +216,20 @@ KNIDECL(com_sun_mmedia_DirectPlayer_nGetMediaTime) {
 
     jint handle = KNI_GetParameterAsInt(1);
     KNIPlayerInfo* pKniInfo = (KNIPlayerInfo*)handle;
-    jint returnValue = -1;
+    javacall_result ret;
+    long ms = -1;
 LockAudioMutex();            
     if (pKniInfo && pKniInfo->pNativeHandle) {
-        returnValue = javacall_media_get_time(pKniInfo->pNativeHandle);
+        ret = javacall_media_get_time(pKniInfo->pNativeHandle, &ms);
+        if (ret != JAVACALL_OK) {
+            ms = -1;
+        }
     }
 UnlockAudioMutex();            
 
-    MMP_DEBUG_STR1("-nGetMediaTime time=%d\n", returnValue);
+    MMP_DEBUG_STR1("-nGetMediaTime time=%d\n", ms);
 
-    KNI_ReturnInt(returnValue);
+    KNI_ReturnInt((jint)ms);
 }
 
 /*  protected native int nSetMediaTime ( int handle , long ms ) ; */
@@ -287,20 +238,23 @@ KNIDECL(com_sun_mmedia_DirectPlayer_nSetMediaTime) {
 
     jint handle = KNI_GetParameterAsInt(1);
     KNIPlayerInfo* pKniInfo = (KNIPlayerInfo*)handle;
-    jlong ms = KNI_GetParameterAsLong(2);
-    jint returnValue = -1;
+    long ms = (long)KNI_GetParameterAsLong(2);
+    javacall_result ret = JAVACALL_FAIL;
 
     MMP_DEBUG_STR("+nSetMediaTime\n");
 
 LockAudioMutex();            
     if (pKniInfo) {
-        returnValue = javacall_media_set_time(pKniInfo->pNativeHandle, (int)ms);
+        ret = javacall_media_set_time(pKniInfo->pNativeHandle, &ms);
     } else {
         REPORT_ERROR(LC_MMAPI, "nSetMediaTime fail\n");
     }
 UnlockAudioMutex();            
+    if (ret != JAVACALL_OK) {
+        ms = -1;
+    }
 
-    KNI_ReturnInt(returnValue);
+    KNI_ReturnInt((jint)ms);
 }
 
 /*  protected native int nGetDuration ( int handle ) ; */
@@ -309,17 +263,21 @@ KNIDECL(com_sun_mmedia_DirectPlayer_nGetDuration) {
 
     jint handle = KNI_GetParameterAsInt(1);
     KNIPlayerInfo* pKniInfo = (KNIPlayerInfo*)handle;
-    jint returnValue = -1;
+    long ms;
+    javacall_result ret = JAVACALL_FAIL;
 
 LockAudioMutex();            
     if (pKniInfo && pKniInfo->pNativeHandle) {
-        returnValue = javacall_media_get_duration(pKniInfo->pNativeHandle);
+        ret = javacall_media_get_duration(pKniInfo->pNativeHandle, &ms);
     }
 UnlockAudioMutex();            
+    if (ret != JAVACALL_OK) {
+        ms = -1;
+    }
 
-    MMP_DEBUG_STR1("-nGetDuration duration=%d\n", returnValue);
+    MMP_DEBUG_STR1("-nGetDuration duration=%d\n", ms);
 
-    KNI_ReturnInt(returnValue);
+    KNI_ReturnInt((jint)ms);
 }
 
 /*  protected native boolean nPause ( int handle ) ; */
@@ -374,12 +332,14 @@ KNIDECL(com_sun_mmedia_DirectPlayer_nIsNeedBuffering) {
     jint handle = KNI_GetParameterAsInt(1);
     KNIPlayerInfo* pKniInfo = (KNIPlayerInfo*)handle;
     jboolean returnValue = KNI_TRUE;
+    javacall_bool isHandled = JAVACALL_FALSE;
 
 LockAudioMutex();            
     /* Is buffering handled by device side? */
     if (pKniInfo && pKniInfo->pNativeHandle &&
-		JAVACALL_OK == javacall_media_protocol_handled_by_device(pKniInfo->pNativeHandle)) {
-        returnValue = KNI_FALSE;
+        JAVACALL_OK == javacall_media_download_handled_by_device(pKniInfo->pNativeHandle,
+                                                                            &isHandled)) {
+        returnValue = (isHandled == JAVACALL_TRUE) ? KNI_FALSE : KNI_TRUE;
     }
 UnlockAudioMutex();            
 
@@ -394,7 +354,6 @@ KNIDECL(com_sun_mmedia_DirectPlayer_nSwitchToForeground) {
     jboolean returnValue = KNI_FALSE;
 #if ENABLE_MULTIPLE_ISOLATES
     jint handle = KNI_GetParameterAsInt(1);
-    jint options = KNI_GetParameterAsInt(2);
     KNIPlayerInfo* pKniInfo = (KNIPlayerInfo*)handle;
 
     MMP_DEBUG_STR2("nSwitchToForeground %d %d\n", pKniInfo, options);
@@ -404,7 +363,7 @@ LockAudioMutex();
         if (1 != pKniInfo->isForeground) {
             pKniInfo->isForeground = 1;
             if (JAVACALL_SUCCEEDED(javacall_media_to_foreground(
-                pKniInfo->pNativeHandle, options))) {
+                pKniInfo->pNativeHandle, pKniInfo->appId))) {
                 returnValue = KNI_TRUE;
             }
         } else {
@@ -422,7 +381,6 @@ KNIDECL(com_sun_mmedia_DirectPlayer_nSwitchToBackground) {
     jboolean returnValue = KNI_FALSE;
 #if ENABLE_MULTIPLE_ISOLATES
     jint handle = KNI_GetParameterAsInt(1);
-    jint options = KNI_GetParameterAsInt(2);
     KNIPlayerInfo* pKniInfo = (KNIPlayerInfo*)handle;
 
     MMP_DEBUG_STR2("nSwitchToBackground %d %d\n", pKniInfo, options);
@@ -432,7 +390,7 @@ LockAudioMutex();
         if (0 != pKniInfo->isForeground) {
             pKniInfo->isForeground = 0;
             if (JAVACALL_SUCCEEDED(javacall_media_to_background(
-                pKniInfo->pNativeHandle, options))) {
+                pKniInfo->pNativeHandle, pKniInfo->appId))) {
                 returnValue = KNI_TRUE;
             }
         } else {
@@ -523,5 +481,262 @@ UnlockAudioMutex();
 
     KNI_EndHandles();
     KNI_ReturnVoid();
+}
+
+/*  protected native boolean nPcmAudioPlayback ( int handle ) ; */
+KNIEXPORT KNI_RETURNTYPE_BOOLEAN
+KNIDECL(com_sun_mmedia_DirectPlayer_nPcmAudioPlayback) {
+    KNI_ReturnBoolean(KNI_FALSE);
+}
+
+/*  private native void nPrefetch(int hNative); */
+KNIEXPORT KNI_RETURNTYPE_VOID
+KNIDECL(com_sun_mmedia_DirectPlayer_nPrefetch) {
+    jint handle = KNI_GetParameterAsInt(1);
+    KNIPlayerInfo* pKniInfo = (KNIPlayerInfo*)handle;
+
+    if (pKniInfo && pKniInfo->pNativeHandle) {
+LockAudioMutex();
+        javacall_media_prefetch(pKniInfo->pNativeHandle);
+        pKniInfo->isAcquire = JAVACALL_TRUE;
+UnlockAudioMutex();            
+    }
+    KNI_ReturnVoid();
+}
+
+/*  private native void nSetWholeContentSize(int hNative, long contentSize) */
+KNIEXPORT KNI_RETURNTYPE_VOID
+KNIDECL(com_sun_mmedia_DirectPlayer_nSetWholeContentSize) {
+    jint handle = KNI_GetParameterAsInt(1);
+    KNIPlayerInfo* pKniInfo = (KNIPlayerInfo*)handle;
+    long contentSize = (long)KNI_GetParameterAsLong(2);
+
+    if (pKniInfo && pKniInfo->pNativeHandle) {
+LockAudioMutex();
+        javacall_media_set_whole_content_size(pKniInfo->pNativeHandle,
+                                                contentSize);
+UnlockAudioMutex();            
+    }
+    KNI_ReturnVoid();
+}
+
+/*  protected native boolean nIsFramePositioningControlSupported ( int handle ) ; */
+KNIEXPORT KNI_RETURNTYPE_BOOLEAN
+KNIDECL(com_sun_mmedia_DirectPlayer_nIsFramePositioningControlSupported) {
+    jint handle = KNI_GetParameterAsInt(1);
+    KNIPlayerInfo* pKniInfo = (KNIPlayerInfo*)handle;
+    jboolean returnValue = KNI_FALSE;
+
+    int controls;
+
+    if (pKniInfo && pKniInfo->pNativeHandle) {
+        if (JAVACALL_OK == javacall_media_get_player_controls(pKniInfo->pNativeHandle, &controls)) {
+            if (controls & JAVACALL_MEDIA_CTRL_FRAME_POSITIONING) {
+                returnValue = KNI_TRUE;
+            }
+        }
+    }
+
+    KNI_ReturnBoolean(returnValue);
+}
+
+/*  protected native boolean nIsMetaDataControlSupported ( int handle ) ; */
+KNIEXPORT KNI_RETURNTYPE_BOOLEAN
+KNIDECL(com_sun_mmedia_DirectPlayer_nIsMetaDataControlSupported) {
+    jint handle = KNI_GetParameterAsInt(1);
+    KNIPlayerInfo* pKniInfo = (KNIPlayerInfo*)handle;
+    jboolean returnValue = KNI_FALSE;
+
+    int controls;
+
+    if (pKniInfo && pKniInfo->pNativeHandle) {
+        if (JAVACALL_OK == javacall_media_get_player_controls(pKniInfo->pNativeHandle, &controls)) {
+            if (controls & JAVACALL_MEDIA_CTRL_METADATA) {
+                returnValue = KNI_TRUE;
+            }
+        }
+    }
+
+    KNI_ReturnBoolean(returnValue);
+}
+
+/*  protected native boolean nIsMIDIControlSupported ( int handle ) ; */
+KNIEXPORT KNI_RETURNTYPE_BOOLEAN
+KNIDECL(com_sun_mmedia_DirectPlayer_nIsMIDIControlSupported) {
+    jint handle = KNI_GetParameterAsInt(1);
+    KNIPlayerInfo* pKniInfo = (KNIPlayerInfo*)handle;
+    jboolean returnValue = KNI_FALSE;
+
+    int controls;
+
+    if (pKniInfo && pKniInfo->pNativeHandle) {
+        if (JAVACALL_OK == javacall_media_get_player_controls(pKniInfo->pNativeHandle, &controls)) {
+            if (controls & JAVACALL_MEDIA_CTRL_MIDI) {
+                returnValue = KNI_TRUE;
+            }
+        }
+    }
+
+    KNI_ReturnBoolean(returnValue);
+}
+
+/*  protected native boolean nIsPitchControlSupported ( int handle ) ; */
+KNIEXPORT KNI_RETURNTYPE_BOOLEAN
+KNIDECL(com_sun_mmedia_DirectPlayer_nIsPitchControlSupported) {
+    jint handle = KNI_GetParameterAsInt(1);
+    KNIPlayerInfo* pKniInfo = (KNIPlayerInfo*)handle;
+    jboolean returnValue = KNI_FALSE;
+
+    int controls;
+
+    if (pKniInfo && pKniInfo->pNativeHandle) {
+        if (JAVACALL_OK == javacall_media_get_player_controls(pKniInfo->pNativeHandle, &controls)) {
+            if (controls & JAVACALL_MEDIA_CTRL_PITCH) {
+                returnValue = KNI_TRUE;
+            }
+        }
+    }
+
+    KNI_ReturnBoolean(returnValue);
+}
+
+/*  protected native boolean nIsRateControlSupported ( int handle ) ; */
+KNIEXPORT KNI_RETURNTYPE_BOOLEAN
+KNIDECL(com_sun_mmedia_DirectPlayer_nIsRateControlSupported) {
+    jint handle = KNI_GetParameterAsInt(1);
+    KNIPlayerInfo* pKniInfo = (KNIPlayerInfo*)handle;
+    jboolean returnValue = KNI_FALSE;
+
+    int controls;
+
+    if (pKniInfo && pKniInfo->pNativeHandle) {
+        if (JAVACALL_OK == javacall_media_get_player_controls(pKniInfo->pNativeHandle, &controls)) {
+            if (controls & JAVACALL_MEDIA_CTRL_RATE) {
+                returnValue = KNI_TRUE;
+            }
+        }
+    }
+
+    KNI_ReturnBoolean(returnValue);
+}
+
+/*  protected native boolean nIsRecordControlSupported ( int handle ) ; */
+KNIEXPORT KNI_RETURNTYPE_BOOLEAN
+KNIDECL(com_sun_mmedia_DirectPlayer_nIsRecordControlSupported) {
+    jint handle = KNI_GetParameterAsInt(1);
+    KNIPlayerInfo* pKniInfo = (KNIPlayerInfo*)handle;
+    jboolean returnValue = KNI_FALSE;
+
+    int controls;
+
+    if (pKniInfo && pKniInfo->pNativeHandle) {
+        if (JAVACALL_OK == javacall_media_get_player_controls(pKniInfo->pNativeHandle, &controls)) {
+            if (controls & JAVACALL_MEDIA_CTRL_RECORD) {
+                returnValue = KNI_TRUE;
+            }
+        }
+    }
+
+    KNI_ReturnBoolean(returnValue);
+}
+
+/*  protected native boolean nIsStopTimeControlSupported ( int handle ) ; */
+KNIEXPORT KNI_RETURNTYPE_BOOLEAN
+KNIDECL(com_sun_mmedia_DirectPlayer_nIsStopTimeControlSupported) {
+    jint handle = KNI_GetParameterAsInt(1);
+    KNIPlayerInfo* pKniInfo = (KNIPlayerInfo*)handle;
+    jboolean returnValue = KNI_FALSE;
+
+    int controls;
+
+    if (pKniInfo && pKniInfo->pNativeHandle) {
+        if (JAVACALL_OK == javacall_media_get_player_controls(pKniInfo->pNativeHandle, &controls)) {
+            if (controls & JAVACALL_MEDIA_CTRL_STOPTIME) {
+                returnValue = KNI_TRUE;
+            }
+        }
+    }
+
+    KNI_ReturnBoolean(returnValue);
+}
+
+/*  protected native boolean nIsTempoControlSupported ( int handle ) ; */
+KNIEXPORT KNI_RETURNTYPE_BOOLEAN
+KNIDECL(com_sun_mmedia_DirectPlayer_nIsTempoControlSupported) {
+    jint handle = KNI_GetParameterAsInt(1);
+    KNIPlayerInfo* pKniInfo = (KNIPlayerInfo*)handle;
+    jboolean returnValue = KNI_FALSE;
+
+    int controls;
+
+    if (pKniInfo && pKniInfo->pNativeHandle) {
+        if (JAVACALL_OK == javacall_media_get_player_controls(pKniInfo->pNativeHandle, &controls)) {
+            if (controls & JAVACALL_MEDIA_CTRL_TEMPO) {
+                returnValue = KNI_TRUE;
+            }
+        }
+    }
+
+    KNI_ReturnBoolean(returnValue);
+}
+
+/*  protected native boolean nIsVideoControlSupported ( int handle ) ; */
+KNIEXPORT KNI_RETURNTYPE_BOOLEAN
+KNIDECL(com_sun_mmedia_DirectPlayer_nIsVideoControlSupported) {
+    jint handle = KNI_GetParameterAsInt(1);
+    KNIPlayerInfo* pKniInfo = (KNIPlayerInfo*)handle;
+    jboolean returnValue = KNI_FALSE;
+
+    int controls;
+
+    if (pKniInfo && pKniInfo->pNativeHandle) {
+        if (JAVACALL_OK == javacall_media_get_player_controls(pKniInfo->pNativeHandle, &controls)) {
+            if (controls & JAVACALL_MEDIA_CTRL_VIDEO) {
+                returnValue = KNI_TRUE;
+            }
+        }
+    }
+
+    KNI_ReturnBoolean(returnValue);
+}
+
+/*  protected native boolean nIsToneControlSupported ( int handle ) ; */
+KNIEXPORT KNI_RETURNTYPE_BOOLEAN
+KNIDECL(com_sun_mmedia_DirectPlayer_nIsToneControlSupported) {
+    jint handle = KNI_GetParameterAsInt(1);
+    KNIPlayerInfo* pKniInfo = (KNIPlayerInfo*)handle;
+    jboolean returnValue = KNI_FALSE;
+
+    int controls;
+
+    if (pKniInfo && pKniInfo->pNativeHandle) {
+        if (JAVACALL_OK == javacall_media_get_player_controls(pKniInfo->pNativeHandle, &controls)) {
+            if (controls & JAVACALL_MEDIA_CTRL_TONE) {
+                returnValue = KNI_TRUE;
+            }
+        }
+    }
+
+    KNI_ReturnBoolean(returnValue);
+}
+
+/*  protected native boolean nIsVolumeControlSupported ( int handle ) ; */
+KNIEXPORT KNI_RETURNTYPE_BOOLEAN
+KNIDECL(com_sun_mmedia_DirectPlayer_nIsVolumeControlSupported) {
+    jint handle = KNI_GetParameterAsInt(1);
+    KNIPlayerInfo* pKniInfo = (KNIPlayerInfo*)handle;
+    jboolean returnValue = KNI_FALSE;
+
+    int controls;
+
+    if (pKniInfo && pKniInfo->pNativeHandle) {
+        if (JAVACALL_OK == javacall_media_get_player_controls(pKniInfo->pNativeHandle, &controls)) {
+            if (controls & JAVACALL_MEDIA_CTRL_VOLUME) {
+                returnValue = KNI_TRUE;
+            }
+        }
+    }
+
+    KNI_ReturnBoolean(returnValue);
 }
 

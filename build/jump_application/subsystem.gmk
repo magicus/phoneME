@@ -37,8 +37,6 @@ ifeq ($(USE_LCDUI), true)
 SUBSYSTEM_JSR_135_JAVA_FILES += \
     $(JSR_135_DIR)/src/share/components/direct-player/classes/com/sun/mmedia/DirectVideo.java 
 endif
-SUBSYSTEM_JSR_135_NATIVE_FILES += \
-    KNIDirectVideo.c
 endif
 
 SUBSYSTEM_JSR_135_NATIVE_FILES += \

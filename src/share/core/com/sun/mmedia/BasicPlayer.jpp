@@ -30,12 +30,10 @@ import javax.microedition.media.*;
 import javax.microedition.media.control.*;
 import com.sun.mmedia.control.*;
 import java.util.Enumeration;
-import java.util.Hashtable;
 import com.sun.mmedia.protocol.*;
 // #ifndef ABB [
 import javax.microedition.media.protocol.*;
 // #endif ]
-import com.sun.j2me.app.AppIsolate;
 
 /**
  * BasicPlayer provides basic implementation for the Player methods.
@@ -54,17 +52,12 @@ public abstract class BasicPlayer implements Player
     // #else ][
     private final static boolean debug = false;
     // #endif ]
+
+    protected String  mediaFormat = null;
+    protected boolean handledByDevice = false;
+    protected int hNative;      // handle of native API library 
+    protected int pID;          // unique ID of the player
         
-    /**
-     * global player id
-     */
-    private static int pcount = -1;
-
-    /**
-     * lock object
-     */
-    private static Object idLock = new Object();
-
     /**
      * the state of this player
      */
@@ -102,27 +95,6 @@ public abstract class BasicPlayer implements Player
      */
     Object evtLock = new Object();
 
-    /**
-     * player ID of this player
-     */
-    protected int pID = 0;
-
-    /**
-     * hastable to map playerID to instances
-     */
-    private static Hashtable mplayers = new Hashtable(4);
-
-    /**
-     * table of player states
-     */
-    private static Hashtable pstates = new Hashtable();
-
-    /**
-     * table of media times
-     */
-    private static Hashtable mtimes = new Hashtable();
-
-    
     /**
      * Control package name
      */
@@ -268,28 +240,22 @@ public abstract class BasicPlayer implements Player
     private boolean closedDelivered;
 
     /**
-     * VM paused?
-     */
-    private static boolean vmPaused = false;
-
-    /**
      *Constructor for the BasicPlayer object
      */
-    public BasicPlayer() {
+    protected BasicPlayer() {
+
+        this.hNative            = 0;
+        this.mediaFormat        = PlayerImpl.MEDIA_FORMAT_UNKNOWN;
+        this.handledByDevice    = false;
+        this.pID                = 0;
+
         // Initialize sysOffset to the current time.
         // This is used for TimeBase calculations.
         sysOffset = System.currentTimeMillis() * 1000L;
 
-        synchronized (idLock) {
-            pcount = (pcount + 1) % 32767;
-            pID = pcount;
-        }
-        mplayers.put(new Integer(pID), this);
-
         // Set event listener
         new MMEventListener();
     }
-
 
     /**
      * Check to see if the Player is closed.  If the
@@ -461,13 +427,6 @@ public abstract class BasicPlayer implements Player
      * be prefetched.
      */
     public synchronized void prefetch() throws MediaException {
-        chkClosed(false);
-
-        if (vmPaused) {
-            if (debug)
-                System.out.println("ERROR: Try to prefetch player during paused state");
-            return;
-        }        
 
         if (state >= PREFETCHED) {
             return;
@@ -523,13 +482,6 @@ public abstract class BasicPlayer implements Player
      * be started.
      */
     public synchronized void start() throws MediaException {
-        chkClosed(false);
-
-        if (vmPaused) {
-            if (debug)
-                System.out.println("ERROR: Try to start player during paused state");
-            return;
-        }
 
         if (state >= STARTED) {
             return;
@@ -588,7 +540,6 @@ public abstract class BasicPlayer implements Player
 	        sendEvent(PlayerListener.END_OF_MEDIA, new Long(getMediaTime()));
                 stop();
         }
-
     }
 
 
@@ -736,7 +687,6 @@ public abstract class BasicPlayer implements Player
         }
 
         sendEvent(PlayerListener.CLOSED, null);
-        mplayers.remove(new Integer(pID));
     }
 
 
@@ -1038,130 +988,6 @@ public abstract class BasicPlayer implements Player
     protected abstract Control doGetControl(String type);
 
     /**
-     * For global PlayerID management
-     *
-     * @param  pid  Description of the Parameter
-     * @return      Description of the Return Value
-     */
-    public static BasicPlayer get(int pid) {
-        return (BasicPlayer) (mplayers.get(new Integer(pid)));
-    }
-
-    /**
-     * Send external volume changed event to all of the player from this VM
-     */
-    public static void sendExternalVolumeChanged(String evt, int volume) {
-        if (mplayers == null) {
-            return;
-        }
-
-        /* Send event to player if this player is in realized state (or above) */
-        for (Enumeration e = mplayers.elements(); e.hasMoreElements();) {
-            BasicPlayer p = (BasicPlayer) e.nextElement();
-            int state = p.getState();
-            if (state >= Player.REALIZED) {
-                if (debug) System.out.println("Send [" + evt + "] to Player " + p.toString());
-                VolumeControl vc = (VolumeControl)p.getControl("VolumeControl");
-                if (vc != null) {
-                    vc.setLevel(volume);
-                }
-            }
-        }
-    }
-
-    /**
-     *  Pauses and deallocates all media players.
-     *
-     *  After this call all players are either in realized
-     *  or unrealized state.  
-     *
-     *  Resources are being released during deallocation.
-     */
-    public static void pauseAll() {
-        vmPaused = true;
-    
-        if (mplayers == null) {
-            return;
-        }
-
-        for (Enumeration e = mplayers.elements(); e.hasMoreElements();) {
-            BasicPlayer p = (BasicPlayer) e.nextElement();
-
-            int state = p.getState();
-            long time = p.getMediaTime();
-            
-            // save the player's state
-            pstates.put(p, new Integer(state));
-            // save the player's media time
-            mtimes.put(p, new Long(time));
-
-            try {
-                // Stop the player
-                if (state == Player.STARTED) {
-                    p.stop();
-                }
-            } catch(MediaException ex) {
-            }
-            if (debug) 
-                System.out.println("*** pause MMAPI : " + p + "(" + state + ") ***");
-        }
-    }
-
-
-    /**
-     *  Resumes all media players' activities.
-     *
-     *  Players that were in STARTED state when pause
-     *  was called will resume playing at the media time
-     *  they were stopped and deallocated.
-     */
-    public static void resumeAll() {
-        vmPaused = false;
-        
-        if (mplayers == null || pstates.size() == 0) {
-            return;
-        }
-        
-        for (Enumeration e = mplayers.elements(); e.hasMoreElements();) {
-            BasicPlayer p = (BasicPlayer) e.nextElement();
-
-            int state = ((Integer) pstates.get(p)).intValue();
-            long time = ((Long) mtimes.get(p)).longValue();
-
-            if (debug)
-                System.out.println("MMAPI resumeAll state: " + state);
-
-            switch (state) {
-                /*
-                case Player.PREFETCHED:
-                    try {
-                        p.prefetch();
-                        p.setMediaTime(time);
-                    } catch (MediaException ex) {
-                    }
-                    break;
-                */
-                case Player.STARTED:
-                    try {
-                        //p.realize();
-                        //p.prefetch();
-                        if (p.getState() != Player.STARTED) {
-                            p.setMediaTime(time);
-                            p.start();
-                        }
-                    } catch (MediaException ex) {
-                    }
-                    break;
-            }
-        }
-
-        // clear player states and media times
-        pstates.clear();
-        mtimes.clear();
-    }
-    
-
-    /**
      * Implementation method for VolumeControl
      *
      * @param  ll  Description of the Parameter
@@ -1183,11 +1009,10 @@ public abstract class BasicPlayer implements Player
      * Sets the media source
      *
      * @param  source              The new source value
-     * @exception  IOException     Description of the Exception
      * @exception  MediaException  Description of the Exception
      */
     public void setSource(DataSource source)
-         throws IOException, MediaException {
+         throws MediaException {
         this.source = source;
     }
 
