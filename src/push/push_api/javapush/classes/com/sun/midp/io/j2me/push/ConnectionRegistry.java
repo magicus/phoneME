@@ -446,10 +446,15 @@ final class ConnectionRegistry
                   + "," + filter
                   + "," + suiteIdToString(midletSuite);
 
-        if (add0(asciiRegistration) == -1) {
+        int ret = add0(asciiRegistration);
+        if (ret == -1) {
             // in case of Bluetooth URL, unregistration within Bluetooth
             // PushRegistry was already performed by add0()
-            throw new IOException("Connection already registered");
+            throw new IOException("Connection already registered: " + connection);
+        } else if (ret == -2) {
+            throw new OutOfMemoryError("Connection registering");
+        } else if (ret == -3) {
+            throw new IllegalArgumentException("Connection not found");
         }
     }
 
