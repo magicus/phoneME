@@ -280,6 +280,7 @@ public class PlayerImpl implements Player {
         /* create Implementation Player */
         playerInst = getPlayerFromType(mediaFormat);
 
+        playerInst.notificationSource = this;
         playerInst.hNative            = hNative;
         playerInst.mediaFormat        = mediaFormat;
         playerInst.handledByDevice    = handledByDevice;
