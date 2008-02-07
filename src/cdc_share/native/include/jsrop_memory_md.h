@@ -1,5 +1,5 @@
 /*
- * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
@@ -32,10 +32,10 @@
     #include <stdlib.h>
 #endif
 
-#define MALLOC(size) malloc((size))
-#define FREE(addr)   free((addr))
-#define CALLOC(x, y) calloc(x, y)
-#define REALLOC(addr, size) realloc(addr, size)
+#define JAVAME_MALLOC(size)        malloc((size))
+#define JAVAME_FREE(addr)          free((addr))
+#define JAVAME_CALLOC(x, y)        calloc(x, y)
+#define JAVAME_REALLOC(addr, size) realloc(addr, size)
 
 
 #endif /* __JSROP_MEMORY_H */

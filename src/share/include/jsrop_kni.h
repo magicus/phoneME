@@ -1,5 +1,5 @@
 /*
- * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
@@ -176,7 +176,7 @@ jsrop_jstring_from_utf16_string(KNIDECLARGS const javacall_utf16_string utf16_st
  *
  */
 #define RELEASE_UTF16_STRING_PARAMETER \
-            } FREE(*latest_utf16_string_arg); \
+            } JAVAME_FREE(*latest_utf16_string_arg); \
         } \
     }
 

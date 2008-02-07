@@ -1,7 +1,5 @@
 /*
- *   
- *
- * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
@@ -95,7 +93,7 @@ KNIDECL(com_sun_j2me_crypto_RSA_modExp) {
         /* The number of BITS must fit in a BN integer. */
         KNI_ThrowNew(jsropIllegalArgumentException, "arg too long");
     } else {
-        buf = (unsigned char *) MALLOC(maxLen * sizeof(unsigned char));
+        buf = (unsigned char *) JAVAME_MALLOC(maxLen * sizeof(unsigned char));
         if (buf == NULL) {
             KNI_ThrowNew(jsropOutOfMemoryError, NULL);
         } else {
@@ -124,7 +122,7 @@ KNIDECL(com_sun_j2me_crypto_RSA_modExp) {
                 KNI_ThrowNew(jsropOutOfMemoryError, "Mod Exp");
             }
 
-            FREE(buf);
+            JAVAME_FREE(buf);
 
             BN_free(a);
             BN_free(b);

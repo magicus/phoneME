@@ -1,5 +1,5 @@
 /*
- * Portions Copyright  2000-2007 Sun Microsystems, Inc. All Rights 
+ * Portions Copyright  2000-2008 Sun Microsystems, Inc. All Rights 
  * Reserved.  Use is subject to license terms.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
@@ -494,10 +494,10 @@ BIGNUM *a;
     if (a->d != NULL)
         {
         memset(a->d,0,a->max*sizeof(a->d[0]));
-        FREE(a->d);
+        JAVAME_FREE(a->d);
         }
     memset(a,0,sizeof(BIGNUM));
-    FREE(a);
+    JAVAME_FREE(a);
 }
 
 
@@ -505,8 +505,8 @@ void BN_free(a)
 BIGNUM *a;
 {
     if (a == NULL) return;
-    if (a->d != NULL) FREE(a->d);
-    FREE(a);
+    if (a->d != NULL) JAVAME_FREE(a->d);
+    JAVAME_FREE(a);
 }
 
 
@@ -520,20 +520,20 @@ BIGNUM *BN_new(INTEGER bytes)
         return(NULL);
     }
 
-    ret=(BIGNUM *)MALLOC(sizeof(BIGNUM));
+    ret=(BIGNUM *)JAVAME_MALLOC(sizeof(BIGNUM));
     if (ret == NULL) goto err;
     ret->top=0;
     ret->neg=0;
         ret->byteSize = bytes;
     ret->max=((ret->byteSize * 8)/BN_BITS2);
-    p=(BN_ULONG *)MALLOC(sizeof(BN_ULONG)*(ret->max+1));
+    p=(BN_ULONG *)JAVAME_MALLOC(sizeof(BN_ULONG)*(ret->max+1));
     if (p == NULL) goto err;
     ret->d=p;
 
     memset(p,0,(ret->max+1)*sizeof(p[0]));
     return(ret);
 err:
-    if (ret != NULL) FREE(ret);
+    if (ret != NULL) JAVAME_FREE(ret);
 
     REPORT_ERROR(LC_SECURITY, "BN_new::malloc failure");
     return(NULL);
@@ -545,7 +545,7 @@ BN_CTX *BN_CTX_new(INTEGER bytes)
     BIGNUM *n;
     INTEGER i,j;
 
-    ret=(BN_CTX *)MALLOC(sizeof(BN_CTX));
+    ret=(BN_CTX *)JAVAME_MALLOC(sizeof(BN_CTX));
     if (ret == NULL) goto err2;
 
     for (i=0; i<BN_CTX_NUM; i++)
@@ -564,7 +564,7 @@ BN_CTX *BN_CTX_new(INTEGER bytes)
 err:
     for (j=0; j<i; j++)
         BN_free(ret->bn[j]);
-    FREE(ret);
+    JAVAME_FREE(ret);
 err2:
     REPORT_ERROR(LC_SECURITY, "BN_CTX_new::malloc failure");
     return(NULL);
@@ -580,7 +580,7 @@ BN_CTX *c;
     for (i=0; i<BN_CTX_NUM+1; i++)
         BN_clear_free(c->bn[i]);
 
-    FREE(c);
+    JAVAME_FREE(c);
 }
 
 
@@ -593,7 +593,7 @@ BIGNUM *bn_expand2(BIGNUM *b, INTEGER bits)
         {
         n=((bits+BN_BITS2-1)/BN_BITS2)*2;
         #if 1
-        p = (BN_ULONG *)MALLOC(sizeof(BN_ULONG)*(n+1));
+        p = (BN_ULONG *)JAVAME_MALLOC(sizeof(BN_ULONG)*(n+1));
         #else
         p=b->d=(BN_ULONG *)midpRealloc(b->d,sizeof(BN_ULONG)*(n+1));
         #endif
@@ -605,7 +605,7 @@ BIGNUM *bn_expand2(BIGNUM *b, INTEGER bits)
         #if 1
         memcpy(&(p[0]), &(b->d[0]), (b->max)*sizeof(BN_ULONG)); 
         memset(&(p[b->max]),0,((n+1)-b->max)*sizeof(BN_ULONG));
-        FREE(b->d);
+        JAVAME_FREE(b->d);
         b->d = p;
         b->max = n;
         #else
@@ -1587,7 +1587,7 @@ BN_MONT_CTX *BN_MONT_CTX_new(INTEGER bytes)
 {
         BN_MONT_CTX *ret;
 
-        if ((ret=(BN_MONT_CTX *)MALLOC(sizeof(BN_MONT_CTX))) == NULL)
+        if ((ret=(BN_MONT_CTX *)JAVAME_MALLOC(sizeof(BN_MONT_CTX))) == NULL)
                 return(NULL);
         ret->ri=0;
         ret->RR=BN_new(bytes);
@@ -1607,5 +1607,5 @@ BN_MONT_CTX *mont;
         if (mont->RR != NULL) BN_free(mont->RR);
         if (mont->N != NULL) BN_free(mont->N);
         if (mont->Ni != NULL) BN_free(mont->Ni);
-        FREE(mont);
+        JAVAME_FREE(mont);
 }
