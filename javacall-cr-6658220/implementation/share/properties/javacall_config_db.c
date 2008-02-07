@@ -45,13 +45,6 @@
 /* Invalid key */
 #define INI_INVALID_KEY    ((char*)-1)
 
-/* list of escape sequences to be unescaped at load time */
-static char* escape_sequences[] = {
-    "\\\"", /* Escape sequence \" */
-    NULL
-};
-
-
 
 /*---------------------------------------------------------------------------
                         Internal Functions
@@ -427,7 +420,7 @@ javacall_handle configdb_load_no_fs () {
  * @param val buffer to store the second substring
  * @param sep separating character
  *
- * @return JAVACALL_TRUE if the string begins with an escape sequence
+ * @return JAVACALL_OK if the string begins with an escape sequence
  */
 static javacall_result parse_line(char* line, char* key, char* val, char sep){
     int index;
@@ -450,29 +443,6 @@ static javacall_result parse_line(char* line, char* key, char* val, char sep){
     return JAVACALL_OK;
 }
 
-
-/**
- * Test whether the string  begins with an escape sequence
- *
- * @param str string to be tested
- *
- * @return JAVACALL_TRUE if the string begins with an escape sequence
- */
-static javacall_bool is_escape_sequence(char* str) {
-    int i, j;
-
-    /* check all the escape sequences */
-    for (i = 0; escape_sequences[i] != NULL; i++) {
-        /* test match of current escape sequence */
-        for (j = 0; str[j] == escape_sequences[i][j] &&
-                escape_sequences[i][j] != '\0'; j++);
-        if (escape_sequences[i][j] == '\0') {
-            return JAVACALL_TRUE;
-        }
-    }
-    return JAVACALL_FALSE;
-}
-
 /**
  * Remove escape characters from a string
  *
@@ -482,6 +452,7 @@ static javacall_bool is_escape_sequence(char* str) {
  */
 static javacall_result remove_escape_characters(char* str){
     int i, j;
+    int escaped;
     int length;
 
     if (str == NULL) {
@@ -489,12 +460,47 @@ static javacall_result remove_escape_characters(char* str){
     }
 
     length = strlen(str);
+    escaped = 0;
 
-    for (i = 0, j = 0; i < length; i++, j++) {
-        if (JAVACALL_TRUE == is_escape_sequence(&str[i])) {
-            i++;
+    /* run through the string */
+    for (i = 0, j = 0; i < length; i++) {
+        switch (str[i]) {
+            case '\\':
+                if (escaped) {
+                    str[j++] = '\\';
+                    /* add '\\' to result */;
+                    escaped = 0;
+                }
+                else {
+                    /* escaped character, do not add it */
+                    escaped = 1;
+                }
+                break;
+            case 'r':
+                if (escaped) {
+                    /* add '\x0D' to result */;
+                    str[j++] = (char)0x0D;
+                }
+                else {
+                    str[j++] = str[i];
+                }
+                escaped = 0;
+                break;
+            case 'n':
+                if (escaped) {
+                    /* add '\x0A' to result */;
+                    str[j++] = (char)0x0A;
+                }
+                else {
+                    str[j++] = str[i];
+                }
+                escaped = 0;
+                break;
+            default:
+                /* add character to result */
+                str[j++] = str[i];
+                escaped = 0;
         }
-        str[j] = str[i];
     }
 
     str[j] = str[i];    /* '\0' character expected here */
