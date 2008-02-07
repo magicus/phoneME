@@ -384,6 +384,20 @@ char *getMMSAppID(char *entry) {
 }
 #endif
 
+static int checkfilter_recursive(char *p1, char *p2) {
+    if (*p1 == 0) return (*p2 == 0);
+    if (*p1 == '*') {
+        while (*++p1 == '*');
+        do {
+            if (checkfilter_recursive(p1, p2)) return 1;
+        } while (*(p2++));
+        return 0;
+    }
+    if (*p2 == 0) return 0;
+    if (*p1 == *p2 || *p1 == '?') return checkfilter_recursive(++p1, ++p2);
+    return 0;
+} 
+
 #if (ENABLE_CDC == 1)
 
 typedef struct filter_struct {
@@ -443,20 +457,6 @@ static char* find_filter(int port) {
     }    
     return NULL;
 }
-
-static int checkfilter_recursive(char *p1, char *p2) {
-    if (*p1 == 0) return (*p2 == 0);
-    if (*p1 == '*') {
-        while (*++p1 == '*');
-        do {
-            if (checkfilter_recursive(p1, p2)) return 1;
-        } while (*(p2++));
-        return 0;
-    }
-    if (*p2 == 0) return 0;
-    if (*p1 == *p2 || *p1 == '?') return checkfilter_recursive(++p1, ++p2);
-    return 0;
-} 
 
 int check_push_filter(int port, char* senderPhone) {
 
@@ -602,84 +602,7 @@ KNIDECL(com_sun_midp_wma_PushConnectionsPool_hasAvailableData) {
  *     otherwise.
  */
 int jsr120_check_filter(char *filter, char *cmsidn) {
-    char *p1 = NULL;
-    char *p2 = NULL;
 
-    if ((cmsidn == NULL) || (filter == NULL)) return 0;
-
-    /* Filter is exactly "*", then all MSIDN numbers are allowed. */
-    if (strcmp(filter, "*") == 0) return 1;
-
-    /*
-     * Otherwise walk through the filter string looking for character
-     * matches and wildcard matches.
-     * The filter pointer is incremented in the main loop and the
-     * MSIDN pointer is incremented as characters and wildcards
-     * are matched. Checking continues until there are no more filter or
-     * MSIDN characters available.
-     */
-    for (p1=filter, p2=cmsidn; *p1 && *p2; p1++) {
-        /*
-         * For an asterisk, consume all the characters up to
-         * a matching next character.
-         */
-        if (*p1 == '*') {
-            /* Initialize the next two filter characters. */
-            char f1 = *(p1+1);
-            char f2 = '\0';
-            if (f1 != '\0') {
-                f2 = *(p1+2);
-            }
-
-            /* Skip multiple wild cards. */
-            if (f1 == '*') {
-                continue;
-            }
-
-            /*
-             * Consume all the characters up to a match of the next
-             * character from the filter string. Stop consuming
-             * characters, if the address is fully consumed.
-             */
-            while (*p2) {
-                /*
-                 * When the next character matches, check the second character
-                 * from the filter string. If it does not match, continue
-                 * consuming characters from the address string.
-                 */
-                if(*p2 == f1 || f1 == '?') {
-                    if (*(p2+1) == f2 || f2 == '?' || f2 == '*') {
-                        /* Always consume an address character. */
-                        p2++;
-                        if (f2 != '?' || *(p2+1) == '.' || *(p2+1) == '\0') {
-                            /* Also, consume a filter character. */
-                            p1++;
-                        }
-                        break;
-                    }
-                }
-                p2++;
-            }
-        } else if (*p1 == '?') {
-            p2 ++;
-        } else if (*p1 != *p2) {
-            /* If characters do not match, filter failed. */
-            return 0;
-        } else {
-            p2 ++;
- 	}
-    }
-
-    if (!(*p1)  && !(*p2) ) {
-        /* 
-         * All available filter and MSIDN characters were checked.
-         */
-        return 1;
-    } else {
-        /*
-         * Mismatch in length of filter and MSIDN string
-         */
-        return 0;
-    }
+    return checkfilter_recursive(filter, cmsidn);
 }
 
