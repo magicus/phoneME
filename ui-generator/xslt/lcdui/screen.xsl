@@ -29,6 +29,7 @@ information or have any questions.
         <xsl:text>import javax.microedition.lcdui.Displayable;&#10;</xsl:text>
         <xsl:text>import javax.microedition.lcdui.ChoiceGroup;&#10;</xsl:text>
         <xsl:text>import javax.microedition.lcdui.StringItem;&#10;</xsl:text>
+        <xsl:text>import javax.microedition.lcdui.Gauge;&#10;</xsl:text>
         <xsl:text>import javax.microedition.lcdui.Spacer;&#10;</xsl:text>
         <xsl:text>import javax.microedition.lcdui.Item;&#10;</xsl:text>
         <xsl:text>import javax.microedition.lcdui.ItemCommandListener;&#10;</xsl:text>
@@ -41,7 +42,7 @@ information or have any questions.
         <xsl:text>    protected Displayable getDisplayable() {&#10;</xsl:text>
         <xsl:apply-templates select="." mode="LCDUI-create-displayable"/>
         <xsl:text>&#10;</xsl:text>
-        <xsl:apply-templates select="text|filler|options" mode="LCDUI-append"/>
+        <xsl:apply-templates select="text|filler|options|progress" mode="LCDUI-append"/>
         <xsl:apply-templates select="." mode="LCDUI-set-command-listener"/>
         <xsl:text>        return d;&#10;</xsl:text>
         <xsl:text>    }&#10;</xsl:text>
@@ -122,9 +123,9 @@ information or have any questions.
 
 
     <!--
-        Top level "text" element
+        Top level "text" element, "label" element in "options"
     -->
-    <xsl:template match="screen/text" mode="LCDUI-create">
+    <xsl:template match="screen/text|label/text" mode="LCDUI-create">
         <xsl:text>        final StringItem </xsl:text>
         <xsl:apply-templates select="." mode="LCDUI-varname"/>
         <xsl:text> = new StringItem(null, </xsl:text>
@@ -147,11 +148,21 @@ information or have any questions.
         Top level "options" element
     -->
     <xsl:template match="screen/options" mode="LCDUI-create">
+        <xsl:apply-templates select="label/text" mode="LCDUI-append"/>
         <xsl:text>        final ChoiceGroup </xsl:text>
         <xsl:apply-templates select="." mode="LCDUI-varname"/>
-        <xsl:text> = new ChoiceGroup(null, ChoiceGroup.EXCLUSIVE);&#10;</xsl:text>
+        <xsl:text> = new ChoiceGroup(null, ChoiceGroup.</xsl:text>
+        <xsl:apply-templates select="." mode="LCDUI-options-type"/>
+        <xsl:text>);&#10;</xsl:text>
         <xsl:apply-templates select="option/text" mode="LCDUI-create"/>
     </xsl:template>
+
+     <xsl:template match="*[@type='dropdown']" mode="LCDUI-options-type">
+         <xsl:text>POPUP</xsl:text>
+     </xsl:template>
+     <xsl:template match="*[@type='plain' or not(@type)]" mode="LCDUI-options-type">
+         <xsl:text>EXCLUSIVE</xsl:text>
+     </xsl:template>
 
     <xsl:template match="option/text" mode="LCDUI-create">
         <xsl:text>        </xsl:text>
@@ -177,11 +188,23 @@ information or have any questions.
         <xsl:text>                         break;&#10;</xsl:text>
     </xsl:template>
 
+     <!--
+         Top level "progress" element
+     -->
+     <xsl:template match="screen/progress" mode="LCDUI-create">
+         <xsl:text>        final Gauge </xsl:text>
+         <xsl:apply-templates select="." mode="LCDUI-varname"/>
+         <xsl:text> = new Gauge("</xsl:text>
+         <xsl:apply-templates select="." mode="Screen-printf"/>
+         <xsl:text>", false, </xsl:text>
+         <xsl:value-of select="@max"/>
+         <xsl:text>, 0);&#10;</xsl:text>
+     </xsl:template>
 
-    <xsl:template match="screen/text|screen/filler|screen/options" mode="LCDUI-varname">
+    <xsl:template match="screen/text|screen/filler|screen/options|screen/progress|screen/options/label" mode="LCDUI-varname">
         <xsl:variable name="screen-id" select="ancestor::screen/@name"/>
         <xsl:text>item</xsl:text>
-        <xsl:value-of select="count((preceding-sibling::text|preceding-sibling::filler|preceding-sibling::options)[ancestor::screen/@name=$screen-id]) + 1"/>
+        <xsl:value-of select="generate-id()"/>
     </xsl:template>
 
     <xsl:template match="*" mode="LCDUI-varname">
