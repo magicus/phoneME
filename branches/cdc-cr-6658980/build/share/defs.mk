@@ -1935,12 +1935,12 @@ CVM_FILESEP	= /
 ifeq ($(CDC_10),true)
 # Some platforms don't have a tzmappings file. They should override
 # CVM_TZDATAFILE be empty in this case.
-CVM_TZDIR      = $(CVM_TOP)/src/$(TARGET_OS)/lib
+CVM_TZDIR      = $(CDC_OS_COMPONENT_DIR)/src/$(TARGET_OS)/lib
 CVM_TZDATAFILE = $(CVM_LIBDIR)/tzmappings
 endif
 
 # mime content properties file
-CVM_MIMEDIR	 = $(CVM_TOP)/src/$(TARGET_OS)/lib
+CVM_MIMEDIR	 = $(CDC_OS_COMPONENT_DIR)/src/$(TARGET_OS)/lib
 CVM_MIMEDATAFILE = $(CVM_LIBDIR)/content-types.properties
 
 # Name of the cvm binary
