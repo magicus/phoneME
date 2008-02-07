@@ -34,6 +34,8 @@ import java.security.MessageDigest;
 import java.util.*;
 import java.io.PrintStream;
 
+import com.sun.j2me.l10n.LocalizedStrings;
+import com.sun.j2me.i18n.Resource;
 /**
  * This class implements miscellaneous utility methods including
  * those used for conversion of BigIntegers to
@@ -380,45 +382,60 @@ public class Utils {
      * @return formatted calendar string
      */
     public static String calendarToString(Calendar calendar) {
-        String[] months = {"Jan", "Feb", "Mar", "Apr", "May", "Jun",
-                                  "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
-
-        String[] days = {"Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"};
+        int dow, month, day, hour, minute, seconds, year;
+        String ampm, zoneID;
 
         if (calendar == null) {
-            return "Thu Jan 01 00:00:00 UTC 1970";
+            /* By default: "Thu, 01 Jan 1970 12:00:00 AM */
+            dow = Calendar.THURSDAY-1;
+            month = Calendar.JANUARY;
+            day = 1;
+            minute = 0;
+            seconds = 0;
+            year = 1970;
+            zoneID = " GMT";
+        } else {
+            dow = calendar.get(Calendar.DAY_OF_WEEK)-1;
+            month = calendar.get(Calendar.MONTH);
+            day = calendar.get(Calendar.DAY_OF_MONTH);            
+            minute = calendar.get(Calendar.MINUTE);
+            seconds = calendar.get(Calendar.SECOND);
+            year = calendar.get(Calendar.YEAR);            
+            zoneID = calendar.getTimeZone().getID();
+            if (zoneID == null) {
+                zoneID = "";
+            } else {
+                zoneID = " " + zoneID;
+            }
         }
-
-        int dow = calendar.get(Calendar.DAY_OF_WEEK);
-        int month = calendar.get(Calendar.MONTH);
-        int day = calendar.get(Calendar.DAY_OF_MONTH);
-        int hour_of_day = calendar.get(Calendar.HOUR_OF_DAY);
-        int minute = calendar.get(Calendar.MINUTE);
-        int seconds = calendar.get(Calendar.SECOND);
-        int year = calendar.get(Calendar.YEAR);
-
-        String yr = Integer.toString(year);
-
-//        TimeZone zone = calendar.getTimeZone();
-//        String zoneID = zone.getID();
-//        if (zoneID == null) zoneID = "";
-        String zoneID = "GMT";
-
-        // The total size of the string buffer
-        // 3+1+3+1+2+1+2+1+2+1+2+1+zoneID.length+1+yr.length
-        //  = 21 + zoneID.length + yr.length
-        StringBuffer sb = new StringBuffer(25 + zoneID.length() + yr.length());
-
-        sb.append(days[dow-1]).append(' ');
-        sb.append(months[month]).append(' ');
-        appendTwoDigits(sb, day).append(' ');
-        appendTwoDigits(sb, hour_of_day).append(':');
-        appendTwoDigits(sb, minute).append(':');
-        appendTwoDigits(sb, seconds).append(' ');
-        if (zoneID.length() > 0) sb.append(zoneID).append(' ');
-        appendFourDigits(sb, year);
-
-        return sb.toString();
+        
+        LocalizedStrings localString = new LocalizedStrings();        
+        if (localString.isLocalizedAMPMafterTime()) {
+            if (calendar == null) {
+                ampm = "AM";
+                hour = 12;            
+            } else {
+                ampm = (calendar.get(Calendar.AM_PM) == Calendar.AM) ? 
+                    "AM" : "PM";
+                hour = calendar.get(Calendar.HOUR);
+                if (hour == 0) {
+                    hour = 12;
+                }
+            }            
+        } else {
+            if (calendar == null) {
+                hour = 0;
+            } else {
+                hour = calendar.get(Calendar.HOUR_OF_DAY);
+            }
+            ampm = null;
+        }
+        
+        return localString.getLocalizedDateTimeString(Resource.
+                getShortDayName(dow), Integer.toString(day),
+                Resource.getMonthName(month), Integer.toString(year),
+                Integer.toString(hour), Integer.toString(minute), 
+                Integer.toString(seconds), ampm) + zoneID;        
     }
 
     /**
