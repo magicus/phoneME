@@ -116,6 +116,22 @@ endif
 SPECIFIC_DEFINITIONS += $(filter -DENABLE_JSR%, $(foreach jsr,$(JSR_LIST), \
     $(if $(PREFIX_$(USE_$(jsr))), -DENABLE_$(jsr)=1)))
 
+# definitions and rules for JPEG component
+ifeq ($(USE_JC_JPEG_ENCODER), true)
+        USE_JC_JPEG = true
+endif
+
+ifeq ($(USE_JC_JPEG_DECODER), true)
+        USE_JC_JPEG = true
+endif
+
+ifeq ($(USE_JC_JPEG), true)
+JPEG_JC_DIR = $(JAVACALL_DIR)/implementation/share/jpeg
+SOURCE_OUTPUT_LIST += $(JPEG_JC_DIR) javacall/implementation/share
+include $(JPEG_JC_DIR)/module.gmk
+endif
+
+# general build rules
 ifeq ($(USE_DEBUG),true)
 BUILD=debug
 CFLAGS += -DENABLE_JAVACALL_DEBUG
