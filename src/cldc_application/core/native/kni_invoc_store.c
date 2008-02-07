@@ -55,8 +55,10 @@
 #include <midpMalloc.h>
 #include <suitestore_common.h>
 #include <jsr211_invoc.h>
+#include <jsr211_platform_invoc.h>
 #include <jsrop_memory.h>
 #include <javautil_unicode.h>
+#include <javacall_memory.h>
 
 #ifdef _DEBUG
 #define DEBUG_211
@@ -1467,7 +1469,7 @@ StoredInvoc* jsr211_find_invocation(int invoc_id) {
 
     /* Inspect the queue of Invocations and pick one that matches. */
     for (curr = invocQueue; curr != NULL; curr = curr->flink) {
-        if ((void *)invoc_id == curr->invoc) {
+        if (invoc_id == curr->invoc->tid) {
             /* Found one; return it */
             return curr->invoc;
         }
@@ -1608,8 +1610,7 @@ jsr211_launch_result jsr211_execute_handler(javacall_const_utf16_string handler_
  * @param status result of the invocation processing. 
  * @return result of operation.
  */
-
-javacall_result javanotify_chapi_platform_finish(int invoc_id,
+static void javanotify_chapi_platform_finish_handler(int invoc_id,
         javacall_utf16_string url,
         int argsLen, javacall_utf16_string* args,
         int dataLen, void* data,
@@ -1624,7 +1625,7 @@ javacall_result javanotify_chapi_platform_finish(int invoc_id,
     
     /* invalid invoc_id or the invocation is already removed. */
     if (invoc == NULL)
-        return JAVACALL_INVALID_ARGUMENT; 
+        return JAVACALL_INVALID_ARGUMENT;
     result = JAVACALL_OK;
 
     if (PCSL_STRING_OK != pcsl_string_convert_from_utf16(url, javacall_string_len(url), &invoc->url))
@@ -1702,13 +1703,12 @@ javacall_result javanotify_chapi_platform_finish(int invoc_id,
  * This is <code>Registry.invoke()</code> substitute for Platform->Java call.
  * @param handler_id target Java handler Id
  * @param invocation filled out structure with invocation params
- * @param invoc_id assigned by JVM invocation Id for further references
- * @return result of operation.
+ * @param invoc_id invocation Id for further references
  */
-javacall_result javanotify_chapi_java_invoke(
+static void javanotify_chapi_java_invoke_handler(
         const javacall_utf16_string handler_id,
         javacall_chapi_invocation* invocation,
-        /* OUT */ int* invoc_id) {
+        int invoc_id) {
     /* ToDo: this function should be implemented using javacall event queue */
     javacall_utf16_string classname;
     int classname_len = 512 /* ??? */;
@@ -1833,7 +1833,7 @@ javacall_result javanotify_chapi_java_invoke(
 /*                         &invoc->classname, */
 /*                         &is_started); */
                     
-                    *invoc_id = (int)invoc;
+                    invoc_id = invoc->tid;
 
                     if (JAVACALL_OK != res)
                         FREE(invoc->data);
@@ -1938,4 +1938,66 @@ jsr211_boolean jsr211_platform_finish(int tid, jsr211_boolean *should_exit)
     pcsl_string_release_utf16_data(url, &invoc->url);
 
     return success;
+}
+
+    int invoc_id;
+    javacall_utf16_string handler_id;
+    javacall_chapi_invocation_status status;
+    javacall_chapi_invocation invocation;
+
+#define CHECK_FOR_NULL_AND_FREE(pointer) \
+    if (NULL != pointer) { \
+        javacall_free(pointer); \
+        pointer = NULL; \
+    }
+
+static void free_platform_event (jsr211_platform_event *event)
+{
+    int i;
+
+    if (NULL != event) {
+        CHECK_FOR_NULL_AND_FREE(event->handler_id);
+        CHECK_FOR_NULL_AND_FREE(event->invocation.url);
+        CHECK_FOR_NULL_AND_FREE(event->invocation.type);
+        CHECK_FOR_NULL_AND_FREE(event->invocation.action);
+        CHECK_FOR_NULL_AND_FREE(event->invocation.invokingAppName);
+        CHECK_FOR_NULL_AND_FREE(event->invocation.invokingAuthority);
+        CHECK_FOR_NULL_AND_FREE(event->invocation.username);
+        CHECK_FOR_NULL_AND_FREE(event->invocation.password);
+        if (NULL != event->invocation.args) {
+            for (i = 0; i < event->invocation.argsLen; i++)
+                CHECK_FOR_NULL_AND_FREE(event->invocation.args[i]);
+            javacall_free(event->invocation.args);
+            event->invocation.args = NULL;
+        }
+        CHECK_FOR_NULL_AND_FREE(event->invocation.data);
+
+        javacall_free (event);
+    }
+}
+
+void jsr211_process_platform_finish_notification (jsr211_platform_event *event)
+{
+    javanotify_chapi_platform_finish_handler(
+        event->invoc_id,
+        event->invocation.url,
+        event->invocation.argsLen,
+        event->invocation.args,
+        event->invocation.dataLen,
+        event->invocation.data,
+        event->status
+        );
+    
+    free_platform_event(event);
+}
+
+void jsr211_process_java_invoke_notification (jsr211_platform_event *event)
+{
+    javanotify_chapi_java_invoke_handler(
+        event->handler_id,
+        &event->invocation,
+        event->invoc_id
+        );
+    
+    free_platform_event(event);
 }
