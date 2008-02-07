@@ -163,8 +163,6 @@ public class CommonDS extends BasicDS implements SourceStream {
             } else if (locator.equals(Manager.TONE_DEVICE_LOCATOR) 
                        // #ifndef ABB [
                        || locator.equals(Manager.MIDI_DEVICE_LOCATOR)
-                       || locator.startsWith(Configuration.VIDEO_CAPTURE_LOCATOR)
-                       || locator.startsWith(Configuration.AUDIO_CAPTURE_LOCATOR)
                        // #endif ]
                 ) {
                 inputStream = null;
