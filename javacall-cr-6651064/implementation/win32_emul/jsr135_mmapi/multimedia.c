@@ -22,7 +22,7 @@
  * information or have any questions.
  */
 
-#include "lime.h"
+//#include "lime.h"
 #include "multimedia.h"
 #include "mmmididev.h"
 
@@ -35,6 +35,7 @@ static javacall_media_caps g_caps[] =
     { JAVACALL_MEDIA_FORMAT_MIDI,    "audio/midi audio/mid", JAVACALL_MEDIA_MEMORY_PROTOCOL, 0 },
     { JAVACALL_MEDIA_FORMAT_SP_MIDI, "audio/sp-midi",        JAVACALL_MEDIA_MEMORY_PROTOCOL, 0 },
     { JAVACALL_MEDIA_FORMAT_TONE,    "audio/x-tone-seq",     JAVACALL_MEDIA_MEMORY_PROTOCOL, 0 },
+    { JAVACALL_MEDIA_FORMAT_AMR,     "audio/amr",            JAVACALL_MEDIA_MEMORY_PROTOCOL, 0 },
     { NULL,                          NULL,                   0,                              0 }
 };
 
@@ -121,6 +122,8 @@ static javacall_media_format_type g_fmt[] =
     JAVACALL_MEDIA_FORMAT_GRAY8             ,
     JAVACALL_MEDIA_FORMAT_DEVICE_TONE       ,
     JAVACALL_MEDIA_FORMAT_DEVICE_MIDI       ,
+    JAVACALL_MEDIA_FORMAT_CAPTURE_AUDIO     ,
+    JAVACALL_MEDIA_FORMAT_CAPTURE_VIDEO     ,
     //JAVACALL_MEDIA_FORMAT_UNKNOWN excluded, it will be mapped to -1
     JAVACALL_MEDIA_FORMAT_UNSUPPORTED
 };
@@ -181,7 +184,7 @@ javacall_media_format_type fmt_mime2str( const char* mime )
         }
     }
 
-    return JAVACALL_MEDIA_FORMAT_UNKNOWN;;
+    return JAVACALL_MEDIA_FORMAT_UNKNOWN;
 }
 
 //=============================================================================
@@ -200,10 +203,10 @@ media_interface* fmt_enum2itf( jc_fmt fmt )
 {
     switch( fmt )
     {
-    case JC_FMT_MPEG_4_SVP:
-    case JC_FMT_MPEG_4_AVC:
-    case JC_FMT_VIDEO_3GPP:
-        return &g_video_itf;    // was: VIDEO_MPEG4, VIDEO_3GPP, CAPTURE_VIDEO, VIDEO_MPEG, VIDEO_GIF
+    //case JC_FMT_MPEG_4_SVP:
+    //case JC_FMT_MPEG_4_AVC:
+    //case JC_FMT_VIDEO_3GPP:
+        //return &g_video_itf;    // was: VIDEO_MPEG4, VIDEO_3GPP, CAPTURE_VIDEO, VIDEO_MPEG, VIDEO_GIF
 
     case JC_FMT_TONE:
     case JC_FMT_MIDI:
@@ -211,11 +214,11 @@ media_interface* fmt_enum2itf( jc_fmt fmt )
     case JC_FMT_MS_PCM:
         return &g_qsound_itf;   // was: AUDIO_MIDI, AUDIO_WAVE
 
-    case JC_FMT_MPEG1_LAYER3:
-    case JC_FMT_MPEG1_LAYER3_PRO:
-    case JC_FMT_MPEG2_AAC:
-    case JC_FMT_MPEG4_HE_AAC:
-        return &g_audio_itf;    // was: AUDIO_MP3, AUDIO_MPEG4, AUDIO_AAC, AUDIO_MP3_2
+    //case JC_FMT_MPEG1_LAYER3:
+    //case JC_FMT_MPEG1_LAYER3_PRO:
+    //case JC_FMT_MPEG2_AAC:
+    //case JC_FMT_MPEG4_HE_AAC:
+        //return &g_audio_itf;    // was: AUDIO_MP3, AUDIO_MPEG4, AUDIO_AAC, AUDIO_MP3_2
 
     case JC_FMT_AMR:
     case JC_FMT_AMR_WB:
@@ -340,12 +343,13 @@ javacall_result javacall_media_create(int appId,
 
     if( NULL == pPlayer ) return JAVACALL_OUT_OF_MEMORY;
 
-    pPlayer->appId       = appId;
-    pPlayer->playerId    = playerId;
-    pPlayer->uri         = NULL;
-    pPlayer->mediaHandle = NULL;
-    pPlayer->mediaItfPtr = NULL;
-    pPlayer->mediaType   = JAVACALL_MEDIA_FORMAT_UNKNOWN;
+    pPlayer->appId            = appId;
+    pPlayer->playerId         = playerId;
+    pPlayer->uri              = NULL;
+    pPlayer->mediaHandle      = NULL;
+    pPlayer->mediaItfPtr      = NULL;
+    pPlayer->mediaType        = JAVACALL_MEDIA_FORMAT_UNKNOWN;
+    pPlayer->downloadByDevice = JAVACALL_FALSE;    
 
     if( NULL != uri )
     {
@@ -356,26 +360,30 @@ javacall_result javacall_media_create(int appId,
         if( 0 == _wcsnicmp( uri, AUDIO_CAPTURE_LOCATOR, 
                            min( (long)wcslen( AUDIO_CAPTURE_LOCATOR ), uriLength ) ) )
         {
-            pPlayer->mediaType   = JAVACALL_MEDIA_FORMAT_CAPTURE_AUDIO;
-            pPlayer->mediaItfPtr = &g_record_itf;
+            pPlayer->mediaType        = JAVACALL_MEDIA_FORMAT_CAPTURE_AUDIO;
+            pPlayer->mediaItfPtr      = &g_record_itf;
+            pPlayer->downloadByDevice = JAVACALL_TRUE;
         }
         else if( 0 == _wcsnicmp( uri, VIDEO_CAPTURE_LOCATOR, 
                            min( (long)wcslen( VIDEO_CAPTURE_LOCATOR ), uriLength ) ) )
         {
-            pPlayer->mediaType   = JAVACALL_MEDIA_FORMAT_CAPTURE_VIDEO;
-            pPlayer->mediaItfPtr = &g_camera_itf;
+            pPlayer->mediaType        = JAVACALL_MEDIA_FORMAT_CAPTURE_VIDEO;
+            pPlayer->mediaItfPtr      = &g_camera_itf;
+            pPlayer->downloadByDevice = JAVACALL_TRUE;
         }
         else if( 0 == _wcsnicmp( uri, DEVICE_TONE_LOCATOR, 
                            min( (long)wcslen( DEVICE_TONE_LOCATOR ), uriLength ) ) )
         {
-            pPlayer->mediaType   = JAVACALL_MEDIA_FORMAT_DEVICE_TONE;
-            pPlayer->mediaItfPtr = &g_qsound_itf;
+            pPlayer->mediaType        = JAVACALL_MEDIA_FORMAT_DEVICE_TONE;
+            pPlayer->mediaItfPtr      = &g_qsound_itf;
+            pPlayer->downloadByDevice = JAVACALL_TRUE;
         }
         else if( 0 == _wcsnicmp( uri, DEVICE_MIDI_LOCATOR, 
                            min( (long)wcslen( DEVICE_MIDI_LOCATOR ), uriLength ) ) )
         {
-            pPlayer->mediaType   = JAVACALL_MEDIA_FORMAT_DEVICE_MIDI;
-            pPlayer->mediaItfPtr = &g_qsound_interactive_midi_itf;
+            pPlayer->mediaType        = JAVACALL_MEDIA_FORMAT_DEVICE_MIDI;
+            pPlayer->mediaItfPtr      = &g_qsound_interactive_midi_itf;
+            pPlayer->downloadByDevice = JAVACALL_TRUE;
         }
         else
         {
@@ -607,7 +615,7 @@ javacall_result javacall_media_download_handled_by_device(javacall_handle handle
 {
     javacall_impl_player* pPlayer = (javacall_impl_player*)handle;
 
-    *isHandled = JAVACALL_FALSE;
+    *isHandled = pPlayer->downloadByDevice;
 
     return JAVACALL_OK;
 }
@@ -951,8 +959,8 @@ javacall_result javacall_media_set_mute(javacall_handle handle, javacall_bool mu
 javacall_result javacall_media_set_video_color_key(javacall_handle handle,
                                                javacall_bool on,
                                                javacall_pixel color) {
-    static LimeFunction *f1 = NULL;
-    static LimeFunction *f2 = NULL;
+    //static LimeFunction *f1 = NULL;
+    //static LimeFunction *f2 = NULL;
 
     /*if(on == TRUE){
         if (f1 == NULL) {
@@ -970,7 +978,7 @@ javacall_result javacall_media_set_video_color_key(javacall_handle handle,
         f2->call(f2, &res);
 
     }*/
-    return JAVACALL_OK;
+    return JAVACALL_NOT_IMPLEMENTED;
 }
 
 /**

@@ -23,7 +23,7 @@
  */
 
 #include "mm_qsound_audio.h"
-
+#include "mmrecord.h"
 
 #pragma pack(1)
 struct riffchnk
@@ -91,8 +91,7 @@ struct std_head
 };
 #pragma pack()
 
-/*
-int create_wavhead(ch_wav *handle, char *buffer, int buflen)
+int create_wavhead(recorder* h, char *buffer, int buflen)
 {
     struct std_head wh;
 
@@ -101,26 +100,25 @@ int create_wavhead(ch_wav *handle, char *buffer, int buflen)
 
     memset(&wh, '\0', sizeof(wh));
 
-    wh.rc.chnk_id = 0x46464952; // RIFF
-    wh.rc.chnk_ds = 4;
-    wh.rc.type = 0x45564157; // WAVE
+    wh.rc.chnk_id          = 0x46464952; // RIFF
+    wh.rc.chnk_ds          = 4;
+    wh.rc.type             = 0x45564157; // WAVE
 
-    wh.fc.chnk_id = 0x20746D66;  //fmt.
-    wh.fc.chnk_ds = 16;
+    wh.fc.chnk_id          = 0x20746D66;  //fmt.
+    wh.fc.chnk_ds          = 16;
     wh.fc.compression_code = 1;
-    wh.fc.num_channels = handle->channels;
-    wh.fc.sample_rate = handle->rate;
+    wh.fc.num_channels     = h->channels;
+    wh.fc.sample_rate      = h->rate;
     wh.fc.bytes_per_second = 0;  // ??? NEED REVISIT
-    wh.fc.block_align = 0;   // ?? NEED REVISIT
-    wh.fc.bits = handle->bits;
+    wh.fc.block_align      = 0;   // ?? NEED REVISIT
+    wh.fc.bits             = h->bits;
 
-    wh.dc.chnk_id = 0x61746164;
-    wh.dc.chnk_ds = handle->recordLen;
+    wh.dc.chnk_id          = 0x61746164;
+    wh.dc.chnk_ds          = h->recordLen;
 
     memcpy(buffer, &wh, sizeof(wh));
     return sizeof(wh);
 }
-*/
 
 int wav_setStreamPlayerData(ah_wav *handle)
 {
