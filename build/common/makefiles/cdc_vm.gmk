@@ -193,3 +193,8 @@ cdc_dummies:
 
 # ifndef _CDC_GMK_
 endif
+
+# Add configuration input files set by JSRs subsystem
+SUBSYSTEM_CONFIGURATION_INPUT_FILES += \
+	$(JSR_CONFIGURATION_INPUT_FILES)
+
