@@ -426,11 +426,6 @@ javacall_handle configdb_load_no_fs () {
 static javacall_result parse_line(char* line, char* key, char* val, char sep){
     int index;
 
-    /* arguments check */
-    if (line == NULL || key == NULL || val == NULL) {
-        return JAVACALL_FAIL;
-    }
-
     /* get first place of occurance of the separator */
     if (JAVACALL_FAIL == javautil_string_index_of(line, sep, &index)) {
         return JAVACALL_FAIL;
