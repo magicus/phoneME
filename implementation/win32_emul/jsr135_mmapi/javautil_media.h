@@ -62,4 +62,19 @@ int javautil_media_rgb_to_png(unsigned char *input,
                               int width, 
                               int height);
 
+/**
+ * Encode rgbX888 format data to PNG data format (there is no compression)
+ * 
+ * @param input     Pointer to rgbX888 data
+ * @param output    Pointer to PNG encode buffer
+ * @param width     Width of image
+ * @param height    Height of image
+ * 
+ * @return Byte size of encoded PNG data
+ */
+int javautil_media_rgbX888_to_png(unsigned char *input, 
+                                  unsigned char *output,
+                                  int width, 
+                                  int height);
+
 #endif  /* __JAVAUTIL_MEDIA_H */
