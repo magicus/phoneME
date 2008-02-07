@@ -383,7 +383,7 @@ public class Utils {
      */
     public static String calendarToString(Calendar calendar) {
         int dow, month, day, hour, minute, seconds, year;
-        String ampm;
+        String ampm, zoneID;
 
         if (calendar == null) {
             /* By default: "Thu, 01 Jan 1970 12:00:00 AM */
@@ -393,13 +393,20 @@ public class Utils {
             minute = 0;
             seconds = 0;
             year = 1970;
+            zoneID = " GMT";
         } else {
             dow = calendar.get(Calendar.DAY_OF_WEEK)-1;
             month = calendar.get(Calendar.MONTH);
             day = calendar.get(Calendar.DAY_OF_MONTH);            
             minute = calendar.get(Calendar.MINUTE);
             seconds = calendar.get(Calendar.SECOND);
-            year = calendar.get(Calendar.YEAR);
+            year = calendar.get(Calendar.YEAR);            
+            zoneID = calendar.getTimeZone().getID();
+            if (zoneID == null) {
+                zoneID = "";
+            } else {
+                zoneID = " " + zoneID;
+            }
         }
         
         LocalizedStrings localString = new LocalizedStrings();        
@@ -428,7 +435,7 @@ public class Utils {
                 getShortDayName(dow), Integer.toString(day),
                 Resource.getMonthName(month), Integer.toString(year),
                 Integer.toString(hour), Integer.toString(minute), 
-                Integer.toString(seconds), ampm);        
+                Integer.toString(seconds), ampm) + zoneID;        
     }
 
     /**
