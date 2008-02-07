@@ -1,7 +1,5 @@
 /*
- * 
- *
- * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
@@ -1556,7 +1554,8 @@ jsr211_launch_result jsr211_execute_handler(javacall_const_utf16_string handler_
          (NULL == jc_invoc.username) ||
          (NULL == jc_invoc.password) 
     ) ) {
-        jc_invoc.args = CALLOC(invoc->argsLen, sizeof(javacall_utf16_string));
+        jc_invoc.args = JAVAME_CALLOC(
+            invoc->argsLen, sizeof(javacall_utf16_string));
         if (NULL != jc_invoc.args) {
             jsr211_boolean succ = JSR211_TRUE;
             for (i=0; i<invoc->argsLen; i++) {
@@ -1576,7 +1575,7 @@ jsr211_launch_result jsr211_execute_handler(javacall_const_utf16_string handler_
             for (i=0; i<invoc->argsLen; i++)
                 if (NULL != jc_invoc.args[i])
                     pcsl_string_release_utf16_data(jc_invoc.args[i], &invoc->args[i]);
-            FREE(jc_invoc.args);
+            JAVAME_FREE(jc_invoc.args);
             jc_invoc.args = NULL;
         }
     }
@@ -1630,7 +1629,7 @@ javacall_result javanotify_chapi_platform_finish(int invoc_id,
     if (PCSL_STRING_OK != pcsl_string_convert_from_utf16(url, javacall_string_len(url), &invoc->url))
         result = JAVACALL_FAIL;
     if ( (NULL != invoc->args) && (0 != argsLen) ) {
-        invoc->args = (pcsl_string*)CALLOC(argsLen, sizeof(pcsl_string));
+        invoc->args = (pcsl_string*)JAVAME_CALLOC(argsLen, sizeof(pcsl_string));
         if (NULL != invoc->args) {
             for (i = 0; i< argsLen; i++) {
                 invoc->args[i] = PCSL_STRING_NULL;
@@ -1641,7 +1640,7 @@ javacall_result javanotify_chapi_platform_finish(int invoc_id,
             result = JAVACALL_OUT_OF_MEMORY;
     }
     if ( (NULL != invoc->data) && (0 != dataLen) ) {
-        invoc->data = MALLOC(dataLen);
+        invoc->data = JAVAME_MALLOC(dataLen);
         if (NULL != invoc->data) {
             invoc->dataLen = dataLen;
             memcpy (invoc->data, data, dataLen);
@@ -1721,13 +1720,13 @@ javacall_result javanotify_chapi_java_invoke(
 /*     jsr211_boolean is_started; */
     int i;
 
-    classname = CALLOC(classname_len, sizeof(javacall_utf16));
+    classname = JAVAME_CALLOC(classname_len, sizeof(javacall_utf16));
     if (NULL == classname)
         return JAVACALL_OUT_OF_MEMORY;
 
-    suite_id_out = CALLOC(classname_len, sizeof(javacall_utf16));
+    suite_id_out = JAVAME_CALLOC(classname_len, sizeof(javacall_utf16));
     if (NULL == suite_id_out) {
-        FREE(classname);
+        JAVAME_FREE(classname);
         return JAVACALL_OUT_OF_MEMORY;
     }
 
@@ -1737,8 +1736,8 @@ javacall_result javanotify_chapi_java_invoke(
             classname, &classname_len, &flag);
 
     if (res != JAVACALL_OK) {
-        FREE(classname);
-        FREE(suite_id_out);
+        JAVAME_FREE(classname);
+        JAVAME_FREE(suite_id_out);
         return res;
     }
 
@@ -1746,18 +1745,18 @@ javacall_result javanotify_chapi_java_invoke(
     for (i = 0; i < suite_id_len; i++){
         suite_id = suite_id * 10 + (suite_id_out[i] - L'0');
     }
-    FREE(suite_id_out);
+    JAVAME_FREE(suite_id_out);
     
     res = JAVACALL_OK;
         
     if (flag && REGISTERED_NATIVE_FLAG) {
-        FREE(classname);
+        JAVAME_FREE(classname);
         return JAVACALL_INVALID_ARGUMENT;
     }
 
     invoc =  (StoredInvoc*) newStoredInvoc();
     if (invoc == NULL) {
-        FREE(classname);
+        JAVAME_FREE(classname);
         return JAVACALL_OUT_OF_MEMORY;
     }
 
@@ -1771,7 +1770,7 @@ javacall_result javanotify_chapi_java_invoke(
         res = JAVACALL_FAIL;
     if (PCSL_STRING_OK != pcsl_string_convert_from_utf16(classname, classname_len, &invoc->classname))
         res = JAVACALL_FAIL;
-    FREE(classname);
+    JAVAME_FREE(classname);
 
     /* NOTE: ?null suite ID is an indication of platform request */
     invoc->invokingClassname = PCSL_STRING_NULL;
@@ -1801,7 +1800,7 @@ javacall_result javanotify_chapi_java_invoke(
     
     if (JAVACALL_OK == res) {
 	    invoc->argsLen = invocation->argsLen;
-        invoc->args = CALLOC(sizeof(pcsl_string), invoc->argsLen);
+        invoc->args = JAVAME_CALLOC(sizeof(pcsl_string), invoc->argsLen);
         if (NULL != invoc->args) {
             for (i = 0; i < invocation->argsLen; i++) {
                 invoc->args[i] = PCSL_STRING_NULL;
@@ -1813,7 +1812,7 @@ javacall_result javanotify_chapi_java_invoke(
                 // ??? may be we should not allocate memory for the data field if invocation->data == NULL
 
                 invoc->dataLen = invocation->dataLen;
-                invoc->data = MALLOC(invoc->dataLen);
+                invoc->data = JAVAME_MALLOC(invoc->dataLen);
                 if (NULL != invoc->data) {
                     invoc->dataLen = invocation->dataLen;
                     memcpy (invoc->data, invocation->data, invoc->dataLen);
@@ -1836,14 +1835,14 @@ javacall_result javanotify_chapi_java_invoke(
                     *invoc_id = (int)invoc;
 
                     if (JAVACALL_OK != res)
-                        FREE(invoc->data);
+                        JAVAME_FREE(invoc->data);
                 } else
                     res = JAVACALL_OUT_OF_MEMORY;
             }
             if (JAVACALL_OK != res){
                 for (i = 0; i < invocation->argsLen; i++)
                     pcsl_string_free(&invoc->args[i]);
-                FREE(invoc->args);
+                JAVAME_FREE(invoc->args);
             }
         } else
             res = JAVACALL_OUT_OF_MEMORY;
@@ -1858,7 +1857,7 @@ javacall_result javanotify_chapi_java_invoke(
         pcsl_string_free(&invoc->invokingAuthority);
         pcsl_string_free(&invoc->username);
         pcsl_string_free(&invoc->password);
-        FREE(invoc);
+        JAVAME_FREE(invoc);
     }
 
     return res;
@@ -1889,7 +1888,7 @@ jsr211_boolean jsr211_platform_finish(int tid, jsr211_boolean *should_exit)
     invoc = link->invoc;
 
     url = pcsl_string_get_utf16_data(&invoc->url);
-    args = CALLOC(invoc->argsLen, sizeof(javacall_utf16_string));
+    args = JAVAME_CALLOC(invoc->argsLen, sizeof(javacall_utf16_string));
     if ( (NULL != url) && (NULL != args) ) {
         success = JSR211_TRUE;
         for (i = 0; i < invoc->argsLen; i++) {
@@ -1934,7 +1933,7 @@ jsr211_boolean jsr211_platform_finish(int tid, jsr211_boolean *should_exit)
     } else
         success = JSR211_FALSE;
 
-    FREE(args);
+    JAVAME_FREE(args);
     pcsl_string_release_utf16_data(url, &invoc->url);
 
     return success;
