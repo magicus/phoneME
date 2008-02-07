@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
  * information or have any questions.
- */
+ */                         
 
 package com.sun.midp.appmanager;
 
@@ -467,16 +467,20 @@ class AppManagerUI extends Form
         display.setCurrentItem(mi);
     }
 
+    /**
+     * Changes current folder and refreshes items on the
+     * form accordingly.
+     *
+     * @param fid new current folder id
+     */
     private void setFolder(int fid) {
         currentFolderId = fid;
         deleteAll();
 
         for (int i = 0; i < mciVector.size(); i++) {
             MidletCustomItem mci = (MidletCustomItem)mciVector.elementAt(i);
-            if (currentFolderId != mci.msi.folderId) {
-                mci.index = -1;
-            } else {
-                mci.index = append(mci);
+            if (currentFolderId == mci.msi.folderId) {
+                append(mci);
             }
         }
     }
@@ -1144,8 +1148,6 @@ class AppManagerUI extends Form
             }
         }
 
-        ci.index = -1;
-
         mciVector.addElement(ci);
 
         if (foldersOn) {
@@ -1157,7 +1159,7 @@ class AppManagerUI extends Form
             }
         }  else {
             ci.setItemCommandListener(this);
-            ci.index = append(ci);
+            append(ci);
             ci.setOwner(this);
         }
     }
@@ -1168,8 +1170,6 @@ class AppManagerUI extends Form
      * @param suiteInfo the midlet suite info of a recently removed MIDlet
      */
     private void remove(RunningMIDletSuiteInfo suiteInfo) {
-        RunningMIDletSuiteInfo msi;
-
         if (suiteInfo == null) {
             // Invalid parameter, should not happen.
             return;
@@ -1177,7 +1177,7 @@ class AppManagerUI extends Form
 
         // the last item in AppSelector is time
         for (int i = 0; i < mciVector.size(); i++) {
-            MidletCustomItem mci = (MidletCustomItem)mciVector.elementAt(i); 
+            MidletCustomItem mci = (MidletCustomItem)mciVector.elementAt(i);
             if (mci.msi == suiteInfo) {
                 PAPICleanUp.removeMissedTransaction(suiteInfo.suiteId);
 
@@ -1208,6 +1208,7 @@ class AppManagerUI extends Form
                     return;
                 }
 
+
                 try {
                     PushRegistryInternal.unregisterConnections(
                         suiteInfo.suiteId);
@@ -1216,20 +1217,26 @@ class AppManagerUI extends Form
                     // we can't do anything meaningful at this point.
                 }
 
-                delete(mci.index);
-                mciVector.removeElementAt(i--);
+
+                mciVector.removeElementAt(i);
+                if (foldersOn) {
+                    if (mci.msi.folderId == currentFolderId) {
+                        for (int j = 0; j < size(); j++) {
+                            if (get(j).equals(mci)) {
+                                delete(j);
+                                break;
+                            }
+                        }
+                    }
+                } else {
+                    delete(i);
+                }
+                
                 removeMsi = null;
                 break;
             }
-            if (foldersOn) {
-               /*
-                * IMPL_NOTE: if delete happened, mci.index are broken
-                * and we have to restore them. At the moment it is done
-                * by full refresh, but optimization is possible here
-                */
-                setFolder(currentFolderId);
-            }
         }
+        
 
         display.setCurrent(this);
     }
@@ -1927,9 +1934,6 @@ class AppManagerUI extends Form
         Image icon; // = null
         /** current default command */
         Command default_command; // = null
-
-        /** xurrent index of the item on a form or -1 if it is not there */
-        int index;
     }
 }
 
