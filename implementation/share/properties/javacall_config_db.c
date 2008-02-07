@@ -420,10 +420,16 @@ javacall_handle configdb_load_no_fs () {
  * @param val buffer to store the second substring
  * @param sep separating character
  *
- * @return JAVACALL_OK if the string begins with an escape sequence
+ * @return JAVACALL_OK if the line has been successfully parsed
+ *         JAVACALL_FAIL otherwise
  */
 static javacall_result parse_line(char* line, char* key, char* val, char sep){
     int index;
+
+    /* arguments check */
+    if (line == NULL || key == NULL || val == NULL) {
+        return JAVACALL_FAIL;
+    }
 
     /* get first place of occurance of the separator */
     if (JAVACALL_FAIL == javautil_string_index_of(line, sep, &index)) {
