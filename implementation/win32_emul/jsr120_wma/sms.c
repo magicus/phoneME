@@ -69,7 +69,7 @@ int javacall_sms_send(  javacall_sms_encoding    msgType,
     void *pContext;
     unsigned char *pAddress;
 
-    javacall_int64 timeStamp = 0;
+    javacall_int64 timeStamp = javacall_time_get_seconds_since_1970();
     const char* recipientPhone = destAddress;
     //char* senderPhone = "+1234567";
 	char* senderPhone = devicePhoneNumber;

@@ -151,7 +151,7 @@ int* msgLength, char** msg) {
 
         }else if (strcmp("Date:", pch)==0){
             pch = strtok(NULL, "\n");
-            *timeStamp = *((javacall_int64*)pch);
+            *timeStamp = _atoi64(pch);
         }else if (strcmp("Buffer:", pch)==0){
 	       pchLen = strlen("Buffer :\n");
 		pch = pch + pchLen;/// strtok(NULL, "\n");
@@ -222,9 +222,8 @@ int* out_encode_sms_buffer_length) {
     strcat(encode_sms_buffer, "\n");
 
     //adding date-stamp
-    //strcat(encode_sms_buffer, "Date: ");
-    //timeStamp; ptr += sizeof(javacall_int64);
-
+    strcat(encode_sms_buffer, "Date: ");
+	_i64toa(timeStamp,encode_sms_buffer+strlen(encode_sms_buffer),10);
 
     //adding sender address
     strcat(encode_sms_buffer, "SenderAddress: sms://");
