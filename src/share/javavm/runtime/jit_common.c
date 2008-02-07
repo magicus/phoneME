@@ -311,23 +311,6 @@ CVMJITframeIterateGetJavaPc(CVMJITFrameIterator *iter)
 	CVMMethodBlock *mb = CVMJITframeIterateGetMb(iter);
 	CVMUint8 *pc = CVMmbJavaCode(mb) + invokePC;
 	CVMassert(CVMbcAttr(*pc, INVOCATION));
-
-#ifdef CVM_DEBUG_ASSERTS
-	if (iter->index == iter->numEntries) {
-	    /*
-	     * We have reached the initial Java frame.
-	     * Check that the pc-map table and inlining
-	     * table don't totally disagree.
-	     */
-	    CVMFrame *frame = iter->frame;
-	    CVMUint8 *pc0 = CVMpcmapCompiledPcToJavaPc(frame->mb,
-		CVMcompiledFramePC(frame));
-	    CVMassert(pc0 <= pc && pc0 >= CVMmbJavaCode(mb));
-	    /* Should map to the same line number, at least,
-	       but we don't check that here. */
-	}
-#endif
-
 	return pc;
     } else if (iter->index == iter->numEntries) {
 	/* We have reached the initial Java frame, without
