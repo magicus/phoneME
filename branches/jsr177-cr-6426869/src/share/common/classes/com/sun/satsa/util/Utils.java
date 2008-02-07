@@ -382,25 +382,26 @@ public class Utils {
      * @return formatted calendar string
      */
     public static String calendarToString(Calendar calendar) {
-        int dow, month, day, hour, minute, seconds, year;
-        String ampm, zoneID;
+        int dow, month, hour;
+        String ampm, zoneID, day, h, minute, seconds, year;
 
         if (calendar == null) {
             /* By default: "Thu, 01 Jan 1970 12:00:00 AM */
             dow = Calendar.THURSDAY-1;
             month = Calendar.JANUARY;
-            day = 1;
-            minute = 0;
-            seconds = 0;
-            year = 1970;
+            day = "01";
+            minute = "00";
+            seconds = "00";
+            year = "1970";
             zoneID = " GMT";
         } else {
             dow = calendar.get(Calendar.DAY_OF_WEEK)-1;
             month = calendar.get(Calendar.MONTH);
-            day = calendar.get(Calendar.DAY_OF_MONTH);            
-            minute = calendar.get(Calendar.MINUTE);
-            seconds = calendar.get(Calendar.SECOND);
-            year = calendar.get(Calendar.YEAR);            
+            day = extendToTwoDigits(calendar.get(Calendar.DAY_OF_MONTH));
+            minute = extendToTwoDigits(calendar.get(Calendar.MINUTE));
+            seconds = extendToTwoDigits(calendar.get(Calendar.SECOND));
+            year = extendToFourDigits(calendar.get(Calendar.YEAR));
+            
             zoneID = calendar.getTimeZone().getID();
             if (zoneID == null) {
                 zoneID = "";
@@ -430,46 +431,46 @@ public class Utils {
             }
             ampm = null;
         }
+
+        h = extendToTwoDigits(hour);        
         
         return localString.getLocalizedDateTimeString(Resource.
-                getShortDayName(dow), Integer.toString(day),
-                Resource.getMonthName(month), Integer.toString(year),
-                Integer.toString(hour), Integer.toString(minute), 
-                Integer.toString(seconds), ampm) + zoneID;        
+                getShortDayName(dow), day, Resource.getMonthName(month),
+                year, h, minute, seconds, ampm) + zoneID;        
     }
 
     /**
      * Appends zero filled numeric string for two digit numbers.
-     * @param sb current formatted buffer
      * @param number the digit to format
-     * @return updated formatted string buffer
+     * @return formatted string
      */
-    private static final StringBuffer appendTwoDigits(StringBuffer sb,
-						      int number) {
+    private static final String extendToTwoDigits(int number) {
+        String str = Integer.toString(number);
+        
         if (number < 10) {
-            sb.append('0');
+            str = '0' + str;
         }
-        return sb.append(number);
+        return str;
     }
 
     /**
      * Appends zero filled numeric string for four digit numbers.
-     * @param sb current formatted buffer
      * @param number the digit to format
-     * @return updated formatted string buffer
+     * @return formatted string
      */
-    private static final StringBuffer appendFourDigits(StringBuffer sb,
-						       int number) {
+    private static final String extendToFourDigits(int number) {
+        String str = Integer.toString(number);
+
         if (number >= 0 && number < 1000) {
-            sb.append('0');
+            str = '0' + str;
             if (number < 100) {
-                sb.append('0');
+                str = '0' + str;
             }
             if (number < 10) {
-                sb.append('0');
+                str = '0' + str;
             }
         }
-        return sb.append(number);
+        return str;
     }
 
     /**
