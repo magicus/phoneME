@@ -45,6 +45,13 @@
 /* Invalid key */
 #define INI_INVALID_KEY    ((char*)-1)
 
+/* list of escape sequences to be unescaped at load time */
+static char* escape_sequences[] = {
+    "\\\"", /* Escape sequence \" */
+    NULL
+};
+
+
 
 /*---------------------------------------------------------------------------
                         Internal Functions
@@ -410,6 +417,91 @@ javacall_handle configdb_load_no_fs () {
 }
 #endif	//USE_PROPERTIES_FROM_FS
 
+/**
+ * Split a line to key and value pairs.  The key is defined as substring before
+ * the first occurence of a separator.  Value is the substring after the first
+ * occurrence of the separator.
+ *
+ * @param line string to be parsed
+ * @param key buffer to store the first substring
+ * @param val buffer to store the second substring
+ * @param sep separating character
+ *
+ * @return JAVACALL_TRUE if the string begins with an escape sequence
+ */
+static javacall_result parse_line(char* line, char* key, char* val, char sep){
+    int index;
+
+    /* get first place of occurance of the separator */
+    if (JAVACALL_FAIL == javautil_string_index_of(line, sep, &index)) {
+        return JAVACALL_FAIL;
+    }
+
+    /* insert end of string character for simplifying copying */
+    line[index] = '\0';
+
+    /* copy key and value */
+    strcpy(key, line);
+    strcpy(val, &line[index+1]);
+
+    /* restore the line */
+    line[index] = sep;
+
+    return JAVACALL_OK;
+}
+
+
+/**
+ * Test whether the string  begins with an escape sequence
+ *
+ * @param str string to be tested
+ *
+ * @return JAVACALL_TRUE if the string begins with an escape sequence
+ */
+static javacall_bool is_escape_sequence(char* str) {
+    int i, j;
+
+    /* check all the escape sequences */
+    for (i = 0; escape_sequences[i] != NULL; i++) {
+        /* test match of current escape sequence */
+        for (j = 0; str[j] == escape_sequences[i][j] &&
+                escape_sequences[i][j] != '\0'; j++);
+        if (escape_sequences[i][j] == '\0') {
+            return JAVACALL_TRUE;
+        }
+    }
+    return JAVACALL_FALSE;
+}
+
+/**
+ * Remove escape characters from a string
+ *
+ * @param str string escape characters to be removed from
+ * @return JAVACALL_OK on success
+ *         JAVACALL_FAIL otherwise
+ */
+static javacall_result remove_escape_characters(char* str){
+    int i, j;
+    int length;
+
+    if (str == NULL) {
+        return JAVACALL_FAIL;
+    }
+
+    length = strlen(str);
+
+    for (i = 0, j = 0; i < length; i++, j++) {
+        if (JAVACALL_TRUE == is_escape_sequence(&str[i])) {
+            i++;
+        }
+        str[j] = str[i];
+    }
+
+    str[j] = str[i];    /* '\0' character expected here */
+    return JAVACALL_OK;
+}
+
+
 javacall_handle configdb_load_from_fs(javacall_utf16* unicodeFileName, int fileNameLen) {
     string_db*   d ;
     char    line[MAX_LINE_LENGTH+1];
@@ -418,6 +510,7 @@ javacall_handle configdb_load_from_fs(javacall_utf16* unicodeFileName, int fileN
     char    val[MAX_STR_LENGTH+1];
     char*   where;
     int lineno;
+    char sep = '=';
     javacall_handle file_handle;
     javacall_result res;
 
@@ -433,9 +526,9 @@ javacall_handle configdb_load_from_fs(javacall_utf16* unicodeFileName, int fileN
 
     sec[0] = 0;
 
-/*
- * Initialize a new string_db entry
- */
+    /*
+     * Initialize a new string_db entry
+     */
     d = javacall_string_db_new(0);
     if (NULL == d) {
         return NULL;
@@ -453,19 +546,10 @@ javacall_handle configdb_load_from_fs(javacall_utf16* unicodeFileName, int fileN
                 strcpy(sec, sec);
                 configdb_add_entry(d, sec, NULL, NULL);
             }
-            else if (sscanf (where, "%[^=] = \"%[^\"]\"", key, val) == 2
-                       ||  sscanf (where, "%[^=] = '%[^\']'",   key, val) == 2
-                       ||  sscanf (where, "%[^=] = %[^;#]",     key, val) == 2) {
-                javautil_string_skip_trailing_blanks(key);
-                /*
-                 * sscanf cannot handle "" or '' as empty value,
-                 * this is done here
-                 */
-                if (!strcmp(val, "\"\"") || !strcmp(val, "''")) {
-                    val[0] = (char)0;
-                } else {
-                    javautil_string_skip_trailing_blanks(val);
-                }
+            else if (JAVACALL_OK == parse_line(where, key, val, sep)) {
+                javautil_string_strip(key);
+                javautil_string_strip(val);
+                remove_escape_characters(val);
                 configdb_add_entry(d, sec, key, val);
             }
         }
