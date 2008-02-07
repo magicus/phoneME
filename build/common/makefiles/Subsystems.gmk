@@ -364,7 +364,7 @@ endif
 # Description: JSR211
 #####################################################################
 ifeq ($(USE_JSR_211), true)
-JPP_DEFS += -DENABLE_JSR211
+JPP_DEFS += -DENABLE_JSR_211
 -include $(JSR_211_DIR)/build/$(SUBSYSTEM_MAKE_FILE)
 endif
 

@@ -46,6 +46,7 @@
 #include <javacall_security.h>
 #include <javacall_socket.h>
 #include <javacall_time.h>
+#include <javautil_unicode.h>
 
 #ifdef ENABLE_JSR_120
 #include <javacall_sms.h>
@@ -70,6 +71,10 @@
 #ifdef ENABLE_ON_DEVICE_DEBUG
 #include <javacall_odd.h>
 #endif /* ENABLE_ON_DEVICE_DEBUG */
+
+#ifdef ENABLE_JSR_211
+#include <javacall_chapi_invoke.h>
+#endif
 
 static char urlAddress[BINARY_BUFFER_MAX_LEN];
 
@@ -1371,6 +1376,125 @@ void /*OPTIONAL*/javanotify_location_proximity(
 }
 
 #endif /* ENABLE_JSR_179 */
+
+#ifdef ENABLE_JSR_211
+
+static javacall_utf16_string midp_jc_copy_utf16_string(javacall_const_utf16_string src) {
+    int length = 0;
+    javacall_utf16_string result;
+    if (JAVACALL_OK != javautil_unicode_utf16_ulength (src, &length))
+        length = 0;
+    result =
+        javacall_calloc(length, sizeof(javacall_utf16));
+    memcpy(result, src, length*2);
+    return result;
+}
+
+/*
+ * Called by platform to notify java VM that invocation of native handler 
+ * is finished. This is <code>ContentHandlerServer.finish()</code> substitute 
+ * after platform handler completes invocation processing.
+ * @param invoc_id processed invocation Id
+ * @param url if not NULL, then changed invocation URL
+ * @param argsLen if greater than 0, then number of changed args
+ * @param args changed args if @link argsLen is greater than 0
+ * @param dataLen if greater than 0, then length of changed data buffer
+ * @param data the data
+ * @param status result of the invocation processing. 
+ */
+
+void javanotify_chapi_platform_finish(
+        int invoc_id,
+        javacall_utf16_string url,
+        int argsLen, javacall_utf16_string* args,
+        int dataLen, void* data,
+        javacall_chapi_invocation_status status
+) {
+    midp_jc_event_union e;
+    javacall_chapi_invocation *inv;
+    int i;
+
+    e.eventType = JSR211_JC_EVENT_PLATFORM_FINISH;
+    e.data.jsr211PlatformEventEvent.jsr211event =
+        javacall_malloc (sizeof(*e.data.jsr211PlatformEventEvent.jsr211event));
+    if (NULL != e.data.jsr211PlatformEventEvent.jsr211event) {
+        e.data.jsr211PlatformEventEvent.jsr211event->invoc_id   = invoc_id;
+        e.data.jsr211PlatformEventEvent.jsr211event->status     = status;
+        e.data.jsr211PlatformEventEvent.jsr211event->handler_id = NULL;
+        
+        inv = &e.data.jsr211PlatformEventEvent.jsr211event->invocation;
+        inv->url               = midp_jc_copy_utf16_string (url);
+        inv->type              = NULL;
+        inv->action            = NULL;
+        inv->invokingAppName   = NULL;
+        inv->invokingAuthority = NULL;
+        inv->username          = NULL;
+        inv->password          = NULL;
+        inv->argsLen           = argsLen;
+        inv->args              =
+            javacall_calloc (sizeof(javacall_utf16_string), inv->argsLen);
+        if (NULL != inv->args)
+            for (i = 0; i < inv->argsLen; i++)
+                inv->args[i] = midp_jc_copy_utf16_string(args[i]);
+        inv->dataLen           = dataLen;
+        inv->data              = javacall_malloc (inv->dataLen);
+        if (NULL != inv->data)
+            memcpy (inv->data, data, inv->dataLen);
+        inv->responseRequired  = 0;
+    }
+    
+    midp_jc_event_send(&e);
+}
+
+/**
+ * Receives invocation request from platform. <BR>
+ * This is <code>Registry.invoke()</code> substitute for Platform->Java call.
+ * @param handler_id target Java handler Id
+ * @param invocation filled out structure with invocation params
+ * @param invoc_id invocation Id for further references
+ */
+void javanotify_chapi_java_invoke(
+        const javacall_utf16_string handler_id,
+        javacall_chapi_invocation* invocation,
+        int invoc_id) {
+    midp_jc_event_union e;
+    javacall_chapi_invocation *inv;
+    int i;
+
+    e.eventType = JSR211_JC_EVENT_JAVA_INVOKE;
+    e.data.jsr211PlatformEventEvent.jsr211event =
+        javacall_malloc (sizeof(*e.data.jsr211PlatformEventEvent.jsr211event));
+    if (NULL != e.data.jsr211PlatformEventEvent.jsr211event) {
+        e.data.jsr211PlatformEventEvent.jsr211event->invoc_id   = invoc_id;
+        e.data.jsr211PlatformEventEvent.jsr211event->handler_id = 
+            midp_jc_copy_utf16_string(handler_id);
+        e.data.jsr211PlatformEventEvent.jsr211event->status     = INVOCATION_STATUS_ERROR;
+        
+        inv = &e.data.jsr211PlatformEventEvent.jsr211event->invocation;
+        inv->url               = midp_jc_copy_utf16_string(invocation->url);
+        inv->type              = midp_jc_copy_utf16_string(invocation->type);
+        inv->action            = midp_jc_copy_utf16_string(invocation->action);
+        inv->invokingAppName   = midp_jc_copy_utf16_string(invocation->invokingAppName);
+        inv->invokingAuthority = midp_jc_copy_utf16_string(invocation->invokingAuthority);
+        inv->username          = midp_jc_copy_utf16_string(invocation->username);
+        inv->password          = midp_jc_copy_utf16_string(invocation->password);
+        inv->argsLen           = invocation->argsLen;
+        inv->args              =
+            javacall_calloc (sizeof(javacall_utf16_string), inv->argsLen);
+        if (NULL != inv->args)
+            for (i = 0; i < inv->argsLen; i++)
+                inv->args[i] = midp_jc_copy_utf16_string(invocation->args[i]);
+        inv->dataLen           = invocation->dataLen;
+        inv->data              = javacall_malloc (inv->dataLen);
+        if (NULL != inv->data)
+            memcpy (inv->data, invocation->data, inv->dataLen);
+        inv->responseRequired  = invocation->responseRequired;
+    }
+
+    midp_jc_event_send(&e);
+}
+
+#endif /* ENABLE_JSR_211 */
 
 /**
  * The platform calls this callback notify function when the permission dialog

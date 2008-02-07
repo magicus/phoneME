@@ -47,10 +47,9 @@ public final class JSRInitializer {
 // #endif
 
 // #ifdef ENABLE_JSR_211
-        // IMPL_NOTE: for some reason, ENABLE_JSR_211 is defined
-        // only when USE_NATIVE_AMS is true. This check is done in
-        // the JSR211 subsystem configuration files.
+// #ifdef ENABLE_NATIVE_AMS
         com.sun.midp.jsr211.Initializer.init();
+// #endif ENABLE_NATIVE_AMS
 // #endif
 
 // #ifdef ENABLE_JSR_226

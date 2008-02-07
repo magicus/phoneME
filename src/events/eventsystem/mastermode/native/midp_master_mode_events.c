@@ -41,6 +41,10 @@
 #include <wmaInterface.h>
 #endif
 
+#ifdef ENABLE_JSR_211
+#include <jsr211_platform_invoc.h>
+#endif
+
 static MidpReentryData newSignal;
 static MidpEvent newMidpEvent;
 
@@ -200,6 +204,17 @@ void midp_check_events(JVMSPI_BlockedThreadInfo *blocked_threads,
             blocked_threads_count, JSR179_PROXIMITY_SIGNAL, newSignal.descriptor, newSignal.status);
         break;
 #endif /* ENABLE_JSR_179 */
+
+#ifdef ENABLE_JSR_211
+    case JSR211_PLATFORM_FINISH_SIGNAL:
+        jsr211_process_platform_finish_notification ((void*)newSignal.descriptor);
+        midpStoreEventAndSignalAms(newMidpEvent);
+        break;
+    case JSR211_JAVA_INVOKE_SIGNAL:
+        jsr211_process_java_invoke_notification ((void*)newSignal.descriptor);
+        midpStoreEventAndSignalAms(newMidpEvent);
+        break;
+#endif /*ENABLE_JSR_211  */
 
 #if (ENABLE_JSR_120 || ENABLE_JSR_205)
     case WMA_SMS_READ_SIGNAL:
