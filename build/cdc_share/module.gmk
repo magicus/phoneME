@@ -79,6 +79,9 @@ ABSTRACTIONS_CLASSES += \
     $(ABSTRACTIONS_CDC_JAVASRCDIRS)/com/sun/j2me/security/SIPPermission.java \
     $(ABSTRACTIONS_CDC_JAVASRCDIRS)/com/sun/j2me/security/MMAPIPermission.java \
     $(ABSTRACTIONS_CDC_JAVASRCDIRS)/com/sun/j2me/security/ConnectorPermission.java \
+    $(ABSTRACTIONS_CDC_JAVASRCDIRS)/com/sun/j2me/i18n/Resource.java \
+    $(ABSTRACTIONS_CDC_JAVASRCDIRS)/com/sun/j2me/i18n/ResourceConstants.java \
+    $(ABSTRACTIONS_CDC_JAVASRCDIRS)/com/sun/j2me/l10n/LocalizedStrings.java \
 
 ifeq ($(USE_JSR_177), true)
 # names of native source files (like 'file.c')
@@ -134,6 +137,13 @@ ABSTRACTIONS_WRAPPER_CLASSES += \
         com.sun.midp.security.PermissionGroup \
         com.sun.j2me.security.AccessController \
         -e com.sun.j2me.security.AccessControlContext \
+     -package com.sun.j2me.proxy.i18n \
+        com.sun.midp.i18n.ResourceConstants \
+        com.sun.midp.i18n.Resource \
+        com.sun.midp.i18n.ResourceBundle \
+     -package com.sun.j2me.proxy.l10n \
+        com.sun.midp.l10n.LocalizedStrings \
+        com.sun.midp.l10n.LocalizedStringsBase
 
 #####################################################
 ABSTRACTIONS_NATIVE_OBJS     = $(patsubst %.c,$(CVM_OBJDIR)/%.o,$(ABSTRACTIONS_NATIVES))

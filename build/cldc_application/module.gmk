@@ -74,6 +74,7 @@ ABSTRACTIONS_CLASSES = \
     $(JSROP_ABSTRACTS_JAVASRCDIRS)/com/sun/j2me/io/Base64.java \
     $(JSROP_ABSTRACTS_JAVASRCDIRS)/com/sun/j2me/i18n/Resource.java \
     $(JSROP_ABSTRACTS_JAVASRCDIRS)/com/sun/j2me/i18n/ResourceConstants.java \
+    $(JSROP_ABSTRACTS_JAVASRCDIRS)/com/sun/j2me/l10n/LocalizedStrings.java \
     $(JSROP_ABSTRACTS_JAVASRCDIRS)/com/sun/j2me/security/TrustedClass.java \
     $(JSROP_ABSTRACTS_JAVASRCDIRS)/com/sun/j2me/security/Token.java \
     $(JSROP_ABSTRACTS_JAVASRCDIRS)/com/sun/j2me/security/SecurityTokenInitializer.java \

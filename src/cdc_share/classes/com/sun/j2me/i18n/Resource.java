@@ -27,7 +27,7 @@ package com.sun.j2me.i18n;
 /**
  * Intermediate class for logging facilities
  */
-public class Resource extends com.sun.midp.i18n.Resource {
+public class Resource extends com.sun.j2me.proxy.i18n.Resource {
     static final int[] months = { ResourceConstants.LCDUI_DF_JAN_SHORT, 
                                   ResourceConstants.LCDUI_DF_FEB_SHORT,
                                   ResourceConstants.LCDUI_DF_MAR_SHORT, 
