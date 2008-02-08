@@ -298,21 +298,35 @@ static jsr211_result fill_ch_buf(DATA_BUFFER ** buffer, const javacall_utf16* id
     static jchar xd[] = { '0', '1', '2', '3', '4', '5', '6', '7', 
                           '8', '9', 'A', 'B', 'C', 'D', 'E', 'F' };
     jsr211_result rc;
-    jchar b[sizeof(flag) * 2]; int i;
+    SuiteIdType suite_id;
+    jchar flag_buf[sizeof(flag) * 2], suite_id_buf[1 + sizeof(suite_id) * 2]; 
+    int i;
 
     // put id
     CHECKRC( jsr211_append_data(buffer, id, id_size * sizeof(id[0])) );
 	// put suite_id
-    CHECKRC( jsr211_append_data(buffer, suit, suit_size * sizeof(suit[0])) );
+    // !!! suit IS null-terminated
+    if( 0 == jsrop_string_to_suiteid(suit, &suite_id) )
+        return JSR211_FAILED;
+    suite_id_buf[ 0 ] = '0';
+    if( suite_id < 0 ){
+        suite_id_buf[ 0 ] = '-';
+        suite_id = -suite_id;
+    }
+    for( i = sizeof(suite_id); i--; suite_id >>= 8){
+        suite_id_buf[ 1 + 2 * i + 1 ] = xd[suite_id & 0x0F];
+        suite_id_buf[ 1 + 2 * i + 0 ] = xd[(suite_id & 0xF0) >> 4];
+    }
+    CHECKRC( jsr211_append_data(buffer, suite_id_buf, sizeof(suite_id_buf)) );
     // put class_name
     CHECKRC( jsr211_append_data(buffer, clas, clas_size * sizeof(clas[0])) );
 
     // put flag
     for( i = sizeof(flag); i--; flag >>= 8){
-        b[ 2 * i + 1 ] = xd[flag & 0x0F];
-        b[ 2 * i + 0 ] = xd[(flag & 0xF0) >> 4];
+        flag_buf[ 2 * i + 1 ] = xd[flag & 0x0F];
+        flag_buf[ 2 * i + 0 ] = xd[(flag & 0xF0) >> 4];
     }
-    return jsr211_append_data( buffer, b, sizeof(b) );
+    return jsr211_append_data( buffer, flag_buf, sizeof(flag_buf) );
 }
 
 /**

@@ -40,7 +40,7 @@ import com.sun.j2me.security.Token;
  */
 class RegistryStore {
 
-	protected static final java.io.PrintStream DEBUG_OUT = null; //System.out;
+	protected static final java.io.PrintStream DEBUG_OUT = null; // System.out;
 	
     /** 
      * Content Handler fields indexes.
@@ -291,7 +291,7 @@ class RegistryStore {
 
         ContentHandlerImpl ch = new ContentHandlerImpl();
         ch.ID = id;
-        ch.storageId = Integer.parseInt(storageId);
+        ch.storageId = Integer.parseInt(storageId, 16);
         ch.classname = class_name;
         ch.registrationMethod = regMethod;
         return ch;

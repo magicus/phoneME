@@ -36,7 +36,7 @@ public final class InvocationStoreProxy {
 	                // Ignore => invocation will be deleted
 	            }
         	}
-        } else if (invoc.suiteId != AppProxy.INVALID_STORAGE_ID && invoc.classname != null) {
+        } else if (invoc.suiteId != AppProxy.UNUSED_STORAGE_ID && invoc.classname != null) {
             try {
                 AppProxy appl = AppProxy.getCurrent().forApp(invoc.suiteId, invoc.classname);
             	// if MIDlet already started report STARTED

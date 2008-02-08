@@ -94,7 +94,7 @@ public class InvocationStore {
      * @see #getResponse
      */
     static void put(InvocationImpl invoc) {
-        if (invoc.suiteId == AppProxy.INVALID_STORAGE_ID ||
+        if (invoc.suiteId == AppProxy.UNUSED_STORAGE_ID ||
                 invoc.classname == null) {
             throw new NullPointerException();
         }
@@ -125,7 +125,7 @@ public class InvocationStore {
     		DEBUG_OUT.println( "InvocationStore.getRequest: suite = " + suiteId +
     								", classname = '" + classname + "'" );
         InvocationImpl invoc = new InvocationImpl();
-        if (suiteId == AppProxy.INVALID_STORAGE_ID || classname == null) {
+        if (suiteId == AppProxy.UNUSED_STORAGE_ID || classname == null) {
             throw new NullPointerException();
         }
         invoc.suiteId = suiteId;
@@ -215,7 +215,7 @@ public class InvocationStore {
                 mode = MODE_TID_NEXT;
             }
         }
-        invoc.suiteId = AppProxy.INVALID_STORAGE_ID;
+        invoc.suiteId = AppProxy.UNUSED_STORAGE_ID;
         invoc.classname = null;
         invoc.tid = tid;
         return get(invoc, mode, false);
@@ -330,7 +330,7 @@ public class InvocationStore {
      */
     static boolean listen(int suiteId, String classname,
                           boolean request, boolean shouldBlock) {
-        if (suiteId == AppProxy.INVALID_STORAGE_ID || classname == null) {
+        if (suiteId == AppProxy.UNUSED_STORAGE_ID || classname == null) {
             throw new NullPointerException();
         }
         int mode = (request ? MODE_LREQUEST : MODE_LRESPONSE);
@@ -367,7 +367,7 @@ public class InvocationStore {
      */
     static void setListenNotify(int suiteId, String classname,
                                 boolean request) {
-        if (suiteId == AppProxy.INVALID_STORAGE_ID || classname == null) {
+        if (suiteId == AppProxy.UNUSED_STORAGE_ID || classname == null) {
             throw new NullPointerException();
         }
 
