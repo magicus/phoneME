@@ -387,7 +387,8 @@ PROFILE_DIR       ?= $(CVM_TOP)
 ifeq ($(USE_CDC_COM),true)
 CDC_COM_DIR ?= $(COMPONENTS_DIR)/cdc-com
 ifeq ($(wildcard $(CDC_COM_DIR)/build/share/id_cdc-com.mk),)
-$(error CDC_COM_DIR must point to a directory containing the cdc-com sources: $(CDC_COM_DIR))
+$(error CDC_COM_DIR must point to a directory containing the cdc-com sources: \
+        $(CDC_COM_DIR))
 endif
 endif
 
@@ -395,13 +396,15 @@ endif
 ifneq ($(strip $(OPT_PKGS)),)
   ifeq ($(OPT_PKGS), all)
     OPT_PKGS_DEFS_FILES := $(wildcard ../share/defs_*_pkg.mk)
-    OPT_PKGS_LIST  := $(patsubst ../share/defs_%_pkg.mk,%,$(OPT_PKGS_DEFS_FILES))
+    OPT_PKGS_LIST  := $(patsubst ../share/defs_%_pkg.mk,%,\
+                        $(OPT_PKGS_DEFS_FILES))
     OPT_PKGS_NAME  := _$(subst $(space),_,$(strip $(OPT_PKGS_LIST)))
   else
     OPT_PKGS_LIST  := $(subst $(comma),$(space),$(OPT_PKGS))
     OPT_PKGS_NAME  := $(subst $(space),,_$(subst $(comma),_,$(OPT_PKGS)))
     OPT_PKGS_DEFS_FILES := $(foreach PKG,$(OPT_PKGS_LIST),\
-      $(firstword $(value $(shell echo ${patsubst %,%_DIR,${PKG}} | tr '[:lower:]' '[:upper:]')) ../..)/build/share/defs_$(PKG)_pkg.mk)
+      $(firstword $(value $(shell echo ${patsubst %,%_DIR,${PKG}} | \
+      tr '[:lower:]' '[:upper:]')) ../..)/build/share/defs_$(PKG)_pkg.mk)
   endif
   OPT_PKGS_RULES_FILES := $(subst /defs_,/rules_,$(OPT_PKGS_DEFS_FILES))
   OPT_PKGS_ID_FILES := $(subst /defs_,/id_,$(OPT_PKGS_DEFS_FILES))
