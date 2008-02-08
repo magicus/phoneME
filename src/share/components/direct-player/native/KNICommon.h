@@ -1,6 +1,5 @@
 /*
- * 
- * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
@@ -35,8 +34,8 @@
 
 #define MMP_MAX_TEMPBUF_SIZE 256
 
-#define MMP_MALLOC(_size_)      MALLOC((_size_))
-#define MMP_FREE(_p_)           FREE((_p_))
+#define MMP_MALLOC(_size_)      JAVAME_MALLOC((_size_))
+#define MMP_FREE(_p_)           JAVAME_FREE((_p_))
 #define MMP_GET_FREE_SPACE()    (0)
 
 #define MMP_DEBUG_STR(_x_) \
