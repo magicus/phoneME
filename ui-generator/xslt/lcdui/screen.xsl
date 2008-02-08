@@ -42,7 +42,7 @@ information or have any questions.
         <xsl:text>    protected Displayable getDisplayable() {&#10;</xsl:text>
         <xsl:apply-templates select="." mode="LCDUI-create-displayable"/>
         <xsl:text>&#10;</xsl:text>
-        <xsl:apply-templates select="text|filler|options|progress" mode="LCDUI-append"/>
+        <xsl:apply-templates select="text|filler|options|progress|command" mode="LCDUI-append"/>
         <xsl:apply-templates select="." mode="LCDUI-set-command-listener"/>
         <xsl:text>        return d;&#10;</xsl:text>
         <xsl:text>    }&#10;</xsl:text>
@@ -54,23 +54,33 @@ information or have any questions.
     </xsl:template>
 
 
-    <xsl:template match="screen[not(descendant::*/@id)]" mode="LCDUI-set-command-listener"/>
-    <xsl:template match="screen[descendant::*/@id]" mode="LCDUI-set-command-listener">
-        <xsl:text>        Command selectItemCommand = getSelectItemCommand();&#10;</xsl:text>
-        <xsl:text>        ItemCommandListener l = new ItemCommandListener() {&#10;</xsl:text>
-        <xsl:text>            public void commandAction(Command c, Item item) {&#10;</xsl:text>
-        <xsl:apply-templates select="options" mode="LCDUI-map-command"/>
-        <xsl:text>&#10;</xsl:text>
-        <xsl:text>            }&#10;</xsl:text>
-        <xsl:text>        };&#10;</xsl:text>
-        <xsl:apply-templates select="options" mode="LCDUI-set-command-listener"/>
-        <xsl:text>&#10;</xsl:text>
+    <xsl:template match="screen" mode="LCDUI-set-command-listener">
+        <xsl:if test="options">
+            <xsl:text>        Command selectItemCommand = getSelectItemCommand();&#10;</xsl:text>
+            <xsl:text>        ItemCommandListener icl = new ItemCommandListener() {&#10;</xsl:text>
+            <xsl:text>            public void commandAction(Command c, Item item) {&#10;</xsl:text>
+            <xsl:apply-templates select="options" mode="LCDUI-map-command"/>
+            <xsl:text>&#10;</xsl:text>
+            <xsl:text>            }&#10;</xsl:text>
+            <xsl:text>        };&#10;</xsl:text>
+            <xsl:apply-templates select="options" mode="LCDUI-set-item-command-listener"/>
+            <xsl:text>&#10;</xsl:text>
+        </xsl:if>
+        <xsl:if test="command">
+            <xsl:text>        javax.microedition.lcdui.CommandListener cl = new javax.microedition.lcdui.CommandListener() {&#10;</xsl:text>
+            <xsl:text>            public void commandAction(Command item, Displayable d) {&#10;</xsl:text>
+            <xsl:apply-templates select="command" mode="LCDUI-map-command"/>
+            <xsl:text>&#10;</xsl:text>
+            <xsl:text>            }&#10;</xsl:text>
+            <xsl:text>        };&#10;</xsl:text>
+            <xsl:text>        d.setCommandListener(cl);&#10;&#10;</xsl:text>
+        </xsl:if>
     </xsl:template>
 
-    <xsl:template match="*" mode="LCDUI-set-command-listener">
+    <xsl:template match="*" mode="LCDUI-set-item-command-listener">
         <xsl:text>        </xsl:text>
         <xsl:apply-templates select="." mode="LCDUI-varname"/>
-        <xsl:text>.setItemCommandListener(l);&#10;</xsl:text>
+        <xsl:text>.setItemCommandListener(icl);&#10;</xsl:text>
         <xsl:text>        </xsl:text>
         <xsl:apply-templates select="." mode="LCDUI-varname"/>
         <xsl:text>.addCommand(selectItemCommand);&#10;</xsl:text>
@@ -131,7 +141,7 @@ information or have any questions.
         <xsl:text> = new StringItem(null, </xsl:text>
         <xsl:apply-templates select="." mode="Screen-printf"/>
         <xsl:text>, Item.PLAIN);&#10;</xsl:text>
-    </xsl:template>    
+    </xsl:template>
 
 
     <!--
@@ -160,7 +170,7 @@ information or have any questions.
      <xsl:template match="*[@type='dropdown']" mode="LCDUI-options-type">
          <xsl:text>POPUP</xsl:text>
      </xsl:template>
-     <xsl:template match="*[@type='plain' or not(@type)]" mode="LCDUI-options-type">
+     <xsl:template match="*[@type='numbered' or not(@type)]" mode="LCDUI-options-type">
          <xsl:text>EXCLUSIVE</xsl:text>
      </xsl:template>
 
@@ -188,22 +198,57 @@ information or have any questions.
         <xsl:text>                         break;&#10;</xsl:text>
     </xsl:template>
 
-     <!--
-         Top level "progress" element
-     -->
-     <xsl:template match="screen/progress" mode="LCDUI-create">
-         <xsl:text>        final Gauge </xsl:text>
-         <xsl:apply-templates select="." mode="LCDUI-varname"/>
-         <xsl:text> = new Gauge("</xsl:text>
-         <xsl:apply-templates select="." mode="Screen-printf"/>
-         <xsl:text>", false, </xsl:text>
-         <xsl:value-of select="@max"/>
-         <xsl:text>, 0);&#10;</xsl:text>
-     </xsl:template>
 
-    <xsl:template match="screen/text|screen/filler|screen/options|screen/progress|screen/options/label" mode="LCDUI-varname">
-        <xsl:variable name="screen-id" select="ancestor::screen/@name"/>
-        <xsl:text>item</xsl:text>
+    <!--
+        Top level "progress" element
+    -->
+    <xsl:template match="screen/progress" mode="LCDUI-create">
+        <xsl:text>        final Gauge </xsl:text>
+        <xsl:apply-templates select="." mode="LCDUI-varname"/>
+        <xsl:text> = new Gauge("</xsl:text>
+        <xsl:apply-templates select="." mode="Screen-printf"/>
+        <xsl:text>", false, </xsl:text>
+        <xsl:value-of select="@max"/>
+        <xsl:text>, 0);&#10;</xsl:text>
+    </xsl:template>
+
+
+    <!--
+        Top level "command" element
+    -->
+    <xsl:template match="screen/command" mode="LCDUI-append">
+        <xsl:text>        final Command </xsl:text>
+        <xsl:apply-templates select="." mode="LCDUI-varname"/>
+        <xsl:text> = new Command(</xsl:text>
+        <xsl:apply-templates select="text" mode="LCDUI-create"/>
+        <xsl:text>, </xsl:text>
+        <xsl:apply-templates select="." mode="LCDUI-command-type"/>
+        <xsl:text>, 1);&#10;</xsl:text>
+        <xsl:text>        d.addCommand(</xsl:text>
+        <xsl:apply-templates select="." mode="LCDUI-varname"/>
+        <xsl:text>);&#10;&#10;</xsl:text>
+    </xsl:template>
+
+    <xsl:template match="command/text" mode="LCDUI-create">
+        <xsl:apply-templates select="." mode="Screen-printf"/>
+    </xsl:template>
+
+    <xsl:template match="command" mode="LCDUI-command-type">
+        <xsl:choose>
+            <xsl:when test="@id='OK' or @id='YES'">
+                <xsl:text>Command.OK</xsl:text>
+            </xsl:when>
+            <xsl:when test="@id='CANCEL' or @id='NO'">
+                <xsl:text>Command.CANCEL</xsl:text>
+            </xsl:when>
+            <xsl:otherwise>
+                <xsl:text>Command.SCREEN</xsl:text>
+            </xsl:otherwise>
+        </xsl:choose>
+    </xsl:template>
+
+
+    <xsl:template match="screen/text|screen/filler|screen/options|screen/progress|screen/options/label|screen/command" mode="LCDUI-varname">
         <xsl:value-of select="generate-id()"/>
     </xsl:template>
 
