@@ -30,6 +30,8 @@ information or have any questions.
     <property name="screens"        location="../src/screens.xml"/>
     <property name="package"        value="com.sun.ams.ui"/>
 
+    <property name="classpath"      value=""/>
+
     <property name="debug.port"     value=""/> <!-- 8000 -->
 
     <!-- used by Antenna -->
@@ -67,7 +69,7 @@ information or have any questions.
             <file name="${out.root}"/>
         </filelist>
         <pathconvert property="output-xml-dir" refid="output-xml-dir" dirsep="/"/>
-        
+
         <mkdir dir="${out.root}"/>
         <xslt in="${screens}" out="${out.root}/all.xml" style="${xslt.merge}" force="yes"/>
 
@@ -84,10 +86,11 @@ information or have any questions.
         </description>
 
         <mkdir dir="${out.classes}"/>
-        <wtkbuild   srcdir="../test:../src/classes/shared:../src/classes/${toolkit}:${out.src}/com/sun/ams/ui"
-                    destdir="${out.classes}">
+        <javac      srcdir="../test:../src/classes/shared:../src/classes/${toolkit}:${out.src}/com/sun/ams/ui"
+                    destdir="${out.classes}"
+                    classpath="${classpath}">
             <include name="**/*.java"/>
-        </wtkbuild>
+        </javac>
     </target>
 
     <target name="build-test-midlet" depends="javac">
