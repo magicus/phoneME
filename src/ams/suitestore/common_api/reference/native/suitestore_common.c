@@ -404,7 +404,7 @@ midp_suite_get_suite_storage(SuiteIdType suiteId, StorageIdType* pStorageId) {
  */
 MIDPError
 midp_suite_get_suite_folder(SuiteIdType suiteId, FolderIdType* pFolderId) {
-    return get_suite_int_impl(suiteId, 0, (void*)pFolderId);
+    return get_suite_int_impl(suiteId, 1, (void*)pFolderId);
 }
 
 /**
