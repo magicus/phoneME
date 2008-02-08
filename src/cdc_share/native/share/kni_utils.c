@@ -1,7 +1,5 @@
 /*
- *
- *
- * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
@@ -43,7 +41,7 @@ javacall_result jsrop_jstring_to_utf16_string(jstring java_str,
     javacall_result res = JAVACALL_FAIL;
     if (!KNI_IsNullHandle(java_str)) {
         jsize string_length = KNI_GetStringLength(java_str);
-        javacall_utf16_string str_buffer = MALLOC((string_length + 1) *
+        javacall_utf16_string str_buffer = JAVAME_MALLOC((string_length + 1) *
                                                     sizeof(javacall_utf16));
         if (str_buffer != NULL) {
             KNI_GetStringRegion(java_str, 0, string_length, (jchar *)str_buffer);

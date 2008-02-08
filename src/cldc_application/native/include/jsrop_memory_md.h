@@ -1,5 +1,5 @@
 /*
- * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
@@ -30,10 +30,10 @@
 extern "C" { 
 #endif /* __cplusplus */
 
-#define MALLOC(size) midpMalloc(size)
-#define FREE(addr)   midpFree(addr)
-#define CALLOC(x, y) midpCalloc(x, y)
-#define REALLOC(addr, size)   midpRealloc(addr, size)
+#define JAVAME_MALLOC(size)        midpMalloc(size)
+#define JAVAME_FREE(addr)          midpFree(addr)
+#define JAVAME_CALLOC(x, y)        midpCalloc(x, y)
+#define JAVAME_REALLOC(addr, size) midpRealloc(addr, size)
 
 
 #if defined __cplusplus 
