@@ -268,8 +268,8 @@ public class DirectPlayer extends BasicPlayer
 
         if (!handledByDevice) {
             /* predownload media data to fill native buffers */
-            int    javaBufSize = 0;
-            int    packetSize = 0;
+            int javaBufSize = 0;
+            int packetSize = 0;
             boolean needMoreData = false;
 
             long contentSize = stream.getContentLength();
