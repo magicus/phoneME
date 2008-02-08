@@ -1,7 +1,5 @@
 /*
- *
- *
- * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
@@ -128,7 +126,7 @@ static int getFullClassPath(const pcsl_string* classname,
     jchar *ptr, *buf;
 
     sz = pcsl_string_utf16_length(classname) + sizeof(suff) / sizeof(jchar);
-    buf = (jchar*) MALLOC(sz * sizeof(jchar));
+    buf = (jchar*) JAVAME_MALLOC(sz * sizeof(jchar));
     if (buf == NULL) {
         return 0;
     }
@@ -145,7 +143,7 @@ static int getFullClassPath(const pcsl_string* classname,
         n = (PCSL_STRING_OK == pcsl_string_convert_from_utf16(buf, sz, path)?
             1: 0);
     }
-    FREE(buf);
+    JAVAME_FREE(buf);
 
     return n;
 }
@@ -217,7 +215,7 @@ static int parseString(const pcsl_string* src,
 			pcsl_string dst = PCSL_STRING_NULL_INITIALIZER;
             if (PCSL_STRING_OK == pcsl_string_trim(&temp, &dst)) {
 				jsize length = pcsl_string_length(&dst);
-				jchar* buf = (jchar*)MALLOC(length+1);
+				jchar* buf = (jchar*)JAVAME_MALLOC(length+1);
 				if (*dest) {
 					if (PCSL_STRING_OK == pcsl_string_convert_to_utf16(&dst,buf,length+1,NULL)){
 						*dest = buf;
@@ -266,7 +264,7 @@ static int parseArray(const jchar* src, int len,
 		if (arrVar) {
 			str = arrVar;
 		} else {
-            str = (jchar**)CALLOC(n, sizeof(jchar*));
+            str = (jchar**)JAVAME_CALLOC(n, sizeof(jchar*));
             if (str == NULL)
                 break;
             *arr_len = n;
@@ -279,7 +277,7 @@ static int parseArray(const jchar* src, int len,
             while (*p0 <= ' ') p0++;
             p1 = p0 + 1;
             while (p1 < end  && *p1 > ' ') p1++;
-			*str = (jchar*)MALLOC((p1 - p0 + 1) * sizeof(jchar));
+            *str = (jchar*)JAVAME_MALLOC((p1 - p0 + 1) * sizeof(jchar));
 			if (!str) break;
 			while (p0 <= p1) **str = *p0++;
             str++;
@@ -327,33 +325,33 @@ static int parseHandler(jsr211_content_handler* handler, MidpProperties mp,
 
         if (!parseString(attr, &n, &temp, &len)) return -1;
         if (!parseArray(temp, len, &handler->type_num, &handler->types, NULL)){
-			FREE(temp);
+			JAVAME_FREE(temp);
             return -1;
 		}
-		FREE(temp);
+		JAVAME_FREE(temp);
 
         if (n < 0)
             break;
 
         if (!parseString(attr, &n, &temp, &len)) return -1;
         if (!parseArray(temp, len, &handler->suff_num, &handler->suffixes, NULL)){
-			FREE(temp);
+			JAVAME_FREE(temp);
             return -1;
         }
-		FREE(temp);
+		JAVAME_FREE(temp);
 
         if (n < 0)
             break;
         if (!parseString(attr, &n, &temp, &len) ||
             !parseArray(temp, len, &handler->act_num, &handler->actions, NULL))
             return -1;
-        FREE(temp);
+        JAVAME_FREE(temp);
 
         if (n > 0 && handler->act_num > 0) {
             if (!parseString(attr, &n, &temp, &len) ||
                 !parseArray(temp, len, &handler->locale_num, &handler->locales, NULL))
                 return -1;
-            FREE(temp);
+            JAVAME_FREE(temp);
         }
     } while (0);
 
@@ -367,7 +365,7 @@ static int parseHandler(jsr211_content_handler* handler, MidpProperties mp,
     attr = midp_find_property(&mp, &attrName);
     pcsl_string_free(&attrName);
     if (attr != NULL && (len=pcsl_string_length(attr)) > 0) {
-		if (!(handler->id = MALLOC(sizeof(jchar)*(len+1))) return -1;
+        if (!(handler->id = JAVAME_MALLOC(sizeof(jchar)*(len+1))) return -1;
 		if (PCSL_STRING_OK != pcsl_string_convert_to_utf16(&attr, handler->id, len+1, NULL))
             return -1;
     } else {
@@ -389,7 +387,7 @@ static int parseHandler(jsr211_content_handler* handler, MidpProperties mp,
         int act_num = handler->act_num;
         pcsl_string *map;
 
-        map = (pcsl_string*) CALLOC(
+        map = (pcsl_string*) JAVAME_CALLOC(
                         act_num * handler->locale_num, sizeof(pcsl_string));
         if (map == NULL)
             return -1;
@@ -488,7 +486,7 @@ int jsr211_verify_handlers(MidpProperties jadsmp, MidpProperties mfsmp,
     }
 
     handlers = (JSR211_content_handler*)
-                    CALLOC(count, sizeof(JSR211_content_handler));
+                    JAVAME_CALLOC(count, sizeof(JSR211_content_handler));
     if (handlers == NULL) {
         jsr211_errCode = OUT_OF_MEMORY;
         return -1; // No memory
@@ -523,7 +521,7 @@ int jsr211_verify_handlers(MidpProperties jadsmp, MidpProperties mfsmp,
         if (testHnd.buf != NULL) {
             // -- Content handler conflicts with other handlers
             jsr211_errCode = 938;
-            FREE(testHnd.buf);
+            JAVAME_FREE(testHnd.buf);
             testHnd.buf = NULL;
             testHnd.len = 0;
             res = -1;
@@ -589,6 +587,6 @@ void jsr211_remove_handlers(SuiteIdType suiteId) {
             pcsl_string_free(&id);
             buf += sz;
         }
-        FREE(handlers.buf);
+        JAVAME_FREE(handlers.buf);
     }
 }

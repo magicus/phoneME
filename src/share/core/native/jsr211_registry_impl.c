@@ -1,7 +1,5 @@
 /*
- * 
- *
- * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
@@ -51,9 +49,9 @@
  */
 #define ASSURE_BUF(buffer, len, maxlen) \
 	if (res == JAVACALL_CHAPI_ERROR_BUFFER_TOO_SMALL){ \
-		FREE(buffer); \
+		JAVAME_FREE(buffer); \
 		maxlen = len; \
-		buffer = (jchar*) MALLOC(maxlen*sizeof(*buffer)); \
+		buffer = (jchar*) JAVAME_MALLOC(maxlen*sizeof(*buffer)); \
 		continue; \
 	}
 
@@ -80,18 +78,18 @@ static int put_handler(const jchar* id, JSR211_RESULT_BUFFER * result, int appen
 	int res;
 
 	while (1) {
-		classname = MALLOC(classname_len * sizeof(*classname));
+		classname = JAVAME_MALLOC(classname_len * sizeof(*classname));
 		if (!classname) break;
 
-		suite_id = MALLOC(suite_id_len  * sizeof(*suite_id));
+		suite_id = JAVAME_MALLOC(suite_id_len  * sizeof(*suite_id));
 		if (!suite_id) break;
 
 		res = javacall_chapi_get_handler_info(id, suite_id, &suite_id_len,
 				                            classname, &classname_len, &flag);
 
 		if (res == JAVACALL_CHAPI_ERROR_BUFFER_TOO_SMALL){
-			FREE(classname); classname = NULL;
-			FREE(suite_id); suite_id = NULL;
+			JAVAME_FREE(classname); classname = NULL;
+			JAVAME_FREE(suite_id); suite_id = NULL;
 			continue;
 		}
 
@@ -108,8 +106,8 @@ static int put_handler(const jchar* id, JSR211_RESULT_BUFFER * result, int appen
 		break;
 	}
 
-	if (classname) FREE(classname); 
-	if (suite_id) FREE(suite_id);
+	if (classname) JAVAME_FREE(classname); 
+	if (suite_id) JAVAME_FREE(suite_id);
 	return res;
 }
 
@@ -202,7 +200,7 @@ jsr211_result jsr211_find_handler(javacall_const_utf16_string caller_id,
 	int res = JSR211_OK;
 	int enum_by_id_prefix = -1/*TRUE*/;
 
-	buffer = (jchar*) MALLOC(maxlen*sizeof(*buffer));
+	buffer = (jchar*) JAVAME_MALLOC(maxlen*sizeof(*buffer));
 
 	while (buffer){
 		len = maxlen;
@@ -246,7 +244,7 @@ jsr211_result jsr211_find_handler(javacall_const_utf16_string caller_id,
 	javacall_chapi_enum_finish(pos);
 
 	if (buffer == NULL) return JSR211_FAILED; //out of memory
-	FREE(buffer);
+	JAVAME_FREE(buffer);
 
 	return (res==JAVACALL_CHAPI_ERROR_NO_MORE_ELEMENTS)?JSR211_OK:JSR211_FAILED;
 }
@@ -269,7 +267,7 @@ jsr211_result jsr211_find_for_suite( javacall_const_utf16_string suite_id,
 
 	int suite_id_len = wcslen(suite_id);
 
-	buffer = (jchar*) MALLOC(maxlen*sizeof(*buffer));
+	buffer = (jchar*) JAVAME_MALLOC(maxlen*sizeof(*buffer));
 
 	pos=0;
 	while (buffer){
@@ -288,7 +286,7 @@ jsr211_result jsr211_find_for_suite( javacall_const_utf16_string suite_id,
 	javacall_chapi_enum_finish(pos);
 
 	if (!buffer) return JSR211_FAILED; //out of memory
-	FREE(buffer);
+	JAVAME_FREE(buffer);
 
 	return (res==JAVACALL_CHAPI_ERROR_NO_MORE_ELEMENTS)?JSR211_OK:JSR211_FAILED;
 }
@@ -319,7 +317,7 @@ int len, maxlen = MAX_BUFFER;
 int res, found = 0;
 javacall_const_utf16_string suffix;
 
-buffer = (jchar*) MALLOC(maxlen*sizeof(*buffer));
+buffer = (jchar*) JAVAME_MALLOC(maxlen*sizeof(*buffer));
 if (!buffer) return JSR211_FAILED;
 
 suffix=(javacall_const_utf16_string)wcsrchr(url,'.');
@@ -346,7 +344,7 @@ while (buffer && suffix && !found){
 	} 
 	javacall_chapi_enum_finish(pos);
 
-	if (buffer) FREE(buffer);
+	if (buffer) JAVAME_FREE(buffer);
 
 	return (found)?JSR211_OK:JSR211_FAILED;
 }
@@ -380,16 +378,17 @@ jsr211_result jsr211_get_all(
     int vpos;
 
     if (caller_id || (field == JSR211_FIELD_ID)){
-	    handler = (jchar*) REALLOC(handler,handlermaxlen * sizeof(*handler));
+        handler = (jchar*) JAVAME_REALLOC(
+            handler,handlermaxlen * sizeof(*handler));
 	    if (!handler) {
 		    return JSR211_FAILED;
 	    }
     }
 
     if (field != JSR211_FIELD_ID){
-	    value = MALLOC(valuemaxlen*sizeof(*value));
+	    value = JAVAME_MALLOC(valuemaxlen*sizeof(*value));
 	    if (!value) {
-		    if(handler) FREE(handler);
+		    if(handler) JAVAME_FREE(handler);
 		    return JSR211_FAILED;
 	    }
     }
@@ -443,8 +442,8 @@ jsr211_result jsr211_get_all(
 	} 
 	javacall_chapi_enum_finish(hpos);
 
-	if(handler) FREE(handler);
-	if(value) FREE(value);
+	if(handler) JAVAME_FREE(handler);
+	if(value) JAVAME_FREE(value);
 
 	return (handler && value && (res==JAVACALL_CHAPI_ERROR_NO_MORE_ELEMENTS))?JSR211_OK:JSR211_FAILED;
 }
@@ -479,7 +478,7 @@ jsr211_result jsr211_get_handler(
 	} else {
 		int pos = 0;
 		int len, maxlen = MAX_BUFFER;
-		jchar* buffer = (jchar*) MALLOC(maxlen * sizeof(*buffer));
+        jchar* buffer = (jchar*) JAVAME_MALLOC(maxlen * sizeof(*buffer));
 		while (buffer){
 			len = maxlen;
             res = javacall_chapi_enum_handlers_prefixes_of(id, &pos, buffer, &len);
@@ -491,7 +490,7 @@ jsr211_result jsr211_get_handler(
 			break;
 		}
 		javacall_chapi_enum_finish(pos);
-		if (buffer) FREE(buffer);
+		if (buffer) JAVAME_FREE(buffer);
 	}
 
 	return (res==JAVACALL_OK)?JSR211_OK:JSR211_FAILED;
@@ -514,9 +513,9 @@ static int get_action_map(javacall_const_utf16_string id, /*OUT*/ JSR211_RESULT_
 
 	JSR211_RESULT_BUFFER locales_array = jsr211_create_result_buffer(), actions_array;
 	
-	abuffer = (jchar*) MALLOC(alenmax * sizeof(*abuffer));
-	lbuffer = (jchar*) MALLOC(llenmax * sizeof(*lbuffer));
-	lnbuffer = (jchar*) MALLOC(lnlenmax * sizeof(*lnbuffer));
+	abuffer = (jchar*) JAVAME_MALLOC(alenmax * sizeof(*abuffer));
+	lbuffer = (jchar*) JAVAME_MALLOC(llenmax * sizeof(*lbuffer));
+	lnbuffer = (jchar*) JAVAME_MALLOC(lnlenmax * sizeof(*lnbuffer));
 
 	lpos=0;
 	while (locales_array && abuffer && lbuffer && lnbuffer){
@@ -569,9 +568,9 @@ static int get_action_map(javacall_const_utf16_string id, /*OUT*/ JSR211_RESULT_
 
 	javacall_chapi_enum_finish(lpos);
 
-	if (abuffer) FREE(abuffer);
-	if (lbuffer) FREE(lbuffer);
-	if (lnbuffer) FREE(lnbuffer);
+	if (abuffer) JAVAME_FREE(abuffer);
+	if (lbuffer) JAVAME_FREE(lbuffer);
+	if (lnbuffer) JAVAME_FREE(lnbuffer);
 
 	if (locales_array) jsr211_release_result_buffer(locales_array);
 
@@ -602,7 +601,7 @@ jsr211_result jsr211_get_handler_field(javacall_const_utf16_string id,
 		return get_action_map(id,result);
 	}
 
-	buffer = (jchar*) MALLOC(maxlen * sizeof(*buffer));
+	buffer = (jchar*) JAVAME_MALLOC(maxlen * sizeof(*buffer));
 
 	pos=0;
 	while (buffer){
@@ -632,7 +631,7 @@ jsr211_result jsr211_get_handler_field(javacall_const_utf16_string id,
 	javacall_chapi_enum_finish(pos);
 
 	if (!buffer) return JSR211_FAILED;
-	FREE(buffer);
+	JAVAME_FREE(buffer);
 
 	return (res==JAVACALL_CHAPI_ERROR_NO_MORE_ELEMENTS)?JSR211_OK:JSR211_FAILED;
 }

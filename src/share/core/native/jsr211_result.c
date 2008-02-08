@@ -1,7 +1,5 @@
 /*
- * 
- *
- * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
@@ -72,7 +70,7 @@ void jsr211_clean_buffer( DATA_BUFFER** buffer );
 jsr211_result jsr211_add_level( DATA_BUFFER ** buffer );
 
 JSR211_RESULT_BUFFER jsr211_create_result_buffer(){
-    DATA_BUFFER* res = (DATA_BUFFER*)MALLOC( BUFFER_GRANULARITY );
+    DATA_BUFFER* res = (DATA_BUFFER*)JAVAME_MALLOC( BUFFER_GRANULARITY );
 #ifdef TRACE_DATA_OPS
     printf( "jsr211_result: create buffer %p\n", res );
 #endif
@@ -87,7 +85,7 @@ void jsr211_release_result_buffer(JSR211_RESULT_BUFFER resbuf){
 #ifdef TRACE_DATA_OPS
     printf( "jsr211_result: release buffer %p\n", resbuf );
 #endif
-    if (resbuf != NULL) FREE( resbuf );
+    if (resbuf != NULL) JAVAME_FREE( resbuf );
 }
 
 /**
@@ -104,7 +102,7 @@ static jsr211_result assureBufferCap(DATA_BUFFER** resbuf, size_t ext){
         // calculate new size
         size_t sz = ((sizeof(DATA_BUFFER) + (*resbuf)->bytes_used + ext) / BUFFER_GRANULARITY + 1) * 
                         BUFFER_GRANULARITY;
-		DATA_BUFFER* tmp = (DATA_BUFFER*)REALLOC(*resbuf, sz);
+		DATA_BUFFER* tmp = (DATA_BUFFER*)JAVAME_REALLOC(*resbuf, sz);
 #ifdef TRACE_DATA_OPS
         printf( "jsr211_result: assureBufferCap %p -> %p\n", *resbuf, tmp );
 #endif
