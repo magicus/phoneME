@@ -455,7 +455,7 @@ System.out.println("sms.Protocol.newMessage, type = " + type);
 
         try {
              appPackage.checkForPermission(
-                 WMAPermission.sms_send_permission(url.host, numSeg));
+                 WMAPermission.getSmsSendPermission(url.host, numSeg));
         } catch (InterruptedException ie) {
             throw new InterruptedIOException("Interrupted while trying " +
                              "to ask the user permission");
