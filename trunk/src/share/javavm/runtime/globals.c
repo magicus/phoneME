@@ -751,6 +751,9 @@ CVMBool CVMinitVMGlobalState(CVMGlobalState *gs, CVMOptions *options)
     }
 #endif
 
+    /* init interpreter loop function pointer */
+    gs->CVMgcUnsafeExecuteJavaMethodProcPtr = &CVMgcUnsafeExecuteJavaMethod;
+
     CVMinitJNIStatics();
     
     gs->exit_procs = NULL;

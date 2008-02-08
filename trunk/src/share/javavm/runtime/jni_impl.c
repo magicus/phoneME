@@ -2709,7 +2709,10 @@ CVMjniInvoke(JNIEnv *env, jobject obj, jmethodID methodID,
 	CVMassert(!CVMlocalExceptionOccurred(ee));
 
 	/* Call the java method. */
-	CVMgcUnsafeExecuteJavaMethod(ee, methodID, isStatic, isVirtual);
+	(*CVMglobals.CVMgcUnsafeExecuteJavaMethodProcPtr)(ee,
+							  methodID,
+							  isStatic,
+							  isVirtual);
 
 	/* 
 	 * Copy the result. frame->topOfStack will point after the result.

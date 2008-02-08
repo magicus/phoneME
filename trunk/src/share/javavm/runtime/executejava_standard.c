@@ -46,7 +46,7 @@
 #include "javavm/include/porting/int.h"
 #include "javavm/include/porting/jni.h"
 
-#ifdef CVM_JVMTI
+#ifdef CVM_JVMTI_ENABLED
 #include "javavm/include/jvmtiExport.h"
 #include "generated/offsets/java_lang_Thread.h"
 #endif
@@ -382,7 +382,14 @@ CVMdumpStats()
 #define UPDATE_INSTRUCTION_COUNT(opcode)
 #endif
 
-#ifdef CVM_JVMTI
+#if defined(CVM_JVMTI_ENABLED) || defined(CVM_JVMPI_TRACE_INSTRUCTION)
+#define CVM_LOSSLESS_OPCODES
+#endif
+
+#ifdef CVM_JVMTI_ENABLED
+
+#define CVM_EXECUTE_JAVA_METHOD CVMgcUnsafeExecuteJavaMethodJVMTI
+
 
 /* Note: JVMTI_PROCESS_POP_FRAME_AND_EARLY_RETURN() checks for the need to
    pop a frame or force an early return.
@@ -450,6 +457,8 @@ CVMdumpStats()
 	});								\
     }
 #else
+#define CVM_EXECUTE_JAVA_METHOD CVMgcUnsafeExecuteJavaMethod
+
 #define JVMTI_PROCESS_POP_FRAME_AND_EARLY_RETURN()
 #define JVMTI_SINGLE_STEPPING()
 #define JVMTI_CHECK_PROCESSING_NEEDED()
@@ -470,7 +479,7 @@ CVMdumpStats()
 #else
 #define JVMPI_CHECK_FOR_DATA_DUMP_REQUEST(ee)
 #endif
-#ifdef CVM_JVMTI
+#ifdef CVM_JVMTI_ENABLED
 #define JVMTI_CHECK_FOR_DATA_DUMP_REQUEST(ee) \
     if (CVMjvmtiDataDumpWasRequested()) {     \
         DECACHE_PC();                         \
@@ -1517,9 +1526,9 @@ static const CVMUint8 CVMinvokeInterfaceTransitionCode[] = {
  * can instead be used for something more important.
  */
 void
-CVMgcUnsafeExecuteJavaMethod(CVMExecEnv* volatile ee, /* see note above */
-			     CVMMethodBlock* mb,
-			     CVMBool isStatic, CVMBool isVirtual)
+CVM_EXECUTE_JAVA_METHOD(CVMExecEnv* volatile ee, /* see note above */
+                        CVMMethodBlock* mb,
+                        CVMBool isStatic, CVMBool isVirtual)
 {
     CVMFrame*         frame = NULL;         /* actually it's a CVMJavaFrame */
     CVMFrame*         initialframe = NULL;  /* the initial transition frame
@@ -1539,7 +1548,7 @@ CVMgcUnsafeExecuteJavaMethod(CVMExecEnv* volatile ee, /* see note above */
 #ifdef CVM_TRACE
     char              trBuf[30];   /* needed by GET_LONGCSTRING */
 #endif
-#if defined (CVM_JVMPI) || defined(CVM_JVMTI)
+#if defined (CVM_JVMPI) || defined(CVM_JVMTI_ENABLED)
 #undef RETURN_OPCODE
 #define RETURN_OPCODE return_opcode
 	    CVMUint32 return_opcode;
@@ -1683,7 +1692,7 @@ new_transition:
 #ifndef CVM_PREFETCH_OPCODE
 	opcode = *pc;
 #endif
-#if (defined(CVM_JVMTI)) && !defined(CVM_USELABELS)
+#if (defined(CVM_JVMTI_ENABLED)) && !defined(CVM_USELABELS)
     opcode_switch:
 #endif
 #ifndef CVM_USELABELS
@@ -2495,7 +2504,7 @@ new_transition:
 	    if (CHECK_PENDING_REQUESTS(ee)) {
 		goto handle_pending_request;
 	    }
-#ifdef CVM_JVMTI
+#ifdef CVM_JVMTI_ENABLED
 	    if (CVMjvmtiIsEnabled()) {
 		jvalue retValue;
 		CVMmemCopy64Helper((CVMAddr*)&retValue.j, &STACK_INFO(-2).raw);
@@ -2537,7 +2546,7 @@ new_transition:
 	    if (CHECK_PENDING_REQUESTS(ee)) {
 		goto handle_pending_request;
 	    }
-#ifdef CVM_JVMTI
+#ifdef CVM_JVMTI_ENABLED
 	    if (CVMjvmtiIsEnabled()) {
 		jvalue retValue;
 		retValue.j = CVMlongConstZero();
@@ -2578,7 +2587,7 @@ new_transition:
 		goto handle_pending_request;
 	    }
 
-#ifdef CVM_JVMTI
+#ifdef CVM_JVMTI_ENABLED
 	    if (CVMjvmtiIsEnabled()) {
 		jvalue retValue;
 		/* We might gc, so flush state. */
@@ -2703,7 +2712,7 @@ new_transition:
 
 	    TRACESTATUS();
 	    
-#ifdef CVM_JVMTI
+#ifdef CVM_JVMTI_ENABLED
 	    CVMjvmtiClearEarlyReturn(ee);
 #endif
 	    CONTINUE;
@@ -2808,7 +2817,7 @@ new_transition:
 
 	/* debugger breakpoint */
 
-#ifdef CVM_JVMTI
+#ifdef CVM_JVMTI_ENABLED
         CASE_ND(opc_breakpoint) {
 	    OPCODE_DECL
 	    CVMUint32 newOpcode;
@@ -2834,7 +2843,7 @@ new_transition:
 #endif
 	}
 #endif
-#ifndef CVM_JVMTI
+#ifndef CVM_JVMTI_ENABLED
         CASE_NT(opc_breakpoint, 1) {
 	    TRACE(("\tbreakpoint\n"));
 	    UPDATE_PC_AND_TOS_AND_CONTINUE(1, 0);    /* treat as opc_nop */
@@ -3058,15 +3067,6 @@ new_transition:
 	 * all lossy and are not needed when in losslessmode.
 	 */
 
-#ifdef CVM_NO_LOSSY_OPCODES
-        CASE_ND(opc_getfield_quick)
-        CASE_ND(opc_putfield_quick)
-        CASE_ND(opc_getfield2_quick)
-        CASE_ND(opc_putfield2_quick)
-	CASE_ND(opc_agetfield_quick)
-	CASE_ND(opc_aputfield_quick)
-	    goto unimplemented_opcode;
-#else
 
         CASE(opc_getfield_quick, 3)
 	{
@@ -3134,7 +3134,6 @@ new_transition:
 		   STACK_OBJECT(-1), directObj, pc[1]));
             UPDATE_PC_AND_TOS_AND_CONTINUE(3, -2);
         }
-#endif /* CVM_NO_LOSSY_OPCODES */
 
 	/* Allocate memory for a new java object. */
 
@@ -3338,12 +3337,16 @@ new_transition:
 	     * care about lossless mode, we use the faster
 	     * CVMcbMethodTableSlot version.
 	     */
-#ifdef CVM_NO_LOSSY_OPCODES
+            /* The decision as to which opcode to quicken to is made
+             * at runtime in quicken.c.  For now leave this as is but
+             * we may want to optimize it later
+             */
+#ifdef CVM_LOSSLESS_OPCODES
 	    mb = CVMobjMethodTableSlot(directObj, CVMmbMethodTableIndex(mb));
 #else
 	    mb = CVMcbMethodTableSlot(CVMobjectGetClass(directObj),
 				      CVMmbMethodTableIndex(mb));
-#endif /* CVM_NO_LOSSY_OPCODES */
+#endif /* CVM_LOSSLESS_OPCODES */
             SET_JIT_INVOKEVIRTUAL_HINT(ee, pc, mb);
 	    goto callmethod;
 	}
@@ -3397,7 +3400,7 @@ new_transition:
 #ifdef CVM_JVMPI
             JVMPI_CHECK_FOR_DATA_DUMP_REQUEST(ee);
 #endif
-#ifdef CVM_JVMTI
+#ifdef CVM_JVMTI_ENABLED
             JVMTI_CHECK_FOR_DATA_DUMP_REQUEST(ee);
 #endif
 	    invokerIdx = CVMmbInvokerIdx(mb);
@@ -3487,7 +3490,7 @@ new_transition:
 		CVMframeLocals(frame) = locals;
 		pc = CVMjmdCode(jmd);
 		cb = CVMmbClassBlock(mb);
-#ifdef CVM_JVMTI
+#ifdef CVM_JVMTI_ENABLED
 		if (CVMjvmtiMbIsObsolete(mb)) {
 		    cp = CVMjvmtiMbConstantPool(mb);
 		    if (cp == NULL) {
@@ -3554,7 +3557,7 @@ new_transition:
                 }
 #endif /* CVM_JVMPI */
 
-#ifdef CVM_JVMTI
+#ifdef CVM_JVMTI_ENABLED
 		/* %comment k001 */
 		/* Decache all curently uncached interpreter state */
 		if (CVMjvmtiEnvEventEnabled(ee, JVMTI_EVENT_METHOD_ENTRY)) {
@@ -3592,11 +3595,11 @@ new_transition:
 		CNINativeMethod *f = (CNINativeMethod *)CVMmbNativeCode(mb);
 
 		TRACE_FRAMELESS_METHOD_CALL(frame, mb0, CVM_FALSE);
-#ifdef CVM_JVMTI
+#ifdef CVM_JVMTI_ENABLED
 		ee->threadState = CVM_THREAD_IN_NATIVE;
 #endif
 		ret = (*f)(ee, topOfStack, &mb);
-#ifdef CVM_JVMTI
+#ifdef CVM_JVMTI_ENABLED
 		ee->threadState &= ~CVM_THREAD_IN_NATIVE;
 #endif
 		TRACE_FRAMELESS_METHOD_RETURN(mb0, frame);
@@ -3796,7 +3799,7 @@ new_transition:
 	    ASMLABEL(label_handle_exception_tos_already_reset);
 	    CVMassert(CVMexceptionOccurred(ee));
 
-#ifdef CVM_JVMTI
+#ifdef CVM_JVMTI_ENABLED
 	    if (CVMjvmtiThreadEventEnabled(ee, JVMTI_EVENT_EXCEPTION)) {
 	        CVMD_gcSafeExec(ee, {
                     CVMjvmtiPostExceptionEvent(ee, pc,
@@ -3828,7 +3831,7 @@ new_transition:
 	    /* The exception was caught. Cache our new state. */
 #ifdef CVM_JIT
 	    if (CVMframeIsCompiled(frame)) {
-#ifdef CVM_JVMTI
+#ifdef CVM_JVMTI_ENABLED
 		pc = CVMpcmapCompiledPcToJavaPc(frame->mb,
 						CVMcompiledFramePC(frame));
 		CVMassert(pc != NULL); /* there better be a mapping */
@@ -3851,7 +3854,7 @@ new_transition:
 	    CVMsetCurrentExceptionObj(ee, NULL);
 	    topOfStack++;
 
-#ifdef CVM_JVMTI
+#ifdef CVM_JVMTI_ENABLED
 	    if (CVMjvmtiThreadEventEnabled(ee, JVMTI_EVENT_EXCEPTION_CATCH)) {
                 DECACHE_TOS();
 		CVMD_gcSafeExec(ee, {
@@ -3866,7 +3869,7 @@ new_transition:
 		goto return_to_compiled_with_exception;
 	    }
 #endif
-#ifdef CVM_JVMTI
+#ifdef CVM_JVMTI_ENABLED
 	    CVMjvmtiClearEarlyReturn(ee);
 #endif
 	    CONTINUE;   /* continue interpreter loop */
@@ -4126,7 +4129,7 @@ handle_jit_osr:
 		pc += (*pc == opc_invokeinterface_quick ? 5 : 3);
 		CONTINUE;
 	    } else {
-#ifdef CVM_JVMTI
+#ifdef CVM_JVMTI_ENABLED
 		/* Prevent double breakpoints. If the opcode we are
 		 * returning to is an opc_breakpoint, then we've
 		 * already notified the debugger of the breakpoint
@@ -4396,7 +4399,7 @@ handle_jit_osr:
 	        default:
 		    CVMassert(CVM_FALSE); /* We should never get here */
 	    }
-#ifdef CVM_JVMTI
+#ifdef CVM_JVMTI_ENABLED
 	    /* Prevent double breakpoints. If the opcode we just
 	     * quickened is an opc_breakpoint, then we've
 	     * already notified the debugger of the breakpoint
@@ -4436,7 +4439,7 @@ handle_jit_osr:
 		   pc[0], CVMopnames[pc[0]]));
 	    goto finish;
 
-#ifdef CVM_JVMTI
+#ifdef CVM_JVMTI_ENABLED
 	/* NOTE: FETCH_NEXT_OPCODE() must be called AFTER the PC has been
 	   adjusted. CVMjvmtiPostSingleStepEvent() may cause a breakpoint
 	   opcode to get inserted at the current PC to allow the debugger
@@ -4622,3 +4625,4 @@ handle_jit_osr:
 
     return;
 }
+

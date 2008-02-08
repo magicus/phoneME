@@ -776,6 +776,13 @@ extern void
 CVMgcUnsafeExecuteJavaMethod(CVMExecEnv* volatile ee, CVMMethodBlock* mb,
 			     CVMBool isStatic, CVMBool isVirtual);
 
+#ifdef CVM_JVMTI
+/* Entry point for JVMTI enabled interpreter loop */
+extern void
+CVMgcUnsafeExecuteJavaMethodJVMTI(CVMExecEnv* volatile ee, CVMMethodBlock* mb,
+                                  CVMBool isStatic, CVMBool isVirtual);
+#endif
+
 /*
  * CVMgcUnsafeExecuteJavaMethod - the second level interpreter loop
  *

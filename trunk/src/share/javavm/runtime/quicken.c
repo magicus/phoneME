@@ -53,6 +53,19 @@
 #undef  GET_INDEX
 #define GET_INDEX(ptr) (CVMgetUint16(ptr))
 
+/* Used to be that we defined CVM_NO_LOSSY_OPCODES in the makefile.
+ * Now we do a runtime check to determine if we will quicken to
+ * a lossy opcode.  This is so we can build with JVMTI code compiled
+ * in but run with the non-jvmti interpreter loop and with lossy
+ * romized opcodes.  JVMPI instruction tracing needs lossless opcodes
+ * as well, hence this bool.
+ */
+#ifdef CVM_JVMPI_TRACE_INSTRUCTION
+static CVMBool isLossy = CVM_FALSE;
+#else
+static CVMBool isLossy = CVM_TRUE;
+#endif
+
 /* 
  * Macro to make sure that no register caching is done when we
  * write a new byte code.
@@ -410,10 +423,23 @@ CVMquickenOpcodeHelper(CVMExecEnv* ee, CVMUint8* quickening, CVMUint8* pc,
 		CVMcbIs(cb, FINAL)) {
 		newOpcode = opc_invokenonvirtual_quick;
 	    }
-#ifndef CVM_NO_LOSSY_OPCODES
-#ifndef CVM_JIT /* The JIT causes unconditional quickening to
-		   invokevirtual_quick_w for inlining purposes */
-	    else if (CVMmbMethodTableIndex(mb) <= 0xFF) {
+	    /* This used to be #ifndef CVM_NO_LOSSY_OPCODES but now
+	     * we determine at runtime if we are going to quicken to
+	     * a non-lossy opcode based on whether JVMPI instruction tracing
+	     * is on (rare) or some JVMTI agent has connected with the VM.
+	     * This is so we can build with JVMTI code compiled
+	     * in but run with the non-jvmti interpreter loop and with lossy
+	     * romized opcodes. 
+	     */
+#ifndef CVM_JIT
+	    /* The JIT causes unconditional quickening to
+	     *  invokevirtual_quick_w for inlining purposes */
+
+	    else if (isLossy &&
+#ifdef CVM_JVMTI
+                !CVMjvmtiIsEnabled() &&
+#endif
+             CVMmbMethodTableIndex(mb) <= 0xFF) {
 		if (CVMmbClassBlock(mb) == CVMsystemClass(java_lang_Object)) {
 		    newOpcode = opc_invokevirtualobject_quick;
 		} else switch(CVMtypeidGetReturnType(CVMmbNameAndTypeID(mb))) {
@@ -435,7 +461,6 @@ CVMquickenOpcodeHelper(CVMExecEnv* ee, CVMUint8* quickening, CVMUint8* pc,
 		operand2 = CVMmbArgsSize(mb);
 		changesOperands = CVM_TRUE;
 	    }
-#endif
 #endif
 	    else {
 		newOpcode = opc_invokevirtual_quick_w;
@@ -502,7 +527,6 @@ CVMquickenOpcodeHelper(CVMExecEnv* ee, CVMUint8* quickening, CVMUint8* pc,
 		    }
 		}
 	    } else {
-#ifndef CVM_NO_LOSSY_OPCODES
 		CVMBool getfieldQuickeningAllowed;
 		CVMUint16 offset = CVMfbOffset(fb);
                 /* Only quicken if the field is non-volatile. For volatile
@@ -510,8 +534,15 @@ CVMquickenOpcodeHelper(CVMExecEnv* ee, CVMUint8* quickening, CVMUint8* pc,
                  * are used.
                  */
 		getfieldQuickeningAllowed = !CVMfbIs(fb, VOLATILE);
-		
-		if ((offset <= 0xFF) && getfieldQuickeningAllowed) {
+		/* We determine at runtime if we are going to quicken to
+		 * a lossy opcode based on whether JVMPI instruction tracing
+		 * is on (rare) or some JVMTI agent has connected with the VM
+		 */
+		if (isLossy &&
+#ifdef CVM_JVMTI
+                    !CVMjvmtiIsEnabled() &&
+#endif
+                    (offset <= 0xFF) && getfieldQuickeningAllowed) {
 		    if (CVMfbIsDoubleWord(fb)) {
 			newOpcode = (isPutOpcode ? opc_putfield2_quick
 				                 : opc_getfield2_quick);
@@ -526,7 +557,7 @@ CVMquickenOpcodeHelper(CVMExecEnv* ee, CVMUint8* quickening, CVMUint8* pc,
 		    operand2 = 0; /* not really needed */
 		    changesOperands = CVM_TRUE;
 		} else
-#endif /* CVM_NO_LOSSY_OPCODES */
+
 		{
 		    newOpcode = (isPutOpcode ? opc_putfield_quick_w 
 				             : opc_getfield_quick_w);

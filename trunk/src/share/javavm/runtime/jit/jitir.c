@@ -6291,7 +6291,11 @@ translateRange(CVMJITCompilationContext* con,
 
 
  	/* invoke a virtual method */
-#ifndef CVM_NO_LOSSY_OPCODES
+	/* Used to be #ifndef CVM_NO_LOSSY_OPCODES which means we have
+	 * lossy opcodes.  However, quicken.c will not generate these if
+	 * a JVMTI agent is connected (CVMjvmtiEnabled() == true)
+	 * OR if CVM_JIT is defined
+	 */
 #ifndef CVM_JIT
         /* These quickened bytecodes are unused for JIT builds because they
            prevent virtual inlining.  This code is left here for reference
@@ -6340,7 +6344,6 @@ translateRange(CVMJITCompilationContext* con,
             break;
 	}
 #endif /* CVM_JIT */
-#endif /* CVM_NO_LOSSY_OPCODES */
 
 	/*
 	 * Constant pool entry is resolved or resolvable at compile-time.
@@ -6800,15 +6803,20 @@ translateRange(CVMJITCompilationContext* con,
 	 * all lossy and are not needed when in losslessmode.
 	 */
 
-#ifndef CVM_NO_LOSSY_OPCODES
 
-	/* Lossy mode: 
+	/* Used to be Lossy mode: We now rely on quicken.c to 
+         * do the right thing based on runtime decisions.
 	 * Quickened opcodes from opc_getfield and opc_getfield.
 	 * field index is embedded in the instruction.
 	 */
 
 	case opc_agetfield_quick: {
 	    CVMUint32 fieldOffset = absPc[1];
+#ifdef CVM_JVMTI
+            if (CVMjvmtiIsEnabled()) {
+                goto unimplemented_opcode;
+            }
+#endif
             doInstanceFieldRead(con, curbk, pc, NULL, fieldOffset,
 				CVM_TYPEID_OBJ, CVM_FALSE);
 	    break;
@@ -6816,6 +6824,11 @@ translateRange(CVMJITCompilationContext* con,
 
         case opc_getfield_quick: {
 	    CVMUint32 fieldOffset = absPc[1];
+#ifdef CVM_JVMTI
+            if (CVMjvmtiIsEnabled()) {
+                goto unimplemented_opcode;
+            }
+#endif
             doInstanceFieldRead(con, curbk, pc, NULL, fieldOffset,
 				CVMJIT_TYPEID_32BITS, CVM_FALSE);
 	    break;
@@ -6824,6 +6837,11 @@ translateRange(CVMJITCompilationContext* con,
 	/* Quickened from getfield if CVMfbIsDoubleWord(fb) */ 
         case opc_getfield2_quick: {
 	    CVMUint32 fieldOffset = absPc[1];
+#ifdef CVM_JVMTI
+            if (CVMjvmtiIsEnabled()) {
+                goto unimplemented_opcode;
+            }
+#endif
 	    doInstanceFieldRead(con, curbk, pc, NULL, fieldOffset,
 				CVMJIT_TYPEID_64BITS, CVM_FALSE);
 	    break;
@@ -6832,6 +6850,11 @@ translateRange(CVMJITCompilationContext* con,
 	/* Quickened from putfield if CVMfbIsRef(fb) */ 
 	case opc_aputfield_quick: {
 	    CVMUint32 fieldOffset = absPc[1];
+#ifdef CVM_JVMTI
+            if (CVMjvmtiIsEnabled()) {
+                goto unimplemented_opcode;
+            }
+#endif
             doInstanceFieldWrite(con, curbk, pc, NULL, fieldOffset,
 				 CVM_TYPEID_OBJ, CVM_FALSE);
 	    break;
@@ -6841,6 +6864,11 @@ translateRange(CVMJITCompilationContext* con,
 	   !CVMfbIsRef(fb) resolved 32-bit field reference */
         case opc_putfield_quick: {
 	    CVMUint32 fieldOffset = absPc[1];
+#ifdef CVM_JVMTI
+            if (CVMjvmtiIsEnabled()) {
+                goto unimplemented_opcode;
+            }
+#endif
             doInstanceFieldWrite(con, curbk, pc, NULL, fieldOffset,
 				 CVMJIT_TYPEID_32BITS, CVM_FALSE);
 	    break;
@@ -6849,12 +6877,16 @@ translateRange(CVMJITCompilationContext* con,
 	/* Quickened from getfield if CVMfbIsDoubleWord(fb) */ 
         case opc_putfield2_quick: {
 	    CVMUint32 fieldOffset = absPc[1];
+#ifdef CVM_JVMTI
+            if (CVMjvmtiIsEnabled()) {
+                goto unimplemented_opcode;
+            }
+#endif
             doInstanceFieldWrite(con, curbk, pc, NULL, fieldOffset,
 				 CVMJIT_TYPEID_64BITS, CVM_FALSE);
 	    break;
         }
 
-#endif /* !CVM_NO_LOSSY_OPCODES */
 
         case opc_putfield_quick_w:
         case opc_getfield_quick_w: {
@@ -7052,21 +7084,16 @@ translateRange(CVMJITCompilationContext* con,
 	}
 #endif
 
-#ifdef CVM_NO_LOSSY_OPCODES
-        case opc_getfield_quick:
-        case opc_putfield_quick:
-        case opc_getfield2_quick:
-        case opc_putfield2_quick:
-	case opc_agetfield_quick:
-	case opc_aputfield_quick:
-#endif
 #ifndef CVM_INLINING
 	case opc_invokeignored_quick:
 #endif
         case opc_xxxunusedxxx:
 	case opc_exittransition: 
+#ifdef CVM_JVMTI
+ unimplemented_opcode:
+#endif
         default:
-	    CVMdebugPrintf(("\t*** Unimplemented opcode: %d = %s\n",
+	    CVMdebugPrintf(("\t*** jitir: Unimplemented opcode: %d = %s\n",
 		   opcode, CVMopnames[opcode]));
 	    CVMassert(CVM_FALSE);
 	    break;

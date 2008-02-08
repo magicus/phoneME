@@ -66,6 +66,8 @@ typedef struct exit_proc {
     struct exit_proc *next;
 } * exit_procPtr;
 
+typedef void (*loopProcPtr)(CVMExecEnv*, CVMMethodBlock *, CVMBool, CVMBool);
+
 struct CVMOptions {
     void *vfprintfHook;
     void *exitHook;
@@ -629,6 +631,9 @@ struct CVMGlobalState {
 #ifdef CVM_INSPECTOR
     CVMInspector inspector;
 #endif
+
+    loopProcPtr CVMgcUnsafeExecuteJavaMethodProcPtr;
+
 };
 
 #define CVM_CSTATE(x)  (&CVMglobals.cstate[(x)])
