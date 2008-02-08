@@ -1,7 +1,5 @@
 /*
- * 
- *
- * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
@@ -119,7 +117,7 @@ static int fillArray(const jchar **ptr, /*OUT*/int* len, const jchar*** arr) {
 	}
 
 	//alloc array list
-	list = *arr = (const jchar**)MALLOC((*len)*sizeof(jchar*));
+	list = *arr = (const jchar**)JAVAME_MALLOC((*len)*sizeof(jchar*));
 	if (!*arr) return 0;
 	
 	//asign elements
@@ -144,7 +142,8 @@ static jsr211_result installHandler(int n) {
 	int anm_num;
 	jchar *intrenalSuiteID;
 
-	intrenalSuiteID = MALLOC((jsrop_suiteid_string_size(INTERNAL_SUITE_ID)+1) * sizeof(jchar));
+    intrenalSuiteID = JAVAME_MALLOC(
+        (jsrop_suiteid_string_size(INTERNAL_SUITE_ID)+1) * sizeof(jchar));
 
 	if (!jsrop_suiteid_to_string(INTERNAL_SUITE_ID, intrenalSuiteID)){
 		return JSR211_FAILED;
@@ -188,14 +187,14 @@ static jsr211_result installHandler(int n) {
 	}
 
 	//clean string lists
-	if (ch.types) FREE(ch.types);
-	if (ch.suffixes) FREE(ch.suffixes);
-	if (ch.actions) FREE(ch.actions);
-	if (ch.locales) FREE(ch.locales);
-	if (ch.action_map) FREE(ch.action_map);
-	if (ch.accesses) FREE(ch.accesses);
+	if (ch.types) JAVAME_FREE(ch.types);
+	if (ch.suffixes) JAVAME_FREE(ch.suffixes);
+	if (ch.actions) JAVAME_FREE(ch.actions);
+	if (ch.locales) JAVAME_FREE(ch.locales);
+	if (ch.action_map) JAVAME_FREE(ch.action_map);
+	if (ch.accesses) JAVAME_FREE(ch.accesses);
 
-	FREE(intrenalSuiteID);
+	JAVAME_FREE(intrenalSuiteID);
     
     return status;
 }

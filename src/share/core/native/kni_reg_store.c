@@ -1,7 +1,5 @@
 /*
- * 
- *
- * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
@@ -138,16 +136,16 @@ static void result2string(KNIDECLARGS JSR211_RESULT_BUFFER buffer, jstring str){
 static void cleanStringArray(const jchar** strings, int n) {
 	if (strings != NULL){
 		const jchar** p = strings;
-		while(n--) FREE(*p++);
-		FREE((void*)strings);
+		while(n--) JAVAME_FREE(*p++);
+		JAVAME_FREE((void*)strings);
 	}
 }
 
 
 static void cleanHandlerData(jsr211_content_handler* handler) {
-	FREE(handler->id);
-	FREE(handler->suite_id);
-	FREE(handler->class_name);
+	JAVAME_FREE(handler->id);
+	JAVAME_FREE(handler->suite_id);
+	JAVAME_FREE(handler->class_name);
 
 	cleanStringArray(handler->types,handler->type_num);
 	cleanStringArray(handler->suffixes,handler->suff_num);
@@ -267,7 +265,7 @@ static int getStringArray(KNIDECLARGS jobjectArray arrObj, const jchar*** arrPtr
 #ifdef TRACE_MALLOC
     printf( "kni_reg_store.getStringArray(%d): malloc( %d )", __LINE__, sizeof(jchar*) * n );
 #endif
-    arr = MALLOC(sizeof(jchar*) * n);
+    arr = JAVAME_MALLOC(sizeof(jchar*) * n);
     if (!arr) return KNI_ENOMEM;
 
     KNI_StartHandles(1);
@@ -323,14 +321,14 @@ static int fillActionMap(KNIDECLARGS jobject o, jsr211_content_handler* handler)
 
         do {
             // allocate buffers
-            handler->locales = MALLOC(sizeof(jchar*) * len);
+            handler->locales = JAVAME_MALLOC(sizeof(jchar*) * len);
             if (handler->locales == NULL) {
                 ret = KNI_ENOMEM;
                 break;
             }
             handler->locale_num = len;
 
-            handler->action_map = MALLOC(sizeof(jchar*) * len * n);
+            handler->action_map = JAVAME_MALLOC(sizeof(jchar*) * len * n);
             if (handler->action_map == NULL) {
                 ret = KNI_ENOMEM;
                 break;
@@ -407,7 +405,8 @@ static int fillHandlerData(KNIDECLARGS jobject o, jsr211_content_handler* handle
 #else
 	{
 		SuiteIdType suite_id = KNI_GetIntField(o, chImplSuiteId);
-		handler->suite_id = MALLOC((jsrop_suiteid_string_size(suite_id) + 1) * sizeof(jchar));
+            handler->suite_id = JAVAME_MALLOC(
+                (jsrop_suiteid_string_size(suite_id) + 1) * sizeof(jchar));
 		jsrop_suiteid_to_string(suite_id, handler->suite_id);
 	}
 #endif
@@ -477,9 +476,9 @@ static int fillHandlerData(KNIDECLARGS jobject o, jsr211_content_handler* handle
  */
 void jsr211_cleanHandlerData(KNIDECLARGS jsr211_content_handler *handler) {
     // clean up handler structure 
-    if (handler->id!=NULL) FREE(handler->id);
-	if (handler->suite_id!=NULL) FREE(handler->suite_id);
-	if (handler->class_name!=NULL) FREE(handler->class_name);
+    if (handler->id!=NULL) JAVAME_FREE(handler->id);
+	if (handler->suite_id!=NULL) JAVAME_FREE(handler->suite_id);
+	if (handler->class_name!=NULL) JAVAME_FREE(handler->class_name);
 
     if (handler->type_num > 0 && handler->types != NULL) {
         cleanStringArray(KNIPASSARGS handler->types, handler->type_num);
@@ -578,7 +577,7 @@ KNIDECL(com_sun_j2me_content_RegistryStore_unregister0) {
         ret = KNI_TRUE;
     } while (0);
 
-    FREE(id);
+    JAVAME_FREE(id);
     KNI_EndHandles();
 
     KNI_ReturnBoolean(ret);
@@ -616,8 +615,8 @@ KNIDECL(com_sun_j2me_content_RegistryStore_findHandler0) {
 
     } while (0);
 
-    if( value != NULL ) FREE(value);
-    if( callerId != NULL ) FREE(callerId);
+    if( value != NULL ) JAVAME_FREE(value);
+    if( callerId != NULL ) JAVAME_FREE(callerId);
     result2string(KNIPASSARGS  result, valueObj);
 
     KNI_EndHandlesAndReturnObject(valueObj);
@@ -644,7 +643,7 @@ KNIDECL(com_sun_j2me_content_RegistryStore_forSuite0) {
     } else {
 	    jsr211_find_for_suite(suiteID, &result);
         result2string(KNIPASSARGS result, strObj);
-    	FREE(suiteID);
+    	JAVAME_FREE(suiteID);
     }
 #else
     SuiteIdType suite_id_param = KNI_GetParameterAsInt(1);
@@ -690,9 +689,9 @@ KNIDECL(com_sun_j2me_content_RegistryStore_getByURL0) {
         jsr211_handler_by_URL(callerId, url, action, &result);
     } while (0);
 
-    FREE(action);
-    FREE(url);
-    FREE(callerId);
+    JAVAME_FREE(action);
+    JAVAME_FREE(url);
+    JAVAME_FREE(callerId);
     result2string(KNIPASSARGS  result, resultObj);
 
     KNI_EndHandlesAndReturnObject(resultObj);
@@ -724,7 +723,7 @@ KNIDECL(com_sun_j2me_content_RegistryStore_getValues0) {
         jsr211_get_all(callerId, searchBy, &result);
     } while (0);
 
-    FREE(callerId);
+    JAVAME_FREE(callerId);
     result2string(KNIPASSARGS  result, strObj);
 
     KNI_EndHandlesAndReturnObject(strObj);
@@ -760,8 +759,8 @@ KNIDECL(com_sun_j2me_content_RegistryStore_getHandler0) {
         jsr211_get_handler(callerId, id, mode, &handler);
     } while (0);
 
-    FREE(callerId);
-    FREE(id);
+    JAVAME_FREE(callerId);
+    JAVAME_FREE(id);
     result2string(KNIPASSARGS  handler, handlerObj);
 
     KNI_EndHandlesAndReturnObject(handlerObj);
@@ -785,7 +784,7 @@ KNIDECL(com_sun_j2me_content_RegistryStore_loadFieldValues0) {
     if (JAVACALL_OK == jsrop_jstring_to_utf16_string(strObj, &id)) {
         fieldId = KNI_GetParameterAsInt(2);
         jsr211_get_handler_field(id, fieldId, &result);
-        FREE(id);
+        JAVAME_FREE(id);
         result2string(KNIPASSARGS  result, strObj);
     } else {
         jsr211_release_result_buffer(result);
@@ -862,7 +861,7 @@ KNIDECL(com_sun_j2me_content_InvocationStoreProxy_launchNativeHandler0) {
         result = JSR211_LAUNCH_ERROR;
     }
 
-    FREE(id);
+    JAVAME_FREE(id);
     KNI_EndHandles();    
     KNI_ReturnInt(result);
 }
