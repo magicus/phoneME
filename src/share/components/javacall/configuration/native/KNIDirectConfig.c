@@ -74,7 +74,7 @@ KNIDECL(com_sun_mmedia_DefaultConfiguration_nListContentTypesOpen) {
             len = KNI_GetStringLength(stringObj);
             /* if the string is longer than the stack buffer try to malloc it */
             if (len >= sizeof stack_string16_buffer / sizeof stack_string16_buffer[0]) {
-                string16 = JAVAME_MALLOC((len + 1) * sizeof *string16);
+                string16 = MMP_MALLOC((len + 1) * sizeof *string16);
                 if (string16 == NULL) {
                     KNI_ThrowNew(jsropOutOfMemoryError, NULL);
                     break;
@@ -83,7 +83,7 @@ KNIDECL(com_sun_mmedia_DefaultConfiguration_nListContentTypesOpen) {
                 string16 = stack_string16_buffer;
             }
             if (len >= sizeof stack_string_buffer) {
-                proto = JAVAME_MALLOC(len + 1);
+                proto = MMP_MALLOC(len + 1);
                 if (proto == NULL) {
                     KNI_ThrowNew(jsropOutOfMemoryError, NULL);
                     break;
@@ -131,7 +131,7 @@ KNIDECL(com_sun_mmedia_DefaultConfiguration_nListContentTypesOpen) {
             break;
         }
      
-        iterator = (ListIterator*)JAVAME_MALLOC(
+        iterator = (ListIterator*)MMP_MALLOC(
             sizeof *iterator + len); /* zero terminator instead of last space */
         if (iterator == NULL) {
             KNI_ThrowNew(jsropOutOfMemoryError, NULL);
@@ -159,10 +159,10 @@ KNIDECL(com_sun_mmedia_DefaultConfiguration_nListContentTypesOpen) {
 
     /* freeing buffers */
     if (proto != NULL && proto != stack_string_buffer) {
-        JAVAME_FREE(proto);
+        MMP_FREE(proto);
     }
     if (string16 != NULL && string16 != stack_string16_buffer) {
-        JAVAME_FREE(string16);
+        MMP_FREE(string16);
     }
     KNI_EndHandles();
     KNI_ReturnInt((jint)iterator); 
@@ -196,7 +196,7 @@ KNIDECL(com_sun_mmedia_DefaultConfiguration_nListContentTypesNext) {
         }
         /* is the stack buffer enough for the item? */
         if (len >= sizeof stack_string_buffer / sizeof stack_string_buffer[0]) {
-            mime = JAVAME_MALLOC(len + 1);
+            mime = MMP_MALLOC(len + 1);
             if (mime == NULL) {
                 KNI_ThrowNew(jsropOutOfMemoryError, NULL);
                 break;
@@ -218,7 +218,7 @@ KNIDECL(com_sun_mmedia_DefaultConfiguration_nListContentTypesNext) {
     if (mime != NULL) {
         KNI_NewStringUTF(mime, stringObj);
         if (mime != stack_string_buffer) {
-            JAVAME_FREE(mime);
+            MMP_FREE(mime);
         }
     }
     KNI_EndHandlesAndReturnObject(stringObj);
@@ -228,7 +228,7 @@ KNIEXPORT KNI_RETURNTYPE_VOID
 KNIDECL(com_sun_mmedia_DefaultConfiguration_nListContentTypesClose) {
     ListIterator *iterator;
     if ((iterator = (ListIterator *)KNI_GetParameterAsInt(1)) != NULL) {
-        JAVAME_FREE(iterator);
+        MMP_FREE(iterator);
     }
     KNI_ReturnVoid();
 }
@@ -256,7 +256,7 @@ KNIDECL(com_sun_mmedia_DefaultConfiguration_nListProtocolsOpen) {
             int len = KNI_GetStringLength(stringObj);
             /* if the string is longer than the stack buffer try to malloc it */
             if (len >= sizeof stack_string16_buffer / sizeof stack_string16_buffer[0]) {
-                string16 = JAVAME_MALLOC((len + 1) * sizeof *string16);
+                string16 = MMP_MALLOC((len + 1) * sizeof *string16);
                 if (string16 == NULL) {
                     KNI_ThrowNew(jsropOutOfMemoryError, NULL);
                     break;
@@ -265,7 +265,7 @@ KNIDECL(com_sun_mmedia_DefaultConfiguration_nListProtocolsOpen) {
                 string16 = stack_string16_buffer;
             }
             if (len >= sizeof stack_string_buffer / sizeof stack_string_buffer[0]) {
-                mime = JAVAME_MALLOC(len + 1);
+                mime = MMP_MALLOC(len + 1);
                 if (mime == NULL) {
                     KNI_ThrowNew(jsropOutOfMemoryError, NULL);
                     break;
@@ -331,7 +331,7 @@ KNIDECL(com_sun_mmedia_DefaultConfiguration_nListProtocolsOpen) {
                 break;
             }
          
-            iterator = (ListIterator*)JAVAME_MALLOC(
+            iterator = (ListIterator*)MMP_MALLOC(
                 sizeof *iterator + len); /* zero terminator instead of last space */
             if (iterator == NULL) {
                 KNI_ThrowNew(jsropOutOfMemoryError, NULL);
@@ -361,10 +361,10 @@ KNIDECL(com_sun_mmedia_DefaultConfiguration_nListProtocolsOpen) {
 
     /* freeing buffers */
     if (mime != NULL && mime != stack_string_buffer) {
-        JAVAME_FREE(mime);
+        MMP_FREE(mime);
     }
     if (string16 != NULL && string16 != stack_string16_buffer) {
-        JAVAME_FREE(string16);
+        MMP_FREE(string16);
     }
     KNI_EndHandles();
     KNI_ReturnInt((jint)iterator); 
@@ -399,7 +399,7 @@ KNIDECL(com_sun_mmedia_DefaultConfiguration_nListProtocolsNext) {
         
         /* is the stack buffer enough for the item? */
         if (len >= sizeof stack_string_buffer / sizeof stack_string_buffer[0]) {
-            proto = JAVAME_MALLOC(len + 1);
+            proto = MMP_MALLOC(len + 1);
             if (proto == NULL) {
                 KNI_ThrowNew(jsropOutOfMemoryError, NULL);
                 break;
@@ -420,7 +420,7 @@ KNIDECL(com_sun_mmedia_DefaultConfiguration_nListProtocolsNext) {
     if (proto != NULL) {
         KNI_NewStringUTF(proto, stringObj);
         if (proto != stack_string_buffer) {
-            JAVAME_FREE(proto);
+            MMP_FREE(proto);
         }
     }
     KNI_EndHandlesAndReturnObject(stringObj);
@@ -430,7 +430,7 @@ KNIEXPORT KNI_RETURNTYPE_VOID
 KNIDECL(com_sun_mmedia_DefaultConfiguration_nListProtocolsClose) {
     ListIterator *iterator;
     if ((iterator = (ListIterator *)KNI_GetParameterAsInt(1)) != NULL) {
-        JAVAME_FREE(iterator);
+        MMP_FREE(iterator);
     }
     KNI_ReturnVoid();
 }
