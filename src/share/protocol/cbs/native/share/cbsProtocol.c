@@ -200,7 +200,6 @@ KNIDECL(com_sun_midp_io_j2me_cbs_Protocol_close0) {
  */
 static void
 wma_setBlockedCBSHandle(int handle, int eventType) {
-#if ENABLE_REENTRY
     /* Pick up the event data record. */
     MidpReentryData* eventInfo = (MidpReentryData*)SNI_GetReentryData(NULL);
     if (eventInfo == NULL) {
@@ -215,11 +214,6 @@ wma_setBlockedCBSHandle(int handle, int eventType) {
 
     /* No data available. Try again, later. */
     SNI_BlockThread();
-#else
-    CVMD_gcSafeExec(_ee, {
-        jsr120_wait_for_signal(handle, eventType);
-    }); 
-#endif
 }
 
 /**
@@ -278,26 +272,25 @@ KNIDECL(com_sun_midp_io_j2me_cbs_Protocol_receive0) {
 
         do {
             /* If this is the first time, peek into the pool for a message. */
+            pCbsData = jsr120_cbs_pool_peek_next_msg((jchar)msgID);
+            if (pCbsData == NULL) {
 #if ENABLE_REENTRY
-            if (SNI_GetReentryData(NULL) == NULL) {
-#endif
-                pCbsData = jsr120_cbs_pool_peek_next_msg((jchar)msgID);
-
-                /*
-                 * If there is no message, register the connection, if it hasn't
-                 * already been registered. Then block and wait for a message to
-                 * appear in the pool.
-                 */
-                if (pCbsData == NULL) {
+                if (SNI_GetReentryData(NULL) == NULL) {
+                    /*
+                     * If there is no message, register the connection, if it hasn't
+                     * already been registered. Then block and wait for a message to
+                     * appear in the pool.
+                     */
                     /* Wait for a message to arrive in the pool. */
                     wma_setBlockedCBSHandle(handle, WMA_CBS_READ_SIGNAL);
                 }
-#if ENABLE_REENTRY
-            } else {
-                /* Re-entry */
-                pCbsData = jsr120_cbs_pool_peek_next_msg((jchar)msgID);
-            }
+#else
+                CVMD_gcSafeExec(_ee, {
+                    jsr120_wait_for_signal(handle, WMA_CBS_READ_SIGNAL);
+                }); 
 #endif
+            }
+
             /*
              * If a message is waiting, go through the steps of fetching the message
              * and processing its contents.
@@ -441,7 +434,7 @@ KNIDECL(com_sun_midp_io_j2me_cbs_Protocol_waitUntilMessageAvailable0) {
             } else {
 
 #if ENABLE_REENTRY
-                if (!SNI_GetReentryData(NULL)) {
+                if (SNI_GetReentryData(NULL) == NULL) {
                      /* Block and wait for a message. */
                      wma_setBlockedCBSHandle(handle, WMA_CBS_READ_SIGNAL);
                 } else {
@@ -449,7 +442,9 @@ KNIDECL(com_sun_midp_io_j2me_cbs_Protocol_waitUntilMessageAvailable0) {
                      messageLength = -1;
                 }
 #else
-                wma_setBlockedCBSHandle(handle, WMA_CBS_READ_SIGNAL);
+                CVMD_gcSafeExec(_ee, {
+                    jsr120_wait_for_signal(handle, WMA_CBS_READ_SIGNAL);
+                }); 
                 pCbsData = jsr120_cbs_pool_peek_next_msg1(msgID, 1);
                 if (pCbsData != NULL) {
                     messageLength = pCbsData->msgLen;
