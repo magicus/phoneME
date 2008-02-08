@@ -190,6 +190,7 @@ KNIDECL(com_sun_midp_io_j2me_cbs_Protocol_close0) {
     KNI_ReturnInt(status);
 }
 
+#if ENABLE_REENTRY
 /**
  * Marks an open connection as being blocked on a CBS operation. The
  * blocked status of the connection is stored in the current Java
@@ -215,6 +216,7 @@ wma_setBlockedCBSHandle(int handle, int eventType) {
     /* No data available. Try again, later. */
     SNI_BlockThread();
 }
+#endif
 
 /**
  * Receive a CBS message.
