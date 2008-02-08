@@ -33,40 +33,29 @@
  *            - Receiving a CBS message.
  */
 
-//#include <sys/types.h>
 #include <string.h>
 #include <errno.h>
 #include <kni.h>
-
 #include <sni.h>
+
 #include <app_package.h>
 
 #ifdef ENABLE_MIDP
 #include <midpServices.h>
-//#include <commonKNIMacros.h>
-//#include <ROMStructs.h>
 #include <midpError.h>
 #include <midp_properties_port.h>
 #include <midp_logging.h>
 #include <midpResourceLimit.h>
+#else
+  #include "jsr120_signals.h"
+  #include "wmaInterface.h"
 #endif
 
-
-//#if (ENABLE_CDC == 1)
 #ifdef ENABLE_PCSL
 #include <pcsl_memory.h>
 #else
   #define pcsl_mem_malloc malloc
   #define pcsl_mem_free free
-#endif
-//#endif
-
-#if (ENABLE_CDC == 1)
-#define JSR120_KNI_LAYER
-#ifdef JSR_120_ENABLE_JUMPDRIVER
-#include <jsr120_jumpdriver.h>
-#include <JUMPEvents.h>
-#endif
 #endif
 
 #ifdef ENABLE_MIDP
@@ -78,20 +67,14 @@
   static const char* const midpIllegalArgumentException = "java/lang/IllegalArgumentException";
 #endif
 	
-
 /* CBS protocol, native layer APIs and message pool APIs */
 #include <jsr120_cbs_protocol.h>
 #include <jsr120_cbs_pool.h>
 #include <jsr120_cbs_listeners.h>
 
-/*
- * Protocol methods
- */
-#if (ENABLE_CDC != 1)
-static void wma_setBlockedCBSHandle(int msgID, int eventType);
-#endif
-
 unsigned char cbsBuffer[sizeof(CbsMessage)];
+
+#define ENABLE_REENTRY (ENABLE_CDC != 1)
 
 /**
  * Open a CBS connection.
@@ -130,13 +113,7 @@ KNIDECL(com_sun_midp_io_j2me_cbs_Protocol_open0) {
             if (jsr120_cbs_is_midlet_listener_registered((jchar)msgID) == WMA_ERR) {
 
                 /* Fetch a unique handle that identifies this CBS communication session. */
-#if (ENABLE_CDC != 1)
                 handle = (int)(pcsl_mem_malloc(1));
-#else
-#ifdef JSR_120_ENABLE_JUMPDRIVER
-                handle = (int)jumpEventCreate();
-#endif
-#endif
                 if (handle == 0) {
                     KNI_ThrowNew(midpOutOfMemoryError,
                         "Unable to start CBS.");
@@ -171,27 +148,15 @@ static void closeConnection(int msgID, int handle, int deRegister) {
 
     if (msgID > 0 && handle != 0) {
 
-#if (ENABLE_CDC != 1)
         /* Unblock any blocked threads. */
         jsr120_cbs_unblock_thread((int)handle, WMA_CBS_READ_SIGNAL);
-#else
-#ifdef JSR_120_ENABLE_JUMPDRIVER
-        jumpEventHappens((JUMPEvent)handle);
-#endif
-#endif
 
         if (deRegister) {
             /* Unregister the CBS port from the CBS pool. */
             jsr120_cbs_unregister_midlet_listener((jchar)msgID);
 
             /* Release the handle associated with this connection. */
-#if (ENABLE_CDC != 1)
             pcsl_mem_free((void *)handle);
-#else
-#ifdef JSR_120_ENABLE_JUMPDRIVER
-            jumpEventDestroy((JUMPEvent)handle);
-#endif
-#endif
         }
 
     }
@@ -225,6 +190,34 @@ KNIDECL(com_sun_midp_io_j2me_cbs_Protocol_close0) {
     KNI_ReturnInt(status);
 }
 
+#if ENABLE_REENTRY
+/**
+ * Marks an open connection as being blocked on a CBS operation. The
+ * blocked status of the connection is stored in the current Java
+ * thread.
+ *
+ * @param handle The ID to be matched in addition to the event type.
+ * @param eventType The type of event to trigger an unblock.
+ */
+static void
+wma_setBlockedCBSHandle(int handle, int eventType) {
+    /* Pick up the event data record. */
+    MidpReentryData* eventInfo = (MidpReentryData*)SNI_GetReentryData(NULL);
+    if (eventInfo == NULL) {
+        eventInfo = (MidpReentryData*)SNI_AllocateReentryData(
+                                          sizeof(MidpReentryData));
+    }
+
+    /* Populate the event information fields with the latest event data. */
+    eventInfo->waitingFor = eventType;
+    eventInfo->descriptor = handle;
+    eventInfo->status = 0;
+
+    /* No data available. Try again, later. */
+    SNI_BlockThread();
+}
+#endif
+
 /**
  * Receive a CBS message.
  *
@@ -237,9 +230,6 @@ KNIDECL(com_sun_midp_io_j2me_cbs_Protocol_close0) {
  */
 KNIEXPORT KNI_RETURNTYPE_INT
 KNIDECL(com_sun_midp_io_j2me_cbs_Protocol_receive0) {
-#if (ENABLE_CDC != 1)
-    MidpReentryData* info = (MidpReentryData*)SNI_GetReentryData(NULL);
-#endif
 
     /* The CBS message identifier */
     jint msgID;
@@ -284,38 +274,25 @@ KNIDECL(com_sun_midp_io_j2me_cbs_Protocol_receive0) {
 
         do {
             /* If this is the first time, peek into the pool for a message. */
-#if (ENABLE_CDC != 1)
-            if (info == NULL) {
-#endif
-                pCbsData = jsr120_cbs_pool_peek_next_msg((jchar)msgID);
-
-                /*
-                 * If there is no message, register the connection, if it hasn't
-                 * already been registered. Then block and wait for a message to
-                 * appear in the pool.
-                 */
-                if (pCbsData == NULL) {
-
-#if (ENABLE_CDC != 1)
+            pCbsData = jsr120_cbs_pool_peek_next_msg((jchar)msgID);
+            if (pCbsData == NULL) {
+#if ENABLE_REENTRY
+                if (SNI_GetReentryData(NULL) == NULL) {
+                    /*
+                     * If there is no message, register the connection, if it hasn't
+                     * already been registered. Then block and wait for a message to
+                     * appear in the pool.
+                     */
                     /* Wait for a message to arrive in the pool. */
                     wma_setBlockedCBSHandle(handle, WMA_CBS_READ_SIGNAL);
-#else
-#ifdef JSR_120_ENABLE_JUMPDRIVER
-        CVMD_gcSafeExec(_ee, {
-                    if (jumpEventWait((JUMPEvent)handle) == 0) {
-                        pCbsData = jsr120_cbs_pool_peek_next_msg((jchar)msgID);
-                    }
-        }); 
-#endif
-#endif
                 }
-#if (ENABLE_CDC != 1)
-            } else {
-
-                /* Re-entry */
-                pCbsData = jsr120_cbs_pool_peek_next_msg((jchar)msgID);
-            }
+#else
+                CVMD_gcSafeExec(_ee, {
+                    jsr120_wait_for_signal(handle, WMA_CBS_READ_SIGNAL);
+                }); 
 #endif
+            }
+
             /*
              * If a message is waiting, go through the steps of fetching the message
              * and processing its contents.
@@ -420,9 +397,6 @@ KNIDECL(com_sun_midp_io_j2me_cbs_Protocol_receive0) {
  */
 KNIEXPORT KNI_RETURNTYPE_INT
 KNIDECL(com_sun_midp_io_j2me_cbs_Protocol_waitUntilMessageAvailable0) {
-#if (ENABLE_CDC != 1)
-    MidpReentryData *info = (MidpReentryData*)SNI_GetReentryData(NULL);
-#endif
 
     int msgID;
     int handle;
@@ -461,29 +435,21 @@ KNIDECL(com_sun_midp_io_j2me_cbs_Protocol_waitUntilMessageAvailable0) {
                  messageLength = pCbsData->msgLen;
             } else {
 
-#if (ENABLE_CDC != 1)
-                if (!info) {
+#if ENABLE_REENTRY
+                if (SNI_GetReentryData(NULL) == NULL) {
                      /* Block and wait for a message. */
                      wma_setBlockedCBSHandle(handle, WMA_CBS_READ_SIGNAL);
-#else
-#ifdef JSR_120_ENABLE_JUMPDRIVER
-        CVMD_gcSafeExec(_ee, {
-                    if (jumpEventWait((JUMPEvent)handle) != 0) {
-                        messageLength = -1;
-                    } else {
-                        pCbsData = jsr120_cbs_pool_peek_next_msg1(msgID, 1);
-                        if (pCbsData != NULL) {
-                            messageLength = pCbsData->msgLen;
-                        }
-                    }
-        }); 
-#endif
-#endif
-
-#if (ENABLE_CDC != 1)
                 } else {
                      /* May have been awakened due to interrupt. */
                      messageLength = -1;
+                }
+#else
+                CVMD_gcSafeExec(_ee, {
+                    jsr120_wait_for_signal(handle, WMA_CBS_READ_SIGNAL);
+                }); 
+                pCbsData = jsr120_cbs_pool_peek_next_msg1(msgID, 1);
+                if (pCbsData != NULL) {
+                    messageLength = pCbsData->msgLen;
                 }
 #endif
             }
@@ -494,34 +460,6 @@ KNIDECL(com_sun_midp_io_j2me_cbs_Protocol_waitUntilMessageAvailable0) {
 
     KNI_ReturnInt(messageLength);
 }
-
-#if (ENABLE_CDC != 1)
-/**
- * Marks an open connection as being blocked on a CBS operation. The
- * blocked status of the connection is stored in the current Java
- * thread.
- *
- * @param msgID The ID to be matched in addition to the event type.
- * @param eventType The type of event to trigger an unblock.
- */
-static void
-wma_setBlockedCBSHandle(int msgID, int eventType) {
-    /* Pick up the event data record. */
-    MidpReentryData* eventInfo = (MidpReentryData*)SNI_GetReentryData(NULL);
-    if (eventInfo == NULL) {
-        eventInfo = (MidpReentryData*)SNI_AllocateReentryData(
-                                          sizeof(MidpReentryData));
-    }
-
-    /* Populate the event information fields with the latest event data. */
-    eventInfo->waitingFor = eventType;
-    eventInfo->descriptor = msgID;
-    eventInfo->status = 0;
-
-    /* No data available. Try again, later. */
-    SNI_BlockThread();
-}
-#endif
 
 /**
  * Native finalization of the Java object
