@@ -7750,6 +7750,10 @@ CVMjvmtiGetInterface(JavaVM *vm, void **penv)
      */
     CVMglobals.jvmti.statics.context = context;
 
+    /* Set the pointer to the JVMTI interpreter loop */
+    CVMglobals.CVMgcUnsafeExecuteJavaMethodProcPtr =
+	&CVMgcUnsafeExecuteJavaMethodJVMTI;
+
     /* Return the jvmtiEnv * ptr: */
     *penv = (void *)&context->jvmtiExternal;
 

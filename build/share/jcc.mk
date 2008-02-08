@@ -132,7 +132,15 @@ CVM_JCC_OPTIONS += \
 		  $(CVM_PROFILE_JCC_OPTIONS) \
 	          $(CVM_GENERATE_OFFSETS)
 
-ifeq ($(CVM_NO_LOSSY_OPCODES), true)
+ifeq ($(CVM_JVMTI_ROM), true)
+	override CVM_LOSSLESS_OPCODES = true
+endif
+
+ifeq ($(CVM_JVMPI_TRACE_INSTRUCTION), true)
+	override CVM_LOSSLESS_OPCODES = true
+endif
+
+ifeq ($(CVM_LOSSLESS_OPCODES), true)
 CVM_JCC_OPTIONS += -qlossless
 endif
 
