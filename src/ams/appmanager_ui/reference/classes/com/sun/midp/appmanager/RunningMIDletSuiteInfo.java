@@ -104,6 +104,7 @@ public class RunningMIDletSuiteInfo extends MIDletSuiteInfo {
               info.enabled);
 
         storageId = info.storageId;
+        folderId = info.folderId;
         numberOfMidlets = info.numberOfMidlets;
         trusted = info.trusted;
         preinstalled = info.preinstalled;

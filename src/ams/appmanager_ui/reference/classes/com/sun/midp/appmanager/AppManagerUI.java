@@ -332,9 +332,6 @@ class AppManagerUI extends Form
     /** List of available folders */
     private FolderList folderList;
 
-    /** List of available folders */
-    private FolderList itemFolderList;
-
     /** currently selected folder' id */
     private int currentFolderId;
 
@@ -369,13 +366,6 @@ class AppManagerUI extends Form
         folderList.setSelectCommand(selectFolderCmd);
         folderList.setCommandListener(this);
         foldersOn = folderList.hasItems();
-        /* IMPL_NOTE: optimization possible: use onre Folder List for ams and
-         * for items.
-         */
-        itemFolderList = new FolderList();
-        itemFolderList.addCommand(selectItemFolderCmd);
-        itemFolderList.setSelectCommand(selectItemFolderCmd);
-        itemFolderList.setCommandListener(this);
 
         mciVector = new Vector();
 
@@ -476,7 +466,6 @@ class AppManagerUI extends Form
     private void setFolder(int fid) {
         currentFolderId = fid;
         deleteAll();
-
         for (int i = 0; i < mciVector.size(); i++) {
             MidletCustomItem mci = (MidletCustomItem)mciVector.elementAt(i);
             if (currentFolderId == mci.msi.folderId) {
@@ -532,7 +521,6 @@ class AppManagerUI extends Form
      * @param s the Displayable the command was on.
      */
     public void commandAction(Command c, Displayable s) {
-
         if (c == exitCmd) {
             if ((s == this) || s == folderList) {
                 manager.shutDown();
@@ -592,7 +580,7 @@ class AppManagerUI extends Form
             }
         } else if (c == selectItemFolderCmd) {
             if (foldersOn && (null != mciToChangeFolder)) {
-                Folder f = itemFolderList.getSelectedFolder();
+                Folder f = folderList.getSelectedFolder();
                 int folderId = f.getId();
 
                 if (mciToChangeFolder.msi.folderId != folderId) {
@@ -615,6 +603,11 @@ class AppManagerUI extends Form
             display.setCurrent(this);
         } else if (c == backCmd) {
             if ((display.getCurrent() == this) && foldersOn) {
+                folderList.removeCommand(selectItemFolderCmd);
+                folderList.addCommand(exitCmd);
+                folderList.addCommand(selectFolderCmd);
+                folderList.setSelectCommand(selectFolderCmd);
+                folderList.setSelectedFolder(currentFolderId);
                 display.setCurrent(folderList);
                 return;
             }
@@ -720,11 +713,15 @@ class AppManagerUI extends Form
             manager.exitMidlet(msi);
             display.setCurrent(this);
         } else if (c == changeFolderCmd) {
-            mciToChangeFolder = (MidletCustomItem)item;
             if (foldersOn) {
-                display.setCurrent(itemFolderList);
+                folderList.removeCommand(exitCmd);
+                folderList.removeCommand(selectFolderCmd);
+                folderList.addCommand(selectItemFolderCmd);
+                folderList.setSelectCommand(selectItemFolderCmd);
+                mciToChangeFolder = (MidletCustomItem)item;
+                folderList.setSelectedFolder(currentFolderId);
+                display.setCurrent(folderList);
             }
-
         }
     }
 
@@ -1148,19 +1145,18 @@ class AppManagerUI extends Form
             }
         }
 
+        ci.setItemCommandListener(this);
+        ci.setOwner(this);
+
         mciVector.addElement(ci);
 
         if (foldersOn) {
             /* check if suiteInfo corresponds to current folder */
             if (currentFolderId == suiteInfo.folderId) {
-                ci.setItemCommandListener(this);
                 append(ci);
-                ci.setOwner(this);
             }
         }  else {
-            ci.setItemCommandListener(this);
             append(ci);
-            ci.setOwner(this);
         }
     }
 

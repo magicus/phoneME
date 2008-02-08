@@ -92,4 +92,21 @@ public class FolderList extends javax.microedition.lcdui.List {
         return null;
     }
 
+    /**
+     * Select item that correcponds to passed folder id
+     * @param folderId
+     */
+    public synchronized void setSelectedFolder(int folderId) {
+        folders = FolderManager.getFolders();
+        if (folders != null) {
+            for (int i = 0;  i < folders.size(); i++) {
+                Folder f = (Folder)folders.elementAt(i);
+                if (f.getId() == folderId) {
+                    this.setSelectedIndex(i, true);
+                    break;
+                }
+            }
+        }
+    }
+
 }
