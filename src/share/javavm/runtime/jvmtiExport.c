@@ -214,7 +214,7 @@ CVMjvmtiClassObject2ClassBlock(CVMExecEnv *ee, CVMObject *obj)
     (CVMjvmtiEnvEventEnabled(ee, eventType))
 
 #define MUST_NOTIFY_THREAD(ee, eventType)				\
-    (MUST_NOTIFY(ee, eventType) && CVMjvmtiThreadEventEnabled(ee, eventType))
+    (CVMjvmtiThreadEventEnabled(ee, eventType))
 
 /* forward defs */
 #ifdef JDK12
@@ -1164,6 +1164,7 @@ reportFrameEvent(CVMExecEnv* ee, jint kind, CVMFrame *targetFrame,
 	{
 	    /* NOTE: need to pass return value */
 	    jvmtiEventMethodExit callback;
+            CVMtraceJVMTI(("JVMTI: Post MethodExit: ee 0x%x\n", (int)ee));
 	    callback = context->eventCallbacks.MethodExit;
 	    if (callback != NULL) {
 		(*callback)(&context->jvmtiExternal, env,
@@ -1191,8 +1192,8 @@ CVMjvmtiPostFramePopEvent(CVMExecEnv* ee, CVMBool isRef,
 	return;
     }
 
-    if (!MUST_NOTIFY(ee, JVMTI_EVENT_FRAME_POP) &&
-	!MUST_NOTIFY(ee, JVMTI_EVENT_METHOD_EXIT)) {
+    if (!MUST_NOTIFY_THREAD(ee, JVMTI_EVENT_FRAME_POP) &&
+	!MUST_NOTIFY_THREAD(ee, JVMTI_EVENT_METHOD_EXIT)) {
 	return;
     }
 
