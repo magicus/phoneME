@@ -32,6 +32,7 @@ package com.sun.ukit.jaxp;
 
 /* package */ abstract class Attrs implements org.xml.sax.Attributes
 {
+	private static final String CDATA = "CDATA";
 	/**
 	 * Attributes string array. Each individual attribute is represented by 
 	 * several strings.
@@ -74,7 +75,10 @@ package com.sun.ukit.jaxp;
 		mItems[ mCount * attrStringsNum + qnameOff ] = qname;
 		mItems[ mCount * attrStringsNum + valueOff ] = value;
 		
-		mItems[ mCount * attrStringsNum + typeOff ] = "";
+		// set CDATA as a default type (will be rewritten later if known)
+		// (3.3.3) All attributes for which no declaration has been read SHOULD be 
+		// treated by a non-validating processor as if declared CDATA.
+		mItems[ mCount * attrStringsNum + typeOff ] = CDATA;
 		return mCount++;
 	}
 
@@ -86,7 +90,7 @@ package com.sun.ukit.jaxp;
 			Parser.DEBUG_OUT.println( "Attrs.setType( '" + mItems[ idx * attrStringsNum + qnameOff ] + "', '" + type + "' )" );
 		}
 		mItems[ idx * attrStringsNum + typeOff ] = type;
-		if( !(type.charAt(0) == 'C' && "CDATA".equals(type)) ){
+		if( !(type.charAt(0) == 'C' && CDATA.equals(type)) ){
 			// add non-CDATA conversion (3.3.3)
 			String value = getValue(idx);
 			StringBuffer b = new StringBuffer( value.length() );
@@ -131,7 +135,8 @@ package com.sun.ukit.jaxp;
 	}
 
 	final protected String get(int index, int stringOff) {
-		return (index >= 0 && index < mCount)? mItems[index * attrStringsNum + stringOff]: null;
+		return (index >= 0 && index < mCount)? 
+					mItems[index * attrStringsNum + stringOff] : null;
 	}
 
 	/**
@@ -213,7 +218,7 @@ package com.sun.ukit.jaxp;
 	 */
 	public String getType(String uri, String localName)
 	{
-		return get( getIndex(uri, localName), typeOff);
+		return get( getIndex(uri, localName), typeOff );
 	}
 
 	/**
@@ -229,7 +234,7 @@ package com.sun.ukit.jaxp;
 	 */
 	public String getType(String qName)
 	{
-		return get( getIndex(qName), typeOff);
+		return get( getIndex(qName), typeOff );
 	}
 
 	/**
@@ -304,11 +309,6 @@ package com.sun.ukit.jaxp;
 		mCount--;
 		for( idx *= attrStringsNum; idx < mCount * attrStringsNum; idx++)
 			mItems[ idx ] = mItems[ idx + attrStringsNum ]; 
-	}
-	
-	protected void checkIdx( int idx ) {
-		if( idx < 0 || idx >= mCount )
-			throw new ArrayIndexOutOfBoundsException();
 	}
 	
 	//-----------------------------------------------------
@@ -389,13 +389,11 @@ package com.sun.ukit.jaxp;
 		}
 		
 		public String getURI(int index) {
-			checkIdx(index);
-			return "";
+			return ( index < 0 || index >= mCount )? null : "";
 		}
 
 		public String getLocalName(int index) {
-			checkIdx(index);
-			return "";
+			return ( index < 0 || index >= mCount )? null : "";
 		}
 	}
 }

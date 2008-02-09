@@ -1447,12 +1447,10 @@ public final class Parser extends SAXParser implements Locator
 		wsskip();
 		DTD.ExternalID externalID = new DTD.ExternalID(); 
 		pubsys('N', externalID);
-		if( dtd.notations == null )
-			dtd.notations = new Hashtable();
 		if( dtd.notations.containsKey(name) )
 			panic(FAULT); // http://www.w3.org/TR/REC-xml/#UniqueNotationName
 		dtd.notations.put(name, externalID);
-		mHand.notationDecl(name, tempExternalID.pubidLiteral, tempExternalID.systemLiteral);
+		mHand.notationDecl(name, externalID.pubidLiteral, externalID.systemLiteral);
 	}
 
 	/**
@@ -1485,12 +1483,6 @@ public final class Parser extends SAXParser implements Locator
 		Element element = elementStack.top(); 
 		// Read attributes till the end of the element tag
 		parseAttributes();
-		if( mIsNSAware ){
-			// resolve element namespace
-			String errMsg = element.resolveNamespace( namespaceStack );
-			if( errMsg != null )
-				panic(errMsg);
-		}
 		// process attributes: set attributes types, normalize attributes values
 		// (http://www.w3.org/TR/REC-xml-names/#ns-using) 
 		// Note that DTD-based validation is not namespace-aware in the following sense: 
@@ -1504,6 +1496,12 @@ public final class Parser extends SAXParser implements Locator
 		if( l != null ){
 			setAttrTypes( l );
 			addDefaultAttributes( l );
+		}
+		if( mIsNSAware ){
+			// resolve element namespace
+			String errMsg = element.resolveNamespace( namespaceStack );
+			if( errMsg != null )
+				panic(errMsg);
 		}
 		if( mIsNSAware ){
 			Hashtable ll = dtd.findAttList(element.namespace.URI, 
@@ -1523,14 +1521,8 @@ public final class Parser extends SAXParser implements Locator
 			}
 		}
 		
-		// set type "CDATA" for all attributes without type
-		// (3.3.3) All attributes for which no declaration has been read SHOULD be 
-		// treated by a non-validating processor as if declared CDATA.
-		for( int idx = attributes.getLength(); idx-- > 0; ){
-			if( attributes.getType(idx) == null )
-				attributes.setType( idx, "CDATA" );
-		}
-
+		// all attributes without type already have "CDATA" type
+		
 		// check attributes duplication
 		if( attributes.hasDuplications() )
 			panic(FAULT);
