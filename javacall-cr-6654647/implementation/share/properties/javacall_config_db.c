@@ -27,6 +27,8 @@
 #include <string.h>
 #include <stdlib.h>
 
+
+#include "javautil_printf.h"
 #include "javacall_defs.h"
 #include "javacall_memory.h"
 #include "javacall_logging.h"
@@ -34,6 +36,7 @@
 
 #include "javacall_db.h"
 #include "javautil_string.h"
+#include "javautil_sprintf.h"
 #include "javacall_config_db.h"
 
 /* Maximal expected line length from properties file */
@@ -100,7 +103,7 @@ static void configdb_add_entry(
 
 /* Make a key as section:keyword */
     if (key != NULL) {
-        sprintf(longkey, "%s:%s", sec, key);
+        javautil_sprintf(longkey, "%s:%s", sec, key);
     } else {
         strcpy(longkey, sec);
     }
@@ -181,52 +184,6 @@ char* javacall_configdb_get_section_name(javacall_handle config_handle, int n) {
 
 /**
  * Dump the content of the parameter database to an open file pointer
- * The output format is pairs of [Key]=[Value]
- *
- * @param config_handle    database object created by calling javacall_configdb_load
- * @param unicodeFileName  output file name
- * @param fileNameLen      file name length
- */
-void javacall_configdb_dump(javacall_handle config_handle,
-                            javacall_utf16* unicodeFileName,
-                            int fileNameLen) {
-
-    int     i;
-    string_db *d = (string_db *)config_handle;
-    javacall_handle file_handle;
-    char            l[MAX_STR_LENGTH];
-    javacall_result res;
-
-    if (d == NULL || unicodeFileName == NULL || fileNameLen <= 0) {
-        return;
-    }
-
-    res = javacall_file_open(unicodeFileName,
-                             fileNameLen,
-                             JAVACALL_FILE_O_RDWR | JAVACALL_FILE_O_CREAT,
-                             &file_handle);
-    if (res != JAVACALL_OK) {
-        javacall_print("javacall_configdb_dump(): ERROR - Can't open the dump file!\n");
-        return;
-    }
-
-    for (i = 0; i < d->size; i++) {
-        if (d->key[i] == NULL) {
-            continue;
-        }
-
-        if (d->val[i] != NULL) {
-            sprintf(l, "[%s]=[%s]\n", d->key[i], d->val[i]);
-        } else {
-            sprintf(l, "[%s]=UNDEF\n", d->key[i]);
-        }
-        javacall_file_write(file_handle, (unsigned char*)l, strlen(l));
-    }
-    javacall_file_close(file_handle);
-}
-
-/**
- * Dump the content of the parameter database to an open file pointer
  * The output format is as a standard INI file
  * 
  * @param config_handle    database object created by calling javacall_configdb_load
@@ -269,9 +226,9 @@ void javacall_configdb_dump_ini(javacall_handle config_handle,
             }
 
             if (d->val[i] != NULL) {
-                sprintf(l, "[%s]=[%s]\n", d->key[i], d->val[i]);
+                javautil_sprintf(l, "[%s]=[%s]\n", d->key[i], d->val[i]);
             } else {
-                sprintf(l, "[%s]=UNDEF\n", d->key[i]);
+                javautil_sprintf(l, "[%s]=UNDEF\n", d->key[i]);
             }
 
             javacall_file_write(file_handle, (unsigned char*)l, strlen(l));
@@ -282,15 +239,15 @@ void javacall_configdb_dump_ini(javacall_handle config_handle,
     for (i = 0; i < nsec; i++) {
         secname = javacall_configdb_get_section_name(d, i) ;
         seclen  = (int)strlen(secname);
-        sprintf(l, "\n[%s]\n", secname);
+        javautil_sprintf(l, "\n[%s]\n", secname);
         javacall_file_write(file_handle, (unsigned char*)l, strlen(l));
-        sprintf(keym, "%s:", secname);
+        javautil_sprintf(keym, "%s:", secname);
         for (j = 0; j < d->size; j++) {
             if (d->key[j] == NULL) {
                 continue;
             }
             if (!strncmp(d->key[j], keym, seclen+1)) {
-                sprintf(l,
+                javautil_sprintf(l,
                         "%-30s = %s\n",
                         d->key[j]+seclen+1,
                         d->val[j] ? d->val[j] : "");
@@ -298,7 +255,7 @@ void javacall_configdb_dump_ini(javacall_handle config_handle,
             }
         }
     }
-    sprintf(l, "\n");
+    javautil_sprintf(l, "\n");
     javacall_file_write(file_handle, (unsigned char*)l, strlen(l));
 
     javacall_file_close(file_handle);
@@ -394,6 +351,11 @@ void javacall_configdb_unset(javacall_handle config_handle, char* key) {
 #ifndef USE_PROPERTIES_FROM_FS
 #include "javacall_static_properties.h"
 
+/**
+ * Load static configuration properties
+ *
+ * @return handle to database with the properties
+ */
 javacall_handle configdb_load_no_fs () {
     string_db* db;
     int i, j;
@@ -501,9 +463,40 @@ static javacall_result remove_escape_characters(char* str){
     return JAVACALL_OK;
 }
 
+/**
+ * Attempt to parse a line as a section name
+ *
+ * @param line line to be parsed
+ * @param sec buffer to store the section name
+ * @return JAVACALL_OK if the line is in section name format
+ *         JAVACALL_FAIL otherwise
+ */
+javacall_bool read_section_name(char *line, char *sec){
+    if (*line != '[') {
+        return JAVACALL_FAIL;
+    }
+    line++;    /* skip the '[' char */
+    while (*line != '\0' && *line != ']') {
+        *sec = *line;
+        line++;
+        sec++;
+    }
+    if (*line == ']') {
+        *sec = '\0';
+        return JAVACALL_OK;
+    }
+    return JAVACALL_FAIL;
+}
 
+/**
+ * Load properties from file stored on the file system
+ *
+ * @param unicodeFileName file name
+ * @param fileNameLen length of the file name
+ * @return handle to the properties storage
+ */
 javacall_handle configdb_load_from_fs(javacall_utf16* unicodeFileName, int fileNameLen) {
-    string_db*   d ;
+    string_db*   d;
     char    line[MAX_LINE_LENGTH+1];
     char    sec[MAX_STR_LENGTH+1];
     char    key[MAX_STR_LENGTH+1];
@@ -541,9 +534,8 @@ javacall_handle configdb_load_from_fs(javacall_utf16* unicodeFileName, int fileN
             continue; /* Comment lines */
         }
         else {
-            if (sscanf(where, "[%[^]]", sec) == 1) {
+            if (JAVACALL_OK == read_section_name(where, sec) == 1) {
                 /* Valid section name */
-                strcpy(sec, sec);
                 configdb_add_entry(d, sec, NULL, NULL);
             }
             else if (JAVACALL_OK == parse_line(where, key, val, sep)) {
