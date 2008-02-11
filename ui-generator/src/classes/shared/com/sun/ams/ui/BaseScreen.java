@@ -49,12 +49,18 @@ public class BaseScreen implements StringIds {
         while(0 <= token) {
             returnString.append(format.substring(startIndex, token));
 
-            // Get char after '%'. That char is within the ['0','9'] range.
-            // Convert it into args array index.
-            int argIdx = (format.charAt(token + 1) - '0');
+            // Get char after '%'. That char is within the ['0','9'] range,
+            // or it is escaped '%'.
+            int chr = format.charAt(token + 1);
+            if('%' != chr) {
+                // Convert chr into args array index.
+                int argIdx = chr - '0';
 
-            // Do the substitution.
-            returnString.append(args[argIdx]);
+                // Do the substitution.
+                returnString.append(args[argIdx]);
+            } else {
+                returnString.append('%');
+            }
 
             // Find the next '%'.
             startIndex = token + 2;
@@ -75,7 +81,8 @@ public class BaseScreen implements StringIds {
 
     private static void
     test(String format, String expected) {
-        String res = BaseScreen.printfImpl(format, new Object[] { "One", "Two" });
+        String res =
+            BaseScreen.printfImpl(format, new Object[] { "One", "Two" });
         if(!expected.equals(res)) {
             throw new RuntimeException();
         }
@@ -93,5 +100,9 @@ public class BaseScreen implements StringIds {
         test("%1Hello%0", "TwoHelloOne");
         test("%1%0", "TwoOne");
         test("%1\n%0\n", "Two\nOne\n");
+        test("%1%%\n%0\n", "Two%\nOne\n");
+        test("%%%%", "%%");
+        test("%%", "%");
+        test("%%%1", "%Two");
     }
 }

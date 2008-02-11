@@ -23,7 +23,7 @@ Clara, CA 95054 or visit www.sun.com if you need additional
 information or have any questions.
 -->
 
-<xsl:stylesheet version="2.0" 
+<xsl:stylesheet version="2.0"
     xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
     xmlns:fn="http://www.w3.org/2005/xpath-functions">
 
@@ -62,7 +62,7 @@ information or have any questions.
         </xsl:choose>
     </xsl:template>
 
-    
+
     <xsl:template name="uniq">
         <xsl:param name="str"/>
         <xsl:variable name="res">
@@ -74,7 +74,7 @@ information or have any questions.
         </xsl:variable>
         <xsl:value-of select="fn:replace($res,'&#10; ','&#10;')"/>
     </xsl:template>
-    
+
 
     <xsl:template name="expand">
         <xsl:param name="str"/>
@@ -86,7 +86,7 @@ information or have any questions.
             <xsl:call-template name="replace">
                 <xsl:with-param name="str" select="translate($str, '%', '&#333;')"/>
                 <xsl:with-param name="from" select="'&#333;&#333;'"/>
-                <xsl:with-param name="to" select="'%'"/>
+                <xsl:with-param name="to" select="'%%'"/>
             </xsl:call-template>
             <xsl:text>"</xsl:text>
         </xsl:param>
