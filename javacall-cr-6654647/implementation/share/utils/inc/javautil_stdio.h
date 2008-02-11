@@ -27,10 +27,11 @@
 #define _JAVAUTIL_STDIO_H_
 
 /**
- * javautil_sprintf - Format a string and place it in a buffer
- * @buf: The buffer to place the result into
- * @fmt: The format string to use
- * @...: Arguments for the format string
+ * Formats a string and places it in a buffer
+ *
+ * @param buf buffer to place the result into
+ * @param fmt format string to use
+ * @param ... arguments for the format string
  */
 int javautil_sprintf(char *buf, const char *fmt, ...);
 
