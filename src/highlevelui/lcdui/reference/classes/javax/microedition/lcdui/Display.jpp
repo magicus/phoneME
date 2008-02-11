@@ -1383,8 +1383,8 @@ public class Display {
         if (!hasForeground) {
             return false;
         }
-
-        return vibrate0(displayId, duration);
+        
+        return deviceAccess.vibrate(displayId, duration);
     }
 
     /**
@@ -2405,19 +2405,6 @@ public class Display {
     private native boolean playAlertSound0(int displayId, int alertType);
 // #endif ENABLE_CDC
 
-    /**
-     * Plays the vibration if this Display is current and in foreground
-     * and device has vibration capability.
-     *
-     * @param displayId The display ID of this Display
-     * @param dur the duration in milli seconds
-     *
-     * @return if it's successful, return <code>true</code>,
-     *         othewise return <code>false</code>
-     *
-     */
-    private native boolean vibrate0(int displayId, int dur);
-
 
     /**
      * Sets full screen on the device.
@@ -3339,7 +3326,7 @@ public class Display {
                 updateCommandSet();
 
                 // reset the vibrator and blacklight
-                vibrate0(displayId, 0);
+                deviceAccess.vibrate(displayId, 0);
                 deviceAccess.flashBacklight(displayId, 0);
 
                 // draw correct trusted icon

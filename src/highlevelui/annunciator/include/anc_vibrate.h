@@ -57,12 +57,11 @@ extern jboolean anc_stop_vibrate(void);
  * Platform should start the vibration at once when 
  * this function is called.
  *
- * @param duration duration of the vibrate period.
  * @return KNI_TRUE when the system supports 
  * vibrate control via this function, 
  * KNI_FALSE otherwise
  */
-extern jboolean anc_start_vibrate(int duration);
+extern jboolean anc_start_vibrate();
 
 #ifdef __cplusplus
 }
