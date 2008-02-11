@@ -445,8 +445,7 @@ public final class Parser extends SAXParser implements Locator
 	 * SAXException while parsing.
 	 * @see org.xml.sax.helpers.DefaultHandler
 	 */
-	private void parse() throws SAXException, IOException
-	{
+	private void parse() throws SAXException, IOException {
 		try {
 			//		Initialize the parser
 			mDoc = mInp;			// current input is document entity
@@ -455,7 +454,7 @@ public final class Parser extends SAXParser implements Locator
 			namespaceStack.clean();
 			//		Parse an xml document
 			char ch;
-			mHand.setDocumentLocator(this);
+			// mHand.setDocumentLocator(this);
 			mHand.startDocument();
 			mSt	= stateMiscBeforeDTD;
 			while ((ch = next()) != EOS) {
@@ -482,7 +481,7 @@ public final class Parser extends SAXParser implements Locator
 						//		Document's element.
 						back();
 						mSt	= stateDocument;		// document's element
-						elm();
+						parseDocumentElement();
 						mSt	= stateMiscAfterDocument;		// misc after document's element
 						break;
 					}
@@ -1452,6 +1451,167 @@ public final class Parser extends SAXParser implements Locator
 		dtd.notations.put(name, externalID);
 		mHand.notationDecl(name, externalID.pubidLiteral, externalID.systemLiteral);
 	}
+	
+	private void parseDocumentElement() throws SAXException, IOException {
+		processTag(); // read document element
+		short st = 0;
+		char ch;
+		while( elementStack.size() > 0 ) {
+			mBuffIdx = -1;
+			while( st >= 0 ) {
+				ch = (mChIdx < mChLen)? mChars[mChIdx++]: next();
+				switch (st) {
+				case 0:		// read the end of the element tag
+					switch (ch) {
+					case '>':
+						//		Report the element
+						reportStartElement();
+						st = 2;
+						break;
+					case '/':
+						st = 1;
+						break;
+					default:
+						panic(FAULT);
+					}
+					break;
+				case 1:		// read the end of the empty element
+					switch (ch) {
+					case '>':
+						//		Report the element
+						reportStartElement();
+						st = -1;
+						break;
+					default:
+						panic(FAULT);
+					}
+					break;
+
+				case 2:		// skip white space between tags
+					switch (ch) {
+					case ' ':
+					case '\t':
+					case '\n':
+						bappend(ch);
+						break;
+
+					case '\r':		// EOL processing [#2.11]
+						if (next() != '\n')
+							back();
+						bappend('\n');
+						break;
+
+					case '<':
+						// Need revisit: With additional info from DTD and xml:space attr [#2.10]
+						// the following call can be supported:
+						// mHand.ignorableWhitespace(mBuff, 0, (mBuffIdx + 1));
+						bflash();
+
+					default:
+						back();
+						st = 3;
+					}
+					break;
+
+				case 3:		// read the text content of the element
+					switch (ch) {
+					case '&':
+						ent('x');
+						break;
+
+					case '<':
+						bflash();
+						st = 2;
+						switch (next()) {
+						case '/':	// the end of the element content
+							//		Check element's open/close tags balance
+							mBuffIdx = -1;
+							bname(mIsNSAware);
+							char[] elementQName = elementStack.top().elementName;
+							if (elementQName.length != (mBuffIdx + 1))
+								panic(FAULT);
+							for (int i = 0; i < elementQName.length; i++) {
+								if (elementQName[i] != mBuff[i])
+									panic(FAULT);
+							}
+							//		Skip white spaces before '>'
+							if (wsskip() != '>')
+								panic(FAULT);
+							ch = next(); // consume '>'
+							st = -1;
+							break;
+
+						case '!':	// a comment or a CDATA
+							ch = next();
+							back();
+							switch (ch) {
+							case '-':	// must be a comment
+								comm();
+								break;
+
+							case '[':	// must be a CDATA section
+								cdat();
+								break;
+
+							default:
+								panic(FAULT);
+							}
+							break;
+
+						case '?':	// processing instruction
+							pi();
+							break;
+
+						default:	// must be the first char of an xml name 
+							back();
+							processTag();
+							st = 0;
+						}
+						mBuffIdx = -1;
+						break;
+
+					case '\r':		// EOL processing [#2.11]
+						if (next() != '\n')
+							back();
+						bappend('\n');
+						break;
+
+					case EOS:
+						panic(FAULT);
+
+					case ' ':		// characters not supported by bappend()
+					case '\"':
+					case '\'':
+					case '\n':
+					case '\t':
+					case '%':
+						bappend(ch);
+						break;
+
+					default:
+						bappend();
+					}
+					break;
+
+				default:
+					panic(FAULT);
+				}
+			}
+			processTagClosing();
+			st = 2;
+		}
+	}
+
+	private void reportStartElement() throws SAXException {
+		Element element = elementStack.top();
+		if (mIsNSAware) {
+			mHand.startElement( element.namespace.URI, QName.local(element.elementName),
+						"", attributes);
+		} else {
+			mHand.startElement( "", "",
+						QName.qname(element.elementName), attributes);
+		}
+	}
 
 	/**
 	 * Registers namespace with prefix. 
@@ -1465,19 +1625,7 @@ public final class Parser extends SAXParser implements Locator
 			element.registeredNamespacesNumber++;
 	}
 	
-	/**
-	 * Parses an element.
-	 *
-	 * This recursive method is responsible for prefix scope control 
-	 * (<code>mPref</code>). When the element is leaving the scope all 
-	 * prefixes defined within the element are removed from the prefix 
-	 * stack.
-	 *
-	 * @exception SAXException 
-	 * @exception IOException 
-	 */
-	private void elm() throws SAXException, IOException
-	{
+	private Element processTag() throws SAXException, IOException {
 		// Read an element name and put it on top of the element stack
 		elementStack.push( qname(mIsNSAware) );
 		Element element = elementStack.top(); 
@@ -1502,8 +1650,7 @@ public final class Parser extends SAXParser implements Locator
 			String errMsg = element.resolveNamespace( namespaceStack );
 			if( errMsg != null )
 				panic(errMsg);
-		}
-		if( mIsNSAware ){
+			
 			Hashtable ll = dtd.findAttList(element.namespace.URI, 
 										QName.local(element.elementName));
 			if( ll != null && ll != l ){
@@ -1527,7 +1674,7 @@ public final class Parser extends SAXParser implements Locator
 		if( attributes.hasDuplications() )
 			panic(FAULT);
 		
-		/* java6:///api/org/xml/sax/ContentHandler.html#startElement(java.lang.String,%20java.lang.String,%20java.lang.String,%20org.xml.sax.Attributes)
+		/* org/xml/sax/ContentHandler.html#startElement(java.lang.String,%20java.lang.String,%20java.lang.String,%20org.xml.sax.Attributes)
 		 * 
 		 * The attribute list will contain attributes used for Namespace declarations 
 		 * (xmlns* attributes) only if the http://xml.org/sax/features/namespace-prefixes  
@@ -1553,164 +1700,23 @@ public final class Parser extends SAXParser implements Locator
 				}
 			}
 		}
-			
-		//		Read the element and it's content
-		
-		mBuffIdx = -1;
-		char ch;
-		for (short st = 0; st >= 0;) {
-			ch = (mChIdx < mChLen)? mChars[mChIdx++]: next();
-			switch (st) {
-			case 0:		// read the end of the element tag
-			case 1:		// read the end of the empty element
-				switch (ch) {
-				case '>':
-					//		Report the element
-					if (mIsNSAware) {
-						mHand.startElement( element.namespace.URI, QName.local(element.elementName),
-									"", attributes);
-					} else {
-						mHand.startElement( "", "",
-									QName.qname(element.elementName), attributes);
-					}
-					
-					st	= (st == 0)? (short)2: (short)-1;
-					break;
+		return element;
+	}
 
-				case '/':
-					if (st != 0)
-						panic(FAULT);
-					st	= 1;
-					break;
-
-				default:
-					panic(FAULT);
-				}
-				break;
-
-			case 2:		// skip white space between tags
-				switch (ch) {
-				case ' ':
-				case '\t':
-				case '\n':
-					bappend(ch);
-					break;
-
-				case '\r':		// EOL processing [#2.11]
-					if (next() != '\n')
-						back();
-					bappend('\n');
-					break;
-
-				case '<':
-					// Need revisit: With additional info from DTD and xml:space attr [#2.10]
-					// the following call can be supported:
-					// mHand.ignorableWhitespace(mBuff, 0, (mBuffIdx + 1));
-					bflash();
-
-				default:
-					back();
-					st = 3;
-				}
-				break;
-
-			case 3:		// read the text content of the element
-				switch (ch) {
-				case '&':
-					ent('x');
-					break;
-
-				case '<':
-					bflash();
-					switch (next()) {
-					case '/':	// the end of the element content
-						//		Check element's open/close tags balance
-						mBuffIdx = -1;
-						bname(mIsNSAware);
-						char[] elementQName = elementStack.top().elementName;
-						if (elementQName.length != (mBuffIdx + 1))
-							panic(FAULT);
-						for (int i = 0; i < elementQName.length; i++) {
-							if (elementQName[i] != mBuff[i])
-								panic(FAULT);
-						}
-						//		Skip white spaces before '>'
-						if (wsskip() != '>')
-							panic(FAULT);
-						ch = next();
-						st = -1;
-						break;
-
-					case '!':	// a comment or a CDATA
-						ch = next();
-						back();
-						switch (ch) {
-						case '-':	// must be a comment
-							comm();
-							break;
-
-						case '[':	// must be a CDATA section
-							cdat();
-							break;
-
-						default:
-							panic(FAULT);
-						}
-						break;
-
-					case '?':	// processing instruction
-						pi();
-						break;
-
-					default:	// must be the first char of an xml name 
-						back();
-						elm();	// recursive call
-					}
-					mBuffIdx = -1;
-					if (st != -1)
-						st	= 2;
-					break;
-
-				case '\r':		// EOL processing [#2.11]
-					if (next() != '\n')
-						back();
-					bappend('\n');
-					break;
-
-				case EOS:
-					panic(FAULT);
-
-				case ' ':		// characters not supported by bappend()
-				case '\"':
-				case '\'':
-				case '\n':
-				case '\t':
-				case '%':
-					bappend(ch);
-					break;
-
-				default:
-					bappend();
-				}
-				break;
-
-			default:
-				panic(FAULT);
-			}
-		}
-		
-		element = elementStack.pop(); 
-		//		Report the end of element
+	private void processTagClosing() throws SAXException {
+		Element element = elementStack.pop(); 
+		// Report the end of element
 		if (mIsNSAware)
-			mHand.endElement(element.namespace.URI, QName.local(element.elementName), "");
+			mHand.endElement(element.namespace.URI, 
+						QName.local(element.elementName), "");
 		else mHand.endElement("", "", QName.qname(element.elementName));
-		//		Restore the top of the prefix stack
+		// Restore the top of the prefix stack
 		while( element.registeredNamespacesNumber-- > 0 ) {
 			Namespace ns = namespaceStack.pop();
 			mHand.endPrefixMapping(ns.id);
 			ns.free();
 		}
-		//		Remove the top element tag
+		// Remove the top element tag
 		element.free();
 	}
 
@@ -2923,12 +2929,10 @@ public final class Parser extends SAXParser implements Locator
 	/**
 	 * Reports characters and empties the parser's buffer.
 	 */
-	private void bflash()
-		throws SAXException
-	{
+	private void bflash() throws SAXException {
 		if (mBuffIdx >= 0) {
 			//		Textual data has been read
-			mHand.characters(mBuff, 0, (mBuffIdx + 1));
+			mHand.characters(mBuff, 0, mBuffIdx + 1);
 			mBuffIdx = -1;
 		}
 	}
@@ -2937,9 +2941,7 @@ public final class Parser extends SAXParser implements Locator
 	 * Appends a characters to parser's buffer starting with the last 
 	 * read character and until one of special characters.
 	 */
-	private void bappend()
-		throws SAXException, IOException
-	{
+	private void bappend() throws SAXException, IOException {
 		char ch;
 
 		back();
@@ -3869,6 +3871,9 @@ class Element extends LinkedList {
 		
 		public void clean() {
 			while( stack.size() > 0 ) pop().free();
+		}
+		public int size() {
+			return stack.size();
 		}
 		public Element top(){
 			return (Element)stack.elementAt(stack.size() - 1);
