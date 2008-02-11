@@ -35,7 +35,7 @@
 /**
  * Reads number from input buffer, converts it to integer, forwards the buffer
  *
- * @param s the source buffer
+ * @param buf the source buffer
  * @return integer value of the read number
  */
 static int skip_atoi(const char **buf) {
@@ -52,6 +52,7 @@ static int skip_atoi(const char **buf) {
  *
  * @param buf buffer to place the result into
  * @param fmt format string to use
+ * @param size buffer size
  * @param args string arguments
  */
 static int javautil_vsnprintf(char *buf, size_t size, const char *fmt, va_list args) {
