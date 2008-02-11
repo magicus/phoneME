@@ -72,6 +72,8 @@ typedef enum {
     INPUT_MODE_KANA  = 64
 } wtk_input_mode_type;
 
+
+#define INFINITE_VIB 1000*1000*100 /*Large enough value*/
 /**
  * Turn device's Vibrate on/off
  *
@@ -81,10 +83,15 @@ typedef enum {
  *         <tt>JAVACALL_FAIL</tt> if device does not supports vibration
  *
  */
-javacall_result javacall_annunciator_vibrate(javacall_bool duration) {
+javacall_result javacall_annunciator_vibrate(javacall_bool onOff) {
     bool_t res;
+    int duration = 0;
 
     static LimeFunction *f = NULL;
+
+    if (onOff == JAVACALL_TRUE) {
+        duration = INFINITE_VIB;
+    }
 
     if (f==NULL)
     {
