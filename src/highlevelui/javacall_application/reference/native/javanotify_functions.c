@@ -72,10 +72,6 @@
 #include <javacall_odd.h>
 #endif /* ENABLE_ON_DEVICE_DEBUG */
 
-#ifdef ENABLE_JSR_211
-#include <javacall_chapi_invoke.h>
-#endif
-
 static char urlAddress[BINARY_BUFFER_MAX_LEN];
 
 #define MAX_PHONE_NUMBER_LENGTH 48
