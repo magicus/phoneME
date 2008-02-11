@@ -28,7 +28,7 @@
 # Basis profile sits on top of Foundationm so we need to include 
 # foundation rules.
 #
-include ../share/rules_foundation.mk
+include $(CDC_DIR)/build/share/rules_foundation.mk
 
 # print our configuration
 printconfig::
@@ -42,7 +42,7 @@ include $(AWT_IMPLEMENTATION_DIR)/build/share/rules_$(J2ME_CLASSLIB)_$(AWT_IMPLE
 
 # Include profile specific gunit rules, if it exists
 ifeq ($(CVM_GUNIT_TESTS), true)
--include ../share/rules_$(J2ME_CLASSLIB)_gunit.mk
+-include $(CDC_DIR)/build/share/rules_$(J2ME_CLASSLIB)_gunit.mk
 endif
 
 testclasses:: basis_test_copy_resources

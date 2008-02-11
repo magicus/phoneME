@@ -28,8 +28,8 @@
 # Include target awt implementation specific makefiles. This is where
 # AWT_PEERSET will be overriden if desired.
 #
--include ../$(TARGET_OS)/defs_personal_$(AWT_IMPLEMENTATION).mk
--include ../$(TARGET_OS)-$(TARGET_CPU_FAMILY)-$(TARGET_DEVICE)/defs_personal_$(AWT_IMPLEMENTATION).mk
+-include $(CDC_OS_COMPONENT_DIR)/build/$(TARGET_OS)/defs_personal_$(AWT_IMPLEMENTATION).mk
+-include $(CDC_DEVICE_COMPONENT_DIR)/build/$(TARGET_OS)-$(TARGET_CPU_FAMILY)-$(TARGET_DEVICE)/defs_personal_$(AWT_IMPLEMENTATION).mk
 
 #
 # Default peerset is qt
@@ -39,14 +39,14 @@ AWT_PEERSET ?= qt
 #
 # Include target awt peerset specific makefiles.
 #
--include ../$(TARGET_OS)/defs_personal_$(AWT_PEERSET).mk
--include ../$(TARGET_OS)-$(TARGET_CPU_FAMILY)/defs_personal_$(AWT_PEERSET).mk
--include ../$(TARGET_OS)-$(TARGET_CPU_FAMILY)-$(TARGET_DEVICE)/defs_personal_$(AWT_PEERSET).mk
+-include $(CDC_OS_COMPONENT_DIR)/build/$(TARGET_OS)/defs_personal_$(AWT_PEERSET).mk
+-include $(CDC_OSCPU_COMPONENT_DIR)/build/$(TARGET_OS)-$(TARGET_CPU_FAMILY)/defs_personal_$(AWT_PEERSET).mk
+-include $(CDC_DEVICE_COMPONENT_DIR)/build/$(TARGET_OS)-$(TARGET_CPU_FAMILY)-$(TARGET_DEVICE)/defs_personal_$(AWT_PEERSET).mk
 
 #
 # Include shared awt peerset specific makefile
 #
-include ../share/defs_personal_$(AWT_PEERSET).mk
+include $(CDC_DIR)/build/share/defs_personal_$(AWT_PEERSET).mk
 
 #
 # Contains the peerset and optionally the version. The peerset specific

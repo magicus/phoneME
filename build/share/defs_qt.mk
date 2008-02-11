@@ -36,8 +36,8 @@
 #                            3 is using qt3.3.1 (default for QTEMBEDDED=false)
 #
 
--include ../$(TARGET_OS)/defs_qt.mk
--include ../$(TARGET_OS)-$(TARGET_CPU_FAMILY)-$(TARGET_DEVICE)/defs_qt.mk
+-include $(CDC_OS_COMPONENT_DIR)/build/$(TARGET_OS)/defs_qt.mk
+-include $(CDC_DEVICE_COMPONENT_DIR)/build/$(TARGET_OS)-$(TARGET_CPU_FAMILY)-$(TARGET_DEVICE)/defs_qt.mk
 
 QTEMBEDDED	?= false
 QTOPIA		?= $(QTEMBEDDED)

@@ -131,10 +131,10 @@ BINARY_BUNDLE_PATTERNS += \
 #
 # Get any platform specific dependencies of any kind.
 #
--include ../$(TARGET_CPU_FAMILY)/defs_jump.mk
--include ../$(TARGET_OS)/defs_jump.mk
--include ../$(TARGET_OS)-$(TARGET_CPU_FAMILY)/defs_jump.mk
--include ../$(TARGET_OS)-$(TARGET_CPU_FAMILY)-$(TARGET_DEVICE)/defs_jump.mk
+-include $(CDC_CPU_COMPONENT_DIR)/build/$(TARGET_CPU_FAMILY)/defs_jump.mk
+-include $(CDC_OS_COMPONENT_DIR)/build/$(TARGET_OS)/defs_jump.mk
+-include $(CDC_OSCPU_COMPONENT_DIR)/build/$(TARGET_OS)-$(TARGET_CPU_FAMILY)/defs_jump.mk
+-include $(CDC_DEVICE_COMPONENT_DIR)/build/$(TARGET_OS)-$(TARGET_CPU_FAMILY)-$(TARGET_DEVICE)/defs_jump.mk
 
 #
 # Finally modify CVM variables w/ all the JUMP items
