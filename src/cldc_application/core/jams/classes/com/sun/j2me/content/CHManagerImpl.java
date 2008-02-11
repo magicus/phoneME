@@ -44,7 +44,10 @@ import com.sun.midp.main.MIDletProxy;
 import com.sun.midp.main.MIDletProxyList;
 import com.sun.midp.main.MIDletProxyListListener;
 import com.sun.midp.midlet.MIDletSuite;
-
+import com.sun.midp.events.EventListener;
+import com.sun.midp.events.EventQueue;
+import com.sun.midp.events.Event;
+import com.sun.midp.events.EventTypes;
 
 /**
  * Handle all of the details of installing ContentHandlers.
@@ -62,9 +65,9 @@ import com.sun.midp.midlet.MIDletSuite;
  * MIDP stack is BUILT with CHAPI.
  */
 public class CHManagerImpl extends com.sun.midp.content.CHManager
-    								implements MIDletProxyListListener {
-	
-	protected static final java.io.PrintStream DEBUG_OUT = null; //System.out;
+    implements MIDletProxyListListener, EventListener {
+
+    protected static final java.io.PrintStream DEBUG_OUT = null; //System.out;
 	
     /**
      * Inner class to request security token from SecurityInitializer.
@@ -96,6 +99,11 @@ public class CHManagerImpl extends com.sun.midp.content.CHManager
      */
     private CHManagerImpl() {
         super();
+        EventQueue.getEventQueue(
+            SecurityInitializer.requestToken(
+                new SecurityTrusted()
+                )
+            ).registerEventListener(EventTypes.CHAPI_EVENT, this);
         if( DEBUG_OUT != null ) DEBUG_OUT.println( "CHManagerImpl()" );
     }
 
@@ -295,5 +303,33 @@ public class CHManagerImpl extends com.sun.midp.content.CHManager
      */
     public void midletStartError(int externalAppId, int suiteId, String className,
                           int errorCode, String errorDetails) {
+    }
+
+    /**
+     * Preprocess an event that is being posted to the event queue.
+     * This method will get called in the thread that posted the event.
+     * 
+     * @param event event being posted
+     *
+     * @param waitingEvent previous event of this type waiting in the
+     *     queue to be processed
+     * 
+     * @return true to allow the post to continue, false to not post the
+     *     event to the queue
+     */
+    public boolean preprocess(Event event, Event waitingEvent)
+    {
+        return true;
+    }
+
+    /**
+     * Process an event.
+     * This method will get called in the event queue processing thread.
+     *
+     * @param event event to process
+     */
+    public void process(Event event)
+    {
+        InvocationStoreProxy.invokeNext();
     }
 }

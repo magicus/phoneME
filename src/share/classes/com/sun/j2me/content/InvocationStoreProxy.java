@@ -23,8 +23,8 @@ public final class InvocationStoreProxy {
 		if( DEBUG_OUT != null ) DEBUG_OUT.println( "handler: " + handler ); 
         	
         // check if it is native handler
-        if (handler != null && 
-        		(handler.registrationMethod & ContentHandlerImpl.REGISTERED_NATIVE_FLAG) != 0){
+        /* IMPL_NOTE: null suite ID is an indication of platform request */
+        if (invoc.suiteId == AppProxy.INVALID_STORAGE_ID){
         	// call native handler only for unprocessed invocations
         	// status is returned without launching of a handler
         	if( invoc.getStatus() == Invocation.WAITING ) {
@@ -36,7 +36,7 @@ public final class InvocationStoreProxy {
 	                // Ignore => invocation will be deleted
 	            }
         	}
-        } else if (invoc.suiteId != AppProxy.INVALID_STORAGE_ID && invoc.classname != null) {
+        } else if (invoc.classname != null) {
             try {
                 AppProxy appl = AppProxy.getCurrent().forApp(invoc.suiteId, invoc.classname);
             	// if MIDlet already started report STARTED
