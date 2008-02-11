@@ -110,9 +110,9 @@ public final class Parser extends SAXParser implements Locator
 	//   > 0x100 : unrecognized name
 	//   < 0x100 : replacement character
 
-	private DTD				dtd = new DTD();
-	private Namespace.Stack	namespaceStack = new Namespace.Stack();
-	private Element.Stack	elementStack = new Element.Stack();
+	final private DTD		dtd = new DTD();
+	final private Namespace.Stack	namespaceStack = new Namespace.Stack();
+	final private Element.Stack		elementStack = new Element.Stack();
 	final private Attrs		attributes;	// attributes of the current element
 
 	private Input			mInp;		// stack of entities
@@ -507,7 +507,7 @@ public final class Parser extends SAXParser implements Locator
 			if ((mDoc != null) && (mDoc.src != null)) {
 				try { mDoc.src.close(); } catch (IOException ioe) {}
 			}
-			dtd = null;
+			dtd.clean();
 			mDoc = null;
 			mHand = null;
 			mSt = stateStartOfTheDocument;
@@ -1639,7 +1639,7 @@ public final class Parser extends SAXParser implements Locator
 		// a document that uses namespaces against a DTD, the same prefixes must be used in 
 		// the DTD as in the instance. A DTD may however indirectly constrain the namespaces 
 		// used in a valid document by providing #FIXED values for attributes that declare
-		// namespaces.		
+		// namespaces.
 		Hashtable l = (Hashtable)dtd.attLists.get(QName.qname(element.elementName));
 		if( l != null ){
 			setAttrTypes( l );
@@ -1723,11 +1723,15 @@ public final class Parser extends SAXParser implements Locator
 	private void setAttrTypes(Hashtable attList) {
 		for( int idx = attributes.getLength(); idx-- > 0; ){
 			String qname = attributes.getQName(idx);
+			if( DEBUG_OUT != null )
+				DEBUG_OUT.print( "setAttType( '" + qname + "', " );
 			DTD.AttDef def = (DTD.AttDef)attList.get( qname );
 			if( def != null ){
 				// sets type and convert value if type is 'CDATA'
 				attributes.setType( idx, def.attType );
+				if( DEBUG_OUT != null ) DEBUG_OUT.print( def.attType );
 			}
+			if( DEBUG_OUT != null ) DEBUG_OUT.print( " )" );
 		}
 	}
 
