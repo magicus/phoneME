@@ -24,7 +24,7 @@
 # @(#)id_foundation.mk	1.4 06/10/10
 #
 
-include ../share/id_cdc.mk
+include $(CDC_DIR)/build/share/id_cdc.mk
 
 J2ME_PROFILE_NAME		= Foundation Profile
 J2ME_PROFILE_SPEC_VERSION	= 1.1

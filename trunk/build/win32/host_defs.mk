@@ -49,7 +49,7 @@ override GENERATEMAKEFILES = false
 TARGET_LD		= $(TARGET_LINK)
 TARGET_LINK		= LINK.EXE
 TARGET_AR		= $(TARGET_LINK) -lib /nologo
-TARGET_AR_CREATE	= $(TARGET_AR) /out:$(1)
+TARGET_AR_CREATE	= $(TARGET_AR) /out:$(call POSIX2HOST, $(1))
 TARGET_AR_UPDATE	= true $(TARGET_AR_CREATE)
 
 # Override the default TARGET_CC_VERSION, since it relies on the gcc
@@ -169,7 +169,8 @@ CC_CMD_FDLIB	= $(call compileCC,$(CFLAGS_FDLIB),$@,$<)
 LINK_MANIFEST = \
 	if [ -f $@.manifest ] ; then \
 	    echo "   Linking in manifest file $(notdir $@.manifest)"; \
-	    mt.exe -nologo -manifest $@.manifest "-outputresource:$@;\#2" ;\
+	    mt.exe -nologo -manifest $(call POSIX2HOST,$@).manifest \
+		"-outputresource:$(call POSIX2HOST,$@);\#2" ;\
 	fi;
 
 # LINK_CMD(extraLibs)

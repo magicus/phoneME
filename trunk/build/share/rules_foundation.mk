@@ -22,5 +22,5 @@
 # information or have any questions.
 #
 
-include ../share/rules_cdc.mk
--include ../share/rules_foundation-commercial.mk
+include $(CDC_DIR)/build/share/rules_cdc.mk
+-include $(CDC_DIR)/build/share/rules_foundation-commercial.mk

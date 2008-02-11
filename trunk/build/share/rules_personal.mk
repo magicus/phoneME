@@ -28,7 +28,7 @@
 # Personal profile sits on top of Basis so we need to include 
 # Basis rules.
 #
-include ../share/rules_basis.mk
+include $(CDC_DIR)/build/share/rules_basis.mk
 
 javadoc-personal:
 	@echo ""

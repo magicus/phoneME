@@ -23,7 +23,7 @@
 # information or have any questions. 
 
 # setup qt tools, includes, and libs
-include ../share/defs_qt.mk
+include $(CDC_DIR)/build/share/defs_qt.mk
 
 #
 # QtEmbedded support if needed

@@ -25,8 +25,8 @@
 #
 
 # Include target specific makefiles first
--include ../$(TARGET_OS)/defs_basis_$(AWT_IMPLEMENTATION).mk
--include ../$(TARGET_OS)-$(TARGET_CPU_FAMILY)-$(TARGET_DEVICE)/defs_basis_$(AWT_IMPLEMENTATION).mk
+-include $(CDC_OS_COMPONENT_DIR)/build/$(TARGET_OS)/defs_basis_$(AWT_IMPLEMENTATION).mk
+-include $(CDC_DEVICE_COMPONENT_DIR)/build/$(TARGET_OS)-$(TARGET_CPU_FAMILY)-$(TARGET_DEVICE)/defs_basis_$(AWT_IMPLEMENTATION).mk
 
 ifeq ($(CVM_USE_NATIVE_TOOLS), true)
 # checks /usr/local/microwin/src/engine directory first

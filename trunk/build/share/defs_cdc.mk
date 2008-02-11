@@ -561,6 +561,6 @@ JAVADOC_CDC_SRCPATH     = $(CVM_SHAREDCLASSES_SRCDIR):$(CVM_CLDCCLASSES_SRCDIR)
 
 CDC_REPORTS_DIR  =$(REPORTS_DIR)/cdc
 
-include ../share/defs_zoneinfo.mk
+include $(CDC_DIR)/build/share/defs_zoneinfo.mk
 
-include ../$(TARGET_OS)/defs_cdc.mk
+include $(CDC_OS_COMPONENT_DIR)/build/$(TARGET_OS)/defs_cdc.mk

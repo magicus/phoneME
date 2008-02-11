@@ -109,6 +109,6 @@ $(error cannot specify CVM_JIT_PATCHED_METHOD_INVOCATIONS=true with CVM_JIT_COPY
 endif
 endif
 
-include  ../portlibs/defs_jit_risc.mk
+include  $(CDC_DIR)/build/portlibs/defs_jit_risc.mk
 
 endif

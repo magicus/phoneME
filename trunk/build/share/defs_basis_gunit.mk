@@ -42,8 +42,8 @@ CVM_TEST_CLASSES  += \
 CVM_CDC_TESTS_TORUN = \
    tests.appcontext.FocusMgmtTest \
    tests.ixcpermission.IxcPermissionTest
-   
+
 # tests.volatileImage.ImageTest is interactive
 # tests.appcontext.FullScreenTest fails
 
-include ../share/defs_gunit.mk
+include $(CDC_DIR)/build/share/defs_gunit.mk

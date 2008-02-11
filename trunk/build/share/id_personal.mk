@@ -24,7 +24,7 @@
 # information or have any questions. 
 #
 
-include ../share/id_basis.mk
+include $(CDC_DIR)/build/share/id_basis.mk
 
 J2ME_PROFILE_NAME		= Personal Profile
 J2ME_PROFILE_SPEC_VERSION	= 1.1

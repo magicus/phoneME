@@ -26,7 +26,7 @@
 # GUnit Makefile
 #
 
-include ../share/rules_gunit.mk
+include $(CDC_DIR)/build/share/rules_gunit.mk
 
 testclasses:: basis_gunittest_copy_resources
 

@@ -28,8 +28,8 @@
 #  Makefile for building the jdwp tool
 #
 
--include  ../$(TARGET_OS)/jdwp_transport_$(CVM_JDWP_TRANSPORT).mk
--include  ../share/jdwp_transport_$(CVM_JDWP_TRANSPORT).mk
+-include $(CDC_OS_COMPONENT_DIR)/build/$(TARGET_OS)/jdwp_transport_$(CVM_JDWP_TRANSPORT).mk
+-include $(CDC_DIR)/build/share/jdwp_transport_$(CVM_JDWP_TRANSPORT).mk
 
 ###############################################################################
 # Make definitions:

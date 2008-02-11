@@ -66,6 +66,6 @@ endif
 ifneq ($(CVM_AOT), true)
 CVM_JIT_COPY_CCMCODE_TO_CODECACHE ?= true
 endif
-include  ../portlibs/defs_jit_risc.mk
+include  $(CDC_DIR)/build/portlibs/defs_jit_risc.mk
 
 endif

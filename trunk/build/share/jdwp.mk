@@ -38,8 +38,8 @@ CVM_JDWP_FLAGSDIR      = $(CVM_JDWP_BUILD_TOP)/flags
 CVM_JDWP_CLASSES       = $(CVM_JDWP_BUILD_TOP)/classes
 
 CVM_JDWP_SHAREROOT     = $(CVM_TOP)/src/share/tools/jpda
-CVM_JDWP_TARGETROOT    = $(CVM_TOP)/src/$(TARGET_OS)/tools/jpda
-CVM_JDWP_TARGETSHAREROOT = $(CVM_TOP)/src/$(TARGET_OS)
+CVM_JDWP_TARGETROOT    = $(CDC_OS_COMPONENT_DIR)/src/$(TARGET_OS)/tools/jpda
+CVM_JDWP_TARGETSHAREROOT = $(CDC_OS_COMPONENT_DIR)/src/$(TARGET_OS)
 
 CVM_JDWP_BUILDDIRS += \
         $(CVM_JDWP_OBJDIR) \
@@ -255,5 +255,5 @@ $(CVM_JDWP_OBJDIR)/%.o: %.S
 	@echo "... $@"
 	$(SO_ASM_CMD)
 
--include  ../$(TARGET_OS)/jdwp_transport.mk
--include  ../share/jdwp_transport.mk
+-include $(CDC_OS_COMPONENT_DIR)/build/$(TARGET_OS)/jdwp_transport.mk
+-include $(CDC_DIR)/build/share/jdwp_transport.mk

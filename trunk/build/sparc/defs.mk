@@ -65,5 +65,5 @@ CVM_JCS_CPU_RULES_FILE    += \
     $(CVM_TOP)/src/sparc/javavm/runtime/jit/jitfloatgrammarrules.jcs
 endif
 
-include  ../portlibs/defs_jit_risc.mk
+include  $(CDC_DIR)/build/portlibs/defs_jit_risc.mk
 endif

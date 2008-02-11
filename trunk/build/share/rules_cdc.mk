@@ -71,5 +71,5 @@ run-unittests:: cdc-reports-dir
 	$(AT)$(GUNIT_CMD)
 	$(AT)echo "<==== end running CDC unit-tests"
 
--include ../share/rules_cdc-commercial.mk
-include ../share/rules_zoneinfo.mk
+-include $(CDC_DIR)/build/share/rules_cdc-commercial.mk
+include $(CDC_DIR)/build/share/rules_zoneinfo.mk
