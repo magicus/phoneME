@@ -51,7 +51,7 @@ jboolean anc_start_vibrate(int dur)
 
     REPORT_CALL_TRACE(LC_CORE, "LF:JAVACALL:midpLCDUIStartVibrate()\n");
 
-    result = javacall_annunciator_vibrate(JAVACALL_TRUE);
+    result = javacall_annunciator_vibrate(dur);
 
     if (JAVACALL_SUCCEEDED(result)) {
         return KNI_TRUE;
@@ -73,7 +73,7 @@ jboolean anc_stop_vibrate(void)
 
     REPORT_CALL_TRACE(LC_CORE, "LF:JAVACALL:midpLCDUIStopVibrate()\n");
     
-    result = javacall_annunciator_vibrate(JAVACALL_FALSE);
+    result = javacall_annunciator_vibrate(0);
 
     if (JAVACALL_SUCCEEDED(result)) {
         return KNI_TRUE;
