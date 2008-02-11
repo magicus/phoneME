@@ -92,10 +92,12 @@ pcm_handle_t pcm_out_open_channel( int          bits,
 
         r = DirectSoundCreate(NULL, &g_pDS, NULL);
 
-        if( DS_OK != r ) return NULL;
+        // if( DS_OK != r ) return NULL;
 
         if( NULL == ( hwnd = GetForegroundWindow() ) ) hwnd = GetDesktopWindow();
-        g_pDS->SetCooperativeLevel(hwnd, DSSCL_NORMAL);
+        if (NULL != g_pDS) {
+            g_pDS->SetCooperativeLevel(hwnd, DSSCL_NORMAL);
+        }
 
         memset( g_Ch, 0, sizeof( g_Ch ) );
         
@@ -104,7 +106,7 @@ pcm_handle_t pcm_out_open_channel( int          bits,
     }
     else /* not first channel ==> hardware device is already opened */
     {
-        JC_MM_ASSERT( NULL != g_pDS );
+        //JC_MM_ASSERT( NULL != g_pDS );
     }
 
     /* create and initialize new channel */
@@ -125,6 +127,7 @@ pcm_handle_t pcm_out_open_channel( int          bits,
 
     ch->dsbuf_size  = min( DSBSIZE_MAX, 8 * blk_size );
     ch->dsbuf_offs  = 0;
+    ch->pDSB        = NULL;
 
     JC_MM_ASSERT( NULL != ch->blk );
 
@@ -146,11 +149,13 @@ pcm_handle_t pcm_out_open_channel( int          bits,
                          DSBCAPS_GLOBALFOCUS;
     bdsc.lpwfxFormat   = &wfmt;
 
-    r = g_pDS->CreateSoundBuffer( &bdsc, &(ch->pDSB), NULL );
-    JC_MM_ASSERT(r == DS_OK);
+    if (NULL != g_pDS) {
+        r = g_pDS->CreateSoundBuffer( &bdsc, &(ch->pDSB), NULL );
+        JC_MM_ASSERT(r == DS_OK);
 
-    r = ch->pDSB->Play( 0, 0, DSBPLAY_LOOPING );
-    JC_MM_ASSERT(r == DS_OK);
+        r = ch->pDSB->Play( 0, 0, DSBPLAY_LOOPING );
+        JC_MM_ASSERT(r == DS_OK);
+    }
 
 
     /* Add new channel to channel list.
@@ -200,8 +205,10 @@ void pcm_out_close_channel( pcm_handle_t hch )
 
     /* channel cleanup */
 
-    hch->pDSB->Stop();
-    hch->pDSB->Release();
+    if (NULL != hch->pDSB) {
+        hch->pDSB->Stop();
+        hch->pDSB->Release();
+    }
     FREE( hch->blk );
     FREE( hch );
 
@@ -216,8 +223,10 @@ void pcm_out_close_channel( pcm_handle_t hch )
             JC_MM_DEBUG_WARNING_PRINT( "Failed to wait for mixing thread shutdown\n" );
         }
 
+    if (NULL != g_pDS) {
         g_pDS->Release();
         g_pDS = NULL;
+    }
 
         CloseHandle( g_hChMutex );
         g_hChMutex = NULL;
@@ -316,14 +325,14 @@ DWORD WINAPI mixing_thread( void* arg )
             {
                 pch = g_Ch[ c ];
 
-                if( 0 == pch->blk_ready )
+                if( 0 == pch->blk_ready || NULL == pch->pDSB)
                 {
                     pch->blk_ready = pch->gd_callback( pch->blk,
                                                        pch->blk_size, 
                                                        pch->cb_param );
                 }
 
-                if( pch->blk_ready > 0 )
+                if( pch->blk_ready > 0 && NULL != pch->pDSB)
                 {
                     DWORD avail = get_available_space( pch );
                     if( avail > pch->blk_ready )

@@ -559,6 +559,7 @@ static int gmInit(int isolateID, int gmIdx)
 
     JC_MM_DEBUG_PRINT1( "# pcm_out_open_channel returned 0x%08X\n",
             (int)(g_QSoundGM[gmIdx].pcm_handle) );
+    //JC_MM_ASSERT(NULL != g_QSoundGM[gmIdx].pcm_handle);
 
     g_QSoundGM[gmIdx].isolateRefs = 1;
 
@@ -1956,6 +1957,7 @@ static javacall_result audio_qs_short_midi_event(javacall_handle handle,
         case JC_FMT_TONE:
         case JC_FMT_MIDI:
         case JC_FMT_SP_MIDI:
+        case JC_FMT_DEVICE_MIDI:
         {
             if( WAIT_OBJECT_0 == WaitForSingleObject( g_QSoundGM[gmIdx].hMutexREAD, 500 ) )
             {
