@@ -108,9 +108,9 @@ CDC_TARGET_CPU      = ${CDC_TARGET_CPU_${TARGET_CPU}}
 
 VM_INCLUDES += -I$(CDC_DIST_DIR)/include -I$(CDC_DIR)/src \
                -I$(CDC_DIR)/src/share -I$(CDC_DIR)/src/share/javavm/export \
-               -I$(CDC_DIR)/src/$(HOST_OS) -I$(CDC_DIST_DIR) \
-               -I$(CDC_DIR)/src/$(HOST_OS)-$(CDC_TARGET_CPU) \
-               -I$(CDC_DIR)/src/$(CDC_TARGET_CPU) \
+               -I$(CDC_OS_COMPONENT_DIR)/src/$(TARGET_OS) -I$(CDC_DIST_DIR) \
+               -I$(CDC_OSCPU_COMPONENT_DIR)/src/$(TARGET_OS)-$(CDC_TARGET_CPU) \
+               -I$(CDC_CPU_COMPONENT_DIR)/src/$(CDC_TARGET_CPU) \
 	             -I$(MIDP_OUTPUT_DIR) \
                -I$(MIDP_DIR)/src/core/vm_services/cdc_vm/native
 
