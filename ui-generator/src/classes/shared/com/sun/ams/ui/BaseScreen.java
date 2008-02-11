@@ -40,27 +40,28 @@ public class BaseScreen implements StringIds {
     static String printf(int id, Object args[]) {
         return printfImpl(localizeString(id), args);
     }
-    
+
     private static String format(String format, Object[] args) {
-        // find the first token
-        StringBuffer returnString=new StringBuffer();
-        int token=0, startIndex=0;
-        token = format.indexOf('%', token);
-        if (token == -1)
-            return format;
-        while (token > -1) {
-            String numString="";
+        StringBuffer returnString = new StringBuffer();
+
+        int startIndex = 0;
+        int token = format.indexOf('%');
+        while(0 <= token) {
             returnString.append(format.substring(startIndex, token));
-            token++;
-            // parse the digit that comes after the % as the 
-            // number of the argument to substitute
-            numString += format.charAt(token++);
-            int argIndex = Integer.valueOf(numString).intValue();
-            if (argIndex < args.length)
-                returnString.append(args[argIndex]);
-            startIndex = token;
-            token = format.indexOf('%', token);
+
+            // Get char after '%'. That char is within the ['0','9'] range.
+            // Convert it into args array index.
+            int argIdx = (format.charAt(token + 1) - '0');
+
+            // Do the substitution.
+            returnString.append(args[argIdx]);
+
+            // Find the next '%'.
+            startIndex = token + 2;
+            token = format.indexOf('%', startIndex);
         }
+        returnString.append(format.substring(startIndex));
+
         return returnString.toString();
     }
 
@@ -70,5 +71,27 @@ public class BaseScreen implements StringIds {
 
     BaseScreen(ScreenProperties props) {
         this.props = props;
+    }
+
+    private static void
+    test(String format, String expected) {
+        String res = BaseScreen.printfImpl(format, new Object[] { "One", "Two" });
+        if(!expected.equals(res)) {
+            throw new RuntimeException();
+        }
+    }
+
+    public static void
+    main(String args[]) {
+        test(
+            "Sha\nving %0 to %1  abc\nPlease Wait...",
+            "Sha\nving One to Two  abc\nPlease Wait...");
+        test("", "");
+        test("Hello", "Hello");
+        test("Hello%1", "HelloTwo");
+        test("%1Hello%1", "TwoHelloTwo");
+        test("%1Hello%0", "TwoHelloOne");
+        test("%1%0", "TwoOne");
+        test("%1\n%0\n", "Two\nOne\n");
     }
 }
