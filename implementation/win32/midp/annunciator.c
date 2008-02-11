@@ -203,15 +203,16 @@ void drawTopbarImage(void) {
 }
 
 /**
- * Turn device's Vibrate on/off
+ * Set device's Vibration
  *
- * @param turnVibrateOn if <tt>1</tt>, turn vibrate on, else turn vibrate off
+ * @param duration vibration period in microseconds, 0 to stop
  *
- * @return <tt>JAVACALL_OK</tt> if device supports vibration
- *         <tt>JAVACALL_FAIL</tt> if device does not supports vibration
- *
+ * @return <tt>JAVACALL_OK</tt> if device supports vibration or
+ *         <tt>JAVACALL_FAIL</tt> if the device does not supports 
+ *         vibration
+ *                
  */
-javacall_result javacall_annunciator_vibrate(javacall_bool enableVibrate) {
+javacall_result javacall_annunciator_vibrate(int duration) {
 
     return JAVACALL_FAIL;
 
