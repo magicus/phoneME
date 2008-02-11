@@ -339,10 +339,10 @@ CVM_TOP_ABS   := $(CDC_DIR)
 
 # Paths to os, cpu, os-cpu, and os-cpu-device ports. They default
 # to being in the cdc component, but can be setup to point elsewhere.
-CDC_OS_COMPONENT_DIR      ?= $(CDC_DIR)
-CDC_CPU_COMPONENT_DIR     ?= $(CDC_DIR)
-CDC_OSCPU_COMPONENT_DIR   ?= $(CDC_DIR)
-CDC_DEVICE_COMPONENT_DIR  ?= $(CDC_DIR)
+export CDC_OS_COMPONENT_DIR      ?= $(CDC_DIR)
+export CDC_CPU_COMPONENT_DIR     ?= $(CDC_DIR)
+export CDC_OSCPU_COMPONENT_DIR   ?= $(CDC_DIR)
+export CDC_DEVICE_COMPONENT_DIR  ?= $(CDC_DIR)
 
 # Include any existing platform defs first
 ifneq ($(J2ME_PLATFORM),)

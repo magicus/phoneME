@@ -62,8 +62,8 @@ $(MIDP_CLASSES_ZIP): $(MIDP_CLASSESZIP_DEPS) force_midp_build
 	@echo "====> start building MIDP classes"
 	$(AT)$(MAKE) $(MAKE_NO_PRINT_DIRECTORY) \
 		     JDK_DIR=$(JDK_DIR) TARGET_VM=$(TARGET_VM) \
-	             TARGET_CPU=$(TARGET_CPU) USE_DEBUG=$(USE_DEBUG) \
-	             USE_SSL=$(USE_SSL) \
+	             TARGET_CPU=$(TARGET_CPU) TARGET_OS=$(TARGET_OS) \
+	             USE_DEBUG=$(USE_DEBUG) \
 	             USE_RESTRICTED_CRYPTO=$(USE_RESTRICTED_CRYPTO) \
 	             VERIFY_BUILD_ENV= \
 	             CONFIGURATION_OVERRIDE=$(CONFIGURATION_OVERRIDE) \
@@ -118,8 +118,8 @@ $(MIDP_CLASSLIST): $(MIDP_PUB_CLASSES_ZIP)
 source_bundle:: $(CVM_BUILD_DEFS_MK) 
 	$(AT)$(MAKE) $(MAKE_NO_PRINT_DIRECTORY) \
 		     JDK_DIR=$(JDK_DIR) TARGET_VM=$(TARGET_VM) \
-	             TARGET_CPU=$(TARGET_CPU) USE_DEBUG=$(USE_DEBUG) \
-	             USE_SSL=$(USE_SSL) \
+	             TARGET_CPU=$(TARGET_CPU) TARGET_OS=$(TARGET_OS) \
+	             USE_DEBUG=$(USE_DEBUG) \
 	             USE_RESTRICTED_CRYPTO=$(USE_RESTRICTED_CRYPTO) \
 	             VERIFY_BUILD_ENV= \
 	             CONFIGURATION_OVERRIDE=$(CONFIGURATION_OVERRIDE) \
@@ -160,8 +160,8 @@ $(RUNMIDLET): force_midp_build
 	@echo "====> start building MIDP natives"
 	$(AT)$(MAKE) $(MAKE_NO_PRINT_DIRECTORY) \
 		     JDK_DIR=$(JDK_DIR) TARGET_VM=$(TARGET_VM) \
-	             TARGET_CPU=$(TARGET_CPU) USE_DEBUG=$(USE_DEBUG) \
-	             USE_SSL=$(USE_SSL) \
+	             TARGET_CPU=$(TARGET_CPU) TARGET_OS=$(TARGET_OS) \
+	             USE_DEBUG=$(USE_DEBUG) \
 	             USE_RESTRICTED_CRYPTO=$(USE_RESTRICTED_CRYPTO) \
 	             VERIFY_BUILD_ENV= \
 	             CONFIGURATION_OVERRIDE=$(CONFIGURATION_OVERRIDE) \
