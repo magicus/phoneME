@@ -32,11 +32,20 @@ information or have any questions.
             <xsl:apply-templates select="*"/>
         </xsl:copy>
     </xsl:template>
-    
+
     <xsl:template match="include">
-        <xsl:apply-templates select="document(@href)"/>
+        <xsl:apply-templates select="document(@href)/screens/*"/>
     </xsl:template>
-    
+
+    <xsl:template match="label[not(text)]|option[not(text)]|command[not(text)]">
+        <xsl:element name="{name()}">
+            <xsl:apply-templates select="@*|comment()"/>
+            <xsl:element name="text">
+                <xsl:apply-templates select="node()"/>
+            </xsl:element>
+        </xsl:element>
+    </xsl:template>
+
     <xsl:template match="@*|node()|comment()">
         <xsl:copy>
             <xsl:apply-templates select="@*|node()|comment()"/>
