@@ -382,7 +382,7 @@ javacall_result javacall_media_create(int appId,
                            min( (long)wcslen( DEVICE_MIDI_LOCATOR ), uriLength ) ) )
         {
             pPlayer->mediaType        = JAVACALL_MEDIA_FORMAT_DEVICE_MIDI;
-            pPlayer->mediaItfPtr      = &g_qsound_interactive_midi_itf;
+            pPlayer->mediaItfPtr      = &g_qsound_itf;
             pPlayer->downloadByDevice = JAVACALL_TRUE;
         }
         else
@@ -1820,45 +1820,108 @@ javacall_result javacall_media_get_pitch(javacall_handle handle,
 }
 
 
-/* MIDI Bank Query functions (mainly stubs) *******************************************/
-javacall_result javacall_media_is_midibank_query_supported(javacall_handle handle,
-                                                           /*OUT*/ long* supported) {
-    return JAVACALL_FAIL;
+/* MIDI Bank Query functions *******************************************/
+javacall_result javacall_media_is_midibank_query_supported(javacall_handle handle, 
+                                                           /*OUT*/ long* supported)
+{
+    javacall_result ret = JAVACALL_FAIL;
+    javacall_impl_player* pPlayer = (javacall_impl_player*)handle;
+    media_interface* pItf = pPlayer->mediaItfPtr;
+
+    if (QUERY_MIDI_ITF(pItf, is_bank_query_supported)) {
+        ret = pItf->vptrMidi->is_bank_query_supported(
+            pPlayer->mediaHandle, supported);
+    }
+
+    return ret;
 }
 
-javacall_result javacall_media_get_midibank_list(javacall_handle handle,
-                                                 long custom, /*OUT*/short* banklist,
-                                                 /*INOUT*/ long* numlist) {
-    return JAVACALL_FAIL;
+javacall_result javacall_media_get_midibank_list(javacall_handle handle, 
+                                                 long custom, 
+                                                 /*OUT*/short* banklist, 
+                                                 /*INOUT*/ long* numlist) 
+{
+    javacall_result ret = JAVACALL_FAIL;
+    javacall_impl_player* pPlayer = (javacall_impl_player*)handle;
+    media_interface* pItf = pPlayer->mediaItfPtr;
+
+    if (QUERY_MIDI_ITF(pItf, get_bank_list)) {
+        ret = pItf->vptrMidi->get_bank_list(
+            pPlayer->mediaHandle, custom, banklist, numlist);
+    }
+
+    return ret;
 }
 
-javacall_result javacall_media_get_midibank_key_name(javacall_handle handle,
-                                                     long bank, long program,
-                                                     long key,
-                                                     /*OUT*/char* keyname,
-                                                     /*INOUT*/ long* keynameLen) {
-    return JAVACALL_FAIL;
+javacall_result javacall_media_get_midibank_key_name(javacall_handle handle, 
+                                                     long bank, long program, 
+                                                     long key, 
+                                                     /*OUT*/char* keyname, 
+                                                     /*INOUT*/ long* keynameLen) 
+{
+    javacall_result ret = JAVACALL_FAIL;
+    javacall_impl_player* pPlayer = (javacall_impl_player*)handle;
+    media_interface* pItf = pPlayer->mediaItfPtr;
+
+    if (QUERY_MIDI_ITF(pItf, get_key_name)) {
+        ret = pItf->vptrMidi->get_key_name(
+            pPlayer->mediaHandle, bank, program, key, keyname, keynameLen);
+    }
+
+    return ret;
 }
 
-javacall_result javacall_media_get_midibank_program_name(javacall_handle handle,
-                                                         long bank, long program,
-                                                         /*OUT*/char* progname,
-                                                         /*INOUT*/ long* prognameLen) {
-    return JAVACALL_FAIL;
+javacall_result 
+javacall_media_get_midibank_program_name(javacall_handle handle, 
+                                         long bank, long program, 
+                                         /*OUT*/char* progname, 
+                                         /*INOUT*/ long* prognameLen) 
+{
+    javacall_result ret = JAVACALL_FAIL;
+    javacall_impl_player* pPlayer = (javacall_impl_player*)handle;
+    media_interface* pItf = pPlayer->mediaItfPtr;
+
+    if (QUERY_MIDI_ITF(pItf, get_program_name)) {
+        ret = pItf->vptrMidi->get_program_name(
+            pPlayer->mediaHandle, bank, program, progname, prognameLen);
+    }
+
+    return ret;
 }
 
-javacall_result javacall_media_get_midibank_program_list(javacall_handle handle,
-                                                         long bank,
-                                                         /*OUT*/char* proglist,
-                                                         /*INOUT*/ long* proglistLen) {
-    return JAVACALL_FAIL;
+javacall_result 
+javacall_media_get_midibank_program_list(javacall_handle handle, 
+                                         long bank, 
+                                         /*OUT*/char* proglist, 
+                                         /*INOUT*/ long* proglistLen) 
+{
+    javacall_result ret = JAVACALL_FAIL;
+    javacall_impl_player* pPlayer = (javacall_impl_player*)handle;
+    media_interface* pItf = pPlayer->mediaItfPtr;
+
+    if (QUERY_MIDI_ITF(pItf, get_program_list)) {
+        ret = pItf->vptrMidi->get_program_list(
+            pPlayer->mediaHandle, bank, proglist, proglistLen);
+    }
+
+    return ret;
 }
 
-javacall_result javacall_media_get_midibank_program(javacall_handle handle,
-                                                    long channel, /*OUT*/long* prog) {
-    return JAVACALL_FAIL;
+javacall_result javacall_media_get_midibank_program(javacall_handle handle, 
+                                                    long channel, 
+                                                    /*OUT*/long* prog) {
+    javacall_result ret = JAVACALL_FAIL;
+    javacall_impl_player* pPlayer = (javacall_impl_player*)handle;
+    media_interface* pItf = pPlayer->mediaItfPtr;
+
+    if (QUERY_MIDI_ITF(pItf, get_program)) {
+        ret = pItf->vptrMidi->get_program(pPlayer->mediaHandle, channel, prog);
+    }
+
+    return ret;
 }
 
+/* Frame Position functions *******************************************/
 
 javacall_result javacall_media_map_frame_to_time(javacall_handle handle,
                                                  long frameNum, /*OUT*/ long* ms) {
