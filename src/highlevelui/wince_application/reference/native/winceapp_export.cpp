@@ -424,17 +424,17 @@ static BOOL InitInstance(HINSTANCE hInstance, int CmdShow) {
     HWND _hwndMain = CreateWindowEx(WS_EX_CAPTIONOKBTN,
                                _szAppName,
                                _szTitle,
-                               WS_OVERLAPPED |WS_CAPTION |WS_SYSMENU |WS_THICKFRAME |WS_MINIMIZEBOX |WS_MAXIMIZEBOX | WS_VISIBLE,
+                               WS_VISIBLE,
                                CW_USEDEFAULT,
                                CW_USEDEFAULT,
                                CW_USEDEFAULT,
                                CW_USEDEFAULT,
                                NULL, NULL, hInstance, NULL);
 
-    SHFullScreen(_hwndMain, SHFS_HIDESIPBUTTON);
-
     if (!_hwndMain)
         return FALSE;
+
+    SHFullScreen(_hwndMain, SHFS_HIDETASKBAR | SHFS_HIDESTARTICON | SHFS_HIDESIPBUTTON);
 
     winceapp_set_window_handle(_hwndMain);
     ShowWindow(_hwndMain, CmdShow);
