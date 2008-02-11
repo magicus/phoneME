@@ -23,7 +23,6 @@
  * information or have any questions.
  */
 
-#include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
 
@@ -40,7 +39,7 @@
 #include "javacall_config_db.h"
 
 /* Maximal expected line length from properties file */
-#define MAX_LINE_LENGTH	    1023
+#define MAX_LINE_LENGTH     1023
 
 /* Maximal expected single text word length from properties file*/
 #define MAX_STR_LENGTH      1023
@@ -48,18 +47,15 @@
 /* Invalid key */
 #define INI_INVALID_KEY    ((char*)-1)
 
-/* list of escape sequences to be unescaped at load time */
-static char* escape_sequences[] = {
-    "\\\"", /* Escape sequence \" */
-    NULL
-};
 
-
-
-/*---------------------------------------------------------------------------
-                        Internal Functions
- ---------------------------------------------------------------------------*/
-
+/**
+ * Reads a line from file
+ *
+ * @param line buffer to store the read line
+ * @param length buffer size, including '\0' character
+ * @param file_handle file handle
+ * @return read line
+ */
 static char *configdb_fgets(char *line, int length, javacall_handle file_handle) {
     long read_length = 0;
     long actual_read = 1;
@@ -81,7 +77,7 @@ static char *configdb_fgets(char *line, int length, javacall_handle file_handle)
 
     line[read_length] = 0;
 
-    if (read_length>0) {
+    if (read_length > 0) {
         return line;
     }
 
@@ -89,7 +85,14 @@ static char *configdb_fgets(char *line, int length, javacall_handle file_handle)
 }
 
 
-/* convert an INI section/key to a database key and add it to the database */
+/**
+ * Converts an INI section/key to a database key and adds it to the database
+ *
+ * @param d pointer to db
+ * @param sec section name
+ * @param key key name
+ * @param val value to be set
+ */
 static void configdb_add_entry(
                               string_db * d,
                               char * sec,
@@ -101,23 +104,19 @@ static void configdb_add_entry(
         return;
     }
 
-/* Make a key as section:keyword */
+    /* Make a key as section:keyword */
     if (key != NULL) {
         javautil_sprintf(longkey, "%s:%s", sec, key);
     } else {
         strcpy(longkey, sec);
     }
 
-/* Add (key,val) to string_db */
+    /* Add (key,val) to string_db */
     javacall_string_db_set(d, longkey, val);
 }
 
-/*---------------------------------------------------------------------------
-                        Public Functions
- ---------------------------------------------------------------------------*/
-
 /**
- * Get the number of sections in the database
+ * Gets the number of sections in the database
  *
  * @param config_handle database object created by calling javacall_configdb_load
  * @return number of sections in the database or -1 in case of error
@@ -148,7 +147,7 @@ int javacall_configdb_get_num_of_sections(javacall_handle config_handle) {
 
 
 /**
- * Get the name of the n'th section
+ * Gets the name of the n'th section
  *
  * @param config_handle database object created by calling javacall_configdb_load
  * @param n section number
@@ -183,7 +182,7 @@ char* javacall_configdb_get_section_name(javacall_handle config_handle, int n) {
 
 
 /**
- * Dump the content of the parameter database to an open file pointer
+ * Dumps the content of the parameter database to an open file pointer
  * The output format is as a standard INI file
  * 
  * @param config_handle    database object created by calling javacall_configdb_load
@@ -263,7 +262,7 @@ void javacall_configdb_dump_ini(javacall_handle config_handle,
 
 
 /**
- * Get the value corresponding to the key as a string
+ * Gets the value corresponding to the key as a string
  *
  * @param config_handle   database object created by calling javacall_configdb_load
  * @param key             The key to get the corresponding value of
@@ -295,7 +294,7 @@ javacall_result javacall_configdb_getstring(javacall_handle config_handle, char*
 
 
 /**
- * Find a key in the database
+ * Finds a key in the database
  *
  * @param config_handle database object created by calling javacall_configdb_load
  * @param key   the key to find
@@ -352,7 +351,7 @@ void javacall_configdb_unset(javacall_handle config_handle, char* key) {
 #include "javacall_static_properties.h"
 
 /**
- * Load static configuration properties
+ * Loads static configuration properties
  *
  * @return handle to database with the properties
  */
@@ -377,10 +376,10 @@ javacall_handle configdb_load_no_fs () {
     }
     return(javacall_handle)db;
 }
-#endif	//USE_PROPERTIES_FROM_FS
+#endif  /* USE_PROPERTIES_FROM_FS */
 
 /**
- * Split a line to key and value pairs.  The key is defined as substring before
+ * Splits a line to key and value pairs.  The key is defined as substring before
  * the first occurence of a separator.  Value is the substring after the first
  * occurrence of the separator.
  *
@@ -389,7 +388,8 @@ javacall_handle configdb_load_no_fs () {
  * @param val buffer to store the second substring
  * @param sep separating character
  *
- * @return JAVACALL_TRUE if the string begins with an escape sequence
+ * @return JAVACALL_OK if the line has been successfully parsed
+ *         JAVACALL_FAIL otherwise
  */
 static javacall_result parse_line(char* line, char* key, char* val, char sep){
     int index;
@@ -412,31 +412,8 @@ static javacall_result parse_line(char* line, char* key, char* val, char sep){
     return JAVACALL_OK;
 }
 
-
 /**
- * Test whether the string  begins with an escape sequence
- *
- * @param str string to be tested
- *
- * @return JAVACALL_TRUE if the string begins with an escape sequence
- */
-static javacall_bool is_escape_sequence(char* str) {
-    int i, j;
-
-    /* check all the escape sequences */
-    for (i = 0; escape_sequences[i] != NULL; i++) {
-        /* test match of current escape sequence */
-        for (j = 0; str[j] == escape_sequences[i][j] &&
-                escape_sequences[i][j] != '\0'; j++);
-        if (escape_sequences[i][j] == '\0') {
-            return JAVACALL_TRUE;
-        }
-    }
-    return JAVACALL_FALSE;
-}
-
-/**
- * Remove escape characters from a string
+ * Removes escape characters from a string
  *
  * @param str string escape characters to be removed from
  * @return JAVACALL_OK on success
@@ -444,6 +421,7 @@ static javacall_bool is_escape_sequence(char* str) {
  */
 static javacall_result remove_escape_characters(char* str){
     int i, j;
+    int escaped;
     int length;
 
     if (str == NULL) {
@@ -451,12 +429,47 @@ static javacall_result remove_escape_characters(char* str){
     }
 
     length = strlen(str);
+    escaped = 0;
 
-    for (i = 0, j = 0; i < length; i++, j++) {
-        if (JAVACALL_TRUE == is_escape_sequence(&str[i])) {
-            i++;
+    /* run through the string */
+    for (i = 0, j = 0; i < length; i++) {
+        switch (str[i]) {
+            case '\\':
+                if (escaped) {
+                    str[j++] = '\\';
+                    /* add '\\' to result */;
+                    escaped = 0;
+                }
+                else {
+                    /* escaped character, do not add it */
+                    escaped = 1;
+                }
+                break;
+            case 'r':
+                if (escaped) {
+                    /* add '\x0D' to result */;
+                    str[j++] = (char)0x0D;
+                }
+                else {
+                    str[j++] = str[i];
+                }
+                escaped = 0;
+                break;
+            case 'n':
+                if (escaped) {
+                    /* add '\x0A' to result */;
+                    str[j++] = (char)0x0A;
+                }
+                else {
+                    str[j++] = str[i];
+                }
+                escaped = 0;
+                break;
+            default:
+                /* add character to result */
+                str[j++] = str[i];
+                escaped = 0;
         }
-        str[j] = str[i];
     }
 
     str[j] = str[i];    /* '\0' character expected here */
@@ -464,7 +477,7 @@ static javacall_result remove_escape_characters(char* str){
 }
 
 /**
- * Attempt to parse a line as a section name
+ * Attempts to parse a line as a section name
  *
  * @param line line to be parsed
  * @param sec buffer to store the section name
@@ -489,7 +502,7 @@ javacall_bool read_section_name(char *line, char *sec){
 }
 
 /**
- * Load properties from file stored on the file system
+ * Loads properties from file stored on the file system
  *
  * @param unicodeFileName file name
  * @param fileNameLen length of the file name
@@ -562,7 +575,7 @@ javacall_handle javacall_configdb_load(javacall_utf16* unicodeFileName, int file
     return configdb_load_from_fs(unicodeFileName, fileNameLen);
 #else
     return configdb_load_no_fs();
-#endif	//USE_PROPERTIES_FROM_FS
+#endif  /* USE_PROPERTIES_FROM_FS */
 }
 
 
