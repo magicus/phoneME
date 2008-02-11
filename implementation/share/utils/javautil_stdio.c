@@ -68,8 +68,9 @@ static int javautil_vsnprintf(char *buf, size_t size, const char *fmt, va_list a
     str = buf;
     end = buf + size - 1;
 
+    /* support unlimited buffer size */
     if (end < buf - 1) {
-        end = ((void *)-1);
+        end = ((char *)-1);
         size = end - buf + 1;
     }
 
@@ -89,6 +90,7 @@ static int javautil_vsnprintf(char *buf, size_t size, const char *fmt, va_list a
             switch (*fmt) {
                 case '-':
                     flags |= LEFT;
+                    break;
                 /* Add more flags here */
                 default:
                     is_flag = 0;    /* not a recognized flag */
@@ -162,7 +164,7 @@ static int javautil_vsnprintf(char *buf, size_t size, const char *fmt, va_list a
  * @param args arguments for the format string
  */
 static int javautil_vsprintf(char *buf, const char *fmt, va_list args) {
-    return javautil_vsnprintf(buf, 0xFFFFFFFFUL, fmt, args);
+    return javautil_vsnprintf(buf, (size_t)-1, fmt, args);
 }
 
 
