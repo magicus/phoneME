@@ -152,7 +152,7 @@ void javanotify_chapi_platform_finish(int invoc_id,
  * This is <code>Registry.invoke()</code> substitute for Platform->Java call.
  * @param handler_id target Java handler Id
  * @param invocation filled out structure with invocation params
- * @param invoc_id invocation Id for further references
+ * @param invoc_id invocation Id for further references, should be positive
  */
 void javanotify_chapi_java_invoke(
         const javacall_utf16_string handler_id, 
