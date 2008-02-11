@@ -27,7 +27,6 @@
 #include <stdlib.h>
 
 
-#include "javautil_printf.h"
 #include "javacall_defs.h"
 #include "javacall_memory.h"
 #include "javacall_logging.h"
