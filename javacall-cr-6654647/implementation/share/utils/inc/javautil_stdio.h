@@ -36,4 +36,4 @@
 int javautil_sprintf(char *buf, const char *fmt, ...);
 
 
-#endif //_JAVAUTIL_STDIO_H_
+#endif /* _JAVAUTIL_STDIO_H_ */
