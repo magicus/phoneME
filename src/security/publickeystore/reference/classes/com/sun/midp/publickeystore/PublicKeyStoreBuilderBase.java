@@ -139,6 +139,6 @@ public class PublicKeyStoreBuilderBase extends PublicKeyStore {
         storage.writeValue(PublicKeyInfo.MODULUS_TAG, key.getModulus());
         storage.writeValue(PublicKeyInfo.EXPONENT_TAG, key.getExponent());
         storage.writeValue(PublicKeyInfo.DOMAIN_TAG, key.getDomain());
-        storage.writeValue(PublicKeyInfo.ENABLED_TAG, key.isEnabled());
+        storage.writeValue(PublicKeyInfo.ENABLED_TAG, key.isEnabled()?"enabled":"disabled");
     }
 }
