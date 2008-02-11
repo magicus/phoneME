@@ -1957,6 +1957,7 @@ static javacall_result audio_qs_short_midi_event(javacall_handle handle,
         case JC_FMT_TONE:
         case JC_FMT_MIDI:
         case JC_FMT_SP_MIDI:
+        case JC_FMT_DEVICE_TONE:
         case JC_FMT_DEVICE_MIDI:
         {
             if( WAIT_OBJECT_0 == WaitForSingleObject( g_QSoundGM[gmIdx].hMutexREAD, 500 ) )
