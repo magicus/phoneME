@@ -28,7 +28,7 @@ GNU_TOOLS_BINDIR  =
 # PCSL defs
 #
 PCSL_TARGET      ?= $(WIN32_PLATFORM)_$(TARGET_CPU)
-PCSL_PLATFORM     = $(PCSL_TARGET)_evc
+
 NETWORK_MODULE    = winsock
 PCSL_MAKE_OPTIONS = USE_CYGWIN=true
 
@@ -36,18 +36,32 @@ PCSL_MAKE_OPTIONS = USE_CYGWIN=true
 # MIDP defs
 #
 
-MIDP_PLATFORM     = $(WIN32_PLATFORM)
-MIDP_MAKEFILE_DIR = build/$(WIN32_PLATFORM)
+ifeq ($(USE_GCI), true)
+	MIDP_PLATFORM ?= win32_gci
+else
+	MIDP_PLATFORM ?= $(WIN32_PLATFORM)
+endif
+
+MIDP_MAKEFILE_DIR = build/$(MIDP_PLATFORM)
 
 CONFIGURATION_OVERRIDE	= \
         $(MIDP_DIR)/src/configuration/wince/sp176x220.xml
 
 MIDP_OBJECTS      = \
-        $(MIDP_OUTPUT_DIR)/obj$(DEBUG_POSTFIX)/$(TARGET_CPU)/*.o \
-        $(MIDP_OUTPUT_DIR)/obj$(DEBUG_POSTFIX)/$(TARGET_CPU)/resources.res
+        $(MIDP_OUTPUT_DIR)/obj$(DEBUG_POSTFIX)/$(TARGET_CPU)/*.o
 
 LIBPATH           += /libpath:$(call POSIX2HOST,$(PCSL_OUTPUT_DIR)/$(PCSL_TARGET)/lib)
 MIDP_LIBS         = \
 	libpcsl_file.lib libpcsl_memory.lib libpcsl_print.lib \
-	libpcsl_string.lib libpcsl_network.lib Ws2.lib gx.lib aygshell.lib
+	libpcsl_string.lib libpcsl_network.lib
+
+ifeq ($(WIN32_PLATFORM),wince)
+	PCSL_PLATFORM    = $(PCSL_TARGET)_evc
+	MIDP_LIBS        += Ws2.lib gx.lib aygshell.lib
+	MIDP_OBJECTS     += $(MIDP_OUTPUT_DIR)/obj$(DEBUG_POSTFIX)/$(TARGET_CPU)/resources.res
+else
+	PCSL_PLATFORM    = $(PCSL_TARGET)_vc
+	MIDP_LIBS        += winmm.lib
+endif
+
 WIN_LINKLIBS += $(MIDP_LIBS)
