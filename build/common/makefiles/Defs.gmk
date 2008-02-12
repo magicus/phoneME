@@ -445,17 +445,28 @@ endef
 # Distinguish between normal java files from generated one 
 #
 define countjavafiles
-if [ -f $(REBUILD_JAVA_LIST) ]; then \
-   num1=`cat $(REBUILD_JAVA_LIST) $(SUBSET_API_JAVA_LIST) $(SUPERSET_API_JAVA_LIST) | wc -w`; \
+ if [ -f $(REBUILD_JAVA_LIST) ]; then \
+   num1=`cat $(REBUILD_JAVA_LIST) | wc -w`; \
  else \
    num1=0; \
  fi; \
- if [ -f $(GENERATED_JAVA_LIST) ]; then \
-   num2=`cat $(GENERATED_JAVA_LIST) | wc -w`; \
+ if [ -f $(SUBSET_API_JAVA_LIST) ]; then \
+   num2=`cat $(SUBSET_API_JAVA_LIST) | wc -w`; \
  else \
    num2=0; \
  fi; \
- echo " ... compiling $$num1 .java files and $$num2 generated .java files";
+ if [ -f $(SUPERSET_API_JAVA_LIST) ]; then \
+   num3=`cat $(SUPERSET_API_JAVA_LIST) | wc -w`; \
+ else \
+   num3=0; \
+ fi; \
+ num=$$(( (num1 + num2) + num3)); \
+ if [ -f $(GENERATED_JAVA_LIST) ]; then \
+   num4=`cat $(GENERATED_JAVA_LIST) | wc -w`; \
+ else \
+   num4=0; \
+ fi; \
+ echo " ... compiling $$num .java files and $$num4 generated .java files";
 endef
 
 # Macro to compile Java sources with preverifier and then to build
