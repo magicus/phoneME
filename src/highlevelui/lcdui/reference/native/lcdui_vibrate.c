@@ -56,7 +56,7 @@
  */
 
 KNIEXPORT KNI_RETURNTYPE_BOOLEAN
-Java_com_sun_midp_lcdui_DisplayDeviceAccess_vibrate0() {
+KNIDECL(com_sun_midp_lcdui_DisplayDeviceAccess_vibrate0) {
     jboolean onoff = KNI_GetParameterAsBoolean(2);
     int displayId = KNI_GetParameterAsInt(1);
 
