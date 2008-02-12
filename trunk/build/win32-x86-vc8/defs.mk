@@ -44,6 +44,7 @@ PATH    := $(PLATFORM_TOOLS_PATH):$(VS8_PATH)/Common7/IDE:$(PATH)
 export LIB
 export INCLUDE
 export PATH
+export USE_VS2005=true
 
 # get some vc specific defs
 include ../win32/vc_defs.mk

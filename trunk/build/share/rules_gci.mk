@@ -51,7 +51,7 @@ endif
 # against the libraries that the profile requires (like X11 or QT libraries).
 #
 ifeq ($(CVM_STATICLINK_LIBS), true)
-LINKLIBS += $(GCI_LIB_LIBS)
+LINKCVM_LIBS += $(GCI_LIB_LIBS)
 endif
 
 #
@@ -60,7 +60,7 @@ endif
 #
 ifeq ($(CVM_PRELOAD_LIB), true)
 ifneq ($(CVM_STATICLINK_LIBS), true)
-LINKLIBS += \
+LINKCVM_LIBS += \
         -L$(CVM_LIBDIR) \
         -l$(GCI_LIB_NAME)$(DEBUG_POSTFIX)
 endif

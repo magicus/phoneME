@@ -32,7 +32,7 @@ ifeq ($(USE_MIDP),true)
 -include $(CDC_DEVICE_COMPONENT_DIR)/build/$(TARGET_OS)-$(TARGET_CPU_FAMILY)-$(TARGET_DEVICE)/defs_midp.mk
 
 ifeq ($(USE_GCI), true)
-    MIDP_PLATFORM = linux_gci
+    MIDP_PLATFORM ?= linux_gci
 else
     MIDP_PLATFORM ?= linux_fb_gcc
 endif
