@@ -186,7 +186,7 @@ public class WebPublicKeyStore extends PublicKeyStore
         keystore = new PublicKeyStoreBuilderBase(sharedKeyList);
         try {
             storage = new RandomAccessStream(classSecurityToken);
-            String keystore_filename = System.getProperty("com.sun.midp.publickeystore.WebPublicKeyStore");
+            String keystore_filename = Configuration.getProperty("com.sun.midp.publickeystore.WebPublicKeyStore");
 
             // Fallback to default storage root
             if (keystore_filename == null) {
@@ -210,7 +210,6 @@ public class WebPublicKeyStore extends PublicKeyStore
                 Logging.trace(e, "Corrupt key store file, cannot" +
                               "authenticate HTTPS servers");
             }
-
             return;
         } finally {
             try {
