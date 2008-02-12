@@ -84,6 +84,7 @@ typedef struct {
     int                     playing;
     int                     eom;
     IWaveStream             *stream;
+    IEffectModule           *em;              // current effect module
     unsigned char           *originalData;
     int                     originalDataLen;
     unsigned char           *streamBuffer;
