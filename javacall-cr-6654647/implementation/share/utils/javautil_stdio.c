@@ -51,11 +51,14 @@ static int skip_atoi(const char **buf) {
  * Formats a string and places it in a buffer
  *
  * @param buf buffer to place the result into
- * @param fmt format string to use
  * @param size buffer size
+ * @param fmt format string to use
  * @param args string arguments
+ *
+ * @return number of printed characters
  */
-static int javautil_vsnprintf(char *buf, size_t size, const char *fmt, va_list args) {
+static int javautil_vsnprintf(char *buf, size_t size, const char *fmt,
+                              va_list args) {
     int len;
     int i;
     char *str, *end;
@@ -162,6 +165,8 @@ static int javautil_vsnprintf(char *buf, size_t size, const char *fmt, va_list a
  * @param buf buffer to place the result into
  * @param fmt format string to use
  * @param args arguments for the format string
+ *
+ * @return number of printed characters
  */
 static int javautil_vsprintf(char *buf, const char *fmt, va_list args) {
     return javautil_vsnprintf(buf, (size_t)-1, fmt, args);
@@ -174,6 +179,8 @@ static int javautil_vsprintf(char *buf, const char *fmt, va_list args) {
  * @param buf buffer to place the result into
  * @param fmt format string to use
  * @param ... arguments for the format string
+ *
+ * @return number of printed characters
  */
 int javautil_sprintf(char *buf, const char *fmt, ...) {
     va_list args;
