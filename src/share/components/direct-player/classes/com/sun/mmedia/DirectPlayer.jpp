@@ -318,6 +318,9 @@ public class DirectPlayer extends BasicPlayer
         if (nPcmAudioPlayback(hNative)) {
             AudioTunnel.getInstance().start();
         }
+        
+		if( null != state_subscriber )
+			state_subscriber.PlayerPrefetched( this );
     }
 
     /**

@@ -47,6 +47,8 @@ public class PlayerImpl implements Player {
     // #endif ]
 
     protected BasicPlayer playerInst = null;
+	public    BasicPlayer getPlayerInst(){ return playerInst; };
+    
     protected DataSource  source;
     protected SourceStream stream;
     private boolean isClosed = false;
