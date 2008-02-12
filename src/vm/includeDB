@@ -2173,6 +2173,7 @@ Universe.cpp                     JavaNear.hpp
 Universe.cpp                     JavaVTable.hpp
 Universe.cpp                     JVM.hpp
 Universe.cpp                     MixedOop.hpp
+Universe.cpp                     Natives.hpp
 Universe.cpp                     Near.hpp
 Universe.cpp                     NearClass.hpp
 Universe.cpp                     ObjArrayClass.hpp

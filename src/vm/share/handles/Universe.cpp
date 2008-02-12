@@ -1338,9 +1338,27 @@ ReturnOop Universe::new_instance(InstanceClass* klass JVM_TRAPS) {
   OopDesc* result = ObjectHeap::allocate(instance_size.fixed_value() 
                                          JVM_ZCHECK_0(result));
   result->initialize(klass->prototypical_near());
-  if (klass->has_finalizer()) {
+  AccessFlags flags = klass->access_flags();
+  if (flags.has_finalizer()) {
     UsingFastOops fast_oops;
     Oop::Fast obj(result);  // create handle, call below can gc
+    if (flags.has_unresolved_finalizer()) {
+      UsingFastOops fast_oops2;
+      ObjArray::Fast methods = klass->methods();
+      Method::Fast finalize_method = 
+        InstanceClass::find_method(&methods, Symbols::finalize_name(),
+                                   Symbols::void_signature());
+#if ENABLE_DYNAMIC_NATIVE_METHODS
+      address finalizer = 
+        Natives::load_dynamic_native_code(&finalize_method JVM_CHECK_0);
+      GUARANTEE(finalizer != NULL, "Error must be thrown");
+
+      flags.clear_has_unresolved_finalizer();
+      klass->set_access_flags(flags);
+#else 
+      Throw::unsatisfied_link_error(&finalize_method JVM_THROW_0)
+#endif
+    }
     ObjectHeap::register_finalizer_reachable_object(&obj JVM_CHECK_0);
     return obj;
   }

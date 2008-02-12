@@ -54,7 +54,10 @@ public:
   static void append_jni(TypeArray *byte_array, CharacterStream *stream,
                                 int skip, char end_char, int *index JVM_TRAPS);
   static ReturnOop get_jni_class_name(InstanceClass *klass JVM_TRAPS);
+#endif
 
+#if ENABLE_DYNAMIC_NATIVE_METHODS
+  static address load_dynamic_native_code(Method* method JVM_TRAPS);
 #endif
 };
 

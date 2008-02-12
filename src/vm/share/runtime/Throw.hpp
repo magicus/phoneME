@@ -88,6 +88,4 @@ class Throw : public AllStatic {
   }
 
   static void uncatchable(JVM_SINGLE_ARG_TRAPS);
- private:
-  static Oop* _out_of_memory_error_instance;
 };

@@ -2066,20 +2066,43 @@ extern "C" {
   ReturnOop get_incompatible_class_change_error(JVM_SINGLE_ARG_TRAPS);
 
   // Natives.cpp
-  void Java_unimplemented(JVM_SINGLE_ARG_TRAPS);
 #if ENABLE_DYNAMIC_NATIVE_METHODS
-  jboolean  Java_unimplemented_bool(JVM_SINGLE_ARG_TRAPS);
-  jbyte     Java_unimplemented_byte(JVM_SINGLE_ARG_TRAPS);
-  jchar     Java_unimplemented_char(JVM_SINGLE_ARG_TRAPS);
-  jshort    Java_unimplemented_short(JVM_SINGLE_ARG_TRAPS);
-  jint      Java_unimplemented_int(JVM_SINGLE_ARG_TRAPS);
+
 #if ENABLE_FLOAT
-  jfloat  Java_unimplemented_float(JVM_SINGLE_ARG_TRAPS);
-  jdouble Java_unimplemented_double(JVM_SINGLE_ARG_TRAPS);
+#define FOR_FLOAT_TYPES_ARG(template, arg) \
+   template(jfloat,  T_FLOAT,  arg)            \
+   template(jdouble, T_DOUBLE, arg)    
+#else
+#define FOR_FLOAT_TYPES_ARG(template, arg)
 #endif
-  jlong   Java_unimplemented_long(JVM_SINGLE_ARG_TRAPS);
-  jobject Java_unimplemented_object(JVM_SINGLE_ARG_TRAPS);
+
+#define FOR_NON_VOID_TYPES_ARG(template, arg) \
+   template(jboolean, T_BOOLEAN, arg)         \
+   template(jbyte,    T_BYTE,    arg)         \
+   template(jchar,    T_CHAR,    arg)         \
+   template(jshort,   T_SHORT,   arg)         \
+   template(jint,     T_INT,     arg)         \
+   template(jlong,    T_LONG,    arg)         \
+   template(jobject,  T_OBJECT,  arg)         \
+   template(jarray,   T_ARRAY,   arg)         \
+   FOR_FLOAT_TYPES_ARG(template, arg)
+
+#define FOR_NON_VOID_TYPES(template) FOR_NON_VOID_TYPES_ARG(template, 0)
+
+#define FOR_ALL_TYPES_ARG(template, arg)          \
+   template(void,     T_VOID,    arg)             \
+   FOR_NON_VOID_TYPES_ARG(template, arg)
+
+#define FOR_ALL_TYPES(template) FOR_ALL_TYPES_ARG(template, 0)
+
+#define DECLARE_JAVA_UNIMPLEMENTED(jtype, ttype, arg) \
+  jtype Java_ ## jtype ## _unimplemented(JVM_SINGLE_ARG_TRAPS);
+
+  FOR_NON_VOID_TYPES(DECLARE_JAVA_UNIMPLEMENTED)
+
 #endif
+
+  void Java_void_unimplemented(JVM_SINGLE_ARG_TRAPS);
 
   void Java_abstract_method_execution(JVM_SINGLE_ARG_TRAPS);
   void Java_illegal_method_execution(JVM_SINGLE_ARG_TRAPS);

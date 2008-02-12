@@ -1109,55 +1109,25 @@ ClassFileParser::parse_method(ClassParserState *state, ConstantPool* cp,
       init_native_method(&m, (address) Java_abstract_method_execution);
     } else {
 #if ENABLE_DYNAMIC_NATIVE_METHODS
-      if(!GenerateROMImage) {
+      if (!GenerateROMImage) {
         Signature::Fast signature = m().signature();
+
+#define INIT_NATIVE_METHOD_CASE(jtype, ttype, arg)             \
+          case ttype :                                         \
+            init_native_method(                                \
+              &m, (address) Java_ ## jtype ## _unimplemented); \
+            break;      
+
         switch(signature().return_type()) {
-          //For now, we have individual functions for each return
-          // type.  This may very well change in the future.  
-          // For example, using Java_unimplemented_int for 
-          // bool, byte, char, short, and int types. 
-          case(T_VOID):
-            init_native_method(&m, (address) Java_unimplemented);
-            break;      
-          case(T_BOOLEAN):
-            init_native_method(&m, (address) Java_unimplemented_bool);
-            break;      
-          case(T_BYTE):
-            init_native_method(&m, (address) Java_unimplemented_byte);
-            break;      
-          case(T_CHAR):
-            init_native_method(&m, (address) Java_unimplemented_char);
-            break;      
-          case(T_SHORT):
-            init_native_method(&m, (address) Java_unimplemented_short);
-            break;      
-          case(T_INT):
-            init_native_method(&m, (address) Java_unimplemented_int);
-            break;      
-#if ENABLE_FLOAT
-          case(T_FLOAT):
-            init_native_method(&m, (address) Java_unimplemented_float);
-            break;      
-          case(T_DOUBLE):
-            init_native_method(&m, (address) Java_unimplemented_double);
-            break;      
-#endif //ENABLE_FLOAT
-          case(T_LONG):
-            init_native_method(&m, (address) Java_unimplemented_long);
-            break;      
-          case(T_OBJECT):
-          case(T_ARRAY):
-            init_native_method(&m, (address) Java_unimplemented_object);
-            break;      
-          default:
-            SHOULD_NOT_REACH_HERE();
+          FOR_ALL_TYPES(INIT_NATIVE_METHOD_CASE)
+            default:
+          SHOULD_NOT_REACH_HERE();
         }
-      } else {
-        init_native_method(&m, (address) Java_unimplemented);
-      }
-#else
-      init_native_method(&m, (address) Java_unimplemented);
+      } else 
 #endif
+      {
+        init_native_method(&m, (address) Java_void_unimplemented);
+      }
     }
   } else {
     if (code_length > 0) {
@@ -1881,20 +1851,18 @@ ReturnOop ClassFileParser::parse_class_internal(ClassParserState *stack JVM_TRAP
                                                     itable_length);
 
   // Finalization support
-  bool has_finalizer = false;
   if (super_class.not_null()) {  // Don't set flag for java.lang.Object
-    has_finalizer = super_class().has_finalizer();
-    if (!has_finalizer) {
-      Method::Raw fm = 
-          InstanceClass::find_method(&methods, Symbols::finalize_name(),
-                                     Symbols::void_signature());
-      if (fm.not_null()) {
-        has_finalizer = fm().is_private() && fm().is_native();
+    Method::Raw fm = 
+      InstanceClass::find_method(&methods, Symbols::finalize_name(),
+                                 Symbols::void_signature());
+    if (fm.not_null() && fm().is_private() && fm().is_native()) {
+      if (!GenerateROMImage && 
+          fm().get_native_code() == (address)Java_void_unimplemented) {
+        access_flags.set_has_unresolved_finalizer();
+      } else {
+        access_flags.set_has_finalizer();
       }
     }
-  }
-  if (has_finalizer) {
-    access_flags.set_has_finalizer();
   }
 #if ENABLE_ISOLATES
   if (Task::current()->is_hidden_class(&class_name)) {

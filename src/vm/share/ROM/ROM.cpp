@@ -1066,6 +1066,20 @@ ReturnOop ROM::symbol_for(utf8 s, juint hash_value, int len) {
 
 #if USE_BINARY_IMAGE_LOADER || USE_BINARY_IMAGE_GENERATOR
 
+#if ENABLE_DYNAMIC_NATIVE_METHODS
+
+#define TEMPLATE(jtype, ttype, arg) arg(Java_ ## jtype ## _unimplemented)
+
+#define UNIMPLEMENTED_METHOD_ENTRIES_DO(template) \
+  FOR_ALL_TYPES_ARG(TEMPLATE, template)
+
+#else
+
+#define UNIMPLEMENTED_METHOD_ENTRIES_DO(template) \
+  template(Java_void_unimplemented)
+
+#endif
+
 #define METHOD_ENTRIES_DO(template) \
   template(interpreter_method_entry) \
   template(interpreter_fast_method_entry_0) \
@@ -1091,7 +1105,7 @@ ReturnOop ROM::symbol_for(utf8 s, juint hash_value, int len) {
   template(shared_fast_getint_static_accessor)   \
   template(shared_fast_getlong_static_accessor)  \
   \
-  template(Java_unimplemented)                 \
+  UNIMPLEMENTED_METHOD_ENTRIES_DO(template)    \
   template(Java_abstract_method_execution)     \
   template(Java_incompatible_method_execution) \
   \

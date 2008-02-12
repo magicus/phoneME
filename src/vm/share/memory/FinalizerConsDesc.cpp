@@ -56,6 +56,11 @@ void FinalizerConsDesc::run_finalizer( void ) {
     native_finalizer = finalize_method().is_quick_native() ?
       (void (*)()) finalize_method().get_quick_native_code() :
       (void (*)()) finalize_method().get_native_code();
+
+    // Registration would fail if finalizer were invalid
+    GUARANTEE(native_finalizer != (void (*)())NULL &&
+              native_finalizer != (void (*)())Java_void_unimplemented,
+              "Finalizer must be valid at this point");
   }
 
   (*native_finalizer)();

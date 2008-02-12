@@ -137,6 +137,11 @@ class AccessFlags {
     return (_flags & JVM_ACC_HAS_FINALIZER) != 0;
   }
 
+  bool has_unresolved_finalizer() const {
+    return (_flags & JVM_ACC_HAS_FINALIZER) != 0 &&
+      (_flags & JVM_ACC_NATIVE) != 0;
+  }
+
   bool is_array_class() const {
     return (_flags & JVM_ACC_ARRAY_CLASS) != 0;
   }
@@ -245,6 +250,7 @@ class AccessFlags {
   friend class SystemDictionary;
   friend class JVM;
   friend class ConstantPool;
+  friend class Universe;
 
   // The functions below should only be called on the _access_flags
   // instance variables directly, otherwise they are just changing a
@@ -261,6 +267,9 @@ class AccessFlags {
   }
   void set_has_finalizer() {
     atomic_set_bits(JVM_ACC_HAS_FINALIZER);
+  } 
+  void set_has_unresolved_finalizer() {
+    atomic_set_bits(JVM_ACC_HAS_FINALIZER | JVM_ACC_NATIVE);
   } 
   void set_has_vanilla_constructor() {
     atomic_set_bits(JVM_ACC_HAS_VANILLA_CONSTRUCTOR);
@@ -301,6 +310,11 @@ class AccessFlags {
 
   void clear_has_monitor_bytecodes()   {
     atomic_clear_bits(JVM_ACC_HAS_MONITOR_BYTECODES);
+  }
+
+  void clear_has_unresolved_finalizer()   {
+    GUARANTEE(has_unresolved_finalizer(), "No need to clear");
+    atomic_clear_bits(JVM_ACC_NATIVE);
   }
 
   /// This structure is used in non-product mode to print out the

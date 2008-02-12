@@ -2436,12 +2436,13 @@ void CodeGenerator::invoke(const Method* method,
   // IMPL_NOTE: this needs to be fixed so that the AOT-compiled code can 
   // directly invoke the method without a look up
   if (method->is_native() && 
-      method->get_native_code() == (address)Java_unimplemented) {
+      method->get_native_code() == (address)Java_void_unimplemented) {
     // Used by AOT only: we are calling a MIDP native method, which
     // is not resolved during romization
     try_skip_lookup = false;
   } else if (method->is_quick_native() && 
-             method->get_quick_native_code() == (address)Java_unimplemented) {
+             method->get_quick_native_code() == 
+             (address)Java_void_unimplemented) {
     try_skip_lookup = false;
   }
 #else
