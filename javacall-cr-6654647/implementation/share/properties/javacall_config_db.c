@@ -28,13 +28,13 @@
 
 
 #include "javacall_defs.h"
+#include "javautil_stdio.h"
 #include "javacall_memory.h"
 #include "javacall_logging.h"
 #include "javacall_file.h"
 
 #include "javacall_db.h"
 #include "javautil_string.h"
-#include "javautil_sprintf.h"
 #include "javacall_config_db.h"
 
 /* Maximal expected line length from properties file */
