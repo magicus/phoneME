@@ -125,12 +125,46 @@ public class AutoTester extends AutoTesterBase implements AutoTesterInterface {
 
                 midletInfo = getFirstMIDletOfSuite(suiteId,
                                                    midletSuiteStorage);
+
+                Isolate[] isolatesBefore = Isolate.getIsolates();
+
                 testIsolate =
                     AmsUtil.startMidletInNewIsolate(suiteId,
                         midletInfo.classname, midletInfo.name, null,
                         null, null);
 
                 testIsolate.waitForExit();
+
+                Isolate[] isolatesAfter = Isolate.getIsolates();
+
+                /*
+                 * Wait for termination of all isolates contained in
+                 * isolatesAfter[], but not in isolatesBefore[].
+                 * This is needed to pass some tests (for example, CHAPI)
+                 * that starting several isolates.
+                 */
+                int i, j;
+                for (i = 0; i < isolatesAfter.length; i++) {
+                    for (j = 0; j < isolatesBefore.length; j++) {
+                        try {
+                            if (isolatesBefore[j].equals(isolatesAfter[i])) {
+                                break;
+                            }
+                        } catch (Exception e) {
+                            // isolatesAfter[i] might already exit,
+                            // no need to wait for it
+                            break;
+                        }
+                    }
+
+                    if (j == isolatesBefore.length) {
+                        try {
+                            isolatesAfter[i].waitForExit();
+                        } catch (Exception e) {
+                            // ignore: the isolate might already exit
+                        }
+                    }
+                }
 
                 if (loopCount > 0) {
                     loopCount -= 1;
