@@ -56,16 +56,12 @@
 #define LIME_DEBUG_PRINTF
 #endif
 
+#if ENABLE_JSR_179
+extern char *ExtractEventData(javacall_utf16_string event_name);
 extern void ParseOrientationData(char *data);
 extern void ParseAccuracyData(char *data);
 extern void ParseLocationData(char *data);
-extern void ParseLocationData(char *data);
-extern void HandleProximityLocationEvent();
-extern void HandleProximityStateEvent();
-
-#if ENABLE_JSR_179
-extern javacall_location_state provider_state[];
-extern char *ExtractEventData(javacall_utf16_string event_name);
+extern void HandleLocationProviderStateEvent(int state);
 #endif
 
 void SendEvent(KVMEventType *evt);
@@ -270,21 +266,18 @@ void SendEvent (KVMEventType *evt) {
 
 #if ENABLE_JSR_179
         case STATE_AVAILABLE:
-            provider_state[0] = JAVACALL_LOCATION_AVAILABLE;
-            HandleProximityLocationEvent();
+            HandleLocationProviderStateEvent(JAVACALL_LOCATION_AVAILABLE);
             break;
         case STATE_OUT_OF_SERVICE:
-            provider_state[0] = JAVACALL_LOCATION_OUT_OF_SERVICE;
-            HandleProximityLocationEvent();
+            HandleLocationProviderStateEvent(JAVACALL_LOCATION_OUT_OF_SERVICE);
             break;
         case STATE_TEMPORARILY_UNAVAILABLE:
-            provider_state[0] = JAVACALL_LOCATION_RESULT_TEMPORARILY_UNAVAILABLE;
+            HandleLocationProviderStateEvent(JAVACALL_LOCATION_TEMPORARILY_UNAVAILABLE);
             break;
         case LOCATION:
             event_data = ExtractEventData(L"4200");
             if (event_data) {
                 ParseLocationData(event_data);
-                HandleProximityLocationEvent();
             }
             break;
         case ORIENTATION:
