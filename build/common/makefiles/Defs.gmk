@@ -497,11 +497,19 @@ define compilefiles
 		else \
 			f3= ; \
 		fi ; \
-		$(JAVAC_CMD) -g$(JAVAC_DEBUG) -d $(JAVAC_OUT_DIR) \
-			-bootclasspath "$(BOOTCLASSPATH)" \
-			-classpath $(CLASSBINDIR) $$f1 $$f2 $$f3 || exit 1; \
+		if [ -n "$$f1$$f2$$f3" ]; then \
+			echo " ... compiling subset API java files..."; \
+			$(JAVAC_CMD) -g$(JAVAC_DEBUG) -d $(JAVAC_OUT_DIR) \
+				-bootclasspath "$(BOOTCLASSPATH)" \
+				-classpath $(CLASSBINDIR) $$f1 $$f2 $$f3 || exit 1; \
+		fi ; \
 		if [ -f $(SUPERSET_API_JAVA_LIST) ] ; then \
 			f4=@$(SUPERSET_API_JAVA_LIST) ; \
+		else \
+			f4= ; \
+		fi ; \
+		if [ -n "$$f4" ]; then \
+			echo " ... compiling superset API java files..."; \
 			$(JAVAC_CMD) -g$(JAVAC_DEBUG) -d $(JAVAC_OUT_DIR) \
 				-bootclasspath "$(BOOTCLASSPATH)" \
 				-classpath $(CLASSBINDIR) $$f1 $$f2 $$f4 || exit 1; \
@@ -517,7 +525,9 @@ define compilefiles
 	else \
 		echo " ... no need to recompile .java files"; \
 	fi) $(LOG)
-	@if [ -f $(REBUILD_JAVA_LIST) -o -f $(GENERATED_JAVA_LIST) -o ! -f $@ ]; then \
+	@if [ -f $(REBUILD_JAVA_LIST) -o -f $(GENERATED_JAVA_LIST)    \
+	                              -o -f $(SUBSET_API_JAVA_LIST)   \
+	                              -o -f $(SUPERSET_API_JAVA_LIST) -o ! -f $@ ]; then \
 		echo " ... $@"; \
 		rm -f $@; \
 		$(JAR_CMD) -cf $@ -C $(CLASSBINDIR) .; \
