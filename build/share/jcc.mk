@@ -220,7 +220,7 @@ $(CVM_OBJDIR)/$(CVM_ROMJAVA_O): $(CVM_ROMJAVA_LIST) \
 		$(CVM_TOP)/src/share/javavm/include/string_impl.h \
 		$(CVM_TOP)/src/share/javavm/include/preloader_impl.h \
 		$(CVM_TOP)/src/share/javavm/include/porting/endianness.h
-	$(MAKE) $(MAKE_NO_PRINT_DIRECTORY) GENERATEMAKEFILES=false \
+	$(AT)$(MAKE) $(MAKE_NO_PRINT_DIRECTORY) GENERATEMAKEFILES=false \
 		$(CVM_ROMJAVA_LIST_O)
 	echo Linking $@
 	$(AT)$(call TARGET_AR_CREATE,$@) $(call POSIX2HOST,$(CVM_ROMJAVA_LIST_O))
