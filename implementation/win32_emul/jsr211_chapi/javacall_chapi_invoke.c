@@ -30,7 +30,7 @@
 
 #include "javacall_chapi_invoke.h"
 
-
+#include "windows.h"
 
 /**
  * Asks NAMS to launch specified MIDlet. <BR>
@@ -74,12 +74,16 @@ javacall_result javacall_chapi_platform_invoke(int invoc_id,
         /* OUT */ javacall_bool* without_finish_notification, 
         /* OUT */ javacall_bool* should_exit)
 {
+    int res;
     (void)invoc_id;
     (void)handler_id;
-    (void)invocation;
-    (void)without_finish_notification;
-    (void)should_exit;
-    return JAVACALL_NOT_IMPLEMENTED;
+    *without_finish_notification = 1;
+    *should_exit = 0;
+
+    res = (int) ShellExecuteW( NULL, invocation->action, invocation->url, NULL, NULL, SW_SHOWNORMAL);
+    if ( res > 32 )
+        return JAVACALL_OK;
+    return JAVACALL_FAIL;
 }
 
 /*

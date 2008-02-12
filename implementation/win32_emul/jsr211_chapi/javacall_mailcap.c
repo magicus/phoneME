@@ -34,10 +34,13 @@
 #include "inc/javautil_str.h"
 #include "inc/javautil_storage.h"
 
+#include <time.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <memory.h>
 #include <string.h>
+#include <assert.h>
+
 
 #ifdef _DEBUG
 #define DEBUG_OUTPUT 1
@@ -1270,7 +1273,31 @@ javacall_result javacall_chapi_init_registry(void){
 	accesslist_fname = strdup(buf);
 
 	res = read_caps();
-
+    {
+        javacall_const_utf16_string handlerID = L"who_cares?";
+        javacall_utf16 tmp[100];
+        int tmpLen1 = 100;
+        int tmpLen2 = 100;
+        res = javacall_chapi_get_handler_info( handlerID, tmp, &tmpLen1, tmp, &tmpLen2, NULL );
+        if ( res == JAVACALL_CHAPI_ERROR_NOT_FOUND ){ // register dummy handler
+            javacall_const_utf16_string suffix = L".html";
+            javacall_const_utf16_string contentType = L"text/html";
+            javacall_const_utf16_string action = L"open";
+            res = javacall_chapi_register_handler(  	
+                handlerID,
+		        L"this is going to be handled by OS shell",
+		        L"suite_id",
+		        L"class_name",
+		        REGISTERED_NATIVE_FLAG,
+		        &contentType, 1,
+		        &suffix, 1,
+		        &action, 1,
+		        NULL, 0,
+		        NULL, 0,
+		        NULL, 0 );
+            assert( res == JAVACALL_OK );
+        }
+    }
 	return res;
 }
 
@@ -1320,7 +1347,7 @@ javacall_result javacall_chapi_register_handler(
 	int idQuoted;
 
 #ifdef DEBUG_OUTPUT
-	wprintf(L"JAVACALL::javacall_chapi_register_handler(%s,%d,%s)\n",content_handler_id,suite_id,class_name);
+	wprintf(L"JAVACALL::javacall_chapi_register_handler(%s,%s,%s)\n",content_handler_id,suite_id,class_name);
 #endif
 
 	result = open_db(MAILCAP_INDEX,&file,CHAPI_APPEND);
