@@ -232,9 +232,6 @@ public class DirectPlayer extends BasicPlayer
         if (debug) 
             System.out.println("[direct] DirectPlayer.doRealize " + mediaFormat);
 
-		if( null != state_subscriber )
-			state_subscriber.PlayerRealized( this );
-
         // #ifdef ENABLE_MULTIPLE_ISOLATES [
         // Add to media tunnel as event consumer
         // and, let native layer knows about their situation
