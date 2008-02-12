@@ -115,7 +115,6 @@
 #include <string.h> /* for NULL */
 #include <midpInit.h>
 #include <midpStorage.h>
-#include <midpUtilCRC.h>
 #include <pcsl_memory.h>
 
 #include <suitestore_intern.h>
@@ -480,7 +479,6 @@ MIDPError
 read_suites_data(char** ppszError) {
     MIDPError status;
     int i;
-    unsigned long realCrc, storedCrc;
     long bufferLen, pos;
     char* buffer = NULL;
     pcsl_string_status rc;
@@ -518,8 +516,7 @@ read_suites_data(char** ppszError) {
         return ALL_OK;
     }
 
-    if (status == ALL_OK && bufferLen <
-            (long) (sizeof(unsigned long) + sizeof(int))) {
+    if (status == ALL_OK && bufferLen < (long) sizeof(int)) {
         pcsl_mem_free(buffer);
         status = SUITE_CORRUPTED_ERROR; /* _suites.dat is corrupted */
     }
@@ -527,22 +524,8 @@ read_suites_data(char** ppszError) {
         return status;
     }
 
-    /* check the integrity of the suite database */
+    /* parse contents of the suite database */
     pos = 0;
-
-    realCrc = midpCRC32Init((unsigned char *)buffer + sizeof(unsigned long),
-                            bufferLen - sizeof(unsigned long));
-    realCrc = midpCRC32Finalize(realCrc);
-    storedCrc = *(unsigned long*)buffer;
-
-    if (realCrc != storedCrc) {
-        pcsl_mem_free(buffer);
-        return SUITE_CORRUPTED_ERROR;
-    }
-
-    ADJUST_POS_IN_BUF(pos, bufferLen, sizeof(unsigned long));
-
-    /* parse its contents */
     numOfSuites = *(int*)&buffer[pos];
     ADJUST_POS_IN_BUF(pos, bufferLen, sizeof(int));
 
@@ -677,7 +660,6 @@ write_suites_data(char** ppszError) {
     MIDPError status = ALL_OK;
     long bufferLen, pos;
     char* buffer = NULL;
-    char* pCrc;
     pcsl_string_status rc;
     pcsl_string suitesDataFile;
     MidletSuiteData* pData;
@@ -701,8 +683,8 @@ write_suites_data(char** ppszError) {
     /* allocate a buffer where the information about all suites will be saved */
     bufferLen = g_numberOfSuites * (sizeof(MidletSuiteData) +
         MAX_VAR_SUITE_DATA_LEN);
-    /* space to store the number of suites and the crc */
-    bufferLen += sizeof(unsigned long) + sizeof(int);
+    /* space to store the number of suites */
+    bufferLen += sizeof(int);
     buffer = pcsl_mem_malloc(bufferLen);
     if (buffer == NULL) {
         pcsl_string_free(&suitesDataFile);
@@ -712,10 +694,6 @@ write_suites_data(char** ppszError) {
     /* assemble the information about all suites into the allocated buffer */
     pos = 0;
     pData = g_pSuitesData;
-
-    /* reserve space for CRC */
-    pCrc = buffer;
-    ADJUST_POS_IN_BUF(pos, bufferLen, sizeof(unsigned long));
 
     *(int*)&buffer[pos] = g_numberOfSuites;
     ADJUST_POS_IN_BUF(pos, bufferLen, sizeof(int));
@@ -784,13 +762,6 @@ write_suites_data(char** ppszError) {
     }
 
     if (status == ALL_OK) {
-        /* calculate CRC of data in the buffer */
-        unsigned long crcToStore = midpCRC32Init(
-            (unsigned char *)buffer + sizeof(unsigned long), 
-            pos - sizeof(unsigned long));
-        crcToStore = midpCRC32Finalize(crcToStore);
-        *(unsigned long*)pCrc = crcToStore;
-
         /* write the buffer into the file */
         status = write_file(ppszError, &suitesDataFile, buffer, pos);
     }
