@@ -246,7 +246,8 @@ endif
 # Include JSR 226
 ifeq ($(USE_JSR_226), true)
 export JSR_226_DIR ?= $(COMPONENTS_DIR)/jsr226
-JSR_226_MAKE_FILE = $(JSR_226_DIR)/perseus2/platform.releases/leto/resources/build/$(SUBSYSTEM_MAKE_FILE)
+export JSR_226_PLATFORM_RELEASE ?= cdc_midp
+JSR_226_MAKE_FILE = $(JSR_226_DIR)/perseus2/platform.releases/$(JSR_226_PLATFORM_RELEASE)/resources/build/$(SUBSYSTEM_MAKE_FILE) 
 ifeq ($(wildcard $(JSR_226_MAKE_FILE)),)
 $(error JSR_226_DIR must point to a directory containing JSR 226 sources)
 endif
