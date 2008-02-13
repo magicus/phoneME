@@ -44,6 +44,7 @@ import com.sun.midp.main.MIDletProxy;
 import com.sun.midp.main.MIDletProxyList;
 import com.sun.midp.main.MIDletProxyListListener;
 import com.sun.midp.midlet.MIDletSuite;
+
 import com.sun.midp.events.EventListener;
 import com.sun.midp.events.EventQueue;
 import com.sun.midp.events.Event;
@@ -99,11 +100,6 @@ public class CHManagerImpl extends com.sun.midp.content.CHManager
      */
     private CHManagerImpl() {
         super();
-        EventQueue.getEventQueue(
-            SecurityInitializer.requestToken(
-                new SecurityTrusted()
-                )
-            ).registerEventListener(EventTypes.CHAPI_EVENT, this);
         if( DEBUG_OUT != null ) DEBUG_OUT.println( "CHManagerImpl()" );
     }
 
@@ -238,8 +234,9 @@ public class CHManagerImpl extends com.sun.midp.content.CHManager
      *
      * @param midletProxyList reference to the MIDlet proxy list
      */
-    public void initCleanupMonitor(MIDletProxyList midletProxyList) {
+    public void init(MIDletProxyList midletProxyList, EventQueue eventQueue) {
         midletProxyList.addListener(this);
+        eventQueue.registerEventListener(EventTypes.CHAPI_EVENT, this);
     }
 
     /**

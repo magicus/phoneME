@@ -30,6 +30,11 @@ import com.sun.midp.main.MIDletProxy;
 import com.sun.midp.main.MIDletProxyList;
 import com.sun.midp.main.MIDletProxyListListener;
 
+import com.sun.midp.events.EventListener;
+import com.sun.midp.events.EventQueue;
+import com.sun.midp.events.Event;
+import com.sun.midp.events.EventTypes;
+
 /**
  * Handle all of the details of ContentHandlers lifecycle.
  *
@@ -57,7 +62,7 @@ public class CHManagerImpl
      *
      * @param midletProxyList reference to the MIDlet proxy list
      */
-    public void initCleanupMonitor(MIDletProxyList midletProxyList) {
+    public void init(MIDletProxyList midletProxyList, EventQueue eventQueue) {
         midletProxyList.addListener(this);
     }
 
