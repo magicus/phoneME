@@ -1108,9 +1108,8 @@ ClassFileParser::parse_method(ClassParserState *state, ConstantPool* cp,
     if (m().is_abstract()) {
       init_native_method(&m, (address) Java_abstract_method_execution);
     } else {
-#if ENABLE_DYNAMIC_NATIVE_METHODS
-      if (!GenerateROMImage) {
-        Signature::Fast signature = m().signature();
+#if ENABLE_DYNAMIC_NATIVE_METHODS && !USE_SOURCE_IMAGE_GENERATOR
+      Signature::Fast signature = m().signature();
 
 #define INIT_NATIVE_METHOD_CASE(jtype, ttype, arg)             \
           case ttype :                                         \
@@ -1118,16 +1117,14 @@ ClassFileParser::parse_method(ClassParserState *state, ConstantPool* cp,
               &m, (address) Java_ ## jtype ## _unimplemented); \
             break;      
 
-        switch(signature().return_type()) {
-          FOR_ALL_TYPES(INIT_NATIVE_METHOD_CASE)
-            default:
-          SHOULD_NOT_REACH_HERE();
-        }
-      } else 
-#endif
-      {
-        init_native_method(&m, (address) Java_void_unimplemented);
+      switch(signature().return_type()) {
+        FOR_ALL_TYPES(INIT_NATIVE_METHOD_CASE)
+          default:
+        SHOULD_NOT_REACH_HERE();
       }
+#else
+      init_native_method(&m, (address) Java_void_unimplemented);
+#endif
     }
   } else {
     if (code_length > 0) {
@@ -1856,10 +1853,12 @@ ReturnOop ClassFileParser::parse_class_internal(ClassParserState *stack JVM_TRAP
       InstanceClass::find_method(&methods, Symbols::finalize_name(),
                                  Symbols::void_signature());
     if (fm.not_null() && fm().is_private() && fm().is_native()) {
-      if (!GenerateROMImage && 
-          fm().get_native_code() == (address)Java_void_unimplemented) {
+#if !USE_SOURCE_IMAGE_GENERATOR
+      if (fm().get_native_code() == (address)Java_void_unimplemented) {
         access_flags.set_has_unresolved_finalizer();
-      } else {
+      } else 
+#endif
+      {
         access_flags.set_has_finalizer();
       }
     }
