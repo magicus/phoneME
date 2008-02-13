@@ -35,9 +35,6 @@ import javax.xml.parsers.*;
 import java.rmi.MarshalException;
 
 import java.io.*;
-import java.rmi.*;
-import javax.microedition.io.*;
-
 import java.util.Stack;
 import java.util.Vector;
 
@@ -1159,10 +1156,9 @@ public class SOAPDecoder extends DefaultHandler
         }
 
         // simple test to see if we've made it inside the body yet
-        if (eName.toLowerCase().equals("envelope") ||
-            eName.toLowerCase().equals("body"))
-        {
-            if (!uri.equals(SOAP_URI)) {
+        String lowerCaseEName = eName.toLowerCase(); 
+        if ("envelope".equals(lowerCaseEName) || "body".equals(lowerCaseEName)){
+            if (!SOAP_URI.equals(uri)) {
                 errString = "Invalid URI From Server: " + uri + ", " +
                             "expected: " + SOAP_URI;
                 stateStack.push(new Integer(4));
@@ -1174,11 +1170,8 @@ public class SOAPDecoder extends DefaultHandler
 
         // the header element may appear as the first child of the
         // the envelope element.
-        if (bodyNEnvelope == 1 &&
-            uri.equals(SOAP_URI) &&
-            eName.toLowerCase().equals("header"))
-
-        {
+        if (bodyNEnvelope == 1 && 
+        		SOAP_URI.equals(uri) && "header".equals(lowerCaseEName)) {
             processingHeader = true;
             return;
         }
@@ -1186,7 +1179,7 @@ public class SOAPDecoder extends DefaultHandler
         // while processing the header element we can ignore anything
         // that does not have mustUnderstand = "1", if it does then
         // refuse to process the message. We understand no headers...
-        if (processingHeader = true) {
+        if (processingHeader) {
             String mustUnderstand = attrs.getValue(SOAP_URI, "mustUnderstand");
             if (mustUnderstand != null && mustUnderstand.equals("1")) {
                 errString = "Unsupported header element with mustUnderstand";
@@ -1211,9 +1204,8 @@ public class SOAPDecoder extends DefaultHandler
 
         String attr = attrs.getValue(
             "http://www.w3.org/2001/XMLSchema-instance", "nil");
-        isNill = (attr != null && (
-            attr.toLowerCase().equals("true") ||
-            attr.equals("1")));
+        isNill = (attr != null && 
+        			(attr.toLowerCase().equals("true") || attr.equals("1")));
 
         token.delete(0, token.length());
         startState(uri, eName);

@@ -43,6 +43,8 @@ import org.xml.sax.InputSource;
 import org.xml.sax.SAXParseException;
 import org.xml.sax.SAXException;
 
+import com.sun.ukit.jaxp.DTD.ExternalID;
+
 import javax.xml.parsers.SAXParser;
 
 class QName {
@@ -75,6 +77,7 @@ class QName {
 public final class Parser extends SAXParser implements Locator
 {
 	final static java.io.PrintStream DEBUG_OUT = System.out; 
+	static final boolean STRICT = true; 
 	
 	public final static String	FAULT	= "";
 
@@ -210,6 +213,10 @@ public final class Parser extends SAXParser implements Locator
 		nmttyp['\t'] = 3;
 		nmttyp['\r'] = 3;
 		nmttyp['\n'] = 3;
+	}
+	
+	final static void ASSERT( boolean v ){
+		if( !v ) throw new IllegalArgumentException();
 	}
 
 	/**
@@ -591,7 +598,7 @@ public final class Parser extends SAXParser implements Locator
 			case 3:		// skip spaces after internal subset
 				switch (chtyp(ch)) {
 				case '>':
-					if (dtd.externalID != null) {
+					if (dtd.externalID != ExternalID.EMPTY) {
 						//		Report the DTD external subset
 						InputSource is = mHand.resolveEntity(dtd.externalID.pubidLiteral, 
 													dtd.externalID.systemLiteral);
@@ -1072,10 +1079,10 @@ public final class Parser extends SAXParser implements Locator
 				bntok();
 				switch( bkeyword() ){
 					case 'E':
-						dtd.elements.put(elementName, DTD.empty);
+						dtd.elements.put(elementName, DTD.EMPTY);
 						break;
 					case 'A':
-						dtd.elements.put(elementName, DTD.any);
+						dtd.elements.put(elementName, DTD.ANY);
 						break;
 					default:
 						panic(FAULT);
@@ -1179,7 +1186,7 @@ public final class Parser extends SAXParser implements Locator
 	/**
 	 * dummy element for duplicated attribute definitions
 	 */
-	private static final DTD.AttDef dummyAttDef = new DTD.AttDef(); 
+	private static final DTD.AttDef dummyAttDef = new DTD.AttDef();
 	
 	/**
 	 * Parses an attribute declaration.
@@ -1618,11 +1625,14 @@ public final class Parser extends SAXParser implements Locator
 	 * 
 	 * @param spaceName namespace prefix. Can be empty string. 
 	 * @param URI namespace URI
+	 * @throws SAXException 
 	 */
-	final private void pushNamespace( String spaceName, String URI ) {
+	final private void pushNamespace( String spaceName, String URI ) throws SAXException {
 		Element element = elementStack.top();
-		if( namespaceStack.pushUnique( element.registeredNamespacesNumber, spaceName, URI ) )
+		if( namespaceStack.pushUnique( element.registeredNamespacesNumber, spaceName, URI ) ){
 			element.registeredNamespacesNumber++;
+			mHand.startPrefixMapping( spaceName, URI );
+		}
 	}
 	
 	private Element processTag() throws SAXException, IOException {
@@ -1682,20 +1692,10 @@ public final class Parser extends SAXParser implements Locator
 		 * optional).
 		 */
 		if( mIsNSAware ){
-			// report new namespaces to handler
-			// 	NOTE: The namespace declaration should not be reported as an element attribute.
+			// NOTE: The namespace declaration should not be reported as an element attribute.
 			for( int idx = attributes.getLength(); idx-- > 0; ){
-				String qname = attributes.getQName(idx), namespacePrefix = null;
-				if( XMLNSSTR.equals(qname) ){
-					namespacePrefix = "";
-				} else if( qname.startsWith(XMLNSSTR + ':') ){
-					namespacePrefix = attributes.getLocalName(idx);
-				}
-				if( namespacePrefix != null ){
-					String namespaceURI = attributes.getValue(idx);
-					/* here we register namespaces that are specified in DTD for the element */
-					pushNamespace( namespacePrefix, namespaceURI );
-					mHand.startPrefixMapping( namespacePrefix, namespaceURI );
+				String qname = attributes.getQName(idx);
+				if( XMLNSSTR.equals(qname) || qname.startsWith(XMLNSSTR + ':') ){
 					attributes.remove(idx);
 				}
 			}
@@ -1706,16 +1706,18 @@ public final class Parser extends SAXParser implements Locator
 	private void processTagClosing() throws SAXException {
 		Element element = elementStack.pop(); 
 		// Report the end of element
-		if (mIsNSAware)
+		if (mIsNSAware){
 			mHand.endElement(element.namespace.URI, 
 						QName.local(element.elementName), "");
-		else mHand.endElement("", "", QName.qname(element.elementName));
-		// Restore the top of the prefix stack
-		while( element.registeredNamespacesNumber-- > 0 ) {
-			Namespace ns = namespaceStack.pop();
-			mHand.endPrefixMapping(ns.id);
-			ns.free();
-		}
+			// Restore the top of the prefix stack
+			if( DEBUG_OUT != null ) 
+				DEBUG_OUT.println( QName.qname(element.elementName) + ".registeredNamespacesNumber = " + element.registeredNamespacesNumber );
+			while( element.registeredNamespacesNumber-- > 0 ) {
+				Namespace ns = namespaceStack.pop();
+				mHand.endPrefixMapping(ns.id);
+				ns.free();
+			}
+		} else mHand.endElement("", "", QName.qname(element.elementName));
 		// Remove the top element tag
 		element.free();
 	}
@@ -1723,19 +1725,15 @@ public final class Parser extends SAXParser implements Locator
 	private void setAttrTypes(Hashtable attList) {
 		for( int idx = attributes.getLength(); idx-- > 0; ){
 			String qname = attributes.getQName(idx);
-			if( DEBUG_OUT != null )
-				DEBUG_OUT.print( "setAttType( '" + qname + "', " );
 			DTD.AttDef def = (DTD.AttDef)attList.get( qname );
 			if( def != null ){
 				// sets type and convert value if type is 'CDATA'
 				attributes.setType( idx, def.attType );
-				if( DEBUG_OUT != null ) DEBUG_OUT.print( def.attType );
 			}
-			if( DEBUG_OUT != null ) DEBUG_OUT.print( " )" );
 		}
 	}
 
-	private void addDefaultAttributes(Hashtable attList) {
+	private void addDefaultAttributes(Hashtable attList) throws SAXException {
 		if( DEBUG_OUT != null )
 			DEBUG_OUT.println( "addDefaultAttributes" ); 
 		for( Enumeration e = attList.keys(); e.hasMoreElements();){
@@ -1756,125 +1754,31 @@ public final class Parser extends SAXParser implements Locator
 				default: // #FIXED & <default>
 					if( attributes.getIndex(qname) == -1 ){
 						// add attribute with the default value
-						int idx = attributes.add(qname, def.defaultDeclValue);
+						int idx = addAttribute(qname, def.defaultDeclValue);
 						attributes.setType( idx, def.attType ); // sets type and convert value if type is 'CDATA'
 					}
 			}
 		}
 	}
-
-	/**
-	 * Parses an attribute.
-	 *
-	 * This recursive method is responsible for prefix addition 
-	 * (<code>mPref</code>) and prefix mapping reports on the way down. The 
-	 * element's start tag end triggers the return process. The method then 
-	 * on it's way back resolves prefixes and accumulates attributes.<br />
-	 * Note that this method will not report namespace declaration attributes
-	 * (xmlns* attributes), the 
-	 * {@link DefaultHandler#startPrefixMapping startPrefixMapping} method 
-	 * is invoked instead.
-	 *
-	 * @param att An object which represents current attribute.
-	 * @exception SAXException 
-	 * @exception IOException 
-	 */
-	/*
-	private void attr(Pair att) throws SAXException, IOException
-	{
-		Pair	next = null;
-		char	norm = 'c';		// CDATA-type normalization by default [#3.3.3]
-		String	type;
-		try {
-			switch (wsskip()) {
-			case '/':
-			case '>':
-				//		Go through all defined attributes on current tag to 
-				//		find defaults
-				for (Pair def = att.list; def != null; def = def.next) {
-					if (def.list != null) {
-						//		Attribute definition with default value
-						Pair act = att.next;
-						while (act != null) {
-							if (act.eqname(def.chars) == true)
-								break;
-							act = act.next;
-						}
-						if (act == null) {
-							//		Add default attribute
-							push(new Input(def.list.chars));
-							attr(att);
-							return;
-						}
-					}
-				}
-				return;
-
-			default:
-				//		Read the attribute name and value
-				att.chars = qname(mIsNSAware);
-				att.name  = att.local();
-				type = "CDATA";
-				norm = 'c';
-				if (att.list != null) {
-					// look for declaration of this attribute in the DTD 
-					Pair attr = find(att.list, att.chars);
-					if (attr != null) {
-						norm = 'i';
-						switch (attr.id) {
-							case 'i': type = "ID"; break;
-							case 'r': type = "IDREF"; break;
-							case 'R': type = "IDREFS"; break;
-							case 'n': type = "ENTITY"; break;
-							case 'N': type = "ENTITIES"; break;
-							case 't': type = "NMTOKEN"; break;
-							case 'T': type = "NMTOKENS"; break;
-							case 'u': type = "NMTOKEN"; break;
-							case 'o': type = "NOTATION"; break;
-							case 'c': norm = 'c'; break;
-							default:
-								panic(FAULT);
-						}
-					}
-				}
-				if( wsskip() != '=' )
-					panic(FAULT);
-				next(); // consume '='
-				
-				bqstr(norm);		// read the value with normalization.
-				String val = new String(mBuff, 1, mBuffIdx);
-				
-				//		Put a namespace declaration on top of the prefix stack
-				if (mIsNSAware && isdecl(att, val)) {
-					//		A namespace declaration
-					//		Report a start of the new mapping
-					mHand.startPrefixMapping(mPref.name, mPref.value);
-					//		Recursive call to parse the next attribute
-					next = pair(att);
-					next.list = att.list;
-					attr(next);
-					//		NOTE: The namespace declaration is not reported as an element attribute.
-				} else {
-					//		An ordinary attribute
-					//		Recursive call to parse the next attribute
-					next = pair(att);
-					next.list = att.list;
-					attr(next);
-					//		Add the attribute to the attributes string array
-					//		Resolve the prefix if any and report the attribute
-					//		NOTE: The attribute does not accept the default namespace.
-					mAttrs.add( (att.chars[0] != 0)? rslv(att.chars) : "", mIsNSAware? att.name : "", 
-										att.qname(), val, type );
-				}
-				break;
-			}
-		} finally {
-			if (next != null)
-				del(next);
-		}
-	}
-	*/
 	
+	private int addAttribute(String attributeQName, String attrValue) throws SAXException {
+		
+		if( mIsNSAware ){
+			String namespacePrefix = null;
+			if( XMLNSSTR.equals(attributeQName) ){
+				namespacePrefix = "";
+			} else if( attributeQName.startsWith(XMLNSSTR + ':') ){
+				namespacePrefix = attributeQName.substring(XMLNSSTR.length() + 1);
+			}
+			if( namespacePrefix != null ){
+				/* here we register namespaces that are specified in DTD for the element */
+				pushNamespace( namespacePrefix, attrValue );
+			}
+		}
+		// save all attributes (xmlns too)
+		return attributes.add( attributeQName, attrValue /*CDATA normalized*/ );
+	}
+
 	private void parseAttributes() throws SAXException, IOException {
 		attributes.clean();
 		boolean done = false;
@@ -1892,24 +1796,7 @@ public final class Parser extends SAXParser implements Locator
 					next(); // consume '='
 					bqstr('c');	// read value with CDATA normalization.
 					String attrValue = new String(mBuff, 1, mBuffIdx);
-					
-					if( mIsNSAware ) {
-						// check for a namespace declaration
-						String spaceName = null;
-						if( XMLNSSTR.equals(QName.qname( attrName )) ){
-							// default namespace declaration
-							spaceName = "";
-						} else if( XMLNSSTR.equals(QName.prefix( attrName )) ){
-							spaceName = QName.local(attrName);
-						}
-						if( spaceName != null ){
-							// put a namespace declaration on top of the prefix stack
-							pushNamespace( spaceName, attrValue );
-						}
-					}
-					// save all attributes (xmlns too)
-					// An ordinary attribute
-					attributes.add( QName.qname(attrName), attrValue /*CDATA normalized*/ );
+					addAttribute(QName.qname(attrName), attrValue);
 			}
 		}
 		// all attributes have been read
@@ -3603,7 +3490,7 @@ public final class Parser extends SAXParser implements Locator
 
 class DTD {
 	String name; // doctype name
-	ExternalID externalID = new ExternalID();
+	ExternalID externalID = ExternalID.EMPTY;
 	Hashtable/*<Name, Contentspec>*/ elements = new Hashtable(); 
 	Hashtable/*<elemQName, Hashtable<attQName, AttDef>>*/ attLists = new Hashtable();
 	Hashtable/*<URI, Hashtable<localName, ref to attList element>>*/ attListsRef = new Hashtable();
@@ -3617,10 +3504,7 @@ class DTD {
 		// if pubidLiteral == null => ExteralID :: 'SYSTEM' SystemLiteral
 		// else ExteralID :: 'PUBLIC' PubidLiteral [SystemLiteral]
 
-		public void clean() {
-			pubidLiteral = null;
-			systemLiteral = null;
-		}
+		public static final ExternalID EMPTY = new ExternalID();
 	}
 	
 	static interface Contentspec {
@@ -3699,16 +3583,16 @@ class DTD {
 		}
 	}
 	
-	final static Contentspec empty = new Contentspec() {
+	final static Contentspec EMPTY = new Contentspec() {
 		public int type() { return typeEMPTY; }
 	};
-	final static Contentspec any = new Contentspec() {
+	final static Contentspec ANY = new Contentspec() {
 		public int type() { return typeANY; }
 	};
 	
 	public void clean() {
 		name = null;
-		externalID.clean();
+		externalID = ExternalID.EMPTY;
 		elements.clear(); 
 		attLists.clear();
 		attListsRef.clear();
@@ -3803,6 +3687,7 @@ class Namespace extends LinkedList {
 		}
 
 		public boolean pushUnique( int topElemsToCheckCount, String id, String URI ){
+			if( Parser.STRICT ) Parser.ASSERT( stack.size() >= topElemsToCheckCount );
 			for( int idx = stack.size(); topElemsToCheckCount-- > 0 ;){
 				if( ((Namespace)stack.elementAt( --idx )).id.equals(id) )
 					return false;
@@ -3823,6 +3708,7 @@ class Namespace extends LinkedList {
 		}
 		
 		public Namespace pop() {
+			if( Parser.STRICT ) Parser.ASSERT( stack.size() > 0 );
 			Namespace ns = (Namespace)stack.elementAt(stack.size() - 1);
 			stack.removeElementAt(stack.size() - 1);
 			return ns;
@@ -3850,11 +3736,13 @@ class Namespace extends LinkedList {
 }
 
 class Element extends LinkedList {
-	int registeredNamespacesNumber = 0;
-	Namespace namespace = null; // element namespace
-	char[] elementName = null; // as read by qname()
+	int registeredNamespacesNumber;
+	Namespace namespace; // element namespace
+	char[] elementName; // as read by qname()
 	
 	public Element init( char[] qname ){
+		registeredNamespacesNumber = 0;
+		namespace = null;
 		elementName = qname;
 		return this;
 	}
@@ -3880,6 +3768,7 @@ class Element extends LinkedList {
 			return stack.size();
 		}
 		public Element top(){
+			if( Parser.STRICT ) Parser.ASSERT( stack.size() > 0 );
 			return (Element)stack.elementAt(stack.size() - 1);
 		}
 		public void push( char[] qname ){
