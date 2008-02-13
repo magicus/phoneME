@@ -36,13 +36,7 @@
 #include <suitestore_task_manager.h>
 #include <commandLineUtil.h>
 #include <commandLineUtil_md.h>
-#include <midp_properties_port.h>
-
-#if ENABLE_MULTIPLE_ISOLATES
-#define MIDP_HEAP_REQUIREMENT (MAX_ISOLATES * 1024 * 1024)
-#else
-#define MIDP_HEAP_REQUIREMENT (1280 * 1024)
-#endif
+#include <heap.h>
 
 /** Maximum number of command line arguments. */
 #define RUNMIDLET_MAX_ARGS 32
@@ -64,29 +58,6 @@ static const char* const runUsageText =
 "  where <suite number> is the number of a suite as displayed by the\n"
 "  listMidlets command, and <suite ID> is the unique ID a suite is \n"
 "  referenced by\n\n";
-
-
-/**
- * Reads MAX_ISOLATES property, calculates and returns size of the 
- * required heap.  If the MAX_ISOLATES has not been found, default
- * heap size is returned
- *
- * @return <tt>heap size</tt> 
- */
-int
-getHeapRequirement(){
-    int max_isolates = getInternalPropertyInt("MAX_ISOLATES");
-    int midp_heap_requirement;
-
-    if (max_isolates == 0) {
-        max_isolates = MAX_ISOLATES;
-    }
-
-    /*calculate heap size*/
-    midp_heap_requirement = max_isolates * 1280 * 1024;
-    return midp_heap_requirement;
-}
-
 
 /**
  * Runs a MIDlet from an installed MIDlet suite. This is an example of
@@ -217,7 +188,7 @@ runMidlet(int argc, char** commandlineArgs) {
         return -1;
     }
 
-    /* get midp home directory, set it */
+    /* get midp application directory, set it */
     appDir = getApplicationDir(argv[0]);
     if (appDir == NULL) {
         return -1;
@@ -225,7 +196,7 @@ runMidlet(int argc, char** commandlineArgs) {
 
     midpSetAppDir(appDir);
 
-    /* get midp home directory, set it */
+    /* get midp configuration directory, set it */
     confDir = getConfigurationDir(argv[0]);
     if (confDir == NULL) {
         return -1;

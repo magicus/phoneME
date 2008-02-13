@@ -45,4 +45,5 @@ SUBSYSTEM_AMS_EXTRA_INCLUDES += \
 #
 SUBSYSTEM_AMS_NATIVE_FILES += \
     commandLineUtil.c \
-    findMidlet.c
+    findMidlet.c \
+    heap.c

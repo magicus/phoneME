@@ -43,15 +43,6 @@
 #include <midp_runtime_info.h>
 
 /*
- * Defines the heap requirement to use when initializing the VM.
- */
-#if ENABLE_MULTIPLE_ISOLATES
-    #define MIDP_HEAP_REQUIREMENT (MAX_ISOLATES * 1024 * 1024)
-#else
-    #define MIDP_HEAP_REQUIREMENT (1024 * 1024)
-#endif
-
-/*
  * Definitions of the events that may cause a call of listener.
  */
 /**
