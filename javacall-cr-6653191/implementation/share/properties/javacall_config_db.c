@@ -571,6 +571,13 @@ javacall_handle configdb_load_from_fs(javacall_utf16* unicodeFileName, int fileN
  */
 javacall_handle javacall_configdb_load(javacall_utf16* unicodeFileName, int fileNameLen) {
 #ifdef USE_PROPERTIES_FROM_FS
+    if (NULL == configdb_load_from_fs(unicodeFileName, fileNameLen)) {
+        /*
+         * Configuration file is a must here.  
+         * Exit now, do not propagate the error further.
+         */
+        exit(1);
+    }
     return configdb_load_from_fs(unicodeFileName, fileNameLen);
 #else
     return configdb_load_no_fs();
