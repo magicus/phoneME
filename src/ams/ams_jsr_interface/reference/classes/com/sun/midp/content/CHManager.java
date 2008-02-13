@@ -205,6 +205,7 @@ public class CHManager {
      * for incompletely handled Invocation requests.
      *
      * @param midletProxyList reference to the MIDlet proxy list
+     * @param eventQueue reference to AMS isolate event queue
      */
     public void init(MIDletProxyList midletProxyList, EventQueue eventQueue) {
     }

@@ -351,7 +351,7 @@ typedef struct {
 #endif /* ENABLE_JSR_177 */
         jsr75_jc_event_root_changed        jsr75RootchangedEvent;
 #ifdef ENABLE_JSR_211
-        jsr211_jc_event_platform_event    jsr211PlatformEventEvent;
+        jsr211_jc_event_platform_event    jsr211PlatformEvent;
 #endif
 
         midp_event_heap_size               heap_size;
