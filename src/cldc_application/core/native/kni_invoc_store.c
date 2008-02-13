@@ -57,6 +57,7 @@
 #include <jsr211_invoc.h>
 #include <jsr211_platform_invoc.h>
 #include <jsrop_memory.h>
+#include <jsrop_suitestore.h>
 #include <javautil_unicode.h>
 #include <javacall_memory.h>
 
@@ -1778,13 +1779,12 @@ static void javanotify_chapi_java_invoke_handler(
         return;
     }
 
-    suite_id = 0;
-    for (i = 0; i < suite_id_len; i++){
-        suite_id = suite_id * 10 + (suite_id_out[i] - L'0');
+    if (0 == jsrop_string_to_suiteid (suite_id_out, &suite_id)) {
+        suite_id = UNUSED_SUITE_ID;
     }
     FREE(suite_id_out);
-    
-    if (flag && REGISTERED_NATIVE_FLAG) {
+
+    if ((flag && REGISTERED_NATIVE_FLAG) || (UNUSED_SUITE_ID == suite_id)) {
         FREE(classname);
         jsr211_abort_platform_invocation(invoc_id);
         return;
