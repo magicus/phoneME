@@ -55,6 +55,12 @@ typedef signed int javacall_int32;
 typedef __int64 javacall_int64;  // This type shall be redefined for non MSC compiler!!
 
 /**
+ * @typedef javacall_uint64
+ * @brief 64 bit unsigned integer type
+ */
+typedef unsigned __int64 javacall_uint64;  // This type shall be redefined for non MSC compiler!!
+
+/**
  * @def JAVACALL_MAX_FILE_NAME_LENGTH
  * Maximal length of filename supported 
  */
