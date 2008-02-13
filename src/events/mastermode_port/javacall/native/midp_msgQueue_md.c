@@ -29,6 +29,7 @@
 
 #include <javacall_events.h>
 #include <midp_jc_event_defs.h>
+#include <midpUtilKni.h>
 
 #ifdef ENABLE_JSR_75
 extern void notifyDisksChanged();
@@ -72,8 +73,16 @@ void checkForSystemSignal(MidpReentryData* pNewSignal,
     case MIDP_JC_EVENT_KEY:
         pNewSignal->waitingFor = UI_SIGNAL;
         pNewMidpEvent->type    = MIDP_KEY_EVENT;
-        pNewMidpEvent->CHR     = event->data.keyEvent.key;
         pNewMidpEvent->ACTION  = event->data.keyEvent.keyEventType;
+        // Special Handling for Key typed event
+        if( event->data.keyEvent.keyEventType == JAVACALL_KEYTYPED ) {
+            char buf[2];
+            buf[0] = event->data.keyEvent.key;
+            buf[1] = 0;
+            pcsl_string_from_chars(buf,&(pNewMidpEvent->stringParam1));
+        } else {
+            pNewMidpEvent->CHR     = event->data.keyEvent.key;
+        }
         break;
     case MIDP_JC_EVENT_PEN:
         pNewSignal->waitingFor = UI_SIGNAL;

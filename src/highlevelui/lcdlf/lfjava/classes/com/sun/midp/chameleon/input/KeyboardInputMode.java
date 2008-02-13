@@ -132,7 +132,11 @@ public class KeyboardInputMode implements InputMode {
         // if the key is printable one
         if (mediator != null &&
             !longPress) {
-            if( keyCode >= ' ' && keyCode < 127) {
+            if( keyCode >= ' ' && keyCode < 127 && 
+            //Following line is used for removing duplicate
+            //events when using the keyboard
+            !(keyCode >= '0' && keyCode <= '9') &&
+            keyCode != '*' && keyCode != '#' ) {
                 mediator.commit("" + (char)keyCode);
             } else if ( mediator.isNewlineKey(keyCode)) {
                 mediator.commit("\n");
