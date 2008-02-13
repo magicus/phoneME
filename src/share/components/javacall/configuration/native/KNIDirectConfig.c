@@ -458,7 +458,14 @@ void mmapi_string_delete_duplicates(char *p) {
                 s_len = strlen(s0);
             }
             if (s_len == p_len && !javautil_strnicmp(p, s0, s_len)) {
-                memset(s0, ' ', s_len);
+                s0--;
+                s_len++;
+                if (s == NULL) {
+                    *s0 = 0;
+                } else {
+                    s = s0;
+                    memcpy(s0, s0+s_len, strlen(s0) - s_len);
+                }
             }
         } while (s != NULL && *s != '\0');
         p += p_len;
