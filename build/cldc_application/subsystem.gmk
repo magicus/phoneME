@@ -31,6 +31,13 @@
 #Generated dir for JSR 172
 JSR_172_GENERATED_DIR=$(GENERATED_DIR)
 
+ifneq ($(USE_JSR_280), true)
+SUBSYSTEM_JSR172_PACKAGES += \
+   com.sun.ukit.jaxp \
+   org.xml.sax \
+   org.xml.sax.helpers
+endif
+
 INTERNAL_JSR_172_JAVA_FILES_RMI_RI_FILES += \
         $(INTERNAL_JSR_172_RI_DIR)/rmi/java/rmi/RemoteException.java \
         $(INTERNAL_JSR_172_RI_DIR)/rmi/java/rmi/Remote.java
