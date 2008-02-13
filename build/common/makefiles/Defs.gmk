@@ -522,7 +522,7 @@ define compilefiles
 		if [ -n "$$f4" ]; then \
 			echo " ... compiling superset API java files..."; \
 			$(JAVAC_CMD) -g$(JAVAC_DEBUG) -d $(JAVAC_OUT_DIR) \
-				-bootclasspath "$(BOOTCLASSPATH)" \
+				-bootclasspath "$(BOOTCLASSPATH)$(PATHSEP)$(JAVAC_OUT_DIR)" \
 				-classpath $(CLASSBINDIR) $$f1 $$f2 $$f4 || exit 1; \
 		fi ; \
 		if test "$(TARGET_VM)" = "cldc_vm"; then \
