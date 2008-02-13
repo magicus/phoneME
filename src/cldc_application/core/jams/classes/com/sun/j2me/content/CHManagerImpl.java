@@ -233,6 +233,7 @@ public class CHManagerImpl extends com.sun.midp.content.CHManager
      * This method is only called from MIDletSuiteLoader in the AMS Isolate.
      *
      * @param midletProxyList reference to the MIDlet proxy list
+     * @param eventQueue reference to AMS isolate event queue
      */
     public void init(MIDletProxyList midletProxyList, EventQueue eventQueue) {
         midletProxyList.addListener(this);

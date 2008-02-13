@@ -1614,7 +1614,7 @@ jsr211_launch_result jsr211_execute_handler(javacall_const_utf16_string handler_
  * @param status result of the invocation processing. 
  * @return result of operation.
  */
-static void javanotify_chapi_platform_finish_handler(int invoc_id,
+static void handle_javanotify_chapi_platform_finish(int invoc_id,
         javacall_utf16_string url,
         int argsLen, javacall_utf16_string* args,
         int dataLen, void* data,
@@ -1728,7 +1728,7 @@ static void jsr211_abort_platform_invocation (int tid)
  * @param invocation filled out structure with invocation params
  * @param invoc_id invocation Id for further references, should be positive
  */
-static void javanotify_chapi_java_invoke_handler(
+static void handle_javanotify_chapi_java_invoke(
         const javacall_utf16_string handler_id,
         javacall_chapi_invocation* invocation,
         int invoc_id) {
@@ -1780,17 +1780,17 @@ static void javanotify_chapi_java_invoke_handler(
     }
 
     if (0 == jsrop_string_to_suiteid (suite_id_out, &suite_id)) {
-        suite_id = UNUSED_SUITE_ID;
+        suite_id = INVALID_SUITE_ID;
     }
     FREE(suite_id_out);
 
-    if ((flag && REGISTERED_NATIVE_FLAG) || (UNUSED_SUITE_ID == suite_id)) {
+    if ((flag & REGISTERED_NATIVE_FLAG) || (INVALID_SUITE_ID == suite_id)) {
         FREE(classname);
         jsr211_abort_platform_invocation(invoc_id);
         return;
     }
 
-    invoc =  (StoredInvoc*) newStoredInvoc();
+    invoc = (StoredInvoc*)newStoredInvoc();
     if (invoc == NULL) {
         FREE(classname);
         jsr211_abort_platform_invocation(invoc_id);
@@ -1802,7 +1802,7 @@ static void javanotify_chapi_java_invoke_handler(
     invoc->tid = invoc_id;
     invoc->status = STATUS_INIT;
     invoc->suiteId = suite_id;
-    invoc->invokingSuiteId = UNUSED_SUITE_ID;
+    invoc->invokingSuiteId = INVALID_SUITE_ID;
 
     if (PCSL_STRING_OK != pcsl_string_convert_from_utf16(handler_id, javacall_string_len(handler_id), &invoc->ID))
         res = JAVACALL_FAIL;
@@ -1960,10 +1960,7 @@ jsr211_boolean jsr211_platform_finish(int tid, jsr211_boolean *should_exit)
                                                  status,
                                                  &_should_exit);
                 if (JAVACALL_OK == res) {
-                    if (_should_exit)
-                        *should_exit = JSR211_TRUE;
-                    else
-                        *should_exit = JSR211_FALSE;
+                    *should_exit = _should_exit ? JSR211_TRUE : JSR211_FALSE;
                 } else
                     success = JSR211_FALSE;
             }
@@ -1980,16 +1977,11 @@ jsr211_boolean jsr211_platform_finish(int tid, jsr211_boolean *should_exit)
     return success;
 }
 
-    int invoc_id;
-    javacall_utf16_string handler_id;
-    javacall_chapi_invocation_status status;
-    javacall_chapi_invocation invocation;
-
 #define CHECK_FOR_NULL_AND_FREE(pointer) \
     if (NULL != pointer) { \
         javacall_free(pointer); \
         pointer = NULL; \
-    }
+    } \
 
 static void free_platform_event (jsr211_platform_event *event)
 {
@@ -2018,7 +2010,7 @@ static void free_platform_event (jsr211_platform_event *event)
 
 void jsr211_process_platform_finish_notification (jsr211_platform_event *event)
 {
-    javanotify_chapi_platform_finish_handler(
+    handle_javanotify_chapi_platform_finish(
         event->invoc_id,
         event->invocation.url,
         event->invocation.argsLen,
@@ -2033,7 +2025,7 @@ void jsr211_process_platform_finish_notification (jsr211_platform_event *event)
 
 void jsr211_process_java_invoke_notification (jsr211_platform_event *event)
 {
-    javanotify_chapi_java_invoke_handler(
+    handle_javanotify_chapi_java_invoke(
         event->handler_id,
         &event->invocation,
         event->invoc_id

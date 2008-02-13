@@ -136,7 +136,7 @@ class AppProxy {
     /** MIDlet property for the suite vendor. */
     static final String VENDOR_PROP        = "MIDlet-Vendor";
     
-    static final int INVALID_STORAGE_ID = MIDletSuite.UNUSED_SUITE_ID;
+    static final int INVALID_STORAGE_ID = MIDletSuite.INTERNAL_SUITE_ID;
 
     /**
      * Sets the security token used for privileged operations.
