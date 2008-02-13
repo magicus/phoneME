@@ -1324,6 +1324,7 @@ static void invocFree(StoredInvoc* invoc) {
 
 /**
  * Function to deliver the next transaction id.
+ * Java-side always generates negative transaction ids
  * 
  * @return the next transaction id.
  */
