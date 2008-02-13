@@ -131,7 +131,9 @@ main(int argc, char *argv[]) {
     /* uncomment this like to force the debugger to start */
     /* _asm int 3; */
 
-    javacall_initialize_configurations();
+    if (JAVACALL_OK != javacall_initialize_configurations()) {
+        return -1;
+    }
 
     for (i = 1; i < argc; i++) {
         javautil_debug_print(JAVACALL_LOG_INFORMATION, "core",
@@ -200,7 +202,7 @@ main(int argc, char *argv[]) {
         } else if (strcmp(argv[i], "-monitormemory") == 0) {
             /* old argument  - ignore it */
         } else if (strcmp(argv[i], "-memory_profiler") == 0) {
-            
+
             /* It is a CLDC arg, add to CLDC arguments list */
             vmArgv[vmArgc++] = argv[i++]; /* -memory_profiler */
             vmArgv[vmArgc++] = argv[i++]; /* -port */
@@ -443,7 +445,7 @@ main(int argc, char *argv[]) {
         }
 
     } else if (executionMode == AUTOTEST) {
-        char *argv1[5] = {"runMidlet", "-1", 
+        char *argv1[5] = {"runMidlet", "-1",
             "com.sun.midp.installer.AutoTester", url, domainStr};
         int numargs = (domainStr!=NULL) ? 5 : 4;
         javanotify_start_java_with_arbitrary_args(numargs, argv1);
