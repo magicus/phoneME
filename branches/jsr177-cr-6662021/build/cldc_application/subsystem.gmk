@@ -109,7 +109,7 @@ JSR_177_BINDIR=$(BINDIR)/..
 JCRMIC_TOOL = $(JSR_177_BINDIR)/$(JCRMIC_ARCHIVE)
 SIM_TEST    = $(JSR_177_BUILD_DIR)/.sim_test
 
-ifeq ($(JSR_177_APDU_PLATFORM_API), simulator)
+ifeq ($(JSR_177_USE_EMULATOR),true)
     SIM_TOOL = $(SIM_TEST) $(APPLETS) $(JC_EEPROM_IMAGE)
 endif
 
@@ -117,7 +117,7 @@ endif
 #
 JSR177_JAVAC ?= $(JAVAC_CMD)
 
-ifeq ($(JSR_177_APDU_PLATFORM_API), simulator)
+ifeq ($(JSR_177_USE_EMULATOR),true)
 all_tools :: $(JAVACARD_CLASSES) $(JSR_177_BINDIR) $(JCRMIC_TOOL) $(SIM_TOOL)
 
 JSR177_JAVA ?= $(JAVA_CMD)
@@ -158,7 +158,7 @@ ifeq ($(USE_RESTRICTED_CRYPTO), true)
 SUBSYSTEM_JSR_177_I3TEST_JAVA_FILES += \
 	$(JSR_177_DIR)/src/cldc_application/test/i3test/com/sun/satsa/crypto/TestRC4.java 
 endif
-ifeq ($(JSR_177_APDU_PLATFORM_API), simulator)
+ifeq ($(JSR_177_USE_EMULATOR),true)
 ifeq ($(JSR_177_APDU_MANAGER),carddevice)
 SUBSYSTEM_JSR_177_I3TEST_JAVA_FILES += \
 	$(JSR_177_DIR)/src/cldc_application/test/i3test/com/sun/cdc/io/j2me/apdu/TestCad.java \

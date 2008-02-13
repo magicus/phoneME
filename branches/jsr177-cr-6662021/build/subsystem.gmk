@@ -66,8 +66,8 @@ JSR_177_APDU_MANAGER ?= carddevice
 # CardDevice={platformcarddevice}
 JSR_177_APDU_CARDDEVICE ?= platformcarddevice
 
-# PlatformAPI={simulator|stubs|real}
-JSR_177_APDU_PLATFORM_API ?= simulator
+# Does SAT applications for testing emulator have to be generated={true|false}
+JSR_177_USE_EMULATOR ?= true
 
 # Javadoc source path
 #
@@ -249,17 +249,6 @@ endif
 MODULE_SATSA_APDU_JAVA_FILES += \
     $(JSR_177_DIR)/src/share/protocol/apdu/classes/com/sun/midp/io/j2me/apdu/Protocol.java
 
-# Add device driver
-ifeq ($(JSR_177_APDU_CARDDEVICE),platformcarddevice)
-    ifeq ($(JSR_177_APDU_PLATFORM_API),real)
-        ifeq ($(TARGET_OS),win32)
-            LINKLIBS += $(JSR_177_DIR)/src/share/protocol/apdu/driver_lib/carddevice.lib
-        else
-            LINKLIBS += -L$(JSR_177_DIR)/src/share/protocol/apdu/driver_lib -lcarddevice
-        endif
-    endif
-endif
-
 MODULE_SATSA_JCRMI_JAVA_FILES = \
     $(JSR_177_DIR)/src/share/protocol/jcrmi/classes/com/sun/cdc/io/j2me/jcrmi/Protocol.java \
     $(JSR_177_DIR)/src/share/protocol/jcrmi/classes/com/sun/midp/io/j2me/jcrmi/Protocol.java \
@@ -357,12 +346,10 @@ JSR_177_PROPERTY_FILES += \
 	$(INTERNAL_JSR_177_CONFIG_DIR)/common/properties_jsr177.xml
 	
 # Include properties that depend on build options
-ifeq ($(JSR_177_APDU_PLATFORM_API),simulator)
+ifeq ($(JSR_177_USE_EMULATOR),true)
     JSR_177_PROPERTY_FILES += \
         $(INTERNAL_JSR_177_CONFIG_DIR)/common/properties_jsr177_simulator.xml
-endif
-
-ifeq ($(JSR_177_APDU_PLATFORM_API),real)
+else
     JSR_177_PROPERTY_FILES += \
         $(INTERNAL_JSR_177_CONFIG_DIR)/common/properties_jsr177_real.xml
 endif
@@ -380,7 +367,7 @@ JCRMIC_PROPERTIES = com/sun/satsa/jcrmic/jcrmic.properties
 JCRMIC_MANIFEST_FILE = jcrmic.manifest
 JCRMIC_ARCHIVE = jcrmic.jar
 
-ifeq ($(JSR_177_APDU_PLATFORM_API), simulator)
+ifeq ($(JSR_177_USE_EMULATOR),true)
     ifndef JC_DIR
         JC_DIR = /java/re/jcdevkit/2.2.1/archive/fcs/binaries/domestic/linux/java_card_kit-2_2_1
     endif
@@ -465,7 +452,7 @@ $(JSR_177_GENERATED_DIR)/classes/$(JC_ACL_APPLET_PATH)/Data.java: $(ACL_DATA_DIR
 	$(JSR_177_GENERATED_DIR)/classes/$(JC_ACL_APPLET_PATH)/ $(ACL_DATA_DIR)/files/
 	$(AT)$(JSR177_JAVA) -classpath $(ACL_DATA_CLASSES) acl_data.Print $(ACL_DATA_DIR)/files/* > $(ACL_DATA_DIR)/files.txt
 
-ifeq ($(JSR_177_APDU_PLATFORM_API), simulator)
+ifeq ($(JSR_177_USE_EMULATOR),true)
 # wim_data tool
 #
 WIM_DATA_DIR = $(JSR_177_BUILD_DIR)/wim_data
@@ -627,5 +614,5 @@ jsr177_display:
 	@echo   "USE_JSR_177_ACL_TEXT        = ""$(USE_JSR_177_ACL_TEXT)" $(LOG)
 	@echo   "JSR_177_APDU_MANAGER        = ""$(JSR_177_APDU_MANAGER)" $(LOG)
 	@echo   "JSR_177_APDU_CARDDEVICE     = ""$(JSR_177_APDU_CARDDEVICE)" $(LOG)
-	@echo   "JSR_177_APDU_PLATFORM_API   = ""$(JSR_177_APDU_PLATFORM_API)" $(LOG)
+	@echo   "JSR_177_USE_EMULATOR        = ""$(JSR_177_USE_EMULATOR)" $(LOG)
 	@echo   "" $(LOG)
