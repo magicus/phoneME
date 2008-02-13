@@ -32,14 +32,21 @@ extern "C" {
 #include "javacall_properties.h"
 #include "javacall_config_db.h"
 
+typedef enum {
+    PROPERTIES_INIT_NOT_STARTED,
+    PROPERTIES_INIT_IN_PROGRESS,
+    PROPERTIES_INIT_COMPLETED
+} properties_init_state;
+
 static unsigned short property_file_name[] = {'j','w','c','_','p','r','o','p','e','r','t','i','e','s','.','i','n','i',0};
 
 static javacall_handle handle = NULL;
 static int property_was_updated = 0;
-static int init_done = 0;
+static int init_state = PROPERTIES_INIT_NOT_STARTED;
 
 static const char application_prefix[] = "application:";
 static const char internal_prefix[] = "internal:";
+
 
 /**
  * Initializes the configuration sub-system.
@@ -47,18 +54,27 @@ static const char internal_prefix[] = "internal:";
  * @return <tt>JAVACALL_OK</tt> for success, JAVACALL_FAIL otherwise
  */
 javacall_result javacall_initialize_configurations(void) {
-    int file_name_len = sizeof(property_file_name)/sizeof(unsigned short);
-    if (init_done) {
+    int file_name_len;
+
+    if (PROPERTIES_INIT_COMPLETED == init_state) {
         return JAVACALL_OK;
     }
+    else if (PROPERTIES_INIT_IN_PROGRESS == init_state) {
+        /* Properties initialization has not been finished yet */
+        return JAVACALL_FAIL;
+    }
 
+    /* initialize state */
+    init_state = PROPERTIES_INIT_IN_PROGRESS;
     property_was_updated = 0;
+
+    file_name_len = sizeof(property_file_name)/sizeof(unsigned short);
 
     handle = javacall_configdb_load(property_file_name, file_name_len);
     if (handle == NULL) {
         return JAVACALL_FAIL;
     }
-    init_done = 1;
+    init_state = PROPERTIES_INIT_COMPLETED;
     return JAVACALL_OK;
 }
 
@@ -66,13 +82,15 @@ javacall_result javacall_initialize_configurations(void) {
  * Finalize the configuration subsystem.
  */
 void javacall_finalize_configurations(void) {
-    int file_name_len = sizeof(property_file_name)/sizeof(unsigned short);
-    if (!init_done) {
+    int file_name_len;
+
+    if (PROPERTIES_INIT_COMPLETED != init_state) {
         return;
     }
 
     if (property_was_updated != 0) {
 #ifdef USE_PROPERTIES_FROM_FS
+        file_name_len = sizeof(property_file_name)/sizeof(unsigned short);
         javacall_configdb_dump_ini(handle, property_file_name, file_name_len);
 #endif //USE_PROPERTIES_FROM_FS
     }
@@ -82,7 +100,8 @@ void javacall_finalize_configurations(void) {
 
 /**
  * Gets the value of the specified property in the specified
- * property set.
+ * property set.  If the property has not been found, assigns
+ * NULL to result.
  *
  * @param key The key to search for
  * @param type The property type
@@ -99,6 +118,7 @@ javacall_result javacall_get_property(const char* key,
 
     /* protection against access to uninitialized properties */
     if (JAVACALL_FAIL == javacall_initialize_configurations()) {
+        *result = NULL;
         return JAVACALL_FAIL;
     }
 
