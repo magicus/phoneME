@@ -44,7 +44,7 @@
 #include <midpError.h>
 #include <midpUtilKni.h>
 #include <midp_runtime_info.h>
-#include <runMidlet.h>
+#include <heap.h>
 
 /** The name of the native application manager peer internal class. */
 #define APP_MANAGER_PEER "com.sun.midp.main.NativeAppManagerPeer"

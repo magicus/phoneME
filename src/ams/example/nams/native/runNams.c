@@ -717,6 +717,7 @@ static MIDPError runMainClass(int argc, char* argv[]) {
 int runNams(int argc, char* argv[]) {
     MIDPError status;
     char* appDir;
+    char* confDir;
     int used;
     int savedArgc;
     char **savedArgv;
@@ -741,6 +742,14 @@ int runNams(int argc, char* argv[]) {
 
     /* set up appDir before calling midp_system_start */
     midpSetAppDir(appDir);
+
+    /* get midp configuration directory, set it */
+    confDir = getConfigurationDir(argv[0]);
+    if (confDir == NULL) {
+        return -1;
+    }
+
+    midpSetConfigDir(confDir);
 
     do {
         argc = savedArgc;

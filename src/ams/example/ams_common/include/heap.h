@@ -24,27 +24,24 @@
  * information or have any questions.
  */
 
-#ifndef _RUN_MIDLET_H_
-#define _RUN_MIDLET_H_
+#ifndef _HEAP_H_
+#define _HEAP_H_
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-
 /**
- * Runs a MIDlet from an installed MIDlet suite. This is an example of
- * how to use the public MIDP API.
+ * Reads MAX_ISOLATES property, calculates and returns size of the
+ * required heap. If the MAX_ISOLATES has not been found, default
+ * heap size is returned.
  *
- * @param argc The total number of arguments
- * @param argv An array of 'C' strings containing the arguments
- *
- * @return <tt>0</tt> for success, otherwise <tt>-1</tt>
+ * @return <tt>heap size</tt>
  */
-int runMidlet(int argc, char** commandlineArgs);
+int getHeapRequirement();
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* _RUN_MIDLET_H_ */
+#endif /* _HEAP_H_ */

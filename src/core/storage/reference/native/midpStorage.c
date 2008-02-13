@@ -70,21 +70,29 @@ static const char* const STRING_CORRUPT_ERROR =
     "string data corrupt or invalid, cannot perform i/o operation";
 
 /*
- * Name of the storage directory.
- */
-PCSL_DEFINE_STATIC_ASCII_STRING_LITERAL_START(APP_DIR)
-    {'a', 'p', 'p', 'd', 'b', '\0'}
-PCSL_DEFINE_STATIC_ASCII_STRING_LITERAL_END(APP_DIR);
-/*
  * Name of the external storage directory.
  */
 PCSL_DEFINE_STATIC_ASCII_STRING_LITERAL_START(MEMORY_CARD_DIR)
     {'m', 'e', 'm', 'o', 'r', 'y', '_', 'c', 'a', 'r', 'd', '\0'}
 PCSL_DEFINE_STATIC_ASCII_STRING_LITERAL_END(MEMORY_CARD_DIR);
 
+/*
+ * IMPL_NOTE: currently the following two strings are unused (APP_DIR
+ *            and CONFIG_DIR are defined in commandLineUtil_md.c),
+ *            but this is not quite correct.
+ */
+/*
+ * Name of the storage directory.
+ */
+/*
+PCSL_DEFINE_STATIC_ASCII_STRING_LITERAL_START(APP_DIR)
+    {'a', 'p', 'p', 'd', 'b', '\0'}
+PCSL_DEFINE_STATIC_ASCII_STRING_LITERAL_END(APP_DIR);
+
 PCSL_DEFINE_STATIC_ASCII_STRING_LITERAL_START(CONFIG_SUBDIR)
     {'l', 'i', 'b', '\0'}
 PCSL_DEFINE_STATIC_ASCII_STRING_LITERAL_END(CONFIG_SUBDIR);
+*/
 
 #if REPORT_LEVEL <= LOG_INFORMATION
 #define DEBUGP2F(x, y) { \
