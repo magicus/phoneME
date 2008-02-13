@@ -17,11 +17,6 @@ public final class InvocationStoreProxy {
 			invoc.debugTo(DEBUG_OUT);
 			DEBUG_OUT.println();
 		}
-        ContentHandlerImpl handler = null;
-        if( invoc.ID != null )
-            handler = RegistryStore.getHandler(null, invoc.ID, RegistryStore.SEARCH_EXACT);
-		if( DEBUG_OUT != null ) DEBUG_OUT.println( "handler: " + handler ); 
-        	
         // check if it is native handler
         /* IMPL_NOTE: null suite ID is an indication of platform request */
         if (invoc.suiteId == AppProxy.INVALID_STORAGE_ID){
@@ -29,7 +24,7 @@ public final class InvocationStoreProxy {
         	// status is returned without launching of a handler
         	if( invoc.getStatus() == Invocation.WAITING ) {
 	            try {
-	                if( launchNativeHandler(handler.getID()) )
+	                if( launchNativeHandler(invoc.getID()) )
 	                	invoc.finish(Invocation.INITIATED);
 	                return LIT_NATIVE_STARTED;
 	            } catch (ContentHandlerException che) {
