@@ -980,7 +980,11 @@ public abstract class Installer {
                     newPermissions += Permissions.getName(i);
                 }
             } else {
-                newPermissions += additionalPermissions;
+                if (newPermissions == null) {
+                    newPermissions = additionalPermissions; 
+                } else {
+                    newPermissions += additionalPermissions;
+                }
             }
 
             state.jadProps.setProperty(MIDletSuite.PERMISSIONS_PROP,
