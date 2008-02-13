@@ -47,7 +47,7 @@ static struct _protocolNames {
     JAVACALL_MEDIA_RTSP_PROTOCOL,       "rtsp"
 };
 
-static void delete_duplicates(char *p);
+void mmapi_string_delete_duplicates(char *p);
 static javacall_result simple_jcharString_to_asciiString(jchar *jcharString, jsize jcharStringLen, char *asciiStringBuffer, jsize bufferSize);
 
 KNIEXPORT KNI_RETURNTYPE_INT
@@ -154,7 +154,7 @@ KNIDECL(com_sun_mmedia_DefaultConfiguration_nListContentTypesOpen) {
         }
         p--; *p = '\0'; /* replace last space with zero */
         
-        delete_duplicates(iterator->list);
+        mmapi_string_delete_duplicates(iterator->list);
     } while (0);
 
     /* freeing buffers */
@@ -356,7 +356,7 @@ KNIDECL(com_sun_mmedia_DefaultConfiguration_nListProtocolsOpen) {
             /* No protocols were found for provided MIME type. Return 0 */
             break;
         }
-        delete_duplicates(iterator->list);
+        mmapi_string_delete_duplicates(iterator->list);
     } while (0);
 
     /* freeing buffers */
@@ -436,7 +436,7 @@ KNIDECL(com_sun_mmedia_DefaultConfiguration_nListProtocolsClose) {
 }
 
 /* Delete duplicates */
-static void delete_duplicates(char *p) {
+void mmapi_string_delete_duplicates(char *p) {
     do {
         char *s, *s0;
         int p_len, s_len;
