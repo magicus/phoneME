@@ -56,6 +56,8 @@
 #define LIME_DEBUG_PRINTF
 #endif
 
+#define USE_KEYTYPED_VM_EVENTS
+
 #if ENABLE_JSR_179
 extern char *ExtractEventData(javacall_utf16_string event_name);
 extern void ParseOrientationData(char *data);
