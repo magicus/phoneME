@@ -113,8 +113,8 @@ public class MIDletSuiteLoader extends CldcMIDletSuiteLoader {
         PushRegistryInternal.startListening(internalSecurityToken);
 
         // Initialize the Content Handler Monitor of MIDlet exits
-        CHManager.getManager(internalSecurityToken).initCleanupMonitor(
-            midletProxyList);
+        CHManager.getManager(internalSecurityToken).init(
+            midletProxyList, eventQueue);
 
         // Initialize WMA's cleanup monitor
         WMACleanupMonitor.init(midletProxyList);
