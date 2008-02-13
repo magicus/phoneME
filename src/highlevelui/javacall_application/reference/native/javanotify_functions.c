@@ -1375,13 +1375,18 @@ void /*OPTIONAL*/javanotify_location_proximity(
 
 #ifdef ENABLE_JSR_211
 
-static javacall_utf16_string midp_jc_copy_utf16_string(javacall_const_utf16_string src) {
+/*
+ * Copies source javacall_utf16_string string into newly allocated memory buffer
+ * @param src source javacall_utf16_string
+ * @return pointer to newly allocated memory containing copy of source string
+ */
+static javacall_utf16_string
+copy_jc_utf16_string(javacall_const_utf16_string src) {
     int length = 0;
     javacall_utf16_string result;
     if (JAVACALL_OK != javautil_unicode_utf16_ulength (src, &length))
         length = 0;
-    result =
-        javacall_calloc(length, sizeof(javacall_utf16));
+    result = javacall_calloc(length, sizeof(javacall_utf16));
     memcpy(result, src, length*2);
     return result;
 }
@@ -1419,7 +1424,7 @@ void javanotify_chapi_platform_finish(
         e.data.jsr211PlatformEventEvent.jsr211event->handler_id = NULL;
         
         inv = &e.data.jsr211PlatformEventEvent.jsr211event->invocation;
-        inv->url               = midp_jc_copy_utf16_string (url);
+        inv->url               = copy_jc_utf16_string (url);
         inv->type              = NULL;
         inv->action            = NULL;
         inv->invokingAppName   = NULL;
@@ -1431,7 +1436,7 @@ void javanotify_chapi_platform_finish(
             javacall_calloc (sizeof(javacall_utf16_string), inv->argsLen);
         if (NULL != inv->args)
             for (i = 0; i < inv->argsLen; i++)
-                inv->args[i] = midp_jc_copy_utf16_string(args[i]);
+                inv->args[i] = copy_jc_utf16_string(args[i]);
         inv->dataLen           = dataLen;
         inv->data              = javacall_malloc (inv->dataLen);
         if (NULL != inv->data)
@@ -1463,23 +1468,26 @@ void javanotify_chapi_java_invoke(
     if (NULL != e.data.jsr211PlatformEventEvent.jsr211event) {
         e.data.jsr211PlatformEventEvent.jsr211event->invoc_id   = invoc_id;
         e.data.jsr211PlatformEventEvent.jsr211event->handler_id = 
-            midp_jc_copy_utf16_string(handler_id);
-        e.data.jsr211PlatformEventEvent.jsr211event->status     = INVOCATION_STATUS_ERROR;
+            copy_jc_utf16_string(handler_id);
+        e.data.jsr211PlatformEventEvent.jsr211event->status     =
+            INVOCATION_STATUS_ERROR;
         
         inv = &e.data.jsr211PlatformEventEvent.jsr211event->invocation;
-        inv->url               = midp_jc_copy_utf16_string(invocation->url);
-        inv->type              = midp_jc_copy_utf16_string(invocation->type);
-        inv->action            = midp_jc_copy_utf16_string(invocation->action);
-        inv->invokingAppName   = midp_jc_copy_utf16_string(invocation->invokingAppName);
-        inv->invokingAuthority = midp_jc_copy_utf16_string(invocation->invokingAuthority);
-        inv->username          = midp_jc_copy_utf16_string(invocation->username);
-        inv->password          = midp_jc_copy_utf16_string(invocation->password);
-        inv->argsLen           = invocation->argsLen;
-        inv->args              =
+        inv->url             = copy_jc_utf16_string(invocation->url);
+        inv->type            = copy_jc_utf16_string(invocation->type);
+        inv->action          = copy_jc_utf16_string(invocation->action);
+        inv->invokingAppName = 
+            copy_jc_utf16_string(invocation->invokingAppName);
+        inv->invokingAuthority = 
+            copy_jc_utf16_string(invocation->invokingAuthority);
+        inv->username        = copy_jc_utf16_string(invocation->username);
+        inv->password        = copy_jc_utf16_string(invocation->password);
+        inv->argsLen         = invocation->argsLen;
+        inv->args            =
             javacall_calloc (sizeof(javacall_utf16_string), inv->argsLen);
         if (NULL != inv->args)
             for (i = 0; i < inv->argsLen; i++)
-                inv->args[i] = midp_jc_copy_utf16_string(invocation->args[i]);
+                inv->args[i] = copy_jc_utf16_string(invocation->args[i]);
         inv->dataLen           = invocation->dataLen;
         inv->data              = javacall_malloc (inv->dataLen);
         if (NULL != inv->data)
