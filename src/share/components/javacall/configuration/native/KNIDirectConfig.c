@@ -23,6 +23,7 @@
  */
 
 #include "KNICommon.h"
+#include <stdio.h>
 #include <jsrop_kni.h>
 #include <javautil_string.h>
 
@@ -47,7 +48,7 @@ static struct _protocolNames {
     JAVACALL_MEDIA_RTSP_PROTOCOL,       "rtsp"
 };
 
-static void delete_duplicates(char *p);
+void mmapi_string_delete_duplicates(char *p);
 static javacall_result simple_jcharString_to_asciiString(jchar *jcharString, jsize jcharStringLen, char *asciiStringBuffer, jsize bufferSize);
 
 KNIEXPORT KNI_RETURNTYPE_INT
@@ -154,7 +155,7 @@ KNIDECL(com_sun_mmedia_DefaultConfiguration_nListContentTypesOpen) {
         }
         p--; *p = '\0'; /* replace last space with zero */
         
-        delete_duplicates(iterator->list);
+        mmapi_string_delete_duplicates(iterator->list);
     } while (0);
 
     /* freeing buffers */
@@ -356,7 +357,7 @@ KNIDECL(com_sun_mmedia_DefaultConfiguration_nListProtocolsOpen) {
             /* No protocols were found for provided MIME type. Return 0 */
             break;
         }
-        delete_duplicates(iterator->list);
+        mmapi_string_delete_duplicates(iterator->list);
     } while (0);
 
     /* freeing buffers */
@@ -436,7 +437,7 @@ KNIDECL(com_sun_mmedia_DefaultConfiguration_nListProtocolsClose) {
 }
 
 /* Delete duplicates */
-static void delete_duplicates(char *p) {
+void mmapi_string_delete_duplicates(char *p) {
     do {
         char *s, *s0;
         int p_len, s_len;
@@ -458,7 +459,14 @@ static void delete_duplicates(char *p) {
                 s_len = strlen(s0);
             }
             if (s_len == p_len && !javautil_strnicmp(p, s0, s_len)) {
-                memset(s0, ' ', s_len);
+                s0--;
+                s_len++;
+                if (s == NULL) {
+                    *s0 = 0;
+                } else {
+                    s = s0;
+                    memmove(s0, s0+s_len, strlen(s0) - s_len);
+                }
             }
         } while (s != NULL && *s != '\0');
         p += p_len;

@@ -24,11 +24,14 @@
  * information or have any questions. 
  */
 
+#include <string.h>
 #include <javacall_defs.h>
 #include <javacall_multimedia.h>
 
 static javacall_media_configuration *configuration;
 static javacall_bool configuration_filled = JAVACALL_FALSE;
+
+void mmapi_string_delete_duplicates(char *p);
 
 javacall_media_configuration *get_configuration() {
     if (JAVACALL_FALSE == configuration_filled) {
@@ -128,7 +131,50 @@ const char* get_system_property_video_snapshot_encodings()
     return "";
 }
 
+#define MAX_STREAMABLE_CONTENT_PROPERTY_LEN 1024
+static char streamable_content_property[MAX_STREAMABLE_CONTENT_PROPERTY_LEN] = {0};
+static javacall_bool streamable_content_property_filled = JAVACALL_FALSE;
+
 const char* get_system_property_streamable_contents()
 {
-    return "";
+    javacall_media_configuration *cfg = get_configuration();
+    javacall_media_caps* mediaCaps = NULL;
+    char *p=streamable_content_property;
+    int types_len;
+    
+    if (cfg != NULL && streamable_content_property_filled == JAVACALL_FALSE) {
+        mediaCaps = cfg->mediaCaps;
+        while (mediaCaps != NULL && mediaCaps->mediaFormat != NULL) {
+            /* verify if support streaming from memory */
+            if (mediaCaps->streamingProtocols & JAVACALL_MEDIA_MEMORY_PROTOCOL) {
+                /* add content Types to property string */
+                types_len = strlen(mediaCaps->contentTypes);
+                if (((p-(int)streamable_content_property)+types_len) >=
+                    MAX_STREAMABLE_CONTENT_PROPERTY_LEN) {
+                    /* delete duplicates and try again */
+                    
+                    mmapi_string_delete_duplicates(streamable_content_property);
+                    p = streamable_content_property + strlen(streamable_content_property);
+
+                    if (((p-(int)streamable_content_property)+types_len) >=
+                        MAX_STREAMABLE_CONTENT_PROPERTY_LEN) {
+                        
+                        mediaCaps++;
+                        continue;
+                    }
+                }
+                memcpy(p, mediaCaps->contentTypes, types_len);
+                p += types_len;
+                *p++ = ' ';
+            }
+            mediaCaps++;
+        }
+        if (p != streamable_content_property) {
+            p--; *p = '\0'; /* replace last space with zero */
+            /* delete duplicates */
+            mmapi_string_delete_duplicates(streamable_content_property);
+        }
+        streamable_content_property_filled = JAVACALL_TRUE;
+    }
+    return streamable_content_property;
 }

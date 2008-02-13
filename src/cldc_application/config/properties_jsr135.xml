@@ -41,61 +41,46 @@
       Comment="Mixing support."/>
 
     <property Key="supports.audio.capture"
-      Value="true"
+      Value=""
       Scope="system"
+      Callout="get_system_property_supports_audio_capture" 
       Comment="Audio capture support."/>
 
     <property Key="supports.video.capture"
-      Value="false"
+      Value=""
       Scope="system"
+      Callout="get_system_property_supports_video_capture" 
       Comment="Video capture support."/>
 
     <property Key="supports.recording"
-      Value="true"
+      Value=""
       Scope="system"
+      Callout="get_system_property_supports_recording" 
       Comment="Recording support."/>
 
     <property Key="audio.encodings" 
-      Value="encoding=pcm" 
-	  Scope="system"/>
-
-    <!--
-    <property Key="audio.encodings"
-      Value="encoding=pcm encoding=pcm&amp;rate=8000&amp;bits=8&amp;channels=1 encoding=pcm&amp;rate=22050&amp;bits=16&amp;channels=2"
+      Value="" 
       Scope="system"
+      Callout="get_system_property_audio_encodings" 
       Comment="Supported audio encodings."/>
 
     <property Key="video.encodings"
-      Value="encoding=png"
+      Value=""
       Scope="system"
+      Callout="get_system_property_video_encodings" 
       Comment="Supported video encodings."/>
-    -->
-
-    <!--
-    <property Key="video.encodings"
-      Value="encoding=rgb565&amp;width=160&amp;height=120 encoding=rgb565&amp;width=320&amp;height=240 encoding=rgb565&amp;width=120&amp;height=160"
-      Scope="system"
-      Comment="Supported video encodings."/>
-    -->
 
     <property Key="video.snapshot.encodings"
       Value=""
       Scope="system"
+      Callout="get_system_property_video_snapshot_encodings" 
       Comment="Supported video snapshot encodings."/>
 
-    <!--
-    <property Key="video.snapshot.encodings"
-      Value="encoding=jpeg encoding=png"
-      Scope="system"
-      Comment="Supported video snapshot encodings."/>
-    -->
-
-    <!--
     <property Key="streamable.contents"
-      Value="audio/x-wav"
+      Value=""
       Scope="system"
+      Callout="get_system_property_streamable_contents" 
       Comment="Streamable contents."/>
-    -->
 
 </properties>
 </configuration>
