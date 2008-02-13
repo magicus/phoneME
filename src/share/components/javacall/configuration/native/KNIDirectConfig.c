@@ -23,6 +23,7 @@
  */
 
 #include "KNICommon.h"
+#include <stdio.h>
 #include <jsrop_kni.h>
 #include <javautil_string.h>
 
@@ -464,7 +465,7 @@ void mmapi_string_delete_duplicates(char *p) {
                     *s0 = 0;
                 } else {
                     s = s0;
-                    memcpy(s0, s0+s_len, strlen(s0) - s_len);
+                    memmove(s0, s0+s_len, strlen(s0) - s_len);
                 }
             }
         } while (s != NULL && *s != '\0');
