@@ -319,7 +319,7 @@ class MIDPConfig{
 	midJarURL = new URL[nComponents];
 	try {
 	    for (int i=0; i<nComponents; i++){
-		midJarURL[i] = new URL("file://".concat(midpPath[i]));
+		midJarURL[i] = new File(midpPath[i]).toURI().toURL();
 	    }
 	}catch(Exception e){
 	    System.err.println("URL Creation:");
