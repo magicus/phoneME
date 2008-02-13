@@ -236,7 +236,7 @@ bool LocationAddress::has_fixed_offset(jint& fixed_offset) {
   int base_offset;
   int actual_index;
 
-  if (Compiler::omit_stack_frame()) {
+  if (code_generator()->omit_stack_frame()) {
     // Everything is accessed using jsp
     actual_index = frame()->stack_pointer() - index();
     fixed_offset = JavaFrame::arg_offset_from_sp(actual_index);     
@@ -263,7 +263,7 @@ bool LocationAddress::has_fixed_offset(jint& fixed_offset) {
 }
     
 Assembler::Register LocationAddress::fixed_register() {
-  if (Compiler::omit_stack_frame()) {
+  if (code_generator()->omit_stack_frame()) {
     return Assembler::jsp;
   } else {
     return is_local() ? Assembler::fp : Assembler::jsp;

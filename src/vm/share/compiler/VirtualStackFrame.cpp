@@ -304,10 +304,10 @@ VirtualStackFrame* VirtualStackFrame::create(Method* method JVM_TRAPS) {
     VirtualStackFrame::allocate(JVM_SINGLE_ARG_ZCHECK_0( frame ) );
 
   // Setup the stack pointer and the virtual stack pointer.
-  if (Compiler::omit_stack_frame()) {
-    frame->set_real_stack_pointer(method->size_of_parameters() - 1);
-  } else {
-    frame->set_real_stack_pointer(method->max_locals() - 1);
+  {
+    const int real_stack_pointer = code_generator()->omit_stack_frame() ?
+      method->size_of_parameters() : method->max_locals();
+    frame->set_real_stack_pointer( real_stack_pointer - 1 );
   }
   frame->set_virtual_stack_pointer(method->max_locals() - 1);
   frame->clear_flush_count();

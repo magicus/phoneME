@@ -588,18 +588,16 @@ void CodeOptimizer::determine_osr_entry(int* ins_start, int* ins_end) {
 //scheduler will skip them.
 void CodeOptimizer::determine_bound_literal(
                int* ins_start, int* ins_end) {
-  Compiler *current_compiler = Compiler::current();
+  Compiler* current_compiler = Compiler::current();
   InternalCodeOptimizer* internal_optimizer = current_compiler->optimizer();
-  BinaryAssembler::Label label;
 
-   //create literal data structure
+  //create literal data structure
   current_compiler->begin_bound_literal_search();
-  label = current_compiler->get_next_bound_literal();
-  while (!label.is_unused()) {
-    if (label.position() >= internal_optimizer->_start_code_offset ) {
+  for( BinaryAssembler::Label label;
+       !((label = current_compiler->get_next_bound_literal()).is_unused());) {
+    if( label.position() >= internal_optimizer->_start_code_offset ) {
       _data_entries.set(offset_to_index(label.position(),internal_optimizer)); 
     }
-    label = current_compiler->get_next_bound_literal();
   }
 }
 

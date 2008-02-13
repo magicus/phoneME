@@ -144,7 +144,7 @@ void CodeGenerator::go_to_interpreter(JVM_SINGLE_ARG_TRAPS) {
   }
 #endif
 
-  if (Compiler::omit_stack_frame()) {
+  if (omit_stack_frame()) {
     // Cannot deoptimize when the frame is omitted.
     // Must abort current compilation discarding any generated code.
     Compiler::abort_active_compilation(false JVM_THROW);
@@ -170,7 +170,7 @@ void CodeGenerator::uncommon_trap(JVM_SINGLE_ARG_TRAPS) {
     Compiler::abort_active_compilation(false JVM_THROW);
   }
 
-  if (Compiler::omit_stack_frame()) {
+  if (omit_stack_frame()) {
     // Cannot deoptimize when the frame is omitted.
     // Must abort current compilation discarding any generated code.
     Compiler::abort_active_compilation(false JVM_THROW);
@@ -209,7 +209,7 @@ void CodeGenerator::osr_entry(bool force JVM_TRAPS) {
   GUARANTEE(!Compiler::is_inlining(),
             "OSR stubs not supported for inlined methods");
 
-  if (!Compiler::omit_stack_frame() &&
+  if (!omit_stack_frame() &&
       !GenerateROMImage && (force || (!Compiler::is_in_loop()))) {
     // Make sure it's possible to conform to this entry.
     frame()->conformance_entry(false);

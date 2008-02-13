@@ -346,9 +346,17 @@ public:
   void bytecode_prolog();
   void flush_epilogue(JVM_SINGLE_ARG_TRAPS);
 
+  bool omit_stack_frame( void ) const {
+    return _omit_stack_frame;
+  }
+  void set_omit_stack_frame( const bool value ) {
+    _omit_stack_frame = value;
+  }
+
   OopDesc* finish( void );
 
  protected:
+
   // Generic binary operations.
   // NOTE: result must be uninitialized when this routine is called;
   //       op1 must be in a register; and
@@ -489,7 +497,10 @@ public:
 #if ENABLE_APPENDED_CALLINFO
     _callinfo_writer.initialize( this->compiled_method() );
 #endif
+    _omit_stack_frame = false;
   }
+
+  bool _omit_stack_frame;
 
   // Platform dependent stuff
 #include "incls/_CodeGenerator_pd.hpp.incl"

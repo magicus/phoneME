@@ -114,8 +114,7 @@ public:
   template( VirtualStackFrame*, conforming_frame        )\
   template( VirtualStackFrame*, cached_preserved_frame  )\
   template( Compiler*,          root                    )\
-  template( Compiler*,          current                 )\
-  template( bool,               omit_stack_frame        )
+  template( Compiler*,          current                 )
 
 class CompilerStatic {
  public:
@@ -176,7 +175,16 @@ class Compiler: public StackObj {
   ~Compiler();
 
   // Called during VM start-up
-  static void initialize( void );
+  static void initialize( void ) {
+    jvm_memset(&_state, 0, sizeof _state);
+    jvm_memset(&_suspended_compiler_context, 0, 
+               sizeof _suspended_compiler_context);
+#if ENABLE_PERFORMANCE_COUNTERS && ENABLE_DETAILED_PERFORMANCE_COUNTERS
+    jvm_memset(&comp_perf_counts, 0, sizeof comp_perf_counts );
+#endif
+    _estimated_frame_time = 30;
+    _last_frame_time_stamp = Os::java_time_millis();
+  }
 
   // Compiles the method and returns the result.
   // ^CompiledMethod
@@ -203,7 +211,7 @@ class Compiler: public StackObj {
   }
 
   static BytecodeCompileClosure* closure( void ) {
-    return jvm_fast_globals.compiler_closure;
+    return _compiler_closure;
   }
 
   static VirtualStackFrame* get_cached_preserved_frame( void ) {
@@ -384,17 +392,17 @@ class Compiler: public StackObj {
  public:
 #endif
   static int bci( void ) {
-    return jvm_fast_globals.compiler_bci;
+    return _compiler_bci;
   }
   static void set_bci( int bci ) {
-    jvm_fast_globals.compiler_bci = bci;
+    _compiler_bci = bci;
   }
 
   static int  num_stack_lock_words(void) {
-    return jvm_fast_globals.num_stack_lock_words;
+    return _num_stack_lock_words;
   }
   static void set_num_stack_lock_words(int num_lock_words) {
-    jvm_fast_globals.num_stack_lock_words = num_lock_words;
+    _num_stack_lock_words = num_lock_words;
   }
 
   static bool is_in_loop           ( void ) { 
@@ -431,7 +439,17 @@ class Compiler: public StackObj {
  public:
   static void on_timer_tick(bool is_real_time_tick JVM_TRAPS);
   static void process_interpretation_log();
-  static void set_hint(int hint);
+
+  static void Compiler::set_hint(const int hint) {
+    switch (hint) {
+    case JVM_HINT_VISUAL_OUTPUT:
+      _estimated_frame_time = 300;
+      _last_frame_time_stamp = Os::java_time_millis();
+      break;
+    case JVM_HINT_END_STARTUP_PHASE:
+      break;
+    }
+  }
 
   static bool is_time_to_suspend( void ) {
     return !is_inlining() &&
@@ -606,14 +624,30 @@ class Compiler: public StackObj {
   //in uncompiled OSRStub or
   //EntryFrame.We won't schedule those instruction since 
   //other code will jump to those places later.
-  void begin_pinned_entry_search();
+  void begin_pinned_entry_search( void ) {
+    _next_element = compilation_queue();
+  }
+
   BinaryAssembler::Label get_next_pinned_entry();
 
   //two method for getting the jittted code offset of the
   //literal who has been written
   //out. We won't unpack those place during scheduling
-  void begin_bound_literal_search();
-  BinaryAssembler::Label get_next_bound_literal();
+  void begin_bound_literal_search( void ) {
+    _next_bound_literal  =  this->code_generator()->_first_literal;
+  }
+
+  BinaryAssembler::Label get_next_bound_literal( void ) {
+    while( _next_bound_literal ) {
+      const LiteralPoolElement* literal = _next_bound_literal;
+      _next_bound_literal = _next_bound_literal->next();
+      if( literal->is_bound() ) {
+        return literal->label();
+      }
+    }
+    BinaryAssembler::Label label;
+    return label;
+  }
 
   friend class CodeOptimizer;
   friend class InternalCodeOptimizer;

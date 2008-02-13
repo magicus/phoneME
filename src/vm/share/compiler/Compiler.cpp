@@ -59,16 +59,16 @@ inline void CompilerContext::cleanup( void ) {
   }
 }
 
-jlong                           Compiler::_estimated_frame_time;
-jlong                           Compiler::_last_frame_time_stamp;
-Compiler::CompilationFailure    Compiler::_failure;
+jlong                         Compiler::_estimated_frame_time;
+jlong                         Compiler::_last_frame_time_stamp;
+Compiler::CompilationFailure  Compiler::_failure;
 #ifndef PRODUCT
-Compiler::CompilationHistory*   Compiler::_history_head;
-Compiler::CompilationHistory*   Compiler::_history_tail;
+Compiler::CompilationHistory* Compiler::_history_head;
+Compiler::CompilationHistory* Compiler::_history_tail;
 #endif
 
 Compiler::Compiler( Method* method, const int active_bci ) {
-  jvm_memset(&_context, 0, sizeof(_context));
+  jvm_memset(&_context, 0, sizeof _context );
 #if ENABLE_INLINE
   if (is_active()) {
     // Dump cached values to the context
@@ -99,8 +99,8 @@ Compiler::Compiler( Method* method, const int active_bci ) {
   VirtualStackFrame::init_status_of_current_snippet_tracking();
   RegisterAllocator::wipe_all_notations();
 #endif
-  jvm_fast_globals.compiler_method         = method;
-  jvm_fast_globals.compiler_closure        = &_closure;
+  _compiler_method  = method;
+  _compiler_closure = &_closure;
 }
 
 #ifndef PRODUCT
@@ -129,38 +129,14 @@ Compiler::~Compiler() {
     }
 #endif
 
-    jvm_fast_globals.compiler_closure = &parent_compiler->_closure;
-    jvm_fast_globals.compiler_method  = parent_compiler->method();
-    jvm_fast_globals.compiler_bci     = parent_compiler->saved_bci();
-    jvm_fast_globals.num_stack_lock_words =
-      parent_compiler->saved_num_stack_lock_words();
+    _compiler_closure     = &parent_compiler->_closure;
+    _compiler_method      = parent_compiler->method();
+    _compiler_bci         = parent_compiler->saved_bci();
+    _num_stack_lock_words = parent_compiler->saved_num_stack_lock_words();
   } else {
     set_root(NULL);
   }
   set_current(parent_compiler);
-}
-
-// Called during VM start-up
-void Compiler::initialize() {
-  jvm_memset(&_state, 0, sizeof(_state));
-  jvm_memset(&_suspended_compiler_context, 0, 
-             sizeof(_suspended_compiler_context));
-#if ENABLE_PERFORMANCE_COUNTERS && ENABLE_DETAILED_PERFORMANCE_COUNTERS
-  jvm_memset(&comp_perf_counts, 0, sizeof(comp_perf_counts));
-#endif
-  _estimated_frame_time = 30;
-  _last_frame_time_stamp = Os::java_time_millis();
-}
-
-void Compiler::set_hint(int hint) {
-  switch (hint) {
-  case JVM_HINT_VISUAL_OUTPUT:
-    _estimated_frame_time = 300;
-    _last_frame_time_stamp = Os::java_time_millis();
-    break;
-  case JVM_HINT_END_STARTUP_PHASE:
-    break;
-  }
 }
 
 void Compiler::on_timer_tick(bool is_real_time_tick JVM_TRAPS) {
@@ -471,6 +447,24 @@ ReturnOop Compiler::allocate_and_compile(const int compiled_code_factor
   return result;
 }
 
+inline ReturnOop Compiler::try_to_compile(Method* method,
+  const int active_bci, const int compiled_code_factor JVM_TRAPS)
+{
+  OopDesc* result;
+  {
+    Compiler compiler( method, active_bci );
+    compiler.init_performance_counters(false);
+    result = compiler.allocate_and_compile(compiled_code_factor JVM_NO_CHECK);
+    compiler.update_performance_counters(false, result);
+    Thread::clear_current_pending_exception();
+  }
+
+  if( _failure != out_of_time ) {
+    terminate( result );
+  }
+  return result;
+}
+
 /*
  * The chain of command:
  * Compiler::compile()
@@ -488,6 +482,9 @@ ReturnOop Compiler::compile(Method* method, int active_bci JVM_TRAPS) {
   EnforceCompilerJavaStackDirection enfore_java_stack_direction;
 
   EventLogger::start(EventLogger::COMPILE);
+
+  CompilationQueueElement::reset_pool();
+  ObjectHeap::save_compiler_area_top();
 
   // We need a bigger compiled code factor if any of these are set.
   // The following values are justs guesses.  They may need to be fixed.
@@ -540,7 +537,7 @@ inline void Compiler::begin_compile( JVM_SINGLE_ARG_TRAPS ) {
   mthd->compute_attributes( attributes JVM_CHECK );
 
   Compiler::setup_for_compile( attributes JVM_CHECK );
-  Compiler::set_omit_stack_frame( 
+  code_generator()->set_omit_stack_frame( 
     OmitLeafMethodFrames &&
     (!ENABLE_WTK_PROFILER || TestCompiler) &&
     !attributes.can_throw_exceptions &&
@@ -608,27 +605,6 @@ inline void Compiler::suspend( void ) {
 }
 
 #if  ENABLE_INTERNAL_CODE_OPTIMIZER
-void  Compiler::begin_bound_literal_search() {
-  _next_bound_literal  =  this->code_generator()->_first_literal;
-}
-
-BinaryAssembler::Label Compiler::get_next_bound_literal( void ) {
-  while( _next_bound_literal ) {
-    const LiteralPoolElement* literal = _next_bound_literal;
-    _next_bound_literal = _next_bound_literal->next();
-    if( literal->is_bound() ) {
-      return literal->label();
-    }
-  }
-  BinaryAssembler::Label label;
-  return label;
-}
-
-
-void Compiler::begin_pinned_entry_search( void ) {
-  _next_element = compilation_queue();
-}
-
 BinaryAssembler::Label Compiler::get_next_pinned_entry( void ) {
   while( _next_element ) {
     const CompilationQueueElement* e = _next_element;
@@ -899,27 +875,6 @@ void Compiler::internal_compile_inlined( Method::Attributes& attributes
   Compiler::set_frame( parent_frame() );
 }
 #endif  
-
-ReturnOop Compiler::try_to_compile(Method* method, const int active_bci,
-                                   const int compiled_code_factor
-                                   JVM_TRAPS) {
-  OopDesc* result;
-  CompilationQueueElement::reset_pool();
-  ObjectHeap::save_compiler_area_top();
-  {
-    Compiler compiler( method, active_bci );
-    compiler.init_performance_counters(false);
-    result = compiler.allocate_and_compile(compiled_code_factor         
-                                           JVM_NO_CHECK);
-    compiler.update_performance_counters(false, result);
-    Thread::clear_current_pending_exception();
-  }
-
-  if( _failure != out_of_time ) {
-    terminate( result );
-  }
-  return result;
-}
 
 inline bool Compiler::reserve_compiler_area(size_t compiled_method_size) {
   // We need about 75 bytes of compiler data buffer per byte of Java

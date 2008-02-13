@@ -2369,8 +2369,10 @@ void Method::compute_attributes(Attributes& attributes JVM_TRAPS) const {
       attributes.has_loops = has_loops;
       attributes.can_throw_exceptions = 
         Bytecodes::can_throw_exceptions_flags(accumulated_flags);
+#if ENABLE_INLINE
       attributes.bytecodes_allow_inlining = 
         Bytecodes::allow_inlining_flags(accumulated_flags);
+#endif
       attributes.num_locks = num_locks;
       attributes.num_bytecodes_can_throw_npe = exception_count;  
     }

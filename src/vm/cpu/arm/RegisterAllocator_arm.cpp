@@ -147,13 +147,12 @@ next_register_table_noframe[Assembler::number_of_registers] = {
 void RegisterAllocator::initialize() {
   Assembler::Register next;
 
-  if (Compiler::omit_stack_frame()) {
+  if (code_generator()->omit_stack_frame()) {
     _next_register_table = (Assembler::Register*)next_register_table_noframe;
-    next = Assembler::r0; // IMPL_NOTE: this needs fine tuning.
   } else {
     _next_register_table = (Assembler::Register*)next_register_table_frame;
-    next = Assembler::r0; // IMPL_NOTE: this needs fine tuning.
   }
+  next = Assembler::r0; // IMPL_NOTE: this needs fine tuning.
 
   _next_allocate       = next;
   _next_byte_allocate  = Assembler::no_reg;

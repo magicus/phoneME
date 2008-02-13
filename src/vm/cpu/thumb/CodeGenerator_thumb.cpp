@@ -551,7 +551,7 @@ void CodeGenerator::method_entry(Method* method JVM_TRAPS) {
     frame()->clear_literals();
   }
 
-  if (Compiler::omit_stack_frame()) {
+  if (omit_stack_frame()) {
     // The rest of method_entry deal with pushing the call frame, so
     // we can safely return here.
     GUARANTEE(!ENABLE_WTK_PROFILER, "Profiler always need call frame");
@@ -1232,7 +1232,7 @@ void CodeGenerator::double_cmp(Value& result, BytecodeClosure::cond_op cond,
 void CodeGenerator::vcall_simple_c_runtime(Value& result,
                                         address runtime_func, ...) {
   GUARANTEE(runtime_func != 0, "sanity check");
-  GUARANTEE(!Compiler::omit_stack_frame(),
+  GUARANTEE(!omit_stack_frame(),
             "cannot call runtime functions with omitted compiled frame");
 
   int i;
@@ -2059,7 +2059,7 @@ void CodeGenerator::return_result(Value& result JVM_TRAPS) {
   }
 
   // We always return to Java code or an assembly language stub
-  Compiler::omit_stack_frame() ? bx(lr) : bx(r3);
+  omit_stack_frame() ? bx(lr) : bx(r3);
 
   RegisterAllocator::dereference(r0);
   RegisterAllocator::dereference(r1);
@@ -2091,7 +2091,7 @@ void CodeGenerator::return_void(JVM_SINGLE_ARG_TRAPS) {
     }
   }
 
-  Compiler::omit_stack_frame() ? bx(lr) : bx(r3);
+  omit_stack_frame() ? bx(lr) : bx(r3);
 
   RegisterAllocator::dereference(r3);
 
@@ -2121,7 +2121,7 @@ void CodeGenerator::return_error(Value& value JVM_TRAPS) {
 
 
 void CodeGenerator::restore_last_frame(Register return_address) {
-  if (Compiler::omit_stack_frame()) {
+  if (omit_stack_frame()) {
     int params = method()->size_of_parameters();
     if (params > 0) {
       add_imm(jsp, - params * JavaStackDirection * BytesPerStackElement);
@@ -2153,7 +2153,7 @@ void CodeGenerator::throw_simple_exception(int rte JVM_TRAPS) {
 
   if (rte == ThrowExceptionStub::rte_null_pointer) { 
     int num_locals = method()->max_locals(); 
-    if(Compiler::omit_stack_frame()) {
+    if(omit_stack_frame()) {
       int params = method()->size_of_parameters();
       mov_imm(r3, gp_compiler_throw_NullPointerException_10_ptr);
       mov_imm(r0, - params * JavaStackDirection * BytesPerStackElement);
@@ -2167,15 +2167,14 @@ void CodeGenerator::throw_simple_exception(int rte JVM_TRAPS) {
     }
     bx(r3);
   } else if (rte == ThrowExceptionStub::rte_array_index_out_of_bounds) { 
-    if(Compiler::omit_stack_frame()) {
+    if(omit_stack_frame()) {
       int params = method()->size_of_parameters();
       mov_imm(r3, gp_compiler_throw_ArrayIndexOutOfBoundsException_10_ptr);
       mov_imm(r0, - params * JavaStackDirection * BytesPerStackElement);
       bx(r3);
     } else {
       Register tmp_reg = r1;
-      address &target 
-          = gp_compiler_throw_ArrayIndexOutOfBoundsException_ptr;
+      address &target = gp_compiler_throw_ArrayIndexOutOfBoundsException_ptr;
       mov_imm(r0, method()->max_locals());
       long offset = (long)&target - (long)&gp_base_label;
       mov(tmp_reg, gp);

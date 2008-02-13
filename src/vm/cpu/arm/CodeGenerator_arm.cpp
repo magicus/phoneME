@@ -1143,7 +1143,7 @@ void CodeGenerator::method_prolog(Method *method JVM_TRAPS) {
   // ldr pc
   _interleave_frame_linking = false;
 
-  if (Compiler::omit_stack_frame()) {
+  if (omit_stack_frame()) {
     need_stack_and_timer_checks = false;
   }
 
@@ -1229,7 +1229,7 @@ void CodeGenerator::method_entry(Method* method JVM_TRAPS) {
   //   - check stack overflow
   method_prolog(method JVM_CHECK);
 
-  if (Compiler::omit_stack_frame()) {
+  if (omit_stack_frame()) {
     // The rest of method_entry deal with pushing the call frame, so
     // we can safely return here.
     GUARANTEE(!ENABLE_WTK_PROFILER, "Profiler always need call frame");
@@ -2231,7 +2231,7 @@ void CodeGenerator::vcall_simple_c_runtime(Value& result,
   frame()->flush_fpu();
 #endif
   GUARANTEE(runtime_func != 0, "sanity check");
-  GUARANTEE(!Compiler::omit_stack_frame(),
+  GUARANTEE(!omit_stack_frame(),
             "cannot call runtime functions with omitted compiled frame");
   int i;
   static const Register ctemps[] = { r0, r1, r2, r3, r12, lr };
@@ -3642,7 +3642,7 @@ void CodeGenerator::return_error(Value& value JVM_TRAPS) {
 
 void CodeGenerator::restore_last_frame(JVM_SINGLE_ARG_TRAPS) {
   Method *m = method();
-  if (Compiler::omit_stack_frame()) {
+  if (omit_stack_frame()) {
     int params = m->size_of_parameters();
     if (params > 0) {
       add_imm(jsp, jsp, - params * JavaStackDirection * BytesPerStackElement);
@@ -3696,7 +3696,7 @@ void CodeGenerator::throw_simple_exception(int rte JVM_TRAPS) {
 
   if (rte == ThrowExceptionStub::rte_null_pointer) {
     int params = method()->size_of_parameters();
-    if(Compiler::omit_stack_frame()) {
+    if(omit_stack_frame()) {
       address &target = gp_compiler_throw_NullPointerException_10_ptr;
       mov_imm(r0, - params * JavaStackDirection * BytesPerStackElement);
       offset = (long)&target - (long)&gp_base_label;
@@ -3709,7 +3709,7 @@ void CodeGenerator::throw_simple_exception(int rte JVM_TRAPS) {
   } else if (rte == ThrowExceptionStub::rte_array_index_out_of_bounds) {
     int params = method()->size_of_parameters();
 
-    if(Compiler::omit_stack_frame()) {
+    if(omit_stack_frame()) {
       address &target = gp_compiler_throw_ArrayIndexOutOfBoundsException_10_ptr;
       mov_imm(r0, - params * JavaStackDirection * BytesPerStackElement);
       offset = (long)&target - (long)&gp_base_label;
