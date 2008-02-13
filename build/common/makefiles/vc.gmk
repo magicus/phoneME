@@ -73,6 +73,12 @@ ASM		= "$(_MASM_DIR$(MASM_DIR))$(MASM_DIR)/ml"
 ASM_FLAGS	+= /nologo /c /coff /Zi
 ASM_OUTPUT	= -Fo
 
+ifeq ($(TARGET_VM), cdc_vm)
+  ifneq ($(CVM_PRELOAD_LIB), true)
+    LD_FLAGS += /DLL
+  endif
+endif
+
 ifeq ($(USE_DEBUG), true)
 
 DEBUG_CFLAGS 	+= -Zi -Od -MDd

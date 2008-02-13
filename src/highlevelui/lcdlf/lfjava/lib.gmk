@@ -272,3 +272,7 @@ JPP_DEFS += -DENABLE_CHAMELEON
 ifeq ($(PLATFORM), linux_gci)
   JPP_DEFS += -DENABLE_GCI
 endif
+
+ifeq ($(PLATFORM), win32_gci)
+  JPP_DEFS += -DENABLE_GCI
+endif

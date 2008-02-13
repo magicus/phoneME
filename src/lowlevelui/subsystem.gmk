@@ -61,8 +61,13 @@ else
                   SUBSYSTEM_IMAGE_MODULES = img_platform
             endif
          else
-            SUBSYSTEM_GRAPHICS_MODULES = gx_putpixel
-            SUBSYSTEM_IMAGE_MODULES = img_putpixel
+            ifeq ($(PLATFORM), win32_gci)
+              SUBSYSTEM_GRAPHICS_MODULES = gx_gci
+              SUBSYSTEM_IMAGE_MODULES = img_gci
+            else
+              SUBSYSTEM_GRAPHICS_MODULES = gx_putpixel
+              SUBSYSTEM_IMAGE_MODULES = img_putpixel
+            endif
           endif
     endif
 endif

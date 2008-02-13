@@ -25,34 +25,22 @@
 #
 ######################################################################
 #
-# LCDUI impl on cdc Library
+# Makefile for building and packaging.
 #
 ######################################################################
 
-# Name of the library
-CDCUI_NAME = cdcui
-CDCUI_DIR = $(SUBSYSTEM_HIGHUI_DIR)/$(CDCUI_NAME)
-CDCUI_CLASSES_DIR = $(CDCUI_DIR)/reference
+include Platform.gmk
 
-# Add to library set for this build
-LIB_SET += $(CDCUI_NAME)
+# Workspace directory
+MIDP_DIR               := $(shell dirname $(shell dirname $(CURDIR)))
 
-
-$(GENERATED_DIR)/classes/com/sun/midp/lcdui/LCDUIEnvironmentForCDC.java: $(CDCUI_CLASSES_DIR)/classes/com/sun/midp/lcdui/LCDUIEnvironmentForCDC.jpp
-	@$(call runjpp,$^,$@)
-
-
-# Java files for the library
-#
-SUBSYSTEM_CDCUI_JAVA_FILES += \
-    $(GENERATED_DIR)/classes/com/sun/midp/lcdui/LCDUIEnvironmentForCDC.java
-
-ifeq ($(TARGET_PLATFORM), linux_gci)
-SUBSYSTEM_CDCUI_JAVA_FILES += \
-    $(CDCUI_CLASSES_DIR)/classes/com/sun/midp/lcdui/GCIEventListener.java
+# Build output directory
+ifndef MIDP_OUTPUT_DIR
+MIDP_OUTPUT_DIR         = $(CURDIR)/output
 endif
 
-ifeq ($(TARGET_PLATFORM), win32_gci)
-SUBSYSTEM_CDCUI_JAVA_FILES += \
-    $(CDCUI_CLASSES_DIR)/classes/com/sun/midp/lcdui/GCIEventListener.java
-endif
+# Build options should be include before shared gmk
+include Options.gmk
+
+# All rules are defined in shared makefiles
+include $(MIDP_DIR)/build/common/Top.gmk

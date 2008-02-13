@@ -54,5 +54,9 @@ endif
 ifeq ($(PLATFORM), linux_gci)
   include $(GRAPHICS_API_DIR)/gxapi_gci/$(LIB_MAKE_FILE)
 else
-  include $(GRAPHICS_API_DIR)/gxapi_native/$(LIB_MAKE_FILE)
+  ifeq ($(PLATFORM), win32_gci)
+    include $(GRAPHICS_API_DIR)/gxapi_gci/$(LIB_MAKE_FILE)
+  else
+    include $(GRAPHICS_API_DIR)/gxapi_native/$(LIB_MAKE_FILE)
+  endif
 endif

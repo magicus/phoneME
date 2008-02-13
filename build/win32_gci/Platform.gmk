@@ -25,34 +25,29 @@
 #
 ######################################################################
 #
-# LCDUI impl on cdc Library
+# Makefile for building and packaging.
 #
 ######################################################################
 
-# Name of the library
-CDCUI_NAME = cdcui
-CDCUI_DIR = $(SUBSYSTEM_HIGHUI_DIR)/$(CDCUI_NAME)
-CDCUI_CLASSES_DIR = $(CDCUI_DIR)/reference
+# Definition of platform to build on
+HOST_PLATFORM		= win32
+HOST_OS			= win32
+HOST_CPU		= i386
+HOST_COMPILER		= vc
 
-# Add to library set for this build
-LIB_SET += $(CDCUI_NAME)
-
-
-$(GENERATED_DIR)/classes/com/sun/midp/lcdui/LCDUIEnvironmentForCDC.java: $(CDCUI_CLASSES_DIR)/classes/com/sun/midp/lcdui/LCDUIEnvironmentForCDC.jpp
-	@$(call runjpp,$^,$@)
-
-
-# Java files for the library
-#
-SUBSYSTEM_CDCUI_JAVA_FILES += \
-    $(GENERATED_DIR)/classes/com/sun/midp/lcdui/LCDUIEnvironmentForCDC.java
-
-ifeq ($(TARGET_PLATFORM), linux_gci)
-SUBSYSTEM_CDCUI_JAVA_FILES += \
-    $(CDCUI_CLASSES_DIR)/classes/com/sun/midp/lcdui/GCIEventListener.java
+# Definition of platform to run on
+TARGET_PLATFORM		= win32_gci
+TARGET_OS		= win32
+TARGET_CPU		= i386
+ifndef TARGET_DEVICE
+TARGET_DEVICE		= x86
 endif
+TARGET_COMPILER		= vc
+TARGET_VM		= cdc_vm
 
-ifeq ($(TARGET_PLATFORM), win32_gci)
-SUBSYSTEM_CDCUI_JAVA_FILES += \
-    $(CDCUI_CLASSES_DIR)/classes/com/sun/midp/lcdui/GCIEventListener.java
-endif
+# file/directory name separator ( / or \\\\ )
+# if the file separator is backslash, double-quoting is needed,
+# that is, you need to write "\\\\" (four backslashes) for "\" (one backslash)
+FN_SEP=\\\\
+
+
