@@ -42,7 +42,7 @@ static unsigned short property_file_name[] = {'j','w','c','_','p','r','o','p','e
 
 static javacall_handle handle = NULL;
 static int property_was_updated = 0;
-static int init_state = PROPERTIES_INIT_NOT_STARTED;
+static properties_init_state init_state = PROPERTIES_INIT_NOT_STARTED;
 
 static const char application_prefix[] = "application:";
 static const char internal_prefix[] = "internal:";
