@@ -769,7 +769,9 @@ static SmsMessage* jsr120_sms_new_msg_javacall(jchar  encodingType,
     memset(sms, 0, sizeof(SmsMessage));
 
     sms->msgAddr   = (char*)javacall_malloc(MAX_ADDR_LEN);
+    memset(sms->msgAddr, 0, MAX_ADDR_LEN);
     sms->msgBuffer = (char*)javacall_malloc(msgLen);
+    memset(sms->msgBuffer, 0, msgLen);
 
     sms->encodingType  = encodingType;
     sms->sourcePortNum = sourcePortNum;
@@ -777,8 +779,14 @@ static SmsMessage* jsr120_sms_new_msg_javacall(jchar  encodingType,
     sms->timeStamp     = timeStamp;
     sms->msgLen        = msgLen;
 
-    memcpy(sms->msgAddr, msgAddr, MAX_ADDR_LEN);
-    memcpy(sms->msgBuffer, msgBuffer, msgLen);
+    if (msgAddr != NULL) {
+        memcpy(sms->msgAddr, msgAddr, MAX_ADDR_LEN);
+    }
+
+    if (msgBuffer != NULL) {
+        memcpy(sms->msgBuffer, msgBuffer, msgLen);
+    }
+    
 
     return sms;
 }
