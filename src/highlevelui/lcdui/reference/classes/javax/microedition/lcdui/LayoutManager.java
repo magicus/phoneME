@@ -873,7 +873,7 @@ class LayoutManager {
                 /* fall through */
         case Item.LAYOUT_RIGHT:
                 for (; rowStart <= rowEnd; rowStart++) {
-                    itemLFs[rowEnd].lMove(hSpace, 0); 
+                    itemLFs[rowStart].lMove(hSpace, 0); 
                 } 
                 break;
 
