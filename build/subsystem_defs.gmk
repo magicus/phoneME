@@ -103,6 +103,7 @@ INTERNAL_JSR_172_JAVA_FILES_JAXP_RI_FILES += \
         $(INTERNAL_JSR_172_RI_DIR)/jaxp/com/sun/ukit/jaxp/ParserFactory.java \
         $(INTERNAL_JSR_172_RI_DIR)/jaxp/com/sun/ukit/jaxp/ReaderUTF16.java \
         $(INTERNAL_JSR_172_RI_DIR)/jaxp/com/sun/ukit/jaxp/ReaderUTF8.java \
+        $(INTERNAL_JSR_172_RI_DIR)/jaxp/com/sun/ukit/jaxp/DTD.java \
         $(INTERNAL_JSR_172_RI_DIR)/jaxp/com/sun/ukit/jaxp/Parser.java \
         $(INTERNAL_JSR_172_RI_DIR)/jaxp/com/sun/ukit/jaxp/Attrs.java
 endif
