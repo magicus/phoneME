@@ -440,7 +440,7 @@ class Compiler: public StackObj {
   static void on_timer_tick(bool is_real_time_tick JVM_TRAPS);
   static void process_interpretation_log();
 
-  static void Compiler::set_hint(const int hint) {
+  static void set_hint(const int hint) {
     switch (hint) {
     case JVM_HINT_VISUAL_OUTPUT:
       _estimated_frame_time = 300;
