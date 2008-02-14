@@ -777,8 +777,18 @@ static SmsMessage* jsr120_sms_new_msg_javacall(jchar  encodingType,
     sms->timeStamp     = timeStamp;
     sms->msgLen        = msgLen;
 
-    memcpy(sms->msgAddr, msgAddr, MAX_ADDR_LEN);
-    memcpy(sms->msgBuffer, msgBuffer, msgLen);
+    if (msgAddr != NULL) {
+        memcpy(sms->msgAddr, msgAddr, MAX_ADDR_LEN);
+    }else{
+        *(sms->msgAddr)=0;
+    }
+
+    if (msgBuffer != NULL) {
+        memcpy(sms->msgBuffer, msgBuffer, msgLen);
+    }else{
+        *(sms->msgAddr)=0;
+    }
+    
 
     return sms;
 }
