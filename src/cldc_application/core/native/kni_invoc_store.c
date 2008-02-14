@@ -1602,7 +1602,7 @@ jsr211_launch_result jsr211_execute_handler(javacall_const_utf16_string handler_
 }
 
 /*
- * Called by platform to notify java VM that invocation of native handler 
+ * Called when platform notifies java VM that invocation of native handler 
  * is finished. This is <code>ContentHandlerServer.finish()</code> substitute 
  * after platform handler completes invocation processing.
  * @param invoc_id processed invocation Id
@@ -1722,7 +1722,7 @@ static void jsr211_abort_platform_invocation (int tid)
 }
 
 /**
- * Receives invocation request from platform. <BR>
+ * Receives invocation request initiated by the platform. <BR>
  * This is <code>Registry.invoke()</code> substitute for Platform->Java call.
  * @param handler_id target Java handler Id
  * @param invocation filled out structure with invocation params
@@ -1863,7 +1863,7 @@ static void handle_javanotify_chapi_java_invoke(
                     invoc->data = MALLOC(invoc->dataLen);
                     if (NULL == invoc->data)
                         res = JAVACALL_OUT_OF_MEMORY;
-                };
+                }
                 if (JAVACALL_OK == res) {
                     memcpy (invoc->data, invocation->data, invoc->dataLen);
                 
@@ -2008,10 +2008,23 @@ static void free_platform_event (jsr211_platform_event *event)
     }
 }
 
-void jsr211_process_platform_finish_notification (jsr211_platform_event *event)
+void 
+jsr211_process_platform_finish_notification (int invoc_id,
+                                             jsr211_platform_event *event)
 {
+    if (NULL == event) {
+        handle_javanotify_chapi_platform_finish(
+            invoc_id,
+            NULL,
+            0, NULL, /* args */
+            0, NULL, /* data */
+            STATUS_ERROR
+            );
+        return;
+    }
+
     handle_javanotify_chapi_platform_finish(
-        event->invoc_id,
+        invoc_id,
         event->invocation.url,
         event->invocation.argsLen,
         event->invocation.args,
@@ -2023,12 +2036,19 @@ void jsr211_process_platform_finish_notification (jsr211_platform_event *event)
     free_platform_event(event);
 }
 
-void jsr211_process_java_invoke_notification (jsr211_platform_event *event)
+void
+jsr211_process_java_invoke_notification (int invoc_id,
+                                         jsr211_platform_event *event)
 {
+    if (NULL == event) {
+        jsr211_abort_platform_invocation(invoc_id);
+        return;
+    }
+
     handle_javanotify_chapi_java_invoke(
         event->handler_id,
         &event->invocation,
-        event->invoc_id
+        invoc_id
         );
     
     free_platform_event(event);

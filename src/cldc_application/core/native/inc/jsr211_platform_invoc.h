@@ -44,15 +44,18 @@ extern "C" {
 #endif/*__cplusplus*/
 
 typedef struct {
-    int invoc_id;
     javacall_utf16_string handler_id;
     javacall_chapi_invocation_status status;
     javacall_chapi_invocation invocation;
 } jsr211_platform_event;
 
-void jsr211_process_platform_finish_notification (jsr211_platform_event *event);
+void
+jsr211_process_platform_finish_notification (int invoc_id, 
+                                             jsr211_platform_event *event);
 
-void jsr211_process_java_invoke_notification (jsr211_platform_event *event);
+void 
+jsr211_process_java_invoke_notification (int invoc_id,
+                                         jsr211_platform_event *event);
 
 #ifdef __cplusplus
 }
