@@ -43,7 +43,7 @@ COMMON_JC_IMPL_PATH = $(JAVACALL_DIR)/implementation/linux_x86_cdc
 JSR_120_JC_IMPL_PATH = $(JAVACALL_DIR)/implementation/linux_x86_cdc
 JSR_135_JC_IMPL_PATH = $(JAVACALL_DIR)/implementation/linux_x86_cdc
 JSR_135_NOTIFIER_PATH=$(JAVACALL_DIR)/notifiers/jump_application
-JSR_177_JC_IMPL_PATH=$(JAVACALL_DIR)/implementation/linux_x86
+JSR_177_JC_IMPL_PATH=$(JAVACALL_DIR)/implementation/linux_x86_emul
 
 #For each project location for basic definitions shall be specified
 #(location of the used javacall_platform_defs.h)
@@ -65,7 +65,7 @@ SOURCE_OUTPUT_LIST += $(JSR_135_JC_IMPL_PATH)/$(JSR_135_JC_DIR) javacall/impleme
 endif
 
 ifeq ($(USE_JSR_177),true)
-SOURCE_OUTPUT_LIST += $(JSR_177_JC_IMPL_PATH)/$(JSR_177_JC_DIR) javacall/implementation/linux_x86
+SOURCE_OUTPUT_LIST += $(JSR_177_JC_IMPL_PATH)/$(JSR_177_JC_DIR) javacall/implementation/linux_x86_emul
 endif
 
 ifeq ($(USE_COMMON),true)
