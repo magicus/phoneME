@@ -224,6 +224,7 @@ int* out_encode_sms_buffer_length) {
     //adding date-stamp
     strcat(encode_sms_buffer, "Date: ");
 	_i64toa(timeStamp,encode_sms_buffer+strlen(encode_sms_buffer),10);
+    strcat(encode_sms_buffer, "\n");
 
     //adding sender address
     strcat(encode_sms_buffer, "SenderAddress: sms://");
@@ -278,15 +279,15 @@ void **pContext) {
     //    void *pContext = NULL;
 
     javacall_sms_encoding   encodingType;
-    int                     encodingType_int;
-    char*                   sourceAddress;
-    char*                   msg;
-    int                     msgLen;
-    int                     destPortNum;
-    int                     srcPortNum;
-    javacall_int64          timeStamp;
-    char*                   recipientPhone;
-    char*                   senderPhone;
+    int                     encodingType_int = 0;
+    char*                   sourceAddress = NULL;
+    char*                   msg = NULL;
+    int                     msgLen = 0;
+    int                     destPortNum = 0;
+    int                     srcPortNum = 0;
+    javacall_int64          timeStamp = 0;
+    char*                   recipientPhone = NULL;
+    char*                   senderPhone = NULL;
 
     msg = (char *) malloc(SMS_BUFF_LENGTH);
     memset(msg, 0, SMS_BUFF_LENGTH);
