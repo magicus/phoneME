@@ -85,16 +85,6 @@ public class TextPolicy {
     }
 
     /**
-     * Check is this is a valid email
-     *
-     * @param array string to check
-     * @return true if this is a valid string
-     */
-    private static boolean checkEmail(String array) {
-        return array.indexOf('\n')==-1;
-    }
-
-    /**
      * Check is this is a valid numeric
      *
      * @param array string to check
@@ -152,16 +142,6 @@ public class TextPolicy {
     }
 
     /**
-     * Check is this is a valid url
-     *
-     * @param array string to check
-     * @return true if this is a valid string
-     */
-    private static boolean checkURL(String array) {
-        return array.indexOf('\n')==-1;
-    }
-
-    /**
      * Check is this is a valid string given the constraints
      *
      * @param dca string to check
@@ -178,10 +158,10 @@ public class TextPolicy {
         switch (constraints & TextField.CONSTRAINT_MASK) {
             case TextField.ANY:         return true;
             case TextField.DECIMAL:     return checkDecimal(dca.toString());
-            case TextField.EMAILADDR:   return checkEmail(dca.toString());
+            case TextField.EMAILADDR:   return true;
             case TextField.NUMERIC:     return checkNumeric(dca.toString());
             case TextField.PHONENUMBER: return checkPhoneNumber(dca.toString());
-            case TextField.URL:         return checkURL(dca.toString());
+            case TextField.URL:         return true;
         }
         return false;
     } 
