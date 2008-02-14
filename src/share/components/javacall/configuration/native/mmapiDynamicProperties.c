@@ -102,33 +102,27 @@ const char* get_system_property_audio_encodings()
 {
     javacall_media_configuration *cfg = get_configuration();
     if (cfg != NULL) {
-        if (NULL != cfg->audioEncoding) {
-            return cfg->audioEncoding;
-        }
+        return cfg->audioEncoding;
     }
-    return "";
+    return NULL;
 }
 
 const char* get_system_property_video_encodings()
 {
     javacall_media_configuration *cfg = get_configuration();
     if (cfg != NULL) {
-        if (NULL != cfg->videoEncoding) {
-            return cfg->videoEncoding;
-        }
+        return cfg->videoEncoding;
     }
-    return "";
+    return NULL;
 }
 
 const char* get_system_property_video_snapshot_encodings()
 {
     javacall_media_configuration *cfg = get_configuration();
     if (cfg != NULL) {
-        if (NULL != cfg->videoSnapshotEncoding) {
-            return cfg->videoSnapshotEncoding;
-        }
+        return cfg->videoSnapshotEncoding;
     }
-    return "";
+    return NULL;
 }
 
 #define MAX_STREAMABLE_CONTENT_PROPERTY_LEN 1024
@@ -149,14 +143,14 @@ const char* get_system_property_streamable_contents()
             if (mediaCaps->streamingProtocols & JAVACALL_MEDIA_MEMORY_PROTOCOL) {
                 /* add content Types to property string */
                 types_len = strlen(mediaCaps->contentTypes);
-                if (((p-(int)streamable_content_property)+types_len) >=
+                if (((int)(p-streamable_content_property)+types_len+1) >=
                     MAX_STREAMABLE_CONTENT_PROPERTY_LEN) {
                     /* delete duplicates and try again */
                     
                     mmapi_string_delete_duplicates(streamable_content_property);
                     p = streamable_content_property + strlen(streamable_content_property);
 
-                    if (((p-(int)streamable_content_property)+types_len) >=
+                    if (((int)(p-streamable_content_property)+types_len+1) >=
                         MAX_STREAMABLE_CONTENT_PROPERTY_LEN) {
                         
                         mediaCaps++;

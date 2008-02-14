@@ -448,6 +448,7 @@ void mmapi_string_delete_duplicates(char *p) {
         if (*p == '\0' || (s = strchr(p, ' ')) == NULL || (p_len = (int)(s - p)) == 0) {
             break;
         }
+        s++;
         do {
             s0 = s;
             if ((s = strchr(s0, ' ')) != NULL) {
