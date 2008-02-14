@@ -368,7 +368,7 @@ javacall_result javacall_dir_get_root_path(javacall_utf16* /* OUT */ rootPath,
     wchar_t filesep[2] = {chSep, (wchar_t)0};
     int len;
 
-    javacall_result res = helper_dir_get_root_path(rootPath,&len);
+    javacall_result res = helper_dir_get_home_path(rootPath,&len);
 
     if (res != JAVACALL_OK) {
         return res;
@@ -395,20 +395,20 @@ javacall_result javacall_dir_get_root_path(javacall_utf16* /* OUT */ rootPath,
  * @return <tt>JAVACALL_OK</tt> if operation completed successfully
  *         <tt>JAVACALL_FAIL</tt> if an error occured
  */
-javacall_result javacall_dir_get_configuration_path(javacall_utf16* /* OUT */ configPath, 
+javacall_result javacall_dir_get_config_path(javacall_utf16* /* OUT */ configPath, 
                                                     int* /* IN | OUT */ configPathLen)
 {
     wchar_t chSep = javacall_get_file_separator();
     wchar_t filesep[2] = {chSep, (wchar_t)0};
     int len;
-    javacall_result res = helper_dir_get_root_path(configPath,&len);
+    javacall_result res = helper_dir_get_home_path(configPath,&len);
 
 
     if (res != JAVACALL_OK) {
         return res;
     }
 
-    if (len + wcslen(CONFIG_DIR) >= rootPathLen)
+    if (len + wcslen(CONFIG_DIR) >= configPathLen)
         return JAVACALL_FAIL;
 
     wcscat(configPath, filesep);
