@@ -173,6 +173,8 @@ class GCIEventListener implements
 	{Constants.KEYCODE_DOWN,              40},
 	{Constants.KEYCODE_LEFT,              37},
 	{Constants.KEYCODE_RIGHT,             39},
-	{Constants.KEYCODE_SELECT,            10}
+	{Constants.KEYCODE_SELECT,            10},
+    {Constants.KEYCODE_SOFT1,            112},
+    {Constants.KEYCODE_SOFT2,            113}
     };
 }
