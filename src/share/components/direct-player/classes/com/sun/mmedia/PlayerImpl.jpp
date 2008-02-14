@@ -404,8 +404,10 @@ public class PlayerImpl implements Player {
             }        
 
             playerInst.prefetch();
-            
-            if( null != state_subscriber ) state_subscriber.PlayerPrefetched( this );
+
+            if (null != state_subscriber) {
+                state_subscriber.PlayerPrefetched(this);
+            }
         }
     };
 

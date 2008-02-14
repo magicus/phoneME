@@ -691,13 +691,13 @@ public class DirectPlayer extends BasicPlayer
     {
         String ctype = super.getContentType();
         
-        if( null == ctype )
-        {
+        if( null == ctype ) {
             ctype = nGetContentType(hNative);
-            if( null != ctype )
-            {
+            if( null != ctype ) {
                 int s_pos = ctype.indexOf(' ');
-                if( -1 != s_pos ) ctype = ctype.substring(0,s_pos);
+                if (-1 != s_pos) {
+                    ctype = ctype.substring(0, s_pos);
+                }
             }
         }
         
