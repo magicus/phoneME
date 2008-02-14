@@ -152,6 +152,11 @@ extern "C" {
  */
 #define MIDP_ODD_MIDLET_EXITED_EVENT    51
 
+/**
+ * JSR-211 CHAPI platform notification event.
+ */
+#define CHAPI_EVENT                     52
+
 /** @} */
 
 /**

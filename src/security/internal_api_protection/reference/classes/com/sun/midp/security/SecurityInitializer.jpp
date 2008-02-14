@@ -233,10 +233,10 @@ public final class SecurityInitializer {
         "com.sun.javame.sensor.NativeSensorRegistry$SecurityTrusted",
         // #endif ENABLE_JSR_256
 
-        // #ifdef ENABLE_JSR211
+        // #ifdef ENABLE_JSR_211
         "com.sun.jsr211.security.SecurityInitializer$SecurityTrusted",
         "com.sun.j2me.content.CHManagerImpl$SecurityTrusted",
-        // #endif ENABLE_JSR211
+        // #endif ENABLE_JSR_211
 
         // Pass the security token to the i3 test framework.
         // #ifdef ENABLE_I3_TEST

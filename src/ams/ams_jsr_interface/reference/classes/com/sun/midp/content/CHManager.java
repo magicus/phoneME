@@ -40,6 +40,11 @@ import com.sun.midp.installer.InstallState;
 import com.sun.midp.security.Permissions;
 import com.sun.midp.security.SecurityToken;
 
+import com.sun.midp.events.EventListener;
+import com.sun.midp.events.EventQueue;
+import com.sun.midp.events.Event;
+import com.sun.midp.events.EventTypes;
+
 /**
  * Stub interface to handle ContentHandlers functions.
  * If ContentHandlers are not supported it provides a no-op
@@ -52,7 +57,7 @@ import com.sun.midp.security.SecurityToken;
  * {@link #install remove old content handlers and register new ones}.
  * When a suite is to be removed the content handlers are
  * {@link #uninstall uninstalled}.
- * At startup {@link #initCleanupMonitor} to initialize any
+ * At startup {@link #init} to initialize any
  * necessary cleanup handling when the application exits.
  * When a MIDlet is about to created the
  * {@link #midletAdded} method is called.
@@ -200,8 +205,9 @@ public class CHManager {
      * for incompletely handled Invocation requests.
      *
      * @param midletProxyList reference to the MIDlet proxy list
+     * @param eventQueue reference to AMS isolate event queue
      */
-    public void initCleanupMonitor(MIDletProxyList midletProxyList) {
+    public void init(MIDletProxyList midletProxyList, EventQueue eventQueue) {
     }
 
     /**

@@ -331,4 +331,9 @@ public final class EventTypes {
      * Notification sent by AMS to the debug agent.
      */
     public static final int MIDP_ODD_MIDLET_EXITED_EVENT = 51;
+
+    /**
+     * JSR-211 CHAPI platform notification event.
+     */
+    public static final int CHAPI_EVENT = 52;
 }

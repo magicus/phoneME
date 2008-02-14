@@ -69,6 +69,9 @@ extern "C" {
 #ifdef ENABLE_JSR_179
 #include "javacall_location.h"
 #endif /* ENABLE_JSR_179 */
+#ifdef ENABLE_JSR_211
+#include "jsr211_platform_invoc.h"
+#endif /* ENABLE_JSR_211 */
 #if ENABLE_JSR_234
 #include <javacall_multimedia_advanced.h>
 #endif /* ENABLE_JSR_234 */
@@ -123,6 +126,10 @@ typedef enum {
     MIDP_JC_EVENT_SWITCH_FOREGOUND     ,
     MIDP_JC_EVENT_SELECT_APP           ,
 #endif /*ENABLE_MULTIPLE_ISOLATES*/
+#ifdef ENABLE_JSR_211
+    JSR211_JC_EVENT_PLATFORM_FINISH      ,
+    JSR211_JC_EVENT_JAVA_INVOKE          ,
+#endif
 #if ENABLE_JSR_234
     MIDP_JC_EVENT_ADVANCED_MULTIMEDIA  ,
 #endif /*ENABLE_JSR_234*/
@@ -255,6 +262,13 @@ typedef struct {
 } jsr179_jc_event_proximity;
 #endif /* ENABLE_JSR_179 */
 
+#ifdef ENABLE_JSR_211
+typedef struct {
+    int invoc_id;
+    jsr211_platform_event *jsr211event;
+} jsr211_jc_event_platform_event;
+#endif
+
 #ifdef ENABLE_JSR_256
 typedef struct {
     javacall_sensor_type sensor_type;
@@ -337,6 +351,9 @@ typedef struct {
         midp_jc_event_carddevice           carddeviceEvent;
 #endif /* ENABLE_JSR_177 */
         jsr75_jc_event_root_changed        jsr75RootchangedEvent;
+#ifdef ENABLE_JSR_211
+        jsr211_jc_event_platform_event     jsr211PlatformEvent;
+#endif
 
         midp_event_heap_size               heap_size;
         midp_event_remove_midlet           removeMidletEvent;
