@@ -37,10 +37,11 @@ USE_ABSTRACTIONS=true
 # Javadoc source path
 ifeq ($(USE_NATIVE_AMS), true)
 AMS_DIR=nams
-EXTRA_CFLAGS += -DENABLE_JSR_211=1
 else
 AMS_DIR=jams
 endif
+
+EXTRA_CFLAGS += -DENABLE_JSR_211=1
 
 JSR_211_SOURCEPATH = \
 $(JSR_211_DIR)/src/share/classes$(PATHSEP)$(JSR_211_DIR)/src/cldc_application/classes$(PATHSEP)$(JSR_211_DIR)/src/core/$(AMS_DIR)/classes

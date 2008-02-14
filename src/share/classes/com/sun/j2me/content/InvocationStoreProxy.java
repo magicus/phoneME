@@ -17,26 +17,21 @@ public final class InvocationStoreProxy {
 			invoc.debugTo(DEBUG_OUT);
 			DEBUG_OUT.println();
 		}
-        ContentHandlerImpl handler = null;
-        if( invoc.ID != null )
-            handler = RegistryStore.getHandler(null, invoc.ID, RegistryStore.SEARCH_EXACT);
-		if( DEBUG_OUT != null ) DEBUG_OUT.println( "handler: " + handler ); 
-        	
         // check if it is native handler
-        if (handler != null && 
-        		(handler.registrationMethod & ContentHandlerImpl.REGISTERED_NATIVE_FLAG) != 0){
+        /* IMPL_NOTE: null suite ID is an indication of platform request */
+        if (invoc.suiteId == AppProxy.UNUSED_STORAGE_ID){
         	// call native handler only for unprocessed invocations
         	// status is returned without launching of a handler
         	if( invoc.getStatus() == Invocation.WAITING ) {
 	            try {
-	                if( launchNativeHandler(handler.getID()) )
+	                if( launchNativeHandler(invoc.getID()) )
 	                	invoc.finish(Invocation.INITIATED);
 	                return LIT_NATIVE_STARTED;
 	            } catch (ContentHandlerException che) {
 	                // Ignore => invocation will be deleted
 	            }
         	}
-        } else if (invoc.suiteId != AppProxy.UNUSED_STORAGE_ID && invoc.classname != null) {
+        } else if (invoc.classname != null) {
             try {
                 AppProxy appl = AppProxy.getCurrent().forApp(invoc.suiteId, invoc.classname);
             	// if MIDlet already started report STARTED
