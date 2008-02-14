@@ -2,22 +2,22 @@
  *
  * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
- *
+ * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
  * 2 only, as published by the Free Software Foundation.
- *
+ * 
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
  * included at /legal/license.txt).
- *
+ * 
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA
- *
+ * 
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
  * information or have any questions.
@@ -69,7 +69,7 @@ static char controlLoopInfo[] = "\t To control:\n"
                                 "\t '4' to send Resume \n"
                                 "\t \n"
                                 "\t '0' to quit";
-
+                                
 
 /* forward declaration */
 void main_install_content(int argc, char *argv[]);
@@ -326,7 +326,7 @@ int main(int argc, char *main_argv[]) {
             argc -= 2;
             argv += 2;
             continue;
-        } else
+        } else 
         */
         if (1 < argc && 0 == strcmp(argv[1], "debug")) {
             argc -= 1;
@@ -362,10 +362,7 @@ int main(int argc, char *main_argv[]) {
     */
 
     javacall_events_init();
-    if (JAVACALL_OK != javacall_initialize_configurations()) {
-        return -1;
-    }
-
+    javacall_initialize_configurations();
 
 #if !ENABLE_MULTIPLE_INSTANCES
     if (isSecondaryInstance()) {
@@ -407,7 +404,7 @@ int main(int argc, char *main_argv[]) {
             mainArgumentsHandle(iarvc, iargv);
         }
     } /* end of while(WaitForSingleObject(...)) */
-#endif
+#endif    
 
     CloseHandle(lifecycle_shutdown_event);
     return 1;
@@ -501,7 +498,7 @@ LRESULT CALLBACK main_dlgproc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lPa
 
         if ((itemId == IDOK) && (msgId == 0)) {
 
-            int len; /* length of an argument */
+            int len; /* length of an argument */ 
             int lenbuf = 0; /* length of the buffer */
             i = SendDlgItemMessage(hDlg, IDC_LIST_MODE, LB_GETCURSEL, 0, 0);
             if (i < 0) {
@@ -587,16 +584,16 @@ LRESULT CALLBACK main_dlgproc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lPa
                 }
                 CloseHandle(hFile);
             }
-
+            
             if (GetOpenFileName(&ofn) && *path) {
                 SendMessage(wndPath, WM_SETTEXT, 0, (LPARAM) path);
             }
             break;
         }
 
-
+    
         if ((itemId == IDC_LIST_MODE) && (msgId == LBN_SELCHANGE)) {
-
+ 
                 i = SendDlgItemMessage(hDlg, IDC_LIST_MODE, LB_GETCURSEL, 0, 0);
                 for (j = 0; j < maindlg_items_cnt; j++) {
                     EnableWindow(GetDlgItem(hDlg, maindlg_items[j]),
@@ -604,7 +601,7 @@ LRESULT CALLBACK main_dlgproc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lPa
                 }
         }
         // End of case WM_COMMAND
-
+    
     } // End of switch(message)
 
     return 0;
