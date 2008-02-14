@@ -143,14 +143,14 @@ const char* get_system_property_streamable_contents()
             if (mediaCaps->streamingProtocols & JAVACALL_MEDIA_MEMORY_PROTOCOL) {
                 /* add content Types to property string */
                 types_len = strlen(mediaCaps->contentTypes);
-                if (((int)(p-streamable_content_property)+types_len) >=
+                if (((int)(p-streamable_content_property)+types_len+1) >=
                     MAX_STREAMABLE_CONTENT_PROPERTY_LEN) {
                     /* delete duplicates and try again */
                     
                     mmapi_string_delete_duplicates(streamable_content_property);
                     p = streamable_content_property + strlen(streamable_content_property);
 
-                    if (((int)(p-streamable_content_property)+types_len) >=
+                    if (((int)(p-streamable_content_property)+types_len+1) >=
                         MAX_STREAMABLE_CONTENT_PROPERTY_LEN) {
                         
                         mediaCaps++;
