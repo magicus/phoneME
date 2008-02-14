@@ -26,13 +26,10 @@
 package com.sun.j2mews.xml.rpc;
 
 import javax.microedition.xml.rpc.*;
-import javax.xml.namespace.QName;
 import javax.xml.rpc.*;
 
-
 import java.io.*;
-import java.rmi.*;
-import javax.microedition.io.*;
+import java.util.Hashtable;
 
 public class SOAPEncoder {
 
@@ -50,6 +47,12 @@ public class SOAPEncoder {
      * error condition
      */
     String errString;
+    
+    final static private Hashtable specialsMap = new Hashtable();
+    static {
+    	specialsMap.put(new Double(Double.POSITIVE_INFINITY).toString(), "INF");
+    	specialsMap.put(new Double(Double.NEGATIVE_INFINITY).toString(), "-INF");
+    }
 
     /**
      * Empty constructor
@@ -102,14 +105,13 @@ public class SOAPEncoder {
             buffer.append("</soap:Body>\n");
         }
         buffer.append("</soap:Envelope>\n");
-
-	try { 
+        
+        try { 
             if (encoding != null) {
                 stream.write(buffer.toString().getBytes(encoding));
             } else {
                 stream.write(buffer.toString().getBytes());
             }
-
         } catch (IOException e) {
             this.buffer = null;
             throw new JAXRPCException(e.getMessage());
@@ -167,7 +169,7 @@ public class SOAPEncoder {
                 throw new RuntimeException();
             }
             // Error check that we have a valid # of array elements
-	    checkArraySize(parent, values.length);
+            checkArraySize(parent, values.length);
         }
 
         // We loop through, encoding each value of the "array"
@@ -225,14 +227,22 @@ public class SOAPEncoder {
             errString = "Simple Type Mismatch";
             throw new RuntimeException();
         }
-        if (contentType.value < 7) {
-            // value can be string encoded by its Java wrapper,
-            // ie. Boolean, Byte, Long, etc.
-            buffer.append(value.toString());
-        } else {
-            // value is String data and needs to be escaped
-            // properly per XML
-            xmlIzeString(value.toString());
+        switch(contentType.value) {
+        	case 5: // float
+        	case 6: // double
+        		String v = value.toString();
+        		String sv = (String)specialsMap.get(v);
+        		buffer.append( (sv == null)? v : sv );
+        		break;
+        	case 7:
+                // value is String data and needs to be escaped
+                // properly per XML
+                xmlIzeString(value.toString());
+        		break;
+        	default:
+	            // value can be string encoded by its Java wrapper,
+	            // ie. Boolean, Byte, Long, etc.
+	            buffer.append(value.toString());
         }
     }
 
@@ -325,28 +335,28 @@ public class SOAPEncoder {
             break;
         case 5:
 // #ifdef ENABLE_CLDC_11
-                if (value instanceof float[]) {
-                    float[] values = (float[])value;
-                    checkArraySize(parent, values.length);
-                    for (int i = 0; i < values.length; i++) {
-                        buffer.append(
-                            "<" + id + ">" + values[i] + "</" + id + ">\n");
-                    }
-                    return;
+            if (value instanceof float[]) {
+                float[] values = (float[])value;
+                checkArraySize(parent, values.length);
+                for (int i = 0; i < values.length; i++) {
+                    buffer.append(
+                        "<" + id + ">" + values[i] + "</" + id + ">\n");
                 }
+                return;
+            }
 // #endif ENABLE_CLDC_11
             break;
         case 6:
 // #ifdef ENABLE_CLDC_11
-		if (value instanceof double[]) {
-                    double[] values = (double[])value;
-                    checkArraySize(parent, values.length);
-                    for (int i = 0; i < values.length; i++) {
-                        buffer.append(
-                            "<" + id + ">" + values[i] + "</" + id + ">\n");
-                    }
-                    return;
-                }
+			if (value instanceof double[]) {
+	            double[] values = (double[])value;
+	            checkArraySize(parent, values.length);
+	            for (int i = 0; i < values.length; i++) {
+	                buffer.append(
+	                    "<" + id + ">" + values[i] + "</" + id + ">\n");
+	            }
+	            return;
+	        }
 // #endif ENABLE_CLDC_11
             break;
         }
@@ -429,7 +439,7 @@ public class SOAPEncoder {
         case 5:
             return (value instanceof Float);
         case 6:
-	    return (value instanceof Double);
+	        return (value instanceof Double);
 // #endif ENABLE_CLDC_11
         case 7:
             return (value instanceof String);

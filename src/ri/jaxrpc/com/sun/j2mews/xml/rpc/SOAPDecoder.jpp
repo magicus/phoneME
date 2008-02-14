@@ -1081,8 +1081,7 @@ public class SOAPDecoder extends DefaultHandler
         case 4: // Type.LONG
             try {
                 if (token.startsWith("+")) {
-                    return new Long(Long.parseLong(
-                        token.substring(1)));
+                    return new Long(Long.parseLong(token.substring(1)));
                 } else {
                     return new Long(Long.parseLong(token));
                 }
@@ -1093,43 +1092,41 @@ public class SOAPDecoder extends DefaultHandler
             }
 // #ifdef ENABLE_CLDC_11
         case 5: // Type.FLOAT
-                try {
-                    if (token.startsWith("+")) {
-                        return new Float(Float.parseFloat(
-                                         token.substring(1)));
-                    } else if (token.startsWith("NaN")) {
-			return new Float(Float.NaN);
-		    } else if (token.startsWith("INF")) {
-			return new Float(Float.POSITIVE_INFINITY);
-		    } else if (token.startsWith("-INF")) {
-			return new Float(Float.NEGATIVE_INFINITY);
-		    } else {
-                        return new Float(Float.parseFloat(token));
-                    }
-                } catch (NumberFormatException nfe) {
-                    stateStack.push(new Integer(4));
-                    errString = "Expected Float, received: " + token;
-                    throw new RuntimeException();
+            try {
+                if (token.startsWith("+")) {
+                    return new Float(Float.parseFloat(token.substring(1)));
+                } else if (token.startsWith("NaN")) {
+                	return new Float(Float.NaN);
+			    } else if (token.startsWith("INF")) {
+			    	return new Float(Float.POSITIVE_INFINITY);
+			    } else if (token.startsWith("-INF")) {
+			    	return new Float(Float.NEGATIVE_INFINITY);
+			    } else {
+                    return new Float(Float.parseFloat(token));
                 }
+            } catch (NumberFormatException nfe) {
+                stateStack.push(new Integer(4));
+                errString = "Expected Float, received: " + token;
+                throw new RuntimeException();
+            }
         case 6: // Type.DOUBLE
-                try {
-                    if (token.startsWith("+")) {
-                        return new Double(Double.parseDouble(
-                                          token.substring(1)));
-                    } else if (token.startsWith("NaN")) {
-			return new Double(Double.NaN);
-		    } else if (token.startsWith("INF")) {
-			return new Double(Double.POSITIVE_INFINITY);
-		    } else if (token.startsWith("-INF")) {
-			return new Double(Double.NEGATIVE_INFINITY);
-                    } else {
-                        return new Double(Double.parseDouble(token));
-                    }
-                } catch (NumberFormatException nfe) {
-                    stateStack.push(new Integer(4));
-                    errString = "Expected Double, received: " + token;
-                    throw new RuntimeException();
+            try {
+                if (token.startsWith("+")) {
+                    return new Double(Double.parseDouble(token.substring(1)));
+                } else if (token.startsWith("NaN")) {
+                	return new Double(Double.NaN);
+			    } else if (token.startsWith("INF")) {
+			    	return new Double(Double.POSITIVE_INFINITY);
+			    } else if (token.startsWith("-INF")) {
+			    	return new Double(Double.NEGATIVE_INFINITY);
+                } else {
+                    return new Double(Double.parseDouble(token));
                 }
+            } catch (NumberFormatException nfe) {
+                stateStack.push(new Integer(4));
+                errString = "Expected Double, received: " + token;
+                throw new RuntimeException();
+            }
 // #endif ENABLE_CLDC_11
 
         case 7: // Type.STRING
