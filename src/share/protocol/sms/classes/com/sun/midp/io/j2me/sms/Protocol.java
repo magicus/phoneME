@@ -781,6 +781,9 @@ public class Protocol extends ProtocolBase {
      *   msisdn ::== "+" digits | digits
      *   digit ::== "0" | "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9"
      *   digits ::== digit | digit digits
+     *
+     * @param msisdn host address to check
+     * @exception IllegalArgumentException is thrown for wrong msisdn
      */
     static void checkHostAddressSyntax(String msisdn) 
              throws IllegalArgumentException {
@@ -802,7 +805,7 @@ public class Protocol extends ProtocolBase {
             throw new IllegalArgumentException("Empty host address");
         }
 
-        for (; offset < msisdn.length(); offset++) {
+        for (; offset < len; offset++) {
             char c = msisdn.charAt(offset);
             if ((c < '0') || (c > '9')) {
                 throw new IllegalArgumentException(
