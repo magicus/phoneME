@@ -154,7 +154,8 @@ public class PTILayer extends PopupLayer {
     public boolean keyInput(int type, int keyCode) {
         boolean ret = false;
         String[] l = getList(); 
-        if (type == EventConstants.PRESSED && visible) {
+        if (( (type == EventConstants.PRESSED) ||
+                (type == EventConstants.REPEATED) ) && visible) {
             switch (keyCode) {
             case Constants.KEYCODE_UP:
             case Constants.KEYCODE_LEFT:
