@@ -132,11 +132,16 @@ public class KeyboardInputMode implements InputMode {
         // if the key is printable one
         if (mediator != null &&
             !longPress) {
-            if( keyCode >= ' ' && keyCode < 127 && 
-            //Following line is used for removing duplicate
-            //events when using the keyboard
-            !(keyCode >= '0' && keyCode <= '9') &&
-            keyCode != '*' && keyCode != '#' ) {
+            if( keyCode >= ' ' && keyCode < 127  
+            /* IMPL_NOTE: CR <6658788>, temporary changes to process wrong
+             * repeated key events on Shift+<0..9> passed from emulator.
+             * Should be reverted as soon as the emulator is fixed.
+             */            
+            && !(keyCode >= '0' && keyCode <= '9') &&
+            keyCode != '*' && keyCode != '#'
+            /* IMPL_NOTE: End of temporary changes for CR <6658788> 
+             */
+          ) {
                 mediator.commit("" + (char)keyCode);
             } else if ( mediator.isNewlineKey(keyCode)) {
                 mediator.commit("\n");
