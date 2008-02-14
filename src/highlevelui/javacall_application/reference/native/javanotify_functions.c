@@ -1387,8 +1387,8 @@ copy_jc_utf16_string(javacall_const_utf16_string src) {
     if (JAVACALL_OK != javautil_unicode_utf16_ulength (src, &length)) {
         length = 0;
     }
-    result = javacall_calloc(length, sizeof(javacall_utf16));
-    memcpy(result, src, length*2);
+    result = javacall_calloc(length + 1, sizeof(javacall_utf16));
+    memcpy(result, src, (length + 1) * sizeof(javacall_utf16));
     return result;
 }
 
@@ -1417,10 +1417,10 @@ void javanotify_chapi_platform_finish(
     int i;
 
     e.eventType = JSR211_JC_EVENT_PLATFORM_FINISH;
+    e.data.jsr211PlatformEvent.invoc_id    = invoc_id;
     e.data.jsr211PlatformEvent.jsr211event =
         javacall_malloc (sizeof(*e.data.jsr211PlatformEvent.jsr211event));
     if (NULL != e.data.jsr211PlatformEvent.jsr211event) {
-        e.data.jsr211PlatformEvent.jsr211event->invoc_id   = invoc_id;
         e.data.jsr211PlatformEvent.jsr211event->status     = status;
         e.data.jsr211PlatformEvent.jsr211event->handler_id = NULL;
         
@@ -1467,10 +1467,10 @@ void javanotify_chapi_java_invoke(
     int i;
 
     e.eventType = JSR211_JC_EVENT_JAVA_INVOKE;
+    e.data.jsr211PlatformEvent.invoc_id    = invoc_id;
     e.data.jsr211PlatformEvent.jsr211event =
         javacall_malloc (sizeof(*e.data.jsr211PlatformEvent.jsr211event));
     if (NULL != e.data.jsr211PlatformEvent.jsr211event) {
-        e.data.jsr211PlatformEvent.jsr211event->invoc_id   = invoc_id;
         e.data.jsr211PlatformEvent.jsr211event->handler_id = 
             copy_jc_utf16_string(handler_id);
         e.data.jsr211PlatformEvent.jsr211event->status     =

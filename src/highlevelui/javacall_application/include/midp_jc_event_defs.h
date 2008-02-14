@@ -264,6 +264,7 @@ typedef struct {
 
 #ifdef ENABLE_JSR_211
 typedef struct {
+    int invoc_id;
     jsr211_platform_event *jsr211event;
 } jsr211_jc_event_platform_event;
 #endif

@@ -207,11 +207,11 @@ void midp_check_events(JVMSPI_BlockedThreadInfo *blocked_threads,
 
 #ifdef ENABLE_JSR_211
     case JSR211_PLATFORM_FINISH_SIGNAL:
-        jsr211_process_platform_finish_notification ((void*)newSignal.descriptor);
+        jsr211_process_platform_finish_notification (newSignal.descriptor, newSignal.pResult);
         midpStoreEventAndSignalAms(newMidpEvent);
         break;
     case JSR211_JAVA_INVOKE_SIGNAL:
-        jsr211_process_java_invoke_notification ((void*)newSignal.descriptor);
+        jsr211_process_java_invoke_notification (newSignal.descriptor, newSignal.pResult);
         midpStoreEventAndSignalAms(newMidpEvent);
         break;
 #endif /*ENABLE_JSR_211  */
