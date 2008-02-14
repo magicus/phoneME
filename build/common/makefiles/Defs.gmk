@@ -411,35 +411,52 @@ override GENERATED_JAVA_LIST=$(MIDP_OUTPUT_DIR)/genjavalist.txt
 # line length limit on cygwin, we split it into 100 words length chunks. 
 # This is not guaranteed to help in all cases, but at least reduce the 
 # possibility of it happening.
-define appendfiles
-    ( if [ $(words $?) -gt 200 ]; then \
-        echo "ERROR: Java files list exceeds 200 words limit."; \
-        echo "To increase the limit, edit appendfiles variable definition in Defs.gmk"; \
-        exit 1; \
-    fi ); \
-    _javalist="$(wordlist 1,100,$?)"; \
-    ( if [ -n "$$_javalist" ]; then \
-        echo "$$_javalist" >> $$_list_file; \
-    fi ); \
-    _javalist2="$(wordlist 101,200,$?)"; \
-    ( if [ -n "$$_javalist2" ]; then \
-        echo "$$_javalist2" >> $$_list_file; \
-    fi )
-endef
-
 define appendjavafiles
-    @_list_file=$(REBUILD_JAVA_LIST); \
-    $(appendfiles)
+    @if [ $(words $?) -gt 200 ]; then \
+        echo "ERROR: Java files list exceeds 200 words limit."; \
+        echo "To increase the limit, edit appendjavafiles variable definition in Defs.gmk"; \
+        exit 1; \
+    fi
+    @_javalist="$(wordlist 1,100,$?)"; \
+    if [ -n "$$_javalist" ]; then \
+        echo "$$_javalist" >> $(REBUILD_JAVA_LIST); \
+    fi
+    @_javalist="$(wordlist 101,200,$?)"; \
+    if [ -n "$$_javalist" ]; then \
+        echo "$$_javalist" >> $(REBUILD_JAVA_LIST); \
+    fi
 endef
 
 define appendsubsetjavafiles
-    @_list_file=$(SUBSET_API_JAVA_LIST); \
-    $(appendfiles)
+    @if [ $(words $?) -gt 200 ]; then \
+        echo "ERROR: Java files list exceeds 200 words limit."; \
+        echo "To increase the limit, edit appendsubsetjavafiles variable definition in Defs.gmk"; \
+        exit 1; \
+    fi
+    @_javalist="$(wordlist 1,100,$?)"; \
+    if [ -n "$$_javalist" ]; then \
+        echo "$$_javalist" >> $(SUBSET_API_JAVA_LIST); \
+    fi
+    @_javalist="$(wordlist 101,200,$?)"; \
+    if [ -n "$$_javalist" ]; then \
+        echo "$$_javalist" >> $(SUBSET_API_JAVA_LIST); \
+    fi
 endef
 
 define appendsupersetjavafiles
-    @_list_file=$(SUPERSET_API_JAVA_LIST); \
-    $(appendfiles)
+    @if [ $(words $?) -gt 200 ]; then \
+        echo "ERROR: Java files list exceeds 200 words limit."; \
+        echo "To increase the limit, edit appendsupersetjavafiles variable definition in Defs.gmk"; \
+        exit 1; \
+    fi
+    @_javalist="$(wordlist 1,100,$?)"; \
+    if [ -n "$$_javalist" ]; then \
+        echo "$$_javalist" >> $(SUPERSET_API_JAVA_LIST); \
+    fi
+    @_javalist="$(wordlist 101,200,$?)"; \
+    if [ -n "$$_javalist" ]; then \
+        echo "$$_javalist" >> $(SUPERSET_API_JAVA_LIST); \
+    fi
 endef
 
 # Distinguish between normal java files from generated one 
