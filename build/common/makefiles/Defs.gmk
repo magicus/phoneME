@@ -411,52 +411,32 @@ override GENERATED_JAVA_LIST=$(MIDP_OUTPUT_DIR)/genjavalist.txt
 # line length limit on cygwin, we split it into 100 words length chunks. 
 # This is not guaranteed to help in all cases, but at least reduce the 
 # possibility of it happening.
-define appendjavafiles
+define appendfiles
     @if [ $(words $?) -gt 200 ]; then \
         echo "ERROR: Java files list exceeds 200 words limit."; \
-        echo "To increase the limit, edit appendjavafiles variable definition in Defs.gmk"; \
+        echo "To increase the limit, edit appendfiles variable definition in Defs.gmk"; \
         exit 1; \
     fi
     @_javalist="$(wordlist 1,100,$?)"; \
     if [ -n "$$_javalist" ]; then \
-        echo "$$_javalist" >> $(REBUILD_JAVA_LIST); \
+        echo "$$_javalist" >> $(1); \
     fi
     @_javalist="$(wordlist 101,200,$?)"; \
     if [ -n "$$_javalist" ]; then \
-        echo "$$_javalist" >> $(REBUILD_JAVA_LIST); \
+        echo "$$_javalist" >> $(1); \
     fi
+endef
+
+define appendjavafiles
+    @$(call appendfiles,$(REBUILD_JAVA_LIST)) 
 endef
 
 define appendsubsetjavafiles
-    @if [ $(words $?) -gt 200 ]; then \
-        echo "ERROR: Java files list exceeds 200 words limit."; \
-        echo "To increase the limit, edit appendsubsetjavafiles variable definition in Defs.gmk"; \
-        exit 1; \
-    fi
-    @_javalist="$(wordlist 1,100,$?)"; \
-    if [ -n "$$_javalist" ]; then \
-        echo "$$_javalist" >> $(SUBSET_API_JAVA_LIST); \
-    fi
-    @_javalist="$(wordlist 101,200,$?)"; \
-    if [ -n "$$_javalist" ]; then \
-        echo "$$_javalist" >> $(SUBSET_API_JAVA_LIST); \
-    fi
+    @$(call appendfiles,$(SUBSET_API_JAVA_LIST)) 
 endef
 
 define appendsupersetjavafiles
-    @if [ $(words $?) -gt 200 ]; then \
-        echo "ERROR: Java files list exceeds 200 words limit."; \
-        echo "To increase the limit, edit appendsupersetjavafiles variable definition in Defs.gmk"; \
-        exit 1; \
-    fi
-    @_javalist="$(wordlist 1,100,$?)"; \
-    if [ -n "$$_javalist" ]; then \
-        echo "$$_javalist" >> $(SUPERSET_API_JAVA_LIST); \
-    fi
-    @_javalist="$(wordlist 101,200,$?)"; \
-    if [ -n "$$_javalist" ]; then \
-        echo "$$_javalist" >> $(SUPERSET_API_JAVA_LIST); \
-    fi
+    @$(call appendfiles,$(SUPERSET_API_JAVA_LIST)) 
 endef
 
 # Distinguish between normal java files from generated one 
