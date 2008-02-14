@@ -1920,6 +1920,12 @@ static int parsePushList(int pushfd, int startListening) {
     return 0;
 }
 
+/**
+ * Parses the URL port.
+ *
+ * buffer A full-text push entry string from the registry ("mms://12345:11")
+ * @return port or <tt>-1</tt> on parse error
+ */
 static int getUrlPort(char* buffer) {
 
     char* p = buffer;
