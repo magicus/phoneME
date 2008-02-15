@@ -101,6 +101,15 @@ ifeq ($(HOST_OS),)
 $(error Invalid host. "$(UNAME_OS)" not recognized.)
 endif
 
+# locate the tools component
+export TOOLS_DIR ?= $(COMPONENTS_DIR)/tools
+ifeq ($(wildcard $(TOOLS_DIR)/tools.gmk),)
+$(error TOOLS_DIR must point to the shared tools directory: $(TOOLS_DIR))
+endif
+
+# include tools component makefile. Don't do this until after HOSE_OS is setup
+include $(TOOLS_DIR)/tools.gmk
+
 TOOL_WHICH	?= PATH="$(PATH)" which "$(1)"
 
 #
@@ -1160,7 +1169,7 @@ endif
 # Directories
 #
 CVM_JCSDIR               = $(CVM_BUILD_TOP)/jcs
-CVM_OBJDIR               = $(CVM_BUILD_TOP)/obj
+CVM_OBJDIR               := $(call abs2rel,$(CVM_BUILD_TOP)/obj)
 CVM_BINDIR               = $(CVM_BUILD_TOP)/bin
 CVM_DERIVEDROOT          = $(CVM_BUILD_TOP)/generated
 CVM_BUILDTIME_CLASSESDIR = $(CVM_BUILD_TOP)/btclasses
@@ -1343,6 +1352,7 @@ endif
 CVM_INCLUDE_DIRS  += \
 	$(CVM_SHAREROOT) \
 	$(CVM_BUILD_TOP) \
+	. \
 
 #
 # These are for the convenience of external code like
@@ -2150,19 +2160,8 @@ ifeq ($(CVM_GCOV), true)
 CCFLAGS   	+= -fprofile-arcs -ftest-coverage
 endif
 
-# PROFILE_INCLUDE_DIRS is a list of profile specific directories that contains
-# 	the profile specific include paths. These paths should be searched for
-#	include files before searching the base configuration include path.
-# CVM_INCLUDE_DIRS is a list of directories that defines the base configuration
-# 	include path. 
-# ALL_INCLUDE_DIRS combines the above lists. On most platforms it needs to
-# 	be converted to host from before used.
-# ALL_INCLUDE_FLAGS is ALL_INCLUDE_DIRS converted into the compiler
-# 	command line option for C include directories.
-ALL_INCLUDE_DIRS	= $(PROFILE_INCLUDE_DIRS) $(CVM_INCLUDE_DIRS)
-ALL_INCLUDE_FLAGS	= \
-	$(foreach dir,$(call POSIX2HOST,$(ALL_INCLUDE_DIRS)),-I$(dir))
-
+# Note, ALL_INCLUDE_FLAGS flags is setup in rules.mk so
+# abs2rel only needs to be called on it once.
 CPPFLAGS 	+= $(CVM_DEFINES) $(ALL_INCLUDE_FLAGS)
 CFLAGS_SPEED   	= $(CFLAGS) $(CCFLAGS_SPEED) $(CPPFLAGS)
 CFLAGS_SPACE   	= $(CFLAGS) $(CCFLAGS_SPACE) $(CPPFLAGS)
@@ -2181,17 +2180,26 @@ SO_LINKFLAGS 	= $(LINKFLAGS) -shared
 #
 # commands for running the tools
 #
-ASM_CMD 	= $(AT)$(TARGET_AS) $(ASM_FLAGS) -D_ASM $(CPPFLAGS) -o $@ $<
-CCC_CMD_SPEED	= $(AT)$(TARGET_CCC) $(CFLAGS_SPEED) $(CCCFLAGS) -o $@ $<
-CCC_CMD_SPACE	= $(AT)$(TARGET_CCC) $(CFLAGS_SPACE) $(CCCFLAGS) -o $@ $<
-CC_CMD_SPEED	= $(AT)$(TARGET_CC) $(CFLAGS_SPEED) -o $@ $<
-CC_CMD_SPACE	= $(AT)$(TARGET_CC) $(CFLAGS_SPACE) -o $@ $<
-CC_CMD_LOOP	= $(AT)$(TARGET_CC) $(CFLAGS_LOOP) -o $@ $<
-CC_CMD_FDLIB	= $(AT)$(TARGET_CC) $(CFLAGS_FDLIB) -o $@ $<
+ASM_CMD 	= $(AT)$(TARGET_AS) $(ASM_FLAGS) -D_ASM $(CPPFLAGS) \
+			-o $@ $(call abs2rel,$<)
+
+# compileCCC(flags, objfile, srcfiles)
+compileCCC      = $(AT)$(TARGET_CCC) $(1) -o $(2) $(call abs2rel,$(3))
+CCC_CMD_SPEED   = $(call compileCCC,$(CFLAGS_SPEED) $(CCCFLAGS),$@,$<)
+CCC_CMD_SPACE   = $(call compileCCC,$(CFLAGS_SPACE) $(CCCFLAGS),$@,$<)
+
+# compileCC(flags, objfile, srcfiles)
+compileCC       = $(AT)$(TARGET_CC) $(1) -o $(2) $(call abs2rel,$(3))
+CC_CMD_SPEED    = $(call compileCC,$(CFLAGS_SPEED),$@,$<)
+CC_CMD_SPACE	= $(call compileCC,$(CFLAGS_SPACE),$@,$<)
+CC_CMD_LOOP	= $(call compileCC,$(CFLAGS_LOOP) ,$@,$<)
+CC_CMD_FDLIB	= $(call compileCC,$(CFLAGS_FDLIB),$@,$<)
+
 # LINK_CMD(extraLibs)
 LINK_CMD	= $(AT)$(TARGET_LD)  $(LINKFLAGS) -o $@ $^ $(LINKLIBS) $(1)
 SO_ASM_CMD 	= $(ASM_CMD)
-SO_CC_CMD   	= $(AT)$(TARGET_CC) $(SO_CFLAGS) -o $@ $<
+SO_CC_CMD	= $(call compileCC,$(SO_CFLAGS),$@,$<)
+
 # SO_LINK_CMD(extraLibs)
 SO_LINK_CMD 	= $(AT)$(TARGET_LD) $(SO_LINKFLAGS) -o $@ $^ $(1)
 JAVAC_CMD	= $(CVM_JAVAC) $(JAVAC_OPTIONS)
@@ -2209,15 +2217,6 @@ endif
 # Standard classpath for libclasses compilation
 #
 JAVA_CLASSPATH += $(LIB_CLASSESDIR)
-
-# locate the tools component
-export TOOLS_DIR ?= $(COMPONENTS_DIR)/tools
-ifeq ($(wildcard $(TOOLS_DIR)/tools.gmk),)
-$(error TOOLS_DIR must point to the shared tools directory: $(TOOLS_DIR))
-endif
-
-# include tools component makefile
-include $(TOOLS_DIR)/tools.gmk
 
 #
 # Include target makfiles last.

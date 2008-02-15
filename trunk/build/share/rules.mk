@@ -49,6 +49,18 @@ else
 PROFILE_INCLUDES = "Do not reference PROFILE_INCLUDES"
 endif
 
+# PROFILE_INCLUDE_DIRS is a list of profile specific directories that contains
+# 	the profile specific include paths. These paths should be searched for
+#	include files before searching the base configuration include path.
+# CVM_INCLUDE_DIRS is a list of directories that defines the base configuration
+# 	include path. 
+# ALL_INCLUDE_DIRS combines the above lists. On most platforms it needs to
+# 	be converted to host from before used.
+# ALL_INCLUDE_FLAGS is ALL_INCLUDE_DIRS converted into the compiler
+# 	command line option for C include directories.
+ALL_INCLUDE_DIRS	:= $(PROFILE_INCLUDE_DIRS) $(CVM_INCLUDE_DIRS)
+ALL_INCLUDE_FLAGS	:= $(call makeIncludeFlags,$(ALL_INCLUDE_DIRS))
+
 #
 #  Common makefile rules
 #

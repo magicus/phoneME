@@ -32,7 +32,7 @@
 # Make definitions:
 
 CVM_JDWP_BUILD_TOP     = $(CVM_BUILD_TOP)/jdwp
-CVM_JDWP_OBJDIR        = $(CVM_JDWP_BUILD_TOP)/obj
+CVM_JDWP_OBJDIR        := $(call abs2rel,$(CVM_JDWP_BUILD_TOP)/obj)
 CVM_JDWP_LIBDIR        ?= $(CVM_LIBDIR)
 CVM_JDWP_FLAGSDIR      = $(CVM_JDWP_BUILD_TOP)/flags
 CVM_JDWP_CLASSES       = $(CVM_JDWP_BUILD_TOP)/classes
@@ -74,7 +74,8 @@ ifeq ($(JPDA_NO_DLALLOC), true)
 CVM_JDWP_DEFINES += -DJPDA_NO_DLALLOC
 endif
 
-jdwp : CVM_INCLUDE_DIRS += $(CVM_JDWP_INCLUDE_DIRS)
+jdwp : ALL_INCLUDE_FLAGS := \
+	$(ALL_INCLUDE_FLAGS) $(call makeIncludeFlags,$(CVM_JDWP_INCLUDE_DIRS))
 jdwp : CVM_DEFINES += $(CVM_JDWP_DEFINES)
 
 #

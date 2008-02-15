@@ -32,7 +32,7 @@
 # Make definitions:
 
 CVM_HPROF_BUILD_TOP     = $(CVM_BUILD_TOP)/hprof
-CVM_HPROF_OBJDIR        = $(CVM_HPROF_BUILD_TOP)/obj
+CVM_HPROF_OBJDIR        := $(call abs2rel,$(CVM_HPROF_BUILD_TOP)/obj)
 CVM_HPROF_LIBDIR        ?= $(CVM_LIBDIR)
 CVM_HPROF_FLAGSDIR      = $(CVM_HPROF_BUILD_TOP)/flags
 
@@ -52,7 +52,8 @@ CVM_HPROF_INCLUDE_DIRS  += \
         $(CVM_HPROF_SHAREROOT) \
         $(CVM_HPROF_TARGETROOT)
 
-hprof : CVM_INCLUDE_DIRS += $(CVM_HPROF_INCLUDE_DIRS)
+hprof : ALL_INCLUDE_FLAGS := \
+	$(ALL_INCLUDE_FLAGS) $(call makeIncludeFlags,$(CVM_HPROF_INCLUDE_DIRS))
 
 #
 # List of object files to build:

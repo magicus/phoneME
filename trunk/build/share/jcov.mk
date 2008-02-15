@@ -30,7 +30,7 @@
 # Make definitions:
 
 CVM_JCOV_BUILD_TOP      = $(CVM_BUILD_TOP)/jcov
-CVM_JCOV_OBJDIR         = $(CVM_JCOV_BUILD_TOP)/obj
+CVM_JCOV_OBJDIR         := $(call abs2rel,$(CVM_JCOV_BUILD_TOP)/obj)
 CVM_JCOV_LIBDIR         ?= $(CVM_LIBDIR)
 CVM_JCOV_FLAGSDIR       = $(CVM_JCOV_BUILD_TOP)/flags
 
@@ -50,7 +50,8 @@ CVM_JCOV_INCLUDE_DIRS  += \
         $(CVM_JCOV_SHAREROOT) \
         $(CVM_JCOV_TARGETROOT)
 
-jcov : CVM_INCLUDE_DIRS += $(CVM_JCOV_INCLUDE_DIRS)
+jcov : ALL_INCLUDE_FLAGS := \
+	$(ALL_INCLUDE_FLAGS) $(call makeIncludeFlags,$(CVM_JCOV_INCLUDE_DIRS))
 
 #
 # List of object files to build:
