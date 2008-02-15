@@ -155,6 +155,14 @@
             Name="KEYCODE_SELECT"
             Value="-5" 
             Comment="key select code (internal)"/>
+  <constant Type="int"
+            Name="KEYCODE_SOFT1"
+            Value="-6" 
+            Comment="key soft1 code (internal)"/>
+  <constant Type="int"
+            Name="KEYCODE_SOFT2"
+            Value="-7" 
+            Comment="key soft2 code (internal)"/>
   <constant Type="boolean"
             Name="MEASURE_STARTUP"
             Value="false" 
