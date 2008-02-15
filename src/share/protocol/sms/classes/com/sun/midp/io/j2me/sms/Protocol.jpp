@@ -227,7 +227,6 @@ public class Protocol extends ProtocolBase {
     public Message newMessage(String type) {
 	String address = null;
 
-System.out.println("sms.Protocol.newMessage, type = " + type);
 	/*
          * Provide the default address from the original open.
          */
@@ -463,6 +462,8 @@ System.out.println("sms.Protocol.newMessage, type = " + type);
 
 	ensureOpen();
 
+        checkHostAddressSyntax(url.host);
+
 	if ((m_mode & Connector.WRITE) == 0) {
 
 	    throw new IOException("Invalid mode");
@@ -480,6 +481,10 @@ System.out.println("sms.Protocol.newMessage, type = " + type);
                 throw new SecurityException(
                   "not allowed to send SMS messages to the restricted ports");
             }
+        }
+
+        if (url.port > 65535) {
+            throw new IllegalArgumentException("Port is out of range: " + url.port);
         }
 
 	int messageType = GSM_BINARY;
@@ -771,6 +776,43 @@ System.out.println("sms.Protocol.newMessage, type = " + type);
 	throw new IllegalArgumentException("Not supported");
     }
 
+    /**
+     * Checks host address accordingly to spec rules:
+     *   msisdn ::== "+" digits | digits
+     *   digit ::== "0" | "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9"
+     *   digits ::== digit | digit digits
+     *
+     * @param msisdn host address to check
+     * @exception IllegalArgumentException is thrown for wrong msisdn
+     */
+    static void checkHostAddressSyntax(String msisdn) 
+             throws IllegalArgumentException {
+
+        if (msisdn == null) {
+            throw new IllegalArgumentException("Empty host address");
+        }
+
+        int len = msisdn.length();
+        if (len == 0) {
+            throw new IllegalArgumentException("Empty host address");
+        }
+
+        /* Only '+' followed by 0-9 are allowed in the host field. */
+        int offset = (msisdn.charAt(0) == '+') ? 1 : 0;
+
+        if (offset == len) {
+            /* '+' not followed by digits */
+            throw new IllegalArgumentException("Empty host address");
+        }
+
+        for (; offset < len; offset++) {
+            char c = msisdn.charAt(offset);
+            if ((c < '0') || (c > '9')) {
+                throw new IllegalArgumentException(
+                    "Wrong host format: " + msisdn);
+            }
+        }
+    }
 
     /*
      * Protocol members
@@ -825,27 +867,11 @@ System.out.println("sms.Protocol.newMessage, type = " + type);
 	    }
 	}
 
-	if (host != null) {
-	    int offset = 0;
-	    int len = host.length();
-	    char c = '\0';
-	    /* Only '+' followed by 0-9 are allowed in the host field. */
-	    if (len > 0) {
-		c = host.charAt(0);
-		if (c == '+') {
-		    offset = 1;
-		}
-		for (int i = offset; i < host.length(); i++) {
-		    c = host.charAt(i);
-		    if ('0' <= c && c <= '9') {
-
-			continue;
-		    } else {
-			throw new IllegalArgumentException("Host format");
-		    }
-		}
-	    }
-	}
+        if (host != null) {
+            if (!host.equals("")) {
+                checkHostAddressSyntax(host);
+            }
+        }
 
         int portNumber = 0;
         m_iport = 0;
