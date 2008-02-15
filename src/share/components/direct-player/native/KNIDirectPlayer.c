@@ -740,3 +740,41 @@ KNIDECL(com_sun_mmedia_DirectPlayer_nIsVolumeControlSupported) {
     KNI_ReturnBoolean(returnValue);
 }
 
+/*  protected native String nGetContentType(int handle); */
+KNIEXPORT KNI_RETURNTYPE_OBJECT
+KNIDECL(com_sun_mmedia_DirectPlayer_nGetContentType)
+{
+    jint handle = KNI_GetParameterAsInt(1);
+    KNIPlayerInfo* pKniInfo = (KNIPlayerInfo*)handle;
+    javacall_media_format_type mFormat = JAVACALL_MEDIA_FORMAT_UNKNOWN;
+
+    javacall_media_configuration *cfg;
+    javacall_media_caps *caps;
+
+    KNI_StartHandles(1);
+    KNI_DeclareHandle(stringObj);
+    KNI_ReleaseHandle(stringObj);
+
+    if (pKniInfo && pKniInfo->pNativeHandle) {
+        LockAudioMutex();            
+
+        if( JAVACALL_OK == javacall_media_get_format(pKniInfo->pNativeHandle, &mFormat) ) {
+            if( NULL != mFormat ) {
+                if( JAVACALL_OK == javacall_media_get_configuration(&cfg) ) {
+                    for( caps = cfg->mediaCaps; 
+                         caps != NULL && caps->mediaFormat != NULL;
+                         caps++ ) {
+                        if( javacall_media_fmt_equal( caps->mediaFormat, mFormat ) ) {
+                            const char* ct = caps->contentTypes;
+                            KNI_NewStringUTF(ct, stringObj);
+                        }
+                    }
+                }
+            }
+        }
+
+        UnlockAudioMutex();            
+    }
+    KNI_EndHandlesAndReturnObject(stringObj);
+}
+

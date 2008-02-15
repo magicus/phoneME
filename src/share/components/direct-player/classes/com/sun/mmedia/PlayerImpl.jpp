@@ -31,6 +31,7 @@ import  java.util.Enumeration;
 import  java.util.Hashtable;
 import  java.util.Vector;
 import  com.sun.j2me.app.AppPackage;
+import  com.sun.mmedia.PlayerStateSubscriber;
 
 
 // #ifndef ABB [
@@ -45,6 +46,8 @@ public class PlayerImpl implements Player {
     // #else ][
     private final static boolean debug = false;
     // #endif ]
+
+	public PlayerStateSubscriber state_subscriber = null;
 
     protected BasicPlayer playerInst = null;
 	public    BasicPlayer getPlayerInst(){ return playerInst; };
@@ -401,6 +404,10 @@ public class PlayerImpl implements Player {
             }        
 
             playerInst.prefetch();
+
+            if (null != state_subscriber) {
+                state_subscriber.PlayerPrefetched(this);
+            }
         }
     };
 

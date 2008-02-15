@@ -25,10 +25,10 @@
 
 package com.sun.mmedia;
 
-import com.sun.mmedia.DirectPlayer;
+import javax.microedition.media.Player;
 import javax.microedition.media.MediaException;
 
 public interface PlayerStateSubscriber
 {
-    void PlayerPrefetched(DirectPlayer dp) throws MediaException;
+    void PlayerPrefetched(Player player) throws MediaException;
 }
