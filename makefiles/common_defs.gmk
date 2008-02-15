@@ -89,3 +89,24 @@ endef
 define runJarFile
 	$(JAVA_CMD) -jar `$(call POSIX2HOST_CMD,$(1))` $(2)
 endef
+
+# abs2rel(abspaths)
+# Converts <abspaths> to paths that are relative the the current directory.
+# Useful for compiler source file arguments so the compiler saves source
+# file information using relative paths instead of absolute paths. Also
+# useful if you don't want to have to worry about later calling POSIX2HOST
+# on a path.
+define abs2rel
+    $(shell echo $(1) | tr ' ' '\n' | \
+            awk -F/ -f $(TOOLS_DIR)/makefiles/abs2rel.awk PWD=`pwd`)
+endef
+
+# makeIncludeFlags(includeDirs)
+# Converts the paths specified in includeDirs to -I arguments for the 
+# compiler. It also converts them to relative paths so command lines
+# are shorter and we don't need to convert to a host path. If -I is
+# not appropriate for the platform, it is expected that a target
+# specific makefile will override this macro.
+define makeIncludeFlags
+	$(patsubst %,-I%,$(call abs2rel,$(1)))
+endef
