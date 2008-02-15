@@ -207,19 +207,6 @@ extern "C" {
  */
 typedef javacall_const_ascii_string javacall_media_format_type;
 
-/**
-* Compares two Media formats.
-* 
-* @param fmt1                      first format
-* @param fmt2                      second format
-* @return if given formats are equal?
-*
-*/
-javacall_bool 
-    javacall_media_fmt_equal(
-        javacall_media_format_type fmt1, 
-        javacall_media_format_type fmt2); 
-
 /** @} */
 
 /**
