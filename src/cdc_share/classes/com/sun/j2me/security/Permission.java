@@ -32,11 +32,19 @@ public class Permission {
     protected String name;
     
     protected String resource;
+
+    private String extraValue = null;
     
     /** Creates a new instance of Permission. */
     public Permission(String name, String resource) {
         this.name = name;
         this.resource = resource;
+    }
+
+    /** Creates a new instance of Permission. */
+    public Permission(String name, String resource, String extraValue) {
+        this(name, resource);
+        this.extraValue = extraValue;
     }
     
     /** Returns name of the permission. */
@@ -47,6 +55,11 @@ public class Permission {
     /** Returns resource of the permission. */
     public String getResource() {
         return resource;
+    }
+
+    /** Returns extra value */
+    public String getExtraValue() {
+        return extraValue;
     }
 
     /** Checks if the corresponding CDC permission is granted. */
