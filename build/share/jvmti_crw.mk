@@ -35,7 +35,7 @@ CVM_CRW_LIB           = $(LIB_PREFIX)java_crw_demo$(LIB_POSTFIX)
 CVM_CRW_JAR           = java_crw_demo.jar
 
 CVM_CRW_BUILD_TOP     = $(CVM_BUILD_TOP)/jvmti/crw
-CVM_CRW_OBJDIR        = $(CVM_CRW_BUILD_TOP)/obj
+CVM_CRW_OBJDIR        := $(call abs2rel,$(CVM_CRW_BUILD_TOP)/obj)
 CVM_CRW_FLAGSDIR      = $(CVM_CRW_BUILD_TOP)/flags
 CVM_CRW_CLASSES	      = $(CVM_CRW_BUILD_TOP)/classes
 
@@ -59,7 +59,8 @@ CVM_CRW_INCLUDES  += \
         $(CVM_CRW_SHAREROOT) \
         $(CVM_CRW_TARGETROOT)
 
-java_crw_demo : CVM_INCLUDE_DIRS += $(CVM_CRW_INCLUDES)
+java_crw_demo : ALL_INCLUDE_FLAGS := \
+	$(ALL_INCLUDE_FLAGS) $(call makeIncludeFlags,$(CVM_CRW_INCLUDES))
 
 #
 # List of object files to build:

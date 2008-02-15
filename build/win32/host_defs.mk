@@ -153,18 +153,10 @@ SO_LINKFLAGS	= $(LINKDLL_FLAGS)
 #
 
 # compileCCC(flags, objfile, srcfiles)
-compileCCC	= $(AT)$(TARGET_CCC) $(1) /Fo$(call POSIX2HOST,$(2)) \
-		  $(call POSIX2HOST,$(3))
-CCC_CMD_SPEED	= $(call compileCCC,$(CFLAGS_SPEED) $(CCCFLAGS),$@,$<)
-CCC_CMD_SPACE	= $(call compileCCC,$(CFLAGS_SPACE) $(CCCFLAGS),$@,$<)
+compileCCC = $(AT)$(TARGET_CCC) $(1) /Fo$(2) $(call abs2rel,$(3))
 
 # compileCC(flags, objfile, srcfiles)
-compileCC	= $(AT)$(TARGET_CC) $(1) /Fo$(call POSIX2HOST,$(2)) \
-		  $(call POSIX2HOST,$(3))
-CC_CMD_SPEED	= $(call compileCC,$(CFLAGS_SPEED),$@,$<)
-CC_CMD_SPACE	= $(call compileCC,$(CFLAGS_SPACE),$@,$<)
-CC_CMD_LOOP	= $(call compileCC,$(CFLAGS_LOOP), $@,$<)
-CC_CMD_FDLIB	= $(call compileCC,$(CFLAGS_FDLIB),$@,$<)
+compileCC  = $(AT)$(TARGET_CC) $(1) /Fo$(2) $(call abs2rel,$(3))
 
 LINK_MANIFEST = \
 	if [ -f $@.manifest ] ; then \
@@ -179,8 +171,6 @@ LINK_CMD	= $(AT)\
 	$(call POSIX2HOST_CMD,$^) > $(OUT).lst; \
 	$(TARGET_LINK) $(LINKCVM_FLAGS) /out:$(OUT) @$(OUT).lst $(1); \
 	$(LINK_MANIFEST)
-
-SO_CC_CMD	= $(AT)$(TARGET_CC) $(SO_CFLAGS) /Fo$(call POSIX2HOST,$@) $(call POSIX2HOST,$<)
 
 # SO_LINK_CMD(extraLibs)
 SO_LINK_CMD	= $(AT)\
