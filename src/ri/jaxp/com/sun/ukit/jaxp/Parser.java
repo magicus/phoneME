@@ -1,4 +1,6 @@
 /*
+ *  
+ *
  * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
@@ -25,7 +27,9 @@
 
 package com.sun.ukit.jaxp;
 
+import java.util.Enumeration;
 import java.util.Hashtable;
+import java.util.Vector;
 import java.io.InputStream;
 import java.io.Reader;
 import java.io.InputStreamReader;
@@ -33,12 +37,33 @@ import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 
 import org.xml.sax.helpers.DefaultHandler;
+import org.xml.sax.Attributes;
 import org.xml.sax.Locator;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXParseException;
 import org.xml.sax.SAXException;
 
+import com.sun.ukit.jaxp.DTD.ExternalID;
+
 import javax.xml.parsers.SAXParser;
+
+/**
+ * Helper class. It extracts prefix, local name and qualified name from 
+ * special structure char[]. 
+ */
+class QName {
+	final static String prefix( char[] qname ){
+		return (qname[0] == 0)? "" : new String( qname, 1, qname[0] - 1 );
+	}
+	
+	final static String local( char[] qname ){
+		return new String( qname, 1 + qname[0], qname.length - (1 + qname[0]) );
+	}
+	
+	final static String qname( char[] qname ){
+		return new String( qname, 1, qname.length - 1 );
+	}
+}
 
 /**
  * XML non-validating parser.
@@ -53,10 +78,11 @@ import javax.xml.parsers.SAXParser;
  * @see org.xml.sax.helpers.DefaultHandler
  */
 
-public final class Parser
-	extends SAXParser
-	implements Locator
+public final class Parser extends SAXParser implements Locator
 {
+	final static java.io.PrintStream DEBUG_OUT = null; // System.out; 
+	static final boolean STRICT = true; 
+	
 	public final static String	FAULT	= "";
 
 	private final static int  BUFFSIZE_READER	= 512;
@@ -65,15 +91,10 @@ public final class Parser
 	/** The end of stream character. */
 	public final static char	EOS		= 0xffff;
 
-	private Pair			mNoNS;		// there is no namespace
-	private Pair			mXml;		// the xml namespace
-
 	private DefaultHandler	mHand;		// a document handler
-	private Hashtable		mEnt;		// the entities look up table
-	private Hashtable		mPEnt;		// the parameter entities look up table
 
 	private boolean			mIsSAlone;	// xml decl standalone flag
-	private boolean			mIsNSAware;	// if true - to report QName
+	final private boolean	mIsNSAware;	// if true - to report QName
 
 	private short			mSt;		// global state of the parser
 	// mSt values:
@@ -83,6 +104,12 @@ public final class Parser
 	// - 3 : misc after DTD
 	// - 4 : document's element
 	// - 5 : misc after document's element
+	private final short stateStartOfTheDocument = 0;
+	private final short stateMiscBeforeDTD = 1;
+	private final short stateInsideDTD = 2;
+	private final short stateMiscAfterDTD = 3;
+	private final short stateDocument = 4;
+	private final short stateMiscAfterDocument = 5;
 
 	private char			mESt;		// built-in entity recognizer state
 	// mESt values:
@@ -90,13 +117,10 @@ public final class Parser
 	//   > 0x100 : unrecognized name
 	//   < 0x100 : replacement character
 
-	private char[]			mBuff;		// parser buffer
-	private int				mBuffIdx;	// index of the last char
-
-	private Pair			mPref;		// stack of prefixes
-	private Pair			mElm;		// stack of elements
-
-	private Pair			mAttL;		// list of defined attributes by element name
+	final private DTD		dtd = new DTD();
+	final private Namespace.Stack	namespaceStack = new Namespace.Stack();
+	final private Element.Stack		elementStack = new Element.Stack();
+	final private Attrs		attributes;	// attributes of the current element
 
 	private Input			mInp;		// stack of entities
 	private Input			mDoc;		// document entity
@@ -105,36 +129,13 @@ public final class Parser
 	private int				mChLen;		// current capacity
 	private int				mChIdx;		// index to the next char
  
-	private Attrs			mAttrs;		// attributes of the curr. element
-	private String[]		mItems;		// attributes array of the curr. element
-	private char			mAttrIdx;	// attributes counter/index
+	private char[]			mBuff;		// parser buffer
+	private int				mBuffIdx;	// index of the last char
 
-	private Pair			mDltd;		// deleted objects for reuse
+	private final DTD.ExternalID tempExternalID = new DTD.ExternalID();
 
-	/**
-	 * Default prefixes
-	 */
-	private final static char NONS[];
-	private final static char XML[];
-	private final static char XMLNS[];
-	static {
-		NONS = new char[1];
-		NONS[0] = (char)0;
 
-		XML = new char[4];
-		XML[0] = (char)4;
-		XML[1] = 'x';
-		XML[2] = 'm';
-		XML[3] = 'l';
-
-		XMLNS = new char[6];
-		XMLNS[0] = (char)6;
-		XMLNS[1] = 'x';
-		XMLNS[2] = 'm';
-		XMLNS[3] = 'l';
-		XMLNS[4] = 'n';
-		XMLNS[5] = 's';
-	}
+	final static String XMLNSSTR = "xmlns";
 
 	/**
 	 * ASCII character type array.
@@ -217,6 +218,10 @@ public final class Parser
 		nmttyp['\r'] = 3;
 		nmttyp['\n'] = 3;
 	}
+	
+	final static void ASSERT( boolean v ){
+		if( !v ) throw new IllegalArgumentException();
+	}
 
 	/**
 	 * Constructor.
@@ -224,24 +229,12 @@ public final class Parser
 	public Parser(boolean nsaware)
 	{
 		super();
-		mIsNSAware	= nsaware;
+		mIsNSAware = nsaware;
+		attributes = mIsNSAware? (Attrs)new Attrs.NSAware() : 
+						(Attrs)new Attrs.NotNSAware(); 
 
 		//		Initialize the parser
 		mBuff	= new char[BUFFSIZE_PARSER];
-		mAttrs	= new Attrs();
-
-		//		Default namespace
-		mPref	= pair(mPref);
-		mPref.name	= "";
-		mPref.value	= "";
-		mPref.chars	= NONS;
-		mNoNS	= mPref;	// no namespace
-		//		XML namespace
-		mPref	= pair(mPref);
-		mPref.name	= "xml";
-		mPref.value	= "http://www.w3.org/XML/1998/namespace";
-		mPref.chars	= XML;
-		mXml	= mPref;	// XML namespace
 	}
 
 	/**
@@ -365,43 +358,116 @@ public final class Parser
 	 * SAXException while parsing.
 	 * @see org.xml.sax.helpers.DefaultHandler
 	 */
-	public void parse(InputSource is, DefaultHandler handler)
+	public void parse(InputSource is, final DefaultHandler handler)
 		throws SAXException, IOException
 	{
 		if ((is == null) || (handler == null))
 			throw new IllegalArgumentException("");
-		//		Set up the handler
-		mHand	= handler;
-		//		Set up the document
-		mInp	= new Input(BUFFSIZE_READER);
+		// Set up the handler
+		mHand = handler;
+		if( DEBUG_OUT != null ){
+			mHand = new DefaultHandler(){
+				public void characters(char[] ch, int start, int length)
+						throws SAXException {
+					handler.characters(ch, start, length);
+				}
+				public void endDocument() throws SAXException {
+					handler.endDocument();
+				}
+				public void ignorableWhitespace(char[] ch, int start, int length)
+						throws SAXException {
+					handler.ignorableWhitespace(ch, start, length);
+				}
+				public void notationDecl(String name, String publicId,
+						String systemId) throws SAXException {
+					handler.notationDecl(name, publicId, systemId);
+				}
+				public void processingInstruction(String target, String data)
+						throws SAXException {
+					handler.processingInstruction(target, data);
+				}
+				public InputSource resolveEntity(String publicId,
+						String systemId) throws SAXException {
+					return handler.resolveEntity(publicId, systemId);
+				}
+				public void setDocumentLocator(Locator locator) {
+					handler.setDocumentLocator(locator);
+				}
+				public void skippedEntity(String name) throws SAXException {
+					handler.skippedEntity(name);
+				}
+				public void startDocument() throws SAXException {
+					handler.startDocument();
+				}
+				public void unparsedEntityDecl(String name, String publicId,
+								String systemId, String notationName) throws SAXException {
+					handler.unparsedEntityDecl(name, publicId, systemId, notationName);
+				}
+				public void endElement(String uri, String localName, String name)
+						throws SAXException {
+					DEBUG_OUT.println( "endElement( '" + uri + "', '" + localName + "', '" + name + "' )" );
+					handler.endElement(uri, localName, name);
+				}
+				public void endPrefixMapping(String prefix) throws SAXException {
+					DEBUG_OUT.println( "endPrefixMapping( '" + prefix + "' )" );
+					handler.endPrefixMapping(prefix);
+				}
+				public void error(SAXParseException e) throws SAXException {
+					e.printStackTrace();
+					handler.error(e);
+				}
+				public void fatalError(SAXParseException e) throws SAXException {
+					e.printStackTrace();
+					handler.fatalError(e);
+				}
+				public void startElement(String uri, String localName,
+						String name, Attributes attributes) throws SAXException {
+					DEBUG_OUT.println( "startElement( '" + uri + "', '" + localName + "', '" + name + "' )" );
+					for(int i = 0; i < attributes.getLength(); i++){
+						DEBUG_OUT.println( "\t[" + i + "]: '" + attributes.getURI(i) + "', '" +
+									attributes.getLocalName(i) + "', '" + attributes.getQName(i) + "' " +
+									attributes.getType(i) + " \"" + attributes.getValue(i) + "\"");
+					}
+					handler.startElement(uri, localName, name, attributes);
+				}
+				public void startPrefixMapping(String prefix, String uri)
+						throws SAXException {
+					DEBUG_OUT.println( "startPrefixMapping( '" + prefix + "', '" + uri + "' )" );
+					handler.startPrefixMapping(prefix, uri);
+				}
+				public void warning(SAXParseException e) throws SAXException {
+					e.printStackTrace();
+					handler.warning(e);
+				}
+			};
+		}
+		// Set up the document
+		mInp = new Input(BUFFSIZE_READER);
 		setinp(is);
-		parse(handler);
+		parse();
 	}
 
 	/**
 	 * Parse the XML document content using the specified
 	 * {@link org.xml.sax.helpers.DefaultHandler}.
 	 *
-	 * @param handler The SAX DefaultHandler to use.
 	 * @exception IOException If any IO errors occur.
 	 * @exception SAXException If the underlying parser throws a
 	 * SAXException while parsing.
 	 * @see org.xml.sax.helpers.DefaultHandler
 	 */
-	private void parse(DefaultHandler handler)
-		throws SAXException, IOException
-	{
+	private void parse() throws SAXException, IOException {
 		try {
 			//		Initialize the parser
-			mPEnt	= new Hashtable();
-			mEnt	= new Hashtable();
-			mDoc	= mInp;			// current input is document entity
-			mChars	= mInp.chars;	// use document entity buffer
+			mDoc = mInp;			// current input is document entity
+			mChars = mInp.chars;	// use document entity buffer
+			elementStack.clean();
+			namespaceStack.clean();
 			//		Parse an xml document
-			char	ch;
-			mHand.setDocumentLocator(this);
+			char ch;
+			// mHand.setDocumentLocator(this);
 			mHand.startDocument();
-			mSt	= 1;
+			mSt	= stateMiscBeforeDTD;
 			while ((ch = next()) != EOS) {
 				switch (chtyp(ch)) {
 				case '<':
@@ -421,13 +487,13 @@ public final class Parser
 						break;
 
 					default:			// must be the first char of an xml name 
-						if (mSt == 5)	// misc after document's element
+						if (mSt == stateMiscAfterDocument)	// misc after document's element
 							panic(FAULT);
 						//		Document's element.
 						back();
-						mSt	= 4;		// document's element
-						elm();
-						mSt	= 5;		// misc after document's element
+						mSt	= stateDocument;		// document's element
+						parseDocumentElement();
+						mSt	= stateMiscAfterDocument;		// misc after document's element
 						break;
 					}
 					break;
@@ -440,32 +506,22 @@ public final class Parser
 					panic(FAULT);
 				}
 			}
-			if (mSt != 5)	// misc after document's element
+			if (mSt != stateMiscAfterDocument)	// misc after document's element
 				panic(FAULT);
+		} catch( RuntimeException t ) {
+			t.printStackTrace();
+			throw t;
 		} finally {
 			mHand.endDocument();
-			while (mAttL != null) {
-				while (mAttL.list != null) {
-					if (mAttL.list.list != null)
-						del(mAttL.list.list);
-					mAttL.list = del(mAttL.list);
-				}
-				mAttL = del(mAttL);
-			}
-			while (mElm != null)
-				mElm	= del(mElm);
-			while (mPref != mXml)
-				mPref	= del(mPref);
 			while (mInp != null)
 				pop();
 			if ((mDoc != null) && (mDoc.src != null)) {
 				try { mDoc.src.close(); } catch (IOException ioe) {}
 			}
-			mPEnt	= null;
-			mEnt	= null;
-			mDoc	= null;
-			mHand	= null;
-			mSt		= 0;
+			dtd.clean();
+			mDoc = null;
+			mHand = null;
+			mSt = stateStartOfTheDocument;
 		}
 	}
 
@@ -475,22 +531,22 @@ public final class Parser
 	 * @exception SAXException 
 	 * @exception IOException 
 	 */
-	private void dtd()
-		throws SAXException, IOException
+	private void dtd() throws SAXException, IOException
 	{
 		char	ch;
-		Pair	psid	= null;
 		// read 'DOCTYPE'
-		if (!((mSt == 0 || mSt == 1) && "DOCTYPE".equals(name(false))))
+		if (!((mSt == stateStartOfTheDocument || mSt == stateMiscBeforeDTD) && 
+				"DOCTYPE".equals(name(false))))
 			panic(FAULT);
-		mSt	= 2;	// DTD
+		dtd.clean();
+		mSt	= stateInsideDTD;	// DTD
 		for (short st = 0; st >= 0;) {
 			ch	= next();
 			switch (st) {
 			case 0:		// read the document type name
 				if (chtyp(ch) != ' ') {
 					back();
-					/*String name =*/ name(mIsNSAware);
+					dtd.name = name(mIsNSAware);
 					wsskip();
 					st		= 1;	// read 'PUPLIC' or 'SYSTEM'
 				}
@@ -500,7 +556,8 @@ public final class Parser
 				switch (chtyp(ch)) {
 				case 'A':
 					back();
-					psid = pubsys(' ');
+					dtd.externalID = new DTD.ExternalID(); 
+					pubsys(' ', dtd.externalID);
 					st	= 2;	// skip spaces before internal subset
 					break;
 
@@ -545,9 +602,10 @@ public final class Parser
 			case 3:		// skip spaces after internal subset
 				switch (chtyp(ch)) {
 				case '>':
-					if (psid != null) {
+					if (dtd.externalID != ExternalID.EMPTY) {
 						//		Report the DTD external subset
-						InputSource is = mHand.resolveEntity(psid.name, psid.value);
+						InputSource is = mHand.resolveEntity(dtd.externalID.pubidLiteral, 
+													dtd.externalID.systemLiteral);
 						if (is != null) {
 							if (mIsSAlone == false) {
 								//		Set the end of DTD external subset char
@@ -556,8 +614,8 @@ public final class Parser
 								//		Set the DTD external subset InputSource
 								push(new Input(BUFFSIZE_READER));
 								setinp(is);
-								mInp.pubid = psid.name;
-								mInp.sysid = psid.value;
+								mInp.pubid = dtd.externalID.pubidLiteral;
+								mInp.sysid = dtd.externalID.systemLiteral;
 								//		Parse the DTD external subset
 								dtdsub();
 							} else {
@@ -581,7 +639,6 @@ public final class Parser
 							//		Unresolved DTD external subset
 							mHand.skippedEntity("[dtd]");
 						}
-						del(psid);
 					}
 					st	= -1;	// end of DTD
 					break;
@@ -599,7 +656,14 @@ public final class Parser
 				panic(FAULT);
 			}
 		}
-		mSt	= 3;	// misc after DTD
+		mSt	= stateMiscAfterDTD;	// misc after DTD
+		
+		if( DEBUG_OUT != null ){
+			DEBUG_OUT.println( "DTD.attLists:" );
+			for( Enumeration e = dtd.attLists.keys(); e.hasMoreElements();){
+				DEBUG_OUT.println( "\t" + e.nextElement() );
+			}
+		}
 	}
 
 	/**
@@ -634,7 +698,7 @@ public final class Parser
 						// markup or entity declaration
 						bntok();
 						switch (bkeyword()) {
-						case 'n':
+						case 'n': // ENTITY
 							dtdent();
 							break;
 
@@ -652,7 +716,6 @@ public final class Parser
 
 						default:
 							panic(FAULT);	// unsupported markup declaration
-							break;
 						}
 						st	= 1;		// read the end of declaration
 						break;
@@ -725,10 +788,9 @@ public final class Parser
 	private void dtdent()
 		throws SAXException, IOException
 	{
-		String	str = null;
+		String	entityName = null;
 		char[]	val = null;
 		Input   inp = null;
-		Pair    ids = null;
 		char	ch;
 		for (short st = 0; st >= 0;) {
 			ch	= next();
@@ -746,23 +808,25 @@ public final class Parser
 					if (chtyp(ch) == ' ') {
 						//		Parameter entity declaration.
 						wsskip();
-						str = name(false);
+						entityName = name(false);
 						switch (chtyp(wsskip())) {
 						case 'A':
 							//		Read the external identifier
-							ids = pubsys(' ');
+							pubsys(' ', tempExternalID);
 							if (wsskip() == '>') {
 								//		External parsed entity
-								if (mPEnt.containsKey(str) == false) {	// [#4.2]
+								if (dtd.parameterEntities == null || 
+										!dtd.parameterEntities.containsKey(entityName)) {	// [#4.2]
 									inp       = new Input();
-									inp.pubid = ids.name;
-									inp.sysid = ids.value;
-									mPEnt.put(str, inp);
+									inp.pubid = tempExternalID.pubidLiteral;
+									inp.sysid = tempExternalID.systemLiteral;
+									if(dtd.parameterEntities == null)
+										dtd.parameterEntities = new Hashtable();
+									dtd.parameterEntities.put(entityName, inp);
 								}
 							} else {
 								panic(FAULT);
 							}
-							del(ids);
 							st	= -1;	// the end of declaration
 							break;
 
@@ -770,24 +834,27 @@ public final class Parser
 						case '\'':
 							//		Read the parameter entity value
 							bqstr('d');
-							//		Create the parameter entity value
-							val	= new char[mBuffIdx + 1];
-							System.arraycopy(mBuff, 1, val, 1, val.length - 1);
-							//		Add surrounding spaces [#4.4.8]
-							val[0] = ' ';
 							//		Add the entity to the entity look up table
-							if (mPEnt.containsKey(str) == false) {	// [#4.2]
+							if (dtd.parameterEntities == null || 
+									!dtd.parameterEntities.containsKey(entityName)) {	// [#4.2]
+								//		Create the parameter entity value
+								val	= new char[mBuffIdx + 1];
+								System.arraycopy(mBuff, 1, val, 1, val.length - 1);
+								//		Add surrounding spaces [#4.4.8]
+								val[0] = ' ';
+								
 								inp       = new Input(val);
 								inp.pubid = mInp.pubid;
 								inp.sysid = mInp.sysid;
-								mPEnt.put(str, inp);
+								if(dtd.parameterEntities == null)
+									dtd.parameterEntities = new Hashtable();
+								dtd.parameterEntities.put(entityName, inp);
 							}
 							st	= -1;	// the end of declaration
 							break;
 
 						default:
 							panic(FAULT);
-							break;
 						}
 					} else {
 						//		Parameter entity reference.
@@ -797,58 +864,63 @@ public final class Parser
 
 				default:
 					back();
-					str	= name(false);
+					entityName = name(false);
 					st	= 1;	// read entity declaration value
 					break;
 				}
 				break;
 
-			case 1:		// read entity declaration value
+			case 1:		// read general entity declaration value
 				switch (chtyp(ch)) {
 				case '\"':	// internal entity
 				case '\'':
 					back();
 					bqstr('d');	// read a string into the buffer
-					if (mEnt.get(str) == null) {
+					if (dtd.generalEntities == null || 
+							!dtd.generalEntities.containsKey(entityName) /*[#4.2]*/) {
 						//		Create general entity value
 						val	= new char[mBuffIdx];
 						System.arraycopy(mBuff, 1, val, 0, val.length);
 						//		Add the entity to the entity look up table
-						if (mEnt.containsKey(str) == false) {	// [#4.2]
-							inp       = new Input(val);
-							inp.pubid = mInp.pubid;
-							inp.sysid = mInp.sysid;
-							mEnt.put(str, inp);
-						}
+						inp       = new Input(val);
+						inp.pubid = mInp.pubid;
+						inp.sysid = mInp.sysid;
+						if( dtd.generalEntities == null )
+							dtd.generalEntities = new Hashtable();
+						dtd.generalEntities.put(entityName, inp);
 					}
 					st	= -1;	// the end of declaration
 					break;
 
 				case 'A':	// external entity
 					back();
-					ids = pubsys(' ');
+					pubsys(' ', tempExternalID);
 					switch (wsskip()) {
 					case '>':	// external parsed entity
-						if (mEnt.containsKey(str) == false) {	// [#4.2]
+						if (dtd.generalEntities == null || 
+								!dtd.generalEntities.containsKey(entityName)) {	// [#4.2]
 							inp       = new Input();
-							inp.pubid = ids.name;
-							inp.sysid = ids.value;
-							mEnt.put(str, inp);
+							inp.pubid = tempExternalID.pubidLiteral;
+							inp.sysid = tempExternalID.systemLiteral;
+							if( dtd.generalEntities == null )
+								dtd.generalEntities = new Hashtable();
+							dtd.generalEntities.put(entityName, inp);
 						}
 						break;
 
 					case 'N':	// external general unparsed entity
-						if ("NDATA".equals(name(false)) == true) {
+						if ("NDATA".equals(name(false))) {
 							wsskip();
-							mHand.unparsedEntityDecl(
-								str, ids.name, ids.value, name(false));
+							mHand.unparsedEntityDecl( entityName, 
+										tempExternalID.pubidLiteral, tempExternalID.systemLiteral, 
+										name(false) );
 							break;
 						}
+						// no break here!
 					default:
 						panic(FAULT);
 						break;
 					}
-					del(ids);
 					st	= -1;	// the end of declaration
 					break;
 
@@ -858,7 +930,6 @@ public final class Parser
 
 				default:
 					panic(FAULT);
-					break;
 				}
 				break;
 
@@ -874,25 +945,32 @@ public final class Parser
 	 * @exception SAXException 
 	 * @exception IOException 
 	 */
-	private void parseChoiseOrSeq() throws SAXException, IOException {
+	private DTD.ChoiceOrSeq parseChoiseOrSeq() throws SAXException, IOException {
 //		[49] choice	::= '(' S? cp ( S? '|' S? cp )+ S? ')'
 //		[50] seq	::= '(' S? cp ( S? ',' S? cp )* S? ')'
+		DTD.ChoiceOrSeq result = null;
 		boolean done = false;
-		parseCp();
+		DTD.Cp cp = parseCp();
 		char ch = wsskip();
 		switch( ch ){
 			case ')': 
+				result = new DTD.Seq();
 				done = true;
 				break;
-			case '|': case ',': 
+			case '|':
+				result = new DTD.Choice();
+				break;
+			case ',': 
+				result = new DTD.Seq();
 				break;
 			default:
 				panic(FAULT);
 		}
 		next(); // skip acceptable character 
+		result.add( cp );
 		final char delimiter = ch; 
 		while( !done ){
-			parseCp();
+			result.add( parseCp() );
 			switch( ch = wsskip() ){
 				case ')': 
 					done = true;
@@ -906,6 +984,8 @@ public final class Parser
 			}
 			next(); // skip acceptable character
 		}
+		result.invertChildrenOrder();
+		return result;
 	}
 
 	/**
@@ -914,24 +994,27 @@ public final class Parser
 	 * @exception SAXException 
 	 * @exception IOException 
 	 */
-	private void parseCp() throws SAXException, IOException
-//	[48] cp 	::= (Name | choice | seq) ('?' | '*' | '+')?
+	private DTD.Cp parseCp() throws SAXException, IOException
+//	[48] cp ::= (Name | choice | seq) ('?' | '*' | '+')?
+//	http://www.w3.org/TR/REC-xml-names/#ns-using[18] cp	::= (QName | choice | seq) ('?' | '*' | '+')? 
 	{
+		DTD.Cp result = null;
 		char ch = wsskip();
 		if( ch == '(' ){ // choice | seq
 			next();
-			parseChoiseOrSeq();
+			result = parseChoiseOrSeq();
 		} else { // Name
-			//String name = 
-				name(mIsNSAware); 
+			result = new DTD.CpName( name(mIsNSAware) ); 
 		}
 		// ('?' | '*' | '+')?
-		switch( next() ){
+		switch( (ch = next()) ){
 			case '?': case '*': case '+':
+				result.modifier = ch;
 				break;
 			default:
 				back();
 		}
+		return result;
 	}
 
 	/**
@@ -940,8 +1023,7 @@ public final class Parser
 	 * @exception SAXException 
 	 * @exception IOException 
 	 */
-	private void dtdelm()
-		throws SAXException, IOException
+	private void dtdelm() throws SAXException, IOException
 //		[45]   	elementdecl	   ::=   	'<!ELEMENT' S  Name  S  contentspec  S? '>'
 //		[46]   	contentspec	   ::=   	'EMPTY' | 'ANY' | Mixed | children
 //		[47]   	children	   ::=   	(choice | seq) ('?' | '*' | '+')?
@@ -952,8 +1034,7 @@ public final class Parser
 //										| '(' S? '#PCDATA' S? ')'
 	{
 		wsskip();
-		//String elementName = 
-			name(mIsNSAware);
+		String elementName = name(mIsNSAware);
 		// parse contentspec (it is used only in elementdecl)
 		char ch = wsskip();
 		switch( ch ){
@@ -965,13 +1046,13 @@ public final class Parser
 					bntok();
 					if( bkeyword() != 'p' )
 						panic(FAULT); // "#PCDATA expected"
+					DTD.Mixed mixed = new DTD.Mixed(); 
 					int namesCount = 0;
 					do {
 						if( wsskip() != '|' ) break;
 						next(); // skip '|'
 						wsskip();
-						//String name = 
-							name(mIsNSAware);
+						mixed.add( name(mIsNSAware) );
 						namesCount++;
 					} while(true);
 					if( next() != ')' )
@@ -980,16 +1061,32 @@ public final class Parser
 						if( namesCount > 0 )
 							panic(FAULT); // '*' expected as a part of ')*'
 						back();
+					} else mixed.finishWithAsterisk  = true;
+					mixed.names = (NamesList)LinkedList.invert(mixed.names);
+					dtd.elements.put(elementName, mixed);
+				} else { // (choice | seq) ('?' | '*' | '+')?
+					DTD.Cp choiseOrSeq = parseChoiseOrSeq();
+					// ('?' | '*' | '+')?
+					switch( (ch = next()) ){
+						case '?': case '*': case '+':
+							choiseOrSeq.modifier = ch;
+							break;
+						default:
+							back();
 					}
-				} else { // choice | seq
-					parseChoiseOrSeq();
+
+					dtd.elements.put( elementName, choiseOrSeq );
 				}
 				break;
 				
 			default: // EMPTY or ANY
 				bntok();
 				switch( bkeyword() ){
-					case 'E': case 'A':
+					case 'E':
+						dtd.elements.put(elementName, DTD.EMPTY);
+						break;
+					case 'A':
+						dtd.elements.put(elementName, DTD.ANY);
 						break;
 					default:
 						panic(FAULT);
@@ -1010,16 +1107,16 @@ public final class Parser
 	 * @exception SAXException 
 	 * @exception IOException 
 	 */
-	private void dtdattl()
-		throws SAXException, IOException
+	private void dtdattl() throws SAXException, IOException
 	{
 		char elmqn[] = null;
-		Pair elm     = null;
+		Hashtable/*<String, AttDef>*/ attList = null;
+		
 		char ch;
 		for (short st = 0; st >= 0;) {
-			ch	= next();
+			ch = next();
 			switch (st) {
-			case 0:		// read the element name
+			case 0:		// skip spaces, read the element name
 				switch (chtyp(ch)) {
 				case ' ':
 					break;
@@ -1032,13 +1129,11 @@ public final class Parser
 					back();
 					//		Get the element from the list or add a new one.
 					elmqn = qname(mIsNSAware);
-					elm   = find(mAttL, elmqn);
-					if (elm == null) {
-						elm = pair(mAttL);
-						elm.chars = elmqn;
-						mAttL     = elm;
+					attList = dtd.getAttList( QName.qname(elmqn) ); 
+					if( DEBUG_OUT != null ){
+						DEBUG_OUT.println( "attl '" + QName.qname(elmqn) + "'" );
 					}
-					st = 1;		// read an attribute declaration
+					st = 1;		// read an attribute declarations
 					break;
 
 				case '%':
@@ -1047,7 +1142,6 @@ public final class Parser
 
 				default:
 					panic(FAULT);
-					break;
 				}
 				break;
 
@@ -1059,9 +1153,9 @@ public final class Parser
 				case 'X':
 				case ':':
 					back();
-					dtdatt(elm);
+					dtdatt(attList);
 					if (wsskip() == '>')
-						return;
+						st = -1;
 					break;
 
 				case ' ':
@@ -1073,17 +1167,31 @@ public final class Parser
 
 				default:
 					panic(FAULT);
-					break;
 				}
 				break;
 
 			default:
 				panic(FAULT);
-				break;
 			}
+		}
+		// check if the element has explicit namespace specification
+		DTD.AttDef attdef = null;
+		String prefix = QName.prefix(elmqn);
+		if( "".equals( prefix ) ){
+			attdef = (DTD.AttDef)attList.get(XMLNSSTR);
+		} else {
+			attdef = (DTD.AttDef)attList.get(XMLNSSTR + ":" + prefix);
+		}
+		if( attdef != null && attdef.defaultDeclType == DTD.AttDef.ddtFIXED ){
+			dtd.addAttList(attdef.defaultDeclValue, QName.local(elmqn), attList);
 		}
 	}
 
+	/**
+	 * dummy element for duplicated attribute definitions
+	 */
+	private static final DTD.AttDef dummyAttDef = new DTD.AttDef();
+	
 	/**
 	 * Parses an attribute declaration.
 	 *
@@ -1096,14 +1204,15 @@ public final class Parser
 	 * @exception SAXException 
 	 * @exception IOException 
 	 */
-	private void dtdatt(Pair elm)
-		throws SAXException, IOException
+	private void dtdatt(Hashtable/*<String, AttDef>*/ attList) 
+							throws SAXException, IOException
 	{
 		char attqn[] = null;
-		Pair att     = null;
+		DTD.AttDef attdef = null;
+		
 		char ch;
 		for (short st = 0; st >= 0;) {
-			ch	= next();
+			ch = next();
 			switch (st) {
 			case 0:		// the attribute name
 				switch (chtyp(ch)) {
@@ -1115,17 +1224,17 @@ public final class Parser
 					back();
 					//		Get the attribute from the list or add a new one.
 					attqn = qname(mIsNSAware);
-					att   = find(elm.list, attqn);
-					if (att == null) {
+					String qname = QName.qname(attqn);
+					attdef = (DTD.AttDef)attList.get( qname );
+					if (attdef == null) {
 						//		New attribute declaration
-						att = pair(elm.list);
-						att.chars = attqn;
-						elm.list  = att;
+						attdef = new DTD.AttDef();
+						attdef.localName = QName.local(attqn);
+						attList.put( qname, attdef );
 					} else {
 						//		Do not override the attribute declaration [#3.3]
-						att = pair(null);
-						att.chars = attqn;
-						att.id    = 'c';
+						attdef = dummyAttDef;
+						attdef.clean();
 					}
 					wsskip();
 					st = 1;
@@ -1145,8 +1254,8 @@ public final class Parser
 
 			case 1:		// the attribute type
 				switch (chtyp(ch)) {
-				case '(':
-					att.id = 'u';	// enumeration type
+				case '(': 
+					attdef.attType = DTD.AttDef.typeNMTOKEN; // see org.xml.sax.Attributes.getType()
 					st = 2;			// read the first element of the list
 					break;
 
@@ -1160,8 +1269,9 @@ public final class Parser
 				default:
 					back();
 					bntok();		// read type id
-					att.id = bkeyword();
-					switch (att.id) {
+					attdef.attType = new String(mBuff, 1, mBuffIdx);
+					
+					switch (bkeyword()) {
 					case 'o':		// NOTATION
 						if (chtyp(next()) != ' ' && wsskip() != '(')
 							panic(FAULT);
@@ -1189,6 +1299,8 @@ public final class Parser
 				break;
 
 			case 2:		// read the first element of the list
+				// [58] NotationType ::= 'NOTATION' S '(' S? Name (S? '|' S? Name)* S? ')'
+				// [59] Enumeration ::= '(' S? Nmtoken (S? '|' S? Nmtoken)* S? ')'
 				switch (chtyp(ch)) {
 				case 'a':
 				case 'A':
@@ -1199,19 +1311,16 @@ public final class Parser
 				case '_':
 				case 'X':
 					back();
-					switch (att.id) {
-					case 'u':	// enumeration type
+					if( attdef.attType == DTD.AttDef.typeNMTOKEN ) {
+						// enumeration type
 						bntok();
-						break;
-
-					case 'o':	// NOTATION
+					} else { // NOTATION
 						mBuffIdx = -1;
 						bname(false);
-						break;
-
-					default:
-						panic(FAULT);
 					}
+					String value = new String(mBuff, 1, mBuffIdx);
+					attdef.enumeratedTypeValues = new Hashtable();
+					attdef.enumeratedTypeValues.put( value, value );
 					wsskip();
 					st = 3;		// read next element of the list
 					break;
@@ -1237,19 +1346,16 @@ public final class Parser
 
 				case '|':
 					wsskip();
-					switch (att.id) {
-					case 'u':	// enumeration type
+					if( attdef.attType == DTD.AttDef.typeNMTOKEN ) {
+						// enumeration type
 						bntok();
-						break;
-
-					case 'o':	// NOTATION
+					} else { // NOTATION
 						mBuffIdx = -1;
 						bname(false);
-						break;
-
-					default:
-						panic(FAULT);
 					}
+					String value = new String(mBuff, 1, mBuffIdx);
+					if( attdef.enumeratedTypeValues.put( value, value ) != null )
+						panic(FAULT); // Validity constraint: No Duplicate Tokens
 					wsskip();
 					break;
 
@@ -1259,7 +1365,6 @@ public final class Parser
 
 				default:
 					panic(FAULT);
-					break;
 				}
 				break;
 
@@ -1269,18 +1374,23 @@ public final class Parser
 					bntok();
 					switch (bkeyword()) {
 					case 'F':	// FIXED
+						attdef.defaultDeclType = DTD.AttDef.ddtFIXED;
 						wsskip();
 						st = 5;	// read the default value
 						break;
 
 					case 'Q':	// REQUIRED
+						attdef.defaultDeclType = DTD.AttDef.ddtREQUIRED;
+						st = -1;
+						break;
+						
 					case 'I':	// IMPLIED
+						attdef.defaultDeclType = DTD.AttDef.ddtIMPLIED;
 						st = -1;
 						break;
 
 					default:
 						panic(FAULT);
-						break;
 					}
 					break;
 
@@ -1311,17 +1421,9 @@ public final class Parser
 				case '\'':
 					back();
 					bqstr('d');	// the value in the mBuff now
-					att.list = pair(null);
-					//		Create a string like "attqname='value' "
-					att.list.chars = new char[att.chars.length + mBuffIdx + 3];
-					System.arraycopy(
-						att.chars, 1, att.list.chars, 0, att.chars.length - 1);
-					att.list.chars[att.chars.length - 1] = '=';
-					att.list.chars[att.chars.length]     = ch;
-					System.arraycopy(
-						mBuff, 1, att.list.chars, att.chars.length + 1, mBuffIdx);
-					att.list.chars[att.chars.length + mBuffIdx + 1] = ch;
-					att.list.chars[att.chars.length + mBuffIdx + 2] = ' ';
+					attdef.defaultDeclValue = new String(mBuff, 1, mBuffIdx);
+					// here we should check defaultDeclValue validity
+					
 					st = -1;
 					break;
 
@@ -1347,365 +1449,410 @@ public final class Parser
 	 */
 	private void dtdnot()
 		throws SAXException, IOException
+// [82]	NotationDecl   ::=   	'<!NOTATION' S  Name  S (ExternalID | PublicID) S? '>'
+// [83]	PublicID	   ::=   	'PUBLIC' S PubidLiteral
 	{
 		wsskip();
 		String name = name(false);
 		wsskip();
-		Pair   ids	= pubsys('N');
-		mHand.notationDecl(name, ids.name, ids.value);
-		del(ids);
+		DTD.ExternalID externalID = new DTD.ExternalID(); 
+		pubsys('N', externalID);
+		if( dtd.notations.containsKey(name) )
+			panic(FAULT); // http://www.w3.org/TR/REC-xml/#UniqueNotationName
+		dtd.notations.put(name, externalID);
+		mHand.notationDecl(name, externalID.pubidLiteral, externalID.systemLiteral);
 	}
-
+	
 	/**
-	 * Parses an element.
-	 *
-	 * This recursive method is responsible for prefix scope control 
-	 * (<code>mPref</code>). When the element is leaving the scope all 
-	 * prefixes defined within the element are removed from the prefix 
-	 * stack.
-	 *
-	 * @exception SAXException 
-	 * @exception IOException 
+	 * Parses document element.
+	 * 
+	 * @throws SAXException
+	 * @throws IOException
 	 */
-	private void elm()
-		throws SAXException, IOException
-	{
-		//		Save the current top of the prefix stack
-		Pair	pref	= mPref;
-		//		Read an element name and put it on top of the element stack
-		mElm		= pair(mElm);
-		mElm.chars	= qname(mIsNSAware);
-		mElm.name	= mElm.local();
-		//		Find the list of defined attributes of the current element 
-		Pair	elm	= find(mAttL, mElm.chars);
-		//		Read attributes till the end of the element tag
-		mAttrIdx	= 0;
-		Pair	att	= pair(null);
-		att.list	= (elm != null)? elm.list: null;	// attrs defined on this elm
-		attr(att);
-		del(att);
-		//		Read the element and it's content
-		mBuffIdx	= -1;
-		char	ch;
-		for (short st = 0; st >= 0;) {
-			ch = (mChIdx < mChLen)? mChars[mChIdx++]: next();
-			switch (st) {
-			case 0:		// read the end of the element tag
-			case 1:		// read the end of the empty element
-				switch (ch) {
-				case '>':
-					//		Report the element
-					if (mIsNSAware == true) {
-						mElm.value	= rslv(mElm.chars);
-						mHand.startElement(
-							mElm.value,
-							mElm.name,
-							"",
-							mAttrs);
-					} else {
-						mHand.startElement(
-							"",
-							"",
-							mElm.name,
-							mAttrs);
-					}
-					mItems	= null;
-					st	= (st == 0)? (short)2: (short)-1;
-					break;
-
-				case '/':
-					if (st != 0)
+	private void parseDocumentElement() throws SAXException, IOException {
+		processTag(); // read document element
+		short st = 0;
+		char ch;
+		while( elementStack.size() > 0 ) {
+			mBuffIdx = -1;
+			while( st >= 0 ) {
+				ch = (mChIdx < mChLen)? mChars[mChIdx++]: next();
+				switch (st) {
+				case 0:		// read the end of the element tag
+					switch (ch) {
+					case '>':
+						//		Report the element
+						reportStartElement();
+						st = 2;
+						break;
+					case '/':
+						st = 1;
+						break;
+					default:
 						panic(FAULT);
-					st	= 1;
+					}
+					break;
+				case 1:		// read the end of the empty element
+					switch (ch) {
+					case '>':
+						//		Report the element
+						reportStartElement();
+						st = -1;
+						break;
+					default:
+						panic(FAULT);
+					}
 					break;
 
-				default:
-					panic(FAULT);
-				}
-				break;
+				case 2:		// skip white space between tags
+					switch (ch) {
+					case ' ':
+					case '\t':
+					case '\n':
+						bappend(ch);
+						break;
 
-			case 2:		// skip white space between tags
-				switch (ch) {
-				case ' ':
-				case '\t':
-				case '\n':
-					bappend(ch);
-					break;
+					case '\r':		// EOL processing [#2.11]
+						if (next() != '\n')
+							back();
+						bappend('\n');
+						break;
 
-				case '\r':		// EOL processing [#2.11]
-					if (next() != '\n')
+					case '<':
+						// Need revisit: With additional info from DTD and xml:space attr [#2.10]
+						// the following call can be supported:
+						// mHand.ignorableWhitespace(mBuff, 0, (mBuffIdx + 1));
+						bflash();
+
+					default:
 						back();
-					bappend('\n');
+						st = 3;
+					}
 					break;
 
-				case '<':
-					// Need revisit: With additional info from DTD and xml:space attr [#2.10]
-					// the following call can be supported:
-					// mHand.ignorableWhitespace(mBuff, 0, (mBuffIdx + 1));
-					bflash();
+				case 3:		// read the text content of the element
+					switch (ch) {
+					case '&':
+						ent('x');
+						break;
 
-				default:
-					back();
-					st	= 3;
-					break;
-				}
-				break;
-
-			case 3:		// read the text content of the element
-				switch (ch) {
-				case '&':
-					ent('x');
-					break;
-
-				case '<':
-					bflash();
-					switch (next()) {
-					case '/':	// the end of the element content
-						//		Check element's open/close tags balance
-						mBuffIdx = -1;
-						bname(mIsNSAware);
-						char[] chars = mElm.chars;
-						if (chars.length == (mBuffIdx + 1)) {
-							for (char i = 1; i <= mBuffIdx; i += 1) {
-								if (chars[i] != mBuff[i])
+					case '<':
+						bflash();
+						st = 2;
+						switch (next()) {
+						case '/':	// the end of the element content
+							//		Check element's open/close tags balance
+							mBuffIdx = -1;
+							bname(mIsNSAware);
+							char[] elementQName = elementStack.top().elementName;
+							if (elementQName.length != (mBuffIdx + 1))
+								panic(FAULT);
+							for (int i = 0; i < elementQName.length; i++) {
+								if (elementQName[i] != mBuff[i])
 									panic(FAULT);
 							}
-						} else {
-							panic(FAULT);
-						}
-						//		Skip white spaces before '>'
-						if (wsskip() != '>')
-							panic(FAULT);
-						ch	= next();
-						st	= -1;
-						break;
-
-					case '!':	// a comment or a CDATA
-						ch	= next();
-						back();
-						switch (ch) {
-						case '-':	// must be a comment
-							comm();
+							//		Skip white spaces before '>'
+							if (wsskip() != '>')
+								panic(FAULT);
+							ch = next(); // consume '>'
+							st = -1;
 							break;
 
-						case '[':	// must be a CDATA section
-							cdat();
+						case '!':	// a comment or a CDATA
+							ch = next();
+							back();
+							switch (ch) {
+							case '-':	// must be a comment
+								comm();
+								break;
+
+							case '[':	// must be a CDATA section
+								cdat();
+								break;
+
+							default:
+								panic(FAULT);
+							}
 							break;
 
-						default:
-							panic(FAULT);
+						case '?':	// processing instruction
+							pi();
+							break;
+
+						default:	// must be the first char of an xml name 
+							back();
+							processTag();
+							st = 0;
 						}
+						mBuffIdx = -1;
 						break;
 
-					case '?':	// processing instruction
-						pi();
+					case '\r':		// EOL processing [#2.11]
+						if (next() != '\n')
+							back();
+						bappend('\n');
 						break;
 
-					default:	// must be the first char of an xml name 
-						back();
-						elm();	// recursive call
+					case EOS:
+						panic(FAULT);
+
+					case ' ':		// characters not supported by bappend()
+					case '\"':
+					case '\'':
+					case '\n':
+					case '\t':
+					case '%':
+						bappend(ch);
 						break;
+
+					default:
+						bappend();
 					}
-					mBuffIdx = -1;
-					if (st != -1)
-						st	= 2;
-					break;
-
-				case '\r':		// EOL processing [#2.11]
-					if (next() != '\n')
-						back();
-					bappend('\n');
-					break;
-
-				case EOS:
-					panic(FAULT);
-
-				case ' ':		// characters not supported by bappend()
-				case '\"':
-				case '\'':
-				case '\n':
-				case '\t':
-				case '%':
-					bappend(ch);
 					break;
 
 				default:
-					bappend();
-					break;
+					panic(FAULT);
 				}
-				break;
-
-			default:
-				panic(FAULT);
 			}
-		}
-		//		Report the end of element
-		if (mIsNSAware == true)
-			mHand.endElement(mElm.value, mElm.name, "");
-		else
-			mHand.endElement("", "", mElm.name);
-		//		Remove the top element tag
-		mElm	= del(mElm);
-		//		Restore the top of the prefix stack
-		while (mPref != pref) {
-			mHand.endPrefixMapping(mPref.name);
-			mPref	= del(mPref);
+			processTagClosing();
+			st = 2;
 		}
 	}
 
 	/**
-	 * Parses an attribute.
-	 *
-	 * This recursive method is responsible for prefix addition 
-	 * (<code>mPref</code>) and prefix mapping reports on the way down. The 
-	 * element's start tag end triggers the return process. The method then 
-	 * on it's way back resolves prefixes and accumulates attributes.<br />
-	 * Note that this method will not report namespace declaration attributes
-	 * (xmlns* attributes), the 
-	 * {@link DefaultHandler#startPrefixMapping startPrefixMapping} method 
-	 * is invoked instead.
-	 *
-	 * @param att An object which represents current attribute.
-	 * @exception SAXException 
-	 * @exception IOException 
+	 * Reports start of element into DefaultHandler.
+	 * 
+	 * @throws SAXException
 	 */
-	private void attr(Pair att)
-		throws SAXException, IOException
-	{
-		Pair	next = null;
-		char	norm = 'c';		// CDATA-type normalization by default [#3.3.3]
-		String	val;
-		String	type;
-		try {
-			switch (wsskip()) {
-			case '/':
-			case '>':
-				//		Go through all defined attributes on current tag to 
-				//		find defaults
-				for (Pair def = att.list; def != null; def = def.next) {
-					if (def.list != null) {
-						//		Attribute definition with default value
-						Pair act = att.next;
-						while (act != null) {
-							if (act.eqname(def.chars) == true)
-								break;
-							act = act.next;
-						}
-						if (act == null) {
-							//		Add default attribute
-							push(new Input(def.list.chars));
-							attr(att);
-							return;
-						}
-					}
-				}
-				//		Ensure the attribute string array capacity
-				mAttrs.setLength(mAttrIdx);
-				mItems	= mAttrs.mItems;
-				return;
-
-			default:
-				//		Read the attribute name and value
-				att.chars = qname(mIsNSAware);
-				att.name  = att.local();
-				type = "CDATA";
-				if (att.list != null) {
-					Pair attr = find(att.list, att.chars);
-					if (attr != null) {
-						switch (attr.id) {
-						case 'i':
-							type = "ID";
-							norm = 'i';
-							break;
-
-						case 'r':
-							type = "IDREF";
-							norm = 'i';
-							break;
-
-						case 'R':
-							type = "IDREFS";
-							norm = 'i';
-							break;
-
-						case 'n':
-							type = "ENTITY";
-							norm = 'i';
-							break;
-
-						case 'N':
-							type = "ENTITIES";
-							norm = 'i';
-							break;
-
-						case 't':
-							type = "NMTOKEN";
-							norm = 'i';
-							break;
-
-						case 'T':
-							type = "NMTOKENS";
-							norm = 'i';
-							break;
-
-						case 'u':
-							type = "NMTOKEN";
-							norm = 'i';
-							break;
-
-						case 'o':
-							type = "NOTATION";
-							norm = 'i';
-							break;
-
-						case 'c':
-							norm = 'c';
-							break;
-
-						default:
-							panic(FAULT);
-						}
-					}
-				}
-				wsskip();
-				if (next() != '=')
-					panic(FAULT);
-				bqstr(norm);		// read the value with normalization.
-				val = new String(mBuff, 1, mBuffIdx);
-				//		Put a namespace declaration on top of the prefix stack
-				if (!(mIsNSAware && isdecl(att, val))) {
-					//		An ordinary attribute
-					mAttrIdx++;
-					//		Recursive call to parse the next attribute
-					next = pair(att);
-					next.list = att.list;
-					attr(next);
-					mAttrIdx--;
-					//		Add the attribute to the attributes string array
-					char	idx	= (char)(mAttrIdx << 3);
-					mItems[idx + 1]	= att.qname();		// attr qname
-					mItems[idx + 2]	= (mIsNSAware)? att.name: ""; // attr local name
-					mItems[idx + 3]	= val;				// attr value
-					mItems[idx + 4]	= type;				// attr type
-					//		Resolve the prefix if any and report the attribute
-					//		NOTE: The attribute does not accept the default namespace.
-					mItems[idx + 0]	= (att.chars[0] != 0)? rslv(att.chars): "";
-				} else {
-					//		A namespace declaration
-					//		Report a start of the new mapping
-					mHand.startPrefixMapping(mPref.name, mPref.value);
-					//		Recursive call to parse the next attribute
-					next = pair(att);
-					next.list = att.list;
-					attr(next);
-					//		NOTE: The namespace declaration is not reported.
-				}
-				break;
-			}
-		} finally {
-			if (next != null)
-				del(next);
+	private void reportStartElement() throws SAXException {
+		Element element = elementStack.top();
+		if (mIsNSAware) {
+			mHand.startElement( element.namespace.URI, QName.local(element.elementName),
+						"", attributes);
+		} else {
+			mHand.startElement( "", "",
+						QName.qname(element.elementName), attributes);
 		}
+	}
+
+	/**
+	 * Registers namespace with prefix. 
+	 * 
+	 * @param spaceName namespace prefix. Can be empty string. 
+	 * @param URI namespace URI
+	 * @throws SAXException 
+	 */
+	final private void pushNamespace( String spaceName, String URI ) throws SAXException {
+		Element element = elementStack.top();
+		if( namespaceStack.pushUnique( element.registeredNamespacesNumber, spaceName, URI ) ){
+			element.registeredNamespacesNumber++;
+			mHand.startPrefixMapping( spaceName, URI );
+		}
+	}
+	
+	/**
+	 * Processes XML tag.
+	 *  
+	 * Puts it on elements stack top. Parses attributes, adds default attributes,
+	 * registers namespaces and so on.
+	 * 
+	 * @throws SAXException
+	 * @throws IOException
+	 */
+	private void processTag() throws SAXException, IOException {
+		// Read an element name and put it on top of the element stack
+		elementStack.push( qname(mIsNSAware) );
+		Element element = elementStack.top(); 
+		// Read attributes till the end of the element tag
+		parseAttributes();
+		// process attributes: set attributes types, normalize attributes values
+		// (http://www.w3.org/TR/REC-xml-names/#ns-using) 
+		// Note that DTD-based validation is not namespace-aware in the following sense: 
+		// a DTD constrains the elements and attributes that may appear in a document by 
+		// their uninterpreted names, not by (namespace name, local name) pairs. To validate 
+		// a document that uses namespaces against a DTD, the same prefixes must be used in 
+		// the DTD as in the instance. A DTD may however indirectly constrain the namespaces 
+		// used in a valid document by providing #FIXED values for attributes that declare
+		// namespaces.
+		Hashtable l = (Hashtable)dtd.attLists.get(QName.qname(element.elementName));
+		if( l != null ){
+			setAttrTypes( l );
+			addDefaultAttributes( l );
+		}
+		if( mIsNSAware ){
+			// resolve element namespace
+			String errMsg = element.resolveNamespace( namespaceStack );
+			if( errMsg != null )
+				panic(errMsg);
+			
+			Hashtable ll = dtd.findAttList(element.namespace.URI, 
+										QName.local(element.elementName));
+			if( ll != null && ll != l ){
+				setAttrTypes( ll );
+				addDefaultAttributes( ll );
+			}
+		}
+		
+		// resolve attributes namespaces
+		if( mIsNSAware ){
+			for( int idx = attributes.getLength(); idx-- > 0; ){
+				String errMsg = ((Attrs.NSAware)attributes).resolveNamespace(idx, namespaceStack);
+				if( errMsg != null )
+					panic(errMsg);
+			}
+		}
+		
+		// all attributes without type already have "CDATA" type
+		
+		// check attributes duplication
+		if( attributes.hasDuplications() )
+			panic(FAULT);
+		
+		/* org/xml/sax/ContentHandler.html#startElement(java.lang.String,%20java.lang.String,%20java.lang.String,%20org.xml.sax.Attributes)
+		 * 
+		 * The attribute list will contain attributes used for Namespace declarations 
+		 * (xmlns* attributes) only if the http://xml.org/sax/features/namespace-prefixes  
+		 * property is true (it is false by default, and support for a true value is 
+		 * optional).
+		 */
+		if( mIsNSAware ){
+			// NOTE: The namespace declaration should not be reported as an element attribute.
+			for( int idx = attributes.getLength(); idx-- > 0; ){
+				String qname = attributes.getQName(idx);
+				if( XMLNSSTR.equals(qname) || qname.startsWith(XMLNSSTR + ':') ){
+					attributes.remove(idx);
+				}
+			}
+		}
+	}
+
+	/**
+	 * Closes current element.
+	 * 
+	 * @throws SAXException
+	 */
+	private void processTagClosing() throws SAXException {
+		Element element = elementStack.pop(); 
+		// Report the end of element
+		if (mIsNSAware){
+			mHand.endElement(element.namespace.URI, 
+						QName.local(element.elementName), "");
+			// Restore the top of the prefix stack
+			if( DEBUG_OUT != null ) 
+				DEBUG_OUT.println( QName.qname(element.elementName) + ".registeredNamespacesNumber = " + element.registeredNamespacesNumber );
+			while( element.registeredNamespacesNumber-- > 0 ) {
+				Namespace ns = namespaceStack.pop();
+				mHand.endPrefixMapping(ns.id);
+				ns.free();
+			}
+		} else mHand.endElement("", "", QName.qname(element.elementName));
+		// Remove the top element tag
+		element.free();
+	}
+
+	/**
+	 * Sets attributes types (from !ATTLIST data)
+	 * 
+	 * @param attList ATTLIST for current element
+	 */
+	private void setAttrTypes(Hashtable attList) {
+		for( int idx = attributes.getLength(); idx-- > 0; ){
+			String qname = attributes.getQName(idx);
+			DTD.AttDef def = (DTD.AttDef)attList.get( qname );
+			if( def != null ){
+				// sets type and convert value if type is 'CDATA'
+				attributes.setType( idx, def.attType );
+			}
+		}
+	}
+
+	/**
+	 * Adds default attributes.
+	 * 
+	 * @param attList ATTLIST for current element
+	 * @throws SAXException
+	 */
+	private void addDefaultAttributes(Hashtable attList) throws SAXException {
+		if( DEBUG_OUT != null )
+			DEBUG_OUT.println( "addDefaultAttributes" ); 
+		for( Enumeration e = attList.keys(); e.hasMoreElements();){
+			String qname = (String)e.nextElement();
+			DTD.AttDef def = (DTD.AttDef)attList.get(qname);
+			if( DEBUG_OUT != null ){
+				DEBUG_OUT.println( "\tdefatt '" + qname + "' " + 
+						def.attType + " " + def.defaultDeclType + 
+						" \"" + def.defaultDeclValue + "\"" );
+			}
+			switch( def.defaultDeclType ){
+				case DTD.AttDef.ddtIMPLIED: // #IMPLIED
+					break;
+				case DTD.AttDef.ddtREQUIRED: // #REQUIRED
+					// our parser is not a validating parser
+					// so we don't check presence of the attribute 
+					break;
+				default: // #FIXED & <default>
+					if( attributes.getIndex(qname) == -1 ){
+						// add attribute with the default value
+						int idx = addAttribute(qname, def.defaultDeclValue);
+						attributes.setType( idx, def.attType ); // sets type and convert value if type is 'CDATA'
+					}
+			}
+		}
+	}
+	
+	/**
+	 * Adds attribute value.
+	 * 
+	 * @param attributeQName
+	 * @param attrValue
+	 * @return
+	 * @throws SAXException
+	 */
+	private int addAttribute(String attributeQName, String attrValue) throws SAXException {
+		
+		if( mIsNSAware ){
+			String namespacePrefix = null;
+			if( XMLNSSTR.equals(attributeQName) ){
+				namespacePrefix = "";
+			} else if( attributeQName.startsWith(XMLNSSTR + ':') ){
+				namespacePrefix = attributeQName.substring(XMLNSSTR.length() + 1);
+			}
+			if( namespacePrefix != null ){
+				/* here we register namespaces that are specified in DTD for the element */
+				pushNamespace( namespacePrefix, attrValue );
+			}
+		}
+		// save all attributes (xmlns too)
+		return attributes.add( attributeQName, attrValue /*CDATA normalized*/ );
+	}
+
+	/**
+	 * Parses element attributes.
+	 * 
+	 * @throws SAXException
+	 * @throws IOException
+	 */
+	private void parseAttributes() throws SAXException, IOException {
+		attributes.clean();
+		boolean done = false;
+		while( !done ){
+			switch( wsskip() ){
+				case '/': case '>':
+					done = true;
+					break;
+					
+				default:
+					// Read the attribute name and value
+					char[] attrName = qname(mIsNSAware);
+					if( wsskip() != '=' )
+						panic(FAULT);
+					next(); // consume '='
+					bqstr('c');	// read value with CDATA normalization.
+					String attrValue = new String(mBuff, 1, mBuffIdx);
+					addAttribute(QName.qname(attrName), attrValue);
+			}
+		}
+		// all attributes have been read
 	}
 
 	/**
@@ -1717,38 +1864,34 @@ public final class Parser
 	private void comm()
 		throws SAXException, IOException
 	{
-		if (mSt == 0)
-			mSt	= 1;	// misc before DTD
+		if (mSt == stateStartOfTheDocument)
+			mSt	= stateMiscBeforeDTD;	// misc before DTD
 		char	ch;
 		for (short st = 0; st >= 0;) {
 			ch = (mChIdx < mChLen)? mChars[mChIdx++]: next();
 			switch (st) {
 			case 0:		// first '-' of the comment open
-				if (ch == '-')
-					st	= 1;
-				else
+				if (ch != '-')
 					panic(FAULT);
+				st = 1;
 				break;
 
 			case 1:		// secind '-' of the comment open
-				if (ch == '-')
-					st	= 2;
-				else
+				if (ch != '-')
 					panic(FAULT);
+				st = 2;
 				break;
 
 			case 2:		// skip the comment body
 				switch (ch) {
 				case '-':
-					st	= 3;
+					st = 3;
 					break;
 
 				case EOS:
 					panic(FAULT);
-					break;
 
 				default:
-					break;
 				}
 				break;
 
@@ -1757,10 +1900,9 @@ public final class Parser
 				break;
 
 			case 4:		// '>' of the comment close
-				if (ch == '>')
-					st	= -1;
-				else
+				if (ch != '>')
 					panic(FAULT);
+				st = -1;
 				break;
 
 			default:
@@ -1795,12 +1937,11 @@ public final class Parser
 					str	= name(false);
 					//		PI target name may not be empty string [#2.6]
 					//		PI target name 'XML' is reserved [#2.6]
-					if ((str.length() == 0) || 
-						(mXml.name.equals(str.toLowerCase()) == true))
+					if ((str.length() == 0) || ("xml".equals(str.toLowerCase())))
 						panic(FAULT);
 					//		This is processing instruction
-					if (mSt == 0)	// the begining of the document
-						mSt	= 1;	// misc before DTD
+					if (mSt == stateStartOfTheDocument)	// the begining of the document
+						mSt	= stateMiscBeforeDTD;	// misc before DTD
 					wsskip();		// skip spaces after the PI target name
 					st	= 1;		// accumulate the PI body
 					mBuffIdx = -1;
@@ -2001,57 +2142,33 @@ public final class Parser
 	/**
 	 * Reads the public or/and system identifiers.
 	 *
-	 * @param inp The input object. 
-	 * @exception SAXException 
-	 * @exception IOException 
-	 */
-	private void pubsys(Input inp)
-		throws SAXException, IOException
-	{
-		Pair pair	= pubsys(' ');
-		inp.pubid	= pair.name;
-		inp.sysid	= pair.value;
-		del(pair);
-	}
-
-	/**
-	 * Reads the public or/and system identifiers.
-	 *
 	 * @param flag The 'N' allows public id be without system id.
 	 * @return The public or/and system identifiers pair.
 	 * @exception SAXException 
 	 * @exception IOException 
 	 */
-	private Pair pubsys(char flag)
-		throws SAXException, IOException
+	private void pubsys( char flag, DTD.ExternalID eid ) throws SAXException, IOException
 	{
-		Pair   ids	= pair(null);
+		eid.pubidLiteral = eid.systemLiteral = null;
 		String str	= name(false);
-		if ("PUBLIC".equals(str) == true) {
+		if ("PUBLIC".equals(str)) {
 			bqstr('i');		// non-CDATA normalization [#4.2.2]
-			ids.name = new String(mBuff, 1, mBuffIdx);
+			eid.pubidLiteral = new String(mBuff, 1, mBuffIdx);
 			switch (wsskip()) {
 			case '\"':
 			case '\'':
 				bqstr(' ');
-				ids.value = new String(mBuff, 1, mBuffIdx);
+				eid.systemLiteral = new String(mBuff, 1, mBuffIdx);
 				break;
 
 			default:
 				if (flag != 'N')	// [#4.7]
 					panic(FAULT);
-				ids.value = null;
-				break;
 			}
-			return ids;
-		} else if ("SYSTEM".equals(str) == true) {
-			ids.name	= null;
+		} else if ("SYSTEM".equals(str)) {
 			bqstr(' ');
-			ids.value = new String(mBuff, 1, mBuffIdx);
-			return ids;
-		}
-		panic(FAULT);
-		return null;
+			eid.systemLiteral = new String(mBuff, 1, mBuffIdx);
+		} else panic(FAULT);
 	}
 
 	/**
@@ -2080,6 +2197,51 @@ public final class Parser
 		}
 		bqstr('-');
 		return new String(mBuff, 1, mBuffIdx);
+	}
+
+	/*
+	// #2.2
+	// [2] Char	::= #x9 | #xA | #xD | [#x20-#xD7FF] | [#xE000-#xFFFD] | [#x10000-#x10FFFF]
+	final private int[] legalCharRangeStart = new int[] {0x9, 0xA, 0xD, 0x20, 0xE000, 0x10000};
+	final private int[] legalCharRangeEnd = new int[] {0x9, 0xA, 0xD, 0xD7FF, 0xFFFD, 0x10FFFF};
+	*/
+	/**
+	 * Checks and convert codePoint (came from a character reference) into UTF-16 characters
+	 * @param codePoint 
+	 * @return value as character
+	 * @throws SAXException
+	 */
+	private void codePointToBuffer( int codePoint, char flag ) throws SAXException
+	{
+		/*
+		// find index in legalCharRangeStart of value that is less than 'value' (binary search)
+		int head = 0, tail = legalCharRangeStart.length;
+		while( head < tail ){
+			int pos = (head + tail) / 2;
+			if( legalCharRangeStart[pos] <= value ) head = pos + 1;
+			else tail = pos;
+		}
+		if( !(head > 0 && value <= legalCharRangeEnd[head - 1]) )
+			panic(FAULT); // "invalid character reference"
+		*/
+		if( codePoint < 0 )
+			panic(FAULT); // impossible (superfluous check)
+	    if (codePoint < 0x10000) {
+	        if (0xd7FF < codePoint && codePoint < 0xe000)
+	            panic(FAULT); // invalid code point
+	        char ch = (char)codePoint;
+	        // code is copied from its original place (ent(int flag))
+			if (ch == ' ' || mInp.next != null) 
+				bappend(ch, flag);
+			else bappend(ch);
+	    } else {
+	        if (codePoint > 0x10FFFF)
+	            panic(FAULT); // invalid code point
+	    	
+	        int offset = codePoint - 0x10000;
+	        bappend((char)((offset >> 10) + 0xd800));
+	        bappend((char)((offset & 0x3ff) + 0xdc00));
+	    }
 	}
 
 	/**
@@ -2137,7 +2299,7 @@ public final class Parser
 						bappend(mESt);
 						st	= -1;
 						break;
-					} else if (mSt == 2) {
+					} else if (mSt == stateInsideDTD) {
 						//		In DTD entity declaration has to resolve character 
 						//		entities and include "as is" others. [#4.4.7]
 						bappend(';');
@@ -2146,7 +2308,7 @@ public final class Parser
 					}
 					//		Convert an entity name to a string
 					str	= new String(mBuff, idx + 1, mBuffIdx - idx);
-					inp	= (Input)mEnt.get(str);
+					inp	= (dtd.generalEntities == null)? null : (Input)dtd.generalEntities.get(str);
 					//		Restore the buffer offset
 					mBuffIdx = idx - 1;
 					if (inp != null) {
@@ -2162,7 +2324,7 @@ public final class Parser
 								//		Unresolved external entity
 								bflash();
 								if (flag != 'x')
-									panic(FAULT);	// unknown entity within marckup
+									panic(FAULT);	// unknown entity within markup
 								mHand.skippedEntity(str);
 							}
 						} else {
@@ -2173,7 +2335,7 @@ public final class Parser
 						//		Unknown or general unparsed entity
 						bflash();
 						if (flag != 'x')
-							panic(FAULT);	// unknown entity within marckup
+							panic(FAULT);	// unknown entity within markup
 						mHand.skippedEntity(str);
 					}
 					st	= -1;
@@ -2201,18 +2363,12 @@ public final class Parser
 					try {
 						int i = Integer.parseInt(
 							new String(mBuff, idx + 1, mBuffIdx - idx), 10);
-						if (i >= 0xffff)
-							panic(FAULT);
-						ch = (char)i;
+						// Restore the buffer offset
+						mBuffIdx = idx - 1;
+						codePointToBuffer(i, flag);
 					} catch (NumberFormatException nfe) {
 						panic(FAULT);
 					}
-					//		Restore the buffer offset
-					mBuffIdx = idx - 1;
-					if (ch == ' ' || mInp.next != null)
-						bappend(ch, flag);
-					else
-						bappend(ch);
 					st	= -1;
 					break;
 
@@ -2240,18 +2396,12 @@ public final class Parser
 					try {
 						int i = Integer.parseInt(
 							new String(mBuff, idx + 1, mBuffIdx - idx), 16);
-						if (i >= 0xffff)
-							panic(FAULT);
-						ch = (char)i;
+						// Restore the buffer offset
+						mBuffIdx = idx - 1;
+						codePointToBuffer(i, flag);
 					} catch (NumberFormatException nfe) {
 						panic(FAULT);
 					}
-					//		Restore the buffer offset
-					mBuffIdx = idx - 1;
-					if (ch == ' ' || mInp.next != null)
-						bappend(ch, flag);
-					else
-						bappend(ch);
 					st	= -1;
 					break;
 
@@ -2284,14 +2434,14 @@ public final class Parser
 		Input	inp = null;
 		String	str	= null;
 		bappend('%');
-		if (mSt != 2)		// the DTD internal subset
+		if (mSt != stateInsideDTD)		// the DTD internal subset
 			return;			// Not Recognized [#4.4.1]
 		//		Read entity name
 		bname(false);
 		str = new String(mBuff, idx + 2, mBuffIdx - idx - 1);
 		if (next() != ';')
 			panic(FAULT);
-		inp	= (Input)mPEnt.get(str);
+		inp	= (dtd.parameterEntities == null)? null : (Input)dtd.parameterEntities.get(str);
 		//		Restore the buffer offset
 		mBuffIdx = idx - 1;
 		if (inp != null) {
@@ -2326,67 +2476,6 @@ public final class Parser
 			//		Unknown parameter entity
 			mHand.skippedEntity("%" + str);
 		}
-	}
-
-	/**
-	 * Recognizes and handles a namespace declaration.
-	 *
-	 * This method identifies a type of namespace declaration if any and 
-	 * puts new mapping on top of prefix stack.
-	 *
-	 * @param name The attribute qualified name (<code>name.value</code> is a 
-	 *	<code>String</code> object which represents the attribute prefix).
-	 * @param value The attribute value.
-	 * @return <code>true</code> if a namespace declaration is recognized.
-	 */
-	private boolean isdecl(Pair name, String value)
-	{
-		if (name.chars[0] == 0) {
-			if ("xmlns".equals(name.name) == true) {
-				//		New default namespace declaration
-				mPref = pair(mPref);
-				mPref.value = value;
-				mPref.name  = "";
-				mPref.chars = NONS;
-				return true;
-			}
-		} else {
-			if (name.eqpref(XMLNS) == true) {
-				//		New prefix declaration
-				int len = name.name.length();
-				mPref = pair(mPref);
-				mPref.value    = value;
-				mPref.name     = name.name;
-				mPref.chars    = new char[len + 1];
-				mPref.chars[0] = (char)(len + 1);
-				name.name.getChars(0, len, mPref.chars, 1);
-				return true;
-			}
-		}
-		return false;
-	}
-
-	/**
-	 * Resolves a prefix.
-	 *
-	 * @return The namespace assigned to the prefix.
-	 * @exception SAXException When mapping for specified prefix is not found.
-	 */
-	private String rslv(char[] qname)
-		throws SAXException
-	{
-		for (Pair pref = mPref; pref != null; pref = pref.next) {
-			if (pref.eqpref(qname) == true)
-				return pref.value;
-		}
-		if (qname[0] == 1) {	// QNames like ':local'
-			for (Pair pref = mPref; pref != null; pref = pref.next) {
-				if (pref.chars[0] == 0)
-					return pref.value;
-			}
-		}
-		panic(FAULT);
-		return null;
 	}
 
 	/**
@@ -2425,8 +2514,7 @@ public final class Parser
 	 *
 	 * @param msg The problem description message.
 	 */
-	private void panic(String msg)
-		throws SAXException
+	private void panic(String msg) throws SAXException
 	{
 		final boolean debug_mode = false;
 		if( debug_mode ){
@@ -2456,8 +2544,7 @@ public final class Parser
 	 * @exception SAXException  When incorrect character appear in the name.
 	 * @exception IOException 
 	 */
-	private void bname(boolean ns)
-		throws SAXException, IOException
+	private void bname(boolean ns) throws SAXException, IOException
 	{
 		char	ch;
 		char	type;
@@ -2467,7 +2554,7 @@ public final class Parser
 		int		bchidx	= bqname + 1;
 		int		bstart	= bchidx;
 		int		cstart	= mChIdx;
-		short	st		= (short)((ns == true)? 0: 2);
+		short	st		= (short)(ns? 0: 2);
 		while (true) {
 			//		Read next character
 			if (mChIdx >= mChLen) {
@@ -2478,11 +2565,11 @@ public final class Parser
 				bstart = bchidx;
 			}
 			ch = mChars[mChIdx++];
+			if (ch == EOS)
+				panic(FAULT);
 			type = (char)0;	// [X]
 			if (ch < 0x80) {
 				type = (char)nmttyp[ch];
-			} else if (ch == EOS) {
-				panic(FAULT);
 			}
 			//		Parse QName
 			switch (st) {
@@ -2514,7 +2601,7 @@ public final class Parser
 
 				case 1:	// [:]
 					bchidx++;	// append char to the buffer
-					if (ns == true) {
+					if( ns ) {
 						if (bcolon != bqname)
 							panic(FAULT);	// it must be only one colon
 						bcolon = bchidx - 1;
@@ -2527,6 +2614,8 @@ public final class Parser
 					mChIdx--;	// back();
 					bcopy(cstart, bstart);
 					mBuff[bqname] = (char)(bcolon - bqname);
+					if( DEBUG_OUT != null )
+						DEBUG_OUT.println( "bname '" + new String(mBuff, 1, mBuffIdx) + "'" );
 					return;
 				}
 				break;
@@ -2545,8 +2634,7 @@ public final class Parser
 	 * @exception SAXException  When incorrect character appear in the name.
 	 * @exception IOException 
 	 */
-	private void bntok()
-		throws SAXException, IOException
+	private void bntok() throws SAXException, IOException
 	{
 		char	ch;
 		mBuffIdx = -1;
@@ -2569,6 +2657,8 @@ public final class Parser
 				back();
 				if( mBuffIdx == 0 ) // zero length nmtoken
 					panic(FAULT);
+				if( DEBUG_OUT != null )
+					DEBUG_OUT.println( "bntok '" + new String(mBuff, 1, mBuffIdx) + "'" );
 				return;
 			}
 		}
@@ -2674,7 +2764,7 @@ public final class Parser
 	}
 
 	/**
-	 * Reads a single or double quotted string in to the buffer.
+	 * Reads a single or double quotted string into the buffer.
 	 *
 	 * This method resolves entities inside a string unless the parser 
 	 * parses DTD.
@@ -2684,24 +2774,18 @@ public final class Parser
 	 * @exception SAXException 
 	 * @exception IOException 
 	 */
-	private void bqstr(char flag)
-		throws SAXException, IOException
+	private void bqstr(char flag) throws SAXException, IOException
 	{
 		Input inp = mInp;	// remember the original input
 		mBuffIdx  = -1;
 		bappend((char)0);	// default offset to the colon char
 		char ch;
+		wsskip();
 		for (short st = 0; st >= 0;) {
 			ch = (mChIdx < mChLen)? mChars[mChIdx++]: next();
 			switch (st) {
 			case 0:		// read a single or double quote
 				switch (ch) {
-				case ' ':
-				case '\n':
-				case '\r':
-				case '\t':
-					break;
-
 				case '\'':
 					st = 2;	// read a single quoted string
 					break;
@@ -2712,7 +2796,6 @@ public final class Parser
 
 				default:
 					panic(FAULT);
-					break;
 				}
 				break;
 
@@ -2771,7 +2854,6 @@ public final class Parser
 
 				default:
 					bappend();
-					break;
 				}
 				break;
 
@@ -2783,17 +2865,18 @@ public final class Parser
 		//		i-mode (non CDATA normalization) and it has to be removed.
 		if ((flag == 'i') && (mBuff[mBuffIdx] == ' '))
 			mBuffIdx -= 1;
+		
+		if( DEBUG_OUT != null )
+			DEBUG_OUT.println( "bqstr '" + new String(mBuff, 1, mBuffIdx) + "'" );
 	}
 
 	/**
 	 * Reports characters and empties the parser's buffer.
 	 */
-	private void bflash()
-		throws SAXException
-	{
+	private void bflash() throws SAXException {
 		if (mBuffIdx >= 0) {
 			//		Textual data has been read
-			mHand.characters(mBuff, 0, (mBuffIdx + 1));
+			mHand.characters(mBuff, 0, mBuffIdx + 1);
 			mBuffIdx = -1;
 		}
 	}
@@ -2802,9 +2885,7 @@ public final class Parser
 	 * Appends a characters to parser's buffer starting with the last 
 	 * read character and until one of special characters.
 	 */
-	private void bappend()
-		throws SAXException, IOException
-	{
+	private void bappend() throws SAXException, IOException {
 		char ch;
 
 		back();
@@ -3006,7 +3087,7 @@ public final class Parser
 		mChLen   = 0;
 		mChars   = mInp.chars;
 		mInp.src = null;
-		if (mSt == 0)
+		if (mSt == stateStartOfTheDocument)
 			mIsSAlone	= false;	// default [#2.9]
 		if (is.getCharacterStream() != null) {
 			//		Ignore encoding in the xml text decl. 
@@ -3266,7 +3347,7 @@ public final class Parser
 						enc = eqstr('=').toUpperCase();
 						st  = 3;
 					} else if ("standalone".equals(str) == true) {
-						if ((st == 1) || (mSt != 0))	// [#4.3.1]
+						if ((st == 1) || (mSt != stateStartOfTheDocument))	// [#4.3.1]
 							panic(FAULT);
 						str = eqstr('=').toLowerCase();
 						//		Check the 'standalone' value and use it 
@@ -3303,8 +3384,8 @@ public final class Parser
 				case '?':
 					if (next() != '>')
 						panic(FAULT);
-					if (mSt == 0)		// the begining of the document
-						mSt	= 1;		// misc before DTD
+					if (mSt == stateStartOfTheDocument)		// the begining of the document
+						mSt	= stateMiscBeforeDTD;		// misc before DTD
 					st = -1;
 					break;
 
@@ -3426,13 +3507,10 @@ public final class Parser
 				if (mInp != mDoc) {
 					pop();	// restore the previous input
 					return next();
-				} else {
-					mChars[0] = EOS;
-					mChLen    = 1;
 				}
-			}
-			else
-				mChLen = Num;
+				mChars[0] = EOS;
+				mChLen    = 1;
+			} else mChLen = Num;
 			mChIdx = 0;
 		}
 		return mChars[mChIdx++];
@@ -3461,61 +3539,181 @@ public final class Parser
 	{
 		mChars[mChIdx] = ch;
 	}
+}
+
+/**
+ * base class for any linked list
+ */
+
+class LinkedList {
+	protected LinkedList next = null;
+	
+	static public LinkedList invert( LinkedList l ){
+		LinkedList newHead = null, next;
+		while( l != null ){
+			next = l.next;
+			l.next = newHead;
+			newHead = l;
+			l = next;
+		}
+		return newHead;
+	}
+}
+
+/**
+ * Class for list of string names. 
+ */
+class NamesList extends LinkedList {
+	String name;
+	
+	NamesList( String name, NamesList next ){
+		this.name = name;
+		this.next = next;
+	}
+}
+
+/**
+ * This class represents namespace.  
+ */
+
+class Namespace extends LinkedList {
+	String id = null, URI = null;
+	
+	final public Namespace init(String id, String URI){
+		this.id = id;
+		this.URI = URI;
+		return this;
+	}
 
 	/**
-	 * Finds a pair in the pair chain by a qualified name.
-	 *
-	 * @param chain The first element of the chain of pairs.
-	 * @param qname The qualified name.
-	 * @return A pair with the specified qualified name or null.
+	 * stack for namespaces 
 	 */
-	private Pair find(Pair chain, char[] qname)
-	{
-		for (Pair pair = chain; pair != null; pair = pair.next) {
-			if (pair.eqname(qname) == true)
-				return pair;
+	static class Stack {
+		private Vector/*<Namespace>*/ stack = new Vector();
+		
+		public void clean() {
+			while( stack.size() > 0 ) pop().free();
+
+			// Default namespace
+			pushUnique(0, "", "");
+			// XML namespace
+			pushUnique(0, "xml", "http://www.w3.org/XML/1998/namespace");
+			// xmlns namespace
+			pushUnique(0, Parser.XMLNSSTR, "http://www.w3.org/2000/xmlns/");
 		}
+
+		public boolean pushUnique( int topElemsToCheckCount, String id, String URI ){
+			if( Parser.STRICT ) Parser.ASSERT( stack.size() >= topElemsToCheckCount );
+			for( int idx = stack.size(); topElemsToCheckCount-- > 0 ;){
+				if( ((Namespace)stack.elementAt( --idx )).id.equals(id) )
+					return false;
+			}
+			stack.addElement(Namespace.allocate().init( id, URI ));
+			return true;
+		}
+
+		public Namespace find(String id) {
+			if( Parser.DEBUG_OUT != null )
+				Parser.DEBUG_OUT.println( "Namespace.Stack.find '" + id + "'");
+			for( int idx = stack.size(); idx-- > 0 ;){
+				Namespace ns = (Namespace)stack.elementAt(idx);
+				if( ns.id.length() == id.length() && id.equals(ns.id) )
+					return ns;
+			}
+			return null;
+		}
+		
+		public Namespace pop() {
+			if( Parser.STRICT ) Parser.ASSERT( stack.size() > 0 );
+			Namespace ns = (Namespace)stack.elementAt(stack.size() - 1);
+			stack.removeElementAt(stack.size() - 1);
+			return ns;
+		}
+	}
+	
+	// allocate / free support
+	static public Namespace allocate(){
+		if(freeObjects != null){
+			Namespace obj = freeObjects;
+			freeObjects = (Namespace)freeObjects.next;
+			return obj;
+		}
+		return new Namespace();
+	}
+	
+	public void free(){
+		next = freeObjects;
+		freeObjects = this;
+	}
+	
+	private Namespace(){}	
+	static private Namespace freeObjects = null;
+}
+
+/**
+ * This class contains xml element data  
+ */
+class Element extends LinkedList {
+	int registeredNamespacesNumber;
+	Namespace namespace; // element namespace
+	char[] elementName; // as read by qname()
+	
+	public Element init( char[] qname ){
+		registeredNamespacesNumber = 0;
+		namespace = null;
+		elementName = qname;
+		return this;
+	}
+	
+	public String /*error message*/ resolveNamespace(Namespace.Stack nsStack) {
+		// mIsNSAware is true
+		namespace = nsStack.find( QName.prefix( elementName ) );
+		if( namespace == null )
+			return Parser.FAULT;
 		return null;
 	}
 
 	/**
-	 * Provedes an instance of a pair.
-	 *
-	 * @param next The reference to a next pair.
-	 * @return An instance of a pair.
+	 * stack for elements 
 	 */
-	private Pair pair(Pair next)
-	{
-		Pair pair;
-
-		if (mDltd != null) {
-			pair  = mDltd;
-			mDltd = pair.next;
-		} else {
-			pair  = new Pair();
+	static class Stack {
+		private Vector/*<Element>*/ stack = new Vector();
+		
+		public void clean() {
+			while( stack.size() > 0 ) pop().free();
 		}
-		pair.next = next;
-
-		return pair;
+		public int size() {
+			return stack.size();
+		}
+		public Element top(){
+			if( Parser.STRICT ) Parser.ASSERT( stack.size() > 0 );
+			return (Element)stack.elementAt(stack.size() - 1);
+		}
+		public void push( char[] qname ){
+			stack.addElement(Element.allocate().init( qname ));
+		}
+		public Element pop(){
+			Element element = top(); 
+			stack.removeElementAt(stack.size() - 1);
+			return element;
+		}
 	}
-
-	/**
-	 * Deletes an instance of a pair.
-	 *
-	 * @param pair The pair to delete.
-	 * @return A reference to the next pair in a chain.
-	 */
-	private Pair del(Pair pair)
-	{
-		Pair next = pair.next;
-
-		pair.name  = null;
-		pair.value = null;
-		pair.chars = null;
-		pair.list  = null;
-		pair.next  = mDltd;
-		mDltd      = pair;
-
-		return next;
+	
+	// allocate / free support
+	static public Element allocate(){
+		if(freeObjects != null){
+			Element obj = freeObjects;
+			freeObjects = (Element)freeObjects.next;
+			return obj;
+		}
+		return new Element();
 	}
+	
+	public void free(){
+		next = freeObjects;
+		freeObjects = this;
+	}
+	
+	private Element(){}	
+	static private Element freeObjects = null;
 }

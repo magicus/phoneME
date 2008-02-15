@@ -26,53 +26,97 @@
 
 package com.sun.ukit.jaxp;
 
-import org.xml.sax.Attributes;
-
 /**
  * SAX Attributes interface implementation.
  */
 
-/* package */ class Attrs
-	implements org.xml.sax.Attributes
+/* package */ abstract class Attrs implements org.xml.sax.Attributes
 {
+	private static final String CDATA = "CDATA";
 	/**
-	 * Attributes string array. Each individual attribute is reprecented by 
-	 * four strings: namespace URL(+0), qname(+1), local name(+2), value(+3),
-	 * type(+4). 
-	 * In order to find attribute by the attrubute index, the attribute 
-	 * index MUST be multiplied by 8. The result will point to the attribute 
-	 * namespace URL. 
+	 * Attributes string array. Each individual attribute is represented by 
+	 * several strings.
+	 * In order to find attribute by the attribute index, the attribute 
+	 * index MUST be multiplied by 'attrStringsNum'.
 	 */
-	/* package */ String[]	mItems;
+	protected String[]	mItems;
+	final static protected int qnameOff = 0, typeOff = 1, valueOff = 2;
+	final protected int attrStringsNum; 
 
 	/**
-	 * Number of attributes in the attributes string array.
+	 * Number of attributes in the object.
 	 */
-	private char			mLength;
+	protected char mCount;
 
 	/**
 	 * Constructor.
 	 */
-	/* package */ Attrs()
-	{
-		//		The default number of attributies capacity is 8.
-		mItems	= new String[(8 << 3)];
+	protected Attrs( int attrStringsNum ) {
+		this.attrStringsNum = attrStringsNum;
+		// The default number of attributes capacity is 8.
+		mItems = new String[ 8 * attrStringsNum ];
+		clean();
 	}
-
-	/**
-	 * Sets up the number of attributes and ensure the capacity of 
-	 * the attribute string array.
-	 *
-	 * @param length The number of attributes in the object.
-	 */
-	/* package */ void setLength(char length)
-	{
-		if (length > ((char)(mItems.length >> 3))) {
-			mItems	= new String[length << 3];
+	
+	public void clean(){
+		mCount = 0;
+	}
+	
+	public int add( String qname, String value ){
+		// assert( qname != null && value != null );
+		if( Parser.DEBUG_OUT != null ){
+			Parser.DEBUG_OUT.println( "Attrs.add( '" + value + "' )" );
 		}
-		mLength	= length;
+		if( (mCount + 1) * attrStringsNum > mItems.length ){
+			String[] items = new String[ mItems.length + 8 * attrStringsNum ];
+			System.arraycopy(mItems, 0, items, 0, mItems.length);
+			mItems = items;
+		}
+		mItems[ mCount * attrStringsNum + qnameOff ] = qname;
+		mItems[ mCount * attrStringsNum + valueOff ] = value;
+		
+		// set CDATA as a default type (will be rewritten later if known)
+		// (3.3.3) All attributes for which no declaration has been read SHOULD be 
+		// treated by a non-validating processor as if declared CDATA.
+		mItems[ mCount * attrStringsNum + typeOff ] = CDATA;
+		return mCount++;
 	}
 
+	public void setType(int idx, String type) {
+		// assert( type != null );
+		if( idx < 0 || idx >= mCount )
+			throw new ArrayIndexOutOfBoundsException();
+		if( Parser.DEBUG_OUT != null ){
+			Parser.DEBUG_OUT.println( "Attrs.setType( '" + mItems[ idx * attrStringsNum + qnameOff ] + "', '" + type + "' )" );
+		}
+		mItems[ idx * attrStringsNum + typeOff ] = type;
+		if( !(type.charAt(0) == 'C' && CDATA.equals(type)) ){
+			// add non-CDATA conversion (3.3.3)
+			String value = getValue(idx);
+			StringBuffer b = new StringBuffer( value.length() );
+			int nonSpaceCount = 0;
+			for( int i = 0; i < value.length(); i++){
+				if( value.charAt(i) != ' ' ){
+					nonSpaceCount++;
+				} else if( nonSpaceCount > 0 ){
+					// flush non-space chars with one trailing space
+					b.append(value.substring(i - nonSpaceCount, i + 1));
+					nonSpaceCount = 0;
+				}
+			}
+			if( nonSpaceCount > 0 )
+				b.append(value.substring(value.length() - nonSpaceCount, value.length()));
+			// delete the last space if there exist
+			if( b.length() > 0 && b.charAt(b.length() - 1) == ' ' )
+				b.setLength(b.length() - 1);
+			// set value
+			if( Parser.DEBUG_OUT != null ){
+				Parser.DEBUG_OUT.println( "\t'" + getValue(idx) + "' -> '" + b.toString() + "'" );
+			}
+			mItems[ idx * attrStringsNum + valueOff ] = b.toString();
+		}
+	}
+	
 	/**
 	 * Return the number of attributes in the list.
 	 *
@@ -86,57 +130,13 @@ import org.xml.sax.Attributes;
 	 * @see #getType(int)
 	 * @see #getValue(int)
 	 */
-	public int getLength()
-	{
-		return mLength;
+	public int getLength() {
+		return mCount;
 	}
 
-	/**
-	 * Look up an attribute's Namespace URI by index.
-	 *
-	 * @param index The attribute index (zero-based).
-	 * @return The Namespace URI, or the empty string if none
-	 *	is available, or null if the index is out of
-	 *	range.
-	 * @see #getLength
-	 */
-	public String getURI(int index)
-	{
-		return ((index >= 0) && (index < mLength))? 
-			(mItems[index << 3]): 
-			null;
-	}
-
-	/**
-	 * Look up an attribute's local name by index.
-	 *
-	 * @param index The attribute index (zero-based).
-	 * @return The local name, or the empty string if Namespace
-	 *	processing is not being performed, or null
-	 *	if the index is out of range.
-	 * @see #getLength
-	 */
-	public String getLocalName(int index)
-	{
-		return ((index >= 0) && (index < mLength))? 
-			(mItems[(index << 3) + 2]):
-			null;
-	}
-
-	/**
-	 * Look up an attribute's XML 1.0 qualified name by index.
-	 *
-	 * @param index The attribute index (zero-based).
-	 * @return The XML 1.0 qualified name, or the empty string
-	 *	if none is available, or null if the index
-	 *	is out of range.
-	 * @see #getLength
-	 */
-	public String getQName(int index)
-	{
-		if ((index < 0) || (index >= mLength))
-			return null;
-		return mItems[(index << 3) + 1];
+	final protected String get(int index, int stringOff) {
+		return (index >= 0 && index < mCount)? 
+					mItems[index * attrStringsNum + stringOff] : null;
 	}
 
 	/**
@@ -148,7 +148,7 @@ import org.xml.sax.Attributes;
 	 *
 	 * <p>If the parser has not read a declaration for the attribute,
 	 * or if the parser does not report attribute types, then it must
-	 * return the value "CDATA" as stated in the XML 1.0 Recommentation
+	 * return the value "CDATA" as stated in the XML 1.0 Recommendation
 	 * (clause 3.3.3, "Attribute-Value Normalization").</p>
 	 *
 	 * <p>For an enumerated attribute that is not a notation, the
@@ -161,9 +161,7 @@ import org.xml.sax.Attributes;
 	 */
 	public String getType(int index)
 	{
-		return ((index >= 0) && (index < (mItems.length >> 3)))? 
-			(mItems[(index << 3) + 4]): 
-			null;
+		return get(index, typeOff);
 	}
 
 	/**
@@ -181,31 +179,7 @@ import org.xml.sax.Attributes;
 	 */
 	public String getValue(int index)
 	{
-		return ((index >= 0) && (index < mLength))? 
-			(mItems[(index << 3) + 3]):
-			null;
-	}
-
-	/**
-	 * Look up the index of an attribute by Namespace name.
-	 *
-	 * @param uri The Namespace URI, or the empty string if
-	 *	the name has no Namespace URI.
-	 * @param localName The attribute's local name.
-	 * @return The index of the attribute, or -1 if it does not
-	 *	appear in the list.
-	 */
-	public int getIndex(String uri, String localName)
-	{
-		char	len	= mLength;
-		char	idx	= 0;
-		while (idx < len) {
-			if ((mItems[idx << 3]).equals(uri) &&
-				mItems[(idx << 3) + 2].equals(localName))
-				return idx;
-			idx++;
-		}
-		return -1;
+		return get(index, valueOff);
 	}
 
 	/**
@@ -217,16 +191,18 @@ import org.xml.sax.Attributes;
 	 */
 	public int getIndex(String qName)
 	{
-		char	len	= mLength;
-		char	idx	= 0;
-		while (idx < len) {
+		char len = mCount;
+		for( char idx = 0; idx < len; idx++) {
 			if (getQName(idx).equals(qName))
 				return idx;
-			idx++;
 		}
 		return -1;
 	}
 
+	public String getQName(int index) {
+		return get(index, qnameOff);
+	}
+	
 	/**
 	 * Look up an attribute's type by Namespace name.
 	 *
@@ -242,8 +218,7 @@ import org.xml.sax.Attributes;
 	 */
 	public String getType(String uri, String localName)
 	{
-		int	idx	= getIndex(uri, localName);
-		return (idx >= 0)? (mItems[(idx << 3) + 4]): null;
+		return get( getIndex(uri, localName), typeOff );
 	}
 
 	/**
@@ -259,8 +234,7 @@ import org.xml.sax.Attributes;
 	 */
 	public String getType(String qName)
 	{
-		int	idx	= getIndex(qName);
-		return (idx >= 0)? (mItems[(idx << 3) + 4]): null;
+		return get( getIndex(qName), typeOff );
 	}
 
 	/**
@@ -277,8 +251,7 @@ import org.xml.sax.Attributes;
 	 */
 	public String getValue(String uri, String localName)
 	{
-		int	idx	= getIndex(uri, localName);
-		return (idx >= 0)? (mItems[(idx << 3) + 3]): null;
+		return get( getIndex(uri, localName), valueOff);
 	}
 
 	/**
@@ -294,7 +267,133 @@ import org.xml.sax.Attributes;
 	 */
 	public String getValue(String qName)
 	{
-		int	idx	= getIndex(qName);
-		return (idx >= 0)? (mItems[(idx << 3) + 3]): null;
+		return get( getIndex(qName), valueOff);
+	}
+	
+	protected int compare( int j, int k ) {
+		return mItems[ j * attrStringsNum + qnameOff ].
+					compareTo(mItems[ k * attrStringsNum + qnameOff ]);
+	}
+
+	/**
+	 * Sorts attributes using URL and local name as a sort key 
+	 */
+	protected void sort() {
+		String tmp;
+		for( int i = 1; i < getLength(); i++){
+			int j = i;
+			while( j > 0 && compare( j, j - 1 ) < 0 ){
+				// change jth and (j-1)th elements
+				int idx = (j - 1) * attrStringsNum, count = attrStringsNum;
+				for(; count-- > 0; idx++){
+					tmp = mItems[ idx ];
+					mItems[ idx ] = mItems[ idx + attrStringsNum ];
+					mItems[ idx + attrStringsNum ] = tmp;
+				}
+			}
+		}
+	}
+
+	public boolean hasDuplications() {
+		sort();
+		for( int i = 1; i < getLength(); i++){
+			if( compare(i - 1, i) == 0 )
+				return true;
+		}
+		return false;
+	}
+
+	public void remove(int idx) {
+		if( idx < 0 || idx >= mCount )
+			throw new ArrayIndexOutOfBoundsException();
+		mCount--;
+		for( idx *= attrStringsNum; idx < mCount * attrStringsNum; idx++)
+			mItems[ idx ] = mItems[ idx + attrStringsNum ]; 
+	}
+	
+	//-----------------------------------------------------
+	
+	static class NSAware extends Attrs {
+		final static private int namespaceOff = valueOff + 1, nameOff = namespaceOff + 1; 
+		
+		protected NSAware() {
+			super(nameOff + 1);
+		}
+
+		public int getIndex(String uri, String localName) {
+			char len = mCount;
+			for( char idx = 0; idx < len; idx++) {
+				if (getURI(idx).equals(uri) && getLocalName(idx).equals(localName)){
+					return idx;
+				}
+			}
+			return -1;
+		}
+
+		public String getURI(int index) {
+			return get(index, namespaceOff);
+		}
+
+		public String getLocalName(int index) {
+			return get(index, nameOff);
+		}
+
+		String /*error message*/ resolveNamespace(int idx, Namespace.Stack nsStack) {
+			String qname = mItems[idx * attrStringsNum + qnameOff];
+			int cidx = qname.indexOf(':');
+			if( cidx != -1 ){
+				// attribute name has prefix
+				String prefix = qname.substring(0, cidx );
+				Namespace ns = nsStack.find(prefix);
+				if( ns == null )
+					return Parser.FAULT;
+				mItems[ idx * attrStringsNum + namespaceOff ] = ns.URI;
+				mItems[idx * attrStringsNum + nameOff] = qname.substring(cidx + 1);
+			} else {
+				// attribute has no namespace specification
+				mItems[ idx * attrStringsNum + namespaceOff ] = "";
+				mItems[idx * attrStringsNum + nameOff] = qname;
+			}
+			return null;
+		}
+		
+		protected int compare( int j, int k ) {
+			// local names can't be null
+			int rc = mItems[ j * attrStringsNum + nameOff ].
+						compareTo(mItems[ k * attrStringsNum + nameOff ]);
+			if( rc != 0 )
+				return rc;
+			String nsj = mItems[ j * attrStringsNum + namespaceOff ];
+			if( nsj == null ){
+				if( mItems[ k * attrStringsNum + namespaceOff ] == null )
+					return 0; // equals
+				return -1; 
+			}
+			String nsk = mItems[ k * attrStringsNum + namespaceOff ];
+			if( nsk == null )
+				return +1;
+			return nsj.compareTo( nsk );
+		}
+
+	}
+	
+	//-----------------------------------------------------
+	
+	static class NotNSAware extends Attrs {
+		protected NotNSAware() {
+			super(valueOff + 1);
+		}
+
+		public int getIndex(String uri, String localName) {
+			return -1;
+		}
+		
+		public String getURI(int index) {
+			return ( index < 0 || index >= mCount )? null : "";
+		}
+
+		public String getLocalName(int index) {
+			return ( index < 0 || index >= mCount )? null : "";
+		}
 	}
 }

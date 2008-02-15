@@ -26,9 +26,6 @@
 
 package javax.microedition.xml.rpc;
 
-import javax.xml.namespace.QName;
-import javax.xml.rpc.JAXRPCException;
-
 /**
  * The class <code>Type</code> is a type safe enumeration of allowable
  * types that are used to identify simple types defined in a Web Service's
