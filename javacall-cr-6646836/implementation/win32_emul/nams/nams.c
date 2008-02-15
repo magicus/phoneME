@@ -57,62 +57,113 @@ void javacall_ams_refresh_lcd()
     javacall_lcd_flush();
 }
 
-void javacall_ams_midlet_stateChanged(javacall_midlet_state state,
-                                      const javacall_app_id appID,
-                                      javacall_change_reason reason)
-{
-    int appIndex=0;
+/**
+ * Inform on change of the specific MIDlet's lifecycle status.
+ *
+ * Java will invoke this function whenever the lifecycle status of the running
+ * MIDlet is changed, for example when the running MIDlet has been paused,
+ * resumed, the MIDlet has shut down etc.
+ * 
+ * @param state new state of the running MIDlet. Can be either,
+ *        <tt>JAVACALL_MIDLET_STATE_ACTIVE</tt>
+ *        <tt>JAVACALL_MIDLET_STATE_PAUSED</tt>
+ *        <tt>JAVACALL_MIDLET_STATE_DESTROYED</tt>
+ *        <tt>JAVACALL_MIDLET_STATE_ERROR</tt>
+ * @param appID The ID of the state-changed suite
+ * @param reason The reason why the state change has happened
+ */
+void javacall_ams_midlet_state_changed(javacall_midlet_state state,
+                                       const javacall_app_id appID,
+                                       javacall_change_reason reason) {
+    int appIndex = 0;
 
-    switch (state)
-    {
-    case JAVACALL_MIDLET_STATE_FOREGROUND:
-        javautil_debug_print (JAVACALL_LOG_INFORMATION, "nams", "[NAMS] Midlet state change to foreground\n");
-        break;
-    case JAVACALL_MIDLET_STATE_PAUSED:
-        if (nams_if_midlet_exist(appID) != JAVACALL_OK) // New started midlet
-        {
-            if (nams_add_midlet(appID) != JAVACALL_OK)
-            {
-	         javautil_debug_print (JAVACALL_LOG_ERROR, "nams", "[NAMS] Add midlet failed!\n");
+    switch (state) {
+        case JAVACALL_MIDLET_STATE_PAUSED:
+            if (nams_if_midlet_exist(appID) != JAVACALL_OK) {
+                /* New started midlet */
+                if (nams_add_midlet(appID) != JAVACALL_OK) {
+                    javacall_print("[NAMS] Add midlet failed!\n");
+                }
+            } else {
+                javacall_print("[NAMS] Midlet state change to paused\n");
             }
-        }
-        else
-        {
-            javautil_debug_print (JAVACALL_LOG_INFORMATION, "nams", "[NAMS] Midlet state change to paused\n");
-        }
-        break;
-    case JAVACALL_MIDLET_STATE_BACKGROUND:
-        javautil_debug_print (JAVACALL_LOG_INFORMATION, "nams", "[NAMS] Midlet state change to background\n");
-        break;
-    case JAVACALL_MIDLET_STATE_DESTROYED:
-        if (nams_remove_midlet(appID) != JAVACALL_OK)
-        {
-            javautil_debug_print (JAVACALL_LOG_ERROR, "nams", "[NAMS] Midlet can't be removed!\n");
-        }
-        return;
-    case JAVACALL_MIDLET_STATE_ERROR:
-        javautil_debug_print (JAVACALL_LOG_ERROR, "nams", "[NAMS] Midlet state error!\n");
-        break;
-    default:
-        break;
-    }
-    if (nams_set_midlet_state(state, appID, reason) != JAVACALL_OK)
-    {
-        javautil_debug_print (JAVACALL_LOG_ERROR, "nams", "[NAMS] Specified midlet's state can't be changed!\n");
-    }
-    if (nams_find_midlet_by_state(JAVACALL_MIDLET_STATE_FOREGROUND, &appIndex)
-        != JAVACALL_OK)
-    {
-        // There is no midlet at fore ground, refresh the screen to blank
-        javacall_ams_refresh_lcd();
+            break;
+        case JAVACALL_MIDLET_STATE_DESTROYED:
+            if (nams_remove_midlet(appID) != JAVACALL_OK) {
+                javacall_print("[NAMS] Midlet can't be removed!\n");
+            }
+            return;
+        case JAVACALL_MIDLET_STATE_ERROR:
+            javacall_print("[NAMS] Midlet state error!\n");
+            break;
+        default:
+            break;
     }
 
+    if (nams_set_midlet_state(state, appID, reason) != JAVACALL_OK) {
+        javacall_print("[NAMS] Specified midlet's state can't be changed!\n");
+    }
+
+    if (nams_find_midlet_by_state(JAVACALL_MIDLET_UI_STATE_FOREGROUND,
+            &appIndex) != JAVACALL_OK) {
+        /* There is no midlet at fore ground, refresh the screen to blank */
+        /* javacall_ams_refresh_lcd(); */
+    }
+}
+                                      
+/**
+ * Inform on change of the specific MIDlet's lifecycle status.
+ *
+ * Java will invoke this function whenever the running MIDlet has switched
+ * to foreground or background.
+ *
+ * @param state new state of the running MIDlet. Can be either
+ *        <tt>JAVACALL_MIDLET_STATE_UI_FOREGROUND</tt>,
+ *        <tt>JAVACALL_MIDLET_STATE_UI_BACKGROUND</tt>,
+ *        <tt>JAVACALL_MIDLET_STATE_UI_FOREGROUND_REQUEST</tt>,
+ *        <tt>JAVACALL_MIDLET_STATE_UI_BACKGROUND_REQUEST</tt>.
+ * @param appID The ID of the state-changed suite
+ * @param reason The reason why the state change has happened
+ */
+void javacall_ams_ui_state_changed(javacall_midlet_ui_state state,
+                                   const javacall_app_id appID,
+                                   javacall_change_reason reason) {
+    int appIndex = 0;
+
+    switch (state) {
+        case JAVACALL_MIDLET_UI_STATE_FOREGROUND:
+            javacall_print("[NAMS] Midlet state change to foreground\n");
+            break;
+        case JAVACALL_MIDLET_UI_STATE_BACKGROUND:
+            javacall_print("[NAMS] Midlet state change to background\n");
+            break;
+        case JAVACALL_MIDLET_UI_STATE_FOREGROUND_REQUEST:
+            javacall_print("[NAMS] Midlet is requesting foreground\n");
+            nams_set_midlet_request_foreground(appID);
+            break;
+        case JAVACALL_MIDLET_UI_STATE_BACKGROUND_REQUEST:
+            javacall_print("[NAMS] Midlet is requesting background\n");
+            break;
+        default:
+            break;
+    }
+
+    if (nams_set_midlet_state(state, appID, reason) != JAVACALL_OK) {
+        javacall_print("[NAMS] Specified midlet's state can't be changed!\n");
+    }
+
+    if (nams_find_midlet_by_state(JAVACALL_MIDLET_UI_STATE_FOREGROUND,
+            &appIndex) != JAVACALL_OK) {
+        /* There is no midlet at fore ground, refresh the screen to blank */
+        /* javacall_ams_refresh_lcd(); */
+    }
 }
 
-javacall_result javacall_ams_getSuiteProperty(const javacall_suite_id suiteID,
-                                              const javacall_utf16_string key,
-                                              javacall_utf16_string value,
-                                              int maxValue)
+javacall_result
+javacall_ams_get_suite_property(const javacall_suite_id suiteID,
+                                const javacall_utf16_string key,
+                                javacall_utf16_string value,
+                                int maxValue)
 {
 
     int   propsNum=0;

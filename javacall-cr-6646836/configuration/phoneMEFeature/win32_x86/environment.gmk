@@ -60,8 +60,8 @@ else
 SPECIFIC_DEFINITIONS += -DENABLE_ON_DEVICE_DEBUG=0
 endif
 
-ifeq ($(USE_NATIVE_AMS_JC),)
-USE_NATIVE_AMS_JC=false
+ifeq ($(USE_NATIVE_AMS),)
+USE_NATIVE_AMS=false
 endif
 
 ifneq ($(USE_STATIC_PROPERTIES),true)
@@ -70,7 +70,7 @@ endif
 
 
 # Switch native AMS function on/off
-ifeq ($(USE_NATIVE_AMS_JC), true)
+ifeq ($(USE_NATIVE_AMS), true)
 
 JSR_LIST += NATIVE_AMS
 NATIVE_AMS_JC_IMPL_PATH = $(JAVACALL_DIR)/implementation/win32
