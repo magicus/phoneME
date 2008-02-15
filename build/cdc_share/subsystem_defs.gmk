@@ -52,6 +52,8 @@ MODULE_JSR_120_COMMON_JAVA_FILES += \
     $(JSR_120_DIR)/src/cdc_share/classes/com/sun/midp/wma/PushConnectionsPool.java
 endif
 
+JPP_DEFS             += -DENABLE_CDC
+
 include $(JSR_120_DIR)/build/share/common_defs.gmk
 
 CVM_DEFINES          += $(JSR_120_EXTRA_CFLAGS) -DENABLE_CDC=1 -DENABLE_JUMP=1

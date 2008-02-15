@@ -74,15 +74,23 @@ SUBSYSTEM_PROTOCOL_MODULES += sms cbs
 # Jpp files that need pre-processing
 #
 $(JSR_120_GENERATED_DIR)/classes/javax/wireless/messaging/MessageConnection.java: \
-        $(JSR_120_DIR)/src/share/core/common/classes/javax/wireless/messaging/MessageConnection.jpp
+	$(JSR_120_DIR)/src/share/core/common/classes/javax/wireless/messaging/MessageConnection.jpp
 	@$(call runjpp,$^,$@)
 
 $(JSR_120_GENERATED_DIR)/classes/com/sun/wma/TCKTest.java: \
-    $(JSR_120_DIR)/src/share/tool/wmatool/classes/com/sun/wma/TCKTest.jpp
+	$(JSR_120_DIR)/src/share/tool/wmatool/classes/com/sun/wma/TCKTest.jpp
 	@$(call runjpp,$^,$@)
 
 $(JSR_120_GENERATED_DIR)/classes/com/sun/tck/wma/MessageConnector.java: \
-    $(JSR_120_DIR)/src/share/tool/wmatool/classes/com/sun/tck/wma/MessageConnector.jpp
+	$(JSR_120_DIR)/src/share/tool/wmatool/classes/com/sun/tck/wma/MessageConnector.jpp
+	@$(call runjpp,$^,$@)
+
+$(JSR_120_GENERATED_DIR)/classes/com/sun/midp/io/j2me/sms/Protocol.java: \
+	$(JSR_120_DIR)/src/share/protocol/sms/classes/com/sun/midp/io/j2me/sms/Protocol.jpp
+	@$(call runjpp,$^,$@)
+
+$(JSR_120_GENERATED_DIR)/classes/com/sun/midp/io/j2me/cbs/Protocol.java: \
+	$(JSR_120_DIR)/src/share/protocol/cbs/classes/com/sun/midp/io/j2me/cbs/Protocol.jpp
 	@$(call runjpp,$^,$@)
 
 # Java files for the ( jsr_120 ) module
@@ -127,13 +135,13 @@ endif
 MODULE_JSR_120_SMS_JAVA_FILES = \
     $(JSR_120_DIR)/src/share/protocol/share/com/sun/midp/io/j2me/ProtocolBase.java \
     $(JSR_120_DIR)/src/share/protocol/sms/classes/com/sun/midp/io/j2me/sms/BinaryObject.java \
-    $(JSR_120_DIR)/src/share/protocol/sms/classes/com/sun/midp/io/j2me/sms/Protocol.java \
+    $(JSR_120_GENERATED_DIR)/classes/com/sun/midp/io/j2me/sms/Protocol.java \
     $(JSR_120_DIR)/src/share/protocol/sms/classes/com/sun/midp/io/j2me/sms/MessageObject.java \
     $(JSR_120_DIR)/src/share/protocol/sms/classes/com/sun/midp/io/j2me/sms/TextEncoder.java \
     $(JSR_120_DIR)/src/share/protocol/sms/classes/com/sun/midp/io/j2me/sms/TextObject.java
 
 MODULE_JSR_120_CBS_JAVA_FILES = \
-    $(JSR_120_DIR)/src/share/protocol/cbs/classes/com/sun/midp/io/j2me/cbs/Protocol.java \
+    $(JSR_120_GENERATED_DIR)/classes/com/sun/midp/io/j2me/cbs/Protocol.java \
     $(JSR_120_DIR)/src/share/protocol/cbs/classes/com/sun/midp/io/j2me/cbs/BinaryObject.java \
     $(JSR_120_DIR)/src/share/protocol/cbs/classes/com/sun/midp/io/j2me/cbs/TextObject.java
 
