@@ -49,6 +49,7 @@ public class Permission {
         this.midpPerm = midpPerm;
     }
 
+    /** Creates a new instance of Permissions */
     public Permission(String name, String resource, String extraValue) {
         this(name, resource);
         this.extraValue = extraValue;
