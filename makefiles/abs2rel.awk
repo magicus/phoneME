@@ -30,7 +30,7 @@
 
 {
     if ($1 != "") {
-        /* relative already */
+        # relative already
         print $0
         next
     }
