@@ -46,6 +46,7 @@ information or have any questions.
         <xsl:apply-templates select="." mode="LCDUI-set-command-listener"/>
         <xsl:text>        return d;&#10;</xsl:text>
         <xsl:text>    }&#10;</xsl:text>
+        <xsl:apply-templates select="." mode="Screen-progress-define"/>
     </xsl:template>
 
 
@@ -76,7 +77,7 @@ information or have any questions.
             <xsl:text>        d.setCommandListener(cl);&#10;&#10;</xsl:text>
         </xsl:if>
     </xsl:template>
-
+    
     <xsl:template match="*" mode="LCDUI-set-item-command-listener">
         <xsl:text>        </xsl:text>
         <xsl:apply-templates select="." mode="LCDUI-varname"/>
@@ -129,6 +130,22 @@ information or have any questions.
     </xsl:template>
     <xsl:template match="*[@align='right']" mode="LCDUI-layout">
         <xsl:text>Item.LAYOUT_NEWLINE_BEFORE | Item.LAYOUT_RIGHT</xsl:text>
+    </xsl:template>
+
+
+    <xsl:template match="screen[not(progress)]" mode="Screen-progress-define" />
+    <xsl:template match="screen[progress]" mode="Screen-progress-define">
+        <xsl:text>&#10;</xsl:text>
+        <xsl:text>    public void updateProgress(Object progressId, int value, int max) {&#10;</xsl:text>
+        <xsl:apply-templates select="progress" mode="LCDUI-progress-match-id" />
+        <xsl:text>        throw new RuntimeException(progressId + " not found");&#10;</xsl:text>
+        <xsl:text>    }&#10;</xsl:text>
+    </xsl:template>
+
+    <xsl:template match="screen[progress]" mode="Screen-define-extra-members">
+        <xsl:apply-imports/>
+        <xsl:apply-templates select="progress" mode="LCDUI-define-progress"/>
+        <xsl:text>&#10;</xsl:text>
     </xsl:template>
 
 
@@ -203,13 +220,30 @@ information or have any questions.
         Top level "progress" element
     -->
     <xsl:template match="screen/progress" mode="LCDUI-create">
-        <xsl:text>        final Gauge </xsl:text>
+        <xsl:apply-templates select="label/text" mode="LCDUI-append"/>
+        <xsl:text>        </xsl:text>
         <xsl:apply-templates select="." mode="LCDUI-varname"/>
-        <xsl:text> = new Gauge("</xsl:text>
-        <xsl:apply-templates select="." mode="Screen-printf"/>
-        <xsl:text>", false, </xsl:text>
-        <xsl:value-of select="@max"/>
-        <xsl:text>, 0);&#10;</xsl:text>
+        <xsl:text> = new Gauge("", false, 100, 0);&#10;</xsl:text>
+    </xsl:template>
+
+    <xsl:template match="screen/progress" mode="LCDUI-progress-match-id">
+        <xsl:variable name="varname">
+            <xsl:apply-templates select="." mode="LCDUI-varname"/>
+        </xsl:variable>
+        <xsl:variable name="id">
+            <xsl:apply-templates select="." mode="Screen-progress-id"/>
+        </xsl:variable>
+        <xsl:value-of select="concat('        if (progressId.equals(',$id,')) {&#10;')"/>
+        <xsl:value-of select="concat('            ',$varname,'.setValue(value);&#10;')"/>
+        <xsl:value-of select="concat('            ',$varname,'.setMaxValue(max);&#10;')"/>
+        <xsl:text>            return;&#10;</xsl:text>
+        <xsl:text>        }&#10;</xsl:text>
+    </xsl:template>
+
+    <xsl:template match="screen/progress" mode="LCDUI-define-progress">
+        <xsl:text>    private Gauge </xsl:text>
+        <xsl:apply-templates select="." mode="LCDUI-varname"/>
+        <xsl:text>;&#10;</xsl:text>
     </xsl:template>
 
 
@@ -248,7 +282,7 @@ information or have any questions.
     </xsl:template>
 
 
-    <xsl:template match="screen/text|screen/filler|screen/options|screen/progress|screen/options/label|screen/command" mode="LCDUI-varname">
+    <xsl:template match="screen/text|screen/filler|screen/options|screen/progress|screen/options/label|screen/progress/label|screen/command" mode="LCDUI-varname">
         <xsl:value-of select="generate-id()"/>
     </xsl:template>
 
