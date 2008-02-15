@@ -764,7 +764,7 @@ KNIDECL(com_sun_mmedia_DirectPlayer_nGetContentType)
                     for( caps = cfg->mediaCaps; 
                          caps != NULL && caps->mediaFormat != NULL;
                          caps++ ) {
-                        if( javacall_media_fmt_equal( caps->mediaFormat, mFormat ) ) {
+                        if( 0 == strcmp( caps->mediaFormat, mFormat ) ) {
                             const char* ct = caps->contentTypes;
                             KNI_NewStringUTF(ct, stringObj);
                         }
