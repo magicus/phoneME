@@ -62,6 +62,22 @@ javacall_result javacall_media_get_configuration(
 }
 
 /**
+* Compares two Media formats.
+* 
+* @param fmt1                      first format
+* @param fmt2                      second format
+* @return if given formats are equal?
+*
+*/
+javacall_bool 
+    javacall_media_fmt_equal(
+        javacall_media_format_type fmt1, 
+        javacall_media_format_type fmt2)
+{
+    return JAVACALL_FALSE;
+}
+
+/**
  * Java MMAPI call this function to create native media handler.
  * This function is called at the first time to initialize native library.
  * You can do your own initialization job from this function.
