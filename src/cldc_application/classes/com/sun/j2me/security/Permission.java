@@ -33,6 +33,8 @@ public class Permission {
     
     private String resource;
 
+    private String extraValue = null;
+
     private int midpPerm;
 
     /** Creates a new instance of Permissions */
@@ -46,6 +48,11 @@ public class Permission {
         this(name, resource);
         this.midpPerm = midpPerm;
     }
+
+    public Permission(String name, String resource, String extraValue) {
+        this(name, resource);
+        this.extraValue = extraValue;
+    }
     
     /** Returns name of permission */
     public String getName() {
@@ -55,6 +62,11 @@ public class Permission {
     /** Returns resource of permission */
     public String getResource() {
         return resource;
+    }
+
+    /** Returns extra value */
+    public String getExtraValue() {
+        return extraValue;
     }
 
     /** Returns corresponding MIDP permission */

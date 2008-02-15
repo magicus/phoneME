@@ -83,7 +83,7 @@ public class AppPackage {
      *  thread while asking user
      */
     public void checkForPermission(Permission p) throws InterruptedException {
-        AccessController.checkPermission(p.getName(), p.getResource());
+        AccessController.checkPermission(p.getName(), p.getResource(), p.getExtraValue());
     }    
     
     /**
