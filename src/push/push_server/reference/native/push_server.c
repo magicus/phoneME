@@ -204,7 +204,7 @@ static PushEntry *pushlist = NULL;
 static AlarmEntry *alarmlist = NULL;
 
 static int pushlength = 0;
-static void pushProcessPort(char *buffer, PushEntry* pe);
+static int pushProcessPort(char *buffer, PushEntry* pe);
 static int alarmopen();
 static void alarmsave();
 static void pushListFree();
@@ -648,13 +648,16 @@ int midpAddPushEntry(SuiteIdType suiteId,
  * On succesful registration, write a new copy of the file to disk.
  *
  * @param str A push entry string.
- * @return <tt>0</tt> if successful, <tt>-1</tt> if the entry already
- *         exists, <tt>-2</tt> if out of memory
+ * @return <tt>0</tt> if successful, 
+ *         <tt>-1</tt> if the entry already exists, 
+ *         <tt>-2</tt> if out of memory
+ *         <tt>-3</tt> if illegal arguments or unknown connection type
  */
 int pushadd(char *str) {
     PushEntry *pe;
     int comma;
     char *cp;
+    int ret;
 
     /* Count the characters up to the first comma. */
     for (comma = 0, cp = str; *cp; comma++, cp++) {
@@ -708,7 +711,7 @@ int pushadd(char *str) {
     bt_push_register_url(str, NULL, 0);
 #endif
     */
-    pushProcessPort(str, pe);
+    ret = pushProcessPort(str, pe);
     if (pe->fd == -1) {
 #if ENABLE_JSR_82
         bt_push_unregister_url(str);
@@ -718,7 +721,7 @@ int pushadd(char *str) {
         midpFree(pe->storagename);
         midpFree(pe->filter);
         midpFree(pe);
-        return -1;
+        return ret;
     }
 
     pe->next = pushlist;
@@ -1918,6 +1921,33 @@ static int parsePushList(int pushfd, int startListening) {
 }
 
 /**
+ * Parses the URL port.
+ *
+ * buffer A full-text push entry string from the registry ("mms://12345:11")
+ * @return port or <tt>-1</tt> on parse error
+ */
+static int getUrlPort(char* buffer) {
+
+    char* p = buffer;
+    int colon_found = 0;
+    for (; *p != '\0' ; p++) {
+        if (*p == ':') {
+            colon_found++ ;
+        }
+
+        if (colon_found == 2) {
+            p++ ;
+            /*
+            * Parse the port number from the
+            * connection string
+            */
+            return atoi(p);
+        }
+    }
+    return -1;
+}
+
+/**
  * Parses the port number from the connection field
  * and uses it for the connection appropriate open
  * call. The handle will be included in
@@ -1933,23 +1963,22 @@ static int parsePushList(int pushfd, int startListening) {
  * <li>isWMAEntry set to KNI_TRUE for a WMA connection, KNI_FALSE otherwise</li>
  * <li>isSipEntry set to KNI_TRUE for a SIP/SIPS connection,
                   KNI_FALSE otherwise</li>
+ *
+ * @return <tt>0</tt> if successful, 
+ *         <tt>-1</tt> if the entry already exists, 
+ *         <tt>-2</tt> if out of memory
+ *         <tt>-3</tt> if illegal arguments or unknown connection type
  * </ul>
  */
-static void pushProcessPort(char *buffer, PushEntry* pe) {
+static int pushProcessPort(char *buffer, PushEntry* pe) {
     char *p;
-    int colon_found;
     void *handle;
     void *context = NULL;
     char *exception = NULL;
     int status;
-    /*
-     * Flag that controls port number calculation.
-     * Port number is not meaningful for protocols like MMS.
-     */
-    jboolean calcPort = KNI_TRUE;
 
     if (buffer == NULL || pe == NULL) {
-        return;
+        return -3;
     }
 
     pe->isWMAEntry = KNI_FALSE;
@@ -1962,7 +1991,6 @@ static void pushProcessPort(char *buffer, PushEntry* pe) {
      * allowed.
      */
     p = buffer;
-    colon_found = 0;
     pe->port = -1;
 
 #if ENABLE_JSR_82
@@ -1972,10 +2000,10 @@ static void pushProcessPort(char *buffer, PushEntry* pe) {
             bt_handle_t handle = bt_push_start_server(&port);
             if (handle == BT_INVALID_HANDLE) {
                 pe->fd = -1;
-                return;
+                return -1;
             }
             pe->fd = (int)handle;
-            return;
+            return 0;
         }
     }
 #endif
@@ -1985,7 +2013,6 @@ static void pushProcessPort(char *buffer, PushEntry* pe) {
     if ((strncmp(buffer, "sips:", 5) == 0) ||
             (strncmp(buffer, "sip:", 4) == 0)) {
         pe->isSIPEntry = KNI_TRUE;
-        calcPort = KNI_FALSE;
 
         if (strncmp(buffer, "sips:", 5) == 0) {
             p += 5;
@@ -2007,118 +2034,112 @@ static void pushProcessPort(char *buffer, PushEntry* pe) {
             pe->port = atoi(p);
         }
 
-        /* fall down in 'for' bellow */
         p = buffer;
-        colon_found = 2;
     }
-
 #endif
-
-    for (; *p != '\0' ; p++) {
-        if (*p == ':') {
-            colon_found++ ;
-        }
-
-        if (colon_found == 2) {
-            p++ ;
-#if ENABLE_JSR_205
-            if (isMMSProtocol(buffer)) {
-                calcPort = KNI_FALSE;
-                pe->port = -1;
-                pe->appID = getMMSAppID(buffer);
-            }
-#endif
-            /*
-            * Parse the port number from the
-            * connection string
-            */
-            if (calcPort) {
-                pe->port = atoi(p);
-            }
             
-            if (pushIsDatagramConnection(buffer)) {
-                /**
-                 * Verify that the resource is available well within limit as per
-                 * the policy in ResourceLimiter
-                 */
-                if (midpCheckResourceLimit(RSC_TYPE_UDP, 1) == 0) {
-                    REPORT_INFO(LC_PROTOCOL, "(Push)Resource limit exceeded for"
-                                             " datagrams");
-                    pe->fd = -1;
-                    exception = (char *)midpIOException;
-                } else {
-                    status = pcsl_datagram_open_start(pe->port,
-                                                      &handle, &context);
-
-                    if (status == PCSL_NET_SUCCESS) {
-                        pe->fd = (int) handle;
-                        /* Update the resource count  */
-                        if (midpIncResourceCount(RSC_TYPE_UDP, 1) == 0) {
-                            REPORT_INFO(LC_PROTOCOL, "(Push)Datagrams: Resource"
-                                                     " limit update error");
-                        }
-                    } else {
-                        pe->fd = -1;
-                        exception = (char *)midpIOException;
-                    }
-                }
-#if ENABLE_SERVER_SOCKET
-            } else if (pushIsSocketConnection(buffer)) {
-                /**
-                 * Verify that the resource is available well within limit as per
-                 * the policy in ResourceLimiter
-                 */
-                if (midpCheckResourceLimit(RSC_TYPE_TCP_SER, 1) == 0) {
-                    REPORT_INFO(LC_PROTOCOL, "(Push)Resource limit exceeded"
-                                             " for TCP server sockets");
-                    pe->fd = -1;
-                    exception = (char *)midpIOException;
-                } else {
-                    /* Open the server socket */
-                    status = pcsl_serversocket_open(pe->port, &handle);
-
-                    if (status == PCSL_NET_SUCCESS) {
-                        pe->fd = (int) handle;
-                        
-                        /* Update the resource count  */
-                        if (midpIncResourceCount(RSC_TYPE_TCP_SER, 1) == 0) {
-                            REPORT_INFO(LC_PROTOCOL, "(Push)TCP Server: "
-                                        "Resource limit update error");
-                        }
-                    } else {
-                        /**
-                         * pcsl_serversocket_open can never return WOULDBLOCK
-                         * thus anything other that PCSL_NET_SUCCESS is an
-                         * indication of an error
-                         */
-                        midp_snprintf(gKNIBuffer, KNI_BUFFER_SIZE,
-                            "IOError in push::serversocket::open = %d\n",
-                            pcsl_network_error(handle));
-                        REPORT_INFO1(LC_PROTOCOL, "%s\n", gKNIBuffer);
-                        exception = (char *)midpIOException;
-                    }
-                }
-#endif
-            } else {
-#if (ENABLE_JSR_205 || ENABLE_JSR_120)
-                /* check for sms,cbs or mms connection */
-                wmaPushProcessPort(buffer, &pe->fd, pe->port,
-                    suiteIdFromChars(pushstorage(buffer, 3)), pe->appID);
-                if (pe->fd != -1) {
-                    pe->isWMAEntry = KNI_TRUE;
-                }
-#else
-                midp_snprintf(gKNIBuffer, KNI_BUFFER_SIZE,
-                              "Error in push::serversocket::open: "
-                              "unknown connection type.\n");
-                REPORT_WARN1(LC_PROTOCOL, "%s\n", gKNIBuffer);
-#endif
-            }
-            return;
+    if (pushIsDatagramConnection(buffer)) {
+        if (pe->port == -1) {
+            pe->port = getUrlPort(buffer);
         }
+        /**
+         * Verify that the resource is available well within limit as per
+         * the policy in ResourceLimiter
+         */
+        if (midpCheckResourceLimit(RSC_TYPE_UDP, 1) == 0) {
+            REPORT_INFO(LC_PROTOCOL, "(Push)Resource limit exceeded for"
+                                     " datagrams");
+            pe->fd = -1;
+            exception = (char *)midpIOException;
+        } else {
+            status = pcsl_datagram_open_start(pe->port,
+                                              &handle, &context);
+
+            if (status == PCSL_NET_SUCCESS) {
+                pe->fd = (int) handle;
+                /* Update the resource count  */
+                if (midpIncResourceCount(RSC_TYPE_UDP, 1) == 0) {
+                    REPORT_INFO(LC_PROTOCOL, "(Push)Datagrams: Resource"
+                                             " limit update error");
+                }
+            } else {
+                pe->fd = -1;
+                exception = (char *)midpIOException;
+            }
+        }
+#if ENABLE_SERVER_SOCKET
+    } else if (pushIsSocketConnection(buffer)) {
+        if (pe->port == -1) {
+            pe->port = getUrlPort(buffer);
+        }
+        /**
+         * Verify that the resource is available well within limit as per
+         * the policy in ResourceLimiter
+         */
+        if (midpCheckResourceLimit(RSC_TYPE_TCP_SER, 1) == 0) {
+            REPORT_INFO(LC_PROTOCOL, "(Push)Resource limit exceeded"
+                                     " for TCP server sockets");
+            pe->fd = -1;
+            exception = (char *)midpIOException;
+        } else {
+            /* Open the server socket */
+            status = pcsl_serversocket_open(pe->port, &handle);
+
+            if (status == PCSL_NET_SUCCESS) {
+                pe->fd = (int) handle;
+                
+                /* Update the resource count  */
+                if (midpIncResourceCount(RSC_TYPE_TCP_SER, 1) == 0) {
+                    REPORT_INFO(LC_PROTOCOL, "(Push)TCP Server: "
+                                "Resource limit update error");
+                }
+            } else {
+                /**
+                 * pcsl_serversocket_open can never return WOULDBLOCK
+                 * thus anything other that PCSL_NET_SUCCESS is an
+                 * indication of an error
+                 */
+                midp_snprintf(gKNIBuffer, KNI_BUFFER_SIZE,
+                    "IOError in push::serversocket::open = %d\n",
+                    pcsl_network_error(handle));
+                REPORT_INFO1(LC_PROTOCOL, "%s\n", gKNIBuffer);
+                exception = (char *)midpIOException;
+            }
+        }
+#endif
+#if (ENABLE_JSR_205 || ENABLE_JSR_120)
+    } else if ((strncmp(buffer, "sms://:", 7) == 0) ||
+               (strncmp(buffer, "cbs://:", 7) == 0)) {
+
+        pe->port = getUrlPort(buffer);
+
+        /* check for sms or cbs connection */
+        wmaPushProcessPort(buffer, &pe->fd, pe->port,
+            suiteIdFromChars(pushstorage(buffer, 3)), pe->appID);
+        if (pe->fd != -1) {
+            pe->isWMAEntry = KNI_TRUE;
+        }
+#endif
+#if (ENABLE_JSR_205)
+    } else if (strncmp(buffer, "mms://:", 7) == 0) {
+
+        pe->appID = getMMSAppID(buffer);
+        /* check for mms connection */
+        wmaPushProcessPort(buffer, &pe->fd, pe->port,
+            suiteIdFromChars(pushstorage(buffer, 3)), pe->appID);
+        if (pe->fd != -1) {
+            pe->isWMAEntry = KNI_TRUE;
+        }
+#endif
+    } else {
+        midp_snprintf(gKNIBuffer, KNI_BUFFER_SIZE,
+                      "Error in push::serversocket::open: "
+                      "unknown connection type.\n");
+        REPORT_WARN1(LC_PROTOCOL, "%s\n", gKNIBuffer);
+        return -3;
     }
     
-    return;
+    return -3;
 }
 
 /**
