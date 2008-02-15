@@ -36,6 +36,8 @@ static javacall_media_caps g_caps[] =
     { JAVACALL_MEDIA_FORMAT_SP_MIDI, "audio/sp-midi",        JAVACALL_MEDIA_MEMORY_PROTOCOL, 0 },
     { JAVACALL_MEDIA_FORMAT_TONE,    "audio/x-tone-seq",     JAVACALL_MEDIA_MEMORY_PROTOCOL, 0 },
     { JAVACALL_MEDIA_FORMAT_AMR,     "audio/amr",            JAVACALL_MEDIA_MEMORY_PROTOCOL, 0 },
+    { JAVACALL_MEDIA_FORMAT_DEVICE_TONE, "audio/tone",       JAVACALL_MEDIA_MEMORY_PROTOCOL, 0 },
+    { JAVACALL_MEDIA_FORMAT_DEVICE_MIDI, "audio/midi",       JAVACALL_MEDIA_MEMORY_PROTOCOL, 0 },
     { NULL,                          NULL,                   0,                              0 }
 };
 
