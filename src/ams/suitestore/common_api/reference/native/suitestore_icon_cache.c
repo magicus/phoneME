@@ -1,24 +1,24 @@
 /*
  *
  *
- * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
- * 
+ *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
  * 2 only, as published by the Free Software Foundation.
- * 
+ *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
  * included at /legal/license.txt).
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA
- * 
+ *
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
  * information or have any questions.
@@ -49,7 +49,7 @@
 /**
  * A number of additional free entries that will be allocated in
  * g_pIconCache array to avoid memory reallocations when a new
- * icon is added into the cache.  
+ * icon is added into the cache.
  */
 #define RESERVED_CACHE_ENTRIES_NUM 10
 
@@ -220,7 +220,7 @@ MIDPError midp_load_suites_icons() {
             status = IO_ERROR;
             break;
         }
-        
+
         pData->pInfo[0].imageDataLength = pNextCacheEntry->imageDataLength;
 
         memcpy(pData->pInfo[0].pImageData, pIconBytes,
@@ -315,7 +315,7 @@ static MIDPError store_suites_icons(const IconCache* pIconCache) {
         }
 
         dataLen += pData->pInfo[0].imageDataLength;
-        
+
         strLen = pcsl_string_utf16_length(&pData->pInfo[0].imageName);
         strLen <<= 1;
         if (strLen > 0) {
@@ -365,7 +365,7 @@ static MIDPError store_suites_icons(const IconCache* pIconCache) {
             status = OUT_OF_MEMORY;
             break;
         }
-        
+
         /* convert UTF16 length to size in bytes */
         pNextCacheEntry->nameLength <<= 1;
         if (pNextCacheEntry->nameLength <= 0) {
@@ -450,6 +450,7 @@ MIDPError
 midp_get_suite_icon(SuiteIdType suiteId, const pcsl_string* pIconName,
                     unsigned char** ppImageData, int* pImageDataLen) {
     IconCache* pIconCache;
+    int i;
 
     if (pIconName == NULL || ppImageData == NULL || pImageDataLen == NULL ||
             suiteId == UNUSED_SUITE_ID) {
@@ -461,8 +462,18 @@ midp_get_suite_icon(SuiteIdType suiteId, const pcsl_string* pIconName,
         return NOT_FOUND;
     }
 
-    *pImageDataLen = pIconCache->pInfo[0].imageDataLength;
-    *ppImageData   = pIconCache->pInfo[0].pImageData;
+    /* iterate through the icons cache */
+    for (i = 0; i < pIconCache->numberOfCachedImages; i++) {
+        if (pcsl_string_equals(pIconName, &(pIconCache->pInfo[i].imageName))) {
+            *pImageDataLen = pIconCache->pInfo[i].imageDataLength;
+            *ppImageData = pIconCache->pInfo[i].pImageData;
+        }
+    }
+
+    /* icon not found */
+    if (i == pIconCache->numberOfCachedImages) {
+        return NOT_FOUND;
+    }
 
     return ALL_OK;
 }
@@ -553,7 +564,7 @@ midp_add_suite_icon(SuiteIdType suiteId, const pcsl_string* pIconName,
         pIconCache->pInfo[0].entryOffsetInFile = (unsigned long)-1;
         pIconCache->pInfo[0].imageDataLength = imageDataLen;
         pIconCache->pInfo[0].pImageData = pImageData;
-        
+
         status = store_suites_icons(pIconCache);
     } while (0);
 
