@@ -34,6 +34,8 @@ import javax.microedition.media.control.VideoControl;
 import javax.microedition.media.control.FramePositioningControl;
 import javax.microedition.media.control.RateControl;
 import javax.microedition.media.control.StopTimeControl;
+import com.sun.mmedia.protocol.BasicDS;
+import javax.microedition.media.protocol.DataSource;
 
 import com.sun.mmedia.Configuration;
 import com.sun.mmedia.VideoRenderer;
@@ -128,6 +130,21 @@ final public class GIFPlayer extends BasicPlayer implements Runnable {
     private byte[] imageData;
     private int imageDataLength;
     private int lzwCodeSize;
+    
+    /**
+     * Sets the media source
+     *
+     * @param  source              The new source value
+     * @exception  MediaException  Description of the Exception
+     */
+    public void setSource(DataSource source)
+        throws MediaException {
+        super.setSource(source);
+        
+        if (source.getContentType() == null) {
+            ((BasicDS)source).setContentType(Configuration.MIME_IMAGE_GIF);
+        }
+    }
 
     /**
      * Retrieves the specified control object for the
