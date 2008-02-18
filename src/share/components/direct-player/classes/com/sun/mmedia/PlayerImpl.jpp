@@ -116,6 +116,9 @@ public class PlayerImpl implements Player {
     protected static native int nBuffering(int handle, byte[] buffer, int size);
     // ask Native Player if it needs more data immediatelly
     protected static native boolean nNeedMoreDataImmediatelly(int hNative);    
+    // Provide whole media content size, if known
+    protected native void nSetWholeContentSize(int hNative, long contentSize);
+
 
     /** Unknown media format */
     static final String MEDIA_FORMAT_UNKNOWN = "UNKNOWN";
@@ -238,6 +241,10 @@ public class PlayerImpl implements Player {
                 if (mediaFormat.equals(MEDIA_FORMAT_UNKNOWN)) {
                     long contLength = stream.getContentLength();
                     boolean need_more = true;
+
+                    if (contLength > 0) {
+                        nSetWholeContentSize(hNative, contLength);
+                    }
                     /* first loop - allocate java buffer*/
                     int javaBufSize = nGetJavaBufferSize(hNative);
                     int packetSize  = nGetFirstPacketSize(hNative);

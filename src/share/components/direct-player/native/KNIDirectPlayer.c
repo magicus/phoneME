@@ -504,22 +504,6 @@ UnlockAudioMutex();
     KNI_ReturnVoid();
 }
 
-/*  private native void nSetWholeContentSize(int hNative, long contentSize) */
-KNIEXPORT KNI_RETURNTYPE_VOID
-KNIDECL(com_sun_mmedia_DirectPlayer_nSetWholeContentSize) {
-    jint handle = KNI_GetParameterAsInt(1);
-    KNIPlayerInfo* pKniInfo = (KNIPlayerInfo*)handle;
-    long contentSize = (long)KNI_GetParameterAsLong(2);
-
-    if (pKniInfo && pKniInfo->pNativeHandle) {
-LockAudioMutex();
-        javacall_media_set_whole_content_size(pKniInfo->pNativeHandle,
-                                                contentSize);
-UnlockAudioMutex();            
-    }
-    KNI_ReturnVoid();
-}
-
 /*  protected native boolean nIsFramePositioningControlSupported ( int handle ) ; */
 KNIEXPORT KNI_RETURNTYPE_BOOLEAN
 KNIDECL(com_sun_mmedia_DirectPlayer_nIsFramePositioningControlSupported) {

@@ -207,6 +207,22 @@ KNIDECL(com_sun_mmedia_PlayerImpl_nRealize) {
     KNI_ReturnVoid();
 }
 
+/*  private native void nSetWholeContentSize(int hNative, long contentSize) */
+KNIEXPORT KNI_RETURNTYPE_VOID
+KNIDECL(com_sun_mmedia_PlayerImpl_nSetWholeContentSize) {
+    jint handle = KNI_GetParameterAsInt(1);
+    KNIPlayerInfo* pKniInfo = (KNIPlayerInfo*)handle;
+    long contentSize = (long)KNI_GetParameterAsLong(2);
+
+    if (pKniInfo && pKniInfo->pNativeHandle) {
+LockAudioMutex();
+        javacall_media_set_whole_content_size(pKniInfo->pNativeHandle,
+                                                contentSize);
+UnlockAudioMutex();            
+    }
+    KNI_ReturnVoid();
+}
+
 /*  protected static native int nGetJavaBufferSize(int handle); */
 KNIEXPORT KNI_RETURNTYPE_INT
 KNIDECL(com_sun_mmedia_PlayerImpl_nGetJavaBufferSize) {
