@@ -103,7 +103,7 @@ public class WMACleanupMonitor implements MIDletProxyListListener {
      * @param midlet The proxy of the removed MIDlet
      */
     public void midletRemoved(MIDletProxy midlet) {
-        //deleteMessages0(midlet.getSuiteId());
+        deleteMessages0(midlet.getSuiteId());
     }
 
     /**
