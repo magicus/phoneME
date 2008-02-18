@@ -56,6 +56,7 @@ typedef struct {
     int                     gmIdx;
     long                    wholeContentSize;
     IControl*               controls[CONT_MAX];
+    javacall_bool           needProcessHeader;
 } ah_hdr;
 
 typedef struct {

@@ -47,6 +47,8 @@ static void* g_pExternalBankData = NULL;    // IMPL_NOTE need to close
 static int   g_iExternalBankSize = 0;
 #endif /*INTERNAL_SOUNDBANK*/
 
+static void doProcessHeader(ah* h, const char* buffer, long buf_length);
+
 /******************************************************************************/
 
 static void sendEOM(int appId, int playerId, long duration)
@@ -722,6 +724,9 @@ static javacall_handle audio_qs_create(int appId, int playerId,
             newHandle->hdr.playerID         = playerId;
             newHandle->hdr.gmIdx            = gmIdx;
             newHandle->hdr.wholeContentSize = -1;
+            newHandle->hdr.needProcessHeader= JAVACALL_FALSE;
+            newHandle->midi.midiBuffer      = NULL;
+            newHandle->midi.midiBufferLen   = 0;
 
             newHandle->hdr.controls[CON135_METADATA] =
                 (IControl*)mQ234_PlayControl_getMetaDataControl(synth);
@@ -745,6 +750,11 @@ static javacall_handle audio_qs_create(int appId, int playerId,
                 (IControl*)mQ234_PlayControl_getVolumeControl(synth);
 
             newHandle->midi.synth    = synth;
+            
+            // need some data to recognize sp-midi
+            if (mediaType == JC_FMT_MIDI) {
+                newHandle->hdr.needProcessHeader = JAVACALL_TRUE;
+            }
         }
         break;
 
@@ -760,6 +770,9 @@ static javacall_handle audio_qs_create(int appId, int playerId,
             newHandle->hdr.playerID         = playerId;
             newHandle->hdr.gmIdx            = gmIdx;
             newHandle->hdr.wholeContentSize = -1;
+            newHandle->hdr.needProcessHeader= JAVACALL_FALSE;
+            newHandle->wav.originalData     = NULL;
+            newHandle->wav.originalDataLen  = 0;
             newHandle->wav.em               = NULL;
 
             ef = g_QSoundGM[gmIdx].EM135;
@@ -784,6 +797,20 @@ static javacall_handle audio_qs_create(int appId, int playerId,
                             mediaType, (int)newHandle, gmIdx);
 
     return (javacall_handle)newHandle;
+}
+
+/**
+ *
+ */
+static javacall_result audio_qs_get_format(javacall_handle handle, jc_fmt* fmt) {
+    ah *h             = (ah*)handle;
+    
+    if (h->hdr.needProcessHeader) {
+        *fmt = JC_FMT_UNKNOWN;
+    } else {
+        *fmt = h->hdr.mediaType;
+    }
+    return JAVACALL_OK;
 }
 
 /**
@@ -992,15 +1019,19 @@ static javacall_result audio_qs_get_buffer_address(javacall_handle handle,
         case JC_FMT_SP_MIDI:
         case JC_FMT_DEVICE_TONE:
         case JC_FMT_DEVICE_MIDI:
-            h->midi.midiBuffer    = MALLOC( h->hdr.wholeContentSize );
-            h->midi.midiBufferLen = h->hdr.wholeContentSize;
+            if (h->midi.midiBuffer == NULL) {
+                h->midi.midiBuffer    = MALLOC( h->hdr.wholeContentSize );
+                h->midi.midiBufferLen = h->hdr.wholeContentSize;
+            }
             *buffer               = h->midi.midiBuffer;
             *max_size             = h->midi.midiBufferLen;
             break;
         case JC_FMT_MS_PCM:
         case JC_FMT_AMR:
-            h->wav.originalData    = MALLOC( h->hdr.wholeContentSize );
-            h->wav.originalDataLen = h->hdr.wholeContentSize;
+            if (h->wav.originalData == NULL) {
+                h->wav.originalData    = MALLOC( h->hdr.wholeContentSize );
+                h->wav.originalDataLen = h->hdr.wholeContentSize;
+            }
             *buffer                = h->wav.originalData;
             *max_size              = h->wav.originalDataLen;
             break;
@@ -1028,6 +1059,10 @@ static javacall_result audio_qs_do_buffering(
 
     //printf( "audio_qs_do_buffering h=0x%08X, buf=0x%08X, len=%ld\n",
     //        (int)handle, (int)buffer, length);
+
+    if (h->hdr.needProcessHeader) {
+        doProcessHeader(h, buffer, *length);
+    }
 
     switch(h->hdr.mediaType)
     {
@@ -2688,6 +2723,36 @@ static javacall_result audio_qs_get_program(javacall_handle handle,
     return r;
 }
 
+/*****************************************************************************/
+
+/**
+ * Retrieve needed parameters from the header. 
+ * Now we distinquish MIDI and SP-MIDI.
+ */
+static void doProcessHeader(ah* h, const void* buf, long buf_length) {
+    const unsigned char* buffer = (const unsigned char*)buf;
+    
+    if (h->hdr.needProcessHeader && buffer != NULL && buf_length > 0) {
+        if (buf_length >= 6 && h->hdr.mediaType == JC_FMT_MIDI) {
+            int i;
+            int maxSearch = 512;
+            
+            if ((long)maxSearch > buf_length - 5) {
+                maxSearch = (int)buf_length - 5;
+            }
+            for (i = 0; i < maxSearch; i++) {
+                if ((buffer[i] == 0xF0) &&  
+                    (buffer[i + 2] == 0x7F) &&
+                    (buffer[i + 4] == 0x0B) &&
+                    (buffer[i + 5] == 0x01)) {
+                    h->hdr.mediaType = JC_FMT_SP_MIDI;
+                    break;
+                }
+            }
+        }
+        h->hdr.needProcessHeader = JAVACALL_FALSE;
+    }
+}
 
 /*****************************************************************************/
 
@@ -2696,7 +2761,7 @@ static javacall_result audio_qs_get_program(javacall_handle handle,
  */
 static media_basic_interface _audio_qs_basic_itf = {
     audio_qs_create,
-    NULL,
+    audio_qs_get_format,
     audio_qs_get_player_controls,
     audio_qs_close,
     audio_qs_destroy,
