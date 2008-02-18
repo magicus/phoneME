@@ -27,6 +27,8 @@
  */
 
 #include <windows.h>
+#include <stdlib.h>
+#include <malloc.h>
 
 #include "javavm/include/winntUtil.h"
 
