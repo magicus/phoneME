@@ -64,6 +64,7 @@ import com.sun.midp.chameleon.layers.PTILayer;
 import com.sun.midp.chameleon.skins.ChoiceGroupSkin;
 import com.sun.midp.chameleon.skins.ScreenSkin;
 import com.sun.midp.chameleon.skins.resources.*;
+import com.sun.midp.chameleon.input.KeyboardInputMode;
 import java.io.IOException;
 // #endif ENABLE_CHAMELEON
 
@@ -2949,20 +2950,60 @@ public class Display {
          *
          * @param inputText input text string
          */
+
+        // Modified to handle Keyboard events properly
+        // Handle keyboard event only if in Keyboard Input mode
         public void handleInputMethodEvent(String inputText) {
-            TextBox textBoxCopy = null;
+            /* IMPL_NOTE: CR <6658788>, temporary changes to process wrong
+             * repeated key events on Shift+<0..9> passed from emulator.
+             * Should be reverted as soon as the emulator is fixed.
+             */
+            TextField textFieldCopy = null;
 
             synchronized (LCDUILock) {
                 if (current instanceof TextBox) {
-                    textBoxCopy = (TextBox) current;
+                    textFieldCopy = ((TextBox)current).textField;
+                }
+
+                if (current instanceof FormLFImpl ) {
+                    FormLFImpl x = (FormLFImpl) current;
+                    Item y=x.lGetCurrentItem();
+                    if (y instanceof TextField) {
+                        textFieldCopy = (TextField) y;
+                    }
                 }
             }
 
             // SYNC NOTE: TextBox.insert() does its own locking so we
             // move the call outside of our lock using a local variable
-            if (textBoxCopy != null) {
-                textBoxCopy.insert(inputText, textBoxCopy.getCaretPosition());
-            }
+            if (textFieldCopy != null) {
+            // #ifdef ENABLE_CHAMELEON
+                TextInputSession session  = ((TextFieldLFImpl)textFieldCopy.textFieldLF).getInputSession();
+                if (session.getCurrentInputMode() instanceof KeyboardInputMode)
+                    textFieldCopy.insert(inputText, textFieldCopy.getCaretPosition());
+            // #else
+                textFieldCopy.insert(inputText, textFieldCopy.getCaretPosition());
+            // #endif ENABLE_CHAMELEON
+                    
+            } 
+
+            /* IMPL_NOTE: End of temporary changes for CR <6658788> 
+             * Original source:
+
+                TextBox textBoxCopy = null;
+    
+                synchronized (LCDUILock) {
+                    if (current instanceof TextBox) {
+                        textBoxCopy = (TextBox) current;
+                    }
+                }
+    
+                // SYNC NOTE: TextBox.insert() does its own locking so we
+                // move the call outside of our lock using a local variable
+                if (textBoxCopy != null) {
+                    textBoxCopy.insert(inputText, textBoxCopy.getCaretPosition());
+                }
+               */
         } // handleInputMethodEvent
 
         /**
