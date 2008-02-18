@@ -130,15 +130,6 @@ static javacall_media_format_type g_fmt[] =
 
 static const int g_fmt_count = sizeof( g_fmt ) / sizeof( g_fmt[ 0 ] );
 
-javacall_bool javacall_media_fmt_equal( javacall_media_format_type fmt1,
-                                        javacall_media_format_type fmt2 )
-{
-    JC_MM_ASSERT( NULL != fmt1 );
-    JC_MM_ASSERT( NULL != fmt2 );
-
-    return ( 0 == strcmp( fmt1, fmt2 ) );
-}
-
 jc_fmt fmt_str2enum( javacall_media_format_type fmt )
 {
     int n;
@@ -146,7 +137,7 @@ jc_fmt fmt_str2enum( javacall_media_format_type fmt )
     JC_MM_ASSERT( JC_FMT_UNSUPPORTED == g_fmt_count - 1 );
 
     for( n = 0; n < g_fmt_count; n++ )
-        if( javacall_media_fmt_equal( fmt, g_fmt[ n ] ) ) return (jc_fmt)n;
+        if( 0 == strcmp( fmt, g_fmt[ n ] ) ) return (jc_fmt)n;
 
     return JC_FMT_UNKNOWN;
 }
@@ -429,7 +420,7 @@ javacall_result javacall_media_realize(javacall_handle handle,
     javacall_impl_player*  pPlayer = (javacall_impl_player*)handle;
     char* cmime;
 
-    if( javacall_media_fmt_equal( JAVACALL_MEDIA_FORMAT_UNKNOWN, pPlayer->mediaType ) )
+    if( 0 == strcmp( JAVACALL_MEDIA_FORMAT_UNKNOWN, pPlayer->mediaType ) )
     {
         if( NULL != mime )
         {
@@ -453,7 +444,7 @@ javacall_result javacall_media_realize(javacall_handle handle,
         }
 
         if( NULL == pPlayer->mediaItfPtr && 
-            !javacall_media_fmt_equal( JAVACALL_MEDIA_FORMAT_UNKNOWN, pPlayer->mediaType ) )
+            0 != strcmp( JAVACALL_MEDIA_FORMAT_UNKNOWN, pPlayer->mediaType ) )
         {
             pPlayer->mediaItfPtr = fmt_enum2itf( fmt_str2enum(pPlayer->mediaType) );
 
