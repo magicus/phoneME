@@ -139,9 +139,8 @@ javacall_result javacall_chapi_platform_invoke(int invoc_id,
  * @param dataLen if greater than 0, then length of changed data buffer
  * @param data the data
  * @param status result of the invocation processing. 
- * @return result of operation.
  */
-javacall_result javanotify_chapi_platform_finish(int invoc_id, 
+void javanotify_chapi_platform_finish(int invoc_id, 
         javacall_utf16_string url,
         int argsLen, javacall_utf16_string* args,
         int dataLen, void* data, 
@@ -153,12 +152,12 @@ javacall_result javanotify_chapi_platform_finish(int invoc_id,
  * This is <code>Registry.invoke()</code> substitute for Platform->Java call.
  * @param handler_id target Java handler Id
  * @param invocation filled out structure with invocation params
- * @param invoc_id assigned by JVM invocation Id for further references
- * @return result of operation.
+ * @param invoc_id invocation Id for further references, should be positive
  */
-javacall_result javanotify_chapi_java_invoke(
+void javanotify_chapi_java_invoke(
         const javacall_utf16_string handler_id, 
-        javacall_chapi_invocation* invocation, /* OUT */ int* invoc_id);
+        javacall_chapi_invocation* invocation,
+        int invoc_id);
 
 
 /*
