@@ -1791,7 +1791,13 @@ public class Display {
                     wantRotation = getReverseOrientation0();
                     isRotatedKnown = true;
                 }
-                da.displayableLF.uSetRotatedStatus(wantRotation);
+
+            // Postponed notification of screen rotation
+            if (da.displayableLF.uSetRotatedStatus(wantRotation)) {
+                da.displayableLF.uCallSizeChanged(
+                        Display.WIDTH, Display.HEIGHT);
+            };
+            
             if (hasForegroundCopy) {
                 // #ifdef ENABLE_CHAMELEON
                 // We need to establish the new title and ticker so that
