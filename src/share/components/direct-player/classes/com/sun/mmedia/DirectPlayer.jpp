@@ -150,8 +150,6 @@ public class DirectPlayer extends BasicPlayer
 
     // Start Prefetch of Native Player
     protected native void nPrefetch(int hNative);
-    // Provide whole media content size, if known
-    protected native void nSetWholeContentSize(int hNative, long contentSize);
     // Is Control supported by native or not
     protected static native boolean nIsFramePositioningControlSupported(int hNative);
     protected static native boolean nIsMetaDataControlSupported(int hNative);
@@ -270,7 +268,7 @@ public class DirectPlayer extends BasicPlayer
 
             long contentSize = stream.getContentLength();
             if (contentSize > 0) {
-                nSetWholeContentSize(hNative, contentSize);
+                PlayerImpl.nSetWholeContentSize(hNative, contentSize);
             }
 
             javaBufSize = PlayerImpl.nGetJavaBufferSize(hNative);
