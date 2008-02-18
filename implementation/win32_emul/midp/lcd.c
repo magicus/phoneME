@@ -442,8 +442,11 @@ javacall_bool generateSoftButtonKeys(int x, int y, javacall_penevent_type pentyp
         if( x > (2*VRAM.width / 3)) {
             javanotify_key_event(JAVACALL_KEY_SOFT2, keytype);
         }
-    }
-    return JAVACALL_TRUE;
+		return JAVACALL_TRUE;
+    } 
+
+	return JAVACALL_FALSE;
+    
 }
     
 #ifdef __cplusplus
