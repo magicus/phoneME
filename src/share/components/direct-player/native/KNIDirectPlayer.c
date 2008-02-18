@@ -23,11 +23,11 @@
  * information or have any questions.
  */
 
-#include <string.h>
 #include "KNICommon.h"
 
 #include "jsrop_exceptions.h"
 #include "jsr135_sync.h"
+#include "javautil_string.h"
 
 /* Global Variables ************************************************************************/
 
@@ -764,7 +764,7 @@ KNIDECL(com_sun_mmedia_DirectPlayer_nGetContentType)
                     for( caps = cfg->mediaCaps; 
                          caps != NULL && caps->mediaFormat != NULL;
                          caps++ ) {
-                        if( javacall_media_fmt_equal( caps->mediaFormat, mFormat ) ) {
+                        if( javautil_string_equals( caps->mediaFormat, mFormat ) ) {
                             const char* ct = caps->contentTypes;
                             KNI_NewStringUTF(ct, stringObj);
                         }
