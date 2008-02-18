@@ -104,23 +104,8 @@ MODULE_JSR_120_COMMON_JAVA_FILES += \
     
 vpath % $(JSR_120_DIR)/src/share/test/native
 
-ifeq ($(DELETE_WMA_MSGS), true)
-#
-# If messages are to be deleted, include a WMACleanupMonitor implementation
-# that will do so.
-#
 MODULE_JSR_120_COMMON_JAVA_FILES += \
     $(JSR_120_DIR)/src/share/core/common/classes/com/sun/midp/wma/WMACleanupMonitor.java
-else
-#
-# If message are not to be deleted, then include a stubbed implementation of
-# WMACleanupMonitor
-#
-ifneq ($(JSR_120_ENABLE_JUMP), true)
-MODULE_JSR_120_COMMON_JAVA_FILES += \
-    $(AMS_JSR_INTERFACE_DIR)/classes/com/sun/midp/wma/WMACleanupMonitor.java
-endif
-endif
 
 ifeq ($(JSR_120_ENABLE_JUMPDRIVER), true)
 ifeq ($(JSR_120_ENABLE_JUMP), true)
@@ -188,13 +173,11 @@ SUBSYSTEM_JSR_120_NATIVE_FILES += \
     jsr120_cbs_listeners.c \
     wmaPushRegistry.c
 
-ifeq ($(DELETE_WMA_MSGS), true)
 SUBSYSTEM_JSR_120_NATIVE_FILES += \
     jsr120_msg_cleanup.c
     
 SUBSYSTEM_JSR_120_CNI_CLASSES += \
     com.sun.midp.wma.WMACleanupMonitor
-endif
 
 ifeq ($(JSR_120_ENABLE_JUMPDRIVER), true)
 ifeq ($(JSR_120_ENABLE_JUMP), true)
