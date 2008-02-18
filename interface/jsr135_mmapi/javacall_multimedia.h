@@ -79,7 +79,7 @@ extern "C" {
 #include "javacall_defs.h" 
 
 /**
-* @defgroup jsr135MediaFormatDefs Multimedia Format types
+* @defgroup jsr135MediaFormatDefs Multimedia Format types and functions
 *
 * @ingroup jsr135MediaFormat
 * @{

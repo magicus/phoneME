@@ -1,6 +1,5 @@
 /*
- *
- * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
@@ -1349,19 +1348,3 @@ javacall_result javacall_media_to_background(const javacall_handle handle,
                                              const int appID) {
     return JAVACALL_NOT_IMPLEMENTED;
 }
-
-/**
-* Compares two Media formats.
-*
-* @param fmt1                      first format
-* @param fmt2                      second format
-* @return if given formats are equal?
-*
-*/
-javacall_bool javacall_media_fmt_equal( javacall_media_format_type fmt1,
-                                        javacall_media_format_type fmt2 )
-{
-    return JAVACALL_FALSE;
-}
-
-
