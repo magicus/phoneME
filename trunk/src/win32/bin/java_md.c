@@ -29,6 +29,7 @@
 #include <stdio.h>
 #include <errno.h>
 
+#include "javavm\include\winntUtil.h"
 #ifndef CVM_DLL
 #define _JNI_IMPLEMENTATION_
 #include "jni.h" /* for JNI_CreateJavaVM */
@@ -70,7 +71,7 @@ char** convertArgs(int argc, const char** argv_a)
     return argv;
 }
 
-void freeArgs(int argc, const char** argv)
+void freeArgs(int argc, char** argv)
 {
     int i;
     for (i=0; i<argc; ++i) {
