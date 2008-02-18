@@ -137,6 +137,9 @@ javacall_result javacall_carddevice_is_sat_finish(javacall_int32 slot,
 javacall_result javacall_carddevice_reset_start(char *atr,
                                                 javacall_int32 *atr_size,
                                                 void **context) {
+    (void)atr;
+    (void)atr_size;
+    (void)context;
     return JAVACALL_NOT_IMPLEMENTED;
 }
 
