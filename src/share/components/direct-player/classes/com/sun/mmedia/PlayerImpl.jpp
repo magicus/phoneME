@@ -117,7 +117,7 @@ public class PlayerImpl implements Player {
     // ask Native Player if it needs more data immediatelly
     protected static native boolean nNeedMoreDataImmediatelly(int hNative);    
     // Provide whole media content size, if known
-    protected native void nSetWholeContentSize(int hNative, long contentSize);
+    protected static native void nSetWholeContentSize(int hNative, long contentSize);
 
 
     /** Unknown media format */
