@@ -80,7 +80,7 @@ public class AppPackage {
     public void checkForPermission(Permission p) throws InterruptedException {
         if (CVM.isMIDPContext()) {
             com.sun.j2me.proxy.security.AccessController.
-                checkPermission(p.getName(), p.getResource());
+                checkPermission(p.getName(), p.getResource(), p.getExtraValue());
         } else {
             p.checkCDCPermission();
         }
