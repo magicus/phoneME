@@ -47,13 +47,10 @@
  * Platform dependent implementation of startVibrate
  *
  * @note start vibrate is not implemented, as planned.
- * @parameter dur duration of the vibrate period in 
- *            microseconds
  * @return KNI_FALSE:  this device does not support vibrate
  */
-jboolean anc_start_vibrate(int dur)
+jboolean anc_start_vibrate()
 {
-    (void)dur; /* avoid warning, no op */
     return KNI_FALSE;
 }
 
