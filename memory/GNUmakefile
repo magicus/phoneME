@@ -38,10 +38,16 @@ endif
 # What to build
 #
 
-all doc clean donuts : verify $(MEMORY_SELECT_DIR)
+all doc donuts : verify $(MEMORY_PORT_DIR) $(MEMORY_SELECT_DIR)
 	@echo "building memory port module..."
 	@$(MAKE) -C $(MEMORY_PORT_DIR) $@
 	@echo "building memory module..."
+	@cd $(MEMORY_SELECT_DIR); $(MAKE) $@
+
+clean: verify_for_clean $(MEMORY_PORT_DIR) $(MEMORY_SELECT_DIR)
+	@echo "clean memory port module..."
+	@$(MAKE) -C $(MEMORY_PORT_DIR) $@
+	@echo "clean memory module..."
 	@cd $(MEMORY_SELECT_DIR); $(MAKE) $@
 
 include $(PCSL_DIR)/makefiles/verify.gmk

@@ -73,7 +73,7 @@ include $(PCSL_DIR)/makefiles/share/Docs.gmk
 
 # define ''clean' target
 
-clean: verify
+clean: verify_for_clean
 	rm -rf $(OUTPUT_OBJ_DIR)/pcsl_string.o
 	rm -rf $(OUTPUT_INC_DIR)/pcsl_string_md.h
 	rm -rf $(OUTPUT_LIB_DIR)/libpcsl_string$(LIB_EXT)

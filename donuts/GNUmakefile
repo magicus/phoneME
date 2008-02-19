@@ -102,7 +102,7 @@ $(OUTPUT_BIN_DIR)/donuts$(EXE): $(OUTPUT_OBJ_DIR)/donuts.o $(OUTPUT_OBJ_DIR)/don
 
 	@$(LD) $(LD_FLAGS) `$(call fixcygpath, $(OUTPUT_OBJ_DIR)/donuts.o $(OUTPUT_OBJ_DIR)/donuts_generated.o $(DONUTS_OBJS))` $(LD_OUTPUT)$@ `$(call fixcygpath, $(DONUTS_LIBS))` $(LIBS)
 
-clean: verify
+clean: verify_for_clean
 	rm -rf $(OUTPUT_OBJ_DIR)/test*.o
 	rm -rf $(OUTPUT_BIN_DIR)/donuts$(EXE)
 	rm -rf $(OUTPUT_GEN_DIR)/donuts_generated.c

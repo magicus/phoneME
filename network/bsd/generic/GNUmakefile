@@ -126,7 +126,7 @@ $(OUTPUT_OBJ_DIR)/testSimpleNetwork.o: $(CURDIR)/testSimpleNetwork.c
 
 # define ''clean' target
 
-clean: verify
+clean: verify_for_clean
 	rm -rf $(OUTPUT_OBJ_DIR)/pcsl_network.o
 	rm -rf $(OUTPUT_OBJ_DIR)/pcsl_socket.o
 	rm -rf $(OUTPUT_OBJ_DIR)/pcsl_serversocket.o

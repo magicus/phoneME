@@ -113,7 +113,7 @@ include $(PCSL_DIR)/makefiles/share/Docs.gmk
 
 # define ''clean' target
 
-clean: verify
+clean: verify_for_clean
 	rm -rf $(OUTPUT_OBJ_DIR)/pcsl_ip.o
 	rm -rf $(OUTPUT_OBJ_DIR)/pcsl_tcp_client.o
 	rm -rf $(OUTPUT_OBJ_DIR)/pcsl_tcp_server.o

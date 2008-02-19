@@ -61,7 +61,7 @@ include $(PCSL_DIR)/makefiles/share/Docs.gmk
 
 # define ''clean' target
 
-clean: verify
+clean: verify_for_clean
 	@rm -rf $(OUTPUT_INC_DIR)/pcsl_memory_port.h
 	@rm -rf $(OUTPUT_INC_DIR)/pcsl_memory_port_impl.h
 

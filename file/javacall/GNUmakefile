@@ -101,7 +101,7 @@ $(OUTPUT_OBJ_DIR)/pcsl_util_UTF.o: $(UTIL_DIR)/pcsl_util_UTF.c
 
 # define ''clean' target
 
-clean: verify
+clean: verify_for_clean
 	rm -rf $(OUTPUT_OBJ_DIR)/pcsl_file.o
 	rm -rf $(OUTPUT_OBJ_DIR)/pcsl_dir.o
 	rm -rf $(OUTPUT_INC_DIR)/porting_file.h

@@ -124,7 +124,7 @@ endif
 	@echo  >> $(PCSL_CONFIG_FILENAME)
 	@echo '#endif /*_PCSL_CONFIG_H_*/' >> $(PCSL_CONFIG_FILENAME)
 
-clean: verify
+clean: verify_for_clean
 	rm -rf $(PCSL_OUTPUT_DIR)/$(PCSL_OS)_$(PCSL_CPU)
 	rm -rf $(PCSL_OUTPUT_DIR)/tools
 	rm -rf $(DOC_DIR)

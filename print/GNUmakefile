@@ -38,8 +38,12 @@ endif
 # What to build
 #
 
-all doc clean donuts : verify $(PRINT_SELECT_DIR)
+all doc donuts : verify $(PRINT_SELECT_DIR)
 	@echo "building print module..."
+	@cd $(PRINT_SELECT_DIR); $(MAKE) $@
+
+clean : verify_for_clean $(PRINT_SELECT_DIR)
+	@echo "cleaning print module..."
 	@cd $(PRINT_SELECT_DIR); $(MAKE) $@
 
 include $(PCSL_DIR)/makefiles/verify.gmk

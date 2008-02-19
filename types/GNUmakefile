@@ -57,7 +57,7 @@ include $(PCSL_DIR)/makefiles/share/Docs.gmk
 
 # define ''clean' target
 
-clean: verify
+clean: verify_for_clean
 	@rm -rf $(OUTPUT_INC_DIR)/java_types.h
 	@rm -rf $(OUTPUT_INC_DIR)/java_types_md.h
 
