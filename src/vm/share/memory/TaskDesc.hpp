@@ -134,6 +134,10 @@ private:
 #if ENABLE_OOP_TAG
   jint              _seq;
 #endif
+
+#if ENABLE_JAVA_DEBUGGER
+  jint             _is_debugger_connected;
+#endif
 #endif // ENABLE_ISOLATES
 
   friend class FarClassDesc;

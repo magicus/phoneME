@@ -282,7 +282,14 @@ private:
 
   static int mirror_list_offset() {
     return FIELD_OFFSET(TaskDesc, _mirror_list);
-  } 
+  }
+ 
+#if ENABLE_JAVA_DEBUGGER
+  static int is_debugger_connected_offset() {
+    return FIELD_OFFSET(TaskDesc, _is_debugger_connected);
+  }
+#endif
+
 public:
   static jint clinit_list_offset() {
     return FIELD_OFFSET(TaskDesc, _clinit_list);
@@ -652,6 +659,18 @@ public:
   ReturnOop get_visible_active_isolates(JVM_SINGLE_ARG_TRAPS);
 
   void init_classes_inited_at_build(JVM_SINGLE_ARG_TRAPS);
+
+#if ENABLE_JAVA_DEBUGGER
+  bool is_debugger_connected( void ) const {
+    return (int_field(is_debugger_connected_offset()) != 0);
+  }
+  void set_debugger_connected( void ) {
+    int_field_put(is_debugger_connected_offset(), 1);
+  }
+  void clear_debugger_connected( void ) {
+    int_field_put(is_debugger_connected_offset(), 0);
+  }
+#endif
 
 #ifndef PRODUCT
   // for debugging purposes

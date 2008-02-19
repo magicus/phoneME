@@ -340,6 +340,12 @@ void Java_com_sun_cldc_isolate_Isolate_attachDebugger0(JVM_SINGLE_ARG_TRAPS){
 #endif
 }
 
+jboolean 
+Java_com_sun_cldc_isolate_Isolate_isDebuggerConnected(JVM_SINGLE_ARG_TRAPS) {
+  IsolateObj::Raw isolate = GET_PARAMETER_AS_OOP(0);
+  Task::Raw task = isolate().task();
+  return task().is_debugger_connected();
+}
 } // extern "C"
 
 
