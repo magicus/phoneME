@@ -874,7 +874,7 @@ bool JavaDebugger::dispatch(int timeout)
       if (connected) {
         sync_debugger(&t);
 #if ENABLE_ISOLATES
-	Task::Fast task = Task::get_task(t().task_id());
+        Task::Fast task = Task::get_task(t().task_id());
         task().set_debugger_connected();
 #endif
       } else {
@@ -1160,6 +1160,11 @@ void JavaDebugger::close_java_debugger(Transport *t) {
       ops->disconnect_transport(t);
     }
       
+#if ENABLE_ISOLATES
+    Task::Fast task = Task::get_task(t->task_id());
+    task().clear_debugger_connected();
+#endif
+
 #if ENABLE_ISOLATES
     Transport::Fast transport = Universe::transport_head();
     Transport::Fast prev;
