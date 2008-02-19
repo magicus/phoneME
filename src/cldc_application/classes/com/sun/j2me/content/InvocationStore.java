@@ -108,8 +108,7 @@ public class InvocationStore {
      * Get a new InvocationImpl request from the store using a MIDlet
      * suiteId and classname.
      *
-     * @param suiteId the MIDlet suiteId to search for,
-     *  MUST not be <code>null</code>
+     * @param suiteId the MIDlet suiteId to search for
      * @param classname to match, must not be null
      * @param shouldBlock true if the method should block
      *      waiting for an Invocation
@@ -124,10 +123,8 @@ public class InvocationStore {
     	if( DEBUG_OUT != null )
     		DEBUG_OUT.println( "InvocationStore.getRequest: suite = " + suiteId +
     								", classname = '" + classname + "'" );
+        classname.length(); // null pointer check
         InvocationImpl invoc = new InvocationImpl();
-        if (suiteId == AppProxy.UNUSED_STORAGE_ID || classname == null) {
-            throw new NullPointerException();
-        }
         invoc.suiteId = suiteId;
         invoc.classname = classname;
 
