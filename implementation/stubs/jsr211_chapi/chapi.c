@@ -1,22 +1,23 @@
 /*
- * Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  *
+ * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+ * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
  * 2 only, as published by the Free Software Foundation.
- *
+ * 
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
  * included at /legal/license.txt).
- *
+ * 
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA
- *
+ * 
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
  * information or have any questions.
@@ -66,10 +67,10 @@
  * @param nActions length of actions array
  * @param locales handler supported locales array, can be null
  * @param nLocales length of locales array
- * @param action_names action names for every supported action
+ * @param action_names action names for every supported action 
  *                                  and every supported locale
  *                                  should contain full list of actions for first locale than for second locale etc...
- * @param nActionNames length of action names array. This value must be equal
+ * @param nActionNames length of action names array. This value must be equal 
  * to @link nActions multiplied by @link nLocales .
  * @param access_allowed_ids list of caller application ids (or prefixes to ids) that have allowed access to invoke this handler, can be null
  * @param nAccesses length of accesses list
@@ -83,7 +84,7 @@ javacall_result javacall_chapi_register_handler(
         javacall_chapi_handler_registration_type flag,
         javacall_const_utf16_string* content_types,     int nTypes,
         javacall_const_utf16_string* suffixes,  int nSuffixes,
-        javacall_const_utf16_string* actions,   int nActions,
+        javacall_const_utf16_string* actions,   int nActions,  
         javacall_const_utf16_string* locales,   int nLocales,
         javacall_const_utf16_string* action_names, int nActionNames,
         javacall_const_utf16_string* access_allowed_ids,  int nAccesses
@@ -98,19 +99,19 @@ javacall_result javacall_chapi_register_handler(
  * Returned between calls values are not guaranteed to be unique, it is up to caller to extract unique values if required
  *
  * @param pos_id  pointer to integer that keeps postion's information in enumeration
- *                before first call integer pointed by pos_id must be initialized to zero,
+ *                before first call integer pointed by pos_id must be initialized to zero, 
  *                each next call it should have value returned in previous call
  *                pos_id value is arbitrary number or pointer to some allocated structure and not is index or position in enumeraion
  *                its value should not be interpreted by caller in any way
  *                Method javacall_chapi_enum_finish is called after last enum method call allowing implementation to clean allocated data
  *                If function returns error value pointed by pos_id MUST not be updated
- *
- * @param handler_id_out memory buffer receiving zero terminated string containing single handler id
+ *				  
+ * @param handler_id_out memory buffer receiving zero terminated string containing single handler id 
  * @param length pointer to integer initialized by caller to length of buffer,
  *               on return it set to length of data passing to buffer including the terminating zero
  *               if length of buffer is not enough to keep all data, length is set to minimum needed size and
  *               JAVACALL_CHAPI_ERROR_BUFFER_TOO_SMALL is returned
- * @return JAVACALL_OK if operation was successful,
+ * @return JAVACALL_OK if operation was successful, 
  *         JAVACALL_CHAPI_ERROR_NO_MORE_ELEMENTS if no more elements to return,
  *         JAVACALL_CHAPI_ERROR_BUFFER_TOO_SMALL if buffer too small to keep result
  *         error code if failure occurs
@@ -127,18 +128,18 @@ javacall_result javacall_chapi_register_handler(
  *
  * @suffix suffix of content data file with dot (for example: ".txt" or ".html") for which handlers are searched
  * @param pos_id  pointer to integer that keeps postion's information in enumeration
- *                before first call integer pointed by pos_id must be initialized to zero,
+ *                before first call integer pointed by pos_id must be initialized to zero, 
  *                each next call it should have value returned in previous call
  *                pos_id value is arbitrary number or pointer to some allocated structure and not is index or position in enumeraion
  *                its value should not be interpreted by caller in any way
  *                Method javacall_chapi_enum_finish is called after last enum method call allowing implementation to clean allocated data
  *                If function returns error value pointed by pos_id MUST not be updated
- * @param handler_id_out memory buffer receiving zero terminated string containing single handler id
+ * @param handler_id_out memory buffer receiving zero terminated string containing single handler id 
  * @param length pointer to integer initialized by caller to length of buffer,
  *               on return it set to length of data passing to buffer including the terminating zero
  *               if length of buffer is not enough to keep all data, length is set to minimum needed size and
  *               JAVACALL_CHAPI_ERROR_BUFFER_TOO_SMALL is returned
- * @return JAVACALL_OK if operation was successful,
+ * @return JAVACALL_OK if operation was successful, 
  *         JAVACALL_CHAPI_ERROR_NO_MORE_ELEMENTS if no more elements to return,
  *         JAVACALL_CHAPI_ERROR_BUFFER_TOO_SMALL if buffer too small to keep result
  *         error code if failure occurs
@@ -155,18 +156,18 @@ javacall_result javacall_chapi_enum_handlers_by_suffix(javacall_const_utf16_stri
  *
  * @content_type type of content data for which handlers are searched
  * @param pos_id  pointer to integer that keeps postion's information in enumeration
- *                before first call integer pointed by pos_id must be initialized to zero,
+ *                before first call integer pointed by pos_id must be initialized to zero, 
  *                each next call it should have value returned in previous call
  *                pos_id value is arbitrary number or pointer to some allocated structure and not is index or position in enumeraion
  *                its value should not be interpreted by caller in any way
  *                Method javacall_chapi_enum_finish is called after last enum method call allowing implementation to clean allocated data
  *                If function returns error value pointed by pos_id MUST not be updated
- * @param handler_id_out memory buffer receiving zero terminated string containing single handler id
+ * @param handler_id_out memory buffer receiving zero terminated string containing single handler id 
  * @param length pointer to integer initialized by caller to length of buffer,
  *               on return it set to length of data passing to buffer including the terminating zero
  *               if length of buffer is not enough to keep all data, length is set to minimum needed size and
  *               JAVACALL_CHAPI_ERROR_BUFFER_TOO_SMALL is returned
- * @return JAVACALL_OK if operation was successful,
+ * @return JAVACALL_OK if operation was successful, 
  *         JAVACALL_CHAPI_ERROR_NO_MORE_ELEMENTS if no more elements to return,
  *         JAVACALL_CHAPI_ERROR_BUFFER_TOO_SMALL if buffer too small to keep result
  *         error code if failure occurs
@@ -183,18 +184,18 @@ javacall_result javacall_chapi_enum_handlers_by_suffix(javacall_const_utf16_stri
  *
  * @action action that handler can perform against content
  * @param pos_id  pointer to integer that keeps postion's information in enumeration
- *                before first call integer pointed by pos_id must be initialized to zero,
+ *                before first call integer pointed by pos_id must be initialized to zero, 
  *                each next call it should have value returned in previous call
  *                pos_id value is arbitrary number or pointer to some allocated structure and not is index or position in enumeraion
  *                its value should not be interpreted by caller in any way
  *                Method javacall_chapi_enum_finish is called after last enum method call allowing implementation to clean allocated data
  *                If function returns error value pointed by pos_id MUST not be updated
- * @param handler_id_out memory buffer receiving zero terminated string containing single handler id
+ * @param handler_id_out memory buffer receiving zero terminated string containing single handler id 
  * @param length pointer to integer initialized by caller to length of buffer,
  *               on return it set to length of data passing to buffer including the terminating zero
  *               if length of buffer is not enough to keep all data, length is set to minimum needed size and
  *               JAVACALL_CHAPI_ERROR_BUFFER_TOO_SMALL is returned
- * @return JAVACALL_OK if operation was successful,
+ * @return JAVACALL_OK if operation was successful, 
  *         JAVACALL_CHAPI_ERROR_NO_MORE_ELEMENTS if no more elements to return,
  *         JAVACALL_CHAPI_ERROR_BUFFER_TOO_SMALL if buffer too small to keep result
  *         error code if failure occurs
@@ -211,25 +212,25 @@ javacall_result javacall_chapi_enum_handlers_by_suffix(javacall_const_utf16_stri
  *
  * @suite_id suite id for which content handlers are searched
  * @param pos_id  pointer to integer that keeps postion's information in enumeration
- *                before first call integer pointed by pos_id must be initialized to zero,
+ *                before first call integer pointed by pos_id must be initialized to zero, 
  *                each next call it should have value returned in previous call
  *                pos_id value is arbitrary number or pointer to some allocated structure and not is index or position in enumeraion
  *                its value should not be interpreted by caller in any way
  *                Method javacall_chapi_enum_finish is called after last enum method call allowing implementation to clean allocated data
  *                If function returns error value pointed by pos_id MUST not be updated
- * @param handler_id_out memory buffer receiving zero terminated string containing single handler id
+ * @param handler_id_out memory buffer receiving zero terminated string containing single handler id 
  * @param length pointer to integer initialized by caller to length of buffer,
  *               on return it set to length of data passing to buffer including the terminating zero
  *               if length of buffer is not enough to keep all data, length is set to minimum needed size and
  *               JAVACALL_CHAPI_ERROR_BUFFER_TOO_SMALL is returned
- * @return JAVACALL_OK if operation was successful,
+ * @return JAVACALL_OK if operation was successful, 
  *         JAVACALL_CHAPI_ERROR_NO_MORE_ELEMENTS if no more elements to return,
  *         JAVACALL_CHAPI_ERROR_BUFFER_TOO_SMALL if buffer too small to keep result
  *         error code if failure occurs
  */
 javacall_result javacall_chapi_enum_handlers_by_suite_id(
         javacall_const_utf16_string suite_id,
-        int* pos_id,
+        int* pos_id, 
         /*OUT*/ javacall_utf16*  handler_id_out,
         int* length){
 return JAVACALL_NOT_IMPLEMENTED;
@@ -244,23 +245,23 @@ return JAVACALL_NOT_IMPLEMENTED;
  *
  * @param id      a string used for registered content handlers searching
  * @param pos_id  pointer to integer that keeps postion's information in enumeration
- *                before first call integer pointed by pos_id must be initialized to zero,
+ *                before first call integer pointed by pos_id must be initialized to zero, 
  *                each next call it should have value returned in previous call
  *                pos_id value is arbitrary number or pointer to some allocated structure and not is index or position in enumeration
  *                its value should not be interpreted by caller in any way
  *                Method javacall_chapi_enum_finish is called after last enum method call allowing implementation to clean allocated data
  *                If function returns error value pointed by pos_id MUST not be updated
- * @param handler_id_out memory buffer receiving zero terminated string containing single handler id
+ * @param handler_id_out memory buffer receiving zero terminated string containing single handler id 
  * @param length pointer to integer initialized by caller to length of buffer,
  *               on return it set to length of data passing to buffer including the terminating zero
  *               if length of buffer is not enough to keep all data, length is set to minimum needed size and
  *               JAVACALL_CHAPI_ERROR_BUFFER_TOO_SMALL is returned
- * @return JAVACALL_OK if operation was successful,
+ * @return JAVACALL_OK if operation was successful, 
  *         JAVACALL_CHAPI_ERROR_NO_MORE_ELEMENTS if no more elements to return,
  *         JAVACALL_CHAPI_ERROR_BUFFER_TOO_SMALL if buffer too small to keep result
  *         error code if failure occurs
  */
-javacall_result javacall_chapi_enum_handlers_by_prefix(javacall_const_utf16_string id,
+javacall_result javacall_chapi_enum_handlers_by_prefix(javacall_const_utf16_string id, 
     int* pos_id, /*OUT*/ javacall_utf16* handler_id_out, int* length)
 {
      return JAVACALL_NOT_IMPLEMENTED;
@@ -275,30 +276,30 @@ javacall_result javacall_chapi_enum_handlers_by_prefix(javacall_const_utf16_stri
  *
  * @param id      a string used for registered content handlers searching
  * @param pos_id  pointer to integer that keeps postion's information in enumeration
- *                before first call integer pointed by pos_id must be initialized to zero,
+ *                before first call integer pointed by pos_id must be initialized to zero, 
  *                each next call it should have value returned in previous call
  *                pos_id value is arbitrary number or pointer to some allocated structure and not is index or position in enumeration
  *                its value should not be interpreted by caller in any way
  *                Method javacall_chapi_enum_finish is called after last enum method call allowing implementation to clean allocated data
  *                If function returns error value pointed by pos_id MUST not be updated
- * @param handler_id_out memory buffer receiving zero terminated string containing single handler id
+ * @param handler_id_out memory buffer receiving zero terminated string containing single handler id 
  * @param length pointer to integer initialized by caller to length of buffer,
  *               on return it set to length of data passing to buffer including the terminating zero
  *               if length of buffer is not enough to keep all data, length is set to minimum needed size and
  *               JAVACALL_CHAPI_ERROR_BUFFER_TOO_SMALL is returned
- * @return JAVACALL_OK if operation was successful,
+ * @return JAVACALL_OK if operation was successful, 
  *         JAVACALL_CHAPI_ERROR_NO_MORE_ELEMENTS if no more elements to return,
  *         JAVACALL_CHAPI_ERROR_BUFFER_TOO_SMALL if buffer too small to keep result
  *         error code if failure occurs
  */
-javacall_result javacall_chapi_enum_handlers_prefixes_of(javacall_const_utf16_string id,
+javacall_result javacall_chapi_enum_handlers_prefixes_of(javacall_const_utf16_string id, 
 												int* pos_id, /*OUT*/ javacall_utf16* handler_id_out, int* length)
 {
      return JAVACALL_NOT_IMPLEMENTED;
 }
 
 /**
- * Enumerate all suffixes of content type data files that can be handled by given content handler or all suffixes
+ * Enumerate all suffixes of content type data files that can be handled by given content handler or all suffixes 
  * registered in registry
  * Function should be called sequentially until JAVACALL_CHAPI_ERROR_NO_MORE_ELEMENTS is returned
  * Returned between calls values are not guaranteed to be unique, it is up to caller to extract unique values if required
@@ -306,7 +307,7 @@ javacall_result javacall_chapi_enum_handlers_prefixes_of(javacall_const_utf16_st
  * @content_handler_id unique id of content handler for which content data files suffixes are requested
  *                     if  content_handler_id is null suffixes for all registered handlers are enumerated
  * @param pos_id  pointer to integer that keeps postion's information in enumeration
- *                before first call integer pointed by pos_id must be initialized to zero,
+ *                before first call integer pointed by pos_id must be initialized to zero, 
  *                each next call it should have value returned in previous call
  *                pos_id value is arbitrary number or pointer to some allocated structure and not is index or position in enumeraion
  *                its value should not be interpreted by caller in any way
@@ -317,7 +318,7 @@ javacall_result javacall_chapi_enum_handlers_prefixes_of(javacall_const_utf16_st
  *               on return it set to length of data passing to buffer including the terminating zero
  *               if length of buffer is not enough to keep all data, length is set to minimum needed size and
  *               JAVACALL_CHAPI_ERROR_BUFFER_TOO_SMALL is returned
- * @return JAVACALL_OK if operation was successful,
+ * @return JAVACALL_OK if operation was successful, 
  *         JAVACALL_CHAPI_ERROR_NO_MORE_ELEMENTS if no more elements to return,
  *         JAVACALL_CHAPI_ERROR_BUFFER_TOO_SMALL if buffer too small to keep result
  *         error code if failure occurs
@@ -336,7 +337,7 @@ javacall_result javacall_chapi_enum_suffixes(javacall_const_utf16_string content
  * @content_handler_id unique id of content handler for which content data types are requested
  *                     if  content_handler_id is null all registered content types are enumerated
  * @param pos_id  pointer to integer that keeps postion's information in enumeration
- *                before first call integer pointed by pos_id must be initialized to zero,
+ *                before first call integer pointed by pos_id must be initialized to zero, 
  *                each next call it should have value returned in previous call
  *                pos_id value is arbitrary number or pointer to some allocated structure and not is index or position in enumeraion
  *                its value should not be interpreted by caller in any way
@@ -347,7 +348,7 @@ javacall_result javacall_chapi_enum_suffixes(javacall_const_utf16_string content
  *               on return it set to length of data passing to buffer including the terminating zero
  *               if length of buffer is not enough to keep all data, length is set to minimum needed size and
  *               JAVACALL_CHAPI_ERROR_BUFFER_TOO_SMALL is returned
- * @return JAVACALL_OK if operation was successful,
+ * @return JAVACALL_OK if operation was successful, 
  *         JAVACALL_CHAPI_ERROR_NO_MORE_ELEMENTS if no more elements to return,
  *         JAVACALL_CHAPI_ERROR_BUFFER_TOO_SMALL if buffer too small to keep result
  *         error code if failure occurs
@@ -367,7 +368,7 @@ javacall_result javacall_chapi_enum_types(javacall_const_utf16_string content_ha
  * @content_handler_id unique id of content handler for which possible actions are requested
  *                     if  content_handler_id is null all registered actions are enumerated
  * @param pos_id  pointer to integer that keeps postion's information in enumeration
- *                before first call integer pointed by pos_id must be initialized to zero,
+ *                before first call integer pointed by pos_id must be initialized to zero, 
  *                each next call it should have value returned in previous call
  *                pos_id value is arbitrary number or pointer to some allocated structure and not is index or position in enumeraion
  *                its value should not be interpreted by caller in any way
@@ -378,7 +379,7 @@ javacall_result javacall_chapi_enum_types(javacall_const_utf16_string content_ha
  *               on return it set to length of data passing to buffer including the terminating zero
  *               if length of buffer is not enough to keep all data, length is set to minimum needed size and
  *               JAVACALL_CHAPI_ERROR_BUFFER_TOO_SMALL is returned
- * @return JAVACALL_OK if operation was successful,
+ * @return JAVACALL_OK if operation was successful, 
  *         JAVACALL_CHAPI_ERROR_NO_MORE_ELEMENTS if no more elements to return,
  *         JAVACALL_CHAPI_ERROR_BUFFER_TOO_SMALL if buffer too small to keep result
  *         error code if failure occurs
@@ -397,7 +398,7 @@ javacall_result javacall_chapi_enum_actions(javacall_const_utf16_string content_
  * @content_handler_id unique id of content handler for which possible locales are requested
  *                     in this method content handler id should not be null
  * @param pos_id  pointer to integer that keeps postion's information in enumeration
- *                before first call integer pointed by pos_id must be initialized to zero,
+ *                before first call integer pointed by pos_id must be initialized to zero, 
  *                each next call it should have value returned in previous call
  *                pos_id value is arbitrary number or pointer to some allocated structure and not is index or position in enumeraion
  *                its value should not be interpreted by caller in any way
@@ -408,7 +409,7 @@ javacall_result javacall_chapi_enum_actions(javacall_const_utf16_string content_
  *               on return it set to length of data passing to buffer including the terminating zero
  *               if length of buffer is not enough to keep all data, length is set to minimum needed size and
  *               JAVACALL_CHAPI_ERROR_BUFFER_TOO_SMALL is returned
- * @return JAVACALL_OK if operation was successful,
+ * @return JAVACALL_OK if operation was successful, 
  *         JAVACALL_CHAPI_ERROR_NO_MORE_ELEMENTS if no more elements to return,
  *         JAVACALL_CHAPI_ERROR_BUFFER_TOO_SMALL if buffer too small to keep result
  *         error code if failure occurs
@@ -430,7 +431,7 @@ javacall_result javacall_chapi_enum_action_locales(javacall_const_utf16_string c
  *               on return it set to length of data passing to buffer including the terminating zero
  *               if length of buffer is not enough to keep all data, length is set to minimum needed size and
  *               JAVACALL_CHAPI_ERROR_BUFFER_TOO_SMALL is returned
- * @return JAVACALL_OK if operation was successful,
+ * @return JAVACALL_OK if operation was successful, 
  *         JAVACALL_CHAPI_ERROR_BUFFER_TOO_SMALL if buffer too small to keep result
  *         error code if failure occurs
  */
@@ -448,7 +449,7 @@ javacall_result javacall_chapi_get_local_action_name(javacall_const_utf16_string
  * @content_handler_id unique id of content handler for which callers list is requested
  *                     content handler id should not be null
  * @param pos_id  pointer to integer that keeps postion's information in enumeration
- *                before first call integer pointed by pos_id must be initialized to zero,
+ *                before first call integer pointed by pos_id must be initialized to zero, 
  *                each next call it should have value returned in previous call
  *                pos_id value is arbitrary number or pointer to some allocated structure and not is index or position in enumeraion
  *                its value should not be interpreted by caller in any way
@@ -459,7 +460,7 @@ javacall_result javacall_chapi_get_local_action_name(javacall_const_utf16_string
  *               on return it set to length of data passing to buffer including the terminating zero
  *               if length of buffer is not enough to keep all data, length is set to minimum needed size and
  *               JAVACALL_CHAPI_ERROR_BUFFER_TOO_SMALL is returned
- * @return JAVACALL_OK if operation was successful,
+ * @return JAVACALL_OK if operation was successful, 
  *         JAVACALL_CHAPI_ERROR_NO_MORE_ELEMENTS if no more elements to return,
  *         JAVACALL_CHAPI_ERROR_BUFFER_TOO_SMALL if buffer too small to keep result
  *         error code if failure occurs
@@ -480,7 +481,7 @@ javacall_result javacall_chapi_enum_access_allowed_callers(javacall_const_utf16_
  *               on return it set to length of data passing to buffer including the terminating zero
  *               if length of buffer is not enough to keep all data, length is set to minimum needed size and
  *               JAVACALL_CHAPI_ERROR_BUFFER_TOO_SMALL is returned
- * @return JAVACALL_OK if operation was successful,
+ * @return JAVACALL_OK if operation was successful, 
  *         JAVACALL_CHAPI_ERROR_BUFFER_TOO_SMALL if buffer too small to keep result
  *         error code if failure occurs
  */
@@ -498,15 +499,15 @@ javacall_result javacall_chapi_get_content_handler_friendly_appname(javacall_con
  *                     content handler id is case sensitive
  * @param suite_id_out buffer receiving suite_id of handler, can be null
  *                     for native platform handlers suite_id is zero
- *                     if suite_id_out is null suite_id is not retrieved
+ *                     if suite_id_out is null suite_id is not retrieved 
  * @param classname_out buffer receiving zero terminated string containing classname of handler, can be null
  *                      for native platform handlers classname is full pathname to native application
- *                      if classname_out is null class name is not retrieved
+ *                      if classname_out is null class name is not retrieved 
  * @param classname_len pointer to integer initialized by caller to length of classname buffer
  * @param flag_out pointer to integer receiving handler registration type, can be null
  *                 for native handlers registration flag should contain REGISTERED_NATIVE_FLAG
- *                 if flag_out is null registration flag is not retrieved
- * @return JAVACALL_OK if operation was successful,
+ *                 if flag_out is null registration flag is not retrieved 
+ * @return JAVACALL_OK if operation was successful, 
  *         JAVACALL_CHAPI_ERROR_BUFFER_TOO_SMALL if output buffer lenght is too small to keep result
  *         error code if failure occurs
  */
@@ -572,14 +573,14 @@ javacall_result javacall_chapi_unregister_handler(javacall_const_utf16_string co
  void javacall_chapi_enum_finish(int pos_id){}
 
 
-
+ 
 /**
  * Asks NAMS to launch specified MIDlet. <BR>
  * It can be called by JVM when Java content handler should be launched
  * or when Java caller-MIDlet should be launched.
  * @param suite_id suite Id of the requested MIDlet
  * @param class_name class name of the requested MIDlet
- * @param should_exit if <code>JAVACALL_TRUE</code>, then calling MIDlet
+ * @param should_exit if <code>JAVACALL_TRUE</code>, then calling MIDlet 
  *   should voluntarily exit to allow pending invocation to be handled.
  *   This should be used when there is no free isolate to run content handler (e.g. in SVM mode).
  * @return result of operation.
@@ -598,17 +599,17 @@ javacall_result javacall_chapi_ams_launch_midlet(int suite_id,
  * @param invoc_id requested invocation Id for further references
  * @param handler_id target platform handler Id
  * @param invocation filled out structure with invocation params
- * @param without_finish_notification if <code>JAVACALL_TRUE</code>, then
- *       @link javanotify_chapi_platform_finish() will not be called after
+ * @param without_finish_notification if <code>JAVACALL_TRUE</code>, then 
+ *       @link javanotify_chapi_platform_finish() will not be called after 
  *       the invocation's been processed.
- * @param should_exit if <code>JAVACALL_TRUE</code>, then calling MIDlet
+ * @param should_exit if <code>JAVACALL_TRUE</code>, then calling MIDlet 
  *   should voluntarily exit to allow pending invocation to be handled.
  * @return result of operation.
  */
 javacall_result javacall_chapi_platform_invoke(int invoc_id,
-        const javacall_utf16_string handler_id,
-        javacall_chapi_invocation* invocation,
-        /* OUT */ javacall_bool* without_finish_notification,
+        const javacall_utf16_string handler_id, 
+        javacall_chapi_invocation* invocation, 
+        /* OUT */ javacall_bool* without_finish_notification, 
         /* OUT */ javacall_bool* should_exit)
 {
      return JAVACALL_NOT_IMPLEMENTED;
@@ -616,8 +617,8 @@ javacall_result javacall_chapi_platform_invoke(int invoc_id,
 
 
 /*
- * Called by platform to notify java VM that invocation of native handler
- * is finished. This is <code>ContentHandlerServer.finish()</code> substitute
+ * Called by platform to notify java VM that invocation of native handler 
+ * is finished. This is <code>ContentHandlerServer.finish()</code> substitute 
  * after platform handler completes invocation processing.
  * @param invoc_id processed invocation Id
  * @param url if not NULL, then changed invocation URL
@@ -625,13 +626,12 @@ javacall_result javacall_chapi_platform_invoke(int invoc_id,
  * @param args changed args if @link argsLen is greater than 0
  * @param dataLen if greater than 0, then length of changed data buffer
  * @param data the data
- * @param status result of the invocation processing.
- * @return result of operation.
+ * @param status result of the invocation processing. 
  */
-void javanotify_chapi_platform_finish(int invoc_id,
+void javanotify_chapi_platform_finish(int invoc_id, 
         javacall_utf16_string url,
         int argsLen, javacall_utf16_string* args,
-        int dataLen, void* data,
+        int dataLen, void* data, 
         javacall_chapi_invocation_status status)
 {
 }
@@ -643,11 +643,10 @@ void javanotify_chapi_platform_finish(int invoc_id,
  * @param handler_id target Java handler Id
  * @param invocation filled out structure with invocation params
  * @param invoc_id assigned by JVM invocation Id for further references
- * @return result of operation.
  */
 void javanotify_chapi_java_invoke(
-        const javacall_utf16_string handler_id,
-        javacall_chapi_invocation* invocation, /* OUT */ int invoc_id)
+        const javacall_utf16_string handler_id, 
+        javacall_chapi_invocation* invocation, /* OUT */ int* invoc_id)
 {
 }
 
@@ -655,7 +654,7 @@ void javanotify_chapi_java_invoke(
 /*
  * Called by Java to notify platform that requested invocation processing
  * is completed by Java handler.
- * This is <code>ContentHandlerServer.finish()</code> substitute
+ * This is <code>ContentHandlerServer.finish()</code> substitute 
  * for Platform->Java call.
  * @param invoc_id processed invocation Id
  * @param url if not NULL, then changed invocation URL
@@ -663,12 +662,12 @@ void javanotify_chapi_java_invoke(
  * @param args changed args if @link argsLen is greater than 0
  * @param dataLen if greater than 0, then length of changed data buffer
  * @param data the data
- * @param status result of the invocation processing.
- * @param should_exit if <code>JAVACALL_TRUE</code>, then calling MIDlet
+ * @param status result of the invocation processing. 
+ * @param should_exit if <code>JAVACALL_TRUE</code>, then calling MIDlet 
  *   should voluntarily exit to allow pending invocation to be handled.
  * @return result of operation.
  */
-javacall_result javacall_chapi_java_finish(int invoc_id,
+javacall_result javacall_chapi_java_finish(int invoc_id, 
         javacall_const_utf16_string url,
         int argsLen, javacall_const_utf16_string* args,
         int dataLen, void* data, javacall_chapi_invocation_status status,
@@ -676,3 +675,9 @@ javacall_result javacall_chapi_java_finish(int invoc_id,
 {
      return JAVACALL_NOT_IMPLEMENTED;
 }
+
+
+ 
+ 
+
+
