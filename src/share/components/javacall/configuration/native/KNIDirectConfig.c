@@ -30,6 +30,10 @@
 #define MAX_PROTOCOLNAME_LEN 30
 #define MAX_MIMETYPENAME_LEN 50
 
+#define MIME_AUDIO_TONE "audio/x-tone-seq"
+#define MIME_AUDIO_MIDI "audio/midi"
+#define DEVICE_PROTOCOL "device"
+
 typedef struct {
     char *current;
     char list[0];
@@ -45,7 +49,8 @@ static struct _protocolNames {
     JAVACALL_MEDIA_HTTP_PROTOCOL,       "http",
     JAVACALL_MEDIA_HTTPS_PROTOCOL,      "https",
     JAVACALL_MEDIA_RTP_PROTOCOL,        "rtp",
-    JAVACALL_MEDIA_RTSP_PROTOCOL,       "rtsp"
+    JAVACALL_MEDIA_RTSP_PROTOCOL,       "rtsp",
+    JAVACALL_MEDIA_CAPTURE_PROTOCOL,    "capture"
 };
 
 void mmapi_string_delete_duplicates(char *p);
@@ -54,6 +59,7 @@ static javacall_result simple_jcharString_to_asciiString(jchar *jcharString, jsi
 KNIEXPORT KNI_RETURNTYPE_INT
 KNIDECL(com_sun_mmedia_DefaultConfiguration_nListContentTypesOpen) {
     javacall_int32 proto_mask = 0;
+    javacall_bool deviceProtocol = JAVACALL_FALSE;
     javacall_media_configuration *cfg;
     javacall_media_caps *caps;
     int len;
@@ -107,8 +113,11 @@ KNIDECL(com_sun_mmedia_DefaultConfiguration_nListContentTypesOpen) {
                     proto_mask |= protocolNames[i].proto_mask;
                 }
             }
+            if (!javautil_stricmp(proto, DEVICE_PROTOCOL)) {
+                deviceProtocol = JAVACALL_TRUE;
+            }
         }
-        if (proto_mask == 0 && proto != NULL) {
+        if (proto != NULL && proto_mask == 0 && !deviceProtocol) {
             /* Requested protocol wasn't found. Return 0 */
             break;
         }
@@ -124,6 +133,14 @@ KNIDECL(com_sun_mmedia_DefaultConfiguration_nListContentTypesOpen) {
             if (proto == NULL || (caps->wholeProtocols & proto_mask) != 0
                     || (caps->streamingProtocols & proto_mask) != 0) {
                 len += strlen(caps->contentTypes) + 1; /* +1 for space char */
+            }
+        }
+        if (proto == NULL || deviceProtocol) {
+            if (cfg->supportDeviceMIDI) {
+                len += strlen(MIME_AUDIO_MIDI) + 1;
+            }
+            if (cfg->supportDeviceTone) {
+                len += strlen(MIME_AUDIO_TONE) + 1;
             }
         }
      
@@ -149,6 +166,21 @@ KNIDECL(com_sun_mmedia_DefaultConfiguration_nListContentTypesOpen) {
                     || (caps->streamingProtocols & proto_mask) != 0) {
                 int types_len = strlen(caps->contentTypes);
                 memcpy(p, caps->contentTypes, types_len);
+                p += types_len;
+                *p++ = ' ';
+            }
+        }
+        if (proto == NULL || deviceProtocol) {
+            int types_len;
+            if (cfg->supportDeviceMIDI) {
+                types_len = strlen(MIME_AUDIO_MIDI);
+                memcpy(p, MIME_AUDIO_MIDI, types_len);
+                p += types_len;
+                *p++ = ' ';
+            }
+            if (cfg->supportDeviceTone) {
+                types_len = strlen(MIME_AUDIO_TONE);
+                memcpy(p, MIME_AUDIO_TONE, types_len);
                 p += types_len;
                 *p++ = ' ';
             }
@@ -240,6 +272,7 @@ KNIDECL(com_sun_mmedia_DefaultConfiguration_nListProtocolsOpen) {
     javacall_media_caps *caps;
     ListIterator *iterator = NULL;
     javacall_int32 proto_mask = 0;
+    javacall_bool supportDeviceProtocol = JAVACALL_FALSE;
     char *p;
     
     /* stack buffers. Trying to avoid malloc if a string is not big */
@@ -285,6 +318,15 @@ KNIDECL(com_sun_mmedia_DefaultConfiguration_nListProtocolsOpen) {
             break;
         }
         
+        if ((mime == NULL || !javautil_stricmp(mime, MIME_AUDIO_MIDI)) && 
+                    cfg->supportDeviceMIDI) {
+            supportDeviceProtocol = JAVACALL_TRUE;
+        }
+        if (!supportDeviceProtocol && 
+                    (mime == NULL || !javautil_stricmp(mime, MIME_AUDIO_TONE)) && 
+                    cfg->supportDeviceTone) {
+            supportDeviceProtocol = JAVACALL_TRUE;
+        }
         /* trying to find given MIME type among caps->contentTypes */
         for (caps = cfg->mediaCaps; caps != NULL && caps->mediaFormat != NULL; caps++) {
             if (caps->wholeProtocols != 0 || caps->streamingProtocols != 0) {
@@ -315,7 +357,7 @@ KNIDECL(com_sun_mmedia_DefaultConfiguration_nListProtocolsOpen) {
             }
         }
         
-        if (proto_mask != 0) {
+        if (proto_mask != 0 || supportDeviceProtocol) {
             /* some protocols were found */
             int i;
             int len = 0;
@@ -325,6 +367,9 @@ KNIDECL(com_sun_mmedia_DefaultConfiguration_nListProtocolsOpen) {
                 if ((protocolNames[i].proto_mask & proto_mask) != 0 && protocolNames[i].proto_name != NULL) {
                     len += strlen(protocolNames[i].proto_name) + 1; /* +1 for space char */
                 }
+            }
+            if (supportDeviceProtocol) {
+                len += strlen(DEVICE_PROTOCOL) + 1;
             }
             if (len == 0) {
                 /* Protocol wasn't found in the protocol name table */
@@ -351,6 +396,12 @@ KNIDECL(com_sun_mmedia_DefaultConfiguration_nListProtocolsOpen) {
                     p += proto_len;
                     *p++ = ' ';
                 }
+            }
+            if (supportDeviceProtocol) {
+                int proto_len = strlen(DEVICE_PROTOCOL);
+                memcpy(p, DEVICE_PROTOCOL, proto_len);
+                p += proto_len;
+                *p++ = ' ';
             }
             p--; *p = '\0'; /* replace last space with zero */
         } else {
@@ -466,7 +517,7 @@ void mmapi_string_delete_duplicates(char *p) {
                     *s0 = 0;
                 } else {
                     s = s0;
-                    memmove(s0, s0+s_len, strlen(s0) - s_len);
+                    memmove(s0, s0+s_len, strlen(s0) - s_len + 1);
                 }
             }
         } while (s != NULL && *s != '\0');

@@ -697,6 +697,9 @@ public class DirectPlayer extends BasicPlayer
                     ctype = ctype.substring(0, s_pos);
                 }
             }
+            if (ctype == null && source != null) {
+                ctype = DefaultConfiguration.getContentType(source.getLocator());
+            }
         }
         
         return ctype;
