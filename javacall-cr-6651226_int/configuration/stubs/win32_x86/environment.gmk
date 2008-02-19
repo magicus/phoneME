@@ -59,6 +59,7 @@ JAVACALL_PLATFORM_DEFS_DIR=$(JAVACALL_DIR)/implementation/win32
 
 SOURCE_OUTPUT_LIST += $(foreach jsr,$(JSR_LIST), $(if $(PREFIX_$(USE_$(jsr))), $($(jsr)_JC_IMPL_PATH)/$($(jsr)_JC_DIR) javacall/implementation/stubs))
 SOURCE_OUTPUT_LIST += $(JAVACALL_PLATFORM_DEFS_DIR)/javacall_platform_defs.h javacall/implementation/win32
+SOURCE_OUTPUT_LIST += $(JAVACALL_DIR)/implementation/share/properties javacall/implementation/share
 SOURCE_OUTPUT_LIST += $(JAVACALL_DIR)/configuration/stubs/win32_x86 javacall/configuration/stubs
 
 #Specify list of utility objects necessary for the build
@@ -70,3 +71,5 @@ UTILITIES =                 \
 #Porting objects that are added to PORTING_OBJECTS by default rules can be excluded
 #from the javacall library by setting FILTER_OBJECTS variable
 FILTER_OBJECTS=sos_network.obj
+
+CONFIGURATION_PROPERTIES_FILE = properties.xml
