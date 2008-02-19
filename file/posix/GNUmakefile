@@ -108,7 +108,7 @@ $(OUTPUT_LIB_DIR)/libpcsl_print$(LIB_EXT) :
 	cd $(PRINT_DIR) ; $(MAKE) all
 
 # define ''clean' target
-clean: verify
+clean: verify_for_clean
 	rm -rf $(OUTPUT_OBJ_DIR)/pcsl_posix.o
 	rm -rf $(OUTPUT_OBJ_DIR)/pcsl_dir_posix.o
 	rm -rf $(OUTPUT_OBJ_DIR)/pcsl_rmfs.o

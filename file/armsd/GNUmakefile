@@ -82,7 +82,7 @@ FRC_DOC_REBUILD = force_doc_rebuild
 include $(PCSL_DIR)/makefiles/share/Docs.gmk
 
 # define ''clean' target
-clean: verify
+clean: verify_for_clean
 	rm -rf $(OUTPUT_OBJ_DIR)/pcsl_armsd.o
 	rm -rf $(OUTPUT_OBJ_DIR)/pcsl_dir_armsd.o
 	rm -rf $(OUTPUT_INC_DIR)/pcsl_file.h

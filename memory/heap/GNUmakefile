@@ -90,7 +90,7 @@ $(OUTPUT_OBJ_DIR)/testMem.o: $(MEMORY_DIR)/testMem.c
 
 # define ''clean' target
 
-clean: verify
+clean: verify_for_clean
 	rm -rf $(OUTPUT_OBJ_DIR)/pcsl_memory.o
 	rm -rf $(OUTPUT_OBJ_DIR)/pcsl_chunkheap.o
 	rm -rf $(OUTPUT_OBJ_DIR)/pcsl_chunkmmap_linux.o

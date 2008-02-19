@@ -57,6 +57,8 @@ else
 CYGWIN_TMP_DIR: ;
 endif
 
+verify_for_clean : PCSL_PLATFORM
+
 verify :: PCSL_PLATFORM CYGWIN_TMP_DIR
 
 .PHONY: PCSL_PLATFORM CYGWIN_TMP_DIR

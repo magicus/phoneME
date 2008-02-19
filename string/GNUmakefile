@@ -53,10 +53,8 @@ $(OUTPUT_INC_DIR)/pcsl_string_status.h:
 $(OUTPUT_INC_DIR)/pcsl_string.h:
 	@cp -f pcsl_string.h $(OUTPUT_INC_DIR)
 
-clean : verify types $(STRING_UTIL_DIR) $(STRING_SELECT_DIR)
-	@echo "building string util..."
+clean : verify_for_clean types $(STRING_UTIL_DIR) $(STRING_SELECT_DIR)
 	@cd $(STRING_UTIL_DIR); $(MAKE) $@
-	@echo "building string module..."
 	@cd $(STRING_SELECT_DIR); $(MAKE) $@
 	rm -rf $(OUTPUT_INC_DIR)/pcsl_string_status.h
 	rm -rf $(OUTPUT_INC_DIR)/pcsl_string.h

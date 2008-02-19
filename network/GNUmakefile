@@ -38,8 +38,11 @@ endif
 # What to build
 #
 
-all doc clean donuts : verify $(NETWORK_SELECT_DIR)
+all doc donuts : verify $(NETWORK_SELECT_DIR)
 	@echo "building network module..."
+	@cd $(NETWORK_SELECT_DIR); $(MAKE) $@
+
+clean : verify_for_clean $(NETWORK_SELECT_DIR)
 	@cd $(NETWORK_SELECT_DIR); $(MAKE) $@
 
 include $(PCSL_DIR)/makefiles/verify.gmk

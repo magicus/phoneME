@@ -97,7 +97,7 @@ $(OUTPUT_LIB_DIR)/libpcsl_print$(LIB_EXT) :
 
 # define ''clean' target
 
-clean: verify
+clean: verify_for_clean
 	rm -rf $(OUTPUT_OBJ_DIR)/pcsl_win32.o
 	rm -rf $(OUTPUT_OBJ_DIR)/pcsl_dir_win32.o
 	rm -rf $(OUTPUT_INC_DIR)/pcsl_file.h

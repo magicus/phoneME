@@ -38,8 +38,12 @@ endif
 # What to build
 #
 
-all doc clean donuts : verify string $(FILE_SELECT_DIR)
+all doc donuts : verify string $(FILE_SELECT_DIR)
 	@echo "building file module..."
+	@cd $(FILE_SELECT_DIR); $(MAKE) $@
+
+clean: verify_for_clean $(FILE_SELECT_DIR)
+	@echo "cleaning file module..."
 	@cd $(FILE_SELECT_DIR); $(MAKE) $@
 
 include $(PCSL_DIR)/makefiles/verify.gmk

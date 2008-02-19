@@ -80,7 +80,7 @@ $(OUTPUT_OBJ_DIR)/testPrint.o: $(PRINT_DIR)/testPrint.c
 
 # define ''clean' target
 
-clean: verify
+clean: verify_for_clean
 	rm -rf $(OUTPUT_OBJ_DIR)/pcsl_print.o
 	rm -rf $(OUTPUT_OBJ_DIR)/testPrint.o
 	rm -rf $(OUTPUT_BIN_DIR)/donuts$(EXE)
