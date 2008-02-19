@@ -44,6 +44,7 @@ information or have any questions.
                 </xsl:with-param>
             </xsl:call-template>
         </xsl:variable>
+        <xsl:value-of select="concat($href,'&#10;')"/>
         <xsl:result-document href="{$href}">
             <xsl:apply-templates select="." mode="Screen-define"/>
         </xsl:result-document>

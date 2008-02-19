@@ -38,11 +38,12 @@ information or have any questions.
     <property name="wtk.home"           value="c:/WTK2.5.2"/>
     <property name="wtk.midp.version"   value="2.0"/>
 
-    <property name="out.root"       location="../out"/>
-    <property name="out.classes"    location="${out.root}/classes"/>
-    <property name="out.src"        location="${out.root}/generated/classes"/>
-    <property name="xslt.merge"     location="../xslt/merge.xsl"/>
-    <property name="xslt.main"      location="../xslt/${toolkit}/main.xsl"/>
+    <property name="out.root"               location="../out"/>
+    <property name="out.classes"            location="${out.root}/classes"/>
+    <property name="out.src"                location="${out.root}/generated/classes"/>
+    <property name="generated.files.list"   location="${out.root}/generated/ui_file_list"/>
+    <property name="xslt.merge"             location="../xslt/merge.xsl"/>
+    <property name="xslt.main"              location="../xslt/${toolkit}/main.xsl"/>
 
 
     <!--
@@ -74,7 +75,7 @@ information or have any questions.
         <xslt in="${screens}" out="${out.root}/all.xml" style="${xslt.merge}" force="yes"/>
 
         <mkdir dir="${output-java-dir}"/>
-        <xslt in="${out.root}/all.xml" out="${out.root}/empty" style="${xslt.main}">
+        <xslt in="${out.root}/all.xml" out="${generated.files.list}" style="${xslt.main}">
             <param name="package-name" expression="${package}"/>
             <param name="output-java-dir" expression="file:///${output-java-dir}"/>
             <param name="output-xml-dir" expression="file:///${output-xml-dir}"/>
@@ -85,11 +86,33 @@ information or have any questions.
         <description>Compiles generated UI screen sources
         </description>
 
+        <loadfile property="generated.java.sources" srcfile="${generated.files.list}">
+            <filterchain>
+                <prefixlines prefix=","/>
+                <striplinebreaks/>
+                <tokenfilter>
+                    <replacestring from="file:///${output-java-dir}/" to=""/>
+                </tokenfilter>
+                <linecontains>
+                  <contains value=".java"/>
+                </linecontains>
+            </filterchain>
+        </loadfile>
+
+        <pathconvert pathsep="," property="java.sources">
+            <path id="javac.files.path">
+                <fileset dir="../test"/>
+                <fileset dir="../src/classes/shared"/>
+                <fileset dir="../src/classes/${toolkit}"/>
+            </path>
+            <flattenmapper/>
+        </pathconvert>
+
         <mkdir dir="${out.classes}"/>
-        <javac      srcdir="../test:../src/classes/shared:../src/classes/${toolkit}:${out.src}/com/sun/ams/ui"
-                    destdir="${out.classes}"
-                    classpath="${classpath}">
-            <include name="**/*.java"/>
+        <javac  srcdir="../test:../src/classes/shared:../src/classes/${toolkit}:${out.src}"
+                destdir="${out.classes}"
+                classpath="${classpath}">
+            <include name="${java.sources},${generated.java.sources}"/>
         </javac>
     </target>
 

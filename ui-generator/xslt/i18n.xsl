@@ -43,6 +43,7 @@ information or have any questions.
                 <xsl:with-param name="classname" select="'StringIds'"/>
             </xsl:call-template>
         </xsl:variable>
+        <xsl:value-of select="concat($href,'&#10;')"/>
         <xsl:result-document href="{$href}">
             <xsl:call-template name="I18N-StringIds-impl"/>
         </xsl:result-document>
@@ -73,6 +74,7 @@ information or have any questions.
                 <xsl:with-param name="classname" select="'StringTable'"/>
             </xsl:call-template>
         </xsl:variable>
+        <xsl:value-of select="concat($href,'&#10;')"/>
         <xsl:result-document href="{$href}">
             <xsl:call-template name="I18N-StringTable-impl"/>
         </xsl:result-document>
