@@ -217,6 +217,12 @@ typedef javacall_const_ascii_string javacall_media_format_type;
 
 /**
  * 
+ * Special protocol types.
+ */
+#define JAVACALL_MEDIA_CAPTURE_PROTOCOL       0x8000    // "capture://"
+
+/**
+ * 
  * @brief Multimedia Controls, supported by native layer
  */
 #define JAVACALL_MEDIA_CTRL_VOLUME              0x001
