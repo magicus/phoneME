@@ -46,6 +46,12 @@ information or have any questions.
         </xsl:element>
     </xsl:template>
 
+    <xsl:template match="progress">
+        <progress pid="{@id}">
+            <xsl:apply-templates select="node()|comment()"/>
+        </progress>
+    </xsl:template>
+
     <xsl:template match="@*|node()|comment()">
         <xsl:copy>
             <xsl:apply-templates select="@*|node()|comment()"/>

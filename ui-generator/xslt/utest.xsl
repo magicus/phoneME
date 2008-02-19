@@ -90,17 +90,31 @@ information or have any questions.
         <xsl:text>;&#10;&#10;&#10;</xsl:text>
         <xsl:text>public final class </xsl:text>
         <xsl:apply-templates select="." mode="UTest-classname"/>
-        <xsl:text> {&#10;</xsl:text>
+        <xsl:text><![CDATA[ {
+    private int progressStep;
+
+    private void updateProgress(
+            java.util.TimerTask task, ProgressUpdater pu, Object progressId) {
+        if(progressStep <= 10) {
+            pu.updateProgress(progressId, progressStep, 10);
+        } else {
+            task.cancel();
+        }
+    }
+]]></xsl:text>
         <xsl:text>    public </xsl:text>
         <xsl:apply-templates select="." mode="UTest-classname"/>
         <xsl:text>() {&#10;</xsl:text>
-        <xsl:text>        final Screen s = new </xsl:text>
+        <xsl:text>        final </xsl:text>
+        <xsl:apply-templates select="." mode="Screen-classname"/>
+        <xsl:text> s = new </xsl:text>
         <xsl:apply-templates select="." mode="Screen-classname"/>
         <xsl:text>(&#10;</xsl:text>
         <xsl:apply-templates select="." mode="UTest-screen-props"/>
         <xsl:apply-templates select="." mode="UTest-screen-command-listener"/>
         <xsl:text>);&#10;</xsl:text>
         <xsl:text>        s.show();&#10;</xsl:text>
+        <xsl:apply-templates select="." mode="UTest-screen-progress"/>
         <xsl:text>    }&#10;</xsl:text>
         <xsl:text>}&#10;</xsl:text>
     </xsl:template>
@@ -162,6 +176,28 @@ information or have any questions.
         <xsl:apply-templates select="." mode="Screen-command-id"/>
         <xsl:text>");&#10;</xsl:text>
         <xsl:text>                        break;&#10;</xsl:text>
+    </xsl:template>
+
+
+    <xsl:template match="screen[not(progress)]" mode="UTest-screen-progress"/>
+    <xsl:template match="screen[progress]" mode="UTest-screen-progress">
+        <xsl:text>        new java.util.Timer().schedule(&#10;</xsl:text>
+        <xsl:text>            new java.util.TimerTask() {&#10;</xsl:text>
+        <xsl:text>                public void run() {&#10;</xsl:text>
+        <xsl:apply-templates select="progress" mode="UTest-screen-progress"/>
+        <xsl:text>                    ++progressStep;&#10;</xsl:text>
+        <xsl:text>                }&#10;</xsl:text>
+        <xsl:text>            },&#10;</xsl:text>
+        <xsl:text>            0,&#10;</xsl:text>
+        <xsl:text>            500);&#10;</xsl:text>
+    </xsl:template>
+
+    <xsl:template match="progress" mode="UTest-screen-progress">
+        <xsl:text>                    updateProgress(this, s, </xsl:text>
+        <xsl:apply-templates select=".." mode="Screen-classname"/>
+        <xsl:text>.</xsl:text>
+        <xsl:apply-templates select="." mode="Screen-progress-id"/>
+        <xsl:text>);&#10;</xsl:text>
     </xsl:template>
 
 </xsl:stylesheet>

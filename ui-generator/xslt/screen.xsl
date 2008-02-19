@@ -82,6 +82,7 @@ information or have any questions.
         <xsl:value-of select="@name"/>
     </xsl:template>
 
+
     <!--
         Output interfaces
     -->
@@ -89,6 +90,7 @@ information or have any questions.
     <xsl:template match="screen[progress]" mode="Screen-implements">
         <xsl:text>implements ProgressUpdater</xsl:text>
     </xsl:template>
+
 
     <!--
         Additional stuff for screen classes with CommandListener
@@ -118,7 +120,7 @@ information or have any questions.
         <xsl:message terminate="yes">This rule must never get called, it must be overridden.&#10;</xsl:message>
     </xsl:template>
 
-    
+
     <!--
         Output class constants
     -->
@@ -128,11 +130,11 @@ information or have any questions.
                 <xsl:with-param name="str">
                     <xsl:apply-templates select="descendant::text" mode="Screen-define-prop-keys"/>
                 </xsl:with-param>
-            </xsl:call-template>            
+            </xsl:call-template>
             <xsl:text>&#10;</xsl:text>
         </xsl:if>
-        <xsl:if test="descendant::*[@id]">
-            <xsl:apply-templates select="descendant::*[@id]" mode="Screen-define-ids"/>
+        <xsl:if test="descendant::*[@id|@pid]">
+            <xsl:apply-templates select="descendant::*[@id|@pid]" mode="Screen-define-ids"/>
             <xsl:text>&#10;</xsl:text>
         </xsl:if>
     </xsl:template>
@@ -144,33 +146,33 @@ information or have any questions.
         </xsl:call-template>
     </xsl:template>
 
-    <xsl:template match="*[@id and name(.) != 'progress']" mode="Screen-define-ids">
+    <xsl:template match="*[@id]" mode="Screen-define-ids">
         <xsl:text>    public final static int </xsl:text>
         <xsl:apply-templates select="." mode="Screen-command-id"/>
         <xsl:text> = </xsl:text>
         <xsl:value-of select="count(preceding::*[@id]) + 1"/>
         <xsl:text>;&#10;</xsl:text>
     </xsl:template>
-    
-    <xsl:template match="progress[@id]" mode="Screen-define-ids">
+
+    <xsl:template match="progress" mode="Screen-define-ids">
         <xsl:text>    public final static Object </xsl:text>
         <xsl:apply-templates select="." mode="Screen-progress-id"/>
-        <xsl:text>="</xsl:text>
-        <xsl:value-of select="@id"/>
+        <xsl:text> = "</xsl:text>
+        <xsl:value-of select="@pid"/>
         <xsl:text>";&#10;</xsl:text>
     </xsl:template>
 
-    <xsl:template match="*[@id]" mode="Screen-command-id">
+    <xsl:template match="*" mode="Screen-command-id">
         <xsl:text>COMMAND_ID_</xsl:text>
         <xsl:call-template name="toupper">
             <xsl:with-param name="str" select="@id"/>
         </xsl:call-template>
     </xsl:template>
 
-    <xsl:template match="*[@id]" mode="Screen-progress-id">
+    <xsl:template match="*" mode="Screen-progress-id">
         <xsl:text>PROGRESS_ID_</xsl:text>
         <xsl:call-template name="toupper">
-            <xsl:with-param name="str" select="@id"/>
+            <xsl:with-param name="str" select="@pid"/>
         </xsl:call-template>
     </xsl:template>
 
