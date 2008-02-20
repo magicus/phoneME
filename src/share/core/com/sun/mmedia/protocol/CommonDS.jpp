@@ -113,7 +113,7 @@ public class CommonDS extends BasicDS implements SourceStream {
                 } else {
                     String ct = httpCon.getType();
                     if (ct != null) {
-                        int idx = ct.indexOf(',');
+                        int idx;
                         if ((idx = ct.indexOf(',')) > 0) {
                             setContentType(ct.substring(0,idx));
                         } else if ((idx = ct.indexOf(';')) > 0) {
