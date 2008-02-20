@@ -44,6 +44,8 @@ public class CommonDS extends BasicDS implements SourceStream {
 
     private long contentLength = -1;
     private InputStream inputStream;
+    private ContentDescriptor contentDescriptor = null;
+
 
     public void setLocator(String ml) throws MediaException {
         super.setLocator(urlCvrt(ml));
@@ -115,14 +117,13 @@ public class CommonDS extends BasicDS implements SourceStream {
                     if (ct != null) {
                         int idx;
                         if ((idx = ct.indexOf(',')) > 0) {
-                            setContentType(ct.substring(0,idx));
+                            ct = ct.substring(0,idx);
                         } else if ((idx = ct.indexOf(';')) > 0) {
-                            setContentType(ct.substring(0,idx));
+                            ct = ct.substring(0,idx);
                         } else if ((idx = ct.indexOf(' ')) > 0) {
-                            setContentType(ct.substring(0,idx));
-                        } else {
-                            setContentType(ct);
+                            ct = ct.substring(0,idx);
                         }
+                        contentDescriptor = new ContentDescriptor(ct);
                     }
                     inputStream = httpCon.openInputStream();
                     contentLength = httpCon.getLength();
@@ -219,7 +220,7 @@ public class CommonDS extends BasicDS implements SourceStream {
      * @return    The contentDescriptor value
      */
     public ContentDescriptor getContentDescriptor() {
-        return null;
+        return contentDescriptor;
     }
 
 
