@@ -85,8 +85,13 @@ public class WebPublicKeyStore extends PublicKeyStore
 
         try {
             storage = new RandomAccessStream(classSecurityToken);
-            storage.connect(File.getStorageRoot(Constants.INTERNAL_STORAGE_ID) +
+            if (keystoreLocation != null ) {
+                storage.connect(keystoreLocation, Connector.READ);
+            } else {
+                storage.connect(File.getStorageRoot(Constants.INTERNAL_STORAGE_ID) +
                 "_main.ks", Connector.READ);
+            }
+            
             tks = storage.openInputStream();
         } catch (Exception e) {
             if (Logging.TRACE_ENABLED) {
@@ -178,8 +183,13 @@ public class WebPublicKeyStore extends PublicKeyStore
         keystore = new PublicKeyStoreBuilderBase(sharedKeyList);
         try {
             storage = new RandomAccessStream(classSecurityToken);
-            storage.connect(File.getStorageRoot(Constants.INTERNAL_STORAGE_ID) +
+            if (keystoreLocation != null ) {
+                storage.connect(keystoreLocation, RandomAccessStream.READ_WRITE_TRUNCATE);
+            } else {
+                storage.connect(File.getStorageRoot(Constants.INTERNAL_STORAGE_ID) +
                 "_main.ks", RandomAccessStream.READ_WRITE_TRUNCATE);
+            }
+            
             outputStream = storage.openOutputStream();
         } catch (Exception e) {
             if (Logging.TRACE_ENABLED) {
@@ -327,4 +337,14 @@ public class WebPublicKeyStore extends PublicKeyStore
             return null;
         }
     }
+
+
+    public static void initKeystoreLocation(String location) {
+        if (keystoreLocation == null) {
+            keystoreLocation = location;
+        }
+    }
+
+    private static String keystoreLocation;
+
 }
