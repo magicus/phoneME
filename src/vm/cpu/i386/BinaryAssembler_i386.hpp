@@ -368,33 +368,12 @@ class BinaryAssembler: public BinaryAssemblerCommon {
 
   void get_thread (Register dst);
 
-  void signal_output_overflow();
+  static void instruction_emitted( void ) {}
 
-  void emit_byte(jint value)  {
-    if (has_room_for(sizeof(jbyte))) {
-      byte_at_put(_code_offset, value);
-      _code_offset += sizeof(jbyte);
-    } else {
-      signal_output_overflow();
-    }
-  }
+  void emit_byte(const jint value)  { emit_code_byte ( value ); }
+  void emit_word(const jint value)  { emit_code_short( value ); }
+  void emit_long(const jint value)  { emit_code_int  ( value ); }
 
-  void emit_word(jint value)  {
-    if (has_room_for(sizeof(jshort))) {
-      word_at_put(_code_offset, value);
-      _code_offset += sizeof(jshort);
-    } else {
-      signal_output_overflow();
-    }
-  }
-  void emit_long(jint value)  {
-    if (has_room_for(sizeof(jint))) {
-      long_at_put(_code_offset, value);
-      _code_offset += sizeof(jint);      
-    } else {
-      signal_output_overflow();
-    }
-  }
   void emit_displacement(Label& L);
   void emit_displacement(NearLabel& L);
 

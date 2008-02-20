@@ -87,7 +87,7 @@ class BinaryAssemblerCommon: public Macros {
                                                     const jint param) {
     GUARANTEE(Relocation::has_param(kind), "Sanity");
     emit_relocation(kind, code_offset);
-    emit_ushort((jushort) param);
+    emit_relocation_ushort( param );
   }
   void emit_oop( const OopDesc* obj ) {
     if( ObjectHeap::contains_moveable( obj ) ) {
@@ -101,7 +101,7 @@ class BinaryAssemblerCommon: public Macros {
     }
   }
   void emit_sentinel( void ) {
-     emit_ushort(0);
+     emit_relocation_ushort(0);
   }
   void emit_vsf(const VirtualStackFrame* frame);
 
@@ -142,8 +142,8 @@ class BinaryAssemblerCommon: public Macros {
     }
   }
         
-  jint code_size      ( void ) const { return _code_offset; }
-  jint code_end_offset( void ) const { return offset_at(code_size()); }
+  jint code_size( void ) const { return _code_offset; }
+  jint code_end_offset( void ) const { return offset_at( code_size() ); }
 
   // Returns the size of the relocation data in bytes.
   jint relocation_size( void ) const {
@@ -173,7 +173,7 @@ class BinaryAssemblerCommon: public Macros {
     return compiled_method()->int_field(offset_at(position));
   }
 
-  void  byte_at_put(const int position, const jbyte value)  {
+  void  byte_at_put(const int position, const jbyte value) const {
     compiled_method()->byte_field_put(offset_at(position), value);
   }
   void  short_at_put(const int position, const jshort value) const {
@@ -182,6 +182,10 @@ class BinaryAssemblerCommon: public Macros {
   void  int_at_put(const int position, const jint value) const {
     compiled_method()->int_field_put(offset_at(position), value);
   }
+
+  void emit_code_byte (const unsigned value);
+  void emit_code_short(const unsigned value);
+  void emit_code_int  (const unsigned value);
 
 #if USE_LITERAL_POOL
   void zero_literal_count( void ) { 
@@ -203,22 +207,25 @@ class BinaryAssemblerCommon: public Macros {
 #endif
 
   // Returns the remaining free space in the compiled method.
-  jint free_space( void ) const {
+  jint free_space( const int code_offset ) const {
     return (current_relocation_offset() + sizeof(jushort)) - 
-            offset_at(code_size());
+            offset_at(code_offset);
   }
+  jint free_space( void ) const { return free_space( _code_offset ); }
 
   // check if there's room for a few extra bytes in the compiled method
-  bool has_room_for(const int bytes) const { 
+  bool has_room_for(const int code_offset, const int bytes) const {
     // Using 8 instead of 0 as defensive programming
     // The shrink operation at the end of compilation will regain the extra
     // space 
     // The extra space ensures that there is always a sentinel at the end of
     // the relocation data and that there is always a null oop that the last
     // relocation entry can address. 
-    return free_space() >= bytes + /* slop */8;
+    return free_space(code_offset) >= bytes + /* slop */8;
   }
-
+  bool has_room_for(const int bytes) const {
+    return has_room_for(_code_offset, bytes);
+  }
   bool has_overflown_compiled_method( void ) const { 
     return !has_room_for(0); 
   }
@@ -268,7 +275,7 @@ class BinaryAssemblerCommon: public Macros {
   }
 
   jint compute_embedded_offset(const jint code_offset);
-  void emit_ushort(const jushort value );
+  void emit_relocation_ushort(const unsigned value);
   void emit_dummy (const jint code_offset);
   void emit_relocation_oop( void );
 };

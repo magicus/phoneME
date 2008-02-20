@@ -35,7 +35,15 @@ extern "C" { extern address gp_base_label; }
 
 class BinaryAssembler: public BinaryAssemblerCommon {
  public:
-  void signal_output_overflow();
+  void instruction_emitted( void ) const {
+#if !ENABLE_CODE_OPTIMIZER
+    CodeInterleaver* cil = _interleaver;
+    if (cil != NULL) { 
+      cil->emit();
+    }
+#endif    
+  }
+
   PRODUCT_STATIC void emit_raw(int instr);
 
  public:

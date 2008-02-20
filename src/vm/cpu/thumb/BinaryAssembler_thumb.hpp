@@ -35,8 +35,16 @@ extern "C" { extern address gp_base_label; }
 
 class BinaryAssembler: public BinaryAssemblerCommon {
  public:
-  void emit_raw(int instr);
-  void emit_raw(short instr);
+  void instruction_emitted( void ) const {
+    CodeInterleaver *cil = _interleaver;
+    if (cil != NULL) {
+      TTY_TRACE_CR(("emitting instr"));
+      cil->emit();
+    }
+  }
+
+  void emit_raw(const int   instr) { emit_code_int  ( instr ); }
+  void emit_raw(const short instr) { emit_code_short( instr ); }
 
   NOT_PRODUCT(virtual) void emit(short instr) {
     // emit instruction

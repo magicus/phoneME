@@ -68,7 +68,6 @@ void BytecodeCompileClosure::initialize(Compiler* compiler, Method* method,
 #endif
   TypeArray::Raw exception_handlers = method->exception_table();
   _has_exception_handlers = (exception_handlers().length() != 0);
-  _has_overflown_output = (jubyte)false;
   _code_generator = Compiler::code_generator();
 }
 
@@ -2291,7 +2290,6 @@ void BytecodeCompileClosure::print_on(Stream *st) {
   st->print_cr("bci                    = %d", bci());
   st->print_cr("active_bci             = %d", _active_bci);
   st->print_cr("has_exception_handlers = %d", _has_exception_handlers);
-  st->print_cr("has_overflown_output   = %d", _has_overflown_output);
   st->print_cr("has_clinit             = %d", _has_clinit);
 }
 void BytecodeCompileClosure::p()  {

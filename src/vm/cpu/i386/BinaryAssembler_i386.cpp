@@ -89,10 +89,6 @@ DisassemblerInfo::~DisassemblerInfo() {
 DisassemblerInfo* DisassemblerInfo::_current = NULL;
 #endif
 
-void BinaryAssembler::signal_output_overflow() {
-  Compiler::current()->closure()->signal_output_overflow();
-}
-
 void BinaryAssembler::generic_binary_1(Register dst, Register src,
                                        generic_binary_op_1 op) { 
   emit_arith(0x03 + op * 8, 0xC0, dst, src);

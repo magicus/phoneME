@@ -29,7 +29,32 @@
 
 #if ENABLE_COMPILER
 
-void BinaryAssemblerCommon::emit_ushort(const jushort value) {
+void BinaryAssemblerCommon::emit_code_byte(const unsigned value) {
+  const int code_offset = _code_offset;
+  _code_offset = code_offset + sizeof(jbyte);
+  if( has_room_for(code_offset, sizeof(jbyte)) ) {
+    byte_at_put(code_offset, value);
+    assembler()->instruction_emitted();
+  }
+}
+void BinaryAssemblerCommon::emit_code_short(const unsigned value) {
+  const int code_offset = _code_offset;
+  _code_offset = code_offset + sizeof(jshort);
+  if( has_room_for(code_offset, sizeof(jshort)) ) {
+    short_at_put(code_offset, value);
+    assembler()->instruction_emitted();
+  }
+}
+void BinaryAssemblerCommon::emit_code_int(const unsigned value) {
+  const int code_offset = _code_offset;
+  _code_offset = code_offset + sizeof(jint);
+  if( has_room_for(code_offset, sizeof(jint)) ) {
+    int_at_put(code_offset, value);
+    assembler()->instruction_emitted();
+  }
+}
+
+void BinaryAssemblerCommon::emit_relocation_ushort(const unsigned value) {
   if( has_room_for(sizeof(jushort)) ) {
     compiled_method()->ushort_field_put(current_relocation_offset(), value);
   } 
@@ -61,12 +86,12 @@ void BinaryAssemblerCommon::emit_relocation(const Relocation::Kind kind,
                                             const jint code_offset) {
   GUARANTEE(kind != Relocation::oop_type, "Use emit_oop() instead");
   const int offset = compute_embedded_offset(code_offset);
-  emit_ushort( jushort(((int) kind << offset_width) | offset));
+  emit_relocation_ushort( ((int) kind << offset_width) | offset );
 }
 
 void BinaryAssemblerCommon::emit_dummy(const jint code_offset) {
   emit_relocation(Relocation::comment_type, code_offset);
-  emit_ushort(0);
+  emit_relocation_ushort(0);
 }
 
 /*
@@ -131,7 +156,8 @@ void BinaryAssemblerCommon::emit_relocation_oop( void ) {
                current_oop_relocation_offset() - int(padding_before), "Sanity");    
 
     // Emit the entry itself.
-    emit_ushort(jushort(((int) Relocation::oop_type << offset_width) | offset_before));
+    emit_relocation_ushort(
+      ((int) Relocation::oop_type << offset_width) | offset_before);
     
     set_current_oop_relocation_offset( current_relocation_offset() );
 
@@ -144,14 +170,13 @@ void BinaryAssemblerCommon::emit_relocation_oop( void ) {
     // Update the relative offset for first non-oop entry.
     const Relocation::Kind first_non_oop_entry_kind = 
       (Relocation::Kind)bitfield(first_non_oop_entry, offset_width, type_width);
-    emit_ushort((jushort) (((int) first_non_oop_entry_kind << offset_width) | 
-                           offset_after));
-
+    emit_relocation_ushort(
+      ((int) first_non_oop_entry_kind << offset_width) | offset_after);
     set_current_relocation_offset( saved_relocation_offset );
     set_current_code_offset( saved_code_offset );
   } else {
     const int offset = compute_embedded_offset(code_offset);
-    emit_ushort((jushort) (((int) Relocation::oop_type << offset_width) | offset));
+    emit_relocation_ushort( ((int) Relocation::oop_type << offset_width) | offset );
     set_current_oop_relocation_offset( current_relocation_offset() );
   }
 
@@ -194,16 +219,16 @@ void BinaryAssemblerCommon::emit_vsf(const VirtualStackFrame* frame) {
   // Emit list of mapped registers with encoded SP difference
   const int sp_delta = frame->stack_pointer() - frame->virtual_stack_pointer();
   if (sp_delta >= max_sp_delta) {
-    emit_ushort(jushort(reg_list | (max_sp_delta << sp_shift)));
-    emit_ushort(jushort(sp_delta));
+    emit_relocation_ushort( reg_list | (max_sp_delta << sp_shift) );
+    emit_relocation_ushort( sp_delta );
   } else if (sp_delta >= 0) {
     // in most cases Virtual SP is very close to Real SP
-    emit_ushort(jushort(reg_list | (sp_delta << sp_shift)));
+    emit_relocation_ushort( reg_list | (sp_delta << sp_shift));
   } else if (-sp_delta < max_sp_delta) {
-    emit_ushort(jushort(reg_list | sp_negative | ((-sp_delta) << sp_shift)));
+    emit_relocation_ushort( reg_list | sp_negative | ((-sp_delta) << sp_shift));
   } else {
-    emit_ushort(jushort(reg_list | sp_negative | (max_sp_delta << sp_shift)));
-    emit_ushort(jushort(-sp_delta));
+    emit_relocation_ushort( reg_list | sp_negative | (max_sp_delta << sp_shift) );
+    emit_relocation_ushort( -sp_delta );
   }
   if (reg_list == 0) {
     // optimization for the case when there are no mapped registers
@@ -316,9 +341,9 @@ void BinaryAssemblerCommon::comment(const char* fmt, ...) {
 
     ensure_compiled_method_space(2*len + 4);
     emit_relocation(Relocation::comment_type);
-    emit_ushort((jushort)len);
+    emit_relocation_ushort( len );
     for( int index = 0; index < len; index++ ) {
-      emit_ushort((jushort) buffer[index]);
+      emit_relocation_ushort( buffer[index] );
     }
   }
 }

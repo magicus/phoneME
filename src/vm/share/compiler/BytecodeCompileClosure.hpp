@@ -32,7 +32,6 @@ class BytecodeCompileClosure: public BytecodeClosure {
   CodeGenerator* _code_generator;
   int       _active_bci;
   jubyte    _has_exception_handlers;
-  jubyte    _has_overflown_output;
   bool      _has_clinit;   // if this or any super has clinit 
 #if ENABLE_CODE_PATCHING
   static int _jump_from_bci;
@@ -84,9 +83,6 @@ class BytecodeCompileClosure: public BytecodeClosure {
   }
   bool has_clinit(void) const {
     return _has_clinit;
-  }
-  void signal_output_overflow(void) {
-    _has_overflown_output = (jubyte)true;
   }
   // Epilogue and prologue.
   virtual void bytecode_prolog(JVM_SINGLE_ARG_TRAPS);

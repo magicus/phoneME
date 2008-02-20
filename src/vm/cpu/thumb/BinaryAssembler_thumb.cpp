@@ -122,39 +122,6 @@ void BinaryAssembler::branch_helper(CompilationQueueElement* cqe,
   cqe->set_entry_label(target);
 }    
 
-void BinaryAssembler::emit_raw(int instr) {
-  if (has_room_for(BytesPerInt)) {
-    jint offset = _code_offset;
-    CompiledMethod *cm = compiled_method();
-    cm->int_field_put(offset_at(offset), instr);
-    offset += BytesPerInt;
-    CodeInterleaver *cil = _interleaver;
-    _code_offset = offset;
-    if (cil != NULL) {
-      TTY_TRACE_CR(("emitting int instr"));
-      cil->emit();
-    }
-  } else {
-    _code_offset += BytesPerInt;
-  }
-}
-
-void BinaryAssembler::emit_raw(short instr) {
-  if (has_room_for(BytesPerShort)) {
-    jint offset = _code_offset;
-    CompiledMethod *cm = compiled_method();
-    cm->short_field_put(offset_at(offset), instr);
-    offset += BytesPerShort;
-    CodeInterleaver *cil = _interleaver;
-    _code_offset = offset;
-    if (cil != NULL) {
-      cil->emit();
-    }
-  } else {
-    _code_offset += BytesPerShort;
-  }
-}
-
 void BinaryAssembler::bind(Label& L, int alignment) {
   (void)alignment; // IMPL_NOTE: is this needed?
   bind_to(L, _code_offset);

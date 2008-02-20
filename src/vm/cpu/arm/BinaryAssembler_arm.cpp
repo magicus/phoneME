@@ -93,34 +93,11 @@ void BinaryAssembler::bl(address target, Condition cond) {
 #endif
 }
 
-void BinaryAssembler::signal_output_overflow() {
-  Compiler::current()->closure()->signal_output_overflow();
-}
-
 void BinaryAssembler::emit_raw(int instr) {
 #if ENABLE_PERFORMANCE_COUNTERS && ENABLE_DETAILED_PERFORMANCE_COUNTERS
   GUARANTEE(COMPILER_PERFORMANCE_COUNTER_ACTIVE(), "Sanity");
 #endif
-  BinaryAssembler* ba = instance();
-
-  if (ba->has_room_for(BytesPerWord)) {
-    jint offset = ba->_code_offset;
-    CompiledMethod *cm = ba->compiled_method();
-    cm->int_field_put(ba->offset_at(offset), instr);
-    offset += BytesPerWord;
-#if !ENABLE_CODE_OPTIMIZER
-    CodeInterleaver *cil = ba->_interleaver;
-#endif
-    ba->_code_offset = offset;
-#if ! ENABLE_CODE_OPTIMIZER
-    if (cil != NULL) { 
-      cil->emit();
-    }
-#endif    
-  } else {
-    ba->signal_output_overflow();
-    ba->_code_offset += BytesPerWord;
-  }
+  instance()->emit_code_int( instr );
 }
 
 void BinaryAssembler::bind(Label& L, int /*alignment*/) {
