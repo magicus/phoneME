@@ -467,15 +467,12 @@ midp_get_suite_icon(SuiteIdType suiteId, const pcsl_string* pIconName,
         if (pcsl_string_equals(pIconName, &(pIconCache->pInfo[i].imageName))) {
             *pImageDataLen = pIconCache->pInfo[i].imageDataLength;
             *ppImageData = pIconCache->pInfo[i].pImageData;
+            return ALL_OK;
         }
     }
 
     /* icon not found */
-    if (i == pIconCache->numberOfCachedImages) {
-        return NOT_FOUND;
-    }
-
-    return ALL_OK;
+    return NOT_FOUND;
 }
 
 /**
