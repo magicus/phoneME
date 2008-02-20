@@ -277,7 +277,8 @@ javacall_media_format_type fmt_guess_from_url(javacall_const_utf16_string uri,
         { L".mid",  JAVACALL_MEDIA_FORMAT_MIDI   },
         { L".midi", JAVACALL_MEDIA_FORMAT_MIDI   },
         { L".jts",  JAVACALL_MEDIA_FORMAT_TONE   },
-        { L".gif",  JAVACALL_MEDIA_FORMAT_UNSUPPORTED   }
+        { L".gif",  JAVACALL_MEDIA_FORMAT_UNSUPPORTED   },
+        { L".wmv",  JAVACALL_MEDIA_FORMAT_UNSUPPORTED   }
     };
 
     int i, extlen;
