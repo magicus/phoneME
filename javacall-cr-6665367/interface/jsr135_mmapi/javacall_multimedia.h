@@ -385,9 +385,18 @@ javacall_result javacall_media_get_configuration(
  * @param uriLength     String length of URI
  * @param handle        Handle of native library.
  *
- * @retval JAVACALL_OK               success
- *         JAVACALL_FAIL
- *         JAVACALL_INVALID_ARGUMENT
+ * @retval JAVACALL_OK                      Success
+ * @retval JAVACALL_CONNECTION_NOT_FOUND    Could not connect to the URL
+ * @retval JAVACALL_IO_ERROR                IO error occurred while connecting
+ *                                          the URL or getting data 
+ * @retval JAVACALL_INVALID_ARGUMENT        Invalid URL or other parameter
+ * @retval JAVACALL_FAIL                    General failure or the following
+ *                                          situation. Porting Layer may
+ *                                          decide to reject the creation for
+ *                                          some reason. For example, if you
+ *                                          do not want media from some
+ *                                          pre-defined "bad" Internet site.
+ *                                          
  */
 javacall_result javacall_media_create(int appID,
                                       int playerID,
