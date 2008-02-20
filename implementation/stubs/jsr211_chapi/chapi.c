@@ -1,6 +1,5 @@
 /*
- *
- * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
@@ -646,7 +645,7 @@ void javanotify_chapi_platform_finish(int invoc_id,
  */
 void javanotify_chapi_java_invoke(
         const javacall_utf16_string handler_id, 
-        javacall_chapi_invocation* invocation, /* OUT */ int* invoc_id)
+        javacall_chapi_invocation* invocation, /* OUT */ int invoc_id)
 {
 }
 
