@@ -137,7 +137,7 @@ public class KeyboardInputMode implements InputMode {
              * Should be reverted as soon as the emulator is fixed.
              */            
             if( ("true".equalsIgnoreCase(
-                 com.sun.j2me.main.Configuration.getProperty(
+                 System.getProperty(
                      "com.sun.midp.chameleon.input.emulator_keys_handling"))) && 
                  ((keyCode >= '0' && keyCode <= '9') ||keyCode == '*' || keyCode != '#') ){
                 /* Ignore the key */
