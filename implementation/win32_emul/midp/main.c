@@ -140,7 +140,7 @@ main(int argc, char *argv[]) {
      * Should be reverted as soon as the emulator is fixed.
      */
     javacall_set_property("com.sun.midp.chameleon.input.emulator_keys_handling","true", 
-                          JAVACALL_TRUE,JAVACALL_INTERNAL_PROPERTY);
+                          JAVACALL_TRUE,JAVACALL_APPLICATION_PROPERTY);
     /* IMPL_NOTE: End of temporary changes for CR <6658788> 
      */
 
