@@ -944,13 +944,6 @@ public final class Isolate {
     }
 
     /**
-     * Indicates if debugger connection is established with the VM.
-     *
-     * @return true if debugger is connected, otherwise returns false.
-     */
-    public native boolean isDebuggerConnected();
-
-    /**
      * Controls whether or not classes for this isolate need to be
      * verified. When creating a new Isolate, the AMS may waive
      * verification for classes that have already been verified. The

@@ -873,10 +873,6 @@ bool JavaDebugger::dispatch(int timeout)
       bool connected = ops->connect_transport(&t, Transport::SERVER, 0);
       if (connected) {
         sync_debugger(&t);
-#if ENABLE_ISOLATES
-        Task::Fast task = Task::get_task(t().task_id());
-        task().set_debugger_connected();
-#endif
       } else {
         t = next_t.obj();
         // No connection yet.  Don't check any subsequent transports
@@ -1161,9 +1157,6 @@ void JavaDebugger::close_java_debugger(Transport *t) {
     }
       
 #if ENABLE_ISOLATES
-    Task::Fast task = Task::get_task(t->task_id());
-    task().clear_debugger_connected();
-
     Transport::Fast transport = Universe::transport_head();
     Transport::Fast prev;
     GUARANTEE(!transport.is_null(), "No debugger transports");
