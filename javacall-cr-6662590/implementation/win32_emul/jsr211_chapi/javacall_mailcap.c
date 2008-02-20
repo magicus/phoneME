@@ -1198,6 +1198,9 @@ void reset_lastread(){
 	accesslist_lastread = 0;
 }
 
+void InitPlatform2JavaInvoker();
+void DeInitPlatform2JavaInvoker();
+
 /**********************************************************************************************************************/
 /**
 /**	PUBLIC API
@@ -1298,6 +1301,7 @@ javacall_result javacall_chapi_init_registry(void){
             assert( res == JAVACALL_OK );
         }
     }
+    InitPlatform2JavaInvoker();
 	return res;
 }
 
@@ -1322,6 +1326,7 @@ void javacall_chapi_finalize_registry(void){
 	if (accesslist_fname) CHAPI_FREE(accesslist_fname);
 	accesslist_fname = 0;
 
+    DeInitPlatform2JavaInvoker();
 }
 
 
