@@ -114,8 +114,14 @@ public class CommonDS extends BasicDS implements SourceStream {
                     String ct = httpCon.getType();
                     if (ct != null) {
                         int idx = ct.indexOf(',');
-                        if (idx > 0) {
+                        if ((idx = ct.indexOf(',')) > 0) {
                             setContentType(ct.substring(0,idx));
+                        } else if ((idx = ct.indexOf(';')) > 0) {
+                            setContentType(ct.substring(0,idx));
+                        } else if ((idx = ct.indexOf(' ')) > 0) {
+                            setContentType(ct.substring(0,idx));
+                        } else {
+                            setContentType(ct);
                         }
                     }
                     inputStream = httpCon.openInputStream();
@@ -162,7 +168,8 @@ public class CommonDS extends BasicDS implements SourceStream {
                 goodurl = true;
             }
         } catch (Exception ex) {
-            throw new IOException("failed to connect" + ex.getMessage());
+            throw new IOException("failed to connect to " + 
+                            locator + " : " + ex.getMessage());
         }
 
         if ( !goodurl)

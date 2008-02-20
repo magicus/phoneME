@@ -607,12 +607,10 @@ public final class Manager {
         } else {
             throw new MediaException("Malformed locator");
         }
-
         String supportedProtocols[] = getSupportedProtocols(null);
-        for (int i = 0; i < supportedProtocols.length; i++) {
+        for (int i = 0; i < supportedProtocols.length && !found; i++) {
             if (theProtocol.equals(supportedProtocols[i])) {
                 found = true;
-                break;
             }
         }
 
@@ -671,13 +669,15 @@ public final class Manager {
         try {
             pp = createPlayer(ds);
             /* verify content type determined by http protocol */
-            String type = source.getContentType();
+            String type = ds.getContentType();
             if (type != null) {
                 String supportedContentTypes[] = getSupportedContentTypes(theProtocol);
                 found = false;
-                for(int i=0; i<supportedContentTypes.length && !found; i++) {
-                    if (type.equals(supportedContentTypes[i])) {
-                        found = true;
+                if (supportedContentTypes != null) {
+                    for(int i=0; i<supportedContentTypes.length && !found; i++) {
+                        if (type.equals(supportedContentTypes[i])) {
+                            found = true;
+                        }
                     }
                 }
             }
@@ -860,6 +860,9 @@ public final class Manager {
                 if (type.equals(supportedContentTypes[i])) {
                     found = true;
                 }
+            }
+            if (!found) {
+                throw new MediaException("Player cannot be created for " + type);
             }
         }
 
