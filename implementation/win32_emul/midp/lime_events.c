@@ -56,7 +56,14 @@
 #define LIME_DEBUG_PRINTF
 #endif
 
+/* IMPL_NOTE: CR <6658788>, temporary changes to process wrong
+ * repeated key events on Shift+<0..9> passed from emulator.
+ * Should be reverted as soon as the emulator is fixed.
+ */
 #define USE_KEYTYPED_VM_EVENTS
+/* IMPL_NOTE: End of temporary changes for CR <6658788> 
+ */
+
 
 #if ENABLE_JSR_179
 extern char *ExtractEventData(javacall_utf16_string event_name);

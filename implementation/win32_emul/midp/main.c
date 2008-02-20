@@ -135,6 +135,15 @@ main(int argc, char *argv[]) {
         return -1;
     }
 
+    /* IMPL_NOTE: CR <6658788>, temporary changes to process wrong
+     * repeated key events on Shift+<0..9> passed from emulator.
+     * Should be reverted as soon as the emulator is fixed.
+     */
+    javacall_set_property("com.sun.midp.chameleon.input.emulator_keys_handling","true", 
+                          JAVACALL_TRUE,JAVACALL_INTERNAL_PROPERTY);
+    /* IMPL_NOTE: End of temporary changes for CR <6658788> 
+     */
+
     for (i = 1; i < argc; i++) {
         javautil_debug_print(JAVACALL_LOG_INFORMATION, "core",
                              "argv[%d] = %s", i, argv[i]);
