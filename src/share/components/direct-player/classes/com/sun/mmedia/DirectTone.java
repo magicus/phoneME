@@ -52,7 +52,6 @@ public final class DirectTone extends DirectPlayer {
      */
     public DirectTone() {
         super();
-        hasDataSource = false;
     }
 
     /**

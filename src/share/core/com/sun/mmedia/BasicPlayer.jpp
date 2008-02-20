@@ -53,14 +53,30 @@ public abstract class BasicPlayer implements Player
     private final static boolean debug = false;
     // #endif ]
 
-    protected String  mediaFormat = null;
+    /** Unknown media format */
+    static final String MEDIA_FORMAT_UNKNOWN = "UNKNOWN";
+    /** Unsupported media format */
+    static final String MEDIA_FORMAT_UNSUPPORTED = "UNSUPPORTED";
+    /** Device Tone format */
+    static final String MEDIA_FORMAT_DEVICE_TONE = "DEVICE_TONE";
+    /** Device MIDI format */
+    static final String MEDIA_FORMAT_DEVICE_MIDI = "DEVICE_MIDI";
+    /** Audio Capture format*/
+    static final String MEDIA_FORMAT_CAPTURE_AUDIO = "CAPTURE_AUDIO";
+    /** Video Capture format*/
+    static final String MEDIA_FORMAT_CAPTURE_VIDEO = "CAPTURE_VIDEO";
+    /** Radio Capture format*/
+    static final String MEDIA_FORMAT_CAPTURE_RADIO = "CAPTURE_RADIO";
+
+
+    protected String mediaFormat = null;
     protected boolean handledByDevice = false;
     protected int hNative;      // handle of native API library 
     protected int pID;          // unique ID of the player
 
-	protected Player notificationSource = null; // if not null, will substitute 'this'
-	                                            // in playerUpdate calls
-	
+    protected Player notificationSource = null; // if not null, will substitute 'this'
+                                                // in playerUpdate calls
+    
     /**
      * the state of this player
      */
@@ -246,11 +262,10 @@ public abstract class BasicPlayer implements Player
      *Constructor for the BasicPlayer object
      */
     protected BasicPlayer() {
-
-        this.hNative            = 0;
-        this.mediaFormat        = PlayerImpl.MEDIA_FORMAT_UNKNOWN;
-        this.handledByDevice    = false;
-        this.pID                = 0;
+        hNative            = 0;
+        mediaFormat        = MEDIA_FORMAT_UNKNOWN;
+        handledByDevice    = false;
+        pID                = 0;
 
         // Initialize sysOffset to the current time.
         // This is used for TimeBase calculations.
@@ -339,10 +354,10 @@ public abstract class BasicPlayer implements Player
     protected void doSetLoopCount(int count) {
     }
 
-	protected void doReceiveRSL()
-	{
-		System.out.println( "[basic] received RSL" );
-	}
+    protected void doReceiveRSL()
+    {
+        System.out.println( "[basic] received RSL" );
+    }
 
     /**
      * Constructs portions of the <code>Player</code> without
@@ -373,7 +388,7 @@ public abstract class BasicPlayer implements Player
         if ((source != null) && (stream == null)) {
             stream = source.getStreams()[0];
         } else {
-            if (hasDataSource) {
+            if (!isCapturePlayer() && !isDevicePlayer()) {
                 state = UNREALIZED;
                 throw new MediaException("Unable to realize");
             }
@@ -384,8 +399,20 @@ public abstract class BasicPlayer implements Player
         state = REALIZED;
     }
 
-    protected boolean hasDataSource = true;
     protected boolean hasToneSequenceSet = false;
+
+    protected boolean isCapturePlayer()
+    {
+        return (mediaFormat.equals(MEDIA_FORMAT_CAPTURE_AUDIO) ||
+                mediaFormat.equals(MEDIA_FORMAT_CAPTURE_VIDEO) ||
+                mediaFormat.equals(MEDIA_FORMAT_CAPTURE_RADIO) );
+    }
+
+    protected boolean isDevicePlayer()
+    {
+        return (mediaFormat.equals(MEDIA_FORMAT_DEVICE_MIDI) ||
+                mediaFormat.equals(MEDIA_FORMAT_DEVICE_TONE));
+    }
 
     /**
      * Subclasses need to implement this to realize
@@ -535,12 +562,8 @@ public abstract class BasicPlayer implements Player
         // generate events before the STARTED event is delivered
         doPostStart();
 
-        boolean has_capture_locator = ( null != locator ) &&
-                ( locator.startsWith( Configuration.AUDIO_CAPTURE_LOCATOR ) 
-                    || locator.startsWith( Configuration.VIDEO_CAPTURE_LOCATOR ) );
-        
-        if( !this.hasDataSource && !hasToneSequenceSet && !has_capture_locator ) {
-	        sendEvent(PlayerListener.END_OF_MEDIA, new Long(getMediaTime()));
+        if (isDevicePlayer() && !hasToneSequenceSet) {
+            sendEvent(PlayerListener.END_OF_MEDIA, new Long(getMediaTime()));
                 stop();
         }
     }
@@ -1025,22 +1048,6 @@ public abstract class BasicPlayer implements Player
      * @param locator               The new source locator
      */
     public void setLocator(String locator) {
-        if (locator != null) {
-            if (locator.equals(Manager.TONE_DEVICE_LOCATOR)) {
-                this.hasDataSource = false;
-            }
-            // #ifndef ABB [
-            else if (locator.startsWith(Configuration.AUDIO_CAPTURE_LOCATOR)) {
-                this.hasDataSource = false;
-            }
-            else if (locator.startsWith(Configuration.VIDEO_CAPTURE_LOCATOR)) {
-                this.hasDataSource = false;
-            }
-            else if (locator.equals(Manager.MIDI_DEVICE_LOCATOR)) {
-            this.hasDataSource = false;
-        }
-            // #endif ]
-        }
         this.locator = locator;
     }
 
@@ -1051,11 +1058,11 @@ public abstract class BasicPlayer implements Player
      */
     public String getLocator() {
         if (locator != null) {
-		    return locator;
-		} else if(source != null) {
-			return source.getLocator();
-		}
-		return null;
+            return locator;
+        } else if(source != null) {
+            return source.getLocator();
+        }
+        return null;
     }
 
     // #ifndef ABB [
@@ -1116,7 +1123,7 @@ public abstract class BasicPlayer implements Player
 
         if (source == null) {
             // Call helper function to get a content type
-            return DefaultConfiguration.getContentType(this.locator);
+            return DefaultConfiguration.getContentType(locator);
         } else {
             return source.getContentType();
         }
