@@ -104,9 +104,6 @@ MODULE_JSR_120_COMMON_JAVA_FILES += \
     
 vpath % $(JSR_120_DIR)/src/share/test/native
 
-MODULE_JSR_120_COMMON_JAVA_FILES += \
-    $(JSR_120_DIR)/src/share/core/common/classes/com/sun/midp/wma/WMACleanupMonitor.java
-
 ifeq ($(JSR_120_ENABLE_JUMPDRIVER), true)
 ifeq ($(JSR_120_ENABLE_JUMP), true)
 MODULE_JSR_120_COMMON_JAVA_FILES += \
@@ -172,12 +169,6 @@ SUBSYSTEM_JSR_120_NATIVE_FILES += \
     jsr120_sms_listeners.c \
     jsr120_cbs_listeners.c \
     wmaPushRegistry.c
-
-SUBSYSTEM_JSR_120_NATIVE_FILES += \
-    jsr120_msg_cleanup.c
-    
-SUBSYSTEM_JSR_120_CNI_CLASSES += \
-    com.sun.midp.wma.WMACleanupMonitor
 
 ifeq ($(JSR_120_ENABLE_JUMPDRIVER), true)
 ifeq ($(JSR_120_ENABLE_JUMP), true)
