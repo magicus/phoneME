@@ -59,11 +59,12 @@ public class LifeCycleNotifierProvider {
     /**
      * Initializes the LifeCycleNotifierProvider with a LifeCycleNotifier
      * 
-     * @param lifecycleNotifier a LifeCycleNotifier.
+     * @param notifier a LifeCycleNotifier.
      */
-    public static void init(LifeCycleNotifier lifecyceleNotifier) {
-        if (lifecycleNotifier != null) {
-            lifecycleNotifier = lifecycleNotifier;
+    public static void init(LifeCycleNotifier notifier) {
+        if (notifier != null) {
+            lifecycleNotifier = notifier;
         }
     }
 }
+
