@@ -154,6 +154,7 @@ endif
 MakeDepsOpts_win32    = -resolveVpath true
 MakeDepsOpts_wince    = -resolveVpath true
 MakeDepsOpts_linux    = -resolveVpath true
+MakeDepsOpts_javacall = -resolveVpath true
 MakeDepsOpts         += -gendir $(GEN_DIR) -workspace $(WorkSpace)
 MakeDepsOpts         += $(MakeDepsOpts_$(os_family))
 
@@ -339,6 +340,7 @@ ASM_SUFFIX           = $(ASM_SUFFIX_$(compiler))
 EXTRA_JVMCONFIG_win32   = USE_UNICODE_FOR_FILENAMES=1
 EXTRA_JVMCONFIG_linux   =
 EXTRA_JVMCONFIG_solaris =
+EXTRA_JVMCONFIG_javacall=
 EXTRA_JVMCONFIG         = $(EXTRA_JVMCONFIG_$(os_family))
 
 ifndef ROMIZING
@@ -464,6 +466,9 @@ ifeq ($(IsTarget)+$(ROMIZING)+$(ENABLE_SEGMENTED_ROM_TEXT_BLOCK), true+true+true
 
   ifeq ($(arch), arm)
     ifeq ($(os_family), linux)
+      CompileROMImageSeparately := true
+    endif
+    ifeq ($(os_family), javacall)
       CompileROMImageSeparately := true
     endif
   endif
