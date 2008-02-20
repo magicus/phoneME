@@ -334,16 +334,6 @@ typedef struct {
     BOOL                mute;
 } audio_handle;
 
-/**
- * Native Handle
- */
-typedef struct {
-    javacall_media_format_type mediaType;
-    javacall_handle     mediaHandle;
-    media_interface*    mediaItfPtr;
-} native_handle;
-
-
 #ifdef __cplusplus
 }
 #endif
