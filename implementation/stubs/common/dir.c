@@ -116,6 +116,11 @@ javacall_result javacall_dir_get_configuration_path(javacall_utf16* /* OUT */ co
 }  
 
 
+javacall_result javacall_dir_get_config_path(javacall_utf16* /* OUT */ configPath,
+                                           int* /*IN | OUT*/ configPathLen) {
+    return JAVACALL_FAIL;
+}
+
 /**
  *  Returns file separator character used by the underlying file system
  * (usually this function will return '\\';)
