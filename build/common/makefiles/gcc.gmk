@@ -94,7 +94,7 @@ CC_OUTPUT	= -o
 
 LD		= $(GNU_TOOLS_BINDIR)g++$(GCC_VERSION)
 LINKER_OUTPUT	= -o
-LIBS		= -lpthread -lm -lnsl
+LIBS		+= -lpthread -lm -lnsl
 
 # Options to force single-pass linker to search undefined references repeatly.
 # Note. '-Wl,' option cannot be used instead of -Xlinker

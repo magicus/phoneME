@@ -41,4 +41,6 @@ TARGET_DEVICE		= omap730
 TARGET_COMPILER		= gcc
 TARGET_VM		= cldc_vm
 
+LIBS += -L$(JAVACALL_LIB_DIR) -ljavacall$(g)$(r)
+
 
