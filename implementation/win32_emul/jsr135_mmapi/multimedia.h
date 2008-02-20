@@ -65,6 +65,8 @@ extern "C" {
 #define REALLOC(_ptr_, _size_)    realloc((_ptr_), (_size_))
 #define FREE(_ptr_)               free((_ptr_))
 
+#define MAX_MIMETYPE_LENGTH       0xFF
+    
 //=============================================================================
 //         I N T E R N A L   F O R M A T   P R E S E N T A T I O N
 //=============================================================================
@@ -127,6 +129,8 @@ typedef enum _jc_fmt {
 
 jc_fmt                     fmt_str2enum( javacall_media_format_type fmt );
 javacall_media_format_type fmt_enum2str( jc_fmt                     fmt );
+javacall_result            fmt_str2mime(
+        javacall_media_format_type fmt, char *buf, int buf_len);
 
 //=============================================================================
 //                  M A I N   W I N D O W   A C C E S S
@@ -332,6 +336,9 @@ typedef struct {
     TCHAR               fileName[MAX_PATH * 2];
     long                volume;
     BOOL                mute;
+    long                wholeContentSize;
+    void *              buffer;
+    javacall_bool       isBuffered;
 } audio_handle;
 
 /**

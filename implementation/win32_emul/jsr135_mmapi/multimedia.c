@@ -37,6 +37,11 @@ static javacall_media_caps g_caps[] =
     { JAVACALL_MEDIA_FORMAT_TONE,    "audio/x-tone-seq",     JAVACALL_MEDIA_MEMORY_PROTOCOL, 0 },
     { JAVACALL_MEDIA_FORMAT_AMR,     "audio/amr",            JAVACALL_MEDIA_MEMORY_PROTOCOL, 0 },
     { JAVACALL_MEDIA_FORMAT_CAPTURE_AUDIO, "audio/x-wav",    JAVACALL_MEDIA_CAPTURE_PROTOCOL, 0 },
+#ifdef ENABLE_MMAPI_LIME   
+    { JAVACALL_MEDIA_FORMAT_MPEG1_LAYER3, "audio/mpeg",      JAVACALL_MEDIA_MEMORY_PROTOCOL, 0 },
+    { JAVACALL_MEDIA_FORMAT_MPEG_1,  "video/mpeg",           JAVACALL_MEDIA_MEMORY_PROTOCOL, 0 },
+    { JAVACALL_MEDIA_FORMAT_MOV,     "video/quicktime",      JAVACALL_MEDIA_MEMORY_PROTOCOL, 0 },
+#endif /* ENABLE_MMAPI_LIME */    
     { NULL,                          NULL,                   0,                              0 }
 };
 
@@ -179,6 +184,36 @@ javacall_media_format_type fmt_mime2str( const char* mime )
     return JAVACALL_MEDIA_FORMAT_UNKNOWN;
 }
 
+javacall_result fmt_str2mime(
+        javacall_media_format_type fmt, char *buf, int buf_len) {
+    
+    int i;
+    for (i = 0; i < sizeof g_caps / sizeof g_caps[0] - 1; i++) {
+        if (!strcmp(fmt, g_caps[i].mediaFormat)) {
+            char *s = g_caps[i].contentTypes;
+            char *p = strchr(s, ' ');
+            int len;
+            
+            if (p == NULL) {
+                len = strlen(s);
+            }
+            else {
+                len = (int)(p - s);
+            }
+            
+            if (len >= buf_len) {
+                return JAVACALL_FAIL;
+            }
+            
+            memcpy(buf, s, len);
+            buf[len] = '\0';
+            return JAVACALL_OK;
+        }
+    }
+    
+    return JAVACALL_FAIL;
+} 
+
 //=============================================================================
 
 extern media_interface g_audio_itf;
@@ -195,10 +230,14 @@ media_interface* fmt_enum2itf( jc_fmt fmt )
 {
     switch( fmt )
     {
-    //case JC_FMT_MPEG_4_SVP:
-    //case JC_FMT_MPEG_4_AVC:
-    //case JC_FMT_VIDEO_3GPP:
-        //return &g_video_itf;    // was: VIDEO_MPEG4, VIDEO_3GPP, CAPTURE_VIDEO, VIDEO_MPEG, VIDEO_GIF
+#ifdef ENABLE_MMAPI_LIME
+    case JC_FMT_MPEG_1:
+    case JC_FMT_MPEG_4_SVP:
+    case JC_FMT_MPEG_4_AVC:
+    case JC_FMT_VIDEO_3GPP:
+    case JC_FMT_MOV:
+        return &g_video_itf;    // was: VIDEO_MPEG4, VIDEO_3GPP, CAPTURE_VIDEO, VIDEO_MPEG, VIDEO_GIF
+ #endif /* ENABLE_MMAPI_LIME */
 
     case JC_FMT_TONE:
     case JC_FMT_MIDI:
@@ -206,12 +245,14 @@ media_interface* fmt_enum2itf( jc_fmt fmt )
     case JC_FMT_MS_PCM:
         return &g_qsound_itf;   // was: AUDIO_MIDI, AUDIO_WAVE
 
-    //case JC_FMT_MPEG1_LAYER3:
-    //case JC_FMT_MPEG1_LAYER3_PRO:
-    //case JC_FMT_MPEG2_AAC:
-    //case JC_FMT_MPEG4_HE_AAC:
-        //return &g_audio_itf;    // was: AUDIO_MP3, AUDIO_MPEG4, AUDIO_AAC, AUDIO_MP3_2
-
+#ifdef ENABLE_MMAPI_LIME        
+    case JC_FMT_MPEG1_LAYER3:
+    case JC_FMT_MPEG1_LAYER3_PRO:
+    case JC_FMT_MPEG2_AAC:
+    case JC_FMT_MPEG4_HE_AAC:
+        return &g_audio_itf;    // was: AUDIO_MP3, AUDIO_MPEG4, AUDIO_AAC, AUDIO_MP3_2
+#endif /* ENABLE_MMAPI_LIME */
+        
     case JC_FMT_AMR:
     case JC_FMT_AMR_WB:
     case JC_FMT_AMR_WB_PLUS:
@@ -272,12 +313,17 @@ javacall_media_format_type fmt_guess_from_url(javacall_const_utf16_string uri,
         javacall_media_format_type  fmt;
     } map[] =
     {
-        { L".wav",  JAVACALL_MEDIA_FORMAT_MS_PCM },
-        { L".amr",  JAVACALL_MEDIA_FORMAT_AMR    },
-        { L".mid",  JAVACALL_MEDIA_FORMAT_MIDI   },
-        { L".midi", JAVACALL_MEDIA_FORMAT_MIDI   },
-        { L".jts",  JAVACALL_MEDIA_FORMAT_TONE   },
-        { L".gif",  JAVACALL_MEDIA_FORMAT_UNSUPPORTED   }
+        { L".wav",  JAVACALL_MEDIA_FORMAT_MS_PCM       },
+        { L".amr",  JAVACALL_MEDIA_FORMAT_AMR          },
+        { L".mid",  JAVACALL_MEDIA_FORMAT_MIDI         },
+        { L".midi", JAVACALL_MEDIA_FORMAT_MIDI         },
+        { L".jts",  JAVACALL_MEDIA_FORMAT_TONE         },
+#ifdef ENABLE_MMAPI_LIME
+        { L".mp3",  JAVACALL_MEDIA_FORMAT_MPEG1_LAYER3 },
+        { L".mpg",  JAVACALL_MEDIA_FORMAT_MPEG_1       },
+        { L".mov",  JAVACALL_MEDIA_FORMAT_MOV          },
+#endif /* ENABLE_MMAPI_LIME */
+        { L".gif",  JAVACALL_MEDIA_FORMAT_UNSUPPORTED  }
     };
 
     int i, extlen;
@@ -951,26 +997,15 @@ javacall_result javacall_media_set_mute(javacall_handle handle, javacall_bool mu
 javacall_result javacall_media_set_video_color_key(javacall_handle handle,
                                                javacall_bool on,
                                                javacall_pixel color) {
-    //static LimeFunction *f1 = NULL;
-    //static LimeFunction *f2 = NULL;
+    javacall_result ret = JAVACALL_FAIL;
+    javacall_impl_player* pPlayer = (javacall_impl_player*)handle;
+    media_interface* pItf = pPlayer->mediaItfPtr;
 
-    /*if(on == TRUE){
-        if (f1 == NULL) {
-            f1 = NewLimeFunction("com.sun.mmedia",
-                        "MediaBridge",
-                        "resumeVideoPlayback");
-        }
-        f1->call(f1, &res);
-    }else{
-        if (f2 == NULL) {
-            f2 = NewLimeFunction("com.sun.mmedia",
-                        "MediaBridge",
-                        "pauseVideoPlayback");
-        }
-        f2->call(f2, &res);
+    if (QUERY_VIDEO_ITF(pItf, set_video_alpha)) {
+        ret = pItf->vptrVideo->set_video_alpha(pPlayer->mediaHandle, on, color);
+    }
 
-    }*/
-    return JAVACALL_NOT_IMPLEMENTED;
+    return ret;
 }
 
 /**
