@@ -47,7 +47,7 @@ static void* g_pExternalBankData = NULL;    // IMPL_NOTE need to close
 static int   g_iExternalBankSize = 0;
 #endif /*INTERNAL_SOUNDBANK*/
 
-static void doProcessHeader(ah* h, const char* buffer, long buf_length);
+static void doProcessHeader(ah* h, const void* buf, long buf_length);
 
 /******************************************************************************/
 
@@ -63,7 +63,7 @@ static void sendEOM(int appId, int playerId, long duration)
 
 /******************************************************************************/
 
-static void MQ234_CALLBACK set_done_trigger(void *userData)
+static void MQ234_CALLBACK eom_event_trigger(void *userData)
 {
     switch(((ah_hdr *)userData)->mediaType)
     {
@@ -739,13 +739,6 @@ static javacall_handle audio_qs_create(int appId, int playerId,
             newHandle->hdr.controls[CON135_TEMPO] =
                 (IControl*)mQ234_PlayControl_getTempoControl(synth);
 
-            // From some reason TCK requires default tempo to be 120000, in fact 160000 returned
-            // so set it manually, it set twice because when buffereing used than it should be set when 
-            // buffering ends, and here in case protocol handles by device, so no buffering
-            if(mediaType != JC_FMT_TONE && mediaType != JC_FMT_DEVICE_TONE) {
-                long tempo = mQ135_Tempo_SetTempo((ITempoControl*)newHandle->hdr.controls[CON135_TEMPO], 100000);
-            }
-
             newHandle->hdr.controls[CON135_VOLUME] =
                 (IControl*)mQ234_PlayControl_getVolumeControl(synth);
 
@@ -970,7 +963,222 @@ static javacall_result audio_qs_get_player_controls(javacall_handle handle,
 /**
  *
  */
-static javacall_result audio_qs_acquire_device(javacall_handle handle){
+static javacall_result audio_qs_acquire_device(javacall_handle handle)
+{
+    ah*         h     = (ah *)handle;
+    int         gmIdx = h->hdr.gmIdx;
+    long        r     = -1;
+
+    MQ234_ERROR e;
+    int         sRate;
+
+    switch(h->hdr.mediaType)
+    {
+        case JC_FMT_TONE:
+        case JC_FMT_MIDI:
+        case JC_FMT_SP_MIDI:
+        case JC_FMT_DEVICE_TONE:
+        case JC_FMT_DEVICE_MIDI:
+            if(h->midi.midiBuffer != NULL)
+            {
+                MQ234_HostBlock *pHostBlock = NULL;
+                ISynthPerformance *sp = NULL;
+                MQ234_ERROR e;
+
+                /* if HostStorage is still not created, create it! */
+                if( h->midi.storage == NULL )
+                {
+                    h->midi.storage =
+                        mQ234_CreateHostStorage(&(h->midi), fill_midi);
+                    JC_MM_ASSERT(h->midi.storage != NULL);
+                }
+
+                /* create new HostBlock unconditionally */
+                pHostBlock = MALLOC(sizeof(MQ234_HostBlock));
+                JC_MM_ASSERT(pHostBlock != NULL);
+
+                /* initialize new HostBlock */
+                pHostBlock->length   = h->midi.midiBufferLen;
+                pHostBlock->position = 0;
+                pHostBlock->storage  = h->midi.storage;
+
+                /* use the new HostBlock to change data to be played */
+                /* NB: this function also checks if the Tone Sequence buffered
+                   is valid */
+                e = mQ234_SetSynthPlayerData(g_QSoundGM[gmIdx].gm,
+                    h->midi.synth, pHostBlock);
+
+                /* destroy the previously used HostBlock, if any */
+                if( h->midi.midiStream != NULL )
+                {
+                    FREE(h->midi.midiStream);
+                }
+
+                /* remember the currently used HostBlock */
+                h->midi.midiStream = pHostBlock;
+
+                /* NB: the following condition is not met if
+                   the buffered Tone Sequence was invalid */
+                if(e == MQ234_ERROR_NO_ERROR)
+                {
+                    sp = mQ234_PlayControl_GetSynthPerformance(h->midi.synth);
+                    JC_MM_ASSERT(sp != NULL);
+                    h->midi.doneCallback =
+                        mQ234_CreateEventTrigger(handle, eom_event_trigger);
+                    JC_MM_ASSERT(h->midi.doneCallback != NULL);
+                    mQ234_SynthPerformance_SetDoneCallback(sp,
+                        h->midi.doneCallback);
+
+                    r = h->midi.midiBufferLen;
+                }
+
+                /* NB: r==-1 here may mean that the buffered Tone Sequence
+                   was invalid */
+                if( -1 == r )
+                {
+                    JC_MM_DEBUG_PRINT("Synth data NOT set!\n");
+                }
+                else
+                {
+                    JC_MM_DEBUG_PRINT("Synth data set.\n");
+                }
+            }
+        break;
+
+        case JC_FMT_MS_PCM:
+            if( NULL != h->wav.stream )
+            {
+                if( NULL != h->wav.em )
+                {
+                    mQ234_EffectModule_removePlayer( h->wav.em, h->wav.stream );
+                    h->wav.em = NULL;
+                }
+                mQ234_WaveStream_Destroy( h->wav.stream );
+                h->wav.stream = NULL;
+            }
+
+            wav_setStreamPlayerData(&(h->wav));
+            sRate = h->wav.rate;
+
+            if(16 == h->wav.bits)
+            {
+                switch(h->wav.channels) {
+                    case 1:
+                        h->wav.stream = mQ234_CreateWaveStreamPlayer(
+                            &(h->wav), fill_pcm_1c_16b, 1, sRate);
+                        break;
+                    case 2:
+                        h->wav.stream = mQ234_CreateWaveStreamPlayer(
+                            &(h->wav), fill_pcm_2c_16b, 2, sRate);
+                        break;
+                    default:
+                        h->wav.stream = NULL;
+                        break;
+                }
+            } else if(8 == h->wav.bits) {
+                switch(h->wav.channels) {
+                    case 1:
+                        h->wav.stream = mQ234_CreateWaveStreamPlayer(
+                            &(h->wav), fill_pcm_1c_8b, 1, sRate);
+                        break;
+                    case 2:
+                        h->wav.stream = mQ234_CreateWaveStreamPlayer(
+                            &(h->wav), fill_pcm_2c_8b, 2, sRate);
+                        break;
+                    default:
+                        h->wav.stream = NULL;
+                        break;
+                }
+            } else if(24 == h->wav.bits) {
+                switch(h->wav.channels) {
+                    case 1:
+                        h->wav.stream = mQ234_CreateWaveStreamPlayer(
+                            &(h->wav), fill_pcm_1c_24b, 1, sRate);
+                        break;
+                    case 2:
+                        h->wav.stream = mQ234_CreateWaveStreamPlayer(
+                            &(h->wav), fill_pcm_2c_24b, 2, sRate);
+                        break;
+                    default:
+                        h->wav.stream = NULL;
+                        break;
+                }
+            } else {
+                h->wav.stream = NULL;
+            }
+
+            if (h->wav.originalData != NULL) FREE(h->wav.originalData);
+
+            h->wav.originalData    = NULL;
+            h->wav.originalDataLen = 0;
+
+            h->wav.bytesPerMilliSec = (h->wav.rate *
+                h->wav.channels * (h->wav.bits >> 3)) / 1000;
+
+            if(h->wav.stream != NULL) {
+                mQ234_EffectModule_addPlayer(
+                    g_QSoundGM[gmIdx].EM135, h->wav.stream);
+                h->wav.em = g_QSoundGM[gmIdx].EM135;
+            }
+
+            JC_MM_DEBUG_PRINT4( 
+                "wavBuffered: bytes=%d rate=%d channels=%d bits=%d\n",
+                h->wav.streamBufferLen, h->wav.rate,
+                h->wav.channels, h->wav.bits);
+        break;
+
+        case JC_FMT_AMR:
+            if( NULL != h->wav.stream )
+            {
+                if( NULL != h->wav.em )
+                {
+                    mQ234_EffectModule_removePlayer( h->wav.em, h->wav.stream );
+                    h->wav.em = NULL;
+                }
+                mQ234_WaveStream_Destroy( h->wav.stream );
+                h->wav.stream = NULL;
+            }
+
+            AMRDecoder_setStreamPlayerData(&(h->wav));
+
+            switch( h->wav.channels )
+            {
+            case 1:
+                h->wav.stream = mQ234_CreateWaveStreamPlayer(&(h->wav), fill_pcm_1c_16b, 1, h->wav.rate );
+                break;
+            case 2:
+                h->wav.stream = mQ234_CreateWaveStreamPlayer(&(h->wav), fill_pcm_2c_16b, 2, h->wav.rate );
+                break;
+            default:
+                h->wav.stream = NULL;
+                break;
+            }
+
+            if( NULL != h->wav.originalData )
+            {
+                FREE(h->wav.originalData);
+                h->wav.originalData = NULL;
+            }
+            h->wav.originalDataLen = 0;
+
+            //h->amr.bytesPerMilliSec = 2;
+            h->wav.bytesPerMilliSec = (h->wav.rate * h->wav.channels * (16 >> 3)) / 1000;
+
+            if(h->wav.stream != NULL)
+            {
+                e = mQ234_EffectModule_addPlayer(g_QSoundGM[gmIdx].EM135, h->wav.stream);
+                h->wav.em = g_QSoundGM[gmIdx].EM135;
+                JC_MM_ASSERT( MQ234_ERROR_NO_ERROR == e );
+            }
+        break;
+
+        default:
+            JC_MM_DEBUG_PRINT1(
+                "[jc-media] Trying to play unsupported media type %d\n",
+                h->hdr.mediaType);
+            JC_MM_ASSERT( FALSE );
+    }
+
     return JAVACALL_OK;
 }
 
@@ -1052,263 +1260,34 @@ static javacall_result audio_qs_do_buffering(
                             long *min_data_size){
 
     ah*         h     = (ah *)handle;
-    int         gmIdx = h->hdr.gmIdx;
-    long        r     = -1;
-
-    MQ234_ERROR e;
-
-    //printf( "audio_qs_do_buffering h=0x%08X, buf=0x%08X, len=%ld\n",
-    //        (int)handle, (int)buffer, length);
 
     if (h->hdr.needProcessHeader) {
         doProcessHeader(h, buffer, *length);
     }
 
-    switch(h->hdr.mediaType)
+    if( NULL != buffer )
     {
+        switch(h->hdr.mediaType)
+        {
         case JC_FMT_TONE:
         case JC_FMT_MIDI:
         case JC_FMT_SP_MIDI:
         case JC_FMT_DEVICE_TONE:
         case JC_FMT_DEVICE_MIDI:
-        {
-            if( NULL != buffer )
-            {
-                JC_MM_ASSERT( buffer == h->midi.midiBuffer );
-            }
-            else
-            {
-                if(h->midi.midiBuffer != NULL)
-                {
-                    MQ234_HostBlock *pHostBlock = NULL;
-                    ISynthPerformance *sp = NULL;
-                    MQ234_ERROR e;
-
-                    /* if HostStorage is still not created, create it! */
-                    if( h->midi.storage == NULL )
-                    {
-                        h->midi.storage =
-                            mQ234_CreateHostStorage(&(h->midi), fill_midi);
-                        JC_MM_ASSERT(h->midi.storage != NULL);
-                    }
-
-                    /* create new HostBlock unconditionally */
-                    pHostBlock = MALLOC(sizeof(MQ234_HostBlock));
-                    JC_MM_ASSERT(pHostBlock != NULL);
-
-                    /* initialize new HostBlock */
-                    pHostBlock->length   = h->midi.midiBufferLen;
-                    pHostBlock->position = 0;
-                    pHostBlock->storage  = h->midi.storage;
-
-                    /* use the new HostBlock to change data to be played */
-                    /* NB: this function also checks if the Tone Sequence buffered
-                       is valid */
-                    e = mQ234_SetSynthPlayerData(g_QSoundGM[gmIdx].gm,
-                        h->midi.synth, pHostBlock);
-
-                    /* destroy the previously used HostBlock, if any */
-                    if( h->midi.midiStream != NULL )
-                    {
-                        FREE(h->midi.midiStream);
-                    }
-
-                    /* remember the currently used HostBlock */
-                    h->midi.midiStream = pHostBlock;
-
-                    /* NB: the following condition is not met if
-                       the buffered Tone Sequence was invalid */
-                    if(e == MQ234_ERROR_NO_ERROR)
-                    {
-                        sp = mQ234_PlayControl_GetSynthPerformance(h->midi.synth);
-                        JC_MM_ASSERT(sp != NULL);
-                        h->midi.doneCallback =
-                            mQ234_CreateEventTrigger(handle, set_done_trigger);
-                        JC_MM_ASSERT(h->midi.doneCallback != NULL);
-                        mQ234_SynthPerformance_SetDoneCallback(sp,
-                            h->midi.doneCallback);
-
-                        r = h->midi.midiBufferLen;
-                    }
-
-                    /* NB: r==-1 here may mean that the buffered Tone Sequence
-                       was invalid */
-                    if( -1 == r )
-                    {
-                        JC_MM_DEBUG_PRINT("Synth data NOT set!\n");
-                    }
-                    else
-                    {
-                        JC_MM_DEBUG_PRINT("Synth data set.\n");
-
-                        // From some reason TCK requires default tempo to be 120000, in fact 160000 returned
-                        // so set it manually, it set twice because when buffereing used than it should be set when 
-                        // buffering ends, and here in case protocol handles by device, so no buffering
-                        if(h->hdr.mediaType != JC_FMT_TONE && h->hdr.mediaType != JC_FMT_DEVICE_TONE)
-                        {
-                            long tempo = mQ135_Tempo_SetTempo((ITempoControl*)h->hdr.controls[CON135_TEMPO], 120000);
-                        }
-                    }
-                }
-            }
-        }
-        break;
+            JC_MM_ASSERT( buffer == h->midi.midiBuffer );
+            break;
 
         case JC_FMT_MS_PCM:
-        {
-            if( NULL != buffer )
-            {
-                JC_MM_ASSERT( buffer == h->wav.originalData );
-            }
-            else
-            {
-                int sRate;
-
-                if( NULL != h->wav.stream )
-                {
-                    if( NULL != h->wav.em )
-                    {
-                        mQ234_EffectModule_removePlayer( h->wav.em, h->wav.stream );
-                        h->wav.em = NULL;
-                    }
-                    mQ234_WaveStream_Destroy( h->wav.stream );
-                    h->wav.stream = NULL;
-                }
-
-                wav_setStreamPlayerData(&(h->wav));
-                sRate = h->wav.rate;
-
-                if(16 == h->wav.bits)
-                {
-                    switch(h->wav.channels) {
-                        case 1:
-                            h->wav.stream = mQ234_CreateWaveStreamPlayer(
-                                &(h->wav), fill_pcm_1c_16b, 1, sRate);
-                            break;
-                        case 2:
-                            h->wav.stream = mQ234_CreateWaveStreamPlayer(
-                                &(h->wav), fill_pcm_2c_16b, 2, sRate);
-                            break;
-                        default:
-                            h->wav.stream = NULL;
-                            break;
-                    }
-                } else if(8 == h->wav.bits) {
-                    switch(h->wav.channels) {
-                        case 1:
-                            h->wav.stream = mQ234_CreateWaveStreamPlayer(
-                                &(h->wav), fill_pcm_1c_8b, 1, sRate);
-                            break;
-                        case 2:
-                            h->wav.stream = mQ234_CreateWaveStreamPlayer(
-                                &(h->wav), fill_pcm_2c_8b, 2, sRate);
-                            break;
-                        default:
-                            h->wav.stream = NULL;
-                            break;
-                    }
-                } else if(24 == h->wav.bits) {
-                    switch(h->wav.channels) {
-                        case 1:
-                            h->wav.stream = mQ234_CreateWaveStreamPlayer(
-                                &(h->wav), fill_pcm_1c_24b, 1, sRate);
-                            break;
-                        case 2:
-                            h->wav.stream = mQ234_CreateWaveStreamPlayer(
-                                &(h->wav), fill_pcm_2c_24b, 2, sRate);
-                            break;
-                        default:
-                            h->wav.stream = NULL;
-                            break;
-                    }
-                } else {
-                    h->wav.stream = NULL;
-                }
-
-                if (h->wav.originalData != NULL) FREE(h->wav.originalData);
-
-                h->wav.originalData    = NULL;
-                h->wav.originalDataLen = 0;
-
-                h->wav.bytesPerMilliSec = (h->wav.rate *
-                    h->wav.channels * (h->wav.bits >> 3)) / 1000;
-
-                if(h->wav.stream != NULL) {
-                    mQ234_EffectModule_addPlayer(
-                        g_QSoundGM[gmIdx].EM135, h->wav.stream);
-                    h->wav.em = g_QSoundGM[gmIdx].EM135;
-                }
-
-                JC_MM_DEBUG_PRINT4( 
-                    "wavBuffered: bytes=%d rate=%d channels=%d bits=%d\n",
-                    h->wav.streamBufferLen, h->wav.rate,
-                    h->wav.channels, h->wav.bits);
-            }
-        }
-        break;
-
         case JC_FMT_AMR:
-        {
-            if( NULL != buffer )
-            {
-                JC_MM_ASSERT( buffer == h->wav.originalData );
-            }
-            else
-            {
-                if( NULL != h->wav.stream )
-                {
-                    if( NULL != h->wav.em )
-                    {
-                        mQ234_EffectModule_removePlayer( h->wav.em, h->wav.stream );
-                        h->wav.em = NULL;
-                    }
-                    mQ234_WaveStream_Destroy( h->wav.stream );
-                    h->wav.stream = NULL;
-                }
-
-                AMRDecoder_setStreamPlayerData(&(h->wav));
-
-                switch( h->wav.channels )
-                {
-                case 1:
-                    h->wav.stream = mQ234_CreateWaveStreamPlayer(&(h->wav), fill_pcm_1c_16b, 1, h->wav.rate );
-                    break;
-                case 2:
-                    h->wav.stream = mQ234_CreateWaveStreamPlayer(&(h->wav), fill_pcm_2c_16b, 2, h->wav.rate );
-                    break;
-                default:
-                    h->wav.stream = NULL;
-                    break;
-                }
-
-                if( NULL != h->wav.originalData )
-                {
-                    FREE(h->wav.originalData);
-                    h->wav.originalData = NULL;
-                }
-                h->wav.originalDataLen = 0;
-
-                //h->amr.bytesPerMilliSec = 2;
-                h->wav.bytesPerMilliSec = (h->wav.rate * h->wav.channels * (16 >> 3)) / 1000;
-
-                if(h->wav.stream != NULL)
-                {
-                    e = mQ234_EffectModule_addPlayer(g_QSoundGM[gmIdx].EM135, h->wav.stream);
-                    h->wav.em = g_QSoundGM[gmIdx].EM135;
-                    JC_MM_ASSERT( MQ234_ERROR_NO_ERROR == e );
-                }
-
-                //printf( "audio_qs_do_buffering AMR: bytes=%d stream=0x%08X channels=%d\n",
-                //    h->wav.streamBufferLen, (int)h->wav.stream, h->wav.channels);
-            }
-        }
-        break;
+            JC_MM_ASSERT( buffer == h->wav.originalData );
+            break;
 
         default:
             JC_MM_DEBUG_PRINT1(
                 "[jc-media] Trying to play unsupported media type %d\n",
                 h->hdr.mediaType);
             JC_MM_ASSERT( FALSE );
+        }
     }
 
     *need_more_data = JAVACALL_FALSE;
