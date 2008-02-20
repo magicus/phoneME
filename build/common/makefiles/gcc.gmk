@@ -119,7 +119,10 @@ ASMGEN_OPTIONS	+= +GenerateGNUCode
 
 ifneq ($(TARGET_VM), cdc_vm)
 # CDC port is not yet clear of warnings.
+ifneq ($(TARGET_OS), javacall)
+# javacall is not clear of warnings
 EXTRA_CFLAGS	+= -Werror
+endif
 endif
 
 EXTRA_CFLAGS	+= -W -Wall
