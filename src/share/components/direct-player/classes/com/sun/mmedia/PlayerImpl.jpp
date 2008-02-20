@@ -47,10 +47,10 @@ public class PlayerImpl implements Player {
     private final static boolean debug = false;
     // #endif ]
 
-	public PlayerStateSubscriber state_subscriber = null;
+    public PlayerStateSubscriber state_subscriber = null;
 
     protected BasicPlayer playerInst = null;
-	public    BasicPlayer getPlayerInst(){ return playerInst; };
+    public    BasicPlayer getPlayerInst(){ return playerInst; };
     
     protected DataSource  source;
     protected SourceStream stream;
@@ -119,16 +119,6 @@ public class PlayerImpl implements Player {
     // Provide whole media content size, if known
     protected static native void nSetWholeContentSize(int hNative, long contentSize);
 
-
-    /** Unknown media format */
-    static final String MEDIA_FORMAT_UNKNOWN = "UNKNOWN";
-    /** Unsupported media format */
-    static final String MEDIA_FORMAT_UNSUPPORTED = "UNSUPPORTED";
-    /** Device Tone format */
-    static final String MEDIA_FORMAT_DEVICE_TONE = "DEVICE_TONE";
-    /** Device MIDI format */
-    static final String MEDIA_FORMAT_DEVICE_MIDI = "DEVICE_MIDI";
-
     private static String PL_ERR_SH = "Cannot create a Player: ";
     
     /**
@@ -153,10 +143,10 @@ public class PlayerImpl implements Player {
         }
 
         mediaFormat     = nGetMediaFormat(hNative);
-        if (mediaFormat.equals(MEDIA_FORMAT_UNSUPPORTED)) {
+        if (mediaFormat.equals(BasicPlayer.MEDIA_FORMAT_UNSUPPORTED)) {
             /* verify if handled by Java */
             mediaFormat = Configuration.getConfiguration().ext2Format(source.getLocator());
-            if (mediaFormat == null || mediaFormat.equals(MEDIA_FORMAT_UNSUPPORTED)) {
+            if (mediaFormat == null || mediaFormat.equals(BasicPlayer.MEDIA_FORMAT_UNSUPPORTED)) {
                 nTerm(hNative);
                 throw new MediaException("Unsupported Media Format");
             } else {
@@ -164,30 +154,35 @@ public class PlayerImpl implements Player {
             }
         }
 
-        if (locator != null && mediaFormat.equals(MEDIA_FORMAT_UNKNOWN)) {
+        if (locator != null && mediaFormat.equals(BasicPlayer.MEDIA_FORMAT_UNKNOWN)) {
             if (locator.equals(Manager.TONE_DEVICE_LOCATOR)) {
-                mediaFormat = MEDIA_FORMAT_DEVICE_TONE;
+                mediaFormat = BasicPlayer.MEDIA_FORMAT_DEVICE_TONE;
+                handledByDevice = true;
             } else if (locator.equals(Manager.MIDI_DEVICE_LOCATOR)) {
-                mediaFormat = MEDIA_FORMAT_DEVICE_MIDI;
+                mediaFormat = BasicPlayer.MEDIA_FORMAT_DEVICE_MIDI;
+                handledByDevice = true;
             }
-        } else if (locator != null && locator.startsWith(DefaultConfiguration.CAPTURE_LOCATOR)) {
-            handledByDevice = true;
-        }
-
-        if (mediaFormat.equals(MEDIA_FORMAT_DEVICE_TONE) || mediaFormat.equals(MEDIA_FORMAT_DEVICE_MIDI)) {
+        } else if (locator != null && locator.startsWith(Configuration.CAPTURE_LOCATOR)) {
+            if (locator.startsWith(Configuration.AUDIO_CAPTURE_LOCATOR)) {
+                mediaFormat = BasicPlayer.MEDIA_FORMAT_CAPTURE_AUDIO;
+            } else if (locator.startsWith(Configuration.VIDEO_CAPTURE_LOCATOR)) {
+                mediaFormat = BasicPlayer.MEDIA_FORMAT_CAPTURE_VIDEO;
+            } else if (locator.startsWith(Configuration.RADIO_CAPTURE_LOCATOR)) {
+                mediaFormat = BasicPlayer.MEDIA_FORMAT_CAPTURE_RADIO;
+            }
             handledByDevice = true;
         }
 
         if (!handledByJava && !handledByDevice) {
             handledByDevice = nIsHandledByDevice(hNative);
         }
-        this.source     = source;
+
+        this.source = source;
 
         if (!handledByDevice) {
             source.connect();
             stream = source.getStreams()[0];
         }
-
     }
 
         
@@ -223,22 +218,22 @@ public class PlayerImpl implements Player {
         /* realize native player */
         nRealize(hNative, source.getContentType());
 
-        if (mediaFormat.equals(MEDIA_FORMAT_UNKNOWN)) {
+        if (mediaFormat.equals(BasicPlayer.MEDIA_FORMAT_UNKNOWN)) {
             /* ask media format if unknown */
             mediaFormat     = nGetMediaFormat(hNative);
             if (handledByDevice) {
                 /* In case of handledByDevice media format
                  * should be known on this stage 
                  */
-                if (mediaFormat.equals(MEDIA_FORMAT_UNKNOWN)) {
+                if (mediaFormat.equals(BasicPlayer.MEDIA_FORMAT_UNKNOWN)) {
                     throw new MediaException("Unknown Media Format");
                 }
-                if (mediaFormat.equals(MEDIA_FORMAT_UNSUPPORTED)) {
+                if (mediaFormat.equals(BasicPlayer.MEDIA_FORMAT_UNSUPPORTED)) {
                     throw new MediaException("Unsupported Media Format");
                 }
             } else {
                 /* predownload media data to determine media format */
-                if (mediaFormat.equals(MEDIA_FORMAT_UNKNOWN)) {
+                if (mediaFormat.equals(BasicPlayer.MEDIA_FORMAT_UNKNOWN)) {
                     long contLength = stream.getContentLength();
                     boolean need_more = true;
 
@@ -278,13 +273,13 @@ public class PlayerImpl implements Player {
                             need_more = false;
                         }
                         mediaFormat     = nGetMediaFormat(hNative);
-                    } while(mediaFormat.equals(MEDIA_FORMAT_UNKNOWN) && need_more);
+                    } while (mediaFormat.equals(BasicPlayer.MEDIA_FORMAT_UNKNOWN) && need_more);
                 }
 
-                if (mediaFormat.equals(MEDIA_FORMAT_UNSUPPORTED)) {
+                if (mediaFormat.equals(BasicPlayer.MEDIA_FORMAT_UNSUPPORTED)) {
                     throw new MediaException("Unsupported Media Format");
                 }
-                if (mediaFormat.equals(MEDIA_FORMAT_UNKNOWN)) {
+                if (mediaFormat.equals(BasicPlayer.MEDIA_FORMAT_UNKNOWN)) {
                     throw new MediaException("Unknown media Format");
                 }
             }
