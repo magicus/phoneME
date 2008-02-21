@@ -1,0 +1,49 @@
+<!--
+     
+
+   Copyright  2007  Sun Microsystems, Inc. All rights reserved.
+-->
+  <body>
+  This package consists of JUMP JSROP event system abstractions. All optional JSRs 
+  that need to receive native (platform) asynchronous events should use this module.
+
+  <p>
+  All native events are transferred from an underlying platform by means of JavaCall 
+  events mechanism and the respective JavaCall API. Each event consists of the 
+  following fields:
+  <ul>
+  <li><code>type</code> - an integer representing number of the JSR that corresponds 
+  to this event;
+  <li><code>id</code> - an integer that allows to distinguish event sub-types within 
+  one JSR;
+  <li><code>data</code> - a byte array holding whatever additional data is needed to 
+  be passed with the event (data size is limited by the JavaCall implementation).
+  </ul>
+
+  <p>
+  Each JSR that is interested in some type of platform events must have a class 
+  (probably, also an executive module) that implements <code>JUMPEventHandler</code> 
+  interface, and register it as a handler for a certain type of events. For instance, 
+  this is how JSR-75 module will register itself:
+  <pre>
+  public class FileSystemModuleImpl implements JUMPModule, JUMPEventHandler {
+      public void load(Map config) {
+          JUMPEventQueueModule eventQueue = JUMPEventQueueModuleFactory.getInstance().getModule();
+          eventQueue.registerEventHandler(75, this);
+          // more initialization here...
+      }
+  
+      public void handleEvent(int id, byte[] data) {
+          // event processing code here...
+      }
+  
+      // more fields and methods...
+  }
+  </pre>
+
+  <p>
+  After a handler has been registered, all events of the respective type that appear 
+  in the queue will be passed to this handler for processing. The event handler 
+  itself may process events in a separate thread, if it is reasonable.
+
+  </body>
