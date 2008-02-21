@@ -108,44 +108,6 @@ $(JAVACALL_OUTPUT_OBJ_DIR)/%.obj: %.c
 	@echo -n "...compiling: "
 	@$(COMPILE.c) $(OUTPUT_OPTION) `$(call fixcygpath, $<)`	
 
-ifeq ($(USE_JSR_120),true)
-
-ifeq ($(USE_CDC_EMULATION),)
-LINK=link.exe
-LINK_FLAGS=/nologo /dll /subsystem:windowsce,5.01 /NODEFAULTLIB:"oldnames.lib"
-LINK_LIBS=aygshell.lib cemapi.lib coredll.lib ole32.lib oleaut32.lib uuid.lib
-LIBPATH_WIN += `$(call fixcygpath, "$(VC_DIR)/ce/lib/armv4i")`
-LIBPATH += /LIBPATH:"$(LIBPATH_WIN)"
-
-JSMS_SRC_PATH=$(JSR_120_JC_IMPL_PATH)/$(JSR_120_JC_DIR)/dll
-JSMS_SOURCES=$(JSMS_SRC_PATH)/jsms.cpp
-JSMS_OBJECTS=`$(call fixcygpath, $(JAVACALL_OUTPUT_OBJ_DIR)/jsms.obj)`
-JSMS_DEF=`$(call fixcygpath, $(JSMS_SRC_PATH)/jsms.def)`
-
-JSMS_OUTPUT_OPTION=-Fo$(JSMS_OBJECTS) \
-                   -Fp$(JAVACALL_OUTPUT_OBJ_DIR)/jsms \
-                   -Fd$(JAVACALL_OUTPUT_OBJ_DIR)/jsms
-
-$(JAVACALL_OUTPUT_LIB_DIR)/jsms.dll: $(JSMS_SOURCES)
-	@echo -n "...compiling: "
-	$(COMPILE.c) $(JSMS_OUTPUT_OPTION) `$(call fixcygpath, $(JSMS_SOURCES))`
-	@echo "...Generating Library: $@"
-	@$(LINK) $(LINK_FLAGS) $(LIBPATH) \
-            $(JSMS_OBJECTS) \
-            /def:$(JSMS_DEF) \
-            /OUT:`$(call fixcygpath, $(JAVACALL_OUTPUT_LIB_DIR)/jsms.dll)` \
-            $(LINK_LIBS) /entry:DllMain
-else
-$(JAVACALL_OUTPUT_LIB_DIR)/jsms.dll:
-endif
-
-else
-
-$(JAVACALL_OUTPUT_LIB_DIR)/jsms.dll:
-
-endif
-
-
 $(JAVACALL_OUTPUT_OBJ_DIR)/javacall_static_properties.obj: $(STATIC_PROPERTIES_C)
 	@echo -n "...compiling: "
 	@$(COMPILE.c) $(OUTPUT_OPTION) `$(call fixcygpath, $<)`	
@@ -157,7 +119,6 @@ $(JAVACALL_OUTPUT_LIB_DIR)/javacall$(BUILD_EXT).lib: \
 	$(patsubst %,$(JAVACALL_OUTPUT_OBJ_DIR)/%,$(UTILITY_OBJECTS)) \
 	$(patsubst %,$(JAVACALL_OUTPUT_OBJ_DIR)/%,$(PROPERTY_OBJECTS)) \
 	$(SPECIFIC_OBJECTS)
-	@$(MAKE) $(JAVACALL_OUTPUT_LIB_DIR)/jsms.dll
 	@echo "...Generating Library: $@"
 	@$(AR) -out:`$(call fixcygpath, $@)` $(ARFLAGS) `$(call fixcygpath, $^ $(ADDITIONAL_LIBS))`
 	@$(MAKE) JAVACALL_EXTRA_LIBS
