@@ -69,6 +69,7 @@ information or have any questions.
         <xsl:text>) {&#10;        super(props);&#10;</xsl:text>
         <xsl:apply-templates select="." mode="Screen-init-extra-members"/>
         <xsl:text>    }&#10;&#10;</xsl:text>
+        <xsl:apply-templates select="." mode="Screen-progress-define"/>
         <xsl:apply-templates select="." mode="Screen-complete-define"/>
         <xsl:text>}&#10;</xsl:text>
     </xsl:template>
@@ -115,10 +116,27 @@ information or have any questions.
 
 
     <!--
+        Additional stuff for screen with progress item(s).
+    -->
+    <xsl:template match="screen[not(progress)]" mode="Screen-progress-define" />
+    <xsl:template match="screen[progress]" mode="Screen-progress-define">
+        <xsl:text>&#10;</xsl:text>
+        <xsl:text>    public void updateProgress(Object progressId, int value, int max) {&#10;</xsl:text>
+        <xsl:apply-templates select="progress" mode="Screen-progress-define" />
+        <xsl:text>        throw new RuntimeException(progressId + " not found");&#10;</xsl:text>
+        <xsl:text>    }&#10;</xsl:text>
+    </xsl:template>
+
+
+    <!--
         Toolkit specific screen initialization.
     -->
     <xsl:template match="screen" mode="Screen-complete-define">
-        <xsl:message terminate="yes">This rule must never get called, it must be overridden.&#10;</xsl:message>
+        <xsl:call-template name="fatal"/>
+    </xsl:template>
+
+    <xsl:template match="screen/progress" mode="Screen-progress-define">
+        <xsl:call-template name="fatal"/>
     </xsl:template>
 
 

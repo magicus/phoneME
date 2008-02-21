@@ -31,6 +31,7 @@ import javax.microedition.lcdui.Display;
 import javax.microedition.lcdui.Command;
 import javax.microedition.lcdui.Spacer;
 import javax.microedition.lcdui.Form;
+import javax.microedition.lcdui.List;
 import javax.microedition.lcdui.Item;
 
 
@@ -59,12 +60,17 @@ public abstract class Screen extends BaseScreen {
         };
     }
 
+    static List
+    createList() {
+        return null;
+    }
+
     private static void
     recalcSpacers(Form f) {
-        // ROW_EXTRA_SPACE constant addresses extra space form adds to 
-        // every row. The exact value is implemntation dependant, so use some 
-        // reasonable though big enough default value. As we deal with small 
-        // screens we can expect LCDUI implementation to be responsible 
+        // ROW_EXTRA_SPACE constant addresses extra space form adds to
+        // every row. The exact value is implemntation dependant, so use some
+        // reasonable though big enough default value. As we deal with small
+        // screens we can expect LCDUI implementation to be responsible
         // enough not to waste much screen space just to separate rows.
         final int ROW_EXTRA_SPACE = 5;
 
@@ -79,14 +85,14 @@ public abstract class Screen extends BaseScreen {
                 spacers[spacersCount++] = s;
             }
             else {
-                // Item preferred height depends on its current preferred 
-                // width, so set it to be minimum between screen width and 
+                // Item preferred height depends on its current preferred
+                // width, so set it to be minimum between screen width and
                 // default item's preferred width.
                 item.setPreferredSize(
                     Math.min(
-                        item.getPreferredWidth(), 
+                        item.getPreferredWidth(),
                         Math.max(0, f.getWidth() - 2 * ROW_EXTRA_SPACE)),
-                    -1);                
+                    -1);
                 itemsHeight += item.getPreferredHeight();
                 item.setPreferredSize(-1, -1);
 

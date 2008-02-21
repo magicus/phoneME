@@ -29,4 +29,5 @@ package com.sun.ams.ui;
 
 public interface CommandListener {
     public void onCommand(Screen sender, int commandId);
+    public void onDynamicCommand(Screen sender, int commandId, int idx);
 }

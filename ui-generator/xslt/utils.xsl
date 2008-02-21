@@ -146,4 +146,8 @@ information or have any questions.
         </xsl:choose>
     </xsl:template>
 
+
+    <xsl:template name="fatal">
+        <xsl:message terminate="yes">This rule must never get called, it must be overridden.&#10;</xsl:message>
+    </xsl:template>
 </xsl:stylesheet>

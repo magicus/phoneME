@@ -71,7 +71,7 @@ public class BaseScreen implements StringIds {
         return returnString.toString();
     }
 
-    protected String getProperty(String key) {
+    protected Object getProperty(String key) {
         return props.get(key);
     }
 
