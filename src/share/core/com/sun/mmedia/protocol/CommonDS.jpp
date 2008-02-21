@@ -44,6 +44,8 @@ public class CommonDS extends BasicDS implements SourceStream {
 
     private long contentLength = -1;
     private InputStream inputStream;
+    private ContentDescriptor contentDescriptor = null;
+
 
     public void setLocator(String ml) throws MediaException {
         super.setLocator(urlCvrt(ml));
@@ -101,7 +103,7 @@ public class CommonDS extends BasicDS implements SourceStream {
 
         try {
             String locStr = locator.toLowerCase();
-            if (locStr.startsWith("http:")) {
+            if (locStr.startsWith("http:") || locStr.startsWith("https:")) {
                 HttpConnection httpCon = 
                     (HttpConnection)Connector.open(locator);
                 int rescode = httpCon.getResponseCode();
@@ -111,24 +113,21 @@ public class CommonDS extends BasicDS implements SourceStream {
                     httpCon.close();
                     goodurl = false;
                 } else {
+                    String ct = httpCon.getType();
+                    if (ct != null) {
+                        int idx;
+                        if ((idx = ct.indexOf(',')) > 0) {
+                            ct = ct.substring(0,idx);
+                        } else if ((idx = ct.indexOf(';')) > 0) {
+                            ct = ct.substring(0,idx);
+                        } else if ((idx = ct.indexOf(' ')) > 0) {
+                            ct = ct.substring(0,idx);
+                        }
+                        contentDescriptor = new ContentDescriptor(ct);
+                    }
                     inputStream = httpCon.openInputStream();
                     contentLength = httpCon.getLength();
                     httpCon.close();
-                    goodurl = true;
-                }
-            } else if (locStr.startsWith("https:")) {
-                HttpsConnection httpsCon = 
-                    (HttpsConnection)Connector.open(locator);
-                int rescode = httpsCon.getResponseCode();
-                // If the response code of HttpsConnection is in the range of 
-                // 4XX and 5XX, that means the connection failed.
-                if (rescode >= 400) {
-                    httpsCon.close();
-                    goodurl = false;
-                } else {
-                    inputStream = httpsCon.openInputStream();
-                    contentLength = httpsCon.getLength();
-                    httpsCon.close();
                     goodurl = true;
                 }
             } else if (locator.startsWith("file:")) {
@@ -170,7 +169,8 @@ public class CommonDS extends BasicDS implements SourceStream {
                 goodurl = true;
             }
         } catch (Exception ex) {
-            throw new IOException("failed to connect" + ex.getMessage());
+            throw new IOException("failed to connect to " + 
+                            locator + " : " + ex.getMessage());
         }
 
         if ( !goodurl)
@@ -220,7 +220,7 @@ public class CommonDS extends BasicDS implements SourceStream {
      * @return    The contentDescriptor value
      */
     public ContentDescriptor getContentDescriptor() {
-        return null;
+        return contentDescriptor;
     }
 
 

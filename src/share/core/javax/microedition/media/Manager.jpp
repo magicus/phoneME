@@ -587,7 +587,6 @@ public final class Manager {
      */
     public static Player createPlayer(String locator)
          throws IOException, MediaException {
-
         if (locator == null) {
             throw new IllegalArgumentException();
         }
@@ -599,81 +598,69 @@ public final class Manager {
         if (debug)
             System.out.println("[mmapi] createPlayer with " + locator);
 
-        /*
-         * TBD: in general all capture devices 
-         * shall be checked for 
-         * 1). capture://<device>
-         * 2). capture://<device>?<media_encodings>
-         * 3). all other combinations are invalid
-         *
-         * These is second type of URIs: device://<name>. 
-         *
-         * According to RFC2396 (Generic Syntax of URIs), 
-         * <scheme>://<device> part is case incensitive,
-         * but others (media encodings in our case) are case sensitive...
-         */
-        if (
-            locStr.equals(TONE_DEVICE_LOCATOR)
-            // #ifndef ABB [
-            || locStr.equals(MIDI_DEVICE_LOCATOR)
-            // #endif ]
-           )
-        {
-            locator = locStr;
-            found = true;
-        // #ifndef ABB [
-        } else if (locStr.startsWith(DefaultConfiguration.CAPTURE_LOCATOR))
+        /* Verify if Protocol is supported */
+        String theProtocol = null;
+        int idx = locStr.indexOf(':');
+
+        if (idx != -1) {
+            theProtocol = locStr.substring(0, idx);
+        } else {
+            throw new MediaException("Malformed locator");
+        }
+        String supportedProtocols[] = getSupportedProtocols(null);
+        for (int i = 0; i < supportedProtocols.length && !found; i++) {
+            if (theProtocol.equals(supportedProtocols[i])) {
+                found = true;
+            }
+        }
+
+        if (!found) {
+            throw new MediaException("Player cannot be created for " + locator + 
+                                    " Unsupported protocol " + theProtocol);
+        }
+
+        if (locStr.startsWith(DefaultConfiguration.CAPTURE_LOCATOR))
         {
             // separate device & encodings
             int encInd = locator.indexOf('?');
             String encStr = null;
             if (encInd > 0) {
-                encStr = locator.substring(encInd + 1);
                 locStr = locStr.substring(0, encInd);
+
+                idx = locator.indexOf("encoding=");
+                if (idx != -1) {
+                    encStr = locator.substring(idx+9);
+                    if (encStr != null) {
+                        idx = encStr.indexOf('&');
+                        if (idx > 0) {
+                            encStr = encStr.substring(0, idx);
+                        }
+                        encStr = encStr.toLowerCase();
+                    }
+                }
+
             }
-            String supported = null;
             String encodings = null;
             if (locStr.equals(DefaultConfiguration.AUDIO_CAPTURE_LOCATOR)) {
-                supported = System.getProperty("supports.audio.capture");
-                if (supported != null && supported.equals("true")) {
-                    encodings = System.getProperty("audio.encodings");
-                    /* verify encodiing parameters */
-                    found = true;
+                String supported = System.getProperty("supports.audio.capture");
+                encodings = System.getProperty("audio.encodings");
+                if (supported == null || supported.equals("false") || encodings == null) {
+                    found = false;
                 }
             } else if (locStr.equals(DefaultConfiguration.VIDEO_CAPTURE_LOCATOR)) {
-                supported = System.getProperty("supports.video.capture");
-                if (supported != null && supported.equals("true")) {
-                    encodings = System.getProperty("video.encodings");
-                    /* verify encodiing parameters */
-                    found = true;
+                String supported = System.getProperty("supports.video.capture");
+                encodings = System.getProperty("video.encodings");
+                if (supported == null || supported.equals("false") || encodings == null) {
+                    found = false;
                 }
-            } else {
-                found = true;
             }
-        // #endif ]
-        } else {
-            // not in the list of predefined locators, 
-            // find handler by extension
-            String theProtocol = null;
-            int idx = locStr.indexOf(':');
-
-            if (idx != -1) {
-                theProtocol = locStr.substring(0, idx);
-            } else {
-                throw new MediaException("Malformed locator");
-            }
-
-            String[] supported = getSupportedProtocols(null);
-            for (int i = 0; i < supported.length; i++) {
-                if (theProtocol.equals(supported[i])) {
-                    found = true;
-                    break;
-                }
+            if (encStr != null && encodings != null && encodings.indexOf(encStr) == -1) {
+                found = false;
             }
         }
 
         if (!found) {
-                throw new MediaException("Player cannot be created for " + locator);
+            throw new MediaException("Player cannot be created for " + locator);
         }
 
         DataSource ds = createDataSource(locator);
@@ -681,6 +668,27 @@ public final class Manager {
 
         try {
             pp = createPlayer(ds);
+            SourceStream s = ds.getStreams()[0];
+            if (s != null && s.getContentDescriptor() != null) {
+                /* verify content type determined by http protocol */
+                String type = s.getContentDescriptor().getContentType();
+                if (type != null) {
+                    String supportedContentTypes[] = getSupportedContentTypes(theProtocol);
+                    found = false;
+                    if (supportedContentTypes != null) {
+                        for(int i=0; i<supportedContentTypes.length && !found; i++) {
+                            if (type.equals(supportedContentTypes[i])) {
+                                found = true;
+                            }
+                        }
+                    }
+                }
+                if (!found) {
+                    pp.close();
+                    throw new MediaException("Player cannot be created for " + locator);
+                }
+            }
+
         } catch (MediaException ex) {
             ds.disconnect();
             throw ex;
@@ -688,7 +696,6 @@ public final class Manager {
             ds.disconnect();
             throw ex;
         }
-
         return pp;
     }
 
@@ -840,6 +847,28 @@ public final class Manager {
             throw new IllegalArgumentException();
         }
 
+        String type = source.getContentType();
+        if (type != null) {
+            String theProtocol = null;
+            String locator = source.getLocator();
+            if (locator != null) {
+                int idx = locator.indexOf(':');
+                if (idx != -1) {
+                    theProtocol = locator.substring(0, idx);
+                }
+            }
+            String supportedContentTypes[] = getSupportedContentTypes(theProtocol);
+            boolean found = false;
+            for(int i=0; i<supportedContentTypes.length && !found; i++) {
+                if (type.equals(supportedContentTypes[i])) {
+                    found = true;
+                }
+            }
+            if (!found) {
+                throw new MediaException("Player cannot be created for " + type);
+            }
+        }
+
         PlayerImpl p = new PlayerImpl(source);
 
         return p;
@@ -883,7 +912,11 @@ public final class Manager {
             DataSource source = (DataSource) protoClass.newInstance();
             // ... and get it connected ....
             ((BasicDS) source).setLocator(locator);
-
+            if (locator.equals(TONE_DEVICE_LOCATOR)) {
+                ((BasicDS) source).setContentType("audio/x-tone-seq");
+            } else if (locator.equals(MIDI_DEVICE_LOCATOR)) {
+                ((BasicDS) source).setContentType("audio/midi");
+            }
             return source;
         } catch (MediaException e) {
             throw e;
