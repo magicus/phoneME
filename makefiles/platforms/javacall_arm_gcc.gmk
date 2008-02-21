@@ -33,10 +33,7 @@ PCSL_CPU=arm
 FILE_MODULE=javacall
 NETWORK_MODULE=javacall
 MEMORY_PORT_MODULE=javacall
-#MEMORY_MODULE=<by default - malloc>
-# define chunk memory implementation and src directory
-PCSL_CHUNKMEM_IMPL=pcsl_chunkmmap_linux
-PCSL_CHUNKMEM_DIR=$(PCSL_DIR)/memory/malloc
+MEMORY_MODULE=heap
 
 PRINT_MODULE=javacall
 
