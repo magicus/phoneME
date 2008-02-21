@@ -557,68 +557,6 @@ public class Protocol extends ProtocolBase {
         return openPrimInternal(name, mode, timeouts);
     }
 
-
-    /*
-     * StreamConnection Interface
-     */
-
-    /**
-     * Open and return an input stream for a connection.
-     * This method always throw
-     * <code>IllegalArgumentException</code>.
-     *
-     * @return                              An input stream.
-     * @exception IOException               if an I/O error occurs.
-     * @exception IllegalArgumentException  is thrown for all requests.
-     */
-    public InputStream openInputStream() throws IOException {
-
-        throw new IllegalArgumentException("Not supported");
-    }
-
-    /**
-     * Open and return a data input stream for a connection.
-     * This method always throw
-     * <code>IllegalArgumentException</code>.
-     *a
-     * @return                              An input stream.
-     * @exception IOException               if an I/O error occurs.
-     * @exception IllegalArgumentException  is thrown for all requests.
-     */
-    public DataInputStream openDataInputStream() throws IOException {
-
-        throw new IllegalArgumentException("Not supported");
-    }
-
-    /**
-     * Open and return an output stream for a connection.
-     * This method always throw
-     * <code>IllegalArgumentException</code>.
-     *
-     * @return                              An output stream.
-     * @exception IOException               if an I/O error occurs.
-     * @exception IllegalArgumentException  is thrown for all requests.
-     */
-    public OutputStream openOutputStream() throws IOException {
-
-        throw new IllegalArgumentException("Not supported");
-    }
-
-    /**
-     * Open and return a data output stream for a connection.
-     * This method always throw
-     * <code>IllegalArgumentException</code>.
-     *
-     * @return                              An output stream.
-     * @exception IOException               if an I/O error occurs.
-     * @exception IllegalArgumentException  is thrown for all requests.
-     */
-    public DataOutputStream openDataOutputStream() throws IOException {
-
-        throw new IllegalArgumentException("Not supported");
-    }
-
-
     /*
      * Protocol members
      */
