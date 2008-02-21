@@ -58,6 +58,11 @@ public class HttpUrl {
     /** Domain of the host or null. */
     public String domain;
 
+    /** State HEX - parsing 16-bit hex address. */
+    private static final int HEX = 0;
+    /** State PREFIXLEN - parsing the deximal prefix length. */
+    private static final int PREFIXLEN = 1;
+
     /**
      * Construct a HttpUrl.
      *
@@ -282,15 +287,21 @@ public class HttpUrl {
         
         // find the machine name and domain, if not host is not an IP address
         if (host.charAt(0) == '[') {
-            // IP v6 address
+            if (!isValidIPv6Address(host)) {
+                throw new IllegalArgumentException("invalid IPv6 format");
+            }
             return;
         }
 
-        lastDot = host.lastIndexOf('.');
-        if (lastDot != -1 && host.length() > (lastDot + 1) &&
-            Character.isDigit(host.charAt(lastDot + 1))) {
-            // IP v4 address
+        if (Character.isDigit(host.charAt(0))) {
+            if (!isValidIPv4Address(host)) {
+                throw new IllegalArgumentException("invalid IPv4 format");
+            }
             return;
+        }
+
+        if (!isValidHostName(host)) {
+            throw new IllegalArgumentException("invalid host format");
         }
 
         startOfDomain = host.indexOf('.');
@@ -391,4 +402,151 @@ public class HttpUrl {
 
         return url.toString();
     }
+
+    /**
+     * Checks is IPv6 address has a valid format.
+     *
+     * @param address the string representation of IPv6 address
+     * @return true when IPv6 address has valid format else false
+     */
+    private boolean isValidIPv6Address(String address) {
+        int addressLength = address.length();
+        if (addressLength < 3) { // empty IPv6
+            return false;
+        }
+        if (!(address.charAt(addressLength - 1) == ']')) {
+            return false;
+        }
+        String IPv6 = address.substring(1, addressLength - 1);
+        // Format according to RFC 2373
+        int IPv6Length = addressLength - 2;
+        int ptrChar = 0;
+        int hexCounter = 0; // number of hex digits in 16-bit piece
+        int numHexPieces = 0; // number of 16-bit pieces in the address
+        int state = HEX;
+        boolean isDec = true;
+        int currVal = 0;
+        char currChar;
+        int prevPiecePos = 0;
+        while (ptrChar < IPv6Length) {
+            currChar = IPv6.charAt(ptrChar++);
+            switch (state) {
+                case HEX:
+                    switch (currChar) {
+                        case ':':
+                            if (++numHexPieces > 8) {
+                                return false;
+                            }
+                            hexCounter = 0;
+                            isDec = true;
+                            currVal = 0;
+                            prevPiecePos = ptrChar;
+                            break;
+                        case '.': // next symbols IPV4
+                            if (!isDec || hexCounter > 3 ||
+                                currVal > 255 || numHexPieces != 6) {
+                                return false;
+                            }
+                            return isValidIPv4Address(IPv6.substring(ptrChar));
+                        case '/':
+                            state = PREFIXLEN;
+                            break;
+                        default:
+                            if (Character.isDigit(currChar) && isDec) {
+                                currVal = currVal*10 + currChar - '0';
+                            } else if ("ABCDEFabcdef".indexOf(currChar) > -1) {
+                                isDec = false;
+                            } else {
+                                return false;
+                            }
+                            if (++hexCounter > 4) {
+                                return false;
+                            }
+                            break;
+                    } // HEX state
+                    break;
+                case PREFIXLEN:
+                    if (!Character.isDigit(currChar)) {
+                        return false;
+                    }
+                    break;
+            } // switch staea
+        } // while
+        return true;
+    }
+
+    /**
+     * Checks is IPv4 address has a valid format.
+     *
+     * @param address the string representation of IPv4 address
+     * @return true when IPv4 address has valid format else false
+     */
+    private boolean isValidIPv4Address(String address) {
+        if (address.length() < 7) { // less than 0.0.0.0
+            return false;
+        }
+        int ptrChar = 0;
+        int decCounter = 0; // number of dec digits in 8-bit piece
+        int numDecPieces = 0; // number of 8-bit pieces in the address
+        int currVal = 0;
+        char currChar;
+        char prevChar = 0;
+        while (ptrChar < address.length()) {
+            currChar = address.charAt(ptrChar++);
+            if (currChar == '.') {
+                if (prevChar == '.') {
+                    return false;
+                }
+                if (++numDecPieces > 4) {
+                    return false;
+                }
+                currVal = 0;
+                decCounter = 0;
+            } else if (Character.isDigit(currChar)) {
+                if (++decCounter > 3) {
+                    return false;
+                }
+                currVal = currVal*10 + currChar - '0';
+                if (currVal > 255) {
+                    return false;
+                }
+            } else {
+                return false;
+            }
+            prevChar = currChar;
+        }
+        return true;
+    }
+
+    /**
+     * Checks is host name has a valid format (RFC 2396).
+     *
+     * @param hose the host name for checking
+     * @return true when the host name has a valid format
+     */
+    private boolean isValidHostName(String host) {
+        char currChar;
+        int ptrChar = 0;
+        int lenDomain = 0;
+        while (ptrChar < host.length()) {
+            currChar = host.charAt(ptrChar++);
+            if (currChar == '.') {
+                if (lenDomain == 0) {
+                    return false;
+                }
+                lenDomain = 0;
+            } else if (currChar == '-' || Character.isDigit(currChar)) {
+                if (lenDomain == 0) {
+                    return false;
+                }
+                lenDomain++;
+            } else if (Character.isLowerCase(currChar) || Character.isUpperCase(currChar)) {
+                lenDomain++;
+            } else {
+                return false;
+            }
+        }
+        return true;
+    }
+
 }
