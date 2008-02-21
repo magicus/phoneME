@@ -100,6 +100,19 @@ public:
     CLASS_PREPS_SENT   = 2
   };
 
+#if ENABLE_ISOLATES
+  void set_connection_confirmed(int connection_confirmed) {
+    return int_field_put(connection_confirmed_offset(), connection_confirmed);
+  }
+  int connection_confirmed() {
+    return int_field(connection_confirmed_offset());
+  }
+private:
+  static int connection_confirmed_offset() {
+    return (FIELD_OFFSET(TransportDesc, _connection_confirmed));
+  }
+#endif
+
 private:
   static int ops_offset() { return FIELD_OFFSET(TransportDesc, _ops); }
   static int next_offset() { return FIELD_OFFSET(TransportDesc, _next); }

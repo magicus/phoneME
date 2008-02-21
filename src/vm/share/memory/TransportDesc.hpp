@@ -31,6 +31,9 @@ public:
   address              _ops;
   int                  _task_id;
   int                  _flags;
+#if ENABLE_ISOLATES
+  int                  _connection_confirmed;
+#endif
 #endif
 protected:
   static jint header_size() { return sizeof(TransportDesc); }

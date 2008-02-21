@@ -345,8 +345,7 @@ Java_com_sun_cldc_isolate_Isolate_isDebuggerConnected(JVM_SINGLE_ARG_TRAPS) {
   IsolateObj::Raw isolate = GET_PARAMETER_AS_OOP(0);
   Task::Raw task = isolate().task();
   Transport::Raw t = task().transport();
-  Transport::transport_op_def_t *ops = t().ops();
-  return ops->initialized(&t);
+  return t().connection_confirmed();
 }
 
 } // extern "C"

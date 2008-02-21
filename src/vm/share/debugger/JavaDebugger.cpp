@@ -718,10 +718,16 @@ JavaDebugger::vendor_hand_shake(PacketInputStream *in,
   versionString =  in->read_string();
   /*major=*/ in->read_byte();
   minor  =   in->read_byte();
-  if (minor < KDP_REQUIRED_MINOR /* 4 */) {
-    Transport *t = in->transport();
-    close_java_debugger(t);
-    tty->print_cr("VM requires newer Debug Agent; minor version >= 4");
+  {
+    Transport::Raw t = in->transport();
+    if (minor < KDP_REQUIRED_MINOR /* 4 */) {
+      close_java_debugger(&t);
+      tty->print_cr("VM requires newer Debug Agent; minor version >= 4");
+#if ENABLE_ISOLATES
+    } else {
+      t().set_connection_confirmed(1);
+#endif
+    }
   }
   out->write_raw_string(kvmString);
   int base_mode = 0x7fff;
@@ -1177,6 +1183,10 @@ void JavaDebugger::close_java_debugger(Transport *t) {
     Oop::Raw null_oop;
     Task::Raw task = Task::get_task(t->task_id());
     task().set_transport(&null_oop);
+  }
+  {
+    Transport::Raw _t = t;
+    _t().set_connection_confirmed(0);
   }
 #endif
     JVMSPI_DebuggerNotification(KNI_FALSE);
