@@ -1134,7 +1134,7 @@ public class X509Certificate implements Certificate {
             caCerts = certStore.getCertificates(cert.getIssuer());
             if (caCerts != null) {
                 // found a known CA no need to go on to the next cert
-                if (! caCerts[0].getSubject().equals(cert.getSubject())) {
+                if (caCerts[0].getSubject() != cert.getSubject()) {
                     subjectNames.addElement(caCerts[0].getSubject());
                 }
 
@@ -1810,14 +1810,14 @@ public class X509Certificate implements Certificate {
         if (keyUsage != -1) {
             tmp.append("\n");
             tmp.append("KeyUsage:");
-            int t = keyUsage;
+            int t = (int) keyUsage;
             for (int i = 0; i < KEY_USAGE.length; i++) {
                 if ((t & 0x01) == 0x01) {
                     tmp.append(" ");
                     tmp.append(KEY_USAGE[i]);
                 }
 
-                t >>>= 1;
+                t = t >>> 1;
             }
         }
 
