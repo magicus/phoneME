@@ -357,7 +357,7 @@ public class Connector {
         try {
             con = (InputConnection)Connector.open(name, Connector.READ);
         } catch (ClassCastException e) {
-            throw new IOException(
+            throw new IllegalArgumentException(
 /* #ifdef VERBOSE_EXCEPTIONS */
 /// skipped                       e.toString()
 /* #endif */
@@ -392,7 +392,7 @@ public class Connector {
         try {
             con = (OutputConnection)Connector.open(name, Connector.WRITE);
         } catch (ClassCastException e) {
-            throw new IOException(
+            throw new IllegalArgumentException(
 /* #ifdef VERBOSE_EXCEPTIONS */
 /// skipped                       e.toString()
 /* #endif */
