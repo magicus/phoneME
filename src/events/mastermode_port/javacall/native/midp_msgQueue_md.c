@@ -206,15 +206,15 @@ void checkForSystemSignal(MidpReentryData* pNewSignal,
 #ifdef ENABLE_JSR_179
     case JSR179_LOCATION_JC_EVENT:
         pNewSignal->waitingFor = event->data.jsr179LocationEvent.event;
-        pNewSignal->descriptor = event->data.jsr179LocationEvent.provider;
+        pNewSignal->descriptor = (int)event->data.jsr179LocationEvent.provider;
         pNewSignal->status = event->data.jsr179LocationEvent.operation_result;
-        REPORT_CALL_TRACE1(LC_NONE, "[jsr179 event] JSR179_LOCATION_SIGNAL %d %d\n", pNewSignal->descriptor, pNewSignal->status);
+        REPORT_CALL_TRACE2(LC_NONE, "[jsr179 event] JSR179_LOCATION_SIGNAL %d %d\n", pNewSignal->descriptor, pNewSignal->status);
         break;
     case JSR179_PROXIMITY_JC_EVENT:
         pNewSignal->waitingFor = JSR179_PROXIMITY_SIGNAL;
-        pNewSignal->descriptor = event->data.jsr179ProximityEvent.provider;
+        pNewSignal->descriptor = (int)event->data.jsr179ProximityEvent.provider;
         pNewSignal->status = event->data.jsr179ProximityEvent.operation_result;
-        REPORT_CALL_TRACE1(LC_NONE, "[jsr179 event] JSR179_PROXIMITY_SIGNAL %d %d\n", pNewSignal->descriptor, pNewSignal->status);
+        REPORT_CALL_TRACE2(LC_NONE, "[jsr179 event] JSR179_PROXIMITY_SIGNAL %d %d\n", pNewSignal->descriptor, pNewSignal->status);
         break;
 #endif
 
