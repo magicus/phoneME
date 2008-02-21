@@ -88,14 +88,17 @@ information or have any questions.
 
         <loadfile property="generated.java.sources" srcfile="${generated.files.list}">
             <filterchain>
-                <prefixlines prefix=","/>
-                <striplinebreaks/>
                 <tokenfilter>
                     <replacestring from="file:///${output-java-dir}/" to=""/>
                 </tokenfilter>
                 <linecontains>
                   <contains value=".java"/>
                 </linecontains>
+                <prefixlines prefix="${package}."/>
+                <replacestring from="." to="/"/>
+                <replacestring from="/java" to=".java"/>
+                <prefixlines prefix=","/>
+                <striplinebreaks/>
             </filterchain>
         </loadfile>
 
@@ -105,15 +108,21 @@ information or have any questions.
                 <fileset dir="../src/classes/shared"/>
                 <fileset dir="../src/classes/${toolkit}"/>
             </path>
-            <flattenmapper/>
+            <chainedmapper>
+                <flattenmapper/>
+                <filtermapper>
+                    <prefixlines prefix="${package}."/>
+                    <replacestring from="." to="/"/>
+                    <replacestring from="/java" to=".java"/>
+                </filtermapper>
+            </chainedmapper>
         </pathconvert>
 
         <mkdir dir="${out.classes}"/>
         <javac  srcdir="../test:../src/classes/shared:../src/classes/${toolkit}:${out.src}"
                 destdir="${out.classes}"
-                classpath="${classpath}">
-            <include name="${java.sources},${generated.java.sources}"/>
-        </javac>
+                classpath="${classpath}"
+                includes="${java.sources},${generated.java.sources}"/>
     </target>
 
     <target name="build-test-midlet" depends="javac">
