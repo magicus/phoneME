@@ -44,12 +44,12 @@ class BinaryAssembler: public BinaryAssemblerCommon {
 #endif    
   }
 
-  PRODUCT_STATIC void emit_raw(int instr);
+  void emit_raw( const int instr ) {
+    emit_code_int( instr );
+  }
 
  public:
-#if defined(PRODUCT) && !USE_COMPILER_COMMENTS
-  static
-#else
+#if !defined(PRODUCT) || USE_COMPILER_COMMENTS
   virtual
 #endif
   void emit(int instr) {
@@ -57,18 +57,15 @@ class BinaryAssembler: public BinaryAssemblerCommon {
 #if !defined(PRODUCT) || USE_COMPILER_COMMENTS
     if (PrintCompiledCodeAsYouGo) { 
        Disassembler d(tty);
-       tty->print("%d:\t", instance()->_code_offset);
+       tty->print("%d:\t", _code_offset );
        tty->print("0x%08x\t", instr);
-       d.disasm(NULL, instr, instance()->_code_offset);
+       d.disasm(NULL, instr, _code_offset );
        tty->cr();
     }
 #endif
     emit_raw(instr);
   }
 
-#if defined(PRODUCT) && !USE_COMPILER_COMMENTS
-  static
-#endif 
   void emit_int(int instr) {
     // emit instruction
 #if !defined(PRODUCT) || USE_COMPILER_COMMENTS
@@ -81,9 +78,6 @@ class BinaryAssembler: public BinaryAssemblerCommon {
   }
 
 #if ENABLE_EMBEDDED_CALLINFO
-#if defined(PRODUCT) && !USE_COMPILER_COMMENTS
-  static
-#endif 
   void emit_ci(CallInfo info) {
     // emit call info
 #if !defined(PRODUCT) || USE_COMPILER_COMMENTS
@@ -117,7 +111,7 @@ class BinaryAssembler: public BinaryAssemblerCommon {
   void mov_imm(Register rd, address addr, Condition cond = al);
 
   // generates better C++ code than ldr(rd, imm_index(rn, offset_12))
-  PRODUCT_STATIC void ldr_imm_index(Register rd, Register rn, int offset_12=0);
+  static void ldr_imm_index(Register rd, Register rn, int offset_12=0);
 
 public:
 
@@ -147,16 +141,6 @@ public:
   };
 
   CodeInterleaver*    _interleaver;
-
-#ifndef PRODUCT
-  BinaryAssembler* instance() {
-    return this;
-  }
-#else
-  static BinaryAssembler* instance() {
-    return (BinaryAssembler*)((void*)jvm_fast_globals.compiler_code_generator);
-  }
-#endif
 
  public:
   // creation
@@ -372,7 +356,7 @@ private:
 
 #if defined(PRODUCT) && !USE_COMPILER_COMMENTS
 inline void Assembler::emit(int instr) {
-  BinaryAssembler::emit_int(instr);
+  ((BinaryAssembler*)_compiler_code_generator)->emit_int(instr);
 }
 #endif // defined(PRODUCT) && !USE_COMPILER_COMMENTS
 

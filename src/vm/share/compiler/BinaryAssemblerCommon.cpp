@@ -29,30 +29,18 @@
 
 #if ENABLE_COMPILER
 
-void BinaryAssemblerCommon::emit_code_byte(const unsigned value) {
-  const int code_offset = _code_offset;
-  _code_offset = code_offset + sizeof(jbyte);
-  if( has_room_for(code_offset, sizeof(jbyte)) ) {
-    byte_at_put(code_offset, value);
-    assembler()->instruction_emitted();
-  }
+#define IMPLEMENT_CODE_EMITTER(type)\
+void BinaryAssemblerCommon::emit_code_##type(const unsigned value) {        \
+  const int code_offset = _code_offset;                                     \
+  _code_offset = code_offset + sizeof(j##type);                             \
+  if( has_room_for(code_offset, sizeof(j##type)) ) {                        \
+    type##_at_put(code_offset, value);                                      \
+    assembler()->instruction_emitted();                                     \
+  }                                                                         \
 }
-void BinaryAssemblerCommon::emit_code_short(const unsigned value) {
-  const int code_offset = _code_offset;
-  _code_offset = code_offset + sizeof(jshort);
-  if( has_room_for(code_offset, sizeof(jshort)) ) {
-    short_at_put(code_offset, value);
-    assembler()->instruction_emitted();
-  }
-}
-void BinaryAssemblerCommon::emit_code_int(const unsigned value) {
-  const int code_offset = _code_offset;
-  _code_offset = code_offset + sizeof(jint);
-  if( has_room_for(code_offset, sizeof(jint)) ) {
-    int_at_put(code_offset, value);
-    assembler()->instruction_emitted();
-  }
-}
+
+BINARY_CODE_ACCESSOR_DO(IMPLEMENT_CODE_EMITTER)
+#undef IMPLEMENT_CODE_EMITTER
 
 void BinaryAssemblerCommon::emit_relocation_ushort(const unsigned value) {
   if( has_room_for(sizeof(jushort)) ) {

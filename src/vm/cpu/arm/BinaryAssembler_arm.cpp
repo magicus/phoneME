@@ -93,13 +93,6 @@ void BinaryAssembler::bl(address target, Condition cond) {
 #endif
 }
 
-void BinaryAssembler::emit_raw(int instr) {
-#if ENABLE_PERFORMANCE_COUNTERS && ENABLE_DETAILED_PERFORMANCE_COUNTERS
-  GUARANTEE(COMPILER_PERFORMANCE_COUNTER_ACTIVE(), "Sanity");
-#endif
-  instance()->emit_code_int( instr );
-}
-
 void BinaryAssembler::bind(Label& L, int /*alignment*/) {
   bind_to(L, _code_offset);
 }
@@ -258,7 +251,7 @@ extern "C" {
 }
 
 void BinaryAssembler::ldr_imm_index(Register rd, Register rn, int offset_12) {
-  instance()->ldr(rd, imm_index(rn, offset_12));
+  ((BinaryAssembler*)_compiler_code_generator)->ldr(rd, imm_index(rn, offset_12));
 }
 
 void BinaryAssembler::mov_imm(Register rd, address target, Condition cond) {
