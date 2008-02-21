@@ -33,14 +33,12 @@
 
 #ifdef NULL
 #undef NULL
-#define NULL 0
 #endif
-
-#include "windows.h"
+#define NULL 0
 
 #include "javacall_invoke.h"
 
-static LONG volatile timeToQuit;
+static char volatile timeToQuit;
 
 static DWORD WINAPI InvocationRequestListenerProc( LPVOID lpParam ){
     HANDLE pipe = CreateNamedPipe(
@@ -87,7 +85,7 @@ static DWORD WINAPI InvocationRequestListenerProc( LPVOID lpParam ){
         javanotify_chapi_java_invoke(
             (javacall_utf16_string) L"MyContentHandler", 
             &inv, 
-            0 );
+            1 );
     }
 
     CloseHandle( pipe );
@@ -111,5 +109,5 @@ extern "C" void InitPlatform2JavaInvoker(){
 
 
 extern "C" void DeInitPlatform2JavaInvoker(){
-    InterlockedIncrement( (LONG*) &timeToQuit );
+    timeToQuit++;
 }
