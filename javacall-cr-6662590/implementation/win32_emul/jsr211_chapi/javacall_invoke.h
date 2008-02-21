@@ -1,13 +1,15 @@
 #ifndef JAVACALL_INVOKE_H
 #define JAVACALL_INVOKE_H
 
+#include <windows.h>
+
 #define PIPENAME "\\\\.\\pipe\\EmulJavaInvokerPipe"
 #define INV_MSG_BUFF_SIZE 256
 
-#ifdef _DEBUG
+#if defined( _DEBUG ) && defined( _X86_ ) 
 #define assert( a ) if ( !(a) ) __asm int 3
 #else
-#define assert( a )
+#include <assert.h>
 #endif
 
 // NOTE! shouldn't contain virtual functions
