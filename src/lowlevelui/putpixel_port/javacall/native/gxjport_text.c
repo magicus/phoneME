@@ -28,8 +28,8 @@
 
 
 /**
- * Draws the first n characters to Offscreen memory image specified using the current font,
- * color.
+ * Draws the first n characters to Offscreen memory image specified using the
+ * current font, color.
  *
  * @param pixel color of font
  * @param clip  coordinates of the clipping area.
@@ -61,8 +61,8 @@
  * @return <tt>KNI_TRUE</tt> if font rendered successfully,
  *         <tt>KNI_FALSE</tt> or negative value on error or not supported
  */
-int gxjport_draw_chars(int pixel, const jshort *clip, void *dst, int dotted,
-                       int face, int style, int size,
+int gxjport_draw_chars(int pixel, const jshort *clip, gxj_screen_buffer *dst,
+                       int dotted, int face, int style, int size,
                        int x, int y, int anchor,
                        const jchar *chararray, int n) {
 
@@ -79,9 +79,9 @@ int gxjport_draw_chars(int pixel, const jshort *clip, void *dst, int dotted,
                                      clip[1],
                                      clip[2],
                                      clip[3],
-                                     (javacall_pixel*)((gxj_screen_buffer*)dst)->pixelData,
-                                     ((gxj_screen_buffer*)dst)->width,
-                                     ((gxj_screen_buffer*)dst)->height,
+                                     (javacall_pixel*)dst->pixelData,
+                                     dst->width,
+                                     dst->height,
                                      x,
                                      y,
                                      chararray,
@@ -90,9 +90,7 @@ int gxjport_draw_chars(int pixel, const jshort *clip, void *dst, int dotted,
 }
 
 /**
- * Query for the font info structure for a given font specs
- *
- * @image HTML font4.png
+ * queries for the font info structure for a given font specs
  *
  * @param face The font face to be used (Defined in <B>Font.java</B>)
  * @param style The font style to be used (Defined in
