@@ -32,6 +32,7 @@
 #ifndef _JAVAUTIL_STRING_H_
 #define _JAVAUTIL_STRING_H_
 
+#include <string.h>
 #include "javacall_defs.h"
 
 #define COLON    0x3A    /* Colon ':' - Unicode character 0x3A */
