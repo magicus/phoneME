@@ -68,6 +68,11 @@
 #ifdef ENABLE_JSR_179
 #include <javacall_location.h>
 #endif
+
+#ifdef ENABLE_JSR_234
+#include <javanotify_multimedia_advanced.h>
+#endif
+
 #ifdef ENABLE_ON_DEVICE_DEBUG
 #include <javacall_odd.h>
 #endif /* ENABLE_ON_DEVICE_DEBUG */
