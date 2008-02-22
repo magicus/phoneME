@@ -411,10 +411,10 @@ public class HttpUrl {
      */
     private boolean isValidIPv6Address(String address) {
         int addressLength = address.length();
-        if (addressLength < 3) { // empty IPv6
+        if (addressLength < 4) { // empty IPv6
             return false;
         }
-        if (!(address.charAt(addressLength - 1) == ']')) {
+        if (address.charAt(addressLength - 1) != ']') {
             return false;
         }
         String IPv6 = address.substring(1, addressLength - 1);
@@ -428,12 +428,22 @@ public class HttpUrl {
         int currVal = 0;
         char currChar;
         int prevPiecePos = 0;
+        boolean isDoubleColon = false;
         while (ptrChar < IPv6Length) {
             currChar = IPv6.charAt(ptrChar++);
             switch (state) {
                 case HEX:
                     switch (currChar) {
                         case ':':
+                            if (ptrChar < IPv6Length &&
+                                IPv6.charAt(ptrChar) == ':') {
+                                if (isDoubleColon) {
+                                    return false;
+                                }
+                                ptrChar++;
+                                isDoubleColon = true;
+                                break;
+                            }
                             if (++numHexPieces > 8) {
                                 return false;
                             }
