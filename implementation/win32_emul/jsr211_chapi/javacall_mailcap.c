@@ -1333,7 +1333,7 @@ javacall_result javacall_chapi_register_handler(
         javacall_const_utf16_string* action_names, int nActionNames,
         javacall_const_utf16_string* access_allowed_ids,  int nAccesses){
 
-    static jchar invalidSuiteId[ 0x20 ] = "";
+    static javacall_utf16 invalidSuiteId[] = L"FFFFFFFF"; // INVALID_SUITE_ID string representation
 	int result;
 	javautil_storage file=0;
 	int len;
@@ -1342,9 +1342,6 @@ javacall_result javacall_chapi_register_handler(
 	int idQuoted;
 
     if( suite_id == NULL ){ // native handler registration
-        if( invalidSuiteId[0] == '\0' ){ // init invalidSuiteId
-            jsrop_suiteid_to_string(INVALID_SUITE_ID, invalidSuiteId);
-        }
         suite_id = invalidSuiteId;
     }
 
