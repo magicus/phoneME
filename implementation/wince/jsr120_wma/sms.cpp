@@ -519,24 +519,26 @@ static void fillPhone(const unsigned char* javaDestAddress, wchar_t* lpcPhone) {
  *                the  message contents. When all characters in the message contents are in 
  *                the GSM 7-bit alphabet, the DCS should be GSM 7-bit; otherwise, it should  
  *                be  UCS-2.
- * @param destAddress the target SMS address for the message.  The format of the address  parameter  
- *                is  expected to be compliant with MSIDN, for example,. +123456789 
+ * @param destAddress the target SMS address for the message.  The format of the address 
+ *                parameter is  expected to be compliant with MSIDN, for example,. +123456789 
  * @param msgBuffer the message body (payload) to be sent
  * @param msgBufferLen the message body (payload) len
  * @param sourcePort source port of SMS message
  * @param destPort destination port of SMS message where 0 is default destination port 
- * @return handle of sent sms or <tt>0</tt> if unsuccessful
+ * @param handle handle of sent sms 
  * 
  * Note: javacall_callback_on_complete_sms_send() needs to be called to notify
  *       completion of sending operation.
- *       The returned handle will be passed to javacall_callback_on_complete_sms_send( ) upon completion
+ *       The returned handle will be passed to 
+ *         javacall_callback_on_complete_sms_send( ) upon completion
  */
-int javacall_sms_send(  javacall_sms_encoding   msgType, 
+javacall_result javacall_sms_send(  javacall_sms_encoding   msgType, 
                         const unsigned char*    destAddress, 
                         const unsigned char*    msgBuffer, 
                         int                     msgBufferLen, 
                         unsigned short          sourcePort, 
-                        unsigned short          destPort){
+                        unsigned short          destPort,
+                        int handle){
 
     wchar_t lpcPhone[SMS_MAX_ADDRESS_LENGTH];
     fillPhone(destAddress, lpcPhone);
@@ -564,14 +566,14 @@ int javacall_sms_send(  javacall_sms_encoding   msgType,
         int total_segments = calc_segments_num(msgBufferLen);
 
         if (total_segments < 1 || total_segments > 3) {
-            return 0;
+            return JAVACALL_FAIL;
         } else if (total_segments == 1) {
             char smsData[SMS_MAX_PAYLOAD];
             int  smsDataLength;
             int ok = cdma_sms_encode(msgType, msgBuffer, msgBufferLen, sourcePort, destPort, 
                 smsData, &smsDataLength);
             if (!ok) {
-                return 0;
+                return JAVACALL_FAIL;
             }
             send_ok = SendSMS(lpcPhone, (const unsigned char*)smsData, smsDataLength);
         } else {
@@ -585,18 +587,18 @@ int javacall_sms_send(  javacall_sms_encoding   msgType,
                     reference_number, total_segments, segment_number, 
                     smsData, &smsDataLength);
                 if (!ok) {
-                    return 0;
+                    return JAVACALL_FAIL;
                 }
                 send_ok = SendSMS(lpcPhone, (const unsigned char*)smsData, smsDataLength);
 
                 if (!send_ok) {
-                    return 0;
+                    return JAVACALL_FAIL;
                 }
             }
         }
     }
 
-    return send_ok == 1 ? sms_handle : 0;
+    return send_ok == 1 ? JAVACALL_OK : JAVACALL_FAIL;
 }
 
 /**
