@@ -136,6 +136,9 @@ endif
 MakeDepsMain_win32    = WinGammaPlatform
 MakeDepsMain_wince    = WinCEGammaPlatform
 MakeDepsMain_linux    = UnixPlatform
+ifeq ($(target_platform), linux_javacall)
+MakeDepsMain_javacall = UnixPlatform
+endif
 ifneq ($(MakeDepsMain_$(os_family)_$(compiler)),)
 MakeDepsMain          = $(MakeDepsMain_$(os_family)_$(compiler))
 else
@@ -153,6 +156,9 @@ endif
 MakeDepsOpts_win32    = -resolveVpath true
 MakeDepsOpts_wince    = -resolveVpath true
 MakeDepsOpts_linux    = -resolveVpath true
+ifeq ($(target_platform), linux_javacall)
+MakeDepsOpts_javacall = -resolveVpath true
+endif
 MakeDepsOpts         += -gendir $(GEN_DIR) -workspace $(WorkSpace)
 MakeDepsOpts         += $(MakeDepsOpts_$(os_family))
 
@@ -338,6 +344,9 @@ ASM_SUFFIX           = $(ASM_SUFFIX_$(compiler))
 EXTRA_JVMCONFIG_win32   = USE_UNICODE_FOR_FILENAMES=1
 EXTRA_JVMCONFIG_linux   =
 EXTRA_JVMCONFIG_solaris =
+ifeq ($(target_platform), linux_javacall)
+EXTRA_JVMCONFIG_javacall=
+endif
 EXTRA_JVMCONFIG         = $(EXTRA_JVMCONFIG_$(os_family))
 
 ifndef ROMIZING
@@ -463,6 +472,9 @@ ifeq ($(IsTarget)+$(ROMIZING)+$(ENABLE_SEGMENTED_ROM_TEXT_BLOCK), true+true+true
 
   ifeq ($(arch), arm)
     ifeq ($(os_family), linux)
+      CompileROMImageSeparately := true
+    endif
+    ifeq ($(target_platform), linux_javacall)
       CompileROMImageSeparately := true
     endif
   endif
@@ -1558,6 +1570,9 @@ CPP_DEF_FLAGS_i386       = -Di386
 CPP_DEF_FLAGS_arm	 =
 CPP_DEF_FLAGS_win32      = -DWIN32 -D_WINDOWS
 CPP_DEF_FLAGS_linux      = -DLINUX
+ifeq ($(target_platform), linux_javacall)
+CPP_DEF_FLAGS_javacall   = -DLINUX
+endif
 ifeq ($(host_os), cygwin)
 CPP_DEF_FLAGS            += -DCYGWIN
 ENABLE_MAP_FILE          = false
