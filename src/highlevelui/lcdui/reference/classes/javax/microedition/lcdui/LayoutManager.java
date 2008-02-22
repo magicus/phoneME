@@ -909,10 +909,8 @@ class LayoutManager {
         for (int hAlign, i = index; i >= 0; i--) {
             hAlign = itemLFs[i].getLayout() & LAYOUT_HMASK;
 
-            if (hAlign == 0) {
-                continue;
-            }
-            return hAlign;
+            if (hAlign != Item.LAYOUT_DEFAULT)
+                return hAlign;
         }
 
         // default layout is LAYOUT_LEFT

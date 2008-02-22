@@ -432,7 +432,7 @@ abstract class ItemLFImpl implements ItemLF {
         int l = item.layout;
         if (l == Item.LAYOUT_DEFAULT) {
 	    // the spec requires the default vertical layout to be bottom
-            return Item.LAYOUT_BOTTOM | Item.LAYOUT_LEFT;
+            return Item.LAYOUT_BOTTOM;
         } else {
             return l;
         }
