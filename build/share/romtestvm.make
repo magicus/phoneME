@@ -148,6 +148,10 @@ INCLUDE_DIRS         = -I$(DIST_DIR)/include \
 CPP_FLAGS           += $(INCLUDE_DIRS)
 CC_FLAGS            += $(INCLUDE_DIRS)
 
+ifeq ($(os_family), javacall)
+CPP_FLAGS           += -DNEED_CHECK_EVENTS
+endif
+
 all: $(ROMTESTVM)
 all: $(AMS_ROMTESTVM)
 
