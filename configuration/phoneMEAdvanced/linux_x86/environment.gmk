@@ -54,6 +54,7 @@ SOURCE_OUTPUT_LIST += $(JAVACALL_DIR)/configuration/phoneMEAdvanced/linux_x86 ja
 SOURCE_OUTPUT_LIST += $(foreach jsr,$(JSR_LIST), $(if $(PREFIX_$(USE_$(jsr))), $($(jsr)_JC_IMPL_PATH)/$($(jsr)_JC_DIR) javacall/implementation/linux_x86_cdc))
 NOTIFIERS_SRC_LIST = $(foreach jsr,$(JSR_LIST), $(if $(PREFIX_$(USE_$(jsr))), $(wildcard $($(jsr)_NOTIFIER_PATH)/$($(jsr)_JC_DIR))))
 SOURCE_OUTPUT_LIST += $(foreach dir,$(NOTIFIERS_SRC_LIST), $(dir) javacall/notifiers/jump_application)
+SOURCE_OUTPUT_LIST += $(JAVACALL_DIR)/implementation/share/properties javacall/implementation/share
 
 ifeq ($(USE_JSR_120),true)
 SOURCE_OUTPUT_LIST += $(JSR_120_JC_IMPL_PATH)/$(JSR_120_JC_DIR) javacall/implementation/linux_x86_cdc
