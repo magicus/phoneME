@@ -77,3 +77,9 @@ UTILITIES += javautil_string
 
 #Compile options that are not common for all configurations can be specified in
 #SPECIFIC_DEFINITIONS variable
+
+ifneq ($(USE_STATIC_PROPERTIES),true)
+SPECIFIC_DEFINITIONS += -DUSE_PROPERTIES_FROM_FS
+endif
+
+CONFIGURATION_PROPERTIES_FILE = properties.xml
