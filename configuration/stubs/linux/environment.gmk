@@ -59,7 +59,8 @@ SOURCE_OUTPUT_LIST += $(JAVACALL_DIR)/configuration/stubs/linux javacall/configu
 UTILITIES =                 \
         javautil_jad_parser \
         javautil_string \
-        javautil_unicode
+        javautil_unicode \
+        javautil_printf
 
 
 CONFIGURATION_PROPERTIES_FILE = properties.xml
