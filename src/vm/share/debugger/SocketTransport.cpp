@@ -400,9 +400,6 @@ ReturnOop SocketTransport::new_transport(JVM_SINGLE_ARG_TRAPS)
   this_transport().set_listener_socket(_listen_socket);
   this_transport().set_debugger_socket(-1);
   this_transport().set_ops(&socket_transport_ops);
-#if ENABLE_ISOLATES
-  this_transport().set_connection_confirmed(0);
-#endif
   return this_transport;
 
 }
