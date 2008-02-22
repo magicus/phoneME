@@ -674,7 +674,7 @@ abstract class ItemLFImpl implements ItemLF {
     int getLayout() {
         int l = item.layout;
         if (l == Item.LAYOUT_DEFAULT) {
-            return Item.LAYOUT_BOTTOM | Item.LAYOUT_LEFT;
+            return Item.LAYOUT_BOTTOM;
         } else {
             return l;
         }
