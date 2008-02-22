@@ -252,10 +252,12 @@ public:
   void emit_long_branch() {
     emit_relocation(Relocation::long_branch_type);
   }
-  
+
+#if ENABLE_PAGE_PROTECTION  
   void emit_compressed_vsf(VirtualStackFrame* frame) {
     emit_vsf(frame);
   }
+#endif
 
   void branch(Label& L, bool link, Condition cond);
     // alignment is not used on ARM, but is needed to make

@@ -44,11 +44,11 @@ BINARY_CODE_ACCESSOR_DO(IMPLEMENT_CODE_EMITTER)
 
 void BinaryAssemblerCommon::emit_relocation_ushort(const unsigned value) {
   if( has_room_for(sizeof(jushort)) ) {
-    compiled_method()->ushort_field_put(current_relocation_offset(), value);
+    compiled_method()->ushort_field_put( current_relocation_offset(), value);
   } 
-  // IMPL_NOTE: This code looks bogus and should be fixed. However, don't
-  // just move this decrement() into the "if" block above. Some code may depend on
-  // the side-effect where the method is overflown and the offset becomes negative.
+  // IMPL_NOTE: Don't move this decrement() into the "if" block above.
+  // When code buffer overflows, no data should be written
+  // but relocation stream must continue to advance for the overflow detection
   _relocation.decrement();
 }
 
@@ -171,6 +171,7 @@ void BinaryAssemblerCommon::emit_relocation_oop( void ) {
   set_current_oop_code_offset( code_offset );
 }
 
+#if ENABLE_PAGE_PROTECTION
 void BinaryAssemblerCommon::emit_vsf(const VirtualStackFrame* frame) {
   enum {
     extended_mask  = Relocation::extended_mask,
@@ -260,6 +261,7 @@ void BinaryAssemblerCommon::emit_vsf(const VirtualStackFrame* frame) {
     }
   }
 }
+#endif
 
 #if ENABLE_CODE_PATCHING
 void BinaryAssemblerCommon::::emit_checkpoint_info_record(int code_offset,

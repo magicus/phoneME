@@ -59,7 +59,7 @@ class BinaryAssemblerCommon: public Macros {
 #endif
 
   void initialize( OopDesc* compiled_method ) {
-    set_compiled_method( compiled_method );
+    _compiled_method = compiled_method;
     _relocation.initialize( this->compiled_method() );
 #if ENABLE_ISOLATES
     _task_id = Task::current_id();
@@ -103,7 +103,10 @@ class BinaryAssemblerCommon: public Macros {
   void emit_sentinel( void ) {
      emit_relocation_ushort(0);
   }
+
+#if ENABLE_PAGE_PROTECTION
   void emit_vsf(const VirtualStackFrame* frame);
+#endif
 
 #if ENABLE_CODE_PATCHING
   void emit_checkpoint_info_record(const int code_offset, 
@@ -119,12 +122,6 @@ class BinaryAssemblerCommon: public Macros {
 
   CompiledMethod* compiled_method( void ) const {
     return (CompiledMethod*) &_compiled_method;
-  }
-  void set_compiled_method(OopDesc* method) {
-    _compiled_method = method;
-  }
-  void set_compiled_method(CompiledMethod* method) {
-    set_compiled_method( method->obj() );
   }
 
 #if ENABLE_ISOLATES
@@ -152,13 +149,6 @@ class BinaryAssemblerCommon: public Macros {
            - sizeof(jushort);
   }
 
-#if USE_LITERAL_POOL
-  jint unbound_literal_count( void ) const { return _unbound_literal_count; }
-#endif
-
-  int   offset_at(const int position) const  { 
-    return position + CompiledMethod::base_offset();
-  }
   address addr_at(const jint pos) const {
     return (address)(compiled_method()->field_base(offset_at(pos)));
   }
@@ -180,6 +170,8 @@ BINARY_CODE_ACCESSOR_DO(DEFINE_CODE_ACCESSOR)
 #undef DEFINE_CODE_ACCESSOR
 
 #if USE_LITERAL_POOL
+  jint unbound_literal_count( void ) const { return _unbound_literal_count; }
+
   void zero_literal_count( void ) { 
     _unbound_literal_count                     = 0;
     _code_offset_to_force_literals             = 0x7FFFFFFF; // never need to force
@@ -250,6 +242,10 @@ BINARY_CODE_ACCESSOR_DO(DEFINE_CODE_ACCESSOR)
   void emit_relocation_ushort(const unsigned value);
   void emit_dummy (const jint code_offset);
   void emit_relocation_oop( void );
+
+  static int offset_at(const int position) { 
+    return position + CompiledMethod::base_offset();
+  }
 
   // check if there's room for a few extra bytes in the compiled method
   bool has_room_for(const int code_offset, const int bytes) const {
