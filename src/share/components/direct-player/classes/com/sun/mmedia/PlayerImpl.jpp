@@ -549,6 +549,11 @@ public class PlayerImpl implements Player {
             mplayers.remove(new Integer(pID));
         } else {
             if (!isClosed) {
+                /* close source of unrealized player */
+                if (source != null) {
+                    source.disconnect();
+                    source = null;
+                }
                 /* close native part of unrealized player */
                 if(hNative != 0) {
                     nTerm(hNative);
