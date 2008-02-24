@@ -168,6 +168,8 @@ public class CommonDS extends BasicDS implements SourceStream {
                 contentLength = -1;
                 goodurl = true;
             }
+        } catch (RuntimeException re) {
+            throw re;
         } catch (Exception ex) {
             throw new IOException("failed to connect to " + 
                             locator + " : " + ex.getMessage());
