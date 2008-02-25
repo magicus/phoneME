@@ -33,6 +33,8 @@ import com.sun.midp.configurator.Constants;
 import com.sun.midp.i18n.ResourceConstants;
 import com.sun.midp.installer.InternalMIDletSuiteImpl;
 import com.sun.midp.log.*;
+import com.sun.midp.main.Configuration;
+import com.sun.midp.publickeystore.WebPublicKeyStore;
 
 /**
  * The class presents abstract MIDlet suite loader with routines to prepare
@@ -58,6 +60,9 @@ abstract class CldcMIDletSuiteLoader extends AbstractMIDletSuiteLoader {
 
         // Hint VM of startup beginning: system init phase
         MIDletSuiteUtils.vmBeginStartUp(isolateId);
+
+        WebPublicKeyStore.initKeystoreLocation(
+            Configuration.getProperty("com.sun.midp.publickeystore.WebPublicKeyStore"));
 
         super.init();
     }

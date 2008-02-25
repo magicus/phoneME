@@ -146,7 +146,11 @@ public class PublicKeyInfo {
             throw new IOException("public key storage corrupted");
         }
 
-        enabled = ((Boolean)value).booleanValue();
+        if(value instanceof String) {
+			enabled = ((String)value).equals("enabled");
+		} else {
+			enabled = ((Boolean)value).booleanValue();
+		}
 
         return new PublicKeyInfo(owner, notBefore, notAfter,
                                  modulus, exponent, domain, enabled);
