@@ -55,14 +55,9 @@ public final class DirectTone extends DirectPlayer {
     }
 
     /**
-     * the worker method to prefetch the player
-     *
-     * @exception  MediaException  Description of the Exception
-     */
-    protected void doPrefetch() throws MediaException {
-        /* prefetch native player */
-        nPrefetch(hNative);
-
+     * Read header information from media data and determine media Format     *
+     * @exception  MediaException  Description of the Exception     */
+    protected void doRealize() throws MediaException {
         // if no source stream, player is created from TONE_DEVICE_LOCATOR
         // simply return it.
         if (stream != null) {
@@ -91,12 +86,21 @@ public final class DirectTone extends DirectPlayer {
             }
         
             try {
-                ToneControl tControl = new DirectToneControl(this, false);
-                tControl.setSequence(seqs);
+                setSequence(seqs);
             } catch (Exception e) {
-                throw new MediaException("unable to realize: " + e.getMessage());
+                throw new MediaException("unable to prefetch: " + e.getMessage());
             }
         }
+    }
+
+    /**
+     * the worker method to prefetch the player
+     *
+     * @exception  MediaException  Description of the Exception
+     */
+    protected void doPrefetch() throws MediaException {
+        /* prefetch native player */
+        nPrefetch(hNative);
         nAcquireDevice(hNative);
     }
 

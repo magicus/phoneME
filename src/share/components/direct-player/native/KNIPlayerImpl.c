@@ -78,10 +78,14 @@ LockAudioMutex();
         pKniInfo->isForeground = -1;
         pKniInfo->recordState = RECORD_CLOSE;
         res = javacall_media_create(appId, playerId, pszURI, URILength, &pKniInfo->pNativeHandle); 
-        if (res == JAVACALL_FAIL) {
-            MMP_FREE(pKniInfo);
-        } else {
+        if (res == JAVACALL_OK) {
             returnValue = (int)pKniInfo;
+        } else if (res == JAVACALL_IO_ERROR) {
+            MMP_FREE(pKniInfo);
+            returnValue = -1; /* Can not create player - IO error */
+        } else {
+            MMP_FREE(pKniInfo);
+            returnValue = 0; /* Can not create player */
         }
     } else {
         if (pKniInfo) { MMP_FREE(pKniInfo); }
