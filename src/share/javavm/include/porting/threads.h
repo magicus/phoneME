@@ -127,4 +127,8 @@ extern CVMBool CVMthreadStackCheck(CVMThreadID *self, CVMUint32 redZone);
 #error CVM_THREAD_MIN_C_STACK_SIZE < CVM_REDZONE_ILOOP
 #endif
 
+#ifndef CVMthreadSchedHook
+#define CVMthreadSchedHook(tid) ((void)0)
+#endif
+
 #endif /* _INCLUDED_PORTING_THREADS_H */
