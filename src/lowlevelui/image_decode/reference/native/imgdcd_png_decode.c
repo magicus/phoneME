@@ -300,7 +300,7 @@ PNGdecodeImage_real(imageSrcPtr src, imageDstPtr dst,
             }
         } else if (chunkType == PLTE_CHUNK) {
 
-            if ((chunkLength > 768) || ((chunkLength % 3) != 0)) {
+            if ((chunkLength < 0) || (chunkLength > 768) || ((chunkLength % 3) != 0)) {
                 goto formaterror;
             }
 
