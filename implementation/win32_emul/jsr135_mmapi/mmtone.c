@@ -359,6 +359,13 @@ static javacall_result tone_get_java_buffer_size(javacall_handle handle,
                                                  long* java_buffer_size,
                                                  long* first_data_size)
 {
+    *java_buffer_size = pPlayer->toneDataSize;
+    if (pPlayer->pToneBuffer == NULL) {
+        *first_data_size = pPlayer->toneDataSize;
+    } else {
+        *first_data_size = 0;
+    }
+
     return JAVACALL_OK;
 }
 
