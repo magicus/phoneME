@@ -139,7 +139,9 @@ public class PlayerImpl implements Player {
         hNative = nInit(appId, pID, locator);
 
         if (0 == hNative) {
-            throw new MediaException("Unable to create");
+            throw new MediaException("Unable to create native player");
+        } else if (-1 == hNative) {
+            throw new IOException("Unable to create native player");
         }
 
         mediaFormat     = nGetMediaFormat(hNative);
@@ -148,7 +150,7 @@ public class PlayerImpl implements Player {
             mediaFormat = Configuration.getConfiguration().ext2Format(source.getLocator());
             if (mediaFormat == null || mediaFormat.equals(BasicPlayer.MEDIA_FORMAT_UNSUPPORTED)) {
                 nTerm(hNative);
-                throw new MediaException("Unsupported Media Format");
+                throw new MediaException("Unsupported Media Format:" + mediaFormat + " for " + source.getLocator());
             } else {
                 handledByJava = true;
             }
@@ -222,72 +224,24 @@ public class PlayerImpl implements Player {
         /* realize native player */
         nRealize(hNative, type);
 
-        if (mediaFormat.equals(BasicPlayer.MEDIA_FORMAT_UNKNOWN)) {
+        if (!handledByDevice) {
+            /* predownload media data to recognize media format and/or 
+               specific media parameters (e.g. duration) */
+            doBuffering(hNative, stream);
+        }
+
+        if (mediaFormat.equals(BasicPlayer.MEDIA_FORMAT_UNKNOWN)) {        
             /* ask media format if unknown */
-            mediaFormat     = nGetMediaFormat(hNative);
-            if (handledByDevice) {
-                /* In case of handledByDevice media format
-                 * should be known on this stage 
-                 */
-                if (mediaFormat.equals(BasicPlayer.MEDIA_FORMAT_UNKNOWN)) {
-                    throw new MediaException("Unknown Media Format");
-                }
-                if (mediaFormat.equals(BasicPlayer.MEDIA_FORMAT_UNSUPPORTED)) {
-                    throw new MediaException("Unsupported Media Format");
-                }
-            } else {
-                /* predownload media data to determine media format */
-                if (mediaFormat.equals(BasicPlayer.MEDIA_FORMAT_UNKNOWN)) {
-                    long contLength = stream.getContentLength();
-                    boolean need_more = true;
+            mediaFormat = nGetMediaFormat(hNative);
 
-                    if (contLength > 0) {
-                        nSetWholeContentSize(hNative, contLength);
-                    }
-                    /* first loop - allocate java buffer*/
-                    int javaBufSize = nGetJavaBufferSize(hNative);
-                    int packetSize  = nGetFirstPacketSize(hNative);
-                    if (javaBufSize <= 0) {
-                        javaBufSize = 1024;
-                        packetSize = 1024;
-                    }
-                    byte[] buffer = new byte[(int)javaBufSize];
-
-                    do {
-                        int num_read = 0;
-                        int ret;
-                        do {
-                            try {
-                                // read from source stream
-                                ret = stream.read(buffer, 0, packetSize - num_read);
-                            } catch(IOException e) {
-                                throw new MediaException("Read from source error");
-                            }
-                            if (ret > 0) {
-                                num_read += ret;
-                            }
-                            if (ret == -1) {
-                                break;
-                            }
-                        } while(num_read < packetSize);
-                        packetSize = nBuffering(hNative, buffer, num_read);
-                        if ((contLength) != -1 && (contLength == stream.tell())) {
-                            /* end of media */
-                            nBuffering(hNative, null, 0);
-                            need_more = false;
-                        }
-                        mediaFormat     = nGetMediaFormat(hNative);
-                    } while (mediaFormat.equals(BasicPlayer.MEDIA_FORMAT_UNKNOWN) && need_more);
-                }
-
-                if (mediaFormat.equals(BasicPlayer.MEDIA_FORMAT_UNSUPPORTED)) {
-                    throw new MediaException("Unsupported Media Format");
-                }
-                if (mediaFormat.equals(BasicPlayer.MEDIA_FORMAT_UNKNOWN)) {
-                    throw new MediaException("Unknown media Format");
-                }
+            if (mediaFormat.equals(BasicPlayer.MEDIA_FORMAT_UNKNOWN)) {
+                throw new MediaException("Unknown Media Format");
+            }
+            if (mediaFormat.equals(BasicPlayer.MEDIA_FORMAT_UNSUPPORTED)) {
+                throw new MediaException("Unsupported Media Format");
             }
         }
+
         /* create Implementation Player */
         playerInst = getPlayerFromType(mediaFormat);
 
@@ -310,6 +264,67 @@ public class PlayerImpl implements Player {
         mplayers.put(new Integer(pID), playerInst);
 
         playerInst.realize();
+    };
+
+    /**
+     *  Buffering portion of media data
+     *
+     * @param  hNative             Descriptor of native player
+     * @param  stream              Source stream
+     *
+     * @exception  MediaException     read from Source Stream error
+     */
+    static void doBuffering(int hNative, SourceStream stream) 
+        throws MediaException {
+
+        long contLength = stream.getContentLength();
+        boolean need_more = true;
+
+        if (contLength > 0) {
+            if (contLength == stream.tell()) {
+                return;
+            }
+            nSetWholeContentSize(hNative, contLength);
+        }
+        /* first loop - allocate java buffer*/
+        int javaBufSize = nGetJavaBufferSize(hNative);
+        int packetSize  = nGetFirstPacketSize(hNative);
+        if (packetSize > 0) {
+            if (javaBufSize <= 0) {
+                javaBufSize = 1024;
+            }
+            byte[] buffer = new byte[(int)javaBufSize];
+
+            do {
+                int num_read = 0;
+                int ret;
+                do {
+                    try {
+                        // read from source stream
+                        ret = stream.read(buffer, num_read, packetSize - num_read);
+                    } catch(IOException e) {
+                        throw new MediaException("Read from source error");
+                    }
+                    if (ret > 0) {
+                        num_read += ret;
+                    }
+                    if (ret == -1) {
+                        need_more = false;
+                        break;
+                    }
+                } while(num_read < packetSize);
+                if (num_read > 0) {
+                    packetSize = nBuffering(hNative, buffer, num_read);
+                    need_more = nNeedMoreDataImmediatelly(hNative);
+                }
+
+                if ((contLength) != -1 && (contLength == stream.tell())) {
+                    /* end of media */
+                    nBuffering(hNative, null, 0);
+                    need_more = false;
+                }
+            } while (need_more);
+        }
     };
 
     /**
