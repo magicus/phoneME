@@ -135,6 +135,12 @@ ROMGEN_CFG_FILES = rom.config $(EXTRA_ROMGEN_CFG_FILES)
 ROMGEN_INCLUDE_PATHS =  $(CLDC_DIST_DIR)/lib
 ROMGEN_INCLUDE_PATHS += $(MIDP_DIR)/build/common/config
 
+ifeq ($(ENABLE_MULTIPLE_PROFILES_SUPPORT), true)
+ifneq ($(VM_PROFILES_CONFIG_FILE),)
+    ROMGEN_INCLUDE_PATHS += $(dir $(VM_PROFILES_CONFIG_FILE))
+endif
+endif
+
 ROMGEN_ARGS += -romconfig $(ROMGEN_CFG_LST)
 ROMGEN_ARGS += +GenerateROMStructs
 ROMGEN_ARGS += +EnableROMCompilation
@@ -211,7 +217,13 @@ $(MIDP_OUTPUT_DIR)/ROMImage.cpp: $(MIDP_CLASSES_ZIP) \
 	@for f in $(ROMGEN_CFG_FILES); do \
 		echo "Include $$f" >> $(ROMGEN_CFG_LST); \
 	 done
-		
+      
+  ifeq ($(ENABLE_MULTIPLE_PROFILES_SUPPORT), true)
+  ifneq ($(VM_PROFILES_CONFIG_FILE),)
+	@echo "Include $(notdir $(VM_PROFILES_CONFIG_FILE))" >> $(ROMGEN_CFG_LST)
+  endif
+  endif
+	
 	@echo	$(ROMGEN_CMD) $(ROMGEN_ARGS) \
 		-cp $(MIDP_CLASSES_ZIP) \
 		-romize =HeapCapacity96M \
