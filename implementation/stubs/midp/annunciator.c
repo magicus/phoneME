@@ -44,7 +44,7 @@ javacall_result javacall_annunciator_vibrate(javacall_bool enableVibrate){
 }
     
 /**
- * Changes the backlight state of the device.
+ * Sets the backlight state of the device.
  *
  * The MIDP2.x specification defines a method on the Display class 
  * called <code>flashBacklight(duration)</code>, which invokes a 
@@ -58,7 +58,7 @@ javacall_result javacall_annunciator_vibrate(javacall_bool enableVibrate){
  * implementation.
  *
  * Initial state of the backlight (i.e., before this API is invoked for
- * the first time) is assumed to be "bright". Java will generall leave
+ * the first time) is assumed to be "bright". Java will generally leave
  * the backlight in the "bright" state when not flashing, but this
  * is not guaranteed.
  *
