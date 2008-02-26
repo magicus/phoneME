@@ -208,7 +208,11 @@ main(int argc, char *argv[]) {
                 property_type = JAVACALL_INTERNAL_PROPERTY;
             }
             javacall_set_property(key, value, JAVACALL_TRUE,property_type);
-        } else if (strcmp(argv[i], "-monitormemory") == 0) {
+        } else if (strcmp(argv[i], "-profile") == 0) {
+                /* ROM profile name is passed here */ 
+                vmArgv[vmArgc++] = argv[i++];
+                vmArgv[vmArgc++] = argv[i];
+				} else if (strcmp(argv[i], "-monitormemory") == 0) {
             /* old argument  - ignore it */
         } else if (strcmp(argv[i], "-memory_profiler") == 0) {
 
@@ -364,7 +368,7 @@ main(int argc, char *argv[]) {
 
     if (vmArgc > 0 ) {
         /* set VM args */
-        javanotify_set_vm_args(vmArgc, vmArgv);
+	     javanotify_set_vm_args(vmArgc, vmArgv);
     }
 
     if (heapsize != -1) {
