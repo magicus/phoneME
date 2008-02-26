@@ -146,7 +146,7 @@ void JavaTask(void) {
 /**
  * 
  */
-static javacall_result midpHandleSetVmArgs(int argc, char* argv) {
+static javacall_result midpHandleSetVmArgs(int argc, char* argv[]) {
     int used;
 
     while ((used = JVM_ParseOneArg(argc, argv)) > 0) {
