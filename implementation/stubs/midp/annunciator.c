@@ -44,10 +44,23 @@ javacall_result javacall_annunciator_vibrate(javacall_bool enableVibrate){
 }
     
 /**
- * Sets the flashing effect for the device backlight. 
- * The flashing effect is intended to be used to attract the
- * user attention or as a special effect for games.
+ * Sets the backlight state of the device.
  *
+ * The MIDP2.x specification defines a method on the Display class 
+ * called <code>flashBacklight(duration)</code>, which invokes a 
+ * "flashing effect".
+ * The flashing effect is intended to be used to attract the
+ * users attention, or as a special effect for games.
+ *
+ * The javacall_annunciator_flash_backlight() function takes one
+ * boolean parameter, used to set the backlight to either "bright" or
+ * "dim". The exact brightness values are left to the discretion of the
+ * implementation.
+ *
+ * Initial state of the backlight (i.e., before this API is invoked for
+ * the first time) is assumed to be "bright". Java will generally leave
+ * the backlight in the "bright" state when not flashing, but this
+ * is not guaranteed.
  *
  * @param  enableBrightBack <tt>1</tt> to turn backlight to bright mode
  *         <tt>0</tt> to turn backlight to dim mode
