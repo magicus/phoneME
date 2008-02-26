@@ -56,10 +56,23 @@ public class AppIsolateMIDletSuiteLoader extends CldcMIDletSuiteLoader {
         this.midletDisplayName = args[2];
         this.args = new String[] {args[3], args[4], args[5]};
         this.externalAppId = Integer.parseInt(args[6]);
+
         if (args.length > 7) {
             boolean isDebugMode = Integer.parseInt(args[7]) != 0;
+
             if (isDebugMode) {
-                Isolate.currentIsolate().attachDebugger();
+                currentIsolate = Isolate.currentIsolate();
+                currentIsolate.attachDebugger();
+
+                // wait for a connection from debugger
+                while (!currentIsolate.isDebuggerConnected()) {
+                    try {
+                        Thread.sleep(100);
+                    } catch (Exception e) {
+                        // ignore
+                        e.printStackTrace();
+                    }
+                }
             }
         }
     }
@@ -140,7 +153,7 @@ public class AppIsolateMIDletSuiteLoader extends CldcMIDletSuiteLoader {
      * Initializes internal security, and starts the MIDlet.
      *
      * @param args arg[0] the suite ID, arg[1] the class name of the MIDlet,
-     *              arg[2] the name of the MIDlet to display,
+     *             arg[2] the name of the MIDlet to display,
      *             arg[3] optional MIDlet arg 0, arg[4] optional MIDlet arg 1,
      *             arg[5] optional MIDlet arg 2
      */
