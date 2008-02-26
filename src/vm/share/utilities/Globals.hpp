@@ -947,6 +947,15 @@ private:
 #define CPU_VARIANT_RUNTIME_FLAGS(develop, product)
 #endif
 
+#if ENABLE_ARM_VFP
+#define VFP_RUNTIME_FLAGS(develop, product)                          \
+  product(bool, RunFastMode, false,                                      \
+          "Configure the ARM VFP coprocessor to run in RunFast mode "    \
+          "and execute extra instructions to ensure TCK compilance")
+#else
+#define VFP_RUNTIME_FLAGS(develop, product)
+#endif
+
 #define RUNTIME_FLAGS(develop, product, always)            \
       GENERIC_RUNTIME_FLAGS(develop, product)              \
       USE_ROM_RUNTIME_FLAGS(develop, product, always)      \
@@ -963,6 +972,7 @@ private:
       JVMPI_PROFILE_RUNTIME_FLAGS(develop, product)        \
       JVMPI_PROFILE_VERIFY_RUNTIME_FLAGS(develop, product) \
       CPU_VARIANT_RUNTIME_FLAGS(develop, product)          \
+      VFP_RUNTIME_FLAGS(develop, product)                  \
       TTY_TRACE_RUNTIME_FLAGS(always, develop, product)
 
 /*

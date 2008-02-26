@@ -34,18 +34,8 @@
   product(int, ExecutionLoops, 1,                                             \
           "the number of times we run the VM (for measuring start-up time)")
 
-#if ENABLE_ARM_VFP
-#define PLATFORM_RUNTIME_FLAGS_VFP(develop, product)                          \
-  product(bool, RunFastMode, false,                                           \
-          "Configure the ARM VFP coprocessor to run in RunFast mode "         \
-          "and execute extra instructions to ensure TCK compilance")
-#else
-#define PLATFORM_RUNTIME_FLAGS_VFP(develop, product)
-#endif
-
 #define PLATFORM_RUNTIME_FLAGS(develop, product)         \
-        PLATFORM_RUNTIME_FLAGS_GENERIC(develop, product) \
-        PLATFORM_RUNTIME_FLAGS_VFP(develop, product)
+        PLATFORM_RUNTIME_FLAGS_GENERIC(develop, product)
 
  
 #define stricmp strcasecmp
