@@ -696,7 +696,7 @@ class AlertLFImpl extends ScreenLFImpl implements AlertLF {
      */
     public int getDisplayableHeight() {
         return currentDisplay != null ?
-            currentDisplay.getDisplayableWidth() :
+            currentDisplay.getDisplayableHeight() :
             AlertSkin.HEIGHT;
     }
 
