@@ -1198,7 +1198,25 @@ static javacall_result audio_qs_get_java_buffer_size(javacall_handle handle,
     JC_MM_ASSERT( -1 != h->hdr.wholeContentSize );
 
     *java_buffer_size = h->hdr.wholeContentSize;
-    *first_data_size  = h->hdr.wholeContentSize;
+    *first_data_size  = 0;
+    switch(h->hdr.mediaType)
+    {
+        case JC_FMT_TONE:
+        case JC_FMT_MIDI:
+        case JC_FMT_SP_MIDI:
+        case JC_FMT_DEVICE_TONE:
+        case JC_FMT_DEVICE_MIDI:
+            if (h->midi.midiBuffer == NULL) {
+                *first_data_size  = h->hdr.wholeContentSize;
+            }
+            break;
+        case JC_FMT_MS_PCM:
+        case JC_FMT_AMR:
+            if (h->wav.originalData == NULL) {
+                *first_data_size  = h->hdr.wholeContentSize;
+            }
+            break;
+    }
 
     return JAVACALL_OK;
 }

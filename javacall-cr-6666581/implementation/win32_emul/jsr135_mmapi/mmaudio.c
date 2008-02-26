@@ -140,7 +140,11 @@ javacall_result audio_get_java_buffer_size(javacall_handle handle,
     JC_MM_ASSERT( -1 != pHandle->wholeContentSize );
     
     *java_buffer_size = pHandle->wholeContentSize;
-    *first_data_size  = pHandle->wholeContentSize;
+    if (pHandle->buffer == NULL) {
+        *first_data_size  = pHandle->wholeContentSize;
+    } else {
+        *first_data_size  = 0;
+    }
 
     return JAVACALL_OK;
 }
