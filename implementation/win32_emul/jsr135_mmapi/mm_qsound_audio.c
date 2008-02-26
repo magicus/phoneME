@@ -1195,12 +1195,11 @@ static javacall_result audio_qs_get_java_buffer_size(javacall_handle handle,
 {
     ah* h = (ah*)handle;
 
-    JC_MM_ASSERT( -1 != h->hdr.wholeContentSize );
-
     *java_buffer_size = h->hdr.wholeContentSize;
     *first_data_size  = h->hdr.wholeContentSize;
 
-    return JAVACALL_OK;
+    return h->hdr.wholeContentSize > 0 ? JAVACALL_OK : 
+                                         JAVACALL_NO_DATA_AVAILABLE;
 }
 
 static javacall_result audio_qs_set_whole_content_size(javacall_handle handle,
