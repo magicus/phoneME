@@ -669,11 +669,14 @@ CVMdumpStats()
 #undef CHECK_PENDING_REQUESTS
 #ifdef CVM_REMOTE_EXCEPTIONS_SUPPORTED
 /* %comment h001 */
-#define CHECK_PENDING_REQUESTS(ee) \
-	(CVMD_gcSafeCheckRequest(ee) || CVMremoteExceptionOccurred(ee))
+#define CHECK_PENDING_REQUESTS(ee)                      \
+        ((CVMthreadSchedHook(CVMexecEnv2threadID(ee))), \
+         (CVMD_gcSafeCheckRequest(ee) ||                \
+          CVMremoteExceptionOccurred(ee)))
 #else
-#define CHECK_PENDING_REQUESTS(ee) \
-	(CVMD_gcSafeCheckRequest(ee))
+#define CHECK_PENDING_REQUESTS(ee)                      \
+	((CVMthreadSchedHook(CVMexecEnv2threadID(ee))), \
+         (CVMD_gcSafeCheckRequest(ee)))
 #endif
 
 /*
