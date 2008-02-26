@@ -718,10 +718,14 @@ JavaDebugger::vendor_hand_shake(PacketInputStream *in,
   versionString =  in->read_string();
   /*major=*/ in->read_byte();
   minor  =   in->read_byte();
-  if (minor < KDP_REQUIRED_MINOR /* 4 */) {
-    Transport *t = in->transport();
-    close_java_debugger(t);
-    tty->print_cr("VM requires newer Debug Agent; minor version >= 4");
+  {
+    Transport::Raw t = in->transport();
+    if (minor < KDP_REQUIRED_MINOR /* 4 */) {
+      close_java_debugger(&t);
+      tty->print_cr("VM requires newer Debug Agent; minor version >= 4");
+    } else {
+      t().set_connection_confirmed(1);
+    }
   }
   out->write_raw_string(kvmString);
   int base_mode = 0x7fff;
