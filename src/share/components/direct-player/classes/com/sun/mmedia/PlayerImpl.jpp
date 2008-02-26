@@ -281,6 +281,9 @@ public class PlayerImpl implements Player {
         boolean need_more = true;
 
         if (contLength > 0) {
+            if (contLength == stream.tell()) {
+                return;
+            }
             nSetWholeContentSize(hNative, contLength);
         }
         /* first loop - allocate java buffer*/
@@ -306,11 +309,14 @@ public class PlayerImpl implements Player {
                         num_read += ret;
                     }
                     if (ret == -1) {
+                        need_more = false;
                         break;
                     }
                 } while(num_read < packetSize);
-                packetSize = nBuffering(hNative, buffer, num_read);
-                need_more = nNeedMoreDataImmediatelly(hNative);
+                if (num_read > 0) {
+                    packetSize = nBuffering(hNative, buffer, num_read);
+                    need_more = nNeedMoreDataImmediatelly(hNative);
+                }
 
                 if ((contLength) != -1 && (contLength == stream.tell())) {
                     /* end of media */
@@ -558,6 +564,11 @@ public class PlayerImpl implements Player {
             mplayers.remove(new Integer(pID));
         } else {
             if (!isClosed) {
+                /* close source of unrealized player */
+                if (source != null) {
+                    source.disconnect();
+                    source = null;
+                }
                 /* close native part of unrealized player */
                 if(hNative != 0) {
                     nTerm(hNative);
