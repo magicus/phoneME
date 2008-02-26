@@ -1498,12 +1498,12 @@ bool ClassFileParser::is_package_restricted(Symbol *class_name) {
 
   const char* ptr = class_name->base_address();
   const char* s = ptr + class_name->length();
-  for(;;) {
+  do {
     if( --s <= ptr ) {
       // This class is in the 'default' package, which is always unrestricted
       return false;
     }
-  } while( *s == '/' );
+  } while (*s != '/');
 
   const int pkg_length = s - ptr;
   bool is_restricted = ROM::is_restricted_package(ptr, pkg_length);
