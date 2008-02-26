@@ -61,35 +61,40 @@ public final class DirectTone extends DirectPlayer {
         // if no source stream, player is created from TONE_DEVICE_LOCATOR
         // simply return it.
         if (stream != null) {
+            long contLength = stream.getContentLength();
+            if (contLength == stream.tell()) {
+                return;
+            } else {
+                // read the whole sequence from the source stream
+                int chunksize = 128;
+                byte[] tmpseqs = new byte[chunksize];
+                byte[] seqs = null;
+                // make use of BAOS, since it takes care of growing buffer
+                ByteArrayOutputStream baos = new ByteArrayOutputStream(chunksize);
 
-            // read the whole sequence from the source stream
-            int chunksize = 128;
-            byte[] tmpseqs = new byte[chunksize];
-            byte[] seqs = null;
-            // make use of BAOS, since it takes care of growing buffer
-            ByteArrayOutputStream baos = new ByteArrayOutputStream(chunksize);
+                try {
+                    int read;
 
-            try {
-                int read;
+                    while ((read = stream.read(tmpseqs, 0, chunksize)) != -1) {
+                        baos.write(tmpseqs, 0, read);
+                    }
 
-                while ((read = stream.read(tmpseqs, 0, chunksize)) != -1) {
-                    baos.write(tmpseqs, 0, read);
+                    seqs = baos.toByteArray();
+                    baos.close();
+                    tmpseqs = null;
+                    System.gc();
+
+                    try {
+                        ToneControl t = new DirectToneControl(this, false);
+                        t.setSequence(seqs);
+                    } catch (Exception e) {
+                        throw new MediaException("unable to realize: " + e.getMessage());
+                    }
+
+                } catch (IOException ex) {
+                    throw new MediaException("unable to realize: fail to read from source");
                 }
-
-                seqs = baos.toByteArray();
-                baos.close();
-                tmpseqs = null;
-                System.gc();
-
-            } catch (IOException ex) {
-                throw new MediaException("unable to realize: fail to read from source");
-            }
-        
-            try {
-                setSequence(seqs);
-            } catch (Exception e) {
-                throw new MediaException("unable to prefetch: " + e.getMessage());
-            }
+            }        
         }
     }
 
