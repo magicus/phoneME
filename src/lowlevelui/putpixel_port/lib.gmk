@@ -51,6 +51,19 @@ SUBSYSTEM_GRAPHICS_EXTRA_INCLUDES += \
 
 # vpath for sub-system
 #
+
+
+ifeq ($(TARGET_PLATFORM), javacall)
+    include $(PUTPIXEL_PORT_DIR)/javacall/$(LIB_MAKE_FILE)
+else
+    ifeq ($(TARGET_PLATFORM), wince)
+    include $(PUTPIXEL_PORT_DIR)/wince/$(LIB_MAKE_FILE)
+    else
+        include $(PUTPIXEL_PORT_DIR)/stubs/$(LIB_MAKE_FILE)
+    endif
+endif
+
+
 ifeq ($(TARGET_PLATFORM), wince)
     include $(PUTPIXEL_PORT_DIR)/wince/$(LIB_MAKE_FILE)
 else
