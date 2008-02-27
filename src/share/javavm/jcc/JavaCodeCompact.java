@@ -438,14 +438,15 @@ public class JavaCodeCompact extends LinkerUtil {
 	    return false; // missing superclass is a fatal error.
 	}
 	for (int i = 0; i < nclasses; i++){
-	    if (!(c[i] instanceof PrimitiveClassInfo) &&
-		!(c[i] instanceof ArrayClassInfo))
+            ClassInfo cinfo = c[i];
+	    if (!(cinfo instanceof PrimitiveClassInfo) &&
+		!(cinfo instanceof ArrayClassInfo))
 	    {
 		if (verbosity != 0) System.out.println(Localizer.getString(
 			"javacodecompact.building_tables_for_class",
-			c[i].className));
-		c[i].buildFieldtable();
-		c[i].buildMethodtable();
+			cinfo.className));
+		cinfo.buildFieldtable();
+		cinfo.buildMethodtable();
 	    }
 	}
 
@@ -617,28 +618,35 @@ public class JavaCodeCompact extends LinkerUtil {
     public ClassClass[]
     finalizeClasses() throws Exception{
 	ClassClass classes[] = ClassClass.getClassVector(classMaker);
-	int n = classes.length;
+        int numberOfClasses = classes.length;
 
 	CodeHacker ch = new CodeHacker( qlossless, jitOn, verbosity >= 2 );
-	for (int i = 0; i < n; i++){
-	    if (verbosity != 0) System.out.println(Localizer.getString(
-		"javacodecompact.quickening_code_of_class", classes[i].ci.className));
-	    if (! ch.quickenCode( classes[i].ci )){
-		throw new Exception( Localizer.getString(
-		    "javacodecompact.quickening_code_of_class", classes[i].ci.className));
+	for (int i = 0; i < numberOfClasses; i++) {
+	    if (verbosity != 0) {
+                System.out.println(Localizer.getString(
+		    "javacodecompact.quickening_code_of_class",
+                    classes[i].classInfo.className));
+            }
+            if (!ch.quickenAllMethodsInClass(classes[i].classInfo)) {
+                throw new Exception(Localizer.getString(
+		    "javacodecompact.quickening_code_of_class",
+                    classes[i].classInfo.className));
 	    }
 	}
 
 	// constant pool smashing has to be done after quickening,
 	// else it doesn't make much difference!
 
-	for ( int i = 0; i < n; i++ ){
-	    ClassInfo c = classes[i].ci;
-	    if (verbosity != 0) System.out.println(Localizer.getString(
-			"javacodecompact.reducing_constant_pool_of_class", c.className));
-	    c.countReferences( false );
-	    c.smashConstantPool();
-	    c.relocateReferences();
+	for (int i = 0; i < numberOfClasses; i++) {
+	    ClassInfo cinfo = classes[i].classInfo;
+	    if (verbosity != 0) {
+                System.out.println(Localizer.getString(
+                    "javacodecompact.reducing_constant_pool_of_class",
+                    cinfo.className));
+            }
+	    cinfo.countReferences(false);
+	    cinfo.smashConstantPool();
+	    cinfo.relocateReferences();
 	}
 
 	/*
@@ -646,7 +654,7 @@ public class JavaCodeCompact extends LinkerUtil {
 	 * to something more useful.
 	 */
 	if (!noCodeCompaction && !qlossless) {
-            for (int i = 0; i < n; i++) {
+            for (int i = 0; i < numberOfClasses; i++) {
                 classes[i].getInlining();
             }
 	}
@@ -657,7 +665,7 @@ public class JavaCodeCompact extends LinkerUtil {
     validateClasses(ClassClass classes[], ConstantPool sharedConstant){
 	int totalclasses = classes.length;
 	for (int i = 0; i < totalclasses; i++){
-	    ClassInfo ci = classes[i].ci;
+	    ClassInfo ci = classes[i].classInfo;
 	    ci.validate(sharedConstant);
 	}
     }
@@ -701,10 +709,12 @@ public class JavaCodeCompact extends LinkerUtil {
 		    anyMissingConstants = true;
 	    }
 	    if ( anyMissingConstants == true ){
-		System.err.println(Localizer.getString("javacodecompact.classes_referred_to_missing_classes"));
+		System.err.println(Localizer.getString(
+                    "javacodecompact.classes_referred_to_missing_classes"));
 		for (int i = 0; i < totalclasses; i++){
 		    if ( classes[i].impureConstants ){
-			System.err.println("	"+classes[i].ci.className);
+			System.err.println("	" +
+                                           classes[i].classInfo.className);
 		    }
 		}
 	    }
@@ -719,9 +729,9 @@ public class JavaCodeCompact extends LinkerUtil {
 	}
 
 	for (int i = 0; i < totalclasses; i++) {
-            classes[i].ci.relocateAndPackCode(noCodeCompaction);
+            classes[i].classInfo.relocateAndPackCode(noCodeCompaction);
 	    if (useSharedCP) {
-		classes[i].ci.setConstantPool(sharedConstant);
+		classes[i].classInfo.setConstantPool(sharedConstant);
 	    }
 	}
 
@@ -906,7 +916,7 @@ public class JavaCodeCompact extends LinkerUtil {
             if (thisConst == null)
                 continue;
 
-            int count = thisConst.references;
+            int count = thisConst.getReferences();
 	    if (count > 0) {
 		// Add into sharedCP, and replace the original in the cinfo:
 		constants[j] = sharedCP.add(thisConst);

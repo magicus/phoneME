@@ -121,12 +121,12 @@ class ClassConstant extends ConstantObject
     }
 
     public void incReference() {
-	references++;
+        super.incReference();
 	//name.incReference();
     }
 
     public void decReference() {
-	references--;
+        super.decReference();
 	//name.decReference();
     }
 

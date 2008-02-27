@@ -100,14 +100,14 @@ class NameAndTypeConstant extends ConstantObject {
     }
 
     public void incReference() {
-	references++;
+	super.incReference();
 	// don't want these to show up in the resulting symbol table.
 	//name.incReference();
 	//type.incReference();
     }
 
     public void decReference() {
-	references--;
+	super.decReference();
 	//name.decReference();
 	//type.decReference();
     }

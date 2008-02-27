@@ -147,8 +147,9 @@ public abstract class CVMDataType implements CVMTypeCode, util.ClassFileConst {
 	{
 	    if ( d instanceof CVMClassDataType ){
 		CVMClassDataType c = (CVMClassDataType)d;
-		if ( c.classInPackage == classInPkg )
+		if (c.classInPackage == classInPkg) {
 		    return c;
+                }
 	    }
 	    prev = d;
 	}

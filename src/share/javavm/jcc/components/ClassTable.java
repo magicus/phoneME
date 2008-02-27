@@ -131,26 +131,26 @@ class ClassTable
     }
 
     public static boolean
-    enterClass(ClassInfo c, ClassLoader l){
-	l.enterClass(c);
-	String className = c.className;
+    enterClass(ClassInfo cinfo, ClassLoader loader) {
+	loader.enterClass(cinfo);
+	String className = cinfo.className;
 	// Make sure a classvector hasn't been created yet.
 	// (used to add, now we just assert that it isn't necessary).
 	if (vm.ClassClass.hasClassVector()){
-	    System.err.println(Localizer.getString("classtable.class_vector_in_place",
-				className));
+	    System.err.println(Localizer.getString(
+                "classtable.class_vector_in_place", className));
 	    return false;
 	}
-	allClasses.add(c);
+	allClasses.add(cinfo);
 	return true;
     }
 
     public static boolean
-    enterClass(ClassInfo c){
-	if (!(c instanceof vm.ArrayClassInfo)) {
-	    return enterClass(c, loader);
+    enterClass(ClassInfo cinfo){
+	if (!(cinfo instanceof vm.ArrayClassInfo)) {
+	    return enterClass(cinfo, loader);
 	} else {
-	    return enterClass(c, c.loader);
+	    return enterClass(cinfo, cinfo.loader);
 	}
     }
 

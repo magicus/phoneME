@@ -88,12 +88,12 @@ class StringConstant extends ConstantObject
     }
 
     public void incReference() {
-	references++;
+	super.incReference();
 	//str.incReference();
     }
 
     public void decReference() {
-	references--;
+	super.decReference();
 	//str.decReference();
     }
 

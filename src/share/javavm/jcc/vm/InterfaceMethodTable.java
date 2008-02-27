@@ -147,12 +147,16 @@ class InterfaceMethodTable {
 	    MethodInfo target = mtab[j];
 	    if ( (target.access&Const.ACC_STATIC) != 0 ){
 		// should never happen.
-		System.err.println(Localizer.getString("javacodecompact.static_method_in_interface", intf.className, target));
+		System.err.println(Localizer.getString(
+                    "javacodecompact.static_method_in_interface",
+                    intf.className, target));
 		continue;
 	    }
 	    MethodInfo v = findSlot( thisClass.methodtable, target );
 	    if ( v == null ){
-		System.err.println(Localizer.getString("javacodecompact.interface_unimplemented", thisClass.className, intf.className, target));
+		System.err.println(Localizer.getString(
+                    "javacodecompact.interface_unimplemented",
+                    thisClass.className, intf.className, target));
 		ivec[ j ] = 0;
 	    } else {
 		ivec[ j ] = (short)v.methodTableIndex;
@@ -164,9 +168,10 @@ class InterfaceMethodTable {
 
     public static InterfaceMethodTable
     generateInterfaceTable( ClassClass cc, InterfaceMethodFactory imf ){
-	ClassInfo c = cc.ci;
-	if ( c.allInterfaces == null )
+	ClassInfo c = cc.classInfo;
+	if (c.allInterfaces == null) {
 	    c.findAllInterfaces();
+        }
 	String imtName = c.getGenericNativeName() + "_intfMethodtable";
 	ClassInfo sup = c.superClassInfo;
 	int ntotal = c.allInterfaces.size();

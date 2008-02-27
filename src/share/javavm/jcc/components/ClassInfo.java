@@ -256,16 +256,16 @@ class ClassInfo
      * We adjust each constant's index entry accordingly.
      * Naturally, we preserve the null entries.
      */
-    public void smashConstantPool(){
+    public void smashConstantPool() {
 	ConstantObject constants[] = cp.getConstants();
 	int nOld = constants.length;
 	int nNew = 1;
 	ConstantObject o;
 	// first, count and index.
-	for ( int i = 1; i < nOld; i += o.nSlots ){
+	for (int i = 1; i < nOld; i += o.nSlots) {
 	    o = constants[i];
-	    if ( ! o.shared ){
-		if ( o.references == 0 ){
+	    if (!o.shared) {
+		if (o.getReferences() == 0) {
 		    o.index = -1; // trouble.
 		} else {
 		    // we're keeping it.
@@ -277,9 +277,9 @@ class ClassInfo
 	// now reallocate and copy.
 	ConstantObject newConstants[] = new ConstantObject[ nNew ];
 	int j = 1;
-	for ( int i = 1; i < nOld; i += o.nSlots ){
+	for (int i = 1; i < nOld; i += o.nSlots) {
 	    o = constants[i];
-	    if ( (! o.shared ) && ( o.references != 0 ) ){
+	    if (!o.shared && (o.getReferences() != 0)) {
 		// we're keeping it.
 		newConstants[j] = o;
 		j += o.nSlots;
@@ -780,27 +780,27 @@ class ClassInfo
     }
 
     public boolean
-    countReferences( boolean isRelocatable ){
-	if (isRelocatable){
+    countReferences(boolean isRelocatable) {
+	if (isRelocatable) {
 	    thisClass.incReference();
-	    if ( superClass != null ) superClass.incReference();
+	    if (superClass != null) superClass.incReference();
 	}
 	// count interface references
-	if ( interfaces!=null ){
-	    for ( int i = 0; i < interfaces.length ; i++ ){
+	if (interfaces != null) {
+	    for (int i = 0; i < interfaces.length ; i++) {
 		interfaces[i].incReference();
 	    }
 	}
 	// then count references from fields.
-	if ( fields != null ){
-	    for ( int i = 0; i < fields.length; i++ ){
-		fields[i].countConstantReferences( isRelocatable );
+	if (fields != null) {
+	    for (int i = 0; i < fields.length; i++) {
+		fields[i].countConstantReferences(isRelocatable);
 	    }
 	}
 	// then count references from code
-	if ( methods != null ){
-	    for ( int i = 0; i < methods.length; i++ ){
-		methods[i].countConstantReferences( cp, isRelocatable );
+	if (methods != null) {
+	    for (int i = 0; i < methods.length; i++) {
+		methods[i].countConstantReferences(cp, isRelocatable);
 	    }
 	}
 	Attribute.countConstantReferences(classAttributes, isRelocatable);
@@ -852,7 +852,7 @@ class ClassInfo
 		throw new ValidationException(
 		    "Constant pool contains Unicode constant in "+className, c);
 	    }
-	    if (c.references + c.ldcReferences == 0){
+	    if (c.getReferences() + c.getLdcReferences() == 0) {
 		throw new ValidationException(
 		    "Constant pool contains unreferenced constant in "+className, c);
 	    }
@@ -951,9 +951,12 @@ class ClassInfo
 	if ( (t == null) || ((n=t.length) == 0) ) return;
 	o.print( title ); o.println(/*NOI18N*/"["+n+/*NOI18N*/"]:");
 	o.println(/*NOI18N*/"\tPosition Index\tNrefs");
-	for( int i = 0; i < n; i++ ){
-	    if ( t[i] != null )
-		o.println(/*NOI18N*/"\t["+i+/*NOI18N*/"]\t"+t[i].index+/*NOI18N*/"\t"+t[i].references+/*NOI18N*/"\t"+t[i]);
+	for (int i = 0; i < n; i++) {
+	    if (t[i] != null) {
+		o.println(/*NOI18N*/"\t["+i+/*NOI18N*/"]\t"+t[i].index+
+                          /*NOI18N*/"\t"+t[i].getReferences() +
+                          /*NOI18N*/"\t"+t[i]);
+            }
 	}
     }
     private static void

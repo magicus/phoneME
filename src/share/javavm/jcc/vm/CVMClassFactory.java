@@ -30,6 +30,7 @@ import consts.Const;
 import components.ClassInfo;
 import components.ClassTable;
 import components.ConstantPool;
+import components.UnicodeConstant;
 import runtime.CVMWriter;
 import util.Localizer;
 import util.UnresolvedReferenceList;
@@ -69,6 +70,11 @@ public class CVMClassFactory implements VMClassFactory, Comparator {
 	((CVMClass)cc).typeCode = value;
     }
 
+    /** 
+     * This method is responsible for assigning the classIDs (i.e. class
+     * typeID) for all the classes that have been "loaded" in the system.
+     * The value of the typeid to be assigned is attained from CVMDataType.
+     */
     private static void
     setAllClassID(){
 	// null had better work here!
@@ -77,7 +83,10 @@ public class CVMClassFactory implements VMClassFactory, Comparator {
 	int n = allClasses.length;
 	for ( int i = 0; i < n; i++ ){
 	    CVMClass cvmc = (CVMClass) allClasses[i];
-	    cvmc.classId = CVMDataType.lookupClassname(CVMWriter.getUTF(cvmc.ci.thisClass.name));
+            UnicodeConstant className = cvmc.classInfo.thisClass.name;
+            String utfName = CVMWriter.getUTF(className);
+	    int classId = CVMDataType.lookupClassname(utfName);
+            cvmc.setClassId(classId);
 	}
     }
 
@@ -118,8 +127,8 @@ public class CVMClassFactory implements VMClassFactory, Comparator {
 	// classcast exception.
 	CVMClass c1 = (CVMClass)o1;
 	CVMClass c2 = (CVMClass)o2;
-        int classId1 = c1.classId;
-        int classId2 = c2.classId;
+        int classId1 = c1.getClassId();
+        int classId2 = c2.getClassId();
 
         // NOTE: This comparison method is used in the sorting of CVM Class
         // instances in CVM_ROMClasses[].  The Class instances of the Class

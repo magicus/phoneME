@@ -41,8 +41,8 @@ import util.ValidationException;
 public
 abstract class ConstantObject extends ClassComponent implements Cloneable
 {
-    public int references = 0;
-    public int ldcReferences = 0;
+    private int references = 0;
+    private int ldcReferences = 0;
     public boolean shared = false;
     public ConstantPool containingPool; // if shared == true, then container.
     public ClassInfo    containingClass; // at least initially. Not good if shared.
@@ -59,16 +59,24 @@ abstract class ConstantObject extends ClassComponent implements Cloneable
         this.tag = tag;
     }
     
-    public void incldcReference() {
+    public void incLdcReference() {
         ldcReferences++;
     }
 
-    public void decldcReference() {
+    public void decLdcReference() {
         ldcReferences--;
     }
  
-    public void clearldcReference(){
+    public void clearLdcReference() {
         ldcReferences = 0;
+    }
+
+    public int getLdcReferences() {
+        return ldcReferences;
+    }
+
+    public void setLdcReferences(int value) {
+        ldcReferences = value;
     }
 
     // Some items are reference counted so that the most frequently
@@ -85,6 +93,14 @@ abstract class ConstantObject extends ClassComponent implements Cloneable
 
     public void clearReference(){
 	references = 0;
+    }
+
+    public int getReferences() {
+        return references;
+    }
+
+    public void setReferences(int value) {
+        references = value;
     }
 
     public Object clone(){

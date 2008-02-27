@@ -123,7 +123,7 @@ class FMIrefConstant extends ConstantObject
     }
 
     public void incReference() {
-	references++;
+	super.incReference();
 	// if this member reference is not resolved,
 	// then the sig & class entries must also be in the
 	// constant pool.
@@ -134,7 +134,7 @@ class FMIrefConstant extends ConstantObject
     }
 
     public void decReference() {
-	references--;
+	super.decReference();
 	sig.decReference();
 	clas.decReference();
     }
