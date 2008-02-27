@@ -115,7 +115,7 @@ public final class MIDPVideoRenderer extends VideoRenderer
     MIDPVideoRenderer(Player p) {
         if (p instanceof BasicPlayer) {
             this.player = (BasicPlayer)p;
-            locatorString = p.getLocator();
+            locatorString = player.getLocator();
         } else {
             System.err.println("video renderer can't work with Players of this class: " + p.toString());
         }
@@ -217,7 +217,7 @@ public final class MIDPVideoRenderer extends VideoRenderer
         if (canvas != null) // USE_DIRECT_VIDEO
             canvas.repaint();
         else if (mmItem != null) // USE_GUI_PRIMITIVE
-            mmItem.repaint();
+            mmItem.refresh(false);
     }
 
     public void setDisplaySize(int width, int height)
@@ -240,10 +240,9 @@ public final class MIDPVideoRenderer extends VideoRenderer
             }
             scaleToDest();
             if (pvis)
-                if (mmItem != null) {
-                    mmItem.invalidate();
-                    mmItem.repaint();
-                } else if (cvis)                   
+                if (mmItem != null)
+                    mmItem.refresh(true);
+                else if (cvis)                   
                     canvas.repaint();
         }
         // Makes sense only if NOT in Full Screen mode
@@ -310,7 +309,7 @@ public final class MIDPVideoRenderer extends VideoRenderer
                     mmItem.toNormal();
                     canvas = null;
                     if (pvis)
-                        mmItem.repaint();
+                        mmItem.refresh(false);
                 }
             }
             player.sendEvent(PlayerListener.SIZE_CHANGED, this);
@@ -355,23 +354,23 @@ public final class MIDPVideoRenderer extends VideoRenderer
             format = 4;
             pixelsize = 2;
         } else
-            throw new InvalidArgumentException("Image format " + imageType + " not supported");
+            throw new IllegalArgumentException("Image format " + imageType + " not supported");
         
         byte [] arr = new byte[pixelsize * rgbData.length];
         int idx = 0;
         switch (format) {
             case 1: // RGB888
                 for (int i = 0; i < rgbData.length; i++) {
-                    arr[idx++] = (rgbData[i] >> 16) & 0xFF;
-                    arr[idx++] = (rgbData[i] >> 8) & 0xFF;
-                    arr[idx++] = rgbData[i] & 0xFF;
+                    arr[idx++] = (byte)((rgbData[i] >> 16) & 0xFF);
+                    arr[idx++] = (byte)((rgbData[i] >> 8) & 0xFF);
+                    arr[idx++] = (byte)(rgbData[i] & 0xFF);
                 }
                 break;
             case 2: // BGR888
                 for (int i = 0; i < rgbData.length; i++) {
-                    arr[idx++] = (rgbData[i] >> 16) & 0xFF;
-                    arr[idx++] = (rgbData[i] >> 8) & 0xFF;
-                    arr[idx++] = rgbData[i] & 0xFF;
+                    arr[idx++] = (byte)((rgbData[i] >> 16) & 0xFF);
+                    arr[idx++] = (byte)((rgbData[i] >> 8) & 0xFF);
+                    arr[idx++] = (byte)(rgbData[i] & 0xFF);
                 }
                 break;
             case 3: // RGB565
@@ -379,8 +378,8 @@ public final class MIDPVideoRenderer extends VideoRenderer
                     int r = (rgbData[i] >> 19) & 0x1F;
                     int g = (rgbData[i] >> 10) & 0x3F;
                     int b = (rgbData[i] >> 3) & 0x1F;
-                    arr[idx++] = (r << 3) | (g >> 3);
-                    arr[idx++] = (g << 5) | b;
+                    arr[idx++] = (byte)((r << 3) | (g >> 3));
+                    arr[idx++] = (byte)((g << 5) | b);
                 }
                 break;
             case 4: // RGB555
@@ -388,8 +387,8 @@ public final class MIDPVideoRenderer extends VideoRenderer
                     int r = (rgbData[i] >> 19) & 0x1F;
                     int g = (rgbData[i] >> 11) & 0x1F;
                     int b = (rgbData[i] >> 3) & 0x1F;
-                    arr[idx++] = (r << 2) | (g >> 3);
-                    arr[idx++] = (g << 5) | b;
+                    arr[idx++] = (byte)((r << 2) | (g >> 3));
+                    arr[idx++] = (byte)((g << 5) | b);
                 }
                 break;
         }
@@ -429,10 +428,10 @@ public final class MIDPVideoRenderer extends VideoRenderer
         //nativeRender = (mode & NATIVE_RENDER) > 0;
         useAlpha = (mode & USE_ALPHA) > 0;
         if (width < 1 || height < 1)
-            throw new InvalidArgumentException("Positive width and height expected");
+            throw new IllegalArgumentException("Positive width and height expected");
         
-        if (mode != XRGB888)
-            throw new InvalidArgumentException("Only XRGBA888 mode supported");
+        if ((mode & ~(USE_ALPHA | NATIVE_RENDER)) != XRGB888)
+            throw new IllegalArgumentException("Only XRGBA888 mode supported");
         
         videoWidth = width;
         videoHeight = height;
@@ -445,7 +444,7 @@ public final class MIDPVideoRenderer extends VideoRenderer
         
         rgbData = null;
         scaledData = null;
-        scaled = true;
+        scaled = false;
         painting = false;
         //image = null;
     }
@@ -465,7 +464,7 @@ public final class MIDPVideoRenderer extends VideoRenderer
                 canvas.repaint(dx, dy, dw, dh);
             }
         } else if (mmItem != null) {
-            mmItem.repaint();
+            mmItem.refresh(false);
         }
     }
     
@@ -473,23 +472,24 @@ public final class MIDPVideoRenderer extends VideoRenderer
      * Public render method
      */
     public void render(byte[] colorData) {
-        throw new InvalidStateException("Only 32 bit pixel format supported");
+        throw new IllegalStateException("Only 32 bit pixel format supported");
     }
     
     /**
      * Public render method
      */
     public void render(short[] colorData) {
-        throw new InvalidStateException("Only 32 bit pixel format supported");
+        throw new IllegalStateException("Only 32 bit pixel format supported");
     }
 
     public void close() {
         if (!closed && canvas != null)
             mmHelper.unregisterPlayer(canvas, this);
-        synchronized (rgbData) {
-            rgbData = null;
-            scaledData = null;
-        }
+        if (rgbData != null)
+            synchronized (rgbData) {
+                rgbData = null;
+                scaledData = null;
+            }
         //image = null;
         closed = true;
     }
@@ -504,21 +504,20 @@ public final class MIDPVideoRenderer extends VideoRenderer
             ldw = dw;
             ldh = dh;
         }
-        synchronized (rgbData) { // To avoid interference with close()
-            scaled = ldw != videoWidth || ldh != videoHeight;
-            if (rgbData != null && !scaled) {
-                if (scaledData == null || scaledData.length < ldw * ldh)
-                    scaledData = new int[ldw * ldh];
-                // Scale using nearest neighbor
-                int dp = 0;
-                for (int y = 0; y < ldh; y++) {
-                    for (int x = 0; x < ldw; x++) {
-                        scaledData[dp++] = rgbData[((y * videoHeight) / ldh)
-                                    * videoWidth + ((x * videoWidth) / ldw)];
-                    } 
+        if (rgbData != null)
+            synchronized (rgbData) { // To avoid interference with close()
+                scaled = ldw != videoWidth || ldh != videoHeight;
+                if (!scaled) {
+                    if (scaledData == null || scaledData.length < ldw * ldh)
+                        scaledData = new int[ldw * ldh];
+                    // Scale using nearest neighbor
+                    int dp = 0;
+                    for (int y = 0; y < ldh; y++)
+                        for (int x = 0; x < ldw; x++)
+                            scaledData[dp++] = rgbData[((y * videoHeight) / ldh)
+                                        * videoWidth + ((x * videoWidth) / ldw)];
                 }
             }
-        }
     }
 
     /**
@@ -565,9 +564,8 @@ public final class MIDPVideoRenderer extends VideoRenderer
             if (h > videoHeight)
                 h = videoHeight;
             try {
-                synchronized (rgbData) {
-                    painting = true;
-                    if (rgbData != null) {
+                if (rgbData != null) {
+                    synchronized (rgbData) {
                         if (scaled) {
                             g.drawRGB(scaledData, 0, dw, dx, dy, dw, dh, useAlpha);
                         } else {
@@ -624,14 +622,22 @@ public final class MIDPVideoRenderer extends VideoRenderer
             super("");
         }
 
+        public void refresh(boolean resize) {
+            if (resize) {
+                invalidate();
+                repaint();
+            } else
+                repaint(dx, dy, dw, dh);
+        }
+
         protected void paint(Graphics g, int w, int h) {
             // Don't paint if VideoControl visible flag is false
             if (!pvis || painting)
                 return;
 
             painting = true;
-            synchronized (rgbData) {
-                if (rgbData != null) {
+            if (rgbData != null) {
+                synchronized (rgbData) {
                     if (scaled) {
                         g.drawRGB(scaledData, 0, dw, 0, 0, dw, dh, useAlpha);
                     } else {

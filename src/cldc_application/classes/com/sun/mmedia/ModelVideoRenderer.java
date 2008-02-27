@@ -35,10 +35,8 @@ public class ModelVideoRenderer{
     {
     }
     
-    public static VideoRenderer getVideoRenderer(BasicPlayer player, 
-                                          int sourceWidth, 
-                                          int sourceHeight) {
-        return new MIDPVideoRenderer(player, sourceWidth, sourceHeight);
+    public static VideoRenderer getVideoRenderer(BasicPlayer player) {
+        return new MIDPVideoRenderer(player);
     }
 
  }

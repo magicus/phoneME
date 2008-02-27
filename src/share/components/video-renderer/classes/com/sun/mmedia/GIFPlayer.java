@@ -280,8 +280,7 @@ final public class GIFPlayer extends BasicPlayer implements Runnable {
             scanFrames();
 
             // initialize video control
-            videoRenderer = Configuration.getConfiguration().getVideoRenderer(
-                                              this, videoWidth, videoHeight);
+            videoRenderer = Configuration.getConfiguration().getVideoRenderer(this);
             videoControl = (VideoControl)videoRenderer.getVideoControl();
             videoRenderer.initRendering(VideoRenderer.XRGB888 | 
                                         VideoRenderer.USE_ALPHA,
