@@ -339,6 +339,9 @@ public final class MIDPVideoRenderer extends VideoRenderer
         checkState();
 	checkPermission();
         int format = 0, pixelsize = 0;
+        /* REVISIT: Not currently supported.
+         * Need to update  video.snapshot.encodings property accordingly
+         *
         if (imageType == null || imageType.equalsIgnoreCase(SNAPSHOT_RGB888)) {
             format = 1;
             pixelsize = 3;
@@ -351,9 +354,9 @@ public final class MIDPVideoRenderer extends VideoRenderer
         } else if (imageType.equalsIgnoreCase(SNAPSHOT_RGB555)) {
             format = 4;
             pixelsize = 2;
-        } else
+        } else */
             throw new MediaException("Image format " + imageType + " not supported");
-
+        /*
         if (rgbData == null)
             throw new IllegalStateException("No image available");
         
@@ -393,7 +396,7 @@ public final class MIDPVideoRenderer extends VideoRenderer
                 }
                 break;
         }
-        return arr;
+        return arr; */
     }
 
     /*private int tryParam(String tok, String prop, int def) {
@@ -508,7 +511,7 @@ public final class MIDPVideoRenderer extends VideoRenderer
         if (rgbData != null)
             synchronized (rgbData) { // To avoid interference with close()
                 scaled = ldw != videoWidth || ldh != videoHeight;
-                if (!scaled) {
+                if (scaled) {
                     if (scaledData == null || scaledData.length < ldw * ldh)
                         scaledData = new int[ldw * ldh];
                     // Scale using nearest neighbor
