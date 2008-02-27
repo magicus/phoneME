@@ -62,10 +62,3 @@ else
         include $(PUTPIXEL_PORT_DIR)/stubs/$(LIB_MAKE_FILE)
     endif
 endif
-
-
-ifeq ($(TARGET_PLATFORM), wince)
-    include $(PUTPIXEL_PORT_DIR)/wince/$(LIB_MAKE_FILE)
-else
-    include $(PUTPIXEL_PORT_DIR)/javacall/$(LIB_MAKE_FILE)
-endif
