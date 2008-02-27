@@ -264,6 +264,9 @@ public class PlayerImpl implements Player {
         mplayers.put(new Integer(pID), playerInst);
 
         playerInst.realize();
+        if (null != state_subscriber) {
+            state_subscriber.PlayerRealized(this);
+        }
     };
 
     /**

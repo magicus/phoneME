@@ -30,5 +30,6 @@ import javax.microedition.media.MediaException;
 
 public interface PlayerStateSubscriber
 {
+    void PlayerRealized(Player player) throws MediaException;
     void PlayerPrefetched(Player player) throws MediaException;
 }
