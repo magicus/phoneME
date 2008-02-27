@@ -44,16 +44,21 @@ EVENTQUEUE_PORT_DIR = $(SUBSYSTEM_EVENTS_DIR)/eventqueue_port
 SUBSYSTEM_EVENTS_EXTRA_INCLUDES += \
     -I$(SUBSYSTEM_EVENTS_DIR)/eventqueue_port/include
 
-ifeq ($(PLATFORM), linux_qte)
-   include $(EVENTQUEUE_PORT_DIR)/linux_qte/lib.gmk
+
+ifeq ($(PLATFORM), armsd)
+   include $(EVENTQUEUE_PORT_DIR)/stubs/lib.gmk
 else
-   ifeq ($(PLATFORM), win32)
-       include $(EVENTQUEUE_PORT_DIR)/win32/lib.gmk
+   ifeq ($(PLATFORM), linux_fb)
+       include $(EVENTQUEUE_PORT_DIR)/stubs/lib.gmk
    else
-       ifeq ($(PLATFORM), wince)
-           include $(EVENTQUEUE_PORT_DIR)/wince/lib.gmk
+       ifeq ($(PLATFORM), linux_gci)
+           include $(EVENTQUEUE_PORT_DIR)/stubs/lib.gmk
        else
-           include $(EVENTQUEUE_PORT_DIR)/javacall/lib.gmk
+	   ifeq ($(PLATFORM), win32_gci)
+	       include $(EVENTQUEUE_PORT_DIR)/stubs/lib.gmk
+	   else
+	       include $(EVENTQUEUE_PORT_DIR)/$(PLATFORM)/lib.gmk
+	   endif
        endif
    endif
 endif
