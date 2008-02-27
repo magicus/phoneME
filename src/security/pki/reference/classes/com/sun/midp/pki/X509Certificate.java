@@ -1133,11 +1133,7 @@ public class X509Certificate implements Certificate {
             // look up the public key of the certificate issurer
             caCerts = certStore.getCertificates(cert.getIssuer());
             if (caCerts != null) {
-                // found a known CA no need to go on to the next cert
-                if (caCerts[0].getSubject() != cert.getSubject()) {
-                    subjectNames.addElement(caCerts[0].getSubject());
-                }
-
+                subjectNames.addElement(caCerts[0].getSubject());
                 break;
             }
             
