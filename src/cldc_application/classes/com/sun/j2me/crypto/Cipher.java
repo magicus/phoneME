@@ -27,12 +27,21 @@
 package com.sun.j2me.crypto;
 
 /**
- * Implements an abstract class that generalizes all ciphers. It is
- * modelled after javax.crypto.Cipher.
+ * Implements a class that generalizes all ciphers.
  */
-public abstract class Cipher extends com.sun.midp.crypto.Cipher {
+public class Cipher {
     /** Cipher implementation object. */
     private com.sun.midp.crypto.Cipher cipher;
+
+    /** Used in init to indicate encryption mode. */
+    public static final int ENCRYPT_MODE = com.sun.midp.crypto.Cipher.ENCRYPT_MODE;
+
+    /** Used in init to indicate decryption mode. */
+    public static final int DECRYPT_MODE = com.sun.midp.crypto.Cipher.DECRYPT_MODE;
+
+    private Cipher(com.sun.midp.crypto.Cipher cipher) {
+        this.cipher = cipher;
+    }
 
    /**
      * Generates a <code>Cipher</code> object that implements the specified
@@ -55,7 +64,8 @@ public abstract class Cipher extends com.sun.midp.crypto.Cipher {
     public static final Cipher getNewInstance(String transformation)
             throws NoSuchAlgorithmException, NoSuchPaddingException {
         try {
-            return (com.sun.j2me.crypto.Cipher)com.sun.midp.crypto.Cipher.getInstance(transformation);
+            return new Cipher(com.sun.midp.crypto.Cipher.getInstance(
+                                              transformation));
         }
         catch (com.sun.midp.crypto.NoSuchAlgorithmException e) {
             throw new NoSuchAlgorithmException(e.getMessage());
@@ -228,4 +238,16 @@ public abstract class Cipher extends com.sun.midp.crypto.Cipher {
         }
     
     }
+
+    /**
+     * Returns the initialization vector (IV) in a new buffer.
+     * This is useful in the case where a random IV was created.
+     * @return the initialization vector in a new buffer,
+     * or <code>null</code> if the underlying algorithm does
+     * not use an IV, or if the IV has not yet been set.
+     */
+    public byte[] getIV() {
+        return cipher.getIV();
+    }
+
 }
