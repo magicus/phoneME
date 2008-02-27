@@ -502,13 +502,13 @@ class MethodInfo extends ClassMemberInfo implements Const, Cloneable
 
 
     public void
-    countConstantReferences( ConstantPool cp, boolean isRelocatable ){
+    countConstantReferences(ConstantPool cp, boolean isRelocatable) {
 	ConstantObject table[] = cp.getConstants();
 	super.countConstantReferences(isRelocatable);
-	Attribute.countConstantReferences( methodAttributes, isRelocatable );
-	Attribute.countConstantReferences( codeAttributes, isRelocatable );
-	if ( code == null ) return; // no code, no relocation
-	if (ldcInstructions == null){
+	Attribute.countConstantReferences(methodAttributes, isRelocatable);
+        Attribute.countConstantReferences(codeAttributes, isRelocatable);
+	if (code == null) return; // no code, no relocation
+	if (ldcInstructions == null) {
 	    findConstantReferences();
 	}
 	{

@@ -90,9 +90,9 @@ class ConstantPool implements Comparator {
         ConstantObject obj1 = (ConstantObject) o1;
         ConstantObject obj2 = (ConstantObject) o2;
 
-        if (obj1.ldcReferences < obj2.ldcReferences) {
+        if (obj1.getLdcReferences() < obj2.getLdcReferences()) {
 	   return 1;
-        } else if (obj1.ldcReferences == obj2.ldcReferences)
+        } else if (obj1.getLdcReferences() == obj2.getLdcReferences())
            return 0;
         return -1;
     }
@@ -165,8 +165,8 @@ class ConstantPool implements Comparator {
 		enumedEntries.addElement( null ); // place holder.
 	    constants = null; // mark any "constants" as obsolete!
 	} else { 
-	    r.ldcReferences += s.ldcReferences;
-	    r.references += s.references;
+	    r.setLdcReferences(r.getLdcReferences() + s.getLdcReferences());
+	    r.setReferences(r.getReferences() + s.getReferences());
 	}
 	return r; // a similar object in the pool.
     }
@@ -261,7 +261,7 @@ class ConstantPool implements Comparator {
 	// first, count and index.
 	for ( int i = 1; i < n; i += o.nSlots ){
 	    o = (ConstantObject)enumedEntries.elementAt(i);
-	    if ( o.references == 0 ){
+	    if (o.getReferences() == 0) {
 		o.index = -1;
 		h.remove( o );
 	    } else {
@@ -277,7 +277,7 @@ class ConstantPool implements Comparator {
 	newConstants.addElement( null );
 	for ( int i = 1; i < n; i += o.nSlots ){
 	    o = (ConstantObject)enumedEntries.elementAt(i);
-	    if ( o.references != 0 ){
+	    if (o.getReferences() != 0) {
 		// we're keeping it.
 		newConstants.addElement(o);
 		for ( int j =o.nSlots; j > 1; j-- )
@@ -339,7 +339,7 @@ class ConstantPool implements Comparator {
 		throw new ValidationException(
 		    "Shared constant pool contains Unicode constant", c);
 	    }
-	    if (c.references + c.ldcReferences == 0){
+	    if (c.getReferences() + c.getLdcReferences() == 0) {
 		throw new ValidationException(
 		    "Shared constant pool contains unreferenced constant", c);
 	    }
@@ -368,7 +368,8 @@ class ConstantPool implements Comparator {
 	ConstantObject c;
 	for( int i=1; i< n; i+=c.nSlots){
 	    c = (ConstantObject)enumedEntries.elementAt(i);
-	    o.println("\t["+c.index+"]\t"+c.references+"\t"+c.toString() );
+	    o.println("\t["+c.index+"]\t"+
+                      c.getReferences()+"\t"+c.toString() );
 	}
     }
 }

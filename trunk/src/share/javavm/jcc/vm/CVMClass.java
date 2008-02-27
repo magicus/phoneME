@@ -49,7 +49,7 @@ CVMClass extends ClassClass implements Const, CVMConst, CVMTypeCode {
     public CVMMethodInfo	methods[];
     private String		myNativeName;
     protected int		typeCode = 0;
-    protected int		classId  = CVM_T_ERROR;
+    private int                 classId  = CVM_T_ERROR;
 
     public int			nStaticWords;
     public int			nStaticRef;
@@ -62,7 +62,7 @@ CVMClass extends ClassClass implements Const, CVMConst, CVMTypeCode {
     private boolean             isCompressible = true;
     
     public CVMClass( ClassInfo c ){
-	ci = c;
+	classInfo = c;
 	c.vmClass = this;
 
 	if ( c.methods != null ){
@@ -90,8 +90,8 @@ CVMClass extends ClassClass implements Const, CVMConst, CVMTypeCode {
     
     public String getNativeName(){
 	if ( myNativeName == null ){
-	    if ( ci instanceof ArrayClassInfo ){
-		ArrayClassInfo aci = (ArrayClassInfo)ci;
+	    if (classInfo instanceof ArrayClassInfo) {
+		ArrayClassInfo aci = (ArrayClassInfo)classInfo;
 		if (aci.depth == 1) {
 		    /*
 		     * There are some special arrays of well-known basic
@@ -111,7 +111,7 @@ CVMClass extends ClassClass implements Const, CVMConst, CVMTypeCode {
 			aci.arrayClassNumber;
 		}
 	    } else {
-		myNativeName = ci.getGenericNativeName();
+		myNativeName = classInfo.getGenericNativeName();
 	    }
 	}
 	return myNativeName;
@@ -120,16 +120,21 @@ CVMClass extends ClassClass implements Const, CVMConst, CVMTypeCode {
     public int
     CVMflags(){
 	int flagval = 0;
-	int a = ci.access;
-	if ( (a&ACC_PUBLIC) != 0 ) flagval |= CVM_CLASS_ACC_PUBLIC;
-	if ( (a&ACC_FINAL) != 0 ) flagval |= CVM_CLASS_ACC_FINAL;
-	if ( (a&ACC_SUPER) != 0 ) flagval |= CVM_CLASS_ACC_SUPER;
-	if ( (a&ACC_INTERFACE) != 0 ) flagval |= CVM_CLASS_ACC_INTERFACE;
-	if ( (a&ACC_ABSTRACT) != 0 ) flagval |= CVM_CLASS_ACC_ABSTRACT;
-	if (isPrimitiveClass())
+	int acc = classInfo.access;
+	if ((acc & ACC_PUBLIC)    != 0) flagval |= CVM_CLASS_ACC_PUBLIC;
+	if ((acc & ACC_FINAL)     != 0) flagval |= CVM_CLASS_ACC_FINAL;
+	if ((acc & ACC_SUPER)     != 0) flagval |= CVM_CLASS_ACC_SUPER;
+	if ((acc & ACC_INTERFACE) != 0) flagval |= CVM_CLASS_ACC_INTERFACE;
+	if ((acc & ACC_ABSTRACT)  != 0) flagval |= CVM_CLASS_ACC_ABSTRACT;
+	if (isPrimitiveClass()) {
 	    flagval |= CVM_CLASS_ACC_PRIMITIVE;
-	if (ci.hasNonTrivialFinalizer) flagval |= CVM_CLASS_ACC_FINALIZABLE;
-	if (ci.isReference()) flagval |= CVM_CLASS_ACC_REFERENCE;
+        }
+	if (classInfo.hasNonTrivialFinalizer) {
+            flagval |= CVM_CLASS_ACC_FINALIZABLE;
+        }
+	if (classInfo.isReference()) {
+            flagval |= CVM_CLASS_ACC_REFERENCE;
+        }
 	return flagval;
 
     }
@@ -144,11 +149,19 @@ CVMClass extends ClassClass implements Const, CVMConst, CVMTypeCode {
 	return classId;
     }
 
+    // Accessor methods for the classId field:
+    protected int getClassId() {
+	return classId;
+    }
+    protected void setClassId(int id) {
+	classId = id;
+    }
+
     public void orderStatics(){
 	// count statics.
 	// arranged them ref-first
 	// do not assign offsets.
-	FieldInfo f[] = ci.fields;
+	FieldInfo f[] = classInfo.fields;
 	nStaticWords = 0;
 	if ( (f == null) || (f.length == 0 ) ) return; // nothing to do.
 	int nFields = f.length;
@@ -194,12 +207,12 @@ CVMClass extends ClassClass implements Const, CVMConst, CVMTypeCode {
 
     public boolean
     adjustSymbolicConstants(UnresolvedReferenceList missingReferences){
-	ConstantPool cp = ci.getConstantPool();
+	ConstantPool cp = classInfo.getConstantPool();
 
 	if (!isPartiallyResolved(cp)) {
 	    return true;
 	}
-	makeResolvable(cp, missingReferences, ci.className);
+	makeResolvable(cp, missingReferences, classInfo.className);
 	impureConstants = true;
 	return false;
     }

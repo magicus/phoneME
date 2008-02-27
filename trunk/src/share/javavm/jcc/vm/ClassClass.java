@@ -44,7 +44,7 @@ import java.util.StringTokenizer;
 
 public abstract class
 ClassClass {
-    public ClassInfo		ci;
+    public ClassInfo		classInfo;
     public InterfaceMethodTable	inf;
     public boolean		impureConstants = false;
     public int			nGCStatics = 0;
@@ -110,7 +110,7 @@ ClassClass {
 
     public static void destroyClassVector(){
 	for (int i = 0; i < cvector.length; ++i) {
-	    cvector[i].ci.vmClass = null;
+	    cvector[i].classInfo.vmClass = null;
 	}
 	cvector = null;
     }
@@ -120,34 +120,34 @@ ClassClass {
      */
     public int instanceSize(){
 	// fieldtable must always be in order.
-	FieldInfo ft[] = ci.fieldtable;
+	FieldInfo ft[] = classInfo.fieldtable;
 	if ( ft == null || ft.length == 0 ) return 0;
 	FieldInfo lastField = ft[ft.length-1];
 	return (lastField.instanceOffset+lastField.nSlots);
     }
 
     public boolean isInterface() {
-	return (ci.access&Const.ACC_INTERFACE) != 0;
+	return (classInfo.access&Const.ACC_INTERFACE) != 0;
     }
 
     public boolean hasMethodtable(){
-	return ((!isInterface()) && (ci.methodtable != null));
+	return ((!isInterface()) && (classInfo.methodtable != null));
     }
 
     public boolean isArrayClass(){
-	return (ci instanceof ArrayClassInfo);
+	return (classInfo instanceof ArrayClassInfo);
     }
 
     public boolean isPrimitiveClass() { 
-	return (ci instanceof PrimitiveClassInfo);
+	return (classInfo instanceof PrimitiveClassInfo);
     }
 
     public int nmethods(){
-	return (ci.methods==null) ? 0 : ci.methods.length;
+	return (classInfo.methods == null) ? 0 : classInfo.methods.length;
     }
 
     public int nfields(){
-	return (ci.fields==null)  ? 0 : ci.fields.length;
+	return (classInfo.fields == null)  ? 0 : classInfo.fields.length;
     }
 
     /*

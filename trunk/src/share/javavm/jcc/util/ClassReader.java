@@ -151,7 +151,7 @@ public class ClassReader {
 		                        inputName));
             }
 
-            // Load the classfile into into the class container:
+            // Load the classfile into the class container:
             if (cfile.readClassFile()) {
 		//cfile.cinfo.externalize();
 		classesRead.addElement(cfile.cinfo);

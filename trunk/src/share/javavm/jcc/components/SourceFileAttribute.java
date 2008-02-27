@@ -57,8 +57,9 @@ class SourceFileAttribute extends Attribute
     public void
     countConstantReferences( boolean isRelocatable ){
 	super.countConstantReferences( isRelocatable );
-	if (isRelocatable)
+	if (isRelocatable) {
 	    sourceName.incReference();
+        }
     }
 
     /*

@@ -64,14 +64,15 @@ class Attribute extends ClassComponent
 	}
     }
 
-    public void countConstantReferences( boolean isRelocatable ){
+    public void countConstantReferences(boolean isRelocatable) {
 	//
 	// if we are producing relocatable output, then
 	// we will need our name in the string table.
 	// Else not.
 	//
-	if ( isRelocatable )
+	if (isRelocatable) {
 	    name.incReference();
+        }
     }
 
     /*
@@ -147,10 +148,10 @@ class Attribute extends ClassComponent
     }
 
     public static void
-    countConstantReferences( Attribute a[], boolean isRelocatable ){
-	if ( a == null ) return;
-	for ( int i = 0; i < a.length; i++ ){
-	    a[i].countConstantReferences( isRelocatable );
+    countConstantReferences(Attribute a[], boolean isRelocatable) {
+	if (a == null) return;
+	for (int i = 0; i < a.length; i++) {
+	    a[i].countConstantReferences(isRelocatable);
 	}
     }
 

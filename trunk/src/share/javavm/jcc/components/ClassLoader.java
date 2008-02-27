@@ -76,7 +76,8 @@ class ClassLoader
 	c.loader = this;
 	// check to see if a class of this name is already there...
 	if (classes.containsKey( className )){
-	    System.err.println(Localizer.getString("classtable.class_table_already_contains", className));
+	    System.err.println(Localizer.getString(
+                "classtable.class_table_already_contains", className));
 	    return false;
 	}
 	classes.put( className, c );

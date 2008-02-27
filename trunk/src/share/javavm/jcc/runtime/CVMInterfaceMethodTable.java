@@ -63,7 +63,8 @@ class CVMInterfaceMethodTable extends vm.InterfaceMethodTable {
     public
     CVMInterfaceMethodTable( ClassClass c, String n, InterfaceVector v[] ){
 	super( c, n, v );
-	implementsCount = (c.ci.interfaces==null)?0:c.ci.interfaces.length;
+	implementsCount = (c.classInfo.interfaces == null) ?
+                              0 : c.classInfo.interfaces.length;
 	generated = false;
     }
 
@@ -142,7 +143,7 @@ class CVMInterfaceMethodTable extends vm.InterfaceMethodTable {
      */
     public static InterfaceMethodTable
     generateInterfaceTable( ClassClass cc ){
-	ClassInfo c = cc.ci;
+	ClassInfo c = cc.classInfo;
 	if ( c.allInterfaces == null )
 	    c.findAllInterfaces();
 	ClassInfo sup = c.superClassInfo;
@@ -229,8 +230,8 @@ class CVMInterfaceMethodTable extends vm.InterfaceMethodTable {
 		}
 		int num = vector.length;
 		emptyVector = false;
-		out.comment(simt.parent.ci.className + 
-			        " " + vec.intf.className );
+		out.comment(simt.parent.classInfo.className +
+                            " " + vec.intf.className);
 		for (int k = 0, mod = 0; k < num; k++) { 
 		    if (mod == 0) out.write('\t');
 		    out.printHexInt( vector[k] );

@@ -90,8 +90,8 @@ class ClassMemberInfo extends ClassComponent {
     public void
     countConstantReferences(boolean isRelocatable){
 	if (isRelocatable){
-	    if ( name != null ) name.incReference();
-	    if ( type != null ) type.incReference();
+	    if (name != null) name.incReference();
+	    if (type != null) type.incReference();
 	}
     }
 

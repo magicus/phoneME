@@ -58,9 +58,9 @@ class LocalVariableTableAttribute extends Attribute
     }
 
     public void
-    countConstantReferences( boolean isRelocatable ){
-	super.countConstantReferences( isRelocatable );
-	if (isRelocatable){
+    countConstantReferences(boolean isRelocatable) {
+	super.countConstantReferences(isRelocatable);
+	if (isRelocatable) {
 	    for (int i = 0; i < data.length; i++) {
 		data[i].name.incReference();
 		data[i].sig.incReference();

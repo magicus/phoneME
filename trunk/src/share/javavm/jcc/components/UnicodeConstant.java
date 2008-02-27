@@ -71,7 +71,7 @@ class UnicodeConstant extends ConstantObject
 
     public void incReference() {
 	Throwable t;
-	references++;
+        super.incReference();
 	t = new Error();
 	System.err.println("UnicodeConstant.incReference() at ");
 	t.printStackTrace();
@@ -100,7 +100,7 @@ class UnicodeConstant extends ConstantObject
      * This should stop processing and print a backtrace to the offender.
      */
     public void validate(){
-	if ((references != 0) || (ldcReferences != 0)){
+	if ((getReferences() != 0) || (getLdcReferences() != 0)) {
 	    throw new ValidationException("Referenced UnicodeConstant", this);
 	}
 	if (index != -1){

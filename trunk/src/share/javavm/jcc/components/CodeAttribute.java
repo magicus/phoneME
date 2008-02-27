@@ -58,14 +58,14 @@ class CodeAttribute extends Attribute
     }
 
     public void
-    countConstantReferences( boolean isRelocatable ){
-	super.countConstantReferences( isRelocatable );
+    countConstantReferences(boolean isRelocatable) {
+	super.countConstantReferences(isRelocatable);
 	if (exceptionTable != null) {
-	    for( int i = 0; i < exceptionTable.length; i++ ){
+	    for(int i = 0; i < exceptionTable.length; i++) {
 		exceptionTable[i].countConstantReferences();
 	    }
 	}
-	Attribute.countConstantReferences( codeAttributes, isRelocatable );
+	Attribute.countConstantReferences(codeAttributes, isRelocatable);
     }
 
     protected int
