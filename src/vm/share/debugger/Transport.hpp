@@ -101,7 +101,7 @@ public:
   };
 
   void set_connection_confirmed(int connection_confirmed) {
-    return int_field_put(connection_confirmed_offset(), connection_confirmed);
+    int_field_put(connection_confirmed_offset(), connection_confirmed);
   }
   int connection_confirmed() {
     return int_field(connection_confirmed_offset());
