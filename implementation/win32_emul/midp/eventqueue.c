@@ -23,8 +23,13 @@
  * information or have any questions.
  */
 
-
+#include <windows.h>
+#include "javacall_defs.h"
+#include "javacall_memory.h"
 #include "javacall_eventqueue.h"
+
+
+static int specialId;   /* thread safety */
 
 #ifdef __cplusplus
 extern "C" {
@@ -33,30 +38,72 @@ extern "C" {
 
 /**
  * Creates the event queue lock.
+ *
+ * @return <tt>JAVACALL_OK</tt> if successully created lock
+ *         <tt>JAVACALL_FAIL</tt> or negative value otherwise
  */
 javacall_result javacall_create_event_queue_lock(void){
-    return JAVACALL_NOT_IMPLEMENTED;
+    /*
+     * The Master mode needs a lock since all events put in asynchronously.
+     * But slave mode may not if events can be put in the system GUI event
+     * system.
+     */
+    HANDLE *mutex;
+
+    specialId = TlsAlloc();
+    mutex = javacall_malloc(sizeof(HANDLE));
+    if (mutex == NULL) {
+        return JAVACALL_FAIL;
+    }
+
+    TlsSetValue(specialId, mutex);
+    *mutex = CreateMutex(0, JAVACALL_FALSE, "eventQueueMutex");
+    return JAVACALL_OK;
 }
 
 /**
  * Destroys the event queue lock.
+ *
+ * @return <tt>JAVACALL_OK</tt> if successully destroyed lock
+ *         <tt>JAVACALL_FAIL</tt> or negative value otherwise
  */
 javacall_result javacall_destroy_event_queue_lock(void){
-    return JAVACALL_NOT_IMPLEMENTED;
+    /* Clean up thread local data */
+    void* ptr = (void*) TlsGetValue(specialId);
+
+    if (ptr != NULL) {
+        /* Must free TLS data before freeing the TLS (special) ID */
+        javacall_free(ptr);
+        TlsFree(specialId);
+        return JAVACALL_OK;
+    }
+    else {
+        return JAVACALL_FAIL;
+    }
 }
 
 /**
  * Waits to get the event queue lock and then locks it.
+ *
+ * @return <tt>JAVACALL_OK</tt> if successully obtained lock
+ *         <tt>JAVACALL_FAIL</tt> or negative value otherwise
  */
 javacall_result javacall_wait_and_lock_event_queue(void){
-    return JAVACALL_NOT_IMPLEMENTED;
+    HANDLE *mutex = (HANDLE*) TlsGetValue(specialId);
+    WaitForSingleObject(*mutex, INFINITE);
+    return JAVACALL_OK;
 }
 
 /**
  * Unlocks the event queue.
+ *
+ * @return <tt>JAVACALL_OK</tt> if successully released lock
+ *         <tt>JAVACALL_FAIL</tt> or negative value otherwise
  */
 javacall_result javacall_unlock_event_queue(void){
-    return JAVACALL_NOT_IMPLEMENTED;
+    HANDLE *mutex = (HANDLE*) TlsGetValue(specialId);
+    ReleaseMutex(*mutex);
+    return JAVACALL_OK;
 }
 
 
