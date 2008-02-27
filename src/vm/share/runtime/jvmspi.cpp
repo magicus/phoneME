@@ -64,13 +64,18 @@ struct SystemProperty {
 static SystemProperty * system_properties = NULL;
 
 void JVMSPI_SetSystemProperty(char *property_name, char *property_value) {
+  if (property_name == NULL || property_value == NULL) {
+    // IMPL_NOTE: need to report an error
+    return;
+  }
+
   SystemProperty *prop =
       (SystemProperty*)OsMemory_allocate(sizeof(SystemProperty));
   prop->next = system_properties;
   system_properties = prop;
 
-  prop->name  = (char*)OsMemory_allocate(jvm_strlen(property_name + 1));
-  prop->value = (char*)OsMemory_allocate(jvm_strlen(property_value + 1));
+  prop->name  = (char*)OsMemory_allocate(jvm_strlen(property_name) + 1);
+  prop->value = (char*)OsMemory_allocate(jvm_strlen(property_value) + 1);
   jvm_strcpy(prop->name,  property_name);
   jvm_strcpy(prop->value, property_value);
 }
