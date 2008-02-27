@@ -49,3 +49,6 @@ LD_FLAGS+=-nodefaultlib:libcmt.lib
 LIBS += $(wildcard $(JAVACALL_LIB_DIR)/*.lib) 
 LIBS += $(wildcard $(JAVACALL_LIB_DIR)/*.res)
 LIBS += Comdlg32.lib shell32.lib advapi32.lib
+
+EXTRA_ROMGEN_CFG_FILES += $(notdir $(VM_PROFILES_CONFIG_FILE))
+ROMGEN_INCLUDE_PATHS += $(dir $(VM_PROFILES_CONFIG_FILE))
