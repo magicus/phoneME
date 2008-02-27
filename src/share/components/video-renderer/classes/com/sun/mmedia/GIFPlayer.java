@@ -42,8 +42,6 @@ import com.sun.mmedia.VideoRenderer;
 
 /**
  * A player for the GIF89a.
- *
- * @created    January 30, 2004
  */
 final public class GIFPlayer extends BasicPlayer implements Runnable {
     /* Single image decoder */
@@ -285,7 +283,7 @@ final public class GIFPlayer extends BasicPlayer implements Runnable {
             videoRenderer = Configuration.getConfiguration().getVideoRenderer(
                                               this, videoWidth, videoHeight);
             videoControl = (VideoControl)videoRenderer.getVideoControl();
-            videoRenderer.initRendering(VideoRenderer.XBGR888 | 
+            videoRenderer.initRendering(VideoRenderer.XRGB888 | 
                                         VideoRenderer.USE_ALPHA,
                                         videoWidth, videoHeight);
 
@@ -345,7 +343,7 @@ final public class GIFPlayer extends BasicPlayer implements Runnable {
     protected boolean doStart() {
         if (duration == 0) { // e.g. for non-animated GIFs
             new Thread(new Runnable() {
-                synchronized public void run() {
+                public void run() {
                     try {
                         wait(ZERO_DURATION_WAIT);
                     } catch (InterruptedException ie) { }

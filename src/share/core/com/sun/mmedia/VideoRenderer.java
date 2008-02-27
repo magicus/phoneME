@@ -28,73 +28,61 @@ import javax.microedition.media.Control;
 
 /**
  *  Description of the Class
- *
- * @created    January 17, 2005
  */
 public abstract class VideoRenderer {
-    // Frame types
     /**
      *  Description of the Field
      */
-    public final static int RGB565 = 1;
-    // short []
+    public final static int RGB565 = 1; // short []
     /**
      *  Description of the Field
      */
-    public final static int RGB888 = 2;
-    // byte []
+    public final static int RGB888 = 2; // byte []
     /**
      *  Description of the Field
      */
-    public final static int XRGB888 = 3;
-    // int []
+    public final static int XRGB888 = 3; // int []
     /**
      *  Description of the Field
      */
-    public final static int XBGR888 = 4;
-    // int []
+    public final static int XBGR888 = 4; // int []
     /**
      *  Description of the Field
      */
-    public final static int RGBX888 = 5;
-    // int []
+    public final static int RGBX888 = 5; // int []
     /**
      *  Description of the Field
      */
-    public final static int YUV420_PLANAR = 6;
-    // byte []
+    public final static int YUV420_PLANAR = 6; // byte []
     /**
      *  Description of the Field
      */
-    public final static int YUV422_PLANAR = 7;
-    // byte []
+    public final static int YUV422_PLANAR = 7; // byte []
     /**
      *  Description of the Field
      */
-    public final static int YUYV = 8;
-    // byte []
+    public final static int YUYV = 8; // byte []
     /**
      *  Description of the Field
      */
-    public final static int UYVY = 9;
-    // byte []
+    public final static int UYVY = 9; // byte []
     /**
      *  Description of the Field
      */
-    public final static int YVYU = 10;
-    // byte []
+    public final static int YVYU = 10; // byte []
     /**
      *  Description of the Field
      */
-    public final static int NATIVE_RENDER = 128;
-    // to be ORed with above
+    public final static int NATIVE_RENDER = 128; // to be ORed with above
     /**
      *  Description of the Field
      */
     public final static int USE_ALPHA = 256;
     
-    public abstract void initRendering(int mode, int width, int height);    
-    public abstract void render(int[] rgbData);
+    public abstract void initRendering(int colorMode, int width, int height);    
+    public abstract void render(byte[] colorData);
+    public abstract void render(short[] colorData);
+    public abstract void render(int[] colorData);
     public abstract void close();
     
     public abstract Control getVideoControl();
