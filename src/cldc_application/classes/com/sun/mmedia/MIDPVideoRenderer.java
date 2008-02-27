@@ -337,8 +337,6 @@ public final class MIDPVideoRenderer extends VideoRenderer
     public byte[] getSnapshot(String imageType)
         throws MediaException, SecurityException {
         checkState();
-        if (rgbData == null)
-            throw new IllegalStateException("No image available");
 	checkPermission();
         int format = 0, pixelsize = 0;
         if (imageType == null || imageType.equalsIgnoreCase(SNAPSHOT_RGB888)) {
@@ -355,6 +353,9 @@ public final class MIDPVideoRenderer extends VideoRenderer
             pixelsize = 2;
         } else
             throw new MediaException("Image format " + imageType + " not supported");
+
+        if (rgbData == null)
+            throw new IllegalStateException("No image available");
         
         byte [] arr = new byte[pixelsize * rgbData.length];
         int idx = 0;
