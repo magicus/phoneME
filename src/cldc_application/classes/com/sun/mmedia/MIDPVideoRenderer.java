@@ -354,7 +354,7 @@ public final class MIDPVideoRenderer extends VideoRenderer
             format = 4;
             pixelsize = 2;
         } else
-            throw new IllegalArgumentException("Image format " + imageType + " not supported");
+            throw new MediaException("Image format " + imageType + " not supported");
         
         byte [] arr = new byte[pixelsize * rgbData.length];
         int idx = 0;
