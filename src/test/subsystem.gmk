@@ -63,7 +63,8 @@ SUBSYSTEM_TEST_I3TEST_JAVA_FILES += \
     $(SUBSYSTEM_DIR)/test/common/i3test/com/sun/midp/util/LiveTraceCallback.java \
     $(SUBSYSTEM_DIR)/test/common/i3test/com/sun/midp/util/LiveTraceListener.java \
     $(SUBSYSTEM_DIR)/test/common/i3test/com/sun/midp/util/SerialCallback.java \
-    $(SUBSYSTEM_DIR)/test/common/i3test/com/sun/midp/i3test/TestCompWildcard.java
+    $(SUBSYSTEM_DIR)/test/common/i3test/com/sun/midp/i3test/TestCompWildcard.java \
+    $(SUBSYSTEM_DIR)/test/common/i3test/com/sun/midp/io/TestUrl.java
 
 ifeq ($(TARGET_VM), cldc_vm)
 SUBSYSTEM_TEST_I3TEST_JAVA_FILES += \
