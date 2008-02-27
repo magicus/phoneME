@@ -473,6 +473,10 @@ public class PlayerImpl implements Player {
         if (playerInst == null) {
             realize();
         }
+        if ( getState() == REALIZED )
+        {
+            prefetch();
+        }
         if (playerInst != null) {
             playerInst.chkClosed(false);
 
