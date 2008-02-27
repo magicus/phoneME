@@ -1,7 +1,5 @@
 /*
- * 
- *
- * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
@@ -24,10 +22,6 @@
  * information or have any questions. 
  */
 
-/*
- * @(#)jsr211_result.h	1.18 06/04/05 @(#)
- */
-
 /**
  * @file
  * @defgroup chapi JSR 211 Content Handler API (CHAPI)
@@ -42,6 +36,7 @@
 #define _JSR211_RESULT_H_
 
 #include <stddef.h>
+#include <kni.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -62,10 +57,6 @@ typedef enum {
   JSR211_FALSE = 0,    /**< False value */
   JSR211_TRUE      /**< True value */
 } jsr211_boolean;
-
-#ifndef jchar
-typedef unsigned short jchar;
-#endif
 
 /**
  * Common result buffer for serialized data storage.
