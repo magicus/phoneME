@@ -153,9 +153,9 @@ extern int gAncNetworkIndicatorCount;
 #define ANC_DEC_NETWORK_INDICATOR     { gAncNetworkIndicatorCount--; };
 #define ANC_FINISH_NETWORK_INDICATOR  { gAncNetworkIndicatorCount = 0; };
 
-#define ANC_START_NETWORK_INDICATOR   { if (gAncNetworkIndicatorCount > 0) \
-                      anc_set_network_indicator(ANC_NETWORK_INDICATOR_ON); }
-#define ANC_STOP_NETWORK_INDICATOR    { if (gAncNetworkIndicatorCount > 0) \
+#define ANC_START_NETWORK_INDICATOR    \
+                      anc_set_network_indicator(ANC_NETWORK_INDICATOR_ON); 
+#define ANC_STOP_NETWORK_INDICATOR    { if (gAncNetworkIndicatorCount == 0) \
                       anc_set_network_indicator(ANC_NETWORK_INDICATOR_OFF); }
 #define ANC_TOGGLE_NETWORK_INDICATOR  { if (gAncNetworkIndicatorCount > 0) \
                       anc_set_network_indicator(ANC_NETWORK_INDICATOR_TOGGLE); }

@@ -409,7 +409,7 @@ Java_com_sun_midp_io_j2me_socket_Protocol_write0(void) {
 
     REPORT_INFO1(LC_PROTOCOL, "socket::write0 bytesWritten=%d\n", 
                  bytesWritten);
-
+   ANC_STOP_NETWORK_INDICATOR;
     KNI_EndHandles();
 
     KNI_ReturnInt((jint)bytesWritten);
