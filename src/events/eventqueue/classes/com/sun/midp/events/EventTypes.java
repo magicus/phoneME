@@ -336,4 +336,9 @@ public final class EventTypes {
      * JSR-211 CHAPI platform notification event.
      */
     public static final int CHAPI_EVENT = 52;
+
+    /**
+     * This event is used by AutoTester.
+     */
+    public static final int AUTOTESTER_EVENT = 53;
 }

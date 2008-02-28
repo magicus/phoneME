@@ -29,15 +29,17 @@ package com.sun.midp.installer;
 import com.sun.cldc.isolate.*;
 
 import com.sun.midp.i18n.Resource;
-
 import com.sun.midp.i18n.ResourceConstants;
 
 import com.sun.midp.main.AmsUtil;
+import com.sun.midp.main.MIDletSuiteUtils;
 
 import com.sun.midp.midletsuite.MIDletInfo;
 import com.sun.midp.midletsuite.MIDletSuiteStorage;
 import com.sun.midp.midlet.MIDletSuite;
 import com.sun.midp.configurator.Constants;
+
+import com.sun.midp.events.*;
 
 /**
  * Installs/Updates a test suite, runs the first MIDlet in the suite in a loop
@@ -63,13 +65,22 @@ import com.sun.midp.configurator.Constants;
  * If arg-0 is not given then a form will be used to query the tester for
  * the arguments.</p>
  */
-public class AutoTester extends AutoTesterBase implements AutoTesterInterface {
+public class AutoTester extends AutoTesterBase
+        implements AutoTesterInterface, EventListener {
+    /** True if all events in our queue were processed. */
+    private boolean eventsInQueueProcessed;
+
+    /** Our event queue. */
+    EventQueue eventQueue;
 
     /**
      * Create and initialize a new auto tester MIDlet.
      */
     public AutoTester() {
         super();
+
+        eventQueue = EventQueue.getEventQueue();
+        eventQueue.registerEventListener(EventTypes.AUTOTESTER_EVENT, this);
 
         if (url != null) {
             startBackgroundTester();
@@ -135,36 +146,71 @@ public class AutoTester extends AutoTesterBase implements AutoTesterInterface {
 
                 testIsolate.waitForExit();
 
-                Isolate[] isolatesAfter = Isolate.getIsolates();
+                boolean newIsolatesFound;
 
-                /*
-                 * Wait for termination of all isolates contained in
-                 * isolatesAfter[], but not in isolatesBefore[].
-                 * This is needed to pass some tests (for example, CHAPI)
-                 * that starting several isolates.
-                 */
-                int i, j;
-                for (i = 0; i < isolatesAfter.length; i++) {
-                    for (j = 0; j < isolatesBefore.length; j++) {
-                        try {
-                            if (isolatesBefore[j].equals(isolatesAfter[i])) {
+                do {
+                    newIsolatesFound = false;
+
+                    /*
+                     * Send an event to ourselves.
+                     * Main idea of it is to process all events that are in the
+                     * queue at the moment when the test isolate has exited
+                     * (because when testing CHAPI there may be requests to
+                     * start new isolates). When this event arrives, all events
+                     * that were placed in the queue before it are guaranteed
+                     * to be processed.
+                     */
+                    synchronized (this) {
+                        eventsInQueueProcessed = false;
+
+                        NativeEvent event = new NativeEvent(
+                                EventTypes.AUTOTESTER_EVENT);
+                        eventQueue.sendNativeEventToIsolate(event,
+                                MIDletSuiteUtils.getIsolateId());
+
+                        // and wait until it arrives
+                        do {
+                            try {
+                                wait();
+                            } catch(InterruptedException ie) {
+                                // ignore
+                            }
+                        } while (!eventsInQueueProcessed);
+                    }
+
+                    Isolate[] isolatesAfter = Isolate.getIsolates();
+
+                    /*
+                     * Wait for termination of all isolates contained in
+                     * isolatesAfter[], but not in isolatesBefore[].
+                     * This is needed to pass some tests (for example, CHAPI)
+                     * that starting several isolates.
+                     */
+                    int i, j;
+                    for (i = 0; i < isolatesAfter.length; i++) {
+                        for (j = 0; j < isolatesBefore.length; j++) {
+                            try {
+                                if (isolatesBefore[j].equals(
+                                        isolatesAfter[i])) {
+                                    break;
+                                }
+                            } catch (Exception e) {
+                                // isolatesAfter[i] might already exit,
+                                // no need to wait for it
                                 break;
                             }
-                        } catch (Exception e) {
-                            // isolatesAfter[i] might already exit,
-                            // no need to wait for it
-                            break;
                         }
-                    }
 
-                    if (j == isolatesBefore.length) {
-                        try {
-                            isolatesAfter[i].waitForExit();
-                        } catch (Exception e) {
-                            // ignore: the isolate might already exit
+                        if (j == isolatesBefore.length) {
+                            try {
+                                newIsolatesFound = true;
+                                isolatesAfter[i].waitForExit();
+                            } catch (Exception e) {
+                                // ignore: the isolate might already exit
+                            }
                         }
                     }
-                }
+                } while (newIsolatesFound);
 
                 if (loopCount > 0) {
                     loopCount -= 1;
@@ -184,5 +230,41 @@ public class AutoTester extends AutoTesterBase implements AutoTesterInterface {
         }
 
         notifyDestroyed();
+    }
+
+    /**
+     * Preprocess an event that is being posted to the event queue.
+     * This method will get called in the thread that posted the event.
+     *
+     * @param event event being posted
+     *
+     * @param waitingEvent previous event of this type waiting in the
+     *     queue to be processed
+     *
+     * @return true to allow the post to continue, false to not post the
+     *     event to the queue
+     */
+    public boolean preprocess(Event event, Event waitingEvent) {
+        return true;
+    }
+
+    /**
+     * Process an event.
+     * This method will get called in the event queue processing thread.
+     *
+     * @param event event to process
+     */
+    public void process(Event event) {
+        NativeEvent nativeEvent = (NativeEvent)event;
+
+        switch (nativeEvent.getType()) {
+            case EventTypes.AUTOTESTER_EVENT: {
+                synchronized (this) {
+                    eventsInQueueProcessed = true;
+                    notify();
+                }
+                break;
+            }
+        }
     }
 }

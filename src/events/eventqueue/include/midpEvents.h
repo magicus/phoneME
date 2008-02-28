@@ -157,6 +157,11 @@ extern "C" {
  */
 #define CHAPI_EVENT                     52
 
+/**
+ * This event is used by AutoTester.
+ */
+#define AUTOTESTER_EVENT                53
+
 /** @} */
 
 /**
