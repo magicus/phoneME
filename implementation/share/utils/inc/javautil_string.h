@@ -23,6 +23,11 @@
  * information or have any questions.
  */
 
+/**
+ * @file
+ *
+ * Interface for UTF8 string handling.
+ */
 
 #ifndef _JAVAUTIL_STRING_H_
 #define _JAVAUTIL_STRING_H_
@@ -43,8 +48,8 @@
  * @param str string to search in
  * @param c character to look for
  * @param index index of the first occurence of <param>c</param>
- * @return JAVACALL_OK on success,
- *         JAVACALL_FAIL or any other negative value otherwise.
+ * @return <code>JAVACALL_OK</code> on success,
+ *         <code>JAVACALL_FAIL</code> or any other negative value otherwise.
  */
 javacall_result javautil_string_index_of(char* str, char c, /* OUT */ int* index);
 
@@ -54,8 +59,8 @@ javacall_result javautil_string_index_of(char* str, char c, /* OUT */ int* index
  * @param str string to search in
  * @param c character to look for
  * @param index index of the first occurence of <param>c</param>
- * @return JAVACALL_OK on success,
- *         JAVACALL_FAIL or any other negative value otherwise.
+ * @return <code>JAVACALL_OK</code> on success,
+ *         <code>JAVACALL_FAIL</code> or any other negative value otherwise.
  */
 javacall_result javautil_string_last_index_of(char* str, char c,
                                               /* OUT */ int* index);
@@ -66,8 +71,8 @@ javacall_result javautil_string_last_index_of(char* str, char c,
  * @param str1 first string
  * @param str2 second string
  *
- * @return JAVACALL_TRUE if equal,
- *         JAVACALL_FALSE otherwise.
+ * @return <code>JAVACALL_TRUE</code> if equal,
+ *         <code>JAVACALL_FALSE</code> otherwise.
  */
 javacall_bool javautil_string_equals(char* str1, char* str2);
 
@@ -81,8 +86,8 @@ javacall_bool javautil_string_equals(char* str1, char* str2);
  * @param begin the beginning index, inclusive.
  * @param end the ending index, exclusive.
  * @param dest the output string, will contain the specified substring
- * @return JAVACALL_OK on success,
- *         JAVACALL_FAIL or any other negative value otherwise.
+ * @return <code>JAVACALL_OK</code> on success,
+ *         <code>JAVACALL_FAIL</code> or any other negative value otherwise.
  */
 javacall_result javautil_string_substring(char* src, int begin, int end,
                                           /*OUT*/ char** dest);
@@ -91,8 +96,8 @@ javacall_result javautil_string_substring(char* src, int begin, int end,
  * Remove white spaces from the end of a string
  *
  * @param str string to trim
- * @return JAVACALL_OK on success,
- *         JAVACALL_FAIL or any other negative value otherwise.
+ * @return <code>JAVACALL_OK</code> on success,
+ *         <code>JAVACALL_FAIL</code> or any other negative value otherwise.
  */
 javacall_result javautil_string_trim(char* str);
 
@@ -101,8 +106,8 @@ javacall_result javautil_string_trim(char* str);
  *
  * @param str string representation of integer
  * @param number the integer value of str
- * @return JAVACALL_OK on success,
- *         JAVACALL_FAIL or any other negative value otherwise.
+ * @return <code>JAVACALL_OK</code> on success,
+ *         <code>JAVACALL_FAIL</code> or any other negative value otherwise.
  */
 javacall_result javautil_string_parse_int(char* str, int* number);
 

@@ -82,22 +82,27 @@ void WriteMapFile(const char* messageBuffer, int bufferSize,
             FILE_MAP_WRITE,
             0,0,0);
 
-        int bufferSize1 = bufferSize < DATAGRAM_MAX_LENGTH ? bufferSize : DATAGRAM_MAX_LENGTH; //else error
+        if (pFileMemory) {
+            int bufferSize1 = bufferSize < DATAGRAM_MAX_LENGTH ? bufferSize : DATAGRAM_MAX_LENGTH; //else error
 
-        *((int*)(pFileMemory + FILE_OFFSET_MSG_SIZE)) = bufferSize1; 
+            *((int*)(pFileMemory + FILE_OFFSET_MSG_SIZE)) = bufferSize1; 
 
-        int senderPhoneLength = wcslen(senderPhone) * sizeof(wchar_t);
-        if (senderPhoneLength > SENDERPHONE_MAX_LENGTH) {
-            memcpy(pFileMemory + FILE_OFFSET_SENDERPHONE, senderPhone, SENDERPHONE_MAX_LENGTH);
-            *(pFileMemory + FILE_OFFSET_SENDERPHONE + SENDERPHONE_MAX_LENGTH - 1) = 0;
-        } else {
-            memcpy(pFileMemory + FILE_OFFSET_SENDERPHONE, senderPhone, senderPhoneLength + 1);
+            int senderPhoneLength = wcslen(senderPhone) * sizeof(wchar_t);
+            if (senderPhoneLength > SENDERPHONE_MAX_LENGTH) {
+                memcpy(pFileMemory + FILE_OFFSET_SENDERPHONE, senderPhone, SENDERPHONE_MAX_LENGTH);
+                *(pFileMemory + FILE_OFFSET_SENDERPHONE + SENDERPHONE_MAX_LENGTH - 1) = 0;
+            } else {
+                memcpy(pFileMemory + FILE_OFFSET_SENDERPHONE, senderPhone, senderPhoneLength + 1);
+            }
+
+            *(DWORD*)(pFileMemory + FILE_OFFSET_SENDTIME)     = sendTime->dwHighDateTime;
+            *(DWORD*)(pFileMemory + FILE_OFFSET_SENDTIME + 4) = sendTime->dwLowDateTime;
+
+            memcpy(pFileMemory + FILE_OFFSET_DATAGRAM, messageBuffer, bufferSize1);
+
+            UnmapViewOfFile(pFileMemory);
         }
-
-        *(DWORD*)(pFileMemory + FILE_OFFSET_SENDTIME)     = sendTime->dwHighDateTime;
-        *(DWORD*)(pFileMemory + FILE_OFFSET_SENDTIME + 4) = sendTime->dwLowDateTime;
-
-        memcpy(pFileMemory + FILE_OFFSET_DATAGRAM, messageBuffer, bufferSize1);
+        CloseHandle(hFileMap);
     }
 
     if (pMutex) {

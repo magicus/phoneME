@@ -35,6 +35,58 @@ extern "C" {
   //#include "cemapi.h" //CreateFileMapping, CreateMutex, CreateEvent
 #include <sms.h>
 
+#define SMS_STATIC_LINK
+
+#ifndef SMS_STATIC_LINK
+
+typedef HRESULT sms_open_type (
+    const LPCTSTR ptsMessageProtocol,
+    const DWORD dwMessageModes,
+    SMS_HANDLE* const psmshHandle,
+    HANDLE* const phMessageAvailableEvent);
+
+typedef HRESULT sms_send_type (
+    const SMS_HANDLE smshHandle,
+    const SMS_ADDRESS * const psmsaSMSCAddress,
+    const SMS_ADDRESS * const psmsaDestinationAddress,
+    const SYSTEMTIME * const pstValidityPeriod,
+    const BYTE * const pbData,
+    const DWORD dwDataSize,
+    const BYTE * const pbProviderSpecificData,
+    const DWORD dwProviderSpecificDataSize,
+    const SMS_DATA_ENCODING smsdeDataEncoding,
+    const DWORD dwOptions,
+    SMS_MESSAGE_ID * psmsmidMessageID);
+
+typedef HRESULT sms_read_type (
+    const SMS_HANDLE smshHandle,
+    SMS_ADDRESS* const psmsaSMSCAddress,
+    SMS_ADDRESS* const psmsaSourceAddress,
+    SYSTEMTIME* const pstReceiveTime,  // (UTC time)
+    BYTE* const pbBuffer,
+    DWORD dwBufferSize,
+    BYTE* const pbProviderSpecificBuffer,
+    DWORD dwProviderSpecificDataBuffer,
+    DWORD* pdwBytesRead);
+
+typedef HRESULT sms_close_type (
+    const SMS_HANDLE smshHandle);
+
+static sms_open_type*  sms_open_func  = (sms_open_type*) NULL;
+static sms_send_type*  sms_send_func  = (sms_send_type*) NULL;
+static sms_read_type*  sms_read_func  = (sms_read_type*) NULL;
+static sms_close_type* sms_close_func = (sms_close_type*)NULL;
+
+#define SmsOpen        (*sms_open_func)
+#define SmsSendMessage (*sms_send_func)
+#define SmsReadMessage (*sms_read_func)
+#define SmsClose       (*sms_close_func)
+
+#endif //SMS_STATIC_LINK.  #else: WIN_LINKLIBS += sms.lib
+
+static int init_ok = 0;
+javacall_result javacall_wma_init(void);
+
 int SendSMS(LPCTSTR lpszRecipient, 
              const unsigned char*    msgBuffer, 
              int                     msgBufferLen)
@@ -48,10 +100,14 @@ int SendSMS(LPCTSTR lpszRecipient,
     BOOL bUseDefaultSMSC = 1;
     LPCTSTR lpszSMSC = L"";
 
+    if (init_ok == 0) {
+        return 0;
+    }
+
     // try to open an SMS Handle
     if(FAILED(SmsOpen(SMS_MSGTYPE_TEXT, SMS_MODE_SEND, &smshHandle, (HANDLE*)NULL)))
     {
-        //MessageBox(NULL, L"FAIL", L"FAIL", MB_OK | MB_ICONERROR);
+        //MessageBox(0, L"FAIL", L"FAIL SmsOpen", MB_OK | MB_ICONERROR);
         return 0;
     }
 
@@ -104,6 +160,10 @@ int ReceiveSMS(BYTE* const receiveBuffer, int max_receive_buffer,
     TEXT_PROVIDER_SPECIFIC_DATA tpsd;
     HANDLE messageAvailableEvent;
     DWORD bytesRead = 0;
+
+    if (init_ok == 0) {
+        return 0;
+    }
 
     HRESULT ok = SmsOpen(SMS_MSGTYPE_TEXT, SMS_MODE_RECEIVE, &smshHandle, &messageAvailableEvent);
     DWORD dw = GetLastError();
@@ -182,13 +242,13 @@ int hexascii_to_int(char* str, int count) {
 }
 
 // "//WMA" + DESTINATION_PORT + SOURCE_PORT + WMA_DELIMITER 
-// + msgType + datagramLength + oddityByte
-#define SINGLE_SEGM_HEADER_SIZE (5+4+4+1+1+1+1)
+// + msgType + datagramLength + oddityByte + zeroByte
+#define SINGLE_SEGM_HEADER_SIZE (5+4+4+1+1+1+1+1)
 
 // "//WMA" + DESTINATION_PORT + SOURCE_PORT + REFERENCE_NUMBER +
 // + TOTAL_SEGMENTS + SEGMENT_NUMBER + WMA_DELIMITER
-// + msgType + datagramLength + oddityByte
-#define MULTIPLE_SEGM_HEADER_SIZE (5+4+4+2+2+2+1+1+1+1)
+// + msgType + datagramLength + oddityByte + zeroByte
+#define MULTIPLE_SEGM_HEADER_SIZE (5+4+4+2+2+2+1+1+1+1+1)
 
 #define MAX_SEGM_NUMBER 3
 #define SMS_MAX_PAYLOAD SMS_DATAGRAM_SIZE
@@ -204,6 +264,48 @@ static int calc_segments_num(int msgBufferLen) {
 }
 
 #define SMS_SEND_ODDITY_BIT 0x80
+
+/*
+ * Removes zero bytes from the data buffer.
+ * 
+ * The first zero byte position is placed to fixPos byte,
+ * the next zero byte position is placed to previous zero byte,
+ * to the last zero byte 255 constant is placed.
+ *
+ * The original byte array can be easily restored.
+ *
+ * The function is workaround of the problem: SMS message tail 
+ * could be lost if two subsequent bytes are zero. The overhead of
+ * this workaround is one excess byte in message header and one less
+ * byte in useful payload. The algorithm is based on the fact that
+ * single SMS message could not exceed 255 bytes length.
+ */
+void fix_zero(unsigned char* databuf, int databuflength, int fixPos) {
+    databuf[fixPos] = 255;
+    int i;
+    for (i=1; i<databuflength; i++) {
+        if (databuf[i] == 0) {
+            databuf[i] = 255;
+            databuf[fixPos] = i;
+            fixPos = i;
+        }
+    }
+}
+
+/*
+ * Pair function for fix_zero. Restores original byte array.
+ */
+void fix_zero_back(unsigned char* databuf, int databuflength, int fixPos) {
+    if (fixPos >= databuflength) { return; }
+    fixPos = databuf[fixPos];
+    while (fixPos != 255) {
+        if (fixPos >= databuflength) { return; }
+        if (fixPos == 0) { return; }
+        int fixPos1 = databuf[fixPos];
+        databuf[fixPos] = 0;
+        fixPos = fixPos1;
+    }
+}
 
 /**
  * Returns 0 on error
@@ -228,7 +330,8 @@ static int cdma_sms_encode(javacall_sms_encoding   msgType,
 
     databuf[5+4+4+1] = msgType; //the msgType parameter is not specified in documentation.
     databuf[5+4+4+1+1] = 0;     //the datagramSize parameter is not specified in documentation.
-    header_size = 5+4+4+1+1+1;
+    databuf[5+4+4+1+1+1] = 1;   //zero ptr byte
+    header_size = 5+4+4+1+1+1+1;
 
     if ((header_size + msgBufferLen) & 0x01) { //hack. SmsSendMessage fails if bytes number is odd :(
         databuf[5+4+4+1] |= SMS_SEND_ODDITY_BIT;
@@ -238,10 +341,13 @@ static int cdma_sms_encode(javacall_sms_encoding   msgType,
     memcpy(databuf+header_size, msgBuffer, msgBufferLen);
     *databuflength = header_size + msgBufferLen;
     databuf[5+4+4+1+1] = *databuflength;
+    fix_zero((unsigned char*)databuf, *databuflength, 5+4+4+1+1+1);
+
     return 1;
 }
 
 static int static_reference_number = 0;
+static int sms_handle = 0;
 
 /**
  * Returns 0 on error
@@ -271,7 +377,8 @@ static int cdma_sms_mulstisegm_encode(javacall_sms_encoding   msgType,
 
     databuf[5+4+4+2+2+2+1] = msgType; //the msgType parameter is not specified in documentation.
     databuf[5+4+4+2+2+2+1+1] = 0;     //the datagramSize parameter is not specified in documentation.
-    header_size = 5+4+4+2+2+2+1+1+1;
+    databuf[5+4+4+2+2+2+1+1+1] = 1;   //zero ptr byte
+    header_size = 5+4+4+2+2+2+1+1+1+1;
 
     data_length = msgBufferLen - segment_number*SMS_MAX_MULTISEGMDATA_PAYLOAD;
     data_length = (data_length > SMS_MAX_MULTISEGMDATA_PAYLOAD) ? SMS_MAX_MULTISEGMDATA_PAYLOAD : data_length;
@@ -284,6 +391,7 @@ static int cdma_sms_mulstisegm_encode(javacall_sms_encoding   msgType,
     memcpy(databuf+header_size, msgBuffer + segment_number*SMS_MAX_MULTISEGMDATA_PAYLOAD, data_length);
     *databuflength = header_size + data_length;
     databuf[5+4+4+2+2+2+1+1] = *databuflength;
+    fix_zero((unsigned char*)databuf, *databuflength, 5+4+4+2+2+2+1+1+1);
     return 1;
 }
 
@@ -297,7 +405,7 @@ static int cdma_sms_decode(
         int* reference_number, int* total_segments, int* segment_number) {
 
     int header_size;
-    char msgType1;
+    unsigned char msgType1;
     unsigned char datagramSize;
 
     if (strncmp("//WMA", databuf, 5) != 0) {
@@ -309,9 +417,10 @@ static int cdma_sms_decode(
     *sourcePort = hexascii_to_int(databuf+5+4, 4);
     if (databuf[5+4+4] == 0x20) { //<space> character, 0x20. Marks the end of text header.
         *total_segments = 1; //short header, hence there is only one segment
-        msgType1 = databuf[5+4+4+1];
         datagramSize = databuf[5+4+4+1+1];
-        header_size = 5+4+4+1+1+1;
+        fix_zero_back((unsigned char*)databuf, datagramSize, 5+4+4+1+1+1);
+        msgType1 = (unsigned char)databuf[5+4+4+1];
+        header_size = 5+4+4+1+1+1+1;
         if (msgType1 & SMS_SEND_ODDITY_BIT) {
             msgType1 &= ~SMS_SEND_ODDITY_BIT;
             header_size++;
@@ -326,7 +435,8 @@ static int cdma_sms_decode(
         if (databuf[5+4+4+2+2+2] = 0x20) { //<space> character, 0x20. Marks the end of text header.
             msgType1 = databuf[5+4+4+2+2+2+1];
             datagramSize = databuf[5+4+4+2+2+2+1+1];
-            header_size = 5+4+4+2+2+2+1+1+1;
+            fix_zero_back((unsigned char*)databuf, datagramSize, 5+4+4+2+2+2+1+1+1);
+            header_size = 5+4+4+2+2+2+1+1+1+1;
             if (msgType1 & SMS_SEND_ODDITY_BIT) {
                 msgType1 &= ~SMS_SEND_ODDITY_BIT;
                 header_size++;
@@ -409,17 +519,18 @@ static void fillPhone(const unsigned char* javaDestAddress, wchar_t* lpcPhone) {
  *                the  message contents. When all characters in the message contents are in 
  *                the GSM 7-bit alphabet, the DCS should be GSM 7-bit; otherwise, it should  
  *                be  UCS-2.
- * @param destAddress the target SMS address for the message.  The format of the address  parameter  
- *                is  expected to be compliant with MSIDN, for example,. +123456789 
+ * @param destAddress the target SMS address for the message.  The format of the address 
+ *                parameter is  expected to be compliant with MSIDN, for example,. +123456789 
  * @param msgBuffer the message body (payload) to be sent
  * @param msgBufferLen the message body (payload) len
  * @param sourcePort source port of SMS message
  * @param destPort destination port of SMS message where 0 is default destination port 
- * @return handle of sent sms or <tt>0</tt> if unsuccessful
+ * @param handle handle of sent sms 
  * 
  * Note: javacall_callback_on_complete_sms_send() needs to be called to notify
  *       completion of sending operation.
- *       The returned handle will be passed to javacall_callback_on_complete_sms_send( ) upon completion
+ *       The returned handle will be passed to 
+ *         javacall_callback_on_complete_sms_send( ) upon completion
  */
 javacall_result javacall_sms_send(  javacall_sms_encoding   msgType, 
                         const unsigned char*    destAddress, 
@@ -432,10 +543,25 @@ javacall_result javacall_sms_send(  javacall_sms_encoding   msgType,
     wchar_t lpcPhone[SMS_MAX_ADDRESS_LENGTH];
     fillPhone(destAddress, lpcPhone);
     //wchar_t* phone = L"79210951475";
+    sms_handle++;
     int send_ok = 0;
 
+    javacall_wma_init();
+
     if (destPort == 0) {
-        send_ok = SendSMS(lpcPhone, msgBuffer, msgBufferLen);
+        if (msgType == JAVACALL_SMS_MSG_TYPE_UNICODE_UCS2) {
+            //TextEncoder.toByteArray packs TextObject to Big-Endian (network order) USC-2 format,
+            //but WinMobile (SmsSendMessage function) at least for arm/i386 uses Little-Endian encoding
+            unsigned char revert_msgBuffer[SMS_MAX_PAYLOAD];
+            int i;
+            for (i=0; i<msgBufferLen; i+=2) {
+                revert_msgBuffer[i] = msgBuffer[i+1];
+                revert_msgBuffer[i+1] = msgBuffer[i];
+            }
+            send_ok = SendSMS(lpcPhone, revert_msgBuffer, msgBufferLen);
+        } else {
+            send_ok = SendSMS(lpcPhone, msgBuffer, msgBufferLen);
+        }
     } else {
         int total_segments = calc_segments_num(msgBufferLen);
 
@@ -475,9 +601,6 @@ javacall_result javacall_sms_send(  javacall_sms_encoding   msgType,
     return send_ok == 1 ? JAVACALL_OK : JAVACALL_FAIL;
 }
 
-static int init_done = 0;
-javacall_result javacall_wma_init(void);
-
 /**
  * The platform must have the ability to identify the port number of incoming 
  * SMS messages, and deliver messages with port numbers registered to the WMA 
@@ -491,11 +614,8 @@ javacall_result javacall_wma_init(void);
  */
 javacall_result javacall_sms_add_listening_port(unsigned short portNum){
 
-    //##
-    if (!init_done) {
-        javacall_wma_init();
-        init_done = 1;
-    }
+    javacall_wma_init();
+
     return JAVACALL_OK;
 }
 
@@ -742,7 +862,7 @@ DWORD WINAPI receiveSMSThreadProc(LPVOID lpParam) {
                 int bufferSize = *((int*)(pFileMemory + FILE_OFFSET_MSG_SIZE));
                 wchar_t* senderPhoneEmail = (wchar_t*)(pFileMemory + FILE_OFFSET_SENDERPHONE);
                 char* receiveBuffer = pFileMemory + FILE_OFFSET_DATAGRAM;
-
+ 
                 FILETIME sendTime_f;
                 sendTime_f.dwHighDateTime = *((DWORD*)(pFileMemory + FILE_OFFSET_SENDTIME));
                 sendTime_f.dwLowDateTime  = *((DWORD*)(pFileMemory + FILE_OFFSET_SENDTIME+4));
@@ -758,6 +878,7 @@ DWORD WINAPI receiveSMSThreadProc(LPVOID lpParam) {
                 decode_and_notify(receiveBuffer, bufferSize,
                                   senderPhone, timeStamp);
             }
+            //memset(pFileMemory, 0, SMS_MAPFILE_SIZE);
             ReleaseMutex(pMutex);
         }
     } while (1);
@@ -779,8 +900,54 @@ static void createReceiveSMSThread() {
                       &dwJavaThreadId);   // returns the thread identifier
 }
 
+#define lpWMAInitMutex L"wma_init_mutex"
+static int init_done = 0;
+
 javacall_result javacall_wma_init(void) {
+
+    HANDLE pMutex = CreateMutex((LPSECURITY_ATTRIBUTES)NULL, FALSE, lpWMAInitMutex);
+    if (pMutex == NULL) {
+        init_done = 1;
+        init_ok = 0;
+        return JAVACALL_FAIL;
+    }
+
+    DWORD waitMutexOk = WaitForSingleObject(pMutex, INFINITE); 
+
+    if (init_done) {
+        ReleaseMutex(pMutex);
+        return init_ok ? JAVACALL_OK : JAVACALL_FAIL;
+    }
+    init_done = 1;
+    init_ok = 1;
+
     createReceiveSMSThread();
+
+#ifndef SMS_STATIC_LINK
+    HMODULE sms_library = LoadLibrary(L"sms.dll");
+    if (sms_library == NULL) {
+        init_ok = 0;
+        printf("error loading sms.dll");
+        return JAVACALL_FAIL;
+    }
+
+    sms_open_func = (sms_open_type*) GetProcAddress(sms_library, L"SmsOpen");
+    sms_send_func = (sms_send_type*) GetProcAddress(sms_library, L"SmsSendMessage");
+    sms_read_func = (sms_read_type*) GetProcAddress(sms_library, L"SmsReadMessage");
+    sms_close_func= (sms_close_type*)GetProcAddress(sms_library, L"SmsClose");
+    if ((sms_open_func == NULL) ||
+        (sms_send_func == NULL) ||
+        (sms_read_func == NULL) ||
+        (sms_close_func == NULL)) {
+        printf("error loading sms.dll functions");
+        init_ok = 0;
+        ReleaseMutex(pMutex);
+        return JAVACALL_FAIL;
+    }
+#endif
+
+    ReleaseMutex(pMutex);
+    CloseHandle(pMutex);
     return JAVACALL_OK;
 }
 
