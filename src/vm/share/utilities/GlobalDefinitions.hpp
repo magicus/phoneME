@@ -2490,7 +2490,7 @@ extern "C" int   jvm_memcmp(const void *s1, const void *s2, int n);
 #define DIRTY_HEAP(start, length)
 #endif
 
-#if ARM_EXECUTABLE && ENABLE_ZERO_YOUNG_GENERATION
+#if ARM_EXECUTABLE && ENABLE_ZERO_YOUNG_GENERATION && !ENABLE_ARM_V7
 extern "C" void fast_memclear(void* start, int length);
 #else
 inline void fast_memclear(void* start, int length) {
