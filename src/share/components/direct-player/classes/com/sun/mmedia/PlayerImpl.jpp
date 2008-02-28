@@ -107,7 +107,7 @@ public class PlayerImpl implements Player {
     protected native boolean nIsHandledByDevice(int handle);
 
     // Realize native player
-    protected native void nRealize(int handle, String mime);
+    protected native boolean nRealize(int handle, String mime);
     // get java buffer size to determine media format
     protected static native int nGetJavaBufferSize(int handle);
     // get first packet size to determine media format
@@ -222,7 +222,9 @@ public class PlayerImpl implements Player {
             type = stream.getContentDescriptor().getContentType();
         }
         /* realize native player */
-        nRealize(hNative, type);
+        if (!nRealize(hNative, type)) {
+            throw new MediaException("Can not realize");
+        }
 
         if (!handledByDevice && !handledByJava) {
             mediaFormat = nGetMediaFormat(hNative);
@@ -299,7 +301,13 @@ public class PlayerImpl implements Player {
             if (javaBufSize <= 0) {
                 javaBufSize = 1024;
             }
-            byte[] buffer = new byte[(int)javaBufSize];
+
+            byte[] buffer;
+            try {
+                buffer = new byte[(int)javaBufSize];
+            } catch(OutOfMemoryError ome) {
+                throw new MediaException("Not enough memory");
+            }
 
             do {
                 int num_read = 0;
@@ -321,7 +329,11 @@ public class PlayerImpl implements Player {
                 } while(num_read < packetSize);
                 if (num_read > 0) {
                     packetSize = nBuffering(hNative, buffer, num_read);
-                    need_more = nNeedMoreDataImmediatelly(hNative);
+                    if (packetSize >=0) {
+                        need_more = nNeedMoreDataImmediatelly(hNative);
+                    } else {
+                        throw new MediaException("Buffering media data error");
+                    }
                 }
 
                 if ((contLength) != -1 && (contLength == stream.tell())) {

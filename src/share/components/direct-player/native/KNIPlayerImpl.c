@@ -176,13 +176,14 @@ UnlockAudioMutex();
     KNI_ReturnBoolean(returnValue);
 }
 
-/*  protected native void nRealize(int handle, String mime); */
-KNIEXPORT KNI_RETURNTYPE_VOID
+/*  protected native boolean nRealize(int handle, String mime); */
+KNIEXPORT KNI_RETURNTYPE_BOOLEAN
 KNIDECL(com_sun_mmedia_PlayerImpl_nRealize) {
     jint handle = KNI_GetParameterAsInt(1);
     KNIPlayerInfo* pKniInfo = (KNIPlayerInfo*)handle;
     int mimeLength;
     jchar* pszMime = NULL;
+    jboolean returnValue = KNI_FALSE;
 
     KNI_StartHandles(1);
     KNI_DeclareHandle(mime);
@@ -203,12 +204,14 @@ KNIDECL(com_sun_mmedia_PlayerImpl_nRealize) {
             mimeLength = 0;
         }
     }
-    javacall_media_realize(pKniInfo->pNativeHandle, pszMime, mimeLength);
+    if (JAVACALL_OK == javacall_media_realize(pKniInfo->pNativeHandle, pszMime, mimeLength)) {
+        returnValue = KNI_TRUE;
+    }
 
     if (pszMime)      { MMP_FREE(pszMime); }
 
     KNI_EndHandles();
-    KNI_ReturnVoid();
+    KNI_ReturnBoolean(returnValue);
 }
 
 /*  private native void nSetWholeContentSize(int hNative, long contentSize) */
