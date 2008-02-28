@@ -41,19 +41,19 @@
 static char volatile timeToQuit;
 
 static DWORD WINAPI InvocationRequestListenerProc( LPVOID lpParam ){
-    HANDLE pipe = CreateNamedPipe(
-        TEXT(PIPENAME),
-        PIPE_ACCESS_DUPLEX,
-        PIPE_TYPE_MESSAGE,
-        PIPE_UNLIMITED_INSTANCES,
-        sizeof( InvocationMsg ),  //DWORD nOutBufferSize,
-        sizeof( InvocationMsg ),  //DWORD nInBufferSize,
-        1000,               //DWORD nDefaultTimeOut,
-        0 );
-    assert( pipe != INVALID_HANDLE_VALUE );
-
-
+    HANDLE pipe = INVALID_HANDLE_VALUE;
     while( 1 ){
+        pipe = CreateNamedPipe(
+            TEXT(PIPENAME),
+            PIPE_ACCESS_DUPLEX,
+            PIPE_TYPE_MESSAGE | PIPE_READMODE_MESSAGE,
+            PIPE_UNLIMITED_INSTANCES,
+            sizeof( InvocationMsg ),  //DWORD nOutBufferSize,
+            sizeof( InvocationMsg ),  //DWORD nInBufferSize,
+            1000,               //DWORD nDefaultTimeOut,
+            0 );
+        assert( pipe != INVALID_HANDLE_VALUE );
+
         InvocationMsg msg;
         DWORD numberOfBytesRead;
         int ret;
@@ -66,6 +66,9 @@ static DWORD WINAPI InvocationRequestListenerProc( LPVOID lpParam ){
             break;
 
         assert( ret );
+
+        if ( ret == 0 )
+            continue;
 
         javacall_chapi_invocation inv;
         inv.url = (javacall_utf16_string) msg.getMsgPtr();
@@ -86,12 +89,28 @@ static DWORD WINAPI InvocationRequestListenerProc( LPVOID lpParam ){
             (javacall_utf16_string) L"MyContentHandler", 
             &inv, 
             1 );
-    }
 
+        CloseHandle( pipe );
+        pipe = INVALID_HANDLE_VALUE;
+    }
     CloseHandle( pipe );
 
     return 0;
 }
+
+javacall_result javacall_chapi_java_finish(
+    int invoc_id, 
+    javacall_const_utf16_string url,
+    int argsLen, javacall_const_utf16_string* args,
+    int dataLen, void* data, javacall_chapi_invocation_status status,
+    /* OUT */ javacall_bool* should_exit)
+{
+    *should_exit = (javacall_bool) 0;
+    assert( 0 );
+    return JAVACALL_OK;
+}
+
+
 
 extern "C" void InitPlatform2JavaInvoker(){
     timeToQuit = 0;

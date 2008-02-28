@@ -102,11 +102,12 @@ javacall_result javacall_chapi_platform_invoke(int invoc_id,
  *   should voluntarily exit to allow pending invocation to be handled.
  * @return result of operation.
  */
+/*
 javacall_result javacall_chapi_java_finish(int invoc_id, 
         javacall_const_utf16_string url,
         int argsLen, javacall_const_utf16_string* args,
         int dataLen, void* data, javacall_chapi_invocation_status status,
-        /* OUT */ javacall_bool* should_exit)
+         javacall_bool* should_exit)
 {
     (void)invoc_id;
     (void)url;
@@ -118,4 +119,4 @@ javacall_result javacall_chapi_java_finish(int invoc_id,
     (void)should_exit;
     return JAVACALL_NOT_IMPLEMENTED;
 }
-
+*/

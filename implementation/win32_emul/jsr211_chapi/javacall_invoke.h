@@ -1,6 +1,9 @@
 #ifndef JAVACALL_INVOKE_H
 #define JAVACALL_INVOKE_H
 
+// To eliminate VC 8.0+ warnings
+#define _CRT_SECURE_NO_DEPRECATE 
+
 #include <windows.h>
 
 #define PIPENAME "\\\\.\\pipe\\EmulJavaInvokerPipe"
