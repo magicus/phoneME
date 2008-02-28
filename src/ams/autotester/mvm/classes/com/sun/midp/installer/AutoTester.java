@@ -160,7 +160,7 @@ public class AutoTester extends AutoTesterBase
                         eventQueue.sendNativeEventToIsolate(event,
                                 MIDletSuiteUtils.getIsolateId());
 
-                        // and wait util it arrives
+                        // and wait until it arrives
                         do {
                             try {
                                 wait();
