@@ -33,11 +33,13 @@ import com.sun.midp.i18n.Resource;
 import com.sun.midp.i18n.ResourceConstants;
 
 import com.sun.midp.main.AmsUtil;
+import com.sun.midp.main.MIDletSuiteUtils;
 
 import com.sun.midp.midletsuite.MIDletInfo;
 import com.sun.midp.midletsuite.MIDletSuiteStorage;
 import com.sun.midp.midlet.MIDletSuite;
 import com.sun.midp.configurator.Constants;
+import com.sun.midp.events.*;
 
 /**
  * Installs/Updates a test suite, runs the first MIDlet in the suite in a loop
@@ -63,13 +65,22 @@ import com.sun.midp.configurator.Constants;
  * If arg-0 is not given then a form will be used to query the tester for
  * the arguments.</p>
  */
-public class AutoTester extends AutoTesterBase implements AutoTesterInterface {
+public class AutoTester extends AutoTesterBase
+        implements AutoTesterInterface, EventListener {
+    /** */
+    private boolean eventsInQueueProcessed;
+
+    /** Our event queue. */
+    EventQueue eventQueue;
 
     /**
      * Create and initialize a new auto tester MIDlet.
      */
     public AutoTester() {
         super();
+
+        eventQueue = EventQueue.getEventQueue();
+        eventQueue.registerEventListener(EventTypes.AUTOTESTER_EVENT, this);
 
         if (url != null) {
             startBackgroundTester();
@@ -135,6 +146,25 @@ public class AutoTester extends AutoTesterBase implements AutoTesterInterface {
 
                 testIsolate.waitForExit();
 
+                // send an event to ourselves
+                synchronized (this) {
+                    eventsInQueueProcessed = false;
+
+                    NativeEvent event = new NativeEvent(
+                            EventTypes.AUTOTESTER_EVENT);
+                    eventQueue.sendNativeEventToIsolate(event,
+                            MIDletSuiteUtils.getIsolateId());
+
+                    // and wait util it arrives
+                    do {
+                        try {
+                            wait();
+                        } catch(InterruptedException ie) {
+                            // ignore
+                        }
+                    } while (!eventsInQueueProcessed);
+                }
+
                 Isolate[] isolatesAfter = Isolate.getIsolates();
 
                 /*
@@ -184,5 +214,41 @@ public class AutoTester extends AutoTesterBase implements AutoTesterInterface {
         }
 
         notifyDestroyed();
+    }
+
+    /**
+     * Preprocess an event that is being posted to the event queue.
+     * This method will get called in the thread that posted the event.
+     *
+     * @param event event being posted
+     *
+     * @param waitingEvent previous event of this type waiting in the
+     *     queue to be processed
+     *
+     * @return true to allow the post to continue, false to not post the
+     *     event to the queue
+     */
+    public boolean preprocess(Event event, Event waitingEvent) {
+        return true;
+    }
+
+    /**
+     * Process an event.
+     * This method will get called in the event queue processing thread.
+     *
+     * @param event event to process
+     */
+    public void process(Event event) {
+        NativeEvent nativeEvent = (NativeEvent)event;
+
+        switch (nativeEvent.getType()) {
+            case EventTypes.AUTOTESTER_EVENT: {
+                synchronized (this) {
+                    eventsInQueueProcessed = true;
+                    notify();
+                }
+                break;
+            }
+        }
     }
 }
