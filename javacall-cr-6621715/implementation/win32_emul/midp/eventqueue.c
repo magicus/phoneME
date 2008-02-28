@@ -51,13 +51,24 @@ javacall_result javacall_create_event_queue_lock(void){
     HANDLE *mutex;
 
     specialId = TlsAlloc();
-    mutex = javacall_malloc(sizeof(HANDLE));
-    if (mutex == NULL) {
+    if (TLS_OUT_OF_INDEXES == specialId) {
         return JAVACALL_FAIL;
     }
 
-    TlsSetValue(specialId, mutex);
+    mutex = javacall_malloc(sizeof(HANDLE));
+    if (NULL == mutex) {
+        return JAVACALL_FAIL;
+    }
+
+    if (0 == TlsSetValue(specialId, mutex)) {
+        return JAVACALL_FAIL;
+    }
+
     *mutex = CreateMutex(0, JAVACALL_FALSE, "eventQueueMutex");
+    if (NULL == *mutex) {
+        return JAVACALL_FAIL;
+    }
+
     return JAVACALL_OK;
 }
 
@@ -90,7 +101,14 @@ javacall_result javacall_destroy_event_queue_lock(void){
  */
 javacall_result javacall_wait_and_lock_event_queue(void){
     HANDLE *mutex = (HANDLE*) TlsGetValue(specialId);
-    WaitForSingleObject(*mutex, INFINITE);
+    if (0 == *mutex) {
+        return JAVACALL_FAIL;
+    }
+
+    if (WAIT_FAILED == WaitForSingleObject(*mutex, INFINITE)) {
+        return JAVACALL_FAIL;
+    }
+
     return JAVACALL_OK;
 }
 
@@ -102,7 +120,13 @@ javacall_result javacall_wait_and_lock_event_queue(void){
  */
 javacall_result javacall_unlock_event_queue(void){
     HANDLE *mutex = (HANDLE*) TlsGetValue(specialId);
-    ReleaseMutex(*mutex);
+    if (0 == *mutex) {
+        return JAVACALL_FAIL;
+    }
+    if (0 == ReleaseMutex(*mutex)) {
+        return JAVACALL_FAIL;
+    }
+
     return JAVACALL_OK;
 }
 
