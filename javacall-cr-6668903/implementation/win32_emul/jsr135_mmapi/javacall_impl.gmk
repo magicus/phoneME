@@ -1,0 +1,72 @@
+#
+# Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
+# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+# 
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License version
+# 2 only, as published by the Free Software Foundation. 
+# 
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# General Public License version 2 for more details (a copy is
+# included at /legal/license.txt). 
+# 
+# You should have received a copy of the GNU General Public License
+# version 2 along with this work; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+# 02110-1301 USA 
+# 
+# Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+# Clara, CA 95054 or visit www.sun.com if you need additional
+# information or have any questions. 
+#
+
+
+vpath %.c $(JSR_135_DIR)
+
+PORTING_OBJECTS += mmvideo.obj
+PORTING_OBJECTS += mmcamera.obj
+PORTING_OBJECTS += javautil_media.obj
+
+
+
+PORTING_OBJECTS += mmintmidi.obj
+PORTING_OBJECTS += mmaudio.obj
+PORTING_OBJECTS += mmrecord.obj
+PORTING_OBJECTS += multimedia.obj
+PORTING_OBJECTS += mmtone.obj
+
+
+# Currently only JSR 234 use JPEG encoder. 
+ifeq ($(USE_JSR_234),true)
+
+vpath %.c $(JSR_135_DIR)/jpeg_encoder
+
+PORTING_OBJECTS += jcapimin.obj
+PORTING_OBJECTS += jcapistd.obj
+PORTING_OBJECTS += jccoefct.obj
+PORTING_OBJECTS += jccolor.obj
+PORTING_OBJECTS += jcdctmgr.obj
+PORTING_OBJECTS += jchuff.obj
+PORTING_OBJECTS += jcinit.obj
+PORTING_OBJECTS += jcmainct.obj
+PORTING_OBJECTS += jcmarker.obj
+PORTING_OBJECTS += jcmaster.obj
+PORTING_OBJECTS += jcomapi.obj
+PORTING_OBJECTS += jcparam.obj
+PORTING_OBJECTS += jcphuff.obj
+PORTING_OBJECTS += jcprepct.obj
+PORTING_OBJECTS += jcsample.obj
+PORTING_OBJECTS += jctrans.obj
+PORTING_OBJECTS += jdatadst.obj
+PORTING_OBJECTS += jdatasrc.obj
+PORTING_OBJECTS += jdmarker.obj
+PORTING_OBJECTS += jerror.obj
+PORTING_OBJECTS += jfdctfst.obj
+PORTING_OBJECTS += jmemmgr.obj
+PORTING_OBJECTS += jmemnobs.obj
+PORTING_OBJECTS += jpeg_encoder.obj
+PORTING_OBJECTS += jutils.obj
+
+endif
