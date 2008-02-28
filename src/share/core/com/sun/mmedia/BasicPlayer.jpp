@@ -67,6 +67,8 @@ public abstract class BasicPlayer implements Player
     static final String MEDIA_FORMAT_CAPTURE_VIDEO = "CAPTURE_VIDEO";
     /** Radio Capture format*/
     static final String MEDIA_FORMAT_CAPTURE_RADIO = "CAPTURE_RADIO";
+    /** Tone format */
+    static final String MEDIA_FORMAT_TONE = "TONE";
 
 
     protected String mediaFormat = null;
