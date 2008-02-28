@@ -224,10 +224,13 @@ public class PlayerImpl implements Player {
         /* realize native player */
         nRealize(hNative, type);
 
-        if (!handledByDevice) {
+        if (!handledByDevice && !handledByJava) {
+            mediaFormat = nGetMediaFormat(hNative);
             /* predownload media data to recognize media format and/or 
                specific media parameters (e.g. duration) */
-            doBuffering(hNative, stream);
+            if (!mediaFormat.equals(BasicPlayer.MEDIA_FORMAT_TONE)) {
+                doBuffering(hNative, stream);
+            }
         }
 
         if (mediaFormat.equals(BasicPlayer.MEDIA_FORMAT_UNKNOWN)) {        
