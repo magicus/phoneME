@@ -279,7 +279,7 @@ int javautil_wcsnicmp(const unsigned short* string1, const unsigned short* strin
         ch2 = *string2++;
 
         if (ch1 != ch2) {
-            if ((towupper(ch1) != towupper(ch2)) || !ISALFA(ch1))  {
+            if (!ISALFA(ch1) || towupper(ch1) != towupper(ch2))  {
                 break;
             }
         }
