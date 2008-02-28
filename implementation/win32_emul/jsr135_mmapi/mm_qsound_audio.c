@@ -1748,7 +1748,6 @@ static javacall_result audio_qs_set_volume(javacall_handle handle, long* level) 
 
     ah *h = (ah *)handle;
     javacall_result r = JAVACALL_FAIL;
-    *level = 0;
 
     switch(h->hdr.mediaType)
     {
