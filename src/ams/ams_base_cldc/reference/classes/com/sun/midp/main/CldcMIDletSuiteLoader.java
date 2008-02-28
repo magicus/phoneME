@@ -61,7 +61,7 @@ abstract class CldcMIDletSuiteLoader extends AbstractMIDletSuiteLoader {
         // Hint VM of startup beginning: system init phase
         MIDletSuiteUtils.vmBeginStartUp(isolateId);
 
-        WebPublicKeyStore.initKeystoreLocation(
+        WebPublicKeyStore.initKeystoreLocation(internalSecurityToken,
             Configuration.getProperty("com.sun.midp.publickeystore.WebPublicKeyStore"));
 
         super.init();

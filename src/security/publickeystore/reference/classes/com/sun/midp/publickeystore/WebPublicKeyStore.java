@@ -44,6 +44,7 @@ import com.sun.midp.configurator.Constants;
 import com.sun.midp.log.Logging;
 import com.sun.midp.log.LogChannels;
 import com.sun.midp.pki.*;
+import com.sun.midp.security.SecurityToken;
 
 /**
  * A public keystore that can used with SSL.
@@ -338,8 +339,20 @@ public class WebPublicKeyStore extends PublicKeyStore
         }
     }
 
+    /**
+     * Sets the location of the keystore
+     *
+     * @param token security token of the caller
+     * @param location Name of file containing the keystore (Full path)
+     *
+     * @exception SecurityException if the caller does not have the
+     *   MIDP permission.
+     */
 
-    public static void initKeystoreLocation(String location) {
+    public static void initKeystoreLocation(SecurityToken securityToken,String location) {
+
+        securityToken.checkIfPermissionAllowed(Permissions.MIDP);
+
         if (keystoreLocation == null) {
             keystoreLocation = location;
         }
