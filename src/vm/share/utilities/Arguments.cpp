@@ -348,6 +348,7 @@ int Arguments::parse_one_arg(int argc, char** argv) {
       // Turn off any optimizations that would change bytecode offsets
       CompactROMFieldTables = false;
       CompactROMMethodTables = false;
+      CompactROMBytecodes         = false;
       RenameNonPublicROMSymbols   = false;
       AggressiveROMSymbolRenaming = false;
     }
