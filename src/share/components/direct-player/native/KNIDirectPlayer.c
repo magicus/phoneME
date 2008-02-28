@@ -489,19 +489,22 @@ KNIDECL(com_sun_mmedia_DirectPlayer_nPcmAudioPlayback) {
     KNI_ReturnBoolean(KNI_FALSE);
 }
 
-/*  private native void nPrefetch(int hNative); */
-KNIEXPORT KNI_RETURNTYPE_VOID
+/*  private native boolean nPrefetch(int hNative); */
+KNIEXPORT KNI_RETURNTYPE_BOOLEAN
 KNIDECL(com_sun_mmedia_DirectPlayer_nPrefetch) {
     jint handle = KNI_GetParameterAsInt(1);
     KNIPlayerInfo* pKniInfo = (KNIPlayerInfo*)handle;
+    jboolean returnValue = KNI_FALSE;
 
     if (pKniInfo && pKniInfo->pNativeHandle) {
 LockAudioMutex();
-        javacall_media_prefetch(pKniInfo->pNativeHandle);
-        pKniInfo->isAcquire = JAVACALL_TRUE;
+        if (JAVACALL_OK == javacall_media_prefetch(pKniInfo->pNativeHandle)) {
+            pKniInfo->isAcquire = JAVACALL_TRUE;
+            returnValue = KNI_TRUE;
+        }
 UnlockAudioMutex();            
     }
-    KNI_ReturnVoid();
+    KNI_ReturnBoolean(returnValue);
 }
 
 /*  protected native boolean nIsFramePositioningControlSupported ( int handle ) ; */
