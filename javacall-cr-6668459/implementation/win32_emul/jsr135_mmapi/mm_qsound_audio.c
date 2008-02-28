@@ -798,11 +798,9 @@ static javacall_handle audio_qs_create(int appId, int playerId,
 static javacall_result audio_qs_get_format(javacall_handle handle, jc_fmt* fmt) {
     ah *h             = (ah*)handle;
     
-    if (h->hdr.needProcessHeader) {
-        *fmt = JC_FMT_UNKNOWN;
-    } else {
-        *fmt = h->hdr.mediaType;
-    }
+    *fmt = h->hdr.mediaType;
+    JC_MM_DEBUG_INFO_PRINT1("audio_format: %d \n",
+                            h->hdr.mediaType);
     return JAVACALL_OK;
 }
 
@@ -1199,11 +1197,12 @@ static javacall_result audio_qs_get_java_buffer_size(javacall_handle handle,
     *first_data_size  = 0;
     switch(h->hdr.mediaType)
     {
+        case JC_FMT_DEVICE_TONE:
+        case JC_FMT_DEVICE_MIDI:
+            break;
         case JC_FMT_TONE:
         case JC_FMT_MIDI:
         case JC_FMT_SP_MIDI:
-        case JC_FMT_DEVICE_TONE:
-        case JC_FMT_DEVICE_MIDI:
             if (h->midi.midiBuffer == NULL) {
                 *first_data_size  = h->hdr.wholeContentSize;
             }
