@@ -654,7 +654,8 @@ public class JavaAPILister extends LinkerUtil {
 		cvmClass = (CVMClass)sortedCVMClasses.get(i);
 		cName = cvmClass.getNativeName();
 		/* class typeid */
-		out.print("{0x" + Integer.toHexString(cvmClass.classid()) + ", ");
+                out.print("{0x" + Integer.toHexString(cvmClass.getClassId()) +
+                          ", ");
 		/* number of methods */
 		out.print(thisClass.methodtable.length + ", ");
 		/* number of fields */
@@ -798,11 +799,11 @@ public class JavaAPILister extends LinkerUtil {
                 return false;
 	    }
             cvmClass = (CVMClass)cdcClass.vmClass;
-            id = cvmClass.classid();
+            id = cvmClass.getClassId();
             nSortedClasses = sortedCVMClasses.size();
 
             for (j = 0; j < nSortedClasses; j++) {
-                if (id < ((CVMClass)sortedCVMClasses.get(j)).classid()) {
+                if (id < ((CVMClass)sortedCVMClasses.get(j)).getClassId()) {
                     break; /* found location */
 		}
             }
