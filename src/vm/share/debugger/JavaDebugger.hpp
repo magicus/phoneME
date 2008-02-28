@@ -157,7 +157,14 @@ public:
     return (t->not_null());
   }
 
-  static void process_suspend_policy(jbyte, Thread *, jboolean); 
+  static void process_suspend_policy(jbyte policy, Thread *thread, 
+                                     jboolean forceWait) {
+    process_suspend_policy(policy, thread, -1, forceWait);
+  }
+  static void process_suspend_policy(jbyte policy, int task_id, 
+                                     jboolean forceWait) {
+    process_suspend_policy(policy, NULL, task_id, forceWait);
+  }
 
   // commands handled in JavaDebugger
   static void nop(COMMAND_ARGS);
@@ -194,6 +201,8 @@ private:
   static bool _debug_isolate_option_on;
   static bool _debug_main_option_on;
 
+  static void process_suspend_policy(jbyte policy, Thread *thread, 
+                                     int task_id, jboolean forceWait);
   // GC support
 public:
   static void clear_and_release_map_entry(OopDesc**, RefNodeDesc *, int);

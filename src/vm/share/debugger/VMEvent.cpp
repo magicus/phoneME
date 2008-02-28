@@ -1111,16 +1111,20 @@ void VMEvent::vminit(Transport *t)
   out.send_packet();
 
   if (is_suspend) {
+    int task_id = -1;
+#if ENABLE_ISOLATES
+    task_id = Task::current_id();
+#endif
     // Use suspend policy which suspends all threads by default
     JavaDebugger::process_suspend_policy(JDWP_SuspendPolicy_ALL,
-                                        Thread::current(),
-                                        true);
+                                         task_id,
+                                         true);
   } else {
     // Use suspend policy which suspends no threads
     DEBUGGER_EVENT(("VM SuspendPolicy not specified"));
     JavaDebugger::process_suspend_policy(JDWP_SuspendPolicy_NONE,
-                                        Thread::current(),
-                                        true);
+                                         -1,
+                                         true);
   }
   if (_debugger_active) {
     JavaDebugger::send_all_class_prepares();

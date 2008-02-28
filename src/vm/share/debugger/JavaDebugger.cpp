@@ -549,9 +549,7 @@ void JavaDebugger::rehash() {
 }
 
 void JavaDebugger::process_suspend_policy(jbyte policy, Thread *thread,
-                                         jboolean forceWait)
-{
-  int task_id = -1;
+                                          int task_id, jboolean forceWait) {
 
   switch(policy) {
   case JDWP_SuspendPolicy_NONE:
@@ -559,6 +557,7 @@ void JavaDebugger::process_suspend_policy(jbyte policy, Thread *thread,
     dispatch(0);
     break;
   case JDWP_SuspendPolicy_EVENT_THREAD:
+    GUARANTEE(thread != NULL, "Thread must be specified");
 #if ENABLE_ISOLATES
     task_id = thread->task_id();
 #endif
@@ -566,9 +565,6 @@ void JavaDebugger::process_suspend_policy(jbyte policy, Thread *thread,
     dispatch(0);
     break;
   case JDWP_SuspendPolicy_ALL:
-#if ENABLE_ISOLATES
-    task_id = thread->task_id();
-#endif
     ThreadReferenceImpl::suspend_all_threads(task_id, true);
     if (forceWait) {
       process_command_loop();
