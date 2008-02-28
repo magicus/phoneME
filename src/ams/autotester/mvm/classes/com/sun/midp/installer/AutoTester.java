@@ -67,7 +67,7 @@ import com.sun.midp.events.*;
  */
 public class AutoTester extends AutoTesterBase
         implements AutoTesterInterface, EventListener {
-    /** */
+    /** True if all events in our queue were processed. */
     private boolean eventsInQueueProcessed;
 
     /** Our event queue. */
@@ -146,61 +146,70 @@ public class AutoTester extends AutoTesterBase
 
                 testIsolate.waitForExit();
 
-                // send an event to ourselves
-                synchronized (this) {
-                    eventsInQueueProcessed = false;
+                boolean newIsolatesFound;
 
-                    NativeEvent event = new NativeEvent(
-                            EventTypes.AUTOTESTER_EVENT);
-                    eventQueue.sendNativeEventToIsolate(event,
-                            MIDletSuiteUtils.getIsolateId());
+                do {
+                    newIsolatesFound = false;
 
-                    // and wait util it arrives
-                    do {
-                        try {
-                            wait();
-                        } catch(InterruptedException ie) {
-                            // ignore
-                        }
-                    } while (!eventsInQueueProcessed);
-                }
+                    // send an event to ourselves
+                    synchronized (this) {
+                        eventsInQueueProcessed = false;
 
-                Isolate[] isolatesAfter = Isolate.getIsolates();
+                        NativeEvent event = new NativeEvent(
+                                EventTypes.AUTOTESTER_EVENT);
+                        eventQueue.sendNativeEventToIsolate(event,
+                                MIDletSuiteUtils.getIsolateId());
 
-                /*
-                 * Wait for termination of all isolates contained in
-                 * isolatesAfter[], but not in isolatesBefore[].
-                 * This is needed to pass some tests (for example, CHAPI)
-                 * that starting several isolates.
-                 */
-                int i, j;
-                for (i = 0; i < isolatesAfter.length; i++) {
-                    for (j = 0; j < isolatesBefore.length; j++) {
-                        try {
-                            if (isolatesBefore[j].equals(isolatesAfter[i])) {
+                        // and wait util it arrives
+                        do {
+                            try {
+                                wait();
+                            } catch(InterruptedException ie) {
+                                // ignore
+                            }
+                        } while (!eventsInQueueProcessed);
+                    }
+
+                    Isolate[] isolatesAfter = Isolate.getIsolates();
+
+                    /*
+                     * Wait for termination of all isolates contained in
+                     * isolatesAfter[], but not in isolatesBefore[].
+                     * This is needed to pass some tests (for example, CHAPI)
+                     * that starting several isolates.
+                     */
+                    int i, j;
+                    for (i = 0; i < isolatesAfter.length; i++) {
+                        for (j = 0; j < isolatesBefore.length; j++) {
+                            try {
+                                if (isolatesBefore[j].equals(
+                                        isolatesAfter[i])) {
+                                    break;
+                                }
+                            } catch (Exception e) {
+                                // isolatesAfter[i] might already exit,
+                                // no need to wait for it
                                 break;
                             }
-                        } catch (Exception e) {
-                            // isolatesAfter[i] might already exit,
-                            // no need to wait for it
-                            break;
                         }
-                    }
 
-                    if (j == isolatesBefore.length) {
-                        try {
-                            isolatesAfter[i].waitForExit();
-                        } catch (Exception e) {
-                            // ignore: the isolate might already exit
+                        if (j == isolatesBefore.length) {
+                            try {
+                                newIsolatesFound = true;
+                                isolatesAfter[i].waitForExit();
+                            } catch (Exception e) {
+                                // ignore: the isolate might already exit
+                            }
                         }
                     }
-                }
+                } while (newIsolatesFound);
 
                 if (loopCount > 0) {
                     loopCount -= 1;
                 }
             }
         } catch (Throwable t) {
+            t.printStackTrace();
             handleInstallerException(suiteId, t);
         }
 
