@@ -134,8 +134,6 @@ endif
 #
 # Fixup SO_LINKFLAGS..
 #
-SO_LINKFLAGS	:= $(subst -shared,,$(SO_LINKFLAGS))
-SO_LINKFLAGS	+= -dy -G
 
 #
 # The solaris linker automatically exports all symbols in the executable.
@@ -151,6 +149,8 @@ endif
 ifeq ($(is_gnu_ld), 0)
 LINKFLAGS	:= $(subst -Wl$(comma)-export-dynamic,,$(LINKFLAGS))
 SO_LINKFLAGS	:= $(subst -Wl$(comma)-export-dynamic,,$(SO_LINKFLAGS))
+SO_LINKFLAGS	:= $(subst -shared,,$(SO_LINKFLAGS))
+SO_LINKFLAGS	+= -dy -G
 endif
 
 #
