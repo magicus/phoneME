@@ -522,6 +522,8 @@ javacall_result javacall_media_realize(javacall_handle handle,
     {
         ret = pPlayer->mediaItfPtr->vptrBasic->realize(
             pPlayer->mediaHandle, mime, mimeLength );
+    } else {
+        ret = JAVACALL_OK;
     }
 
     return ret;
@@ -626,6 +628,8 @@ javacall_result javacall_media_acquire_device(javacall_handle handle)
 
     if (QUERY_BASIC_ITF(pItf, acquire_device)) {
         ret = pItf->vptrBasic->acquire_device(pPlayer->mediaHandle);
+    } else {
+        ret = JAVACALL_OK;
     }
 
     return ret;
@@ -753,6 +757,8 @@ javacall_result javacall_media_prefetch(javacall_handle handle){
 
     if (QUERY_BASIC_ITF(pItf, prefetch)) {
         ret = pItf->vptrBasic->prefetch(pPlayer->mediaHandle);
+    } else {
+        ret = JAVACALL_OK;
     }
 
     return ret;
