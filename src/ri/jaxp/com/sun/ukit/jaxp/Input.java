@@ -1,6 +1,4 @@
 /*
- *  
- *
  * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
@@ -35,13 +33,19 @@ import java.io.Reader;
  * an instance of this class to manage input.
  */
 
-/* package */ class Input
+public class Input
 {
 	/** The entity public identifier or null. */
 	public String  pubid;
 
 	/** The entity system identifier or null. */
 	public String  sysid;
+
+	/** The encoding from XML declaration or null */
+	public String  xmlenc;
+
+	/** The XML version from XML declaration or 0x0000 */
+	public char    xmlver;
 
 	/** The entity reader. */
 	public Reader  src;
@@ -65,7 +69,8 @@ import java.io.Reader;
 	 */
 	public Input(int buffsize)
 	{
-		this(new char[buffsize]);
+		chars = new char[buffsize];
+		chLen = chars.length;
 	}
 
 	/**
