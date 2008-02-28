@@ -132,4 +132,9 @@ public:
   }
 };
 
+class TaskAllocationContext : public TaskContext {
+public:
+  TaskAllocationContext(int task_id) {}
+};
+
 #endif // ENABLE_ISOLATES

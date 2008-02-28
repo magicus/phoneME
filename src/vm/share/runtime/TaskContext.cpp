@@ -51,8 +51,7 @@ void TaskContextSave::dispose() {
   _global_context._count--;
   GUARANTEE(level == _count, "Out of order context switch.");
 #endif
-  if (_prev_task_id != 0 &&
-      _prev_task_id != _global_context._current_task_id) {
+  if (_prev_task_id != _global_context._current_task_id) {
     GUARANTEE(Universe::task_from_id(_prev_task_id), "task must be alive");
     TaskContext::set_current_task(_prev_task_id);
   }
@@ -115,9 +114,7 @@ void TaskGCContext::dispose( void ) {
   if (TraceTaskContext) {
     tty->print_cr("TGC: dis");
   }
-  if( _prev_task_id != 0 ) {
-    set( _prev_task_id );
-  }
+  set( _prev_task_id );
 }
 
 #if ENABLE_OOP_TAG
@@ -150,7 +147,7 @@ void TaskGCContextDebug::init(int class_id, int tag) {
 }
 
 void TaskGCContextDebug::dispose() {
-  if (_prev_task_id != 0) {
+  {
     Task::Raw task = Universe::task_from_id(_prev_task_id);
     if (task.not_null()) {
       if (TraceGC) {

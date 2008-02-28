@@ -360,7 +360,10 @@ int JavaDebugger::get_object_id_by_ref(Oop *p) {
   ObjArray::Fast refnodes = Universe::objects_by_ref_map();
   index = object_hash_code(p);
   node = refnodes().obj_at(index);
-  node = Universe::new_refnode(JVM_SINGLE_ARG_CHECK_0);
+  {
+    TaskAllocationContext tmp(SYSTEM_TASK);
+    node = Universe::new_refnode(JVM_SINGLE_ARG_CHECK_0);
+  }
   int nextID = JavaDebugger::next_seq_num();
   node().set_seq_num(nextID);
   node().set_ref_obj(p);
@@ -1014,8 +1017,10 @@ bool JavaDebugger::initialize_java_debugger(JVM_SINGLE_ARG_TRAPS) {
   if (!CURRENT_HAS_PENDING_EXCEPTION && _debugger_option_on) {
     // Determine which transport to use via command line args, for now
     // only socket
-    t = Transport::allocate(JVM_SINGLE_ARG_CHECK_0);
-    t = Transport::new_transport("socket" JVM_CHECK_0);
+    {
+      TaskAllocationContext tmp(SYSTEM_TASK);
+      t = Transport::new_transport("socket" JVM_CHECK_0);
+    }
     if (!t.is_null()) {
       t().set_task_id(-1);
 #if ENABLE_ISOLATES
@@ -1056,6 +1061,7 @@ bool JavaDebugger::initialize_java_debugger(JVM_SINGLE_ARG_TRAPS) {
       // Setup some free packet buffers
       plist = Universe::packet_buffer_list();
       if (plist.is_null()) {
+        TaskAllocationContext tmp(SYSTEM_TASK);
         UsingFastOops fastoops2;
 #if ENABLE_MEMORY_PROFILER
         *Universe::packet_buffer_list() =

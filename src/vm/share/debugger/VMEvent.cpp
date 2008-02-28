@@ -717,8 +717,11 @@ void VMEvent::create_event_request(PacketInputStream *in,
   int i;
   bool error = false;
   VMEventModifier::Fast current_modifier_slot, new_modifier, event_modifier;
- 
-  ep = create_vm_event_request();
+
+  {
+    TaskAllocationContext tmp(SYSTEM_TASK);
+    ep = create_vm_event_request();
+  }
     
   ep().set_event_kind(event_kind);
   ep().set_suspend_policy(in->read_byte());
@@ -731,7 +734,10 @@ void VMEvent::create_event_request(PacketInputStream *in,
 #endif
   for (i=0; i < ep().num_modifiers(); i++) {
 
-    new_modifier = VMEventModifier::new_modifier(in, out, error);
+    {
+      TaskAllocationContext tmp(SYSTEM_TASK);
+      new_modifier = VMEventModifier::new_modifier(in, out, error);
+    }
 
     if (error) {
       // some sort of error happened
