@@ -62,5 +62,8 @@ UTILITIES =                 \
         javautil_unicode \
         javautil_printf
 
+ifneq ($(USE_STATIC_PROPERTIES),true)
+SPECIFIC_DEFINITIONS += -DUSE_PROPERTIES_FROM_FS
+endif
 
 CONFIGURATION_PROPERTIES_FILE = properties.xml

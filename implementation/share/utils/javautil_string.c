@@ -1,6 +1,5 @@
 /*
- *
- * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
@@ -280,7 +279,7 @@ int javautil_wcsnicmp(const unsigned short* string1, const unsigned short* strin
         ch2 = *string2++;
 
         if (ch1 != ch2) {
-            if (((ch1 ^ ch2) != 0x20) || !ISALFA(ch1))  {
+            if (!ISALFA(ch1) || towupper(ch1) != towupper(ch2))  {
                 break;
             }
         }
