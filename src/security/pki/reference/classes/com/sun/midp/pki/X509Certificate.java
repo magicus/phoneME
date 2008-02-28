@@ -1813,7 +1813,7 @@ public class X509Certificate implements Certificate {
                     tmp.append(KEY_USAGE[i]);
                 }
 
-                t >>>= 1;
+                t=t >>> 1;
             }
         }
 
