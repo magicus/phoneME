@@ -151,7 +151,15 @@ public class AutoTester extends AutoTesterBase
                 do {
                     newIsolatesFound = false;
 
-                    // send an event to ourselves
+                    /*
+                     * Send an event to ourselves.
+                     * Main idea of it is to process all events that are in the
+                     * queue at the moment when the test isolate has exited
+                     * (because when testing CHAPI there may be requests to
+                     * start new isolates). When this event arrives, all events
+                     * that were placed in the queue before it are guaranteed
+                     * to be processed.
+                     */
                     synchronized (this) {
                         eventsInQueueProcessed = false;
 
