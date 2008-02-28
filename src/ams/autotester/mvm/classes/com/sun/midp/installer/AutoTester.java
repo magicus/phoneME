@@ -29,7 +29,6 @@ package com.sun.midp.installer;
 import com.sun.cldc.isolate.*;
 
 import com.sun.midp.i18n.Resource;
-
 import com.sun.midp.i18n.ResourceConstants;
 
 import com.sun.midp.main.AmsUtil;
@@ -39,6 +38,7 @@ import com.sun.midp.midletsuite.MIDletInfo;
 import com.sun.midp.midletsuite.MIDletSuiteStorage;
 import com.sun.midp.midlet.MIDletSuite;
 import com.sun.midp.configurator.Constants;
+
 import com.sun.midp.events.*;
 
 /**
@@ -209,7 +209,6 @@ public class AutoTester extends AutoTesterBase
                 }
             }
         } catch (Throwable t) {
-            t.printStackTrace();
             handleInstallerException(suiteId, t);
         }
 
