@@ -144,13 +144,8 @@ CVMClass extends ClassClass implements Const, CVMConst, CVMTypeCode {
 	return typeCode;
     }
 
-    public int
-    classid(){
-	return classId;
-    }
-
     // Accessor methods for the classId field:
-    protected int getClassId() {
+    public int getClassId() {
 	return classId;
     }
     protected void setClassId(int id) {

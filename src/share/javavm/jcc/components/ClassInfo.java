@@ -658,7 +658,7 @@ class ClassInfo
         // now try to resolve miranda methods.
         MethodInfo thisMethodtable[] = null;
         MethodInfo thisMethods[] = null;
-        if ((this.access&Const.ACC_ABSTRACT) != 0 && 
+        if ((this.access&Const.ACC_ABSTRACT) != 0 &&
             (this.access&Const.ACC_INTERFACE) == 0 ) {
             int i;
             int methodsnumber = methods.length;
@@ -760,8 +760,11 @@ class ClassInfo
 	if ( interfaces == null ) return; // all done!
 	for( int i = 0; i < interfaces.length; i++ ){
 	    ClassInfo interf = interfaces[i].find();
-	    if ( ( interf == null ) || ( (interf.access&Const.ACC_INTERFACE) == 0 ) ){
-		System.err.println(Localizer.getString("classinfo.class_which_should_be_an_interface_but_is_not", className, interfaces[i]));
+	    if ((interf == null) ||
+                ((interf.access & Const.ACC_INTERFACE) == 0)) {
+		System.err.println(Localizer.getString(
+                    "classinfo.class_which_should_be_an_interface_but_is_not",
+                    className, interfaces[i]));
 		continue;
 	    }
 	    if ( interf.allInterfaces == null )
