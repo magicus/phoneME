@@ -35,6 +35,7 @@
 #include <wchar.h>
 
 #include <javacall_defs.h>
+#include "javautil_string.h"
 
 #include <jsrop_memory.h> 
 #include <jsrop_suitestore.h> 
@@ -240,7 +241,7 @@ jsr211_boolean jsr211_isUniqueString(const jchar *str, size_t sz, int casesens, 
 				if( wcsncmp(str, (const jchar *)data, sz) == 0 )
                     return JAVACALL_FALSE;
 			} else {
-				if( wcsnicmp(str, (const jchar *)data, sz) == 0 )
+				if( javautil_wcsnicmp(str, (const jchar *)data, sz) == 0 )
                     return JAVACALL_FALSE;
 			}
 		}
