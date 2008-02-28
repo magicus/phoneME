@@ -30,6 +30,12 @@ extern "C" {
 #include "javacall_file.h"
 
 /**
+ * PLEASE NOTE:
+ * API descriptions in the header file SUPERCEDE the descriptions
+ * herein.
+ */
+
+/**
  * Initializes the File System
  * @return <tt>JAVACALL_OK</tt> on success, <tt>JAVACALL_FAIL</tt> or negative value on error
  */
@@ -44,16 +50,22 @@ javacall_result javacall_file_init(void) {
 }
 
 /**
- * The open a file
- * @param unicodeFileName path name in UNICODE of file to be opened
- * @param fileNameLen length of file name
+ * Open a file
+ * @param unicodeFileName fully-qualified name (including path) of file to be 
+ *        opened, in UNICODE (utf16)
+ * @param fileNameLen length of the file name or
+ *        JAVACALL_UNKNOWN_LENGTH, which may be used for null terminated string 
  * @param flags open control flags
  *        Applications must specify exactly one of the first three
  *        values (file access modes) below in the value of "flags"
- *        JAVACALL_FILE_O_RDONLY, JAVACALL_FILE_O_WRONLY, JAVACALL_FILE_O_RDWR
+ *        JAVACALL_FILE_O_RDONLY, 
+ *        JAVACALL_FILE_O_WRONLY, 
+ *        JAVACALL_FILE_O_RDWR
  *
- *        Any combination (bitwise-inclusive-OR) of the following may be used:
- *        JAVACALL_FILE_O_CREAT, JAVACALL_FILE_O_TRUNC, JAVACALL_FILE_O_APPEND,
+ *        And any combination (bitwise-inclusive-OR) of the following:
+ *        JAVACALL_FILE_O_CREAT, 
+ *        JAVACALL_FILE_O_TRUNC, 
+ *        JAVACALL_FILE_O_APPEND,
  *
  * @param handle address of pointer to file identifier
  *        on successful completion, file identifier is returned in this 
@@ -68,7 +80,7 @@ javacall_result javacall_file_open(const javacall_utf16 * unicodeFileName, int f
 }
 
 /**
- * Closes the file with the specified handlei
+ * Closes the file with the specified handle
  * @param handle handle of file to be closed
  * @return <tt>JAVACALL_OK</tt> on success, 
  *         <tt>JAVACALL_FAIL</tt> or negative value otherwise
@@ -79,7 +91,7 @@ javacall_result javacall_file_close(javacall_handle handle) {
 
 
 /**
- * Reads a specified number of bytes from a file, 
+ * Reads a specified number of bytes from a file.
  * @param handle handle of file 
  * @param buf buffer to which data is read
  * @param size number of bytes to be read. Actual number of bytes
@@ -91,7 +103,7 @@ long javacall_file_read(javacall_handle handle, unsigned char *buf, long size) {
 }
 
 /**
- * Writes bytes to file
+ * Writes bytes to file.
  * @param handle handle of file 
  * @param buf buffer to be written
  * @param size number of bytes to write
@@ -105,9 +117,12 @@ long javacall_file_write(javacall_handle handle, const unsigned char *buf, long 
 
 /**
  * Deletes a file from the persistent storage.
- * @param unicodeFileName name of file to be deleted
- * @param fileNameLen length of file name
- * @return JAVACALL_OK on success, <tt>JAVACALL_FAIL</tt> or negative value otherwise
+ * @param unicodeFileName fully-qualified name (including path) of file to be 
+ *         deleted, in UNICODE (utf16)
+ * @param fileNameLen length of the file name or
+ *        JAVACALL_UNKNOWN_LENGTH, which may be used for null terminated string 
+ * @return <tt>JAVACALL_OK</tt> on success, 
+ *         <tt>JAVACALL_FAIL</tt> or negative value on error
  */
 javacall_result javacall_file_delete(const javacall_utf16 * unicodeFileName, int fileNameLen) {
     return JAVACALL_FAIL;
@@ -116,10 +131,12 @@ javacall_result javacall_file_delete(const javacall_utf16 * unicodeFileName, int
 /**
  * The  truncate function is used to truncate the size of an open file in 
  * the filesystem storage.
+ * For CDC-HI - based implementations, it is required that this function also
+ * be capable of enlarging a file (standard unix truncate() functionality).
+ * For CLDC-HI - based implementations, this function need not have the 
+ * capability to enlarge a file.
  * @param handle identifier of file to be truncated
  *         This is the identifier returned by javacall_file_open()
- *         The handle may be optionally modified by the implementation
- *         of this function
  * @param size size to truncate to
  * @return <tt>JAVACALL_OK</tt> on success, 
  *         <tt>JAVACALL_FAIL</tt> or negative value on error
@@ -157,8 +174,10 @@ javacall_int64 javacall_file_sizeofopenfile(javacall_handle handle) {
 
 /**
  * Get file size
- * @param fileName name of file in unicode format
- * @param fileNameLen length of file name
+ * @param fileName fully-qualified name (including path) of file
+ *         in UNICODE (utf16)
+ * @param fileNameLen length of the file name or
+ *        JAVACALL_UNKNOWN_LENGTH, which may be used for null terminated string 
  * @return size of file in bytes if successful, -1 otherwise 
  */
 javacall_int64 javacall_file_sizeof(const javacall_utf16 * fileName, int fileNameLen) {
@@ -166,11 +185,14 @@ javacall_int64 javacall_file_sizeof(const javacall_utf16 * fileName, int fileNam
 }
 
 /**
- * Check if the file exists in file system storage.
- * @param fileName name of file in unicode format
- * @param fileNameLen length of file name
+ * Check if a regular file exists in file system storage.
+ *
+ * @param fileName fully-qualified name (including path) of file
+ *         in UNICODE (utf16)
+ * @param fileNameLen length of the file name or
+ *        JAVACALL_UNKNOWN_LENGTH, which may be used for null terminated string 
  * @return <tt>JAVACALL_OK </tt> if it exists and is a regular file, 
- *         <tt>JAVACALL_FAIL</tt> or negative value otherwise (eg: 0 returned if it is a directory)
+ *         <tt>JAVACALL_FAIL</tt> otherwise (e.g., if the file is a directory, or does not exist)
  */
 javacall_result javacall_file_exist(const javacall_utf16 * fileName, int fileNameLen) {
     return JAVACALL_FAIL;
@@ -187,11 +209,19 @@ javacall_result javacall_file_flush(javacall_handle handle) {
 }
 
 /**
- * Renames the filename.
- * @param unicodeOldFilename current name of file
- * @param oldNameLen current name length
- * @param unicodeNewFilename new name of file
- * @param newNameLen length of new name
+ * Renames the filename. 
+ * If the underlying operating system API can "rename" from one arbitrary 
+ * path to another, this behavior is preferable. If not, and if the filename 
+ * parameters have different paths, a value of JAVACALL_FAIL, should be
+ * returned.
+ * @param unicodeOldFilename current fully-qualified name (including path) of 
+ *         file in UNICODE (utf16)
+ * @param oldNameLen current name length or
+ *        JAVACALL_UNKNOWN_LENGTH, which may be used for null terminated string
+ * @param unicodeNewFilename new fully-qualified name (including path) of 
+ *         file in UNICODE (utf16)
+ * @param newNameLen length of new name or
+ *        JAVACALL_UNKNOWN_LENGTH, which may be used for null terminated string 
  * @return <tt>JAVACALL_OK</tt>  on success, 
  *         <tt>JAVACALL_FAIL</tt> or negative value otherwise
  */
