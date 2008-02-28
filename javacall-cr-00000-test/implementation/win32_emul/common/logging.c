@@ -44,13 +44,38 @@ extern "C" {
 
 char print_buffer[PRINT_BUFFER_SIZE];
 char debug_print_buffer[PRINT_BUFFER_SIZE];
-
+static BOOL dbgInit = FALSE;
+static HWND dbgWin = NULL;
+static HANDLE dbgFile;
+static char dbgWinBuff[PRINT_BUFFER_SIZE];
 /**
 * Prints out a string to a system specific output stream
 *
 * @param s a NULL terminated character buffer to be printed
 */
 void javacall_print(const char *s) {
+	if (!dbgInit) {
+		//dbgWin = CreateWindow("LISTBOX", "Gil test", WS_OVERLAPPEDWINDOW|WS_VSCROLL|WS_HSCROLL, 
+		//	CW_USEDEFAULT, CW_USEDEFAULT, 400, 400,
+		//	GetDesktopWindow(), NULL, GetModuleHandle(NULL), NULL);
+		//ShowWindow(dbgWin, SW_SHOW);
+		dbgFile = CreateFile("zayitout.txt",GENERIC_WRITE, FILE_SHARE_READ|FILE_SHARE_WRITE,
+			                    NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+		Sleep(20);
+		dbgWinBuff[0] = 0;
+		dbgInit = TRUE;
+	} else {
+		strcat(dbgWinBuff, s);
+		if (dbgWinBuff[strlen(dbgWinBuff)-1] == '\n') {
+			DWORD len;
+			WriteFile(dbgFile, dbgWinBuff, strlen(dbgWinBuff), &len, NULL);
+			FlushFileBuffers(dbgFile);
+			dbgWinBuff[strlen(dbgWinBuff)-1] = 0;
+			//SendMessage(dbgWin, (UINT) LB_ADDSTRING, 0, dbgWinBuff);
+
+			dbgWinBuff[0] = 0;
+		}
+	}
     //OutputDebugString(s);
     printf("%s", s);
 	fflush(stdout);
