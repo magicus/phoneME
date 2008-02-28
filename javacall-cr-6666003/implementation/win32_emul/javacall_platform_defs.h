@@ -169,12 +169,12 @@ void javautil_printf_lime(char *message, ...);
  * and class members specification
  * IMPL NOTE: Because VC compiler has only one way to specify 
  * the packing alignment in the source code via pack pragma,
- * the __PACKED__ shall be defined as 0. In the appropriated
+ * the __PPACKED__ shall be defined as 1. In the appropriated
  * place this value shall be checked and the pack pragma shall 
- * be inserted. The __Packed__ shall be redefined to the empty 
+ * be inserted. The __PPACKED__ shall be redefined to the empty 
  * string.
  */
-#define __PPACKED__ 0
+#define __PPACKED__ 1
 
 #ifdef __cplusplus
 }
