@@ -47,7 +47,6 @@ public abstract class Parser
 	/** The end of stream character. */
 	public final static char EOS = 0xffff;
 
-	private Pair mNoNS; // there is no namespace
 	private Pair mXml;  // the xml namespace
 
 	private Hashtable mEnt;  // the entities look up table
@@ -316,12 +315,6 @@ public abstract class Parser
 		mBuff  = new char[BUFFSIZE_PARSER];
 		mAttrs = new Attrs();
 
-		//		Default namespace
-		mPref = pair(mPref);
-		mPref.name  = "";
-		mPref.value = "";
-		mPref.chars = NONS;
-		mNoNS = mPref;  // no namespace
 		//		XML namespace
 		mPref = pair(mPref);
 		mPref.name  = "xml";
@@ -738,7 +731,6 @@ public abstract class Parser
 		throws Exception
 	{
 		char   ch;
-		String str  = null;
 		String name = null;
 		Pair   psid = null;
 		// read 'DOCTYPE'
@@ -1673,9 +1665,10 @@ public abstract class Parser
 				for (char i = 1; i < len; i++) {
 					if (pref.chars[i] != attr.chars[i])
 						continue resolve;
-					attr.ns = pref.value;
-					break resolve;
 				}
+				//		All corresponding characters are equal
+				attr.ns = pref.value;
+				break;
 			}
 			//		Attributes without prefix are filtered out before the 
 			//		resolve loop. Element without prefix is handled as a 
@@ -1985,22 +1978,6 @@ public abstract class Parser
 		char chars[] = new char[mBuffIdx + 1];
 		System.arraycopy(mBuff, 0, chars, 0, mBuffIdx + 1);
 		return chars;
-	}
-
-	/**
-	 * Reads the public or/and system identifiers.
-	 *
-	 * @param inp The input object. 
-	 * @exception Exception is parser specific exception form panic method.
-	 * @exception IOException 
-	 */
-	private void pubsys(Input inp)
-		throws Exception
-	{
-		Pair pair = pubsys(' ');
-		inp.pubid = pair.name;
-		inp.sysid = pair.value;
-		del(pair);
 	}
 
 	/**
