@@ -92,6 +92,7 @@ static HANDLE eventThread;
 static HINSTANCE instanceMain;
 static jboolean reverse_orientation;
 static int lastKeyPressed = 0;
+static HANDLE eventWindowInit;
 
 /* IMPL_NOTE: the drawing code requires 16-bit per pixel mode */
 /* Bitmap and memory DC needed for GDI draw, if DD/GAPI
@@ -237,13 +238,11 @@ static void updateDimensions() {
     SHSipInfo(SPI_GETSIPINFO, 0, &sipinfo, 0);
     rcVisibleDesktop = sipinfo.rcVisibleDesktop;
 
-    GetWindowRect(hwndMain, &rc);
-    rc.bottom = GetSystemMetrics(SM_CYSCREEN);
-    gxj_system_screen_buffer.width = rc.right - rc.left;
-    gxj_system_screen_buffer.height = rc.bottom - rc.top;
+    SystemParametersInfo(SPI_GETWORKAREA, 0, &rc, 0);
+    gxj_system_screen_buffer.width = rc.right;
+    gxj_system_screen_buffer.height = rc.bottom;
 
-    MoveWindow(hwndMain, rc.left, rc.top,
-        gxj_system_screen_buffer.width, gxj_system_screen_buffer.height, TRUE);
+    MoveWindow(hwndMain, rc.left, rc.top, rc.right, rc.bottom, TRUE);
 }
 
 static void initPutpixelSurface() {
@@ -251,7 +250,7 @@ static void initPutpixelSurface() {
     updateDimensions();
     /* Use the dimension to initialize Putpixel surface */
     int screenSize = sizeof(gxj_pixel_type) *
-        winceapp_get_screen_width() * winceapp_get_screen_height();
+         GetSystemMetrics(SM_CXSCREEN) * GetSystemMetrics(SM_CYSCREEN);
     gxj_system_screen_buffer.alphaData = 0;
     gxj_system_screen_buffer.pixelData = 
         (gxj_pixel_type *)midpMalloc(screenSize);
@@ -434,7 +433,7 @@ static BOOL InitInstance(HINSTANCE hInstance, int CmdShow) {
     if (!_hwndMain)
         return FALSE;
 
-    SHFullScreen(_hwndMain, SHFS_HIDETASKBAR | SHFS_HIDESTARTICON | SHFS_HIDESIPBUTTON);
+    SHFullScreen(_hwndMain, SHFS_SHOWTASKBAR | SHFS_HIDESIPBUTTON | SHFS_SHOWSTARTICON);
 
     winceapp_set_window_handle(_hwndMain);
     ShowWindow(_hwndMain, CmdShow);
@@ -480,12 +479,23 @@ DWORD WINAPI CreateWinCEWindow(LPVOID lpParam) {
     }
 
     initPutpixelSurface();
+    if (eventWindowInit) {
+        SetEvent(eventWindowInit);
+    }
 
 #if ENABLE_DIRECT_DRAW
     initDirectDraw();
 #else
     if (GXOpenDisplay(hwndMain, 0) == 0)
         REPORT_ERROR(LC_HIGHUI, "GXOpenDisplay() failed");
+#endif
+
+#ifdef ENABLE_SPLASH_SCREEN
+    /* Destroy the splash screen window by class name and window title */
+    HWND hSplashWindow = FindWindow(_T("JavaSplash"), _T("Java"));
+    if (hSplashWindow != NULL) {
+        DestroyWindow(hSplashWindow);
+    }
 #endif
 
     // createEditors();
@@ -501,7 +511,15 @@ DWORD WINAPI CreateWinCEWindow(LPVOID lpParam) {
 }
 
 void winceapp_init() {
+    eventWindowInit = CreateEvent(NULL, TRUE, FALSE, NULL);
+    if (eventWindowInit == NULL) {
+        REPORT_ERROR(LC_AMS, "Creating WindowInit event failed");
+    }
     eventThread = CreateThread(NULL, 0, CreateWinCEWindow, 0, 0, NULL);
+    if (eventWindowInit) {
+        WaitForSingleObject(eventWindowInit, 10000); // wait for 10 seconds maximum
+        CloseHandle(eventWindowInit);
+    }
 }
 
 static jint mapAction(UINT msg, LPARAM lp) {
