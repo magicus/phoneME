@@ -134,13 +134,13 @@ public class TestUrl extends TestCase {
         // IPv4 - false
         url = "http://3.1.3";
         declare("URL " + url);
-        testUrl(url, true);
+        testUrl(url, false);
         url = "http://3.1.3A.5";
         declare("URL " + url);
-        testUrl(url, true);
+        testUrl(url, false);
         url = "http://3.1.256.5";
         declare("URL " + url);
-        testUrl(url, true);
+        testUrl(url, false);
     }
 }
 

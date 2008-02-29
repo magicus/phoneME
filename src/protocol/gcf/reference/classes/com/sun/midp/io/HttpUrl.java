@@ -58,11 +58,6 @@ public class HttpUrl {
     /** Domain of the host or null. */
     public String domain;
 
-    /** State HEX - parsing 16-bit hex address. */
-    private static final int HEX = 0;
-    /** State PREFIXLEN - parsing the deximal prefix length. */
-    private static final int PREFIXLEN = 1;
-
     /**
      * Construct a HttpUrl.
      *
@@ -214,7 +209,13 @@ public class HttpUrl {
             start = afterScheme;
         } else {
             // this is not relative URL so the path must begin with "/"
-            start = url.indexOf('/', startOfAuthority);
+            // can be [IPv6/60].../
+            int posSqBr = url.indexOf(']', startOfAuthority);
+            if (posSqBr > -1) {
+                start = url.indexOf('/', posSqBr);
+            } else {
+                start = url.indexOf('/', startOfAuthority);
+            }
         }
 
         // do not parse an empty path
@@ -414,74 +415,88 @@ public class HttpUrl {
         if (addressLength < 4) { // empty IPv6
             return false;
         }
-        if (address.charAt(addressLength - 1) != ']') {
+        if (address.charAt(0) != '[' || address.charAt(addressLength - 1) != ']') {
             return false;
         }
         String IPv6 = address.substring(1, addressLength - 1);
-        // Format according to RFC 2373
+        // Format according to RFC 3513
         int IPv6Length = addressLength - 2;
         int ptrChar = 0;
-        int hexCounter = 0; // number of hex digits in 16-bit piece
         int numHexPieces = 0; // number of 16-bit pieces in the address
-        int state = HEX;
-        boolean isDec = true;
-        int currVal = 0;
-        char currChar;
-        int prevPiecePos = 0;
+        char currChar = 0;
+        String hexString = null;
+        String separator = null;
+        int length;
         boolean isDoubleColon = false;
+        boolean lastSeparator = true;
         while (ptrChar < IPv6Length) {
-            currChar = IPv6.charAt(ptrChar++);
-            switch (state) {
-                case HEX:
-                    switch (currChar) {
-                        case ':':
-                            if (ptrChar < IPv6Length &&
-                                IPv6.charAt(ptrChar) == ':') {
-                                if (isDoubleColon) {
-                                    return false;
-                                }
-                                ptrChar++;
-                                isDoubleColon = true;
-                                break;
-                            }
-                            if (++numHexPieces > 8) {
-                                return false;
-                            }
-                            hexCounter = 0;
-                            isDec = true;
-                            currVal = 0;
-                            prevPiecePos = ptrChar;
-                            break;
-                        case '.': // next symbols IPV4
-                            if (!isDec || hexCounter > 3 ||
-                                currVal > 255 || numHexPieces != 6) {
-                                return false;
-                            }
-                            return isValidIPv4Address(IPv6.substring(ptrChar));
-                        case '/':
-                            state = PREFIXLEN;
-                            break;
-                        default:
-                            if (Character.isDigit(currChar) && isDec) {
-                                currVal = currVal*10 + currChar - '0';
-                            } else if ("ABCDEFabcdef".indexOf(currChar) > -1) {
-                                isDec = false;
-                            } else {
-                                return false;
-                            }
-                            if (++hexCounter > 4) {
-                                return false;
-                            }
-                            break;
-                    } // HEX state
-                    break;
-                case PREFIXLEN:
-                    if (!Character.isDigit(currChar)) {
+            currChar = IPv6.charAt(ptrChar);
+            if (isHex(currChar)) {
+                hexString = getNextHexValue(IPv6, ptrChar, false);
+                length = hexString.length();
+                if (length > 4) { // 16-bit value couldn't contain more than 4 digits
+                    return false;
+                }
+                ptrChar += length;
+                lastSeparator = false;
+            } else if (currChar == ':') { // colon
+                if (++numHexPieces > 7) { // more than 8 hex pieces
+                    return false;
+                }
+                separator = getNextHexValue(IPv6, ptrChar, true);
+                length = separator.length();
+                if (separator.equals("::")) { // double colon
+                    // double colon
+                    if (isDoubleColon) { // double colon twice
                         return false;
                     }
-                    break;
-            } // switch staea
-        } // while
+                    isDoubleColon = true;
+                } else if (length > 1) { // wrong separator
+                    return false;
+                } else  { // separator is equal ":"
+                    if (ptrChar == 0) { // first symbol is ":"
+                        return false;
+                    }
+                    if (isDoubleColon && numHexPieces > 6) { // no more 7 pieces when "::"
+                        return false;
+                    }
+                }
+                ptrChar += length;
+                lastSeparator = true;
+            } else if (currChar == '.') { // IPv4 suffix
+                if (hexString == null || !isDecimal(hexString)) {
+                    // previous hex piece must be start of IPv4
+                    return false;
+                }
+                if (!((!isDoubleColon && numHexPieces == 6) || (isDoubleColon && numHexPieces < 6))) {
+                    return false;
+                }
+                ptrChar -= hexString.length();
+                return isValidIPv4Address(IPv6.substring(ptrChar));
+            } else if (currChar == '/') { // bit prefix
+                break;
+            } else { // wrong symbol
+                return false;
+            }
+        } // end of while
+        if (lastSeparator && separator.equals(":")) {
+            return false;
+        }
+        if (!((!isDoubleColon && numHexPieces == 7) || (isDoubleColon && numHexPieces < 7))) {
+            return false;
+        }
+        if (currChar == '/') { // bit prefix
+            ptrChar++;
+            String decString = getNextDecValue(IPv6, ptrChar, false);
+            length = decString.length();
+            if (length == 0 || ptrChar + length < IPv6Length) {
+                return false;
+            }
+            int i = Integer.parseInt(decString);
+            if (i < 1 || i > 128) {
+                return false;
+            }
+        }
         return true;
     }
 
@@ -495,35 +510,41 @@ public class HttpUrl {
         if (address.length() < 7) { // less than 0.0.0.0
             return false;
         }
+        int IPv4Length = address.length();
         int ptrChar = 0;
-        int decCounter = 0; // number of dec digits in 8-bit piece
         int numDecPieces = 0; // number of 8-bit pieces in the address
-        int currVal = 0;
         char currChar;
-        char prevChar = 0;
-        while (ptrChar < address.length()) {
-            currChar = address.charAt(ptrChar++);
-            if (currChar == '.') {
-                if (prevChar == '.') {
+        String decString;
+        String separator;
+        int length, value;
+        boolean lastSeparator = true;
+        while (ptrChar < IPv4Length) {
+            currChar = address.charAt(ptrChar);
+            if (Character.isDigit(currChar)) {
+                decString = getNextDecValue(address, ptrChar, false);
+                value = Integer.parseInt(decString);
+                if (value < 0 || value > 255) {
                     return false;
                 }
-                if (++numDecPieces > 4) {
+                ptrChar += decString.length();
+                lastSeparator = false;
+            } else if (currChar == '.') {
+                if (++numDecPieces > 3) { // more than 4 hex pieces
                     return false;
                 }
-                currVal = 0;
-                decCounter = 0;
-            } else if (Character.isDigit(currChar)) {
-                if (++decCounter > 3) {
+                separator = getNextDecValue(address, ptrChar, true);
+                length = separator.length();
+                if (length > 1) {
                     return false;
                 }
-                currVal = currVal*10 + currChar - '0';
-                if (currVal > 255) {
-                    return false;
-                }
-            } else {
+                ptrChar += length;
+                lastSeparator = true;
+            } else { // wrong symbol
                 return false;
             }
-            prevChar = currChar;
+        } // end of while
+        if (lastSeparator || numDecPieces < 3) {
+            return false;
         }
         return true;
     }
@@ -559,4 +580,76 @@ public class HttpUrl {
         return true;
     }
 
+    /**
+     * Checks is the next symbol is hex.
+     *
+     * @param sym the given symbol
+     * @return true when symbol is hex
+     */
+    private boolean isHex(char sym) {
+        return (Character.isDigit(sym) || "ABCDEFabcdef".indexOf(sym) > -1);
+    }
+
+    /**
+     * Gets the next hex substring.
+     *
+     * @param str the source string
+     * @param offset the start index of substring
+     * @param isSeparator false when we need hex value else separator
+     * @return the hex substring or separator
+     */
+    private String getNextHexValue(String str, int offset, boolean isSeparator) {
+        StringBuffer strOut = new StringBuffer();
+        int length = str.length();
+        int i = offset;
+        char sym;
+        while (i < length) {
+            sym = str.charAt(i++);
+            if ((!isHex(sym) && !isSeparator) || ((isHex(sym) || sym == '/') && isSeparator)) {
+                break;
+            }
+            strOut.append(sym);
+        }
+        return strOut.toString();
+    }
+
+    /**
+     * Gets the next decimal substring.
+     *
+     * @param str the source string
+     * @param offset the start index of substring
+     * @param isSeparator false when we need dec value else separator
+     * @return the dec substring or separator
+     */
+    private String getNextDecValue(String str, int offset, boolean isSeparator) {
+        StringBuffer strOut = new StringBuffer();
+        int length = str.length();
+        int i = offset;
+        char sym;
+        while (i < length) {
+            sym = str.charAt(i++);
+            if ((!Character.isDigit(sym) && !isSeparator) || (Character.isDigit(sym) && isSeparator)) {
+                break;
+            }
+            strOut.append(sym);
+        }
+        return strOut.toString();
+    }
+
+    /**
+     * Checks is the given string contains decimal symbols only.
+     *
+     * @param str the source string
+     * @return true when all symbols are dacimal else false
+     */
+    private boolean isDecimal(String str) {
+        for (int i = 0; i < str.length(); i++) {
+            if (!Character.isDigit(str.charAt(i))) {
+                return false;
+            }
+
+        }
+        return true;
+       
+    }
 }
