@@ -221,9 +221,16 @@ public class PlayerImpl implements Player {
         if (type == null && stream != null && stream.getContentDescriptor() != null) {
             type = stream.getContentDescriptor().getContentType();
         }
-        /* realize native player */
+        /* try to realize native player */
         if (!nRealize(hNative, type)) {
-            throw new MediaException("Can not realize");
+            /* verify if handled by Java */
+            if (type != null && mediaFormat.equals(BasicPlayer.MEDIA_FORMAT_UNKNOWN)) {
+                mediaFormat = Configuration.getConfiguration().mime2Format(type);
+            }
+            if (mediaFormat == null || mediaFormat.equals(BasicPlayer.MEDIA_FORMAT_UNKNOWN)) {
+                throw new MediaException("Can not realize");
+            }
+            handledByJava = true;
         }
 
         if (!handledByDevice && !handledByJava) {
