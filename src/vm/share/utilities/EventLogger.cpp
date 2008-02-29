@@ -92,7 +92,7 @@ jbyte EventLogger::Entry::_shift;
 
 inline jlong EventLogger::Entry::now( void ) {
 #if USE_EVENT_LOG_TIMER_DOWNSAMPLING
-  return Os::elapsed_counter() >> _shift;
+  return julong(Os::elapsed_counter()) >> _shift;
 #else
   return Os::elapsed_counter();
 #endif
@@ -103,7 +103,7 @@ inline void EventLogger::Entry::initialize( void ) {
   GUARANTEE( jlong(freq) > 0, "Invalid high-resolution timer frequency");
 #if USE_EVENT_LOG_TIMER_DOWNSAMPLING
   {
-    enum { max_freq = 1 << 30 };
+    enum { max_freq = 1 << (delta_bits-2) };
     jubyte shift = 0;
     for( ; freq > max_freq; freq >>= 1 ) {
       shift++;

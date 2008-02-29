@@ -1173,7 +1173,7 @@
 
 #define ENABLE_VSF_MERGE_TEST  0
 
-#ifdef _X86_
+#ifndef ARM
 #  define USE_EVENT_LOG_TIMER_DOWNSAMPLING  1
 #else
 #  define USE_EVENT_LOG_TIMER_DOWNSAMPLING  0
