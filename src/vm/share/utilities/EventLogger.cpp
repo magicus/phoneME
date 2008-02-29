@@ -86,18 +86,36 @@ inline int EventLogger::add_event_type( const char name[] ) {
 jlong EventLogger::Entry::_last;
 jlong EventLogger::Entry::_freq;
 bool  EventLogger::Entry::_use_usec;
+#if USE_EVENT_LOG_TIMER_DOWNSAMPLING
+jbyte EventLogger::Entry::_shift;
+#endif
 
 inline jlong EventLogger::Entry::now( void ) {
+#if USE_EVENT_LOG_TIMER_DOWNSAMPLING
+  return Os::elapsed_counter() >> _shift;
+#else
   return Os::elapsed_counter();
+#endif
 }
 
 inline void EventLogger::Entry::initialize( void ) {
-  _last = now();
-
-  const jlong freq = Os::elapsed_frequency();
+  julong freq = Os::elapsed_frequency();
+  GUARANTEE( jlong(freq) > 0, "Invalid high-resolution timer frequency");
+#if USE_EVENT_LOG_TIMER_DOWNSAMPLING
+  {
+    enum { max_freq = 1 << 30 };
+    jubyte shift = 0;
+    for( ; freq > max_freq; freq >>= 1 ) {
+      shift++;
+    }
+    _shift = shift;
+  }
+#endif
   _freq = freq;
   _use_usec = freq > 100 * 1000;
   GUARANTEE( freq != 0, "Sanity" );
+
+  _last = now();
 }
 
 inline void EventLogger::Entry::set ( const unsigned type, const jlong time ) {

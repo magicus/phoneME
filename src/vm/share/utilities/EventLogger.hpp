@@ -129,6 +129,9 @@ public:
     static jlong _last;
     static jlong _freq;
     static bool  _use_usec;
+#if USE_EVENT_LOG_TIMER_DOWNSAMPLING
+    static jbyte _shift;
+#endif
   };
 
   struct Block {
