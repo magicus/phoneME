@@ -515,9 +515,10 @@ javacall_result javacall_media_realize(javacall_handle handle,
             {
                 return JAVACALL_FAIL;
             }
-        } else {
-            return JAVACALL_FAIL;
         }
+    }
+    if (NULL == pPlayer->mediaItfPtr) {
+        pPlayer->mediaType = JAVACALL_MEDIA_FORMAT_UNSUPPORTED;
     }
 
     if( QUERY_BASIC_ITF(pPlayer->mediaItfPtr, realize) )
