@@ -515,6 +515,8 @@ javacall_result javacall_media_realize(javacall_handle handle,
             {
                 return JAVACALL_FAIL;
             }
+        } else {
+            return JAVACALL_FAIL;
         }
     }
 
