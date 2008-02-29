@@ -1055,7 +1055,9 @@ static javacall_result audio_qs_acquire_device(javacall_handle handle)
                 h->wav.stream = NULL;
             }
 
-            wav_setStreamPlayerData(&(h->wav));
+            if (1 != wav_setStreamPlayerData(&(h->wav))) {
+                return JAVACALL_FAIL;
+            }
             sRate = h->wav.rate;
 
             if(16 == h->wav.bits)
@@ -1137,7 +1139,9 @@ static javacall_result audio_qs_acquire_device(javacall_handle handle)
                 h->wav.stream = NULL;
             }
 
-            AMRDecoder_setStreamPlayerData(&(h->wav));
+            if (1 != AMRDecoder_setStreamPlayerData(&(h->wav))) {
+                return JAVACALL_FAIL;
+            }
 
             switch( h->wav.channels )
             {
