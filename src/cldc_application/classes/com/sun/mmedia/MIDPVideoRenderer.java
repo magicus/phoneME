@@ -50,6 +50,8 @@ public final class MIDPVideoRenderer extends VideoRenderer
 
     /** If the application requests an Item */
     private MMItem mmItem;
+    /** LCDUI notifications registration */
+    private MMHelper mmHelper = null;
     /** If the application requests to draw in a Canvas */
     private Canvas canvas;
     /** Full screen mode flag */
@@ -90,6 +92,13 @@ public final class MIDPVideoRenderer extends VideoRenderer
     private long frameStartTime = 0;
 
     private static final String UNSUP_PARAMS = "Unsupported parameters";
+    
+    public static final String SNAPSHOT_RGB888 = "rgb888";
+    public static final String SNAPSHOT_BGR888 = "bgr888";
+    public static final String SNAPSHOT_RGB565 = "rgb565";
+    public static final String SNAPSHOT_RGB555 = "rgb555";
+    public static final String SNAPSHOT_ENCODINGS = SNAPSHOT_RGB888 + " "
+            + SNAPSHOT_BGR888 + " " + SNAPSHOT_RGB565 + " " + SNAPSHOT_RGB555;
 
     /** used to protect dx, dy, dw, dh set & read */
     private Object dispBoundsLock = new Object();
@@ -103,25 +112,12 @@ public final class MIDPVideoRenderer extends VideoRenderer
      * VideoControl implementation
      ****************************************************************/
 
-    MIDPVideoRenderer(Player p, int sourceWidth, int sourceHeight) {
-        setSourceSize(sourceWidth, sourceHeight);
+    MIDPVideoRenderer(Player p) {
         if (p instanceof BasicPlayer) {
             this.player = (BasicPlayer)p;
-            locatorString = ((GIFPlayer)player).getLocator();
+            locatorString = player.getLocator();
         } else {
             System.err.println("video renderer can't work with Players of this class: " + p.toString());
-        }
-    }
-
-    void setSourceSize(int sourceWidth, int sourceHeight) {
-        
-        videoWidth = sourceWidth;
-        videoHeight = sourceHeight;
-        
-        // Default display width and height
-        synchronized (dispBoundsLock) {
-            dw = videoWidth;
-            dh = videoHeight;
         }
     }
 
@@ -139,9 +135,9 @@ public final class MIDPVideoRenderer extends VideoRenderer
                 throw new IllegalArgumentException(
                     "container needs to be a Canvas for USE_DIRECT_VIDEO mode");
             
-            if (mmh == null) {
-                mmh = MMHelper.getMMHelper();
-                if (mmh == null)
+            if (mmHelper == null) {
+                mmHelper = MMHelper.getMMHelper();
+                if (mmHelper == null)
                     throw new IllegalArgumentException(
                             "unable to set USE_DIRECT_VIDEO mode");
             }
@@ -150,7 +146,7 @@ public final class MIDPVideoRenderer extends VideoRenderer
             fsmode = false;
             cvis = true;
             canvas = (Canvas) container;
-            mmh.registerPlayer(canvas, this);
+            mmHelper.registerPlayer(canvas, this);
             setVisible(false); // By default video is not shown in USE_DIRECT_VIDEO mode
             return null;
             
@@ -221,7 +217,7 @@ public final class MIDPVideoRenderer extends VideoRenderer
         if (canvas != null) // USE_DIRECT_VIDEO
             canvas.repaint();
         else if (mmItem != null) // USE_GUI_PRIMITIVE
-            mmItem.forcePaint(null);
+            mmItem.refresh(false);
     }
 
     public void setDisplaySize(int width, int height)
@@ -242,9 +238,10 @@ public final class MIDPVideoRenderer extends VideoRenderer
                 dw = width;
                 dh = height;
             }
+            scaleToDest();
             if (pvis)
                 if (mmItem != null)
-                    mmItem.forcePaint(null);
+                    mmItem.refresh(true);
                 else if (cvis)                   
                     canvas.repaint();
         }
@@ -292,6 +289,7 @@ public final class MIDPVideoRenderer extends VideoRenderer
                         dx = (scrw - dw) / 2;
                     }
                 }
+                scaleToDest();
                 if (cvis)
                     canvas.repaint();
 
@@ -302,6 +300,7 @@ public final class MIDPVideoRenderer extends VideoRenderer
                     dw = tmpdw;
                     dh = tmpdh;
                 }
+                scaleToDest();
                 if (mode == USE_DIRECT_VIDEO) {
                     canvas.setFullScreenMode(false);
                     if (pvis && cvis)
@@ -310,7 +309,7 @@ public final class MIDPVideoRenderer extends VideoRenderer
                     mmItem.toNormal();
                     canvas = null;
                     if (pvis)
-                        mmItem.forcePaint(null);
+                        mmItem.refresh(false);
                 }
             }
             player.sendEvent(PlayerListener.SIZE_CHANGED, this);
@@ -337,11 +336,70 @@ public final class MIDPVideoRenderer extends VideoRenderer
 
     public byte[] getSnapshot(String imageType)
         throws MediaException, SecurityException {
-		checkPermission();
-        throw new MediaException("Not supported");
+        checkState();
+	checkPermission();
+        /* REVISIT: Not currently supported.
+         * Need to update  video.snapshot.encodings property accordingly
+         *
+        int format = 0, pixelsize = 0;
+        if (imageType == null || imageType.equalsIgnoreCase(SNAPSHOT_RGB888)) {
+            format = 1;
+            pixelsize = 3;
+        } else if (imageType.equalsIgnoreCase(SNAPSHOT_BGR888)) {
+            format = 2;
+            pixelsize = 3;
+        } else if (imageType.equalsIgnoreCase(SNAPSHOT_RGB565)) {
+            format = 3;
+            pixelsize = 2;
+        } else if (imageType.equalsIgnoreCase(SNAPSHOT_RGB555)) {
+            format = 4;
+            pixelsize = 2;
+        } else */
+            throw new MediaException("Image format " + imageType + " not supported");
+        /*
+        if (rgbData == null)
+            throw new IllegalStateException("No image available");
+        
+        byte [] arr = new byte[pixelsize * rgbData.length];
+        int idx = 0;
+        switch (format) {
+            case 1: // RGB888
+                for (int i = 0; i < rgbData.length; i++) {
+                    arr[idx++] = (byte)((rgbData[i] >> 16) & 0xFF);
+                    arr[idx++] = (byte)((rgbData[i] >> 8) & 0xFF);
+                    arr[idx++] = (byte)(rgbData[i] & 0xFF);
+                }
+                break;
+            case 2: // BGR888
+                for (int i = 0; i < rgbData.length; i++) {
+                    arr[idx++] = (byte)((rgbData[i] >> 16) & 0xFF);
+                    arr[idx++] = (byte)((rgbData[i] >> 8) & 0xFF);
+                    arr[idx++] = (byte)(rgbData[i] & 0xFF);
+                }
+                break;
+            case 3: // RGB565
+                for (int i = 0; i < rgbData.length; i++) {
+                    int r = (rgbData[i] >> 19) & 0x1F;
+                    int g = (rgbData[i] >> 10) & 0x3F;
+                    int b = (rgbData[i] >> 3) & 0x1F;
+                    arr[idx++] = (byte)((r << 3) | (g >> 3));
+                    arr[idx++] = (byte)((g << 5) | b);
+                }
+                break;
+            case 4: // RGB555
+                for (int i = 0; i < rgbData.length; i++) {
+                    int r = (rgbData[i] >> 19) & 0x1F;
+                    int g = (rgbData[i] >> 11) & 0x1F;
+                    int b = (rgbData[i] >> 3) & 0x1F;
+                    arr[idx++] = (byte)((r << 2) | (g >> 3));
+                    arr[idx++] = (byte)((g << 5) | b);
+                }
+                break;
+        }
+        return arr; */
     }
 
-    private int tryParam(String tok, String prop, int def) {
+    /*private int tryParam(String tok, String prop, int def) {
         if (tok.startsWith(prop)) {
             tok = tok.substring(prop.length(), tok.length());
             try {
@@ -350,113 +408,57 @@ public final class MIDPVideoRenderer extends VideoRenderer
             }
         }
         return def;
-    }
+    }*/
     
-    synchronized public void close() {
-        if (!closed && canvas != null)
-            mmh.unregisterPlayer(canvas, this);
-        rgbData = null;
-        scaledRGB = null;
-        pngData = null;
-        closed = true;
-    }
-
     /****************************************************************
      * Rendering interface
      ****************************************************************/
     
-    // Frame types
-    public static final int RGB565 = 1; // short [] 
-    public static final int RGB888 = 2; // byte []
-    public static final int XRGB888 = 3; // int []
-    public static final int XBGR888 = 4; // int []
-    public static final int RGBX888 = 5; // int []
-    public static final int YUV420_PLANAR = 6; // byte []
-    public static final int YUV422_PLANAR = 7; // byte []
-    public static final int YUYV = 8; // byte []
-    public static final int UYVY = 9; // byte []
-    public static final int YVYU = 10; // byte []
-    public static final int NATIVE_RENDER = 128; // to be ORed with above
-    public static final int USE_ALPHA = 256;
-
-    int rgbMode;
-    int pWidth;
-    int pHeight;
-    int [] rgbData;
-    int [] scaledRGB;
-    byte [] pngData;
-    int pngDataLength;
-    boolean nativeRender;
-    boolean useAlpha;
-    private Image image;
-    private MMHelper mmh = null;
+    //private int colorMode;
+    //private boolean nativeRender;
+    private boolean useAlpha;
+    private int [] rgbData;
+    private int [] scaledData;
+    private boolean scaled;
+    private volatile boolean painting; // to prevent deadlocks
+    //private Image image;
 
     public Control getVideoControl() {
-        return (VideoControl)this;
+        return this;
     }
     
     public void initRendering(int mode, int width, int height) {
-        rgbMode = mode & 0x7F; // mask out NATIVE_RENDER
-        nativeRender = (mode & NATIVE_RENDER) > 0;
+        //colorMode = mode & 0x7F; // mask out NATIVE_RENDER
+        //nativeRender = (mode & NATIVE_RENDER) > 0;
         useAlpha = (mode & USE_ALPHA) > 0;
-        pWidth = width;
-        pHeight = height;
-    }
+        if (width < 1 || height < 1)
+            throw new IllegalArgumentException("Positive width and height expected");
+        
+        if ((mode & ~(USE_ALPHA | NATIVE_RENDER)) != XRGB888)
+            throw new IllegalArgumentException("Only XRGBA888 mode supported");
+        
+        videoWidth = width;
+        videoHeight = height;
 
-    void setMode(int mode) {
-        rgbMode = mode & 0x7F;
-        nativeRender = (mode >= 128);
-    }
-
-    int getPreferredRGBMode() {
-        return RGB888;
+        // Default display width and height
+        synchronized (dispBoundsLock) {
+            dw = videoWidth;
+            dh = videoHeight;
+        }
+        
+        rgbData = null;
+        scaledData = null;
+        scaled = false;
+        painting = false;
+        //image = null;
     }
 
     /**
      * Public render method
      */
-    public void render(int[] data) {
-        render((Object)data);
-    }
-
-    /**
-     * Renders the data to the screen at the component's location
-     * and size, if component is visible.
-     * Returns true if displayed, false if not.
-     */
-    synchronized boolean render(Object data) {
-        if (data == null)
-            return false;
-        if (data instanceof int[])
-            update((int[]) data);
-        else
-            return false;
-        
-        return true;
-    }
-
-    synchronized boolean renderImage(byte [] imageData, int imageLength) {
-        // Keep these values, in case snapshot is requested
-        pngData = imageData;
-        pngDataLength = imageLength;
-
-        if (!pvis)
-            return false;
-
-        if (canvas != null) {
-            if (cvis)
-                canvas.repaint(dx, dy, dw, dh);
-        } else if (mmItem != null) {
-            mmItem.renderImage(imageData, imageLength);
-        }
-        return true;
-    }
-
-    private void update(int [] frame) {
-        if (rgbMode != XBGR888)
-            return;
-
-        rgbData = frame;
+    public void render(int[] colorData) {
+        rgbData = colorData;
+        scaleToDest();
 
         if (!pvis)
             return;
@@ -466,33 +468,60 @@ public final class MIDPVideoRenderer extends VideoRenderer
                 canvas.repaint(dx, dy, dw, dh);
             }
         } else if (mmItem != null) {
-            mmItem.forcePaint(frame);
+            mmItem.refresh(false);
         }
+    }
+    
+    /**
+     * Public render method
+     */
+    public void render(byte[] colorData) {
+        throw new IllegalStateException("Only 32 bit pixel format supported");
+    }
+    
+    /**
+     * Public render method
+     */
+    public void render(short[] colorData) {
+        throw new IllegalStateException("Only 32 bit pixel format supported");
+    }
+
+    public void close() {
+        if (!closed && canvas != null)
+            mmHelper.unregisterPlayer(canvas, this);
+        if (rgbData != null)
+            synchronized (rgbData) {
+                rgbData = null;
+                scaledData = null;
+            }
+        //image = null;
+        closed = true;
     }
 
     /**
      * Scales an input rgb image to the destination size.
      */
-    private int [] scaleToDest(int [] source) {
+    private void scaleToDest() {
         int ldw = 0;
         int ldh = 0;
         synchronized (dispBoundsLock) {
             ldw = dw;
             ldh = dh;
         }
-        synchronized (this) { // To avoid interference with close()
-            if (scaledRGB == null || scaledRGB.length < ldw * ldh)
-                scaledRGB = new int[ldw * ldh];
-            // Scale using nearest neighbor
-            int dp = 0;
-            for (int y = 0; y < ldh; y++) {
-                for (int x = 0; x < ldw; x++) {
-                    scaledRGB[dp++] = source[((y * videoHeight) / ldh) * videoWidth +
-                                            ((x * videoWidth) / ldw)];
+        if (rgbData != null)
+            synchronized (rgbData) { // To avoid interference with close()
+                scaled = ldw != videoWidth || ldh != videoHeight;
+                if (scaled) {
+                    if (scaledData == null || scaledData.length < ldw * ldh)
+                        scaledData = new int[ldw * ldh];
+                    // Scale using nearest neighbor
+                    int dp = 0;
+                    for (int y = 0; y < ldh; y++)
+                        for (int x = 0; x < ldw; x++)
+                            scaledData[dp++] = rgbData[((y * videoHeight) / ldh)
+                                        * videoWidth + ((x * videoWidth) / ldw)];
                 }
             }
-            return scaledRGB;
-        }
     }
 
     /**
@@ -500,22 +529,28 @@ public final class MIDPVideoRenderer extends VideoRenderer
      * pixels from the image and then uses the other scaleToDist()
      * to do the scaling.
      */
-    private int [] scaleToDest(Image img) {
+    /*private void scaleToDest(Image img) {
         if (rgbData == null)
             rgbData = new int[videoWidth * videoHeight];
         int width = img.getWidth();
         int height = img.getHeight();
+        // REVISIT: width and height need to be stored...
         img.getRGB(rgbData, 0, videoWidth, 0, 0, width, height);
-        return scaleToDest(rgbData);
-    }
+        scaleToDest();
+    }*/
 
+    /****************************************************************
+     * MIDPVideoPainter interface
+     ****************************************************************/
     /**
      * Paint video into canvas - in USE_DIRECT_VIDEO mode
      */
     public void paintVideo(Graphics g) {
         // Don't paint if Canvas visible flag is false
-        if (!pvis || !cvis)
+        if (!pvis || !cvis || painting)
             return;
+        
+        painting = true;
         
         // Save the clip region
         int cx = g.getClipX();
@@ -525,36 +560,19 @@ public final class MIDPVideoRenderer extends VideoRenderer
         // Change the clip to clip the video area
         g.clipRect(dx, dy, dw, dh);
         
-        // Check if its within our bounds
+        // Check if its within the bounds
         if (g.getClipWidth() > 0 && g.getClipHeight() > 0 && pvis) {
             int w = dw, h = dh;
-            if (w > videoWidth) w = videoWidth;
-            if (h > videoHeight) h = videoHeight;
+            if (w > videoWidth)
+                w = videoWidth;
+            if (h > videoHeight)
+                h = videoHeight;
             try {
-                synchronized (this) {
-                    if (pngData != null) {
-                        if (image != null) {
-
-                        }
-                        image = Image.createImage(pngData, 0, pngDataLength);
-                        // We're rendering an image
-                        if (dw != videoWidth || dh != videoHeight) {
-                            // Scale first and display
-                            int [] scaledRGB = scaleToDest(image);
-                            g.drawRGB(scaledRGB, 0, dw, dx, dy, dw, dh, useAlpha);
+                if (rgbData != null) {
+                    synchronized (rgbData) {
+                        if (scaled) {
+                            g.drawRGB(scaledData, 0, dw, dx, dy, dw, dh, useAlpha);
                         } else {
-                            // No scaling
-                            g.drawImage(image, dx, dy,
-                                        Graphics.LEFT | Graphics.TOP);
-                        }
-                    } else if (rgbData != null) {
-                        // We're rendering an RGB array
-                        if (dw != videoWidth || dh != videoHeight) {
-                            // Scale first and display
-                            int [] scaledRGB = scaleToDest(rgbData);
-                            g.drawRGB(scaledRGB, 0, dw, dx, dy, dw, dh, useAlpha);
-                        } else {
-                            // No scaling
                             g.drawRGB(rgbData, 0, videoWidth, dx, dy, w, h, useAlpha);
                         }
                     }
@@ -562,9 +580,11 @@ public final class MIDPVideoRenderer extends VideoRenderer
             } finally {
                 // Revert the clip region
                 g.setClip(cx, cy, cw, ch);
+                painting = false;
             }
         } else {
             g.setClip(cx, cy, cw, ch);
+            painting = false;
         }
         if (TRACE_FRAMERATE) {
             if (frameStartTime == 0) {
@@ -573,7 +593,7 @@ public final class MIDPVideoRenderer extends VideoRenderer
                 frameCount++;
                 if ((frameCount % 30) == 0) {
                     int frameRate = (int) ( (frameCount * 1000) / (System.currentTimeMillis() - frameStartTime + 1));
-                    //System.err.println("Frame Rate = " + frameRate);
+                    System.err.println("Frame Rate = " + frameRate);
                 }
             }
         }
@@ -601,59 +621,35 @@ public final class MIDPVideoRenderer extends VideoRenderer
      ****************************************************************/
     
     final class MMItem extends MMCustomItem {
-
-        int ody, odh, odw;
-        int [] frame;
-        Image image;
-        Object imageLock = new Object();
         
         public MMItem() {
             super("");
         }
 
-        void forcePaint(int [] frame) {
-            if (frame != null)
-                this.frame = frame;
-            else
+        public void refresh(boolean resize) {
+            if (resize) {
                 invalidate();
-            repaint();
-        }
-        
-        void renderImage(byte [] imageData, int imageLength) {
-            synchronized (imageLock) {
-                image = Image.createImage(imageData, 0, imageLength);
-            }
-            repaint();
+                repaint();
+            } else
+                repaint(dx, dy, dw, dh);
         }
 
         protected void paint(Graphics g, int w, int h) {
             // Don't paint if VideoControl visible flag is false
-            if (!pvis)
+            if (!pvis || painting)
                 return;
 
-            if (frame != null) {
-                if (dw != videoWidth || dh != videoHeight) {
-                    // Scale first
-                    int [] scaledRGB = scaleToDest(frame);
-                    g.drawRGB(scaledRGB, 0, dw, 0, 0, dw, dh, useAlpha);
-                } else {
-                    // No scaling
-                    g.drawRGB(frame, 0, videoWidth, 0, 0, videoWidth, videoHeight, useAlpha);
-                }
-            } else {
-                synchronized (imageLock) {
-                    if (image != null) {
-                        if (dw != videoWidth || dh != videoHeight) {
-                            // Scale first
-                            int [] scaledRGB = scaleToDest(image);
-                            g.drawRGB(scaledRGB, 0, dw, 0, 0, dw, dh, useAlpha);
-                        } else {
-                            // No scaling
-                            g.drawImage(image, 0, 0, Graphics.LEFT | Graphics.TOP);
-                        }
+            painting = true;
+            if (rgbData != null) {
+                synchronized (rgbData) {
+                    if (scaled) {
+                        g.drawRGB(scaledData, 0, dw, 0, 0, dw, dh, useAlpha);
+                    } else {
+                        g.drawRGB(rgbData, 0, videoWidth, 0, 0, videoWidth, videoHeight, useAlpha);
                     }
                 }
             }
+            painting = false;
         }
 
         protected int getMinContentWidth() {

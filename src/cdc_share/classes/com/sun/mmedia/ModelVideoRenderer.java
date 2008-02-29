@@ -38,9 +38,7 @@ public class ModelVideoRenderer{
     {
     }
     
-    public static VideoRenderer getVideoRenderer(BasicPlayer player, 
-                                          int sourceWidth, 
-                                          int sourceHeight) {
+    public static VideoRenderer getVideoRenderer(BasicPlayer player) {
         int appModel = AppModel.getAppModel();
         String className;
         VideoRenderer ret = null;
@@ -55,14 +53,12 @@ public class ModelVideoRenderer{
         }
         try {
             Class clazz = Class.forName(className);
-            Integer w = new Integer(sourceWidth);            
-            Integer h = new Integer(sourceHeight);            
             /*
-            Constructor constructor = clazz.getConstructor(new Class[] {Player.class, int.class, int.class} );
-            ret = (VideoRenderer)constructor.newInstance( new Object[] {player, w, h});
+            Constructor constructor = clazz.getConstructor(new Class[] {Player.class} );
+            ret = (VideoRenderer)constructor.newInstance( new Object[] {player});
              */
             Constructor constructor[] = clazz.getConstructors();
-            ret = (VideoRenderer)constructor[0].newInstance( new Object[] {player, w, h});
+            ret = (VideoRenderer)constructor[0].newInstance(new Object[] {player});
         } catch ( Exception ex ) {
             ex.printStackTrace();
             return null;

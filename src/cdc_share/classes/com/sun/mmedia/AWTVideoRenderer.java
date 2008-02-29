@@ -76,7 +76,7 @@ public class AWTVideoRenderer extends VideoRenderer
     /**
      *Constructor for the VideoRenderer object
      */
-    public AWTVideoRenderer(BasicPlayer player, int sourceWidth, int sourceHeight) { 
+    public AWTVideoRenderer(BasicPlayer player) { 
         locatorString = ((GIFPlayer)player).getLocator();
     }
 
@@ -129,6 +129,19 @@ public class AWTVideoRenderer extends VideoRenderer
 
     }
 
+    /**
+     * Public render method, not supported
+     */
+    public void render(byte[] colorData) {
+        throw new IllegalStateException("Only 32 bit pixel format supported");
+    }
+    
+    /**
+     * Public render method, not supported
+     */
+    public void render(short[] colorData) {
+        throw new IllegalStateException("Only 32 bit pixel format supported");
+    }
 
     /**
      *  Gets the snapshot attribute of the VideoRenderer object

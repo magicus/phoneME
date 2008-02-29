@@ -375,14 +375,16 @@ public class PlayerImpl implements Player {
 
         BasicPlayer p = null;
 
-        if (debug) System.out.println("getPlayerFromType " + className);
+        if (debug)
+            System.out.println("getPlayerFromType " + className);
 
         try {
             // ... try and instantiate the handler ...
             Class handlerClass = Class.forName(className);
             p = (BasicPlayer) handlerClass.newInstance();
         } catch (Exception e) {
-            if(debug) System.out.println("Class not found " + className);
+            if (debug)
+                System.out.println("Class not found " + className);
             throw new MediaException(PL_ERR_SH + e.getMessage());
         }
         return p;

@@ -326,13 +326,11 @@ public class DefaultConfiguration extends Configuration {
      *
      * @return The video renderer
      */
-    public VideoRenderer getVideoRenderer(BasicPlayer player, 
-                                          int sourceWidth, 
-                                          int sourceHeight) {
+    public VideoRenderer getVideoRenderer(BasicPlayer player) {
     // #ifdef ENABLE_INDIRECT_VIDEO [
         // workaround for demo only
-        return ModelVideoRenderer.getVideoRenderer(player, sourceWidth, sourceHeight);
-        //return new MIDPVideoRenderer(player, sourceWidth, sourceWidth);
+        return ModelVideoRenderer.getVideoRenderer(player);
+        //return new MIDPVideoRenderer(player);
     // #else ][
         return null;
     // #endif ]
