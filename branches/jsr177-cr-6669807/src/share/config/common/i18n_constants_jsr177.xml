@@ -1,0 +1,164 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE configuration SYSTEM "../common/configuration.dtd">
+<!--
+
+    Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+    DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+    
+    This program is free software; you can redistribute it and/or
+    modify it under the terms of the GNU General Public License version
+    2 only, as published by the Free Software Foundation.
+    
+    This program is distributed in the hope that it will be useful, but
+    WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+    General Public License version 2 for more details (a copy is
+    included at /legal/license.txt).
+    
+    You should have received a copy of the GNU General Public License
+    version 2 along with this work; if not, write to the Free Software
+    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+    02110-1301 USA
+    
+    Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+    Clara, CA 95054 or visit www.sun.com if you need additional
+    information or have any questions.
+    
+-->
+<configuration>
+<constants>
+<!-- i18n Resource constants -->
+<constant_class Package="com.sun.midp.i18n" Name="ResourceConstants" Scope="public"
+    AutoValue="true" JavaOnly="true" KeysValuesProvider="true" >
+
+     <constant Type="int"
+        Name="JSR177_WIM_NOT_FOUND"
+        Comment="SATSA: com.sun.satsa.pki.PKIManager"/>
+            
+    <constant Type="int"
+        Name="JSR177_CONFIRM_SIGNATURE"
+        Comment="SATSA: com.sun.satsa.pki.PKIManager"/>
+            
+    <constant Type="int"
+        Name="JSR177_STRING_TO_SIGN"
+        Comment="SATSA: com.sun.satsa.pki.PKIManager"/>
+            
+    <constant Type="int"
+        Name="JSR177_WIM_PIN_BLOCKED"
+        Comment="SATSA: com.sun.satsa.pki.WIMApplication"/>
+            
+    <constant Type="int"
+        Name="JSR177_WIM_PIN_NOT_VERIFIED"
+        Comment="SATSA: com.sun.satsa.pki.WIMApplication"/>
+            
+    <constant Type="int"
+        Name="JSR177_CERTIFICATE_USED"
+        Comment="SATSA: com.sun.satsa.pki.WIMApplication"/>
+            
+    <constant Type="int"
+        Name="JSR177_SELECT_CERTIFICATE"
+        Comment="SATSA: com.sun.satsa.pki.WIMApplication"/>
+            
+    <constant Type="int"
+        Name="JSR177_CERTIFICATES_AVAILABLE"
+        Comment="SATSA: com.sun.satsa.pki.WIMApplication"/>
+            
+    <constant Type="int"
+        Name="JSR177_CERTIFICATE_GENERATED"
+        Comment="SATSA: com.sun.satsa.pki.WIMApplication"/>
+            
+    <constant Type="int"
+        Name="JSR177_CERTIFICATE_STORED"
+        Comment="SATSA: com.sun.satsa.pki.WIMApplication"/>
+            
+    <constant Type="int"
+        Name="JSR177_CERTIFICATE_DELETED"
+        Comment="SATSA: com.sun.satsa.pki.WIMApplication"/>
+
+    <constant Type="int"
+        Name="JSR177_CERTIFICATE_SUBJECT"
+        Comment="SATSA: com.sun.satsa.pki.Certificate"/>
+
+    <constant Type="int"
+        Name="JSR177_CERTIFICATE_KEYUSAGE"
+        Comment="SATSA: com.sun.satsa.pki.Certificate"/>
+
+    <constant Type="int"
+        Name="JSR177_CERTIFICATE_KEYUSAGE_AUTH"
+        Comment="SATSA: com.sun.satsa.pki.Certificate"/>
+
+    <constant Type="int"
+        Name="JSR177_CERTIFICATE_KEYUSAGE_NR"
+        Comment="SATSA: com.sun.satsa.pki.Certificate"/>
+
+    <constant Type="int"
+        Name="JSR177_CERTIFICATE_ALGORITHM"
+        Comment="SATSA: com.sun.satsa.pki.Certificate"/>
+
+    <constant Type="int"
+        Name="JSR177_CERTIFICATE_KEYLENGTH"
+        Comment="SATSA: com.sun.satsa.pki.Certificate"/>
+
+    <constant Type="int"
+        Name="JSR177_CERTIFICATE_LABEL"
+        Comment="SATSA: com.sun.satsa.pki.Certificate"/>
+
+    <constant Type="int"
+        Name="JSR177_CERTIFICATE_ISSUER"
+        Comment="SATSA: com.sun.satsa.pki.Certificate"/>
+
+    <constant Type="int"
+        Name="JSR177_CERTIFICATE_SN"
+        Comment="SATSA: com.sun.satsa.pki.Certificate"/>
+
+    <constant Type="int"
+        Name="JSR177_CERTIFICATE_VALIDFROM"
+        Comment="SATSA: com.sun.satsa.pki.Certificate"/>
+
+    <constant Type="int"
+        Name="JSR177_CERTIFICATE_VALIDTILL"
+        Comment="SATSA: com.sun.satsa.pki.Certificate"/>
+
+    <constant Type="int"
+        Name="JSR177_PINDIALOG_TITLE_NEWPIN"
+        Comment="SATSA: com.sun.satsa.pki.MessageDialog"/>
+
+    <constant Type="int"
+        Name="JSR177_PINDIALOG_LABEL"
+        Comment="SATSA: com.sun.satsa.pki.MessageDialog"/>
+
+    <constant Type="int"
+        Name="JSR177_PINDIALOG_ENTERPIN"
+        Comment="SATSA: com.sun.satsa.pki.MessageDialog"/>
+
+    <constant Type="int"
+        Name="JSR177_PINDIALOG_CONFIRMPIN"
+        Comment="SATSA: com.sun.satsa.pki.MessageDialog"/>
+
+    <constant Type="int"
+        Name="JSR177_PINDIALOG_TITLE_VERIFY"
+        Comment="SATSA: com.sun.satsa.acl.PINDialog"/>
+
+    <constant Type="int"
+        Name="JSR177_PINDIALOG_TITLE_CHANGE"
+        Comment="SATSA: com.sun.satsa.acl.PINDialog"/>
+
+    <constant Type="int"
+        Name="JSR177_PINDIALOG_TITLE_DISABLE"
+        Comment="SATSA: com.sun.satsa.acl.PINDialog"/>
+
+    <constant Type="int"
+        Name="JSR177_PINDIALOG_TITLE_ENABLE"
+        Comment="SATSA: com.sun.satsa.acl.PINDialog"/>
+
+    <constant Type="int"
+        Name="JSR177_PINDIALOG_TITLE_UNBLOCK"
+        Comment="SATSA: com.sun.satsa.acl.PINDialog"/>
+
+    <constant Type="int"
+        Name="JSR177_PINDIALOG_NEWVALUE"
+        Comment="SATSA: com.sun.satsa.acl.PINDialog"/>
+
+</constant_class>
+</constants>
+</configuration>
