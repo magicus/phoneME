@@ -221,13 +221,26 @@ public class PlayerImpl implements Player {
         if (type == null && stream != null && stream.getContentDescriptor() != null) {
             type = stream.getContentDescriptor().getContentType();
         }
-        /* realize native player */
+        /* try to realize native player */
         if (!nRealize(hNative, type)) {
             throw new MediaException("Can not realize");
         }
 
         if (!handledByDevice && !handledByJava) {
             mediaFormat = nGetMediaFormat(hNative);
+            if (mediaFormat.equals(BasicPlayer.MEDIA_FORMAT_UNSUPPORTED)) {
+                String format;
+                /* verify if handled by Java */
+                if (type != null &&
+                        (format = Configuration.getConfiguration().mime2Format(type)) != null && 
+                        !format.equals(BasicPlayer.MEDIA_FORMAT_UNKNOWN) && 
+                        !format.equals(BasicPlayer.MEDIA_FORMAT_UNSUPPORTED)) {
+                    mediaFormat = format;
+                    handledByJava = true;
+                } else {
+                    throw new MediaException("Unsupported media format");
+                }
+            }
             /* predownload media data to recognize media format and/or 
                specific media parameters (e.g. duration) */
             if (!mediaFormat.equals(BasicPlayer.MEDIA_FORMAT_TONE)) {

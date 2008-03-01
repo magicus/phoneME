@@ -313,6 +313,28 @@ public abstract class Configuration {
     }
 
     /**
+     * Convert from the content type to its corresponding mediaFormat
+     * format based on the MIME types for Java Players.
+     *
+     * @param  type  MIME type
+     * @return       media Format for this name or null, if couldn't be determined
+     */
+    public String mime2Format(String type) {
+        String ext = null;
+        for (java.util.Enumeration e = mimeTypes.keys(); e.hasMoreElements();) {
+            String k = (String)e.nextElement();
+            if (mimeTypes.get(k).equals(type)) {
+                ext = k;
+                break;
+            }
+        }
+        if (ext != null) {
+            return (String)mFormats.get(ext);
+        }
+        return null;
+    }
+
+    /**
      *  Gets the handler attribute of the Configuration object
      *
      * @param  type  The content type
