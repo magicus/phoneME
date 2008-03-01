@@ -158,6 +158,7 @@ void JVM::stop(int code) {
 
 void JVM::exit(int code) {
   cleanup();
+  Arguments::finalize();
   JVMSPI_Exit(code);
   ::jvm_exit(code); // just in case 'JVMSPI_Exit()' forgot to terminate
                     // the process
@@ -542,8 +543,6 @@ void JVM::cleanup() {
   Universe::apocalypse();
   _is_started = false;  
   Thread::clear_current_pending_exception();
-
-  Arguments::finalize();
 }
 
 bool JVM::check_misc_options(JVM_SINGLE_ARG_TRAPS) {

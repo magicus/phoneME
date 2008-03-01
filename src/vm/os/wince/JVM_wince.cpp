@@ -62,5 +62,7 @@ extern "C" int JVM_Start(const JvmPathChar *classpath, char *main_class,
 #endif
 
   JVM::set_arguments(classpath, main_class, argc, argv);
-  return JVM::start();
+  const int result = JVM::start();
+  Arguments::finalize();
+  return result;
 }

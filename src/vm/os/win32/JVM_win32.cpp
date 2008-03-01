@@ -150,57 +150,40 @@ int CheckException(int n_except, LPEXCEPTION_POINTERS exptr) {
   return EXCEPTION_CONTINUE_SEARCH;
 }
 
-static int executeVM() {
+static int executeVM( void ) {
 #ifndef PRODUCT
   signal(SIGBREAK, SigBreakHandler);
 #endif
+
+  if (SlaveMode) {
+    // IMPL_NOTE: ExecutionLoops not supported in SlaveMode
+    ExecutionLoops = 1;
+  }
   
   int result = 0;
-  __try {
-    result = JVM::start();
+  while( --ExecutionLoops >= 0 ) {
+    if (Verbose) {
+      tty->print_cr("\t***Starting VM***");
+    }
+    __try {
+      result = JVM::start();
+    }
+    __except (CheckException(GetExceptionCode(), GetExceptionInformation())) {
+      ;
+    }
   }
-  __except (CheckException(GetExceptionCode(), GetExceptionInformation())) {
-    ;
-  }
+  Arguments::finalize();
   return result;
 }
 
 extern "C" int JVM_Start(const JvmPathChar *classpath, char *main_class,
                          int argc, char **argv) {
-
   JVM::set_arguments(classpath, main_class, argc, argv);
-
-  if (SlaveMode) {
-    // IMPL_NOTE: ExecutionLoops not supported in SlaveMode
-    ExecutionLoops = 1;
-  }
-  int result = 0;
-  for (int i = 0; i < ExecutionLoops; i++) {
-    if (Verbose) {
-      tty->print_cr("\t***Starting VM***");
-    }
-    result = executeVM();
-  }
-
-  return result;
+  return executeVM();
 }
 
 extern "C" int JVM_Start2(const JvmPathChar *classpath, char *main_class,
                           int argc, jchar **u_argv) {
-
   JVM::set_arguments2(classpath, main_class, argc, NULL, u_argv, true);
-
-  if (SlaveMode) {
-    // IMPL_NOTE: ExecutionLoops not supported in SlaveMode
-    ExecutionLoops = 1;
-  }
-  int result = 0;
-  for (int i = 0; i < ExecutionLoops; i++) {
-    if (Verbose) {
-      tty->print_cr("\t***Starting VM***");
-    }
-    result = executeVM();
-  }
-
-  return result;
+  return executeVM();
 }
