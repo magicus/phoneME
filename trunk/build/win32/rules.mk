@@ -111,7 +111,7 @@ endif
 ifeq ($(CVM_DLL),true)
 CVM_EXE = $(CVM_BUILD_SUBDIR_NAME)/bin/cvm.exe
 $(J2ME_CLASSLIB) :: $(CVM_EXE)
-
+ 
 # Override MT_FLAGS for object file dependencies of cvm.exe
 $(CVM_EXE) : MT_FLAGS = $(MT_EXE_FLAGS)
 
@@ -120,4 +120,17 @@ $(CVM_EXE) : $(patsubst %,$(CVM_OBJDIR)/%,$(CVMEXE_OBJS))
 	$(AT)$(TARGET_LINK) $(LINKFLAGS) $(LINKEXE_FLAGS) /out:$@ \
 		$(call POSIX2HOST,$^) $(LINKEXE_LIBS) $(LINKCVMEXE_LIBS)
 	$(AT)$(LINK_MANIFEST)
+endif
+
+ifeq ($(USE_SPLASH_SCREEN),true)
+ifeq ($(WIN32_PLATFORM),wince)
+
+ifeq ($(CVM_DLL),true)
+$(CVM_EXE): $(SPLASH_RES)
+endif
+
+$(SPLASH_RES): $(SPLASH_RC)
+	@echo "rc $@"
+	$(AT)$(TARGET_RC) /fo $@ $(call POSIX2HOST,$<)
+endif
 endif

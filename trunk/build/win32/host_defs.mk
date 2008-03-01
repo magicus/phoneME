@@ -51,6 +51,7 @@ TARGET_LINK		= LINK.EXE
 TARGET_AR		= $(TARGET_LINK) -lib /nologo
 TARGET_AR_CREATE	= $(TARGET_AR) /out:$(call POSIX2HOST, $(1))
 TARGET_AR_UPDATE	= true $(TARGET_AR_CREATE)
+TARGET_RC		= RC.EXE
 
 # Override the default TARGET_CC_VERSION, since it relies on the gcc
 # -dumpversion and -dumpmachine options.

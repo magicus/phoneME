@@ -35,11 +35,13 @@ LRESULT CALLBACK    WndProc(HWND, UINT, WPARAM, LPARAM);
 
 const int splashWidth = 240, splashHeight=320;
 int splashX = 0, splashY = 0;
-HBITMAP g_hB;
+HBITMAP g_hSplashV, g_hSplashH, g_hCurrent;
 HWND g_hWnd;
 HDC g_dcBitmap = NULL;
 /* If true than call exit after destroying the splash window */
 BOOL g_bExitAfterSplash = FALSE;
+
+DWORD SPLASH_FS_MODE = SHFS_HIDESIPBUTTON | SHFS_HIDESTARTICON | SHFS_HIDETASKBAR;
 
 DWORD WINAPI MessageLoop( LPVOID lpParam )
 {
@@ -97,8 +99,6 @@ BOOL myInit()
     HWND hDesktop;
     RECT rect;
     HWND hWnd;
-    int width;
-    int height;
     HINSTANCE hInst; /* current instance */
 
     /* Store instance handle in our global variable */
@@ -108,24 +108,22 @@ BOOL myInit()
         return FALSE;
     }
 
-    hDesktop = GetDesktopWindow();
-    GetClientRect(hDesktop, &rect);
-    width = rect.right-rect.left;
-    height = rect.bottom-rect.top;
-    splashX = width/2 - splashWidth/2;
-    splashY = height/2 - splashHeight/2;
-
     hWnd = CreateWindow(_T("JavaSplash"), _T("Java"), WS_VISIBLE,
         CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
         NULL, NULL, hInst, NULL);
     g_hWnd = hWnd;
-    g_hB = LoadBitmap(hInst, (LPCTSTR)IDB_SPLASH);
-    if (g_hB == NULL) {
+    g_hSplashV = LoadImage(hInst, _T("IDB_SPLASH_V"), IMAGE_BITMAP, 0, 0, 0);
+    g_hSplashH = LoadImage(hInst, _T("IDB_SPLASH_H"), IMAGE_BITMAP, 0, 0, 0);
+    g_hCurrent = g_hSplashV;
+    if (g_hSplashV == NULL || g_hSplashH == NULL) {
         fprintf(stderr,"LoadBitmap failed\n");
         return FALSE;
     }
 
-    SHFullScreen(hWnd, SHFS_HIDETASKBAR | SHFS_HIDESTARTICON | SHFS_HIDESIPBUTTON);
+    SHFullScreen(hWnd, SPLASH_FS_MODE);
+    SetRect(&rect, 0, 0, GetSystemMetrics(SM_CXSCREEN), GetSystemMetrics(SM_CYSCREEN));
+    MoveWindow(hWnd, rect.left, rect.top, rect.right-rect.left, rect.bottom-rect.top, FALSE);
+
     ShowWindow(hWnd, SW_SHOW);
     UpdateWindow(hWnd);
 
@@ -136,15 +134,27 @@ void OnPaint(HWND hWnd, HDC hdc)
 {
     RECT rect, rect1;
     int width, height;
-    SystemParametersInfo(SPI_GETWORKAREA, 0, &rect, FALSE);
+    SHFullScreen(hWnd, SPLASH_FS_MODE);
+    SetRect(&rect, 0, 0, GetSystemMetrics(SM_CXSCREEN), GetSystemMetrics(SM_CYSCREEN));
     width = rect.right-rect.left;
     height = rect.bottom-rect.top;
+    SetRect(&rect1, 0, 0, width, height);
+    FillRect(hdc, &rect1, GetSysColorBrush(COLOR_DESKTOP));
     if (!g_dcBitmap) {
         g_dcBitmap = CreateCompatibleDC(hdc);
-        SelectObject(g_dcBitmap, (HGDIOBJ)g_hB);
     }
-    BitBlt(hdc, splashX, splashY, splashWidth, splashHeight, g_dcBitmap,
-        0, 0, SRCCOPY);
+    SelectObject(g_dcBitmap, (HGDIOBJ)g_hCurrent);
+    if (g_hCurrent == g_hSplashV) {
+        splashX = (width - splashWidth)/2;
+        splashY = (height - splashHeight)/2;
+        BitBlt(hdc, splashX, splashY, splashWidth, splashHeight, g_dcBitmap,
+            0, 0, SRCCOPY);
+    } else {
+        splashX = (width - splashHeight)/2;
+        splashY = (height - splashWidth)/2;
+        BitBlt(hdc, splashX, splashY, splashHeight, splashWidth, g_dcBitmap,
+            0, 0, SRCCOPY);
+    }
 }
 
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
@@ -158,12 +168,20 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         PostQuitMessage(0);
         break;
     case WM_SETFOCUS:
-        SHFullScreen(hWnd, SHFS_HIDETASKBAR | SHFS_HIDESTARTICON | SHFS_HIDESIPBUTTON);
+        SHFullScreen(hWnd, SPLASH_FS_MODE);
         break;
     case WM_PAINT:
         hdc = BeginPaint(hWnd, &ps);
         OnPaint(hWnd, hdc);
         EndPaint(hWnd, &ps);
+        break;
+    case WM_SIZE:
+        /* LOWORD(lParam) - width, HIWORD(lParam) - height */
+        if ( LOWORD(lParam) > HIWORD(lParam) ) {
+            g_hCurrent = g_hSplashH;
+        } else {
+            g_hCurrent = g_hSplashV;
+        }
         break;
     case WM_DESTROY:
         PostQuitMessage(0);
