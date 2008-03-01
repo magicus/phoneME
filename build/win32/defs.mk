@@ -135,10 +135,19 @@ endif
 # support for putting up a splash screen
 ifeq ($(USE_SPLASH_SCREEN),true)
 ifeq ($(WIN32_PLATFORM),wince)
+SPLASH_RES = $(CVM_OBJDIR)/splash.res
+
+ifeq ($(SPLASH_RC),)
+$(error SPLASH_RC must point to a .rc file if USE_SPLASH_SCREEN is true)
+endif
+
+ifeq ($(CVM_DLL),false)
+CVM_RESOURCES += $(SPLASH_RES)
+endif
+
 CVMEXE_OBJS += splash.o
 CVM_DEFINES += -DENABLE_SPLASH_SCREEN
-RESOURCES = $(call POSIX2HOST,$(CVM_TOP)/src/win32/bin/splash.res)
-LINKCVMEXE_LIBS += aygshell.lib $(RESOURCES)
+LINKCVMEXE_LIBS += aygshell.lib
 endif
 endif
 
