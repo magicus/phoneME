@@ -206,41 +206,12 @@ Java_java_io_Win32FileSystem_getLastModifiedTime(JNIEnv *env, jobject this,
 {
     jlong rv = 0;
     WITH_UNICODE_PATH(env, file, ids_path, path) {
-        LARGE_INTEGER modTime;
-        FILETIME t;
-        HANDLE h = CreateFileW(
-            path,
-            /* Device query access */
-            0,
-            /* Share it */
-            FILE_SHARE_DELETE | FILE_SHARE_READ | FILE_SHARE_WRITE,
-            /* No security attributes */
-            NULL,
-            /* Open existing or fail */
-            OPEN_EXISTING,
-            /* Attributes ignored */
-            0,
-            /* No template file */
-            NULL);
+        WIN32_FILE_ATTRIBUTE_DATA fileAttrData;
 
-        if (h == INVALID_HANDLE_VALUE) {
-DWORD err = GetLastError();
-            /* This works better with older versions of WinCE */
-            h = CreateFileW(
-                path,
-                GENERIC_READ,
-                FILE_SHARE_READ | FILE_SHARE_WRITE,
-                NULL,
-                OPEN_EXISTING,
-                0,
-                NULL);
-        }
-
-        if (h != INVALID_HANDLE_VALUE) {
-            GetFileTime(h, NULL, NULL, &t);
-            CloseHandle(h);
-            modTime.LowPart = (DWORD) t.dwLowDateTime;
-            modTime.HighPart = (LONG) t.dwHighDateTime;
+        if (GetFileAttributesEx(path, GetFileExInfoStandard, &fileAttrData)) {
+            ULARGE_INTEGER modTime;
+            modTime.LowPart = fileAttrData.ftLastWriteTime.dwLowDateTime;
+            modTime.HighPart = fileAttrData.ftLastWriteTime.dwHighDateTime;
             rv = modTime.QuadPart / 10000;
             rv -= 11644473600000;
         }
@@ -469,7 +440,8 @@ Java_java_io_Win32FileSystem_list(JNIEnv *env, jobject this, jobject file)
     handle = FindFirstFileW(search_path, &find_data);
     free(search_path);
     if (handle == INVALID_HANDLE_VALUE) {
-        if (GetLastError() != ERROR_FILE_NOT_FOUND) {
+        DWORD err = GetLastError();
+        if (err != ERROR_FILE_NOT_FOUND && err != ERROR_NO_MORE_FILES) {
             // error
             return NULL;
         } else {
