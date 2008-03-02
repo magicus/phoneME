@@ -33,11 +33,11 @@
 ############################################################
 
 # Local module directory
-PUTPIXEL_PORT_STUBS_DIR = $(SUBSYSTEM_LOWUI_DIR)/putpixel_port/stubs
+PUTPIXEL_PORT_JAVACALL_DIR = $(SUBSYSTEM_LOWUI_DIR)/putpixel_port/javacall
 
 # vpath for sub-system
 #
-vpath % $(PUTPIXEL_PORT_STUBS_DIR)/native
+vpath % $(PUTPIXEL_PORT_JAVACALL_DIR)/native
 
 
 # Native files for the sub-system
