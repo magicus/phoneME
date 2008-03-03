@@ -26,9 +26,6 @@
 
 package com.sun.midp.installer;
 
-import java.io.*;
-import javax.microedition.io.Connector;
-
 import com.sun.j2me.security.AccessController;
 
 import com.sun.midp.security.SecurityToken;
@@ -40,18 +37,10 @@ import com.sun.midp.midletsuite.MIDletInfo;
 import com.sun.midp.i18n.Resource;
 import com.sun.midp.i18n.ResourceConstants;
 
-import com.sun.midp.installer.JadProperties;
-import com.sun.midp.installer.InvalidJadException;
-
-import com.sun.midp.io.j2me.storage.RandomAccessStream;
-import com.sun.midp.io.j2me.storage.File;
-
-import com.sun.midp.jarutil.JarReader;
-
 import com.sun.midp.util.Properties;
 
 /**
- * Implements a the required MIDletSuite functionality needed by the
+ * Implements the required MIDletSuite functionality needed by the
  * system. The class is only needed for internal romized midlets.
  */
 public class InternalMIDletSuiteImpl implements MIDletSuite {
@@ -70,19 +59,8 @@ public class InternalMIDletSuiteImpl implements MIDletSuite {
     /** Suite properties for this suite. */
     private Properties properties;
 
-    /** properties taken from the JAD file */
-    private JadProperties jadProps;
-
-    /** properties taken from the JAR MANIFEST file */
-    private ManifestProperties jarProps;
-
     /** MIDlet class name */
     private String initialMIDletClassName;
-
-    /**
-     * number of midlets in this suite. For a rommized suite assume 1.
-     */
-    private int numberOfMidlets = 1;
 
     /**
      * Creates MIDletSuite for rommized MIDlet.
@@ -94,7 +72,8 @@ public class InternalMIDletSuiteImpl implements MIDletSuite {
      * @return new MIDletSuite object
      */
     public static MIDletSuite create(String theDisplayName, int theId) {
-        return new InternalMIDletSuiteImpl(theDisplayName, theId);
+        return new InternalMIDletSuiteImpl(theDisplayName, theId,
+                                           new Properties());
     }
 
     /**
@@ -102,9 +81,26 @@ public class InternalMIDletSuiteImpl implements MIDletSuite {
      *
      * @param theDisplayName display name to use in permission dialogs,
      *        and in the MIDlet proxy list
-     * @param theId unique identifier for this suite
+     * @param theId ID to separate this suite's resources from others
+     * @param theProps Properties to use for this suite
+     *
+     * @return new MIDletSuite object
      */
-    private InternalMIDletSuiteImpl(String theDisplayName, int theId) {
+    public static MIDletSuite create(String theDisplayName, int theId,
+                                     Properties theProps) {
+        return new InternalMIDletSuiteImpl(theDisplayName, theId, theProps);
+    }
+
+    /**
+     * Creates MIDletSuite for rommized or class path MIDlet.
+     *
+     * @param theDisplayName display name to use in permission dialogs,
+     *        and in the MIDlet proxy list
+     * @param theId unique identifier for this suite
+     * @param theProps Properties to use for this suite
+     */
+    private InternalMIDletSuiteImpl(String theDisplayName, int theId,
+                                    Properties theProps) {
         if (theDisplayName != null) {
             displayName = theDisplayName;
         } else {
@@ -120,7 +116,7 @@ public class InternalMIDletSuiteImpl implements MIDletSuite {
             (Permissions.forDomain(Permissions.MANUFACTURER_DOMAIN_BINDING))
                 [Permissions.CUR_LEVELS];
 
-        properties = new Properties();
+        properties = theProps;
     }
 
     /**
@@ -129,7 +125,18 @@ public class InternalMIDletSuiteImpl implements MIDletSuite {
      * @return number of MIDlet in the suite
      */
     public int getNumberOfMIDlets() {
-        return numberOfMidlets;
+        int i;
+
+        // Called once by the AMS no need to pre calc the number.
+
+        for (i = 1; getProperty("MIDlet-" + i) != null; i++);
+
+        if (i > 1 ) {
+            return i - 1;
+        } else {
+            // This is rommized MIDlet so return 1
+            return 1;
+        }
     }
 
     /**
@@ -166,17 +173,7 @@ public class InternalMIDletSuiteImpl implements MIDletSuite {
      *          the key.
      */
     public String getProperty(String key) {
-        String prop = properties.getProperty(key);
-        if (prop == null) {
-            if (jadProps != null) {
-                /* try to get the property from the JAD */
-                prop = jadProps.getProperty(key);
-            } else if (jarProps != null) {
-                /* try to get the property from the MANIFEST */
-                prop = jarProps.getProperty(key);
-            }
-        }
-        return prop;
+        return properties.getProperty(key);
     }
 
     /**
@@ -199,78 +196,6 @@ public class InternalMIDletSuiteImpl implements MIDletSuite {
         }
 
         properties.setProperty(key, value);
-
-        /* Special handling of arg0 which can be a path
-         * to the JAD file or a classpath */
-        if (key.equals("arg-0") && (value != null)) {
-            /* Check if the value ends with .jad,
-             * which means it is a path to the JAD file */
-            if (value.toLowerCase().endsWith(".jad")) {
-                try {
-                    /* Open JAD file and extract properties */
-                    jadProps = new JadProperties();
-                    DataInputStream dis = null;
-                    RandomAccessStream storage = new RandomAccessStream(token);
-                    storage.connect(value, Connector.READ);
-                    try {
-                        int size = storage.getSizeOf();
-                        byte[] buffer = new byte[size];
-                        dis = storage.openDataInputStream();
-                        try {
-                            dis.readFully(buffer);
-                            InputStream is = new ByteArrayInputStream(buffer);
-
-                            jadProps.load(is, null);
-                            numberOfMidlets = countMIDlets();
-                            buffer = null;
-                            is = null;
-                        } finally {
-                            dis.close();
-                        }
-                    } finally {
-                        storage.disconnect();
-                    }
-                } catch (IOException e){
-                    e.printStackTrace();
-                }
-            } else if (value.toLowerCase().indexOf(".jar") != -1) {
-                /* Check if the value contains .jar,
-                 * which means it is a path to the JAR file */
-                String jarPath = null;
-                String subPath;
-                int index = value.indexOf(';');
-
-                /* parse classpath for a jar file */
-                while(index != -1) {
-                    /* parse classpath token by token asuming delimited is ';' */
-                    subPath = value.substring(0, index);
-                    if (subPath.toLowerCase().indexOf(".jar") != -1) {
-                        jarPath = subPath;
-                        break;
-                    } else {
-                        // get rid of the first token
-                        value = value.substring(index+1, value.length());
-                        index = value.indexOf(';'); // look for the next token
-                    }
-                }
-                if ((jarPath == null) &&
-                    (value.toLowerCase().indexOf(".jar") != -1)) {
-                    jarPath = value;
-                }
-
-                try {
-                    byte[] manifest =
-                        JarReader.readJarEntry(jarPath, MIDletSuite.JAR_MANIFEST);
-                    jarProps = new ManifestProperties();
-                    jarProps.load(new ByteArrayInputStream(manifest));
-                    numberOfMidlets = countMIDlets();
-                } catch (IOException io) {
-                    io.printStackTrace();
-                } catch (OutOfMemoryError e) {
-                    e.printStackTrace();
-                }
-            }
-        }
     }
 
     /**
@@ -487,26 +412,6 @@ public class InternalMIDletSuiteImpl implements MIDletSuite {
      * Close the opened MIDletSuite
      */
     public void close() {
-    }
-
-    /**
-     * Counts the number of MIDlets from its properties.
-     *
-     * @return number of midlet in the suite
-     */
-    private int countMIDlets() {
-        String temp;
-        MIDletInfo midletInfo;
-        int i;
-
-        temp = getProperty("MIDlet-1");
-        if (temp == null) {
-            return 0;
-        }
-
-        for (i=2; getProperty("MIDlet-" + i) != null; i++);
-
-        return i - 1;
     }
 
     /**
