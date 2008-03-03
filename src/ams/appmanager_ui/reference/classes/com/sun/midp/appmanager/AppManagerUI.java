@@ -291,6 +291,16 @@ class AppManagerUI extends Form
                                            (ResourceConstants.AMS_CHANGE_FOLDER),
                                            Command.ITEM, 1);
 
+    /** Command object for "Yes, enable on device debug" command. */
+    private Command enableOddYesCmd = new Command(Resource.getString
+                                            (ResourceConstants.YES),
+                                            Command.OK, 1);
+
+    /** Command object for "No, don't enable on device debug" command. */
+    private Command enableOddNoCmd = new Command(Resource.getString
+                                           (ResourceConstants.NO),
+                                           Command.BACK, 1);
+
     /** Display for the Manager MIDlet. */
     ApplicationManager manager;
 
@@ -409,7 +419,8 @@ class AppManagerUI extends Form
             if (mci != null) {
                 // move it to default folder
                 try {
-                    midletSuiteStorage.moveSuiteToFolder(mci.msi.suiteId, FolderManager.getDefaultFolderId());
+                    midletSuiteStorage.moveSuiteToFolder(mci.msi.suiteId,
+                            FolderManager.getDefaultFolderId());
                     mci.msi.folderId = FolderManager.getDefaultFolderId();
                     setFolder(this.currentFolderId);
                 } catch (Throwable t) {
@@ -423,16 +434,19 @@ class AppManagerUI extends Form
                     // Find item to select
                     if (ms.suiteId == MIDletSuite.INTERNAL_SUITE_ID) {
                         for (int i = 0; i < mciVector.size(); i++) {
-                            MidletCustomItem mi = (MidletCustomItem)mciVector.elementAt(i);
-                            if ((mi.msi.suiteId == MIDletSuite.INTERNAL_SUITE_ID)
-                                && (mi.msi.midletToRun.equals(ms.midletToRun))) {
+                            MidletCustomItem mi =
+                                    (MidletCustomItem)mciVector.elementAt(i);
+                            if ((mi.msi.suiteId ==
+                                    MIDletSuite.INTERNAL_SUITE_ID) &&
+                                    mi.msi.midletToRun.equals(ms.midletToRun)) {
                                 selectItem(mi);
                                 break;
                             }
                         }
                     } else {
                         for (int i = 0; i < mciVector.size(); i++) {
-                            MidletCustomItem mi = (MidletCustomItem)mciVector.elementAt(i);
+                            MidletCustomItem mi =
+                                    (MidletCustomItem)mciVector.elementAt(i);
                             if (mi.msi.suiteId == ms.suiteId) {
                                 selectItem(mi);
                                 break;
@@ -486,8 +500,24 @@ class AppManagerUI extends Form
             return;
         }
 
-        oddEnabled = true;
-        updateContent();
+        // return if ODD is already enabled
+        if (oddEnabled) {
+            return;
+        }
+
+        // warn the user that he enables a potentially dangerous feature
+        String title = Resource.getString(
+            ResourceConstants.AMS_MGR_ENABLE_ON_DEVICE_DEBUG_TITLE, null);
+        String msg = Resource.getString(
+            ResourceConstants.AMS_MGR_ENABLE_ON_DEVICE_DEBUG, null);
+
+        Alert alert = new Alert(title, msg, null, AlertType.WARNING);
+        alert.addCommand(enableOddNoCmd);
+        alert.addCommand(enableOddYesCmd);
+        alert.setCommandListener(this);
+        alert.setTimeout(Alert.FOREVER);
+
+        display.setCurrent(alert);
     }
 
     /**
@@ -573,6 +603,12 @@ class AppManagerUI extends Form
                 return;
             }
 
+        } else if (c == enableOddYesCmd) {
+            // user has confirmed that he wants to enable on device debug
+            oddEnabled = true;
+            updateContent();
+        } else if (c == enableOddNoCmd) {
+            // user doesn't want to enable on device debug, do nothing
         } else if (c == selectFolderCmd) {
             if (foldersOn) {
                 Folder f = folderList.getSelectedFolder();
@@ -585,7 +621,8 @@ class AppManagerUI extends Form
 
                 if (mciToChangeFolder.msi.folderId != folderId) {
                     try {
-                        midletSuiteStorage.moveSuiteToFolder(mciToChangeFolder.msi.suiteId,folderId);
+                        midletSuiteStorage.moveSuiteToFolder(
+                                mciToChangeFolder.msi.suiteId, folderId);
                         mciToChangeFolder.msi.folderId = folderId;
                         if (currentFolderId != folderId) {
                             /*
@@ -595,7 +632,9 @@ class AppManagerUI extends Form
                             setFolder(currentFolderId);
                         }
                     } catch (Throwable t) {
-                        displayError.showErrorAlert(mciToChangeFolder.msi.displayName, t, null, null);
+                        displayError.showErrorAlert(
+                                mciToChangeFolder.msi.displayName,
+                                    t, null, null);
                     }
                     mciToChangeFolder = null;
                 }
@@ -698,8 +737,9 @@ class AppManagerUI extends Form
                 
                 ((MidletCustomItem)item).removeCommand(moveToInternalStorageCmd);
                 msi.storageId = Constants.INTERNAL_STORAGE_ID;
-                displaySuccessMessage(Resource.getString(ResourceConstants.APPLICATION) +
-                        Resource.getString(ResourceConstants.AMS_MGR_SUCC_SUITE_STORAGE_CHANGED));
+                displaySuccessMessage(Resource.getString(
+                    ResourceConstants.APPLICATION) + Resource.getString(
+                        ResourceConstants.AMS_MGR_SUCC_SUITE_STORAGE_CHANGED));
             } catch (Throwable t) {
                 displayError.showErrorAlert(msi.displayName, t, null, null);
             }

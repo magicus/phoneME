@@ -417,6 +417,10 @@
                 Value="Launch"/>
 <localized_string Key="AMS_MGR_RUN_THE_NEW_SUITE"
                 Value="A new midlet suite was installed. Do you want to launch it now?"/>
+<localized_string Key="AMS_MGR_ENABLE_ON_DEVICE_DEBUG_TITLE"
+                Value="Enable ODD"/>
+<localized_string Key="AMS_MGR_ENABLE_ON_DEVICE_DEBUG"
+                Value="On Device Debug is a potentially dangerous feature that may compromise the security of the system. Do you really want to enable it?"/>
 <localized_string Key="AMS_MGR_SUCC_SUITE_STORAGE_CHANGED"
                 Value=" was successfully moved to phone memory"/>
 <localized_string Key="AMS_DISC_APP_WEBSITE_INSTALL"
