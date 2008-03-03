@@ -60,6 +60,7 @@ static DWORD WINAPI InvocationRequestListenerProc( LPVOID lpParam ){
 
         do {
             ret = ReadFile( pipe, &msg, sizeof( msg ), &numberOfBytesRead, 0 );
+            Sleep( 100 );
         } while ( ! timeToQuit && ret == 0 );
 
         if ( timeToQuit )
@@ -106,11 +107,9 @@ javacall_result javacall_chapi_java_finish(
     /* OUT */ javacall_bool* should_exit)
 {
     *should_exit = (javacall_bool) 0;
-    assert( 0 );
+    assert( status == INVOCATION_STATUS_OK || status == INVOCATION_STATUS_CANCELLED );
     return JAVACALL_OK;
 }
-
-
 
 extern "C" void InitPlatform2JavaInvoker(){
     timeToQuit = 0;
