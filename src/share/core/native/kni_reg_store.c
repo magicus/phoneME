@@ -57,13 +57,7 @@ static jint initialized = -1;
 /** com.sun.j2me.content.ContentHandlerImpl internal fields */
 static jfieldID chImplId = 0;       // ID,
              // also it is an uninitiaized state indicator
-
-#ifdef SUITE_ID_STRING
-static jfieldID chImplSuiteID;      // storageID    : String
-#else
 static jfieldID chImplSuiteId;      // storageId    : int
-#endif
-
 static jfieldID chImplClassname;    // classname    : String
 static jfieldID chImplregMethod;    // registrationMethod : int
 static jfieldID chImplTypes;        // types        : String[]
@@ -108,27 +102,18 @@ static void result2string(KNIDECLARGS JSR211_RESULT_BUFFER buffer, jstring str){
 #endif
         }
         length /= 2;
-        while( length-- && *chars++ );
-        if( length + 1 != 0 ){
-            // we should get rid of zero chars inside data, but not now
-#if REPORT_LEVEL <= LOG_ERROR
-		    REPORT_ERROR(LC_NONE, "kni_reg_store.c: data transfer internal problem (zero char exists)");
-#endif
-        } else {
-            // data doesn't contain zero characters
-            // small work around (write termination zero character)
-            *chars = '\0';
-        }
+        chars[ length ] = '\0';
+
+		if (JAVACALL_OK != jsrop_jstring_from_utf16_string_n(
+                                KNIPASSARGS (const javacall_utf16_string)data, length, str)){
+            KNI_ThrowNew(jsropOutOfMemoryError, "No memory to create result string!");
+		}
 #ifdef TRACE_TRANSFER_DATA
         printf( "kni_reg_store: data '" );
         chars = (jchar *)data; 
-        while( *chars ) printf( "%04x", *chars++ );
+        while( length-- ) printf( "%04x", *chars++ );
         printf( "'\n" );
 #endif
-		if (JAVACALL_OK != jsrop_jstring_from_utf16_string(
-                                KNIPASSARGS (const javacall_utf16_string)data, str)){
-            KNI_ThrowNew(jsropOutOfMemoryError, "No memory to create result string!");
-		}
 	}
 	jsr211_release_result_buffer(buffer);
 }
@@ -185,11 +170,7 @@ static int initializeFields(KNIDECLARGS void) {
 		break;
 	}
         chImplId =          KNI_GetFieldID(clObj,  "ID", STRING_TYPE);
-#ifdef SUITE_ID_STRING
-        chImplSuiteID =     KNI_GetFieldID(clObj,  "storageID", STRING_TYPE);
-#else
         chImplSuiteId =     KNI_GetFieldID(clObj,  "storageId", "I");
-#endif
         chImplClassname =   KNI_GetFieldID(clObj,  "classname", STRING_TYPE);
         chImplregMethod =   KNI_GetFieldID(clObj,  "registrationMethod", "I");
         chImplTypes =       KNI_GetFieldID(clObj,  "types", S_ARRAY_TYPE);
@@ -396,20 +377,12 @@ static int fillHandlerData(KNIDECLARGS jobject o, jsr211_content_handler* handle
             break;
         }
         // suiteID
-#ifdef SUITE_ID_STRING
-        KNI_GetObjectField(o, chImplSuiteID, fldObj);
-        if (JAVACALL_OK!=jsrop_jstring_to_utf16_string(fldObj, (javacall_utf16_string*)&(handler->suite_id))) {
-            ret = KNI_ENOMEM;
-            break;
-        }
-#else
-	{
-		SuiteIdType suite_id = KNI_GetIntField(o, chImplSuiteId);
-            handler->suite_id = JAVAME_MALLOC(
-                (jsrop_suiteid_string_size(suite_id) + 1) * sizeof(jchar));
-		jsrop_suiteid_to_string(suite_id, handler->suite_id);
-	}
-#endif
+	    {
+		    SuiteIdType suite_id = KNI_GetIntField(o, chImplSuiteId);
+                handler->suite_id = JAVAME_MALLOC(
+                    (jsrop_suiteid_string_size(suite_id) + 1) * sizeof(jchar));
+		    jsrop_suiteid_to_string(suite_id, handler->suite_id);
+	    }
         // classname
         KNI_GetObjectField(o, chImplClassname, fldObj);
         if (JAVACALL_OK!=jsrop_jstring_to_utf16_string(fldObj, (javacall_utf16_string*)&(handler->class_name))) {
@@ -634,25 +607,12 @@ KNIDECL(com_sun_j2me_content_RegistryStore_forSuite0) {
     KNI_StartHandles(1);
     KNI_DeclareHandle(strObj);   // String object
 
-#ifdef SUITE_ID_STRING
-    jchar* suiteID = NULL;
-    KNI_GetParameterAsObject(1, strObj);   // suiteID
-    if (JAVACALL_OK != jsrop_jstring_to_utf16_string(strObj, (javacall_utf16_string*)&suiteID)) {
-	    jsr211_release_result_buffer(result);
-        KNI_ThrowNew(jsropOutOfMemoryError, NULL);
-    } else {
-	    jsr211_find_for_suite(suiteID, &result);
-        result2string(KNIPASSARGS result, strObj);
-    	JAVAME_FREE(suiteID);
-    }
-#else
     SuiteIdType suite_id_param = KNI_GetParameterAsInt(1);
     jchar suiteID[ 0x20 ];  // enough
     jsrop_suiteid_to_string(suite_id_param, suiteID);
 
     jsr211_find_for_suite(suiteID, &result);
     result2string(KNIPASSARGS result, strObj);
-#endif
 
     KNI_EndHandlesAndReturnObject(strObj);
 }

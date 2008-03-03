@@ -66,9 +66,9 @@ import com.sun.midp.events.EventTypes;
  * MIDP stack is BUILT with CHAPI.
  */
 public class CHManagerImpl extends com.sun.midp.content.CHManager
-    implements MIDletProxyListListener, EventListener {
+    						implements MIDletProxyListListener, EventListener {
 
-    protected static final java.io.PrintStream DEBUG_OUT = null; //System.out;
+    protected static final java.io.PrintStream DEBUG_OUT = System.out;
 	
     /**
      * Inner class to request security token from SecurityInitializer.
@@ -148,17 +148,16 @@ public class CHManagerImpl extends com.sun.midp.content.CHManager
             regInstaller.preInstall(bundle);
 		} catch (IllegalArgumentException ill) {
 		    throw new InvalidJadException(
-				  InvalidJadException.INVALID_CONTENT_HANDLER,
-				  ill.getMessage());
+				  InvalidJadException.INVALID_CONTENT_HANDLER, ill.getMessage());
 		} catch (ContentHandlerException che) {
 		    if (che.getErrorCode() == ContentHandlerException.AMBIGUOUS) {
-			throw new InvalidJadException(
-				      InvalidJadException.CONTENT_HANDLER_CONFLICT,
-				      che.getMessage());
+				throw new InvalidJadException(
+					      InvalidJadException.CONTENT_HANDLER_CONFLICT,
+					      che.getMessage());
 		    } else {
-			throw new InvalidJadException(
-				      InvalidJadException.INVALID_CONTENT_HANDLER,
-				      che.getMessage());
+				throw new InvalidJadException(
+					      InvalidJadException.INVALID_CONTENT_HANDLER,
+					      che.getMessage());
 		    }
 		} catch (ClassNotFoundException cnfe) {
 		    throw new InvalidJadException(InvalidJadException.CORRUPT_JAR,
@@ -261,6 +260,7 @@ public class CHManagerImpl extends com.sun.midp.content.CHManager
      * @param midlet The proxy of the MIDlet being added
      */
     public void midletAdded(MIDletProxy midlet) {
+    	AppProxy.midletIsAdded( midlet.getSuiteId(), midlet.getClassName() );
     }
 
     /**
@@ -281,11 +281,12 @@ public class CHManagerImpl extends com.sun.midp.content.CHManager
      * @param midlet The proxy of the removed MIDlet
      */
     public void midletRemoved(MIDletProxy midlet) {
-		AppProxy.getCurrent().logInfo("midletRemoved: " + midlet.getClassName());
+    	if( DEBUG_OUT != null )
+    		DEBUG_OUT.println("midletRemoved: " + midlet.getClassName());
 	
 		// Cleanup unprocessed Invocations
 		RegistryImpl.cleanup(midlet.getSuiteId(), midlet.getClassName());
-	
+		AppProxy.midletIsRemoved( midlet.getSuiteId(), midlet.getClassName() );
 		// Check for and execute a pending MIDlet suite
 		InvocationStoreProxy.invokeNext();
     }
@@ -301,6 +302,11 @@ public class CHManagerImpl extends com.sun.midp.content.CHManager
      */
     public void midletStartError(int externalAppId, int suiteId, String className,
                           int errorCode, String errorDetails) {
+		// Cleanup unprocessed Invocations
+		RegistryImpl.cleanup(suiteId, className);
+		AppProxy.midletIsRemoved( suiteId, className );
+		// Check for and execute a pending MIDlet suite
+		InvocationStoreProxy.invokeNext();
     }
 
     /**
@@ -315,8 +321,7 @@ public class CHManagerImpl extends com.sun.midp.content.CHManager
      * @return true to allow the post to continue, false to not post the
      *     event to the queue
      */
-    public boolean preprocess(Event event, Event waitingEvent)
-    {
+    public boolean preprocess(Event event, Event waitingEvent) {
         return true;
     }
 
@@ -326,8 +331,7 @@ public class CHManagerImpl extends com.sun.midp.content.CHManager
      *
      * @param event event to process
      */
-    public void process(Event event)
-    {
+    public void process(Event event) {
         InvocationStoreProxy.invokeNext();
     }
 }

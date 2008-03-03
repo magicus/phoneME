@@ -324,9 +324,9 @@ public class Registry {
         // Find the RegistryImpl instance and get/create the Registry
         try {
             return findRegistryImpl(classname).getRegistry();
-	} catch (ContentHandlerException che) {
-	    throw new IllegalArgumentException(che.getMessage());
-	}
+		} catch (ContentHandlerException che) {
+		    throw new IllegalArgumentException(che.getMessage());
+		}
     }
 
     /**
@@ -392,25 +392,25 @@ public class Registry {
      *  application package
      */
     public static ContentHandlerServer getServer(String classname)
-	throws ContentHandlerException
+						throws ContentHandlerException
     {
-	RegistryImpl registryImpl = findRegistryImpl(classname);
-	// Insure only one thread promotes to ContentHandlerServer
-	ContentHandlerImpl server = null;
-	synchronized (mutex) {
-	    server = registryImpl.getServer();
-	    if (server == null) {
-		throw new ContentHandlerException("No registered handler",
-			ContentHandlerException.NO_REGISTERED_HANDLER);
-	    }
-
-	    if (!(server instanceof ContentHandlerServer)) {
-		// Not already a ContentHandlerServer; replace
-		server = new ContentHandlerServerImpl(server);
-		registryImpl.setServer(server);
-	    }
-	}
-	return (ContentHandlerServer)server; 
+		RegistryImpl registryImpl = findRegistryImpl(classname);
+		// Insure only one thread promotes to ContentHandlerServer
+		ContentHandlerImpl server = null;
+		synchronized (mutex) {
+		    server = registryImpl.getServer();
+		    if (server == null) {
+				throw new ContentHandlerException("No registered handler",
+								ContentHandlerException.NO_REGISTERED_HANDLER);
+		    }
+	
+		    if (!(server instanceof ContentHandlerServer)) {
+				// Not already a ContentHandlerServer; replace
+				server = new ContentHandlerServerImpl(server);
+				registryImpl.setServer(server);
+		    }
+		}
+		return (ContentHandlerServer)server; 
     }
 
     /**

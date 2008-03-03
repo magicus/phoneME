@@ -46,10 +46,9 @@ class RequestListenerImpl implements Runnable {
      * @param handler the ContentHandlerImpl to listen for
      * @param listener the listener to notify when present
      */
-    RequestListenerImpl(ContentHandlerImpl handler,
-			RequestListener listener) {
-	this.handler = handler;
-	setListener(listener);
+    RequestListenerImpl(ContentHandlerImpl handler, RequestListener listener) {
+		this.handler = handler;
+		setListener(listener);
     }
 
     /**
@@ -63,24 +62,23 @@ class RequestListenerImpl implements Runnable {
      */
     void setListener(RequestListener listener) {
 
-	if (listener != null) {
-	    // Ensure a thread is running to watch for it
-	    if (thread == null || !thread.isAlive()) {
-		thread = new Thread(this);
-		thread.start();
-	    }
-	} else {
-	    // Forget the thread doing the listening; it will exit
-	    thread = null;
-	}
-
-	/*
-	 * Reset notified flags on pending requests.
-	 * Unblock any threads waiting to notify current listeners
-	 */
-	InvocationStore.setListenNotify(handler.storageId,
-					handler.classname, true);
-	InvocationStore.cancel();
+		if (listener != null) {
+		    // Ensure a thread is running to watch for it
+		    if (thread == null || !thread.isAlive()) {
+				thread = new Thread(this);
+				thread.start();
+		    }
+		} else {
+		    // Forget the thread doing the listening; it will exit
+		    thread = null;
+		}
+	
+		/*
+		 * Reset notified flags on pending requests.
+		 * Unblock any threads waiting to notify current listeners
+		 */
+		InvocationStore.setListenNotify(handler.storageId, handler.classname, true);
+		InvocationStore.cancel();
     }
 
     /**
@@ -90,16 +88,14 @@ class RequestListenerImpl implements Runnable {
      * notified.
      */
     public void run() {
-	Thread mythread = Thread.currentThread();
-	while (mythread == thread) {
-	    // Wait for a matching invocation
-	    boolean pending =
-		InvocationStore.listen(handler.storageId,
-				       handler.classname,
-				       true, true);
-	    if (pending) {
-		handler.requestNotify();
-	    }
-	}
+		Thread mythread = Thread.currentThread();
+		while (mythread == thread) {
+		    // Wait for a matching invocation
+		    boolean pending = InvocationStore.listen(handler.storageId, 
+		    									handler.classname, true, true);
+		    if (pending) {
+		    	handler.requestNotify();
+		    }
+		}
     }
 }

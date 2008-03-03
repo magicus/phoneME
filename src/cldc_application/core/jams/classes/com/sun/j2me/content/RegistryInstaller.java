@@ -41,7 +41,7 @@ import com.sun.midp.installer.InvalidJadException;
  */
 final class RegistryInstaller {
 	
-	protected static final java.io.PrintStream DEBUG_OUT = null; //System.out;
+	protected static final java.io.PrintStream DEBUG_OUT = System.out;
 	
     /** Attribute prefix for ContentHandler attributes. */
     private static final String CH_PREFIX = "MicroEdition-Handler-";
@@ -109,7 +109,7 @@ final class RegistryInstaller {
         				" handlers number = " + sz );        
         for (i = 0; i < sz; i++) {
             if( DEBUG_OUT != null ) 
-            	DEBUG_OUT.println( "RegistryInstaller.preInstall: chs[i] = " + chs[i] );        
+            	DEBUG_OUT.println( "RegistryInstaller.preInstall: chs[" + i + "] = " + chs[i] );        
             if (chs[i] == null) continue;
             if( 0 == (chs[i].registrationMethod & 
             					ContentHandlerImpl.REGISTERED_STATIC_FLAG) ) {

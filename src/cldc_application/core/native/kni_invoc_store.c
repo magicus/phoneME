@@ -44,7 +44,6 @@
 #include <sni.h>
 
 #include <pcsl_string.h>
-#include <pcsl_memory.h>
 
 #include <midpUtilKni.h>
 #include <midpError.h>
@@ -55,6 +54,7 @@
 #include <jsr211_invoc.h>
 #include <jsr211_platform_invoc.h>
 #include <jsrop_memory.h>
+#include <jsrop_kni.h>
 #include <jsrop_suitestore.h>
 #include <javautil_unicode.h>
 #include <javacall_memory.h>
@@ -167,9 +167,8 @@ static jfieldID invokingIDFid;
  * @param classObj the Class object of Invocation
  */
 static void init(jobject invocObj, jclass classObj) {
-    if (urlFid != 0) {
-    return;
-    }
+    if (urlFid != 0)
+        return;
 
     KNI_GetObjectClass(invocObj, classObj);
 
@@ -299,12 +298,12 @@ static jboolean setParamsFromObj(StoredInvoc* invoc,
                 while (len-- > 0) {
                     pcsl_string_free(args++);
                 }
-                pcsl_mem_free(invoc->args);
+                JAVAME_FREE(invoc->args);
                 invoc->args = NULL;
             }
             len = invoc->argsLen;
             if (len > 0) {
-                invoc->args = (pcsl_string*)pcsl_mem_calloc(len, sizeof(pcsl_string));
+                invoc->args = (pcsl_string*)JAVAME_CALLOC(len, sizeof(pcsl_string));
 	            if (invoc->args == NULL)
 		            break;
             }
@@ -326,11 +325,11 @@ static jboolean setParamsFromObj(StoredInvoc* invoc,
 
         if (invoc->dataLen != len) {
             if (invoc->data != NULL) {
-                pcsl_mem_free(invoc->data);
+                JAVAME_FREE(invoc->data);
                 invoc->data = NULL;
             }
             if (len > 0) {
-	            invoc->data = pcsl_mem_malloc(len);
+	            invoc->data = JAVAME_MALLOC(len);
 	            if (invoc->data == NULL)
 		            break;
             }
@@ -653,8 +652,7 @@ Java_com_sun_j2me_content_InvocationStore_listen0(void) {
              */
             desiredSuiteId = KNI_GetParameterAsInt(listenSuiteIdArg);
             KNI_GetParameterAsObject(listenClassnameArg, classname);
-            if (PCSL_STRING_OK != 
-                    midp_jstring_to_pcsl_string(classname, &desiredClassname)) {
+            if (PCSL_STRING_OK != midp_jstring_to_pcsl_string(classname, &desiredClassname)) {
                 KNI_ThrowNew(midpOutOfMemoryError, 
                     "InvocationStore_listen0 no memory for [desiredClassname]");
                 break;
@@ -717,10 +715,9 @@ Java_com_sun_j2me_content_InvocationStore_setListenNotify0(void) {
             desiredSuiteId = KNI_GetParameterAsInt(listenSuiteIdArg);
     
             KNI_GetParameterAsObject(listenClassnameArg, classname);
-            if (PCSL_STRING_OK != midp_jstring_to_pcsl_string(classname, 
-                               &desiredClassname)) {
+            if (PCSL_STRING_OK != midp_jstring_to_pcsl_string(classname, &desiredClassname)) {
                 KNI_ThrowNew(midpOutOfMemoryError, 
-                "InvocationStore_setListenNotify0 no memory for [desiredClassname]");
+                    "InvocationStore_setListenNotify0 no memory for [desiredClassname]");
                 break;
             }
     
@@ -737,9 +734,9 @@ Java_com_sun_j2me_content_InvocationStore_setListenNotify0(void) {
                  * and the suite matches and the classname matches.
                  */
                 if (mode == MODE_LREQUEST && invoc->status == STATUS_WAITING) {
-                       /* This invocation is a match; check classname and suite below */
+                   /* This invocation is a match; check classname and suite below */
                 } else if (mode == MODE_LRESPONSE &&
-                       (invoc->status >= STATUS_OK && invoc->status <= STATUS_INITIATED)) {
+                            (invoc->status >= STATUS_OK && invoc->status <= STATUS_INITIATED)) {
                     /* A pending response; check classname and suite below */
                 } else {
                     /* Not this invocation; on to the next */
@@ -747,7 +744,7 @@ Java_com_sun_j2me_content_InvocationStore_setListenNotify0(void) {
                 }
                 /* Check if this is the right class and suite */
                 if (desiredSuiteId == invoc->suiteId &&
-                    pcsl_string_equals(&desiredClassname, &invoc->classname)) {
+                        pcsl_string_equals(&desiredClassname, &invoc->classname)) {
                     /* Reset the flag so this Invocation will notify. */
                     invoc->notified = KNI_FALSE;
                 }
@@ -772,20 +769,9 @@ Java_com_sun_j2me_content_InvocationStore_setListenNotify0(void) {
  *
  * @return pointer on zeroed StoredInvoc buffer or NULL if EOM occurs.
  */
-static void* newStoredInvoc() {
-
-#define STOREDINVOC_N   ((sizeof(StoredInvoc) + sizeof(int) - 1) / sizeof(int))
-#define STOREDINVOC_SIZE    (STOREDINVOC_N * sizeof(int))
-
-    int i;
-    int* buf = (int*) pcsl_mem_malloc(STOREDINVOC_SIZE);
-
-    if (buf != NULL) {
-        for (i = 0; i < (int)STOREDINVOC_N; i++) {
-            buf[i] = 0;
-        }
-    }
-    
+static StoredInvoc * newStoredInvoc() {
+    StoredInvoc * buf = JAVAME_MALLOC(sizeof(StoredInvoc));
+    memset( buf, '\0', sizeof(*buf) );
     return buf;
 }
 
@@ -820,7 +806,7 @@ Java_com_sun_j2me_content_InvocationStore_put0(void) {
     do {
         /* On any error break out of this block */
         /* Allocate a new zero'ed struct to save the values in */
-        invoc = (StoredInvoc*) newStoredInvoc();
+        invoc = newStoredInvoc();
         if (invoc == NULL) {
             KNI_ThrowNew(midpOutOfMemoryError, 
                                 "InvocationStore_put0 no memory for [invoc]");
@@ -1119,6 +1105,114 @@ Java_com_sun_j2me_content_InvocationStore_size0(void) {
     KNI_ReturnInt(size);
 }
 
+//---------------------------------------------------------
+
+typedef struct _MidletIdChain {
+    SuiteIdType             suiteId;
+    javacall_utf16_string   className;
+    struct _MidletIdChain * next;
+} MidletIdChain;
+
+static MidletIdChain * runningMidletsChain = NULL;
+
+static MidletIdChain * newMidletIdChain( void ) {
+    MidletIdChain * elem = (MidletIdChain *)JAVAME_MALLOC( sizeof(*elem) );
+    if( elem != NULL ) memset( elem, '\0', sizeof(*elem) );
+    return elem;
+}
+
+static void destroyMidletIdChain( MidletIdChain * elem ){
+    JAVAME_FREE( elem );
+}
+
+static int compareMidletIdChain( const MidletIdChain * elem, 
+                    SuiteIdType suiteId, javacall_utf16_string midletClassName ){
+    javacall_int32 comparison;
+    // assert( elem != NULL );
+    if( elem->suiteId != suiteId )
+        return elem->suiteId - suiteId;
+    javautil_unicode_cmp(elem->className, midletClassName, &comparison);
+    return comparison;
+}
+
+static MidletIdChain ** findMidletIdChain( SuiteIdType suiteId, javacall_utf16_string midletClassName ) {
+    MidletIdChain ** p = &runningMidletsChain;
+    while( *p != NULL && compareMidletIdChain( *p, suiteId, midletClassName ) < 0 )
+        p = &(*p)->next;
+    return p;
+}
+
+KNIEXPORT KNI_RETURNTYPE_VOID
+Java_com_sun_j2me_content_AppProxy_midletIsAdded() {
+    SuiteIdType suiteId;
+    javacall_utf16_string midletClassName;
+    KNI_StartHandles(1);
+
+    suiteId = KNI_GetParameterAsInt(1);
+    GET_PARAMETER_AS_UTF16_STRING(2, classname)
+
+    MidletIdChain ** elemPlace, * elem;
+    elemPlace = findMidletIdChain( suiteId, midletClassName );
+    if( *elemPlace == NULL || compareMidletIdChain(*elemPlace, suiteId, midletClassName) != 0 ){
+        if( (elem = newMidletIdChain()) == NULL ){
+            KNI_ThrowNew(jsropOutOfMemoryError, NULL);
+        } else {
+            elem->suiteId = suiteId;
+            elem->className = midletClassName;
+            midletClassName = NULL;
+            elem->next = *elemPlace;
+            *elemPlace = elem;
+        }
+    }
+
+    RELEASE_UTF16_STRING_PARAMETER
+    KNI_EndHandles();
+    KNI_ReturnVoid();
+}
+
+KNIEXPORT KNI_RETURNTYPE_VOID
+Java_com_sun_j2me_content_AppProxy_midletIsRemoved() {
+    SuiteIdType suiteId;
+    javacall_utf16_string midletClassName;
+    KNI_StartHandles(1);
+
+    suiteId = KNI_GetParameterAsInt(1);
+    GET_PARAMETER_AS_UTF16_STRING(2, classname)
+
+    MidletIdChain ** elemPlace;
+    elemPlace = findMidletIdChain( suiteId, midletClassName );
+    if( *elemPlace != NULL && compareMidletIdChain(*elemPlace, suiteId, midletClassName) == 0 ){
+        // remove elem from the chain
+        MidletIdChain * elem = *elemPlace;
+        *elemPlace = (*elemPlace)->next;
+        destroyMidletIdChain( elem );
+    }
+
+    RELEASE_UTF16_STRING_PARAMETER
+    KNI_EndHandles();
+    KNI_ReturnVoid();
+}
+
+KNIEXPORT KNI_RETURNTYPE_BOOLEAN
+Java_com_sun_j2me_content_AppProxy_isMidletRunning() {
+    int res = 0;
+    SuiteIdType suiteId;
+    javacall_utf16_string midletClassName;
+    KNI_StartHandles(1);
+
+    suiteId = KNI_GetParameterAsInt(1);
+    GET_PARAMETER_AS_UTF16_STRING(2, classname)
+
+    MidletIdChain ** elemPlace = findMidletIdChain( suiteId, midletClassName );
+    res = (*elemPlace != NULL && compareMidletIdChain(*elemPlace, suiteId, midletClassName) == 0);
+
+    RELEASE_UTF16_STRING_PARAMETER
+    KNI_EndHandles();
+    KNI_ReturnBoolean( res );
+}
+
+//---------------------------------------------------------
+
 /**
  * Function to put a new entry in the queue.
  * @param invoc an initialized StoredInvoc.
@@ -1132,7 +1226,7 @@ static jboolean invocPut(StoredInvoc* invoc) {
                             invoc->ID.data, invoc->classname.data );
 #endif
 
-    link = (StoredLink*) pcsl_mem_calloc(1, sizeof(StoredLink));
+    link = (StoredLink*) JAVAME_CALLOC(1, sizeof(StoredLink));
     if (link == NULL) 
         return PCSL_FALSE;
 
@@ -1298,11 +1392,11 @@ static void invocFree(StoredInvoc* invoc) {
             while (i--) {
                 pcsl_string_free(args++);
             }
-            pcsl_mem_free(invoc->args);
+            JAVAME_FREE(invoc->args);
         }
 
         if (invoc->data != NULL) {
-            pcsl_mem_free(invoc->data);
+            JAVAME_FREE(invoc->data);
         }
 
         pcsl_string_free(&invoc->url);
@@ -1317,7 +1411,7 @@ static void invocFree(StoredInvoc* invoc) {
         pcsl_string_free(&invoc->username);
         pcsl_string_free(&invoc->password);
 
-        pcsl_mem_free(invoc);
+        JAVAME_FREE(invoc);
     }
 }
 
@@ -1416,7 +1510,7 @@ static void removeEntry(StoredLink* entry) {
         if (flink != NULL) {
             flink->blink = blink;
         }
-        pcsl_mem_free(entry);
+        JAVAME_FREE(entry);
     }
 }
 
@@ -1783,13 +1877,13 @@ static void handle_javanotify_chapi_java_invoke(
     }
     JAVAME_FREE(suite_id_out);
 
-    if ((flag & REGISTERED_NATIVE_FLAG) || (INVALID_SUITE_ID == suite_id)) {
+    if (INVALID_SUITE_ID == suite_id) { // attempt to invoke native handler or suite id conversion error
         JAVAME_FREE(classname);
         jsr211_abort_platform_invocation(invoc_id);
         return;
     }
 
-    invoc = (StoredInvoc*)newStoredInvoc();
+    invoc = newStoredInvoc();
     if (invoc == NULL) {
         JAVAME_FREE(classname);
         jsr211_abort_platform_invocation(invoc_id);
@@ -1913,7 +2007,7 @@ static void handle_javanotify_chapi_java_invoke(
 jsr211_boolean jsr211_platform_finish(int tid, jsr211_boolean *should_exit)
 {
     javacall_const_utf16_string url;
-    javacall_const_utf16_string *args;
+    javacall_utf16_string *args;
     int i;
     javacall_chapi_invocation_status status;
     javacall_bool _should_exit;

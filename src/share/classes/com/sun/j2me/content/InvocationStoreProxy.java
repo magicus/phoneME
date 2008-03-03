@@ -4,7 +4,7 @@ import javax.microedition.content.ContentHandlerException;
 import javax.microedition.content.Invocation;
 
 public final class InvocationStoreProxy {
-	protected static final java.io.PrintStream DEBUG_OUT = null; //System.out;
+	protected static final java.io.PrintStream DEBUG_OUT = System.out;
 
 	static final public int LIT_MIDLET_START_FAILED = 0;
 	static final public int LIT_MIDLET_STARTED = 1;
@@ -12,14 +12,16 @@ public final class InvocationStoreProxy {
 	static final public int LIT_INVOCATION_REMOVED = 3;
 	
 	static public int launchInvocationTarget(InvocationImpl invoc){
-		if( DEBUG_OUT != null ) DEBUG_OUT.println( "launchInvocationTarget:" ); 
+		if( DEBUG_OUT != null ) 
+			DEBUG_OUT.println( "launchInvocationTarget: {" + 
+						AppProxy.getCurrent().getStorageId() + ", " + AppProxy.getCurrent().getClassname() + "}"); 
 		if( DEBUG_OUT != null && invoc != null ){
 			invoc.debugTo(DEBUG_OUT);
 			DEBUG_OUT.println();
 		}
         // check if it is native handler
         /* IMPL_NOTE: null suite ID is an indication of platform request */
-        if (invoc.suiteId == AppProxy.UNUSED_STORAGE_ID){
+        if (invoc.suiteId == AppProxy.INVALID_SUITE_ID){
         	// call native handler only for unprocessed invocations
         	// status is returned without launching of a handler
         	if( invoc.getStatus() == Invocation.WAITING ) {

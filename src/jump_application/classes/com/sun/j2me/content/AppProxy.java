@@ -138,9 +138,7 @@ class AppProxy {
      * @param token a Security token
      * /
     static void setSecurityToken(SecurityToken token) {
-        if (token == null) {
-            throw new NullPointerException();
-        }
+		token.getClass(); // null pointer check
         if (classSecurityToken != null) {
             throw new SecurityException();
         }

@@ -509,7 +509,7 @@ public final class InvocationImpl {
         setStatus(status);
 
         if (getResponseRequired()) {
-            if (AppProxy.UNUSED_STORAGE_ID == suiteId) {
+            if (AppProxy.INVALID_SUITE_ID == suiteId) {
             	// 'native to java' invocation is finished
                 return InvocationStoreProxy.platformFinish(tid);
             }

@@ -104,7 +104,7 @@ class AppProxy {
     private static AppProxy currentApp;
 
     /** The log flag to enable informational messages. */
-    static final boolean LOG_INFO = false;
+    static final boolean LOG_INFO = true;
 
     /** The known AppProxy instances. Key is classname. */
     protected Hashtable appmap;
@@ -136,7 +136,7 @@ class AppProxy {
     /** MIDlet property for the suite vendor. */
     static final String VENDOR_PROP        = "MIDlet-Vendor";
     
-    static final int UNUSED_STORAGE_ID = MIDletSuite.INTERNAL_SUITE_ID;
+    static final int INVALID_SUITE_ID = MIDletSuite.INTERNAL_SUITE_ID;
 
     /**
      * Sets the security token used for privileged operations.
@@ -144,9 +144,7 @@ class AppProxy {
      * @param token a Security token
      */
     static void setSecurityToken(Object token) {
-        if (token == null) {
-            throw new NullPointerException();
-        }
+        token.getClass(); // null pointer check
         if (classSecurityToken != null) {
             throw new SecurityException();
         }
@@ -449,6 +447,10 @@ class AppProxy {
         EventQueue eventQueue = EventQueue.getEventQueue(classSecurityToken);
         eventQueue.sendNativeEventToIsolate(event, amsIsolateId);
     }
+    
+    static native void midletIsAdded( int suiteId, String className );
+    static native boolean isMidletRunning( int suiteId, String className );
+    static native void midletIsRemoved( int suiteId, String className );
 
     /**
      * Launch this application.
@@ -466,10 +468,7 @@ class AppProxy {
      * @return <code>true</code> if the application is started.
      */
     boolean launch(String displayName) {
-    	MIDletProxyList mpList = 
-    		MIDletProxyList.getMIDletProxyList(classSecurityToken);
-    	if( mpList == null ) return false;
-    	if( mpList.isMidletInList(storageId, classname) )
+    	if( isMidletRunning(storageId, classname) )
         	return true;
         return MIDletSuiteUtils.execute(classSecurityToken,
                                  	storageId, classname, displayName);

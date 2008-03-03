@@ -30,7 +30,6 @@
  */
 
 
-//#include <stdlib.h>
 #include <string.h>
 #include <wchar.h>
 
@@ -62,7 +61,7 @@ typedef struct _DATA_BUFFER_{
     size_t  bytes_used;
     size_t  level;
     size_t  size_offset[ LEVELS_COUNT ];
-    unsigned char   data[0];
+    unsigned char   data[1];
 } DATA_BUFFER;
 
 typedef unsigned short size_type;

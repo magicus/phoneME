@@ -50,7 +50,7 @@ import com.sun.midp.security.SecurityToken;
  */
 public final class RegistryImpl {
 
-	protected static final java.io.PrintStream DEBUG_OUT = null; //System.out;
+	protected static final java.io.PrintStream DEBUG_OUT = System.out;
 	
     /**
      * Inner class to request security token from SecurityInitializer.
@@ -71,7 +71,7 @@ public final class RegistryImpl {
     private final Hashtable activeInvocations = new Hashtable();
 
     /** The set of active RegistryImpls. */
-    private static Hashtable registries = new Hashtable();
+    private static final Hashtable registries = new Hashtable();
 
     /** The mutex used to avoid corruption between threads. */
     private static final Object mutex = new Object();
@@ -162,12 +162,15 @@ public final class RegistryImpl {
         // Synchronize between competing operations
         RegistryImpl curr = null;
         synchronized (mutex) {
+        	if( DEBUG_OUT != null )
+        		DEBUG_OUT.println( "RegistryImpl.getRegistryImpl( '" +
+        					classname + "' )");
             // Check if class already has a RegistryImpl
             curr = (RegistryImpl)registries.get(classname);
             if (curr != null) {
                 // Check that it is still a CH or MIDlet
                 if (curr.handlerImpl == null &&
-                    (!curr.application.isRegistered())) {
+                		(!curr.application.isRegistered())) {
                     // Classname is not a registered MIDlet or ContentHandler
                     throw new
                         ContentHandlerException("not a registered MIDlet",
@@ -179,6 +182,14 @@ public final class RegistryImpl {
             // Create a new instance and insert it into the list
             curr = new RegistryImpl(classname);
             registries.put(classname, curr);
+            if( DEBUG_OUT != null ){
+            	DEBUG_OUT.println( "registers:" );
+            	java.util.Enumeration e = registries.keys();
+            	while( e.hasMoreElements() ){
+            		String c = (String)e.nextElement();
+            		DEBUG_OUT.println( "\t" + c + " " + registries.get(c) );
+            	}
+            }
         }
 
         /*
@@ -629,9 +640,8 @@ public final class RegistryImpl {
     public boolean unregister(String classname) {
     	classname.length(); // NullPointer check
 
-    	if(DEBUG_OUT != null){
+    	if(DEBUG_OUT != null)
     		DEBUG_OUT.println( "unregister '" + classname + "'" );
-    	}
         synchronized (mutex) {
 
             ContentHandlerImpl curr = null;
@@ -921,7 +931,7 @@ public final class RegistryImpl {
             }
 
             // Make an attempt to gain the foreground
-            if (invoc.invokingSuiteId != AppProxy.UNUSED_STORAGE_ID &&
+            if (invoc.invokingSuiteId != AppProxy.INVALID_SUITE_ID &&
                     invoc.invokingClassname != null) {
 
                 // Strong FG transition requested

@@ -137,8 +137,6 @@ public class ContentHandlerImpl implements ContentHandler {
 
     /** Content handler statically/dynamically registered during installation */
     final static int REGISTERED_STATIC_FLAG = 0x0001; // if set => statically
-    /** Native platform content handler  */
-    final static int REGISTERED_NATIVE_FLAG = 0x0002; // if set => native 
 
     /** Count of requests retrieved via {@link #getRequest}. */
     int requestCalls;
