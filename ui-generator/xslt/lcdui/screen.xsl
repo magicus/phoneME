@@ -214,7 +214,10 @@ information or have any questions.
      <xsl:template match="*[@type='dropdown']" mode="LCDUI-options-type">
          <xsl:text>POPUP</xsl:text>
      </xsl:template>
-     <xsl:template match="*[@type='numbered' or not(@type)]" mode="LCDUI-options-type">
+     <xsl:template match="*[@type='numbered']" mode="LCDUI-options-type">
+         <xsl:text>EXCLUSIVE</xsl:text>
+     </xsl:template>
+     <xsl:template match="*[@type='plain' or not(@type)]" mode="LCDUI-options-type">
          <xsl:text>EXCLUSIVE</xsl:text>
      </xsl:template>
 

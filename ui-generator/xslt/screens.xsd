@@ -108,6 +108,7 @@ information or have any questions.
                     <xs:restriction base='xs:string'>
                         <xs:enumeration value='dropdown'/>
                         <xs:enumeration value='numbered'/>
+                        <xs:enumeration value='plain'/>
                     </xs:restriction>
                 </xs:simpleType>
             </xs:attribute>
