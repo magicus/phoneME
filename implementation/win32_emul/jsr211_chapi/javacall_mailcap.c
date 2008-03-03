@@ -46,10 +46,9 @@
 #define DEBUG_OUTPUT 1
 #endif
 
-#define CHAPI_MALLOC(x) malloc(x)
-#define CHAPI_CALLOC(x,s) calloc(x,s)
-#define CHAPI_FREE(x) free(x)
-#define CHAPI_REALLOC(x,s) realloc(x,s)
+#define MALLOC malloc
+#define REALLOC realloc
+#define FREE free
 
 
 #define DATABASE_INCREASE_SIZE 128
@@ -162,7 +161,7 @@ const short* DEFAULT_ACTION = 0;
 #define CHAPI_WRITE 2
 #define CHAPI_APPEND 3
 
-#define chricmp(a,b) (((a>='A' && a<='Z') ? a+('a'-'A'): a) == ((b>='A' && b<='Z') ? b+('a'-'A'): b))
+#define chrieq(a,b) (((a ^ b) & ~0x20) == 0)
 
 static int open_db(int db_index, javautil_storage* file, int flag);
 static void close_db(javautil_storage file);
@@ -180,18 +179,18 @@ static javacall_bool is_access_allowed( const handler_info* info, javacall_const
 static content_type_info* new_content_type_info(short* type_name){
 	content_type_info* info;
 	if (!g_content_type_infos){
-		g_content_type_infos = (content_type_info**)CHAPI_MALLOC(sizeof(content_type_info*)*INFO_INC);
+		g_content_type_infos = (content_type_info**)MALLOC(sizeof(content_type_info*)*INFO_INC);
 		if (!g_content_type_infos) return 0;
 		g_content_type_infos_allocated = INFO_INC;
 		g_content_type_infos_used = 0;
 	}
 	if (g_content_type_infos_used>=g_content_type_infos_allocated){
-		content_type_info** tmp = CHAPI_REALLOC(g_content_type_infos,sizeof(content_type_info*)*(g_content_type_infos_allocated+INFO_INC));
+		content_type_info** tmp = REALLOC(g_content_type_infos,sizeof(content_type_info*)*(g_content_type_infos_allocated+INFO_INC));
 		if (!tmp) return 0;
 		g_content_type_infos = tmp;
 		g_content_type_infos_allocated += INFO_INC;
 	}
-	info = (content_type_info*)CHAPI_MALLOC(sizeof(content_type_info));
+	info = (content_type_info*)MALLOC(sizeof(content_type_info));
 	if (!info) return 0;
 	memset(info,0,sizeof(content_type_info));
 	g_content_type_infos[g_content_type_infos_used++] = info;
@@ -202,17 +201,17 @@ static content_type_info* new_content_type_info(short* type_name){
 static void free_list(void** list){
 	void **p;
 	if (p=list){
-		while (*p) CHAPI_FREE(*p++);
-		CHAPI_FREE(list);
+		while (*p) FREE(*p++);
+		FREE(list);
 	}
 }
 
 static void free_content_type_info(content_type_info* info){
-	if (info->type_name) CHAPI_FREE(info->type_name);
-	if (info->description) CHAPI_FREE(info->description);
-	if (info->nametemplate) CHAPI_FREE(info->nametemplate);
+	if (info->type_name) FREE(info->type_name);
+	if (info->description) FREE(info->description);
+	if (info->nametemplate) FREE(info->nametemplate);
 	free_list(info->suffixes);
-	CHAPI_FREE(info);
+	FREE(info);
 }
 
 static void pop_content_type_info(){
@@ -222,9 +221,9 @@ static void pop_content_type_info(){
 static void release_content_type_info(content_type_info* type){
 	if (!--type->actions_refcount){
 		int index=g_content_type_infos_used;
-		while (--index>=0 && g_content_type_infos[index]!=type);
+		while (index-- && g_content_type_infos[index]!=type);
 		if (index>=0 && index<g_content_type_infos_used-1) 
-			memmove(&g_content_type_infos[index],g_content_type_infos[index+1],g_content_type_infos_used-1-index);
+			memmove(&g_content_type_infos[index],&g_content_type_infos[index+1],g_content_type_infos_used-1-index);
 		free_content_type_info(type);
 		g_content_type_infos_used--;
 	}
@@ -236,18 +235,18 @@ static void release_content_type_info(content_type_info* type){
 static handler_info* new_handler_info(short* handler_id){
 	handler_info* info;
 	if (!g_handler_infos){
-		g_handler_infos = (handler_info**)CHAPI_MALLOC(sizeof(handler_info*)*INFO_INC);
+		g_handler_infos = (handler_info**)MALLOC(sizeof(handler_info*)*INFO_INC);
 		if (!g_handler_infos) return 0;
 		g_handler_infos_allocated = INFO_INC;
 		g_handler_infos_used = 0;
 	}
 	if (g_handler_infos_used>=g_handler_infos_allocated){
-		handler_info** tmp = CHAPI_REALLOC(g_handler_infos,sizeof(handler_info*)*(g_handler_infos_allocated+INFO_INC));
+		handler_info** tmp = REALLOC(g_handler_infos,sizeof(handler_info*)*(g_handler_infos_allocated+INFO_INC));
 		if (!tmp) return 0;
 		g_handler_infos = tmp;
 		g_handler_infos_allocated += INFO_INC;
 	}
-	info = (handler_info*)CHAPI_MALLOC(sizeof(handler_info));
+	info = (handler_info*)MALLOC(sizeof(handler_info));
 	if (!info) return 0;
 	memset(info,0,sizeof(handler_info));
 	info->handler_id = handler_id;
@@ -256,15 +255,15 @@ static handler_info* new_handler_info(short* handler_id){
 }
 
 static void free_handler_info(handler_info* info){
-	if (info->handler_id) CHAPI_FREE(info->handler_id);
-	if (info->classname) CHAPI_FREE(info->classname);
-	if (info->suite_id) CHAPI_FREE(info->suite_id);
+	if (info->handler_id) FREE(info->handler_id);
+	if (info->classname) FREE(info->classname);
+	if (info->suite_id) FREE(info->suite_id);
 	if (info->flag & TYPE_INFO_JAVA_HANDLER){
-		if (info->handler_friendly_name) CHAPI_FREE(info->handler_friendly_name);
+		if (info->handler_friendly_name) FREE(info->handler_friendly_name);
 		//on not-java handlers handler_friendly_name refers to appname
 	}
 	if (info->access_list) free_list(info->access_list);
-	CHAPI_FREE(info);
+	FREE(info);
 }
 
 static void delete_handler_info(int index){
@@ -287,7 +286,7 @@ static void delete_handler_info(int index){
 		//delete info
 		free_handler_info(info);
 		if (index<--g_handler_infos_used) 
-			memmove(&g_handler_infos[index],g_handler_infos[index+1],g_handler_infos_used-1-index);
+			memmove(&g_handler_infos[index],&g_handler_infos[index+1],g_handler_infos_used-1-index);
 	}
 }
 
@@ -300,18 +299,18 @@ static void pop_handler_info(){
 static action_info* new_action_info(content_type_info* type, handler_info* handler){
 	action_info* info;
 	if (!g_action_infos){
-		g_action_infos = (action_info**)CHAPI_MALLOC(sizeof(action_info*)*INFO_INC);
+		g_action_infos = (action_info**)MALLOC(sizeof(action_info*)*INFO_INC);
 		if (!g_action_infos) return 0;
 		g_action_infos_allocated = INFO_INC;
 		g_action_infos_used = 0;
 	}
 	if (g_action_infos_used>=g_action_infos_allocated){
-		action_info** tmp = CHAPI_REALLOC(g_action_infos,sizeof(action_info*)*(g_action_infos_allocated+INFO_INC));
+		action_info** tmp = REALLOC(g_action_infos,sizeof(action_info*)*(g_action_infos_allocated+INFO_INC));
 		if (!tmp) return 0;
 		g_action_infos = tmp;
 		g_action_infos_allocated += INFO_INC;
 	}
-	info = (action_info*)CHAPI_MALLOC(sizeof(action_info));
+	info = (action_info*)MALLOC(sizeof(action_info));
 	if (!info) return 0;
 	memset(info,0,sizeof(action_info));
 	info->content_type = type;
@@ -323,22 +322,22 @@ static action_info* new_action_info(content_type_info* type, handler_info* handl
 
 static void free_action_info(action_info* info){
 	if (info->actionname && !(info->flag & TYPE_INFO_ACTION_MASK)) {
-		CHAPI_FREE(info->actionname);
+		FREE(info->actionname);
 	}
 	if (info->params) {
-		CHAPI_FREE(info->params);
+		FREE(info->params);
 	}
 	if (!(info->flag & TYPE_INFO_USE_REFFERENCE)){
 		free_list(info->locales);
 		free_list(info->localnames);
 	}
-	CHAPI_FREE(info);
+	FREE(info);
 }
 
 static void delete_action_info(int index){
 	action_info* info = g_action_infos[index];
 	if (index<--g_action_infos_used) 
-		memmove(&g_action_infos[index],g_action_infos[index+1],g_action_infos_used-1-index);
+		memmove(&g_action_infos[index],&g_action_infos[index+1],g_action_infos_used-1-index);
 	if (info->content_type) release_content_type_info(info->content_type);
 	free_action_info(info);
 }
@@ -354,7 +353,7 @@ static void clean_registry(){
 		while (g_content_type_infos_used){
 			free_content_type_info(g_content_type_infos[--g_content_type_infos_used]);
 		}
-		CHAPI_FREE(g_content_type_infos);
+		FREE(g_content_type_infos);
 		g_content_type_infos = 0;
 		g_content_type_infos_allocated = 0;
 	}
@@ -363,7 +362,7 @@ static void clean_registry(){
 		while (g_handler_infos_used){
 			free_handler_info(g_handler_infos[--g_handler_infos_used]);
 		}
-		CHAPI_FREE(g_handler_infos);
+		FREE(g_handler_infos);
 		g_handler_infos = 0;
 		g_handler_infos_allocated = 0;
 	}
@@ -372,7 +371,7 @@ static void clean_registry(){
 		while (g_action_infos_used){
 			free_action_info(g_action_infos[--g_action_infos_used]);
 		}
-		CHAPI_FREE(g_action_infos);
+		FREE(g_action_infos);
 		g_action_infos = 0;
 		g_action_infos_allocated = 0;
 	}
@@ -442,7 +441,7 @@ static int append_string(char* buffer, const short* str){
 		}
 	}
 
-	*++buf = 0;
+	*++buf = '\0';
 	return buf-buffer;
 }
 
@@ -474,25 +473,17 @@ static int get_line(short* line, int max_size, javautil_storage f){
 		}
 
 		if (i == '%'){ //decode Unicode character
-			while(1){
-				long pos2;
-				int code[4];
-				char b[5];
-				if (javautil_storage_read(f,&b,1)!=1) break;
-				javautil_storage_getpos(f,&pos2);
-				if (javautil_storage_read(f,b,5)==5 && b[2]=='%' &&	
-					(code[0]=unhex(b[0])>=0) &&
-					(code[1]=unhex(b[1])>=0) &&
-					(code[2]=unhex(b[3])>=0) &&
-					(code[3]=unhex(b[4])>=0) )
-				{
-					line[count++]= (unsigned short) ((code[0]<<12) + (code[1]<<8) + (code[2]<<4) + code[3]);
-					if (javautil_storage_read(f,&i,1)!=1) break;
-					continue;
-				}
-				javautil_storage_setpos(f,pos2,JUS_SEEK_SET);
-				break;
-			}
+			long pos2;
+			int code[4];
+			char b[5];
+			javautil_storage_getpos(f,&pos2);
+			if (javautil_storage_read(f,b,5)==5 && b[2]=='%' &&	
+				    (code[0]=unhex(b[0])>=0) &&
+				    (code[1]=unhex(b[1])>=0) &&
+				    (code[2]=unhex(b[3])>=0) &&
+				    (code[3]=unhex(b[4])>=0) ) {
+				i = (unsigned short) ((code[0]<<12) + (code[1]<<8) + (code[2]<<4) + code[3]);
+			} else javautil_storage_setpos(f,pos2,JUS_SEEK_SET);
 		}
 
 		line[count++]=(short)i;
@@ -540,7 +531,7 @@ static int write_line(char* line, javautil_storage f){
 //find next token that ends on ; and can contain key and value separated by =
 static int next_key(const short* line,const short** kstart,const short** kend, const short** valstart,const short** valend, const short** tokenend){
 	int p=0,quot=0,dquot=0,endword=0;
-	while (line[p] && (line[p]==' ' || line[p]=='\t')) ++p; //trim left
+	while (line[p]==' ' || line[p]=='\t') ++p; //trim left
 	if(!line[p]) return 0;
 	endword=p;
 	if (kstart) *kstart = &line[p];
@@ -551,7 +542,7 @@ static int next_key(const short* line,const short** kstart,const short** kend, c
 	while (line[p]){
 		if (line[p]=='=' && !quot && !dquot){ // value found
 			if (kend) *kend = &line[endword];
-			while (line[++p] && (line[p]==' ')); //trim left
+			while (line[++p] == ' '); //trim left
 			if (valstart) *valstart = &line[p];
 			if (valend) *valend = &line[p];
 			endword=p;
@@ -593,15 +584,14 @@ static int next_key_unquote(const short* line,const short** kstart,const short**
 
 static int match(const short* p1, const short* pend, const short* p2){
 	if (!p1 || !p2) return 0;
-	while (*p1 && (p1<=pend) &&  *p2 && chricmp(*p1,*p2))
-	{
+	while (*p1 && (p1<=pend) && *p2 && chrieq(*p1,*p2)){
 		++p1;
 		++p2;
 	}
 	return (!*p2);
 }
 
-/* search for key in line if found returns -1 and value location, if not returns 0 */
+/* search for key in line if found returns -1 and value location, else returns 0 */
 static int find_key(const short* line, const short* key, const short** valstart,const short** valend, const short** tokenend){
 	const short* p = line, *ks, *ke;
 	while ((next_key_unquote(p, &ks, &ke, valstart,valend,&p))){
@@ -614,8 +604,8 @@ static int find_key(const short* line, const short* key, const short** valstart,
 }
 
 
-static int get_id(handler_info* info, /*OUT*/ short*  buffer, int* length){
-		return copy_string(info->handler_id, buffer, length);
+static int get_id(const handler_info* info, /*OUT*/ short*  buffer, int* length){
+	return copy_string(info->handler_id, buffer, length);
 }
 
 
@@ -626,10 +616,11 @@ static int extract_handler(const short* cmds, const short* cmde, short** handler
 	const short* start,*end;
 	int len;
 
-	while (*c && c<=cmde && (*c==' ' || *c=='\t')) ++c; //trim left
+	while (c<=cmde && (*c==' ' || *c=='\t')) ++c; //trim left
 	start = c;
 
-	while (*c && c<=cmde){
+	// wrong code. example 'aaa"bbb'\t\t\t or 'text'"text"'text'
+    while (*c && c<=cmde){
 		if (!(quoted || dquoted) && (*c==' ' || *c=='\t')) break;
 		if (quoted && *c=='\'') quoted=!quoted;
 		if (dquoted && *c=='\"') dquoted=!dquoted;
@@ -638,13 +629,13 @@ static int extract_handler(const short* cmds, const short* cmde, short** handler
 
 	if (handler){
 		len = c-start;
-		*handler = CHAPI_MALLOC((len+1) * sizeof(*start));
+		*handler = MALLOC((len+1) * sizeof(*start));
 		if (!*handler) return JAVACALL_CHAPI_ERROR_NO_MEMORY;
 		memcpy(*handler,start,len*sizeof(*start));
 		(*handler)[len]=0;
 	}
 
-	while (*c && c<=cmde && (*c==' ' || *c=='\t')) ++c; //trim left
+	while (c<=cmde && (*c==' ' || *c=='\t')) ++c; //trim left
 	start = end = c;
 
 	while (*c && c<=cmde){
@@ -654,7 +645,7 @@ static int extract_handler(const short* cmds, const short* cmde, short** handler
 
 	if (params){
 		len = end-start+1;
-		*params = CHAPI_MALLOC((len+1) * sizeof(*start));
+		*params = MALLOC((len+1) * sizeof(*start));
 		if (!*params) return JAVACALL_CHAPI_ERROR_NO_MEMORY;
 		memcpy(*params,start,len*sizeof(*start));
 		(*params)[len]=0;
@@ -669,7 +660,7 @@ static short* substring(const short* str_begin, const short* str_end){
 	short* buf;
 	len = str_end - str_begin + 1;
 
-	buf = CHAPI_MALLOC((len+1) * sizeof(*str_begin));
+	buf = MALLOC((len+1) * sizeof(*str_begin));
 	if (!buf) return 0;
 	memcpy(buf,str_begin,len * sizeof(*str_begin));
 	buf[len] = 0;
@@ -696,7 +687,7 @@ static short** substringarray(const short* str_begin, const short* str_end, int*
 
 	if (pcount) *pcount=len;
 	
-	result = CHAPI_MALLOC((sizeof(short**)) * (len+1));
+	result = MALLOC((sizeof(short**)) * (len+1));
 	if (!result) return 0;
 
 	s = str_begin;
@@ -704,10 +695,10 @@ static short** substringarray(const short* str_begin, const short* str_end, int*
 	p = result;
 
 	while (++s2<=str_end) {
-	if (*s2==XJAVA_ARRAY_DIVIDER) { 
+	    if (*s2==XJAVA_ARRAY_DIVIDER) { 
 			if (!(*p++ = substring_unquote(s,s2-1))){
-				while (--p>=result) CHAPI_FREE(*p);
-				CHAPI_FREE(result);
+				while (--p>=result) FREE(*p);
+				FREE(result);
 				return 0;
 			}
 			s=s2+1;
@@ -715,8 +706,8 @@ static short** substringarray(const short* str_begin, const short* str_end, int*
 	}
 
 	if (s<str_end && !(*p++ = substring_unquote(s,str_end))){
-		while (--p>=result) CHAPI_FREE(*p);
-		CHAPI_FREE(result);
+		while (--p>=result) FREE(*p);
+		FREE(result);
 		return 0;
 	}
 
@@ -756,18 +747,18 @@ static handler_info* find_handler_n(const short* handler_id,int len){
 
 
 int read_access_list(){
-javautil_storage f;
-short* p, *ks, *ke, *vs, *ve;
-short* line;
-int length = MAX_BUFFER, res;
-handler_info* info;
+    javautil_storage f;
+    short* p, *ks, *ke, *vs, *ve;
+    short* line;
+    int length = MAX_BUFFER, res;
+    handler_info* info;
 
-	line = CHAPI_MALLOC(length*sizeof(*line));
+	line = MALLOC(length*sizeof(*line));
 	if (!line) return JAVACALL_CHAPI_ERROR_NO_MEMORY;
 
 	res = open_db(ACCESSLIST_INDEX,&f,CHAPI_READ);
 	if (res) {
-		CHAPI_FREE(line);
+		FREE(line);
 		//no file to read
 		return JAVACALL_OK;
 	}
@@ -776,8 +767,8 @@ handler_info* info;
 
 		if (res < 0) { //buffer too small
 			length*=2;
-			CHAPI_FREE(line);
-			line = CHAPI_MALLOC(length*sizeof(*line));
+			FREE(line);
+			line = MALLOC(length*sizeof(*line));
 			if (!line) break;
 			continue;
 		}
@@ -790,7 +781,7 @@ handler_info* info;
 		}
 	}
 
-	if (line) CHAPI_FREE(line);
+	if (line) FREE(line);
 	close_db(f);
 	update_lastread(ACCESSLIST_INDEX);
 
@@ -798,27 +789,27 @@ handler_info* info;
 }
 
 static int read_action_map(){
-javautil_storage f;
-short* p, *ks, *ke;
-short* line;
-int length = MAX_BUFFER, res, count_localnames, count_locales, ia;
-handler_info* handler;
-action_info* action,*action2;
+    javautil_storage f;
+    short* p, *ks, *ke;
+    short* line;
+    int length = MAX_BUFFER, res, count_localnames, count_locales, ia;
+    handler_info* handler;
+    action_info* action,*action2;
 
-	line = CHAPI_MALLOC(length*sizeof(*line));
+	line = MALLOC(length*sizeof(*line));
 	if (!line) return JAVACALL_CHAPI_ERROR_NO_MEMORY;
 
 	res = open_db(ACTIONMAP_INDEX,&f,CHAPI_READ);
 	if (res) {
-		CHAPI_FREE(line);
+		FREE(line);
 		//no file to read
 		return JAVACALL_OK;
 	}
 	while ((res=get_line(line,length,f))){
 		if (res < 0) { //buffer too small
 			length*=2;
-			CHAPI_FREE(line);
-			line = CHAPI_MALLOC(length*sizeof(*line));
+			FREE(line);
+			line = MALLOC(length*sizeof(*line));
 			if (!line) break;
 			continue;
 		}
@@ -880,7 +871,7 @@ action_info* action,*action2;
 		}
 	}
 
-	if (line) CHAPI_FREE(line);
+	if (line) FREE(line);
 	close_db(f);
 	update_lastread(ACTIONMAP_INDEX);
 	return 0;
@@ -904,12 +895,12 @@ int read_caps(){
 	wprintf(L"JAVACALL::read_registry\n");
 #endif
 
-	line = CHAPI_MALLOC(length*sizeof(*line));
+	line = MALLOC(length*sizeof(*line));
 	if (!line) return JAVACALL_CHAPI_ERROR_NO_MEMORY;
 
 	res = open_db(MAILCAP_INDEX,&f,CHAPI_READ);
 	if (res) {
-		CHAPI_FREE(line);
+		FREE(line);
 		//no file to read
 		return JAVACALL_OK;
 	}
@@ -917,21 +908,19 @@ int read_caps(){
 
 		if (res < 0) { //buffer too small
 			length*=2;
-			CHAPI_FREE(line);
-			line = CHAPI_MALLOC(length*sizeof(*line));
+			FREE(line);
+			line = MALLOC(length*sizeof(*line));
 			if (!line) break;
 			continue;
 		}
 
-		is_java=(find_key(line,L"x-java",0,0,&java_key));
-
 		p = line;
 		if (!next_key_unquote(p,&ks,&ke,0,0,&p)) continue;
 
-		if (type_name) CHAPI_FREE(type_name);
+		if (type_name) FREE(type_name);
 
 		if (match(ks, ke,java_type)){
-			type_name = CHAPI_MALLOC (sizeof(*type_name));
+			type_name = MALLOC (sizeof(*type_name));
 			*type_name = 0;
 		} else {
 			type_name = substring(ks,ke);
@@ -944,18 +933,19 @@ int read_caps(){
 		if (!type) break;
 		type_name = 0;
 
+		is_java = find_key(line,L"x-java",&vs,&ve,&java_key);
 		if (!is_java){
 			//javautil_storage_read native content handler
 			short *name_pos;
 
 			if (!next_key_unquote(p,&ks,&ke,&vs,&ve,&p) || vs || ve) continue;
 
-			if (params) {CHAPI_FREE(params);params=0;}
-			if (handler_name) {CHAPI_FREE(handler_name);handler_name=0;}
+			if (params) {FREE(params);params=0;}
+			if (handler_name) {FREE(handler_name);handler_name=0;}
 			if (extract_handler(ks,ke,&handler_name,&params)) continue;
 
 			if (handler = find_handler(handler_name)){
-				CHAPI_FREE (handler_name);
+				FREE (handler_name);
 				handler_name = 0;
 			} else {
 				handler = new_handler_info(handler_name);
@@ -979,7 +969,7 @@ int read_caps(){
 
 					//new handler associated with action
 					if (handler = find_handler(handler_name)){
-						CHAPI_FREE (handler_name);
+						FREE (handler_name);
 					} else {
 						handler = new_handler_info(handler_name);
 						handler->appname = handler_name;
@@ -1007,16 +997,19 @@ int read_caps(){
 				if (match(ks, ke,L"copiousoutput")) {action->flag |= TYPE_INFO_COPIOUSOUTPUT; continue;}
 			}
 		} else {
+            int jflag = get_integer(vs, ve);
 			if (!find_key(line,L"x-handlerid",&vs,&ve,0)) continue;
 			handler_name = substring_unquote(vs,ve);
 
 			if (handler = find_handler(handler_name)){
-				CHAPI_FREE (handler_name);
+				FREE (handler_name);
 			} else {
 				handler = new_handler_info(handler_name);
 				handler->flag |= TYPE_INFO_JAVA_HANDLER;
 			}
 			handler_name = 0;
+
+            handler->jflag = jflag;
 
 			p = line;
 			action = 0;
@@ -1041,31 +1034,31 @@ int read_caps(){
 			}
 
 		}
-		if (type_name) {CHAPI_FREE(type_name);type_name=0;}
-		if (handler_name) {CHAPI_FREE(handler_name);handler_name=0;}
-		if (params) {CHAPI_FREE(params);params=0;}
+		if (type_name) {FREE(type_name);type_name=0;}
+		if (handler_name) {FREE(handler_name);handler_name=0;}
+		if (params) {FREE(params);params=0;}
 		handler = 0;
 		action = 0;
 		type = 0;
+    }
+    if (handler) pop_handler_info();
+    if (line) FREE(line);
+    close_db(f);
+    update_lastread(MAILCAP_INDEX);
+
+    if (g_handler_infos_used){
+	    read_access_list();
+    }
+
+    if (g_handler_infos_used){
+	    read_action_map();
+    }
+
+    return 0;
 }
-if (handler) pop_handler_info();
-if (line) CHAPI_FREE(line);
-close_db(f);
-update_lastread(MAILCAP_INDEX);
-
-if (g_handler_infos_used){
-	read_access_list();
-}
-
-if (g_handler_infos_used){
-	read_action_map();
-}
-
-return 0;
-}
 
 
-static int suffix_fits(const short* suffix, content_type_info* info){
+static int suffix_fits(const short* suffix, const content_type_info* info){
 	short buffer[MAX_BUFFER],*b=buffer;
 	if (!suffix || !info) return 0;
 	if (info->suffixes){
@@ -1081,12 +1074,12 @@ static int suffix_fits(const short* suffix, content_type_info* info){
 	return 0;
 }
 
-static int type_fits(const short* type, content_type_info* info){
+static int type_fits(const short* type, const content_type_info* info){
 	short *t;
 	if (!type || !info) return 0;
 	t = info->type_name;
 	while (*type && *t) {
-		if (chricmp(*type,*t)) return 0;
+		if (chrieq(*type,*t)) return 0;
 		if (*t == '/' && (!*(t+1) || *(t+1)=='*')) return 1; //check implicit and explicit wildcards
 		++type;
 		++t;
@@ -1289,9 +1282,9 @@ javacall_result javacall_chapi_init_registry(void){
             res = javacall_chapi_register_handler(  	
                 handlerID,
 		        L"this is going to be handled by OS shell",
-		        L"suite_id",
+		        NULL, // INVALID_SUITE_ID
 		        L"class_name",
-		        REGISTERED_NATIVE_FLAG,
+		        0, // flag
 		        &contentType, 1,
 		        &suffix, 1,
 		        &action, 1,
@@ -1314,23 +1307,24 @@ void javacall_chapi_finalize_registry(void){
 	clean_registry();
 	reset_lastread();
 
-	if (mailcaps_path) CHAPI_FREE(mailcaps_path);
+	if (mailcaps_path) FREE(mailcaps_path);
 	mailcaps_path = 0;
 
-	if (mailcaps_fname) CHAPI_FREE(mailcaps_fname);
+	if (mailcaps_fname) FREE(mailcaps_fname);
 	mailcaps_fname = 0;
 
-	if (actionmap_fname) CHAPI_FREE(actionmap_fname);
+	if (actionmap_fname) FREE(actionmap_fname);
 	actionmap_fname = 0;
 
-	if (accesslist_fname) CHAPI_FREE(accesslist_fname);
+	if (accesslist_fname) FREE(accesslist_fname);
 	accesslist_fname = 0;
 
     DeInitPlatform2JavaInvoker();
 }
 
-
-//register handler
+/*
+* if the registered handler is a native handler the suite_id parameter must be equal to INVALID_SUITE_ID (string representation) or NULL
+*/
 javacall_result javacall_chapi_register_handler(
         javacall_const_utf16_string content_handler_id,
         javacall_const_utf16_string content_handler_friendly_appname,
@@ -1344,15 +1338,20 @@ javacall_result javacall_chapi_register_handler(
         javacall_const_utf16_string* action_names, int nActionNames,
         javacall_const_utf16_string* access_allowed_ids,  int nAccesses){
 
+    static javacall_utf16 invalidSuiteId[] = L"FFFFFFFF"; // INVALID_SUITE_ID string representation
 	int result;
 	javautil_storage file=0;
 	int len;
-	int itype,iact, il, iacc;
+	int itype, iact, il, iacc;
 	char buf[MAX_LINE],*b;
 	int idQuoted;
 
+    if( suite_id == NULL ){ // native handler registration
+        suite_id = invalidSuiteId;
+    }
+
 #ifdef DEBUG_OUTPUT
-	wprintf(L"JAVACALL::javacall_chapi_register_handler(%s,%s,%s)\n",content_handler_id,suite_id,class_name);
+	wprintf(L"JAVACALL::javacall_chapi_register_handler(%s,%s,%s,0x%04x)\n",content_handler_id,suite_id,class_name, flag);
 #endif
 
 	result = open_db(MAILCAP_INDEX,&file,CHAPI_APPEND);
@@ -1396,30 +1395,32 @@ javacall_result javacall_chapi_register_handler(
 			if (!javautil_str_wcsicmp(action,EDIT)) {
 				taction=EDIT;
 			} else if (!javautil_str_wcsicmp(action,COMPOSE) || !javautil_str_wcsicmp(action,NEW)){
-					taction=COMPOSE;
+				taction=COMPOSE;
 			} else if (!javautil_str_wcsicmp(action,COMPOSETYPED)){
-					taction=COMPOSETYPED;
+				taction=COMPOSETYPED;
 			} else if (!javautil_str_wcsicmp(action,PRINT)){
-					taction=PRINT;
+				taction=PRINT;
 			}
 
 			//regular mailcap action
 			if (taction) { 
-		b += sprintf(b,"%s=%s -suite \'",taction,java_invoker);
-		b += append_string(b,suite_id);
-		b += sprintf(b,"\' -class \'");
+		        b += sprintf(b,"%s=%s -suite \'",taction,java_invoker);
+		        b += append_string(b,suite_id);
+		        b += sprintf(b,"\' -class \'");
 				b += append_string(b,class_name);
 				b += sprintf(b,"\' -action '");
 				b += append_string(b, action);
 				b += sprintf(b,"\' \'%%s\';");
 			} 
 			//java action
-				b += sprintf(b,"x-action='");
-				b += append_string(b, action);
-				b += sprintf(b,"\';");
+			b += sprintf(b,"x-action='");
+			b += append_string(b, action);
+			b += sprintf(b,"\';");
 		}
 		
-		b += sprintf(b,"x-java;x-handlerid=");
+		b += sprintf(b,"x-java=%d;", flag);
+
+		b += sprintf(b,"x-handlerid=");
 		if (idQuoted) *b++ = '\'';
 		b += append_string(b, content_handler_id);
 		if (idQuoted) *b++ = '\'';
@@ -1458,7 +1459,7 @@ javacall_result javacall_chapi_register_handler(
 	if (result)  return result;
 
 
-//update action local names
+    //update action local names
 	if (nLocales){
 		result = open_db(ACTIONMAP_INDEX,&file,CHAPI_APPEND);
 		if (result != 0) return result;
@@ -1513,7 +1514,7 @@ javacall_result javacall_chapi_register_handler(
 		if (result)  return result;
 	}
 
-//update access_list	
+    //update access_list	
 	if (nAccesses){
 		result = open_db(ACCESSLIST_INDEX,&file,CHAPI_APPEND);
 		if (result) return result;
@@ -1529,7 +1530,7 @@ javacall_result javacall_chapi_register_handler(
 			if (idQuoted) *b++ = '\'';
 			*b++ = '=';
 
-		for (iacc=0;iacc<nAccesses;++iacc){
+		    for (iacc=0;iacc<nAccesses;++iacc){
 				*b++ = '\'';
 				b += append_string(b,access_allowed_ids[iacc]);
 				*b++ = '\'';
