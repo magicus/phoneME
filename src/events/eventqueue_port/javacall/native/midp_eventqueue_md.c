@@ -28,35 +28,34 @@
 #include <midp_logging.h>
 #include <javacall_eventqueue.h>
 
+
 /**
- * @file
- *
- * Platform specific system services, such as event handling.
+ * Creates the event queue lock.
  */
-
-/*=========================================================================
- * Event handling functions
- *=======================================================================*/
-
-/** Create the event queue lock. */
 void
 midp_createEventQueueLock(void) {
     javacall_create_event_queue_lock();
 }
 
-/** Destroy the event queue lock. */
+/**
+ * Destroys the event queue lock.
+ */
 void
 midp_destroyEventQueueLock(void) {
     javacall_destroy_event_queue_lock();
 }
 
-/** Wait to get the event queue lock and then lock it. */
+/**
+ * Waits to get the event queue lock and then locks it.
+ */
 void
 midp_waitAndLockEventQueue(void) {
     javacall_wait_and_lock_event_queue();
 }
 
-/** Unlock the event queue. */
+/**
+ * Unlocks the event queue.
+ */
 void
 midp_unlockEventQueue(void) {
     javacall_unlock_event_queue();
