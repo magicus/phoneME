@@ -80,7 +80,7 @@ final public class GIFPlayer extends BasicPlayer implements Runnable {
     /* For zero duration GIFs (e.g. non-animated) wait time between STARTED and END_OF_MEDIA */
     private final long ZERO_DURATION_WAIT = 50;
 
-    /* a table of frame durations */    
+    /* a table of frame durations (default rate) */    
     private Vector frameTimes;
 
     /* the frame count, shows number of rendered frames, and index of next frame to render  */
@@ -89,10 +89,10 @@ final public class GIFPlayer extends BasicPlayer implements Runnable {
     /* Last frame duration while scanning frames */
     private int scanFrameTime;
 
-    /* elapsed media time since start of stream */
+    /* elapsed media time since start of stream (default rate) */
     private long mediaTimeOffset;
 
-    /* the display time of the last read & created frame  */
+    /* the display time of the last read & created frame (default rate) */
     private long displayTime; // default is 0
 
     /* the video renderer object for the GIF Player */
@@ -106,8 +106,8 @@ final public class GIFPlayer extends BasicPlayer implements Runnable {
 
     /* the rate control object for the GIF Player */
     private RateCtrl rateControl;
-
-    /* the duration of the movie in microseconds */
+    
+    /* the duration of the movie in microseconds (default rate) */
     private long duration;
 
     /* the seek type of the stream: either <code>NOT_SEEKABLE</code>, 
@@ -195,20 +195,21 @@ final public class GIFPlayer extends BasicPlayer implements Runnable {
      * @return    the media time in microseconds.
      */
     protected long doGetMediaTime() {
-        long mediaTime;
+        long mediaTime = getDefaultRateMediaTime() * rateControl.getRate() / 100000;
 
-        if (getState() < STARTED) {
-            mediaTime = mediaTimeOffset;
-        } else {
-            mediaTime = ((System.currentTimeMillis() - startTime) * 1000) + mediaTimeOffset;
-            mediaTime *= (rateControl.getRate() / 100000.0);
-        }
+        if (mediaTime > duration)
+            mediaTime = duration;
 
-        if (mediaTime >= duration) {
-            return duration;
-        }
+        return mediaTime;
+    }
 
-        return mediaTime;       
+    private long getDefaultRateMediaTime() {
+        long mediaTime = mediaTimeOffset;
+
+        if (state == STARTED)
+            mediaTime += (System.currentTimeMillis() - startTime) * 1000;
+
+        return mediaTime;
     }
 
     /**
@@ -228,7 +229,7 @@ final public class GIFPlayer extends BasicPlayer implements Runnable {
         if (now > duration)
             now = duration;
 
-        mediaTimeOffset = now;
+        mediaTimeOffset = now * 100000 / rateControl.getRate();
 
         try {
             int count = framePosControl.mapTimeToFrame(now);
@@ -397,7 +398,7 @@ final public class GIFPlayer extends BasicPlayer implements Runnable {
                 if (playThread != null) {
                     stopped = true;
                     playLock.notifyAll();               
-                    mediaTimeOffset = doGetMediaTime();
+                    mediaTimeOffset = getDefaultRateMediaTime();
                     startTime = 0;
                     playLock.wait();
                 }
@@ -473,10 +474,11 @@ final public class GIFPlayer extends BasicPlayer implements Runnable {
             // send an end-of-media if the player was not stopped
             // and the run loop terminates because the end of media
             // was reached.
-            mediaTimeOffset = doGetMediaTime(); 
+            mediaTimeOffset = getDefaultRateMediaTime(); 
             startTime = 0;
 
-            sendEvent(PlayerListener.END_OF_MEDIA, new Long(mediaTimeOffset));
+            sendEvent(PlayerListener.END_OF_MEDIA,
+                      new Long(mediaTimeOffset * rateControl.getRate() / 100000));
         }
 
         synchronized (playLock) {
@@ -491,7 +493,7 @@ final public class GIFPlayer extends BasicPlayer implements Runnable {
      */
     private void stopTimeReached() {
         // stop the player
-        mediaTimeOffset = doGetMediaTime();
+        mediaTimeOffset = getDefaultRateMediaTime();
         stopped = true;
         startTime = 0;        
         // send STOPPED_AT_TIME event
@@ -605,7 +607,7 @@ final public class GIFPlayer extends BasicPlayer implements Runnable {
                 // wait until end of last frame
                 synchronized (playLock) {
                     try {
-                        long waitTime = displayTime - mediaTime;
+                        long waitTime = (displayTime - mediaTime) * 100000 / rateControl.getRate();
 
                         if (waitTime > 0)
                             playLock.wait(waitTime);
@@ -652,7 +654,8 @@ final public class GIFPlayer extends BasicPlayer implements Runnable {
                         if (!done) {
                             mediaTime = doGetMediaTime() / 1000;
 
-                            long waitTime = displayTime - EARLY_THRESHOLD - mediaTime;
+                            long waitTime = (displayTime - EARLY_THRESHOLD - mediaTime)
+                                * 100000 / rateControl.getRate();
                                 
                             while (!stopped && waitTime > 0) {
                                 if (waitTime > MIN_WAIT) {
@@ -1388,8 +1391,7 @@ final public class GIFPlayer extends BasicPlayer implements Runnable {
             if (frameNumber < 0 || frameNumber >= frameTimes.size()) {
                 return -1;
             }
-
-            return (long) (frameToTime(frameNumber) * rateControl.getRate() / 100000L);
+            return (long) (frameToTime(frameNumber));
         }
 
         /**
@@ -1413,9 +1415,7 @@ final public class GIFPlayer extends BasicPlayer implements Runnable {
                 return -1;
             }
 
-            long time = mediaTime * rateControl.getRate() / 100000;
-
-            return (int) timeToFrame(time);
+            return (int) timeToFrame(mediaTime);
         }
 
         public boolean isActive() {
@@ -1474,7 +1474,8 @@ final public class GIFPlayer extends BasicPlayer implements Runnable {
          * @return The actual rate set in &quot;milli-percentage&quot;.
          * @see #getRate
          */
-        public int setRate(int millirate) {         
+        public int setRate(int millirate) {
+            long oldRate = rate;
             if (millirate < MIN_PLAYBACK_RATE) {
                 rate = MIN_PLAYBACK_RATE;
             } else if (millirate > MAX_PLAYBACK_RATE) {
@@ -1482,7 +1483,11 @@ final public class GIFPlayer extends BasicPlayer implements Runnable {
             } else {
                 rate = millirate;
             }
-
+            if (state == STARTED) {
+                mediaTimeOffset = (long)((System.currentTimeMillis() - startTime)
+                    * 1000 * ((double)oldRate / rate - 1) 
+                    + mediaTimeOffset * (double)oldRate / rate);
+            }
             return rate;
         }
 
