@@ -25,40 +25,14 @@
 #
 ######################################################################
 #
-# Module's Component Configuration file
+# Module's PLATFORM Component Configuration file
 #
-# Remember: It is up to the module itself to impose rules of
-# how to compile the options. All the global Makefile needs
-# is the final def. of Java and native file lists and some
-# other def. (like VPATH)
 ######################################################################
 
-EVENTQUEUE_PORT_DIR = $(SUBSYSTEM_EVENTS_DIR)/eventqueue_port
+
+vpath % $(SUBSYSTEM_EVENTS_DIR)/eventqueue_port/javacall/native
 
 
-############################################################
-# Native files under Eventqueue_port library
-############################################################
+SUBSYSTEM_EVENTS_NATIVE_FILES += \
+    midp_eventqueue_md.c
 
-
-SUBSYSTEM_EVENTS_EXTRA_INCLUDES += \
-    -I$(SUBSYSTEM_EVENTS_DIR)/eventqueue_port/include
-
-
-ifeq ($(PLATFORM), armsd)
-   include $(EVENTQUEUE_PORT_DIR)/stubs/lib.gmk
-else
-   ifeq ($(PLATFORM), linux_fb)
-       include $(EVENTQUEUE_PORT_DIR)/stubs/lib.gmk
-   else
-       ifeq ($(PLATFORM), linux_gci)
-           include $(EVENTQUEUE_PORT_DIR)/stubs/lib.gmk
-       else
-	   ifeq ($(PLATFORM), win32_gci)
-	       include $(EVENTQUEUE_PORT_DIR)/stubs/lib.gmk
-	   else
-	       include $(EVENTQUEUE_PORT_DIR)/$(PLATFORM)/lib.gmk
-	   endif
-       endif
-   endif
-endif
