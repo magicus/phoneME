@@ -33,6 +33,9 @@ extern "C" {
 
 /**
  * Creates the event queue lock.
+ *
+ * @return <tt>JAVACALL_OK</tt> if successully created lock
+ *         <tt>JAVACALL_FAIL</tt> or negative value otherwise
  */
 javacall_result javacall_create_event_queue_lock(void){
     return JAVACALL_NOT_IMPLEMENTED;
@@ -40,6 +43,9 @@ javacall_result javacall_create_event_queue_lock(void){
 
 /**
  * Destroys the event queue lock.
+ *
+ * @return <tt>JAVACALL_OK</tt> if successully destroyed lock
+ *         <tt>JAVACALL_FAIL</tt> or negative value otherwise
  */
 javacall_result javacall_destroy_event_queue_lock(void){
     return JAVACALL_NOT_IMPLEMENTED;
@@ -47,6 +53,9 @@ javacall_result javacall_destroy_event_queue_lock(void){
 
 /**
  * Waits to get the event queue lock and then locks it.
+ *
+ * @return <tt>JAVACALL_OK</tt> if successully obtained lock
+ *         <tt>JAVACALL_FAIL</tt> or negative value otherwise
  */
 javacall_result javacall_wait_and_lock_event_queue(void){
     return JAVACALL_NOT_IMPLEMENTED;
@@ -54,6 +63,9 @@ javacall_result javacall_wait_and_lock_event_queue(void){
 
 /**
  * Unlocks the event queue.
+ *
+ * @return <tt>JAVACALL_OK</tt> if successully released lock
+ *         <tt>JAVACALL_FAIL</tt> or negative value otherwise
  */
 javacall_result javacall_unlock_event_queue(void){
     return JAVACALL_NOT_IMPLEMENTED;
