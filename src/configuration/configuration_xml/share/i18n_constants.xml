@@ -616,6 +616,12 @@
             Name="AMS_MGR_RUN_THE_NEW_SUITE"
             Comment="AMS: com.sun.midp.appmanager.AppManagerUI"/>
   <constant Type="int"
+              Name="AMS_MGR_ENABLE_ON_DEVICE_DEBUG_TITLE"
+              Comment="AMS: com.sun.midp.appmanager.AppManagerUI"/>
+  <constant Type="int"
+              Name="AMS_MGR_ENABLE_ON_DEVICE_DEBUG"
+              Comment="AMS: com.sun.midp.appmanager.AppManagerUI"/>
+  <constant Type="int"
             Name="AMS_MGR_SUCC_SUITE_STORAGE_CHANGED"
             Comment="AMS: com.sun.midp.appmanager.AppManagerUI"/>
   <constant Type="int"
