@@ -161,7 +161,7 @@ static int executeVM( void ) {
   }
   
   int result = 0;
-  while( --ExecutionLoops >= 0 ) {
+  for (int i = 0; i < ExecutionLoops; i++) {
     if (Verbose) {
       tty->print_cr("\t***Starting VM***");
     }
