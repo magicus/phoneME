@@ -1,5 +1,5 @@
 #
-# Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+# Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
 # 
 # This program is free software; you can redistribute it and/or
@@ -43,75 +43,6 @@ JSR_CONFIGURATION_INPUT_FILES += \
 MODULE_SATSA_COMMON_JAVA_FILES += \
     $(JSR_177_DIR)/src/cdc_share/common/classes/com/sun/satsa/security/SecurityInitializer.java
 
-# Same classes are included in JSR 172 as well.
-# Avoid double inclusion.
-ifneq ($(USE_JSR_172), true)
-ifneq ($(J2ME_CLASSLIB), basis)
-ifneq ($(J2ME_CLASSLIB), personal)
-MODULE_SATSA_COMMON_JAVA_FILES += \
-    $(JSR_177_DIR)/src/share/satsa/classes/java/rmi/Remote.java \
-    $(JSR_177_DIR)/src/share/satsa/classes/java/rmi/RemoteException.java
-endif
-endif
-endif
-
-# Source files for the ( satsa ) module
-#
-ifneq ($(USE_SECOP),true)
-MODULE_SATSA_CRYPTO_JAVA_FILES += \
-    $(JSR_177_DIR)/src/share/satsa/classes/javax/crypto/BadPaddingException.java \
-    $(JSR_177_DIR)/src/share/satsa/classes/javax/crypto/Cipher.java \
-    $(JSR_177_DIR)/src/share/satsa/classes/javax/crypto/IllegalBlockSizeException.java \
-    $(JSR_177_DIR)/src/share/satsa/classes/javax/crypto/NoSuchPaddingException.java \
-    $(JSR_177_DIR)/src/share/satsa/classes/javax/crypto/ShortBufferException.java \
-    $(JSR_177_DIR)/src/share/satsa/classes/javax/crypto/spec/SecretKeySpec.java \
-    $(JSR_177_DIR)/src/share/satsa/classes/javax/crypto/spec/IvParameterSpec.java \
-    $(JSR_177_DIR)/src/share/crypto/classes/com/sun/satsa/crypto/RSAPublicKey.java
-endif
-
-MODULE_SATSA_JCRMI_JAVA_FILES += \
-    $(JSR_177_DIR)/src/cdc_share/protocol/jcrmi/classes/com/sun/cdc/io/j2me/jcrmi/RemoteStubCreation.java
-
-MODULE_SATSA_CRYPTO_JAVA_FILES += \
-    $(JSR_177_DIR)/src/cdc_share/satsa/classes/com/sun/j2me/crypto/MD2.java \
-
-# Source files for security package
-#
-ifneq ($(USE_SECOP),true)
-DO_SECURITY_PROVIDER_FILTERING = true
-CVM_PROPS_SRC = $(JSR_177_DIR)/src/cdc_share/satsa/java.security
-
-SECURITY_PROVIDERS += \
-    sun.security.provider.Sun \
-    com.sun.j2me.crypto.SunSATSA
-
-MODULE_SATSA_CRYPTO_JAVA_FILES += \
-    $(JSR_177_DIR)/src/cdc_share/satsa/classes/com/sun/j2me/crypto/SunSATSA.java \
-    $(JSR_177_DIR)/src/cdc_share/satsa/classes/com/sun/j2me/crypto/RSAKeyFactory.java \
-    $(JSR_177_DIR)/src/cdc_share/satsa/classes/com/sun/j2me/crypto/MD5RSASignature.java \
-    $(JSR_177_DIR)/src/cdc_share/satsa/classes/com/sun/j2me/crypto/SHA1RSASignature.java \
-    $(JSR_177_DIR)/src/cdc_share/satsa/classes/com/sun/j2me/crypto/RSASignature.java
-else
-SECURITY_PROVIDERS += \
-    com.sun.satsa.crypto.SunSATSA
-
-MODULE_SATSA_CRYPTO_JAVA_FILES += \
-    $(JSR_177_DIR)/src/cdc_share/satsa/classes/com/sun/satsa/crypto/SunSATSA.java
-
-endif
-
-# Define APDU sources which depend on options
-#
-# JSR_177_APDU_MANAGER=simple
-ifeq ($(JSR_177_APDU_MANAGER),simple)
-vpath % $(JSR_177_DIR)/src/cdc_share/protocol/apdu/simple/native
-endif
-
-# JSR_177_APDU_MANAGER=carddevice & JSR_177_APDU_CARDDEVICE=platformcarddevice
-ifeq ($(JSR_177_APDU_CARDDEVICE),platformcarddevice)
-vpath % $(JSR_177_DIR)/src/cdc_share/protocol/apdu/native
-endif
-
 # Definition for the build directory
 #
 JSR_177_BUILD_DIR       = $(JSROP_BUILD_DIR)/jsr177
@@ -129,63 +60,22 @@ MODULE_SATSA_COMMON_JAVA_FILES += \
 $(JSR_177_INITIALIZER): $(CONFIGURATOR_JAR_FILE)
 	$(call generateJSRInitializer,$(JSR_177_PROPERTY_FILES),$(JSR_177_GENERATED_DIR),$(JSR_177_INIT_PACKAGE),$@,$(JSR_177_LIB_NAME))
 
-# Java card constants
-#
-JAVACARD_CLASSES = $(JSR_177_BUILD_DIR)/javacard_classes
-
-# Java card constants
-#
-JSR_177_BINDIR=$(JSR_177_BUILD_DIR)/bin
-JCRMIC_TOOL = $(JSR_177_BINDIR)/$(JCRMIC_ARCHIVE)
-SIM_TEST    = $(JSR_177_BUILD_DIR)/.sim_test
-
-ifeq ($(JSR_177_USE_EMULATOR),true)
-    SIM_TOOL = $(SIM_TEST) $(APPLETS) $(JC_EEPROM_IMAGE)
-endif
-
-# Tools and applets
-#
-JSR177_JAVAC ?= $(CVM_JAVAC)
-
-ifeq ($(JSR_177_USE_EMULATOR),true)
-TOOLS = $(JAVACARD_CLASSES) $(JSR_177_BINDIR) $(JCRMIC_TOOL) $(SIM_TOOL)
-
-JSR177_JAVA ?= $(CVM_JAVA)
-else
-TOOLS = $(JAVACARD_CLASSES) $(JSR_177_BINDIR) $(JCRMIC_TOOL) $(ACL_DATA_DIRS) \
-        $(JSR_177_GENERATED_DIR)/classes/$(JC_ACL_APPLET_PATH)/Data.java 
-endif
-
 JSR_177_LIB_NAME        = jsr177
 JSR_177_JAR             = $(JSROP_LIB_DIR)/$(JSR_177_LIB_NAME).jar
-JSR_177_NATIVE_LIB      = $(JSROP_LIB_DIR)/$(LIB_PREFIX)$(JSR_177_LIB_NAME)$(LIB_POSTFIX)
-JSR_177_NATIVE_OBJS     = $(patsubst %.c,$(JSROP_OBJ_DIR)/%.o,$(SUBSYSTEM_SATSA_NATIVE_FILES))
 
 SUBSYSTEM_JSR_177_JAVA_FILES = $(SUBSYSTEM_SATSA_JAVA_FILES)
-
 JPP_DEFS             += -DENABLE_JSR_177
-JSROP_NATIVE_OBJS    += $(JSR_177_NATIVE_OBJS)
-JSROP_CNI_CLASSES    += $(SUBSYSTEM_SATSA_CNI_CLASSES)
-JSROP_NATIVE_LIBS    += $(JSR_177_NATIVE_LIB)
 
 JSR_177_API_CLASSLIST = $(JSR_177_DIR)/build/cdc_share/satsa_api.txt
 JSR_177_API_CLASSES   = $(call readClassList, $(JSR_177_API_CLASSLIST))
 JSR_177_EXTRA_JAR     = $(JSROP_LIB_DIR)/$(JSR_177_LIB_NAME)_extras.jar
 JSROP_EXTRA_JARS     += $(JSR_177_EXTRA_JAR)
 
-CVM_INCLUDE_JAVACALL  = true
-
 $(JSR_177_JAR):  $(SUBSYSTEM_JSR_177_JAVA_FILES) $(TOOLS)
 	$(call compileJSRClasses,177)
 
 $(JSR_177_EXTRA_JAR): $(JSR_177_JAR)
 	$(call makeJSRExtraJar,177)
-
-JSROP_JAVACALL_DEPENDENTS += $(JSR_177_NATIVE_OBJS)
-
-$(JSR_177_NATIVE_LIB): $(JSR_177_NATIVE_OBJS) $(ABSTRACTIONS_NATIVE_LIBRARY)
-	@echo "Linking $@"
-	$(AT)$(call makeSharedLibrary, $(JSR_177_NATIVE_OBJS))
 
 # Copy and filter SATSA source in SATSA_SOURCE_OUTPUT_DIR
 satsa_source_bundle:: $(JSR_177_DIR)
