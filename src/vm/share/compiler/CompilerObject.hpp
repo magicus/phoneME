@@ -37,7 +37,11 @@
   template( LiteralPoolElement      ) \
   template( CodeGenerator           )
 
-#define USE_COMPILER_OBJECT_HEADER 1
+#ifdef DEBUG
+# define USE_COMPILER_OBJECT_HEADER 1
+#else
+# define USE_COMPILER_OBJECT_HEADER 0
+#endif
 
 class CompilerObject {
 public:
@@ -48,7 +52,16 @@ public:
     number_of_compiler_object_types,
   };
 private:
- PRODUCT_ONLY( CompilerObject( void ) {} )
+  PRODUCT_ONLY( CompilerObject( void ) {} )
+
+  enum {
+    align_bits = 2,
+    align_mask = (1 << align_bits) - 1,
+  };
+
+  static int align_size( const int size ) {
+    return (size + align_mask) & ~align_mask;
+  }
 
 #if USE_COMPILER_OBJECT_HEADER
   enum {
@@ -58,10 +71,7 @@ private:
     size_shift = 0,
     type_shift = size_bits,
 
-    size_mask  = (1 << size_bits) - 1,
-
-    align_bits = 2,
-    align_mask = (1 << align_bits) - 1,
+    size_mask  = (1 << size_bits) - 1
   };
 
   unsigned header;
@@ -75,10 +85,6 @@ protected:
   }
   int  size( void ) const { return size( header ); }
   Type type( void ) const { return type( header ); }
-
-  static int align_size( const int size ) {
-    return (size + align_mask) & ~align_mask;
-  }
 
 private:
   static unsigned make_header( const Type type, const int size ) {
