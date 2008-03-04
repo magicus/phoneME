@@ -83,7 +83,7 @@ int initDirectSoundCap(recorder *c)
     return 1;
 }
 
-int toggleAudioCapture(int captureFlag)
+BOOL toggleAudioCapture(BOOL on)
 {
     DWORD status = 0;
 
@@ -91,21 +91,24 @@ int toggleAudioCapture(int captureFlag)
 
     assert(captureBuffer->GetStatus(&status) == DS_OK);
 
-    if(!((status & DSCBSTATUS_CAPTURING) ^ captureFlag))
-        return captureFlag;
+    BOOL now_on = ( 0 != (status & DSCBSTATUS_CAPTURING) );
 
-    if(captureFlag)
+    if( !( on ^ now_on ) ) return on;
+
+    if( on )
     {
         DWORD dwReadCursor;
 
-    assert(captureBuffer->GetCurrentPosition (NULL, &dwReadCursor) == DS_OK);
+        assert(captureBuffer->GetCurrentPosition (NULL, &dwReadCursor) == DS_OK);
         captureOffset = dwReadCursor;
         captureBuffer->Start(DSCBSTART_LOOPING);
     }
     else
+    {
         captureBuffer->Stop();
+    }
 
-    return captureFlag;
+    return on;
 }
 
 
