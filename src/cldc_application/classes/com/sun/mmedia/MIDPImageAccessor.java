@@ -50,13 +50,15 @@ class MIDPImageAccessor implements ImageAccess {
      * ImageAccess I/F method
      */
     public boolean isImage(Object image) {
-        return (image instanceof Image);
+        return ((null != image) && (image instanceof Image));
     }
     
     /*
      * ImageAccess I/F method
      */
     public boolean isMutableImage(Object image){
+        if (!isImage(image)) return false;
+
         Image img = (Image)image;
         return img.isMutable();
     }
@@ -65,8 +67,7 @@ class MIDPImageAccessor implements ImageAccess {
      * ImageAccess I/F method
      */
     public int getImageWidth(Object image) {
-        if (!(image instanceof Image))
-            return -1;
+        if (!isImage(image)) return -1;
         
         Image img = (Image)image;
         return img.getWidth();
@@ -76,8 +77,7 @@ class MIDPImageAccessor implements ImageAccess {
      * ImageAccess I/F method
      */
     public int getImageHeight(Object image) {
-        if (!(image instanceof Image))
-            return -1;
+        if (!isImage(image)) return -1;
         
         Image img = (Image)image;
         return img.getHeight();
@@ -87,6 +87,8 @@ class MIDPImageAccessor implements ImageAccess {
      * ImageAccess I/F method
      */
     public byte[] getRGBByteImageData(Object image) {
+        if (!isImage(image)) return null;
+
         return FormatConversionUtils.
                 intArrayToByteArray(getRGBIntImageData(image));
     }
@@ -95,8 +97,7 @@ class MIDPImageAccessor implements ImageAccess {
      * ImageAccess I/F method
      */
     public int[] getRGBIntImageData(Object image) {
-        if (!(image instanceof Image))
-            return null;
+        if (!isImage(image)) return null;
         
         Image img = (Image)image;
         
@@ -112,8 +113,7 @@ class MIDPImageAccessor implements ImageAccess {
      * ImageAccess I/F method
      */
     public Object imageCreateFromImage(Object image) {
-        if (!(image instanceof Image))
-            return null;
+        if (!isImage(image)) return null;
         
         Image img = (Image)image;
         
