@@ -31,7 +31,6 @@ import com.sun.j2me.dialog.Dialog;
 import com.sun.j2me.dialog.MessageDialog;
 import com.sun.j2me.io.FileAccess;
 import com.sun.j2me.security.SatsaPermission;
-import com.sun.cdc.io.j2me.apdu.APDUManager;
 import com.sun.j2me.i18n.Resource;
 import com.sun.j2me.i18n.ResourceConstants;
 import com.sun.j2me.main.Configuration;
@@ -45,6 +44,7 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.util.Vector;
+import java.util.NoSuchElementException;
 
 import com.sun.j2me.security.TrustedClass;
 import com.sun.j2me.security.Token;
@@ -140,30 +140,18 @@ public class PKIManager {
                     UserCredentialManagerException.SE_NO_KEYS);
         }
 
-        int slotCount = APDUManager.getSlotCount();
-
         while (true) {
 
-            for (int i = 0; i < slotCount; i++) {
+            try {
+                Vector CSRs = loadCSRList();
+                byte[] CSR = WIMManager.generateCSR(securityElementID, nameInfo, 
+                      keyLen, keyUsage, forceKeyGen, CSRs, securityToken);
+                
+                storeCSRList(CSRs);
+                return CSR;                                     
+            } catch(NoSuchElementException e) {}
 
-                WIMApplication w = WIMApplication.getInstance(
-                        i, securityElementID, false);
-                if (w == null) {
-                    continue;
-                }
-                try {
-                    Vector CSRs = loadCSRList();
-                    byte[] CSR = w.generateCSR(nameInfo, keyLen,
-                                           keyUsage, forceKeyGen, CSRs, securityToken);
-                    storeCSRList(CSRs);
-                    return CSR;
-                } finally {
-                    w.done();
-                }
-            }
-
-            // WIM application is not found
-
+            // WIM is not found
             if (securityElementPrompt != null) {
                 try {
                     if (MessageDialog.showMessage(
@@ -245,38 +233,12 @@ public class PKIManager {
 
         Vector CSRs = loadCSRList();
 
-        int slotCount = APDUManager.getSlotCount();
-
-        for (int i = 0; i < slotCount; i++) {
-
-            WIMApplication w = WIMApplication.getInstance(
-                    i, null, false);
-
-            if (w == null) {
-                continue;
-            }
-            try {
-                int result = w.addCredential(certDisplayName, t, CSRs, securityToken);
-                if (result == WIMApplication.SUCCESS) {
-                    storeCSRList(CSRs);
-                    return true;
-                }
-                if (result == WIMApplication.CANCEL) {
-                    return false;
-                }
-                if (result == WIMApplication.ERROR) {
-                    break;
-                }
-            } catch (IllegalArgumentException e) {
-                throw e;
-            } catch (SecurityException e) {
-                throw e;
-            } finally {
-                w.done();
-            }
+        boolean result = WIMManager.addCredential(certDisplayName, t, CSRs, 
+                    securityToken);
+         if (result == true) {
+            storeCSRList(CSRs);                
         }
-        throw new UserCredentialManagerException(
-                UserCredentialManagerException.CREDENTIAL_NOT_SAVED);
+        return result;
     }
 
     /**
@@ -329,35 +291,15 @@ public class PKIManager {
             throw new IllegalArgumentException(
                                       "Invalid issuerAndSerialNumber");
         }
-        int slotCount = APDUManager.getSlotCount();
-
+        
         while (true) {
 
-            for (int i = 0; i < slotCount; i++) {
-
-                WIMApplication w = WIMApplication.getInstance(
-                       i, securityElementID, false);
-                if (w == null) {
-                    continue;
-                }
-                try {
-                    int result = w.removeCredential(certDisplayName, isn, securityToken);
-                    if (result == WIMApplication.SUCCESS) {
-                        return true;
-                    }
-                    if (result == WIMApplication.CANCEL) {
-                        return false;
-                    }
-                    throw new UserCredentialManagerException(
-                                         UserCredentialManagerException.
-                                         CREDENTIAL_NOT_FOUND);
-                } finally {
-                    w.done();
-                }
-            }
-
-            // WIM application is not found
-
+            try {
+                return WIMManager.removeCredential(securityElementID, 
+                          certDisplayName, isn, securityToken);                
+            } catch(NoSuchElementException e) {}
+            
+            // WIM is not found
             if (securityElementPrompt != null) {
                 try {
                     if (MessageDialog.showMessage(
@@ -452,26 +394,14 @@ public class PKIManager {
             data = Utils.stringToBytes(string);
         }
 
-        int slotCount = APDUManager.getSlotCount();
-
         while (true) {
 
-            for (int i = 0; i < slotCount; i++) {
+            try {
+                return WIMManager.generateSignature(action == SIGN_STRING, 
+                        data, options, names, securityToken);
+            } catch (NoSuchElementException e) {}
 
-                WIMApplication w = WIMApplication.getInstance(
-                                     i, null, true);
-                if (w == null) {
-                    continue;
-                }
-                try {
-                    return w.generateSignature(action == SIGN_STRING,
-                                                  data, options, names, securityToken);
-                } finally {
-                    w.done();
-                }
-            }
-            // WIM application is not found
-
+            // WIM is not found
             if (securityElementPrompt != null) {
                 try {
                     if (MessageDialog.showMessage(
@@ -492,7 +422,7 @@ public class PKIManager {
      * expected.
      * @return the list
      */
-    private static Vector loadCSRList() {
+    static Vector loadCSRList() {
 
         if (! persistentCSRList()) {
             if (tmpCSRList == null) {
@@ -550,7 +480,7 @@ public class PKIManager {
      * expected.
      * @param CSRs the list
      */
-    private static void storeCSRList(Vector CSRs) {
+    static void storeCSRList(Vector CSRs) {
 
         if (! persistentCSRList()) {
             return;

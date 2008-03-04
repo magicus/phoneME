@@ -40,6 +40,14 @@ MODULE_SATSA_PKI_JAVA_FILES = \
     $(JSR_177_DIR)/src/share/pki/classes/com/sun/satsa/pki/PKIManager.java \
     $(JSR_177_DIR)/src/share/pki/classes/com/sun/satsa/pki/PrivateKey.java \
     $(JSR_177_DIR)/src/share/pki/classes/com/sun/satsa/pki/RFC2253Name.java \
-    $(JSR_177_DIR)/src/share/pki/classes/com/sun/satsa/pki/PublicKey.java \
-    $(JSR_177_DIR)/src/share/pki/classes/com/sun/satsa/pki/WimFileSystem.java \
-    $(JSR_177_DIR)/src/share/pki/classes/com/sun/satsa/pki/WIMApplication.java
+    $(JSR_177_DIR)/src/share/pki/classes/com/sun/satsa/pki/PublicKey.java    
+
+ifeq ($(JSR_177_NULL_IMPLEMENTATION),false)
+MODULE_SATSA_PKI_JAVA_FILES += \
+    $(JSR_177_DIR)/src/share/pki/wimappl/classes/com/sun/satsa/pki/WIMApplication.java \
+    $(JSR_177_DIR)/src/share/pki/wimappl/classes/com/sun/satsa/pki/WimFileSystem.java \
+    $(JSR_177_DIR)/src/share/pki/wimappl/classes/com/sun/satsa/pki/WIMManager.java
+else
+MODULE_SATSA_PKI_JAVA_FILES += \
+    $(JSR_177_DIR)/src/share/pki/nullimpl/classes/com/sun/satsa/pki/WIMManager.java
+endif
