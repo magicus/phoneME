@@ -94,8 +94,8 @@ class AppBundleProxy extends AppProxy {
 		        curr.verifyApplication(classname);
 		        curr.initAppInfo();
 		        appmap.put(classname, curr);
-		        if (LOG_INFO) {
-		            logInfo("AppProxy created: " + curr);
+		        if (LOGGER != null) {
+		            LOGGER.println("AppProxy created: " + curr);
 		        }
 	        }
 	    }

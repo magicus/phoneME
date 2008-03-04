@@ -68,8 +68,6 @@ import com.sun.midp.events.EventTypes;
 public class CHManagerImpl extends com.sun.midp.content.CHManager
     						implements MIDletProxyListListener, EventListener {
 
-    protected static final java.io.PrintStream DEBUG_OUT = System.out;
-	
     /**
      * Inner class to request security token from SecurityInitializer.
      * SecurityInitializer should be able to check this inner class name.
@@ -77,7 +75,7 @@ public class CHManagerImpl extends com.sun.midp.content.CHManager
     static private class SecurityTrusted implements ImplicitlyTrustedClass {};
 
     static {
-        if( DEBUG_OUT != null ) DEBUG_OUT.println( "CHManagerImpl.<static initializer>" );
+        if( AppProxy.LOGGER != null ) AppProxy.LOGGER.println( "CHManagerImpl.<static initializer>" );
         SecurityToken classSecurityToken =
                 SecurityInitializer.requestToken(new SecurityTrusted());
         com.sun.midp.content.CHManager.setCHManager(classSecurityToken, new CHManagerImpl());
@@ -100,7 +98,7 @@ public class CHManagerImpl extends com.sun.midp.content.CHManager
      */
     private CHManagerImpl() {
         super();
-        if( DEBUG_OUT != null ) DEBUG_OUT.println( "CHManagerImpl()" );
+        if( AppProxy.LOGGER != null ) AppProxy.LOGGER.println( "CHManagerImpl()" );
     }
 
     /**
@@ -109,7 +107,7 @@ public class CHManagerImpl extends com.sun.midp.content.CHManager
      * attributes.
      */
     public void install() {
-        if( DEBUG_OUT != null ) DEBUG_OUT.println( "CHManagerImpl.install" );
+        if( AppProxy.LOGGER != null ) AppProxy.LOGGER.println( "CHManagerImpl.install" );
         if (regInstaller != null) {
             regInstaller.install();
             regInstaller = null; // Let GC take it.
@@ -140,7 +138,7 @@ public class CHManagerImpl extends com.sun.midp.content.CHManager
     public void preInstall(Installer installer, InstallState state,
 					MIDletSuite msuite, String authority) throws InvalidJadException
     {
-        if( DEBUG_OUT != null ) DEBUG_OUT.println( "CHManagerImpl.preInstall()" );
+        if( AppProxy.LOGGER != null ) AppProxy.LOGGER.println( "CHManagerImpl.preInstall()" );
 		try {
 		    AppBundleProxy bundle =
 		    	new AppBundleProxy(installer, state, msuite, authority);
@@ -163,7 +161,7 @@ public class CHManagerImpl extends com.sun.midp.content.CHManager
 		    throw new InvalidJadException(InvalidJadException.CORRUPT_JAR,
 						  cnfe.getMessage());
 		}
-        if( DEBUG_OUT != null ) DEBUG_OUT.println( "CHManagerImpl.preInstall() exit" );
+        if( AppProxy.LOGGER != null ) AppProxy.LOGGER.println( "CHManagerImpl.preInstall() exit" );
     }
 
     /**
@@ -172,7 +170,7 @@ public class CHManagerImpl extends com.sun.midp.content.CHManager
      * @param suiteId the suiteId
      */
     public void uninstall(int suiteId) {
-        if( DEBUG_OUT != null ) DEBUG_OUT.println( "CHManagerImpl.uninstall()" );
+        if( AppProxy.LOGGER != null ) AppProxy.LOGGER.println( "CHManagerImpl.uninstall()" );
         RegistryInstaller.uninstallAll(suiteId, false);
     }
 
@@ -216,7 +214,7 @@ public class CHManagerImpl extends com.sun.midp.content.CHManager
      * @see com.sun.midp.content.CHManagerImpl
      */
     public void installDone(boolean success) {
-        if( DEBUG_OUT != null ) DEBUG_OUT.println( "CHManagerImpl.installDone()" );
+        if( AppProxy.LOGGER != null ) AppProxy.LOGGER.println( "CHManagerImpl.installDone()" );
         if (installInvoc != null) {
 		    handler.finish(installInvoc,
 				   success ? Invocation.OK : Invocation.CANCELLED);
@@ -281,8 +279,8 @@ public class CHManagerImpl extends com.sun.midp.content.CHManager
      * @param midlet The proxy of the removed MIDlet
      */
     public void midletRemoved(MIDletProxy midlet) {
-    	if( DEBUG_OUT != null )
-    		DEBUG_OUT.println("midletRemoved: " + midlet.getClassName());
+    	if( AppProxy.LOGGER != null )
+    		AppProxy.LOGGER.println("midletRemoved: " + midlet.getClassName());
 	
 		// Cleanup unprocessed Invocations
 		RegistryImpl.cleanup(midlet.getSuiteId(), midlet.getClassName());

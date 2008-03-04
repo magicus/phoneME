@@ -40,8 +40,6 @@ import com.sun.j2me.security.Token;
  */
 class RegistryStore {
 
-	protected static final java.io.PrintStream DEBUG_OUT = null; // System.out;
-	
     /** 
      * Content Handler fields indexes.
      * <BR>Used with functions: @link findHandler(), @link getValues() and 
@@ -102,10 +100,10 @@ class RegistryStore {
      */
     static ContentHandlerImpl[] findConflicted(String testID) {
         ContentHandlerImpl[] result = findHandler(null, FIELD_ID, testID);
-        if(DEBUG_OUT != null){
-			DEBUG_OUT.println( "conflictedHandlersfor '" + testID + "' [" + result.length + "]:" );
+        if(AppProxy.LOGGER != null){
+			AppProxy.LOGGER.println( "conflictedHandlersfor '" + testID + "' [" + result.length + "]:" );
 			for( int i = 0; i < result.length; i++){
-				DEBUG_OUT.println( "class = '" + result[i].storageId + "', ID = '" + result[i].ID + "'" );
+				AppProxy.LOGGER.println( "class = '" + result[i].storageId + "', ID = '" + result[i].ID + "'" );
 			}
         }
 		return result;
@@ -139,10 +137,10 @@ class RegistryStore {
      * @return found handlers array.
      */
     static ContentHandlerImpl[] forSuite(int suiteId) {
-        if(DEBUG_OUT != null) DEBUG_OUT.println( "RegistryStore.forSuite " + suiteId );
+        if(AppProxy.LOGGER != null) AppProxy.LOGGER.println( "RegistryStore.forSuite " + suiteId );
         String res = store.forSuite0(suiteId);
-        if(DEBUG_OUT != null) 
-        	DEBUG_OUT.println( "RegistryStore.forSuite res = '" + res + "'");
+        if(AppProxy.LOGGER != null) 
+        	AppProxy.LOGGER.println( "RegistryStore.forSuite res = '" + res + "'");
         return deserializeCHArray(res);
     }
 
@@ -250,16 +248,16 @@ class RegistryStore {
     	Vector result = new Vector();
     	// all lengths in bytes
     	int pos = 0;
-//        if(DEBUG_OUT != null) 
-//        	DEBUG_OUT.println( "deserializeString: string length = " + str.length() );
+//        if(AppProxy.LOGGER != null) 
+//        	AppProxy.LOGGER.println( "deserializeString: string length = " + str.length() );
     	while( pos < str.length() ){
     		int elem_length = (int)str.charAt(pos++) / 2;
-//            if(DEBUG_OUT != null) 
-//            	DEBUG_OUT.println( "deserializeString: pos = " + pos + 
+//            if(AppProxy.LOGGER != null) 
+//            	AppProxy.LOGGER.println( "deserializeString: pos = " + pos + 
 //            							", elem_length = " + elem_length );
     		result.addElement(str.substring(pos, pos + elem_length));
-//            if(DEBUG_OUT != null)
-//            	DEBUG_OUT.println( "deserializeString: '" + str.substring(pos, pos + elem_length) + "'" );
+//            if(AppProxy.LOGGER != null)
+//            	AppProxy.LOGGER.println( "deserializeString: '" + str.substring(pos, pos + elem_length) + "'" );
     		pos += elem_length;
     	}
         return result;
@@ -272,8 +270,8 @@ class RegistryStore {
      * @return restored ContentHandlerImpl object or null
      */
     private static ContentHandlerImpl deserializeCH(String str) {
-        if(DEBUG_OUT != null) 
-        	DEBUG_OUT.println( "RegistryStore.deserializeCH '" + str + "'");
+        if(AppProxy.LOGGER != null) 
+        	AppProxy.LOGGER.println( "RegistryStore.deserializeCH '" + str + "'");
         Vector components = deserializeString(str);
 
         if (components.size() < 1) return null;

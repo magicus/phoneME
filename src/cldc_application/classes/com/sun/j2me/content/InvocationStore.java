@@ -40,8 +40,6 @@ package com.sun.j2me.content;
  * requests but blocks, if requested, until it is unblocked.
  */
 public class InvocationStore {
-	protected static final java.io.PrintStream DEBUG_OUT = System.out;
-
     /**
      * The count of cancel requests; access is not synchronized because
      * it is only increments in one place and it does not matter if it is
@@ -95,8 +93,8 @@ public class InvocationStore {
      */
     static void put(InvocationImpl invoc) {
         put0(invoc);
-    	if (AppProxy.LOG_INFO) {
-    	    AppProxy.getCurrent().logInfo("Store put0: " + invoc);
+    	if (AppProxy.LOGGER != null) {
+    	    AppProxy.LOGGER.println("Store put0: " + invoc);
     	}
     }
 
@@ -116,8 +114,8 @@ public class InvocationStore {
      */
     static InvocationImpl getRequest(int suiteId, String classname,
                                      boolean shouldBlock) {
-    	if( DEBUG_OUT != null )
-    		DEBUG_OUT.println( "InvocationStore.getRequest: suite = " + suiteId +
+    	if( AppProxy.LOGGER != null )
+    		AppProxy.LOGGER.println( "InvocationStore.getRequest: suite = " + suiteId +
     								", classname = '" + classname + "'" );
         classname.length(); // null pointer check
         InvocationImpl invoc = new InvocationImpl();
@@ -144,8 +142,8 @@ public class InvocationStore {
      */
     static InvocationImpl getResponse(InvocationImpl invoc, int suiteId, 
                                         String classname, boolean shouldBlock) {
-    	if( DEBUG_OUT != null )
-    		DEBUG_OUT.println( "InvocationStore.getResponse: suite = " + suiteId +
+    	if( AppProxy.LOGGER != null )
+    		AppProxy.LOGGER.println( "InvocationStore.getResponse: suite = " + suiteId +
     								", classname = '" + classname + "'" );
         invoc.suiteId = suiteId;
         invoc.classname = classname;
@@ -266,8 +264,8 @@ public class InvocationStore {
     	    invoc = null;
     	}
     
-    	if (AppProxy.LOG_INFO) {
-    	    AppProxy.getCurrent().logInfo("Store get: " +
+    	if (AppProxy.LOGGER != null) {
+    	    AppProxy.LOGGER.println("Store get: " +
     					  classname +
     					  ", mode: " + mode +
     					  ", " + invoc);
@@ -287,8 +285,8 @@ public class InvocationStore {
      */
     static void setStatus(InvocationImpl invoc) {
     	setStatus0(invoc);
-    	if (AppProxy.LOG_INFO) {
-    	    AppProxy.getCurrent().logInfo("Store setStatus0: " + invoc);
+    	if (AppProxy.LOGGER != null) {
+    	    AppProxy.LOGGER.println("Store setStatus0: " + invoc);
     	}
     }
 
@@ -301,8 +299,8 @@ public class InvocationStore {
      */
     static void setParams(InvocationImpl invoc) {
     	setParams0(invoc);
-    	if (AppProxy.LOG_INFO) {
-    	    AppProxy.getCurrent().logInfo("Store setParams0: " + invoc);
+    	if (AppProxy.LOGGER != null) {
+    	    AppProxy.LOGGER.println("Store setParams0: " + invoc);
     	}
     }
 
@@ -335,8 +333,8 @@ public class InvocationStore {
             }
         }
 
-        if (AppProxy.LOG_INFO) {
-            AppProxy.getCurrent().logInfo("Store listen: " + classname +
+        if (AppProxy.LOGGER != null) {
+            AppProxy.LOGGER.println("Store listen: " + classname +
                                           ", request: " + request +
                                           ", pending: " + pending);
         }
@@ -359,8 +357,8 @@ public class InvocationStore {
         int mode = (request ? MODE_LREQUEST : MODE_LRESPONSE);
         setListenNotify0(suiteId, classname, mode);
 
-        if (AppProxy.LOG_INFO) {
-            AppProxy.getCurrent().logInfo("Store setListenNotify: " +
+        if (AppProxy.LOGGER != null) {
+            AppProxy.LOGGER.println("Store setListenNotify: " +
                                           classname +
                                           ", request: " + request);
         }
@@ -371,6 +369,9 @@ public class InvocationStore {
      * method if it is blocked in the native code.
      */
     static void cancel() {
+    	if( AppProxy.LOGGER != null ){
+    		AppProxy.LOGGER.println( "InvocationStore.cancel called. cancelCount = " + cancelCount );
+    	}
     	cancelCount++;
     	cancel0();
     }
@@ -386,8 +387,8 @@ public class InvocationStore {
      */
 
     static void setCleanup(int suiteId, String classname, boolean cleanup) {
-        if (AppProxy.LOG_INFO) {
-            AppProxy.getCurrent().logInfo("Store setCleanup: " + classname +
+        if (AppProxy.LOGGER != null) {
+            AppProxy.LOGGER.println("Store setCleanup: " + classname +
                                           ": " + cleanup);
         }
         setCleanup0(suiteId, classname, cleanup);

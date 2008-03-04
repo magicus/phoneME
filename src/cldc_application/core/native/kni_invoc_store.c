@@ -63,6 +63,8 @@
 #define DEBUG_211
 #define DEBUG_INVOCLC
 #define TRACE_INVOCFIND
+#define TRACE_MIDLETREG
+#define TRACE_BLOCKING
 #endif
 
 /*
@@ -1145,13 +1147,15 @@ static MidletIdChain ** findMidletIdChain( SuiteIdType suiteId, javacall_utf16_s
 KNIEXPORT KNI_RETURNTYPE_VOID
 Java_com_sun_j2me_content_AppProxy_midletIsAdded() {
     SuiteIdType suiteId;
-    javacall_utf16_string midletClassName;
     KNI_StartHandles(1);
 
     suiteId = KNI_GetParameterAsInt(1);
-    GET_PARAMETER_AS_UTF16_STRING(2, classname)
+    GET_PARAMETER_AS_UTF16_STRING(2, midletClassName)
 
     MidletIdChain ** elemPlace, * elem;
+#ifdef TRACE_MIDLETREG
+    printf( "AppProxy_midletIsAdded: %d, '%ls'\n", suiteId, midletClassName );
+#endif
     elemPlace = findMidletIdChain( suiteId, midletClassName );
     if( *elemPlace == NULL || compareMidletIdChain(*elemPlace, suiteId, midletClassName) != 0 ){
         if( (elem = newMidletIdChain()) == NULL ){
@@ -1173,13 +1177,15 @@ Java_com_sun_j2me_content_AppProxy_midletIsAdded() {
 KNIEXPORT KNI_RETURNTYPE_VOID
 Java_com_sun_j2me_content_AppProxy_midletIsRemoved() {
     SuiteIdType suiteId;
-    javacall_utf16_string midletClassName;
     KNI_StartHandles(1);
 
     suiteId = KNI_GetParameterAsInt(1);
-    GET_PARAMETER_AS_UTF16_STRING(2, classname)
+    GET_PARAMETER_AS_UTF16_STRING(2, midletClassName)
 
     MidletIdChain ** elemPlace;
+#ifdef TRACE_MIDLETREG
+    printf( "AppProxy_midletIsRemoved: %d, '%ls'\n", suiteId, midletClassName );
+#endif
     elemPlace = findMidletIdChain( suiteId, midletClassName );
     if( *elemPlace != NULL && compareMidletIdChain(*elemPlace, suiteId, midletClassName) == 0 ){
         // remove elem from the chain
@@ -1197,13 +1203,15 @@ KNIEXPORT KNI_RETURNTYPE_BOOLEAN
 Java_com_sun_j2me_content_AppProxy_isMidletRunning() {
     int res = 0;
     SuiteIdType suiteId;
-    javacall_utf16_string midletClassName;
     KNI_StartHandles(1);
 
     suiteId = KNI_GetParameterAsInt(1);
-    GET_PARAMETER_AS_UTF16_STRING(2, classname)
+    GET_PARAMETER_AS_UTF16_STRING(2, midletClassName)
 
     MidletIdChain ** elemPlace = findMidletIdChain( suiteId, midletClassName );
+#ifdef TRACE_MIDLETREG
+    printf( "AppProxy_isMidletRunning: %d, '%ls'\n", suiteId, midletClassName );
+#endif
     res = (*elemPlace != NULL && compareMidletIdChain(*elemPlace, suiteId, midletClassName) == 0);
 
     RELEASE_UTF16_STRING_PARAMETER
@@ -1442,6 +1450,9 @@ static void blockThread() {
     if (p == NULL) {
         p = (MidpReentryData*)(SNI_AllocateReentryData(sizeof (MidpReentryData)));
     }
+#ifdef TRACE_BLOCKING
+    printf( "blockThread %p\n", p );
+#endif
     p->waitingFor = JSR211_SIGNAL;
     p->status = JSR211_INVOKE_OK;
     SNI_BlockThread();
@@ -1472,13 +1483,22 @@ static void unblockWaitingThreads(int newStatus) {
     const int status_mask = JSR211_INVOKE_OK | JSR211_INVOKE_CANCELLED;
     int st = newStatus==STATUS_OK ? JSR211_INVOKE_OK: JSR211_INVOKE_CANCELLED;
 
+#ifdef TRACE_BLOCKING
+    printf( "unblockWaitingThreads( %d ). blocked_threads count = %d\n", newStatus, n );
+#endif
     for (i = 0; i < n; i++) {
         MidpReentryData *p = (MidpReentryData*)(blocked_threads[i].reentry_data);
         if (p == NULL) {
             continue;
         }
+#ifdef TRACE_BLOCKING
+        printf( "blocked_thread[%d] %p, waitingFor '%x', status '%x'\n", i, p, p->waitingFor, p->status );
+#endif
         if (p->waitingFor == JSR211_SIGNAL && (p->status | status_mask) != 0) {
             JVMSPI_ThreadID id = blocked_threads[i].thread_id;
+#ifdef TRACE_BLOCKING
+            printf( "try to unblock. id = %p\n", id );
+#endif
             if (id != NULL) {
                 p->status = st;
                 SNI_UnblockThread(id);
@@ -1589,7 +1609,7 @@ static StoredLink* findLink(StoredInvoc *invoc) {
 void jsr211_remove_invocation(StoredInvoc* invoc) {
     StoredLink *link;
 #ifdef DEBUG_211
-    javacall_print( "jsr211_remove_invocation: %d\n", invoc->tid );
+    printf( "jsr211_remove_invocation: %d\n", invoc->tid );
 #endif
     link = findLink(invoc);
     if (NULL != link)

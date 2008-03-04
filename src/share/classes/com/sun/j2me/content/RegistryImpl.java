@@ -49,8 +49,6 @@ import com.sun.midp.security.SecurityToken;
  * registrations that is initialized on first use.
  */
 public final class RegistryImpl {
-
-	protected static final java.io.PrintStream DEBUG_OUT = System.out;
 	
     /**
      * Inner class to request security token from SecurityInitializer.
@@ -162,8 +160,8 @@ public final class RegistryImpl {
         // Synchronize between competing operations
         RegistryImpl curr = null;
         synchronized (mutex) {
-        	if( DEBUG_OUT != null )
-        		DEBUG_OUT.println( "RegistryImpl.getRegistryImpl( '" +
+        	if( AppProxy.LOGGER != null )
+        		AppProxy.LOGGER.println( "RegistryImpl.getRegistryImpl( '" +
         					classname + "' )");
             // Check if class already has a RegistryImpl
             curr = (RegistryImpl)registries.get(classname);
@@ -182,12 +180,12 @@ public final class RegistryImpl {
             // Create a new instance and insert it into the list
             curr = new RegistryImpl(classname);
             registries.put(classname, curr);
-            if( DEBUG_OUT != null ){
-            	DEBUG_OUT.println( "registers:" );
+            if( AppProxy.LOGGER != null ){
+            	AppProxy.LOGGER.println( "registers:" );
             	java.util.Enumeration e = registries.keys();
             	while( e.hasMoreElements() ){
             		String c = (String)e.nextElement();
-            		DEBUG_OUT.println( "\t" + c + " " + registries.get(c) );
+            		AppProxy.LOGGER.println( "\t" + c + " " + registries.get(c) );
             	}
             }
         }
@@ -479,8 +477,8 @@ public final class RegistryImpl {
         throws SecurityException, IllegalArgumentException,
                ClassNotFoundException, ContentHandlerException
     {
-        if(DEBUG_OUT != null){
-			DEBUG_OUT.println( getClass().getName() + ".register '" + classname + "'" );
+        if(AppProxy.LOGGER != null){
+			AppProxy.LOGGER.println( getClass().getName() + ".register '" + classname + "'" );
         }
         
         application.checkRegisterPermission("register");
@@ -504,8 +502,8 @@ public final class RegistryImpl {
             RegistryStore.register(handler);
             setServer(handler);
 
-            if (AppProxy.LOG_INFO) {
-                appl.logInfo("Register: " + classname + ", id: " + handler.getID());
+            if (AppProxy.LOGGER != null) {
+            	AppProxy.LOGGER.println("Register: " + classname + ", id: " + handler.getID());
             }
 
             return handler;
@@ -640,8 +638,8 @@ public final class RegistryImpl {
     public boolean unregister(String classname) {
     	classname.length(); // NullPointer check
 
-    	if(DEBUG_OUT != null)
-    		DEBUG_OUT.println( "unregister '" + classname + "'" );
+    	if(AppProxy.LOGGER != null)
+    		AppProxy.LOGGER.println( "unregister '" + classname + "'" );
         synchronized (mutex) {
 
             ContentHandlerImpl curr = null;

@@ -4,7 +4,6 @@ import javax.microedition.content.ContentHandlerException;
 import javax.microedition.content.Invocation;
 
 public final class InvocationStoreProxy {
-	protected static final java.io.PrintStream DEBUG_OUT = System.out;
 
 	static final public int LIT_MIDLET_START_FAILED = 0;
 	static final public int LIT_MIDLET_STARTED = 1;
@@ -12,12 +11,8 @@ public final class InvocationStoreProxy {
 	static final public int LIT_INVOCATION_REMOVED = 3;
 	
 	static public int launchInvocationTarget(InvocationImpl invoc){
-		if( DEBUG_OUT != null ) 
-			DEBUG_OUT.println( "launchInvocationTarget: {" + 
-						AppProxy.getCurrent().getStorageId() + ", " + AppProxy.getCurrent().getClassname() + "}"); 
-		if( DEBUG_OUT != null && invoc != null ){
-			invoc.debugTo(DEBUG_OUT);
-			DEBUG_OUT.println();
+		if( AppProxy.LOGGER != null ){
+			AppProxy.LOGGER.println( "launchInvocationTarget: " + invoc ); 
 		}
         // check if it is native handler
         /* IMPL_NOTE: null suite ID is an indication of platform request */
@@ -35,10 +30,12 @@ public final class InvocationStoreProxy {
         	}
         } else if (invoc.classname != null) {
             try {
-                AppProxy appl = AppProxy.getCurrent().forApp(invoc.suiteId, invoc.classname);
+            	AppProxy current = AppProxy.getCurrent();
+                AppProxy appl = current.forApp(invoc.suiteId, invoc.classname);
             	// if MIDlet already started report STARTED
-                return appl.launch("Application")? LIT_MIDLET_STARTED 
+                int rc = appl.launch("Application")? LIT_MIDLET_STARTED 
                 						: LIT_MIDLET_START_FAILED;
+                return rc;
             } catch (ClassNotFoundException cnfe) {
                 // Ignore => invocation will be deleted
             }
@@ -63,14 +60,12 @@ public final class InvocationStoreProxy {
      * @return <code>true</code> if some midlets are started 
      */
     static public boolean invokeNext() {
-    	if(DEBUG_OUT!=null) {
-    		DEBUG_OUT.println( InvocationStoreProxy.class.getName() + ".invokeNext() called. Invocations count = " + InvocationStore.size());
+    	if(AppProxy.LOGGER!=null) {
+    		AppProxy.LOGGER.println( "InvocationStoreProxy.invokeNext() called. Invocations count = " + InvocationStore.size());
     		int tid = 0;
     		InvocationImpl invoc;
     		while( (invoc = InvocationStore.getByTid(tid, 1)) != null ){
-	        	DEBUG_OUT.print( "invocation[" + tid + "]: " ); 
-	        	invoc.debugTo(DEBUG_OUT);
-	        	DEBUG_OUT.println();
+	        	AppProxy.LOGGER.println( "invocation[" + tid + "]: " + invoc ); 
                 tid = invoc.tid;
     		}
     	}
@@ -117,7 +112,7 @@ public final class InvocationStoreProxy {
             // so we will start only one new midlet
             done = done || (launchedMidletsCount > 0);
         }
-        if(DEBUG_OUT!=null) DEBUG_OUT.println( InvocationStore.class.getName() + ".invokeNext() finished: started midlets = " + launchedMidletsCount);
+        if(AppProxy.LOGGER!=null) AppProxy.LOGGER.println( InvocationStore.class.getName() + ".invokeNext() finished: started midlets = " + launchedMidletsCount);
         return launchedMidletsCount > 0;
     }
 

@@ -33,7 +33,6 @@ import com.sun.midp.security.Permissions;
 import com.sun.midp.security.SecurityToken;
 
 import com.sun.midp.midlet.MIDletSuite;
-import com.sun.midp.main.MIDletProxyList;
 import com.sun.midp.main.MIDletSuiteUtils;
 import com.sun.midp.midlet.MIDletStateHandler;
 import com.sun.midp.midletsuite.MIDletSuiteImpl;
@@ -104,7 +103,7 @@ class AppProxy {
     private static AppProxy currentApp;
 
     /** The log flag to enable informational messages. */
-    static final boolean LOG_INFO = true;
+    static final Logger LOGGER = null; // new Logger();;
 
     /** The known AppProxy instances. Key is classname. */
     protected Hashtable appmap;
@@ -202,8 +201,8 @@ class AppProxy {
             verifyApplication(classname);
             initAppInfo();
             appmap.put(classname, this);
-            if (LOG_INFO) {
-                logInfo("AppProxy created: " + classname);
+            if (LOGGER != null) {
+            	LOGGER.println("AppProxy created: " + classname);
             }
         }
     }
@@ -227,12 +226,12 @@ class AppProxy {
                     getMIDletSuiteStorage(classSecurityToken).
                     getMIDletSuite(storageId, false);
         } catch (MIDletSuiteLockedException msle) {
-            if (LOG_INFO) {
-                logException("AppProxy creation fails", msle);
+            if (LOGGER != null) {
+            	LOGGER.log("AppProxy creation fails", msle);
             }
         } catch (MIDletSuiteCorruptedException msce) {
-            if (LOG_INFO) {
-                logException("AppProxy creation fails", msce);
+            if (LOGGER != null) {
+            	LOGGER.log("AppProxy creation fails", msce);
             }
         }
         msuite = midletSuite;
@@ -241,8 +240,8 @@ class AppProxy {
             initAppInfo();
         }
 
-        if (LOG_INFO) {
-            logInfo("AppProxy created: " + classname);
+        if (LOGGER != null) {
+        	LOGGER.println("AppProxy created: " + classname);
         }
     }
 
@@ -470,8 +469,18 @@ class AppProxy {
     boolean launch(String displayName) {
     	if( isMidletRunning(storageId, classname) )
         	return true;
-        return MIDletSuiteUtils.execute(classSecurityToken,
-                                 	storageId, classname, displayName);
+    	/* The commented code is another method to check midlet presence in
+    	 * the device memory. Unfortunately it works only in AMS thread.
+    	 * The code isn't deleted because it reminds about a wrong way of 
+    	 * starting a midlet. 
+    	com.sun.midp.main.MIDletProxyList list = 
+    	  		com.sun.midp.main.MIDletProxyList.getMIDletProxyList(classSecurityToken);
+    	if( list != null && list.isMidletInList(storageId, classname) )
+    		return true;*/
+    	if( MIDletSuiteUtils.isAmsIsolate() )
+	        return MIDletSuiteUtils.execute(classSecurityToken,
+	                                 	storageId, classname, displayName);
+    	return false;
     }
 
 
@@ -590,34 +599,11 @@ class AppProxy {
     }
 
     /**
-     * Log an information message to the system logger for this AppProxy.
-     * @param msg a message to write to the log.
-     */
-    void logInfo(String msg) {
-        if (LOG_INFO) {
-            System.out.println(">> " + threadID() + ": " + msg);
-        }
-    }
-
-    /**
-     * Log an information message to the system logger for this AppProxy.
-     * @param msg a message to write to the log.
-     * @param t Throwable to be logged
-     */
-    void logException(String msg, Throwable t) {
-        if (LOG_INFO) {
-            System.out.println("** " + threadID() + ": " + msg);
-            t.printStackTrace();
-        }
-    }
-
-
-    /**
      * Create a printable representation of this AppProxy.
      * @return a printable string
      */
     public String toString() {
-        if (LOG_INFO) {
+        if (LOGGER != null) {
             return"class: " + classname +
                 ", suite: " + storageId +
                 ", registered: " + isRegistered +
@@ -627,18 +613,38 @@ class AppProxy {
             return super.toString();
         }
     }
+}
+
+class Logger {
+	
+	static final private java.io.PrintStream out = System.out;
+
+    /**
+     * Log an information message to the system logger for this AppProxy.
+     * @param msg a message to write to the log.
+     */
+    void println(String msg) {
+        out.println(">> " + threadID() + ": " + msg);
+    }
+
+    /**
+     * Log an information message to the system logger for this AppProxy.
+     * @param msg a message to write to the log.
+     * @param t Throwable to be logged
+     */
+    void log(String msg, Throwable t) {
+        out.println("** " + threadID() + ": " + msg);
+        t.printStackTrace();
+    }
+
 
     /**
      * Map a thread to an printable string.
      * @return a short string for the thread
      */
     private String threadID() {
-        if (LOG_INFO) {
-            Thread thread = Thread.currentThread();
-            int i = thread.hashCode() & 0xff;
-            return "T" + i;
-        } else {
-            return "";
-        }
+        Thread thread = Thread.currentThread();
+        int i = thread.hashCode() & 0xff;
+        return "T" + i;
     }
 }

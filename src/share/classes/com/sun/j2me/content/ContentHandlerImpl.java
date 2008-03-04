@@ -795,6 +795,9 @@ public class ContentHandlerImpl implements ContentHandler {
      * @see javax.microedition.content.ContentHandlerServer#finish
      */
     public InvocationImpl getRequest(boolean wait, Invocation invocation) {
+    	if(AppProxy.LOGGER != null){
+    		AppProxy.LOGGER.println( "ContentHandler.getRequest(" + wait + ")" );
+    	}
         // Application has tried to get a request; reset cleanup flags on all
         if (requestCalls == 0) {
             InvocationStore.setCleanup(storageId, classname, false);
@@ -914,7 +917,7 @@ public class ContentHandlerImpl implements ContentHandler {
      * @return a string with the details
      */
     public String toString() {
-        if (AppProxy.LOG_INFO) {
+        if (AppProxy.LOGGER != null) {
             StringBuffer sb = new StringBuffer(80);
             sb.append("CH:");
             sb.append(" classname: ");

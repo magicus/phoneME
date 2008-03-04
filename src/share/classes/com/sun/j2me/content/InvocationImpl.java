@@ -44,8 +44,6 @@ import javax.microedition.io.ConnectionNotFoundException;
  * of the class MUST be package private.
  */
 public final class InvocationImpl {
-	static public final java.io.PrintStream DEBUG_OUT = null; //System.out; 
-	
     /**
      * The Invocation delegating to this instance.
      * This field is public to Invocation can set it.
@@ -151,8 +149,8 @@ public final class InvocationImpl {
      * Create a fresh InvocationImpl.
      */
     InvocationImpl() {
-    	if( DEBUG_OUT != null )
-    		DEBUG_OUT.println( getClass().getName() + " is created" );
+    	if( AppProxy.LOGGER != null )
+    		AppProxy.LOGGER.println( getClass().getName() + " is created" );
         status = Invocation.INIT;
         responseRequired = true;
         arguments = ContentHandlerImpl.ZERO_STRINGS;
@@ -209,8 +207,8 @@ public final class InvocationImpl {
      * @see #getData
      */
     public void setData(byte[] data) {
-    	if( DEBUG_OUT != null )
-    		DEBUG_OUT.println( getClass().getName() + ".setData " + data );
+    	if( AppProxy.LOGGER != null )
+    		AppProxy.LOGGER.println( getClass().getName() + ".setData " + data );
         this.data = (data == null) ? ZERO_BYTES : data;
     }
 
@@ -244,8 +242,8 @@ public final class InvocationImpl {
      * @see #getURL
      */
     public void setURL(String url) {
-    	if( DEBUG_OUT != null )
-    		DEBUG_OUT.println( getClass().getName() + ".setURL " + url );
+    	if( AppProxy.LOGGER != null )
+    		AppProxy.LOGGER.println( getClass().getName() + ".setURL " + url );
         this.url = url;
     }
 
@@ -266,8 +264,8 @@ public final class InvocationImpl {
      * @see #getType
      */
     public void setType(String type) {
-    	if( DEBUG_OUT != null )
-    		DEBUG_OUT.println( getClass().getName() + ".setType " + type );
+    	if( AppProxy.LOGGER != null )
+    		AppProxy.LOGGER.println( getClass().getName() + ".setType " + type );
         this.type = type;
     }
 
@@ -288,8 +286,8 @@ public final class InvocationImpl {
      * @see #getAction
      */
     public void setAction(String action) {
-    	if( DEBUG_OUT != null )
-    		DEBUG_OUT.println( getClass().getName() + ".setAction " + action );
+    	if( AppProxy.LOGGER != null )
+    		AppProxy.LOGGER.println( getClass().getName() + ".setAction " + action );
         this.action = action;
     }
 
@@ -324,8 +322,8 @@ public final class InvocationImpl {
      * @see #getResponseRequired
      */
     public void setResponseRequired(boolean responseRequired) {
-    	if( DEBUG_OUT != null )
-    		DEBUG_OUT.println( getClass().getName() + ".setResponseRequired " + responseRequired );
+    	if( AppProxy.LOGGER != null )
+    		AppProxy.LOGGER.println( getClass().getName() + ".setResponseRequired " + responseRequired );
         if (getStatus() != Invocation.INIT) {
             throw new IllegalStateException();
         }
@@ -349,8 +347,8 @@ public final class InvocationImpl {
      * @see #getID
      */
     public void setID(String ID) {
-    	if( DEBUG_OUT != null )
-    		DEBUG_OUT.println( getClass().getName() + ".setID " + ID );
+    	if( AppProxy.LOGGER != null )
+    		AppProxy.LOGGER.println( getClass().getName() + ".setID " + ID );
         this.ID = ID;
     }
 
@@ -420,8 +418,8 @@ public final class InvocationImpl {
     boolean invoke(InvocationImpl previous, ContentHandlerImpl handler)
         				throws IllegalArgumentException, IOException
     {
-    	if( DEBUG_OUT != null )
-    		DEBUG_OUT.println( getClass().getName() + ".invoke prev = " + 
+    	if( AppProxy.LOGGER != null )
+    		AppProxy.LOGGER.println( getClass().getName() + ".invoke prev = " + 
     				previous + ", handler = '" + handler + "'" );
         /*
          * Check all of the arguments for validity.
@@ -456,22 +454,6 @@ public final class InvocationImpl {
         					InvocationStoreProxy.LIT_MIDLET_START_FAILED;
     }
 
-	void debugTo(java.io.PrintStream out) {
-    	out.print("{" + suiteId + ", " + classname + "} status = ");
-    	String s = "{" + status + "}";
-    	switch( status ){
-	    	case Invocation.ACTIVE: s = "ACTIVE"; break;
-	    	case Invocation.WAITING: s = "WAITING"; break;
-	    	case Invocation.ERROR: s = "ERROR"; break;
-	    	case Invocation.OK: s = "OK"; break;
-	    	case Invocation.CANCELLED: s = "CANCELLED"; break;
-	    	case Invocation.HOLD: s = "HOLD"; break;
-	    	case Invocation.INIT: s = "INIT"; break;
-	    	case Invocation.INITIATED: s = "INITIATED"; break;
-    	}
-    	out.print(s + ", handlerID = '" + ID + "'" );
-	}
-
 	/**
      * Finish this Invocation and set the status for the response.
      *
@@ -487,6 +469,9 @@ public final class InvocationImpl {
      *    is not <code>OK</code> or <code>CANCELLED</code>
      */
     boolean finish(int status) {
+    	if( AppProxy.LOGGER != null ){
+    		AppProxy.LOGGER.println( "finish( " + status + "), Invocation " + this);
+    	}
         switch( status ){
         	case Invocation.OK:
         	case Invocation.CANCELLED:
@@ -739,26 +724,31 @@ public final class InvocationImpl {
      * @return a String containing a printable form
      */
     public String toString() {
-        if (AppProxy.LOG_INFO) {
+        if (AppProxy.LOGGER != null) {
             StringBuffer sb = new StringBuffer(200);
-            sb.append("tid: ");         sb.append(tid);
-            sb.append(" status: ");     sb.append(status);
-            //        sb.append("  suiteId: ");   sb.append(suiteId);
-            sb.append(", type: ");      sb.append(getType());
+            
+            sb.append("tid: "); sb.append(tid);
+        	sb.append("{" + suiteId + ", " + classname + "} status = ");
+        	String s = "{" + status + "}";
+        	switch( status ){
+    	    	case Invocation.ACTIVE: s = "ACTIVE"; break;
+    	    	case Invocation.WAITING: s = "WAITING"; break;
+    	    	case Invocation.ERROR: s = "ERROR"; break;
+    	    	case Invocation.OK: s = "OK"; break;
+    	    	case Invocation.CANCELLED: s = "CANCELLED"; break;
+    	    	case Invocation.HOLD: s = "HOLD"; break;
+    	    	case Invocation.INIT: s = "INIT"; break;
+    	    	case Invocation.INITIATED: s = "INITIATED"; break;
+        	}
+        	sb.append(s + ", handlerID = '" + ID + "'" );
+
+            sb.append("\n type: ");      sb.append(getType());
             sb.append(", url: ");       sb.append(getURL());
             sb.append(", respReq: ");   sb.append(getResponseRequired());
-            //        sb.append(", args: ");      sb.append(getArgs());
-            //        sb.append(", prevTid: ");   sb.append(previousTid);
-            //        sb.append(", previous: ");
-            //        sb.append((previous == null) ? "null" : "non-null");
-            //        sb.append("_suiteId: ");    sb.append(invokingSuiteId);
             sb.append("\n   invokee: "); sb.append(classname);
             sb.append(", invoker: "); sb.append(invokingClassname);
-            //        sb.append(", _authority: "); sb.append(invokingAuthority);
-            //        sb.append(", _ID: ");       sb.append(invokingID);
             return sb.toString();
-        } else {
-            return super.toString();
         }
+        return super.toString();
     }
 }
