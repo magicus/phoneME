@@ -100,7 +100,7 @@ static javacall_handle recorder_create(int appId, int playerId,
     newHandle->lengthLimit   = INT_MAX;
     newHandle->recordLen     = 0;
     newHandle->rsl           = 0;
-    newHandle->recinit       = 0;
+    newHandle->recInitDone   = FALSE;
     newHandle->recordData    = NULL;
     newHandle->fname         = NULL;
 
@@ -244,7 +244,7 @@ static javacall_result recorder_start_recording(javacall_handle handle)
     javacall_result r = JAVACALL_FAIL;
     recorder* h = (recorder*)handle;
 
-    if(!h->recinit)
+    if(!h->recInitDone)
     {
         int fnameLen;
         int whl;
@@ -267,11 +267,11 @@ static javacall_result recorder_start_recording(javacall_handle handle)
             whl = create_wavhead( h, b, 256 );
             fwrite(b, whl, 1, h->recordData);
 
-            h->recinit = initDirectSoundCap(h);
+            h->recInitDone = ( 0 != initDirectSoundCap(h) );
 
-            if( h->recinit )
+            if( h->recInitDone )
             {
-                toggleAudioCapture(1);
+                toggleAudioCapture(TRUE);
                 r = JAVACALL_OK;
             }
             else
@@ -284,6 +284,10 @@ static javacall_result recorder_start_recording(javacall_handle handle)
                 h->recordData = NULL;
             }
         }
+    }
+    else
+    {
+        toggleAudioCapture(TRUE);
     }
 
     return r;
@@ -298,7 +302,7 @@ static javacall_result recorder_pause_recording(javacall_handle handle)
     javacall_result r = JAVACALL_FAIL;
     recorder* h = (recorder*)handle;
 
-    toggleAudioCapture(0);
+    toggleAudioCapture(FALSE);
     r = JAVACALL_OK;
 
     return r;
@@ -383,16 +387,16 @@ static javacall_result recorder_close_recording(javacall_handle handle)
     javacall_result r = JAVACALL_FAIL;
     recorder* h = (recorder*)handle;
 
-    if(h->recinit)
+    if(h->recInitDone)
     {
         closeDirectSoundCap();
         fclose(h->recordData);
         DeleteFile(h->fname);
         FREE(h->fname); 
 
-        h->fname = NULL;
-        h->recordData = NULL;
-        h->recinit = 0;
+        h->fname       = NULL;
+        h->recordData  = NULL;
+        h->recInitDone = FALSE;
     }
 
     r = JAVACALL_OK;

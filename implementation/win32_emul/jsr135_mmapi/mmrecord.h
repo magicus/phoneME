@@ -39,7 +39,7 @@ typedef struct {
     int     rate;
     int     channels;
 
-    int     recinit;
+    BOOL    recInitDone;
 
     int     lengthLimit;
     int     rsl;
@@ -55,7 +55,7 @@ extern "C" {
 #endif
 
 int  initDirectSoundCap(recorder* cap);
-int  toggleAudioCapture(int captureFlag);
+BOOL toggleAudioCapture(BOOL on);
 int  closeDirectSoundCap();
 void sendRSL(int appId, int playerId, long duration);  // IMPL_NOTE
 int  create_wavhead(recorder* h, char *buffer, int buflen);
