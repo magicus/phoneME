@@ -300,7 +300,8 @@ PNGdecodeImage_real(imageSrcPtr src, imageDstPtr dst,
             }
         } else if (chunkType == PLTE_CHUNK) {
 
-            if ((chunkLength < 0) || (chunkLength > 768) || ((chunkLength % 3) != 0)) {
+            if ((chunkLength < 0) || (chunkLength > (256 * 3)) ||
+                    ((chunkLength % 3) != 0)) {
                 goto formaterror;
             }
 
@@ -448,9 +449,14 @@ PNGdecodeImage_real(imageSrcPtr src, imageDstPtr dst,
         }
 
         if (!check_CRC(src, CRC)) {
-	    REPORT_WARN(LC_LOWUI,"PNG data corrupted (CRC mismatch)");  
+	    REPORT_WARN1(LC_LOWUI,
+                "PNG data corrupted (CRC mismatch for a chunk of 0x%X type)",
+                chunkType); 
 
-            goto formaterror;
+            /* interrupt image decoding only if the chunk is critical */
+            if (chunkType == IHDR_CHUNK) {
+                goto formaterror;
+            }
         }
     }
 
@@ -595,7 +601,7 @@ readPalette(imageSrcPtr src, long length, pngData *data,
 {
     int i;
 
-    data->paletteLength = length/3;
+    data->paletteLength = (unsigned short)(length / 3);
     data->palette = buffer;
 
     for (i = 0; i < data->paletteLength; ++i) {
@@ -615,7 +621,7 @@ readTransPal(imageSrcPtr src, long length, pngData *data,
 {
     int i;
 
-    data->transLength = length;
+    data->transLength = (unsigned short)length;
     data->trans = buffer;
 
     if (data->colorType & CT_PALETTE) { /* palette */
@@ -1662,10 +1668,10 @@ init_CRC(unsigned long chunkType)
 {
     unsigned char buf[4];
 
-    buf[0] = (chunkType >> 24) & 0xff;
-    buf[1] = (chunkType >> 16) & 0xff;
-    buf[2] = (chunkType >>  8) & 0xff;
-    buf[3] = (chunkType >>  0) & 0xff;
+    buf[0] = (unsigned char)((chunkType >> 24) & 0xff);
+    buf[1] = (unsigned char)((chunkType >> 16) & 0xff);
+    buf[2] = (unsigned char)((chunkType >>  8) & 0xff);
+    buf[3] = (unsigned char)((chunkType >>  0) & 0xff);
 
     return update_crc(0xffffffffL, buf, 4);
 }
@@ -1680,7 +1686,7 @@ check_CRC(imageSrcPtr src, unsigned long CRC)
 #if REPORT_LEVEL <= LOG_INFORMATION
     if (transmitted_CRC != CRC) {
         reportToLog(LOG_INFORMATION, LC_LOWUI, "CRC mismatch: xmitted 0x%08lx "
-		    "vs calculated 0x%081x ", transmitted_CRC, CRC);
+		    "vs calculated 0x%08lx ", transmitted_CRC, CRC);
     }
 #endif
 
@@ -1688,7 +1694,7 @@ check_CRC(imageSrcPtr src, unsigned long CRC)
 }
 
 
-/***** CRC support, copied from PNG spec *****/
+/***** CRC support, copied from PNG spec *****/
 
 
 /* Table of CRCs of all 8-bit messages.  */
