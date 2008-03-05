@@ -32,4 +32,5 @@ public interface PlayerStateSubscriber
 {
     void PlayerRealized(Player player) throws MediaException;
     void PlayerPrefetched(Player player) throws MediaException;
+    void PlayerDeallocated( Player player );
 }

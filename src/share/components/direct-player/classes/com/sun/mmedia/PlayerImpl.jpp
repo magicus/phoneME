@@ -576,6 +576,10 @@ public class PlayerImpl implements Player {
     public void deallocate() {
         if (playerInst != null) {
             playerInst.deallocate();
+            if( null != state_subscriber && 
+                ( getState() == PREFETCHED || getState() == STARTED ) ) {
+                state_subscriber.PlayerDeallocated(this);
+            }
         } else {
             // Player in the UNREALIZED or CLOSED state
             if (isClosed) {
