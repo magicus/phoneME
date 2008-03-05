@@ -176,14 +176,9 @@ extern const CVMUint16 argsInvokerAccess[];
 extern const CVMClassBlock * const CVM_ROMClassblocks[];
 extern struct java_lang_Class * const CVM_ROMClasses;
 extern const int CVM_firstROMNonPrimitiveClass;
-extern const int CVM_firstROMVectorClass;
-extern const int CVM_lastROMVectorClass;
+extern const int CVM_firstROMSingleDimensionArrayClass;
+extern const int CVM_lastROMSingleDimensionArrayClass;
 extern const int CVM_nTotalROMClasses;
-
-#ifdef CVM_DUAL_STACK
-extern const int CVM_AuxfirstROMVectorClass;
-extern const int CVM_AuxlastROMVectorClass;
-#endif
 
 extern const int CVM_nROMStrings;
 extern const int CVM_nROMStringsCompressedEntries;

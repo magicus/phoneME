@@ -111,32 +111,79 @@ CVMpreloaderLookupFromType0(CVMClassTypeID typeID)
     /* NOTE: The Class instances of the Class and Array types in the
        CVM_ROMClasses[] are sorted in incremental order of typeid values.  The
        only exception is that deep array types (i.e. array types with depth >=
-       7) will be sorted based only on the basetype field of their typeids
+       3) will be sorted based only on the basetype field of their typeids
        (i.e. the depth field is ignored ... hence the masking operation in the
        computation of the index for the deep array case below).  This is what
        makes it possible to access Class instances for Class and Deep array
-       types in CVM_ROMClasses[] by indexing. */
+       types in CVM_ROMClasses[] by indexing. 
+
+       The sorted order looks like this:
+
+             .---------------------------------------.
+             |  Primtive classes                     |
+             |---------------------------------------|
+             |  Regular Loaded classes               | <= e1
+             |  e.g. java.lang.Object                |
+             |                                       |
+             |  Big Array classes                    |
+             |  i.e. depth exceeds or equals the     |
+             |  the value of CVMtypeArrayMask.       |
+             |
+             |---------------------------------------|
+             |  Single Dimension Array classes       | <= e2
+             |  e.g. [I or [Ljava.lang.Object;       |
+             |                                       | <= e3
+             |---------------------------------------|
+             |  Multi Dimension Array classes        |
+             |  e.g. [[I or [[Ljava.lang.Object; or  |
+             |       [[[I, etc.                      |
+             |                                       |
+             '---------------------------------------'
+         
+       In the above illustration, entry e1 is the first entry in the
+       Regular Loaded classes section.  Entry e2 is the first entry in the
+       Single Dimension Array classes section, and entry e3 is the
+       last entry in this same section.
+
+       The Regular Loaded classes section currectly also holds the Big
+       Array classes whose dimension depth exceeds or equals the bits
+       in CVMtypeArrayMask (currently 3).  In the current implemetation
+       the Big Array classes always come at the end of this section after
+       the Regular Loaded classes.
+
+       CVM_firstNonPrimitiveClass to be the index of entry e1,
+       CVM_firstSingleDimensionArrayClass to be the index of entry e2, and
+       CVM_lastSingleDimensionArrayClass to be the index of entry e3. 
+    */
     if ( !CVMtypeidIsArray(typeID)) {
 	const CVMClassBlock * cb;
 	
+        /* If we get here, then we're looking for a normal class i.e. not
+           a primitive class and not an array class.
+           The index should be within the range of regular loaded (or
+           preloaded in this case) classes if its there: */
 	i = typeID-CVMtypeidLastScalar-1;
-	if ( (i >= CVM_firstROMVectorClass) || ( i < CVM_firstROMNonPrimitiveClass) ){
+        if ((i < CVM_firstROMNonPrimitiveClass) ||
+            (i >= CVM_firstROMSingleDimensionArrayClass)) {
 	    return NULL; /* not here! */
 	}
 	cb = CVM_ROMClassblocks[i];
-	CVMassert( CVMcbClassName(cb) == typeID );
+        CVMassert(CVMcbClassName(cb) == typeID);
 	return (CVMClassBlock*)cb;
     }
 
     if (CVMtypeidIsBigArray(typeID)){
         const CVMClassBlock * cb;
 
+        /* If we get here, then we're looking for a Big Array class.
+           The index should come before the first single dimension array
+           class if it's there: */
         i = (typeID & CVMtypeidBasetypeMask)-CVMtypeidLastScalar-1;
-        if ( i >= CVM_firstROMVectorClass ){
-                return NULL; /* not here! */
+        if (i >= CVM_firstROMSingleDimensionArrayClass) {
+            return NULL; /* not here! */
         }
         cb = CVM_ROMClassblocks[i];
-        CVMassert( CVMcbClassName(cb) == typeID );
+        CVMassert(CVMcbClassName(cb) == typeID);
         return (CVMClassBlock*)cb;
     }
 
@@ -145,25 +192,34 @@ CVMpreloaderLookupFromType0(CVMClassTypeID typeID)
      * array. Choose the appropriate partition of the ROMClasses array
      * and binary search for it.
      */
-    if ( CVMtypeidGetArrayDepth(typeID) == 1 ){
-	lowest = CVM_firstROMVectorClass;
-	highbound= CVM_lastROMVectorClass+1;
+    if (CVMtypeidGetArrayDepth(typeID) == 1) {
+        /* If we get here, we are looking for a single dimension array class.
+           The index should be between the first and last single dimension
+           array class if its there: */
+        lowest = CVM_firstROMSingleDimensionArrayClass;
+        highbound= CVM_lastROMSingleDimensionArrayClass+1;
     } else {
-	lowest = CVM_lastROMVectorClass+1;
+        /* Else, we're looking for a multi-dimension (2 or more but less
+           than the BigArray depth which is currently 4) array class.
+           The index should be between the last single dimension
+           array class and the end of the list if its there: */
+        lowest = CVM_lastROMSingleDimensionArrayClass+1;
 	highbound= CVM_nROMClasses;
     }
 
-    while ( lowest < highbound ){
+    /* Do a binary search to see if the sought array class is there: */
+    while (lowest < highbound) {
 	const CVMClassBlock * cb;
 	int candidateID;
 	i = lowest + (highbound-lowest)/2;
 	cb = CVM_ROMClassblocks[i];
 	candidateID = CVMcbClassName(cb);
-	if ( candidateID == typeID) return (CVMClassBlock*)cb;
-	if ( candidateID < typeID)
-	    lowest = i+1;
-	else
-	    highbound = i;
+        if (candidateID == typeID) return (CVMClassBlock*)cb;
+        if (candidateID < typeID) {
+            lowest = i+1;
+        } else {
+            highbound = i;
+        }
     }
 
     /*
