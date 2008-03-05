@@ -527,14 +527,19 @@ abstract class ItemLFImpl implements ItemLF {
                         (contentBounds[HEIGHT] - labelBounds[HEIGHT]) / 2;
                     itemHeight = contentBounds[HEIGHT];
                 }
-                
-                contentBounds[X] = 
-                    labelBounds[WIDTH] + getHorizontalPad();
-                itemWidth = contentBounds[X] + contentBounds[WIDTH];
+                    if (ScreenSkin.TEXT_ORIENT == Graphics.RIGHT) {
+                        labelBounds[X] =
+                            contentBounds[WIDTH] + getHorizontalPad();
+                        itemWidth = labelBounds[X] + labelBounds[WIDTH];
+                    } else {
+                        contentBounds[X] =
+                        labelBounds[WIDTH] + getHorizontalPad();
+                        itemWidth = contentBounds[X] + contentBounds[WIDTH];
+                    }
 
             } else {
                 // label and content do NOT fit in width available
-                contentBounds[Y] = 
+                contentBounds[Y] =
                     labelBounds[HEIGHT] + getVerticalPad();
                 itemHeight = contentBounds[Y] + contentBounds[HEIGHT];
 
@@ -548,7 +553,13 @@ abstract class ItemLFImpl implements ItemLF {
                         contentBounds[X] = 
                             labelBounds[WIDTH] - contentBounds[WIDTH];
                         break;
+                    case Item.LAYOUT_LEFT:
+                        break;
                     default: // Item.LAYOUT_LEFT
+                        if (ScreenSkin.TEXT_ORIENT == Graphics.RIGHT) {
+                           contentBounds[X] =
+                            labelBounds[WIDTH] - contentBounds[WIDTH];
+                        }
                         break;
                     }
                     itemWidth = labelBounds[WIDTH];
@@ -562,10 +573,18 @@ abstract class ItemLFImpl implements ItemLF {
                         break;
                     case Item.LAYOUT_RIGHT:
                         // we do not right justify the label
-                        // contentBounds[X] = 
-                        //     contentBounds[WIDTH] - labelBounds[WIDTH];
+                        if (ScreenSkin.TEXT_ORIENT == Graphics.RIGHT) {
+                             labelBounds[X] =
+                                 contentBounds[WIDTH] - labelBounds[WIDTH];
+                        }
+                        break;
+                    case Item.LAYOUT_LEFT:
                         break;
                     default: // Item.LAYOUT_LEFT
+                        if (ScreenSkin.TEXT_ORIENT == Graphics.RIGHT) {
+                             labelBounds[X] =
+                                 contentBounds[WIDTH] - labelBounds[WIDTH];
+                        }
                         break;
                     }
                     itemWidth = contentBounds[WIDTH];
@@ -582,8 +601,15 @@ abstract class ItemLFImpl implements ItemLF {
         case Item.LAYOUT_RIGHT:
             x = w - itemWidth;
             break;
-        default: // Item.LAYOUT_LEFT and Default
+        case Item.LAYOUT_LEFT:
             x = 0;
+            break;
+        default: // Item.LAYOUT_LEFT and Default
+            if (ScreenSkin.TEXT_ORIENT == Graphics.RIGHT) {
+                x = w - itemWidth;
+            } else {
+                x = 0;
+            }
         }
 
         switch (item.layout & ImageItem.LAYOUT_VCENTER) {
@@ -1193,8 +1219,8 @@ abstract class ItemLFImpl implements ItemLF {
         if (availableWidth == -1) {
             availableWidth = lGetAvailableWidth();
         }
-        
-        Text.getSizeForWidth(size, availableWidth, item.label, 
+
+        Text.getSizeForWidth(size, availableWidth, item.label,
                                      ScreenSkin.FONT_LABEL, 0);
     }
 

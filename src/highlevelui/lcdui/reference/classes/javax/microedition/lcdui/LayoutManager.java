@@ -29,6 +29,7 @@ package javax.microedition.lcdui;
 import com.sun.midp.log.Logging;
 import com.sun.midp.log.LogChannels;
 import com.sun.midp.configurator.Constants;
+import com.sun.midp.chameleon.skins.ScreenSkin;
 
 /**
  * Layout management class for <code>Form</code>.
@@ -387,7 +388,7 @@ class LayoutManager {
         // tallest item on a line
         int lineHeight = 0;
         int pW, pH;
-        int curAlignment = Item.LAYOUT_LEFT;
+        int curAlignment = (layoutDirection == Graphics.LEFT) ? Item.LAYOUT_LEFT : Item.LAYOUT_RIGHT;
 
         // We loop through the Items starting in startIndex, until we reach
         // the end of the block, and return the index of the next block,
@@ -914,7 +915,7 @@ class LayoutManager {
         }
 
         // default layout is LAYOUT_LEFT
-        return Item.LAYOUT_LEFT;
+        return (layoutDirection == Graphics.LEFT) ? Item.LAYOUT_LEFT : Item.LAYOUT_RIGHT; 
     }
 
     /**
@@ -1314,6 +1315,15 @@ class LayoutManager {
      * A bit mask to capture the vertical layout directive of an item. 
      */
     static final int LAYOUT_VMASK = 0x30;
+
+    // laguage convention is from left to right
+//     final static int LEFT_TO_RIGHT = 0;
+
+     // laguage convention is from right to left
+//     final static int RIGHT_TO_LEFT = 1;
+
+     // layout derection depend on the language conventions in use
+     public static int layoutDirection = ScreenSkin.TEXT_ORIENT;
 
     /**
      * 'sizingBox' is a [x,y,w,h] array used for dynamic sizing of 
