@@ -2896,75 +2896,155 @@ public class CVMWriter implements CoreImageWriter, Const, CVMConst {
 	String  name;
 	int	nClasses;
 	CVMClass classVector[];
-	boolean foundFirstVector;
-	boolean foundLastVector;
-	boolean foundFirstNonPrimitive;
-	int	firstVector;
-	int	lastVector;
-	int	firstNonPrimitive;
+        boolean foundFirstSingleDimensionArrayClass;
+        boolean foundLastSingleDimensionArrayClass;
+        boolean foundFirstNonPrimitiveClass;
+        int	firstSingleDimensionArrayClass;
+        int	lastSingleDimensionArrayClass;
+	int	firstNonPrimitiveClass;
 
 	ClassTable( int nMax, String nm ){
 	    name = nm;
 	    classVector = new CVMClass[nMax];
 	    nClasses = 0;
-	    foundFirstVector = false;
-	    foundLastVector = false;
+            foundFirstSingleDimensionArrayClass = false;
+            foundLastSingleDimensionArrayClass = false;
 	}
 
-	void addClass(CVMClass c){
+        /**
+         * Called by CVMWriter.writeClassList() to add a presorted list of
+         * classes into this ClassTable.  The list of classes are expected to
+         * have already been sorted as follows:
+         *
+         *    .---------------------------------------.
+         *    |  Primtive classes                     |
+         *    |---------------------------------------|
+         *    |  Regular Loaded classes               | <= e1
+         *    |  e.g. java.lang.Object                |
+         *    |                                       |
+         *    |  Big Array classes                    |
+         *    |  i.e. depth exceeds or equals the     |
+         *    |  the value of CVMtypeArrayMask.       |
+         *    |
+         *    |---------------------------------------|
+         *    |  Single Dimension Array classes       | <= e2
+         *    |  e.g. [I or [Ljava.lang.Object;       |
+         *    |                                       | <= e3
+         *    |---------------------------------------|
+         *    |  Multi Dimension Array classes        |
+         *    |  e.g. [[I or [[Ljava.lang.Object; or  |
+         *    |       [[[I, etc.                      |
+         *    |                                       |
+         *    '---------------------------------------'
+         *
+         * In the above illustration, entry e1 is the first entry in the
+         * Regular Loaded classes section.  Entry e2 is the first entry in the
+         * Single Dimension Array classes section, and entry e3 is the
+         * last entry in this same section.
+         *
+         * The Regular Loaded classes section currectly also holds the Big
+         * Array classes whose dimension depth exceeds or equals the bits
+         * in CVMtypeArrayMask (currently 3).  In the current implemetation
+         * the Big Array classes always come at the end of this section after
+         * the Regular Loaded classes.
+         *
+         * We want firstNonPrimitiveClass to be the index of entry e1,
+         * firstSingleDimensionArrayClass to be the index of entry e2, and
+         * lastSingleDimensionArrayClass to be the index of entry e3. 
+         *
+         * ClassTable.addClass() will keep a look out for entries e1, e2, and
+         * e3 and set firstNonPrimitiveClass, firstSingleDimensionArrayClass,
+         * and lastSingleDimensionArrayClass accordingly.
+         */
+        void addClass(CVMClass c) {
 	    int hashCode = 0;
             int classid = c.getClassId();
-	    if ((! foundFirstNonPrimitive ) & !c.isPrimitiveClass()) {
-		firstNonPrimitive = nClasses;
-		foundFirstNonPrimitive = true;
+
+            /* If we haven't found the first non-primitive class yet and
+               this class is not a primitive class, then set the
+               firstNonPrimitiveClass index: */
+            if ((!foundFirstNonPrimitiveClass) & !c.isPrimitiveClass()) {
+                firstNonPrimitiveClass = nClasses;
+                foundFirstNonPrimitiveClass = true;
 	    }
+
+            /* In the following we'll be looking for the first and the last
+               single dimension array class.  To do that, it will check for
+               the first single dimension array class and the first array
+               class with a dimension greater than 1.  The last single
+               dimension array class will be the one before the first array
+               class with a dimension greater than 1.
+
+               Since Big Array classes are kept in the regular loaded
+               classes section which preceeds the single dimension array
+               classes, we should ignore them.
+            */
             int classid_depth = classid & CVMTypeCode.CVMtypeArrayMask;
-	    if ((classid_depth != 0) && 
-		(classid_depth != CVMTypeCode.CVMtypeBigArray)) {
-		if ( !foundFirstVector ){
-		    firstVector = nClasses;
-		    foundFirstVector = true;
+            if ((classid_depth != 0) && 
+                (classid_depth != CVMTypeCode.CVMtypeBigArray)) {
+
+                // Look for the first single dimension array class:
+                if (!foundFirstSingleDimensionArrayClass) {
+                    firstSingleDimensionArrayClass = nClasses;
+                    foundFirstSingleDimensionArrayClass = true;
 		}
-		if ( ((classid>>CVMTypeCode.CVMtypeArrayShift) > 1)
-		    && !foundLastVector ){
-			lastVector = nClasses-1;
-			foundLastVector = true;
+                // Look for the last single dimension array class:
+                if (((classid>>CVMTypeCode.CVMtypeArrayShift) > 1)
+                    && !foundLastSingleDimensionArrayClass) {
+                    lastSingleDimensionArrayClass = nClasses-1;
+                    foundLastSingleDimensionArrayClass = true;
 		}
 	    }
 	    classVector[nClasses++] = c;
 	}
 
-	void writeClasslistInfo(){
-	    if (!foundFirstVector) {
-		// If, by now, we've not found the first vector, then there is no
-		//     preloaded array type.  Point the first vector to the end of
-		//     the array:
-		firstVector = nClasses;
-		foundFirstVector = true;
-		lastVector = nClasses;
-		foundLastVector = true;
-	    } else if (!foundLastVector) {
-		// If we get here, then we must have found the first vector but
-		//     have not found the last vector.  This means that there are
-		//     array types of depth 1 in the list but no array types of
-		//     depth greater than 1.  Point the last vector to the last
-		//     entry in the list:
-		lastVector = nClasses - 1;
-		foundLastVector = true;
+        /**
+         * Writes out miscellaneous info about the classes that were just listed
+         * by ClassTable.writeClassList().  It is expected that the values of
+         * firstArrayClass, firstSingleDimensionArrayClass, and
+         * lastSingleDimensionArrayClass would have been determined (if
+         * applicable) by previous calls to ClassTable.addClass() iterated over
+         * the presorted list of classes.
+         *
+         * See the comments for ClassTable.addClass() above for details on the
+         * expected sorting order of the list of classes.
+         */
+        void writeClassListInfo() {
+            if (!foundFirstSingleDimensionArrayClass) {
+		// If, by now, we've not found the first single dimension array
+                //     class, then there is no preloaded array type.  Point the
+                //     firstSingleDimensionArrayClass index to the end of the
+                //     list of classes:
+                firstSingleDimensionArrayClass = nClasses;
+                foundFirstSingleDimensionArrayClass = true;
+                lastSingleDimensionArrayClass = nClasses;
+                foundLastSingleDimensionArrayClass = true;
+
+            } else if (!foundLastSingleDimensionArrayClass) {
+                // If we get here, then we must have found the first single
+                //     dimension array class but have not found the last one.
+                //     This means that there are array types of depth 1 in the
+                //     list but no array types of depth greater than 1.  Point
+                //     the lastSingleDimensionArrayClass index to the last
+                //     entry in the list:
+                lastSingleDimensionArrayClass = nClasses - 1;
+                foundLastSingleDimensionArrayClass = true;
 	    }
 	    auxOut.println("const int CVM_n" + name + "ROMClasses = " +
                            String.valueOf(nClasses) + ";");
-	    auxOut.print("const int CVM_"+name+"firstROMVectorClass = ");
-	    auxOut.print(firstVector);
-	    auxOut.print(";\nconst int CVM_"+name+"lastROMVectorClass = ");
-	    auxOut.print(lastVector);
+            auxOut.print("const int CVM_"+name+
+                         "firstROMSingleDimensionArrayClass = ");
+            auxOut.print(firstSingleDimensionArrayClass);
+            auxOut.print(";\nconst int CVM_"+name+
+                         "lastROMSingleDimensionArrayClass = ");
+            auxOut.print(lastSingleDimensionArrayClass);
 	    auxOut.println(";");
 	    auxOut.print("const int CVM_"+name+"firstROMNonPrimitiveClass = ");
-	    auxOut.print(firstNonPrimitive);
+            auxOut.print(firstNonPrimitiveClass);
 	    auxOut.println(";");
 	}
 
-	void writeClasslist(){
+        void writeClassList() {
 	    int n = nClasses;
 	    CVMClass classes[] = classVector;
 	    //auxOut.println("const CVMClassBlock * const CVM_" + name +
@@ -2980,10 +3060,8 @@ public class CVMWriter implements CoreImageWriter, Const, CVMConst {
 
     }
 
-    public void writeClassList( ){
-	boolean  foundFirstNonPrimitive = false;
-	int	 firstNonPrimitive = 0;
-	int n = (classes == null) ? 0 : classes.length;
+    public void writeClassList() {
+        int n = (classes == null) ? 0 : classes.length;
 	ClassTable classTable = new ClassTable(n, "");
 	globalHeaderOut.println(
 	    "    struct java_lang_Class CVM_ROMClassBlocks["
@@ -3002,9 +3080,9 @@ public class CVMWriter implements CoreImageWriter, Const, CVMConst {
 	    classTable.addClass(c);
 	}
         auxOut.println("const CVMClassBlock * const CVM_ROMClassblocks[] = {");
-	classTable.writeClasslist();
+        classTable.writeClassList();
 	auxOut.println("};" );
-	classTable.writeClasslistInfo();
+        classTable.writeClassListInfo();
 	 
 	//
 	// array of stack map indirect cells
