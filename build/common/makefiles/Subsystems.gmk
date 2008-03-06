@@ -324,7 +324,7 @@ endif
 ifeq ($(USE_JSR_290), true)
 JPP_DEFS += -DENABLE_JSR_290
 EXTRA_CFLAGS += -DENABLE_JSR_290=1
-include $(JSR_290_DIR)/build/$(SUBSYSTEM_MAKE_FILE)
+include $(JSR_290_DIR)/build/cldc_application/$(SUBSYSTEM_MAKE_FILE)
 endif
 
 #####################################################################
