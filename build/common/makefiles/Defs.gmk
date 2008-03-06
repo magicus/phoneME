@@ -189,6 +189,10 @@ else
    EXTRA_CFLAGS += -DENABLE_MIDP_MALLOC=0
 endif
 
+ifeq ($(TARGET_VM), cdc_vm)
+   USE_IMAGE_CACHE = false
+endif
+
 ifeq ($(USE_IMAGE_CACHE), true)
    EXTRA_CFLAGS += -DENABLE_IMAGE_CACHE=1
 else
