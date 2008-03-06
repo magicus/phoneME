@@ -1056,6 +1056,7 @@ static javacall_result audio_qs_acquire_device(javacall_handle handle)
                 mQ234_WaveStream_Destroy( h->wav.stream );
                 h->wav.stream = NULL;
             }
+
             if (1 != wav_setStreamPlayerData(&(h->wav))) {
                 return JAVACALL_FAIL;
             }
@@ -1137,6 +1138,7 @@ static javacall_result audio_qs_acquire_device(javacall_handle handle)
                 mQ234_WaveStream_Destroy( h->wav.stream );
                 h->wav.stream = NULL;
             }
+
             if (1 != AMRDecoder_setStreamPlayerData(&(h->wav))) {
                 return JAVACALL_FAIL;
             }
