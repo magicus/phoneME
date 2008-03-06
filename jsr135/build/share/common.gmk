@@ -1,0 +1,329 @@
+#
+#
+# Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+# 
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License version
+# 2 only, as published by the Free Software Foundation. 
+# 
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# General Public License version 2 for more details (a copy is
+# included at /legal/license.txt). 
+# 
+# You should have received a copy of the GNU General Public License
+# version 2 along with this work; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+# 02110-1301 USA 
+# 
+# Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+# Clara, CA 95054 or visit www.sun.com if you need additional
+# information or have any questions. 
+######################################################################
+# Module's Component Configuration file
+#
+# Remember: It is up to the module itself to impose rules of
+# how to compile the options. All the global Makefile needs
+# is the final def. of Java and native file lists and some
+# other def. (like VPATH)
+######################################################################
+
+SUBSYSTEMS += jsr135
+
+EXTRA_CFLAGS         += -DENABLE_JSR_135=1
+JPP_DEFS             += -DENABLE_JSR_135 -DENABLE_DEBUG
+
+# Specify romizer configuration file for the MMAPI
+# and path where the file is located
+#
+ROMGEN_INCLUDE_PATHS += $(JSR_135_PROJECT_BUILD_DIR)
+ROMGEN_CFG_FILES     += jsr135_rom.cfg
+
+# Include JSR_135 system properties in Configuration
+JSR_135_PROPERTY_FILES = \
+    $(JSR_135_PROJECT_SRC_DIR)/config/properties_jsr135.xml
+
+SUBSYSTEM_CONFIGURATION_INPUT_FILES += \
+    $(JSR_135_PROPERTY_FILES)
+
+
+# Jpp files that need pre-processing
+#
+$(JSR_135_GENERATED_DIR)/classes/javax/microedition/media/Player.java: \
+  $(JSR_135_DIR)/src/share/core/javax/microedition/media/Player.jpp
+	@$(call runjpp,$^,$@)
+
+$(JSR_135_GENERATED_DIR)/classes/javax/microedition/media/PlayerListener.java: \
+  $(JSR_135_DIR)/src/share/core/javax/microedition/media/PlayerListener.jpp
+	@$(call runjpp,$^,$@)
+
+$(JSR_135_GENERATED_DIR)/classes/javax/microedition/media/Manager.java: \
+  $(JSR_135_DIR)/src/share/core/javax/microedition/media/Manager.jpp
+	@$(call runjpp,$^,$@)
+
+$(JSR_135_GENERATED_DIR)/classes/com/sun/mmedia/BasicPlayer.java: \
+  $(JSR_135_DIR)/src/share/core/com/sun/mmedia/BasicPlayer.jpp
+	@$(call runjpp,$^,$@)
+
+$(JSR_135_GENERATED_DIR)/classes/com/sun/mmedia/Configuration.java: \
+  $(JSR_135_DIR)/src/share/core/com/sun/mmedia/Configuration.jpp
+	@$(call runjpp,$^,$@)
+
+$(JSR_135_GENERATED_DIR)/classes/com/sun/mmedia/protocol/CommonDS.java: \
+  $(JSR_135_DIR)/src/share/core/com/sun/mmedia/protocol/CommonDS.jpp
+	@$(call runjpp,$^,$@)
+
+$(JSR_135_GENERATED_DIR)/classes/com/sun/mmedia/protocol/BasicDS.java: \
+  $(JSR_135_DIR)/src/share/core/com/sun/mmedia/protocol/BasicDS.jpp
+	@$(call runjpp,$^,$@)
+
+$(JSR_135_GENERATED_DIR)/classes/com/sun/mmedia/DefaultConfiguration.java: \
+  $(JSR_135_DIR)/src/share/components/javacall/configuration/com/sun/mmedia/DefaultConfiguration.jpp
+	@$(call runjpp,$^,$@)
+
+$(JSR_135_GENERATED_DIR)/classes/com/sun/mmedia/DirectPlayer.java: \
+  $(JSR_135_DIR)/src/share/components/direct-player/classes/com/sun/mmedia/DirectPlayer.jpp
+	@$(call runjpp,$^,$@)
+
+$(JSR_135_GENERATED_DIR)/classes/com/sun/mmedia/PlayerImpl.java: \
+  $(JSR_135_DIR)/src/share/components/direct-player/classes/com/sun/mmedia/PlayerImpl.jpp
+	@$(call runjpp,$^,$@)
+
+$(JSR_135_GENERATED_DIR)/classes/com/sun/mmedia/DirectRecord.java: \
+  $(JSR_135_DIR)/src/share/components/direct-player/classes/com/sun/mmedia/DirectRecord.jpp
+	@$(call runjpp,$^,$@)
+
+$(JSR_135_GENERATED_DIR)/classes/com/sun/mmedia/NativeTonePlayer.java: \
+  $(JSR_135_DIR)/src/share/components/direct-player/classes/com/sun/mmedia/NativeTonePlayer.jpp
+	@$(call runjpp,$^,$@)
+
+$(JSR_135_GENERATED_DIR)/classes/com/sun/mmedia/MMEventListener.java: \
+  $(JSR_135_PROJECT_SRC_DIR)/classes/com/sun/mmedia/MMEventListener.jpp
+	@$(call runjpp,$^,$@)
+
+SUBSYSTEM_JSR_135_JAVA_FILES += \
+    $(JSR_135_GENERATED_DIR)/classes/javax/microedition/media/Player.java \
+    $(JSR_135_GENERATED_DIR)/classes/javax/microedition/media/PlayerListener.java \
+    $(JSR_135_GENERATED_DIR)/classes/javax/microedition/media/Manager.java \
+    $(JSR_135_GENERATED_DIR)/classes/com/sun/mmedia/BasicPlayer.java \
+    $(JSR_135_GENERATED_DIR)/classes/com/sun/mmedia/Configuration.java \
+    $(JSR_135_GENERATED_DIR)/classes/com/sun/mmedia/DefaultConfiguration.java \
+    $(JSR_135_GENERATED_DIR)/classes/com/sun/mmedia/protocol/CommonDS.java \
+    $(JSR_135_GENERATED_DIR)/classes/com/sun/mmedia/protocol/BasicDS.java \
+    $(JSR_135_DIR)/src/share/core/javax/microedition/media/Control.java \
+    $(JSR_135_DIR)/src/share/core/javax/microedition/media/Controllable.java \
+    $(JSR_135_DIR)/src/share/core/javax/microedition/media/MediaException.java \
+    $(JSR_135_DIR)/src/share/core/com/sun/mmedia/control/DualToneControl.java \
+    $(JSR_135_DIR)/src/share/core/javax/microedition/media/control/ToneControl.java \
+    $(JSR_135_DIR)/src/share/core/javax/microedition/media/control/VolumeControl.java \
+    $(JSR_135_DIR)/src/share/core/com/sun/mmedia/AudioRenderer.java \
+    $(JSR_135_DIR)/src/share/core/com/sun/mmedia/TonePlayer.java \
+    $(JSR_135_DIR)/src/share/core/com/sun/mmedia/protocol/LocatorParser.java \
+    $(JSR_135_GENERATED_DIR)/classes/com/sun/mmedia/MMEventListener.java \
+    $(JSR_135_PROJECT_SRC_DIR)/classes/com/sun/mmedia/AudioTunnel.java \
+    $(JSR_135_GENERATED_DIR)/classes/com/sun/mmedia/NativeTonePlayer.java \
+    $(JSR_135_DIR)/src/share/components/direct-player/classes/com/sun/mmedia/PlayerStateSubscriber.java \
+    $(JSR_135_GENERATED_DIR)/classes/com/sun/mmedia/PlayerImpl.java
+
+
+# Permission verifier
+SUBSYSTEM_JSR_135_JAVA_FILES += \
+    $(JSR_135_DIR)/src/share/core/com/sun/mmedia/PermissionAccessor.java \
+    $(JSR_135_DIR)/src/share/core/com/sun/mmedia/PermissionAccessorAbstractions.java
+
+
+ifeq ($(USE_RTSP), true)
+
+$(JSR_135_GENERATED_DIR)/classes/com/sun/mmedia/Connection.java: \
+  $(JSR_135_DIR)/src/share/components/rtsp-player/classes/com/sun/mmedia/Connection.jpp
+	@$(call runjpp,$^,$@)
+
+SUBSYSTEM_JSR_135_JAVA_FILES += \
+    $(JSR_135_GENERATED_DIR)/classes/com/sun/mmedia/Connection.java \
+    $(JSR_135_DIR)/src/share/components/rtsp-player/classes/com/sun/mmedia/RTSPPlayer.java \
+    $(JSR_135_DIR)/src/share/components/rtsp-player/classes/com/sun/mmedia/RTPPlayer.java \
+    $(JSR_135_DIR)/src/share/components/rtsp-player/classes/com/sun/mmedia/RtspUrl.java \
+    $(JSR_135_DIR)/src/share/components/rtsp-player/classes/com/sun/mmedia/RtspListener.java \
+    $(JSR_135_DIR)/src/share/components/rtsp-player/classes/com/sun/mmedia/RtspCtrl.java \
+    $(JSR_135_DIR)/src/share/components/rtsp-player/classes/com/sun/mmedia/RtspManager.java \
+	$(JSR_135_DIR)/src/share/components/rtsp-player/classes/com/sun/mmedia/sdp/MediaAttribute.java \
+	$(JSR_135_DIR)/src/share/components/rtsp-player/classes/com/sun/mmedia/sdp/MediaDescription.java \
+	$(JSR_135_DIR)/src/share/components/rtsp-player/classes/com/sun/mmedia/sdp/Parser.java \
+	$(JSR_135_DIR)/src/share/components/rtsp-player/classes/com/sun/mmedia/sdp/SdpParser.java \
+	$(JSR_135_DIR)/src/share/components/rtsp-player/classes/com/sun/mmedia/sdp/SessionDescription.java \
+	$(JSR_135_DIR)/src/share/components/rtsp-player/classes/com/sun/mmedia/sdp/TimeDescription.java \
+	$(JSR_135_DIR)/src/share/components/rtsp-player/classes/com/sun/mmedia/protocol/CSeqHeader.java \
+	$(JSR_135_DIR)/src/share/components/rtsp-player/classes/com/sun/mmedia/protocol/PauseMessage.java \
+	$(JSR_135_DIR)/src/share/components/rtsp-player/classes/com/sun/mmedia/protocol/SetParameterMessage.java \
+	$(JSR_135_DIR)/src/share/components/rtsp-player/classes/com/sun/mmedia/protocol/ContentBaseHeader.java \
+	$(JSR_135_DIR)/src/share/components/rtsp-player/classes/com/sun/mmedia/protocol/PlayMessage.java \
+	$(JSR_135_DIR)/src/share/components/rtsp-player/classes/com/sun/mmedia/protocol/SetupMessage.java \
+	$(JSR_135_DIR)/src/share/components/rtsp-player/classes/com/sun/mmedia/protocol/DescribeMessage.java \
+	$(JSR_135_DIR)/src/share/components/rtsp-player/classes/com/sun/mmedia/protocol/RangeHeader.java \
+	$(JSR_135_DIR)/src/share/components/rtsp-player/classes/com/sun/mmedia/protocol/StatusCode.java \
+	$(JSR_135_DIR)/src/share/components/rtsp-player/classes/com/sun/mmedia/protocol/DurationHeader.java	\
+	$(JSR_135_DIR)/src/share/components/rtsp-player/classes/com/sun/mmedia/protocol/Request.java \
+	$(JSR_135_DIR)/src/share/components/rtsp-player/classes/com/sun/mmedia/protocol/StatusLine.java \
+	$(JSR_135_DIR)/src/share/components/rtsp-player/classes/com/sun/mmedia/protocol/Header.java \
+	$(JSR_135_DIR)/src/share/components/rtsp-player/classes/com/sun/mmedia/protocol/RequestLine.java \
+	$(JSR_135_DIR)/src/share/components/rtsp-player/classes/com/sun/mmedia/protocol/TeardownMessage.java \
+	$(JSR_135_DIR)/src/share/components/rtsp-player/classes/com/sun/mmedia/protocol/Message.java \
+	$(JSR_135_DIR)/src/share/components/rtsp-player/classes/com/sun/mmedia/protocol/RequestMessage.java \
+	$(JSR_135_DIR)/src/share/components/rtsp-player/classes/com/sun/mmedia/protocol/TransportHeader.java \
+	$(JSR_135_DIR)/src/share/components/rtsp-player/classes/com/sun/mmedia/protocol/MessageType.java \
+	$(JSR_135_DIR)/src/share/components/rtsp-player/classes/com/sun/mmedia/protocol/Response.java \
+	$(JSR_135_DIR)/src/share/components/rtsp-player/classes/com/sun/mmedia/protocol/OptionsMessage.java \
+	$(JSR_135_DIR)/src/share/components/rtsp-player/classes/com/sun/mmedia/protocol/ResponseMessage.java \
+	$(JSR_135_DIR)/src/share/components/rtsp-player/classes/com/sun/mmedia/protocol/Parser.java \
+	$(JSR_135_DIR)/src/share/components/rtsp-player/classes/com/sun/mmedia/protocol/SessionHeader.java
+endif																				
+
+ifneq ($(ABB), true)
+# 
+# Full JSR135 components
+#
+SUBSYSTEM_JSR_135_JAVA_FILES += \
+    $(JSR_135_DIR)/src/share/core/javax/microedition/media/TimeBase.java \
+    $(JSR_135_DIR)/src/share/core/javax/microedition/media/protocol/DataSource.java \
+    $(JSR_135_DIR)/src/share/core/javax/microedition/media/protocol/SourceStream.java \
+    $(JSR_135_DIR)/src/share/core/javax/microedition/media/protocol/ContentDescriptor.java \
+    $(JSR_135_DIR)/src/share/core/javax/microedition/media/control/FramePositioningControl.java \
+    $(JSR_135_DIR)/src/share/core/javax/microedition/media/control/GUIControl.java \
+    $(JSR_135_DIR)/src/share/core/javax/microedition/media/control/MIDIControl.java \
+    $(JSR_135_DIR)/src/share/core/javax/microedition/media/control/MetaDataControl.java \
+    $(JSR_135_DIR)/src/share/core/javax/microedition/media/control/PitchControl.java \
+    $(JSR_135_DIR)/src/share/core/javax/microedition/media/control/RateControl.java \
+    $(JSR_135_DIR)/src/share/core/javax/microedition/media/control/RecordControl.java \
+    $(JSR_135_DIR)/src/share/core/javax/microedition/media/control/StopTimeControl.java \
+    $(JSR_135_DIR)/src/share/core/javax/microedition/media/control/TempoControl.java \
+    $(JSR_135_DIR)/src/share/core/javax/microedition/media/control/VideoControl.java \
+    $(JSR_135_DIR)/src/share/core/com/sun/mmedia/VideoRenderer.java 
+else 
+# 
+# ABB only components
+#
+SUBSYSTEM_JSR_135_JAVA_FILES += \
+    $(JSR_135_DIR)/src/share/core/com/sun/mmedia/protocol/DataSource.java \
+    $(JSR_135_DIR)/src/share/core/com/sun/mmedia/protocol/SourceStream.java \
+    $(JSR_135_DIR)/src/share/core/com/sun/mmedia/protocol/ContentDescriptor.java
+endif
+
+ifeq ($(DIRECT_PLAYER), true)
+SUBSYSTEM_JSR_135_JAVA_FILES += \
+    $(JSR_135_GENERATED_DIR)/classes/com/sun/mmedia/DirectPlayer.java \
+    $(JSR_135_DIR)/src/share/components/direct-player/classes/com/sun/mmedia/DirectTone.java \
+    $(JSR_135_DIR)/src/share/components/direct-player/classes/com/sun/mmedia/DirectVolume.java \
+    $(JSR_135_DIR)/src/share/components/direct-player/classes/com/sun/mmedia/DirectControls.java
+endif
+
+ifeq ($(DIRECT_MIDI_CONTROL), true)
+SUBSYSTEM_JSR_135_JAVA_FILES += \
+    $(JSR_135_DIR)/src/share/components/direct-player/classes/com/sun/mmedia/DirectMIDI.java \
+    $(JSR_135_DIR)/src/share/components/direct-player/classes/com/sun/mmedia/DirectMIDIControl.java
+endif
+
+# 
+# Indirect video player
+#
+ifeq ($(INDIRECT_VIDEO_PLAYER), true)
+SUBSYSTEM_JSR_135_JAVA_FILES += \
+    $(JSR_135_DIR)/src/share/components/video-renderer/classes/com/sun/mmedia/BasicAudioOut.java \
+    $(JSR_135_DIR)/src/share/components/video-renderer/classes/com/sun/mmedia/FormatConversionUtils.java \
+    $(JSR_135_DIR)/src/share/components/video-renderer/classes/com/sun/mmedia/GIFPlayer.java \
+    $(JSR_135_DIR)/src/share/components/video-renderer/classes/com/sun/mmedia/GIFImageDecoder.java \
+    $(JSR_135_DIR)/src/share/components/video-renderer/classes/com/sun/mmedia/ImageAccess.java
+endif
+
+ifeq ($(DIRECT_CAMERA_PLAYER), true)
+SUBSYSTEM_JSR_135_JAVA_FILES += \
+    $(JSR_135_DIR)/src/share/components/direct-player/classes/com/sun/mmedia/DirectCamera.java
+endif
+
+ifeq ($(DIRECT_RECORD), true)
+SUBSYSTEM_JSR_135_JAVA_FILES += \
+    $(JSR_135_GENERATED_DIR)/classes/com/sun/mmedia/DirectRecord.java
+SUBSYSTEM_JSR_135_NATIVE_FILES += \
+	KNIDirectRecord.c
+endif
+
+SUBSYSTEM_JSR_135_CNI_CLASSES += \
+    com.sun.mmedia.AudioTunnel \
+    com.sun.mmedia.DirectMIDIControl \
+    com.sun.mmedia.DirectPlayer \
+    com.sun.mmedia.PlayerImpl \
+    com.sun.mmedia.DirectRecord \
+    com.sun.mmedia.DirectVolume \
+    com.sun.mmedia.MMEventListener \
+    com.sun.mmedia.NativeTonePlayer \
+    com.sun.mmedia.DefaultConfiguration \
+
+#
+# Native
+#
+
+vpath % $(JSR_135_DIR)/src/share/components/direct-player/native
+vpath % $(JSR_135_PROJECT_SRC_DIR)/native/common
+vpath % $(JSR_135_DIR)/src/share/components/javacall/configuration/native
+
+#
+# Native KNI files
+#
+
+SUBSYSTEM_JSR_135_NATIVE_FILES += \
+	KNIPlayerImpl.c \
+	mmapiDynamicProperties.c
+
+ifeq ($(DIRECT_PLAYER),true)
+SUBSYSTEM_JSR_135_NATIVE_FILES += \
+	KNIDirectPlayer.c \
+	KNIDirectVolume.c \
+	KNITonePlayer.c \
+	KNIDirectConfig.c
+endif
+
+ifeq ($(DIRECT_MIDI_CONTROL), true)
+SUBSYSTEM_JSR_135_NATIVE_FILES += \
+	KNIDirectMIDIControl.c
+endif
+
+JSR_135_NATIVE_LIB    = $(JSROP_LIB_DIR)/$(LIB_PREFIX)$(JSR_135_LIB_NAME)$(LIB_POSTFIX)
+JSR_135_NATIVE_OBJS   = $(patsubst %.c,$(JSROP_OBJ_DIR)/%.o,$(SUBSYSTEM_JSR_135_NATIVE_FILES))
+
+JSROP_NATIVE_OBJS    += $(JSR_135_NATIVE_OBJS)
+JSROP_CNI_CLASSES    += $(SUBSYSTEM_JSR_135_CNI_CLASSES)
+JSROP_NATIVE_LIBS    += $(JSR_135_NATIVE_LIB)
+JSROP_INCLUDE_DIRS   += $(SUBSYSTEM_JSR_135_INCLUDE_DIRS)
+
+ifeq ($(USE_LCDUI), true)
+JSR_135_DEPS += $(MIDP_CLASSESZIP)
+endif
+
+ifeq ($(USE_JSR_75), true)
+JSR_135_DEPS += $(JSR_75_JAR)
+endif
+
+$(JSR_135_JAR): $(JPP_CLASS_FILES) $(SUBSYSTEM_JSR_135_JAVA_FILES) $(JSR_135_DEPS)
+	$(call compileJSROP,jsr135,$(JSR_135_BUILD_DIR)/classes,$(SUBSYSTEM_JSR_135_JAVA_FILES),$(PS)$(subst $(space),$(PS),$(JSR_135_DEPS)))
+	$(call makeJSROPJar,$(JSR_135_JAR),$(JSR_135_BUILD_DIR)/classes)
+
+JSROP_JAVACALL_DEPENDENTS += $(JSR_135_NATIVE_OBJS)
+
+$(JSR_135_NATIVE_LIB): $(JSR_135_NATIVE_OBJS) $(ABSTRACTIONS_NATIVE_LIBRARY)
+	@echo "Linking $@"
+	$(AT)$(call makeSharedLibrary, $(JSR_135_NATIVE_OBJS))
+
+# Append JSR 135 source bundle creation to target
+source_bundle:: jsr_135_source_bundle
+
+# Create JSR 135 source in subdir 'jsr135/'
+JSR_135_SHARE_OUTPUT_DIR=$(SOURCE_OUTPUT_DIR)/jsr135
+ifeq ($(PROJECT_JSR_135_DIR),)
+JSR_135_SOURCE_OUTPUT_DIR=$(JSR_135_SHARE_OUTPUT_DIR)
+else
+JSR_135_SOURCE_OUTPUT_DIR=$(SOURCE_OUTPUT_DIR)/$(notdir $(PROJECT_JSR_135_DIR))
+endif
+
+# Abstractions component is used
+USE_ABSTRACTIONS=true
