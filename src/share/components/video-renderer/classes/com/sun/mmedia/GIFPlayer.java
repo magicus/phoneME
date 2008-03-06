@@ -478,6 +478,7 @@ final public class GIFPlayer extends BasicPlayer implements Runnable {
             startTime = 0;
 
             sendEvent(PlayerListener.END_OF_MEDIA,
+                duration != TIME_UNKNOWN ? new Long(duration) :
                       new Long(mediaTimeOffset * rateControl.getRate() / 100000));
         }
 
