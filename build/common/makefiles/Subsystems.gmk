@@ -318,6 +318,16 @@ include $(JSR_256_DIR)/build/cldc_application/$(SUBSYSTEM_MAKE_FILE)
 endif
 
 #####################################################################
+# (Extra) XML & HTML
+# Description: JSR 290
+#####################################################################
+ifeq ($(USE_JSR_290), true)
+JPP_DEFS += -DENABLE_JSR_290
+EXTRA_CFLAGS += -DENABLE_JSR_290=1
+include $(JSR_290_DIR)/build/$(SUBSYSTEM_MAKE_FILE)
+endif
+
+#####################################################################
 # (Extra) SATSA Subsystem
 # Description: JSR 177
 #####################################################################
