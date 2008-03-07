@@ -62,21 +62,3 @@ ifeq ($(TARGET_VM), cldc_vm)
 SUBSYSTEM_AMS_NATIVE_FILES += \
     runMidlet_md.c
 endif
-
-ifeq ($(TARGET_PLATFORM), wince)
-  ifeq ($(USE_MULTIPLE_ISOLATES), true)
-    RC_DEFS += -DENABLE_MULTIPLE_ISOLATES=1
-  endif
-
-  CEDIR = $(MIDP_DIR)/src/highlevelui/wince_application/resources
-
-  OBJ_FILES += $(OBJ_DIR)/resources.res
-
-  $(OBJ_DIR)/resources.res: $(CEDIR)/resources.rc $(CEDIR)/resources.h
-	@echo " ... $@" $(LOG)
-	$(A)$(RC) -D_WIN32_WCE=$(CEVersion) /I"${EVC_INCLUDE_PATH}" \
-	  /I"${MIDP_OUTPUT_DIR}/generated" \
-	  /I"$(PCSL_TARGET_DIR)/inc" \
-	  $(RC_DEFS) -DUNDER_CE=$(CEVersion) /d "UNICODE" /d "_UNICODE" \
-	  /fo`$(call fixcygpath,$@ $(CEDIR)/resources.rc)`
-endif
