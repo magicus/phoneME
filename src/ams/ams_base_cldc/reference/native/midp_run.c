@@ -789,7 +789,7 @@ midp_run_midlet_with_args_cp(SuiteIdType suiteId,
 #endif
 
 #if ENABLE_WTK_DEBUG
-        setDebugOption(MIDP_DEBUG_SUSPEND);
+        setDebugOption(debugOption);
 #endif
     } while (commandState->suiteId != UNUSED_SUITE_ID);
 
