@@ -793,6 +793,10 @@ midp_run_midlet_with_args_cp(SuiteIdType suiteId,
         if (commandState->isDebugMode) {
             commandState->isDebugMode = 0;
             setDebugOption(MIDP_DEBUG_SUSPEND);
+        } else {
+#if !ENABLE_WTK_DEBUG
+            setDebugOption(MIDP_DEBUG_NO_SUSPEND);
+#endif            
         }
 #endif
     } while (commandState->suiteId != UNUSED_SUITE_ID);

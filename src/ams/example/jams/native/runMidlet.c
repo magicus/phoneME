@@ -151,8 +151,7 @@ runMidlet(int argc, char** commandlineArgs) {
     }
 
     /*
-     * IMPL_NOTE: "-debug" option was already parsed by the VM, so
-     *            argv doesn't contain it at this point. Remove?
+     * IMPL_NOTE: corresponding VM option is called "-debugger"
      */
     if (midpRemoveOptionFlag("-debug", argv, &argc) != NULL) {
         debugOption = MIDP_DEBUG_SUSPEND;

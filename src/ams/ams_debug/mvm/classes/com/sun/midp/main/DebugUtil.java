@@ -34,19 +34,11 @@ import com.sun.cldc.isolate.Isolate;
  */
 class DebugUtil {
     /**
-     * Wait until debugger is connected to the current isolate.
+     * Calls attachDebugger() for the current isolate allowing debugger
+     * to connect to this isolate.
      */
     static void attachDebugger() {
         Isolate currentIsolate = Isolate.currentIsolate();
         currentIsolate.attachDebugger();
-
-        // wait for a connection from debugger
-        while (!currentIsolate.isDebuggerConnected()) {
-            try {
-                Thread.sleep(300);
-            } catch (Exception e) {
-                // ignore
-            }
-        }
     }
 }
