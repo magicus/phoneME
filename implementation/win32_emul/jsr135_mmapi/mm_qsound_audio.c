@@ -725,6 +725,7 @@ static javacall_handle audio_qs_create(int appId, int playerId,
             newHandle->hdr.gmIdx            = gmIdx;
             newHandle->hdr.wholeContentSize = -1;
             newHandle->hdr.needProcessHeader= JAVACALL_FALSE;
+            newHandle->hdr.dataBuffer       = NULL;
             newHandle->midi.midiBuffer      = NULL;
             newHandle->midi.midiBufferLen   = 0;
 
@@ -764,6 +765,7 @@ static javacall_handle audio_qs_create(int appId, int playerId,
             newHandle->hdr.gmIdx            = gmIdx;
             newHandle->hdr.wholeContentSize = -1;
             newHandle->hdr.needProcessHeader= JAVACALL_FALSE;
+            newHandle->hdr.dataBuffer       = NULL;
             newHandle->wav.originalData     = NULL;
             newHandle->wav.originalDataLen  = 0;
             newHandle->wav.em               = NULL;
@@ -1107,8 +1109,6 @@ static javacall_result audio_qs_acquire_device(javacall_handle handle)
                 h->wav.stream = NULL;
             }
 
-            if (h->wav.originalData != NULL) FREE(h->wav.originalData);
-
             h->wav.originalData    = NULL;
             h->wav.originalDataLen = 0;
 
@@ -1158,7 +1158,6 @@ static javacall_result audio_qs_acquire_device(javacall_handle handle)
 
             if( NULL != h->wav.originalData )
             {
-                FREE(h->wav.originalData);
                 h->wav.originalData = NULL;
             }
             h->wav.originalDataLen = 0;
@@ -1191,36 +1190,27 @@ static javacall_result audio_qs_release_device(javacall_handle handle){
     return JAVACALL_OK;
 }
 
+#define DEFAULT_BUFFER_SIZE  1000 * 1024
+#define DEFAULT_PACKET_SIZE  1024
 static javacall_result audio_qs_get_java_buffer_size(javacall_handle handle,
                                                      long* java_buffer_size,
                                                      long* first_data_size)
 {
     ah* h = (ah*)handle;
 
-    *java_buffer_size = h->hdr.wholeContentSize;
-    *first_data_size  = 0;
-    switch(h->hdr.mediaType)
-    {
-        case JC_FMT_DEVICE_TONE:
-        case JC_FMT_DEVICE_MIDI:
-            break;
-        case JC_FMT_TONE:
-        case JC_FMT_MIDI:
-        case JC_FMT_SP_MIDI:
-            if (h->midi.midiBuffer == NULL) {
-                *first_data_size  = h->hdr.wholeContentSize;
-            }
-            break;
-        case JC_FMT_MS_PCM:
-        case JC_FMT_AMR:
-            if (h->wav.originalData == NULL) {
-                *first_data_size  = h->hdr.wholeContentSize;
-            }
-            break;
+    if (h->hdr.mediaType == JC_FMT_DEVICE_TONE || h->hdr.mediaType == JC_FMT_DEVICE_MIDI) {
+        *java_buffer_size = h->hdr.wholeContentSize;
+        *first_data_size  = 0;
+    } else {
+        if (h->hdr.wholeContentSize <= 0) {
+            *java_buffer_size = DEFAULT_BUFFER_SIZE;
+            *first_data_size  = DEFAULT_PACKET_SIZE;
+        } else {
+            *java_buffer_size = h->hdr.wholeContentSize;
+            *first_data_size  = h->hdr.wholeContentSize;
+        }
     }
-
-    return h->hdr.wholeContentSize > 0 ? JAVACALL_OK : 
-                                         JAVACALL_NO_DATA_AVAILABLE;
+    return JAVACALL_OK;
 }
 
 static javacall_result audio_qs_set_whole_content_size(javacall_handle handle,
@@ -1239,35 +1229,69 @@ static javacall_result audio_qs_get_buffer_address(javacall_handle handle,
 {
     ah*         h     = (ah*)handle;
     int         gmIdx = h->hdr.gmIdx;
+    long        size;
 
     switch(h->hdr.mediaType)
     {
-        case JC_FMT_TONE:
-        case JC_FMT_MIDI:
-        case JC_FMT_SP_MIDI:
-        case JC_FMT_DEVICE_TONE:
-        case JC_FMT_DEVICE_MIDI:
-            if (h->midi.midiBuffer == NULL) {
-                h->midi.midiBuffer    = MALLOC( h->hdr.wholeContentSize );
-                h->midi.midiBufferLen = h->hdr.wholeContentSize;
-            }
-            *buffer               = h->midi.midiBuffer;
-            *max_size             = h->midi.midiBufferLen;
-            break;
-        case JC_FMT_MS_PCM:
-        case JC_FMT_AMR:
-            if (h->wav.originalData == NULL) {
-                h->wav.originalData    = MALLOC( h->hdr.wholeContentSize );
-                h->wav.originalDataLen = h->hdr.wholeContentSize;
-            }
-            *buffer                = h->wav.originalData;
-            *max_size              = h->wav.originalDataLen;
-            break;
-        default:
-            JC_MM_DEBUG_PRINT1("[jc-media] get_buffer_address: unsupported media type %d\n", h->hdr.mediaType);
-            JC_MM_ASSERT( FALSE );
-            break;
+    case JC_FMT_TONE:
+    case JC_FMT_MIDI:
+    case JC_FMT_SP_MIDI:
+    case JC_FMT_DEVICE_TONE:
+    case JC_FMT_DEVICE_MIDI:
+        h->midi.midiBuffer = NULL;
+        h->midi.midiBufferLen = 0;
+        break;
+
+    case JC_FMT_MS_PCM:
+    case JC_FMT_AMR:
+        h->wav.originalData = NULL;
+        h->wav.originalDataLen = 0;
+        break;
+
+    default:
+        JC_MM_DEBUG_PRINT1("[jc-media] get_buffer_address: unsupported media type %d\n", h->hdr.mediaType);
+        JC_MM_ASSERT( FALSE );
+        break;
     }
+    if (h->hdr.dataBuffer == NULL) {
+        if (h->hdr.wholeContentSize <= 0) {
+            size = DEFAULT_BUFFER_SIZE;
+        } else {
+            size = h->hdr.wholeContentSize;
+        }
+        h->hdr.dataBuffer = MALLOC(size);
+        if (h->hdr.dataBuffer == NULL) {
+            JC_MM_DEBUG_PRINT("[jc-media] get_buffer_address: Cannot allocate buffer\n");
+            h->hdr.dataBufferLen = 0;
+            h->hdr.dataBufferPos = 0;
+            return JAVACALL_OUT_OF_MEMORY;
+        }
+        h->hdr.dataBufferLen = size;
+        h->hdr.dataBufferPos = 0;
+    } else {
+        size = h->hdr.dataBufferLen - h->hdr.dataBufferPos;
+        if (size < DEFAULT_PACKET_SIZE) {
+            long new_size = h->hdr.dataBufferLen * 2;
+            
+            if (new_size < DEFAULT_PACKET_SIZE) {
+                new_size = DEFAULT_PACKET_SIZE;
+            }
+            h->hdr.dataBuffer = REALLOC(h->hdr.dataBuffer, new_size);
+            if (h->hdr.dataBuffer == NULL) {
+                JC_MM_DEBUG_PRINT("[jc-media] get_buffer_address: Cannot re-allocate buffer\n");
+                FREE(h->hdr.dataBuffer);
+                h->hdr.dataBuffer = NULL;
+                h->hdr.dataBufferLen = 0;
+                h->hdr.dataBufferPos = 0;
+                return JAVACALL_OUT_OF_MEMORY;
+            }
+            h->hdr.dataBufferPos = h->hdr.dataBufferLen;
+            h->hdr.dataBufferLen = new_size;
+            size = h->hdr.dataBufferLen - h->hdr.dataBufferPos;
+        }
+    }
+    *max_size = size;
+    *buffer = h->hdr.dataBuffer + h->hdr.dataBufferPos;
     return JAVACALL_OK;
 }
 
@@ -1281,12 +1305,14 @@ static javacall_result audio_qs_do_buffering(
 
     ah*         h     = (ah *)handle;
 
-    if (h->hdr.needProcessHeader) {
-        doProcessHeader(h, buffer, *length);
-    }
+    JC_MM_ASSERT(h->hdr.dataBuffer != NULL);
+    if( NULL != buffer ) {
+        if (h->hdr.needProcessHeader) {
+            doProcessHeader(h, h->hdr.dataBuffer, h->hdr.dataBufferPos + *length);
+        }
 
-    if( NULL != buffer )
-    {
+        JC_MM_ASSERT(buffer == h->hdr.dataBuffer + h->hdr.dataBufferPos);
+        h->hdr.dataBufferPos += *length;
         switch(h->hdr.mediaType)
         {
         case JC_FMT_TONE:
@@ -1294,12 +1320,14 @@ static javacall_result audio_qs_do_buffering(
         case JC_FMT_SP_MIDI:
         case JC_FMT_DEVICE_TONE:
         case JC_FMT_DEVICE_MIDI:
-            JC_MM_ASSERT( buffer == h->midi.midiBuffer );
+            h->midi.midiBuffer = h->hdr.dataBuffer;
+            h->midi.midiBufferLen = h->hdr.dataBufferPos;
             break;
 
         case JC_FMT_MS_PCM:
         case JC_FMT_AMR:
-            JC_MM_ASSERT( buffer == h->wav.originalData );
+            h->wav.originalData = h->hdr.dataBuffer;
+            h->wav.originalDataLen = h->hdr.dataBufferPos;
             break;
 
         default:
@@ -1308,10 +1336,13 @@ static javacall_result audio_qs_do_buffering(
                 h->hdr.mediaType);
             JC_MM_ASSERT( FALSE );
         }
+        *need_more_data = JAVACALL_TRUE;
+        *min_data_size  = DEFAULT_PACKET_SIZE;
+    } else {
+        *need_more_data = JAVACALL_FALSE;
+        *min_data_size  = 0;
     }
 
-    *need_more_data = JAVACALL_FALSE;
-    *min_data_size  = 0;
     
     return JAVACALL_OK;
 }
@@ -1326,50 +1357,54 @@ static javacall_result audio_qs_clear_buffer(javacall_handle handle){
 
     JC_MM_DEBUG_PRINT("audio_qs_clear_buffer\n");
 
-    switch(h->hdr.mediaType)
-    {
-        case JC_FMT_TONE:
-        case JC_FMT_MIDI:
-        case JC_FMT_SP_MIDI:
-        case JC_FMT_DEVICE_TONE:
-        case JC_FMT_DEVICE_MIDI:
+    if(h->hdr.dataBuffer != NULL) {
+        
+        FREE(h->hdr.dataBuffer);
+        h->hdr.dataBuffer = NULL;
+        
+        switch(h->hdr.mediaType)
         {
-            if( h->midi.midiBuffer != NULL )
+            case JC_FMT_TONE:
+            case JC_FMT_MIDI:
+            case JC_FMT_SP_MIDI:
+            case JC_FMT_DEVICE_TONE:
+            case JC_FMT_DEVICE_MIDI:
             {
-                FREE(h->midi.midiBuffer);
-                h->midi.midiBuffer = NULL;
-                h->midi.midiBufferLen = 0;
+                if( h->midi.midiBuffer != NULL )
+                {
+                    h->midi.midiBuffer = NULL;
+                    h->midi.midiBufferLen = 0;
+                }
+    
+                r = JAVACALL_OK;
             }
-
-            r = JAVACALL_OK;
+    
+            break;
+    
+            case JC_FMT_MS_PCM:
+            case JC_FMT_AMR:
+                if(h->wav.originalData != NULL)
+                {
+                    h->wav.originalDataLen = 0;
+                    h->wav.originalData = NULL;
+                }
+    
+                if(h->wav.streamBuffer != NULL)
+                {
+                    FREE(h->wav.streamBuffer);
+                    h->wav.streamBufferLen = 0;
+                    h->wav.streamBuffer = NULL;
+                }
+    
+                r = JAVACALL_OK;
+            break;
+    
+            default:
+                JC_MM_DEBUG_PRINT1(
+                    "[jc-media] Trying to clear unsupported media type %d\n",
+                    h->hdr.mediaType);
+                JC_MM_ASSERT( FALSE );
         }
-
-        break;
-
-        case JC_FMT_MS_PCM:
-        case JC_FMT_AMR:
-            if(h->wav.originalData != NULL)
-            {
-                FREE(h->wav.originalData);
-                h->wav.originalDataLen = 0;
-                h->wav.originalData = NULL;
-            }
-
-            if(h->wav.streamBuffer != NULL)
-            {
-                FREE(h->wav.streamBuffer);
-                h->wav.streamBufferLen = 0;
-                h->wav.streamBuffer = NULL;
-            }
-
-            r = JAVACALL_OK;
-        break;
-
-        default:
-            JC_MM_DEBUG_PRINT1(
-                "[jc-media] Trying to clear unsupported media type %d\n",
-                h->hdr.mediaType);
-            JC_MM_ASSERT( FALSE );
     }
 
     return r;
