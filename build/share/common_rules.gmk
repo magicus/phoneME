@@ -22,8 +22,6 @@
 # information or have any questions. 
 #
 
-all_tools :: $(WMATOOL_JAR_FILE)
-
 $(WMATOOL_JAR_FILE): $(JSR_120_TOOLS_CLASS_DIR) $(MODULE_TOOL_WMATOOL_JAVA_FILES) $(WMATOOL_MANIFEST_FILE)
 	@echo " ... building WMATool " $(LOG)
 	@echo +++ $(JAVAC_CMD) -g:none -d $(JSR_120_TOOLS_CLASS_DIR) \
@@ -47,6 +45,47 @@ $(WMATOOL_JAR_FILE): $(JSR_120_TOOLS_CLASS_DIR) $(MODULE_TOOL_WMATOOL_JAVA_FILES
 $(WMATOOL_MANIFEST_FILE): $(JSR_120_TOOLS_CLASS_DIR)
 	@echo " ... $@ " $(LOG)
 	@(echo "Main-Class: $(WMATOOL_MAIN_CLASS)" > $@) $(LOG)
+
+#################################################################
+
+$(JSR_120_NCITOOL_CLASS_DIR) :
+	mkdir $(JSR_120_NCITOOL_CLASS_DIR)
+
+$(JSR_120_NCISLAVE_CLASS_DIR) :
+	mkdir $(JSR_120_NCISLAVE_CLASS_DIR)
+
+$(TCK_NCI_TOOL): $(JSR_120_NCITOOL_CLASS_DIR) 
+	@echo " ... building NCI TCK tool" $(LOG)
+	$(JAVAC_CMD) \
+		-g:none \
+		-d $(JSR_120_NCITOOL_CLASS_DIR) \
+		$(MODULE_JSR_120_TCK_NCI_TOOL_JAVA_FILES)
+	cd $(JSR_120_NCITOOL_CLASS_DIR); $(JAR_CMD) cf $(TCK_NCI_TOOL) com/sun/tck com/sun/midp
+
+$(TCK_NCI_SLAVE_JAR): $(JSR_120_NCISLAVE_CLASS_DIR) 
+	@echo " ... building NCISlave midlet" $(LOG)
+	$(JAVAC_CMD) \
+		-g:none \
+		-d $(JSR_120_NCISLAVE_CLASS_DIR) \
+		-classpath $(MIDP_OUTPUT_DIR)/classes.zip \
+		$(MODULE_JSR_120_TCK_NCI_SLAVE_JAVA_FILES) 
+	$(PREVERIFY_CMD) \
+		-classpath $(MIDP_OUTPUT_DIR)/classes.zip \
+		-d $(JSR_120_NCISLAVE_CLASS_DIR_PREVERIFIED) \
+		$(JSR_120_NCISLAVE_CLASS_DIR)
+	cd $(JSR_120_NCISLAVE_CLASS_DIR_PREVERIFIED); \
+	$(JAR_CMD) cfm \
+		$(TCK_NCI_SLAVE_JAR) \
+		$(MODULE_JSR_120_TCK_NCI_SLAVE_MANIFEST) .
+
+$(TCK_NCI_SLAVE_JAD): $(TCK_NCI_SLAVE_JAR) 
+	cp $(MODULE_JSR_120_TCK_NCI_SLAVE_JAD) $(TCK_NCI_SLAVE_JAD)
+	sed "s/MIDlet-Jar-Size: .*/MIDlet-Jar-Size: `cat $(TCK_NCI_SLAVE_JAR) | wc -c`/" \
+		-i $(TCK_NCI_SLAVE_JAD) 
+
+#################################################################
+
+all_tools :: $(TCK_NCI_SLAVE_JAR) $(TCK_NCI_SLAVE_JAD) $(TCK_NCI_TOOL)
 
 clean_tools::
 	-@(rm -fr $(WMATOOL_JAR_FILE)) $(LOG)

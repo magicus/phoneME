@@ -257,6 +257,49 @@ WMATOOL_CLASS_DIRS += \
 	com/sun/wma com/sun/tck
 
 #################################################################
+
+WMA_TOOLS_OUT_DIR   = $(JSR_120_BINDIR)
+WMA_TOOLS_CLASS_DIR = $(JSR_120_TOOLS_CLASS_DIR)
+
+TCK_NCI_TOOL      = $(WMA_TOOLS_OUT_DIR)/wma_nci.jar
+TCK_NCI_SLAVE_JAR = $(WMA_TOOLS_OUT_DIR)/NCISlave.jar
+TCK_NCI_SLAVE_JAD = $(WMA_TOOLS_OUT_DIR)/NCISlave.jad
+
+JSR_120_NCITOOL_CLASS_DIR              = $(WMA_TOOLS_CLASS_DIR)/ncitool
+JSR_120_NCISLAVE_CLASS_DIR             = $(WMA_TOOLS_CLASS_DIR)/ncislave
+JSR_120_NCISLAVE_CLASS_DIR_PREVERIFIED = $(WMA_TOOLS_CLASS_DIR)/ncislave_preverified
+
+MODULE_JSR_120_TCK_NCI_TOOL_JAVA_FILES += \
+    $(JSR_120_DIR)/src/share/tool/ncitool/classes/com/sun/midp/io/nci/server/NCIBinaryMessage.java \
+    $(JSR_120_DIR)/src/share/tool/ncitool/classes/com/sun/midp/io/nci/server/NCIConnector.java \
+    $(JSR_120_DIR)/src/share/tool/ncitool/classes/com/sun/midp/io/nci/server/NCIMessage.java \
+    $(JSR_120_DIR)/src/share/tool/ncitool/classes/com/sun/midp/io/nci/server/NCIMessageConnection.java \
+    $(JSR_120_DIR)/src/share/tool/ncitool/classes/com/sun/midp/io/nci/server/NCITextMessage.java \
+    $(JSR_120_DIR)/src/share/tool/ncitool/classes/com/sun/tck/wma/BinaryMessage.java \
+    $(JSR_120_DIR)/src/share/tool/ncitool/classes/com/sun/tck/wma/Connector.java \
+    $(JSR_120_DIR)/src/share/tool/ncitool/classes/com/sun/tck/wma/Message.java \
+    $(JSR_120_DIR)/src/share/tool/ncitool/classes/com/sun/tck/wma/MessageConnection.java \
+    $(JSR_120_DIR)/src/share/tool/ncitool/classes/com/sun/tck/wma/MessageListener.java \
+    $(JSR_120_DIR)/src/share/tool/ncitool/classes/com/sun/tck/wma/TextMessage.java 
+
+
+MODULE_JSR_120_TCK_NCI_SLAVE_MANIFEST = \
+    $(JSR_120_DIR)/src/share/tool/ncislave/NCISlave.manifest
+
+MODULE_JSR_120_TCK_NCI_SLAVE_JAD = \
+    $(JSR_120_DIR)/src/share/tool/ncislave/NCISlave.jad
+
+ifneq ($(USE_JSR_205), true)
+MODULE_JSR_120_TCK_NCI_SLAVE_JAVA_FILES += \
+    $(JSR_120_DIR)/src/share/tool/ncislave/NCISlave.java
+
+MODULE_JSR_120_TCK_NCI_TOOL_JAVA_FILES += \
+    $(JSR_120_DIR)/src/share/tool/ncitool/classes/com/sun/midp/io/nci/server/NCIMultipartMessage.java 
+endif
+
+
+#################################################################
+
 DOXYGEN_INPUT_LIST += \
 	$(JSR_120_DIR)/src/share/protocol/cbs/native/share/inc/jsr120_cbs_protocol.h \
 	$(JSR_120_DIR)/src/share/core/common/native/share/inc/jsr120_cbs_pool.h \
