@@ -781,15 +781,19 @@ midp_run_midlet_with_args_cp(SuiteIdType suiteId,
             break;
         }
 
+#if ENABLE_WTK_DEBUG
+        /*
+         * If ENABLE_ON_DEVICE_DEBUG is also enabled and debug session is in
+         * progress, debugOption will be overriden in the following code block.
+         */
+        setDebugOption(debugOption);
+#endif
+
 #if ENABLE_ON_DEVICE_DEBUG
         if (commandState->isDebugMode) {
             commandState->isDebugMode = 0;
             setDebugOption(MIDP_DEBUG_SUSPEND);
         }
-#endif
-
-#if ENABLE_WTK_DEBUG
-        setDebugOption(debugOption);
 #endif
     } while (commandState->suiteId != UNUSED_SUITE_ID);
 
