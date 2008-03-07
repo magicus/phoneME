@@ -398,7 +398,7 @@ midpInitializeUI(void) {
     }
 #endif
 
-#if ENABLE_ON_DEVICE_DEBUG
+#if ENABLE_ON_DEVICE_DEBUG || ENABLE_WTK_DEBUG 
     {
 #if ENABLE_MULTIPLE_ISOLATES
     #define OPT_NUM 3
@@ -439,7 +439,7 @@ midpInitializeUI(void) {
     }
 #endif
 
-#endif /* ENABLE_ON_DEVICE_DEBUG */
+#endif /* ENABLE_ON_DEVICE_DEBUG || ENABLE_WTK_DEBUG */
 
     if (pushopen() != 0) {
         return -1;
@@ -786,6 +786,10 @@ midp_run_midlet_with_args_cp(SuiteIdType suiteId,
             commandState->isDebugMode = 0;
             setDebugOption(MIDP_DEBUG_SUSPEND);
         }
+#endif
+
+#if ENABLE_WTK_DEBUG
+        setDebugOption(MIDP_DEBUG_SUSPEND);
 #endif
     } while (commandState->suiteId != UNUSED_SUITE_ID);
 

@@ -67,10 +67,9 @@ public class AppIsolateMIDletSuiteLoader extends CldcMIDletSuiteLoader {
                 // wait for a connection from debugger
                 while (!currentIsolate.isDebuggerConnected()) {
                     try {
-                        Thread.sleep(100);
+                        Thread.sleep(300);
                     } catch (Exception e) {
                         // ignore
-                        e.printStackTrace();
                     }
                 }
             }
