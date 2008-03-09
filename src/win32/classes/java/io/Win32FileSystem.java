@@ -31,7 +31,9 @@ import java.security.AccessController;
 import sun.security.action.GetPropertyAction;
 
 
-class Win32FileSystem extends FileSystem {
+// Common Unicode-aware filesystem class for Windows NT
+// and Windows CE
+abstract class Win32FileSystem extends FileSystem {
 
     private final char slash;
     private final char altSlash;
@@ -268,7 +270,7 @@ class Win32FileSystem extends FileSystem {
 	    || (hasDrives ? (pl == 3) : (pl == 1));
     }
 
-    protected native String getDriveDirectory(int drive);
+    protected abstract String getDriveDirectory(int drive);
 
     private static String[] driveDirCache = new String[26];
 
@@ -503,7 +505,7 @@ class Win32FileSystem extends FileSystem {
 	}
     }
 
-    private static native int listRoots0();
+    protected abstract int listRoots0();
 
     public File[] listRoots() {
 	int ds = listRoots0();

@@ -30,7 +30,6 @@ CLASSLIB_CLASSES += java.net.WinCEDatagramSocketImpl
 
 CVM_TARGETOBJS_SPACE += \
         Win32FileSystem_md.o \
-        WinNTFileSystem_md.o \
         canonicalize_md.o \
 
 SYSTEM_PROPERTIES += impl.prefix.dgram=WinCE

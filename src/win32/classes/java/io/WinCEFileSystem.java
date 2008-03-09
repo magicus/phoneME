@@ -27,10 +27,18 @@ package java.io;
 /**
  * Unicode-aware FileSystem for Windows WinCE.
  */
-class WinCEFileSystem extends WinNTFileSystem {
+class WinCEFileSystem extends Win32FileSystem {
+
+    protected int listRoots0() {
+        return 0;
+    }
 
     String getDrive(String path) {
 	return "";
+    }
+
+    protected String getDriveDirectory(int drive) {
+        throw new InternalError();
     }
 
 }
