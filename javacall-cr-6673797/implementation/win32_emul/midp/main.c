@@ -28,6 +28,10 @@
 #include "javacall_events.h"
 #include "javacall_logging.h"
 
+#ifdef ENABLE_OUTPUT_REDIRECTION
+#include "io_sockets.h"
+#endif /* ENABLE_OUTPUT_REDIRECTION */
+
 #if ENABLE_JSR_120
 extern javacall_result finalize_wma_emulator();
 #endif
@@ -127,6 +131,8 @@ main(int argc, char *argv[]) {
     char *className        = NULL;
     char *classPath        = NULL;
     char *debugPort        = NULL;
+    int stdoutPort         = -1;
+    int stderrPort         = -1;
 
     /* uncomment this like to force the debugger to start */
     /* _asm int 3; */
@@ -253,6 +259,16 @@ main(int argc, char *argv[]) {
             i++;
             url = malloc(sizeof(char)*(strlen(argv[i])+1));
             strcpy(url, argv[i]);
+        } else if (strcmp(argv[i], "-stdoutport") == 0) {
+            if ((i + 1) < argc) {
+                ++i;
+                stdoutPort = atoi(argv[i]);
+            }
+        } else if (strcmp(argv[i], "-stderrport") == 0) {
+            if ((i + 1) < argc) {
+                ++i;
+                stderrPort = atoi(argv[i]);
+            }
         } else if (strcmp(argv[i], "-descriptor") == 0) {
 
             /* run local application */
@@ -472,7 +488,24 @@ main(int argc, char *argv[]) {
 
     InitializeLimeEvents();
 
+    if ((stdoutPort != -1) || (stderrPort != -1)) {
+#ifdef ENABLE_OUTPUT_REDIRECTION
+        /* enable redirection of output to sockets */
+        SIOInit(stdoutPort, stderrPort);
+#else /* ENABLE_OUTPUT_REDIRECTION */
+        javautil_debug_print(JAVACALL_LOG_INFORMATION, "main",
+                             "Output redirection is not supported.");
+#endif /* ENABLE_OUTPUT_REDIRECTION */
+    }
+
     JavaTask();
+
+#ifdef ENABLE_OUTPUT_REDIRECTION
+    if ((stdoutPort != -1) || (stderrPort != -1)) {
+        /* stop redirection of output to sockets */
+        SIOStop();
+    }
+#endif /* ENABLE_OUTPUT_REDIRECTION */
 
     javacall_events_finalize();
 
