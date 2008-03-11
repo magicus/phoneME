@@ -76,6 +76,7 @@ include $(SUBSYSTEM_AMS_DIR)/verifier/lib.gmk
 include $(SUBSYSTEM_AMS_DIR)/midlet_selector_base/lib.gmk
 include $(SUBSYSTEM_AMS_DIR)/midlet_selector/lib.gmk
 include $(SUBSYSTEM_AMS_DIR)/ams_folders/lib.gmk
+include $(SUBSYSTEM_AMS_DIR)/ams_debug/lib.gmk
 
 ifeq ($(USE_ON_DEVICE_DEBUG), true)
 include $(PROJECT_MIDP_DIR)/src/ams/on_device_debug_base/lib.gmk
