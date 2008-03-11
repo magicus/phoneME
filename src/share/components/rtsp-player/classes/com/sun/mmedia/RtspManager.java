@@ -65,7 +65,7 @@ public class RtspManager {
     private int videoWidth;
     private int videoHeight;
 
-    private static Random rnd = new Random(System.currentTimeMillis());
+    private Random rnd = new Random(System.currentTimeMillis());
 
     /**
      * Highest and lowest port values allowed for RTP port pairs.
