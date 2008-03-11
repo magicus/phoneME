@@ -39,4 +39,4 @@ MIDP_JAVADOC_SOURCEPATH += $(SECURITY_OCSP_STUBS_DIR)/classes
 # Java files for the library
 #
 #SUBSYSTEM_SECURITY_JAVA_FILES += \
-#    $(SECURITY_OCSP_STUBS_DIR)/classes/com/sun/midp/pki/OCSPHttpRequest.java
+#    $(SECURITY_OCSP_STUBS_DIR)/classes/com/sun/midp/pki/ocsp/OCSPHttpRequest.java

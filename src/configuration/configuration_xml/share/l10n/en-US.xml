@@ -495,6 +495,8 @@
                 Value="%1 cannot be installed. The trusted certificate used to authorize the application has expired. Contact your application provider to correct this situation."/>
 <localized_string Key="AMS_GRA_INTLR_INVALIDJADEXCEPTION_EXPIRED_CA_KEY"
                 Value="%1 cannot be installed. The public key used for authorization has expired. Contact your service provider to correct this situation."/>
+<localized_string Key="AMS_GRA_INTLR_INVALIDJADEXCEPTION_REVOKED_PROVIDER_CERT"
+                Value="%1 cannot be installed. The trusted certificate used to authorize the application has been revoked. Contact your application provider to correct this situation."/>
 <localized_string Key="AMS_GRA_INTLR_INVALIDJADEXCEPTION_AUTHORIZATION_FAILURE"
                 Value="%1 cannot be installed because it does not have permission to the operation it requires."/>
 <localized_string Key="AMS_GRA_INTLR_INVALIDJADEXCEPTION_PUSH_DUP_FAILURE"

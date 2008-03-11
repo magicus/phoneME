@@ -102,6 +102,9 @@ public interface Verifier {
      * @param jarStorage System store for applications
      * @param jarFilename name of the jar to read.
      *
+     * @return authorization path: a list of authority names begining with
+     *         the most trusted, or null if jar is not signed
+     *
      * @exception IOException if any error prevents the reading
      *   of the JAR
      * @exception InvalidJadException if the JAR is not valid or the
