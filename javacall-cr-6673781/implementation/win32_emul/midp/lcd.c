@@ -379,7 +379,11 @@ int javacall_lcd_get_screen_width() {
  * @retval JAVACALL_FALSE  implementation does not support native softbutton layer
  */
 javacall_bool javacall_lcd_is_native_softbutton_layer_supported () {
+#ifdef ENABLE_NATIVE_SOFTBUTTONS
     return JAVACALL_TRUE;
+#else /* ENABLE_NATIVE_SOFTBUTTONS */
+    return JAVACALL_FALSE;
+#endif /* ENABLE_NATIVE_SOFTBUTTONS */
 }
 
 /**
