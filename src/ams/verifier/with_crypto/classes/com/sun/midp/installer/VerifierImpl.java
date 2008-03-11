@@ -62,7 +62,7 @@ public class VerifierImpl implements Verifier {
     /**
      * Constructor.
      *
-     * @param state current state of the installation
+     * @param installState current state of the installation
      */
     public VerifierImpl(InstallState installState) {
         state = installState;
