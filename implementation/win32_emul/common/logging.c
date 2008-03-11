@@ -42,6 +42,10 @@ extern "C" {
 #include "javacall_logging.h"
 #include "javacall_properties.h"
 
+#ifdef ENABLE_OUTPUT_REDIRECTION
+#include "io_sockets.h"
+#endif /* ENABLE_OUTPUT_REDIRECTION */
+
 char print_buffer[PRINT_BUFFER_SIZE];
 char debug_print_buffer[PRINT_BUFFER_SIZE];
 
@@ -54,6 +58,14 @@ void javacall_print(const char *s) {
     //OutputDebugString(s);
     printf("%s", s);
 	fflush(stdout);
+
+#ifdef ENABLE_OUTPUT_REDIRECTION
+    /**
+     * redirect output to sockets
+     * does nothing if the socket numbers are not set via command line
+     */
+	SIOWrite(1, s, strlen(s));
+#endif /* ENABLE_OUTPUT_REDIRECTION */
 }
 
 
