@@ -59,7 +59,6 @@ JSR_211_JC_IMPL_PATH=$(JAVACALL_DIR)/implementation/${IMPL_DIR_NAME}
 
 SOURCE_OUTPUT_LIST += $(foreach jsr,$(JSR_LIST), $(if $(PREFIX_$(USE_$(jsr))), $(JAVACALL_DIR)/implementation/stubs/$($(jsr)_JC_DIR) javacall/implementation/stubs))
 SOURCE_OUTPUT_LIST += $(foreach jsr,$(JSR_LIST), $(if $(PREFIX_$(USE_$(jsr))), $($(jsr)_JC_IMPL_PATH)/$($(jsr)_JC_DIR) javacall/implementation/$(IMPL_DIR_NAME)))
-SOURCE_OUTPUT_LIST += $(PROJECT_JAVACALL_DIR)/configuration/sjwc/win32_emul javacall/configuration/sjwc
 SOURCE_OUTPUT_LIST += $(JAVACALL_PLATFORM_DEFS_DIR)/javacall_platform_defs.h javacall/implementation/$(IMPL_DIR_NAME)
 SOURCE_OUTPUT_LIST += $(JAVACALL_DIR)/implementation/share/properties javacall/implementation/share
 
