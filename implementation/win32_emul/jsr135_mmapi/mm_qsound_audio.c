@@ -1190,8 +1190,8 @@ static javacall_result audio_qs_release_device(javacall_handle handle){
     return JAVACALL_OK;
 }
 
-#define DEFAULT_BUFFER_SIZE  1000 * 1024
-#define DEFAULT_PACKET_SIZE  1024
+#define DEFAULT_BUFFER_SIZE  100 * 1024
+#define DEFAULT_PACKET_SIZE  4096
 static javacall_result audio_qs_get_java_buffer_size(javacall_handle handle,
                                                      long* java_buffer_size,
                                                      long* first_data_size)
