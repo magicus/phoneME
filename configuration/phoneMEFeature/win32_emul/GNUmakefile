@@ -31,10 +31,6 @@ ifeq ($(JAVACALL_DIR),)
 $(error JAVACALL_DIR is not set.)
 endif
 
-ifeq ($(PROJECT_JAVACALL_DIR),)
-$(error PROJECT_JAVACALL_DIR is not set.)
-endif
-
 include environment.gmk
 
 #For each project location for basic definitions shall be specified
