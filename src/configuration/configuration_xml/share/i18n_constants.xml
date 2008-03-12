@@ -736,6 +736,9 @@
             Name="AMS_GRA_INTLR_INVALIDJADEXCEPTION_REVOKED_PROVIDER_CERT"
             Comment="AMS: com.sun.midp.installer.GraphicalInstaller"/>
   <constant Type="int"
+            Name="AMS_GRA_INTLR_INVALIDJADEXCEPTION_UNKNOWN_PROVIDER_CERT_STATUS"
+            Comment="AMS: com.sun.midp.installer.GraphicalInstaller"/>
+  <constant Type="int"
             Name="AMS_GRA_INTLR_INVALIDJADEXCEPTION_AUTHORIZATION_FAILURE"
             Comment="AMS: com.sun.midp.installer.GraphicalInstaller"/>
   <constant Type="int"

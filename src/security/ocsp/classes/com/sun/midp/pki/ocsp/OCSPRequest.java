@@ -26,13 +26,64 @@
 
 package com.sun.midp.pki.ocsp;
 
+import java.util.Vector;
+
 /**
- * Interface representing OCSP Request.
+ * Class representing OCSP Request.
  */
-public interface OCSPRequest {
+public class OCSPRequest {
+
+    /**
+     * Version of the OCSP request. Default is 0 (means v1).
+     */
+    private int version;
+
+    /**
+     * Name of the requestor. Optional.
+     */
+    private String requestorName;
+
+    /**
+     * List of requests to server.
+     */
+    private Vector requestList = new Vector();
+
+    /**
+     * List of extensions.
+     */
+    private Vector requesExtensions = new Vector();
+
+    /**
+     * Signature (optional).
+     */
+    private byte[] signature;
+
+    /** */
+    private class Request {
+        /** Hash algorithm identifier */
+        String hashAlgorithm;
+        /** Hash of Issuer's DN */
+        String issuerNameHash;
+        /** Hash of Issuer's public key */
+        String issuerKeyHash;
+        /** Certificate serial number */
+        int certSerialNumber;
+        /** This request extensions, optional */
+    }
+
+    private class Extension {
+        /** ID of this extension */
+        String id;
+        /** true is this extension is critical, false otherwise */
+        boolean isCritical;
+        /** Value of the extension (octet string) */
+        String value;
+    }
 
     /**
      *
      */
-    public int getVersion();
+    public OCSPRequest() {
+
+    }
 }

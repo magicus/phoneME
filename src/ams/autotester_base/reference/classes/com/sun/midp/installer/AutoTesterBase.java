@@ -549,12 +549,12 @@ class AutoTesterBase extends MIDlet implements CommandListener,
                 "version";
 
         case InvalidJadException.INVALID_CONTENT_HANDLER:
-	    return "Content handler attribute(s) incorrectly formatted: " +
-		ije.getExtraData();
+            return "Content handler attribute(s) incorrectly formatted: " +
+                ije.getExtraData();
 
-	case InvalidJadException.CONTENT_HANDLER_CONFLICT:
-	    return "Content handler would conflict with another handler: " +
-		ije.getExtraData();
+        case InvalidJadException.CONTENT_HANDLER_CONFLICT:
+            return "Content handler would conflict with another handler: " +
+                ije.getExtraData();
 
         case InvalidJadException.CA_DISABLED:
             return "The application can't be authorized because " +
@@ -562,6 +562,12 @@ class AutoTesterBase extends MIDlet implements CommandListener,
 
         case InvalidJadException.UNSUPPORTED_CHAR_ENCODING:
             return "Unsupported character encoding: " + ije.getExtraData();
+
+        case InvalidJadException.REVOKED_CERT:
+            return "The content provider certificate has been revoked.";
+
+        case InvalidJadException.UNKNOWN_CERT_STATUS:
+            return "The content provider certificate status is unknown.";
         }
 
         return ije.getMessage();

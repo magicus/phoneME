@@ -31,7 +31,7 @@ import javax.microedition.pki.Certificate;
 /**
  * Validates the certificates.
  */
-public interface OCSPValidator {
+public class OCSPValidatorImpl implements OCSPValidator {
 
     /**
      * Retrieves the status of the given certificate.
@@ -40,5 +40,7 @@ public interface OCSPValidator {
      * @return status of the certificate
      * @throws OCSPException if the OCSP Responder returned an error message
      */
-    public int validate(Certificate cert) throws OCSPException;
+    public int validate(Certificate cert) throws OCSPException {
+        return CertStatus.UNKNOWN;
+    }
 }

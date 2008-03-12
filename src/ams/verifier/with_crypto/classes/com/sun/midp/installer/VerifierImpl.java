@@ -33,6 +33,10 @@ import java.util.Vector;
 import javax.microedition.io.Connector;
 import javax.microedition.pki.CertificateException;
 import com.sun.midp.pki.*;
+import com.sun.midp.pki.ocsp.OCSPValidator;
+import com.sun.midp.pki.ocsp.CertStatus;
+import com.sun.midp.pki.ocsp.OCSPValidatorImpl;
+import com.sun.midp.pki.ocsp.OCSPException;
 import com.sun.midp.publickeystore.*;
 import com.sun.midp.crypto.*;
 import com.sun.midp.security.*;
@@ -58,6 +62,9 @@ public class VerifierImpl implements Verifier {
 
     /** Authenticated content provider certificate. */
     private X509Certificate cpCert;
+
+    /** Online Certificate Status Protocol validator. */
+    private OCSPValidator certValidator;
 
     /**
      * Constructor.
@@ -299,7 +306,36 @@ public class VerifierImpl implements Verifier {
                 authPath[0]);
         }
 
-        cpCert = (X509Certificate)derCerts.elementAt(0);
+        /*
+         * If USE_OSCP=true, the following code checks the certificate's
+         * validity using Online Certificate Status Protocol.
+         */
+        if (certValidator == null) {
+            certValidator = new OCSPValidatorImpl();
+        }
+
+        int status;
+        X509Certificate cert = (X509Certificate)derCerts.elementAt(0);
+        
+        try {
+            status = certValidator.validate(cert);
+        } catch (OCSPException ocspEx) {
+            /*
+             * IMPL_NOTE: an exception must be thrown to allow the caller
+             * to display a proper message to the user.
+             */
+            status = CertStatus.UNKNOWN;
+        }
+
+        if (status == CertStatus.REVOKED) {
+            throw new InvalidJadException(
+                InvalidJadException.REVOKED_CERT, cert.getSubject());
+        } else if (status != CertStatus.GOOD) {
+            throw new InvalidJadException(
+                InvalidJadException.UNKNOWN_CERT_STATUS, cert.getSubject());
+        }
+
+        cpCert = cert;
 
         // Authenticated
         return 1;

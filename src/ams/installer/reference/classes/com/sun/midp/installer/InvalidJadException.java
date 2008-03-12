@@ -315,6 +315,18 @@ public class InvalidJadException extends java.io.IOException {
      */
     public static final int UNSUPPORTED_CHAR_ENCODING = 61;
 
+    /**
+     * (62) The certificate has been revoked.
+     * The extra data will be the subject's name as a String.
+     */
+    public static final int REVOKED_CERT              = 62;
+
+    /**
+     * (63) The certificate is unknown to OCSP server.
+     * The extra data will be the subject's name as a String.
+     */
+    public static final int UNKNOWN_CERT_STATUS       = 63;
+
     /** The reason why this exception occurred. */
     private int reason;
 

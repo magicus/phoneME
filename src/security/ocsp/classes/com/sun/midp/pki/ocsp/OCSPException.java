@@ -32,7 +32,7 @@ import java.lang.String;
  * The <CODE>OCSPException</CODE> encapsulates an error that
  * was indicated in the responce received from OCSP Responder.
  */
-public class OCSPException {
+public class OCSPException extends Exception {
 
     /** The reason code for this exception */
     private byte reason;
