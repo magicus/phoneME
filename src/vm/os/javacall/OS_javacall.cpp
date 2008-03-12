@@ -1,24 +1,24 @@
 /*
  *
  *
- * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
- * 
+ *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
  * 2 only, as published by the Free Software Foundation.
- * 
+ *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
  * included at /legal/license.txt).
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA
- * 
+ *
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
  * information or have any questions.
@@ -38,9 +38,8 @@
 #include "incls/_OS_javacall.cpp.incl"
 
 #include <javacall_time.h>
+#include <javacall_os.h>
 
-static bool             ticker_stopping = false;
-static bool             ticker_running = false;
 static int              sock_initialized = 0;
 
 static bool             _compiler_timer_has_ticked = false;
@@ -52,12 +51,12 @@ static bool  _has_offset = false;
 static jlong _offset     = 0;
 
 void ads_panic() {
-  /* Add this empty method just for building javacall_arm smoothly */ 
+  /* Add this empty method just for building javacall_arm smoothly */
   return;
 }
 
 jlong offset() {
-  /* Calculate the OS dependent offset time, if no offset exist, 
+  /* Calculate the OS dependent offset time, if no offset exist,
    * this function is not necessary */
   _offset = 0;
   return _offset;
@@ -73,14 +72,15 @@ jlong Os::java_time_millis() {
 }
 
 void Os::sleep(jlong ms) {
-  /* let the current process sleep for ms seconds */
+  /* let the current process sleep for ms milliseconds */
+    javacall_time_sleep(ms);
 }
 
 static void tick_timer_func(javacall_handle handle) {
 
   real_time_tick(TickInterval);
   _compiler_timer += TickInterval;
-  
+
   if (_compiler_timer >= MaxCompilationTime) {
      _compiler_timer_has_ticked = true;
   }
@@ -90,7 +90,7 @@ bool Os::start_ticks() {
 
   javacall_result jc_ret;
 
-  /* 
+  /*
    * Enable periodic calls to real_time_tick().
    * This is called at VM startup.
    */
@@ -120,15 +120,19 @@ void Os::suspend_ticks() {
    * This is called when the VM is about to sleep
    * (when there's no Java thread to execute)
    */
+
+  javacall_time_suspend_ticks();
   return;
 }
 
 void Os::resume_ticks() {
+
   /*
    * Reverse the effect of suspend_ticks().
    * This is called when the VM
    * wakes up and continues executing Java threads.
    */
+  javacall_time_resume_ticks();
   return;
 }
 
@@ -153,11 +157,13 @@ bool Os::check_compiler_timer() {
 
 void Os::initialize() {
   /*
-   * This function is used to initialize the OS structure. 
+   * This function is used to initialize the OS structure.
    * This is where timers and threads get started for the first
    * real_time_tick event, and where signal handlers and other I/O
    * initialization should occur.
    */
+
+  javacall_os_initialize();
   return;
 }
 
@@ -168,6 +174,8 @@ void Os::dispose() {
    * for a clean and complete restart.  This should undo
    * all the work that initialize does.
    */
+
+  javacall_os_dispose();
   return;
 }
 
