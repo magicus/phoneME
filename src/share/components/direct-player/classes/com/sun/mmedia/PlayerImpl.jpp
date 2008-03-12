@@ -302,9 +302,6 @@ public class PlayerImpl implements Player {
         boolean need_more = true;
 
         if (contLength > 0) {
-            if (contLength == stream.tell()) {
-                return;
-            }
             nSetWholeContentSize(hNative, contLength);
         }
         /* first loop - allocate java buffer*/
@@ -347,12 +344,6 @@ public class PlayerImpl implements Player {
                     } else {
                         throw new MediaException("Buffering media data error");
                     }
-                }
-
-                if ((contLength) != -1 && (contLength == stream.tell())) {
-                    /* end of media */
-                    nBuffering(hNative, null, 0);
-                    need_more = false;
                 }
             } while (need_more);
         }
