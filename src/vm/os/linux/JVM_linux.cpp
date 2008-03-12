@@ -39,7 +39,7 @@
 
 static int executeVM( void ) {
   int result = 0;
-  for (int i = 0; i < ExecutionLoops; i++) {
+  for( int i = ExecutionLoops; --i >= 0; ) {
     if (Verbose) {
       TTY_TRACE_CR(("\t***Starting VM***"));
     }

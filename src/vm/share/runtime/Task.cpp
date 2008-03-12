@@ -468,7 +468,8 @@ void Task::cleanup_terminated_task(int id JVM_TRAPS) {
 #if defined(AZZERT) || USE_BINARY_IMAGE_LOADER
   ObjectHeap::full_collect(JVM_SINGLE_ARG_NO_CHECK);
 #if ENABLE_ISOLATES
-  GUARANTEE( ObjectHeap::get_task_memory_usage(id) == 0, "Leftover objects" );
+  GUARANTEE( ObjectHeap::get_task_memory_usage(id) <= 
+             BoundaryDesc::allocation_size(), "Leftover objects" );
 #endif
 #endif
 

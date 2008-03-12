@@ -794,6 +794,8 @@ void Thread::iterate_oopmaps(oopmaps_doer do_map, void *param) {
   OOPMAP_ENTRY_4(do_map, param, T_OBJECT, next);
   OOPMAP_ENTRY_4(do_map, param, T_OBJECT, previous);
   OOPMAP_ENTRY_4(do_map, param, T_OBJECT, global_next);
+  OOPMAP_ENTRY_4(do_map, param, T_OBJECT, next_waiting);
+  OOPMAP_ENTRY_4(do_map, param, T_OBJECT, wait_obj);
   OOPMAP_ENTRY_4(do_map, param, T_OBJECT, pending_exception);
   OOPMAP_ENTRY_4(do_map, param, T_OBJECT, thread_obj);
   OOPMAP_ENTRY_4(do_map, param, T_OBJECT, pending_entries);
