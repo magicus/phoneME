@@ -103,7 +103,7 @@ runMidlet(int argc, char** commandlineArgs) {
      */
     JVM_SetConfig(JVM_CONFIG_HEAP_CAPACITY, midp_heap_requirement);
 
-#if !ENABLE_ON_DEVICE_DEBUG
+#if !(ENABLE_ON_DEVICE_DEBUG || ENABLE_WTK_DEBUG)
     if (midpRemoveOptionFlag("-port", commandlineArgs, &argc) != NULL) {
         char* pMsg = "WARNING: -port option has no effect, "
                      "set VmDebuggerPort property instead.\n";
@@ -151,8 +151,7 @@ runMidlet(int argc, char** commandlineArgs) {
     }
 
     /*
-     * IMPL_NOTE: "-debug" option was already parsed by the VM, so
-     *            argv doesn't contain it at this point. Remove?
+     * IMPL_NOTE: corresponding VM option is called "-debugger"
      */
     if (midpRemoveOptionFlag("-debug", argv, &argc) != NULL) {
         debugOption = MIDP_DEBUG_SUSPEND;
