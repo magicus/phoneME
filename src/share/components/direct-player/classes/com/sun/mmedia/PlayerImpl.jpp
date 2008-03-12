@@ -322,6 +322,9 @@ public class PlayerImpl implements Player {
             do {
                 int num_read = 0;
                 int ret;
+                if (packetSize > javaBufSize) {
+                    packetSize = javaBufSize;
+                }
                 do {
                     try {
                         // read from source stream
