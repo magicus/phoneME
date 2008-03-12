@@ -888,8 +888,9 @@ public abstract class BasicPlayer implements Player
     public void sendEvent(String evt, Object evtData) {
         //  There's always one listener for EOM -- itself.
         //  "Deliver" the CLOSED event so that the evtQ thread may terminate
-        if (listeners.size() == 0 && evt != PlayerListener.END_OF_MEDIA &&
-            evt != PlayerListener.CLOSED && evt != PlayerListener.ERROR) {
+        if (listeners.size() == 0 && !evt.equals( PlayerListener.END_OF_MEDIA )
+                                  && !evt.equals( PlayerListener.CLOSED )
+                                  && !evt.equals(PlayerListener.ERROR)) {
             return;
         }
 

@@ -56,8 +56,8 @@ public class RTPPlayer extends com.sun.mmedia.DirectPlayer
             // here, this would be a duplicate because RTSPPlayer
             // generates them by itself.
 
-            if (PlayerListener.END_OF_MEDIA == evt ||
-                PlayerListener.VOLUME_CHANGED == evt)
+            if (evt.equals( PlayerListener.END_OF_MEDIA ) ||
+                evt.equals( PlayerListener.VOLUME_CHANGED ))
             {
                 parentPlayer.sendEvent(evt, evtData);
             }
