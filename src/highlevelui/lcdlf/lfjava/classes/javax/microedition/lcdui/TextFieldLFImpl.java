@@ -433,8 +433,16 @@ class TextFieldLFImpl extends ItemLFImpl implements
        size[HEIGHT] = f.getHeight() + (2 * TextFieldSkin.PAD_V);
        size[WIDTH] = f.charWidth('W') * tf.buffer.capacity() +
             (2 * TextFieldSkin.PAD_H);
-       if (size[WIDTH] > availableWidth) {
+        
+       if (size[WIDTH] > availableWidth ) {
             size[WIDTH] = availableWidth;
+       } else if (shouldHExpand()){
+           if (size[WIDTH] + labelBounds[WIDTH] - (4 * TextFieldSkin.PAD_H) < bounds[WIDTH]) {
+                size[WIDTH] = bounds[WIDTH] - labelBounds[WIDTH] - (4 * TextFieldSkin.PAD_H);
+
+           } else {
+                size[WIDTH] = bounds[WIDTH];
+           }
        }
 
         // update scrollWidth used in scrolling UE text
