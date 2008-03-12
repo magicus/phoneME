@@ -1108,16 +1108,20 @@ class LayoutManager {
         }
         
         space = space / numExp;
-        
+
         // We then add the same amount to each Expandable
         for (int i = rowStart; i <= rowEnd; i++) {
             if (itemLFs[i].shouldHExpand()) {
                 itemLFs[i].lSetSize(itemLFs[i].bounds[WIDTH] + space,
-                                   getItemHeight(i, 
-                                                 itemLFs[i].bounds[WIDTH] + 
+                                   getItemHeight(i,
+                                                 itemLFs[i].bounds[WIDTH] +
                                                  space,
-                                                 itemLFs)); 
-                
+                                                 itemLFs));
+
+                itemLFs[i].lGetContentSize(itemLFs[i].contentBounds,itemLFs[i].bounds[WIDTH] + space);
+
+
+
                 // We right shift each subsequent item on the row
                 for (int j = i + 1; j <= rowEnd; j++) {
                     itemLFs[j].lMove(space, 0);
