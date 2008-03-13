@@ -22,14 +22,14 @@
  * Clara, CA 95054 or visit www.sun.com if you need additional
  * information or have any questions.
  */
-#ifndef __JAVACALL_EVENTQUEUE_H_
-#define __JAVACALL_EVENTQUEUE_H_
+
+
+#include "javacall_eventqueue.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-#include <javacall_defs.h>
 
 /**
  * Creates the event queue lock.
@@ -37,7 +37,9 @@ extern "C" {
  * @return <tt>JAVACALL_OK</tt> if successully created lock
  *         <tt>JAVACALL_FAIL</tt> or negative value otherwise
  */
-javacall_result javacall_create_event_queue_lock(void);
+javacall_result javacall_create_event_queue_lock(void){
+    return JAVACALL_NOT_IMPLEMENTED;
+}
 
 /**
  * Destroys the event queue lock.
@@ -45,7 +47,9 @@ javacall_result javacall_create_event_queue_lock(void);
  * @return <tt>JAVACALL_OK</tt> if successully destroyed lock
  *         <tt>JAVACALL_FAIL</tt> or negative value otherwise
  */
-javacall_result javacall_destroy_event_queue_lock(void);
+javacall_result javacall_destroy_event_queue_lock(void){
+    return JAVACALL_NOT_IMPLEMENTED;
+}
 
 /**
  * Waits to get the event queue lock and then locks it.
@@ -53,7 +57,9 @@ javacall_result javacall_destroy_event_queue_lock(void);
  * @return <tt>JAVACALL_OK</tt> if successully obtained lock
  *         <tt>JAVACALL_FAIL</tt> or negative value otherwise
  */
-javacall_result javacall_wait_and_lock_event_queue(void);
+javacall_result javacall_wait_and_lock_event_queue(void){
+    return JAVACALL_NOT_IMPLEMENTED;
+}
 
 /**
  * Unlocks the event queue.
@@ -61,10 +67,13 @@ javacall_result javacall_wait_and_lock_event_queue(void);
  * @return <tt>JAVACALL_OK</tt> if successully released lock
  *         <tt>JAVACALL_FAIL</tt> or negative value otherwise
  */
-javacall_result javacall_unlock_event_queue(void);
+javacall_result javacall_unlock_event_queue(void){
+    return JAVACALL_NOT_IMPLEMENTED;
+}
+
 
 #ifdef __cplusplus
-}
+} //extern "C"
 #endif
 
-#endif /* __JAVACALL_EVENTQUEUE_H_ */
+
