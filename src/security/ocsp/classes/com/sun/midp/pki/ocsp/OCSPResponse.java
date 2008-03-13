@@ -26,23 +26,16 @@
 
 package com.sun.midp.pki.ocsp;
 
-
-import java.io.*;
-import java.math.BigInteger;
-import java.security.*;
-import java.security.cert.Certificate;
-import java.security.cert.CertificateFactory;
-import java.security.cert.CertPathValidatorException;
-import java.security.cert.X509Certificate;
-import java.security.cert.PKIXParameters;
-import javax.security.auth.x500.X500Principal;
 import java.util.Date;
-import java.util.List;
-import java.util.Set;
-import java.util.Iterator;
-import sun.misc.HexDumpEncoder;
-import sun.security.x509.*;
-import sun.security.util.*;
+import java.io.IOException;
+
+import javax.microedition.pki.CertificateException;
+
+import com.sun.midp.pki.X509Certificate;
+import com.sun.midp.pki.Utils;
+import com.sun.midp.pki.ObjectIdentifier;
+import com.sun.midp.pki.DerValue;
+
 import com.sun.midp.log.Logging;
 
 /**
@@ -116,13 +109,6 @@ import com.sun.midp.log.Logging;
  */
 
 class OCSPResponse {
-
-    // Certificate status CHOICE
-    public static final int CERT_STATUS_GOOD = 0;
-    public static final int CERT_STATUS_REVOKED = 1;
-    public static final int CERT_STATUS_UNKNOWN = 2;
-
-    private static final boolean dump = false;
     private static final ObjectIdentifier OCSP_BASIC_RESPONSE_OID;
     private static final ObjectIdentifier OCSP_NONCE_EXTENSION_OID;
     static {
@@ -155,8 +141,7 @@ class OCSPResponse {
      */
     // used by OCSPChecker
     OCSPResponse(byte[] bytes, PKIXParameters params,
-        X509Certificate responderCert)
-        throws IOException, CertPathValidatorException {
+        X509Certificate responderCert) throws IOException, OCSPException {
 
         try {
             int responseStatus;
@@ -168,10 +153,9 @@ class OCSPResponse {
             byte[] ocspNonce;
 
             // OCSPResponse
-            if (dump) {
-                HexDumpEncoder hexEnc = new HexDumpEncoder();
-                System.out.println("OCSPResponse bytes are...");
-                System.out.println(hexEnc.encode(bytes));
+            if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
+                Logging.report(Logging.INFORMATION, LogChannels.LC_SECURITY,
+                       "OCSPResponse bytes are..." + Utils.hexEncode(bytes));
             }
             DerValue der = new DerValue(bytes);
             if (der.tag != DerValue.tag_Sequence) {
@@ -187,9 +171,8 @@ class OCSPResponse {
                            "OCSP response: " + responseToText(responseStatus));
             }
             if (responseStatus != OCSP_RESPONSE_OK) {
-                throw new CertPathValidatorException(
-                    "OCSP Response Failure: " +
-                        responseToText(responseStatus));
+                throw new OCSPException(OCSPException.CANNOT_RECEIVE_RESPONSE,
+                    "OCSP Response Failure: " + responseToText(responseStatus));
             }
 
             // responseBytes
@@ -197,7 +180,7 @@ class OCSPResponse {
             if (! der.isContextSpecific((byte)0)) {
                 throw new IOException("Bad encoding in responseBytes element " +
                     "of OCSP response: expected ASN.1 context specific tag 0.");
-            };
+            }
             DerValue tmp = der.data.getDerValue();
             if (tmp.tag != DerValue.tag_Sequence) {
                 throw new IOException("Bad encoding in responseBytes element " +
@@ -289,8 +272,9 @@ class OCSPResponse {
                     for (int i = 0; i < responseExtDer.length; i++) {
                         responseExtension[i] = new Extension(responseExtDer[i]);
                         if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
-                            Logging.report(Logging.INFORMATION, LogChannels.LC_SECURITY,
-                                       "OCSP extension: " + responseExtension[i]);
+                            Logging.report(Logging.INFORMATION,
+                                LogChannels.LC_SECURITY,
+                                    "OCSP extension: " + responseExtension[i]);
                         }
                         if ((responseExtension[i].getExtensionId()).equals(
                             OCSP_NONCE_EXTENSION_OID)) {
@@ -311,7 +295,7 @@ class OCSPResponse {
 
             // signature
             byte[] signature = seqTmp[2].getBitString();
-            X509CertImpl[] x509Certs = null;
+            X509Certificate[] x509Certs = null;
 
             // if seq[3] is available , then it is a sequence of certificates
             if (seqTmp.length > 3) {
@@ -322,9 +306,9 @@ class OCSPResponse {
                     "of OCSP response: expected ASN.1 context specific tag 0.");
                 }
                 DerValue[] certs = (seqCert.getData()).getSequence(3);
-                x509Certs = new X509CertImpl[certs.length];
+                x509Certs = new X509Certificate[certs.length];
                 for (int i = 0; i < certs.length; i++) {
-                    x509Certs[i] = new X509CertImpl(certs[i].toByteArray());
+                    x509Certs[i] = new X509Certificate(certs[i].toByteArray());
                 }
             }
 
@@ -347,8 +331,10 @@ class OCSPResponse {
                     if (keyPurposes == null ||
                         !keyPurposes.contains(KP_OCSP_SIGNING_OID)) {
                         if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
-                            Logging.report(Logging.INFORMATION, LogChannels.LC_SECURITY,
-                                       "Responder's certificate is not valid for signing OCSP responses.");
+                            Logging.report(Logging.INFORMATION,
+                                    LogChannels.LC_SECURITY,
+                                    "Responder's certificate is not valid " +
+                                        "for signing OCSP responses.");
                         }
                         throw new CertPathValidatorException(
                             "Responder's certificate not valid for signing " +
@@ -361,7 +347,7 @@ class OCSPResponse {
                         responderCert = cert;
                         // cert is trusted, now verify the signed response
 
-                    } catch (GeneralSecurityException e) {
+                    } catch (CertificateException ce) {
                         responderCert = null;
                     }
                 }
@@ -374,11 +360,13 @@ class OCSPResponse {
                 if (! verifyResponse(responseDataDer, responderCert,
                     sigAlgId, signature, params)) {
                     if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
-                        Logging.report(Logging.INFORMATION, LogChannels.LC_SECURITY,
-                                   "Error verifying OCSP Responder's signature");
+                        Logging.report(Logging.INFORMATION,
+                                LogChannels.LC_SECURITY,
+                                "Error verifying OCSP Responder's signature");
                     }
-                    throw new CertPathValidatorException(
-                        "Error verifying OCSP Responder's signature");
+                    throw new OCSPException(
+                        OCSPException.CANNOT_VERIFY_SIGNATURE,
+                            "Error verifying OCSP Responder's signature");
                 }
             } else {
                 // Need responder's cert in order to verify the signature
@@ -386,13 +374,12 @@ class OCSPResponse {
                     Logging.report(Logging.INFORMATION, LogChannels.LC_SECURITY,
                                "Unable to verify OCSP Responder's signature");
                 }
-                throw new CertPathValidatorException(
+                throw new OCSPException(OCSPException.CANNOT_VERIFY_SIGNATURE,
                     "Unable to verify OCSP Responder's signature");
             }
-        } catch (CertPathValidatorException cpve) {
-            throw cpve;
         } catch (Exception e) {
-            throw new CertPathValidatorException(e);
+            throw new OCSPException(OCSPException.UNKNOWN_ERROR,
+                    e.getMessage());
         }
     }
 
@@ -402,10 +389,9 @@ class OCSPResponse {
      */
     private boolean verifyResponse(byte[] responseData, X509Certificate cert,
         AlgorithmId sigAlgId, byte[] signBytes, PKIXParameters params)
-        throws SignatureException {
+            throws SignatureException {
 
         try {
-
             Signature respSignature = Signature.getInstance(sigAlgId.getName());
             respSignature.initVerify(cert);
             respSignature.update(responseData);
@@ -420,7 +406,7 @@ class OCSPResponse {
             } else {
                 if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
                     Logging.report(Logging.INFORMATION, LogChannels.LC_SECURITY,
-                               "Error verifying signature of OCSP Responder");
+                           "Error verifying signature of OCSP Responder");
                 }
                 return false;
             }
@@ -436,9 +422,7 @@ class OCSPResponse {
      * Return the revocation status code for a given certificate.
      */
     // used by OCSPChecker
-    int getCertStatus(SerialNumber sn) {
-        // ignore serial number for now; if we support multiple
-        // requests/responses then it will be used
+    int getCertStatus() {
         return singleResponse.getStatus();
     }
 
@@ -448,40 +432,16 @@ class OCSPResponse {
     }
 
     /*
-     * Map an OCSP response status code to a string.
-     */
-    static private String responseToText(int status) {
-        switch (status)  {
-        case 0:
-            return "Successful";
-        case 1:
-            return "Malformed request";
-        case 2:
-            return "Internal error";
-        case 3:
-            return "Try again later";
-        case 4:
-            return "Unused status code";
-        case 5:
-            return "Request must be signed";
-        case 6:
-            return "Request is unauthorized";
-        default:
-            return ("Unknown status code: " + status);
-        }
-    }
-
-    /*
      * Map a certificate's revocation status code to a string.
      */
     // used by OCSPChecker
     static String certStatusToText(int certStatus) {
         switch (certStatus)  {
-        case 0:
+        case CertStatus.GOOD:
             return "Good";
-        case 1:
+        case CertStatus.REVOKED:
             return "Revoked";
-        case 2:
+        case CertStatus.UNKNOWN:
             return "Unknown";
         default:
             return ("Unknown certificate status code: " + certStatus);
@@ -506,10 +466,10 @@ class OCSPResponse {
             certId = new CertId(tmp.getDerValue().data);
             DerValue derVal = tmp.getDerValue();
             short tag = (byte)(derVal.tag & 0x1f);
-            if (tag ==  CERT_STATUS_GOOD) {
-                certStatus = CERT_STATUS_GOOD;
-            } else if (tag == CERT_STATUS_REVOKED) {
-                certStatus = CERT_STATUS_REVOKED;
+            if (tag ==  CertStatus.GOOD) {
+                certStatus = CertStatus.GOOD;
+            } else if (tag == CertStatus.REVOKED) {
+                certStatus = CertStatus.REVOKED;
                 // RevokedInfo
                 if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
                     Date revocationTime = derVal.data.getGeneralizedTime();
@@ -517,9 +477,8 @@ class OCSPResponse {
                                "Revocation time: " + revocationTime);
                 }
 
-            } else if (tag == CERT_STATUS_UNKNOWN) {
-                certStatus = CERT_STATUS_UNKNOWN;
-
+            } else if (tag == CertStatus.UNKNOWN) {
+                certStatus = CertStatus.UNKNOWN;
             } else {
                 throw new IOException("Invalid certificate status");
             }
@@ -552,7 +511,8 @@ class OCSPResponse {
                     until = " until " + nextUpdate;
                 }
                 Logging.report(Logging.INFORMATION, LogChannels.LC_SECURITY,
-                        "Response's validity interval is from " + thisUpdate + unti);
+                    "Response's validity interval is from " +
+                            thisUpdate + until);
             }
             // Check that the test date is within the validity interval
             if ((thisUpdate != null && now.before(thisUpdate)) ||
@@ -560,7 +520,8 @@ class OCSPResponse {
 
                 if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
                     Logging.report(Logging.INFORMATION, LogChannels.LC_SECURITY,
-                               "Response is unreliable: its validity interval is out-of-date");
+                               "Response is unreliable: " +
+                                       "its validity interval is out-of-date");
                 }
                 throw new IOException("Response is unreliable: its validity " +
                     "interval is out-of-date");
@@ -582,15 +543,22 @@ class OCSPResponse {
          * Construct a string representation of a single OCSP response.
          */
         public String toString() {
-            StringBuilder sb = new StringBuilder();
+            StringBuffer sb = new StringBuffer();
+
             sb.append("SingleResponse:  \n");
             sb.append(certId);
-            sb.append("\nCertStatus: "+ certStatusToText(getCertStatus(null)) +
-                "\n");
-            sb.append("thisUpdate is " + thisUpdate + "\n");
+            sb.append("\nCertStatus: ");
+            sb.append(certStatusToText(getCertStatus()));
+            sb.append("\n");
+            sb.append("thisUpdate is ");
+            sb.append(thisUpdate);
+            sb.append("\n");
             if (nextUpdate != null) {
-                sb.append("nextUpdate is " + nextUpdate + "\n");
+                sb.append("nextUpdate is ");
+                sb.append(nextUpdate);
+                sb.append("\n");
             }
+
             return sb.toString();
         }
     }

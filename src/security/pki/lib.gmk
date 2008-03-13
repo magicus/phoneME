@@ -59,6 +59,9 @@ SUBSYSTEM_SECURITY_JAVA_FILES += \
     $(PKI_DIR)/reference/classes/com/sun/midp/pki/CertStore.java \
     $(PKI_DIR)/reference/classes/com/sun/midp/pki/X509Certificate.java \
     $(PKI_DIR)/reference/classes/com/sun/midp/pki/SubjectAlternativeName.java \
+    $(PKI_DIR)/reference/classes/com/sun/midp/pki/DerValue.java \
+    $(PKI_DIR)/reference/classes/com/sun/midp/pki/DerOutputStream.java \
+    $(PKI_DIR)/reference/classes/com/sun/midp/pki/ObjectIdentifier.java \
     $(PKI_DIR)/reference/classes/com/sun/midp/pki/Utils.java
 
 #

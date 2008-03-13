@@ -39,4 +39,5 @@ MIDP_JAVADOC_SOURCEPATH += $(SECURITY_OCSP_REFERENCE_DIR)/classes
 # Java files for the library
 #
 SUBSYSTEM_SECURITY_JAVA_FILES += \
-    $(SECURITY_OCSP_REFERENCE_DIR)/classes/com/sun/midp/pki/ocsp/OCSPValidatorImpl.java
+    $(SECURITY_OCSP_REFERENCE_DIR)/classes/com/sun/midp/pki/ocsp/OCSPValidatorImpl.java \
+    $(SECURITY_OCSP_REFERENCE_DIR)/classes/com/sun/midp/pki/ocsp/CertId.java

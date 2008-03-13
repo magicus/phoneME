@@ -94,6 +94,17 @@ public class OCSPException extends Exception {
     public static final byte SERVER_NOT_RESPONDING  = 10;
 
     /**
+     * Indicates that the signature of the OCSP responder
+     * can't be verified.
+     */
+    public static final byte CANNOT_VERIFY_SIGNATURE = 11;
+
+    /**
+     * Indicates that some unexpected error has occured.
+     */
+    public static final byte UNKNOWN_ERROR            = 12;
+
+    /**
      * Create a new exception with a specific error reason.
      * The descriptive message for the new exception will be
      * automatically provided, based on the reason.
@@ -145,6 +156,18 @@ public class OCSPException extends Exception {
         switch (reason) {
             case MALFORMED_REQUEST: {
                 return "OCSP request doesn't conform to the OCSP syntax";
+            }
+            case INTERNAL_ERROR: {
+                return "Internal error";
+            }
+            case TRY_LATER: {
+                return "Try again later";
+            }
+            case SIG_REQUIRED: {
+                return "Request must be signed";
+            }
+            case UNAUTHORIZED: {
+                return "Request is unauthorized";
             }
         }
 

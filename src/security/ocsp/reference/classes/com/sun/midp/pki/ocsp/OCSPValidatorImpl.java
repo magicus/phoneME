@@ -56,14 +56,6 @@ public class OCSPValidatorImpl implements OCSPValidator {
     /** Input stream to read a response from OCSP server. */
     private InputStream httpInputStream;
 
-    // stub:
-    class OCSPResponse {
-        OCSPResponse() {}
-        int getStatus() {
-            return CertStatus.GOOD; //UNKNOWN;
-        }
-    }
-
     /**
      * Retrieves the status of the given certificate.
      *
