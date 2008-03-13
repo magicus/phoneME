@@ -48,7 +48,7 @@ void anc_show_trusted_indicator(jboolean isTrusted) {
  * Porting implementation for network indicator.
  */
 void anc_set_network_indicator(AncNetworkIndicatorState status) {
-    (void) javacall_annunciator_display_network_icon(status);
+    (void) javacall_annunciator_display_network_icon(status == ANC_NETWORK_INDICATOR_ON);
 }
 
 /**
