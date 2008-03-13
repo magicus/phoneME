@@ -1603,8 +1603,9 @@ endOfData(imageSrcPtr src)
 static bool
 getChunk(imageSrcPtr src, unsigned long *chunkType, long *chunkLength)
 {
-    if (endOfData(src))
+    if (endOfData(src)) {
         return FALSE;
+    }
 
     *chunkLength = getInt(src);
     *chunkType   = getInt(src);
