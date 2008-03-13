@@ -182,7 +182,18 @@ typedef enum {
     VK_SHUTDOWN         = 3,
     VK_SUSPEND_CURRENT  = 4,
     VK_RESUME_PREVIOUS  = 5,
-    VK_KILL_CURRENT     = 6
+    VK_KILL_CURRENT     = 6,
+
+    KEY_USER1    = -32,
+    KEY_USER2    = -33,
+    KEY_USER3    = -34,
+    KEY_USER4    = -35,
+    KEY_USER5    = -36,
+    KEY_USER6    = -37,
+    KEY_USER7    = -38,
+    KEY_USER8    = -39,
+    KEY_USER9    = -40,
+    KEY_USER10   = -41
 } KeyType;
 
 #define TRANS_NONE           0
