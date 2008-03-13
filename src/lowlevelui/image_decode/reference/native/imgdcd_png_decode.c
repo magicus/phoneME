@@ -214,7 +214,7 @@ bool get_decoded_png_imagesize(imageSrcPtr src, int* width, int* height) {
     return TRUE;
 }
 
-static 
+static
 bool
 PNGdecodeImage_real(imageSrcPtr src, imageDstPtr dst, 
 		    long *paletteData, unsigned char *transData) {
@@ -458,6 +458,11 @@ PNGdecodeImage_real(imageSrcPtr src, imageDstPtr dst,
                 goto formaterror;
             }
         }
+    }
+
+    // No chunks or other content follow the IEND chunk
+    if (chunkType != IEND_CHUNK) {
+        goto formaterror;
     }
 
  done:
@@ -1590,8 +1595,18 @@ getInt(imageSrcPtr src)
 }
 
 static bool
+endOfData(imageSrcPtr src)
+{
+    return src->endOfData(src);
+}
+
+static bool
 getChunk(imageSrcPtr src, unsigned long *chunkType, long *chunkLength)
 {
+    if (endOfData(src)) {
+        return FALSE;
+    }
+
     *chunkLength = getInt(src);
     *chunkType   = getInt(src);
 
