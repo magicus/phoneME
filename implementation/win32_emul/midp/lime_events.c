@@ -185,7 +185,9 @@ void SendEvent (KVMEventType *evt) {
         break;
 
     case keyDownKVMEvent:
-        if ((evt->chr != KEY_END)) {
+        if (evt->chr == KEY_USER2) {
+            javanotify_rotation();
+        } else if ((evt->chr != KEY_END)) {
             javanotify_key_event(evt->chr, JAVACALL_KEYPRESSED);
         } else if (isRunningLocal == JAVACALL_FALSE) {
             javanotify_switch_to_ams();
@@ -195,7 +197,9 @@ void SendEvent (KVMEventType *evt) {
         break;
 
     case keyUpKVMEvent:
-        if ((evt->chr != KEY_END)) {
+        if (evt->chr == KEY_USER2) {
+            // ignore
+        } else if ((evt->chr != KEY_END)) {
 #if ENABLE_ON_DEVICE_DEBUG
             /* assert(posInSequence == sizeof(pStartOddKeySequence) - 1) */
             if (pStartOddKeySequence[posInSequence] == evt->chr) {
@@ -214,13 +218,17 @@ void SendEvent (KVMEventType *evt) {
         break;
 
     case keyRepeatKVMEvent:
-        if (evt->chr != KEY_END) {
+        if (evt->chr == KEY_USER2) {
+            // ignore
+        } else if (evt->chr != KEY_END) {
             javanotify_key_event(evt->chr, JAVACALL_KEYREPEATED);
         }
         break;
 
     case keyTypedKVMEvent:
-        if ((evt->chr != KEY_END)) {
+        if (evt->chr == KEY_USER2) {
+            // ignore
+        } else if ((evt->chr != KEY_END)) {
 #ifdef USE_KEYTYPED_VM_EVENTS
             if ((evt->chr >= ' ') && (evt->chr < 127)) {
                 /* Send Key events received from the keyboard
