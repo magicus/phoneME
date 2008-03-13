@@ -26,6 +26,7 @@
 
 package com.sun.midp.pki.ocsp;
 
+import javax.microedition.pki.Certificate;
 import java.util.Vector;
 
 /**
@@ -51,7 +52,7 @@ public class OCSPRequest {
     /**
      * List of extensions.
      */
-    private Vector requesExtensions = new Vector();
+    private Vector requestExtensions = new Vector();
 
     /**
      * Signature (optional).
@@ -67,8 +68,30 @@ public class OCSPRequest {
         /** Hash of Issuer's public key */
         String issuerKeyHash;
         /** Certificate serial number */
-        int certSerialNumber;
+        String certSerialNumber;
         /** This request extensions, optional */
+        private Vector extensions = new Vector();
+
+        /**
+         * Returns string respresentation of this request. Useful for debug.
+         *
+         * @return string respresentation of this request
+         */
+        public String toString() {
+            String str = "(" +
+                    "\n  hashAlgorithm = " + hashAlgorithm +
+                    "\n  issuerNameHash = " + issuerNameHash +
+                    "\n  certSerialNumber = " + certSerialNumber;
+
+            for (int i = 0; i < extensions.size(); i++) {
+                str += "\n Extension " + i + ": \n" +
+                        extensions.elementAt(i).toString();
+            }
+
+            str += "\n)";
+
+            return str;
+        }
     }
 
     private class Extension {
@@ -78,12 +101,57 @@ public class OCSPRequest {
         boolean isCritical;
         /** Value of the extension (octet string) */
         String value;
+
+        /**
+         * Returns string respresentation of this extension. Useful for debug.
+         *
+         * @return string respresentation of this extension
+         */
+        public String toString() {
+            return "[" +
+                    "\n  id = " + id +
+                    "\n  isCritical = " + isCritical +
+                    "\n  value = " + value +
+                    "\n]";
+        }
     }
 
     /**
      *
      */
-    public OCSPRequest() {
+    public OCSPRequest(Certificate cert) {
 
+    }
+
+    /**
+     *
+     * @return this request encoded as an array of bytes
+     */
+    public byte[] getRequestAsByteArray() {
+        byte[] reqBytes = new byte[1];
+        
+        return reqBytes;
+    }
+
+    /**
+     * Returns string respresentation of this request. Useful for debug.
+     *
+     * @return string respresentation of this request
+     */
+    public String toString() {
+        String str = "version = " + version +
+                     "\nrequestorName = " + requestorName + "\n";
+
+        for (int i = 0; i < requestList.size(); i++) {
+            str += "\n Request " + i + ": \n" +
+                    requestList.elementAt(i).toString();
+        }
+
+        for (int i = 0; i < requestExtensions.size(); i++) {
+            str += "\n Extension " + i + ": \n" +
+                    requestExtensions.elementAt(i).toString();
+        }
+
+        return str;
     }
 }

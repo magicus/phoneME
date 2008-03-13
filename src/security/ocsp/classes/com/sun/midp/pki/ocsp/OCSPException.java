@@ -37,6 +37,9 @@ public class OCSPException extends Exception {
     /** The reason code for this exception */
     private byte reason;
 
+    /** The reason code for this exception */
+    private String errorMessage;
+
     /**
      * Indicates that OCSP request doesn't conform to the OCSP syntax.
      */
@@ -63,6 +66,34 @@ public class OCSPException extends Exception {
     public static final byte UNAUTHORIZED      = 5;
 
     /**
+     * Indicates that the connection to OCSP server could not be opened.
+     */
+    public static final byte SERVER_NOT_FOUND  = 6;
+
+    /**
+     * Indicates that an error occured when connecting
+     * to the OCSP server.
+     */
+    public static final byte CANNOT_OPEN_CONNECTION  = 7;
+
+    /**
+     * Indicates that an error occured when sending
+     * a request to the OCSP server.
+     */
+    public static final byte CANNOT_SEND_REQUEST  = 8;
+
+    /**
+     * Indicates that an error occured when receiving
+     * a response from the OCSP server.
+     */
+    public static final byte CANNOT_RECEIVE_RESPONSE = 9;
+
+    /**
+     * Indicates that the OCSP server did not respond.
+     */
+    public static final byte SERVER_NOT_RESPONDING  = 10;
+
+    /**
      * Create a new exception with a specific error reason.
      * The descriptive message for the new exception will be
      * automatically provided, based on the reason.
@@ -71,6 +102,20 @@ public class OCSPException extends Exception {
      */
     public OCSPException(byte status) {
         reason = status;
+        errorMessage = null;
+    }
+
+    /**
+     * Create a new exception with a specific error reason.
+     * The descriptive message for the new exception will be
+     * automatically provided, based on the reason.
+     *
+     * @param status the reason for the exception
+     * @param message error message, may be null
+     */
+    public OCSPException(byte status, String message) {
+        reason = status;
+        errorMessage = message;
     }
 
     /**
@@ -79,6 +124,14 @@ public class OCSPException extends Exception {
      */
     public byte getReason() {
         return reason;
+    }
+
+    /**
+     * Get the error message.
+     * @return the error message or empty string if it was not given
+     */
+    public String getErrorMessage() {
+        return (errorMessage == null) ? "" : errorMessage;
     }
 
     /**
