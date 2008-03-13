@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE configuration SYSTEM "../common/configuration.dtd">
+<!--
+
+    Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+    DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+    
+    This program is free software; you can redistribute it and/or
+    modify it under the terms of the GNU General Public License version
+    2 only, as published by the Free Software Foundation.
+    
+    This program is distributed in the hope that it will be useful, but
+    WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+    General Public License version 2 for more details (a copy is
+    included at /legal/license.txt).
+    
+    You should have received a copy of the GNU General Public License
+    version 2 along with this work; if not, write to the Free Software
+    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+    02110-1301 USA
+    
+    Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+    Clara, CA 95054 or visit www.sun.com if you need additional
+    information or have any questions.
+    
+-->
+
+<configuration>
+<properties>
+    <property Key="microedition.smartcardslots"
+        Value="0C,1H"
+        Scope="system"
+        Comment="Smart card slot identifiers."/>
+
+    <property Key="com.sun.io.j2me.apdu.satselectapdu"
+        Value="00.a4.04.00.07.a0.00.00.00.62.3.1.7F"
+        Scope="internal"
+        Comment="APDU command for selecting SIM application."/>
+
+    <property Key="com.sun.satsa.store_csr_list"
+        Value="true"
+        Scope="internal"
+        Comment="Save persistent copy of CSR public keys."/>
+
+    <property Key="com.sun.satsa.keygen"
+        Value="true"
+        Scope="internal"
+        Comment="Internal flag to identify key generation."/>
+
+    <property Key="com.sun.satsa.certsig"
+        Value="true"
+        Scope="internal"
+        Comment="Internal flag to identify certificate signing."/>
+
+    <property Key="microedition.satsa.crypto.version"
+        Value="1.0.1"
+        Scope="system"
+        Comment="Version of SATSA-CRYPTO API supported by the device."/>
+
+    <property Key="microedition.satsa.apdu.version"
+        Value="1.0.1"
+        Scope="system"
+        Comment="Version of SATSA-APDU API supported by the device."/>
+
+    <property Key="microedition.satsa.pki.version"
+        Value="1.0.1"
+        Scope="system"
+        Comment="Version of SATSA-PKI API supported by the device."/>
+
+</properties>
+</configuration>
