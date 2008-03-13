@@ -89,17 +89,17 @@
 
 /** For build a parameter string. */
 PCSL_DEFINE_STATIC_ASCII_STRING_LITERAL_START(COMMA_STRING)
-    {',', '\0'};
+    {',', '\0'}
 PCSL_DEFINE_STATIC_ASCII_STRING_LITERAL_END(COMMA_STRING);
 
 /** Filename to save the push connections. ("pushlist.txt") */
 PCSL_DEFINE_STATIC_ASCII_STRING_LITERAL_START(PUSH_LIST_FILENAME)
-    {'p', 'u', 's', 'h', 'l', 'i', 's', 't', '.', 't', 'x', 't', '\0'};
+    {'p', 'u', 's', 'h', 'l', 'i', 's', 't', '.', 't', 'x', 't', '\0'}
 PCSL_DEFINE_STATIC_ASCII_STRING_LITERAL_END(PUSH_LIST_FILENAME);
 
 /** Filename to save the alarms. ("alarmlist.txt") */
 PCSL_DEFINE_STATIC_ASCII_STRING_LITERAL_START(ALARM_LIST_FILENAME)
-    {'a', 'l', 'a', 'r', 'm', 'l', 'i', 's', 't', '.', 't', 'x', 't', '\0'};
+    {'a', 'l', 'a', 'r', 'm', 'l', 'i', 's', 't', '.', 't', 'x', 't', '\0'}
 PCSL_DEFINE_STATIC_ASCII_STRING_LITERAL_END(ALARM_LIST_FILENAME);
 
 /** Pathname for persistent push connection list. */

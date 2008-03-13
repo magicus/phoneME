@@ -89,6 +89,7 @@ LD_FLAGS	+= -nodefaultlib:msvcrt.lib msvcrtd.lib
 else
 
 # flags inherited from the VM : -Ox -Os -Gy -GF
+EXTRA_CFLAGS    += -nologo -DWIN32 -D_WINDOWS 
 EXTRA_CFLAGS 	+= -MD
 LD_FLAGS 	+= -merge:CODESEGMENT=.text -merge:DATASEGMENT=.data \
 		   -opt:REF -opt:ICF,8
