@@ -452,5 +452,3 @@ javacall_bool generateSoftButtonKeys(int x, int y, javacall_penevent_type pentyp
 #ifdef __cplusplus
 } //extern "C"
 #endif
-
-
