@@ -1,6 +1,5 @@
 /*
- *
- * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
@@ -23,11 +22,6 @@
  * information or have any questions.
  */
 
-/**
- * @file
- *
- *
- */
 #include <stdio.h>
 #include <windows.h>
 #include <mmsystem.h>
@@ -39,11 +33,16 @@
 
 #include "javacall_time.h"
 
+static javacall_bool ticker_running = JAVACALL_FALSE;
+
 void CALLBACK win32_timer_callback(UINT uTimerID, UINT uMsg,
                                    DWORD dwUser, DWORD dw1, DWORD dw2){
 
     javacall_callback_func func = (javacall_callback_func)dwUser;
+
+    if (JAVACALL_TRUE == ticker_running) {
     func((javacall_handle *)uTimerID);
+}
 }
 
 /**
@@ -76,6 +75,8 @@ javacall_result javacall_time_initialize_timer(
         return JAVACALL_INVALID_ARGUMENT;
     }
 
+    ticker_running = JAVACALL_TRUE;
+
     hTimer = timeSetEvent(wakeupInMilliSecondsFromNow,
             10, /* 10ms: tuned resolution from CLDC_HI porting experiences */
             win32_timer_callback,
@@ -91,6 +92,34 @@ javacall_result javacall_time_initialize_timer(
     }
 }
 
+/*
+ *
+ * Temporarily disable timer interrupts. This is called when
+ * the VM is about to sleep (when there's no Java thread to execute)
+ *
+ */
+void javacall_time_suspend_ticks(javacall_handle handle){
+    ticker_running = JAVACALL_FALSE;
+    return;
+}
+
+/*
+ *
+ * Enable  timer interrupts. This is called when the VM
+ * wakes up and continues executing Java threads.
+ *
+ */
+void javacall_time_resume_ticks(){
+    ticker_running = JAVACALL_TRUE;
+    return;
+}
+
+/*
+ * Suspend the current process sleep for ms milliseconds
+ */
+void javacall_time_sleep(javacall_uint64 ms){
+    Sleep((DWORD)ms);
+}
 
 /**
  *
