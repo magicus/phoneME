@@ -221,12 +221,12 @@ javacall_result javacall_lcd_flush_partial(int ystart, int yend);
 /**
   * Reverse flag of rotation
   */
-javacall_bool javacall_lcd_reverse_orientation();
+javacall_bool javacall_lcd_reverse_orientation(void);
  
 /**
   * Get flag of rotation
   */
-javacall_bool javacall_lcd_get_reverse_orientation();
+javacall_bool javacall_lcd_get_reverse_orientation(void);
 
 /**
  * checks the implementation supports native softbutton label.
@@ -234,7 +234,7 @@ javacall_bool javacall_lcd_get_reverse_orientation();
  * @retval JAVACALL_TRUE   implementation supports native softbutton layer
  * @retval JAVACALL_FALSE  implementation does not support native softbutton layer
  */
-javacall_bool javacall_lcd_is_native_softbutton_layer_supported();
+javacall_bool javacall_lcd_is_native_softbutton_layer_supported(void);
 
 
 /**
@@ -254,18 +254,18 @@ javacall_result javacall_lcd_set_native_softbutton_label(const javacall_utf16* l
 /**
   * Return width of screen
   */
-int javacall_lcd_get_screen_width();
+int javacall_lcd_get_screen_width(void);
  
 /**
   * Return height of screen
   */
-int javacall_lcd_get_screen_height();
+int javacall_lcd_get_screen_height(void);
 
 /**
  * The platform should invoke this function in platform context
  * to rotate the screen.
  */
-void javanotify_rotation();
+void javanotify_rotation(void);
 
 /** @} */
 

@@ -483,7 +483,7 @@ static javacall_result remove_escape_characters(char* str){
  * @return JAVACALL_OK if the line is in section name format
  *         JAVACALL_FAIL otherwise
  */
-javacall_bool read_section_name(char *line, char *sec){
+javacall_result read_section_name(char *line, char *sec){
     if (*line != '[') {
         return JAVACALL_FAIL;
     }

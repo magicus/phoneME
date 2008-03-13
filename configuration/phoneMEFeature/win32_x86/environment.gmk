@@ -139,11 +139,6 @@ else
 SOURCE_CLEANUP_LIST += javacall/implementation/win32/midp/res/images 
 endif
 
-# NEED REVISIT: provide pure solution without hidden dependencies
-ifeq ($(ENABLE_HIDDEN_DEP_FEATURES),true)
-SPECIFIC_DEFINITIONS+=-DENABLE_HIDDEN_DEP_FEATURES
-endif # ifeq ($(ENABLE_HIDDEN_DEP_FEATURES),true)
-
 #Porting objects that are added to PORTING_OBJECTS by default rules can be excluded
 #from the javacall library by setting FILTER_OBJECTS variable
 

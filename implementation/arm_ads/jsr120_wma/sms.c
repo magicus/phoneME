@@ -62,11 +62,11 @@ javacall_result javacall_sms_is_service_available(void) {
  *       completion of sending operation.
  *       The returned handle will be passed to javacall_callback_on_complete_sms_send( ) upon completion
  */
-javacall_result javacall_sms_send(javacall_sms_encoding   msgType,
-                                  const unsigned char*    destAddress,
-                                  const unsigned char*    msgBuffer,
-                                  int                     msgBufferLen,
-                                  unsigned short          sourcePort,
+javacall_result javacall_sms_send(javacall_sms_encoding   msgType, 
+                                  const unsigned char*    destAddress, 
+                                  const unsigned char*    msgBuffer, 
+                                  int                     msgBufferLen, 
+                                  unsigned short          sourcePort, 
                                   unsigned short          destPort,
                                   int                     handle) {
     return JAVACALL_NOT_IMPLEMENTED;
