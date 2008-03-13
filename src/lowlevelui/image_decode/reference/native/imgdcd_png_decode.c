@@ -461,8 +461,9 @@ PNGdecodeImage_real(imageSrcPtr src, imageDstPtr dst,
     }
 
     // No chunks or other content follow the IEND chunk
-    if (chunkType != IEND_CHUNK)
+    if (chunkType != IEND_CHUNK) {
         goto formaterror;
+    }
 
  done:
 
