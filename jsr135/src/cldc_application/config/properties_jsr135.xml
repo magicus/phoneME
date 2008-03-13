@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE configuration SYSTEM "configuration.dtd">
+<!--
+        Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+        DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+        
+        This program is free software; you can redistribute it and/or
+        modify it under the terms of the GNU General Public License version
+        2 only, as published by the Free Software Foundation.
+        
+        This program is distributed in the hope that it will be useful, but
+        WITHOUT ANY WARRANTY; without even the implied warranty of
+        MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+        General Public License version 2 for more details (a copy is
+        included at /legal/license.txt).
+        
+        You should have received a copy of the GNU General Public License
+        version 2 along with this work; if not, write to the Free Software
+        Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+        02110-1301 USA
+        
+        Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+        Clara, CA 95054 or visit www.sun.com if you need additional
+        information or have any questions.
+-->
+<!-- MMAPI PROPERTIES required by the specification -->
+<configuration>
+<properties>
+<!-- SYSTEM PROPERTIES -->
+<!-- Visible from System.getProperty() -->
+    <!-- JSR135(MMAPI) PROPERTIES -->
+    <property Key="microedition.media.version"
+      Value="1.1"
+      Scope="system"
+      Comment="Version number."/>
+
+    <property Key="supports.mixing"
+      Value=""
+      Scope="system"
+      Callout="get_system_property_supports_mixing" 
+      Comment="Mixing support."/>
+
+    <property Key="supports.audio.capture"
+      Value=""
+      Scope="system"
+      Callout="get_system_property_supports_audio_capture" 
+      Comment="Audio capture support."/>
+
+    <property Key="supports.video.capture"
+      Value=""
+      Scope="system"
+      Callout="get_system_property_supports_video_capture" 
+      Comment="Video capture support."/>
+
+    <property Key="supports.recording"
+      Value=""
+      Scope="system"
+      Callout="get_system_property_supports_recording" 
+      Comment="Recording support."/>
+
+    <property Key="audio.encodings" 
+      Value="" 
+      Scope="system"
+      Callout="get_system_property_audio_encodings" 
+      Comment="Supported audio encodings."/>
+
+    <property Key="video.encodings"
+      Value=""
+      Scope="system"
+      Callout="get_system_property_video_encodings" 
+      Comment="Supported video encodings."/>
+
+    <property Key="video.snapshot.encodings"
+      Value=""
+      Scope="system"
+      Callout="get_system_property_video_snapshot_encodings" 
+      Comment="Supported video snapshot encodings."/>
+
+    <property Key="streamable.contents"
+      Value=""
+      Scope="system"
+      Callout="get_system_property_streamable_contents" 
+      Comment="Streamable contents."/>
+
+</properties>
+</configuration>
