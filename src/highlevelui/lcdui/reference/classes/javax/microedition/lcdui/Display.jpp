@@ -404,7 +404,7 @@ public class Display {
     static final Object calloutLock = new Object();
 
     /** Current display width. */
-    static int WIDTH;
+    public static int WIDTH;
 
     /** Current display height. */
     static int HEIGHT;

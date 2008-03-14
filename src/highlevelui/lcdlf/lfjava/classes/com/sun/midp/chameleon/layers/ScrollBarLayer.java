@@ -29,6 +29,7 @@ package com.sun.midp.chameleon.layers;
 import com.sun.midp.chameleon.*;
 import javax.microedition.lcdui.*;
 import com.sun.midp.chameleon.skins.ScrollIndSkin;
+import com.sun.midp.chameleon.skins.ScreenSkin;
 import com.sun.midp.lcdui.EventConstants;
 import com.sun.midp.log.Logging;
 import com.sun.midp.log.LogChannels;
@@ -159,7 +160,13 @@ public class ScrollBarLayer extends ScrollIndLayer {
                 bounds[W] -= 3;
                 shift =  1; 
             }
-            bounds[X] = scrollableBounds[X] + scrollableBounds[W] - bounds[W] - shift;
+            if (ScreenSkin.TEXT_ORIENT == Graphics.LEFT){
+                bounds[X] = scrollableBounds[X] + scrollableBounds[W] - bounds[W] - shift;
+            }
+            else {
+                bounds[X] = scrollableBounds[X] - shift;
+            }
+
             // the scrollbar move left one pixel as the docking layer draws its bound one pixel less                
 
                 

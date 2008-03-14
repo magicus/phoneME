@@ -203,6 +203,10 @@ public class ScreenSkin {
      */
     public static Image[] IMAGE_HS_BG_WO_TITLE;
 
+    public static int TEXT_ANCHOR;
+
+    
+
     // private constructor
     private ScreenSkin() {
     }

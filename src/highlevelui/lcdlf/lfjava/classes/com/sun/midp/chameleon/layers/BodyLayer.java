@@ -212,6 +212,10 @@ public class BodyLayer extends CLayer
                 ScrollIndSkin.MODE == ScrollIndResourcesConstants.MODE_BAR &&
                 scrollInd.isVisible()) {
                 bounds[W] += scrollInd.bounds[W];
+                if (ScreenSkin.TEXT_ORIENT == Graphics.RIGHT) {
+                    bounds[X] -= scrollInd.bounds[W];
+                }
+
             }
         }
      }
@@ -231,6 +235,10 @@ public class BodyLayer extends CLayer
                         ScrollIndSkin.MODE == ScrollIndResourcesConstants.MODE_BAR &&
                         vis) {
                         bounds[W] += scrollInd.bounds[W];
+                        if (ScreenSkin.TEXT_ORIENT == Graphics.RIGHT) {
+                            bounds[X] -= scrollInd.bounds[W];
+                        }
+
                         addDirtyRegion();
                     }
                 }
@@ -276,6 +284,9 @@ public class BodyLayer extends CLayer
                 if (ScrollIndSkin.MODE == ScrollIndResourcesConstants.MODE_BAR) {
                     int w = scrollInd.bounds[W];
                     bounds[W] += scrollVisible? -w: +w;
+                    if (ScreenSkin.TEXT_ORIENT == Graphics.RIGHT) {
+                           bounds[X] -= scrollVisible? -w: +w;
+                    }
                     addDirtyRegion();
                 }
                 return true;
@@ -307,6 +318,7 @@ public class BodyLayer extends CLayer
     public void update(CLayer[] layers) {
         super.update(layers);
 
+        bounds[X] = 0;
         bounds[W] = ScreenSkin.WIDTH;
         bounds[H] = ScreenSkin.HEIGHT;
 
@@ -331,6 +343,9 @@ public class BodyLayer extends CLayer
             if (ScrollIndSkin.MODE == ScrollIndResourcesConstants.MODE_BAR &&
                 scrollInd.isVisible()) {
                 bounds[W] -= scrollInd.bounds[W];
+                if (ScreenSkin.TEXT_ORIENT == Graphics.RIGHT) {
+                    bounds[X] += scrollInd.bounds[W];
+                }
             }
         }
     }
