@@ -64,6 +64,8 @@ public class OCSPValidatorImpl implements OCSPValidator {
         { 1, 3, 6, 1, 5, 5, 7, 48, 1, 2 };
     private static final ObjectIdentifier OCSP_NONCE_OID;
 
+    private static final int CHUNK_SIZE = 10 * 1024;
+
     static {
         OCSP_NONCE_OID = ObjectIdentifier.newInternal(OCSP_NONCE_DATA);
     }
@@ -194,18 +196,23 @@ public class OCSPValidatorImpl implements OCSPValidator {
                                               OCSP_RESPONSE_MIME_TYPE);
             httpInputStream = httpConnection.openInputStream();
 
-            int contentLength = httpInputStream.getContentLength();
-            if (contentLength == -1) {
-                contentLength = Integer.MAX_VALUE;
-            }
-
-            byte[] response = new byte[contentLength];
+            int bufSize = CHUNK_SIZE;
+            byte[] response = new byte[bufSize];
             int total = 0;
             int count = 0;
-            while (count != -1 && total < contentLength) {
+
+            while (count != -1) {
                 count = httpInputStream.read(response, total,
                                              response.length - total);
                 total += count;
+
+                if (total == response.length) {
+                    // allocate more memory to hold the response
+                    int newBufSize = bufSize + CHUNK_SIZE;
+                    byte[] newResponseBuf = new byte[newBufSize];
+                    System.arraycopy(response, 0, newResponseBuf, 0, total);
+                    response = newResponseBuf; 
+                }
             }
 
             // IMPL_NOTE: implement finding responderCert
