@@ -34,9 +34,9 @@ import javax.microedition.pki.CertificateException;
 import com.sun.midp.pki.AlgorithmId;
 import com.sun.midp.pki.X509Certificate;
 import com.sun.midp.pki.DerValue;
+import com.sun.midp.pki.DerInputStream;
 import com.sun.midp.pki.ObjectIdentifier;
 import com.sun.midp.pki.Utils;
-import com.sun.midp.pki.DerInputStream;
 
 import com.sun.midp.crypto.Signature;
 import com.sun.midp.crypto.SignatureException;
@@ -176,11 +176,11 @@ class OCSPResponse {
             responseStatus = derIn.getEnumerated();
             if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
                 Logging.report(Logging.INFORMATION, LogChannels.LC_SECURITY,
-                           "OCSP response: " + responseToText(responseStatus));
+                           "OCSP response: " + responseStatus);
             }
             if (responseStatus != OCSP_RESPONSE_OK) {
                 throw new OCSPException(OCSPException.CANNOT_RECEIVE_RESPONSE,
-                    "OCSP Response Failure: " + responseToText(responseStatus));
+                    "OCSP Response Failure: " + responseStatus);
             }
 
             // responseBytes
@@ -316,7 +316,9 @@ class OCSPResponse {
                 DerValue[] certs = (seqCert.getData()).getSequence(3);
                 x509Certs = new X509Certificate[certs.length];
                 for (int i = 0; i < certs.length; i++) {
-                    x509Certs[i] = new X509Certificate(certs[i].toByteArray());
+                    byte[] data = certs[i].toByteArray();
+                    x509Certs[i] = X509Certificate.generateCertificate(
+                            data, 0 , data.length);
                 }
             }
 
@@ -331,8 +333,8 @@ class OCSPResponse {
 
                 // Next check if the cert was issued by the responder cert
                 // which was set locally.
-                } else if (cert.getIssuerDN().equals(
-                    responderCert.getSubjectDN())) {
+                } else if (cert.getIssuer().equals(
+                    responderCert.getSubject())) {
 
                     // Check for the OCSPSigning key purpose
                     List<String> keyPurposes = cert.getExtendedKeyUsage();

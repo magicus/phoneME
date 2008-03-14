@@ -30,6 +30,7 @@ import java.util.Date;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.ByteArrayInputStream;
+import java.io.DataInputStream;
 
 /**
  * Represents a single DER-encoded value.  DER encoding rules are a subset
@@ -235,7 +236,11 @@ public class DerValue {
      */
     public DerValue(byte tag, byte[] data) {
         this.tag = tag;
-        buffer = new DerInputBuffer(data.clone());
+
+        byte[] tmpData = new byte[data.length];
+        System.arraycopy(data, 0, tmpData, 0, data.length);
+        buffer = new DerInputBuffer(tmpData);
+
         length = data.length;
         this.data = new DerInputStream(buffer);
         this.data.mark(Integer.MAX_VALUE);

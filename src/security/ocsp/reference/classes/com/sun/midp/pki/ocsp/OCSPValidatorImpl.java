@@ -82,7 +82,11 @@ public class OCSPValidatorImpl implements OCSPValidator {
 
         try {
             openConnection();
-            sendRequest(new OCSPRequest(cert));
+
+            OCSPRequest request = new OCSPRequest(cert);
+            CertId certId = request.getCertId();
+            sendRequest(request);
+
             response = receiveResponse(certPath);
 
             // Check that response applies to the cert that was supplied
@@ -92,8 +96,8 @@ public class OCSPValidatorImpl implements OCSPValidator {
                     "certificate supplied in the OCSP request.");
             }
 
-            SerialNumber serialNumber = currCertImpl.getSerialNumberObject();
-            int certOCSPStatus = ocspResponse.getCertStatus(serialNumber);
+            SerialNumber serialNumber = new SerialNumber(cert.getSerialNumber());
+            int certOCSPStatus = response.getCertStatus(serialNumber);
 
             // -----
             System.out.println("Status of certificate (with serial number " +

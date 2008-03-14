@@ -28,6 +28,7 @@ package com.sun.midp.pki.ocsp;
 
 import java.io.IOException;
 
+import com.sun.midp.pki.DerInputStream;
 import com.sun.midp.pki.DerOutputStream;
 import com.sun.midp.pki.DerValue;
 import com.sun.midp.pki.X509Certificate;
@@ -73,8 +74,13 @@ public class CertId {
         // compute issuerNameHash
         MessageDigest md = MessageDigest.getInstance("SHA1");
         hashAlgId = AlgorithmId.get("SHA1");
-        md.update(issuerCert.getSubjectX500Principal().getEncoded());
-        issuerNameHash = md.digest();
+
+        //md.update(issuerCert.getSubjectX500Principal().getEncoded());
+        byte[] data = issuerCert.getSubject().getBytes();
+        md.update(data, 0, issuerNameHash.length);
+
+        issuerNameHash = new byte[md.getDigestLength()];
+        md.digest(issuerNameHash, 0, issuerNameHash.length);
 
         // compute issuerKeyHash (remove the tag and length)
         byte[] pubKey = issuerCert.getPublicKey().getEncoded();
@@ -83,8 +89,10 @@ public class CertId {
         seq[0] = val.data.getDerValue(); // AlgorithmID
         seq[1] = val.data.getDerValue(); // Key
         byte[] keyBytes = seq[1].getBitString();
-        md.update(keyBytes);
-        issuerKeyHash = md.digest();
+        md.update(keyBytes, 0, keyBytes.length);
+
+        issuerKeyHash = new byte[md.getDigestLength()];
+        md.digest(issuerKeyHash, 0, issuerKeyHash.length);
         certSerialNumber = serialNumber;
 
         if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
