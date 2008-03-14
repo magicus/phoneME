@@ -30,6 +30,8 @@ import com.sun.midp.pki.SerialNumber;
 import com.sun.midp.pki.DerOutputStream;
 import com.sun.midp.pki.X509Certificate;
 import com.sun.midp.pki.DerValue;
+import com.sun.midp.pki.BigInteger;
+
 
 import java.io.IOException;
 
