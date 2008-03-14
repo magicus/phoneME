@@ -510,16 +510,29 @@ public class DerValue {
     }
 
     /**
-     * Returns an ASN.1 INTEGER value as int.
+     * Returns an ASN.1 INTEGER value as a BigInteger.
      *
-     * @return the integer held in this DER value as int.
+     * @return the integer held in this DER value as a BigInteger.
      */
-    public int getBigInteger() throws IOException {
+    public BigInteger getBigInteger() throws IOException {
         if (tag != tag_Integer)
             throw new IOException("DerValue.getBigInteger, not an int " + tag);
-        return buffer.getInteger(data.available());
+        return buffer.getBigInteger(data.available(), false);
     }
 
+    /**
+     * Returns an ASN.1 INTEGER value as a positive BigInteger.
+     * This is just to deal with implementations that incorrectly encode
+     * some values as negative.
+     *
+     * @return the integer held in this DER value as a BigInteger.
+     */
+    public BigInteger getPositiveBigInteger() throws IOException {
+        if (tag != tag_Integer)
+            throw new IOException("DerValue.getBigInteger, not an int " + tag);
+        return buffer.getBigInteger(data.available(), true);
+    }
+    
     /**
      * Returns an ASN.1 ENUMERATED value.
      *

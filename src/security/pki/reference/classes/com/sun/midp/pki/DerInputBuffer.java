@@ -119,6 +119,34 @@ class DerInputBuffer extends ByteArrayInputStream {
 
     /**
      * Returns the integer which takes up the specified number
+     * of bytes in this buffer as a BigInteger.
+     * @param len the number of bytes to use.
+     * @param makePositive whether to always return a positive value,
+     *   irrespective of actual encoding
+     * @return the integer as a BigInteger.
+     */
+    BigInteger getBigInteger(int len, boolean makePositive) throws IOException {
+        if (len > available())
+            throw new IOException("short read of integer");
+
+        if (len == 0) {
+            throw new IOException("Invalid encoding: zero length Int value");
+        }
+
+        byte[] bytes = new byte[len];
+
+        System.arraycopy(buf, pos, bytes, 0, len);
+        skip(len);
+
+        if (makePositive) {
+            return new BigInteger(1, bytes);
+        } else {
+            return new BigInteger(bytes);
+        }
+    }
+
+    /**
+     * Returns the integer which takes up the specified number
      * of bytes in this buffer.
      * @throws IOException if the result is not within the valid
      * range for integer, i.e. between Integer.MIN_VALUE and
@@ -128,18 +156,14 @@ class DerInputBuffer extends ByteArrayInputStream {
      */
     public int getInteger(int len) throws IOException {
 
-        int ret = 0;
-        for (int i = 0; i < len; i++) {
-            ret = (ret << 8) + buf[pos + i];
-        }
-
-        if (ret < Integer.MIN_VALUE) {
+        BigInteger result = getBigInteger(len, false);
+        if (result.compareTo(BigInteger.valueOf(Integer.MIN_VALUE)) < 0) {
             throw new IOException("Integer below minimum valid value");
         }
-        if (ret > Integer.MAX_VALUE) {
+        if (result.compareTo(BigInteger.valueOf(Integer.MAX_VALUE)) > 0) {
             throw new IOException("Integer exceeds maximum valid value");
         }
-        return ret;
+        return result.intValue();
     }
 
     /**

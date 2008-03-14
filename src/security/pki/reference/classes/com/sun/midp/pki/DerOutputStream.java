@@ -151,6 +151,18 @@ public class DerOutputStream extends ByteArrayOutputStream {
         putIntegerContents(i);
     }
 
+       /**
+     * Marshals a DER integer on the output stream.
+     *
+     * @param i the integer in the form of a BigInteger.
+     */
+    public void putInteger(BigInteger i) throws IOException {
+        write(DerValue.tag_Integer);
+        byte[]    buf = i.toByteArray(); // least number  of bytes
+        putLength(buf.length);
+        write(buf, 0, buf.length);
+    }
+    
     /**
      * Marshals a DER integer on the output stream.
      * @param i the integer in the form of an Integer.

@@ -36,11 +36,11 @@ import java.io.InputStream;
  * @author Hemma Prafullchandra
  */
 public class SerialNumber {
-    private int serialNum;
+    private BigInteger serialNum;
 
     // Construct the class from the DerValue
     private void construct(DerValue derVal) throws IOException {
-        serialNum = derVal.getInteger();
+        serialNum = derVal.getBigInteger();
         if (derVal.data.available() != 0) {
             throw new IOException("Excess SerialNumber data");
         }
@@ -51,7 +51,7 @@ public class SerialNumber {
      *
      * @param num the BigInteger number used to create the serial number.
      */
-    public SerialNumber(int num) {
+    public SerialNumber(BigInteger num) {
         serialNum = num;
     }
 
@@ -91,7 +91,7 @@ public class SerialNumber {
      * Return the SerialNumber as user readable string.
      */
     public String toString() {
-        return ("SerialNumber: [" + Integer.toHexString(serialNum) + "]");
+        return ("SerialNumber: [" + BigInteger.toHexString(serialNum) + "]");
     }
 
     /**
@@ -109,7 +109,7 @@ public class SerialNumber {
      *
      * @return serial number
      */
-    public int getNumber() {
+    public BigInteger getNumber() {
         return serialNum;
     }
 }

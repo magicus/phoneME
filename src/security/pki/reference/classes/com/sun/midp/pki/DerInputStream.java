@@ -170,6 +170,32 @@ public class DerInputStream {
     }
 
     /**
+     * Get a integer from the input stream as a BigInteger object.
+     *
+     * @return the integer held in this DER input stream.
+     */
+    public BigInteger getBigInteger() throws IOException {
+        if (buffer.read() != DerValue.tag_Integer) {
+            throw new IOException("DER input, Integer tag error");
+        }
+        return buffer.getBigInteger(getLength(buffer), false);
+    }
+
+    /**
+     * Returns an ASN.1 INTEGER value as a positive BigInteger.
+     * This is just to deal with implementations that incorrectly encode
+     * some values as negative.
+     *
+     * @return the integer held in this DER value as a BigInteger.
+     */
+    public BigInteger getPositiveBigInteger() throws IOException {
+        if (buffer.read() != DerValue.tag_Integer) {
+            throw new IOException("DER input, Integer tag error");
+        }
+        return buffer.getBigInteger(getLength(buffer), true);
+    }
+    
+    /**
      * Get an enumerated from the input stream.
      *
      * @return the integer held in this DER input stream.
