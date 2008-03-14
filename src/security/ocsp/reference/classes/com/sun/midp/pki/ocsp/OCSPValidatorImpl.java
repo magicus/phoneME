@@ -29,7 +29,6 @@ package com.sun.midp.pki.ocsp;
 import com.sun.midp.io.Base64;
 import com.sun.midp.main.Configuration;
 import com.sun.midp.pki.ObjectIdentifier;
-import com.sun.midp.pki.SerialNumber;
 import com.sun.midp.pki.X509Certificate;
 
 import javax.microedition.pki.Certificate;
@@ -83,7 +82,9 @@ public class OCSPValidatorImpl implements OCSPValidator {
         try {
             openConnection();
 
-            OCSPRequest request = new OCSPRequest(cert);
+            X509Certificate issuerCert = (X509Certificate)certPath.elementAt(0);
+            OCSPRequest request =
+                    new OCSPRequest((X509Certificate)cert, issuerCert);
             CertId certId = request.getCertId();
             sendRequest(request);
 
@@ -96,12 +97,10 @@ public class OCSPValidatorImpl implements OCSPValidator {
                     "certificate supplied in the OCSP request.");
             }
 
-            SerialNumber serialNumber = new SerialNumber(cert.getSerialNumber());
-            int certOCSPStatus = response.getCertStatus(serialNumber);
+            int certOCSPStatus = response.getCertStatus();
 
             // -----
-            System.out.println("Status of certificate (with serial number " +
-                serialNumber.getNumber() + ") is: " +
+            System.out.println("Status of certificate is: " +
                 OCSPResponse.certStatusToText(certOCSPStatus));
             // -----
 
