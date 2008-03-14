@@ -66,8 +66,8 @@ public class AlgorithmId {
     private ObjectIdentifier algid;
 
     // The (parsed) parameters
-    private AlgorithmParameters algParams;
-    private boolean constructedFromDer = true;
+    //private AlgorithmParameters algParams;
+    //private boolean constructedFromDer = true;
 
     /**
      * Parameters for this algorithm.  These are stored in unparsed
@@ -91,21 +91,23 @@ public class AlgorithmId {
      * @param oid the identifier for the algorithm.
      * @param algparams the associated algorithm parameters.
      */
+/*
     public AlgorithmId(ObjectIdentifier oid, AlgorithmParameters algparams) {
         algid = oid;
         algParams = algparams;
         constructedFromDer = false;
     }
-
+*/
     private AlgorithmId(ObjectIdentifier oid, DerValue params)
             throws IOException {
         this.algid = oid;
         this.params = params;
-        if (this.params != null) {
+        /*if (this.params != null) {
             decodeParams();
-        }
+        }*/
     }
 
+/*
     protected void decodeParams() throws IOException {
         String algidString = algid.toString();
         try {
@@ -117,18 +119,18 @@ public class AlgorithmId {
                 // This code can go away once we have EC in the SUN provider.
                 algParams = AlgorithmParameters.getInstance(algidString,
                                 sun.security.ec.ECKeyFactory.ecInternalProvider);
-            } catch (NoSuchAlgorithmException ee) {
+            } catch (NoSuchAlgorithmException ee) {*/
                 /*
                  * This algorithm parameter type is not supported, so we cannot
                  * parse the parameters.
                  */
-                algParams = null;
+                /*algParams = null;
                 return;
             }
         }
         // Decode (parse) the parameters
         algParams.init(params.toByteArray());
-    }
+    }*/
 
     /**
      * Marshal a DER-encoded "AlgorithmID" sequence on the DER stream.
@@ -152,13 +154,13 @@ public class AlgorithmId {
 
         bytes.putOID(algid);
         // Setup params from algParams since no DER encoding is given
-        if (constructedFromDer == false) {
+        /*if (constructedFromDer == false) {
             if (algParams != null) {
                 params = new DerValue(algParams.getEncoded());
             } else {
                 params = null;
             }
-        }
+        }*/
         if (params == null) {
             // Changes backed out for compatibility with Solaris
 
@@ -243,9 +245,9 @@ public class AlgorithmId {
         return (algName == null) ? algid.toString() : algName;
     }
 
-    public AlgorithmParameters getParameters() {
-        return algParams;
-    }
+    //public AlgorithmParameters getParameters() {
+    //    return algParams;
+    //}
 
     /**
      * Returns the DER encoded parameter, which can then be
@@ -303,7 +305,7 @@ public class AlgorithmId {
     public int hashCode() {
         StringBuffer sbuf = new StringBuffer();
         sbuf.append(algid.toString());
-        sbuf.append(paramsToString());
+//        sbuf.append(paramsToString());
         return sbuf.toString().hashCode();
     }
 
@@ -311,7 +313,7 @@ public class AlgorithmId {
      * Provides a human-readable description of the algorithm parameters.
      * This may be redefined by subclasses which parse those parameters.
      */
-    protected String paramsToString() {
+    /*protected String paramsToString() {
         if (params == null) {
             return "";
         } else if (algParams != null) {
@@ -319,13 +321,13 @@ public class AlgorithmId {
         } else {
             return ", params unparsed";
         }
-    }
+    }*/
 
     /**
      * Returns a string describing the algorithm and its parameters.
      */
     public String toString() {
-        return getName() + paramsToString();
+        return getName();// + paramsToString();
     }
 
     /**
@@ -403,7 +405,7 @@ public class AlgorithmId {
      * @param algparams the associated algorithm parameters.
      * @exception NoSuchAlgorithmException on error.
      */
-    public static AlgorithmId get(AlgorithmParameters algparams)
+    /*public static AlgorithmId get(AlgorithmParameters algparams)
             throws NoSuchAlgorithmException {
         ObjectIdentifier oid;
         String algname = algparams.getAlgorithm();
@@ -418,7 +420,7 @@ public class AlgorithmId {
                 ("unrecognized algorithm name: " + algname);
         }
         return new AlgorithmId(oid, algparams);
-    }
+    }*/
 
     /*
      * Translates from some common algorithm names to the
@@ -509,40 +511,7 @@ public class AlgorithmId {
             return AlgorithmId.sha1WithECDSA_oid;
         }
 
-        // See if any of the installed providers supply a mapping from
-        // the given algorithm name to an OID string
-        String oidString;
-        if (!initOidTable) {
-            Provider[] provs = Security.getProviders();
-            for (int i=0; i<provs.length; i++) {
-                for (Enumeration<Object> enum_ = provs[i].keys();
-                     enum_.hasMoreElements(); ) {
-                    String alias = (String)enum_.nextElement();
-                    int index;
-                    if (alias.toUpperCase().startsWith("ALG.ALIAS") &&
-                        (index=alias.toUpperCase().indexOf("OID.", 0)) != -1) {
-                        index += "OID.".length();
-                        if (index == alias.length()) {
-                            // invalid alias entry
-                            break;
-                        }
-                        if (oidTable == null) {
-                            oidTable = new Hashtable();
-                        }
-                        oidString = alias.substring(index);
-                        String stdAlgName
-                            = provs[i].getProperty(alias).toUpperCase();
-                        if (oidTable.get(stdAlgName) == null) {
-                            oidTable.put(stdAlgName,
-                                         new ObjectIdentifier(oidString));
-                        }
-                    }
-                }
-            }
-            initOidTable = true;
-        }
-
-        return (ObjectIdentifier)oidTable.get(name.toUpperCase());
+        return null;
     }
 
     private static ObjectIdentifier oid(int v1, int v2, int v3,

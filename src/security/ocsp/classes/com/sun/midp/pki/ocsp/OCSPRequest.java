@@ -32,7 +32,6 @@ import com.sun.midp.pki.X509Certificate;
 import com.sun.midp.pki.DerValue;
 import com.sun.midp.pki.BigInteger;
 
-
 import java.io.IOException;
 
 /**
