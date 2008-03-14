@@ -26,6 +26,7 @@ package com.sun.j2me.app;
 
 import com.sun.j2me.security.Permission;
 import sun.misc.CVM;
+import java.io.InputStream;
 
 /**
  * Abstraction for application package
@@ -105,5 +106,27 @@ public class AppPackage {
      */
     public String getCA() {
         return null;
+    }
+    
+    /**
+     * Finds a resource with a given name.  This method returns null if no
+     * resource with this name is found.  
+     *
+     * @param name  name of the desired resource
+     * @return      a <code>java.io.InputStream</code> object.
+     * @throws NullPointerException if <code>name</code> is <code>null</code>.
+     */     
+    public InputStream getResourceAsStream(String name) {
+        InputStream is;
+        for (int i = 1; ; i++) {
+            Class clazz = CVM.getCallerClass(i);
+            if (clazz == null) {
+                return null;
+            }
+            is = clazz.getResourceAsStream(name);
+            if (is != null) {
+                return is;
+            }
+        }
     }
 }
