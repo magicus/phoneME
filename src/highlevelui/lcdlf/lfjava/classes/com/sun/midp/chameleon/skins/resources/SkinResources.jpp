@@ -31,6 +31,9 @@ import com.sun.midp.log.*;
 import com.sun.midp.util.ResourceHandler;
 import com.sun.midp.configurator.Constants;
 import com.sun.midp.chameleon.skins.ScreenSkin;
+import com.sun.midp.chameleon.skins.TickerSkin;
+import com.sun.midp.chameleon.skins.TitleSkin;
+import com.sun.midp.chameleon.skins.AlertSkin;
 import com.sun.midp.lcdui.DisplayAccess;
 import com.sun.midp.lcdui.GraphicsAccess;
 import com.sun.midp.io.j2me.storage.File;
@@ -511,6 +514,7 @@ public class SkinResources {
         TitleResources.load();
         AlertResources.load();
 
+
         // load the rest of resources
         if (loadAll) {
             PTIResources.load();
@@ -526,6 +530,36 @@ public class SkinResources {
             StringItemResources.load();
             TextFieldResources.load();
             UpdateBarResources.load();
+        }
+
+        checkLocale();
+    }
+
+    public static void checkLocale() {
+        String locale = System.getProperty("microedition.locale");
+
+        // Should change "en-US" to any apropriate locale
+        if (locale.equals("en-US")) {
+
+            if (ScreenSkin.TEXT_ORIENT == Graphics.LEFT) {
+                ScreenSkin.TEXT_ORIENT = Graphics.RIGHT;
+            }
+
+            if (TickerSkin.DIRECTION == Graphics.LEFT) {
+                TickerSkin.DIRECTION = Graphics.RIGHT;
+            }
+
+            if (TitleSkin.TEXT_ALIGN_X == Graphics.LEFT) {
+                TitleSkin.TEXT_ALIGN_X = Graphics.RIGHT;
+            }
+
+            if (AlertSkin.ALIGN_X == Graphics.LEFT) {
+                AlertSkin.ALIGN_X = Graphics.RIGHT;
+            }
+
+            if (AlertSkin.TITLE_ALIGN == Graphics.LEFT) {
+                AlertSkin.TITLE_ALIGN = Graphics.RIGHT;
+            }
         }
     }
 
@@ -617,6 +651,7 @@ final class LoadedSkinResources {
 // #endif
     
 }
+
 
 /**
  * Class reperesenting loaded skin data file.

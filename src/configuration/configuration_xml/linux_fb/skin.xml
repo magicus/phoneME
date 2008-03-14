@@ -36,7 +36,7 @@
 <skin_properties KeysClass="com.sun.midp.chameleon.skins.SkinPropertiesIDs">
   <integer
         Key="SCREEN_TEXT_ORIENT"
-      Value="Graphics.RIGHT"/>
+      Value="Graphics.LEFT"/>
 
   <integer
         Key="SCREEN_PAD_FORM_ITEMS"
@@ -309,7 +309,7 @@
 
   <integer
         Key="TICKER_DIRECTION"
-      Value="Graphics.RIGHT"/>
+      Value="Graphics.LEFT"/>
 
   <integer
         Key="TICKER_RATE"
@@ -439,7 +439,7 @@
 
   <integer
         Key="TITLE_TEXT_ALIGN_X"
-      Value="Graphics.RIGHT"/>
+      Value="Graphics.LEFT"/>
 
   <integer
         Key="TITLE_TEXT_SHD_ALIGN"
@@ -477,7 +477,7 @@
 
   <integer
         Key="ALERT_ALIGN_X"
-        Value="Graphics.RIGHT"/>
+        Value="Graphics.LEFT"/>
 
   <integer
         Key="ALERT_ALIGN_Y"
@@ -493,7 +493,7 @@
 
   <integer
         Key="ALERT_TITLE_ALIGN"
-      Value="Graphics.RIGHT"/>
+      Value="Graphics.LEFT"/>
 
   <integer
         Key="ALERT_TITLE_HEIGHT"
