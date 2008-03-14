@@ -26,7 +26,7 @@
 
 package com.sun.midp.pki;
 
-import java.io.*;
+import java.io.IOException;
 
 
 /**
@@ -50,8 +50,7 @@ import java.io.*;
  * @author Amit Kapoor
  * @author Hemma Prafullchandra
  */
-final public
-class ObjectIdentifier implements Serializable
+final public class ObjectIdentifier
 {
     /** use serialVersionUID from JDK 1.1. for interoperability */
     private static final long serialVersionUID = 8697030238860181294L;

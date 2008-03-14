@@ -1024,10 +1024,9 @@ public class X509Certificate implements Certificate {
                                           res.enc, exponentPos, exponentLen);
 
             if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
-            Logging.report(Logging.INFORMATION, LogChannels.LC_SECURITY,
-                       "Exponent: " +
-                       Utils.hexEncode(res.enc, exponentPos,
-                                                   exponentLen));
+                Logging.report(Logging.INFORMATION, LogChannels.LC_SECURITY,
+                        "Exponent: " +
+                        Utils.hexEncode(res.enc, exponentPos, exponentLen));
             }
 
             res.idx += size;

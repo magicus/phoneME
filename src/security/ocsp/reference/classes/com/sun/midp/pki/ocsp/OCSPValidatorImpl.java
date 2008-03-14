@@ -86,7 +86,7 @@ public class OCSPValidatorImpl implements OCSPValidator {
             response = receiveResponse(certPath);
 
             // Check that response applies to the cert that was supplied
-            if (! certId.equals(ocspResponse.getCertId())) {
+            if (! certId.equals(response.getCertId())) {
                 throw new OCSPException(OCSPException.CANNOT_VERIFY_SIGNATURE,
                     "Certificate in the OCSP response does not match the " +
                     "certificate supplied in the OCSP request.");

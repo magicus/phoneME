@@ -32,14 +32,22 @@ import java.util.Vector;
 
 import javax.microedition.io.Connector;
 import javax.microedition.pki.CertificateException;
-import com.sun.midp.pki.*;
+
+import com.sun.midp.pki.X509Certificate;
+
 import com.sun.midp.pki.ocsp.OCSPValidator;
 import com.sun.midp.pki.ocsp.CertStatus;
 import com.sun.midp.pki.ocsp.OCSPValidatorImpl;
 import com.sun.midp.pki.ocsp.OCSPException;
-import com.sun.midp.publickeystore.*;
-import com.sun.midp.crypto.*;
-import com.sun.midp.security.*;
+
+import com.sun.midp.publickeystore.WebPublicKeyStore;
+import com.sun.midp.publickeystore.PublicKeyInfo;
+
+import com.sun.midp.crypto.PublicKey;
+import com.sun.midp.crypto.Signature;
+import com.sun.midp.crypto.GeneralSecurityException;
+
+import com.sun.midp.security.Permissions;
 
 import com.sun.midp.io.j2me.storage.RandomAccessStream;
 import com.sun.midp.io.Base64;

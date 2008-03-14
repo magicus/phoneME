@@ -33,6 +33,7 @@ import com.sun.midp.pki.DerValue;
 import com.sun.midp.pki.X509Certificate;
 import com.sun.midp.pki.Utils;
 import com.sun.midp.pki.AlgorithmId;
+import com.sun.midp.pki.SerialNumber;
 
 import com.sun.midp.crypto.MessageDigest;
 
@@ -166,7 +167,7 @@ public class CertId {
             for (int i = 0; i < issuerKeyHash.length; i++) {
                 myhash += issuerKeyHash[i] * i;
             }
-            myhash += certSerialNumber.getNumber().hashCode();
+            myhash += new Integer(certSerialNumber.getNumber()).hashCode();
         }
         return myhash;
     }
@@ -193,7 +194,7 @@ public class CertId {
         if (hashAlgId.equals(that.getHashAlgorithm()) &&
             arraysEqual(issuerNameHash, that.getIssuerNameHash()) &&
             arraysEqual(issuerKeyHash, that.getIssuerKeyHash()) &&
-            certSerialNumber.getNumber().equals(that.getSerialNumber())) {
+            certSerialNumber.getNumber() == that.getSerialNumber()) {
             return true;
         } else {
             return false;
