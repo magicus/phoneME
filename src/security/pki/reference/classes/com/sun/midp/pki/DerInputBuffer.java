@@ -48,6 +48,10 @@ class DerInputBuffer extends ByteArrayInputStream {
         super(buf, offset, len);
     }
 
+    DerInputBuffer dup() {
+        return new DerInputBuffer(toByteArray());    
+    }
+
     byte[] toByteArray() {
         int     len = available();
         if (len <= 0)
