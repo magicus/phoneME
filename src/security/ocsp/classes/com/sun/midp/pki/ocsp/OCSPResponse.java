@@ -36,6 +36,7 @@ import com.sun.midp.pki.X509Certificate;
 import com.sun.midp.pki.DerValue;
 import com.sun.midp.pki.ObjectIdentifier;
 import com.sun.midp.pki.Utils;
+import com.sun.midp.pki.DerInputStream;
 
 import com.sun.midp.crypto.Signature;
 import com.sun.midp.crypto.SignatureException;

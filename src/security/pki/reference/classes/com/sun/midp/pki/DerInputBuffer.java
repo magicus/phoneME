@@ -48,17 +48,6 @@ class DerInputBuffer extends ByteArrayInputStream {
         super(buf, offset, len);
     }
 
-    DerInputBuffer dup() {
-        try {
-            DerInputBuffer retval = (DerInputBuffer)clone();
-
-            retval.mark(Integer.MAX_VALUE);
-            return retval;
-        } catch (CloneNotSupportedException e) {
-            throw new IllegalArgumentException(e.toString());
-        }
-    }
-
     byte[] toByteArray() {
         int     len = available();
         if (len <= 0)
@@ -332,9 +321,14 @@ class DerInputBuffer extends ByteArrayInputStream {
          * but we're not supporting that.
          */
         Calendar c = Calendar.getInstance();
-        c.set(year, month, day, hour, minute, second);
+        c.set(Calendar.YEAR, year);
+        c.set(Calendar.MONTH, month);
+        c.set(Calendar.DATE, day);
+        c.set(Calendar.HOUR_OF_DAY, hour);
+        c.set(Calendar.MINUTE, minute);
+        c.set(Calendar.SECOND, second);
         c.set(Calendar.MILLISECOND, millis);
-        long time = c.getTimeInMillis();
+        long time = c.getTime().getTime();
 
         /*
          * Finally, "Z" or "+hhmm" or "-hhmm" ... offsets change hhmm
