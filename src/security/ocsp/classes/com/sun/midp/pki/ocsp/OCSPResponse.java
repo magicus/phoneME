@@ -151,7 +151,6 @@ class OCSPResponse {
             int responseStatus;
             ObjectIdentifier  responseType;
             int version;
-            CertificateIssuerName responderName = null;
             Date producedAtDate;
             AlgorithmId sigAlgId;
             byte[] ocspNonce;
@@ -244,7 +243,7 @@ class OCSPResponse {
             // responderID
             short tag = (byte)(seq.tag & 0x1f);
             if (tag == NAME_TAG) {
-                responderName = new CertificateIssuerName(seq.getData());
+                String responderName = parsex500Name(seq.getData());
                 if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
                     Logging.report(Logging.INFORMATION, LogChannels.LC_SECURITY,
                                "OCSP Responder name: " + responderName);
@@ -387,6 +386,63 @@ class OCSPResponse {
         } catch (Exception e) {
             throw new OCSPException(OCSPException.UNKNOWN_ERROR,
                     e.getMessage());
+        }
+    }
+
+    private String parsex500Name(DerInputStream in) throws IOException {
+        //
+        // X.500 names are a "SEQUENCE OF" RDNs, which means zero or
+        // more and order matters.  We scan them in order, which
+        // conventionally is big-endian.
+        //
+        DerValue[] nameseq = null;
+        byte[] derBytes = in.toByteArray();
+
+        try {
+            nameseq = in.getSequence(5);
+        } catch (IOException ioe) {
+            if (derBytes == null) {
+                nameseq = null;
+            } else {
+                DerValue derVal = new DerValue(DerValue.tag_Sequence,
+                                           derBytes);
+                derBytes = derVal.toByteArray();
+                nameseq = new DerInputStream(derBytes).getSequence(5);
+            }
+        }
+
+        if (nameseq == null) {
+            return null;
+        } else {
+            StringBuffer sb = new StringBuffer();
+            for (int i = 0; i < nameseq.length; i++) {
+                if (nameseq[i].tag != DerValue.tag_Set) {
+                     throw new IOException("X500 RDN");
+                 }
+                 DerInputStream dis = new DerInputStream(nameseq[i].toByteArray());
+                 DerValue[] avaset = dis.getSet(5);
+
+                 for (int j = 0; j < avaset.length; j++) {
+                     // Individual attribute value assertions are SEQUENCE of two values.
+                     // That'd be a "struct" outside of ASN.1.
+                     if (avaset[j].tag != DerValue.tag_Sequence) {
+                         throw new IOException("AVA not a sequence");
+                     }
+                     if (j != 0) {
+                         sb.append(" + ");
+                     }
+                     sb.append(avaset[j].data.getOID().toString());
+                     sb.append(avaset[j].data.getDerValue().getAsString());
+
+                     if (avaset[j].data.available() != 0) {
+                         throw new IOException("AVA, extra bytes = "
+                             + avaset[j].data.available());
+                     }
+                 }
+
+                sb.append(";");
+            }
+            return sb.toString();
         }
     }
 
