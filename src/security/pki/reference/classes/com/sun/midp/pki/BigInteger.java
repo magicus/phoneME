@@ -26,8 +26,6 @@
 
 package com.sun.midp.pki;
 
-import com.sun.midp.pki.Utils;
-
 
 public class BigInteger {
     /**

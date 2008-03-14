@@ -35,6 +35,7 @@ import com.sun.midp.pki.X509Certificate;
 import com.sun.midp.pki.Utils;
 import com.sun.midp.pki.AlgorithmId;
 import com.sun.midp.pki.SerialNumber;
+import com.sun.midp.pki.BigInteger;
 
 import com.sun.midp.crypto.MessageDigest;
 
@@ -139,7 +140,7 @@ public class CertId {
     /**
      * Return the serial number.
      */
-    public int getSerialNumber() {
+    public BigInteger getSerialNumber() {
         return certSerialNumber.getNumber();
     }
 
@@ -175,7 +176,7 @@ public class CertId {
             for (int i = 0; i < issuerKeyHash.length; i++) {
                 myhash += issuerKeyHash[i] * i;
             }
-            myhash += new Integer(certSerialNumber.getNumber()).hashCode();
+            myhash += certSerialNumber.getNumber().hashCode();
         }
         return myhash;
     }
