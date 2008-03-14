@@ -2421,13 +2421,13 @@ blendSrcOver8888_pre(jint *intData,
     jint dblue = ival & 0xff;
     
     //premultiplied source components (we add 0.5 for presicion)
-    jint psred   = (sred * aval   + 127);
+    jint psred   = (sred * aval + 127);
     jint psgreen = (sgreen * aval + 127);
-    jint psblue  = (sblue * aval  + 127);
+    jint psblue  = (sblue * aval + 127);
     
     jint oneminusaval = (256 - aval);
     
-    jint oalpha = (256 * aval + dalpha * oneminusaval)  >> 8;
+    jint oalpha = (255 * aval + dalpha * oneminusaval)  >> 8;
     jint ored   = (psred   + oneminusaval * dred)     >> 8;
     jint ogreen = (psgreen  + oneminusaval * dgreen)   >> 8;
     jint oblue  = (psblue   + oneminusaval * dblue )   >> 8;
