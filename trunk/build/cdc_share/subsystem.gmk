@@ -46,12 +46,10 @@ MODULE_SATSA_COMMON_JAVA_FILES += \
 # Same classes are included in JSR 172 as well.
 # Avoid double inclusion.
 ifneq ($(USE_JSR_172), true)
-ifneq ($(J2ME_CLASSLIB), basis)
-ifneq ($(J2ME_CLASSLIB), personal)
+ifeq ("$(filter basis personal, $(J2ME_CLASSLIB))", "")
 MODULE_SATSA_COMMON_JAVA_FILES += \
     $(JSR_177_DIR)/src/share/satsa/classes/java/rmi/Remote.java \
     $(JSR_177_DIR)/src/share/satsa/classes/java/rmi/RemoteException.java
-endif
 endif
 endif
 
@@ -157,7 +155,7 @@ TOOLS = $(JAVACARD_CLASSES) $(JSR_177_BINDIR) $(JCRMIC_TOOL) $(ACL_DATA_DIRS) \
 endif
 
 JSR_177_LIB_NAME        = jsr177
-JSR_177_JAR             = $(JSROP_LIB_DIR)/$(JSR_177_LIB_NAME).jar
+JSR_177_JAR             = $(JSROP_JAR_DIR)/$(JSR_177_LIB_NAME).jar
 JSR_177_NATIVE_LIB      = $(JSROP_LIB_DIR)/$(LIB_PREFIX)$(JSR_177_LIB_NAME)$(LIB_POSTFIX)
 JSR_177_NATIVE_OBJS     = $(patsubst %.c,$(JSROP_OBJ_DIR)/%.o,$(SUBSYSTEM_SATSA_NATIVE_FILES))
 
@@ -170,13 +168,18 @@ JSROP_NATIVE_LIBS    += $(JSR_177_NATIVE_LIB)
 
 JSR_177_API_CLASSLIST = $(JSR_177_DIR)/build/cdc_share/satsa_api.txt
 JSR_177_API_CLASSES   = $(call readClassList, $(JSR_177_API_CLASSLIST))
-JSR_177_EXTRA_JAR     = $(JSROP_LIB_DIR)/$(JSR_177_LIB_NAME)_extras.jar
+JSR_177_EXTRA_JAR     = $(JSROP_JAR_DIR)/$(JSR_177_LIB_NAME)_extras.jar
 JSROP_EXTRA_JARS     += $(JSR_177_EXTRA_JAR)
 
 CVM_INCLUDE_JAVACALL  = true
 
+ifeq ($(USE_JSR_172), true)
+$(JSR_177_JAR):  $(SUBSYSTEM_JSR_177_JAVA_FILES) $(TOOLS)
+	$(call compileJSRClasses,177,$(PS)$(JSROP_JAR_DIR)/jsr172.jar)
+else
 $(JSR_177_JAR):  $(SUBSYSTEM_JSR_177_JAVA_FILES) $(TOOLS)
 	$(call compileJSRClasses,177)
+endif
 
 $(JSR_177_EXTRA_JAR): $(JSR_177_JAR)
 	$(call makeJSRExtraJar,177)
