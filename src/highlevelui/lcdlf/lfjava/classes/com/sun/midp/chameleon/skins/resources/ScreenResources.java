@@ -33,7 +33,6 @@ import com.sun.midp.log.*;
 import javax.microedition.lcdui.Image;
 import javax.microedition.lcdui.Font;
 import javax.microedition.lcdui.Display;
-import javax.microedition.lcdui.Graphics;
 
 import com.sun.midp.configurator.Constants;
 
