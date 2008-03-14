@@ -175,7 +175,7 @@ CVM_INCLUDE_JAVACALL  = true
 
 ifeq ($(USE_JSR_172), true)
 $(JSR_177_JAR):  $(SUBSYSTEM_JSR_177_JAVA_FILES) $(TOOLS)
-	$(call compileJSRClasses,177,$(JSROP_JAR_DIR)/jsr172.jar)
+	$(call compileJSRClasses,177,$(PS)$(JSROP_JAR_DIR)/jsr172.jar)
 else
 $(JSR_177_JAR):  $(SUBSYSTEM_JSR_177_JAVA_FILES) $(TOOLS)
 	$(call compileJSRClasses,177)
