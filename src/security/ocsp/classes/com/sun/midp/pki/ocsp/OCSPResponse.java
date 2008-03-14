@@ -31,12 +31,7 @@ import java.io.IOException;
 
 import javax.microedition.pki.CertificateException;
 
-import com.sun.midp.pki.AlgorithmId;
-import com.sun.midp.pki.X509Certificate;
-import com.sun.midp.pki.DerValue;
-import com.sun.midp.pki.DerInputStream;
-import com.sun.midp.pki.ObjectIdentifier;
-import com.sun.midp.pki.Utils;
+import com.sun.midp.pki.*;
 
 import com.sun.midp.crypto.Signature;
 import com.sun.midp.crypto.SignatureException;

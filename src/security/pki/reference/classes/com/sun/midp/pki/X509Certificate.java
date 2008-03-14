@@ -276,6 +276,8 @@ public class X509Certificate implements Certificate {
     private byte[] fp = null;  
     /** Certificate serial number. */
     private String serialNumber;
+    /** Certificate serial number represented as a byte array. */
+    private byte[] serialNumberBytes;
     /** Certificate subject. */
     private String subject;
     /** Certificate issuer. */
@@ -360,8 +362,12 @@ public class X509Certificate implements Certificate {
                            int pLen)
         throws Exception {
             version = ver;
-            serialNumber = Utils.hexEncode(rawSerialNumber, 0,
-                                           rawSerialNumber.length);
+            int len = rawSerialNumber.length;
+            serialNumber = Utils.hexEncode(rawSerialNumber, 0, len);
+
+            // save rawSerialNumber in the internal array
+            serialNumberBytes = new byte[len];
+            System.arraycopy(rawSerialNumber, 0, serialNumberBytes, 0, len);
 
             /*
              * We are paranoid so we don't just assign a reference as in
@@ -1538,12 +1544,30 @@ public class X509Certificate implements Certificate {
      * hexadecimal notation with each byte represented as two
      * hex digits separated byte ":" (Unicode x3A).
      * For example,  27:56:FA:80.
+     *
      * @return A string containing the serial number
      * in user-friendly form; <CODE>NULL</CODE> is returned
      * if there is no serial number.
      */
     public String getSerialNumber() {
         return serialNumber;
+    }
+
+    /**
+     * Returns the serial number of this <CODE>Certificate</CODE>
+     * represented as an array of bytes.
+     *
+     * @return A byte array containing the serial number;
+     * <CODE>NULL</CODE> is returned if there is no serial number.
+     */
+    public byte[] getRawSerialNumber() {
+        byte[] data = null;
+        if (serialNumberBytes != null) {
+            int len = serialNumberBytes.length;
+            data = new byte[len];
+            System.arraycopy(serialNumberBytes, 0, data, 0, len);
+        }
+        return data;
     }
 
     /**

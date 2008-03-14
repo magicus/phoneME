@@ -179,7 +179,8 @@ public class OCSPRequest {
         
         this.issuerCert = issuerCert;
 
-        serialNumber = new SerialNumber(userCert.getSerialNumber());
+        serialNumber = new SerialNumber(
+                new BigInteger(userCert.getRawSerialNumber()));
         //serialNumber = userCert.getSerialNumberObject();
     }
 
