@@ -406,7 +406,7 @@ class OCSPResponse {
             if (respSignature.verify(signBytes)) {
                 if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
                     Logging.report(Logging.INFORMATION, LogChannels.LC_SECURITY,
-                               "Verified signature of OCSP Responder);
+                               "Verified signature of OCSP Responder");
                 }
                 return true;
 
