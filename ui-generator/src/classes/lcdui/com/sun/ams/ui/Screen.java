@@ -36,8 +36,6 @@ import javax.microedition.lcdui.Item;
 
 
 public abstract class Screen extends BaseScreen {
-    private Displayable impl;
-
     private static Display display;
 
     static void setDisplay(Display d) {
@@ -45,6 +43,25 @@ public abstract class Screen extends BaseScreen {
     }
 
     protected abstract Displayable getDisplayable();
+
+    protected ScreenContents createScreenContents() {
+        return new ScreenContents() {
+            private Displayable impl = getDisplayable();
+
+            public void show() {
+                display.setCurrent(impl);
+            }
+
+            public void hide() {
+                // FIXME: this doesn't work as expected (does nothing actually)
+                display.setCurrent(null);
+            }
+
+            public boolean isShown() {
+                return impl.isShown();
+            }
+        };
+    }
 
     protected Command getSelectItemCommand() {
         //  FIXME: i18n for "OK"
@@ -110,20 +127,6 @@ public abstract class Screen extends BaseScreen {
         int spacerHeight = dh / spacersCount; // TBD: round up issue
         for(int i = 0; i < spacersCount; ++i) {
             spacers[i].setPreferredSize(-1, spacerHeight);
-        }
-    }
-
-    public void show() {
-        if(null == impl) {
-            impl = getDisplayable();
-        }
-
-        display.setCurrent(impl);
-    }
-
-    public void hide() {
-        if(null != impl && impl.isShown()) {
-            display.setCurrent(null);
         }
     }
 

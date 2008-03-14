@@ -41,7 +41,11 @@ information or have any questions.
     <property name="out.root"               location="../out"/>
     <property name="out.classes"            location="${out.root}/classes"/>
     <property name="out.src"                location="${out.root}/generated/classes"/>
-    <property name="generated.files.list"   location="${out.root}/generated/ui_file_list"/>
+    <property name="generated.files.list"   location="${out.root}/generated/file_list"/>
+
+    <property name="makefile"                       location="${out.root}/generated/ui_makefile"/>
+    <property name="makefile.files_list.varname"    value="GENERATED_FILES"/>
+
     <property name="xslt.merge"             location="../xslt/merge.xsl"/>
     <property name="xslt.main"              location="../xslt/${toolkit}/main.xsl"/>
 
@@ -80,6 +84,25 @@ information or have any questions.
             <param name="output-java-dir" expression="file:///${output-java-dir}"/>
             <param name="output-xml-dir" expression="file:///${output-xml-dir}"/>
         </xslt>
+    </target>
+
+    <target name="makefile" depends="gen">
+        <description>Generate Makefile fragment that initiates make variable with the list of generated files
+        </description>
+
+        <copy file="${generated.files.list}" tofile="${makefile}">
+            <filterchain>
+                <tokenfilter>
+                    <replacestring from="file:///${output-java-dir}/" to=""/>
+                </tokenfilter>
+                <linecontains>
+                  <contains value=".java"/>
+                </linecontains>
+                <prefixlines prefix=" "/>
+                <striplinebreaks/>
+                <prefixlines prefix="${makefile.files_list.varname} :="/>
+            </filterchain>
+        </copy>
     </target>
 
     <target name="javac" depends="gen">

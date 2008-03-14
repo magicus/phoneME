@@ -1,6 +1,4 @@
 /*
- *
- *
  * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  *
@@ -26,22 +24,15 @@
 
 package com.sun.ams.ui;
 
-public class BaseScreen implements StringIds {
-    private ScreenProperties props;
+public abstract class BaseScreen implements StringIds {
+    private ScreenContents      contents;
+    private ScreenProperties    props;
 
     private static String localizeString(int id) {
         return StringTable.getString(id);
     }
 
     private static String printfImpl(String format, Object args[]) {
-        return format(format, args);
-    }
-
-    static String printf(int id, Object args[]) {
-        return printfImpl(localizeString(id), args);
-    }
-
-    private static String format(String format, Object[] args) {
         StringBuffer returnString = new StringBuffer();
 
         int startIndex = 0;
@@ -71,12 +62,59 @@ public class BaseScreen implements StringIds {
         return returnString.toString();
     }
 
+    static String printf(int id, Object args[]) {
+        return printfImpl(localizeString(id), args);
+    }
+
     protected Object getProperty(String key) {
         return props.get(key);
     }
 
+    abstract protected ScreenContents createScreenContents();
+
     BaseScreen(ScreenProperties props) {
         this.props = props;
+    }
+
+    public synchronized void show() {
+        if(null == contents) {
+            contents = createScreenContents();
+        }
+
+        contents.show();
+    }
+
+    public synchronized void waitHide(long millis) {
+        if(null != contents) {
+            try {
+                while(contents.isShown()) {
+                    wait(millis);
+                }
+            } catch(InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    public synchronized void hide() {
+        while(null != contents && contents.isShown()) {
+            contents.hide();
+        }
+
+        notifyAll();
+    }
+
+    public void showAndWait() {
+        showAndWait(Long.MAX_VALUE);
+    }
+
+    public void showAndWait(long millis) {
+        show();
+        waitHide(millis);
+    }
+
+    public void waitHide() {
+        waitHide(Long.MAX_VALUE);
     }
 
     private static void
