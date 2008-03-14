@@ -331,6 +331,9 @@ class OCSPResponse {
                 } else if (cert.getIssuer().equals(
                     responderCert.getSubject())) {
 
+                    /* IMPL_NOTE: key purposes should be parsed in X509Certificate
+                       and validated here */
+                    /*
                     // Check for the OCSPSigning key purpose
                     List<String> keyPurposes = cert.getExtendedKeyUsage();
                     if (keyPurposes == null ||
@@ -346,6 +349,7 @@ class OCSPResponse {
                             "Responder's certificate not valid for signing " +
                             "OCSP responses");
                     }
+                    */
 
                     // verify the signature
                     try {
@@ -578,8 +582,8 @@ class OCSPResponse {
                             thisUpdate + until);
             }
             // Check that the test date is within the validity interval
-            if ((thisUpdate != null && now.before(thisUpdate)) ||
-                (nextUpdate != null && now.after(nextUpdate))) {
+            if ((thisUpdate != null && (now.getTime() < thisUpdate.getTime())) ||
+                (nextUpdate != null && (now.getTime() > nextUpdate.getTime()))) {
 
                 if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
                     Logging.report(Logging.INFORMATION, LogChannels.LC_SECURITY,
