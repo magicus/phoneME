@@ -86,7 +86,7 @@ define compileJSROP
 	$(JAVAC_CMD)						\
 		-d $(2) \
 		-bootclasspath $(CVM_BUILDTIME_CLASSESDIR) 	\
-		-classpath $(JAVACLASSES_CLASSPATH)$(PS)$(JSROP_JUMP_API)$(PS)$(ABSTRACTIONS_JAR)$(PS)$(4) \
+		-classpath $(JAVACLASSES_CLASSPATH)$(PS)$(JSROP_JUMP_API)$(PS)$(ABSTRACTIONS_JAR)$(4) \
 		$(3)
 endef
 
