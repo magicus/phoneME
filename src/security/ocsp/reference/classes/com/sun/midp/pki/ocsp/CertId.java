@@ -26,17 +26,18 @@
 
 package com.sun.midp.pki.ocsp;
 
-import java.io.*;
-import java.math.BigInteger;
+import java.io.IOException;
 
-import sun.security.x509.*;
-
-import com.sun.midp.pki.Utils;
-import com.sun.midp.pki.DerValue;
 import com.sun.midp.pki.DerOutputStream;
+import com.sun.midp.pki.DerValue;
+import com.sun.midp.pki.X509Certificate;
+import com.sun.midp.pki.Utils;
+import com.sun.midp.pki.AlgorithmId;
+
+import com.sun.midp.crypto.MessageDigest;
 
 import com.sun.midp.log.Logging;
-import com.sun.midp.crypto.MessageDigest;
+import com.sun.midp.log.LogChannels;
 
 /**
  * This class corresponds to the CertId field in OCSP Request
@@ -65,7 +66,7 @@ public class CertId {
     /**
      * Creates a CertId. The hash algorithm used is SHA-1.
      */
-    public CertId(X509CertImpl issuerCert, SerialNumber serialNumber)
+    public CertId(X509Certificate issuerCert, SerialNumber serialNumber)
         throws Exception {
 
         // compute issuerNameHash
@@ -99,7 +100,6 @@ public class CertId {
      * Creates a CertId from its ASN.1 DER encoding.
      */
     public CertId(DerInputStream derIn) throws IOException {
-
         hashAlgId = AlgorithmId.parse(derIn.getDerValue());
         issuerNameHash = derIn.getOctetString();
         issuerKeyHash = derIn.getOctetString();
@@ -130,7 +130,7 @@ public class CertId {
     /**
      * Return the serial number.
      */
-    public BigInteger getSerialNumber() {
+    public int getSerialNumber() {
         return certSerialNumber.getNumber();
     }
 

@@ -29,12 +29,9 @@ package com.sun.midp.pki;
 import java.io.ByteArrayOutputStream;
 import java.io.OutputStream;
 import java.io.IOException;
-import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.TimeZone;
-import java.util.Comparator;
-import java.util.Arrays;
-import java.math.BigInteger;
+import java.util.Calendar;
 
 
 /**
@@ -152,18 +149,6 @@ public class DerOutputStream extends ByteArrayOutputStream {
     public void putEnumerated(int i) throws IOException {
         write(DerValue.tag_Enumerated);
         putIntegerContents(i);
-    }
-
-    /**
-     * Marshals a DER integer on the output stream.
-     *
-     * @param i the integer in the form of a BigInteger.
-     */
-    public void putInteger(BigInteger i) throws IOException {
-        write(DerValue.tag_Integer);
-        byte[]    buf = i.toByteArray(); // least number  of bytes
-        putLength(buf.length);
-        write(buf, 0, buf.length);
     }
 
     /**
@@ -395,18 +380,44 @@ public class DerOutputStream extends ByteArrayOutputStream {
          */
 
         TimeZone tz = TimeZone.getTimeZone("GMT");
-        String pattern = null;
+
+        Calendar c = Calendar.getInstance(tz);
+        c.setTime(d);
+        String strYear = Integer.toString(c.get(Calendar.YEAR));
+
+        StringBuffer timeStr = new StringBuffer();
 
         if (tag == DerValue.tag_UtcTime) {
-            pattern = "yyMMddHHmmss'Z'";
+            // "yy"
+            int len = strYear.length();
+            if (len <= 2) {
+                timeStr.append(strYear);
+            } else {
+                timeStr.append(strYear.substring(len - 2, len));
+            }
         } else {
+            // "yyyy"
             tag = DerValue.tag_GeneralizedTime;
-            pattern = "yyyyMMddHHmmss'Z'";
+            timeStr.append(strYear);
         }
 
-        SimpleDateFormat sdf = new SimpleDateFormat(pattern);
-        sdf.setTimeZone(tz);
-        byte[] time = (sdf.format(d)).getBytes("ISO-8859-1");
+        // adding "MMddHHmmss'Z'"
+        int[] n = {
+            Calendar.MONTH, Calendar.DAY_OF_MONTH,
+            Calendar.HOUR, Calendar.SECOND
+        };
+
+        for (int i = 0; i < n.length; i++) {
+            String tmp = Integer.toString(c.get(n[i]));
+            if (tmp.length() < 2) {
+                timeStr.append("0");
+            }
+            timeStr.append(tmp);
+        }
+
+        timeStr.append("'+0000'"); // GMT
+
+        byte[] time = timeStr.toString().getBytes("ISO-8859-1");
 
         /*
          * Write the formatted date.

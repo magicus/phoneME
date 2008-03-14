@@ -31,12 +31,19 @@ import java.io.IOException;
 
 import javax.microedition.pki.CertificateException;
 
+import com.sun.midp.pki.AlgorithmId;
 import com.sun.midp.pki.X509Certificate;
-import com.sun.midp.pki.Utils;
-import com.sun.midp.pki.ObjectIdentifier;
 import com.sun.midp.pki.DerValue;
+import com.sun.midp.pki.ObjectIdentifier;
+import com.sun.midp.pki.Utils;
+
+import com.sun.midp.crypto.Signature;
+import com.sun.midp.crypto.SignatureException;
+import com.sun.midp.crypto.InvalidKeyException;
+import com.sun.midp.crypto.NoSuchAlgorithmException;
 
 import com.sun.midp.log.Logging;
+import com.sun.midp.log.LogChannels;
 
 /**
  * This class is used to process an OCSP response.
@@ -139,8 +146,8 @@ class OCSPResponse {
     /*
      * Create an OCSP response from its ASN.1 DER encoding.
      */
-    // used by OCSPChecker
-    OCSPResponse(byte[] bytes, PKIXParameters params,
+    // used by OCSPValidatorImpl
+    OCSPResponse(byte[] bytes,
         X509Certificate responderCert) throws IOException, OCSPException {
 
         try {
@@ -336,7 +343,8 @@ class OCSPResponse {
                                     "Responder's certificate is not valid " +
                                         "for signing OCSP responses.");
                         }
-                        throw new CertPathValidatorException(
+                        throw new OCSPException(
+                            OCSPException.INVALID_RESPONDER_CERTIFICATE,
                             "Responder's certificate not valid for signing " +
                             "OCSP responses");
                     }
@@ -357,8 +365,8 @@ class OCSPResponse {
             // key from the trusted responder cert
             if (responderCert != null) {
 
-                if (! verifyResponse(responseDataDer, responderCert,
-                    sigAlgId, signature, params)) {
+                if (!verifyResponse(responseDataDer, responderCert,
+                                    sigAlgId, signature)) {
                     if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
                         Logging.report(Logging.INFORMATION,
                                 LogChannels.LC_SECURITY,
@@ -388,13 +396,12 @@ class OCSPResponse {
      * The responder's cert is implicitly trusted.
      */
     private boolean verifyResponse(byte[] responseData, X509Certificate cert,
-        AlgorithmId sigAlgId, byte[] signBytes, PKIXParameters params)
-            throws SignatureException {
-
+            AlgorithmId sigAlgId, byte[] signBytes)
+                    throws SignatureException, CertificateException {
         try {
             Signature respSignature = Signature.getInstance(sigAlgId.getName());
-            respSignature.initVerify(cert);
-            respSignature.update(responseData);
+            respSignature.initVerify(cert.getPublicKey());
+            respSignature.update(responseData, 0, responseData.length);
 
             if (respSignature.verify(signBytes)) {
                 if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
@@ -411,22 +418,23 @@ class OCSPResponse {
                 return false;
             }
         } catch (InvalidKeyException ike) {
-            throw new SignatureException(ike);
+            throw new SignatureException("Invalid key: " + ike.getMessage());
 
         } catch (NoSuchAlgorithmException nsae) {
-            throw new SignatureException(nsae);
+            throw new SignatureException("Invalid algorithm: " +
+                                         nsae.getMessage());
         }
     }
 
     /*
      * Return the revocation status code for a given certificate.
      */
-    // used by OCSPChecker
+    // used by OCSPValidatorImpl
     int getCertStatus() {
         return singleResponse.getStatus();
     }
 
-    // used by OCSPChecker
+    // used by OCSPValidatorImpl
     CertId getCertId() {
         return singleResponse.getCertId();
     }
@@ -434,7 +442,7 @@ class OCSPResponse {
     /*
      * Map a certificate's revocation status code to a string.
      */
-    // used by OCSPChecker
+    // used by OCSPValidatorImpl
     static String certStatusToText(int certStatus) {
         switch (certStatus)  {
         case CertStatus.GOOD:

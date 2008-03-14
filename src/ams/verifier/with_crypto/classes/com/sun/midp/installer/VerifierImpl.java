@@ -318,7 +318,7 @@ public class VerifierImpl implements Verifier {
         X509Certificate cert = (X509Certificate)derCerts.elementAt(0);
         
         try {
-            status = certValidator.validate(cert);
+            status = certValidator.validate(cert, derCerts);
         } catch (OCSPException ocspEx) {
             /*
              * IMPL_NOTE: an exception must be thrown to allow the caller

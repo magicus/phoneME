@@ -28,6 +28,8 @@ package com.sun.midp.pki;
 
 import java.util.Date;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.ByteArrayInputStream;
 
 /**
  * Represents a single DER-encoded value.  DER encoding rules are a subset

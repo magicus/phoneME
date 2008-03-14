@@ -100,9 +100,15 @@ public class OCSPException extends Exception {
     public static final byte CANNOT_VERIFY_SIGNATURE = 11;
 
     /**
+     * Indicates that the signature of the OCSP responder
+     * can't be verified.
+     */
+    public static final byte INVALID_RESPONDER_CERTIFICATE = 12;
+
+    /**
      * Indicates that some unexpected error has occured.
      */
-    public static final byte UNKNOWN_ERROR            = 12;
+    public static final byte UNKNOWN_ERROR            = 13;
 
     /**
      * Create a new exception with a specific error reason.
