@@ -341,4 +341,16 @@ public final class EventTypes {
      * This event is used by AutoTester.
      */
     public static final int AUTOTESTER_EVENT = 53;
+    
+    /**
+     * Notification sent by ODT agent indicating that it has installed a new
+     * MIDlet suite.
+     */
+    public static final int MIDP_ODD_SUITE_INSTALLED_EVENT = 54;
+
+    /**
+     * Notification sent by ODT agent indicating that it has removed 
+     * an installed MIDlet suite.
+     */
+    public static final int MIDP_ODD_SUITE_REMOVED_EVENT = 55;
 }

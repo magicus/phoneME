@@ -193,6 +193,30 @@ public class Manager extends MIDlet implements ApplicationManager,
          */
     }
 
+    /**
+     * Processes MIDP_ODD_SUITE_INSTALLED_EVENT. This event indicates that
+     * a new MIDlet suite has been installed by ODT agent.
+     * 
+     * @param suiteId ID of the newly installed MIDlet suite          
+     */
+    public void handleODDSuiteInstalledEvent(int suiteId) {
+        /*
+         * Not used in SVM: ODT agent doesn't send messages to AMS in SVM mode.
+         */
+    }
+
+    /**
+     * Processes MIDP_ODD_SUITE_REMOVED_EVENT. This event indicates that
+     * an installed MIDlet suite has been removed by ODT agent.
+     * 
+     * @param suiteId ID of the removed MIDlet suite          
+     */
+    public void handleODDSuiteRemovedEvent(int suiteId) {
+        /*
+         * Not used in SVM: ODT agent doesn't send messages to AMS in SVM mode.
+         */
+    }
+
     // ===================================================================
     // ---- Implementation of the ApplicationManager interface ------------
 
