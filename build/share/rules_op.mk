@@ -132,7 +132,7 @@ endef
 # SUBSYSTEM_JSR_#_JAVA_FILES - list of JSR's java sources paths
 # JSR_#_JAR                  - JSR's jar file path
 define compileJSRClasses
-	$(call compileJSROP,jsr$(1),$(JSR_$(1)_BUILD_DIR)/classes,$(SUBSYSTEM_JSR_$(1)_JAVA_FILES))
+	$(call compileJSROP,jsr$(1),$(JSR_$(1)_BUILD_DIR)/classes,$(SUBSYSTEM_JSR_$(1)_JAVA_FILES),$(2))
 	$(call makeJSROPJar,$(JSR_$(1)_JAR),$(JSR_$(1)_BUILD_DIR)/classes)
 endef
 
