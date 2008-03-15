@@ -362,6 +362,19 @@ main(int argc, char *argv[]) {
             } else {
                 heapsize = atoi(argv[i]);
             }
+
+            // Override JAVA_HEAP_SIZE internal property used
+            // by MIDP initialization code
+            if (heapsize > 0) {
+                // 1GB heap size fits 10 digits number in bytes
+                #define MAX_HEAP_SIZE_DIGITS 10
+                char *heapsize_str = malloc(sizeof(char)*(MAX_HEAP_SIZE_DIGITS+1));
+                _snprintf(heapsize_str, MAX_HEAP_SIZE_DIGITS, "%d", heapsize);
+                javacall_set_property(
+                    "JAVA_HEAP_SIZE", heapsize_str,
+                    JAVACALL_TRUE, JAVACALL_INTERNAL_PROPERTY);
+            }
+
         } else if (strncmp(argv[i], "-", 1) == 0) {
             javautil_debug_print (JAVACALL_LOG_INFORMATION, "main",
                                   "Illegal argument %s", argv[i]);
