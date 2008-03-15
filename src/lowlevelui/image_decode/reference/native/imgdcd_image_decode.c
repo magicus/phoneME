@@ -48,6 +48,14 @@ getByte(imageSrcPtr self)
     return (*(r->buf))[r->offset++];
 }
 
+static bool
+endOfData(imageSrcPtr self)
+{
+    resourceImageSrcPtr r = (resourceImageSrcPtr) self->ptr;
+    if (r->remaining < 0) return TRUE;
+    else return FALSE;
+}
+
 static int
 getBytes(imageSrcPtr self, uchar *buf, int len)
 {
@@ -125,14 +133,15 @@ create_imagesrc_from_data(char **data, int len) {
 	return NULL;
     }
 
-    p->super.ptr      = p;
-    p->super.done     = done;
-    p->super.reset    = reset;
-    p->super.getByte  = getByte;
-    p->super.getBytes = getBytes;
-    p->super.skip     = skip;
-    p->super.seek     = seek;
-    p->super.getpos   = getPos;
+    p->super.ptr       = p;
+    p->super.done      = done;
+    p->super.reset     = reset;
+    p->super.getByte   = getByte;
+    p->super.getBytes  = getBytes;
+    p->super.skip      = skip;
+    p->super.seek      = seek;
+    p->super.getpos    = getPos;
+    p->super.endOfData = endOfData;
 
     p->buf = (uchar **)data;
     p->len = len;

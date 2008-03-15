@@ -57,6 +57,7 @@ typedef struct _ids {
     int    (*getBytes)(struct _ids *self, uchar *buf, int bufsize);
     void   (*skip)(struct _ids *self, int numBytes);
     void   (*done)(struct _ids *self);
+    bool   (*endOfData)(struct _ids *self);
 } imageSrcData, *imageSrcPtr;
 
 typedef struct _idd {
