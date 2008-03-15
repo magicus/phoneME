@@ -446,8 +446,8 @@ void Scheduler::sleep_forever() {
 */
 
 ReturnOop Scheduler::add_waiting_thread(Thread *thread, JavaOop *obj) {
-
   remove_from_active(thread);
+
   Thread::Raw pending_waiters =  find_waiting_thread(obj);
   thread->clear_previous();
 
@@ -459,7 +459,6 @@ ReturnOop Scheduler::add_waiting_thread(Thread *thread, JavaOop *obj) {
     tail().set_next_waiting(thread);
     wait_queue->set_global_next(thread);
     pending_waiters = thread->obj();
-    thread->clear_next();
   } else {
     GUARANTEE(obj->equals(pending_waiters().wait_obj()),
               "Wait objects not equal");
@@ -469,8 +468,8 @@ ReturnOop Scheduler::add_waiting_thread(Thread *thread, JavaOop *obj) {
       tail = tail().next();
     }
     tail().set_next(thread);
-    thread->clear_next();
   }
+  thread->clear_next();
   thread->clear_next_waiting();
   thread->set_wait_obj(obj);
   return pending_waiters;
@@ -495,7 +494,6 @@ ReturnOop Scheduler::add_sync_thread(Thread* thread, Thread *pending_waiters,
 }
 
 void Scheduler::remove_waiting_thread(Thread* thread) {
-
   Thread::Raw list;
   JavaOop obj = thread->wait_obj();
   if (obj.is_null()) {
@@ -1227,7 +1225,6 @@ void Scheduler::sleep_current_thread(jlong millis) {
   }
   thread->set_wakeup_time(wakeup);
   add_to_sleeping(thread);
-
   yield();
 }
 

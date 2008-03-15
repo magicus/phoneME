@@ -228,7 +228,7 @@ void Synchronizer::signal_waiters(StackLock* stack_lock) {
     Scheduler::add_to_active(&first_waiter);
     JavaOop::Raw obj = first_waiter().wait_obj();
     first_waiter().wait_stack_lock()->lock(&first_waiter, &obj);
-    if (!next_waiter.is_null()) {
+    if (next_waiter.not_null()) {
       // If there are more waiters, transfer this information to
       // the new lock
       if (TraceThreadsExcessive) {
@@ -239,6 +239,7 @@ void Synchronizer::signal_waiters(StackLock* stack_lock) {
       first_waiter().wait_stack_lock()->set_waiters(&next_waiter);
     }
     first_waiter().clear_wait_stack_lock();
+    first_waiter().clear_next_waiting();
     first_waiter().clear_wait_obj();
   }
 }

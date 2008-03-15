@@ -1362,6 +1362,7 @@ Task.hpp                         MixedOop.hpp
 Task.hpp                         Universe.hpp
 Task.hpp                         OopCons.hpp
 Task.cpp                         Task.hpp
+Task.cpp                         BoundaryDesc.hpp
 Task.cpp                         ObjArrayDesc.hpp
 Task.cpp                         MethodTrap.hpp
 Task.cpp                         Verifier.hpp
