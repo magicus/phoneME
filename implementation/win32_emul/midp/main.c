@@ -23,6 +23,7 @@
  */
 #include "javacall_lifecycle.h"
 #include "lime.h"
+#include "stdio.h"
 #include "windows.h"
 #include "javacall_properties.h"
 #include "javacall_events.h"
@@ -128,6 +129,7 @@ main(int argc, char *argv[]) {
     char *descriptor       = NULL;
     char *device           = NULL;
     int heapsize           = -1;
+    char *heapsizeStr      = NULL;
     char *className        = NULL;
     char *classPath        = NULL;
     char *debugPort        = NULL;
@@ -368,10 +370,10 @@ main(int argc, char *argv[]) {
             if (heapsize > 0) {
                 // 1GB heap size fits 10 digits number in bytes
                 #define MAX_HEAP_SIZE_DIGITS 10
-                char *heapsize_str = malloc(sizeof(char)*(MAX_HEAP_SIZE_DIGITS+1));
-                _snprintf(heapsize_str, MAX_HEAP_SIZE_DIGITS, "%d", heapsize);
+                heapsizeStr = malloc(sizeof(char)*(MAX_HEAP_SIZE_DIGITS+1));
+                _snprintf(heapsizeStr, MAX_HEAP_SIZE_DIGITS, "%d", heapsize);
                 javacall_set_property(
-                    "JAVA_HEAP_SIZE", heapsize_str,
+                    "JAVA_HEAP_SIZE", heapsizeStr,
                     JAVACALL_TRUE, JAVACALL_INTERNAL_PROPERTY);
             }
 
@@ -531,6 +533,7 @@ main(int argc, char *argv[]) {
     free(className);
     free(url);
     free(storageName);
+    free(heapsizeStr);
 
     FinalizeLimeEvents();
     return 1;
