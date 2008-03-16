@@ -28,16 +28,23 @@
 #include <midp_properties_port.h>
 
 /**
- * Reads MAX_ISOLATES property, calculates and returns size of the
- * required heap. If the MAX_ISOLATES has not been found, default
- * heap size is returned.
+ * Reads JAVA_HEAP_SIZE property and returns it as required heap size.
+ * If JAVA_HEAP_SIZE has not been found, then reads MAX_ISOLATES property,
+ * calculates and returns size of the required heap. If the MAX_ISOLATES
+ * has not been found, default heap size is returned.
  *
  * @return <tt>heap size</tt>
  */
-int getHeapRequirement() {
-    int max_isolates = getInternalPropertyInt("MAX_ISOLATES");
+ int getHeapRequirement() {
+    int max_isolates;
     int midp_heap_requirement;
 
+    midp_heap_requirement = getInternalPropertyInt("JAVA_HEAP_SIZE");
+    if (midp_heap_requirement > 0) {
+        return midp_heap_requirement;
+    }
+
+    max_isolates = getInternalPropertyInt("MAX_ISOLATES");
     if (max_isolates <= 0) {
 #if ENABLE_MULTIPLE_ISOLATES
         max_isolates = MAX_ISOLATES;
@@ -68,6 +75,6 @@ int getHeapRequirement() {
      */
     midp_heap_requirement = 1280 * 1024 + (max_isolates - 1) * 1024 * 1024;
 #endif
-    
+
     return midp_heap_requirement;
 }
