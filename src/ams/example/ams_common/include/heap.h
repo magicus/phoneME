@@ -32,9 +32,10 @@ extern "C" {
 #endif
 
 /**
- * Reads MAX_ISOLATES property, calculates and returns size of the
- * required heap. If the MAX_ISOLATES has not been found, default
- * heap size is returned.
+ * Reads JAVA_HEAP_SIZE property and returns it as required heap size.
+ * If JAVA_HEAP_SIZE has not been found, then reads MAX_ISOLATES property,
+ * calculates and returns size of the required heap. If the MAX_ISOLATES
+ * has not been found, default heap size is returned.
  *
  * @return <tt>heap size</tt>
  */
