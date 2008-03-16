@@ -129,7 +129,6 @@ main(int argc, char *argv[]) {
     char *descriptor       = NULL;
     char *device           = NULL;
     int heapsize           = -1;
-    char *heapsizeStr      = NULL;
     char *className        = NULL;
     char *classPath        = NULL;
     char *debugPort        = NULL;
@@ -365,13 +364,14 @@ main(int argc, char *argv[]) {
                 heapsize = atoi(argv[i]);
             }
 
-            // Override JAVA_HEAP_SIZE internal property used
-            // by MIDP initialization code
+            /* Override JAVA_HEAP_SIZE internal property used
+            /* by MIDP initialization code */
             if (heapsize > 0) {
-                // 1GB heap size fits 10 digits number in bytes
-                #define MAX_HEAP_SIZE_DIGITS 10
-                heapsizeStr = malloc(sizeof(char)*(MAX_HEAP_SIZE_DIGITS+1));
-                _snprintf(heapsizeStr, MAX_HEAP_SIZE_DIGITS, "%d", heapsize);
+                /* 1GB heap size fits 10-digits number in bytes */
+                #define HEAPSIZE_BUFFER_SIZE 11
+
+                char heapsizeStr[HEAPSIZE_BUFFER_SIZE];
+                _snprintf(heapsizeStr, HEAPSIZE_BUFFER_SIZE, "%d", heapsize);
                 javacall_set_property(
                     "JAVA_HEAP_SIZE", heapsizeStr,
                     JAVACALL_TRUE, JAVACALL_INTERNAL_PROPERTY);
@@ -533,7 +533,6 @@ main(int argc, char *argv[]) {
     free(className);
     free(url);
     free(storageName);
-    free(heapsizeStr);
 
     FinalizeLimeEvents();
     return 1;
