@@ -1,5 +1,5 @@
 #
-# Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+# Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
 # 
 # This program is free software; you can redistribute it and/or
@@ -32,11 +32,11 @@ endif
 
 include $(JAVACALL_DIR)/build/common.gmk
 
-TEMP=$(patsubst %.c,%.obj,$(PORTING_SOURCE))
+TEMP_PORTING_SOURCE=$(patsubst %.c,%.obj,$(PORTING_SOURCE))
 ifneq ($(FILTER_OBJECTS)x,x)
-PORTING_OBJECTS+=$(filter-out $(FILTER_OBJECTS),$(TEMP))
+PORTING_OBJECTS+=$(filter-out $(FILTER_OBJECTS),$(TEMP_PORTING_SOURCE))
 else # ifneq ($(FILTER_OBJECTS)x,x)
-PORTING_OBJECTS+=$(TEMP)
+PORTING_OBJECTS+=$(TEMP_PORTING_SOURCE)
 endif # ifneq ($(FILTER_OBJECTS)x,x)
 
 NOTIFIER_OBJECTS=$(patsubst %.c,%.obj,$(NOTIFIER_SOURCE))
@@ -77,11 +77,11 @@ OUTPUT_OPTION=-o`$(call fixcygpath, $@)` \
 
 $(JAVACALL_OUTPUT_OBJ_DIR)/%.obj: %.cpp
 	@echo "...compiling: $<"
-	@$(COMPILE.cc) $(OUTPUT_OPTION) `$(call fixcygpath, $<)`
+	$(AT)$(COMPILE.cc) $(OUTPUT_OPTION) `$(call fixcygpath, $<)`
 
 $(JAVACALL_OUTPUT_OBJ_DIR)/%.obj: %.c
 	@echo "...compiling: $<"
-	@$(COMPILE.c) $(OUTPUT_OPTION) `$(call fixcygpath, $<)`	
+	$(AT)$(COMPILE.c) $(OUTPUT_OPTION) `$(call fixcygpath, $<)`	
 
 JAVACALL_EXTRA_LIBS::
 
@@ -91,11 +91,11 @@ $(JAVACALL_OUTPUT_LIB_DIR)/javacall$(BUILD_EXT).lib: \
 	$(patsubst %,$(JAVACALL_OUTPUT_OBJ_DIR)/%,$(PROPERTY_OBJECTS)) \
 	$(SPECIFIC_OBJECTS)
 	@echo "...Generating Library: $@"
-	@$(AR) $(ARFLAGS) `$(call fixcygpath, $@)` `$(call fixcygpath, $^ $(ADDITIONAL_LIBS))`
-	@$(MAKE) JAVACALL_EXTRA_LIBS
+	$(AT)$(AR) $(ARFLAGS) `$(call fixcygpath, $@)` `$(call fixcygpath, $^ $(ADDITIONAL_LIBS))`
+	$(AT)$(MAKE) JAVACALL_EXTRA_LIBS
 
 $(JAVACALL_OUTPUT_LIB_DIR)/notifiers$(BUILD_EXT).lib: \
     $(patsubst %,$(JAVACALL_OUTPUT_OBJ_DIR)/%,$(NOTIFIER_OBJECTS))
 	@echo "...Generating Library: $@"
-	@$(AR) `$(call fixcygpath, $@)` $(ARFLAGS) `$(call fixcygpath, $^)`
+	$(AT)$(AR) `$(call fixcygpath, $@)` $(ARFLAGS) `$(call fixcygpath, $^)`
 
