@@ -23,6 +23,7 @@
  */
 #include "javacall_lifecycle.h"
 #include "lime.h"
+#include "stdio.h"
 #include "windows.h"
 #include "javacall_properties.h"
 #include "javacall_events.h"
@@ -342,6 +343,20 @@ main(int argc, char *argv[]) {
             } else {
                 heapsize = atoi(argv[i]);
             }
+
+            /* Override JAVA_HEAP_SIZE internal property used
+            /* by MIDP initialization code */
+            if (heapsize > 0) {
+                /* 1GB heap size fits 10-digits number in bytes */
+                #define HEAPSIZE_BUFFER_SIZE 11
+
+                char heapsizeStr[HEAPSIZE_BUFFER_SIZE];
+                _snprintf(heapsizeStr, HEAPSIZE_BUFFER_SIZE, "%d", heapsize);
+                javacall_set_property(
+                    "JAVA_HEAP_SIZE", heapsizeStr,
+                    JAVACALL_TRUE, JAVACALL_INTERNAL_PROPERTY);
+            }
+
         } else if (strncmp(argv[i], "-", 1) == 0) {
             javautil_debug_print (JAVACALL_LOG_INFORMATION, "main",
                                   "Illegal argument %s", argv[i]);
