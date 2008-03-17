@@ -338,10 +338,10 @@ LABEL(_arrAcquireLockMPSafe)
 	ldr	v1, [a1, #0]   /* v1 <- allocPtr   */
 	ldr	a4, [a4, #0]   /* a1 <- allocTop */
 	/* instance size is in a3 */
-	adds	ip, v1, a3     /* lr <- allocNext (allocPtr v1 + size a3) */
+	adds	ip, v1, a3     /* ip <- allocNext (allocPtr v1 + size a3) */
 	/* Check for overflow */
 	bvs	ARR_GOUNLOCKANDSLOW
-	cmp	ip, a4         /* Is lr <= a4 (within range?) */
+	cmp	ip, a4         /* Is ip <= a4 (within range?) */
 	bhi	ARR_GOUNLOCKANDSLOW
 	str  	ip, [a1]    /* and the new allocPtr is committed */
 
@@ -374,6 +374,24 @@ LABEL(SMALL_ARRAY_PLD)
 	pld  [ip, #128]	
  	pld  [ip, #160]	
 
+#if 0
+	/* TODO: The code above appears to have the wrong logic. I believe
+	 * the code below is correct, but I was not able to test it
+	 * on a platform with pld. Note that the two pld's before the
+	 * SMALL_ARRAY_PLD label should also be removed. This same change
+	 * should also be applied in CVMCCMruntimeANewArrayGlue. What
+         * would probably be better than the above logic would be to just
+         * do a good job of scheduling all 6 pld instructions in delay
+         * slots between other instructions.
+	 */
+	pld  [ip]	
+	pld  [ip, #32]
+	pld  [ip, #64]
+	pld  [ip, #96]	
+LABEL(SMALL_ARRAY_PLD)       
+	pld  [ip, #128]	
+	pld  [ip, #160]
+#endif
 #endif	/* IAI_PRELOAD_NEW_OBJECT */
 
 #ifdef CVM_FASTALLOC_STATS
