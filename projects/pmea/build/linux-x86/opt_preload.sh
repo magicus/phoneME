@@ -36,7 +36,4 @@ make \
   CVM_PRELOAD_LIB=true \
   CVM_JIT=false \
   CVM_SYMBOLS=true \
-  USE_JSR_135=false \
-  USE_JSR_172=true \
-  USE_JSR_177=true \
   $@

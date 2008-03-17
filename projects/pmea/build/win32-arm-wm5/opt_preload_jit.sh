@@ -34,7 +34,6 @@ make \
   USE_JPEG=true \
     JPEG_DIR=$COMPONENTS_DIR/jpeg \
   USE_MIDP=true \
-  ABSTRACTIONS_DIR=$COMPONENTS_DIR/abstractions \
   CVM_INCLUDE_JAVACALL=false \
   PCSL_TARGET=wince_arm  \
   J2ME_CLASSLIB=basis \

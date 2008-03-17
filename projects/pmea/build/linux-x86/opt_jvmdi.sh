@@ -36,7 +36,4 @@ make \
   CVM_JVMDI=true \
   CVM_SYMBOLS=true \
   CVM_JIT=false \
-  USE_JSR_135=false \
-  USE_JSR_172=true \
-  USE_JSR_177=true \
   $@

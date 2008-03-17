@@ -35,7 +35,4 @@ make \
   USE_JUMP=true \
   CVM_JIT=true \
   CVM_DEBUG=true \
-  USE_JSR_135=false \
-  USE_JSR_172=true \
-  USE_JSR_177=true \
  $@
