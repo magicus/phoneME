@@ -315,7 +315,7 @@ CVMMIPSCCALLgetRequired(CVMJITCompilationContext *con,
 
 /* Purpose: Performs initialization in preparation for pinning arguments to
             registers or to overflow to the native stack. Unlike ARM, there
-            is not need to emit a stack adjustment.
+            is no need to emit a stack adjustment.
 */
 #define CVMCPUCCALLinitArgs(con, callContext, irec, forTargetting,     \
                             useRegArgs) {                              \
