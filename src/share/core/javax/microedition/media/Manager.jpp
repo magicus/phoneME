@@ -592,31 +592,19 @@ public final class Manager {
         }
 
         String locStr = locator.toLowerCase();
-        BasicPlayer p;
-        boolean found = false;
 
         if (debug)
             System.out.println("[mmapi] createPlayer with " + locator);
 
         /* Verify if Protocol is supported */
         String theProtocol = null;
+        boolean found = false;
         int idx = locStr.indexOf(':');
 
         if (idx != -1) {
             theProtocol = locStr.substring(0, idx);
         } else {
             throw new MediaException("Malformed locator");
-        }
-        String supportedProtocols[] = getSupportedProtocols(null);
-        for (int i = 0; i < supportedProtocols.length && !found; i++) {
-            if (theProtocol.equals(supportedProtocols[i])) {
-                found = true;
-            }
-        }
-
-        if (!found) {
-            throw new MediaException("Player cannot be created for " + locator + 
-                                    " Unsupported protocol " + theProtocol);
         }
 
         if (locStr.startsWith(DefaultConfiguration.CAPTURE_LOCATOR))
@@ -640,6 +628,7 @@ public final class Manager {
                 }
 
             }
+            found = true;
             String encodings = null;
             if (locStr.equals(DefaultConfiguration.AUDIO_CAPTURE_LOCATOR)) {
                 String supported = System.getProperty("supports.audio.capture");
@@ -657,10 +646,21 @@ public final class Manager {
             if (encStr != null && encodings != null && encodings.indexOf(encStr) == -1) {
                 found = false;
             }
-        }
+            if (!found) {
+                throw new MediaException("Player cannot be created for " + locator);
+            }
+        } else {
+            String supportedProtocols[] = getSupportedProtocols(null);
+            for (int i = 0; i < supportedProtocols.length && !found; i++) {
+                if (theProtocol.equals(supportedProtocols[i])) {
+                    found = true;
+                }
+            }
 
-        if (!found) {
-            throw new MediaException("Player cannot be created for " + locator);
+            if (!found) {
+                throw new MediaException("Player cannot be created for " + locator + 
+                                        " Unsupported protocol " + theProtocol);
+            }
         }
 
         DataSource ds = createDataSource(locator);
