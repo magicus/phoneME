@@ -90,4 +90,46 @@ typedef struct _KNIPlayerInfo {
     void* pNativeHandle;    /* OEM can use this field to extend handle */
 } KNIPlayerInfo;
 
+javacall_result javacall_media_get_event_data(javacall_handle handle, int eventType, void *pResult, int numArgs, void *args[]);
+
+#ifdef ENABLE_CDC
+
+#define JAVACALL_ASYNC_EXEC(status_,code_,handle_,descr_,event_,args_) \
+    status_ = code_
+#else
+
+#define JAVACALL_ASYNC_GET_RESULT_returns_data(ret_args_)  \
+    do { \
+        void *args__[] = ret_args_; \
+        javacall_media_get_event_data((handle_), ctx__->pResult, sizeof args__ / sizeof args__[0], args__); \
+    } while (0) \
+
+#define JAVACALL_ASYNC_GET_RESULT_returns_no_data  (void)ctx__ /* empty */
+
+#define JAVACALL_ASYNC_EXEC(status_,code_,handle_,descr_,event_,args_) \
+do { \
+    MidpReentryData* ctx__ = (MidpReentryData *)SNI_GetReentryData(NULL); \
+    javacall_result result__ = JAVACALL_FAIL; \
+    if (ctx__ == NULL) { \
+        result__ = (code_); \
+    } else { \
+        ((status_) = ctx__->status); \
+        JAVACALL_ASYNC_GET_RESULT_##args_; \
+    } \
+    if (result__ == JAVACALL_WOULD_BLOCK) { \
+        if (ctx__ == NULL) { \
+            if ((ctx__ = (MidpReentryData *)(SNI_AllocateReentryData(sizeof (MidpReentryData)))) == NULL) { \
+                (status_) = JAVACALL_NO_MEMORY; \
+                break; \
+            } \
+        } \
+        ctx__->descriptor = (int)(descr_); \
+        ctx__->waitingFor = (int)(event_); \
+        SNI_BlockThread(); \
+    } \
+    (status_) = result__; \
+} while(0)
+
+#endif /* ENABLE_CDC */
+
 #endif

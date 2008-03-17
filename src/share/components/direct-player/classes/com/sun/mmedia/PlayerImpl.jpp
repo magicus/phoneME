@@ -95,6 +95,8 @@ public class PlayerImpl implements Player {
      * lock object
      */
     private static Object idLock = new Object();
+    
+    private boolean endOfStreamReached = false;
 
 
     // Init native library
@@ -298,6 +300,9 @@ public class PlayerImpl implements Player {
     static void doBuffering(int hNative, SourceStream stream) 
         throws MediaException {
 
+        if (endOfStreamReached) {
+            return;
+        }
         long contLength = stream.getContentLength();
         boolean need_more = true;
 
@@ -337,18 +342,26 @@ public class PlayerImpl implements Player {
                     }
                     if (ret == -1) {
                         need_more = false;
+                        endOfStreamReached = true;
                         break;
                     }
                 } while(num_read < packetSize);
                 if (num_read > 0) {
                     packetSize = nBuffering(hNative, buffer, num_read);
                     if (packetSize >=0) {
-                        need_more = nNeedMoreDataImmediatelly(hNative);
+                        need_more = !endOfStreamReached && nNeedMoreDataImmediatelly(hNative);
                     } else {
                         throw new MediaException("Buffering media data error");
                     }
                 }
             } while (need_more);
+            if (endOfStreamReached) {
+                /* end input stream */
+                packetSize = nBuffering(hNative, NULL, 0);
+                if (packetSize < 0) {
+                    throw new MediaException("Buffering media data error");
+                }
+            }
         }
     };
 
