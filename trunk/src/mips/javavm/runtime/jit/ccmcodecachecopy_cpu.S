@@ -44,6 +44,9 @@ CVMCCMcodeCacheCopyStart:
 #include "ccmallocators_cpu.S"
 #include "ccminvokers_cpu.S"
 #include "ccmmath_cpu.S"
+#ifdef USE_CDC_COM
+#include "ccmintrinsics_asm_cpu.S"
+#endif
 
 /*************************************************************************
  * This is the end of the code we copy into the start of the code cache.

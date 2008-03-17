@@ -344,6 +344,15 @@ export CDC_CPU_COMPONENT_DIR     ?= $(CDC_DIR)
 export CDC_OSCPU_COMPONENT_DIR   ?= $(CDC_DIR)
 export CDC_DEVICE_COMPONENT_DIR  ?= $(CDC_DIR)
 
+# Locate the cdc-com component
+ifeq ($(USE_CDC_COM),true)
+CDC_COM_DIR ?= $(COMPONENTS_DIR)/cdc-com
+ifeq ($(wildcard $(CDC_COM_DIR)/build/share/id_cdc-com.mk),)
+$(error CDC_COM_DIR must point to a directory containing the cdc-com sources: \
+        $(CDC_COM_DIR))
+endif
+endif
+
 # Include any existing platform defs first
 ifneq ($(J2ME_PLATFORM),)
 include $(CDC_DIR)/build/share/defs_$(J2ME_PLATFORM).mk
@@ -426,6 +435,9 @@ all:: printconfig checkconfig $(J2ME_CLASSLIB) tools
 include $(CDC_OS_COMPONENT_DIR)/build/$(TARGET_OS)/top.mk
 
 # Include all defs makefiles.
+ifeq ($(USE_CDC_COM),true)
+include $(CDC_COM_DIR)/build/share/defs.mk
+endif
 include  $(CDC_DIR)/build/share/defs.mk
 -include $(CDC_DIR)/build/share/defs_midp.mk
 -include $(CDC_DIR)/build/share/defs_jump.mk

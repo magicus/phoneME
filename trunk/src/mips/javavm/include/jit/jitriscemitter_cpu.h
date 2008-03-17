@@ -281,4 +281,79 @@ CVMMIPSemitMemoryReferencePCRelative(CVMJITCompilationContext* con, int opcode,
                                        regID, CVMMIPS_sp,		\
 				       offset + OFFSET_CStack_CCEE)
 
+
+/**************************************************************
+ * CPU C Call convention abstraction - The following are prototypes of calling
+ * convention support functions required by the RISC emitter porting layer.
+ **************************************************************/
+
+#if CVMCPU_MAX_ARG_REGS != 8
+
+/* Purpose: Gets the registers required by a C call.  These register could be
+            altered by the call being made. */
+extern CVMJITRegsRequiredType
+CVMMIPSCCALLgetRequired(CVMJITCompilationContext *con,
+                        CVMJITRegsRequiredType argsRequired,
+                        CVMJITIRNode *intrinsicNode,
+                        CVMJITIntrinsic *irec,
+                        CVMBool useRegArgs);
+
+/* Purpose: Dynamically instantiates an instance of the CVMCPUCallContext. */
+#define CVMCPUCCallnewContext(con)                                \
+    ((CVMCPUCallContext *)CVMJITmemNew(con, JIT_ALLOC_CGEN_OTHER,       \
+                                       sizeof(CVMCPUCallContext)))
+
+/* Purpose: Gets the registers required by a C call.  These register could be
+            altered by the call being made. */
+#define CVMCPUCCALLgetRequired(con, argsRequired, node, irec, useRegArgs) \
+    useRegArgs? /* IAI-22 */ \
+        CVMMIPSCCALLgetRequired(con, argsRequired, node, irec, useRegArgs): \
+        (CVMCPU_AVOID_C_CALL | argsRequired)
+
+#define CVMMIPSCCALLargSize(argType) \
+    (((argType == CVM_TYPEID_LONG) || (argType == CVM_TYPEID_DOUBLE)) ? 2 : 1)
+
+/* Purpose: Performs initialization in preparation for pinning arguments to
+            registers or to overflow to the native stack. Unlike ARM, there
+            is not need to emit a stack adjustment.
+*/
+#define CVMCPUCCALLinitArgs(con, callContext, irec, forTargetting,     \
+                            useRegArgs) {                              \
+    (callContext)->reservedRes = NULL;                                 \
+}
+
+/* Purpose: Gets the register targets for the specified argument. */
+#define CVMCPUCCALLgetArgTarget(con, callContext, argType, argNo, \
+                                argWordIndex, useRegArgs) \
+    ((argWordIndex + CVMMIPSCCALLargSize(argType) <= CVMCPU_MAX_ARG_REGS) ? \
+      (1U << (CVMCPU_ARG1_REG + argWordIndex)) :                           \
+      useRegArgs ? /* IAI-22 */                                            \
+        (1U << (CVMMIPS_t0 + argWordIndex - CVMCPU_MAX_ARG_REGS)) :       \
+        CVMRM_ANY_SET)
+
+/* Purpose: Relinquish a previously pinned arguments. */
+#define CVMCPUCCALLrelinquishArg(con, callContext, arg, argType, argNo, \
+                                 argWordIndex, useRegArgs)              \
+    if ((useRegArgs) /* IAI-22 */ ||                                    \
+        argWordIndex + CVMMIPSCCALLargSize(argType) <= CVMCPU_MAX_ARG_REGS) { \
+        CVMRMrelinquishResource(CVMRM_INT_REGS(con), arg);              \
+    } else if ((callContext)->reservedRes != NULL) {                    \
+        CVMRMrelinquishResource(CVMRM_INT_REGS(con),                    \
+                                (callContext)->reservedRes);            \
+        (callContext)->reservedRes = NULL;                              \
+    }
+
+/* Purpose: Releases any resources allocated in CVMCPUCCALLinitArgs().
+            Unlike ARM, there is nothing for us to do here since we did
+            not need to emit any stack adjustment, so this function
+            is a nop.
+*/
+#define CVMCPUCCALLdestroyArgs(con, callContext, irec, forTargetting,   \
+                               useRegArgs) {                            \
+    ((void)useRegArgs);                                                 \
+    ((void)callContext);                                                \
+}
+
+#endif /* CVMCPU_MAX_ARG_REGS != 8 */
+
 #endif /* _INCLUDED_JITRISCEMITTER_CPU_H */

@@ -46,6 +46,7 @@
 #include "portlibs/jit/risc/include/export/jitregman.h"
 #include "javavm/include/jit/jitconstantpool.h"
 #include "javavm/include/jit/jitcodebuffer.h"
+#include "javavm/include/jit/jitintrinsic.h"
 #include "javavm/include/jit/jitpcmap.h"
 #include "javavm/include/jit/jitfixup.h"
 #include "javavm/include/porting/endianness.h"
@@ -4188,3 +4189,127 @@ CVMCPUemitMoveFrom64BitRegister(CVMJITCompilationContext* con,
                                      LOREG(destRegID), CVMMIPS_t7, 0);
 }
 #endif /* CVMCPU_HAS_64BIT_REGISTERS */
+
+/**************************************************************
+ * CPU C Call convention abstraction - The following are prototypes of calling
+ * convention support functions required by the RISC emitter porting layer.
+ **************************************************************/
+
+#if CVMCPU_MAX_ARG_REGS != 8
+
+/* Purpose: Gets the registers required by a C call.  These register could be
+            altered by the call being made. */
+extern CVMJITRegsRequiredType
+CVMMIPSCCALLgetRequired(CVMJITCompilationContext *con,
+                        CVMJITRegsRequiredType argsRequired,
+                        CVMJITIRNode *intrinsicNode,
+                        CVMJITIntrinsic *irec,
+                        CVMBool useRegArgs)
+{
+    CVMJITRegsRequiredType result = CVMCPU_AVOID_C_CALL | argsRequired;
+
+    int numberOfArgs = irec->numberOfArgs;
+
+    CVMassert(useRegArgs);
+    if (numberOfArgs != 0) {
+        int i;
+        CVMJITIRNode *iargNode = CVMJITirnodeGetLeftSubtree(intrinsicNode);
+        for (i = 0; i < numberOfArgs; i++) {
+            int regno;
+	    int	argType = CVMJITgetTypeTag(iargNode);
+	    int argWordIndex = CVMJIT_IARG_WORD_INDEX(iargNode);
+	    int argSize = CVMMIPSCCALLargSize(argType);
+
+	    if (argWordIndex + argSize <= CVMCPU_MAX_ARG_REGS) {
+	        regno = CVMCPU_ARG1_REG + argWordIndex;
+	    } else {
+	        /* IAI-22 */
+	        regno = (CVMMIPS_t0 + argWordIndex - CVMCPU_MAX_ARG_REGS);
+		/* Make sure that we are not allocating more than 8 words
+                   of args. Although we could choose to support more
+                   are registers if we wanted, it is not needed. */
+		CVMassert(regno + argSize - 1 < CVMMIPS_t4);
+	    }
+	    result |= (1U << regno);
+	    iargNode = CVMJITirnodeGetRightSubtree(iargNode);
+	}
+	CVMassert(iargNode->tag == CVMJIT_ENCODE_NULL_IARG);
+    }
+    return result;
+}
+
+/* Purpose: Pins an arguments to the appropriate register or store it into the
+            appropriate stack location. */
+CVMRMResource *
+CVMCPUCCALLpinArg(CVMJITCompilationContext *con,
+                  CVMCPUCallContext *callContext, CVMRMResource *arg,
+                  int argType, int argNo, int argWordIndex,
+                  CVMRMregset *outgoingRegs, CVMBool useRegArgs)
+{
+    int argSize = CVMMIPSCCALLargSize(argType);
+
+    if (useRegArgs || argWordIndex + argSize <= CVMCPU_MAX_ARG_REGS) {
+        int regno;
+        if (argWordIndex + argSize <= CVMCPU_MAX_ARG_REGS) {
+            regno = CVMCPU_ARG1_REG + argWordIndex;
+	} else {
+	    /* IAI-22 */
+	    CVMassert(useRegArgs == CVM_TRUE);
+	    regno = (CVMMIPS_t0 + argWordIndex - CVMCPU_MAX_ARG_REGS);
+            /* Make sure that we are not allocating more than 8 words
+               of args. Although we could choose to support more
+               registers if we wanted, it is not needed. */
+	    CVMassert(regno + argSize - 1 < CVMMIPS_t4);
+	}
+        arg = CVMRMpinResourceSpecific(CVMRM_INT_REGS(con), arg, regno);
+        CVMassert(regno - CVMCPU_ARG1_REG + arg->size <= CVMCPU_MAX_ARG_REGS
+                  || useRegArgs);
+        *outgoingRegs |= arg->rmask;
+    } else {
+        /* Save arguments to the C stack */
+        int stackIndex = argWordIndex * 4;
+        /* no more than 8 words of args allowed */
+        CVMassert(argWordIndex < 8);
+        CVMRMpinResource(CVMRM_INT_REGS(con), arg,
+			 CVMRM_ANY_SET, CVMRM_EMPTY_SET);
+        if (argSize == 1) {
+            CVMCPUemitMemoryReferenceImmediate(con, CVMCPU_STR32_OPCODE,
+                CVMRMgetRegisterNumber(arg), CVMCPU_SP_REG, stackIndex);
+        } else {
+	    /* Assert argument is 64-bit aligned. If this ever fails then
+	     * we need to actually do the alignment. */
+	    CVMassert(argWordIndex % 2 == 0);
+            if (argWordIndex < CVMCPU_MAX_ARG_REGS) {
+                /* Reserve the last arg because we're using it for the low
+                   word of this argument.  Since we can't pin the arg which
+                   is 64 bit to it, we have to create an artificial resource
+                   just to keep that register protected until we're done with
+                   it.  Tracking the reservedRes in the callContext will
+                   allow us to relinquish it later when we're done with it. */
+                callContext->reservedRes =
+                    CVMRMgetResourceSpecific(CVMRM_INT_REGS(con),
+					     CVMCPU_ARG4_REG, 1);
+                
+                /* We have a 64 bit arg and only one arg register left.
+                   Hence, we put the high word on the stack: */
+                CVMCPUemitMemoryReferenceImmediate(con, CVMCPU_STR32_OPCODE,
+                    CVMRMgetRegisterNumber(arg)+1, CVMCPU_SP_REG, 0);
+                
+                /* And the low word in the last arg register: */
+                CVMCPUemitMoveRegister(con, CVMCPU_MOV_OPCODE,
+                    CVMCPU_ARG4_REG, CVMRMgetRegisterNumber(arg),
+                    CVMJIT_NOSETCC);
+                
+                *outgoingRegs |= callContext->reservedRes->rmask;
+            } else {
+                CVMCPUemitMemoryReferenceImmediate(con, CVMCPU_STR64_OPCODE,
+                    CVMRMgetRegisterNumber(arg), CVMCPU_SP_REG, stackIndex);
+            }
+        }
+        CVMRMrelinquishResource(CVMRM_INT_REGS(con), arg);
+    }
+    
+    return arg;
+}
+
+#endif /* CVMCPU_MAX_ARG_REGS != 8 */

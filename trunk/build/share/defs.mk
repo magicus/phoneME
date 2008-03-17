@@ -388,16 +388,6 @@ CVM_LIBDIR_ABS    := $(CVM_BUILD_TOP_ABS)/lib
 
 PROFILE_DIR       ?= $(CDC_DIR)
 
-
-# Locate the cdc-com component
-ifeq ($(USE_CDC_COM),true)
-CDC_COM_DIR ?= $(COMPONENTS_DIR)/cdc-com
-ifeq ($(wildcard $(CDC_COM_DIR)/build/share/id_cdc-com.mk),)
-$(error CDC_COM_DIR must point to a directory containing the cdc-com sources: \
-        $(CDC_COM_DIR))
-endif
-endif
-
 # Optional Package names
 ifneq ($(strip $(OPT_PKGS)),)
   ifeq ($(OPT_PKGS), all)
@@ -824,6 +814,7 @@ CVM_FLAGS += \
 	USE_MIDP \
 	USE_JUMP \
 	USE_GCI \
+	USE_CDC_COM \
 	CVM_DUAL_STACK \
 	CVM_SPLIT_VERIFY \
 	CVM_KNI \
