@@ -103,7 +103,7 @@ class AppProxy {
     private static AppProxy currentApp;
 
     /** The log flag to enable informational messages. */
-    static final Logger LOGGER = null; // new Logger();;
+    static final Logger LOGGER = null; // new Logger();
 
     /** The known AppProxy instances. Key is classname. */
     protected Hashtable appmap;
@@ -119,6 +119,8 @@ class AppProxy {
 
     /** The classname of the application. */
     protected String classname;
+    
+    protected String version, authority;
 
     /** The application name. */
     private String applicationName;
@@ -162,7 +164,7 @@ class AppProxy {
                 MIDletSuite msuite = mh.getMIDletSuite();
                 try {
                     currentApp = (msuite != null) ?
-                        new AppProxy(msuite,
+                        new AppProxy(msuite, msuite.getID(),
                                      mh.getFirstRunningMidlet(),
                                      null) :
                         new AppProxy(MIDletSuite.INTERNAL_SUITE_ID, "");
@@ -174,6 +176,16 @@ class AppProxy {
         return currentApp;
     }
 
+	class VAGetter extends MIDletSuiteUser {
+		String ver, auth;
+		void use(MIDletSuite msuite) {  
+	        try {
+	        	auth =((MIDletSuiteImpl)msuite).getInstallInfo().getCA();
+	        } catch (RuntimeException e) {}
+	        ver = msuite.getProperty(VERSION_PROP);
+		}
+	};
+	
     /**
      * Construct an AppProxy with the specified MIDletSuite.
      *
@@ -185,7 +197,7 @@ class AppProxy {
      * @exception IllegalArgumentException if classname is not
      *   a valid application
      */
-    protected AppProxy(MIDletSuite msuite, String classname, Hashtable appmap)
+    protected AppProxy(MIDletSuite msuite, int storageId, String classname, Hashtable appmap)
         throws ClassNotFoundException
     {
         if (appmap == null) {
@@ -194,17 +206,23 @@ class AppProxy {
         }
 
         this.msuite = msuite;
-        this.storageId = msuite.getID();
+        this.storageId = storageId;
         this.classname = classname;
+        VAGetter t = (VAGetter)new VAGetter().execute();
+    	version = t.ver;
+    	authority = t.auth;
         this.appmap = appmap;
+        if (LOGGER != null)
+        	LOGGER.println("AppProxy() classname '" + classname + "'");
         if (classname != null) {
             verifyApplication(classname);
-            initAppInfo();
+        	new MIDletSuiteUser(){
+				void use(MIDletSuite msuite) { initAppInfo( msuite ); }
+        	}.execute();
             appmap.put(classname, this);
-            if (LOGGER != null) {
-            	LOGGER.println("AppProxy created: " + classname);
-            }
         }
+        if (LOGGER != null)
+        	LOGGER.println("AppProxy created: " + this);
     }
 
     /**
@@ -218,27 +236,17 @@ class AppProxy {
     {
         this.storageId = storageId;
         this.classname = classname;
-        MIDletSuite midletSuite = null;
+        msuite = null;
 
-        /* trying to initialize fields from suite info */
-        try {
-            midletSuite = MIDletSuiteStorage.
-                    getMIDletSuiteStorage(classSecurityToken).
-                    getMIDletSuite(storageId, false);
-        } catch (MIDletSuiteLockedException msle) {
-            if (LOGGER != null) {
-            	LOGGER.log("AppProxy creation fails", msle);
-            }
-        } catch (MIDletSuiteCorruptedException msce) {
-            if (LOGGER != null) {
-            	LOGGER.log("AppProxy creation fails", msce);
-            }
-        }
-        msuite = midletSuite;
-
-        if (msuite != null) {
-            initAppInfo();
-        }
+    	class user extends VAGetter {
+			void use(MIDletSuite msuite) {
+				super.use( msuite );
+				initAppInfo( msuite ); 
+			}
+    	};
+    	VAGetter t = (VAGetter)new user().execute();
+    	version = t.ver;
+    	authority = t.auth;
 
         if (LOGGER != null) {
         	LOGGER.println("AppProxy created: " + classname);
@@ -264,7 +272,7 @@ class AppProxy {
             if (curr == null) {
                 // Create a new instance
                 // throws ClassNotFoundException and IllegalArgumentException
-                curr = new AppProxy(msuite, classname, appmap);
+                curr = new AppProxy(msuite, storageId, classname, appmap);
             }
         }
         return curr;
@@ -333,7 +341,7 @@ class AppProxy {
      * @return the version
      */
     String getVersion() {
-        return msuite == null? null: msuite.getProperty(VERSION_PROP);
+        return version;
     }
 
     /**
@@ -345,12 +353,7 @@ class AppProxy {
      * @return the authority.
      */
     String getAuthority() {
-        String auth = null;
-        try {
-            auth = ((MIDletSuiteImpl)msuite).getInstallInfo().getCA();
-        } catch (RuntimeException e) {
-        }
-        return auth;
+    	return authority;
     }
 
     /**
@@ -368,8 +371,14 @@ class AppProxy {
      * @param key the name of the property to retrieve
      * @return the value of the property or <code>null</code>
      */
-    String getProperty(String key) {
-        return msuite.getProperty(key);
+    String getProperty(final String key) {
+    	class user extends MIDletSuiteUser {
+    		String value;
+			void use(MIDletSuite msuite) {
+				value = msuite.getProperty(key);
+			}
+    	};
+        return ((user)new user().execute()).value;
     }
 
     /**
@@ -377,13 +386,17 @@ class AppProxy {
      * @param reason the reason for the permission check
      * @exception SecurityException if not allowed
      */
-    final void checkRegisterPermission(String reason) {
-        try {
-            msuite.checkForPermission(Permissions.CHAPI_REGISTER,
-                                      getApplicationName(), reason);
-        } catch (InterruptedException ie) {
-            throw new SecurityException("interrupted");
-        }
+    final void checkRegisterPermission(final String reason) {
+    	new MIDletSuiteUser(){
+			void use(MIDletSuite msuite) {
+		        try {
+		            msuite.checkForPermission(Permissions.CHAPI_REGISTER,
+	                          getApplicationName(), reason);
+		        } catch (InterruptedException ie) {
+		            throw new SecurityException("interrupted");
+		        }
+        	}
+    	}.execute();
     }
 
     /**
@@ -510,7 +523,7 @@ class AppProxy {
      * Initialize application name and application ID
      * from the attributes.
      */
-    protected void initAppInfo() {
+    protected void initAppInfo( MIDletSuite msuite ) {
         // Check if it is an internal MIDlet
         if (storageId == MIDletSuite.INTERNAL_SUITE_ID) {
             applicationName = classname.substring(classname.lastIndexOf('.') + 1);
@@ -536,7 +549,7 @@ class AppProxy {
         }
 
         if (applicationID == null || applicationID.length() == 0) {
-            applicationID = getDefaultID();
+            applicationID = getDefaultID(msuite);
         }
     }
 
@@ -551,11 +564,19 @@ class AppProxy {
      * @return the ID; MUST NOT be <code>null</code>
      */
     String getDefaultID() {
+    	class user extends MIDletSuiteUser {
+    		String defID;
+			void use(MIDletSuite msuite) { defID = getDefaultID(msuite); }
+    	};
+    	return ((user)new user().execute()).defID;
+    }
+
+    private String getDefaultID( MIDletSuite suite ) {
         StringBuffer sb = new StringBuffer(80);
-        String s = msuite.getProperty(VENDOR_PROP);
+        String s = suite.getProperty(VENDOR_PROP);
         sb.append((s != null) ? s : "internal");
         sb.append('-');
-        s = msuite.getProperty(MIDletSuiteImpl.SUITE_NAME_PROP);
+        s = suite.getProperty(MIDletSuiteImpl.SUITE_NAME_PROP);
         sb.append((s != null) ? s : "system");
         sb.append('-');
         sb.append(classname);
@@ -612,6 +633,40 @@ class AppProxy {
         } else {
             return super.toString();
         }
+    }
+    
+    
+    protected abstract class MIDletSuiteUser {
+    	abstract void use( MIDletSuite msuite );
+    	MIDletSuiteUser execute() {
+    		if( msuite != null ){
+                if (LOGGER != null) LOGGER.println("msuite isn't null: " + msuite);
+    			use( msuite );
+    		} else {
+	            try {
+	                MIDletSuite suite = MIDletSuiteStorage.
+	                        getMIDletSuiteStorage(classSecurityToken).
+	                        getMIDletSuite(storageId, false);
+	                if (LOGGER != null) LOGGER.println("use msuite " + suite);
+	                if( suite != null ){
+	                	try {
+	                		use(suite);
+	                	} finally {
+	                		suite.close();
+	                	}
+	                }
+	            } catch (MIDletSuiteLockedException msle) {
+	                if (LOGGER != null) {
+	                	LOGGER.log("AppProxy creation fails", msle);
+	                }
+	            } catch (MIDletSuiteCorruptedException msce) {
+	                if (LOGGER != null) {
+	                	LOGGER.log("AppProxy creation failed", msce);
+	                }
+	            }
+    		}
+			return this;
+    	}
     }
 }
 

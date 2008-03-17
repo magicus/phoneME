@@ -26,6 +26,9 @@
 
 package com.sun.j2me.content;
 
+import java.util.Hashtable;
+
+import com.sun.j2me.content.AppProxy.MIDletSuiteUser;
 import com.sun.midp.installer.InstallState;
 import com.sun.midp.installer.Installer;
 import com.sun.midp.installer.InvalidJadException;
@@ -38,13 +41,10 @@ import com.sun.midp.midlet.MIDletSuite;
  */
 class AppBundleProxy extends AppProxy {
     /** The installer with access to the archive. */
-    private Installer installer;
+    private final Installer installer;
 
     /** The InstallState. */
-    private InstallState state;
-
-    /** The authority for this bundle. */
-    private final String authority;
+    private final InstallState state;
 
     /**
      * Construct an AppBundleProxy to draft from a
@@ -60,12 +60,32 @@ class AppBundleProxy extends AppProxy {
      *  a valid application
      */
     AppBundleProxy(Installer installer, InstallState state, MIDletSuite msuite,
-                          String authority) throws ClassNotFoundException
+            			String authority) throws ClassNotFoundException
     {
-        super(msuite, null, null);
+    	this(installer, state, msuite, null, authority, null);
+    }
+
+    private AppBundleProxy(Installer installer, InstallState state, MIDletSuite msuite,
+                          String classname, String authority, Hashtable appmap) throws ClassNotFoundException
+    {
+        super(msuite, msuite.getID(), /*!!!*/ null, appmap);
         this.installer = installer;
         this.state = state;
         this.authority = authority;
+        
+        this.classname = classname;
+        // code for classname checking
+        if (classname != null) {
+            verifyApplication(classname);
+        	new MIDletSuiteUser(){
+				void use(MIDletSuite msuite) { initAppInfo( msuite ); }
+        	}.execute();
+            this.appmap.put(classname, this);
+        }
+        
+        if (LOGGER != null)
+            LOGGER.println("AppBundleProxy created: installer = " + this.installer + 
+            		", state = " + this.state + "\n\tauthority = '" + this.authority + "'");
     }
 
     /**
@@ -87,16 +107,14 @@ class AppBundleProxy extends AppProxy {
             if (curr == null) {
 		        // Create a new instance and check if it is a valid app
 		        curr = new AppBundleProxy(installer, state,
-		                         msuite, authority);
-		        curr.classname = classname;
-		        curr.appmap = appmap;
-		        // Throws ClassNotFoundException or IllegalArgumentException
-		        curr.verifyApplication(classname);
-		        curr.initAppInfo();
-		        appmap.put(classname, curr);
-		        if (LOGGER != null) {
-		            LOGGER.println("AppProxy created: " + curr);
-		        }
+		                         msuite, classname, authority, appmap);
+// moved into constructor		        
+//		        // Throws ClassNotFoundException or IllegalArgumentException
+//		        curr.verifyApplication(classname);
+//		        curr.initAppInfo( msuite );
+//		        appmap.put(classname, curr);
+		        if (LOGGER != null)
+		            LOGGER.println("AppBundleProxy for class '" + classname + "' created: " + curr);
 	        }
 	    }
 	    return curr;
@@ -114,6 +132,9 @@ class AppBundleProxy extends AppProxy {
     protected void verifyApplication(String classname)
     							throws ClassNotFoundException
     {
+    	if(AppProxy.LOGGER != null) 
+    		AppProxy.LOGGER.println("AppBundleProxy.verifyApplication: installer = " + 
+    				installer );
 	    try {
 	        installer.verifyMIDlet(classname);
 	    } catch (InvalidJadException ije) {
@@ -131,6 +152,6 @@ class AppBundleProxy extends AppProxy {
      * @return the authority.
      */
     String getAuthority() {
-    return authority;
+    	return authority;
     }
 }
