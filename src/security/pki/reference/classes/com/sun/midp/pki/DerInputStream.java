@@ -511,7 +511,7 @@ public class DerInputStream {
         return getLength(in.read(), in);
     }
 
-    /*
+    /**
      * Get a length from the input stream, allowing for at most 32 bits of
      * encoding to be used.  (Not the same as getting a tagged integer!)
      *
@@ -531,12 +531,14 @@ public class DerInputStream {
              * NOTE:  tmp == 0 indicates indefinite length encoded data.
              * tmp > 4 indicates more than 4Gb of data.
              */
-            if (tmp == 0)
+            if (tmp == 0) {
                 return -1;
-            if (tmp < 0 || tmp > 4)
+            }
+            if (tmp < 0 || tmp > 4) {
                 throw new IOException("DerInputStream.getLength(): lengthTag="
                     + tmp + ", "
                     + ((tmp < 0) ? "incorrect DER encoding." : "too big."));
+            }
 
             for (value = 0; tmp > 0; tmp --) {
                 value <<= 8;

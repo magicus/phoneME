@@ -26,6 +26,10 @@
 
 package com.sun.midp.crypto;
 
+import com.sun.midp.pki.*;
+
+import java.io.IOException;
+
 /**
  * Implements RSAKey with methods to set and get RSA exponent
  * and modulus.
@@ -62,7 +66,7 @@ class RSAKey implements Key {
      * @return true if the kesy are the same.
      */
     public boolean equals(RSAPrivateKey k) {
-	return equals((RSAKey) k);
+	    return equals((RSAKey) k);
     }
     
     /**
@@ -71,7 +75,7 @@ class RSAKey implements Key {
      * @return true if the keys are the same.
      */
     public boolean equals(RSAPublicKey k) {
-	return equals((RSAKey) k);
+	    return equals((RSAKey) k);
     }
     
     /**
@@ -80,22 +84,22 @@ class RSAKey implements Key {
      * @return true if the keys are the same.
      */
     public boolean equals(RSAKey k) {
-	byte[] kexp = new byte[exp.length];
-	byte[] kmod = new byte[mod.length];
+        byte[] kexp = new byte[exp.length];
+        byte[] kmod = new byte[mod.length];
 
-	if (this.getClass() != k.getClass())
-	    return false;
-	if (k.getExponent(kexp, (short) 0) != exp.length)
-	    return false;
-	if (k.getModulus(kmod, (short) 0) != mod.length)
-	    return false;
-	for (int i = 0; i < exp.length; i++)
-	    if (kexp[i] != exp[i])
-		return false;
-	for (int i = 0; i < mod.length; i++)
-	    if (kmod[i] != mod[i])
-		return false;
-	return true;
+        if (this.getClass() != k.getClass())
+            return false;
+        if (k.getExponent(kexp, (short) 0) != exp.length)
+            return false;
+        if (k.getModulus(kmod, (short) 0) != mod.length)
+            return false;
+        for (int i = 0; i < exp.length; i++)
+            if (kexp[i] != exp[i])
+            return false;
+        for (int i = 0; i < mod.length; i++)
+            if (kmod[i] != mod[i])
+            return false;
+        return true;
     }
     
     /**
@@ -103,7 +107,7 @@ class RSAKey implements Key {
      * @return the type of the key
      */    
     public String getAlgorithm() {
-	return "RSA";
+	    return "RSA";
     }
 
     /** 
@@ -120,8 +124,84 @@ class RSAKey implements Key {
      *
      * @return null because there is no encoding
      */
-    public byte[] getEncoded() { 
+    public byte[] getEncoded() {
+        try {
+            byte[] tmp = getEncodedInternal();
+            byte[] encodedKey = new byte[tmp.length];
+            System.arraycopy(tmp, 0, encodedKey, 0, tmp.length);
+            return encodedKey;
+        } catch (InvalidKeyException e) {
+            // ignore
+        }
         return null;
+    }
+
+    /////////////////////////////////
+    /* The encoding for the key. */
+    protected byte[] encodedKey = null;
+
+
+    private byte[] getEncodedInternal() throws InvalidKeyException {
+        byte[] encoded = encodedKey;
+        if (encoded == null) {
+            try {
+                DerOutputStream out = new DerOutputStream();
+                encode(out);
+                encoded = out.toByteArray();
+            } catch (IOException e) {
+                throw new InvalidKeyException("IOException : " +
+                                               e.getMessage());
+            }
+            encodedKey = encoded;
+        }
+        return encoded;
+    }
+    /**
+     * Encode SubjectPublicKeyInfo sequence on the DER output stream.
+     *
+     * @exception IOException on encoding errors.
+     */
+    public final void encode(DerOutputStream out) throws IOException {
+        try {
+            encode(out, AlgorithmId.get("RSA"), getKey());
+        } catch (NoSuchAlgorithmException nsae) {
+            throw new IOException(nsae.getMessage());
+        }
+    }
+
+    /**
+     * Gets the key. The key may or may not be byte aligned.
+     * @return a BitArray containing the key.
+     */
+    protected BitArray getKey() throws IOException {
+        DerOutputStream out = new DerOutputStream();
+        out.putInteger(new BigInteger(mod));
+        out.putInteger(new BigInteger(exp));
+        DerValue val =
+            new DerValue(DerValue.tag_Sequence, out.toByteArray());
+        byte[] key = val.toByteArray();
+
+        int remaining = key.length % 8;
+        int unusedBits = ((remaining == 0) ? 0 : 8 - remaining);
+
+        BitArray bitStringKey = new BitArray(
+                          key.length * 8 - unusedBits,
+                          key);
+
+        return (BitArray)bitStringKey.clone();
+    }
+
+    ////////////////////////////////
+
+    /*
+     * Produce SubjectPublicKey encoding from algorithm id and key material.
+     */
+    static void encode(DerOutputStream out, AlgorithmId algid, BitArray key)
+        throws IOException {
+            DerOutputStream tmp = new DerOutputStream();
+            algid.encode(tmp);
+            tmp.putUnalignedBitString(key);
+            out.write(DerValue.tag_Sequence, tmp);
     }
 
     // The next four are for RSA public/private keys
@@ -132,11 +212,12 @@ class RSAKey implements Key {
      * @return length of the data copied
      */
     public short getExponent(byte[] buf, short off) {
-	if (off + exp.length > buf.length)
-	    return 0;
+        if (off + exp.length > buf.length) {
+            return 0;
+        }
 
-	System.arraycopy(exp, 0, buf, off, exp.length);
-	return ((short) exp.length);
+        System.arraycopy(exp, 0, buf, off, exp.length);
+        return ((short) exp.length);
     }
     
     /**
@@ -156,10 +237,11 @@ class RSAKey implements Key {
      * @see #setModulus
      */
     public short getModulus(byte[] buf, short off) {
-	if (off + mod.length > buf.length)
-	    return ((short) 0);
-	System.arraycopy(mod, 0, buf, off, mod.length);
-	return ((short) mod.length);
+        if (off + mod.length > buf.length) {
+            return ((short) 0);
+        }
+        System.arraycopy(mod, 0, buf, off, mod.length);
+        return ((short) mod.length);
     }    
 
     /**
@@ -171,8 +253,8 @@ class RSAKey implements Key {
      * @exception IllegalArgumentException if exponent is too large
      */
     private void setExponent(byte[] buf, int off, int len) {
-	exp = new byte[len];
-	System.arraycopy(buf, off, exp, 0, len);
+        exp = new byte[len];
+        System.arraycopy(buf, off, exp, 0, len);
     }
 
 
@@ -187,8 +269,8 @@ class RSAKey implements Key {
         // move modulus len out to a multiple of 64 bits (8 bytes)
         len = (len + 7) / 8 * 8;
 
-	mod = new byte[len];
-	System.arraycopy(buf, off, mod, 0, len);
+        mod = new byte[len];
+        System.arraycopy(buf, off, mod, 0, len);
     }
 
     /**
@@ -196,8 +278,8 @@ class RSAKey implements Key {
      * @return string representation of key
      */
     public String toString() {
-	return ("[" + (getModulusLen() * 8) + "-bit RSA key" +
-		", Exponent: 0x" + Util.hexEncode(exp) + 
-		", Modulus: 0x" + Util.hexEncode(mod) + "]");
+        return ("[" + (getModulusLen() * 8) + "-bit RSA key" +
+            ", Exponent: 0x" + Util.hexEncode(exp) + 
+            ", Modulus: 0x" + Util.hexEncode(mod) + "]");
     }
 }

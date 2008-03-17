@@ -29,6 +29,7 @@ package com.sun.midp.pki;
 import java.io.ByteArrayOutputStream;
 import java.io.OutputStream;
 import java.io.IOException;
+
 import java.util.Date;
 import java.util.TimeZone;
 import java.util.Calendar;
@@ -235,6 +236,31 @@ public class DerOutputStream extends ByteArrayOutputStream {
         putLength(bits.length + 1);
         write(0);               // all of last octet is used
         write(bits);
+    }
+
+    /**
+     * Marshals a DER bit string on the output stream.
+     * The bit strings need not be byte-aligned.
+     *
+     * @param ba the bit string, MSB first
+     */
+    public void putUnalignedBitString(BitArray ba) throws IOException {
+        byte[] bits = ba.toByteArray();
+
+        write(DerValue.tag_BitString);
+        putLength(bits.length + 1);
+        write(bits.length*8 - ba.length()); // excess bits in last octet
+        write(bits);
+    }
+
+    /**
+     * Marshals a truncated DER bit string on the output stream.
+     * The bit strings need not be byte-aligned.
+     *
+     * @param bits the bit string, MSB first
+     */
+    public void putTruncatedUnalignedBitString(BitArray ba) throws IOException {
+        putUnalignedBitString(ba.truncate());
     }
 
     /**

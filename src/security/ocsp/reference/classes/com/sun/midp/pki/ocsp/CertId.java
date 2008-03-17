@@ -70,15 +70,14 @@ public class CertId {
      * Creates a CertId. The hash algorithm used is SHA-1.
      */
     public CertId(X509Certificate issuerCert, SerialNumber serialNumber)
-        throws Exception {
-
+            throws Exception {
         // compute issuerNameHash
-        MessageDigest md = MessageDigest.getInstance("SHA1");
-        hashAlgId = AlgorithmId.get("SHA1");
+        MessageDigest md = MessageDigest.getInstance("SHA-1");
+        hashAlgId = AlgorithmId.get("SHA-1");
 
         //md.update(issuerCert.getSubjectX500Principal().getEncoded());
         byte[] data = issuerCert.getSubject().getBytes();
-        md.update(data, 0, issuerNameHash.length);
+        md.update(data, 0, data.length);
 
         issuerNameHash = new byte[md.getDigestLength()];
         md.digest(issuerNameHash, 0, issuerNameHash.length);
@@ -89,11 +88,13 @@ public class CertId {
         DerValue[] seq = new DerValue[2];
         seq[0] = val.data.getDerValue(); // AlgorithmID
         seq[1] = val.data.getDerValue(); // Key
+
         byte[] keyBytes = seq[1].getBitString();
         md.update(keyBytes, 0, keyBytes.length);
 
         issuerKeyHash = new byte[md.getDigestLength()];
         md.digest(issuerKeyHash, 0, issuerKeyHash.length);
+    
         certSerialNumber = serialNumber;
 
         if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
@@ -244,15 +245,17 @@ public class CertId {
      */
     public String toString() {
         StringBuffer sb = new StringBuffer();
-        sb.append("CertId \n");
+        sb.append("-- CertId ---\n");
         sb.append("Algorithm: ");
         sb.append(hashAlgId.toString());
         sb.append("\n");
-        sb.append("issuerNameHash \n");
 
+        sb.append("issuerNameHash: \n");
         sb.append(Utils.hexEncode(issuerNameHash));
+
         sb.append("\nissuerKeyHash: \n");
         sb.append(Utils.hexEncode(issuerKeyHash));
+
         sb.append("\n");
         sb.append(certSerialNumber.toString());
         

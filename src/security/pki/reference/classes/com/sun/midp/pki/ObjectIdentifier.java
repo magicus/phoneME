@@ -50,10 +50,7 @@ import java.io.IOException;
  * @author Amit Kapoor
  * @author Hemma Prafullchandra
  */
-final public class ObjectIdentifier
-{
-    /** use serialVersionUID from JDK 1.1. for interoperability */
-    private static final long serialVersionUID = 8697030238860181294L;
+final public class ObjectIdentifier {
     private static final int maxFirstComponent = 2;
     private static final int maxSecondComponent = 39;
 
@@ -158,8 +155,7 @@ final public class ObjectIdentifier
      * @exception IOException indicates a decoding error
      */
     public ObjectIdentifier (DerInputStream in)
-        throws IOException
-    {
+        throws IOException {
         byte    type_id;
         int     bufferEnd;
 
@@ -191,8 +187,7 @@ final public class ObjectIdentifier
      * Build the OID from the rest of a DER input buffer; the tag
      * and length have been removed/verified
      */
-    ObjectIdentifier (DerInputBuffer buf) throws IOException
-    {
+    ObjectIdentifier (DerInputBuffer buf) throws IOException {
         initFromEncoding (new DerInputStream (buf), 0);
     }
 

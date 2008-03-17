@@ -216,7 +216,8 @@ public class DerValue {
             }
         }
 
-        data = init(isPrintableString ? tag_PrintableString : tag_UTF8String, value);
+        data = init(isPrintableString ?
+                        tag_PrintableString : tag_UTF8String, value);
     }
 
     /**
@@ -250,12 +251,13 @@ public class DerValue {
      * package private
      */
     DerValue(DerInputBuffer in) throws IOException {
-        // XXX must also parse BER-encoded constructed
+        // IMPL_NOTE: must also parse BER-encoded constructed
         // values such as sequences, sets...
 
         tag = (byte)in.read();
         byte lenByte = (byte)in.read();
         length = DerInputStream.getLength((lenByte & 0xff), in);
+
         if (length == -1) {  // indefinite length encoding found
             DerInputBuffer inbuf = in.dup();
             int readLen = inbuf.available();
@@ -268,9 +270,10 @@ public class DerValue {
             dis.close();
             DerIndefLenConverter derIn = new DerIndefLenConverter();
             inbuf = new DerInputBuffer(derIn.convert(indefData));
-            if (tag != inbuf.read())
+            if (tag != inbuf.read()) {
                 throw new IOException
                         ("Indefinite length encoding not supported");
+            }
             length = DerInputStream.getLength(inbuf);
             buffer = inbuf.dup();
             buffer.truncate(length);
@@ -280,7 +283,6 @@ public class DerValue {
             // the object is ended by sending two zero bytes.
             in.skip(length + offset);
         } else {
-
             buffer = in.dup();
             buffer.truncate(length);
             data = new DerInputStream(buffer);
@@ -381,16 +383,21 @@ public class DerValue {
             dis.close();
             DerIndefLenConverter derIn = new DerIndefLenConverter();
             in = new ByteArrayInputStream(derIn.convert(indefData));
-            if (tag != in.read())
+            if (tag != in.read()) {
                 throw new IOException
                         ("Indefinite length encoding not supported");
+            }
             length = DerInputStream.getLength(in);
         }
-        if (length == 0)
+        if (length == 0) {
             return null;
+        }
 
-        if (fullyBuffered && in.available() != length)
+        /*
+        if (fullyBuffered && in.available() != length) {
             throw new IOException("extra data given to DerValue constructor");
+        }
+        */
 
         byte[] bytes = new byte[length];
 
@@ -456,14 +463,16 @@ public class DerValue {
      * @return the OID held in this DER value
      */
     public ObjectIdentifier getOID() throws IOException {
-        if (tag != tag_ObjectId)
+        if (tag != tag_ObjectId) {
             throw new IOException("DerValue.getOID, not an OID " + tag);
+        }
         return new ObjectIdentifier(buffer);
     }
 
     private byte[] append(byte[] a, byte[] b) {
-        if (a == null)
+        if (a == null) {
             return b;
+        }
 
         byte[] ret = new byte[a.length + b.length];
         System.arraycopy(a, 0, ret, 0, a.length);
@@ -485,8 +494,9 @@ public class DerValue {
                 "DerValue.getOctetString, not an Octet String: " + tag);
         }
         bytes = new byte[length];
-        if (buffer.read(bytes) != length)
+        if (buffer.read(bytes) != length) {
             throw new IOException("short read on DerValue buffer");
+        }
         if (isConstructed()) {
             DerInputStream in = new DerInputStream(bytes);
             bytes = null;
@@ -515,8 +525,9 @@ public class DerValue {
      * @return the integer held in this DER value as a BigInteger.
      */
     public BigInteger getBigInteger() throws IOException {
-        if (tag != tag_Integer)
+        if (tag != tag_Integer) {
             throw new IOException("DerValue.getBigInteger, not an int " + tag);
+        }
         return buffer.getBigInteger(data.available(), false);
     }
 
@@ -528,8 +539,9 @@ public class DerValue {
      * @return the integer held in this DER value as a BigInteger.
      */
     public BigInteger getPositiveBigInteger() throws IOException {
-        if (tag != tag_Integer)
+        if (tag != tag_Integer) {
             throw new IOException("DerValue.getBigInteger, not an int " + tag);
+        }
         return buffer.getBigInteger(data.available(), true);
     }
     
@@ -552,9 +564,10 @@ public class DerValue {
      * @return the bit string held in this value
      */
     public byte[] getBitString() throws IOException {
-        if (tag != tag_BitString)
+        if (tag != tag_BitString) {
             throw new IOException(
                 "DerValue.getBitString, not a bit string " + tag);
+        }
 
         return buffer.getBitString();
     }
@@ -564,25 +577,27 @@ public class DerValue {
      * encoding restrictions (ASCII, T61, Printable, IA5, BMP, UTF8).
      */
     public String getAsString() throws IOException {
-        if (tag == tag_UTF8String)
+        if (tag == tag_UTF8String) {
             return getUTF8String();
-        else if (tag == tag_PrintableString)
+        } else if (tag == tag_PrintableString) {
             return getPrintableString();
-        else if (tag == tag_T61String)
+        } else if (tag == tag_T61String) {
             return getT61String();
-        else if (tag == tag_IA5String)
+        } else if (tag == tag_IA5String) {
             return getIA5String();
+        }
         /*
           IMPL_NOTE: Need encoder for UniversalString before it can be handled.
           else if (tag == tag_UniversalString)
           return getUniversalString();
         */
-        else if (tag == tag_BMPString)
+        else if (tag == tag_BMPString) {
             return getBMPString();
-        else if (tag == tag_GeneralString)
+        } else if (tag == tag_GeneralString) {
             return getGeneralString();
-        else
+        } else {
             return null;
+        }
     }
 
     /**
@@ -594,10 +609,11 @@ public class DerValue {
      */
     public byte[] getBitString(boolean tagImplicit) throws IOException {
         if (!tagImplicit) {
-            if (tag != tag_BitString)
+            if (tag != tag_BitString) {
                 throw new IOException("DerValue.getBitString, not a bit string "
                                        + tag);
             }
+        }
         return buffer.getBitString();
     }
 
@@ -620,10 +636,11 @@ public class DerValue {
      * @return the printable string held in this value
      */
     public String getPrintableString()
-    throws IOException {
-        if (tag != tag_PrintableString)
+            throws IOException {
+        if (tag != tag_PrintableString) {
             throw new IOException(
                 "DerValue.getPrintableString, not a string " + tag);
+        }
 
         return new String(getDataBytes(), "ASCII");
     }
@@ -634,9 +651,10 @@ public class DerValue {
      * @return the teletype string held in this value
      */
     public String getT61String() throws IOException {
-        if (tag != tag_T61String)
+        if (tag != tag_T61String) {
             throw new IOException(
                 "DerValue.getT61String, not T61 " + tag);
+        }
 
         return new String(getDataBytes(), "ISO-8859-1");
     }
@@ -647,9 +665,10 @@ public class DerValue {
      * @return the ASCII string held in this value
      */
     public String getIA5String() throws IOException {
-        if (tag != tag_IA5String)
+        if (tag != tag_IA5String) {
             throw new IOException(
                 "DerValue.getIA5String, not IA5 " + tag);
+        }
 
         return new String(getDataBytes(), "ASCII");
     }
@@ -661,9 +680,10 @@ public class DerValue {
      * this value
      */
     public String getBMPString() throws IOException {
-        if (tag != tag_BMPString)
+        if (tag != tag_BMPString) {
             throw new IOException(
                 "DerValue.getBMPString, not BMP " + tag);
+        }
 
         // BMPString is the same as Unicode in big endian, unmarked
         // format.
@@ -677,9 +697,10 @@ public class DerValue {
      * this value
      */
     public String getUTF8String() throws IOException {
-        if (tag != tag_UTF8String)
+        if (tag != tag_UTF8String) {
             throw new IOException(
                 "DerValue.getUTF8String, not UTF-8 " + tag);
+        }
 
         return new String(getDataBytes(), "UTF8");
     }
@@ -691,9 +712,10 @@ public class DerValue {
      * this value
      */
     public String getGeneralString() throws IOException {
-        if (tag != tag_GeneralString)
+        if (tag != tag_GeneralString) {
             throw new IOException(
                 "DerValue.getGeneralString, not GeneralString " + tag);
+        }
 
         return new String(getDataBytes(), "ASCII");
     }
@@ -730,10 +752,11 @@ public class DerValue {
      * @param other the object being compared with this one
      */
     public boolean equals(Object other) {
-        if (other instanceof DerValue)
+        if (other instanceof DerValue) {
             return equals((DerValue)other);
-        else
+        } else {
             return false;
+        }
     }
 
     /**
@@ -781,19 +804,21 @@ public class DerValue {
      */
     public String toString() {
         try {
-
             String str = getAsString();
-            if (str != null)
+            if (str != null) {
                 return "\"" + str + "\"";
-            if (tag == tag_Null)
+            }
+            if (tag == tag_Null) {
                 return "[DerValue, null]";
-            if (tag == tag_ObjectId)
+            }
+            if (tag == tag_ObjectId) {
                 return "OID." + getOID();
-
+            }
             // integers
-            else
+            else {
                 return "[DerValue, tag = " + tag
                         + ", length = " + length + "]";
+            }
         } catch (IOException e) {
             throw new IllegalArgumentException("misformatted DER value");
         }
@@ -820,8 +845,9 @@ public class DerValue {
      * integers or bit strings.
      */
     public DerInputStream toDerInputStream() throws IOException {
-        if (tag == tag_Sequence || tag == tag_Set)
+        if (tag == tag_Sequence || tag == tag_Set) {
             return new DerInputStream(buffer);
+        }
         throw new IOException("toDerInputStream rejects tag type " + tag);
     }
 

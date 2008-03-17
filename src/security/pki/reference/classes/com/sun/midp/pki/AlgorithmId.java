@@ -57,9 +57,6 @@ import com.sun.midp.crypto.NoSuchAlgorithmException;
  */
 public class AlgorithmId {
 
-    /** use serialVersionUID from JDK 1.1. for interoperability */
-    private static final long serialVersionUID = 7205873507486557157L;
-
     /**
      * The object identitifer being used for this algorithm.
      */
@@ -74,7 +71,7 @@ public class AlgorithmId {
      * DER-encoded form; subclasses can be made to automaticaly parse
      * them so there is fast access to these parameters.
      */
-    protected DerValue          params;
+    protected DerValue params;
 
     /**
      * Constructs a parameterless algorithm ID.
@@ -148,7 +145,7 @@ public class AlgorithmId {
      *
      * @exception IOException on encoding error.
      */
-    public void derEncode (OutputStream out) throws IOException {
+    public void derEncode(OutputStream out) throws IOException {
         DerOutputStream bytes = new DerOutputStream();
         DerOutputStream tmp = new DerOutputStream();
 
@@ -195,7 +192,6 @@ public class AlgorithmId {
         out.write(tmp.toByteArray());
     }
 
-
     /**
      * Returns the DER-encoded X.509 AlgorithmId as a byte array.
      */
@@ -235,7 +231,7 @@ public class AlgorithmId {
                         AlgorithmId.parse(new DerValue(getEncodedParams()));
                 String paramsName = paramsId.getName();
                 if (paramsName.equals("SHA")) {
-                    paramsName = "SHA1";
+                    paramsName = "SHA-1";
                 }
                 algName = paramsName + "withECDSA";
             } catch (IOException e) {

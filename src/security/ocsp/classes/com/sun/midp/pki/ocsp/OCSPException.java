@@ -58,57 +58,57 @@ public class OCSPException extends Exception {
     /**
      * Indicates that the server requires the client sign the request.
      */
-    public static final byte SIG_REQUIRED      = 4;
+    public static final byte SIG_REQUIRED      = 5;
 
     /**
      * Indicates that the client is not authorized to make this query.
      */
-    public static final byte UNAUTHORIZED      = 5;
+    public static final byte UNAUTHORIZED      = 6;
 
     /**
      * Indicates that the connection to OCSP server could not be opened.
      */
-    public static final byte SERVER_NOT_FOUND  = 6;
+    public static final byte SERVER_NOT_FOUND  = 7;
 
     /**
      * Indicates that an error occured when connecting
      * to the OCSP server.
      */
-    public static final byte CANNOT_OPEN_CONNECTION  = 7;
+    public static final byte CANNOT_OPEN_CONNECTION  = 8;
 
     /**
      * Indicates that an error occured when sending
      * a request to the OCSP server.
      */
-    public static final byte CANNOT_SEND_REQUEST  = 8;
+    public static final byte CANNOT_SEND_REQUEST  = 9;
 
     /**
      * Indicates that an error occured when receiving
      * a response from the OCSP server.
      */
-    public static final byte CANNOT_RECEIVE_RESPONSE = 9;
+    public static final byte CANNOT_RECEIVE_RESPONSE = 10;
 
     /**
      * Indicates that the OCSP server did not respond.
      */
-    public static final byte SERVER_NOT_RESPONDING  = 10;
+    public static final byte SERVER_NOT_RESPONDING  = 11;
 
     /**
      * Indicates that the signature of the OCSP responder
      * can't be verified.
      */
-    public static final byte CANNOT_VERIFY_SIGNATURE = 11;
+    public static final byte CANNOT_VERIFY_SIGNATURE = 12;
 
     /**
      * Indicates that the signature of the OCSP responder
      * can't be verified.
      */
-    public static final byte INVALID_RESPONDER_CERTIFICATE = 12;
+    public static final byte INVALID_RESPONDER_CERTIFICATE = 13;
 
     /**
      * Indicates that some unexpected error has occured.
      */
-    public static final byte UNKNOWN_ERROR            = 13;
+    public static final byte UNKNOWN_ERROR            = 14;
 
     /**
      * Create a new exception with a specific error reason.

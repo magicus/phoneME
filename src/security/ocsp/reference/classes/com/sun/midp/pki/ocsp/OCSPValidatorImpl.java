@@ -113,6 +113,9 @@ public class OCSPValidatorImpl implements OCSPValidator {
             System.out.println("ERROR: " + e.getErrorMessage());            
             e.printStackTrace();
             throw e;
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new OCSPException(OCSPException.UNKNOWN_ERROR, e.getMessage());
         } finally {
             cleanup();
         }
@@ -159,6 +162,8 @@ public class OCSPValidatorImpl implements OCSPValidator {
         try {
             byte[] requestBytes = request.getRequestAsByteArray();
 
+            httpConnection.setRequestProperty("Accept",
+                                              OCSP_RESPONSE_MIME_TYPE);
             httpConnection.setRequestProperty("ContentType",
                                               OCSP_REQUEST_MIME_TYPE);
             httpConnection.setRequestProperty("Content-length",
@@ -192,8 +197,6 @@ public class OCSPValidatorImpl implements OCSPValidator {
         System.out.println(">>> receiveResponse(): started");
 
         try {
-            httpConnection.setRequestProperty("Accept",
-                                              OCSP_RESPONSE_MIME_TYPE);
             httpInputStream = httpConnection.openInputStream();
 
             int bufSize = CHUNK_SIZE;

@@ -69,7 +69,8 @@ SUBSYSTEM_SECURITY_JAVA_FILES += \
     $(PKI_DIR)/reference/classes/com/sun/midp/pki/AlgorithmId.java \
     $(PKI_DIR)/reference/classes/com/sun/midp/pki/Extension.java \
     $(PKI_DIR)/reference/classes/com/sun/midp/pki/BigInteger.java \
-    $(PKI_DIR)/reference/classes/com/sun/midp/pki/SerialNumber.java
+    $(PKI_DIR)/reference/classes/com/sun/midp/pki/SerialNumber.java \
+    $(PKI_DIR)/reference/classes/com/sun/midp/pki/BitArray.java
 
 #
 # Interfaces must always be included

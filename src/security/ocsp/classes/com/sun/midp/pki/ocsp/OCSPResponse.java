@@ -156,10 +156,13 @@ class OCSPResponse {
             byte[] ocspNonce;
 
             // OCSPResponse
-            if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
+            //if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
                 Logging.report(Logging.INFORMATION, LogChannels.LC_SECURITY,
-                       "OCSPResponse bytes are..." + Utils.hexEncode(bytes));
-            }
+                    "OCSPResponse first bytes are... " +
+                        Utils.hexEncode(bytes, 0,
+                                (bytes.length > 256) ? 256 : bytes.length));
+            //}
+
             DerValue der = new DerValue(bytes);
             if (der.tag != DerValue.tag_Sequence) {
                 throw new IOException("Bad encoding in OCSP response: " +
@@ -169,22 +172,25 @@ class OCSPResponse {
 
             // responseStatus
             responseStatus = derIn.getEnumerated();
-            if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
+            //if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
                 Logging.report(Logging.INFORMATION, LogChannels.LC_SECURITY,
                            "OCSP response: " + responseStatus);
-            }
+            //}
             if (responseStatus != OCSP_RESPONSE_OK) {
-                throw new OCSPException(OCSPException.CANNOT_RECEIVE_RESPONSE,
+                throw new OCSPException((byte)responseStatus,
                     "OCSP Response Failure: " + responseStatus);
             }
 
             // responseBytes
             der = derIn.getDerValue();
+System.out.println(">>> 1");
             if (! der.isContextSpecific((byte)0)) {
                 throw new IOException("Bad encoding in responseBytes element " +
                     "of OCSP response: expected ASN.1 context specific tag 0.");
             }
+System.out.println(">>> 2");
             DerValue tmp = der.data.getDerValue();
+System.out.println(">>> 3");
             if (tmp.tag != DerValue.tag_Sequence) {
                 throw new IOException("Bad encoding in responseBytes element " +
                     "of OCSP response: expected ASN.1 SEQUENCE tag.");
@@ -192,7 +198,9 @@ class OCSPResponse {
 
             // responseType
             derIn = tmp.data;
+System.out.println(">>> 4");
             responseType = derIn.getOID();
+System.out.println(">>> 5");
             if (responseType.equals(OCSP_BASIC_RESPONSE_OID)) {
                 if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
                     Logging.report(Logging.INFORMATION, LogChannels.LC_SECURITY,
@@ -207,15 +215,18 @@ class OCSPResponse {
                     responseType);
             }
 
+System.out.println(">>> 6");
             // BasicOCSPResponse
             DerInputStream basicOCSPResponse =
                 new DerInputStream(derIn.getOctetString());
+System.out.println(">>> 7");
 
             DerValue[]  seqTmp = basicOCSPResponse.getSequence(2);
             DerValue responseData = seqTmp[0];
 
             // Need the DER encoded ResponseData to verify the signature later
             byte[] responseDataDer = seqTmp[0].toByteArray();
+System.out.println(">>> 8");
 
             // tbsResponseData
             if (responseData.tag != DerValue.tag_Sequence) {
@@ -240,6 +251,7 @@ class OCSPResponse {
                 }
             }
 
+System.out.println(">>> 9");
             // responderID
             short tag = (byte)(seq.tag & 0x1f);
             if (tag == NAME_TAG) {
@@ -256,6 +268,7 @@ class OCSPResponse {
                     "or 1");
             }
 
+System.out.println(">>> 10");
             // producedAt
             seq = seqDerIn.getDerValue();
             producedAtDate = seq.getGeneralizedTime();
@@ -293,12 +306,15 @@ class OCSPResponse {
                 }
             }
 
+System.out.println(">>> 11");
             // signatureAlgorithmId
             sigAlgId = AlgorithmId.parse(seqTmp[1]);
+System.out.println(">>> 12");
 
             // signature
             byte[] signature = seqTmp[2].getBitString();
             X509Certificate[] x509Certs = null;
+System.out.println(">>> 13");
 
             // if seq[3] is available , then it is a sequence of certificates
             if (seqTmp.length > 3) {
@@ -317,6 +333,7 @@ class OCSPResponse {
                 }
             }
 
+System.out.println(">>> 14");
             // Check whether the cert returned by the responder is trusted
             if (x509Certs != null && x509Certs[0] != null) {
                 X509Certificate cert = x509Certs[0];
@@ -363,10 +380,12 @@ class OCSPResponse {
                 }
             }
 
+System.out.println(">>> 15");
             // Confirm that the signed response was generated using the public
             // key from the trusted responder cert
             if (responderCert != null) {
 
+System.out.println(">>> 16");
                 if (!verifyResponse(responseDataDer, responderCert,
                                     sigAlgId, signature)) {
                     if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
@@ -387,6 +406,8 @@ class OCSPResponse {
                 throw new OCSPException(OCSPException.CANNOT_VERIFY_SIGNATURE,
                     "Unable to verify OCSP Responder's signature");
             }
+        } catch (OCSPException e) {
+            throw e;
         } catch (Exception e) {
             throw new OCSPException(OCSPException.UNKNOWN_ERROR,
                     e.getMessage());

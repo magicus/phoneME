@@ -28,6 +28,24 @@ package com.sun.midp.pki;
 
 
 public class BigInteger {
+    private final static int MAX_CONSTANT = 16;
+    private static BigInteger posConst[] = new BigInteger[MAX_CONSTANT+1];
+    private static BigInteger negConst[] = new BigInteger[MAX_CONSTANT+1];
+
+    static {
+        for (int i = 1; i <= MAX_CONSTANT; i++) {
+            int[] magnitude = new int[1];
+            magnitude[0] = i;
+            posConst[i] = new BigInteger(magnitude,  1);
+            negConst[i] = new BigInteger(magnitude, -1);
+        }
+    }
+
+    /**
+     * The BigInteger constant zero.
+     */
+    public static final BigInteger ZERO = new BigInteger(new int[0], 0);
+
     /**
      * The signum of this BigInteger: -1 for negative, 0 for zero, or
      * 1 for positive.  Note that the BigInteger zero <i>must</i> have
@@ -84,8 +102,9 @@ public class BigInteger {
      * @throws NumberFormatException {@code val} is zero bytes long.
      */
     public BigInteger(byte[] val) {
-        if (val.length == 0)
+        if (val == null || val.length == 0) {
             throw new NumberFormatException("Zero length BigInteger");
+        }
 
         if (val[0] < 0) {
             mag = makePositive(val);
@@ -127,19 +146,6 @@ public class BigInteger {
         }
     }
 
-
-    private final static int MAX_CONSTANT = 16;
-    private static BigInteger posConst[] = new BigInteger[MAX_CONSTANT+1];
-    private static BigInteger negConst[] = new BigInteger[MAX_CONSTANT+1];
-    static {
-        for (int i = 1; i <= MAX_CONSTANT; i++) {
-            int[] magnitude = new int[1];
-            magnitude[0] = i;
-            posConst[i] = new BigInteger(magnitude,  1);
-            negConst[i] = new BigInteger(magnitude, -1);
-        }
-    }
-
     /**
      * Constructs a BigInteger with the specified value, which may not be zero.
      */
@@ -168,14 +174,9 @@ public class BigInteger {
      * arguments are correct, and it doesn't copy the magnitude array.
      */
     private BigInteger(int[] magnitude, int signum) {
-        this.signum = (magnitude.length==0 ? 0 : signum);
+        this.signum = (magnitude.length == 0 ? 0 : signum);
         this.mag = magnitude;
     }
-    
-    /**
-     * The BigInteger constant zero.
-     */
-    public static final BigInteger ZERO = new BigInteger(new int[0], 0);
     
     /**
      * Returns a BigInteger whose value is equal to that of the
@@ -188,12 +189,14 @@ public class BigInteger {
      */
     public static BigInteger valueOf(long val) {
         // If -MAX_CONSTANT < val < MAX_CONSTANT, return stashed constant
-        if (val == 0)
+        if (val == 0) {
             return ZERO;
-        if (val > 0 && val <= MAX_CONSTANT)
+        }
+        if (val > 0 && val <= MAX_CONSTANT) {
             return posConst[(int) val];
-        else if (val < 0 && val >= -MAX_CONSTANT)
+        } else if (val < 0 && val >= -MAX_CONSTANT) {
             return negConst[(int) -val];
+        }
 
         return new BigInteger(val);
     }
@@ -306,19 +309,23 @@ public class BigInteger {
      * less than, equal to, or greater than arg2.
      */
     private static int intArrayCmp(int[] arg1, int[] arg2) {
-        if (arg1.length < arg2.length)
+        if (arg1.length < arg2.length) {
             return -1;
-        if (arg1.length > arg2.length)
+        }
+        if (arg1.length > arg2.length) {
             return 1;
+        }
 
         // Argument lengths are equal; compare the values
         for (int i=0; i<arg1.length; i++) {
             long b1 = arg1[i] & LONG_MASK;
             long b2 = arg2[i] & LONG_MASK;
-            if (b1 < b2)
+            if (b1 < b2) {
                 return -1;
-            if (b1 > b2)
+            }
+            if (b1 > b2) {
                 return 1;
+            }
         }
         return 0;
     }
@@ -459,8 +466,9 @@ public class BigInteger {
             result[i] = a[b--] & 0xff;
             int bytesRemaining = b - keep + 1;
             int bytesToTransfer = Math.min(3, bytesRemaining);
-            for (int j=8; j <= 8*bytesToTransfer; j += 8)
+            for (int j=8; j <= 8*bytesToTransfer; j += 8) {
                 result[i] |= ((a[b--] & 0xff) << j);
+            }
         }
         return result;
     }
@@ -565,8 +573,7 @@ public class BigInteger {
      * separated for readability, with eight words (32 bytes) per line.
      */
     public static String toHexString(BigInteger b) {
-        return Utils.hexEncode(b.toByteArray());
+        return (b == null) ? "" : Utils.hexEncode(b.toByteArray());
     }
-    
 
 }

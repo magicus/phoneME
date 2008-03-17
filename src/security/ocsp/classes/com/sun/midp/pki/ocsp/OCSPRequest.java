@@ -27,10 +27,14 @@
 package com.sun.midp.pki.ocsp;
 
 import com.sun.midp.pki.SerialNumber;
-import com.sun.midp.pki.DerOutputStream;
 import com.sun.midp.pki.X509Certificate;
-import com.sun.midp.pki.DerValue;
 import com.sun.midp.pki.BigInteger;
+import com.sun.midp.pki.DerOutputStream;
+import com.sun.midp.pki.DerValue;
+import com.sun.midp.pki.Utils;
+
+import com.sun.midp.log.Logging;
+import com.sun.midp.log.LogChannels;
 
 import java.io.IOException;
 
@@ -122,50 +126,6 @@ public class OCSPRequest {
         //String certSerialNumber;
         /** This request extensions, optional */
         //private Vector extensions = new Vector();
-
-        /**
-         * Returns string respresentation of this request. Useful for debug.
-         *
-         * @return string respresentation of this request
-         */
-        /*
-        public String toString() {
-            String str = "(" +
-                    "\n  hashAlgorithm = " + hashAlgorithm +
-                    "\n  issuerNameHash = " + issuerNameHash +
-                    "\n  certSerialNumber = " + certSerialNumber;
-
-            for (int i = 0; i < extensions.size(); i++) {
-                str += "\n Extension " + i + ": \n" +
-                        extensions.elementAt(i).toString();
-            }
-
-            str += "\n)";
-
-            return str;
-        }
-    }*/
-
-    //private class Extension {
-        /** ID of this extension */
-        //String id;
-        /** true is this extension is critical, false otherwise */
-        //boolean isCritical;
-        /** Value of the extension (octet string) */
-        //String value;
-
-        /**
-         * Returns string respresentation of this extension. Useful for debug.
-         *
-         * @return string respresentation of this extension
-         */
-        //public String toString() {
-        //    return "[" +
-        //            "\n  id = " + id +
-        //            "\n  isCritical = " + isCritical +
-        //            "\n  value = " + value +
-        //            "\n]";
-        //}
     //}
 
     /**
@@ -180,12 +140,36 @@ public class OCSPRequest {
         
         this.issuerCert = issuerCert;
 
-        serialNumber = new SerialNumber(
-                new BigInteger(userCert.getRawSerialNumber()));
+        byte[] sn = userCert.getRawSerialNumber();
+        if (sn != null) {
+            serialNumber = new SerialNumber(new BigInteger(sn));
+        } else {
+            //serialNumber = new SerialNumber(BigInteger.valueOf(0));
+
+            serialNumber = new SerialNumber(new BigInteger(new byte[] {
+                0x43, (byte)0xab, (byte)0xc5, 0x2c, (byte)0xd9, 0x4a, 0x3f, 0x54, (byte)0x98,
+                    0x7a, 0x3b, 0x3a, (byte)0xda, 0x2b, 0x51, 0x41
+            }));
+            System.out.println(">>> s = " + serialNumber.toString());
+        }
+
         //serialNumber = userCert.getSerialNumberObject();
+
+        //if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
+            try {
+                byte[] data = getRequestAsByteArray();
+                Logging.report(Logging.INFORMATION, LogChannels.LC_SECURITY,
+                    "OCSPRequest first bytes are... " +
+                        Utils.hexEncode(data, 0,
+                                (data.length > 256) ? 256 : data.length));
+            } catch (Exception e) {
+                // ignore
+            }
+        //}
     }
 
     /**
+     * Returns this request encoded as an array of bytes.
      *
      * @return this request encoded as an array of bytes
      * @throws IOException if an error occured during encoding
@@ -201,6 +185,12 @@ public class OCSPRequest {
         } catch (Exception e) {
             throw new IOException("Error encoding OCSP request");
         }
+
+        System.out.println(">>> singleRequest = " + singleRequest);
+
+        // write version v1(0)
+//        tmp.write(DerValue.tag_Integer, BigInteger.valueOf(0).toByteArray());
+        //tmp.write(DerValue.tag_UTF8String, "");
 
         certId = singleRequest.getCertId();
         singleRequest.encode(derSingleReqList);
@@ -265,6 +255,25 @@ public class OCSPRequest {
 
         private CertId getCertId() {
             return certId;
+        }
+
+        /**
+         * Returns string respresentation of this request. Useful for debug.
+         *
+         * @return string respresentation of this request
+         */
+        public String toString() {
+            String str = "SingleRequest (" +
+                    "\n " + certId;
+
+            //for (int i = 0; i < extensions.size(); i++) {
+            //    str += "\n Extension " + i + ": \n" +
+            //            extensions.elementAt(i).toString();
+            //}
+
+            str += "\n)";
+
+            return str;
         }
     }
     
