@@ -35,8 +35,10 @@ static javacall_media_caps g_caps[] =
     { JAVACALL_MEDIA_FORMAT_MIDI,    "audio/midi audio/mid audio/x-midi", JAVACALL_MEDIA_MEMORY_PROTOCOL, 0 },
     { JAVACALL_MEDIA_FORMAT_SP_MIDI, "audio/sp-midi",                     JAVACALL_MEDIA_MEMORY_PROTOCOL, 0 },
     { JAVACALL_MEDIA_FORMAT_TONE,    "audio/x-tone-seq audio/tone",       JAVACALL_MEDIA_MEMORY_PROTOCOL, 0 },
-    { JAVACALL_MEDIA_FORMAT_AMR,     "audio/amr",                         JAVACALL_MEDIA_MEMORY_PROTOCOL, 0 },
     { JAVACALL_MEDIA_FORMAT_CAPTURE_AUDIO, "audio/x-wav",                 JAVACALL_MEDIA_CAPTURE_PROTOCOL, 0 },
+#ifdef ENABLE_AMR
+    { JAVACALL_MEDIA_FORMAT_AMR,     "audio/amr",                         JAVACALL_MEDIA_MEMORY_PROTOCOL, 0 },
+#endif // ENABLE_AMR
 #ifdef ENABLE_MMAPI_LIME   
     { JAVACALL_MEDIA_FORMAT_MPEG1_LAYER3, "audio/mpeg",      JAVACALL_MEDIA_MEMORY_PROTOCOL, 0 },
     { JAVACALL_MEDIA_FORMAT_MPEG_1,  "video/mpeg",           JAVACALL_MEDIA_MEMORY_PROTOCOL, 0 },
@@ -252,11 +254,13 @@ media_interface* fmt_enum2itf( jc_fmt fmt )
     case JC_FMT_MPEG4_HE_AAC:
         return &g_audio_itf;    // was: AUDIO_MP3, AUDIO_MPEG4, AUDIO_AAC, AUDIO_MP3_2
 #endif /* ENABLE_MMAPI_LIME */
-        
+
+#ifdef EANBLE_AMR
     case JC_FMT_AMR:
     case JC_FMT_AMR_WB:
     case JC_FMT_AMR_WB_PLUS:
         return &g_amr_audio_itf; // was: AUDIO_AMR
+#endif // ENABLE_AMR
 
     //case JC_FMT_TONE:
         //return &g_tone_itf;     // AUDIO_TONE
@@ -314,10 +318,12 @@ javacall_media_format_type fmt_guess_from_url(javacall_const_utf16_string uri,
     } map[] =
     {
         { L".wav",  JAVACALL_MEDIA_FORMAT_MS_PCM },
-        { L".amr",  JAVACALL_MEDIA_FORMAT_AMR    },
         { L".mid",  JAVACALL_MEDIA_FORMAT_MIDI   },
         { L".midi", JAVACALL_MEDIA_FORMAT_MIDI   },
         { L".jts",  JAVACALL_MEDIA_FORMAT_TONE   },
+#ifdef ENABLE_AMR
+        { L".amr",  JAVACALL_MEDIA_FORMAT_AMR    },
+#endif // ENABLE_AMR
 #ifdef ENABLE_MMAPI_LIME
         { L".mp3",  JAVACALL_MEDIA_FORMAT_MPEG1_LAYER3 },
         { L".mpg",  JAVACALL_MEDIA_FORMAT_MPEG_1       },
