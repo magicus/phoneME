@@ -1,7 +1,5 @@
 /*
- *   
- *
- * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
@@ -66,7 +64,7 @@ platformRequest(char* pszUrl) {
         return 1;
     }
 
-    execargs[0] = (char *)getInternalProp(PLATFORM_REQUEST_KEY);
+    execargs[0] = (char *)getInternalProperty(PLATFORM_REQUEST_KEY);
     if (execargs[0] == NULL) {
         REPORT_INFO(LC_CORE, "PlatformRequest is not configured.");
 	return 0;

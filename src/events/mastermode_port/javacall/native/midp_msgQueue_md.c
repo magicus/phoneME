@@ -109,6 +109,13 @@ void checkForSystemSignal(MidpReentryData* pNewSignal,
         pNewMidpEvent->type    = ROTATION_EVENT;
         break;
 
+#if ENABLE_ON_DEVICE_DEBUG
+    case MIDP_JC_ENABLE_ODD_EVENT:
+        pNewSignal->waitingFor = AMS_SIGNAL;
+        pNewMidpEvent->type = MIDP_ENABLE_ODD_EVENT;
+        break;
+#endif
+
 #ifdef ENABLE_JSR_75
     case JSR75_FC_JC_EVENT_ROOTCHANGED:
         notifyDisksChanged();
@@ -126,6 +133,8 @@ void checkForSystemSignal(MidpReentryData* pNewSignal,
         break;
     case MIDP_JC_EVENT_SMS_SENDING_RESULT:
         pNewSignal->waitingFor = WMA_SMS_WRITE_SIGNAL;
+        pNewSignal->descriptor = (int)event->data.smsSendingResultEvent.handle;
+        pNewSignal->status = event->data.smsSendingResultEvent.result;
         break;
 #endif
 #if ENABLE_JSR_205
@@ -135,6 +144,8 @@ void checkForSystemSignal(MidpReentryData* pNewSignal,
         break;
     case MIDP_JC_EVENT_MMS_SENDING_RESULT:
         pNewSignal->waitingFor = WMA_MMS_WRITE_SIGNAL;
+        pNewSignal->descriptor = (int)event->data.mmsSendingResultEvent.handle;
+        pNewSignal->status = event->data.mmsSendingResultEvent.result;
         break;
 #endif
 
@@ -143,8 +154,8 @@ void checkForSystemSignal(MidpReentryData* pNewSignal,
 
         if( JAVACALL_EVENT_MEDIA_SNAPSHOT_FINISHED == event->data.multimediaEvent.mediaType ) {
             pNewSignal->waitingFor = MEDIA_SNAPSHOT_SIGNAL;
-            pNewSignal->descriptor = (((event->data.multimediaEvent.isolateId & 0xFFFF) << 16) 
-                                     | (event->data.multimediaEvent.playerId & 0xFFFF));
+//            pNewSignal->descriptor = (((event->data.multimediaEvent.isolateId & 0xFFFF) << 16) 
+//                                     | (event->data.multimediaEvent.playerId & 0xFFFF));
 
             REPORT_CALL_TRACE1(LC_NONE, "[media event] JAVACALL_EVENT_MEDIA_SNAPSHOT_FINISHED %d\n",
                                pNewSignal->descriptor);
@@ -157,8 +168,9 @@ void checkForSystemSignal(MidpReentryData* pNewSignal,
         pNewMidpEvent->type         = MMAPI_EVENT;
         pNewMidpEvent->MM_PLAYER_ID = event->data.multimediaEvent.playerId;
         pNewMidpEvent->MM_DATA      = event->data.multimediaEvent.data;
-        pNewMidpEvent->MM_ISOLATE   = event->data.multimediaEvent.isolateId;
+        pNewMidpEvent->MM_ISOLATE   = event->data.multimediaEvent.appId;
         pNewMidpEvent->MM_EVT_TYPE  = event->data.multimediaEvent.mediaType;
+        pNewMidpEvent->MM_EVT_STATUS= event->data.multimediaEvent.status;
 
         /* VOLUME_CHANGED event must be sent to all players.             */
         /* MM_ISOLATE = -1 causes bradcast by StoreMIDPEventInVmThread() */
@@ -167,7 +179,7 @@ void checkForSystemSignal(MidpReentryData* pNewSignal,
 
         REPORT_CALL_TRACE4(LC_NONE, "[media event] External event recevied %d %d %d %d\n",
                 pNewMidpEvent->type, 
-                event->data.multimediaEvent.isolateId, 
+                event->data.multimediaEvent.appId, 
                 pNewMidpEvent->MM_PLAYER_ID, 
                 pNewMidpEvent->MM_DATA);
 #endif
@@ -180,12 +192,12 @@ void checkForSystemSignal(MidpReentryData* pNewSignal,
         pNewMidpEvent->type         = AMMS_EVENT;
         pNewMidpEvent->MM_PLAYER_ID = event->data.multimediaEvent.playerId;
         pNewMidpEvent->MM_DATA      = event->data.multimediaEvent.data;
-        pNewMidpEvent->MM_ISOLATE   = event->data.multimediaEvent.isolateId;
+        pNewMidpEvent->MM_ISOLATE   = event->data.multimediaEvent.appId;
         pNewMidpEvent->MM_EVT_TYPE  = event->data.multimediaEvent.mediaType;
 
         REPORT_CALL_TRACE4(LC_NONE, "[jsr234 event] External event recevied %d %d %d %d\n",
             pNewMidpEvent->type, 
-            event->data.multimediaEvent.isolateId, 
+            event->data.multimediaEvent.appId, 
             pNewMidpEvent->MM_PLAYER_ID, 
             pNewMidpEvent->MM_DATA);
 
@@ -193,12 +205,33 @@ void checkForSystemSignal(MidpReentryData* pNewSignal,
 #endif
 #ifdef ENABLE_JSR_179
     case JSR179_LOCATION_JC_EVENT:
-        pNewSignal->waitingFor = JSR179_LOCATION_SIGNAL;
-        pNewSignal->descriptor = event->data.jsr179LocationEvent.provider;
+        pNewSignal->waitingFor = event->data.jsr179LocationEvent.event;
+        pNewSignal->descriptor = (int)event->data.jsr179LocationEvent.provider;
         pNewSignal->status = event->data.jsr179LocationEvent.operation_result;
-        REPORT_CALL_TRACE1(LC_NONE, "[jsr179 event] JSR179_LOCATION_SIGNAL %d %d\n", pNewSignal->descriptor, pNewSignal->status);
+        REPORT_CALL_TRACE2(LC_NONE, "[jsr179 event] JSR179_LOCATION_SIGNAL %d %d\n", pNewSignal->descriptor, pNewSignal->status);
+        break;
+    case JSR179_PROXIMITY_JC_EVENT:
+        pNewSignal->waitingFor = JSR179_PROXIMITY_SIGNAL;
+        pNewSignal->descriptor = (int)event->data.jsr179ProximityEvent.provider;
+        pNewSignal->status = event->data.jsr179ProximityEvent.operation_result;
+        REPORT_CALL_TRACE2(LC_NONE, "[jsr179 event] JSR179_PROXIMITY_SIGNAL %d %d\n", pNewSignal->descriptor, pNewSignal->status);
         break;
 #endif
+#ifdef ENABLE_JSR_211
+    case JSR211_JC_EVENT_PLATFORM_FINISH:
+        pNewSignal->waitingFor = JSR211_PLATFORM_FINISH_SIGNAL;
+        pNewSignal->descriptor = event->data.jsr211PlatformEvent.invoc_id;
+        pNewSignal->pResult    = event->data.jsr211PlatformEvent.jsr211event;
+        pNewMidpEvent->type    = CHAPI_EVENT;
+        break;
+    case JSR211_JC_EVENT_JAVA_INVOKE:
+        pNewSignal->waitingFor = JSR211_JAVA_INVOKE_SIGNAL;
+        pNewSignal->descriptor = event->data.jsr211PlatformEvent.invoc_id;
+        pNewSignal->pResult    = event->data.jsr211PlatformEvent.jsr211event;
+        pNewMidpEvent->type    = CHAPI_EVENT;
+        break;
+#endif /* ENABLE_JSR_211 */
+
 #ifdef ENABLE_JSR_177
     case MIDP_JC_EVENT_CARDDEVICE:
         switch (event->data.carddeviceEvent.eventType) {
@@ -239,6 +272,18 @@ void checkForSystemSignal(MidpReentryData* pNewSignal,
         pNewMidpEvent->intParam1 = 0;
         break;
 #endif /* ENABLE_MULTIPLE_ISOLATES */
+#if ENABLE_JSR_256
+    case JSR256_JC_EVENT_SENSOR_AVAILABLE:
+        pNewSignal->waitingFor = JSR256_SIGNAL;
+        pNewMidpEvent->type    = SENSOR_EVENT;
+        pNewMidpEvent->intParam1 = event->data.jsr256SensorAvailable.sensor_type;
+        pNewMidpEvent->intParam2 = event->data.jsr256SensorAvailable.is_available;
+        break;
+    case JSR256_JC_EVENT_SENSOR_OPEN_CLOSE:
+        pNewSignal->waitingFor = JSR256_SIGNAL;
+        pNewSignal->descriptor = (int)event->data.jsr256_jc_event_sensor.sensor;
+        break;
+#endif /* ENABLE_JSR_256 */
     default:
         REPORT_ERROR(LC_CORE,"Unknown event.\n");
         break;
