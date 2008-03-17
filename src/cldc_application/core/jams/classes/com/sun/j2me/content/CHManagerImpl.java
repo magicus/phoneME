@@ -138,7 +138,10 @@ public class CHManagerImpl extends com.sun.midp.content.CHManager
     public void preInstall(Installer installer, InstallState state,
 					MIDletSuite msuite, String authority) throws InvalidJadException
     {
-        if( AppProxy.LOGGER != null ) AppProxy.LOGGER.println( "CHManagerImpl.preInstall()" );
+        if( AppProxy.LOGGER != null ) 
+        	AppProxy.LOGGER.println( "CHManagerImpl.preInstall(): installer = " + 
+        			installer + ", state = " + state + ", msuite = " + msuite + 
+        			"\n\tauthority = '" + authority + "'" );
 		try {
 		    AppBundleProxy bundle =
 		    	new AppBundleProxy(installer, state, msuite, authority);

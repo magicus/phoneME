@@ -212,7 +212,7 @@ final class RegistryInstaller {
             String handler_n = CH_PREFIX.concat(sindex);
             String value = appl.getProperty(handler_n);
             if(AppProxy.LOGGER != null)
-            	AppProxy.LOGGER.println( "RegistryInstaller.parseAttributes: appl.getProperty(handler_n) = '" + 
+            	AppProxy.LOGGER.println( "RegistryInstaller.parseAttributes: appl.getProperty(" + handler_n + ") = '" + 
             				value + "'" );            
             if (value == null)
                 break;
