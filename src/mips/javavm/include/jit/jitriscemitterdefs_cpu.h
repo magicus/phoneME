@@ -272,9 +272,14 @@ struct CVMMIPSCompareContext {
  * CPU C Call convention abstraction - The following are prototypes of calling
  * convention support functions required by the RISC emitter porting layer.
  **************************************************************/
-
-#undef CVMCPU_HAVE_PLATFORM_SPECIFIC_C_CALL_CONVENTION
-
+#if CVMCPU_MAX_ARG_REGS != 8
+typedef struct CVMCPUCallContext CVMCPUCallContext;
+struct CVMCPUCallContext
+{
+    CVMRMResource *reservedRes;
+};
+#define CVMCPU_HAVE_PLATFORM_SPECIFIC_C_CALL_CONVENTION
+#endif
 
 #ifdef CVMJIT_TRAP_BASED_GC_CHECKS
 #define MIPS_LW    (0x23 << 26)

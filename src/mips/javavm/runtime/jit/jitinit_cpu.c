@@ -70,6 +70,16 @@ gcPatchPointsBranchTargets[CVMCPU_NUM_CCM_PATCH_POINTS] = {
 };
 #endif /* CVMJIT_PATCH_BASED_GC_CHECKS */
 
+#ifdef CVMJIT_INTRINSICS
+extern void CVMCCMMIPSintrinsic_java_lang_System_identityHashCodeGlue(void);
+extern void CVMCCMMIPSintrinsic_java_lang_Object_hashCodeGlue(void);
+extern void CVMCCMMIPSintrinsic_java_lang_String_hashCodeGlue(void);
+extern void CVMCCMintrinsic_java_lang_String_indexOf0_STRING_I(void);
+extern void CVMCCMintrinsic_sun_misc_CVM_copyCharArray(void);
+extern void CVMCCMintrinsic_sun_misc_CVM_copyObjectArray(void);
+extern void CVMCCMintrinsic_java_lang_System_arraycopyGlue(void);
+#endif /* CVMJIT_INTRINSICS */
+
 /*
  * A table so profiling code can tell what part of ccmcodecachecopy_cpu.o
  * we are executing in. Also used by some debugging code.
@@ -156,6 +166,29 @@ static const CVMCCMCodeCacheCopyEntry ccmCodeCacheCopyEntries[] = {
     ENTRY(CVMCCMruntimeIDiv)
     ENTRY(CVMCCMruntimeIRem)
 #endif
+#ifdef CVMJIT_INTRINSICS
+#ifndef CVMCCM_DISABLE_MIPS_CVM_INDENTITYHASHCODE_INTRINSIC
+    ENTRY(CVMCCMMIPSintrinsic_java_lang_System_identityHashCodeGlue)
+#endif
+#ifndef CVMCCM_DISABLE_MIPS_CVM_OBJECTHASHCODE_INTRINSIC
+    ENTRY(CVMCCMMIPSintrinsic_java_lang_Object_hashCodeGlue)
+#endif
+#ifndef CVMCCM_DISABLE_MIPS_CVM_STRINGHASHCODE_INTRINSIC
+    ENTRY(CVMCCMMIPSintrinsic_java_lang_String_hashCodeGlue)
+#endif
+#ifndef CVMCCM_DISABLE_MIPS_CVM_INDEXOF_INTRINSIC
+    ENTRY(CVMCCMintrinsic_java_lang_String_indexOf0_STRING_I)
+#endif
+#ifndef CVMCCM_DISABLE_MIPS_CVM_COPYCHARARRAY_INTRINSIC
+    ENTRY(CVMCCMintrinsic_sun_misc_CVM_copyCharArray)
+#endif
+#ifndef CVMCCM_DISABLE_MIPS_CVM_COPYOBJECTARRAY_INTRINSIC
+    ENTRY(CVMCCMintrinsic_sun_misc_CVM_copyObjectArray)
+#endif
+#ifndef CVMCCM_DISABLE_MIPS_CVM_ARRAYCOPY_INTRINSIC
+    ENTRY(CVMCCMintrinsic_java_lang_System_arraycopyGlue)
+#endif
+#endif /* CVMJIT_INTRINSICS */
     {(CVMUint8*)&CVMCCMcodeCacheCopyEnd, NULL},
 };
 #undef ENTRY

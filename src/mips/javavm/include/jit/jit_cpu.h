@@ -81,11 +81,23 @@
 /* This platform will support intrinsics: */
 #define CVMJIT_INTRINSICS
 
+/* This platform supports custom intrinsics with register arguments
+   in non-std registers. For o32, this means supporting args 5 to 8
+   in t0 to t3 just like n32 does. */
+#define CVMJIT_INTRINSICS_HAVE_PLATFORM_SPECIFIC_REG_ARGS
+
 /* Max number of args registers. */
 #define CVMCPU_MAX_ARG_REGS CVMMIPS_MAX_ARG_REGS
 
-/* This platform does not support args beyond the max number of arg registers*/
-#undef CVMCPU_ALLOW_C_ARGS_BEYOND_MAX_ARG_REGS
+/* o32 calling conventions only use 4 arg registers. n32 and n64 use 8
+ * arg registers. If only 4 args are supported, then we support up to 8
+ * total args by storing the extra args on the C stack per normal
+ * o32 calling conventions.
+ * See CVMMIPSCCALLgetRequired.
+ */
+#if CVMCPU_MAX_ARG_REGS != 8
+#define CVMCPU_ALLOW_C_ARGS_BEYOND_MAX_ARG_REGS
+#endif
 
 /* the size of one instruction */
 #define CVMCPU_INSTRUCTION_SIZE 4

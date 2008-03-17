@@ -46,6 +46,13 @@
 	LA(jp, CCMFUNCTION);			\
 	jr	jp
 
+/* 
+ * The last word of ccmStorage is reserved on mips for the memmove pointer.
+ * Note we could get rid of this requirement if we supported %gp in the
+ * ccm assembler glue.
+ */
+#define OFFSET_CVMCCExecEnv_memmove OFFSET_CVMCCExecEnv_ccmStorage+60
+
 /*
  * Some macros to assist with fixing up compiled frames. They only bother
  * calling CVMJITfixupFrames if the frames need fixing.

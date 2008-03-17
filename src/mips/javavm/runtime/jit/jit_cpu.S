@@ -143,6 +143,9 @@ NESTED(CVMJITgoNative, CONSTANT_CVMCCExecEnv_size, ra)
 	la	a2, CVMCCMruntimeGCRendezvousGlue
 	sw	a2, OFFSET_CStack_CCEE+OFFSET_CVMCCExecEnv_ccmGCRendezvousGlue(sp)
 #endif
+        /* Store pointer to memmove */
+        la      a2, memmove
+	sw	a2, OFFSET_CStack_CCEE+OFFSET_CVMCCExecEnv_memmove(sp)
 	jr	a3
 SET_SIZE( CVMJITgoNative ) 
 
