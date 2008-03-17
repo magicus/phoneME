@@ -31,6 +31,9 @@ ifeq ($(JAVACALL_DIR),)
 $(error JAVACALL_DIR is not set.)
 endif
 
+#Lime client library directory
+LIME_DIR ?= $(COMPONENTS_DIR)/lime
+
 include environment.gmk
 
 #For each project location for basic definitions shall be specified
@@ -40,7 +43,10 @@ JAVACALL_PLATFORM_DEFS_DIR=$(JAVACALL_DIR)/implementation/win32_emul
 #For each project specified toolchain shall be selected
 include $(JAVACALL_DIR)/build/vc/rules.gmk
 
+#Lime client library 
+include $(LIME_DIR)/client/build/share/rules_lime.gmk
+
 #Specific targets can be achieved before and after achievement of common targets
 #Specify these targets after including 'rules.gmk' file.
 pre_target:
-post_target: 
+post_target:  $(LIME_LIB)

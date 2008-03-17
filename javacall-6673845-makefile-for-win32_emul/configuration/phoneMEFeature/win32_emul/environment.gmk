@@ -80,6 +80,8 @@ ifneq ($(USE_STATIC_PROPERTIES),true)
 SPECIFIC_DEFINITIONS += -DUSE_PROPERTIES_FROM_FS
 endif
 
+#Lime
+include $(LIME_DIR)/client/build/share/defs_lime.gmk
 
 #For each project location for basic definitions shall be specified
 #(location of the used javacall_platform_defs.h)
