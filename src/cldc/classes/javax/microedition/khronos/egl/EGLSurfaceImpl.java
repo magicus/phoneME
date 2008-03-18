@@ -24,7 +24,7 @@
 
 package javax.microedition.khronos.egl;
 
-import javax.microedition.lcdui.Graphics;
+import com.sun.j2me.proxy.lcdui.Graphics
 import java.util.Hashtable;
 import java.lang.ref.WeakReference;
 
