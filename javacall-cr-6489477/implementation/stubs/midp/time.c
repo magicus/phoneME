@@ -69,18 +69,26 @@ javacall_result javacall_time_finalize_timer(javacall_handle handle){
 }
 
 /*
+ *
  * Temporarily disable timer interrupts. This is called when
  * the VM is about to sleep (when there's no Java thread to execute)
+ *
+ * @param handle timer handle to suspend
+ *
  */
-void javacall_time_suspend_ticks(){
+void javacall_time_suspend_ticks(javacall_handle handle){
     return;
 }
 
 /*
+ *
  * Enable  timer interrupts. This is called when the VM
  * wakes up and continues executing Java threads.
+ *
+ * @param handle timer handle to resume
+ *
  */
-void javacall_time_resume_ticks(){
+void javacall_time_resume_ticks(javacall_handle handle){
     return;
 }
 
