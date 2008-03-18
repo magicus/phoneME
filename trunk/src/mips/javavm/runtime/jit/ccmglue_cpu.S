@@ -435,7 +435,7 @@ ENTRY ( CVMCCMruntimeLookupInterfaceMBGlue )
         /* ointerfaceCount = ocb->interfacesX->interfaceCountX; */ 
         lhu    a0, OFFSET_CVMInterfaces_interfaceCountX(OINTERFACES)
 
-#define GUESS   v0 
+#define GUESS   v1
         lw	GUESS, -4(ra)		# load guess value
         sltu	t0, GUESS, a0		# cmp guess and ointerfaceCount
 	/* if guess >= ointerfaceCount, invalid */
@@ -446,7 +446,6 @@ ENTRY ( CVMCCMruntimeLookupInterfaceMBGlue )
 	addu	GUESS, GUESS, OINTERFACES
 	/* target ICB = ointerfaces.itable[guess].interfaceCb */
         lw	t0, OFFSET_CVMInterfaces_itable(GUESS)
-#undef GUESS
 
 #ifdef CVM_METHODBLOCK_HAS_CB
         lw     v0, OFFSET_CVMMethodBlock_cbX(INTERFACE_MB) # get icb
@@ -485,13 +484,9 @@ ENTRY ( CVMCCMruntimeLookupInterfaceMBGlue )
         lw     SOURCE_MB_IDX, OFFSET_CVMMethodBlock_codeX(INTERFACE_MB)
 
 #define TARGET_METHODTABLE_INDICES jp
-#define GUESS v0
         /* Target methodTableIndices = 
                 ocb->interfacesX.itable[guess].methodTableIndicesX;
         */
-        lw	GUESS, -4(ra)	# load guess value
-        sll     GUESS, GUESS, CONSTANT_LOG2_CVMInterfaceTable_SIZE
-	addu	GUESS, GUESS, OINTERFACES
 	lw	TARGET_METHODTABLE_INDICES, OFFSET_CVMInterfaces_itable0_intfInfoX(GUESS)
 #undef GUESS
 #undef OINTERFACES

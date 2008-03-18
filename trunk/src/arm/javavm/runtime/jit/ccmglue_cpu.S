@@ -595,7 +595,10 @@ ENTRY1 ( CVMCCMruntimeLookupInterfaceMBGlue )
         /* If we get here than the guess is within the valid range: */
         add     r3, OINTERFACES, #OFFSET_CVMInterfaces_itable
         mov     GUESS, GUESS, asl #CONSTANT_LOG2_CVMInterfaceTable_SIZE
-        ldr     r3, [r3, GUESS]     /* target ICB = &ointerfaces.itable[guess] */
+        ldr     r3, [r3, GUESS]   /* target ICB = &ointerfaces.itable[guess] */
+
+        /* Free up the GUESS reg (r0) for use below. Save its content first: */
+        str     GUESS, [sp, #OFFSET_CVMCCExecEnv_ccmStorage+0]
 #undef GUESS
 
 #ifdef CVM_METHODBLOCK_HAS_CB
@@ -633,12 +636,13 @@ ENTRY1 ( CVMCCMruntimeLookupInterfaceMBGlue )
 
 #define TARGET_METHODTABLE_INDICES ip
 #define GUESS r0
+        /* Reload the GUESS reg (r0) content from earlier: */
+        ldr     GUESS, [sp, #OFFSET_CVMCCExecEnv_ccmStorage+0]
+
         /* Target methodTableIndices = 
                 ocb->interfacesX.itable[guess].methodTableIndicesX;
-        */
-        ldr     GUESS, [lr, #-4]       /* load guess value */
+        */ 
         add     ip, OINTERFACES, #OFFSET_CVMInterfaces_itable0_intfInfoX
-        mov     GUESS, GUESS, asl #CONSTANT_LOG2_CVMInterfaceTable_SIZE
         ldr     TARGET_METHODTABLE_INDICES, [ip, GUESS]
 #undef GUESS
 #undef OINTERFACES
