@@ -39,7 +39,7 @@ endif
 
 JSR_LIST = COMMON MIDP JSR_120 JSR_135 JSR_177 JSR_211
 
-IMPL_DIR_NAME=arm_ads
+IMPL_DIR_NAME=stubs
 
 USE_MIDP=true
 USE_COMMON=true
@@ -79,11 +79,11 @@ endif
 
 #For each project location for basic definitions shall be specified
 #(location of the used javacall_platform_defs.h)
-JAVACALL_PLATFORM_DEFS_DIR=$(JAVACALL_DIR)/implementation/${IMPL_DIR_NAME}
+JAVACALL_PLATFORM_DEFS_DIR=$(JAVACALL_DIR)/implementation/linux_x86
 
 SOURCE_OUTPUT_LIST += $(foreach jsr,$(JSR_LIST), $(if $(PREFIX_$(USE_$(jsr))), $(JAVACALL_DIR)/implementation/${IMPL_DIR_NAME}/$($(jsr)_JC_DIR) javacall/implementation/${IMPL_DIR_NAME}))
-SOURCE_OUTPUT_LIST += $(JAVACALL_PLATFORM_DEFS_DIR)/javacall_platform_defs.h $(JAVACALL_DIR)/implementation/${IMPL_DIR_NAME}
-SOURCE_OUTPUT_LIST += $(JAVACALL_DIR)/configuration/phoneMEFeature/${IMPL_DIR_NAME} javacall/configuration/phoneMEFeature
+SOURCE_OUTPUT_LIST += $(JAVACALL_PLATFORM_DEFS_DIR)/javacall_platform_defs.h $(JAVACALL_DIR)/implementation/linux_x86
+SOURCE_OUTPUT_LIST += $(JAVACALL_DIR)/configuration/stubs/arm_ads javacall/configuration/stubs
 SOURCE_OUTPUT_LIST += $(foreach jsr,$(JSR_LIST), $(if $(PREFIX_$(USE_$(jsr))), $($(jsr)_JC_IMPL_PATH)/$($(jsr)_JC_DIR) javacall/implementation/${IMPL_DIR_NAME}))
 SOURCE_OUTPUT_LIST += $(JAVACALL_DIR)/implementation/${IMPL_DIR_NAME}/common javacall/implementation/${IMPL_DIR_NAME}
 
@@ -115,4 +115,4 @@ else
    PORTING_SOURCE+=events.c
 endif
 
-CONFIGURATION_PROPERTIES_FILE = $(JAVACALL_DIR)/configuration/phoneMEFeature/${IMPL_DIR_NAME}/properties.xml
+CONFIGURATION_PROPERTIES_FILE = $(JAVACALL_DIR)/configuration/stubs/arm_ads/properties.xml
