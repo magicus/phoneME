@@ -36,6 +36,6 @@ make \
   USE_MIDP=true \
   CVM_INCLUDE_JAVACALL=false \
   PCSL_TARGET=wince_arm  \
-  J2ME_CLASSLIB=basis \
+  J2ME_CLASSLIB=foundation \
   CVM_BUILD_SUBDIR_NAME=opt_preload_jit \
   $@
