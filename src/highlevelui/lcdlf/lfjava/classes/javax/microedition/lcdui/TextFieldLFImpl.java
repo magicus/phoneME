@@ -1675,37 +1675,42 @@ class TextFieldLFImpl extends ItemLFImpl implements
      */
     void lCallTraverseOut() {
         super.lCallTraverseOut();
-        
+
         firstTimeInTraverse = true;
+
         
         if (editable) {
             TextInputSession is = getInputSession();
-            InputMode im = is.getCurrentInputMode();
-            if (im != null && im.hasDisplayable()) { 
+            InputMode im = null;
+            if (is != null ) {
+                im = is.getCurrentInputMode();
+            }
+            if (im != null && im.hasDisplayable()) {
                 disableTF();
                 ((ScreenLFImpl)tf.owner.getLF()).resetToTop = false;
-            } else { 
+            } else {
+
                 disableInput();
-  
-                if (im != null) { 
-                    interruptedIM = im; 
+                if (im != null) {
+                    interruptedIM = im;
                 } else {
-                    cursor.index = tf.buffer.length(); 
+                    cursor.index = tf.buffer.length();
                 }
             }
             // Leave the hide of indicator layer to uCallTraverseOut
             // to avoid deadlocking
         } else {
-	    cursor.option = Text.PAINT_USE_CURSOR_INDEX;
+            cursor.option = Text.PAINT_USE_CURSOR_INDEX;
             cursor.visible = false;
+
             cursor.index = tf.buffer.length();
         }
         xScrollOffset = 0;
         
-        if (textScrollPainter != null) { 
+        if (textScrollPainter != null) {
             stopScroll();
         }
-        
+
         lRequestPaint();
     }
 
@@ -1861,7 +1866,9 @@ class TextFieldLFImpl extends ItemLFImpl implements
         disableTF();
         removeInputCommands();       
         TextInputSession is = getInputSession();
-        is.endSession();
+        if (is != null) {
+            is.endSession();
+        }
         // reset input mode name
         inputModeIndicator.setDisplayMode(null);
     }
