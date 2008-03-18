@@ -851,61 +851,72 @@ preserveHeaderWord(CVMGenMarkCompactGeneration* thisGen,
 /* Sweep the heap, compute the compacted addresses, write them into the
    original object headers, and return the new allocPtr of this space. */
 static CVMUint32*
-sweep(CVMGenMarkCompactGeneration* thisGen, CVMUint32* base, CVMUint32* top)
+sweep(CVMExecEnv* ee, CVMGenMarkCompactGeneration* thisGen,
+      CVMUint32* base, CVMUint32* top)
 {
     CVMUint32* forwardingAddress = base;
     CVMUint32* curr = base;
+    CVMUint32  chunkSize = 2 * 1024 * 1024;
+
     CVMtraceGcCollect(("GC[MC,%d]: Sweeping object range [%x,%x)\n",
 		       thisGen->gen.generationNo, base, top));
     while (curr < top) {
-	CVMObject* currObj    = (CVMObject*)curr;
-	CVMAddr    classWord  = CVMobjectGetClassWord(currObj);
-	CVMClassBlock* currCb = CVMobjectGetClassFromClassWord(classWord);
-	CVMUint32  objSize    = CVMobjectSizeGivenClass(currObj, currCb);
-	if (CVMobjectMarkedOnClassWord(classWord)) {
-	    volatile CVMAddr* headerAddr   = &CVMobjectVariousWord(currObj);
-	    CVMAddr  originalWord = *headerAddr;
-	    CVMtraceGcScan(("GC[MC,%d]: obj 0x%x -> 0x%x\n",
-			    thisGen->gen.generationNo, curr,
-			    forwardingAddress));
-	    if (!CVMobjectTrivialHeaderWord(originalWord)) {
-		/* Preserve the old header word with the new address
-                   of object, but only if it is non-trivial. */
-		preserveHeaderWord(thisGen, 
-		    (CVMObject *)forwardingAddress, originalWord);
-	    }
+        CVMUint32* nextChunk = curr + chunkSize;
+        if (nextChunk > top) {
+            nextChunk = top;
+        }
 
-	    /* Set forwardingAddress in header */
-	    *headerAddr = (CVMAddr)forwardingAddress;
-	    /* Pretend to have copied this live object! */
-	    forwardingAddress += objSize / 4;
-        } else {
+        while (curr < nextChunk) {
+	    CVMObject* currObj    = (CVMObject*)curr;
+	    CVMAddr    classWord  = CVMobjectGetClassWord(currObj);
+	    CVMClassBlock* currCb = CVMobjectGetClassFromClassWord(classWord);
+	    CVMUint32  objSize    = CVMobjectSizeGivenClass(currObj, currCb);
+	    if (CVMobjectMarkedOnClassWord(classWord)) {
+	        volatile CVMAddr* headerAddr   = &CVMobjectVariousWord(currObj);
+	        CVMAddr  originalWord = *headerAddr;
+	        CVMtraceGcScan(("GC[MC,%d]: obj 0x%x -> 0x%x\n",
+			        thisGen->gen.generationNo, curr,
+			        forwardingAddress));
+	        if (!CVMobjectTrivialHeaderWord(originalWord)) {
+		    /* Preserve the old header word with the new address
+                       of object, but only if it is non-trivial. */
+		    preserveHeaderWord(thisGen, 
+		        (CVMObject *)forwardingAddress, originalWord);
+	        }
+
+	        /* Set forwardingAddress in header */
+	        *headerAddr = (CVMAddr)forwardingAddress;
+	        /* Pretend to have copied this live object! */
+	        forwardingAddress += objSize / 4;
+            } else {
 #ifdef CVM_JVMPI
-	    {
-		extern CVMUint32 liveObjectCount;
-                if (CVMjvmpiEventObjectFreeIsEnabled()) {
-                    CVMjvmpiPostObjectFreeEvent(currObj);
-                }
-		liveObjectCount--;
-	    }
+	        {
+		    extern CVMUint32 liveObjectCount;
+                    if (CVMjvmpiEventObjectFreeIsEnabled()) {
+                        CVMjvmpiPostObjectFreeEvent(currObj);
+                    }
+		    liveObjectCount--;
+	        }
 #endif
 #ifdef CVM_JVMTI
-	    {
-                if (CVMjvmtiShouldPostObjectFree()) {
-                    CVMjvmtiPostObjectFreeEvent(currObj);
-                }
-	    }
+	        {
+                    if (CVMjvmtiShouldPostObjectFree()) {
+                        CVMjvmtiPostObjectFreeEvent(currObj);
+                    }
+	        }
 #endif
 #ifdef CVM_INSPECTOR
-	    /* We only need to report this if there are captured states that
-	       need to be updated: */
-	    if (CVMglobals.inspector.hasCapturedState) {
-    	        CVMgcHeapStateObjectFreed(currObj);
-	    }
+	        /* We only need to report this if there are captured states that
+	           need to be updated: */
+	        if (CVMglobals.inspector.hasCapturedState) {
+    	            CVMgcHeapStateObjectFreed(currObj);
+	        }
 #endif
-	}
-	/* iterate */
-	curr += objSize / 4;
+	    }
+	    /* iterate */
+	    curr += objSize / 4;
+        }
+        CVMthreadSchedHook(CVMexecEnv2threadID(ee));
     }
     CVMassert(curr == top); /* This had better be exact */
     CVMtraceGcCollect(("GC[MC,%d]: Swept object range [%x,%x) -> 0x%x\n",
@@ -1378,7 +1389,7 @@ CVMgenMarkCompactCollect(CVMGeneration* gen,
     */
     thisGen->gcPhase = GC_PHASE_SWEEP;
 
-    newAllocPtr = sweep(thisGen, gen->allocBase, gen->allocPtr);
+    newAllocPtr = sweep(ee, thisGen, gen->allocBase, gen->allocPtr);
     CVMassert(newAllocPtr <= gen->allocPtr);
 
     /* At this point, the new addresses of each object are written in
