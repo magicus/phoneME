@@ -1427,7 +1427,8 @@ CVMMIPSemitBranch0(CVMJITCompilationContext* con,
         printPC(con);
 	if (srcRegID == CVMMIPS_zero && rhsRegID == CVMMIPS_zero &&
 	    (opcode == MIPS_BEQ_OPCODE || opcode == MIPS_BGEZAL_OPCODE)) {
-            CVMconsolePrintf("	b	PC=0x%8x",
+            CVMconsolePrintf("	%s	PC=0x%8x",
+                             opcode == MIPS_BEQ_OPCODE ? "b" : "bal",
 			     CVMJITcbufLogicalToPhysical(con, logicalPC));
 	} else if (opcode == MIPS_BEQ_OPCODE || opcode == MIPS_BNE_OPCODE) {
             CVMconsolePrintf("	%s	%s, %s, PC=0x%8x",
@@ -3653,7 +3654,7 @@ CVMJITfixupAddress(CVMJITCompilationContext* con,
     instruction |= offsetBits;
     *instructionPtr = instruction;
     CVMtraceJITCodegen(("--->Fixed instruction at %d(0x%x) to reference %d\n", 
-			instructionLogicalAddress, instruction,
+			instructionLogicalAddress, instructionPtr,
 			targetLogicalAddress));
 }
 
