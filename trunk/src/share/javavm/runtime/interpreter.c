@@ -3551,11 +3551,21 @@ CVMassertHook(const char *filename, int lineno, const char *expr) {
 #endif
 
 #ifdef CVM_DEBUG_DUMPSTACK
+    {
+        CVMExecEnv* ee = CVMgetEE();
 #ifdef CVM_JIT
-    /* 4975844: fixup frames first so CVMdumpStack doesn't also assert! */
-    CVMCCMruntimeLazyFixups(CVMgetEE());
+        /* 4975844: fixup frames first so CVMdumpStack doesn't also assert!
+           However, CVMCCMruntimeLazyFixups asserts that ee->microlock != 0,
+           so clear it just in case.
+        */
+        if (ee->microLock != 0) {
+            CVMconsolePrintf("CVMassertHook: ee->microLock != 0\n");
+            ee->microLock = 0;
+        }
+        CVMCCMruntimeLazyFixups(ee);
 #endif
-    CVMdumpStack(&(CVMgetEE()->interpreterStack),0,0,0);
+        CVMdumpStack(&ee->interpreterStack,0,0,0);
+    }
 #endif /* CVM_DEBUG_DUMPSTACK */
 
     /* %comment l028 */
