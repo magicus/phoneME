@@ -120,8 +120,7 @@ void Os::suspend_ticks() {
    * This is called when the VM is about to sleep
    * (when there's no Java thread to execute)
    */
-
-  javacall_time_suspend_ticks();
+  javacall_time_suspend_ticks(tick_timer_handle);
   return;
 }
 
@@ -132,7 +131,7 @@ void Os::resume_ticks() {
    * This is called when the VM
    * wakes up and continues executing Java threads.
    */
-  javacall_time_resume_ticks();
+  javacall_time_resume_ticks(tick_timer_handle);
   return;
 }
 
