@@ -1316,6 +1316,9 @@ CVMgenMarkCompactCollect(CVMGeneration* gen,
      */
     CVMgenScanAllRoots((CVMGeneration*)thisGen,
 		       ee, gcOpts, CVMgenMarkCompactScanTransitively, &tsd);
+
+    CVMthreadSchedHook(CVMexecEnv2threadID(ee));
+
     /*
      * Don't discover any more weak references.
      */
@@ -1401,6 +1404,8 @@ CVMgenMarkCompactCollect(CVMGeneration* gen,
 
     /* Unmark: Clear/reset marks on the objects in the youngGen: */
     unmark(thisGen, youngGen->allocBase, youngGen->allocPtr);
+
+    CVMthreadSchedHook(CVMexecEnv2threadID(ee));
 
     /* Compact: Move objects and reset marks in the oldGen: */
     compact(thisGen, gen->allocBase, gen->allocPtr);
