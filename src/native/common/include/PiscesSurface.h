@@ -63,6 +63,7 @@
 #define TYPE_INT_ARGB 2
 #define TYPE_INT_ARGB_PRE 3
 #define TYPE_USHORT_565_RGB 8
+#define TYPE_USHORT_5658 9
 #define TYPE_BYTE_GRAY 10
 
 #define CORRECT_DIMS(_surface, _x, _y, _w, _h, _x1, _y1) \
@@ -93,6 +94,7 @@ typedef struct _Surface {
 
     jint imageType;
     void* data;
+    void* alphaData;
 } Surface;
 
 #endif

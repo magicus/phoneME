@@ -28,6 +28,7 @@
 
 #include <KNIUtil.h>
 #include <PiscesSysutils.h>
+#include <midpPiscesUtils.h>
 
 #include <PiscesSurface.inl>
 
@@ -189,99 +190,10 @@ Java_com_sun_pisces_AbstractSurface_setRGB() {
 
         SNI_BEGIN_RAW_POINTERS;
 
-        tempArray = &JavaIntArray(arrayHandle)[offset];
+        tempArray = PISCES_GET_DATA_POINTER(JavaIntArray(arrayHandle)) + offset;
 
         ACQUIRE_SURFACE(surface, objectHandle);
         surface_setRGB(surface, x, y, width, height, tempArray, scanLength);
-        RELEASE_SURFACE(surface, objectHandle);
-
-        SNI_END_RAW_POINTERS;
-    }
-
-    KNI_EndHandles();
-    KNI_ReturnVoid();
-}
-
-KNIEXPORT KNI_RETURNTYPE_VOID
-Java_com_sun_pisces_AbstractSurface_drawSurfaceImpl() {
-    KNI_StartHandles(2);
-    KNI_DeclareHandle(objectHandle);
-    KNI_DeclareHandle(surfaceHandle);
-
-    jint srcX = KNI_GetParameterAsInt(2);
-    jint srcY = KNI_GetParameterAsInt(3);
-    jint dstX = KNI_GetParameterAsInt(4);
-    jint dstY = KNI_GetParameterAsInt(5);
-    jint width = KNI_GetParameterAsInt(6);
-    jint height = KNI_GetParameterAsInt(7);
-    jfloat opacity = KNI_GetParameterAsFloat(8);
-
-    Surface* dstSurface;
-    Surface* srcSurface;
-
-    KNI_GetThisPointer(objectHandle);
-    dstSurface = (Surface*)JLongToPointer(
-                     KNI_GetLongField(objectHandle, 
-                     fieldIds[SURFACE_NATIVE_PTR]));
-    KNI_GetParameterAsObject(1, surfaceHandle);
-    srcSurface = (Surface*)JLongToPointer(
-                     KNI_GetLongField(surfaceHandle, 
-                     fieldIds[SURFACE_NATIVE_PTR]));
-
-    CORRECT_DIMS(dstSurface, dstX, dstY, width, height, srcX, srcY);
-    CORRECT_DIMS(srcSurface, srcX, srcY, width, height, dstX, dstY);
-
-    if ((width > 0) && (height > 0) && (opacity > 0)) {
-        ACQUIRE_SURFACE(dstSurface, objectHandle);
-        ACQUIRE_SURFACE(srcSurface, surfaceHandle);
-        surface_drawSurface(dstSurface, dstX, dstY, width, height,
-                            srcSurface, srcX, srcY, opacity);
-        RELEASE_SURFACE(srcSurface, surfaceHandle);
-        RELEASE_SURFACE(dstSurface, objectHandle);
-    }
-
-    KNI_EndHandles();
-    KNI_ReturnVoid();
-}
-
-KNIEXPORT KNI_RETURNTYPE_VOID
-Java_com_sun_pisces_AbstractSurface_drawRGBImpl() {
-    KNI_StartHandles(2);
-    KNI_DeclareHandle(objectHandle);
-    KNI_DeclareHandle(arrayHandle);
-
-    jint offset = KNI_GetParameterAsInt(2);
-    jint scanLength = KNI_GetParameterAsInt(3);
-    jint x = KNI_GetParameterAsInt(4);
-    jint y = KNI_GetParameterAsInt(5);
-    jint width = KNI_GetParameterAsInt(6);
-    jint height = KNI_GetParameterAsInt(7);
-    jfloat opacity = KNI_GetParameterAsFloat(8);
-
-    jint srcX = 0;
-    jint srcY = 0;
-
-    Surface* surface;
-
-    KNI_GetParameterAsObject(1, arrayHandle);
-
-    KNI_GetThisPointer(objectHandle);
-    surface = (Surface*)JLongToPointer(
-                  KNI_GetLongField(objectHandle, fieldIds[SURFACE_NATIVE_PTR]));
-
-    CORRECT_DIMS(surface, x, y, width, height, srcX, srcY);
-
-    if ((width > 0) && (height > 0)) {
-        jint* tempArray;
-        offset += srcY * scanLength + srcX;
-
-        SNI_BEGIN_RAW_POINTERS;
-
-        tempArray = &JavaIntArray(arrayHandle)[offset];
-
-        ACQUIRE_SURFACE(surface, objectHandle);
-        surface_drawRGB(surface, x, y, width, height, tempArray, scanLength,
-                        opacity);
         RELEASE_SURFACE(surface, objectHandle);
 
         SNI_END_RAW_POINTERS;

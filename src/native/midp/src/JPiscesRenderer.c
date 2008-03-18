@@ -31,6 +31,7 @@
 #include <JAbstractSurface.h>
 #include <JTransform.h>
 
+#include <midpPiscesUtils.h>
 #include <PiscesSysutils.h>
 
 #include <PiscesRenderer.inl>
@@ -48,27 +49,16 @@
 #define CMD_CURVE_TO 3
 #define CMD_CLOSE 4
 
-// SURFACE_FROM_RENDERER is needed only when the java surface support is enabled
-#ifdef PISCES_JAVA_SURFACE_SUPPORT
-
 #define SURFACE_FROM_RENDERER(surface, surfaceHandle, rendererHandle)     \
         KNI_GetObjectField((rendererHandle), fieldIds[RENDERER_SURFACE],  \
                            (surfaceHandle));                              \
         (surface) = &surface_get((surfaceHandle))->super;
 
-#else // PISCES_JAVA_SURFACE_SUPPORT
-
-#define SURFACE_FROM_RENDERER(surface, surfaceHandle, rendererHandle) \
-    (void)(surface); \
-    (void)(surfaceHandle);
-
-#endif // PISCES_JAVA_SURFACE_SUPPORT
-
-
 static jfieldID fieldIds[RENDERER_LAST + 1];
 static jboolean fieldIdsInitialized = KNI_FALSE;
 
 static jboolean initializeRendererFieldIds(jobject objectHandle);
+static int toPiscesCoords(unsigned int ff);
 
 KNIEXPORT KNI_RETURNTYPE_VOID
 Java_com_sun_pisces_PiscesRenderer_staticInitialize() {
@@ -105,11 +95,15 @@ Java_com_sun_pisces_PiscesRenderer_initialize() {
                            surfaceHandle);
         surface = &surface_get(surfaceHandle)->super;
 
-        ACQUIRE_SURFACE(surface, surfaceHandle);
+/*
+ *      ACQUIRE_SURFACE(surface, surfaceHandle);
+ */ 
         rdr = renderer_create(surface);
         KNI_SetLongField(objectHandle, fieldIds[RENDERER_NATIVE_PTR],
                          PointerToJLong(rdr));
-        RELEASE_SURFACE(surface, surfaceHandle);
+/*
+ *      RELEASE_SURFACE(surface, surfaceHandle);
+ */ 
 
         //    KNI_registerCleanup(objectHandle, disposeNativeImpl);
 
@@ -147,9 +141,10 @@ Java_com_sun_pisces_PiscesRenderer_nativeFinalize() {
 }
 
 KNIEXPORT KNI_RETURNTYPE_VOID
-Java_com_sun_pisces_PiscesRenderer_beginRendering__IIIII() {
-    KNI_StartHandles(1);
+Java_com_sun_pisces_PiscesRenderer_beginRenderingIIIII() {
+    KNI_StartHandles(2);
     KNI_DeclareHandle(objectHandle);
+    KNI_DeclareHandle(surfaceHandle);
 
     jint minX = KNI_GetParameterAsInt(1);
     jint minY = KNI_GetParameterAsInt(2);
@@ -158,12 +153,17 @@ Java_com_sun_pisces_PiscesRenderer_beginRendering__IIIII() {
     jint windingRule = KNI_GetParameterAsInt(5);
 
     Renderer* rdr;
+    Surface* surface;
 
     KNI_GetThisPointer(objectHandle);
     rdr = (Renderer*)JLongToPointer(KNI_GetLongField(objectHandle,
                                     fieldIds[RENDERER_NATIVE_PTR]));
 
+    SURFACE_FROM_RENDERER(surface, surfaceHandle, objectHandle);
+    ACQUIRE_SURFACE(surface, surfaceHandle);
+    INVALIDATE_RENDERER_SURFACE(rdr);
     renderer_beginRendering5(rdr, minX, minY, width, height, windingRule);
+    RELEASE_SURFACE(surface, surfaceHandle);
 
     if (KNI_TRUE == readAndClearMemErrorFlag()) {
         KNI_ThrowNew("java/lang/OutOfMemoryError",
@@ -175,19 +175,25 @@ Java_com_sun_pisces_PiscesRenderer_beginRendering__IIIII() {
 }
 
 KNIEXPORT KNI_RETURNTYPE_VOID
-Java_com_sun_pisces_PiscesRenderer_beginRendering__I() {
-    KNI_StartHandles(1);
+Java_com_sun_pisces_PiscesRenderer_beginRenderingI() {
+    KNI_StartHandles(2);
     KNI_DeclareHandle(objectHandle);
+    KNI_DeclareHandle(surfaceHandle);
 
     jint windingRule = KNI_GetParameterAsInt(1);
 
     Renderer* rdr;
+    Surface* surface;
 
     KNI_GetThisPointer(objectHandle);
     rdr = (Renderer*)JLongToPointer(KNI_GetLongField(objectHandle,
                                     fieldIds[RENDERER_NATIVE_PTR]));
 
+    SURFACE_FROM_RENDERER(surface, surfaceHandle, objectHandle);
+    ACQUIRE_SURFACE(surface, surfaceHandle);
+    INVALIDATE_RENDERER_SURFACE(rdr);
     renderer_beginRendering1(rdr, windingRule);
+    RELEASE_SURFACE(surface, surfaceHandle);
 
     if (KNI_TRUE == readAndClearMemErrorFlag()) {
         KNI_ThrowNew("java/lang/OutOfMemoryError",
@@ -213,6 +219,7 @@ Java_com_sun_pisces_PiscesRenderer_endRendering() {
 
     SURFACE_FROM_RENDERER(surface, surfaceHandle, objectHandle);
     ACQUIRE_SURFACE(surface, surfaceHandle);
+    INVALIDATE_RENDERER_SURFACE(rdr);
     renderer_endRendering(rdr);
     RELEASE_SURFACE(surface, surfaceHandle);
 
@@ -327,7 +334,7 @@ Java_com_sun_pisces_PiscesRenderer_getTransformImpl() {
 }
 
 KNIEXPORT KNI_RETURNTYPE_VOID
-Java_com_sun_pisces_PiscesRenderer_setStroke__IIII_3II() {
+Java_com_sun_pisces_PiscesRenderer_setStrokeImpl() {
     KNI_StartHandles(2);
     KNI_DeclareHandle(objectHandle);
     KNI_DeclareHandle(arrayHandle);
@@ -376,7 +383,7 @@ Java_com_sun_pisces_PiscesRenderer_setStroke__IIII_3II() {
 }
 
 KNIEXPORT KNI_RETURNTYPE_VOID
-Java_com_sun_pisces_PiscesRenderer_setStroke__() {
+Java_com_sun_pisces_PiscesRenderer_setStrokeImplNoParam() {
     KNI_StartHandles(1);
     KNI_DeclareHandle(objectHandle);
 
@@ -611,7 +618,7 @@ Java_com_sun_pisces_PiscesRenderer_setLinearGradientImpl() {
 
     SNI_BEGIN_RAW_POINTERS;
 
-    ramp = JavaIntArray(rampHandle);
+    ramp = PISCES_GET_DATA_POINTER(JavaIntArray(rampHandle));
 
     rdr->_gradient_cycleMethod = cycleMethod;
     renderer_setLinearGradient(rdr, x0, y0, x1, y1,
@@ -653,7 +660,7 @@ Java_com_sun_pisces_PiscesRenderer_setRadialGradientImpl() {
 
     SNI_BEGIN_RAW_POINTERS;
 
-    ramp = JavaIntArray(rampHandle);
+    ramp = PISCES_GET_DATA_POINTER( JavaIntArray(rampHandle));
 
     rdr->_gradient_cycleMethod = cycleMethod;
     renderer_setRadialGradient(rdr, cx, cy, fx, fy, radius,
@@ -904,6 +911,7 @@ Java_com_sun_pisces_PiscesRenderer_clearRect() {
 
     SURFACE_FROM_RENDERER(surface, surfaceHandle, objectHandle);
     ACQUIRE_SURFACE(surface, surfaceHandle);
+    INVALIDATE_RENDERER_SURFACE(rdr);
     renderer_clearRect(rdr, x, y, w, h);
     RELEASE_SURFACE(surface, surfaceHandle);
 
@@ -936,6 +944,7 @@ Java_com_sun_pisces_PiscesRenderer_drawLine() {
 
     SURFACE_FROM_RENDERER(surface, surfaceHandle, objectHandle);
     ACQUIRE_SURFACE(surface, surfaceHandle);
+    INVALIDATE_RENDERER_SURFACE(rdr);
     renderer_drawLine(rdr, x0, y0, x1, y1);
     RELEASE_SURFACE(surface, surfaceHandle);
 
@@ -968,6 +977,7 @@ Java_com_sun_pisces_PiscesRenderer_drawRect() {
 
     SURFACE_FROM_RENDERER(surface, surfaceHandle, objectHandle);
     ACQUIRE_SURFACE(surface, surfaceHandle);
+    INVALIDATE_RENDERER_SURFACE(rdr);
     renderer_drawRect(rdr, x, y, w, h);
     RELEASE_SURFACE(surface, surfaceHandle);
 
@@ -1000,6 +1010,7 @@ Java_com_sun_pisces_PiscesRenderer_fillRect() {
 
     SURFACE_FROM_RENDERER(surface, surfaceHandle, objectHandle);
     ACQUIRE_SURFACE(surface, surfaceHandle);
+    INVALIDATE_RENDERER_SURFACE(rdr);
     renderer_fillRect(rdr, x, y, w, h);
     RELEASE_SURFACE(surface, surfaceHandle);
 
@@ -1032,6 +1043,7 @@ Java_com_sun_pisces_PiscesRenderer_drawOval() {
 
     SURFACE_FROM_RENDERER(surface, surfaceHandle, objectHandle);
     ACQUIRE_SURFACE(surface, surfaceHandle);
+    INVALIDATE_RENDERER_SURFACE(rdr);
     renderer_drawOval(rdr, x, y, w, h);
     RELEASE_SURFACE(surface, surfaceHandle);
 
@@ -1064,6 +1076,7 @@ Java_com_sun_pisces_PiscesRenderer_fillOval() {
 
     SURFACE_FROM_RENDERER(surface, surfaceHandle, objectHandle);
     ACQUIRE_SURFACE(surface, surfaceHandle);
+    INVALIDATE_RENDERER_SURFACE(rdr);
     renderer_fillOval(rdr, x, y, w, h);
     RELEASE_SURFACE(surface, surfaceHandle);
 
@@ -1098,6 +1111,7 @@ Java_com_sun_pisces_PiscesRenderer_drawRoundRect() {
 
     SURFACE_FROM_RENDERER(surface, surfaceHandle, objectHandle);
     ACQUIRE_SURFACE(surface, surfaceHandle);
+    INVALIDATE_RENDERER_SURFACE(rdr);
     renderer_drawRoundRect(rdr, x, y, w, h, aw, ah);
     RELEASE_SURFACE(surface, surfaceHandle);
 
@@ -1132,6 +1146,7 @@ Java_com_sun_pisces_PiscesRenderer_fillRoundRect() {
 
     SURFACE_FROM_RENDERER(surface, surfaceHandle, objectHandle);
     ACQUIRE_SURFACE(surface, surfaceHandle);
+    INVALIDATE_RENDERER_SURFACE(rdr);
     renderer_fillRoundRect(rdr, x, y, w, h, aw, ah);
     RELEASE_SURFACE(surface, surfaceHandle);
 
@@ -1167,6 +1182,7 @@ Java_com_sun_pisces_PiscesRenderer_drawArc() {
 
     SURFACE_FROM_RENDERER(surface, surfaceHandle, objectHandle);
     ACQUIRE_SURFACE(surface, surfaceHandle);
+    INVALIDATE_RENDERER_SURFACE(rdr);
     renderer_drawArc(rdr, x, y, width, height, startAngle, arcAngle, arcType);
     RELEASE_SURFACE(surface, surfaceHandle);
 
@@ -1202,6 +1218,7 @@ Java_com_sun_pisces_PiscesRenderer_fillArc() {
 
     SURFACE_FROM_RENDERER(surface, surfaceHandle, objectHandle);
     ACQUIRE_SURFACE(surface, surfaceHandle);
+    INVALIDATE_RENDERER_SURFACE(rdr);
     renderer_fillArc(rdr, x, y, width, height, startAngle, arcAngle, arcType);
     RELEASE_SURFACE(surface, surfaceHandle);
 
@@ -1248,59 +1265,62 @@ Java_com_sun_pisces_PiscesRenderer_setPathData() {
 
     jint idx;
     Renderer* rdr;
-    jfloat* data;
+
+    unsigned int* data;
     jbyte* commands;
-    jint offset = 0;
+
+    int x1, x2, x3;
+    int y1, y2, y3;
 
     KNI_GetParameterAsObject(1, dataHandle);
     KNI_GetParameterAsObject(2, commandsHandle);
 
     KNI_GetThisPointer(objectHandle);
-    rdr = (Renderer*)JLongToPointer(KNI_GetLongField(objectHandle,
-                                                     fieldIds[RENDERER_NATIVE_PTR]));
+    rdr = (Renderer*)JLongToPointer(
+            KNI_GetLongField(objectHandle, fieldIds[RENDERER_NATIVE_PTR]));
 
     SNI_BEGIN_RAW_POINTERS;
-    data = (jfloat *) JavaIntArray(dataHandle);
-    commands = JavaByteArray(commandsHandle);
-    
-    
-    for (idx = 0; idx < nCommands; ++idx) {
-      switch (commands[idx]) {
-      case CMD_MOVE_TO:
-        renderer_moveTo(rdr,
-                        (jint)(data[offset] * 65536.0f),
-                        (jint)(data[offset + 1] * 65536.0f));
-        offset += 2;
-        break;
-      case CMD_LINE_TO:
-        renderer_lineTo(rdr,
-                        (jint)(data[offset] * 65536.0f),
-                        (jint)(data[offset + 1] * 65536.0f));
-        offset += 2;
-        break;
-      case CMD_QUAD_TO:
-        renderer_quadTo(rdr,
-                        (jint)(data[offset] * 65536.0f),
-                        (jint)(data[offset + 1] * 65536.0f),
-                        (jint)(data[offset + 2] * 65536.0f),
-                        (jint)(data[offset + 3] * 65536.0f));
-        offset += 4;
-        break;
-      case CMD_CURVE_TO:
-        renderer_cubicTo(rdr,
-                         (jint)(data[offset] * 65536.0f),
-                         (jint)(data[offset + 1] * 65536.0f),
-                         (jint)(data[offset + 2] * 65536.0f),
-                         (jint)(data[offset + 3] * 65536.0f),
-                         (jint)(data[offset + 4] * 65536.0f),
-                         (jint)(data[offset + 5] * 65536.0f));
-        offset += 6;
-        break;
-      case CMD_CLOSE:
-      default:
-        renderer_close(rdr);
-        break;
-      }
+
+    data = (unsigned int*)PISCES_GET_DATA_POINTER(JavaIntArray(dataHandle));
+    commands = PISCES_GET_DATA_POINTER(JavaByteArray(commandsHandle));
+
+    for (idx = nCommands; idx; --idx) {
+        switch (*commands++) {
+            case CMD_MOVE_TO:
+                x1 = toPiscesCoords(*data++);
+                y1 = toPiscesCoords(*data++);
+                
+                renderer_moveTo(rdr, x1, y1);
+                break;
+            case CMD_LINE_TO:
+                x1 = toPiscesCoords(*data++);
+                y1 = toPiscesCoords(*data++);
+
+                renderer_lineTo(rdr, x1, y1);
+                break;
+            case CMD_QUAD_TO:
+                x1 = toPiscesCoords(*data++);
+                y1 = toPiscesCoords(*data++);
+                x2 = toPiscesCoords(*data++);
+                y2 = toPiscesCoords(*data++);
+
+                renderer_quadTo(rdr, x1, y1, x2, y2);
+                break;
+            case CMD_CURVE_TO:
+                x1 = toPiscesCoords(*data++);
+                y1 = toPiscesCoords(*data++);
+                x2 = toPiscesCoords(*data++);
+                y2 = toPiscesCoords(*data++);
+                x3 = toPiscesCoords(*data++);
+                y3 = toPiscesCoords(*data++);
+
+                renderer_cubicTo(rdr, x1, y1, x2, y2, x3, y3);
+                break;
+            case CMD_CLOSE:
+            default:
+                renderer_close(rdr);
+                break;
+        }
     }
 
     SNI_END_RAW_POINTERS;
@@ -1361,4 +1381,31 @@ initializeRendererFieldIds(jobject objectHandle) {
 
     KNI_EndHandles();
     return retVal;
+}
+
+/**
+ * Converts floating point number into S15.16 format
+ * [= (int)(f * 65536.0f)]. Doesn't correctly handle INF, NaN and -0.
+ * 
+ * @param ff number encoded as sign [1 bit], exponent + 127 [8 bits], mantisa
+ *           without the implicit 1 at the beginning [23 bits] 
+ * @return ff in S15.16 format
+ */ 
+static int 
+toPiscesCoords(unsigned int ff) {
+    int shift;
+    unsigned int gg;
+
+    /* get mantisa */
+	gg = ((ff & 0xffffff) | 0x800000);
+	/* calculate shift from exponent */
+	shift = 134 - ((ff >> 23) & 0xff);
+	/* do left or right shift to get value to S15.16 format */
+	gg = (shift < 0) ? (gg << -shift) : (gg >> shift);
+	/* fix sign */
+	gg = (gg ^ -(int)(ff >> 31)) + (ff >> 31);
+	/* handle zero */
+	gg &= -(ff != 0);
+
+    return (int)gg;
 }

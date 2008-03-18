@@ -67,5 +67,4 @@ public interface Surface {
     public void setRGB(int[] argb, int offset, int scanLength, 
             int x, int y, int width, int height);
 
-    public SurfaceDestination createSurfaceDestination();
 }

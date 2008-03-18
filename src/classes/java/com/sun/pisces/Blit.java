@@ -694,7 +694,7 @@ public class Blit {
                 blend565(shortData, imageOffset, alpha, red, green, blue);
                 imageOffset += imageStride;
             }
-        } else if (imageType == TYPE_USHORT_565_RGB) {
+        } else if (imageType == TYPE_BYTE_GRAY) {
             byte[] byteData = (byte[])imageData;
             for (int i = 0; i < length; i++) {
                 blend8(byteData, imageOffset, alpha, red);

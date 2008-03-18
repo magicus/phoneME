@@ -68,28 +68,33 @@ void blitSrc888(Renderer *rdr, jint height);
 void blitSrc8888_pre(Renderer *rdr, jint height);
 void blitSrc8888(Renderer *rdr, jint height);
 void blitSrc565(Renderer *rdr, jint height);
+void blitSrc5658(Renderer *rdr, jint height);
 void blitSrc8(Renderer *rdr, jint height);
 
 void blitPTSrc888(Renderer *rdr, jint height);
 void blitPTSrc8888(Renderer *rdr, jint height);
 void blitPTSrc8888_pre(Renderer *rdr, jint height);
 void blitPTSrc565(Renderer *rdr, jint height);
+void blitPTSrc5658(Renderer *rdr, jint height);
 void blitPTSrc8(Renderer *rdr, jint height);
 
 void blitSrcOver888(Renderer *rdr, jint height);
 void blitSrcOver8888(Renderer *rdr, jint height);
 void blitSrcOver8888_pre(Renderer *rdr, jint height);
 void blitSrcOver565(Renderer *rdr, jint height);
+void blitSrcOver5658(Renderer *rdr, jint height);
 void blitSrcOver8(Renderer *rdr, jint height);
 
 void blitPTSrcOver888(Renderer *rdr, jint height);
 void blitPTSrcOver8888(Renderer *rdr, jint height);
 void blitPTSrcOver8888_pre(Renderer *rdr, jint height);
 void blitPTSrcOver565(Renderer *rdr, jint height);
+void blitPTSrcOver5658(Renderer *rdr, jint height);
 void blitPTSrcOver8(Renderer *rdr, jint height);
 
 void clearRect8888(Renderer *rdr, jint x, jint y, jint w, jint h);
 void clearRect565(Renderer *rdr, jint x, jint y, jint w, jint h);
+void clearRect5658(Renderer *rdr, jint x, jint y, jint w, jint h);
 void clearRect8(Renderer *rdr, jint x, jint y, jint w, jint h);
 
 #endif

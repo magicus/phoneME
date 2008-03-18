@@ -44,6 +44,16 @@ endif
 # Directories for each internal workspace
 INTERNAL_PISCES_DIR=$(PISCES_DIR)
 
+# Pisces defines
+ifeq ($(PISCES_USE_JWC_OLD_IMPLEMENTATION), true)
+  EXTRA_CFLAGS += -DPISCES_USE_JWC_OLD_IMPLEMENTATION
+endif
+
+ifdef PISCES_AA_LEVEL
+  EXTRA_CFLAGS += -DPISCES_AA_LEVEL=$(PISCES_AA_LEVEL)
+endif
+
+
 # Implementation APIs in pisces
 SUBSYSTEM_PISCES_JAVA_FILES_SOURCEPATH=\
 $(INTERNAL_PISCES_DIR)/src/classes/common
@@ -56,7 +66,8 @@ endif
 ifeq ($(SUBSYSTEM_PISCES_MODULES), java_native)
     SUBSYSTEM_PISCES_JAVA_FILES_SOURCEPATH +=\
     $(PATHSEP)$(INTERNAL_PISCES_DIR)/src/classes/native\
-    $(PATHSEP)$(INTERNAL_PISCES_DIR)/src/classes/native-midp
+    $(PATHSEP)$(INTERNAL_PISCES_DIR)/src/classes/native-midp\
+    $(PATHSEP)$(INTERNAL_PISCES_DIR)/src/classes/native-jwc
 endif
 
 INTERNAL_PISCES_CONFIG_DIR = \
@@ -130,18 +141,22 @@ ifeq ($(SUBSYSTEM_PISCES_MODULES), java_native)
             $(INTERNAL_PISCES_DIR)/src/classes/native
     INTERNAL_PISCES_NATIVE-MIDP_CLASSES_DIR := \
             $(INTERNAL_PISCES_DIR)/src/classes/native-midp
-
+    INTERNAL_PISCES_NATIVE-JWC_CLASSES_DIR := \
+            $(INTERNAL_PISCES_DIR)/src/classes/native-jwc
+            
     INTERNAL_PISCES_JAVA_FILES += \
             $(INTERNAL_PISCES_NATIVE_CLASSES_DIR)/com/sun/pisces/AbstractSurface.java \
             $(INTERNAL_PISCES_NATIVE_CLASSES_DIR)/com/sun/pisces/NativeFinalization.java \
-            $(INTERNAL_PISCES_NATIVE_CLASSES_DIR)/com/sun/pisces/NativeSurface.java \
             $(INTERNAL_PISCES_NATIVE_CLASSES_DIR)/com/sun/pisces/PiscesRenderer.java \
             $(INTERNAL_PISCES_NATIVE_CLASSES_DIR)/com/sun/pisces/Transform6.java \
             $(INTERNAL_PISCES_NATIVE-MIDP_CLASSES_DIR)/com/sun/pisces/Configuration.java \
-            $(INTERNAL_PISCES_NATIVE-MIDP_CLASSES_DIR)/com/sun/pisces/GraphicsSurfaceDestination.java \
             $(INTERNAL_PISCES_NATIVE-MIDP_CLASSES_DIR)/com/sun/pisces/NativeFinalizer.java \
             $(INTERNAL_PISCES_NATIVE-MIDP_CLASSES_DIR)/com/sun/pisces/PiscesFinalizer.java \
-            $(INTERNAL_PISCES_NATIVE-MIDP_CLASSES_DIR)/com/sun/pisces/PiscesLibrary.java
+            $(INTERNAL_PISCES_NATIVE-MIDP_CLASSES_DIR)/com/sun/pisces/PiscesLibrary.java \
+            $(INTERNAL_PISCES_NATIVE-JWC_CLASSES_DIR)/com/sun/pisces/GraphicsSurface.java \
+            $(INTERNAL_PISCES_NATIVE_CLASSES_DIR)/com/sun/pisces/NativeSurface.java
+
+#            $(INTERNAL_PISCES_NATIVE-MIDP_CLASSES_DIR)/com/sun/pisces/GraphicsSurfaceDestination.java 
 
     ifdef PISCES_JAVA_SURFACE_SUPPORT
         INTERNAL_PISCES_JAVA_FILES += \
@@ -166,10 +181,33 @@ ifeq ($(SUBSYSTEM_PISCES_MODULES), java_native)
     vpath % $(INTERNAL_PISCES_DIR)/src/native/common/src
     vpath % $(INTERNAL_PISCES_DIR)/src/native/midp/src
 
+ifeq ($(PISCES_USE_JWC_OLD_IMPLEMENTATION), true)
+    vpath % $(INTERNAL_PISCES_DIR)/src/native/midp-jwc-old/src
+else    
+ifeq ($(TARGET_PLATFORM), linux_qte)
+    vpath % $(INTERNAL_PISCES_DIR)/src/native/midp-jwc-platform/src 
+else
+    vpath % $(INTERNAL_PISCES_DIR)/src/native/midp-jwc/src
+endif
+endif    
+
     INTERNAL_PISCES_INCLUDES += \
             -I$(INTERNAL_PISCES_DIR)/src/native/common/include \
-            -I$(INTERNAL_PISCES_DIR)/src/native/midp/include \
-
+            -I$(INTERNAL_PISCES_DIR)/src/native/midp/include
+            
+ifeq ($(PISCES_USE_JWC_OLD_IMPLEMENTATION), true)
+    INTERNAL_PISCES_INCLUDES += \
+            -I$(INTERNAL_PISCES_DIR)/src/native/midp-jwc-old/include
+else 
+ifeq ($(TARGET_PLATFORM), linux_qte)
+    INTERNAL_PISCES_INCLUDES += \
+            -I$(INTERNAL_PISCES_DIR)/src/native/midp-jwc-platform/include           
+else
+    INTERNAL_PISCES_INCLUDES += \
+            -I$(INTERNAL_PISCES_DIR)/src/native/midp-jwc/include
+endif
+endif
+            
     INTERNAL_PISCES_SRC_FILES += \
                 PiscesBlit.c \
                 PiscesLibrary.c \
@@ -180,13 +218,18 @@ ifeq ($(SUBSYSTEM_PISCES_MODULES), java_native)
                 PiscesUtil.c \
                 PiscesSysutils.c \
                 JAbstractSurface.c \
-                JGraphicsSurfaceDestination.c \
-                JNativeSurface.c \
                 JNativeFinalizer.c \
-		JPiscesFinalizer.c \
+		            JPiscesFinalizer.c \
                 JPiscesRenderer.c \
                 JTransform.c \
-                KNIUtil.c
+                KNIUtil.c \
+                JGraphicsSurface.c \
+                JNativeSurface.c \
+                JNativeSurfaceImpl.c
+                
+#                JGraphicsSurfaceDestination.c 
+#                 
+
 
     # Specify romizer configuration file for the jsr
     # and path where the file is located
@@ -197,7 +240,6 @@ ifeq ($(SUBSYSTEM_PISCES_MODULES), java_native)
     ifdef PISCES_JAVA_SURFACE_SUPPORT
         INTERNAL_PISCES_SRC_FILES += \
                     JJavaSurface.c
-        EXTRA_CFLAGS += -DPISCES_JAVA_SURFACE_SUPPORT
     endif # PISCES_JAVA_SURFACE_SUPPORT
 endif
 
@@ -211,6 +253,7 @@ SUBSYSTEM_PISCES_NATIVE_FILES += \
 
 SUBSYSTEM_PISCES_INCLUDES += \
     $(INTERNAL_PISCES_INCLUDES)
+    
 
 # Append Pisces source bundle creation to target
 source_bundle:: pisces_source_bundle

@@ -30,7 +30,7 @@ package com.sun.pisces;
  * <code>PathSink</code> interface, and additionally accepts curve
  * drawing commands: <code>quadTo</code> and <code>curveTo</code>.
  */
-public abstract class PathSink extends LineSink {
+public class PathSink extends LineSink {
 
     /**
      * Draws a quadratic Bezier curve starting at the current drawing
@@ -53,7 +53,7 @@ public abstract class PathSink extends LineSink {
      * @param x2 the final X coordinate in S15.16 format
      * @param y2 the final Y coordinate in S15.16 format
      */
-    public abstract void quadTo(int x1, int y1, int x2, int y2);
+    public void quadTo(int x1, int y1, int x2, int y2) {}
 
     /**
      * Draws a cubic Bezier curve starting at the current drawing
@@ -78,5 +78,5 @@ public abstract class PathSink extends LineSink {
      * @param x3 the final X coordinate in S15.16 format
      * @param y3 the final Y coordinate in S15.16 format
      */
-    public abstract void cubicTo(int x1, int y1, int x2, int y2, int x3, int y3);
+    public void cubicTo(int x1, int y1, int x2, int y2, int x3, int y3) {}
 }

@@ -39,7 +39,7 @@ public final class PiscesRenderer extends PathSink
     public static final int ARC_PIE = 2;
     
     long nativePtr = 0L;
-    final AbstractSurface surface;
+    protected AbstractSurface surface;
 
     private final NativeFinalizer finalizer;
         
@@ -291,7 +291,12 @@ public final class PiscesRenderer extends PathSink
      * segment lengths in S15.16 format, or <code>null</code>.
      * @param dashPhase the starting dash offset, in S15.16 format.
      */
-    public native void setStroke(int lineWidth, int capStyle, int joinStyle,
+    public void setStroke(int lineWidth, int capStyle, int joinStyle,
+            int miterLimit, int[] dashArray, int dashPhase) {
+        setStrokeImpl(lineWidth, capStyle, joinStyle, miterLimit, dashArray, dashPhase);
+    }
+    
+    private native void setStrokeImpl(int lineWidth, int capStyle, int joinStyle,
             int miterLimit, int[] dashArray, int dashPhase);
 
     /**
@@ -322,7 +327,11 @@ public final class PiscesRenderer extends PathSink
      */
     public native void resetClip();
 
-    public native void beginRendering(int windingRule);
+    public void beginRendering(int windingRule) {
+        beginRenderingI(windingRule);
+    }
+    
+    private native void beginRenderingI(int windingRule);
 
     /**
      * Begins the rendering of path data.  The supplied clipping
@@ -330,7 +339,12 @@ public final class PiscesRenderer extends PathSink
      * the destination image bounds; only pixels within the resulting
      * rectangle may be written to.
      */
-    public native void beginRendering(int minX, int minY, 
+    public void beginRendering(int minX, int minY, 
+            int width, int height, int windingRule) {
+        beginRenderingIIIII(minX, minY, width, height, windingRule);
+    }
+    
+    private native void beginRenderingIIIII(int minX, int minY, 
             int width, int height, int windingRule);
 
     /**
@@ -347,7 +361,10 @@ public final class PiscesRenderer extends PathSink
      */
     public native void getBoundingBox(int[] bbox);
     
-    public native void setStroke();
+    public void setStroke() {
+        setStrokeImplNoParam();
+    }
+    private native void setStrokeImplNoParam();
     
     public native void setFill();
 

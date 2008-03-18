@@ -38,8 +38,13 @@
 
 #include <PiscesSysutils.h>
 
-#define DEFAULT_SUBPIXEL_LG_POSITIONS_X 3
-#define DEFAULT_SUBPIXEL_LG_POSITIONS_Y 3
+#ifdef PISCES_AA_LEVEL
+#define DEFAULT_SUBPIXEL_LG_POSITIONS_X PISCES_AA_LEVEL
+#define DEFAULT_SUBPIXEL_LG_POSITIONS_Y PISCES_AA_LEVEL
+#else
+#define DEFAULT_SUBPIXEL_LG_POSITIONS_X 1
+#define DEFAULT_SUBPIXEL_LG_POSITIONS_Y 1
+#endif
 
 #define PISCES_ACV (jlong)(65536.0 * 0.22385762508460333)
 
@@ -558,8 +563,11 @@ renderer_setCompositeRule(Renderer* rdr, jint compositeRule) {
                                INVALID_COMPOSITE_DEPENDED_ROUTINES;
 
         if ((compositeRule == COMPOSITE_SRC_OVER) ||
+                (((compositeRule == COMPOSITE_CLEAR) ||
+		  (compositeRule == COMPOSITE_SRC)) &&
                 ((rdr->_imageType == TYPE_INT_ARGB) ||
-                   (rdr->_imageType == TYPE_INT_ARGB_PRE))) {
+                   (rdr->_imageType == TYPE_INT_ARGB_PRE) || (rdr->_imageType ==
+                   TYPE_USHORT_5658)))) {
             // need to recalculate the alpha map
             // see the implementation of validateAlphaMap
             rdr->_rendererState |= VALIDATE_ALPHA_MAP |
@@ -1023,6 +1031,7 @@ updateInternalColor(Renderer* rdr) {
 
     switch (rdr->_imageType) {
         case TYPE_USHORT_565_RGB:
+        case TYPE_USHORT_5658:
             rdr->_cred = _Pisces_convert8To5[rdr->_ored];
             rdr->_cgreen = _Pisces_convert8To6[rdr->_ogreen];
             rdr->_cblue = _Pisces_convert8To5[rdr->_oblue];
@@ -1052,6 +1061,8 @@ updateRendererSurface(Renderer* rdr) {
             surface->height;
     rdr->_data = 
             surface->data;
+    rdr->_alphaData =
+            surface->alphaData;            
     rdr->_imageOffset = 
             surface->offset;
     rdr->_imageScanlineStride = 
@@ -1061,8 +1072,10 @@ updateRendererSurface(Renderer* rdr) {
 
     if (rdr->_imageType != surface->imageType) {
         if ((rdr->_compositeRule != COMPOSITE_SRC_OVER) && 
-                ((surface->imageType == TYPE_INT_ARGB) || 
-                    (surface->imageType == TYPE_INT_ARGB_PRE))) {
+                (surface->imageType == TYPE_INT_ARGB || 
+                    surface->imageType == TYPE_INT_ARGB_PRE ||
+                    surface->imageType == TYPE_USHORT_5658
+                    )) {
             // need to recalculate the alpha map
             // see the implementation of validateAlphaMap
             rdr->_rendererState |= VALIDATE_ALPHA_MAP |
@@ -1107,6 +1120,15 @@ updateSurfaceDependedRoutines(Renderer* rdr) {
             rdr->_bl_PT_Clear = blitSrc8888_pre;
             rdr->_clearRect = clearRect8888;
             break;  
+        case TYPE_USHORT_5658:
+            rdr->_bl_SourceOver = blitSrcOver5658;
+            rdr->_bl_PT_SourceOver = blitPTSrcOver5658;
+            rdr->_bl_Source = blitSrc5658;
+            rdr->_bl_PT_Source = blitPTSrc5658;
+            rdr->_bl_Clear = blitSrc5658;
+            rdr->_bl_PT_Clear = blitSrc5658;
+            rdr->_clearRect = clearRect5658;
+            break;
         case TYPE_USHORT_565_RGB:
             rdr->_bl_SourceOver = blitSrcOver565;
             rdr->_bl_PT_SourceOver = blitPTSrcOver565;
@@ -1115,7 +1137,7 @@ updateSurfaceDependedRoutines(Renderer* rdr) {
             rdr->_bl_Clear = blitSrc565;
             rdr->_bl_PT_Clear = blitSrc565;
             rdr->_clearRect = clearRect565;
-            break;
+            break;        
         case TYPE_BYTE_GRAY:
             rdr->_bl_SourceOver = blitSrcOver8;
             rdr->_bl_PT_SourceOver = blitPTSrcOver8;
@@ -1211,8 +1233,11 @@ validateAlphaMap(Renderer* rdr) {
         case PAINT_FLAT_COLOR:
             if (rdr->_rendererState & INVALID_COLOR_ALPHA_MAP) {
                 if ((rdr->_compositeRule == COMPOSITE_SRC_OVER) || 
-                        (rdr->_imageType == TYPE_INT_ARGB || 
-                            rdr->_imageType == TYPE_INT_ARGB_PRE)) {
+                        (((rdr->_compositeRule == COMPOSITE_CLEAR) ||
+			  (rdr->_compositeRule == COMPOSITE_SRC)) &&
+                        ((rdr->_imageType == TYPE_INT_ARGB) || 
+                            (rdr->_imageType == TYPE_INT_ARGB_PRE)||
+                            (rdr->_imageType == TYPE_USHORT_5658)))) {
                     jint i;
                     for (i = 0; i <= rdr->_MAX_AA_ALPHA; i++) {
                         rdr->_colorAlphaMap[i] = 
@@ -1232,9 +1257,12 @@ validateAlphaMap(Renderer* rdr) {
             // PAINT_TEXTURE
             if (rdr->_rendererState & INVALID_PAINT_ALPHA_MAP) {
                 if ((rdr->_compositeRule == COMPOSITE_SRC_OVER) || 
-                        ((rdr->_compositeRule == COMPOSITE_SRC) &&
+                        (((rdr->_compositeRule == COMPOSITE_CLEAR) ||
+			  (rdr->_compositeRule == COMPOSITE_SRC)) &&
                         ((rdr->_imageType == TYPE_INT_ARGB) || 
-                            (rdr->_imageType == TYPE_INT_ARGB_PRE)))) {
+                            (rdr->_imageType == TYPE_INT_ARGB_PRE) ||
+                            (rdr->_imageType == TYPE_USHORT_5658)
+                            ))) {
                     jint i;
                     jfloat compositeAlpha = rdr->_compositeAlpha;
                 
@@ -1379,10 +1407,6 @@ endRenderingImpl(Renderer* rdr) {
                         x0, y0, x1, y1,
                         rdr->_cred, rdr->_cgreen, rdr->_cblue);
 
-        /* Check for error in memory allocation */
-        if (XNI_TRUE == readMemErrorFlag()) {
-            return;
-        }
 
         rdr->_bboxX0 = x0 >> rdr->_SUBPIXEL_LG_POSITIONS_X;
         rdr->_bboxY0 = y0 >> rdr->_SUBPIXEL_LG_POSITIONS_Y;
@@ -1451,11 +1475,6 @@ endRenderingImpl(Renderer* rdr) {
             }
 
             computeCrossingsForEdge(rdr, index, bminY, bmaxY);
-            /* Check for error in memory allocation */
-            if (XNI_TRUE == readMemErrorFlag()) {
-                return;
-            }
-
         }
 
         computeBounds(rdr);
@@ -1508,10 +1527,6 @@ computeCrossingsForEdge(Renderer *rdr, jint index,
     lx = (jlong)(y - iy0)*dx/dy + ix0;
     addCrossing(rdr, y >> rdr->_YSHIFT, (jint)(lx >> rdr->_XSHIFT), 
                 orientation);
-    /* Check for error in memory allocation */
-    if (XNI_TRUE == readMemErrorFlag()) {
-        return;
-    }
 
     y += rdr->_YSTEP;
     if (y > maxY) {
@@ -1523,10 +1538,6 @@ computeCrossingsForEdge(Renderer *rdr, jint index,
         lx += xstep;
         addCrossing(rdr, y >> rdr->_YSHIFT, (jint)(lx >> rdr->_XSHIFT), 
                     orientation);
-        /* Check for error in memory allocation */
-        if (XNI_TRUE == readMemErrorFlag()) {
-            return;
-        }
     }
 }
 
