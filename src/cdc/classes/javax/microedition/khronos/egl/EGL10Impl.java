@@ -26,9 +26,9 @@ package javax.microedition.khronos.egl;
 
 import javax.microedition.khronos.opengles.*;
 import com.sun.jsr239.*;
-import com.sun.midp.lcdui.GameMap;
+import com.sun.j2me.proxy.lcdui.GameMap;
 
-import javax.microedition.lcdui.Graphics;
+import com.sun.j2me.proxy.lcdui.Graphics;
 
 import java.lang.ref.WeakReference;
 import java.util.Enumeration;

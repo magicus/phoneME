@@ -24,7 +24,7 @@
 
 package javax.microedition.khronos.egl;
 
-import com.sun.j2me.proxy.lcdui.Graphics;
+import javax.microedition.lcdui.Graphics;
 import java.util.Hashtable;
 import java.lang.ref.WeakReference;
 
@@ -57,7 +57,7 @@ final class EGLSurfaceImpl extends EGLSurface {
         }
     }
 
-    protected native void finalize();
+    private native void finalize();
     
     public int nativeId() {
 	return nativeId;
