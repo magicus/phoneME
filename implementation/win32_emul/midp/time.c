@@ -36,9 +36,7 @@
 
 #define MAX_SUSPENDED_TIMERS 5
 
-
-static javacall_bool ticker_running = JAVACALL_FALSE;
-static UINT suspended_timers[MAX_SUSPENDED_TIMERS];
+static javacall_handle suspended_timers[MAX_SUSPENDED_TIMERS];
 
 void CALLBACK win32_timer_callback(UINT uTimerID, UINT uMsg,
                                    DWORD dwUser, DWORD dw1, DWORD dw2){
@@ -47,7 +45,7 @@ void CALLBACK win32_timer_callback(UINT uTimerID, UINT uMsg,
 
     /* Check, if the timer has been suspended */
     for (i = 0; i < MAX_SUSPENDED_TIMERS; i++) {
-        if (uTimerID == suspended_timers[i]) {
+        if (uTimerID == (UINT)suspended_timers[i]) {
             return;
         }
     }
@@ -85,8 +83,6 @@ javacall_result javacall_time_initialize_timer(
         return JAVACALL_INVALID_ARGUMENT;
     }
 
-    ticker_running = JAVACALL_TRUE;
-
     hTimer = timeSetEvent(wakeupInMilliSecondsFromNow,
             10, /* 10ms: tuned resolution from CLDC_HI porting experiences */
             win32_timer_callback,
@@ -115,8 +111,8 @@ void javacall_time_suspend_ticks(javacall_handle handle){
     for (i = 0; i < MAX_SUSPENDED_TIMERS; i++) {
         if (suspended_timers[i] == handle) {
             return; /* the timer has already been suspended */
-        } else if (suspended_timers[i] == (UINT)NULL) {
-            suspended_timers[i] = (UINT)handle;
+        } else if (suspended_timers[i] == NULL) {
+            suspended_timers[i] = handle;
             return;
         }
     }
@@ -133,8 +129,8 @@ void javacall_time_suspend_ticks(javacall_handle handle){
 void javacall_time_resume_ticks(javacall_handle handle){
     int i;
     for (i = 0; i < MAX_SUSPENDED_TIMERS; i++) {
-        if (suspended_timers[i] == (UINT)handle) {
-            suspended_timers[i] = (UINT)NULL;
+        if (suspended_timers[i] == handle) {
+            suspended_timers[i] = NULL;
             return;
         }
     }
