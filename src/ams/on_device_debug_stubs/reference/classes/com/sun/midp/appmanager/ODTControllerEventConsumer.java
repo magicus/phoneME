@@ -47,4 +47,20 @@ interface ODTControllerEventConsumer {
     public void handleODDStartMidletEvent(int suiteId, String className,
                                           String displayName,
                                           boolean isDebugMode);
+
+    /**
+     * Processes MIDP_ODD_SUITE_INSTALLED_EVENT. This event indicates that
+     * a new MIDlet suite has been installed by ODT agent.
+     * 
+     * @param suiteId ID of the newly installed midlet suite          
+     */
+    public void handleODDSuiteInstalledEvent(int suiteId);
+
+    /**
+     * Processes MIDP_ODD_SUITE_REMOVED_EVENT. This event indicates that
+     * an installed MIDlet suite has been removed by ODT agent.
+     * 
+     * @param suiteId ID of the removed midlet suite          
+     */
+    public void handleODDSuiteRemovedEvent(int suiteId);
 }

@@ -187,6 +187,28 @@ public class MVMManager extends MIDlet
         }
     }
 
+    /**
+     * Processes MIDP_ODD_SUITE_INSTALLED_EVENT. This event indicates that
+     * a new MIDlet suite has been installed by ODT agent. It is signal for 
+     * the application manager to update the displayed list of MIDlets.
+     * 
+     * @param suiteId ID of the newly installed MIDlet suite       
+     */
+    public void handleODDSuiteInstalledEvent(int suiteId) {
+        appManagerUI.notifySuiteInstalled(suiteId);
+    }
+
+    /**
+     * Processes MIDP_ODD_SUITE_REMOVED_EVENT. This event indicates that
+     * an installed MIDlet suite has been removed by ODT agent. It is signal for 
+     * the application manager to update the displayed list of MIDlets.
+     * 
+     * @param suiteId ID of the removed MIDlet suite          
+     */
+    public void handleODDSuiteRemovedEvent(int suiteId) {
+        appManagerUI.notifySuiteRemoved(suiteId);
+    }
+    
     // =================================================================
     // ---------- Operations that can be performed on Midlets ----------
 

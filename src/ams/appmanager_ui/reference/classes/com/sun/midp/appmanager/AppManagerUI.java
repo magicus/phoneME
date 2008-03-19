@@ -989,7 +989,27 @@ class AppManagerUI extends Form
                                     (ResourceConstants.EXCEPTION),
                                     errorMsg);
     }
+    
+    /**
+     * Called when a new MIDlet suite is installed externally.
+     * 
+     * @param suiteId ID of the newly installed MIDlet suite
+     */         
+    void notifySuiteInstalled(int suiteId) {
+        /* IMPL NOTE: implement better handling of this event */
+        updateContent();
+    }
 
+    /**
+     * Called when a MIDlet suite has been removed externally.
+     * 
+     * @param suiteId ID of the removed MIDlet suite          
+     */         
+    void notifySuiteRemoved(int suiteId) {
+        /* IMPL NOTE: implement better handling of this event */
+        updateContent();
+    }
+    
     // ------------------------------------------------------------------
 
     /**
@@ -1972,4 +1992,5 @@ class AppManagerUI extends Form
         Command default_command; // = null
     }
 }
+
 
