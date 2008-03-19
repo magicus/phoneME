@@ -271,7 +271,15 @@ InitializeEvents(void) {
     }
 
 #if ENABLE_MULTIPLE_ISOLATES
-    maxIsolates = JVM_MaxIsolates();
+    maxIsolates = getInternalPropertyInt("MAX_ISOLATES");
+    if (0 == maxIsolates) {
+        char maxIsolatesStr[5];
+        REPORT_INFO(LC_AMS, "MAX_ISOLATES property not set");
+        /* set XML constant value as property value */
+        maxIsolates = MAX_ISOLATES;
+        sprintf(maxIsolatesStr, "%d", maxIsolates);
+        setInternalProperty("MAX_ISOLATES", maxIsolatesStr);
+    }
 #endif
 
     sizeInBytes = maxIsolates * sizeof (EventQueue);
@@ -391,18 +399,10 @@ static void StoreMIDPEventInVmThreadImp(MidpEvent event, int isolateId) {
  */
 void
 StoreMIDPEventInVmThread(MidpEvent event, int isolateId) {
-
-    int max_isolates = getInternalPropertyInt("MAX_ISOLATES");
-
-    if (0 == max_isolates) {
-        REPORT_ERROR(LC_AMS, "MAX_ISOLATES property not set");
-        max_isolates = MAX_ISOLATES;
-    }
-
     if( -1 != isolateId ) {
         StoreMIDPEventInVmThreadImp(event, isolateId);
     } else {
-        for (isolateId = 0; isolateId < max_isolates; ++isolateId)
+        for (isolateId = 0; isolateId < maxIsolates; ++isolateId)
             StoreMIDPEventInVmThreadImp(event, isolateId);
     }
 }
