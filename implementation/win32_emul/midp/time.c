@@ -23,12 +23,6 @@
  */
 
 
-
-/**
- * @file
- *
- *
- */
 #include <stdio.h>
 #include <windows.h>
 #include <mmsystem.h>
@@ -40,10 +34,22 @@
 
 #include "javacall_time.h"
 
+#define MAX_SUSPENDED_TIMERS 5
+
+static javacall_handle suspended_timers[MAX_SUSPENDED_TIMERS];
+
 void CALLBACK win32_timer_callback(UINT uTimerID, UINT uMsg,
                                    DWORD dwUser, DWORD dw1, DWORD dw2){
-
+    int i;
     javacall_callback_func func = (javacall_callback_func)dwUser;
+
+    /* Check, if the timer has been suspended */
+    for (i = 0; i < MAX_SUSPENDED_TIMERS; i++) {
+        if (uTimerID == (UINT)suspended_timers[i]) {
+            return;
+        }
+    }
+
     func((javacall_handle *)uTimerID);
 }
 
@@ -92,6 +98,50 @@ javacall_result javacall_time_initialize_timer(
     }
 }
 
+/*
+ *
+ * Temporarily disable timer interrupts. This is called when
+ * the VM is about to sleep (when there's no Java thread to execute)
+ *
+ * @param handle timer handle to suspend
+ *
+ */
+void javacall_time_suspend_ticks(javacall_handle handle){
+    int i;
+    for (i = 0; i < MAX_SUSPENDED_TIMERS; i++) {
+        if (suspended_timers[i] == handle) {
+            return; /* the timer has already been suspended */
+        } else if (suspended_timers[i] == NULL) {
+            suspended_timers[i] = handle;
+            return;
+        }
+    }
+}
+
+/*
+ *
+ * Enable  timer interrupts. This is called when the VM
+ * wakes up and continues executing Java threads.
+ *
+ * @param handle timer handle to resume
+ *
+ */
+void javacall_time_resume_ticks(javacall_handle handle){
+    int i;
+    for (i = 0; i < MAX_SUSPENDED_TIMERS; i++) {
+        if (suspended_timers[i] == handle) {
+            suspended_timers[i] = NULL;
+            return;
+        }
+    }
+}
+
+/*
+ * Suspend the current process sleep for ms milliseconds
+ */
+void javacall_time_sleep(javacall_uint64 ms){
+    Sleep((DWORD)ms);
+}
 
 /**
  *
@@ -106,6 +156,9 @@ javacall_result javacall_time_finalize_timer(javacall_handle handle) {
     if (NULL == handle) {
         return JAVACALL_INVALID_ARGUMENT;
     }
+
+    /* Remove timer from the suspended timers list (if exists) */
+    javacall_time_resume_ticks(handle);
 
     if (TIMERR_NOERROR == timeKillEvent((UINT)handle)) {
         return JAVACALL_OK;
