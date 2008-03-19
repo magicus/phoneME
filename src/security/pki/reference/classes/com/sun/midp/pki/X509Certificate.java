@@ -1121,6 +1121,31 @@ public class X509Certificate implements Certificate {
      */
     public static String[] verifyChain(Vector certs, int keyUsage,
             int extKeyUsage, CertStore certStore)
+                throws CertificateException {
+        return verifyChain(certs, keyUsage, extKeyUsage, certStore, null);
+    }
+
+    /**
+     * Verify a chain of certificates.
+     *
+     * @param certs list of certificates with first being entity certificate
+     *     and the last being the CA issued certificate.
+     * @param keyUsage -1 to not check the key usage extension, or
+     *      a key usage bit mask to check for if the extension is present
+     * @param extKeyUsage -1 to not check the extended key usage extension, or
+     *      a extended key usage bit mask to check for if the extension
+     *      is present
+     * @param certStore store of trusted CA certificates
+     * @param outIssuer [out] trusted CA authorized the last certificate
+     *                  in certs
+     *
+     * @return authorization path: an array of names from most trusted to
+     *    least trusted from the certificate chain
+     *
+     * @exception CertificateException if there is an error verifying the chain
+     */
+    public static String[] verifyChain(Vector certs, int keyUsage,
+            int extKeyUsage, CertStore certStore, Vector outIssuer)
             throws CertificateException {
         X509Certificate cert;
         X509Certificate prevCert;
@@ -1130,12 +1155,12 @@ public class X509Certificate implements Certificate {
         Vector subjectNames = new Vector();
         String[] authPath;
 
-        // must be an enitity certificate
+        // must be an entity certificate
         cert = (X509Certificate)certs.elementAt(0);
         checkKeyUsageAndValidity(cert, keyUsage, extKeyUsage);
 
         for (int i = 1; ; i++) {
-            // look up the public key of the certificate issurer
+            // look up the public key of the certificate issuer
             caCerts = certStore.getCertificates(cert.getIssuer());
             if (caCerts != null) {
                 subjectNames.addElement(caCerts[0].getSubject());
@@ -1245,6 +1270,10 @@ public class X509Certificate implements Certificate {
             for (int j = subjectNames.size() - 1, k = 0; j >= 0;
                      j--, k++) {
                 authPath[k] = (String)subjectNames.elementAt(j);
+            }
+
+            if (outIssuer != null) {
+                outIssuer.addElement(caCerts[i]);
             }
 
             return authPath;

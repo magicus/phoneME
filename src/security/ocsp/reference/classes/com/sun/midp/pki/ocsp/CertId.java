@@ -76,7 +76,14 @@ public class CertId {
         hashAlgId = AlgorithmId.get("SHA-1");
 
         //md.update(issuerCert.getSubjectX500Principal().getEncoded());
-        byte[] data = issuerCert.getSubject().getBytes();
+        String subj = issuerCert.getSubject();
+System.out.println("subj = " + subj);
+        DerValue tmp = null;
+        try {tmp = new DerValue(DerValue.tag_UTF8String, subj); } catch (Exception e) {e.printStackTrace();}
+        byte[] data = tmp.getDataBytes();
+System.out.println("data.length = " + data.length);
+
+        //byte[] data = issuerCert.getSubject().getBytes();
         md.update(data, 0, data.length);
 
         issuerNameHash = new byte[md.getDigestLength()];
@@ -87,9 +94,14 @@ public class CertId {
         DerValue val = new DerValue(pubKey);
         DerValue[] seq = new DerValue[2];
         seq[0] = val.data.getDerValue(); // AlgorithmID
+System.out.println("alg. id = " + seq[0]);
         seq[1] = val.data.getDerValue(); // Key
+System.out.println("key = " + seq[0]);        
+System.out.println("key as string = " + issuerCert.getPublicKey());        
 
+        // md.reset();
         byte[] keyBytes = seq[1].getBitString();
+System.out.println("keyBytes.length = " + keyBytes.length);        
         md.update(keyBytes, 0, keyBytes.length);
 
         issuerKeyHash = new byte[md.getDigestLength()];
@@ -192,7 +204,6 @@ public class CertId {
      * @return true if the objects are considered equal, false otherwise.
      */
     public boolean equals(Object other) {
-
         if (this == other) {
             return true;
         }
@@ -224,18 +235,23 @@ public class CertId {
      * @return <tt>true</tt> if the two arrays are equal.
      */
     private static boolean arraysEqual(byte[] a, byte[] a2) {
-        if (a==a2)
+        if (a==a2) {
             return true;
-        if (a==null || a2==null)
+        }
+        if (a==null || a2==null) {
             return false;
+        }
 
         int length = a.length;
-        if (a2.length != length)
+        if (a2.length != length) {
             return false;
+        }
 
-        for (int i=0; i<length; i++)
-            if (a[i] != a2[i])
+        for (int i=0; i<length; i++) {
+            if (a[i] != a2[i]) {
                 return false;
+            }
+        }
 
         return true;
     }

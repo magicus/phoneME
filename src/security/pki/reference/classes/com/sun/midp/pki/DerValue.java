@@ -347,7 +347,7 @@ public class DerValue {
             enc = "UnicodeBigUnmarked";
             break;
         case tag_UTF8String:
-            enc = "UTF8";
+            enc = "UTF-8";
             break;
             // TBD: Need encoder for UniversalString before it can
             // be handled.

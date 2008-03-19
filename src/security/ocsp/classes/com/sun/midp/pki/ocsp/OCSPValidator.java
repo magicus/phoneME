@@ -37,10 +37,12 @@ public interface OCSPValidator {
     /**
      * Retrieves the status of the given certificate.
      *
-     * @param cert certificate status of which must be checked
-     * @param certPath vector of X.509 certificates
+     * @param cert X.509 certificate status of which must be checked
+     * @param issuerCert certificate of the trusted authority issued
+     *                   the certificate given by cert
      * @return status of the certificate
      * @throws OCSPException if the OCSP Responder returned an error message
      */
-    public int validate(Certificate cert, Vector certPath) throws OCSPException;
+    public int validate(Certificate cert, Certificate issuerCert)
+            throws OCSPException;
 }

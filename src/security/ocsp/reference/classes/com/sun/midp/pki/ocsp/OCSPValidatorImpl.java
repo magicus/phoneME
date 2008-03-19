@@ -30,6 +30,7 @@ import com.sun.midp.io.Base64;
 import com.sun.midp.main.Configuration;
 import com.sun.midp.pki.ObjectIdentifier;
 import com.sun.midp.pki.X509Certificate;
+import com.sun.midp.publickeystore.WebPublicKeyStore;
 
 import javax.microedition.pki.Certificate;
 import javax.microedition.io.HttpConnection;
@@ -73,24 +74,32 @@ public class OCSPValidatorImpl implements OCSPValidator {
     /**
      * Retrieves the status of the given certificate.
      *
-     * @param cert certificate status of which must be checked
-     * @param certPath vector of X.509 certificates
+     * @param cert X.509 certificate status of which must be checked
+     * @param issuerCert certificate of the trusted authority issued
+     *                   the certificate given by cert
      * @return status of the certificate
      * @throws OCSPException if the OCSP Responder returned an error message
      */
-    public int validate(Certificate cert, Vector certPath) throws OCSPException {
+    public int validate(Certificate cert, Certificate issuerCert)
+            throws OCSPException {
         OCSPResponse response;
 
         try {
             openConnection();
 
-            X509Certificate issuerCert = (X509Certificate)certPath.elementAt(0);
+            //X509Certificate issuerCert = (X509Certificate)certPath.elementAt(0);
             OCSPRequest request =
-                    new OCSPRequest((X509Certificate)cert, issuerCert);
+                    new OCSPRequest((X509Certificate)cert,
+                            (X509Certificate)issuerCert);
             CertId certId = request.getCertId();
             sendRequest(request);
 
-            response = receiveResponse(certPath);
+            //WebPublicKeyStore keyStore = WebPublicKeyStore.getTrustedKeyStore();
+            //X509Certificate[] caCerts = keyStore.getKey(0);
+            X509Certificate[] caCerts = new X509Certificate[] {
+                    (X509Certificate)issuerCert
+            }; 
+            response = receiveResponse(caCerts);
 
             // Check that response applies to the cert that was supplied
             if (! certId.equals(response.getCertId())) {
@@ -189,40 +198,45 @@ public class OCSPValidatorImpl implements OCSPValidator {
     /**
      * Receives a response from the OCSP server.
      *
-     * @param certPath vector of X.509 certificates
+     * @param caCerts X.509 certificates of known CAs
      * @return OCSP response received from the server
      * @throws OCSPException if an error occured while receiving response
      */
-    private OCSPResponse receiveResponse(Vector certPath) throws OCSPException {
+    private OCSPResponse receiveResponse(X509Certificate[] caCerts)
+            throws OCSPException {
         System.out.println(">>> receiveResponse(): started");
 
         try {
             httpInputStream = httpConnection.openInputStream();
 
             int bufSize = CHUNK_SIZE;
-            byte[] response = new byte[bufSize];
+            byte[] tmpBuf = new byte[bufSize];
             int total = 0;
             int count = 0;
 
             while (count != -1) {
-                count = httpInputStream.read(response, total,
-                                             response.length - total);
+                count = httpInputStream.read(tmpBuf, total,
+                                             tmpBuf.length - total);
                 total += count;
 
-                if (total == response.length) {
+                if (total == tmpBuf.length) {
                     // allocate more memory to hold the response
                     int newBufSize = bufSize + CHUNK_SIZE;
                     byte[] newResponseBuf = new byte[newBufSize];
-                    System.arraycopy(response, 0, newResponseBuf, 0, total);
-                    response = newResponseBuf; 
+                    System.arraycopy(tmpBuf, 0, newResponseBuf, 0, total);
+                    tmpBuf = newResponseBuf;
                 }
             }
 
-            // IMPL_NOTE: implement finding responderCert
-            X509Certificate responderCert =
-                    (X509Certificate)certPath.elementAt(0);
+            byte[] responseBuf = new byte[total];
+            System.arraycopy(tmpBuf, 0, responseBuf, 0, total);
 
-            OCSPResponse ocspResponse = new OCSPResponse(response,
+            // IMPL_NOTE: implement finding responderCert
+            X509Certificate responderCert = caCerts[0];
+            //WebPublicKeyStore keyStore = WebPublicKeyStore.getTrustedKeyStore();
+            //X509Certificate responderCert = keyStore.getKey(0);
+
+            OCSPResponse ocspResponse = new OCSPResponse(responseBuf,
                                                          responderCert);
 
             System.out.println(">>> receiveResponse(): exiting");

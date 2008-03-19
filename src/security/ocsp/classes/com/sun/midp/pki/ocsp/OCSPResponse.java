@@ -343,8 +343,8 @@ System.out.println(">>> 14");
                 if (cert.equals(responderCert)) {
                     // cert is trusted, now verify the signed response
 
-                // Next check if the cert was issued by the responder cert
-                // which was set locally.
+                    // Next check if the cert was issued by the responder cert
+                    // which was set locally.
                 } else if (cert.getIssuer().equals(
                     responderCert.getSubject())) {
 

@@ -191,8 +191,6 @@ class RSAKey implements Key {
         return (BitArray)bitStringKey.clone();
     }
 
-    ////////////////////////////////
-
     /*
      * Produce SubjectPublicKey encoding from algorithm id and key material.
      */
@@ -203,6 +201,8 @@ class RSAKey implements Key {
             tmp.putUnalignedBitString(key);
             out.write(DerValue.tag_Sequence, tmp);
     }
+
+    ////////////////////////////////
 
     // The next four are for RSA public/private keys
     /**

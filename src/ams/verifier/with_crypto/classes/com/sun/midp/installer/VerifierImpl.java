@@ -272,12 +272,14 @@ public class VerifierImpl implements Verifier {
             return -1;
         }
 
+        Vector issuer = new Vector(1);
+
         try {
             keyStore = WebPublicKeyStore.getTrustedKeyStore();
             authPath = X509Certificate.verifyChain(derCerts,
                             X509Certificate.DIGITAL_SIG_KEY_USAGE,
                             X509Certificate.CODE_SIGN_EXT_KEY_USAGE,
-                            keyStore);
+                            keyStore, issuer);
         } catch (CertificateException ce) {
             switch (ce.getReason()) {
             case CertificateException.UNRECOGNIZED_ISSUER:
@@ -326,7 +328,9 @@ public class VerifierImpl implements Verifier {
         X509Certificate cert = (X509Certificate)derCerts.elementAt(0);
         
         try {
-            status = certValidator.validate(cert, derCerts);
+            status = certValidator.validate(
+                    (X509Certificate)derCerts.elementAt(derCerts.size() - 1),
+                        (X509Certificate)issuer.elementAt(0));
         } catch (OCSPException ocspEx) {
             /*
              * IMPL_NOTE: an exception must be thrown to allow the caller
