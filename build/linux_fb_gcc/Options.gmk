@@ -80,6 +80,7 @@ USE_FILE_SYSTEM         = true
 USE_ON_DEVICE_DEBUG     = false
 USE_WTK_DEBUG           = false
 USE_AMS_FOLDERS         = false
+USE_AMS_EXECUTABLE      = true
 
 # DIRECTFB 
 USE_DIRECTFB            = false

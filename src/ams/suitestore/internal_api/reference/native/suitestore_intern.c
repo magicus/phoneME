@@ -573,15 +573,15 @@ read_suites_data(char** ppszError) {
         {
             int i;
             jint strLen;
-            pcsl_string* pStrings[] = {
-                &pData->varSuiteData.midletClassName,
-                &pData->varSuiteData.displayName,
-                &pData->varSuiteData.iconName,
-                &pData->varSuiteData.suiteVendor,
-                &pData->varSuiteData.suiteName,
-                &pData->varSuiteData.pathToJar,
-                &pData->varSuiteData.pathToSettings
-            };
+            pcsl_string* pStrings[7];
+
+            pStrings[0] = &pData->varSuiteData.midletClassName;
+            pStrings[1] = &pData->varSuiteData.displayName;
+            pStrings[2] = &pData->varSuiteData.iconName;
+            pStrings[3] = &pData->varSuiteData.suiteVendor;
+            pStrings[4] = &pData->varSuiteData.suiteName;
+            pStrings[5] = &pData->varSuiteData.pathToJar;
+            pStrings[6] = &pData->varSuiteData.pathToSettings;
 
             status = ALL_OK;
 
@@ -713,16 +713,16 @@ write_suites_data(char** ppszError) {
         {
             int i, convertedLen;
             jint strLen;
-            pcsl_string* pStrings[] = {
-                &pData->varSuiteData.midletClassName,
-                &pData->varSuiteData.displayName,
-                &pData->varSuiteData.iconName,
-                &pData->varSuiteData.suiteVendor,
-                &pData->varSuiteData.suiteName,
-                &pData->varSuiteData.pathToJar,
-                &pData->varSuiteData.pathToSettings
-            };
+            pcsl_string* pStrings[7];
 
+            pStrings[0] = &pData->varSuiteData.midletClassName;
+            pStrings[1] = &pData->varSuiteData.displayName;
+            pStrings[2] = &pData->varSuiteData.iconName;
+            pStrings[3] = &pData->varSuiteData.suiteVendor;
+            pStrings[4] = &pData->varSuiteData.suiteName;
+            pStrings[5] = &pData->varSuiteData.pathToJar;
+            pStrings[6] = &pData->varSuiteData.pathToSettings;
+                
             status = ALL_OK;
 
             for (i = 0; i < (int) (sizeof(pStrings) / sizeof(pStrings[0]));

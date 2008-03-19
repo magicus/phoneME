@@ -123,8 +123,11 @@ ifeq ($(USE_VAREXPORT), true)
 include $(MIDP_DIR)/build/common/makefiles/varexport.gmk
 endif
 
+ifeq ($(USE_AMS_EXECUTABLE), true)
 
 # Build AMS executables after everything else ae built
 # This additional build targets must be defined after all includes
 # so that Make variables are fully populated by each subsystem
 all:: $(SUBSYSTEM_AMS_EXECUTABLES)
+
+endif

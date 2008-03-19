@@ -45,6 +45,16 @@ CC              = armcc
 CPP             = armcpp
 CC_OUTPUT       = -o
 
+AR              = armar
+AR_FLAGS        = -crs
+AR_OUTPUT       =
+
+# commands for AR (lib) script
+MRI_ADD = 
+MRI_CREATE = -crs 
+MRI_SAVE = 
+MRI_OPT = -via 
+
 LD              = armlink
 # THERE MUST BE A WHITESPACE AFTER the -o THE BUILD WILL FAIL OTHERWISE
 LD_OUTPUT       = -o 
@@ -73,5 +83,6 @@ LD_FLAGS       += -map -symbols -list runMidlet$(g)$(p).map \
 
 
 endif
+EXTRA_CFLAGS +=  -apcs /interwork
 
 endif

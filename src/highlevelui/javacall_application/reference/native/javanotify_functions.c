@@ -130,7 +130,7 @@ void javanotify_key_event(javacall_key key, javacall_keypress_type type) {
 void javanotify_pen_event(int x, int y, javacall_penevent_type type) {
     midp_jc_event_union e;
 
-        REPORT_INFO3(LC_CORE,"javanotify_pen_event() >> x=%d, y=%d type=%d\n",x,y,type);
+    REPORT_INFO3(LC_CORE,"javanotify_pen_event() >> x=%d, y=%d type=%d\n",x,y,type);
 
     e.eventType = MIDP_JC_EVENT_PEN;
     e.data.penEvent.type = type;
@@ -1680,11 +1680,10 @@ void /* OPTIONAL */ javanotify_textfield_phonenumber_selection(char* phoneNumber
 }
 
 void /* OPTIONAL */ javanotify_rotation() {
-     midp_jc_event_union e;
-     int length;
-  
-     e.eventType = MIDP_JC_EVENT_ROTATION;
-     midp_jc_event_send(&e);
+    midp_jc_event_union e;
+
+    e.eventType = MIDP_JC_EVENT_ROTATION;
+    midp_jc_event_send(&e);
 }
 
 #if ENABLE_ON_DEVICE_DEBUG
