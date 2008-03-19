@@ -129,10 +129,27 @@ ENTRY ( CVMCCMruntimeCheckCastGlue )
 	li	a3, ~3
 	and	a1, a1, a3	# mask off low bits of object cb
 	/* see if guess is correct */
-	bne	a0, a1, call_checkcast_helper
+	bne	a0, a1, inline_superclass_checkcast
 1:
 	move	v0, a0
 	jr	ra		# return, null or same as last successful cast
+
+inline_superclass_checkcast:
+/* IAI - 21 */
+#if defined(IAI_FAST_ASSIGNABLE_CHECKING) && !defined(CVM_AOT)
+	/* Before calling helper, do a quick inline check cast. 
+	 * Compare the cast cb with current object's class, super class, 
+         * supersuper class ...  until to the super class is NULL.
+         */
+ 	move 	v0, a1   /* v0 = object.cb */
+
+FASTCHECKING1:
+	bne	a2, v0, 1f  /* cast cb != object.cb */
+	sw	a1, -4(ra)  /* save the matched cb into cache */
+	jr	ra          /* match, so return */
+1:	lw	v0, OFFSET_CVMClassBlock_superClassCb(v0) /* load super class*/
+	bne	v0, zero, FASTCHECKING1 /* if superCb not NULL then continue */
+#endif /* IAI_FAST_ASSIGNABLE_CHECKING */
 
 call_checkcast_helper:
 	/* need to call the helper */
@@ -159,13 +176,33 @@ ENTRY ( CVMCCMruntimeInstanceOfGlue )
 	lw	a0, -4(ra)	# load the guess cb
 	li	a3, ~3
 	and	a1, a1, a3	# mask off low bits of object cb
-	bne	a0, a1, 2f	# see if guess is correct
-	li	a0, 1		# return TRUE if equal
+        /* see if guess is correct */
+	bne	a0, a1, inline_superclass_instanceof
+	li	v0, 1		# return TRUE if equal
+	jr	ra
 1:
 	move	v0, a0
 	jr	ra
 
-2:
+inline_superclass_instanceof:
+/* IAI - 21 */
+#if defined(IAI_FAST_ASSIGNABLE_CHECKING) && !defined(CVM_AOT)
+	/* Before calling helper, do a quick inline check cast. 
+	 * Compare the cast cb with current object's class, super class, 
+         * super'super class ...  until to the super class is NULL.
+         */
+ 	move 	a0, a1   /* a0 = object.cb */
+
+FASTCHECKING2:
+	bne	a2, a0, 2f  /* cast cb != object.cb */
+	li	v0, 1       /* return TRUE if a match is fine */
+	sw	a1, -4(ra)  /* save the matched cb into cache */
+	jr	ra          /* match, so return */
+2:	lw	a0, OFFSET_CVMClassBlock_superClassCb(a0) /* load super class*/
+	bne	a0, zero, FASTCHECKING2 /* if superCb not NULL then continue */
+#endif /* IAI_FAST_ASSIGNABLE_CHECKING */
+
+
 	/* need to call the helper */
 	/*
 	 * a1 = objectCb

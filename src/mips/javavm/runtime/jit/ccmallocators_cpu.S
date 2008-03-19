@@ -41,6 +41,15 @@
 	addiu	a0, sp, OFFSET_CStack_CCEE ;				\
 	BRANCH_TO_VM_FUNCTION(HELPER)
 
+/* IAI - 19 */
+/* preload the memory to be allocated for the next object 
+ * in the next NewGlue call 
+ */
+#ifdef IAI_PRELOAD_NEW_OBJECT
+#define PREFETCH(offset, basereg) pref 1,offset(basereg)
+#else
+#define PREFETCH(offset, basereg)
+#endif
 
 /*
  * Entry point for allocating an object. The cb is the only argument and
@@ -48,10 +57,14 @@
  * when it gets passed to CVMgcAllocNewInstance.
  */
 ENTRY ( CVMCCMruntimeNewGlue )
+	/* Arguments:           */
+	/*	a1 = 'cb'       */
+#ifdef IAI_NEW_GLUE_CALLING_CONVENTION_IMPROVEMENT
+	/*	a2 = 'instance size'	 IAI-03 */
+	/*	a3 = 'accessflag'	 IAI-03 */
+#endif
+
 	/*
-	 * Arguments:	
-	 *	a1 = 'cb'
-	 *
 	 * TODO:	 Do a flag on class that means "big instance"
 	 *		 So that we can check finalizability and big instance
 	 *		 together.
@@ -60,7 +73,11 @@ ENTRY ( CVMCCMruntimeNewGlue )
 #define	CB		a1
 #define CVMGLOBALS	t0
 	LA(CVMGLOBALS, CVMglobals)
+/* IAI-03 */
+#ifndef IAI_NEW_GLUE_CALLING_CONVENTION_IMPROVEMENT
+	/* Get access flags from class */
 	lbu	a3, OFFSET_CVMClassBlock_accessFlagsX(CB)  # flags
+#endif
 	andi	a3, a3, CONSTANT_CLASS_ACC_FINALIZABLE     # finalizable?
 	li	a0, 1	       		# locked	
 	bne	a3, zero, GOSLOW	# bail if yes. Otherwise v1 == 0
@@ -83,13 +100,24 @@ ENTRY ( CVMCCMruntimeNewGlue )
 	lw	a3, OFFSET_CVMGlobalState_allocTopPtr(CVMGLOBALS)
 	lw	v0, (a0)   # v0 <- allocPtr  
 	lw	a3, (a3)   # a3 <- allocTop
+/* IAI-03 */
+#ifndef IAI_NEW_GLUE_CALLING_CONVENTION_IMPROVEMENT
+	/* get instance size from class */
 	lhu	a2, OFFSET_CVMClassBlock_instanceSizeX(CB)  # instance size
+#endif
 	addu	a2, v0, a2     # a2 <- allocNext (allocPtr v0 + size a2)
+
+        /* first of 6 prefetches of next object's cache lines */
+	PREFETCH(0,a2)
+
 	/* Check for overflow */
 	sltu	jp, a2, v0
+	PREFETCH(32,a2)
+	PREFETCH(64,a2)
 	bne	jp, zero, GOUNLOCKANDSLOW
 	/* Is a2 <= a3 (within range?) */
 	sltu	jp, a3, a2
+	PREFETCH(96,a2)
 	bne	jp, zero, GOUNLOCKANDSLOW
 	sw  	a2, (a0)    # and the new allocPtr is committed
 #ifdef CVM_FASTALLOC_STATS
@@ -111,7 +139,9 @@ ENTRY ( CVMCCMruntimeNewGlue )
          * And a2 was allocNext which is also the end of the object
 	 */
 	addiu	a3, v0, 4
+	PREFETCH(128,a2)
 	addiu	a2, a2, -4
+	PREFETCH(160,a2)
 	b	LOOPTEST
 INITLOOP:
 	sw	zero, (a3)	# Next object field
@@ -239,14 +269,22 @@ ENTRY ( CVMCCMruntimeNewArrayGlue )
 	lw	a3, 0(a3)	/* o3 <- allocTop */
 
 	addu	a0, OBJ, OBJSIZE
+
+	/* first of 6 prefetches of next object's cache lines */
+	PREFETCH(0,a0)
+
 	/* Check for overflow */
 	sltu	jp, a0, OBJ
+	PREFETCH(32,a0)
+	PREFETCH(64,a0)
 	bne	jp, zero, ARR_GOUNLOCKANDSLOW
 	/* within range? */
 	sltu	jp, a3, a0
+	PREFETCH(96,a0)
 	bne	jp, zero, ARR_GOUNLOCKANDSLOW
 
 	sw  	a0, (v1)	/* commit the new allocPtr */
+
 
 	/* From now on, v1 can be trashed. */
 #ifdef CVM_FASTALLOC_STATS
@@ -265,7 +303,9 @@ ENTRY ( CVMCCMruntimeNewArrayGlue )
 
 #define	ALLOCNEXT	v1
 	addu	ALLOCNEXT, OBJ, OBJSIZE
+	PREFETCH(128,a0)
 	addiu	a3, OBJ, 12
+	PREFETCH(160,a0)
 	b	ARR_LOOPTEST
 
 ARR_INITLOOP:
@@ -411,14 +451,21 @@ ENTRY ( CVMCCMruntimeANewArrayGlue )
 	lw	a3, (a3)	/* a3 <- allocTop */
 
 	addu	a0, OBJ, OBJSIZE
+
+	/* first of 6 prefetches of next object's cache lines */
+	PREFETCH(0,a0)
+
 	/* Check for overflow */
 	sltu	jp, a0, OBJ
-	bne	jp, zero, OBJARR_GOUNLOCKANDSLOW
+	PREFETCH(32,a0)
+	PREFETCH(64,a0)
 	/* within range? */
 	sltu	jp, a3, a0
+	PREFETCH(96,a0)
 	bne	jp, zero, OBJARR_GOUNLOCKANDSLOW
 
 	sw  	a0, (v1)	/* commit the new allocPtr */
+   
 
 #ifdef CVM_FASTALLOC_STATS
 	/* Count fast locks */
@@ -436,7 +483,9 @@ ENTRY ( CVMCCMruntimeANewArrayGlue )
 
 #define ALLOCNEXT	v1
 	addu	ALLOCNEXT, OBJ, OBJSIZE
+	PREFETCH(128,a0)
 	addiu	a3, OBJ, 12
+	PREFETCH(160,a0)
 	b	OBJARR_LOOPTEST
 
 OBJARR_INITLOOP:
