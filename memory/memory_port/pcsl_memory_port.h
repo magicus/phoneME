@@ -118,7 +118,7 @@ extern "C" {
  * @param    y actual size of memory allocated
  * @return     a pointer to the newly allocated memory, or <tt>0</tt> if not available
  */
-#define pcsl_heap_allocate_port(x,y)   pcsl_heap_allocate_port_impl((x),(y))
+#define pcsl_heap_allocate_port(x,y)   pcsl_heap_allocate_port_impl((long)(x),(long*)(y))
 
 /** 
  * Frees large memory heap
