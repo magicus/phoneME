@@ -238,11 +238,13 @@ static void updateDimensions() {
     SHSipInfo(SPI_GETSIPINFO, 0, &sipinfo, 0);
     rcVisibleDesktop = sipinfo.rcVisibleDesktop;
 
-    SystemParametersInfo(SPI_GETWORKAREA, 0, &rc, 0);
-    gxj_system_screen_buffer.width = rc.right;
-    gxj_system_screen_buffer.height = rc.bottom;
+    SHFullScreen(hwndMain, SHFS_HIDESIPBUTTON);
+    GetWindowRect(hwndMain, &rc);
+    gxj_system_screen_buffer.width = rc.right - rc.left;
+    gxj_system_screen_buffer.height = GetSystemMetrics(SM_CYSCREEN) - rc.top;
 
-    MoveWindow(hwndMain, rc.left, rc.top, rc.right, rc.bottom, TRUE);
+    MoveWindow(hwndMain, rc.left, rc.top, gxj_system_screen_buffer.width,
+        gxj_system_screen_buffer.height, TRUE);
 }
 
 static void initPutpixelSurface() {
@@ -432,8 +434,6 @@ static BOOL InitInstance(HINSTANCE hInstance, int CmdShow) {
 
     if (!_hwndMain)
         return FALSE;
-
-    SHFullScreen(_hwndMain, SHFS_SHOWTASKBAR | SHFS_HIDESIPBUTTON | SHFS_SHOWSTARTICON);
 
     winceapp_set_window_handle(_hwndMain);
     ShowWindow(_hwndMain, CmdShow);
@@ -776,6 +776,9 @@ LRESULT CALLBACK winceapp_wndproc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) {
             result = processKey(hwnd, mapAction(msg, lp), lastKeyPressed);
         }
         return result;
+    case WM_SETFOCUS:
+        SHFullScreen(hwnd, SHFS_HIDESIPBUTTON);
+        break;
     default:
         return DefWindowProc(hwnd, msg, wp, lp);
     }
