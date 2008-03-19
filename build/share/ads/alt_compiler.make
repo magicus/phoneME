@@ -58,7 +58,7 @@ JVM_FPU_FLAGS		=
 endif
 
 ifeq ($(ENABLE_PCSL), true)
-PCSL_DIST_DIR           = $(PCSL_OUTPUT_DIR)/armsd_arm
+PCSL_DIST_DIR           = $(PCSL_OUTPUT_DIR)/$(os_family)_$(arch)
 
 CPP_INCLUDE_DIRS       += -I"$(PCSL_DIST_DIR)/inc"
 
@@ -71,7 +71,7 @@ LINK_FLAGS             += $(PCSL_LIBS)
 MAKE_EXPORT_EXTRA_LIBS += $(PCSL_LIBS)
 endif
 
-CPP_OPT_FLAGS		= 
+CPP_OPT_FLAGS		= -Wx
 
 CPP_OPT_FLAGS_debug	= $(DEBUG_SYMBOLS_FLAGS)
 CPP_OPT_FLAGS_release	= -O2 -Otime
@@ -129,7 +129,7 @@ else
     #
     ASM_FLAGS          += -CheckRegList -32 
     ifeq ($(ENABLE_ARM_VFP), true)
-    ASM_FLAGS          += -FPU VFP -CPU ARM10200E
+    ASM_FLAGS          += -FPU VFP -CPU $(TARGET_CPU)
     endif
     LINKER_OUTPUT	= -O
 
