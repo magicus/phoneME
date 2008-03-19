@@ -147,6 +147,8 @@ public class MVMManager extends MIDlet
         appManagerUI = new AppManagerUI(this, display, displayError, first,
                                         null);
 
+        processArguments();
+
         if (first) {
             first = false;
         }
@@ -328,14 +330,7 @@ public class MVMManager extends MIDlet
 
     /** Launch the ODT agent. */
     public void launchODTAgent() {
-        try {
-            MIDletSuiteUtils.execute(MIDletSuite.INTERNAL_SUITE_ID,
-                ODT_AGENT,
-                Resource.getString(ResourceConstants.ODT_AGENT_MIDLET));
-        } catch (Exception ex) {
-            displayError.showErrorAlert(Resource.getString(
-                ResourceConstants.ODT_AGENT_MIDLET), ex, null, null);
-        }
+        launchODTAgent(null);
     }
 
     /**
@@ -428,4 +423,45 @@ public class MVMManager extends MIDlet
         }
     }
 
+    /**
+     * Processes the arguments of this MIDletSuite.
+     */
+    private void processArguments() {
+        for (int i = 0; i < 3; ++i) {
+            final String argValue = getAppProperty("arg-" + i);
+            if (argValue == null) {
+                // no more arguments
+                break;
+            }
+
+            if (argValue.equals("-runodtagent")) {
+                launchODTAgent(null);
+            } else if (argValue.startsWith("-runodtagent:")) {
+                final int colonIndex = argValue.indexOf(':');
+                final String odtAgentSettings = 
+                        argValue.substring(colonIndex + 1);
+                launchODTAgent(odtAgentSettings);
+            }
+        }
+    }
+
+    /**
+     * Launches the ODT agent with the given settings.
+     * 
+     * @param odtAgentSettings string containing the ODT agent settings or
+     *      <code>null</code> if the default settings should be used
+     */
+    private void launchODTAgent(final String odtAgentSettings) {
+        try {
+            MIDletSuiteUtils.executeWithArgs(
+                    MIDletSuite.INTERNAL_SUITE_ID,
+                    ODT_AGENT,
+                    Resource.getString(ResourceConstants.ODT_AGENT_MIDLET),
+                    odtAgentSettings, null, null);
+        } catch (final Exception ex) {
+            displayError.showErrorAlert(
+                    Resource.getString(ResourceConstants.ODT_AGENT_MIDLET), 
+                    ex, null, null);
+        }
+    }
 }
