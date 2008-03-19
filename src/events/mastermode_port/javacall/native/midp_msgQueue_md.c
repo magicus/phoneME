@@ -168,9 +168,7 @@ void checkForSystemSignal(MidpReentryData* pNewSignal,
         pNewMidpEvent->type         = MMAPI_EVENT;
         pNewMidpEvent->MM_PLAYER_ID = event->data.multimediaEvent.playerId;
         pNewMidpEvent->MM_DATA      = event->data.multimediaEvent.data;
-        pNewMidpEvent->MM_ISOLATE   = event->data.multimediaEvent.appId;
         pNewMidpEvent->MM_EVT_TYPE  = event->data.multimediaEvent.mediaType;
-        pNewMidpEvent->MM_EVT_STATUS= event->data.multimediaEvent.status;
 
         /* VOLUME_CHANGED event must be sent to all players.             */
         /* MM_ISOLATE = -1 causes bradcast by StoreMIDPEventInVmThread() */
