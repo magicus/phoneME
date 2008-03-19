@@ -153,7 +153,6 @@ static int max_isolates = 0;
  */
 static void initResourceLimit() {
     int i, j;
-    char max_isolates_str[5];
 
 #if ENABLE_CDC
     // CDC does not have isolates.
@@ -162,10 +161,10 @@ static void initResourceLimit() {
     max_isolates = getInternalPropertyInt("MAX_ISOLATES");
 
     if (0 == max_isolates) {
-        REPORT_ERROR(LC_AMS, "MAX_ISOLATES property not set");
-        /* get XML-generated property */
+        char max_isolates_str[5];
+        REPORT_INFO(LC_AMS, "MAX_ISOLATES property not set");
+        /* set XML constant value as property value */
         max_isolates = MAX_ISOLATES;
-        /* set the hard-coded property */
         sprintf(max_isolates_str, "%d", max_isolates);
         setInternalProperty("MAX_ISOLATES", max_isolates_str);
     }
