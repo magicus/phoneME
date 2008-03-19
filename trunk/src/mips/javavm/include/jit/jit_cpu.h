@@ -28,6 +28,10 @@
 #ifndef _INCLUDED_MIPS_JIT_CPU_H
 #define _INCLUDED_MIPS_JIT_CPU_H
 
+#ifdef USE_CDC_COM
+#include "javavm/include/iai_opt_config.h"
+#endif
+
 /*
  * This file #defines all of the macros that shared parts of the jit
  * use in a platform indendent way. The exported symbols are prefixed
