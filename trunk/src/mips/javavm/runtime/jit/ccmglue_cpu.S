@@ -139,7 +139,7 @@ inline_superclass_checkcast:
 #if defined(IAI_FAST_ASSIGNABLE_CHECKING) && !defined(CVM_AOT)
 	/* Before calling helper, do a quick inline check cast. 
 	 * Compare the cast cb with current object's class, super class, 
-         * supersuper class ...  until to the super class is NULL.
+         * super super class ...  until to the super class is NULL.
          */
  	move 	v0, a1   /* v0 = object.cb */
 
