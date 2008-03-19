@@ -29,9 +29,7 @@
  * @brief javacall registry access implementation
  */
 
-
 #include <string.h>
-#include <wchar.h>
 
 #include <javacall_defs.h>
 #include "javautil_string.h"
