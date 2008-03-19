@@ -51,6 +51,12 @@ extern void javanotify_list_storageNames(void);
 extern void InitializeLimeEvents();
 extern void FinalizeLimeEvents();
 
+static void reportOutOfMemoryError();
+
+#if ENABLE_MULTIPLE_ISOLATES
+static char* constructODTAgentMVMManagerArgument(
+        const char* odtAgentSettings);
+#endif /* ENABLE_MULTIPLE_ISOLATES */
 
 /** Usage text for the run emulator executable. */
 /* IMPL_NOTE: Update usage according to main(...) func */
@@ -98,10 +104,19 @@ static const char* const emulatorUsageText =
             "-Xdomain:<domain_name>\n"
             "                   Set the MIDlet suite's security domain\n\n";
 
+#define ODT_AGENT_OPTION "-Xodtagent"
+#define ODT_AGENT_OPTION_LEN \
+        (sizeof(ODT_AGENT_OPTION) / sizeof(char) - 1)
+
+#define RUN_ODT_AGENT_PREFIX "-runodtagent"
+#define RUN_ODT_AGENT_PREFIX_LEN \
+        (sizeof(RUN_ODT_AGENT_PREFIX) / sizeof(char) - 1)
+
 typedef enum {
     RUN_OTA,
     RUN_LOCAL,
     AUTOTEST,
+    ODTAGENT
 } execution_mode;
 
 typedef enum {
@@ -134,6 +149,8 @@ main(int argc, char *argv[]) {
     char *debugPort        = NULL;
     int stdoutPort         = -1;
     int stderrPort         = -1;
+    char* odtAgentSettings = NULL;
+    char* mvmManagerArgument = NULL;
 
     /* uncomment this like to force the debugger to start */
     /* _asm int 3; */
@@ -270,6 +287,27 @@ main(int argc, char *argv[]) {
                 ++i;
                 stderrPort = atoi(argv[i]);
             }
+        } else if (strcmp(argv[i], ODT_AGENT_OPTION) == 0) {
+            /* handle "-Xodtagent" */
+            executionMode = ODTAGENT;
+        } else if (strncmp(argv[i], ODT_AGENT_OPTION ":", 
+                           ODT_AGENT_OPTION_LEN + 1) == 0) {
+            /* handle "-Xodtagent:<settings>" */
+            
+            /* settings for the ODT agent start after the ':' */
+            const char* settingsString = argv[i] + ODT_AGENT_OPTION_LEN + 1;
+            int settingsStringLen = strlen(settingsString);
+
+            odtAgentSettings = 
+                    (char*)malloc((settingsStringLen + 1) * sizeof(char));
+            if (odtAgentSettings == NULL) {
+                reportOutOfMemoryError();
+                return -1;
+            }
+            
+            strcpy(odtAgentSettings, settingsString);
+
+            executionMode = ODTAGENT;
         } else if (strcmp(argv[i], "-descriptor") == 0) {
 
             /* run local application */
@@ -493,6 +531,44 @@ main(int argc, char *argv[]) {
             "com.sun.midp.installer.AutoTester", url, domainStr};
         int numargs = (domainStr!=NULL) ? 5 : 4;
         javanotify_start_java_with_arbitrary_args(numargs, argv1);
+    } else if (executionMode == ODTAGENT) {
+    
+#if ENABLE_MULTIPLE_ISOLATES
+
+        /* run the MVM manager and instruct it run the ODT agent */
+
+        char* argv1[4] = { 
+                "runMidlet", "-1",
+                "com.sun.midp.appmanager.MVMManager", 
+                RUN_ODT_AGENT_PREFIX }; 
+    
+        if (odtAgentSettings != NULL) {
+            mvmManagerArgument = 
+                    constructODTAgentMVMManagerArgument(odtAgentSettings);
+            if (mvmManagerArgument == NULL) {
+                reportOutOfMemoryError();
+                return -1;
+            }
+            
+            /* replace the first mvm manager argument */
+            argv1[3] = mvmManagerArgument;
+        }
+
+        javanotify_start_java_with_arbitrary_args(4, argv1);
+
+#else /* ENABLE_MULTIPLE_ISOLATES */
+
+        /* run the ODT agent directly */
+
+        char *argv1[4] = {
+                "runMidlet", "-1",
+                "com.sun.midp.odd.ODTAgentMIDlet", 
+                odtAgentSettings };
+        int numargs = (odtAgentSettings != NULL) ? 4 : 3;
+        javanotify_start_java_with_arbitrary_args(numargs, argv1);
+
+#endif /* ENABLE_MULTIPLE_ISOLATES */
+
     } else { /* no execution mode, invalid arguments */
         javanotify_start();
     }
@@ -533,7 +609,48 @@ main(int argc, char *argv[]) {
     free(className);
     free(url);
     free(storageName);
+    free(odtAgentSettings);
+    free(mvmManagerArgument);
 
     FinalizeLimeEvents();
     return 1;
 }
+
+/**
+ * Logs an out of memory error.
+ */ 
+static void 
+reportOutOfMemoryError() {
+    javautil_debug_print(JAVACALL_LOG_CRITICAL, "main",
+                         "Out of memory error");
+}
+
+#if ENABLE_MULTIPLE_ISOLATES
+
+/**
+ * Constructs a new string in the form which is accepted as a parameter to the
+ * MVM application manager and causes the manager to run ODT agent automatically 
+ * with the specified settings. The returned value is a pointer to the newly 
+ * allocated string. Its responsibility of the caller to free it after use.
+ * 
+ * @param odtAgentSettings pointer to settings string to be passed to ODT agent
+ * @return pointer to the allocated argument string or <code>NULL</code> if
+ *      the string allocation failed 
+ */  
+static char*
+constructODTAgentMVMManagerArgument(const char* odtAgentSettings) {
+    int mvmManagerParamLen = 
+            RUN_ODT_AGENT_PREFIX_LEN + 1 + strlen(odtAgentSettings);
+    char* mvmManagerParamString = 
+            (char*)malloc((mvmManagerParamLen + 1) * sizeof(char));
+    if (mvmManagerParamString == NULL) {
+        return NULL;
+    }
+    
+    strcpy(mvmManagerParamString, RUN_ODT_AGENT_PREFIX ":");
+    strcat(mvmManagerParamString, odtAgentSettings);
+    
+    return mvmManagerParamString;
+}
+
+#endif /* ENABLE_MULTIPLE_ISOLATES */
