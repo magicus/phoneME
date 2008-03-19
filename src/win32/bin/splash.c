@@ -41,7 +41,7 @@ HDC g_dcBitmap = NULL;
 /* If true than call exit after destroying the splash window */
 BOOL g_bExitAfterSplash = FALSE;
 
-DWORD SPLASH_FS_MODE = SHFS_HIDESIPBUTTON | SHFS_HIDESTARTICON | SHFS_HIDETASKBAR;
+DWORD SPLASH_FS_MODE = SHFS_HIDESIPBUTTON | SHFS_HIDETASKBAR;
 
 DWORD WINAPI MessageLoop( LPVOID lpParam )
 {
