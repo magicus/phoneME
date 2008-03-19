@@ -113,7 +113,6 @@ void javacall_finalize_configurations(void) {
 javacall_result javacall_get_property(const char* key,
                                       javacall_property_type type,
                                       char** result){
-    char* value = NULL;
     char* joined_key = NULL;
 
     /* protection against access to uninitialized properties */
