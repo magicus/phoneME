@@ -43,6 +43,7 @@ QpFrame::QpFrame(QpWidget *parent, char *name, int flags) {
                                                                name,
                                                                flags);
     this->setQWidget(widget);
+    this->setBackgroundMode(Qt::NoBackground);
 }
 
 void
@@ -58,6 +59,14 @@ QpFrame::setFrameStyle(int style) {
     QT_METHOD_ARGS_ALLOC(qtMethodParam, argp);
     argp->param = (void *)style ;
     invokeAndWait(QpFrame::SetFrameStyle,argp);
+    QT_METHOD_ARGS_FREE(argp);
+}
+
+void 
+QpFrame::setBackgroundMode(Qt::BackgroundMode mode) {
+    QT_METHOD_ARGS_ALLOC(qtMethodParam, argp);
+    argp->param = (void *)mode ;
+    invokeAndWait(QpFrame::SetBackgroundMode,argp);
     QT_METHOD_ARGS_FREE(argp);
 }
 
@@ -121,6 +130,9 @@ QpFrame::execute(int methodId, void *args) {
     case QpFrame::SetFrameStyle:
         execSetFrameStyle((int)(((qtMethodParam *)args)->param));
         break ;
+    case QpFrame::SetBackgroundMode:
+        execSetBackgroundMode((Qt::BackgroundMode)(int)(((qtMethodParam *)args)->param));
+        break ;
     case QpFrame::FrameRect:
         ((qtQRectArg *)args)->arg = execFrameRect();
         break;
@@ -157,6 +169,12 @@ void
 QpFrame::execSetFrameStyle(int style) {
     QFrame *frame = (QFrame *)this->getQWidget();
     frame->setFrameStyle(style);
+}
+
+void 
+QpFrame::execSetBackgroundMode(Qt::BackgroundMode mode) {
+    QFrame *frame = (QFrame *)this->getQWidget();
+    frame->setBackgroundMode(mode);
 }
 
 QRect 
