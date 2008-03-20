@@ -47,6 +47,20 @@ abstract class QtContainerPeer extends QtComponentPeer implements ContainerPeer
     abstract void add (QtComponentPeer peer);
     abstract void remove (QtComponentPeer peer);
 
+
+    public void paint(Graphics g)
+    {
+	clearBackground(g);
+	super.paint(g);
+    }
+
+    public void clearBackground(Graphics g)
+    {
+	g.setColor(target.getBackground());
+	g.fillRect(0, 0, target.getWidth(), target.getHeight());
+	g.setColor(target.getForeground());
+    }
+
     public Insets getInsets () 
     {
 	return insets;

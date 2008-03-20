@@ -44,6 +44,7 @@ public interface ComponentPeer {
     void		paint(Graphics g);
     void		repaint(long tm, int x, int y, int width, int height);
     void		print(Graphics g);
+    void		clearBackground(Graphics g);
     void		setBounds(int x, int y, int width, int height);
     void                handleEvent(AWTEvent e);
     Point		getLocationOnScreen();

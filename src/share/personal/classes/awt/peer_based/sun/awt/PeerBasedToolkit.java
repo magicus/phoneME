@@ -463,6 +463,8 @@ class LightweightPeer implements sun.awt.peer.LightweightPeer {
 
     public void print(Graphics g) {}
 
+    public void clearBackground(Graphics g) {}
+
     public void setBounds(int x, int y, int width, int height) {}
 
     public void reshape(int x, int y, int width, int height) {}

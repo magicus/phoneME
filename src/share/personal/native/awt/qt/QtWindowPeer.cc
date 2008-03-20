@@ -595,7 +595,7 @@ Java_sun_awt_qt_QtWindowPeer_computeInsets(JNIEnv *env, jobject thisObj)
 
 
     // If this window is not supposed to have a border, just return.
-    if (qpFrame->frameStyle() & Qt::WStyle_NoBorder) {
+    if (qpFrame->testWFlags(Qt::WStyle_NoBorder)) {
         return;
     }
 

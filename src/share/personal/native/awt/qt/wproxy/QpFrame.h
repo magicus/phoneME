@@ -48,6 +48,7 @@ class QpFrame : public QpWidget {
             SOM = QpWidget::EOM,
             SetLineWidth = QpFrame::SOM,
             SetFrameStyle,
+            SetBackgroundMode,
             FrameRect,
             SetFrameRect,
             FrameGeometry,
@@ -59,10 +60,12 @@ class QpFrame : public QpWidget {
         };
 
     virtual void execute(int method, void *args);
+    void setBackgroundMode(Qt::BackgroundMode mode);
     private :
 
     void execSetLineWidth(int width);
     void execSetFrameStyle(int style);
+    void execSetBackgroundMode(Qt::BackgroundMode mode);
     QRect execFrameRect(void);
     void execSetFrameRect(QRect rect);
     QRect execFrameGeometry(void);

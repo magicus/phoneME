@@ -191,6 +191,8 @@ abstract class QtComponentPeer implements ComponentPeer, UpdateClient,
 	
     public void	print(Graphics g) { }
 	
+    public void	clearBackground(Graphics g) { }
+
     public void	setBounds(int x, int y, int width, int height)
     {
 	// Fix for 4744238.  Let a set size attempt of 0x0 go through but guard

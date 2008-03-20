@@ -717,9 +717,7 @@ public class Container extends Component {
             // The fix is to call paint(g) instead of super.update(g).  See also
             // the fix in Component.update().
             if (! (peer instanceof sun.awt.peer.LightweightPeer)) {
-                g.setColor(getBackground());
-                g.fillRect(0, 0, width, height);
-                g.setColor(getForeground());
+                peer.clearBackground(g);
             }
             paint(g);
         }
@@ -1416,6 +1414,14 @@ public class Container extends Component {
             str += ",layout=" + layoutMgr.getClass().getName();
         }
         return str;
+    }
+
+    public void show() {
+        boolean wasShowing = isShowing();
+        super.show();
+        if (!wasShowing && peer != null) {
+            peer.clearBackground(getGraphics());
+        }
     }
 
     /**
