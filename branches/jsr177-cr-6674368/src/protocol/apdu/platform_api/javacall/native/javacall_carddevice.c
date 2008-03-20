@@ -102,8 +102,8 @@ JSR177_STATUSCODE jsr177_finalize() {
     return JSR177_STATUSCODE_OK;
 }
 
-javacall_result jsr177_set_property(const char *prop_name, 
-                                      const char *prop_value) {
+javacall_result jsr177_set_property(const jbyte *prop_name, 
+                                      const jbyte *prop_value) {
 
     return javacall_carddevice_set_property(prop_name, prop_value);
 }
