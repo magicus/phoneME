@@ -229,6 +229,9 @@ typedef union CVMGenSummaryTableEntry {
 /* A card is summarized */
 #define CARD_SUMMARIZED_BYTE 2
 
+/* A card is special */
+#define CARD_SENTINEL_BYTE 3
+
 /* For faster checks, an integer that makes up four clean cards */
 #define FOUR_CLEAN_CARDS \
     (((CVMUint32)CARD_CLEAN_BYTE << 24) |    \
