@@ -374,8 +374,9 @@ void **pContext) {
                 pch = strtok(NULL, "\n");
                 address = pch;
             }else if (strcmp("Buffer:", pch)==0){
-                msgBuffer = pch+8;
-                pch = strtok(NULL, "\n");
+                msgBuffer = pch+strlen("Buffer: \n");
+                pch = NULL;
+                break;
             }
  	   //  javautil_debug_print (JAVACALL_LOG_INFORMATION, "jsr120_UDPEmulator", "%s\n", pch);
             pch = strtok(NULL, " \n");
