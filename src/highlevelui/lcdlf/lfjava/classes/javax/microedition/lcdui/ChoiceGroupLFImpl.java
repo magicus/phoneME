@@ -856,7 +856,6 @@ class ChoiceGroupLFImpl extends ItemLFImpl implements ChoiceGroupLF {
             hilighted = (i == hilightedIndex && hasFocus);
 
             if (hilighted) {
-                System.err.println("Drawing highlighted");
                 g.setColor(ScreenSkin.COLOR_BG_HL);
                 g.fillRect(-ChoiceGroupSkin.PAD_H, 0, 
                            ChoiceGroupSkin.PAD_H + contentW + 

@@ -221,7 +221,7 @@ getProp(Property** propertySet, const char* key) {
  * @param value An array of values to associate with the keys
  */
 static void
-initializeProp(Property** propertySet, char* key[], char* value[]) {
+initializeProp(Property** propertySet, const char* key[], char* value[]) {
     int i = 0;
 
     while (key[i] != NULL) {
