@@ -688,39 +688,8 @@ public class Container extends Component {
      * @see   java.awt.Component#update(java.awt.Graphics)
      */
     public void paint(Graphics g) {
-        if (isShowing()) {
-            int ncomponents = this.ncomponents;
-            Component component[] = this.component;
-            Rectangle clip = g.getClipRect();
-            for (int i = ncomponents - 1; i >= 0; i--) {
-                Component comp = component[i];
-                if (comp != null &&
-                    comp.peer instanceof sun.awt.peer.LightweightPeer &&
-                    comp.visible == true) {
-                    Rectangle cr = comp.getBounds();
-                    if ((clip == null) || cr.intersects(clip)) {
-                        Graphics cg = g.create();
-                        if (cg instanceof ConstrainableGraphics) {
-                            ((ConstrainableGraphics) cg).constrain(cr.x, cr.y, cr.width, cr.height);
-                        } else {
-                            cg.translate(cr.x, cr.y);
-                            // Fixed 6178102.
-                            // Moved the clipRect() call here, same as in Component.getGraphics().
-                            cg.clipRect(0, 0, cr.width, cr.height);
-                        }
-                        // Fixed 6178102.
-                        // This call does not belong here.
-                        //cg.clipRect(0, 0, cr.width, cr.height);
-                        cg.setFont(comp.getFont());
-                        try {
-                            comp.paint(cg);
-                        } finally {
-                            cg.dispose();
-                        }
-                    }
-                }
-            }
-        }
+        // Fixed 6643917: calling common method for paint and paintComponents
+        paintContents(g, true);
     }
 
     /**
@@ -797,33 +766,49 @@ public class Container extends Component {
      * @since     JDK1.0
      */
     public void paintComponents(Graphics g) {
-        int ncomponents = this.ncomponents;
-        Component component[] = this.component;
-        for (int i = ncomponents - 1; i >= 0; i--) {
-            Component comp = component[i];
-            if (comp != null) {
-                Graphics cg = comp.getGraphics();
-                Rectangle parentRect = g.getClipRect();
-                // Calculate the clipping region of the child's graphics
-                // context, by taking the intersection of the parent's
-                // clipRect (if any) and the child's bounds, and then
-                // translating it's coordinates to be relative to the child.
-                if (parentRect != null) {
-                    Rectangle childRect = comp.getBounds();
-                    if (childRect.intersects(parentRect) == false) {
-                        // Child component is completely clipped out: ignore.
-                        continue;
+        // Fixed 6643917: calling common method for paint and paintComponents
+        paintContents(g, false);
+    }
+
+    /**
+     * 6643917 
+     * Paints only lightweights or all components, depending on the
+     * onlyLightweights boolean argument.
+     */
+    private void paintContents(Graphics g, boolean onlyLightweights) {
+        if (isShowing()) {
+            int ncomponents = this.ncomponents;
+            Component component[] = this.component;
+            Rectangle clip = g.getClipRect();
+            for (int i = ncomponents - 1; i >= 0; i--) {
+                Component comp = component[i];
+                if (comp != null &&
+                    (!onlyLightweights || comp.peer instanceof sun.awt.peer.LightweightPeer) &&
+                    comp.visible == true) {
+                    Rectangle cr = comp.getBounds();
+                    if ((clip == null) || cr.intersects(clip)) {
+                        Graphics cg = g.create();
+                        if (cg instanceof ConstrainableGraphics) {
+                            ((ConstrainableGraphics) cg).constrain(cr.x, cr.y, cr.width, cr.height);
+                        } else {
+                            cg.translate(cr.x, cr.y);
+                            // Fixed 6178102.
+                            // Moved the clipRect() call here, same as in Component.getGraphics().
+                            cg.clipRect(0, 0, cr.width, cr.height);
+                        }
+                        // Fixed 6178102.
+                        // This call does not belong here.
+                        //cg.clipRect(0, 0, cr.width, cr.height);
+                        cg.setFont(comp.getFont());
+                        try {
+                            if (onlyLightweights)
+                                comp.paint(cg);
+                            else
+                                comp.paintAll(cg);
+                        } finally {
+                            cg.dispose();
+                        }
                     }
-                    Rectangle childClipRect =
-                        childRect.intersection(parentRect);
-                    childClipRect.translate(-childRect.x, -childRect.y);
-                    cg.clipRect(childClipRect.x, childClipRect.y,
-                        childClipRect.width, childClipRect.height);
-                }
-                try {
-                    comp.paintAll(cg);
-                } finally {
-                    cg.dispose();
                 }
             }
         }
