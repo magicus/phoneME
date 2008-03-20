@@ -2971,9 +2971,11 @@ public class Display {
             // move the call outside of our lock using a local variable
             if (textFieldCopy != null) {
             // #ifdef ENABLE_CHAMELEON
-                TextInputSession session  = ((TextFieldLFImpl)textFieldCopy.textFieldLF).getInputSession();
-                if (session.getCurrentInputMode() instanceof KeyboardInputMode)
-                    textFieldCopy.insert(inputText, textFieldCopy.getCaretPosition());
+                if (!(Display.this.window).systemMenuUp()) {
+                    TextInputSession session  = ((TextFieldLFImpl)textFieldCopy.textFieldLF).getInputSession();
+                    if (session.getCurrentInputMode() instanceof KeyboardInputMode)
+                        textFieldCopy.insert(inputText, textFieldCopy.getCaretPosition());
+                }
             // #else
                 textFieldCopy.insert(inputText, textFieldCopy.getCaretPosition());
             // #endif ENABLE_CHAMELEON
