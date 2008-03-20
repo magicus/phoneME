@@ -101,7 +101,7 @@ javacall_result javacall_media_get_event_data(javacall_handle handle, int eventT
 #define JAVACALL_ASYNC_GET_RESULT_returns_data(ret_args_)  \
     do { \
         void *args__[] = ret_args_; \
-        javacall_media_get_event_data((handle_), ctx__->pResult, sizeof args__ / sizeof args__[0], args__); \
+        javacall_media_get_event_data(handle__, ctx__->pResult, sizeof args__ / sizeof args__[0], args__); \
     } while (0) \
 
 #define JAVACALL_ASYNC_GET_RESULT_returns_no_data  (void)ctx__ /* empty */
@@ -110,6 +110,7 @@ javacall_result javacall_media_get_event_data(javacall_handle handle, int eventT
 do { \
     MidpReentryData* ctx__ = (MidpReentryData *)SNI_GetReentryData(NULL); \
     javacall_result result__ = JAVACALL_FAIL; \
+    javacall_handle handle__ = (handle_);
     if (ctx__ == NULL) { \
         result__ = (code_); \
     } else { \

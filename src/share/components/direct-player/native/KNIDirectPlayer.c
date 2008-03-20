@@ -210,7 +210,7 @@ KNIDECL(com_sun_mmedia_DirectPlayer_nStop) {
     javacall_result result;
     javacall_int32 player_descriptor;
     
-    MMP_DEBUG_STR("+nStart\n");
+    MMP_DEBUG_STR("+nStop\n");
 
     if (NULL == pKniInfo || NULL == pKniInfo->pNativeHandle || 
             JAVACALL_TRUE != jmmpCheckCondition(pKniInfo, CHECK_ISPLAYING)) {

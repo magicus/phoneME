@@ -356,9 +356,8 @@ public class PlayerImpl implements Player {
                 }
             } while (need_more);
             if (endOfStreamReached) {
-                /* end input stream */
-                packetSize = nBuffering(hNative, NULL, 0);
-                if (packetSize < 0) {
+                /* end of input stream */
+                if (nBuffering(hNative, null, 0) < 0) {
                     throw new MediaException("Buffering media data error");
                 }
             }
