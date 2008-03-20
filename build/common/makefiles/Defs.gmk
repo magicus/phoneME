@@ -165,7 +165,7 @@ LOG_ONLY   = >> $(LOG_FILE)
 #
 JAR_CMD      = $(JDK_DIR)/bin/jar$(EXE)
 JAVA_CMD     = $(JDK_DIR)/bin/java$(EXE)
-JAVAC_CMD    = $(JDK_DIR)/bin/javac$(EXE)
+JAVAC_CMD    = $(JDK_DIR)/bin/javac$(EXE) -source 1.3 -target 1.3
 JAVADOC_CMD  = $(JDK_DIR)/bin/javadoc$(EXE)
 
 # MIDP tools
