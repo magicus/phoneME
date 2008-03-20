@@ -37,6 +37,7 @@ static javacall_media_caps g_caps[] =
     { JAVACALL_MEDIA_FORMAT_TONE,    "audio/x-tone-seq audio/tone",       JAVACALL_MEDIA_MEMORY_PROTOCOL, 0 },
     { JAVACALL_MEDIA_FORMAT_AMR,     "audio/amr",                         JAVACALL_MEDIA_MEMORY_PROTOCOL, 0 },
     { JAVACALL_MEDIA_FORMAT_CAPTURE_AUDIO, "audio/x-wav",                 JAVACALL_MEDIA_CAPTURE_PROTOCOL, 0 },
+    { JAVACALL_MEDIA_FORMAT_CAPTURE_RADIO, "audio/x-wav",                 JAVACALL_MEDIA_CAPTURE_PROTOCOL, 0 },
 #ifdef ENABLE_MMAPI_LIME   
     { JAVACALL_MEDIA_FORMAT_MPEG1_LAYER3, "audio/mpeg",      JAVACALL_MEDIA_MEMORY_PROTOCOL, 0 },
     { JAVACALL_MEDIA_FORMAT_MPEG_1,  "video/mpeg",           JAVACALL_MEDIA_MEMORY_PROTOCOL, 0 },
@@ -57,7 +58,7 @@ javacall_result javacall_media_get_configuration(const javacall_media_configurat
     g_cfg.supportRecording      = JAVACALL_TRUE;
     g_cfg.supportDeviceTone     = JAVACALL_TRUE;
     g_cfg.supportDeviceMIDI     = JAVACALL_TRUE;
-    g_cfg.supportCaptureRadio   = JAVACALL_FALSE;
+    g_cfg.supportCaptureRadio   = JAVACALL_TRUE;
 
     g_cfg.mediaCaps             = g_caps;
 
@@ -130,6 +131,7 @@ static javacall_media_format_type g_fmt[] =
     JAVACALL_MEDIA_FORMAT_DEVICE_MIDI       ,
     JAVACALL_MEDIA_FORMAT_CAPTURE_AUDIO     ,
     JAVACALL_MEDIA_FORMAT_CAPTURE_VIDEO     ,
+    JAVACALL_MEDIA_FORMAT_CAPTURE_RADIO     ,
     //JAVACALL_MEDIA_FORMAT_UNKNOWN excluded, it will be mapped to -1
     JAVACALL_MEDIA_FORMAT_UNSUPPORTED
 };
@@ -225,6 +227,7 @@ extern media_interface g_video_itf;
 extern media_interface g_camera_itf;
 //extern media_interface g_interactive_midi_itf;
 extern media_interface g_record_itf;
+extern media_interface g_fake_radio_itf;
 
 media_interface* fmt_enum2itf( jc_fmt fmt )
 {
@@ -365,6 +368,7 @@ javacall_handle javacall_media_create2(int playerId, javacall_media_format_type 
 
 #define AUDIO_CAPTURE_LOCATOR   L"capture://audio"
 #define VIDEO_CAPTURE_LOCATOR   L"capture://video"
+#define RADIO_CAPTURE_LOCATOR   L"capture://radio"
 #define DEVICE_TONE_LOCATOR     L"device://tone"
 #define DEVICE_MIDI_LOCATOR     L"device://midi"
 
@@ -408,6 +412,13 @@ javacall_result javacall_media_create(int appId,
         {
             pPlayer->mediaType        = JAVACALL_MEDIA_FORMAT_CAPTURE_VIDEO;
             pPlayer->mediaItfPtr      = &g_camera_itf;
+            pPlayer->downloadByDevice = JAVACALL_TRUE;
+        }
+        else if( 0 == _wcsnicmp( uri, RADIO_CAPTURE_LOCATOR, 
+                           min( (long)wcslen( RADIO_CAPTURE_LOCATOR ), uriLength ) ) )
+        {
+            pPlayer->mediaType        = JAVACALL_MEDIA_FORMAT_CAPTURE_RADIO;
+            pPlayer->mediaItfPtr      = &g_fake_radio_itf;
             pPlayer->downloadByDevice = JAVACALL_TRUE;
         }
         else if( 0 == _wcsnicmp( uri, DEVICE_TONE_LOCATOR, 
@@ -478,7 +489,10 @@ javacall_result javacall_media_realize(javacall_handle handle,
 
             if( NULL != cmime )
             {
-                /* warning! TODO: unsafe, mime must contain only ASCII chars. */
+                /* Implementation Note: 
+                 * unsafe, mime must contain only ASCII chars. 
+                 * NEED REVISIT
+                 */
                 int wres = WideCharToMultiByte( CP_ACP, 0, mime, mimeLength,
                                                 cmime, mimeLength + 1, NULL, NULL );
                 if( wres )

@@ -120,6 +120,7 @@ typedef enum _jc_fmt {
     JC_FMT_DEVICE_TONE       ,
     JC_FMT_DEVICE_MIDI       ,
     JC_FMT_CAPTURE_AUDIO     ,
+    JC_FMT_CAPTURE_RADIO     ,
     JC_FMT_CAPTURE_VIDEO     ,
     //JC_FMT_UNKNOWN excluded, it will be mapped to -1
     JC_FMT_UNSUPPORTED       ,

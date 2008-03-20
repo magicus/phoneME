@@ -36,6 +36,7 @@ PORTING_OBJECTS += mmaudio.obj
 PORTING_OBJECTS += mmrecord.obj
 PORTING_OBJECTS += multimedia.obj
 PORTING_OBJECTS += mmtone.obj
+PORTING_OBJECTS += fake_radio.obj
 
 
 # Currently only JSR 234 use JPEG encoder. 
