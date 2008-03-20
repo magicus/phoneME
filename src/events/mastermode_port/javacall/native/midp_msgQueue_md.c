@@ -190,7 +190,6 @@ void checkForSystemSignal(MidpReentryData* pNewSignal,
         pNewMidpEvent->type         = AMMS_EVENT;
         pNewMidpEvent->MM_PLAYER_ID = event->data.multimediaEvent.playerId;
         pNewMidpEvent->MM_DATA      = event->data.multimediaEvent.data;
-        pNewMidpEvent->MM_ISOLATE   = event->data.multimediaEvent.appId;
         pNewMidpEvent->MM_EVT_TYPE  = event->data.multimediaEvent.mediaType;
 
         REPORT_CALL_TRACE4(LC_NONE, "[jsr234 event] External event recevied %d %d %d %d\n",
@@ -207,12 +206,6 @@ void checkForSystemSignal(MidpReentryData* pNewSignal,
         pNewSignal->descriptor = (int)event->data.jsr179LocationEvent.provider;
         pNewSignal->status = event->data.jsr179LocationEvent.operation_result;
         REPORT_CALL_TRACE2(LC_NONE, "[jsr179 event] JSR179_LOCATION_SIGNAL %d %d\n", pNewSignal->descriptor, pNewSignal->status);
-        break;
-    case JSR179_PROXIMITY_JC_EVENT:
-        pNewSignal->waitingFor = JSR179_PROXIMITY_SIGNAL;
-        pNewSignal->descriptor = (int)event->data.jsr179ProximityEvent.provider;
-        pNewSignal->status = event->data.jsr179ProximityEvent.operation_result;
-        REPORT_CALL_TRACE2(LC_NONE, "[jsr179 event] JSR179_PROXIMITY_SIGNAL %d %d\n", pNewSignal->descriptor, pNewSignal->status);
         break;
 #endif
 #ifdef ENABLE_JSR_211
