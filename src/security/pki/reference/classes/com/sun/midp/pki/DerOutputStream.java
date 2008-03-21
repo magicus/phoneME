@@ -159,7 +159,7 @@ public class DerOutputStream extends ByteArrayOutputStream {
      */
     public void putInteger(BigInteger i) throws IOException {
         write(DerValue.tag_Integer);
-        byte[]    buf = i.toByteArray(); // least number  of bytes
+        byte[] buf = i.toByteArray(); // least number of bytes
         putLength(buf.length);
         write(buf, 0, buf.length);
     }
@@ -325,14 +325,14 @@ public class DerOutputStream extends ByteArrayOutputStream {
      * Marshals a string as a DER encoded UTF8String.
      */
     public void putUTF8String(String s) throws IOException {
-        writeString(s, DerValue.tag_UTF8String, "UTF8");
+        writeString(s, DerValue.tag_UTF8String, "UTF-8");
     }
 
     /**
      * Marshals a string as a DER encoded PrintableString.
      */
     public void putPrintableString(String s) throws IOException {
-        writeString(s, DerValue.tag_PrintableString, "ASCII");
+        writeString(s, DerValue.tag_PrintableString, "US_ASCII");
     }
 
     /**
@@ -350,7 +350,7 @@ public class DerOutputStream extends ByteArrayOutputStream {
      * Marshals a string as a DER encoded IA5String.
      */
     public void putIA5String(String s) throws IOException {
-        writeString(s, DerValue.tag_IA5String, "ASCII");
+        writeString(s, DerValue.tag_IA5String, "US_ASCII");
     }
 
     /**
@@ -364,7 +364,7 @@ public class DerOutputStream extends ByteArrayOutputStream {
      * Marshals a string as a DER encoded GeneralString.
      */
     public void putGeneralString(String s) throws IOException {
-        writeString(s, DerValue.tag_GeneralString, "ASCII");
+        writeString(s, DerValue.tag_GeneralString, "US_ASCII");
     }
 
     /**

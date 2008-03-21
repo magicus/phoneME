@@ -183,14 +183,12 @@ class OCSPResponse {
 
             // responseBytes
             der = derIn.getDerValue();
-System.out.println(">>> 1");
             if (! der.isContextSpecific((byte)0)) {
                 throw new IOException("Bad encoding in responseBytes element " +
                     "of OCSP response: expected ASN.1 context specific tag 0.");
             }
-System.out.println(">>> 2");
+
             DerValue tmp = der.data.getDerValue();
-System.out.println(">>> 3");
             if (tmp.tag != DerValue.tag_Sequence) {
                 throw new IOException("Bad encoding in responseBytes element " +
                     "of OCSP response: expected ASN.1 SEQUENCE tag.");
@@ -198,9 +196,8 @@ System.out.println(">>> 3");
 
             // responseType
             derIn = tmp.data;
-System.out.println(">>> 4");
             responseType = derIn.getOID();
-System.out.println(">>> 5");
+
             if (responseType.equals(OCSP_BASIC_RESPONSE_OID)) {
                 if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
                     Logging.report(Logging.INFORMATION, LogChannels.LC_SECURITY,
@@ -215,18 +212,15 @@ System.out.println(">>> 5");
                     responseType);
             }
 
-System.out.println(">>> 6");
             // BasicOCSPResponse
             DerInputStream basicOCSPResponse =
                 new DerInputStream(derIn.getOctetString());
-System.out.println(">>> 7");
 
             DerValue[]  seqTmp = basicOCSPResponse.getSequence(2);
             DerValue responseData = seqTmp[0];
 
             // Need the DER encoded ResponseData to verify the signature later
             byte[] responseDataDer = seqTmp[0].toByteArray();
-System.out.println(">>> 8");
 
             // tbsResponseData
             if (responseData.tag != DerValue.tag_Sequence) {
@@ -251,7 +245,6 @@ System.out.println(">>> 8");
                 }
             }
 
-System.out.println(">>> 9");
             // responderID
             short tag = (byte)(seq.tag & 0x1f);
             if (tag == NAME_TAG) {
@@ -268,7 +261,6 @@ System.out.println(">>> 9");
                     "or 1");
             }
 
-System.out.println(">>> 10");
             // producedAt
             seq = seqDerIn.getDerValue();
             producedAtDate = seq.getGeneralizedTime();
@@ -277,6 +269,7 @@ System.out.println(">>> 10");
             DerValue[] singleResponseDer = seqDerIn.getSequence(1);
             // Examine only the first response
             singleResponse = new SingleResponse(singleResponseDer[0]);
+System.out.println(">>> 444");
 
             // responseExtensions
             if (seqDerIn.available() > 0) {
@@ -285,18 +278,20 @@ System.out.println(">>> 10");
                     DerValue[]  responseExtDer = seq.data.getSequence(3);
                     Extension[] responseExtension =
                         new Extension[responseExtDer.length];
+
                     for (int i = 0; i < responseExtDer.length; i++) {
                         responseExtension[i] = new Extension(responseExtDer[i]);
+System.out.println(">>> OCSP extension: " + responseExtension[i]);
                         if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
                             Logging.report(Logging.INFORMATION,
                                 LogChannels.LC_SECURITY,
                                     "OCSP extension: " + responseExtension[i]);
                         }
+
                         if ((responseExtension[i].getExtensionId()).equals(
                             OCSP_NONCE_EXTENSION_OID)) {
                             ocspNonce =
                                 responseExtension[i].getExtensionValue();
-
                         } else if (responseExtension[i].isCritical())  {
                             throw new IOException(
                                 "Unsupported OCSP critical extension: " +
@@ -306,15 +301,12 @@ System.out.println(">>> 10");
                 }
             }
 
-System.out.println(">>> 11");
             // signatureAlgorithmId
             sigAlgId = AlgorithmId.parse(seqTmp[1]);
-System.out.println(">>> 12");
 
             // signature
             byte[] signature = seqTmp[2].getBitString();
             X509Certificate[] x509Certs = null;
-System.out.println(">>> 13");
 
             // if seq[3] is available , then it is a sequence of certificates
             if (seqTmp.length > 3) {
@@ -333,7 +325,6 @@ System.out.println(">>> 13");
                 }
             }
 
-System.out.println(">>> 14");
             // Check whether the cert returned by the responder is trusted
             if (x509Certs != null && x509Certs[0] != null) {
                 X509Certificate cert = x509Certs[0];
@@ -380,12 +371,11 @@ System.out.println(">>> 14");
                 }
             }
 
-System.out.println(">>> 15");
+            System.out.println(">>> responderCert.subj = " + responderCert.getSubject());
+
             // Confirm that the signed response was generated using the public
             // key from the trusted responder cert
             if (responderCert != null) {
-
-System.out.println(">>> 16");
                 if (!verifyResponse(responseDataDer, responderCert,
                                     sigAlgId, signature)) {
                     if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
@@ -549,12 +539,13 @@ System.out.println(">>> 16");
             if (der.tag != DerValue.tag_Sequence) {
                 throw new IOException("Bad ASN.1 encoding in SingleResponse");
             }
-            DerInputStream tmp = der.data;
 
+            DerInputStream tmp = der.data;
             certId = new CertId(tmp.getDerValue().data);
             DerValue derVal = tmp.getDerValue();
             short tag = (byte)(derVal.tag & 0x1f);
-            if (tag ==  CertStatus.GOOD) {
+
+            if (tag == CertStatus.GOOD) {
                 certStatus = CertStatus.GOOD;
             } else if (tag == CertStatus.REVOKED) {
                 certStatus = CertStatus.REVOKED;
@@ -564,18 +555,20 @@ System.out.println(">>> 16");
                     Logging.report(Logging.INFORMATION, LogChannels.LC_SECURITY,
                                "Revocation time: " + revocationTime);
                 }
-
             } else if (tag == CertStatus.UNKNOWN) {
                 certStatus = CertStatus.UNKNOWN;
             } else {
-                throw new IOException("Invalid certificate status");
+                throw new IOException("Invalid certificate status: " + tag);
             }
+System.out.println(">>> certStatus = " + certStatus);
 
             thisUpdate = tmp.getGeneralizedTime();
+System.out.println(">>> 222");
 
             if (tmp.available() == 0)  {
                 // we are done
             } else {
+System.out.println(">>> 333");
                 derVal = tmp.getDerValue();
                 tag = (byte)(derVal.tag & 0x1f);
                 if (tag == 0) {
@@ -591,6 +584,7 @@ System.out.println(">>> 16");
                 }
                 // ignore extensions
             }
+System.out.println(">>> ok 2");
 
             Date now = new Date();
             if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
@@ -602,6 +596,8 @@ System.out.println(">>> 16");
                     "Response's validity interval is from " +
                             thisUpdate + until);
             }
+
+System.out.println(">>> ok 3");
             // Check that the test date is within the validity interval
             if ((thisUpdate != null && (now.getTime() < thisUpdate.getTime())) ||
                 (nextUpdate != null && (now.getTime() > nextUpdate.getTime()))) {
@@ -611,9 +607,11 @@ System.out.println(">>> 16");
                                "Response is unreliable: " +
                                        "its validity interval is out-of-date");
                 }
+                
                 throw new IOException("Response is unreliable: its validity " +
                     "interval is out-of-date");
             }
+System.out.println(">>> ok 4");
         }
 
         /*

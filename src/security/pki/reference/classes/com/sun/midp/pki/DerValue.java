@@ -255,6 +255,7 @@ public class DerValue {
         // values such as sequences, sets...
 
         tag = (byte)in.read();
+
         byte lenByte = (byte)in.read();
         length = DerInputStream.getLength((lenByte & 0xff), in);
 
@@ -393,11 +394,11 @@ public class DerValue {
             return null;
         }
 
-        /*
+        ///*
         if (fullyBuffered && in.available() != length) {
             throw new IOException("extra data given to DerValue constructor");
         }
-        */
+        //*/
 
         byte[] bytes = new byte[length];
 
@@ -642,7 +643,7 @@ public class DerValue {
                 "DerValue.getPrintableString, not a string " + tag);
         }
 
-        return new String(getDataBytes(), "ASCII");
+        return new String(getDataBytes(), "US_ASCII");
     }
 
     /**
@@ -670,7 +671,7 @@ public class DerValue {
                 "DerValue.getIA5String, not IA5 " + tag);
         }
 
-        return new String(getDataBytes(), "ASCII");
+        return new String(getDataBytes(), "US_ASCII");
     }
 
     /**
@@ -717,7 +718,7 @@ public class DerValue {
                 "DerValue.getGeneralString, not GeneralString " + tag);
         }
 
-        return new String(getDataBytes(), "ASCII");
+        return new String(getDataBytes(), "US_ASCII");
     }
 
     /**

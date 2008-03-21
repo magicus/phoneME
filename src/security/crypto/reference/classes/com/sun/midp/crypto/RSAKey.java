@@ -156,6 +156,7 @@ class RSAKey implements Key {
         }
         return encoded;
     }
+    
     /**
      * Encode SubjectPublicKeyInfo sequence on the DER output stream.
      *
@@ -181,11 +182,13 @@ class RSAKey implements Key {
             new DerValue(DerValue.tag_Sequence, out.toByteArray());
         byte[] key = val.toByteArray();
 
-        int remaining = key.length % 8;
-        int unusedBits = ((remaining == 0) ? 0 : 8 - remaining);
+//System.out.println("!!! getKey() = " + Utils.hexEncode(key));
 
+System.out.println("*** key.length = " + key.length);        
+
+        // there are no unused bits: modulus length % 8 is always 0
         BitArray bitStringKey = new BitArray(
-                          key.length * 8 - unusedBits,
+                          key.length * 8,
                           key);
 
         return (BitArray)bitStringKey.clone();
@@ -195,11 +198,11 @@ class RSAKey implements Key {
      * Produce SubjectPublicKey encoding from algorithm id and key material.
      */
     static void encode(DerOutputStream out, AlgorithmId algid, BitArray key)
-        throws IOException {
-            DerOutputStream tmp = new DerOutputStream();
-            algid.encode(tmp);
-            tmp.putUnalignedBitString(key);
-            out.write(DerValue.tag_Sequence, tmp);
+            throws IOException {
+        DerOutputStream tmp = new DerOutputStream();
+        algid.encode(tmp);
+        tmp.putUnalignedBitString(key);
+        out.write(DerValue.tag_Sequence, tmp);
     }
 
     ////////////////////////////////

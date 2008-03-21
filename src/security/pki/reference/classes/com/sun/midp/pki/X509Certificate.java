@@ -268,7 +268,7 @@ public class X509Certificate implements Certificate {
         (byte) 0x05, (byte) 0x07, (byte) 0x03
     };
 
-    /** True iff subject matches issuer. */
+    /** True if subject matches issuer. */
     private boolean selfSigned;
     /** X.509 version. For more readable code the version field starts a 1. */
     private byte version = 1;
@@ -278,6 +278,8 @@ public class X509Certificate implements Certificate {
     private String serialNumber;
     /** Certificate serial number represented as a byte array. */
     private byte[] serialNumberBytes;
+    /** Issuer name represented as a byte array. */
+    //private byte[] issuerBytes;
     /** Certificate subject. */
     private String subject;
     /** Certificate issuer. */
@@ -380,6 +382,7 @@ public class X509Certificate implements Certificate {
 
             subject = new String(sub);
             issuer = new String(iss);
+
             from = notBefore;
             until = notAfter;
             sigAlg = NONE;
@@ -916,6 +919,7 @@ public class X509Certificate implements Certificate {
             start = res.idx;
             size = res.getLen(SEQUENCE_TYPE);
             int end = res.idx + size;
+
             try {
                 res.issuer = res.getName(end);
                 if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
@@ -1590,11 +1594,23 @@ public class X509Certificate implements Certificate {
      * <CODE>NULL</CODE> is returned if there is no serial number.
      */
     public byte[] getRawSerialNumber() {
+        return getCopyOfArray(serialNumberBytes);
+    }
+
+    /**
+     * Returns a copy of the given array.
+     *
+     * @param arr array to copy
+     *
+     * @return A byte array containing a copy of the given array;
+     * <CODE>NULL</CODE> is returned if arr is <CODE>NULL<C/ODE>.
+     */
+    private byte[] getCopyOfArray(byte[] arr) {
         byte[] data = null;
-        if (serialNumberBytes != null) {
-            int len = serialNumberBytes.length;
+        if (arr != null) {
+            int len = arr.length;
             data = new byte[len];
-            System.arraycopy(serialNumberBytes, 0, data, 0, len);
+            System.arraycopy(arr, 0, data, 0, len);
         }
         return data;
     }

@@ -405,7 +405,7 @@ public class DerInputStream {
      */
     public String getPrintableString() throws IOException {
         return readString(DerValue.tag_PrintableString, "Printable",
-                          "ASCII");
+                          "US_ASCII");
     }
 
     /**
@@ -422,7 +422,7 @@ public class DerInputStream {
      * Read a string that was encoded as a IA5tring DER value.
      */
     public String getIA5String() throws IOException {
-        return readString(DerValue.tag_IA5String, "IA5", "ASCII");
+        return readString(DerValue.tag_IA5String, "IA5", "US_ASCII");
     }
 
     /**
@@ -438,7 +438,7 @@ public class DerInputStream {
      */
     public String getGeneralString() throws IOException {
         return readString(DerValue.tag_GeneralString, "General",
-                          "ASCII");
+                          "US_ASCII");
     }
 
     /**

@@ -49,24 +49,27 @@ class DerInputBuffer extends ByteArrayInputStream {
     }
 
     DerInputBuffer dup() {
-        return new DerInputBuffer(toByteArray());    
+        byte[] srcArray = toByteArray();
+        return new DerInputBuffer(srcArray == null ? (new byte[0]) : srcArray);    
     }
 
     byte[] toByteArray() {
-        int     len = available();
-        if (len <= 0)
+        int len = available();
+        if (len <= 0) {
             return null;
-        byte[]  retval = new byte[len];
+        }
+        byte[] retval = new byte[len];
 
         System.arraycopy(buf, pos, retval, 0, len);
         return retval;
     }
 
     int peek() throws IOException {
-        if (pos >= count)
+        if (pos >= count) {
             throw new IOException("out of data");
-        else
+        } else {
             return buf[pos];
+        }
     }
 
     /**

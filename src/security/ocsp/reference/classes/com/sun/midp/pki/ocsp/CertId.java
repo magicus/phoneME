@@ -27,6 +27,7 @@
 package com.sun.midp.pki.ocsp;
 
 import java.io.IOException;
+import java.util.Hashtable;
 
 import com.sun.midp.pki.DerInputStream;
 import com.sun.midp.pki.DerOutputStream;
@@ -76,12 +77,76 @@ public class CertId {
         hashAlgId = AlgorithmId.get("SHA-1");
 
         //md.update(issuerCert.getSubjectX500Principal().getEncoded());
-        String subj = issuerCert.getSubject();
-System.out.println("subj = " + subj);
-        DerValue tmp = null;
-        try {tmp = new DerValue(DerValue.tag_UTF8String, subj); } catch (Exception e) {e.printStackTrace();}
-        byte[] data = tmp.getDataBytes();
+
+///////////////////////////
+        Hashtable nameTagToCode = new Hashtable(20);
+        nameTagToCode.put("CN", new Integer(3));  // Common name: id-at 3
+        nameTagToCode.put("SN", new Integer(4));  // Surname: id-at 4
+        nameTagToCode.put("C", new Integer(6));   // Country: id-at 6
+        nameTagToCode.put("L", new Integer(7));   // Locality: id-at 7
+        nameTagToCode.put("ST", new Integer(8));  // State or province: id-at 8
+        nameTagToCode.put("STREET", new Integer(9)); // Street address: id-at 9
+        nameTagToCode.put("O", new Integer(10));  // Organization: id-at 10
+        nameTagToCode.put("OU", new Integer(11)); // Organization unit: id-at 11
+        // "EmailAddress"
+
+        String issuer = issuerCert.getIssuer();
+        StringBuffer currTag = new StringBuffer();
+        int i = 0;
+
+        DerOutputStream tmpStream = new DerOutputStream();
+
+        while (i < issuer.length()) {
+            DerOutputStream out = new DerOutputStream();
+            char c = issuer.charAt(i);
+            i++;
+
+            if (c == '=') {
+                Integer code = (Integer)nameTagToCode.get(currTag.toString());
+
+                if (code != null) {
+                    DerValue v = new DerValue(DerValue.tag_ObjectId,
+                            new byte[] {0x55, 0x04, code.byteValue()});
+                    out.putDerValue(v);
+                } else {
+                    // IMPL_NOTE: handle e-mail and unknown names
+                    throw new IOException("Can't encode: " + currTag);
+                }
+
+                int idx = issuer.substring(i).indexOf(";");
+                if (idx < 0) {
+                    idx = issuer.substring(i).length();
+                }
+                
+                String attrValue = issuer.substring(i, i + idx);
+
+                //System.out.println("tag = '" + currTag + "'");
+                //System.out.println("attrValue = '" + attrValue + "'");
+
+                out.putPrintableString(attrValue);
+
+                DerOutputStream tmpStream2 = new DerOutputStream();
+                tmpStream2.write(DerValue.tag_Sequence, out);
+                tmpStream.write(DerValue.tag_Set, tmpStream2);
+
+                i += idx + 1;
+                currTag = new StringBuffer();
+                continue;
+            }
+
+            currTag.append(c);
+        }
+
+///////////////////////////
+
+
+        DerOutputStream finalOut = new DerOutputStream();
+        finalOut.write(DerValue.tag_Sequence, tmpStream);
+
+        byte[] data = finalOut.toByteArray();
+
 System.out.println("data.length = " + data.length);
+System.out.println("data = " + Utils.hexEncode(data));        
 
         //byte[] data = issuerCert.getSubject().getBytes();
         md.update(data, 0, data.length);
@@ -94,14 +159,24 @@ System.out.println("data.length = " + data.length);
         DerValue val = new DerValue(pubKey);
         DerValue[] seq = new DerValue[2];
         seq[0] = val.data.getDerValue(); // AlgorithmID
-System.out.println("alg. id = " + seq[0]);
+//System.out.println("alg. id = " + seq[0]);
         seq[1] = val.data.getDerValue(); // Key
-System.out.println("key = " + seq[0]);        
-System.out.println("key as string = " + issuerCert.getPublicKey());        
+//System.out.println("key = " + seq[1]);
+//System.out.println("key as string = " + issuerCert.getPublicKey());
 
         // md.reset();
-        byte[] keyBytes = seq[1].getBitString();
-System.out.println("keyBytes.length = " + keyBytes.length);        
+        //byte[] keyBytes1 = seq[1].getBitString();
+
+byte[] keyBytes1 = seq[1].getBitString();
+byte[] keyBytes = new byte[keyBytes1.length + 1];
+System.arraycopy(keyBytes1, 0, keyBytes, 0, 7);
+keyBytes[3] = 0xa;
+keyBytes[7] = 0x01;
+System.arraycopy(keyBytes1, 7, keyBytes, 8, keyBytes1.length - 7);
+
+//System.out.println("keyBytes.length = " + keyBytes.length);
+//System.out.println("keyBytes = " + Utils.hexEncode(keyBytes));
+
         md.update(keyBytes, 0, keyBytes.length);
 
         issuerKeyHash = new byte[md.getDigestLength()];

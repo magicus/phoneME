@@ -33,15 +33,15 @@ public interface CertStatus {
     /**
      * Certificate is not revoked.
      */
-    public static final byte GOOD = 1;
+    public static final byte GOOD = 0;
 
     /**
      * Certificate is revoked.
      */
-    public static final byte REVOKED = 2;
+    public static final byte REVOKED = 1;
 
     /**
      * Status of the certificate is unknown.
      */
-    public static final byte UNKNOWN = 3;
+    public static final byte UNKNOWN = 2;
 }
