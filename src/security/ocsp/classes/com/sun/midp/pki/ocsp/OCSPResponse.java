@@ -27,6 +27,7 @@
 package com.sun.midp.pki.ocsp;
 
 import java.util.Date;
+import java.util.Vector;
 import java.io.IOException;
 
 import javax.microedition.pki.CertificateException;
@@ -145,7 +146,7 @@ class OCSPResponse {
      */
     // used by OCSPValidatorImpl
     OCSPResponse(byte[] bytes,
-        X509Certificate responderCert) throws IOException, OCSPException {
+        X509Certificate responderCert, Vector keys) throws IOException, OCSPException {
 
         try {
             int responseStatus;
@@ -376,16 +377,27 @@ System.out.println(">>> OCSP extension: " + responseExtension[i]);
             // Confirm that the signed response was generated using the public
             // key from the trusted responder cert
             if (responderCert != null) {
-                if (!verifyResponse(responseDataDer, responderCert,
+                if (!verifyResponse(responseDataDer, responderCert.getPublicKey(),
                                     sigAlgId, signature)) {
-                    if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
-                        Logging.report(Logging.INFORMATION,
-                                LogChannels.LC_SECURITY,
+                    // try other trusted public keys
+                    boolean ok = false;
+                    for (int i = 0; i < keys.size(); i++) {
+                        if (verifyResponse(responseDataDer, keys.elementAt(i),
+                                            sigAlgId, signature)) {
+                            ok = true;
+                        }
+
+                    }
+                    if (!ok) {
+                        if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
+                            Logging.report(Logging.INFORMATION,
+                                    LogChannels.LC_SECURITY,
+                                    "Error verifying OCSP Responder's signature");
+                        }
+                        throw new OCSPException(
+                            OCSPException.CANNOT_VERIFY_SIGNATURE,
                                 "Error verifying OCSP Responder's signature");
                     }
-                    throw new OCSPException(
-                        OCSPException.CANNOT_VERIFY_SIGNATURE,
-                            "Error verifying OCSP Responder's signature");
                 }
             } else {
                 // Need responder's cert in order to verify the signature
@@ -465,12 +477,12 @@ System.out.println(">>> OCSP extension: " + responseExtension[i]);
      * Verify the signature of the OCSP response.
      * The responder's cert is implicitly trusted.
      */
-    private boolean verifyResponse(byte[] responseData, X509Certificate cert,
+    private boolean verifyResponse(byte[] responseData, PublicKey pubKey,
             AlgorithmId sigAlgId, byte[] signBytes)
                     throws SignatureException, CertificateException {
         try {
             Signature respSignature = Signature.getInstance(sigAlgId.getName());
-            respSignature.initVerify(cert.getPublicKey());
+            respSignature.initVerify(pubKey);
             respSignature.update(responseData, 0, responseData.length);
 
             if (respSignature.verify(signBytes)) {

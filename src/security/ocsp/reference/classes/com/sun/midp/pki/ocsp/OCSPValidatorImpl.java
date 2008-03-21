@@ -238,11 +238,11 @@ public class OCSPValidatorImpl implements OCSPValidator {
 
             // IMPL_NOTE: implement finding responderCert
             X509Certificate responderCert = caCerts[0];
-            //WebPublicKeyStore keyStore = WebPublicKeyStore.getTrustedKeyStore();
-            //X509Certificate responderCert = keyStore.getKey(0);
+            WebPublicKeyStore keyStore = WebPublicKeyStore.getTrustedKeyStore();
+            Vector keys = keyStore.getKeys();
 
             OCSPResponse ocspResponse = new OCSPResponse(responseBuf,
-                                                         responderCert);
+                                                         responderCert, keys);
 
             System.out.println(">>> receiveResponse(): exiting");
 

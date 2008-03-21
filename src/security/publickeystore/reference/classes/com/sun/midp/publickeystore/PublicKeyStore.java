@@ -150,6 +150,27 @@ public class PublicKeyStore {
     }
 
     /**
+     * Returns all CAs Public keys.
+     *
+     * @return public key information of the keys
+     */
+    public synchronized Vector getKeys() {
+        PublicKeyInfo keyInfo;
+        Vector keys = null;
+
+        for (int i = 0; i < keyList.size(); i++) {
+            keyInfo = (PublicKeyInfo)keyList.elementAt(i);
+            if (keys == null) {
+                keys = new Vector();
+            }
+
+            keys.addElement(keyInfo);
+        }
+
+        return keys;
+    }
+
+    /**
      * Gets the number of keys in the store.
      * @return number of keys in the keystore
      */
