@@ -417,14 +417,16 @@ class AppManagerUI extends Form
             // the user if he want to launch a midlet from the suite.
             MidletCustomItem mci = getLastInstalledMidletItem();
             if (mci != null) {
-                // move it to default folder
-                try {
-                    midletSuiteStorage.moveSuiteToFolder(mci.msi.suiteId,
-                            FolderManager.getDefaultFolderId());
-                    mci.msi.folderId = FolderManager.getDefaultFolderId();
-                    setFolder(this.currentFolderId);
-                } catch (Throwable t) {
-                    displayError.showErrorAlert(mci.msi.displayName, t, null, null);
+                if (foldersOn) {
+                    // move it to default folder
+                    try {
+                        midletSuiteStorage.moveSuiteToFolder(mci.msi.suiteId,
+                                FolderManager.getDefaultFolderId());
+                        mci.msi.folderId = FolderManager.getDefaultFolderId();
+                        setFolder(this.currentFolderId);
+                    } catch (Throwable t) {
+                        displayError.showErrorAlert(mci.msi.displayName, t, null, null);
+                    }
                 }
 
                 askUserIfLaunchMidlet();
@@ -1964,7 +1966,12 @@ class AppManagerUI extends Form
         /** True if this MidletCustomItem has focus, and false - otherwise */
         boolean hasFocus; // = false;
 
-        /** The owner of this MidletCustomItem */
+        /**
+         * The owner of this MidletCustomItem
+         * IMPL_NOTE:
+         *   This field has the same name with package private
+         *   Item.owner, however the field values are independent.
+         */
         AppManagerUI owner; // = false
 
         /** The MIDletSuiteInfo associated with this MidletCustomItem */
