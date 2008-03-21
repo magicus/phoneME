@@ -480,12 +480,19 @@ class AppManagerUI extends Form
      * @param fid new current folder id
      */
     private void setFolder(int fid) {
-        currentFolderId = fid;
-        deleteAll();
-        for (int i = 0; i < mciVector.size(); i++) {
-            MidletCustomItem mci = (MidletCustomItem)mciVector.elementAt(i);
-            if (currentFolderId == mci.msi.folderId) {
-                append(mci);
+        if (foldersOn) {
+            currentFolderId = fid;
+            deleteAll();
+            for (int i = 0; i < mciVector.size(); i++) {
+                MidletCustomItem mci = (MidletCustomItem)mciVector.elementAt(i);
+                if (currentFolderId == mci.msi.folderId) {
+                    append(mci);
+                }
+            }
+        } else {
+            if (Logging.REPORT_LEVEL <= Logging.ERROR) {
+                Logging.report(Logging.ERROR, LogChannels.LC_AMS,
+                               "Folders are not supported");
             }
         }
     }
