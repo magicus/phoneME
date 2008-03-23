@@ -189,7 +189,7 @@ LockAudioMutex();
     JAVACALL_ASYNC_EXEC(
         result,
         javacall_media_start(pKniInfo->pNativeHandle),
-        pKniInfo->pNativeHandle, player_descriptor, MEDIA_START_SIGNAL,
+        pKniInfo->pNativeHandle, player_descriptor, MEDIA_START_SIGNAL, JAVACALL_EVENT_MEDIA_STARTED,
         returns_no_data
     );
 UnlockAudioMutex();            
@@ -224,7 +224,7 @@ LockAudioMutex();
     JAVACALL_ASYNC_EXEC(
         result,
         javacall_media_stop(pKniInfo->pNativeHandle),
-        pKniInfo->pNativeHandle, player_descriptor, MEDIA_STOP_SIGNAL,
+        pKniInfo->pNativeHandle, player_descriptor, MEDIA_STOP_SIGNAL, JAVACALL_EVENT_MEDIA_STOPPED,
         returns_no_data
     );
 UnlockAudioMutex();            
@@ -278,7 +278,7 @@ LockAudioMutex();
         JAVACALL_ASYNC_EXEC(
             ret,
             javacall_media_set_time(pKniInfo->pNativeHandle, &ms),
-            pKniInfo->pNativeHandle, player_descriptor, MEDIA_SET_TIME_SIGNAL,
+            pKniInfo->pNativeHandle, player_descriptor, MEDIA_SET_TIME_SIGNAL, JAVACALL_EVENT_MEDIA_TIME_SET,
             returns_data({&ms})
         );
 
@@ -311,7 +311,7 @@ LockAudioMutex();
         JAVACALL_ASYNC_EXEC(
             ret,
             javacall_media_get_duration(pKniInfo->pNativeHandle, &ms),
-            pKniInfo->pNativeHandle, player_descriptor, MEDIA_GET_DURATION_SIGNAL,
+            pKniInfo->pNativeHandle, player_descriptor, MEDIA_GET_DURATION_SIGNAL, JAVACALL_EVENT_MEDIA_DURATION_GOTTEN,
             returns_data({&ms})
         );
         
@@ -350,7 +350,7 @@ LockAudioMutex();
         JAVACALL_ASYNC_EXEC(
             result,
             javacall_media_pause(pKniInfo->pNativeHandle),
-            pKniInfo->pNativeHandle, player_descriptor, MEDIA_PAUSE_SIGNAL,
+            pKniInfo->pNativeHandle, player_descriptor, MEDIA_PAUSE_SIGNAL, JAVACALL_EVENT_MEDIA_PAUSED,
             returns_no_data
         );
 UnlockAudioMutex();
@@ -381,7 +381,7 @@ LockAudioMutex();
         JAVACALL_ASYNC_EXEC(
             result,
             javacall_media_resume(pKniInfo->pNativeHandle),
-            pKniInfo->pNativeHandle, player_descriptor, MEDIA_RESUME_SIGNAL,
+            pKniInfo->pNativeHandle, player_descriptor, MEDIA_RESUME_SIGNAL, JAVACALL_EVENT_MEDIA_RESUMED,
             returns_no_data
         );
 UnlockAudioMutex();
