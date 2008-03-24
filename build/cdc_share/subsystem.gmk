@@ -154,7 +154,7 @@ JSR_211_SOURCE_SUBDIRS = src/$(JSR211_PLATFORM) \
 			build/cdc_share  
 
 # Copy and filter JSR_211 source in JSR_211_SOURCE_OUTPUT_DIR
-chapi_source_bundle: JSR_211_DIR
+chapi_source_bundle:
 	@echo " ... JSR 211 source bundle" $(LOG)
 	$(AT)$(call source_bundle_filter,$(JSR_211_DIR),$(JSR_211_SOURCE_OUTPUT_DIR),$(JSR_211_SOURCE_SUBDIRS))	
 	$(AT)cp -f $(JSR_211_DIR)/build/subsystem.gmk $(JSR_211_SOURCE_OUTPUT_DIR)/build/subsystem.gmk
