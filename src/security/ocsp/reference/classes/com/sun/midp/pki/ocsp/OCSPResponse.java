@@ -342,9 +342,9 @@ System.out.println(">>> OCSP extension: " + responseExtension[i]);
 
             System.out.println(">>> responderCert.subj = " + certs[0].getSubject());
 
-            // Confirm that the signed response was generated using the public
-            // key from the trusted responder cert
             if (certs != null) {
+                // Confirm that the signed response was generated using the public
+                // key from the trusted cert
                 boolean verified = false;
                 for (int i = 0; (!verified) && (i < certs.length); i++) {
                     try {
