@@ -157,7 +157,8 @@ public class Text {
     public static int paintLine(Graphics g, String str, Font font, int fgColor, 
 				int w, int h, TextCursor cursor, int offset) {
 
-        if (w <= 0 || 
+
+        if (w <= 0 ||
             (cursor == null && (str == null || str.length() == 0))) {
             return 0;
         }
@@ -187,22 +188,42 @@ public class Text {
 	    cursor.index >= 0 && cursor.index <= str.length()) {
 	    int pos = offset;
 	    if (cursor.index > 0) {
-		pos += font.charsWidth(text, 0, cursor.index); 
-	    }
+            if (ScreenSkin.TEXT_ORIENT == Graphics.RIGHT) {
+                pos += font.charsWidth(text, 0, cursor.index);
+            } else {
+                pos += font.charsWidth(text, 0, cursor.index);
+            }
+        }
 	    // IMPL_NOTE: optimize this with math instead of iteration
-	    cursor.x = pos;
-	    if (cursor.x >= w) {
-		while (cursor.x >= w) {
-		    offset -= scrollPix;
-		    cursor.x -= scrollPix;
-		}
-	    } else { 
-		while ((cursor.x < w / 2) && (offset < 0)) { 
-		    offset += scrollPix;
-		    cursor.x += scrollPix;
-		}
-	    }
-	    cursor.y      = fontHeight;
+
+        cursor.x = pos;
+        if (ScreenSkin.TEXT_ORIENT == Graphics.RIGHT) {
+            cursor.x = w - pos;
+            if (cursor.x <= 0) {
+            while (cursor.x <= 0) {
+                offset -= scrollPix;
+                cursor.x += scrollPix;
+            }
+            } else {
+            while ((cursor.x > w / 2) && (offset > w)) {
+                offset -= scrollPix;
+                cursor.x -= scrollPix;
+            }
+            }
+        } else {
+            if (cursor.x >= w) {
+            while (cursor.x >= w) {
+                offset -= scrollPix;
+                cursor.x -= scrollPix;
+            }
+            } else {
+            while ((cursor.x < w / 2) && (offset < 0)) {
+                offset += scrollPix;
+                cursor.x += scrollPix;
+            }
+            }
+        }
+        cursor.y      = fontHeight;
 	    cursor.width  = 1;
 	    cursor.height = fontHeight;
 	    
@@ -210,14 +231,10 @@ public class Text {
 	    cursor = null;
 	}
 
-    if (ScreenSkin.TEXT_ORIENT == Graphics.RIGHT) {
-        offset = w - offset;
-    }
-
-    g.drawChars(text, 0, text.length,  offset, h,
+    g.drawChars(text, 0, text.length,  (ScreenSkin.TEXT_ORIENT == Graphics.RIGHT) ? w - offset : offset, h,
 		    Graphics.BOTTOM | ScreenSkin.TEXT_ORIENT);
-	
-	return offset;
+
+    return offset;
     }
 
     /**

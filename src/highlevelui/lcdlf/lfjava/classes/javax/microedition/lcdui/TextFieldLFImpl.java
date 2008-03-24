@@ -514,12 +514,13 @@ class TextFieldLFImpl extends ItemLFImpl implements
         g.clipRect(TextFieldSkin.PAD_H, TextFieldSkin.PAD_V,
             width - (2 * TextFieldSkin.PAD_H),
             height - (2 * TextFieldSkin.PAD_V));
-        g.translate(TextFieldSkin.PAD_H + 1, 
+        
+        g.translate(TextFieldSkin.PAD_H + 1,
                     TextFieldSkin.PAD_V);
 
         int clr;
         if (hasFocus) {
-            clr = (editable ? ScreenSkin.COLOR_FG_HL : 
+            clr = (editable ? ScreenSkin.COLOR_FG_HL :
                    ScreenSkin.COLOR_FG_HL);
         } else {
             clr = (editable ? TextFieldSkin.COLOR_FG :
@@ -530,14 +531,14 @@ class TextFieldLFImpl extends ItemLFImpl implements
         xScrollOffset = paint(g, tf.buffer,
             hasFocus ? is.getPendingChar() : 0,
             tf.constraints,
-            ScreenSkin.FONT_INPUT_TEXT, clr, 
-            width - (2 * TextFieldSkin.PAD_H), 
-            height - (2 * TextFieldSkin.PAD_V), 
-            xScrollOffset, Text.NORMAL, cursor); 
-        
-        g.translate(-(TextFieldSkin.PAD_H + 1), 
+            ScreenSkin.FONT_INPUT_TEXT, clr,
+            width - (2 * TextFieldSkin.PAD_H),
+            height - (2 * TextFieldSkin.PAD_V),
+            xScrollOffset, Text.NORMAL, cursor);
+
+        g.translate(-(TextFieldSkin.PAD_H + 1),
                     -TextFieldSkin.PAD_V);
-        
+
         if (usePreferredX) {
             cursor.preferredX = cursor.x;
         }

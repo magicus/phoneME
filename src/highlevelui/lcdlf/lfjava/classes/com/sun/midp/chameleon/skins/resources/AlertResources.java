@@ -32,6 +32,7 @@ import com.sun.midp.chameleon.skins.ScreenSkin;
 
 import javax.microedition.lcdui.Image;
 import javax.microedition.lcdui.Font;
+import javax.microedition.lcdui.Graphics;
 
 public class AlertResources {
     private static boolean init;
@@ -121,11 +122,23 @@ public class AlertResources {
                 SkinPropertiesIDs.ALERT_IMAGE_ICON_ALRM);
         AlertSkin.IMAGE_ICON_CNFM = SkinResources.getImage(
                 SkinPropertiesIDs.ALERT_IMAGE_ICON_CNFM);
+
+        checkLocale();
         
         init = true;
     }
 
-   
+
+    public static void checkLocale() {
+        String locale = System.getProperty("microedition.locale");
+
+        // Should change "en-US" to any appropriate locale
+        if (locale.equals("en-US")) {
+            if (AlertSkin.TITLE_ALIGN == Graphics.LEFT) {
+                AlertSkin.TITLE_ALIGN = Graphics.RIGHT;
+            }
+        }
+    }
 }
     
 

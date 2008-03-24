@@ -538,7 +538,8 @@ public class SkinResources {
     public static void checkLocale() {
         String locale = System.getProperty("microedition.locale");
 
-        // Should change "en-US" to any apropriate locale
+
+        // Should change "en-US" to any appropriate locale
         if (locale.equals("en-US")) {
 
             if (ScreenSkin.TEXT_ORIENT == Graphics.LEFT) {
@@ -557,9 +558,6 @@ public class SkinResources {
                 AlertSkin.ALIGN_X = Graphics.RIGHT;
             }
 
-            if (AlertSkin.TITLE_ALIGN == Graphics.LEFT) {
-                AlertSkin.TITLE_ALIGN = Graphics.RIGHT;
-            }
         }
     }
 

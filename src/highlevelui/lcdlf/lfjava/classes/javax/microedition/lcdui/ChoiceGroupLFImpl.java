@@ -857,7 +857,7 @@ class ChoiceGroupLFImpl extends ItemLFImpl implements ChoiceGroupLF {
                         break;
                 }
             }
-            g.translate(offSetX, 0);
+                g.translate(offSetX, 0);
 
             hilighted = (i == hilightedIndex && hasFocus);
 
@@ -879,17 +879,21 @@ class ChoiceGroupLFImpl extends ItemLFImpl implements ChoiceGroupLF {
                 iH = g.getClipHeight();
 
                 if (ScreenSkin.TEXT_ORIENT == Graphics.RIGHT) {
-                    textOffset = contentW;
+                    if (choiceImg != null) {
+                        textOffset = w - ChoiceGroupSkin.WIDTH_IMAGE - choiceImg.getWidth() - ChoiceGroupSkin.PAD_H;
+                    } else {
+                        textOffset = w - ChoiceGroupSkin.WIDTH_IMAGE - ChoiceGroupSkin.PAD_H;                        
+                    }
                 }
                 g.clipRect(textOffset, 0,
                            ChoiceGroupSkin.WIDTH_IMAGE,
                            ChoiceGroupSkin.HEIGHT_IMAGE);
                 g.drawImage(cg.cgElements[i].imageEl,
-                            textOffset, 0,
+                            textOffset , 0,
                             Graphics.LEFT | Graphics.TOP);
                 g.setClip(iX, iY, iW, iH);
                 if (ScreenSkin.TEXT_ORIENT == Graphics.RIGHT) {
-                    textOffset = ChoiceGroupSkin.PAD_H;
+                    textOffset = 2 * ChoiceGroupSkin.PAD_H;    
                 } else {
                     textOffset = ChoiceGroupSkin.WIDTH_IMAGE +
                         ChoiceGroupSkin.PAD_H;
@@ -908,7 +912,7 @@ class ChoiceGroupLFImpl extends ItemLFImpl implements ChoiceGroupLF {
 
         } // end for
 
-        g.translate(0, -translatedY); 
+        g.translate(0, -translatedY);
     }
 
     /**
