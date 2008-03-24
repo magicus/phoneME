@@ -243,7 +243,6 @@ class OCSPResponse {
             if (seq.isContextSpecific((byte)0)) {
                 // seq[0] is version
                 if (seq.isConstructed() && seq.isContextSpecific()) {
-                    //System.out.println ("version is available");
                     seq = seq.data.getDerValue();
                     version = seq.getInteger();
                     if (seq.data.available() != 0) {
@@ -289,7 +288,6 @@ class OCSPResponse {
 
                     for (int i = 0; i < responseExtDer.length; i++) {
                         responseExtension[i] = new Extension(responseExtDer[i]);
-System.out.println(">>> OCSP extension: " + responseExtension[i]);
                         if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
                             Logging.report(Logging.INFORMATION,
                                 LogChannels.LC_SECURITY,
@@ -340,8 +338,6 @@ System.out.println(">>> OCSP extension: " + responseExtension[i]);
                  * use it to verify signature. By now we do nothing with it.
                  */
             }
-
-            System.out.println(">>> responderCert.subj = " + ((X509Certificate)certs.elementAt(0)).getSubject());
 
             if (certs != null) {
                 // Confirm that the signed response was generated using
@@ -546,7 +542,6 @@ System.out.println(">>> OCSP extension: " + responseExtension[i]);
             } else {
                 throw new IOException("Invalid certificate status: " + tag);
             }
-System.out.println(">>> certStatus = " + certStatus);
 
             thisUpdate = tmp.getGeneralizedTime();
 

@@ -199,10 +199,11 @@ public class CertId {
         }
 
         CertId that = (CertId) other;
+
         if (hashAlgId.equals(that.getHashAlgorithm()) &&
             arraysEqual(issuerNameHash, that.getIssuerNameHash()) &&
             arraysEqual(issuerKeyHash, that.getIssuerKeyHash()) &&
-            certSerialNumber.getNumber() == that.getSerialNumber()) {
+            certSerialNumber.getNumber().equals(that.getSerialNumber())) {
             return true;
         } else {
             return false;

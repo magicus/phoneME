@@ -99,9 +99,6 @@ public class OCSPRequest {
         
         this.issuerCert = issuerCert;
 
-System.out.println(">>> userCert.getIssuer() = " + userCert.getIssuer());
-System.out.println(">>> issuerCert.getIssuer() = " + issuerCert.getIssuer());        
-
         byte[] sn = userCert.getRawSerialNumber();
         if (sn != null) {
             serialNumber = new SerialNumber(new BigInteger(sn));
@@ -111,9 +108,7 @@ System.out.println(">>> issuerCert.getIssuer() = " + issuerCert.getIssuer());
                     "Certificate's Serial Number is not known.");
         }
 
-        System.out.println(">>> s = " + serialNumber.toString());
-
-        //if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
+        if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
             try {
                 byte[] data = getRequestAsByteArray();
                 Logging.report(Logging.INFORMATION, LogChannels.LC_SECURITY,
@@ -123,7 +118,7 @@ System.out.println(">>> issuerCert.getIssuer() = " + issuerCert.getIssuer());
             } catch (Exception e) {
                 // ignore
             }
-        //}
+        }
     }
 
     /**
@@ -143,8 +138,6 @@ System.out.println(">>> issuerCert.getIssuer() = " + issuerCert.getIssuer());
         } catch (Exception e) {
             throw new IOException("Error encoding OCSP request");
         }
-
-        System.out.println(">>> singleRequest = " + singleRequest);
 
         certId = singleRequest.getCertId();
         singleRequest.encode(derSingleReqList);

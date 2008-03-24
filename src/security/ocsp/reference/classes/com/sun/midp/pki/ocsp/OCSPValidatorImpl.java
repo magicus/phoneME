@@ -32,6 +32,7 @@ import com.sun.midp.pki.ObjectIdentifier;
 import com.sun.midp.pki.X509Certificate;
 import com.sun.midp.publickeystore.WebPublicKeyStore;
 import com.sun.midp.publickeystore.PublicKeyInfo;
+import com.sun.midp.security.Permissions;
 
 import javax.microedition.pki.Certificate;
 import javax.microedition.io.HttpConnection;
@@ -88,24 +89,25 @@ public class OCSPValidatorImpl implements OCSPValidator {
         try {
             openConnection();
 
-            //X509Certificate issuerCert = (X509Certificate)certPath.elementAt(0);
             OCSPRequest request =
                     new OCSPRequest((X509Certificate)cert,
                             (X509Certificate)issuerCert);
-            CertId certId = request.getCertId();
             sendRequest(request);
+            // certId field becomes valid only after the request is sent
+            // or after getRequestAsByteArray() is called
+            CertId certId = request.getCertId();
 
-            //WebPublicKeyStore keyStore = WebPublicKeyStore.getTrustedKeyStore();
-            //X509Certificate[] caCerts = keyStore.getKey(0);
+            // preparing a vector of all trusted CAs 
             WebPublicKeyStore keyStore = WebPublicKeyStore.getTrustedKeyStore();
             Vector keys = keyStore.getKeys();
 
             Vector caCerts = new Vector();
             caCerts.addElement(issuerCert);
-            caCerts.addElement(cert);
             for (int i = 0; i < keys.size(); i++) {
                 PublicKeyInfo ki = (PublicKeyInfo)keys.elementAt(i);
-                caCerts.addElement(WebPublicKeyStore.createCertificate(ki));
+                if (ki.isEnabled() && Permissions.isTrusted(ki.getDomain())) {
+                    caCerts.addElement(WebPublicKeyStore.createCertificate(ki));
+                }
             }
             
             response = receiveResponse(caCerts);
@@ -119,21 +121,15 @@ public class OCSPValidatorImpl implements OCSPValidator {
 
             int certOCSPStatus = response.getCertStatus();
 
-            // -----
-            System.out.println("Status of certificate is: " +
-                OCSPResponse.certStatusToText(certOCSPStatus));
-            // -----
-
             if (certOCSPStatus != CertStatus.GOOD) {
                 return certOCSPStatus;
             }
         } catch (OCSPException e) {
-            System.out.println("ERROR: " + e.getErrorMessage());            
-            e.printStackTrace();
+            // e.printStackTrace();
             throw e;
         } catch (Exception e) {
-            e.printStackTrace();
-            throw new OCSPException(OCSPException.UNKNOWN_ERROR, e.getMessage());
+            throw new OCSPException(OCSPException.UNKNOWN_ERROR,
+                                    e.getMessage());
         } finally {
             cleanup();
         }
@@ -148,9 +144,7 @@ public class OCSPValidatorImpl implements OCSPValidator {
      */
     private void openConnection() throws OCSPException {
         String proxyUsername = null, proxyPassword = null;
-        //String responderUrl = Configuration.getProperty("ocsp.responderURL");
-        String responderUrl = "http://cingular-ocsp.geotrust.com/responder";
-        //String responderUrl = "http://ocsp.digsigtrust.com";
+        String responderUrl = Configuration.getProperty("ocsp.responderURL");
 
         try {
             httpConnection = (HttpConnection)
@@ -177,8 +171,6 @@ public class OCSPValidatorImpl implements OCSPValidator {
      * @throws OCSPException if an error occured while sending the request 
      */
     private void sendRequest(OCSPRequest request) throws OCSPException {
-        System.out.println(">>> sendRequest():\n" + request.toString());
-
         try {
             byte[] requestBytes = request.getRequestAsByteArray();
 
@@ -202,8 +194,6 @@ public class OCSPValidatorImpl implements OCSPValidator {
             throw new OCSPException(OCSPException.CANNOT_SEND_REQUEST,
                                     ioe.getMessage());
         }
-
-        System.out.println(">>> sendRequest(): exiting");
     }
 
     /**
@@ -215,8 +205,6 @@ public class OCSPValidatorImpl implements OCSPValidator {
      */
     private OCSPResponse receiveResponse(Vector caCerts)
             throws OCSPException {
-        System.out.println(">>> receiveResponse(): started");
-
         try {
             httpInputStream = httpConnection.openInputStream();
 
@@ -246,8 +234,6 @@ public class OCSPValidatorImpl implements OCSPValidator {
             System.arraycopy(tmpBuf, 0, responseBuf, 0, total);
 
             OCSPResponse ocspResponse = new OCSPResponse(responseBuf, caCerts);
-
-            System.out.println(">>> receiveResponse(): exiting");
 
             return ocspResponse;
         } catch (IOException ioe) {

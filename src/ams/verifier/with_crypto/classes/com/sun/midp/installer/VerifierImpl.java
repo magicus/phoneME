@@ -324,30 +324,36 @@ public class VerifierImpl implements Verifier {
             certValidator = new OCSPValidatorImpl();
         }
 
-        int status;
-        X509Certificate cert = (X509Certificate)derCerts.elementAt(0);
-        
-        try {
-            status = certValidator.validate(
-                    (X509Certificate)derCerts.elementAt(derCerts.size() - 1),
-                        (X509Certificate)issuer.elementAt(0));
-        } catch (OCSPException ocspEx) {
-            /*
-             * IMPL_NOTE: an exception must be thrown to allow the caller
-             * to display a proper message to the user.
-             */
-            status = CertStatus.UNKNOWN;
+        // go through the authorization path and send OCSP requests
+        // begin with the most trusted certificate
+        for (int i = 0; i < derCerts.size(); i++) {
+            int status;
+            X509Certificate cert = (X509Certificate)derCerts.elementAt(i);
+
+            try {
+                status = certValidator.validate((X509Certificate)
+                    derCerts.elementAt(derCerts.size() - i - 1),
+                        (i == 0 ? (X509Certificate)issuer.elementAt(0) :
+                                  (X509Certificate)
+                                      derCerts.elementAt(derCerts.size() - i)));
+            } catch (OCSPException ocspEx) {
+                /*
+                 * IMPL_NOTE: an exception must be thrown to allow the caller
+                 * to display a proper message to the user.
+                 */
+                status = CertStatus.UNKNOWN;
+            }
+
+            if (status == CertStatus.REVOKED) {
+                throw new InvalidJadException(
+                    InvalidJadException.REVOKED_CERT, cert.getSubject());
+            } else if (status != CertStatus.GOOD) {
+                throw new InvalidJadException(
+                    InvalidJadException.UNKNOWN_CERT_STATUS, cert.getSubject());
+            }
         }
 
-        if (status == CertStatus.REVOKED) {
-            throw new InvalidJadException(
-                InvalidJadException.REVOKED_CERT, cert.getSubject());
-        } else if (status != CertStatus.GOOD) {
-            throw new InvalidJadException(
-                InvalidJadException.UNKNOWN_CERT_STATUS, cert.getSubject());
-        }
-
-        cpCert = cert;
+        cpCert = (X509Certificate)derCerts.elementAt(0);
 
         // Authenticated
         return 1;
