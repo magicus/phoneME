@@ -32,13 +32,30 @@
 extern "C" {
 #endif
 
+#include "lime.h"
+
 #include "javacall_events.h"
 
 #ifdef WIN32
 #include <windows.h>
 #endif
 
+#include "javacall_memory.h"
+#include "javacall_lifecycle.h"
+#include "javacall_socket.h"
+#include "javacall_datagram.h"
+
 #include "lcd.h"
+
+
+
+
+#if ENABLE_JSR_120
+extern javacall_result try_process_wma_emulator(javacall_handle handle);
+#endif
+
+static HWND hwnd;
+
 
 typedef struct EventMessage_ {
     struct EventMessage_* next;
@@ -132,6 +149,7 @@ javacall_bool javacall_events_finalize(void) {
         events_mutex=NULL;
     }
     if (events_handle!=NULL) {
+        ResetEvent(events_handle);
         CloseHandle(events_handle);
         events_handle=NULL;
     }
@@ -276,13 +294,13 @@ javacall_result javacall_event_receive(
         javacall_events_init();
     }
 
-    ok=(binaryBuffer!=NULL) && (binaryBufferMaxLen>0);
+    ok = (binaryBuffer != NULL) && (binaryBufferMaxLen > 0);
 
     if (ok) {
         ok = WaitForSingleObject(events_mutex, 0)==WAIT_OBJECT_0;
     }
     if (ok) {
-        totalRead = dequeueEventMessage(binaryBuffer,binaryBufferMaxLen);
+        totalRead = dequeueEventMessage(binaryBuffer, binaryBufferMaxLen);
         if (head == NULL) {
             ResetEvent(events_handle);
         }
@@ -333,14 +351,18 @@ javacall_result javacall_event_send(unsigned char* binaryBuffer,
 
 #define EVENT_LOOP_TIMER_ID 2112
 
+/**
+ * The function signals the underlying platform that JVM needs to execute
+ * one timeslice. Used in slave mode only.
+ */
 void javacall_schedule_vm_timeslice(void) {
     PostMessage(midpGetWindowHandle(), WM_TIMER, (WPARAM)EVENT_LOOP_TIMER_ID, (LPARAM)NULL);
 }
 
 /**
- * Sample event loop.
+ * Platform-specific event processing loop
  */
-void midp_slavemode_port_event_loop(void) {
+void javacall_slavemode_port_event_loop(void) {
     MSG msg;
     javacall_int64 ms;
 
@@ -351,6 +373,8 @@ void midp_slavemode_port_event_loop(void) {
      * JVM_Start(classPath, mainClass, argc, argv);
      */
 
+
+    /* signal the platform that SJWC needs to execute one timeslice */
     javacall_schedule_vm_timeslice();
 
     while (GetMessage(&msg, NULL, 0, 0)) {
@@ -359,31 +383,292 @@ void midp_slavemode_port_event_loop(void) {
         }
 
         if (msg.message == WM_TIMER && msg.wParam == EVENT_LOOP_TIMER_ID) {
+            /* Timer event.  Execute a time slice */
+
             KillTimer(midpGetWindowHandle(), EVENT_LOOP_TIMER_ID);
 
+            /* execute one  timeslice */
             ms = javanotify_vm_timeslice();
-            if (ms == 0) {
-                //PostMessage(midpGetWindowHandle(), WM_TIMER, EVENT_LOOP_TIMER_ID, NULL); // Impl note: to bypass timer mechanism
-                SetTimer(midpGetWindowHandle(), EVENT_LOOP_TIMER_ID, ms, NULL);
-            } else if (ms > 0) {
-                SetTimer(midpGetWindowHandle(), EVENT_LOOP_TIMER_ID, ms, NULL);
-            } else if (ms == -2) {
+            if (ms >= 0) {
+                /* JVM nas not exited and at least one of the threads is unblocked */
+                SetTimer(midpGetWindowHandle(), EVENT_LOOP_TIMER_ID, (javacall_int32)ms, NULL);
+            }
+            else if (ms == -1){
+                /* all ot the threads are blocked, wait for event */
+            }
+            else if (ms == -2) {
+                /* JVM has exited */
                 return;
-            } else /*if (ms == -1)*/ {
-                /* wait for event */
             }
         } else {
+            /* Non-timer event.  Some sort of platform message */
             TranslateMessage(&msg);
             DispatchMessage(&msg);
-
             javanotify_inform_event();
-	}
+        }
+    }
+}
+
+void FinalizeLimeEvents() {
+    EndLime();
+}
+
+int IsJavaRunning = 0;
+
+#define LIME_PACKAGE "com.sun.kvem.midp"
+#define LIME_GRAPHICS_CLASS "GraphicsBridge"
+#define LIME_EVENT_CLASS "EventBridge"
+
+/* Thread which checks if LIME events are pending */
+static DWORD WINAPI
+DispatcherThread(void* pArg) {
+
+	extern void CheckLimeEvent();
+
+    //Make sure lime was properly initialized
+    Sleep(200);
+	while(IsJavaRunning) {
+    	CheckLimeEvent();
     }
 
-    /*
-     * Cleanup:
-     * JVM_CleanUp();
-     */
+    return 0;
+}
+
+void InitializeLimeEvents()
+{
+    static int initialized = 0;
+
+    IsJavaRunning = 1;
+
+    if (!initialized) {
+        LimeFunction *f;
+        initialized = TRUE;
+        f = NewLimeFunction(LIME_PACKAGE,
+                            LIME_GRAPHICS_CLASS,
+                            "initialize");
+        f->call(f, NULL);
+        DeleteLimeFunction(f);
+
+        /* initialize the event bridge */
+        f = NewLimeFunction(LIME_PACKAGE,
+                            LIME_EVENT_CLASS,
+                            "initialize");
+        f->call(f, NULL);
+        DeleteLimeFunction(f);
+
+    }
+
+    CreateThread(NULL, 0, DispatcherThread, (void *)2000, 0, NULL);
+
+}
+
+static LRESULT CALLBACK
+WndProc (HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam) {
+    //check if udp or tcp
+    int level = SOL_SOCKET;
+    int opttarget;
+    int optname;
+    int optsize = sizeof(optname);
+
+
+    switch (iMsg) {
+
+    case WM_CLOSE:
+        /*
+         * Handle the "X" (close window) button by sending the AMS a shutdown
+         * event.
+         */
+        PostQuitMessage (0);
+        javanotify_shutdown();
+        return 0;
+
+    case WM_TIMER:
+        // Stop the timer from repeating the WM_TIMER message.
+        KillTimer(hwnd, wParam);
+
+        return 0;
+
+
+
+    case WM_NETWORK:
+
+#ifdef ENABLE_NETWORK_TRACING
+        fprintf(stderr, "Got WM_NETWORK(");
+        fprintf(stderr, "descriptor = %d, ", (int)wParam);
+        fprintf(stderr, "status = %d, ", WSAGETSELECTERROR(lParam));
+#endif
+
+        optname = SO_TYPE;
+        if (0 != getsockopt((SOCKET)wParam, SOL_SOCKET,  optname,(char*)&opttarget, &optsize)) {
+#ifdef ENABLE_NETWORK_TRACING
+            fprintf(stderr, "getsocketopt error)\n");
+#endif
+        }
+
+	if(opttarget == SOCK_STREAM) {
+	        switch (WSAGETSELECTEVENT(lParam)) {
+	        case FD_CONNECT:
+	            /* Change this to a write. */
+	            javanotify_socket_event(
+	                    JAVACALL_EVENT_SOCKET_OPEN_COMPLETED,
+	                    (javacall_handle)wParam,
+	                    (WSAGETSELECTERROR(lParam) == 0) ? JAVACALL_OK : JAVACALL_FAIL);
+#ifdef ENABLE_NETWORK_TRACING
+	            fprintf(stderr, "[TCP] FD_CONNECT)\n");
+#endif
+	            return 0;
+
+	        case FD_WRITE:
+	            javanotify_socket_event(
+	                    JAVACALL_EVENT_SOCKET_SEND,
+	                    (javacall_handle)wParam,
+	                    (WSAGETSELECTERROR(lParam) == 0) ? JAVACALL_OK : JAVACALL_FAIL);
+	            javanotify_socket_event(
+	                    JAVACALL_EVENT_SERVER_SOCKET_ACCEPT_COMPLETED,
+	                    (javacall_handle)wParam,
+	                    (WSAGETSELECTERROR(lParam) == 0) ? JAVACALL_OK : JAVACALL_FAIL);
+#ifdef ENABLE_NETWORK_TRACING
+	            fprintf(stderr, "[TCP] FD_WRITE)\n");
+#endif
+	            return 0;
+
+	        case FD_ACCEPT:
+		      javanotify_server_socket_event(
+	                    JAVACALL_EVENT_SERVER_SOCKET_ACCEPT_COMPLETED,
+	                    (javacall_handle)wParam,
+						(javacall_handle)wParam,
+	                    (WSAGETSELECTERROR(lParam) == 0) ? JAVACALL_OK : JAVACALL_FAIL);
+#ifdef ENABLE_NETWORK_TRACING
+	            fprintf(stderr, "[TCP] FD_ACCEPT, ");
+#endif
+	        case FD_READ:
+	            javanotify_socket_event(
+	                    JAVACALL_EVENT_SOCKET_RECEIVE,
+	                    (javacall_handle)wParam,
+	                    (WSAGETSELECTERROR(lParam) == 0) ? JAVACALL_OK : JAVACALL_FAIL);
+#ifdef ENABLE_NETWORK_TRACING
+	            fprintf(stderr, "[TCP] FD_READ)\n");
+#endif
+	            return 0;
+
+	        case FD_CLOSE:
+                        javanotify_socket_event(
+                                JAVACALL_EVENT_SOCKET_CLOSE_COMPLETED,
+	                    (javacall_handle)wParam,
+	                    (WSAGETSELECTERROR(lParam) == 0) ? JAVACALL_OK : JAVACALL_FAIL);
+#ifdef ENABLE_NETWORK_TRACING
+	            fprintf(stderr, "[TCP] FD_CLOSE)\n");
+#endif
+	            return 0;
+
+	        default:
+#ifdef ENABLE_NETWORK_TRACING
+	            fprintf(stderr, "[TCP] unsolicited event %d)\n",
+	                    WSAGETSELECTEVENT(lParam));
+#endif
+	            break;
+	        }//end switch
+	}//SOCK_STREAM
+	else if (opttarget == SOCK_DGRAM) {
+		 switch (WSAGETSELECTEVENT(lParam)) {
+
+	        case FD_WRITE:
+	            javanotify_datagram_event(
+	                    JAVACALL_EVENT_DATAGRAM_SENDTO_COMPLETED,
+	                    (javacall_handle)wParam,
+	                    (WSAGETSELECTERROR(lParam) == 0) ? JAVACALL_OK : JAVACALL_FAIL);
+#ifdef ENABLE_NETWORK_TRACING
+	            fprintf(stderr, "[UDP] FD_WRITE)\n");
+#endif
+	            return 0;
+	        case FD_READ:
+#if ENABLE_JSR_120
+				if (JAVACALL_OK == try_process_wma_emulator((javacall_handle)wParam)) {
+                   return 0;
+				}
+#endif
+				javanotify_datagram_event(
+						   JAVACALL_EVENT_DATAGRAM_RECVFROM_COMPLETED,
+						   (javacall_handle)wParam,
+						   (WSAGETSELECTERROR(lParam) == 0) ? JAVACALL_OK : JAVACALL_FAIL);
+
+#ifdef ENABLE_NETWORK_TRACING
+	            fprintf(stderr, "[UDP] FD_READ)\n");
+#endif
+	            return 0;
+	        case FD_CLOSE:
+#ifdef ENABLE_NETWORK_TRACING
+	            fprintf(stderr, "[UDP] FD_CLOSE)\n");
+#endif
+	            return 0;
+	        default:
+#ifdef ENABLE_NETWORK_TRACING
+	            fprintf(stderr, "[UDP] unsolicited event %d)\n",
+	                    WSAGETSELECTEVENT(lParam));
+#endif
+	            break;
+               }//end switch
+	}//end UDP
+       return 0;
+
+    case WM_HOST_RESOLVED:
+#ifdef ENABLE_TRACE_NETWORKING
+        fprintf(stderr, "Got Windows event WM_HOST_RESOLVED \n");
+#endif
+        javanotify_socket_event(
+                JAVACALL_EVENT_NETWORK_GETHOSTBYNAME_COMPLETED,
+                (javacall_handle)wParam,
+                (WSAGETSELECTERROR(lParam) == 0) ? JAVACALL_OK : JAVACALL_FAIL);
+        return 0;
+
+    }
+
+    return DefWindowProc (hwnd, iMsg, wParam, lParam);
+}
+
+
+static void InitializePhantomWindow() {
+    HINSTANCE hInstance = GetModuleHandle(NULL);
+    char szAppName[] = "no_window";
+    WNDCLASSEX  wndclass;
+
+
+    wndclass.cbSize        = sizeof (wndclass);
+    wndclass.style         = 0;
+    wndclass.lpfnWndProc   = WndProc;
+    wndclass.cbClsExtra    = 0;
+    wndclass.cbWndExtra    = 0;
+    wndclass.hInstance     = hInstance;
+    wndclass.hIcon         = NULL;
+    wndclass.hCursor       = NULL;
+    wndclass.hbrBackground = NULL;
+    wndclass.lpszMenuName  = NULL;
+    wndclass.lpszClassName = szAppName;
+    wndclass.hIconSm       = NULL;
+
+    RegisterClassEx (&wndclass);
+
+    hwnd = CreateWindow (szAppName,               /* window class name       */
+                         "MIDP",                  /* window caption          */
+                         WS_DISABLED,             /* window style; disable   */
+                         CW_USEDEFAULT,           /* initial x position      */
+                         CW_USEDEFAULT,           /* initial y position      */
+                         0,                       /* initial x size          */
+                         0,                       /* initial y size          */
+                         NULL,                    /* parent window handle    */
+                         NULL,                    /* window menu handle      */
+                         hInstance,               /* program instance handle */
+                         NULL);                   /* creation parameters     */
+
+}
+
+HWND midpGetWindowHandle() {
+
+    if (hwnd == NULL) {
+            InitializePhantomWindow();
+    }
+
+    return hwnd;
 }
 
 
