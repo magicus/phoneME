@@ -37,9 +37,9 @@ import javax.microedition.content.Registry;
 import javax.microedition.content.ResponseListener;
 
 import com.sun.j2me.security.Token;
+import com.sun.j2me.proxy.security.SecurityToken;
 import com.sun.j2me.security.TrustedClass;
-import com.sun.jsr211.security.SecurityInitializer;
-import com.sun.midp.security.SecurityToken;
+import com.sun.j2me.security.SecurityTokenInitializer;
 
 /**
  * Implementation of Content Handler registry.  It maintains
@@ -59,7 +59,7 @@ public final class RegistryImpl {
 
     /** This class has a different security domain than the App suite */
     private static Token securityToken =
-    	SecurityInitializer.requestToken(new SecurityTrusted());
+    	SecurityTokenInitializer.requestToken(new SecurityTrusted());
     
     static {
 	    RegistryStore.setSecurityToken(securityToken);

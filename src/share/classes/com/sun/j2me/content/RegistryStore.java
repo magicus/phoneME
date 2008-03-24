@@ -404,7 +404,7 @@ class RegistryStore {
     /**
      * Cleanup native resources.
      */
-    private native void finalize();
+    protected native void finalize();
 
     /**
      * Registers given content handler.

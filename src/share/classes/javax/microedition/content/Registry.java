@@ -31,7 +31,7 @@ import java.io.IOException;
 import com.sun.j2me.content.ContentHandlerImpl;
 import com.sun.j2me.content.InvocationImpl;
 import com.sun.j2me.content.RegistryImpl;
-import com.sun.jsr211.security.SecurityInitializer;
+import com.sun.j2me.security.SecurityTokenInitializer;
 import com.sun.j2me.security.Token;
 import com.sun.j2me.security.TrustedClass;
 
@@ -290,7 +290,7 @@ public class Registry {
     
     /** This class has a different security domain than the MIDlet suite */
     private static Token classSecurityToken =
-        SecurityInitializer.requestToken(new SecurityTrusted());
+        SecurityTokenInitializer.requestToken(new SecurityTrusted());
 
     /** The mutex used to avoid corruption between threads. */
     private static final Object mutex = new Object();

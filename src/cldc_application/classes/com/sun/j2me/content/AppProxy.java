@@ -669,37 +669,3 @@ class AppProxy {
     	}
     }
 }
-
-class Logger {
-	
-	static final private java.io.PrintStream out = System.out;
-
-    /**
-     * Log an information message to the system logger for this AppProxy.
-     * @param msg a message to write to the log.
-     */
-    void println(String msg) {
-        out.println(">> " + threadID() + ": " + msg);
-    }
-
-    /**
-     * Log an information message to the system logger for this AppProxy.
-     * @param msg a message to write to the log.
-     * @param t Throwable to be logged
-     */
-    void log(String msg, Throwable t) {
-        out.println("** " + threadID() + ": " + msg);
-        t.printStackTrace();
-    }
-
-
-    /**
-     * Map a thread to an printable string.
-     * @return a short string for the thread
-     */
-    private String threadID() {
-        Thread thread = Thread.currentThread();
-        int i = thread.hashCode() & 0xff;
-        return "T" + i;
-    }
-}
