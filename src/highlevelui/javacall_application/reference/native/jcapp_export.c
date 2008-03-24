@@ -3,22 +3,22 @@
  *
  * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
- * 
+ *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
  * 2 only, as published by the Free Software Foundation.
- * 
+ *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
  * included at /legal/license.txt).
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA
- * 
+ *
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
  * information or have any questions.
@@ -30,11 +30,14 @@
 #include <midpMalloc.h>
 #include <javacall_lcd.h>
 #include <string.h>
+#include <javacall_time.h>
 #include <kni.h>
 
 
 gxj_screen_buffer gxj_system_screen_buffer;
 
+static jboolean isLcdDirty = KNI_FALSE;
+static javacall_time_milliseconds lastFlushTimeTicks = 0;
 /**
  * @file
  * Additional porting API for Java Widgets based port of abstract
@@ -44,14 +47,15 @@ gxj_screen_buffer gxj_system_screen_buffer;
 int jcapp_get_screen_buffer() {
      javacall_lcd_color_encoding_type color_encoding;
      gxj_system_screen_buffer.alphaData = NULL;
-     gxj_system_screen_buffer.pixelData = 
+     gxj_system_screen_buffer.pixelData =
          javacall_lcd_get_screen (JAVACALL_LCD_SCREEN_PRIMARY,
                                   &gxj_system_screen_buffer.width,
                                   &gxj_system_screen_buffer.height,
-                                  &color_encoding);                                
-     if (JAVACALL_LCD_COLOR_RGB565 != color_encoding) {        
+                                  &color_encoding);
+     if (JAVACALL_LCD_COLOR_RGB565 != color_encoding) {
 	    return -2;
-     };                     
+     };
+     return 0;
 }
 
 
@@ -72,20 +76,19 @@ void static jcapp_reset_screen_buffer() {
  *         <tt>other value</tt> otherwise
  */
 int jcapp_init() {
-    javacall_lcd_color_encoding_type color_encoding;
- 
+
     if (!JAVACALL_SUCCEEDED(javacall_lcd_init ()))
-        return -1;        
- 
+        return -1;
+
     /**
-     *   NOTE: Only JAVACALL_LCD_COLOR_RGB565 encoding is supported by phoneME 
+     *   NOTE: Only JAVACALL_LCD_COLOR_RGB565 encoding is supported by phoneME
      *     implementation. Other values are reserved for future  use. Returning
      *     the buffer in other encoding will result in application termination.
      */
     if (jcapp_get_screen_buffer() == -2) {
         REPORT_ERROR(LC_LOWUI, "Screen pixel format is the one different from RGB565!");
         return -2;
-    }    
+    }
 
     jcapp_reset_screen_buffer();
     return 0;
@@ -107,8 +110,17 @@ void jcapp_finalize() {
  * @param x2 bottom-right x coordinate of the area to refresh
  * @param y2 bottom-right y coordinate of the area to refresh
  */
+#define TRACE_LCD_REFRESH
 void jcapp_refresh(int x1, int y1, int x2, int y2)
 {
+#ifdef  TRACE_LCD_REFRESH
+    {
+// lcd_updates is used to trace how many lcd updates for given interval
+// lcd_updates is defined in midp_slavemode_javacall.c
+        extern int lcd_updates;
+        lcd_updates++;
+    }
+#endif
     javacall_lcd_flush_partial (y1, y2);
 }
 
@@ -118,7 +130,7 @@ void jcapp_refresh(int x1, int y1, int x2, int y2)
  * @param mode true for full screen mode
  *             false for normal
  */
-void jcapp_set_fullscreen_mode(jboolean mode) {    
+void jcapp_set_fullscreen_mode(jboolean mode) {
 
     javacall_lcd_set_full_screen_mode(mode);
     jcapp_get_screen_buffer();
@@ -129,7 +141,7 @@ void jcapp_set_fullscreen_mode(jboolean mode) {
  * Change screen orientation flag
  */
 jboolean jcapp_reverse_orientation() {
-    jboolean res = javacall_lcd_reverse_orientation(); 
+    jboolean res = javacall_lcd_reverse_orientation();
     jcapp_get_screen_buffer();
 
     // Whether current Displayable won't repaint the entire screen on
@@ -150,7 +162,7 @@ jboolean jcapp_get_reverse_orientation() {
  * Return screen width
  */
 int jcapp_get_screen_width() {
-    return javacall_lcd_get_screen_width();   
+    return javacall_lcd_get_screen_width();
 }
 
 /**
@@ -162,7 +174,7 @@ int jcapp_get_screen_height() {
 
 /**
  * Checks if soft button layer is supported
- * 
+ *
  * @return KNI_TRUE if native softbutton is supported, KNI_FALSE - otherwise
  */
 jboolean jcapp_is_native_softbutton_layer_supported() {
@@ -171,8 +183,8 @@ jboolean jcapp_is_native_softbutton_layer_supported() {
 
 /**
  * Paints the Soft Buttons when using a native layer
- * acts as intermidiate layer between kni and javacall 
- * 
+ * acts as intermidiate layer between kni and javacall
+ *
  * @param label Label to draw (UTF16)
  * @param len Length of the lable (0 will cause removal of current label)
  * @param index Index of the soft button in the soft button bar.
@@ -181,4 +193,30 @@ jboolean jcapp_is_native_softbutton_layer_supported() {
 	javacall_lcd_set_native_softbutton_label(label, len, index);
 }
 
+/*
+ * will be called from event handling loop periodically
+ */
+void jcapp_refresh_pending(javacall_time_milliseconds timeTowaitInMillisec) {
+
+    // This functions is currenty place-holder. It does nothing now since
+    // isLcdDirty is KNI_FALSE and it never changes. This can be changed
+    // in jcapp_refresh() as it is in Samsung-17
+    //
+    if(isLcdDirty == KNI_FALSE) {
+        return;
+    }
+
+    /* apply the expected waiting time to lastFlushtimeTicks */
+
+    if(-1 == timeTowaitInMillisec) {
+        lastFlushTimeTicks = 0;
+    } else {
+        lastFlushTimeTicks -= timeTowaitInMillisec;
+    }
+
+    //if(KNI_FALSE == lfjport_is_painting()) {
+    //FIX THIS
+    jcapp_refresh(0, gxj_system_screen_buffer.height, 0, 0);
+    //}
+}
 

@@ -3,22 +3,22 @@
  *
  * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
- * 
+ *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
  * 2 only, as published by the Free Software Foundation.
- * 
+ *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
  * included at /legal/license.txt).
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA
- * 
+ *
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
  * information or have any questions.
@@ -80,7 +80,6 @@
  * Maximal length of the VM profile name.
  */
 #define MAX_VM_PROFILE_LEN 256
-
 /**
  * @def ROTATION_ARG
  * Name of the system property with initial screen rotation mode.
@@ -104,8 +103,7 @@ static MIDP_ERROR getClassPathForVerifyOnce(
 #define STACK_SIZE 8192
 
 /* Stack grows down */
-static void
-measureStack(int clearStack) {
+void measureStack(int clearStack) {
     char  stack[STACK_SIZE];
     char  tag = (char)0xef;
     int   i;
@@ -128,8 +126,7 @@ measureStack(int clearStack) {
 #undef STACK_SIZE
 
 #else
-
-#define measureStack(x) ;
+void measureStack(int clearStack) {}
 
 #endif
 
@@ -376,7 +373,7 @@ midpInitializeUI(void) {
 
         reserved = getInternalPropertyInt("AMS_MEMORY_RESERVED_MVM");
         if (0 == reserved) {
-            REPORT_ERROR(LC_AMS, "AMS_MEMORY_RESERVED_MVM property not set");            
+            REPORT_ERROR(LC_AMS, "AMS_MEMORY_RESERVED_MVM property not set");
             reserved = AMS_MEMORY_RESERVED_MVM;
         }
 
@@ -418,7 +415,7 @@ midpInitializeUI(void) {
             (void)JVM_ParseOneArg(1, &argv[i]);
         }
 #undef OPT_NUM
-        
+
         /*
          * Use the default port: 2800.
          * To redefine it, "-port <n>" option can be used.
@@ -526,7 +523,7 @@ static void setDebugOption(int debugOption) {
         argv[0] = "-debug_isolate";
         (void)JVM_ParseOneArg(1, argv);
 #endif
-        
+
         if (debugOption == MIDP_DEBUG_SUSPEND) {
             argv[0] = "-suspend";
             (void)JVM_ParseOneArg(1, argv);
