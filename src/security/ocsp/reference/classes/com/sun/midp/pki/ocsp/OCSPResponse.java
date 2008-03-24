@@ -122,6 +122,7 @@ import com.sun.midp.log.LogChannels;
 class OCSPResponse {
     private static final ObjectIdentifier OCSP_BASIC_RESPONSE_OID;
     private static final ObjectIdentifier OCSP_NONCE_EXTENSION_OID;
+
     static {
         ObjectIdentifier tmp1 = null;
         ObjectIdentifier tmp2 = null;
@@ -151,8 +152,8 @@ class OCSPResponse {
      * Create an OCSP response from its ASN.1 DER encoding.
      */
     // used by OCSPValidatorImpl
-    OCSPResponse(byte[] bytes,
-        X509Certificate[] certs, Vector keys) throws IOException, OCSPException {
+    OCSPResponse(byte[] bytes, X509Certificate[] certs, Vector keys)
+            throws IOException, OCSPException {
 
         try {
             int responseStatus;
@@ -163,12 +164,12 @@ class OCSPResponse {
             byte[] ocspNonce;
 
             // OCSPResponse
-            //if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
+            if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
                 Logging.report(Logging.INFORMATION, LogChannels.LC_SECURITY,
                     "OCSPResponse first bytes are... " +
                         Utils.hexEncode(bytes, 0,
                                 (bytes.length > 256) ? 256 : bytes.length));
-            //}
+            }
 
             DerValue der = new DerValue(bytes);
             if (der.tag != DerValue.tag_Sequence) {
@@ -179,10 +180,11 @@ class OCSPResponse {
 
             // responseStatus
             responseStatus = derIn.getEnumerated();
-            //if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
+            if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
                 Logging.report(Logging.INFORMATION, LogChannels.LC_SECURITY,
                            "OCSP response: " + responseStatus);
-            //}
+            }
+            
             if (responseStatus != OCSP_RESPONSE_OK) {
                 throw new OCSPException((byte)responseStatus,
                     "OCSP Response Failure: " + responseStatus);
@@ -276,7 +278,6 @@ class OCSPResponse {
             DerValue[] singleResponseDer = seqDerIn.getSequence(1);
             // Examine only the first response
             singleResponse = new SingleResponse(singleResponseDer[0]);
-System.out.println(">>> 444");
 
             // responseExtensions
             if (seqDerIn.available() > 0) {
@@ -334,47 +335,48 @@ System.out.println(">>> OCSP extension: " + responseExtension[i]);
 
             // Check whether the cert returned by the responder is trusted
             if (x509Certs != null && x509Certs[0] != null) {
-                /* IMPL_NOTE: if there is a certificate specified in the responce,
-                 * we can verify it first and if it is trusted then use it to
-                 * verify signature. By now we do nothing with it.
+                /* IMPL_NOTE: if there is a certificate specified in the
+                 * responce, we can verify it first and if it is trusted then
+                 * use it to verify signature. By now we do nothing with it.
                  */
             }
 
             System.out.println(">>> responderCert.subj = " + certs[0].getSubject());
 
             if (certs != null) {
-                // Confirm that the signed response was generated using the public
-                // key from the trusted cert
+                // Confirm that the signed response was generated using
+                // the public key from the trusted cert
                 boolean verified = false;
                 for (int i = 0; (!verified) && (i < certs.length); i++) {
                     try {
                         verified = verifyResponse(responseDataDer,
                                         certs[i].getPublicKey(),
                                         sigAlgId, signature);
-                    }  catch (IllegalArgumentException e) {
-                       /* IMPL_NOTE: if the key usage does not include KP_OCSP_SIGNING_OID
-                        * then  IllegalArgumentException is thrown. We should check the key
-                        * usages first and remove this try-catch.
+                    }  catch (SignatureException e) {
+                       /* IMPL_NOTE: if the key usage does not include
+                        * KP_OCSP_SIGNING_OID then SignatureException
+                        * is thrown. We should check the key usages
+                        * first and remove this try-catch.
                         */
                         verified = false;
                     }
                 }
+
                 // try other trusted public keys
                 for (int i = 0; (!verified) && (i < keys.size()); i++) {
                     try {
                         verified = verifyResponse(responseDataDer,
                                        (PublicKey)keys.elementAt(i),
                                        sigAlgId, signature);
-                    } catch (IllegalArgumentException e) {
-                        /* IMPL_NOTE: if the key usage does not include KP_OCSP_SIGNING_OID
-                         * then  IllegalArgumentException is thrown. We should check the key
-                         * usages first and remove this try-catch.
+                    } catch (SignatureException e) {
+                        /* IMPL_NOTE: if the key usage does not include
+                         * KP_OCSP_SIGNING_OID then SignatureException
+                         * is thrown. We should check the key usages
+                         * first and remove this try-catch.
                          */
                          verified = false;
                     }
                 }
-
-                // try to verify using certificate chain
 
                 if (!verified) {
                     if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
@@ -396,6 +398,7 @@ System.out.println(">>> OCSP extension: " + responseExtension[i]);
                     "Unable to verify OCSP Responder's signature");
             }
         } catch (OCSPException e) {
+            // e.printStackTrace();
             throw e;
         } catch (Exception e) {
             throw new OCSPException(OCSPException.UNKNOWN_ERROR,
@@ -562,12 +565,10 @@ System.out.println(">>> OCSP extension: " + responseExtension[i]);
 System.out.println(">>> certStatus = " + certStatus);
 
             thisUpdate = tmp.getGeneralizedTime();
-System.out.println(">>> 222");
 
             if (tmp.available() == 0)  {
                 // we are done
             } else {
-System.out.println(">>> 333");
                 derVal = tmp.getDerValue();
                 tag = (byte)(derVal.tag & 0x1f);
                 if (tag == 0) {
@@ -583,7 +584,6 @@ System.out.println(">>> 333");
                 }
                 // ignore extensions
             }
-System.out.println(">>> ok 2");
 
             Date now = new Date();
             if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
@@ -596,7 +596,6 @@ System.out.println(">>> ok 2");
                             thisUpdate + until);
             }
 
-System.out.println(">>> ok 3");
             // Check that the test date is within the validity interval
             if ((thisUpdate != null && (now.getTime() < thisUpdate.getTime())) ||
                 (nextUpdate != null && (now.getTime() > nextUpdate.getTime()))) {
@@ -610,7 +609,6 @@ System.out.println(">>> ok 3");
                 throw new IOException("Response is unreliable: its validity " +
                     "interval is out-of-date");
             }
-System.out.println(">>> ok 4");
         }
 
         /*
