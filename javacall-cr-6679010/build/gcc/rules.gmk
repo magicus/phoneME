@@ -50,12 +50,12 @@ endif
 
 include $(JAVACALL_DIR)/build/common.gmk
 
-TEMP1=$(patsubst %.c,%.o,$(PORTING_SOURCE))
-TEMP=$(patsubst %.cpp,%.o,$(TEMP1))
+TEMP_OBJECTS1=$(patsubst %.c,%.o,$(PORTING_SOURCE))
+TEMP_OBJECTS=$(patsubst %.cpp,%.o,$(TEMP_OBJECTS1))
 ifneq ($(FILTER_OBJECTS)x,x)
-PORTING_OBJECTS+=$(filter-out $(FILTER_OBJECTS),$(TEMP))
+PORTING_OBJECTS+=$(filter-out $(FILTER_OBJECTS),$(TEMP_OBJECTS))
 else # ifneq ($(FILTER_OBJECTS)x,x)
-PORTING_OBJECTS+=$(TEMP)
+PORTING_OBJECTS+=$(TEMP_OBJECTS)
 endif # ifneq ($(FILTER_OBJECTS)x,x)
 
 NOTIFIER_OBJECTS=$(patsubst %.c,%.o,$(NOTIFIER_SOURCE))
