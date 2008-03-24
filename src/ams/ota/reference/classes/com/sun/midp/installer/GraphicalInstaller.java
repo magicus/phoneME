@@ -1549,6 +1549,11 @@ public class GraphicalInstaller extends MIDlet implements CommandListener {
         displayAlert(title, message, AlertType.ERROR);
     }
 
+    /**
+     * Notify the platform of the installation status
+     */
+    native void notifyInstallStatus0(boolean status);
+
 
     /** A class to install a suite in a background thread. */
     private class BackgroundInstaller implements Runnable, InstallListener {
@@ -1722,6 +1727,12 @@ public class GraphicalInstaller extends MIDlet implements CommandListener {
                     // because an error has occured.
                     GraphicalInstaller.saveSettings(null,
                         MIDletSuite.UNUSED_SUITE_ID);
+
+                    // notify platform that the installation failed
+                    notifyInstallStatus0(false);
+                } else {
+                    // notify platform of successful installation
+                    notifyInstallStatus0(true);
                 }
 
                 if (parent.progressForm != null) {

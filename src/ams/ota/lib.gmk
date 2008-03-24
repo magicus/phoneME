@@ -57,6 +57,32 @@ SUBSYSTEM_AMS_JAVA_FILES += \
     $(OTA_DIR)/classes/com/sun/midp/installer/OtaNotifier.java
 endif
 
+# vpath for sub-system
+#
+vpath % \
+    $(OTA_DIR)/native/share
+
+# Include path for the sub-system
+#
+SUBSYSTEM_AMS_EXTRA_INCLUDES += \
+    -I$(OTA_DIR)/../include
+
+# Native files for OTA module
+#
+SUBSYSTEM_AMS_NATIVE_FILES += \
+    midpGraphicalInstaller.c
+
+ifeq ($(TARGET_PLATFORM), javacall)
+    vpath % $(OTA_DIR)/native/javacall
+    SUBSYSTEM_AMS_NATIVE_FILES += \
+        midpGraphicalInstaller_md.c
+else
+    vpath % $(OTA_DIR)/native/default
+    SUBSYSTEM_AMS_NATIVE_FILES += \
+        midpGraphicalInstaller_md.c
+endif
+
+
 ams_resources:: ota_resources
 
 # Directory with image resources
