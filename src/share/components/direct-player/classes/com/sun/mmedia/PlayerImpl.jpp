@@ -96,9 +96,6 @@ public class PlayerImpl implements Player {
      */
     private static Object idLock = new Object();
     
-    private boolean endOfStreamReached = false;
-
-
     // Init native library
     protected native int nInit(int appId, int pID, String URI);
     // Terminate native library
@@ -300,9 +297,6 @@ public class PlayerImpl implements Player {
     static void doBuffering(int hNative, SourceStream stream) 
         throws MediaException {
 
-        if (endOfStreamReached) {
-            return;
-        }
         long contLength = stream.getContentLength();
         boolean need_more = true;
 
@@ -324,6 +318,7 @@ public class PlayerImpl implements Player {
                 throw new MediaException("Not enough memory");
             }
 
+            boolean endOfStreamReached = false;
             do {
                 int num_read = 0;
                 int ret;
