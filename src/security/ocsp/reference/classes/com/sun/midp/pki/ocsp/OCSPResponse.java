@@ -152,7 +152,7 @@ class OCSPResponse {
      */
     // used by OCSPValidatorImpl
     OCSPResponse(byte[] bytes,
-        X509Certificate responderCert, Vector keys) throws IOException, OCSPException {
+        X509Certificate[] certs, Vector keys) throws IOException, OCSPException {
 
         try {
             int responseStatus;
@@ -323,10 +323,10 @@ System.out.println(">>> OCSP extension: " + responseExtension[i]);
                     throw new IOException("Bad encoding in certs element " +
                     "of OCSP response: expected ASN.1 context specific tag 0.");
                 }
-                DerValue[] certs = (seqCert.getData()).getSequence(3);
-                x509Certs = new X509Certificate[certs.length];
-                for (int i = 0; i < certs.length; i++) {
-                    byte[] data = certs[i].toByteArray();
+                DerValue[] certsDer = (seqCert.getData()).getSequence(3);
+                x509Certs = new X509Certificate[certsDer.length];
+                for (int i = 0; i < certsDer.length; i++) {
+                    byte[] data = certsDer[i].toByteArray();
                     x509Certs[i] = X509Certificate.generateCertificate(
                             data, 0 , data.length);
                 }
@@ -334,78 +334,57 @@ System.out.println(">>> OCSP extension: " + responseExtension[i]);
 
             // Check whether the cert returned by the responder is trusted
             if (x509Certs != null && x509Certs[0] != null) {
-                X509Certificate cert = x509Certs[0];
-
-                // First check if the cert matches the responder cert which
-                // was set locally.
-                if (cert.equals(responderCert)) {
-                    // cert is trusted, now verify the signed response
-
-                    // Next check if the cert was issued by the responder cert
-                    // which was set locally.
-                } else if (cert.getIssuer().equals(
-                    responderCert.getSubject())) {
-
-                    /* IMPL_NOTE: key purposes should be parsed in X509Certificate
-                       and validated here */
-                    /*
-                    // Check for the OCSPSigning key purpose
-                    List<String> keyPurposes = cert.getExtendedKeyUsage();
-                    if (keyPurposes == null ||
-                        !keyPurposes.contains(KP_OCSP_SIGNING_OID)) {
-                        if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
-                            Logging.report(Logging.INFORMATION,
-                                    LogChannels.LC_SECURITY,
-                                    "Responder's certificate is not valid " +
-                                        "for signing OCSP responses.");
-                        }
-                        throw new OCSPException(
-                            OCSPException.INVALID_RESPONDER_CERTIFICATE,
-                            "Responder's certificate not valid for signing " +
-                            "OCSP responses");
-                    }
-                    */
-
-                    // verify the signature
-                    try {
-                        cert.verify(responderCert.getPublicKey());
-                        responderCert = cert;
-                        // cert is trusted, now verify the signed response
-
-                    } catch (CertificateException ce) {
-                        responderCert = null;
-                    }
-                }
+                /* IMPL_NOTE: if there is a certificate specified in the responce,
+                 * we can verify it first and if it is trusted then use it to
+                 * verify signature. By now we do nothing with it.
+                 */
             }
 
-            System.out.println(">>> responderCert.subj = " + responderCert.getSubject());
+            System.out.println(">>> responderCert.subj = " + certs[0].getSubject());
 
             // Confirm that the signed response was generated using the public
             // key from the trusted responder cert
-            if (responderCert != null) {
-                if (!verifyResponse(responseDataDer,
-                                    responderCert.getPublicKey(),
-                                    sigAlgId, signature)) {
-                    // try other trusted public keys
-                    boolean ok = false;
-                    for (int i = 0; i < keys.size(); i++) {
-                        if (verifyResponse(responseDataDer,
-                                           (PublicKey)keys.elementAt(i),
-                                           sigAlgId, signature)) {
-                            ok = true;
-                        }
-
+            if (certs != null) {
+                boolean verified = false;
+                for (int i = 0; (!verified) && (i < certs.length); i++) {
+                    try {
+                        verified = verifyResponse(responseDataDer,
+                                        certs[i].getPublicKey(),
+                                        sigAlgId, signature);
+                    }  catch (IllegalArgumentException e) {
+                       /* IMPL_NOTE: if the key usage does not include KP_OCSP_SIGNING_OID
+                        * then  IllegalArgumentException is thrown. We should check the key
+                        * usages first and remove this try-catch.
+                        */
+                        verified = false;
                     }
-                    if (!ok) {
-                        if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
-                            Logging.report(Logging.INFORMATION,
-                                    LogChannels.LC_SECURITY,
-                                    "Error verifying OCSP Responder's signature");
-                        }
-                        throw new OCSPException(
-                            OCSPException.CANNOT_VERIFY_SIGNATURE,
+                }
+                // try other trusted public keys
+                for (int i = 0; (!verified) && (i < keys.size()); i++) {
+                    try {
+                        verified = verifyResponse(responseDataDer,
+                                       (PublicKey)keys.elementAt(i),
+                                       sigAlgId, signature);
+                    } catch (IllegalArgumentException e) {
+                        /* IMPL_NOTE: if the key usage does not include KP_OCSP_SIGNING_OID
+                         * then  IllegalArgumentException is thrown. We should check the key
+                         * usages first and remove this try-catch.
+                         */
+                         verified = false;
+                    }
+                }
+
+                // try to verify using certificate chain
+
+                if (!verified) {
+                    if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
+                        Logging.report(Logging.INFORMATION,
+                                LogChannels.LC_SECURITY,
                                 "Error verifying OCSP Responder's signature");
                     }
+                    throw new OCSPException(
+                        OCSPException.CANNOT_VERIFY_SIGNATURE,
+                            "Error verifying OCSP Responder's signature");
                 }
             } else {
                 // Need responder's cert in order to verify the signature

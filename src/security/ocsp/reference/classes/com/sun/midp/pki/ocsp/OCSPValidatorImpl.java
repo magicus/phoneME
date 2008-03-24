@@ -97,7 +97,7 @@ public class OCSPValidatorImpl implements OCSPValidator {
             //WebPublicKeyStore keyStore = WebPublicKeyStore.getTrustedKeyStore();
             //X509Certificate[] caCerts = keyStore.getKey(0);
             X509Certificate[] caCerts = new X509Certificate[] {
-                    (X509Certificate)issuerCert
+                    (X509Certificate)issuerCert, (X509Certificate)cert 
             }; 
             response = receiveResponse(caCerts);
 
@@ -236,13 +236,11 @@ public class OCSPValidatorImpl implements OCSPValidator {
             byte[] responseBuf = new byte[total];
             System.arraycopy(tmpBuf, 0, responseBuf, 0, total);
 
-            // IMPL_NOTE: implement finding responderCert
-            X509Certificate responderCert = caCerts[0];
             WebPublicKeyStore keyStore = WebPublicKeyStore.getTrustedKeyStore();
             Vector keys = keyStore.getKeys();
 
             OCSPResponse ocspResponse = new OCSPResponse(responseBuf,
-                                                         responderCert, keys);
+                                                         caCerts, keys);
 
             System.out.println(">>> receiveResponse(): exiting");
 
