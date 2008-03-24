@@ -176,15 +176,11 @@ class RSAKey implements Key {
      */
     protected BitArray getKey() throws IOException {
         DerOutputStream out = new DerOutputStream();
-        out.putInteger(new BigInteger(mod));
+        out.putInteger(new BigInteger(1, mod)); // 1 - sign byte (0)
         out.putInteger(new BigInteger(exp));
         DerValue val =
             new DerValue(DerValue.tag_Sequence, out.toByteArray());
         byte[] key = val.toByteArray();
-
-//System.out.println("!!! getKey() = " + Utils.hexEncode(key));
-
-System.out.println("*** key.length = " + key.length);        
 
         // there are no unused bits: modulus length % 8 is always 0
         BitArray bitStringKey = new BitArray(

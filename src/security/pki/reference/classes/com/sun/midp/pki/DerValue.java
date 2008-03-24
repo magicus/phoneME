@@ -49,11 +49,6 @@ import java.io.DataInputStream;
  * A note with respect to T61/Teletex strings: From RFC 1617, section 4.1.3
  * and RFC 3280, section 4.1.2.4., we assume that this kind of string will
  * contain ISO-8859-1 characters only.
- *
- *
- * @author David Brownell
- * @author Amit Kapoor
- * @author Hemma Prafullchandra
  */
 public class DerValue {
     /** The tag class types */

@@ -75,8 +75,6 @@ import java.io.IOException;
  * }
  *
  * </pre>
- *
- * @author      Ram Marti
  */
 
 public class OCSPRequest {
@@ -90,45 +88,6 @@ public class OCSPRequest {
     private CertId certId = null;
 
     /**
-     * Version of the OCSP request. Default is 0 (means v1).
-     */
-    //private int version;
-
-    /**
-     * Name of the requestor. Optional.
-     */
-    //private String requestorName;
-
-    /**
-     * List of requests to server.
-     */
-    //private Vector requestList = new Vector();
-
-    /**
-     * List of extensions.
-     */
-    //private Vector requestExtensions = new Vector();
-
-    /**
-     * Signature (optional).
-     */
-    //private byte[] signature;
-
-    /** */
-    //private class Request {
-        /** Hash algorithm identifier */
-        //String hashAlgorithm;
-        /** Hash of Issuer's DN */
-        //String issuerNameHash;
-        /** Hash of Issuer's public key */
-        //String issuerKeyHash;
-        /** Certificate serial number */
-        //String certSerialNumber;
-        /** This request extensions, optional */
-        //private Vector extensions = new Vector();
-    //}
-
-    /**
      * Constructs an OCSPRequest. This constructor is used
      * to construct an unsigned OCSP Request for a single user cert.
      */
@@ -140,26 +99,19 @@ public class OCSPRequest {
         
         this.issuerCert = issuerCert;
 
-System.out.println(">>> userCert.getSubject() = " + userCert.getSubject());        
-System.out.println(">>> issuerCert.getSubject() = " + issuerCert.getSubject());        
+System.out.println(">>> userCert.getIssuer() = " + userCert.getIssuer());
+System.out.println(">>> issuerCert.getIssuer() = " + issuerCert.getIssuer());        
 
         byte[] sn = userCert.getRawSerialNumber();
         if (sn != null) {
             serialNumber = new SerialNumber(new BigInteger(sn));
         } else {
-            //serialNumber = new SerialNumber(BigInteger.valueOf(0));
-
-            serialNumber = new SerialNumber(new BigInteger(new byte[] {
-//                0x43, (byte)0xab, (byte)0xc5, 0x2c, (byte)0xd9, 0x4a, 0x3f, 0x54, (byte)0x98,
-//                    0x7a, 0x3b, 0x3a, (byte)0xda, 0x2b, 0x51, 0x41
-
-                0x07, 0x19, 0x26, 0x73, (byte)0xB9, 0x40, 0x13, (byte)0xCB,
-                0x36, (byte)0xFB, 0x7D, 0x01, (byte)0xDF, (byte)0xA4, (byte)0x8D, (byte)0x83                    
-            }));
-            System.out.println(">>> s = " + serialNumber.toString());
+            // actually, this field is not used by some servers
+            throw new IllegalArgumentException(
+                    "Certificate's Serial Number is not known.");
         }
 
-        //serialNumber = userCert.getSerialNumberObject();
+        System.out.println(">>> s = " + serialNumber.toString());
 
         //if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
             try {
@@ -193,10 +145,6 @@ System.out.println(">>> issuerCert.getSubject() = " + issuerCert.getSubject());
         }
 
         System.out.println(">>> singleRequest = " + singleRequest);
-
-        // write version v1(0)
-//        tmp.write(DerValue.tag_Integer, BigInteger.valueOf(0).toByteArray());
-        //tmp.write(DerValue.tag_UTF8String, "");
 
         certId = singleRequest.getCertId();
         singleRequest.encode(derSingleReqList);

@@ -76,79 +76,11 @@ public class CertId {
         MessageDigest md = MessageDigest.getInstance("SHA-1");
         hashAlgId = AlgorithmId.get("SHA-1");
 
-        //md.update(issuerCert.getSubjectX500Principal().getEncoded());
+        byte[] data = getNameEncoded(issuerCert.getSubject());
 
-///////////////////////////
-        Hashtable nameTagToCode = new Hashtable(20);
-        nameTagToCode.put("CN", new Integer(3));  // Common name: id-at 3
-        nameTagToCode.put("SN", new Integer(4));  // Surname: id-at 4
-        nameTagToCode.put("C", new Integer(6));   // Country: id-at 6
-        nameTagToCode.put("L", new Integer(7));   // Locality: id-at 7
-        nameTagToCode.put("ST", new Integer(8));  // State or province: id-at 8
-        nameTagToCode.put("STREET", new Integer(9)); // Street address: id-at 9
-        nameTagToCode.put("O", new Integer(10));  // Organization: id-at 10
-        nameTagToCode.put("OU", new Integer(11)); // Organization unit: id-at 11
-        // "EmailAddress"
+//System.out.println("data.length = " + data.length);
+//System.out.println("data = " + Utils.hexEncode(data));        
 
-        String issuer = issuerCert.getIssuer();
-        StringBuffer currTag = new StringBuffer();
-        int i = 0;
-
-        DerOutputStream tmpStream = new DerOutputStream();
-
-        while (i < issuer.length()) {
-            DerOutputStream out = new DerOutputStream();
-            char c = issuer.charAt(i);
-            i++;
-
-            if (c == '=') {
-                Integer code = (Integer)nameTagToCode.get(currTag.toString());
-
-                if (code != null) {
-                    DerValue v = new DerValue(DerValue.tag_ObjectId,
-                            new byte[] {0x55, 0x04, code.byteValue()});
-                    out.putDerValue(v);
-                } else {
-                    // IMPL_NOTE: handle e-mail and unknown names
-                    throw new IOException("Can't encode: " + currTag);
-                }
-
-                int idx = issuer.substring(i).indexOf(";");
-                if (idx < 0) {
-                    idx = issuer.substring(i).length();
-                }
-                
-                String attrValue = issuer.substring(i, i + idx);
-
-                //System.out.println("tag = '" + currTag + "'");
-                //System.out.println("attrValue = '" + attrValue + "'");
-
-                out.putPrintableString(attrValue);
-
-                DerOutputStream tmpStream2 = new DerOutputStream();
-                tmpStream2.write(DerValue.tag_Sequence, out);
-                tmpStream.write(DerValue.tag_Set, tmpStream2);
-
-                i += idx + 1;
-                currTag = new StringBuffer();
-                continue;
-            }
-
-            currTag.append(c);
-        }
-
-///////////////////////////
-
-
-        DerOutputStream finalOut = new DerOutputStream();
-        finalOut.write(DerValue.tag_Sequence, tmpStream);
-
-        byte[] data = finalOut.toByteArray();
-
-System.out.println("data.length = " + data.length);
-System.out.println("data = " + Utils.hexEncode(data));        
-
-        //byte[] data = issuerCert.getSubject().getBytes();
         md.update(data, 0, data.length);
 
         issuerNameHash = new byte[md.getDigestLength()];
@@ -159,7 +91,6 @@ System.out.println("data = " + Utils.hexEncode(data));
         DerValue val = new DerValue(pubKey);
         DerValue[] seq = new DerValue[2];
         seq[0] = val.data.getDerValue(); // AlgorithmID
-//System.out.println("alg. id = " + seq[0]);
         seq[1] = val.data.getDerValue(); // Key
 //System.out.println("key = " + seq[1]);
 //System.out.println("key as string = " + issuerCert.getPublicKey());
@@ -167,15 +98,15 @@ System.out.println("data = " + Utils.hexEncode(data));
         // md.reset();
         //byte[] keyBytes1 = seq[1].getBitString();
 
-byte[] keyBytes1 = seq[1].getBitString();
-byte[] keyBytes = new byte[keyBytes1.length + 1];
-System.arraycopy(keyBytes1, 0, keyBytes, 0, 7);
-keyBytes[3] = 0xa;
-keyBytes[7] = 0x01;
-System.arraycopy(keyBytes1, 7, keyBytes, 8, keyBytes1.length - 7);
+byte[] keyBytes = seq[1].getBitString();
+//byte[] keyBytes = new byte[keyBytes1.length + 1];
+//System.arraycopy(keyBytes1, 0, keyBytes, 0, 7);
+//keyBytes[3] = 0xa;
+//keyBytes[7] = 0x01;
+//System.arraycopy(keyBytes1, 7, keyBytes, 8, keyBytes1.length - 7);
 
-//System.out.println("keyBytes.length = " + keyBytes.length);
-//System.out.println("keyBytes = " + Utils.hexEncode(keyBytes));
+System.out.println("keyBytes.length = " + keyBytes.length);
+System.out.println("keyBytes = " + Utils.hexEncode(keyBytes));
 
         md.update(keyBytes, 0, keyBytes.length);
 
@@ -295,6 +226,80 @@ System.arraycopy(keyBytes1, 7, keyBytes, 8, keyBytes1.length - 7);
         } else {
             return false;
         }
+    }
+
+    /**
+     * Returns DER-encoded form of the given name.
+     *
+     * @param name name to encode
+     * @return array of bytes containing DER-encoded name
+     * @throws IOException if error occured when encoding the subject name
+     */
+    private byte[] getNameEncoded(String name)
+            throws IOException {
+        Hashtable nameTagToCode = new Hashtable(20);
+        nameTagToCode.put("CN", new Integer(3));  // Common name: id-at 3
+        nameTagToCode.put("SN", new Integer(4));  // Surname: id-at 4
+        nameTagToCode.put("C", new Integer(6));   // Country: id-at 6
+        nameTagToCode.put("L", new Integer(7));   // Locality: id-at 7
+        nameTagToCode.put("ST", new Integer(8));  // State or province: id-at 8
+        nameTagToCode.put("STREET", new Integer(9)); // Street address: id-at 9
+        nameTagToCode.put("O", new Integer(10));  // Organization: id-at 10
+        nameTagToCode.put("OU", new Integer(11)); // Organization unit: id-at 11
+        // "EmailAddress"
+
+        //String issuer = cert.getIssuer();
+        StringBuffer currTag = new StringBuffer();
+        int i = 0;
+
+        DerOutputStream tmpStream = new DerOutputStream();
+
+        while (i < name.length()) {
+            DerOutputStream out = new DerOutputStream();
+            char c = name.charAt(i);
+            i++;
+
+            if (c == '=') {
+                Integer code = (Integer)nameTagToCode.get(currTag.toString());
+
+                if (code != null) {
+                    DerValue v = new DerValue(DerValue.tag_ObjectId,
+                            new byte[] {0x55, 0x04, code.byteValue()});
+                    out.putDerValue(v);
+                } else {
+                    // IMPL_NOTE: handle e-mail and unknown names
+                    throw new IOException("Can't encode: " + currTag);
+                }
+
+                String restOfName = name.substring(i);
+                int idx = restOfName.indexOf(";");
+                if (idx < 0) {
+                    idx = restOfName.length();
+                }
+
+                String attrValue = name.substring(i, i + idx);
+
+                //System.out.println("tag = '" + currTag + "'");
+                //System.out.println("attrValue = '" + attrValue + "'");
+
+                out.putPrintableString(attrValue);
+
+                DerOutputStream tmpStream2 = new DerOutputStream();
+                tmpStream2.write(DerValue.tag_Sequence, out);
+                tmpStream.write(DerValue.tag_Set, tmpStream2);
+
+                i += idx + 1;
+                currTag = new StringBuffer();
+                continue;
+            }
+
+            currTag.append(c);
+        }
+
+        DerOutputStream finalOut = new DerOutputStream();
+        finalOut.write(DerValue.tag_Sequence, tmpStream);
+
+        return finalOut.toByteArray();
     }
 
     /**

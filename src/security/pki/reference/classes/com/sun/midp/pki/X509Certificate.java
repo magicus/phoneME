@@ -368,8 +368,12 @@ public class X509Certificate implements Certificate {
             serialNumber = Utils.hexEncode(rawSerialNumber, 0, len);
 
             // save rawSerialNumber in the internal array
-            serialNumberBytes = new byte[len];
-            System.arraycopy(rawSerialNumber, 0, serialNumberBytes, 0, len);
+            if (len > 0) {
+                serialNumberBytes = new byte[len];
+                System.arraycopy(rawSerialNumber, 0, serialNumberBytes, 0, len);
+            } else {
+                serialNumberBytes = null;
+            }
 
             /*
              * We are paranoid so we don't just assign a reference as in
@@ -905,6 +909,8 @@ public class X509Certificate implements Certificate {
             // Expect the serial number coded as an integer
             size = res.getLen(INTEGER_TYPE);
             res.serialNumber = Utils.hexEncode(res.enc, res.idx, size);
+            res.serialNumberBytes = new byte[size];
+            System.arraycopy(res.enc, res.idx, res.serialNumberBytes, 0, size);
             res.idx += size;
             
             // Expect the signature AlgorithmIdentifier
@@ -930,7 +936,7 @@ public class X509Certificate implements Certificate {
             } catch (Exception e) {
                 throw new IOException("Could not parse issuer name");
             }
-            
+
             // Validity is a sequence of two UTCTime values
             try {
                 res.match(ValiditySeq);

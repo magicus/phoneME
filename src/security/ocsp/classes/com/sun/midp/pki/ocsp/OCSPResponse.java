@@ -32,13 +32,19 @@ import java.io.IOException;
 
 import javax.microedition.pki.CertificateException;
 
-import com.sun.midp.pki.*;
-
+import com.sun.midp.pki.AlgorithmId;
+import com.sun.midp.pki.DerInputStream;
+import com.sun.midp.pki.ObjectIdentifier;
+import com.sun.midp.pki.X509Certificate;
+import com.sun.midp.pki.DerValue;
+import com.sun.midp.pki.Extension;
+import com.sun.midp.pki.Utils;
 
 import com.sun.midp.crypto.Signature;
 import com.sun.midp.crypto.SignatureException;
 import com.sun.midp.crypto.InvalidKeyException;
 import com.sun.midp.crypto.NoSuchAlgorithmException;
+import com.sun.midp.crypto.PublicKey;
 
 import com.sun.midp.log.Logging;
 import com.sun.midp.log.LogChannels;
@@ -377,13 +383,15 @@ System.out.println(">>> OCSP extension: " + responseExtension[i]);
             // Confirm that the signed response was generated using the public
             // key from the trusted responder cert
             if (responderCert != null) {
-                if (!verifyResponse(responseDataDer, responderCert.getPublicKey(),
+                if (!verifyResponse(responseDataDer,
+                                    responderCert.getPublicKey(),
                                     sigAlgId, signature)) {
                     // try other trusted public keys
                     boolean ok = false;
                     for (int i = 0; i < keys.size(); i++) {
-                        if (verifyResponse(responseDataDer, keys.elementAt(i),
-                                            sigAlgId, signature)) {
+                        if (verifyResponse(responseDataDer,
+                                           (PublicKey)keys.elementAt(i),
+                                           sigAlgId, signature)) {
                             ok = true;
                         }
 

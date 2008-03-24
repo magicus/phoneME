@@ -257,7 +257,7 @@ public class DerOutputStream extends ByteArrayOutputStream {
      * Marshals a truncated DER bit string on the output stream.
      * The bit strings need not be byte-aligned.
      *
-     * @param bits the bit string, MSB first
+     * @param ba the bit string, MSB first
      */
     public void putTruncatedUnalignedBitString(BitArray ba) throws IOException {
         putUnalignedBitString(ba.truncate());
