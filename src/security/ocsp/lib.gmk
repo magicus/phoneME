@@ -43,8 +43,6 @@ SECURITY_OCSP_DIR = $(SUBSYSTEM_DIR)/$(SECURITY_OCSP_NAME)
 SUBSYSTEM_SECURITY_JAVA_FILES += \
     $(SECURITY_OCSP_DIR)/classes/com/sun/midp/pki/ocsp/OCSPException.java \
     $(SECURITY_OCSP_DIR)/classes/com/sun/midp/pki/ocsp/OCSPValidator.java \
-    $(SECURITY_OCSP_DIR)/classes/com/sun/midp/pki/ocsp/OCSPRequest.java \
-    $(SECURITY_OCSP_DIR)/classes/com/sun/midp/pki/ocsp/OCSPResponse.java \
     $(SECURITY_OCSP_DIR)/classes/com/sun/midp/pki/ocsp/CertStatus.java
 
 ifeq ($(USE_OCSP), true)

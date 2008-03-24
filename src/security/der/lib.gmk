@@ -25,22 +25,21 @@
 #
 ######################################################################
 #
-# OCSP (Online Certificate Status Protocol) library
+# DER library
 #
 ######################################################################
 
-# Name of the library
-SECURITY_OCSP_REFERENCE_NAME = security/ocsp/reference
-SECURITY_OCSP_REFERENCE_DIR = $(SUBSYSTEM_DIR)/$(SECURITY_OCSP_REFERENCE_NAME)
 
-# Javadoc source path
-MIDP_JAVADOC_SOURCEPATH += $(SECURITY_OCSP_REFERENCE_DIR)/classes
-
-# Java files for the library
+# Adds to local variable and global SUBSYSTEMS list
 #
-SUBSYSTEM_SECURITY_JAVA_FILES += \
-    $(SECURITY_OCSP_REFERENCE_DIR)/classes/com/sun/midp/pki/ocsp/OCSPValidatorImpl.java \
-    $(SECURITY_OCSP_REFERENCE_DIR)/classes/com/sun/midp/pki/ocsp/CertId.java \
-    $(SECURITY_OCSP_REFERENCE_DIR)/classes/com/sun/midp/pki/ocsp/OCSPRequest.java \
-    $(SECURITY_OCSP_REFERENCE_DIR)/classes/com/sun/midp/pki/ocsp/OCSPResponse.java
-	
+SUBSYSTEMS += der
+
+# Name of the library
+SECURITY_DER_NAME = security/der
+SECURITY_DER_DIR = $(SUBSYSTEM_DIR)/$(SECURITY_DER_NAME)
+
+ifeq ($(USE_OCSP), true)
+include $(SECURITY_DER_DIR)/reference/lib.gmk
+else
+include $(SECURITY_DER_DIR)/stubs/lib.gmk
+endif

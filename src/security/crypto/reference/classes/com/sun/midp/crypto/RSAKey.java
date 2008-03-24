@@ -26,10 +26,6 @@
 
 package com.sun.midp.crypto;
 
-import com.sun.midp.pki.*;
-
-import java.io.IOException;
-
 /**
  * Implements RSAKey with methods to set and get RSA exponent
  * and modulus.
@@ -87,18 +83,23 @@ class RSAKey implements Key {
         byte[] kexp = new byte[exp.length];
         byte[] kmod = new byte[mod.length];
 
-        if (this.getClass() != k.getClass())
+        if (this.getClass() != k.getClass()) {
             return false;
-        if (k.getExponent(kexp, (short) 0) != exp.length)
+        }
+        if (k.getExponent(kexp, (short) 0) != exp.length) {
             return false;
-        if (k.getModulus(kmod, (short) 0) != mod.length)
+        }
+        if (k.getModulus(kmod, (short) 0) != mod.length) {
             return false;
-        for (int i = 0; i < exp.length; i++)
+        }
+        for (int i = 0; i < exp.length; i++) {
             if (kexp[i] != exp[i])
             return false;
-        for (int i = 0; i < mod.length; i++)
+        }
+        for (int i = 0; i < mod.length; i++) {
             if (kmod[i] != mod[i])
             return false;
+        }
         return true;
     }
     
@@ -119,95 +120,14 @@ class RSAKey implements Key {
         return "RAW"; 
     }
 
-    /** 
+    /**
      * Returns the encoding of key.
      *
      * @return null because there is no encoding
      */
     public byte[] getEncoded() {
-        try {
-            byte[] tmp = getEncodedInternal();
-            byte[] encodedKey = new byte[tmp.length];
-            System.arraycopy(tmp, 0, encodedKey, 0, tmp.length);
-            return encodedKey;
-        } catch (InvalidKeyException e) {
-            // ignore
-        }
-        return null;
+        return DEREncoder.encode(this);
     }
-
-    /////////////////////////////////
-    /* The encoding for the key. */
-    protected byte[] encodedKey = null;
-
-
-    private byte[] getEncodedInternal() throws InvalidKeyException {
-        byte[] encoded = encodedKey;
-        if (encoded == null) {
-            try {
-                DerOutputStream out = new DerOutputStream();
-                encode(out);
-                encoded = out.toByteArray();
-            } catch (IOException e) {
-                throw new InvalidKeyException("IOException : " +
-                                               e.getMessage());
-            }
-            encodedKey = encoded;
-        }
-        return encoded;
-    }
-    
-    /**
-     * Encode SubjectPublicKeyInfo sequence on the DER output stream.
-     *
-     * @exception IOException on encoding errors.
-     */
-    public final void encode(DerOutputStream out) throws IOException {
-        try {
-            encode(out, AlgorithmId.get("RSA"), getKey());
-        } catch (NoSuchAlgorithmException nsae) {
-            throw new IOException(nsae.getMessage());
-        }
-    }
-
-    /**
-     * Gets the key. The key may or may not be byte aligned.
-     * @return a BitArray containing the key.
-     */
-    protected BitArray getKey() throws IOException {
-        DerOutputStream out = new DerOutputStream();
-        /*
-         * IMPL_NOTE: currently we always write the sign byte
-         * for the modulus for proper hash calculation.
-         * Actually it must present only if it was present in
-         * the original DER-encoded certificate.
-         */
-        out.putInteger(new BigInteger(1, mod)); // 1 - sign byte (0)
-        out.putInteger(new BigInteger(exp));
-        DerValue val =
-            new DerValue(DerValue.tag_Sequence, out.toByteArray());
-        byte[] key = val.toByteArray();
-
-        // there are no unused bits: modulus length % 8 is always 0
-        BitArray bitStringKey = new BitArray(
-                          key.length * 8,
-                          key);
-
-        return (BitArray)bitStringKey.clone();
-    }
-
-    /*
-     * Produce SubjectPublicKey encoding from algorithm id and key material.
-     */
-    static void encode(DerOutputStream out, AlgorithmId algid, BitArray key)
-            throws IOException {
-        DerOutputStream tmp = new DerOutputStream();
-        algid.encode(tmp);
-        tmp.putUnalignedBitString(key);
-        out.write(DerValue.tag_Sequence, tmp);
-    }
-
-    ////////////////////////////////
 
     // The next four are for RSA public/private keys
     /**

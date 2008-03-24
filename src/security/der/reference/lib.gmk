@@ -25,22 +25,30 @@
 #
 ######################################################################
 #
-# OCSP (Online Certificate Status Protocol) library
+# DER library
 #
 ######################################################################
 
 # Name of the library
-SECURITY_OCSP_REFERENCE_NAME = security/ocsp/reference
-SECURITY_OCSP_REFERENCE_DIR = $(SUBSYSTEM_DIR)/$(SECURITY_OCSP_REFERENCE_NAME)
+SECURITY_DER_REFERENCE_NAME = security/der/reference
+SECURITY_DER_REFERENCE_DIR = $(SUBSYSTEM_DIR)/$(SECURITY_DER_REFERENCE_NAME)
 
 # Javadoc source path
-MIDP_JAVADOC_SOURCEPATH += $(SECURITY_OCSP_REFERENCE_DIR)/classes
+MIDP_JAVADOC_SOURCEPATH += $(SECURITY_DER_REFERENCE_DIR)/classes
 
 # Java files for the library
 #
 SUBSYSTEM_SECURITY_JAVA_FILES += \
-    $(SECURITY_OCSP_REFERENCE_DIR)/classes/com/sun/midp/pki/ocsp/OCSPValidatorImpl.java \
-    $(SECURITY_OCSP_REFERENCE_DIR)/classes/com/sun/midp/pki/ocsp/CertId.java \
-    $(SECURITY_OCSP_REFERENCE_DIR)/classes/com/sun/midp/pki/ocsp/OCSPRequest.java \
-    $(SECURITY_OCSP_REFERENCE_DIR)/classes/com/sun/midp/pki/ocsp/OCSPResponse.java
-	
+    $(SECURITY_DER_REFERENCE_DIR)/classes/com/sun/midp/crypto/DEREncoder.java \
+    $(SECURITY_DER_REFERENCE_DIR)/classes/com/sun/midp/pki/DerValue.java \
+    $(SECURITY_DER_REFERENCE_DIR)/classes/com/sun/midp/pki/DerOutputStream.java \
+    $(SECURITY_DER_REFERENCE_DIR)/classes/com/sun/midp/pki/DerInputStream.java \
+    $(SECURITY_DER_REFERENCE_DIR)/classes/com/sun/midp/pki/DerInputBuffer.java \
+    $(SECURITY_DER_REFERENCE_DIR)/classes/com/sun/midp/pki/DerIndefLenConverter.java \
+    $(SECURITY_DER_REFERENCE_DIR)/classes/com/sun/midp/pki/ObjectIdentifier.java \
+    $(SECURITY_DER_REFERENCE_DIR)/classes/com/sun/midp/pki/AlgorithmId.java \
+    $(SECURITY_DER_REFERENCE_DIR)/classes/com/sun/midp/pki/Extension.java \
+    $(SECURITY_DER_REFERENCE_DIR)/classes/com/sun/midp/pki/BigInteger.java \
+    $(SECURITY_DER_REFERENCE_DIR)/classes/com/sun/midp/pki/SerialNumber.java \
+    $(SECURITY_DER_REFERENCE_DIR)/classes/com/sun/midp/pki/BitArray.java
+					    

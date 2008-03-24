@@ -23,24 +23,5 @@
 # Clara, CA 95054 or visit www.sun.com if you need additional
 # information or have any questions.
 #
-######################################################################
-#
-# OCSP (Online Certificate Status Protocol) library
-#
-######################################################################
 
-# Name of the library
-SECURITY_OCSP_REFERENCE_NAME = security/ocsp/reference
-SECURITY_OCSP_REFERENCE_DIR = $(SUBSYSTEM_DIR)/$(SECURITY_OCSP_REFERENCE_NAME)
-
-# Javadoc source path
-MIDP_JAVADOC_SOURCEPATH += $(SECURITY_OCSP_REFERENCE_DIR)/classes
-
-# Java files for the library
-#
-SUBSYSTEM_SECURITY_JAVA_FILES += \
-    $(SECURITY_OCSP_REFERENCE_DIR)/classes/com/sun/midp/pki/ocsp/OCSPValidatorImpl.java \
-    $(SECURITY_OCSP_REFERENCE_DIR)/classes/com/sun/midp/pki/ocsp/CertId.java \
-    $(SECURITY_OCSP_REFERENCE_DIR)/classes/com/sun/midp/pki/ocsp/OCSPRequest.java \
-    $(SECURITY_OCSP_REFERENCE_DIR)/classes/com/sun/midp/pki/ocsp/OCSPResponse.java
-	
+include $(CURDIR)/../../../build/share/genroot.make
