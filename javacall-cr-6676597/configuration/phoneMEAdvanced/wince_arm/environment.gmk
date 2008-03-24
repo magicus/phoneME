@@ -31,7 +31,7 @@ include $(JAVACALL_DIR)/build/list.gmk
 TARGET_CPU=arm
 USE_MIDP=false
 
-JSR_LIST    +=COMMON JSR_120 JSR_135 JSR_177
+JSR_LIST    +=COMMON JSR_120 JSR_135 JSR_177 JSR_211
 
 USE_COMMON = true
 COMMON_JC_IMPL_PATH = $(JAVACALL_DIR)/implementation/win32
@@ -41,6 +41,8 @@ JSR_120_JC_IMPL_PATH=$(JAVACALL_DIR)/implementation/wince
 JSR_135_JC_IMPL_PATH=$(JAVACALL_DIR)/implementation/wince
 
 JSR_177_JC_IMPL_PATH=$(JAVACALL_DIR)/implementation/win32
+
+JSR_211_JC_IMPL_PATH=$(JAVACALL_DIR)/implementation/win32
 
 SOURCE_OUTPUT_LIST += $(JAVACALL_DIR)/configuration/phoneMEAdvanced/wince_arm javacall/configuration/phoneMEAdvanced
 
