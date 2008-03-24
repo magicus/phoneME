@@ -2,22 +2,22 @@
  *
  * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
- * 
+ *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
  * 2 only, as published by the Free Software Foundation.
- * 
+ *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
  * included at /legal/license.txt).
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA
- * 
+ *
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
  * information or have any questions.
@@ -62,7 +62,7 @@ extern "C" {
  * @defgroup NotificationLifecycle Notification API for Lifecycle
  * @ingroup Lifecycle
  * @{
- */ 
+ */
 
 /**
  * The platform should invoke this function in platform context to start
@@ -121,27 +121,27 @@ void javanotify_install_midlet(const char * httpUrl);
  * has already been downloaded and resides somewhere on the file system.
  * The function also requires the full URL that was used to download the
  * file.
- * 
+ *
  * The given URL should be of the form http://www.sun.com/a/b/c/d.jad
- * or http://www.sun.com/a/b/c/d.gcd.  
+ * or http://www.sun.com/a/b/c/d.gcd.
  * Java will start a graphical installer which will download the content
  * fom the Internet.
  *
- * @param httpUrl null-terminated http URL string of the content 
+ * @param httpUrl null-terminated http URL string of the content
  *        descriptor. The URL is of the following form:
  *        http://www.website.com/a/b/c/d.jad
- * @param descFilePath full path of the descriptor file which is of the 
+ * @param descFilePath full path of the descriptor file which is of the
  *        form:
  *        /a/b/c/d.jad  or /a/b/c/d.gcd
  * @param descFilePathLen length of the file path
  * @param isJadFile set to TRUE if the mime type of of the downloaded
- *        descriptor file is <tt>text/vnd.sun.j2me.app-descriptor</tt>. If 
- *        the mime type is anything else (e.g., <tt>text/x-pcs-gcd</tt>), 
+ *        descriptor file is <tt>text/vnd.sun.j2me.app-descriptor</tt>. If
+ *        the mime type is anything else (e.g., <tt>text/x-pcs-gcd</tt>),
  *        this must be set to FALSE.
  * @param isSilent set to TRUE if the content is to be installed silently,
  *        without intervention from the user. (e.g., in the case of SL
  *        or SI messages)
- * 
+ *
  */
 void javanotify_install_content(const char * httpUrl,
                                 const javacall_utf16* descFilePath,
@@ -231,17 +231,17 @@ void javanotify_start_java_with_arbitrary_args(int argc, char* argv[]);
 
 /** @} */
 
-/** 
+/**
  * @defgroup MandatoryLifecycle Mandatory Lifecycle API
  * @ingroup Lifecycle
- * 
+ *
  * Lifecycle APIs define the functionality for:
  *   Announcing Lifecycle state change
  *   Platform request
  *
  * @{
  */
- 
+
 /**
  * @enum javacall_lifecycle_state
  * @brief Java lifecycle state
@@ -345,22 +345,28 @@ void JavaTask(void);
  */
 void javacall_schedule_vm_timeslice(void);
 
+
+/**
+ * Platform-specific event processing loop
+ */
+void javacall_slavemode_port_event_loop(void);
+
 /**
  * In slave mode executes one JVM time slice.
  * @return <tt>-2</tt> if JVM has exited
- *         <tt>-1</tt> if all the Java threads are blocked waiting for events 
+ *         <tt>-1</tt> if all the Java threads are blocked waiting for events
  *         <tt>timeout value</tt>  the nearest timeout of all blocked Java threads
  */
-javacall_int64 javanotify_vm_timeslice(void); 
+javacall_int64 javanotify_vm_timeslice(void);
 
 /**
- * The platform should invoke this function in platform context 
+ * The platform should invoke this function in platform context
  * to select another running application to be the foreground.
  */
 void javanotify_select_foreground_app(void);
 
 /**
- * The platform should invoke this function in platform context 
+ * The platform should invoke this function in platform context
  * to bring the Application Manager Screen to foreground.
  */
 void javanotify_switch_to_ams(void);
