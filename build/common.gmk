@@ -96,7 +96,7 @@ output_properties_files: $(DYNAMIC_PROPERTIES_INI)
 
 $(DYNAMIC_PROPERTIES_INI): $(CONFIGURATOR_JAR_FILE) \
     $(JAVACALL_PROPERTIES_TARGET_FILE)
-	@$(call runJarFile,$(CONFIGURATOR_JAR_FILE)\
+	@$(call runJarFile,$(CONFIGURATOR_JAR_FILE),\
 		-xml $(JAVACALL_PROPERTIES_TARGET_FILE) \
 		-xsl $(CONFIGURATOR_DIR)/xsl/cldc/propertiesIni.xsl \
 		-out $@)
