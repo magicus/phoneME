@@ -590,11 +590,15 @@ class ChoiceGroupPopupLFImpl extends ChoiceGroupLFImpl {
                 g.setColor(ChoiceGroupSkin.COLOR_BORDER_SHD);
                 g.drawLine(1, 1, 1, bounds[HEIGHT] - 2); 
             }
-            
-            if (sbVisible && ScrollIndSkin.MODE == 
+
+            if (sbVisible && ScrollIndSkin.MODE ==
                     ScrollIndResourcesConstants.MODE_ARROWS) {
-                int sbX = bounds[WIDTH] - 
-                    (ChoiceGroupSkin.WIDTH_SCROLL / 2) - 1;
+                int sbX;
+                if (ScreenSkin.TEXT_ORIENT == Graphics.RIGHT) {
+                    sbX = (ChoiceGroupSkin.WIDTH_SCROLL / 2) + 1;  
+                } else {
+                    sbX = bounds[WIDTH] -(ChoiceGroupSkin.WIDTH_SCROLL / 2) - 1;
+                }
                 int sbY = ChoiceGroupSkin.PAD_V;
                 int sbH = bounds[HEIGHT] - (2 * ChoiceGroupSkin.PAD_V);
                 int thumbY = sbY + 4 + 
@@ -717,8 +721,8 @@ class ChoiceGroupPopupLFImpl extends ChoiceGroupLFImpl {
 
             if (ScrollIndSkin.MODE == ScrollIndResourcesConstants.MODE_BAR) {
                 setScrollInd(ScrollIndLayer.getInstance(ScrollIndSkin.MODE));
-                setBackground(sbVisible ? null : ChoiceGroupSkin.IMAGE_POPUP_BG,
-                              ChoiceGroupSkin.COLOR_BG);
+//                setBackground(sbVisible ? null : ChoiceGroupSkin.IMAGE_POPUP_BG,
+//                              ChoiceGroupSkin.COLOR_BG);
             }
             updatePopupLayer(viewable[Y]);
         }

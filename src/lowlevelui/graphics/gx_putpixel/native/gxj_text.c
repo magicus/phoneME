@@ -359,6 +359,8 @@ gx_get_fontinfo(int face, int style, int size,
 }
 
 /**
+
+
  * Gets the advance width for the first n characters in charArray if
  * they were to be drawn in the font indicated by the parameters.
  *
