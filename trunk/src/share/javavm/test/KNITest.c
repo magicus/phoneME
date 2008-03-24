@@ -246,11 +246,12 @@ KNIDECL(KNITest_newStringArray) {
 
 KNIEXPORT KNI_RETURNTYPE_OBJECT
 KNIDECL(KNITest_newObjectArray) {
+    jint len;
     KNI_StartHandles(2);
     KNI_DeclareHandle(newArr);
     KNI_DeclareHandle(clazz);
     KNI_GetParameterAsObject(1, clazz);
-    jint len = KNI_GetParameterAsInt(2);
+    len = KNI_GetParameterAsInt(2);
     SNI_NewObjectArray(clazz, len, newArr);
     KNI_EndHandlesAndReturnObject(newArr);
 }
