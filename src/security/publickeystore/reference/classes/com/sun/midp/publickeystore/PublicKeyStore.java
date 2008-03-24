@@ -143,7 +143,7 @@ public class PublicKeyStore {
                 }
 
                 keys.addElement(keyInfo);
-            }
+            }                               
 	}
 
         return keys;

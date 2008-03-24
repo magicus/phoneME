@@ -31,6 +31,7 @@ import com.sun.midp.main.Configuration;
 import com.sun.midp.pki.ObjectIdentifier;
 import com.sun.midp.pki.X509Certificate;
 import com.sun.midp.publickeystore.WebPublicKeyStore;
+import com.sun.midp.publickeystore.PublicKeyInfo;
 
 import javax.microedition.pki.Certificate;
 import javax.microedition.io.HttpConnection;
@@ -96,9 +97,17 @@ public class OCSPValidatorImpl implements OCSPValidator {
 
             //WebPublicKeyStore keyStore = WebPublicKeyStore.getTrustedKeyStore();
             //X509Certificate[] caCerts = keyStore.getKey(0);
-            X509Certificate[] caCerts = new X509Certificate[] {
-                    (X509Certificate)issuerCert, (X509Certificate)cert 
-            }; 
+            WebPublicKeyStore keyStore = WebPublicKeyStore.getTrustedKeyStore();
+            Vector keys = keyStore.getKeys();
+
+            Vector caCerts = new Vector();
+            caCerts.addElement(issuerCert);
+            caCerts.addElement(cert);
+            for (int i = 0; i < keys.size(); i++) {
+                PublicKeyInfo ki = (PublicKeyInfo)keys.elementAt(i);
+                caCerts.addElement(WebPublicKeyStore.createCertificate(ki));
+            }
+            
             response = receiveResponse(caCerts);
 
             // Check that response applies to the cert that was supplied
@@ -204,7 +213,7 @@ public class OCSPValidatorImpl implements OCSPValidator {
      * @return OCSP response received from the server
      * @throws OCSPException if an error occured while receiving response
      */
-    private OCSPResponse receiveResponse(X509Certificate[] caCerts)
+    private OCSPResponse receiveResponse(Vector caCerts)
             throws OCSPException {
         System.out.println(">>> receiveResponse(): started");
 
@@ -236,11 +245,7 @@ public class OCSPValidatorImpl implements OCSPValidator {
             byte[] responseBuf = new byte[total];
             System.arraycopy(tmpBuf, 0, responseBuf, 0, total);
 
-            WebPublicKeyStore keyStore = WebPublicKeyStore.getTrustedKeyStore();
-            Vector keys = keyStore.getKeys();
-
-            OCSPResponse ocspResponse = new OCSPResponse(responseBuf,
-                                                         caCerts, keys);
+            OCSPResponse ocspResponse = new OCSPResponse(responseBuf, caCerts);
 
             System.out.println(">>> receiveResponse(): exiting");
 

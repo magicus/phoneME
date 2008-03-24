@@ -22,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
  * information or have any questions.
- */
+ */                                                             
 
 package com.sun.midp.pki.ocsp;
 
@@ -152,7 +152,7 @@ class OCSPResponse {
      * Create an OCSP response from its ASN.1 DER encoding.
      */
     // used by OCSPValidatorImpl
-    OCSPResponse(byte[] bytes, X509Certificate[] certs, Vector keys)
+    OCSPResponse(byte[] bytes, Vector certs)
             throws IOException, OCSPException {
 
         try {
@@ -341,17 +341,17 @@ System.out.println(">>> OCSP extension: " + responseExtension[i]);
                  */
             }
 
-            System.out.println(">>> responderCert.subj = " + certs[0].getSubject());
+            System.out.println(">>> responderCert.subj = " + ((X509Certificate)certs.elementAt(0)).getSubject());
 
             if (certs != null) {
                 // Confirm that the signed response was generated using
                 // the public key from the trusted cert
                 boolean verified = false;
-                for (int i = 0; (!verified) && (i < certs.length); i++) {
+                for (int i = 0; (!verified) && (i < certs.size()); i++) {
                     try {
                         verified = verifyResponse(responseDataDer,
-                                        certs[i].getPublicKey(),
-                                        sigAlgId, signature);
+                            ((X509Certificate)certs.elementAt(i)).getPublicKey(),
+                            sigAlgId, signature);
                     }  catch (SignatureException e) {
                        /* IMPL_NOTE: if the key usage does not include
                         * KP_OCSP_SIGNING_OID then SignatureException
@@ -359,22 +359,6 @@ System.out.println(">>> OCSP extension: " + responseExtension[i]);
                         * first and remove this try-catch.
                         */
                         verified = false;
-                    }
-                }
-
-                // try other trusted public keys
-                for (int i = 0; (!verified) && (i < keys.size()); i++) {
-                    try {
-                        verified = verifyResponse(responseDataDer,
-                                       (PublicKey)keys.elementAt(i),
-                                       sigAlgId, signature);
-                    } catch (SignatureException e) {
-                        /* IMPL_NOTE: if the key usage does not include
-                         * KP_OCSP_SIGNING_OID then SignatureException
-                         * is thrown. We should check the key usages
-                         * first and remove this try-catch.
-                         */
-                         verified = false;
                     }
                 }
 
