@@ -37,8 +37,6 @@ import java.util.Vector;
  * This assumes that the basic data structure is "tag, length, value"
  * triplet. In the case where the length is "indefinite", terminating
  * end-of-contents bytes are expected.
- *
- * @author Hemma Prafullchandra
  */
 class DerIndefLenConverter {
 
@@ -130,14 +128,16 @@ class DerIndefLenConverter {
      * then skip the tag and its 1 byte length of zero.
      */
     private void writeTag() {
-        if (dataPos == dataSize)
+        if (dataPos == dataSize) {
             return;
+        }
         int tag = data[dataPos++];
         if (isEOC(tag) && (data[dataPos] == 0)) {
             dataPos++;  // skip length
             writeTag();
-        } else
+        } else {
             newData[newDataPos++] = (byte)tag;
+        }
     }
 
     /**
@@ -291,8 +291,9 @@ class DerIndefLenConverter {
      * Write the value;
      */
     private void writeValue(int curLen) {
-        for (int i=0; i < curLen; i++)
+        for (int i=0; i < curLen; i++) {
             newData[newDataPos++] = data[dataPos++];
+        }
     }
 
     /**

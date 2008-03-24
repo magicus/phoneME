@@ -43,11 +43,6 @@ import java.util.Calendar;
  * <P>At this time, this class supports only a subset of the types of
  * DER data encodings which are defined.  That subset is sufficient for
  * generating most X.509 certificates.
- *
- *
- * @author David Brownell
- * @author Amit Kapoor
- * @author Hemma Prafullchandra
  */
 public class DerOutputStream extends ByteArrayOutputStream {
     /**

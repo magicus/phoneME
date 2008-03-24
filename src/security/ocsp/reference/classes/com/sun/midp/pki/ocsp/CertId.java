@@ -57,8 +57,6 @@ import com.sun.midp.log.LogChannels;
  *      }
  *
  * </pre>
- *
- * @author      Ram Marti
  */
 public class CertId {
     private AlgorithmId hashAlgId;
@@ -78,9 +76,6 @@ public class CertId {
 
         byte[] data = getNameEncoded(issuerCert.getSubject());
 
-//System.out.println("data.length = " + data.length);
-//System.out.println("data = " + Utils.hexEncode(data));        
-
         md.update(data, 0, data.length);
 
         issuerNameHash = new byte[md.getDigestLength()];
@@ -92,22 +87,8 @@ public class CertId {
         DerValue[] seq = new DerValue[2];
         seq[0] = val.data.getDerValue(); // AlgorithmID
         seq[1] = val.data.getDerValue(); // Key
-//System.out.println("key = " + seq[1]);
-//System.out.println("key as string = " + issuerCert.getPublicKey());
 
-        // md.reset();
-        //byte[] keyBytes1 = seq[1].getBitString();
-
-byte[] keyBytes = seq[1].getBitString();
-//byte[] keyBytes = new byte[keyBytes1.length + 1];
-//System.arraycopy(keyBytes1, 0, keyBytes, 0, 7);
-//keyBytes[3] = 0xa;
-//keyBytes[7] = 0x01;
-//System.arraycopy(keyBytes1, 7, keyBytes, 8, keyBytes1.length - 7);
-
-System.out.println("keyBytes.length = " + keyBytes.length);
-System.out.println("keyBytes = " + Utils.hexEncode(keyBytes));
-
+        byte[] keyBytes = seq[1].getBitString();
         md.update(keyBytes, 0, keyBytes.length);
 
         issuerKeyHash = new byte[md.getDigestLength()];
@@ -278,9 +259,6 @@ System.out.println("keyBytes = " + Utils.hexEncode(keyBytes));
                 }
 
                 String attrValue = name.substring(i, i + idx);
-
-                //System.out.println("tag = '" + currTag + "'");
-                //System.out.println("attrValue = '" + attrValue + "'");
 
                 out.putPrintableString(attrValue);
 

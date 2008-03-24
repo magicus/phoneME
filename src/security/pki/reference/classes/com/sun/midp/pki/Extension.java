@@ -53,8 +53,6 @@ import java.io.IOException;
  * </pre>
  * where the Object is typically an array of DER encoded bytes.
  * <p>
- * @author Amit Kapoor
- * @author Hemma Prafullchandra
  */
 public class Extension {
 
@@ -129,16 +127,19 @@ public class Extension {
      */
     public void encode(DerOutputStream out) throws IOException {
 
-        if (extensionId == null)
+        if (extensionId == null) {
             throw new IOException("Null OID to encode for the extension!");
-        if (extensionValue == null)
+        }
+        if (extensionValue == null) {
             throw new IOException("No value to encode for the extension!");
+        }
 
         DerOutputStream dos = new DerOutputStream();
 
         dos.putOID(extensionId);
-        if (critical)
+        if (critical) {
             dos.putBoolean(critical);
+        }
         dos.putOctetString(extensionValue);
 
         out.write(DerValue.tag_Sequence, dos);
@@ -195,8 +196,9 @@ public class Extension {
         if (extensionValue != null) {
             byte[] val = extensionValue;
             int len = val.length;
-            while (len > 0)
+            while (len > 0) {
                 h += len * val[--len];
+            }
         }
         h = h * hashMagic + extensionId.hashCode();
         h = h * hashMagic + (critical?1231:1237);

@@ -37,8 +37,6 @@ import java.util.Calendar;
  * does so with impunity, since it's not intended to be exposed to
  * anyone who could violate the "typed value stream" DER model and hence
  * corrupt the input stream of DER values.
- *
- * @author David Brownell
  */
 class DerInputBuffer extends ByteArrayInputStream {
 

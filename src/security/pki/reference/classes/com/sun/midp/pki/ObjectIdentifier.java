@@ -44,11 +44,6 @@ import java.io.IOException;
  * meaning to identifiers below the 1.3.6.1.4.1.42.2.17 node in the
  * hierarchy, and other organizations can easily acquire the ability
  * to assign such unique identifiers.
- *
- *
- * @author David Brownell
- * @author Amit Kapoor
- * @author Hemma Prafullchandra
  */
 final public class ObjectIdentifier {
     private static final int maxFirstComponent = 2;
@@ -349,35 +344,6 @@ final public class ObjectIdentifier {
         for ( ; i > 0; --i)
             out.write (buf [i] | 0x080);
         out.write (buf [0]);
-    }
-
-    // XXX this API should probably facilitate the JDK sort utility
-
-    /**
-     * Compares this identifier with another, for sorting purposes.
-     * An identifier does not precede itself.
-     *
-     * @param other identifer that may precede this one.
-     * @return true iff <em>other</em> precedes this one
-     *          in a particular sorting order.
-     */
-    public boolean precedes (ObjectIdentifier other) {
-        int i;
-
-        // shorter IDs go first
-        if (other == this || componentLen < other.componentLen)
-            return false;
-        if (other.componentLen < componentLen)
-            return true;
-
-        // for each component, the lesser component goes first
-        for (i = 0; i < componentLen; i++) {
-            if (other.components [i] < components [i])
-                return true;
-        }
-
-        // identical IDs don't precede each other
-        return false;
     }
 
     /**

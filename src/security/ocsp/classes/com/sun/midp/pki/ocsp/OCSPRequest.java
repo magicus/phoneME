@@ -172,22 +172,13 @@ System.out.println(">>> issuerCert.getIssuer() = " + issuerCert.getIssuer());
      * @return string respresentation of this request
      */
     public String toString() {
-        /*
-        String str = "version = " + version +
-                     "\nrequestorName = " + requestorName + "\n";
-
-        for (int i = 0; i < requestList.size(); i++) {
-            str += "\n Request " + i + ": \n" +
-                    requestList.elementAt(i).toString();
+        try {
+            byte[] data = getRequestAsByteArray();
+            return Utils.hexEncode(data, 0,
+                (data.length > 256) ? 256 : data.length);
+        } catch (Exception e) {
+            // ignore
         }
-
-        for (int i = 0; i < requestExtensions.size(); i++) {
-            str += "\n Extension " + i + ": \n" +
-                    requestExtensions.elementAt(i).toString();
-        }
-
-        return str;
-        */
         return "";
     }
 
@@ -219,14 +210,7 @@ System.out.println(">>> issuerCert.getIssuer() = " + issuerCert.getIssuer());
         public String toString() {
             String str = "SingleRequest (" +
                     "\n " + certId;
-
-            //for (int i = 0; i < extensions.size(); i++) {
-            //    str += "\n Extension " + i + ": \n" +
-            //            extensions.elementAt(i).toString();
-            //}
-
             str += "\n)";
-
             return str;
         }
     }

@@ -48,11 +48,6 @@ import java.io.DataInputStream;
  * <P>At this time, this class supports only a subset of the types of DER
  * data encodings which are defined.  That subset is sufficient for parsing
  * most X.509 certificates.
- *
- *
- * @author David Brownell
- * @author Amit Kapoor
- * @author Hemma Prafullchandra
  */
 
 public class DerInputStream {
@@ -108,8 +103,9 @@ public class DerInputStream {
 
             DerIndefLenConverter derIn = new DerIndefLenConverter();
             buffer = new DerInputBuffer(derIn.convert(inData));
-        } else
+        } else {
             buffer = new DerInputBuffer(data, offset, len);
+        }
         buffer.mark(Integer.MAX_VALUE);
     }
 
@@ -129,7 +125,7 @@ public class DerInputStream {
      *          same.
      */
     public DerInputStream subStream(int len, boolean do_skip)
-    throws IOException {
+            throws IOException {
         DerInputBuffer  newbuf = buffer.dup();
 
         newbuf.truncate(len);
@@ -212,8 +208,9 @@ public class DerInputStream {
      * will be stripped off before the bit string is returned.
      */
     public byte[] getBitString() throws IOException {
-        if (buffer.read() != DerValue.tag_BitString)
+        if (buffer.read() != DerValue.tag_BitString) {
             throw new IOException("DER input not an bit string");
+        }
 
         return buffer.getBitString(getLength(buffer));
     }
@@ -222,13 +219,15 @@ public class DerInputStream {
      * Returns an ASN.1 OCTET STRING from the input stream.
      */
     public byte[] getOctetString() throws IOException {
-        if (buffer.read() != DerValue.tag_OctetString)
+        if (buffer.read() != DerValue.tag_OctetString) {
             throw new IOException("DER input not an octet string");
+        }
 
         int length = getLength(buffer);
         byte[] retval = new byte[length];
-        if ((length != 0) && (buffer.read(retval) != length))
+        if ((length != 0) && (buffer.read(retval) != length)) {
             throw new IOException("short read of DER octet string");
+        }
 
         return retval;
     }
@@ -246,8 +245,9 @@ public class DerInputStream {
      * Reads an encoded null value from the input stream.
      */
     public void getNull() throws IOException {
-        if (buffer.read() != DerValue.tag_Null || buffer.read() != 0)
+        if (buffer.read() != DerValue.tag_Null || buffer.read() != 0) {
             throw new IOException("getNull, bad data");
+        }
     }
 
     /**
@@ -269,8 +269,9 @@ public class DerInputStream {
      */
     public DerValue[] getSequence(int startLen) throws IOException {
         tag = (byte)buffer.read();
-        if (tag != DerValue.tag_Sequence)
+        if (tag != DerValue.tag_Sequence) {
             throw new IOException("Sequence tag error");
+        }
         return readVector(startLen);
     }
 
@@ -286,8 +287,9 @@ public class DerInputStream {
      */
     public DerValue[] getSet(int startLen) throws IOException {
         tag = (byte)buffer.read();
-        if (tag != DerValue.tag_Set)
+        if (tag != DerValue.tag_Set) {
             throw new IOException("Set tag error");
+        }
         return readVector(startLen);
     }
 
@@ -336,9 +338,10 @@ public class DerInputStream {
            dis.close();
            DerIndefLenConverter derIn = new DerIndefLenConverter();
            buffer = new DerInputBuffer(derIn.convert(indefData));
-           if (tag != buffer.read())
+           if (tag != buffer.read()) {
                 throw new IOException("Indefinite length encoding" +
-                        " not supported");
+                                      " not supported");
+           }
            len = DerInputStream.getLength(buffer);
         }
 
@@ -351,10 +354,11 @@ public class DerInputStream {
          * Create a temporary stream from which to read the data,
          * unless it's not really needed.
          */
-        if (buffer.available() == len)
+        if (buffer.available() == len) {
             newstr = this;
-        else
+        } else {
             newstr = subStream(len, true);
+        }
 
         /*
          * Pull values out of the stream.
@@ -367,8 +371,9 @@ public class DerInputStream {
             vec.addElement(value);
         } while (newstr.available() > 0);
 
-        if (newstr.available() != 0)
+        if (newstr.available() != 0) {
             throw new IOException("extra data at end of vector");
+        }
 
         /*
          * Now stick them into the array we're returning.
@@ -376,8 +381,9 @@ public class DerInputStream {
         int             i, max = vec.size();
         DerValue[]      retval = new DerValue[max];
 
-        for (i = 0; i < max; i++)
+        for (i = 0; i < max; i++) {
             retval[i] = (DerValue)vec.elementAt(i);
+        }
 
         return retval;
     }
@@ -397,7 +403,7 @@ public class DerInputStream {
      * Read a string that was encoded as a UTF8String DER value.
      */
     public String getUTF8String() throws IOException {
-        return readString(DerValue.tag_UTF8String, "UTF-8", "UTF8");
+        return readString(DerValue.tag_UTF8String, "UTF-8", "UTF-8");
     }
 
     /**
@@ -452,15 +458,17 @@ public class DerInputStream {
     private String readString(byte stringTag, String stringName,
                               String enc) throws IOException {
 
-        if (buffer.read() != stringTag)
+        if (buffer.read() != stringTag) {
             throw new IOException("DER input not a " +
                                   stringName + " string");
+        }
 
         int length = getLength(buffer);
         byte[] retval = new byte[length];
-        if ((length != 0) && (buffer.read(retval) != length))
+        if ((length != 0) && (buffer.read(retval) != length)) {
             throw new IOException("short read of DER " +
                                   stringName + " string");
+        }
 
         return new String(retval, enc);
     }
@@ -469,8 +477,9 @@ public class DerInputStream {
      * Get a UTC encoded time value from the input stream.
      */
     public Date getUTCTime() throws IOException {
-        if (buffer.read() != DerValue.tag_UtcTime)
+        if (buffer.read() != DerValue.tag_UtcTime) {
             throw new IOException("DER input, UTCtime tag invalid ");
+        }
         return buffer.getUTCTime(getLength(buffer));
     }
 
@@ -478,8 +487,9 @@ public class DerInputStream {
      * Get a Generalized encoded time value from the input stream.
      */
     public Date getGeneralizedTime() throws IOException {
-        if (buffer.read() != DerValue.tag_GeneralizedTime)
+        if (buffer.read() != DerValue.tag_GeneralizedTime) {
             throw new IOException("DER input, GeneralizedTime tag invalid ");
+        }
         return buffer.getGeneralizedTime(getLength(buffer));
     }
 

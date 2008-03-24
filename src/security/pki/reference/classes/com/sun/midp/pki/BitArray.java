@@ -30,9 +30,6 @@ import java.io.ByteArrayOutputStream;
 
 /**
  * A packed array of booleans.
- *
- * @author Joshua Bloch
- * @author Douglas Hoover
  */
 
 public class BitArray {
@@ -136,7 +133,7 @@ public class BitArray {
      *  Sets the indexed bit in this BitArray.
      */
     public void set(int index, boolean value)
-    throws ArrayIndexOutOfBoundsException {
+            throws ArrayIndexOutOfBoundsException {
         if (index < 0 || index >= length) {
             throw new ArrayIndexOutOfBoundsException(Integer.toString(index));
         }

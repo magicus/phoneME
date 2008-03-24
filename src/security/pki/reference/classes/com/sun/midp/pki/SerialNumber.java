@@ -31,9 +31,6 @@ import java.io.InputStream;
 
 /**
  * This class defines the SerialNumber class used by certificates.
- *
- * @author Amit Kapoor
- * @author Hemma Prafullchandra
  */
 public class SerialNumber {
     private BigInteger serialNum;

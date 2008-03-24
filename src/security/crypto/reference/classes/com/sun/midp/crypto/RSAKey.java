@@ -176,6 +176,12 @@ class RSAKey implements Key {
      */
     protected BitArray getKey() throws IOException {
         DerOutputStream out = new DerOutputStream();
+        /*
+         * IMPL_NOTE: currently we always write the sign byte
+         * for the modulus for proper hash calculation.
+         * Actually it must present only if it was present in
+         * the original DER-encoded certificate.
+         */
         out.putInteger(new BigInteger(1, mod)); // 1 - sign byte (0)
         out.putInteger(new BigInteger(exp));
         DerValue val =

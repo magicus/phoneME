@@ -334,7 +334,7 @@ public class DerValue {
         case tag_PrintableString:
         case tag_IA5String:
         case tag_GeneralString:
-            enc = "ASCII";
+            enc = "US_ASCII";
             break;
         case tag_T61String:
             enc = "ISO-8859-1";
@@ -389,11 +389,9 @@ public class DerValue {
             return null;
         }
 
-        ///*
         if (fullyBuffered && in.available() != length) {
             throw new IOException("extra data given to DerValue constructor");
         }
-        //*/
 
         byte[] bytes = new byte[length];
 
@@ -698,7 +696,7 @@ public class DerValue {
                 "DerValue.getUTF8String, not UTF-8 " + tag);
         }
 
-        return new String(getDataBytes(), "UTF8");
+        return new String(getDataBytes(), "UTF-8");
     }
 
     /**
