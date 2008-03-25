@@ -43,7 +43,7 @@ public class TLV {
     /** ASN constructed flag used in types (0x20). */
     static final int EXPLICIT = CONSTRUCTED;
     /** ANY_STRING type used as a place holder. [UNIVERSAL 0] */
-    static final int ANY_STRING_TYPE = 0x00; // our own hack
+    static final int ANY_STRING_TYPE = 0x00;
     /** ASN BOOLEAN type used in certificate parsing. [UNIVERSAL 1] */
     static final int BOOLEAN_TYPE    = 1;
     /** ASN INTEGER type used in certificate parsing. [UNIVERSAL 2] */
