@@ -59,6 +59,8 @@ typedef enum {
     JAVACALL_MIDLET_STATE_ACTIVE,
     /** MIDlet paused */
     JAVACALL_MIDLET_STATE_PAUSED,
+    /** MIDlet suspended */
+    JAVACALL_MIDLET_STATE_SUSPENDED,
     /** MIDlet destroyed */
     JAVACALL_MIDLET_STATE_DESTROYED,
     /** MIDlet error */
