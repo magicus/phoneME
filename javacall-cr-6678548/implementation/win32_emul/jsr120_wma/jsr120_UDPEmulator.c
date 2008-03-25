@@ -182,17 +182,20 @@ int* out_encode_sms_buffer_length) {
     int lngth;
     int defaultSegmentsNum = 1;
 
-	if ((senderPhone == NULL) || (recipientPhone == NULL) || (msg == NULL)) {
-		javautil_debug_print (JAVACALL_LOG_ERROR, "jsr120_UDPEmulator", "NULL Parameters to encodeSmsBuffer");
-		return NULL;
-	}
-
-    if (strlen(recipientPhone) + strlen(senderPhone) + msgLength + 64 > SMS_BUFF_LENGTH) {
-	 javautil_debug_print (JAVACALL_LOG_ERROR, "jsr120_UDPEmulator", "Error: too big SMS!");
-        *out_encode_sms_buffer_length = 0;
-        return encode_sms_buffer;
+    if ((msg == NULL) && (msgLength > 0)) {
+        javautil_debug_print(JAVACALL_LOG_ERROR, "jsr120_UDPEmulator", "NULL message to encodeSmsBuffer\n");
+        return NULL;
     }
 
+    if ((senderPhone == NULL) || (recipientPhone == NULL)) {
+        javautil_debug_print(JAVACALL_LOG_ERROR, "jsr120_UDPEmulator", "NULL Parameters to encodeSmsBuffer");
+        return NULL;
+    }
+
+    if (strlen(recipientPhone) + strlen(senderPhone) + msgLength + 64 > SMS_BUFF_LENGTH) {
+        javautil_debug_print(JAVACALL_LOG_ERROR, "jsr120_UDPEmulator", "Error: too big SMS!");
+        return NULL;
+    }
 
     //adding the Content-Type
     memset(encode_sms_buffer, 0, SMS_BUFF_LENGTH);
@@ -252,12 +255,14 @@ int* out_encode_sms_buffer_length) {
 
     //adding the message - must be at te end of the payload buffer
     strcat(encode_sms_buffer, "Buffer: \n");
-      //calculate the length of the payload
+    //calculate the length of the payload
     lngth = strlen(encode_sms_buffer) + msgLength;
 
     *out_encode_sms_buffer_length = lngth ;
 
- memcpy(&encode_sms_buffer[lngth-msgLength], msg,msgLength);
+    if (msgLength > 0) {
+        memcpy(&encode_sms_buffer[lngth-msgLength], msg, msgLength);
+    }
     return encode_sms_buffer;
 }
 
