@@ -1539,7 +1539,7 @@ BN_CTX *ctx;
         nl=n->top;
         if ((al == 0) || (nl == 0)) { r->top=0; return(1); }
 
-        max=(nl+al+1); /* allow for overflow (no?) XXX */
+        max=(nl+al+1); /* need to revisit: allow for overflow (no?) */
         if (bn_expand(r,(INTEGER)((max)*BN_BITS2)) == NULL) goto err;
 
         r->neg=a->neg^n->neg;
@@ -1548,7 +1548,7 @@ BN_CTX *ctx;
         rp=r->d;
 
         /* clear the top bytes of T */
-        for (i=r->top; i<max; i++) /* memset? XXX */
+        for (i=r->top; i<max; i++) /* need to revisit: memset? */
                 r->d[i]=0;
 /*      memset(&(r->d[r->top]),0,(max-r->top)*sizeof(BN_ULONG)); */
 
@@ -1566,7 +1566,7 @@ BN_CTX *ctx;
                         v2=rp[x];
                         v2+=v;
                         rp[x]=v2;
-                        v=((v2&BN_MASK2) < v)?1:0; /* ever true? XXX */
+                        v=((v2&BN_MASK2) < v)?1:0; /* need to revisit: ever true? */
                         }
                 rp++;
                 }
@@ -1577,7 +1577,7 @@ BN_CTX *ctx;
 
         if (BN_ucmp(ret,mont->N) >= 0)
                 {
-                bn_qsub(ret,ret,mont->N); /* XXX */
+                bn_qsub(ret,ret,mont->N); /* need to revisit */
                 }
         retn=1;
 err:
