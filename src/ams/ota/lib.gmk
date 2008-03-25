@@ -67,21 +67,17 @@ vpath % \
 SUBSYSTEM_AMS_EXTRA_INCLUDES += \
     -I$(OTA_DIR)/../include
 
+ifeq ($(TARGET_PLATFORM), javacall)
+    vpath % $(OTA_DIR)/native/javacall
+else
+    vpath % $(OTA_DIR)/native/default
+endif
+
 # Native files for OTA module
 #
 SUBSYSTEM_AMS_NATIVE_FILES += \
-    midpGraphicalInstaller.c
-
-ifeq ($(TARGET_PLATFORM), javacall)
-    vpath % $(OTA_DIR)/native/javacall
-    SUBSYSTEM_AMS_NATIVE_FILES += \
-        midpGraphicalInstaller_md.c
-else
-    vpath % $(OTA_DIR)/native/default
-    SUBSYSTEM_AMS_NATIVE_FILES += \
-        midpGraphicalInstaller_md.c
-endif
-
+    midpGraphicalInstaller.c \
+    midpGraphicalInstaller_md.c
 
 ams_resources:: ota_resources
 
