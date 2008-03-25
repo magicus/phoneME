@@ -161,8 +161,8 @@ typedef struct {
 // and widths of the printable ASCII characters (0x20 ~ 0x7e). We use
 // WinCE API to query and draw the other characters.
 //
-// FIXME: we should support other font styles, such as italic, monospace
-// and bold.
+// Need to revisit: we should support other font styles, such as italic,
+// monospace and bold.
 static FastFontInfo systemFontInfo;
 
 // A counter to check the size of the JIT code.
@@ -1031,14 +1031,14 @@ int wince_init_fonts() {
     printf("wince_init_fonts() Platform=%s, screenWidth=%d, screenHeight=%d\n",
         fPocketPC ? "PocketPC" : "Smartphone", screenWidth, screenHeight);
 
-    // FIXME: the font size and raster-ness should be stored in a
+    // Need to revisit: the font size and raster-ness should be stored in a
     // configuration file so that it's easy to control without
     // recompilation.
     if (screenWidth > 320) {
-        is_raster = 0; // FIXME: do not hard code
+        is_raster = 0; // Need to revisit: do not hard code
         height = 24;
     } else if (fPocketPC) {
-        is_raster = 1; // FIXME: do not hard code
+        is_raster = 1; // Need to revisit: do not hard code
         height = 16; //set it to the value suite for your device
     } else {
         is_raster = 1;
@@ -1094,7 +1094,7 @@ int wince_init_fonts() {
         return 0;
     }
 
-    // FIXME: support fonts of other styles as well.
+    // Need to revisit: support fonts of other styles as well.
     init_font(&systemFontInfo, font, is_raster);
     if (bSmooth) {
         // restore to old value
