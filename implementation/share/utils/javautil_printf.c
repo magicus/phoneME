@@ -221,7 +221,7 @@ void javautil_vprintf(int severity, int channelID, int isolateID, char *msg, va_
             msg++;
 
             switch(*msg) {    /* Type to expect.*/
-            /*FIXME %ld and %lld ?*/
+            /*Need to revisit: %ld and %lld ?*/
                 case 'u':
                 case 'i':
                 case 'd': /* integer */
