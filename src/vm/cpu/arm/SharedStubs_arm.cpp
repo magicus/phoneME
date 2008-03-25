@@ -818,7 +818,7 @@ void SharedStubs::generate_brute_force_icache_flush() {
 
     eol_comment("clean data cache line");
     mcr(p15, 0, r0, c7, c10, 1);
-    // Intel says that this isn't necessary.
+    // This isn't necessary for XScale
     // eol_comment("invalidate data cache line");
     // mcr(p15, 0, r0, c7, c6, 1);
 
