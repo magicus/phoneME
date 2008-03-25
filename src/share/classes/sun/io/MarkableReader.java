@@ -132,8 +132,7 @@ public class MarkableReader {
      * @see     java.io.InputStream#reset()
      */
     public synchronized void mark(int readlimit) {
-        if (readlimit < 0) {
-            clearPosition();
+        if (readlimit <= 0) {
             return;
         }
 
