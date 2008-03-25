@@ -506,7 +506,7 @@ static void drawCharImpl(gxj_screen_buffer *sbuf,
    int dstMask;
 
    if (c == ' ') {
-       return; // hack -- let assume that space is always empty in all
+       return; // the implementation assumes that space is always empty in all
                // charsets.
    }
 
