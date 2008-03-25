@@ -1146,7 +1146,7 @@ void /* OPTIONAL */ javanotify_server_socket_event(javacall_server_socket_callba
         /* If the platform is not able to provide the socket handle in the callback,
            it should pass 0. */
         if (operation_result == JAVACALL_OK) {
-            (javacall_handle) e.data.socketEvent.status = new_socket_handle;
+		e.data.socketEvent.status = (javacall_result) new_socket_handle;
         } else {
             e.data.socketEvent.status = operation_result;
         }
