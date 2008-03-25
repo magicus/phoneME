@@ -71,19 +71,21 @@ int javacall_sms_send(  javacall_sms_encoding    msgType,
 
     javacall_int64 timeStamp = javacall_time_get_seconds_since_1970();
     const char* recipientPhone = destAddress;
-    //char* senderPhone = "+1234567";
-	char* senderPhone = devicePhoneNumber;
+    char* senderPhone = devicePhoneNumber;
     int encodedSMSLength;
     char* encodedSMS;
 
     char* IP_text = getProp("JSR_205_DATAGRAM_HOST", "127.0.0.1");
-
 
     javacall_network_init_start();
     pAddress = getIPBytes_nonblock(IP_text);
 
     encodedSMS = encodeSmsBuffer(msgType, destPort,sourcePort, timeStamp, recipientPhone, senderPhone,
         msgBufferLen, msgBuffer, &encodedSMSLength);
+
+    if (encodedSMS == NULL) {
+        return JAVACALL_FAIL;
+    }
 
     if (smsDatagramSocketHandle) {
         ok = javacall_datagram_sendto_start(smsDatagramSocketHandle, pAddress, smsOutPortNumber,
