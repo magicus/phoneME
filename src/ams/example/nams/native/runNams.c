@@ -409,6 +409,7 @@ void state_change_listener(const NamsEventData* pEventData) {
         switch (pEventData->state) {
             case MIDP_MIDLET_STATE_ACTIVE: printf("ACTIVE\""); break;
             case MIDP_MIDLET_STATE_PAUSED: printf("PAUSED\""); break;
+            case MIDP_MIDLET_STATE_SUSPENDED: printf("SUSPENDED\""); break;
             case MIDP_MIDLET_STATE_DESTROYED:
                 printf("DESTROYED\"");
                 if (pEventData->reason == MIDP_REASON_TERMINATED) {

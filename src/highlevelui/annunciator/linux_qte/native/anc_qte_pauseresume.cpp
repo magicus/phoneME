@@ -105,7 +105,7 @@ static SuspendDialog *suspendDialog;
  * Platform handling code for VM pause notification call.
  */
 extern "C"
-void pdMidpNotifySuspendAll() {
+void pdMidpNotifyPausedAll() {
     if (suspendDialog == NULL) {
         QWidget * mscreen = qteapp_get_mscreen()->asWidget();
 
@@ -118,7 +118,7 @@ void pdMidpNotifySuspendAll() {
  * Platform handling code for VM resume notification call.
  */
 extern "C"
-void pdMidpNotifyResumeAll() {
+void pdMidpNotifyResumedAll() {
 
     if (suspendDialog != NULL) {
         qteapp_get_mscreen()->activateAll();
@@ -127,3 +127,21 @@ void pdMidpNotifyResumeAll() {
         suspendDialog = NULL;
     }
 }
+
+/**
+ * Platform handling code for VM suspend notification call.
+ */
+extern "C"
+void pdMidpNotifyInternalPausedAll() {
+    REPORT_CALL_TRACE(LC_CORE, "LF:STUB:pdMidpNotifyInternalPausedAll()\n");
+}
+
+/**
+ * Platform handling code for VM continue notification call.
+ */
+extern "C"
+void pdMidpNotifyInternalResumedAll() {
+    REPORT_CALL_TRACE(LC_CORE, "LF:STUB:pdMidpNotifyInternalResumedAll()\n");
+}
+
+

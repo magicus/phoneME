@@ -97,7 +97,7 @@ void checkForSystemSignal(MidpReentryData* pNewSignal,
         pNewMidpEvent->ACTION  = event->data.penEvent.type;
         pNewMidpEvent->X_POS   = event->data.penEvent.x;
         pNewMidpEvent->Y_POS   = event->data.penEvent.y;
-	break;
+        break;
     case MIDP_JC_EVENT_SOCKET:
         pNewSignal->waitingFor = event->data.socketEvent.waitingFor;
         pNewSignal->descriptor = (int)event->data.socketEvent.handle;
@@ -115,6 +115,14 @@ void checkForSystemSignal(MidpReentryData* pNewSignal,
     case MIDP_JC_EVENT_RESUME:
         pNewSignal->waitingFor = AMS_SIGNAL;
         pNewMidpEvent->type    = ACTIVATE_ALL_EVENT;
+        break;
+    case MIDP_JC_EVENT_INTERNAL_PAUSE:
+        pNewSignal->waitingFor = AMS_SIGNAL;
+        pNewMidpEvent->type    = INTERNAL_PAUSE_ALL_EVENT;
+        break;
+    case MIDP_JC_EVENT_INTERNAL_RESUME:
+        pNewSignal->waitingFor = AMS_SIGNAL;
+        pNewMidpEvent->type    = INTERNAL_ACTIVATE_ALL_EVENT;
         break;
     case MIDP_JC_EVENT_PUSH:
         pNewSignal->waitingFor = PUSH_ALARM_SIGNAL;

@@ -34,6 +34,8 @@
 #include <sni.h>
 
 #include <midpMIDletProxyList.h>
+#include <midp_constants_data.h>
+#include <midp_properties_port.h>
 
 /**
  * The ID of the isolate in which the AMS is running. In SVM mode, this is 0
@@ -80,6 +82,39 @@ KNIDECL(com_sun_midp_main_MIDletSuiteUtils_isAmsIsolate) {
 #else
     KNI_ReturnBoolean(KNI_TRUE);
 #endif
+}
+
+/**
+ * Check if current configuration is MVM or SVM
+ * @return <code>true</code> if current configuration is MVM
+ *         <code>false</code> otherwise
+ */
+KNIEXPORT KNI_RETURNTYPE_BOOLEAN
+KNIDECL(com_sun_midp_main_MIDletSuiteUtils_isMVM) {
+#if ENABLE_MULTIPLE_ISOLATES
+    KNI_ReturnBoolean(KNI_TRUE);
+#else
+    KNI_ReturnBoolean(KNI_FALSE);
+#endif
+}
+
+/**
+ * Get max number of isolates that can run concurrently
+ * @return maximum number of isolates that can run concurrently
+ */
+KNIEXPORT KNI_RETURNTYPE_INT
+KNIDECL(com_sun_midp_main_MIDletSuiteUtils_getMaxIsolates) {
+    int max_isolates = getInternalPropertyInt("MAX_ISOLATES");
+
+    if (max_isolates <= 0) {
+#if ENABLE_MULTIPLE_ISOLATES
+        max_isolates = MAX_ISOLATES;
+#else
+        max_isolates = 1;
+#endif
+    }
+
+    KNI_ReturnInt(max_isolates);
 }
 
 /**

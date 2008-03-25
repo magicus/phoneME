@@ -43,7 +43,7 @@ class SuspendTimer extends Timer {
      * The timeout within which MIDlets have chance to complete.
      */
     private static final long TIMEOUT =
-            Configuration.getIntProperty("suspendAppTimeout", 2000);
+            Configuration.getIntProperty("suspendAppTimeout", 5000);
 
     /**
      * The only instance of suspend timer.

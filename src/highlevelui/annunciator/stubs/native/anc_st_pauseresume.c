@@ -36,15 +36,30 @@
 /**
  * Platform handling code for VM pause notification call.
  */
-void pdMidpNotifySuspendAll() {
+void pdMidpNotifyPausedAll() {
     
-    REPORT_CALL_TRACE(LC_CORE, "LF:STUB:pdMidpNotifySuspendAll()\n");
+    REPORT_CALL_TRACE(LC_CORE, "LF:STUB:pdMidpNotifyPausedAll()\n");
 }
 
 /**
  * Platform handling code for VM resume notification call.
  */
-void pdMidpNotifyResumeAll() {
+void pdMidpNotifyResumedAll() {
 
-    REPORT_CALL_TRACE(LC_CORE, "LF:STUB:pdMidpNotifyResumeAll()\n");
+    REPORT_CALL_TRACE(LC_CORE, "LF:STUB:pdMidpNotifyResumedAll()\n");
 }
+
+/**
+ * Platform handling code for VM suspend notification call.
+ */
+void pdMidpNotifyInternalPausedAll() {
+    REPORT_CALL_TRACE(LC_CORE, "LF:STUB:pdMidpNotifyInternalPausedAll()\n");
+}
+
+/**
+ * Platform handling code for VM continue notification call.
+ */
+void pdMidpNotifyInternalResumedAll() {
+    REPORT_CALL_TRACE(LC_CORE, "LF:STUB:pdMidpNotifyInternalResumedAll()\n");
+}
+

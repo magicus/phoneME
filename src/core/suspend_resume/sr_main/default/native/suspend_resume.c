@@ -157,6 +157,7 @@ void midp_suspend() {
 }
 
 void resume_java() {
+
     if (getMidpInitLevel() >= VM_LEVEL) {
         MidpEvent event;
         MIDP_EVENT_INITIALIZE(event);
@@ -200,8 +201,12 @@ KNIDECL(com_sun_midp_suspend_SuspendSystem_00024MIDPSystem_suspended0) {
      */
     if (sr_state == SR_SUSPENDING) {
         suspend_resources();
-    } else {
-        /* the sate is SR_RESUMING - pending for safe resume. */
+    } else if (sr_state == SR_RESUMING) {
+        /* IMPL_NOTE: midp_suspend() is never called on any platform other than Linux
+         * so sr_state is always SR_ACTIVE.
+         * this caused the system to be immediately resumed after pause 
+         */
+        /* the state is SR_RESUMING - pending for safe resume. */
         resume_java();
     }
 

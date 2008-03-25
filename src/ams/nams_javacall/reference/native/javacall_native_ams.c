@@ -299,6 +299,37 @@ javacall_result javanotify_ams_midlet_resume(const javacall_app_id appID) {
 }
 
 /**
+ * Platform invokes this function to inform VM to suspend the isolate of
+ * a specific MIDlet without calling MIDlet.pauseApp()
+ *
+ * @param appID appID of the suite to suspend
+ * @return <tt>JAVACALL_OK</tt> if <code>appID</code> has a proper value
+ *         <tt>JAVACALL_FAIL</tt> otherwise
+ * @note the real status of operation will be notified by
+ *       <link>javacall_ams_midlet_stateChanged</link>
+ */
+javacall_result javanotify_ams_midlet_suspend(const javacall_app_id appID) {
+    MIDPError res = midp_midlet_suspend((jint)appID);
+    return (res == ALL_OK) ? JAVACALL_OK : JAVACALL_FAIL;
+}
+
+/**
+ * Platform invokes this function to inform VM to continue the isolate of
+ * a specific MIDlet without calling MIDlet.startApp()
+ *
+ * @param appID appID of the suite to continue
+ * @return <tt>JAVACALL_OK</tt> if <code>appID</code> has a proper value
+ *         <tt>JAVACALL_FAIL</tt> otherwise
+ * @note the real status of operation will be notified by
+ *       <link>javacall_ams_midlet_stateChanged</link>
+ */
+javacall_result javanotify_ams_midlet_continue(const javacall_app_id appID) {
+    MIDPError res = midp_midlet_continue((jint)appID);
+    return (res == ALL_OK) ? JAVACALL_OK : JAVACALL_FAIL;
+}
+
+
+/**
  * Platform invokes this function to get information about the suite containing
  * the specified running MIDlet. This call is synchronous.
  *
@@ -569,6 +600,10 @@ static javacall_midlet_state midp_midlet_state2javacall(jint midpMidletState) {
         }
         case MIDP_MIDLET_STATE_PAUSED: {
             jcMidletState = JAVACALL_MIDLET_STATE_PAUSED;
+            break;
+        }
+        case MIDP_MIDLET_STATE_SUSPENDED: {
+            jcMidletState = JAVACALL_MIDLET_STATE_SUSPENDED;
             break;
         }
         case MIDP_MIDLET_STATE_DESTROYED: {

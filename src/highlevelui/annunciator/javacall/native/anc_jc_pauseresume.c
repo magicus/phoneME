@@ -38,7 +38,7 @@
 /**
  * Platform handling code for VM pause notification call.
  */
-void pdMidpNotifySuspendAll() {
+void pdMidpNotifyPausedAll() {
     javacall_lifecycle_state_changed(JAVACALL_LIFECYCLE_MIDLET_PAUSED,
                                      JAVACALL_OK);
 }
@@ -46,9 +46,24 @@ void pdMidpNotifySuspendAll() {
 /**
  * Platform handling code for VM resume notification call.
  */
-void pdMidpNotifyResumeAll() {
-
+void pdMidpNotifyResumedAll() {
     javacall_lifecycle_state_changed(JAVACALL_LIFECYCLE_MIDLET_RESUMED,
                                          JAVACALL_OK);
-
 }
+
+/**
+ * Platform handling code for VM suspend notification call.
+ */
+void pdMidpNotifyInternalPausedAll() {
+    javacall_lifecycle_state_changed(JAVACALL_LIFECYCLE_MIDLET_INTERNAL_PAUSED,
+                                     JAVACALL_OK);
+}
+
+/**
+ * Platform handling code for VM continue notification call.
+ */
+void pdMidpNotifyInternalResumedAll() {
+    javacall_lifecycle_state_changed(JAVACALL_LIFECYCLE_MIDLET_INTERNAL_RESUMED,
+                                     JAVACALL_OK);
+}
+

@@ -360,6 +360,50 @@ MIDPError midp_midlet_pause(jint appId) {
 }
 
 /**
+ * Suspend the bytecode execution of the specified MIDlet
+ *
+ * If appId is invalid, or if that application is already suspended, this call
+ * has no effect and the MIDlet state change listener will be called anyway.
+ *
+ * @param appId The ID used to identify the application
+ *
+ * @return error code: ALL_OK if the operation was started successfully
+ */
+MIDPError midp_midlet_suspend(jint appId) {
+    MidpEvent evt;
+
+    MIDP_EVENT_INITIALIZE(evt);
+
+    evt.type = NATIVE_MIDLET_SUSPEND_REQUEST;
+    evt.intParam1 = appId;
+
+    midpStoreEventAndSignalAms(evt);
+    return ALL_OK;
+}
+
+/**
+ * Continue the bytecode execution of the specified suspended MIDlet.
+ *
+ * If appId is invalid, or if that application is already active, this call
+ * has no effect and the MIDlet state change listener will be called anyway.
+ *
+ * @param appId The ID used to identify the application
+ *
+ * @return error code: ALL_OK if the operation was started successfully
+ */
+MIDPError midp_midlet_continue(jint appId) {
+    MidpEvent evt;
+
+    MIDP_EVENT_INITIALIZE(evt);
+
+    evt.type = NATIVE_MIDLET_CONTINUE_REQUEST;
+    evt.intParam1 = appId;
+
+    midpStoreEventAndSignalAms(evt);
+    return ALL_OK;
+}
+
+/**
  * Stop the specified MIDlet.
  *
  * If the midlet is not terminated within the given number of milliseconds,
@@ -687,6 +731,45 @@ Java_com_sun_midp_main_NativeAppManagerPeer_notifyMidletPaused(void) {
     eventData.event = MIDP_NAMS_EVENT_STATE_CHANGED;    
     eventData.appId = externalAppId;
     eventData.state = MIDP_MIDLET_STATE_PAUSED;
+    msd.suiteId = KNI_GetParameterAsInt(2);
+    eventData.pSuiteData = &msd;
+
+    KNI_StartHandles(1);
+    KNI_DeclareHandle(handle);
+    KNI_GetParameterAsObject(3, handle);
+
+    res = midp_jstring_to_pcsl_string(handle,
+                                      &msd.varSuiteData.midletClassName);
+
+    nams_listeners_notify(MIDLET_EVENT_LISTENER, &eventData);
+
+    if (res == PCSL_STRING_OK) {
+        pcsl_string_free(&msd.varSuiteData.midletClassName);
+    }
+
+    KNI_EndHandles();
+    KNI_ReturnVoid();
+}
+
+/**
+ * Notify the native application manager that the MIDlet is suspended.
+ *
+ * @param externalAppId ID assigned by the external application manager
+ * @param suiteId ID of the suite the suspended midlet belongs to
+ * @param className class name of the midlet that was suspended
+ */
+KNIEXPORT KNI_RETURNTYPE_VOID
+Java_com_sun_midp_main_NativeAppManagerPeer_notifyMidletSuspended(void) {
+    jint externalAppId = KNI_GetParameterAsInt(1);
+    NamsEventData eventData;
+    MidletSuiteData msd;
+    pcsl_string_status res;
+
+    memset((char*)&eventData, 0, sizeof(NamsEventData));
+    memset((char*)&msd, 0, sizeof(MidletSuiteData));
+    eventData.event = MIDP_NAMS_EVENT_STATE_CHANGED;    
+    eventData.appId = externalAppId;
+    eventData.state = MIDP_MIDLET_STATE_SUSPENDED;
     msd.suiteId = KNI_GetParameterAsInt(2);
     eventData.pSuiteData = &msd;
 

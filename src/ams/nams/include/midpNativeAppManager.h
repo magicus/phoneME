@@ -99,12 +99,13 @@
  */
 #define MIDP_MIDLET_STATE_ACTIVE     1
 #define MIDP_MIDLET_STATE_PAUSED     2
-#define MIDP_MIDLET_STATE_DESTROYED  3
-#define MIDP_MIDLET_STATE_ERROR      4
-#define MIDP_DISPLAY_STATE_FOREGROUND 5
-#define MIDP_DISPLAY_STATE_BACKGROUND 6
-#define MIDP_DISPLAY_STATE_FOREGROUND_REQUEST 7
-#define MIDP_DISPLAY_STATE_BACKGROUND_REQUEST 8
+#define MIDP_MIDLET_STATE_SUSPENDED  3
+#define MIDP_MIDLET_STATE_DESTROYED  4
+#define MIDP_MIDLET_STATE_ERROR      5
+#define MIDP_DISPLAY_STATE_FOREGROUND 6
+#define MIDP_DISPLAY_STATE_BACKGROUND 7
+#define MIDP_DISPLAY_STATE_FOREGROUND_REQUEST 8
+#define MIDP_DISPLAY_STATE_BACKGROUND_REQUEST 9
 
 /**
  * Reasons that may cause a state change
@@ -278,6 +279,30 @@ MIDPError midp_midlet_resume(jint appId);
  * @return error code: ALL_OK if the operation was started successfully
  */
 MIDPError midp_midlet_pause(jint appId);
+
+/**
+ * Suspend the bytecode execution of the specified MIDlet
+ *
+ * If appId is invalid, or if that application is already suspended, this call
+ * has no effect and the MIDlet state change listener will be called anyway.
+ *
+ * @param appId The ID used to identify the application
+ *
+ * @return error code: ALL_OK if the operation was started successfully
+ */
+MIDPError midp_midlet_suspend(jint appId);
+
+/**
+ * Continue the bytecode execution of the specified suspended MIDlet.
+ *
+ * If appId is invalid, or if that application is already active, this call
+ * has no effect and the MIDlet state change listener will be called anyway.
+ *
+ * @param appId The ID used to identify the application
+ *
+ * @return error code: ALL_OK if the operation was started successfully
+ */
+MIDPError midp_midlet_continue(jint appId);
 
 /**
  * Stop the specified MIDlet.

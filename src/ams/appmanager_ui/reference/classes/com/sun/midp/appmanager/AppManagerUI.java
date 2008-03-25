@@ -1247,7 +1247,7 @@ class AppManagerUI extends Form
                 PAPICleanUp.removeMissedTransaction(suiteInfo.suiteId);
 
                 if (mci.msi.proxy != null) {
-                    mci.msi.proxy.destroyMidlet();
+                    mci.msi.proxy.destroyMidlet(-1);
                 }
 
                 try {
@@ -1932,7 +1932,7 @@ class AppManagerUI extends Form
             // most icon and we reset the traversal to start from the top
             if (msi.suiteId == MIDletSuite.INTERNAL_SUITE_ID &&
                     appManagerMidlet != null) {
-                appManagerMidlet.destroyMidlet();
+                appManagerMidlet.destroyMidlet(-1);
             }
         }
 

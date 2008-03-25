@@ -437,7 +437,7 @@ public class MVMManager extends MIDlet
     public void exitMidlet(RunningMIDletSuiteInfo suiteInfo) {
         try {
             if (suiteInfo != null) {
-                suiteInfo.proxy.destroyMidlet();
+                suiteInfo.proxy.destroyMidlet(-1);
             }
 
         } catch (Exception ex) {

@@ -175,6 +175,10 @@ public class NativeAppManagerPeer
         eventQueue.registerEventListener(
             EventTypes.NATIVE_MIDLET_PAUSE_REQUEST, this);
         eventQueue.registerEventListener(
+            EventTypes.NATIVE_MIDLET_SUSPEND_REQUEST, this);
+        eventQueue.registerEventListener(
+            EventTypes.NATIVE_MIDLET_CONTINUE_REQUEST, this);
+        eventQueue.registerEventListener(
             EventTypes.NATIVE_MIDLET_DESTROY_REQUEST, this);
         eventQueue.registerEventListener(
             EventTypes.NATIVE_MIDLET_GETINFO_REQUEST, this);
@@ -228,6 +232,12 @@ public class NativeAppManagerPeer
             if (midlet.getMidletState() == MIDletProxy.MIDLET_PAUSED) {
                 notifyMidletPaused(midlet.getExternalAppId(),
                                    midlet.getSuiteId(), midlet.getClassName());
+                return;
+            }
+
+            if (midlet.getMidletState() == MIDletProxy.MIDLET_SUSPENDED) {
+                notifyMidletSuspended(midlet.getExternalAppId(),
+                                      midlet.getSuiteId(), midlet.getClassName());
                 return;
             }
         }
@@ -304,29 +314,32 @@ public class NativeAppManagerPeer
      * @param event event to process
      */
     public void process(Event event) {
-        String errorMsg = null;
+        String errorMsg = "Process native event request: ";
 
         NativeEvent nativeEvent = (NativeEvent)event;
-        MIDletProxy midlet = midletProxyList.findMIDletProxy(
-                                 nativeEvent.intParam1);
+        int externalID = nativeEvent.intParam1;
+        int amsIsolateId = MIDletSuiteUtils.getAmsIsolateId();
+
+        // find the MIDlet by the given external App ID
+        MIDletProxy midlet = midletProxyList.findMIDletProxy(externalID);
 
         switch (nativeEvent.getType()) {
 
         case EventTypes.NATIVE_MIDLET_EXECUTE_REQUEST:
             if (midlet == null) {
                 if (nativeEvent.intParam2 == MIDletSuite.UNUSED_SUITE_ID) {
-                    notifyMidletStartError(nativeEvent.intParam1,
+                    notifyMidletStartError(externalID,
                                            MIDletSuite.UNUSED_SUITE_ID,
                                            nativeEvent.stringParam1,
                                            Constants.MIDLET_ID_NOT_GIVEN);
                 } else if (nativeEvent.stringParam1 == null) {
-                    notifyMidletStartError(nativeEvent.intParam1,
+                    notifyMidletStartError(externalID,
                                            nativeEvent.intParam2,
                                            null,
                                            Constants.MIDLET_CLASS_NOT_GIVEN);
                 } else {
                     MIDletSuiteUtils.executeWithArgs(internalSecurityToken,
-                        nativeEvent.intParam1, nativeEvent.intParam2,
+                        externalID, nativeEvent.intParam2,
                         nativeEvent.stringParam1, nativeEvent.stringParam2,
                         nativeEvent.stringParam3, nativeEvent.stringParam4,
                         nativeEvent.stringParam5, nativeEvent.intParam3,
@@ -334,36 +347,217 @@ public class NativeAppManagerPeer
                         nativeEvent.stringParam6, false);
                 }
             } else {
-                errorMsg = "Only one instance of a MIDlet can be launched";
+                errorMsg += "Only one instance of a MIDlet can be launched";
             }
             break;
 
         case EventTypes.NATIVE_MIDLET_RESUME_REQUEST:
+            if (midlet == null) {
+                /* a MIDlet matching the given external ID was not found
+                 * check if the isolate for that MIDlet exists and the 
+                 * MIDlet is in the process of starting up */
+                Isolate isolate = 
+                    StartMIDletMonitor.getPendingStartMIDlet(externalID);
+                if (isolate != null) {
+                    int isolateID = isolate.id();
+                    if (isolateID != -1) {
+                        Logging.report(Logging.INFORMATION, LogChannels.LC_AMS,
+                                       "Found a starting isolate " + isolateID +
+                                       " for App Id " + externalID);
+                        midlet = new MIDletProxy(midletProxyList, externalID,
+                                                 isolateID,
+                                                 MIDletSuite.INTERNAL_SUITE_ID,
+                                                 null, null,
+                                                 MIDletProxy.MIDLET_PAUSED);
+                        boolean resumed = midlet.continueIsolate();
+                        if (resumed) {
+                            midletProxyList.handleMIDletContinueNotifyEvent(midlet);
+                        }
+                        break;
+                    } else {
+                        errorMsg += "A MIDlet with App Id " + externalID + 
+                            " was not found, abort attempt to resume the midlet";
+                        break;
+                    }
+                } else {
+                    errorMsg += "Could not find a starting isolate " +
+                        "for App Id " + externalID;
+                    break;
+                }
+            }
+
             if (midlet != null) {
                 midlet.activateMidlet();
             } else {
-                errorMsg = "Invalid App Id";
+                errorMsg += "Invalid App Id";
             }
             break;
 
         case EventTypes.NATIVE_MIDLET_PAUSE_REQUEST:
+            if (midlet == null) {
+                /* a MIDlet matching the given external ID was not found
+                 * check if the isolate for that MIDlet exists and the 
+                 * MIDlet is in the process of starting up */
+                Isolate isolate = 
+                    StartMIDletMonitor.getPendingStartMIDlet(externalID);
+                if (isolate != null) {
+                    int isolateID = isolate.id();
+                    if (isolateID != -1) {
+                        Logging.report(Logging.INFORMATION, LogChannels.LC_AMS,
+                                       "Found a starting isolate " + isolateID +
+                                       " for App Id " + externalID);
+                        midlet = new MIDletProxy(midletProxyList, externalID,
+                                                 isolateID,
+                                                 MIDletSuite.INTERNAL_SUITE_ID,
+                                                 null, null,
+                                                 MIDletProxy.MIDLET_ACTIVE);
+                    } else {
+                        errorMsg = "A MIDlet with App Id " + externalID + 
+                            " was not found, abort attempt to pause the midlet";
+                        break;
+                    }
+                } else {
+                    errorMsg = "Could not find a starting isolate " +
+                        "for App Id " + externalID;
+                    break;
+                }
+            }
+
+            // if running in MVM mode, don't pause the AMS isolate
+            if (MIDletSuiteUtils.isMVM() &&
+                midlet.getIsolateId() == amsIsolateId) {
+                errorMsg += "Attempting to pause the AMS isolate, ignore!";
+                break;
+            }
+
             if (midlet != null) {
-                midlet.pauseMidlet();
+                boolean suspended = midlet.pauseMidlet();
+                if (suspended) {
+                    midletProxyList.handleMIDletSuspendNotifyEvent(midlet);
+                }
             } else {
-                errorMsg = "Invalid App Id";
+                errorMsg += "Invalid App Id";
+            }
+            break;
+
+        case EventTypes.NATIVE_MIDLET_SUSPEND_REQUEST:
+            if (midlet == null) {
+                /* a MIDlet matching the given external ID was not found
+                 * check if the isolate for that MIDlet exists and the 
+                 * MIDlet is in the process of starting up */
+                Isolate isolate = 
+                    StartMIDletMonitor.getPendingStartMIDlet(externalID);
+                if (isolate != null) {
+                    int isolateID = isolate.id();
+                    if (isolateID != -1) {
+                        Logging.report(Logging.INFORMATION, LogChannels.LC_AMS,
+                                       "Found a starting isolate " + isolateID +
+                                       " for App Id " + externalID);
+                        midlet = new MIDletProxy(midletProxyList, externalID,
+                                                 isolateID,
+                                                 MIDletSuite.INTERNAL_SUITE_ID,
+                                                 null, null,
+                                                 MIDletProxy.MIDLET_ACTIVE);
+                    } else {
+                        errorMsg += "A MIDlet with App Id " + externalID + 
+                            " was not found, abort attempt to suspend the midlet";
+                        break;
+                    }
+                } else {
+                    errorMsg += "Could not find a starting isolate " +
+                        "for App Id " + externalID;
+                    break;
+                }
+            }
+
+            // if running in MVM mode, don't suspend the AMS isolate
+            if (MIDletSuiteUtils.isMVM() &&
+                midlet.getIsolateId() == amsIsolateId) {
+                errorMsg += "Attempting to suspend the AMS isolate, ignore!";
+                break;
+            }
+
+            if (midlet != null) {
+                boolean suspended = midlet.suspendIsolate();
+                if (suspended) {
+                    midletProxyList.handleMIDletSuspendNotifyEvent(midlet);
+                }
+            } else {
+                errorMsg += "Invalid App Id";
+            }
+            break;
+
+        case EventTypes.NATIVE_MIDLET_CONTINUE_REQUEST:
+            if (midlet == null) {
+                /* a MIDlet matching the given external ID was not found
+                 * check if the isolate for that MIDlet exists and the 
+                 * MIDlet is in the process of starting up */
+                Isolate isolate = 
+                    StartMIDletMonitor.getPendingStartMIDlet(externalID);
+                if (isolate != null) {
+                    int isolateID = isolate.id();
+                    if (isolateID != -1) {
+                        Logging.report(Logging.INFORMATION, LogChannels.LC_AMS,
+                                       "Found a starting isolate " + isolateID +
+                                       " for App Id " + externalID);
+                        midlet = new MIDletProxy(midletProxyList, externalID,
+                                                 isolateID,
+                                                 MIDletSuite.INTERNAL_SUITE_ID,
+                                                 null, null,
+                                                 MIDletProxy.MIDLET_SUSPENDED);
+                    } else {
+                        errorMsg += "A MIDlet with App Id " + externalID + 
+                            " was not found, abort attempt to continue the midlet";
+                        break;
+                    }
+                } else {
+                    errorMsg += "Could not find a starting isolate " +
+                        "for App Id " + externalID;
+                    break;
+                }
+            }
+
+            if (midlet != null) {
+                boolean continued = midlet.continueIsolate();
+                if (continued) {
+                    midletProxyList.handleMIDletContinueNotifyEvent(midlet);
+                }
+            } else {
+                errorMsg += "Invalid App Id";
             }
             break;
 
         case EventTypes.NATIVE_MIDLET_DESTROY_REQUEST:
-            /*
-             * IMPL_NOTE: nativeEvent.intParam2 is a timeout value which
-             *            should be passed to MIDletProxy.destroyMidlet().
-             *
-             */
-            if (midlet != null) {
-                midlet.destroyMidlet();
+            if (midlet == null) {
+                /* a MIDlet matching the given external ID was not found
+                 * check if the isolate for that MIDlet exists and the 
+                 * MIDlet is in the process of starting up */
+                Isolate isolate = 
+                    StartMIDletMonitor.getPendingStartMIDlet(externalID);
+                if (isolate != null) {
+                    int isolateID = isolate.id();
+                    if (isolateID != -1) {
+                        Logging.report(Logging.INFORMATION, LogChannels.LC_AMS,
+                                       "Found a starting isolate " + isolateID +
+                                       " for App Id " + externalID);
+                        isolate.exit(0);
+                        isolate.waitForExit();
+                        Logging.report(Logging.INFORMATION, LogChannels.LC_AMS,
+                                       "Isolate " + isolateID + " is terminated");
+                        break;
+                    } else {
+                        errorMsg += "App Id " + externalID + 
+                            " was not found, abort attempt to destroy the midlet";
+                        break;
+                    }
+                } else {
+                    errorMsg += "Could not find a starting isolate " +
+                        "for App Id " + externalID;
+                    break;
+                }
             } else {
-                errorMsg = "Invalid App Id";
+                midlet.continueIsolate();
+                midlet.destroyMidlet(nativeEvent.intParam2);
             }
             break;
 
@@ -394,14 +588,14 @@ public class NativeAppManagerPeer
             }
 
             notifyOperationCompleted(EventTypes.NATIVE_MIDLET_GETINFO_REQUEST,
-                nativeEvent.intParam1, (task == null) ? 1 : 0);
+                externalID, (task == null) ? 1 : 0);
             break;
 
         case EventTypes.NATIVE_SET_FOREGROUND_REQUEST:
             // Allow Nams to explicitly set nothing to be in the foreground
             // with special AppId 0
             if (midlet != null ||
-                nativeEvent.intParam1 == Constants.MIDLET_APPID_NO_FOREGROUND) {
+                externalID == Constants.MIDLET_APPID_NO_FOREGROUND) {
                 if (midletProxyList.getForegroundMIDlet() == midlet &&
                         midlet != null) {
                     // send the notification even if the midlet already has
@@ -412,12 +606,12 @@ public class NativeAppManagerPeer
                     midletProxyList.setForegroundMIDlet(midlet);
                 }
             } else {
-                errorMsg = "Invalid App Id";
+                errorMsg += "Invalid App Id";
             }
             break;
 
         default:
-            errorMsg = "Unknown event type "+event.getType();
+            errorMsg += "Unknown event type "+event.getType();
             break;
         }
 
@@ -530,6 +724,17 @@ public class NativeAppManagerPeer
     private static native void notifyMidletPaused(int externalAppId,
                                                   int suiteId,
                                                   String className);
+
+    /**
+     * Notify the native application manager that the MIDlet is suspended.
+     *
+     * @param externalAppId ID assigned by the external application manager
+     * @param suiteId ID of the suite the suspended midlet belongs to
+     * @param className class name of the midlet that was suspended
+     */
+    private static native void notifyMidletSuspended(int externalAppId,
+                                                     int suiteId,
+                                                     String className);
 
     /**
      * Notify the native application manager that the MIDlet is destroyed.

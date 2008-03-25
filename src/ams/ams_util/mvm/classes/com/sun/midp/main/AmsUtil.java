@@ -253,7 +253,8 @@ public class AmsUtil {
         }
 
         try {
-            StartMIDletMonitor app = StartMIDletMonitor.okToStart(id, midlet);
+            StartMIDletMonitor app = StartMIDletMonitor.okToStart(id, midlet,
+                                                                  externalAppId);
             if (app == null) {
                 // Isolate is already running; don't start it again
                 return null;
@@ -261,7 +262,7 @@ public class AmsUtil {
 
             isolate =
                 new Isolate("com.sun.midp.main.AppIsolateMIDletSuiteLoader",
-                    args, classpath, classpathext);
+                            args, classpath, classpathext);
             app.setIsolate(isolate);
         } catch (Throwable t) {
             t.printStackTrace();

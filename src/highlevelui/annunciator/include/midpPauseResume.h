@@ -45,7 +45,7 @@ extern "C" {
  * The system will call this routine to notify
  * platform that all apps have been suspended.
  */
-void pdMidpNotifySuspendAll(void);
+void pdMidpNotifyPausedAll(void);
 
 /**
  * Porting layer for MIDP VM resume function.
@@ -53,7 +53,23 @@ void pdMidpNotifySuspendAll(void);
  * The system will call this routine to notify
  * platform that all apps have been resumed.
  */
-void pdMidpNotifyResumeAll(void);
+void pdMidpNotifyResumedAll(void);
+
+/**
+ * Porting layer for MIDP VM suspend function.
+ *
+ * The system will call this routine to notify platform
+ * that bytecode execution all apps have been suspended.
+ */
+void pdMidpNotifyInternalPausedAll(void);
+
+/**
+ * Porting layer for MIDP VM continue function.
+ *
+ * The system will call this routine to notify platform
+ * that bytecode execution of all apps have been resumed.
+ */
+void pdMidpNotifyInternalResumedAll(void);
 
 #ifdef __cplusplus
 }

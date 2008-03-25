@@ -36,13 +36,13 @@
 	  Comment="Timeout in milliseconds to destroy a running MIDlet"/>
 
   <property Key="suspendAppTimeout"
-	  Value="2000"
+	  Value="5000"
 	  Scope="internal"
 	  Comment="Timeout in milliseconds for MIDlets to complete 
                    pauseApp() execution within java stack pause"/>
 
   <property Key="suspendAlertTime"
-      Value="900"
+      Value="0"
       Scope="internal"
       Comment="Time in milliseconds for minimal duration of java suspension.
         It is required to let a user see alert of java suspending. If the

@@ -282,7 +282,7 @@ final class ConnectionRegistry
                 continue;
             }
 
-            midlet.destroyMidlet();
+            midlet.destroyMidlet(-1);
         }
     }
 

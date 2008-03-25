@@ -206,7 +206,7 @@ final class AutoMIDletStateController
             } else if (state == AutoMIDletLifeCycleState.PAUSED) {
                  midletProxy.pauseMidlet();
             } else if (state == AutoMIDletLifeCycleState.DESTROYED) {
-                midletProxy.destroyMidlet();
+                midletProxy.destroyMidlet(-1);
             }
         }
     }

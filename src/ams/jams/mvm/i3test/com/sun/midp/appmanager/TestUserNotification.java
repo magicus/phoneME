@@ -190,11 +190,11 @@ public class TestUserNotification extends TestCase implements
         proxyList.removeListener(this);
 
         if (midlet1 != null) {
-            midlet1.destroyMidlet();
+            midlet1.destroyMidlet(-1);
         }
 
         if (midlet2 != null) {
-            midlet2.destroyMidlet();
+            midlet2.destroyMidlet(-1);
         }
     }
 

@@ -91,7 +91,7 @@ public class TestHandleFatalError extends TestCase
 
         if (!testMidletRemovedFromList) {
             fail(TEST_MIDLET + " not removed from list of running MIDlets");
-            testMidlet.destroyMidlet();
+            testMidlet.destroyMidlet(-1);
             return;
         }
     }

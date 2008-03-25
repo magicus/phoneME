@@ -253,7 +253,7 @@ public class MIDletProxyList
             for (int i = midletProxies.size() - 1; i >= 0; i--) {
                 MIDletProxy current = (MIDletProxy)midletProxies.elementAt(i);
 
-                current.destroyMidlet();
+                current.destroyMidlet(-1);
             }
         }
     }
@@ -413,7 +413,7 @@ public class MIDletProxyList
                 SuspendSystem.getInstance(classSecurityToken).getState();
 
         if ((suspendResumeState == SuspendSystem.SUSPENDED) ||
-                (suspendResumeState == SuspendSystem.SUSPENDING)) {
+            (suspendResumeState == SuspendSystem.SUSPENDING)) {
             MIDletProxyUtils.terminateMIDletIsolate(midletProxy, this);
             midletProxy = null;
             return;
@@ -435,9 +435,8 @@ public class MIDletProxyList
      * @param midletSuiteId ID of the MIDlet suite
      * @param midletClassName Class name of the MIDlet
      */
-    public void handleMIDletActiveNotifyEvent(
-        int midletSuiteId,
-        String midletClassName) {
+    public void handleMIDletActiveNotifyEvent(int midletSuiteId,
+                                              String midletClassName) {
 
         MIDletProxy midletProxy = findMIDletProxy(midletSuiteId,
                                                   midletClassName);
@@ -460,7 +459,7 @@ public class MIDletProxyList
         notifyListenersOfProxyUpdate(midletProxy,
                                      MIDletProxyListListener.MIDLET_STATE);
         setForegroundMIDlet(displayController.midletActive(midletProxy));
-        notifyIfMidletActive();
+        notifyIfMidletActive(false);
     }
 
     /**
@@ -487,11 +486,61 @@ public class MIDletProxyList
             return;
         }
 
-        midletProxy.setMidletState(MIDletProxy.MIDLET_PAUSED);
+        midletProxy.pausedNotification();
         notifyListenersOfProxyUpdate(midletProxy,
                                      MIDletProxyListListener.MIDLET_STATE);
 
         setForegroundMIDlet(displayController.midletPaused(midletProxy));
+    }
+
+    /**
+     * Process a MIDlet suspended notification.
+     * MIDletControllerEventConsumer I/F method.
+     *
+     * @param midlet the sending MIDlet
+     */
+    public void handleMIDletSuspendNotifyEvent(MIDletProxy midlet) {
+        if (midlet == null) {
+            /*
+             * There is nothing we can do for the other events
+             * if a proxy was not found. See midletActiveNotification().
+             */
+            return;
+        }
+
+        notifyListenersOfProxyUpdate(midlet,
+                                     MIDletProxyListListener.MIDLET_STATE);
+        /* in case this function is called, it means the MIDlet was not started
+         * yet and the whole isolate was suspended. So the resources were not 
+         * suspended individually and the MIDLET_RS_PAUSED_NOTIFICATION
+         * would never be sent.
+         * Need to notify suspend system so that the dependency will be removed
+         * and the SuspendSystem timer will not go off.
+         */
+        notifyListenersOfProxyUpdate(midlet,
+                                     MIDletProxyListListener.RESOURCES_SUSPENDED);
+
+        setForegroundMIDlet(displayController.midletPaused(midlet));
+    }
+
+    /**
+     * Process a MIDlet continued notification.
+     * MIDletControllerEventConsumer I/F method.
+     *
+     * @param midlet the sending MIDlet
+     */
+    public void handleMIDletContinueNotifyEvent(MIDletProxy midlet) {
+        if (midlet == null) {
+            /*
+             * There is nothing we can do for the other events
+             * if a proxy was not found. See midletActiveNotification().
+             */
+            return;
+        }
+
+        notifyListenersOfProxyUpdate(midlet,
+                                     MIDletProxyListListener.MIDLET_STATE);
+        notifyIfMidletActive(false);
     }
 
     /**
@@ -554,9 +603,8 @@ public class MIDletProxyList
      * @param midletSuiteId ID of the MIDlet suite
      * @param midletClassName Class name of the MIDlet
      */
-    public void handleMIDletRsPauseNotifyEvent(
-        int midletSuiteId,
-        String midletClassName) {
+    public void handleMIDletRsPauseNotifyEvent(int midletSuiteId,
+                                               String midletClassName) {
 
         MIDletProxy midletProxy = findMIDletProxy(midletSuiteId,
                                                   midletClassName);
@@ -592,7 +640,7 @@ public class MIDletProxyList
             return;
         }
 
-        midletProxy.destroyMidlet();
+        midletProxy.destroyMidlet(-1);
     }
 
     /**
@@ -603,13 +651,25 @@ public class MIDletProxyList
     public void handleActivateAllEvent() {
         SuspendSystem.getInstance(classSecurityToken).resume();
 
+        /* if running locally (not via OTA)
+         * then resume only the foreground MIDlet */
+        if ("true".equals(System.getProperty("running_local"))) {
+            foregroundMidlet.activateMidlet();
+            return;
+        }
+
         synchronized (midletProxies) {
             MIDletProxy current;
 
             for (int i = midletProxies.size() - 1; i >= 0; i--) {
                 current = (MIDletProxy)midletProxies.elementAt(i);
 
-                current.activateMidlet();
+                /* activateMidlet() returns true if the MIDlet's 
+                 * isolate was suspended before startApp() was complete
+                 * and now it is reusmed, so just notify the platform */
+                if (current.activateMidlet()) {
+                    handleMIDletContinueNotifyEvent(current);
+                }
             }
         }
     }
@@ -619,23 +679,37 @@ public class MIDletProxyList
      * MIDletControllerEventConsumer I/F method.
      */
     public void handlePauseAllEvent() {
+        int amsIsolateID = MIDletSuiteUtils.getAmsIsolateId();
+
         synchronized (midletProxies) {
             MIDletProxy current;
 
             for (int i = midletProxies.size() - 1; i >= 0; i--) {
                 current = (MIDletProxy)midletProxies.elementAt(i);
-                if (!current.wasNotActive) {
-                    SuspendSystem.getInstance(classSecurityToken).
+                if (MIDletSuiteUtils.isMVM()) {
+                    /* in MVM (OTA mode), don't pause the AMS isolate */
+                    if ((current.getIsolateId() != amsIsolateID) ||
+                        ("true".equals(System.getProperty("running_local")))) {
+
+                        /* since the AMS isolate will not be paused,
+                         * it is not a dependancy 
+                         * only a regular MIDlet is a dependency */
+                        SuspendSystem.getInstance(classSecurityToken).
                             addSuspendDependency(current);
-                    current.pauseMidlet();
+
+                        if (current.pauseMidlet()) {
+                            /* StartApp() has not completed yet, 
+                             * the isolate was suspended */
+                            handleMIDletSuspendNotifyEvent(current);
+                        }
+                    }
                 } else {
-                    MIDletProxyUtils.terminateMIDletIsolate(current, this);
+                    current.pauseMidlet();
                 }
             }
         }
 
         SuspendSystem.getInstance(classSecurityToken).suspend();
-
     }
 
     /**
@@ -652,6 +726,52 @@ public class MIDletProxyList
                 current.terminateNotPausedMidlet();
             }
 
+        }
+    }
+
+    /**
+     * Process an INTERNAL_ACTIVATE_ALL_EVENT.
+     * MIDletControllerEventConsumer I/F method.
+     */
+    public void handleInternalActivateAllEvent() {
+
+        synchronized (midletProxies) {
+            MIDletProxy current;
+
+            for (int i = midletProxies.size() - 1; i >= 0; i--) {
+                current = (MIDletProxy)midletProxies.elementAt(i);
+                current.continueIsolate();
+            }
+        }
+
+        notifyIfMidletActive(true);
+    }
+
+    /**
+     * Process an INTERNAL_PAUSE_ALL_EVENT.
+     * MIDletControllerEventConsumer I/F method.
+     */
+    public void handleInternalPauseAllEvent() {
+        int amsIsolateID = MIDletSuiteUtils.getAmsIsolateId();
+
+        synchronized (midletProxies) {
+            MIDletProxy current;
+
+            for (int i = midletProxies.size() - 1; i >= 0; i--) {
+                current = (MIDletProxy)midletProxies.elementAt(i);
+
+                if (MIDletSuiteUtils.isMVM()) {
+                    /* in MVM (OTA mode), don't pause the AMS isolate */
+                    if ((current.getIsolateId() != amsIsolateID) ||
+                        ("true".equals(System.getProperty("running_local")))) {
+                        current.suspendIsolate();
+                    }
+                } else {
+                    current.suspendIsolate();
+                }
+            }
+
+            notifyIfAllPaused(true);
         }
     }
 
@@ -688,7 +808,7 @@ public class MIDletProxyList
      * out of the state with all the MIDlets being either paused 
      * or destroyed.
      */
-    private void notifyIfMidletActive() {
+    private void notifyIfMidletActive(boolean notifyContinue) {
         MIDletProxy midletProxy;
 
         synchronized (midletProxies) {
@@ -698,7 +818,11 @@ public class MIDletProxyList
                     if (midletProxy.getMidletState() ==
                             MIDletProxy.MIDLET_ACTIVE) {
                         allPaused = false;
-                        notifyResumeAll0();
+                        if (notifyContinue) {
+                            notifyInternalResumedAll0();
+                        } else {
+                            notifyResumedAll0();
+                        }
                         break;
                     }
                 }
@@ -712,27 +836,42 @@ public class MIDletProxyList
      * destroyed. The notification is produced only once when the system
      * runs to that state.
      */
-    private void notifyIfAllPaused() {
+    private void notifyIfAllPaused(boolean notifySuspend) {
         boolean  allMidletsPaused = false;
+        MIDletProxy current;
         int midletState;
+        int amsIsolateId = MIDletSuiteUtils.getAmsIsolateId();
 
         synchronized (midletProxies) {
             if (!allPaused) {
                 for (int i = midletProxies.size() - 1; i >= 0; i--) {
-                    midletState = ((MIDletProxy) midletProxies.elementAt(i)).
-                            getMidletState();
+                    current = (MIDletProxy)midletProxies.elementAt(i);
+                    midletState = current.getMidletState();
 
-                    if (MIDletProxy.MIDLET_PAUSED == midletState) {
+                    if (MIDletProxy.MIDLET_PAUSED == midletState ||
+                        MIDletProxy.MIDLET_SUSPENDED == midletState) {
                         allMidletsPaused = true;
                     } else if (MIDletProxy.MIDLET_DESTROYED != midletState) {
-                        allMidletsPaused = false;
-                        break;
+                        // if running in MVM mode don't take the AMS isolate
+                        // into account because it will never be suspended or paused
+                        if (MIDletSuiteUtils.isMVM() &&
+                            current.getIsolateId() == amsIsolateId &&
+                            !("true".equals(System.getProperty("running_local")))) {
+                            continue;
+                        } else {
+                            allMidletsPaused = false;
+                            break;
+                        }
                     }
                 }
 
                 if (allMidletsPaused) {
                     allPaused = true;
-                    notifySuspendAll0();
+                    if (notifySuspend) {
+                        notifyInternalPausedAll0();
+                    } else {
+                        notifyPausedAll0();
+                    }
                 }
             }
         }
@@ -861,7 +1000,7 @@ public class MIDletProxyList
         }
 
         midletProxy.setWantsForeground(false, false);
-        setForegroundMIDlet(displayController.backgroundRequest(midletProxy));
+        setForegroundMIDlet(displayController.backgroundRequest(midletProxy, false));
         notifyListenersOfProxyUpdate(midletProxy,
                                      MIDletProxyListListener.WANTS_FOREGROUND);
     }
@@ -884,6 +1023,7 @@ public class MIDletProxyList
         MIDletProxy preempting = new MIDletProxy(this, 0,
             midletIsolateId, MIDletSuite.UNUSED_SUITE_ID,
                 null, null, MIDletProxy.MIDLET_ACTIVE);
+        preempting.setMidletState(MIDletProxy.MIDLET_ACTIVE);
         preempting.setDisplayId(midletDisplayId);
 
         MIDletProxy nextForeground =
@@ -1111,7 +1251,6 @@ public class MIDletProxyList
      *
      * @return true if any MIDlet has set an Alert as the current displayable
      *   while in the background, otherwise false
-     *
      */
     public boolean isAlertWaitingInBackground() {
         synchronized (midletProxies) {
@@ -1256,7 +1395,7 @@ public class MIDletProxyList
      * Called to notify that java side of MIDP system has been suspended.
      */
     public void midpSuspended() {
-        notifyIfAllPaused();
+        notifyIfAllPaused(false);
     }
 
     /**
@@ -1276,10 +1415,22 @@ public class MIDletProxyList
     /**
      * Notify native code that all MIDlets have been paused.
      */
-    private native void notifySuspendAll0();
+    private native void notifyPausedAll0();
 
     /**
      * Notify native code that an active MIDlet appeared in the system.
      */
-    private native void notifyResumeAll0();
+    private native void notifyResumedAll0();
+
+    /**
+     * Notify native code that bytecode execution of all MIDlets
+     * have been suspended.
+     */
+    private native void notifyInternalPausedAll0();
+
+    /**
+     * Notify native code that bytecode execution of all MIDlets
+     * have been resumed.
+     */
+    private native void notifyInternalResumedAll0();
 }

@@ -70,11 +70,13 @@ public class NativeDisplayControllerPeer extends MVMDisplayController {
      * selector to the user.
      *
      * @param midlet The proxy of the MIDlet that was updated
+     * @param midletDestroyed indicates whether the MIDlet is destroyed or
+     *        just switched to the background
      *
      * @return foreground MIDlet so the foreground will not change at this
      * time
      */
-    MIDletProxy backgroundRequest(MIDletProxy midlet) {
+    MIDletProxy backgroundRequest(MIDletProxy midlet, boolean midletDestroyed) {
         MIDletProxy foreground = midletProxyList.getForegroundMIDlet();
 
         if (midlet == foreground) {

@@ -120,7 +120,7 @@ class DisplayController {
      *         MIDlet if the foreground should not change
      */
     MIDletProxy midletPaused(MIDletProxy midlet) {
-        return backgroundRequest(midlet);
+        return backgroundRequest(midlet, false);
     }
 
     /**
@@ -138,7 +138,7 @@ class DisplayController {
     MIDletProxy midletDestroyed(MIDletProxy midlet) {
         clearLastMidletCreated(midlet);
 
-        return backgroundRequest(midlet);
+        return backgroundRequest(midlet, true);
     }
 
     /**
@@ -185,15 +185,23 @@ class DisplayController {
      * (see the findNextForeground method).
      *
      * @param midlet The proxy of the MIDlet that was updated
-     *
+     * @param midletDestroyed indicates whether the MIDlet is destroyed or
+     *        just switched to the background
+     * 
      * @return Proxy of the next foreground MIDlet, may be the foreground
      *         MIDlet if the foreground should not change
      */
-    MIDletProxy backgroundRequest(MIDletProxy midlet) {
+    MIDletProxy backgroundRequest(MIDletProxy midlet, boolean midletDestroyed) {
         MIDletProxy foreground = midletProxyList.getForegroundMIDlet();
 
-        if (midlet != foreground) {
-            // not in the foreground, so don't change the foreground
+        if (midlet != foreground ||
+            (("true".equals(System.getProperty("running_local"))) &&
+             (!midletDestroyed))) {
+            /*
+             * Either this midlet is not in the foreground or
+             * we are running locally (not via OTA)
+             * so don't change the foreground midlet
+             */
             return foreground;
         }
 

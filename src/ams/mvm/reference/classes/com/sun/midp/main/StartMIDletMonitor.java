@@ -63,6 +63,11 @@ class StartMIDletMonitor implements MIDletProxyListListener {
     private String midlet;
 
     /**
+     * The external ID of the MIDlet being started
+     */
+    private int externalAppId;
+
+    /**
      * The IsolateID of the MIDlet being started.
      */
     private Isolate isolate;
@@ -89,9 +94,10 @@ class StartMIDletMonitor implements MIDletProxyListListener {
      * @param id ID of an installed suite
      * @param midletClassName class name of MIDlet to invoke
      */
-    private StartMIDletMonitor(int id, String midletClassName) {
+    private StartMIDletMonitor(int id, String midletClassName, int externalId) {
         suiteId = id;
         midlet = midletClassName;
+        externalAppId = externalId;
         startPending.addElement(this);
         midletProxyList.addListener(this);
     }
@@ -120,7 +126,8 @@ class StartMIDletMonitor implements MIDletProxyListListener {
      * @return the new StartMIDletMonitor to allow the MIDlet to be started;
      *    null if the MIDlet is already active or being started
      */
-    static StartMIDletMonitor okToStart(int id, String midletClassName) {
+    static StartMIDletMonitor okToStart(int id, String midletClassName,
+                                        int externalAppId) {
         synchronized (startPending) {
             // Verify that the requested MIDlet is not already running
             // (is not in the MIDletProxyList)
@@ -139,7 +146,7 @@ class StartMIDletMonitor implements MIDletProxyListListener {
             StartMIDletMonitor start = findMonitor(id, midletClassName);
             if (start == null) {
                 // Not already starting; register new start
-                start = new StartMIDletMonitor(id, midletClassName);
+                start = new StartMIDletMonitor(id, midletClassName, externalAppId);
             } else {
                 // MIDlet is already started; return null
                 start = null;
@@ -149,6 +156,53 @@ class StartMIDletMonitor implements MIDletProxyListListener {
                 }
             }
             return start;
+        }
+    }
+
+    /**
+     * Check if there's a MIDlet in the process of starting that matches
+     * the given external app ID
+     * 
+     * @param externalAppId
+     * @return the isolate instance of the starting MIDlet or <code>null</code>
+     * if a MIDlet with the given external app ID could not be found
+     */
+    static Isolate getPendingStartMIDlet(int externalAppId) {
+        synchronized (startPending) {
+            /*
+             * check if the startMIDletMonitor for the given suite ID
+             * and class name
+             */
+            StartMIDletMonitor pending = null;
+            boolean found = false;
+
+            for (int i = 0; i < startPending.size(); i++) {
+                pending = (StartMIDletMonitor)startPending.elementAt(i);
+
+                // If there is a terminated Isolate in the list, clean it up
+                if (pending.isolate != null && pending.isolate.isTerminated()) {
+                    // Isolate is not alive, clean the pending entry
+                    startPending.removeElementAt(i);
+                    midletProxyList.removeListener(pending);
+                    // Recheck the element at the same index
+                    i--;
+                    continue; // keep looking
+                }
+
+                if (externalAppId == pending.externalAppId) {
+                    found = true;
+                    break;
+                }
+            }
+
+            if (!found) {
+                /*
+                 * could not find a MIDlet with the given external ID
+                 * in the process of starting up
+                 */
+                return null;
+            }
+            return pending.isolate;
         }
     }
 
@@ -167,27 +221,27 @@ class StartMIDletMonitor implements MIDletProxyListListener {
      */
     private static StartMIDletMonitor findMonitor(int id,
                                                   String midletClassName) {
-	for (int i = 0; i < startPending.size(); i++) {
-	    StartMIDletMonitor pending =
-		(StartMIDletMonitor)startPending.elementAt(i);
-	    // If there is a terminated Isolate in the list, clean it up
-	    if (pending.isolate != null &&
-		pending.isolate.isTerminated()) {
-		// Isolate is not alive, clean the pending entry
-		startPending.removeElementAt(i);
-		midletProxyList.removeListener(pending);
-		// Recheck the element at the same index
-		i--;
-		continue; // keep looking
-	    }
+        for (int i = 0; i < startPending.size(); i++) {
+            StartMIDletMonitor pending =
+                (StartMIDletMonitor)startPending.elementAt(i);
+            // If there is a terminated Isolate in the list, clean it up
+            if (pending.isolate != null &&
+                pending.isolate.isTerminated()) {
+                // Isolate is not alive, clean the pending entry
+                startPending.removeElementAt(i);
+                midletProxyList.removeListener(pending);
+                // Recheck the element at the same index
+                i--;
+                continue; // keep looking
+            }
 
-	    if (id == pending.suiteId &&
+            if (id == pending.suiteId &&
                     (midletClassName == null ||
                      midletClassName.equals(pending.midlet))) {
-		return pending;
-	    }
-	}
-	return null;
+                return pending;
+            }
+        }
+        return null;
     }
 
     /**
@@ -198,17 +252,17 @@ class StartMIDletMonitor implements MIDletProxyListListener {
      * @param midletClassName class name of MIDlet of the notifying MIDlet
      */
     private void cleanupPending(int id, String midletClassName) {
-	synchronized (startPending) {
-	    // If the notification is for this monitor
-	    if (id == suiteId &&
-		(midletClassName == null || midletClassName.equals(midlet))) {
-		// Remove from the startPending list
-		startPending.removeElement(this);
+        synchronized (startPending) {
+            // If the notification is for this monitor
+            if (id == suiteId &&
+                (midletClassName == null || midletClassName.equals(midlet))) {
+                // Remove from the startPending list
+                startPending.removeElement(this);
 
-		// Remove the instance as a listener of the MIDletProxyList
-		midletProxyList.removeListener(this);
-	    }
-	}
+                // Remove the instance as a listener of the MIDletProxyList
+                midletProxyList.removeListener(this);
+            }
+        }
     }
 
     /**

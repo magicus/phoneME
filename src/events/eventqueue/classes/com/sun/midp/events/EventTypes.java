@@ -116,7 +116,7 @@ public final class EventTypes {
     public static final int SHUTDOWN_EVENT  =  15;
 
     /**
-     * Major ID for a pause all event.
+     * Major ID for an activate (resume) all event.
      */
     public static final int ACTIVATE_ALL_EVENT  =  16;
 
@@ -126,30 +126,39 @@ public final class EventTypes {
     public static final int PAUSE_ALL_EVENT  =  17;
 
     /**
+     * Major ID for a internal resume all event.
+     */
+    public static final int INTERNAL_ACTIVATE_ALL_EVENT = 18;
+
+    /**
+     * Major ID for an internal pause all event.
+     */
+    public static final int INTERNAL_PAUSE_ALL_EVENT = 19;
+
+    /**
      * Major ID for a MIDlet created notification.
      */
-    public static final int MIDLET_CREATED_NOTIFICATION  =  18;
+    public static final int MIDLET_CREATED_NOTIFICATION  =  20;
 
     /**
      * Major ID for a MIDlet active notification.
      */
-    public static final int MIDLET_ACTIVE_NOTIFICATION  =  19;
+    public static final int MIDLET_ACTIVE_NOTIFICATION  =  21;
 
     /**
      * Major ID for a MIDlet paused notification.
      */
-    public static final int MIDLET_PAUSED_NOTIFICATION  =  20;
+    public static final int MIDLET_PAUSED_NOTIFICATION  =  22;
 
     /**
      * Major ID for a MIDlet destroyed notification.
      */
-    public static final int MIDLET_DESTROYED_NOTIFICATION  =  21;
-
+    public static final int MIDLET_DESTROYED_NOTIFICATION  =  23;
 
     /**
      * Major ID for a Display created notification.
      */
-    public static final int DISPLAY_CREATED_NOTIFICATION  =  22;
+    public static final int DISPLAY_CREATED_NOTIFICATION  =  24;
 
     /**
      * Major ID for a foreground request event.
@@ -159,7 +168,7 @@ public final class EventTypes {
      * </ul>
      * @see com.sun.midp.main.MIDletProxyList#foregroundRequestEvent
      */
-    public static final int FOREGROUND_REQUEST_EVENT  =  23;
+    public static final int FOREGROUND_REQUEST_EVENT  =  25;
 
     /**
      * Major ID for a background request event.
@@ -169,7 +178,7 @@ public final class EventTypes {
      * </ul>
      * @see com.sun.midp.main.MIDletProxyList#backgroundRequestEvent
      */
-    public static final int BACKGROUND_REQUEST_EVENT  =  24;
+    public static final int BACKGROUND_REQUEST_EVENT  =  26;
 
     /**
      * User request to show the midlet selection screen, if any.
@@ -179,17 +188,17 @@ public final class EventTypes {
      * </ul>
      * @see com.sun.midp.main.MIDletProxyList#selectForegroundEvent
      */
-    public static final int SELECT_FOREGROUND_EVENT  =  25;
+    public static final int SELECT_FOREGROUND_EVENT  =  27;
 
     /**
      * Major ID for a preempt event.
      */
-    public static final int PREEMPT_EVENT = 26;
+    public static final int PREEMPT_EVENT = 28;
 
     /**
      * Major ID for a MIDlet start error event.
      */
-    public static final int MIDLET_START_ERROR_EVENT = 27;
+    public static final int MIDLET_START_ERROR_EVENT = 29;
 
     /**
      * Major ID for a execute MIDlet event.
@@ -202,13 +211,13 @@ public final class EventTypes {
      * <li> stringParam6 = arg2;
      * </ul>
      */
-    public static final int EXECUTE_MIDLET_EVENT  =  28;
+    public static final int EXECUTE_MIDLET_EVENT  =  30;
 
     /**
      * Major ID for a request to destroy  a MIDlet event.
      * @see com.sun.midp.main.MIDletProxyList#midletDestroyRequestEvent
      */
-    public static final int MIDLET_DESTROY_REQUEST_EVENT  =  29;
+    public static final int MIDLET_DESTROY_REQUEST_EVENT  =  31;
 
     /**
      * Major ID for an foreground handoff event.
@@ -223,62 +232,70 @@ public final class EventTypes {
      * </ul>
      * @see com.sun.midp.main.MIDletProxyList#foregroundTransferEvent
      */
-    public static final int FOREGROUND_TRANSFER_EVENT = 30;
-
+    public static final int FOREGROUND_TRANSFER_EVENT = 32;
 
     /** The event will shutdown the event queue when processed. */
-    public static final int EVENT_QUEUE_SHUTDOWN = 31;
+    public static final int EVENT_QUEUE_SHUTDOWN = 33;
 
     /**
      * This is sent to the AMS isolate when an application isolate
      * has fatal error.
      */
-    public static final int FATAL_ERROR_NOTIFICATION = 32;
+    public static final int FATAL_ERROR_NOTIFICATION = 34;
 
     /**
      * Major ID for a JSR 75 FileConnection disks changed event.
      */
-    public static final int FC_DISKS_CHANGED_EVENT = 33;
+    public static final int FC_DISKS_CHANGED_EVENT = 35;
 
     /** Reserved for testing. */
-    public static final int TEST_EVENT = 34;
+    public static final int TEST_EVENT = 36;
 
     /**
      * Sent to the AMS isolate when a paused MIDlet is requesting to be
      * moved to active state.
      */
-    public static final int MIDLET_RESUME_REQUEST = 35;
+    public static final int MIDLET_RESUME_REQUEST = 37;
 
     /**
      * Sent by the native system to request a MIDlet be created and started.
      */
-    public static final int NATIVE_MIDLET_EXECUTE_REQUEST = 36;
+    public static final int NATIVE_MIDLET_EXECUTE_REQUEST = 38;
 
     /**
      * Sent by the native system to request a paused MIDlet be resumed.
      */
-    public static final int NATIVE_MIDLET_RESUME_REQUEST = 37;
+    public static final int NATIVE_MIDLET_RESUME_REQUEST = 39;
 
     /**
      * Sent by the native system to request a MIDlet be paused.
      */
-    public static final int NATIVE_MIDLET_PAUSE_REQUEST = 38;
+    public static final int NATIVE_MIDLET_PAUSE_REQUEST = 40;
+
+    /**
+     * Sent by the native system to request a MIDlet be suspended.
+     */
+    public static final int NATIVE_MIDLET_SUSPEND_REQUEST = 41;
+
+    /**
+     * Sent by the native system to request a suspended MIDlet be continued.
+     */
+    public static final int NATIVE_MIDLET_CONTINUE_REQUEST = 42;
 
     /**
      * Sent by the native system to request a MIDlet be destroyed.
      */
-    public static final int NATIVE_MIDLET_DESTROY_REQUEST = 39;
+    public static final int NATIVE_MIDLET_DESTROY_REQUEST = 43;
 
     /**
-     * Sent by the native system to request a MIDlet be destroyed.
+     * Sent by the native system to request information about a MIDlet.
      */
-    public static final int NATIVE_MIDLET_GETINFO_REQUEST = 40;
+    public static final int NATIVE_MIDLET_GETINFO_REQUEST = 44;
 
     /**
      * Sent by the native system to request a MIDlet be in the foreground.
      */
-    public static final int NATIVE_SET_FOREGROUND_REQUEST = 41;
-
+    public static final int NATIVE_SET_FOREGROUND_REQUEST = 45;
     
     /**
      * Sent by the Automation API subsystem to request a MIDlet 
@@ -289,26 +306,26 @@ public final class EventTypes {
      * <li>stringParam2 = MIDlet's class name
      * </ul>
      */
-    public static final int SET_FOREGROUND_BY_NAME_REQUEST = 42;
+    public static final int SET_FOREGROUND_BY_NAME_REQUEST = 46;
 
     /*
      * Sent to request screen rotation
      */
-    public static final int ROTATION_EVENT = 43;
+    public static final int ROTATION_EVENT = 47;
 
     /**
      * MIDlet resources paused notification 
      */
-    public static final int MIDLET_RS_PAUSED_NOTIFICATION = 44;
+    public static final int MIDLET_RS_PAUSED_NOTIFICATION = 48;
 
     /** Major ID for MMAPI event */
-    public static final int MMAPI_EVENT = 45;
+    public static final int MMAPI_EVENT = 49;
 
     /** Major ID for AMMS  event */ 
-    public static final int AMMS_EVENT  = 46;
+    public static final int AMMS_EVENT  = 50;
 
     /** The event to repaint entire screen*/
-    public static final int SCREEN_REPAINT_EVENT = 47;
+    public static final int SCREEN_REPAINT_EVENT = 51;
 
     /**
      * JSR-256 sensor notification event.

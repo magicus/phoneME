@@ -93,11 +93,13 @@ public class MVMDisplayController extends DisplayController {
      * selector to the foreground.
      *
      * @param midlet The proxy of the MIDlet that was updated
-     *
+     * @param midletDestroyed indicates whether the MIDlet is destroyed or
+     *        just switched to the background
+     * 
      * @return Proxy of the next foreground MIDlet, may be the foreground
      *         MIDlet if the foreground should not change
      */
-    MIDletProxy backgroundRequest(MIDletProxy midlet) {
+    MIDletProxy backgroundRequest(MIDletProxy midlet, boolean midletDestroyed) {
         MIDletProxy foreground = midletProxyList.getForegroundMIDlet();
 
         if (midlet != foreground) {
@@ -109,7 +111,14 @@ public class MVMDisplayController extends DisplayController {
          * Normal MVM mode case,
          * Let the user choose the next foreground.
          */
-        return getForegroundSelector();
+        if (MIDletSuiteUtils.getMaxIsolates() > 2 ||
+            midletDestroyed) {
+            return getForegroundSelector();
+        } else {
+            /* If max number of isolates is 2, we are simulating SVM 
+             * environment within MVM so don't return to the AMS */
+            return foreground;
+        }
     }
 
     /**

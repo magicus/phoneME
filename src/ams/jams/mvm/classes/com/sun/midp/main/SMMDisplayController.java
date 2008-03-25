@@ -74,11 +74,13 @@ public class SMMDisplayController extends DisplayController {
      * findNextForeground method).
      *
      * @param midlet The proxy of the MIDlet that was updated
+     * @param midletDestroyed indicates whether the MIDlet is destroyed or
+     *        just switched to the background
      *
      * @return Proxy of the next foreground MIDlet, may be the foreground
      *         MIDlet if the foreground should not change
      */
-    MIDletProxy backgroundRequest(MIDletProxy midlet) {
+    MIDletProxy backgroundRequest(MIDletProxy midlet, boolean midletDestroyed) {
         MIDletProxy foreground = midletProxyList.getForegroundMIDlet();
 
         if (midlet != foreground) {
