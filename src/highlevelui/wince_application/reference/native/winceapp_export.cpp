@@ -762,7 +762,7 @@ LRESULT CALLBACK winceapp_wndproc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) {
                 return processSystemKey(hwnd, mapKey(wp, lp));
             break;
         default:
-            // May need special handling for soft keys?  Not sure yet...
+            // May need special handling for soft keys?
             if (0 != lastKeyPressed && WM_KEYUP == msg) { 
                 //should use cached pressed key code for input
                 result = processKey(hwnd, KEYMAP_STATE_RELEASED, lastKeyPressed);
