@@ -117,7 +117,8 @@ ifeq ($(USE_JUNIT_TEST), true)
         $(CDC_SHARE_PUSH_TESTS_DIR)/com/sun/midp/push/reservation/impl/RDFactoryTest.java
 
 
-    # TBD: temporal hack: this file should be only included into only plain MIDP on CDC stack:
+    # TBD: temporary solution: this file should be only included into 
+    # only plain MIDP on CDC stack:
     # any other CDC-based stack should provide its own copy of this class
     ifneq ($(USE_JUMP), true)
         SUBSYSTEM_CDC_SHARE_PUSH_JUNIT_JAVA_FILES += \
