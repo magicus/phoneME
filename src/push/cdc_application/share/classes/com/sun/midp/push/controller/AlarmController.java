@@ -142,7 +142,7 @@ final class AlarmController {
         } catch (IOException ioe) {
             /*
              * RFC: looks like optimal strategy, but we might simply ignore it
-             * (cf. Irbis push_server.c)
+             * (cf. src/push/push_server/reference/native/push_server.c)
              */
             throw new ConnectionNotFoundException();
         }
