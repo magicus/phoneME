@@ -26,7 +26,6 @@
 
 package com.sun.midp.main;
 
-import java.io.PrintStream;
 import java.util.Timer;
 import java.util.TimerTask;
 

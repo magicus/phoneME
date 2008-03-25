@@ -243,7 +243,7 @@ public class MIDletProxyList
 
             if (midletProxies.size() == 0) {
                 /*
-                 * We are done if no proxyies are in the list.
+                 * We are done if no proxies are in the list.
                  * Notify any objects waiting for shutdown.
                  */
                 midletProxies.notifyAll();
@@ -723,7 +723,14 @@ public class MIDletProxyList
             for (int i = midletProxies.size() - 1; i >= 0; i--) {
                 current = (MIDletProxy)midletProxies.elementAt(i);
 
-                current.terminateNotPausedMidlet();
+                /* Don't kill the AMS isolate since it was not a dependency
+                 * in the first place.
+                 * This was probably called due to a badly behaving MIDlet 
+                 * that did not pause correctly, but since the AMS is never
+                 * paused, don't kill it */
+                if (current.getIsolateId() != MIDletSuiteUtils.getAmsIsolateId()) {
+                    current.terminateNotPausedMidlet();
+                }
             }
 
         }
