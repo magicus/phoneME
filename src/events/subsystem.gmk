@@ -54,13 +54,13 @@ MIDP_JAVADOC_ALL += \
         -group "Events Packages" \
 	$(shell echo $(SUBSYSTEM_EVENTS_PACKAGES)|tr ' ' $(PATHSEP))
 
-
-#TODO@gd212247 uncomment the lines
-#ifeq ($(PLATFORM), linux_qte)
-   SUBSYSTEM_EVENTS_MODULES = slave_mode
-#else
-#   SUBSYSTEM_EVENTS_MODULES = master_mode
-#endif
+ifeq ($(PLATFORM),)
+   ifeq ($(PLATFORM), linux_qte)
+       SUBSYSTEM_EVENTS_MODULES = slave_mode
+   else
+       SUBSYSTEM_EVENTS_MODULES = master_mode
+   endif
+endif
 
 include $(SUBSYSTEM_EVENTS_DIR)/eventqueue/lib.gmk
 include $(SUBSYSTEM_EVENTS_DIR)/eventqueue_port/lib.gmk
