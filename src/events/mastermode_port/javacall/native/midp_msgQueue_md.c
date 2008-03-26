@@ -40,7 +40,11 @@ extern void notifyDisksChanged();
 #include <carddevice.h>
 #endif /* ENABLE_JSR_177 */
 
-/*
+#if !ENABLE_MULTIPLE_ISOLATES
+#include <javaTask.h>
+#endif
+
+/**
  * This function is called by the VM periodically. It has to check if
  * system has sent a signal to MIDP and return the result in the
  * structs given.
@@ -60,6 +64,12 @@ void checkForSystemSignal(MidpReentryData* pNewSignal,
     static unsigned char binaryBuffer[BINARY_BUFFER_MAX_LEN];
     javacall_bool res;
     int outEventLen;
+
+#if !ENABLE_MULTIPLE_ISOLATES
+    if (vmPaused) {
+        timeout = -1;
+    }
+#endif
     
     res = javacall_event_receive ((long)timeout, binaryBuffer, BINARY_BUFFER_MAX_LEN, &outEventLen);
 
@@ -91,6 +101,7 @@ void checkForSystemSignal(MidpReentryData* pNewSignal,
          * pNewMidpEvent->CHR     = event->data.keyEvent.key;
          */
         break;
+
     case MIDP_JC_EVENT_PEN:
         pNewSignal->waitingFor = UI_SIGNAL;
         pNewMidpEvent->type    = MIDP_PEN_EVENT;
@@ -98,36 +109,90 @@ void checkForSystemSignal(MidpReentryData* pNewSignal,
         pNewMidpEvent->X_POS   = event->data.penEvent.x;
         pNewMidpEvent->Y_POS   = event->data.penEvent.y;
         break;
+
     case MIDP_JC_EVENT_SOCKET:
         pNewSignal->waitingFor = event->data.socketEvent.waitingFor;
         pNewSignal->descriptor = (int)event->data.socketEvent.handle;
         pNewSignal->status     = event->data.socketEvent.status;
         pNewSignal->pResult    = (void *) event->data.socketEvent.extraData;
         break;
+
     case MIDP_JC_EVENT_END:
         pNewSignal->waitingFor = AMS_SIGNAL;
         pNewMidpEvent->type    = SHUTDOWN_EVENT;
+#if !ENABLE_MULTIPLE_ISOLATES
+        vmPaused = JAVACALL_FALSE;
+        start_kill_timer();
+#endif
         break;
+
+    case MIDP_JC_EVENT_KILL:
+        midp_exitVM(-1);
+        break;
+
     case MIDP_JC_EVENT_PAUSE:
+#if !ENABLE_MULTIPLE_ISOLATES
+        if (!isStartAppCompleted()) {
+            // suspend the isolate
+            vmPaused = JAVACALL_TRUE;
+            // notify platform that paused
+            javacall_lifecycle_state_changed(JAVACALL_LIFECYCLE_MIDLET_PAUSED,
+                                             JAVACALL_OK);
+            break;
+        } else {
+            start_kill_timer();
+        }
+#endif
         pNewSignal->waitingFor = AMS_SIGNAL;
         pNewMidpEvent->type    = PAUSE_ALL_EVENT;
         break;
+
     case MIDP_JC_EVENT_RESUME:
+#if !ENABLE_MULTIPLE_ISOLATES
+        // resume the isolate
+        vmPaused = JAVACALL_FALSE;
+        if (!isStartAppCompleted()) {
+            // notify platform that resumed
+            javacall_lifecycle_state_changed(JAVACALL_LIFECYCLE_MIDLET_RESUMED,
+                                             JAVACALL_OK);
+            break;
+        }
+#endif
         pNewSignal->waitingFor = AMS_SIGNAL;
         pNewMidpEvent->type    = ACTIVATE_ALL_EVENT;
         break;
+
     case MIDP_JC_EVENT_INTERNAL_PAUSE:
+#if !ENABLE_MULTIPLE_ISOLATES
+        // suspend the isolate
+        vmPaused = JAVACALL_TRUE;
+        // notify platform that internally paused
+        javacall_lifecycle_state_changed(JAVACALL_LIFECYCLE_MIDLET_INTERNAL_PAUSED,
+                                         JAVACALL_OK);
+#else
         pNewSignal->waitingFor = AMS_SIGNAL;
         pNewMidpEvent->type    = INTERNAL_PAUSE_ALL_EVENT;
+#endif
         break;
+
     case MIDP_JC_EVENT_INTERNAL_RESUME:
+#if !ENABLE_MULTIPLE_ISOLATES
+        // resume the isolate
+        vmPaused = JAVACALL_FALSE; 
+        // notify platform that resumed
+        javacall_lifecycle_state_changed(JAVACALL_LIFECYCLE_MIDLET_INTERNAL_RESUMED,
+                                         JAVACALL_OK);
+#else
         pNewSignal->waitingFor = AMS_SIGNAL;
         pNewMidpEvent->type    = INTERNAL_ACTIVATE_ALL_EVENT;
+#endif
         break;
+
     case MIDP_JC_EVENT_PUSH:
         pNewSignal->waitingFor = PUSH_ALARM_SIGNAL;
         pNewSignal->descriptor = event->data.pushEvent.alarmHandle;
         break;
+
     case MIDP_JC_EVENT_ROTATION:
         pNewSignal->waitingFor = UI_SIGNAL;
         pNewMidpEvent->type    = ROTATION_EVENT;
@@ -227,18 +292,21 @@ void checkForSystemSignal(MidpReentryData* pNewSignal,
 
         break;
 #endif
+
 #ifdef ENABLE_JSR_179
     case JSR179_LOCATION_JC_EVENT:
         pNewSignal->waitingFor = event->data.jsr179LocationEvent.event;
         pNewSignal->descriptor = (int)event->data.jsr179LocationEvent.provider;
         pNewSignal->status = event->data.jsr179LocationEvent.operation_result;
-        REPORT_CALL_TRACE2(LC_NONE, "[jsr179 event] JSR179_LOCATION_SIGNAL %d %d\n", pNewSignal->descriptor, pNewSignal->status);
+        REPORT_CALL_TRACE2(LC_NONE, "[jsr179 event] JSR179_LOCATION_SIGNAL %d %d\n",
+                           pNewSignal->descriptor, pNewSignal->status);
         break;
     case JSR179_PROXIMITY_JC_EVENT:
         pNewSignal->waitingFor = JSR179_PROXIMITY_SIGNAL;
         pNewSignal->descriptor = (int)event->data.jsr179ProximityEvent.provider;
         pNewSignal->status = event->data.jsr179ProximityEvent.operation_result;
-        REPORT_CALL_TRACE2(LC_NONE, "[jsr179 event] JSR179_PROXIMITY_SIGNAL %d %d\n", pNewSignal->descriptor, pNewSignal->status);
+        REPORT_CALL_TRACE2(LC_NONE, "[jsr179 event] JSR179_PROXIMITY_SIGNAL %d %d\n",
+                           pNewSignal->descriptor, pNewSignal->status);
         break;
 #endif
 
@@ -285,6 +353,7 @@ void checkForSystemSignal(MidpReentryData* pNewSignal,
         }
         break;
 #endif /* ENABLE_JSR_177 */
+
 #if ENABLE_MULTIPLE_ISOLATES
     case MIDP_JC_EVENT_SWITCH_FOREGROUND:
         pNewSignal->waitingFor = AMS_SIGNAL;
@@ -297,6 +366,7 @@ void checkForSystemSignal(MidpReentryData* pNewSignal,
         pNewMidpEvent->intParam1 = 0;
         break;
 #endif /* ENABLE_MULTIPLE_ISOLATES */
+
 #if ENABLE_JSR_256
     case JSR256_JC_EVENT_SENSOR_AVAILABLE:
         pNewSignal->waitingFor = JSR256_SIGNAL;
@@ -309,6 +379,7 @@ void checkForSystemSignal(MidpReentryData* pNewSignal,
         pNewSignal->descriptor = (int)event->data.jsr256_jc_event_sensor.sensor;
         break;
 #endif /* ENABLE_JSR_256 */
+
     default:
         REPORT_ERROR(LC_CORE,"Unknown event.\n");
         break;

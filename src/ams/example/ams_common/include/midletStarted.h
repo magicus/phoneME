@@ -24,25 +24,33 @@
  * information or have any questions.
  */
 
-#include <javacall_lifecycle.h>
-#include <runMidlet.h>
+#ifndef _MIDLET_STARTED_H_
+#define _MIDLET_STARTED_H_
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+#include <kni.h>
 
 /**
- * Entry point of the Javacall executable.
- *
- * @param argc number of arguments (1 means no arguments)
- * @param argv the arguments, argv[0] is the executable's name
- *
- * @return the exit value (1 if OK)
+ * Indicate to native layer whether the MIDlet.startApp() method has completed
+ * Relevant in SVM only
+ * 
+ * @param status <code>true</code> if startApp() finished
  */
-javacall_result JavaTaskImpl(int argc, char* argv) {
-    javacall_result res = runMidlet(argc, argv);
+void setStartAppCompleted(jboolean status);
 
-    javacall_lifecycle_state_changed(JAVACALL_LIFECYCLE_MIDLET_SHUTDOWN,
-                                     (res == 1) ? JAVACALL_OK : JAVACALL_FAIL);
+/**
+ * Check if MIDlet.startApp() was called
+ * 
+ * @return <code>KNI_TRUE</code> if startApp() was called already,
+ *         <code>KNI_FALSE</code> otherwise
+ */
+jboolean isStartAppCompleted(void);
 
-#if !ENABLE_MULTIPLE_ISOLATES
-    stop_kill_timer();
-#endif
-    return res;
+#ifdef __cplusplus
 }
+#endif
+
+#endif /* _MIDLET_STARTED_H_ */

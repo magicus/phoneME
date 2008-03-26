@@ -182,6 +182,7 @@ public class MIDletPeer implements MIDletEventConsumer {
      */
     void startApp() throws MIDletStateChangeException {
         tunnel.callStartApp(midlet);
+        setStartAppCompleted0(true);
     }
 
     /**
@@ -209,6 +210,14 @@ public class MIDletPeer implements MIDletEventConsumer {
         tunnel.callDestroyApp(midlet, unconditional);
     }
 
+    /**
+     * Notify native code that the MIDlet.startApp() method has returned
+     * Relevant for SVM only
+     * 
+     * @param status <code>true</code> if startApp() finished
+     */
+    private native void setStartAppCompleted0(boolean status);
+    
     /**
      *
      * Used by a <code>MIDlet</code> to notify the application management

@@ -51,6 +51,75 @@ static javacall_result midpHandleListMIDlets(void);
 static javacall_result midpHandleListStorageNames(void);
 static javacall_result midpHandleRemoveMIDlet(midp_event_remove_midlet removeMidletEvent);
 
+#if !ENABLE_MULTIPLE_ISOLATES
+
+#include <midp_properties_port.h>
+#include <midletStarted.h>
+
+/** <code>true</code> if the VM is paused */
+javacall_bool vmPaused;
+
+/** Kill timer handle */
+static javacall_handle kill_timer_handle;
+
+/**
+ * Kill timer handler to kill the SVM in case the pause or shutdown
+ * requests take too long
+ */
+void kill_timer_handler(javacall_handle handle) {
+    midp_jc_event_union e;
+
+    /* kill the VM */
+    REPORT_INFO(LC_EVENTS, "kill timer went off, kill the SVM\n");
+    javacall_print("kill timer went off, kill the SVM\n");
+    
+    e.eventType = MIDP_JC_EVENT_KILL;
+
+    javacall_event_send((unsigned char *)&e,
+                        sizeof(midp_jc_event_union));
+}
+
+/**
+ * Start a timer to kill the SVM in case the pause or shutdown
+ * requests take too long
+ */
+void start_kill_timer() {
+    int kill_timeout;
+
+    REPORT_INFO(LC_EVENTS, "start_kill_timer() >>\n");
+    javacall_print("start_kill_timer() >>\n");
+
+    kill_timeout = getInternalPropertyInt("destroyMIDletTimeout");
+    if (kill_timeout <= 0) {
+        kill_timeout = KILL_TIMEOUT;
+    }
+
+    javacall_time_initialize_timer(kill_timeout,
+                                   JAVACALL_FALSE,
+                                   kill_timer_handler,
+                                   &kill_timer_handle);
+
+    REPORT_INFO(LC_EVENTS, "start_kill_timer() <<\n");
+    javacall_print("start_kill_timer() <<\n");
+}
+
+/**
+ * Stop the kill timer
+ */
+void stop_kill_timer() {
+    REPORT_INFO(LC_EVENTS, "stop_kill_timer() >>\n");
+    javacall_print("stop_kill_timer() >>\n");
+
+    if (kill_timer_handle) {
+        javacall_time_finalize_timer(kill_timer_handle);
+        kill_timer_handle = NULL;
+    }
+
+    REPORT_INFO(LC_EVENTS, "stop_kill_timer() <<\n");
+    javacall_print("stop_kill_timer() <<\n");
+}
+#endif /* !ENABLE_MULTIPLE_ISOLATES */
+
 /**
  * An entry point of a thread devoted to run java
  */
@@ -67,6 +136,10 @@ void JavaTask(void) {
 
     /* Outer Event Loop */
     while (JavaTaskIsGoOn) {
+
+#if !ENABLE_MULTIPLE_ISOLATES
+        setStartAppCompleted(JAVACALL_FALSE); /* MIDlet.startApp() not called yet */
+#endif
 
         if (midpInitializeMemory(-1) != 0) {
             REPORT_CRIT(LC_CORE,"JavaTask() >> midpInitializeMemory()  Not enough memory.\n");

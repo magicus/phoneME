@@ -29,6 +29,7 @@
 #include <midlet.h>
 #include <midpMalloc.h>
 #include <midpError.h>
+#include <midletStarted.h>
 
 /**
  * @file 
@@ -94,4 +95,19 @@ KNIDECL(com_sun_midp_main_CldcPlatformRequest_dispatchPlatformRequest) {
     KNI_ReturnBoolean(KNI_FALSE);
 }
 
+/**
+ * Indicate to native layer whether the MIDlet.startApp() method has completed
+ * Relevant in SVM only
+ * 
+ * @param status <code>true</code> if startApp() finished
+ */
+KNIEXPORT KNI_RETURNTYPE_VOID
+KNIDECL(com_sun_midp_midlet_MIDletPeer_setStartAppCompleted0) {
+#if !ENABLE_MULTIPLE_ISOLATES
+    jboolean status = KNI_GetParameterAsBoolean(1);
+
+    setStartAppCompleted(status);
+#endif
+    KNI_ReturnVoid();
+}
 

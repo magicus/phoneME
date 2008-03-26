@@ -31,6 +31,7 @@ import com.sun.midp.security.SecurityToken;
 import com.sun.midp.security.Permissions;
 
 import java.util.Vector;
+import java.util.Enumeration;
 
 /**
  * Main system of the current isolate that contains all 
@@ -188,7 +189,15 @@ public class SuspendSystem extends AbstractSubsystem {
          * @param midlet MIDletProxy that represents the MIDlet removed
          */
         public synchronized void midletRemoved(MIDletProxy midlet) {
-            midletKilled = true;
+            /*
+             * Check if another MIDlet is about to run.
+             * In SVM, a new MIDlet is launched in the same isolate,
+             * so if there are more elements, the isolate is not killed.
+             */
+            Enumeration proxies = mpl.getMIDlets();
+            if (!proxies.hasMoreElements()) {
+                midletKilled = true;
+            }
             removeSuspendDependency(midlet);
             if (midlet == lastForeground) {
                 lastForeground = null; 

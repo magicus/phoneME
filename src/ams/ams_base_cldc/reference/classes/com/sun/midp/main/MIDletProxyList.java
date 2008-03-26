@@ -704,6 +704,9 @@ public class MIDletProxyList
                         }
                     }
                 } else {
+                    /* In SVM mode, the MIDlet is always a dependency */
+                    SuspendSystem.getInstance(classSecurityToken).
+                        addSuspendDependency(current);
                     current.pauseMidlet();
                 }
             }

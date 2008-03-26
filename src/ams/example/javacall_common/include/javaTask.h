@@ -44,6 +44,32 @@ extern "C" {
  */
 void JavaTask(void);
 
+#if !ENABLE_MULTIPLE_ISOLATES
+
+#define KILL_TIMEOUT 5000;
+
+/** <code>true</code> if the VM is paused */
+extern javacall_bool vmPaused;
+
+/**
+ * Kill timer handler to kill the SVM in case the pause or shutdown
+ * requests take too long
+ */
+void kill_timer_handler(javacall_handle handle);
+
+/**
+ * Start a timer to kill the SVM in case the pause or shutdown
+ * requests take too long
+ */
+void start_kill_timer(void);
+
+/**
+ * Stop the kill timer
+ */
+void stop_kill_timer(void);
+
+#endif
+
 #ifdef __cplusplus
 }
 #endif

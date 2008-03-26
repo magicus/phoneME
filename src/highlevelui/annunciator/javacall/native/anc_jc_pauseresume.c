@@ -29,6 +29,10 @@
 #include <javacall_annunciator.h>
 #include <javacall_lifecycle.h>
 
+#if !ENABLE_MULTIPLE_ISOLATES
+#include <javaTask.h>
+#endif
+
 /**
  * @file
  *
@@ -41,6 +45,14 @@
 void pdMidpNotifyPausedAll() {
     javacall_lifecycle_state_changed(JAVACALL_LIFECYCLE_MIDLET_PAUSED,
                                      JAVACALL_OK);
+#if !ENABLE_MULTIPLE_ISOLATES
+    stop_kill_timer();
+
+    /* IMPL NOTE: don't suspend isolate if TCK is running */
+
+    /* suspend the isolate */
+    vmPaused = JAVACALL_TRUE;
+#endif
 }
 
 /**

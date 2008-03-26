@@ -45,6 +45,10 @@
 #include <jsr211_platform_invoc.h>
 #endif
 
+#if !ENABLE_MULTIPLE_ISOLATES
+#include <midletStarted.h>
+#endif
+
 static MidpReentryData newSignal;
 static MidpEvent newMidpEvent;
 
@@ -98,8 +102,8 @@ eventUnblockJavaThread(
  *  -1 = Do not timeout. Block until an event happens.
  */
 void midp_check_events(JVMSPI_BlockedThreadInfo *blocked_threads,
-		       int blocked_threads_count,
-		       jlong timeout) {
+                       int blocked_threads_count,
+                       jlong timeout) {
     if (midp_waitWhileSuspended()) {
         /* System has been requested to resume. Returning control to VM
          * to perform java-side resume routines. Timeout may be too long
@@ -122,7 +126,7 @@ void midp_check_events(JVMSPI_BlockedThreadInfo *blocked_threads,
         }
 
         break;
-#endif // ENABLE_JAVA_DEBUGGER
+#endif /* ENABLE_JAVA_DEBUGGER */
 
     case AMS_SIGNAL:
         midpStoreEventAndSignalAms(newMidpEvent);
@@ -198,7 +202,7 @@ void midp_check_events(JVMSPI_BlockedThreadInfo *blocked_threads,
     case JSR179_ORIENTATION_SIGNAL:
         midp_thread_signal_list(blocked_threads,
             blocked_threads_count, JSR179_ORIENTATION_SIGNAL, newSignal.descriptor, newSignal.status);
-        break;    
+        break;
     case JSR179_PROXIMITY_SIGNAL:
         midp_thread_signal_list(blocked_threads,
             blocked_threads_count, JSR179_PROXIMITY_SIGNAL, newSignal.descriptor, newSignal.status);
@@ -265,6 +269,10 @@ int midpRunVm(JvmPathChar* classPath,
               char** argv) {
     /* Master mode does not need VM time slice requests. */
     midp_thread_set_timeslice_proc(NULL);
+
+#if !ENABLE_MULTIPLE_ISOLATES
+    setStartAppCompleted(KNI_FALSE); /* MIDlet.startApp() not called yet */
+#endif
 
     return JVM_Start(classPath, mainClass, argc, argv);
 }

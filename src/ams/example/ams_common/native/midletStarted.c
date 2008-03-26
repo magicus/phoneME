@@ -1,7 +1,6 @@
 /*
  *
- *
- * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
@@ -24,25 +23,27 @@
  * information or have any questions.
  */
 
-#include <javacall_lifecycle.h>
-#include <runMidlet.h>
+#include <midletStarted.h>
+
+/** <code>true</code> if the MIDlet.startApp() method has not finished yet */
+static jboolean wasStarted;
 
 /**
- * Entry point of the Javacall executable.
- *
- * @param argc number of arguments (1 means no arguments)
- * @param argv the arguments, argv[0] is the executable's name
- *
- * @return the exit value (1 if OK)
+ * Indicate to native layer whether the MIDlet.startApp() method has complete
+ * Relevant in SVM only
+ * 
+ * @param status <code>true</code> is startApp() finished
  */
-javacall_result JavaTaskImpl(int argc, char* argv) {
-    javacall_result res = runMidlet(argc, argv);
+void setStartAppCompleted(jboolean status) {
+    wasStarted = status;
+}
 
-    javacall_lifecycle_state_changed(JAVACALL_LIFECYCLE_MIDLET_SHUTDOWN,
-                                     (res == 1) ? JAVACALL_OK : JAVACALL_FAIL);
-
-#if !ENABLE_MULTIPLE_ISOLATES
-    stop_kill_timer();
-#endif
-    return res;
+/**
+ * Check if MIDlet.startApp() was called
+ * 
+ * @return <code>KNI_TRUE</code> if startApp() was called already,
+ *         <code>KNI_FALSE</code> otherwise
+ */
+jboolean isStartAppCompleted(void) {
+    return wasStarted;
 }

@@ -47,3 +47,8 @@ SUBSYSTEM_AMS_NATIVE_FILES += \
     commandLineUtil.c \
     findMidlet.c \
     heap.c
+
+ifneq ($(USE_MULTIPLE_ISOLATES), true)
+SUBSYSTEM_AMS_NATIVE_FILES += \
+    midletStarted.c
+endif
