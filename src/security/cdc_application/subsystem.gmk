@@ -34,4 +34,4 @@
 #
 ######################################################################
 
-include $(SUBSYSTEM_DIR)/$(SECURITY_SUBSYSTEM)/subsystem.gmk
+include $(SUBSYSTEM_DIR)/security/subsystem.gmk
