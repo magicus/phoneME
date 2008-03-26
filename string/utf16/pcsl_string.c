@@ -1115,7 +1115,11 @@ pcsl_string_status pcsl_string_trim_from_end(const pcsl_string * str,
  */
 pcsl_string_status pcsl_string_convert_to_jint(const pcsl_string * str, jint * value) {
   jlong value_long;
-  pcsl_string_status  ret_val = pcsl_string_convert_to_jlong( str, &value_long);
+  pcsl_string_status ret_val;
+  if (value == NULL) {
+    return PCSL_STRING_EINVAL;
+  }
+  ret_val = pcsl_string_convert_to_jlong(str, &value_long);
   if (ret_val == PCSL_STRING_OK) { /* check result */
     jint value_int = (jint)value_long;
     if ((jlong)value_int == value_long) {
