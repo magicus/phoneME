@@ -185,6 +185,12 @@ void SendEvent (KVMEventType *evt) {
         break;
 
     case keyDownKVMEvent:
+#ifdef USE_KEYTYPED_VM_EVENTS
+        /* Regular key events are sent over keyTypedKVMEvent */
+        if ((evt->chr >= ' ') && (evt->chr <= 127)) {
+            break;
+        }
+#endif
         if ((evt->chr != KEY_END)) {
             javanotify_key_event(evt->chr, JAVACALL_KEYPRESSED);
         } else if (isRunningLocal == JAVACALL_FALSE) {
@@ -209,6 +215,12 @@ void SendEvent (KVMEventType *evt) {
                 posInSequence = 0;
             }
 #endif
+#ifdef USE_KEYTYPED_VM_EVENTS
+            /* Regular key events are sent over keyTypedKVMEvent */
+            if ((evt->chr >= ' ') && (evt->chr <= 127)) {
+                break;
+            }
+#endif
             javanotify_key_event(evt->chr, JAVACALL_KEYRELEASED);
         }
         break;
@@ -222,11 +234,9 @@ void SendEvent (KVMEventType *evt) {
     case keyTypedKVMEvent:
         if ((evt->chr != KEY_END)) {
 #ifdef USE_KEYTYPED_VM_EVENTS
-            if ((evt->chr >= ' ') && (evt->chr < 127)) {
-                /* Send Key events received from the keyboard
-                 * using the MIDP IME mechanism (Only for regular keys) */
-                javanotify_key_event(evt->chr, JAVACALL_KEYTYPED);
-            } else if (evt->chr == 127) { /* for the delete key */
+            /* Send regular key events received from the keyboard
+             * using standard MIDP mechanism */
+            if ((evt->chr >= ' ') && (evt->chr <= 127)) {
                 javanotify_key_event(evt->chr, JAVACALL_KEYPRESSED);
                 javanotify_key_event(evt->chr, JAVACALL_KEYRELEASED);
             }
