@@ -61,9 +61,8 @@
  * Should be reverted as soon as the emulator is fixed.
  */
 #define USE_KEYTYPED_VM_EVENTS
-/* IMPL_NOTE: End of temporary changes for CR <6658788> 
+/* IMPL_NOTE: End of temporary changes for CR <6658788>
  */
-
 
 #if ENABLE_JSR_179
 extern char *ExtractEventData(javacall_utf16_string event_name);
@@ -85,7 +84,9 @@ static const char pStartOddKeySequence[] = "#1*2";
 static int posInSequence = 0;
 #endif
 
+#ifdef USE_KEYTYPED_VM_EVENTS
 static int latestKey = 0;
+#endif
 
 void CheckLimeEvent() {
     static LimeFunction *f = NULL;
@@ -218,6 +219,10 @@ void SendEvent (KVMEventType *evt) {
 #ifdef USE_KEYTYPED_VM_EVENTS
             /* Regular key events are sent over keyTypedKVMEvent */
             if ((evt->chr >= ' ') && (evt->chr <= 127)) {
+                if (latestKey == evt->chr) {
+                    javanotify_key_event(latestKey, JAVACALL_KEYRELEASED);
+                }
+                latestKey = 0;
                 break;
             }
 #endif
@@ -234,11 +239,25 @@ void SendEvent (KVMEventType *evt) {
     case keyTypedKVMEvent:
         if ((evt->chr != KEY_END)) {
 #ifdef USE_KEYTYPED_VM_EVENTS
+            /* Multiple key presses are not supported,
+             * non-regular key press means the previous key is released */
+            if (latestKey != 0 && latestKey != evt->chr) {
+                javanotify_key_event(latestKey, JAVACALL_KEYRELEASED);
+                latestKey = 0;
+            }
             /* Send regular key events received from the keyboard
              * using standard MIDP mechanism */
             if ((evt->chr >= ' ') && (evt->chr <= 127)) {
-                javanotify_key_event(evt->chr, JAVACALL_KEYPRESSED);
-                javanotify_key_event(evt->chr, JAVACALL_KEYRELEASED);
+                /* Don't produce multiple press events for held keypad keys,
+                 * but do it for other typed chars, since WTK doesn't support
+                 * repeated key presses for them */
+                if (latestKey != evt->chr ||
+                        (evt->chr != '*' && evt->chr != '#' && 
+                        (evt->chr < '0' || evt->chr > '9'))) {
+
+                    javanotify_key_event(evt->chr, JAVACALL_KEYPRESSED);
+                    latestKey = evt->chr;
+                }
             }
 #else /* Temporary solution, will not work on all cases but provides
        * a solution for text entry */
