@@ -114,21 +114,7 @@ public class DisplayEventListener implements EventListener {
             switch (event.getType()) {
             case EventTypes.KEY_EVENT:
                 if (nativeEvent.intParam1 == EventConstants.IME) {
-                    /* IMPL_NOTE: CR <6658788>, temporary changes to process wrong
-                     * repeated key events on Shift+<0..9> passed from emulator.
-                     * Should be reverted as soon as the emulator is fixed.
-                     */            
-                    try {
-                        dc.handleInputMethodEvent(nativeEvent.stringParam1);
-                    }
-                    catch( Exception e) {
-                        // We're doing  best effort, will ignore exceptions
-                    }
-                    /* IMPL_NOTE: End of temporary changes for CR <6658788> 
-                     * Original source:
-                     * dc.handleInputMethodEvent(nativeEvent.stringParam1); 
-                     */
-
+                    dc.handleInputMethodEvent(nativeEvent.stringParam1);
                 }    
                 if (Logging.REPORT_LEVEL < Constants.LOG_DISABLED &&
                       nativeEvent.intParam2 == EventConstants.DEBUG_TRACE1) {

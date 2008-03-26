@@ -2947,58 +2947,19 @@ public class Display {
         // Modified to handle Keyboard events properly
         // Handle keyboard event only if in Keyboard Input mode
         public void handleInputMethodEvent(String inputText) {
-            /* IMPL_NOTE: CR <6658788>, temporary changes to process wrong
-             * repeated key events on Shift+<0..9> passed from emulator.
-             * Should be reverted as soon as the emulator is fixed.
-             */
-            TextField textFieldCopy = null;
+            TextBox textBoxCopy = null;
 
             synchronized (LCDUILock) {
                 if (current instanceof TextBox) {
-                    textFieldCopy = ((TextBox)current).textField;
-                }
-
-                if (current instanceof FormLFImpl ) {
-                    FormLFImpl x = (FormLFImpl) current;
-                    Item y=x.lGetCurrentItem();
-                    if (y instanceof TextField) {
-                        textFieldCopy = (TextField) y;
-                    }
+                    textBoxCopy = (TextBox) current;
                 }
             }
 
             // SYNC NOTE: TextBox.insert() does its own locking so we
             // move the call outside of our lock using a local variable
-            if (textFieldCopy != null) {
-            // #ifdef ENABLE_CHAMELEON
-                if (!(Display.this.window).systemMenuUp()) {
-                    TextInputSession session  = ((TextFieldLFImpl)textFieldCopy.textFieldLF).getInputSession();
-                    if (session.getCurrentInputMode() instanceof KeyboardInputMode)
-                        textFieldCopy.insert(inputText, textFieldCopy.getCaretPosition());
-                }
-            // #else
-                textFieldCopy.insert(inputText, textFieldCopy.getCaretPosition());
-            // #endif ENABLE_CHAMELEON
-                    
-            } 
-
-            /* IMPL_NOTE: End of temporary changes for CR <6658788> 
-             * Original source:
-
-                TextBox textBoxCopy = null;
-    
-                synchronized (LCDUILock) {
-                    if (current instanceof TextBox) {
-                        textBoxCopy = (TextBox) current;
-                    }
-                }
-    
-                // SYNC NOTE: TextBox.insert() does its own locking so we
-                // move the call outside of our lock using a local variable
-                if (textBoxCopy != null) {
-                    textBoxCopy.insert(inputText, textBoxCopy.getCaretPosition());
-                }
-               */
+            if (textBoxCopy != null) {
+                textBoxCopy.insert(inputText, textBoxCopy.getCaretPosition());
+            }
         } // handleInputMethodEvent
 
         /**
