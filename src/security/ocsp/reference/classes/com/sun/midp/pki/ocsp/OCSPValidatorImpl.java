@@ -135,6 +135,7 @@ public class OCSPValidatorImpl implements OCSPValidator {
      * @throws OCSPException if the connection can't be established
      */
     private void openConnection() throws OCSPException {
+        // IMPL_NOTE: currently proxyUsername and proxyPassword are not used. 
         String proxyUsername = null, proxyPassword = null;
         String responderUrl = Configuration.getProperty("ocsp.responderURL");
 

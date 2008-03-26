@@ -319,13 +319,17 @@ public class VerifierImpl implements Verifier {
         /*
          * If USE_OSCP=true, the following code checks the certificate's
          * validity using Online Certificate Status Protocol.
+         * Otherwise, certValidator.validate() always returns CertStatus.GOOD.
          */
+        
         if (certValidator == null) {
             certValidator = new OCSPValidatorImpl();
         }
 
-        // go through the authorization path and send OCSP requests
-        // begin with the most trusted certificate
+        /*
+         * Go through the authorization path and send OCSP requests
+         * begin with the most trusted certificate.
+         */
         for (int i = 0; i < derCerts.size(); i++) {
             int status;
             X509Certificate cert = (X509Certificate)derCerts.elementAt(i);
@@ -338,8 +342,9 @@ public class VerifierImpl implements Verifier {
                                       derCerts.elementAt(derCerts.size() - i)));
             } catch (OCSPException ocspEx) {
                 /*
-                 * IMPL_NOTE: an exception must be thrown to allow the caller
-                 * to display a proper message to the user.
+                 * IMPL_NOTE: exception with some status other then
+                 * UNKNOWN_CERT_STATUS should be thrown here to allow
+                 * the caller to display a proper message to the user. 
                  */
                 status = CertStatus.UNKNOWN;
             }

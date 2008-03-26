@@ -49,11 +49,6 @@ import com.sun.midp.crypto.NoSuchAlgorithmException;
  * This class is not a general repository for OIDs, or for such string names.
  * Note that the mappings between algorithm IDs and algorithm names is
  * not one-to-one.
- *
- *
- * @author David Brownell
- * @author Amit Kapoor
- * @author Hemma Prafullchandra
  */
 public class AlgorithmId {
 
@@ -61,10 +56,6 @@ public class AlgorithmId {
      * The object identitifer being used for this algorithm.
      */
     private ObjectIdentifier algid;
-
-    // The (parsed) parameters
-    //private AlgorithmParameters algParams;
-    //private boolean constructedFromDer = true;
 
     /**
      * Parameters for this algorithm.  These are stored in unparsed
@@ -86,51 +77,20 @@ public class AlgorithmId {
      * Constructs an algorithm ID with algorithm parameters.
      *
      * @param oid the identifier for the algorithm.
-     * @param algparams the associated algorithm parameters.
+     * @param params the associated algorithm parameters.
+     * @exception IOException on encoding error.
      */
-/*
-    public AlgorithmId(ObjectIdentifier oid, AlgorithmParameters algparams) {
-        algid = oid;
-        algParams = algparams;
-        constructedFromDer = false;
-    }
-*/
     private AlgorithmId(ObjectIdentifier oid, DerValue params)
             throws IOException {
         this.algid = oid;
         this.params = params;
-        /*if (this.params != null) {
-            decodeParams();
-        }*/
     }
-
-/*
-    protected void decodeParams() throws IOException {
-        String algidString = algid.toString();
-        try {
-            algParams = AlgorithmParameters.getInstance(algidString);
-        } catch (NoSuchAlgorithmException e) {
-            try {
-                // Try the internal EC code so that we can fully parse EC
-                // keys even if the provider is not registered.
-                // This code can go away once we have EC in the SUN provider.
-                algParams = AlgorithmParameters.getInstance(algidString,
-                                sun.security.ec.ECKeyFactory.ecInternalProvider);
-            } catch (NoSuchAlgorithmException ee) {*/
-                /*
-                 * This algorithm parameter type is not supported, so we cannot
-                 * parse the parameters.
-                 */
-                /*algParams = null;
-                return;
-            }
-        }
-        // Decode (parse) the parameters
-        algParams.init(params.toByteArray());
-    }*/
 
     /**
      * Marshal a DER-encoded "AlgorithmID" sequence on the DER stream.
+     *
+     * @param out the output stream on which to write the DER encoding.
+     * @exception IOException on encoding error.
      */
     public final void encode(DerOutputStream out) throws IOException {
         derEncode(out);
@@ -140,9 +100,7 @@ public class AlgorithmId {
      * DER encode this object onto an output stream.
      * Implements the <code>DerEncoder</code> interface.
      *
-     * @param out
-     * the output stream on which to write the DER encoding.
-     *
+     * @param out the output stream on which to write the DER encoding.
      * @exception IOException on encoding error.
      */
     public void derEncode(OutputStream out) throws IOException {
@@ -150,17 +108,8 @@ public class AlgorithmId {
         DerOutputStream tmp = new DerOutputStream();
 
         bytes.putOID(algid);
-        // Setup params from algParams since no DER encoding is given
-        /*if (constructedFromDer == false) {
-            if (algParams != null) {
-                params = new DerValue(algParams.getEncoded());
-            } else {
-                params = null;
-            }
-        }*/
-        if (params == null) {
-            // Changes backed out for compatibility with Solaris
 
+        if (params == null) {
             // Several AlgorithmId should omit the whole parameter part when
             // it's NULL. They are ---
             // rfc3370 2.1: Implementations SHOULD generate SHA-1
@@ -173,17 +122,6 @@ public class AlgorithmId {
             // MUST be omitted entirely
             // rfc3370 3.1: When the id-dsa-with-sha1 algorithm identifier
             // is used, the AlgorithmIdentifier parameters field MUST be absent.
-            /*if (
-                algid.equals((Object)SHA_oid) ||
-                algid.equals((Object)SHA256_oid) ||
-                algid.equals((Object)SHA384_oid) ||
-                algid.equals((Object)SHA512_oid) ||
-                algid.equals((Object)DSA_oid) ||
-                algid.equals((Object)sha1WithDSA_oid)) {
-                ; // no parameter part encoded
-            } else {
-                bytes.putNull();
-            }*/
             bytes.putNull();
         } else {
             bytes.putDerValue(params);
@@ -207,6 +145,8 @@ public class AlgorithmId {
      * "OID.1.3.14.3.2.13" style notation.  Use the <code>getName</code>
      * call when you do not need to ensure cross-system portability
      * of algorithm names, or need a user friendly name.
+     *
+     * @return ISO OID for this algorithm
      */
     public final ObjectIdentifier getOID () {
         return algid;
@@ -219,6 +159,8 @@ public class AlgorithmId {
      * return a name such as "MD5withRSA" for a signature algorithm on
      * some systems.  It also returns names like "OID.1.2.3.4", when
      * no particular name for the algorithm is known.
+     *
+     * @return name for the algorithm
      */
     public String getName() {
         String algName = (String)nameTable.get(algid);
@@ -241,23 +183,24 @@ public class AlgorithmId {
         return (algName == null) ? algid.toString() : algName;
     }
 
-    //public AlgorithmParameters getParameters() {
-    //    return algParams;
-    //}
-
     /**
      * Returns the DER encoded parameter, which can then be
      * used to initialize java.security.AlgorithmParamters.
      *
      * @return DER encoded parameters, or null not present.
+     * @exception IOException on encoding error.
      */
     public byte[] getEncodedParams() throws IOException {
         return (params == null) ? null : params.toByteArray();
     }
 
     /**
-     * Returns true iff the argument indicates the same algorithm
+     * Returns true if the argument indicates the same algorithm
      * with the same parameters.
+     *
+     * @param other algorithm identifier to compare with
+     *
+     * @return true if the objects are equal, false otherwise
      */
     public boolean equals(AlgorithmId other) {
         boolean paramsEqual =
@@ -271,6 +214,8 @@ public class AlgorithmId {
      * for the algorithm are compared.
      *
      * @param other preferably an AlgorithmId, else an ObjectIdentifier
+     * 
+     * @return true if the objects are equal, false otherwise
      */
     public boolean equals(Object other) {
         if (this == other) {
@@ -288,6 +233,10 @@ public class AlgorithmId {
     /**
      * Compares two algorithm IDs for equality.  Returns true iff
      * they are the same algorithm, ignoring algorithm parameters.
+
+     * @param id object identifier to compare with
+     *
+     * @return true if the objects are equal, false otherwise
      */
     public final boolean equals(ObjectIdentifier id) {
         return algid.equals(id);
@@ -301,29 +250,14 @@ public class AlgorithmId {
     public int hashCode() {
         StringBuffer sbuf = new StringBuffer();
         sbuf.append(algid.toString());
-//        sbuf.append(paramsToString());
         return sbuf.toString().hashCode();
     }
-
-    /**
-     * Provides a human-readable description of the algorithm parameters.
-     * This may be redefined by subclasses which parse those parameters.
-     */
-    /*protected String paramsToString() {
-        if (params == null) {
-            return "";
-        } else if (algParams != null) {
-            return algParams.toString();
-        } else {
-            return ", params unparsed";
-        }
-    }*/
 
     /**
      * Returns a string describing the algorithm and its parameters.
      */
     public String toString() {
-        return getName();// + paramsToString();
+        return getName();
     }
 
     /**
@@ -375,7 +309,9 @@ public class AlgorithmId {
      * with this algorithm name.
      *
      * @param algname the name being used
-     * @exception NoSuchAlgorithmException on error.
+     * @return one of the algorithm IDs most commonly associated
+     *         with this algorithm name
+     * @exception NoSuchAlgorithmException on error
      */
     public static AlgorithmId get(String algname)
             throws NoSuchAlgorithmException {
@@ -394,30 +330,6 @@ public class AlgorithmId {
         return new AlgorithmId(oid);
     }
 
-    /**
-     * Returns one of the algorithm IDs most commonly associated
-     * with this algorithm parameters.
-     *
-     * @param algparams the associated algorithm parameters.
-     * @exception NoSuchAlgorithmException on error.
-     */
-    /*public static AlgorithmId get(AlgorithmParameters algparams)
-            throws NoSuchAlgorithmException {
-        ObjectIdentifier oid;
-        String algname = algparams.getAlgorithm();
-        try {
-            oid = algOID(algname);
-        } catch (IOException ioe) {
-            throw new NoSuchAlgorithmException
-                ("Invalid ObjectIdentifier " + algname);
-        }
-        if (oid == null) {
-            throw new NoSuchAlgorithmException
-                ("unrecognized algorithm name: " + algname);
-        }
-        return new AlgorithmId(oid, algparams);
-    }*/
-
     /*
      * Translates from some common algorithm names to the
      * OID with which they're usually associated ... this mapping
@@ -425,7 +337,7 @@ public class AlgorithmId {
      * where synonyms are supported or where a given algorithm
      * is commonly associated with multiple OIDs.
      *
-     * XXX This method needs to be enhanced so that we can also pass the
+     * IMPL_NOTE: This method needs to be enhanced so that we can also pass the
      * scope of the algorithm name to it, e.g., the algorithm name "DSA"
      * may have a different OID when used as a "Signature" algorithm than when
      * used as a "KeyPairGenerator" algorithm.
