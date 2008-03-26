@@ -43,6 +43,11 @@
 #include <netdb.h>
 #include <sys/types.h>
 #include <sys/ioctl.h>
+
+#ifdef SOLARIS
+#include <sys/filio.h>
+#endif
+
 #include <sys/socket.h>
 #include <arpa/inet.h>
 #include <netinet/in.h>

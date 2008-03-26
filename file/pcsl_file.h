@@ -28,6 +28,8 @@
 #define _PCSL_FILE_H_
 
 #include <pcsl_string.h>
+#include <fcntl.h>
+#include <stdio.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -91,26 +93,26 @@ extern "C" {
  * Open the file for reading only.
  */
 
-#define PCSL_FILE_O_RDONLY             0x00
+#define PCSL_FILE_O_RDONLY             O_RDONLY
 
 /**
  * Open the file for writing only.
  */
 
-#define PCSL_FILE_O_WRONLY             0x01
+#define PCSL_FILE_O_WRONLY             O_WRONLY
 
 /**
  * Open the file for reading and writing.
  */
 
-#define PCSL_FILE_O_RDWR               0x02
+#define PCSL_FILE_O_RDWR               O_RDWR
 
 /**
  * Create the file  if  it  does  not  exist.
  * If the file exists, this flag has no effect except.
  */
 
-#define PCSL_FILE_O_CREAT              0x40
+#define PCSL_FILE_O_CREAT              O_CREAT
 
 /**
  * If the file exists and is a regular file, and the file
@@ -118,7 +120,7 @@ extern "C" {
  * is  truncated  to  0.
  */
 
-#define PCSL_FILE_O_TRUNC              0x200 
+#define PCSL_FILE_O_TRUNC              O_TRUNC
 
 /**
  * If set, the file offset is set to the end of the file
@@ -126,7 +128,7 @@ extern "C" {
  * contents of a file.
  */
 
-#define PCSL_FILE_O_APPEND             0x400
+#define PCSL_FILE_O_APPEND             O_APPEND
 
 /**  
  * Below definitions are for pcsl_file_seek's position parameter 
@@ -135,17 +137,17 @@ extern "C" {
 /**
  *  The offset is set to the specified number of offset bytes. 
  */
-#define PCSL_FILE_SEEK_SET  0
+#define PCSL_FILE_SEEK_SET  SEEK_SET
 
 /**
  * The offset is set to its current location plus offset bytes. 
  */
-#define	PCSL_FILE_SEEK_CUR  1
+#define	PCSL_FILE_SEEK_CUR  SEEK_CUR
 
 /**
  *  The offset is set to the size of the file plus offset bytes. 
  */
-#define PCSL_FILE_SEEK_END  2
+#define PCSL_FILE_SEEK_END  SEEK_END
 
 
 /**
