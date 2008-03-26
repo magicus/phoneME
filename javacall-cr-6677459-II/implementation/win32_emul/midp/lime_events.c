@@ -232,7 +232,22 @@ void SendEvent (KVMEventType *evt) {
 
     case keyRepeatKVMEvent:
         if (evt->chr != KEY_END) {
+#ifdef USE_KEYTYPED_VM_EVENTS
+            /* For compound key presses, like shift + digit, WTK produces repeated
+             * key events for base key only, e.g. for the digit. It is not good,
+             * since, for example for '!' it will produce '1' repeated key event.
+             * It can be fixed in assumption that repeated key event can happen
+             * to previously pressed and not yet released key only */
+            if ((evt->chr >= ' ') && (evt->chr <= 127)) {
+                if (latestKey != 0) {
+                    javanotify_key_event(latestKey, JAVACALL_KEYREPEATED);
+                }
+            } else {
+                javanotify_key_event(evt->chr, JAVACALL_KEYREPEATED);
+            }
+#else
             javanotify_key_event(evt->chr, JAVACALL_KEYREPEATED);
+#endif
         }
         break;
 
@@ -252,7 +267,7 @@ void SendEvent (KVMEventType *evt) {
                  * but do it for other typed chars, since WTK doesn't support
                  * repeated key presses for them */
                 if (latestKey != evt->chr ||
-                        (evt->chr != '*' && evt->chr != '#' && 
+                        (evt->chr != '*' && evt->chr != '#' &&
                         (evt->chr < '0' || evt->chr > '9'))) {
 
                     javanotify_key_event(evt->chr, JAVACALL_KEYPRESSED);
