@@ -115,8 +115,6 @@ import com.sun.midp.log.LogChannels;
  *   UnknownInfo ::= NULL -- this can be replaced with an enumeration
  *
  * </pre>
- *
- * @author      Ram Marti
  */
 
 class OCSPResponse {
@@ -152,7 +150,7 @@ class OCSPResponse {
      * Create an OCSP response from its ASN.1 DER encoding.
      */
     // used by OCSPValidatorImpl
-    OCSPResponse(byte[] bytes, Vector certs)
+    OCSPResponse(byte[] bytes, Vector certs, CertId reqCertId)
             throws IOException, OCSPException {
 
         try {
@@ -236,6 +234,7 @@ class OCSPResponse {
                 throw new IOException("Bad encoding in tbsResponseData " +
                     " element of OCSP response: expected ASN.1 SEQUENCE tag.");
             }
+            
             DerInputStream seqDerIn = responseData.data;
             DerValue seq = seqDerIn.getDerValue();
 
@@ -275,8 +274,20 @@ class OCSPResponse {
 
             // responses
             DerValue[] singleResponseDer = seqDerIn.getSequence(1);
-            // Examine only the first response
-            singleResponse = new SingleResponse(singleResponseDer[0]);
+
+            // Search the response with the same CertId as given in the request
+            int n;
+            for (n = 0; n < singleResponseDer.length; n++) {
+                singleResponse = new SingleResponse(singleResponseDer[n]);
+                if (singleResponse.getCertId().equals(reqCertId)) {
+                    break;
+                }
+            }
+
+            if (n == singleResponseDer.length) {
+                throw new IOException("Response doesn't contain information" +
+                                      "about the requested certificate");
+            }
 
             // responseExtensions
             if (seqDerIn.available() > 0) {
@@ -314,16 +325,19 @@ class OCSPResponse {
             byte[] signature = seqTmp[2].getBitString();
             X509Certificate[] x509Certs = null;
 
-            // if seq[3] is available , then it is a sequence of certificates
+            // if seq[3] is available, then it is a sequence of certificates
             if (seqTmp.length > 3) {
                 // certs are available
                 DerValue seqCert = seqTmp[3];
+                
                 if (! seqCert.isContextSpecific((byte)0)) {
                     throw new IOException("Bad encoding in certs element " +
                     "of OCSP response: expected ASN.1 context specific tag 0.");
                 }
+
                 DerValue[] certsDer = (seqCert.getData()).getSequence(3);
                 x509Certs = new X509Certificate[certsDer.length];
+
                 for (int i = 0; i < certsDer.length; i++) {
                     byte[] data = certsDer[i].toByteArray();
                     x509Certs[i] = X509Certificate.generateCertificate(
@@ -387,11 +401,11 @@ class OCSPResponse {
     }
 
     private String parsex500Name(DerInputStream in) throws IOException {
-        //
-        // X.500 names are a "SEQUENCE OF" RDNs, which means zero or
-        // more and order matters.  We scan them in order, which
-        // conventionally is big-endian.
-        //
+        /*
+         * X.500 names are a "SEQUENCE OF" RDNs, which means zero or
+         * more and order matters.  We scan them in order, which
+         * conventionally is big-endian.
+         */
         DerValue[] nameseq = null;
         byte[] derBytes = in.toByteArray();
 

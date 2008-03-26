@@ -278,8 +278,6 @@ public class X509Certificate implements Certificate {
     private String serialNumber;
     /** Certificate serial number represented as a byte array. */
     private byte[] serialNumberBytes;
-    /** Issuer name represented as a byte array. */
-    //private byte[] issuerBytes;
     /** Certificate subject. */
     private String subject;
     /** Certificate issuer. */

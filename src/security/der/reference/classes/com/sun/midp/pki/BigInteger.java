@@ -339,19 +339,24 @@ public class BigInteger {
      */
     public boolean equals(Object x) {
         // This test is just an optimization, which may or may not help
-        if (x == this)
+        if (x == this) {
             return true;
+        }
 
-        if (!(x instanceof BigInteger))
+        if (!(x instanceof BigInteger)) {
             return false;
+        }
         BigInteger xInt = (BigInteger) x;
 
-        if (xInt.signum != signum || xInt.mag.length != mag.length)
+        if (xInt.signum != signum || xInt.mag.length != mag.length) {
             return false;
+        }
 
-        for (int i=0; i<mag.length; i++)
-            if (xInt.mag[i] != mag[i])
+        for (int i = 0; i < mag.length; i++) {
+            if (xInt.mag[i] != mag[i]) {
                 return false;
+            }
+        }
 
         return true;
     }

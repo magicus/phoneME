@@ -90,9 +90,11 @@ public class OCSPRequest {
     /**
      * Constructs an OCSPRequest. This constructor is used
      * to construct an unsigned OCSP Request for a single user cert.
+     *
+     * @param userCert certificate to check
+     * @param issuerCert certificate of the userCert's issuer
      */
     OCSPRequest(X509Certificate userCert, X509Certificate issuerCert) {
-
         if (issuerCert == null) {
             throw new IllegalArgumentException("Null IssuerCertificate");
         }

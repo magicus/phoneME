@@ -158,23 +158,6 @@
   <property Key="ocsp.responderURL"
 	    Value="http://127.0.0.1:80"
 	    Scope="internal"/>
-<!--	    
-  <property Key="ocsp.responderCertSubjectName"
-	    Value="CN=OCSP Responder, O=XYZ Corp"
-	    Scope="internal"/>
--->	    
-  <!-- Ignored if ocsp.responderCertSubjectName is set. -->
-<!--	    
-  <property Key="ocsp.responderCertIssuerName"
-	    Value="CN=Enterprise CA, O=XYZ Corp"
-	    Scope="internal"/>
--->	    
-  <!-- Ignored if ocsp.responderCertSubjectName is set. -->
-<!--	    
-  <property Key="ocsp.responderCertSerialNumber"
-	    Value="2A:FF:00"
-	    Scope="internal"/>
--->	    
 
 <!-- SYSTEM PROPERTIES -->
 <!-- Visible from System.getProperty() -->

@@ -84,8 +84,6 @@ public class OCSPValidatorImpl implements OCSPValidator {
      */
     public int validate(Certificate cert, Certificate issuerCert)
             throws OCSPException {
-        OCSPResponse response;
-
         try {
             openConnection();
 
@@ -110,7 +108,7 @@ public class OCSPValidatorImpl implements OCSPValidator {
                 }
             }
             
-            response = receiveResponse(caCerts);
+            OCSPResponse response = receiveResponse(caCerts, certId);
 
             // Check that response applies to the cert that was supplied
             if (! certId.equals(response.getCertId())) {
@@ -119,11 +117,7 @@ public class OCSPValidatorImpl implements OCSPValidator {
                     "certificate supplied in the OCSP request.");
             }
 
-            int certOCSPStatus = response.getCertStatus();
-
-            if (certOCSPStatus != CertStatus.GOOD) {
-                return certOCSPStatus;
-            }
+            return response.getCertStatus();
         } catch (OCSPException e) {
             // e.printStackTrace();
             throw e;
@@ -133,8 +127,6 @@ public class OCSPValidatorImpl implements OCSPValidator {
         } finally {
             cleanup();
         }
-
-        return response.getCertStatus();
     }
 
     /**
@@ -144,7 +136,9 @@ public class OCSPValidatorImpl implements OCSPValidator {
      */
     private void openConnection() throws OCSPException {
         String proxyUsername = null, proxyPassword = null;
-        String responderUrl = Configuration.getProperty("ocsp.responderURL");
+        //String responderUrl = Configuration.getProperty("ocsp.responderURL");
+        String responderUrl = "http://cingular-ocsp.geotrust.com/responder";
+        //String responderUrl = "http://ocsp.digsigtrust.com";
 
         try {
             httpConnection = (HttpConnection)
@@ -200,10 +194,11 @@ public class OCSPValidatorImpl implements OCSPValidator {
      * Receives a response from the OCSP server.
      *
      * @param caCerts X.509 certificates of known CAs
+     * @param reqCertId ID of the certificate specified in the request 
      * @return OCSP response received from the server
      * @throws OCSPException if an error occured while receiving response
      */
-    private OCSPResponse receiveResponse(Vector caCerts)
+    private OCSPResponse receiveResponse(Vector caCerts, CertId reqCertId)
             throws OCSPException {
         try {
             httpInputStream = httpConnection.openInputStream();
@@ -233,9 +228,7 @@ public class OCSPValidatorImpl implements OCSPValidator {
             byte[] responseBuf = new byte[total];
             System.arraycopy(tmpBuf, 0, responseBuf, 0, total);
 
-            OCSPResponse ocspResponse = new OCSPResponse(responseBuf, caCerts);
-
-            return ocspResponse;
+            return new OCSPResponse(responseBuf, caCerts, reqCertId);
         } catch (IOException ioe) {
             throw new OCSPException(OCSPException.SERVER_NOT_RESPONDING,
                                     ioe.getMessage());

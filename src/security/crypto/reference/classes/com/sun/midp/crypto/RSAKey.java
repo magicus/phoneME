@@ -123,7 +123,8 @@ class RSAKey implements Key {
     /**
      * Returns the encoding of key.
      *
-     * @return null because there is no encoding
+     * @return if OCSP is enabled, returns DER encoding of this key,
+     *         otherwise returns null
      */
     public byte[] getEncoded() {
         return DEREncoder.encode(this);
