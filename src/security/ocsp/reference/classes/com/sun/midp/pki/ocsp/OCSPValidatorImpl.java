@@ -136,9 +136,7 @@ public class OCSPValidatorImpl implements OCSPValidator {
      */
     private void openConnection() throws OCSPException {
         String proxyUsername = null, proxyPassword = null;
-        //String responderUrl = Configuration.getProperty("ocsp.responderURL");
-        String responderUrl = "http://cingular-ocsp.geotrust.com/responder";
-        //String responderUrl = "http://ocsp.digsigtrust.com";
+        String responderUrl = Configuration.getProperty("ocsp.responderURL");
 
         try {
             httpConnection = (HttpConnection)
