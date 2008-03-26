@@ -512,6 +512,7 @@ public abstract class Installer {
                     "Throwable during posting install message");
                 }
             }
+            e.printStackTrace();
 
             throw new
                 InvalidJadException(InvalidJadException.TOO_MANY_PROPS);
@@ -536,6 +537,7 @@ public abstract class Installer {
                     "Throwable during posting install message");
                 }
             }
+            e.printStackTrace();
 
             throw new
                 InvalidJadException(InvalidJadException.TOO_MANY_PROPS);
@@ -775,6 +777,7 @@ public abstract class Installer {
                         "Throwable during posting the install message");
                     }
                 }
+                e.printStackTrace();
 
                 throw new
                     InvalidJadException(InvalidJadException.TOO_MANY_PROPS);
@@ -802,6 +805,7 @@ public abstract class Installer {
                         "Throwable while posting install message ");
                     }
                 }
+                e.printStackTrace();
 
                 throw new
                     InvalidJadException(InvalidJadException.TOO_MANY_PROPS);
@@ -1241,6 +1245,7 @@ public abstract class Installer {
                         "Throwable during posting install message");
                     }
                 }
+                e.printStackTrace();
 
                 throw new
                     InvalidJadException(InvalidJadException.TOO_MANY_PROPS);

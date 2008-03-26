@@ -31,6 +31,7 @@
  */
 
 #include <string.h>
+#include <jvm.h>
 #include <midpServices.h>
 #include <midp_logging.h>
 #include <localeMethod.h>
@@ -77,6 +78,13 @@
 #include <javacall_odd.h>
 #endif /* ENABLE_ON_DEVICE_DEBUG */
 
+#include "midp_thread.h"
+
+#if ENABLE_SLAVE_MODE_EVENTS
+#include "midp_slavemode_port.h"
+extern javacall_result midpHandleStartEvent(midp_jc_event_start_arbitrary_arg startMidletEvent);
+#endif
+
 static char urlAddress[BINARY_BUFFER_MAX_LEN];
 
 #define MAX_PHONE_NUMBER_LENGTH 48
@@ -89,8 +97,15 @@ static char selectedNumber[MAX_PHONE_NUMBER_LENGTH];
  */
 static javacall_result
 midp_jc_event_send(midp_jc_event_union *event) {
-    return javacall_event_send((unsigned char *)event,
-                               sizeof(midp_jc_event_union));
+    javacall_result rc = javacall_event_send((unsigned char *)event,sizeof(midp_jc_event_union));
+#if ENABLE_SLAVE_MODE_EVENTS
+    // call the JVM NOW! to process the EVENT and schedule a time-slice
+    if (JVM_GetConfig(JVM_CONFIG_SLAVE_MODE) == KNI_TRUE) {
+        javanotify_inform_event();
+        javacall_schedule_vm_timeslice();
+    }
+#endif
+    return rc;
 }
 
 /**
@@ -148,7 +163,28 @@ void javanotify_start(void) {
     midp_jc_event_union e;
     midp_jc_event_start_arbitrary_arg *data = &e.data.startMidletArbitraryArgEvent;
 
+#if ENABLE_SLAVE_MODE_EVENTS
+    int main_memory_chunk_size = -1;
+#endif
+
     REPORT_INFO(LC_CORE, "javanotify_start() >>\n");
+
+#if ENABLE_SLAVE_MODE_EVENTS
+    JVM_SetConfig(JVM_CONFIG_SLAVE_MODE, KNI_TRUE);
+
+    midp_thread_set_timeslice_proc(midp_slavemode_port_schedule_vm_timeslice);
+    JVM_Initialize();
+    main_memory_chunk_size = (5*1024*1024 + 200*1024);//javacall_get_internal_property_int("MAIN_MEMORY_CHUNK_SIZE", (5*1024*1024));
+    if (main_memory_chunk_size <= 0) {
+        /* Java heap supposed to be more than 0 */
+        REPORT_ERROR1(LC_AMS, "javanotify_start(): MAIN_MEMORY_CHUNK_SIZE is too low = %d!"
+                      "Default value will be used!\n", main_memory_chunk_size);
+    }
+
+    if (midpInitializeMemory(main_memory_chunk_size) != 0) {
+        //FIX IT
+    }
+#endif
 
     e.eventType = MIDP_JC_EVENT_START_ARBITRARY_ARG;
 
@@ -162,7 +198,14 @@ void javanotify_start(void) {
     "com.sun.midp.appmanager.Manager";
 #endif
 
+#if ENABLE_SLAVE_MODE_EVENTS
+    javacall_lifecycle_state_changed(JAVACALL_LIFECYCLE_MIDLET_STARTED, JAVACALL_OK);
+
+    midpHandleStartEvent(e.data.startMidletArbitraryArgEvent);
+
+#else
     midp_jc_event_send(&e);
+#endif
 }
 
 /**

@@ -81,6 +81,7 @@ USE_ON_DEVICE_DEBUG     = false
 USE_WTK_DEBUG           = false
 USE_AMS_FOLDERS         = false
 USE_AMS_EXECUTABLE      = true
+EVENT_SYSTEM_IMPLEMENTATION = master
 
 # DEBUG
 USE_DEBUG               = false

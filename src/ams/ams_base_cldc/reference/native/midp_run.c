@@ -33,6 +33,7 @@
 #include <sni.h>
 #include <pcsl_print.h>
 #include <pcsl_memory.h>
+#include "javacall_time.h"
 
 #include <midpAMS.h>
 #include <midpInit.h>
@@ -104,7 +105,7 @@ static MIDP_ERROR getClassPathForVerifyOnce(
 #define STACK_SIZE 8192
 
 /* Stack grows down */
-static void
+void
 measureStack(int clearStack) {
     char  stack[STACK_SIZE];
     char  tag = (char)0xef;
@@ -129,7 +130,7 @@ measureStack(int clearStack) {
 
 #else
 
-static void
+void
 measureStack(int clearStack) {
     (void)clearStack;
     return;
@@ -1029,6 +1030,7 @@ int midpRunMainClass(JvmPathChar *classPath,
      */
     vmStatus = midpRunVm(classPath, mainClass, argc, argv);
 
+#if !ENABLE_SLAVE_MODE_EVENTS
     pushcheckinall();
     midp_resetEvents();
     midpMIDletProxyListReset();
@@ -1044,6 +1046,7 @@ int midpRunMainClass(JvmPathChar *classPath,
     }
 
     midpFinalize();
+#endif
 
     return vmStatus;
 }

@@ -62,7 +62,7 @@ public class DiscoveryApp extends MIDlet implements CommandListener {
     /** Display for this MIDlet. */
     private Display display;
     /** Contains the default URL for the install list. */
-    private String defaultInstallListUrl = "http://";
+    private String defaultInstallListUrl = System.getProperty("provisioning.url", "http://");
     /** Contains the URL the user typed in. */
     private TextBox urlTextBox;
     /** Displays the progress of the install. */

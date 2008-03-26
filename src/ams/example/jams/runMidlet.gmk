@@ -50,3 +50,11 @@ $(BINDIR)/runMidlet$(g)$(p)$(EXE): \
 	$(A)$(LD) $(LD_FLAGS) $(LINKER_OUTPUT)`$(call fixcygpath,$@ \
 	     $(LD_START_GROUP) $(AMS_RUNMIDLET_OBJ_FILES) $(OBJLIB) $(LIBS))` $(LD_END_GROUP) $(LOG)
 	$(A)$(VC_MANIFEST_EMBED_EXE)
+
+$(BINDIR)/runMidlet$(g)$(p)$(LIB_SUFFIX): \
+    $(MIDP_DEPS) $(OBJLIB) $(AMS_RUNMIDLET_OBJ_FILES)
+	@echo "######################################################################################"
+	@echo " ... LIBING $@ " $(LOG)
+	$(LD) $(LINKER_OUTPUT)`$(call fixcygpath,$@ \
+	     $(LD_START_GROUP) $(AMS_RUNMIDLET_OBJ_FILES) $(OBJLIB) $(LIBS))` $(LD_END_GROUP) $(LOG)
+

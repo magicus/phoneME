@@ -58,7 +58,11 @@ MIDP_JAVADOC_ALL += \
 ifeq ($(PLATFORM), linux_qte)
    SUBSYSTEM_EVENTS_MODULES = slave_mode
 else
-   SUBSYSTEM_EVENTS_MODULES = master_mode
+   ifeq ($(EVENT_SYSTEM_IMPLEMENTATION), slave)
+        SUBSYSTEM_EVENTS_MODULES = slave_mode
+   else
+        SUBSYSTEM_EVENTS_MODULES = master_mode
+   endif
 endif
 
 include $(SUBSYSTEM_EVENTS_DIR)/eventqueue/lib.gmk
