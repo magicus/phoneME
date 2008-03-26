@@ -125,7 +125,17 @@ include $(SUBSYSTEM_DIR)/rms/$(SUBSYSTEM_MAKE_FILE)
 # Description: Security
 #####################################################################
 
-include $(SUBSYSTEM_DIR)/security/$(SUBSYSTEM_MAKE_FILE)
+ifeq ($(TARGET_VM), cldc_vm)
+  include $(SUBSYSTEM_DIR)/security/$(SUBSYSTEM_MAKE_FILE)
+else
+  ifeq ($(TARGET_VM), cdc_vm)
+    ifeq ($(USE_OEM_SECURITY), true)
+      include $(OEM_SECURITY_DIR)/$(SUBSYSTEM_MAKE_FILE)
+    else
+      include $(SUBSYSTEM_DIR)/security/cdc_application/$(SUBSYSTEM_MAKE_FILE)
+    endif
+  endif
+endif
 
 #####################################################################
 # Protocol Subsystem
