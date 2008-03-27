@@ -1,24 +1,24 @@
 /*
- *  
+ *
  *
  * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
- * 
+ *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
  * 2 only, as published by the Free Software Foundation.
- * 
+ *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
  * included at /legal/license.txt).
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA
- * 
+ *
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
  * information or have any questions.
@@ -73,12 +73,12 @@ int midpRunVm(JvmPathChar* classPath,
 	      char* mainClass,
 	      int argc,
 	      char** argv) {
-    midp_thread_set_timeslice_proc(midp_slavemode_port_schedule_vm_timeslice);
+    midp_thread_set_timeslice_proc(midp_slavemode_schedule_vm_timeslice);
 
     JVM_SetConfig(JVM_CONFIG_SLAVE_MODE, KNI_TRUE);
     JVM_Start(classPath, mainClass, argc, argv);
 
-    midp_slavemode_port_event_loop();
+    midp_slavemode_event_loop();
 
     return JVM_CleanUp();
 }
