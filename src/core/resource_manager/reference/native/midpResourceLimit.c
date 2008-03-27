@@ -158,6 +158,8 @@ static void initResourceLimit() {
     // CDC does not have isolates.
     max_isolates = 1;
 #else
+
+#if ENABLE_MULTIPLE_ISOLATES
     max_isolates = getInternalPropertyInt("MAX_ISOLATES");
 
     if (0 == max_isolates) {
@@ -168,11 +170,17 @@ static void initResourceLimit() {
         sprintf(max_isolates_str, "%d", max_isolates);
         setInternalProperty("MAX_ISOLATES", max_isolates_str);
     }
+#else
+    max_isolates = 1;
+    setInternalProperty("MAX_ISOLATES", "1");
+#endif
+
 #endif
 
     REPORT_INFO(LC_CORE, "initialize resource limit\n");
 
-    gIsolateResourceUsage = (_IsolateResourceUsage*)midpMalloc(sizeof(_IsolateResourceUsage)*max_isolates);
+    gIsolateResourceUsage = (_IsolateResourceUsage*)
+        midpMalloc(sizeof(_IsolateResourceUsage) * max_isolates);
 
     for (i = 0; i < max_isolates; i++) {
         gIsolateResourceUsage[i].isolateId = -1;

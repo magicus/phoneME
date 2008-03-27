@@ -44,14 +44,14 @@
         return midp_heap_requirement;
     }
 
+#if ENABLE_MULTIPLE_ISOLATES
     max_isolates = getInternalPropertyInt("MAX_ISOLATES");
     if (max_isolates <= 0) {
-#if ENABLE_MULTIPLE_ISOLATES
         max_isolates = MAX_ISOLATES;
-#else
-        max_isolates = 1;
-#endif
     }
+#else
+    max_isolates = 1;
+#endif
 
     /*
      * Calculate heap size.
