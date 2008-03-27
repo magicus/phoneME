@@ -49,12 +49,12 @@ extern "C" {
  * Requests that the VM control code schedule a time slice as soon
  * as possible, since Java platform threads are waiting to be run.
  */
-void midp_slavemode_port_schedule_vm_timeslice(void);
+void midp_slavemode_schedule_vm_timeslice(void);
 
 /**
  * Main processing loop.
  */
-void midp_slavemode_port_event_loop(void);
+void midp_slavemode_event_loop(void);
 
 /**
  * Executes bytecodes for a small time slice
