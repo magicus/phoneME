@@ -222,14 +222,14 @@ void SendEvent (KVMEventType *evt) {
 #ifdef USE_KEYTYPED_VM_EVENTS
             /* Regular key events are sent over keyTypedKVMEvent */
             if ((evt->chr >= ' ') && (evt->chr <= 127)) {
-                if (0 == latestKeyTyped && latestKeyDown == evt->chr) {
-
-                    /* Support skin presses - when there is no keytyped
-                     * event between key down/up events */
-                    javanotify_key_event(latestKeyDown, JAVACALL_KEYPRESSED);
-                    javanotify_key_event(latestKeyDown, JAVACALL_KEYRELEASED);
-                    
-                } else if (latestKeyTyped == evt->chr) {
+                if (0 == latestKeyTyped) {
+                    if (evt->chr == latestKeyDown) {
+                        /* Support skin presses - when there is no keytyped
+                         * event between key down/up events */
+                        javanotify_key_event(latestKeyDown, JAVACALL_KEYPRESSED);
+                        javanotify_key_event(latestKeyDown, JAVACALL_KEYRELEASED);
+                    }
+                } else if (evt->chr == latestKeyTyped || evt->chr == latestKeyDown) {
                     javanotify_key_event(latestKeyTyped, JAVACALL_KEYRELEASED);
                 }
                 latestKeyDown = 0;
@@ -277,9 +277,7 @@ void SendEvent (KVMEventType *evt) {
                 /* Don't produce multiple press events for held keypad keys,
                  * but do it for other typed chars, since WTK doesn't support
                  * repeated key presses for them */
-                if (latestKeyTyped != evt->chr ||
-                        (evt->chr != '*' && evt->chr != '#' &&
-                        (evt->chr < '0' || evt->chr > '9'))) {
+                if (evt->chr != latestKeyTyped || 0 == latestKeyDown) {
 
                     javanotify_key_event(evt->chr, JAVACALL_KEYPRESSED);
                     latestKeyTyped = evt->chr;
