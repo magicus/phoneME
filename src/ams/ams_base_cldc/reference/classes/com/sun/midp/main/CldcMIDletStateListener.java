@@ -40,8 +40,6 @@ import com.sun.midp.suspend.SuspendSystem;
 
 import com.sun.midp.security.SecurityToken;
 
-import com.sun.mmedia.MediaTunnel;
-
 /**
  * The class implements the MIDlet state listener for the CLDC VM.
  */
@@ -219,7 +217,6 @@ class CldcMIDletStateListener implements MIDletStateListener {
      */
     public void midletDestroyed(MIDletSuite suite, String className) {
         displayContainer.removeDisplay(className);
-        MediaTunnel.getInstance().callDestroyEventHandler(classSecurityToken);
         midletControllerEventProducer.sendMIDletDestroyNotifyEvent(
             suite.getID(), className);
     }
