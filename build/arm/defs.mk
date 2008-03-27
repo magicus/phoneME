@@ -59,10 +59,10 @@ CVM_JCS_CPU_RULES_FILE    = \
 # with a branch instruction.
 CVM_JIT_COPY_CCMCODE_TO_CODECACHE ?= true
 
-CVM_JIT_PATCHED_METHOD_INVOCATIONS = false
-ifeq ($(CVM_JIT_PATCHED_METHOD_INVOCATIONS), true)
+CVM_JIT_PMI ?= false
+ifeq ($(CVM_JIT_PMI), true)
 ifneq ($(CVM_JIT_COPY_CCMCODE_TO_CODECACHE), true)
-$(error cannot specify CVM_JIT_PATCHED_METHOD_INVOCATIONS=true with CVM_JIT_COPY_CCMCODE_TO_CODECACHE=false)
+$(error cannot specify CVM_JIT_PMI=true with CVM_JIT_COPY_CCMCODE_TO_CODECACHE=false)
 endif
 endif
 

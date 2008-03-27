@@ -247,3 +247,12 @@ CVMJITdestroyCompilerBackEnd(void)
     }
 #endif
 }
+
+#ifdef CVM_JIT_PATCHED_METHOD_INVOCATIONS
+/* Purpose: back-end PMI initialization. */
+CVMBool
+CVMJITPMIinitBackEnd(void)
+{
+    return CVM_TRUE;
+}
+#endif

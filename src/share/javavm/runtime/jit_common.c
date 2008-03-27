@@ -1386,7 +1386,7 @@ const CVMSubOptionEnumData jitTraceOptions[] = {
     { "osr",            CVM_DEBUGFLAG(TRACE_JITOSR) },
     { "reglocals",      CVM_DEBUGFLAG(TRACE_JITREGLOCALS) },
 #ifdef CVM_JIT_PATCHED_METHOD_INVOCATIONS
-    { "patchedinvokes", CVM_DEBUGFLAG(TRACE_JITPATCHEDINVOKES) },
+    { "pmi",            CVM_DEBUGFLAG(TRACE_JITPATCHEDINVOKES) },
 #endif
 };
 #endif
@@ -1506,6 +1506,12 @@ static const CVMSubOptionData knownJitSubOptions[] = {
      CVM_BOOLEAN_OPTION, 
      {{CVM_FALSE, CVM_TRUE, CVM_FALSE}},
      &CVMglobals.jit.compilingCausesClassLoading},
+#ifdef CVM_JIT_PATCHED_METHOD_INVOCATIONS
+    {"Xpmi", "Patched Method Invocations", 
+     CVM_BOOLEAN_OPTION, 
+     {{CVM_FALSE, CVM_TRUE, CVM_TRUE}},
+     &CVMglobals.jit.pmiEnabled},
+#endif
 #endif
 
 #ifdef CVM_JIT_COLLECT_STATS
@@ -2258,6 +2264,7 @@ CVMJITPMIcallerTableDeleteRecord(CVMUint32 callerRecIdx)
 {
     CVMJITGlobalState* jgs = &CVMglobals.jit;
     CVMJITPMICallerRecord* callerRec = &jgs->pmiCallerRecords[callerRecIdx];
+    CVMassert(jgs->pmiEnabled);
     if (jgs->pmiFirstFreeCallerRecordIdx == -1) {
 	/* Free record list is empty, so this new record will be last */
 	CVMJITPMIcallerTableMarkEndOfList(callerRec);
@@ -2275,6 +2282,7 @@ static CVMBool
 CVMJITPMIcallerTableAllocateRecord(CVMUint32* callerRecIdxPtr)
 {
     CVMJITGlobalState* jgs = &CVMglobals.jit;
+    CVMassert(jgs->pmiEnabled);
 
     if (jgs->pmiFirstFreeCallerRecordIdx != -1) {
 	CVMJITPMICallerRecord* callerRec;
@@ -2446,6 +2454,7 @@ static void
 CVMJITPMIcalleeTableDeleteRecord(CVMJITPMICalleeRecord* calleeRec)
 {
     CVMJITGlobalState* jgs = &CVMglobals.jit;
+    CVMassert(jgs->pmiEnabled);
     jgs->pmiNumUsedCalleeRecords--;
     jgs->pmiNumDeletedCalleeRecords++;
     calleeRec->calleeMb = (CVMMethodBlock*)1;
@@ -2467,6 +2476,7 @@ CVMJITPMIcalleeTableFindRecord(CVMMethodBlock* calleeMb, CVMUint32* indexPtr)
     CVMUint32 hashIdx =
 	(CVMmbNameAndTypeID(calleeMb) + (int)calleeMb) %
 	jgs->pmiNumCalleeRecords;
+    CVMassert(jgs->pmiEnabled);
 
     /* Make sure we own the jitLock */
     CVMassert(CVMsysMutexIAmOwner(CVMgetEE(), &CVMglobals.jitLock));
@@ -2550,7 +2560,7 @@ CVMJITPMIcalleeTableFindRecord(CVMMethodBlock* calleeMb, CVMUint32* indexPtr)
 }
 
 /*
- * Resize the callee hash table. This is done with too large of a % of
+ * Resize the callee hash table. This is done when too large of a % of
  * the entries are either allocated or deleted (too few are truly
  * empty).
  */
@@ -2632,6 +2642,7 @@ CVMJITPMIcalleeTableAddRecord(CVMMethodBlock* calleeMb,
     CVMJITGlobalState* jgs = &CVMglobals.jit;
     CVMJITPMICalleeRecord* calleeRec =
 	&jgs->pmiCalleeRecords[*calleeRecIdxPtr];
+    CVMassert(jgs->pmiEnabled);
 
     if (CVMJITPMIcalleeTableIsDeletedRecord(calleeRec)) {
 	/* If it is a previously deleted record, then just use it without
@@ -2795,6 +2806,11 @@ CVMJITPMIinit(CVMJITGlobalState* jgs)
 	return CVM_FALSE;
     }
 
+    /* init the backend */
+    if (!CVMJITPMIinitBackEnd()) {
+        return CVM_FALSE;
+    }
+
     return CVM_TRUE;
 }
 
@@ -2827,6 +2843,7 @@ CVMJITPMIaddPatchRecord(CVMMethodBlock* callerMb,
 
     /* Make sure we own the jitLock */
     CVMassert(CVMsysMutexIAmOwner(CVMgetEE(), &CVMglobals.jitLock));
+    CVMassert(jgs->pmiEnabled);
     
     CVMtraceJITPatchedInvokes((
         "PMI ADD: callerMb=0x%x instrAddr=0x%x %C.%M\n",
@@ -2933,6 +2950,7 @@ CVMJITPMIremovePatchRecords(CVMMethodBlock* callerMb, CVMMethodBlock* calleeMb,
 
     /* Make sure we own the jitLock */
     CVMassert(CVMsysMutexIAmOwner(CVMgetEE(), &CVMglobals.jitLock));
+    CVMassert(jgs->pmiEnabled);
     
     CVMtraceJITPatchedInvokes(("PMI REMOVE: calleeMb=0x%x %C.%M\n",
 			       calleeMb, CVMmbClassBlock(calleeMb), calleeMb));
@@ -3122,6 +3140,7 @@ CVMJITPMIpatchCall(CVMMethodBlock* calleeMb,
 		   CVMBool isVirtual)
 {
     int branchTargetOffset;
+    CVMassert(CVMglobals.jit.pmiEnabled);
     
     /*
       These are the possible states a patch point can be in, and the
@@ -3199,9 +3218,12 @@ CVMJITPMIpatchCallsToMethod(CVMMethodBlock* calleeMb,
     CVMUint32              callerRecIdx;
     CVMJITPMICallerRecord* callerRec;
 
-      /* Make sure we own the jitLock */
-    CVMassert(CVMsysMutexIAmOwner(CVMgetEE(), &CVMglobals.jitLock));
+    if (!jgs->pmiEnabled) {
+        return;
+    }
 
+    /* Make sure we own the jitLock */
+    CVMassert(CVMsysMutexIAmOwner(CVMgetEE(), &CVMglobals.jitLock));
     /* get the callee record */
     calleeRecordExists =
 	CVMJITPMIcalleeTableFindRecord(calleeMb, &calleeRecIdx);

@@ -272,6 +272,7 @@ CVMJITcompileGenerateCode(CVMJITCompilationContext* con)
      * code buffer after the stackmaps, so no space will be wasted.
      */
     if (con->numCallees != 0) {
+        CVMassert(CVMglobals.jit.pmiEnabled);
 	con->callees = (CVMMethodBlock**)
 	    CVMJITmemNew(con, JIT_ALLOC_CGEN_OTHER,
 			 (con->numCallees + 1) * sizeof(CVMAddr));

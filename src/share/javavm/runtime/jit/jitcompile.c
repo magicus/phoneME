@@ -562,6 +562,8 @@ CVMJITcompileMethod(CVMExecEnv *ee, CVMMethodBlock* mb)
 		  sizeof(CVMAddr) - 1) &
 		 ~(sizeof(CVMAddr) - 1));
 
+            CVMassert(CVMglobals.jit.pmiEnabled);
+
 	    CVMJITcbufGetPhysicalPC(&con) =
 		(CVMUint8*)&callees[numCallees + 1];
 	    if (CVMJITcbufGetPhysicalPC(&con) >= con.codeBufEnd) {
@@ -654,6 +656,7 @@ CVMJITcompileMethod(CVMExecEnv *ee, CVMMethodBlock* mb)
 
 #ifdef CVM_JIT_PATCHED_METHOD_INVOCATIONS
 	    if (con.callees != NULL) {
+                CVMassert(CVMglobals.jit.pmiEnabled);
 	    	cmd->calleesOffsetX =
 		    (CVMUint32*)con.callees - (CVMUint32 *)cmd;
 	    } else {
@@ -803,6 +806,7 @@ CVMJITcompileMethod(CVMExecEnv *ee, CVMMethodBlock* mb)
 	 */
 	CVMUint32 numCallees = (CVMUint32)con.callees[0];
 	CVMUint32 i;
+        CVMassert(CVMglobals.jit.pmiEnabled);
 	for (i = 1; i <= numCallees; i++) {
 	    CVMMethodBlock* calleeMb = con.callees[i];
 	    /* Remove records. */ 
