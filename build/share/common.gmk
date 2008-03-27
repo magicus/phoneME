@@ -260,6 +260,8 @@ SUBSYSTEM_JSR_135_CNI_CLASSES += \
     com.sun.mmedia.AudioTunnel \
     com.sun.mmedia.DirectMIDIControl \
     com.sun.mmedia.DirectPlayer \
+    com.sun.mmedia.DirectMIDI \
+    com.sun.mmedia.DirectTone \
     com.sun.mmedia.PlayerImpl \
     com.sun.mmedia.DirectRecord \
     com.sun.mmedia.DirectVolume \
