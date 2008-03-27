@@ -31,6 +31,8 @@
 ######################################################################
 
 SUBSYSTEM_MMAPI_JAVA_FILES = \
+    $(SUBSYSTEM_DIR)/mmapi/classes/com/sun/mmedia/MediaTunnel.java \
+    $(SUBSYSTEM_DIR)/mmapi/classes/com/sun/mmedia/MediaEventConsumer.java \
     $(SUBSYSTEM_DIR)/mmapi/classes/javax/microedition/lcdui/MMHelperImpl.java \
     $(SUBSYSTEM_DIR)/mmapi/classes/com/sun/mmedia/MMHelper.java \
     $(SUBSYSTEM_DIR)/mmapi/classes/com/sun/mmedia/MMVideoItem.java \
