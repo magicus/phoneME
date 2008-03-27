@@ -55,4 +55,10 @@ public final class DirectMIDI extends DirectPlayer {
 
         return null;
     }
+    // native finalizer 
+// #ifdef ENABLE_CDC [    
+    protected native void finalize();
+    // #else ][
+    private native void finalize();
+// #endif ]    
 }
