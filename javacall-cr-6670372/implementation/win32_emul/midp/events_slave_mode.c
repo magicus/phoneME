@@ -149,7 +149,6 @@ javacall_bool javacall_events_finalize(void) {
         events_mutex=NULL;
     }
     if (events_handle!=NULL) {
-        ResetEvent(events_handle);
         CloseHandle(events_handle);
         events_handle=NULL;
     }
@@ -159,13 +158,11 @@ javacall_bool javacall_events_finalize(void) {
 	return JAVACALL_OK;
 }
 
-javacall_bool isSecondaryInstance(void)
-{
+javacall_bool isSecondaryInstance(void){
     return events_secondary;
 }
 
-void enqueueInterprocessMessage(int argc, char *argv[])
-{
+void enqueueInterprocessMessage(int argc, char *argv[]){
     if (EVENT_QUEUE_ACQUIRE)
     {
         int i;
@@ -181,8 +178,7 @@ void enqueueInterprocessMessage(int argc, char *argv[])
     }
 }
 
-int dequeueInterprocessMessage(char*** argv)
-{
+int dequeueInterprocessMessage(char*** argv){
     int argc = 0;
     if (EVENT_QUEUE_ACQUIRE)
     {
@@ -212,8 +208,7 @@ int dequeueInterprocessMessage(char*** argv)
     return argc;
 }
 
-void enqueueEventMessage(unsigned char* data,int dataLen)
-{
+void enqueueEventMessage(unsigned char* data,int dataLen){
     EventMessage** iter;
     EventMessage* elem=(EventMessage*)javacall_malloc(sizeof(EventMessage));
     elem->data      =javacall_malloc(dataLen);
@@ -226,8 +221,7 @@ void enqueueEventMessage(unsigned char* data,int dataLen)
     *iter=elem;
 }
 
-int dequeueEventMessage(unsigned char* data,int dataLen)
-{
+int dequeueEventMessage(unsigned char* data,int dataLen){
     EventMessage* root;
     if (head==NULL) {
         return 0;
@@ -362,13 +356,13 @@ void javacall_schedule_vm_timeslice(void) {
 /**
  * Platform-specific event processing loop
  */
-void javacall_slavemode_port_event_loop(void) {
+void javacall_slavemode_event_loop(void) {
     MSG msg;
     javacall_int64 ms;
 
     /*
      * Init part from midpRunVm, should be placed to javanotify_start():
-     * midp_thread_set_timeslice_proc(midp_slavemode_port_schedule_vm_timeslice);
+     * midp_thread_set_timeslice_proc(midp_slavemode_schedule_vm_timeslice);
      * JVM_SetConfig(JVM_CONFIG_SLAVE_MODE, KNI_TRUE);
      * JVM_Start(classPath, mainClass, argc, argv);
      */
@@ -404,7 +398,7 @@ void javacall_slavemode_port_event_loop(void) {
             /* Non-timer event.  Some sort of platform message */
             TranslateMessage(&msg);
             DispatchMessage(&msg);
-            javanotify_inform_event();
+            midp_slavemode_inform_event();
         }
     }
 }
@@ -434,8 +428,7 @@ DispatcherThread(void* pArg) {
     return 0;
 }
 
-void InitializeLimeEvents()
-{
+void InitializeLimeEvents(){
     static int initialized = 0;
 
     IsJavaRunning = 1;
