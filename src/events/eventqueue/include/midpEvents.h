@@ -132,6 +132,17 @@ extern "C" {
 /** The event to repaint entire screen */
 #define SCREEN_REPAINT_EVENT            47
 
+#define MM_EOM_EVENT  48
+#define MM_DURATION_EVENT  49
+#define MM_RECORD_LIMIT_EVENT  50
+#define MM_RECORD_ERROR_EVENT  51    
+#define MM_BUFFERING_START_EVENT  52
+#define MM_BUFFERING_STOP_EVENT  53    
+#define MM_VOLUME_CHANGED_EVENT  54
+#define MM_GENERAL_ERROR_EVENT  55
+#define MM_PLAYER_STARVED_EVENT  56
+#define MM_STOP_TIME_REACHED_EVENT  57
+
 /** JSR-256 event */
 #define SENSOR_EVENT                    48
 
