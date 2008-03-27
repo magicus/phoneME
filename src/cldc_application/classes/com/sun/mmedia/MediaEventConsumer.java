@@ -43,9 +43,4 @@ public interface MediaEventConsumer {
      */        
     public void handleMediaBackgroundNotify();    
 
-    /**
-     * Called by event delivery when MIDlet controller (in AMS Isolate)
-     * notifies MIDlet that there is a change in its destroyed status
-     */        
-    public void handleMediaDestroyedNotify();
 }

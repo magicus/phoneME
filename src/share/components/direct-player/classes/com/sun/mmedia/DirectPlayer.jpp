@@ -28,7 +28,6 @@
  * 
  * ENABLE_DEBUG : Debug mode ?
  * ENABLE_MULTIPLE_ISOLATES : MVM mode ?
- * ENABLE_CDC : is CDC VM ?
  * ABB : Audio Building Block Only ?
  * RECORD : Support Recording ?
  * MIDI_CONTROL : Support MIDI controls ?
@@ -62,7 +61,7 @@ import com.sun.mmedia.DirectRecord;
  * This class depends on native library to handle media data
  */ 
 public class DirectPlayer extends BasicPlayer 
-// #ifndef ENABLE_CDC [
+// #ifdef ENABLE_MULTIPLE_ISOLATES [
     implements MediaEventConsumer
 // #endif ]
 {
@@ -97,7 +96,7 @@ public class DirectPlayer extends BasicPlayer
     private DirectMIDIControl midiControl;
     // #endif ]
 
-    // #ifndef ENABLE_CDC [
+    // #ifdef ENABLE_MULTIPLE_ISOLATES [
     // Tunnel between media and MIDP
     private static MediaTunnel mediaTunnel;
     private int mvmOption = -1;
@@ -173,10 +172,9 @@ public class DirectPlayer extends BasicPlayer
     {
         super();
 
-        // #ifndef ENABLE_CDC [
+        // #ifdef ENABLE_MULTIPLE_ISOLATES [
         // Get media tunnerl singleton instance
         mediaTunnel = MediaTunnel.getInstance();
-        mediaTunnel.registerMediaEventConsumer(this);
         // #endif ]
         if (debug) System.out.println("[direct] Create DirectPlayer");
     }
@@ -231,7 +229,7 @@ public class DirectPlayer extends BasicPlayer
         if (debug) 
             System.out.println("[direct] DirectPlayer.doRealize " + mediaFormat);
 
-        // #ifndef ENABLE_CDC [
+        // #ifdef ENABLE_MULTIPLE_ISOLATES [
         // Add to media tunnel as event consumer
         // and, let native layer knows about their situation
         synchronized(mediaTunnel) {
@@ -445,7 +443,7 @@ public class DirectPlayer extends BasicPlayer
     protected void doClose() {
         if (debug) System.out.println("[direct] DirectPlayer.doClose");
 
-        // #ifndef ENABLE_CDC [
+        // #ifdef ENABLE_MULTIPLE_ISOLATES [
         // Unregister from media tunnel
         mediaTunnel.unregisterMediaEventConsumer(this);
         // #endif ]
@@ -717,9 +715,9 @@ public class DirectPlayer extends BasicPlayer
     }
     // #endif ]
     
-    // #ifndef ENABLE_CDC [
+    // #ifdef ENABLE_MULTIPLE_ISOLATES [
 
-    // Resource Handling Porting Layer
+    // MVM Resource Handling Porting Layer
     ////////////////////////////////////////////////////////////////////
 
     /**
@@ -746,13 +744,6 @@ public class DirectPlayer extends BasicPlayer
             nSwitchToBackground(hNative, mvmOption);
     }
 
-    /**
-     * Called by event delivery when MIDlet controller (in AMS Isolate)
-     * notifies MIDlet that there is a change in its destroyed status
-     */        
-    public void handleMediaDestroyedNotify() {
-        close();
-    }
     // #endif ]
 }
 
