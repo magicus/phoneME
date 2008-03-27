@@ -85,7 +85,8 @@ static int posInSequence = 0;
 #endif
 
 #ifdef USE_KEYTYPED_VM_EVENTS
-static int latestKey = 0;
+static int latestKeyTyped = 0;
+static int latestKeyDown = 0;
 #endif
 
 void CheckLimeEvent() {
@@ -189,6 +190,8 @@ void SendEvent (KVMEventType *evt) {
 #ifdef USE_KEYTYPED_VM_EVENTS
         /* Regular key events are sent over keyTypedKVMEvent */
         if ((evt->chr >= ' ') && (evt->chr <= 127)) {
+            latestKeyTyped = 0;
+            latestKeyDown = evt->chr;
             break;
         }
 #endif
@@ -219,10 +222,18 @@ void SendEvent (KVMEventType *evt) {
 #ifdef USE_KEYTYPED_VM_EVENTS
             /* Regular key events are sent over keyTypedKVMEvent */
             if ((evt->chr >= ' ') && (evt->chr <= 127)) {
-                if (latestKey == evt->chr) {
-                    javanotify_key_event(latestKey, JAVACALL_KEYRELEASED);
+                if (0 == latestKeyTyped && latestKeyDown == evt->chr) {
+
+                    /* Support skin presses - when there is no keytyped
+                     * event between key down/up events */
+                    javanotify_key_event(latestKeyDown, JAVACALL_KEYPRESSED);
+                    javanotify_key_event(latestKeyDown, JAVACALL_KEYRELEASED);
+                    
+                } else if (latestKeyTyped == evt->chr) {
+                    javanotify_key_event(latestKeyTyped, JAVACALL_KEYRELEASED);
                 }
-                latestKey = 0;
+                latestKeyDown = 0;
+                latestKeyTyped = 0;
                 break;
             }
 #endif
@@ -239,8 +250,8 @@ void SendEvent (KVMEventType *evt) {
              * It can be fixed in assumption that repeated key event can happen
              * to previously pressed and not yet released key only */
             if ((evt->chr >= ' ') && (evt->chr <= 127)) {
-                if (latestKey != 0) {
-                    javanotify_key_event(latestKey, JAVACALL_KEYREPEATED);
+                if (latestKeyTyped != 0) {
+                    javanotify_key_event(latestKeyTyped, JAVACALL_KEYREPEATED);
                 }
             } else {
                 javanotify_key_event(evt->chr, JAVACALL_KEYREPEATED);
@@ -256,9 +267,9 @@ void SendEvent (KVMEventType *evt) {
 #ifdef USE_KEYTYPED_VM_EVENTS
             /* Multiple key presses are not supported,
              * non-regular key press means the previous key is released */
-            if (latestKey != 0 && latestKey != evt->chr) {
-                javanotify_key_event(latestKey, JAVACALL_KEYRELEASED);
-                latestKey = 0;
+            if (0 != latestKeyTyped && latestKeyTyped != evt->chr) {
+                javanotify_key_event(latestKeyTyped, JAVACALL_KEYRELEASED);
+                latestKeyTyped = 0;
             }
             /* Send regular key events received from the keyboard
              * using standard MIDP mechanism */
@@ -266,12 +277,12 @@ void SendEvent (KVMEventType *evt) {
                 /* Don't produce multiple press events for held keypad keys,
                  * but do it for other typed chars, since WTK doesn't support
                  * repeated key presses for them */
-                if (latestKey != evt->chr ||
+                if (latestKeyTyped != evt->chr ||
                         (evt->chr != '*' && evt->chr != '#' &&
                         (evt->chr < '0' || evt->chr > '9'))) {
 
                     javanotify_key_event(evt->chr, JAVACALL_KEYPRESSED);
-                    latestKey = evt->chr;
+                    latestKeyTyped = evt->chr;
                 }
             }
 #else /* Temporary solution, will not work on all cases but provides
