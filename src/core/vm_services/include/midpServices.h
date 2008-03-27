@@ -3,22 +3,22 @@
  *
  * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
- * 
+ *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
  * 2 only, as published by the Free Software Foundation.
- * 
+ *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
  * included at /legal/license.txt).
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA
- * 
+ *
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
  * information or have any questions.
@@ -90,33 +90,60 @@ typedef enum midp_SignalType {
     JSR256_SIGNAL,
     JSR179_PROXIMITY_SIGNAL,
     JSR179_ORIENTATION_SIGNAL
+    MEDIA_START_SIGNAL,
+    MEDIA_STOP_SIGNAL,
+    MEDIA_PAUSE_SIGNAL,
+    MEDIA_RESUME_SIGNAL,
+    MEDIA_SET_TIME_SIGNAL,
+    MEDIA_GET_DURATION_SIGNAL,
+    MEDIA_SEEK_FRAME_SIGNAL,
+    MEDIA_SKIP_FRAMES_SIGNAL,
+    MEDIA_GET_METADATA_KEY_SIGNAL,
+    MEDIA_GET_METADATA_SIGNAL,
+    MEDIA_GET_PITCH_SIGNAL,
+    MEDIA_SET_PITCH_SIGNAL,
+    MEDIA_GET_RATE_SIGNAL,
+    MEDIA_SET_RATE_SIGNAL,
+    MEDIA_START_RECORD_SIGNAL,
+    MEDIA_STOP_RECORD_SIGNAL,
+    MEDIA_PAUSE_RECORD_SIGNAL,
+    MEDIA_RESET_RECORD_SIGNAL,
+    MEDIA_COMMIT_RECORD_SIGNAL,
+    MEDIA_GET_TEMPO_SIGNAL,
+    MEDIA_SET_TEMPO_SIGNAL,
+    MEDIA_GET_VIDEO_HEIGHT_SIGNAL,
+    MEDIA_GET_VIDEO_WIDTH_SIGNAL,
+    MEDIA_SET_VIDEO_LOCATION_SIGNAL,
+    MEDIA_SET_VIDEO_VISIBILITY_SIGNAL,
+    MEDIA_SHORT_MIDI_EVENT_SIGNAL,
+    MEDIA_LONG_MIDI_EVENT_SIGNAL,
 } midpSignalType;
 
 
 /**
- * Structure to hold contextual information across thread blocking, awakening, 
+ * Structure to hold contextual information across thread blocking, awakening,
  * and native method reinvocation.
- * 
+ *
  * This structure is used at three different times:
- * 
+ *
  * (1) It is populated at the time the thread is blocked.
  *
- * (2) It is read at the time an event occurs and the notifying code wishes to 
- * awaken one or more threads. 
+ * (2) It is read at the time an event occurs and the notifying code wishes to
+ * awaken one or more threads.
  *
  * (3) It is available to the native method when it is reinvoked.
  *
- * The waitingFor field defines the namespace within which descriptor values 
- * reside. When searching for threads to be signaled, both the waitingFor and 
+ * The waitingFor field defines the namespace within which descriptor values
+ * reside. When searching for threads to be signaled, both the waitingFor and
  * descriptor fields must match the arguments to the signal call.
  *
- * The status field can be set at time (2) by the notifying code in order to 
+ * The status field can be set at time (2) by the notifying code in order to
  * pass status to the reinvoked native method at time (3).
  *
  * The pResult field can be set at time (1) for use at time (3). The notifying
  * code at time (2) should not set or get this field. The reason is that
  * pResult may require native memory allocation, and notification may occur on
- * zero or many threads, which makes dealing with native memory allocation 
+ * zero or many threads, which makes dealing with native memory allocation
  * difficult.
  */
 typedef struct _MidpReentryData {
@@ -162,11 +189,11 @@ jboolean midp_isDebuggerActive(void);
 #endif /* ENABLE_JAVA_DEBUGGER */
 
 /**
- * Get the current isolate ID from VM in case of MVM mode. 
+ * Get the current isolate ID from VM in case of MVM mode.
  * For SVM, simply return 0 as an isolate ID.
  *
  * @return isolated : Isolate ID
- * 
+ *
  */
 extern int getCurrentIsolateId();
 
