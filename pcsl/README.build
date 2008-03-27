@@ -1,0 +1,264 @@
+#  
+#
+# Copyright  2007  Sun Microsystems, Inc. All rights reserved.
+#
+
+How to build pcsl
+---------------------
+
+ 2.1. Environment variables to be set: 
+      PCSL_OUTPUT_DIR : This is the directory where the output is created. If not set
+                        the output directory is created at the top of the workspace. So
+                        if /pcsl is the top of the workspace, then  
+                        PCSL_OUTPUT_DIR is set to /pcsl/output.
+      PCSL_PLATFORM   : This is a triplet of (OS, CPU, COMPILER). For example,
+                        linux_i386_gcc, linux_arm_gcc or win32_i386_vc. This has
+                        to be set. There is no default ! It can be set either as an
+                        environment variable or can be specified on the command line, eg:
+                        >make PCSL_PLATFORM=linux_arm_gcc
+                        When output is being generated, a directory based on (OS, CPU) is
+                        created beneath PCSL_OUTPUT_DIR, eg: $(PCSL_OUTPUT_DIR)/linux_arm,
+                        or $(PCSL_OUTPUT_DIR)/win32_i386. All the object files and libraries
+                        will be put beneath this directory.
+      JDK_DIR         : This environment variable is needed only for building the JAR file
+                        for SOS proxy server. This directory represents the local JDK 
+                        directory path
+
+ 2.2 Build options 
+    Command line options: 
+
+ 2.2.1
+    Each of the four services comes in more than one flavor.
+    For example, you can either build the ram file system or the posix file system.
+    The available options are:
+
+    File system: ram posix win32 stubs
+    Memory:      malloc heap stubs
+    network:     bsd/qte bsd/generic sos winsock stubs
+    print:       stdout file stubs
+
+    You can choose between the different options by using the command line
+    variables: FILE_MODULE MEMORY_MODULE PRINT_MODULE NETWORK_MODULE
+
+    eg: >make FILE_MODULE=ram MEMORY_MODULE=heap
+
+    IF none these variables are defined, then by default the
+    posix, malloc, socket/bsd/qte, stdout
+    modules are built.
+
+ 2.2.2
+    Debug versus optimized build
+    By default you get an optimized compilation, for example, if using
+    the gcc compiler, the "-O3 -fexpensive-optimizations", compiler flags are
+    used. 
+    If you want a debug build, then use the USE_DEBUG flag on the command line, 
+    >make USE_DEBUG=true
+    >make USE_DEBUG=true donuts 
+
+ 2.3. Build Targets
+
+     There is a GNUmakefile at the top of the workspace and in every source 
+     directory beneath. Each GNUmakefile knows how to make its subdirectories
+     recursively. All the makefiles, except for the one in the donuts directory,
+     have the four targets listed below:
+
+     Description                          target name
+     ------------------------------------------------
+     The Software Development Environment all (default)
+     Unit Tests                           donuts
+     Doxygen                              doc
+     Clean                                clean
+
+     Note that the makefile at the top of the workspace will make all the modules and
+     libraries, all of the unit tests and the docs for all the modules. The makefiles
+     in the individual module directories, will make the library, docs and unit test, for
+     that module only.
+     The makefile in the donuts directory has only two targets: all (default) and clean.
+     'all' will make all the unit tests. Since the unit tests depend on the module libraries,
+     they will be made if necessary. 'clean' will remove all the unit test .o files and the
+     generated donuts.c file.
+
+ 2.3.1. 
+    Software development environment, i.e. libraries and include files that other
+    applications can use and link against. These are built by the default, 'all'
+    target.
+    The four service libraries: libpcsl_file.a libpcsl_memory.a libpcsl_network.a
+                                libpcsl_print.a
+    Associated include files: pcsl_file.h pcsl_memory.h pcsl_network.h pcsl_print.h
+                              pcsl_types.h
+    Depending on what network module is being built, there might be some more
+    network related inlcude files, for example, if the socket based BSD-qte 
+    network module is being built, then pcsl_network_qte.h will be present
+
+    All the libraries can be built from the top of the workspace, eg:
+    >cd /pcsl
+    >make PCSL_PLATFORM=linux_arm_gcc
+    Individual libraries can be built from any of the interior module directories, eg:
+    >cd /pcsl/file
+    >make PCSL_PLATFORM=linux_i386_gcc FILE_MODULE=ram
+    or
+    >cd /pcsl/memory/heap
+    >make PCSL_PLATFORM=win32_i386_vc
+    In the last case, since we are in the heap directory, MEMORY_MODULE = heap.
+
+    You can optionally set the PCSL_OUTPUT_DIR environment variable.
+    If you want to generate the libraries with the default modules, then all you
+    have to do is type make, at the top of the workspace,
+    >make PCSL_PLATFORM=linux_i386_gcc
+    But if you want specific modules, then, for example
+    >make  PCSL_PLATFORM=linux_i386_gcc NETWORK_MODULE=socket/sos PRINT_MODULE=file
+    To remove a previous build, you can run
+    >make PCSL_PLATFORM=linux_arm_gcc clean
+    This will remove the "ouput" directory and all its contents.
+
+    Once make completes, the following directories will be created: (assuming OS=linux,
+    and CPU=arm)
+
+    $(PCSL_OUTPUT_DIR)/linux_arm/lib
+    $(PCSL_OUTPUT_DIR)/linux_arm/inc
+    $(PCSL_OUTPUT_DIR)/linux_arm/obj
+    $(PCSL_OUTPUT_DIR)/linux_arm/bin
+    $(PCSL_OUTPUT_DIR)/linux_arm/generated
+
+    The lib and inc directories are the ones you will need for development.
+    If PCSL_OUTPUT_DIR has not been set, it will be set to 
+    <top of workspace>/output i.e. in the above example
+    /pcsl/output/
+
+ 2.3.2
+    PCSL test harness. PCSL provides its own unit tests for the different services,
+    that can be built and run.
+
+    All the tests can be built from either the top of the workspace, or from
+    the donuts directory.
+    Individual module tests can be built, from any interior module directory, with
+    the 'donuts' target.
+    To build the PCSL unit tests
+
+    1. As before PCSL_OUTPUT_DIR can be optionally set
+       PCSL_PLATFORM can either be set in the environment or at the command line.
+
+    2. The donuts target will build any required libraries, if necessary.
+
+    3. To build all tests:
+       Either go to the top of the workspace or to the donuts directory. If, for example,
+       pcsl has been installed at /pcsl directory, and you are building for the
+       linux, arm, gcc platform, then
+       >cd /pcsl or >cd /pcsl/donuts
+       Then type
+       >make PCSL_PLATFORM=linux_arm_gcc donuts
+       or, in the donuts directory
+       >make PCSL_PLATFORM=linux_arm_gcc
+
+       To build individual unit tests, go to a specific module directory
+       and type, for example:
+       >cd /pcsl/file or >cd /pcsl/file/posix
+       >make PCSL_PLATFORM=linux_arm_gcc donuts
+       This will build unit test for the file module.
+
+       Once this completes successfully. an executable
+       $(PCSL_OUTPUT_DIR)/linux_arm/bin/donuts
+       is created.
+       In order to run the tests:
+       >cd $(PCSL_OUTPUT_DIR)/linux_arm/
+       >bin/donuts
+       This will run all the tests.
+       To list the tests:
+       >bin/donuts -list
+       and to run individual tests, for example
+       >bin/donuts testFile
+       will run the file system test.
+       >make PCSL_PLATFORM=linux_arm_gcc clean
+       will remove the unit tests.
+
+ 2.3.3
+    Doxygen docs. HTML Documents generated from high level public, 
+    and low level porting interfaces. 
+     
+    All the docs can be built from the top of the workspace, with the 'doc' target
+    Docs for individual modules can be built, from any interior module directory, again with
+    the 'doc' target.
+
+    To build the Doxygen docs
+
+    1. As before PCSL_OUTPUT_DIR can be optionally set
+       PCSL_PLATFORM can either be set in the environment or at the command line.
+
+    2. To build
+       Either go to the top of the workspace or to an interior module directory.
+
+       >cd /pcsl or >cd /pcsl/file
+       Then type
+       >make PCSL_PLATFORM=linux_arm_gcc doc
+       Once this completes successfully,
+       $(PCSL_OUTPUT_DIR)/doc/doxygen/html
+       will be created, with all the content in the html directory. You can view
+       the contents in your browser, by going to 
+       http://$(PCSL_OUTPUT_DIR)/doc/doxygen/html/index.html
+
+ 2.3.4
+.  As before a ">make PCSL_PLATFORM=linux_arm_gcc clean" at the top of the workspace,
+   will remove all docs, and everything else.
+   A 'clean' target in one of the interior module directory, will remove libraries,
+   objects, docs and unit tests of that module.
+
+ Appendix A
+
+   List of Makefiles:
+
+   (Assuming PCSL is installed at /pcsl)
+
+   1. /pcsl/GNUmakefile
+
+      Makefile at the top of the workspace, will build all libraries, docs and tests.
+
+   2. /pcsl/file/GNUmakefile               - makes named FILE_MODULE/donuts/doc/clean
+   3. /pcsl/print/GNUmakefile              - makes named PRINT_MODULE/donuts/doc/clean
+   4. /pcsl/memory/GNUmakefile             - makes named MEMORY_MODULE/donuts/doc/clean
+   5. /pcsl/network/GNUmakefile            - makes named NETWORK_MODULE/donuts/doc/clean
+   6. /pcsl/network/socket/GNUmakefile     - makes named NETWORK_MODULE/donuts/doc/clean
+   7. /pcsl/network/socket/bsd/GNUmakefile - makes named NETWORK_MODULE/donuts/doc/clean
+
+   8. /pcsl/file/posix/GNUmakefile        - makes the posix FILE module/donuts/doc/clean
+   9. /pcsl/file/ram/GNUmakefile          - makes the ram FILE module/donuts/doc/clean
+  10. /pcsl/file/win32/GNUmakefile        - makes the win32 FILE module/donuts/doc/clean
+  12. /pcsl/print/stdout/GNUmakefile      - makes the stdout PRINT module/donuts/doc/clean
+  13. /pcsl/print/file/GNUmakefile        - makes the file PRINT module/donuts/doc/clean
+  14. /pcsl/memory/malloc/GNUmakefile     - makes the malloc MEMORY module/donuts/doc/clean
+  15. /pcsl/memory/heap/GNUmakefile       - makes the heap MEMORY module/donuts/doc/clean
+  16. /pcsl/network/socket/bsd/generic/GNUmakefile   
+                                  - makes the socket/bsd/generic NETWORK module/donuts/doc/clean
+  17. /pcsl/src/network/socket/bsd/qte/GNUmakefile   
+                                  - makes the socket/bsd/qte NETWORK module/donuts/doc/clean
+  18. /pcsl/src/network/socket/sos/GNUmakefile   
+                                  - makes the socket/sos NETWORK module/donuts/doc/clean
+  19. /pcsl/src/network/socket/winsock/GNUmakefile   
+                                  - makes the socket/winsock NETWORK module/donuts/doc/clean
+  20. /pcsl/donuts/GNUmakefile    - makes all the PCSL unit tests
+
+  Below is a list of files included by some or all the makefiles above:
+
+  1. /pcsl/makefiles/top.gmk          - included by all makefiles
+  2. /pcsl/makefiles/share/gcc.gmk    - gcc (ver. 2.96) specific defines, eg: CFLAGS, LDFLAGS 
+  3. /pcsl/makefiles/share/vc.gmk     - Visual C (vc) specific defines, eg: CFLAGS 
+  4. /pcsl/makefiles/share/linux.gmk  - Linux specific defines
+  5. /pcsl/makefiles/share/win32.gmk  - Windows specific defines
+  6. /pcsl/makefiles/share/Docs.gmk   - Doxygen specific defines
+                                        included by all makefiles that have a 'doc' target
+  7. /pcsl/makefiles/platforms/linux_arm_gcc.gmk 
+                                      - Included by top.gmk for the (linux,arm,gcc) platform
+                                        Includes gcc.gmk and linux.gmk
+  8. /pcsl/makefiles/platforms/linux_i386_gcc.gmk 
+                                      - Included by top.gmk for the (linux,i386,gcc) platform
+                                        Includes gcc.gmk and linux.gmk
+  9. /pcsl/makefiles/platforms/win32_i386_vc.gmk 
+                                      - Included by top.gmk for the (win32,i386,vc) platform
+                                        Includes win32.gmk and vc.gmk
+  Note: Makefiles need include only top.gmk and optionally Docs.gmk. From the PCSL_PLATFORM
+  definition, top.gmk will include all the platform specific files.
+
+Appendix B:
+
+ In order to build SOS proxy server, javacomm package must be installed. This package  
+facilitates communication over a serial port using Java APIs.  
+
