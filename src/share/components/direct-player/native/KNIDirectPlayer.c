@@ -480,7 +480,6 @@ UnlockAudioMutex();
     }
 
     KNI_EndHandles();
-    KNI_ReturnVoid();
 }
 
 /* Native finalizer */
