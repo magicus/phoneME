@@ -34,7 +34,11 @@ import com.sun.j2me.app.AppPackage;
  * @created    January 13, 2005
  */
  
-public class NativeTonePlayer implements TonePlayer {
+public class NativeTonePlayer implements TonePlayer 
+// #ifndef ENABLE_CDC [
+    , MediaEventConsumer
+// #endif ]
+{
     /**
      * The native implementation method to play a tone.
      *
@@ -58,13 +62,16 @@ public class NativeTonePlayer implements TonePlayer {
         // Set audioTunnel to Driver
         AudioTunnel.getInstance().start();
 
-
         // Get current application ID to support MVM
         int appId = AppPackage.getInstance().getId();
 
         if (false == nPlayTone(appId, note, duration, volume)) {
             throw new MediaException("can't play tone");
         }
+// #ifndef ENABLE_CDC [
+        // Listen to MIDlet state changes
+        MediaTunnel.getInstance().registerMediaEventConsumer(this);
+// #endif ]
     }    
 
     /**
@@ -74,6 +81,40 @@ public class NativeTonePlayer implements TonePlayer {
         // Get current application ID to support MVM
         int appId = AppPackage.getInstance().getId();
 
+// #ifndef ENABLE_CDC [
+        // Unregister from media tunnel
+        MediaTunnel.getInstance().unregisterMediaEventConsumer(this);
+// #endif ]
         nStopTone(appId);
     }
+// #ifndef ENABLE_CDC [
+
+    // Resource Handling Porting Layer
+    ////////////////////////////////////////////////////////////////////
+
+    /**
+     * Called by event delivery when MIDlet controller (in AMS Isolate)
+     * notifies MIDlet and its display that there is a change in its foreground status
+     */    
+    public void handleMediaForegroundNotify() {
+    }
+
+    /**
+     * Called by event delivery when MIDlet controller (in AMS Isolate)
+     * notifies MIDlet and its display that there is a change in its foreground status
+     */        
+    public void handleMediaBackgroundNotify() {
+        if (!MediaTunnel.getInstance().isBackPlayable()) {
+            stopTone();
+        }
+    }
+
+    /**
+     * Called by event delivery when MIDlet controller (in AMS Isolate)
+     * notifies MIDlet that there is a change in its destroyed status
+     */        
+    public void handleMediaDestroyedNotify() {
+        stopTone();
+    }
+// #endif ]
 }
