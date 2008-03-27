@@ -271,9 +271,9 @@
 # CVM_GCOV default: false
 #     Enable gcov code coverage support.
 #
-# CVM_JIT_PATCHED_METHOD_INVOCATIONS default: false
+# CVM_JIT_PMI default: false
 #     Support for the dynamic patching of calls to methods within 
-#     compiled methods.
+#     compiled methods. Not supported on all platforms.
 #
 # Options for locating target tools such as gcc. See defs.mk file
 # for more details:

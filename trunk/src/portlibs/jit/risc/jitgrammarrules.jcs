@@ -1219,7 +1219,7 @@ reg32: NEW_OBJECT reg32 : 90 : SET_AVOID_C_CALL($$); :
 
 #ifdef IAI_NEW_GLUE_CALLING_CONVENTION_IMPROVEMENT
 	/* Load the class instanceSize and accessFlags into ARG3 and ARG4.
-	 * If the class is resolved and linked, then these are know at
+	 * If the class is resolved and linked, then these are known at
 	 * compile time and can be treated as constants. Otherwise they
 	 * are loaded from the cb.
 	 */
@@ -5036,7 +5036,8 @@ invokeMethod(CVMJITCompilationContext *con, CVMJITRMContext* rc,
 	} 
 
 #ifdef CVM_JIT_PATCHED_METHOD_INVOCATIONS
-	else if (invokerIdx != CVM_INVOKE_LAZY_JNI_METHOD) {
+	else if (CVMglobals.jit.pmiEnabled && 
+                 invokerIdx != CVM_INVOKE_LAZY_JNI_METHOD) {
 	    int flags = CVMJITirnodeGetBinaryNodeFlag(invokeNode);
 	    CVMBool isVirtual = (flags & CVMJITBINOP_VIRTUAL_INVOKE) != 0; 
 
@@ -5114,8 +5115,13 @@ invokeMethod(CVMJITCompilationContext *con, CVMJITRMContext* rc,
 					   (void*)CVMCCMletInterpreterDoInvoke,
 					   CVMJIT_NOCPDUMP, CVMJIT_NOCPBRANCH);
 		}
+#ifdef CVMCPU_HAS_DELAY_SLOT
+		CVMassert(CVMJITcbufGetLogicalPC(con) ==
+			  logicalPC + 2 * CVMCPU_INSTRUCTION_SIZE);
+#else
 		CVMassert(CVMJITcbufGetLogicalPC(con) ==
 			  logicalPC + CVMCPU_INSTRUCTION_SIZE);
+#endif
 		CVMJITcsClearEmitInPlace(con);
 		CVMJITcsBeginBlock(con);
 	    }

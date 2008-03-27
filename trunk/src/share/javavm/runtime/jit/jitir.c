@@ -3862,11 +3862,13 @@ doInvokeKnownMB(CVMJITCompilationContext* con,
         }
 
 #ifdef CVM_JIT_PATCHED_METHOD_INVOCATIONS
-	con->numCallees++;
-	CVMtraceJITPatchedInvokes((
-            "PMI: callee(%d) allocated 0x%x %C.%M\n",
-	    con->numCallees,
-	    targetMb, CVMmbClassBlock(targetMb), targetMb));
+        if (CVMglobals.jit.pmiEnabled) {
+            con->numCallees++;
+            CVMtraceJITPatchedInvokes((
+                "PMI: callee(%d) allocated 0x%x %C.%M\n",
+                con->numCallees,
+                targetMb, CVMmbClassBlock(targetMb), targetMb));
+        }
 #endif
 	invokeMethod(con, curbk, rtnType, plist, argSize, isVirtual, mbNode);
 	return CVM_FALSE; /* Invoked */
@@ -3983,27 +3985,29 @@ doInvokeVirtualOrInterface(CVMJITCompilationContext* con,
 	CVMJITMethodContext* mc = con->mc;
 
 #ifdef CVM_JIT_PATCHED_METHOD_INVOCATIONS
-	/* if the method is virtual... */
-        if (isInvokeVirtual &&
-	    /* ...and it has not been overridden */
-	    (CVMmbCompileFlags(prototypeMb) & CVMJIT_IS_OVERRIDDEN) == 0 &&
-	    /* ...and it is not abstract */
-            !CVMmbIs(prototypeMb, ABSTRACT) &&
-	    /* ...and it is not inlinable */
-	    (!CVMJITinlines(NONVIRTUAL) ||
-	     (CVMmbIs(prototypeMb, SYNCHRONIZED) &&
-	      !CVMJITinlines(NONVIRTUAL_SYNC)) ||
-	     isInlinable(con, prototypeMb) == InlineNotInlinable))
-	{
-	    /* ...then this translates to a known MB invocation in the back
-	       end. There we will add this method to the patch table in
-	       case it later gets overridden and we need patch the invoke to
-	       do a true virtual invocation. */
-	    CVMBool invokeResult = doInvokeKnownMB(
-		 con, curbk, prototypeMb, CVM_TRUE, CVM_TRUE, CVM_FALSE); 
-	    CVMassert(!invokeResult); /* Shouldn't be inlined! */
-	    return invokeResult;
-	}
+        if (CVMglobals.jit.pmiEnabled) {
+            /* if the method is virtual... */
+            if (isInvokeVirtual &&
+                /* ...and it has not been overridden */
+                (CVMmbCompileFlags(prototypeMb) & CVMJIT_IS_OVERRIDDEN) == 0 &&
+                /* ...and it is not abstract */
+                !CVMmbIs(prototypeMb, ABSTRACT) &&
+                /* ...and it is not inlinable */
+                (!CVMJITinlines(NONVIRTUAL) ||
+                 (CVMmbIs(prototypeMb, SYNCHRONIZED) &&
+                  !CVMJITinlines(NONVIRTUAL_SYNC)) ||
+                 isInlinable(con, prototypeMb) == InlineNotInlinable))
+            {
+                /* ...then this translates to a known MB invocation in the back
+                   end. There we will add this method to the patch table in
+                   case it later gets overridden and we need patch the invoke
+                   to do a true virtual invocation. */
+                CVMBool invokeResult = doInvokeKnownMB(
+                     con, curbk, prototypeMb, CVM_TRUE, CVM_TRUE, CVM_FALSE); 
+                CVMassert(!invokeResult); /* Shouldn't be inlined! */
+                return invokeResult;
+            }
+        }
 #endif
 
         /* Connect flow and flush all locals before possibly throwing an

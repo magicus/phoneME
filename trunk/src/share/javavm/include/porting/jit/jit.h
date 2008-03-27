@@ -321,6 +321,12 @@ CVMJITinitCompilerBackEnd(void);
 extern void
 CVMJITdestroyCompilerBackEnd(void);
 
+#ifdef CVM_JIT_PATCHED_METHOD_INVOCATIONS
+/* Purpose: back-end PMI initialization. */
+extern CVMBool
+CVMJITPMIinitBackEnd(void);
+#endif
+
 /******************************************************************
  * The following two code cache functions are called if 
  * the macro CVMJIT_HAVE_PLATFORM_SPECIFIC_ALLOC_FREE_CODECACHE

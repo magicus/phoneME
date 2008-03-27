@@ -252,3 +252,27 @@ CVMJITdestroyCompilerBackEnd(void)
     }
 #endif
 }
+
+#ifdef CVM_JIT_PATCHED_METHOD_INVOCATIONS
+/* Purpose: back-end PMI initialization. */
+CVMBool
+CVMJITPMIinitBackEnd(void)
+{
+    CVMJITGlobalState* jgs = &CVMglobals.jit;
+    const CVMUint32 regionMask = 0xf0000000;
+    
+    /* In order for PMI to work on MIPS, the entire code cache has to
+       fit entirely in one 256mb region. Otherwise we will not be able
+       to properly patch JAL instructions that end up jumping between
+       JAL regions.
+    */
+    if (((CVMUint32)jgs->codeCacheStart & regionMask) !=
+        ((CVMUint32)jgs->codeCacheEnd & regionMask))
+    {
+        CVMdebugPrintf(("WARNING: PMI disabled because code cache is not "
+                        "entirely located within one 256mb JAL region\n"));
+        CVMglobals.jit.pmiEnabled = CVM_FALSE;
+    }
+    return CVM_TRUE;
+}
+#endif

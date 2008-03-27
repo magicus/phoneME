@@ -1343,15 +1343,38 @@ void
 CVMCPUpatchBranchInstruction(int offset, CVMUint8* instrAddr)
 {
     CVMCPUInstruction branch;
-    /* NOTE: This code isn't working yet. Extra work needs to be done
-       to support patched method invocations for MIPS since it is possible
-       that the new target address will not reachable with a jal.
+    CVMUint32 sourcePC = (CVMUint32)instrAddr;
+    CVMUint32 targetPC = sourcePC + offset;
+    const CVMInt32 regionMask = 0xf0000000;
+
+    CVMassert(CVMglobals.jit.pmiEnabled);
+
+    /* We should never run into a case where instrAddr and instrAddr+offset
+       are not located in the same 256mb region, since PMI is disabled
+       if the code cache does not fit entirely in one 256mb region,
+       or if we are not copying ccmglue to the start of the codecache.
     */
-    CVMassert(CVM_FALSE); /* this code is not supported yet */
-    /* There better already be an unconditional jal at this address */
-    CVMassert((*(CVMUint32*)instrAddr & ~0x03ffffff) == MIPS_JAL_OPCODE);
-    branch = CVMPPCgetBranchInstruction(CVMCPU_COND_AL, offset) |
-	PPC_BRANCH_LINK_BIT;
+    CVMassert((sourcePC & regionMask) == (targetPC & regionMask));
+
+    /* There better already be an unconditional jal or bal at this address */
+    CVMassert((*(CVMUint32*)instrAddr & ~0x03ffffff) == MIPS_JAL_OPCODE ||
+              (*(CVMUint32*)instrAddr & ~0x0000ffff) == 
+              ((0x1 << 26) | MIPS_BGEZAL_OPCODE));
+
+    /* Patch with a bal (bgezal r0,r0) if within range. Otherwise jal. */
+    if  (offset <= CVMMIPS_MAX_BRANCH_OFFSET &&
+         offset >= CVMMIPS_MIN_BRANCH_OFFSET)
+    {
+        /* The bal instruction branches based on the offset of PC+4, so we
+           need to adjust it. Note the MIN and MAX values above assume
+           that the adjustment has not been made yet. */
+        offset -= CVMCPU_INSTRUCTION_SIZE;
+        /* patch with bal */
+        branch = (0x1 << 26) | MIPS_BGEZAL_OPCODE | ((offset >> 2) & 0xffff);
+    } else {
+        /* patch with jal */
+        branch = MIPS_JAL_OPCODE | ((targetPC & ~regionMask) >> 2);
+    }
     *((CVMCPUInstruction*)instrAddr) = branch;
 }
 
