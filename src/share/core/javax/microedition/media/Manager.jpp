@@ -621,7 +621,7 @@ public final class Manager {
 
         if( locStr.startsWith( DefaultConfiguration.RADIO_CAPTURE_LOCATOR ) )
         {
-            if( !DefaultConfiguration.isRadioSupported() )
+            if( !config.isRadioSupported() )
             {
                 throw new MediaException( "Radio Capture is not supported" );
             }
