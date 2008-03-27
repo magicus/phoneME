@@ -129,4 +129,21 @@ public final class MediaTunnel {
             c.handleMediaBackgroundNotify();
         }
     }
+    
+    /**
+     * Notify media event consumer about the switch to the destroyed state
+     */
+    public synchronized void callDestroyEventHandler() {
+        if (map == null) {
+          return;
+        }
+
+        int size = map.size();
+        hasForeground = false;
+        
+        for (int i = 0; i < size; ++i) {
+            MediaEventConsumer c = (MediaEventConsumer)map.elementAt(i);
+            c.handleMediaDestroyedNotify();
+        }
+    }
 }

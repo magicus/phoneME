@@ -53,8 +53,8 @@ SUBSYSTEM_JSR_135_NATIVE_FILES += \
 endif
 
 # Tunnel to MIDP
-SUBSYSTEM_JSR_135_JAVA_FILES += $(JSR_135_PROJECT_SRC_DIR)/classes/com/sun/mmedia/MediaEventConsumer.java
-SUBSYSTEM_JSR_135_JAVA_FILES += $(JSR_135_PROJECT_SRC_DIR)/classes/com/sun/mmedia/MediaTunnel.java
+#SUBSYSTEM_JSR_135_JAVA_FILES += $(JSR_135_PROJECT_SRC_DIR)/classes/com/sun/mmedia/MediaEventConsumer.java
+#SUBSYSTEM_JSR_135_JAVA_FILES += $(JSR_135_PROJECT_SRC_DIR)/classes/com/sun/mmedia/MediaTunnel.java
 
 ifeq ($(INDIRECT_VIDEO_PLAYER), true)
 SUBSYSTEM_JSR_135_JAVA_FILES += \

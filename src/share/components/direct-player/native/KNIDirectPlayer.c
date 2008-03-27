@@ -429,10 +429,12 @@ KNIDECL(com_sun_mmedia_DirectPlayer_finalize) {
     handle = KNI_GetIntField(instance, KNI_GetFieldID(clazz, "hNative", "I"));
     state = KNI_GetIntField(instance, KNI_GetFieldID(clazz, "state", "I"));
 
+printf("finalizer\n");
+javacall_print("finalizer\n");
     MMP_DEBUG_STR2("+finalize handle=%d state=%d\n", handle, state);
 
     pKniInfo = (KNIPlayerInfo*)handle;
-
+__asm{int 3}
     if (pKniInfo && pKniInfo->pNativeHandle) {
 #ifdef ENABLE_MEDIA_RECORD        
         /* Get record control instance and clazz */
@@ -463,6 +465,7 @@ UnlockAudioMutex();
         /* Stop playing, delete cache, release device and terminate library */ 
 LockAudioMutex();            
         if (STARTED == state) {
+printf("stopped by finalizer\n");
             MMP_DEBUG_STR("stopped by finalizer\n");
             javacall_media_stop(pKniInfo->pNativeHandle);
             javacall_media_clear_buffer(pKniInfo->pNativeHandle);
