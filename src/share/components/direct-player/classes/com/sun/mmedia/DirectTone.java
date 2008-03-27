@@ -206,41 +206,46 @@ public final class DirectTone extends DirectPlayer {
 
             if (seq[0] != ToneControl.VERSION || seq[1] != 1)
                 return false;
-            
+
             int pos = 2;
-            
-            // 0 - version, 1 - tempo, 2 - resolution, 3 - blocks_started,
-            // 4 - block content, 5 - non-block sequences
-            int stage = 0;
-            
+
+            final int STAGE_VER      = 0;
+            final int STAGE_TEMPO    = 1;
+            final int STAGE_RESO     = 2;
+            final int STAGE_BLK_DEF1 = 3;
+            final int STAGE_BLK_DEF2 = 4;
+            final int STAGE_NORMAL   = 5;
+
+            int stage = STAGE_VER;
+
             while (pos < seq.length) {
                 switch (note = seq[pos++]) {
                     case ToneControl.TEMPO:
-                        if (stage != 0)
+                        if (stage != STAGE_VER)
                             return false; // only after version
                         if (seq[pos] < 5 || seq[pos] > 127)
                             return false;
                         pos++;
-                        stage = 1;
+                        stage = STAGE_TEMPO;
                         break;
                     case ToneControl.RESOLUTION:
-                        if (stage > 1)
+                        if (stage > STAGE_TEMPO)
                             return false; // only after version and tempo
                         if (seq[pos] < 1 || seq[pos] > 127)
                             return false;
                         pos++;
-                        stage = 2;
+                        stage = STAGE_RESO;
                         break;
                     case ToneControl.BLOCK_START:
-                        if (stage > 2)
+                        if (stage > STAGE_RESO)
                             return false;
                         blk = seq[pos++];
                         if (blk < 0 || blk > 127)
                             return false;
-                        stage = 3;
+                        stage = STAGE_BLK_DEF1;
                         break;
                     case ToneControl.BLOCK_END:
-                        if (stage != 4)
+                        if (stage != STAGE_BLK_DEF2)
                             return false; // block is empty
                         if (-1 == blk)
                             return false;
@@ -248,7 +253,7 @@ public final class DirectTone extends DirectPlayer {
                             return false;
                         blk_defined[blk] = true;
                         blk = -1;
-                        stage = 3;
+                        stage = STAGE_RESO;
                         break;
                     case ToneControl.PLAY_BLOCK:
                         if (seq[pos] < 0 || seq[pos] > 127)
@@ -256,25 +261,25 @@ public final class DirectTone extends DirectPlayer {
                         if (!blk_defined[seq[pos]])
                             return false;
                         pos++;
-                        stage = (blk == -1) ? 5 : 4;
+                        stage = (blk == -1) ? STAGE_NORMAL : STAGE_BLK_DEF2;
                         break;
                     case ToneControl.SET_VOLUME:
                         if (seq[pos] < 0 || seq[pos] > 100)
                             return false;
                         pos++;
-                        stage = (blk == -1) ? 5 : 4;
+                        stage = (blk == -1) ? STAGE_NORMAL : STAGE_BLK_DEF2;
                         break;
                     case ToneControl.REPEAT:
                         if (seq[pos] < 2 || seq[pos] > 127)
                             return false;
                         pos++;
-                        stage = (blk == -1) ? 5 : 4;
+                        stage = (blk == -1) ? STAGE_NORMAL : STAGE_BLK_DEF2;
                         break;
                     case ToneControl.SILENCE:
                         if (seq[pos] < 1 || seq[pos] > 127)
                             return false;
                         pos++;
-                        stage = (blk == -1) ? 5 : 4;
+                        stage = (blk == -1) ? STAGE_NORMAL : STAGE_BLK_DEF2;
                         break;
                     case DualToneControl.DUALTONE:
                         if (!dualTone)
@@ -288,7 +293,7 @@ public final class DirectTone extends DirectPlayer {
                         if (seq[pos] < 0 || seq[pos] > 127)
                             return false;
                         pos++;
-                        stage = (blk == -1) ? 5 : 4;
+                        stage = (blk == -1) ? STAGE_NORMAL : STAGE_BLK_DEF2;
                         break;
                     default: // note
                         if (note < 0 || note > 127)
@@ -296,11 +301,11 @@ public final class DirectTone extends DirectPlayer {
                         if (seq[pos] < 1 || seq[pos] > 127)
                             return false;
                         pos++;
-                        stage = (blk == -1) ? 5 : 4;
+                        stage = (blk == -1) ? STAGE_NORMAL : STAGE_BLK_DEF2;
                 }
             }
 
-            return stage == 5; // at least 1 sequence event present
+            return stage == STAGE_NORMAL; // at least 1 sequence event present
         }
 
         /**
