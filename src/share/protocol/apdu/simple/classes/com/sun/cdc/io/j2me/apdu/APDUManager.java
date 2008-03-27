@@ -131,7 +131,7 @@ public class APDUManager {
         throws IOException {
         
         checkSlotNumber(slot);
-        return selectApplication(true, apdu, slot);
+        return selectApplication(false, apdu, slot);
     }
     
     /**
