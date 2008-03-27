@@ -404,12 +404,12 @@ UnlockAudioMutex();
 
 /*************************************************************************/
 
-/* Native finalizer */
-KNIEXPORT KNI_RETURNTYPE_VOID
-KNIDECL(com_sun_mmedia_DirectPlayer_finalize) {
+static void do_finalize(KNIDECLARGS int dummy) {
     jint handle;
     jint state;
     KNIPlayerInfo* pKniInfo;
+    (void)dummy;
+
 #ifdef ENABLE_MEDIA_RECORD
     KNI_StartHandles(3);
     KNI_DeclareHandle(instance);
@@ -482,6 +482,25 @@ UnlockAudioMutex();
     KNI_EndHandles();
     KNI_ReturnVoid();
 }
+
+/* Native finalizer */
+KNIEXPORT KNI_RETURNTYPE_VOID
+KNIDECL(com_sun_mmedia_DirectPlayer_finalize) {
+    do_finalize(KNIPASSARGS 0);
+}
+
+KNIEXPORT KNI_RETURNTYPE_VOID
+KNIDECL(com_sun_mmedia_DirectMIDI_finalize) {
+    do_finalize(KNIPASSARGS 0);
+    KNI_ReturnVoid();
+}
+
+KNIEXPORT KNI_RETURNTYPE_VOID
+KNIDECL(com_sun_mmedia_DirectTone_finalize) {
+    do_finalize(KNIPASSARGS 0);
+    KNI_ReturnVoid();
+}
+
 
 /*  protected native boolean nPcmAudioPlayback ( int handle ) ; */
 KNIEXPORT KNI_RETURNTYPE_BOOLEAN

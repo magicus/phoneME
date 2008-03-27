@@ -321,4 +321,10 @@ public final class DirectTone extends DirectPlayer {
             _player.setSequence(sequence);
         }
     }
+    // native finalizer 
+// #ifdef ENABLE_CDC [    
+    protected native void finalize();
+    // #else ][
+    private native void finalize();
+// #endif ]    
 }
