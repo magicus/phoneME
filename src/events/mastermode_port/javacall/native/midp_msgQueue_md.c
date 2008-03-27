@@ -73,23 +73,8 @@ void checkForSystemSignal(MidpReentryData* pNewSignal,
     case MIDP_JC_EVENT_KEY:
         pNewSignal->waitingFor = UI_SIGNAL;
         pNewMidpEvent->type    = MIDP_KEY_EVENT;
+        pNewMidpEvent->CHR     = event->data.keyEvent.key;
         pNewMidpEvent->ACTION  = event->data.keyEvent.keyEventType;
-        /* IMPL_NOTE: CR <6658788>, temporary changes to process wrong
-         * repeated key events on Shift+<0..9> passed from emulator.
-         * Should be reverted as soon as the emulator is fixed.
-         */
-        if( event->data.keyEvent.keyEventType == JAVACALL_KEYTYPED ) {
-            char buf[2];
-            buf[0] = event->data.keyEvent.key;
-            buf[1] = 0;
-            pcsl_string_from_chars(buf,&(pNewMidpEvent->stringParam1));
-        } else {
-            pNewMidpEvent->CHR     = event->data.keyEvent.key;
-        }
-        /* IMPL_NOTE: End of temporary changes for CR <6658788> 
-         * Original source:
-         * pNewMidpEvent->CHR     = event->data.keyEvent.key;
-         */
         break;
     case MIDP_JC_EVENT_PEN:
         pNewSignal->waitingFor = UI_SIGNAL;
