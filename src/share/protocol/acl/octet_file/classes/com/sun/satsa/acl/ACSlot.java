@@ -142,7 +142,7 @@ public class ACSlot{
         try {
             /* attempt to select the MF file */
             h = APDUManager.openACLConnection(selectMF, slotNumber);
-            selectDIR[0] = (byte)(0xFC | h.channel);
+            selectDIR[0] = (byte)(h.channel);
             byte[] res = APDUManager.exchangeAPDU(h, selectDIR);
             if (Utils.getShort(res, 0) == FILE_NOT_FOUND) {
                 throw new ConnectionNotFoundException("DIR is not found");
