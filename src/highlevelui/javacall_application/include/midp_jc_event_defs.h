@@ -74,6 +74,7 @@ extern "C" {
 #endif /* ENABLE_JSR_211 */
 #if ENABLE_JSR_234
 #include <javacall_multimedia_advanced.h>
+#include <javanotify_multimedia_advanced.h>
 #endif /* ENABLE_JSR_234 */
 #include <javacall_security.h>
 #ifdef ENABLE_JSR_256
