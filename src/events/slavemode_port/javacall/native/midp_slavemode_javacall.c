@@ -319,19 +319,19 @@ javacall_result midpHandleMultimediaEvent(midp_jc_event_multimedia multimediaEve
     if (NO_SIGNAL == signal) {
          newMidpEvent.intParam1 = multimediaEvent.playerId;
          newMidpEvent.intParam2 = (long)multimediaEvent.data;
-         newMidpEvent.intParam3 = multimediaEvent.isolateId;
+         newMidpEvent.intParam3 = multimediaEvent.appId;
 
         REPORT_CALL_TRACE4(LC_MMAPI, "[media event] External event recevied %d %d %d %d\n",
                            newMidpEvent.type,
-                           multimediaEvent.isolateId,
+                           multimediaEvent.appId,
                            newMidpEvent.intParam1,
                            newMidpEvent.intParam2);
 
-        StoreMIDPEventInVmThread(newMidpEvent, multimediaEvent.isolateId);
+        StoreMIDPEventInVmThread(newMidpEvent, multimediaEvent.appId);
 	 if (MM_GENERAL_ERROR_EVENT == newMidpEvent.type
 	      || MM_RECORD_ERROR_EVENT == newMidpEvent.type
 	      || MM_EOM_EVENT == newMidpEvent.type) {
-            int descriptor = (((multimediaEvent.isolateId & 0xFFFF) << 16) | (multimediaEvent.playerId & 0xFFFF));
+            int descriptor = (((multimediaEvent.appId & 0xFFFF) << 16) | (multimediaEvent.playerId & 0xFFFF));
             eventUnblockMultimediaJavaThread(blocked_threads, blocked_threads_count,
                                                     signal, descriptor, multimediaEvent.status);
 	 }
@@ -339,7 +339,7 @@ javacall_result midpHandleMultimediaEvent(midp_jc_event_multimedia multimediaEve
     } else {
         /* HACK - Compose 16 bit of isolate ID and 16 bit of player ID
                        to generate descriptor */
-        int descriptor = (((multimediaEvent.isolateId & 0xFFFF) << 16) | (multimediaEvent.playerId & 0xFFFF));
+        int descriptor = (((multimediaEvent.appId & 0xFFFF) << 16) | (multimediaEvent.playerId & 0xFFFF));
         REPORT_CALL_TRACE4(LC_MMAPI, "[media event] signal %d, descriptor %d, status %d, data %d\n",
             signal, descriptor, multimediaEvent.status, multimediaEvent.data);
         eventUnblockMultimediaJavaThread(blocked_threads, blocked_threads_count,
@@ -392,9 +392,9 @@ javacall_result checkForSystemSignal(MidpReentryData* pNewSignal,
     event = (midp_jc_event_union *) binaryBuffer;
 
     switch (event->eventType) {
-    case MIDP_JC_EVENT_KEY:
+    case MIDP_JC_EVENT_KEY:		
         pNewSignal->waitingFor = UI_SIGNAL;
-        pNewMidpEvent->type    = MIDP_KEY_EVENT;
+        pNewMidpEvent->type    = MIDP_KEY_EVENT;		
         pNewMidpEvent->CHR     = event->data.keyEvent.key;
         pNewMidpEvent->ACTION  = event->data.keyEvent.keyEventType;
         break;
@@ -479,12 +479,12 @@ javacall_result checkForSystemSignal(MidpReentryData* pNewSignal,
         pNewMidpEvent->type         = AMMS_EVENT;
         pNewMidpEvent->MM_PLAYER_ID = event->data.multimediaEvent.playerId;
         pNewMidpEvent->MM_DATA      = event->data.multimediaEvent.data;
-        pNewMidpEvent->MM_ISOLATE   = event->data.multimediaEvent.isolateId;
+        pNewMidpEvent->MM_ISOLATE   = event->data.multimediaEvent.appId;
         pNewMidpEvent->MM_EVT_TYPE  = event->data.multimediaEvent.mediaType;
 
         REPORT_CALL_TRACE4(LC_NONE, "[jsr234 event] External event recevied %d %d %d %d\n",
             pNewMidpEvent->type,
-            event->data.multimediaEvent.isolateId,
+            event->data.multimediaEvent.appId,
             pNewMidpEvent->MM_PLAYER_ID,
             pNewMidpEvent->MM_DATA);
 
@@ -573,7 +573,7 @@ static int midp_slavemode_handle_events(JVMSPI_BlockedThreadInfo *blocked_thread
 		       int blocked_threads_count,
 		       jlong timeout) {
     int ret = -1;
-    static MidpReentryData newSignal;
+     static MidpReentryData newSignal;
     static MidpEvent newMidpEvent;
 
     newSignal.waitingFor = 0;
@@ -692,11 +692,8 @@ static int midp_slavemode_handle_events(JVMSPI_BlockedThreadInfo *blocked_thread
 
 /**
  * The platform calls this function in slave mode to inform VM of new events.
- *
- * @param blocked_threads_count number of blocked threads
- * @param blocked_threads blocked threads
  */
-void javanotify_inform_event(void) {
+void midp_slavemode_inform_event(void) {
     int blocked_threads_count;
     JVMSPI_BlockedThreadInfo * blocked_threads;
 
@@ -721,7 +718,7 @@ int timer_ticks = 0;
  */
 javacall_int64 javanotify_vm_timeslice(void) {
 #ifndef TRACE_TIMESLICE_USAGE
-    javanotify_inform_event();
+    midp_slavemode_inform_event();
 
 	return midpTimeSlice();
 #else /*! TRACE_TIMESLICE_USAGE*/
@@ -736,7 +733,7 @@ javacall_int64 javanotify_vm_timeslice(void) {
     javacall_time_milliseconds current;
 
     current = javacall_time_get_clock_milliseconds();
-    javanotify_inform_event();
+    midp_slavemode_inform_event();
     rtn = midpTimeSlice();
     jvm_dur = javacall_time_get_clock_milliseconds() - current;
     current += current + jvm_dur;
@@ -830,13 +827,13 @@ jlong midp_slavemode_time_slice(void) {
  * Requests that the VM control code schedule a time slice as soon
  * as possible, since Java platform threads are waiting to be run.
  */
-void midp_slavemode_port_schedule_vm_timeslice(void){
+void midp_slavemode_schedule_vm_timeslice(void){
     javacall_schedule_vm_timeslice();
 }
 
 /**
  * Main processing loop.
  */
-void midp_slavemode_port_event_loop(void){
-    javacall_slavemode_port_event_loop();
+void midp_slavemode_event_loop(void){
+    javacall_slavemode_event_loop();
 }
