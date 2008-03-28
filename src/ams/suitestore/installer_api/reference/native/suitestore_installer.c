@@ -34,12 +34,6 @@
  * ported if using a native installer (what is probably the case if using NAMS).
  */
 
-#include <string.h>
-
-#ifndef UNDER_CE
-#include <time.h> /* IMPL_NOTE: can we use it? */
-#endif
-
 #include <kni.h>
 #include <pcsl_memory.h>
 #include <midpInit.h>
