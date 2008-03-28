@@ -473,7 +473,9 @@ static javacall_result javacall_carddevice_reset(char *atr, javacall_int32 *atr_
     *atr_size = bytes;
     slots[current_slot].events = 0;
 
-    IsSatSlot = NOT_INITIALIZED;
+    if (current_slot == 0) {
+        IsSatSlot = NOT_INITIALIZED;
+    }
 
     return JAVACALL_OK;
 
