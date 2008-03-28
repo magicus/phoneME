@@ -378,6 +378,7 @@ BOOLEAN_OPTIONS = \
 	USE_LINKS \
 	USE_ON_DEVICE_DEBUG \
 	USE_WTK_DEBUG \
+	USE_OCSP \
 	USE_AMS_FOLDERS
 
 $(BOOLEAN_OPTIONS)::
@@ -419,6 +420,14 @@ USE_WTK_DEBUG::
 	@if [ "$(USE_WTK_DEBUG)" = "true" ]; then \
 	  if [ "$(USE_JAVA_DEBUGGER)" = "false" ]; then \
 	    echo "ERROR: USE_JAVA_DEBUGGER must be true when USE_WTK_DEBUG is true"; \
+	    exit -1; \
+	  fi; \
+	fi
+
+USE_OCSP::
+	@if [ "$(USE_OCSP)" = "true" ]; then \
+	  if [ ! "$(USE_RESTRICTED_CRYPTO)" = "true" ]; then \
+	    echo "ERROR: USE_RESTRICTED_CRYPTO must be true when USE_OCSP is true"; \
 	    exit -1; \
 	  fi; \
 	fi

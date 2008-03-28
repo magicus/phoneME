@@ -25,12 +25,7 @@
  */
 package com.sun.midp.midletsuite;
 
-import java.io.DataInputStream;
 import java.io.IOException;
-
-import javax.microedition.io.Connector;
-
-import com.sun.midp.io.j2me.storage.RandomAccessStream;
 
 /**
  * Information about a MIDlet that is to be installed.
@@ -81,6 +76,8 @@ public class InstallInfo {
 
     /**
      * Constructor for InstallInfo to be called when storing a new suite.
+     *
+     * @param theId ID of the installed suite
      */
     public InstallInfo(int theId) {
         id = theId;

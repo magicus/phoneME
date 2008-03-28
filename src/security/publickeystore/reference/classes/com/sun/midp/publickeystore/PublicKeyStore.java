@@ -137,14 +137,33 @@ public class PublicKeyStore {
   
         for (int i = 0; i < keyList.size(); i++) {
             keyInfo = (PublicKeyInfo)keyList.elementAt(i);
-	    if (keyInfo.getOwner().compareTo(owner) == 0) {
+	        if (keyInfo.getOwner().compareTo(owner) == 0) {
                 if (keys == null) {
                     keys = new Vector();
                 }
 
                 keys.addElement(keyInfo);
-            }
-	}
+            }                               
+        }
+
+        return keys;
+    }
+
+    /**
+     * Returns all CAs Public keys.
+     *
+     * @return public key information of the keys
+     */
+    public synchronized Vector getKeys() {
+        Object keyInfo;
+        Vector keys;
+
+        keys = new Vector(keyList.size());
+
+        for (int i = 0; i < keyList.size(); i++) {
+            keyInfo = keyList.elementAt(i);
+            keys.addElement(keyInfo);
+        }
 
         return keys;
     }

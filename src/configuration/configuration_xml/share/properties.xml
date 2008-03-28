@@ -153,9 +153,14 @@
             Value="-1"
             Scope="internal"
             Comment="Default AMS memory limit in MVM mode"/>
+
+  <!-- OCSP (Online Certificate Status Protocol) properties: example values -->
+  <property Key="ocsp.responderURL"
+	    Value="http://127.0.0.1:80"
+	    Scope="internal"/>
+
 <!-- SYSTEM PROPERTIES -->
 <!-- Visible from System.getProperty() -->
-
   <property Key="microedition.hostname" 
 		Value="" 
 		Scope="system"

@@ -268,7 +268,7 @@ public class X509Certificate implements Certificate {
         (byte) 0x05, (byte) 0x07, (byte) 0x03
     };
 
-    /** True iff subject matches issuer. */
+    /** True if subject matches issuer. */
     private boolean selfSigned;
     /** X.509 version. For more readable code the version field starts a 1. */
     private byte version = 1;
@@ -276,6 +276,8 @@ public class X509Certificate implements Certificate {
     private byte[] fp = null;  
     /** Certificate serial number. */
     private String serialNumber;
+    /** Certificate serial number represented as a byte array. */
+    private byte[] serialNumberBytes;
     /** Certificate subject. */
     private String subject;
     /** Certificate issuer. */
@@ -360,8 +362,16 @@ public class X509Certificate implements Certificate {
                            int pLen)
         throws Exception {
             version = ver;
-            serialNumber = Utils.hexEncode(rawSerialNumber, 0,
-                                           rawSerialNumber.length);
+            int len = rawSerialNumber.length;
+            serialNumber = Utils.hexEncode(rawSerialNumber, 0, len);
+
+            // save rawSerialNumber in the internal array
+            if (len > 0) {
+                serialNumberBytes = new byte[len];
+                System.arraycopy(rawSerialNumber, 0, serialNumberBytes, 0, len);
+            } else {
+                serialNumberBytes = null;
+            }
 
             /*
              * We are paranoid so we don't just assign a reference as in
@@ -374,6 +384,7 @@ public class X509Certificate implements Certificate {
 
             subject = new String(sub);
             issuer = new String(iss);
+
             from = notBefore;
             until = notAfter;
             sigAlg = NONE;
@@ -896,6 +907,8 @@ public class X509Certificate implements Certificate {
             // Expect the serial number coded as an integer
             size = res.getLen(INTEGER_TYPE);
             res.serialNumber = Utils.hexEncode(res.enc, res.idx, size);
+            res.serialNumberBytes = new byte[size];
+            System.arraycopy(res.enc, res.idx, res.serialNumberBytes, 0, size);
             res.idx += size;
             
             // Expect the signature AlgorithmIdentifier
@@ -910,6 +923,7 @@ public class X509Certificate implements Certificate {
             start = res.idx;
             size = res.getLen(SEQUENCE_TYPE);
             int end = res.idx + size;
+
             try {
                 res.issuer = res.getName(end);
                 if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
@@ -920,7 +934,7 @@ public class X509Certificate implements Certificate {
             } catch (Exception e) {
                 throw new IOException("Could not parse issuer name");
             }
-            
+
             // Validity is a sequence of two UTCTime values
             try {
                 res.match(ValiditySeq);
@@ -1024,10 +1038,9 @@ public class X509Certificate implements Certificate {
                                           res.enc, exponentPos, exponentLen);
 
             if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
-            Logging.report(Logging.INFORMATION, LogChannels.LC_SECURITY,
-                       "Exponent: " +
-                       Utils.hexEncode(res.enc, exponentPos,
-                                                   exponentLen));
+                Logging.report(Logging.INFORMATION, LogChannels.LC_SECURITY,
+                        "Exponent: " +
+                        Utils.hexEncode(res.enc, exponentPos, exponentLen));
             }
 
             res.idx += size;
@@ -1116,6 +1129,31 @@ public class X509Certificate implements Certificate {
      */
     public static String[] verifyChain(Vector certs, int keyUsage,
             int extKeyUsage, CertStore certStore)
+                throws CertificateException {
+        return verifyChain(certs, keyUsage, extKeyUsage, certStore, null);
+    }
+
+    /**
+     * Verify a chain of certificates.
+     *
+     * @param certs list of certificates with first being entity certificate
+     *     and the last being the CA issued certificate.
+     * @param keyUsage -1 to not check the key usage extension, or
+     *      a key usage bit mask to check for if the extension is present
+     * @param extKeyUsage -1 to not check the extended key usage extension, or
+     *      a extended key usage bit mask to check for if the extension
+     *      is present
+     * @param certStore store of trusted CA certificates
+     * @param outIssuer [out] trusted CA authorized the last certificate
+     *                  in certs
+     *
+     * @return authorization path: an array of names from most trusted to
+     *    least trusted from the certificate chain
+     *
+     * @exception CertificateException if there is an error verifying the chain
+     */
+    public static String[] verifyChain(Vector certs, int keyUsage,
+            int extKeyUsage, CertStore certStore, Vector outIssuer)
             throws CertificateException {
         X509Certificate cert;
         X509Certificate prevCert;
@@ -1125,12 +1163,12 @@ public class X509Certificate implements Certificate {
         Vector subjectNames = new Vector();
         String[] authPath;
 
-        // must be an enitity certificate
+        // must be an entity certificate
         cert = (X509Certificate)certs.elementAt(0);
         checkKeyUsageAndValidity(cert, keyUsage, extKeyUsage);
 
         for (int i = 1; ; i++) {
-            // look up the public key of the certificate issurer
+            // look up the public key of the certificate issuer
             caCerts = certStore.getCertificates(cert.getIssuer());
             if (caCerts != null) {
                 subjectNames.addElement(caCerts[0].getSubject());
@@ -1240,6 +1278,10 @@ public class X509Certificate implements Certificate {
             for (int j = subjectNames.size() - 1, k = 0; j >= 0;
                      j--, k++) {
                 authPath[k] = (String)subjectNames.elementAt(j);
+            }
+
+            if (outIssuer != null) {
+                outIssuer.addElement(caCerts[i]);
             }
 
             return authPath;
@@ -1539,12 +1581,42 @@ public class X509Certificate implements Certificate {
      * hexadecimal notation with each byte represented as two
      * hex digits separated byte ":" (Unicode x3A).
      * For example,  27:56:FA:80.
+     *
      * @return A string containing the serial number
      * in user-friendly form; <CODE>NULL</CODE> is returned
      * if there is no serial number.
      */
     public String getSerialNumber() {
         return serialNumber;
+    }
+
+    /**
+     * Returns the serial number of this <CODE>Certificate</CODE>
+     * represented as an array of bytes.
+     *
+     * @return A byte array containing the serial number;
+     * <CODE>NULL</CODE> is returned if there is no serial number.
+     */
+    public byte[] getRawSerialNumber() {
+        return getCopyOfArray(serialNumberBytes);
+    }
+
+    /**
+     * Returns a copy of the given array.
+     *
+     * @param arr array to copy
+     *
+     * @return A byte array containing a copy of the given array;
+     * <CODE>NULL</CODE> is returned if arr is <CODE>NULL<C/ODE>.
+     */
+    private byte[] getCopyOfArray(byte[] arr) {
+        byte[] data = null;
+        if (arr != null) {
+            int len = arr.length;
+            data = new byte[len];
+            System.arraycopy(arr, 0, data, 0, len);
+        }
+        return data;
     }
 
     /**

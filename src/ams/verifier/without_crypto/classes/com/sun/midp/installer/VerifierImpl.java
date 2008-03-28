@@ -39,7 +39,7 @@ public class VerifierImpl implements Verifier {
     /**
      * Constructor.
      *
-     * @param midletSuite midlet suite to verify
+     * @param installState midlet suite to verify
      */
     public VerifierImpl(InstallState installState) {
     }
@@ -79,5 +79,25 @@ public class VerifierImpl implements Verifier {
     public String[] verifyJar(RandomAccessStream jarStorage,
             String jarFilename) throws IOException, InvalidJadException {
         return null;
+    }
+
+    /**
+     * Enables or disables certificate revocation checking using OCSP.
+     *
+     * @param enable true to enable OCSP checking, false - to disable it
+     */
+    public void enableOCSPCheck(boolean enable) {
+        // OCSP is always disabled when Crypto is not included
+    }
+
+    /**
+     * Returns true if OCSP certificate revocation checking is enabled,
+     * false if it is disabled.
+     *
+     * @return true if OCSP checking is enabled, false otherwise
+     */
+    public boolean isOCSPCheckEnabled() {
+        // OCSP is always disabled when Crypto is not included
+        return false;
     }
 }

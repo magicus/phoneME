@@ -32,10 +32,22 @@ import java.util.Vector;
 
 import javax.microedition.io.Connector;
 import javax.microedition.pki.CertificateException;
-import com.sun.midp.pki.*;
-import com.sun.midp.publickeystore.*;
-import com.sun.midp.crypto.*;
-import com.sun.midp.security.*;
+
+import com.sun.midp.pki.X509Certificate;
+
+import com.sun.midp.pki.ocsp.OCSPValidator;
+import com.sun.midp.pki.ocsp.CertStatus;
+import com.sun.midp.pki.ocsp.OCSPValidatorImpl;
+import com.sun.midp.pki.ocsp.OCSPException;
+
+import com.sun.midp.publickeystore.WebPublicKeyStore;
+import com.sun.midp.publickeystore.PublicKeyInfo;
+
+import com.sun.midp.crypto.PublicKey;
+import com.sun.midp.crypto.Signature;
+import com.sun.midp.crypto.GeneralSecurityException;
+
+import com.sun.midp.security.Permissions;
 
 import com.sun.midp.io.j2me.storage.RandomAccessStream;
 import com.sun.midp.io.Base64;
@@ -59,10 +71,20 @@ public class VerifierImpl implements Verifier {
     /** Authenticated content provider certificate. */
     private X509Certificate cpCert;
 
+    /** Online Certificate Status Protocol validator. */
+    private OCSPValidator certValidator;
+
+    /**
+     * True if the certificates used to sign the midlet suite being
+     * installed must be checked using Online Certificate Status
+     * Protocol (if enabled at the build-time), false otherwise.
+     */
+    private boolean isOCSPEnabled;
+
     /**
      * Constructor.
      *
-     * @param state current state of the installation
+     * @param installState current state of the installation
      */
     public VerifierImpl(InstallState installState) {
         state = installState;
@@ -112,6 +134,9 @@ public class VerifierImpl implements Verifier {
      * @param jarStorage System store for applications
      * @param jarFilename name of the jar to read.
      *
+     * @return authorization path: a list of authority names begining with
+     *         the most trusted, or null if jar is not signed
+     *
      * @exception IOException if any error prevents the reading
      *   of the JAR
      * @exception InvalidJadException if the JAR is not valid or the
@@ -149,6 +174,25 @@ public class VerifierImpl implements Verifier {
         }
 
         return authPath;
+    }
+
+    /**
+     * Enables or disables certificate revocation checking using OCSP.
+     *
+     * @param enable true to enable OCSP checking, false - to disable it
+     */
+    public void enableOCSPCheck(boolean enable) {
+        isOCSPEnabled = enable;
+    }
+
+    /**
+     * Returns true if OCSP certificate revocation checking is enabled,
+     * false if it is disabled.
+     *
+     * @return true if OCSP checking is enabled, false otherwise
+     */
+    public boolean isOCSPCheckEnabled() {
+        return isOCSPEnabled;
     }
 
     /**
@@ -254,12 +298,14 @@ public class VerifierImpl implements Verifier {
             return -1;
         }
 
+        Vector issuer = new Vector(1);
+
         try {
             keyStore = WebPublicKeyStore.getTrustedKeyStore();
             authPath = X509Certificate.verifyChain(derCerts,
                             X509Certificate.DIGITAL_SIG_KEY_USAGE,
                             X509Certificate.CODE_SIGN_EXT_KEY_USAGE,
-                            keyStore);
+                            keyStore, issuer);
         } catch (CertificateException ce) {
             switch (ce.getReason()) {
             case CertificateException.UNRECOGNIZED_ISSUER:
@@ -294,6 +340,52 @@ public class VerifierImpl implements Verifier {
             throw new InvalidJadException(
                 InvalidJadException.CA_DISABLED,
                 authPath[0]);
+        }
+
+        if (isOCSPEnabled) {
+            /*
+             * If USE_OSCP=true, the following code checks the certificate's
+             * validity using Online Certificate Status Protocol.
+             * Otherwise, certValidator.checkCertStatus() always returns
+             * CertStatus.GOOD.
+             */
+
+            if (certValidator == null) {
+                certValidator = new OCSPValidatorImpl();
+            }
+
+            /*
+             * Go through the authorization path and send OCSP requests
+             * begin with the most trusted certificate.
+             */
+            for (int i = 0; i < derCerts.size(); i++) {
+                int status;
+                X509Certificate cert = (X509Certificate)
+                    derCerts.elementAt(derCerts.size() - i - 1);
+
+                try {
+                    status = certValidator.checkCertStatus(cert,
+                        (i == 0 ? (X509Certificate)issuer.elementAt(0) :
+                              (X509Certificate)
+                                  derCerts.elementAt(derCerts.size() - i)));
+                } catch (OCSPException ocspEx) {
+                    /*
+                     * IMPL_NOTE: exception with some status other then
+                     * UNKNOWN_CERT_STATUS should be thrown here to allow
+                     * the caller to display a proper message to the user.
+                     */
+                    status = CertStatus.UNKNOWN;
+                }
+
+                if (status == CertStatus.REVOKED) {
+                    throw new InvalidJadException(
+                        InvalidJadException.REVOKED_CERT, cert.getSubject());
+                } else if (status != CertStatus.GOOD) {
+                    throw new InvalidJadException(
+                        InvalidJadException.UNKNOWN_CERT_STATUS,
+                            cert.getSubject());
+                }
+            }
         }
 
         cpCert = (X509Certificate)derCerts.elementAt(0);

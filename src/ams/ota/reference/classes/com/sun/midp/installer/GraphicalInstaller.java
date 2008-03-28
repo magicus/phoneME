@@ -390,6 +390,16 @@ public class GraphicalInstaller extends MIDlet implements CommandListener {
                 AMS_GRA_INTLR_INVALIDJADEXCEPTION_UNSUPPORTED_CHAR_ENCODING;
             break;
 
+        case InvalidJadException.REVOKED_CERT:
+            key = ResourceConstants.
+                AMS_GRA_INTLR_INVALIDJADEXCEPTION_REVOKED_PROVIDER_CERT;
+            break;
+
+        case InvalidJadException.UNKNOWN_CERT_STATUS:
+            key = ResourceConstants.
+                AMS_GRA_INTLR_INVALIDJADEXCEPTION_UNKNOWN_PROVIDER_CERT_STATUS;
+            break;
+
         default:
             return exception.getMessage();
         }
