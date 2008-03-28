@@ -40,14 +40,17 @@ extern "C" {
 /* This is logical LCDUI putpixel screen buffer. */
 static struct {
     javacall_pixel* hdc;
+    javacall_pixel* hdc_rotated;
     int width;
     int height;
-	int full_height; /* screen height in full screen mode */
+    int full_height; /* screen height in full screen mode */
 } VRAM;
 
 static javacall_bool inFullScreenMode;
 static javacall_bool isLCDActive = JAVACALL_FALSE;
 static javacall_bool reverse_orientation;
+
+static void rotate_offscreen_buffer(javacall_pixel* dst, javacall_pixel *src, int src_width, int src_height);
 
 /**
  * Initialize LCD API
@@ -79,7 +82,9 @@ javacall_result javacall_lcd_init(void) {
 	VRAM.full_height = res[2];
 
 	VRAM.hdc = (javacall_pixel*)malloc(VRAM.width * VRAM.full_height * sizeof(javacall_pixel));
-    memset(VRAM.hdc,0x11,VRAM.width * VRAM.full_height * sizeof(javacall_pixel));
+        memset(VRAM.hdc,0x11,VRAM.width * VRAM.full_height * sizeof(javacall_pixel));
+        /* assuming for win32_emul configuration we have no need to minimize memory consumption */
+	VRAM.hdc_rotated = (javacall_pixel*)malloc(VRAM.width * VRAM.full_height * sizeof(javacall_pixel));
     return JAVACALL_OK;
 }
 
@@ -97,6 +102,8 @@ javacall_result javacall_lcd_init(void) {
 javacall_result javacall_lcd_finalize(void){
 
     if(isLCDActive) {
+        free(VRAM.hdc_rotated);
+        VRAM.hdc_rotated = NULL;
         free(VRAM.hdc);
         VRAM.hdc = NULL;
         isLCDActive = JAVACALL_FALSE;
@@ -131,22 +138,31 @@ javacall_pixel* javacall_lcd_get_screen(javacall_lcd_screen_type screenType,
                                         int* screenWidth,
                                         int* screenHeight,
                                         javacall_lcd_color_encoding_type* colorEncoding) {
+
+    /* as status bar does not rotate client area rotates without distortion */
+    if (reverse_orientation) {
+        int* temp = screenWidth;
+        screenWidth = screenHeight;
+        screenHeight = temp;
+        
+    }
+
     if(screenWidth) {
         *screenWidth = VRAM.width;
     }
 
     if(screenHeight) {
-            if(inFullScreenMode) {
-				*screenHeight = VRAM.full_height;
-            } else {
-				*screenHeight = VRAM.height;
+        if(inFullScreenMode) {
+            *screenHeight = VRAM.full_height;
+        } else {
+            *screenHeight = VRAM.height;
         }
     }
     if(colorEncoding) {
-		*colorEncoding =JAVACALL_LCD_COLOR_RGB565;
+        *colorEncoding =JAVACALL_LCD_COLOR_RGB565;
     }
 
-	return VRAM.hdc;
+    return VRAM.hdc;
 }
     
     
@@ -160,25 +176,36 @@ javacall_pixel* javacall_lcd_get_screen(javacall_lcd_screen_type screenType,
  * @retval JAVACALL_FAIL    fail
  */
 javacall_result javacall_lcd_flush(void) {
-	static LimeFunction *f = NULL;
-	static LimeFunction *f1 = NULL;
-	short clip[4] = {0,0,VRAM.width, VRAM.height};
+    static LimeFunction *f = NULL;
+    static LimeFunction *f1 = NULL;
+    short clip[4] = {0,0,VRAM.width, VRAM.height};
+    javacall_pixel *current_hdc;
 	 
-	if(inFullScreenMode) {
-		clip[3] = VRAM.full_height;
-	}
+    if(inFullScreenMode) {
+        clip[3] = VRAM.full_height;
+    }
 
-	if (f == NULL) {
-		f = NewLimeFunction(LIME_PACKAGE,
-							LIME_GRAPHICS_CLASS,
-							"drawRGB16");
-	}
+    if (reverse_orientation) {
+        current_hdc = VRAM.hdc_rotated;
+        rotate_offscreen_buffer(current_hdc,
+                                VRAM.hdc,
+                                inFullScreenMode ? VRAM.full_height : VRAM.height,
+                                VRAM.width);
+    } else {
+        current_hdc = VRAM.hdc;
+    }
+
+    if (f == NULL) {
+        f = NewLimeFunction(LIME_PACKAGE,
+                            LIME_GRAPHICS_CLASS,
+                            "drawRGB16");
+    }
   
-	if(inFullScreenMode) {
-		f->call(f, NULL, 0, 0, clip, 4, 0, VRAM.hdc, (VRAM.width * VRAM.full_height) << 1, 0, 0, VRAM.width, VRAM.full_height);
-	} else {
-		f->call(f, NULL, 0, 0, clip, 4, 0, VRAM.hdc, (VRAM.width * VRAM.height) << 1, 0, 0, VRAM.width, VRAM.height);
-	}
+    if(inFullScreenMode) {
+        f->call(f, NULL, 0, 0, clip, 4, 0, current_hdc, (VRAM.width * VRAM.full_height) << 1, 0, 0, VRAM.width, VRAM.full_height);
+    } else {
+        f->call(f, NULL, 0, 0, clip, 4, 0, current_hdc, (VRAM.width * VRAM.height) << 1, 0, 0, VRAM.width, VRAM.height);
+    }
 
     if (f1==NULL)
     {
@@ -186,17 +213,30 @@ javacall_result javacall_lcd_flush(void) {
                              LIME_GRAPHICS_CLASS,
                              "refresh");
     }
-	if(inFullScreenMode) {
-		f1->call(f1, NULL, 0, 0, VRAM.width, VRAM.full_height);
-	} else {
-		f1->call(f1, NULL, 0, 0, VRAM.width, VRAM.height);
-	}
+    if(inFullScreenMode) {
+        f1->call(f1, NULL, 0, 0, VRAM.width, VRAM.full_height);
+    } else {
+        f1->call(f1, NULL, 0, 0, VRAM.width, VRAM.height);
+    }
 
- 	return JAVACALL_OK;
+    return JAVACALL_OK;
 }
     
 
+static void rotate_offscreen_buffer(javacall_pixel* dst, javacall_pixel *src, int src_width, int src_height) {
+    int buffer_length = src_width*src_height;
+    javacall_pixel *src_end = src + buffer_length;
+    javacall_pixel *dst_end = dst + buffer_length;
 
+    dst += src_height - 1;
+    while (src < src_end) {
+        *dst = *(src++);
+        dst += src_height;
+        if (dst >= dst_end) {
+            dst -= buffer_length + 1;
+        }
+    }
+}
 
 
 
@@ -337,13 +377,6 @@ javacall_lcd_set_screen_mode(
 
 javacall_bool javacall_lcd_reverse_orientation() {
       reverse_orientation = !reverse_orientation;    
-/*      if (reverse_orientation) {
-        y_offset = Y_SCREEN_OFFSET;
-      } else {
-        y_offset = Y_SCREEN_OFFSET + topBarHeight;
-      }
-      VRAM.width = javacall_lcd_get_screen_width();
-      VRAM.height = DISPLAY_HEIGHT;*/
       return reverse_orientation;
 }
  
@@ -352,24 +385,27 @@ javacall_bool javacall_lcd_get_reverse_orientation() {
 }
   
 int javacall_lcd_get_screen_height() {
-     /*if (reverse_orientation) {
-         return DISPLAY_WIDTH;
-     } else {*/
-         if(inFullScreenMode) {
-          return VRAM.full_height;
-         } else {
-          return VRAM.height;
-         }
-     /*}*/
+    if (reverse_orientation) {
+        return VRAM.width;
+    } else {
+        if(inFullScreenMode) {
+            return VRAM.full_height;
+        } else {
+            return VRAM.height;
+        }
+    }
 }
   
 int javacall_lcd_get_screen_width() {
-    return VRAM.width;
-     /*if (reverse_orientation) {
-         return DISPLAY_HEIGHT;
-     } else {
-         return DISPLAY_WIDTH;
-     }*/
+    if (reverse_orientation) {
+        if(inFullScreenMode) {
+            return VRAM.full_height;
+        } else {
+            return VRAM.height;
+        }
+    } else {
+        return VRAM.width;
+    }
 }
 
 /**

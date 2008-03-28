@@ -195,7 +195,9 @@ void SendEvent (KVMEventType *evt) {
             break;
         }
 #endif
-        if ((evt->chr != KEY_END)) {
+        if (evt->chr == KEY_USER2) {
+            javanotify_rotation();
+        } else if ((evt->chr != KEY_END)) {
             javanotify_key_event(evt->chr, JAVACALL_KEYPRESSED);
         } else if (isRunningLocal == JAVACALL_FALSE) {
             javanotify_switch_to_ams();
@@ -205,7 +207,9 @@ void SendEvent (KVMEventType *evt) {
         break;
 
     case keyUpKVMEvent:
-        if ((evt->chr != KEY_END)) {
+        if (evt->chr == KEY_USER2) {
+            // ignore
+        } else if ((evt->chr != KEY_END)) {
 #if ENABLE_ON_DEVICE_DEBUG
             /* assert(posInSequence == sizeof(pStartOddKeySequence) - 1) */
             if (pStartOddKeySequence[posInSequence] == evt->chr) {
@@ -242,7 +246,9 @@ void SendEvent (KVMEventType *evt) {
         break;
 
     case keyRepeatKVMEvent:
-        if (evt->chr != KEY_END) {
+        if (evt->chr == KEY_USER2) {
+            // ignore
+        } else if (evt->chr != KEY_END) {
 #ifdef USE_KEYTYPED_VM_EVENTS
             /* For compound key presses, like shift + digit, WTK produces repeated
              * key events for base key only, e.g. for the digit. It is not good,
@@ -263,7 +269,9 @@ void SendEvent (KVMEventType *evt) {
         break;
 
     case keyTypedKVMEvent:
-        if ((evt->chr != KEY_END)) {
+        if (evt->chr == KEY_USER2) {
+            // ignore
+        } else if ((evt->chr != KEY_END)) {
 #ifdef USE_KEYTYPED_VM_EVENTS
             /* Multiple key presses are not supported,
              * non-regular key press means the previous key is released */
