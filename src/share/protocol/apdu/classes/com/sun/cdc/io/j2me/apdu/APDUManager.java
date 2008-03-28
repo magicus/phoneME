@@ -190,7 +190,7 @@ if (false) {
         }
         try {
             return new Handle(slot,
-                   cads[slot].selectApplication(true, apdu));
+                   cads[slot].selectApplication(false, apdu));
         } catch (IOException e) {
             if (cads[slot].isAlive()) {
                 cads[slot].clean();
