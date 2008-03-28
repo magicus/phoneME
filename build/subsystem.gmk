@@ -447,7 +447,7 @@ ACL_DATA_SOURCES =                                              \
 
 $(JSR_177_GENERATED_DIR)/classes/$(JC_ACL_APPLET_PATH)/Data.java: $(ACL_DATA_DIRS) $(JSR_177_DIR)/src/share/tool/acl_data/acl_0
 	@echo " ... generating " $@
-	$(AT)$(JSR177_JAVAC) -source 1.4 -encoding utf-8 -d $(ACL_DATA_CLASSES) -classpath $(ACL_DATA_CLASSES) $(ACL_DATA_SOURCES)
+	$(AT)$(JSR177_JAVAC) -encoding utf-8 -d $(ACL_DATA_CLASSES) -classpath $(ACL_DATA_CLASSES) $(ACL_DATA_SOURCES)
 	$(AT)$(JSR177_JAVA) -classpath $(ACL_DATA_CLASSES) acl_data.Main $(JSR_177_DIR)/src/share/tool/acl_data/acl_0 \
 	$(JSR_177_GENERATED_DIR)/classes/$(JC_ACL_APPLET_PATH)/ $(ACL_DATA_DIR)/files/
 	$(AT)$(JSR177_JAVA) -classpath $(ACL_DATA_CLASSES) acl_data.Print $(ACL_DATA_DIR)/files/* > $(ACL_DATA_DIR)/files.txt
@@ -473,7 +473,7 @@ WIM_DATA_SOURCES =                                         \
     
 $(JSR_177_GENERATED_DIR)/classes/$(JC_PKI_APPLET_PATH)/Data.java: $(WIM_DATA_DIRS) $(JSR_177_DIR)/src/share/tool/wim_data/Main.java
 	@echo " ... generating " $@
-	$(AT)$(JSR177_JAVAC) -source 1.4 -encoding utf-8 -d $(WIM_DATA_CLASSES) -classpath $(WIM_DATA_CLASSES) $(WIM_DATA_SOURCES)
+	$(AT)$(JSR177_JAVAC) -encoding utf-8 -d $(WIM_DATA_CLASSES) -classpath $(WIM_DATA_CLASSES) $(WIM_DATA_SOURCES)
 	$(AT)$(JSR177_JAVA) -classpath $(WIM_DATA_CLASSES) wim_data.Main $(JSR_177_GENERATED_DIR)/classes/$(JC_PKI_APPLET_PATH)/ \
 	$(WIM_DATA_DIR)/	
 

@@ -143,7 +143,7 @@ endif
 
 # Tools and applets
 #
-JSR177_JAVAC ?= $(CVM_JAVAC)
+JSR177_JAVAC ?= $(CVM_JAVAC) -source 1.4
 
 ifeq ($(JSR_177_USE_EMULATOR),true)
 TOOLS = $(JAVACARD_CLASSES) $(JSR_177_BINDIR) $(JCRMIC_TOOL) $(SIM_TOOL)
