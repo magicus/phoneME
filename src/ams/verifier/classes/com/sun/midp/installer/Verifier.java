@@ -112,4 +112,19 @@ public interface Verifier {
      */
     public String[] verifyJar(RandomAccessStream jarStorage,
         String jarFilename) throws IOException, InvalidJadException;
+
+    /**
+     * Enables or disables certificate revocation checking using OCSP.
+     *
+     * @param enable true to enable OCSP checking, false - to disable it
+     */
+    public void enableOCSPCheck(boolean enable);
+
+    /**
+     * Returns true if OCSP certificate revocation checking is enabled,
+     * false if it is disabled.
+     *
+     * @return true if OCSP checking is enabled, false otherwise
+     */
+    public boolean isOCSPCheckEnabled();
 }

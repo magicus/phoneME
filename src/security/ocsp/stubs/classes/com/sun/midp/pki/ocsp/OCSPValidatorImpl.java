@@ -42,7 +42,7 @@ public class OCSPValidatorImpl implements OCSPValidator {
      * @return status of the certificate
      * @throws OCSPException if the OCSP Responder returned an error message
      */
-    public int validate(Certificate cert, Certificate issuerCert)
+    public int checkCertStatus(Certificate cert, Certificate issuerCert)
             throws OCSPException {
         return CertStatus.GOOD;
     }

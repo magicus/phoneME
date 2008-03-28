@@ -137,14 +137,14 @@ public class PublicKeyStore {
   
         for (int i = 0; i < keyList.size(); i++) {
             keyInfo = (PublicKeyInfo)keyList.elementAt(i);
-	    if (keyInfo.getOwner().compareTo(owner) == 0) {
+	        if (keyInfo.getOwner().compareTo(owner) == 0) {
                 if (keys == null) {
                     keys = new Vector();
                 }
 
                 keys.addElement(keyInfo);
             }                               
-	}
+        }
 
         return keys;
     }
@@ -155,15 +155,13 @@ public class PublicKeyStore {
      * @return public key information of the keys
      */
     public synchronized Vector getKeys() {
-        PublicKeyInfo keyInfo;
-        Vector keys = null;
+        Object keyInfo;
+        Vector keys;
+
+        keys = new Vector(keyList.size());
 
         for (int i = 0; i < keyList.size(); i++) {
-            keyInfo = (PublicKeyInfo)keyList.elementAt(i);
-            if (keys == null) {
-                keys = new Vector();
-            }
-
+            keyInfo = keyList.elementAt(i);
             keys.addElement(keyInfo);
         }
 

@@ -75,6 +75,13 @@ public class VerifierImpl implements Verifier {
     private OCSPValidator certValidator;
 
     /**
+     * True if the certificates used to sign the midlet suite being
+     * installed must be checked using Online Certificate Status
+     * Protocol (if enabled at the build-time), false otherwise.
+     */
+    private boolean isOCSPEnabled;
+
+    /**
      * Constructor.
      *
      * @param installState current state of the installation
@@ -167,6 +174,25 @@ public class VerifierImpl implements Verifier {
         }
 
         return authPath;
+    }
+
+    /**
+     * Enables or disables certificate revocation checking using OCSP.
+     *
+     * @param enable true to enable OCSP checking, false - to disable it
+     */
+    public void enableOCSPCheck(boolean enable) {
+        isOCSPEnabled = enable;
+    }
+
+    /**
+     * Returns true if OCSP certificate revocation checking is enabled,
+     * false if it is disabled.
+     *
+     * @return true if OCSP checking is enabled, false otherwise
+     */
+    public boolean isOCSPCheckEnabled() {
+        return isOCSPEnabled;
     }
 
     /**
@@ -316,45 +342,49 @@ public class VerifierImpl implements Verifier {
                 authPath[0]);
         }
 
-        /*
-         * If USE_OSCP=true, the following code checks the certificate's
-         * validity using Online Certificate Status Protocol.
-         * Otherwise, certValidator.validate() always returns CertStatus.GOOD.
-         */
-        
-        if (certValidator == null) {
-            certValidator = new OCSPValidatorImpl();
-        }
+        if (isOCSPEnabled) {
+            /*
+             * If USE_OSCP=true, the following code checks the certificate's
+             * validity using Online Certificate Status Protocol.
+             * Otherwise, certValidator.checkCertStatus() always returns
+             * CertStatus.GOOD.
+             */
 
-        /*
-         * Go through the authorization path and send OCSP requests
-         * begin with the most trusted certificate.
-         */
-        for (int i = 0; i < derCerts.size(); i++) {
-            int status;
-            X509Certificate cert = (X509Certificate)derCerts.elementAt(i);
-
-            try {
-                status = certValidator.validate((X509Certificate)
-                    derCerts.elementAt(derCerts.size() - i - 1),
-                        (i == 0 ? (X509Certificate)issuer.elementAt(0) :
-                                  (X509Certificate)
-                                      derCerts.elementAt(derCerts.size() - i)));
-            } catch (OCSPException ocspEx) {
-                /*
-                 * IMPL_NOTE: exception with some status other then
-                 * UNKNOWN_CERT_STATUS should be thrown here to allow
-                 * the caller to display a proper message to the user. 
-                 */
-                status = CertStatus.UNKNOWN;
+            if (certValidator == null) {
+                certValidator = new OCSPValidatorImpl();
             }
 
-            if (status == CertStatus.REVOKED) {
-                throw new InvalidJadException(
-                    InvalidJadException.REVOKED_CERT, cert.getSubject());
-            } else if (status != CertStatus.GOOD) {
-                throw new InvalidJadException(
-                    InvalidJadException.UNKNOWN_CERT_STATUS, cert.getSubject());
+            /*
+             * Go through the authorization path and send OCSP requests
+             * begin with the most trusted certificate.
+             */
+            for (int i = 0; i < derCerts.size(); i++) {
+                int status;
+                X509Certificate cert = (X509Certificate)
+                    derCerts.elementAt(derCerts.size() - i - 1);
+
+                try {
+                    status = certValidator.checkCertStatus(cert,
+                        (i == 0 ? (X509Certificate)issuer.elementAt(0) :
+                              (X509Certificate)
+                                  derCerts.elementAt(derCerts.size() - i)));
+                } catch (OCSPException ocspEx) {
+                    /*
+                     * IMPL_NOTE: exception with some status other then
+                     * UNKNOWN_CERT_STATUS should be thrown here to allow
+                     * the caller to display a proper message to the user.
+                     */
+                    status = CertStatus.UNKNOWN;
+                }
+
+                if (status == CertStatus.REVOKED) {
+                    throw new InvalidJadException(
+                        InvalidJadException.REVOKED_CERT, cert.getSubject());
+                } else if (status != CertStatus.GOOD) {
+                    throw new InvalidJadException(
+                        InvalidJadException.UNKNOWN_CERT_STATUS,
+                            cert.getSubject());
+                }
             }
         }
 

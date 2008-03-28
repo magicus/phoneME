@@ -190,8 +190,10 @@ public abstract class Installer {
     Installer() {
         state = getInstallState();
         verifier = new VerifierImpl(state);
+        // This setting has no effect until OCSP is enabled at the build-time.
+        verifier.enableOCSPCheck(true);
 
-        /* Aliases for more compact record. */
+        // Aliases for more compact record.
         info = state.installInfo;
         settings = state.suiteSettings;
     }
@@ -360,6 +362,26 @@ public abstract class Installer {
         state.storageId = storageId;
 
         return performInstall();
+    }
+
+    /**
+     * Enables or disables certificate revocation checking using OCSP.
+     *
+     * @param enable true to enable OCSP checking, false - to disable it
+     */
+    public void enableOCSPCheck(boolean enable) {
+        // This setting has no effect until OCSP is enabled at the build-time.
+        verifier.enableOCSPCheck(enable);
+    }
+
+    /**
+     * Returns true if OCSP certificate revocation checking is enabled,
+     * false if it is disabled.
+     *
+     * @return true if OCSP checking is enabled, false otherwise
+     */
+    public boolean isOCSPCheckEnabled() {
+        return verifier.isOCSPCheckEnabled();
     }
 
     /**
