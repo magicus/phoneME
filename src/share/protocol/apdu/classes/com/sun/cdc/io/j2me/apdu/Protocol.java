@@ -140,7 +140,8 @@ public class Protocol implements APDUConnection, ConnectionBaseInterface,
         } 
 
         // open connection
-
+        APDUManager.checkSlotNumber(slot);
+            
         if (isSAT) {
             boolean satSlot;
             try {
@@ -157,8 +158,6 @@ public class Protocol implements APDUConnection, ConnectionBaseInterface,
             h = APDUManager.openSATConnection(slot);
             openForSAT = true;
         } else {
-
-            APDUManager.checkSlotNumber(slot);
 
             byte[] apdu = new byte[32];
             apdu[1] = (byte) 0xa4;
