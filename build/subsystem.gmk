@@ -408,7 +408,7 @@ $(JSR_177_BINDIR):
 #
 $(JCRMIC_TOOL): $(JCRMIC_SOURCES)
 	@echo " ..." $@
-	$(AT)$(JSR177_JAVAC) -d $(JAVACARD_CLASSES) $(JCRMIC_SOURCES)
+	$(AT)$(JSR177_JAVAC) -source 1.2 -d $(JAVACARD_CLASSES) $(JCRMIC_SOURCES)
 	$(AT)cp -f $(JSR_177_DIR)/src/share/tool/jcrmic/$(JCRMIC_PROPERTIES) $(JAVACARD_CLASSES)/$(JCRMIC_PROPERTIES)
 	$(AT)cp -f $(JSR_177_DIR)/src/share/tool/jcrmic/$(JCRMIC_MANIFEST_FILE) $(JAVACARD_CLASSES)/$(JCRMIC_MANIFEST_FILE)
 	$(AT)(cd $(JAVACARD_CLASSES) ; $(JAR_CMD) cfm $(JCRMIC_ARCHIVE) $(JCRMIC_MANIFEST_FILE) com/sun/satsa/jcrmic )
@@ -531,7 +531,7 @@ endef
 # actions    - compiles 'appTarget'
 define applets
 	@echo " ... compiling $(1)"
-	$(AT)$(JSR177_JAVAC) -g -d $(JAVACARD_CLASSES) -classpath $(JAVACARD_CLASSES)$(PATHSEP)$(JC_API) $(filter %.java,$(2))
+	$(AT)$(JSR177_JAVAC) -source 1.2 -g -d $(JAVACARD_CLASSES) -classpath $(JAVACARD_CLASSES)$(PATHSEP)$(JC_API) $(filter %.java,$(2))
 	$(AT)cp -f $(JSR_177_DIR)/src/share/tool/javacard/$(call appletName,$@).opt $(JAVACARD_CLASSES)/
 	@echo " ... preparing $(1)"
 	$(call simtoolkit,$@,$(AT)cp -r -f $(JC_DIR)/api_export_files $(JAVACARD_CLASSES))
