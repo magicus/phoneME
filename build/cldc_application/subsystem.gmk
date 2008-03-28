@@ -115,7 +115,7 @@ endif
 
 # Tools and applets
 #
-JSR177_JAVAC ?= $(JDK_DIR)/bin/javac$(EXE) -source 1.4
+JSR177_JAVAC ?= $(JDK_DIR)/bin/javac$(EXE)
 
 ifeq ($(JSR_177_USE_EMULATOR),true)
 all_tools :: $(JAVACARD_CLASSES) $(JSR_177_BINDIR) $(JCRMIC_TOOL) $(SIM_TOOL)
