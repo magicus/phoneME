@@ -56,7 +56,7 @@ void Stream::print_cr(const char* format, ...) {
 }
 
 #if !defined(PRODUCT) || ENABLE_TTY_TRACE || ENABLE_PERFORMANCE_COUNTERS \
-    || ENABLE_WTK_PROFILER
+    || ENABLE_WTK_PROFILER || USE_AOT_COMPILATION
 void Stream::put(char ch) {
   GUARANTEE(ch != 0, "please fix call site");
   char buf[] = { ch, '\0' };

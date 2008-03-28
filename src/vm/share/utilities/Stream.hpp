@@ -107,7 +107,7 @@ public:
 #endif
 
 #if !defined(PRODUCT) || ENABLE_TTY_TRACE || ENABLE_PERFORMANCE_COUNTERS \
-    || ENABLE_WTK_PROFILER
+    || ENABLE_WTK_PROFILER || USE_AOT_COMPILATION
   void put(char ch);
 #endif
 
