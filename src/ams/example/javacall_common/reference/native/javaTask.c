@@ -93,7 +93,11 @@ void JavaTask(void) {
                          event->data.startMidletArbitraryArgEvent.argv);
 
             JavaTaskIsGoOn = JAVACALL_FALSE;
+#if ENABLE_SLAVE_MODE_EVENTS
+            return;
+#else
             break;
+#endif
 
         case MIDP_JC_EVENT_SET_VM_ARGS:
             REPORT_INFO(LC_CORE, "JavaTask() MIDP_JC_EVENT_SET_VM_ARGS >>\n");

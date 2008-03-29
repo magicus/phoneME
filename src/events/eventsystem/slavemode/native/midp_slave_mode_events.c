@@ -1,7 +1,7 @@
 /*
  *  
  *
- * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
@@ -78,7 +78,13 @@ int midpRunVm(JvmPathChar* classPath,
     JVM_SetConfig(JVM_CONFIG_SLAVE_MODE, KNI_TRUE);
     JVM_Start(classPath, mainClass, argc, argv);
 
-    midp_slavemode_port_event_loop();
+    return 0;
+}
 
-    return JVM_CleanUp();
+jlong midp_slavemode_time_slice(void) {
+    jlong to = JVM_TimeSlice();
+    if ((jlong)-2 == to) {
+        JVM_CleanUp();
+    }
+    return to;
 }

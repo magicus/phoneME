@@ -29,6 +29,7 @@
 #include <gxj_putpixel.h>
 #include <midpMalloc.h>
 #include <javacall_lcd.h>
+#include <javacall_time.h>
 #include <string.h>
 #include <kni.h>
 
@@ -177,8 +178,19 @@ jboolean jcapp_is_native_softbutton_layer_supported() {
  * @param len Length of the lable (0 will cause removal of current label)
  * @param index Index of the soft button in the soft button bar.
  */
- void jcapp_set_softbutton_label_on_native_layer(unsigned short *label, int len,int index) {
+void jcapp_set_softbutton_label_on_native_layer(unsigned short *label, int len,int index) {
 	javacall_lcd_set_native_softbutton_label(label, len, index);
 }
 
 
+/*
+ * will be called from event handling loop periodically
+ */
+void jcapp_refresh_pending(javacall_time_milliseconds timeTowaitInMillisec) {
+
+    /* NEED REVISIT */
+    /*
+    if(KNI_FALSE == lfjport_is_painting()) {
+        jcapp_refresh(0, gxj_system_screen_buffer.height, 0, 0);
+    } */
+}
