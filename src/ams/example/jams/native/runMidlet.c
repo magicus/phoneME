@@ -38,8 +38,6 @@
 #include <commandLineUtil_md.h>
 #include <heap.h>
 
-#include "midp_jc_event_defs.h"
-
 /** Maximum number of command line arguments. */
 #define RUNMIDLET_MAX_ARGS 32
 
@@ -60,34 +58,6 @@ static const char* const runUsageText =
 "  where <suite number> is the number of a suite as displayed by the\n"
 "  listMidlets command, and <suite ID> is the unique ID a suite is \n"
 "  referenced by\n\n";
-
-
-#if ENABLE_SLAVE_MODE_EVENTS
-javacall_result midpHandleStartEvent(midp_jc_event_start_arbitrary_arg startMidletEvent) {
-    javacall_result res;
-    int argc = 0;
-    int max_argc = startMidletEvent.argc;
-    char *argv[MIDP_RUNMIDLET_MAXIMUM_ARGS];
-
-    argv[argc] = startMidletEvent.argv[argc++];
-
-    argv[argc] = startMidletEvent.argv[argc++];         /* "-1" */
-
-    argv[argc] = startMidletEvent.argv[argc++];
-
-    for(; (argc <= max_argc) && (argc < MIDP_RUNMIDLET_MAXIMUM_ARGS); ) {
-        argv[argc] = startMidletEvent.argv[argc++];
-    }
-
-    res = runMidlet(max_argc, argv);
-
-    javacall_lifecycle_state_changed(JAVACALL_LIFECYCLE_MIDLET_SHUTDOWN, (res == 1) ? JAVACALL_OK: JAVACALL_FAIL);
-
-
-    return res;
-
-}  /* end of midpHandleStartEvent */
-#endif
 
 /**
  * Runs a MIDlet from an installed MIDlet suite. This is an example of

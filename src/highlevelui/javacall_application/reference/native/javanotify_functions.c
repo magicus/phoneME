@@ -166,6 +166,9 @@ void javanotify_start(void) {
 #if ENABLE_SLAVE_MODE_EVENTS
     int main_memory_chunk_size = -1;
     char *prop_val = NULL;
+    int argc = 0;
+    char *argv[MIDP_RUNMIDLET_MAXIMUM_ARGS];
+    javacall_result res;
 #endif
 
     REPORT_INFO(LC_CORE, "javanotify_start() >>\n");
@@ -191,7 +194,22 @@ void javanotify_start(void) {
         REPORT_ERROR(LC_AMS, "javanotify_start(): Cannot initialize MIDP memory\n");
         return;
     }
-#endif
+    argv[argc++] = "runMidlet";
+    argv[argc++] = "-1";
+    argv[argc++] = 
+#if ENABLE_MULTIPLE_ISOLATES
+    "com.sun.midp.appmanager.MVMManager";
+#else
+    "com.sun.midp.appmanager.Manager";
+#endif /* if ENABLE_MULTIPLE_ISOLATES */
+
+    javacall_lifecycle_state_changed(JAVACALL_LIFECYCLE_MIDLET_STARTED, JAVACALL_OK);
+    
+    res = runMidlet(argc, argv);
+
+    javacall_lifecycle_state_changed(JAVACALL_LIFECYCLE_MIDLET_SHUTDOWN, (res == 1) ? JAVACALL_OK: JAVACALL_FAIL);
+
+#else /* if ENABLE_SLAVE_MODE_EVENTS */
 
     e.eventType = MIDP_JC_EVENT_START_ARBITRARY_ARG;
 
@@ -205,14 +223,8 @@ void javanotify_start(void) {
     "com.sun.midp.appmanager.Manager";
 #endif
 
-#if ENABLE_SLAVE_MODE_EVENTS
-    javacall_lifecycle_state_changed(JAVACALL_LIFECYCLE_MIDLET_STARTED, JAVACALL_OK);
-
-    midpHandleStartEvent(e.data.startMidletArbitraryArgEvent);
-
-#else
     midp_jc_event_send(&e);
-#endif
+#endif /* if ENABLE_SLAVE_MODE_EVENTS */
 }
 
 /**
