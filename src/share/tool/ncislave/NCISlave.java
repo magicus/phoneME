@@ -21,19 +21,32 @@ public class NCISlave extends MIDlet implements CommandListener, Runnable {
     private static final int SLEEP_LENGTH = 50;
     private Command exitCommand; // The exit command
     private Command connectCommand; // The connect command
+    private Command logCommand; // The log command
+    private Command statusCommand; // The status command
+    private Command confCommand; // The configuration command
     private Display display;    // The display for this MIDlet
     private TextBox url;
+    private Form    configuration;
+    private TextBox getIp;
+    private Form status;
+    private StringItem  statusConect;
+    private TextField  statusSend;
+    private TextField  statusRecieve;
+    private StringBuffer logBuffer;
+    private int maxLenLogBuffer = 1000;
     private volatile String address = null;
     private Vector listeners = new Vector();
     private static Hashtable urlMap = new Hashtable();
     private int NumOfSMSSend;
     private int NumOfSMSRecv;
+    private int NumOfActions;
     private String LastAction;
     private String Connection;
     private String Connection1;
     private String TCKPort;
     private String TCKIPAddress;
     MessageConnection smsconn, mmsconn;
+
     /**
      * Start up the Hello MIDlet by creating the TextBox and associating
      * the exit command and listener.
@@ -44,15 +57,46 @@ public class NCISlave extends MIDlet implements CommandListener, Runnable {
             display = Display.getDisplay(this);
             exitCommand = new Command("Exit", Command.EXIT, 2);
             connectCommand = new Command("Connect", Command.SCREEN, 1);
+	    logCommand = new Command("Log", Command.SCREEN, 1);
+	    statusCommand = new Command("Status", Command.SCREEN, 1);
+	    confCommand = new Command("Configuration", Command.SCREEN, 1);
             TCKPort = getAppProperty("TCKPort");
             TCKIPAddress = getAppProperty("TCKIPAddress");
-            url = new TextBox("Please Enter TCK Server address", TCKIPAddress, 256, 0);
+            getIp = new TextBox("Enter TCK server address", TCKIPAddress, 256, 0);
+	    address = getIp.getString();
+	    url = new TextBox("Logging", null,10000,0);
+	    configuration = new Form("Configuration");
+	    configuration.append("Host: " + address);
+	    configuration.append("\nPort: " + TCKPort);
+	    configuration.append("\nPhone number: 5550000");
+	    status = new Form("Status");
+	    statusConect = new StringItem("Connection status", null);
+	    statusSend = new TextField("Total Send Messages", null, 3, TextField.UNEDITABLE);
+	    statusRecieve = new TextField("Total Recieved Messages", null, 3, TextField.UNEDITABLE);
+	    status.append(statusConect);
+	    status.append(statusSend);
+	    status.append(statusRecieve);
+	    logBuffer = new StringBuffer(maxLenLogBuffer);   
+
+            configuration.addCommand(exitCommand);
+            configuration.addCommand(connectCommand);
+	    configuration.setCommandListener(this);
+
+	    getIp.addCommand(exitCommand);
+	    getIp.addCommand(confCommand);
+	    getIp.setCommandListener(this);
+
             
-            url.addCommand(exitCommand);
-            url.addCommand(connectCommand);
             url.setCommandListener(this);
+	    url.addCommand(exitCommand);
+	    url.addCommand(statusCommand);    
+
+	    status.addCommand(exitCommand);
+	    status.addCommand(logCommand);
+	    status.setCommandListener(this);
             
-            display.setCurrent(url);
+            display.setCurrent(getIp);
+            
             Connection = getAppProperty("listen0");
             smsconn = (MessageConnection)Connector.open(Connection);
             smsconn.setMessageListener(new MessageListenerAdapter(Connection));
@@ -94,22 +138,39 @@ public class NCISlave extends MIDlet implements CommandListener, Runnable {
             return;
         }
         
+	 if (c == confCommand) {
+            display.setCurrent(configuration);
+            return;
+        }
+        
         if (c == connectCommand) {
             if(address != null) {
                 address = null;
             } else {
-                address = url.getString();
-                url.setString("Trying to Connect to TCK Server on " + address +":" +TCKPort);
+                address = TCKIPAddress;
+		display.setCurrent(status);
+		statusConect.setText("Trying to Connect to TCK Server on host: " + address +"\nTCK port: " +TCKPort);
+	
                 new Thread(this).start();                
             }
             return;
         }
+	 if (c == logCommand) {
+	    display.setCurrent(url);
+	    return;
+	}
+	  if (c == statusCommand) {
+	    display.setCurrent(status);
+	    return;
+	}
     }
     
     /**
      * This is the thread that polls the server for commands
      */
     public void run() {
+	String tmpString = null;
+
         long time = System.currentTimeMillis();
         while(address != null) {
             //System.out.println("Polling server in: " + (System.currentTimeMillis() - time));
@@ -130,7 +191,14 @@ public class NCISlave extends MIDlet implements CommandListener, Runnable {
                 }
 
                 DataInputStream input = Connector.openDataInputStream("http://" + address + ":"+TCKPort+"/read");
-                url.setString("CONNECTED TO TCK SERVER.\n\n Waiting for SMS on:" + Connection + "\n\nTotal Send Message="+NumOfSMSSend + " ,Total Received Message="+NumOfSMSRecv+"\n\nLastAction="+LastAction);
+
+		statusConect.setText("\nCONNECTED TO TCK SERVER.\n\nWaiting for SMS on: " + Connection);
+		tmpString = tmpString.valueOf(NumOfSMSSend);
+		statusSend.setString(tmpString);
+		tmpString = tmpString.valueOf(NumOfSMSRecv);
+		statusRecieve.setString(tmpString);
+
+		
                 // do we have anything pending?
                 if(!input.readBoolean()) {
                     int listenerCount = input.readInt();
@@ -169,6 +237,9 @@ public class NCISlave extends MIDlet implements CommandListener, Runnable {
             } catch(Exception err) {
                 url.setString("Retrying on connection error " + err.getClass() + ": " + err.getMessage());    
             }
+
+	    	setBuffer();
+	 
         }
     }
     
@@ -246,6 +317,9 @@ public class NCISlave extends MIDlet implements CommandListener, Runnable {
                         reportError("Send to server error", err);
                         continue;
                     }
+
+		   setBuffer();
+	
                     // will only return if no exception was thrown
                     return;
                 }
@@ -281,6 +355,25 @@ public class NCISlave extends MIDlet implements CommandListener, Runnable {
             reportError("sendBinaryMessage error", e);
         }
     }
+
+    private void setBuffer(){
+	String tmpString;
+	int currentBufLen = logBuffer.length();
+	int testSize = maxLenLogBuffer-LastAction.length();
+	int newLength = currentBufLen+maxLenLogBuffer;
+
+	if(currentBufLen > testSize) {
+	    logBuffer.setLength(newLength);
+	    System.out.println("resizing: new length: \n" +newLength);
+	    logBuffer.delete(currentBufLen, newLength);
+	}
+
+	NumOfActions++;
+	logBuffer.append("\n"+NumOfActions+") "+LastAction);
+	tmpString = logBuffer.toString();
+	url.setString(tmpString);
+    }
+    
 
     class MessageListenerAdapter implements MessageListener, Runnable {
         private String url;
@@ -323,3 +416,4 @@ public class NCISlave extends MIDlet implements CommandListener, Runnable {
     }
 
 }
+

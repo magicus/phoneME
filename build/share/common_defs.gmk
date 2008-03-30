@@ -289,7 +289,7 @@ MODULE_JSR_120_TCK_NCI_SLAVE_MANIFEST = \
 MODULE_JSR_120_TCK_NCI_SLAVE_JAD = \
     $(JSR_120_DIR)/src/share/tool/ncislave/NCISlave.jad
 
-ifneq ($(USE_JSR_205), true)
+ifeq ($(USE_JSR_205), true)
 MODULE_JSR_120_TCK_NCI_SLAVE_JAVA_FILES += \
     $(JSR_120_DIR)/src/share/tool/ncislave/NCISlave.java
 
