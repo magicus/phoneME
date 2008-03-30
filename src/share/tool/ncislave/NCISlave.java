@@ -364,7 +364,6 @@ public class NCISlave extends MIDlet implements CommandListener, Runnable {
 
 	if(currentBufLen > testSize) {
 	    logBuffer.setLength(newLength);
-	    System.out.println("resizing: new length: \n" +newLength);
 	    logBuffer.delete(currentBufLen, newLength);
 	}
 
