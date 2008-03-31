@@ -288,6 +288,7 @@ void SendEvent (KVMEventType *evt) {
                 if (evt->chr != latestKeyTyped || 0 == latestKeyDown) {
 
                     javanotify_key_event(evt->chr, JAVACALL_KEYPRESSED);
+                    javanotify_key_event(evt->chr, JAVACALL_KEYRELEASED);
                     latestKeyTyped = evt->chr;
                 }
             }
