@@ -59,7 +59,6 @@
 extern void jcapp_refresh_pending(javacall_time_milliseconds timeTowaitInMillisec);
 extern void measureStack(int clearStack);
 
-static jlong midpTimeSlice(void);
 
 
 /**
@@ -394,7 +393,7 @@ javacall_result checkForSystemSignal(MidpReentryData* pNewSignal,
     switch (event->eventType) {
     case MIDP_JC_EVENT_KEY:		
         pNewSignal->waitingFor = UI_SIGNAL;
-        pNewMidpEvent->type    = MIDP_KEY_EVENT;		
+        pNewMidpEvent->type    = MIDP_KEY_EVENT;
         pNewMidpEvent->CHR     = event->data.keyEvent.key;
         pNewMidpEvent->ACTION  = event->data.keyEvent.keyEventType;
         break;
@@ -705,10 +704,6 @@ void midp_slavemode_inform_event(void) {
     }
 }
 
-//#define TRACE_TIMESLICE_USAGE
-int lcd_updates = 0;
-int timer_ticks = 0;
-
 /**
  * In slave mode executes one JVM time slice
  *
@@ -717,111 +712,43 @@ int timer_ticks = 0;
  *         <tt>timeout value</tt>  the nearest timeout of all blocked Java threads
  */
 javacall_int64 javanotify_vm_timeslice(void) {
-#ifndef TRACE_TIMESLICE_USAGE
     midp_slavemode_inform_event();
-
-	return midpTimeSlice();
-#else /*! TRACE_TIMESLICE_USAGE*/
-    static javacall_time_milliseconds start = 0;
-    static javacall_time_milliseconds jvm_run_time = 0;
-    static javacall_time_milliseconds jvm_dur_min = 0;
-    static javacall_time_milliseconds jvm_dur_max = 0;
-    javacall_time_milliseconds elapsed_time = 0;
-    javacall_time_milliseconds jvm_dur = 0;
-    javacall_int64 rtn;
-    static int num_jvm_run = 0;
-    javacall_time_milliseconds current;
-
-    current = javacall_time_get_clock_milliseconds();
-    midp_slavemode_inform_event();
-    rtn = midpTimeSlice();
-    jvm_dur = javacall_time_get_clock_milliseconds() - current;
-    current += current + jvm_dur;
-    jvm_run_time += jvm_dur;
-    num_jvm_run++;
-
-    if (jvm_dur_max == 0 || jvm_dur > jvm_dur_max)
-        jvm_dur_max = jvm_dur;
-    if (jvm_dur_min == 0 || jvm_dur < jvm_dur_min)
-        jvm_dur_min = jvm_dur;
-
-    elapsed_time = (current - start);
-    if (elapsed_time >= 3000) {
-        REPORT_INFO7(LC_CORE, "timeslice: jvm_run_time=%dms/elaped=%dms(%d%%), "
-                              "avg_run=%dms, %d calls, %d lcd_updates, %d ticks\n",
-                     (int)jvm_run_time,
-                     (int)elapsed_time,
-                     (int)(jvm_run_time*100/elapsed_time),
-                     (int)(jvm_run_time/(num_jvm_run<=0?1:num_jvm_run)),
-                     (int)num_jvm_run,
-                     (int)lcd_updates,
-                     (int)timer_ticks);
-        REPORT_INFO2(LC_CORE, "timeslice: jvm_dur: max=%dms, min=%dms\n",
-                     (int)jvm_dur_max,
-                     (int)jvm_dur_min);
-
-        start = current;
-        jvm_run_time = 0;
-        num_jvm_run = 0;
-        jvm_dur_max = 0;
-        jvm_dur_min = 0;
-        lcd_updates = 0;
-        timer_ticks = 0;
-    }
-    return rtn;
-#endif /*TRACE_TIMESLICE_USAGE*/
+	return midp_slavemode_time_slice();
 }
 
 
 /**
- * Executes bytecodes for a small time slice.  If JVM finished running,
+ * Executes bytecodes for a time slice.  If JVM finished running,
  * then begins finalization.  If JVM continues running, refreshes pending
  * applications.
  */
-static jlong midpTimeSlice(void) {
+static jlong midp_slavemode_time_slice(void) {
 
-    jlong to = midp_slavemode_time_slice();
+    jlong to;
     javacall_time_milliseconds toInMillisec;
 
-    if (-2 == to) {
+    /* execute byteslice */
+    to = JVM_TimeSlice();
+    if ((jlong)-2 != to){
+        to = JVM_TimeSlice();
+    }
+
+    if ((jlong)-2 == to) {
+        /* Terminate JVM */
+        JVM_CleanUp();
         measureStack(KNI_FALSE);
         pushcheckinall();
         midpFinalize();
         javacall_lifecycle_state_changed(JAVACALL_LIFECYCLE_MIDLET_SHUTDOWN,
                                          JAVACALL_OK);
     } else {
-        /* convert jlong to long */
-        if (to > 0x7FFFFFFF) {
-            toInMillisec = -1;
-        } else if (to < 0) {
-            toInMillisec = -1;
-        }   else {
-            toInMillisec = (javacall_time_milliseconds)(to&0x7FFFFFFF);
-        }
-
-        jcapp_refresh_pending(toInMillisec);
+        /* Refresh screen */
+        jcapp_refresh_pending((javacall_time_milliseconds)to);
     }
 
     return to;
 }
 
-/**
- * Executes bytecodes for a small time slice
- *
- * @return <tt>-2</tt> if JVM has exited
- *         <tt>-1</tt> if all the Java threads are blocked waiting for events
- *         <tt>timeout value</tt>  the nearest timeout of all blocked Java threads
- */
-jlong midp_slavemode_time_slice(void) {
-    jlong to = JVM_TimeSlice();
-    if (-2 != to){
-        to = JVM_TimeSlice();
-    }
-    if ((jlong)-2 == to) {
-        JVM_CleanUp();
-    }
-    return to;
-}
 
 /**
  * Requests that the VM control code schedule a time slice as soon
