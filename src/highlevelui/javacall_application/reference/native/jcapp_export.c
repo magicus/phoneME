@@ -110,17 +110,8 @@ void jcapp_finalize() {
  * @param x2 bottom-right x coordinate of the area to refresh
  * @param y2 bottom-right y coordinate of the area to refresh
  */
-#define TRACE_LCD_REFRESH
 void jcapp_refresh(int x1, int y1, int x2, int y2)
 {
-#ifdef  TRACE_LCD_REFRESH
-    {
-// lcd_updates is used to trace how many lcd updates for given interval
-// lcd_updates is defined in midp_slavemode_javacall.c
-        extern int lcd_updates;
-        lcd_updates++;
-    }
-#endif
     javacall_lcd_flush_partial (y1, y2);
 }
 
