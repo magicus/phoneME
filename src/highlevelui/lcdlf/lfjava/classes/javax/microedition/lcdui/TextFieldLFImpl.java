@@ -483,8 +483,6 @@ class TextFieldLFImpl extends ItemLFImpl implements
     void lPaintContent(Graphics g, int width, int height) {
         // Draw the TextField background region
 
-        System.out.println("TextFieldLFImpl.lPaintContent contentWidth=" + width);
-        System.out.println("TextFieldLFImpl.lPaintContent Width=" + bounds[WIDTH]);
         if (editable) {
             if (TextFieldSkin.IMAGE_BG != null) {
                 CGraphicsUtil.draw9pcsBackground(g, 0, 0, width, height,
@@ -1664,6 +1662,16 @@ class TextFieldLFImpl extends ItemLFImpl implements
             moveInputModeIndicator();
         }
      }
+
+    /**
+     *  If hilighted element of item is not completely visible should make it visible
+     * @param viewport
+     * @param visRect the in/out rectangle for the internal traversal location
+     * @return
+     */
+    boolean lScrollToItem(int[] viewport, int[] visRect) {
+        return true;
+    }
     
     /**
      * Called by the system to indicate traversal has left this Item
