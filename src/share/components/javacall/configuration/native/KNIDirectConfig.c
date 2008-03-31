@@ -56,6 +56,32 @@ static struct _protocolNames {
 void mmapi_string_delete_duplicates(char *p);
 static javacall_result simple_jcharString_to_asciiString(jchar *jcharString, jsize jcharStringLen, char *asciiStringBuffer, jsize bufferSize);
 
+KNIEXPORT KNI_RETURNTYPE_BOOLEAN
+KNIDECL(com_sun_mmedia_DefaultConfiguration_nIsRadioSupported) {
+    javacall_media_configuration *cfg;
+    jboolean res = KNI_FALSE;
+    if (javacall_media_get_configuration(&cfg) != JAVACALL_OK) {
+        KNI_ThrowNew(jsropRuntimeException, "Couldn't get MMAPI configuration");
+    }
+    if( JAVACALL_TRUE == cfg->supportCaptureRadio )
+    {
+        javacall_media_caps *caps = cfg->mediaCaps;
+        if( NULL != caps )
+        {
+            while( NULL != caps->mediaFormat )
+            {
+                if( JAVACALL_MEDIA_FORMAT_CAPTURE_RADIO == caps->mediaFormat )
+                {
+                    res = KNI_TRUE;
+                    break;
+                }
+            }
+        }
+    }
+    
+    KNI_ReturnBoolean( res );
+}
+
 KNIEXPORT KNI_RETURNTYPE_INT
 KNIDECL(com_sun_mmedia_DefaultConfiguration_nListContentTypesOpen) {
     javacall_int32 proto_mask = 0;
