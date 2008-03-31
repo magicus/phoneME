@@ -22,11 +22,6 @@
  * information or have any questions.
  */
 
-/**
- * @file
- *
- *
- */
 
 #ifdef __cplusplus
 extern "C" {
@@ -47,7 +42,7 @@ extern "C" {
 
 #include "lcd.h"
 
-
+void midp_slavemode_inform_event(void);
 
 
 #if ENABLE_JSR_120
@@ -61,7 +56,7 @@ typedef struct EventMessage_ {
     struct EventMessage_* next;
     unsigned char* data;
     int dataLen;
-}EventMessage;
+} EventMessage;
 
 
 /*
@@ -89,9 +84,13 @@ javacall_bool    events_secondary =JAVACALL_FALSE;
 #define EVENT_QUEUE_ACQUIRE  (WaitForSingleObject(events_mutex, 300) == WAIT_OBJECT_0)
 #define EVENT_QUEUE_RELEASE  ReleaseMutex(events_mutex)
 
+/**
+ * Initialize events mechanism
+ *
+ */
 javacall_bool javacall_events_init(void) {
 
-    if (events_sharefile==NULL) {
+    if (events_sharefile == NULL) {
         events_sharefile = CreateFileMapping(
             INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE,
             0, sizeof(EventSharedList), EVENT_SHARED_NAME);
@@ -112,14 +111,14 @@ javacall_bool javacall_events_init(void) {
     }
 
 
-    if (events_mutex==NULL) {
-        events_mutex=CreateMutex(
+    if (events_mutex == NULL) {
+        events_mutex = CreateMutex(
             NULL,       // default security attributes
             FALSE,      // initially not owned
             EVENT_MUTEX_NAME);      // named object
     }
 
-    if (events_handle==NULL) {
+    if (events_handle ==NULL) {
         events_handle = CreateEvent(
             NULL,       // default security attributes
             TRUE,       // manual-reset event
@@ -134,6 +133,10 @@ javacall_bool javacall_events_init(void) {
         (events_sharefile != NULL) && (events_shared != NULL);
 }
 
+/**
+ * Finalize events mechanism
+ *
+ */
 javacall_bool javacall_events_finalize(void) {
 
     if (events_shared!=NULL) {
@@ -158,101 +161,66 @@ javacall_bool javacall_events_finalize(void) {
 	return JAVACALL_OK;
 }
 
-javacall_bool isSecondaryInstance(void){
-    return events_secondary;
-}
 
-void enqueueInterprocessMessage(int argc, char *argv[]){
-    if (EVENT_QUEUE_ACQUIRE)
-    {
-        int i;
-        char *dest = events_shared->data;
-        for(i = 0; (i < argc) && argv[i]; i++)
-        {
-            int length = strlen(argv[i]) + 1;
-            memcpy(dest, argv[i], length);
-            dest += length;
-        }
-        *dest = 0;
-        EVENT_QUEUE_RELEASE;
-    }
-}
-
-int dequeueInterprocessMessage(char*** argv){
-    int argc = 0;
-    if (EVENT_QUEUE_ACQUIRE)
-    {
-        int lengthTotal = 1;
-        char *src = events_shared->data;
-
-        while(*src) {
-            argc++;
-            lengthTotal += strlen(src) + 1;
-            src += strlen(src) + 1;
-        }
-
-        if (argc) {
-            *argv = javacall_malloc(lengthTotal + argc * sizeof(char*));
-            src = (char*) ((*argv) + argc);
-            memcpy(src, events_shared->data, lengthTotal);
-            argc = 0;
-            while(*src) {
-                (*argv)[argc++] = src;
-                src += strlen(src) + 1;
-            }
-            events_shared->data[0] = 0;
-            events_shared->data[1] = 0;
-        }
-        EVENT_QUEUE_RELEASE;
-    }
-    return argc;
-}
-
-void enqueueEventMessage(unsigned char* data,int dataLen){
+/**
+ * Adds message to the end of events queue.  Performs memory allocation for
+ * the message.
+ *
+ * @param data buffer containing the message to be added
+ * @param dataLen buffer size
+ *
+ * @return <tt><JAVACALL_OK></tt> on success
+ *         <tt>JAVACALL_OUT_OF_MEMORY</tt> on memory allocation error
+ */
+javacall_result enqueueEventMessage(unsigned char* data, int dataLen){
     EventMessage** iter;
-    EventMessage* elem=(EventMessage*)javacall_malloc(sizeof(EventMessage));
-    elem->data      =javacall_malloc(dataLen);
-    elem->dataLen   =dataLen;
-    elem->next      =NULL;
+    EventMessage* elem;
+
+    /* allocate memory */
+    if (NULL == (elem =(EventMessage*)javacall_malloc(sizeof(EventMessage)))) {
+        return JAVACALL_OUT_OF_MEMORY;
+    }
+    if (NULL == (elem->data = javacall_malloc(dataLen))) {
+        return JAVACALL_OUT_OF_MEMORY;
+    }
+
+    /* initialize fields */
+    elem->dataLen = dataLen;
+    elem->next = NULL;
     memcpy(elem->data, data, dataLen);
 
-    for(iter=&head; *iter!=NULL; iter=&((*iter)->next) )
-        ;
+    /* iterate to the end of the list */
+    for(iter=&head; *iter!=NULL; iter=&((*iter)->next));
     *iter=elem;
+    return JAVACALL_OK;
 }
 
-int dequeueEventMessage(unsigned char* data,int dataLen){
+/**
+ * Copies message from the head of events queue to the buffer and afterwards
+ * removes the message from the head, deallocating memory on the way.
+ *
+ * @param data buffer to be copied to
+ * @param dataLen buffer size
+ *
+ * @return number of copied characters, or 0 if no character copied
+ */
+javacall_result dequeueEventMessage(unsigned char* data, int dataLen){
     EventMessage* root;
-    if (head==NULL) {
+
+    if (head == NULL) {
         return 0;
     }
-    dataLen=min(dataLen, head->dataLen);
+
+    dataLen = min(dataLen, head->dataLen);
     memcpy(data, head->data, dataLen);
-    root=head->next;
+    root = head->next;
     javacall_free(head->data);
     javacall_free(head);
-    head=root;
+    head = root;
 
     return dataLen;
 }
 
-static javacall_bool checkForEvents(long timeout) {
-    MSG msg;
-
-    while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE)) {
-        /* Dispatching the message will call WndProc below. */
-        if (msg.message == WM_QUIT) {
-            return JAVACALL_FALSE;
-        }
-        TranslateMessage(&msg);
-        DispatchMessage(&msg);
-    }
-    if (WaitForSingleObject(events_handle, 0)==WAIT_OBJECT_0) {
-        /* We got signal to unblock a Java thread. */
-        return JAVACALL_TRUE;
-    }
-    return JAVACALL_FALSE; /* time out */
-}
 
 /**
  * Waits for an incoming event message and copies it to user supplied
@@ -291,7 +259,7 @@ javacall_result javacall_event_receive(
     ok = (binaryBuffer != NULL) && (binaryBufferMaxLen > 0);
 
     if (ok) {
-        ok = WaitForSingleObject(events_mutex, 0)==WAIT_OBJECT_0;
+        ok = WaitForSingleObject(events_mutex, 0) == WAIT_OBJECT_0;
     }
     if (ok) {
         totalRead = dequeueEventMessage(binaryBuffer, binaryBufferMaxLen);
@@ -301,15 +269,15 @@ javacall_result javacall_event_receive(
         ok = ReleaseMutex(events_mutex);
     }
 
-    ok= ok && (totalRead!=0);
+    ok = ok && (totalRead!=0);
     if (outEventLen!=NULL) {
         *outEventLen = ok ? totalRead : 0;
     }
     return ok ? JAVACALL_OK : JAVACALL_FAIL;
 }
 
- /**
- * copies a user supplied event message to a queue of messages
+/**
+ * Copies a user supplied event message to a queue of messages
  *
  * @param binaryBuffer a pointer to binary event buffer to send
  *        The platform should make a private copy of this buffer as
@@ -326,18 +294,18 @@ javacall_result javacall_event_send(unsigned char* binaryBuffer,
         javacall_events_init();
     }
 
-    ok=(binaryBuffer!=NULL) && (binaryBufferLen>0);
+    ok =(binaryBuffer != NULL) && (binaryBufferLen > 0);
 
     if (ok) {
-        ok=WaitForSingleObject(events_mutex, 500)==WAIT_OBJECT_0;
+        ok = WaitForSingleObject(events_mutex, 500) == WAIT_OBJECT_0;
     }
     if (ok) {
-        ok=(binaryBuffer!=NULL) && (binaryBufferLen>0);
+        ok = (binaryBuffer!=NULL) && (binaryBufferLen>0);
     }
     if (ok) {
-        enqueueEventMessage(binaryBuffer,binaryBufferLen);
+        enqueueEventMessage(binaryBuffer, binaryBufferLen);
         SetEvent(events_handle);
-        ok=ReleaseMutex(events_mutex);
+        ok = ReleaseMutex(events_mutex);
     }
     return ok ? JAVACALL_OK : JAVACALL_FAIL;
 }
@@ -346,8 +314,8 @@ javacall_result javacall_event_send(unsigned char* binaryBuffer,
 #define EVENT_LOOP_TIMER_ID 2112
 
 /**
- * The function signals the underlying platform that JVM needs to execute
- * one timeslice. Used in slave mode only.
+ * Signals the platform that JVM needs to execute one timeslice.
+ * Used in slave mode only.
  */
 void javacall_schedule_vm_timeslice(void) {
     PostMessage(midpGetWindowHandle(), WM_TIMER, (WPARAM)EVENT_LOOP_TIMER_ID, (LPARAM)NULL);
@@ -370,6 +338,8 @@ void javacall_slavemode_event_loop(void) {
 
     /* signal the platform that SJWC needs to execute one timeslice */
     javacall_schedule_vm_timeslice();
+
+    _asm int 3
 
     while (GetMessage(&msg, NULL, 0, 0)) {
         if (msg.message == WM_QUIT) {
@@ -428,33 +398,6 @@ DispatcherThread(void* pArg) {
     return 0;
 }
 
-void InitializeLimeEvents(){
-    static int initialized = 0;
-
-    IsJavaRunning = 1;
-
-    if (!initialized) {
-        LimeFunction *f;
-        initialized = TRUE;
-        f = NewLimeFunction(LIME_PACKAGE,
-                            LIME_GRAPHICS_CLASS,
-                            "initialize");
-        f->call(f, NULL);
-        DeleteLimeFunction(f);
-
-        /* initialize the event bridge */
-        f = NewLimeFunction(LIME_PACKAGE,
-                            LIME_EVENT_CLASS,
-                            "initialize");
-        f->call(f, NULL);
-        DeleteLimeFunction(f);
-
-    }
-
-    CreateThread(NULL, 0, DispatcherThread, (void *)2000, 0, NULL);
-
-}
-
 static LRESULT CALLBACK
 WndProc (HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam) {
     //check if udp or tcp
@@ -464,7 +407,10 @@ WndProc (HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam) {
     int optsize = sizeof(optname);
 
 
-    switch (iMsg) {
+	_asm int 3
+    
+	switch (iMsg) {
+        
 
     case WM_CLOSE:
         /*
@@ -663,6 +609,33 @@ HWND midpGetWindowHandle() {
 
     return hwnd;
 }
+
+void InitializeLimeEvents(){
+    static int initialized = 0;
+
+    IsJavaRunning = 1;
+
+    if (!initialized) {
+        LimeFunction *f;
+        initialized = TRUE;
+        f = NewLimeFunction(LIME_PACKAGE,
+                            LIME_GRAPHICS_CLASS,
+                            "initialize");
+        f->call(f, NULL);
+        DeleteLimeFunction(f);
+
+        /* initialize the event bridge */
+        f = NewLimeFunction(LIME_PACKAGE,
+                            LIME_EVENT_CLASS,
+                            "initialize");
+        f->call(f, NULL);
+        DeleteLimeFunction(f);
+
+    }
+
+    CreateThread(NULL, 0, DispatcherThread, (void *)2000, 0, NULL);
+}
+
 
 
 #ifdef __cplusplus
