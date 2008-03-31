@@ -80,6 +80,12 @@ import com.sun.me.gci.windowsystem.GCIDisplay;
 import com.sun.me.gci.windowsystem.GCIScreenWidget;
 // #endif
 
+// #ifdef ENABLE_KEYBOARD
+import javax.microedition.lcdui.KeyboardLayer.*;
+import javax.microedition.lcdui.VirtualKeyboard.*;
+import javax.microedition.lcdui.VirtualKeyboardListener.*;
+// #endif
+
 /**
  * <code>Display</code> represents the manager of the display and
  * input devices of the
@@ -508,6 +514,17 @@ public class Display {
     /** Cached reference to Active Displays Container. */
     private static DisplayContainer displayContainer;
 
+    // #ifdef ENABLE_KEYBOARD [
+    /** Canvas keyboard abstract command. */
+    private static Command canvasKeyboardCommand;
+
+    /** TextField keyboard abstract command. */
+    private static Command textFieldKeyboardCommand;
+
+    /** keyboard layer */
+    KeyboardLayer keyboardLayer = null; 
+    // #endif ]
+
     /** Device <code>Graphics</code> associated with this Display. */
     private Graphics screenGraphics;
 
@@ -649,6 +666,10 @@ public class Display {
 
         DisplayFactory.setStaticDisplayAccess(classSecurityToken, 
                                               displayStaticAccess);
+        // #ifdef ENABLE_KEYBOARD [
+        canvasKeyboardCommand = new Command("Keypad", Command.HELP, 60);
+        textFieldKeyboardCommand = new Command("Keyboard", Command.ITEM, 0);
+        // #endif ]
     }
 
 
@@ -1833,6 +1854,14 @@ public class Display {
 
         } // synchronized
 
+        // #ifdef ENABLE_KEYBOARD [
+        // When Screen is changed, we need to try open keyboard in TextEdit.
+        if (current instanceof FormLFImpl) {
+            if (isKeyboardAutoOpen()) {
+                OpenKeyboard();
+            }
+        }
+        // #endif ]
 
         // SYNC NOTE: The implementation of dsPaint() could call
         // out to MIDlet's paint() function. So we have to call it
@@ -2189,27 +2218,115 @@ public class Display {
 
         Displayable d = current.lGetDisplayable();
 
+        // #ifdef ENABLE_KEYBOARD [
+        // Check Opended Keyboard
+        if (keyboardLayer != null && keyboardLayer.open) {
+            // don't update command set beacuse of already showing soft button of softkeyboard
+            return;
+        }
+
+        boolean addKeyboard = true;
+        boolean canvas=false;
+        boolean textfield=false;
+        // Displayable commands
+        Command[] screenCommands = d.commands;
+        int screenComCount = d.numCommands;
+
+
+        // Reset each command id
+        for (int i = 0; i < screenComCount; i++) {
+            screenCommands[i].setInternalID(i);
+            if (screenCommands[i].getLabel().equals("Keyboard") ||
+                screenCommands[i].getLabel().equals("Keypad")) {
+                addKeyboard = false;
+            }
+        }
+
+        if (addKeyboard) {
+            // Piggy back Keyboard command to Canvas or to TextField
+            if (current instanceof CanvasLFImpl) {
+                canvas=true;
+            } else if (current instanceof FormLFImpl) {
+                Item item = null;
+                synchronized (LCDUILock) {
+                    item = ((FormLFImpl)current).lGetCurrentItem();
+                }
+                if ((item != null) &&
+                    (item instanceof TextField) && 
+                    (((TextField)item).textFieldLF instanceof TextFieldLFImpl)) {
+
+                    textfield=true;
+                }
+            }
+                
+            if (canvas || textfield) {
+                if (screenCommands == null) {
+                    screenCommands = new Command[1];
+                } else if (screenCommands.length == screenComCount) {
+                    screenCommands = new Command[screenComCount+1];
+                    System.arraycopy(d.commands, 0, screenCommands, 0,
+                                     d.numCommands);
+                }
+
+                if (canvas) {
+                    screenCommands[screenComCount] = canvasKeyboardCommand;
+                    screenComCount++;
+                } else if (textfield) {
+                    screenCommands[screenComCount] = textFieldKeyboardCommand;
+                    screenComCount++;
+                }
+            }
+        } // if (addKeyboard)
+        // #endif ]
+        
         // Item commands
         Item curItem = (current instanceof FormLF)
                             ? ((FormLF)current).lGetCurrentItem()
                             : null;
 
         if (curItem == null) {
-            // This call will not result in any call into application code
+            // #ifdef ENABLE_KEYBOARD [
+            // This call will not result in any call into application code        
+            window.updateCommandSet(null,
+                                    0,
+                                    null,
+                                    screenCommands,
+                                    screenComCount,
+                                    d.listener);
+
+            // #else ][
+            // This call will not result in any call into application code        
             window.updateCommandSet(null,
                                     0,
                                     null,
                                     d.commands,
                                     d.numCommands,
                                     d.listener);
+            // #endif ]
         } else {
-            // This call will not result in any call into application code
+            // #ifdef ENABLE_KEYBOARD [
+            Command[] itemCommands = curItem.commands;
+            int itemComCount = curItem.numCommands;
+            for (int i = 0; i < itemComCount; i++) {
+                itemCommands[i].setInternalID(i + screenComCount);
+            }        
+            // This call will not result in any call into application code        
+            window.updateCommandSet(curItem.commands,
+                                    curItem.numCommands,
+                                    curItem.commandListener,
+                                    screenCommands,
+                                    screenComCount,
+                                    d.listener);
+  
+            // #else ][
+            // This call will not result in any call into application code        
             window.updateCommandSet(curItem.commands,
                                     curItem.numCommands,
                                     curItem.commandListener,
                                     d.commands,
                                     d.numCommands,
                                     d.listener);
+            // #endif ]
         }
         // #else
         if (current == null) {
@@ -2247,6 +2364,130 @@ public class Display {
         }
         // #endif ENABLE_CHAMELEON
     }
+
+    // #ifdef ENABLE_KEYBOARD [
+    public void initKeyboardInputMode()
+    {
+        /* Initial InputMode */
+        int initInputMode = KeyboardLayer.LOWERCASE;
+
+
+        // MUST regarding second screen.
+        DisplayableLF workDisplayLF = getCurrent().getLF();
+
+        if (workDisplayLF instanceof FormLFImpl) {
+            Item item = null;
+            synchronized (LCDUILock) {
+                item = ((FormLFImpl)workDisplayLF).lGetCurrentItem();
+            }
+
+            if ((item != null) &&
+            (item instanceof TextField) && 
+            (((TextField)item).textFieldLF instanceof TextFieldLFImpl)) {
+                TextFieldLF textLF =  ((TextField)item).textFieldLF;
+                TextFieldLFImpl textLFImpl = (TextFieldLFImpl)textLF;
+                keyboardLayer = KeyboardLayer.getInstance(textLFImpl);
+
+                switch (textLFImpl.getConstraints()) {
+                    case TextField.DECIMAL:
+                    case TextField.NUMERIC:
+                    case TextField.PHONENUMBER:
+                        initInputMode = KeyboardLayer.NUMERIC;
+                    break;
+                    default:
+                        break;
+                }
+            }
+            else {
+                keyboardLayer = null;
+            }
+            
+            if (keyboardLayer != null) {
+                keyboardLayer.setState(initInputMode);
+            }
+        }
+    }
+
+    public String getKeyboardIMName()
+    {
+        if (keyboardLayer != null) {
+            return keyboardLayer.getIMName();
+        }
+        else {
+            return null;
+        }
+    }
+    
+   public boolean OpenKeyboard() {
+        // Check conditions to open soft keyboard.
+        if (!isKeyboardEnabled()) {
+            return false;
+        }
+
+        DisplayableLF workDisplayLF = current;
+
+        if (workDisplayLF instanceof CanvasLFImpl) {
+            keyboardLayer = KeyboardLayer.getInstance((CanvasLFImpl)workDisplayLF);
+        } else if (workDisplayLF instanceof FormLFImpl) {
+            Item item = null;
+            synchronized (LCDUILock) {
+            item = ((FormLFImpl)workDisplayLF).lGetCurrentItem();
+            }
+
+            if ((item != null) &&
+            (item instanceof TextField) && 
+            (((TextField)item).textFieldLF instanceof TextFieldLFImpl)) {
+                TextFieldLF textLF =  ((TextField)item).textFieldLF;
+                TextFieldLFImpl textLFImpl = (TextFieldLFImpl)textLF;
+                keyboardLayer = KeyboardLayer.getInstance(textLFImpl);
+            }
+            else {
+                keyboardLayer = null;
+            }            
+        }else {            
+            return false;
+        }
+        
+       if (keyboardLayer == null) {
+            return false;
+        }
+
+         if (!keyboardLayer.open) {
+            int kh = keyboardLayer.getHeight();
+
+            showPopup(keyboardLayer);
+            keyboardLayer.open = true;
+            keyboardLayer.justOpened = true;
+        }
+
+        return true;
+        
+    }
+
+    public boolean CloseKeyboard() {
+        // Check conditions to close soft keyboard.
+        if (!isKeyboardEnabled()) {
+            return false;
+        }
+
+        if (keyboardLayer != null)
+        {
+            keyboardLayer.open = false;
+            hidePopup(keyboardLayer);
+        }
+        return true;
+    }
+    public boolean isKeyboardEnabled()
+    {
+        return VirtualKeyboard.isEnabled();
+    }
+
+    public boolean isKeyboardAutoOpen()
+    {
+        return isKeyboardEnabled() && VirtualKeyboard.isAutoOpen();
+    }
+    // #endif ]
+
 
     /**
      * Is the current display visible.
@@ -2496,6 +2737,13 @@ public class Display {
          */
         public void callScreenListener(Command cmd, CommandListener listener)
         {
+            // #ifdef ENABLE_KEYBOARD [
+            if (isKeyboardEnabled() && 
+                   ((cmd.getLabel().equals("Keypad")) || 
+                    (cmd.getLabel().equals("Keyboard")))) {
+                OpenKeyboard();
+            }       
+            // #endif ]
             Displayable currentDisplayable = null;
 
             synchronized (LCDUILock) {

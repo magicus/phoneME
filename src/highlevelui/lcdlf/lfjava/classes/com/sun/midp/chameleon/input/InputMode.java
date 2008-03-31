@@ -110,6 +110,7 @@ public interface InputMode {
      * Most likely it is handled by the text component */
     public static final int KEYCODE_NONE = -3; // dont clash
 
+    public static final int KEYCODE_CLEAR = -8;
     /** 
      * a sub-inputMode which may be supported by an InputMode.
      * all letters are uppercase  

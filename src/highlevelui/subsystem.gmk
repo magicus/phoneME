@@ -109,6 +109,14 @@ else
 endif
 
 #####################################################################
+# KEYBAORD Subsystem
+# Description: Use a Soft Keyboard
+#####################################################################
+ifeq ($(USE_SOFT_KEYBOARD), true)
+    include $(SUBSYSTEM_HIGHUI_DIR)/keyboard/lib.gmk
+endif
+
+#####################################################################
 # Application specific Subsystem
 # Description: qte_application, fb_application, win32_app or armsd_app
 #####################################################################
@@ -248,3 +256,8 @@ SUBSYSTEM_HIGHUI_EXTRA_INCLUDES	+= $(SUBSYSTEM_APP_EXTRA_INCLUDES)
 ifeq ($(TARGET_VM), cdc_vm)
 SUBSYSTEM_HIGHUI_JAVA_FILES     += $(SUBSYSTEM_CDCUI_JAVA_FILES)
 endif
+
+# KEYBOARD
+#
+SUBSYSTEM_HIGHUI_JAVA_FILES     += $(SUBSYSTEM_KEYBOARD_JAVA_FILES)
+
