@@ -89,7 +89,7 @@ typedef enum midp_SignalType {
     MEDIA_SNAPSHOT_SIGNAL,  /* sent when snapshot acquisition is complete */
     JSR256_SIGNAL,
     JSR179_PROXIMITY_SIGNAL,
-    JSR179_ORIENTATION_SIGNAL
+    JSR179_ORIENTATION_SIGNAL,
     MEDIA_START_SIGNAL,
     MEDIA_STOP_SIGNAL,
     MEDIA_PAUSE_SIGNAL,
