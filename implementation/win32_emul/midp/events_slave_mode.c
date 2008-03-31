@@ -42,9 +42,6 @@ extern "C" {
 
 #include "lcd.h"
 
-void midp_slavemode_inform_event(void);
-
-
 #if ENABLE_JSR_120
 extern javacall_result try_process_wma_emulator(javacall_handle handle);
 #endif
@@ -324,52 +321,16 @@ void javacall_schedule_vm_timeslice(void) {
 /**
  * Platform-specific event processing loop
  */
-void javacall_slavemode_event_loop(void) {
+void javacall_slavemode_handle_events(void) {
     MSG msg;
-    javacall_int64 ms;
-
-    /*
-     * Init part from midpRunVm, should be placed to javanotify_start():
-     * midp_thread_set_timeslice_proc(midp_slavemode_schedule_vm_timeslice);
-     * JVM_SetConfig(JVM_CONFIG_SLAVE_MODE, KNI_TRUE);
-     * JVM_Start(classPath, mainClass, argc, argv);
-     */
-
 
     /* signal the platform that SJWC needs to execute one timeslice */
     javacall_schedule_vm_timeslice();
 
-    _asm int 3
-
     while (GetMessage(&msg, NULL, 0, 0)) {
-        if (msg.message == WM_QUIT) {
-            return;
-        }
-
-        if (msg.message == WM_TIMER && msg.wParam == EVENT_LOOP_TIMER_ID) {
-            /* Timer event.  Execute a time slice */
-
-            KillTimer(midpGetWindowHandle(), EVENT_LOOP_TIMER_ID);
-
-            /* execute one  timeslice */
-            ms = javanotify_vm_timeslice();
-            if (ms >= 0) {
-                /* JVM nas not exited and at least one of the threads is unblocked */
-                SetTimer(midpGetWindowHandle(), EVENT_LOOP_TIMER_ID, (javacall_int32)ms, NULL);
-            }
-            else if (ms == -1){
-                /* all ot the threads are blocked, wait for event */
-            }
-            else if (ms == -2) {
-                /* JVM has exited */
-                return;
-            }
-        } else {
-            /* Non-timer event.  Some sort of platform message */
-            TranslateMessage(&msg);
-            DispatchMessage(&msg);
-            midp_slavemode_inform_event();
-        }
+        /* Dispatch the message */
+        TranslateMessage(&msg);
+        DispatchMessage(&msg);
     }
 }
 
@@ -405,29 +366,28 @@ WndProc (HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam) {
     int opttarget;
     int optname;
     int optsize = sizeof(optname);
-
-
-	_asm int 3
+    javacall_int64 ms;	
     
 	switch (iMsg) {
-        
-
-    case WM_CLOSE:
-        /*
-         * Handle the "X" (close window) button by sending the AMS a shutdown
-         * event.
-         */
-        PostQuitMessage (0);
-        javanotify_shutdown();
-        return 0;
-
     case WM_TIMER:
-        // Stop the timer from repeating the WM_TIMER message.
-        KillTimer(hwnd, wParam);
-
+        if (wParam == EVENT_LOOP_TIMER_ID) {
+            KillTimer(midpGetWindowHandle(), EVENT_LOOP_TIMER_ID);
+            /* execute one timeslice */
+            ms = javanotify_vm_timeslice();
+            if (ms >= 0) {
+                /* JVM nas not exited and at least one of the threads is unblocked */
+                SetTimer(midpGetWindowHandle(), EVENT_LOOP_TIMER_ID, (javacall_int32)ms, NULL);
+            }
+            else if (ms == -1){
+                /* all ot the threads are blocked, wait for event */
+            }
+            else if (ms == -2) {
+                /* JVM has exited */
+                PostQuitMessage(0);
+                return 0;
+            }
+        }
         return 0;
-
-
 
     case WM_NETWORK:
 
