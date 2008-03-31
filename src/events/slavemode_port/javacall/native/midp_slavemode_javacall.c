@@ -723,9 +723,7 @@ javacall_int64 javanotify_vm_timeslice(void) {
  * applications.
  */
 static jlong midp_slavemode_time_slice(void) {
-
     jlong to;
-    javacall_time_milliseconds toInMillisec;
 
     /* execute byteslice */
     to = JVM_TimeSlice();
@@ -735,7 +733,6 @@ static jlong midp_slavemode_time_slice(void) {
 
     if ((jlong)-2 == to) {
         /* Terminate JVM */
-        JVM_CleanUp();
         measureStack(KNI_FALSE);
         pushcheckinall();
         midpFinalize();
@@ -761,6 +758,6 @@ void midp_slavemode_schedule_vm_timeslice(void){
 /**
  * Main processing loop.
  */
-void midp_slavemode_event_loop(void){
-    javacall_slavemode_event_loop();
+void midp_slavemode_dispatch_events(void){
+    javacall_slavemode_handle_events();
 }
