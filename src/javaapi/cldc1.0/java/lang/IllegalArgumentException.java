@@ -30,7 +30,6 @@ package java.lang;
  * Thrown to indicate that a method has been passed an illegal or 
  * inappropriate argument.
  *
- * @version 1.16, 12/04/99 (CLDC 1.0, Sprint 2000)
  * @see        java.lang.Thread#setPriority(int)
  * @since   JDK1.0
  */
