@@ -43,19 +43,7 @@ class RecordEnumerationImpl implements RecordEnumeration {
     }
 
     /**
-     * Returns the recordId of the <em>next</em> record in this enumeration,
-     * where <em>next</em> is defined by the comparator and/or filter
-     * supplied in the constructor of this enumerator. After calling
-     * this method, the enumeration is advanced to the next available
-     * record.
-     *
-     * @exception InvalidRecordIDException when no more records are
-     *          available. Subsequent calls to this method will
-     *          continue to throw this exception until
-     *          <code>reset()</code> has been called to reset the
-     *          enumeration.
-     *
-     * @return the recordId of the next record in this enumeration
+     * Returns the recordId of the <em>next</em> record in this enumeration
      */
     public int nextRecordId() throws InvalidRecordIDException {
          try {
@@ -66,10 +54,7 @@ class RecordEnumerationImpl implements RecordEnumeration {
     };
 
     /**
-     * Returns true if more elements exist in the <em>next</em> direction.
-     *
-     * @return true if more elements exist in the <em>next</em>
-     *         direction
+     * Returns true if more elements exist in the <em>next</em> direction
      */
     public boolean hasNextElement() {
         return re.hasNextElement();

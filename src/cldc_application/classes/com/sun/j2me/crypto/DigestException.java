@@ -27,8 +27,8 @@
 package com.sun.j2me.crypto;
 
 /**
- * This exception is thrown when a particular cryptographic algorithm is
- * requested but is not available in the environment.
+ * This exception is thrown if a requested cryptographic algorithm is not 
+ * available
  */
 
 public class DigestException extends com.sun.midp.crypto.DigestException {

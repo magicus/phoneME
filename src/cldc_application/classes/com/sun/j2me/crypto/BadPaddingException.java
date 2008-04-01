@@ -27,8 +27,7 @@
 package com.sun.j2me.crypto;
 
 /** 
- * This exception is thrown when a particular padding mechanism is
- * expected for the input data but the data is not padded properly.
+ * This exception is thrown if an error occures when padding input data
  */
 public class BadPaddingException extends com.sun.midp.crypto.BadPaddingException {
 }

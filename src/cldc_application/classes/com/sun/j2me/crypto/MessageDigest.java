@@ -27,22 +27,7 @@
 package com.sun.j2me.crypto;
 
 /**
- * This MessageDigest class provides applications the functionality of a
- * message digest algorithm, such as MD5 or SHA.
- * Message digests are secure one-way hash functions that take arbitrary-sized
- * data and output a fixed-length hash value.
- *
- * <p>A <code>MessageDigest</code> object starts out initialized. The data is 
- * processed through it using the <code>update</code>
- * method. At any point {@link #reset() reset} can be called
- * to reset the digest. Once all the data to be updated has been
- * updated, the <code>digest</code> method should 
- * be called to complete the hash computation.
- *
- * <p>The <code>digest</code> method can be called once for a given number 
- * of updates. After <code>digest</code> has been called, 
- * the <code>MessageDigest</code>
- * object is reset to its initialized state.
+ * Provides applications the functionality of a message digest algorithm
  */
 
 public class MessageDigest {

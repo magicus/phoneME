@@ -27,8 +27,7 @@
 package com.sun.j2me.crypto;
 
 /** 
- * This exception is thrown when an output buffer provided by the user
- * is too short to hold the operation result.
+ * This exception is thrown if an output buffer is too short
  */
 public class ShortBufferException extends com.sun.midp.crypto.ShortBufferException {
 }
