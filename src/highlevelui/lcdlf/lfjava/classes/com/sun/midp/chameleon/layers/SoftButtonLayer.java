@@ -171,7 +171,7 @@ public class SoftButtonLayer extends CLayer implements CommandListener {
      */
     public SoftButtonLayer(ChamDisplayTunnel tunnel) {
         super(SoftButtonSkin.IMAGE_BG, SoftButtonSkin.COLOR_BG);
-	super.setSupportsInput(true);
+        super.setSupportsInput(true);
         super.setVisible(true);
         this.tunnel = tunnel;
 
@@ -195,13 +195,13 @@ public class SoftButtonLayer extends CLayer implements CommandListener {
         return isInteractive;
     }
 
-  /**
+    /**
      * Assigns new value to isInteractive and signals MIDPWindow.
      */
     private void setInteractive(boolean interactive) {
-	 if (isInteractive != interactive) {
-	       isInteractive = interactive;
-	     if (owner instanceof MIDPWindow) {
+        if (isInteractive != interactive) {
+            isInteractive = interactive;
+            if (owner instanceof MIDPWindow) {
                 ((MIDPWindow)owner).onSoftButtonInteractive(isInteractive);
             }
         }
@@ -273,6 +273,7 @@ public class SoftButtonLayer extends CLayer implements CommandListener {
 
         // reset the commands
         soft1 = null;
+        soft2 = null;
 
         if (numS > 0) {
             int index = -1;
@@ -335,8 +336,12 @@ public class SoftButtonLayer extends CLayer implements CommandListener {
                 soft2 = null;
                 break;
             case 1:
-                soft2 = new Command[1];
-                soft2[0] = (numI > 0) ? this.itmCmds[0] : this.scrCmds[0];
+                if (soft1 == null) {
+                    soft1 = (numI > 0) ? this.itmCmds[0] : this.scrCmds[0];
+                } else {
+                    soft2 = new Command[1];
+                    soft2[0] = (numI > 0) ? this.itmCmds[0] : this.scrCmds[0];
+                }
                 break;
             default:
                 soft2 = new Command[numI + numS];
@@ -404,7 +409,7 @@ public class SoftButtonLayer extends CLayer implements CommandListener {
         if (keyCode == EventConstants.SOFT_BUTTON1) {
             if (isSoft1Active()) {
                 if (type == EventConstants.PRESSED) {
-                        setInteractive(true);
+                    setInteractive(true);
                     ret = true;
                 } else if (type == EventConstants.RELEASED) {
                     soft1();
@@ -414,7 +419,7 @@ public class SoftButtonLayer extends CLayer implements CommandListener {
         } else if (keyCode == EventConstants.SOFT_BUTTON2) {
             if (isSoft2Active()) {
                 if (type == EventConstants.PRESSED) {
-                        setInteractive(true);
+                    setInteractive(true);
                     ret = true;
                 } else if (type == EventConstants.RELEASED) {
                     soft2();
@@ -732,14 +737,14 @@ public class SoftButtonLayer extends CLayer implements CommandListener {
             labels[1] = SoftButtonSkin.TEXT_MENUCMD;
         }
 
-        if (isNativeLayer) { 
-	// paint buttons on native layer instead of java's SFBLayer
-	    setNativeSoftButtonLabel0 (labels[0],0);
-	    setNativeSoftButtonLabel0 (labels[1],1);
-	 } else {
-	    addDirtyRegion();
-	    requestRepaint();
- 	 }
+        if (isNativeLayer) {
+            // paint buttons on native layer instead of java's SFBLayer
+            setNativeSoftButtonLabel0 (labels[0],0);
+            setNativeSoftButtonLabel0 (labels[1],1);
+        } else {
+            addDirtyRegion();
+            requestRepaint();
+        }
     }
 
     /**
@@ -819,11 +824,11 @@ public class SoftButtonLayer extends CLayer implements CommandListener {
      * @param g the graphics context to be updated
      */
     protected void paintBody(Graphics g) {
-    
-	//paint nothing when using native layer
-	if (isNativeLayer){
-	    return;
-	}
+
+        //paint nothing when using native layer
+        if (isNativeLayer) {
+            return;
+        }
 
         g.setFont(SoftButtonSkin.FONT);
 
