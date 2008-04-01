@@ -80,9 +80,9 @@
 #include <javacall_odd.h>
 #endif /* ENABLE_ON_DEVICE_DEBUG */
 
-#include "midp_thread.h"
 
 #if ENABLE_SLAVE_MODE_EVENTS
+#include "midp_thread.h"
 #include "midp_slavemode_port.h"
 extern javacall_result midpHandleStartEvent(midp_jc_event_start_arbitrary_arg startMidletEvent);
 #endif
