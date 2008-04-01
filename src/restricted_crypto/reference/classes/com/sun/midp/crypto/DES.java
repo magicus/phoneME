@@ -65,40 +65,7 @@ public class DES extends Cipher {
 
     /**
      * Initializes this cipher with a key and a set of algorithm
-     * parameters.
-     *
-     * <p>The cipher is initialized for one of the following  operations:
-     * encryption or decryption depending
-     * on the value of <code>opmode</code>.
-     *
-     * <p>If this cipher requires any algorithm parameters and
-     * <code>params</code> is null, the underlying cipher implementation is
-     * supposed to generate the required parameters itself (using
-     * provider-specific default or random values) if it is being
-     * initialized for encryption, and raise an
-     * <code>InvalidAlgorithmParameterException</code> if it is being
-     * initialized for decryption.
-     *
-     * <p>Note that when a Cipher object is initialized, it loses all
-     * previously-acquired state. In other words, initializing a Cipher is
-     * equivalent to creating a new instance of that Cipher and initializing
-     * it.
-     *
-     * @param opmode the operation mode of this cipher (this is one of the
-     * following:
-     * <code>ENCRYPT_MODE</code> or <code>DECRYPT_MODE</code>)
-     * @param key the encryption key
-     * @param params the algorithm parameters
-     *
-     * @exception InvalidKeyException if the given key is inappropriate for
-     * initializing this cipher, or its keysize exceeds the maximum allowable
-     * keysize.
-     * @exception InvalidAlgorithmParameterException if the given algorithm
-     * parameters are inappropriate for this cipher,
-     * or this cipher is being initialized for decryption and requires
-     * algorithm parameters and <code>params</code> is null, or the given
-     * algorithm parameters imply a cryptographic strength that would exceed
-     * the legal limits.
+     * parameters.     
      */
     public void init(int opmode, Key key, CryptoParameter params)
             throws InvalidKeyException, InvalidAlgorithmParameterException {
@@ -108,39 +75,7 @@ public class DES extends Cipher {
     /**
      * Continues a multiple-part encryption or decryption operation
      * (depending on how this cipher was initialized), processing another data
-     * part.
-     *
-     * <p>The first <code>inputLen</code> bytes in the <code>input</code>
-     * buffer, starting at <code>inputOffset</code> inclusive, are processed,
-     * and the result is stored in the <code>output</code> buffer, starting at
-     * <code>outputOffset</code> inclusive.
-     *
-     * <p>If the <code>output</code> buffer is too small to hold the result,
-     * a <code>ShortBufferException</code> is thrown. In this case, repeat this
-     * call with a larger output buffer.
-     *
-     * <p>If <code>inputLen</code> is zero, this method returns
-     * a length of zero.
-     *
-     * <p>Note: this method should be copy-safe, which means the
-     * <code>input</code> and <code>output</code> buffers can reference
-     * the same byte array and no unprocessed input data is overwritten
-     * when the result is copied into the output buffer.
-     *
-     * @param input the input buffer
-     * @param inputOffset the offset in <code>input</code> where the input
-     * starts
-     * @param inputLen the input length
-     * @param output the buffer for the result
-     * @param outputOffset the offset in <code>output</code> where the result
-     * is stored
-     *
-     * @return the number of bytes stored in <code>output</code>
-     *
-     * @exception IllegalStateException if this cipher is in a wrong state
-     * (e.g., has not been initialized)
-     * @exception ShortBufferException if the given output buffer is too small
-     * to hold the result
+     * part.     
      */
     public int update(byte[] input, int inputOffset, int inputLen,
                                byte[] output, int outputOffset)
@@ -152,55 +87,7 @@ public class DES extends Cipher {
     /**
      * Encrypts or decrypts data in a single-part operation, or finishes a
      * multiple-part operation. The data is encrypted or decrypted,
-     * depending on how this cipher was initialized.
-     *
-     * <p>The first <code>inputLen</code> bytes in the <code>input</code>
-     * buffer, starting at <code>inputOffset</code> inclusive, and any input
-     * bytes that may have been buffered during a previous
-     * <code>update</code> operation, are processed, with padding
-     * (if requested) being applied.
-     * The result is stored in the <code>output</code> buffer, starting at
-     * <code>outputOffset</code> inclusive.
-     *
-     * <p>If the <code>output</code> buffer is too small to hold the result,
-     * a <code>ShortBufferException</code> is thrown. In this case, repeat this
-     * call with a larger output buffer.
-     *
-     * <p>Upon finishing, this method resets this cipher object to the state
-     * it was in when previously initialized via a call to <code>init</code>.
-     * That is, the object is reset and available to encrypt or decrypt
-     * (depending on the operation mode that was specified in the call to
-     * <code>init</code>) more data.
-     *
-     * <p>Note: if any exception is thrown, this cipher object may need to
-     * be reset before it can be used again.
-     *
-     * <p>Note: this method should be copy-safe, which means the
-     * <code>input</code> and <code>output</code> buffers can reference
-     * the same byte array and no unprocessed input data is overwritten
-     * when the result is copied into the output buffer.
-     *
-     * @param input the input buffer
-     * @param inputOffset the offset in <code>input</code> where the input
-     * starts
-     * @param inputLen the input length
-     * @param output the buffer for the result
-     * @param outputOffset the offset in <code>output</code> where the result
-     * is stored
-     *
-     * @return the number of bytes stored in <code>output</code>
-     *
-     * @exception IllegalStateException if this cipher is in a wrong state
-     * (e.g., has not been initialized)
-     * @exception IllegalBlockSizeException if this cipher is a block cipher,
-     * no padding has been requested (only in encryption mode), and the total
-     * input length of the data processed by this cipher is not a multiple of
-     * block size
-     * @exception ShortBufferException if the given output buffer is too small
-     * to hold the result
-     * @exception BadPaddingException if this cipher is in decryption mode,
-     * and (un)padding has been requested, but the decrypted data is not
-     * bounded by the appropriate padding bytes
+     * depending on how this cipher was initialized.     
      */
     public int doFinal(byte[] input, int inputOffset, int inputLen,
         byte[] output, int outputOffset)

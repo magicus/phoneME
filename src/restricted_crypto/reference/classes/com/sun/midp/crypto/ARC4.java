@@ -230,55 +230,7 @@ public final class ARC4 extends Cipher {
     /**
      * Encrypts or decrypts data in a single-part operation, or finishes a
      * multiple-part operation. The data is encrypted or decrypted,
-     * depending on how this cipher was initialized.
-     *
-     * <p>The first <code>inputLen</code> bytes in the <code>input</code>
-     * buffer, starting at <code>inputOffset</code> inclusive, and any input
-     * bytes that may have been buffered during a previous
-     * <code>update</code> operation, are processed, with padding
-     * (if requested) being applied.
-     * The result is stored in the <code>output</code> buffer, starting at
-     * <code>outputOffset</code> inclusive.
-     *
-     * <p>If the <code>output</code> buffer is too small to hold the result,
-     * a <code>ShortBufferException</code> is thrown. In this case, repeat this
-     * call with a larger output buffer.
-     *
-     * <p>Upon finishing, this method resets this cipher object to the state
-     * it was in when previously initialized via a call to <code>init</code>.
-     * That is, the object is reset and available to encrypt or decrypt
-     * (depending on the operation mode that was specified in the call to
-     * <code>init</code>) more data.
-     *
-     * <p>Note: if any exception is thrown, this cipher object may need to
-     * be reset before it can be used again.
-     *
-     * <p>Note: this method should be copy-safe, which means the
-     * <code>input</code> and <code>output</code> buffers can reference
-     * the same byte array and no unprocessed input data is overwritten
-     * when the result is copied into the output buffer.
-     *
-     * @param input the input buffer
-     * @param inputOffset the offset in <code>input</code> where the input
-     * starts
-     * @param inputLen the input length
-     * @param output the buffer for the result
-     * @param outputOffset the offset in <code>output</code> where the result
-     * is stored
-     *
-     * @return the number of bytes stored in <code>output</code>
-     *
-     * @exception IllegalStateException if this cipher is in a wrong state
-     * (e.g., has not been initialized)
-     * @exception IllegalBlockSizeException if this cipher is a block cipher,
-     * no padding has been requested (only in encryption mode), and the total
-     * input length of the data processed by this cipher is not a multiple of
-     * block size
-     * @exception ShortBufferException if the given output buffer is too small
-     * to hold the result
-     * @exception BadPaddingException if this cipher is in decryption mode,
-     * and (un)padding has been requested, but the decrypted data is not
-     * bounded by the appropriate padding bytes
+     * depending on how this cipher was initialized.     
      */
     public int doFinal(byte[] input, int inputOffset, int inputLen,
                        byte[] output, int outputOffset)
