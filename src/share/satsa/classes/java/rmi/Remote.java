@@ -26,18 +26,5 @@
 
 package java.rmi;
 
-/** 
- * The <code>Remote</code> interface serves to identify interfaces whose
- * methods may be invoked from a non-local virtual machine.  Any object that
- * is a remote object MUST directly or indirectly implement this interface.
- * Only those methods specified in a remote interface, that is, an 
- * interface that
- * extends <code>java.rmi.Remote</code>, are available remotely.
- *
- * <p>Implementation classes can implement any number of remote interfaces and
- * can extend other remote implementation classes. 
- *
- * @version 1.12, 12/03/01
- * @since   JDK1.1
- */
+// JAVADOC COMMENT ELIDED
 public interface Remote {}

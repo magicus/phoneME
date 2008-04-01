@@ -468,41 +468,7 @@ public class Protocol
      */
     private static final byte ErrorTag = (byte) 0x99;
 
-    /**
-     * Invokes a remote method.
-     *
-     * The remote method invoked on the card can throw an exception to
-     * signal that an unexpected condition has been detected.<p>
-     *
-     * If the exception thrown on the card is an exception defined in
-     * the Java Card 2.2 API, then the same exception is thrown to the
-     * stub method. The client can access the reason code associated
-     * with Java Card-specific exceptions using the standard
-     * <code>getReason()</code> method.<p>
-     *
-     * If the exception thrown on the card is a subclass of an exception
-     * defined in the Java Card 2.2 API, then the closest exception defined
-     * in the API (along with the reason code, if applicable) is
-     * thrown to the stub method. The detail message string of the
-     * exception object may indicate that exception subclass was thrown
-     * on the card.<p>
-     *
-     * Apart from the exceptions thrown by the remote method itself,
-     * errors during communication, marshalling, protocol handling,
-     * unmarshalling, stub object instantiation, and so on, related
-     * to the JCRMI method invocation, results in a
-     * <code>RemoteException</code> being thrown to the stub method.
-     *
-     * @param ref handle for remote object
-     * @param method simple (not fully qualified) name of the method
-     *        followed by the method descriptor. Representation of a
-     *        method descriptor is the same as that described in The
-     *        Java Virtual Machine Specification (&#167 4.3.3)
-     * @param params the parameter list
-     * @return result of remote method invocation
-     * @exception java.lang.Exception if any exception occurs during
-     *            the remote method invocation
-     */
+    // JAVADOC COMMENT ELIDED
     Object invoke(Reference ref, String method, Object[] params)
             throws Exception {
 
@@ -894,91 +860,22 @@ public class Protocol
         throw new IllegalArgumentException("Not supported");
     }
 
-    /**
-     * A call to enterPin method pops up a UI that requests the PIN
-     * from the user. The pinID field indicates which PIN must be
-     * requested from the user. The user can either cancel the request
-     * or continue. If the user enters the PIN and chooses to continue,
-     * The implementation is responsible for
-     * presenting the PIN entered by the user to the card for verification.
-     * @param pinID the type of PIN the implementation is suppose to prompt
-     * the user to enter.
-     * @return PINENTRY_CANCELLED if the user cancelled the PIN entry
-     * request or the value returned by the remote method.
-     * @exception java.rmi.RemoteException is thrown if the PIN could
-     * not be communicated to the card or an exception is thrown
-     * by the card in response to the PIN entry.
-     * @exception SecurityException is thrown if the J2ME application does
-     * not have appropriate rights to ask for PIN verification.
-     */
+    // JAVADOC COMMENT ELIDED
     public short enterPin(int pinID) throws java.rmi.RemoteException {
         return doEnterPin(pinID, 0, ACLPermissions.CMD_VERIFY);
     }
 
-    /**
-     * A call to <code>changePin</code> method pops up a UI that requests
-     * the user for an old or existing PIN value and the new PIN value to
-     * to change the value of the PIN. The pinID field indicates which PIN is
-     * to be changed. The user can either cancel the request
-     * or continue. If the user enters the PIN values and chooses to continue
-     * the implementation is responsible for presenting the
-     * the old and new values of the PIN to the card.
-     * @param pinID the type of PIN the implementation is suppose to prompt
-     * the user to change.
-     * @return PINENTRY_CANCELLED if the user cancelled the PIN entry
-     * request or the value returned by the remote method.
-     * @exception java.rmi.RemoteException is thrown if the PIN could
-     * not be communicated to the card or an exception is thrown
-     * by the card in response to the PIN entry.
-     * @exception SecurityException is thrown if the J2ME application does
-     * not have appropriate rights to ask for changing the PIN value.
-     */
+    // JAVADOC COMMENT ELIDED
     public short changePin(int pinID) throws RemoteException {
         return doEnterPin(pinID, 0, ACLPermissions.CMD_CHANGE);
     }
 
-    /**
-     * A call to <code>disablePin</code> method pops up a UI that requests
-     * the user to enter the value for the PIN that is to be disabled.
-     * The pinID field
-     * indicates which PIN is to be disabled. The user can
-     * either cancel the request
-     * or continue. If the user enters the PIN and chooses to continue the
-     * implementation is responsible
-     * for presenting the PIN value to the card to disable PIN.
-     * @param pinID the type of PIN the implementation is required to prompt
-     * the user to enter.
-     * @return PINENTRY_CANCELLED if the user cancelled the PIN entry
-     * request or the value returned by the remote method.
-     * @exception java.rmi.RemoteException is thrown if the PIN could
-     * not be communicated to the card or an exception is thrown
-     * by the card in response to the PIN entry.
-     * @exception SecurityException is thrown if the J2ME application does
-     * not have appropriate rights to ask for disabling the PIN.
-     */
+    // JAVADOC COMMENT ELIDED
     public short disablePin(int pinID) throws RemoteException {
         return doEnterPin(pinID, 0, ACLPermissions.CMD_DISABLE);
     }
 
-    /**
-     * A call to <code>enablePin</code> method pops up a UI that requests
-     * the user to enter the value for the PIN that is to be enabled.
-     * The pinID field
-     * indicates which PIN is to be enabled. The user can
-     * either cancel the request
-     * or continue. If the user enters the PIN and chooses to continue the
-     * implementation is responsible
-     * for presenting the PIN value to the card for enabling the PIN.
-     * @param pinID the type of PIN the implementation is required to prompt
-     * the user to enter.
-     * @return PINENTRY_CANCELLED if the user cancelled the PIN entry
-     * request or the value returned by the remote method.
-     * @exception java.rmi.RemoteException is thrown if the PIN could
-     * not be communicated to the card or an exception is thrown
-     * by the card in response to the PIN entry.
-     * @exception SecurityException is thrown if the J2ME application does
-     * not have appropriate rights to ask for enabling the PIN.
-     */
+    // JAVADOC COMMENT ELIDED
     public short enablePin(int pinID) throws RemoteException {
         return doEnterPin(pinID, 0, ACLPermissions.CMD_ENABLE);
     }
