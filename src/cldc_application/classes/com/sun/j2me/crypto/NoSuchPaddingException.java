@@ -27,8 +27,7 @@
 package com.sun.j2me.crypto;
 
 /** 
- * This exception is thrown when a particular padding mechanism is
- * requested but is not available in the environment.
+ * This exception is thrown if there is no requested padding mechanism
  */
 public class NoSuchPaddingException extends com.sun.midp.crypto.NoSuchPaddingException {
     public NoSuchPaddingException(String string) {

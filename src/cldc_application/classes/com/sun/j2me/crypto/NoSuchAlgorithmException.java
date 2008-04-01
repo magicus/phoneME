@@ -27,8 +27,7 @@
 package com.sun.j2me.crypto;
 
 /**
- * This exception is thrown when a particular cryptographic algorithm is
- * requested but is not available in the environment.
+ * This exception is thrown if there is no requeted cryptographic algorithm
  */
 
 public class NoSuchAlgorithmException extends com.sun.midp.crypto.NoSuchAlgorithmException {

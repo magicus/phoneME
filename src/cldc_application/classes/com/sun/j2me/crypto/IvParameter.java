@@ -33,24 +33,10 @@
 package com.sun.j2me.crypto;
 
 /**
- * This class specifies an <i>initialization vector</i> (IV).
- * Examples which use IVs are ciphers in feedback mode, e.g., DES in
- * CBC mode and RSA ciphers with OAEP encoding operation.
+ * This class specifies an <i>initialization vector</i>.
  */
 public class IvParameter extends com.sun.midp.crypto.IvParameter implements CryptoParameter {
 
-  /**
-   * Uses the first <code>len</code> bytes in <code>iv</code>,
-   * beginning at <code>offset</code> inclusive, as the IV.
-   *
-   * <p> The bytes that constitute the IV are those between
-   * <code>iv[offset]</code> and <code>iv[offset+len-1]</code> inclusive.
-   *
-   * @param iv the buffer with the IV
-   * @param offset the offset in <code>iv</code> where the IV
-   * starts
-   * @param len the number of IV bytes
-   */
     public IvParameter(byte[] iv, int offset, int len) {
         super(iv, offset, len);
     }
