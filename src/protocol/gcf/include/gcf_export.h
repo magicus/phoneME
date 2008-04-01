@@ -57,9 +57,21 @@ extern "C" {
  *
  * @return the name of this device
  */
-extern char* getLocalHostName();
+extern char* getLocalHostName(void);
 
+extern void setMidpNetworkConnected(void);
 
+/* Sets midp network state as disconnected */
+extern void unsetMidpNetworkConnected(void);
+
+/* Returns the status of midp networking: connected/disconnected */
+extern int isMidpNetworkConnected(void);
+
+extern int initializeMidpNetwork(void);
+
+extern void cancelNetworkClose(void);
+
+extern void requestNetworkClose(void);
 #ifdef __cplusplus
 }
 #endif

@@ -153,7 +153,8 @@ typedef enum {
 
 typedef enum {
     MIDP_NETWORK_UP         = 1000,
-    MIDP_NETWORK_DOWN       = 1001
+    MIDP_NETWORK_DOWN       = 1001,
+    MIDP_NETWORK_DOWN_REQUEST  = 1002
 } midp_network_event_type;
 
 #ifdef ENABLE_JSR_177

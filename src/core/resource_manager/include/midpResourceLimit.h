@@ -111,6 +111,13 @@ extern int midpIncResourceCount(RscType type, int delta);
  */
 extern int midpDecResourceCount(RscType type, int delta);
 
+/**
+ * Checks if there is socket in use.
+ *
+ * @return 1 if there is socket in use, otherwise 0
+ */
+extern int midpCheckSocketInUse(void);
+
 #ifdef __cplusplus
 }
 #endif

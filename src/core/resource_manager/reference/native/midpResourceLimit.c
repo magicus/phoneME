@@ -576,3 +576,35 @@ void midpFreeReservedResources() {
         }
     }
 }
+
+/**
+ * Checks if there is socket in use.
+ *
+ * @return 1 if there is socket in use, otherwise 0
+ */
+int midpCheckSocketInUse(void) {
+    int i;
+    int rtn = 0;
+
+    for(i =0; i < MAX_ISOLATES; i++) {
+        if(0 == gIsolateResourceUsage[i].inUse)
+            continue;
+
+        if ( (0 != gIsolateResourceUsage[i].resourceUsage[RSC_TYPE_TCP_CLI])
+           || (0 != gIsolateResourceUsage[i].resourceUsage[RSC_TYPE_TCP_SER])
+           || (0 != gIsolateResourceUsage[i].resourceUsage[RSC_TYPE_UDP]) ) {
+            REPORT_INFO4(LC_PROTOCOL, "midpCheckSocketInUse: isolate=%d, client=%d, server=%d, udp=%d\n"
+                    , gIsolateResourceUsage[i].isolateId
+                    , gIsolateResourceUsage[i].resourceUsage[RSC_TYPE_TCP_CLI]
+                    , gIsolateResourceUsage[i].resourceUsage[RSC_TYPE_TCP_SER]
+                    , gIsolateResourceUsage[i].resourceUsage[RSC_TYPE_UDP]);
+            rtn = 1;
+            break;
+        }
+    }
+    if(0 == rtn) {
+        REPORT_INFO(LC_PROTOCOL, "midpCheckSocketInUse: No socket is in use\n");
+    }
+
+    return rtn;
+}

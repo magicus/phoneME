@@ -126,6 +126,12 @@ static jfieldID stringParam6FieldID;
  * @return an event queue
  */
 static EventQueue* getIsolateEventQueue(int isolateId) {
+    if (NULL == pEventQueues) {
+        REPORT_CRIT(LC_CORE,
+            "Assertion failed: getIsolateEventQueue() "
+            "ERROR!!! called while pEventQueues is NULL!!!");
+        return NULL;
+    }
     /*
      * Note: Using Isolate IDs as an event queue array index is only done
      * here for performance reasons and should NOT
@@ -214,6 +220,9 @@ static int
 getPendingMIDPEvent(MidpEvent* pResult, int isolateId) {
     EventQueue* pEventQueue = getIsolateEventQueue(isolateId);
 
+    if (NULL == pEventQueue) {
+        return -1;
+    }
     if (pEventQueue->numEvents == 0) {
         return -1;
     }
@@ -339,6 +348,9 @@ static void StoreMIDPEventInVmThreadImp(MidpEvent event, int isolateId) {
     JVMSPI_ThreadID thread;
 
     pEventQueue = getIsolateEventQueue(isolateId);
+    if (NULL == pEventQueue) {
+        return;
+    }
 
     midp_logThreadId("StoreMIDPEventInVmThread");
 
@@ -530,6 +542,9 @@ Java_com_sun_midp_events_NativeEventMonitor_waitForNativeEvent(void) {
     }
 
     pEventQueue = getIsolateEventQueue(isolateId);
+    if (NULL == pEventQueue) {
+        KNI_ReturnInt(0);
+    }
 
     if (pEventQueue->isMonitorBlocked) {
         /*

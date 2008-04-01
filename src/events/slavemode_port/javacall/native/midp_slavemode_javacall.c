@@ -202,6 +202,10 @@ void checkForSystemSignal(MidpReentryData* pNewSignal,
         pNewSignal->status     = event->data.socketEvent.status;
         pNewSignal->pResult    = (void *) event->data.socketEvent.extraData;
         break;
+    case MIDP_JC_EVENT_NETWORK:
+        pNewSignal->waitingFor = NETWORK_INIT_SIGNAL;
+        pNewSignal->status = event->data.networkEvent.netType;
+        break;
     case MIDP_JC_EVENT_END:
         pNewSignal->waitingFor = AMS_SIGNAL;
         pNewMidpEvent->type    = SHUTDOWN_EVENT;
@@ -401,6 +405,7 @@ void checkForSystemSignal(MidpReentryData* pNewSignal,
 #endif /* ENABLE_JSR_256 */
     default:
         REPORT_ERROR(LC_CORE,"Unknown event.\n");
+
         break;
     };
 
@@ -470,7 +475,38 @@ void midp_slave_handle_events(JVMSPI_BlockedThreadInfo *blocked_threads, int blo
         eventUnblockJavaThread(blocked_threads, blocked_threads_count,
             NETWORK_WRITE_SIGNAL, newSignal.descriptor,
             newSignal.status);
-        return; 
+        return;
+
+    case NETWORK_INIT_SIGNAL:
+        if(MIDP_NETWORK_UP == newSignal.status) {
+            midp_thread_signal_list(blocked_threads,
+                    blocked_threads_count, NETWORK_INIT_SIGNAL, 0, PCSL_NET_SUCCESS);
+        } else if(MIDP_NETWORK_DOWN == newSignal.status) {
+            /* Wakeup all network threads. */
+            midp_thread_signal_list(blocked_threads,              
+                    blocked_threads_count, NETWORK_INIT_SIGNAL, 0, PCSL_NET_IOERROR);
+            midp_thread_signal_list(blocked_threads,
+                    blocked_threads_count, NETWORK_READ_SIGNAL, 0, PCSL_NET_IOERROR);
+            midp_thread_signal_list(blocked_threads,
+                    blocked_threads_count, NETWORK_WRITE_SIGNAL, 0, PCSL_NET_IOERROR);
+            midp_thread_signal_list(blocked_threads,
+                    blocked_threads_count, NETWORK_EXCEPTION_SIGNAL, 0, PCSL_NET_IOERROR);
+            midp_thread_signal_list(blocked_threads,
+                    blocked_threads_count, HOST_NAME_LOOKUP_SIGNAL, 0, PCSL_NET_IOERROR);
+            if(isMidpNetworkConnected()) {
+                unsetMidpNetworkConnected();
+                REPORT_INFO(LC_PROTOCOL, "midp_check_events: network down from server side");
+            }
+        } else if(MIDP_NETWORK_DOWN_REQUEST == newSignal.status) {
+            if(isMidpNetworkConnected()) {
+                if (0 == midpCheckSocketInUse()) {
+                    pcsl_network_finalize_start();
+                    unsetMidpNetworkConnected();
+                    REPORT_INFO(LC_PROTOCOL, "midp_check_events: network closed by MIDP_NETWORK_DOWN_REQUEST");
+                }
+            }
+        }
+        break;
 
     case PUSH_ALARM_SIGNAL:
         if (findPushTimerBlockedHandle(newSignal.descriptor) != 0) {
