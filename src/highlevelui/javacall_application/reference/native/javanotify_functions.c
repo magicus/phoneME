@@ -310,7 +310,70 @@ void javanotify_start_tck(char *tckUrl, javacall_lifecycle_tck_domain domain_typ
     midp_jc_event_union e;
     midp_jc_event_start_arbitrary_arg *data = &e.data.startMidletArbitraryArgEvent;
 
+#if ENABLE_SLAVE_MODE_EVENTS
+    int main_memory_chunk_size = -1;
+    char *prop_val = NULL;
+    int argc = 0;
+    char *argv[MIDP_RUNMIDLET_MAXIMUM_ARGS];
+    javacall_result res;
+#endif
+
     REPORT_INFO2(LC_CORE,"javanotify_start_tck() >> tckUrl=%s, domain_type=%d \n",tckUrl,domain_type);
+
+#if ENABLE_SLAVE_MODE_EVENTS
+    JVM_SetConfig(JVM_CONFIG_SLAVE_MODE, KNI_TRUE);
+
+    midp_thread_set_timeslice_proc(midp_slavemode_port_schedule_vm_timeslice);
+    JVM_Initialize();
+    if (javacall_get_property("MAIN_MEMORY_CHUNK_SIZE", JAVACALL_INTERNAL_PROPERTY, &prop_val) == JAVACALL_OK &&
+        (javautil_string_parse_int(prop_val, &main_memory_chunk_size) != JAVACALL_OK ||
+            main_memory_chunk_size <= 0)) {
+        /* Java heap supposed to be more than 0 */
+        REPORT_ERROR1(LC_AMS, "javanotify_start_tck(): MAIN_MEMORY_CHUNK_SIZE is incorrect or too low = %d!"
+                      "Default value will be used!\n", main_memory_chunk_size);
+        return;
+    }
+    if (main_memory_chunk_size <= 0) {
+        main_memory_chunk_size = 5*1024*1024 + 200*1024;
+    }
+
+    if (midpInitializeMemory(main_memory_chunk_size) != 0) {
+        REPORT_ERROR(LC_AMS, "javanotify_start_tck(): Cannot initialize MIDP memory\n");
+        return;
+    }
+    argv[argc++] = "runMidlet";
+    argv[argc++] = "-1";
+    argv[argc++] = "com.sun.midp.installer.AutoTester";
+
+    length = strlen(tckUrl);
+    if (length >= BINARY_BUFFER_MAX_LEN)
+        return;
+    
+    memset(urlAddress, 0, BINARY_BUFFER_MAX_LEN);
+    memcpy(urlAddress, tckUrl, length);
+    if (strcmp(urlAddress, "none") != 0) {
+        argv[argc++] = urlAddress;
+    }
+
+    if (domain_type == JAVACALL_LIFECYCLE_TCK_DOMAIN_UNTRUSTED) {
+        argv[argc++] = "untrusted";
+    } else if (domain_type == JAVACALL_LIFECYCLE_TCK_DOMAIN_TRUSTED) {
+        argv[argc++] = "trusted";
+    } else if (domain_type == JAVACALL_LIFECYCLE_TCK_DOMAIN_UNTRUSTED_MIN) {
+        argv[argc++] = "minimum";
+    } else if (domain_type == JAVACALL_LIFECYCLE_TCK_DOMAIN_UNTRUSTED_MAX) {
+        argv[argc++] = "maximum";
+    } else {
+        return;
+    }
+
+    javacall_lifecycle_state_changed(JAVACALL_LIFECYCLE_MIDLET_STARTED, JAVACALL_OK);
+    
+    res = runMidlet(argc, argv);
+
+    javacall_lifecycle_state_changed(JAVACALL_LIFECYCLE_MIDLET_SHUTDOWN, (res == 1) ? JAVACALL_OK: JAVACALL_FAIL);
+
+#else /* if ENABLE_SLAVE_MODE_EVENTS */
 
     e.eventType = MIDP_JC_EVENT_START_ARBITRARY_ARG;
 
@@ -343,6 +406,7 @@ void javanotify_start_tck(char *tckUrl, javacall_lifecycle_tck_domain domain_typ
     }
 
     midp_jc_event_send(&e);
+#endif /* if ENABLE_SLAVE_MODE_EVENTS */
 }
 
 /**
