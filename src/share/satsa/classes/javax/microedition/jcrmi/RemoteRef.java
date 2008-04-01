@@ -40,48 +40,7 @@ import java.rmi.RemoteException;
 
 public interface RemoteRef {
 
-    /**
-     * Invokes a remote method.
-     * <p>A remote method invocation consists of three steps:</p>
-     * <ol>
-     * <li>Marshall the representation for the method and parameters.</li>
-     * <li>Communicate the method invocation to the host and unmarshall the
-     * return value or exception returned.</li>
-     * <li>Return the result of the method invocation to the caller.</li>
-     * </ol>
-     *
-     * The remote method invoked on the card can throw an exception to
-     * signal that an unexpected condition has been detected.<p>
-     *
-     * If the exception thrown on the card is an exception defined in
-     * the Java Card 2.2 API, then the same exception is thrown to the
-     * stub method. The client can access the reason code associated
-     * with Java Card-specific exceptions using the standard
-     * <code>getReason()</code> method.<p>
-     *
-     * If the exception thrown on the card is a subclass of an exception
-     * defined in the Java Card 2.2 API, then the closest exception defined
-     * in the API (along with the reason code, if applicable) is
-     * thrown to the stub method. The detail message string of the
-     * exception object may indicate that exception subclass was thrown
-     * on the card.<p>
-     *
-     * Apart from the exceptions thrown by the remote method itself,
-     * errors during communication, marshalling, protocol handling,
-     * unmarshalling, stub object instantiation, and so on, related
-     * to the JCRMI method invocation, results in a
-     * <code>RemoteException</code> being thrown to the stub method.
-     *
-     * @param method simple (not fully qualified) name of the method
-     *        followed by the method descriptor. Representation of a
-     *        method descriptor is the same as that described in The
-     *        Java Virtual Machine Specification (section 4.3.3)     
-     * @param params the parameter list
-     * @return result of remote method invocation
-     * @exception java.lang.Exception if any exception occurs during
-     *            the remote method invocation
-     */
-
+    // JAVADOC COMMENT ELIDED
     public Object invoke(String method, Object[] params) throws Exception;
 
     /**
