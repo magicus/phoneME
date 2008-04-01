@@ -125,7 +125,7 @@ information or have any questions.
                         <xsl:value-of select="$level"/>
                     </xsl:when>
                     <xsl:when test="$action='utest-get-value'">
-                        <xsl:text>                    else if(</xsl:text>
+                        <xsl:text>                    else if (</xsl:text>
                         <xsl:value-of select="concat($action-arg0,$keyname)"/>
                         <xsl:text>.equals(key)) return "&lt;</xsl:text>
                         <xsl:value-of select="$varname"/>

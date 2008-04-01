@@ -25,7 +25,7 @@
 package com.sun.ams.ui;
 
 public abstract class BaseScreen implements StringIds {
-    private ScreenContents      contents;
+    BaseScreenStack             stack;
     private ScreenProperties    props;
 
     private static String localizeString(int id) {
@@ -37,13 +37,13 @@ public abstract class BaseScreen implements StringIds {
 
         int startIndex = 0;
         int token = format.indexOf('%');
-        while(0 <= token) {
+        while (0 <= token) {
             returnString.append(format.substring(startIndex, token));
 
             // Get char after '%'. That char is within the ['0','9'] range,
             // or it is escaped '%'.
             int chr = format.charAt(token + 1);
-            if('%' != chr) {
+            if ('%' != chr) {
                 // Convert chr into args array index.
                 int argIdx = chr - '0';
 
@@ -70,58 +70,15 @@ public abstract class BaseScreen implements StringIds {
         return props.get(key);
     }
 
-    abstract protected ScreenContents createScreenContents();
-
     BaseScreen(ScreenProperties props) {
         this.props = props;
-    }
-
-    public synchronized void show() {
-        if(null == contents) {
-            contents = createScreenContents();
-        }
-
-        contents.show();
-    }
-
-    public synchronized void waitHide(long millis) {
-        if(null != contents) {
-            try {
-                while(contents.isShown()) {
-                    wait(millis);
-                }
-            } catch(InterruptedException e) {
-                e.printStackTrace();
-            }
-        }
-    }
-
-    public synchronized void hide() {
-        while(null != contents && contents.isShown()) {
-            contents.hide();
-        }
-
-        notifyAll();
-    }
-
-    public void showAndWait() {
-        showAndWait(Long.MAX_VALUE);
-    }
-
-    public void showAndWait(long millis) {
-        show();
-        waitHide(millis);
-    }
-
-    public void waitHide() {
-        waitHide(Long.MAX_VALUE);
     }
 
     private static void
     test(String format, String expected) {
         String res =
             BaseScreen.printfImpl(format, new Object[] { "One", "Two" });
-        if(!expected.equals(res)) {
+        if (!expected.equals(res)) {
             throw new RuntimeException();
         }
     }

@@ -41,7 +41,7 @@ information or have any questions.
     </xsl:template>
 
     <xsl:template match="screen" mode="Screen-complete-define">
-        <xsl:text>    protected Displayable getDisplayable() {&#10;</xsl:text>
+        <xsl:text>    protected Displayable createDisplayable() {&#10;</xsl:text>
         <xsl:apply-templates select="." mode="LCDUI-create-displayable"/>
         <xsl:text>&#10;</xsl:text>
         <xsl:if test="descendant::dynamic-option|descendant::dynamic-command">
@@ -99,7 +99,7 @@ information or have any questions.
 
     <xsl:template match="*" mode="LCDUI-map-command">
         <xsl:if test="position() = 1">
-            <xsl:text>                if(false) {&#10;</xsl:text>
+            <xsl:text>                if (false) {&#10;</xsl:text>
             <xsl:text>                } </xsl:text>
         </xsl:if>
         <xsl:text>else if (</xsl:text>
@@ -108,7 +108,7 @@ information or have any questions.
         <xsl:text>                    int commandId = -1;&#10;</xsl:text>
         <xsl:text>                    int commandIdIdx = -1;&#10;</xsl:text>
         <xsl:apply-templates select="." mode="LCDUI-map-item-to-command-id"/>
-        <xsl:text>                    if(commandIdIdx == -1)&#10;</xsl:text>
+        <xsl:text>                    if (commandIdIdx == -1)&#10;</xsl:text>
         <xsl:text>                        listener.onCommand(</xsl:text>
         <xsl:apply-templates select="ancestor::screen" mode="Screen-classname"/>
         <xsl:text>.this, commandId);&#10;</xsl:text>
@@ -148,7 +148,7 @@ information or have any questions.
         <xsl:text>        counter = </xsl:text>
         <xsl:apply-templates select="." mode="LCDUI-baseidx"/>
         <xsl:text>;&#10;</xsl:text>
-        <xsl:text>        for(Enumeration e = (Enumeration)getProperty("</xsl:text>
+        <xsl:text>        for (Enumeration e = (Enumeration)getProperty("</xsl:text>
         <xsl:apply-templates select="." mode="Screen-command-id"/>
         <xsl:text>") ; e.hasMoreElements(); ++counter) {&#10;</xsl:text>
         <xsl:apply-templates select="." mode="LCDUI-dynamic-item-create"/>
@@ -231,14 +231,14 @@ information or have any questions.
 
     <xsl:template match="screen/options" mode="LCDUI-map-item-to-command-id">
         <xsl:text>                    final int idx = ((ChoiceGroup)item).getSelectedIndex();&#10;</xsl:text>
-        <xsl:text>                    if(false) {&#10;</xsl:text>
+        <xsl:text>                    if (false) {&#10;</xsl:text>
         <xsl:text>                    }</xsl:text>
         <xsl:apply-templates select="option|dynamic-option" mode="LCDUI-map-item-to-command-id"/>
         <xsl:text>&#10;</xsl:text>
     </xsl:template>
 
     <xsl:template match="option" mode="LCDUI-map-item-to-command-id">
-        <xsl:text> else if(</xsl:text>
+        <xsl:text> else if (</xsl:text>
         <xsl:apply-templates select="." mode="LCDUI-baseidx"/>
         <xsl:text> == idx) {&#10;</xsl:text>
         <xsl:text>                        commandId = </xsl:text>
@@ -254,7 +254,7 @@ information or have any questions.
     </xsl:template>
 
     <xsl:template match="dynamic-option" mode="LCDUI-map-item-to-command-id">
-        <xsl:text> else if(</xsl:text>
+        <xsl:text> else if (</xsl:text>
         <xsl:apply-templates select="." mode="LCDUI-baseidx"/>
         <xsl:text><![CDATA[ <= idx && idx < ]]></xsl:text>
         <xsl:apply-templates select="." mode="LCDUI-range-value"/>

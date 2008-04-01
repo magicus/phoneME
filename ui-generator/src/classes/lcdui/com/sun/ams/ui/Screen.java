@@ -36,32 +36,9 @@ import javax.microedition.lcdui.Item;
 
 
 public abstract class Screen extends BaseScreen {
-    private static Display display;
+    private Displayable displayable;
 
-    static void setDisplay(Display d) {
-        display = d;
-    }
-
-    protected abstract Displayable getDisplayable();
-
-    protected ScreenContents createScreenContents() {
-        return new ScreenContents() {
-            private Displayable impl = getDisplayable();
-
-            public void show() {
-                display.setCurrent(impl);
-            }
-
-            public void hide() {
-                // FIXME: this doesn't work as expected (does nothing actually)
-                display.setCurrent(null);
-            }
-
-            public boolean isShown() {
-                return impl.isShown();
-            }
-        };
-    }
+    protected abstract Displayable createDisplayable();
 
     protected Command getSelectItemCommand() {
         //  FIXME: i18n for "OK"
@@ -95,9 +72,9 @@ public abstract class Screen extends BaseScreen {
         int itemsHeight = ROW_EXTRA_SPACE;
         int spacersCount = 0;
         Spacer spacers[] = new Spacer[f.size()];
-        for(int i = 0, size = f.size(); i < size; ++i) {
+        for (int i = 0, size = f.size(); i < size; ++i) {
             Item item = f.get(i);
-            if(item instanceof Spacer) {
+            if (item instanceof Spacer) {
                 Spacer s = (Spacer)item;
                 spacers[spacersCount++] = s;
             }
@@ -119,18 +96,25 @@ public abstract class Screen extends BaseScreen {
         }
 
         int dh = f.getHeight() - itemsHeight;
-        if(dh <= 0 || 0 == spacersCount) {
+        if (dh <= 0 || 0 == spacersCount) {
             return;
         }
 
         // 2. redistribute "dh" between spacers
         int spacerHeight = dh / spacersCount; // TBD: round up issue
-        for(int i = 0; i < spacersCount; ++i) {
+        for (int i = 0; i < spacersCount; ++i) {
             spacers[i].setPreferredSize(-1, spacerHeight);
         }
     }
 
     Screen(ScreenProperties props) {
         super(props);
+    }
+
+    synchronized Displayable getDisplayable() {
+        if (displayable == null) {
+            displayable = createDisplayable();
+        }
+        return displayable;
     }
 }

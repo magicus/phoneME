@@ -92,12 +92,12 @@ information or have any questions.
         <xsl:text>;&#10;&#10;&#10;</xsl:text>
         <xsl:text>public final class </xsl:text>
         <xsl:apply-templates select="." mode="UTest-classname"/>
-        <xsl:text><![CDATA[ {
+        <xsl:text><![CDATA[ extends BaseTest {
     private int progressStep;
 
     private void updateProgress(
             java.util.TimerTask task, ProgressUpdater pu, Object progressId) {
-        if(progressStep <= 10) {
+        if (progressStep <= 10) {
             pu.updateProgress(progressId, progressStep, 10);
         } else {
             task.cancel();
@@ -106,7 +106,7 @@ information or have any questions.
 
     private static java.util.Enumeration createDynamicItems(String baseLabel, int count) {
         java.util.Vector ctnr = new java.util.Vector(count);
-        for(int i = 0; i < count; ++i) {
+        for (int i = 0; i < count; ++i) {
             ctnr.addElement("<" + baseLabel + "-" + (i + 1) + ">");
         }
         return ctnr.elements();
@@ -123,7 +123,7 @@ information or have any questions.
         <xsl:apply-templates select="." mode="UTest-screen-props"/>
         <xsl:apply-templates select="." mode="UTest-screen-command-listener"/>
         <xsl:text>);&#10;</xsl:text>
-        <xsl:text>        s.show();&#10;</xsl:text>
+        <xsl:text>        BaseTest.screens.show(s);&#10;</xsl:text>
         <xsl:apply-templates select="." mode="UTest-screen-progress"/>
         <xsl:text>    }&#10;</xsl:text>
         <xsl:text>}&#10;</xsl:text>
@@ -139,7 +139,7 @@ information or have any questions.
     <xsl:template match="screen" mode="UTest-screen-props">
         <xsl:text>            new ScreenProperties() {&#10;</xsl:text>
         <xsl:text>                public Object get(String key) {&#10;</xsl:text>
-        <xsl:text>                    if(false) return null;&#10;</xsl:text>
+        <xsl:text>                    if (false) return null;&#10;</xsl:text>
         <xsl:call-template name="uniq">
             <xsl:with-param name="str">
                 <xsl:apply-templates select="descendant::text" mode="UTest-screen-props"/>
@@ -163,7 +163,7 @@ information or have any questions.
     </xsl:template>
 
     <xsl:template match="dynamic-command|dynamic-option" mode="UTest-screen-props">
-        <xsl:text>                    else if("</xsl:text>
+        <xsl:text>                    else if ("</xsl:text>
         <xsl:apply-templates select="." mode="Screen-command-id"/>
         <xsl:text>".equals(key)) return createDynamicItems(key, </xsl:text>
         <xsl:apply-templates select="." mode="UTest-dynamic-item-max-idx"/>
@@ -186,7 +186,7 @@ information or have any questions.
         <xsl:text>                    onDynamicCommand(sender, commandId, -100);&#10;</xsl:text>
         <xsl:text>                }&#10;</xsl:text>
         <xsl:text>                public void onDynamicCommand(Screen sender, int commandId, int idx) {&#10;</xsl:text>
-        <xsl:text>                    switch(commandId) {&#10;</xsl:text>
+        <xsl:text>                    switch (commandId) {&#10;</xsl:text>
         <xsl:apply-templates select="descendant::*[@id]" mode="UTest-screen-command-listener"/>
         <xsl:text>                    default:&#10;</xsl:text>
         <xsl:text>                        throw new RuntimeException("unexpected commandId: " + commandId);&#10;</xsl:text>
@@ -204,9 +204,9 @@ information or have any questions.
         <xsl:text>                        System.out.print("Command: </xsl:text>
         <xsl:apply-templates select="." mode="Screen-command-id"/>
         <xsl:text>");&#10;</xsl:text>
-        <xsl:text>                        if(idx != -100) System.out.print(" idx=" + idx);&#10;</xsl:text>
+        <xsl:text>                        if (idx != -100) System.out.print(" idx=" + idx);&#10;</xsl:text>
         <xsl:text>                        System.out.println("");&#10;</xsl:text>
-        <xsl:text>                        if(idx != -100 &amp;&amp; (idx &lt; 0 || </xsl:text>
+        <xsl:text>                        if (idx != -100 &amp;&amp; (idx &lt; 0 || </xsl:text>
         <xsl:apply-templates select="." mode="UTest-dynamic-item-max-idx"/>
         <xsl:text> &lt;= idx)) throw new RuntimeException("invalid idx=" + idx);&#10;</xsl:text>
         <xsl:text>                        break;&#10;</xsl:text>

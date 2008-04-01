@@ -51,13 +51,13 @@ public class TestMIDlet extends MIDlet implements CommandListener {
         display     = Display.getDisplay(this);
         testList    = new List("Screens", List.IMPLICIT);
 
-        Screen.setDisplay(display);
+        BaseTest.screens = new ScreenStack(display);
 
         testList.setSelectCommand(runTestCommand);
         testList.addCommand(exitCommand);
         testList.setCommandListener(this);
 
-        for(int i = 0; i != TestClassList.names.length; ++i) {
+        for (int i = 0; i != TestClassList.names.length; ++i) {
             testList.append(getLabel(TestClassList.names[i]), null);
         }
     }
@@ -76,11 +76,11 @@ public class TestMIDlet extends MIDlet implements CommandListener {
         if (c == exitCommand) {
             destroyApp(true);
             notifyDestroyed();
-        } else if(c == runTestCommand) {
+        } else if (c == runTestCommand) {
             String testClass = TestClassList.names[testList.getSelectedIndex()];
             try {
                 Class.forName(testClass).newInstance();
-            } catch(Exception e) {
+            } catch (Exception e) {
                 e.printStackTrace();
             }
         }
