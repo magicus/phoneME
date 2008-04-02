@@ -121,28 +121,7 @@ public abstract class BasicPlayer implements Player
      */
     protected final static String pkgName = "javax.microedition.media.control.";
 
-    /**
-     * Centralized control management with string constants for each
-     * implemented Control.
-     * <p>
-     * For adding a new control interfaces, follow the following steps:
-     * <ol>
-     *  <li>Add new control name here. If it is not in the package
-     *     javax.microedition.media.control, then the full package
-     *     name of the control must be used.
-     *  <li>Add the control's name field to the allCtrls array (see below)
-     * </ol>
-     * <p>
-     * Size note: it would be space saving to declare the array allCtrls
-     * with the strings directly and not define the strings constants here.
-     * However, it is more convenient for descendants to use
-     * these constants, instead of e.g.
-     * <code>&nbsp;&nbsp;&nbsp;allCtrls[4]; // RateControl</code>
-     *
-     * @see    #getControls()
-     * @see    #doGetControl(String)
-     * @see    #allCtrls
-     */
+/* JAVADOC ELIDED */
 
     protected final static String fpcName = "FramePositioningControl";
     /**
@@ -293,45 +272,7 @@ public abstract class BasicPlayer implements Player
     }
 
 
-    /**
-     * Set the number of times the <code>Player</code> will loop
-     * and play the content.
-     * <p>
-     * By default, the loop count is one.  That is, once started,
-     * the <code>Player</code> will start playing from the current
-     * media time to the end of media once.
-     * <p>
-     * If the loop count is set to N where N is bigger than one,
-     * starting the <code>Player</code> will start playing the
-     * content from the current media time to the end of media.
-     * It will then loop back to the beginning of the content
-     * (media time zero) and play till the end of the media.
-     * The number of times it will loop to the beginning and
-     * play to the end of media will be N-1.
-     * <p>
-     * Setting the loop count to 0 is invalid.  An
-     * <code>IllegalArgumentException</code> will be thrown.
-     * <p>
-     * Setting the loop count to -1 will loop and play the content
-     * indefinitely.
-     * <p>
-     * If the <code>Player</code> is stopped before the preset loop
-     * count is reached either because <code>stop</code> is called or
-     * a preset stop time (set with the <code>StopTimeControl</code>)
-     * is reached, calling <code>start</code> again will
-     * resume the looping playback from where it was stopped until it
-     * fully reaches the preset loop count.
-     * <p>
-     * An <i>END_OF_MEDIA</i> event will be posted
-     * every time the <code>Player</code> reaches the end of media.
-     * If the <code>Player</code> loops back to the beginning and
-     * starts playing again because it has not completed the loop
-     * count, a <i>STARTED</i> event will be posted.
-     *
-     * @param  count                         indicates the number of times the content will be
-     * played.  1 is the default.  0 is invalid.  -1 indicates looping
-     * indefintely.
-     */
+/* JAVADOC ELIDED */
     public void setLoopCount(int count) {
         chkClosed(false);
         
@@ -361,23 +302,7 @@ public abstract class BasicPlayer implements Player
         System.out.println( "[basic] received RSL" );
     }
 
-    /**
-     * Constructs portions of the <code>Player</code> without
-     * acquiring the scarce and exclusive resources.
-     * This may include examining media data and may
-     * take some time to complete.
-     * <p>
-     * When <code>realize</code> completes successfully,
-     * the <code>Player</code> is in the
-     * <i>REALIZED</i> state.
-     * <p>
-     * If <code>realize</code> is called when the <code>Player</code> is in
-     * the <i>REALIZED</i>, <i>PREFETCHTED</i> or <i>STARTED</i> state,
-     * the request will be ignored.
-     *
-     * @exception  MediaException         Thrown if the <code>Player</code> cannot
-     * be realized.
-     */
+/* JAVADOC ELIDED */
     public synchronized void realize() throws MediaException {
         chkClosed(false);
 
@@ -425,39 +350,7 @@ public abstract class BasicPlayer implements Player
     protected abstract void doRealize() throws MediaException;
 
 
-    /**
-     * Acquires the scarce and exclusive resources
-     * and processes as much data as necessary
-     * to reduce the start latency.
-     * <p>
-     * When <code>prefetch</code> completes successfully,
-     * the <code>Player</code> is in
-     * the <i>PREFETCHED</i> state.
-     * <p>
-     * If <code>prefetch</code> is called when the <code>Player</code>
-     * is in the <i>UNREALIZED</i> state,
-     * it will implicitly call <code>realize</code>.
-     * <p>
-     * If <code>prefetch</code> is called when the <code>Player</code>
-     * is already in the <i>PREFETCHED</i> state, the <code>Player</code>
-     * may still process data necessary to reduce the start
-     * latency.  This is to guarantee that start latency can
-     * be maintained at a minimum.
-     * <p>
-     * If <code>prefetch</code> is called when the <code>Player</code>
-     * is in the <i>STARTED</i> state,
-     * the request will be ignored.
-     * <p>
-     * If the <code>Player</code> cannot obtain all
-     * of the resources it needs, it throws a <code>MediaException</code>.
-     * When that happens, the <code>Player</code> will not be able to
-     * start.  However, <code>prefetch</code> may be called again when
-     * the needed resource is later released perhaps by another
-     * <code>Player</code> or application.
-     *
-     * @exception  MediaException         Thrown if the <code>Player</code> cannot
-     * be prefetched.
-     */
+/* JAVADOC ELIDED */
     public synchronized void prefetch() throws MediaException {
 
         if (state >= PREFETCHED) {
@@ -483,36 +376,7 @@ public abstract class BasicPlayer implements Player
     protected abstract void doPrefetch() throws MediaException;
 
 
-    /**
-     * Starts the <code>Player</code> as soon as possible.
-     * If the <code>Player</code> was previously stopped
-     * by calling <code>stop</code> or reaching a preset
-     * stop time, it will resume playback
-     * from where it was previously stopped.  If the
-     * <code>Player</code> has reached the end of media,
-     * calling <code>start</code> will automatically
-     * start the playback from the start of the media.
-     * <p>
-     * When <code>start</code> returns successfully,
-     * the <code>Player</code> must have been started and
-     * a <code>STARTED</code> event will
-     * be delivered to the registered <code>PlayerListener</code>s.
-     * However, the <code>Player</code> is not guaranteed to be in
-     * the <i>STARTED</i> state.  The <code>Player</code> may have
-     * already stopped (in the <i>PREFETCHED</i> state) because
-     * the media has 0 or a very short duration.
-     * <p>
-     * If <code>start</code> is called when the <code>Player</code>
-     * is in the <i>UNREALIZED</i> or <i>REALIZED</i> state,
-     * it will implicitly call <code>prefetch</code>.
-     * <p>
-     * If <code>start</code> is called when the <code>Player</code>
-     * is in the <i>STARTED</i> state,
-     * the request will be ignored.
-     *
-     * @exception  MediaException         Thrown if the <code>Player</code> cannot
-     * be started.
-     */
+/* JAVADOC ELIDED */
     public synchronized void start() throws MediaException {
 
         if (state >= STARTED) {
@@ -588,21 +452,7 @@ public abstract class BasicPlayer implements Player
     }
 
 
-    /**
-     * Stops the <code>Player</code>.  It will pause the playback at
-     * the current media time.
-     * <p>
-     * When <code>stop</code> returns, the <code>Player</code> is in the
-     * <i>PREFETCHED</i> state.
-     * A <code>STOPPED</code> event will be delivered to the registered
-     * <code>PlayerListener</code>s.
-     * <p>
-     * If <code>stop</code> is called on
-     * a stopped <code>Player</code>, the request is ignored.
-     *
-     * @exception  MediaException         Thrown if the <code>Player</code>
-     * cannot be stopped.
-     */
+/* JAVADOC ELIDED */
     public synchronized void stop() throws MediaException {
         chkClosed(false);
 
@@ -637,29 +487,7 @@ public abstract class BasicPlayer implements Player
     protected void doPreStop() {
     }
 
-    /**
-     * Release the scarce or exclusive
-     * resources like the audio device acquired by the <code>Player</code>.
-     * <p>
-     * When <code>deallocate</code> returns, the <code>Player</code>
-     * is in the <i>UNREALIZED</i> or <i>REALIZED</i> state.
-     * <p>
-     * If the <code>Player</code> is blocked at
-     * the <code>realize</code> call while realizing, calling
-     * <code>deallocate</code> unblocks the <code>realize</code> call and
-     * returns the <code>Player</code> to the <i>UNREALIZED</i> state.
-     * Otherwise, calling <code>deallocate</code> returns the
-     * <code>Player</code> to  the <i>REALIZED</i> state.
-     * <p>
-     * If <code>deallocate</code> is called when the <code>Player</code>
-     * is in the <i>UNREALIZED</i> or <i>REALIZED</i>
-     * state, the request is ignored.
-     * <p>
-     * If the <code>Player</code> is <code>STARTED</code>
-     * when <code>deallocate</code> is called, <code>deallocate</code>
-     * will implicitly call <code>stop</code> on the <code>Player</code>.
-     *
-     */
+/* JAVADOC ELIDED */
     public synchronized void deallocate() {
         chkClosed(false);
 
@@ -689,17 +517,7 @@ public abstract class BasicPlayer implements Player
     protected abstract void doDeallocate();
 
 
-    /**
-     * Close the <code>Player</code> and release its resources.
-     * <p>
-     * When the method returns, the <code>Player</code> is in the
-     * <i>CLOSED</i> state and can no longer be used.
-     * A <code>CLOSED</code> event will be delivered to the registered
-     * <code>PlayerListener</code>s.
-     * <p>
-     * If <code>close</code> is called on a closed <code>Player</code>
-     * the request is ignored.
-     */
+/* JAVADOC ELIDED */
     public synchronized void close() {
         if (state == CLOSED) {
             return;
@@ -787,15 +605,7 @@ public abstract class BasicPlayer implements Player
     protected abstract long doSetMediaTime(long now) throws MediaException;
 
 
-    /**
-     * Gets this <code>Player</code>'s current <i>media time</i>.
-     * If the <i>media time</i> cannot be determined,
-     * <code>getMediaTime</code> returns <code>TIME_UNKNOWN</code>.
-     *
-     * @return                            The current <i>media time</i> in microseconds or
-     * <code>TIME_UNKNOWN</code>.
-     * @see                               #setMediaTime
-     */
+/* JAVADOC ELIDED */
     public long getMediaTime() {
         chkClosed(false);
         return doGetMediaTime();
@@ -849,13 +659,7 @@ public abstract class BasicPlayer implements Player
     protected abstract long doGetDuration();
 
 
-    /**
-     * Add a player listener for this player.
-     *
-     * @param  playerListener             the listener to add.
-     * If <code>null</code> is used, the request will be ignored.
-     * @see                               #removePlayerListener
-     */
+/* JAVADOC ELIDED */
     public void addPlayerListener(PlayerListener playerListener) {
         chkClosed(false);
         if (playerListener != null) {
@@ -864,15 +668,7 @@ public abstract class BasicPlayer implements Player
     }
 
 
-    /**
-     * Remove a player listener for this player.
-     *
-     * @param  playerListener             the listener to remove.
-     * If <code>null</code> is used or the given
-     * <code>playerListener</code> is not a listener for this
-     * <code>Player</code>, the request will be ignored.
-     * @see                               #addPlayerListener
-     */
+/* JAVADOC ELIDED */
     public void removePlayerListener(PlayerListener playerListener) {
         chkClosed(false);
         listeners.removeElement(playerListener);
@@ -1300,40 +1096,7 @@ public abstract class BasicPlayer implements Player
     int RANDOM_ACCESSIBLE = SourceStream.RANDOM_ACCESSIBLE;
 
 
-    /**
-     * Reads <code>len</code>
-     * bytes from the first StreamSource of the DataSource (member
-     * variable <code>stream</code>.
-     * <p>
-     * This method
-     * blocks until one of the following conditions
-     * occurs:<p>
-     * <ul>
-     * <li><code>len</code> bytes
-     * of input data are available, in which case
-     * a normal return is made.
-     *
-     * <li>End of file
-     * is detected, in which case an <code>MediaException</code>
-     * is thrown.
-     *
-     * <li>An I/O error occurs, in
-     * which case an <code>IOException</code> is thrown.
-     * </ul>
-     * <p>
-     * If <code>len</code> is zero,
-     * then no bytes are read. Otherwise, the first
-     * byte read is stored into element <code>b[off]</code>,
-     * the next one into <code>b[off+1]</code>,
-     * and so on. The number of bytes read is,
-     * at most, equal to <code>len</code>.
-     *
-     * @param  b                the buffer into which the data is read.
-     * @param  off              an int specifying the offset into the data.
-     * @param  len              an int specifying the number of bytes to read.
-     * @return                  Description of the Return Value
-     * @exception  IOException  if an I/O error occurs.
-     */
+/* JAVADOC ELIDED */
     protected int readFully(byte b[], int off, int len) throws IOException {
         int n = 0;
         while (n < len) {

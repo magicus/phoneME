@@ -127,140 +127,23 @@ public interface VideoControl extends GUIControl {
      */
     Object initDisplayMode(int mode, Object arg);
 
-    /**
-     * Set the location of the video with respect to 
-     * the canvas where the video is displayed.  
-     * <p>
-     * This method only works when the <code>USE_DIRECT_VIDEO</code>
-     * mode is set.  In <code>USE_GUI_PRIMITIVE</code> mode,
-     * this call will be ignored.
-     * <p>
-     * The location is specified in pixel values relative to the 
-     * upper left hand corner of the GUI object.
-     * <p>
-     * By default, video appears at location (0,0).
-     * <p>
-     * The location can be given in negative values or can be
-     * greater than the actual size of the canvas.  When
-     * that happens, the video should be clipped to the
-     * boundaries of the canvas.
-     *
-     * @param x The x coordinate (in pixels) of the video location.
-     * @param y The y coordinate (in pixels) of the video location.
-     * @exception IllegalStateException Thrown if 
-     * <code>initDisplayMode</code> has not been called.
-     */
+/* JAVADOC ELIDED */
     void setDisplayLocation(int x, int y);
 
-    /**
-     * Return the X-coordinate of the video with respect
-     * to the GUI object where the video is displayed.
-     * The coordinate is specified in pixel values relative to the 
-     * upper left hand corner of the GUI object.
-     * <p> 
-     * The return value is undefined if <code>initDisplayMode</code>
-     * has not been called.
-     *
-     * @return the X-coordinate of the video.
-     */
+/* JAVADOC ELIDED */
     int getDisplayX();
 
-    /**
-     * Return the Y-coordinate of the video with respective
-     * to the GUI object where the video is displayed.
-     * The coordinate is specified in pixel values relative to the 
-     * upper left hand corner of the GUI object.
-     * <p> 
-     * The return value is undefined if <code>initDisplayMode</code>
-     * has not been called.
-     *
-     * @return the Y-coordinate of the video.
-     */
+/* JAVADOC ELIDED */
     int getDisplayY();
 
-    /**
-     * Show or hide the video.
-     * <p>
-     * If <code>USE_GUI_PRIMITIVE</code> is set, the video by
-     * default is shown when the GUI primitive is displayed.
-     * If <code>USE_DIRECT_VIDEO</code> is set, the video by
-     * default is not shown when the canvas is displayed
-     * until <code>setVisible(true)</code> is called.  If
-     * the canvas is removed from the screen, the video
-     * will not be displayed.
-     *
-     * @param visible Show the video if true, hide it otherwise.
-     * @exception IllegalStateException Thrown if 
-     * <code>initDisplayMode</code> has not been called.
-     */
+/* JAVADOC ELIDED */
     void setVisible(boolean visible);
 
-    /**
-     * Resize the video image.
-     * <p>
-     * If the video mode is set to <code>USE_DIRECT_VIDEO</code>,
-     * setting the size of the video will not
-     * affect the size of the GUI object that the video is
-     * displayed.  
-     * If the video is scaled to beyond the size of the 
-     * GUI object, the video will be clipped.
-     * <p>
-     * If the video mode is set to <code>USE_GUI_PRIMITIVE</code>,
-     * Scaling the video will also scale the GUI object. 
-     * <p>
-     * The actual scaling algorithm is left up
-     * to the underlying implementation.  If
-     * the dimensions of the requested display size are smaller than 
-     * the dimensions of the video clip, some implementations may 
-     * choose to merely clip the video while other implementations 
-     * may resize the video.  
-     * <p>
-     * If the dimensions of the requested display size are bigger than 
-     * the dimensions of the video clip, some implementations may 
-     * resize the video while others may leave the video clip in the 
-     * original size and just enlarge the display region.  It is 
-     * left up to the implementation 
-     * where the video clip is placed in the display region in this 
-     * instance (i.e., it can be in the center of the window or 
-     * in a corner of the window).
-     *
-     * @param width Desired width (in pixels) of the display window
-     * @param height Desired height (in pixels) of the display window
-     * @exception IllegalArgumentException Thrown if the
-     * given <code>width</code> and <code>height</code> are
-     * non-positive values.
-     * @exception IllegalStateException Thrown if 
-     * <code>initDisplayMode</code> has not been called.
-     * @exception MediaException Thrown if resizing is not supported or
-     * the operation failed due to hardware or software limitations.
-     */
+/* JAVADOC ELIDED */
     void setDisplaySize(int width, int height) 
 	throws MediaException;
 
-    /**
-     * Set the size of the render region for the video clip to be 
-     * fullscreen. It is left up to the underlying implementation how 
-     * fullscreen mode is
-     * implemented and what actual dimensions constitutes fullscreen.  
-     * This is useful when the application does not know the actual 
-     * width and height dimensions
-     * that are needed to make setDisplaySize(width, height) go to 
-     * fullscreen mode.
-     * For example, on a device with a 400 pixel wide by 200 pixel 
-     * high screen, a video
-     * clip that is 50 pixels wide by 100 pixels high in fullscreen 
-     * mode may be 
-     * 100 pixels wide by 200 pixels high if the underlying implementation 
-     * wants
-     * to preserve the aspect ratio.  In this case, an exception 
-     * is not thrown.
-     * @param fullScreenMode Indicates whether or not to render 
-     * in full screen mode
-     * @exception MediaException Thrown if resizing to full screen size
-     * is not supported.
-     * @exception IllegalStateException Thrown if 
-     * <code>initDisplayMode</code> has not been called.
-     */
+/* JAVADOC ELIDED */
     void setDisplayFullScreen(boolean fullScreenMode) throws MediaException;
 
     /**

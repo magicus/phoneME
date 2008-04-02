@@ -61,83 +61,16 @@ package javax.microedition.media.control;
  */
 public interface FramePositioningControl extends javax.microedition.media.Control {
 
-    /**
-     * Seek to a given video frame.
-     * The media time of the <code>Player</code> will be updated 
-     * to reflect the new position set.
-     * <p>
-     * This method can be called on a stopped or started 
-     * <code>Player</code>.
-     * If the <code>Player</code> is
-     * in the <i>Started</i> state, this method may cause the
-     * <code>Player</code> to change states.  If that happens, the
-     * appropriate transition events will be posted by
-     * the <code>Player</code> when its state changes.
-     * <p>
-     * If the given frame number is less than the first or larger
-     * than the last frame number in the media, <code>seek</code>
-     * will jump to either the first or the last frame respectively.
-     *
-     * @param frameNumber the frame to seek to.
-     * @return the actual frame that the Player has seeked to. 
-     */
+/* JAVADOC ELIDED */
     int seek(int frameNumber);
 
-    /**
-     * Skip a given number of frames from the current position.
-     * The media time of the <code>Player</code> will be updated to 
-     * reflect the new position set.
-     * <p>
-     * This method can be called on a stopped or started <code>Player</code>.
-     * If the <code>Player</code> is in the <i>Started</i> state,
-     * the current position is changing.  Hence, 
-     * the frame actually skipped to will not be exact.
-     * <p>
-     * If the <code>Player</code> is
-     * in the <i>Started</i> state, this method may cause the
-     * <code>Player</code> to change states.  If that happens, the
-     * appropriate transition events will be posted.
-     * <p>
-     * If the given <code>framesToSkip</code> will cause the position to
-     * extend beyond the first or last frame, <code>skip</code> will
-     * jump to the first or last frame respectively.
-     *
-     * @param framesToSkip the number of frames to skip from the current
-     *   position.  If framesToSkip is positive, it will seek forward
-     *   by framesToSkip number of frames.  If framesToSkip is negative, 
-     *   it will seek backward by framesToSkip number of frames.
-     *   e.g. skip(-1) will seek backward one frame.
-     * @return the actual number of frames skipped.  
-     */
+/* JAVADOC ELIDED */
     int skip(int framesToSkip);
 
-    /**
-     * Converts the given frame number to the corresponding media time.
-     * The method only performs the calculations.  It does not
-     * position the media to the given frame.
-     * 
-     * @param frameNumber the input frame number for the conversion.
-     * @return the converted media time in microseconds for the given frame.  
-     * If the conversion fails, -1 is returned.
-     */
+/* JAVADOC ELIDED */
     long mapFrameToTime(int frameNumber);
 
-    /**
-     * Converts the given media time to the corresponding frame number.
-     * The method only performs the calculations.  It does not
-     * position the media to the given media time.
-     * <p>
-     * The frame returned is the nearest frame that has a media time
-     * less than or equal to the given media time.
-     * <p> 
-     * <code>mapTimeToFrame(0)</code> must not fail and must 
-     * return the frame number of the first frame. 
-     * 
-     * @param mediaTime the input media time for the 
-     * conversion in microseconds.
-     * @return the converted frame number for the given media time.  
-     * If the conversion fails, -1 is returned.
-     */
+/* JAVADOC ELIDED */
     int mapTimeToFrame(long mediaTime);
 }
 

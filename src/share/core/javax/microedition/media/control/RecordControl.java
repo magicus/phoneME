@@ -137,60 +137,10 @@ public interface RecordControl extends javax.microedition.media.Control {
      */
     String getContentType();
 
-    /**
-     * Start recording the media.
-     * <p>
-     * If the <code>Player</code> is already started, <code>startRecord</code>
-     * will immediately start the recording.  If the <code>Player</code> 
-     * is not already started, <code>startRecord</code> will not 
-     * record any media.  It will put the recording in a "standby" mode.
-     * As soon as the <code>Player</code> is started, 
-     * the recording will start right away.
-     * <p>
-     * If <code>startRecord</code> is called when the recording has
-     * already started, it will be ignored.
-     * <p>
-     * When <code>startRecord</code> returns, the recording has started
-     * and a <i>RECORD_STARTED</i> event will be delivered through the
-     * <code>PlayerListener</code>.
-     * <p>
-     * If an error occurs while recording is in progress, 
-     * <i>RECORD_ERROR</i> event will be delivered via the PlayerListener.
-     *
-     * @exception IllegalStateException Thrown if any of the following
-     * conditions is true:
-     * <ul>
-     * <li>
-     * if <code>setRecordLocation</code> or <code>setRecordStream</code> has
-     * not been called for the first time.
-     * <li>
-     * If <code>commit</code> has been called and
-     * <code>setRecordLocation</code> or <code>setRecordStream</code>
-     * has not been called.
-     * </ul>
-     */
+/* JAVADOC ELIDED */
     void startRecord();
 	
-    /**
-     * Stop recording the media.  <code>stopRecord</code> will not
-     * automatically stop the <code>Player</code>.  It only stops
-     * the recording.
-     * <p>
-     * Stopping the <code>Player</code> does not imply
-     * a <code>stopRecord</code>.  Rather, the recording
-     * will be put into a "standby" mode.  Once the <code>Player</code>
-     * is re-started, the recording will resume automatically.
-     * <p>
-     * After <code>stopRecord</code>, <code>startRecord</code> can 
-     * be called to resume the recording.
-     * <p>
-     * If <code>stopRecord</code> is called when the recording has
-     * already stopped, it will be ignored.
-     * <p>
-     * When <code>stopRecord</code> returns, the recording has stopped
-     * and a <i>RECORD_STOPPED</i> event will be delivered through the
-     * <code>PlayerListener</code>.
-     */
+/* JAVADOC ELIDED */
     void stopRecord();
     
     /**

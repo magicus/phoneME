@@ -75,30 +75,6 @@ public interface MetaDataControl extends javax.microedition.media.Control {
      */
     String[] getKeys();
 
-    /**
-     * Retrieve the value found in the metadata associated with the
-     * given key.  Only keys obtained from <code>getKeys</code>
-     * are valid and can be used to retrieve metadata values.
-     * If <code>null</code> or an invalid key is used, an
-     * <code>IllegalArgumentException</code> will be thrown.
-     * <p>
-     * Some keys are valid but the associated metadata may not 
-     * be available before a certain portion of the media is 
-     * played.  For example, some streaming media types may 
-     * contain metadata that's stored at the end of the file.
-     * As a result, the metadata may not be available
-     * until the playback reaches the end of media.  When
-     * that happens, calling <code>getKeyValues</code> with
-     * those keys will return <code>null</code> before the
-     * data is available.  However, when the playback reaches
-     * the end of media, all metadata values must be
-     * made available. 
-     *
-     * @param key a key to retrieve the value.
-     * @return the value of the key or null if the given key is valid but
-     * the value is not yet available.
-     * @exception IllegalArgumentException Thrown if the given key is
-     * <code>null</code> or invalid.
-     */
+/* JAVADOC ELIDED */
     String getKeyValue(String key);
 }

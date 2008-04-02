@@ -123,26 +123,10 @@ abstract public class DataSource implements Controllable {
      */
     public abstract String getContentType();
     
-    /**
-     * Open a connection to the source described by
-     * the locator and initiate communication.
-     *
-     * @exception IOException Thrown if there are IO problems
-     * when <CODE>connect</CODE> is called.
-     * @exception SecurityException Thrown if the caller does not
-     * have security permission to call <code>connect</code>.
-     */
+/* JAVADOC ELIDED */
     public abstract void connect() throws IOException; 
 
-    /**
-     * Close the connection to the source described by the locator
-     * and free resources used to maintain the connection.
-     * <p>
-     * If no resources are in use, <CODE>disconnect</CODE> is ignored.
-     * If <CODE>stop</CODE> hasn't already been called,
-     * calling <CODE>disconnect</CODE> implies a stop.
-     *
-     */
+/* JAVADOC ELIDED */
     public abstract void disconnect();
 
     /**
@@ -168,17 +152,7 @@ abstract public class DataSource implements Controllable {
      */
     public abstract void stop() throws IOException;
 
-    /**
-     * Get the collection of streams that this source
-     * manages. The collection of streams is entirely
-     * content dependent. The  MIME type of this
-     * <CODE>DataSource</CODE> provides the only indication of
-     * what streams may be available on this connection.
-     *
-     * @return The collection of streams for this source.
-     * @exception IllegalStateException Thrown if the source
-     * is not connected.
-     */
+/* JAVADOC ELIDED */
     public abstract SourceStream[] getStreams();
 
     

@@ -547,11 +547,7 @@ final public class GIFPlayer extends BasicPlayer implements Runnable {
         return interval;    
     }
 
-    /**
-     * Maps media time to the corresponding frame.
-     *
-     * Returns the frame number.
-     */
+/* JAVADOC ELIDED */
     private int timeToFrame(long mediaTime) {
         int frame = 0;
 
@@ -1260,26 +1256,7 @@ final public class GIFPlayer extends BasicPlayer implements Runnable {
             active = false;
         }
 
-        /**
-         * Seek to a given video frame.
-         * The media time of the <code>Player</code> will be updated
-         * to reflect the new position set.
-         * <p>
-         * This method can be called on a stopped or started
-         * <code>Player</code>.
-         * If the <code>Player</code> is
-         * in the <i>Started</i> state, this method may cause the
-         * <code>Player</code> to change states.  If that happens, the
-         * appropriate transition events will be posted by
-         * the <code>Player</code> when its state changes.
-         * <p>
-         * If the given frame number is less than the first or larger
-         * than the last frame number in the media, <code>seek</code>
-         * will jump to either the first or the last frame respectively.
-         *
-         * @param frameNumber the frame to seek to.
-         * @return the actual frame that the Player has seeked to.
-         */
+/* JAVADOC ELIDED */
         public int seek(int frameNumber) {
             active = true;
 
@@ -1309,34 +1286,7 @@ final public class GIFPlayer extends BasicPlayer implements Runnable {
         }
 
 
-        /**
-         * Skip a given number of frames from the current position.
-         * The media time of the <code>Player</code> will be updated to
-         * reflect the new position set.
-         * <p>
-         * This method can be called on a stopped or started 
-         * <code>Player</code>.
-         *
-         * If the <code>Player</code> is in the <i>Started</i> state,
-         * the current position is changing.  Hence,
-         * the frame actually skipped to will not be exact.
-         * <p>
-         * If the <code>Player</code> is
-         * in the <i>Started</i> state, this method may cause the
-         * <code>Player</code> to change states.  If that happens, the
-         * appropriate transition events will be posted.
-         * <p>
-         * If the given <code>framesToSkip</code> will cause the position to
-         * extend beyond the first or last frame, <code>skip</code> will
-         * jump to the first or last frame respectively.
-         *
-         * @param framesToSkip the number of frames to skip from the current
-         * position.  If framesToSkip is positive, it will seek forward
-         * by framesToSkip number of frames.  If framesToSkip is negative,
-         * it will seek backward by framesToSkip number of frames.
-         * e.g. skip(-1) will seek backward one frame.
-         * @return the actual number of frames skipped.
-         */
+/* JAVADOC ELIDED */
         public int skip(int framesToSkip) {
             active = true;
 
@@ -1379,15 +1329,7 @@ final public class GIFPlayer extends BasicPlayer implements Runnable {
             return frames_skipped;
         }
 
-        /**
-         * Converts the given frame number to the corresponding media time.
-         * The method only performs the calculations. It does not
-         * position the media to the given frame.
-         *
-         * @param frameNumber the input frame number for the conversion.
-         * @return the converted media time in microseconds for the 
-         * given frame. If the conversion fails, -1 is returned.
-         */
+/* JAVADOC ELIDED */
         public long mapFrameToTime(int frameNumber) {
             if (frameNumber < 0 || frameNumber >= frameTimes.size()) {
                 return -1;
@@ -1395,22 +1337,7 @@ final public class GIFPlayer extends BasicPlayer implements Runnable {
             return (long) (frameToTime(frameNumber));
         }
 
-        /**
-         * Converts the given media time to the corresponding frame number.
-         * The method only performs the calculations.  It does not
-         * position the media to the given media time.
-         * <p>
-         * The frame returned is the nearest frame that has a media time
-         * less than or equal to the given media time.
-         * <p>
-         * <code>mapTimeToFrame(0)</code> must not fail and must
-         * return the frame number of the first frame.
-         *
-         * @param mediaTime the input media time for the
-         * conversion in microseconds.
-         * @return the converted frame number for the given media time.
-         * If the conversion fails, -1 is returned.
-         */
+/* JAVADOC ELIDED */
         public int mapTimeToFrame(long mediaTime) {         
             if (mediaTime < 0 || mediaTime > duration) {
                 return -1;
@@ -1448,33 +1375,7 @@ final public class GIFPlayer extends BasicPlayer implements Runnable {
             rate = 100000; // normal speed, 100%
         }
 
-        /**
-         * Sets the playback rate.
-         *
-         * The specified rate is 1000 times the percentage of the
-         * actual rate. For example, to play back at twice the speed, specify
-         * a rate of 200'000.<p>
-         *
-         * The <code>setRate</code> method returns the actual rate set by the
-         * <code>Player</code>.  <code>Player</code> should set their rate
-         * as close to the requested
-         * value as possible, but are not required to set the rate to the exact
-         * value of any argument other than 100'000. A <code>Player</code>
-         * is only guaranteed to set
-         * its rate exactly to 100'000.
-         * If the given rate is less than <code>getMinRate</code>
-         * or greater than <code>getMaxRate</code>,
-         * the rate will be adjusted to the minimum or maximum
-         * supported rate respectively.
-         * <p>
-         * If the <code>Player</code> is already
-         * started, <code>setRate</code> will immediately take effect.
-         *
-         * @param millirate The playback rate to set. The rate is given in
-         *        a &quot;milli-percentage&quot; value.
-         * @return The actual rate set in &quot;milli-percentage&quot;.
-         * @see #getRate
-         */
+/* JAVADOC ELIDED */
         public int setRate(int millirate) {
             long oldRate = rate;
             if (millirate < MIN_PLAYBACK_RATE) {

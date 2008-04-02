@@ -85,50 +85,7 @@ public interface SourceStream extends Controllable {
     long getContentLength();
     
 
-    /**
-     * Reads up to <code>len</code> bytes of data from the input stream into
-     * an array of bytes.  An attempt is made to read as many as
-     * <code>len</code> bytes, but a smaller number may be read.
-     * The number of bytes actually read is returned as an integer.
-     *
-     * <p> This method blocks until input data is available, end of file is
-     * detected, or an exception is thrown.
-     *
-     * <p> If <code>b</code> is <code>null</code>, a
-     * <code>NullPointerException</code> is thrown.
-     *
-     * <p> If <code>off</code> is negative, or <code>len</code> is negative, or
-     * <code>off+len</code> is greater than the length of the array
-     * <code>b</code>, then an <code>IndexOutOfBoundsException</code> is
-     * thrown.
-     *
-     * <p> If <code>len</code> is zero, then no bytes are read and
-     * <code>0</code> is returned; otherwise, there is an attempt to read at
-     * least one byte. If no byte is available because the stream is at end of
-     * file, the value <code>-1</code> is returned; otherwise, at least one
-     * byte is read and stored into <code>b</code>.
-     *
-     * <p> The first byte read is stored into element <code>b[off]</code>, the
-     * next one into <code>b[off+1]</code>, and so on. The number of bytes read
-     * is, at most, equal to <code>len</code>. Let <i>k</i> be the number of
-     * bytes actually read; these bytes will be stored in elements
-     * <code>b[off]</code> through <code>b[off+</code><i>k</i><code>-1]</code>,
-     * leaving elements <code>b[off+</code><i>k</i><code>]</code> through
-     * <code>b[off+len-1]</code> unaffected.
-     *
-     * <p> If the first byte cannot be read for any reason other than end of
-     * file, then an <code>IOException</code> is thrown. In particular, an
-     * <code>IOException</code> is thrown if the input stream has been closed.
-     *
-     * @param      b     the buffer into which the data is read.
-     * @param      off   the start offset in array <code>b</code>
-     *                   at which the data is written.
-     * @param      len   the maximum number of bytes to read.
-     * @return     the total number of bytes read into the buffer, or
-     *             <code>-1</code> if there is no more data because the end of
-     *             the stream has been reached.
-     * @exception  IOException  if an I/O error occurs.
-     */
+/* JAVADOC ELIDED */
     int read(byte[] b, int off, int len)
 	throws IOException;
 
@@ -147,29 +104,7 @@ public interface SourceStream extends Controllable {
     int getTransferSize();
 
 
-    /**
-     * Seek to the specified point in the stream.  The <code>seek</code>
-     * method may, for a variety of reasons, fail to seek to the specified
-     * position.  For example,
-     * it may be asked to seek to a position beyond the size of the stream;
-     * or the stream may only be seekable to the beginning
-     * (<code>getSeekType</code> returns <code>SEEKABLE_TO_START</code>).
-     * The return value indicates whether the seeking is successful. 
-     * If it is successful, the value returned will be the same as the 
-     * given position.  Otherwise, the return value will indicate what 
-     * the new position is.
-     * <p>
-     * If the given position is negative, seek will treat that as 0
-     * and attempt to seek to 0.
-     * <p>
-     * An IOException will be thrown if an I/O error occurs, e.g. when
-     * the stream comes from a remote connection and the connection is
-     * broken.
-     *  
-     * @param where The position to seek to.
-     * @return The new stream position.
-     * @exception IOException Thrown if an I/O error occurs.
-     */
+/* JAVADOC ELIDED */
     long seek(long where) throws IOException;
 
 
