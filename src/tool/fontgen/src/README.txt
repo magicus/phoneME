@@ -1,4 +1,4 @@
-Copyright  2007  Sun Microsystems, Inc. All rights reserved.
+Copyright  2008  Sun Microsystems, Inc. All rights reserved.
 
 	MIDP Font Generation Tool
 
