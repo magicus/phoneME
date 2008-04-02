@@ -73,8 +73,8 @@ class VirtualKeyboard {
     public VirtualKeyboard(char[][] keys, 
                            VirtualKeyboardListener vkl,
                            boolean displayTextArea) {
-        if(displayTextArea){
-              textKbd = true;               
+        textKbd = displayTextArea;
+        if(textKbd){
               PADDING = 4;
         } else {
               PADDING = 2;
@@ -94,17 +94,22 @@ class VirtualKeyboard {
                          Font.STYLE_PLAIN, 
                          Font.SIZE_SMALL);
         fontW = f.charWidth('M');
-        buttonW = fontW * 2;
-        fontWCenter = buttonW / 2;
         fontH = f.getHeight();
 
-        if (displayTextArea) {
+        
+        if (textKbd) {
             textfieldHeight = fontH + 3 * PADDING;
+            buttonW = fontW * 2;
+            buttonH = fontH * 3/2;
+            fontHTop = (buttonH - fontH) / 2 ;
+            fontWCenter = buttonW / 2;
+        } else {
+            buttonW = fontW * 3;
+            buttonH = fontH * 3;
+            fontHTop = (buttonH - fontH) / 2 ;
+            fontWCenter = buttonW / 2;
         }
-
-        buttonH = fontH * 3/2;
-        fontHTop = (buttonH - fontH) / 2 ;
-
+        
         maxRows = (kbHeight - PADDING) / (buttonH + PADDING);
 
         if(textKbd) {
