@@ -625,7 +625,7 @@ public final class Manager {
             {
                 throw new MediaException( "Radio Capture is not supported" );
             }
-            parseRadioLocatorStr( locStr );
+            parseRadioLocatorStr( locator );
         }
         else if (locStr.startsWith(DefaultConfiguration.AUDIO_CAPTURE_LOCATOR) ||
             locStr.startsWith(DefaultConfiguration.VIDEO_CAPTURE_LOCATOR))
