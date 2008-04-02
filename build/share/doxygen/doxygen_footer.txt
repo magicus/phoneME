@@ -1,11 +1,11 @@
 <!--
 
-        Copyright  2007  Sun Microsystems, Inc. All rights reserved.
+        Copyright  2008  Sun Microsystems, Inc. All rights reserved.
 -->
 <p>&#160;</p>
 <hr class="pHr" />
 <p class="copyright">
    <a href="../../share/copyright.html">Copyright</a> &#169;
-   2004 Sun Microsystems, Inc. All rights reserved.</p>
+   2008 Sun Microsystems, Inc. All rights reserved.</p>
 </body>
 </html>
