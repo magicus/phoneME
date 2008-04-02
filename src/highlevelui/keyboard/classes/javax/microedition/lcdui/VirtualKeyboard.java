@@ -24,7 +24,7 @@ class VirtualKeyboard {
     public static final boolean USE_VIRTUAL_KEYBOARD = true;
 
     /** indicates whether the virtual keyboard is opened automatically */
-    public static final boolean USE_VIRTUAL_KEYBOARD_OPEN_AUTO = true;
+    public static final boolean USE_VIRTUAL_KEYBOARD_OPEN_AUTO = false;
 
     /** instance of the virtual keyboard listener */
     VirtualKeyboardListener vkl;
@@ -144,7 +144,7 @@ class VirtualKeyboard {
         }else{
             neededHeight = maxRows * (buttonH + PADDING) +
                            3 * PADDING + textfieldHeight;
-            kbY = vkl.getAvailableHeight();
+            kbY = vkl.getAvailableHeight()-neededHeight;
             kbHeight = neededHeight;
         }
 
@@ -356,12 +356,16 @@ class VirtualKeyboard {
         drawSunkedBorder(g,PADDING,PADDING,
                          kbWidth - 2*PADDING, textfieldHeight); 
 
-        g.translate(PADDING*2 + 1,PADDING*2);
+        g.setClip(0,0,
+                         kbWidth - 2*PADDING, textfieldHeight); 
+
+
+        g.translate(PADDING + 1,PADDING);
 
         vkl.paintTextOnly(g,kbWidth - 3*PADDING,
-                          textfieldHeight - 2*PADDING + PADDING/2);
+                          textfieldHeight - 2*PADDING);
 
-        g.translate(-PADDING*2 - 1,-PADDING*2);
+        g.translate(-PADDING - 1,-PADDING);
         g.setClip(0,0,kbWidth,kbHeight);
     }
 
@@ -587,7 +591,11 @@ class VirtualKeyboard {
             }
          }
 
-        //TODO: Check for meta chars
+         if (metaKeys==null) {
+             return false;
+         }
+
+        //Check for meta chars
         int mkWidth = metaKeys.length *   
                       (IMAGE_SIZE + 3*META_PADDING) + META_PADDING;
         int currX = (kbWidth - mkWidth) / 2 + 2*META_PADDING;
@@ -618,10 +626,7 @@ class VirtualKeyboard {
             }
         }
 
-        System.out.println("Not found");
-
-
-         return false;
+        return false;
     }
 
     /**
@@ -643,7 +648,6 @@ class VirtualKeyboard {
             // dismiss the menu layer if the user pressed outside the menu
             if ( isKeyAtPointerPosition(x, y)) {
              // press on valid key
-                System.out.println("Pressing ...");
                 traverse(type,Constants.KEYCODE_SELECT);
                 vkl.repaintVK();
                
@@ -651,9 +655,9 @@ class VirtualKeyboard {
             break;
         case EventConstants.RELEASED:
                 if ( isKeyAtPointerPosition(x, y)) {
-                    System.out.println("Releasing ...");
                     traverse(type,Constants.KEYCODE_SELECT);
                     vkl.repaintVK();
+               
             }
 
             break;
