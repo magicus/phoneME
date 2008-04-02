@@ -74,8 +74,8 @@ KNIDECL(com_sun_mmedia_DefaultConfiguration_nIsRadioSupported) {
             for( i = 0; NULL != cfg->mediaCaps[i].mediaFormat && 
                     i < caps_sanity_size_limit; i++ )
             {
-                if( JAVACALL_MEDIA_FORMAT_CAPTURE_RADIO == 
-                    cfg->mediaCaps[i].mediaFormat )
+                if( 0 == strcmp( JAVACALL_MEDIA_FORMAT_CAPTURE_RADIO, 
+                    cfg->mediaCaps[i].mediaFormat ) )
                 {
                     res = KNI_TRUE;
                     break;
