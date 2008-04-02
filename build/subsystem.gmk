@@ -1,5 +1,5 @@
 #
-# Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+# Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
 # 
 # This program is free software; you can redistribute it and/or
@@ -344,7 +344,7 @@ INTERNAL_JSR_177_CONFIG_DIR = $(JSR_177_DIR)/src/share/config
 #
 JSR_177_PROPERTY_FILES += \
 	$(INTERNAL_JSR_177_CONFIG_DIR)/common/properties_jsr177.xml
-	
+
 # Include properties that depend on build options
 ifeq ($(JSR_177_USE_EMULATOR),true)
     JSR_177_PROPERTY_FILES += \
@@ -371,11 +371,11 @@ ifeq ($(JSR_177_USE_EMULATOR),true)
     ifndef JC_DIR
         JC_DIR = /java/re/jcdevkit/2.2.1/archive/fcs/binaries/domestic/linux/java_card_kit-2_2_1
     endif
-    
+
     ifeq ($(wildcard $(JC_DIR)/lib/apdutool.jar),)
         $(error JC_DIR must point to the Java Card Development Kit directory: $(JC_DIR))
     endif
-    
+
     JC_API = $(JC_DIR)/lib/api.jar
     JC_CONVERTER = $(JC_DIR)/lib/converter.jar
     JC_VERIFIER=$(JC_DIR)/lib/offcardverifier.jar
@@ -413,7 +413,7 @@ $(JCRMIC_TOOL): $(JCRMIC_SOURCES)
 	$(AT)cp -f $(JSR_177_DIR)/src/share/tool/jcrmic/$(JCRMIC_MANIFEST_FILE) $(JAVACARD_CLASSES)/$(JCRMIC_MANIFEST_FILE)
 	$(AT)(cd $(JAVACARD_CLASSES) ; $(JAR_CMD) cfm $(JCRMIC_ARCHIVE) $(JCRMIC_MANIFEST_FILE) com/sun/satsa/jcrmic )
 	$(AT)mv $(JAVACARD_CLASSES)/$(JCRMIC_ARCHIVE) $(JCRMIC_TOOL)
-	
+
 # acl_data tool
 #
 ACL_DATA_DIR = $(JSR_177_BUILD_DIR)/acl_data
@@ -470,7 +470,7 @@ WIM_DATA_SOURCES =                                         \
     $(JSR_177_DIR)/src/share/tool/wim_data/PIN.java        \
     $(JSR_177_DIR)/src/share/tool/wim_data/TLV.java        \
     $(JSR_177_DIR)/src/share/tool/wim_data/Utils.java
-    
+
 $(JSR_177_GENERATED_DIR)/classes/$(JC_PKI_APPLET_PATH)/Data.java: $(WIM_DATA_DIRS) $(JSR_177_DIR)/src/share/tool/wim_data/Main.java
 	@echo " ... generating " $@
 	$(AT)$(JSR177_JAVAC) -source 1.4 -encoding utf-8 -d $(WIM_DATA_CLASSES) -classpath $(WIM_DATA_CLASSES) $(WIM_DATA_SOURCES)
@@ -553,7 +553,7 @@ $(APPLETS):
 
 $(TOOLKIT_EXP):
 	$(call applets,(JAVACARD_CLASSES)/$(SIM_TOOLKIT_PATH)/javacard/toolkit.cap,$(SIM_TOOLKIT_SOURCES))
-	
+
 $(TOOLKIT_CLASSES):
 	$(AT)$(JSR177_JAVAC) -g -d $(JAVACARD_CLASSES) -classpath $(JAVACARD_CLASSES)$(PATHSEP)$(JC_API) $(SIM_TOOLKIT_SOURCES)
 
