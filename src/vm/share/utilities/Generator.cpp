@@ -2,7 +2,7 @@
 /*
  *   
  *
- * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
@@ -302,7 +302,7 @@ void Generator::generate_oopmaps() {
     
     const char * header = 
       "/*\n"
-      " * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.\n"
+      " * Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.\n"
       " * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER\n"
       " * \n"
       " * This program is free software; you can redistribute it and/or\n"
