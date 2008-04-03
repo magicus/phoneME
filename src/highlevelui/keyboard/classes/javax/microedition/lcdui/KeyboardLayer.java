@@ -326,7 +326,7 @@ class KeyboardLayer extends PopupLayer implements VirtualKeyboardListener {
     void prepareKeyMapCanvas() {         
         keys = new char[1][];              
          //keys[0] = new char[16]; 
-        keys[0] = new char[13]; 
+        keys[0] = new char[12]; 
          // game keys A,B,C,D
 
          keys[0][0] = 'A';
@@ -343,8 +343,7 @@ class KeyboardLayer extends PopupLayer implements VirtualKeyboardListener {
          keys[0][9] = '^';
          keys[0][10] = 'v';
 
-         keys[0][11] = 'X';
-         keys[0][12] = ' ';
+         keys[0][11] = ' ';
 
 
          /*for (char i=0; i<4; i++) {   
@@ -387,7 +386,7 @@ class KeyboardLayer extends PopupLayer implements VirtualKeyboardListener {
             if (disp == null) {
                 System.out.println("Could not find display - Can't hide popup");
             } else {
-                //disp.hidePopup(this);
+                disp.hidePopup(this);
             }
 
             open = false;
@@ -411,8 +410,7 @@ class KeyboardLayer extends PopupLayer implements VirtualKeyboardListener {
                 case '>': key = Constants.KEYCODE_RIGHT; break;
                 case '^': key = Constants.KEYCODE_UP; break;
                 case 'v': key = Constants.KEYCODE_DOWN; break;
-                case ' ': key = 0; break;
-                case 'X': key = Constants.KEYCODE_SELECT; break;
+                case ' ': key = Constants.KEYCODE_SELECT; break;
             }
 
             if (type == EventConstants.RELEASED) {
