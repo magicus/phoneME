@@ -1,0 +1,618 @@
+#
+# Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+# 
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License version
+# 2 only, as published by the Free Software Foundation.
+# 
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# General Public License version 2 for more details (a copy is
+# included at /legal/license.txt).
+# 
+# You should have received a copy of the GNU General Public License
+# version 2 along with this work; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+# 02110-1301 USA
+# 
+# Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+# Clara, CA 95054 or visit www.sun.com if you need additional
+# information or have any questions.
+#
+######################################################################
+#
+# Module's Component Configuration file
+#
+# Remember: It is up to the module itself to impose rules of
+# how to compile the options. All the global Makefile needs
+# is the final def. of Java and native file lists and some
+# other def. (like VPATH)
+#
+######################################################################
+
+ifeq ($(JSR_177_DIR),)
+$(error JSR_177_DIR is not set.)
+endif
+
+# Adds to global SUBSYSTEMS list
+#
+SUBSYSTEMS += satsa
+
+# Abstractions component is used
+USE_ABSTRACTIONS=true
+
+# Add my verify and display commands
+verify: jsr177_verify
+display: jsr177_display
+
+# Way to specify an space as an argument  for subst
+# Copied from genlibrary.make
+JSR177_EMPTY=
+JSR177_SPACECHAR=$(JSR177_EMPTY) $(JSR177_EMPTY)
+
+# Variable for config errors
+JSR_177_ERRORS :=
+
+# Default values for options
+#
+# ACL from another implementation text files={true|false}
+USE_JSR_177_ACL_TEXT ?= false
+
+# APDUManager={carddevice|simple}
+JSR_177_APDU_MANAGER ?= carddevice
+
+# CardDevice={platformcarddevice}
+JSR_177_APDU_CARDDEVICE ?= platformcarddevice
+
+# Does SAT applications for testing emulator have to be generated={true|false}
+JSR_177_USE_EMULATOR ?= true
+
+# Javadoc source path
+#
+SUBSYSTEM_SATSA_SOURCEPATH = $(JSR_177_DIR)/src/share/satsa/classes \
+  $(JSR_177_DIR)/src/share/protocol/jcrmi/classes \
+  $(JSR_177_DIR)/src/share/pki/classes \
+  $(JSR_177_DIR)/src/share/crypto/classes \
+  $(JSR_177_DIR)/src/share/protocol/acl/common/classes \
+  $(JSR_177_DIR)/src/share/common/classes
+
+ifeq ($(USE_JSR_177_ACL_TEXT), true)
+SUBSYSTEM_SATSA_SOURCEPATH += \
+  $(JSR_177_DIR)/src/share/protocol/acl/text_file/classes
+else
+SUBSYSTEM_SATSA_SOURCEPATH += \
+  $(JSR_177_DIR)/src/share/protocol/acl/octet_file/classes
+endif
+
+ifeq ($(JSR_177_APDU_MANAGER),simple)
+SUBSYSTEM_SATSA_SOURCEPATH += \
+  $(JSR_177_DIR)/src/share/protocol/apdu/simple/classes
+else
+SUBSYSTEM_SATSA_SOURCEPATH += \
+  $(JSR_177_DIR)/src/share/protocol/apdu/classes
+endif
+
+SUBSYSTEM_SATSA_PACKAGES = \
+  com.sun.cdc.io.j2me.apdu \
+  com.sun.cdc.io.j2me.jcrmi \
+  com.sun.satsa.acl \
+  com.sun.satsa.util \
+  com.sun.satsa.util.pkcs15 \
+  com.sun.satsa.pki \
+  com.sun.cardreader \
+  java.rmi \
+  javacard.framework \
+  javacard.framework.service \
+  javacard.security \
+  javax.microedition.apdu \
+  javax.microedition.jcrmi \
+  javax.microedition.securityservice 
+
+ifeq ($(USE_RESTRICTED_CRYPTO), true)
+SUBSYSTEM_SATSA_PACKAGES += \
+  javax.crypto \
+  javax.crypto.spec \
+  java.security \
+  java.security.spec \
+  com.sun.satsa.crypto
+endif
+
+JAVADOC_ALL_SOURCEPATH += \
+    $(subst $(JSR177_SPACECHAR),$(PATHSEP),$(SUBSYSTEM_SATSA_SOURCEPATH))
+
+JAVADOC_ALL_PACKAGES +=  $(SUBSYSTEM_SATSA_PACKAGES)
+
+GROUP_DOC_ALL += \
+	-group "JSR177 SATSA" \
+    $(subst $(JSR177_SPACECHAR),$(PATHSEP),$(SUBSYSTEM_SATSA_PACKAGES)) 
+
+# Source files for the ( satsa ) module
+#
+JSR_177_COMMON = $(JSR_177_DIR)/src/share/common
+
+MODULE_SATSA_COMMON_JAVA_FILES = \
+    $(JSR_177_COMMON)/classes/com/sun/satsa/util/pkcs15/PKCS15File.java \
+    $(JSR_177_COMMON)/classes/com/sun/satsa/util/pkcs15/AODF.java \
+    $(JSR_177_COMMON)/classes/com/sun/satsa/util/pkcs15/DODF.java \
+    $(JSR_177_COMMON)/classes/com/sun/satsa/util/pkcs15/ODF.java \
+    $(JSR_177_COMMON)/classes/com/sun/satsa/util/pkcs15/DIRF.java \
+    $(JSR_177_COMMON)/classes/com/sun/satsa/util/TLV.java \
+    $(JSR_177_COMMON)/classes/com/sun/satsa/util/TLVException.java \
+    $(JSR_177_COMMON)/classes/com/sun/satsa/util/Utils.java \
+    $(JSR_177_COMMON)/classes/com/sun/satsa/util/Connection.java \
+    $(JSR_177_COMMON)/classes/com/sun/satsa/util/FileSystemAbstract.java \
+    $(JSR_177_COMMON)/classes/com/sun/satsa/util/Location.java \
+    $(JSR_177_DIR)/src/share/satsa/classes/javax/microedition/jcrmi/RemoteStub.java \
+    $(JSR_177_DIR)/src/share/satsa/classes/javax/microedition/jcrmi/RemoteRef.java \
+    $(JSR_177_DIR)/src/share/satsa/classes/javax/microedition/jcrmi/JavaCardRMIConnection.java \
+    $(JSR_177_DIR)/src/share/satsa/classes/javax/microedition/pki/UserCredentialManagerException.java \
+    $(JSR_177_DIR)/src/share/satsa/classes/javax/microedition/pki/UserCredentialManager.java \
+    $(JSR_177_DIR)/src/share/satsa/classes/javax/microedition/securityservice/CMSMessageSignatureService.java \
+    $(JSR_177_DIR)/src/share/satsa/classes/javax/microedition/securityservice/CMSMessageSignatureServiceException.java \
+    $(JSR_177_DIR)/src/share/satsa/classes/javax/microedition/apdu/APDUConnection.java \
+    $(JSR_177_DIR)/src/share/satsa/classes/javacard/framework/service/ServiceException.java \
+    $(JSR_177_DIR)/src/share/satsa/classes/javacard/framework/ISOException.java \
+    $(JSR_177_DIR)/src/share/satsa/classes/javacard/framework/APDUException.java \
+    $(JSR_177_DIR)/src/share/satsa/classes/javacard/framework/CardException.java \
+    $(JSR_177_DIR)/src/share/satsa/classes/javacard/framework/CardRuntimeException.java \
+    $(JSR_177_DIR)/src/share/satsa/classes/javacard/framework/PINException.java \
+    $(JSR_177_DIR)/src/share/satsa/classes/javacard/framework/TransactionException.java \
+    $(JSR_177_DIR)/src/share/satsa/classes/javacard/framework/SystemException.java \
+    $(JSR_177_DIR)/src/share/satsa/classes/javacard/framework/UserException.java \
+    $(JSR_177_DIR)/src/share/satsa/classes/javacard/security/CryptoException.java
+
+JSR_177_ACL_COMMON_DIR = $(JSR_177_DIR)/src/share/protocol/acl/common
+JSR_177_ACL_CLASSES_DIR = classes/com/sun/satsa/acl
+JSR_177_ACL_TEXT_DIR = $(JSR_177_DIR)/src/share/protocol/acl/text_file
+JSR_177_ACL_OCTET_DIR = $(JSR_177_DIR)/src/share/protocol/acl/octet_file
+ifeq ($(USE_JSR_177_ACL_TEXT), true)
+JSR_177_ACL_IMPL_DIR = $(JSR_177_ACL_TEXT_DIR)
+MODULE_SATSA_ACL_JAVA_FILES = \
+    $(JSR_177_ACL_IMPL_DIR)/$(JSR_177_ACL_CLASSES_DIR)/ACLFileReader.java
+else
+JSR_177_ACL_IMPL_DIR = $(JSR_177_ACL_OCTET_DIR)
+MODULE_SATSA_ACL_JAVA_FILES = \
+    $(JSR_177_ACL_IMPL_DIR)/$(JSR_177_ACL_CLASSES_DIR)/AclFileSystem.java \
+    $(JSR_177_ACL_IMPL_DIR)/$(JSR_177_ACL_CLASSES_DIR)/ACIF.java
+endif
+
+MODULE_SATSA_ACL_JAVA_FILES += \
+    $(JSR_177_ACL_IMPL_DIR)/$(JSR_177_ACL_CLASSES_DIR)/ACEntry.java \
+    $(JSR_177_ACL_IMPL_DIR)/$(JSR_177_ACL_CLASSES_DIR)/ACList.java \
+    $(JSR_177_ACL_IMPL_DIR)/$(JSR_177_ACL_CLASSES_DIR)/ACSlot.java \
+    $(JSR_177_ACL_IMPL_DIR)/$(JSR_177_ACL_CLASSES_DIR)/PINAttributes.java \
+	$(JSR_177_ACL_COMMON_DIR)/$(JSR_177_ACL_CLASSES_DIR)/JCRMIPermission.java \
+	$(JSR_177_ACL_IMPL_DIR)/$(JSR_177_ACL_CLASSES_DIR)/AccessControlManager.java \
+	$(JSR_177_ACL_COMMON_DIR)/$(JSR_177_ACL_CLASSES_DIR)/ACLPermissions.java \
+	$(JSR_177_ACL_COMMON_DIR)/$(JSR_177_ACL_CLASSES_DIR)/APDUPermissions.java \
+	$(JSR_177_ACL_COMMON_DIR)/$(JSR_177_ACL_CLASSES_DIR)/JCRMIPermissions.java \
+	$(JSR_177_ACL_COMMON_DIR)/$(JSR_177_ACL_CLASSES_DIR)/PINData.java \
+	$(JSR_177_ACL_COMMON_DIR)/$(JSR_177_ACL_CLASSES_DIR)/PINEntryDialog.java
+
+# Define APDU sources which depend on options
+#
+# JSR_177_APDU_MANAGER=simple
+ifeq ($(JSR_177_APDU_MANAGER),simple)
+MODULE_SATSA_APDU_JAVA_FILES = \
+    $(JSR_177_DIR)/src/share/protocol/apdu/simple/classes/com/sun/cdc/io/j2me/apdu/Protocol.java \
+    $(JSR_177_DIR)/src/share/protocol/apdu/simple/classes/com/sun/cdc/io/j2me/apdu/APDUManager.java \
+    $(JSR_177_DIR)/src/share/protocol/apdu/simple/classes/com/sun/cdc/io/j2me/apdu/Handle.java \
+    $(JSR_177_DIR)/src/share/protocol/apdu/simple/classes/com/sun/cdc/io/j2me/apdu/Slot.java \
+    $(JSR_177_DIR)/src/share/protocol/apdu/simple/classes/com/sun/cardreader/CardDeviceException.java
+MODULE_SATSA_APDU_NATIVE_FILES += \
+	apdu_manager_kni.c 
+SUBSYSTEM_SATSA_CNI_CLASSES += \
+    com.sun.cdc.io.j2me.apdu.APDUManager
+else
+
+# JSR_177_APDU_MANAGER=carddevice
+ifeq ($(JSR_177_APDU_MANAGER),carddevice)
+MODULE_SATSA_APDU_JAVA_FILES = \
+    $(JSR_177_DIR)/src/share/protocol/apdu/classes/com/sun/cdc/io/j2me/apdu/Protocol.java \
+    $(JSR_177_DIR)/src/share/protocol/apdu/classes/com/sun/cdc/io/j2me/apdu/APDUManager.java \
+    $(JSR_177_DIR)/src/share/protocol/apdu/classes/com/sun/cdc/io/j2me/apdu/Cad.java \
+    $(JSR_177_DIR)/src/share/protocol/apdu/classes/com/sun/cdc/io/j2me/apdu/Handle.java \
+    $(JSR_177_DIR)/src/share/protocol/apdu/classes/com/sun/cdc/io/j2me/apdu/TLP224Message.java \
+    $(JSR_177_DIR)/src/share/protocol/apdu/classes/com/sun/cardreader/CardDevice.java \
+    $(JSR_177_DIR)/src/share/protocol/apdu/classes/com/sun/cardreader/CardSlot.java \
+    $(JSR_177_DIR)/src/share/protocol/apdu/classes/com/sun/cardreader/SlotFactory.java \
+    $(JSR_177_DIR)/src/share/protocol/apdu/classes/com/sun/cardreader/CardDeviceException.java
+
+# JSR_177_APDU_MANAGER=carddevice & JSR_177_APDU_CARDDEVICE=platformcarddevice
+ifeq ($(JSR_177_APDU_CARDDEVICE),platformcarddevice)
+MODULE_SATSA_APDU_JAVA_FILES += \
+    $(JSR_177_DIR)/src/share/protocol/apdu/classes/com/sun/cardreader/PlatformCardDevice.java
+MODULE_SATSA_APDU_NATIVE_FILES += \
+	carddevice_kni.c
+SUBSYSTEM_SATSA_CNI_CLASSES += \
+    com.sun.cardreader.PlatformCardDevice
+else
+# error - bad JSR_177_APDU_CARDDEVICE
+JSR_177_ERRORS += \
+    (echo "ERROR: JSR_177_APDU_CARDDEVICE is not properly set ($(JSR_177_APDU_CARDDEVICE))") $(LOG);
+
+# end of JSR_177_APDU_CARDDEVICE platformcarddevice
+endif
+else
+# error - bad JSR_177_APDU_MANAGER
+JSR_177_ERRORS += \
+    (echo "ERROR: JSR_177_APDU_MANAGER is not properly set ($(JSR_177_APDU_MANAGER))") $(LOG);
+
+# end of JSR_177_APDU_MANAGER carddevice
+endif
+# end of JSR_177_APDU_MANAGER simple
+endif
+# END OF Define APDU sources
+
+MODULE_SATSA_APDU_JAVA_FILES += \
+    $(JSR_177_DIR)/src/share/protocol/apdu/classes/com/sun/midp/io/j2me/apdu/Protocol.java
+
+MODULE_SATSA_JCRMI_JAVA_FILES = \
+    $(JSR_177_DIR)/src/share/protocol/jcrmi/classes/com/sun/cdc/io/j2me/jcrmi/Protocol.java \
+    $(JSR_177_DIR)/src/share/protocol/jcrmi/classes/com/sun/midp/io/j2me/jcrmi/Protocol.java \
+    $(JSR_177_DIR)/src/share/protocol/jcrmi/classes/com/sun/cdc/io/j2me/jcrmi/Reference.java
+
+MODULE_SATSA_PKI_JAVA_FILES = \
+    $(JSR_177_DIR)/src/share/pki/classes/com/sun/satsa/pki/Certificate.java \
+    $(JSR_177_DIR)/src/share/pki/classes/com/sun/satsa/pki/PKIManager.java \
+    $(JSR_177_DIR)/src/share/pki/classes/com/sun/satsa/pki/PrivateKey.java \
+    $(JSR_177_DIR)/src/share/pki/classes/com/sun/satsa/pki/RFC2253Name.java \
+    $(JSR_177_DIR)/src/share/pki/classes/com/sun/satsa/pki/PublicKey.java \
+    $(JSR_177_DIR)/src/share/pki/classes/com/sun/satsa/pki/WimFileSystem.java \
+    $(JSR_177_DIR)/src/share/pki/classes/com/sun/satsa/pki/WIMApplication.java
+
+JCRMIC_SOURCES = \
+    $(JSR_177_DIR)/src/share/tool/jcrmic/com/sun/satsa/jcrmic/classfile/attributes/JAttribute.java \
+    $(JSR_177_DIR)/src/share/tool/jcrmic/com/sun/satsa/jcrmic/classfile/attributes/JExceptionsAttr.java \
+    $(JSR_177_DIR)/src/share/tool/jcrmic/com/sun/satsa/jcrmic/classfile/constants/JConstant.java \
+    $(JSR_177_DIR)/src/share/tool/jcrmic/com/sun/satsa/jcrmic/classfile/constants/JConstantClass.java \
+    $(JSR_177_DIR)/src/share/tool/jcrmic/com/sun/satsa/jcrmic/classfile/constants/JConstantDouble.java \
+    $(JSR_177_DIR)/src/share/tool/jcrmic/com/sun/satsa/jcrmic/classfile/constants/JConstantFloat.java \
+    $(JSR_177_DIR)/src/share/tool/jcrmic/com/sun/satsa/jcrmic/classfile/constants/JConstantFieldRef.java \
+    $(JSR_177_DIR)/src/share/tool/jcrmic/com/sun/satsa/jcrmic/classfile/constants/JConstantInteger.java \
+    $(JSR_177_DIR)/src/share/tool/jcrmic/com/sun/satsa/jcrmic/classfile/constants/JConstantUtf8.java \
+    $(JSR_177_DIR)/src/share/tool/jcrmic/com/sun/satsa/jcrmic/classfile/constants/JConstantInterfaceMethodRef.java \
+    $(JSR_177_DIR)/src/share/tool/jcrmic/com/sun/satsa/jcrmic/classfile/constants/JConstantMethodRef.java \
+    $(JSR_177_DIR)/src/share/tool/jcrmic/com/sun/satsa/jcrmic/classfile/constants/JConstantNameAndType.java \
+    $(JSR_177_DIR)/src/share/tool/jcrmic/com/sun/satsa/jcrmic/classfile/constants/JConstantLong.java \
+    $(JSR_177_DIR)/src/share/tool/jcrmic/com/sun/satsa/jcrmic/classfile/constants/JConstantPool.java \
+    $(JSR_177_DIR)/src/share/tool/jcrmic/com/sun/satsa/jcrmic/classfile/constants/JConstantString.java \
+    $(JSR_177_DIR)/src/share/tool/jcrmic/com/sun/satsa/jcrmic/classfile/Loader.java \
+    $(JSR_177_DIR)/src/share/tool/jcrmic/com/sun/satsa/jcrmic/classfile/JClass.java \
+    $(JSR_177_DIR)/src/share/tool/jcrmic/com/sun/satsa/jcrmic/classfile/JMethod.java \
+    $(JSR_177_DIR)/src/share/tool/jcrmic/com/sun/satsa/jcrmic/utils/IndentingWriter.java \
+    $(JSR_177_DIR)/src/share/tool/jcrmic/com/sun/satsa/jcrmic/utils/Notifier.java \
+    $(JSR_177_DIR)/src/share/tool/jcrmic/com/sun/satsa/jcrmic/utils/StreamReader.java \
+    $(JSR_177_DIR)/src/share/tool/jcrmic/com/sun/satsa/jcrmic/Main.java \
+    $(JSR_177_DIR)/src/share/tool/jcrmic/com/sun/satsa/jcrmic/RemoteMethod.java
+
+SIM_TOOLKIT_PATH=sim/toolkit
+SIM_TOOLKIT_SOURCES = \
+    $(JSR_177_DIR)/src/share/tool/javacard/$(SIM_TOOLKIT_PATH)/AccessSAT.java \
+    $(JSR_177_DIR)/src/share/tool/javacard/$(SIM_TOOLKIT_PATH)/SATBaseApplet.java \
+    $(JSR_177_DIR)/src/share/tool/javacard/$(SIM_TOOLKIT_PATH)/EditHandler.java \
+    $(JSR_177_DIR)/src/share/tool/javacard/$(SIM_TOOLKIT_PATH)/EnvelopeHandler.java \
+    $(JSR_177_DIR)/src/share/tool/javacard/$(SIM_TOOLKIT_PATH)/MEProfile.java \
+    $(JSR_177_DIR)/src/share/tool/javacard/$(SIM_TOOLKIT_PATH)/ViewHandler.java \
+    $(JSR_177_DIR)/src/share/tool/javacard/$(SIM_TOOLKIT_PATH)/EnvelopeResponseHandler.java \
+    $(JSR_177_DIR)/src/share/tool/javacard/$(SIM_TOOLKIT_PATH)/ProactiveHandler.java \
+    $(JSR_177_DIR)/src/share/tool/javacard/$(SIM_TOOLKIT_PATH)/ToolkitConstants.java \
+    $(JSR_177_DIR)/src/share/tool/javacard/$(SIM_TOOLKIT_PATH)/ToolkitException.java \
+    $(JSR_177_DIR)/src/share/tool/javacard/$(SIM_TOOLKIT_PATH)/ProactiveResponseHandler.java \
+    $(JSR_177_DIR)/src/share/tool/javacard/$(SIM_TOOLKIT_PATH)/ToolkitInterface.java \
+    $(JSR_177_DIR)/src/share/tool/javacard/$(SIM_TOOLKIT_PATH)/ToolkitRegistry.java
+
+JC_SAT_APPLET_PATH=com/sun/satsa/satapplet
+JC_SAT_APPLET_SOURCES = \
+    $(JSR_177_DIR)/src/share/tool/javacard/$(JC_SAT_APPLET_PATH)/SATApplet.java
+    
+JC_GSM_APPLET_PATH=com/sun/satsa/gsmapplet
+JC_GSM_APPLET_SOURCES = \
+    $(JSR_177_DIR)/src/share/tool/javacard/$(JC_GSM_APPLET_PATH)/AccessSATImpl.java \
+    $(JSR_177_DIR)/src/share/tool/javacard/$(JC_GSM_APPLET_PATH)/GSMApplet.java
+
+JC_PKI_APPLET_PATH=com/sun/satsa/pkiapplet
+JC_PKI_APPLET_SOURCES = \
+    $(JSR_177_DIR)/src/share/tool/javacard/$(JC_PKI_APPLET_PATH)/Parser.java \
+    $(JSR_177_DIR)/src/share/tool/javacard/$(JC_PKI_APPLET_PATH)/PKIApplet.java \
+    $(JSR_177_DIR)/src/share/tool/javacard/$(JC_PKI_APPLET_PATH)/File.java \
+    $(JSR_177_GENERATED_DIR)/classes/$(JC_PKI_APPLET_PATH)/Data.java
+
+JC_ACL_APPLET_PATH=com/sun/satsa/aclapplet
+JC_ACL_APPLET_SOURCES = \
+    $(JSR_177_DIR)/src/share/tool/javacard/$(JC_ACL_APPLET_PATH)/Parser.java \
+    $(JSR_177_DIR)/src/share/tool/javacard/$(JC_ACL_APPLET_PATH)/ACLApplet.java \
+    $(JSR_177_DIR)/src/share/tool/javacard/$(JC_ACL_APPLET_PATH)/File.java \
+    $(JSR_177_GENERATED_DIR)/classes/$(JC_ACL_APPLET_PATH)/Data.java
+
+# Determines what option we have made and set it
+# to some variable that global makefile recognize
+#
+SUBSYSTEM_SATSA_JAVA_FILES   = $(MODULE_SATSA_COMMON_JAVA_FILES) \
+			       $(MODULE_SATSA_APDU_JAVA_FILES) \
+			       $(MODULE_SATSA_JCRMI_JAVA_FILES) \
+			       $(MODULE_SATSA_PKI_JAVA_FILES) \
+			       $(MODULE_SATSA_ACL_JAVA_FILES) \
+			       $(MODULE_SATSA_CRYPTO_JAVA_FILES)
+
+# JSR 177 internal paths
+INTERNAL_JSR_177_CONFIG_DIR = $(JSR_177_DIR)/src/share/config
+
+# Include jsr 177 common properties in Configuration
+#
+JSR_177_PROPERTY_FILES += \
+	$(INTERNAL_JSR_177_CONFIG_DIR)/common/properties_jsr177.xml
+	
+# Include properties that depend on build options
+ifeq ($(JSR_177_USE_EMULATOR),true)
+    JSR_177_PROPERTY_FILES += \
+        $(INTERNAL_JSR_177_CONFIG_DIR)/common/properties_jsr177_simulator.xml
+else
+    JSR_177_PROPERTY_FILES += \
+        $(INTERNAL_JSR_177_CONFIG_DIR)/common/properties_jsr177_real.xml
+endif
+
+ifeq ($(JSR_177_APDU_MANAGER),carddevice)
+    ifeq ($(JSR_177_APDU_CARDDEVICE),platformcarddevice)
+        JSR_177_PROPERTY_FILES += \
+            $(INTERNAL_JSR_177_CONFIG_DIR)/common/properties_jsr177_platform.xml
+    endif
+endif
+
+# Java card constants
+#
+JCRMIC_PROPERTIES = com/sun/satsa/jcrmic/jcrmic.properties
+JCRMIC_MANIFEST_FILE = jcrmic.manifest
+JCRMIC_ARCHIVE = jcrmic.jar
+
+ifeq ($(JSR_177_USE_EMULATOR),true)
+    ifndef JC_DIR
+        JC_DIR = /java/re/jcdevkit/2.2.1/archive/fcs/binaries/domestic/linux/java_card_kit-2_2_1
+    endif
+    
+    ifeq ($(wildcard $(JC_DIR)/lib/apdutool.jar),)
+        $(error JC_DIR must point to the Java Card Development Kit directory: $(JC_DIR))
+    endif
+    
+    JC_API = $(JC_DIR)/lib/api.jar
+    JC_CONVERTER = $(JC_DIR)/lib/converter.jar
+    JC_VERIFIER=$(JC_DIR)/lib/offcardverifier.jar
+    JC_SCRIPTGEN=$(JC_DIR)/lib/scriptgen.jar
+    JC_APDUTOOL_CLASSPATH="$(JC_DIR)/lib/apduio.jar$(PATHSEP)$(JC_DIR)/lib/apdutool.jar"
+
+    JC_EEPROM_IMAGE = $(JSR_177_BINDIR)/jc_eeprom_image
+    SAT_SCRIPT_PATH = $(JAVACARD_CLASSES)/jc_script
+endif
+
+SUBSYSTEM_SATSA_NATIVE_FILES = \
+    $(MODULE_SATSA_APDU_NATIVE_FILES)
+
+EXTRA_CFLAGS += -DENABLE_JSR_177
+JPP_DEFS += -DENABLE_JSR_177
+
+ifneq ($(TARGET_VM), cldc_vm)
+include $(JSR_177_DIR)/build/cdc_share/subsystem.gmk
+else
+include $(JSR_177_DIR)/build/cldc_application/subsystem.gmk
+endif
+
+# Tools and applets
+#
+$(JSR_177_BINDIR):
+	@echo " ... creating directories" $@
+	$(AT)mkdir -p $@
+
+# jcrmic tool
+#
+$(JCRMIC_TOOL): $(JCRMIC_SOURCES)
+	@echo " ..." $@
+	$(AT)$(JSR177_JAVAC) -source 1.2 -d $(JAVACARD_CLASSES) $(JCRMIC_SOURCES)
+	$(AT)cp -f $(JSR_177_DIR)/src/share/tool/jcrmic/$(JCRMIC_PROPERTIES) $(JAVACARD_CLASSES)/$(JCRMIC_PROPERTIES)
+	$(AT)cp -f $(JSR_177_DIR)/src/share/tool/jcrmic/$(JCRMIC_MANIFEST_FILE) $(JAVACARD_CLASSES)/$(JCRMIC_MANIFEST_FILE)
+	$(AT)(cd $(JAVACARD_CLASSES) ; $(JAR_CMD) cfm $(JCRMIC_ARCHIVE) $(JCRMIC_MANIFEST_FILE) com/sun/satsa/jcrmic )
+	$(AT)mv $(JAVACARD_CLASSES)/$(JCRMIC_ARCHIVE) $(JCRMIC_TOOL)
+	
+# acl_data tool
+#
+ACL_DATA_DIR = $(JSR_177_BUILD_DIR)/acl_data
+ACL_DATA_CLASSES = $(ACL_DATA_DIR)/classes
+
+ifeq ($(wildcard $(JSR_177_DIR)/src/share/tool/acl_data/acl_0),)
+    $(error ACL input text file 'acl_0' have to be placed into $(JSR_177_DIR)/src/share/tool/acl_data directory)
+endif
+
+ACL_DATA_DIRS = $(ACL_DATA_DIR)/files $(ACL_DATA_DIR)/classes $(JSR_177_GENERATED_DIR)/classes/$(JC_ACL_APPLET_PATH)
+$(ACL_DATA_DIRS): 
+	@echo " ... creating directories" $@
+	$(AT)mkdir -p $@
+
+ACL_DATA_SOURCES =                                              \
+    $(JSR_177_DIR)/src/share/tool/acl_data/ACEntry.java         \
+    $(JSR_177_DIR)/src/share/tool/acl_data/ACLFileReader.java   \
+    $(JSR_177_DIR)/src/share/tool/acl_data/Main.java            \
+    $(JSR_177_DIR)/src/share/tool/acl_data/PINData.java         \
+    $(JSR_177_DIR)/src/share/tool/acl_data/TLVException.java    \
+    $(JSR_177_DIR)/src/share/tool/acl_data/ACFile.java          \
+    $(JSR_177_DIR)/src/share/tool/acl_data/ACList.java          \
+    $(JSR_177_DIR)/src/share/tool/acl_data/JCRMIPermission.java \
+    $(JSR_177_DIR)/src/share/tool/acl_data/Print.java           \
+    $(JSR_177_DIR)/src/share/tool/acl_data/TLV.java             \
+    $(JSR_177_DIR)/src/share/tool/acl_data/ACLPermissions.java  \
+    $(JSR_177_DIR)/src/share/tool/acl_data/FileSystem.java      \
+    $(JSR_177_DIR)/src/share/tool/acl_data/Location.java        \
+    $(JSR_177_DIR)/src/share/tool/acl_data/PINAttributes.java   \
+    $(JSR_177_DIR)/src/share/tool/acl_data/Utils.java
+
+$(JSR_177_GENERATED_DIR)/classes/$(JC_ACL_APPLET_PATH)/Data.java: $(ACL_DATA_DIRS) $(JSR_177_DIR)/src/share/tool/acl_data/acl_0
+	@echo " ... generating " $@
+	$(AT)$(JSR177_JAVAC) -source 1.4 -encoding utf-8 -d $(ACL_DATA_CLASSES) -classpath $(ACL_DATA_CLASSES) $(ACL_DATA_SOURCES)
+	$(AT)$(JSR177_JAVA) -classpath $(ACL_DATA_CLASSES) acl_data.Main $(JSR_177_DIR)/src/share/tool/acl_data/acl_0 \
+	$(JSR_177_GENERATED_DIR)/classes/$(JC_ACL_APPLET_PATH)/ $(ACL_DATA_DIR)/files/
+	$(AT)$(JSR177_JAVA) -classpath $(ACL_DATA_CLASSES) acl_data.Print $(ACL_DATA_DIR)/files/* > $(ACL_DATA_DIR)/files.txt
+
+ifeq ($(JSR_177_USE_EMULATOR),true)
+# wim_data tool
+#
+WIM_DATA_DIR = $(JSR_177_BUILD_DIR)/wim_data
+WIM_DATA_CLASSES = $(WIM_DATA_DIR)/classes
+
+WIM_DATA_DIRS = $(WIM_DATA_DIR)/classes $(JSR_177_GENERATED_DIR)/classes/$(JC_PKI_APPLET_PATH)
+$(WIM_DATA_DIRS): 
+	@echo " ... creating directories" $@
+	$(AT)mkdir -p $@
+
+WIM_DATA_SOURCES =                                         \
+    $(JSR_177_DIR)/src/share/tool/wim_data/FileSystem.java \
+    $(JSR_177_DIR)/src/share/tool/wim_data/Key.java        \
+    $(JSR_177_DIR)/src/share/tool/wim_data/Main.java       \
+    $(JSR_177_DIR)/src/share/tool/wim_data/PIN.java        \
+    $(JSR_177_DIR)/src/share/tool/wim_data/TLV.java        \
+    $(JSR_177_DIR)/src/share/tool/wim_data/Utils.java
+    
+$(JSR_177_GENERATED_DIR)/classes/$(JC_PKI_APPLET_PATH)/Data.java: $(WIM_DATA_DIRS) $(JSR_177_DIR)/src/share/tool/wim_data/Main.java
+	@echo " ... generating " $@
+	$(AT)$(JSR177_JAVAC) -source 1.4 -encoding utf-8 -d $(WIM_DATA_CLASSES) -classpath $(WIM_DATA_CLASSES) $(WIM_DATA_SOURCES)
+	$(AT)$(JSR177_JAVA) -classpath $(WIM_DATA_CLASSES) wim_data.Main $(JSR_177_GENERATED_DIR)/classes/$(JC_PKI_APPLET_PATH)/ \
+	$(WIM_DATA_DIR)/	
+
+# simulator tool
+#
+APPLETS_LIST = toolkit   \
+               gsmapplet \
+               satapplet \
+               pkiapplet \
+               aclapplet
+
+APPLETS = $(JAVACARD_CLASSES)/$(SIM_TOOLKIT_PATH)/javacard/toolkit.cap     \
+	      $(JAVACARD_CLASSES)/$(JC_GSM_APPLET_PATH)/javacard/gsmapplet.cap \
+	      $(JAVACARD_CLASSES)/$(JC_SAT_APPLET_PATH)/javacard/satapplet.cap \
+	      $(JAVACARD_CLASSES)/$(JC_PKI_APPLET_PATH)/javacard/pkiapplet.cap \
+	      $(JAVACARD_CLASSES)/$(JC_ACL_APPLET_PATH)/javacard/aclapplet.cap
+$(JAVACARD_CLASSES)/$(SIM_TOOLKIT_PATH)/javacard/toolkit.cap: $(SIM_TOOLKIT_SOURCES)
+
+TOOLKIT_EXP=$(JAVACARD_CLASSES)/api_export_files/$(SIM_TOOLKIT_PATH)/javacard/toolkit.exp
+TOOLKIT_CLASSES=$(foreach class,$(subst .java,.class,$(notdir $(SIM_TOOLKIT_SOURCES))),$(JAVACARD_CLASSES)/$(SIM_TOOLKIT_PATH)/$(class))
+$(JAVACARD_CLASSES)/$(JC_SAT_APPLET_PATH)/javacard/satapplet.cap: $(JC_SAT_APPLET_SOURCES) $(TOOLKIT_CLASSES) $(TOOLKIT_EXP)
+$(JAVACARD_CLASSES)/$(JC_GSM_APPLET_PATH)/javacard/gsmapplet.cap: $(JC_GSM_APPLET_SOURCES) $(TOOLKIT_CLASSES) $(TOOLKIT_EXP)
+$(JAVACARD_CLASSES)/$(JC_PKI_APPLET_PATH)/javacard/pkiapplet.cap: $(JC_PKI_APPLET_SOURCES)
+$(JAVACARD_CLASSES)/$(JC_ACL_APPLET_PATH)/javacard/aclapplet.cap: $(JC_ACL_APPLET_SOURCES)
+
+SCRS = $(foreach app, $(APPLETS_LIST), $(JAVACARD_CLASSES)/$(app).scr)
+$(JAVACARD_CLASSES)/toolkit.scr:   $(JAVACARD_CLASSES)/$(SIM_TOOLKIT_PATH)/javacard/toolkit.cap
+$(JAVACARD_CLASSES)/satapplet.scr: $(JAVACARD_CLASSES)/$(JC_SAT_APPLET_PATH)/javacard/satapplet.cap
+$(JAVACARD_CLASSES)/gsmapplet.scr: $(JAVACARD_CLASSES)/$(JC_GSM_APPLET_PATH)/javacard/gsmapplet.cap
+$(JAVACARD_CLASSES)/pkiapplet.scr: $(JAVACARD_CLASSES)/$(JC_PKI_APPLET_PATH)/javacard/pkiapplet.cap
+$(JAVACARD_CLASSES)/aclapplet.scr: $(JAVACARD_CLASSES)/$(JC_ACL_APPLET_PATH)/javacard/aclapplet.cap
+
+# appletName(appTarget)
+# appTarget  - full target name for applet
+#
+# actions    - returns name of applet without path and extension
+define appletName
+$(strip $(foreach app, $(APPLETS_LIST),$(findstring $(app),$(1))))
+endef
+
+# simtoolkit(appTarget, command)
+# appTarget  - full target name for applet
+# command    - executing command
+#
+# actions    - passes 'command' to command line if 'appTarget' is 'toolkit'
+JSR_177_IS_toolkit=1
+define simtoolkit
+$(if $(JSR_177_IS_$(call appletName,$(1))),$(2))
+endef
+
+# applets(appTarget, sources)
+# appTarget  - full target name for applet
+# sources    - java source files
+#
+# actions    - compiles 'appTarget'
+define applets
+	@echo " ... compiling $(1)"
+	$(AT)$(JSR177_JAVAC) -source 1.2 -g -d $(JAVACARD_CLASSES) -classpath $(JAVACARD_CLASSES)$(PATHSEP)$(JC_API) $(filter %.java,$(2))
+	$(AT)cp -f $(JSR_177_DIR)/src/share/tool/javacard/$(call appletName,$@).opt $(JAVACARD_CLASSES)/
+	@echo " ... preparing $(1)"
+	$(call simtoolkit,$@,$(AT)cp -r -f $(JC_DIR)/api_export_files $(JAVACARD_CLASSES))
+	$(AT)(cd $(JAVACARD_CLASSES) ; $(JSR177_JAVA) -classpath $(JC_VERIFIER)$(PATHSEP)$(JC_CONVERTER) com.sun.javacard.converter.Converter -config $(call appletName, $(1)).opt )	
+	$(call simtoolkit,$@,$(AT)mkdir -p $(JAVACARD_CLASSES)/api_export_files/$(SIM_TOOLKIT_PATH)/javacard/)
+	$(call simtoolkit,$@,$(AT)cp $(JAVACARD_CLASSES)/$(SIM_TOOLKIT_PATH)/javacard/toolkit.exp $(JAVACARD_CLASSES)/api_export_files/$(SIM_TOOLKIT_PATH)/javacard/)
+endef
+
+$(SIM_TEST):
+	@echo " ... Checking Java Card Development Kit"
+	$(if $(shell ($(JC_DIR)/bin/cref -version 2>/dev/null | \
+	              grep "[Vv]ersion" | grep "2\.2\.1" > /dev/null); \
+	             if test $$? -ne 0; then echo "Error"; fi), \
+	    $(error JC_DIR points to wrong Java Card Development Kit directory: $(JC_DIR)))
+	$(AT)touch $@
+
+$(APPLETS): 
+	$(call applets,$@,$^)
+
+$(TOOLKIT_EXP):
+	$(call applets,(JAVACARD_CLASSES)/$(SIM_TOOLKIT_PATH)/javacard/toolkit.cap,$(SIM_TOOLKIT_SOURCES))
+	
+$(TOOLKIT_CLASSES):
+	$(AT)$(JSR177_JAVAC) -g -d $(JAVACARD_CLASSES) -classpath $(JAVACARD_CLASSES)$(PATHSEP)$(JC_API) $(SIM_TOOLKIT_SOURCES)
+
+$(JAVACARD_CLASSES)/%.scr:
+	$(AT)$(JSR177_JAVA) -classpath $(JC_SCRIPTGEN) com.sun.javacard.scriptgen.Main -o $@ -nobanner $^
+
+$(JC_EEPROM_IMAGE): $(SCRS)
+	@echo " ..." $@
+	$(AT)cp -f $(JSR_177_DIR)/src/share/tool/javacard/*.scr $(JAVACARD_CLASSES)/
+	$(AT)cat $(JAVACARD_CLASSES)/header.scr $^ $(JAVACARD_CLASSES)/footer.scr > $(JAVACARD_CLASSES)/satsimulator.scr
+	@echo " ... loading applets (be patient)"
+	$(AT)$(JC_DIR)/bin/cref -o $(JC_EEPROM_IMAGE) -nobanner -nomeminfo -s &
+	-$(AT)sleep 1
+	$(AT)(cd $(JAVACARD_CLASSES) ; $(JSR177_JAVA) -classpath $(JC_APDUTOOL_CLASSPATH) com.sun.javacard.apdutool.Main -h 127.0.0.1 -nobanner satsimulator.scr)
+	$(AT)(mkdir -p $(SAT_SCRIPT_PATH) ; mv -f $(JAVACARD_CLASSES)/satsimulator.scr $(SAT_SCRIPT_PATH)/)
+	$(AT)(cd $(JAVACARD_CLASSES) ; rm -f *.opt header.scr footer.scr satsimulator.scr)
+	@echo " ..." $@ " done"
+endif
+
+$(JAVACARD_CLASSES):
+	@echo " ... creating directories" $@
+	$(AT)mkdir -p $@
+
+# Append SATSA source bundle creation to target
+source_bundle:: satsa_source_bundle
+
+# Create SATSA source in subdir 'jsr177/'
+SATSA_SOURCE_OUTPUT_DIR=$(SOURCE_OUTPUT_DIR)/jsr177
+
+# Copy and filter SATSA source in SATSA_SOURCE_OUTPUT_DIR
+satsa_source_bundle:: $(JSR_177_DIR)
+	@echo " ... JSR 177 source bundle" $(LOG)
+	$(AT)$(call source_bundle_filter,$(JSR_177_DIR),$(SATSA_SOURCE_OUTPUT_DIR), src/share)
+	$(AT)mkdir -p $(SATSA_SOURCE_OUTPUT_DIR)/build
+	$(AT)cp -f $(JSR_177_DIR)/build/subsystem.gmk $(SATSA_SOURCE_OUTPUT_DIR)/build/subsystem.gmk
+
+# Subsystem verify rules
+#
+ifeq ($(JSR_177_ERRORS),)
+jsr177_verify:
+else
+jsr177_verify:
+	@$(JSR_177_ERRORS)
+	$(AT)exit -1
+endif
+
+# Display subsystem information
+#
+jsr177_display:
+	@echo   "" $(LOG)
+	@echo   "==========================" $(LOG)
+	@echo   "JSR177 Build Configuration" $(LOG)
+	@echo   "==========================" $(LOG)
+	@echo   "" $(LOG)
+	@echo   "TARGET_PLATFORM             = ""$(TARGET_PLATFORM)" $(LOG)
+	@echo   "JSR_177_DIR                 = ""$(JSR_177_DIR)" $(LOG)
+	@echo   "JC_DIR                      = ""$(JC_DIR)" $(LOG)
+	@echo   "USE_JSR_177_ACL_TEXT        = ""$(USE_JSR_177_ACL_TEXT)" $(LOG)
+	@echo   "JSR_177_APDU_MANAGER        = ""$(JSR_177_APDU_MANAGER)" $(LOG)
+	@echo   "JSR_177_APDU_CARDDEVICE     = ""$(JSR_177_APDU_CARDDEVICE)" $(LOG)
+	@echo   "JSR_177_USE_EMULATOR        = ""$(JSR_177_USE_EMULATOR)" $(LOG)
+	@echo   "" $(LOG)
