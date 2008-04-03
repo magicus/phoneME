@@ -113,10 +113,15 @@ public class DirectPlayer extends BasicPlayer
     protected native int nTerm(int handle);
     // Get Content Type
     protected native String nGetContentType(int handle);
+    // Radio Tuner is exclusive. 
+    // Acquire it or return false if it is not available
+    private native boolean nAcquireRadioTuner();
     // Device is available?
     protected native boolean nAcquireDevice(int handle);
     // Relase device reference
     protected native void nReleaseDevice(int handle);
+    // Radio Tuner is exclusive. Release it
+    private native void nReleaseRadioTuner();
     // Clear buffered data
     protected native boolean nFlushBuffer(int handle);
     // Start playing
@@ -249,6 +254,13 @@ public class DirectPlayer extends BasicPlayer
         
     }
     
+    private boolean isRadioPlayer()
+    {
+        return ( null != source.getLocator() && 
+            source.getLocator().startsWith( 
+                DefaultConfiguration.RADIO_CAPTURE_LOCATOR ) );
+    }
+    
     /**
      * 1. Get all data from stream and buffering it to native library
      *
@@ -256,6 +268,14 @@ public class DirectPlayer extends BasicPlayer
      */
     protected void doPrefetch() throws MediaException {
         if (debug) System.out.println("[direct] DirectPlayer.doPrefetch for " + hNative + " " + mediaFormat);
+
+        if( isRadioPlayer() )
+        {
+            if( !nAcquireRadioTuner() )
+            {
+                throw new MediaException( "Radio Tuner is not available" );
+            }
+        }
 
         /* prefetch native player */
         if (!nPrefetch(hNative)) {
@@ -419,6 +439,12 @@ public class DirectPlayer extends BasicPlayer
         if (nPcmAudioPlayback(hNative)) {
             AudioTunnel.getInstance().stop();
         }
+
+        if( isRadioPlayer() )
+        {
+            nReleaseRadioTuner();
+        }
+        
         // To support streaming
         isFirstStart = true;
 

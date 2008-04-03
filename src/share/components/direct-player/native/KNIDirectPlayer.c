@@ -31,6 +31,8 @@
 
 /* Global Variables ************************************************************************/
 
+static jboolean g_isRadioTunerTakenByJava = KNI_FALSE;
+
 /* Externs **********************************************************************************/
 
 extern int unicodeToNative(const jchar *ustr, int ulen, unsigned char *bstr, int blen);
@@ -725,6 +727,32 @@ KNIDECL(com_sun_mmedia_DirectPlayer_nIsVolumeControlSupported) {
     }
 
     KNI_ReturnBoolean(returnValue);
+}
+
+KNIEXPORT KNI_RETURNTYPE_BOOLEAN
+KNIDECL(com_sun_mmedia_DirectPlayer_nAcquireRadioTuner)
+{
+    jboolean returnValue = KNI_FALSE;
+    
+    LockAudioMutex();
+    if( KNI_FALSE == g_isRadioTunerTakenByJava )
+    {
+        g_isRadioTunerTakenByJava = KNI_TRUE;
+        returnValue = KNI_TRUE;
+    }
+    UnlockAudioMutex();
+    
+    KNI_ReturnBoolean( returnValue );
+}
+
+KNIEXPORT KNI_RETURNTYPE_VOID
+KNIDECL(com_sun_mmedia_DirectPlayer_nReleaseRadioTuner)
+{
+    LockAudioMutex();
+    g_isRadioTunerTakenByJava = KNI_FALSE;
+    UnlockAudioMutex();
+    
+    KNI_ReturnVoid();
 }
 
 /*  protected native String nGetContentType(int handle); */
