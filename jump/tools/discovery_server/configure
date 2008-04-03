@@ -1,0 +1,522 @@
+#!/bin/sh
+
+#
+# Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+#
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License version
+# 2 only, as published by the Free Software Foundation.
+#
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# General Public License version 2 for more details (a copy is
+# included at /legal/license.txt).
+#
+# You should have received a copy of the GNU General Public License
+# version 2 along with this work; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+# 02110-1301 USA
+#
+# Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+# Clara, CA 95054 or visit www.sun.com if you need additional
+# information or have any questions.
+#
+
+# Run with debugging info: env DBG_SH="set -x" sh ./configure
+${DBG_SH}
+
+# Use '-v' command line argument to have verbose output
+if [ -n "$1" -a "$1" = "-v" ]
+then VERBOSE=true
+else VERBOSE=false
+fi
+
+PATH=/sbin:/bin:/usr/sbin:/usr/bin
+# --------------------------------------------
+# Common variables
+
+CONF_FILE="provisioning.conf"
+PROVISIONING_CONF="$PWD/$CONF_FILE"
+
+DEFAULT_GROUP="daemon"
+TEXT_TO_ADD="# Additions for download provisioning `date`"
+
+# Used in regular expression to skip spaces and tabs
+SPACE="\t "
+# --------------------------------------------
+# Common functions
+
+# runs the argument, returns 0 if the argument fails.
+not()
+{
+    if $*
+    then
+        return 1
+    else
+        return 0
+    fi
+}
+
+# workaround for tab-supporting case-insensitive egrep
+# @param input file
+# @param regular expression
+func_igrep()
+{
+    SRC_FILE=$1
+    shift
+    perl -e "\$found=0; while (<>) { if (/$*/i) { \$found++; print \$_ } }; exit 1 if \$found==0" "$SRC_FILE" 2>/dev/null
+    return $?
+}
+
+# workaround for tab-supporting case-sensitive egrep
+# @param input file
+# @param regular expression
+func_grep()
+{
+    SRC_FILE=$1
+    shift
+    perl -e "\$found=0; while (<>) { if (/$*/) { \$found++; print \$_ } }; exit 1 if \$found==0" "$SRC_FILE" 2>/dev/null
+    return $?
+}
+
+# echo all arguments if $VERBOSE=true
+func_log()
+{
+    $VERBOSE && echo $@
+}
+
+# Prints error message and exit with status 1
+# @param message
+func_error()
+{
+    echo "$1"
+    $VERBOSE || echo "You may try to restart configure script with -v option to see detailed output."
+    exit 1
+}
+
+# Check for platform
+func_check_platform()
+{
+    func_log -n "Check for platform... "
+    PLATFORM=`uname`
+
+    case "$PLATFORM" in
+    "Linux" | "SunOS" ) PLATFORM="unix" ;;
+    *         ) func_error "Unknown platform: $PLATFORM" ;;
+    esac
+    func_log "$PLATFORM"
+
+    # Only root can change Apache configuration
+    func_log -n "Checking permissions... "
+    # Compatibility crutch, getting user id:
+    uid=`id | cut -d ' ' -f 1 | sed -e 's/uid=\([0-9]\+\)(.\+)/\1/'`
+    func_log "user id: $uid"
+    if [ "$uid" -ne 0 ]
+    then
+        echo "Sorry, you must be root to do this."
+        exit 1
+    fi
+}
+
+# Checks if $REPLY is 'y' or 'yes' case insensitively
+func_reply_yes()
+{
+    echo "$REPLY" | egrep -i "^y(es)?$" >/dev/null
+    return $?
+}
+
+# Asks a user to enter path to $HTTPD_CONF
+func_ask_httpd()
+{
+    REPLY=""
+    while [ ! -w "$REPLY" ]
+    do
+        printf "Please specify path to Apache configuration file: "
+        read REPLY
+    done
+    HTTPD_CONF="$REPLY"
+}
+
+# Emulating arrays:
+# func_setvar ARR_NAME_$I VALUE
+# @param arr_name_$index
+# @param value
+func_setvar()
+{
+    eval "${1}=${2}"
+}
+
+# func_getvar ARR_NAME_$I
+# echo $VAR
+# @param arr_name_$index
+func_getvar()
+{
+    eval "VAR=\$${1}"
+}
+
+# Check Apache configs
+func_get_apache()
+{
+    cat \
+<<EOM
+
+Now we'll examine your system to try to find the correct Apache
+server configuratin file to modify.
+EOM
+
+    func_log "Looking for Apache configuration files."
+    I=1
+    for node in /usr/local/apache2/conf /etc/sysconfig /etc/apache2 /etc
+    do
+        for conf in httpd.conf httpd2.conf apache apache2 apache.conf apache2.conf
+        do
+            FOUND_CONF_FILE="$node/$conf"
+            if [ -w "$FOUND_CONF_FILE" -a ! -d "$FOUND_CONF_FILE" ]
+            then
+                func_setvar CONF_ARR_$I "$FOUND_CONF_FILE"
+                echo "$I) $FOUND_CONF_FILE"
+                I=`expr $I + 1`
+            fi
+        done
+    done
+    
+    if [ $I -gt 1 ]
+    then
+        # At least 1 file was found
+        echo "$I) Another one"
+        REPLY=0
+        while [ "$REPLY" -lt 1 -o "$REPLY" -gt $I ]
+        do
+            printf "Please choose a file to be edited [1]: "
+            read REPLY
+            [ -z "$REPLY" ] && REPLY=1
+        done
+        if [ "$REPLY" -eq $I ]
+        then
+            func_ask_httpd
+        else
+            func_getvar CONF_ARR_$REPLY
+            HTTPD_CONF=$VAR
+        fi
+    else
+        func_log "Apache configuration not found."
+        func_ask_httpd
+    fi
+
+    func_log "'$HTTPD_CONF' will be used as Apache configuration file."
+}
+
+# Gets group name from $HTTPD_CONF or uid.conf file
+func_get_group()
+{
+    APACHE_GROUP=""
+    # Looking for UID in $HTTPD_CONF file
+    if [ -r "$HTTPD_CONF" ]
+    then
+        func_log -n "Looking for group name which Apache uses to run child processes in '$HTTPD_CONF'... "
+        APACHE_GROUP=`func_igrep "$HTTPD_CONF" "^[$SPACE]*Group[$SPACE]+.+[$SPACE]*" | awk '{print $2}'`
+        if [ -n "$APACHE_GROUP" ]
+        then
+            func_log "$APACHE_GROUP"
+        else
+            func_log "not found"
+        fi
+    fi
+    
+    # Let's look somewhere else
+    if [ -z "$APACHE_GROUP" ]
+    then
+        UID_CONF=`dirname "$HTTPD_CONF"`/uid.conf
+
+        # Let's try to find uid.conf file
+        if [ ! -r "$UID_CONF" ]
+        then
+            for uid_conf in /etc/apache2/uid.conf /usr/local/apache2/uid.conf /usr/local/apache2/conf/uid.conf
+            do
+                if [ -r "$uid_conf" ]
+                then
+                    UID_CONF="$uid_conf"
+                    break
+                fi
+            done
+        fi
+        
+        # Did we find uid.conf?
+        if [ -r "$UID_CONF" ]
+        then
+            func_log -n "Looking for group name somewhere else... "
+            APACHE_GROUP=`func_igrep "$UID_CONF" "^[$SPACE]*Group[$SPACE]+.+[$SPACE]*" | awk '{print $2}'`
+            if [ -n "$APACHE_GROUP" ]
+            then
+                func_log "found '$APACHE_GROUP' in '$UID_CONF'"
+            else
+                func_log "not found"
+            fi
+        fi
+    fi
+    
+    [ -z "$APACHE_GROUP" ] && APACHE_GROUP="$DEFAULT_GROUP"
+    
+    # Let's ask a user to confirm or edit the group name.
+    # $DEFAULT_GROUP is default value 
+    # BTW, we will check the group name with /etc/group file!
+    REPLY=""
+    while [ -z "$REPLY" ]
+    do
+        printf "Please specify a group name which Apache uses to run child processes [$APACHE_GROUP]: "
+        read REPLY
+        [ -z "$REPLY" ] && REPLY="$APACHE_GROUP"
+
+        if grep "^$REPLY:" /etc/group >/dev/null
+        then
+            func_log "'$REPLY' found in '/etc/group'"
+            APACHE_GROUP="$REPLY"
+        else
+            echo "'$REPLY' not found in '/etc/group'"
+            REPLY=""
+        fi
+    done
+    
+    [ "$APACHE_GROUP" = "root" ] && cat >&2 \
+<<EOM
+SECURITY WARNING:
+    Don't set Group (or User) to root unless you know exactly
+    what you are doing, and what the dangers are.
+    If you want to change this, please edit your Apache configuration
+    and run this script again.
+EOM
+}
+
+# Creating a filename for backup: $1.bakN, writes new name to $BACKUP_NAME
+# @param original file name
+func_create_backup_name()
+{
+    TEMP_FILE_NAME="$1.bak"
+    I=0
+    while [ -f "$TEMP_FILE_NAME" ]
+    do
+        TEMP_FILE_NAME="$1.bak$I"
+        I=`expr $I + 1`
+    done
+}
+
+# Creating backup of $HTTPD_CONF
+func_backup()
+{
+    echo
+    echo "We will change these lines in file '$HTTPD_CONF':"
+    diff "$HTTPD_CONF" "$BACKUP_NAME"
+    echo
+    printf "Do you agree with these changes? [yes]: "
+    read REPLY
+    if func_reply_yes || [ -z "$REPLY" ]
+    then
+        func_create_backup_name "/tmp/provisioning"
+        TEMP_FILE=$TEMP_FILE_NAME
+        # Exchanging $HTTPD_CONF <-> $HTTPD_CONF.bak 
+        # through /tmp/provisioning.bakX
+        cp "$HTTPD_CONF" "$TEMP_FILE" || func_error "Cannot create a backup file '$TEMP_FILE'"
+        cp "$BACKUP_NAME" "$HTTPD_CONF" || func_error "Cannot update '$HTTPD_CONF'"
+        cp "$TEMP_FILE" "$BACKUP_NAME" || func_error "Cannot create a backup file '$BACKUP_NAME'"
+        rm "$TEMP_FILE"
+        echo "Backup saved to '$BACKUP_NAME'."
+    else
+        rm "$BACKUP_NAME"
+    fi
+}
+
+# Adds provisioning.conf to /etc/sysconfig/apache2
+func_edit_sysconfig()
+{
+    printf "Is '$HTTPD_CONF' SuSE specific Apache configuration file? [yes]: "
+    read REPLY
+    if not func_reply_yes && [ -n "$REPLY" ]
+    then
+        # Will try to think that $HTTPD_CONF is genuine Apache httpd.conf file
+        return 1
+    fi
+    
+    func_log -n "Check '$HTTPD_CONF' for having '$CONF_FILE' included... "
+    CONF_VAR="APACHE_CONF_INCLUDE_FILES"
+    if func_grep "$HTTPD_CONF" "^[$SPACE]*$CONF_VAR" | not grep "$PROVISIONING_CONF" 1>/dev/null 2>/dev/null
+    then
+        func_log "not found"
+        ESC_PROVISIONING_CONF=`func_escape $PROVISIONING_CONF`
+        # Comment out original line and add a new one
+        SED_EXPR="s/\($CONF_VAR.*\)\"\$/# &\n$TEXT_TO_ADD\n\1 $ESC_PROVISIONING_CONF\"/"
+        # Let's define $BACKUP_NAME:
+        func_create_backup_name "$HTTPD_CONF"
+        BACKUP_NAME=$TEMP_FILE_NAME
+        if sed -e "$SED_EXPR" "$HTTPD_CONF" >"$BACKUP_NAME"
+        then
+            # What if there is no APACHE_CONF_INCLUDE_FILES variable?
+            if func_grep "$BACKUP_NAME" "^[$SPACE]*$CONF_VAR" | not grep "$PROVISIONING_CONF" >/dev/null
+            then
+                # Let's add it
+                cat >>"$BACKUP_NAME" \
+<<EOM
+$TEXT_TO_ADD
+$CONF_VAR="$PROVISIONING_CONF"
+EOM
+            fi
+            func_backup
+            return 0
+        else
+            func_error "Cannot create a backup of '$HTTPD_CONF'."
+        fi
+    else
+        func_log "found there"
+        return 0
+    fi
+}
+
+# Adds "Include provisioning.conf" to httpd.conf if there are no such line yet
+func_add_include()
+{
+    printf "Is '$HTTPD_CONF' syntactically original Apache configuration file? [yes]: "
+    read REPLY
+    if not func_reply_yes && [ -n "$REPLY" ]
+    then
+        # Will try to think that $HTTPD_CONF is SuSE specific Apache
+        # configuration file, again
+        return 1
+    fi
+    
+    func_log -n "Check '$HTTPD_CONF' for having '$CONF_FILE' included... "
+    if func_igrep "$HTTPD_CONF" "^[$SPACE]*Include[$SPACE]" | not grep "$PROVISIONING_CONF" 1>/dev/null 2>/dev/null
+    then
+        func_log "not found"
+        # Let's define $BACKUP_NAME:
+        func_create_backup_name "$HTTPD_CONF"
+        BACKUP_NAME=$TEMP_FILE_NAME
+        if cp "$HTTPD_CONF" "$BACKUP_NAME"
+        then
+            cat >>"$BACKUP_NAME" \
+<<EOM
+$TEXT_TO_ADD
+Include $PROVISIONING_CONF
+EOM
+            func_backup
+            return 0
+        else
+            func_error "Cannot create a backup of '$HTTPD_CONF'."
+        fi
+    else
+        func_log "found there"
+        return 0
+    fi
+}
+
+# Escaping slashes in paths
+# @param path
+func_escape()
+{
+    echo "$1" | sed -e 's/\//\\\//g'
+}
+
+# Compiles provisioning.conf from a template
+func_create_config()
+{
+    if [ -f $CONF_FILE ]
+    then
+        echo "WARNING: It will overwrite your current Apache configuration file '$CONF_FILE'."
+        printf "Are you sure you want to continue? (yes/no) [no]: "
+        read REPLY
+        if not func_reply_yes
+        then
+            func_error "Exit without changing."
+        fi
+    fi
+    cat \
+<<EOM
+
+The server root web alias is a way to access the provisioning files
+on a given web server, such as: http://myserver/<web alias>.
+EOM
+    printf "Please enter server root web alias for this instance of provisioning server [provisioning]: "
+    read SERVER_ROOT
+    
+    [ -z "$SERVER_ROOT" ] && SERVER_ROOT=/provisioning
+    
+    ESC_SERVER_ROOT=`func_escape $SERVER_ROOT`
+    ESC_PWD=`func_escape $PWD`
+    SED_EXPR="s/%%PWD%%/$ESC_PWD/g;s/%%SERVER_ROOT%%/$ESC_SERVER_ROOT/g"
+    sed -e "$SED_EXPR" conf.template >$CONF_FILE
+}
+
+# Tuning permissions to get files accessible by Apache child processes (like
+# Python)
+func_ch_permissions()
+{
+    func_log "Changing access attributes..."
+    func_log -n "bin... "
+        if chmod -R g+xr bin && chgrp -R "$APACHE_GROUP" bin
+        then func_log "OK"
+        else
+            func_error "Cannot set access attributes for bin directory."
+        fi
+    func_log -n "styles... "
+        if chmod g+xr styles && chmod g+r styles/* && chgrp -R "$APACHE_GROUP" styles
+        then func_log "OK"
+        else
+            func_error "Cannot set access attributes for styles directory."
+        fi
+    func_log -n "repository... "
+        if chmod -R g+xrw repository && chgrp -R "$APACHE_GROUP" repository
+        then func_log "OK"
+        else
+            func_error "Cannot set access attributes for repository directory."
+        fi
+    func_log -n "passwords... "
+        if chmod g+r passwords && chgrp "$APACHE_GROUP" passwords
+        then func_log "OK"
+        else
+            func_error "Cannot set access attributes for passwords file"
+        fi
+    func_log -n "$CONF_FILE... "
+        if chmod g+r $CONF_FILE && chgrp "$APACHE_GROUP" $CONF_FILE
+        then func_log "OK"
+        else
+            func_error "Cannot set access attributes for '$CONF_FILE'"
+        fi
+    func_log
+}
+
+# Adds $PROVISIONING_CONF to $HTTPD_CONF
+func_config_apache()
+{
+    RESULT=1
+    # Check if $HTTPD_CONF is SuSE-style config first
+    if func_grep "$HTTPD_CONF" "^[#$SPACE]*APACHE_CONF_INCLUDE_FILES" >/dev/null
+    then
+        func_edit_sysconfig
+        RESULT=$?
+    fi
+    while [ -n "$RESULT" -a "$RESULT" -eq 1 ]
+    do
+        func_add_include
+        RESULT=$?
+        if [ -n "$RESULT" -a "$RESULT" -eq 1 ]
+        then
+            func_edit_sysconfig
+            RESULT=$?
+        fi
+    done
+    echo
+    echo "Please check the file '$HTTPD_CONF' to ensure it is correct."
+}
+
+# --------------------------------------------
+
+# Let's start
+func_check_platform
+func_create_config
+func_get_apache
+func_config_apache
+func_get_group
+func_ch_permissions
+
+echo "Now you may want to restart your Apache server."
+
