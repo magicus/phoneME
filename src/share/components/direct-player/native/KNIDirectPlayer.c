@@ -730,7 +730,7 @@ KNIDECL(com_sun_mmedia_DirectPlayer_nIsVolumeControlSupported) {
 }
 
 KNIEXPORT KNI_RETURNTYPE_BOOLEAN
-KNIDECL(com_sun_mmedia_DirectPlayer_nAcquireRadioTuner)
+KNIDECL(com_sun_mmedia_DirectPlayer_nAcquireRadioAccess)
 {
     jboolean returnValue = KNI_FALSE;
     
@@ -746,7 +746,7 @@ KNIDECL(com_sun_mmedia_DirectPlayer_nAcquireRadioTuner)
 }
 
 KNIEXPORT KNI_RETURNTYPE_VOID
-KNIDECL(com_sun_mmedia_DirectPlayer_nReleaseRadioTuner)
+KNIDECL(com_sun_mmedia_DirectPlayer_nReleaseRadioAccess)
 {
     LockAudioMutex();
     g_isRadioTunerTakenByJava = KNI_FALSE;

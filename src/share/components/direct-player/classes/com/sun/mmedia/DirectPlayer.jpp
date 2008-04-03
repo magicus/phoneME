@@ -107,21 +107,24 @@ public class DirectPlayer extends BasicPlayer
 
     protected boolean wholeDataDownloaded = false;
 
+    // this field will be checked in the native finalizer
+    private boolean hasTakenRadioAccess = false;
+
     // Native functions /////////////////////////////////////////////////
     
     // Terminate native library
     protected native int nTerm(int handle);
     // Get Content Type
     protected native String nGetContentType(int handle);
-    // Radio Tuner is exclusive. 
+    // Access to Radio Tuner for a Java Player is exclusive. 
     // Acquire it or return false if it is not available
-    private native boolean nAcquireRadioTuner();
+    private native boolean nAcquireRadioAccess();
     // Device is available?
     protected native boolean nAcquireDevice(int handle);
     // Relase device reference
     protected native void nReleaseDevice(int handle);
-    // Radio Tuner is exclusive. Release it
-    private native void nReleaseRadioTuner();
+    // Access to Radio Tuner for a Java Player is exclusive. Release it
+    private native void nReleaseRadioAccess();
     // Clear buffered data
     protected native boolean nFlushBuffer(int handle);
     // Start playing
@@ -261,22 +264,8 @@ public class DirectPlayer extends BasicPlayer
                 DefaultConfiguration.RADIO_CAPTURE_LOCATOR ) );
     }
     
-    /**
-     * 1. Get all data from stream and buffering it to native library
-     *
-     * @exception  MediaException  Description of the Exception
-     */
-    protected void doPrefetch() throws MediaException {
-        if (debug) System.out.println("[direct] DirectPlayer.doPrefetch for " + hNative + " " + mediaFormat);
-
-        if( isRadioPlayer() )
-        {
-            if( !nAcquireRadioTuner() )
-            {
-                throw new MediaException( "Radio Tuner is not available" );
-            }
-        }
-
+    private void prefetchData() throws MediaException
+    {
         /* prefetch native player */
         if (!nPrefetch(hNative)) {
             throw new MediaException("Can not prefetch");
@@ -286,11 +275,37 @@ public class DirectPlayer extends BasicPlayer
             /* predownload media data to fill native buffers */
             PlayerImpl.doBuffering(hNative, stream);
         }
-
-        if(!nAcquireDevice(hNative)) {
-            throw new MediaException("Can not acquire device");
+    }
+    
+    private void acquireDevice() throws MediaException
+    {
+        if( isRadioPlayer() )
+        {
+            if( !nAcquireRadioAccess() )
+            {
+                throw new MediaException( "Radio Tuner is already used " +
+                        "by a Java Player" );
+            }
+            hasTakenRadioAccess = true;
         }
 
+        if(!nAcquireDevice(hNative)) {
+            releaseRadioAccess();
+            throw new MediaException("Can not acquire device");
+        }
+    }
+    
+    /**
+     * 1. Get all data from stream and buffering it to native library
+     *
+     * @exception  MediaException  Description of the Exception
+     */
+    protected void doPrefetch() throws MediaException {
+        if (debug) System.out.println("[direct] DirectPlayer.doPrefetch for " + hNative + " " + mediaFormat);
+
+        prefetchData();
+        acquireDevice();
+        
         if (nPcmAudioPlayback(hNative)) {
             AudioTunnel.getInstance().start();
         }
@@ -426,6 +441,15 @@ public class DirectPlayer extends BasicPlayer
                 "DirectPlayer.doStop");
         }
     }
+
+    private void releaseRadioAccess()
+    {
+        if( isRadioPlayer() )
+        {
+            nReleaseRadioAccess();
+            hasTakenRadioAccess = false;
+        }
+    }
     
     /**
      * Override method in BasicPlayer to deallocate
@@ -439,12 +463,9 @@ public class DirectPlayer extends BasicPlayer
         if (nPcmAudioPlayback(hNative)) {
             AudioTunnel.getInstance().stop();
         }
-
-        if( isRadioPlayer() )
-        {
-            nReleaseRadioTuner();
-        }
         
+        releaseRadioAccess();
+
         // To support streaming
         isFirstStart = true;
 
