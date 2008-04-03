@@ -348,27 +348,151 @@ public class Protocol implements APDUConnection, ConnectionBaseInterface,
         throw new IllegalArgumentException("Not supported");
     }
 
-    // JAVADOC COMMENT ELIDED
+    /**
+     * A call to enterPin method pops up a UI that requests the PIN
+     * from the user. The pinID field indicates which PIN must be
+     * requested from the user. The user can
+     * either cancel the request
+     * or continue. If the user enters the PIN and chooses to continue the
+     * implementation is responsible
+     * for presenting the PIN value to the card for verification.
+     * @param pinID the type of PIN the implementation is suppose to prompt
+     * the user to enter.
+     * @return result of PIN verification which is the status word
+     * recived from the smart card in the form of a byte array. This method
+     * would return null if the user cancels the request.
+     * @exception IOException is thrown if the PIN could not be communicated
+     * with the card due to IO problems such as if the connection was
+     * closed before the command could be completed successfully.
+     * @exception InterruptedIOException is thrown if the connection object
+     * is closed before a reply from the card is received.
+     * @exception SecurityException is thrown if the J2ME application does
+     * not have appropriate rights to ask for PIN verification.
+     */
     public byte[] enterPin(int pinID) throws IOException {
         return doEnterPin(pinID, 0, ACLPermissions.CMD_VERIFY);
     }
 
-    // JAVADOC COMMENT ELIDED
+    /**
+     * A call to <code>changePin</code> method pops up a UI that requests the
+     * the user for an old or existing PIN value and the new PIN value
+     * to change the value of the PIN. The pinID field indicates which PIN is
+     * to be changed. The user can
+     * either cancel the request
+     * or continue. If the user enters the PIN values and chooses to
+     * continue the
+     * implementation is responsible
+     * for presenting the PIN value to the card to the card.
+     * @param pinID the type of PIN the implementation is suppose to prompt
+     * the user to change.
+     * @return result of changing the PIN value which is the status word
+     * recived from the smart card in the form of a byte array. This method
+     * would return null if the user cancels the request.
+     * @exception IOException is thrown if the PIN could not be communicated
+     * with the card due to IO problems such as if the connection was
+     * closed before the command could be completed successfully.
+     * @exception InterruptedIOException is thrown if the connection object
+     * is closed before a reply from the card is received.
+     * @exception SecurityException is thrown if the J2ME application does
+     * not have appropriate rights to ask for changing the PIN value.
+     */
     public byte [] changePin(int pinID) throws IOException {
         return doEnterPin(pinID, 0, ACLPermissions.CMD_CHANGE);
     }
 
-    // JAVADOC COMMENT ELIDED
+    /**
+     * A call to <code>disablePin</code> method pops up a UI that requests the
+     * the user to enter the value for the PIN that is to be disabled.
+     * The pinID field
+     * indicates which PIN is to be disabled. The user can
+     * either cancel the request
+     * or continue. If the user enters the PIN and chooses to continue the
+     * implementation is responsible
+     * for presenting the PIN value to the card to disable PIN.
+     * @param pinID the type of PIN the implementation is required to prompt
+     * the user to enter.
+     * @return result of disabling the PIN value which is the status word
+     * recived from the smart card in the form of a byte array. This method
+     * would return null if the user cancels the request.
+     * @exception IOException is thrown if the PIN could not be communicated
+     * with the card due to IO problems such as if the connection was
+     * closed before the command could be completed successfully.
+     * @exception InterruptedIOException is thrown if the connection object
+     * is closed before a reply from the card is received.
+     * @exception SecurityException is thrown if the J2ME application does
+     * not have appropriate rights to ask for disabling the PIN.
+     */
     public byte [] disablePin(int pinID) throws IOException {
         return doEnterPin(pinID, 0, ACLPermissions.CMD_DISABLE);
     }
 
-    // JAVADOC COMMENT ELIDED
+    /**
+     * A call to <code>enablePin</code> method pops up a UI that requests the
+     * the user to enter the value for the PIN that is to be enabled.
+     * The pinID field
+     * indicates which PIN is to be enabled. The user can
+     * either cancel the request
+     * or continue. If the user enters the PIN and chooses to continue the
+     * implementation is responsible
+     * for presenting the PIN value to the card for enabling the PIN.
+     * @param pinID the type of PIN the implementation is required to prompt
+     * the user to enter.
+     * @return result of enabling the PIN value which is the status word
+     * recived from the smart card in the form of a byte array. This method
+     * would return null if the user cancels the request.
+     * @exception IOException is thrown if the PIN could not be communicated
+     * with the card due to IO problems such as if the connection was
+     * closed before the command could be completed successfully.
+     * @exception InterruptedIOException is thrown if the connection object
+     * is closed before a reply from the card is received.
+     * @exception SecurityException is thrown if the J2ME application does
+     * not have appropriate rights to ask for enabling the PIN.
+     */
     public byte [] enablePin(int pinID) throws IOException {
         return doEnterPin(pinID, 0, ACLPermissions.CMD_ENABLE);
     }
 
-    // JAVADOC COMMENT ELIDED
+    /**
+     * This is a high-level method that lets the J2ME application
+     * ask the user to enter the value for an unblocking PIN,
+     * and the new value for the blocked PIN and send
+     * these to the card.
+     * A call to <code>unblockPin</code> method pops up a UI that requests
+     * the user to enter the value for the unblocking PIN and the
+     * new value for the blocked PIN.
+     * The <code>unblockingPinID</code> field indicates which unblocking
+     * PIN is to be
+     * used to unblock the blocked PIN which is indicated by the field
+     * <code>blockedPinId</code>.
+     * The unblockingPinID field indicates which PIN is to be unblocked.
+     * The user can either cancel the request
+     * or continue. If the user enters the PIN values and chooses to continue,
+     * the implementation is responsible
+     * for presenting the PIN values to the card for unblocking the
+     * blocked PIN.
+     * If padding is required for either of the PIN values, the
+     * implementation is responsible for providing appropriate padding.
+     * @param blockedPinID the Id of PIN that is to be unblocked.
+     * @param unblockingPinId the Id of unblocking PIN.
+     * @return result of unblocking the PIN value which is the status word
+     * received from the smart card in the form of a byte array. This method
+     * would return null if the user cancels the request.
+     * @exception IOException is thrown if the PIN could not be communicated
+     * with the card because the connection was
+     * closed before this method was called or because
+     * of communication problems.
+     * @throws InterruptedIOException can be thrown in any of these situations:
+     * <ul>
+     *    <li>if this <code>Connection</code>
+     *        object is closed during the exchange
+     *        operation</li>
+     *     <li>if the card is removed after connection is established and
+     *         then reinserted, and attempt is made to unblock PIN
+     *         without re-establishing the connection</li>
+     * </ul>
+     * @exception SecurityException is thrown if the J2ME application does
+     * not have appropriate rights to ask for unblocking the PIN.
+     */
     public byte [] unblockPin(int blockedPinID, int unblockingPinId)
     throws IOException {
         return doEnterPin(blockedPinID, unblockingPinId,
