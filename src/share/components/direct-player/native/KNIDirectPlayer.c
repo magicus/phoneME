@@ -470,6 +470,13 @@ LockAudioMutex();
             javacall_media_clear_buffer(pKniInfo->pNativeHandle);
         }
         javacall_media_release_device(pKniInfo->pNativeHandle);
+        
+        if( KNI_TRUE == KNI_GetBooleanField( instance, 
+            KNI_GetFieldID( clazz, "hasTakenRadioAccess", "Z" ) ) )
+        {
+            g_isRadioTunerTakenByJava = KNI_FALSE;
+        }
+        
         javacall_media_close(pKniInfo->pNativeHandle);
 UnlockAudioMutex();            
         javacall_media_destroy(pKniInfo->pNativeHandle);
