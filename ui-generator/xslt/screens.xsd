@@ -103,10 +103,18 @@ information or have any questions.
                     <xs:element ref="dynamic-option"/>
                 </xs:choice>
             </xs:sequence>
-            <xs:attribute name="type">
+            <xs:attribute name="style">
                 <xs:simpleType>
                     <xs:restriction base='xs:string'>
+                        <xs:enumeration value='fullscreen'/>
                         <xs:enumeration value='dropdown'/>
+                        <xs:enumeration value='plain'/>
+                    </xs:restriction>
+                </xs:simpleType>
+            </xs:attribute>
+            <xs:attribute name="item-style">
+                <xs:simpleType>
+                    <xs:restriction base='xs:string'>
                         <xs:enumeration value='numbered'/>
                         <xs:enumeration value='plain'/>
                     </xs:restriction>

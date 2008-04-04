@@ -30,6 +30,7 @@ information or have any questions.
         <xsl:text>import java.util.Vector;&#10;</xsl:text>
         <xsl:text>import javax.microedition.lcdui.Displayable;&#10;</xsl:text>
         <xsl:text>import javax.microedition.lcdui.ChoiceGroup;&#10;</xsl:text>
+        <xsl:text>import javax.microedition.lcdui.Choice;&#10;</xsl:text>
         <xsl:text>import javax.microedition.lcdui.StringItem;&#10;</xsl:text>
         <xsl:text>import javax.microedition.lcdui.Gauge;&#10;</xsl:text>
         <xsl:text>import javax.microedition.lcdui.Spacer;&#10;</xsl:text>
@@ -37,6 +38,7 @@ information or have any questions.
         <xsl:text>import javax.microedition.lcdui.ItemCommandListener;&#10;</xsl:text>
         <xsl:text>import javax.microedition.lcdui.Command;&#10;</xsl:text>
         <xsl:text>import javax.microedition.lcdui.Form;&#10;</xsl:text>
+        <xsl:text>import javax.microedition.lcdui.List;&#10;</xsl:text>
         <xsl:text>&#10;&#10;</xsl:text>
     </xsl:template>
 
@@ -57,14 +59,20 @@ information or have any questions.
     </xsl:template>
 
 
-    <xsl:template match="screen" mode="LCDUI-create-displayable">
+    <xsl:template match="screen[not(options/@style='fullscreen')]" mode="LCDUI-create-displayable">
         <xsl:text>        Form d = createForm();&#10;</xsl:text>
+    </xsl:template>
+
+    <xsl:template match="screen[options/@style='fullscreen']" mode="LCDUI-create-displayable">
+        <xsl:text>        List d = createList();&#10;</xsl:text>
     </xsl:template>
 
 
     <xsl:template match="screen" mode="LCDUI-set-command-listener">
         <xsl:if test="options">
-            <xsl:text>        Command selectItemCommand = getSelectItemCommand();&#10;</xsl:text>
+            <xsl:text>        final Command selectItemCommand = getSelectItemCommand();&#10;</xsl:text>
+        </xsl:if>
+        <xsl:if test="options[not(@style='fullscreen')]">
             <xsl:text>        ItemCommandListener icl = new ItemCommandListener() {&#10;</xsl:text>
             <xsl:text>            public void commandAction(Command c, Item item) {&#10;</xsl:text>
             <xsl:apply-templates select="options" mode="LCDUI-map-command"/>
@@ -74,13 +82,16 @@ information or have any questions.
             <xsl:apply-templates select="options" mode="LCDUI-set-item-command-listener"/>
             <xsl:text>&#10;</xsl:text>
         </xsl:if>
-        <xsl:if test="command">
+        <xsl:if test="options[@style='fullscreen']">
+            <xsl:text>        d.setSelectCommand(selectItemCommand);&#10;</xsl:text>
+        </xsl:if>
+        <xsl:if test="command|dynamic-command|options[@style='fullscreen']">
             <xsl:text>        javax.microedition.lcdui.CommandListener cl = new javax.microedition.lcdui.CommandListener() {&#10;</xsl:text>
             <xsl:text>            public void commandAction(Command item, Displayable d) {&#10;</xsl:text>
             <xsl:if test="dynamic-command">
                 <xsl:text>                int idx;&#10;</xsl:text>
             </xsl:if>
-            <xsl:apply-templates select="command|dynamic-command" mode="LCDUI-map-command"/>
+            <xsl:apply-templates select="command|dynamic-command|options[@style='fullscreen']" mode="LCDUI-map-command"/>
             <xsl:text>&#10;</xsl:text>
             <xsl:text>            }&#10;</xsl:text>
             <xsl:text>        };&#10;</xsl:text>
@@ -177,9 +188,20 @@ information or have any questions.
 
 
     <!--
-        Top level "text" element, "label" element in "options"
+        element's label if any
     -->
-    <xsl:template match="screen/text|label/text" mode="LCDUI-create">
+    <xsl:template match="*[label/text]" mode="LCDUI-get-label">
+        <xsl:apply-templates select="label/text" mode="Screen-printf"/>
+    </xsl:template>
+    <xsl:template match="*[not(label/text)]" mode="LCDUI-get-label">
+        <xsl:text>null</xsl:text>
+    </xsl:template>
+
+
+    <!--
+        Top level "text" element
+    -->
+    <xsl:template match="screen/text" mode="LCDUI-create">
         <xsl:text>        final StringItem </xsl:text>
         <xsl:apply-templates select="." mode="LCDUI-varname"/>
         <xsl:text> = new StringItem(null, </xsl:text>
@@ -201,25 +223,30 @@ information or have any questions.
     <!--
         Top level "options" element
     -->
+    <xsl:template match="screen/options[@style='fullscreen']" mode="LCDUI-append">
+        <xsl:text>        final Choice </xsl:text>
+        <xsl:apply-templates select="." mode="LCDUI-varname"/>
+        <xsl:text> = d;&#10;</xsl:text>
+        <xsl:apply-templates select="option/text|dynamic-option" mode="LCDUI-append"/>
+    </xsl:template>
+
     <xsl:template match="screen/options" mode="LCDUI-create">
-        <xsl:apply-templates select="label/text" mode="LCDUI-append"/>
         <xsl:text>        final ChoiceGroup </xsl:text>
         <xsl:apply-templates select="." mode="LCDUI-varname"/>
-        <xsl:text> = new ChoiceGroup(null, ChoiceGroup.</xsl:text>
+        <xsl:text> = new ChoiceGroup(</xsl:text>
+        <xsl:apply-templates select="." mode="LCDUI-get-label"/>
+        <xsl:text>, ChoiceGroup.</xsl:text>
         <xsl:apply-templates select="." mode="LCDUI-options-type"/>
         <xsl:text>);&#10;</xsl:text>
         <xsl:apply-templates select="option/text|dynamic-option" mode="LCDUI-append"/>
     </xsl:template>
 
-     <xsl:template match="*[@type='dropdown']" mode="LCDUI-options-type">
-         <xsl:text>POPUP</xsl:text>
-     </xsl:template>
-     <xsl:template match="*[@type='numbered']" mode="LCDUI-options-type">
-         <xsl:text>EXCLUSIVE</xsl:text>
-     </xsl:template>
-     <xsl:template match="*[@type='plain' or not(@type)]" mode="LCDUI-options-type">
-         <xsl:text>EXCLUSIVE</xsl:text>
-     </xsl:template>
+    <xsl:template match="*[@style='dropdown']" mode="LCDUI-options-type">
+        <xsl:text>POPUP</xsl:text>
+    </xsl:template>
+    <xsl:template match="*[@style='plain'or not(@style)]" mode="LCDUI-options-type">
+        <xsl:text>EXCLUSIVE</xsl:text>
+    </xsl:template>
 
     <xsl:template match="option/text" mode="LCDUI-append">
         <xsl:text>        </xsl:text>
@@ -229,12 +256,25 @@ information or have any questions.
         <xsl:text>, null);&#10;</xsl:text>
     </xsl:template>
 
+    <xsl:template match="screen/options[@style='fullscreen']" mode="LCDUI-options-get-self">
+        <xsl:text>d</xsl:text>
+    </xsl:template>
+    <xsl:template match="screen/options[not(@style='fullscreen')]" mode="LCDUI-options-get-self">
+        <xsl:text>item</xsl:text>
+    </xsl:template>
+
     <xsl:template match="screen/options" mode="LCDUI-map-item-to-command-id">
-        <xsl:text>                    final int idx = ((ChoiceGroup)item).getSelectedIndex();&#10;</xsl:text>
+        <xsl:text>                    final int idx = ((Choice)</xsl:text>
+        <xsl:apply-templates select="." mode="LCDUI-options-get-self"/>
+        <xsl:text>).getSelectedIndex();&#10;</xsl:text>
         <xsl:text>                    if (false) {&#10;</xsl:text>
         <xsl:text>                    }</xsl:text>
         <xsl:apply-templates select="option|dynamic-option" mode="LCDUI-map-item-to-command-id"/>
         <xsl:text>&#10;</xsl:text>
+    </xsl:template>
+
+    <xsl:template match="screen/options[@style='fullscreen']" mode="LCDUI-map-command-test-command">
+        <xsl:text>item == selectItemCommand</xsl:text>
     </xsl:template>
 
     <xsl:template match="option" mode="LCDUI-map-item-to-command-id">
@@ -273,10 +313,11 @@ information or have any questions.
         Top level "progress" element
     -->
     <xsl:template match="screen/progress" mode="LCDUI-create">
-        <xsl:apply-templates select="label/text" mode="LCDUI-append"/>
         <xsl:text>        </xsl:text>
         <xsl:apply-templates select="." mode="LCDUI-varname"/>
-        <xsl:text> = new Gauge("", false, 100, 0);&#10;</xsl:text>
+        <xsl:text> = new Gauge(</xsl:text>
+        <xsl:apply-templates select="." mode="LCDUI-get-label"/>
+        <xsl:text>, false, 100, 0);&#10;</xsl:text>
     </xsl:template>
 
     <xsl:template match="screen/progress" mode="LCDUI-define-progress">

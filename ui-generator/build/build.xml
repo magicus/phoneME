@@ -22,7 +22,7 @@ Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
 Clara, CA 95054 or visit www.sun.com if you need additional
 information or have any questions.
 -->
-<project name="ui screens" default="build-test-midlet" basedir=".">
+<project name="ui screens" default="gen" basedir=".">
     <description>Build UI screens from XML
     </description>
 
@@ -60,8 +60,10 @@ information or have any questions.
 
 
     <target name="gen">
-        <description>Generate UI screen sources from XML
+        <description>Generate UI screen sources from XML with/without unit tests
         </description>
+
+        <property name="with-unit-tests" value="no"/>
 
         <filelist id="output-java-dir" dir="${out.src}">
             <file name="${package}"/>
@@ -83,7 +85,17 @@ information or have any questions.
             <param name="package-name" expression="${package}"/>
             <param name="output-java-dir" expression="file:///${output-java-dir}"/>
             <param name="output-xml-dir" expression="file:///${output-xml-dir}"/>
+            <param name="with-unit-tests" expression="${with-unit-tests}"/>
         </xslt>
+    </target>
+
+    <target name="gen-with-unit-tests">
+        <description>Generate UI screen sources from XML with unit tests
+        </description>
+
+        <antcall target="gen">
+            <param name="with-unit-tests" value="yes"/>
+        </antcall>
     </target>
 
     <target name="makefile" depends="gen">
@@ -105,14 +117,15 @@ information or have any questions.
         </copy>
     </target>
 
-    <target name="javac" depends="gen">
-        <description>Compiles generated UI screen sources
+    <target name="javac" depends="gen-with-unit-tests">
+        <description>Generates and compiles UI screen sources with unit tests
         </description>
 
         <loadfile property="generated.java.sources" srcfile="${generated.files.list}">
             <filterchain>
                 <tokenfilter>
-                    <replacestring from="file:///${output-java-dir}/" to=""/>
+                    <!-- Extract file basename -->
+                    <replaceregex pattern="^.*/([^/]{1,})$" replace="\1" flags="s"/>
                 </tokenfilter>
                 <linecontains>
                   <contains value=".java"/>

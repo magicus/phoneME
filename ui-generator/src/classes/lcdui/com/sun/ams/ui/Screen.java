@@ -56,7 +56,7 @@ public abstract class Screen extends BaseScreen {
 
     static List
     createList() {
-        return null;
+        return new List(null, List.EXCLUSIVE | List.IMPLICIT);
     }
 
     private static void

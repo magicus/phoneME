@@ -32,8 +32,9 @@ information or have any questions.
 
     <xsl:param name="package-name"/>
 
-    <xsl:param name="output-java-dir" select="translate($package-name,'.','/')"/>
-    <xsl:param name="output-xml-dir" select="."/>
+    <xsl:param name="output-java-dir"   select="translate($package-name,'.','/')"/>
+    <xsl:param name="output-xml-dir"    select="."/>
+    <xsl:param name="with-unit-tests"   select="'yes'"/>
 
 
     <xsl:template match="/*">
@@ -48,7 +49,9 @@ information or have any questions.
 
         <xsl:call-template name="top-I18N"/>
         <xsl:call-template name="top-Screen"/>
-        <xsl:call-template name="top-UTest"/>
+        <xsl:if test="$with-unit-tests='yes'">
+            <xsl:call-template name="top-UTest"/>
+        </xsl:if>
     </xsl:template>
 
 
