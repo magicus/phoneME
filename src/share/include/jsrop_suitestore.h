@@ -24,6 +24,7 @@
 #ifndef __JSROP_SUITESTORE_H
 #define __JSROP_SUITESTORE_H
 
+#include <java_types.h>
 #include <jsrop_suitestore_md.h>
 
 #if defined __cplusplus 

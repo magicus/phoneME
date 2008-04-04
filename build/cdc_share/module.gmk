@@ -41,7 +41,8 @@ ABSTRACTIONS_NATIVES += \
 	os_sync.c \
     internal_props.c \
 	exceptions.c \
-	kni_utils.c
+	jsrop_suitestore.c \
+	kni_utils.c \
 
 # classes
 ABSTRACTIONS_CLASSES += \
