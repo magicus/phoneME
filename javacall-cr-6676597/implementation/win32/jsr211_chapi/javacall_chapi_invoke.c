@@ -1,6 +1,5 @@
 /*
- *
- * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
@@ -31,7 +30,7 @@
 
 #include "javacall_chapi_invoke.h"
 
-
+#include "windows.h"
 
 /**
  * Asks NAMS to launch specified MIDlet. <BR>
@@ -75,66 +74,17 @@ javacall_result javacall_chapi_platform_invoke(int invoc_id,
         /* OUT */ javacall_bool* without_finish_notification, 
         /* OUT */ javacall_bool* should_exit)
 {
+    int res;
     (void)invoc_id;
     (void)handler_id;
-    (void)invocation;
-    (void)without_finish_notification;
-    (void)should_exit;
-    return JAVACALL_NOT_IMPLEMENTED;
+    *without_finish_notification = 1;
+    *should_exit = 0;
+
+    res = (int) ShellExecuteW( NULL, invocation->action, invocation->url, NULL, NULL, SW_SHOWNORMAL);
+    if ( res > 32 )
+        return JAVACALL_OK;
+    return JAVACALL_FAIL;
 }
-
-
-
-/*
- * Called by platform to notify java VM that invocation of native handler 
- * is finished. This is <code>ContentHandlerServer.finish()</code> substitute 
- * after platform handler completes invocation processing.
- * @param invoc_id processed invocation Id
- * @param url if not NULL, then changed invocation URL
- * @param argsLen if greater than 0, then number of changed args
- * @param args changed args if @link argsLen is greater than 0
- * @param dataLen if greater than 0, then length of changed data buffer
- * @param data the data
- * @param status result of the invocation processing. 
- * @return result of operation.
- */
-javacall_result javanotify_chapi_platform_finish(int invoc_id, 
-        javacall_utf16_string url,
-        int argsLen, javacall_utf16_string* args,
-        int dataLen, void* data, 
-        javacall_chapi_invocation_status status)
-{
-    (void)invoc_id;
-    (void)url;
-    (void)argsLen;
-    (void)args;
-    (void)dataLen;
-    (void)data;
-    (void)status;
-    return JAVACALL_NOT_IMPLEMENTED;
-}
-
-
-
-/**
- * Receives invocation request from platform. <BR>
- * This is <code>Registry.invoke()</code> substitute for Platform->Java call.
- * @param handler_id target Java handler Id
- * @param invocation filled out structure with invocation params
- * @param invoc_id assigned by JVM invocation Id for further references
- * @return result of operation.
- */
-javacall_result javanotify_chapi_java_invoke(
-        const javacall_utf16_string handler_id, 
-        javacall_chapi_invocation* invocation, /* OUT */ int* invoc_id)
-{
-    (void)handler_id;
-    (void)invocation;
-    (void)invoc_id;
-    return JAVACALL_NOT_IMPLEMENTED;
-}
-
-
 
 /*
  * Called by Java to notify platform that requested invocation processing
@@ -152,11 +102,12 @@ javacall_result javanotify_chapi_java_invoke(
  *   should voluntarily exit to allow pending invocation to be handled.
  * @return result of operation.
  */
+/*
 javacall_result javacall_chapi_java_finish(int invoc_id, 
-        javacall_utf16_string url,
-        int argsLen, javacall_utf16_string* args,
+        javacall_const_utf16_string url,
+        int argsLen, javacall_const_utf16_string* args,
         int dataLen, void* data, javacall_chapi_invocation_status status,
-        /* OUT */ javacall_bool* should_exit)
+         javacall_bool* should_exit)
 {
     (void)invoc_id;
     (void)url;
@@ -168,4 +119,4 @@ javacall_result javacall_chapi_java_finish(int invoc_id,
     (void)should_exit;
     return JAVACALL_NOT_IMPLEMENTED;
 }
-
+*/
