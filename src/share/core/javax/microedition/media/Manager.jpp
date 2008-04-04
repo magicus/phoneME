@@ -619,7 +619,16 @@ public final class Manager {
                                     " Unsupported protocol " + theProtocol);
         }
 
-        if (locStr.startsWith(DefaultConfiguration.CAPTURE_LOCATOR))
+        if( locStr.startsWith( DefaultConfiguration.RADIO_CAPTURE_LOCATOR ) )
+        {
+            if( !config.isRadioSupported() )
+            {
+                throw new MediaException( "Radio Capture is not supported" );
+            }
+            parseRadioLocatorStr( locator );
+        }
+        else if (locStr.startsWith(DefaultConfiguration.AUDIO_CAPTURE_LOCATOR) ||
+            locStr.startsWith(DefaultConfiguration.VIDEO_CAPTURE_LOCATOR))
         {
             // separate device & encodings
             int encInd = locator.indexOf('?');
@@ -699,6 +708,191 @@ public final class Manager {
         return pp;
     }
 
+    private static void parseRadioLocatorStr( String locator ) throws MediaException
+    {
+        final int prefixLen = 
+                DefaultConfiguration.RADIO_CAPTURE_LOCATOR.length();
+        
+        if( null == locator )
+        {
+            throw new MediaException( "radio locator is null" );
+        }
+        if( !locator.startsWith( DefaultConfiguration.RADIO_CAPTURE_LOCATOR ) )
+        {
+            throw new MediaException( "bad radio locator" );
+        }
+        
+        if ( locator.length() == prefixLen )
+        {
+            return;
+        }
+        
+        if( locator.charAt( prefixLen ) != '?' )
+        {
+            throw new MediaException( "bad radio locator" );
+        }
+        String params = locator.substring( prefixLen + 1 );
+        parseRadioParamsString( params );
+    }
+
+    private static void parseRadioParamsString( String params ) throws MediaException
+    {
+        boolean foundFreq       = false;
+        boolean foundMod        = false;
+        boolean foundStereoMode = false;
+        boolean foundId         = false; 
+        boolean foundPreset     = false;
+        
+        int i = 0, j = -1; 
+        do {
+            j = params.indexOf( '&', i );
+            String param = j < 0 ? params.substring( i ) : params.substring( i,
+                    j );
+            if( param.startsWith( "f=" ) )
+            {
+                if( foundFreq )
+                {
+                    throw new MediaException( "frequency is set more than" +
+                            " once in the radio locator string" );
+                }
+                parseRadioFreqParam( param );
+                foundFreq = true;
+            }
+            else if ( param.startsWith( "mod=" ) )
+            {
+                if( foundMod )
+                {
+                    throw new MediaException( "modulation is set more than" +
+                            " once in the radio locator string" );
+                }
+                parseRadioModParam( param );
+                foundMod = true;
+            }
+            else if ( param.startsWith( "st=" ) )
+            {
+                if( foundStereoMode )
+                {
+                    throw new MediaException( "stereo mode is set more than" +
+                            " once in the radio locator string" );
+                }
+                parseRadioStereoParam( param );
+                foundStereoMode = true;
+            }
+            else if ( param.startsWith( "id=" ) )
+            {
+                if( foundId )
+                {
+                    throw new MediaException( "Program ID is set more than" +
+                            " once in the radio locator string" );
+                }
+                parseRadioIdParam( param );
+                foundId = true;
+            }
+            else if ( param.startsWith( "preset=" ) )
+            {
+                if( foundPreset )
+                {
+                    throw new MediaException( "Preset is set more than" +
+                            " once in the radio locator string" );
+                }
+                parseRadioPresetParam( param );
+                foundPreset = true;
+            }
+            else
+            {
+                throw new MediaException( "Unknown parameter in the" +
+                        " radio locator string" );
+            }
+
+            i = j + 1;
+        } while( j >= 0 );
+        
+    }
+    
+    private static void parseRadioFreqParam( String s )
+        throws MediaException
+    {
+        String param = s;
+        if( 'M' == param.charAt( param.length() - 1 ) || 
+            'k' == param.charAt( param.length() - 1 ) )
+        {
+            param = param.substring( 0, param.length() - 1 );
+        }
+        try {
+            if( 0 >= Float.parseFloat( param.substring( 2 ) ) )
+            {
+                throw new MediaException( "Frequency is not positive" +
+                        " in the radio locator string" );
+            }
+        } catch (NumberFormatException e)
+        {
+            throw new MediaException( "Frequency is not numeric or too big" +
+                    " in the radio locator string" );
+        }
+    }
+    
+    private static void parseRadioModParam( String param )
+        throws MediaException
+    {
+        String mod = param.substring( "mod=".length() );
+        if( !mod.equals( "am" ) && !mod.equals( "fm" ) )
+        {
+            throw new MediaException( "Unknown modulation in the" +
+                    " radio locator string parameters" );
+        }
+    }
+    
+    private static void parseRadioStereoParam( String param )
+        throws MediaException
+    {
+        String mode = param.substring( "st=".length() );
+        if( !mode.equals( "mono" ) && 
+            !mode.equals( "stereo" ) && 
+            !mode.equals( "auto" ))
+        {
+            throw new MediaException( "Unknown stereo mode in the" +
+                    " radio locator string parameters" );
+        }
+    }
+
+    private static void parseRadioIdParam( String param )
+        throws MediaException
+    {
+        String id = param.toLowerCase().substring( "id=".length() );
+        if( 0 == id.length() )
+        {
+            throw new MediaException( "Empty Program ID name in" +
+                    " the radio locator string parameters" );
+        }
+        
+        for( int i = 0; i < id.length(); i++ )
+        {
+            char ch = id.charAt( i );
+            if( !Character.isLowerCase( ch ) &&
+                !Character.isDigit( ch ) )
+            {
+                throw new MediaException( "Not an alphanumeric Program" +
+                        " ID in the radio locator string parameters" );
+            }
+        }
+    }
+
+    private static void parseRadioPresetParam( String param )
+        throws MediaException
+    {
+        String preset = param.substring( "preset=".length() );
+        try {
+            if( 0 >= Byte.parseByte( preset ) )
+            {
+                throw new MediaException( "Preset number is not positive" +
+                        " in the radio locator string" );
+            }
+        } catch (NumberFormatException e)
+        {
+            throw new MediaException( "Preset number is not numeric" +
+                    " or too big in the radio locator string" );
+        }
+    }
 
     /**
      * Create a <code>Player</code> to play back media from an
