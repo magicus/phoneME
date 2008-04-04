@@ -21,7 +21,7 @@ public final class InvocationStoreProxy {
         	// status is returned without launching of a handler
         	if( invoc.getStatus() == Invocation.WAITING ) {
 	            try {
-	                if( launchNativeHandler(invoc.getID()) )
+	                if( AppProxy.launchNativeHandler(invoc.getID()) )
 	                	invoc.finish(Invocation.INITIATED);
 	                return LIT_NATIVE_STARTED;
 	            } catch (ContentHandlerException che) {
@@ -115,44 +115,4 @@ public final class InvocationStoreProxy {
         if(AppProxy.LOGGER!=null) AppProxy.LOGGER.println( InvocationStore.class.getName() + ".invokeNext() finished: started midlets = " + launchedMidletsCount);
         return launchedMidletsCount > 0;
     }
-
-    /**
-     * Starts native content handler.
-     * @param handler Content handler to be executed.
-     * @return true if invoking app should exit.
-     * @exception ContentHandlerException if no such handler ID in the Registry
-     * or native handlers execution is not supported.
-     */
-    static private boolean launchNativeHandler(String handlerID) 
-    										throws ContentHandlerException {
-        int result = launchNativeHandler0(handlerID);
-        if (result < 0) {
-            throw new ContentHandlerException(
-                        "Unable to launch platform handler",
-                        ContentHandlerException.NO_REGISTERED_HANDLER);
-        }
-        return (result > 0);
-    }
-
-    /**
-     * Informs platform about finishing of processing platform's request
-     * @param invoc finished invocation
-     * @return should_exit flag for the invocation handler
-     */
-    static boolean platformFinish(int tid) {
-        return platformFinish0(tid);
-    }
-    /**
-     * Starts native content handler.
-     * @param handlerId ID of the handler to be executed
-     * @return result status:
-     * <ul>
-     * <li> 0 - LAUNCH_OK 
-     * <li> > 0 - LAUNCH_OK_SHOULD_EXIT
-     * <li> &lt; 0 - error
-     * </ul>
-     */
-    private static native int launchNativeHandler0(String handlerId);
-
-    private static native boolean platformFinish0(int tid);
 }

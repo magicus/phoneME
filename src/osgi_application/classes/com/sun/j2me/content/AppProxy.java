@@ -27,12 +27,9 @@
 package com.sun.j2me.content;
 
 import java.util.Hashtable;
+import javax.microedition.content.ContentHandlerException;
 
-import com.sun.j2me.security.Permission;
 import com.sun.j2me.security.Token;
-import com.sun.j2me.proxy.security.SecurityToken;
-import com.sun.j2me.proxy.security.Permissions;
-
 
 /**
  * Each AppProxy instance provides access to the AMS information
@@ -84,20 +81,26 @@ import com.sun.j2me.proxy.security.Permissions;
  * </ul>
  */
 class AppProxy {
-    /** This class has a different security domain than the MIDlet suite */
-    private static Token classSecurityToken;
+
+    /** The log flag to enable informational messages. */
+    static final Logger LOGGER = new Logger();
+
+    /** MIDlet property for the suite version. */
+    static final String VERSION_PROP       = "MIDlet-Version";
+
+    /** MIDlet property for the suite vendor. */
+    static final String VENDOR_PROP        = "MIDlet-Vendor";
+    
+    static final int INVALID_SUITE_ID = 0;
+
+    /** The mutex used to avoid corruption between threads. */
+    protected static final Object mutex = new Object();
 
     /** The current AppProxy. */
     private static AppProxy currentApp;
 
-    /** The log flag to enable informational messages. */
-    static final Logger LOGGER = null; // new Logger();
-
     /** The known AppProxy instances. Key is classname. */
     protected Hashtable appmap;
-
-    /** The mutex used to avoid corruption between threads. */
-    protected static final Object mutex = new Object();
 
     /** The storageId (suiteId) for this application. */
     protected final int storageId;
@@ -116,27 +119,6 @@ class AppProxy {
     /** The application is registered. */
     private boolean isRegistered;
 
-    /** MIDlet property for the suite version. */
-    static final String VERSION_PROP       = "MIDlet-Version";
-
-    /** MIDlet property for the suite vendor. */
-    static final String VENDOR_PROP        = "MIDlet-Vendor";
-    
-    static final int INVALID_SUITE_ID = 0;
-
-    /**
-     * Sets the security token used for privileged operations.
-     * The token may only be set once.
-     * @param token a Security token
-     */
-    static void setSecurityToken(Object token) {
-        token.getClass(); // null pointer check
-        if (classSecurityToken != null) {
-            throw new SecurityException();
-        }
-        classSecurityToken = (Token)token;
-    }
-
     /**
      * Gets the AppProxy for the currently running application.
      * @return the current application.
@@ -144,6 +126,7 @@ class AppProxy {
     static AppProxy getCurrent() {
         synchronized (mutex) {
             if (currentApp == null) {
+            	currentApp = new AppProxy( INVALID_SUITE_ID, "InvalidClassName", null );
             }
         }
         return currentApp;
@@ -156,10 +139,13 @@ class AppProxy {
      * @param storageId the suiteId
      * @param classname the classname
      */
-    protected AppProxy(int storageId, String classname)
+    protected AppProxy(int storageId, String classname, Hashtable appmap)
     {
         this.storageId = storageId;
         this.classname = classname;
+        if( appmap == null ) appmap = new Hashtable();
+        this.appmap = appmap;
+        this.appmap.put(classname, this);
         if (LOGGER != null) {
         	LOGGER.println("AppProxy created: " + classname);
         }
@@ -184,6 +170,7 @@ class AppProxy {
             if (curr == null) {
                 // Create a new instance
                 // throws ClassNotFoundException and IllegalArgumentException
+            	curr = new AppProxy( storageId, classname, appmap );
             }
         }
         return curr;
@@ -204,14 +191,11 @@ class AppProxy {
         throws ClassNotFoundException
     {
         // Check in the current suite
-        if (storageId == this.storageId) {
-            return forClass(classname);
-        }
+        if (storageId == this.storageId) 
+        	return forClass(classname);
 
         // Create a new instance
-        AppProxy curr = new AppProxy(storageId, classname);
-
-        return curr;
+        return new AppProxy(storageId, classname, null);
     }
 
     /**
@@ -291,19 +275,14 @@ class AppProxy {
      * @param reason the reason for the permission check
      * @exception SecurityException if not allowed
      */
-    final void checkRegisterPermission(final String reason) {
-    }
+    final void checkRegisterPermission(final String reason) {}
 
     /**
      * Check if the internal API use is allowed.
      * @param securityToken a generic security token
      * @exception SecurityException thrown if internal API use not allowed
      */
-    final static void checkAPIPermission(SecurityToken securityToken) {
-        if (securityToken != null) {
-            securityToken.checkIfPermissionAllowed(Permissions.MIDP);
-        }
-    }
+    final static void checkAPIPermission(Token securityToken) {}
 
     /**
      * Request the transition of the foreground to this application
@@ -438,6 +417,14 @@ class AppProxy {
         return null;
     }*/
 
+	static boolean launchNativeHandler(String id) throws ContentHandlerException {
+		return false;
+	}
+	
+    static boolean platformFinish(int tid) {
+        return false;
+    }
+	
     /**
      * Create a printable representation of this AppProxy.
      * @return a printable string

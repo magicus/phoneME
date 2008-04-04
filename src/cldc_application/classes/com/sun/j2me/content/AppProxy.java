@@ -404,7 +404,8 @@ class AppProxy {
      * @param securityToken a generic security token
      * @exception SecurityException thrown if internal API use not allowed
      */
-    final static void checkAPIPermission(SecurityToken securityToken) {
+    final static void checkAPIPermission(Token token) {
+		SecurityToken securityToken = token.getSecurityToken();
         if (securityToken != null) {
             securityToken.checkIfPermissionAllowed(Permissions.MIDP);
         } else {
@@ -618,6 +619,47 @@ class AppProxy {
         }
         return null;
     }
+
+    /**
+     * Starts native content handler.
+     * @param handler Content handler to be executed.
+     * @return true if invoking app should exit.
+     * @exception ContentHandlerException if no such handler ID in the Registry
+     * or native handlers execution is not supported.
+     */
+    static boolean launchNativeHandler(String handlerID) 
+    										throws ContentHandlerException {
+        int result = launchNativeHandler0(handlerID);
+        if (result < 0) {
+            throw new ContentHandlerException(
+                        "Unable to launch platform handler",
+                        ContentHandlerException.NO_REGISTERED_HANDLER);
+        }
+        return (result > 0);
+    }
+
+    /**
+     * Informs platform about finishing of processing platform's request
+     * @param invoc finished invocation
+     * @return should_exit flag for the invocation handler
+     */
+    static boolean platformFinish(int tid) {
+        return platformFinish0(tid);
+    }
+
+    /**
+     * Starts native content handler.
+     * @param handlerId ID of the handler to be executed
+     * @return result status:
+     * <ul>
+     * <li> 0 - LAUNCH_OK 
+     * <li> > 0 - LAUNCH_OK_SHOULD_EXIT
+     * <li> &lt; 0 - error
+     * </ul>
+     */
+    private static native int launchNativeHandler0(String handlerId);
+
+    private static native boolean platformFinish0(int tid);
 
     /**
      * Create a printable representation of this AppProxy.
