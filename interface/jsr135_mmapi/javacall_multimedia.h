@@ -193,6 +193,8 @@ extern "C" {
 /** Capture formats section */
 /** Capture audio, capture/audio */
 #define JAVACALL_MEDIA_FORMAT_CAPTURE_AUDIO     "CAPTURE_AUDIO"
+/** Capture radio, capture/radio */
+#define JAVACALL_MEDIA_FORMAT_CAPTURE_RADIO     "CAPTURE_RADIO"
 /** Capture video, capture/video */
 #define JAVACALL_MEDIA_FORMAT_CAPTURE_VIDEO     "CAPTURE_VIDEO"
 
