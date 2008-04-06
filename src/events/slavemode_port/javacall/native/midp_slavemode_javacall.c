@@ -735,7 +735,6 @@ static jlong midp_slavemode_time_slice(void) {
         /* Terminate JVM */
         measureStack(KNI_FALSE);
         pushcheckinall();
-        midpFinalize();
         javacall_lifecycle_state_changed(JAVACALL_LIFECYCLE_MIDLET_SHUTDOWN,
                                          JAVACALL_OK);
     } else {
