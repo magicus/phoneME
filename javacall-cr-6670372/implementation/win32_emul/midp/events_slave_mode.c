@@ -366,11 +366,12 @@ WndProc (HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam) {
     int opttarget;
     int optname;
     int optsize = sizeof(optname);
+    static javacall_bool is_finalizing = JAVACALL_FALSE;
     javacall_int64 ms;	
     
 	switch (iMsg) {
     case WM_TIMER:
-        if (wParam == EVENT_LOOP_TIMER_ID) {
+        if (wParam == EVENT_LOOP_TIMER_ID && is_finalizing == JAVACALL_FALSE) {
             KillTimer(midpGetWindowHandle(), EVENT_LOOP_TIMER_ID);
             /* execute one timeslice */
             ms = javanotify_vm_timeslice();
@@ -382,6 +383,7 @@ WndProc (HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam) {
                 /* all ot the threads are blocked, wait for event */
             }
             else if (ms == -2) {
+                is_finalizing = JAVACALL_TRUE;
                 /* JVM has exited */
                 PostQuitMessage(0);
                 return 0;
