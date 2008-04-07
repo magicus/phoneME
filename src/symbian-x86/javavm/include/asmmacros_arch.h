@@ -43,8 +43,8 @@
 
 #define SET_SIZE(x)
 
-#define ALIGN(n)		\
-	.align n
+#define ALIGN16		\
+	.align 16
 
 #define VARIABLE(x)		\
 	.data;			\

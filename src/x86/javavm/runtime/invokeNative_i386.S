@@ -30,53 +30,53 @@
 	.text
 	ENTRY(CVMjniInvokeNative)
 
-/ This function translates the "Java" calling convention into the
-/ C convention used in native methods. Java VM passes all the
-/ arguments in the Java stack, and expects the results to be placed there
-/ as well. We therefore have to copy the arguments into the C stack (or
-/ registers), and place the return values back into the Java stack.
-/
-/ With a small sacrifice in efficiency, this approach avoids having to
-/ generate a stub function for every native method.
-/
-/ The x86 passes all arguments on stack, and returns floating pointer
-/ results in ST0, 32-bit results in eax, and 64-bit results in eax and
-/ edx.
-/
-/ The first argument to CVMjniInvokeNative is a pointer to the JNI
-/ environment, which should be passed unmodified as the first argument
-/ to the native method.
-/
-/ The second argument is a pointer to the "real" native method function.
-/
-/ The third argument (stk) is a pointer to the Java stack, where all
-/ the arguments are stored (as stk[0], stk[1], etc.).
-/
-/ The fourth argument is the "terse" signature of the native method,
-/ which basically collapses all objects in the long signature into
-//one byte, since they're all treated the same.  This makes the parsing
-/ in this routine simpler and faster.  See classload.c and classruntime.c
-/ for details.
-/
-/ The fifth argument is the total size (in 32-bit words) of the
-/ arguments on the Java stack. Note that the Java stack does not have
-/ any alignment requirement, and stores all arguments consecutively in
-/ words and double words. The argument size includes the "this" pointer
-/ for non-static methods.
-/
-/ The sixth argument is 0 for non-static methods, or a jclass
-/ for static methods. Non-static native methods receive an object
-/ reference as the second argument (passed in the Java stack as
-/ stk[0]). The "real" method arguments to non-static methods begin at
-/ stk[1]. Static native methods receive a class reference as the second
-/ argument.
-/
-/ The return value of the native method is placed at stk[0] for
-/ word-sized results, or at stk[0] and stk[1] for
-/ double-word-sized results. The return value of CVMjniInvokeNative is
-/ 0 if the native method returns void, 1 if the native
-/ method returns a word, 2 if the native method returns a
-/ double word, or -1 if the native method returns an object.
+ # This function translates the "Java" calling convention into the
+ # C convention used in native methods. Java VM passes all the
+ # arguments in the Java stack, and expects the results to be placed there
+ # as well. We therefore have to copy the arguments into the C stack (or
+ # registers), and place the return values back into the Java stack.
+ #
+ # With a small sacrifice in efficiency, this approach avoids having to
+ # generate a stub function for every native method.
+ #
+ # The x86 passes all arguments on stack, and returns floating pointer
+ # results in ST0, 32-bit results in eax, and 64-bit results in eax and
+ # edx.
+ #
+ # The first argument to CVMjniInvokeNative is a pointer to the JNI
+ # environment, which should be passed unmodified as the first argument
+ # to the native method.
+ #
+ # The second argument is a pointer to the "real" native method function.
+ #
+ # The third argument (stk) is a pointer to the Java stack, where all
+ # the arguments are stored (as stk[0], stk[1], etc.).
+ #
+ # The fourth argument is the "terse" signature of the native method,
+ # which basically collapses all objects in the long signature into
+ # one byte, since they're all treated the same.  This makes the parsing
+ # in this routine simpler and faster.  See classload.c and classruntime.c
+ # for details.
+ #
+ # The fifth argument is the total size (in 32-bit words) of the
+ # arguments on the Java stack. Note that the Java stack does not have
+ # any alignment requirement, and stores all arguments consecutively in
+ # words and double words. The argument size includes the "this" pointer
+ # for non-static methods.
+ #
+ # The sixth argument is 0 for non-static methods, or a jclass
+ # for static methods. Non-static native methods receive an object
+ # reference as the second argument (passed in the Java stack as
+ # stk[0]). The "real" method arguments to non-static methods begin at
+ # stk[1]. Static native methods receive a class reference as the second
+ # argument.
+ #
+ # The return value of the native method is placed at stk[0] for
+ # word-sized results, or at stk[0] and stk[1] for
+ # double-word-sized results. The return value of CVMjniInvokeNative is
+ # 0 if the native method returns void, 1 if the native
+ # method returns a word, 2 if the native method returns a
+ # double word, or -1 if the native method returns an object.
 
 # #define args_again \
 	# movb	%dl, %cl; \
@@ -86,13 +86,13 @@
 
 	
 
-/ _env$ = 8 ; JNI environment
-/ _f$ = 12 ; native method function
-/ _stk$ = 16 ; Java stack
-/ _sig$ = 20 ; method signature
-/ _sz$ = 24 ; total argument size
-/ _cls$ = 28 ; class (if static)
-/ _res$ = 32 ; result pointer
+ # _env$ = 8 ; JNI environment
+ # _f$ = 12 ; native method function
+ # _stk$ = 16 ; Java stack
+ # _sig$ = 20 ; method signature
+ # _sz$ = 24 ; total argument size
+ # _cls$ = 28 ; class (if static)
+ # _res$ = 32 ; result pointer
 
 	pushl	%ebp
 	movl	%esp, %ebp
