@@ -156,6 +156,9 @@ int g_action_infos_allocated;
 #define OPEN "open"
 #define NEW "new"
 
+#define __L(m) L ## m
+#define _L(m) __L(m)
+
 const short * DEFAULT_ACTION = NULL;
 
 #define CHAPI_READ 1
@@ -961,11 +964,11 @@ int read_caps(){
 			action = new_action_info(type, handler);
 			action->params = params; params = 0;
 			action->flag |= TYPE_INFO_ACTION_VIEW;
-			action->actionname_const = L###VIEW;
+			action->actionname_const = _L(VIEW);
 
 			while ((next_key_unquote(p,&ks,&ke,&vs,&ve,&p))){
-                if (match(ks, ke, L###VIEW) || match(ks, ke, L###EDIT) || match(ks, ke, L###PRINT) || 
-                        match(ks, ke, L###COMPOSE) || match(ks, ke, L###COMPOSETYPED)) {
+                if (match(ks, ke, _L(VIEW)) || match(ks, ke, _L(EDIT)) || match(ks, ke, _L(PRINT)) || 
+                        match(ks, ke, _L(COMPOSE)) || match(ks, ke, _L(COMPOSETYPED))) {
 
 					if (extract_handler(vs,ve,&handler_name,&params)) continue;
 
@@ -985,11 +988,11 @@ int read_caps(){
 					//new action
 					action = new_action_info(type, handler);//increase type refs
 					action->params = params;params = 0;
-					if (match(ks, ke, L##VIEW)) {action->flag |= TYPE_INFO_ACTION_VIEW;action->actionname_const = L##VIEW; }
-					if (match(ks, ke, L##EDIT)) {action->flag |= TYPE_INFO_ACTION_EDIT;action->actionname_const = L##EDIT; }
-					if (match(ks, ke, L##PRINT)) {action->flag |= TYPE_INFO_ACTION_PRINT;action->actionname_const = L##PRINT; }
-					if (match(ks, ke, L##COMPOSE)) {action->flag |= TYPE_INFO_ACTION_COMPOSE;action->actionname_const = L##COMPOSE; }
-					if (match(ks, ke, L##COMPOSETYPED)) {action->flag |= TYPE_INFO_COMPOSETYPED;action->actionname_const = L##COMPOSETYPED; }
+					if (match(ks, ke, _L(VIEW))) {action->flag |= TYPE_INFO_ACTION_VIEW;action->actionname_const = _L(VIEW); }
+					if (match(ks, ke, _L(EDIT))) {action->flag |= TYPE_INFO_ACTION_EDIT;action->actionname_const = _L(EDIT); }
+					if (match(ks, ke, _L(PRINT))) {action->flag |= TYPE_INFO_ACTION_PRINT;action->actionname_const = _L(PRINT); }
+					if (match(ks, ke, _L(COMPOSE))) {action->flag |= TYPE_INFO_ACTION_COMPOSE;action->actionname_const = _L(COMPOSE); }
+					if (match(ks, ke, _L(COMPOSETYPED))) {action->flag |= TYPE_INFO_COMPOSETYPED;action->actionname_const = _L(COMPOSETYPED); }
 					continue;
 				}
 				if (match(ks, ke,L"description") && !type->description) {type->description = substring_unquote(vs,ve);continue;}
@@ -1394,13 +1397,13 @@ javacall_result javacall_chapi_register_handler(
 			const short* action = actions[iact];
 			const char* taction = NULL;
 
-            if (!javautil_str_wcsicmp(action,L##EDIT)) {
+            if (!javautil_str_wcsicmp(action,_L(EDIT))) {
 				taction=EDIT;
-            } else if (!javautil_str_wcsicmp(action,L##COMPOSE) || !javautil_str_wcsicmp(action,L##NEW)){
+            } else if (!javautil_str_wcsicmp(action,_L(COMPOSE)) || !javautil_str_wcsicmp(action,_L(NEW))){
 				taction=COMPOSE;
-            } else if (!javautil_str_wcsicmp(action,L##COMPOSETYPED)){
+            } else if (!javautil_str_wcsicmp(action,_L(COMPOSETYPED))){
 				taction=COMPOSETYPED;
-            } else if (!javautil_str_wcsicmp(action,L##PRINT)){
+            } else if (!javautil_str_wcsicmp(action,_L(PRINT))){
 				taction=PRINT;
 			}
 
@@ -1656,13 +1659,13 @@ javacall_result javacall_chapi_enum_handlers_by_action(javacall_const_utf16_stri
 	
 	if (!action || !*action) searched_action = TYPE_INFO_ACTION_DEFAULT;
 	else
-	if (!javautil_str_wcsicmp(action, L##VIEW) || !javautil_str_wcsicmp(action, L##OPEN)) searched_action = TYPE_INFO_ACTION_VIEW;
+	if (!javautil_str_wcsicmp(action, _L(VIEW)) || !javautil_str_wcsicmp(action, _L(OPEN))) searched_action = TYPE_INFO_ACTION_VIEW;
 	else
-	if (!javautil_str_wcsicmp(action, L##EDIT)) searched_action = TYPE_INFO_ACTION_EDIT;
+	if (!javautil_str_wcsicmp(action, _L(EDIT))) searched_action = TYPE_INFO_ACTION_EDIT;
 	else
-	if (!javautil_str_wcsicmp(action, L##PRINT)) searched_action = TYPE_INFO_ACTION_PRINT;
+	if (!javautil_str_wcsicmp(action, _L(PRINT))) searched_action = TYPE_INFO_ACTION_PRINT;
 	else
-	if (!javautil_str_wcsicmp(action, L##COMPOSE) || !javautil_str_wcsicmp(action, L##NEW)) searched_action = TYPE_INFO_ACTION_COMPOSE;
+	if (!javautil_str_wcsicmp(action, _L(COMPOSE)) || !javautil_str_wcsicmp(action, _L(NEW))) searched_action = TYPE_INFO_ACTION_COMPOSE;
 
 	while (index < g_action_infos_used){
 		action_info* ai = g_action_infos[index];
@@ -2135,15 +2138,15 @@ javacall_bool javacall_chapi_is_action_supported(javacall_const_utf16_string con
 	info = find_handler(content_handler_id);
 	if (!info) return JAVACALL_CHAPI_ERROR_NOT_FOUND;
 
-	if (!action || !*action || !javautil_str_wcsicmp(action, L##VIEW) || !javautil_str_wcsicmp(action, L##OPEN)) searched_action = TYPE_INFO_ACTION_VIEW;
+	if (!action || !*action || !javautil_str_wcsicmp(action, _L(VIEW)) || !javautil_str_wcsicmp(action, _L(OPEN))) searched_action = TYPE_INFO_ACTION_VIEW;
 	else
-	if (!javautil_str_wcsicmp(action, L##EDIT)) searched_action = TYPE_INFO_ACTION_EDIT;
+	if (!javautil_str_wcsicmp(action, _L(EDIT))) searched_action = TYPE_INFO_ACTION_EDIT;
 	else
-	if (!javautil_str_wcsicmp(action, L##PRINT)) searched_action = TYPE_INFO_ACTION_PRINT;
+	if (!javautil_str_wcsicmp(action, _L(PRINT))) searched_action = TYPE_INFO_ACTION_PRINT;
 	else
-        if (!javautil_str_wcsicmp(action, L##COMPOSE) || !javautil_str_wcsicmp(action,L##NEW)) searched_action = TYPE_INFO_ACTION_COMPOSE;
+        if (!javautil_str_wcsicmp(action, _L(COMPOSE)) || !javautil_str_wcsicmp(action,_L(NEW))) searched_action = TYPE_INFO_ACTION_COMPOSE;
 	else
-	if (!javautil_str_wcsicmp(action, L##COMPOSETYPED)) searched_action = TYPE_INFO_ACTION_COMPOSETYPED;
+	if (!javautil_str_wcsicmp(action, _L(COMPOSETYPED))) searched_action = TYPE_INFO_ACTION_COMPOSETYPED;
 
 	for (i=0;i<g_action_infos_used;++i){
 		if (g_action_infos[i]->handler == info) {
