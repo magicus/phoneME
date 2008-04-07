@@ -35,7 +35,7 @@
 
 /*
  * The size in bytes of the region for which we want accurate profiling
- * information. In this case, we want to be accurate to within an instrruction.
+ * information. In this case, we want to be accurate to within an instruction.
  */
 #define CVMJIT_PROFILE_REGION_SIZE CVMCPU_INSTRUCTION_SIZE
 #ifndef _ASM
