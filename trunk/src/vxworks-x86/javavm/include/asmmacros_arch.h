@@ -42,5 +42,8 @@
 #define SET_SIZE(x)		\
 	.size	_##x, (.-_##x)
 
+#define ALIGN16			\
+	.align 16
+
 
 #endif /* _INCLUDED_ASMMACROS_ARCH_H */
