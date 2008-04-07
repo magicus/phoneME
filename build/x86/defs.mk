@@ -104,9 +104,6 @@ CVM_TARGETOBJS_OTHER += \
 CVM_SRCDIRS   += \
         $(CVM_TOP)/src/$(TARGET_CPU_FAMILY)/javavm/runtime/jit
 
-CVM_INCLUDE_DIRS  += \
-        $(CVM_TOP)/src/portlibs/jit/cisc
-
 CVM_JCS_CPU_RULES_FILE     += \
     $(CVM_TOP)/src/x86/javavm/runtime/jit/jitaddrgrammarrules.jcs
 
