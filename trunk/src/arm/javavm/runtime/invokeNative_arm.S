@@ -121,7 +121,7 @@ ENTRY1(CVMjniInvokeNative)
 
     /* Set up registers for processing the signature, etc. */
 
-    STMFD   sp!, {SAVESET,lr}    /* IF YOU CHANGE THIS LINE, CHANGE THE MAP BELOW! */
+    stmfd   sp!, {SAVESET,lr}    /* IF YOU CHANGE THIS LINE, CHANGE THE MAP BELOW! */
 
 #define stk1	[fp, #SAVESIZE+4]
 #define stk2	[fp, #SAVESIZE+8]
@@ -178,7 +178,7 @@ LABEL(arg_32)
 	ldr	pc, [SWITCHBASE, SIGBYTE, lsl #2]
 
 LABEL(arg_64)
-	LDMIA	JSTKPTR!, {a3,SIGBYTE}
+	ldmia	JSTKPTR!, {a3,SIGBYTE}
 #ifdef AAPCS
 	/* Round stack up to 8 byte boundary for AAPCS */
 	add	CSTKPTR, CSTKPTR, #4
@@ -230,11 +230,11 @@ LABEL(args_done)
 
 	adr	SWITCHBASE,ret_jumps
 	
-	MOV	lr, pc			/* for the debugger, for now */
+	mov	lr, pc			/* for the debugger, for now */
 	BR_REG(FuncPtr)
 	
 	ldr	a4, stk3		/* pointer to result buffer */
-	MOV	sp, fp
+	mov	sp, fp
 
 	/* thread the return address to the */
 	/* proper code for our return type */
@@ -243,38 +243,38 @@ LABEL(args_done)
 LABEL(ret_obj)
 	str	a1,[a4]
 	mov	a1,#-1	/* -1 indicates object return */
-	LDMFD	sp!, {SAVESET, lr}
+	ldmfd	sp!, {SAVESET, lr}
 	BR_REG(lr)
 	
 LABEL(ret_s32)	
 	str	a1,[a4]
 	mov	a1,#1	/* 1 indicates single-word return */
-	LDMFD	sp!, {SAVESET, lr}
+	ldmfd	sp!, {SAVESET, lr}
 	BR_REG(lr)
 
 LABEL(ret_s64)
 	stmia	a4, {a1,a2}
 	mov	a1,#2	/* 2 indicates double-word return */
-	LDMFD	sp!, {SAVESET, lr}
+	ldmfd	sp!, {SAVESET, lr}
 	BR_REG(lr)
 
 #ifdef CVM_ARM_FLOAT_RESULT_IN_FLOAT_REGISTER	
 LABEL(ret_f32)	
 	stfs	f0,[a4]
 	mov	a1,#1	/* 1 indicates single-word return */
-	LDMFD	sp!, {SAVESET, lr}
+	ldmfd	sp!, {SAVESET, lr}
 	BR_REG(lr)
 
 LABEL(ret_f64)
 	stfd	f0,[a4]
 	mov	a1,#2	/* 2 indicates double-word return */
-	LDMFD	sp!, {SAVESET, lr}
+	ldmfd	sp!, {SAVESET, lr}
 	BR_REG(lr)
 #endif
 
 LABEL(ret_void)
 	mov	a1,#0	/* 0 indicates void return */
-	LDMFD	sp!, {SAVESET, lr}
+	ldmfd	sp!, {SAVESET, lr}
 	BR_REG(lr)
 
 LABEL(ret_jumps)		
