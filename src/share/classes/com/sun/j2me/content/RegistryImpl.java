@@ -166,8 +166,7 @@ public final class RegistryImpl {
             curr = (RegistryImpl)registries.get(classname);
             if (curr != null) {
                 // Check that it is still a CH or MIDlet
-                if (curr.handlerImpl == null &&
-                		(!curr.application.isRegistered())) {
+                if (curr.handlerImpl == null && !curr.application.isRegistered()) {
                     // Classname is not a registered MIDlet or ContentHandler
                     throw new
                         ContentHandlerException("not a registered MIDlet",
