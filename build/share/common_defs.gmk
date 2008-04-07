@@ -280,23 +280,31 @@ MODULE_JSR_120_TCK_NCI_TOOL_JAVA_FILES += \
     $(JSR_120_DIR)/src/share/tool/ncitool/classes/com/sun/tck/wma/Message.java \
     $(JSR_120_DIR)/src/share/tool/ncitool/classes/com/sun/tck/wma/MessageConnection.java \
     $(JSR_120_DIR)/src/share/tool/ncitool/classes/com/sun/tck/wma/MessageListener.java \
-    $(JSR_120_DIR)/src/share/tool/ncitool/classes/com/sun/tck/wma/TextMessage.java 
-
+    $(JSR_120_DIR)/src/share/tool/ncitool/classes/com/sun/tck/wma/TextMessage.java \
+    $(JSR_120_DIR)/src/share/tool/ncitool/classes/com/sun/tck/wma/MMSAddress.java 
 
 MODULE_JSR_120_TCK_NCI_SLAVE_MANIFEST = \
     $(JSR_120_DIR)/src/share/tool/ncislave/NCISlave.manifest
 
 MODULE_JSR_120_TCK_NCI_SLAVE_JAD = \
-    $(JSR_120_DIR)/src/share/tool/ncislave/NCISlave.jad
+	$(JSR_120_DIR)/src/share/tool/ncislave/NCISlave.jad
+
+MODULE_JSR_120_TCK_NCI_SLAVE_JAVA_FILES += \
+    $(JSR_120_DIR)/src/share/tool/ncislave/NCISlave.java \
+    $(JSR_120_DIR)/src/share/tool/ncitool/classes/com/sun/tck/wma/MMSAddress.java
 
 ifeq ($(USE_JSR_205), true)
-MODULE_JSR_120_TCK_NCI_SLAVE_JAVA_FILES += \
-    $(JSR_120_DIR)/src/share/tool/ncislave/NCISlave.java
-
 MODULE_JSR_120_TCK_NCI_TOOL_JAVA_FILES += \
-    $(JSR_120_DIR)/src/share/tool/ncitool/classes/com/sun/midp/io/nci/server/NCIMultipartMessage.java 
+    $(JSR_120_DIR)/src/share/tool/ncitool/classes/com/sun/midp/io/nci/server/NCIMultipartMessage.java  \
+    $(JSR_205_DIR)/src/share/tool/wmatool/classes/com/sun/tck/wma/MultipartMessage.java \
+    $(JSR_205_DIR)/src/share/tool/wmatool/classes/com/sun/tck/wma/SizeExceededException.java \
+    $(JSR_205_DIR)/src/share/tool/wmatool/classes/com/sun/tck/wma/MessagePart.java 
+else
+MODULE_JSR_120_TCK_NCI_TOOL_JAVA_FILES += \
+    $(JSR_120_DIR)/src/share/tool/ncitool/classes/com/sun/tck/wma/SizeExceededException.java \
+    $(JSR_120_DIR)/src/share/tool/ncitool/classes/com/sun/tck/wma/MultipartMessage.java \
+    $(JSR_120_DIR)/src/share/tool/ncitool/classes/com/sun/tck/wma/MessagePart.java
 endif
-
 
 #################################################################
 
