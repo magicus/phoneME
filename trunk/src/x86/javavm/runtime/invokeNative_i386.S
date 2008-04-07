@@ -119,8 +119,8 @@ static_done:
 
 	# NOTE: At this point, %esp is %ebp + 3 pushl i.e. %ebp - 12.  We will
 	#       need to restore #esp to this value later after the call.
-
 	subl	%edx, %esp	# reserve stack space for JNI method args.
+        andl    $0xfffffff0, %esp # keep stack 16 byte aligned
 	movl	%esp, %edi
 
 	movl	8(%ebp), %eax	# copy env to outgoing args[0]
