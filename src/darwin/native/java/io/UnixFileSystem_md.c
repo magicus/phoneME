@@ -68,6 +68,7 @@ typedef long 		longlong_t;
 typedef long 		timestruc_t;
 #define _ST_FSTYPSZ 1
 
+#ifndef __DARWIN_STRUCT_STAT64
 /* The stat64 structure must be provided for systems without large-file support
    (e.g., Solaris 2.5.1).  These definitions are copied from the Solaris 2.6
    <sys/stat.h> and <sys/types.h> files.
@@ -75,6 +76,10 @@ typedef long 		timestruc_t;
 typedef longlong_t      off64_t;        /* offsets within files */
 typedef u_longlong_t    ino64_t;        /* expanded inode type  */
 typedef longlong_t      blkcnt64_t;     /* count of file blocks */
+
+#undef st_atime
+#undef st_mtime
+#undef st_ctime
 
 struct	stat64 {
 	dev_t	st_dev;
@@ -87,14 +92,15 @@ struct	stat64 {
 	dev_t	st_rdev;
 	long	st_pad2[2];
 	off64_t	st_size;
-	timestruc_t st_atime64;
-	timestruc_t st_mtime64;
-	timestruc_t st_ctime64;
+	timestruc_t st_atime;
+	timestruc_t st_mtime;
+	timestruc_t st_ctime;
 	long	st_blksize;
 	blkcnt64_t st_blocks;
 	char	st_fstype[_ST_FSTYPSZ];
 	long	st_pad4[8];
 };
+#endif
 
 typedef int (*STAT64)(const char *, struct stat64 *);
 
@@ -197,7 +203,7 @@ Java_java_io_UnixFileSystem_getLastModifiedTime(JNIEnv *env, jobject this,
         if (stat64_ptr) {
             struct stat64 sb;
             if (((*stat64_ptr)(path, &sb)) == 0) {
-                rv = 1000 * (jlong)sb.st_mtime64;
+                rv = 1000 * (jlong)sb.st_mtime;
             }
         } else {
             struct stat sb;
@@ -384,7 +390,7 @@ Java_java_io_UnixFileSystem_setLastModifiedTime(JNIEnv *env, jobject this,
         if (stat64_ptr) {
             struct stat64 sb;
             if (((*stat64_ptr)(path, &sb)) == 0)
-		ts = sb.st_atime64;
+		ts = sb.st_atime;
 	    else
 		goto error;
 	} else {

@@ -88,7 +88,7 @@
 #include <semaphore.h>
 #endif
 
-#define thread_t                pthread_t
+/* #define thread_t                pthread_t */
 
 #define mutex_t                 pthread_mutex_t
 #define mutex_init              pthread_mutex_init
