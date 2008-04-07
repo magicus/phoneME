@@ -29,6 +29,8 @@
 #include <dirent.h>             /* For DIR */
 #include <sys/param.h>          /* For MAXPATHLEN */
 
+#define NO_PROC_FILESYSTEM
+
 #ifdef JAVASE
 
 #include <unistd.h>		/* For F_OK, R_OK, W_OK */

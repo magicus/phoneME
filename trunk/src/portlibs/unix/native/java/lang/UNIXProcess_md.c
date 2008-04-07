@@ -246,6 +246,9 @@ Java_java_lang_UNIXProcess_waitForProcessExit(JNIEnv* env,
 
 int closeDescriptors()
 {
+#ifdef NO_PROC_FILESYSTEM
+    return 0;
+#else
     DIR *dp;
     struct dirent *dirp;
     char procdir[20];
@@ -268,6 +271,7 @@ int closeDescriptors()
     }
     closedir(dp);
     return 1;
+#endif
 }
 
 JNIEXPORT jint JNICALL
