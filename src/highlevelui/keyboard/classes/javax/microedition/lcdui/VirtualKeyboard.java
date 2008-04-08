@@ -199,7 +199,7 @@ class VirtualKeyboard {
     void traverse(int type, int keyCode) {
 
         // Soft button means dismiss to the virtual keyboard
-        if (type != EventConstants.RELEASED && keyCode == EventConstants.SOFT_BUTTON2) {
+        if (type == EventConstants.RELEASED && keyCode == EventConstants.SOFT_BUTTON2) {
             vkl.virtualKeyEntered(type, (char)0);
             return;
         }
