@@ -794,7 +794,7 @@ KNIDECL(com_sun_j2me_content_RegistryStore_finalize) {
  * private native int launchNativeHandler0(String handlerId);
  */
 KNIEXPORT KNI_RETURNTYPE_INT
-KNIDECL(com_sun_j2me_content_InvocationStoreProxy_launchNativeHandler0) {
+KNIDECL(com_sun_j2me_content_AppProxy_launchNativeHandler0) {
     jchar* id = NULL;
     jsr211_launch_result result;
 
@@ -820,7 +820,7 @@ KNIDECL(com_sun_j2me_content_InvocationStoreProxy_launchNativeHandler0) {
  * private native boolean platformFinish0(String handlerId);
  */
 KNIEXPORT KNI_RETURNTYPE_BOOLEAN
-KNIDECL(com_sun_j2me_content_InvocationStoreProxy_platformFinish0) {
+KNIDECL(com_sun_j2me_content_AppProxy_platformFinish0) {
     jint tid;
     jsr211_boolean should_exit;
 
