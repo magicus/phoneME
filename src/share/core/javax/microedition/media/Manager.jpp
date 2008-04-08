@@ -592,14 +592,13 @@ public final class Manager {
         }
 
         String locStr = locator.toLowerCase();
-        BasicPlayer p;
-        boolean found = false;
 
         if (debug)
             System.out.println("[mmapi] createPlayer with " + locator);
 
         /* Verify if Protocol is supported */
         String theProtocol = null;
+        boolean found = false;
         int idx = locStr.indexOf(':');
 
         if (idx != -1) {
@@ -607,25 +606,14 @@ public final class Manager {
         } else {
             throw new MediaException("Malformed locator");
         }
-        String supportedProtocols[] = getSupportedProtocols(null);
-        for (int i = 0; i < supportedProtocols.length && !found; i++) {
-            if (theProtocol.equals(supportedProtocols[i])) {
-                found = true;
-            }
-        }
 
-        if (!found) {
-            throw new MediaException("Player cannot be created for " + locator + 
-                                    " Unsupported protocol " + theProtocol);
-        }
-
-        if( locStr.startsWith( DefaultConfiguration.RADIO_CAPTURE_LOCATOR ) )
+        if (locStr.startsWith(DefaultConfiguration.RADIO_CAPTURE_LOCATOR))
         {
-            if( !config.isRadioSupported() )
+            if (!config.isRadioSupported())
             {
                 throw new MediaException( "Radio Capture is not supported" );
             }
-            parseRadioLocatorStr( locator );
+            parseRadioLocatorStr(locator);
         }
         else if (locStr.startsWith(DefaultConfiguration.AUDIO_CAPTURE_LOCATOR) ||
             locStr.startsWith(DefaultConfiguration.VIDEO_CAPTURE_LOCATOR))
@@ -635,7 +623,6 @@ public final class Manager {
             String encStr = null;
             if (encInd > 0) {
                 locStr = locStr.substring(0, encInd);
-
                 idx = locator.indexOf("encoding=");
                 if (idx != -1) {
                     encStr = locator.substring(idx+9);
@@ -649,6 +636,7 @@ public final class Manager {
                 }
 
             }
+            found = true;
             String encodings = null;
             if (locStr.equals(DefaultConfiguration.AUDIO_CAPTURE_LOCATOR)) {
                 String supported = System.getProperty("supports.audio.capture");
@@ -666,10 +654,21 @@ public final class Manager {
             if (encStr != null && encodings != null && encodings.indexOf(encStr) == -1) {
                 found = false;
             }
-        }
+            if (!found) {
+                throw new MediaException("Player cannot be created for " + locator);
+            }
+        } else {
+            String supportedProtocols[] = getSupportedProtocols(null);
+            for (int i = 0; i < supportedProtocols.length && !found; i++) {
+                if (theProtocol.equals(supportedProtocols[i])) {
+                    found = true;
+                }
+            }
 
-        if (!found) {
-            throw new MediaException("Player cannot be created for " + locator);
+            if (!found) {
+                throw new MediaException("Player cannot be created for " + locator + 
+                                        " Unsupported protocol " + theProtocol);
+            }
         }
 
         DataSource ds = createDataSource(locator);
@@ -697,7 +696,6 @@ public final class Manager {
                     throw new MediaException("Player cannot be created for " + locator);
                 }
             }
-
         } catch (MediaException ex) {
             ds.disconnect();
             throw ex;

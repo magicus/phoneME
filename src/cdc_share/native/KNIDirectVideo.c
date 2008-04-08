@@ -24,6 +24,7 @@
  */
 
 #include "KNICommon.h"
+#include "SNI.h"
 
 #include "jsrop_exceptions.h"
 
@@ -142,6 +143,7 @@ KNIDECL(com_sun_mmedia_DirectVideo_nSnapShot) {
                     (char*)tmpArray, dataBytes)) {
                     KNI_ReleaseHandle(returnValueHandle);
                 } else {
+                    SNI_NewArray(SNI_BYTE_ARRAY, dataBytes, returnValueHandle);
                     KNI_SetRawArrayRegion(returnValueHandle, 0, dataBytes, (jbyte*)tmpArray);
                     MMP_FREE(tmpArray);
                 }
