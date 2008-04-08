@@ -30,6 +30,7 @@ import java.util.Vector;
 import java.util.Hashtable;
 
 import com.sun.midp.security.Permissions;
+import com.sun.j2me.security.Token;
 import com.sun.midp.security.SecurityToken;
 
 import com.sun.midp.midlet.MIDletSuite;
@@ -45,6 +46,8 @@ import com.sun.midp.events.EventTypes;
 import com.sun.midp.events.EventQueue;
 
 import com.sun.midp.io.Util;
+
+import javax.miContentHandlerException;
 
 /**
  * Each AppProxy instance provides access to the AMS information
