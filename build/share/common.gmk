@@ -103,6 +103,14 @@ $(JSR_135_GENERATED_DIR)/classes/com/sun/mmedia/MMEventListener.java: \
   $(JSR_135_PROJECT_SRC_DIR)/classes/com/sun/mmedia/MMEventListener.jpp
 	@$(call runjpp,$^,$@)
 
+$(JSR_135_GENERATED_DIR)/classes/com/sun/mmedia/DirectMIDI.java: \
+  $(JSR_135_DIR)/src/share/components/direct-player/classes/com/sun/mmedia/DirectMIDI.jpp
+	@$(call runjpp,$^,$@)
+
+$(JSR_135_GENERATED_DIR)/classes/com/sun/mmedia/DirectTone.java: \
+  $(JSR_135_DIR)/src/share/components/direct-player/classes/com/sun/mmedia/DirectTone.jpp
+	@$(call runjpp,$^,$@)
+
 SUBSYSTEM_JSR_135_JAVA_FILES += \
     $(JSR_135_GENERATED_DIR)/classes/javax/microedition/media/Player.java \
     $(JSR_135_GENERATED_DIR)/classes/javax/microedition/media/PlayerListener.java \
@@ -213,14 +221,14 @@ endif
 ifeq ($(DIRECT_PLAYER), true)
 SUBSYSTEM_JSR_135_JAVA_FILES += \
     $(JSR_135_GENERATED_DIR)/classes/com/sun/mmedia/DirectPlayer.java \
-    $(JSR_135_DIR)/src/share/components/direct-player/classes/com/sun/mmedia/DirectTone.java \
+    $(JSR_135_GENERATED_DIR)/classes/com/sun/mmedia/DirectTone.java \
     $(JSR_135_DIR)/src/share/components/direct-player/classes/com/sun/mmedia/DirectVolume.java \
     $(JSR_135_DIR)/src/share/components/direct-player/classes/com/sun/mmedia/DirectControls.java
 endif
 
 ifeq ($(DIRECT_MIDI_CONTROL), true)
 SUBSYSTEM_JSR_135_JAVA_FILES += \
-    $(JSR_135_DIR)/src/share/components/direct-player/classes/com/sun/mmedia/DirectMIDI.java \
+    $(JSR_135_GENERATED_DIR)/classes/com/sun/mmedia/DirectMIDI.java \
     $(JSR_135_DIR)/src/share/components/direct-player/classes/com/sun/mmedia/DirectMIDIControl.java
 endif
 
@@ -252,6 +260,8 @@ SUBSYSTEM_JSR_135_CNI_CLASSES += \
     com.sun.mmedia.AudioTunnel \
     com.sun.mmedia.DirectMIDIControl \
     com.sun.mmedia.DirectPlayer \
+    com.sun.mmedia.DirectMIDI \
+    com.sun.mmedia.DirectTone \
     com.sun.mmedia.PlayerImpl \
     com.sun.mmedia.DirectRecord \
     com.sun.mmedia.DirectVolume \

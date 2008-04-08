@@ -49,8 +49,10 @@ import com.sun.j2me.log.LogChannels;
 public class DirectVideo extends DirectPlayer implements 
     VideoControl, MIDPVideoPainter {
 
-/* FIXME: these can swap when device screen orientation changes, so they cannot be final */
-/* FIXME: native methods return 0 */
+/* Need to revisit: these can swap when device screen orientation changes,
+ * so they cannot be final 
+ */
+/* Need to revisit: native methods return 0 */
     private final int SCREEN_WIDTH = 240;//nGetScreenWidth();
     private final int SCREEN_HEIGHT = 240;//nGetScreenHeight();
     private final int DEFAULT_WIDTH = 80;

@@ -399,5 +399,11 @@ public abstract class Configuration {
     public static boolean nativeLoopMode() {
         return nativeLooping;
     }
+
+    public boolean isRadioSupported()
+    {
+        return false;
+    }
+    
 }
 

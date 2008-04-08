@@ -36,7 +36,7 @@
 
 typedef struct {
     char *current;
-    char list[0];
+    char list[1];
 } ListIterator;
 
 static struct _protocolNames {
@@ -55,6 +55,42 @@ static struct _protocolNames {
 
 void mmapi_string_delete_duplicates(char *p);
 static javacall_result simple_jcharString_to_asciiString(jchar *jcharString, jsize jcharStringLen, char *asciiStringBuffer, jsize bufferSize);
+
+const int caps_sanity_size_limit = 256;
+
+KNIEXPORT KNI_RETURNTYPE_BOOLEAN
+KNIDECL(com_sun_mmedia_DefaultConfiguration_nIsRadioSupported) {
+    javacall_media_configuration *cfg;
+    jboolean res = KNI_FALSE;
+    if (javacall_media_get_configuration(&cfg) != JAVACALL_OK) {
+        KNI_ThrowNew(jsropRuntimeException, "Couldn't get MMAPI configuration");
+    }
+    else if( JAVACALL_TRUE == cfg->supportCaptureRadio )
+    {
+        javacall_media_caps *caps = cfg->mediaCaps;
+        int i = 0;
+        if( NULL != cfg->mediaCaps )
+        {
+            for( i = 0; NULL != cfg->mediaCaps[i].mediaFormat && 
+                    i < caps_sanity_size_limit; i++ )
+            {
+                if( 0 == strcmp( JAVACALL_MEDIA_FORMAT_CAPTURE_RADIO, 
+                    cfg->mediaCaps[i].mediaFormat ) )
+                {
+                    res = KNI_TRUE;
+                    break;
+                }
+            }
+            if( i >= caps_sanity_size_limit )
+            {
+                KNI_ThrowNew(jsropRuntimeException, 
+                    "MMAPI configuration caps list is not null-terminated");
+            }
+        }
+    }
+    
+    KNI_ReturnBoolean( res );
+}
 
 KNIEXPORT KNI_RETURNTYPE_INT
 KNIDECL(com_sun_mmedia_DefaultConfiguration_nListContentTypesOpen) {
@@ -199,7 +235,7 @@ KNIDECL(com_sun_mmedia_DefaultConfiguration_nListContentTypesOpen) {
     }
     KNI_EndHandles();
     KNI_ReturnInt((jint)iterator); 
-};
+}
 
 KNIEXPORT KNI_RETURNTYPE_OBJECT
 KNIDECL(com_sun_mmedia_DefaultConfiguration_nListContentTypesNext) {
@@ -420,7 +456,7 @@ KNIDECL(com_sun_mmedia_DefaultConfiguration_nListProtocolsOpen) {
     }
     KNI_EndHandles();
     KNI_ReturnInt((jint)iterator); 
-};
+}
 
 KNIEXPORT KNI_RETURNTYPE_OBJECT
 KNIDECL(com_sun_mmedia_DefaultConfiguration_nListProtocolsNext) {
