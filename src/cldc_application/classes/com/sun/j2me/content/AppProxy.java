@@ -47,7 +47,7 @@ import com.sun.midp.events.EventQueue;
 
 import com.sun.midp.io.Util;
 
-import javax.miContentHandlerException;
+import javax.microedition.content.ContentHandlerException;
 
 /**
  * Each AppProxy instance provides access to the AMS information
