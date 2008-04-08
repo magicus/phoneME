@@ -3610,6 +3610,13 @@ public class Display {
                                        +System.currentTimeMillis());
                 }
             }
+
+            // #ifdef ENABLE_KEYBOARD [
+            if((keyboardLayer!= null) && keyboardLayer.open) {
+                showPopup(keyboardLayer);
+            }
+            // #endif ]
+
         }
 
         /**
