@@ -181,6 +181,16 @@ else
    JPP_DEFS            += -DENABLE_CDC
 endif
 
+
+
+ifeq ($(SOFT_KEYBOARD_ENABLED), true)
+   JPP_DEFS     += -DENABLE_KEYBOARD
+   USE_SOFT_KEYBOARD	= true
+else
+#   JPP_DEFS     += -DENABLE_KEYBOARD
+   USE_SOFT_KEYBOARD	= false
+endif
+
 # Make options
 #
 ifeq ($(USE_MIDP_MALLOC), true)

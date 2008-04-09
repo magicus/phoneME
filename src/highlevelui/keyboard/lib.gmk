@@ -1,0 +1,43 @@
+#
+# @(#)subsystem.gmk	1.75 06/04/05 @(#)
+#
+# Copyright  1990-2006 Sun Microsystems, Inc. All rights reserved.
+# SUN PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+#
+######################################################################
+#
+# Module's Component Configuration file
+#
+# Remember: It is up to the module itself to impose rules of
+# how to compile the options. All the global Makefile needs
+# is the final def. of Java and native file lists and some
+# other def. (like VPATH)
+#
+######################################################################
+
+# Name of the library
+#
+KEYBOARD_NAME = keyboard
+KEYBOARD_DIR = $(SUBSYSTEM_HIGHUI_DIR)/$(KEYBOARD_NAME)
+
+# Add to library set for this build
+LIB_SET += $(KEYBOARD_DIR)
+
+# Export include files
+# SUBSYSTEM_LCDLF_EXTRA_INCLUDES +=
+
+# Native files for the library
+# SUBSYSTEM_KEYBOARD_NATIVE_FILES +=
+
+# Source code path for the library
+# vpath $(KEYBOARD_DIR)/native
+
+# Java files for the library
+#
+SUBSYSTEM_KEYBOARD_JAVA_FILES = \
+    $(SUBSYSTEM_HIGHUI_DIR)/keyboard/classes/javax/microedition/lcdui/VirtualKeyboardListener.java \
+    $(SUBSYSTEM_HIGHUI_DIR)/keyboard/classes/javax/microedition/lcdui/VirtualKeyboard.java \
+    $(SUBSYSTEM_HIGHUI_DIR)/keyboard/classes/javax/microedition/lcdui/KeyboardLayer.java
+
+# Define Jpp
+#JPP_DEFS += 

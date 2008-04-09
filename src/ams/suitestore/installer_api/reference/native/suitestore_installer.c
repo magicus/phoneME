@@ -34,8 +34,6 @@
  * ported if using a native installer (what is probably the case if using NAMS).
  */
 
-#include <string.h>
-
 #include <kni.h>
 #include <pcsl_memory.h>
 #include <midpInit.h>

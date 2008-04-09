@@ -1,3 +1,4 @@
+#  @(#)lib.gmk	1.1 06/06/06 @(#)
 #
 # Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -30,4 +31,4 @@
 
 # Directory with image resources
 INT_INPUT_AMS_IMAGES_DIR = \
-  $(PROJECT_APPMANAGER_UI_RESOURCE_DIR)/$(PLATFORM)
+  $(APPMANAGER_UI_RESOURCE_DIR)/$(PLATFORM)
