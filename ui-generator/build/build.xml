@@ -47,7 +47,9 @@ information or have any questions.
     <property name="makefile.files_list.varname"    value="GENERATED_FILES"/>
 
     <property name="xslt.merge"             location="../xslt/merge.xsl"/>
+    <property name="xslt.prep"              location="../xslt/prep.xsl"/>
     <property name="xslt.main"              location="../xslt/${toolkit}/main.xsl"/>
+    <property name="xsd"                    location="../xslt/screens.xsd"/>
 
 
     <!--
@@ -77,11 +79,36 @@ information or have any questions.
         </filelist>
         <pathconvert property="output-xml-dir" refid="output-xml-dir" dirsep="/"/>
 
+        <!-- Produce a single xml from multiple files handling 'include' elements -->
         <mkdir dir="${out.root}"/>
-        <xslt in="${screens}" out="${out.root}/all.xml" style="${xslt.merge}" force="yes"/>
+        <xslt in="${screens}" out="${out.root}/merged.xml" style="${xslt.merge}" force="yes"/>
 
+        <!-- Validate temporary xml -->
+        <pathconvert dirsep="/" property="xsd.file">
+            <path>
+                <pathelement location="${xsd}"/>
+            </path>
+        </pathconvert>
+        <xmlvalidate    file="${out.root}/merged.xml"
+                        lenient="false"
+                        failonerror="true"
+                        warn="true">
+            <attribute  name="http://apache.org/xml/features/validation/schema"
+                        value="true"/>
+            <attribute  name="http://xml.org/sax/features/validation"
+                        value="true"/>
+            <property   name="http://apache.org/xml/properties/schema/external-noNamespaceSchemaLocation"
+                        value="${xsd.file}"/>
+            <property   name="http://apache.org/xml/properties/schema/external-schemaLocation"
+                        value="${xsd.file}"/>
+        </xmlvalidate>
+
+        <!-- Do some preliminary transformations -->
+        <xslt in="${out.root}/merged.xml" out="${out.root}/prep.xml" style="${xslt.prep}" force="yes"/>
+
+        <!-- Run source generator -->
         <mkdir dir="${output-java-dir}"/>
-        <xslt in="${out.root}/all.xml" out="${generated.files.list}" style="${xslt.main}">
+        <xslt in="${out.root}/prep.xml" out="${generated.files.list}" style="${xslt.main}">
             <param name="package-name" expression="${package}"/>
             <param name="output-java-dir" expression="file:///${output-java-dir}"/>
             <param name="output-xml-dir" expression="file:///${output-xml-dir}"/>
