@@ -14,9 +14,16 @@ import com.sun.midp.chameleon.skins.ChoiceGroupSkin;
 import com.sun.midp.chameleon.layers.PopupLayer;
 import com.sun.midp.chameleon.input.*;
 
+import com.sun.midp.security.SecurityToken;
+import com.sun.midp.security.SecurityInitializer;
+import com.sun.midp.security.ImplicitlyTrustedClass;
+
+import com.sun.midp.util.ResourceHandler;
+
+import java.util.Vector;
+
 /**
  * This is a popup layer that handles a sub-popup within the text tfContext
- * @author Amir Uval
  */
 class KeyboardLayer extends PopupLayer implements VirtualKeyboardListener {
 
@@ -41,7 +48,7 @@ class KeyboardLayer extends PopupLayer implements VirtualKeyboardListener {
         backupString = tfContext.tf.getString();        
         if (vk==null) {
             prepareKeyMapTextField();
-            vk = new VirtualKeyboard(keys, this, true);
+            vk = new VirtualKeyboard(Maps, this, true);
         }
 
 	setBounds(vk.kbX, vk.kbY, vk.kbWidth, vk.kbHeight);
@@ -65,7 +72,7 @@ class KeyboardLayer extends PopupLayer implements VirtualKeyboardListener {
         cvContext = canvas;
         if (vk==null) {
             prepareKeyMapCanvas();
-            vk = new VirtualKeyboard(keys, this, false);
+            vk = new VirtualKeyboard(Maps, this, false);
         }
 
         //System.out.println("vk.kbX:"+vk.kbX+",vk.kbY:"+vk.kbY+",vk.kbWidth:"+vk.kbWidth+",vk.kbHeight:"+vk.kbHeight);
@@ -267,14 +274,67 @@ class KeyboardLayer extends PopupLayer implements VirtualKeyboardListener {
     String backupString;
 
     /** the list of available keys */
-    char[][] keys = null;
+    //char[][] keys = null;
+    Vector Maps = null;
 
     /**
      * Prepare key map
      */
     void prepareKeyMapTextField() {
-        keys = new char[4][];
 
+
+        Maps = new Vector();
+
+        Image icon = null;
+        Image otherIcon = null;
+        int width = 18;
+        int height = 18;
+        int pos;
+
+        Vector Keys = new Vector();
+            pos = 0;
+            Keys.addElement(new Key(icon,otherIcon,'q','q',pos,0,width,height)); pos+=width+2;
+            Keys.addElement(new Key(icon,otherIcon,'w','w',pos,0,width,height)); pos+=width+2;
+            Keys.addElement(new Key(icon,otherIcon,'e','e',pos,0,width,height)); pos+=width+2;
+            Keys.addElement(new Key(icon,otherIcon,'r','r',pos,0,width,height)); pos+=width+2;
+            Keys.addElement(new Key(icon,otherIcon,'t','t',pos,0,width,height)); pos+=width+2;
+            Keys.addElement(new Key(icon,otherIcon,'y','y',pos,0,width,height)); pos+=width+2;
+            Keys.addElement(new Key(icon,otherIcon,'u','u',pos,0,width,height)); pos+=width+2;
+            Keys.addElement(new Key(icon,otherIcon,'i','i',pos,0,width,height)); pos+=width+2;
+            Keys.addElement(new Key(icon,otherIcon,'o','o',pos,0,width,height)); pos+=width+2;
+            Keys.addElement(new Key(icon,otherIcon,'p','p',pos,0,width,height)); pos+=width+2;
+
+            pos = 10;
+            Keys.addElement(new Key(icon,otherIcon,'a','a',pos,30,width,height)); pos+=width+2;
+            Keys.addElement(new Key(icon,otherIcon,'s','s',pos,30,width,height)); pos+=width+2;
+            Keys.addElement(new Key(icon,otherIcon,'d','d',pos,30,width,height)); pos+=width+2;
+            Keys.addElement(new Key(icon,otherIcon,'f','f',pos,30,width,height)); pos+=width+2;
+            Keys.addElement(new Key(icon,otherIcon,'g','g',pos,30,width,height)); pos+=width+2;
+            Keys.addElement(new Key(icon,otherIcon,'h','h',pos,30,width,height)); pos+=width+2;
+            Keys.addElement(new Key(icon,otherIcon,'j','j',pos,30,width,height)); pos+=width+2;
+            Keys.addElement(new Key(icon,otherIcon,'k','k',pos,30,width,height)); pos+=width+2;
+            Keys.addElement(new Key(icon,otherIcon,'l','l',pos,30,width,height)); pos+=width+2;
+            Keys.addElement(new Key(icon,otherIcon,';',';',pos,30,width,height)); pos+=width+2;
+
+            pos = 20;
+            Keys.addElement(new Key(icon,otherIcon,'z','z',pos,60,width,height)); pos+=width+2;
+            Keys.addElement(new Key(icon,otherIcon,'x','x',pos,60,width,height)); pos+=width+2;
+            Keys.addElement(new Key(icon,otherIcon,'c','c',pos,60,width,height)); pos+=width+2;
+            Keys.addElement(new Key(icon,otherIcon,'v','v',pos,60,width,height)); pos+=width+2;
+            Keys.addElement(new Key(icon,otherIcon,'b','b',pos,60,width,height)); pos+=width+2;
+            Keys.addElement(new Key(icon,otherIcon,'m','m',pos,60,width,height)); pos+=width+2;
+            Keys.addElement(new Key(icon,otherIcon,',',',',pos,60,width,height)); pos+=width+2;
+            Keys.addElement(new Key(icon,otherIcon,'.','.',pos,60,width,height)); pos+=width+2;
+            Keys.addElement(new Key(icon,otherIcon,'/','/',pos,60,width,height)); pos+=width+2;
+            
+        Maps.addElement(Keys);
+
+
+
+
+
+/*
+        Keys.add(new Key(null,null,'0',50,0)); 
         // numerals
         keys[0] = new char[22]; // numerals
         for (char i=0; i<10; i++) {  // 0..9
@@ -318,44 +378,31 @@ class KeyboardLayer extends PopupLayer implements VirtualKeyboardListener {
         keys[3][22] = '~'; // space
         keys[3][23] = '^'; // space
         keys[3][24] = ' '; // space
+        */
     }
 
     /**
      * Prepare key map for Canvas keypad.
      */
-    void prepareKeyMapCanvas() {         
-        keys = new char[1][];              
-         //keys[0] = new char[16]; 
-        keys[0] = new char[12]; 
-         // game keys A,B,C,D
+    void prepareKeyMapCanvas() {
 
-         keys[0][0] = 'A';
-         keys[0][1] = 'B';
-         keys[0][2] = 'C';
-         keys[0][3] = 'D';
-        
-         keys[0][4] = '*';
-         keys[0][5] = '#'; 
-         keys[0][6] = '0'; 
+        Image otherIcon = null;
 
-         keys[0][7] = '<';
-         keys[0][8] = '>';
-         keys[0][9] = '^';
-         keys[0][10] = 'v';
+        Maps = new Vector();
 
-         keys[0][11] = ' ';
+            Vector Keys = new Vector();
+                Keys.addElement(new Key(getImageFromInternalStorage("up_norm"),otherIcon,Constants.KEYCODE_UP,50,0));
+                Keys.addElement(new Key(getImageFromInternalStorage("down_norm"),otherIcon,Constants.KEYCODE_DOWN,50,100));
+                Keys.addElement(new Key(getImageFromInternalStorage("left_norm"),otherIcon,Constants.KEYCODE_LEFT,0,50));
+                Keys.addElement(new Key(getImageFromInternalStorage("right_norm"),otherIcon,Constants.KEYCODE_RIGHT,100,50));
+                Keys.addElement(new Key(getImageFromInternalStorage("center_norm"),otherIcon,Constants.KEYCODE_SELECT,50,50));
 
+                Keys.addElement(new Key(getImageFromInternalStorage("butt_1_norm"),otherIcon,'1',130,10));
+                Keys.addElement(new Key(getImageFromInternalStorage("butt_2_norm"),otherIcon,'3',200,10));
+                Keys.addElement(new Key(getImageFromInternalStorage("butt_3_norm"),otherIcon,'7',130,110));
+                Keys.addElement(new Key(getImageFromInternalStorage("butt_4_norm"),otherIcon,'9',200,110));
 
-         /*for (char i=0; i<4; i++) {   
-             keys[0][i] = (char)(65+i);
-         }*/
-         /*
-        for (char i=4, j=0; i<14; i++, j++) {  // 0..9
-             keys[0][i] = (char)(j+48);
-         }
-         keys[0][14] = '*';
-         keys[0][15] = '#';              
-         */
+        Maps.addElement(Keys);
 
      }
 
@@ -368,12 +415,11 @@ class KeyboardLayer extends PopupLayer implements VirtualKeyboardListener {
      * @param c char selected by the user from the virtual keyboard
      *
      */
-    public void virtualKeyEntered(int type, char c) {
+    public void virtualKeyEntered(int type, int c) {
 
         // c == 0 - Trying to dismiss the virtual keyboard
         // 
-        int key = c;
-
+        // 
         if (c == 0) {
             Display disp = null;
 
@@ -401,20 +447,8 @@ class KeyboardLayer extends PopupLayer implements VirtualKeyboardListener {
             }
         } else if (cvContext != null) {
 
-            switch (c) {
-                case 'A': key = '1'; break;
-                case 'B': key = '3'; break;
-                case 'C': key = '7'; break;
-                case 'D': key = '9'; break;
-                case '<': key = Constants.KEYCODE_LEFT; break;
-                case '>': key = Constants.KEYCODE_RIGHT; break;
-                case '^': key = Constants.KEYCODE_UP; break;
-                case 'v': key = Constants.KEYCODE_DOWN; break;
-                case ' ': key = Constants.KEYCODE_SELECT; break;
-            }
-
             if (type == EventConstants.RELEASED) {
-                cvContext.uCallKeyReleased(key);
+                cvContext.uCallKeyReleased(c);
 
                 if (!justOpened) {
                     Display disp = cvContext.currentDisplay;
@@ -422,7 +456,7 @@ class KeyboardLayer extends PopupLayer implements VirtualKeyboardListener {
                         System.out.println("Could not find display - Can't hide popup");
                     } else {
                         //FIXME: Add option to automatically remove...
-                        if( c == ' ')
+                        if( c == 0 )
                             disp.hidePopup(this);
                     }
                     open = false;
@@ -430,7 +464,7 @@ class KeyboardLayer extends PopupLayer implements VirtualKeyboardListener {
                     justOpened = false;
                 }
             } else {
-                cvContext.uCallKeyPressed(key);
+                cvContext.uCallKeyPressed(c);
                 justOpened = false;
             }   
         }
@@ -527,4 +561,29 @@ class KeyboardLayer extends PopupLayer implements VirtualKeyboardListener {
     public void repaintVK() {
         requestRepaint();
     }
+
+
+    private Image getImageFromInternalStorage(String imageName) {
+        byte[] imageBytes =
+                ResourceHandler.getSystemImageResource(classSecurityToken, imageName);
+
+        if (imageBytes != null) {
+            return Image.createImage(imageBytes, 0, imageBytes.length);
+        }
+
+        return null;
+    }
+
+        /**
+     * Inner class to request security token from SecurityInitializer.
+     * SecurityInitializer should be able to check this inner class name.
+     */
+    static private class SecurityTrusted
+        implements ImplicitlyTrustedClass {};
+
+    /** Security token to allow access to implementation APIs */
+    private static SecurityToken classSecurityToken =
+        SecurityInitializer.requestToken(new SecurityTrusted());
+
+
 }

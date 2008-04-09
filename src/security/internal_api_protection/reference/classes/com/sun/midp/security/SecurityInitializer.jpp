@@ -166,6 +166,7 @@ public final class SecurityInitializer {
 
         // #ifdef ENABLE_CHAMELEON
         "com.sun.midp.chameleon.skins.resources.SkinResources$SecurityTrusted",
+        "javax.microedition.lcdui.KeyboardLayer$SecurityTrusted",
         // #endif ENABLE_CHAMELEON
 
         // #ifndef ENABLE_CHAMELEON
@@ -254,7 +255,7 @@ public final class SecurityInitializer {
 
         "com.sun.midp.suspend.AbstractSubsystem$SecurityTrusted",
         "com.sun.midp.io.j2me.socket.Protocol$SecurityTrusted",
-        "com.sun.midp.main.MIDletProxyList$SecurityTrusted"
+        "com.sun.midp.main.MIDletProxyList$SecurityTrusted",
     };
 
     /**

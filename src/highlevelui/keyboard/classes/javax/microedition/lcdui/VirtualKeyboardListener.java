@@ -18,7 +18,7 @@ interface VirtualKeyboardListener {
     /**
      * key input callback
      */
-    public void virtualKeyEntered(int type, char c);
+    public void virtualKeyEntered(int type, int keycode);
     
     /**
      * meta key event callback

@@ -37,7 +37,8 @@ LIB_SET += $(KEYBOARD_DIR)
 SUBSYSTEM_KEYBOARD_JAVA_FILES = \
     $(SUBSYSTEM_HIGHUI_DIR)/keyboard/classes/javax/microedition/lcdui/VirtualKeyboardListener.java \
     $(SUBSYSTEM_HIGHUI_DIR)/keyboard/classes/javax/microedition/lcdui/VirtualKeyboard.java \
-    $(SUBSYSTEM_HIGHUI_DIR)/keyboard/classes/javax/microedition/lcdui/KeyboardLayer.java
+    $(SUBSYSTEM_HIGHUI_DIR)/keyboard/classes/javax/microedition/lcdui/KeyboardLayer.java \
+    $(SUBSYSTEM_HIGHUI_DIR)/keyboard/classes/javax/microedition/lcdui/Key.java
 
 # Define Jpp
 #JPP_DEFS += 

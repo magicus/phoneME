@@ -12,10 +12,10 @@ import com.sun.midp.configurator.Constants;
 import com.sun.midp.chameleon.skins.*;
 import com.sun.midp.chameleon.layers.PopupLayer;
 
+import java.util.*;
 
 /**
  * This is a popup layer that handles a sub-popup within the text tfContext
- * @author Amir Uval
  */
 
 class VirtualKeyboard {
@@ -54,7 +54,7 @@ class VirtualKeyboard {
     char PRESS_OUT_OF_BOUNDS = 0;
 
     /** array of all available keys n the keyboard */
-    char[][] keys;
+    //char[][] keys;
 
     boolean inMetaKeys = false; // traversal mode
     boolean inShift = false;
@@ -70,9 +70,15 @@ class VirtualKeyboard {
      * @param vkl the virtual keyboard listener
      * @param displayTextArea flag to indicate whether to display the text area
      */
-    public VirtualKeyboard(char[][] keys, 
+    public VirtualKeyboard(Vector maps, 
                            VirtualKeyboardListener vkl,
                            boolean displayTextArea) {
+
+        this.keyboardMaps = maps;
+        this.currentMap = (Vector)keyboardMaps.elementAt(0);
+
+        this.vkl = vkl;
+
         textKbd = displayTextArea;
         if(textKbd){
               PADDING = 4;
@@ -82,13 +88,12 @@ class VirtualKeyboard {
             
         
         currentKeyboard = 0;
-        this.vkl = vkl;
-
-        kbX = PADDING;
-        kbY = PADDING;
 
         kbWidth = vkl.getAvailableWidth() - 2*PADDING;
-        kbHeight = vkl.getAvailableHeight() - 2*PADDING;
+        kbHeight = 150 + 2*PADDING;
+        kbX = PADDING;
+        kbY = vkl.getAvailableHeight()-kbHeight;
+
 
         f = Font.getFont(Font.FACE_PROPORTIONAL, // or SYSTEM
                          Font.STYLE_PLAIN, 
@@ -97,7 +102,7 @@ class VirtualKeyboard {
         fontH = f.getHeight();
 
         
-        if (textKbd) {
+        /*if (textKbd) {
             textfieldHeight = fontH + 3 * PADDING;
             buttonW = fontW * 2;
             buttonH = fontH * 3/2;
@@ -169,7 +174,7 @@ class VirtualKeyboard {
             metaKeys[SHIFT_META_KEY] = Image.createImage(shift,0,shift.length);
             metaKeys[CAPS_META_KEY] = Image.createImage(caps,0,caps.length);
             metaKeys[MODE_META_KEY] = Image.createImage(mode,0,mode.length);
-        }
+        }*/
      }
 
     /**
@@ -200,18 +205,18 @@ class VirtualKeyboard {
 
         // Soft button means dismiss to the virtual keyboard
         if (type == EventConstants.RELEASED && keyCode == EventConstants.SOFT_BUTTON2) {
-            vkl.virtualKeyEntered(type, (char)0);
+            vkl.virtualKeyEntered(type, 0);
             return;
         }
 
-        if (!inMetaKeys) {
+ //       if (!inMetaKeys) {
             if (type == EventConstants.RELEASED &&
                 keyCode != Constants.KEYCODE_SELECT) {
                 // in this case we don't want to traverse on key release
                 
             } else {
               switch (keyCode) {
-		case Constants.KEYCODE_RIGHT:
+		/*case Constants.KEYCODE_RIGHT:
 		    currentChar++;
 		    if (currentChar > keys[currentKeyboard].length - 1) {
 			currentChar = 0;
@@ -238,11 +243,11 @@ class VirtualKeyboard {
 			currentChar = (currentChar - maxColumns);
 			inMetaKeys = true;
 		    }
-		    break;
+		    break;*/
 		case Constants.KEYCODE_SELECT:
-                  // System.out.println("Key Selected - type :" + type + ", " + keys[currentKeyboard][currentChar]);
-		    vkl.virtualKeyEntered(type,keys[currentKeyboard][currentChar]);
-		    if (inShift && type == EventConstants.PRESSED) {
+                    if(currentKey!= null)
+                        vkl.virtualKeyEntered(type,currentKey.getKey());
+		    /*if (inShift && type == EventConstants.PRESSED) {
                       // shift is a one-shot upper case
                       inShift = false;
                       if(textKbd){
@@ -252,11 +257,11 @@ class VirtualKeyboard {
                       else{
                           currentKeyboard = 0;
                       }
-                    }
+                    }*/
 		    break;
 		}
             }
-        } else {
+        /*} else {
 
             if (type != EventConstants.RELEASED) {
 
@@ -319,7 +324,7 @@ class VirtualKeyboard {
 		    }                    
 		}
             }
-        }
+        }*/
 
         // triggers paint()
         vkl.repaintVK();
@@ -331,13 +336,20 @@ class VirtualKeyboard {
      * @param g The graphics context to paint to
      */
     protected void paint(Graphics g) {
+
         g.setFont(f);
         g.setColor(LIGHT_GRAY);
 
-        g.fillRect(0,0,kbWidth,kbHeight);
-        drawBorder(g,0,0,kbWidth-1,kbHeight-1);
+        if (textKbd) {
+            g.fillRect(0,0,kbWidth,kbHeight);
+            drawBorder(g,0,0,kbWidth-1,kbHeight-1);
+        }
 
-        if (textfieldHeight > 0) {
+        for(int i=0; i < currentMap.size(); i++) {
+            ((Key)(currentMap.elementAt(i))).paint(g);
+        }
+
+        /*if (textfieldHeight > 0) {
             drawTextField(g);
         }
 
@@ -348,7 +360,7 @@ class VirtualKeyboard {
                     (IMAGE_SIZE + 6 * META_PADDING) -
                     textfieldHeight);
         if(textKbd)
-            drawMetaKeys(g);
+            drawMetaKeys(g);*/
       
     }
 
@@ -381,7 +393,7 @@ class VirtualKeyboard {
      */
     void drawKeys(Graphics g) {
 
-        int tmp;
+        /*int tmp;
         
         if(!textKbd){
             currentKeyboard = 0;
@@ -413,7 +425,7 @@ class VirtualKeyboard {
                              i * (PADDING+buttonH) + PADDING + fontHTop,
                              g.HCENTER|g.TOP);
             }
-        }
+        }*/
     }
 
     /**
@@ -423,7 +435,7 @@ class VirtualKeyboard {
      */
     void drawMetaKeys(Graphics g) {
 
-        int mkWidth = metaKeys.length *   
+        /*int mkWidth = metaKeys.length *   
                       (IMAGE_SIZE + 3*META_PADDING) + META_PADDING;
         int currX = (kbWidth - mkWidth) / 2 + 2*META_PADDING;
         int currY = 0;
@@ -461,7 +473,7 @@ class VirtualKeyboard {
                 currX = META_PADDING;
                 currY -= (IMAGE_SIZE + META_PADDING);
             }
-        }   
+        }   */
     }
 
     /**
@@ -511,130 +523,6 @@ class VirtualKeyboard {
     }
 
     /**
-     * draw a button
-     * 
-     * @param g The graphics context to paint to
-     * @param x x-coordinate of the button's location
-     * @param y y-coordinate of the button's location
-     * @param w the width of the button
-     * @param h the height of the button
-     */
-    private void drawButton(Graphics g, int x, int y, int w, int h) {
-        g.setColor(GRAY);
-        g.drawLine(x+1,y+h-1,x+w,y+h-1);    //bottom
-        g.drawLine(x+w-1,y+1,x+w-1,y+h);    //right
-
-        g.setColor(DARK_GRAY);
-        g.drawLine(x,y+h,x+w,y+h);    //bottom
-        g.drawLine(x+w,y,x+w,y+h);    //right
-
-        g.setColor(WHITE);
-        g.drawLine(x,y,x+w-1,y);
-        g.drawLine(x,y,x,y+h-1);
-
-    }
-
-    /**
-     * draw a beveled button
-     * 
-     * @param g The graphics context to paint to
-     * @param x x-coordinate of the button's location
-     * @param y y-coordinate of the button's location
-     * @param w the width of the button
-     * @param h the height of the button
-     */
-    private void drawBeveledButton(Graphics g, int x, int y, int w, int h) {
-        g.setColor(GRAY);
-        g.drawLine(x+1,y+h-1,x+w,y+h-1);    //bottom
-        g.drawLine(x+w-1,y+1,x+w-1,y+h);    //right
-
-        g.setColor(WHITE);
-        g.drawLine(x,y+h,x+w,y+h);    //bottom
-        g.drawLine(x+w,y,x+w,y+h);    //right
-
-        g.setColor(GRAY);
-        g.drawLine(x,y,x+w-1,y);
-        g.drawLine(x,y,x,y+h-1);
-
-        g.setColor(WHITE);
-        g.drawLine(x+1,y+1,x+w-2,y+1);
-        g.drawLine(x+1,y+1,x+1,y+h-2);
-
-    }
-
-    
-   
-    /**
-     * Helper function to determine the itemIndex at the x,y position
-     *
-     * @param x,y   pointer coordinates in menuLayer's space (0,0 means left-top
-     *      corner) both value can be negative as menuLayer handles the pointer
-     *      event outside its bounds
-     * @return menuItem's index since 0, or PRESS_OUT_OF_BOUNDS, PRESS_ON_TITLE
-     *
-     */
-    private boolean isKeyAtPointerPosition(int x, int y) {
-        int ret=-1;
-        int tmpX,tmpY,tmp;
-         for (int i=0; i<maxRows; i++) {
-            for (int j=0; j<maxColumns; j++) {
-                tmp = i * maxColumns + j;
-                if (tmp >= keys[currentKeyboard].length) {
-                    // no more chars to draw
-                    break;
-                }
-
-                tmpX=x-(j * (PADDING+buttonW) + PADDING);
-                tmpY=y-(i * (PADDING+buttonH) + PADDING)-textfieldHeight;
-
-                if( (tmpX>=0)&&(tmpY>=0) &&(tmpX<buttonW) && (tmpY< buttonH)) {
-                    currentChar = tmp;
-                    inMetaKeys = false;
-                    return true;
-                }
-
-            }
-         }
-
-         if (metaKeys==null) {
-             return false;
-         }
-
-        //Check for meta chars
-        int mkWidth = metaKeys.length *   
-                      (IMAGE_SIZE + 3*META_PADDING) + META_PADDING;
-        int currX = (kbWidth - mkWidth) / 2 + 2*META_PADDING;
-        int currY = kbHeight - 
-                    (IMAGE_SIZE + 6 * META_PADDING);
-
-        for (int i=0; i<metaKeys.length; i++) {
-            if (currX + IMAGE_SIZE > kbWidth) {
-
-                currX = PADDING;
-                currY -= (IMAGE_SIZE + META_PADDING);
-            }
-
-
-            tmpX = x-currX;
-            tmpY = y-currY;
-
-            if( (tmpX>=0)&&(tmpY>=0) &&(tmpX<(IMAGE_SIZE + 2*META_PADDING)) && (tmpY< (IMAGE_SIZE + 2*META_PADDING))) {
-                currentMeta = i;
-                inMetaKeys = true;
-                return true;
-            }
-            
-            currX += (IMAGE_SIZE + 2*META_PADDING + 2);
-            if (currX > kbWidth) {
-                currX = META_PADDING;
-                currY -= (IMAGE_SIZE + META_PADDING);
-            }
-        }
-
-        return false;
-    }
-
-    /**
      * Handle input from a pen tap. Parameters describe
      * the type of pen event and the x,y location in the
      * layer at which the event occurred. Important : the
@@ -646,12 +534,21 @@ class VirtualKeyboard {
      * @param y the y coordinate of the event
      */
     public boolean pointerInput(int type, int x, int y) {
+
+
+        currentKey = null;
+        for(int i=0; i < currentMap.size(); i++) {
+            if(((Key)currentMap.elementAt(i)).pointerInput(type,x,y))
+                currentKey = (Key)(currentMap.elementAt(i));
+        }
+
+
         switch (type) {
         case EventConstants.PRESSED:
            
 
             // dismiss the menu layer if the user pressed outside the menu
-            if ( isKeyAtPointerPosition(x, y)) {
+            if ( currentKey != null) {
              // press on valid key
                 traverse(type,Constants.KEYCODE_SELECT);
                 vkl.repaintVK();
@@ -659,7 +556,7 @@ class VirtualKeyboard {
             }
             break;
         case EventConstants.RELEASED:
-                if ( isKeyAtPointerPosition(x, y)) {
+            if ( currentKey != null) {
                     traverse(type,Constants.KEYCODE_SELECT);
                     vkl.repaintVK();
                
@@ -1145,5 +1042,8 @@ class VirtualKeyboard {
     //When input method is changed, process this key to update UI 
     final static int IM_CHANGED_KEY = 99;
 
+    Vector keyboardMaps;
+    Vector currentMap;
+    Key currentKey;
 }
 
