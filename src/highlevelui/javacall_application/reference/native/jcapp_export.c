@@ -51,7 +51,9 @@ int jcapp_get_screen_buffer() {
                                   &color_encoding);                                
      if (JAVACALL_LCD_COLOR_RGB565 != color_encoding) {        
 	    return -2;
-     };                     
+     };
+
+     return 0;
 }
 
 
