@@ -26,7 +26,11 @@
 
 #define INTERNAL_SOUNDBANK      0
 #include "mm_qsound_audio.h"
+
+#if( defined( ENABLE_AMR ) && defined( AMR_USE_QSOUND ) )
 #include "amr/AMRDecoder.h"
+#endif // ENABLE_AMR
+
 #include "javacall_memory.h"
 
 #if( 1 == INTERNAL_SOUNDBANK )
@@ -1127,6 +1131,7 @@ static javacall_result audio_qs_acquire_device(javacall_handle handle)
                 h->wav.channels, h->wav.bits);
         break;
 
+#if( defined( ENABLE_AMR ) && defined( AMR_USE_QSOUND ) )
         case JC_FMT_AMR:
             if( NULL != h->wav.stream )
             {
@@ -1172,6 +1177,7 @@ static javacall_result audio_qs_acquire_device(javacall_handle handle)
                 JC_MM_ASSERT( MQ234_ERROR_NO_ERROR == e );
             }
         break;
+#endif // ENABLE_AMR
 
         default:
             JC_MM_DEBUG_PRINT1(
