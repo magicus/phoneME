@@ -2242,6 +2242,12 @@ public class Display {
             }
         }
 
+        if((current instanceof CanvasLFImpl) && !isKeypadEnabled())
+           addKeyboard = false;
+
+        if((current instanceof FormLFImpl) && !isKeyboardEnabled())
+           addKeyboard = false;
+
         if (addKeyboard) {
             // Piggy back Keyboard command to Canvas or to TextField
             if (current instanceof CanvasLFImpl) {
@@ -2419,16 +2425,20 @@ public class Display {
     }
     
    public boolean OpenKeyboard() {
-        // Check conditions to open soft keyboard.
-        if (!isKeyboardEnabled()) {
-            return false;
-        }
 
         DisplayableLF workDisplayLF = current;
 
         if (workDisplayLF instanceof CanvasLFImpl) {
+            // Check conditions to open soft keypad.
+            if (!isKeypadEnabled()) {
+                return false;
+            }
             keyboardLayer = KeyboardLayer.getInstance((CanvasLFImpl)workDisplayLF);
         } else if (workDisplayLF instanceof FormLFImpl) {
+            // Check conditions to open soft keyboard.
+            if (!isKeyboardEnabled()) {
+                return false;
+            }
             Item item = null;
             synchronized (LCDUILock) {
             item = ((FormLFImpl)workDisplayLF).lGetCurrentItem();
@@ -2466,7 +2476,7 @@ public class Display {
 
     public boolean CloseKeyboard() {
         // Check conditions to close soft keyboard.
-        if (!isKeyboardEnabled()) {
+        if (!isKeyboardEnabled()&&!isKeypadEnabled()) {
             return false;
         }
 
@@ -2479,7 +2489,12 @@ public class Display {
     }
     public boolean isKeyboardEnabled()
     {
-        return VirtualKeyboard.isEnabled();
+        return VirtualKeyboard.isKeyboardEnabled();
+    }
+
+    public boolean isKeypadEnabled()
+    {
+        return VirtualKeyboard.isKeypadEnabled();
     }
 
     public boolean isKeyboardAutoOpen()
@@ -2739,10 +2754,14 @@ public class Display {
         {
             // #ifdef ENABLE_KEYBOARD [
             if (isKeyboardEnabled() && 
-                   ((cmd.getLabel().equals("Keypad")) || 
-                    (cmd.getLabel().equals("Keyboard")))) {
+                    (cmd.getLabel().equals("Keyboard"))) {
                 OpenKeyboard();
-            }       
+            }
+            if (isKeypadEnabled() && 
+                   (cmd.getLabel().equals("Keypad"))) {
+                OpenKeyboard();
+            }
+
             // #endif ]
             Displayable currentDisplayable = null;
 
