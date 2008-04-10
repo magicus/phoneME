@@ -1,0 +1,209 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- 
+Copyright 2006 Sun Microsystems, Inc. All rights reserved.
+
+Sun Microsystems, Inc. has intellectual property rights relating to technology
+embodied in the product that is described in this document. In particular, and
+without limitation, these intellectual property rights may include one or more
+of the U.S. patents listed at http://www.sun.com/patents and one or more
+additional patents or pending patent applications in the U.S. and in other
+countries.
+U.S. Government Rights - Commercial software. Government users are subject to
+the Sun Microsystems, Inc. standard license agreement and applicable provisions
+of the FAR and its supplements.
+
+Use is subject to license terms.
+
+This distribution may include materials developed by third parties.Sun, Sun
+Microsystems, phoneME and Java are trademarks or registered trademarks of Sun
+Microsystems, Inc. in the U.S. and other countries.
+
+
+Copyright 2006 Sun Microsystems, Inc. Tous droits réservés.
+
+Sun Microsystems, Inc. détient les droits de propriété intellectuels relatifs à
+la technologie incorporée dans le produit qui est décrit dans ce document. En
+particulier, et ce sans limitation, ces droits de propriété intellectuelle
+peuvent inclure un ou plus des brevets américains listés à l'adresse
+http://www.sun.com/patents et un ou les brevets supplémentaires ou les
+applications de brevet en attente aux Etats - Unis et dans les autres pays.
+
+L'utilisation est soumise aux termes du contrat de licence.
+
+Cette distribution peut comprendre des composants développés par des tierces
+parties.
+
+Sun, Sun Microsystems, phoneME et Java sont des marques de fabrique ou des
+marques déposées de Sun Microsystems, Inc. aux Etats-Unis et dans d'autres pays.
+-->
+<project xmlns="http://www.netbeans.org/ns/project/1">
+    <type>org.netbeans.modules.ant.freeform</type>
+    <configuration>
+        <general-data xmlns="http://www.netbeans.org/ns/freeform-project/1">
+            <!-- Do not use Project Properties customizer when editing this file manually. -->
+            <name>jump</name>
+            <properties>
+                <property name="ant.script">build/build.xml</property>
+            </properties>
+            <folders>
+                <source-folder>
+                    <label>classes_api</label>
+                    <type>java</type>
+                    <location>src/share/api/classes</location>
+                </source-folder>
+                <source-folder>
+                    <label>classes_impl_contentstore</label>
+                    <type>java</type>
+                    <location>src/share/impl/contentstore/classes</location>
+                </source-folder>
+                <source-folder>
+                    <label>classes_impl_pushregistry</label>
+                    <type>java</type>
+                    <location>src/share/impl/pushregistry/classes</location>
+                </source-folder>
+                <source-folder>
+                    <label>classes_impl_download</label>
+                    <type>java</type>
+                    <location>src/share/impl/download/classes</location>
+                </source-folder>
+                <source-folder>
+                    <label>classes_impl_installer</label>
+                    <type>java</type>
+                    <location>src/share/impl/installer/classes</location>
+                </source-folder>
+                <source-folder>
+                    <label>native_api</label>
+                    <type>java</type>
+                    <location>src/share/api/native</location>
+                </source-folder>
+                <source-folder>
+                    <label>classes_tests</label>
+                    <type>java</type>
+                    <location>src/share/tests/classes</location>
+                </source-folder>
+            </folders>
+            <ide-actions>
+                <action name="build">
+                    <script>${ant.script}</script>
+                    <target>all</target>
+                </action>
+                <action name="javadoc">
+                    <script>${ant.script}</script>
+                    <target>doc</target>
+                </action>
+                <action name="clean">
+                    <script>${ant.script}</script>
+                    <target>clean</target>
+                </action>
+                <action name="rebuild">
+                    <script>${ant.script}</script>
+                    <target>clean</target>
+                    <target>all</target>
+                </action>
+                <action name="test">
+                    <script>${ant.script}</script>
+                    <target>run-unittests</target>
+                </action>
+            </ide-actions>
+            <export>
+                <type>jar</type>
+                <location>dist/lib/jump-api.jar</location>
+                <script>${ant.script}</script>
+                <build-target>all</build-target>
+            </export>
+            <export>
+                <type>jar</type>
+                <location>dist/lib/jump-impl.jar</location>
+                <script>${ant.script}</script>
+                <build-target>all</build-target>
+            </export>
+            <view>
+                <items>
+                    <source-folder style="packages">
+                        <label>classes_api</label>
+                        <location>src/share/api/classes</location>
+                    </source-folder>
+                    <source-folder style="packages">
+                        <label>classes_impl_contentstore</label>
+                        <location>src/share/impl/contentstore/classes</location>
+                    </source-folder>
+                    <source-folder style="packages">
+                        <label>classes_impl_pushregistry</label>
+                        <location>src/share/impl/pushregistry/classes</location>
+                    </source-folder>
+                    <source-folder style="packages">
+                        <label>classes_impl_download</label>
+                        <location>src/share/impl/download/classes</location>
+                    </source-folder>
+                    <source-folder style="packages">
+                        <label>classes_impl_installer</label>
+                        <location>src/share/impl/installer/classes</location>
+                    </source-folder>
+                    <source-folder style="packages">
+                        <label>native_api</label>
+                        <location>src/share/api/native</location>
+                    </source-folder>
+                    <source-folder style="packages">
+                        <label>classes_tests</label>
+                        <location>src/share/tests/classes</location>
+                    </source-folder>
+                    <source-file>
+                        <location>${ant.script}</location>
+                    </source-file>
+                </items>
+                <context-menu>
+                    <ide-action name="build"/>
+                    <ide-action name="javadoc"/>
+                    <ide-action name="clean"/>
+                    <ide-action name="rebuild"/>
+                    <ide-action name="test"/>
+                </context-menu>
+            </view>
+            <subprojects/>
+        </general-data>
+        <java-data xmlns="http://www.netbeans.org/ns/freeform-project-java/2">
+            <compilation-unit>
+                <package-root>src/share/api/classes</package-root>
+                <built-to>dist/lib/jump-api.jar</built-to>
+                <built-to>dist/lib/jump-impl.jar</built-to>
+                <source-level>1.4</source-level>
+            </compilation-unit>
+            <compilation-unit>
+                <package-root>src/share/impl/contentstore/classes</package-root>
+                <built-to>dist/lib/jump-api.jar</built-to>
+                <built-to>dist/lib/jump-impl.jar</built-to>
+                <source-level>1.4</source-level>
+            </compilation-unit>
+            <compilation-unit>
+                <package-root>src/share/impl/pushregistry/classes</package-root>
+                <built-to>dist/lib/jump-api.jar</built-to>
+                <built-to>dist/lib/jump-impl.jar</built-to>
+                <source-level>1.4</source-level>
+            </compilation-unit>
+            <compilation-unit>
+                <package-root>src/share/impl/download/classes</package-root>
+                <built-to>dist/lib/jump-api.jar</built-to>
+                <built-to>dist/lib/jump-impl.jar</built-to>
+                <source-level>1.4</source-level>
+            </compilation-unit>
+            <compilation-unit>
+                <package-root>src/share/impl/installer/classes</package-root>
+                <built-to>dist/lib/jump-api.jar</built-to>
+                <built-to>dist/lib/jump-impl.jar</built-to>
+                <source-level>1.4</source-level>
+            </compilation-unit>
+            <compilation-unit>
+                <package-root>src/share/api/native</package-root>
+                <built-to>dist/lib/jump-api.jar</built-to>
+                <built-to>dist/lib/jump-impl.jar</built-to>
+                <source-level>1.4</source-level>
+            </compilation-unit>
+            <compilation-unit>
+                <package-root>src/share/tests/classes</package-root>
+                <unit-tests/>
+                <classpath mode="compile">dist/lib/jump-api.jar:dist/lib/jump-impl.jar</classpath>
+                <source-level>1.4</source-level>
+            </compilation-unit>
+        </java-data>
+    </configuration>
+</project>
