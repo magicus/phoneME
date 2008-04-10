@@ -23,6 +23,9 @@ class VirtualKeyboard {
     /** indicates whether the virtual keyboard is enabled */
     public static final boolean USE_VIRTUAL_KEYBOARD = true;
 
+    /** indicates whether the virtual keypad is enabled */
+    public static final boolean USE_VIRTUAL_KEYPAD = true;
+
     /** indicates whether the virtual keyboard is opened automatically */
     public static final boolean USE_VIRTUAL_KEYBOARD_OPEN_AUTO = false;
 
@@ -177,8 +180,17 @@ class VirtualKeyboard {
      * @return <code>true</code> if the virtual keyboard is enabled,
      *         <code>false</code> otherwise.
      */
-    static boolean isEnabled(){
+    static boolean isKeyboardEnabled(){
         return USE_VIRTUAL_KEYBOARD;
+    }
+
+    /**
+     * Checks if the virtual keyboard is enabled.
+     * @return <code>true</code> if the virtual keyboard is enabled,
+     *         <code>false</code> otherwise.
+     */
+    static boolean isKeypadEnabled(){
+        return USE_VIRTUAL_KEYPAD;
     }
 
     /**
