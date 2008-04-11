@@ -175,7 +175,6 @@ KNIDECL(com_sun_mmedia_DirectPlayer_nStart) {
     jint handle = KNI_GetParameterAsInt(1);
     KNIPlayerInfo* pKniInfo = (KNIPlayerInfo*)handle;
     javacall_result result;
-    javacall_int32 player_descriptor;
     
     MMP_DEBUG_STR("+nStart\n");
 
@@ -183,13 +182,11 @@ KNIDECL(com_sun_mmedia_DirectPlayer_nStart) {
         KNI_ReturnBoolean(KNI_FALSE);
     }
 
-    player_descriptor = ((pKniInfo->appId & 0xFFFF) << 16) | (pKniInfo->playerId & 0xFFFF);
-    
 LockAudioMutex();            
-    JAVACALL_ASYNC_EXEC(
+    JAVACALL_MM_ASYNC_EXEC(
         result,
         javacall_media_start(pKniInfo->pNativeHandle),
-        pKniInfo->pNativeHandle, player_descriptor, MEDIA_START_SIGNAL, JAVACALL_EVENT_MEDIA_STARTED,
+        pKniInfo->pNativeHandle, pKniInfo->appId, pKniInfo->playerId, JAVACALL_EVENT_MEDIA_STARTED,
         returns_no_data
     );
 UnlockAudioMutex();            
@@ -208,7 +205,6 @@ KNIDECL(com_sun_mmedia_DirectPlayer_nStop) {
     jint handle = KNI_GetParameterAsInt(1);
     KNIPlayerInfo* pKniInfo = (KNIPlayerInfo*)handle;
     javacall_result result;
-    javacall_int32 player_descriptor;
     
     MMP_DEBUG_STR("+nStop\n");
 
@@ -218,13 +214,11 @@ KNIDECL(com_sun_mmedia_DirectPlayer_nStop) {
         KNI_ReturnBoolean(KNI_FALSE);
     }
 
-    player_descriptor = ((pKniInfo->appId & 0xFFFF) << 16) | (pKniInfo->playerId & 0xFFFF);
-    
 LockAudioMutex();            
-    JAVACALL_ASYNC_EXEC(
+    JAVACALL_MM_ASYNC_EXEC(
         result,
         javacall_media_stop(pKniInfo->pNativeHandle),
-        pKniInfo->pNativeHandle, player_descriptor, MEDIA_STOP_SIGNAL, JAVACALL_EVENT_MEDIA_STOPPED,
+        pKniInfo->pNativeHandle, pKniInfo->appId, pKniInfo->playerId, JAVACALL_EVENT_MEDIA_STOPPED,
         returns_no_data
     );
 UnlockAudioMutex();            
@@ -267,19 +261,17 @@ KNIDECL(com_sun_mmedia_DirectPlayer_nSetMediaTime) {
     KNIPlayerInfo* pKniInfo = (KNIPlayerInfo*)handle;
     long ms = (long)KNI_GetParameterAsLong(2);
     javacall_result ret = JAVACALL_FAIL;
-    javacall_int32 player_descriptor;
 
     MMP_DEBUG_STR("+nSetMediaTime\n");
 
     if (pKniInfo && pKniInfo->pNativeHandle) {
-        player_descriptor = ((pKniInfo->appId & 0xFFFF) << 16) | (pKniInfo->playerId & 0xFFFF);
 LockAudioMutex();
 
-        JAVACALL_ASYNC_EXEC(
+        JAVACALL_MM_ASYNC_EXEC(
             ret,
             javacall_media_set_time(pKniInfo->pNativeHandle, &ms),
-            pKniInfo->pNativeHandle, player_descriptor, MEDIA_SET_TIME_SIGNAL, JAVACALL_EVENT_MEDIA_TIME_SET,
-            returns_data({&ms})
+            pKniInfo->pNativeHandle, pKniInfo->appId, pKniInfo->playerId, JAVACALL_EVENT_MEDIA_TIME_SET,
+            returns_data((&ms))
         );
 
 UnlockAudioMutex();            
@@ -302,17 +294,15 @@ KNIDECL(com_sun_mmedia_DirectPlayer_nGetDuration) {
     KNIPlayerInfo* pKniInfo = (KNIPlayerInfo*)handle;
     long ms;
     javacall_result ret = JAVACALL_FAIL;
-    javacall_int32 player_descriptor;
 
     if (pKniInfo && pKniInfo->pNativeHandle) {
-        player_descriptor = ((pKniInfo->appId & 0xFFFF) << 16) | (pKniInfo->playerId & 0xFFFF);
 LockAudioMutex();
 
-        JAVACALL_ASYNC_EXEC(
+        JAVACALL_MM_ASYNC_EXEC(
             ret,
             javacall_media_get_duration(pKniInfo->pNativeHandle, &ms),
-            pKniInfo->pNativeHandle, player_descriptor, MEDIA_GET_DURATION_SIGNAL, JAVACALL_EVENT_MEDIA_DURATION_GOTTEN,
-            returns_data({&ms})
+            pKniInfo->pNativeHandle, pKniInfo->appId, pKniInfo->playerId, JAVACALL_EVENT_MEDIA_DURATION_GOTTEN,
+            returns_data((&ms))
         );
         
 UnlockAudioMutex();            
@@ -334,7 +324,6 @@ KNIDECL(com_sun_mmedia_DirectPlayer_nPause) {
     jint handle = KNI_GetParameterAsInt(1);
     KNIPlayerInfo* pKniInfo = (KNIPlayerInfo*)handle;
     javacall_result result = JAVACALL_FAIL;
-    javacall_int32 player_descriptor;
 
     MMP_DEBUG_STR("+nPause\n");  
 
@@ -344,13 +333,11 @@ KNIDECL(com_sun_mmedia_DirectPlayer_nPause) {
         KNI_ReturnBoolean(KNI_FALSE);
     } else {
 
-        player_descriptor = ((pKniInfo->appId & 0xFFFF) << 16) | (pKniInfo->playerId & 0xFFFF);
-    
 LockAudioMutex();            
-        JAVACALL_ASYNC_EXEC(
+        JAVACALL_MM_ASYNC_EXEC(
             result,
             javacall_media_pause(pKniInfo->pNativeHandle),
-            pKniInfo->pNativeHandle, player_descriptor, MEDIA_PAUSE_SIGNAL, JAVACALL_EVENT_MEDIA_PAUSED,
+            pKniInfo->pNativeHandle, pKniInfo->appId, pKniInfo->playerId, JAVACALL_EVENT_MEDIA_PAUSED,
             returns_no_data
         );
 UnlockAudioMutex();
@@ -366,7 +353,6 @@ KNIDECL(com_sun_mmedia_DirectPlayer_nResume) {
     jint handle = KNI_GetParameterAsInt(1);
     KNIPlayerInfo* pKniInfo = (KNIPlayerInfo*)handle;
     javacall_result result = JAVACALL_FAIL;
-    javacall_int32 player_descriptor;
 
     MMP_DEBUG_STR("+nResume\n");  
 
@@ -375,13 +361,11 @@ KNIDECL(com_sun_mmedia_DirectPlayer_nResume) {
         KNI_ReturnBoolean(KNI_FALSE);
     } else {
 
-        player_descriptor = ((pKniInfo->appId & 0xFFFF) << 16) | (pKniInfo->playerId & 0xFFFF);
-    
 LockAudioMutex();            
-        JAVACALL_ASYNC_EXEC(
+        JAVACALL_MM_ASYNC_EXEC(
             result,
             javacall_media_resume(pKniInfo->pNativeHandle),
-            pKniInfo->pNativeHandle, player_descriptor, MEDIA_RESUME_SIGNAL, JAVACALL_EVENT_MEDIA_RESUMED,
+            pKniInfo->pNativeHandle, pKniInfo->appId, pKniInfo->playerId, JAVACALL_EVENT_MEDIA_RESUMED,
             returns_no_data
         );
 UnlockAudioMutex();
