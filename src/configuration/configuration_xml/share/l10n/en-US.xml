@@ -409,6 +409,12 @@
                 Value="How often should %1 ask for permission to open a sensor connection?"/>
 <localized_string Key="AMS_MGR_SENSOR_SETTINGS_QUE_DONT"
                 Value="Don't open any sensor connections and don't ask"/>
+<localized_string Key="AMS_MGR_CONTACTLESS_SETTINGS"
+                Value="Contactless Connections"/>
+<localized_string Key="AMS_MGR_CONTACTLESS_SETTINGS_QUE"
+                Value="How often should %1 ask for permission to open a contactless connection?"/>
+<localized_string Key="AMS_MGR_CONTACTLESS_SETTINGS_QUE_DONT"
+                Value="Don't open any contactless connections and don't ask"/>
 <localized_string Key="AMS_MGR_UPDATE_IS_RUNNING"
                 Value="You started an update for the application %1.  Please cancel or finish the update before you change its settings, get info or launch the application"/>
 <localized_string Key="AMS_MGR_INSTALLER_IS_RUNNING"
@@ -643,6 +649,10 @@
                 Value="Is it OK to open a sensor connection?"/>
 <localized_string Key="PERMISSION_SENSOR_QUE"
                 Value="%1 wants to open a sensor connection.&#010;&#010;Is it OK to open a sensor connection?"/>
+<localized_string Key="PERMISSION_CONTACTLESS_TITLE"
+                Value="Is it OK to open a contactless connection?"/>
+<localized_string Key="PERMISSION_CONTACTLESS_QUE"
+                Value="%1 wants to open a contactless connection.&#010;&#010;Is it OK to open a contactless connection?"/>
 <localized_string Key="AMS_PERMISSION_PAYMENT_DELETION_QUESTION"
                 Value="ATTENTION!&#010;There are pending payment transactions that will be deleted:&#010;"/>
 <localized_string Key="AMS_SELECTOR_SEL_TO_LAUNCH"

@@ -200,6 +200,19 @@ public final class Permissions {
     /** javax.microedition.io.Connector.ProtectedSensor permission ID. */
     public static final int PROTECTED_SENSOR = 54;
 
+    /** javax.microedition.contactless.DiscoveryManager ID. */
+    public static final int CONTACTLESS_DISCOVERY = 55;
+    /** javax.microedition.contactless.ndef.NDEFTagConnection.write ID. */
+    public static final int CONTACTLESS_NDEF_WRITE = 56;
+    /** javax.microedition.io.Connector.ndef ID. */
+    public static final int CONTACTLESS_NDEF = 57;
+    /** javax.microedition.io.Connector.rf ID. */
+    public static final int CONTACTLESS_RF = 58;
+    /** javax.microedition.io.Connector.sc ID. */
+    public static final int CONTACTLESS_SC = 59;
+    /** javax.microedition.io.Connector.vtag ID. */
+    public static final int CONTACTLESS_VTAG = 60;
+
     /** Never allow the permission. */
     public static final byte NEVER = 0;
     /** Allow an permission with out asking the user. */
@@ -363,6 +376,16 @@ public final class Permissions {
         ResourceConstants.PERMISSION_SENSOR_TITLE,
         ResourceConstants.PERMISSION_SENSOR_QUE, 0,
         BLANKET, ONESHOT, ONESHOT, ONESHOT);
+
+    /** Sensor permission group. */
+    static final PermissionGroup CONTACTLESS_GROUP = new PermissionGroup(
+        ResourceConstants.AMS_MGR_CONTACTLESS_SETTINGS,
+        ResourceConstants.AMS_MGR_CONTACTLESS_SETTINGS_QUE,
+        ResourceConstants.AMS_MGR_CONTACTLESS_SETTINGS_QUE_DONT,
+        ResourceConstants.PERMISSION_CONTACTLESS_TITLE,
+        ResourceConstants.PERMISSION_CONTACTLESS_QUE, 0,
+        BLANKET, ONESHOT, ONESHOT, ONESHOT);
+
 
     /** Permission specifications. */
     static final PermissionSpec[] permissionSpecs =
@@ -574,7 +597,7 @@ public final class Permissions {
      * @return array of permission groups
      */
     public static PermissionGroup[] getSettingGroups() {
-        PermissionGroup[] groups = new PermissionGroup[13];
+        PermissionGroup[] groups = new PermissionGroup[14];
 
         groups[0] = NET_ACCESS_GROUP;
         groups[1] = SEND_MESSAGE_GROUP;
@@ -589,6 +612,7 @@ public final class Permissions {
         groups[10] = AUTHENTICATION_GROUP;
         groups[11] = CALL_CONTROL_GROUP;
         groups[12] = SENSOR_GROUP;
+        groups[13] = CONTACTLESS_GROUP;
 
         return groups;
     }
