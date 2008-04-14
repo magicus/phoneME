@@ -1007,10 +1007,11 @@ class AppManagerUI extends Form
     void notifySuiteInstalled(int suiteId) {
         updateContent();
         int size = mciVector.size();
-        for (int i=0; i<size; i++) {
+        for (int i = 0; i < size; i++) {
             MidletCustomItem mci = (MidletCustomItem)mciVector.elementAt(i);
             if (mci.msi.suiteId == suiteId) {
                 display.setCurrentItem(mci);
+                break;
             }
         }        
         
@@ -1023,7 +1024,7 @@ class AppManagerUI extends Form
      */         
     void notifySuiteRemoved(int suiteId) {
         int size = mciVector.size();
-        for (int i=0; i<size; i++) {
+        for (int i = 0; i < size; i++) {
             MidletCustomItem mci = (MidletCustomItem)mciVector.elementAt(i);
             RunningMIDletSuiteInfo msi = mci.msi;
             if (msi.suiteId == suiteId) {
