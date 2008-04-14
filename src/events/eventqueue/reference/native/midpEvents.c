@@ -425,8 +425,8 @@ StoreMIDPEventInVmThread(MidpEvent event, int isolateId) {
  * handleFatalError(Ljava/lang/Throwable;)V
  */
 KNIEXPORT KNI_RETURNTYPE_VOID
-Java_com_sun_midp_events_EventQueue_handleFatalError(void) {
-    handleFatalError();
+KNIDECL(com_sun_midp_events_EventQueue_handleFatalError) {
+    handleFatalError(KNIPASSARGS 0);
 }
 
 /**
@@ -434,10 +434,11 @@ Java_com_sun_midp_events_EventQueue_handleFatalError(void) {
  * Must be called from a KNI method
  *
  */
-void handleFatalError(void) {
+void handleFatalError(KNIDECLARGS int dummy) {
     KNI_StartHandles(1);
     KNI_DeclareHandle(throwableObj);
     KNI_GetParameterAsObject(1, throwableObj);
+    (void)dummy; /* avoid the warning */
 
     /* IMPL NOTE: Figure out what throwable class this is and log the error? */
     REPORT_CRIT1(LC_CORE, "handleFatalError: uncaught exception in "
@@ -473,7 +474,7 @@ void handleFatalError(void) {
  * @return -1 for no event read or the number of events still pending after
  * this event
  */
-static int readNativeEventCommon(int isolateId) {
+static int readNativeEventCommon(KNIDECLARGS int isolateId) {
     MidpEvent event;
     int eventsPending;
 
@@ -529,13 +530,13 @@ static int readNativeEventCommon(int isolateId) {
  * @return number of events waiting in the native queue
  */
 KNIEXPORT KNI_RETURNTYPE_INT
-Java_com_sun_midp_events_NativeEventMonitor_waitForNativeEvent(void) {
+KNIDECL(com_sun_midp_events_NativeEventMonitor_waitForNativeEvent) {
     jint isolateId;
     int eventsPending;
     EventQueue* pEventQueue;
 
     isolateId = getCurrentIsolateId();
-    eventsPending = readNativeEventCommon(isolateId);
+    eventsPending = readNativeEventCommon(KNIPASSARGS isolateId);
     if (eventsPending != -1) {
         /* event was read, and more may be pending */
         KNI_ReturnInt(eventsPending);
@@ -576,12 +577,12 @@ Java_com_sun_midp_events_NativeEventMonitor_waitForNativeEvent(void) {
  * @return <tt>true</tt> if an event was read, otherwise <tt>false</tt>
  */
 KNIEXPORT KNI_RETURNTYPE_BOOLEAN
-Java_com_sun_midp_events_NativeEventMonitor_readNativeEvent(void) {
+KNIDECL(com_sun_midp_events_NativeEventMonitor_readNativeEvent) {
     jint isolateId;
 
     isolateId = getCurrentIsolateId();
 
-    KNI_ReturnBoolean(readNativeEventCommon(isolateId) != -1);
+    KNI_ReturnBoolean(readNativeEventCommon(KNIPASSARGS isolateId) != -1);
 }
 
 /**
@@ -591,7 +592,7 @@ Java_com_sun_midp_events_NativeEventMonitor_readNativeEvent(void) {
  * @param isolateId ID of the target Isolate
  */
 KNIEXPORT KNI_RETURNTYPE_VOID
-Java_com_sun_midp_events_EventQueue_sendNativeEventToIsolate(void) {
+KNIDECL(com_sun_midp_events_EventQueue_sendNativeEventToIsolate) {
     MidpEvent event;
     jint isolateId;
     int noExceptions = 0;
@@ -650,7 +651,7 @@ Java_com_sun_midp_events_EventQueue_sendNativeEventToIsolate(void) {
  *
  */
 KNIEXPORT KNI_RETURNTYPE_VOID
-Java_com_sun_midp_events_EventQueue_sendShutdownEvent(void) {
+KNIDECL(com_sun_midp_events_EventQueue_sendShutdownEvent) {
     MidpEvent event;
     jint isolateId;
 
@@ -672,7 +673,7 @@ Java_com_sun_midp_events_EventQueue_sendShutdownEvent(void) {
  *
  */
 KNIEXPORT KNI_RETURNTYPE_VOID
-Java_com_sun_midp_events_EventQueue_resetNativeEventQueue(void) {
+KNIDECL(com_sun_midp_events_EventQueue_resetNativeEventQueue) {
     resetEventQueue(getCurrentIsolateId());
 }
 
@@ -683,7 +684,7 @@ Java_com_sun_midp_events_EventQueue_resetNativeEventQueue(void) {
  * @return Native event queue handle
  */
 KNIEXPORT KNI_RETURNTYPE_INT
-Java_com_sun_midp_events_EventQueue_getNativeEventQueueHandle(void) {
+KNIDECL(com_sun_midp_events_EventQueue_getNativeEventQueueHandle) {
     /* For now use Isolate IDs for event queue handles. */
     return getCurrentIsolateId();
 }
@@ -693,7 +694,7 @@ Java_com_sun_midp_events_EventQueue_getNativeEventQueueHandle(void) {
  * the Isolate ends.
  */
 KNIEXPORT KNI_RETURNTYPE_VOID
-Java_com_sun_midp_events_EventQueue_finalize(void) {
+KNIDECL(com_sun_midp_events_EventQueue_finalize) {
    jint handle;
 
    KNI_StartHandles(1);

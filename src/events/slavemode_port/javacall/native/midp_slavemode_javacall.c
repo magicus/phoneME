@@ -42,6 +42,17 @@
 
 #if ENABLE_JSR_135
 #include <javacall_multimedia.h>
+#include <javanotify_multimedia.h>
+/**
+ * Constructs the descriptor from appId (10 bit), playerId (16 bit) and
+ * event code (6 bit)
+ */
+/*
+#define MAKE_PLAYER_DESCRIPTOR(appId_, playerId_, event_) \
+    (((((event_)-JAVACALL_EVENT_MEDIA_JAVA_EVENTS_MARKER) & 0x3F) << 26) | \
+        (((appId_) & 0x3FF) << 16) | ((playerId_) & 0xFFFF))
+*/
+#include <KNICommon.h>
 #endif
 
 #include <javacall_lifecycle.h>
@@ -120,7 +131,7 @@ eventUnblockJavaThread(
             * again without being blocked first.
             */
             pThreadReentryData->waitingFor = -1;
-            javacall_print("eventUnblockJavaThread without signal!\n");
+            REPORT_ERROR(LC_CORE,"eventUnblockJavaThread without signal!\n");
             midp_thread_unblock(blocked_threads[i].thread_id);
             return 1;
         }
@@ -270,31 +281,31 @@ void checkForSystemSignal(MidpReentryData* pNewSignal,
     case MIDP_JC_EVENT_MULTIMEDIA:
 #if ENABLE_JSR_135
 
-        if( JAVACALL_EVENT_MEDIA_SNAPSHOT_FINISHED == event->data.multimediaEvent.mediaType ) {
-            pNewSignal->waitingFor = MEDIA_SNAPSHOT_SIGNAL;
-//            pNewSignal->descriptor = (((event->data.multimediaEvent.isolateId & 0xFFFF) << 16) 
-//                                     | (event->data.multimediaEvent.playerId & 0xFFFF));
+        pNewSignal->waitingFor = MEDIA_EVENT_SIGNAL;
+        if (event->data.multimediaEvent.mediaType > 0 &&
+                event->data.multimediaEvent.mediaType < 
+                        JAVACALL_EVENT_MEDIA_JAVA_EVENTS_MARKER) {
 
-            REPORT_CALL_TRACE1(LC_NONE, "[media event] JAVACALL_EVENT_MEDIA_SNAPSHOT_FINISHED %d\n",
-                               pNewSignal->descriptor);
+            pNewMidpEvent->type         = MMAPI_EVENT;
+            pNewMidpEvent->MM_PLAYER_ID = event->data.multimediaEvent.playerId;
+            pNewMidpEvent->MM_DATA      = event->data.multimediaEvent.data;
+            pNewMidpEvent->MM_ISOLATE   = event->data.multimediaEvent.appId;
+            pNewMidpEvent->MM_EVT_TYPE  = event->data.multimediaEvent.mediaType;
+            pNewMidpEvent->MM_EVT_STATUS= event->data.multimediaEvent.status;
+    
+            /* VOLUME_CHANGED event must be sent to all players.             */
+            /* MM_ISOLATE = -1 causes bradcast by StoreMIDPEventInVmThread() */
+            if( JAVACALL_EVENT_MEDIA_VOLUME_CHANGED == event->data.multimediaEvent.mediaType ) {
+                pNewMidpEvent->MM_ISOLATE = -1;
+            }
         } else {
-            pNewSignal->waitingFor = MEDIA_EVENT_SIGNAL;
+            pNewSignal->status     = event->data.multimediaEvent.status;
+            pNewSignal->descriptor = 
+                        MAKE_PLAYER_DESCRIPTOR(event->data.multimediaEvent.appId,
+                                               event->data.multimediaEvent.playerId,
+                                               event->data.multimediaEvent.mediaType);
+            pNewSignal->pResult    = event->data.multimediaEvent.data;
         }
-
-        pNewSignal->status = JAVACALL_OK;
-
-        pNewMidpEvent->type         = MMAPI_EVENT;
-        pNewMidpEvent->MM_PLAYER_ID = event->data.multimediaEvent.playerId;
-        pNewMidpEvent->MM_DATA      = event->data.multimediaEvent.data;
-        pNewMidpEvent->MM_ISOLATE   = event->data.multimediaEvent.appId;
-        pNewMidpEvent->MM_EVT_TYPE  = event->data.multimediaEvent.mediaType;
-        pNewMidpEvent->MM_EVT_STATUS= event->data.multimediaEvent.status;
-
-        /* VOLUME_CHANGED event must be sent to all players.             */
-        /* MM_ISOLATE = -1 causes bradcast by StoreMIDPEventInVmThread() */
-        if( JAVACALL_EVENT_MEDIA_VOLUME_CHANGED == event->data.multimediaEvent.mediaType )
-            pNewMidpEvent->MM_ISOLATE = -1; 
-
         REPORT_CALL_TRACE4(LC_NONE, "[media event] External event recevied %d %d %d %d\n",
                 pNewMidpEvent->type, 
                 event->data.multimediaEvent.appId, 
@@ -495,14 +506,14 @@ void midp_slave_handle_events(JVMSPI_BlockedThreadInfo *blocked_threads, int blo
                     blocked_threads_count, HOST_NAME_LOOKUP_SIGNAL, 0, PCSL_NET_IOERROR);
             if(isMidpNetworkConnected()) {
                 unsetMidpNetworkConnected();
-                REPORT_INFO(LC_PROTOCOL, "midp_check_events: network down from server side");
+                REPORT_INFO(LC_PROTOCOL, "midp_slave_handle_events: network down from server side");
             }
         } else if(MIDP_NETWORK_DOWN_REQUEST == newSignal.status) {
             if(isMidpNetworkConnected()) {
                 if (0 == midpCheckSocketInUse()) {
                     pcsl_network_finalize_start();
                     unsetMidpNetworkConnected();
-                    REPORT_INFO(LC_PROTOCOL, "midp_check_events: network closed by MIDP_NETWORK_DOWN_REQUEST");
+                    REPORT_INFO(LC_PROTOCOL, "midp_slave_handle_events: network closed by MIDP_NETWORK_DOWN_REQUEST");
                 }
             }
         }
@@ -518,15 +529,25 @@ void midp_slave_handle_events(JVMSPI_BlockedThreadInfo *blocked_threads, int blo
         break;
 #if (ENABLE_JSR_135 || ENABLE_JSR_234)
     case MEDIA_EVENT_SIGNAL:
-        StoreMIDPEventInVmThread(newMidpEvent, newMidpEvent.MM_ISOLATE);
-        eventUnblockJavaThread(blocked_threads, blocked_threads_count,
-                MEDIA_EVENT_SIGNAL, newSignal.descriptor, 
-                newSignal.status);
-        break;
-    case MEDIA_SNAPSHOT_SIGNAL:
-        eventUnblockJavaThread(blocked_threads, blocked_threads_count,
-                MEDIA_SNAPSHOT_SIGNAL, newSignal.descriptor, 
-                newSignal.status);
+        if (newMidpEvent.type == MMAPI_EVENT) {
+            StoreMIDPEventInVmThread(newMidpEvent, newMidpEvent.MM_ISOLATE);
+        } else {
+            int i;
+            
+            for (i = 0; i < blocked_threads_count; i++) {
+                MidpReentryData *pThreadReentryData =
+                    (MidpReentryData*)(blocked_threads[i].reentry_data);
+        
+                if (pThreadReentryData != NULL 
+                        && pThreadReentryData->descriptor == newSignal.descriptor
+                        && pThreadReentryData->waitingFor == newSignal.waitingFor) {
+                    pThreadReentryData->status = newSignal.status;
+                    pThreadReentryData->pResult = newSignal.pResult;
+                    midp_thread_unblock(blocked_threads[i].thread_id);
+                    break;
+                }
+            }
+        }
         break;
 #endif
 #ifdef ENABLE_JSR_179
