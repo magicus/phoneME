@@ -28,8 +28,11 @@
 #define _PCSL_FILE_H_
 
 #include <pcsl_string.h>
+
+#ifndef WINCE
 #include <fcntl.h>
 #include <stdio.h>
+#endif
 
 #ifdef __cplusplus
 extern "C" {
@@ -89,6 +92,15 @@ extern "C" {
  *  File system Open control flags, to be passed to pcsl_file_open() 
  */
 
+#ifdef WINCE
+#define PCSL_FILE_O_RDONLY             0x00
+#define PCSL_FILE_O_WRONLY             0x01
+#define PCSL_FILE_O_RDWR               0x02
+#define PCSL_FILE_O_CREAT              0x40
+#define PCSL_FILE_O_TRUNC              0x200 
+#define PCSL_FILE_O_APPEND             0x400
+#else
+
 /**
  * Open the file for reading only.
  */
@@ -129,10 +141,17 @@ extern "C" {
  */
 
 #define PCSL_FILE_O_APPEND             O_APPEND
+#endif /* WINCE */
 
 /**  
  * Below definitions are for pcsl_file_seek's position parameter 
  */
+
+#ifdef WINCE
+#define PCSL_FILE_SEEK_SET  0
+#define	PCSL_FILE_SEEK_CUR  1
+#define PCSL_FILE_SEEK_END  2
+#else
 
 /**
  *  The offset is set to the specified number of offset bytes. 
@@ -149,6 +168,7 @@ extern "C" {
  */
 #define PCSL_FILE_SEEK_END  SEEK_END
 
+#endif /* WINCE */
 
 /**
  * Initializes the File System. 
