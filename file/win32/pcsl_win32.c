@@ -98,6 +98,7 @@ int pcsl_file_finalize() {
 int pcsl_file_open(const pcsl_string * fileName, int flags, void **handle) {
 
     int fd;
+    int oFlag = O_BINARY;
     int creationMode = 0;
     const jchar * pszOsFilename = pcsl_string_get_utf16_data(fileName);
 
@@ -105,16 +106,34 @@ int pcsl_file_open(const pcsl_string * fileName, int flags, void **handle) {
 	return -1;
     }
 
+    /* compute open control flag */
+    if ((flags & PCSL_FILE_O_WRONLY) == PCSL_FILE_O_WRONLY) {
+        oFlag |= O_WRONLY;
+    } 
+
+    if ((flags & PCSL_FILE_O_RDWR) == PCSL_FILE_O_RDWR) {
+        oFlag |= O_RDWR;
+    } 
+
     if ((flags & PCSL_FILE_O_CREAT) == PCSL_FILE_O_CREAT) {
+        oFlag |= O_CREAT;
         creationMode = _S_IREAD | _S_IWRITE;
     } 
+
+    if ((flags & PCSL_FILE_O_TRUNC) == PCSL_FILE_O_TRUNC) {
+        oFlag |= O_TRUNC;
+    } 
+
+    if ((flags & PCSL_FILE_O_APPEND) == PCSL_FILE_O_APPEND) {
+        oFlag |= O_APPEND;
+    }
 
     /*
      * Unlike Unix systems, Win32 will convert CR/LF pairs to LF when
      * reading and in reverse when writing, unless the file is opened
      * in binary mode.
      */
-    fd = _wopen(pszOsFilename, flags | O_BINARY, creationMode);
+    fd = _wopen(pszOsFilename, oFlag | O_BINARY, creationMode);
 
     pcsl_string_release_utf16_data(pszOsFilename, fileName);
 
