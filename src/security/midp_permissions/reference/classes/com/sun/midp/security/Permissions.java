@@ -377,7 +377,7 @@ public final class Permissions {
         ResourceConstants.PERMISSION_SENSOR_QUE, 0,
         BLANKET, ONESHOT, ONESHOT, ONESHOT);
 
-    /** Sensor permission group. */
+    /** Contactless permission group. */
     static final PermissionGroup CONTACTLESS_GROUP = new PermissionGroup(
         ResourceConstants.AMS_MGR_CONTACTLESS_SETTINGS,
         ResourceConstants.AMS_MGR_CONTACTLESS_SETTINGS_QUE,
