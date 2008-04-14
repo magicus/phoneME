@@ -45,9 +45,9 @@
 #ifdef CVM_DEBUG_ASSERTS
 .file "ccmglue_cpu.S"
 ccmglue_cpu_filename:
-.string "ccmglue_cpu.S"
+.asciz "ccmglue_cpu.S"
 CVMCCMruntimeThrowNullPointerExceptionGlue_assert_expression:
-.string "%eax == (%esp)"
+.asciz "%eax == (%esp)"
 #endif
 
 /* CVMCCMruntimeThrowDivideByZeroGlue */
@@ -795,7 +795,7 @@ SET_SIZE( CVMCCMruntimeGCRendezvousGlue )
 /* call CVMCCMruntimeSimpleSyncUnlock */
 #if defined(CVMJIT_SIMPLE_SYNC_METHODS) && \
     (CVM_FASTLOCK_TYPE == CVM_FASTLOCK_ATOMICOPS)
-ENTRY ( CVMCCMruntimeSimpleSyncUnlockGlue )
+ENTRY(CVMCCMruntimeSimpleSyncUnlockGlue)
 	CALL_HELPER_2(A3 /* scratch */, EE_AS_ARG, AS_ARG(A2), \
 	    SYM_NAME(CVMCCMruntimeSimpleSyncUnlock))
 SET_SIZE( CVMCCMruntimeSimpleSyncUnlockGlue )

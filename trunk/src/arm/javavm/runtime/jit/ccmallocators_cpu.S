@@ -52,7 +52,7 @@
  * is in a2 rather than a1. This is so we don't need to move it to a1
  * when it gets passed to CVMgcAllocNewInstance.
  */
-	ENTRY ( CVMCCMruntimeNewGlue )
+	ENTRY(CVMCCMruntimeNewGlue)
 ENTRY1 ( CVMCCMruntimeNewGlue )
 
 	/* Arguments:	  */
@@ -247,7 +247,7 @@ LABEL(RETURNOBJ)
 /*
  * Entry point for allocating an array of a basic type.
  */
-	ENTRY ( CVMCCMruntimeNewArrayGlue )
+	ENTRY(CVMCCMruntimeNewArrayGlue)
 ENTRY1 ( CVMCCMruntimeNewArrayGlue )
 
 	/* Arguments:	 
@@ -496,7 +496,7 @@ LABEL(ARR_RETURNOBJ)
 /*
  * Entry point for allocating an array of the specified arrayCb.
  */
-	ENTRY ( CVMCCMruntimeANewArrayGlue )
+	ENTRY(CVMCCMruntimeANewArrayGlue)
 ENTRY1 ( CVMCCMruntimeANewArrayGlue )
 
 	/* Arguments:
@@ -729,7 +729,7 @@ LABEL(OBJARR_RETURNOBJ)
  * Allocate a multidimensional array. This is rare, so we just call 
  * the C helper.
  */
-	ENTRY ( CVMCCMruntimeMultiANewArrayGlue )
+	ENTRY(CVMCCMruntimeMultiANewArrayGlue)
 ENTRY1 ( CVMCCMruntimeMultiANewArrayGlue )
 
 	/* Arguments:	 

@@ -269,7 +269,7 @@ Before CALL_HELPER
         addl    $( (nargs + 2) * 4), %esp;
 
 
-#define CVMJITX86_CMPXCHG(reg32, mem32) lock cmpxchgl reg32, mem32
-#define CVMJITX86_CMPXCHG8B(mem64) lock cmpxchg8b mem64
+#define CVMJITX86_CMPXCHG(reg32, mem32) lock ; cmpxchgl reg32, mem32
+#define CVMJITX86_CMPXCHG8B(mem64) lock ; cmpxchg8b mem64
 
 #endif /* _INCLUDED_JITASMMACROS_CPU_H */

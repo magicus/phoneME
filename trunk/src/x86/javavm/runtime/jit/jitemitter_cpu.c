@@ -2220,9 +2220,9 @@ void CVMX86call_mem(CVMJITCompilationContext* con, CVMX86Address adr) {
 }
 
 void CVMX86jmp_imm8(CVMJITCompilationContext* con, CVMX86address dst) {
-   CVMUint32 offset = (int)dst - (int)CVMJITcbufGetPhysicalPC(con) - 2 /* size of jmp_imm8 */;
+   CVMInt32 offset = (int)dst - (int)CVMJITcbufGetPhysicalPC(con) - 2 /* size of jmp_imm8 */;
    CVMassert(dst != NULL /* jcc most probably wrong */);
-   CVMassert(-128 <= offset < 128 /* not a signed 8 bit value */);
+   CVMassert(-128 <= offset && offset < 128 /* not a signed 8 bit value */);
    CVMtraceJITCodegenExec({
       printPC(con);
       CVMconsolePrintf("	jmp_imm8	$0x%x", dst);
@@ -2294,10 +2294,10 @@ void CVMX86jmp_mem(CVMJITCompilationContext* con, CVMX86Address adr) {
 
 
 void CVMX86jcc_imm8(CVMJITCompilationContext* con, CVMX86Condition cc, CVMX86address dst) {
-    CVMUint32 offset = (int)dst - (int)con->curPhysicalPC - 2 /* size of jcc_imm8 */;
+    CVMInt32 offset = (int)dst - (int)con->curPhysicalPC - 2 /* size of jcc_imm8 */;
     CVMassert((0 <= cc) && (cc < 16) /* illegal cc */);
     CVMassert(dst != NULL /* jcc most probably wrong */);
-    CVMassert(-128 <= offset < 128 /* not a signed 8 bit value */);
+    CVMassert(-128 <= offset && offset < 128 /* not a signed 8 bit value */);
     CVMtraceJITCodegenExec({
 	char ccBuf[30];
 	printPC(con);
