@@ -188,7 +188,6 @@ KNIDECL(com_sun_mmedia_DirectVideo_nSnapShot) {
 KNIEXPORT KNI_RETURNTYPE_BOOLEAN
 KNIDECL(com_sun_mmedia_DirectVideo_nSetVisible) {
 
-    static jboolean oldVisible = KNI_FALSE;
     jint handle = KNI_GetParameterAsInt(1);
     jboolean visible = KNI_GetParameterAsBoolean(2);
     KNIPlayerInfo* pKniInfo = (KNIPlayerInfo*)handle;
@@ -197,15 +196,10 @@ KNIDECL(com_sun_mmedia_DirectVideo_nSetVisible) {
 
     MMP_DEBUG_STR1("[kni_video] +nSetVisible %d\n", visible);
 
-    if (oldVisible != visible) {
-        if (pKniInfo && pKniInfo->pNativeHandle &&
-            JAVACALL_OK == javacall_media_set_video_visible(pKniInfo->pNativeHandle, 
-                               (KNI_TRUE == visible ? JAVACALL_TRUE : JAVACALL_FALSE))) 
-        {
-            oldVisible = visible;
-            returnValue = KNI_TRUE;
-        }
-    } else {
+    if (pKniInfo && pKniInfo->pNativeHandle &&
+        JAVACALL_OK == javacall_media_set_video_visible(pKniInfo->pNativeHandle, 
+                           (KNI_TRUE == visible ? JAVACALL_TRUE : JAVACALL_FALSE))) 
+    {
         returnValue = KNI_TRUE;
     }
 

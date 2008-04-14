@@ -112,14 +112,24 @@ KNIDECL(com_sun_mmedia_DirectPlayer_nAcquireDevice) {
     jint handle = KNI_GetParameterAsInt(1);
     KNIPlayerInfo* pKniInfo = (KNIPlayerInfo*)handle;
     jboolean returnValue = KNI_FALSE;
+    javacall_result result = JAVACALL_FAIL;
 
     MMP_DEBUG_STR("+nAcquireDevice\n");
 
 LockAudioMutex();
-    if (pKniInfo && JAVACALL_OK == javacall_media_acquire_device(pKniInfo->pNativeHandle)) {
-        pKniInfo->isAcquire = JAVACALL_TRUE;
-        returnValue = KNI_TRUE;
+    if (pKniInfo && pKniInfo->pNativeHandle) {
+        JAVACALL_MM_ASYNC_EXEC(
+            result,
+            javacall_media_acquire_device(pKniInfo->pNativeHandle),
+            pKniInfo->pNativeHandle, pKniInfo->appId, pKniInfo->playerId, JAVACALL_EVENT_MEDIA_DEVICE_ACQUIRED,
+            returns_no_data
+        );
+        if (result == JAVACALL_OK) {
+            pKniInfo->isAcquire = JAVACALL_TRUE;
+            returnValue = KNI_TRUE;
+        }
     }
+    
 UnlockAudioMutex();
     KNI_ReturnBoolean(returnValue);
 }
