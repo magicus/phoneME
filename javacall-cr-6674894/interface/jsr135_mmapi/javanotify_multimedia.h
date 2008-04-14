@@ -83,7 +83,76 @@ typedef enum {
     /** Posted when the blocked snapshot finished */
     JAVACALL_EVENT_MEDIA_SNAPSHOT_FINISHED,
     /** Posted when an error had occurred. */
-    JAVACALL_EVENT_MEDIA_ERROR
+    JAVACALL_EVENT_MEDIA_ERROR,
+    /** 
+     * All events that should be sent to Java listeners must be defined
+     * above this marker.
+     */
+    JAVACALL_EVENT_MEDIA_JAVA_EVENTS_MARKER,
+
+    /** Posted when the blocked start finished */
+    JAVACALL_EVENT_MEDIA_STARTED,
+    /** Posted when the blocked stop finished */
+    JAVACALL_EVENT_MEDIA_STOPPED,    
+    /** Posted when the blocked pause finished */
+    JAVACALL_EVENT_MEDIA_PAUSED,    
+    /** Posted when the blocked resume finished */
+    JAVACALL_EVENT_MEDIA_RESUMED,        
+    /** Posted when the blocked set media time  finished */
+    JAVACALL_EVENT_MEDIA_TIME_SET,
+    /** Posted when the blocked get duration finished */
+    JAVACALL_EVENT_MEDIA_DURATION_GOTTEN,
+    /** Posted when the blocked seek to frame finished */
+    JAVACALL_EVENT_MEDIA_FRAME_SOUGHT,  
+    /** Posted when the blocked skip frames finished */
+    JAVACALL_EVENT_MEDIA_FRAMES_SKIPPED,
+    /** Posted when the blocked get metadata key finished */
+    JAVACALL_EVENT_MEDIA_METADATA_KEY_GOTTEN,  
+    /** Posted when the blocked get metadata finished */
+    JAVACALL_EVENT_MEDIA_METADATA_GOTTEN,
+    /** Posted when the blocked get pitch finished */
+    JAVACALL_EVENT_MEDIA_PITCH_GOTTEN,
+    /** Posted when the blocked set pitch finished */
+    JAVACALL_EVENT_MEDIA_PITCH_SET,  
+    /** Posted when the blocked get rate finished */
+    JAVACALL_EVENT_MEDIA_RATE_GOTTEN,          
+    /** Posted when the blocked set rate finished */
+    JAVACALL_EVENT_MEDIA_RATE_SET,   
+    /** Posted when the blocked start recording finished */
+    JAVACALL_EVENT_MEDIA_RECORD_STARTED,
+    /** Posted when the blocked stop recording finished */
+    JAVACALL_EVENT_MEDIA_RECORD_STOPPED,
+    /** Posted when the blocked pause recording finished */
+    JAVACALL_EVENT_MEDIA_RECORD_PAUSED,       
+    /** Posted when the blocked reset recording finished */
+    JAVACALL_EVENT_MEDIA_RECORD_RESET,       
+    /** Posted when the blocked commit recording finished */
+    JAVACALL_EVENT_MEDIA_RECORD_COMMITTED,           
+    /** Posted when the blocked get tempo finished */
+    JAVACALL_EVENT_MEDIA_TEMPO_GOTTEN,
+    /** Posted when the blocked set tempo finished */
+    JAVACALL_EVENT_MEDIA_TEMPO_SET,
+    /** Posted when the blocked get video size finished */
+    JAVACALL_EVENT_MEDIA_VIDEO_SIZE_GOTTEN,        
+    /** Posted when the blocked set video location finished */
+    JAVACALL_EVENT_MEDIA_VIDEO_LOCATION_SET,        
+    /** Posted when the blocked set video visibility finished */
+    JAVACALL_EVENT_MEDIA_VIDEO_VISIBILITY_SET,
+    /** Posted when finished a short MIDI event */
+    JAVACALL_EVENT_MEDIA_SHORT_MIDI_EVENT_FINISHED,
+    /** Posted when finished a long MIDI event */
+    JAVACALL_EVENT_MEDIA_LONG_MIDI_EVENT_FINISHED,
+    
+    /** Posted when preset stop time reached */
+    JAVACALL_EVENT_MEDIA_STOP_TIME_REACHED,
+    /** Posted when native video player finished rendering a frame */
+    JAVACALL_EVENT_MEDIA_FRAME_RENDERED,
+
+    /** Posted when the blocked do buffering finished */
+    JAVACALL_EVENT_MEDIA_BUFFERING_UNBLOCKED,
+    /** Posted when the blocked acquire device finished */
+    JAVACALL_EVENT_MEDIA_DEVICE_ACQUIRED,
+    
 } javacall_media_notification_type;
 
 /** 
