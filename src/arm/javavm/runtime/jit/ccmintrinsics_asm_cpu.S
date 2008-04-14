@@ -63,7 +63,7 @@
 /*
  * Entry point for intrinsic implementation of Object.hashCode().
  */
-	ENTRY ( CVMCCMARMintrinsic_java_lang_System_identityHashCodeGlue )
+	ENTRY(CVMCCMARMintrinsic_java_lang_System_identityHashCodeGlue)
 ENTRY1 ( CVMCCMARMintrinsic_java_lang_System_identityHashCodeGlue )
         /* Get the object from the argument: */
         ldr     OBJ, [JSP, #-4]
@@ -79,7 +79,7 @@ ENTRY1 ( CVMCCMARMintrinsic_java_lang_System_identityHashCodeGlue )
 /*
  * Entry point for intrinsic implementation of Object.hashCode().
  */
-	ENTRY ( CVMCCMARMintrinsic_java_lang_Object_hashCodeGlue )
+	ENTRY(CVMCCMARMintrinsic_java_lang_Object_hashCodeGlue)
 ENTRY1 ( CVMCCMARMintrinsic_java_lang_Object_hashCodeGlue )
         /* r4 = v1 = jfp 
          * r5 = v2 = jsp 
@@ -232,7 +232,7 @@ LABEL(_objectHashCodeSlowRoute)
 /*
  * Entry point for intrinsic implementation of String.hashCode().
  */
-	ENTRY ( CVMCCMARMintrinsic_java_lang_String_hashCodeGlue )
+	ENTRY(CVMCCMARMintrinsic_java_lang_String_hashCodeGlue)
 ENTRY1 ( CVMCCMARMintrinsic_java_lang_String_hashCodeGlue )
         /* r0 = a1 = (java.lang.String)thisString 
          * r4 = v1 = jfp 
@@ -305,7 +305,7 @@ LABEL(String_hashCode_done)
 /*
  * Entry point for intrinsic implementation of Object.hashCode().
  */
- ENTRY ( CVMCCMARMintrinsic_java_lang_Object_hashCodeGlue )
+ ENTRY(CVMCCMARMintrinsic_java_lang_Object_hashCodeGlue)
         ; r4 = v1 = jfp
         ; r5 = v2 = jsp
         ; sp = ccee
@@ -441,7 +441,7 @@ _objectHashCodeSlowRoute
 /*
  * Entry point for intrinsic implementation of String.hashCode().
  */
- ENTRY ( CVMCCMARMintrinsic_java_lang_String_hashCodeGlue )
+ ENTRY(CVMCCMARMintrinsic_java_lang_String_hashCodeGlue)
         ; r0 = a1 = (java.lang.String)thisString
         ; r4 = v1 = jfp
         ; r5 = v2 = jsp
@@ -517,7 +517,7 @@ String_hashCode_done
  */
 /* IAI-05 */
 #ifdef IAI_IMPLEMENT_INDEXOF_IN_ASSEMBLY
-	ENTRY ( CVMCCMintrinsic_java_lang_String_indexOf_II )
+	ENTRY(CVMCCMintrinsic_java_lang_String_indexOf_II)
 ENTRY1 ( CVMCCMintrinsic_java_lang_String_indexOf_II )
         /*Arguments: 
          *    r0 = this object
@@ -570,7 +570,7 @@ LABEL(L1)
 /* 
  * Intrinsic version of String.indexOf(int ch)
  */
-	ENTRY ( CVMCCMintrinsic_java_lang_String_indexOf_I )
+	ENTRY(CVMCCMintrinsic_java_lang_String_indexOf_I)
 ENTRY1 ( CVMCCMintrinsic_java_lang_String_indexOf_I )
         /*Arguments: 
          *    r0 = this object 
@@ -617,7 +617,7 @@ LABEL(L2)
 /* 
  * Intrinsic version of sun.misc.CVM.copyCharArray(...)
  */
-	ENTRY ( CVMCCMintrinsic_sun_misc_CVM_copyCharArray )
+	ENTRY(CVMCCMintrinsic_sun_misc_CVM_copyCharArray)
 ENTRY1 ( CVMCCMintrinsic_sun_misc_CVM_copyCharArray )
         /*Arguments: 
          *    r0 = srcArr 
@@ -644,7 +644,7 @@ ENTRY1 ( CVMCCMintrinsic_sun_misc_CVM_copyCharArray )
 	IMPORT CVMgcCardTableVirtualBasePtr
 #endif
 
-	ENTRY ( CVMCCMintrinsic_sun_misc_CVM_copyObjectArray )
+	ENTRY(CVMCCMintrinsic_sun_misc_CVM_copyObjectArray)
 ENTRY1 ( CVMCCMintrinsic_sun_misc_CVM_copyObjectArray )
         /*Arguments: 
          *    r0 = srcArr 
@@ -709,7 +709,7 @@ LABEL(copyObjectArray_markCard)
 #define	TYPE	r0
 #define TEMP	ip
 
-	ENTRY ( CVMCCMintrinsic_java_lang_System_arraycopyGlue )
+	ENTRY(CVMCCMintrinsic_java_lang_System_arraycopyGlue)
 ENTRY1 ( CVMCCMintrinsic_java_lang_System_arraycopyGlue )
         /*Arguments: 
 	 *    r0 = ccee

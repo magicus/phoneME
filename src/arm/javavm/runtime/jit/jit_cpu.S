@@ -68,7 +68,7 @@
 #ifdef WINCE
 	NESTED_ENTRY CVMJITgoNative
 #else
-	ENTRY( CVMJITgoNative )
+	ENTRY(CVMJITgoNative)
 #endif
 ENTRY1( CVMJITgoNative )
 	/* a1 = exceptionObject - unused unless returning to exception handler
@@ -157,7 +157,7 @@ CVMcodeCacheEnd
 #ifdef CVMJIT_HAVE_STATIC_CODECACHE
 	ALTERNATE_ENTRY CVMJITexitNative
 #else
-	ENTRY( CVMJITexitNative )
+	ENTRY(CVMJITexitNative)
 #endif
 ENTRY1( CVMJITexitNative )
 	/* a1 = ccee 
@@ -184,7 +184,7 @@ ENTRY1( CVMJITexitNative )
  * extern void
  * CVMJITfixupFrames(CVMFrame *);
  */
-	ENTRY ( CVMJITfixupFrames )
+	ENTRY(CVMJITfixupFrames)
 ENTRY1 ( CVMJITfixupFrames )
 #define CFP a1
 #define PREV a2

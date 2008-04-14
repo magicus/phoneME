@@ -98,7 +98,7 @@
 /*************************************************************************
  * This is the start of the code we copy into the start of the code cache.
  *************************************************************************/
-	ENTRY ( CVMCCMcodeCacheCopyStart )
+	ENTRY(CVMCCMcodeCacheCopyStart)
 ENTRY1 ( CVMCCMcodeCacheCopyStart )
 	
 #include "ccmglue_cpu.S"
@@ -113,5 +113,5 @@ ENTRY1 ( CVMCCMcodeCacheCopyStart )
  * The .pool is important. It must appear just before this symbol.
  *************************************************************************/
 	POOL
-	ENTRY( CVMCCMcodeCacheCopyEnd )
+	ENTRY(CVMCCMcodeCacheCopyEnd)
 ENTRY1( CVMCCMcodeCacheCopyEnd )

@@ -60,7 +60,7 @@
     (CVM_FASTLOCK_TYPE == CVM_FASTLOCK_MICROLOCK && \
     CVM_MICROLOCK_TYPE == CVM_MICROLOCK_SWAP_SPINLOCK)
 
-	ENTRY( CVMCCMinvokeNonstaticSyncMethodHelper )
+	ENTRY(CVMCCMinvokeNonstaticSyncMethodHelper)
 ENTRY1( CVMCCMinvokeNonstaticSyncMethodHelper )
 LABEL(CVMCCMinvokeNonstaticSyncMethodHelperLocal)
 	/* r0 = mb 
@@ -225,7 +225,7 @@ LABEL(jfp_set)
 
 #endif /* CVM_MICROLOCK_SWAP_SPINLOCK */
 
-	ENTRY( CVMARMgcPatchPointAtInvoke )
+	ENTRY(CVMARMgcPatchPointAtInvoke)
 ENTRY1( CVMARMgcPatchPointAtInvoke )
 LABEL(CVMARMgcPatchPointAtInvokeLocal)
 	/* GC check - gc will patch at this location when a rendezvous is 
@@ -235,7 +235,7 @@ LABEL(CVMARMgcPatchPointAtInvokeLocal)
 
         mov	pc, lr	/* Return to method after handling possible GC request */
 
-	ENTRY( CVMARMhandleGCAtInvoke)
+	ENTRY(CVMARMhandleGCAtInvoke)
 ENTRY1( CVMARMhandleGCAtInvoke)
 #if !defined(CVM_JIT_CCM_USE_C_HELPER) && !defined(CVM_JIT_CCM_USE_C_SYNC_HELPER)
 
@@ -372,7 +372,7 @@ LABEL(_fastTryLockFailed)
 
 #define ORIG_LR         r10
 
- ENTRY( CVMCCMinvokeNonstaticSyncMethodHelper ) 
+ ENTRY(CVMCCMinvokeNonstaticSyncMethodHelper) 
 LABEL(CVMCCMinvokeNonstaticSyncMethodHelperLocal) 
 	; r0 = mb
 	; r1 = CVMObjectICell* of object to sync on.
@@ -576,7 +576,7 @@ _fastlockSuccess
 #undef TEMP
 
 
- ENTRY( CVMARMgcPatchPointAtInvoke ) 
+ ENTRY(CVMARMgcPatchPointAtInvoke) 
 LABEL(CVMARMgcPatchPointAtInvokeLocal)
 	; GC check - gc will patch at this location when a rendezvous is
 	; needed. See ccmGcPatchPoints in jitinit_cpu.c. The patch will
@@ -584,7 +584,7 @@ LABEL(CVMARMgcPatchPointAtInvokeLocal)
 
         mov	pc, lr	; Return to method after handling possible GC request
 
- ENTRY( CVMARMhandleGCAtInvoke)	
+ ENTRY(CVMARMhandleGCAtInvoke)	
 	;
 	; At this point a GC is requested.
 	;
@@ -662,7 +662,7 @@ LABEL(CVMARMgcPatchPointAtInvokeLocal)
 #error unsupported CVM_FASTLOCK_TYPE or CVM_MICROLOCK_TYPE
 #endif 
 
-	ENTRY( CVMCCMinvokeStaticSyncMethodHelper )
+	ENTRY(CVMCCMinvokeStaticSyncMethodHelper)
 ENTRY1( CVMCCMinvokeStaticSyncMethodHelper )
         /* r0 = a1 = target mb  
          * r4 = v1 = jfp  
@@ -697,7 +697,7 @@ ENTRY1( CVMCCMinvokeStaticSyncMethodHelper )
 
 	SET_SIZE( CVMCCMinvokeStaticSyncMethodHelper )
 
-	ENTRY( CVMCCMinvokeCNIMethod )
+	ENTRY(CVMCCMinvokeCNIMethod)
 ENTRY1( CVMCCMinvokeCNIMethod )
         /* r4 = v1 = jfp  
          * r5 = v2 = jsp  
@@ -773,7 +773,7 @@ LABEL(new_transition)
 #undef ARGS
         SET_SIZE( CVMCCMinvokeCNIMethod ) 
 
-	ENTRY( CVMCCMinvokeJNIMethod )
+	ENTRY(CVMCCMinvokeJNIMethod)
 ENTRY1( CVMCCMinvokeJNIMethod ) 
         /* r4 = v1 = jfp  
          * r5 = v2 = jsp  
@@ -815,7 +815,7 @@ ENTRY1( CVMCCMinvokeJNIMethod )
 	/* 
  	 *  r0 = invokeMb (not the targetMb) 
  	 */
-	ENTRY( CVMCCMinvokeVirtual )
+	ENTRY(CVMCCMinvokeVirtual)
 ENTRY1( CVMCCMinvokeVirtual )
 	/* Get "this" by looking back on the stack */
         ldrb	r1, [r0, #OFFSET_CVMMethodBlock_argsSizeX]
@@ -834,12 +834,12 @@ ENTRY1( CVMCCMinvokeVirtual )
         SET_SIZE( CVMCCMinvokeVirtual ) 
 #endif
 
-	ENTRY( CVMCCMletInterpreterDoInvoke )
+	ENTRY(CVMCCMletInterpreterDoInvoke)
 ENTRY1( CVMCCMletInterpreterDoInvoke )
 LABEL(letInterpreterDoInvoke_store_lr)
         str lr,[JFP,#OFFSET_CVMCompiledFrame_PC]
 
-	ENTRY( CVMCCMletInterpreterDoInvokeWithoutFlushRetAddr )
+	ENTRY(CVMCCMletInterpreterDoInvokeWithoutFlushRetAddr)
 ENTRY1( CVMCCMletInterpreterDoInvokeWithoutFlushRetAddr )
 LABEL(letInterpreterDoInvoke)
         /* 
@@ -915,12 +915,12 @@ LABEL(handleGCForReturn)
 /*
  * The GC checks for the various return variants
  */
-	ENTRY( CVMARMhandleGCForReturnFromMethod )
+	ENTRY(CVMARMhandleGCForReturnFromMethod)
 ENTRY1( CVMARMhandleGCForReturnFromMethod )
 	ldr	r7, =CVMCCMreturnFromMethod
 	b	handleGCForReturn	
 
-	ENTRY( CVMARMhandleGCForReturnFromSyncMethod )
+	ENTRY(CVMARMhandleGCForReturnFromSyncMethod)
 ENTRY1( CVMARMhandleGCForReturnFromSyncMethod )
 	ldr	r7, =CVMCCMreturnFromSyncMethod
 	b	handleGCForReturn	
@@ -932,7 +932,7 @@ ENTRY1( CVMARMhandleGCForReturnFromSyncMethod )
  *
  * CVMMethodBlock* CVMCCMreturnFromMethod(); 
  */ 
-	ENTRY( CVMCCMreturnFromMethod )
+	ENTRY(CVMCCMreturnFromMethod)
 ENTRY1( CVMCCMreturnFromMethod )
 	/* GC check - gc will patch at this location when a rendezvous is 
 	 * needed. See ccmGcPatchPoints in jitinit_cpu.c. The patch will 
@@ -968,7 +968,7 @@ ENTRY1( CVMCCMreturnFromMethod )
 	/* fall through to CVMCCMreturnToInterpreter */
 #endif
 
-	ENTRY( CVMCCMreturnToInterpreter )
+	ENTRY(CVMCCMreturnToInterpreter)
 ENTRY1( CVMCCMreturnToInterpreter )
 LABEL(returnToInterpreter)
 	FIXUP_FRAMES_0(JFP)
@@ -1007,7 +1007,7 @@ LABEL(returnToInterpreter1)
  * CVMMethodBlock* 
  * CVMCCMreturnFromSyncMethod(); 
  */ 
-	ENTRY( CVMCCMreturnFromSyncMethod )
+	ENTRY(CVMCCMreturnFromSyncMethod)
 ENTRY1( CVMCCMreturnFromSyncMethod )
 	b returnToInterpreter
 
@@ -1022,7 +1022,7 @@ ENTRY1( CVMCCMreturnFromSyncMethod )
  * CVMMethodBlock* 
  * CVMCCMreturnFromSyncMethod(); 
  */ 
-	ENTRY( CVMCCMreturnFromSyncMethod )
+	ENTRY(CVMCCMreturnFromSyncMethod)
 ENTRY1( CVMCCMreturnFromSyncMethod )
 	/* GC check - gc will patch at this location when a rendezvous is 
 	 * needed. See ccmGcPatchPoints in jitinit_cpu.c. The patch will 
@@ -1248,7 +1248,7 @@ LABEL(_fastTryUnlockFailed)
  * CVMMethodBlock* 
  * CVMCCMreturnFromSyncMethod(); 
  */ 
- ENTRY( CVMCCMreturnFromSyncMethod )
+ ENTRY(CVMCCMreturnFromSyncMethod)
 	; GC check - gc will patch at this location when a rendezvous is
 	; needed. See ccmGcPatchPoints in jitinit_cpu.c. The patch will
 	; be a "b CVMARMhandleGCForReturnFromSyncMethod"

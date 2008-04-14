@@ -38,7 +38,7 @@
 #ifdef CVM_DEBUG_ASSERTS
 .file "ccmallocators_cpu.S"
 ccmallocators_cpu_filename:
-.string "ccmallocators_cpu.S"
+.asciz "ccmallocators_cpu.S"
 CVMCCMruntimeNewGlue_assert_expression:
 CVMCCMruntimeNewArrayGlue_assert_expression:
 CVMCCMruntimeANewArrayGlue_assert_expression:
@@ -48,7 +48,7 @@ CVMCCMruntimeNewArrayGlue_unlock1_assert_expression:
 CVMCCMruntimeNewArrayGlue_unlock2_assert_expression:
 CVMCCMruntimeANewArrayGlue_unlock1_assert_expression:
 CVMCCMruntimeANewArrayGlue_unlock2_assert_expression:
-.string "heap is unlocked"
+.asciz "heap is unlocked"
 #endif /* CVM_DEBUG_ASSERTS */
 
 /*
@@ -140,7 +140,7 @@ LOOPTEST:
 
 INITDONE:	
         # unlock the heap
-	lock decl	OFFSET_CVMGlobalState_fastHeapLock + SYM_NAME(CVMglobals)
+	lock ; decl	OFFSET_CVMGlobalState_fastHeapLock + SYM_NAME(CVMglobals) 
 
 	# return to compiled code. The object is in A1.
 	ret
@@ -321,7 +321,7 @@ ARR_LOOPTEST:
 
 ARR_ENDINIT:	
 	# unlock the heap
-	lock decl	OFFSET_CVMGlobalState_fastHeapLock + SYM_NAME(CVMglobals)
+	lock  ; decl	OFFSET_CVMGlobalState_fastHeapLock + SYM_NAME(CVMglobals) ; 
 
 	# return to compiled code. The object is in A1.
 	ret
@@ -540,7 +540,7 @@ OBJARR_LOOPTEST:
 
 OBJARR_ENDINIT:	
 	# unlock the heap
-	lock decl	OFFSET_CVMGlobalState_fastHeapLock + SYM_NAME(CVMglobals)
+	lock  ; decl	OFFSET_CVMGlobalState_fastHeapLock + SYM_NAME(CVMglobals)
 	# return to compiled code. The object is in A1.
 	ret
 
