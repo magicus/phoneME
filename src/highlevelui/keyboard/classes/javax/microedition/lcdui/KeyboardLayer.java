@@ -44,6 +44,7 @@ class KeyboardLayer extends PopupLayer implements VirtualKeyboardListener {
 
         this.layerID  = "KeyboardLayer";
         tfContext = tf;
+        transparent = false;
         //backupstring is set to original text before the kbd was used
         backupString = tfContext.tf.getString();        
         if (vk==null) {
@@ -51,7 +52,8 @@ class KeyboardLayer extends PopupLayer implements VirtualKeyboardListener {
             vk = new VirtualKeyboard(Maps, this, true);
         }
 
-	setBounds(vk.kbX, vk.kbY, vk.kbWidth, vk.kbHeight);
+        System.out.println("vk.kbX:"+vk.kbX+",vk.kbY:"+vk.kbY+",vk.kbWidth:"+vk.kbWidth+",vk.kbHeight:"+vk.kbHeight);
+        setBounds(vk.kbX, vk.kbY, vk.kbWidth, vk.kbHeight);
 
         Command keyboardClose = new Command("Close", Command.OK, 1);
         setCommands(new Command[] { keyboardClose });
@@ -68,6 +70,8 @@ class KeyboardLayer extends PopupLayer implements VirtualKeyboardListener {
         super((Image)null, -1); // don't draw a background  
 
         this.layerID  = "KeyboardLayer";
+        transparent = true;
+        setOpaque(false);
         tfContext = null;
         cvContext = canvas;
         if (vk==null) {
@@ -75,7 +79,7 @@ class KeyboardLayer extends PopupLayer implements VirtualKeyboardListener {
             vk = new VirtualKeyboard(Maps, this, false);
         }
 
-        //System.out.println("vk.kbX:"+vk.kbX+",vk.kbY:"+vk.kbY+",vk.kbWidth:"+vk.kbWidth+",vk.kbHeight:"+vk.kbHeight);
+        System.out.println("vk.kbX:"+vk.kbX+",vk.kbY:"+vk.kbY+",vk.kbWidth:"+vk.kbWidth+",vk.kbHeight:"+vk.kbHeight);
 	setBounds(vk.kbX,vk.kbY,vk.kbWidth,vk.kbHeight);
 
         Command keypadClose = new Command("Close", Command.OK, 1);
@@ -119,20 +123,20 @@ class KeyboardLayer extends PopupLayer implements VirtualKeyboardListener {
             (state == NUMERIC || 
              state == LOWERCASE ||
              state == UPPERCASE)) {
-            vk.currentKeyboard = state;
+            vk.currentKeyboardIndex = state;
         }
     }
 
     public int getState() {
         if (vk != null) {            
-            return vk.currentKeyboard;
+            return vk.currentKeyboardIndex;
         }
         return -1;
     }
 
     public String getIMName() {
         if (vk != null) {
-            switch(vk.currentKeyboard)
+            switch(vk.currentKeyboardIndex)
             {
                 case KeyboardLayer.NUMERIC:
                     return "1234";
@@ -285,88 +289,225 @@ class KeyboardLayer extends PopupLayer implements VirtualKeyboardListener {
 
         Maps = new Vector();
 
-        Image icon = null;
-        Image otherIcon = null;
-        int width = 18;
-        int height = 18;
-        int pos;
+        Image icon = getImageFromInternalStorage("key_un_24");
+        Image otherIcon = getImageFromInternalStorage("key_sel_24");
+        int width = icon.getWidth();
+        int height = icon.getHeight();
+        int xpos;
+        int ypos;
+        int pad = 0;
 
-        Vector Keys = new Vector();
-            pos = 0;
-            Keys.addElement(new Key(icon,otherIcon,'q','q',pos,0,width,height)); pos+=width+2;
-            Keys.addElement(new Key(icon,otherIcon,'w','w',pos,0,width,height)); pos+=width+2;
-            Keys.addElement(new Key(icon,otherIcon,'e','e',pos,0,width,height)); pos+=width+2;
-            Keys.addElement(new Key(icon,otherIcon,'r','r',pos,0,width,height)); pos+=width+2;
-            Keys.addElement(new Key(icon,otherIcon,'t','t',pos,0,width,height)); pos+=width+2;
-            Keys.addElement(new Key(icon,otherIcon,'y','y',pos,0,width,height)); pos+=width+2;
-            Keys.addElement(new Key(icon,otherIcon,'u','u',pos,0,width,height)); pos+=width+2;
-            Keys.addElement(new Key(icon,otherIcon,'i','i',pos,0,width,height)); pos+=width+2;
-            Keys.addElement(new Key(icon,otherIcon,'o','o',pos,0,width,height)); pos+=width+2;
-            Keys.addElement(new Key(icon,otherIcon,'p','p',pos,0,width,height)); pos+=width+2;
+       Vector Keyboard = new Vector();
 
-            pos = 10;
-            Keys.addElement(new Key(icon,otherIcon,'a','a',pos,30,width,height)); pos+=width+2;
-            Keys.addElement(new Key(icon,otherIcon,'s','s',pos,30,width,height)); pos+=width+2;
-            Keys.addElement(new Key(icon,otherIcon,'d','d',pos,30,width,height)); pos+=width+2;
-            Keys.addElement(new Key(icon,otherIcon,'f','f',pos,30,width,height)); pos+=width+2;
-            Keys.addElement(new Key(icon,otherIcon,'g','g',pos,30,width,height)); pos+=width+2;
-            Keys.addElement(new Key(icon,otherIcon,'h','h',pos,30,width,height)); pos+=width+2;
-            Keys.addElement(new Key(icon,otherIcon,'j','j',pos,30,width,height)); pos+=width+2;
-            Keys.addElement(new Key(icon,otherIcon,'k','k',pos,30,width,height)); pos+=width+2;
-            Keys.addElement(new Key(icon,otherIcon,'l','l',pos,30,width,height)); pos+=width+2;
-            Keys.addElement(new Key(icon,otherIcon,';',';',pos,30,width,height)); pos+=width+2;
+       Vector Lines = new Vector();
+            xpos = 100;
+            ypos = 0;
+            Lines.addElement(new Key(icon,otherIcon,'1','1',xpos,ypos,width,height)); xpos+=width+pad;
+            Lines.addElement(new Key(icon,otherIcon,'2','2',xpos,ypos,width,height)); xpos+=width+pad;
+            Lines.addElement(new Key(icon,otherIcon,'3','3',xpos,ypos,width,height)); xpos+=width+pad;
+            Keyboard.addElement(Lines);
+            Lines = new Vector();
 
-            pos = 20;
-            Keys.addElement(new Key(icon,otherIcon,'z','z',pos,60,width,height)); pos+=width+2;
-            Keys.addElement(new Key(icon,otherIcon,'x','x',pos,60,width,height)); pos+=width+2;
-            Keys.addElement(new Key(icon,otherIcon,'c','c',pos,60,width,height)); pos+=width+2;
-            Keys.addElement(new Key(icon,otherIcon,'v','v',pos,60,width,height)); pos+=width+2;
-            Keys.addElement(new Key(icon,otherIcon,'b','b',pos,60,width,height)); pos+=width+2;
-            Keys.addElement(new Key(icon,otherIcon,'m','m',pos,60,width,height)); pos+=width+2;
-            Keys.addElement(new Key(icon,otherIcon,',',',',pos,60,width,height)); pos+=width+2;
-            Keys.addElement(new Key(icon,otherIcon,'.','.',pos,60,width,height)); pos+=width+2;
-            Keys.addElement(new Key(icon,otherIcon,'/','/',pos,60,width,height)); pos+=width+2;
-            
-        Maps.addElement(Keys);
+            xpos = 100;
+            ypos +=height+pad;
+
+            Lines.addElement(new Key(icon,otherIcon,'4','4',xpos,ypos,width,height)); xpos+=width+pad;
+            Lines.addElement(new Key(icon,otherIcon,'5','5',xpos,ypos,width,height)); xpos+=width+pad;
+            Lines.addElement(new Key(icon,otherIcon,'6','6',xpos,ypos,width,height)); xpos+=width+pad;
+            Keyboard.addElement(Lines);
+            Lines = new Vector();
+
+            xpos = 100;
+            ypos +=height+pad;
+
+            Lines.addElement(new Key(icon,otherIcon,'7','7',xpos,ypos,width,height)); xpos+=width+pad;
+            Lines.addElement(new Key(icon,otherIcon,'8','8',xpos,ypos,width,height)); xpos+=width+pad;
+            Lines.addElement(new Key(icon,otherIcon,'9','9',xpos,ypos,width,height)); xpos+=width+pad;
+            Lines.addElement(new Key(icon,otherIcon,'0','0',xpos,ypos,width,height)); xpos+=width+pad;
+
+            Keyboard.addElement(Lines);
+            Lines = new Vector();
+
+            xpos = 0; //pad+width/3*2;
+            ypos +=height+pad;
+
+            Lines.addElement(new Key(icon,otherIcon,VirtualKeyboard.BACKSPACE_META_KEY,'<',xpos,ypos,width,height)); xpos+=width+pad;
+            Lines.addElement(new Key(icon,otherIcon,VirtualKeyboard.OK_META_KEY,'O',xpos,ypos,width,height)); xpos+=width+pad;
+            Lines.addElement(new Key(icon,otherIcon,VirtualKeyboard.CANCEL_META_KEY,'X',xpos,ypos,width,height)); xpos+=width+pad;
+            Lines.addElement(new Key(icon,otherIcon,VirtualKeyboard.MODE_META_KEY,'M',xpos,ypos,width,height)); xpos+=width+pad;
+
+            Keyboard.addElement(Lines);
+
+            Maps.addElement(Keyboard);
+            Keyboard = new Vector();
+            Lines = new Vector();
+
+            xpos = pad;
+            ypos = 0;
+            Lines.addElement(new Key(icon,otherIcon,'q','q',xpos,ypos,width,height)); xpos+=width+pad;
+            Lines.addElement(new Key(icon,otherIcon,'w','w',xpos,ypos,width,height)); xpos+=width+pad;
+            Lines.addElement(new Key(icon,otherIcon,'e','e',xpos,ypos,width,height)); xpos+=width+pad;
+            Lines.addElement(new Key(icon,otherIcon,'r','r',xpos,ypos,width,height)); xpos+=width+pad;
+            Lines.addElement(new Key(icon,otherIcon,'t','t',xpos,ypos,width,height)); xpos+=width+pad;
+            Lines.addElement(new Key(icon,otherIcon,'y','y',xpos,ypos,width,height)); xpos+=width+pad;
+            Lines.addElement(new Key(icon,otherIcon,'u','u',xpos,ypos,width,height)); xpos+=width+pad;
+            Lines.addElement(new Key(icon,otherIcon,'i','i',xpos,ypos,width,height)); xpos+=width+pad;
+            Lines.addElement(new Key(icon,otherIcon,'o','o',xpos,ypos,width,height)); xpos+=width+pad;
+            Lines.addElement(new Key(icon,otherIcon,'p','p',xpos,ypos,width,height)); xpos+=width+pad;
+
+            Keyboard.addElement(Lines);
+
+            Lines = new Vector();
+            xpos = pad+width/3;
+            ypos +=height+pad;
+            Lines.addElement(new Key(icon,otherIcon,'a','a',xpos,ypos,width,height)); xpos+=width+pad;
+            Lines.addElement(new Key(icon,otherIcon,'s','s',xpos,ypos,width,height)); xpos+=width+pad;
+            Lines.addElement(new Key(icon,otherIcon,'d','d',xpos,ypos,width,height)); xpos+=width+pad;
+            Lines.addElement(new Key(icon,otherIcon,'f','f',xpos,ypos,width,height)); xpos+=width+pad;
+            Lines.addElement(new Key(icon,otherIcon,'g','g',xpos,ypos,width,height)); xpos+=width+pad;
+            Lines.addElement(new Key(icon,otherIcon,'h','h',xpos,ypos,width,height)); xpos+=width+pad;
+            Lines.addElement(new Key(icon,otherIcon,'j','j',xpos,ypos,width,height)); xpos+=width+pad;
+            Lines.addElement(new Key(icon,otherIcon,'k','k',xpos,ypos,width,height)); xpos+=width+pad;
+            Lines.addElement(new Key(icon,otherIcon,'l','l',xpos,ypos,width,height)); xpos+=width+pad;
+
+            Keyboard.addElement(Lines);
+
+            Lines = new Vector();
+            xpos = pad+width/3*2;
+            ypos +=height+pad;
+            Lines.addElement(new Key(icon,otherIcon,'z','z',xpos,ypos,width,height)); xpos+=width+pad;
+            Lines.addElement(new Key(icon,otherIcon,'x','x',xpos,ypos,width,height)); xpos+=width+pad;
+            Lines.addElement(new Key(icon,otherIcon,'c','c',xpos,ypos,width,height)); xpos+=width+pad;
+            Lines.addElement(new Key(icon,otherIcon,'v','v',xpos,ypos,width,height)); xpos+=width+pad;
+            Lines.addElement(new Key(icon,otherIcon,'b','b',xpos,ypos,width,height)); xpos+=width+pad;
+            Lines.addElement(new Key(icon,otherIcon,'m','m',xpos,ypos,width,height)); xpos+=width+pad;
+            Lines.addElement(new Key(icon,otherIcon,' ',' ',xpos,ypos,width,height)); xpos+=width+pad;
+
+            Keyboard.addElement(Lines);
+
+            Lines = new Vector();
+            xpos = 0;
+            ypos +=height+pad;
+
+            Lines.addElement(new Key(icon,otherIcon,VirtualKeyboard.BACKSPACE_META_KEY,'<',xpos,ypos,width,height)); xpos+=width+pad;
+            Lines.addElement(new Key(icon,otherIcon,VirtualKeyboard.OK_META_KEY,'O',xpos,ypos,width,height)); xpos+=width+pad;
+            Lines.addElement(new Key(icon,otherIcon,VirtualKeyboard.CANCEL_META_KEY,'X',xpos,ypos,width,height)); xpos+=width+pad;
+            Lines.addElement(new Key(icon,otherIcon,VirtualKeyboard.MODE_META_KEY,'M',xpos,ypos,width,height)); xpos+=width+pad;
+            Lines.addElement(new Key(icon,otherIcon,VirtualKeyboard.SHIFT_META_KEY,'S',xpos,ypos,width,height)); xpos+=width+pad;
+            Lines.addElement(new Key(icon,otherIcon,VirtualKeyboard.CAPS_META_KEY,'c',xpos,ypos,width,height)); xpos+=width+pad;
+
+            Keyboard.addElement(Lines);
+            Maps.addElement(Keyboard);
+            Keyboard = new Vector();
+            Lines = new Vector();
+
+            xpos = pad;
+            ypos = 0;
+            Lines.addElement(new Key(icon,otherIcon,'Q','Q',xpos,ypos,width,height)); xpos+=width+pad;
+            Lines.addElement(new Key(icon,otherIcon,'W','W',xpos,ypos,width,height)); xpos+=width+pad;
+            Lines.addElement(new Key(icon,otherIcon,'E','E',xpos,ypos,width,height)); xpos+=width+pad;
+            Lines.addElement(new Key(icon,otherIcon,'R','R',xpos,ypos,width,height)); xpos+=width+pad;
+            Lines.addElement(new Key(icon,otherIcon,'T','T',xpos,ypos,width,height)); xpos+=width+pad;
+            Lines.addElement(new Key(icon,otherIcon,'Y','Y',xpos,ypos,width,height)); xpos+=width+pad;
+            Lines.addElement(new Key(icon,otherIcon,'U','U',xpos,ypos,width,height)); xpos+=width+pad;
+            Lines.addElement(new Key(icon,otherIcon,'I','I',xpos,ypos,width,height)); xpos+=width+pad;
+            Lines.addElement(new Key(icon,otherIcon,'O','O',xpos,ypos,width,height)); xpos+=width+pad;
+            Lines.addElement(new Key(icon,otherIcon,'P','P',xpos,ypos,width,height)); xpos+=width+pad;
+
+            Keyboard.addElement(Lines);
+            Lines = new Vector();
+
+            xpos = pad+width/3;
+            ypos +=height+pad;
+            Lines.addElement(new Key(icon,otherIcon,'A','A',xpos,ypos,width,height)); xpos+=width+pad;
+            Lines.addElement(new Key(icon,otherIcon,'S','S',xpos,ypos,width,height)); xpos+=width+pad;
+            Lines.addElement(new Key(icon,otherIcon,'D','D',xpos,ypos,width,height)); xpos+=width+pad;
+            Lines.addElement(new Key(icon,otherIcon,'F','F',xpos,ypos,width,height)); xpos+=width+pad;
+            Lines.addElement(new Key(icon,otherIcon,'G','G',xpos,ypos,width,height)); xpos+=width+pad;
+            Lines.addElement(new Key(icon,otherIcon,'H','H',xpos,ypos,width,height)); xpos+=width+pad;
+            Lines.addElement(new Key(icon,otherIcon,'J','J',xpos,ypos,width,height)); xpos+=width+pad;
+            Lines.addElement(new Key(icon,otherIcon,'K','K',xpos,ypos,width,height)); xpos+=width+pad;
+            Lines.addElement(new Key(icon,otherIcon,'L','L',xpos,ypos,width,height)); xpos+=width+pad;
+
+            Keyboard.addElement(Lines);
+            Lines = new Vector();
+
+            xpos = pad+width/3*2;
+            ypos +=height+pad;
+
+            Lines.addElement(new Key(icon,otherIcon,'Z','Z',xpos,ypos,width,height)); xpos+=width+pad;
+            Lines.addElement(new Key(icon,otherIcon,'X','X',xpos,ypos,width,height)); xpos+=width+pad;
+            Lines.addElement(new Key(icon,otherIcon,'C','C',xpos,ypos,width,height)); xpos+=width+pad;
+            Lines.addElement(new Key(icon,otherIcon,'V','V',xpos,ypos,width,height)); xpos+=width+pad;
+            Lines.addElement(new Key(icon,otherIcon,'B','B',xpos,ypos,width,height)); xpos+=width+pad;
+            Lines.addElement(new Key(icon,otherIcon,'M','M',xpos,ypos,width,height)); xpos+=width+pad;
+            Lines.addElement(new Key(icon,otherIcon,' ',' ',xpos,ypos,width,height)); xpos+=width+pad;
+
+            Keyboard.addElement(Lines);
+            Lines = new Vector();
+
+            xpos = 0; //pad+width/3*2;
+            ypos +=height+pad;
+
+            Lines.addElement(new Key(icon,otherIcon,VirtualKeyboard.BACKSPACE_META_KEY,'<',xpos,ypos,width,height)); xpos+=width+pad;
+            Lines.addElement(new Key(icon,otherIcon,VirtualKeyboard.OK_META_KEY,'O',xpos,ypos,width,height)); xpos+=width+pad;
+            Lines.addElement(new Key(icon,otherIcon,VirtualKeyboard.CANCEL_META_KEY,'X',xpos,ypos,width,height)); xpos+=width+pad;
+            Lines.addElement(new Key(icon,otherIcon,VirtualKeyboard.MODE_META_KEY,'M',xpos,ypos,width,height)); xpos+=width+pad;
+            Lines.addElement(new Key(icon,otherIcon,VirtualKeyboard.SHIFT_META_KEY,'S',xpos,ypos,width,height)); xpos+=width+pad;
+            Lines.addElement(new Key(icon,otherIcon,VirtualKeyboard.CAPS_META_KEY,'c',xpos,ypos,width,height)); xpos+=width+pad;
+
+            Keyboard.addElement(Lines);
+            Maps.addElement(Keyboard);
+            Keyboard = new Vector();
+            Lines = new Vector();
 
 
+             xpos = 0;
+             ypos =0;
+             Lines.addElement(new Key(icon,otherIcon,'!','!',xpos,ypos,width,height)); xpos+=width+pad;
+             Lines.addElement(new Key(icon,otherIcon,'@','@',xpos,ypos,width,height)); xpos+=width+pad;
+             Lines.addElement(new Key(icon,otherIcon,'#','#',xpos,ypos,width,height)); xpos+=width+pad;
+             Lines.addElement(new Key(icon,otherIcon,'$','$',xpos,ypos,width,height)); xpos+=width+pad;
+             Lines.addElement(new Key(icon,otherIcon,'%','%',xpos,ypos,width,height)); xpos+=width+pad;
+             Lines.addElement(new Key(icon,otherIcon,'^','%',xpos,ypos,width,height)); xpos+=width+pad;
+             Lines.addElement(new Key(icon,otherIcon,'&','&',xpos,ypos,width,height)); xpos+=width+pad;
+             Lines.addElement(new Key(icon,otherIcon,'*','*',xpos,ypos,width,height)); xpos+=width+pad;
+             Lines.addElement(new Key(icon,otherIcon,'(','(',xpos,ypos,width,height)); xpos+=width+pad;
+             Lines.addElement(new Key(icon,otherIcon,')',')',xpos,ypos,width,height)); xpos+=width+pad;
 
+             Keyboard.addElement(Lines);
+             Lines = new Vector();
+
+             xpos = 0;
+             ypos +=height+pad;
+
+             Lines.addElement(new Key(icon,otherIcon,'+','+',xpos,ypos,width,height)); xpos+=width+pad;
+             Lines.addElement(new Key(icon,otherIcon,'-','-',xpos,ypos,width,height)); xpos+=width+pad;
+             Lines.addElement(new Key(icon,otherIcon,'*','*',xpos,ypos,width,height)); xpos+=width+pad;
+             Lines.addElement(new Key(icon,otherIcon,'/','/',xpos,ypos,width,height)); xpos+=width+pad;
+             Lines.addElement(new Key(icon,otherIcon,'.','.',xpos,ypos,width,height)); xpos+=width+pad;
+             Lines.addElement(new Key(icon,otherIcon,',',',',xpos,ypos,width,height)); xpos+=width+pad;
+             Lines.addElement(new Key(icon,otherIcon,';',';',xpos,ypos,width,height)); xpos+=width+pad;
+             Lines.addElement(new Key(icon,otherIcon,'\'','\'',xpos,ypos,width,height)); xpos+=width+pad;
+             Lines.addElement(new Key(icon,otherIcon,'\"','\"',xpos,ypos,width,height)); xpos+=width+pad;
+             Lines.addElement(new Key(icon,otherIcon,'~','~',xpos,ypos,width,height)); xpos+=width+pad;
+
+             Keyboard.addElement(Lines);
+             Lines = new Vector();
+
+             xpos = 0;
+             ypos +=2*(height+pad);
+
+             Lines.addElement(new Key(icon,otherIcon,VirtualKeyboard.BACKSPACE_META_KEY,'<',xpos,ypos,width,height)); xpos+=width+pad;
+             Lines.addElement(new Key(icon,otherIcon,VirtualKeyboard.OK_META_KEY,'O',xpos,ypos,width,height)); xpos+=width+pad;
+             Lines.addElement(new Key(icon,otherIcon,VirtualKeyboard.CANCEL_META_KEY,'X',xpos,ypos,width,height)); xpos+=width+pad;
+             Lines.addElement(new Key(icon,otherIcon,VirtualKeyboard.MODE_META_KEY,'M',xpos,ypos,width,height)); xpos+=width+pad;
+
+             Keyboard.addElement(Lines);
+            Maps.addElement(Keyboard);
 
 
 /*
-        Keys.add(new Key(null,null,'0',50,0)); 
-        // numerals
-        keys[0] = new char[22]; // numerals
-        for (char i=0; i<10; i++) {  // 0..9
-            keys[0][i] = (char)(i+48);
-        }
-        keys[0][10] = '=';
-        keys[0][11] = '+';
-        keys[0][12] = '-';
-        keys[0][13] = '*';
-        keys[0][14] = '/';
-        keys[0][15] = '.';
-        keys[0][16] = ',';
-        keys[0][17] = '$';
-        keys[0][18] = '%';
-        keys[0][19] = '^';
-        keys[0][20] = '#';
-        keys[0][21] = ' ';
-
-        // Roman, lower case
-        keys[1] = new char[27]; // numerals
-        for (char i=0; i<26; i++) {  // a..z
-            keys[1][i] = (char)(i+97);
-        }
-        keys[1][26] = ' '; // space
-
-        // Roman, upper case
-        keys[2] = new char[27]; // numerals
-        for (char i=0; i<26; i++) {  // A..Z
-            keys[2][i] = (char)(i+65);
-        }
-        keys[2][26] = ' '; // space
-
         // Symbol
         keys[3] = new char[25]; // numerals
         for (char i=0; i<15; i++) {  // !../
@@ -381,6 +522,7 @@ class KeyboardLayer extends PopupLayer implements VirtualKeyboardListener {
         */
     }
 
+
     /**
      * Prepare key map for Canvas keypad.
      */
@@ -390,19 +532,44 @@ class KeyboardLayer extends PopupLayer implements VirtualKeyboardListener {
 
         Maps = new Vector();
 
-            Vector Keys = new Vector();
-                Keys.addElement(new Key(getImageFromInternalStorage("up_norm"),otherIcon,Constants.KEYCODE_UP,50,0));
-                Keys.addElement(new Key(getImageFromInternalStorage("down_norm"),otherIcon,Constants.KEYCODE_DOWN,50,100));
-                Keys.addElement(new Key(getImageFromInternalStorage("left_norm"),otherIcon,Constants.KEYCODE_LEFT,0,50));
-                Keys.addElement(new Key(getImageFromInternalStorage("right_norm"),otherIcon,Constants.KEYCODE_RIGHT,100,50));
-                Keys.addElement(new Key(getImageFromInternalStorage("center_norm"),otherIcon,Constants.KEYCODE_SELECT,50,50));
+        int size=33;
+        int base=getAvailableWidth()/2;
 
-                Keys.addElement(new Key(getImageFromInternalStorage("butt_1_norm"),otherIcon,'1',130,10));
-                Keys.addElement(new Key(getImageFromInternalStorage("butt_2_norm"),otherIcon,'3',200,10));
-                Keys.addElement(new Key(getImageFromInternalStorage("butt_3_norm"),otherIcon,'7',130,110));
-                Keys.addElement(new Key(getImageFromInternalStorage("butt_4_norm"),otherIcon,'9',200,110));
+        Vector Keyboard = new Vector();
 
-        Maps.addElement(Keys);
+            Vector Lines = new Vector();
+                Lines.addElement(new Key(getImageFromInternalStorage("up_sel_"+size),
+                                        getImageFromInternalStorage("up_un_"+size),
+                                        Constants.KEYCODE_UP,size,0));
+                Lines.addElement(new Key(getImageFromInternalStorage("down_sel_"+size),
+                                        getImageFromInternalStorage("down_un_"+size),
+                                        Constants.KEYCODE_DOWN,size,size*2));
+                Lines.addElement(new Key(getImageFromInternalStorage("left_sel_"+size),
+                                        getImageFromInternalStorage("left_un_"+size),
+                                        Constants.KEYCODE_LEFT,0,size));
+                Lines.addElement(new Key(getImageFromInternalStorage("right_sel_"+size),
+                                        getImageFromInternalStorage("right_un_"+size),
+                                        Constants.KEYCODE_RIGHT,size*2,size));
+                Lines.addElement(new Key(getImageFromInternalStorage("mid_sel_"+size),
+                                        getImageFromInternalStorage("mid_un_"+size),
+                                        Constants.KEYCODE_SELECT,size+4,size+4)); //FIXME
+
+                Lines.addElement(new Key(getImageFromInternalStorage("red_un_"+size),
+                                        getImageFromInternalStorage("red_sel_"+size),
+                                        '1',base,10));
+                Lines.addElement(new Key(getImageFromInternalStorage("green_un_"+size),
+                                        getImageFromInternalStorage("green_sel_"+size)
+                                        ,'3',base+size*2,10));
+                Lines.addElement(new Key(getImageFromInternalStorage("blue_un_"+size),
+                                        getImageFromInternalStorage("blue_sel_"+size),
+                                        '7',base+size/2,10+size*3/2));
+                Lines.addElement(new Key(getImageFromInternalStorage("yellow_un_"+size),
+                                        getImageFromInternalStorage("yellow_sel_"+size),
+                                        '9',base+size*5/2,10+size*3/2));
+
+        Keyboard.addElement(Lines);
+
+        Maps.addElement(Keyboard);
 
      }
 
@@ -534,7 +701,8 @@ class KeyboardLayer extends PopupLayer implements VirtualKeyboardListener {
      */
     public int getAvailableWidth() {
         if (tfContext != null) {
-            return tfContext.tf.owner.getWidth();
+            return bounds[W];
+            //return tfContext.tf.owner.getWidth();
         } else if (cvContext != null) {
             return cvContext.owner.getWidth();
         }
@@ -564,11 +732,17 @@ class KeyboardLayer extends PopupLayer implements VirtualKeyboardListener {
 
 
     private Image getImageFromInternalStorage(String imageName) {
-        byte[] imageBytes =
-                ResourceHandler.getSystemImageResource(classSecurityToken, imageName);
 
-        if (imageBytes != null) {
-            return Image.createImage(imageBytes, 0, imageBytes.length);
+        try {
+            byte[] imageBytes =
+                    ResourceHandler.getSystemImageResource(classSecurityToken, imageName);
+    
+            if (imageBytes != null) {
+                return Image.createImage(imageBytes, 0, imageBytes.length);
+            }
+        }
+        catch (Exception e) {
+            System.out.println("Error reading image:"+imageName);
         }
 
         return null;
