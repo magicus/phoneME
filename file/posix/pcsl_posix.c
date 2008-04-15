@@ -76,6 +76,7 @@ int pcsl_file_finalize() {
 int pcsl_file_open(const pcsl_string * fileName, int flags, void **handle)
 {
     int   fd;
+    int oFlag = O_RDONLY;
     int   creationMode = 0;
     const jbyte * pszOsFilename = pcsl_string_get_utf8_data(fileName);
 
@@ -83,11 +84,29 @@ int pcsl_file_open(const pcsl_string * fileName, int flags, void **handle)
       return -1;
     }
 
-    if((flags & PCSL_FILE_O_CREAT) == PCSL_FILE_O_CREAT) {
+    /* compute open control flag */
+    if ((flags & PCSL_FILE_O_WRONLY) == PCSL_FILE_O_WRONLY) {
+        oFlag |= O_WRONLY;
+    } 
+
+    if ((flags & PCSL_FILE_O_RDWR) == PCSL_FILE_O_RDWR) {
+        oFlag |= O_RDWR;
+    } 
+
+    if ((flags & PCSL_FILE_O_CREAT) == PCSL_FILE_O_CREAT) {
+        oFlag |= O_CREAT;
         creationMode = DEFAULT_FILE_CREATION_MODE;
+    } 
+
+    if ((flags & PCSL_FILE_O_TRUNC) == PCSL_FILE_O_TRUNC) {
+        oFlag |= O_TRUNC;
+    } 
+
+    if ((flags & PCSL_FILE_O_APPEND) == PCSL_FILE_O_APPEND) {
+        oFlag |= O_APPEND;
     }
 
-    fd = open((char*)pszOsFilename, flags, creationMode);
+    fd = open((char*)pszOsFilename, oFlag, creationMode);
 
     pcsl_string_release_utf8_data(pszOsFilename, fileName);
 
