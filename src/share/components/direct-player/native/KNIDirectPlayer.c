@@ -246,19 +246,18 @@ KNIDECL(com_sun_mmedia_DirectPlayer_nGetMediaTime) {
 
     jint handle = KNI_GetParameterAsInt(1);
     KNIPlayerInfo* pKniInfo = (KNIPlayerInfo*)handle;
-    long ms = -1;
     javacall_result ret;
-
+    long ms = -1;
+LockAudioMutex();
     if (pKniInfo && pKniInfo->pNativeHandle) {
-LockAudioMutex();            
         ret = javacall_media_get_time(pKniInfo->pNativeHandle, &ms);
-UnlockAudioMutex();            
+        if (ret != JAVACALL_OK) {
+            ms = -1;
+        }
     }
+UnlockAudioMutex();
 
-    if (ret != JAVACALL_OK) {
-        ms = -1;
-    }
-    MMP_DEBUG_STR1("-nGetMediaTime time=%d\n", returnValue);
+    MMP_DEBUG_STR1("-nGetMediaTime time=%d\n", ms);
 
     KNI_ReturnInt((jint)ms);
 }
