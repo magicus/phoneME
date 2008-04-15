@@ -56,6 +56,10 @@ import javax.microedition.media.control.StopTimeControl;
 import com.sun.mmedia.DirectRecord;
 // #endif ]
 
+// #ifdef ENABLE_JSR_234 [
+import com.sun.amms.directcontrol.*;
+// #endif ]
+
 /**
  * Media direct player base class
  * This class depends on native library to handle media data
@@ -96,6 +100,10 @@ public class DirectPlayer extends BasicPlayer
     private DirectMIDIControl midiControl;
     // #endif ]
 
+// #ifdef ENABLE_JSR_234 [
+    private DirectRDSControl rdsControl;
+// #endif ]
+
     // #ifdef ENABLE_MULTIPLE_ISOLATES [
     // Tunnel between media and MIDP
     private static MediaTunnel mediaTunnel;
@@ -110,7 +118,7 @@ public class DirectPlayer extends BasicPlayer
     // this field will be checked in the native finalizer
     private boolean hasTakenRadioAccess = false;
 
-    // Native functions /////////////////////////////////////////////////
+// Native functions /////////////////////////////////////////////////
     
     // Terminate native library
     protected native int nTerm(int handle);
@@ -632,6 +640,19 @@ public class DirectPlayer extends BasicPlayer
                 return vc;
             }
         }
+// #ifdef ENABLE_JSR_234 [
+        if ((null != locator) && locator.startsWith(Configuration.RADIO_CAPTURE_LOCATOR))
+        {
+            if( type.equals( rdscName ) )
+            {
+                if( null == rdsControl )
+                {
+                    rdsControl = DirectRDSControl.createInstance( hNative );
+                }
+                return rdsControl;
+            }
+        }
+// #endif ]
 
         if (debug) System.out.println("[direct] DirectPlayer.doGetControl " + type + " return null");
         return null;
