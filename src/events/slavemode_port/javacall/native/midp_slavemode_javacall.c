@@ -43,15 +43,6 @@
 #if ENABLE_JSR_135
 #include <javacall_multimedia.h>
 #include <javanotify_multimedia.h>
-/**
- * Constructs the descriptor from appId (10 bit), playerId (16 bit) and
- * event code (6 bit)
- */
-/*
-#define MAKE_PLAYER_DESCRIPTOR(appId_, playerId_, event_) \
-    (((((event_)-JAVACALL_EVENT_MEDIA_JAVA_EVENTS_MARKER) & 0x3F) << 26) | \
-        (((appId_) & 0x3FF) << 16) | ((playerId_) & 0xFFFF))
-*/
 #include <KNICommon.h>
 #endif
 
