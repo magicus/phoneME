@@ -29,11 +29,6 @@
 
 #include <pcsl_string.h>
 
-#ifndef WINCE
-#include <fcntl.h>
-#include <stdio.h>
-#endif
-
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -92,39 +87,30 @@ extern "C" {
  *  File system Open control flags, to be passed to pcsl_file_open() 
  */
 
-#ifdef WINCE
-#define PCSL_FILE_O_RDONLY             0x00
-#define PCSL_FILE_O_WRONLY             0x01
-#define PCSL_FILE_O_RDWR               0x02
-#define PCSL_FILE_O_CREAT              0x40
-#define PCSL_FILE_O_TRUNC              0x200 
-#define PCSL_FILE_O_APPEND             0x400
-#else
-
 /**
  * Open the file for reading only.
  */
 
-#define PCSL_FILE_O_RDONLY             O_RDONLY
+#define PCSL_FILE_O_RDONLY             0x00
 
 /**
  * Open the file for writing only.
  */
 
-#define PCSL_FILE_O_WRONLY             O_WRONLY
+#define PCSL_FILE_O_WRONLY             0x01
 
 /**
  * Open the file for reading and writing.
  */
 
-#define PCSL_FILE_O_RDWR               O_RDWR
+#define PCSL_FILE_O_RDWR               0x02
 
 /**
  * Create the file  if  it  does  not  exist.
  * If the file exists, this flag has no effect except.
  */
 
-#define PCSL_FILE_O_CREAT              O_CREAT
+#define PCSL_FILE_O_CREAT              0x40
 
 /**
  * If the file exists and is a regular file, and the file
@@ -132,7 +118,7 @@ extern "C" {
  * is  truncated  to  0.
  */
 
-#define PCSL_FILE_O_TRUNC              O_TRUNC
+#define PCSL_FILE_O_TRUNC              0x200 
 
 /**
  * If set, the file offset is set to the end of the file
@@ -140,35 +126,27 @@ extern "C" {
  * contents of a file.
  */
 
-#define PCSL_FILE_O_APPEND             O_APPEND
-#endif /* WINCE */
+#define PCSL_FILE_O_APPEND             0x400
 
 /**  
  * Below definitions are for pcsl_file_seek's position parameter 
  */
 
-#ifdef WINCE
-#define PCSL_FILE_SEEK_SET  0
-#define	PCSL_FILE_SEEK_CUR  1
-#define PCSL_FILE_SEEK_END  2
-#else
-
 /**
  *  The offset is set to the specified number of offset bytes. 
  */
-#define PCSL_FILE_SEEK_SET  SEEK_SET
+#define PCSL_FILE_SEEK_SET  0
 
 /**
  * The offset is set to its current location plus offset bytes. 
  */
-#define	PCSL_FILE_SEEK_CUR  SEEK_CUR
+#define	PCSL_FILE_SEEK_CUR  1
 
 /**
  *  The offset is set to the size of the file plus offset bytes. 
  */
-#define PCSL_FILE_SEEK_END  SEEK_END
+#define PCSL_FILE_SEEK_END  2
 
-#endif /* WINCE */
 
 /**
  * Initializes the File System. 
