@@ -85,7 +85,21 @@ public class OCSPValidatorImpl implements OCSPValidator {
     public int checkCertStatus(Certificate cert, Certificate issuerCert)
             throws OCSPException {
         try {
-            openConnection();
+            String responderUrl =
+                    ((X509Certificate)cert).getAuthAccessLocation();
+            if (responderUrl == null) {
+                /*
+                 * IMPL_NOTE: in our implementation the certificates not
+                 *     containing AuthorityInfoAccess extension are not
+                 *     checked using OCSP, so we should never get here.
+                 *     To change this behavior, the following code block:  
+                 *         "if (cert.getAuthAccessLocation() == null)"
+                 *     should be removed in VerifierImpl.checkCertChain().
+                 */
+                responderUrl = Configuration.getProperty("ocsp.responderURL");
+            }
+
+            openConnection(responderUrl);
 
             OCSPRequest request =
                     new OCSPRequest((X509Certificate)cert,
@@ -132,12 +146,12 @@ public class OCSPValidatorImpl implements OCSPValidator {
     /**
      * Opens a connection to the OCSP server.
      *
+     * @param responderUrl URL of the OCSP server to establish connection with
      * @throws OCSPException if the connection can't be established
      */
-    private void openConnection() throws OCSPException {
+    private void openConnection(String responderUrl) throws OCSPException {
         // IMPL_NOTE: currently proxyUsername and proxyPassword are not used. 
         String proxyUsername = null, proxyPassword = null;
-        String responderUrl = Configuration.getProperty("ocsp.responderURL");
 
         try {
             httpConnection = (HttpConnection)
@@ -169,7 +183,7 @@ public class OCSPValidatorImpl implements OCSPValidator {
 
             httpConnection.setRequestProperty("Accept",
                                               OCSP_RESPONSE_MIME_TYPE);
-            httpConnection.setRequestProperty("ContentType",
+            httpConnection.setRequestProperty("Content-Type",
                                               OCSP_REQUEST_MIME_TYPE);
             httpConnection.setRequestProperty("Content-length",
                 String.valueOf(requestBytes.length));
