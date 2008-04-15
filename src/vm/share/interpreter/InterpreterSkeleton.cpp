@@ -154,7 +154,7 @@ void native_math_sqrt_entry()                      {}
 void native_math_ceil_entry()                      {}
 void native_math_floor_entry()                     {}
 
-#if ENABLE_CLDC_111
+#if ENABLE_CLDC_111 || ENABLE_REFLECTION
 
 void native_math_asin_entry()                      {}
 void native_math_acos_entry()                      {}

@@ -50,7 +50,7 @@
 #include "incls/_precompiled.incl"
 #include "incls/_JFP_lib_sin.cpp.incl"
 
-#if ENABLE_FLOAT && ENABLE_CLDC_111
+#if ENABLE_FLOAT && (ENABLE_CLDC_111 || ENABLE_REFLECTION)
 
 static const double
 ac_one=  1.00000000000000000000e+00, /* 0x3FF00000, 0x00000000 */

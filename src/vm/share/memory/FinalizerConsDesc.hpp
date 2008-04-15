@@ -34,21 +34,41 @@ class FinalizerConsDesc: public ObjArrayDesc {
     Size           = 2
   };
 
-  OopDesc** obj_at_addr(int index) {
-    OopDesc** base = (OopDesc**)((address)this + ArrayDesc::header_size());
-    return base + index;
+  OopDesc** base ( void ) {
+    return DERIVED( OopDesc**, this, ArrayDesc::header_size() );
+  }
+  OopDesc* const* base ( void ) const {
+    return DERIVED( OopDesc* const*, this, ArrayDesc::header_size() );
+  }
+
+  OopDesc** obj_at_addr( const int index ) {
+    return base() + index;
+  }
+  OopDesc* const* obj_at_addr( const int index ) const {
+    return base() + index;
   }
 
   // Raw functions during GC
-  OopDesc** referent_addr()           { return obj_at_addr(ReferentOffset); }
-  FinalizerConsDesc** next_addr()     { return (FinalizerConsDesc**) obj_at_addr(NextOffset); }
+  OopDesc** referent_addr( void ) {
+    return obj_at_addr(ReferentOffset);
+  }
+  OopDesc* const* referent_addr( void ) const {
+    return obj_at_addr(ReferentOffset);
+  }
+
+  FinalizerConsDesc** next_addr( void ) {
+    return (FinalizerConsDesc**) obj_at_addr(NextOffset);
+  }
+  FinalizerConsDesc* const* next_addr( void ) const {
+    return (FinalizerConsDesc* const*) obj_at_addr(NextOffset);
+  }
 
   // Referent (finalizer reachable object)
-  OopDesc* referent()                 { return *referent_addr(); }
-  void set_referent(OopDesc* r)       { oop_write_barrier(referent_addr(), r); }
+  OopDesc* referent( void ) const { return *referent_addr(); }
+  void set_referent(OopDesc* r)   { oop_write_barrier(referent_addr(), r); }
 
   // Link to next element in list
-  FinalizerConsDesc* next()           { return *next_addr(); }
+  FinalizerConsDesc* next( void ) const { return *next_addr(); }
   void set_next(FinalizerConsDesc* n) { oop_write_barrier((OopDesc**) next_addr(), n); }
 
   void run_finalizer(void);

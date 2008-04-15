@@ -55,7 +55,7 @@ JVM_SOFTFP_LINKAGE jdouble jvm_floor(jdouble x) {
   return jvm_fplib_floor(x);
 }
 
-#if ENABLE_CLDC_111
+#if ENABLE_CLDC_111 || ENABLE_REFLECTION
 
 JVM_SOFTFP_LINKAGE jdouble jvm_asin(jdouble x) {
   return jvm_fplib_asin(x);

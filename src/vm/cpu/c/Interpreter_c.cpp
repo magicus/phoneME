@@ -563,7 +563,7 @@ enum {
     ADVANCE_FOR_RETURN();
   }
 
-#if ENABLE_CLDC_111
+#if ENABLE_CLDC_111 || ENABLE_REFLECTION
 
   void native_math_asin_entry() {
     jdouble x = DOUBLE_POP();

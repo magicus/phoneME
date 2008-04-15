@@ -120,7 +120,7 @@ void NativeGenerator::generate_native_math_entries() {
   set_return_type(T_DOUBLE);
   jmpx(return_reg);
 
-#if ENABLE_CLDC_111
+#if ENABLE_CLDC_111 || ENABLE_REFLECTION
 
   Label label_asin("jvm_asin");       import(label_asin);
   Label label_acos("jvm_acos");       import(label_acos);

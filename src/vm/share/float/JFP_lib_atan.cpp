@@ -44,7 +44,7 @@
 #include "incls/_precompiled.incl"
 #include "incls/_JFP_lib_sin.cpp.incl"
 
-#if ENABLE_FLOAT && ENABLE_CLDC_111
+#if ENABLE_FLOAT && (ENABLE_CLDC_111 || ENABLE_REFLECTION)
 
 static const double atanhi[] = {
   4.63647609000806093515e-01, /* atan(0.5)hi 0x3FDDAC67, 0x0561BB4F */

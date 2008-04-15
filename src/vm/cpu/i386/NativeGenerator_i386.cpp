@@ -136,7 +136,7 @@ void NativeGenerator::generate_native_math_entries() {
   jmp(edi);
   rom_linkable_entry_end(); // native_math_floor_entry
 
-#if ENABLE_CLDC_111
+#if ENABLE_CLDC_111 || ENABLE_REFLECTION
 
   // Generate asin entry.
   offset = 0;
