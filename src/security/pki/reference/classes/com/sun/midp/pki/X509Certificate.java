@@ -236,6 +236,7 @@ public class X509Certificate implements Certificate {
         (byte) 0x02, (byte) 0x05, (byte) 0x05, (byte) 0x00, 
         (byte) 0x04, (byte) 0x10
     };
+
     /**
      * Expected prefix in decrypted value when SHA-1 hash is used for signing
      * 30 21 30 09 06 05 2b 0e 03 02 1a 05 00 04 14.
@@ -266,6 +267,11 @@ public class X509Certificate implements Certificate {
     private static final byte[] ID_KP = {
         (byte) 0x2b, (byte) 0x06, (byte) 0x01, (byte) 0x05,
         (byte) 0x05, (byte) 0x07, (byte) 0x03
+    };
+
+    /** Includes DER encoding for id-pe-authorityInfoAccess. */
+    private static final byte[] ID_AIA = {
+        0x2b, 0x06, 0x01, 0x05, 0x05, 0x07, 0x01, 0x01
     };
 
     /** True if subject matches issuer. */
@@ -320,7 +326,12 @@ public class X509Certificate implements Certificate {
     private int keyUsage = -1;
     /** Collection of extended keyUsage bits. */
     private int extKeyUsage = -1;
-    
+    /** AuthorityInfoAccess extension: access method. */
+    private byte[] authAccessMethod = null;
+    /** AuthorityInfoAccess extension: access location. */
+    private String authAccessLocation = null;
+
+
     /** Private constructor */
     private X509Certificate() {
     }
@@ -779,9 +790,65 @@ public class X509Certificate implements Certificate {
                      * policyConstraints 0x24
                      */ 
                 }
+            } else {
+                // Check for AuthorityInfoAccess extension: id-pe 1
+                authAccessLocation = "";
+                
+                if ((end - extIdIdx > ID_AIA.length) &&
+                         Utils.byteMatch(enc, extIdIdx, ID_AIA,
+                                         0, ID_AIA.length)) {
+                    extId = "AIA";
+
+                    /*
+                     * AuthorityInfoAccessSyntax  ::=
+                     *     SEQUENCE SIZE (1..MAX) OF AccessDescription
+                     *
+                     * AccessDescription  ::=  SEQUENCE {
+                     *     accessMethod          OBJECT IDENTIFIER,
+                     *     accessLocation        GeneralName  }
+                     */
+                    getLen(SEQUENCE_TYPE);
+                    int oidLen;
+
+                    while (idx < extValIdx + extValLen) {
+                        getLen(SEQUENCE_TYPE);
+                        
+                        oidLen = getLen(OID_TYPE);
+                        authAccessMethod = new byte[oidLen];
+                        System.arraycopy(enc, idx, authAccessMethod, 0, oidLen);
+                        idx += oidLen;
+
+                        // reset context-specific bits (10xx xxxx)
+                        byte choiceVal = (byte)(enc[idx] & (byte)0x3f);
+
+                        /*
+                         * Currently we support only the following types:
+                         * 
+                         * rfc822Name  [1]     IA5String,
+                         * dNSName     [2]     IA5String,
+                         * uniformResourceIdentifier [6] IA5String
+                         */
+                        if (choiceVal == 1 || choiceVal == 2 ||
+                                choiceVal == 6) {
+                            int len = getLen(enc[idx]);
+                            if (len > 0) {
+                                for (int i = 0; i < len; i++) {
+                                    authAccessLocation += (char)enc[idx++];
+                                }
+                            }
+                        } else {
+                            // acessLocation type is not supported
+                            authAccessMethod = null;
+                            authAccessLocation = null;
+                            if (crit) {
+                                badExt = true;
+                            }
+                        }
+                    }
+                }
             }
             
-                // For debugging only
+            // For debugging only
             if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
                 Logging.report(Logging.INFORMATION, LogChannels.LC_SECURITY,
                            "<Id: " +
@@ -1599,6 +1666,26 @@ public class X509Certificate implements Certificate {
      */
     public byte[] getRawSerialNumber() {
         return getCopyOfArray(serialNumberBytes);
+    }
+
+    /**
+     * Returns access method field of AuthorityInfoAccess extension.
+     *
+     * @return A byte array containing the access method field of
+     *         AuthorityInfoAccess extension if present, null otherwise.
+     */
+    public byte[] getAuthAccessMethod() {
+        return getCopyOfArray(authAccessMethod);
+    }
+
+    /**
+     * Returns access location field of AuthorityInfoAccess extension.
+     *
+     * @return A string containing the access location field of
+     *         AuthorityInfoAccess extension if present, null otherwise.
+     */
+    public String getAuthAccessLocation() {
+        return authAccessLocation;
     }
 
     /**
