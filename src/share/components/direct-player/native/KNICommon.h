@@ -115,36 +115,26 @@ do { \
     javacall_result result__ = JAVACALL_FAIL; \
     javacall_handle handle__ = (handle_); \
     int javacall_event__ = (int)(javacall_event_); \
-javacall_printf("Enter %s", __FUNCTION__);\
     if (ctx__ == NULL) { \
-javacall_printf("+Calling: '%s', playerid=%d, event=%s", #code_, (player_id_), #javacall_event_);\
         result__ = (code_); \
-javacall_printf("-result=%d", result__);\
     } else { \
-javacall_printf("+Re-enter after %s", #javacall_event_);\
         (result__ = ctx__->status); \
-javacall_printf("-result=%d", result__);\
         if (result__ == JAVACALL_OK) { \
             JAVACALL_MM_ASYNC_GET_RESULT_##args_; \
         } \
     } \
     if (result__ == JAVACALL_WOULD_BLOCK) { \
-javacall_printf("JAVACALL_WOULD_BLOCK");\
         if (ctx__ == NULL) { \
             if ((ctx__ = (MidpReentryData *)(SNI_AllocateReentryData(sizeof (MidpReentryData)))) == NULL) { \
                 (status_) = JAVACALL_OUT_OF_MEMORY; \
-javacall_printf("Cannot alloc MidpReentryData");\
-javacall_printf("Exit %s", __FUNCTION__);\
                 break; \
             } \
         } \
         ctx__->descriptor = MAKE_PLAYER_DESCRIPTOR(app_id_, player_id_, javacall_event__); \
         ctx__->waitingFor = MEDIA_EVENT_SIGNAL; \
-javacall_printf("will wait");\
         SNI_BlockThread(); \
     } \
     (status_) = result__; \
-javacall_printf("Exit %s", __FUNCTION__);\
 } while(0)
 
 /**
