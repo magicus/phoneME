@@ -467,15 +467,15 @@ public:
 
   static void update_compiler_area_top(const OopDesc* latest_compiled_method) {
     OopDesc** compiler_area_top = _saved_compiler_area_top;
+    _saved_compiler_area_top = NULL;
+
     if( latest_compiled_method ) {
       GUARANTEE(latest_compiled_method == (OopDesc*)compiler_area_top, "sanity");
       compiler_area_top = DERIVED(OopDesc**, compiler_area_top,
                                    latest_compiled_method->object_size());
     }
     compiler_area_terminate( compiler_area_top );
-  #ifndef PRODUCT
-    _saved_compiler_area_top = NULL;
-  #endif
+
     if (VerifyGC >= 2) {
       verify();
     }
