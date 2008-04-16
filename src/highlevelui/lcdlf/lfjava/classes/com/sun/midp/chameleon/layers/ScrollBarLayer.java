@@ -162,9 +162,8 @@ public class ScrollBarLayer extends ScrollIndLayer {
             }
             if (ScreenSkin.TEXT_ORIENT == Graphics.LEFT){
                 bounds[X] = scrollableBounds[X] + scrollableBounds[W] - bounds[W] - shift;
-            }
-            else {
-                bounds[X] = scrollableBounds[X] - shift;
+            } else {
+                bounds[X] = scrollableBounds[X] + shift;
             }
 
             // the scrollbar move left one pixel as the docking layer draws its bound one pixel less                

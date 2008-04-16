@@ -1320,12 +1320,6 @@ class LayoutManager {
      */
     static final int LAYOUT_VMASK = 0x30;
 
-    // laguage convention is from left to right
-//     final static int LEFT_TO_RIGHT = 0;
-
-     // laguage convention is from right to left
-//     final static int RIGHT_TO_LEFT = 1;
-
      // layout derection depend on the language conventions in use
      public static int layoutDirection = ScreenSkin.TEXT_ORIENT;
 

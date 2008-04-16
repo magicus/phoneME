@@ -824,8 +824,9 @@ class ChoiceGroupLFImpl extends ItemLFImpl implements ChoiceGroupLF {
                             Graphics.LEFT | Graphics.TOP);
                     offSetX = ChoiceGroupSkin.PAD_H + choiceImg.getWidth();
                 } else {
-                    g.drawImage(choiceImg, bounds[WIDTH] - 2 * ChoiceGroupSkin.PAD_H - choiceImg.getWidth(), 0,
-                            Graphics.LEFT | Graphics.TOP);
+                    g.drawImage(choiceImg, bounds[WIDTH]
+                            - 2 * ChoiceGroupSkin.PAD_H - choiceImg.getWidth(),
+                            0, Graphics.LEFT | Graphics.TOP);
                     offSetX = ChoiceGroupSkin.PAD_H;
                 }
             } else {

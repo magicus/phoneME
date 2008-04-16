@@ -137,6 +137,11 @@ public class AlertResources {
             if (AlertSkin.TITLE_ALIGN == Graphics.LEFT) {
                 AlertSkin.TITLE_ALIGN = Graphics.RIGHT;
             }
+
+            if (AlertSkin.ALIGN_X == Graphics.LEFT) {
+                AlertSkin.ALIGN_X = Graphics.RIGHT;
+            }
+            
         }
     }
 }

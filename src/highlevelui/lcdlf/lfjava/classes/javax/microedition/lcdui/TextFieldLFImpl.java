@@ -483,8 +483,6 @@ class TextFieldLFImpl extends ItemLFImpl implements
     void lPaintContent(Graphics g, int width, int height) {
         // Draw the TextField background region
 
-        System.out.println("TextFieldLFImpl.lPaintContent contentWidth=" + width);
-        System.out.println("TextFieldLFImpl.lPaintContent Width=" + bounds[WIDTH]);
         if (editable) {
             if (TextFieldSkin.IMAGE_BG != null) {
                 CGraphicsUtil.draw9pcsBackground(g, 0, 0, width, height,

@@ -554,10 +554,6 @@ public class SkinResources {
                 TitleSkin.TEXT_ALIGN_X = Graphics.RIGHT;
             }
 
-            if (AlertSkin.ALIGN_X == Graphics.LEFT) {
-                AlertSkin.ALIGN_X = Graphics.RIGHT;
-            }
-
         }
     }
 

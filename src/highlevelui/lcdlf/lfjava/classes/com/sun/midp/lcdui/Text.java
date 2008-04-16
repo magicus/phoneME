@@ -188,11 +188,7 @@ public class Text {
 	    cursor.index >= 0 && cursor.index <= str.length()) {
 	    int pos = offset;
 	    if (cursor.index > 0) {
-            if (ScreenSkin.TEXT_ORIENT == Graphics.RIGHT) {
-                pos += font.charsWidth(text, 0, cursor.index);
-            } else {
-                pos += font.charsWidth(text, 0, cursor.index);
-            }
+            pos += font.charsWidth(text, 0, cursor.index);
         }
 	    // IMPL_NOTE: optimize this with math instead of iteration
 

@@ -55,7 +55,7 @@ class AlertLFImpl extends ScreenLFImpl implements AlertLF {
 
         alert = a;
         
-//        AlertResources.load();
+        AlertResources.load();
         
         // SYNC NOTE: Hold the lock to prevent changes to indicator
         // internal state
