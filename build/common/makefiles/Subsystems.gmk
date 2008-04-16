@@ -328,6 +328,15 @@ include $(JSR_256_DIR)/build/cldc_application/$(SUBSYSTEM_MAKE_FILE)
 endif
 
 #####################################################################
+# (Extra) Contactless Communication
+# Description: JSR 257
+#####################################################################
+ifeq ($(USE_JSR_257), true)
+JPP_DEFS += -DENABLE_JSR_257
+include $(JSR_257_DIR)/build/$(SUBSYSTEM_MAKE_FILE)
+endif
+ 
+#####################################################################
 # (Extra) XML & HTML
 # Description: JSR 290
 #####################################################################

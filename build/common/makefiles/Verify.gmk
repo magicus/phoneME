@@ -154,6 +154,12 @@ define verify_jsr_256_directory
     fi
 endef
 
+define verify_jsr_257_directory
+    if [ "$(USE_JSR_257)" = "true" ]; then \
+        $(verify_directory) \
+    fi
+endef
+ 
 define verify_jsr_290_directory
     if [ "$(USE_JSR_290)" = "true" ]; then \
         $(verify_directory); \
