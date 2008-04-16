@@ -34,6 +34,9 @@
 #include "gxj_intern_putpixel.h"
 #include "gxj_intern_font_bitmap.h"
 
+/** Text output directions */
+#define LEFT_TO_RIGHT    1
+#define RIGHT_TO_LEFT   -1
 
 /**
  * @file
@@ -61,7 +64,7 @@ static pfontbitmap selectFontBitmap(jchar c, pfontbitmap* pfonts) {
 /**
  * @file
  *
- * putpixel primitive character drawing. 
+ * putpixel primitive character drawing.
  */
 unsigned char BitMask[8] = {0x80,0x40,0x20,0x10,0x8,0x4,0x2,0x1};
 static void drawChar(gxj_screen_buffer *sbuf, jchar c0,
@@ -130,15 +133,10 @@ static void drawChar(gxj_screen_buffer *sbuf, jchar c0,
 }
 
 /*
- * Draws the first n characters specified using the current font,
- * color, and anchor point.
+ * @file
  *
- * <p>
- * <b>Reference:</b>
- * Related Java declaration:
- * <pre>
- *     drawString(Ljava/lang/String;III)V
- * </pre>
+ * draws the first n characters specified using the current font,
+ * color, and anchor point.
  *
  * @param pixel Device-dependent pixel value
  * @param clip Clipping information
@@ -151,14 +149,17 @@ static void drawChar(gxj_screen_buffer *sbuf, jchar c0,
  * @param x The x coordinate of the anchor point
  * @param y The y coordinate of the anchor point
  * @param anchor The anchor point for positioning the text
+ * @param direction text output direction (LEFT_TO_RIGHT | RIGHT_TO_LEFT)
  * @param chararray Pointer to the characters to be drawn
  * @param n The number of characters to be drawn
  */
-void
-gx_draw_chars(jint pixel, const jshort *clip, 
+static void
+drawString(jint pixel, const jshort *clip,
 	      const java_imagedata *dst, int dotted, 
 	      int face, int style, int size,
-	      int x, int y, int anchor, const jchar *charArray, int n) {
+	      int x, int y, int anchor, int direction,
+	      const jchar *charArray, int n) {
+
     int i;
     int xStart;
     int xDest;
@@ -166,6 +167,9 @@ gx_draw_chars(jint pixel, const jshort *clip,
     int width;
     int yLimit;
     int nCharsToSkip = 0;
+    int charToDraw;
+    int charToStop;
+
     int widthRemaining;
     int yCharSource;
     int charsWidth;
@@ -175,6 +179,7 @@ gx_draw_chars(jint pixel, const jshort *clip,
     int fontAscent;
     int fontDescent;
     int fontLeading;
+    gxj_pixel_type pixelColor;
     int clipX1 = clip[0];
     int clipY1 = clip[1];
     int clipX2 = clip[2];
@@ -182,11 +187,11 @@ gx_draw_chars(jint pixel, const jshort *clip,
     int diff;
     int result;
     gxj_screen_buffer screen_buffer;
-    gxj_screen_buffer *dest = 
+    gxj_screen_buffer *dest =
       gxj_get_image_screen_buffer_impl(dst, &screen_buffer, NULL);
     dest = (gxj_screen_buffer *)getScreenBuffer(dest);
 
-    REPORT_CALL_TRACE(LC_LOWUI, "LCDUIdrawChars()\n");
+    REPORT_CALL_TRACE(LC_LOWUI, "gx_draw_chars_impl()\n");
 
     if (n <= 0) {
         /* nothing to do */
@@ -215,6 +220,7 @@ gx_draw_chars(jint pixel, const jshort *clip,
         yDest -= charsHeight - fontDescent;
     }
 
+    // Request platform to draw chars on its own
     result = gxjport_draw_chars(pixel, clip, dest, dotted, face, style, size,
                                 xDest, yDest, anchor, charArray, n);
     if (result == KNI_TRUE) { 
@@ -292,6 +298,20 @@ gx_draw_chars(jint pixel, const jshort *clip,
     }
 
     widthRemaining = width;
+    pixelColor = GXJ_RGB24TORGB16(pixel);
+
+    switch (direction) {
+        case RIGHT_TO_LEFT:
+            charToDraw = n - nCharsToSkip - 1;
+            charToStop = -1;
+            break;
+
+        case LEFT_TO_RIGHT:
+        default:
+            charToDraw = nCharsToSkip;
+            charToStop = n;
+            break;
+    }
 
     if (xStart != 0) {
         int xLimit;
@@ -305,29 +325,49 @@ gx_draw_chars(jint pixel, const jshort *clip,
         }
 
         /* Clipped, draw the right part of the first char. */
-        drawChar(dest, charArray[nCharsToSkip], GXJ_RGB24TORGB16(pixel), xDest, yDest,
+        drawChar(dest, charArray[charToDraw], pixelColor, xDest, yDest,
                  xStart, yCharSource, xLimit, yLimit,
                  FontBitmaps, fontWidth, fontHeight);
-        nCharsToSkip++;
+        charToDraw += direction;
         xDest += startWidth;
         widthRemaining -= startWidth;
     }
 
     /* Draw all the fully wide chars. */
-    for (i = nCharsToSkip; i < n && widthRemaining >= fontWidth;
-         i++, xDest += fontWidth, widthRemaining -= fontWidth) {
+    for (i = charToDraw; i != charToStop && widthRemaining >= fontWidth;
+         i+=direction, xDest += fontWidth, widthRemaining -= fontWidth) {
 
-        drawChar(dest, charArray[i], GXJ_RGB24TORGB16(pixel), xDest, yDest,
+        drawChar(dest, charArray[i], pixelColor, xDest, yDest,
                  0, yCharSource, fontWidth, yLimit,
                  FontBitmaps, fontWidth, fontHeight);
     }
 
-    if (i < n && widthRemaining > 0) {
+    if (i != charToStop && widthRemaining > 0) {
         /* Clipped, draw the left part of the last char. */
-        drawChar(dest, charArray[i], GXJ_RGB24TORGB16(pixel), xDest, yDest,
+        drawChar(dest, charArray[i], pixelColor, xDest, yDest,
                  0, yCharSource, widthRemaining, yLimit,
                  FontBitmaps, fontWidth, fontHeight);
     }
+}
+
+
+void
+gx_draw_chars(jint pixel, const jshort *clip,
+	      const java_imagedata *dst, int dotted,
+	      int face, int style, int size,
+	      int x, int y, int anchor,
+	      const jchar *charArray, int n) {
+
+    /* In the case of right-to-left output the string with mixed content should be
+     * analyzed for sequences of characters with the same direction. Each sequence
+     * substring should be rendered with proper coordinates, anchor and direction.
+     */
+
+    /* Get locale to detect whether right-to-left output is needed */
+
+
+    drawString(pixel, clip, dst, dotted, face, style, size,
+        x, y, anchor, LEFT_TO_RIGHT, charArray, n);
 }
 
 /**
@@ -345,7 +385,7 @@ gx_get_fontinfo(int face, int style, int size,
 		int *ascent, int *descent, int *leading) {
     int result;
 
-    REPORT_CALL_TRACE(LC_LOWUI, "LCDUIgetFontInfo()\n");
+    REPORT_CALL_TRACE(LC_LOWUI, "gx_get_fontinfo()\n");
 
     result = gxjport_get_font_info(face, style, size,
                                    ascent, descent, leading);
@@ -382,7 +422,7 @@ gx_get_charswidth(int face, int style, int size,
 		  const jchar *charArray, int n) {
     int width;
 
-    REPORT_CALL_TRACE(LC_LOWUI, "LCDUIcharsWidth()\n");
+    REPORT_CALL_TRACE(LC_LOWUI, "gx_get_charswidth()\n");
 
     width = gxjport_get_chars_width(face, style, size, charArray, n); 
     if (width > 0) {

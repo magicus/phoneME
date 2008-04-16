@@ -37,6 +37,7 @@ import java.util.TimerTask;
 import com.sun.midp.log.Logging;
 import com.sun.midp.log.LogChannels;
 import com.sun.midp.chameleon.skins.AlertSkin;
+import com.sun.midp.chameleon.skins.ScreenSkin;
 import com.sun.midp.chameleon.skins.resources.AlertResources;
 
 /**
@@ -337,10 +338,10 @@ class AlertLFImpl extends ScreenLFImpl implements AlertLF {
         // We vertically center the title text
         titley = 
             (AlertSkin.TITLE_HEIGHT - AlertSkin.FONT_TITLE.getHeight()) / 2;
-        
+
         switch (AlertSkin.TITLE_ALIGN) {
             case Graphics.RIGHT:
-                titlex = AlertSkin.WIDTH - AlertSkin.TITLE_MARGIN - titlew;
+                titlex = AlertSkin.WIDTH - AlertSkin.TITLE_MARGIN;
                 break;
             case Graphics.HCENTER:
                 titlex = (AlertSkin.WIDTH - titlew) / 2;
@@ -357,7 +358,7 @@ class AlertLFImpl extends ScreenLFImpl implements AlertLF {
         
         if (icon != null) {
             g.drawImage(icon, titlex, icony,
-                        Graphics.LEFT | Graphics.TOP);
+                        ScreenSkin.TEXT_ORIENT | Graphics.TOP);
             titlex += (AlertSkin.PAD_HORIZ + iconw);
             titlew -= (AlertSkin.PAD_HORIZ + iconw);
         }

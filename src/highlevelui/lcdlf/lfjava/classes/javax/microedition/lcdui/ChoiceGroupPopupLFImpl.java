@@ -108,6 +108,8 @@ class ChoiceGroupPopupLFImpl extends ChoiceGroupLFImpl {
     void lPaintContent(Graphics g, int width, int height) {
         // paint closed state of the popup
 
+        int textOffset = 0;
+
         // if there are no elements, we are done
         if (cg.numOfEls == 0) {
             return;
@@ -135,13 +137,19 @@ class ChoiceGroupPopupLFImpl extends ChoiceGroupLFImpl {
                 yOffset = 0;
             }
             width -= (w + 1);
+
+           if (ScreenSkin.TEXT_ORIENT == Graphics.RIGHT) {
+              textOffset = 0;
+            } else {
+              textOffset = width;
+            }
             if (ChoiceGroupSkin.IMAGE_BUTTON_BG != null) {
                 CGraphicsUtil.draw9pcsBackground(
-                    g, width, 1, w, height - 2,
+                    g, textOffset, 1, w, height - 2,
                     ChoiceGroupSkin.IMAGE_BUTTON_BG);
             }
             g.drawImage(ChoiceGroupSkin.IMAGE_BUTTON_ICON,
-                        width, yOffset + 1,
+                        textOffset, yOffset + 1,
                         Graphics.LEFT | Graphics.TOP);
             width -= ChoiceGroupSkin.PAD_H;
         }
@@ -152,7 +160,7 @@ class ChoiceGroupPopupLFImpl extends ChoiceGroupLFImpl {
 
         // paint value
 
-        int textOffset = 0;
+
 
         if (cg.cgElements[s].imageEl != null) {
             int iX = g.getClipX();
@@ -160,25 +168,33 @@ class ChoiceGroupPopupLFImpl extends ChoiceGroupLFImpl {
             int iW = g.getClipWidth();
             int iH = g.getClipHeight();
 
-            g.clipRect(0, 0,
+            if (ScreenSkin.TEXT_ORIENT == Graphics.RIGHT)
+                textOffset = width;
+
+            g.clipRect(textOffset, 0,
                        ChoiceGroupSkin.WIDTH_IMAGE,
                        ChoiceGroupSkin.HEIGHT_IMAGE);
             g.drawImage(cg.cgElements[s].imageEl,
-                        0, 0,
+                        textOffset, 0,
                         Graphics.LEFT | Graphics.TOP);
             g.setClip(iX, iY, iW, iH);
-            textOffset = ChoiceGroupSkin.WIDTH_IMAGE +
-                ChoiceGroupSkin.PAD_H;
         }
 
-        g.translate(textOffset, 0);
+        textOffset = ChoiceGroupSkin.WIDTH_IMAGE +
+                ChoiceGroupSkin.PAD_H;
+
+        if (ScreenSkin.TEXT_ORIENT != Graphics.RIGHT) {
+            g.translate(textOffset, 0);
+        }
         Text.drawTruncString(g,
                         cg.cgElements[s].stringEl,
                         cg.cgElements[s].getFont(),
                         (hasFocus) ? ScreenSkin.COLOR_FG_HL :
                             ChoiceGroupSkin.COLOR_FG,
                         width);
-        g.translate(-textOffset, 0);
+        if (ScreenSkin.TEXT_ORIENT != Graphics.RIGHT) {
+            g.translate(-textOffset, 0);
+        }
         
         g.translate(-ChoiceGroupSkin.PAD_H, -ChoiceGroupSkin.PAD_V);
 
@@ -574,11 +590,15 @@ class ChoiceGroupPopupLFImpl extends ChoiceGroupLFImpl {
                 g.setColor(ChoiceGroupSkin.COLOR_BORDER_SHD);
                 g.drawLine(1, 1, 1, bounds[HEIGHT] - 2); 
             }
-            
-            if (sbVisible && ScrollIndSkin.MODE == 
+
+            if (sbVisible && ScrollIndSkin.MODE ==
                     ScrollIndResourcesConstants.MODE_ARROWS) {
-                int sbX = bounds[WIDTH] - 
-                    (ChoiceGroupSkin.WIDTH_SCROLL / 2) - 1;
+                int sbX;
+                if (ScreenSkin.TEXT_ORIENT == Graphics.RIGHT) {
+                    sbX = (ChoiceGroupSkin.WIDTH_SCROLL / 2) + 1;  
+                } else {
+                    sbX = bounds[WIDTH] -(ChoiceGroupSkin.WIDTH_SCROLL / 2) - 1;
+                }
                 int sbY = ChoiceGroupSkin.PAD_V;
                 int sbH = bounds[HEIGHT] - (2 * ChoiceGroupSkin.PAD_V);
                 int thumbY = sbY + 4 + 
@@ -701,8 +721,8 @@ class ChoiceGroupPopupLFImpl extends ChoiceGroupLFImpl {
 
             if (ScrollIndSkin.MODE == ScrollIndResourcesConstants.MODE_BAR) {
                 setScrollInd(ScrollIndLayer.getInstance(ScrollIndSkin.MODE));
-                setBackground(sbVisible ? null : ChoiceGroupSkin.IMAGE_POPUP_BG,
-                              ChoiceGroupSkin.COLOR_BG);
+//                setBackground(sbVisible ? null : ChoiceGroupSkin.IMAGE_POPUP_BG,
+//                              ChoiceGroupSkin.COLOR_BG);
             }
             updatePopupLayer(viewable[Y]);
         }

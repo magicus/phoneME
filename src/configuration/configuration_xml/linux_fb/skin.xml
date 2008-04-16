@@ -36,7 +36,7 @@
 <skin_properties KeysClass="com.sun.midp.chameleon.skins.SkinPropertiesIDs">
   <integer
         Key="SCREEN_TEXT_ORIENT"
-      Value="Graphics.RIGHT"/>
+      Value="Graphics.LEFT"/>
 
   <integer
         Key="SCREEN_PAD_FORM_ITEMS"
@@ -143,7 +143,7 @@
 
   <integer
         Key="SCROLL_MODE"
-      Value="ScrollIndSkin.MODE_ARROWS"/>
+      Value="ScrollIndSkin.MODE_BAR"/>
 
   <integer
         Key="SCROLL_WIDTH"
@@ -477,7 +477,7 @@
 
   <integer
         Key="ALERT_ALIGN_X"
-      Value="Graphics.HCENTER"/>
+        Value="Graphics.LEFT"/>
 
   <integer
         Key="ALERT_ALIGN_Y"

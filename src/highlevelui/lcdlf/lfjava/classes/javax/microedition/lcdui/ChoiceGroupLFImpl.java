@@ -819,20 +819,27 @@ class ChoiceGroupLFImpl extends ItemLFImpl implements ChoiceGroupLF {
                                            i == selectedIndex);
             
             if (choiceImg != null) {
-                g.drawImage(choiceImg, 0, 0,
+                if (ScreenSkin.TEXT_ORIENT == Graphics.LEFT) {
+                    g.drawImage(choiceImg, 0, 0,
                             Graphics.LEFT | Graphics.TOP);
-                offSetX = ChoiceGroupSkin.PAD_H + choiceImg.getWidth();
+                    offSetX = ChoiceGroupSkin.PAD_H + choiceImg.getWidth();
+                } else {
+                    g.drawImage(choiceImg, bounds[WIDTH]
+                            - 2 * ChoiceGroupSkin.PAD_H - choiceImg.getWidth(),
+                            0, Graphics.LEFT | Graphics.TOP);
+                    offSetX = ChoiceGroupSkin.PAD_H;
+                }
             } else {
                 g.setColor(ChoiceGroupSkin.COLOR_FG);
                 switch (cType) {
                     case Choice.MULTIPLE:
                         offSetX = ChoiceGroupSkin.PAD_H +
                             ChoiceGroupSkin.WIDTH_IMAGE;
-                        g.drawRect(1, 1, 
+                        g.drawRect(1, 1,
                                    ChoiceGroupSkin.WIDTH_IMAGE - 3,
                                    ChoiceGroupSkin.HEIGHT_IMAGE - 3);
                         if (cg.cgElements[i].selected) {
-                            g.fillRect(3, 3, 
+                            g.fillRect(3, 3,
                                 ChoiceGroupSkin.WIDTH_IMAGE - 6,
                                 ChoiceGroupSkin.HEIGHT_IMAGE - 6);
                         }
@@ -840,61 +847,73 @@ class ChoiceGroupLFImpl extends ItemLFImpl implements ChoiceGroupLF {
                     case Choice.EXCLUSIVE:
                         offSetX = ChoiceGroupSkin.PAD_H +
                             ChoiceGroupSkin.WIDTH_IMAGE;
-                        g.drawArc(1, 1, 
+                        g.drawArc(1, 1,
                             ChoiceGroupSkin.WIDTH_IMAGE - 2,
                             ChoiceGroupSkin.HEIGHT_IMAGE - 2, 0, 360);
                         if (i == selectedIndex) {
-                            g.fillArc(3, 3, 
+                            g.fillArc(3, 3,
                                 ChoiceGroupSkin.WIDTH_IMAGE - 5,
                                 ChoiceGroupSkin.HEIGHT_IMAGE - 5, 0, 360);
                         }
                         break;
                 }
             }
-            g.translate(offSetX, 0);
+                g.translate(offSetX, 0);
 
             hilighted = (i == hilightedIndex && hasFocus);
 
             if (hilighted) {
                 g.setColor(ScreenSkin.COLOR_BG_HL);
-                g.fillRect(-ChoiceGroupSkin.PAD_H, 0, 
-                           ChoiceGroupSkin.PAD_H + contentW + 
-                           ChoiceGroupSkin.PAD_H, 
+                g.fillRect(-ChoiceGroupSkin.PAD_H, 0,
+                           ChoiceGroupSkin.PAD_H + contentW +
+                           ChoiceGroupSkin.PAD_H,
                            elHeights[i]);
             }
 
-            if (cg.cgElements[i].imageEl == null) {
-                textOffset = 0;
-            } else {
+            textOffset = 0;
+            if (cg.cgElements[i].imageEl != null) {
+
+
                 iX = g.getClipX();
                 iY = g.getClipY();
                 iW = g.getClipWidth();
                 iH = g.getClipHeight();
 
-                g.clipRect(0, 0,
-                           ChoiceGroupSkin.WIDTH_IMAGE, 
+                if (ScreenSkin.TEXT_ORIENT == Graphics.RIGHT) {
+                    if (choiceImg != null) {
+                        textOffset = w - ChoiceGroupSkin.WIDTH_IMAGE - choiceImg.getWidth() - ChoiceGroupSkin.PAD_H;
+                    } else {
+                        textOffset = w - ChoiceGroupSkin.WIDTH_IMAGE - ChoiceGroupSkin.PAD_H;                        
+                    }
+                }
+                g.clipRect(textOffset, 0,
+                           ChoiceGroupSkin.WIDTH_IMAGE,
                            ChoiceGroupSkin.HEIGHT_IMAGE);
-                g.drawImage(cg.cgElements[i].imageEl, 
-                            0, 0, 
+                g.drawImage(cg.cgElements[i].imageEl,
+                            textOffset , 0,
                             Graphics.LEFT | Graphics.TOP);
                 g.setClip(iX, iY, iW, iH);
-                textOffset = ChoiceGroupSkin.WIDTH_IMAGE +
-                    ChoiceGroupSkin.PAD_H;
+                if (ScreenSkin.TEXT_ORIENT == Graphics.RIGHT) {
+                    textOffset = 2 * ChoiceGroupSkin.PAD_H;    
+                } else {
+                    textOffset = ChoiceGroupSkin.WIDTH_IMAGE +
+                        ChoiceGroupSkin.PAD_H;
+                }
             }
-           
+
             g.translate(0, -1);
-            Text.paint(g, cg.cgElements[i].stringEl, 
+            Text.paint(g, cg.cgElements[i].stringEl,
                        cg.cgElements[i].getFont(),
-                       ChoiceGroupSkin.COLOR_FG, 
+                       ChoiceGroupSkin.COLOR_FG,
                        ScreenSkin.COLOR_FG_HL,
-                       contentW, elHeights[i], textOffset, 
+                       contentW, elHeights[i], textOffset,
                        (hilighted) ? mode | Text.INVERT : mode, null);
             g.translate(-offSetX, elHeights[i] + 1);
             translatedY += elHeights[i];
 
         } // end for
 
-        g.translate(0, -translatedY); 
+        g.translate(0, -translatedY);
     }
 
     /**

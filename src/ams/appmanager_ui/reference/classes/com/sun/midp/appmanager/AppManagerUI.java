@@ -43,6 +43,7 @@ import com.sun.midp.log.Logging;
 import com.sun.midp.log.LogChannels;
 
 import com.sun.midp.payment.PAPICleanUp;
+import com.sun.midp.chameleon.skins.ScreenSkin;
 
 import java.io.*;
 import javax.microedition.rms.*;
@@ -1761,48 +1762,92 @@ class AppManagerUI extends Form
 
                     boolean truncate = (xScrollOffset == 0) && truncated;
 
-                    g.clipRect(bgIconW + ITEM_PAD, 0,
+                    if (ScreenSkin.TEXT_ORIENT == Graphics.RIGHT) {
+                        g.clipRect(truncWidth + ITEM_PAD, 0,
+                            truncate ? w - truncWidth - bgIconW - 2 * ITEM_PAD :
+                                    w - bgIconW - 2 * ITEM_PAD, h);
+                        g.drawChars(text, 0, textLen,
+                            w - (bgIconW + ITEM_PAD + xScrollOffset), (h - ICON_FONT.getHeight())/2,
+                                ScreenSkin.TEXT_ORIENT | Graphics.TOP);
+                        g.setClip(cX, cY, cW, cH);
+
+                        if (truncate) {
+                            g.drawChar(truncationMark, truncWidth,
+                                (h - ICON_FONT.getHeight())/2, Graphics.RIGHT | Graphics.TOP);
+                        }
+                    } else {
+                        g.clipRect(bgIconW + ITEM_PAD, 0,
                         truncate ? w - truncWidth - bgIconW - 2 * ITEM_PAD :
                                    w - bgIconW - 2 * ITEM_PAD, h);
-                    g.drawChars(text, 0, textLen,
-                        bgIconW + ITEM_PAD + xScrollOffset, (h - ICON_FONT.getHeight())/2,
-                            Graphics.LEFT | Graphics.TOP);
-                    g.setClip(cX, cY, cW, cH);
+                        g.drawChars(text, 0, textLen,
+                            bgIconW + ITEM_PAD + xScrollOffset, (h - ICON_FONT.getHeight())/2,
+                                Graphics.LEFT | Graphics.TOP);
+                        g.setClip(cX, cY, cW, cH);
 
-                    if (truncate) {
-                        g.drawChar(truncationMark, w - truncWidth,
-                            (h - ICON_FONT.getHeight())/2, Graphics.LEFT | Graphics.TOP);
+                        if (truncate) {
+                            g.drawChar(truncationMark, w - truncWidth,
+                                (h - ICON_FONT.getHeight())/2, Graphics.LEFT | Graphics.TOP);
+                        }
                     }
 
                 }
             }
 
             if (cX < bgIconW) {
-                if (hasFocus) {
-                    g.drawImage(ICON_BG, 0, (h - bgIconH)/2,
-                                Graphics.TOP | Graphics.LEFT);
-                }
+                if (ScreenSkin.TEXT_ORIENT == Graphics.RIGHT) {
+                    if (hasFocus) {
+                        g.drawImage(ICON_BG, w - bgIconW, (h - bgIconH)/2,
+                                    Graphics.TOP | Graphics.LEFT);
+                    }
 
-                if (icon != null) {
-                    g.drawImage(icon, (bgIconW - icon.getWidth())/2,
-                                (bgIconH - icon.getHeight())/2,
-                                Graphics.TOP | Graphics.LEFT);
-                }
+                    if (icon != null) {
+                        g.drawImage(icon, w - (bgIconW - icon.getWidth())/2,
+                                    (bgIconH - icon.getHeight())/2,
+                                    Graphics.TOP | Graphics.RIGHT);
+                    }
 
-                // Draw special icon if user attention is requested and
-                // that midlet needs to be brought into foreground by the user
-                if (msi.proxy != null && msi.proxy.isAlertWaiting()) {
-                    g.drawImage(FG_REQUESTED,
-                                bgIconW - FG_REQUESTED.getWidth(), 0,
-                                Graphics.TOP | Graphics.LEFT);
-                }
+                    // Draw special icon if user attention is requested and
+                    // that midlet needs to be brought into foreground by the user
+                    if (msi.proxy != null && msi.proxy.isAlertWaiting()) {
+                        g.drawImage(FG_REQUESTED,
+                                    w - (bgIconW - FG_REQUESTED.getWidth()), 0,
+                                    Graphics.TOP | Graphics.LEFT);
+                    }
 
-                if (!msi.enabled) {
-                    // indicate that this suite is disabled
-                    g.drawImage(DISABLED_IMAGE,
-                                (bgIconW - DISABLED_IMAGE.getWidth())/2,
-                                (bgIconH - DISABLED_IMAGE.getHeight())/2,
-                                Graphics.TOP | Graphics.LEFT);
+                    if (!msi.enabled) {
+                        // indicate that this suite is disabled
+                        g.drawImage(DISABLED_IMAGE,
+                                    w - (bgIconW - DISABLED_IMAGE.getWidth())/2,
+                                    (bgIconH - DISABLED_IMAGE.getHeight())/2,
+                                    Graphics.TOP | Graphics.LEFT);
+                    }
+                } else {
+                    if (hasFocus) {
+                        g.drawImage(ICON_BG, 0, (h - bgIconH)/2,
+                                    Graphics.TOP | Graphics.LEFT);
+                    }
+
+                    if (icon != null) {
+                        g.drawImage(icon, (bgIconW - icon.getWidth())/2,
+                                    (bgIconH - icon.getHeight())/2,
+                                    Graphics.TOP | Graphics.LEFT);
+                    }
+
+                    // Draw special icon if user attention is requested and
+                    // that midlet needs to be brought into foreground by the user
+                    if (msi.proxy != null && msi.proxy.isAlertWaiting()) {
+                        g.drawImage(FG_REQUESTED,
+                                    bgIconW - FG_REQUESTED.getWidth(), 0,
+                                    Graphics.TOP | Graphics.LEFT);
+                    }
+
+                    if (!msi.enabled) {
+                        // indicate that this suite is disabled
+                        g.drawImage(DISABLED_IMAGE,
+                                    (bgIconW - DISABLED_IMAGE.getWidth())/2,
+                                    (bgIconH - DISABLED_IMAGE.getHeight())/2,
+                                    Graphics.TOP | Graphics.LEFT);
+                    }
                 }
             }
 
