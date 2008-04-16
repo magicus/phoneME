@@ -269,24 +269,7 @@ void ObjectHeap::accumulate_current_task_memory_usage( void ) {
 OopDesc** ObjectHeap::current_task_allocation_end ( void ) {
   GUARANTEE( _inline_allocation_top == _task_allocation_start,
     "no allocations should happen here" );
-  int available = free_memory() - int(_reserved_memory_deficit);
-  if( available < 0 ) {
-    available = 0;
-  }
-  const TaskMemoryInfo& task_info = get_task_info( _current_task_id );
-  const int estimate = task_info.estimate;
-  {
-    const int unused = task_info.reserve - estimate;
-    if( unused > 0 ) {
-      available += unused;
-    }
-  }
-  {
-    const int unused = task_info.limit - estimate;
-    if( unused < available ) {
-      available = unused;
-    }
-  }
+  int available = available_for_current_task();
   available = align_size_down( available, BytesPerWord );
 
   OopDesc** allocation_end =
@@ -299,31 +282,6 @@ OopDesc** ObjectHeap::current_task_allocation_end ( void ) {
   }
   GUARANTEE(allocation_end <= _compiler_area_start, "overlap");
   return allocation_end;
-}
-
-int ObjectHeap::available_for_current_task() {
-  OopDesc** const allocation_end = disable_allocation_trap();
-  accumulate_current_task_memory_usage();
-
-  int available = free_memory() - (int)_reserved_memory_deficit;
-  const TaskMemoryInfo& task_info = get_task_info(_current_task_id);
-  const int estimate = task_info.estimate;
-  {
-    const int unused = task_info.reserve - estimate;
-    if (unused > 0) {
-      available += unused;
-    }
-  }
-  {
-    const int unused = task_info.limit - estimate;
-    if (unused < available) {
-      available = unused;
-    }
-  }
-
-  enable_allocation_trap(allocation_end);
-  GUARANTEE(available >= 0, "sanity");
-  return available;
 }
 
 int ObjectHeap::on_task_switch ( const int task_id ) {

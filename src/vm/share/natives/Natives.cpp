@@ -684,8 +684,12 @@ void Java_java_lang_Runtime_gc(JVM_SINGLE_ARG_TRAPS) {
   ObjectHeap::full_collect(JVM_SINGLE_ARG_NO_CHECK_AT_BOTTOM);
 }
 
-jlong Java_java_lang_Runtime_freeMemory() {
-  return ObjectHeap::available_for_current_task();
+jlong Java_java_lang_Runtime_freeMemory( void ) {
+  OopDesc** const allocation_end = ObjectHeap::disable_allocation_trap();
+  ObjectHeap::accumulate_current_task_memory_usage();
+  const int available = ObjectHeap::available_for_current_task();
+  ObjectHeap::enable_allocation_trap(allocation_end);
+  return available;
 }
 
 jlong Java_java_lang_Runtime_totalMemory() {
