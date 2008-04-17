@@ -112,6 +112,11 @@ javacall_result javacall_events_init(void);
  */
 javacall_result javacall_events_finalize(void);
 
+/**
+ * The platform calls this function in slave mode to inform VM of new events.
+ */
+void javanotify_inform_event(void);
+
 
 /** @} */
 
