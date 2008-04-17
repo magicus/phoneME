@@ -3,22 +3,22 @@
  *
  * Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
- * 
+ *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
  * 2 only, as published by the Free Software Foundation.
- * 
+ *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
  * included at /legal/license.txt).
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA
- * 
+ *
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
  * information or have any questions.
@@ -64,6 +64,19 @@ extern jlong midp_slavemode_time_slice(void);
 static jlong midpTimeSlice(void);
 
 /**
+ * Data struct for linked list with each node encapsulating a single event
+ */
+typedef struct _Event {
+    unsigned char data[100];
+    int dataLen;
+} Event;
+
+Event eventsArray[MAX_EVENTS];
+
+static int index = 0;
+static int size = 0;
+
+/**
  * Free the event result. Called when no waiting Java thread was found to
  * receive the result. This may be empty on some systems.
  *
@@ -77,8 +90,94 @@ void midpFreeEventResult(int waitingFor, void* pResult) {
 
 
 /**
+ * Waits for an incoming event message and copies it to user supplied
+ * data buffer
+ * @param waitForever indicate if the function should block forever
+ * @param timeTowaitInMillisec max number of seconds to wait
+ *              if waitForever is false
+ * @param binaryBuffer user-supplied buffer to copy event to
+ * @param binaryBufferMaxLen maximum buffer size that an event can be
+ *              copied to.
+ *              If an event exceeds the binaryBufferMaxLen, then the first
+ *              binaryBufferMaxLen bytes of the events will be copied
+ *              to user-supplied binaryBuffer, and JAVACALL_OUT_OF_MEMORY will
+ *              be returned
+ * @param outEventLen user-supplied pointer to variable that will hold actual
+ *              event size received
+ *              Platform is responsible to set this value on success to the
+ *              size of the event received, or 0 on failure.
+ *              If outEventLen is NULL, the event size is not returned.
+ * @return <tt>JAVACALL_OK</tt> if an event successfully received,
+ *         <tt>JAVACALL_FAIL</tt> or if failed or no messages are avaialable
+ *         <tt>JAVACALL_OUT_OF_MEMORY</tt> If an event's size exceeds the
+ *         binaryBufferMaxLen
+ */
+
+javacall_result javacall_event_receive(
+                                    long            timeTowaitInMillisec,
+                            /*OUT*/ unsigned char*  binaryBuffer,
+                            /*IN*/  int             binaryBufferMaxLen,
+                            /*OUT*/ int*            outEventLen) {
+
+
+    if (size == 0) {
+        return JAVACALL_FAIL;
+    }
+
+    if (index == 0) {
+        index = MAX_EVENTS - 1;
+    }
+    else {
+        index--;
+    }
+
+    if(eventsArray[index].dataLen > binaryBufferMaxLen) {
+        /*if not enough memory, we keep the event in the list so that client code can re-invoke with bigger buffer*/
+        *outEventLen = 0;
+        return JAVACALL_OUT_OF_MEMORY;
+    }
+
+    *outEventLen = eventsArray[index].dataLen;
+    memcpy(binaryBuffer, eventsArray[index].data, *outEventLen);
+
+	size--;
+
+    return JAVACALL_OK;
+}
+
+/**
+ * copies a user supplied event message to a queue of messages
+ *
+ * @param binaryBuffer a pointer to binary event buffer to send
+ *        The platform should make a private copy of this buffer as
+ *        access to it is not allowed after the function call.
+ * @param binaryBufferLen size of binary event buffer to send
+ * @return <tt>JAVACALL_OK</tt> if an event successfully sent,
+ *         <tt>JAVACALL_FAIL</tt> or negative value if failed
+ */
+javacall_result javacall_event_send(unsigned char* binaryBuffer,
+                                    int binaryBufferLen) {
+    if (size == MAX_EVENTS) {
+        return JAVACALL_FAIL;
+    }
+    eventsArray[index].dataLen = binaryBufferLen;
+    memcpy(eventsArray[index].data, binaryBuffer, binaryBufferLen);
+    index = (index + 1) % MAX_EVENTS;
+    size++;
+    return JAVACALL_OK;
+}
+
+
+/**
  * Unblock a Java thread.
- * Returns 1 if a thread was unblocked, otherwise 0.
+ *
+ * @param blocked_threads blocked threads
+ * @param blocked_threads_count number of blocked threads
+ * @param waitingFor signal type
+ * @param descriptor platform specific handle
+ * @param status error code produced by the operation that unblocked the thread
+ *
+ * @return <tt>1</tt> if a thread was unblocked, otherwise <tt>0</tt>.
  */
 static int
 eventUnblockJavaThread(
@@ -107,7 +206,7 @@ eventUnblockJavaThread(
 
         if (pThreadReentryData != NULL
                 && pThreadReentryData->descriptor == descriptor
-                && pThreadReentryData->waitingFor == waitingFor) {
+                && pThreadReentryData->waitingFor == (midpSignalType)waitingFor) {
             pThreadReentryData->status = status;
             midp_thread_unblock(blocked_threads[i].thread_id);
             return 1;
@@ -148,7 +247,7 @@ eventUnblockJavaThread(
  *       caller immediately regardless of the if a signal was sent.
  *  -1 = Do not timeout. Block until a signal is sent to MIDP.
  */
-void checkForSystemSignal(MidpReentryData* pNewSignal,
+javacall_result checkForSystemSignal(MidpReentryData* pNewSignal,
                           MidpEvent* pNewMidpEvent,
                           JVMSPI_BlockedThreadInfo *blocked_threads,
                           int blocked_threads_count,
@@ -158,19 +257,20 @@ void checkForSystemSignal(MidpReentryData* pNewSignal,
     static unsigned char binaryBuffer[BINARY_BUFFER_MAX_LEN];
     javacall_bool res;
     int outEventLen;
-    
+
     res = javacall_event_receive ((long)timeout, binaryBuffer, BINARY_BUFFER_MAX_LEN, &outEventLen);
 
     if (!JAVACALL_SUCCEEDED(res)) {
-        return;
+        return res;
     }
-    
+
     event = (midp_jc_event_union *) binaryBuffer;
 
     switch (event->eventType) {
     case MIDP_JC_EVENT_KEY:
         pNewSignal->waitingFor = UI_SIGNAL;
         pNewMidpEvent->type    = MIDP_KEY_EVENT;
+        pNewMidpEvent->CHR     = event->data.keyEvent.key;
         pNewMidpEvent->ACTION  = event->data.keyEvent.keyEventType;
         /* IMPL_NOTE: CR <6658788>, temporary changes to process wrong
          * repeated key events on Shift+<0..9> passed from emulator.
@@ -184,7 +284,7 @@ void checkForSystemSignal(MidpReentryData* pNewSignal,
         } else {
             pNewMidpEvent->CHR     = event->data.keyEvent.key;
         }
-        /* IMPL_NOTE: End of temporary changes for CR <6658788> 
+        /* IMPL_NOTE: End of temporary changes for CR <6658788>
          * Original source:
          * pNewMidpEvent->CHR     = event->data.keyEvent.key;
          */
@@ -272,7 +372,7 @@ void checkForSystemSignal(MidpReentryData* pNewSignal,
 
         if( JAVACALL_EVENT_MEDIA_SNAPSHOT_FINISHED == event->data.multimediaEvent.mediaType ) {
             pNewSignal->waitingFor = MEDIA_SNAPSHOT_SIGNAL;
-//            pNewSignal->descriptor = (((event->data.multimediaEvent.isolateId & 0xFFFF) << 16) 
+//            pNewSignal->descriptor = (((event->data.multimediaEvent.isolateId & 0xFFFF) << 16)
 //                                     | (event->data.multimediaEvent.playerId & 0xFFFF));
 
             REPORT_CALL_TRACE1(LC_NONE, "[media event] JAVACALL_EVENT_MEDIA_SNAPSHOT_FINISHED %d\n",
@@ -293,12 +393,12 @@ void checkForSystemSignal(MidpReentryData* pNewSignal,
         /* VOLUME_CHANGED event must be sent to all players.             */
         /* MM_ISOLATE = -1 causes bradcast by StoreMIDPEventInVmThread() */
         if( JAVACALL_EVENT_MEDIA_VOLUME_CHANGED == event->data.multimediaEvent.mediaType )
-            pNewMidpEvent->MM_ISOLATE = -1; 
+            pNewMidpEvent->MM_ISOLATE = -1;
 
         REPORT_CALL_TRACE4(LC_NONE, "[media event] External event recevied %d %d %d %d\n",
-                pNewMidpEvent->type, 
-                event->data.multimediaEvent.appId, 
-                pNewMidpEvent->MM_PLAYER_ID, 
+                pNewMidpEvent->type,
+                event->data.multimediaEvent.appId,
+                pNewMidpEvent->MM_PLAYER_ID,
                 pNewMidpEvent->MM_DATA);
 #endif
         break;
@@ -314,9 +414,9 @@ void checkForSystemSignal(MidpReentryData* pNewSignal,
         pNewMidpEvent->MM_EVT_TYPE  = event->data.multimediaEvent.mediaType;
 
         REPORT_CALL_TRACE4(LC_NONE, "[jsr234 event] External event recevied %d %d %d %d\n",
-            pNewMidpEvent->type, 
-            event->data.multimediaEvent.appId, 
-            pNewMidpEvent->MM_PLAYER_ID, 
+            pNewMidpEvent->type,
+            event->data.multimediaEvent.appId,
+            pNewMidpEvent->MM_PLAYER_ID,
             pNewMidpEvent->MM_DATA);
 
         break;
@@ -373,7 +473,7 @@ void checkForSystemSignal(MidpReentryData* pNewSignal,
             pNewSignal->pResult    = NULL;
             break;
         default:    /* just ignore invalid event type */
-            REPORT_ERROR1(LC_CORE,"Invalid carddevice event type: %d\n", 
+            REPORT_ERROR1(LC_CORE,"Invalid carddevice event type: %d\n",
                 event->data.carddeviceEvent.eventType);
             break;
         }
@@ -405,14 +505,27 @@ void checkForSystemSignal(MidpReentryData* pNewSignal,
 #endif /* ENABLE_JSR_256 */
     default:
         REPORT_ERROR(LC_CORE,"Unknown event.\n");
-
         break;
     };
 
     REPORT_CALL_TRACE(LC_HIGHUI, "LF:STUB:checkForSystemSignal()\n");
+    return JAVACALL_OK;
 }
 
-void midp_slave_handle_events(JVMSPI_BlockedThreadInfo *blocked_threads, int blocked_threads_count, jlong timeout) {
+/**
+ * Handles the native event notification
+ *
+ * @param blocked_threads blocked threads
+ * @param blocked_threads_count number of blocked threads
+ * @param timeout wait timeout
+ *
+ * @return <tt>JAVACALL_OK</tt> if an event successfully received,
+ *         <tt>JAVACALL_FAIL</tt> or if failed or no messages are avaialable
+ */
+static int midp_slavemode_handle_events(JVMSPI_BlockedThreadInfo *blocked_threads,
+		       int blocked_threads_count,
+		       jlong timeout) {
+    int ret = -1;
     static MidpReentryData newSignal;
     static MidpEvent newMidpEvent;
 
@@ -420,180 +533,192 @@ void midp_slave_handle_events(JVMSPI_BlockedThreadInfo *blocked_threads, int blo
     newSignal.pResult = NULL;
     MIDP_EVENT_INITIALIZE(newMidpEvent);
 
-    checkForSystemSignal(&newSignal, &newMidpEvent, blocked_threads, blocked_threads_count, timeout);
+    if (checkForSystemSignal(&newSignal, &newMidpEvent,
+                          blocked_threads, blocked_threads_count,
+                                timeout)
+          == JAVACALL_OK){
 
-    switch (newSignal.waitingFor) {
-#if ENABLE_JAVA_DEBUGGER
-    case VM_DEBUG_SIGNAL:
-        if (midp_isDebuggerActive()) {
-            JVM_ProcessDebuggerCmds();
-        }
-
-        break;
-#endif // ENABLE_JAVA_DEBUGGER
-
-    case AMS_SIGNAL:
-        midpStoreEventAndSignalAms(newMidpEvent);
-        break;
-
-    case UI_SIGNAL:
-        midpStoreEventAndSignalForeground(newMidpEvent);
-        break;
-
-    case NETWORK_READ_SIGNAL:
-        if (eventUnblockJavaThread(blocked_threads,
-                                   blocked_threads_count, newSignal.waitingFor,
-                                   newSignal.descriptor,
-                                   newSignal.status))
-            /* Processing is done in eventUnblockJavaThread. */;
-        else if (findPushBlockedHandle(newSignal.descriptor) != 0) {
-            /* The push system is waiting for a read on this descriptor */
-            midp_thread_signal_list(blocked_threads, blocked_threads_count, 
-                                    PUSH_SIGNAL, 0, 0);
-        }
-#if (ENABLE_JSR_120 || ENABLE_JSR_205)
-        else
-            jsr120_check_signal(newSignal.waitingFor, newSignal.descriptor, newSignal.status);
-#endif
-        break;
-
-    case HOST_NAME_LOOKUP_SIGNAL:
-    case NETWORK_WRITE_SIGNAL:
-#if (ENABLE_JSR_120 || ENABLE_JSR_205)
-        if (!jsr120_check_signal(newSignal.waitingFor, newSignal.descriptor, newSignal.status))
-#endif
-            midp_thread_signal_list(blocked_threads, blocked_threads_count,
-                                    newSignal.waitingFor, newSignal.descriptor,
-                                    newSignal.status);
-        break;
-
-    case NETWORK_EXCEPTION_SIGNAL:
-        /* Find both the read and write threads and signal the status. */
-        eventUnblockJavaThread(blocked_threads, blocked_threads_count,
-            NETWORK_READ_SIGNAL, newSignal.descriptor,
-            newSignal.status);
-        eventUnblockJavaThread(blocked_threads, blocked_threads_count,
-            NETWORK_WRITE_SIGNAL, newSignal.descriptor,
-            newSignal.status);
-        return;
-
-    case NETWORK_INIT_SIGNAL:
-        if(MIDP_NETWORK_UP == newSignal.status) {
-            midp_thread_signal_list(blocked_threads,
-                    blocked_threads_count, NETWORK_INIT_SIGNAL, 0, PCSL_NET_SUCCESS);
-        } else if(MIDP_NETWORK_DOWN == newSignal.status) {
-            /* Wakeup all network threads. */
-            midp_thread_signal_list(blocked_threads,              
-                    blocked_threads_count, NETWORK_INIT_SIGNAL, 0, PCSL_NET_IOERROR);
-            midp_thread_signal_list(blocked_threads,
-                    blocked_threads_count, NETWORK_READ_SIGNAL, 0, PCSL_NET_IOERROR);
-            midp_thread_signal_list(blocked_threads,
-                    blocked_threads_count, NETWORK_WRITE_SIGNAL, 0, PCSL_NET_IOERROR);
-            midp_thread_signal_list(blocked_threads,
-                    blocked_threads_count, NETWORK_EXCEPTION_SIGNAL, 0, PCSL_NET_IOERROR);
-            midp_thread_signal_list(blocked_threads,
-                    blocked_threads_count, HOST_NAME_LOOKUP_SIGNAL, 0, PCSL_NET_IOERROR);
-            if(isMidpNetworkConnected()) {
-                unsetMidpNetworkConnected();
-                REPORT_INFO(LC_PROTOCOL, "midp_check_events: network down from server side");
+        switch (newSignal.waitingFor) {
+    #if ENABLE_JAVA_DEBUGGER
+        case VM_DEBUG_SIGNAL:
+            if (midp_isDebuggerActive()) {
+                JVM_ProcessDebuggerCmds();
             }
-        } else if(MIDP_NETWORK_DOWN_REQUEST == newSignal.status) {
-            if(isMidpNetworkConnected()) {
-                if (0 == midpCheckSocketInUse()) {
-                    pcsl_network_finalize_start();
+
+            break;
+    #endif // ENABLE_JAVA_DEBUGGER
+
+        case AMS_SIGNAL:
+            midpStoreEventAndSignalAms(newMidpEvent);
+            break;
+
+        case UI_SIGNAL:
+            midpStoreEventAndSignalForeground(newMidpEvent);
+            break;
+
+        case NETWORK_READ_SIGNAL:
+            if (eventUnblockJavaThread(blocked_threads,
+                                       blocked_threads_count, newSignal.waitingFor,
+                                       newSignal.descriptor,
+                                       newSignal.status))
+                /* Processing is done in eventUnblockJavaThread. */;
+            else if (findPushBlockedHandle(newSignal.descriptor) != 0) {
+                /* The push system is waiting for a read on this descriptor */
+                midp_thread_signal_list(blocked_threads, blocked_threads_count,
+                                        PUSH_SIGNAL, 0, 0);
+            }
+#if (ENABLE_JSR_120 || ENABLE_JSR_205)
+            else
+                jsr120_check_signal(newSignal.waitingFor, newSignal.descriptor, newSignal.status);
+#endif
+            break;
+
+        case HOST_NAME_LOOKUP_SIGNAL:
+        case NETWORK_WRITE_SIGNAL:
+#if (ENABLE_JSR_120 || ENABLE_JSR_205)
+            if (!jsr120_check_signal(newSignal.waitingFor, newSignal.descriptor, newSignal.status))
+#endif
+                midp_thread_signal_list(blocked_threads, blocked_threads_count,
+                                        newSignal.waitingFor, newSignal.descriptor,
+                                        newSignal.status);
+            break;
+
+        case NETWORK_EXCEPTION_SIGNAL:
+            /* Find both the read and write threads and signal the status. */
+            eventUnblockJavaThread(blocked_threads, blocked_threads_count,
+                NETWORK_READ_SIGNAL, newSignal.descriptor,
+                newSignal.status);
+            eventUnblockJavaThread(blocked_threads, blocked_threads_count,
+                NETWORK_WRITE_SIGNAL, newSignal.descriptor,
+                newSignal.status);
+            return;
+
+        case NETWORK_INIT_SIGNAL:
+            if(MIDP_NETWORK_UP == newSignal.status) {
+                midp_thread_signal_list(blocked_threads,
+                        blocked_threads_count, NETWORK_INIT_SIGNAL, 0, PCSL_NET_SUCCESS);
+            } else if(MIDP_NETWORK_DOWN == newSignal.status) {
+                /* Wakeup all network threads. */
+                midp_thread_signal_list(blocked_threads,
+                        blocked_threads_count, NETWORK_INIT_SIGNAL, 0, PCSL_NET_IOERROR);
+                midp_thread_signal_list(blocked_threads,
+                        blocked_threads_count, NETWORK_READ_SIGNAL, 0, PCSL_NET_IOERROR);
+                midp_thread_signal_list(blocked_threads,
+                        blocked_threads_count, NETWORK_WRITE_SIGNAL, 0, PCSL_NET_IOERROR);
+                midp_thread_signal_list(blocked_threads,
+                        blocked_threads_count, NETWORK_EXCEPTION_SIGNAL, 0, PCSL_NET_IOERROR);
+                midp_thread_signal_list(blocked_threads,
+                        blocked_threads_count, HOST_NAME_LOOKUP_SIGNAL, 0, PCSL_NET_IOERROR);
+                if(isMidpNetworkConnected()) {
                     unsetMidpNetworkConnected();
-                    REPORT_INFO(LC_PROTOCOL, "midp_check_events: network closed by MIDP_NETWORK_DOWN_REQUEST");
+                    REPORT_INFO(LC_PROTOCOL, "midp_check_events: network down from server side");
+                }
+            } else if(MIDP_NETWORK_DOWN_REQUEST == newSignal.status) {
+                if(isMidpNetworkConnected()) {
+                    if (0 == midpCheckSocketInUse()) {
+                        pcsl_network_finalize_start();
+                        unsetMidpNetworkConnected();
+                        REPORT_INFO(LC_PROTOCOL, "midp_check_events: network closed by MIDP_NETWORK_DOWN_REQUEST");
+                    }
                 }
             }
-        }
-        break;
+            break;
 
-    case PUSH_ALARM_SIGNAL:
-        if (findPushTimerBlockedHandle(newSignal.descriptor) != 0) {
-            /* The push system is waiting for this alarm */
-            midp_thread_signal_list(blocked_threads,
-                blocked_threads_count, PUSH_SIGNAL, 0, 0);
-        }
+        case PUSH_ALARM_SIGNAL:
+            if (findPushTimerBlockedHandle(newSignal.descriptor) != 0) {
+                /* The push system is waiting for this alarm */
+                midp_thread_signal_list(blocked_threads,
+                    blocked_threads_count, PUSH_SIGNAL, 0, 0);
+            }
 
-        break;
+            break;
 #if (ENABLE_JSR_135 || ENABLE_JSR_234)
-    case MEDIA_EVENT_SIGNAL:
-        StoreMIDPEventInVmThread(newMidpEvent, newMidpEvent.MM_ISOLATE);
-        eventUnblockJavaThread(blocked_threads, blocked_threads_count,
-                MEDIA_EVENT_SIGNAL, newSignal.descriptor, 
-                newSignal.status);
-        break;
-    case MEDIA_SNAPSHOT_SIGNAL:
-        eventUnblockJavaThread(blocked_threads, blocked_threads_count,
-                MEDIA_SNAPSHOT_SIGNAL, newSignal.descriptor, 
-                newSignal.status);
-        break;
+        case MEDIA_EVENT_SIGNAL:
+            StoreMIDPEventInVmThread(newMidpEvent, newMidpEvent.MM_ISOLATE);
+            eventUnblockJavaThread(blocked_threads, blocked_threads_count,
+                    MEDIA_EVENT_SIGNAL, newSignal.descriptor,
+                    newSignal.status);
+            break;
+        case MEDIA_SNAPSHOT_SIGNAL:
+            eventUnblockJavaThread(blocked_threads, blocked_threads_count,
+                    MEDIA_SNAPSHOT_SIGNAL, newSignal.descriptor,
+                    newSignal.status);
+            break;
 #endif
 #ifdef ENABLE_JSR_179
-    case JSR179_LOCATION_SIGNAL:
-        midp_thread_signal_list(blocked_threads,
-            blocked_threads_count, JSR179_LOCATION_SIGNAL, newSignal.descriptor, newSignal.status);
-        break;
-    case JSR179_ORIENTATION_SIGNAL:
-        midp_thread_signal_list(blocked_threads,
-            blocked_threads_count, JSR179_ORIENTATION_SIGNAL, newSignal.descriptor, newSignal.status);
-        break;    
-    case JSR179_PROXIMITY_SIGNAL:
-        midp_thread_signal_list(blocked_threads,
-            blocked_threads_count, JSR179_PROXIMITY_SIGNAL, newSignal.descriptor, newSignal.status);
-        break;
+        case JSR179_LOCATION_SIGNAL:
+            midp_thread_signal_list(blocked_threads,
+                blocked_threads_count, JSR179_LOCATION_SIGNAL, newSignal.descriptor, newSignal.status);
+            break;
+        case JSR179_ORIENTATION_SIGNAL:
+            midp_thread_signal_list(blocked_threads,
+                blocked_threads_count, JSR179_ORIENTATION_SIGNAL, newSignal.descriptor, newSignal.status);
+            break;
+        case JSR179_PROXIMITY_SIGNAL:
+            midp_thread_signal_list(blocked_threads,
+                blocked_threads_count, JSR179_PROXIMITY_SIGNAL, newSignal.descriptor, newSignal.status);
+            break;
 #endif /* ENABLE_JSR_179 */
 
 #ifdef ENABLE_JSR_211
-    case JSR211_PLATFORM_FINISH_SIGNAL:
-        jsr211_process_platform_finish_notification (newSignal.descriptor, newSignal.pResult);
-        midpStoreEventAndSignalAms(newMidpEvent);
-        break;
-    case JSR211_JAVA_INVOKE_SIGNAL:
-        jsr211_process_java_invoke_notification (newSignal.descriptor, newSignal.pResult);
-        midpStoreEventAndSignalAms(newMidpEvent);
-        break;
+        case JSR211_PLATFORM_FINISH_SIGNAL:
+            jsr211_process_platform_finish_notification (newSignal.descriptor, newSignal.pResult);
+            midpStoreEventAndSignalAms(newMidpEvent);
+            break;
+        case JSR211_JAVA_INVOKE_SIGNAL:
+            jsr211_process_java_invoke_notification (newSignal.descriptor, newSignal.pResult);
+            midpStoreEventAndSignalAms(newMidpEvent);
+            break;
 #endif /*ENABLE_JSR_211  */
 
 #if (ENABLE_JSR_120 || ENABLE_JSR_205)
-    case WMA_SMS_READ_SIGNAL:
-    case WMA_CBS_READ_SIGNAL:
-    case WMA_MMS_READ_SIGNAL:
-    case WMA_SMS_WRITE_SIGNAL:
-    case WMA_MMS_WRITE_SIGNAL:
-         jsr120_check_signal(newSignal.waitingFor, newSignal.descriptor, newSignal.status);
-         break;
+        case WMA_SMS_READ_SIGNAL:
+        case WMA_CBS_READ_SIGNAL:
+        case WMA_MMS_READ_SIGNAL:
+        case WMA_SMS_WRITE_SIGNAL:
+        case WMA_MMS_WRITE_SIGNAL:
+             jsr120_check_signal(newSignal.waitingFor, newSignal.descriptor, newSignal.status);
+             break;
 #endif
 #ifdef ENABLE_JSR_177
-    case CARD_READER_DATA_SIGNAL:
-        midp_thread_signal_list(blocked_threads, blocked_threads_count,
-                                newSignal.waitingFor, newSignal.descriptor,
-                                newSignal.status);
-        break;
+        case CARD_READER_DATA_SIGNAL:
+            midp_thread_signal_list(blocked_threads, blocked_threads_count,
+                                    newSignal.waitingFor, newSignal.descriptor,
+                                    newSignal.status);
+            break;
 #endif /* ENABLE_JSR_177 */
 #ifdef ENABLE_JSR_256
-    case JSR256_SIGNAL:
-        if (newMidpEvent.type == SENSOR_EVENT) {
-            StoreMIDPEventInVmThread(newMidpEvent, -1);
-        } else {
-            midp_thread_signal_list(blocked_threads, blocked_threads_count,
-                newSignal.waitingFor, newSignal.descriptor, newSignal.status);
-        }
-        break;
+        case JSR256_SIGNAL:
+            if (newMidpEvent.type == SENSOR_EVENT) {
+                StoreMIDPEventInVmThread(newMidpEvent, -1);
+            } else {
+                midp_thread_signal_list(blocked_threads, blocked_threads_count,
+                    newSignal.waitingFor, newSignal.descriptor, newSignal.status);
+            }
+            break;
 #endif /* ENABLE_JSR_256 */
-    default:
-        break;
-    } /* switch */
+        default:
+            break;
+        } /* switch */
+        ret = 0;
+    }
+
+    return ret;
 }
 
 /*
- * See comments in javacall_events.h
+ * Call this function in slave mode to inform VM of new events.
  */
 void javanotify_inform_event(void) {
     int blocked_threads_count;
     JVMSPI_BlockedThreadInfo * blocked_threads = SNI_GetBlockedThreads(&blocked_threads_count);
 
-    midp_slave_handle_events(blocked_threads, blocked_threads_count, 0 /*timeout*/);
+    int ret = 0;
+
+    while (ret == 0){
+        blocked_threads = SNI_GetBlockedThreads(&blocked_threads_count);
+        ret = midp_slavemode_handle_events(blocked_threads, blocked_threads_count, 0 /*timeout*/);
+    }
 }
 
 /*
@@ -635,7 +760,7 @@ static jlong midpTimeSlice(void) {
     return to;
 }
 
-void midp_slavemode_port_schedule_vm_timeslice(void) {
+void midp_slavemode_schedule_vm_timeslice(void) {
     javacall_schedule_vm_timeslice();
 }
 

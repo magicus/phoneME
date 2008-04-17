@@ -3,22 +3,22 @@
  *
  * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
- * 
+ *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
  * 2 only, as published by the Free Software Foundation.
- * 
+ *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
  * included at /legal/license.txt).
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA
- * 
+ *
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
  * information or have any questions.
@@ -93,12 +93,7 @@ void JavaTask(void) {
                          event->data.startMidletArbitraryArgEvent.argv);
 
             JavaTaskIsGoOn = JAVACALL_FALSE;
-#if ENABLE_SLAVE_MODE_EVENTS
-            return;
-#else
             break;
-#endif
-
         case MIDP_JC_EVENT_SET_VM_ARGS:
             REPORT_INFO(LC_CORE, "JavaTask() MIDP_JC_EVENT_SET_VM_ARGS >>\n");
             midpHandleSetVmArgs(event->data.startMidletArbitraryArgEvent.argc,
@@ -148,7 +143,7 @@ void JavaTask(void) {
 } /* end of JavaTask */
 
 /**
- * 
+ *
  */
 static javacall_result midpHandleSetVmArgs(int argc, char* argv[]) {
     int used;
@@ -161,7 +156,7 @@ static javacall_result midpHandleSetVmArgs(int argc, char* argv[]) {
 }
 
 /**
- * 
+ *
  */
 static javacall_result midpHandleSetHeapSize(midp_event_heap_size heap_size) {
     JVM_SetConfig(JVM_CONFIG_HEAP_CAPACITY, heap_size.heap_size);
@@ -170,7 +165,7 @@ static javacall_result midpHandleSetHeapSize(midp_event_heap_size heap_size) {
 }
 
 /**
- * 
+ *
  */
 static javacall_result midpHandleListMIDlets() {
     char *argv[3];
@@ -186,7 +181,7 @@ static javacall_result midpHandleListMIDlets() {
 }
 
 /**
- * 
+ *
  */
 static javacall_result midpHandleListStorageNames() {
     char *argv[3];
@@ -206,7 +201,7 @@ static javacall_result midpHandleListStorageNames() {
 }
 
 /**
- * 
+ *
  */
 static javacall_result
 midpHandleRemoveMIDlet(midp_event_remove_midlet removeMidletEvent) {

@@ -3,22 +3,22 @@
  *
  * Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
- * 
+ *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
  * 2 only, as published by the Free Software Foundation.
- * 
+ *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
  * included at /legal/license.txt).
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA
- * 
+ *
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
  * information or have any questions.
@@ -93,7 +93,7 @@ runMidlet(int argc, char** commandlineArgs) {
     int ordinalSuiteNumber = -1;
     char* chSuiteNum = NULL;
     int midp_heap_requirement;
-    
+
     JVM_Initialize(); /* It's OK to call this more than once */
 
     midp_heap_requirement = getHeapRequirement();
@@ -111,7 +111,7 @@ runMidlet(int argc, char** commandlineArgs) {
         fprintf(stderr, pMsg);
         return -1;
     }
-#endif    
+#endif
 
     /*
      * Parse options for the VM. This is desirable on a 'development' platform
@@ -200,7 +200,7 @@ runMidlet(int argc, char** commandlineArgs) {
     if (confDir == NULL) {
         return -1;
     }
-    
+
     midpSetConfigDir(confDir);
 
     if (midpInitialize() != 0) {
@@ -367,10 +367,10 @@ runMidlet(int argc, char** commandlineArgs) {
     default:
         break;
     }
-
-#if !ENABLE_SLAVE_MODE_EVENTS
-    midpFinalize();
-#endif
+	
+	if (JVM_GetConfig(JVM_CONFIG_SLAVE_MODE) == KNI_FALSE) {	
+		midpFinalize();
+	}
 
     return status;
 }
