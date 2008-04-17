@@ -94,6 +94,7 @@ int* msgLength, char** msg) {
     char * t_pch;
     int pchLen;
     char * pch;
+	int segment_num;
 
     pch = strtok(ptr, " \n");
 	*encodingType  = -1; // Uninitialized
@@ -124,6 +125,9 @@ int* msgLength, char** msg) {
         }else if (strcmp("Segments:", pch)==0){
             pch = strtok(NULL, "\n");
             segments = atoi(pch);
+        }else if (strcmp("Fragment:", pch)==0){
+            pch = strtok(NULL, "\n");
+            segment_num = atoi(pch);
         }else if (strcmp("SenderAddress:", pch)==0){
             //Example: 'SenderAddress: sms://+5555555556'
             pch = strtok(NULL, "\n");
@@ -160,13 +164,17 @@ int* msgLength, char** msg) {
 		pchLen = *msgLength;
 		if (pchLen > SMS_BUFF_LENGTH) {
 			pchLen = SMS_BUFF_LENGTH;
-		}
-		memcpy( t_pch , pch, pchLen);
+
+		 if ((segment_num == 1) && (segments > 1)) {
+			 javautil_debug_print (JAVACALL_LOG_ERROR, "jsr120_UDPEmulator", "The SMS is too long!");
+		 }
+		}	
+		memcpy(t_pch , pch, pchLen);
         }
 	// javautil_debug_print (JAVACALL_LOG_INFORMATION, "jsr120_UDPEmulator", "%s\n", pch);
         pch = strtok(NULL, " \n");
     }
-
+		
     *ptr = 0;
 }
 
@@ -308,7 +316,6 @@ void **pContext) {
 		                    &msgLen,
 		                    &msg);
 
-
     if (javacall_is_sms_port_registered((unsigned short)destPortNum) != JAVACALL_OK) {
 		javautil_debug_print (JAVACALL_LOG_INFORMATION, "jsr120_UDPEmulator", "SMS on unregistered port received!");
 		free(msg);
@@ -317,9 +324,16 @@ void **pContext) {
 
     //encodingType = JAVACALL_SMS_MSG_TYPE_ASCII; //## to do: convert encodingType_int->encodingType
     encodingType = encodingType_int;
-    javanotify_incoming_sms(encodingType, senderPhone, msg, msgLen, (unsigned short)srcPortNum, (unsigned short)destPortNum, timeStamp);
-    free(msg);
-    return JAVACALL_OK;
+	 if (msgLen < SMS_BUFF_LENGTH+1) {
+		javanotify_incoming_sms(encodingType, senderPhone, msg, msgLen, (unsigned short)srcPortNum, (unsigned short)destPortNum, timeStamp);
+		free(msg);
+		return JAVACALL_OK;
+	 }
+	 else{
+		 free(msg);
+		 return JAVACALL_FAIL;
+	 }
+    
 }
 
 javacall_result process_UDPEmulator_cbs_incoming(unsigned char *pAddress,
