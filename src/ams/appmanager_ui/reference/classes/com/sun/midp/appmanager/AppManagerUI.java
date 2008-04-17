@@ -1006,8 +1006,16 @@ class AppManagerUI extends Form
      * @param suiteId ID of the newly installed MIDlet suite
      */         
     void notifySuiteInstalled(int suiteId) {
-        /* IMPL NOTE: implement better handling of this event */
         updateContent();
+        int size = mciVector.size();
+        for (int i = 0; i < size; i++) {
+            MidletCustomItem mci = (MidletCustomItem)mciVector.elementAt(i);
+            if (mci.msi.suiteId == suiteId) {
+                display.setCurrentItem(mci);
+                break;
+            }
+        }        
+        
     }
 
     /**
@@ -1016,7 +1024,27 @@ class AppManagerUI extends Form
      * @param suiteId ID of the removed MIDlet suite          
      */         
     void notifySuiteRemoved(int suiteId) {
-        /* IMPL NOTE: implement better handling of this event */
+        int size = mciVector.size();
+        for (int i = 0; i < size; i++) {
+            MidletCustomItem mci = (MidletCustomItem)mciVector.elementAt(i);
+            RunningMIDletSuiteInfo msi = mci.msi;
+            if (msi.suiteId == suiteId) {
+                mciVector.removeElementAt(i);
+                if (foldersOn) {
+                    if (mci.msi.folderId == currentFolderId) {
+                        for (int j = 0; j < size(); j++) {
+                            if (get(j).equals(mci)) {
+                                delete(j);
+                                break;
+                            }
+                        }
+                    }
+                } else {
+                    delete(i);
+                }
+                break;
+            }
+        }
         updateContent();
     }
     
