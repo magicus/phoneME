@@ -1503,8 +1503,8 @@ ifeq ($(PRODUCT_DEBUG), true)
 CPP_OPT_FLAGS_release   += -g
 CPP_OPT_FLAGS_product   += -g
 else
-CPP_OPT_FLAGS_release   = -O2 -Wuninitialized
-CPP_OPT_FLAGS_product   = -O2 -Wuninitialized \
+CPP_OPT_FLAGS_release   = -O2 -Wuninitialized -Wstrict-aliasing=2
+CPP_OPT_FLAGS_product   = -O2 -Wstrict-aliasing=2 -Wuninitialized \
                           -fexpensive-optimizations
   ifneq ($(PROFILING), true)
   CPP_OPT_FLAGS_product+= -fomit-frame-pointer
