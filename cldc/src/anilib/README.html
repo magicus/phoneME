@@ -1,0 +1,132 @@
+<!--
+
+ Copyright  2007  Sun Microsystems, Inc. All rights reserved.
+
+-->
+<title>ANILib -- Asynchronous Native Interface Library</title>
+<h1>ANILib -- Asynchronous Native Interface Library</h1>
+
+<blockquote>
+
+    ANILib, the Asynchronous Native Interface Library, is an add-on
+    package for this Virtual Machine. It provides
+    an API for using native threads in this VM for executing
+    long running native methods. <p>
+
+    ANILib was previously included as an bundled component of this VM.
+    In this release, we have separated out the ANILib
+    functionality into a separate package to improve maintainability
+    and achieve a more modular software design.
+
+</blockquote>
+
+<h2>Version Information</h2>
+
+<blockquote>
+
+    This is version 1.0.1 of ANILib.
+
+</blockquote>
+
+<h2>Build Instructions</h2>
+
+<blockquote>
+
+    This version of ANILib has built-in support for 3 platforms: <p>
+
+    <ul>
+      <li> <code>win32_i386</code>
+      <li> <code>linux_i386</code>
+      <li> <code>linux_arm</code>
+    </ul>
+    <p>    
+
+    The source code has been structured so that it will be easy to add
+    support for other platforms. <p>
+
+    To build ANILib for your selected platform, you need to follow
+    these steps. (Note the instructions assumes you're building for
+    <code>linux_i386</code>.) <p>
+
+    <ol>
+      <li> First, you need to build the VM. This can be done
+           by setting up the <code>JVMWorkSpace</code> environment
+           variable, and then executing the <code>gnumake</code>
+           command inside
+           <code>$(JVMWorkSpace)/build/linux_i386</code>. <p>
+
+      <li> Change to the <code>build/linux_i386</code> subdirectory of 
+           the ANILib source distribution, and execute the
+           <code>gnumake</code> command. This produces the following
+           output files: <p>
+           
+           <ul>
+             <li> <code>build/linux_i386/product/cldc_vm_ani</code>
+             <li> <code>build/linux_i386/product/libani.a</code>
+             <li> <code>build/linux_i386/test_classes/SocketTest.class</code>
+           </ul>
+
+           <p>
+
+      <li> By default, the <code>product</code> variant of ANILib is
+           produced. If you wish to build for other variants, please use
+           commands such as: <p>
+
+           <ul>
+             <li> <code>gnumake BUILD=debug</code>
+             <li> <code>gnumake BUILD=release</code>
+             <li> <code>gnumake BUILD=product</code>
+           </ul>
+
+
+</blockquote>
+
+<h2>Running Test Programs</h2>
+
+<blockquote>
+
+    ANILib comes with a sample program, <code>SocketTest</code>, which
+    tests the capabilities of a sample socket protocol. To Execute it,
+    try these commands:
+
+    <blockquote><code>
+    cd build/linux_i386<br>
+    ./product/cldc_vm_ani -cp test_classes SocketTest -host www.sun.com
+    </code></blockquote>
+
+    Please read the comments in <a
+    href="src/tests/SocketTest.java"><code>src/tests/SocketTest.java</code></a>
+    for a complete list of options provided by SocketTest for testing
+    different features in ANILib.
+
+</blockquote>
+
+<h2>Linking with ANILib</h2>
+
+<blockquote>
+
+    To use the <code>ANI_XXX()</code> functions exported by ANILib,
+    simply link with <code>libani.a</code> (or <code>ani.lib</code>
+    for the <code>win32_i386</code> platform). <p>
+
+</blockquote>
+
+<h2>Changes from Previous Version</h2>
+
+<blockquote>
+
+    This version of ANILib adds a new API function,
+    <code>ANI_Initialize()</code>, which must be called before you use
+    any other ANI functions. <p>
+
+    Also, when your program is about exit, please call
+    <code>ANI_Dispose()</code> to free up resources allocated by
+    ANILib. <p>
+
+    When compiling your code, please use the <a
+    href="src/share/ani.h"><code>src/share/ani.h</code></a> header
+    file included in this ANILib source distribution. <p>
+
+</blockquote>
+
+<hr>
