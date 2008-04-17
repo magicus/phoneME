@@ -37,7 +37,7 @@
 #include <midp_logging.h>
 #include <localeMethod.h>
 #include <midp_jc_event_defs.h>
-
+#include "javautil_string.h"
 #include <javacall_datagram.h>
 #include <javacall_events.h>
 #include <javacall_input.h>
@@ -50,7 +50,7 @@
 #include <javacall_time.h>
 #include <javautil_unicode.h>
 #include <javacall_properties.h>
-
+#include "runMidlet.h"
 #ifdef ENABLE_JSR_120
 #include <javacall_sms.h>
 #include <javacall_cbs.h>
@@ -291,6 +291,8 @@ void javanotify_start_tck(char *tckUrl, javacall_lifecycle_tck_domain domain_typ
 
     REPORT_INFO2(LC_CORE,"javanotify_start_tck() >> tckUrl=%s, domain_type=%d \n",tckUrl,domain_type);
 
+    memset(&e, 0, sizeof(e));
+
     JVM_SetConfig(JVM_CONFIG_SLAVE_MODE, KNI_TRUE);
 
     midp_thread_set_timeslice_proc(midp_slavemode_schedule_vm_timeslice);
@@ -322,10 +324,14 @@ void javanotify_start_tck(char *tckUrl, javacall_lifecycle_tck_domain domain_typ
     memset(urlAddress, 0, BINARY_BUFFER_MAX_LEN);
     memcpy(urlAddress, tckUrl, length);
     if (strcmp(urlAddress, "none") != 0) {
+#if 0
         data->argv[data->argc++] = urlAddress;
+#endif
+		argv[argc++] = urlAddress;
     }
 
-
+	argv[argc++] = "maximum";
+#if 0
     if (domain_type == JAVACALL_LIFECYCLE_TCK_DOMAIN_UNTRUSTED) {
         data->argv[data->argc++] = "untrusted";
     } else if (domain_type == JAVACALL_LIFECYCLE_TCK_DOMAIN_TRUSTED) {
@@ -337,8 +343,16 @@ void javanotify_start_tck(char *tckUrl, javacall_lifecycle_tck_domain domain_typ
     } else {
         return;
     }
+#endif
+	
 
-    midp_jc_event_send(&e);
+    javacall_lifecycle_state_changed(JAVACALL_LIFECYCLE_MIDLET_STARTED, JAVACALL_OK);
+
+    res = runMidlet(argc, argv);
+
+    javacall_lifecycle_state_changed(JAVACALL_LIFECYCLE_MIDLET_SHUTDOWN, (res == 1) ? JAVACALL_OK: JAVACALL_FAIL);
+
+    //midp_jc_event_send(&e);
 }
 
 /**

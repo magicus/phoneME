@@ -342,6 +342,10 @@ JVMSPI_DebuggerNotification(jboolean is_active) {
 }
 #endif
 
+/** static buffer to store string to print */
+static char buffer[256];
+/** current length of buffer to print */
+static int length;
 /**
  * This function provides an implementation
  * used by the logging service, as well as by the
@@ -350,7 +354,60 @@ JVMSPI_DebuggerNotification(jboolean is_active) {
  * @param s a string sent to a system specific output stream
  */
 void JVMSPI_PrintRaw(const char* s) {
-    pcsl_print(s);
+    int sLength = strlen(s);
+    int i;
+
+    /**
+     * Received only one character to print, do buffering
+     */
+    if (s[1] == '\0') {
+        if (s[0] == '\n') {
+            buffer[length++] = '\r';
+            buffer[length++] = '\n';
+            buffer[length++] = '\0';
+            pcsl_print(buffer);
+            buffer[0] = '\0';
+            length = 0;
+        } else {
+            if (length < 250) {
+                buffer[length++] = s[0];
+                buffer[length] = '\0';
+            } else {
+                buffer[length++] = '\r';
+                buffer[length++] = '\n';
+                buffer[length++] = '\0';
+                pcsl_print(buffer);
+                buffer[0] = s[0];
+                buffer[1] = '\0';
+                length = 1;
+            }
+        }
+    } else {
+        if (sLength + length > 250) {
+            if (length > 0) {
+                buffer[length++] = '\r';
+                buffer[length++] = '\n';
+                buffer[length++] = '\0';
+                pcsl_print(buffer);
+                buffer[0] = '\0';
+                length = 0;
+            }
+            pcsl_print(s);
+        } else {
+            for (i=0; i<sLength; i++) {
+                buffer[length++] = s[i];
+                if (s[i] == '\n') {
+                    buffer[length++] = '\r';
+                    buffer[length++] = '\n';
+                    buffer[length++] = '\0';
+                    pcsl_print(buffer);
+                    buffer[0] = '\0';
+                    length = 0;
+                }
+            }
+            buffer[length] = '\0';
+        }
+    }
 }
 
 /**
