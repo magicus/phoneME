@@ -551,7 +551,15 @@ private:
   name##_skip_##suffix,
 
 #define UNIVERSE_HANDLES_ACCESS(name, type) \
-  static type* name() { return (type*) &persistent_handles[name##_index]; }
+  static type* name() { \
+		union{ \
+			void* pVoid; \
+			type* pType; \
+		} converter; \
+		converter.pVoid = &persistent_handles[name##_index]; \
+		return converter.pType; }
+	
+//static type* name() { return (type*) &persistent_handles[name##_index]; }
 
   // Count the number of all persistent handles
   enum {
