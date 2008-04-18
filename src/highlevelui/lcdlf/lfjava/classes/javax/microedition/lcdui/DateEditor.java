@@ -98,7 +98,7 @@ class DateEditor extends PopupLayer implements CommandListener {
                 break;
         }
 
-        // initialize the bounds(used for pointer input) with invariant
+        // init the bounds(used for pointer input) with invariant
         // relative coordinate of the uppper left corner and with invalid
         // width, height values dependent on skin images
         month_bounds = new int[] {
@@ -343,7 +343,7 @@ class DateEditor extends PopupLayer implements CommandListener {
         int transY = y - calendar_bounds[Y];
         int o = DateEditorSkin.IMAGE_CAL_BG.getWidth() / 7;
         int rowH = 11;
-        //variable o, rowH, h is same as in paintCalendar()
+        //variable o, rowH, h is same as in paintCaalendar()
         int h = DateEditorSkin.IMAGE_DATES.getHeight() / 31;
 
         if (transX >= 0 && transX <= calendar_bounds[W] &&
@@ -779,18 +779,59 @@ class DateEditor extends PopupLayer implements CommandListener {
     }
 
     /**
+     * Paint the Calendar background 
+     * @param g The Graphics context to paint to
+     */
+    protected void paintCalBg(Graphics g) {
+	if (DateEditorSkin.IMAGE_CAL_BG == null ||
+	    DateEditorSkin.IMAGE_DAYS == null) {
+	    return;
+	}
+        g.drawImage(DateEditorSkin.IMAGE_CAL_BG, 0, 0,
+                    Graphics.LEFT | Graphics.TOP);
+
+	// paint days of week
+	int wBg = DateEditorSkin.IMAGE_DAYS.getWidth();
+        int hBg = DateEditorSkin.IMAGE_DAYS.getHeight();
+        int w = wBg / 7;
+
+	
+	int o = Resource.getFirstDayOfWeek();
+
+	int xBg = 5;
+	int x = (o - 1) * w;
+
+        for (int i = 0; i < 7; i++) {
+	    g.drawRegion(DateEditorSkin.IMAGE_DAYS,
+			 x, 0,
+			 w, hBg,
+			 Sprite.TRANS_NONE,
+			 xBg, 0,
+			 Graphics.TOP | Graphics.HCENTER);
+	    xBg += w;
+
+	    x += w;
+	    if ( x >= wBg ) {
+		x -= wBg;
+	    }
+
+	}
+    }
+
+
+    /**
      * Paint the Calendar.
      * @param g The Graphics context to paint to
      */
     protected void paintCalendar(Graphics g) {
         if (DateEditorSkin.IMAGE_CAL_BG == null ||
+	    DateEditorSkin.IMAGE_DAYS == null ||
             DateEditorSkin.IMAGE_DATES == null)
         {
             return;
         }
 
-        g.drawImage(DateEditorSkin.IMAGE_CAL_BG, 0, 0,
-                    Graphics.LEFT | Graphics.TOP);
+	paintCalBg(g);
 
         if (DateEditorSkin.IMAGE_DATES == null) {
             return;

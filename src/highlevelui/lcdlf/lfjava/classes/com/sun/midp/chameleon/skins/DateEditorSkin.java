@@ -140,6 +140,12 @@ public class DateEditorSkin {
     public static Image IMAGE_DATES;
 
     /**
+     * This field corresponds to DATEEDITOR_IMAGE_DAYS skin property.
+     * See its comment for further details.
+     */
+    public static Image IMAGE_DAYS;
+
+    /**
      * This field corresponds to DATEEDITOR_IMAGE_TIME_BG skin property.
      * See its comment for further details.
      */

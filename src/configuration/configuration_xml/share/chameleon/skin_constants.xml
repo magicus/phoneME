@@ -1316,6 +1316,13 @@
                      centered in the image."/>
             
   <constant Type="int"
+            Name="DATEEDITOR_IMAGE_DAYS"
+            Comment="This is a single image which holds all the days of week as 
+                     graphics. The image is arranged horizontally, starting 
+                     with 1 and going to 7. Each letter is equal height and
+                     centered in the image."/>
+            
+  <constant Type="int"
             Name="DATEEDITOR_IMAGE_TIME_BG"
             Comment="The background image for the drop-down hour/minute 
                      selected."/>

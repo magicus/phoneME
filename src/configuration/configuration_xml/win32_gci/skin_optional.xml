@@ -791,6 +791,11 @@
     Romized="false"/>
 
   <image
+        Key="DATEEDITOR_IMAGE_DAYS"
+      Value="dateeditor.image_days"
+    Romized="false"/>
+
+  <image
         Key="DATEEDITOR_IMAGE_TIME_BG"
       Value="dateeditor.image_time_bg"
     Romized="false"/>
