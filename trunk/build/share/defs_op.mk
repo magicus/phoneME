@@ -345,8 +345,10 @@ JSROP_JC_DIR = JAVACALL_DIR
 else
 JSROP_JC_DIR = PROJECT_JAVACALL_DIR
 endif
-JAVACALL_MAKE_FILE = $($(JSROP_JC_DIR))/configuration/phoneMEAdvanced/$(JAVACALL_TARGET)/module.gmk
+
+JAVACALL_MAKE_FILE ?= $($(JSROP_JC_DIR))/configuration/phoneMEAdvanced/$(JAVACALL_TARGET)/module.gmk
 ifeq ($(wildcard $(JAVACALL_MAKE_FILE)),)
+$(warning $(JAVACALL_MAKE_FILE) was not found)
 $(error $(JSROP_JC_DIR) must point to a directory containing javacall implementation sources)
 endif
 include $(JAVACALL_MAKE_FILE)
