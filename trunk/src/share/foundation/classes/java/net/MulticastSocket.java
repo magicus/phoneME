@@ -166,6 +166,7 @@ class MulticastSocket extends DatagramSocket {
 	if (bindaddr != null) {
 	    bind(bindaddr);
 	}
+        getImpl().setIsMulticastSocket();
     }
 
     /**
