@@ -49,21 +49,42 @@ public interface CVMTypeCode {
 
     public static final int  CVMtypeLastScalar   =   CVM_T_BOOLEAN;
 
+    /* For reference:
+    *** BEGIN CVM_16BIT_TYPEID encoding
+
     // parameters of the encoding
+    public static final int  CVMtypeTokenSize    =   16;
     public static final int  CVMtypeArrayShift   =   14;
-    static final int CVMtypeCookieSize   =   16;
 
     // the below values are all derived from the above as follows:
     // CVMtypeBasetypeMask =  ((1<<CVMtypeArrayShift) - 1)
-    // CVMtypeArrayMask    =  ((1<<(CVMtypeCookieSize-CVMtypeArrayShift)) - 1)
+    // CVMtypeArrayMask    =  ((1<<(CVMtypeTokenSize-CVMtypeArrayShift)) - 1)
     //				     <<CVMtypeArrayShift
     // CVMtypeBigArray     = CVMtypeArrayMask
-    // CVMtypeMaxSmallArray = (CVMtypeBigArray>>CVMtypeArrayShift) - 1
+    // CVMtypeMaxSmallArray = (CVMtypeBigArray>>>CVMtypeArrayShift) - 1
 
     public static final int  CVMtypeArrayMask    =   0xc000;
     public static final int  CVMtypeBasetypeMask =   0x3fff;
     public static final int  CVMtypeBigArray     =   0xc000;
     public static final int  CVMtypeMaxSmallArray=   2;
- 
+
+    *** END CVM_16BIT_TYPEID encoding */
+
+    // parameters of the encoding
+    public static final int  CVMtypeTokenSize    =   32;
+    public static final int  CVMtypeArrayShift   =   24;
+
+    // the below values are all derived from the above as follows:
+    // CVMtypeBasetypeMask =  ((1<<CVMtypeArrayShift) - 1)
+    // CVMtypeArrayMask    =  ((1<<(CVMtypeTokenSize-CVMtypeArrayShift)) - 1)
+    //				     <<CVMtypeArrayShift
+    // CVMtypeBigArray     = CVMtypeArrayMask
+    // CVMtypeMaxSmallArray = max(((CVMtypeBigArray>>>CVMtypeArrayShift) - 1),\
+    //                            VM_MAX_ARRAY_DIMENSIONS)
+
+    public static final int  CVMtypeArrayMask     = 0xff000000;
+    public static final int  CVMtypeBasetypeMask  = 0x00ffffff; 
+    public static final int  CVMtypeBigArray      = CVMtypeArrayMask;
+    public static final int  CVMtypeMaxSmallArray = 0xff;
 
 }

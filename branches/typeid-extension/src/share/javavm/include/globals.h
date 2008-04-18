@@ -486,9 +486,10 @@ struct CVMGlobalState {
      * all access to it.
      */
     CVMSysMutex typeidLock; /* protect table insertion */
-    CVMUint32	typeIDscalarSegmentSize;
-    CVMUint32	typeIDmethodTypeSegmentSize;
-    CVMUint32	typeIDmemberNameSegmentSize;
+    CVMUint32	typeidClassSegmentSize;
+    CVMUint32	typeidMethodSigSegmentSize;
+    CVMUint32	typeidNameSegmentSize;
+    CVMUint32	typeidNameAndTypeSegmentSize;
 
     /*
      * The lock on the intern table (which is now a C data structure)

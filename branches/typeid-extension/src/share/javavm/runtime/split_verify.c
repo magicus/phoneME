@@ -1760,7 +1760,7 @@ CVMvfyLookupField(
 	n = CVMcbFieldCount(memberClass);
 	for (i = 0; i < n; i++){
 	    CVMFieldBlock*  fp = CVMcbFieldSlot(memberClass, i);
-	    if (CVMtypeidIsSame(CVMfbNameAndTypeID(fp), nameTypeKey)){
+            if (CVMtypeidIsSameField(CVMfbNameAndTypeID(fp), nameTypeKey)){
 		return fp;
 	    }
 	}
@@ -1779,7 +1779,7 @@ CVMvfyLookupMethod(
 	n = CVMcbMethodCount(memberClass);
 	for (i = 0; i < n; i++){
 	    CVMMethodBlock*  mp = CVMcbMethodSlot(memberClass, i);
-	    if (CVMtypeidIsSame(CVMmbNameAndTypeID(mp), nameTypeKey)){
+            if (CVMtypeidIsSameMethod(CVMmbNameAndTypeID(mp), nameTypeKey)){
 		return mp;
 	    }
 	}
@@ -5464,7 +5464,7 @@ does this do?
 		* With that in mind, make sure that the one is never invoked,
 		* and the other referenced only by INVOKESPECIAL.
 		*/
-		if (CVMtypeidIsClinit(methodNameKey)){
+                if (CVMtypeidHasClinitName(methodNameKey)){
 		    Vfy_throw(cntxt, VE_CALLS_CLINIT);
 		}
 		if (CVMtypeidIsConstructor(methodNameKey) && 

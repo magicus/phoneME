@@ -1019,13 +1019,13 @@ CVMjvmtiPostFieldModificationEvent(CVMExecEnv* ee, CVMObjectICell* obj,
 	CVMMethodBlock* mb;
 	jlocation location;
 	JNIEnv* env = CVMexecEnv2JniEnv(ee);
-	CVMFieldTypeID tid = CVMfbNameAndTypeID(fb);
+	CVMClassTypeID tid = CVMtypeidGetMemberType(CVMfbNameAndTypeID(fb));
 	char sig_type;
 	CVMJvmtiContext *context;
 	jvmtiEventFieldModification callback;
 
 	if (CVMtypeidIsPrimitive(tid)) {
-	    sig_type = CVMterseTypePrimitiveSignatures[CVMtypeidGetType(tid)];
+	    sig_type = CVMterseTypePrimitiveSignatures[CVMtypeidGetToken(tid)];
 	} else if (CVMtypeidIsArray(tid)) {
 	    sig_type = CVM_SIGNATURE_ARRAY;
 	} else {

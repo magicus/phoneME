@@ -844,8 +844,8 @@ static jint CVMdumperDumpInstance(CVMDumper *self, CVMObject *obj)
             if (CVMfbIs(fb, STATIC)) {
                 continue;
             }
-            fieldType = CVMtypeidGetType(CVMfbNameAndTypeID(fb));
-            if (CVMtypeidFieldIsRef(fieldType)) {
+            fieldType = CVMtypeidGetMemberType(CVMfbNameAndTypeID(fb));
+            if (CVMtypeidClassIsRef(fieldType)) {
                 CVMObject *value;
                 CVMD_fieldReadRef(obj, CVMfbOffset(fb), value);
                 CVMdumperWriteID(self, value);
@@ -860,7 +860,7 @@ static jint CVMdumperDumpInstance(CVMDumper *self, CVMObject *obj)
     CVMdumperWrite##type_(self, value);                  \
     size += size_;                                       \
 }
-                switch (fieldType) {
+                switch (CVMtypeidGetToken(fieldType)) {
                     case CVM_TYPEID_LONG: DUMP_FIELD(8, Long, Long); break;
                     case CVM_TYPEID_DOUBLE: DUMP_FIELD(8, Double, Double); break;
                     case CVM_TYPEID_INT: DUMP_FIELD(4, Int, Int); break;
@@ -1037,8 +1037,8 @@ static jint CVMdumperDumpClass(CVMDumper *self, CVMObject *clazz)
             if (!CVMfbIs(fb, STATIC)) {
                 continue;
             }
-            fieldType = CVMtypeidGetType(CVMfbNameAndTypeID(fb));
-            if (CVMtypeidFieldIsRef(fieldType)) {
+            fieldType = CVMtypeidGetMemberType(CVMfbNameAndTypeID(fb));
+            if (CVMtypeidClassIsRef(fieldType)) {
                 CVMObject *value = (CVMObject *) CVMfbStaticField(ee, fb).raw;
                 CVMdumperWriteID(self, value);
 
@@ -1058,7 +1058,7 @@ static jint CVMdumperDumpClass(CVMDumper *self, CVMObject *clazz)
     CVMdumperWrite##type_(self, value);                 \
 }
 
-                switch (fieldType) {
+                switch (CVMtypeidGetToken(fieldType)) {
                     case CVM_TYPEID_LONG:    DUMP_VALUE2(Long);      break;
                     case CVM_TYPEID_DOUBLE:  DUMP_VALUE2(Double);    break;
                     case CVM_TYPEID_INT:     DUMP_VALUE(Int,     i); break;
@@ -1219,11 +1219,11 @@ static jsize CVMdumperComputeInstanceDumpSize(CVMDumper *self, CVMObject *obj)
             if (CVMfbIs(fb, STATIC)) {
                 continue;
             }
-            fieldType = CVMtypeidGetType(CVMfbNameAndTypeID(fb));
-            if (CVMtypeidFieldIsRef(fieldType)) {
+            fieldType = CVMtypeidGetMemberType(CVMfbNameAndTypeID(fb));
+            if (CVMtypeidClassIsRef(fieldType)) {
                 size += sizeof(jobjectID);
             } else if (dumpLevel == JVMPI_DUMP_LEVEL_2) {
-                switch (fieldType) {
+                switch (CVMtypeidGetToken(fieldType)) {
                     case CVM_TYPEID_BOOLEAN:
                     case CVM_TYPEID_BYTE:    size += sizeof(CVMUint8); break;
                     case CVM_TYPEID_CHAR:
@@ -1326,11 +1326,11 @@ static jsize CVMdumperComputeClassDumpSize(CVMDumper *self, CVMObject *clazz)
             if (!CVMfbIs(fb, STATIC)) {
                 continue;
             }
-            fieldType = CVMtypeidGetType(CVMfbNameAndTypeID(fb));
-            if (CVMtypeidFieldIsRef(fieldType)) {
+            fieldType = CVMtypeidGetMemberType(CVMfbNameAndTypeID(fb));
+            if (CVMtypeidClassIsRef(fieldType)) {
                 size += sizeof(jobjectID);
             } else if (dumpLevel == JVMPI_DUMP_LEVEL_2) {
-                switch (fieldType) {
+                switch (CVMtypeidGetToken(fieldType)) {
                     case CVM_TYPEID_BOOLEAN:
                     case CVM_TYPEID_BYTE:    size += sizeof(CVMUint8); break;
                     case CVM_TYPEID_CHAR:

@@ -1,7 +1,5 @@
 /*
- * @(#)typeid_impl.h	1.32 06/10/10
- *
- * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.  
+ * Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.  
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER  
  *   
  * This program is free software; you can redistribute it and/or  
@@ -70,7 +68,7 @@ typedef CVMUint8	TypeidState;
  * is required. Since 0 is, in some places, a valid index, we
  * use this value instead:
  */
-#define TYPEID_NOENTRY ((CVMTypeIDTypePart)-1)
+#define TYPEID_NOENTRY ((CVMTypeIDToken)-1)
 
 /*
  * This idiom is used in many places to build an extensable,
@@ -83,9 +81,9 @@ typedef CVMUint8	TypeidState;
  */
 #define SEGMENT_HEADER(T)	\
     int		firstIndex;	\
-    int		nFree;		\
+    int		numberOfFreeEntries; \
     int		nextFree;	\
-    int		nInSegment;	\
+    int		numEntriesInSegment; \
     T **	next;
 
 /*
@@ -105,33 +103,46 @@ typedef CVMUint8	TypeidState;
  * flags a free entry. See MAX_COUNT
  */
 
+/* NOTE: The size of nextIndex below imposes a limit on the max value for a
+   CVMTypeIDToken.  With 24-bits, we can have up to approximately 16M unique
+   IDs.  It is same to assume that we won't have 16M classes or field/method
+   names nor method signatures co-existing at the same time in an embedded
+   environment.  If more than 24bits is needed, then the size of nextIndex
+   should be increased, and ... should be adjusted accordingly.
+
+   Ouch!!!  I just found out that we can't take the address of a 24-bit bit
+   field.  I'll jut use the full 32 bit for now and take the size hit.
+   Will worry about the footprint after this.
+*/
 #define COMMON_TYPE_ENTRY_HEADER \
-    CVMTypeIDPart	nextIndex;	/* hash bucket chain */ \
-    CVMUint8		refCount; \
+    CVMTypeIDToken      nextIndex;      /* hash bucket chain */ \
+    CVMUint8            refCount; \
     STATEFLAG( state )
 
 /*
- * The basic decoding of the scalarType cookie is described in
- * scalarType.h.  When that cookie includes an index to a larger table
- * entry, that entry is a struct scalarTableEntry, which is in a
- * scalarEntrySegment.
+ * The basic decoding of the CVMClassTypeID cookie is described in a comment
+ * at the top of typeid.h.  That cookie includes an index to a larger table
+ * entry.  That entry is a struct CVMTypeIDClassEntry, which is in a
+ * CVMTypeIDClassSegment.
  * 
- * Scalar types are also used as classname cookies, since, for the vast
- * majority of classes, there is at least one scalar holding an instance
- * of the class type, (and thus a scalar type corresponding to the class)
- * it seemed economic to unify the two.
+ * Class types are also used as classname cookies.
  * 
  * There are only two entry types: big arrays and classes. It seems
  * wasteful to use a whole byte for the tag, but alignment constraints are
  * probably going to cause it to be wasted on padding otherwise.
  * 
+ * For 32-bit typeIDs, big arrays are not needed because there will be 8 bits
+ * reserved in the CVMClassTypeID to encode the array depth.  8 bits give
+ * us a max array depth of 255 which is the maximum allowed by the VM spec.
+ * Hence, there is no need to support big arrays in this case.
  */
 
 #include "javavm/include/typeid.h"
 
 struct pkg; /* see below */
 
-struct scalarTableEntry {
+typedef struct CVMTypeIDClassEntry CVMTypeIDClassEntry;
+struct CVMTypeIDClassEntry {
     COMMON_TYPE_ENTRY_HEADER
     CVMUint8			tag;
     CVMUint8			nameLength; /* only used for classnameType */
@@ -148,7 +159,8 @@ struct scalarTableEntry {
 	     * type is used.
 	     */
 	    CVMAddr	depth;
-	    CVMAddr	basetype;
+	    CVMTypeIDToken basetype;
+
 	} bigArray;
     } value;
 };
@@ -176,29 +188,31 @@ struct scalarTableEntry {
  * the segment to be ReadOnly, even though the next pointer won't be!
  */
 
-#define SCALAR_TABLE_SEGMENT_HEADER SEGMENT_HEADER(struct scalarTableSegment)
+#define CVM_TYPEID_CLASS_SEGMENT_HEADER \
+    SEGMENT_HEADER(CVMTypeIDClassSegment)
 
-struct scalarTableSegment {
-    SCALAR_TABLE_SEGMENT_HEADER
-    struct scalarTableEntry
-		data[1]; /* variable size */
+typedef struct CVMTypeIDClassSegment CVMTypeIDClassSegment;
+struct CVMTypeIDClassSegment {
+    CVM_TYPEID_CLASS_SEGMENT_HEADER
+    CVMTypeIDClassEntry data[1]; /* variable size */
 };
 
 /*
- * CVMtypeTable points to the first scalarTableSegment.
+ * CVMtypeidClassEntries is the first CVMTypeIDClassSegment which in turn
+ * can point to a chain of other segments.
  */
-#ifndef IN_ROMJAVA
-extern struct scalarTableSegment CVMFieldTypeTable;
+#ifndef IN_ROMJAVAAUX
+extern struct CVMTypeIDClassSegment CVMtypeidClassEntries;
 #endif
 
-#define FIRST_SCALAR_TABLE_INDEX CVMtypeLastScalar+1
+#define CVM_TYPEID_FIRST_CLASS_INDEX CVMtypeLastPrimitive+1
 
 /****************************************************************************
  * The basis of type-structure lookup is the package.
  * This introduces another layer of data-structure management.
  * Packages are looked up using an initial hash of the name into
  * a table. Then each package itself contains a mini-hash table for
- * looking up the scalarTableEntry's.
+ * looking up the CVMTypeIDClassEntry's.
  * These packages cannot be ReadOnly, as they contain hash tables, which are
  * administred by add-at-beginning-of-chain, so the entries can be ReadOnly.
  * These are reference counted.
@@ -213,7 +227,7 @@ struct pkg {
     struct pkg *	next;	/* hash bucket chain */
     TypeidState		state; /* to hold INROM flag if no other */
     CVMUint8	 	refCount;
-    CVMTypeIDTypePart	typeData[NCLASSHASH];
+    CVMTypeIDToken      typeData[NCLASSHASH];
 };
 
 extern struct pkg ** const CVM_pkgHashtable;
@@ -296,22 +310,27 @@ extern struct sigForm ** const CVMformTablePtr;
  * derived by inspecting the form.
  */
 
-#define METHOD_TYPE_HEADER \
+#define CVM_TYPEID_METHODSIG_HEADER \
     COMMON_TYPE_ENTRY_HEADER \
     CVMUint8		nParameters; /* needed for inline form */
 
-#define N_METHOD_INLINE_DETAILS	2
+#ifdef CVM_16BIT_TYPEID
+#define NUMBER_OF_METHOD_INLINE_DETAILS	2
+#else
+#define NUMBER_OF_METHOD_INLINE_DETAILS	1
+#endif
 
-struct methodTypeTableEntry {
-    METHOD_TYPE_HEADER
+typedef struct CVMTypeIDMethodSigEntry CVMTypeIDMethodSigEntry;
+struct CVMTypeIDMethodSigEntry {
+    CVM_TYPEID_METHODSIG_HEADER
 
     union methodFormUnion {
 	struct sigForm *	formp;
 	CVMUint32		formdata;
     } form;
     union methodDetailUnion {
-	CVMTypeIDTypePart	data[N_METHOD_INLINE_DETAILS];
-	CVMTypeIDTypePart *	datap;
+        CVMTypeIDToken          data[NUMBER_OF_METHOD_INLINE_DETAILS];
+        CVMTypeIDToken         *datap;
     } details;
 };
 
@@ -319,16 +338,17 @@ struct methodTypeTableEntry {
  * The indexable table of these things.
  */
 
-#define METHOD_TABLE_SEGMENT_HEADER SEGMENT_HEADER(struct methodTypeTableSegment)
+#define CVM_TYPEID_METHODSIG_SEGMENT_HEADER \
+    SEGMENT_HEADER(CVMTypeIDMethodSigSegment)
 
-struct methodTypeTableSegment {
-    METHOD_TABLE_SEGMENT_HEADER
-    struct methodTypeTableEntry
-		data[1]; /* variable size */
+typedef struct CVMTypeIDMethodSigSegment CVMTypeIDMethodSigSegment;
+struct CVMTypeIDMethodSigSegment {
+    CVM_TYPEID_METHODSIG_SEGMENT_HEADER
+    CVMTypeIDMethodSigEntry data[1]; /* variable size */
 };
 
-#ifndef IN_ROMJAVA
-extern struct methodTypeTableSegment CVMMethodTypeTable;
+#ifndef IN_ROMJAVAAUX
+extern struct CVMTypeIDMethodSigSegment CVMtypeidMethodSigEntries;
 #endif
 
 /*
@@ -342,31 +362,64 @@ extern struct methodTypeTableSegment CVMMethodTypeTable;
  */
 #define NMETHODTYPEHASH	(13*37) /* arbitrary odd number */
 
-extern CVMTypeIDPart * const CVMMethodTypeHash;
+extern CVMTypeIDToken *const CVMtypeidMethodSigHash;
 
 /********************************************************************
- * The member name table. Hashed, reference counted,
- * indexed. Just like all the above.
+ * The member name table used for tracking names of members (i.e. fields
+ * and methods). Hashed, reference counted, indexed. Just like all the above.
  */
-struct memberName {
+typedef struct CVMTypeIDNameEntry CVMTypeIDNameEntry;
+struct CVMTypeIDNameEntry {
     COMMON_TYPE_ENTRY_HEADER
-    const char *	name;
+    const char *name;
 };
 
-#define MEMBER_NAME_TABLE_SEGMENT_HEADER SEGMENT_HEADER(struct memberNameTableSegment)
+#define CVM_TYPEID_NAME_SEGMENT_HEADER \
+    SEGMENT_HEADER(CVMTypeIDNameSegment)
 
-struct memberNameTableSegment{
-    MEMBER_NAME_TABLE_SEGMENT_HEADER
-    struct memberName	data[1]; /* of variable size */
+typedef struct CVMTypeIDNameSegment CVMTypeIDNameSegment;
+struct CVMTypeIDNameSegment {
+    CVM_TYPEID_NAME_SEGMENT_HEADER
+    CVMTypeIDNameEntry data[1]; /* of variable size */
 };
 
-#define NMEMBERNAMEHASH	(41*13)	/* pretty arbitrary odd number */
+/* Set the hash table size to an arbitrary large enough prime-ish number: */
+#define CVM_TYPEID_NAME_HASH_SIZE  (41*13)
 
-extern CVMTypeIDPart * const CVMMemberNameHash;
+extern CVMTypeIDToken *const CVMtypeidNameHash;
 
-#ifndef IN_ROMJAVA
-extern struct memberNameTableSegment CVMMemberNames;
+#ifndef IN_ROMJAVAAUX
+extern CVMTypeIDNameSegment CVMtypeidNameEntries;
 #endif
+
+/********************************************************************
+ * The NameAndType table use for tracking composite pairs of member names and
+ * types.  Hashed, reference counted, indexed. Just like all the above.
+ */
+typedef struct CVMTypeIDNameAndTypeEntry CVMTypeIDNameAndTypeEntry;
+struct CVMTypeIDNameAndTypeEntry {
+    COMMON_TYPE_ENTRY_HEADER
+    CVMCompositeTypeID compID;
+};
+
+#define CVM_TYPEID_NAME_AND_TYPE_SEGMENT_HEADER \
+    SEGMENT_HEADER(CVMTypeIDNameAndTypeSegment)
+
+typedef struct CVMTypeIDNameAndTypeSegment CVMTypeIDNameAndTypeSegment;
+struct CVMTypeIDNameAndTypeSegment {
+    CVM_TYPEID_NAME_AND_TYPE_SEGMENT_HEADER
+    CVMTypeIDNameAndTypeEntry data[1]; /* of variable size */
+};
+
+/* Set the hash table size to an arbitrary large enough prime-ish number: */
+#define CVM_TYPEID_NAME_AND_TYPE_HASH_SIZE (41*13)
+
+extern CVMTypeIDToken *const CVMtypeidNameAndTypeHash;
+
+#ifndef IN_ROMJAVAAUX
+extern CVMTypeIDNameAndTypeSegment CVMtypeidNameAndTypeEntries;
+#endif
+
 
 /********************************************************************
  * Here for the convenience of several of the C functions. 

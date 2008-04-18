@@ -102,7 +102,7 @@ JVM_FindPrimitiveClass(JNIEnv *env, const char *utf)
      */
     tid = CVMtypeidNewClassID(ee, utf, (int)strlen(utf));
 
-    if (tid == CVM_TYPEID_ERROR) {
+    if (CVMtypeidIsSameClass(tid, CVM_CLASS_TYPEID_ERROR)) {
 	/* CVMtypeidNewClassID() will always succeed if the type already
 	 * exist, so it must not be primitive.
 	 */
@@ -359,13 +359,14 @@ JVM_GetClassModifiers(JNIEnv *env, jclass cls)
     /* Check if this class happens to be a member class. */
     if (icount != 0) {
 	CVMUint32 i;
-        CVMClassTypeID classID = CVM_TYPEID_ERROR;
+        CVMTypeID typeID;
+        typeID.classID = CVM_CLASS_TYPEID_ERROR;
 	for (i = 0; i < icount; i++) {
 	    CVMConstantPool* cp = CVMcbConstantPool(cb);
 	    CVMUint16 classIdx = CVMcbInnerClassInfo(cb, i)->innerClassIndex;
 	    CVMClassBlock* innerCb;
 #ifdef CVM_CLASSLOADING
-            if (CVMcpCheckResolvedAndGetTID(ee, cb, cp, classIdx, &classID)) {
+            if (CVMcpCheckResolvedAndGetTID(ee, cb, cp, classIdx, &typeID)) {
 		innerCb = CVMcpGetCb(cp, classIdx);
 	    } else {
 		innerCb = NULL;
@@ -373,7 +374,8 @@ JVM_GetClassModifiers(JNIEnv *env, jclass cls)
 #else
 	    innerCb = CVMcpGetCb(cp, classIdx);
 #endif
-	    if (cb == innerCb || CVMcbClassName(cb) == classID) {
+	    if (cb == innerCb ||
+                CVMtypeidIsSameClass(CVMcbClassName(cb), typeID.classID)) {
 		/* Aha, this is really a member class. */
 		jint access =
 		    CVMcbInnerClassInfo(cb, i)->innerClassAccessFlags;
@@ -1743,8 +1745,9 @@ JVM_Clone(JNIEnv *env, jobject obj)
 			if (!CVMfbIs(fb, STATIC)) {
 			    CVMUint32 offset = CVMfbOffset(fb);
 			    CVMClassTypeID type =
-				CVMtypeidGetType(CVMfbNameAndTypeID(fb));
-			    switch (type) {
+				CVMtypeidGetMemberType(CVMfbNameAndTypeID(fb));
+
+                            switch (CVMtypeidGetToken(type)) {
 				case CVM_TYPEID_INT:
 				case CVM_TYPEID_SHORT:
 				case CVM_TYPEID_CHAR:
@@ -2835,7 +2838,8 @@ JVM_AllocateNewObject(JNIEnv *env, jobject thisObj, jclass currClass,
 
     for (len = CVMcbMethodCount(initCb) - 1; len >= 0; len--) {
 	mb = CVMcbMethodSlot(initCb, len);
-	if (CVMtypeidIsSame(CVMmbNameAndTypeID(mb), noArgConstructorTid)) {
+	if (CVMtypeidIsSameMethod(CVMmbNameAndTypeID(mb),
+                                  noArgConstructorTid)) {
 	    break;
 	}
     }
@@ -3743,7 +3747,7 @@ JVM_FindLoadedClass(JNIEnv *env, jobject loader, jstring name)
      */
     classTypeID = CVMtypeidNewClassID(ee, slash_name, (int)strlen(slash_name));
 
-    if (classTypeID != CVM_TYPEID_ERROR) {
+    if (!CVMtypeidIsSameClass(classTypeID, CVM_CLASS_TYPEID_ERROR)) {
 	CVMBool success;
 	/*
 	 * Any time CVMloaderCacheLookup() is called and we want to make sure

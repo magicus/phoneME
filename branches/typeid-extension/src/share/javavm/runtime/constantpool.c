@@ -114,7 +114,7 @@ CVMprivate_cpResolveEntryWithoutClassLoading(CVMExecEnv* ee,
 
     cpType = CVMcpEntryType(cp, cpIndex);
     if (cpType != CVM_CONSTANT_ClassTypeID && p_typeid != NULL) {
-	*p_typeid = CVM_TYPEID_ERROR;
+	p_typeid->classID = CVM_CLASS_TYPEID_ERROR;
     }
 
     if (CVMcpIsResolved(cp, cpIndex)) {
@@ -145,16 +145,16 @@ CVMprivate_cpResolveEntryWithoutClassLoading(CVMExecEnv* ee,
 	if (!CVMcpIsResolved(cp, classCpIndex)) {
 	    classID = CVMcpGetClassTypeID(cp, classCpIndex);
 	} else {
-	    classID = CVM_TYPEID_ERROR;
+	    classID = CVM_CLASS_TYPEID_ERROR;
 	}
 	
 	/* also set p_typeid so we can return it to the caller if needed */
 	typeIDIdx = CVMcpGetMemberRefTypeIDIdx(cp, cpIndex);
 	if (p_typeid != NULL) {
 	    if (cpType == CVM_CONSTANT_Fieldref) {
-		*p_typeid = CVMcpGetFieldTypeID(cp, typeIDIdx);
+		p_typeid->fieldID = CVMcpGetFieldTypeID(cp, typeIDIdx);
 	    } else {
-		*p_typeid = CVMcpGetMethodTypeID(cp, typeIDIdx);
+		p_typeid->methodID = CVMcpGetMethodTypeID(cp, typeIDIdx);
 	    }
 	}
     }
@@ -174,7 +174,7 @@ CVMprivate_cpResolveEntryWithoutClassLoading(CVMExecEnv* ee,
      * that the class is loaded, but loading has not yet been initiated by
      * the ClassLoader of currentCb.
      */
-    if (classID != CVM_TYPEID_ERROR
+    if (!CVMtypeidIsSameClass(classID, CVM_CLASS_TYPEID_ERROR)
 #ifdef CVM_JIT
 	&& !CVMglobals.jit.compilingCausesClassLoading
 #endif
@@ -203,7 +203,7 @@ CVMprivate_cpResolveEntryWithoutClassLoading(CVMExecEnv* ee,
 	 */
 	if (CVMtypeidIsPrimitive(classID) || 
 	    (CVMtypeidIsArray(classID) &&
-	     CVMtypeidIsPrimitive(CVMtypeidGetArrayBasetype(classID))))
+	     CVMtypeidIsPrimitive(CVMtypeidGetArrayBaseType(classID))))
 	{
 	    cb = CVMpreloaderLookupFromType(ee, classID, NULL);
 	} 
@@ -275,7 +275,7 @@ CVMprivate_cpExtractTypeIDFromUnresolvedEntry(CVMExecEnv* ee,
 
     cpType = CVMcpEntryType(cp, cpIndex);
     if (cpType != CVM_CONSTANT_ClassTypeID && p_typeid != NULL) {
-	*p_typeid = CVM_TYPEID_ERROR;
+        p_typeid->classID = CVM_CLASS_TYPEID_ERROR;
     }
 
     if (CVMcpIsResolved(cp, cpIndex)) {
@@ -298,14 +298,14 @@ CVMprivate_cpExtractTypeIDFromUnresolvedEntry(CVMExecEnv* ee,
 	typeIDIdx = CVMcpGetMemberRefTypeIDIdx(cp, cpIndex);
 	if (p_typeid != NULL) {
 	    if (cpType == CVM_CONSTANT_Fieldref) {
-		*p_typeid = CVMcpGetFieldTypeID(cp, typeIDIdx);
+		p_typeid->fieldID = CVMcpGetFieldTypeID(cp, typeIDIdx);
 	    } else {
-		*p_typeid = CVMcpGetMethodTypeID(cp, typeIDIdx);
+		p_typeid->methodID = CVMcpGetMethodTypeID(cp, typeIDIdx);
 	    }
 	}
     } else {
         if (p_typeid != NULL) {
-	    *p_typeid = CVMcpGetClassTypeID(cp, cpIndex);
+	    p_typeid->classID = CVMcpGetClassTypeID(cp, cpIndex);
         }
     }
     
@@ -365,7 +365,7 @@ CVMprivate_cpResolveEntryFromClass(CVMExecEnv* ee,
      */
     CVMUint16       classCpIndex;
     CVMClassBlock*  resolvedCb;
-    CVMClassTypeID  classID = CVM_TYPEID_ERROR;
+    CVMClassTypeID  classID = CVM_CLASS_TYPEID_ERROR;
     /*
      * We need to make sure the cp entry is not resolved and get its
      * contents while holding the lock. Otherwise it could get resolved
@@ -529,7 +529,8 @@ CVMprivate_cpResolveEntryFromClass(CVMExecEnv* ee,
     if (!CVMcpIsResolved(cp, classCpIndex)) {
 	CVMcpSetCb(cp, classCpIndex, resolvedCb);
     } else {
-	classID = CVM_TYPEID_ERROR; /* so we don't try to dispose it later */
+        /* Set it appropriately so we don't try to dispose it later: */
+	classID = CVM_CLASS_TYPEID_ERROR;
     }
     if (!CVMcpIsResolved(cp, cpIndex)) {
 	/*
@@ -558,7 +559,7 @@ CVMprivate_cpResolveEntryFromClass(CVMExecEnv* ee,
      * after releasing the cpLock. This probably isn't totally necessary,
      * but it means we hold the lock less and avoid any possible rank error.
      */
-    if (classID != CVM_TYPEID_ERROR) {
+    if (!CVMtypeidIsSameClass(classID, CVM_CLASS_TYPEID_ERROR)) {
 	CVMtypeidDisposeClassID(ee, classID);
     }
     
@@ -573,7 +574,7 @@ CVMcpFindFieldInClass(CVMExecEnv* ee,
     CVMInt32 fieldIdx;
     for (fieldIdx = CVMcbFieldCount(targetCb) - 1; fieldIdx >=0; fieldIdx--) {
         CVMFieldBlock* fb = CVMcbFieldSlot(targetCb, fieldIdx);
-        if (CVMtypeidIsSame(fieldTypeID, CVMfbNameAndTypeID(fb))) {
+        if (CVMtypeidIsSameField(fieldTypeID, CVMfbNameAndTypeID(fb))) {
             return fb;
         }
     }
@@ -717,7 +718,7 @@ CVMcpResolveMethodref(CVMExecEnv* ee,
 	for (methodIdx = CVMcbMethodCount(cb) - 1;
 	     methodIdx >= 0; methodIdx--) {
 	    mb = CVMcbMethodSlot(cb, methodIdx);
-	    if (CVMtypeidIsSame(methodTypeID, CVMmbNameAndTypeID(mb))) {
+	    if (CVMtypeidIsSameMethod(methodTypeID, CVMmbNameAndTypeID(mb))) {
 		goto found;
 	    }
 	}
@@ -731,7 +732,7 @@ CVMcpResolveMethodref(CVMExecEnv* ee,
 	    CVMcbMethodTableCount(CVMsystemClass(java_lang_Object));
 	for (n = CVMcbMethodTableCount(methodCb) - 1; n >= objectMethods ;n--){
 	    mb = CVMcbMethodTableSlot(methodCb, n);
-	    if (CVMtypeidIsSame(methodTypeID, CVMmbNameAndTypeID(mb))) {
+	    if (CVMtypeidIsSameMethod(methodTypeID, CVMmbNameAndTypeID(mb))) {
 		/*
 		 * If the mb is in the methodtable, but not declared,
 		 * it must be a miranda method.
@@ -769,7 +770,7 @@ CVMcpResolveMethodref(CVMExecEnv* ee,
      */
     access = CVMmbAccessFlags(mb);
 
-    if (CVMtypeidIsSameName(CVMmbNameAndTypeID(mb), CVMglobals.cloneTid) &&
+    if (CVMtypeidIsSameMethod(CVMmbNameAndTypeID(mb), CVMglobals.cloneTid) &&
 	(cb == CVMsystemClass(java_lang_Object)) &&
 	CVMtypeidIsArray(CVMcbClassName(methodCb))) {
       CVMassert(IsProtected(access));
@@ -822,7 +823,7 @@ CVMcpResolveInterfaceMethodref(CVMExecEnv* ee,
 	for (methodIdx = CVMcbMethodCount(intfCb) - 1; 
 	     methodIdx >= 0; methodIdx--) {
 	    CVMMethodBlock* mb = CVMcbMethodSlot(intfCb, methodIdx);
-	    if (CVMtypeidIsSame(methodTypeID, CVMmbNameAndTypeID(mb))) {
+	    if (CVMtypeidIsSameMethod(methodTypeID, CVMmbNameAndTypeID(mb))) {
 		return mb;
 	    }
 	}
@@ -835,7 +836,8 @@ CVMcpResolveInterfaceMethodref(CVMExecEnv* ee,
         for (methodIdx = CVMcbMethodCount(ObjectCb) - 1;
              methodIdx >= 0; methodIdx--) {
              CVMMethodBlock* ObjectMb = CVMcbMethodSlot(ObjectCb, methodIdx);
-             if (CVMtypeidIsSame(methodTypeID, CVMmbNameAndTypeID(ObjectMb))) {
+             if (CVMtypeidIsSameMethod(methodTypeID,
+                                       CVMmbNameAndTypeID(ObjectMb))) {
                  return ObjectMb;
              }
         }

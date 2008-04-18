@@ -44,7 +44,7 @@ import java.io.IOException;
  * of its occurance.
  */
 public class BufferedPrintStream extends PrintStream {
-    private final static int bufsize = 2*4096; // to choose a number at random.
+    private final static int bufsize = 4*4096; // to choose a number at random.
     private final static int buflastindex = bufsize-1;
     protected byte[] buf;
     protected int curindex;

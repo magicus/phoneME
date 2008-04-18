@@ -101,7 +101,7 @@ isBadMethod(CVMExecEnv *ee, CVMMethodBlock *mb)
 	    bad = CVM_TRUE;
 
         /* Reject the method if it is a <clinit>(): */
-        } else if (CVMtypeidIsStaticInitializer(CVMmbNameAndTypeID(mb))) {
+        } else if (CVMtypeidIsClinit(CVMmbNameAndTypeID(mb))) {
             /* Mark method as not compilable: */
             CVM_COMPILEFLAGS_LOCK(ee);
             CVMmbCompileFlags(mb) |= CVMJIT_NOT_COMPILABLE;
@@ -159,24 +159,25 @@ void CVMJITassertMiscJITAssumptions(void)
 	      offsetof(CVMArrayInfo, elementCb));
 
     /* Offsets and constants for CVMTypeID */
-    CVMassert(CONSTANT_CVMtypeidArrayShift == CONSTANT_CVMtypeidArrayShift);
-    CVMassert(CONSTANT_CVMtypeidArrayMask == CONSTANT_CVMtypeidArrayMask);
+    CVMassert(CONSTANT_CVMtypeidArrayShift == CVMtypeidArrayShift);
+    CVMassert(CONSTANT_CVMtypeidArrayMask == CVMtypeidArrayMask);
+
     CVMassert(CONSTANT_CVM_TYPEID_INT_ARRAY ==
-	      CVMtypeidEncodeBasicPrimitiveArrayType(CVM_TYPEID_INT));
+	      CVMtypeidEncodeBasicPrimitiveArrayToken(CVM_TYPEID_INT));
     CVMassert(CONSTANT_CVM_TYPEID_SHORT_ARRAY ==
-	      CVMtypeidEncodeBasicPrimitiveArrayType(CVM_TYPEID_SHORT));
+	      CVMtypeidEncodeBasicPrimitiveArrayToken(CVM_TYPEID_SHORT));
     CVMassert(CONSTANT_CVM_TYPEID_CHAR_ARRAY ==
-	      CVMtypeidEncodeBasicPrimitiveArrayType(CVM_TYPEID_CHAR));
+	      CVMtypeidEncodeBasicPrimitiveArrayToken(CVM_TYPEID_CHAR));
     CVMassert(CONSTANT_CVM_TYPEID_LONG_ARRAY ==
-	      CVMtypeidEncodeBasicPrimitiveArrayType(CVM_TYPEID_LONG));
+	      CVMtypeidEncodeBasicPrimitiveArrayToken(CVM_TYPEID_LONG));
     CVMassert(CONSTANT_CVM_TYPEID_BYTE_ARRAY ==
-	      CVMtypeidEncodeBasicPrimitiveArrayType(CVM_TYPEID_BYTE));
+	      CVMtypeidEncodeBasicPrimitiveArrayToken(CVM_TYPEID_BYTE));
     CVMassert(CONSTANT_CVM_TYPEID_FLOAT_ARRAY ==
-	      CVMtypeidEncodeBasicPrimitiveArrayType(CVM_TYPEID_FLOAT));
+	      CVMtypeidEncodeBasicPrimitiveArrayToken(CVM_TYPEID_FLOAT));
     CVMassert(CONSTANT_CVM_TYPEID_DOUBLE_ARRAY ==
-	      CVMtypeidEncodeBasicPrimitiveArrayType(CVM_TYPEID_DOUBLE));
+	      CVMtypeidEncodeBasicPrimitiveArrayToken(CVM_TYPEID_DOUBLE));
     CVMassert(CONSTANT_CVM_TYPEID_BOOLEAN_ARRAY ==
-	      CVMtypeidEncodeBasicPrimitiveArrayType(CVM_TYPEID_BOOLEAN));
+	      CVMtypeidEncodeBasicPrimitiveArrayToken(CVM_TYPEID_BOOLEAN));
 
     /* Verifying CVMMethodBlock offsets and constants: */
 #ifdef CVM_METHODBLOCK_HAS_CB

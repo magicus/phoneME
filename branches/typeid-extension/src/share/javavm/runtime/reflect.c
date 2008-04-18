@@ -376,7 +376,7 @@ CVMreflectField(CVMExecEnv* ee,
 		int which,
 		CVMObjectICell* result)
 {
-    CVMFieldTypeID nameCookie;
+    CVMNameTypeID nameID;
 
     if (CVMcbIs(cb, PRIMITIVE) || CVMisArrayClass(cb)) {
 	CVMthrowNoSuchFieldException(ee, "attempt to find field of "
@@ -390,8 +390,8 @@ CVMreflectField(CVMExecEnv* ee,
      * We need to use the "new" function, because the "lookup" function
      * is only valid when we know that the type already exists.
      */
-    nameCookie = CVMtypeidNewMembername(ee, name);
-    if (nameCookie == CVM_TYPEID_ERROR) {
+    nameID = CVMtypeidNewMemberName(ee, name);
+    if (CVMtypeidIsSameName(nameID, CVM_NAME_TYPEID_ERROR)) {
 	/* Clear the exception. A new one will be thrown when the field
 	 * is not found. */
 	CVMclearLocalException(ee);
@@ -403,8 +403,10 @@ CVMreflectField(CVMExecEnv* ee,
 	CVMBool isInterface = CVMcbIs(cb, INTERFACE);
 	if (!isInterface) {
 	    WALK_INSTANCE_FIELDS(cb, fb, {
+                CVMNameTypeID fbNameID =
+                    CVMtypeidGetMemberName(CVMfbNameAndTypeID(fb));
 		if (CVMfbIs(fb, PUBLIC) &&
-		    CVMtypeidIsSameName(nameCookie, CVMfbNameAndTypeID(fb))) {
+                    CVMtypeidIsSameName(nameID, fbNameID)) {
 		    CVMreflectNewJavaLangReflectField(ee, fb, result);
 		    /* We don't need to check for throwing OutOfMemoryError
 		       since CVMreflectNewJavaLangReflectField does it 
@@ -415,7 +417,9 @@ CVMreflectField(CVMExecEnv* ee,
 	}
 
 	WALK_INTERFACE_FIELDS(cb, fb, {
-	    if (CVMtypeidIsSameName(nameCookie, CVMfbNameAndTypeID(fb))) {
+            CVMNameTypeID fbNameID =
+                CVMtypeidGetMemberName(CVMfbNameAndTypeID(fb));
+            if (CVMtypeidIsSameName(nameID, fbNameID)) {
 		CVMreflectNewJavaLangReflectField(ee, fb, result);
 		/* We don't need to check for throwing OutOfMemoryError
 		   since CVMreflectNewJavaLangReflectField does it already */
@@ -426,7 +430,9 @@ CVMreflectField(CVMExecEnv* ee,
     }
     case REFLECT_MEMBER_DECLARED: {
 	WALK_DECLARED_FIELDS(cb, fb, {
-	    if (CVMtypeidIsSameName(nameCookie, CVMfbNameAndTypeID(fb))) {
+            CVMNameTypeID fbNameID =
+                CVMtypeidGetMemberName(CVMfbNameAndTypeID(fb));
+	    if (CVMtypeidIsSameName(nameID, fbNameID)) {
 		CVMreflectNewJavaLangReflectField(ee, fb, result);
 		/* We don't need to check for throwing OutOfMemoryError
 		   since CVMreflectNewJavaLangReflectField does it already */
@@ -443,8 +449,8 @@ CVMreflectField(CVMExecEnv* ee,
     CVMthrowNoSuchFieldException(ee, "%s", name);
 
  finish:
-    if (nameCookie != CVM_TYPEID_ERROR) {
-	CVMtypeidDisposeMembername(ee, nameCookie);
+    if (!CVMtypeidIsSameName(nameID, CVM_NAME_TYPEID_ERROR)) {
+        CVMtypeidDisposeMemberName(ee, nameID);
     }
 }
 
@@ -533,7 +539,7 @@ CVMreflectNewJavaLangReflectField(CVMExecEnv* ee,
 
     fieldTypeClassBlock =
 	CVMclassLookupByTypeFromClass(ee,
-				      CVMtypeidGetType(nameAndTypeID),
+				      CVMtypeidGetMemberType(nameAndTypeID),
 				      CVM_FALSE, cb);
     /* It's possible that loading the field type's classblock threw an
        exception. */
@@ -681,7 +687,8 @@ CVMreflectGetObjectMethodblock(CVMExecEnv* ee,
     } /* !CVMcbIs(cb, INTERFACE) && !CVMmbIs(mb, PRIVATE) */
 
 found:
-    CVMassert(CVMtypeidIsSame(CVMmbNameAndTypeID(mb), CVMmbNameAndTypeID(omb)));
+    CVMassert(CVMtypeidIsSameMethod(CVMmbNameAndTypeID(mb),
+                                    CVMmbNameAndTypeID(omb)));
     return omb;
 
 nosuchmethod:
@@ -708,7 +715,7 @@ CVMreflectGetParameterTypes(CVMExecEnv* ee,
 {
     CVMInt32 cnt, i = 0;
     CVMClassBlock* pcb;
-    CVMClassTypeID p;
+    CVMTypeIDToken p;
 
     /*
      * Compute number of parameters
@@ -726,8 +733,10 @@ CVMreflectGetParameterTypes(CVMExecEnv* ee,
     /*
      * Resolve parameter types to classblocks
      */
-    while ((p=CVM_SIGNATURE_ITER_NEXT(*sigp)) != CVM_TYPEID_ENDFUNC) {
-	pcb = CVMclassLookupByTypeFromClass(ee, p, CVM_FALSE, cb);
+    while ((p = CVM_SIGNATURE_ITER_NEXT(*sigp)) != CVM_TYPEID_ENDFUNC) {
+        CVMClassTypeID classID;
+        CVMtypeidSetToken(classID, p);
+	pcb = CVMclassLookupByTypeFromClass(ee, classID, CVM_FALSE, cb);
 	if (pcb == NULL) {
 	    CVMID_icellSetNull(result);
 	    return;
@@ -914,6 +923,7 @@ CVMreflectNewJavaLangReflectMethod(CVMExecEnv* ee,
     CVMID_localrootBegin(ee); {
 	CVMID_localrootDeclare(CVMArrayOfRefICell, parameterTypes);
 	CVMID_localrootDeclare(CVMArrayOfRefICell, checkedExceptions);
+        CVMClassTypeID returnTypeID;
 
 	/* Parameter types */
 	CVMreflectGetParameterTypes(ee, &parameters, cb, parameterTypes);
@@ -926,8 +936,10 @@ CVMreflectNewJavaLangReflectMethod(CVMExecEnv* ee,
 			    (CVMObjectICell*) parameterTypes);
 	
 	/* Return type */
-	returnType = CVMclassLookupByTypeFromClass(
-            ee, CVM_SIGNATURE_ITER_RETURNTYPE(parameters), CVM_FALSE, cb);
+        CVMtypeidSetToken(returnTypeID,
+                          CVM_SIGNATURE_ITER_RETURNTYPE(parameters));
+	returnType = CVMclassLookupByTypeFromClass(ee, returnTypeID,
+                                                   CVM_FALSE, cb);
 	if (returnType == NULL) {
 	    /* exception occurred */	    
 	    CVMID_icellSetNull(result);
@@ -1011,7 +1023,7 @@ abort:
 
 #define CVMmbIsSpecial(mb) \
 	(CVMtypeidIsConstructor(CVMmbNameAndTypeID(mb)) || \
-	 CVMtypeidIsStaticInitializer(CVMmbNameAndTypeID(mb)))
+         CVMtypeidIsClinit(CVMmbNameAndTypeID(mb)))
     
 void
 CVMreflectMethods(CVMExecEnv* ee,
@@ -1245,7 +1257,7 @@ CVMreflectMatchParameterTypes(CVMExecEnv *ee,
     CVMBool mustAbort = CVM_FALSE;
     CVMMethodTypeID nameAndTypeID = CVMmbNameAndTypeID(mb);
     CVMSigIterator signature;
-    CVMClassTypeID p;
+    CVMTypeIDToken p;
     CVMClassBlock* cb;
     CVMClassBlock* cbFromSig;
     CVMClassBlock* cbFromArray;
@@ -1268,11 +1280,14 @@ CVMreflectMatchParameterTypes(CVMExecEnv *ee,
     CVMID_localrootBegin(ee); {
 	CVMID_localrootDeclare(CVMObjectICell, classICell);
 	
-	while ( (p = CVM_SIGNATURE_ITER_NEXT( signature ) ) != CVM_TYPEID_ENDFUNC ){
+	while ((p = CVM_SIGNATURE_ITER_NEXT(signature)) != CVM_TYPEID_ENDFUNC) {
+            CVMClassTypeID argClassID;
+            CVMtypeidSetToken(argClassID, p);
 	    /*
 	     * The match must be exact, not by name.  This can be slow...
 	     */
-	    cbFromSig = CVMclassLookupByTypeFromClass(ee, p, CVM_FALSE, cb );
+	    cbFromSig = CVMclassLookupByTypeFromClass(ee, argClassID,
+                                                      CVM_FALSE, cb);
 	    if (cbFromSig == NULL) {
 		/* exception: Must execute CVMID_localrootEnd() */
 		mustAbort = CVM_TRUE;
@@ -1325,12 +1340,12 @@ CVMreflectMethod(CVMExecEnv* ee,
 		 CVMObjectICell* result)
 {
     CVMInt32 tcnt, pcnt;
-    CVMMethodTypeID nameCookie;
+    CVMNameTypeID nameID;
 
     GET_ARRAY_LENGTH(ee, types, tcnt); /* handles NULL */
 
     if (CVMcbIs(cb, PRIMITIVE)) {
-	nameCookie = CVM_TYPEID_ERROR;
+	nameID = CVM_NAME_TYPEID_ERROR;
 	goto nosuchmethod;
     }
 
@@ -1340,8 +1355,8 @@ CVMreflectMethod(CVMExecEnv* ee,
      * We need to use the "new" function, because the "lookup" function
      * is only valid when we know that the type already exists.
      */
-    nameCookie = CVMtypeidNewMembername(ee, name);
-    if (nameCookie == CVM_TYPEID_ERROR) {
+    nameID = CVMtypeidNewMemberName(ee, name);
+    if (CVMtypeidIsSameName(nameID, CVM_NAME_TYPEID_ERROR)) {
 	/* Clear the exception. */
 	CVMclearLocalException(ee);
 	goto nosuchmethod;
@@ -1355,7 +1370,8 @@ CVMreflectMethod(CVMExecEnv* ee,
 
 	    WALK_INTERFACE_METHODS(cb, mb, {
 		CVMMethodTypeID nameAndTypeID = CVMmbNameAndTypeID(mb);
-		if ((CVMtypeidIsSameName(nameCookie, nameAndTypeID)) &&
+                CVMNameTypeID mbNameID = CVMtypeidGetMemberName(nameAndTypeID);
+		if (CVMtypeidIsSameName(nameID, mbNameID) &&
 		    (tcnt == 
 		     (pcnt = CVMreflectGetParameterCount(nameAndTypeID))) &&
 		    (pcnt == 0 ||
@@ -1374,9 +1390,10 @@ CVMreflectMethod(CVMExecEnv* ee,
 
 	WALK_INSTANCE_METHODS(cb, mb, {
 	    CVMMethodTypeID nameAndTypeID = CVMmbNameAndTypeID(mb);
+            CVMNameTypeID mbNameID = CVMtypeidGetMemberName(nameAndTypeID);
 	    if (CVMmbIs(mb, PUBLIC) &&
 		!CVMmbIsSpecial(mb) &&
-		(CVMtypeidIsSameName(nameCookie, nameAndTypeID)) &&
+		CVMtypeidIsSameName(nameID, mbNameID) &&
 		(tcnt ==
 		 (pcnt = CVMreflectGetParameterCount(nameAndTypeID))) &&
 		(pcnt == 0 ||
@@ -1392,10 +1409,11 @@ CVMreflectMethod(CVMExecEnv* ee,
 
 	WALK_SUPER_METHODS(cb, mb, {
 	    CVMMethodTypeID nameAndTypeID = CVMmbNameAndTypeID(mb);
+            CVMNameTypeID mbNameID = CVMtypeidGetMemberName(nameAndTypeID);
 	    if (CVMmbIs(mb, PUBLIC) &&
 		CVMmbIs(mb, STATIC) &&
 		!CVMmbIsSpecial(mb) &&
-		(CVMtypeidIsSameName(nameCookie, nameAndTypeID )) &&
+		CVMtypeidIsSameName(nameID, mbNameID) &&
 		(tcnt ==
 		 (pcnt = CVMreflectGetParameterCount(nameAndTypeID))) &&
 		(pcnt == 0 ||
@@ -1418,8 +1436,9 @@ CVMreflectMethod(CVMExecEnv* ee,
 
 	WALK_DECLARED_METHODS(cb, mb, {
 	    CVMMethodTypeID nameAndTypeID = CVMmbNameAndTypeID(mb);
+            CVMNameTypeID mbNameID = CVMtypeidGetMemberName(nameAndTypeID);
 	    if (!CVMmbIsSpecial(mb) &&
-		(CVMtypeidIsSameName(nameCookie, nameAndTypeID )) &&
+		CVMtypeidIsSameName(nameID, mbNameID) &&
 		(tcnt ==
 		 (pcnt = CVMreflectGetParameterCount(nameAndTypeID))) &&
 		(pcnt == 0 ||
@@ -1429,10 +1448,12 @@ CVMreflectMethod(CVMExecEnv* ee,
 		   walk all the methods and look for the most "specific"
 		   method: */
 	        CVMSigIterator signature;
+                CVMTypeIDToken returnToken;
 		CVMClassTypeID returnTypeID;
 
 		CVMtypeidGetSignatureIterator(nameAndTypeID, &signature);
-		returnTypeID = CVM_SIGNATURE_ITER_RETURNTYPE(signature);
+                returnToken = CVM_SIGNATURE_ITER_RETURNTYPE(signature);
+                CVMtypeidSetToken(returnTypeID, returnToken);
 
 		if (CVMtypeidIsPrimitive(returnTypeID)) {
 		    /* If the first method we encounter is a primitive type,
@@ -1494,8 +1515,8 @@ CVMreflectMethod(CVMExecEnv* ee,
     CVMthrowNoSuchMethodException(ee, "%s", name);
 
  finish:
-    if (nameCookie != CVM_TYPEID_ERROR) {
-	CVMtypeidDisposeMembername(ee, nameCookie);
+    if (!CVMtypeidIsSameName(nameID, CVM_NAME_TYPEID_ERROR)) {
+        CVMtypeidDisposeMemberName(ee, nameID);
     }
 }
 

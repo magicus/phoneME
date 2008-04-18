@@ -192,7 +192,8 @@ static CVMClassTypeID
 JVM_GetCPFieldSignature(CVMConstantPool* cp, jint cp_index)
 {
     CVMUint16 typeIDIdx = CVMcpGetMemberRefTypeIDIdx(cp, cp_index);
-    return CVMtypeidGetType(CVMcpGetFieldTypeID(cp, typeIDIdx));
+    CVMFieldTypeID fid = CVMcpGetFieldTypeID(cp, typeIDIdx);
+    return CVMtypeidGetMemberType(fid);
 }
 
 static CVMMethodTypeID
@@ -243,7 +244,7 @@ JVM_GetCPFieldModifiers(CVMConstantPool* cp, int cp_index,
     int i;
     for (i = 0; i < CVMcbFieldCount(cbCalled); i++) {
 	CVMFieldBlock* fb = CVMcbFieldSlot(cbCalled, i);
-	if (CVMtypeidIsSame(CVMfbNameAndTypeID(fb), typeID)) {
+	if (CVMtypeidIsSameField(CVMfbNameAndTypeID(fb), typeID)) {
 	    return CVMfbAccessFlags(fb);
 	}
     }
@@ -259,7 +260,7 @@ JVM_GetCPMethodModifiers(CVMConstantPool* cp, int cp_index,
     int i;
     for (i = 0; i < CVMcbMethodCount(cbCalled); i++) {
 	CVMMethodBlock* mb = CVMcbMethodSlot(cbCalled, i);
-	if (CVMtypeidIsSame(CVMmbNameAndTypeID(mb), typeID)) {
+	if (CVMtypeidIsSameMethod(CVMmbNameAndTypeID(mb), typeID)) {
 	    return CVMmbAccessFlags(mb);
 	}
     }
@@ -592,8 +593,8 @@ static void *CCalloc(context_type *context, int size, jboolean zero);
 static fullinfo_type cp_index_to_class_fullinfo(context_type *, int, int);
 
 static char signature_to_fieldtype(context_type *context, 
-				   CVMFieldTypeID fieldID,
-				   fullinfo_type *info);
+                                   CVMTypeIDToken sigToken,
+                                   fullinfo_type *info);
 
 static void CCerror (context_type *, char *format, ...);
 static void CCout_of_memory (context_type *);
@@ -693,11 +694,11 @@ class_to_ID(context_type *context, CVMClassBlock *cb, jboolean loadable)
     unsigned short *pID;
     CVMClassTypeID name = CVMcbClassName(cb);
 
-    hash = name;
+    hash = CVMtypeidGetToken(name);
     pID = &(class_hash->table[hash % HASH_TABLE_SIZE]);
     while (*pID) {
         bucket = GET_BUCKET(class_hash, *pID);
-        if (name == bucket->name) {
+        if (CVMtypeidIsSameClass(name, bucket->name)) {
 	    /*
 	     * There is an unresolved entry with our name
 	     * so we're forced to load it in case it matches us.
@@ -738,16 +739,15 @@ static int
 class_name_to_ID(context_type *context, CVMClassTypeID name)
 {
     hash_table_type *class_hash = &(context->class_hash);
-    unsigned int hash = name;
+    unsigned int hash = CVMtypeidGetToken(name);
     hash_bucket_type *bucket;
     unsigned short *pID;
     jboolean force_load = JNI_FALSE;
 
-    CVMassert(name == CVMtypeidGetType(name));
     pID = &(class_hash->table[hash % HASH_TABLE_SIZE]);
     while (*pID) {
         bucket = GET_BUCKET(class_hash, *pID);
-        if (name == bucket->name) {
+        if (CVMtypeidIsSameClass(name, bucket->name)) {
 	    if (bucket->loadable)
 	        goto done;
 	    force_load = JNI_TRUE;
@@ -1288,7 +1288,7 @@ verify_opcode_operands(context_type *context, int inumber, int offset)
 	verify_constant_pool_type(context, key, kind);
 	methodname = JVM_GetCPMethodName(context->constant_pool, key);
 	is_constructor = CVMtypeidIsConstructor(methodname);
-	is_internal = is_constructor || CVMtypeidIsClinit(methodname);
+        is_internal = is_constructor || CVMtypeidHasClinitName(methodname);
 
 	clazz_info = cp_index_to_class_fullinfo(context, key,
 						CVM_CONSTANT_Methodref);
@@ -1712,9 +1712,9 @@ initialize_dataflow(context_type *context)
 	/* Fill in each of the arguments into the registers. */
 	CVMMethodTypeID methodID = CVMmbNameAndTypeID(mb);
 	CVMSigIterator iter;
-	CVMClassTypeID arg;
+	CVMTypeIDToken arg;
 	CVMtypeidGetSignatureIterator(methodID, &iter);
-	while((arg = CVM_SIGNATURE_ITER_NEXT(iter)) != CVM_TYPEID_ENDFUNC) {
+	while ((arg = CVM_SIGNATURE_ITER_NEXT(iter)) != CVM_TYPEID_ENDFUNC) {
 	    char fieldchar = 
 		signature_to_fieldtype(context, arg, &full_info);
 	    switch (fieldchar) {
@@ -1964,7 +1964,8 @@ pop_stack(context_type *context, int inumber, stack_info_type *new_stack_info)
 #endif
 	    if (opcode == opc_putfield)
 		*ip++ = 'A';	/* object for putfield */
-	    *ip++ = signature_to_fieldtype(context, signature, &put_full_info);
+            *ip++ = signature_to_fieldtype(context,
+                        CVMtypeidGetToken(signature), &put_full_info);
 	    *ip = '\0';
 	    stack_operands = buffer;
 	    break;
@@ -1976,7 +1977,7 @@ pop_stack(context_type *context, int inumber, stack_info_type *new_stack_info)
 	    /* The top stuff on the stack depends on the method signature */
 	    int operand = this_idata->operand.i;
 	    CVMSigIterator iter;
-	    CVMClassTypeID argClassID;
+	    CVMTypeIDToken arg;
 	    CVMMethodTypeID signature = 
 	        JVM_GetCPMethodSignature(context->constant_pool, operand);
 	    char *ip = buffer;
@@ -1989,10 +1990,9 @@ pop_stack(context_type *context, int inumber, stack_info_type *new_stack_info)
 		/* First, push the object */
 		*ip++ = (opcode == opc_invokeinit ? '@' : 'A');
 	    CVMtypeidGetSignatureIterator(signature, &iter);
-	    while((argClassID = CVM_SIGNATURE_ITER_NEXT(iter))
-		  != CVM_TYPEID_ENDFUNC) {
+	    while ((arg = CVM_SIGNATURE_ITER_NEXT(iter)) != CVM_TYPEID_ENDFUNC){
 		*ip++ =
-		    signature_to_fieldtype(context, argClassID, &full_info);
+                    signature_to_fieldtype(context, arg, &full_info);
 		if (ip >= buffer + CVM_VERIFY_OPERAND_BUF_SIZE - 1)
 		    CCerror(context, "Signature %s has too many arguments", 
 			    signature);
@@ -2284,7 +2284,7 @@ pop_stack(context_type *context, int inumber, stack_info_type *new_stack_info)
 	case opc_invokeinterface: case opc_invokestatic: {
 	    int operand = this_idata->operand.i;
 	    CVMSigIterator iter;
-	    CVMClassTypeID argClassID;
+	    CVMTypeIDToken arg;
 	    CVMMethodTypeID signature = 
 	        JVM_GetCPMethodSignature(context->constant_pool, operand);
 	    int item;
@@ -2338,7 +2338,7 @@ pop_stack(context_type *context, int inumber, stack_info_type *new_stack_info)
 		        JVM_GetCPMethodName(context->constant_pool,
 					    this_idata->operand.i);
 		    int is_clone = 
-			CVMtypeidIsSameName(methodName, CVMglobals.cloneTid);
+			CVMtypeidIsSameMember(methodName, CVMglobals.cloneTid);
 
 		    if ((target_type == context->object_info) && 
 			(GET_INDIRECTION(object_type) > 0) &&
@@ -2350,10 +2350,8 @@ pop_stack(context_type *context, int inumber, stack_info_type *new_stack_info)
 		item = 1;
 	    }
 	    CVMtypeidGetSignatureIterator(signature, &iter);
-	    while((argClassID = CVM_SIGNATURE_ITER_NEXT(iter))
-		  != CVM_TYPEID_ENDFUNC) {
-		if (signature_to_fieldtype(context, argClassID,
-					   &full_info) == 'A') {
+	    while ((arg = CVM_SIGNATURE_ITER_NEXT(iter)) != CVM_TYPEID_ENDFUNC){
+		if (signature_to_fieldtype(context, arg, &full_info) == 'A') {
 		    if (!isAssignableTo(context, 
 					stack_extra_info[item], full_info)) {
 			CCerror(context, "Incompatible argument to function");
@@ -2651,7 +2649,8 @@ push_stack(context_type *context, int inumber, stack_info_type *new_stack_info)
 		print_formatted_fieldname(context, operand);
 	    }
 #endif
-	    buffer[0] = signature_to_fieldtype(context, signature, &full_info);
+            buffer[0] = signature_to_fieldtype(context,
+                            CVMtypeidGetToken(signature), &full_info);
 	    buffer[1] = '\0';
 	    stack_results = buffer;
 	    break;
@@ -2663,16 +2662,15 @@ push_stack(context_type *context, int inumber, stack_info_type *new_stack_info)
 	    /* Look to signature to determine correct result. */
 	    int operand = this_idata->operand.i;
 	    CVMSigIterator iter;
-	    CVMClassTypeID argClassID;
+	    CVMTypeIDToken arg;
 	    CVMMethodTypeID signature =
 		JVM_GetCPMethodSignature(context->constant_pool, operand);
 	    CVMtypeidGetSignatureIterator(signature, &iter);
-	    argClassID = CVM_SIGNATURE_ITER_RETURNTYPE(iter);
-	    if (argClassID == CVM_TYPEID_VOID) {
+	    arg = CVM_SIGNATURE_ITER_RETURNTYPE(iter);
+	    if (arg == CVM_TYPEID_VOID) {
 		stack_results = "";
 	    } else {
-		buffer[0] = signature_to_fieldtype(context, argClassID, 
-						   &full_info);
+                buffer[0] = signature_to_fieldtype(context, arg, &full_info);
 		buffer[1] = '\0';
 		stack_results = buffer;
 	    }
@@ -3499,12 +3497,14 @@ cp_index_to_class_fullinfo(context_type *context, int cp_index, int kind)
 					    cp_index);
 	break;
     default:
-	classname = 0; /* get rid of compiler warning */
+        /* get rid of compiler warning: */
+	CVMtypeidSetToken(classname, CVM_TYPEID_NONE);
+
         CCerror(context, "Internal error #5");
     }
     
     if (CVMtypeidIsArray(classname)) {
-	signature_to_fieldtype(context, classname, &result);
+	signature_to_fieldtype(context, CVMtypeidGetToken(classname), &result);
     } else {
 	result = make_class_info_from_name(context, classname);
     }
@@ -3555,21 +3555,25 @@ CCout_of_memory(context_type *context)
 
 static char 
 signature_to_fieldtype(context_type *context, 
-			CVMFieldTypeID fieldID, fullinfo_type *full_info_p)
+                       CVMTypeIDToken sigToken, fullinfo_type *full_info_p)
 {
     fullinfo_type full_info = MAKE_FULLINFO(0, 0, 0);
     char result;
     int array_depth = 0;
+    CVMSigTypeID sigID;
+
+    CVMtypeidSetToken(sigID, sigToken);
     
-    if (CVMtypeidIsArray(fieldID)) {
-	array_depth = CVMtypeidGetArrayDepth(fieldID);
-	fieldID = CVMtypeidGetArrayBasetype(fieldID);
+    if (CVMtypeidIsArray(sigID)) {
+	array_depth = CVMtypeidGetArrayDepth(sigID);
+	sigID = CVMtypeidGetArrayBaseType(sigID);
+        sigToken = CVMtypeidGetToken(sigID); /* Keep in sync with sigID. */
     }
 
-    if (!CVMtypeidIsPrimitive(fieldID)) {
-	full_info = make_class_info_from_name(context, fieldID);
+    if (!CVMtypeidIsPrimitive(sigID)) {
+	full_info = make_class_info_from_name(context, sigID);
 	result = 'A';
-    } else switch(fieldID) {
+    } else switch(sigToken) {
         default:
 	    full_info = MAKE_FULLINFO(ITEM_Bogus, 0, 0);
 	    result = 0; 

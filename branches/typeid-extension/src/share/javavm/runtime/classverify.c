@@ -82,7 +82,7 @@ CVMclassVerify(CVMExecEnv* ee, CVMClassBlock* cb)
 	for (i = 0; i < CVMcbMethodCount(cb); i++) {
 	    CVMMethodBlock* mb = CVMcbMethodSlot(cb, i);
 	    if (CVMmbIs(mb, STATIC)) {
-		if (!CVMtypeidIsStaticInitializer(CVMmbNameAndTypeID(mb))) { 
+		if (!CVMtypeidIsClinit(CVMmbNameAndTypeID(mb))) { 
 		    /* Only internal interface methods can be static */
 		    CVMthrowVerifyError(
                         ee, "Illegal static method %M in interface %C",

@@ -285,7 +285,8 @@ CVMclassLoadClass0(CVMExecEnv* ee, CVMClassLoaderICell* loader,
      * We do not trust that the ClassLoader.loadClass method actually
      * returns the right class.
      */
-    if (cb != NULL && classTypeID != CVMcbClassName(cb)) {
+    if ((cb != NULL) &&
+        !CVMtypeidIsSameClass(classTypeID, CVMcbClassName(cb))) {
         CVMthrowNoClassDefFoundError(ee, 
 				     "Bad class name (expect: %!C, get: %!C)",
 				     classTypeID, CVMcbClassName(cb));

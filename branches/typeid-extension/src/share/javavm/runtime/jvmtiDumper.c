@@ -892,8 +892,8 @@ jvmtiDumpInstanceFields(CVMObject *obj, const CVMClassBlock *cb,
 	if (CVMfbIs(fb, STATIC)) {
 	    continue;
 	}
-	fieldType = CVMtypeidGetType(CVMfbNameAndTypeID(fb));
-	if (doRefs && CVMtypeidFieldIsRef(fieldType)) {
+	fieldType = CVMtypeidGetMemberType(CVMfbNameAndTypeID(fb));
+	if (doRefs && CVMtypeidClassIsRef(fieldType)) {
 	    CVMObject *value;
 	    CVMD_fieldReadRef(obj, CVMfbOffset(fb), value);
 	    if (value != NULL) {
@@ -907,12 +907,13 @@ jvmtiDumpInstanceFields(CVMObject *obj, const CVMClassBlock *cb,
 	} else if (dc->callbacks->primitive_field_callback != NULL) {
 	    /* primitive value */
 	    jvalue v;
+            CVMTypeIDToken fieldTypeToken = CVMtypeidGetToken(fieldType);
 
 #define DUMP_VALUE(type_, result_) {			   \
 		CVMD_fieldRead##type_(obj, CVMfbOffset(fb), result_);	\
 }
 
-	    switch (fieldType) {
+	    switch (fieldTypeToken) {
 	    case CVM_TYPEID_LONG:    DUMP_VALUE(Long,   v.j); break;
 	    case CVM_TYPEID_DOUBLE:  DUMP_VALUE(Double, v.d); break;
 	    case CVM_TYPEID_INT:     DUMP_VALUE(Int,     v.i); break;
@@ -927,7 +928,7 @@ jvmtiDumpInstanceFields(CVMObject *obj, const CVMClassBlock *cb,
 					  obj, 
 					  dc,
 					  *fieldIndex,
-					  fieldType,
+					  fieldTypeToken,
 					  v) == CVM_FALSE) {
 		return CVM_FALSE;
 	    }
@@ -1005,8 +1006,8 @@ jvmtiDumpStaticFields(CVMObject *clazz, const CVMClassBlock *cb,
             if (!CVMfbIs(fb, STATIC)) {
                 continue;
             }
-            fieldType = CVMtypeidGetType(CVMfbNameAndTypeID(fb));
-            if (doRefs && CVMtypeidFieldIsRef(fieldType)) {
+            fieldType = CVMtypeidGetMemberType(CVMfbNameAndTypeID(fb));
+            if (doRefs && CVMtypeidClassIsRef(fieldType)) {
                 CVMObject *value =
 		    (CVMObject*)CVMjvmtiGetICellDirect(ee, &CVMfbStaticField(ee, fb).r);
 		if (value != NULL) {
@@ -1020,6 +1021,7 @@ jvmtiDumpStaticFields(CVMObject *clazz, const CVMClassBlock *cb,
             } else if (dc->callbacks->primitive_field_callback != NULL) {
 		/* primitive value */
 		jvalue v;
+                CVMTypeIDToken fieldTypeToken = CVMtypeidGetToken(fieldType);
 
 #define DUMP_VALUE(type_, result_) {			\
     result_ = (type_)*(&CVMfbStaticField(ee, fb).raw);	\
@@ -1029,7 +1031,7 @@ jvmtiDumpStaticFields(CVMObject *clazz, const CVMClassBlock *cb,
 #define DUMP_VALUE2(type_, result_) {			     \
     result_ = CVMjvm2##type_(&CVMfbStaticField(ee, fb).raw); \
 }
-                switch (fieldType) {
+                switch (fieldTypeToken) {
 		case CVM_TYPEID_LONG:    DUMP_VALUE2(Long,   v.j); break;
 		case CVM_TYPEID_DOUBLE:  DUMP_VALUE2(Double, v.d); break;
 		case CVM_TYPEID_INT:     DUMP_VALUE(jint,     v.i); break;
@@ -1047,7 +1049,7 @@ jvmtiDumpStaticFields(CVMObject *clazz, const CVMClassBlock *cb,
 					      clazz, 
 					      dc,
 					      fieldIndex,
-					      fieldType,
+					      fieldTypeToken,
 					      v);
 		if (result == CVM_FALSE) {
 		    return result;
