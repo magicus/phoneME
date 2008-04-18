@@ -2778,7 +2778,7 @@ doStaticFieldRef(CVMJITCompilationContext* con,
     CVMJITIRNode*   staticRefNode;
     CVMJITIRNode*   fieldAddressNode;
     CVMUint8        typeTag;
-    CVMFieldTypeID  fid;
+    CVMTypeID       typeID;
     CVMJITIRNode*   valueNode = NULL;
     CVMBool         isVolatile;
 
@@ -2791,7 +2791,7 @@ doStaticFieldRef(CVMJITCompilationContext* con,
         valueNode = CVMJITirnodeStackPop(con);
     }
 
-    if (CVMcpCheckResolvedAndGetTID(ee, currCb, cp, cpIndex, &fid)) {
+    if (CVMcpCheckResolvedAndGetTID(ee, currCb, cp, cpIndex, &typeID)) {
 	CVMFieldBlock* fb = CVMcpGetFb(cp, cpIndex);
         CVMClassBlock* cb;
         CVMJavaVal32*  staticArea;
@@ -2804,7 +2804,7 @@ doStaticFieldRef(CVMJITCompilationContext* con,
          */
 	isVolatile = CVMfbIs(fb, VOLATILE);
 
-	fid = CVMfbNameAndTypeID(fb);
+        typeID.fieldID = CVMfbNameAndTypeID(fb);
 
 #ifndef CVM_TRUSTED_CLASSLOADERS
         /* Make sure that both the opcode and the fb agree on whether or
@@ -2826,7 +2826,8 @@ doStaticFieldRef(CVMJITCompilationContext* con,
 #endif
         cb = CVMfbClassBlock(fb);
         staticArea = &CVMfbStaticField(ee, fb);
-	typeTag = CVMtypeidGetPrimitiveType(fid);
+        typeID.classID = CVMtypeidGetMemberType(typeID.fieldID);
+        typeTag = CVMtypeidGetPredefinedTypeToken(typeID.classID);
 
 	initNeeded = checkInitNeeded(con, cb);
 
@@ -2890,7 +2891,8 @@ doStaticFieldRef(CVMJITCompilationContext* con,
 #ifndef CVM_TRUSTED_CLASSLOADERS
     createResolveStaticFBNode:
 #endif
-        typeTag = CVMtypeidGetPrimitiveType(fid);
+        typeID.classID = CVMtypeidGetMemberType(typeID.fieldID);
+        typeTag = CVMtypeidGetPredefinedTypeToken(typeID.classID);
 
 	/* Since the field is unresolved.  We assume it is volatile just to be
 	   safe. */
@@ -6122,7 +6124,7 @@ translateRange(CVMJITCompilationContext* con,
 	   is resolved or not */
 	case opc_invokestatic: {
             CVMUint16 cpIndex = CVMgetUint16(absPc+1);
-	    CVMMethodTypeID mid;
+            CVMTypeID typeID;
 	    CVMJITIRNode* plist;
 	    CVMJITIRNode* targetNode;
 	    CVMUint16     argSize;
@@ -6130,7 +6132,7 @@ translateRange(CVMJITCompilationContext* con,
 
 	    /* If cp index is resolved, do the same as 
 	       opc_invokestatic_checkinit_quick. */
-            if (CVMcpCheckResolvedAndGetTID(ee, cb, cp, cpIndex, &mid)) {
+            if (CVMcpCheckResolvedAndGetTID(ee, cb, cp, cpIndex, &typeID)) {
                 CVMMethodBlock* targetMb = CVMcpGetMb(cp, cpIndex);
 
 #ifndef CVM_TRUSTED_CLASSLOADERS
@@ -6139,7 +6141,7 @@ translateRange(CVMJITCompilationContext* con,
                 if (!CVMmbIs(targetMb, STATIC)) {
                     /* If not, we treat it as if it is unresolved and let the
                        compiler runtime take care of throwing an exception: */
-		    mid = CVMmbNameAndTypeID(targetMb);
+                    typeID.methodID = CVMmbNameAndTypeID(targetMb);
                     goto createResolveStaticMBNode;
                 }
 #endif
@@ -6156,8 +6158,8 @@ translateRange(CVMJITCompilationContext* con,
 #ifndef CVM_TRUSTED_CLASSLOADERS
             createResolveStaticMBNode:
 #endif
-                argSize = CVMtypeidGetArgsSize(mid);
-                rtnType = CVMtypeidGetReturnType(mid);
+                argSize = CVMtypeidGetArgsSize(typeID.methodID);
+                rtnType = CVMtypeidGetReturnType(typeID.methodID);
 
 		/* Resolution could cause Java class loader code to run. Kill
 		   cached pointers. */
@@ -6184,11 +6186,11 @@ translateRange(CVMJITCompilationContext* con,
 
         case opc_invokespecial: {
             CVMUint16 cpIndex;
-	    CVMMethodTypeID mid;
+	    CVMTypeID typeID;
 	    
 	    FETCH_CPINDEX_ATOMIC(cpIndex);
 
-            if (CVMcpCheckResolvedAndGetTID(ee, cb, cp, cpIndex, &mid)) {
+            if (CVMcpCheckResolvedAndGetTID(ee, cb, cp, cpIndex, &typeID)) {
 	   	/* invokenonvirtual_quick or invokesuper_quick semantics */
                 CVMMethodBlock* targetMb = CVMcpGetMb(cp, cpIndex);
                 CVMMethodBlock* new_mb = targetMb;
@@ -6199,7 +6201,7 @@ translateRange(CVMJITCompilationContext* con,
                 if (CVMmbIs(targetMb, STATIC)) {
                     /* If not, we treat it as if it is unresolved and let the
                        compiler runtime take care of throwing an exception: */
-		    mid = CVMmbNameAndTypeID(targetMb);
+		    typeID.methodID = CVMmbNameAndTypeID(targetMb);
                     goto createResolveSpecialMBNode;
                 }
 #endif
@@ -6238,8 +6240,8 @@ translateRange(CVMJITCompilationContext* con,
 #ifndef CVM_TRUSTED_CLASSLOADERS
             createResolveSpecialMBNode:
 #endif
-                argSize = CVMtypeidGetArgsSize(mid) + 1;
-                rtnType = CVMtypeidGetReturnType(mid);
+                argSize = CVMtypeidGetArgsSize(typeID.methodID) + 1;
+                rtnType = CVMtypeidGetReturnType(typeID.methodID);
 
 		/* Resolution could cause Java class loader code to run. Kill
 		   cached pointers. */
@@ -6373,7 +6375,7 @@ translateRange(CVMJITCompilationContext* con,
         doInvokeVirtualOrInterfaceIR:
 	{
             CVMUint16 cpIndex;
-	    CVMMethodTypeID mid;
+            CVMTypeID typeID;
 	    CVMUint16 argSize;
 	    CVMUint8 rtnType;
 	    CVMJITIRNode* targetNode;
@@ -6389,7 +6391,7 @@ translateRange(CVMJITCompilationContext* con,
 	       an exception in the invocation code coming up below: */
 	    connectFlowToExcHandlers(con, mc, pc, CVM_TRUE);
 
-            if (CVMcpCheckResolvedAndGetTID(ee, cb, cp, cpIndex, &mid)) {
+            if (CVMcpCheckResolvedAndGetTID(ee, cb, cp, cpIndex, &typeID)) {
 	  	/* Since cpIndex must be resolved for invokevirtual_quick_w,
 		   we combine the case together.  Use mtIndex to 
 		   build constant node of CVMJIT_METHODTABLE_INDEX */
@@ -6404,7 +6406,7 @@ translateRange(CVMJITCompilationContext* con,
                 if (CVMmbIs(prototypeMb, STATIC)) {
                     /* If not, we treat it as if it is unresolved and let the
                        compiler runtime take care of throwing an exception: */
-		    mid = CVMmbNameAndTypeID(prototypeMb);
+		    typeID.methodID = CVMmbNameAndTypeID(prototypeMb);
                     goto createResolveVirtualOrInterfaceMBNode;
                 }
 #endif
@@ -6486,8 +6488,8 @@ translateRange(CVMJITCompilationContext* con,
 		killAllCachedReferences(con);
 
 		/* Compute args size, account for 'this' */
-    	 	argSize = CVMtypeidGetArgsSize(mid) + 1;
-    		rtnType = CVMtypeidGetReturnType(mid);
+    	 	argSize = CVMtypeidGetArgsSize(typeID.methodID) + 1;
+    		rtnType = CVMtypeidGetReturnType(typeID.methodID);
 
                 /* Build RESOLVE_REFERENCE node with opcode
                    CVMJIT_CONST_METHOD_TABLE_INDEX_UNRESOLVED.  Then, append it
@@ -6895,8 +6897,9 @@ translateRange(CVMJITCompilationContext* con,
         case opc_putfield_quick_w:
         case opc_getfield_quick_w: {
     	    CVMFieldBlock* fb = CVMcpGetFb(cp, CVMgetUint16(absPc+1));
-	    CVMUint8 typeTag =
-		CVMtypeidGetPrimitiveType(CVMfbNameAndTypeID(fb));
+            CVMClassTypeID typeID =
+                CVMtypeidGetMemberType(CVMfbNameAndTypeID(fb));
+	    CVMUint8 typeTag = CVMtypeidGetPredefinedTypeToken(typeID);
 	    CVMUint32 fieldOffset = CVMfbOffset(fb);
             CVMBool isVolatile  = CVMfbIs(fb, VOLATILE);
 
@@ -6915,7 +6918,7 @@ translateRange(CVMJITCompilationContext* con,
 	    CVMJITIRNode*  constNode;
 	    CVMUint16      fieldOffset;
 	    CVMUint16      cpIndex;
-	    CVMFieldTypeID fid;
+            CVMTypeID      typeID;
 	    CVMBool        isVolatile;
             CVMUint8       typeTag;
 
@@ -6924,14 +6927,15 @@ translateRange(CVMJITCompilationContext* con,
 	    /* The constant pool entry might be resolved. If it is, this
 	       case looks very much like the {get,put}field_quick_w. If it
 	       is not, then we have to generate the fb resolution code. */
-            if (CVMcpCheckResolvedAndGetTID(ee, cb, cp, cpIndex, &fid)) {
+            if (CVMcpCheckResolvedAndGetTID(ee, cb, cp, cpIndex, &typeID)) {
 		CVMFieldBlock* fb = CVMcpGetFb(cp, cpIndex);
 
-		fid = CVMfbNameAndTypeID(fb);
+		typeID.fieldID = CVMfbNameAndTypeID(fb);
 		fieldOffset = CVMfbOffset(fb);
 		constNode = NULL;
 		isVolatile = CVMfbIs(fb, VOLATILE);
-                typeTag = CVMtypeidGetPrimitiveType(fid);
+                typeID.classID = CVMtypeidGetMemberType(typeID.fieldID);
+                typeTag = CVMtypeidGetPredefinedTypeToken(typeID.classID);
 
 #ifndef CVM_TRUSTED_CLASSLOADERS
                 /* Make sure that both the opcode and the fb agree on whether
@@ -6948,7 +6952,8 @@ translateRange(CVMJITCompilationContext* con,
 #ifndef CVM_TRUSTED_CLASSLOADERS
             createResolveFBNode:
 #endif
-                typeTag = CVMtypeidGetPrimitiveType(fid);
+                typeID.classID = CVMtypeidGetMemberType(typeID.fieldID);
+                typeTag = CVMtypeidGetPredefinedTypeToken(typeID.classID);
 
 		/* Since the field is unresolved.  We assume it is volatile
 		   just to be safe. */

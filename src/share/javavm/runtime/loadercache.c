@@ -137,11 +137,11 @@ struct CVMLoaderConstraint {
 static CVMLoaderConstraint**
 CVMloaderConstraintLookup(CVMClassTypeID classID, CVMClassLoaderICell* loader)
 {
-    int index = (CVMUint32)classID % CVM_LOADER_CONSTRAINT_TABLE_SIZE;
+    int index = CVMtypeidGetToken(classID) % CVM_LOADER_CONSTRAINT_TABLE_SIZE;
     CVMLoaderConstraint** pp = &CVMglobals.loaderConstraints[index];
     while (*pp != NULL) {
         CVMLoaderConstraint* p = *pp;
-	if (CVMtypeidIsSameType(p->classID, classID)) {
+	if (CVMtypeidIsSameClass(p->classID, classID)) {
 	    int i;
 	    for (i = p->num_loaders - 1; i >= 0; i--) {
 	        if (p->loaders[i] == loader) {
@@ -341,7 +341,8 @@ CVMloaderConstraintAdd(CVMExecEnv* ee,
 	    p->max_loaders = 2;
 	    p->cb = cb;
 	    
-	    index = (CVMUint32)classID % CVM_LOADER_CONSTRAINT_TABLE_SIZE;
+	    index = CVMtypeidGetToken(classID) %
+                    CVM_LOADER_CONSTRAINT_TABLE_SIZE;
 	    p->next = CVMglobals.loaderConstraints[index];
 	    CVMglobals.loaderConstraints[index] = p;
 	    result = CVM_TRUE;
@@ -385,7 +386,7 @@ CVMloaderConstraintsCheckMethodSignatureLoaders(CVMExecEnv* ee,
 						CVMClassLoaderICell* loader1,
 						CVMClassLoaderICell* loader2)
 {
-    CVMClassTypeID argClassID;
+    CVMTypeIDToken arg;
     CVMSigIterator sigIterator;
 
     /* Nothing to do if loaders are the same. */
@@ -395,13 +396,15 @@ CVMloaderConstraintsCheckMethodSignatureLoaders(CVMExecEnv* ee,
 
     /* Handle the signature result type first */
     CVMtypeidGetSignatureIterator(methodID, &sigIterator);
-    argClassID = CVM_SIGNATURE_ITER_RETURNTYPE(sigIterator);
+    arg = CVM_SIGNATURE_ITER_RETURNTYPE(sigIterator);
 
     /*
      * Iteratate over all method argument types. The result type will
      * be handled first.
      */
     do {
+        CVMClassTypeID argClassID;
+        CVMtypeidSetToken(argClassID, arg);
 	if (!CVMtypeidIsPrimitive(argClassID)) {
 	    if (!CVMloaderConstraintAdd(ee, argClassID, loader1, loader2)) {
 		return CVM_FALSE; /* exception already thrown */
@@ -409,8 +412,8 @@ CVMloaderConstraintsCheckMethodSignatureLoaders(CVMExecEnv* ee,
 	}
 	    
 	/* Get the next signature argument */
-	argClassID = CVM_SIGNATURE_ITER_NEXT(sigIterator);
-    } while (argClassID != CVM_TYPEID_ENDFUNC);
+	arg = CVM_SIGNATURE_ITER_NEXT(sigIterator);
+    } while (arg != CVM_TYPEID_ENDFUNC);
 
     return CVM_TRUE;
 }
@@ -427,8 +430,9 @@ CVMloaderConstraintsCheckFieldSignatureLoaders(CVMExecEnv* ee,
 					       CVMClassLoaderICell* loader1,
 					       CVMClassLoaderICell* loader2)
 {
+    CVMClassTypeID classID = CVMtypeidGetMemberType(fieldID);
     /* Nothing to do for primitive classes. */
-    if (CVMtypeidIsPrimitive(fieldID)) {
+    if (CVMtypeidIsPrimitive(classID)) {
 	return CVM_TRUE;
     }
 
@@ -437,8 +441,7 @@ CVMloaderConstraintsCheckFieldSignatureLoaders(CVMExecEnv* ee,
        return CVM_TRUE;
     }
 
-    return CVMloaderConstraintAdd(ee, CVMtypeidGetType(fieldID),
-				  loader1, loader2);
+    return CVMloaderConstraintAdd(ee, classID, loader1, loader2);
 }
 
 /* 
@@ -641,7 +644,8 @@ CVMloaderCacheAddProtectionDomain(CVMExecEnv* ee, CVMClassTypeID classID,
     CVMLoaderCacheEntry* entry;
 
     loader = CVMloaderCacheGetGlobalRootFromLoader(ee, loader);
-    entry  = CVMglobals.loaderCache[HASH_INDEX(classID, loader)];
+    entry  = CVMglobals.loaderCache[
+                 HASH_INDEX(CVMtypeidGetToken(classID), loader)];
 
     CVM_LOADERCACHE_ASSERT_LOCKED(ee);
 
@@ -659,7 +663,7 @@ CVMloaderCacheAddProtectionDomain(CVMExecEnv* ee, CVMClassTypeID classID,
 	 * 32 bit platforms and 8 byte on 64 bit platforms
 	 */
 	isMarked = (((CVMAddr)cb) & 1) != 0;
-	if (!isMarked && CVMcbClassName(cb) == classID
+	if (!isMarked && CVMtypeidIsSameClass(CVMcbClassName(cb), classID)
 	    && entry->loader == loader) {
 	    /* Allocate new pds array that can hold new pd */
 	    CVMObjectICell** pds = (CVMObjectICell**)
@@ -787,7 +791,8 @@ CVMloaderCacheLookupWithProtectionDomain(CVMExecEnv* ee,
 
     CVM_LOADERCACHE_ASSERT_LOCKED(ee);
 
-    entry  = CVMglobals.loaderCache[HASH_INDEX(classID, loader)];
+    entry  = CVMglobals.loaderCache[
+                 HASH_INDEX(CVMtypeidGetToken(classID), loader)];
 
     while (entry) {
 	CVMClassBlock* cb = entry->cb;
@@ -803,7 +808,7 @@ CVMloaderCacheLookupWithProtectionDomain(CVMExecEnv* ee,
 	 * 32 bit platforms and 8 byte on 64 bit platforms
 	 */
 	isMarked = (((CVMAddr)cb) & 1) != 0;
-	if (!isMarked && CVMcbClassName(cb) == classID
+	if (!isMarked && CVMtypeidIsSameClass(CVMcbClassName(cb), classID)
 	    && entry->loader == loader) {
 	    /*
 	     * If the ERROR flag is set and the SUPERCLASS_LOADED flag
@@ -936,7 +941,8 @@ CVMloaderCacheAdd(CVMExecEnv* ee, CVMClassBlock* cb,
     /* We can now add (cb, loader) into the loader cache */
     {
 	CVMLoaderCacheEntry* entry;
-	int index = HASH_INDEX(CVMcbClassName(cb), loader);
+	int index = HASH_INDEX(
+                        CVMtypeidGetToken(CVMcbClassName(cb)), loader);
 	
 	/* %comment c016 */
 	entry = (CVMLoaderCacheEntry *)malloc(sizeof(CVMLoaderCacheEntry));

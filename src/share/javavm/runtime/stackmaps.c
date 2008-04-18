@@ -2970,7 +2970,7 @@ CVMstackmapSetupMethodEntryState(CVMStackmapContext* con,
 {
     CVMMethodTypeID  tid = CVMmbNameAndTypeID(con->mb);
     CVMterseSigIterator  terseSig;
-    int	       typeSyllable;
+    CVMTypeIDToken typeSyllable;
 
     CVMCellTypeState* vars = firstBB->varState;
     CVMUint32 varNo = 0;
@@ -2980,8 +2980,9 @@ CVMstackmapSetupMethodEntryState(CVMStackmapContext* con,
     if (!CVMmbIs(con->mb, STATIC)) {
 	vars[varNo++] = CVMctsRef; /* this */
     }	
-    while((typeSyllable=CVM_TERSE_ITER_NEXT( terseSig) ) != CVM_TYPEID_ENDFUNC ){
-	switch( typeSyllable ){
+    while ((typeSyllable = CVM_TERSE_ITER_NEXT(terseSig)) !=
+           CVM_TYPEID_ENDFUNC) {
+	switch(typeSyllable) {
 	case CVM_TYPEID_OBJ:
 	    vars[varNo++] = CVMctsRef; break;
 	case CVM_TYPEID_LONG: 

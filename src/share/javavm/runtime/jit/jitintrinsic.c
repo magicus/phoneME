@@ -70,20 +70,20 @@ fillInIntrinsicsFromConfigs(CVMExecEnv *ee,
         /* Get the classTypeID for the intrinsic: */
         classTypeID = CVMtypeidNewClassID(ee, cf->className,
                                           strlen(cf->className));
-        if (classTypeID == CVM_TYPEID_ERROR) {
+        if (CVMtypeidIsSameClass(classTypeID, CVM_CLASS_TYPEID_ERROR)) {
             goto errorCase;
         }
 
         /* Get the methodTypeID for the intrinsic: */
         methodTypeID = CVMtypeidNewMethodIDFromNameAndSig(ee,
                            cf->methodName, cf->methodSignature);
-        if (methodTypeID == CVM_TYPEID_ERROR) {
+        if (CVMtypeidIsSameMethod(methodTypeID, CVM_METHOD_TYPEID_ERROR)) {
             goto errorCase;
         }
 
         for (j = 0; j < origNumberOfIntrinsics; j++) {
-            if ((ilist[j].classTypeID == classTypeID) &&
-                (ilist[j].methodTypeID == methodTypeID)) {
+            if (CVMtypeidIsSameClass(ilist[j].classTypeID, classTypeID) &&
+                CVMtypeidIsSameMethod(ilist[j].methodTypeID, methodTypeID)) {
                 break;
             }
         }
@@ -167,10 +167,11 @@ compareUnknownIntrinsic(const void *v1, const void *v2)
     CVMassert(v2 != NULL);
     ip1 = *(CVMJITIntrinsic **)v1;
     ip2 = *(CVMJITIntrinsic **)v2;
-    if (ip1->classTypeID == ip2->classTypeID) {
+    if (CVMtypeidIsSameClass(ip1->classTypeID, ip2->classTypeID)) {
         return ((CVMInt32)ip1->methodTypeID - (CVMInt32)ip2->methodTypeID);
     }
-    return ((CVMInt32)ip1->classTypeID - (CVMInt32)ip2->classTypeID);
+    return ((CVMInt32)CVMtypeidGetToken(ip1->classTypeID) -
+            (CVMInt32)CVMtypeidGetToken(ip2->classTypeID));
 }
 
 #if defined(CVM_DEBUG_ASSERTS) || defined(CVM_DEBUG_INTRINSICS)
@@ -686,6 +687,8 @@ CVMJITintrinsicScanForIntrinsicMethods(CVMExecEnv *ee, CVMClassBlock *cb)
     CVMJITIntrinsic *irec;
     CVMBool touchedJavaList = CVM_FALSE;
     CVMBool touchedNativeList = CVM_FALSE;
+    CVMTypeIDToken classToken;
+
 
     /* If this class is not loaded by the bootclassloader, then we know that
        it doesn't have an intrinsics because we only support intrinsics for
@@ -707,6 +710,8 @@ CVMJITintrinsicScanForIntrinsicMethods(CVMExecEnv *ee, CVMClassBlock *cb)
 
     numberOfUnknownIntrinsics = jgs->numberOfUnknownIntrinsics;
     classTypeID = CVMcbClassName(cb);
+    classToken = CVMtypeidGetToken(classTypeID);
+
     /* Do a binary search to see if the class is in the unknown list: */
     irec = NULL;
     start = 0;
@@ -715,12 +720,14 @@ CVMJITintrinsicScanForIntrinsicMethods(CVMExecEnv *ee, CVMClassBlock *cb)
     ilist = jgs->sortedUnknownIntrinsics;
     while (start <= end) {
         CVMJITIntrinsic *ip;
+        CVMTypeIDToken currentToken;
         current = start + ((end - start) >> 1); /* start + (end-start)/2. */
         ip = ilist[current];
-        if ((CVMInt32)classTypeID == (CVMInt32)ip->classTypeID) {
+        currentToken = CVMtypeidGetToken(ip->classTypeID);
+        if (classToken == currentToken) {
             irec = ip; /* Found it. */
             break;
-        } else if ((CVMInt32)classTypeID < (CVMInt32)ip->classTypeID) {
+        } else if (classToken < currentToken) {
             end = current - 1;   /* Search lower half region. */
         } else {
             start = current + 1; /* Search upper half region. */
@@ -742,8 +749,10 @@ CVMJITintrinsicScanForIntrinsicMethods(CVMExecEnv *ee, CVMClassBlock *cb)
     current--;
     while (current >= 0) {
         CVMJITIntrinsic *ip;
+        CVMTypeIDToken currentToken;
         ip = ilist[current];
-        if (classTypeID == ip->classTypeID) {
+        currentToken = CVMtypeidGetToken(ip->classTypeID);
+        if (classToken == currentToken) {
             first = current;
         }
         current--;
@@ -753,8 +762,10 @@ CVMJITintrinsicScanForIntrinsicMethods(CVMExecEnv *ee, CVMClassBlock *cb)
     current = last + 1;
     while (current <= end) {
         CVMJITIntrinsic *ip;
+        CVMTypeIDToken currentToken;
         ip = ilist[current];
-        if (classTypeID == ip->classTypeID) {
+        currentToken = CVMtypeidGetToken(ip->classTypeID);
+        if (classToken == currentToken) {
             last = current;
         }
         current++;

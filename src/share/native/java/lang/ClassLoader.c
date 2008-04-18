@@ -191,7 +191,7 @@ Java_java_lang_ClassLoader_loadBootstrapClass0(JNIEnv *env, jobject loader,
     char buf[128];
     int len;
     int unicode_len;
-    CVMClassTypeID typeID = CVM_TYPEID_ERROR;
+    CVMClassTypeID typeID = CVM_CLASS_TYPEID_ERROR;
     CVMClassBlock* cb;
     CVMExecEnv* ee = CVMjniEnv2ExecEnv(env);
 
@@ -222,7 +222,7 @@ Java_java_lang_ClassLoader_loadBootstrapClass0(JNIEnv *env, jobject loader,
 
     /* get a typeid for the class name */
     typeID = CVMtypeidNewClassID(ee, clname, len);
-    if (typeID == CVM_TYPEID_ERROR) {
+    if (CVMtypeidIsSameClass(typeID, CVM_CLASS_TYPEID_ERROR)) {
 	goto done; /* exception already thrown */
     }
 
@@ -255,7 +255,7 @@ Java_java_lang_ClassLoader_loadBootstrapClass0(JNIEnv *env, jobject loader,
     }
 
  done:
-    if (typeID != CVM_TYPEID_ERROR) {
+    if (!CVMtypeidIsSameClass(typeID, CVM_CLASS_TYPEID_ERROR)) {
 	CVMtypeidDisposeClassID(ee, typeID);
     }
     if (clname != buf) {

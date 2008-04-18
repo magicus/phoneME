@@ -105,7 +105,7 @@ CVMclassprivateReturnDeclaredMethodInClassMethods(const CVMClassBlock* cb,
     int i;
     for (i = 0; i < CVMcbMethodCount(cb); i++) {
         CVMMethodBlock* mb = CVMcbMethodSlot(cb, i);
-	if (CVMtypeidIsSame(CVMmbNameAndTypeID(mb), tid)) {
+	if (CVMtypeidIsSameMethod(CVMmbNameAndTypeID(mb), tid)) {
             return mb;
 	}
     }
@@ -120,7 +120,7 @@ CVMclassprivateReturnDeclaredMethodInClassMethodTable(
     int i;
     for (i = 0; i < CVMcbMethodTableCount(cb); i++) {
         CVMMethodBlock* mb = CVMcbMethodTableSlot(cb, i);
-	if (CVMtypeidIsSame(CVMmbNameAndTypeID(mb), tid)) {
+	if (CVMtypeidIsSameMethod(CVMmbNameAndTypeID(mb), tid)) {
             return mb;
 	}
     }
@@ -177,7 +177,7 @@ CVMclassGetMethodBlock(const CVMClassBlock* cb,
 	    }
 
 	    /* <clinit> from current class only, not superclasses */
-	    if (CVMtypeidIsStaticInitializer(tid)) {
+            if (CVMtypeidIsClinit(tid)) {
 		return NULL;
 	    }
 
@@ -219,7 +219,7 @@ CVMclassGetDeclaredMethodBlock(CVMExecEnv *ee,
      */
     CVMMethodTypeID tid = CVMtypeidNewMethodIDFromNameAndSig(ee, name, sig);
 
-    if (tid != CVM_TYPEID_ERROR) {
+    if (!CVMtypeidIsSameMethod(tid, CVM_METHOD_TYPEID_ERROR)) {
 	CVMMethodBlock* resultMb =
 	    CVMclassGetDeclaredMethodBlockFromTID(cb, tid);
 	CVMtypeidDisposeMethodID(ee, tid);
@@ -237,7 +237,7 @@ CVMclassprivateReturnDeclaredFieldInClass(const CVMClassBlock* cb,
     int i;
     for (i = 0; i < CVMcbFieldCount(cb); i++) {
         CVMFieldBlock* fb = CVMcbFieldSlot(cb, i);
-	if (CVMtypeidIsSame(CVMfbNameAndTypeID(fb), tid)) {
+	if (CVMtypeidIsSameField(CVMfbNameAndTypeID(fb), tid)) {
             return fb;
 	}
     }
@@ -331,7 +331,10 @@ CVMclassScan(CVMExecEnv* ee, CVMClassBlock* cb,
 	     CVMRefCallbackFunc callback, void* data)
 {
     CVMUint32     numRefStatics = CVMcbNumStaticRefs(cb);
-    if (CVMcbClassName(cb) != 0) {
+
+    /* Check if the classID has been assigned yet before using it in a
+       trace printf: */
+    if (CVMtypeidGetToken(CVMcbClassName(cb)) != CVM_TYPEID_NONE) {
 	CVMtraceGcScan(("Scanning class %C (0x%x), "
 			"with %d ref-type statics\n",
 			cb, cb, numRefStatics));

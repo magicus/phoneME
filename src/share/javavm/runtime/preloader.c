@@ -87,7 +87,7 @@ CVMpreloaderLookup(const char* className)
 {
     CVMClassTypeID typeID = 
 	CVMtypeidLookupClassID(NULL, className, (int)strlen(className) );
-    if (typeID == CVM_TYPEID_ERROR) {
+    if (CVMtypeidIsSameClass(typeID, CVM_CLASS_TYPEID_ERROR)) {
 	return NULL; /* not in type table, so don't bother looking. */
     }
     return CVMpreloaderLookupFromType(CVMgetEE(), typeID, NULL);
@@ -97,15 +97,13 @@ CVMpreloaderLookup(const char* className)
 static CVMClassBlock *
 CVMpreloaderLookupFromType0(CVMClassTypeID typeID)
 {
-    CVMClassTypeID i, lowest, highbound;
-
-    /* No CVMFieldTypeIDs allowed. Upper bits must never be set. */
-    CVMassert(CVMtypeidGetType(typeID) == typeID);
+    CVMUint32 i, lowest, highbound;
+    CVMTypeIDToken typeIDToken = CVMtypeidGetToken(typeID);
 
     if (CVMtypeidIsPrimitive(typeID)) {
 	/* NOTE: casting away const is safe here because we know that
            run-time flags are separated from ROMized classblocks */
-	return (CVMClassBlock*) CVMterseTypeClassblocks[typeID];
+	return (CVMClassBlock*) CVMterseTypeClassblocks[typeIDToken];
     }
 
     /* NOTE: The Class instances of the Class and Array types in the
@@ -118,7 +116,6 @@ CVMpreloaderLookupFromType0(CVMClassTypeID typeID)
        types in CVM_ROMClasses[] by indexing. 
 
        The sorted order looks like this:
-
              .---------------------------------------.
              |  Primtive classes                     |
              |---------------------------------------|
@@ -162,13 +159,13 @@ CVMpreloaderLookupFromType0(CVMClassTypeID typeID)
            a primitive class and not an array class.
            The index should be within the range of regular loaded (or
            preloaded in this case) classes if its there: */
-	i = typeID-CVMtypeidLastScalar-1;
+	i = typeIDToken - CVMtypeidLastPrimitive - 1;
         if ((i < CVM_firstROMNonPrimitiveClass) ||
             (i >= CVM_firstROMSingleDimensionArrayClass)) {
 	    return NULL; /* not here! */
 	}
 	cb = CVM_ROMClassblocks[i];
-        CVMassert(CVMcbClassName(cb) == typeID);
+        CVMassert(CVMtypeidIsSameClass(CVMcbClassName(cb), typeID));
 	return (CVMClassBlock*)cb;
     }
 
@@ -178,12 +175,12 @@ CVMpreloaderLookupFromType0(CVMClassTypeID typeID)
         /* If we get here, then we're looking for a Big Array class.
            The index should come before the first single dimension array
            class if it's there: */
-        i = (typeID & CVMtypeidBasetypeMask)-CVMtypeidLastScalar-1;
+        i = (typeIDToken & CVMtypeidBaseTypeMask) - CVMtypeidLastPrimitive - 1;
         if (i >= CVM_firstROMSingleDimensionArrayClass) {
             return NULL; /* not here! */
         }
         cb = CVM_ROMClassblocks[i];
-        CVMassert(CVMcbClassName(cb) == typeID);
+        CVMassert(CVMtypeidIsSameClass(CVMcbClassName(cb), typeID));
         return (CVMClassBlock*)cb;
     }
 
@@ -210,12 +207,12 @@ CVMpreloaderLookupFromType0(CVMClassTypeID typeID)
     /* Do a binary search to see if the sought array class is there: */
     while (lowest < highbound) {
 	const CVMClassBlock * cb;
-	int candidateID;
+	CVMTypeIDToken candidateToken;
 	i = lowest + (highbound-lowest)/2;
 	cb = CVM_ROMClassblocks[i];
-	candidateID = CVMcbClassName(cb);
-        if (candidateID == typeID) return (CVMClassBlock*)cb;
-        if (candidateID < typeID) {
+	candidateToken = CVMtypeidGetToken(CVMcbClassName(cb));
+        if (candidateToken == typeIDToken) return (CVMClassBlock*)cb;
+        if (candidateToken < typeIDToken) {
             lowest = i+1;
         } else {
             highbound = i;
@@ -253,12 +250,12 @@ CVMpreloaderLookupPrimitiveClassFromType(CVMClassTypeID classType){
     int i;
     const CVMClassBlock* cb;
 
-    i = classType-CVMtypeidLastScalar-1;
+    i = CVMtypeidGetToken(classType) - CVMtypeidLastPrimitive - 1;
     if ( (i < 0) || ( i >= CVM_firstROMNonPrimitiveClass) ){
 	return NULL; /* not here! */
     }
     cb = CVM_ROMClassblocks[i];
-    CVMassert( CVMcbClassName(cb) == classType );
+    CVMassert(CVMtypeidIsSameClass(CVMcbClassName(cb), classType));
     return (CVMClassBlock*)cb;
 }
 
@@ -556,7 +553,7 @@ CVMpreloaderInit()
 	/*
 	 * Skip the class 
 	 */
-	masterData += sizeof(CVMClassBlock*);
+        masterData += CVM_CLASSBLOCK_OFFSET_IN_METHODRANGE;
 	
 	/* Now iterate over master copies of methods */
 	for (i = 0; i < count; i++) {
@@ -565,7 +562,7 @@ CVMpreloaderInit()
 		/* Put in a cb pointer and move on */
 		destData = (CVMUint8*)destMethods;
 		*((CVMClassBlock**)destData) = theCb;
-		destData += sizeof(CVMClassBlock*);
+                destData += CVM_CLASSBLOCK_OFFSET_IN_METHODRANGE;
 		destMethods = (CVMMethodBlock*)destData;
 	    }
 	    
