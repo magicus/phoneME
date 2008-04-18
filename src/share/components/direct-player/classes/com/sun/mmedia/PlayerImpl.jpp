@@ -113,13 +113,15 @@ public class PlayerImpl implements Player {
     // get first packet size to determine media format
     protected static native int nGetFirstPacketSize(int handle);
     // buffering media data
-    protected static native int nBuffering(int handle, byte[] buffer, int size);
+    protected static native int nBuffering(int handle, byte[] buffer, int offset, int total, int size);
     // ask Native Player if it needs more data immediatelly
     protected static native boolean nNeedMoreDataImmediatelly(int hNative);    
     // Provide whole media content size, if known
     protected static native void nSetWholeContentSize(int hNative, long contentSize);
 
     private static String PL_ERR_SH = "Cannot create a Player: ";
+    
+    MediaDownloadThread downloadThread = null;
     
     /**
      * Constructor 
@@ -244,7 +246,21 @@ public class PlayerImpl implements Player {
             /* predownload media data to recognize media format and/or 
                specific media parameters (e.g. duration) */
             if (!mediaFormat.equals(BasicPlayer.MEDIA_FORMAT_TONE)) {
-                doBuffering(hNative, stream);
+System.out.println("JSR135 : PlayerImpl.realize 1");
+                downloadThread = new MediaDownloadThread(hNative, stream);
+System.out.println("JSR135 : PlayerImpl.realize 2");
+//                downloadThread.prepare();
+System.out.println("JSR135 : PlayerImpl.realize 3");
+                Thread dt = new Thread(downloadThread);
+                dt.start();
+System.out.println("JSR135 : PlayerImpl.realize 4");
+                try {
+                dt.join();
+System.out.println("JSR135 : PlayerImpl.realize 5");
+                }catch(InterruptedException ex) {
+System.out.println("JSR135 : PlayerImpl.realize ERR:" + ex.getMessage());
+                }
+//                doBuffering(hNative, stream);
             }
         }
 
@@ -268,6 +284,7 @@ public class PlayerImpl implements Player {
         playerInst.mediaFormat        = mediaFormat;
         playerInst.handledByDevice    = handledByDevice;
         playerInst.pID                = pID;
+        playerInst.downloadThread     = downloadThread;
 
         playerInst.setSource(source);
 
@@ -341,7 +358,7 @@ public class PlayerImpl implements Player {
                     }
                 } while(num_read < packetSize);
                 if (num_read > 0) {
-                    packetSize = nBuffering(hNative, buffer, num_read);
+                    packetSize = nBuffering(hNative, buffer, 0, javaBufSize, num_read);
                     if (packetSize >=0) {
                         need_more = nNeedMoreDataImmediatelly(hNative);
                     } else {
@@ -1037,4 +1054,109 @@ public class PlayerImpl implements Player {
         mtimes.clear();
     }
 
+}
+
+
+/**
+ * The thread that's downloads media data
+ *
+ */
+class MediaDownloadThread implements Runnable {
+    /**
+     * the stream instance
+     */
+    private SourceStream stream;
+    long contLength = -1;
+    int packetSize = 0;
+    byte[] buffer = null;
+    boolean eom = false;
+    int hNative;
+
+    /**
+     * The constructor
+     *
+     * @param  stream  the instance of stream.
+     */
+    MediaDownloadThread(int hNative, SourceStream stream) {
+        this.hNative = hNative;
+        this.stream = stream;
+System.out.println("JSR135 : MediaDownloadThread");
+        contLength = stream.getContentLength();
+System.out.println("JSR135 : MediaDownloadThread - contLength= " + contLength);
+        if (contLength > 0) {
+System.out.println("JSR135 : MediaDownloadThread - nSetWholeContentSize ");
+            PlayerImpl.nSetWholeContentSize(hNative, contLength);
+        }
+    }
+
+    void prepare() throws MediaException{
+System.out.println("JSR135 : MediaDownloadThread.prepare Start ");
+        int newjavaBufSize = PlayerImpl.nGetJavaBufferSize(hNative);
+        packetSize  = PlayerImpl.nGetFirstPacketSize(hNative);
+System.out.println("JSR135 : MediaDownloadThread.prepare newjavaBufSize= " + newjavaBufSize);
+System.out.println("JSR135 : MediaDownloadThread.prepare packetSize= " + packetSize);
+        if (packetSize > 0) {
+            try {
+                if (buffer == null) {
+System.out.println("JSR135 : MediaDownloadThread.prepare allocate " + packetSize);
+                    buffer = new byte[(int)packetSize];
+                } else {
+                    if (packetSize > buffer.length) {
+System.out.println("JSR135 : MediaDownloadThread.prepare allocate " + packetSize);
+                        buffer = new byte[(int)packetSize];;
+                    }
+                }
+            } catch(OutOfMemoryError ome) {
+                throw new MediaException("Not enough memory");
+            }
+        }
+System.out.println("JSR135 : MediaDownloadThread.prepare OK ");
+    }
+
+    /**
+     * Event handling thread.
+     */
+    public void run() {
+        PlayerImpl.nGetJavaBufferSize(hNative);
+        packetSize  = PlayerImpl.nGetFirstPacketSize(hNative);
+System.out.println("JSR135 : MediaDownloadThread.run START packetSize=" + packetSize);
+
+        if(packetSize > 0) {
+            do {
+                int offset = 0;
+System.out.println("JSR135 : MediaDownloadThread.run loop1 ");
+                int num_read = packetSize;
+                int ret;
+                if (buffer == null || packetSize > buffer.length) {
+System.out.println("JSR135 : MediaDownloadThread.prepare allocate " + packetSize);
+                    buffer = new byte[(int)packetSize];
+                }
+
+                do {
+System.out.println("JSR135 : MediaDownloadThread.run loop2 offset=" + offset + " packetSize=" + packetSize);
+                    try {
+                        ret = stream.read(buffer, offset, packetSize-offset);
+                    } catch (IOException ex) {
+                        ret = -1;
+                    }
+System.out.println("JSR135 : MediaDownloadThread.run loop2 ret =" + ret);
+                    if (ret == -1) {
+                        eom = true;
+                        break;
+                    }
+                    num_read -= ret;
+                    offset += ret;
+System.out.println("JSR135 : MediaDownloadThread.run loop2 num_read=" + num_read + " offset=" + offset);
+                }while(num_read>0);
+                packetSize = PlayerImpl.nBuffering(hNative, buffer, 0, packetSize, (packetSize-num_read));
+System.out.println("JSR135 : MediaDownloadThread.run nBuffering packetSize=" + packetSize);
+            }while (PlayerImpl.nNeedMoreDataImmediatelly(hNative) && !eom);
+            if (eom) {
+System.out.println("JSR135 : MediaDownloadThread.run nBuffering EOM");
+                packetSize = PlayerImpl.nBuffering(hNative, null, 0, 0, 0);
+System.out.println("JSR135 : MediaDownloadThread.run nBuffering EOM packetSize=" + packetSize);
+            }
+        }
+System.out.println("JSR135 : MediaDownloadThread.run exit");
+    }
 }

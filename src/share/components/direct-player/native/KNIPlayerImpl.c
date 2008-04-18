@@ -277,15 +277,17 @@ KNIDECL(com_sun_mmedia_PlayerImpl_nNeedMoreDataImmediatelly) {
     KNI_ReturnBoolean(needMoreData);
 }
 
-/*  protected native int nBuffering ( int handle , Object buffer, int length ) ; */
+/*  protected native int nBuffering ( int handle , Object buffer, int offset, int total, int length ) ; */
 KNIEXPORT KNI_RETURNTYPE_INT
 KNIDECL(com_sun_mmedia_PlayerImpl_nBuffering) {
 
     jint handle = KNI_GetParameterAsInt(1);
-    long length = (long)KNI_GetParameterAsInt(3);
+    long offset = (long)KNI_GetParameterAsInt(3);
+    long total = (long)KNI_GetParameterAsInt(4);
+    long length = (long)KNI_GetParameterAsInt(5);
     jint returnValue = -1;
     KNIPlayerInfo* pKniInfo = (KNIPlayerInfo*)handle;
-    void *nBuffer;
+    jbyte *nBuffer;
     long nBufferSize;
     javacall_bool need_more_data;
     long min_data_size;
@@ -305,7 +307,12 @@ LockAudioMutex();
                     length = nBufferSize;
                 }
                 MMP_DEBUG_STR1("+nBuffering length=%d\n", length);
-                KNI_GetRawArrayRegion(bufferHandle, 0, (int)length, (jbyte*)nBuffer);
+                if ((offset + length) <= total) {
+                    KNI_GetRawArrayRegion(bufferHandle, offset, (int)length, (jbyte*)nBuffer);
+                } else {
+                    KNI_GetRawArrayRegion(bufferHandle, offset, (int)(total-offset), (jbyte*)nBuffer);
+                    KNI_GetRawArrayRegion(bufferHandle, 0, (int)offset+length-total, (jbyte*)&nBuffer[total-offset]);
+                }
                 ret = javacall_media_do_buffering(pKniInfo->pNativeHandle, 
                         (const void*)nBuffer, &length, &need_more_data, &min_data_size);
                 if (ret == JAVACALL_OK) {
