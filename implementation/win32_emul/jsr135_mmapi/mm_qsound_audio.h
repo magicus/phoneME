@@ -49,6 +49,16 @@ typedef enum
     CONT_MAX
 } controls_enum;
 
+/* Native porting layer context */
+typedef enum
+{
+    PL135_UNREALIZED,
+    PL135_REALIZED,
+    PL135_PREFETCHED,
+    PL135_STARTED,
+    PL135_CLOSED
+} player_state_enum;
+
 typedef struct {
     jc_fmt                  mediaType;
     int                     isolateID;
@@ -58,8 +68,10 @@ typedef struct {
     unsigned char           *dataBuffer;
     int                     dataBufferLen;
     int                     dataBufferPos;
+    int                     dataBufferOffset;
     IControl*               controls[CONT_MAX];
     javacall_bool           needProcessHeader;
+    player_state_enum       state;
 } ah_hdr;
 
 typedef struct {
@@ -91,8 +103,14 @@ typedef struct {
     IEffectModule           *em;              // current effect module
     unsigned char           *originalData;
     int                     originalDataLen;
+    int                     originalDataOffset;
+    javacall_bool           originalDataFull;
+    javacall_bool           originalData_dataChnk;
+    int                     originalData_dataChnkFull;
+    int                     originalData_dataChnkOffset;
     unsigned char           *streamBuffer;
     int                     streamBufferLen;
+    javacall_bool           streamBufferFull;
     int                     currentPos;
     int                     bytesPerMilliSec;
     struct wav_meta_data    metaData;
