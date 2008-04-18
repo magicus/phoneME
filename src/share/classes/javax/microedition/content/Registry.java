@@ -29,6 +29,7 @@ package javax.microedition.content;
 import java.io.IOException;
 
 import com.sun.j2me.content.ContentHandlerImpl;
+import com.sun.j2me.content.ContentHandlerServerImpl;
 import com.sun.j2me.content.InvocationImpl;
 import com.sun.j2me.content.RegistryImpl;
 import com.sun.j2me.security.SecurityTokenInitializer;
@@ -1004,14 +1005,12 @@ public class Registry {
      *
      * @return the next pending response Invocation or <code>null</code>
      *  if the <code>wait</code> is false and no Invocation is available or
-     *  if cancelled with {@link #cancelGetResponse}
+     *  if canceled with {@link #cancelGetResponse}
      * @see #invoke
      * @see #cancelGetResponse
      */
     public Invocation getResponse(boolean wait) {
-        Invocation response = new Invocation();
-	response = impl.getResponse(wait, response.getInvocImpl());
-        return response;
+        return impl.getResponse(wait);
     }
 
     /**

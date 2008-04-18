@@ -233,7 +233,7 @@ public class ContentHandlerImpl implements ContentHandler {
     /**
      * Initialize a new instance with the same information.
      * @param handler another ContentHandlerImpl
-     * @see javax.microedition.content.ContentHandlerServerImpl
+     * @see com.sun.j2me.content.ContentHandlerServerImpl
      */
     protected ContentHandlerImpl(ContentHandlerImpl handler) {
         this();
@@ -691,8 +691,7 @@ public class ContentHandlerImpl implements ContentHandler {
     private void loadAppData() {
         if (appname == null) {
             try {
-                AppProxy app = 
-                        AppProxy.getCurrent().forApp(storageId, classname);
+                AppProxy app = AppProxy.getCurrent().forApp(storageId, classname);
                 appname = app.getApplicationName();
                 version = app.getVersion();
                 authority = app.getAuthority();
@@ -773,59 +772,6 @@ public class ContentHandlerImpl implements ContentHandler {
                 RegistryStore.getArrayField(ID, RegistryStore.FIELD_ACCESSES);
         }
         return accessRestricted;
-    }
-
-    /**
-     * Gets the next Invocation request pending for this
-     * ContentHandlerServer.
-     * The method can be unblocked with a call to
-     * {@link #cancelGetRequest cancelGetRequest}.
-     * The application should process the Invocation as
-     * a request to perform the <code>action</code> on the content.
-     *
-     * @param wait <code>true</code> if the method must wait for
-     * for an Invocation if one is not available;
-     * <code>false</code> if the method MUST NOT wait.
-     * @param invocation an Invocation instance that will delegate to
-     * the result; if any
-     * @return the next pending Invocation or <code>null</code>
-     *  if no Invocation is available; <code>null</code>
-     *  if canceled with {@link #cancelGetRequest cancelGetRequest}
-     * @see javax.microedition.content.Registry#invoke
-     * @see javax.microedition.content.ContentHandlerServer#finish
-     */
-    public InvocationImpl getRequest(boolean wait, Invocation invocation) {
-    	if(AppProxy.LOGGER != null){
-    		AppProxy.LOGGER.println( "ContentHandler.getRequest(" + wait + ")" );
-    	}
-        // Application has tried to get a request; reset cleanup flags on all
-        if (requestCalls == 0) {
-            InvocationStore.setCleanup(storageId, classname, false);
-        }
-        requestCalls++;
-
-        InvocationImpl invoc =
-            InvocationStore.getRequest(storageId, classname, wait);
-        if (invoc != null) {
-            // Keep track of number of requests delivered to the application
-            AppProxy.requestForeground(invoc.invokingSuiteId,
-                                       invoc.invokingClassname,
-                                       invoc.suiteId,
-                                       invoc.classname);
-            invoc.invocation = invocation;
-        }
-        return invoc;
-    }
-
-    /**
-     * Cancel a pending <code>getRequest</code>.
-     * This method will force a Thread blocked in a call to the
-     * <code>getRequest</code> method for the same application
-     * context to return early.
-     * If no Thread is blocked; this call has no effect.
-     */
-    public void cancelGetRequest() {
-        InvocationStore.cancel();
     }
 
     /**

@@ -47,7 +47,7 @@ import com.sun.j2me.security.SecurityTokenInitializer;
  * The RegistryImpl class maintains an array of the current
  * registrations that is initialized on first use.
  */
-public final class RegistryImpl {
+public final class RegistryImpl implements Counter {
 	
     /**
      * Inner class to request security token from SecurityInitializer.
@@ -84,6 +84,8 @@ public final class RegistryImpl {
 
     /** The AppProxy for this registry. */
     final AppProxy application;
+    
+    int cancelCounter = 0;
 
     /** Count of responses received. */
     int responseCalls;
@@ -294,8 +296,7 @@ public final class RegistryImpl {
      */
     static void cleanup(int suiteId, String classname) {
         InvocationImpl invoc = null;
-        while ((invoc =
-                InvocationStore.getCleanup(suiteId, classname)) != null) {
+        while ((invoc = InvocationStore.getCleanup(suiteId, classname)) != null) {
             invoc.setStatus(Invocation.ERROR);
         }
     }
@@ -512,7 +513,7 @@ public final class RegistryImpl {
      * Replaces the entry in RegisteredTypes list as well.
      *
      * @param server the ContentHandlerImpl for this RegistryImpl
-     * @see javax.microedition.content.ContentHandlerServerImpl
+     * @see com.sun.j2me.content.ContentHandlerServerImpl
      */
     public void setServer(ContentHandlerImpl server) {
         synchronized (mutex) {
@@ -874,21 +875,21 @@ public final class RegistryImpl {
      * @see #invoke
      * @see #cancelGetResponse
      */
-    public Invocation getResponse(boolean wait, InvocationImpl resp)
+    public Invocation getResponse(boolean wait)
     {
         // Application has tried to get a response; reset cleanup flags on all
         if (responseCalls == 0) {
-            InvocationStore.setCleanup(application.getStorageId(),
-                                       application.getClassname(), false);
+            InvocationStore.setCleanup(application.getStorageId(), 
+            						application.getClassname(), false);
         }
         responseCalls++;
 
         // Find a response for this application and context
         InvocationImpl invoc =
-            InvocationStore.getResponse(resp, application.getStorageId(),
-                                        application.getClassname(), wait);
+            InvocationStore.getResponse(application.getStorageId(), 
+            						application.getClassname(), wait, this);
         if (invoc != null) {
-            // Keep track of how many responses have been recevied;
+            // Keep track of how many responses have been received;
 
             /*
              * If there was a previous Request/Tid
@@ -916,8 +917,7 @@ public final class RegistryImpl {
                      * There will be a previous Invocation unless the app has
                      * already finished it. It will have a HOLD status.
                      */
-                    invoc.previous =
-                        InvocationStore.getByTid(invoc.previousTid, 0);
+                    invoc.previous = InvocationStore.getByTid(invoc.previousTid, false);
                 }
             }
             if (invoc.previous != null && invoc.previous.getStatus() == Invocation.HOLD) {
@@ -948,6 +948,7 @@ public final class RegistryImpl {
      * If no Thread is blocked; this call has no effect.
      */
     public void cancelGetResponse() {
+    	cancelCounter++;
         InvocationStore.cancel();
     }
 
@@ -1300,5 +1301,9 @@ public final class RegistryImpl {
         Integer tid = new Integer(invoc.tid);
         return (InvocationImpl)activeInvocations.remove(tid);
     }
+
+	public int getCounter() {
+		return cancelCounter;
+	}
 
 }

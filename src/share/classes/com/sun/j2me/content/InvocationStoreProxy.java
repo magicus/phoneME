@@ -30,8 +30,8 @@ public final class InvocationStoreProxy {
         	}
         } else if (invoc.classname != null) {
             try {
-            	AppProxy current = AppProxy.getCurrent();
-                AppProxy appl = current.forApp(invoc.suiteId, invoc.classname);
+                AppProxy appl = 
+                	AppProxy.getCurrent().forApp(invoc.suiteId, invoc.classname);
             	// if MIDlet already started report STARTED
                 int rc = appl.launch("Application")? LIT_MIDLET_STARTED 
                 						: LIT_MIDLET_START_FAILED;
@@ -64,7 +64,7 @@ public final class InvocationStoreProxy {
     		AppProxy.LOGGER.println( "InvocationStoreProxy.invokeNext() called. Invocations count = " + InvocationStore.size());
     		int tid = 0;
     		InvocationImpl invoc;
-    		while( (invoc = InvocationStore.getByTid(tid, 1)) != null ){
+    		while( (invoc = InvocationStore.getByTid(tid, true)) != null ){
 	        	AppProxy.LOGGER.println( "invocation[" + tid + "]: " + invoc ); 
                 tid = invoc.tid;
     		}
@@ -77,7 +77,7 @@ public final class InvocationStoreProxy {
 
         // Look for a recently queued Invocation to launch
         tid = 0;
-        while (!done && (invoc = InvocationStore.getByTid(tid, 1)) != null) {
+        while (!done && (invoc = InvocationStore.getByTid(tid, true)) != null) {
             switch (invoc.getStatus()){
 	            case Invocation.WAITING: {
 	                switch( launchInvocationTarget(invoc) ){

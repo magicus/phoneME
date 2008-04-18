@@ -26,8 +26,13 @@
 
 package com.sun.j2me.content;
 
+import java.lang.reflect.Method;
 import java.util.Hashtable;
+
 import javax.microedition.content.ContentHandlerException;
+
+import sun.misc.MIDPConfig;
+import sun.misc.MIDPImplementationClassLoader;
 
 import com.sun.j2me.security.Token;
 
@@ -80,7 +85,7 @@ import com.sun.j2me.security.Token;
  * <
  * </ul>
  */
-class AppProxy {
+public class AppProxy {
 
     /** The log flag to enable informational messages. */
     static final Logger LOGGER = new Logger();
@@ -98,6 +103,8 @@ class AppProxy {
 
     /** The current AppProxy. */
     private static AppProxy currentApp;
+    private static Registry registry;
+    private static AMS ams;
 
     /** The known AppProxy instances. Key is classname. */
     protected Hashtable appmap;
@@ -119,6 +126,61 @@ class AppProxy {
     /** The application is registered. */
     private boolean isRegistered;
 
+    private final static MIDPImplementationClassLoader midpClassLoader = 
+    						MIDPConfig.getMIDPImplementationClassLoader();
+    private final static Class classMIDletStateHandler;
+    private final static Class classMIDletSuite;
+    static {
+    	try {
+			classMIDletStateHandler = 
+					midpClassLoader.loadClass("com.sun.midp.midlet.MIDletStateHandler");
+			classMIDletSuite = midpClassLoader.loadClass("com.sun.midp.midlet.MIDletSuite");
+		} catch (ClassNotFoundException e) {
+			e.printStackTrace();
+			throw new RuntimeException(e); 
+		}
+    }
+
+    static Object getMIDletSuite(){
+    	Object midletSuite = null;
+		try {
+			Method method_getMIDletStateHandler = 
+				classMIDletStateHandler.getMethod("getMidletStateHandler", null);
+			Method method_getMIDletSuite = 
+				classMIDletStateHandler.getMethod("getMIDletSuite", null);
+			
+			Object midletStateHandler = method_getMIDletStateHandler.invoke(null, null);
+			midletSuite = method_getMIDletSuite.invoke(midletStateHandler, null); 
+		} catch( Exception x ){
+			x.printStackTrace();
+			throw new RuntimeException(x); 
+		} 
+		return midletSuite;
+    }
+
+    static int getSuiteID(){
+		try {
+			Method method_getID = classMIDletSuite.getMethod("getID", null);
+			return ((Integer)method_getID.invoke(getMIDletSuite(), null)).intValue();
+		} catch( Exception x ){
+			if( x instanceof RuntimeException ) throw (RuntimeException)x;
+			x.printStackTrace();
+			throw new RuntimeException(x); 
+		} 
+    }
+
+    static boolean midletIsRegistered( String midletClassName ){
+		try {
+			Method method_isRegistered = classMIDletSuite.getMethod("isRegistered", new Class[]{String.class});
+			return ((Boolean)method_isRegistered.invoke(getMIDletSuite(), 
+								new Object[]{midletClassName})).booleanValue();
+		} catch( Exception x ){
+			if( x instanceof RuntimeException ) throw (RuntimeException)x;
+			x.printStackTrace();
+			throw new RuntimeException(x); 
+		} 
+    }
+
     /**
      * Gets the AppProxy for the currently running application.
      * @return the current application.
@@ -126,7 +188,7 @@ class AppProxy {
     static AppProxy getCurrent() {
         synchronized (mutex) {
             if (currentApp == null) {
-            	currentApp = new AppProxy( INVALID_SUITE_ID, "InvalidClassName", null );
+                currentApp = new AppProxy( getSuiteID(), "Invalid.Class.Name", null );
             }
         }
         return currentApp;
@@ -139,15 +201,18 @@ class AppProxy {
      * @param storageId the suiteId
      * @param classname the classname
      */
-    protected AppProxy(int storageId, String classname, Hashtable appmap)
-    {
+    protected AppProxy(int storageId, String classname, Hashtable appmap) {
         this.storageId = storageId;
         this.classname = classname;
+        isRegistered = midletIsRegistered(classname);
+        
         if( appmap == null ) appmap = new Hashtable();
         this.appmap = appmap;
         this.appmap.put(classname, this);
         if (LOGGER != null) {
-        	LOGGER.println("AppProxy created: " + classname);
+            LOGGER.println("AppProxy created: (" + storageId + ", '" + classname + "')");
+            LOGGER.println("\tRegistry(" + registry + ")");
+            LOGGER.println("\tAMS(" + ams + ")");
         }
     }
 
@@ -161,8 +226,7 @@ class AppProxy {
      * @exception IllegalArgumentException if classname is
      *  not a valid application
      */
-    AppProxy forClass(String classname) throws ClassNotFoundException
-    {
+    AppProxy forClass(String classname) throws ClassNotFoundException {
         AppProxy curr = null;
         synchronized (mutex) {
             // Check if class already has a AppProxy
@@ -170,7 +234,7 @@ class AppProxy {
             if (curr == null) {
                 // Create a new instance
                 // throws ClassNotFoundException and IllegalArgumentException
-            	curr = new AppProxy( storageId, classname, appmap );
+                curr = new AppProxy( storageId, classname, appmap );
             }
         }
         return curr;
@@ -192,7 +256,7 @@ class AppProxy {
     {
         // Check in the current suite
         if (storageId == this.storageId) 
-        	return forClass(classname);
+            return forClass(classname);
 
         // Create a new instance
         return new AppProxy(storageId, classname, null);
@@ -248,7 +312,7 @@ class AppProxy {
      * @return the authority.
      */
     String getAuthority() {
-    	return authority;
+        return authority;
     }
 
     /**
@@ -330,9 +394,9 @@ class AppProxy {
      * @return <code>true</code> if the application is started.
      */
     boolean launch(String displayName) {
-    	if( isMidletRunning(storageId, classname) )
-        	return true;
-    	return false;
+        if( isMidletRunning(storageId, classname) )
+            return true;
+        return false;
     }
 
 
@@ -352,9 +416,9 @@ class AppProxy {
         Class appClass = Class.forName(classname);
         Class midletClass = Class.forName("javax.microedition.midlet.MIDlet");
         if ((!midletClass.isAssignableFrom(appClass)) ||
-        		appClass == midletClass) {
+                appClass == midletClass) {
             throw new IllegalArgumentException("Class '" + classname + 
-            							"' is not a MIDlet");
+                                        "' is not a MIDlet");
         }
     }
 
@@ -417,14 +481,24 @@ class AppProxy {
         return null;
     }*/
 
-	static boolean launchNativeHandler(String id) throws ContentHandlerException {
-		return false;
-	}
-	
+    static boolean launchNativeHandler(String id) throws ContentHandlerException {
+        return false;
+    }
+    
     static boolean platformFinish(int tid) {
         return false;
     }
-	
+
+    public static void setRegistry( Registry registry ) {
+    	AppProxy.registry = registry;
+        System.out.println("AppProxy.setRegistry(" + registry + ")");
+    }
+
+    public static void setAMS( AMS ams ) {
+    	AppProxy.ams = ams;
+        System.out.println("AppProxy.setAMS(" + ams + ")");
+    }
+
     /**
      * Create a printable representation of this AppProxy.
      * @return a printable string

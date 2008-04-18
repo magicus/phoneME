@@ -24,27 +24,29 @@
  * information or have any questions. 
  */
 
-package javax.microedition.content;
+package com.sun.j2me.content;
 
-import com.sun.j2me.content.ContentHandlerImpl;
-import com.sun.j2me.content.InvocationImpl;
+import javax.microedition.content.ContentHandlerServer;
+import javax.microedition.content.Invocation;
+import javax.microedition.content.RequestListener;
 
 /**
  * The internal structure of a registered content handler.
  */
-final class ContentHandlerServerImpl extends ContentHandlerImpl
-    			implements ContentHandlerServer
+final public class ContentHandlerServerImpl extends ContentHandlerImpl
+    			implements ContentHandlerServer, Counter
 {
-
     /** The listener to notify. */
     private RequestListener listener;
+    
+    int cancelCounter = 0;
 
     /**
      * Construct an empty ContentHandlerServerImpl
      * that has the same fields as the existing handler.
      * @param handler the ContentHandlerImpl to clone
      */
-    ContentHandlerServerImpl(ContentHandlerImpl handler) {
+    public ContentHandlerServerImpl(ContentHandlerImpl handler) {
     	super(handler);
     }
     
@@ -67,14 +69,40 @@ final class ContentHandlerServerImpl extends ContentHandlerImpl
      * @see javax.microedition.content.ContentHandlerServer#finish
      */
     public Invocation getRequest(boolean wait) {
-    	Invocation request = new Invocation((InvocationImpl)null);
-        InvocationImpl invoc = super.getRequest(wait, request);
+    	if(AppProxy.LOGGER != null){
+    		AppProxy.LOGGER.println( "ContentHandler.getRequest(" + wait + ")" );
+    	}
+        // Application has tried to get a request; reset cleanup flags on all
+        if (requestCalls == 0) {
+            InvocationStore.setCleanup(storageId, classname, false);
+        }
+        requestCalls++;
+
+        InvocationImpl invoc =
+            InvocationStore.getRequest(storageId, classname, wait, this);
         if (invoc != null) {
+            // Keep track of number of requests delivered to the application
+            AppProxy.requestForeground(invoc.invokingSuiteId,
+                                       invoc.invokingClassname,
+                                       invoc.suiteId,
+                                       invoc.classname);
+            
 		    // Wrap it in an Invocation instance
-		    request.setInvocImpl(invoc);
-		    return request;
+            return invoc.wrap();
         }
         return null;
+    }
+
+    /**
+     * Cancel a pending <code>getRequest</code>.
+     * This method will force a Thread blocked in a call to the
+     * <code>getRequest</code> method for the same application
+     * context to return early.
+     * If no Thread is blocked; this call has no effect.
+     */
+    public void cancelGetRequest() {
+    	cancelCounter++;
+        InvocationStore.cancel();
     }
 
     /**
@@ -106,7 +134,7 @@ final class ContentHandlerServerImpl extends ContentHandlerImpl
      * @exception NullPointerException if the invocation is <code>null</code>
      */
     public boolean finish(Invocation invoc, int status) {
-    	return finish(invoc.getInvocImpl(), status);
+    	return finish(InvocationImpl.tunnel.getInvocImpl(invoc), status);
     }
     
 
@@ -133,5 +161,9 @@ final class ContentHandlerServerImpl extends ContentHandlerImpl
 		    l.invocationRequestNotify(this);
 		}
     }
+
+	public int getCounter() {
+		return cancelCounter;
+	}
 
 }

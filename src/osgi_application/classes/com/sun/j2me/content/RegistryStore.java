@@ -155,7 +155,7 @@ class RegistryStore {
                                                 String value) {
         /* Check value for null */
         value.length();
-        return null;
+        return new ContentHandlerImpl[0];
     }
 
     /**
@@ -177,7 +177,7 @@ class RegistryStore {
      * @return found values array.
      */
     static String[] getValues(String callerId, int searchBy) {
-    	return null;
+    	return new String[0];
     }
 
     /**
@@ -219,7 +219,7 @@ class RegistryStore {
         ContentHandlerImpl handler = null;
 
         if (classname.length() == 0)
-            throw new IllegalArgumentException("classname can't be emty");
+            throw new IllegalArgumentException("classname can't be empty");
 
         if (arr != null) {
             for (int i = 0; i < arr.length; i++) {

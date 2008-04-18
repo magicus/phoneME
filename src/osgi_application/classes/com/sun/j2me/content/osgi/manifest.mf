@@ -1,0 +1,11 @@
+Manifest-Version: 1.0
+MicroEdition-Configuration: CLDC-1.0
+MicroEdition-Profile: MIDP-1.0
+Bundle-Name: jsr211 OSGi bridge
+Bundle-SymbolicName: JSR211-OSGI
+Bundle-Version: 1.0.0
+Bundle-Activator: com.sun.j2me.content.osgi.JSR211Service$Activator
+Bundle-Vendor: Sun Microsystems, Inc.
+Import-Package: org.osgi.framework, 
+ org.osgi.service.application
+Export-Package: com.sun.j2me.content.osgi
