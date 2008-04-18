@@ -372,6 +372,7 @@ class Socket {
 	}
     }
 
+    static Class implClass = null;
     /**
      * Sets impl to the system-default type of SocketImpl.
      * @since 1.4
@@ -382,9 +383,23 @@ class Socket {
 	    impl = factory.createSocketImpl();
 	    checkOldImpl();
 	} else {
-	    // No need to do a checkOldImpl() here, we know it's an up to date
-	    // SocketImpl!
-	    impl = new PlainSocketImpl();
+            if (implClass == null) {
+                try {
+                    String prefix = (String) AccessController.doPrivileged(
+                                     new sun.security.action.GetPropertyAction("impl.prefix.stream", "Plain"));
+                    implClass =
+                        Class.forName("java.net."+prefix+"SocketImpl");
+                } catch (Exception e) {
+                    implClass = java.net.PlainSocketImpl.class;
+                }
+            }
+            try {
+                impl = (SocketImpl) implClass.newInstance();
+            } catch (Exception e) {
+                impl = new PlainSocketImpl();
+            }
+            if (impl != null && !(impl instanceof java.net.PlainSocketImpl))
+                checkOldImpl();
 	}
 	if (impl != null)
 	    impl.setSocket(this);

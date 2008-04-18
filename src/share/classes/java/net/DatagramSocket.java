@@ -709,10 +709,19 @@ class DatagramSocket {
 		// the native impl doesn't support connect or the connect
 		// via the impl failed.
 		boolean stop = false;
+                InetAddress peekAddress;
+                int peekPort;
 		while (!stop) {
 		    // peek at the packet to see who it is from.
-		    InetAddress peekAddress = new InetAddress();
-		    int peekPort = getImpl().peek(peekAddress);
+                    if (!oldImpl) {
+                        // We can use the new peekData() API
+                        DatagramPacket peekPacket = new DatagramPacket(new byte[1], 1);
+                        peekPort = getImpl().peekData(peekPacket);
+                        peekAddress = peekPacket.getAddress();
+                    } else {
+                        peekAddress = new InetAddress();
+                        peekPort = getImpl().peek(peekAddress);
+                    }
 		    if ((!connectedAddress.equals(peekAddress)) ||
 			(connectedPort != peekPort)) {
 			// throw the packet away and silently continue

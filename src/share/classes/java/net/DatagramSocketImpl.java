@@ -241,4 +241,7 @@ public abstract class DatagramSocketImpl implements SocketOptions {
     protected FileDescriptor getFileDescriptor() {
 	return fd;
     }
+
+    void setIsMulticastSocket() {
+    }
 }
