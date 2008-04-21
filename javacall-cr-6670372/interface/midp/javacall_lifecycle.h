@@ -1,6 +1,6 @@
 /*
  *
- * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  *
  * This program is free software; you can redistribute it and/or
@@ -344,8 +344,6 @@ void JavaTask(void);
  * one timeslice. Used in slave mode only.
  */
 void javacall_schedule_vm_timeslice(void);
-
-
 
 /**
  * In slave mode executes one JVM time slice.
