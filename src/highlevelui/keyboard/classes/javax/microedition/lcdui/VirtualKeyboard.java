@@ -290,7 +290,7 @@ class VirtualKeyboard {
         g.setColor(DARK_GRAY);
 
         if (textKbd) {
-            g.fillRect(0,0,kbWidth,kbHeight);
+         //   g.fillRect(0,0,kbWidth,kbHeight);
             //drawBorder(g,0,0,kbWidth-1,kbHeight-1);
             if (textfieldHeight > 0) {
                 drawTextField(g);

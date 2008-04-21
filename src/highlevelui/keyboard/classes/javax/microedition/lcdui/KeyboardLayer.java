@@ -496,7 +496,15 @@ class KeyboardLayer extends PopupLayer implements VirtualKeyboardListener {
              Lines = new Vector();
 
              xpos = 0;
-             ypos +=2*(height+pad);
+             ypos +=height+pad;
+
+             Lines.addElement(new Key(icon,otherIcon,'_','_',xpos,ypos,width,height)); xpos+=width+pad;
+
+             Keyboard.addElement(Lines);
+             Lines = new Vector();
+
+             xpos = 0;
+             ypos +=height+pad;
 
              Lines.addElement(new Key(icon,otherIcon,VirtualKeyboard.BACKSPACE_META_KEY,'<',xpos,ypos,width,height)); xpos+=width+pad;
              Lines.addElement(new Key(icon,otherIcon,VirtualKeyboard.OK_META_KEY,'O',xpos,ypos,width,height)); xpos+=width+pad;
@@ -535,24 +543,41 @@ class KeyboardLayer extends PopupLayer implements VirtualKeyboardListener {
         int size=33;
         int base=getAvailableWidth()/2;
 
+        Image up_sel   = getImageFromInternalStorage("up_sel_"+size);
+        Image up_un    = getImageFromInternalStorage("up_un_"+size);
+        Image left_sel = getImageFromInternalStorage("left_sel_"+size);
+        Image left_un  = getImageFromInternalStorage("left_un_"+size);
+        Image mid_sel  = getImageFromInternalStorage("mid_sel_"+size);
+        Image mid_un   = getImageFromInternalStorage("mid_un_"+size);
+        Image right_sel  = getImageFromInternalStorage("right_sel_"+size);
+        Image right_un   = getImageFromInternalStorage("right_un_"+size);
+        Image down_sel = getImageFromInternalStorage("down_sel_"+size);
+        Image down_un  = getImageFromInternalStorage("down_un_"+size);
+        
         Vector Keyboard = new Vector();
 
-            Vector Lines = new Vector();
-                Lines.addElement(new Key(getImageFromInternalStorage("up_sel_"+size),
-                                        getImageFromInternalStorage("up_un_"+size),
-                                        Constants.KEYCODE_UP,size,0));
-                Lines.addElement(new Key(getImageFromInternalStorage("down_sel_"+size),
-                                        getImageFromInternalStorage("down_un_"+size),
-                                        Constants.KEYCODE_DOWN,size,size*2));
-                Lines.addElement(new Key(getImageFromInternalStorage("left_sel_"+size),
-                                        getImageFromInternalStorage("left_un_"+size),
-                                        Constants.KEYCODE_LEFT,0,size));
-                Lines.addElement(new Key(getImageFromInternalStorage("right_sel_"+size),
-                                        getImageFromInternalStorage("right_un_"+size),
-                                        Constants.KEYCODE_RIGHT,size*2,size));
-                Lines.addElement(new Key(getImageFromInternalStorage("mid_sel_"+size),
-                                        getImageFromInternalStorage("mid_un_"+size),
-                                        Constants.KEYCODE_SELECT,size+4,size+4)); //FIXME
+                Vector Lines = new Vector();
+                Lines.addElement(new Key(up_un, up_sel,
+                                        Constants.KEYCODE_UP,
+                                         left_un.getWidth()-1,
+                                         0));
+                Lines.addElement(new Key(left_un,left_sel,
+                                        Constants.KEYCODE_LEFT,
+                                         0,
+                                         up_un.getHeight()-1));
+               /* Lines.addElement(new Key(mid_un,mid_sel,
+                                        Constants.KEYCODE_SELECT,
+                                         left_un.getWidth()-2,
+                                         up_un.getHeight()-2));*/
+                Lines.addElement(new Key(down_un, down_sel,
+                                         Constants.KEYCODE_DOWN,
+                                         left_un.getWidth()-1,
+                                         up_un.getHeight()+mid_un.getHeight()-1));
+                Lines.addElement(new Key(right_un,right_sel,
+                                         Constants.KEYCODE_RIGHT,
+                                         left_un.getWidth()+mid_un.getWidth()-1,
+                                         up_un.getHeight()-1));
+
 
                 Lines.addElement(new Key(getImageFromInternalStorage("red_un_"+size),
                                         getImageFromInternalStorage("red_sel_"+size),
