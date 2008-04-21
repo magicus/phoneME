@@ -107,8 +107,8 @@ ENTRY1(CVMjniInvokeNative)
 #define JSTKPTR v1
 #define CSTKPTR v7
 
-#define RETTYPE v6
-#define SIGBUFF  v5
+#define RETTYPE v5
+#define SIGBUFF  lr
 #define SWITCHBASE v2
 
 #define FuncPtr	ip
