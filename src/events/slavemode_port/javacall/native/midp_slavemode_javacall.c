@@ -815,7 +815,6 @@ void javanotify_inform_event(void) {
  * See comments in javacall_lifecycle.h
  */
 javacall_int64 javanotify_vm_timeslice(void) {
-    _asm int 3
     return midpTimeSlice();
 }
 
