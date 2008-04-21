@@ -346,10 +346,6 @@ void JavaTask(void);
 void javacall_schedule_vm_timeslice(void);
 
 
-/**
- * Platform-specific event processing loop
- */
-void javacall_slavemode_event_loop(void);
 
 /**
  * In slave mode executes one JVM time slice.
