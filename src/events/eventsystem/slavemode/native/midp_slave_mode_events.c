@@ -78,10 +78,6 @@ int midpRunVm(JvmPathChar* classPath,
     JVM_SetConfig(JVM_CONFIG_SLAVE_MODE, KNI_TRUE);
     JVM_Start(classPath, mainClass, argc, argv);
 
-#ifdef WIN32_EMUL
-    midp_slavemode_event_loop();
-    return JVM_CleanUp();
-#endif
     return 0;
 }
 
