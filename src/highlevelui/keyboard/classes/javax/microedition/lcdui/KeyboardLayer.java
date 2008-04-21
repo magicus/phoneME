@@ -52,7 +52,7 @@ class KeyboardLayer extends PopupLayer implements VirtualKeyboardListener {
             vk = new VirtualKeyboard(Maps, this, true);
         }
 
-        System.out.println("vk.kbX:"+vk.kbX+",vk.kbY:"+vk.kbY+",vk.kbWidth:"+vk.kbWidth+",vk.kbHeight:"+vk.kbHeight);
+        //System.out.println("vk.kbX:"+vk.kbX+",vk.kbY:"+vk.kbY+",vk.kbWidth:"+vk.kbWidth+",vk.kbHeight:"+vk.kbHeight);
         setBounds(vk.kbX, vk.kbY, vk.kbWidth, vk.kbHeight);
 
         Command keyboardClose = new Command("Close", Command.OK, 1);
@@ -79,7 +79,7 @@ class KeyboardLayer extends PopupLayer implements VirtualKeyboardListener {
             vk = new VirtualKeyboard(Maps, this, false);
         }
 
-        System.out.println("vk.kbX:"+vk.kbX+",vk.kbY:"+vk.kbY+",vk.kbWidth:"+vk.kbWidth+",vk.kbHeight:"+vk.kbHeight);
+        //System.out.println("vk.kbX:"+vk.kbX+",vk.kbY:"+vk.kbY+",vk.kbWidth:"+vk.kbWidth+",vk.kbHeight:"+vk.kbHeight);
 	setBounds(vk.kbX,vk.kbY,vk.kbWidth,vk.kbHeight);
 
         Command keypadClose = new Command("Close", Command.OK, 1);
@@ -123,7 +123,7 @@ class KeyboardLayer extends PopupLayer implements VirtualKeyboardListener {
             (state == NUMERIC || 
              state == LOWERCASE ||
              state == UPPERCASE)) {
-            vk.currentKeyboardIndex = state;
+            vk.changeKeyboad(state);
         }
     }
 
