@@ -39,6 +39,7 @@
 #include <midpResourceLimit.h>
 #include <midpAMS.h>
 #include <javacall_events.h>
+#include <javautil_string.h>
 
 #if ENABLE_JSR_135
 #include <javacall_multimedia.h>
