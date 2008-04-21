@@ -1,7 +1,7 @@
 #
 #
 #
-# Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+# Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
 # 
 # This program is free software; you can redistribute it and/or
@@ -40,7 +40,12 @@ SUBSYSTEM_APP_EXTRA_INCLUDES += -I$(SUBSYSTEM_APP_DIR)/include
 
 vpath % $(SUBSYSTEM_APP_DIR)/reference/native
 
+ifeq ($(SUBSYSTEM_EVENTS_MODULES), slave_mode)
+    SUBSYSTEM_APP_NATIVE_FILES += javanotify_functions_slavemode.c
+else
+    SUBSYSTEM_APP_NATIVE_FILES += javanotify_functions.c
+endif
+
 SUBSYSTEM_APP_NATIVE_FILES += \
-    jcapp_export.c \
-    javanotify_functions.c
-	
+    jcapp_export.c
+

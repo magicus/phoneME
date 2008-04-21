@@ -1,7 +1,7 @@
 /*
  *
  *
- * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
@@ -94,7 +94,6 @@ void JavaTask(void) {
 
             JavaTaskIsGoOn = JAVACALL_FALSE;
             break;
-
         case MIDP_JC_EVENT_SET_VM_ARGS:
             REPORT_INFO(LC_CORE, "JavaTask() MIDP_JC_EVENT_SET_VM_ARGS >>\n");
             midpHandleSetVmArgs(event->data.startMidletArbitraryArgEvent.argc,
@@ -153,6 +152,7 @@ static javacall_result midpHandleSetVmArgs(int argc, char* argv[]) {
         argc -= used;
         argv += used;
     }
+    return JAVACALL_OK;
 }
 
 /**
@@ -161,6 +161,7 @@ static javacall_result midpHandleSetVmArgs(int argc, char* argv[]) {
 static javacall_result midpHandleSetHeapSize(midp_event_heap_size heap_size) {
     JVM_SetConfig(JVM_CONFIG_HEAP_CAPACITY, heap_size.heap_size);
     JVM_SetConfig(JVM_CONFIG_HEAP_MINIMUM, heap_size.heap_size);
+    return JAVACALL_OK;
 }
 
 /**
@@ -176,6 +177,7 @@ static javacall_result midpHandleListMIDlets() {
     argv[argc++] = "com.sun.midp.scriptutil.SuiteLister";
 
     res = JavaTaskImpl(argc, argv);
+    return res;
 }
 
 /**
@@ -195,6 +197,7 @@ static javacall_result midpHandleListStorageNames() {
     argv[argc++] = "com.sun.midp.scriptutil.SuiteLister";
 
     res = JavaTaskImpl(argc, argv);
+    return res;
 }
 
 /**
@@ -212,4 +215,5 @@ midpHandleRemoveMIDlet(midp_event_remove_midlet	removeMidletEvent) {
     argv[argc++] = removeMidletEvent.suiteID;
 
     res = JavaTaskImpl(argc, argv);
+    return res;
 }

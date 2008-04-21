@@ -51,13 +51,9 @@ extern "C" {
  */
 void midp_slavemode_schedule_vm_timeslice(void);
 
-/**
- * Main processing loop.
- */
-void midp_slavemode_dispatch_events(void);
 
 /**
- * Executes bytecodes for a small time slice
+ * Executes bytecodes for a time slice
  *
  * @return <tt>-2</tt> if JVM has exited
  *         <tt>-1</tt> if all the Java threads are blocked waiting for events

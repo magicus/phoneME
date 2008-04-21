@@ -78,7 +78,14 @@ int midpRunVm(JvmPathChar* classPath,
     JVM_SetConfig(JVM_CONFIG_SLAVE_MODE, KNI_TRUE);
     JVM_Start(classPath, mainClass, argc, argv);
 
-    midp_slavemode_dispatch_events();
-
-    return JVM_CleanUp();
+    return 0;
 }
+
+jlong midp_slavemode_time_slice(void) {
+    jlong to = JVM_TimeSlice();
+    if ((jlong)-2 == to) {
+        JVM_CleanUp();
+    }
+    return to;
+}
+

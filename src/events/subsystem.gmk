@@ -1,7 +1,7 @@
 #
 #
 #
-# Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+# Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
 #
 # This program is free software; you can redistribute it and/or
@@ -54,12 +54,13 @@ MIDP_JAVADOC_ALL += \
         -group "Events Packages" \
 	$(shell echo $(SUBSYSTEM_EVENTS_PACKAGES)|tr ' ' $(PATHSEP))
 
-ifeq ($(PLATFORM),)
-   ifeq ($(PLATFORM), linux_qte)
-       SUBSYSTEM_EVENTS_MODULES = slave_mode
-   else
-       SUBSYSTEM_EVENTS_MODULES = master_mode
-   endif
+
+ifndef SUBSYSTEM_EVENTS_MODULES
+    ifeq ($(PLATFORM), linux_qte)
+	   SUBSYSTEM_EVENTS_MODULES=slave_mode
+    else
+	   SUBSYSTEM_EVENTS_MODULES=master_mode
+    endif
 endif
 
 include $(SUBSYSTEM_EVENTS_DIR)/eventqueue/lib.gmk
