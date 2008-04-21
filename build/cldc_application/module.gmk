@@ -90,8 +90,7 @@ ABSTRACTIONS_CLASSES = \
     $(JSROP_ABSTRACTS_JAVASRCDIRS)/com/sun/j2me/rms/RecordStoreNotOpenException.java \
     $(JSROP_ABSTRACTS_JAVASRCDIRS)/com/sun/j2me/rms/RecordStoreFullException.java \
     $(JSROP_ABSTRACTS_JAVASRCDIRS)/com/sun/j2me/rms/RecordStoreNotFoundException.java \
-    $(JSROP_ABSTRACTS_JAVASRCDIRS)/com/sun/j2me/rms/RecordEnumerationImpl.java \
-    $(JSROP_ABSTRACTS_JAVASRCDIRS)/com/sun/j2me/security/ContactlessPermission.java \
+    $(JSROP_ABSTRACTS_JAVASRCDIRS)/com/sun/j2me/rms/RecordEnumerationImpl.java
 
 ifeq ($(USE_JSR_177), true)
 ABSTRACTIONS_CLASSES += \
