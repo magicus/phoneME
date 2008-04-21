@@ -53,7 +53,7 @@ static javacall_media_configuration g_cfg;
 javacall_result javacall_media_get_configuration(const javacall_media_configuration** cfg)
 {
     g_cfg.audioEncoding         = "encoding=pcm&rate=22050&bits=16&channels=1";
-    g_cfg.videoEncoding         = NULL;
+    g_cfg.videoEncoding         = "encoding=rgb888";
     g_cfg.videoSnapshotEncoding = NULL;
 
     g_cfg.supportMixing         = JAVACALL_TRUE;
@@ -226,7 +226,6 @@ extern media_interface g_amr_audio_itf;
 extern media_interface g_qsound_interactive_midi_itf;
 extern media_interface g_video_itf;
 //extern media_interface g_tone_itf;
-extern media_interface g_camera_itf;
 //extern media_interface g_interactive_midi_itf;
 extern media_interface g_record_itf;
 extern media_interface g_fake_radio_itf;
@@ -421,7 +420,7 @@ javacall_result javacall_media_create(int appId,
                            min( (long)wcslen( VIDEO_CAPTURE_LOCATOR ), uriLength ) ) )
         {
             pPlayer->mediaType        = JAVACALL_MEDIA_FORMAT_CAPTURE_VIDEO;
-            pPlayer->mediaItfPtr      = &g_camera_itf;
+            pPlayer->mediaItfPtr      = &g_video_itf;
             pPlayer->downloadByDevice = JAVACALL_TRUE;
         }
         else if( 0 == _wcsnicmp( uri, RADIO_CAPTURE_LOCATOR, 

@@ -208,10 +208,19 @@ static void CALLBACK audio_timer_callback(UINT uID, UINT uMsg,
             pHandle->timerId = 0;
             pHandle->offset = 0;
             timeKillEvent(uID);
-            JC_MM_DEBUG_PRINT1("[jc_media] javanotify_on_media_notification %d\n", pHandle->playerId);
-            javanotify_on_media_notification(JAVACALL_EVENT_MEDIA_END_OF_MEDIA,
-                                             pHandle->isolateId, pHandle->playerId, 
-                                             JAVACALL_OK, (void*)pHandle->duration);
+
+            if( JC_FMT_CAPTURE_VIDEO == pHandle->mediaType ) {
+                // emulated camera loops ininitely,
+                // but EOM must not be sent
+                audio_set_time( (javacall_handle)dwUser, &(pHandle->offset) );
+                audio_start( (javacall_handle)dwUser );
+                return;
+            } else {
+                JC_MM_DEBUG_PRINT1("[jc_media] javanotify_on_media_notification %d\n", pHandle->playerId);
+                javanotify_on_media_notification(JAVACALL_EVENT_MEDIA_END_OF_MEDIA,
+                                                 pHandle->isolateId, pHandle->playerId, 
+                                                 JAVACALL_OK, (void*)pHandle->duration);
+            }
         }
     }
 }
