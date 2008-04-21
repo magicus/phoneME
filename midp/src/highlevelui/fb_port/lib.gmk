@@ -1,0 +1,62 @@
+#
+#   
+#
+# Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+# 
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License version
+# 2 only, as published by the Free Software Foundation.
+# 
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# General Public License version 2 for more details (a copy is
+# included at /legal/license.txt).
+# 
+# You should have received a copy of the GNU General Public License
+# version 2 along with this work; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+# 02110-1301 USA
+# 
+# Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+# Clara, CA 95054 or visit www.sun.com if you need additional
+# information or have any questions.
+#
+######################################################################
+#
+# LCDLF Look and Feel Library
+#
+######################################################################
+
+# Name of the library
+FBPORT_NAME = fb_port
+FBPORT_DIR = $(SUBSYSTEM_HIGHUI_DIR)/$(FBPORT_NAME)
+
+# Add to library set for this build
+LIB_SET += $(FBPORT_NAME)
+
+# Export include files
+SUBSYSTEM_APP_EXTRA_INCLUDES += -I$(FBPORT_DIR)/include
+
+# Native files for the library
+# SUBSYSTEM_APP_NATIVE_FILES +=
+
+# Source code path for the library
+# vpath $(FBPORT_DIR)/native
+
+# Java files for the library
+#
+SUBSYSTEM_APP_JAVA_FILES +=
+
+# IMPL NOTE: Use library configuration file to select switch library
+#
+ifeq ($(USE_DIRECTFB), true)
+    include $(FBPORT_DIR)/directfb/lib.gmk
+else 
+ifeq ($(TARGET_CPU), arm)
+    include $(FBPORT_DIR)/fb/lib.gmk
+else
+    include $(FBPORT_DIR)/qvfb/lib.gmk
+endif
+endif
