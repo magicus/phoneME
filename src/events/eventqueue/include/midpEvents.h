@@ -1,24 +1,24 @@
 /*
- *   
  *
- * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+ *
+ * Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
- * 
+ *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
  * 2 only, as published by the Free Software Foundation.
- * 
+ *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
  * included at /legal/license.txt).
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA
- * 
+ *
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
  * information or have any questions.
@@ -41,7 +41,7 @@
  * @ingroup events_queue
  *
  * @brief Interface to the event queue.
- * These functions are NOT to be ported. They are implemented in 
+ * These functions are NOT to be ported. They are implemented in
  * shared layer already. Platform dependent layer should call them
  * to send events to Java platform system.
  */
@@ -126,7 +126,7 @@ extern "C" {
 /* JSR-135 event */
 #define MMAPI_EVENT                     45
 
-/** JSR-234 event */ 
+/** JSR-234 event */
 #define AMMS_EVENT                      46
 
 /** The event to repaint entire screen */
@@ -135,9 +135,9 @@ extern "C" {
 #define MM_EOM_EVENT  48
 #define MM_DURATION_EVENT  49
 #define MM_RECORD_LIMIT_EVENT  50
-#define MM_RECORD_ERROR_EVENT  51    
+#define MM_RECORD_ERROR_EVENT  51
 #define MM_BUFFERING_START_EVENT  52
-#define MM_BUFFERING_STOP_EVENT  53    
+#define MM_BUFFERING_STOP_EVENT  53
 #define MM_VOLUME_CHANGED_EVENT  54
 #define MM_GENERAL_ERROR_EVENT  55
 #define MM_PLAYER_STARVED_EVENT  56
@@ -201,7 +201,7 @@ extern "C" {
  * Enqueues an event to be processed by the Java event thread for a given
  * Isolate, or all isolates if isolateId is -1.
  * Only safe to call from VM thread.
- * Any other threads should call StoreMIDPEvent. 
+ * Any other threads should call StoreMIDPEvent.
  *
  *   MidpEvent event;
  *
@@ -215,7 +215,7 @@ extern "C" {
  *
  * @param event      The event to enqueue.
  *
- * @param isolateId  ID of an Isolate 
+ * @param isolateId  ID of an Isolate
  *                   -1 for broadcast to all isolates
  *                   0 for SVM mode
  */
