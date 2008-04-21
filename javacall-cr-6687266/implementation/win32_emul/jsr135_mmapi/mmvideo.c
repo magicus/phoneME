@@ -508,20 +508,6 @@ static javacall_result video_get_buffer_address(javacall_handle handle,
     return audio_get_buffer_address(handle, buffer, max_size);
 }
 
-static javacall_result video_get_format(javacall_handle handle, jc_fmt* fmt)
-{
-    audio_handle* pHandle = (audio_handle *) handle;
-    
-    if (pHandle->isBuffered) {
-        *fmt = pHandle->mediaType;
-    }
-    else {
-        *fmt = JC_FMT_UNKNOWN;
-    }
-    
-    return JAVACALL_OK;
-}
-
 static javacall_result video_set_video_color_key(
             javacall_handle handle, javacall_bool on, javacall_pixel color) {
     
@@ -543,7 +529,7 @@ static javacall_result video_set_video_color_key(
  */
 static media_basic_interface _video_basic_itf = {
     video_create,
-    video_get_format,
+    NULL,
     NULL, // get_player_controls
     video_close,
     video_destroy,
