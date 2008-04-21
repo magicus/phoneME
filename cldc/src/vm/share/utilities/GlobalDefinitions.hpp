@@ -2211,7 +2211,7 @@ NAME_BUFFER_SIZE = 270
 #if ENABLE_FLOAT
 
 static inline jint float_bits(jfloat f) {
-  return *(jint*)&f;
+  return jint_cast(f);
 }
 
 static inline jlong double_bits(jdouble d) {
@@ -2225,7 +2225,7 @@ static inline jlong double_bits(jdouble d) {
 }
 
 static inline jfloat float_from_bits(jint bits) {
-  return *(jfloat*)&bits;
+  return jfloat_cast(bits);
 }
 
 static inline jdouble double_from_bits(jlong bits) {
