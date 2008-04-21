@@ -1,0 +1,404 @@
+Copyright 2007 Sun Microsystems, Inc. All rights reserved.
+
+Sun Microsystems, Inc. has intellectual property rights relating to technology
+embodied in the product that is described in this document. In particular, and
+without limitation, these intellectual property rights may include one or more
+of the U.S. patents listed at http://www.sun.com/patents and one or more
+additional patents or pending patent applications in the U.S. and in other
+countries.
+U.S. Government Rights - Commercial software. Government users are subject to
+the Sun Microsystems, Inc. standard license agreement and applicable provisions
+of the FAR and its supplements.
+
+Use is subject to license terms.
+
+This distribution may include materials developed by third parties.Sun, Sun
+Microsystems, phoneME and Java are trademarks or registered trademarks of Sun
+Microsystems, Inc. in the U.S. and other countries.
+
+
+Copyright 2007 Sun Microsystems, Inc. Tous droits réservés.
+
+Sun Microsystems, Inc. détient les droits de propriété intellectuels relatifs à
+la technologie incorporée dans le produit qui est décrit dans ce document. En
+particulier, et ce sans limitation, ces droits de propriété intellectuelle
+peuvent inclure un ou plus des brevets américains listés à l'adresse
+http://www.sun.com/patents et un ou les brevets supplémentaires ou les
+applications de brevet en attente aux Etats - Unis et dans les autres pays.
+
+L'utilisation est soumise aux termes du contrat de licence.
+
+Cette distribution peut comprendre des composants développés par des tierces
+parties.
+
+Sun, Sun Microsystems, phoneME et Java sont des marques de fabrique ou des
+marques déposées de Sun Microsystems, Inc. aux Etats-Unis et dans d'autres pays.
+
+
+Content of this document
+
+          * Provisioning Server Replacement CGI Script
+          * XML Output
+               * Example
+          * HTML Output
+               * Example: Show Bundles
+               * Example: Management Console
+                    * Choosing the repository and editing the server
+                      configuration XML
+                    * Editing the repository content
+          * infoURL Response
+          * Installation
+               * Manual Installation
+          * Bundle Content
+          * System Requirements
+          * Known Issues and TODO list
+
+
+Provisioning Server Replacement CGI Script
+
+   The purpose of this replacement is to provide a method of discovering a
+   repository content since new Sun Application Server doesn't use Cloudscape
+   database anymore. We decided to write a CGI script and run it on Apache
+   web server. It should provide a list of the files in the repository in XML
+   and HTML formats and responds on infoURL and installNotifyURI requests.
+   The script is written on Python scripting language.
+
+   The current features are:
+
+     * Provides repository content in XML and HTML format;
+     * Supports of MIDP-style and general downloads;
+     * Provides installNotifyURI and infoURL response;
+     * Simple web-based repository management functions;
+     * Works with multiple repositories.
+
+   The script generates both XML and HTML output. It also responses on
+   infoURL and installNotifyURI requests. It doesn't do anything but
+   listening on installNotifyURI request, and returns a brief information
+   about the file on infoURL request.
+
+  +----------------------------------------------------------------------------+
+  | Request  |                    Example                    |    Response     |
+  | argument |                                               |                 |
+  |----------+-----------------------------------------------+-----------------|
+  |          |                                               |No specific      |
+  |          |                                               |response, sets   |
+  |          |                                               |name as the name |
+  |repository|repository                                     |of current       |
+  |          |                                               |repository.      |
+  |          |                                               |Default:         |
+  |          |                                               |'repository'.    |
+  |----------+-----------------------------------------------+-----------------|
+  |          |                                               |Returns XML or   |
+  |          |                                               |HTML output with |
+  |type      |xml                                            |the repository   |
+  |          |                                               |content. Default:|
+  |          |                                               |html             |
+  |----------+-----------------------------------------------+-----------------|
+  |          |                                               |Response on      |
+  |          |                                               |infoURL. Returns |
+  |id        |http://servername/repository/games/JavaClock.dd|brief information|
+  |          |                                               |about the        |
+  |          |                                               |resource.        |
+  |----------+-----------------------------------------------+-----------------|
+  |          |                                               |Response on      |
+  |          |                                               |installNotifyURI.|
+  |installed |true                                           |Returns nothing. |
+  |          |                                               |Does nothing. The|
+  |          |                                               |id should be     |
+  |          |                                               |supplied as well.|
+  +----------------------------------------------------------------------------+
+
+XML Output
+
+   The XML output of the CGI script is conformed with the XML Schema. It
+   encapsulates all definitions from OMA Download Descriptor namespace and
+   MIDP JAD namespace.
+
+   The XML Schema is defined as:
+
+ <?xml version="1.0" encoding="UTF-8"?>
+
+ <xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+             xmlns:dd="urn:oma:xml:dl:dd:2.0"
+             targetNamespace="http://sun.com/2006/provisioning"
+             elementFormDefault="qualified"
+             >
+     <xsd:import namespace="urn:oma:xml:dl:dd:2.0"
+                 schemaLocation="dd-V2_0.xsd"/>
+     <xsd:import namespace="urn:oma:xml:dl:jad:2.0"
+                 schemaLocation="dd_midpjad-V2_0.xsd"/>
+
+     <xsd:element name="serverContent">
+         <xsd:complexType mixed="true">
+             <xsd:sequence>
+                 <xsd:any namespace="urn:oma:xml:dl:dd:2.0"
+                           minOccurs="0" maxOccurs="unbounded"/>
+                 <xsd:any namespace="urn:oma:xml:dl:jad:2.0"
+                           minOccurs="0" maxOccurs="unbounded"/>
+             </xsd:sequence>
+         </xsd:complexType>
+     </xsd:element>
+ </xsd:schema>
+
+  Example
+
+   The request of:
+
+ http://hostname.com/cgi/showbundles.py?repository=repository1&type=xml
+
+   may produce the following response:
+
+ <?xml version="1.0" encoding="utf-8"?>
+ <serverContent
+         xmlns="http://sun.com/2006/provisioning"
+         xmlns:dd="urn:oma:xml:dl:dd:2.0"
+         xmlns:xsd="http://www.w3.org/2001/XMLSchema-instance"
+         xsd:schemaLocation="http://sun.com/2006/provisioning servercontent.xsd">
+         
+ <dd:media xmlns="urn:oma:xml:dl:dd:2.0" DDVersion="2.0">
+   <product>
+     <mediaObject>
+       <meta>
+         <name>Sample</name>
+       </meta>
+       <size>451</size>
+       <type>application/vnd.oma.dd+xml</type>
+       <objectID>http://192.168.1.1/jsr124/repository/rep1/sample.dd</objectID>
+       <objectURI>
+         <server>http://192.168.1.1/jsr124/bin/download.py?repository=repository1&amp;file=sample.dd</server>
+       </objectURI>
+     </mediaObject>
+   </product>
+ </dd:media>
+ <dd:media xmlns="urn:oma:xml:dl:dd:2.0" DDVersion="2.0">
+   <product>
+     <mediaObject>
+       <meta>
+         <name>JavaClock</name>
+       </meta>
+       <size>819</size>
+       <type>application/vnd.oma.dd+xml</type>
+       <objectID>http://192.168.1.1/jsr124/repository/rep1/JavaClock.dd</objectID>
+       <objectURI>
+         <server>http://192.168.1.1/jsr124/bin/download.py?repository=repository1&amp;file=JavaClock.dd</server>
+       </objectURI>
+     </mediaObject>
+   </product>
+ </dd:media>
+
+ ...
+
+ </serverContent>
+
+HTML Output
+
+   The current version of the provisioning server pages provides the
+   following features:
+
+     * Shows content of a repository;
+     * Supports of multiple repositories with simple switching between them;
+     * Provides simple management functions: adding/deleting files, direct
+       editing of the server configuration.
+
+  Example: Show Bundles
+
+   The request of:
+
+ http://hostname.com/cgi/showbundles.py?repository1&type=html
+
+   or
+
+ http://hostname.com/cgi/showbundles.py?repository1
+
+   may produce a nice html page with the following information:
+
+   Games (this is the repository title)
+
+   This is a copy of the first repository but with .dd files only. (this is
+   the repository description)
+
+   +------------------------------------------------------------------------+
+   |     Name     |Size|Type|     Time     |              Info              |
+   |--------------+----+----+--------------+--------------------------------|
+   |JavaClock     |819 |.dd |Mon Dec 25    |Vendor: Sun Microsystems, Inc.  |
+   |              |    |    |18:07:02 2006 |                                |
+   |--------------+----+----+--------------+--------------------------------|
+   |DrawTest      |885 |.dd |Mon Dec 25    |Have fun drawing with DrawTest?.|
+   |              |    |    |18:07:02 2006 |                                |
+   |--------------+----+----+--------------+--------------------------------|
+   |TextApps      |1025|.dd |Mon Dec 25    |Contains the NervousText? and   |
+   |              |    |    |18:07:02 2006 |Blink apps.                     |
+   |--------------+----+----+--------------+--------------------------------|
+   |HelloWorld    |849 |.dd |Mon Dec 25    |Vendor: Sun Microsystems, Inc.  |
+   |              |    |    |18:07:02 2006 |                                |
+   |--------------+----+----+--------------+--------------------------------|
+   |WireFrame     |879 |.dd |Mon Dec 25    |Rotate images in 3D!            |
+   |              |    |    |18:07:02 2006 |                                |
+   |--------------+----+----+--------------+--------------------------------|
+   |Tumbling Duke2|934 |.dd |Mon Dec 25    |Watch Duke show off his         |
+   |              |    |    |18:07:02 2006 |athleticism.                    |
+   |--------------+----+----+--------------+--------------------------------|
+   |MMPlayXlet    |905 |.dd |Mon Dec 25    |Play your favorite music and    |
+   |              |    |    |18:07:02 2006 |movies.                         |
+   |--------------+----+----+--------------+--------------------------------|
+   |Animator      |895 |.dd |Mon Dec 25    |Wanna watch a cool java bean    |
+   |              |    |    |18:07:02 2006 |animation?                      |
+   +------------------------------------------------------------------------+
+
+  Example: Management Console
+
+   These pages are available by pressing Manage... button on the top left
+   corner of the Repository Content page. You will be asked to enter
+   administrator's name and password. Administrative accounts are managed by
+   the Apache server and are stored in passwd-style file in the provisioning
+   server's tree.
+
+    Choosing the repository and editing the server configuration XML
+
+   On the main page of the Management Console you may choose the repository
+   you wish to edit (add or delete files), or you may edit the server
+   configuration XML file.
+
+   To view a repository content click its name. To edit the repository you
+   choose click the ...Edit hyperlink.
+
+   Here is a simple server configuration XML. It should be placed in
+   repository folder in the server's tree. Please note, that repository names
+   should be unique for the server and be a one word without spaces.
+
+ <server>
+     <title>Miraculous Server</title>
+     <url>/provisioning/</url>
+     <description>
+ This is a simple provisioning server replacement.
+ It was designed to replace an old good jsr124 discovery process which is not
+ compatible with the latest Sun Java System Application Server Enterprise Edition.
+     </description>
+     <repository name="samples">
+         <title>Old Good Samples</title>
+         <description>Here you can find two samples.</description>
+     </repository>
+ </server>
+
+   To return back to the main page of the Management Console press the
+   Manage... button again.
+
+   You may find the full version of this file in the repository folder of the
+   provisioning server bundle.
+
+    Editing the repository content
+
+   If you'll follow the ...Edit link from the main Management Console page
+   you'll get a repository management form. You may add or delete files of
+   any type here.
+
+infoURL Response
+
+   The request of:
+
+ http://hostname.com/cgi/showbundles.py?id=http://hostname.com/repository/repositoryname/games.jad
+
+   may produce the following response:
+
+ MicroEdition-Configuration: CLDC-1.0
+ MIDlet-Description: Sample suite of games for the MIDP.
+ Created-By: 1.3.1 (Sun Microsystems Inc.)
+ MIDlet-Vendor: Sun Microsystems, Inc.
+
+Installation
+
+   The installation process consist of the following steps:
+
+    1. Choose a root directory for provisioning server. Please note that you
+       will have to add content to <server_root>/repository folder;
+    2. Unzip provisioning.zip file to this directory;
+    3. Go to this directory and launch ./configure to update server
+       configuration. It will create or rewrite provisioning.conf file and
+       configure Apache HTTP server;
+    4. Add administrative account to password file using htpasswd tool;
+    5. Restart Apache daemon.
+
+  Manual Installation
+
+   If something goes wrong with automatic installation (for example, you use
+   Windows), please follow the next simple steps:
+
+    1. Choose a root directory for provisioning server. Please note that you
+       will have to add content to <server_root>/repository folder;
+    2. Unzip provisioning.zip file to this directory;
+    3. Go to this directory;
+    4. Copy conf.template to provisioning.conf;
+    5. Open provisioning.conf file in your favourite text editor and replace
+       placeholders as:
+
+   %%SERVER_ROOT%% = Web alias for provisioning server (for example,
+   provisioning);
+
+   %%PWD%% = Current directory (for example, /var/www/provisioning).
+
+    1. Use provisioning.conf as additional Apache configuration file (add a
+       line Include /var/www/provisioning/provisioning.conf to httpd.conf,
+       for example);
+    2. Change permissions of provisioning server directories as appropriate
+       (to allow Apache's child process launch scripts, use styles and browse
+       (and change) the repository);
+    3. Add administrative account to password file using htpasswd tool;
+    4. If you use SuSE? and you have edited /etc/sysconfig/apache2 file,
+       don't forget to launch SuSEconfig? --module apache;
+    5. Restart Apache daemon.
+
+Bundle Content
+
+   The bundle contains of the following files:
+
+   passwords
+           Password file
+
+   conf.template
+           Configuration template file. Don't edit it.
+
+   configure
+           Configuration script.
+
+   bin/showbundles.py
+           Generates HTML and XML formatted server content output
+
+   bin/provisioning.py
+           Common module
+
+   bin/admin/admin_console.py
+           Web interface for administrative functions
+
+   styles/styles.css
+           Styles for web pages
+
+   styles/styles_print.css
+           Styles for printing
+
+   repository
+           Repository directory
+
+   repository/repconf.xml
+           Repository configuration
+
+System Requirements
+
+     * Python v. 2.3 or higher;
+     * Apache HTTP Server with following modules installed:
+
+            mod_auth_basic
+                    Basic authentication
+
+            mod_authn_file
+                    User authentication using text files
+
+Known Issues and TODO list
+
+     * Issues
+          * It is not possible to edit HTML tags or reserved symbol sequenses
+            in the server configuration XML file from web interface, even
+            when escaped;
+
+
+Copyright 2007 Sun Microsystems, Inc.
+

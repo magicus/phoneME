@@ -1,0 +1,57 @@
+<?xml version="1.0"?>
+<!--
+Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+
+This program is free software; you can redistribute it and/or
+modify it under the terms of the GNU General Public License version
+2 only, as published by the Free Software Foundation.
+
+This program is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+General Public License version 2 for more details (a copy is
+included at /legal/license.txt).
+
+You should have received a copy of the GNU General Public License
+version 2 along with this work; if not, write to the Free Software
+Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+02110-1301 USA
+
+Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+Clara, CA 95054 or visit www.sun.com if you need additional
+information or have any questions.
+-->
+<project basedir="." default="compile-windowing-module" name="jump-impl-windowing">
+
+    <available
+        file="com/sun/me/gci/windowsystem/GCIGraphicsEnvironment.class"
+        type="file"
+        property="gci.classes.available">
+
+        <filepath>
+            <pathelement location="${cdc.dir}/basis_classes"/>
+            <pathelement location="${cdc.dir}/btclasses"/>
+        </filepath>
+    </available>
+
+    <target name="with-gci" unless="gci.classes.available">
+        <echo message="WARNING: GCI classes are not available, windowing module will not work!"/>
+
+        <patternset id="select-rules">
+            <exclude name="classes/com/sun/jumpimpl/**/WindowingClient.java"/>
+            <include name="stub_classes/com/sun/jumpimpl/**/*"/>
+        </patternset>
+    </target>
+    <target name="without-gci" if="gci.classes.available">
+        <patternset id="select-rules"/>
+    </target>
+
+    <target name="compile-windowing-module" depends="with-gci,without-gci">
+        <jump.javac srcdir="${s.share.impl.dir}/windowing">
+            <include name="classes/com/sun/jumpimpl/**/*.java"/>
+            <patternset refid="select-rules"/>
+        </jump.javac>
+    </target>
+
+</project>
