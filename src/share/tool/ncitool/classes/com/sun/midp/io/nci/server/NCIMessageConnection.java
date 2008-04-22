@@ -1,3 +1,27 @@
+/*
+ * Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License version
+ * 2 only, as published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * General Public License version 2 for more details (a copy is
+ * included at /legal/license.txt).
+ *
+ * You should have received a copy of the GNU General Public License
+ * version 2 along with this work; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA
+ *
+ * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+ * Clara, CA 95054 or visit www.sun.com if you need additional
+ * information or have any questions.
+ */
+
 package com.sun.midp.io.nci.server;
 
 import com.sun.tck.wma.*;
@@ -235,15 +259,12 @@ public class NCIMessageConnection implements MessageConnection {
                     CharBuffer cb = UTF8.decode(temp);
                     
                     String [] tokens = SPACE.split(cb, 3);
-                    
-                        /*for(int iter = 0 ; iter < tokens.length ; iter++) {
-                            System.out.println("Token " + iter + ": " + tokens[iter]);
-                        }*/
+        
                     
                     ByteArrayOutputStream outputArray = new ByteArrayOutputStream();
                     DataOutputStream outputData = new DataOutputStream(outputArray);
                     
-                    // the client is polling the server whether something is available
+                    /* the client is polling the server whether something is available*/
                     if(tokens [1].endsWith("/read")) {
                         Message message = null;
                         synchronized(this) {
@@ -256,11 +277,9 @@ public class NCIMessageConnection implements MessageConnection {
 							outputData.writeBoolean(true);
                             outputData.writeUTF(message.getAddress());
                             if(message instanceof TextMessage) {
-                                //System.out.println("NCI:: Sending SMS message: " + ((TextMessage)message).getPayloadText());
                                 outputData.writeInt(0);
                                 outputData.writeUTF(((TextMessage)message).getPayloadText());
                             } else if (message instanceof BinaryMessage){
-                                //System.out.println("NCI:: Sending SMS binary message");
                                 outputData.writeInt(1);
                                 byte[] data = ((BinaryMessage)message).getPayloadData();
                                 outputData.writeInt(data.length);
@@ -268,8 +287,6 @@ public class NCIMessageConnection implements MessageConnection {
                                     outputData.writeByte(data[iter]);
                                 }
                             } else {
-                                //System.out.println("NCI:: Sending MMS message");
-                                //TODO:
                                 outputData.writeInt(2);
 				    byte[] data = ((NCIMultipartMessage)message).getAsByteArray();
 				    outputData.writeInt(data.length);
@@ -280,18 +297,10 @@ public class NCIMessageConnection implements MessageConnection {
                         } else {
                             outputData.writeBoolean(false);
                             outputData.writeInt(0);
-                            
-                            // this doesn't work due to synchronization between client and server
-                            /*outputData.writeInt(listeningURLs.size());
-                            Iterator iter = listeningURLs.keySet().iterator();
-                            while(iter.hasNext()) {
-                                outputData.writeUTF((String)iter.next());
-                            }*/
                         }
                     } else {
-                        //System.out.println("NCI:: Got read request");
                         tokens = tokens[1].split(";");
-                        // if this is a binary message
+                        /* if this is a binary message */
                         Message current;
                         String url = URLDecoder.decode(tokens[3], "iso8859-1");
                         if(tokens[1].equals("b")) {
@@ -378,7 +387,7 @@ public class NCIMessageConnection implements MessageConnection {
             buffers [1] = UTF8.encode(cbtemp);
             
             while (channel.write(buffers) != 0) {
-                // nothing
+                /* nothing */
             }
         }
     }

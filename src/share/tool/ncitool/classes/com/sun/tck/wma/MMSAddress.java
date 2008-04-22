@@ -1,3 +1,27 @@
+/*
+ * Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License version
+ * 2 only, as published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * General Public License version 2 for more details (a copy is
+ * included at /legal/license.txt).
+ *
+ * You should have received a copy of the GNU General Public License
+ * version 2 along with this work; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA
+ *
+ * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+ * Clara, CA 95054 or visit www.sun.com if you need additional
+ * information or have any questions.
+ */
+
 package com.sun.tck.wma;
 
 /**
@@ -145,8 +169,9 @@ public class MMSAddress {
 		}
 	    }
 	    
-	    // there should be at least one digit and 
-	    // the number between dots should be less then 256
+	    /* there should be at least one digit and 
+	     * the number between dots should be less then 256
+	     */
 	    if (j == 0 || 
 		(j == 3 && 
 		 (((s.charAt(i-3)-'0')*10 + (s.charAt(i-2)-'0'))*10 +
@@ -154,7 +179,7 @@ public class MMSAddress {
 		return false;
 	    }
 	    
-	    // check if this is the end of the string
+	    /* check if this is the end of the string*/
 	    if (i == len)  {
 		if (num == 4) {
 		    mmsAddress.set(s.substring(initI), null, IPV4);
@@ -171,12 +196,13 @@ public class MMSAddress {
 	    }
 
 	    if (c != '.') {
-		return false; // 4th character after beg (or dot)
-		// should be dot;
-		// only dots are allowed as non digit char
+		return false; 
+		/* 4th character after beg (or dot)
+		 * should be dot;
+		 * only dots are allowed as non digit char*/
 	    }
 
-	    // allowed '.' => continue
+	    /* allowed '.' => continue*/
 	    i++;
 	}
 	
@@ -226,13 +252,13 @@ public class MMSAddress {
 		}
 	    }
 	    
-	    // there should be at least one digit 
+	    /* there should be at least one digit */
 	    if (j == 0) {
 		return false;
 	    }
 
 	    
-	    // check if this is the end of the string
+	    /* check if this is the end of the string*/
 	    if (i == len)  {
 		if (num == 8) {
 		    mmsAddress.set(s.substring(initI), null, IPV6);
@@ -250,12 +276,13 @@ public class MMSAddress {
 		    return parseApplicationId(s, i, mmsAddress);
 		}
 	    } else {
-		return false; // 5th character after beg (or :)
-		// should be :
-		// only : are allowed as non digit char
+		return false; 
+		/* 5th character after beg (or :)
+		 * should be :
+		 * only : are allowed as non digit char*/
 	    }
 
-	    // allowed ':' => continue
+	    /* allowed ':' => continue*/
 	    i++;
 	}
 	
@@ -290,8 +317,9 @@ public class MMSAddress {
 	}
 
 	if (i == len) {
-            return false; // Even though spec allows "mms://" as a valid 
-            // shortcode, we disallow it here
+            return false; 
+	    /* Even though spec allows "mms://" as a valid 
+             * shortcode, we disallow it here*/
 	}
         int initI = i;
 	char c;
@@ -345,7 +373,7 @@ public class MMSAddress {
 	    return false;
 	}
 	
-	i++; // to skip ':'
+	i++; /* to skip ':'*/
 
 	char c;
 	int initI = i;
@@ -357,7 +385,7 @@ public class MMSAddress {
 	    for (j = 0; i < len; i++, j++) {
 		c = s.charAt(i);
 
-	        if ((c != '_') && /* dot is also allowed in the spec ??? */
+	        if ((c != '_') && 
 		    !digit(c) && !alpha(c)) {
 		    break;
 		}
@@ -372,8 +400,8 @@ public class MMSAddress {
 		return true;
 	    }
 
-	    // there has to be at least one digit or letter and
-	    // nondigit and nonalpha char can be only dot (one dot only)
+	    /* there has to be at least one digit or letter and
+	     * nondigit and nonalpha char can be only dot (one dot only)*/
 	    if (j == 0 || c != '.') {
 		return false;
 	    }
@@ -454,8 +482,8 @@ public class MMSAddress {
                 continue;
             }
 	    if (c == '\r') {
-		// only CR LF one after another are allowed
-		// CR by itself is not allowed
+		/* only CR LF one after another are allowed
+		 * CR by itself is not allowed */
 	        if (i == n-1 || s.charAt(i+1) != '\n') {
 		    return i;
 		}
@@ -496,27 +524,29 @@ public class MMSAddress {
 
 	int initI = i;
 
-	// email can be on of the following:
-	// emial ::== mailbox | phrase : [#mailbox] ;
+	/* email can be on of the following:
+	 * emial ::== mailbox | phrase : [#mailbox] ;
 
-	// if there is a ';' at the end then there should be a phrase
-	// at the beginning
+	 * if there is a ';' at the end then there should be a phrase
+	 * at the beginning
+
+	 */
 	if (s.charAt(len-1) == ';') {
 
 	    if ((i = isPhrase(s, i, len-1)) <= 0) {
 		return false;
 	    }
 
-	    // there was no ":"
+	    /* there was no ":"*/
 	    if (i >= len-1 || s.charAt(i) != ':') {
 		return false;
 	    }
 
-	    i++; // move after ':'
+	    i++; /* move after ':'*/
 
 	    if (i == len-1) {
                 mmsAddress.set(s.substring(initI), null, EMAIL);
-		return true; // phrase : ; is allowed string
+		return true; /* phrase : ; is allowed string*/
 	    }
 
 	    if ((i = isMailbox(s, i, len-1)) <= 0) {
@@ -525,7 +555,7 @@ public class MMSAddress {
 
 	    while (i < len-1) {
 
-		// there has to be a ',' sep
+		/* there has to be a ',' sep*/
 		if (i >= len-2 && s.charAt(i) != ',') {
 		    return false;
 		}
@@ -583,8 +613,8 @@ public class MMSAddress {
 
 	i = initI;
 
-	// check for  [phrase] <[1#(@ domain):] local @ domain>
-	// note phrase is optional
+	/* check for  [phrase] <[1#(@ domain):] local @ domain>
+	 * note phrase is optional */
 	if ((s.charAt(i) != '<') &&
 	    (i = isPhrase(s, initI, n)) < 0) {
 	    return -1;
@@ -600,8 +630,8 @@ public class MMSAddress {
 	    return -1;
 	}
 
-	// there can be a list of domains: 
-	// @ domain, @domain, @domain :
+	/* there can be a list of domains: 
+	 * @ domain, @domain, @domain :*/
 	boolean atLeastOneDomain = false;
 	while (s.charAt(i) == '@') {
 	    atLeastOneDomain = true;
@@ -618,7 +648,7 @@ public class MMSAddress {
 		break;
 	    }
 
-	    // @domain,,@domain is allowed
+	    /* @domain,,@domain is allowed*/
 	    while (s.charAt(i) == ',') {
 		i++;
 		if (i == n || s.charAt(i) == ':') {
@@ -634,7 +664,7 @@ public class MMSAddress {
 	    i++;
 	}
 
-	// local @ domain
+	/* local @ domain*/
 	if ((i = isLocalAtDomain(s, i, n)) <= 0) {
 	    return -1;
 	}
@@ -759,7 +789,7 @@ public class MMSAddress {
             n = s.length();
         }
 
-	// see if there is at least one word
+	/* see if there is at least one word*/
 	boolean withinQuotation = false;
 	boolean atLeastOneWord  = false;
 
@@ -783,14 +813,14 @@ public class MMSAddress {
 		}
 		withinQuotation = false;
 	    } else if (c == '\\') {
-		// chars can be quoated only within separators
-		// and there has to be another char after '\'
+		/* chars can be quoated only within separators
+		 * and there has to be another char after '\' */
 		if (!withinQuotation || i == n-1) {
 		    return -1;
 		}
 		i++;
 		c = s.charAt(i);
-		// only ALPHA character can be quoted
+		/* only ALPHA character can be quoted */
 		if (!alpha(c)) {
 		    return -1;
 		}
@@ -798,13 +828,13 @@ public class MMSAddress {
 	    } else if (dotSeparated && c == '.') {
 		if (i == initI ||
 		    ((i - initI) > 0 && s.charAt(i-1) == '.')) {
-		    // empty word
-		    // string starts with .
+		    /* empty word*/
+		    /* string starts with .*/
 		    return -1;
 		}
 	    } else if (withinQuotation) {
-		// within quotation \r is not allowed but
-		// \r is allowed as part of linear-white-space
+		/* within quotation \r is not allowed but
+		 * \r is allowed as part of linear-white-space */
 		if (c == ' ' || c == '\t' || c == '\r') {
 		    if ((i = linearWhiteSpaceSeq(s, i, n)) < 0) {
 			return -1;
@@ -814,13 +844,12 @@ public class MMSAddress {
 	    } else if (atomChar(c)) {
 		atLeastOneWord = true;
 	    } else {
-		// this is supposed to be an atom 
+		/* this is supposed to be an atom  */
 		break;
 	    }
 	}
 
-	// open quotation or no words or
-	// dot separator is the last char
+	/* open quotation or no words or dot separator is the last char */
 	if (withinQuotation || !atLeastOneWord ||
 	    (dotSeparated && i > initI && s.charAt(i-1) == '.')) {
 	    return -1;
@@ -853,7 +882,7 @@ public class MMSAddress {
 	    return -1;
 	}
 
-	// local
+	/* local */
 	if ((i = isLocalPart(s, i, n)) <= 0) {
 	    return -1;
 	}
@@ -864,7 +893,7 @@ public class MMSAddress {
 
         i++;
 
-	// domain
+	/* domain */
 	return isDomain(s, i, n);
     }
 

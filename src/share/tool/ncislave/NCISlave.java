@@ -1,3 +1,27 @@
+/*
+ * Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License version
+ * 2 only, as published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * General Public License version 2 for more details (a copy is
+ * included at /legal/license.txt).
+ *
+ * You should have received a copy of the GNU General Public License
+ * version 2 along with this work; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA
+ *
+ * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+ * Clara, CA 95054 or visit www.sun.com if you need additional
+ * information or have any questions.
+ */
+
 import java.io.*;
 import java.util.*;
 import javax.microedition.io.*;
@@ -7,12 +31,9 @@ import javax.wireless.messaging.*;
 import com.sun.tck.wma.*;
 
 /**
- * An example MIDlet with simple "Hello" text and an Exit command.
- * Refer to the startApp, pauseApp, and destroyApp
- * methods so see how each handles the requested transition.
- *
- * @author  shai
- * @version
+ * An example MIDlet with an Exit command. Refer to the 
+ * startApp, pauseApp, and destroyApp methods so see how each 
+ * handles the requested transition. 
  */
 public class NCISlave extends MIDlet implements CommandListener, Runnable {
     /**
@@ -171,7 +192,6 @@ public class NCISlave extends MIDlet implements CommandListener, Runnable {
 
         long time = System.currentTimeMillis();
         while(address != null) {
-            //System.out.println("Polling server in: " + (System.currentTimeMillis() - time));
             time = System.currentTimeMillis();
             try {
                 Message current = null;
@@ -181,8 +201,7 @@ public class NCISlave extends MIDlet implements CommandListener, Runnable {
                         messageQueue.removeElementAt(0);
                     }
                 }
-                // used to avoid lengthly synchronization holding the
-                // event thread
+                /* used to avoid lengthly synchronization holding the event thread*/
                 if(current != null) {
                     System.out.println("message not null!");
                     sendMessageToServer(current);
@@ -197,7 +216,7 @@ public class NCISlave extends MIDlet implements CommandListener, Runnable {
 		statusRecieve.setString(tmpString);
 
 		
-                // do we have anything pending?
+                /* Is there anything pending?*/
                 if(!input.readBoolean()) {
                     int listenerCount = input.readInt();
                     for(int iter = 0 ; iter <  listenerCount ; iter++) {
@@ -216,10 +235,10 @@ public class NCISlave extends MIDlet implements CommandListener, Runnable {
                     continue;
                 }
                 
-                // send an SMS message to the appropriate address
+                /* send an SMS message to the appropriate address*/
                 String address = input.readUTF();
 
-                // is the message a text/binary/multipart message
+                /* is the message a text/binary/multipart message*/
                 int type = input.readInt();
                 if(type == 0) {
                     String text = input.readUTF();
@@ -327,7 +346,7 @@ public class NCISlave extends MIDlet implements CommandListener, Runnable {
 
 		   setBuffer();
 	
-                    // will only return if no exception was thrown
+                    /* will only return if no exception was thrown*/
                     return;
                 }
             }

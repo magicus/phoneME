@@ -1,3 +1,27 @@
+/*
+ * Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License version
+ * 2 only, as published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * General Public License version 2 for more details (a copy is
+ * included at /legal/license.txt).
+ *
+ * You should have received a copy of the GNU General Public License
+ * version 2 along with this work; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA
+ *
+ * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+ * Clara, CA 95054 or visit www.sun.com if you need additional
+ * information or have any questions.
+ */
+
 package com.sun.midp.io.nci.server;
 
 import com.sun.tck.wma.*;
@@ -17,28 +41,5 @@ public class NCIConnector implements Connector {
     public static void main(String[] argv) throws Exception {
 	MessageConnection con;
 	Message m;
-		/*
-	 con = new NCIConnector().open("sms://:54321");
-        m = con.newMessage(MessageConnection.BINARY_MESSAGE, "sms://+5550001:54321");
-        ((BinaryMessage)m).setPayloadData(new String("1234567890").getBytes());
-        con.send(m);
-        System.out.println(con.receive().toString());
-	 con.close();
-
-	 con = new NCIConnector().open("sms://:54321");
-        m = con.newMessage(MessageConnection.TEXT_MESSAGE, "sms://+5550001:54321");
-        ((TextMessage)m).setPayloadText(new String("1234567890"));
-        con.send(m);
-        System.out.println(con.receive().toString());
-	 con.close();
-	 */
-	/*
-        con = new NCIConnector().open("mms://:com.sun.tck.wma.mms.NCIslave");
-        m = con.newMessage(MessageConnection.MULTIPART_MESSAGE, "mms://+5550001:com.sun.tck.wma.mms.NCIslave");
-        ((MultipartMessage)m).addMessagePart(new MessagePart(new String("my content").getBytes(), "text", "id-1", null, null));
-        con.send(m);
-        System.out.println(con.receive().toString());
-	 con.close();
-	*/
     }
 }
