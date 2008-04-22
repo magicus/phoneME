@@ -235,9 +235,19 @@ class VirtualKeyboard {
         			}
                              vkl.virtualMetaKeyEntered(IM_CHANGED_KEY);
         			break;
-        		    case MODE_META_KEY: //"Mode"  
+        		    case MODE_SYMBOL_META_KEY: //"Mode"  
                                 if (type == EventConstants.PRESSED) break;
-                                changeKeyboad((currentKeyboardIndex+1) % keyboardMaps.size());
+                                changeKeyboad(3); // Symbol
+                             vkl.virtualMetaKeyEntered(IM_CHANGED_KEY);
+        			break;
+                            case MODE_NUMERIC_META_KEY: //"Mode"  
+                                if (type == EventConstants.PRESSED) break;
+                                changeKeyboad(0); // Numeric
+                             vkl.virtualMetaKeyEntered(IM_CHANGED_KEY);
+        			break;
+                            case MODE_ALPHA_META_KEY: //"Mode"  
+                                if (type == EventConstants.PRESSED) break;
+                                changeKeyboad(1); // Alpha
                              vkl.virtualMetaKeyEntered(IM_CHANGED_KEY);
         			break;
         		    case BACKSPACE_META_KEY: //"backspace" 
@@ -460,10 +470,12 @@ class VirtualKeyboard {
     // change the serial numbers here:
     final static int OK_META_KEY = -100;
     final static int CANCEL_META_KEY = -101;
-    final static int MODE_META_KEY = -102;
-    final static int BACKSPACE_META_KEY = -103;
-    final static int SHIFT_META_KEY = -104;
-    final static int CAPS_META_KEY = -105;
+    final static int MODE_NUMERIC_META_KEY = -102;
+    final static int MODE_SYMBOL_META_KEY = -103;
+    final static int MODE_ALPHA_META_KEY = -104;
+    final static int BACKSPACE_META_KEY = -105;
+    final static int SHIFT_META_KEY = -106;
+    final static int CAPS_META_KEY = -107;
 
     //When input method is changed, process this key to update UI 
     final static int IM_CHANGED_KEY = -99;

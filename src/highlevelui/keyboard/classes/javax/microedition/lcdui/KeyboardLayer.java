@@ -305,6 +305,7 @@ class KeyboardLayer extends PopupLayer implements VirtualKeyboardListener {
             Lines.addElement(new Key(icon,otherIcon,'1','1',xpos,ypos,width,height)); xpos+=width+pad;
             Lines.addElement(new Key(icon,otherIcon,'2','2',xpos,ypos,width,height)); xpos+=width+pad;
             Lines.addElement(new Key(icon,otherIcon,'3','3',xpos,ypos,width,height)); xpos+=width+pad;
+            Lines.addElement(new Key(icon,otherIcon,'.','.',xpos,ypos,width,height)); xpos+=width+pad;
             Keyboard.addElement(Lines);
             Lines = new Vector();
 
@@ -314,6 +315,7 @@ class KeyboardLayer extends PopupLayer implements VirtualKeyboardListener {
             Lines.addElement(new Key(icon,otherIcon,'4','4',xpos,ypos,width,height)); xpos+=width+pad;
             Lines.addElement(new Key(icon,otherIcon,'5','5',xpos,ypos,width,height)); xpos+=width+pad;
             Lines.addElement(new Key(icon,otherIcon,'6','6',xpos,ypos,width,height)); xpos+=width+pad;
+            Lines.addElement(new Key(icon,otherIcon,'-','-',xpos,ypos,width,height)); xpos+=width+pad;
             Keyboard.addElement(Lines);
             Lines = new Vector();
 
@@ -334,7 +336,8 @@ class KeyboardLayer extends PopupLayer implements VirtualKeyboardListener {
             Lines.addElement(new Key(icon,otherIcon,VirtualKeyboard.BACKSPACE_META_KEY,'<',xpos,ypos,width,height)); xpos+=width+pad;
             Lines.addElement(new Key(icon,otherIcon,VirtualKeyboard.OK_META_KEY,'O',xpos,ypos,width,height)); xpos+=width+pad;
             Lines.addElement(new Key(icon,otherIcon,VirtualKeyboard.CANCEL_META_KEY,'X',xpos,ypos,width,height)); xpos+=width+pad;
-            Lines.addElement(new Key(icon,otherIcon,VirtualKeyboard.MODE_META_KEY,'M',xpos,ypos,width,height)); xpos+=width+pad;
+            Lines.addElement(new Key(icon,otherIcon,VirtualKeyboard.MODE_ALPHA_META_KEY,'a',xpos,ypos,width,height)); xpos+=width+pad;
+            Lines.addElement(new Key(icon,otherIcon,VirtualKeyboard.MODE_SYMBOL_META_KEY,'$',xpos,ypos,width,height)); xpos+=width+pad;
 
             Keyboard.addElement(Lines);
 
@@ -392,7 +395,8 @@ class KeyboardLayer extends PopupLayer implements VirtualKeyboardListener {
             Lines.addElement(new Key(icon,otherIcon,VirtualKeyboard.BACKSPACE_META_KEY,'<',xpos,ypos,width,height)); xpos+=width+pad;
             Lines.addElement(new Key(icon,otherIcon,VirtualKeyboard.OK_META_KEY,'O',xpos,ypos,width,height)); xpos+=width+pad;
             Lines.addElement(new Key(icon,otherIcon,VirtualKeyboard.CANCEL_META_KEY,'X',xpos,ypos,width,height)); xpos+=width+pad;
-            Lines.addElement(new Key(icon,otherIcon,VirtualKeyboard.MODE_META_KEY,'M',xpos,ypos,width,height)); xpos+=width+pad;
+            Lines.addElement(new Key(icon,otherIcon,VirtualKeyboard.MODE_NUMERIC_META_KEY,'1',xpos,ypos,width,height)); xpos+=width+pad;
+            Lines.addElement(new Key(icon,otherIcon,VirtualKeyboard.MODE_SYMBOL_META_KEY,'$',xpos,ypos,width,height)); xpos+=width+pad;
             Lines.addElement(new Key(icon,otherIcon,VirtualKeyboard.SHIFT_META_KEY,'S',xpos,ypos,width,height)); xpos+=width+pad;
             Lines.addElement(new Key(icon,otherIcon,VirtualKeyboard.CAPS_META_KEY,'c',xpos,ypos,width,height)); xpos+=width+pad;
 
@@ -452,7 +456,8 @@ class KeyboardLayer extends PopupLayer implements VirtualKeyboardListener {
             Lines.addElement(new Key(icon,otherIcon,VirtualKeyboard.BACKSPACE_META_KEY,'<',xpos,ypos,width,height)); xpos+=width+pad;
             Lines.addElement(new Key(icon,otherIcon,VirtualKeyboard.OK_META_KEY,'O',xpos,ypos,width,height)); xpos+=width+pad;
             Lines.addElement(new Key(icon,otherIcon,VirtualKeyboard.CANCEL_META_KEY,'X',xpos,ypos,width,height)); xpos+=width+pad;
-            Lines.addElement(new Key(icon,otherIcon,VirtualKeyboard.MODE_META_KEY,'M',xpos,ypos,width,height)); xpos+=width+pad;
+            Lines.addElement(new Key(icon,otherIcon,VirtualKeyboard.MODE_NUMERIC_META_KEY,'1',xpos,ypos,width,height)); xpos+=width+pad;
+            Lines.addElement(new Key(icon,otherIcon,VirtualKeyboard.MODE_SYMBOL_META_KEY,'$',xpos,ypos,width,height)); xpos+=width+pad;
             Lines.addElement(new Key(icon,otherIcon,VirtualKeyboard.SHIFT_META_KEY,'S',xpos,ypos,width,height)); xpos+=width+pad;
             Lines.addElement(new Key(icon,otherIcon,VirtualKeyboard.CAPS_META_KEY,'c',xpos,ypos,width,height)); xpos+=width+pad;
 
@@ -499,6 +504,13 @@ class KeyboardLayer extends PopupLayer implements VirtualKeyboardListener {
              ypos +=height+pad;
 
              Lines.addElement(new Key(icon,otherIcon,'_','_',xpos,ypos,width,height)); xpos+=width+pad;
+             Lines.addElement(new Key(icon,otherIcon,':',':',xpos,ypos,width,height)); xpos+=width+pad;
+             Lines.addElement(new Key(icon,otherIcon,'<','<',xpos,ypos,width,height)); xpos+=width+pad;
+             Lines.addElement(new Key(icon,otherIcon,'>','>',xpos,ypos,width,height)); xpos+=width+pad;
+             Lines.addElement(new Key(icon,otherIcon,'{','{',xpos,ypos,width,height)); xpos+=width+pad;
+             Lines.addElement(new Key(icon,otherIcon,'}','}',xpos,ypos,width,height)); xpos+=width+pad;
+             Lines.addElement(new Key(icon,otherIcon,'[',']',xpos,ypos,width,height)); xpos+=width+pad;
+             Lines.addElement(new Key(icon,otherIcon,'[',']',xpos,ypos,width,height)); xpos+=width+pad;
 
              Keyboard.addElement(Lines);
              Lines = new Vector();
@@ -509,7 +521,8 @@ class KeyboardLayer extends PopupLayer implements VirtualKeyboardListener {
              Lines.addElement(new Key(icon,otherIcon,VirtualKeyboard.BACKSPACE_META_KEY,'<',xpos,ypos,width,height)); xpos+=width+pad;
              Lines.addElement(new Key(icon,otherIcon,VirtualKeyboard.OK_META_KEY,'O',xpos,ypos,width,height)); xpos+=width+pad;
              Lines.addElement(new Key(icon,otherIcon,VirtualKeyboard.CANCEL_META_KEY,'X',xpos,ypos,width,height)); xpos+=width+pad;
-             Lines.addElement(new Key(icon,otherIcon,VirtualKeyboard.MODE_META_KEY,'M',xpos,ypos,width,height)); xpos+=width+pad;
+             Lines.addElement(new Key(icon,otherIcon,VirtualKeyboard.MODE_ALPHA_META_KEY,'a',xpos,ypos,width,height)); xpos+=width+pad;
+             Lines.addElement(new Key(icon,otherIcon,VirtualKeyboard.MODE_NUMERIC_META_KEY,'1',xpos,ypos,width,height)); xpos+=width+pad;
 
              Keyboard.addElement(Lines);
             Maps.addElement(Keyboard);
