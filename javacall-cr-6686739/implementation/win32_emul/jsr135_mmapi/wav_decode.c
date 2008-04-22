@@ -134,8 +134,6 @@ int wav_setStreamPlayerData(ah_wav *handle, const void* buffer, long length)
 
     javacall_bool parse_next = JAVACALL_TRUE;
 
-//    __asm{int 3h}
-
     if (buffer == NULL) {
         if (handle->originalData)
             FREE(handle->originalData);
@@ -173,6 +171,7 @@ int wav_setStreamPlayerData(ah_wav *handle, const void* buffer, long length)
                 data += length;
                 handle->originalData_dataChnkOffset += length;
             }
+printf("jsr135: download data len=%d whole_size=%d\n", length, handle->streamBufferLen);
         } else {
             /* just skip this chunk for now */
             if (handle->originalDataLen == 4) {
@@ -210,7 +209,7 @@ int wav_setStreamPlayerData(ah_wav *handle, const void* buffer, long length)
                     parse_next = 0;
                 }
             break;
-/* Temporary unsupported
+/* Temporary unsupported - just skip
             // LIST
             case 0x5453494C:
             {
