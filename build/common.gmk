@@ -1,23 +1,22 @@
-#   
 #
-# Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+# Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
-# 
+#
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License version
 # 2 only, as published by the Free Software Foundation.
-# 
+#
 # This program is distributed in the hope that it will be useful, but
 # WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
 # General Public License version 2 for more details (a copy is
 # included at /legal/license.txt).
-# 
+#
 # You should have received a copy of the GNU General Public License
 # version 2 along with this work; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
 # 02110-1301 USA
-# 
+#
 # Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
 # Clara, CA 95054 or visit www.sun.com if you need additional
 # information or have any questions.
@@ -27,11 +26,18 @@ ifeq ($(JAVACALL_DIR),)
 $(error JAVACALL_DIR is not set.)
 endif
 
+ifeq ($(TOOLS_DIR),)
+$(error TOOLS_DIR is not set.)
+endif
+
+include $(TOOLS_DIR)/tools.gmk
+
 include $(JAVACALL_DIR)/build/list.gmk
 
-.PHONY: javacall_common create_output_dirs copy_include_files clean doxygen
+.PHONY: javacall_common create_output_dirs copy_include_files \
+    output_properties_files clean doxygen
 
-javacall_common: create_output_dirs copy_include_files
+javacall_common: create_output_dirs copy_include_files output_properties_files
 
 PREFIX_true=1
 
@@ -50,22 +56,82 @@ JAVACALL_INCLUDE_SOURCE_FILES_SET+=$(foreach dir,$(JAVACALL_INCLUDE_DIR_SET),$(w
 
 JAVACALL_INCLUDE_SOURCE_FILES_SET+= $(JAVACALL_PLATFORM_DEFS_DIR)/javacall_platform_defs.h
 JAVACALL_INCLUDE_SOURCE_FILES_SET+= $(JAVACALL_DIR)/interface/javacall_defs.h
+JAVACALL_INCLUDE_SOURCE_FILES_SET+= $(JAVACALL_DIR)/implementation/share/properties/inc/javacall_properties.h
+
+UTILITIES+= javautil_stdio
 
 ifneq ($(UTILITIES)x, x)
-VPATH+=$(JAVACALL_DIR)/implementation/utils
-JAVACALL_INCLUDE_SOURCE_FILES_SET+= $(foreach util,$(UTILITIES),$(JAVACALL_DIR)/implementation/utils/inc/$(util).h)
-SOURCE_OUTPUT_LIST += $(JAVACALL_DIR)/implementation/utils javacall/implementation
+VPATH+=$(JAVACALL_DIR)/implementation/share/utils
+JAVACALL_INCLUDE_SOURCE_FILES_SET+= $(foreach util,$(UTILITIES),$(JAVACALL_DIR)/implementation/share/utils/inc/$(util).h)
+SOURCE_OUTPUT_LIST += $(JAVACALL_DIR)/implementation/share/utils javacall/implementation/share
 endif
+
+# All the property stuff
+vpath %.c $(JAVACALL_DIR)/implementation/share/properties
+VPATH+=$(JAVACALL_DIR)/implementation/share/properties
+PROPERTY_FILES = javacall_properties \
+		 javacall_config_db \
+		 javacall_db
+
+JAVACALL_PROPERTIES_TARGET_FILE = $(JAVACALL_OUTPUT_DIR)/properties.xml
+
+ifeq ($(USE_STATIC_PROPERTIES), true)
+STATIC_PROPERTIES_C = $(JAVACALL_OUTPUT_DIR)/javacall_static_properties.c
+PROPERTY_FILES += javacall_static_properties
+
+output_properties_files:
+
+$(STATIC_PROPERTIES_C): $(CONFIGURATOR_JAR_FILE) \
+    $(JAVACALL_PROPERTIES_TARGET_FILE)
+	@$(call runJarFile,$(CONFIGURATOR_JAR_FILE),\
+		-xml $(JAVACALL_PROPERTIES_TARGET_FILE) \
+		-xsl $(CONFIGURATOR_DIR)/xsl/cldc/propertiesNative.xsl \
+		-params arrayNamePrefix javacall \
+		-out $@)
+
+else
+DYNAMIC_PROPERTIES_INI = $(JAVACALL_OUTPUT_DIR)/jwc_properties.ini
+
+output_properties_files: $(DYNAMIC_PROPERTIES_INI)
+
+$(DYNAMIC_PROPERTIES_INI): $(CONFIGURATOR_JAR_FILE) \
+    $(JAVACALL_PROPERTIES_TARGET_FILE)
+	@$(call runJarFile,$(CONFIGURATOR_JAR_FILE),\
+		-xml $(JAVACALL_PROPERTIES_TARGET_FILE) \
+		-xsl $(CONFIGURATOR_DIR)/xsl/cldc/propertiesIni.xsl \
+		-out $@)
+
+endif
+
 
 # In case using of the javacall functions wrappers, set the USE_JAVACALL_WRAPPERS variable
 ifeq ($(USE_JAVACALL_WRAPPERS),true)
 UTILITIES+= wrappers
 CFLAGS += -DUSE_JAVACALL_WRAPPERS
 ifeq ($(UTILITIES)x, x)
-VPATH+=$(JAVACALL_DIR)/implementation/utils
+VPATH+=$(JAVACALL_DIR)/implementation/share/utils
 endif
 endif
 
+SPECIFIC_DEFINITIONS += $(filter -DENABLE_JSR%, $(foreach jsr,$(JSR_LIST), \
+    $(if $(PREFIX_$(USE_$(jsr))), -DENABLE_$(jsr)=1)))
+
+# definitions and rules for JPEG component
+ifeq ($(USE_JC_JPEG_ENCODER), true)
+        USE_JC_JPEG = true
+endif
+
+ifeq ($(USE_JC_JPEG_DECODER), true)
+        USE_JC_JPEG = true
+endif
+
+ifeq ($(USE_JC_JPEG), true)
+JPEG_JC_DIR = $(JAVACALL_DIR)/implementation/share/jpeg
+SOURCE_OUTPUT_LIST += $(JPEG_JC_DIR) javacall/implementation/share
+include $(JPEG_JC_DIR)/module.gmk
+endif
+
+# general build rules
 ifeq ($(USE_DEBUG),true)
 BUILD=debug
 CFLAGS += -DENABLE_JAVACALL_DEBUG
@@ -94,6 +160,13 @@ JAVACALL_OUTPUT_EXT_LIB_DIR:=$(JAVACALL_OUTPUT_DIR)/ext_lib
 
 JAVACALL_INCLUDE_TARGET_FILES_SET:=$(foreach file,$(JAVACALL_INCLUDE_SOURCE_FILES_SET),$(JAVACALL_OUTPUT_INCLUDE_DIR)/$(notdir $(file)))
 
+$(JAVACALL_PROPERTIES_TARGET_FILE): $(CONFIGURATION_PROPERTIES_FILE) \
+    $(JAVACALL_DIR)/build/configuration.dtd $(JAVACALL_OUTPUT_DIR)
+	@echo Copying property definitions...
+	@cp -u $(CONFIGURATION_PROPERTIES_FILE) \
+		$(JAVACALL_PROPERTIES_TARGET_FILE)
+	@cp -u $(JAVACALL_DIR)/build/configuration.dtd $(JAVACALL_OUTPUT_DIR)
+
 $(JAVACALL_INCLUDE_TARGET_FILES_SET): $(JAVACALL_INCLUDE_SOURCE_FILES_SET)
 	@echo Copying include files...
 	@cp -f $^ $(JAVACALL_OUTPUT_INCLUDE_DIR)
@@ -106,7 +179,7 @@ create_output_dirs: $(JAVACALL_OUTPUT_DIR) $(JAVACALL_OUTPUT_INCLUDE_DIR) $(JAVA
 
 copy_include_files: $(JAVACALL_INCLUDE_TARGET_FILES_SET)
 
-clean:
+clean::
 	@rm -rf $(JAVACALL_OUTPUT_DIR)
 
 include $(JAVACALL_DIR)/build/docs.gmk
@@ -142,6 +215,6 @@ SOURCE_OUTPUT_LIST += $(JAVACALL_DIR)/interface/javacall_defs.h javacall/interfa
 SOURCE_OUTPUT_LIST += $(JAVACALL_DIR)/build javacall
 
 source_bundle:: SOURCE_OUTPUT_DIR
-	@echo  ... javacall source bundle; 
+	@echo  ... javacall source bundle;
 	@$(call make_source_bundle, $(SOURCE_OUTPUT_LIST), $(SOURCE_CLEANUP_LIST))
 

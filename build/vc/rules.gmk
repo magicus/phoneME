@@ -1,6 +1,5 @@
-#   
 #
-# Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+# Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
 # 
 # This program is free software; you can redistribute it and/or
@@ -23,7 +22,7 @@
 # information or have any questions.
 #
 
-.PHONY: all pre_target local_vc post_target
+.PHONY: all pre_target local_vc post_target JAVACALL_EXTRA_LIBS
 
 all: pre_target javacall_common local_vc post_target 
 
@@ -32,12 +31,12 @@ $(error JAVACALL_DIR is not set.)
 endif
 
 include $(JAVACALL_DIR)/build/common.gmk
-TEMP1=$(patsubst %.c,%.obj,$(PORTING_SOURCE))
-TEMP=$(patsubst %.cpp,%.obj,$(TEMP1))
+TEMP_OBJECTS1=$(patsubst %.c,%.obj,$(PORTING_SOURCE))
+TEMP_OBJECTS=$(patsubst %.cpp,%.obj,$(TEMP_OBJECTS1))
 ifneq ($(FILTER_OBJECTS)x,x)
-PORTING_OBJECTS+=$(filter-out $(FILTER_OBJECTS),$(TEMP))
+PORTING_OBJECTS+=$(filter-out $(FILTER_OBJECTS),$(TEMP_OBJECTS))
 else # ifneq ($(FILTER_OBJECTS)x,x)
-PORTING_OBJECTS+=$(TEMP)
+PORTING_OBJECTS+=$(TEMP_OBJECTS)
 endif # ifneq ($(FILTER_OBJECTS)x,x)
 
 NOTIFIER_OBJECTS=$(patsubst %.c,%.obj,$(NOTIFIER_SOURCE))
@@ -50,6 +49,7 @@ ifneq ($(NOTIFIER_OBJECTS)x,x)
 NOTIFIERS_LIB=$(JAVACALL_OUTPUT_LIB_DIR)/notifiers$(BUILD_EXT).lib
 EXTRA_LDFLAGS+=$(NOTIFIERS_LIB)
 endif
+PROPERTY_OBJECTS=$(addsuffix .obj,$(PROPERTY_FILES))
 
 local_vc: $(NOTIFIERS_LIB) $(JAVACALL_OUTPUT_LIB_DIR)/javacall$(BUILD_EXT).lib
 
@@ -57,7 +57,7 @@ CC=cl.exe
 CXX=cl.exe
 RC=rc.exe
 
-LOCAL_CFLAGS_debug = -MDd -Gm -EHsc -Zi -Od -D_DEBUG -D_MBCS -D_LIB -FD -GZ -W3
+LOCAL_CFLAGS_debug = -MDd -Gm -EHsc -Zi -Od -D_DEBUG -D_MBCS -D_LIB -FD -W3
 LOCAL_CFLAGS_nodebug = -MD -EHsc -O2 -D_MBCS -D_LIB -W3
 
 ifneq ($(findstring CYGWIN, $(shell uname)), CYGWIN)
@@ -83,6 +83,12 @@ ifeq ($(TARGET_CPU),arm)
 ARFLAGS=-nologo -MACHINE:ARM
 else
 ARFLAGS=-nologo -MACHINE:X86
+ifeq ($(USE_VS2005), true)
+LOCAL_CFLAGS_$(BUILD) += /D_CRT_SECURE_NO_DEPRECATE /D_CRT_NONSTDC_NO_DEPRECATE
+LOCAL_CFLAGS_debug += -RTC1
+else
+LOCAL_CFLAGS_debug += -GZ
+endif
 endif
 
 LOCAL_CFLAGS_$(BUILD) += $(PLATFORM_FLAGS)
@@ -102,12 +108,20 @@ $(JAVACALL_OUTPUT_OBJ_DIR)/%.obj: %.c
 	@echo -n "...compiling: "
 	@$(COMPILE.c) $(OUTPUT_OPTION) `$(call fixcygpath, $<)`	
 
+$(JAVACALL_OUTPUT_OBJ_DIR)/javacall_static_properties.obj: $(STATIC_PROPERTIES_C)
+	@echo -n "...compiling: "
+	@$(COMPILE.c) $(OUTPUT_OPTION) `$(call fixcygpath, $<)`	
+
+JAVACALL_EXTRA_LIBS::
+
 $(JAVACALL_OUTPUT_LIB_DIR)/javacall$(BUILD_EXT).lib: \
 	$(patsubst %,$(JAVACALL_OUTPUT_OBJ_DIR)/%,$(PORTING_OBJECTS)) \
 	$(patsubst %,$(JAVACALL_OUTPUT_OBJ_DIR)/%,$(UTILITY_OBJECTS)) \
+	$(patsubst %,$(JAVACALL_OUTPUT_OBJ_DIR)/%,$(PROPERTY_OBJECTS)) \
 	$(SPECIFIC_OBJECTS)
 	@echo "...Generating Library: $@"
 	@$(AR) -out:`$(call fixcygpath, $@)` $(ARFLAGS) `$(call fixcygpath, $^ $(ADDITIONAL_LIBS))`
+	@$(MAKE) JAVACALL_EXTRA_LIBS
 
 $(JAVACALL_OUTPUT_LIB_DIR)/notifiers$(BUILD_EXT).lib: \
     $(patsubst %,$(JAVACALL_OUTPUT_OBJ_DIR)/%,$(NOTIFIER_OBJECTS))

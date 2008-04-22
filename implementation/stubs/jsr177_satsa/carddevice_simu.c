@@ -1,7 +1,5 @@
 /*
- *   
- *
- * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
@@ -66,8 +64,7 @@ javacall_result javacall_carddevice_set_property(const char *prop_name,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  *         JAVACALL_FAIL otherwise
  */
-javacall_result javacall_carddevice_select_slot(int slot_index) {
-    (void)slot_index;
+javacall_result javacall_carddevice_select_slot(javacall_int32 slot_index) {
     return JAVACALL_NOT_IMPLEMENTED;
 }
 
@@ -78,7 +75,7 @@ javacall_result javacall_carddevice_select_slot(int slot_index) {
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  *         JAVACALL_FAIL otherwise
  */
-javacall_result javacall_carddevice_get_slot_count(int *slot_cnt) {
+javacall_result javacall_carddevice_get_slot_count(javacall_int32 *slot_cnt) {
     *slot_cnt = 1;
     return JAVACALL_NOT_IMPLEMENTED;
 }
@@ -137,7 +134,8 @@ javacall_result javacall_carddevice_is_sat_finish(javacall_int32 slot,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  *         JAVACALL_FAIL otherwise
  */
-javacall_result javacall_carddevice_reset_start(char *atr, int *atr_size, 
+javacall_result javacall_carddevice_reset_start(char *atr,
+                                                javacall_int32 *atr_size,
                                                 void **context) {
     (void)atr;
     (void)atr_size;
@@ -159,7 +157,8 @@ javacall_result javacall_carddevice_reset_start(char *atr, int *atr_size,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  *         JAVACALL_FAIL otherwise
  */
-javacall_result javacall_carddevice_reset_finish(char *atr, int *atr_size, 
+javacall_result javacall_carddevice_reset_finish(char *atr,
+                                                 javacall_int32 *atr_size,
                                                  void *context) {
     (void)atr;
     (void)atr_size;
@@ -220,8 +219,11 @@ javacall_result javacall_carddevice_card_movement_events(JAVACALL_CARD_MOVEMENT 
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  *         JAVACALL_FAIL otherwise
  */
-javacall_result javacall_carddevice_xfer_data_start(char *tx_buffer, int tx_size,
-                                                    char *rx_buffer, int *rx_size, void **context) {
+javacall_result javacall_carddevice_xfer_data_start(char *tx_buffer,
+                                                    javacall_int32 tx_size,
+                                                    char *rx_buffer,
+                                                    javacall_int32 *rx_size,
+                                                    void **context) {
     (void)tx_buffer;
     (void)tx_size;
     (void)rx_buffer;
@@ -243,8 +245,11 @@ javacall_result javacall_carddevice_xfer_data_start(char *tx_buffer, int tx_size
  *         this function again to complete the operation
  *         JAVACALL_FAIL otherwise
  */
-javacall_result javacall_carddevice_xfer_data_finish(char *tx_buffer, int tx_size,
-                                                     char *rx_buffer, int *rx_size, void *context) {
+javacall_result javacall_carddevice_xfer_data_finish(char *tx_buffer,
+                                                     javacall_int32 tx_size,
+                                                     char *rx_buffer,
+                                                     javacall_int32 *rx_size,
+                                                     void *context) {
     (void)tx_buffer;
     (void)tx_size;
     (void)rx_buffer;
@@ -273,7 +278,7 @@ void javacall_carddevice_set_error(const char *fmt, ...) {
  * @param buf_size Size of the buffer in bytes
  * @return JAVACALL_TRUE if error messages were returned, JAVACALL_FALSE otherwise
  */
-javacall_bool javacall_carddevice_get_error(char *buf, int buf_size) {
+javacall_bool javacall_carddevice_get_error(char *buf, javacall_int32 buf_size) {
     (void)buf;
     (void)buf_size;
     return JAVACALL_FALSE;

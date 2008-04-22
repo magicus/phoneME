@@ -38,6 +38,7 @@
 #include "javacall_lifecycle.h"
 #include "javacall_logging.h"
 #include "javacall_events.h"
+#include "javacall_properties.h"
 #include "javautil_jad_parser.h"
 #include "javacall_lcd.h"
 #include "lcd.h"
@@ -69,7 +70,6 @@ static char controlLoopInfo[] = "\t To control:\n"
                                 "\t \n"
                                 "\t '0' to quit";
                                 
-unsigned char enable_java_debugger = 0;
 
 /* forward declaration */
 void main_install_content(int argc, char *argv[]);
@@ -300,13 +300,11 @@ int main(int argc, char *main_argv[]) {
         if (DialogBox(
                 GetModuleHandle(NULL),
                 MAKEINTRESOURCE(IDD_DIALOG_MAIN_ARGS),
-                NULL, main_dlgproc))
-        {
+                     NULL, main_dlgproc)) {
             maindlg_argv[0] = argv[0];
             argv = maindlg_argv;
             argc = maindlg_argc;
-        }
-        else {
+        } else {
             argc = 1;
         }
     }
@@ -331,7 +329,6 @@ int main(int argc, char *main_argv[]) {
         } else 
         */
         if (1 < argc && 0 == strcmp(argv[1], "debug")) {
-            enable_java_debugger = 1;
             argc -= 1;
             argv += 1;
             continue;
@@ -365,10 +362,10 @@ int main(int argc, char *main_argv[]) {
     */
 
     javacall_events_init();
+    javacall_initialize_configurations();
 
 #if !ENABLE_MULTIPLE_INSTANCES
-    if (isSecondaryInstance())
-    {
+    if (isSecondaryInstance()) {
         enqueueInterprocessMessage(argc, argv);
         return 0;
     }
@@ -392,8 +389,7 @@ int main(int argc, char *main_argv[]) {
 #if ENABLE_MULTIPLE_INSTANCES
     WaitForSingleObject(lifecycle_shutdown_event, INFINITE);
 #else
-    while (WaitForSingleObject(lifecycle_shutdown_event, 50) != WAIT_OBJECT_0)
-    {
+    while (WaitForSingleObject(lifecycle_shutdown_event, 50) != WAIT_OBJECT_0) {
         /* Check for Interprocess event */
         int iarvc, i;
         char** iargv;
@@ -475,8 +471,7 @@ LRESULT CALLBACK main_dlgproc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lPa
 {
     int i, j, itemId = LOWORD(wParam), msgId = HIWORD(wParam);
 
-    switch (message)
-    {
+    switch (message) {
     case WM_INITDIALOG:
 
         for (i = 0; i < maindlg_course_cnt; i++) {

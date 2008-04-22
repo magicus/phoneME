@@ -67,6 +67,12 @@ typedef unsigned short javacall_uint16;
 typedef unsigned long javacall_uint32;
 
 /**
+ * @typedef javacall_uint64
+ * @brief 64 bit unsigned integer type
+ */
+typedef unsigned long long javacall_uint64;
+
+/**
  * @typedef javacall_int32
  * @brief 32 bit interger type
  */
@@ -121,9 +127,31 @@ typedef long long javacall_int64;
 #define JAVACALL_MAX_LOCALIZED_DIR_NAME_LENGTH    512
 
 /**
+ * @def JAVACALL_PIM_MAX_ARRAY_ELEMENTS
+ * 
+ */
+#define JAVACALL_PIM_MAX_ARRAY_ELEMENTS (10)   
+/**
+ * @def JAVACALL_PIM_MAX_ATTRIBUTES
+ * 
+ */
+#define JAVACALL_PIM_MAX_ATTRIBUTES     (15)
+/**
+ * @def JAVACALL_PIM_MAX_FIELDS
+ * 
+ */
+#define JAVACALL_PIM_MAX_FIELDS         (19)
+
+/**
+ * @def __PPACKED__
+ * definition for the packing alignment for structure, union, 
+ * and class members specification
+ */
+#define __PPACKED__ __attribute__ ((packed))
+
+/**
  * @}
  */
-
 #ifdef __cplusplus
 }
 #endif

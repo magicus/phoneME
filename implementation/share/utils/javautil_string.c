@@ -1,6 +1,5 @@
 /*
- *
- * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
@@ -235,16 +234,14 @@ javacall_result javautil_string_parse_int(char* str, int* number) {
 int javautil_strnicmp(const char* string1, const char* string2, size_t nchars)
 {
     unsigned char ch1, ch2;
-    do
-    {
+    do {
         if (nchars-- == 0) {
             return 0;
         }
         ch1 = (unsigned char) *string1++;
         ch2 = (unsigned char) *string2++;
 
-        if (ch1 != ch2)
-        {
+        if (ch1 != ch2) {
             if (((ch1 ^ ch2) != 0x20) || !ISALFA(ch1))  {
                 break;
             }
@@ -257,13 +254,11 @@ int javautil_strnicmp(const char* string1, const char* string2, size_t nchars)
 int javautil_stricmp(const char* string1, const char* string2)
 {
     unsigned char ch1, ch2;
-    do
-    {
+    do {
         ch1 = (unsigned char) *string1++;
         ch2 = (unsigned char) *string2++;
 
-        if (ch1 != ch2)
-        {
+        if (ch1 != ch2) {
             if (((ch1 ^ ch2) != 0x20) || !ISALFA(ch1))  {
                 break;
             }
@@ -276,17 +271,15 @@ int javautil_stricmp(const char* string1, const char* string2)
 int javautil_wcsnicmp(const unsigned short* string1, const unsigned short* string2, size_t nchars)
 {
     unsigned short ch1, ch2;
-    do
-    {
+    do {
         if (nchars-- == 0) {
             return 0;
         }
         ch1 = *string1++;
         ch2 = *string2++;
 
-        if (ch1 != ch2)
-        {
-            if (((ch1 ^ ch2) != 0x20) || !ISALFA(ch1))  {
+        if (ch1 != ch2) {
+            if (!ISALFA(ch1) || towupper(ch1) != towupper(ch2))  {
                 break;
             }
         }
@@ -294,3 +287,144 @@ int javautil_wcsnicmp(const unsigned short* string1, const unsigned short* strin
     while (ch1 && ch2);
     return ch1 - ch2;
 }
+
+/**
+ * Returns a new string that is a concatenation of two input strings.
+ * Memory allocated within this function by javacall_malloc() and should be freed
+ * by javacall_free()
+ *
+ * @param prefix the beginning/prefix string
+ * @param suffix the ending/suffix string
+ * @return concatenated string on success, NULL otherwise.
+ */
+char* javautil_string_strcat(const char* prefix, const char* suffix) {
+    char *joined_string = NULL;
+    int len1 = 0;
+    int len2 = 0;
+
+    if ((prefix == NULL) || (suffix == NULL)) {
+        return NULL;
+    }
+
+    len1 = strlen(prefix);
+    len2 = strlen(suffix);
+
+    joined_string = javacall_malloc((len1+len2+1));
+    if (joined_string == NULL) {
+        return NULL;
+    }
+    
+
+    memcpy(joined_string, prefix, len1);
+    memcpy(joined_string+len1, suffix, len2);
+    joined_string[len1+len2] = '\0';
+
+    return joined_string;
+}
+
+/**
+ * Skip leading blanks
+ * 
+ * @param s input string
+ * 
+ * @return a pointer to the first non blank character inside "s"
+ */
+char* javautil_string_skip_leading_blanks(char* s) {
+
+    if (s == NULL) {
+        return NULL;
+    }
+
+    while (*s == ' ' || *s == '\t') {
+        s++;
+    }
+
+    return s;
+}
+
+/**
+ * Skip trailing blanks
+ * 
+ * @param s input string
+ */
+void javautil_string_skip_trailing_blanks(char * s) {
+    int i;
+
+    if (s == NULL) {
+        return;
+    }
+
+    i = strlen(s) - 1;
+
+    while (i >= 0 && (s[i] == ' ' || s[i] == '\t')) {
+        i--;
+    }
+
+    s[i+1] = '\0';
+}
+
+/**
+ * Skip blanks in the beginning and at the end of the string
+ * 
+ * @param s string to be stripped of whitespaces
+ */
+void javautil_string_strip(char* s) {
+    char* pf;   /*forward pointer*/
+    int i, length;
+
+    /*check arguments*/
+    if (s == NULL) {
+        return;
+    }
+
+    pf = s;
+
+    /*skip leading blanks*/
+    while (*pf == ' ' || *pf == '\t') {
+        pf++;
+    }
+
+    /*skip trailing blanks*/
+    length = strlen(pf) - 1;
+
+    while (length >= 0 && (pf[length] == ' ' || pf[length] == '\t')) {
+        length--;
+    }
+
+    length++;
+
+    for (i = 0; i < length; i++) {
+        s[i] = pf[i];
+    }
+
+    s[i] = '\0';
+}
+
+/**
+ * Duplicates a string
+ * 
+ * @param s input string
+ * @return a newly allocated string with the same content as s
+ */
+char* javautil_string_duplicate(char *s) {
+    int len;
+    char *new_s;
+
+    if (NULL == s){    
+        return NULL;
+    }
+        
+    len = strlen(s);
+    new_s = javacall_malloc(len+1);
+    if (NULL==new_s){
+        return NULL;
+    }
+
+    strcpy(new_s, s);
+    return new_s;
+}
+
+#ifdef __cplusplus
+}
+#endif
+

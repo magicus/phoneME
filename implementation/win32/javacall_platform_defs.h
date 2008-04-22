@@ -49,6 +49,30 @@ extern "C" {
 typedef unsigned short javacall_utf16;
 
 /**
+ * @typedef javacall_uint8
+ * @brief 8 bit unsigned interger type
+ */
+typedef unsigned __int8 javacall_uint8;
+
+/**
+ * @typedef javacall_uint16
+ * @brief 16 bit unsigned interger type
+ */
+typedef unsigned __int16 javacall_uint16;
+
+/**
+ * @typedef javacall_uint32
+ * @brief 32 bit unsigned interger type
+ */
+typedef unsigned __int32 javacall_uint32;
+
+/**
+ * @typedef javacall_uint64
+ * @brief 64 bit unsigned integer type
+ */
+typedef unsigned __int64 javacall_uint64;
+
+/**
  * @typedef javacall_int32
  * @brief 32 bit interger type
  */
@@ -108,6 +132,22 @@ typedef const javacall_utf16* javacall_const_filename_string;
  * Maximal length of a localized name of a special directory
  */
 #define JAVACALL_MAX_LOCALIZED_DIR_NAME_LENGTH    512
+
+/**
+ * @def JAVACALL_PIM_MAX_ARRAY_ELEMENTS
+ * 
+ */
+#define JAVACALL_PIM_MAX_ARRAY_ELEMENTS (10)   
+/**
+ * @def JAVACALL_PIM_MAX_ATTRIBUTES
+ * 
+ */
+#define JAVACALL_PIM_MAX_ATTRIBUTES     (15)
+/**
+ * @def JAVACALL_PIM_MAX_FIELDS
+ * 
+ */
+#define JAVACALL_PIM_MAX_FIELDS         (19)
 
 /**
  * @}

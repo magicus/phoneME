@@ -23,6 +23,7 @@
 # information or have any questions.
 #
 
+
 ifeq ($(JAVACALL_DIR),)
 $(error JAVACALL_DIR is not set.)
 endif

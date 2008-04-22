@@ -72,10 +72,23 @@ extern "C" {
 javacall_result javacall_annunciator_vibrate(javacall_bool enableVibrate);
     
 /**
- * Sets the flashing effect for the device backlight. 
- * The flashing effect is intended to be used to attract the
- * user attention or as a special effect for games.
+ * Sets the backlight state of the device.
  *
+ * The MIDP2.x specification defines a method on the Display class 
+ * called <code>flashBacklight(duration)</code>, which invokes a 
+ * "flashing effect".
+ * The flashing effect is intended to be used to attract the
+ * users attention, or as a special effect for games.
+ *
+ * The javacall_annunciator_flash_backlight() function takes one
+ * boolean parameter, used to set the backlight to either "bright" or
+ * "dim". The exact brightness values are left to the discretion of the
+ * implementation.
+ *
+ * Initial state of the backlight (i.e., before this API is invoked for
+ * the first time) is assumed to be "bright". Java will generally leave
+ * the backlight in the "bright" state when not flashing, but this
+ * is not guaranteed.
  *
  * @param  enableBrightBack <tt>1</tt> to turn backlight to bright mode
  *         <tt>0</tt> to turn backlight to dim mode
@@ -117,6 +130,47 @@ javacall_result javacall_annunciator_display_trusted_icon(
 javacall_result javacall_annunciator_display_network_icon(
                      javacall_bool enableNetworkIndicator);
 
+
+
+
+
+/**
+ * @enum javacall_input_mode_type
+ * @brief Input mode icon type
+ */
+typedef enum {
+    /** Input mode indication for Latin caps */
+    JAVACALL_INPUT_MODE_LATIN_CAPS      =1,
+    /** Input mode indication for Latin lowercase */
+    JAVACALL_INPUT_MODE_LATIN_LOWERCASE =2,
+    /** Input mode indication for numeric */
+    JAVACALL_INPUT_MODE_NUMERIC         =3,
+    /** Input mode indication for symbol */
+    JAVACALL_INPUT_MODE_SYMBOL          =4,
+    /** Input mode indication for T9 */
+    JAVACALL_INPUT_MODE_T9              =5,
+    /** Input mode indication for off */
+    JAVACALL_INPUT_MODE_OFF             =6
+} javacall_input_mode_type;
+
+/**
+ * Set the input mode.
+ * Notify the platform to show the current input mode
+ * @param mode equals the new mode just set values are one of the following :
+ *        - JAVACALL_INPUT_MODE_LATIN_CAPS      
+ *        - JAVACALL_INPUT_MODE_LATIN_LOWERCASE  
+ *        - JAVACALL_INPUT_MODE_NUMERIC         
+ *        - JAVACALL_INPUT_MODE_SYMBOL    
+ *        - JAVACALL_INPUT_MODE_T9
+ *        - JAVACALL_INPUT_MODE_OFF
+ *             
+ * @return <tt>JAVACALL_OK</tt> operation was supported by the device
+ *         <tt>JAVACALL_FAIL</tt> or negative value on failure, or if not 
+ *         supported on device
+ */
+javacall_result javacall_annunciator_display_input_mode_icon(
+                     javacall_input_mode_type mode);
+  
 
 /**
  * Turning Home indicator off or on. 

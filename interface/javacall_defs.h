@@ -113,7 +113,9 @@ typedef enum {
    /** bad properties in jad file, 
     * either a missing required property or
     * incorrectly formatted property */
-   JAVACALL_BAD_JAD_PROPERTIES = -13
+   JAVACALL_BAD_JAD_PROPERTIES = -13,
+    /** javacall properties db value not found */
+    JAVACALL_VALUE_NOT_FOUND = -14
 } javacall_result;
 
 #define JAVACALL_SUCCEEDED(Status) ((javacall_result)(Status) >= 0) 
@@ -148,6 +150,12 @@ typedef void* javacall_handle;
 typedef javacall_int32 javacall_suite_id;
 
 /**
+ * @define INVALID_SUITE_ID
+ * @brief The suite_id that doesn't correspond to any midlet suite
+ */
+#define INVALID_SUITE_ID (-1)
+
+/**
  * @typedef javacall_utf16_string
  * @brief general utf16 string type, this type is null terminated string
  */
@@ -172,6 +180,20 @@ typedef unsigned char* javacall_utf8_string;
  * terminated string
  */
 typedef const unsigned char* javacall_const_utf8_string;
+
+/**
+ * @typedef javacall_ascii_string
+ * @brief general eight-bit ASCII string type,
+ *        this type is null terminated string
+ */
+typedef char* javacall_ascii_string;
+
+/**
+ * @typedef javacall_const_ascii_string
+ * @brief general constant eight-bit ASCII string type,
+ *        this type is constant null terminated string
+ */
+typedef const char* javacall_const_ascii_string;
 
 /**
  * @typedef javacall_pixel
