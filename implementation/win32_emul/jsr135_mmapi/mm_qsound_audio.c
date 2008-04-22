@@ -55,6 +55,11 @@ static int   g_iExternalBankSize = 0;
 static void doProcessHeader(ah* h, const void* buf, long buf_length);
 static javacall_result audio_qs_get_duration(javacall_handle handle, long* ms);
 
+
+#define PCM_PACKET_SIZE(wav) (wav.rate*wav.channels*wav.bits/8)
+#define MIN_PCM_BUFFERED_SIZE(wav) (3*PCM_PACKET_SIZE(wav))
+#define MAX_PCM_BUFFERED_SIZE(wav) (5*PCM_PACKET_SIZE(wav))
+
 /******************************************************************************/
 
 static void sendEOM(int appId, int playerId, long duration)
@@ -66,6 +71,14 @@ static void sendEOM(int appId, int playerId, long duration)
         appId, playerId, JAVACALL_OK, (void*)duration);
 }
 
+static void sendBuffering(int appId, int playerId)
+{
+    JC_MM_DEBUG_PRINT2("sendBuffering app=%d player=%d\n",
+                       appId, playerId);
+
+    javanotify_on_media_notification(JAVACALL_EVENT_MEDIA_NEED_MORE_MEDIA_DATA,
+        appId, playerId, JAVACALL_OK, NULL);
+}
 
 /******************************************************************************/
 
@@ -136,7 +149,7 @@ static void* getNextSamples(void* userData, int bytesCnt, int* pBytesGet)
                 return NULL;
             currentPos = pWAV->currentPos;
 
-            if(currentPos >= pWAV->streamBufferLen) {
+            if(currentPos >= pWAV->streamBufferLen && pWAV->streamBufferFull) {
                 if (pWAV->eom) {
                     return NULL;
                 } else {
@@ -158,6 +171,13 @@ static void* getNextSamples(void* userData, int bytesCnt, int* pBytesGet)
             pWAV->currentPos += bytesCnt;
             if (pBytesGet)
                 *pBytesGet = bytesCnt;
+
+            if (pHDR->mediaType == JC_FMT_MS_PCM) {
+                if (!pWAV->streamBufferFull && 
+                    (pWAV->streamBufferLen-pWAV->currentPos)<=MIN_PCM_BUFFERED_SIZE((*pWAV))) {
+                    sendBuffering(pWAV->hdr.isolateID,pWAV->hdr.playerID);
+                }
+            }
          }
          break;
 
@@ -1235,8 +1255,13 @@ static javacall_result audio_qs_get_java_buffer_size(javacall_handle handle,
         *java_buffer_size = h->hdr.wholeContentSize;
         *first_data_size  = 0;
     } else {
+        if (h->hdr.dataBufferLen == 0) {
             *java_buffer_size = DEFAULT_BUFFER_SIZE;
             *first_data_size  = DEFAULT_PACKET_SIZE;
+        } else {
+            *java_buffer_size = h->hdr.dataBufferLen;
+            *first_data_size  = h->hdr.dataBufferLen;
+        }
 /*
         if (h->hdr.wholeContentSize <= 0) {
             *java_buffer_size = DEFAULT_BUFFER_SIZE;
@@ -1282,11 +1307,16 @@ static javacall_result audio_qs_get_buffer_address(javacall_handle handle,
     case JC_FMT_MS_PCM:
         if (h->hdr.dataBuffer == NULL) {
             h->hdr.dataBuffer = MALLOC(DEFAULT_PACKET_SIZE);
-        }        
-        h->hdr.dataBufferLen = DEFAULT_PACKET_SIZE;
+            h->hdr.dataBufferLen = DEFAULT_PACKET_SIZE;
+        } else {
+            if (h->wav.rate != 0 && h->hdr.dataBufferLen == DEFAULT_PACKET_SIZE) {
+                h->hdr.dataBufferLen = PCM_PACKET_SIZE(h->wav);
+                h->hdr.dataBuffer = REALLOC(h->hdr.dataBuffer, h->hdr.dataBufferLen);
+            }
+        }
         h->hdr.dataBufferPos = 0;
 
-        *max_size = DEFAULT_PACKET_SIZE;
+        *max_size = h->hdr.dataBufferLen;
         *buffer = h->hdr.dataBuffer;
         return JAVACALL_OK;
 
@@ -1378,8 +1408,10 @@ static javacall_result audio_qs_do_buffering(
             } else {
                 *need_more_data = JAVACALL_TRUE;
             }*/
-            wav_setStreamPlayerData(&h->wav, buffer, *length);
-            *min_data_size  = DEFAULT_PACKET_SIZE;
+            if (wav_setStreamPlayerData(&h->wav, buffer, *length) != 1) {
+                return JAVACALL_FAIL;
+            }
+            *min_data_size  = h->hdr.dataBufferLen;
 
             if (h->wav.streamBufferFull) {
                 *need_more_data = JAVACALL_FALSE;
@@ -1389,14 +1421,11 @@ static javacall_result audio_qs_do_buffering(
                 } else {
                     *need_more_data = JAVACALL_FALSE;
                 }
-            } else if (h->hdr.state == PL135_PREFETCHED) {
-                if (h->wav.streamBufferLen < 5*DEFAULT_PACKET_SIZE) {
-                    *need_more_data = JAVACALL_TRUE;
-                } else {
-                    *need_more_data = JAVACALL_FALSE;
-                }
-            } else {
+            } else if ((h->wav.streamBufferLen - h->wav.currentPos) < 
+                        MAX_PCM_BUFFERED_SIZE(h->wav)) {
                 *need_more_data = JAVACALL_TRUE;
+            } else {
+                *need_more_data = JAVACALL_FALSE;
             }
             h->hdr.dataBufferPos = 0;
             return JAVACALL_OK;
