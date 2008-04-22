@@ -1673,7 +1673,7 @@ class AppManagerUI extends Form
      * Inner class used to display a running midlet in the AppSelector.
      * MidletCustomItem consists of an icon and name associated with the
      * corresponding midlet. In addition if a midlet requests to be
-     * put into foreground (requires user attention) an additional
+     * put into foreground (requires user attention) an additional                  
      * system provided icon will be displayed.
      */
     class MidletCustomItem extends CustomItem {

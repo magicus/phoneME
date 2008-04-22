@@ -532,7 +532,7 @@ public class SkinResources {
             UpdateBarResources.load();
         }
 
-        checkLocale();
+        // checkLocale();
     }
 
     public static void checkLocale() {

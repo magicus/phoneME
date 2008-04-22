@@ -34,7 +34,7 @@ import com.sun.midp.configurator.Constants;
  * A skin containing values for standard "screen" type stuff,
  * such as width and height, standard background, etc.
  */
-public class ScreenSkin {
+public class    ScreenSkin {
     
     /**
      * The overall width of the screen available for use
