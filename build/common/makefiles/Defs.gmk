@@ -1,24 +1,24 @@
 #
-#   
+#
 #
 # Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
-# 
+#
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License version
 # 2 only, as published by the Free Software Foundation.
-# 
+#
 # This program is distributed in the hope that it will be useful, but
 # WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
 # General Public License version 2 for more details (a copy is
 # included at /legal/license.txt).
-# 
+#
 # You should have received a copy of the GNU General Public License
 # version 2 along with this work; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
 # 02110-1301 USA
-# 
+#
 # Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
 # Clara, CA 95054 or visit www.sun.com if you need additional
 # information or have any questions.
@@ -61,13 +61,13 @@
 # JDK_DIR        - Directory containing the Java Development Kit
 # EXTRA_INCLUDES - Additional search directories for .h files
 # EXTRA_CFLAGS   - Additional arguments for compiler
-# CMDLINE_CFLAGS - Compiler arguments that are defined on the 
+# CMDLINE_CFLAGS - Compiler arguments that are defined on the
 #                  makefile command-line. This must not be set
 #                  or modified directly within the makefiles.
 # USE_MIDP_MALLOC  - Use internal memory management for native
 #                    heap allocations. (default value is false)
-# USE_IMAGE_CACHE  - At MIDlet install time, search the jar for images, 
-#                    convert them to a platform native representation, 
+# USE_IMAGE_CACHE  - At MIDlet install time, search the jar for images,
+#                    convert them to a platform native representation,
 #                    and cache the converted image for faster loading
 #                    at runtime of the MIDlet.
 # USE_ICON_CACHE   - Store icons of all installed midlet suites in one
@@ -81,7 +81,7 @@
 # USE_NATIVE_PROFILER  - Compile MIDP so that it is profiler enabled
 #                        currently for GCC only
 #                        (default is false )
-# USE_CLDC_RELEASE - In the case of non-debug build link MIDP with 
+# USE_CLDC_RELEASE - In the case of non-debug build link MIDP with
 #                    release version of CLDC (default is false)
 #####################################################################
 
@@ -195,6 +195,12 @@ else
    EXTRA_CFLAGS += -DENABLE_IMAGE_CACHE=0
 endif
 
+ifeq ($(USE_JPEG_CACHE), true)
+   EXTRA_CFLAGS += -DENABLE_JPEG_CACHE=1
+else
+   EXTRA_CFLAGS += -DENABLE_JPEG_CACHE=0
+endif
+
 ifeq ($(TARGET_VM), cdc_vm)
    USE_ICON_CACHE = false
 endif
@@ -209,14 +215,14 @@ ifeq ($(USE_I3_TEST), true)
    EXTRA_CFLAGS += -DENABLE_I3_TEST=1
    JPP_DEFS     += -DENABLE_I3_TEST
 else
-   EXTRA_CFLAGS += -DENABLE_I3_TEST=0   
+   EXTRA_CFLAGS += -DENABLE_I3_TEST=0
 endif
 
 ifeq ($(USE_NUTS_FRAMEWORK), true)
    EXTRA_CFLAGS += -DENABLE_NUTS_FRAMEWORK=1
    override NUTS_CMD = $(BINDIR)/nuts_main$(g)$(p)$(EXE)
 else
-   EXTRA_CFLAGS += -DENABLE_NUTS_FRAMEWORK=0   
+   EXTRA_CFLAGS += -DENABLE_NUTS_FRAMEWORK=0
    override NUTS_CMD =
 endif
 
@@ -249,7 +255,7 @@ ifeq ($(USE_NAMS_TEST_SERVICE), true)
 else
    EXTRA_CFLAGS += -DENABLE_NAMS_TEST_SERVICE=0
 endif
-   
+
 else
    EXTRA_CFLAGS += -DENABLE_NATIVE_AMS=0 -DENABLE_NAMS_TEST_SERVICE=0
 endif
@@ -354,23 +360,23 @@ endif
 
 ifeq ($(USE_CLDC_RELEASE), true)
    r = _r
-else 
-   r = 
-endif 
+else
+   r =
+endif
 
 ifeq ($(USE_DEBUG), true)
     EXTRA_CFLAGS += -DAZZERT=1 -DENABLE_DEBUG=1
     JPP_DEFS	 += -DENABLE_DEBUG
     JAVAC_DEBUG =
     g = _g
-    r = 
+    r =
 else
     ifneq ($(USE_CLDC_RELEASE), true)
         EXTRA_CFLAGS += -DPRODUCT
     endif
     EXTRA_CFLAGS += -DENABLE_DEBUG=0
     JAVAC_DEBUG = :none
-    g = 
+    g =
 endif
 
 ifeq ($(USE_CONTROL_ARGS_FROM_JAD), true)
@@ -419,9 +425,9 @@ override GENERATED_JAVA_LIST=$(MIDP_OUTPUT_DIR)/genjavalist.txt
 # Some subsystems have no Java files. The dependency on classes.zip
 # could become empty, ie. unconditional. Need to filter out
 # this case.
-# Implementation note: in order to keep Java files list from hitting command 
-# line length limit on cygwin, we split it into 100 words length chunks. 
-# This is not guaranteed to help in all cases, but at least reduce the 
+# Implementation note: in order to keep Java files list from hitting command
+# line length limit on cygwin, we split it into 100 words length chunks.
+# This is not guaranteed to help in all cases, but at least reduce the
 # possibility of it happening.
 define appendfiles
     @if [ $(words $?) -gt 200 ]; then \
@@ -440,18 +446,18 @@ define appendfiles
 endef
 
 define appendjavafiles
-    @$(call appendfiles,$(REBUILD_JAVA_LIST)) 
+    @$(call appendfiles,$(REBUILD_JAVA_LIST))
 endef
 
 define appendsubsetjavafiles
-    @$(call appendfiles,$(SUBSET_API_JAVA_LIST)) 
+    @$(call appendfiles,$(SUBSET_API_JAVA_LIST))
 endef
 
 define appendsupersetjavafiles
-    @$(call appendfiles,$(SUPERSET_API_JAVA_LIST)) 
+    @$(call appendfiles,$(SUPERSET_API_JAVA_LIST))
 endef
 
-# Distinguish between normal java files from generated one 
+# Distinguish between normal java files from generated one
 #
 define countjavafiles
  if [ -f $(REBUILD_JAVA_LIST) ]; then \
@@ -550,8 +556,8 @@ define compilefiles
 	fi $(LOG)
 endef
 
-# Rules to split $(MIDP_CLASSES_ZIP) into $(MIDP_PUB_CLASSES_ZIP) and 
-# $(MIDP_PRIV_CLASSES_ZIP) for proper romization so that midp classes 
+# Rules to split $(MIDP_CLASSES_ZIP) into $(MIDP_PUB_CLASSES_ZIP) and
+# $(MIDP_PRIV_CLASSES_ZIP) for proper romization so that midp classes
 # packed in $(MIDP_PRIV_CLASSES_ZIP) be available at bootclasspath.
 #
 ifeq ($(TARGET_VM), cldc_vm)

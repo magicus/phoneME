@@ -1,24 +1,24 @@
 /*
  *
  *
- * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
- * 
+ *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
  * 2 only, as published by the Free Software Foundation.
- * 
+ *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
  * included at /legal/license.txt).
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA
- * 
+ *
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
  * information or have any questions.
@@ -100,6 +100,26 @@ PCSL_DEFINE_STATIC_ASCII_STRING_LITERAL_START(PNG_EXT2)
     {'.', 'P', 'N', 'G', '\0'}
 PCSL_DEFINE_STATIC_ASCII_STRING_LITERAL_END(PNG_EXT2);
 
+#if ENABLE_JPEG_CACHE
+
+PCSL_DEFINE_STATIC_ASCII_STRING_LITERAL_START(JPEG_EXT1)
+    {'.', 'j', 'p', 'g', '\0'}
+PCSL_DEFINE_STATIC_ASCII_STRING_LITERAL_END(JPEG_EXT1);
+
+PCSL_DEFINE_STATIC_ASCII_STRING_LITERAL_START(JPEG_EXT2)
+    {'.', 'J', 'P', 'G', '\0'}
+PCSL_DEFINE_STATIC_ASCII_STRING_LITERAL_END(JPEG_EXT2);
+
+PCSL_DEFINE_STATIC_ASCII_STRING_LITERAL_START(JPEG_EXT3)
+    {'.', 'j', 'p', 'e', 'g', '\0'}
+PCSL_DEFINE_STATIC_ASCII_STRING_LITERAL_END(JPEG_EXT3);
+
+PCSL_DEFINE_STATIC_ASCII_STRING_LITERAL_START(JPEG_EXT4)
+    {'.', 'J', 'P', 'E', 'G', '\0'}
+PCSL_DEFINE_STATIC_ASCII_STRING_LITERAL_END(JPEG_EXT4);
+
+#endif
+
 /* Forward declaration */
 static int storeImageToCache(SuiteIdType suiteId,
                              StorageIdType storageId,
@@ -110,10 +130,17 @@ static int storeImageToCache(SuiteIdType suiteId,
 /**
  * Tests if JAR entry is a PNG image, by name extension
  */
-static jboolean png_filter(const pcsl_string * entry) {
+static jboolean png_jpeg_filter(const pcsl_string * entry) {
 
-    if (pcsl_string_ends_with(entry, &PNG_EXT1) ||
-        pcsl_string_ends_with(entry, &PNG_EXT2)) {
+    if (pcsl_string_ends_with(entry, &PNG_EXT1)
+        || pcsl_string_ends_with(entry, &PNG_EXT2)
+#if ENABLE_JPEG_CACHE
+        || pcsl_string_ends_with(entry, &JPEG_EXT1)
+        || pcsl_string_ends_with(entry, &JPEG_EXT2)
+        || pcsl_string_ends_with(entry, &JPEG_EXT3)
+        || pcsl_string_ends_with(entry, &JPEG_EXT4)
+#endif
+        ) {
         return KNI_TRUE;
     }
 
@@ -123,7 +150,7 @@ static jboolean png_filter(const pcsl_string * entry) {
 /**
  * Loads PNG image from JAR, decodes it and writes as native
  */
-static jboolean png_cache_action(const pcsl_string * entry) {
+static jboolean png_jpeg_action(const pcsl_string * entry) {
     unsigned char *pngBufPtr = NULL;
     unsigned int pngBufLen = 0;
     unsigned char *nativeBufPtr = NULL;
@@ -287,8 +314,8 @@ void createImageCache(SuiteIdType suiteId, StorageIdType storageId) {
     }
 
     result = loadAndCacheJarFileEntries(&jarFileName,
-        (jboolean (*)(const pcsl_string *))&png_filter,
-        (jboolean (*)(const pcsl_string *))&png_cache_action);
+        (jboolean (*)(const pcsl_string *))&png_jpeg_filter,
+        (jboolean (*)(const pcsl_string *))&png_jpeg_action);
 
     /* If something went wrong then clean up anything that was created */
     if (result != 1) {
@@ -356,7 +383,7 @@ void moveImageCache(SuiteIdType suiteId, StorageIdType storageIdFrom, StorageIdT
         pcsl_string fileName;
         pcsl_string newFilePath = PCSL_STRING_NULL;
         jsize filePathLength;
-        
+
         if (0 != storage_get_next_file_in_iterator(&root, handle, &filePath)) {
             break;
         }
@@ -383,7 +410,7 @@ void moveImageCache(SuiteIdType suiteId, StorageIdType storageIdFrom, StorageIdT
             storage_rename_file(&pszError, &filePath, &newFilePath);
             pcsl_string_free(&fileName);
             pcsl_string_free(&newFilePath);
-            
+
             if (pszError != NULL) {
                 storageFreeError(pszError);
             }
@@ -451,6 +478,9 @@ static int storeImageToCache(SuiteIdType suiteId, StorageIdType storageId,
     }
 
     storageClose(&errmsg, handle);
+    if (status == 0) {
+        storage_delete_file(&errmsg, resName);
+    }
 
     return status;
 }

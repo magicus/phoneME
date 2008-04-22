@@ -1,27 +1,27 @@
 /*
- *   
  *
- * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+ *
+ * Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
- * 
+ *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
- * 2 only, as published by the Free Software Foundation. 
- * 
+ * 2 only, as published by the Free Software Foundation.
+ *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
- * included at /legal/license.txt). 
- * 
+ * included at /legal/license.txt).
+ *
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
- * 02110-1301 USA 
- * 
+ * 02110-1301 USA
+ *
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
- * information or have any questions. 
+ * information or have any questions.
  */
 
 #include <stdio.h>
@@ -54,7 +54,7 @@ static long
 readChars(void* state, unsigned char* buffer, long n) {
     long size;
     char* pszError;
- 
+
     size = storageRead(&pszError, (int)state, (char*)buffer, n);
     storageFreeError(pszError);
     return size;
@@ -220,7 +220,7 @@ midpGetJarEntry(void* handle, const pcsl_string * name,
         pcsl_string_release_utf8_data((jbyte*)pName, name);
         return MIDP_JAR_OUT_OF_MEM_ERROR;
     }
-    
+
     entryInfo = findJarEntryInfo(&pJarInfo->fileObj, &pJarInfo->jarInfo,
                 pName, nameLen, pCompBuffer);
     pcsl_string_release_utf8_data((jbyte*)pName, name);
@@ -228,7 +228,7 @@ midpGetJarEntry(void* handle, const pcsl_string * name,
     if (entryInfo.status == JAR_ENTRY_NOT_FOUND) {
         return 0;
     }
-    
+
     if (entryInfo.status != 0) {
         return MIDP_JAR_CORRUPT_ERROR;
     }
@@ -269,7 +269,7 @@ midpJarEntryExists(void* handle, const pcsl_string * name) {
         pcsl_string_release_utf8_data((jbyte*)pName, name);
         return MIDP_JAR_OUT_OF_MEM_ERROR;
     }
-    
+
     entryInfo = findJarEntryInfo(&pJarInfo->fileObj, &pJarInfo->jarInfo,
                 pName, nameLen, pCompBuffer);
     pcsl_string_release_utf8_data((jbyte*)pName, name);
@@ -285,7 +285,7 @@ midpJarEntryExists(void* handle, const pcsl_string * name) {
     return 1;
 }
 
-int 
+int
 midpIterateJarEntries(void *handle, filterFuncT *filter, actionFuncT *action) {
 
     MidpJarInfo *pJarInfo = (MidpJarInfo*)handle;
@@ -298,13 +298,13 @@ midpIterateJarEntries(void *handle, filterFuncT *filter, actionFuncT *action) {
     entryInfo = getFirstJarEntryInfo(&pJarInfo->fileObj, &pJarInfo->jarInfo);
 
     while (entryInfo.status == 0) {
-        
+
         nameBuf =  (unsigned char*) midpMalloc(entryInfo.nameLen);
         if (nameBuf == NULL) {
             status = MIDP_JAR_OUT_OF_MEM_ERROR;
             break;
         }
-        
+
         entryInfo.status = getJarEntryName(&pJarInfo->fileObj, &entryInfo, nameBuf);
         if (entryInfo.status != 0) {
             status = MIDP_JAR_CORRUPT_ERROR;
@@ -319,22 +319,22 @@ midpIterateJarEntries(void *handle, filterFuncT *filter, actionFuncT *action) {
             status = MIDP_JAR_OUT_OF_MEM_ERROR;
             break;
         }
-       
+
         if ((*filter)(&entryName)) {
-            /* name match: call action */   
+            /* name match: call action */
             if (!(*action)(&entryName)) {
-                status = 0;
-                pcsl_string_free(&entryName);
-                break;
+                //status = 0;
+                //pcsl_string_free(&entryName);
+                //break;
             }
         }
-        
+
         pcsl_string_free(&entryName);
-        
-        entryInfo = getNextJarEntryInfo(&pJarInfo->fileObj, &pJarInfo->jarInfo, 
+
+        entryInfo = getNextJarEntryInfo(&pJarInfo->fileObj, &pJarInfo->jarInfo,
                                         &entryInfo);
-        
+
     }
-       
+
     return status;
 }
