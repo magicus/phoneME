@@ -1,24 +1,24 @@
 /*
- *  
  *
- * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+ *
+ * Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
- * 
+ *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
  * 2 only, as published by the Free Software Foundation.
- * 
+ *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
  * included at /legal/license.txt).
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA
- * 
+ *
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
  * information or have any questions.
@@ -41,7 +41,7 @@
 /**
  * @file
  *
- * putpixel primitive graphics. 
+ * putpixel primitive graphics.
  */
 
 /**
@@ -97,8 +97,8 @@ gxj_screen_buffer* gxj_get_image_screen_buffer_impl(const java_imagedata *img,
  * Draw triangle
  */
 void
-gx_fill_triangle(int color, const jshort *clip, 
-		  const java_imagedata *dst, int dotted, 
+gx_fill_triangle(int color, const jshort *clip,
+		  const java_imagedata *dst, int dotted,
                   int x1, int y1, int x2, int y2, int x3, int y3) {
   gxj_screen_buffer screen_buffer;
   gxj_screen_buffer *sbuf = gxj_get_image_screen_buffer_impl(dst, &screen_buffer, NULL);
@@ -109,7 +109,7 @@ gx_fill_triangle(int color, const jshort *clip,
   /* Surpress unused parameter warnings */
   (void)dotted;
 
-  fill_triangle(sbuf, GXJ_RGB24TORGB16(color), 
+  fill_triangle(sbuf, GXJ_RGB24TORGB16(color),
 		clip, x1, y1, x2, y2, x3, y3);
 }
 
@@ -117,8 +117,8 @@ gx_fill_triangle(int color, const jshort *clip,
  * Copy from a specify region to other region
  */
 void
-gx_copy_area(const jshort *clip, 
-	      const java_imagedata *dst, int x_src, int y_src, 
+gx_copy_area(const jshort *clip,
+	      const java_imagedata *dst, int x_src, int y_src,
               int width, int height, int x_dest, int y_dest) {
   gxj_screen_buffer screen_buffer;
   gxj_screen_buffer *sbuf = gxj_get_image_screen_buffer_impl(dst, &screen_buffer, NULL);
@@ -128,74 +128,52 @@ gx_copy_area(const jshort *clip,
 		   x_src, y_src, 0);
 }
 
-/**
- * Premultiply color components by it's corresponding alpha component.
+/*
+ * For A in [0..0xffff]
  *
- * Formula: Cs = Csr * As (for source pixel),
- *          Cd = Cdr * Ad (analog for destination pixel).
+ *        A / 255 == A / 256 + ((A / 256) + (A % 256) + 1) / 256
  *
- * @param C one of the raw color components of the pixel (Csr or Cdr in the formula).
- * @param A the alpha component of the source pixel (As or Ad in the formula).
- * @return color component in premultiplied form.
  */
-#define PREMULTUPLY_ALPHA(C, A) \
-    (unsigned char)( ((int)(C)) * (A) / 0xff )
+#define div(x)  (((x) >> 8) + ((((x) >> 8) + ((x) & 0xff) + 1) >> 8))
 
-/**
- * The source is composited over the destination (Porter-Duff Source Over 
- * Destination rule).
- *
- * Formula: Cr = Cs + Cd*(1-As)
- *
- * Note: the result is always equal or less than 0xff, i.e. overflow is impossible.
- *
- * @param Cs a color component of the source pixel in premultiplied form
- * @param As the alpha component of the source pixel
- * @param Cd a color component of the destination pixel in premultiplied form
- * @return a color component of the result in premultiplied form
- */
-#define ADD_PREMULTIPLIEDCOLORS_SRCOVER(Cs, As, Cd) \
-    (unsigned char)( ((int)(Cs)) + ((int)(Cd)) * (0xff - (As)) / 0xff )
+__inline static unsigned short alphaComposition(jint src, unsigned short dst,
+                                                unsigned char As) {
+#if 0
+  unsigned char Rs = (unsigned char)(src >> 16);
+  unsigned char Rd = (unsigned char)
+    ((((dst & 0xF800) << 5) | (dst & 0xE000)) >> 13);
+  int pRr = ((int)Rs - Rd) * As + Rd * 0xff;
+  unsigned char Rr =
+    (unsigned char)( div(pRr) );
 
-/**
- * Combine separate source and destination color components.
- *
- * Note: all backround pixels are treated as full opaque.
- *
- * @param Csr one of the raw color components of the source pixel
- * @param As the alpha component of the source pixel
- * @param Cdr one of the raw color components of the destination pixel
- * @return a color component of the result in premultiplied form
- */
-#define ADD_COLORS(Csr, As, Cdr) \
-    ADD_PREMULTIPLIEDCOLORS_SRCOVER( \
-            PREMULTUPLY_ALPHA(Csr, As), \
-            As, \
-            PREMULTUPLY_ALPHA(Cdr, 0xff) )
+  unsigned char Gs = (unsigned char)(src >> 8);
+  unsigned char Gd = (unsigned char)
+    (((dst & 0x07E0) >> 3) | ((dst & 0x0600) >> 9));
+  int pGr = ((int)Gs - Gd) * As + Gd * 0xff;
+  unsigned char Gr =
+    (unsigned char)( div(pGr) );
 
-
-/**
- * Combine source and destination colors to achieve blending and transparency
- * effects.
- *
- * @param src source pixel value in 32bit ARGB format.
- * @param dst destination pixel value in 32bit RGB format.
- * @return result pixel value in 32bit RGB format.
- */
-static jint alphaComposition(jint src, jint dst) {
-    unsigned char As = (unsigned char)(src >> 24);
-
-    unsigned char Rr = ADD_COLORS(
-            (unsigned char)(src >> 16), As, (unsigned char)(dst >> 16) );
-
-    unsigned char Gr = ADD_COLORS(
-            (unsigned char)(src >> 8), As, (unsigned char)(dst >> 8) );
-
-    unsigned char Br = ADD_COLORS(
-            (unsigned char)src, As, (unsigned char)dst );
+  unsigned char Bs = (unsigned char)(src);
+  unsigned char Bd = (unsigned char)
+    ((dst & 0x001F) << 3) | ((dst & 0x001C) >> 2);
+  int pBr = ((int)Bs - Bd) * As + Bd * 0xff;
+  unsigned char Br =
+    (unsigned char)( div(pBr) );
 
     /* compose RGB from separate color components */
-    return (((jint)Rr) << 16) | (((jint)Gr) << 8) | Br;
+  return ((Rr & 0xF8) << 8) + ((Gr & 0xFC) << 3) + (Br >> 3);
+#endif
+
+    unsigned int rb;
+    unsigned int g;
+    unsigned int bg = dst;
+
+    src = GXJ_RGB24TORGB16(src);
+
+    rb = (((src & 0x0000f81f) * As) + ((bg & 0x0000f81f) * (0x3f - As))) & 0x3e07c0;
+    g =  (((src & 0x000007e0) * As) + ((bg & 0x000007e0) * (0x3f - As))) & 0x1f800;
+
+    return ((rb | g) >> 6);
 }
 
 
@@ -207,16 +185,15 @@ extern void asm_draw_rgb(jint* src, int srcSpan, unsigned short* dst,
 /** Draw image in RGB format */
 void
 gx_draw_rgb(const jshort *clip,
-	     const java_imagedata *dst, jint *rgbData,
-             jint offset, jint scanlen, jint x, jint y,
-             jint width, jint height, jboolean processAlpha) {
-    int a, b, diff;
-    int dataRowIndex, sbufRowIndex;
+	        const java_imagedata *dst, jint *rgbData,
+            jint offset, jint scanlen, jint x, jint y,
+            jint width, jint height, jboolean processAlpha) {
+    int diff;
 
     gxj_screen_buffer screen_buffer;
     gxj_screen_buffer* sbuf = (gxj_screen_buffer*) getScreenBuffer(
       gxj_get_image_screen_buffer_impl(dst, &screen_buffer, NULL));
-    int sbufWidth = sbuf->width;
+    const int sbufWidth = sbuf->width;
 
     const jshort clipX1 = clip[0];
     const jshort clipY1 = clip[1];
@@ -257,35 +234,142 @@ gx_draw_rgb(const jshort *clip,
 #endif
 
     CHECK_SBUF_CLIP_BOUNDS(sbuf, clip);
-    dataRowIndex = 0;
-    sbufRowIndex = y * sbufWidth;
 
-    for (b = y; b < y + height;
-        b++, dataRowIndex += scanlen,
-        sbufRowIndex += sbufWidth) {
+#define SRC_PIXEL_TO_DEST_WITH_ALPHA(pSrc, pDest) \
+        src = *pSrc++;  \
+        As = src >> 26; \
+        *pDest = alphaComposition(src, *pDest, (unsigned char)As);   \
+        pDest++
 
-        for (a = x; a < x + width; a++) {
-            jint value = rgbData[offset + (a - x) + dataRowIndex];
-            int idx = sbufRowIndex + a;
+#define SRC_PIXEL_TO_DEST(pSrc, pDest) \
+        src = *pSrc++;  \
+        *pDest = GXJ_RGB24TORGB16(src); \
+        pDest++
 
-            CHECK_PTR_CLIP(sbuf, &(sbuf->pixelData[idx]));
+#if 0
+    {
+        const unsigned int width16 = width & 0xFFFFFFF0;
+        const unsigned int widthRemain = width & 0xF;
+        unsigned int col;
 
-            if (!processAlpha || (value & 0xff000000) == 0xff000000) {
-                // Pixel has no alpha or no transparency
-                sbuf->pixelData[idx] = GXJ_RGB24TORGB16(value);
-            } else {
-                if ((value & 0xff000000) != 0) {
-                    jint background = GXJ_RGB16TORGB24(sbuf->pixelData[idx]);
-                    jint composition = alphaComposition(value, background);
-                    sbuf->pixelData[idx] = GXJ_RGB24TORGB16(composition);
+        gxj_pixel_type * pdst = &sbuf->pixelData[y * sbufWidth + x];
+        jint * psrc = &rgbData[offset];
+        unsigned int pdst_delta = sbufWidth - width;
+        unsigned int psrc_delta = scanlen - width;
+        gxj_pixel_type * pdst_end = pdst + height * sbufWidth;
+        unsigned int  src;
+        unsigned char As;
+
+        if (pdst_delta < 0 || psrc_delta < 0) {
+            return;
+        }
+
+        if (processAlpha) {
+            do {
+                for (col = width16; col != 0; col -= 16) {
+                    SRC_PIXEL_TO_DEST_WITH_ALPHA(psrc, pdst);
+                    SRC_PIXEL_TO_DEST_WITH_ALPHA(psrc, pdst);
+                    SRC_PIXEL_TO_DEST_WITH_ALPHA(psrc, pdst);
+                    SRC_PIXEL_TO_DEST_WITH_ALPHA(psrc, pdst);
+                    SRC_PIXEL_TO_DEST_WITH_ALPHA(psrc, pdst);
+                    SRC_PIXEL_TO_DEST_WITH_ALPHA(psrc, pdst);
+                    SRC_PIXEL_TO_DEST_WITH_ALPHA(psrc, pdst);
+                    SRC_PIXEL_TO_DEST_WITH_ALPHA(psrc, pdst);
+                    SRC_PIXEL_TO_DEST_WITH_ALPHA(psrc, pdst);
+                    SRC_PIXEL_TO_DEST_WITH_ALPHA(psrc, pdst);
+                    SRC_PIXEL_TO_DEST_WITH_ALPHA(psrc, pdst);
+                    SRC_PIXEL_TO_DEST_WITH_ALPHA(psrc, pdst);
+                    SRC_PIXEL_TO_DEST_WITH_ALPHA(psrc, pdst);
+                    SRC_PIXEL_TO_DEST_WITH_ALPHA(psrc, pdst);
+                    SRC_PIXEL_TO_DEST_WITH_ALPHA(psrc, pdst);
+                    SRC_PIXEL_TO_DEST_WITH_ALPHA(psrc, pdst);
                 }
-            }
-        } /* loop by rgb data columns */
-    } /* loop by rgb data rows */
+
+                for (col = widthRemain; col != 0; col--) {
+                    SRC_PIXEL_TO_DEST_WITH_ALPHA(psrc, pdst);
+                }
+
+                psrc += psrc_delta;
+                pdst += pdst_delta;
+            } while (pdst < pdst_end);
+        } else {
+            do {
+                for (col = width16; col != 0; col -= 16) {
+                    SRC_PIXEL_TO_DEST(psrc, pdst);
+                    SRC_PIXEL_TO_DEST(psrc, pdst);
+                    SRC_PIXEL_TO_DEST(psrc, pdst);
+                    SRC_PIXEL_TO_DEST(psrc, pdst);
+                    SRC_PIXEL_TO_DEST(psrc, pdst);
+                    SRC_PIXEL_TO_DEST(psrc, pdst);
+                    SRC_PIXEL_TO_DEST(psrc, pdst);
+                    SRC_PIXEL_TO_DEST(psrc, pdst);
+                    SRC_PIXEL_TO_DEST(psrc, pdst);
+                    SRC_PIXEL_TO_DEST(psrc, pdst);
+                    SRC_PIXEL_TO_DEST(psrc, pdst);
+                    SRC_PIXEL_TO_DEST(psrc, pdst);
+                    SRC_PIXEL_TO_DEST(psrc, pdst);
+                    SRC_PIXEL_TO_DEST(psrc, pdst);
+                    SRC_PIXEL_TO_DEST(psrc, pdst);
+                    SRC_PIXEL_TO_DEST(psrc, pdst);
+                }
+
+                for (col = widthRemain; col != 0; col--) {
+                    SRC_PIXEL_TO_DEST(psrc,pdst);
+                }
+
+                psrc += psrc_delta;
+                pdst += pdst_delta;
+            } while (pdst < pdst_end);
+        }
+    }
+#else
+    {
+        gxj_pixel_type * pdst = &sbuf->pixelData[y * sbufWidth + x];
+        unsigned int * psrc = &rgbData[offset];
+        unsigned int pdst_delta = sbufWidth - width;
+        unsigned int psrc_delta = scanlen - width;
+        gxj_pixel_type * pdst_end = pdst + height * sbufWidth;
+
+        if (pdst_delta < 0 || psrc_delta < 0) {
+            return;
+        }
+
+        if (!processAlpha) {
+            do {
+                gxj_pixel_type * pdst_stop = pdst + width;
+                do {
+                    jint src = *psrc++;
+
+                    CHECK_PTR_CLIP(sbuf, pdst);
+
+                    *pdst = GXJ_RGB24TORGB16(src);
+                } while (++pdst < pdst_stop);
+
+                psrc += psrc_delta;
+                pdst += pdst_delta;
+            } while (pdst < pdst_end);
+        } else {
+            do {
+                gxj_pixel_type * pdst_stop = pdst + width;
+
+                do {
+                    unsigned int src = *psrc++;
+                    unsigned char As = (unsigned char)(src >> 26);
+
+                    CHECK_PTR_CLIP(sbuf, pdst);
+                    *pdst = alphaComposition(src, *pdst, As);
+                } while (++pdst < pdst_stop);
+
+                psrc += psrc_delta;
+                pdst += pdst_delta;
+            } while (pdst < pdst_end);
+        }
+    }
+#endif
 }
 
 /**
- * Obtain the color that will be final shown 
+ * Obtain the color that will be final shown
  * on the screen after the system processed it.
  */
 int
@@ -306,8 +390,8 @@ gx_get_displaycolor(int color) {
  * Draw a line between two points (x1,y1) and (x2,y2).
  */
 void
-gx_draw_line(int color, const jshort *clip, 
-	      const java_imagedata *dst, int dotted, 
+gx_draw_line(int color, const jshort *clip,
+	      const java_imagedata *dst, int dotted,
               int x1, int y1, int x2, int y2)
 {
   int lineStyle = (dotted ? DOTTED : SOLID);
@@ -315,9 +399,9 @@ gx_draw_line(int color, const jshort *clip,
   gxj_screen_buffer screen_buffer;
   gxj_screen_buffer *sbuf = gxj_get_image_screen_buffer_impl(dst, &screen_buffer, NULL);
   sbuf = (gxj_screen_buffer *)getScreenBuffer(sbuf);
-  
+
   REPORT_CALL_TRACE(LC_LOWUI, "gx_draw_line()\n");
-  
+
   draw_clipped_line(sbuf, pixelColor, lineStyle, clip, x1, y1, x2, y2);
 }
 
@@ -328,9 +412,9 @@ gx_draw_line(int color, const jshort *clip,
  *       since x,y is quan. to be positive (>=0), we don't
  *       need to test for special case anymore.
  */
-void 
-gx_draw_rect(int color, const jshort *clip, 
-	      const java_imagedata *dst, int dotted, 
+void
+gx_draw_rect(int color, const jshort *clip,
+	      const java_imagedata *dst, int dotted,
               int x, int y, int width, int height)
 {
 
@@ -342,7 +426,7 @@ gx_draw_rect(int color, const jshort *clip,
 
   REPORT_CALL_TRACE(LC_LOWUI, "gx_draw_rect()\n");
 
-  draw_roundrect(pixelColor, clip, sbuf, lineStyle, x,  y, 
+  draw_roundrect(pixelColor, clip, sbuf, lineStyle, x,  y,
 		 width, height, 0, 0, 0);
 }
 
@@ -384,9 +468,9 @@ void fastFill_rect(unsigned short color, gxj_screen_buffer *sbuf, int x, int y, 
 /**
  * Fill a rectangle at (x,y) with the given width and height.
  */
-void 
-gx_fill_rect(int color, const jshort *clip, 
-	      const java_imagedata *dst, int dotted, 
+void
+gx_fill_rect(int color, const jshort *clip,
+	      const java_imagedata *dst, int dotted,
               int x, int y, int width, int height) {
 
   gxj_pixel_type pixelColor = GXJ_RGB24TORGB16(color);
@@ -404,10 +488,10 @@ gx_fill_rect(int color, const jshort *clip,
     return;
   }
 
-  
+
   REPORT_CALL_TRACE(LC_LOWUI, "gx_fill_rect()\n");
 
-  draw_roundrect(pixelColor, clip, sbuf, dotted?DOTTED:SOLID, 
+  draw_roundrect(pixelColor, clip, sbuf, dotted?DOTTED:SOLID,
 		 x, y, width, height, 1, 0, 0);
 }
 
@@ -415,9 +499,9 @@ gx_fill_rect(int color, const jshort *clip,
  * Draw a rectangle at (x,y) with the given width and height. arcWidth and
  * arcHeight, if nonzero, indicate how much of the corners to round off.
  */
-void 
-gx_draw_roundrect(int color, const jshort *clip, 
-		   const java_imagedata *dst, int dotted, 
+void
+gx_draw_roundrect(int color, const jshort *clip,
+		   const java_imagedata *dst, int dotted,
                    int x, int y, int width, int height,
                    int arcWidth, int arcHeight)
 {
@@ -430,7 +514,7 @@ gx_draw_roundrect(int color, const jshort *clip,
   REPORT_CALL_TRACE(LC_LOWUI, "gx_draw_roundrect()\n");
 
   /* API of the draw_roundrect requests radius of the arc at the four */
-  draw_roundrect(pixelColor, clip, sbuf, lineStyle, 
+  draw_roundrect(pixelColor, clip, sbuf, lineStyle,
 		 x, y, width, height,
 		 0, arcWidth >> 1, arcHeight >> 1);
 }
@@ -439,9 +523,9 @@ gx_draw_roundrect(int color, const jshort *clip,
  * Fill a rectangle at (x,y) with the given width and height. arcWidth and
  * arcHeight, if nonzero, indicate how much of the corners to round off.
  */
-void 
-gx_fill_roundrect(int color, const jshort *clip, 
-		   const java_imagedata *dst, int dotted, 
+void
+gx_fill_roundrect(int color, const jshort *clip,
+		   const java_imagedata *dst, int dotted,
                    int x, int y, int width, int height,
                    int arcWidth, int arcHeight)
 {
@@ -453,7 +537,7 @@ gx_fill_roundrect(int color, const jshort *clip,
 
   REPORT_CALL_TRACE(LC_LOWUI, "gx_fillround_rect()\n");
 
-  draw_roundrect(pixelColor, clip, sbuf, lineStyle, 
+  draw_roundrect(pixelColor, clip, sbuf, lineStyle,
 		 x,  y,  width,  height,
 		 1, arcWidth >> 1, arcHeight >> 1);
 }
@@ -462,14 +546,14 @@ gx_fill_roundrect(int color, const jshort *clip,
  *
  * Draw an elliptical arc centered in the given rectangle. The
  * portion of the arc to be drawn starts at startAngle (with 0 at the
- * 3 o'clock position) and proceeds counterclockwise by <arcAngle> 
+ * 3 o'clock position) and proceeds counterclockwise by <arcAngle>
  * degrees.  arcAngle may not be negative.
  *
  * @note: check for width, height <0 is done in share layer
  */
-void 
-gx_draw_arc(int color, const jshort *clip, 
-	     const java_imagedata *dst, int dotted, 
+void
+gx_draw_arc(int color, const jshort *clip,
+	     const java_imagedata *dst, int dotted,
              int x, int y, int width, int height,
              int startAngle, int arcAngle)
 {
@@ -479,32 +563,32 @@ gx_draw_arc(int color, const jshort *clip,
   gxj_screen_buffer *sbuf = gxj_get_image_screen_buffer_impl(dst, &screen_buffer, NULL);
   sbuf = (gxj_screen_buffer *)getScreenBuffer(sbuf);
 
-  draw_arc(pixelColor, clip, sbuf, lineStyle, x, y, 
+  draw_arc(pixelColor, clip, sbuf, lineStyle, x, y,
 	   width, height, 0, startAngle, arcAngle);
 }
 
 /**
  * Fill an elliptical arc centered in the given rectangle. The
  * portion of the arc to be drawn starts at startAngle (with 0 at the
- * 3 o'clock position) and proceeds counterclockwise by <arcAngle> 
+ * 3 o'clock position) and proceeds counterclockwise by <arcAngle>
  * degrees.  arcAngle may not be negative.
  */
-void 
-gx_fill_arc(int color, const jshort *clip, 
-	     const java_imagedata *dst, int dotted, 
+void
+gx_fill_arc(int color, const jshort *clip,
+	     const java_imagedata *dst, int dotted,
              int x, int y, int width, int height,
              int startAngle, int arcAngle)
 {
   int lineStyle = (dotted?DOTTED:SOLID);
   gxj_pixel_type pixelColor = GXJ_RGB24TORGB16(color);
   gxj_screen_buffer screen_buffer;
-  gxj_screen_buffer *sbuf = 
+  gxj_screen_buffer *sbuf =
       gxj_get_image_screen_buffer_impl(dst, &screen_buffer, NULL);
   sbuf = (gxj_screen_buffer *)getScreenBuffer(sbuf);
 
   REPORT_CALL_TRACE(LC_LOWUI, "gx_fill_arc()\n");
 
-  draw_arc(pixelColor, clip, sbuf, lineStyle, 
+  draw_arc(pixelColor, clip, sbuf, lineStyle,
 	   x, y, width, height, 1, startAngle, arcAngle);
 }
 
