@@ -90,6 +90,7 @@ static char urlAddress[BINARY_BUFFER_MAX_LEN];
 #define MAX_PHONE_NUMBER_LENGTH 48
 static char selectedNumber[MAX_PHONE_NUMBER_LENGTH];
 
+
 /**
  * A helper function to
  * @param event a pointer to midp_javacall_event_union
@@ -156,34 +157,43 @@ void javanotify_pen_event(int x, int y, javacall_penevent_type type) {
  * Java.
  */
 void javanotify_start(void) {
-    midp_jc_event_union e;
-    midp_jc_event_start_arbitrary_arg *data = &e.data.startMidletArbitraryArgEvent;
-
     int main_memory_chunk_size = -1;
     char *prop_val = NULL;
     int argc = 0;
     char *argv[MIDP_RUNMIDLET_MAXIMUM_ARGS];
     javacall_result res;
 
-    REPORT_INFO(LC_CORE, "javanotify_start() >>\n");
-
+    REPORT_ERROR(LC_CORE, "javanotify_start()\n");
     JVM_Initialize();
-    if (javacall_get_property("MAIN_MEMORY_CHUNK_SIZE", JAVACALL_INTERNAL_PROPERTY, &prop_val) == JAVACALL_OK &&
-        (javautil_string_parse_int(prop_val, &main_memory_chunk_size) != JAVACALL_OK ||
-            main_memory_chunk_size <= 0)) {
-        /* Java heap supposed to be more than 0 */
-        REPORT_ERROR1(LC_AMS, "javanotify_start(): MAIN_MEMORY_CHUNK_SIZE is incorrect or too low = %d!"
-                      "Default value will be used!\n", main_memory_chunk_size);
+    res = javacall_get_property("MAIN_MEMORY_CHUNK_SIZE", JAVACALL_INTERNAL_PROPERTY, &prop_val);
+    if(res != JAVACALL_OK) {
+        REPORT_ERROR(LC_CORE,"javanotify_functions_slavemode->javanotify_start_tck() Can't get property file!!!\n");
+        REPORT_ERROR(LC_CORE,"javanotify_functions_slavemode->javanotify_start_tck() System will now exit!!!\n");
         return;
     }
+    
+    res =  javautil_string_parse_int(prop_val, &main_memory_chunk_size);
+    if (res != JAVACALL_OK) {
+        /* Java heap supposed to be more than 0 */
+        REPORT_ERROR(LC_AMS, "javanotify_functions_slavemode()->javanotify_start() javautil_string_parse_int() error.!\n");
+        REPORT_ERROR(LC_CORE,"javanotify_functions_slavemode()->javanotify_start() System will now exit!!!\n");
+
+        return;
+    }
+
     if (main_memory_chunk_size <= 0) {
-        main_memory_chunk_size = 5*1024*1024 + 200*1024;
+        REPORT_ERROR1(LC_AMS, "javanotify_functions_slavemode()->javanotify_start() MAIN_MEMORY_CHUNK_SIZE is incorrect main_memory_chunk_size = %d!", 
+                      main_memory_chunk_size);
+        REPORT_ERROR(LC_CORE,"javanotify_functions_slavemode()->javanotify_start() System will now exit!!!\n");
+        return;
     }
 
     if (midpInitializeMemory(main_memory_chunk_size) != 0) {
-        REPORT_ERROR(LC_AMS, "javanotify_start(): Cannot initialize MIDP memory\n");
+        REPORT_ERROR(LC_CORE,"javanotify_functions_slavemode()->javanotify_start() Cannot initialize MIDP memory!!!\n");
+        REPORT_ERROR(LC_CORE,"javanotify_functions_slavemode()->javanotify_start() System will now exit!!!\n");
         return;
     }
+
     argv[argc++] = "runMidlet";
     argv[argc++] = "-1";
     argv[argc++] =
@@ -279,40 +289,49 @@ void javanotify_start_local(char* classname, char* descriptor,
  * @param domain the TCK execution domain
  */
 void javanotify_start_tck(char *tckUrl, javacall_lifecycle_tck_domain domain_type) {
-    int length;
-    midp_jc_event_union e;
-    midp_jc_event_start_arbitrary_arg *data = &e.data.startMidletArbitraryArgEvent;
-
+    char *argv[MIDP_RUNMIDLET_MAXIMUM_ARGS];
+    int argc = 0;
     int main_memory_chunk_size = -1;
     char *prop_val = NULL;
-    int argc = 0;
-    char *argv[MIDP_RUNMIDLET_MAXIMUM_ARGS];
+    int length;
     javacall_result res;
 
-    REPORT_INFO2(LC_CORE,"javanotify_start_tck() >> tckUrl=%s, domain_type=%d \n",tckUrl,domain_type);
-
-    memset(&e, 0, sizeof(e));
+    REPORT_ERROR2(LC_CORE,"javanotify_start_tck() tckUrl=%s, domain_type=%d \n",tckUrl,domain_type);
 
     JVM_SetConfig(JVM_CONFIG_SLAVE_MODE, KNI_TRUE);
 
     midp_thread_set_timeslice_proc(midp_slavemode_schedule_vm_timeslice);
     JVM_Initialize();
-    if (javacall_get_property("MAIN_MEMORY_CHUNK_SIZE", JAVACALL_INTERNAL_PROPERTY, &prop_val) == JAVACALL_OK &&
-        (javautil_string_parse_int(prop_val, &main_memory_chunk_size) != JAVACALL_OK ||
-            main_memory_chunk_size <= 0)) {
-        /* Java heap supposed to be more than 0 */
-        REPORT_ERROR1(LC_AMS, "javanotify_start_tck(): MAIN_MEMORY_CHUNK_SIZE is incorrect or too low = %d!"
-                      "Default value will be used!\n", main_memory_chunk_size);
+
+    res = javacall_get_property("MAIN_MEMORY_CHUNK_SIZE", JAVACALL_INTERNAL_PROPERTY, &prop_val);
+    if(res != JAVACALL_OK) {
+        REPORT_ERROR(LC_CORE,"javanotify_functions_slavemode->javanotify_start_tck() Can't get property file!!!\n");
+        REPORT_ERROR(LC_CORE,"javanotify_functions_slavemode->javanotify_start_tck() System will now exit!!!\n");
         return;
     }
+    
+    res =  javautil_string_parse_int(prop_val, &main_memory_chunk_size);
+    if (res != JAVACALL_OK) {
+        /* Java heap supposed to be more than 0 */
+        REPORT_ERROR(LC_AMS, "javanotify_start_tck(): javautil_string_parse_int() error.!\n");
+        REPORT_ERROR(LC_CORE,"javanotify_functions_slavemode->javanotify_start_tck() System will now exit!!!\n");
+
+        return;
+    }
+
     if (main_memory_chunk_size <= 0) {
-        main_memory_chunk_size = 5*1024*1024 + 200*1024;
+        REPORT_ERROR1(LC_AMS, "javanotify_start_tck(): MAIN_MEMORY_CHUNK_SIZE is incorrect = %d!", main_memory_chunk_size);
+        REPORT_ERROR(LC_CORE,"javanotify_functions_slavemode->javanotify_start_tck() System will now exit!!!\n");
+        return;
     }
 
     if (midpInitializeMemory(main_memory_chunk_size) != 0) {
         REPORT_ERROR(LC_AMS, "javanotify_start_tck(): Cannot initialize MIDP memory\n");
+        REPORT_ERROR(LC_CORE,"javanotify_functions_slavemode->javanotify_start_tck() Cannot initialize MIDP memory!!!\n");
+        REPORT_ERROR(LC_CORE,"javanotify_functions_slavemode->javanotify_start_tck() System will now exit!!!\n");
         return;
     }
+
     argv[argc++] = "runMidlet";
     argv[argc++] = "-1";
     argv[argc++] = "com.sun.midp.installer.AutoTester";
@@ -324,26 +343,22 @@ void javanotify_start_tck(char *tckUrl, javacall_lifecycle_tck_domain domain_typ
     memset(urlAddress, 0, BINARY_BUFFER_MAX_LEN);
     memcpy(urlAddress, tckUrl, length);
     if (strcmp(urlAddress, "none") != 0) {
-#if 0
-        data->argv[data->argc++] = urlAddress;
-#endif
 		argv[argc++] = urlAddress;
     }
 
-	argv[argc++] = "maximum";
-#if 0
     if (domain_type == JAVACALL_LIFECYCLE_TCK_DOMAIN_UNTRUSTED) {
-        data->argv[data->argc++] = "untrusted";
+        argv[argc++] = "untrusted";
     } else if (domain_type == JAVACALL_LIFECYCLE_TCK_DOMAIN_TRUSTED) {
-        data->argv[data->argc++] = "trusted";
+        argv[argc++] = "trusted";
     } else if (domain_type == JAVACALL_LIFECYCLE_TCK_DOMAIN_UNTRUSTED_MIN) {
-        data->argv[data->argc++] = "minimum";
+        argv[argc++] = "minimum";
     } else if (domain_type == JAVACALL_LIFECYCLE_TCK_DOMAIN_UNTRUSTED_MAX) {
-        data->argv[data->argc++] = "maximum";
+        argv[argc++] = "maximum";
     } else {
+        REPORT_ERROR(LC_CORE,"javanotify_functions_slavemode->javanotify_start_tck() Can not recognize TCK DOMAIN\n");
+        REPORT_ERROR1(LC_CORE,"Domain type is %d. System will now exit!!!\n", domain_type);
         return;
     }
-#endif
 	
 
     javacall_lifecycle_state_changed(JAVACALL_LIFECYCLE_MIDLET_STARTED, JAVACALL_OK);
@@ -352,7 +367,6 @@ void javanotify_start_tck(char *tckUrl, javacall_lifecycle_tck_domain domain_typ
 
     javacall_lifecycle_state_changed(JAVACALL_LIFECYCLE_MIDLET_SHUTDOWN, (res == 1) ? JAVACALL_OK: JAVACALL_FAIL);
 
-    //midp_jc_event_send(&e);
 }
 
 /**
