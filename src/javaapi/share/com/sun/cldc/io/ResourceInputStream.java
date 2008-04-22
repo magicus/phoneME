@@ -29,11 +29,18 @@ package com.sun.cldc.io;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Vector;
+import java.lang.ref.WeakReference;
 
 /**
  * Input stream class for accessing resource files in classpath.
  */
 public class ResourceInputStream extends InputStream {
+
+    private static int SKIP_BLOCK_SIZE = 5120;
+
+    // skip buffer
+    private static WeakReference bufRef;
+
     private Object fileDecoder;
     private Object savedDecoder; // used for mark/reset functionality
 
@@ -118,6 +125,37 @@ public class ResourceInputStream extends InputStream {
             throw new IOException();
         }
      }
+
+
+    /**
+     * Skips over and discards <code>n</code> bytes of data from file stream.
+     *
+     * @param      n   the number of bytes to be skipped.
+     * @return      the actual number of bytes skipped.
+     * @exception  IOException  if an I/O error occurs.
+     */
+    public long skip(long n) throws IOException {
+        byte[] b;
+        synchronized(this) {
+            if (null == bufRef || null == (b = (byte[])bufRef.get())) {
+                b = new byte[SKIP_BLOCK_SIZE];
+                bufRef = new WeakReference(b);
+            }
+        }
+        long readBytesTotal = 0;
+        int readBytes = 0;
+
+        while (readBytesTotal < n) {
+            int bytesToRead = (readBytesTotal + SKIP_BLOCK_SIZE) <= n ? 
+                               SKIP_BLOCK_SIZE: (int)(n - readBytesTotal);
+            readBytes = read(b, 0, bytesToRead);
+            if (readBytes <= 0) {
+                break;
+            }
+            readBytesTotal += readBytes;
+        }
+        return readBytesTotal;
+    }
 
     /**
      * Reads the next byte of data from the input stream.

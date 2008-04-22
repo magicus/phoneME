@@ -1,7 +1,7 @@
 /*
  *   
  *
- * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
@@ -26,6 +26,8 @@
 
 package java.io;
 
+import java.lang.ref.WeakReference;
+
 /**
  * A data input stream lets an application read primitive Java data
  * types from an underlying input stream in a machine-independent
@@ -39,6 +41,11 @@ package java.io;
 
 public
 class DataInputStream extends InputStream implements DataInput {
+
+    private static int SKIP_BLOCK_SIZE = 5120;
+
+    // skip buffer
+    private static WeakReference bufRef;
 
     /**
      * The input stream.
@@ -476,7 +483,26 @@ class DataInputStream extends InputStream implements DataInput {
      * @exception  IOException  if an I/O error occurs.
      */
     public long skip(long n) throws IOException {
-        return in.skip(n);
+        byte[] b;
+        synchronized(this) {
+            if (null == bufRef || null == (b = (byte[])bufRef.get())) {
+                b = new byte[SKIP_BLOCK_SIZE];
+                bufRef = new WeakReference(b);
+            }
+        }
+        long readBytesTotal = 0;
+        int readBytes = 0;
+
+        while (readBytesTotal < n) {
+            int bytesToRead = (readBytesTotal + SKIP_BLOCK_SIZE) <= n ? 
+                               SKIP_BLOCK_SIZE: (int)(n - readBytesTotal);
+            readBytes = in.read(b, 0, bytesToRead);
+            if (readBytes <= 0) {
+                break;
+            }
+            readBytesTotal += readBytes;
+        }
+        return readBytesTotal;
     }
 
     /**
