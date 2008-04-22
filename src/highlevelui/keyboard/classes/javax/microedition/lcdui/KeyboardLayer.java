@@ -383,6 +383,7 @@ class KeyboardLayer extends PopupLayer implements VirtualKeyboardListener {
             Lines.addElement(new Key(icon,otherIcon,'c','c',xpos,ypos,width,height)); xpos+=width+pad;
             Lines.addElement(new Key(icon,otherIcon,'v','v',xpos,ypos,width,height)); xpos+=width+pad;
             Lines.addElement(new Key(icon,otherIcon,'b','b',xpos,ypos,width,height)); xpos+=width+pad;
+            Lines.addElement(new Key(icon,otherIcon,'n','n',xpos,ypos,width,height)); xpos+=width+pad;
             Lines.addElement(new Key(icon,otherIcon,'m','m',xpos,ypos,width,height)); xpos+=width+pad;
             Lines.addElement(new Key(icon,otherIcon,' ',' ',xpos,ypos,width,height)); xpos+=width+pad;
 
@@ -444,6 +445,7 @@ class KeyboardLayer extends PopupLayer implements VirtualKeyboardListener {
             Lines.addElement(new Key(icon,otherIcon,'C','C',xpos,ypos,width,height)); xpos+=width+pad;
             Lines.addElement(new Key(icon,otherIcon,'V','V',xpos,ypos,width,height)); xpos+=width+pad;
             Lines.addElement(new Key(icon,otherIcon,'B','B',xpos,ypos,width,height)); xpos+=width+pad;
+            Lines.addElement(new Key(icon,otherIcon,'N','N',xpos,ypos,width,height)); xpos+=width+pad;
             Lines.addElement(new Key(icon,otherIcon,'M','M',xpos,ypos,width,height)); xpos+=width+pad;
             Lines.addElement(new Key(icon,otherIcon,' ',' ',xpos,ypos,width,height)); xpos+=width+pad;
 
