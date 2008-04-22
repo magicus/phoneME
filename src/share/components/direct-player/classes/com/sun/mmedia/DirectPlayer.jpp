@@ -273,25 +273,17 @@ public class DirectPlayer extends BasicPlayer
 
         if (!handledByDevice) {
             /* predownload media data to fill native buffers */
-            try {
-            if (downloadThread != null) {
-System.out.println("JSR135 : DirectPlayer.prefetch 1");
-//                downloadThread.prepare();
-                Thread dt = new Thread(downloadThread);
-System.out.println("JSR135 : DirectPlayer.prefetch 2");
-                dt.start();
-System.out.println("JSR135 : DirectPlayer.prefetch 3");
+            if (downloadThread != null && downloadThread.Lock()) {
                 try {
-                dt.join();
-System.out.println("JSR135 : DirectPlayer.prefetch 4");
-                } catch(InterruptedException ex) {
-System.out.println("JSR135 : DirectPlayer.prefetch ERR: " + ex.getMessage());
+                    Thread dt = new Thread(downloadThread);
+                    dt.start();
+                    dt.join();
+                    downloadThread.Unlock();
+                } catch (Exception e) {
+                } finally {
+                    downloadThread.Unlock();
                 }
             }
-            } catch (Exception e) {
-System.out.println("JSR135 : DirectPlayer.prefetch ERR: " + e.getMessage());                
-            }
-//            PlayerImpl.doBuffering(hNative, stream);
         }
     }
     
@@ -380,20 +372,6 @@ System.out.println("JSR135 : DirectPlayer.prefetch ERR: " + e.getMessage());
             midiControl.playerStarted();
         }
         // #endif ]
-            /* predownload media data to fill native buffers */
-            try {
-            if (downloadThread != null) {
-System.out.println("JSR135 : DirectPlayer.start 1");
-//                downloadThread.prepare();
-                Thread dt = new Thread(downloadThread);
-System.out.println("JSR135 : DirectPlayer.start 2");
-                dt.start();
-System.out.println("JSR135 : DirectPlayer.start 3");
-            }
-            } catch (Exception e) {
-System.out.println("JSR135 : DirectPlayer.start ERR: " + e.getMessage());                
-            }
-        
     }
     
     /**
@@ -419,6 +397,18 @@ System.out.println("JSR135 : DirectPlayer.start ERR: " + e.getMessage());
         }
 
         return ret;
+    }
+
+    protected void continueDownload() {
+        /* predownload media data to fill native buffers */
+        if (downloadThread != null && downloadThread.Lock()) {
+            try {
+                new Thread(downloadThread).start();
+            } catch (Exception e) {
+                System.out.println("JSR135 : CAN NOT CREATE DOWNLOAD THREAD : " + e.getMessage());
+                downloadThread.Unlock(); /* if can not create Thread */
+            }
+        }
     }
     
     /**
@@ -508,6 +498,10 @@ System.out.println("JSR135 : DirectPlayer.start ERR: " + e.getMessage());
             try {
                 // seek to start position
                 stream.seek(0);
+                if (downloadThread != null && downloadThread.Lock()) {
+                    downloadThread.deallocate();
+                    downloadThread.Unlock();
+                }
             } catch(IOException e) {
                 if (debug) System.out.println("[direct] doDeallocate seek IOException");
                 return; // just return

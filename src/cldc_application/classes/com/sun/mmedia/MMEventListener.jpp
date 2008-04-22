@@ -43,11 +43,12 @@ class MMEventListener implements EventListener {
     private static final int EVENT_MEDIA_RECORD_ERROR		=  4;
     private static final int EVENT_MEDIA_DEVICE_AVAILABLE	=  5;
     private static final int EVENT_MEDIA_DEVICE_UNAVAILABLE	=  6;
-    private static final int EVENT_MEDIA_BUFFERING_STARTED	=  7;
-    private static final int EVENT_MEDIA_BUFFERING_STOPPED	=  8;
-    private static final int EVENT_MEDIA_VOLUME_CHANGED		=  9;
-    private static final int EVENT_MEDIA_SNAPSHOT_FINISHED	= 10;
-    private static final int EVENT_MEDIA_ERROR				= 11;
+    private static final int EVENT_MEDIA_NEED_MORE_MEDIA_DATA	=  7;
+    private static final int EVENT_MEDIA_BUFFERING_STARTED	=  8;
+    private static final int EVENT_MEDIA_BUFFERING_STOPPED	=  9;
+    private static final int EVENT_MEDIA_VOLUME_CHANGED		=  10;
+    private static final int EVENT_MEDIA_SNAPSHOT_FINISHED	=  11;
+    private static final int EVENT_MEDIA_ERROR				=  12;
 
     MMEventListener() {
         MMEventHandler.setListener(this);
@@ -131,6 +132,11 @@ class MMEventListener implements EventListener {
             }
             break;
 // #endif ]
+        case EVENT_MEDIA_NEED_MORE_MEDIA_DATA:
+            p = PlayerImpl.get(nevt.intParam1);
+            if (p != null) {
+                p.continueDownload();
+            }
         }
     }
 }

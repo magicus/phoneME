@@ -590,6 +590,9 @@ public abstract class BasicPlayer implements Player
     }
 
 
+    protected void continueDownload() {
+    }
+    
     /**
      * Stops the <code>Player</code>.  It will pause the playback at
      * the current media time.
