@@ -641,7 +641,9 @@ public class DirectPlayer extends BasicPlayer
             }
         }
 // #ifdef ENABLE_JSR_234 [
-        if ((null != locator) && locator.startsWith(Configuration.RADIO_CAPTURE_LOCATOR))
+        if ( ( null != source.getLocator() ) && 
+               source.getLocator().startsWith(
+                Configuration.RADIO_CAPTURE_LOCATOR ) )
         {
             if( type.equals( rdscName ) )
             {
