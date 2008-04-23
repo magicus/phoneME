@@ -94,6 +94,7 @@ int* msgLength, char** msg) {
     char * t_pch;
     int pchLen;
     char * pch;
+	int segment_num;
 
     pch = strtok(ptr, " \n");
 	*encodingType  = -1; // Uninitialized
@@ -124,6 +125,9 @@ int* msgLength, char** msg) {
         }else if (strcmp("Segments:", pch)==0){
             pch = strtok(NULL, "\n");
             segments = atoi(pch);
+        }else if (strcmp("Fragment:", pch)==0){
+            pch = strtok(NULL, "\n");
+            segment_num = atoi(pch);
         }else if (strcmp("SenderAddress:", pch)==0){
             //Example: 'SenderAddress: sms://+5555555556'
             pch = strtok(NULL, "\n");
@@ -154,19 +158,22 @@ int* msgLength, char** msg) {
             *timeStamp = _atoi64(pch);
         }else if (strcmp("Buffer:", pch)==0){
 	       pchLen = strlen("Buffer :\n");
-		pch = pch + pchLen;/// strtok(NULL, "\n");
+		pch = pch + pchLen;/* strtok(NULL, "\n");*/
 
 		t_pch = *msg;
 		pchLen = *msgLength;
 		if (pchLen > SMS_BUFF_LENGTH) {
 			pchLen = SMS_BUFF_LENGTH;
-		}
-		memcpy( t_pch , pch, pchLen);
+
+		 if ((segment_num == 1) && (segments > 1)) {
+			 javautil_debug_print (JAVACALL_LOG_ERROR, "jsr120_UDPEmulator", "The SMS is too long!");
+		 }
+		}	
+		memcpy(t_pch , pch, pchLen);
         }
-	// javautil_debug_print (JAVACALL_LOG_INFORMATION, "jsr120_UDPEmulator", "%s\n", pch);
         pch = strtok(NULL, " \n");
     }
-
+		
     *ptr = 0;
 }
 
@@ -197,7 +204,7 @@ int* out_encode_sms_buffer_length) {
         return NULL;
     }
 
-    //adding the Content-Type
+    /*adding the Content-Type*/
     memset(encode_sms_buffer, 0, SMS_BUFF_LENGTH);
 
     switch(encodingType) {
@@ -214,27 +221,27 @@ int* out_encode_sms_buffer_length) {
         break;
     }
 
-    //adding ADDRESS_HEADER
+    /*adding ADDRESS_HEADER*/
     strcat(encode_sms_buffer, "Address: sms://");
-    //add the recipient phone
+    /*add the recipient phone*/
     strcat(encode_sms_buffer, recipientPhone);
     strcat(encode_sms_buffer, ":");
-    //add port number
+    /*add port number*/
     itoa(destPortNum, port, 10);
     strcat(encode_sms_buffer, port);
     strcat(encode_sms_buffer, "\n");
 
-    //adding date-stamp
+    /*adding date-stamp*/
     strcat(encode_sms_buffer, "Date: ");
 	_i64toa(timeStamp,encode_sms_buffer+strlen(encode_sms_buffer),10);
     strcat(encode_sms_buffer, "\n");
 
-    //adding sender address
+    /*adding sender address*/
     strcat(encode_sms_buffer, "SenderAddress: sms://");
     strcat(encode_sms_buffer, senderPhone);
     if (srcPortNum > 0) {
         strcat(encode_sms_buffer, ":");
-        //add port number
+        /*add port number*/
         itoa(srcPortNum, port, 10);
         strcat(encode_sms_buffer, port);
     }
@@ -242,7 +249,7 @@ int* out_encode_sms_buffer_length) {
 
 
     strcat(encode_sms_buffer, "Segments: ");
-    //num of segments is 1 by default
+    /*num of segments is 1 by default*/
     itoa(defaultSegmentsNum, segmentsNum, 10);
     strcat(encode_sms_buffer, segmentsNum);
     strcat(encode_sms_buffer, "\n");
@@ -253,9 +260,9 @@ int* out_encode_sms_buffer_length) {
     strcat(encode_sms_buffer, msgLen);
     strcat(encode_sms_buffer, "\n");
 
-    //adding the message - must be at te end of the payload buffer
+    /*adding the message - must be at te end of the payload buffer*/
     strcat(encode_sms_buffer, "Buffer: \n");
-    //calculate the length of the payload
+    /*calculate the length of the payload*/
     lngth = strlen(encode_sms_buffer) + msgLength;
 
     *out_encode_sms_buffer_length = lngth ;
@@ -276,13 +283,6 @@ int length,
 int *pBytesRead,
 void **pContext) {
 
-    //    unsigned char pAddress[256];
-    //    int port;
-    //    char buffer[1024];
-    //    int length = 1024;
-    //    int pBytesRead;
-    //    void *pContext = NULL;
-
     javacall_sms_encoding   encodingType;
     int                     encodingType_int = 0;
     char*                   sourceAddress = NULL;
@@ -297,7 +297,7 @@ void **pContext) {
     msg = (char *) malloc(SMS_BUFF_LENGTH);
     memset(msg, 0, SMS_BUFF_LENGTH);
 
-    sourceAddress = (char*)pAddress;  // currently, sourceAddress = 0x0100007f = 127.0.0.1
+    sourceAddress = (char*)pAddress;  /* currently, sourceAddress = 0x0100007f = 127.0.0.1*/
     decodeSmsBuffer(buffer,
 		                    &encodingType_int,
 		                    &destPortNum,
@@ -308,18 +308,23 @@ void **pContext) {
 		                    &msgLen,
 		                    &msg);
 
-
     if (javacall_is_sms_port_registered((unsigned short)destPortNum) != JAVACALL_OK) {
 		javautil_debug_print (JAVACALL_LOG_INFORMATION, "jsr120_UDPEmulator", "SMS on unregistered port received!");
 		free(msg);
         return JAVACALL_FAIL;
     }
 
-    //encodingType = JAVACALL_SMS_MSG_TYPE_ASCII; //## to do: convert encodingType_int->encodingType
     encodingType = encodingType_int;
-    javanotify_incoming_sms(encodingType, senderPhone, msg, msgLen, (unsigned short)srcPortNum, (unsigned short)destPortNum, timeStamp);
-    free(msg);
-    return JAVACALL_OK;
+	 if (msgLen < SMS_BUFF_LENGTH+1) {
+		javanotify_incoming_sms(encodingType, senderPhone, msg, msgLen, (unsigned short)srcPortNum, (unsigned short)destPortNum, timeStamp);
+		free(msg);
+		return JAVACALL_OK;
+	 }
+	 else{
+		 free(msg);
+		 return JAVACALL_FAIL;
+	 }
+    
 }
 
 javacall_result process_UDPEmulator_cbs_incoming(unsigned char *pAddress,
@@ -332,7 +337,7 @@ void **pContext) {
     javacall_cbs_encoding  msgType = JAVACALL_CBS_MSG_TYPE_ASCII;
     unsigned short         msgID = 13;
     unsigned char*         msgBuffer = "msgBuffer";
-    int                    msgBufferLen = 9; //strlen(msgBuffer);
+    int                    msgBufferLen = 9; /*strlen(msgBuffer);*/
 
     char* ptr = buffer;
     int segments;
@@ -369,20 +374,19 @@ void **pContext) {
                 pch = strtok(NULL, "\n");
                 segments = atoi(pch);
             }else if (strcmp("CBSAddress:", pch)==0){
-                //Example: 'CBSAddress: cbs://:50001'
+                /*Example: 'CBSAddress: cbs://:50001'*/
                 pch = strtok(NULL, "\n");
                 t_pch = strrchr(pch, ':')+1;
                 msgID = (short)atoi(t_pch);
                 t_pch = NULL;
             }else if (strcmp("Address:", pch)==0){
-                //Example: 'Address: 24680'
+                /*Example: 'Address: 24680'*/
                 pch = strtok(NULL, "\n");
                 address = pch;
             }else if (strcmp("Buffer:", pch)==0){
                 msgBuffer = pch+8;
                 pch = strtok(NULL, "\n");
             }
- 	   //  javautil_debug_print (JAVACALL_LOG_INFORMATION, "jsr120_UDPEmulator", "%s\n", pch);
             pch = strtok(NULL, " \n");
         }
 
@@ -419,7 +423,7 @@ javacall_result init_wma_emulator() {
     javacall_result ok = JAVACALL_OK;
     javacall_result ok1;
 
-// Open using LimeCall
+/* Open using LimeCall*/
 initializeWMASupport();
 
 ok1 = javacall_datagram_open(smsInPortNumber, &smsDatagramSocketHandle);
@@ -458,20 +462,20 @@ javacall_result try_process_wma_emulator(javacall_handle handle) {
         int ok;
 
         if ( handle != smsDatagramSocketHandle) {
-            // Not WMA message (Regular Datagram)
+            /* Not WMA message (Regular Datagram)*/
             return JAVACALL_FAIL;
         }
 
         ok = javacall_datagram_recvfrom_start(
         handle, pAddress, &port, buffer, length, &pBytesRead, &pContext);
-        if (strstr(buffer, "sms://")!= NULL){ ///vrifies buffer starts with "sms"
+        if (strstr(buffer, "sms://")!= NULL){ /*vrifies buffer starts with "sms"*/
   	     javautil_debug_print (JAVACALL_LOG_INFORMATION, "jsr120_UDPEmulator", "This is an SMS message");
             result = process_UDPEmulator_sms_incoming(pAddress, &port, buffer,
             length, &pBytesRead, &pContext);
             if (result == JAVACALL_OK){
                 return JAVACALL_OK;
             }
-        }else if(strstr(buffer, "cbs://")!= NULL){ ///vrifies buffer starts with "cbs"
+        }else if(strstr(buffer, "cbs://")!= NULL){ /*vrifies buffer starts with "cbs"*/
   	     javautil_debug_print (JAVACALL_LOG_INFORMATION, "jsr120_UDPEmulator", "This is an CBS message");
             result = process_UDPEmulator_cbs_incoming(pAddress, &port, buffer,
             length, &pBytesRead, &pContext);
