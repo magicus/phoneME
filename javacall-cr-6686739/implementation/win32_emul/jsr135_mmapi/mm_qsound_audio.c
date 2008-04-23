@@ -451,7 +451,6 @@ static int gmInit(int isolateID, int gmIdx)
     MQ234_SynthConfig synthConfig;
     MQ234_HostBlock dlsData;
     MQ234_ERROR err;
-
     memset(&opts, '\0', sizeof(opts));
 
     opts.mutexCreateParams = NULL;
@@ -1000,6 +999,7 @@ static javacall_result audio_qs_acquire_device(javacall_handle handle)
     int         gmIdx = h->hdr.gmIdx;
     long        r     = -1;
 
+    MQ234_ERROR e;
     int         sRate;
 
     switch(h->hdr.mediaType)

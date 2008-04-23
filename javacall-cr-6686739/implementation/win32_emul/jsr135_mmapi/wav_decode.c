@@ -171,7 +171,6 @@ int wav_setStreamPlayerData(ah_wav *handle, const void* buffer, long length)
                 data += length;
                 handle->originalData_dataChnkOffset += length;
             }
-printf("jsr135: download data len=%d whole_size=%d\n", length, handle->streamBufferLen);
         } else {
             /* just skip this chunk for now */
             if (handle->originalDataLen == 4) {
