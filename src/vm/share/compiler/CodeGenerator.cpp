@@ -1136,9 +1136,10 @@ void ForwardBranchOptimizer::store_local(BasicType /*kind*/, int index JVM_TRAPS
   if (_state == Load && _next_bci == _final_bci) { 
     // Optimize Load + Store as if it were an if-then-else
     VirtualStackFrame* frame = _cg->frame();
+    const int real_index = Compiler::current_local_base() + index;
     // TRUE:   local = local
-    frame->value_at(_load_true, Compiler::current_local_base() + index);
-    frame->clear(index);
+    frame->value_at(_load_true, real_index);
+    frame->clear(real_index);
     _etc_true_start = bci();
     // We fix things up so we look like if-then-else
     _next_state  = LoadEtcStopLoadEtcDone;
