@@ -121,8 +121,9 @@ public class OCSPValidatorImpl implements OCSPValidator {
                     caCerts.addElement(WebPublicKeyStore.createCertificate(ki));
                 }
             }
-            
-            OCSPResponse response = receiveResponse(caCerts, certId);
+
+            OCSPResponse response = receiveResponse(caCerts, certId,
+                    (X509Certificate)issuerCert);
 
             // Check that response applies to the cert that was supplied
             if (! certId.equals(response.getCertId())) {
@@ -208,11 +209,13 @@ public class OCSPValidatorImpl implements OCSPValidator {
      *
      * @param caCerts X.509 certificates of known CAs
      * @param reqCertId ID of the certificate specified in the request 
+     * @param issuerCert certificate of the trusted authority issued
+     *                   the certificate being verified
      * @return OCSP response received from the server
      * @throws OCSPException if an error occured while receiving response
      */
-    private OCSPResponse receiveResponse(Vector caCerts, CertId reqCertId)
-            throws OCSPException {
+    private OCSPResponse receiveResponse(Vector caCerts, CertId reqCertId,
+            X509Certificate issuerCert) throws OCSPException {
         try {
             httpInputStream = httpConnection.openInputStream();
 
@@ -241,7 +244,7 @@ public class OCSPValidatorImpl implements OCSPValidator {
             byte[] responseBuf = new byte[total];
             System.arraycopy(tmpBuf, 0, responseBuf, 0, total);
 
-            return new OCSPResponse(responseBuf, caCerts, reqCertId);
+            return new OCSPResponse(responseBuf, caCerts, reqCertId, issuerCert);
         } catch (IOException ioe) {
             throw new OCSPException(OCSPException.SERVER_NOT_RESPONDING,
                                     ioe.getMessage());
