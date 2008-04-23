@@ -133,7 +133,8 @@ SUBSYSTEM_JSR_135_JAVA_FILES += \
     $(JSR_135_PROJECT_SRC_DIR)/classes/com/sun/mmedia/AudioTunnel.java \
     $(JSR_135_GENERATED_DIR)/classes/com/sun/mmedia/NativeTonePlayer.java \
     $(JSR_135_DIR)/src/share/components/direct-player/classes/com/sun/mmedia/PlayerStateSubscriber.java \
-    $(JSR_135_GENERATED_DIR)/classes/com/sun/mmedia/PlayerImpl.java
+    $(JSR_135_GENERATED_DIR)/classes/com/sun/mmedia/PlayerImpl.java \
+    $(JSR_135_DIR)/src/share/components/direct-player/classes/com/sun/mmedia/MediaDownload.java
 
 
 # Permission verifier
@@ -268,6 +269,7 @@ SUBSYSTEM_JSR_135_CNI_CLASSES += \
     com.sun.mmedia.MMEventListener \
     com.sun.mmedia.NativeTonePlayer \
     com.sun.mmedia.DefaultConfiguration \
+    com.sun.mmedia.MediaDownload \
 
 #
 # Native
@@ -283,6 +285,7 @@ vpath % $(JSR_135_DIR)/src/share/components/javacall/configuration/native
 
 SUBSYSTEM_JSR_135_NATIVE_FILES += \
 	KNIPlayerImpl.c \
+	KNIMediaDownload.c \
 	mmapiDynamicProperties.c
 
 ifeq ($(DIRECT_PLAYER),true)

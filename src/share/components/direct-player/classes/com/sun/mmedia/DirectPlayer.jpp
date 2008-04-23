@@ -273,15 +273,11 @@ public class DirectPlayer extends BasicPlayer
 
         if (!handledByDevice) {
             /* predownload media data to fill native buffers */
-            if (downloadThread != null && downloadThread.Lock()) {
+            if (mediaDownload != null) {
                 try {
-                    Thread dt = new Thread(downloadThread);
-                    dt.start();
-                    dt.join();
-                    downloadThread.Unlock();
-                } catch (Exception e) {
-                } finally {
-                    downloadThread.Unlock();
+                    mediaDownload.download();
+                } catch (IOException ex) {
+                    throw new MediaException("Can not start media download thread : " + ex.getMessage());
                 }
             }
         }
@@ -401,12 +397,16 @@ public class DirectPlayer extends BasicPlayer
 
     protected void continueDownload() {
         /* predownload media data to fill native buffers */
-        if (downloadThread != null && downloadThread.Lock()) {
+        if (mediaDownload != null && mediaDownload.Lock()) {
             try {
-                new Thread(downloadThread).start();
+                new Thread(mediaDownload).start();
             } catch (Exception e) {
                 System.out.println("JSR135 : CAN NOT CREATE DOWNLOAD THREAD : " + e.getMessage());
-                downloadThread.Unlock(); /* if can not create Thread */
+                mediaDownload.Unlock(); /* if can not create Thread */
+                try {
+                    stop();
+                } catch(MediaException ex) {
+                }
             }
         }
     }
@@ -498,9 +498,9 @@ public class DirectPlayer extends BasicPlayer
             try {
                 // seek to start position
                 stream.seek(0);
-                if (downloadThread != null && downloadThread.Lock()) {
-                    downloadThread.deallocate();
-                    downloadThread.Unlock();
+                if (mediaDownload != null && mediaDownload.Lock()) {
+                    mediaDownload.deallocate();
+                    mediaDownload.Unlock();
                 }
             } catch(IOException e) {
                 if (debug) System.out.println("[direct] doDeallocate seek IOException");

@@ -109,20 +109,10 @@ public class PlayerImpl implements Player {
 
     // Realize native player
     protected native boolean nRealize(int handle, String mime);
-    // get java buffer size to determine media format
-    protected static native int nGetJavaBufferSize(int handle);
-    // get first packet size to determine media format
-    protected static native int nGetFirstPacketSize(int handle);
-    // buffering media data
-    protected static native int nBuffering(int handle, byte[] buffer, int offset, int total, int size);
-    // ask Native Player if it needs more data immediatelly
-    protected static native boolean nNeedMoreDataImmediatelly(int hNative);    
-    // Provide whole media content size, if known
-    protected static native void nSetWholeContentSize(int hNative, long contentSize);
 
     private static String PL_ERR_SH = "Cannot create a Player: ";
     
-    MediaDownloadThread downloadThread = null;
+    MediaDownload mediaDownload = null;
     
     /**
      * Constructor 
@@ -247,15 +237,13 @@ public class PlayerImpl implements Player {
             /* predownload media data to recognize media format and/or 
                specific media parameters (e.g. duration) */
             if (!mediaFormat.equals(BasicPlayer.MEDIA_FORMAT_TONE)) {
-                downloadThread = new MediaDownloadThread(hNative, stream);
-                downloadThread.Lock();
-                Thread dt = new Thread(downloadThread);
-                dt.start();
+                mediaDownload = new MediaDownload(hNative, stream);
                 try {
-                    dt.join();
-                }catch(InterruptedException ex) {
-                } finally {
-                    downloadThread.Unlock();
+                    mediaDownload.download();
+                } catch(IOException ex1) {
+                    throw new MediaException("Can not start download Thread: " + ex1.getMessage());
+                }catch(Exception ex) {
+                    throw new MediaException("Can not start download Thread: " + ex.getMessage());
                 }
             }
         }
@@ -280,7 +268,7 @@ public class PlayerImpl implements Player {
         playerInst.mediaFormat        = mediaFormat;
         playerInst.handledByDevice    = handledByDevice;
         playerInst.pID                = pID;
-        playerInst.downloadThread     = downloadThread;
+        playerInst.mediaDownload      = mediaDownload;
 
         playerInst.setSource(source);
 
@@ -297,71 +285,6 @@ public class PlayerImpl implements Player {
         playerInst.realize();
         if (null != state_subscriber) {
             state_subscriber.PlayerRealized(this);
-        }
-    };
-
-    /**
-     *  Buffering portion of media data
-     *
-     * @param  hNative             Descriptor of native player
-     * @param  stream              Source stream
-     *
-     * @exception  MediaException     read from Source Stream error
-     */
-    static void doBuffering(int hNative, SourceStream stream) 
-        throws MediaException {
-
-        long contLength = stream.getContentLength();
-        boolean need_more = true;
-
-        if (contLength > 0) {
-            nSetWholeContentSize(hNative, contLength);
-        }
-        /* first loop - allocate java buffer*/
-        int javaBufSize = nGetJavaBufferSize(hNative);
-        int packetSize  = nGetFirstPacketSize(hNative);
-        if (packetSize > 0) {
-            if (javaBufSize <= 0) {
-                javaBufSize = 1024;
-            }
-
-            byte[] buffer;
-            try {
-                buffer = new byte[(int)javaBufSize];
-            } catch(OutOfMemoryError ome) {
-                throw new MediaException("Not enough memory");
-            }
-
-            do {
-                int num_read = 0;
-                int ret;
-                if (packetSize > javaBufSize) {
-                    packetSize = javaBufSize;
-                }
-                do {
-                    try {
-                        // read from source stream
-                        ret = stream.read(buffer, num_read, packetSize - num_read);
-                    } catch(IOException e) {
-                        throw new MediaException("Read from source error");
-                    }
-                    if (ret > 0) {
-                        num_read += ret;
-                    }
-                    if (ret == -1) {
-                        need_more = false;
-                        break;
-                    }
-                } while(num_read < packetSize);
-                if (num_read > 0) {
-                    packetSize = nBuffering(hNative, buffer, 0, javaBufSize, num_read);
-                    if (packetSize >=0) {
-                        need_more = nNeedMoreDataImmediatelly(hNative);
-                    } else {
-                        throw new MediaException("Buffering media data error");
-                    }
-                }
-            } while (need_more);
         }
     };
 
@@ -1052,99 +975,3 @@ public class PlayerImpl implements Player {
 
 }
 
-
-/**
- * The thread that's downloads media data
- *
- */
-class MediaDownloadThread implements Runnable {
-    /**
-     * the stream instance
-     */
-    private SourceStream stream;
-    long contLength = -1;
-    int packetSize = 0;
-    int javaBufSize = 0; /* unused in current version */
-    byte[] buffer = null;
-    boolean eom = false;
-    int hNative;
-    boolean lock = false;    
-
-    synchronized boolean Lock() {
-        if (lock) 
-            return false;
-        lock = true;    
-        return true;
-    }
-    synchronized void Unlock() {
-        lock = false;    
-    }
-    /**
-     * The constructor
-     *
-     * @param  stream  the instance of stream.
-     */
-    MediaDownloadThread(int hNative, SourceStream stream) {
-        this.hNative = hNative;
-        this.stream = stream;
-        lock = false;
-        eom = false;
-        contLength = -1;
-    }
-
-    /**
-     * Event handling thread.
-     */
-    public void run() {
-        try {
-            if (contLength == -1) {
-                contLength = stream.getContentLength();
-                if (contLength > 0) {
-                    PlayerImpl.nSetWholeContentSize(hNative, contLength);
-                }
-            } 
-            javaBufSize = PlayerImpl.nGetJavaBufferSize(hNative);
-            packetSize  = PlayerImpl.nGetFirstPacketSize(hNative);
-
-            if(packetSize > 0) {
-                do {
-                    int offset = 0;
-                    int num_read = packetSize;
-                    int ret;
-                    if (buffer == null || packetSize > buffer.length) {
-                        buffer = new byte[(int)packetSize];
-                    }
-
-                    do {
-                        try {
-                            ret = stream.read(buffer, offset, packetSize-offset);
-                        } catch (IOException ex) {
-                            ret = -1;
-                        }
-                        if (ret == -1) {
-                            eom = true;
-                            break;
-                        }
-                        num_read -= ret;
-                        offset += ret;
-                    }while(num_read>0);
-                    packetSize = PlayerImpl.nBuffering(hNative, buffer, 0, packetSize, (packetSize-num_read));
-                }while (PlayerImpl.nNeedMoreDataImmediatelly(hNative) && !eom);
-                if (eom) {
-                    packetSize = PlayerImpl.nBuffering(hNative, null, 0, 0, 0);
-                }
-            }
-        } catch(Exception e) {
-        } finally {
-            Unlock();
-        }
-    }
-    
-    void deallocate() {
-        eom = false;
-        contLength = -1;
-        buffer = null;
-        javaBufSize = 0;
-        packetSize = 0;
-    }
-}

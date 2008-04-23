@@ -676,9 +676,10 @@ public final class Manager {
 
         try {
             pp = createPlayer(ds);
+            /*
             SourceStream s = ds.getStreams()[0];
             if (s != null && s.getContentDescriptor() != null) {
-                /* verify content type determined by http protocol */
+                /* verify content type determined by http protocol
                 String type = s.getContentDescriptor().getContentType();
                 if (type != null) {
                     String supportedContentTypes[] = getSupportedContentTypes(theProtocol);
@@ -696,6 +697,7 @@ public final class Manager {
                     throw new MediaException("Player cannot be created for " + locator);
                 }
             }
+            */
         } catch (MediaException ex) {
             ds.disconnect();
             throw ex;
