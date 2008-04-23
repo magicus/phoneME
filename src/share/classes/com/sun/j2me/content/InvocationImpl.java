@@ -46,6 +46,7 @@ import javax.microedition.io.ConnectionNotFoundException;
 public final class InvocationImpl {
 	
 	public static Tunnel tunnel = null;
+	public static final int UNDEFINED_TID = 0;
 	
     /**
      * The Invocation delegating to this instance.
@@ -98,7 +99,7 @@ public final class InvocationImpl {
     String password;
 
     /** Transaction Identifier. */
-    int tid;
+    int tid = UNDEFINED_TID;
 
     /** The MIDlet suite that should handle this Invocation. */
     int suiteId;

@@ -38,7 +38,7 @@ import javax.microedition.content.ResponseListener;
 
 import com.sun.j2me.security.Token;
 import com.sun.j2me.security.TrustedClass;
-import com.sun.j2me.security.SecurityTokenInitializer;
+import com.sun.jsr211.security.SecurityInitializer;
 
 /**
  * Implementation of Content Handler registry.  It maintains
@@ -60,7 +60,7 @@ public final class RegistryImpl implements Counter {
     
     static {
     	securityToken =
-        	SecurityTokenInitializer.requestToken(new SecurityTrusted());
+        	SecurityInitializer.requestToken(new SecurityTrusted());
 	    RegistryStore.setSecurityToken(securityToken);
     }
     

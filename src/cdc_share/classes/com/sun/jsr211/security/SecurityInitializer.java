@@ -1,7 +1,7 @@
 /*
  *   
  *
- * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
@@ -25,9 +25,6 @@
  */
 package com.sun.jsr211.security;
 
-import com.sun.midp.security.SecurityInitializerImpl;
-
-import com.sun.j2me.security.TrustedClass;
 import com.sun.j2me.security.Token;
 
 /**
@@ -38,30 +35,6 @@ import com.sun.j2me.security.Token;
  */
 public final class SecurityInitializer {
 
-    /** List of the trusted subsystem classes that can request for token */
-    final static private String[] trustedClasses = new String[] {
-        "com.sun.j2me.content.RegistryImpl$SecurityTrusted",
-        "javax.microedition.content.Registry$SecurityTrusted"
-    };
-
-    /**
-     * Inner class to request security token from SecurityInitializer.
-     * SecurityInitializer should be able to check this inner class name.
-     */
-    static private class SecurityTrusted
-        implements TrustedClass {};
-
-    /**
-     * Internal implementation of the JSR security initializer
-     * redispatching security token requested from the core
-     * security initializer
-     */
-    private static SecurityInitializerImpl impl =
-        new SecurityInitializerImpl(
-            com.sun.midp.security.SecurityInitializer.
-            				requestToken(new SecurityTrusted()),
-            trustedClasses);
-
     /**
      * Hand out internal security token to trusted requesters
      *
@@ -69,7 +42,6 @@ public final class SecurityInitializer {
      * @return if the object is really trusted to requested
      */
     final public static Token requestToken(TrustedClass trusted) {
-System.out.println( "com.sun.jsr211.security.SecurityInitializer.requestToken: " + trusted.getClass().getName() );
-        return new Token(impl.requestToken(trusted));
+        return null;
     }
 }
