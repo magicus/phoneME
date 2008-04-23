@@ -36,11 +36,16 @@ extern "C" {
 #include <fcntl.h>
 #include <string.h>
 #include <sys/stat.h>
+#include <memory.h>
 
 #include "javacall_file.h"
 #include "javacall_dir.h"
 #include "javacall_logging.h"
 #include "file.h"
+#include "javautil_unicode.h"
+
+
+#define CONVERT_TO_FSHANDLE(h)  ((int)h)
 
 #define MAX_NULL_TERMINATED_NAME_LENGTH (JAVACALL_MAX_FILE_NAME_LENGTH + 1)
 
@@ -48,6 +53,19 @@ static int stringlastindexof(unsigned short *str,
                              int strLen,
                              unsigned short ch);
 
+#define WRITE_CACHE_SIZE 256
+
+static javacall_handle cacheHandle;
+static unsigned int  cacheIdx;
+static unsigned char cacheBuf[WRITE_CACHE_SIZE];
+
+static void flush_write_cache(javacall_handle handle) {
+    if (cacheHandle && cacheHandle == handle) {
+        javautil_debug_print (JAVACALL_LOG_INFORMATION, "file", "flush_write_cache h=%d, size=%d\n", cacheHandle, cacheIdx, 0);
+        _write(CONVERT_TO_FSHANDLE(cacheHandle), cacheBuf, cacheIdx);
+        cacheIdx = 0;
+    }
+}
 
 /**
  * Returns the index within this string of the last occurrence of the
@@ -122,13 +140,31 @@ unsigned short* char_to_unicode(char* str) {
 javacall_result javacall_file_init(void) {
     return JAVACALL_OK;
 }
-
 /**
  * Cleans up resources used by file system
- * @return JAVACALL_OK on success, JAVACALL_FAIL otherwise
- */
-javacall_result javacall_file_finalize(void) {
+ * @return <tt>JAVACALL_OK</tt> on success, <tt>JAVACALL_FAIL</tt> or negative value on error
+ */ javacall_result javacall_file_finalize(void) {
     return JAVACALL_OK;
+}
+
+static void enable_cache_for_file(javacall_handle handle,
+        const unsigned char* fileName, int length) {
+    int needCache = 0;
+
+    if (fileName[length - 3] == 'b'
+            || fileName[length - 2] == 'u'
+            || fileName[length - 1] == 'n') {
+        needCache = 1;
+    } else if (fileName[length - 3] == 'p'
+            || fileName[length - 2] == 'r'
+            || fileName[length - 1] == 'f') {
+        needCache = 1;
+    }
+
+    if (needCache) {
+        flush_write_cache(cacheHandle);
+        cacheHandle = handle;
+    }
 }
 
 /**
@@ -163,13 +199,22 @@ javacall_result javacall_file_open(const javacall_utf16*  unicodeFileName,
     int fd;
     int oFlag =  O_BINARY;
     int creationMode = 0;
+    javacall_int32 length;
 
     wchar_t wOsFilename[MAX_NULL_TERMINATED_NAME_LENGTH]; // max file name
+    unsigned char buf[JAVACALL_MAX_FILE_NAME_LENGTH + 1];
 
     if( fileNameLen > JAVACALL_MAX_FILE_NAME_LENGTH ) {
-	 javautil_debug_print (JAVACALL_LOG_ERROR, "file", "javacall_file_open: ERROR - File name length exceeds max file length");
+        javautil_debug_print(JAVACALL_LOG_ERROR, "file", "javacall_file_open: ERROR - File name length exceeds max file length");
         return JAVACALL_FAIL;
     }
+
+    if (JAVACALL_FAIL == javautil_unicode_utf16_to_utf8(unicodeFileName,
+            fileNameLen, buf, JAVACALL_MAX_FILE_NAME_LENGTH, &length)) {
+        javautil_debug_print(JAVACALL_LOG_ERROR, "file", "javacall_file_open failed: can't convert file name");
+        return JAVACALL_FAIL;
+    }
+    buf[length] = 0x0;
 
     memcpy(wOsFilename, unicodeFileName, fileNameLen*sizeof(wchar_t));
     wOsFilename[fileNameLen] = 0;
@@ -212,6 +257,9 @@ javacall_result javacall_file_open(const javacall_utf16*  unicodeFileName,
     }
 
     *handle = (void *)fd;
+    if (oFlag != O_RDONLY) {
+        enable_cache_for_file(*handle, buf, length);
+    }
     return JAVACALL_OK;
 } /* end of javacall_file_open */
 
@@ -224,6 +272,11 @@ javacall_result javacall_file_open(const javacall_utf16*  unicodeFileName,
 javacall_result javacall_file_close(javacall_handle handle){
 
     int res;
+    flush_write_cache(handle);
+    if (handle == cacheHandle) {
+        cacheHandle = NULL;
+    }
+
     res = _close((int) handle);
     if(res == -1) {
         return JAVACALL_FAIL;
@@ -246,6 +299,8 @@ long javacall_file_read(javacall_handle handle,
                         unsigned char *buf,
                         long size){
 
+    flush_write_cache(handle);
+
     return _read((int) handle, buf, size);
 }
 
@@ -262,8 +317,24 @@ long javacall_file_read(javacall_handle handle,
 long javacall_file_write(javacall_handle handle,
                          const unsigned char* buf,
                          long size) {
+    long ret;
 
-    return _write((int) handle, buf, size);
+    if (cacheHandle == handle) {
+        if (size >= WRITE_CACHE_SIZE) {
+            flush_write_cache(handle);
+            ret = _write(CONVERT_TO_FSHANDLE(handle), buf, size);
+        } else {
+            if (cacheIdx + size >= WRITE_CACHE_SIZE) {
+                flush_write_cache(cacheHandle);
+            }
+            memcpy(cacheBuf + cacheIdx, buf, size);
+            cacheIdx += size;
+            ret = size;
+        }
+    } else {
+        ret = _write(CONVERT_TO_FSHANDLE(handle), buf, size);
+    }
+    return ret;
 }
 
 /**
@@ -275,6 +346,8 @@ long javacall_file_write(javacall_handle handle,
 javacall_result javacall_file_flush(javacall_handle handle) {
 
     int res;
+    flush_write_cache(handle);
+
     res = _commit((int) handle);
     if(res == -1) {
         return JAVACALL_FAIL;
@@ -348,7 +421,7 @@ javacall_result javacall_file_truncate(javacall_handle handle, javacall_int64 si
 javacall_int64 javacall_file_seek(javacall_handle handle,
                         javacall_int64 offset,
                         javacall_file_seek_flags position) {
-
+    flush_write_cache(handle);
     return _lseek((int)handle, (long)offset, position);
 }
 
@@ -362,6 +435,7 @@ javacall_int64 javacall_file_sizeofopenfile(javacall_handle handle){
 
     struct _stat stat_buf;
 
+    flush_write_cache(handle);
     if (_fstat((int)handle, &stat_buf) == -1) {
         return -1;
     }
@@ -420,6 +494,10 @@ javacall_result javacall_file_exist(const javacall_utf16* fileName,
     int res;
 
     wchar_t wOsFilename[MAX_NULL_TERMINATED_NAME_LENGTH]; // max file name
+
+    if (fileName[0] == '.' && fileName[1] == 0x0)
+        return JAVACALL_FAIL;
+
 
     if( fileNameLen > JAVACALL_MAX_FILE_NAME_LENGTH ) {
 	 javautil_debug_print (JAVACALL_LOG_ERROR, "file", "javacall_file_exist: File name length exceeds max file length");
