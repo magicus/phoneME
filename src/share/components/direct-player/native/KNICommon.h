@@ -91,8 +91,6 @@ typedef struct _KNIPlayerInfo {
     void* pNativeHandle;    /* OEM can use this field to extend handle */
 } KNIPlayerInfo;
 
-javacall_result javacall_media_get_event_data(javacall_handle handle, int eventType, void *pResult, int numArgs, void *args[]);
-
 #if ENABLE_CDC
 
 #define JAVACALL_MM_ASYNC_EXEC(status_,code_,handle_,descr_,midp_event_,javacall_event_,args_) \
