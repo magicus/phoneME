@@ -37,7 +37,8 @@
 #include <midp_logging.h>
 #include <localeMethod.h>
 #include <midp_jc_event_defs.h>
-
+#include <midp_properties_port.h>
+#include "javautil_string.h"
 #include <javacall_datagram.h>
 #include <javacall_events.h>
 #include <javacall_input.h>
@@ -50,7 +51,7 @@
 #include <javacall_time.h>
 #include <javautil_unicode.h>
 #include <javacall_properties.h>
-
+#include "runMidlet.h"
 #ifdef ENABLE_JSR_120
 #include <javacall_sms.h>
 #include <javacall_cbs.h>
@@ -88,7 +89,38 @@ extern javacall_result midpHandleStartEvent(midp_jc_event_start_arbitrary_arg st
 static char urlAddress[BINARY_BUFFER_MAX_LEN];
 
 #define MAX_PHONE_NUMBER_LENGTH 48
+#define DEFAULT_MEMORY_CHUNK_SIZE (5*1024*1024 + 200*1024)
+
 static char selectedNumber[MAX_PHONE_NUMBER_LENGTH];
+
+
+/**
+ * Helper function to read memory parameters and initialize memory
+ *
+ * @return JAVACALL_OK if memory successfully initialized
+ */
+static javacall_result
+initialize_memory_slavemode(void) {
+    int main_memory_chunk_size;
+
+    /* Get java heap memory size */
+    main_memory_chunk_size = getInternalPropertyInt("MAIN_MEMORY_CHUNK_SIZE");
+    if (0 == main_memory_chunk_size){
+        REPORT_ERROR(LC_AMS, "javanotify_start(): Missing MAIN_MEMORY_CHUNK_SIZE property."
+                      "System will exit!\n");
+        main_memory_chunk_size = DEFAULT_MEMORY_CHUNK_SIZE;
+        return JAVACALL_FAIL;
+    }
+
+    /* Initialize midp memory pool */
+    if (midpInitializeMemory(main_memory_chunk_size) != 0) {
+        REPORT_ERROR(LC_AMS, "javanotify_start(): Cannot initialize MIDP memory\n");
+        return JAVACALL_OUT_OF_MEMORY;
+    }
+
+    return JAVACALL_OK;
+}
+
 
 /**
  * A helper function to
@@ -141,6 +173,7 @@ void javanotify_key_event(javacall_key key, javacall_keypress_type type) {
 void javanotify_pen_event(int x, int y, javacall_penevent_type type) {
     midp_jc_event_union e;
 
+    REPORT_ERROR(LC_AMS, "javanotify_pen_event(): Slave Mode method to be revised\n");
     REPORT_INFO3(LC_CORE,"javanotify_pen_event() >> x=%d, y=%d type=%d\n",x,y,type);
 
     e.eventType = MIDP_JC_EVENT_PEN;
@@ -151,16 +184,13 @@ void javanotify_pen_event(int x, int y, javacall_penevent_type type) {
     midp_jc_event_send(&e);
 }
 
+
+
 /**
  * The platform should invoke this function in platform context to start
  * Java.
  */
 void javanotify_start(void) {
-    midp_jc_event_union e;
-    midp_jc_event_start_arbitrary_arg *data = &e.data.startMidletArbitraryArgEvent;
-
-    int main_memory_chunk_size = -1;
-    char *prop_val = NULL;
     int argc = 0;
     char *argv[MIDP_RUNMIDLET_MAXIMUM_ARGS];
     javacall_result res;
@@ -168,22 +198,11 @@ void javanotify_start(void) {
     REPORT_INFO(LC_CORE, "javanotify_start() >>\n");
 
     JVM_Initialize();
-    if (javacall_get_property("MAIN_MEMORY_CHUNK_SIZE", JAVACALL_INTERNAL_PROPERTY, &prop_val) == JAVACALL_OK &&
-        (javautil_string_parse_int(prop_val, &main_memory_chunk_size) != JAVACALL_OK ||
-            main_memory_chunk_size <= 0)) {
-        /* Java heap supposed to be more than 0 */
-        REPORT_ERROR1(LC_AMS, "javanotify_start(): MAIN_MEMORY_CHUNK_SIZE is incorrect or too low = %d!"
-                      "Default value will be used!\n", main_memory_chunk_size);
+
+    if (initialize_memory_slavemode() != JAVACALL_OK) {
         return;
-    }
-    if (main_memory_chunk_size <= 0) {
-        main_memory_chunk_size = 5*1024*1024 + 200*1024;
     }
 
-    if (midpInitializeMemory(main_memory_chunk_size) != 0) {
-        REPORT_ERROR(LC_AMS, "javanotify_start(): Cannot initialize MIDP memory\n");
-        return;
-    }
     argv[argc++] = "runMidlet";
     argv[argc++] = "-1";
     argv[argc++] =
@@ -194,10 +213,7 @@ void javanotify_start(void) {
 #endif /* if ENABLE_MULTIPLE_ISOLATES */
 
     javacall_lifecycle_state_changed(JAVACALL_LIFECYCLE_MIDLET_STARTED, JAVACALL_OK);
-
     res = runMidlet(argc, argv);
-
-    javacall_lifecycle_state_changed(JAVACALL_LIFECYCLE_MIDLET_SHUTDOWN, (res == 1) ? JAVACALL_OK: JAVACALL_FAIL);
 }
 
 /**
@@ -208,28 +224,34 @@ void javanotify_start(void) {
  */
 void javanotify_start_suite(char* suiteId) {
     int length;
-    midp_jc_event_union e;
-    midp_jc_event_start_arbitrary_arg *data = &e.data.startMidletArbitraryArgEvent;
+    int argc = 0;
+    char *argv[MIDP_RUNMIDLET_MAXIMUM_ARGS];
+    javacall_result res;
 
     REPORT_INFO(LC_CORE, "javanotify_start_suite() >>\n");
 
-    e.eventType = MIDP_JC_EVENT_START_ARBITRARY_ARG;
+    JVM_Initialize();
 
-    data->argc = 0;
-    data->argv[data->argc++] = "runMidlet";
-    data->argv[data->argc++] = "-1";
-    data->argv[data->argc++] = "com.sun.midp.appmanager.MIDletSuiteLauncher";
-
-    length = strlen(suiteId);
-    if (length >= BINARY_BUFFER_MAX_LEN) {
+    if (initialize_memory_slavemode() != JAVACALL_OK) {
         return;
     }
 
+    length = strlen(suiteId);
+    if (length >= BINARY_BUFFER_MAX_LEN) {
+        REPORT_ERROR(LC_AMS, "javanotify_start_suite(): Incorrect suiteId parameter\n");
+        return;
+    }
     memset(urlAddress, 0, BINARY_BUFFER_MAX_LEN);
     memcpy(urlAddress, suiteId, length);
-    data->argv[data->argc++] = urlAddress;
 
-    midp_jc_event_send(&e);
+    argv[argc++] = "runMidlet";
+    argv[argc++] = "-1";
+    argv[argc++] = "com.sun.midp.appmanager.MIDletSuiteLauncher";
+    argv[argc++] = urlAddress;
+
+    javacall_lifecycle_state_changed(JAVACALL_LIFECYCLE_MIDLET_STARTED, JAVACALL_OK);
+
+    res = runMidlet(argc, argv);
 }
 
 /**
@@ -238,36 +260,41 @@ void javanotify_start_suite(char* suiteId) {
  */
 void javanotify_start_local(char* classname, char* descriptor,
                             char* classpath, javacall_bool debug) {
-    midp_jc_event_union e;
-    midp_jc_event_start_arbitrary_arg *data = &e.data.startMidletArbitraryArgEvent;
+    int argc = 0;
+    char *argv[MIDP_RUNMIDLET_MAXIMUM_ARGS];
+    javacall_result res;
 
     REPORT_INFO2(LC_CORE,"javanotify_start_local() >> classname=%s, descriptor=%d \n",
                  classname, descriptor);
 
-    e.eventType = MIDP_JC_EVENT_START_ARBITRARY_ARG;
+    JVM_Initialize();
+    if (initialize_memory_slavemode() != JAVACALL_OK) {
+        return;
+    }
 
-    data->argc = 0;
-    data->argv[data->argc++] = "runMidlet";
-    data->argv[data->argc++] = "-1";
+    argv[argc++] = "runMidlet";
+    argv[argc++] = "-1";
 
     if (classname == NULL) {
-        data->argv[data->argc++] = "internal";
+        argv[argc++] = "internal";
     } else {
-        data->argv[data->argc++] = classname;
+        argv[argc++] = classname;
     }
 
     if (descriptor != NULL) {
-        data->argv[data->argc++] = descriptor;
+        argv[argc++] = descriptor;
     } else {
-        data->argv[data->argc++] = classpath;
+        argv[argc++] = classpath;
     }
 
     if (classpath != NULL) {
-        data->argv[data->argc++] = "-classpathext";
-        data->argv[data->argc++] = classpath;
+        argv[argc++] = "-classpathext";
+        argv[argc++] = classpath;
     }
 
-    midp_jc_event_send(&e);
+    javacall_lifecycle_state_changed(JAVACALL_LIFECYCLE_MIDLET_STARTED, JAVACALL_OK);
+
+    res = runMidlet(argc, argv);
 }
 
 /**
@@ -280,65 +307,52 @@ void javanotify_start_local(char* classname, char* descriptor,
  */
 void javanotify_start_tck(char *tckUrl, javacall_lifecycle_tck_domain domain_type) {
     int length;
-    midp_jc_event_union e;
-    midp_jc_event_start_arbitrary_arg *data = &e.data.startMidletArbitraryArgEvent;
-
-    int main_memory_chunk_size = -1;
-    char *prop_val = NULL;
     int argc = 0;
     char *argv[MIDP_RUNMIDLET_MAXIMUM_ARGS];
     javacall_result res;
 
     REPORT_INFO2(LC_CORE,"javanotify_start_tck() >> tckUrl=%s, domain_type=%d \n",tckUrl,domain_type);
 
-    JVM_SetConfig(JVM_CONFIG_SLAVE_MODE, KNI_TRUE);
-
     midp_thread_set_timeslice_proc(midp_slavemode_schedule_vm_timeslice);
     JVM_Initialize();
-    if (javacall_get_property("MAIN_MEMORY_CHUNK_SIZE", JAVACALL_INTERNAL_PROPERTY, &prop_val) == JAVACALL_OK &&
-        (javautil_string_parse_int(prop_val, &main_memory_chunk_size) != JAVACALL_OK ||
-            main_memory_chunk_size <= 0)) {
-        /* Java heap supposed to be more than 0 */
-        REPORT_ERROR1(LC_AMS, "javanotify_start_tck(): MAIN_MEMORY_CHUNK_SIZE is incorrect or too low = %d!"
-                      "Default value will be used!\n", main_memory_chunk_size);
+
+    if (initialize_memory_slavemode() != JAVACALL_OK) {
         return;
-    }
-    if (main_memory_chunk_size <= 0) {
-        main_memory_chunk_size = 5*1024*1024 + 200*1024;
     }
 
-    if (midpInitializeMemory(main_memory_chunk_size) != 0) {
-        REPORT_ERROR(LC_AMS, "javanotify_start_tck(): Cannot initialize MIDP memory\n");
-        return;
-    }
     argv[argc++] = "runMidlet";
     argv[argc++] = "-1";
     argv[argc++] = "com.sun.midp.installer.AutoTester";
 
     length = strlen(tckUrl);
-    if (length >= BINARY_BUFFER_MAX_LEN)
+    if (length >= BINARY_BUFFER_MAX_LEN) {
+        REPORT_ERROR(LC_AMS, "javanotify_start_tck(): tckUrl is too long");
         return;
+    }
 
     memset(urlAddress, 0, BINARY_BUFFER_MAX_LEN);
     memcpy(urlAddress, tckUrl, length);
     if (strcmp(urlAddress, "none") != 0) {
-        data->argv[data->argc++] = urlAddress;
+	    argv[argc++] = urlAddress;
     }
 
-
     if (domain_type == JAVACALL_LIFECYCLE_TCK_DOMAIN_UNTRUSTED) {
-        data->argv[data->argc++] = "untrusted";
+        argv[argc++] = "untrusted";
     } else if (domain_type == JAVACALL_LIFECYCLE_TCK_DOMAIN_TRUSTED) {
-        data->argv[data->argc++] = "trusted";
+        argv[argc++] = "trusted";
     } else if (domain_type == JAVACALL_LIFECYCLE_TCK_DOMAIN_UNTRUSTED_MIN) {
-        data->argv[data->argc++] = "minimum";
+        argv[argc++] = "minimum";
     } else if (domain_type == JAVACALL_LIFECYCLE_TCK_DOMAIN_UNTRUSTED_MAX) {
-        data->argv[data->argc++] = "maximum";
+        argv[argc++] = "maximum";
     } else {
+        REPORT_ERROR(LC_CORE, "javanotify_start_tck() Can not recognize TCK domain\n");
+        REPORT_ERROR1(LC_CORE, "TCK domain type is %d. System will now exit\n", domain_type);
         return;
     }
 
-    midp_jc_event_send(&e);
+    javacall_lifecycle_state_changed(JAVACALL_LIFECYCLE_MIDLET_STARTED, JAVACALL_OK);
+
+    res = runMidlet(argc, argv);
 }
 
 /**
@@ -351,24 +365,30 @@ void javanotify_start_tck(char *tckUrl, javacall_lifecycle_tck_domain domain_typ
  * @note allowed argument description can be obtained by '-help' value as arg1.
  */
 void javanotify_start_i3test(char* arg1, char* arg2) {
-    midp_jc_event_union e;
-    midp_jc_event_start_arbitrary_arg *data = &e.data.startMidletArbitraryArgEvent;
+    int argc = 0;
+    char *argv[MIDP_RUNMIDLET_MAXIMUM_ARGS];
+    javacall_result res;
 
     REPORT_INFO2(LC_CORE,"javanotify_start_i3test() >> %s %s\n",arg1,arg2);
 
-    e.eventType = MIDP_JC_EVENT_START_ARBITRARY_ARG;
+    JVM_Initialize();
 
-    data->argc = 0;
-    data->argv[data->argc++] = "runMidlet";
-    data->argv[data->argc++] = "-1";
-    data->argv[data->argc++] = "com.sun.midp.i3test.Framework";
-    if (NULL != arg1) {
-        data->argv[data->argc++] = arg1;
-        if (NULL != arg2)
-            data->argv[data->argc++] = arg2;
+    if (initialize_memory_slavemode() != JAVACALL_OK) {
+        return;
     }
 
-    midp_jc_event_send(&e);
+    argv[argc++] = "runMidlet";
+    argv[argc++] = "-1";
+    argv[argc++] = "com.sun.midp.i3test.Framework";
+    if (NULL != arg1) {
+        argv[argc++] = arg1;
+        if (NULL != arg2)
+            argv[argc++] = arg2;
+    }
+
+    javacall_lifecycle_state_changed(JAVACALL_LIFECYCLE_MIDLET_STARTED, JAVACALL_OK);
+
+    res = runMidlet(argc, argv);
 }
 
 /**
@@ -382,28 +402,32 @@ void javanotify_start_i3test(char* arg1, char* arg2) {
  * @note allowed argument description can be obtained by '-help' value as arg1.
  */
 void javanotify_start_handler(char* handlerID, char* url, char* action) {
-    midp_jc_event_union e;
-    midp_jc_event_start_arbitrary_arg *data = &e.data.startMidletArbitraryArgEvent;
+    int argc = 0;
+    char *argv[MIDP_RUNMIDLET_MAXIMUM_ARGS];
+    javacall_result res;
 
     REPORT_INFO3(LC_CORE,"javanotify_start_handler() >> %s %s %s\n",
                  handlerID, url, action);
 
-    e.eventType = MIDP_JC_EVENT_START_ARBITRARY_ARG;
+    if (initialize_memory_slavemode() != JAVACALL_OK) {
+        return;
+    }
 
-    data->argc = 0;
-    data->argv[data->argc++] = "runMidlet";
-    data->argv[data->argc++] = "-1";
-    data->argv[data->argc++] = "com.sun.midp.content.Invoker";
+    argv[argc++] = "runMidlet";
+    argv[argc++] = "-1";
+    argv[argc++] = "com.sun.midp.content.Invoker";
     if (NULL != handlerID) {
-        data->argv[data->argc++] = handlerID;
+        argv[argc++] = handlerID;
         if (NULL != url) {
-            data->argv[data->argc++] = url;
+            argv[argc++] = url;
             if (NULL != action)
-                data->argv[data->argc++] = action;
+                argv[argc++] = action;
         }
     }
 
-    midp_jc_event_send(&e);
+    javacall_lifecycle_state_changed(JAVACALL_LIFECYCLE_MIDLET_STARTED, JAVACALL_OK);
+
+    res = runMidlet(argc, argv);
 }
 
 /**
@@ -426,28 +450,33 @@ void javanotify_start_handler(char* handlerID, char* url, char* action) {
  */
 void javanotify_install_midlet(const char *httpUrl) {
     int length;
-    midp_jc_event_union e;
-    midp_jc_event_start_arbitrary_arg *data = &e.data.startMidletArbitraryArgEvent;
+    int argc = 0;
+    char *argv[MIDP_RUNMIDLET_MAXIMUM_ARGS];
+    javacall_result res;
 
     REPORT_INFO1(LC_CORE,"javanotify_install_midlet() >> httpUrl = %s\n", httpUrl);
 
-    e.eventType = MIDP_JC_EVENT_START_ARBITRARY_ARG;
+    if (initialize_memory_slavemode() != JAVACALL_OK) {
+        return;
+    }
 
-    data->argc = 0;
-    data->argv[data->argc++] = "runMidlet";
-    data->argv[data->argc++] = "-1";
-    data->argv[data->argc++] = "com.sun.midp.installer.GraphicalInstaller";
-    data->argv[data->argc++] = "I";
+    argv[argc++] = "runMidlet";
+    argv[argc++] = "-1";
+    argv[argc++] = "com.sun.midp.installer.GraphicalInstaller";
+    argv[argc++] = "I";
 
     length = strlen(httpUrl);
-    if (length >= BINARY_BUFFER_MAX_LEN)
+    if (length >= BINARY_BUFFER_MAX_LEN){
+        REPORT_ERROR(LC_AMS, "javanotify_install_midlet(): httpUrl is too long\n");
         return;
+    }
 
     memset(urlAddress, 0, BINARY_BUFFER_MAX_LEN);
     memcpy(urlAddress, httpUrl, length);
-    data->argv[data->argc++] = urlAddress;
+    argv[argc++] = urlAddress;
 
-    midp_jc_event_send(&e);
+    javacall_lifecycle_state_changed(JAVACALL_LIFECYCLE_MIDLET_STARTED, JAVACALL_OK);
+    res = runMidlet(argc, argv);
 }
 
 /**
@@ -471,28 +500,34 @@ void javanotify_install_midlet(const char *httpUrl) {
  */
 void javanotify_install_midlet_from_filesystem(const javacall_utf16* jadFilePath,
                                                int jadFilePathLen, int userWasAsked) {
-    midp_jc_event_union e;
-    midp_jc_event_start_arbitrary_arg *data = &e.data.startMidletArbitraryArgEvent;
-
+    int argc = 0;
+    char *argv[MIDP_RUNMIDLET_MAXIMUM_ARGS];
+    javacall_result res;
     REPORT_INFO(LC_CORE, "javanotify_install_midlet_from_filesystem() >>\n");
 
-    e.eventType = MIDP_JC_EVENT_START_ARBITRARY_ARG;
-
-    data->argc = 0;
-    data->argv[data->argc++] = "runMidlet";
-    data->argv[data->argc++] = "-1";
-    data->argv[data->argc++] = "com.sun.midp.scriptutil.CommandLineInstaller";
-    data->argv[data->argc++] = "I";
-
-    if (jadFilePathLen >= BINARY_BUFFER_MAX_LEN)
+    JVM_Initialize();
+    if (initialize_memory_slavemode() != JAVACALL_OK) {
         return;
+    }
+
+    argv[argc++] = "runMidlet";
+    argv[argc++] = "-1";
+    argv[argc++] = "com.sun.midp.scriptutil.CommandLineInstaller";
+    argv[argc++] = "I";
+
+    if (jadFilePathLen >= BINARY_BUFFER_MAX_LEN){
+        REPORT_ERROR(LC_AMS, "javanotify_install_midlet_from_filesystem(): jadFilePathLen is too long");
+        return;
+    }
 
     memset(urlAddress, 0, BINARY_BUFFER_MAX_LEN);
     unicodeToNative(jadFilePath, jadFilePathLen,
                     (unsigned char *)urlAddress, BINARY_BUFFER_MAX_LEN);
-    data->argv[data->argc++] = urlAddress;
 
-    midp_jc_event_send(&e);
+    argv[argc++] = urlAddress;
+
+    javacall_lifecycle_state_changed(JAVACALL_LIFECYCLE_MIDLET_STARTED, JAVACALL_OK);
+    res = runMidlet(argc, argv);
 }
 
 /**
@@ -518,41 +553,47 @@ void javanotify_install_midlet_from_filesystem(const javacall_utf16* jadFilePath
  */
 void javanotify_install_midlet_wparams(const char* httpUrl,
                                        int silentInstall, int forceUpdate) {
+    int argc = 0;
+    char *argv[MIDP_RUNMIDLET_MAXIMUM_ARGS];
+    javacall_result res;
     int length;
-    midp_jc_event_union e;
-    midp_jc_event_start_arbitrary_arg *data = &e.data.startMidletArbitraryArgEvent;
 
     REPORT_INFO2(LC_CORE,"javanotify_install_midlet_wparams() >> "
                          "httpUrl = %s, silentInstall = %d\n",
                  httpUrl, silentInstall);
 
-    e.eventType = MIDP_JC_EVENT_START_ARBITRARY_ARG;
+    JVM_Initialize();
 
-    data->argc = 0;
-    data->argv[data->argc++] = "runMidlet";
-    data->argv[data->argc++] = "-1";
-    data->argv[data->argc++] = "com.sun.midp.installer.GraphicalInstaller";
+    if (initialize_memory_slavemode() != JAVACALL_OK) {
+        return;
+    }
+
+    argv[argc++] = "runMidlet";
+    argv[argc++] = "-1";
+    argv[argc++] = "com.sun.midp.installer.GraphicalInstaller";
 
     if (silentInstall == 1) {
         if (forceUpdate == 1) {
-            data->argv[data->argc++] = "FU";
+            argv[argc++] = "FU";
         } else {
-            data->argv[data->argc++] = "FI";
+            argv[argc++] = "FI";
         }
     } else {
-        data->argv[data->argc++] = "I";
+        argv[argc++] = "I";
     }
 
     length = strlen(httpUrl);
     if (length >= BINARY_BUFFER_MAX_LEN) {
+        REPORT_ERROR(LC_AMS, "javanotify_install_midlet_wparams(): httpUrl is too long");
         return;
     }
 
     memset(urlAddress, 0, BINARY_BUFFER_MAX_LEN);
     memcpy(urlAddress, httpUrl, length);
-    data->argv[data->argc++] = urlAddress;
+    argv[argc++] = urlAddress;
 
-    midp_jc_event_send(&e);
+    javacall_lifecycle_state_changed(JAVACALL_LIFECYCLE_MIDLET_STARTED, JAVACALL_OK);
+    res = runMidlet(argc, argv);
 }
 
 /**
@@ -567,17 +608,21 @@ void javanotify_install_midlet_wparams(const char* httpUrl,
  *       being EXPLICITLY INSTRUCTED to do so.
  */
 void javanotify_start_java_with_arbitrary_args(int argc, char* argv[]) {
-    midp_jc_event_union e;
+
+    javacall_result res;
 
     REPORT_INFO(LC_CORE, "javanotify_start_java_with_arbitrary_args() >>\n");
 
-    if (argc > MIDP_RUNMIDLET_MAXIMUM_ARGS)
+    if (argc > MIDP_RUNMIDLET_MAXIMUM_ARGS) {
         argc = MIDP_RUNMIDLET_MAXIMUM_ARGS;
-    e.eventType = MIDP_JC_EVENT_START_ARBITRARY_ARG;
-    e.data.startMidletArbitraryArgEvent.argc = argc;
-    memcpy(e.data.startMidletArbitraryArgEvent.argv, argv, argc * sizeof(char*));
+    }
 
-    midp_jc_event_send(&e);
+    if (initialize_memory_slavemode() != JAVACALL_OK) {
+        return;
+    }
+
+    javacall_lifecycle_state_changed(JAVACALL_LIFECYCLE_MIDLET_STARTED, JAVACALL_OK);
+    res = runMidlet(argc, argv);
 }
 
 /**
@@ -589,6 +634,7 @@ void javanotify_start_java_with_arbitrary_args(int argc, char* argv[]) {
 void javanotify_set_vm_args(int argc, char* argv[]) {
     midp_jc_event_union e;
 
+    REPORT_ERROR(LC_AMS, "javanotify_set_vm_args(): Slave Mode method to be revised\n");
     REPORT_INFO(LC_CORE, "javanotify_set_vm_args() >>\n");
 
     if (argc > MIDP_RUNMIDLET_MAXIMUM_ARGS) {
@@ -609,6 +655,7 @@ void javanotify_set_vm_args(int argc, char* argv[]) {
 void javanotify_set_heap_size(int heapsize) {
     midp_jc_event_union e;
 
+    REPORT_ERROR(LC_AMS, "javanotify_set_heap_size(): Slave Mode method to be revised\n");
     REPORT_INFO(LC_CORE, "javanotify_set_heap_size() >>\n");
 
     e.eventType = MIDP_JC_EVENT_SET_HEAP_SIZE;
@@ -622,6 +669,7 @@ void javanotify_set_heap_size(int heapsize) {
 void javanotify_list_midlets(void) {
     midp_jc_event_union e;
 
+    REPORT_ERROR(LC_AMS, "javanotify_list_midlets(): Slave Mode method to be revised\n");
     REPORT_INFO(LC_CORE, "javanotify_list_midlets() >>\n");
 
     e.eventType = MIDP_JC_EVENT_LIST_MIDLETS;
@@ -635,6 +683,7 @@ void javanotify_list_midlets(void) {
 void javanotify_list_storageNames(void) {
     midp_jc_event_union e;
 
+    REPORT_ERROR(LC_AMS, "javanotify_list_storageNames(): Slave Mode method to be revised\n");
     REPORT_INFO(LC_CORE, "javanotify_list_storageName() >>\n");
 
     e.eventType = MIDP_JC_EVENT_LIST_STORAGE_NAMES;
@@ -647,6 +696,7 @@ void javanotify_list_storageNames(void) {
 void javanotify_remove_suite(char* suite_id) {
     midp_jc_event_union e;
 
+    REPORT_ERROR(LC_AMS, "javanotify_remove_suite(): Slave Mode method to be revised\n");
     REPORT_INFO(LC_CORE, "javanotify_remove_suite() >>\n");
 
     e.eventType = MIDP_JC_EVENT_REMOVE_MIDLET;
@@ -662,6 +712,7 @@ void javanotify_transient(char* url) {
     midp_jc_event_union e;
     midp_jc_event_start_arbitrary_arg *data = &e.data.startMidletArbitraryArgEvent;
 
+    REPORT_ERROR(LC_AMS, "javanotify_transient(): Slave Mode method to be revised\n");
     REPORT_INFO(LC_CORE,"javanotify_transient() >>\n");
 
     e.eventType = MIDP_JC_EVENT_START_ARBITRARY_ARG;
@@ -692,9 +743,12 @@ void javanotify_transient(char* url) {
 void javanotify_shutdown(void) {
     midp_jc_event_union e;
 
+    REPORT_ERROR(LC_AMS, "javanotify_shutdown(): Slave Mode method to be revised\n");
     REPORT_INFO(LC_CORE, "javanotify_shutdown() >>\n");
 
     e.eventType = MIDP_JC_EVENT_END;
+
+    javacall_lifecycle_state_changed(JAVACALL_LIFECYCLE_MIDLET_SHUTDOWN, JAVACALL_OK);
 
     midp_jc_event_send(&e);
 }
@@ -706,6 +760,7 @@ void javanotify_shutdown(void) {
 void javanotify_pause(void) {
     midp_jc_event_union e;
 
+    REPORT_ERROR(LC_AMS, "javanotify_pause(): Slave Mode method to be revised\n");
     REPORT_INFO(LC_CORE, "javanotify_pause() >>\n");
 
     e.eventType = MIDP_JC_EVENT_PAUSE;
@@ -720,6 +775,7 @@ void javanotify_pause(void) {
 void javanotify_resume(void) {
     midp_jc_event_union e;
 
+    REPORT_ERROR(LC_AMS, "javanotify_resume(): Slave Mode method to be revised\n");
     REPORT_INFO(LC_CORE, "javanotify_resume() >>\n");
 
     e.eventType = MIDP_JC_EVENT_RESUME;
@@ -735,6 +791,7 @@ void javanotify_select_foreground_app(void) {
 #if ENABLE_MULTIPLE_ISOLATES
     midp_jc_event_union e;
 
+    REPORT_ERROR(LC_AMS, "javanotify_select_foreground_app(): Slave Mode method to be revised\n");
     REPORT_INFO(LC_CORE, "javanotify_switchforeground() >>\n");
 
     e.eventType = MIDP_JC_EVENT_SWITCH_FOREGROUND;
@@ -751,6 +808,7 @@ void javanotify_switch_to_ams(void) {
 #if ENABLE_MULTIPLE_ISOLATES
     midp_jc_event_union e;
 
+    REPORT_ERROR(LC_AMS, "javanotify_switch_to_ams(): Slave Mode method to be revised\n");
     REPORT_INFO(LC_CORE, "javanotify_selectapp() >>\n");
 
     e.eventType = MIDP_JC_EVENT_SELECT_APP;
@@ -766,6 +824,7 @@ void javanotify_switch_to_ams(void) {
 void javanotify_internal_pause(void) {
     midp_jc_event_union e;
 
+    REPORT_ERROR(LC_AMS, "javanotify_internal_pause(): Slave Mode method to be revised\n");
     REPORT_INFO(LC_CORE, "javanotify_internal_pause() >>\n");
 
     e.eventType = MIDP_JC_EVENT_INTERNAL_PAUSE;
@@ -780,6 +839,7 @@ void javanotify_internal_pause(void) {
 void javanotify_internal_resume(void) {
     midp_jc_event_union e;
 
+    REPORT_ERROR(LC_AMS, "javanotify_internal_resume(): Slave Mode method to be revised\n");
     REPORT_INFO(LC_CORE, "javanotify_internal_resume() >>\n");
 
     e.eventType = MIDP_JC_EVENT_INTERNAL_RESUME;
@@ -799,6 +859,9 @@ void javanotify_internal_resume(void) {
  */
 void javanotify_network_event(javacall_network_event netEvent) {
     midp_jc_event_union e;
+
+    REPORT_ERROR(LC_AMS, "javanotify_network_event(): Slave Mode method to be revised\n");
+    REPORT_INFO(LC_CORE, "javanotify_network_event() >>\n");
     e.eventType = MIDP_JC_EVENT_NETWORK;
     if (netEvent == JAVACALL_NETWORK_UP) {
         e.data.networkEvent.netType = MIDP_NETWORK_UP;
@@ -885,6 +948,8 @@ void javanotify_incoming_sms(javacall_sms_encoding msgType,
     midp_jc_event_union e;
         SmsMessage* sms;
 
+    REPORT_ERROR(LC_AMS, "javanotify_incoming_sms(): Slave Mode method to be revised\n");
+    REPORT_INFO(LC_CORE, "javanotify_incoming_sms() >>\n");
     e.eventType = MIDP_JC_EVENT_SMS_INCOMING;
 
     sms = jsr120_sms_new_msg_javacall(
@@ -933,6 +998,8 @@ void javanotify_incoming_mms(
     midp_jc_event_union e;
     MmsMessage* mms;
 
+    REPORT_ERROR(LC_AMS, "javanotify_incoming_mms(): Slave Mode method to be revised\n");
+    REPORT_INFO(LC_CORE, "javanotify_incoming_mms() >>\n");
     e.eventType = MIDP_JC_EVENT_MMS_INCOMING;
 
     mms = jsr205_mms_new_msg_javacall(fromAddress, appID, replyToAppID, bodyLen, body);
@@ -950,6 +1017,8 @@ void javanotify_incoming_mms_available(
     midp_jc_event_union e;
     MmsMessage* mms;
 
+    REPORT_ERROR(LC_AMS, "javanotify_incoming_mms_available(): Slave Mode method to be revised\n");
+    REPORT_INFO(LC_CORE, "javanotify_incoming_mms_available() >>\n");
     e.eventType = MIDP_JC_EVENT_MMS_INCOMING;
 
     //bodyLen=-1
@@ -1009,6 +1078,8 @@ void javanotify_incoming_cbs(
 
     e.eventType = MIDP_JC_EVENT_CBS_INCOMING;
 
+    REPORT_ERROR(LC_AMS, "javanotify_incoming_cbs(): Slave Mode method to be revised\n");
+    REPORT_INFO(LC_CORE, "javanotify_incoming_cbs() >>\n");
     cbs = jsr120_cbs_new_msg_javacall(msgType, msgID, msgBufferLen, msgBuffer);
 
     e.data.cbsIncomingEvent.stub = (int)cbs;
@@ -1034,6 +1105,8 @@ void javanotify_sms_send_completed(javacall_result result,
                                    int handle) {
     midp_jc_event_union e;
 
+    REPORT_ERROR(LC_AMS, "javanotify_sms_send_completed(): Slave Mode method to be revised\n");
+    REPORT_INFO(LC_CORE, "javanotify_sms_send_completed() >>\n");
     e.eventType = MIDP_JC_EVENT_SMS_SENDING_RESULT;
     e.data.smsSendingResultEvent.handle = (void *) handle;
     e.data.smsSendingResultEvent.result
@@ -1060,6 +1133,8 @@ void javanotify_mms_send_completed(javacall_result result,
                                    int handle) {
     midp_jc_event_union e;
 
+    REPORT_ERROR(LC_AMS, "javanotify_mms_send_completed(): Slave Mode method to be revised\n");
+    REPORT_INFO(LC_CORE, "javanotify_mms_send_completed() >>\n");
     e.eventType = MIDP_JC_EVENT_MMS_SENDING_RESULT;
     e.data.mmsSendingResultEvent.handle = (void *) handle;
     e.data.mmsSendingResultEvent.result =
@@ -1078,6 +1153,8 @@ void javanotify_carddevice_event(javacall_carddevice_event event,
                                  void *context) {
     midp_jc_event_union e;
 
+    REPORT_ERROR(LC_AMS, "javanotify_carddevice_event(): Slave Mode method to be revised\n");
+    REPORT_INFO(LC_CORE, "javanotify_carddevice_event() >>\n");
     e.eventType = MIDP_JC_EVENT_CARDDEVICE;
     switch (event) {
     case JAVACALL_CARDDEVICE_RESET:
@@ -1126,6 +1203,9 @@ void javanotify_socket_event(javacall_socket_callback_type type,
                         javacall_result operation_result) {
 
     midp_jc_event_union e;
+
+    REPORT_ERROR(LC_AMS, "javanotify_socket_event(): Slave Mode method to be revised\n");
+    REPORT_INFO(LC_CORE, "javanotify_socket_event() >>\n");
     e.eventType = MIDP_JC_EVENT_SOCKET;
     e.data.socketEvent.handle = socket_handle;
     e.data.socketEvent.status = operation_result;
@@ -1190,6 +1270,8 @@ void /* OPTIONAL */ javanotify_server_socket_event(javacall_server_socket_callba
                                javacall_handle new_socket_handle,
                                javacall_result operation_result) {
     midp_jc_event_union e;
+    REPORT_ERROR(LC_AMS, "javanotify_server_socket_event(): Slave Mode method to be revised\n");
+    REPORT_INFO(LC_CORE, "javanotify_server_socket_event() >>\n");
     e.eventType = MIDP_JC_EVENT_SOCKET;
     e.data.socketEvent.handle = socket_handle;
     e.data.socketEvent.status = operation_result;
@@ -1237,6 +1319,9 @@ void javanotify_datagram_event(javacall_datagram_callback_type type,
                                javacall_result operation_result) {
 
     midp_jc_event_union e;
+
+    REPORT_ERROR(LC_AMS, "javanotify_datagram_event(): Slave Mode method to be revised\n");
+    REPORT_INFO(LC_CORE, "javanotify_datagram_event() >>\n");
     e.eventType = MIDP_JC_EVENT_SOCKET;
     e.data.socketEvent.handle = handle;
     e.data.socketEvent.status = operation_result;
@@ -1277,7 +1362,7 @@ void javanotify_on_media_notification(javacall_media_notification_type type,
                                       void *data) {
 #if ENABLE_JSR_135
     midp_jc_event_union e;
-
+    REPORT_ERROR(LC_AMS, "javanotify_on_media_notification(): Slave Mode method to be revised\n");
     REPORT_INFO4(LC_MMAPI, "javanotify_on_media_notification type=%d appId=%d playerId%d status=%d\n", type, appId, playerId, status);
 
     e.eventType = MIDP_JC_EVENT_MULTIMEDIA;
@@ -1305,6 +1390,7 @@ void javanotify_on_amms_notification(javacall_amms_notification_type type,
                                      void *data) {
     midp_jc_event_union e;
 
+    REPORT_ERROR(LC_AMS, "javanotify_start(): Slave Mode method to be revised\n");
     e.eventType = MIDP_JC_EVENT_ADVANCED_MULTIMEDIA;
     e.data.multimediaEvent.mediaType = type;
     e.data.multimediaEvent.appId = (int)((processorId >> 32) & 0xFFFF);
@@ -1325,6 +1411,9 @@ void javanotify_on_amms_notification(javacall_amms_notification_type type,
  * @param result the decoding operation result
  */
 void javanotify_on_image_decode_end(javacall_handle handle, javacall_result result) {
+    REPORT_ERROR(LC_AMS, "javanotify_on_image_decode_end(): Slave Mode method to be revised\n");
+    REPORT_INFO(LC_CORE, "javanotify_on_image_decode_end() >>\n");
+
 #ifdef ENABLE_EXTERNAL_IMAGE_DECODER
     midp_jc_event_union e;
 
@@ -1345,6 +1434,9 @@ void javanotify_on_image_decode_end(javacall_handle handle, javacall_result resu
  * a root on removed).
  */
 void javanotify_fileconnection_root_changed(void) {
+    REPORT_ERROR(LC_AMS, "javanotify_fileconnection_root_changed(): Slave Mode method to be revised\n");
+    REPORT_INFO(LC_CORE, "javanotify_fileconnection_root_changed() >>\n");
+
 #ifdef ENABLE_JSR_75
     midp_jc_event_union e;
     e.eventType = JSR75_FC_JC_EVENT_ROOTCHANGED;
@@ -1383,6 +1475,9 @@ void javanotify_location_event(
         javacall_handle provider,
         javacall_location_result operation_result) {
     midp_jc_event_union e;
+
+    REPORT_ERROR(LC_AMS, "javanotify_location_event(): Slave Mode method to be revised\n");
+    REPORT_INFO(LC_CORE, "javanotify_location_event() >>\n");
 
     e.eventType = JSR179_LOCATION_JC_EVENT;
 
@@ -1429,6 +1524,9 @@ void /*OPTIONAL*/javanotify_location_proximity(
         javacall_location_result operation_result) {
 
     midp_jc_event_union e;
+
+    REPORT_ERROR(LC_AMS, "javanotify_location_proximity(): Slave Mode method to be revised\n");
+    REPORT_INFO(LC_CORE, "javanotify_location_proximity() >>\n");
 
     e.eventType = JSR179_PROXIMITY_JC_EVENT;
     e.data.jsr179ProximityEvent.provider = provider;
@@ -1487,6 +1585,9 @@ void javanotify_chapi_platform_finish(
     javacall_chapi_invocation *inv;
     int i;
 
+    REPORT_ERROR(LC_AMS, "javanotify_chapi_platform_finish(): Slave Mode method to be revised\n");
+    REPORT_INFO(LC_CORE, "javanotify_chapi_platform_finish() >>\n");
+
     e.eventType = JSR211_JC_EVENT_PLATFORM_FINISH;
     e.data.jsr211PlatformEvent.invoc_id    = invoc_id;
     e.data.jsr211PlatformEvent.jsr211event =
@@ -1536,6 +1637,9 @@ void javanotify_chapi_java_invoke(
     midp_jc_event_union e;
     javacall_chapi_invocation *inv;
     int i;
+
+    REPORT_ERROR(LC_AMS, "javanotify_chapi_java_invoke(): Slave Mode method to be revised\n");
+    REPORT_INFO(LC_CORE, "javanotify_chapi_java_invoke() >>\n");
 
     e.eventType = JSR211_JC_EVENT_JAVA_INVOKE;
     e.data.jsr211PlatformEvent.invoc_id    = invoc_id;
@@ -1588,6 +1692,9 @@ void javanotify_security_permission_dialog_finish(
                          javacall_security_permission_type userPermission) {
     midp_jc_event_union e;
 
+    REPORT_ERROR(LC_AMS, "javanotify_security_permission_dialog_finish(): Slave Mode method to be revised\n");
+    REPORT_INFO(LC_CORE, "javanotify_security_permission_dialog_finish() >>\n");
+
     e.eventType = MIDP_JC_EVENT_PERMISSION_DIALOG;
     e.data.permissionDialog_event.permission_level = userPermission;
 
@@ -1635,6 +1742,8 @@ void javanotify_install_content(const char * httpUrl,
     midp_jc_event_union e;
     int httpUrlLength, dscFileOffset;
 
+    REPORT_ERROR(LC_AMS, "javanotify_install_content(): Slave Mode method to be revised\n");
+    REPORT_INFO(LC_CORE, "javanotify_install_content() >>\n");
 
     if ((httpUrl == NULL) || (httpUrl == NULL)) {
         return; /* mandatory parameter is NULL */
@@ -1672,6 +1781,9 @@ void javanotify_vscl_incoming_event(javacall_vscl_event_type type,
                                     javacall_utf16* str1,
                                     javacall_utf16* str2) {
     midp_jc_event_union e;
+
+    REPORT_ERROR(LC_AMS, "javanotify_vscl_incoming_event(): Slave Mode method to be revised\n");
+    REPORT_INFO(LC_CORE, "javanotify_vscl_incoming_event() >>\n");
 
     switch (type) {
     case JAVACALL_VSCL_INCOMING_CALL:
@@ -1720,6 +1832,9 @@ void /* OPTIONAL */ javanotify_textfield_phonenumber_selection(char* phoneNumber
     midp_jc_event_union e;
     int length;
 
+    REPORT_ERROR(LC_AMS, "javanotify_textfield_phonenumber_selection(): Slave Mode method to be revised\n");
+    REPORT_INFO(LC_CORE, "javanotify_textfield_phonenumber_selection() >>\n");
+
     e.eventType = MIDP_JC_EVENT_PHONEBOOK;
     memset(selectedNumber, 0, MAX_PHONE_NUMBER_LENGTH);
 
@@ -1740,6 +1855,9 @@ void /* OPTIONAL */ javanotify_textfield_phonenumber_selection(char* phoneNumber
 void /* OPTIONAL */ javanotify_rotation() {
     midp_jc_event_union e;
 
+    REPORT_ERROR(LC_AMS, "javanotify_rotation(): Slave Mode method to be revised\n");
+    REPORT_INFO(LC_CORE, "javanotify_rotation() >>\n");
+
     e.eventType = MIDP_JC_EVENT_ROTATION;
     midp_jc_event_send(&e);
 }
@@ -1751,6 +1869,9 @@ void /* OPTIONAL */ javanotify_rotation() {
  */
 void javanotify_enable_odd() {
      midp_jc_event_union e;
+
+     REPORT_ERROR(LC_AMS, "javanotify_enable_odd(): Slave Mode method to be revised\n");
+     REPORT_INFO(LC_CORE, "javanotify_enable_odd() >>\n");
 
      e.eventType = MIDP_JC_ENABLE_ODD_EVENT;
      midp_jc_event_send(&e);
