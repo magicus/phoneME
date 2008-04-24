@@ -218,7 +218,6 @@ public:
   jfloat    as_float()  { return *((jfloat*)base()); } 
   jdouble   as_double() { 
     jlong a = as_long();
-//    return *(jdouble *)&a;
 		return jdouble_cast(a);
   }
 #endif
@@ -241,7 +240,6 @@ public:
   }
 
   void set_double(jdouble val) {
-    //set_long(*(jlong*)&val);
 		set_long(jlong_cast(val));
   }
 
@@ -672,7 +670,6 @@ class RuntimeFrame: public Frame {
   }
   jdouble   double_at (const jint index) const { 
     jlong value = long_at(index);
-    //return *(double *)&value;
 		return jdouble_cast(value);
   }
       
