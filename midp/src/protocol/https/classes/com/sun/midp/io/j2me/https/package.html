@@ -1,0 +1,87 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<html>
+<head>
+<!--
+
+    
+ 
+  Copyright  2007  Sun Microsystems, Inc. All rights reserved.
+
+-->
+</head>
+<body bgcolor="white">
+Provides the implementation of a HTTPS generic connection,
+ when an application invokes <code>javax.microediton.io.Connector.open</code>
+ with <b>https</b> as the scheme of the URL. The connection can be used in the
+ same manner as <code>javax.microediton.io.HttpConnection</code>.
+<p>
+HTTPS depends on the public keys of certificate authorities. To manage the keys
+ use the MIDP MEKeyTool. From the directory above the MIDP executable use:</p>
+<blockquote><p>
+<code>java -jar bin/MEKeyTool.jar -help</code></p></blockquote>
+<h2>
+Features and Non-Features</h2>
+<blockquote><p>
+Supports Netscape HTTPS proxies, uses the same configuration value as HTTP.</p>
+<p>
+Does not support HTTP 1.1 persistant connections.</p>
+<p>
+See the <a href="../../../ssl/package-summary.html">
+ <code>com.sun.midp.ssl</code></a> package documentation for more feature
+ information.</p>
+</blockquote>
+<h2>
+Internal Architecture</h2>
+<blockquote><p align="center">
+<img src="doc-files/https.gif" border=0></p>
+<ul>
+<li><b>HTTP</b>: Performs HTTP request and response processing
+</li>
+<li><b>TCP</b>: Reliable Internet protocol
+</li>
+<li><b>SSL</b>: Secure Socket Layer performs authentication and provides
+ privacy
+</li>
+<li><b>Public Keystore</b>: Holds the public keys of trusted certificate
+ authorities
+</li>
+<li><b>MEKeyTool</b>: An off-device tool that manages mobile equipment public
+ keystores.
+</li>
+</ul></blockquote>
+<h2>
+Related Information</h2>
+<blockquote>
+<p>
+<a href="http://docs.iplanet.com/docs/manuals/security/sslin/index.htm">
+A Good Introduction to SSL</a></p>
+<p>
+<a href="http://docs.iplanet.com/docs/manuals/security/pkin/index.htm">
+A Good Introduction to Public Key Cryptography</a></p>
+<p>
+<a href="http://www.ietf.org/rfc/rfc2818.txt">
+RFC 2818, HTTP Over TLS</a></p>
+<p>
+<a href="http://www.ietf.org/rfc/rfc2616.txt">RFC 2616, Hypertext Transfer
+Protocol -- HTTP/1.1</a></p>
+<p>
+<a href="http://www.web-cache.com/Writings/Internet-Drafts/draft-luotonen-web-proxy-tunneling-01.txt">
+Internet Draft, Tunneling TCP based protocols through Web proxy servers</a></p>
+<p>
+<a href="http://www.ietf.org/rfc/rfc2246.txt">
+RFC 2246, The TLS Protocol Version 1.0</a></p>
+<p>
+<a href="http://home.netscape.com/eng/ssl3/draft302.txt">
+SSL Protocol Version 3.0</a></p>
+<p>
+<a href="http://www.ietf.org/rfc/rfc2459.txt">RFC 2459, Internet X.509
+Public Key Infrastructure Certificate and CRL Profile</a></p>
+<p>
+<a href="http://www.rsasecurity.com/rsalabs/pkcs/">RSA's PKCS (Public
+Key Cryptography Standards) document set.</a></p>
+<p>
+<a href="http://www.rsasecurity.com/rsalabs/pkcs/">RSA's PKCS (Public
+Key Cryptography Standards) document set.</a></p>
+</blockquote>
+</body>
+</html>
