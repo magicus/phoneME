@@ -56,7 +56,7 @@ static void doProcessHeader(ah* h, const void* buf, long buf_length);
 static javacall_result audio_qs_get_duration(javacall_handle handle, long* ms);
 
 
-#define PCM_PACKET_SIZE(wav) (wav.rate*wav.channels*wav.bits/8)
+#define PCM_PACKET_SIZE(wav) (wav.rate*wav.channels*(wav.bits>>3))
 #define MIN_PCM_BUFFERED_SIZE(wav) (3*PCM_PACKET_SIZE(wav))
 #define MAX_PCM_BUFFERED_SIZE(wav) (5*PCM_PACKET_SIZE(wav))
 
@@ -79,6 +79,7 @@ static void sendBuffering(int appId, int playerId)
     javanotify_on_media_notification(JAVACALL_EVENT_MEDIA_NEED_MORE_MEDIA_DATA,
         appId, playerId, JAVACALL_OK, NULL);
 }
+
 
 /******************************************************************************/
 
@@ -173,9 +174,23 @@ static void* getNextSamples(void* userData, int bytesCnt, int* pBytesGet)
                 *pBytesGet = bytesCnt;
 
             if (pHDR->mediaType == JC_FMT_MS_PCM) {
+                if(pWAV->bufferingMode && 
+                    ( (pWAV->streamBufferLen != pWAV->currentPos) || 
+                      (pWAV->streamBufferFull))) {
+                    javanotify_on_media_notification(JAVACALL_EVENT_MEDIA_BUFFERING_STOPPED,
+                            pWAV->hdr.isolateID,pWAV->hdr.playerID, JAVACALL_OK, 
+                            (void*)(pWAV->currentPos / pWAV->bytesPerMilliSec));
+                    pWAV->bufferingMode = JAVACALL_FALSE;
+                }
                 if (!pWAV->streamBufferFull && 
                     (pWAV->streamBufferLen-pWAV->currentPos)<=MIN_PCM_BUFFERED_SIZE((*pWAV))) {
                     sendBuffering(pWAV->hdr.isolateID,pWAV->hdr.playerID);
+                    if(!pWAV->bufferingMode && pWAV->streamBufferLen == pWAV->currentPos) {
+                        javanotify_on_media_notification(JAVACALL_EVENT_MEDIA_BUFFERING_STARTED,
+                                pWAV->hdr.isolateID,pWAV->hdr.playerID, JAVACALL_OK, 
+                                (void*)(pWAV->currentPos / pWAV->bytesPerMilliSec));
+                        pWAV->bufferingMode = JAVACALL_TRUE;
+                    }
                 }
             }
          }
@@ -797,6 +812,7 @@ static javacall_handle audio_qs_create(int appId, int playerId,
             newHandle->wav.originalDataFull = JAVACALL_FALSE;
             newHandle->wav.em               = NULL;
             newHandle->wav.streamBufferFull = JAVACALL_FALSE;
+            newHandle->wav.bufferingMode    = JAVACALL_FALSE;
 
             ef = g_QSoundGM[gmIdx].EM135;
 
@@ -1408,6 +1424,7 @@ static javacall_result audio_qs_do_buffering(
             } else {
                 *need_more_data = JAVACALL_TRUE;
             }*/
+            
             if (wav_setStreamPlayerData(&h->wav, buffer, *length) != 1) {
                 return JAVACALL_FAIL;
             }

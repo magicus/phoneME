@@ -113,6 +113,7 @@ typedef struct {
     javacall_bool           streamBufferFull;
     int                     currentPos;
     int                     bytesPerMilliSec;
+    javacall_bool           bufferingMode;
     struct wav_meta_data    metaData;
 } ah_wav;
 
