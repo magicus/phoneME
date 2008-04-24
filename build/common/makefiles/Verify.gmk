@@ -625,7 +625,7 @@ verify: CYGWIN_TMP_DIR MIDP_DIR JDK_DIR CRYPTO_OUTPUT_DIR TOOLS_DIR \
 # Rules to display Makefile variables.
 #
 ######################################################################
-
+tmplogfile = $(MIDP_OUTPUT_DIR)/tmplogfile
 display:
 	@echo   "" $(LOG)
 	@echo   "========================" $(LOG)
@@ -634,8 +634,9 @@ display:
 	@echo   "" $(LOG)
 	@echo   "VAR_IMPORT_FROM       = ""$(VAR_IMPORT_FROM)" $(LOG)
 	@echo   "" $(LOG)
+	@$(shell rm -f $(tmplogfile))
 	@$(foreach v, $(BOOLEAN_OPTIONS), \
-		printf "%-21s = %s\n" "$(v)" "$($(v))" $(LOG);)
+		$(shell printf "%-21s = %s\n" "$(v)" "$($(v))" >> $(tmplogfile))) cat $(tmplogfile) $(LOG)
 	@echo   "" $(LOG)
 	@echo   "CFLAGS                = ""$(DEBUG_CFLAGS) $(EXTRA_CFLAGS) $(CMDLINE_CFLAGS)" $(LOG)
 	@echo   "" $(LOG)
