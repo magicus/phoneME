@@ -262,8 +262,14 @@ WMA_TOOLS_OUT_DIR   = $(JSR_120_BINDIR)
 WMA_TOOLS_CLASS_DIR = $(JSR_120_TOOLS_CLASS_DIR)
 
 TCK_NCI_TOOL      = $(WMA_TOOLS_OUT_DIR)/wma_nci.jar
-TCK_NCI_SLAVE_JAR = $(WMA_TOOLS_OUT_DIR)/NCISlave.jar
-TCK_NCI_SLAVE_JAD = $(WMA_TOOLS_OUT_DIR)/NCISlave.jad
+
+ifeq ($(USE_JSR_205), true)
+	TCK_NCI_SLAVE_JAR = $(WMA_TOOLS_OUT_DIR)/NCISlave.jar
+	TCK_NCI_SLAVE_JAD = $(WMA_TOOLS_OUT_DIR)/NCISlave.jad
+else
+	TCK_NCI_SLAVE_JAR = $(WMA_TOOLS_OUT_DIR)/NCISlave_SMS.jar
+	TCK_NCI_SLAVE_JAD = $(WMA_TOOLS_OUT_DIR)/NCISlave_SMS.jad
+endif
 
 JSR_120_NCITOOL_CLASS_DIR              = $(WMA_TOOLS_CLASS_DIR)/ncitool
 JSR_120_NCISLAVE_CLASS_DIR             = $(WMA_TOOLS_CLASS_DIR)/ncislave
@@ -283,15 +289,29 @@ MODULE_JSR_120_TCK_NCI_TOOL_JAVA_FILES += \
     $(JSR_120_DIR)/src/share/tool/ncitool/classes/com/sun/tck/wma/TextMessage.java \
     $(JSR_120_DIR)/src/share/tool/ncitool/classes/com/sun/tck/wma/MMSAddress.java 
 
+ifeq ($(USE_JSR_205), true)
 MODULE_JSR_120_TCK_NCI_SLAVE_MANIFEST = \
     $(JSR_120_DIR)/src/share/tool/ncislave/NCISlave.manifest
+else
+MODULE_JSR_120_TCK_NCI_SLAVE_MANIFEST = \
+    $(JSR_120_DIR)/src/share/tool/ncislave/NCISlave_SMS.manifest
+endif
 
+ifeq ($(USE_JSR_205), true)
 MODULE_JSR_120_TCK_NCI_SLAVE_JAD = \
 	$(JSR_120_DIR)/src/share/tool/ncislave/NCISlave.jad
 
 MODULE_JSR_120_TCK_NCI_SLAVE_JAVA_FILES += \
     $(JSR_120_DIR)/src/share/tool/ncislave/NCISlave.java \
     $(JSR_120_DIR)/src/share/tool/ncitool/classes/com/sun/tck/wma/MMSAddress.java
+else
+    MODULE_JSR_120_TCK_NCI_SLAVE_JAD = \
+	$(JSR_120_DIR)/src/share/tool/ncislave/NCISlave_SMS.jad
+
+MODULE_JSR_120_TCK_NCI_SLAVE_JAVA_FILES += \
+    $(JSR_120_DIR)/src/share/tool/ncislave/NCISlave_SMS.java \
+    $(JSR_120_DIR)/src/share/tool/ncitool/classes/com/sun/tck/wma/MMSAddress.java
+endif
 
 ifeq ($(USE_JSR_205), true)
 MODULE_JSR_120_TCK_NCI_TOOL_JAVA_FILES += \
@@ -301,6 +321,7 @@ MODULE_JSR_120_TCK_NCI_TOOL_JAVA_FILES += \
     $(JSR_205_DIR)/src/share/tool/wmatool/classes/com/sun/tck/wma/MessagePart.java 
 else
 MODULE_JSR_120_TCK_NCI_TOOL_JAVA_FILES += \
+    $(JSR_120_DIR)/src/share/tool/ncitool/classes/com/sun/midp/io/nci/server/NCIMultipartMessage.java  \
     $(JSR_120_DIR)/src/share/tool/ncitool/classes/com/sun/tck/wma/SizeExceededException.java \
     $(JSR_120_DIR)/src/share/tool/ncitool/classes/com/sun/tck/wma/MultipartMessage.java \
     $(JSR_120_DIR)/src/share/tool/ncitool/classes/com/sun/tck/wma/MessagePart.java
