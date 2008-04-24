@@ -36,7 +36,7 @@
 <skin_properties KeysClass="com.sun.midp.chameleon.skins.SkinPropertiesIDs">
   <integer
         Key="SCREEN_TEXT_ORIENT"
-      Value="Graphics.LEFT"/>
+      Value="Graphics.RIGHT"/>
 
   <integer
         Key="SCREEN_PAD_FORM_ITEMS"

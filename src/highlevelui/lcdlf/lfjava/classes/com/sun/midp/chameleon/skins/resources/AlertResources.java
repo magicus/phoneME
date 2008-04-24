@@ -124,7 +124,7 @@ public class AlertResources {
                 SkinPropertiesIDs.ALERT_IMAGE_ICON_CNFM);
 
         checkLocale();
-        
+
         init = true;
     }
 
@@ -132,16 +132,9 @@ public class AlertResources {
     public static void checkLocale() {
         String locale = System.getProperty("microedition.locale");
 
-        // Should change "en-US" to any appropriate locale
-        if (locale.equals("en-US")) {
-            if (AlertSkin.TITLE_ALIGN == Graphics.LEFT) {
-                AlertSkin.TITLE_ALIGN = Graphics.RIGHT;
-            }
-
-            if (AlertSkin.ALIGN_X == Graphics.LEFT) {
-                AlertSkin.ALIGN_X = Graphics.RIGHT;
-            }
-            
+        if (locale.equals("he")) {
+            AlertSkin.TITLE_ALIGN = Graphics.RIGHT;
+            AlertSkin.ALIGN_X = Graphics.RIGHT;
         }
     }
 }
