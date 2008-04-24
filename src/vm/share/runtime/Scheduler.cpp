@@ -1658,6 +1658,10 @@ jlong Scheduler::time_slice(JVM_SINGLE_ARG_TRAPS) {
     return 100;
   }
 
+  if (Thread::current()->not_null()) {
+    Thread::cache_current_pending_exception();
+  }
+
   Thread *next_thread = get_next_runnable_thread();
   if (!next_thread->equals(Thread::current())) {
     Thread::set_current(next_thread);
@@ -1694,6 +1698,10 @@ jlong Scheduler::time_slice(JVM_SINGLE_ARG_TRAPS) {
 #endif
 
   primordial_to_current_thread();
+
+  if (Thread::current()->not_null()) {
+    Thread::decache_current_pending_exception();
+  }
 
   if (_estimated_event_readiness > 0) {
     _estimated_event_readiness --;
