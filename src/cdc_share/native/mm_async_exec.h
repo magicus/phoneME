@@ -22,4 +22,10 @@
  * information or have any questions.
  */
 
+#ifndef __mm_async_exec_H__
+#define __mm_async_exec_H__
 
+#define JAVACALL_MM_ASYNC_EXEC(status_,code_,handle_,descr_,midp_event_,javacall_event_,args_) \
+    status_ = code_
+
+#endif __mm_async_exec_H__
