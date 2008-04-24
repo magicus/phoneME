@@ -51,7 +51,7 @@ class MediaDownload implements Runnable {
     // get first packet size to determine media format
     protected static native int nGetFirstPacketSize(int handle);
     // buffering media data
-    protected static native int nBuffering(int handle, byte[] buffer, int offset, int total, int size);
+    protected static native int nBuffering(int handle, byte[] buffer, int size);
     // ask Native Player if it needs more data immediatelly
     protected static native boolean nNeedMoreDataImmediatelly(int hNative);    
     // Provide whole media content size, if known
@@ -107,14 +107,14 @@ class MediaDownload implements Runnable {
                     num_read -= ret;
                     offset += ret;
                 }while(num_read>0);
-                packetSize = nBuffering(hNative, buffer, 0, packetSize, (packetSize-num_read));
+                packetSize = nBuffering(hNative, buffer, packetSize-num_read);
                 if (packetSize == -1) {
                     packetSize = 0;
                     throw new MediaException("Error data buffering or encoding");
                 }
             }while (nNeedMoreDataImmediatelly(hNative) && !eom);
             if (eom) {
-                packetSize = nBuffering(hNative, null, 0, 0, 0);
+                packetSize = nBuffering(hNative, null, 0);
             }
         }
     }
