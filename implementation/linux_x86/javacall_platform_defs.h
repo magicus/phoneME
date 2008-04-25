@@ -143,13 +143,6 @@ typedef long long javacall_int64;
 #define JAVACALL_PIM_MAX_FIELDS         (19)
 
 /**
- * @def __PPACKED__
- * definition for the packing alignment for structure, union, 
- * and class members specification
- */
-#define __PPACKED__ __attribute__ ((packed))
-
-/**
  * @}
  */
 #ifdef __cplusplus
