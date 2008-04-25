@@ -163,19 +163,6 @@ void javautil_printf_lime(char *message, ...);
  */
 #define JAVACALL_PIM_MAX_FIELDS         (19)
 
-/**
- * @def __PPACKED__
- * definition for the packing alignment for structure, union, 
- * and class members specification
- * IMPL NOTE: Because VC compiler has only one way to specify 
- * the packing alignment in the source code via pack pragma,
- * the __PPACKED__ shall be defined as 1. In the appropriated
- * place this value shall be checked and the pack pragma shall 
- * be inserted. The __PPACKED__ shall be redefined to the empty 
- * string.
- */
-#define __PPACKED__ 1
-
 #ifdef __cplusplus
 }
 #endif
