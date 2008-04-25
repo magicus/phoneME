@@ -80,12 +80,11 @@ vpath % $(SUBSYSTEM_JSR_211_NATIVE_SHARE_DIR)
 
 # Java files for the ( JSR_211 ) module
 #
-INTERNAL_JSR_211_DIR   = $(JSR_211_DIR)/src/share/classes
+INTERNAL_JSR_211_DIR   		= $(JSR_211_DIR)/src/share/classes
 INTERNAL_JSR_211_CLDC_DIR   = $(JSR_211_DIR)/src/cldc_application/classes
-INTERNAL_JSR_211_SHARE_DIR    = $(JSR_211_DIR)/share/src/classes
-INTERNAL_JSR_211_LF_DIR = $(JSR_211_DIR)/src/cldc_application/core/$(AMS_DIR)/classes
-INTERNAL_JSR_211_I3TEST_DIR= $(JSR_211_DIR)/src/cldc_application/i3test
-INTERNAL_JSR_211_CONFIG_DIR= $(JSR_211_DIR)/src/share/config
+INTERNAL_JSR_211_LF_DIR 	= $(JSR_211_DIR)/src/cldc_application/core/$(AMS_DIR)/classes
+INTERNAL_JSR_211_I3TEST_DIR	= $(JSR_211_DIR)/src/cldc_application/i3test
+INTERNAL_JSR_211_CONFIG_DIR	= $(JSR_211_DIR)/src/share/config
 
 ifndef JSR_211_BUILD_DIR
 JSR_211_BUILD_DIR          = $(MIDP_MAKE_DIR)/jsr211

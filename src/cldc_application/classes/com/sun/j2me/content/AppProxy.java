@@ -183,7 +183,8 @@ class AppProxy {
 		String ver, auth;
 		void use(MIDletSuite msuite) {  
 	        try {
-	        	auth =((MIDletSuiteImpl)msuite).getInstallInfo().getCA();
+	        	if( msuite instanceof MIDletSuiteImpl )
+	        		auth =((MIDletSuiteImpl)msuite).getInstallInfo().getCA();
 	        } catch (RuntimeException e) {}
 	        ver = msuite.getProperty(VERSION_PROP);
 		}

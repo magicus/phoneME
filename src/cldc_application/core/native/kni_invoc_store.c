@@ -279,6 +279,8 @@ static jboolean update(StoredInvoc* invoc, jobject invocObj, jobject tmp1, jobje
 #undef updateInt
 #undef updateString
     
+        invoc->responseRequired = KNI_GetBooleanField(invocObj, FID(responseRequired));
+
         /*
          * Copy the arguments if non-empty.
          * Always keep the pointers safe so invocFree()
@@ -671,8 +673,7 @@ static int copyOut(StoredInvoc *invoc, int mode,
         KNI_SetRawArrayRegion(obj, 0, invoc->dataLen, invoc->data);
     }
 
-    KNI_SetBooleanField(invocObj, FID(responseRequired),
-            invoc->responseRequired);
+    KNI_SetBooleanField(invocObj, FID(responseRequired), invoc->responseRequired);
 
 #undef storeInt
 

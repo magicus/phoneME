@@ -80,6 +80,10 @@ public class CHManagerImpl extends com.sun.midp.content.CHManager
                 SecurityInitializer.requestToken(new SecurityTrusted());
         com.sun.midp.content.CHManager.setCHManager(classSecurityToken, new CHManagerImpl());
         AppProxy.setSecurityToken(classSecurityToken);
+        
+        // load Invocation class
+        Class cl = Invocation.class;
+        cl = cl.getClass();
     }
 
     /** Installed handlers accumulator. */
