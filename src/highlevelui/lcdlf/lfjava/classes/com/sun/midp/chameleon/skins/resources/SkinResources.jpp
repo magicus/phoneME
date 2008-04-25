@@ -543,6 +543,10 @@ public class SkinResources {
             ScreenSkin.TEXT_ORIENT = Graphics.RIGHT;
             TickerSkin.DIRECTION = Graphics.RIGHT;
             TitleSkin.TEXT_ALIGN_X = Graphics.RIGHT;
+        } else {
+            ScreenSkin.TEXT_ORIENT = Graphics.LEFT;
+            TickerSkin.DIRECTION = Graphics.LEFT;
+            TitleSkin.TEXT_ALIGN_X = Graphics.LEFT;
         }
     }
 

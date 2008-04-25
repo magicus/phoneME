@@ -135,6 +135,9 @@ public class AlertResources {
         if (locale.equals("he")) {
             AlertSkin.TITLE_ALIGN = Graphics.RIGHT;
             AlertSkin.ALIGN_X = Graphics.RIGHT;
+        } else {
+            AlertSkin.TITLE_ALIGN = Graphics.LEFT;
+            AlertSkin.ALIGN_X = Graphics.LEFT;
         }
     }
 }
