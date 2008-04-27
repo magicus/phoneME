@@ -461,7 +461,14 @@ ifeq ($(USE_JSR_239), true)
 JPP_DEFS += -DENABLE_JSR_239
 include $(JSR_239_DIR)/src/cldc-oi/config/$(SUBSYSTEM_MAKE_FILE)
 endif
-
+#####################################################################
+# (Extra) API_EXTENSIONS Subsystem
+# Description: API_EXTENSIONS
+####################################################################
+ifeq ($(USE_API_EXTENSIONS), true)
+JPP_DEFS += -DENABLE_API_EXTENSIONS
+include $(API_EXTENSIONS_DIR)/build/cldc_application/$(SUBSYSTEM_MAKE_FILE)
+endif
 #####################################################################
 # (Extra) Abstractions Subsystem
 # Description: Abstractions for optional packages
