@@ -128,9 +128,9 @@ static int storeImageToCache(SuiteIdType suiteId,
 
 
 /**
- * Tests if JAR entry is a PNG image, by name extension
+ * Tests if JAR entry is an image, by name extension
  */
-static jboolean png_jpeg_filter(const pcsl_string * entry) {
+static jboolean image_filter(const pcsl_string * entry) {
 
     if (pcsl_string_ends_with(entry, &PNG_EXT1)
         || pcsl_string_ends_with(entry, &PNG_EXT2)
@@ -148,9 +148,9 @@ static jboolean png_jpeg_filter(const pcsl_string * entry) {
 }
 
 /**
- * Loads PNG image from JAR, decodes it and writes as native
+ * Loads image from JAR, decodes it and writes as native
  */
-static jboolean png_jpeg_action(const pcsl_string * entry) {
+static jboolean image_action(const pcsl_string * entry) {
     unsigned char *pngBufPtr = NULL;
     unsigned int pngBufLen = 0;
     unsigned char *nativeBufPtr = NULL;
@@ -314,8 +314,8 @@ void createImageCache(SuiteIdType suiteId, StorageIdType storageId) {
     }
 
     result = loadAndCacheJarFileEntries(&jarFileName,
-        (jboolean (*)(const pcsl_string *))&png_jpeg_filter,
-        (jboolean (*)(const pcsl_string *))&png_jpeg_action);
+        (jboolean (*)(const pcsl_string *))&image_filter,
+        (jboolean (*)(const pcsl_string *))&image_action);
 
     /* If something went wrong then clean up anything that was created */
     if (result != 1) {
@@ -461,11 +461,10 @@ static int storeImageToCache(SuiteIdType suiteId, StorageIdType storageId,
 
     /* Open the file */
     handle = storage_open(&errmsg, &path, OPEN_READ_WRITE_TRUNCATE);
-    pcsl_string_free(&path);
     if (errmsg != NULL) {
         REPORT_WARN1(LC_LOWUI,"Warning: could not save cached image; %s\n",
 		     errmsg);
-
+        pcsl_string_free(&path);
 	storageFreeError(errmsg);
 	return 0;
     }
@@ -478,9 +477,18 @@ static int storeImageToCache(SuiteIdType suiteId, StorageIdType storageId,
     }
 
     storageClose(&errmsg, handle);
-    if (status == 0) {
-        storage_delete_file(&errmsg, resName);
+    if (errmsg != NULL) {
+        storageFreeError(errmsg);    
     }
+    
+    if (status == 0) {
+        storage_delete_file(&errmsg, &path);
+        if (errmsg != NULL) {
+            storageFreeError(errmsg);
+        }
+    }
+
+    pcsl_string_free(&path);
 
     return status;
 }
