@@ -44,6 +44,8 @@ public abstract class InputStream {
 
     private static int SKIP_BLOCK_SIZE = 4096;
 
+    private static byte tmp_buf[] = new byte[SKIP_BLOCK_SIZE];
+
     /**
      * Reads the next byte of data from the input stream. The value byte is
      * returned as an <code>int</code> in the range <code>0</code> to
@@ -212,14 +214,13 @@ public abstract class InputStream {
      * @exception  IOException  if an I/O error occurs.
      */
     public long skip(long n) throws IOException {
-        byte[] b = new byte[SKIP_BLOCK_SIZE];
 	long bytesToReadTotal = n;
 	int readBytes = 0;
 
 	while (bytesToReadTotal > 0) {
 	    int bytesToRead = bytesToReadTotal < SKIP_BLOCK_SIZE ?
 		(int)bytesToReadTotal : SKIP_BLOCK_SIZE;
-		readBytes = read(b, 0, bytesToRead);
+		readBytes = read(tmp_buf, 0, bytesToRead);
 		if (readBytes <= 0) {
 		    break;
 		}
