@@ -43,7 +43,7 @@ class MediaDownload implements Runnable {
     byte[] buffer = null;
     boolean eom = false;
     int hNative;
-    boolean lock = false;
+    boolean needMoreData = false;
 
 
     // get java buffer size to determine media format
@@ -51,21 +51,12 @@ class MediaDownload implements Runnable {
     // get first packet size to determine media format
     protected static native int nGetFirstPacketSize(int handle);
     // buffering media data
-    protected static native int nBuffering(int handle, byte[] buffer, int size);
+    protected static native int nBuffering(int handle, byte[] buffer, int offset, int size);
     // ask Native Player if it needs more data immediatelly
     protected static native boolean nNeedMoreDataImmediatelly(int hNative);    
     // Provide whole media content size, if known
     protected static native void nSetWholeContentSize(int hNative, long contentSize);
 
-    synchronized boolean Lock() {
-        if (lock) 
-            return false;
-        lock = true;    
-        return true;
-    }
-    synchronized void Unlock() {
-        lock = false;    
-    }
     /**
      * The constructor
      *
@@ -74,61 +65,134 @@ class MediaDownload implements Runnable {
     MediaDownload(int hNative, SourceStream stream) {
         this.hNative = hNative;
         this.stream = stream;
-        lock = false;
         eom = false;
         contLength = -1;
     }
     
-    public void download() throws MediaException, IOException {
+    synchronized public void download(boolean inBackground) throws MediaException, IOException {
+        int roffset = 0;
+        int woffset = 0;
+
         if (contLength == -1) {
             contLength = stream.getContentLength();
             if (contLength > 0) {
                 nSetWholeContentSize(hNative, contLength);
             }
-        } 
-        javaBufSize = nGetJavaBufferSize(hNative);
+        }
+       
+        int newJavaBufSize = nGetJavaBufferSize(hNative);
         packetSize  = nGetFirstPacketSize(hNative);
-
+        
         if(packetSize > 0 && !eom) {
-            do {
-                int offset = 0;
-                int num_read = packetSize;
-                int ret;
-                if (buffer == null || packetSize > buffer.length) {
-                    buffer = new byte[(int)packetSize];
-                }
+            
+            if (newJavaBufSize < packetSize) {
+                newJavaBufSize = packetSize;
+            }
+            
+            if (buffer == null || newJavaBufSize > buffer.length) {
+                buffer = new byte[(int)newJavaBufSize];
+                javaBufSize = newJavaBufSize;
+            }
 
-                do {
-                    ret = stream.read(buffer, offset, packetSize-offset);
-                    if (ret == -1) {
-                        eom = true;
-                        break;
+            if (inBackground) {
+                woffset = BgDownloadAndWait(roffset, woffset);
+            }
+
+            do {
+                int num_read = woffset - roffset;
+                int ret;
+                if (num_read < packetSize && !eom) {
+                    if ((roffset + packetSize) > javaBufSize) {
+                        woffset = moveBuff(roffset, woffset);
+                        roffset = 0;
                     }
-                    num_read -= ret;
-                    offset += ret;
-                }while(num_read>0);
-                packetSize = nBuffering(hNative, buffer, packetSize-num_read);
+                    do {
+                        ret = stream.read(buffer, woffset, packetSize-num_read);
+                        if (ret == -1) {
+                            eom = true;
+                            break;
+                        }
+                        num_read += ret;
+                        woffset += ret;
+                    }while(num_read<packetSize);
+                }
+                
+                packetSize = nBuffering(hNative, buffer, roffset, num_read);
+                roffset += num_read;
                 if (packetSize == -1) {
                     packetSize = 0;
+                    needMoreData = false;
                     throw new MediaException("Error data buffering or encoding");
+                } else if (packetSize > javaBufSize){
+                    if ((woffset - roffset)==0) {
+                        javaBufSize = packetSize;
+                        buffer = new byte[(int)javaBufSize];
+                    } else {
+                        javaBufSize = packetSize;
+                        byte b[] = new byte[(int)javaBufSize];
+                        for (int i=0, j=roffset; j<woffset; i++, j++) {
+                            b[i] = buffer[j];
+                        }
+                        buffer = b;
+                        woffset -= roffset;
+                        roffset = 0;
+                    }
                 }
-            }while (nNeedMoreDataImmediatelly(hNative) && !eom);
+                if (roffset == woffset) {
+                    roffset = 0;
+                    woffset = 0;   
+                }
+                needMoreData = nNeedMoreDataImmediatelly(hNative);
+                if (inBackground && !needMoreData) {
+                    woffset = moveBuff(roffset, woffset);
+                    roffset = 0;
+                    woffset = BgDownloadAndWait(roffset, woffset);
+                }
+            }while (needMoreData && !eom);
             if (eom) {
-                packetSize = nBuffering(hNative, null, 0);
+                packetSize = nBuffering(hNative, null, 0, 0);
+                needMoreData = false;
             }
         }
     }
 
+    private int moveBuff(int roffset, int woffset) {
+        for (int i=0, j=roffset; j<woffset; i++, j++) {
+            buffer[i] = buffer[j];
+        }
+        return woffset-roffset;
+    }
+
+    private int BgDownloadAndWait(int roffset, int woffset) throws IOException {
+        while (!needMoreData) {
+            if (woffset<javaBufSize && !eom) {
+                int num_read = packetSize;
+                if (woffset + num_read >javaBufSize) {
+                    num_read = javaBufSize - woffset;
+                }
+                int ret = stream.read(buffer, woffset, num_read);
+                if (ret == -1) {
+                    eom = true;
+                } else {
+                    woffset += ret;
+                }
+            } else {
+                try {
+                    wait(500);
+                } catch (Exception e) {}
+            }
+        };
+        return woffset;
+    }
+    
     /**
      * Event handling thread.
      */
     public void run() {
         try {
-            download();
+            download(true);
         } catch(IOException ex1) {
         } catch(MediaException ex2) {
-        } finally {
-            Unlock();
         }
     }
     
@@ -140,4 +204,29 @@ class MediaDownload implements Runnable {
         packetSize = 0;
     }
     
+    /**
+     * 
+     */
+    public void fgDownload() throws IOException, MediaException {
+        download(false);
+    }
+
+    /**
+     * 
+     */
+    public boolean bgDownload() {
+        if (!eom) {
+            try {
+                new Thread(this).start();
+            } catch (Exception e) {
+                return false;
+            }
+        }
+        return true;
+    }
+    
+    synchronized public void continueDownload() {
+        needMoreData = true;
+        notifyAll();
+    }
 }

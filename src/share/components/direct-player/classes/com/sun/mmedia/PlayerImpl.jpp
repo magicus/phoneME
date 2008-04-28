@@ -239,7 +239,7 @@ public class PlayerImpl implements Player {
             if (!mediaFormat.equals(BasicPlayer.MEDIA_FORMAT_TONE)) {
                 mediaDownload = new MediaDownload(hNative, stream);
                 try {
-                    mediaDownload.download();
+                    mediaDownload.fgDownload();
                 } catch(IOException ex1) {
                     throw new MediaException("Can not start download Thread: " + ex1.getMessage());
                 }catch(Exception ex) {
