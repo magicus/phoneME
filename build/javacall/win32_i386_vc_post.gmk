@@ -40,11 +40,23 @@ wtkbin: $(SUBSYSTEM_AMS_EXECUTABLES)
 	$(AT)$(call copy_file, \
 	 $(MIDP_OUTPUT_DIR)/lib/., $(WTK_STORAGE_DIR)/)
 	$(AT)$(call copy_file, \
+	 $(MIDP_OUTPUT_DIR)/classes.zip, $(WTK_BIN_DIR)/)
+	$(AT)$(call copy_file, \
 	 $(MIDP_OUTPUT_DIR)/appdb/., $(WTK_STORAGE_DIR)/DefaultColorPhone/)
+	$(AT)$(call copy_file, \
+	 $(MIDP_OUTPUT_DIR)/bin/i386/MEKeyTool.jar, $(WTK_BIN_DIR)/bin/)
+	$(AT)$(call copy_file, \
+	 $(MIDP_OUTPUT_DIR)/bin/i386/JadTool.jar, $(WTK_BIN_DIR)/bin/)
 	$(AT)$(call copy_file_if_exists, \
          $(MIDP_OUTPUT_DIR)/bin/i386/jwc_properties.ini, $(WTK_BIN_DIR)/jwc_properties.ini)
 	$(AT)$(call copy_file_if_exists, \
          $(JAVACALL_OUTPUT_DIR)/storage/., $(WTK_STORAGE_DIR)/DefaultColorPhone/)
+	$(AT)$(call copy_file_if_exists, \
+         $(MIDP_OUTPUT_DIR)/javacard_classes, $(WTK_BIN_DIR)/)
+	$(AT)$(call copy_file_if_exists, \
+         $(MIDP_OUTPUT_DIR)/bin/jc_eeprom_image, $(WTK_BIN_DIR)/bin/)
+	$(AT)touch $(WTK_STORAGE_DIR)/DefaultColorPhone/alarmlist.txt
+	$(AT)touch $(WTK_STORAGE_DIR)/DefaultColorPhone/pushlist.txt
 
 define copy_file
     cp -r $(1) $(2)
