@@ -276,6 +276,8 @@ javacall_result helper_normalize_properties() {
 
     char* default_storage; 
     int default_storage_ok = 0;
+    
+    char* sdk_version;
 
     if (!firstTime) {
         return JAVACALL_OK;
@@ -324,10 +326,23 @@ javacall_result helper_normalize_properties() {
                 return JAVACALL_OK;
             }
     }
+    
+    javacall_get_property("sdk_version",
+                                      JAVACALL_APPLICATION_PROPERTY,
+                                      &sdk_version);
 
-	/* Version is >= 2.5.2, storage_root is absolute path */
-    wcscpy(buffer_w, char_to_unicode(default_storage));
-    wcscat(buffer_w,newKS);
+    if (sdk_version == NULL) {
+        /* WTK version is >= 2.5.2, storage_root is absolute path */
+        wcscpy(buffer_w, char_to_unicode(default_storage));
+        wcscat(buffer_w, newKS);
+    } else {
+        /* Java ME SDK version is >= 3.0 */
+        unsigned short separator[] = {'\\', 0};
+        wcscpy(buffer_w, char_to_unicode(storage_root));
+        wcscat(buffer_w, separator);
+        wcscat(buffer_w, oldKS);
+    }
+    
     javacall_set_property("com.sun.midp.publickeystore.WebPublicKeyStore", 
                unicode_to_char(buffer_w), 
                JAVACALL_TRUE,
