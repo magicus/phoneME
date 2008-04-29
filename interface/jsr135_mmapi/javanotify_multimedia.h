@@ -1,6 +1,6 @@
 /*
  *
- * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
@@ -52,39 +52,6 @@ extern "C" {
  ******************************************************************************
  ******************************************************************************/
 
-/**
- * @enum javacall_media_notification_type
- * 
- * @brief Multimedia notification type.
- */
-typedef enum {
-    /** Posted when a Player has reached the end of the media. */
-    JAVACALL_EVENT_MEDIA_END_OF_MEDIA = 1,      
-    /** Posted when the duration of a Player is updated. */    
-    JAVACALL_EVENT_MEDIA_DURATION_UPDATED, 
-    /** Record size limit is reached or no more space is available */
-    JAVACALL_EVENT_MEDIA_RECORD_SIZE_LIMIT,
-    /** Posted when an error occurs during the recording. */
-    JAVACALL_EVENT_MEDIA_RECORD_ERROR,          
-    /** Posted when the system or another higher priority application has released 
-        an exclusive device which is now available to the Player. */
-    JAVACALL_EVENT_MEDIA_DEVICE_AVAILABLE,      
-    /** Posted when the system or another higher priority application has temporarily 
-        taken control of an exclusive device which was previously available to the Player. */
-    JAVACALL_EVENT_MEDIA_DEVICE_UNAVAILABLE,    
-    /** Posted when the native player needs more media content from Java side. */
-    JAVACALL_EVENT_MEDIA_NEED_MORE_MEDIA_DATA,
-    /** Posted when the Player enters into a buffering mode. */
-    JAVACALL_EVENT_MEDIA_BUFFERING_STARTED,     
-    /** Posted when the Player leaves the buffering mode. */
-    JAVACALL_EVENT_MEDIA_BUFFERING_STOPPED,
-    /** Posted when the volume changed from external action. */
-    JAVACALL_EVENT_MEDIA_VOLUME_CHANGED,
-    /** Posted when the blocked snapshot finished */
-    JAVACALL_EVENT_MEDIA_SNAPSHOT_FINISHED,
-    /** Posted when an error had occurred. */
-    JAVACALL_EVENT_MEDIA_ERROR
-} javacall_media_notification_type;
 
 /** 
  * @defgroup MediaNotification Notification API for Multimedia
