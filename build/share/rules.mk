@@ -408,11 +408,11 @@ endif
 	$(AT)if [ -s $(CVM_BUILD_TOP)/.libclasses.list ] ; then		\
 		echo "Compiling $(J2ME_PRODUCT_NAME) classes...";	\
 		$(JAVAC_CMD)						\
-			-d $(LIB_CLASSESDIR) 				\
-			-bootclasspath $(CVM_BUILDTIME_CLASSESDIR) 	\
-			-classpath $(JAVACLASSES_CLASSPATH)             \
+			-d $(call POSIX2HOST,$(LIB_CLASSESDIR))		\
+			-bootclasspath $(call POSIX2HOST,$(CVM_BUILDTIME_CLASSESDIR)) 	\
+			-classpath $(call POSIX2HOST,$(JAVACLASSES_CLASSPATH))             \
 			-sourcepath $(JAVACLASSES_SRCPATH)		\
-			@$(CVM_BUILD_TOP)/.libclasses.list ;		\
+			@$(call POSIX2HOST,$(CVM_BUILD_TOP)/.libclasses.list) ;		\
 		touch $(CVM_BUILD_TOP)/.libclasses;			\
 	fi
 
@@ -420,11 +420,11 @@ endif
 	$(AT)if [ -s $(CVM_BUILD_TOP)/.btclasses.list ] ; then		\
 		echo "Compiling build-time classes...";			\
 		$(JAVAC_CMD)						\
-			-d $(CVM_BUILDTIME_CLASSESDIR)			\
+			-d $(call POSIX2HOST,$(CVM_BUILDTIME_CLASSESDIR))			\
 			-bootclasspath $(CVM_BUILDTIME_CLASSESDIR) 	\
 			-classpath $(CVM_BUILDTIME_CLASSESDIR)$(PS)$(OPTPKGS_CLASSPATH)		\
 			-sourcepath $(JAVACLASSES_SRCPATH)		\
-			@$(CVM_BUILD_TOP)/.btclasses.list ;		\
+			@$(call POSIX2HOST,$(CVM_BUILD_TOP)/.btclasses.list) ;		\
 		touch $(CVM_BUILD_TOP)/.btclasses;			\
 	fi
 
@@ -434,12 +434,12 @@ endif
 		cp -f $(CVM_TESTCLASSES_SRCDIR)/TestSyncLocker.class	\
 		      $(CVM_TEST_CLASSESDIR); \
 		$(JAVAC_CMD)						\
-			-d $(CVM_TEST_CLASSESDIR)			\
+			-d $(call POSIX2HOST,$(CVM_TEST_CLASSESDIR))	\
 			-bootclasspath 					\
-			   $(CVM_BUILDTIME_CLASSESDIR)$(PS)$(LIB_CLASSESDIR)\
-			-classpath $(CVM_TEST_CLASSESDIR)$(PS)$(TEST_JARFILES) \
+			   $(call POSIX2HOST,$(CVM_BUILDTIME_CLASSESDIR))$(PS)$(call POSIX2HOST,$(LIB_CLASSESDIR))\
+			-classpath $(call POSIX2HOST,$(CVM_TEST_CLASSESDIR))$(PS)$(call POSIX2HOST,$(TEST_JARFILES)) \
 			-sourcepath $(TESTCLASSES_SRCPATH)		\
-			@$(CVM_BUILD_TOP)/.testclasses.list ;		\
+			@$(call POSIX2HOST,$(CVM_BUILD_TOP)/.testclasses.list) ;		\
 		touch $(CVM_BUILD_TOP)/.testclasses;			\
 	fi
 
@@ -447,12 +447,12 @@ endif
 	$(AT)if [ -s $(CVM_BUILD_TOP)/.democlasses.list ] ; then	\
 		echo "Compiling demo classes...";			\
 		$(JAVAC_CMD)						\
-			-d $(CVM_DEMO_CLASSESDIR)			\
+			-d $(call POSIX2HOST,$(CVM_DEMO_CLASSESDIR))			\
 			-bootclasspath 					\
-			   $(CVM_BUILDTIME_CLASSESDIR)$(PS)$(LIB_CLASSESDIR)\
-			-classpath $(CVM_DEMO_CLASSESDIR) 		\
+			   $(call POSIX2HOST,$(CVM_BUILDTIME_CLASSESDIR))$(PS)$(call POSIX2HOST,$(LIB_CLASSESDIR))\
+			-classpath $(call POSIX2HOST,$(CVM_DEMO_CLASSESDIR)) 		\
 			-sourcepath $(CVM_DEMOCLASSES_SRCPATH)		\
-			@$(CVM_BUILD_TOP)/.democlasses.list ;	\
+			@$(call POSIX2HOST,$(CVM_BUILD_TOP)/.democlasses.list) ;	\
 		touch $(CVM_BUILD_TOP)/.democlasses;			\
 	fi
 
@@ -941,10 +941,10 @@ $(CVM_DERIVEDROOT)/jni/.time.stamp : $(LIB_CLASSESJAR)
 	$(AT)if [ -s $(CVM_BUILD_TOP)/.javahclasses.list ] ; then	\
 		echo ... generating jni class headers ;		\
 		$(CVM_JAVAH) -jni					\
-			-d $(CVM_DERIVEDROOT)/jni			\
-			-classpath $(call POSIX2HOST, $(LIB_CLASSESJAR))$(JSR_JNI_CLASSPATH) \
+			-d $(call POSIX2HOST,$(CVM_DERIVEDROOT)/jni)			\
+			-classpath $(call POSIX2HOST,$(LIB_CLASSESJAR))$(JSR_JNI_CLASSPATH) \
 			-bootclasspath $(call POSIX2HOST,$(CVM_BUILDTIME_CLASSESZIP))	\
-			$(JSR_JNI_CLASSES) @$(CVM_BUILD_TOP)/.javahclasses.list ;		\
+			$(JSR_JNI_CLASSES) @$(call POSIX2HOST,$(CVM_BUILD_TOP)/.javahclasses.list) ;		\
 	fi
 	@touch $@
 endif
