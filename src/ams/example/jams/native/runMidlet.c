@@ -1,7 +1,7 @@
 /*
  *
  *
- * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
@@ -368,7 +368,9 @@ runMidlet(int argc, char** commandlineArgs) {
         break;
     }
 
-    midpFinalize();
+    if (JVM_GetConfig(JVM_CONFIG_SLAVE_MODE) == KNI_FALSE) {	
+        midpFinalize();
+    }
 
     return status;
 }
