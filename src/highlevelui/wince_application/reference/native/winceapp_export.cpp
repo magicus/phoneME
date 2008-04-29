@@ -263,6 +263,17 @@ static void releasePutpixelSurface() {
     midpFree(gxj_system_screen_buffer.pixelData);
 }
 
+static void deleteGDIObjects() {
+    if (NULL != g_hMemDC) {
+        DeleteDC(g_hMemDC);
+        g_hMemDC = NULL;
+    }
+    if (NULL != g_hBitmap) {
+        DeleteObject(g_hBitmap);
+        g_hBitmap = NULL;
+    }
+}
+
 #if ENABLE_DIRECT_DRAW
 static void releaseDirectDraw();
 
@@ -327,17 +338,6 @@ static void releaseDirectDraw() {
     }*/
     g_screen.pDD->Release();
     g_screen.pDD = NULL;
-}
-
-static void deleteGDIObjects() {
-    if (NULL != g_hMemDC) {
-        DeleteDC(g_hMemDC);
-        g_hMemDC = NULL;
-    }
-    if (NULL != g_hBitmap) {
-        DeleteObject(g_hBitmap);
-        g_hBitmap = NULL;
-    }
 }
 
 /*
@@ -1016,7 +1016,7 @@ void winceapp_refresh(int x1, int y1, int x2, int y2) {
         for (; y1 < y2; y1++) {
             memcpy(dst, src, srcWidth * sizeof(gxj_pixel_type));
             src += winceapp_get_screen_width();
-            dst += (gxj_pixel_type*)( ((int)dst) + g_screen.yPitch );
+            dst = (gxj_pixel_type*)( ((int)dst) + g_screen.yPitch );
         }
 #endif /* ENABLE_DIRECT_DRAW */
     endDirectPaint();
