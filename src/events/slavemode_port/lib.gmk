@@ -1,7 +1,7 @@
 #
 #   
 #
-# Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+# Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
 # 
 # This program is free software; you can redistribute it and/or
@@ -38,4 +38,6 @@ SUBSYSTEM_EVENTS_EXTRA_INCLUDES += \
 
 ifeq ($(PLATFORM), linux_qte)
    include $(SUBSYSTEM_EVENTS_DIR)/slavemode_port/linux_qte/lib.gmk
+else
+   include $(SUBSYSTEM_EVENTS_DIR)/slavemode_port/javacall/lib.gmk
 endif

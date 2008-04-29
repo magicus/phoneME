@@ -1,7 +1,7 @@
 /*
  *
  *
- * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
@@ -104,8 +104,7 @@ static MIDP_ERROR getClassPathForVerifyOnce(
 #define STACK_SIZE 8192
 
 /* Stack grows down */
-static void
-measureStack(int clearStack) {
+void measureStack(int clearStack) {
     char  stack[STACK_SIZE];
     char  tag = (char)0xef;
     int   i;
@@ -129,8 +128,7 @@ measureStack(int clearStack) {
 
 #else
 
-static void
-measureStack(int clearStack) {
+void measureStack(int clearStack) {
     (void)clearStack;
     return;
 }
