@@ -69,22 +69,22 @@ ifeq ($(CVM_JIT), true)
 CVM_GENOPCODE_TARGETS	+= \
 	$(CVM_DERIVEDROOT)/javavm/runtime/jit/jitopcodemap.c
 CVM_JITOPCODEMAP	 = \
-	-opcodeMap $(CVM_DERIVEDROOT)/javavm/runtime/jit/jitopcodemap.c
+	-opcodeMap $(call POSIX2HOST,$(CVM_DERIVEDROOT)/javavm/runtime/jit/jitopcodemap.c)
 endif
 
 $(CVM_GENOPCODE_TARGETS): $(CVM_OPCODE_LIST) $(CVM_GENOPCODE_DEPEND)
 	@echo ... $(CVM_OPCODE_LIST)
-	$(AT)export CLASSPATH; \
-	CLASSPATH=$(CVM_JCC_CLASSPATH); \
-	$(CVM_JAVA) GenOpcodes $(CVM_OPCODE_LIST) \
-	    -h $(CVM_DERIVEDROOT)/javavm/include/opcodes.h \
-	    -c $(CVM_DERIVEDROOT)/javavm/runtime/opcodes.c \
-	    -bcAttr $(CVM_DERIVEDROOT)/javavm/runtime/bcattr.c \
-	    -opcodeLengths $(CVM_DERIVEDROOT)/javavm/runtime/opcodelen.c \
+	$(AT)CLASSPATH=$(call POSIX2HOST,$(CVM_JCC_CLASSPATH)); \
+	export CLASSPATH; \
+	$(CVM_JAVA) GenOpcodes $(call POSIX2HOST,$(CVM_OPCODE_LIST)) \
+	    -h $(call POSIX2HOST,$(CVM_DERIVEDROOT)/javavm/include/opcodes.h) \
+	    -c $(call POSIX2HOST,$(CVM_DERIVEDROOT)/javavm/runtime/opcodes.c) \
+	    -bcAttr $(call POSIX2HOST,$(CVM_DERIVEDROOT)/javavm/runtime/bcattr.c) \
+	    -opcodeLengths $(call POSIX2HOST,$(CVM_DERIVEDROOT)/javavm/runtime/opcodelen.c) \
 	    $(CVM_JITOPCODEMAP) \
-	    -label $(CVM_DERIVEDROOT)/javavm/include/opcodeLabels.h \
-	    -javaConst $(CVM_DERIVEDROOT)/javavm/runtime/opcodeconsts/OpcodeConst.java \
-	    -simplification $(CVM_DERIVEDROOT)/javavm/include/opcodeSimplification.h
+	    -label $(call POSIX2HOST,$(CVM_DERIVEDROOT)/javavm/include/opcodeLabels.h) \
+	    -javaConst $(call POSIX2HOST,$(CVM_DERIVEDROOT)/javavm/runtime/opcodeconsts/OpcodeConst.java) \
+	    -simplification $(call POSIX2HOST,$(CVM_DERIVEDROOT)/javavm/include/opcodeSimplification.h)
 
 $(CVM_GENOPCODE_DEPEND) :: $(CVM_JCC_CLASSPATH)
 $(CVM_GENOPCODE_DEPEND) :: $(CVM_JCC_SRCPATH)/GenOpcodes.java \
@@ -92,9 +92,9 @@ $(CVM_GENOPCODE_DEPEND) :: $(CVM_JCC_SRCPATH)/GenOpcodes.java \
 		 $(CVM_JCC_SRCPATH)/util/*.java \
 		 $(CVM_JCC_SRCPATH)/JCCMessage.properties
 	@echo "... $@"
-	$(AT)CLASSPATH=$(CVM_JCC_SRCPATH); export CLASSPATH; \
-	$(CVM_JAVAC) $(JAVAC_OPTIONS) -d $(CVM_JCC_CLASSPATH) \
-	    $(subst /,$(CVM_FILESEP),$(CVM_JCC_SRCPATH)/GenOpcodes.java)
+	$(AT)CLASSPATH=$(call POSIX2HOST,$(CVM_JCC_SRCPATH)); export CLASSPATH; \
+	$(CVM_JAVAC) $(JAVAC_OPTIONS) -d $(call POSIX2HOST,$(CVM_JCC_CLASSPATH)) \
+	    $(call POSIX2HOST,$(subst /,$(CVM_FILESEP),$(CVM_JCC_SRCPATH)/GenOpcodes.java))
 	$(AT)rm -f $(CVM_JCC_CLASSPATH)/JCCMessage.properties; \
 	cp $(CVM_JCC_SRCPATH)/JCCMessage.properties $(CVM_JCC_CLASSPATH)/JCCMessage.properties
 
@@ -125,9 +125,9 @@ endif
 CVM_JCC_OPTIONS += \
 		  $(CVM_GENERATE_NATIVES) \
 		  -nativesType JNI "-*" \
-		  -headersDir CNI $(CVM_DERIVEDROOT)/cni \
-		  -headersDir JNI $(CVM_DERIVEDROOT)/jni \
-		  -headersDir CVMOffsets $(CVM_DERIVEDROOT)/offsets \
+		  -headersDir CNI $(call POSIX2HOST,$(CVM_DERIVEDROOT)/cni) \
+		  -headersDir JNI $(call POSIX2HOST,$(CVM_DERIVEDROOT)/jni) \
+		  -headersDir CVMOffsets $(call POSIX2HOST,$(CVM_DERIVEDROOT)/offsets) \
 		  $(JCC_EXCLUDES) \
 		  $(CVM_PROFILE_JCC_OPTIONS) \
 	          $(CVM_GENERATE_OFFSETS)
@@ -182,10 +182,10 @@ CVM_JCC_INPUT_FILES = $(filter-out -%,$(CVM_JCC_INPUT))
 
 $(CVM_ROMJAVA_LIST): $(CVM_JCC_INPUT_FILES) $(CVM_JCC_DEPEND)
 	@echo "jcc romjava.c files"
-	$(AT)$(CVM_JAVA) -cp $(CVM_JCC_CLASSPATH) -Xmx256m JavaCodeCompact \
+	$(AT)$(CVM_JAVA) -cp $(call POSIX2HOST,$(CVM_JCC_CLASSPATH)) -Xmx256m JavaCodeCompact \
 		$(CVM_JCC_OPTIONS) \
 		-maxSegmentSize $(CVM_ROMJAVA_CLASSES_PER_FILE) \
-		-o $(CVM_ROMJAVA_CPATTERN) \
+		-o $(call POSIX2HOST,$(CVM_ROMJAVA_CPATTERN)) \
 		$(call POSIX2HOST,$(CVM_JCC_INPUT)) \
 		$(CVM_JCC_CL_INPUT) $(CVM_JCC_APILISTER_OPTIONS)
 
@@ -238,7 +238,7 @@ CVM_JCC_CLASSES0 = \
 	runtime/CVMWriter.java
 
 CVM_JCC_CLASSES1 = $(patsubst %,$(CVM_JCC_SRCPATH)/%,$(CVM_JCC_CLASSES0))
-CVM_JCC_CLASSES  = $(subst /,$(CVM_FILESEP),$(CVM_JCC_CLASSES1))
+CVM_JCC_CLASSES  = $(subst /,$(CVM_FILESEP),$(call POSIX2HOST,$(CVM_JCC_CLASSES1)))
 
 $(CVM_JCC_DEPEND) :: $(CVM_JCC_CLASSPATH)
 $(CVM_JCC_DEPEND) :: $(CVM_DERIVEDROOT)/javavm/runtime/opcodeconsts/OpcodeConst.java
@@ -252,8 +252,8 @@ $(CVM_JCC_DEPEND) :: $(CVM_JCC_SRCPATH)/JavaCodeCompact.java \
 		 $(CVM_JCC_SRCPATH)/vm/*.java \
 		 $(CVM_JCC_SRCPATH)/JCCMessage.properties
 	@echo "... $@"
-	@CLASSPATH=$(CVM_JCC_CLASSPATH)$(PS)$(CVM_JCC_SRCPATH)$(PS)$(CVM_DERIVEDROOT)/javavm/runtime; export CLASSPATH; \
-	$(CVM_JAVAC) $(JAVAC_OPTIONS) -d $(CVM_JCC_CLASSPATH) \
+	$(AT)CLASSPATH=$(call POSIX2HOST,$(CVM_JCC_CLASSPATH))$(PS)$(call POSIX2HOST,$(CVM_JCC_SRCPATH))$(PS)$(call POSIX2HOST,$(CVM_DERIVEDROOT)/javavm/runtime); export CLASSPATH; \
+	$(CVM_JAVAC) $(JAVAC_OPTIONS) -d $(call POSIX2HOST,$(CVM_JCC_CLASSPATH)) \
 	    $(CVM_JCC_CLASSES)
 	@rm -f $(CVM_JCC_CLASSPATH)/JCCMessage.properties; \
 	cp $(CVM_JCC_SRCPATH)/JCCMessage.properties $(CVM_JCC_CLASSPATH)/JCCMessage.properties

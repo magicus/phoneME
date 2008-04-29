@@ -125,7 +125,7 @@ $(CVM_GENOPCODE_DEPEND) :: $(CVM_JCC_SRCPATH)/GenOpcodes.java \
 	@echo "... $@"
 	$(AT)CLASSPATH=$(CVM_JCC_SRCPATH); export CLASSPATH; \
 	$(CVM_JAVAC) $(JAVAC_OPTIONS) -d $(CVM_JCC_CLASSPATH) \
-	    $(subst /,$(CVM_FILESEP),$(CVM_JCC_SRCPATH)/GenOpcodes.java)
+	    $(call POSIX2HOST,$(subst /,$(CVM_FILESEP),$(CVM_JCC_SRCPATH)/GenOpcodes.java))
 	$(AT)rm -f $(CVM_JCC_CLASSPATH)/JCCMessage.properties; \
 	cp $(CVM_JCC_SRCPATH)/JCCMessage.properties $(CVM_JCC_CLASSPATH)/JCCMessage.properties
 

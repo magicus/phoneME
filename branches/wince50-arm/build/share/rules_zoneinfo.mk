@@ -29,10 +29,10 @@
 #
 
 $(ZONEINFO_CLASSES_DIR)/%.class: $(CVM_SHAREROOT)/tools/javazic/%.java
-	$(AT)echo $? >> $(ZONEINFO_CLASSES_DIR)/.classes.list
+	$(AT)echo $(call POSIX2HOST,$?) >> $(ZONEINFO_CLASSES_DIR)/.classes.list
 
 $(ZONEINFO_CLASSES_DIR)/%.class: $(CVM_SHAREROOT)/classes/%.java 
-	$(AT)echo $? >> $(ZONEINFO_CLASSES_DIR)/.classes.list
+	$(AT)echo $(call POSIX2HOST,$?) >> $(ZONEINFO_CLASSES_DIR)/.classes.list
 
 $(J2ME_CLASSLIB):: $(ZONEINFO_CLASSES_DIR) .delete.classlist $(FILES_class) .compile.classlist $(ZONEINFO_INSTALLDIR)/$(MAPFILE)
 
@@ -46,16 +46,16 @@ $(ZONEINFO_CLASSES_DIR):
 	$(AT)if [ -s $(ZONEINFO_CLASSES_DIR)/.classes.list ] ; then	\
 	     echo "Compiling zic classes... ";				\
 	     $(JAVAC_CMD)						\
-			-d $(ZONEINFO_CLASSES_DIR)			\
-			@$(ZONEINFO_CLASSES_DIR)/.classes.list ;	\
+			-d $(call POSIX2HOST,$(ZONEINFO_CLASSES_DIR))			\
+			@$(call POSIX2HOST,$(ZONEINFO_CLASSES_DIR)/.classes.list) ;	\
 	fi
 
 $(ZONEINFO_WORKDIR)/$(MAPFILE): $(FILES_class) $(TZFILES)
 	$(AT)rm -rf $(ZONEINFO_WORKDIR)
-	$(AT)$(CVM_JAVA) -classpath $(ZONEINFO_CLASSES_DIR) \
+	$(AT)$(CVM_JAVA) -classpath $(call POSIX2HOST,$(ZONEINFO_CLASSES_DIR)) \
 	    sun.tools.MyClassPath \
 	    sun.tools.javazic.Main \
-	    -V "$(TZDATA_VER)" -d $(ZONEINFO_WORKDIR) $(TZFILES)
+	    -V "$(TZDATA_VER)" -d $(call POSIX2HOST,$(ZONEINFO_WORKDIR)) $(call POSIX2HOST,$(TZFILES))
 
 $(ZONEINFO_INSTALLDIR)/$(MAPFILE): $(ZONEINFO_WORKDIR)/$(MAPFILE)
 	$(AT)if [ ! -d $(ZONEINFO_INSTALLDIR) ] ; then \
