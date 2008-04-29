@@ -1,6 +1,6 @@
 /*
  * 
- * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
@@ -22,7 +22,7 @@
  * Clara, CA 95054 or visit www.sun.com if you need additional
  * information or have any questions.
  */
- 
+
 package com.sun.mmedia;
 
 import java.util.*;
@@ -40,7 +40,6 @@ import javax.microedition.media.PlayerListener;
 
 import com.sun.j2me.log.Logging;
 import com.sun.j2me.log.LogChannels;
-
 
 /**
  * Video direct player
@@ -110,7 +109,7 @@ public class DirectVideo extends DirectPlayer implements
     private native int nGetScreenHeight();
     // Turn on or off alpha channel
     private native int nSetAlpha(int handle, boolean on, int color);
-
+    
     // member functions /////////////////////////////////////////////
 
     public DirectVideo() {
@@ -220,9 +219,8 @@ public class DirectVideo extends DirectPlayer implements
         nSetAlpha(hNative, false, ALPHA_COLOR);
         setTranslatedVideoLocation(g, x, y, w, h);
 
-        // set location and size of display region
         if (hNative != 0) {
-            nSetVisible(hNative, true);
+            nSetVisible(hNative, !hidden);
         }
     }
 
@@ -235,7 +233,7 @@ public class DirectVideo extends DirectPlayer implements
             g.fillRect(x, y, w, h);
             setTranslatedVideoLocation(g, x, y, w, h);
             if (hNative != 0) {
-                nSetVisible(hNative, true);
+                nSetVisible(hNative, !hidden);
             }
         } else {
             if (hNative != 0) {
@@ -250,18 +248,6 @@ public class DirectVideo extends DirectPlayer implements
     private void repaint() {
         if (canvas != null) {
             canvas.repaint();
-        } else if (item != null) {
-            item.forcePaint();
-        }
-    }
-
-    /**
-     * request to repaint canvas and wait until that processed
-     */
-    private void repaintAndWait() {
-        if (canvas != null) {
-            canvas.repaint();
-            canvas.serviceRepaints();
         } else if (item != null) {
             item.forcePaint();
         }
@@ -311,7 +297,7 @@ public class DirectVideo extends DirectPlayer implements
 
     protected boolean doStart() {
         started = true;
-        repaintAndWait();
+        repaint();
         return super.doStart();
     }
 
@@ -337,7 +323,7 @@ public class DirectVideo extends DirectPlayer implements
         if (mode != USE_DIRECT_VIDEO && mode != USE_GUI_PRIMITIVE) {
             throw new IllegalArgumentException("unsupported mode");
         }
-        if (mode == USE_DIRECT_VIDEO && !(container instanceof Canvas)) {
+        if (mode == USE_DIRECT_VIDEO && !Canvas.class.isInstance(container)) {
             throw new IllegalArgumentException("container needs to be a Canvas");
         }
         if (mode == USE_GUI_PRIMITIVE && container != null) {
@@ -357,6 +343,9 @@ public class DirectVideo extends DirectPlayer implements
                     throw new RuntimeException("initDisplayMode: unable to set the display mode");
                 }
             }
+            if (!canvas.isShown()) {
+                hidden = true;
+            }
             displayMode = mode;
             // register this direct video handler to MMH
             // MMH used to communicate with Canvas
@@ -373,6 +362,18 @@ public class DirectVideo extends DirectPlayer implements
     }
 
     /**
+     * Override method in BasicPlayer to close
+     * the <code>Player</code>.
+     */
+    protected void doClose() {
+        if (mmh != null && canvas != null) {
+            // unregister this direct video handler with MMH
+            mmh.unregisterPlayer(canvas, this);
+        }
+        super.doClose();
+    }
+    
+    /**
      * Set display location 
      */
     public void setDisplayLocation(int x, int y) {
@@ -387,7 +388,7 @@ public class DirectVideo extends DirectPlayer implements
                 dy = y;
             }
             if (dw != 0 && dh !=0) {
-                repaintAndWait();
+                repaint();
             }
         }
     }
@@ -416,9 +417,9 @@ public class DirectVideo extends DirectPlayer implements
         if (item != null) {
             // this will raise sizeChanged event
             // and sizeChanged shall raise paint event also
-            item.setPreferredSize(width, height);
+            item.setPreferredSize( width, height );
         }
-        repaintAndWait();
+        repaint();
         
         if (sizeChanged) {
             sendEvent(PlayerListener.SIZE_CHANGED, this);
@@ -472,7 +473,7 @@ public class DirectVideo extends DirectPlayer implements
         this.visible = visible;
 
         if (old != visible) {
-            repaintAndWait();
+            repaint();
         }
 
         if (visible == false && hNative != 0) {
@@ -494,6 +495,7 @@ public class DirectVideo extends DirectPlayer implements
      * There is no snap shot support now
      */
     public byte[] getSnapshot(String imageType) throws MediaException {
+        checkPermission();
         checkState();
         throw new MediaException("No snapshot support");
     }
@@ -517,6 +519,9 @@ public class DirectVideo extends DirectPlayer implements
         if (debug) {
             Logging.report(Logging.INFORMATION, LogChannels.LC_MMAPI, 
                 "paintVideo x=" + x + ",y=" + y + ",w=" + w + ",h=" + h); 
+        }
+        if (canvas != null && !canvas.isShown()) {
+            hidden = true;
         }
 
         if (hidden) {
@@ -544,6 +549,9 @@ public class DirectVideo extends DirectPlayer implements
             Logging.report(Logging.INFORMATION, LogChannels.LC_MMAPI, 
                 "hideVideoPreview"); 
         }
+        if (hNative != 0) {
+            nSetVisible(hNative, false);
+        }
         hidden = true;
         nSetAlpha(hNative, true, ALPHA_COLOR);
         repaint();
@@ -558,10 +566,10 @@ public class DirectVideo extends DirectPlayer implements
                 "showVideoPreview"); 
         }
         hidden = false;
-        nSetAlpha(hNative, false, ALPHA_COLOR);        
         repaint();
+        // IMPL NOTE - we shouldn't show video immediately: it will appear after drawVideo()
     }
-
+    
     // Inner class ///////////////////////////////////////////////////////////
 
     /**
@@ -642,6 +650,4 @@ public class DirectVideo extends DirectPlayer implements
             repaint();
         }
     }
-
 }
-
