@@ -57,7 +57,6 @@
 #include <fcNotifyIsolates.h>
 #endif
 
-extern void jcapp_refresh_pending(javacall_time_milliseconds timeTowaitInMillisec);
 extern void measureStack(int clearStack);
 extern jlong midp_slavemode_time_slice(void);
 
@@ -326,98 +325,6 @@ javacall_result midpHandleMultimediaEvent(midp_jc_event_multimedia multimediaEve
     case JAVACALL_EVENT_MEDIA_ERROR:
         newMidpEvent.type = MM_GENERAL_ERROR_EVENT;
         break;
-    case JAVACALL_EVENT_MEDIA_STARTED:
-        signal = MEDIA_START_SIGNAL;
-        break;
-    case JAVACALL_EVENT_MEDIA_STOPPED:
-        signal = MEDIA_STOP_SIGNAL;
-        break;
-    case JAVACALL_EVENT_MEDIA_PAUSED:
-        signal = MEDIA_PAUSE_SIGNAL;
-        break;
-    case JAVACALL_EVENT_MEDIA_RESUMED:
-        signal = MEDIA_RESUME_SIGNAL;
-        break;
-    case JAVACALL_EVENT_MEDIA_TIME_SET:
-        signal = MEDIA_SET_TIME_SIGNAL;
-        break;
-    case JAVACALL_EVENT_MEDIA_DURATION_GOTTEN:
-        signal = MEDIA_GET_DURATION_SIGNAL;
-        break;
-    case JAVACALL_EVENT_MEDIA_FRAME_SOUGHT:
-        signal = MEDIA_SEEK_FRAME_SIGNAL;
-        break;
-    case JAVACALL_EVENT_MEDIA_FRAMES_SKIPPED:
-        signal = MEDIA_SKIP_FRAMES_SIGNAL;
-        break;
-    case JAVACALL_EVENT_MEDIA_METADATA_KEY_GOTTEN:
-        signal = MEDIA_GET_METADATA_KEY_SIGNAL;
-        break;
-    case JAVACALL_EVENT_MEDIA_METADATA_GOTTEN:
-        signal = MEDIA_GET_METADATA_SIGNAL;
-        break;
-    case JAVACALL_EVENT_MEDIA_PITCH_GOTTEN:
-        signal = MEDIA_GET_PITCH_SIGNAL;
-        break;
-    case JAVACALL_EVENT_MEDIA_PITCH_SET:
-        signal = MEDIA_SET_PITCH_SIGNAL;
-        break;
-    case JAVACALL_EVENT_MEDIA_RATE_GOTTEN:
-        signal = MEDIA_GET_RATE_SIGNAL;
-        break;
-    case JAVACALL_EVENT_MEDIA_RATE_SET:
-        signal = MEDIA_SET_RATE_SIGNAL;
-        break;
-    case JAVACALL_EVENT_MEDIA_RECORD_STARTED:
-        signal = MEDIA_START_RECORD_SIGNAL;
-        break;
-    case JAVACALL_EVENT_MEDIA_RECORD_STOPPED:
-        signal = MEDIA_STOP_RECORD_SIGNAL;
-        break;
-    case JAVACALL_EVENT_MEDIA_RECORD_PAUSED:
-        signal = MEDIA_PAUSE_RECORD_SIGNAL;
-        break;
-    case JAVACALL_EVENT_MEDIA_RECORD_RESET:
-        signal = MEDIA_RESET_RECORD_SIGNAL;
-        break;
-    case JAVACALL_EVENT_MEDIA_RECORD_COMMITTED:
-        signal = MEDIA_COMMIT_RECORD_SIGNAL;
-        break;
-    case JAVACALL_EVENT_MEDIA_SNAPSHOT_FINISHED:
-        signal = MEDIA_SNAPSHOT_SIGNAL;
-        break;
-    case JAVACALL_EVENT_MEDIA_TEMPO_GOTTEN:
-        signal = MEDIA_GET_TEMPO_SIGNAL;
-        break;
-    case JAVACALL_EVENT_MEDIA_TEMPO_SET:
-        signal = MEDIA_SET_TEMPO_SIGNAL;
-        break;
-    case JAVACALL_EVENT_MEDIA_VIDEO_HEIGHT_GOTTEN:
-        signal = MEDIA_GET_VIDEO_HEIGHT_SIGNAL;
-        break;
-    case JAVACALL_EVENT_MEDIA_VIDEO_WIDTH_GOTTEN:
-        signal = MEDIA_GET_VIDEO_WIDTH_SIGNAL;
-        break;
-    case JAVACALL_EVENT_MEDIA_VIDEO_LOCATION_SET:
-        signal = MEDIA_SET_VIDEO_LOCATION_SIGNAL;
-        break;
-    case JAVACALL_EVENT_MEDIA_VIDEO_VISIBILITY_SET:
-        signal = MEDIA_SET_VIDEO_VISIBILITY_SIGNAL;
-        break;
-    case JAVACALL_EVENT_MEDIA_SHORT_MIDI_EVENT_FINISHED:
-    	signal = MEDIA_SHORT_MIDI_EVENT_SIGNAL;
-    	break;
-    case JAVACALL_EVENT_MEDIA_LONG_MIDI_EVENT_FINISHED:
-    	signal = MEDIA_LONG_MIDI_EVENT_SIGNAL;
-    	break;
-
-    case JAVACALL_EVENT_MEDIA_FRAME_RENDERED:
-        //LCDUIrefresh(0, 0, LCDUI_getScreenWidth(), LCDUI_getScreenHeight());
-        return JAVACALL_OK;
-
-    case JAVACALL_EVENT_MEDIA_STOP_TIME_REACHED:
-        newMidpEvent.type = MM_STOP_TIME_REACHED_EVENT;
-        break;
     default:
         break;
     }
@@ -486,8 +393,6 @@ javacall_result checkForSystemSignal(MidpReentryData* pNewSignal,
     }	else {
         timeTowaitInMillisec = (long)(timeout&0x7FFFFFFF);
     }
-
-    jcapp_refresh_pending(-1/*timeTowaitInMillisec*/);
 
     res = javacall_event_receive ((long)timeTowaitInMillisec, binaryBuffer, BINARY_BUFFER_MAX_LEN, &outEventLen);
 
@@ -838,8 +743,6 @@ static jlong midpTimeSlice(void) {
         }   else {
             toInMillisec = (javacall_time_milliseconds)(to&0x7FFFFFFF);
         }
-
-        jcapp_refresh_pending(toInMillisec);
     }
 
     return to;
