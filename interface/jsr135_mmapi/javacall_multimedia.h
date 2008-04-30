@@ -203,101 +203,13 @@ extern "C" {
 /** Unsupported format */
 #define JAVACALL_MEDIA_FORMAT_UNSUPPORTED       "UNSUPPORTED"
 
+/**
+ * 
+ * Media format type definition.
+ */
 typedef javacall_const_ascii_string javacall_media_format_type;
 
-/**
- * @enum javacall_media_notification_type
- * 
- * @brief Multimedia notification type.
- */
-typedef enum {
-    /** Posted when a Player has reached the end of the media. */
-    JAVACALL_EVENT_MEDIA_END_OF_MEDIA = 1,
-    /** Posted when the duration of a Player is updated. */
-    JAVACALL_EVENT_MEDIA_DURATION_UPDATED,
-    /** Record size limit is reached or no more space is available */
-    JAVACALL_EVENT_MEDIA_RECORD_SIZE_LIMIT,
-    /** Posted when an error occurs during the recording. */
-    JAVACALL_EVENT_MEDIA_RECORD_ERROR,
-    /** Posted when the system or another higher priority application has released
-        an exclusive device which is now available to the Player. */
-    JAVACALL_EVENT_MEDIA_DEVICE_AVAILABLE,
-    /** Posted when the system or another higher priority application has temporarily
-        taken control of an exclusive device which was previously available to the Player. */
-    JAVACALL_EVENT_MEDIA_DEVICE_UNAVAILABLE,
-    /** Posted when the native player needs more media content from Java side. */
-    JAVACALL_EVENT_MEDIA_NEED_MORE_MEDIA_DATA,
-    /** Posted when the Player enters into a buffering mode. */
-    JAVACALL_EVENT_MEDIA_BUFFERING_STARTED,
-    /** Posted when the Player leaves the buffering mode. */
-    JAVACALL_EVENT_MEDIA_BUFFERING_STOPPED,
-    /** Posted when the volume changed from external action. */
-    JAVACALL_EVENT_MEDIA_VOLUME_CHANGED,
-    /** Posted when an error had occurred. */
-    JAVACALL_EVENT_MEDIA_ERROR,
-    /** Posted when the blocked start finished */
-    JAVACALL_EVENT_MEDIA_STARTED,  /* 11 */
-    /** Posted when the blocked stop finished */
-    JAVACALL_EVENT_MEDIA_STOPPED,
-    /** Posted when the blocked pause finished */
-    JAVACALL_EVENT_MEDIA_PAUSED,
-    /** Posted when the blocked resume finished */
-    JAVACALL_EVENT_MEDIA_RESUMED,
-    /** Posted when the blocked set media time  finished */
-    JAVACALL_EVENT_MEDIA_TIME_SET, /*15*/
-    /** Posted when the blocked get duration finished */
-    JAVACALL_EVENT_MEDIA_DURATION_GOTTEN, // 16
-    /** Posted when the blocked seek to frame finished */
-    JAVACALL_EVENT_MEDIA_FRAME_SOUGHT,
-    /** Posted when the blocked skip frames finished */
-    JAVACALL_EVENT_MEDIA_FRAMES_SKIPPED,
-    /** Posted when the blocked get metadata key finished */
-    JAVACALL_EVENT_MEDIA_METADATA_KEY_GOTTEN,
-    /** Posted when the blocked get metadata finished */
-    JAVACALL_EVENT_MEDIA_METADATA_GOTTEN,     /* 20 */
-    /** Posted when the blocked get pitch finished */
-    JAVACALL_EVENT_MEDIA_PITCH_GOTTEN, /* 21 */
-    /** Posted when the blocked set pitch finished */
-    JAVACALL_EVENT_MEDIA_PITCH_SET,
-    /** Posted when the blocked get rate finished */
-    JAVACALL_EVENT_MEDIA_RATE_GOTTEN,
-    /** Posted when the blocked set rate finished */
-    JAVACALL_EVENT_MEDIA_RATE_SET,
-    /** Posted when the blocked start recording finished */
-    JAVACALL_EVENT_MEDIA_RECORD_STARTED,      /* 25 */
-    /** Posted when the blocked stop recording finished */
-    JAVACALL_EVENT_MEDIA_RECORD_STOPPED, // 26
-    /** Posted when the blocked pause recording finished */
-    JAVACALL_EVENT_MEDIA_RECORD_PAUSED,
-    /** Posted when the blocked reset recording finished */
-    JAVACALL_EVENT_MEDIA_RECORD_RESET,
-    /** Posted when the blocked commit recording finished */
-    JAVACALL_EVENT_MEDIA_RECORD_COMMITTED,
-    /** Posted when the blocked snapshot finished */
-    JAVACALL_EVENT_MEDIA_SNAPSHOT_FINISHED, /* 30 */
-    /** Posted when the blocked get tempo finished */
-    JAVACALL_EVENT_MEDIA_TEMPO_GOTTEN, /* 31 */
-    /** Posted when the blocked set tempo finished */
-    JAVACALL_EVENT_MEDIA_TEMPO_SET, /* 32 */
-    /** Posted when the blocked get video size finished */
-    JAVACALL_EVENT_MEDIA_VIDEO_HEIGHT_GOTTEN,
-    /** Posted when the blocked get video size finished */
-    JAVACALL_EVENT_MEDIA_VIDEO_WIDTH_GOTTEN,
-    /** Posted when the blocked set video location finished */
-    JAVACALL_EVENT_MEDIA_VIDEO_LOCATION_SET,
-    /** Posted when the blocked set video visibility finished */
-    JAVACALL_EVENT_MEDIA_VIDEO_VISIBILITY_SET, /* 36 */
-    /** Posted when finished a short MIDI event */
-    JAVACALL_EVENT_MEDIA_SHORT_MIDI_EVENT_FINISHED,
-    /** Posted when finished a long MIDI event */
-    JAVACALL_EVENT_MEDIA_LONG_MIDI_EVENT_FINISHED,
-
-    /** Posted when preset stop time reached */
-    JAVACALL_EVENT_MEDIA_STOP_TIME_REACHED, //39
-    /** Posted when native video player finished rendering a frame */
-    JAVACALL_EVENT_MEDIA_FRAME_RENDERED
-
-} javacall_media_notification_type;
+/** @} */
 
 /**
  * 
@@ -463,6 +375,43 @@ javacall_result javacall_media_get_configuration(
  * 
  * @{
  */
+
+/**
+ * This function is called to get all the necessary return values from 
+ * the JavaCall Media functions that can run in asynchronous mode.
+ * This function is called every time the following situation occurs.
+ * A JSR-135 JavaCall API function returned JAVACALL_WOULD_BLOCK and continued
+ * its 
+ * execution in asynchronous mode. Then it finished the execution and send the
+ * corresponding event to inform Java layer about it. Such events are described
+ * in the description of the enum javacall_media_notification_type after the
+ * event 
+ * JAVACALL_EVENT_MEDIA_JAVA_EVENTS_MARKER. After the event Java
+ * layer calls javacall_media_get_event_data() to get the return values.
+ *
+ * @param handle        handle to the native player that the function having
+ *                      returned JAVACALL_WOULD_BLOCK was called for.
+ * @param eventType     the type of the event, one of 
+ *                      javacall_media_notification_type (but greater than 
+ *                      JAVACALL_EVENT_MEDIA_JAVA_EVENTS_MARKER)
+ * @param pResult       The event data passed as the param \a data to the
+ *                      function javanotify_on_media_notification() while
+ *                      sending the event
+ * @param numArgs       the number of return values to get
+ * @param args          the pointer to the array to copy the return values to
+ *
+ * @retval JAVACALL_INVALID_ARGUMENT    bad arguments or the function should
+ *                                      not be called now for this native
+ *                                      player and eventType (no event has been
+ *                                      sent, see the function description)
+ * @retval JAVACALL_OK                  Success
+ * @retval JAVACALL_FAIL                General failure
+ * @see JAVACALL_WOULD_BLOCK
+ * @see javacall_media_notification_type
+ * @see JAVACALL_EVENT_MEDIA_JAVA_EVENTS_MARKER
+ */
+javacall_result javacall_media_get_event_data(javacall_handle handle, 
+                    int eventType, void *pResult, int numArgs, void *args[]);
 
 /**
  * Java MMAPI call this function to create native media handler.
