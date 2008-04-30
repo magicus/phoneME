@@ -95,8 +95,7 @@ public class PlayerImpl implements Player {
      * lock object
      */
     private static Object idLock = new Object();
-
-
+    
     // Init native library
     protected native int nInit(int appId, int pID, String URI);
     // Terminate native library
@@ -319,6 +318,7 @@ public class PlayerImpl implements Player {
                 throw new MediaException("Not enough memory");
             }
 
+            boolean endOfStreamReached = false;
             do {
                 int num_read = 0;
                 int ret;
@@ -337,18 +337,25 @@ public class PlayerImpl implements Player {
                     }
                     if (ret == -1) {
                         need_more = false;
+                        endOfStreamReached = true;
                         break;
                     }
                 } while(num_read < packetSize);
                 if (num_read > 0) {
                     packetSize = nBuffering(hNative, buffer, num_read);
                     if (packetSize >=0) {
-                        need_more = nNeedMoreDataImmediatelly(hNative);
+                        need_more = !endOfStreamReached && nNeedMoreDataImmediatelly(hNative);
                     } else {
                         throw new MediaException("Buffering media data error");
                     }
                 }
             } while (need_more);
+            if (endOfStreamReached) {
+                /* end of input stream */
+                if (nBuffering(hNative, null, 0) < 0) {
+                    throw new MediaException("Buffering media data error");
+                }
+            }
         }
     };
 

@@ -31,6 +31,9 @@
 
 #include "javacall_defs.h"
 #include "javacall_multimedia.h"
+#include "javanotify_multimedia.h"
+
+#include "mm_async_exec.h"
 
 #define MMP_MAX_TEMPBUF_SIZE 256
 
