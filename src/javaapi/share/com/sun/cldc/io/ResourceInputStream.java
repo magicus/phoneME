@@ -1,24 +1,24 @@
 /*
- *   
  *
- * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+ *
+ * Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
- * 
+ *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
  * 2 only, as published by the Free Software Foundation.
- * 
+ *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
  * included at /legal/license.txt).
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA
- * 
+ *
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
  * information or have any questions.
@@ -37,9 +37,6 @@ import java.lang.ref.WeakReference;
 public class ResourceInputStream extends InputStream {
 
     private static int SKIP_BLOCK_SIZE = 5120;
-
-    // skip buffer
-    private static WeakReference bufRef;
 
     private Object fileDecoder;
     private Object savedDecoder; // used for mark/reset functionality
@@ -125,37 +122,6 @@ public class ResourceInputStream extends InputStream {
             throw new IOException();
         }
      }
-
-
-    /**
-     * Skips over and discards <code>n</code> bytes of data from file stream.
-     *
-     * @param      n   the number of bytes to be skipped.
-     * @return      the actual number of bytes skipped.
-     * @exception  IOException  if an I/O error occurs.
-     */
-    public long skip(long n) throws IOException {
-        byte[] b;
-        synchronized(this) {
-            if (null == bufRef || null == (b = (byte[])bufRef.get())) {
-                b = new byte[SKIP_BLOCK_SIZE];
-                bufRef = new WeakReference(b);
-            }
-        }
-        long readBytesTotal = 0;
-        int readBytes = 0;
-
-        while (readBytesTotal < n) {
-            int bytesToRead = (readBytesTotal + SKIP_BLOCK_SIZE) <= n ? 
-                               SKIP_BLOCK_SIZE: (int)(n - readBytesTotal);
-            readBytes = read(b, 0, bytesToRead);
-            if (readBytes <= 0) {
-                break;
-            }
-            readBytesTotal += readBytes;
-        }
-        return readBytesTotal;
-    }
 
     /**
      * Reads the next byte of data from the input stream.
@@ -244,7 +210,7 @@ public class ResourceInputStream extends InputStream {
     /**
      * Indicates that this ResourceInputStream supports mark/reset
      * functionality
-     * 
+     *
      * @return true
      */
     public boolean markSupported() {
