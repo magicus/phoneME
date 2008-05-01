@@ -29,14 +29,11 @@ package com.sun.cldc.io;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Vector;
-import java.lang.ref.WeakReference;
 
 /**
  * Input stream class for accessing resource files in classpath.
  */
 public class ResourceInputStream extends InputStream {
-
-    private static int SKIP_BLOCK_SIZE = 5120;
 
     private Object fileDecoder;
     private Object savedDecoder; // used for mark/reset functionality
