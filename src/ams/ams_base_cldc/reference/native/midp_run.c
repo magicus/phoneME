@@ -343,9 +343,9 @@ JVMSPI_DebuggerNotification(jboolean is_active) {
 #endif
 
 /** static buffer to store string to print */
-static char buffer[256];
+static char JVMSPI_PrintRaw_buffer[256];
 /** current length of buffer to print */
-static int length;
+static int JVMSPI_PrintRaw_buffer_length;
 /**
  * This function provides an implementation
  * used by the logging service, as well as by the
@@ -362,50 +362,50 @@ void JVMSPI_PrintRaw(const char* s) {
      */
     if (s[1] == '\0') {
         if (s[0] == '\n') {
-            buffer[length++] = '\r';
-            buffer[length++] = '\n';
-            buffer[length++] = '\0';
-            pcsl_print(buffer);
-            buffer[0] = '\0';
-            length = 0;
+            JVMSPI_PrintRaw_buffer[JVMSPI_PrintRaw_buffer_length++] = '\r';
+            JVMSPI_PrintRaw_buffer[JVMSPI_PrintRaw_buffer_length++] = '\n';
+            JVMSPI_PrintRaw_buffer[JVMSPI_PrintRaw_buffer_length++] = '\0';
+            pcsl_print(JVMSPI_PrintRaw_buffer);
+            JVMSPI_PrintRaw_buffer[0] = '\0';
+            JVMSPI_PrintRaw_buffer_length = 0;
         } else {
-            if (length < 250) {
-                buffer[length++] = s[0];
-                buffer[length] = '\0';
+            if (JVMSPI_PrintRaw_buffer_length < 250) {
+                JVMSPI_PrintRaw_buffer[JVMSPI_PrintRaw_buffer_length++] = s[0];
+                JVMSPI_PrintRaw_buffer[JVMSPI_PrintRaw_buffer_length] = '\0';
             } else {
-                buffer[length++] = '\r';
-                buffer[length++] = '\n';
-                buffer[length++] = '\0';
-                pcsl_print(buffer);
-                buffer[0] = s[0];
-                buffer[1] = '\0';
-                length = 1;
+                JVMSPI_PrintRaw_buffer[JVMSPI_PrintRaw_buffer_length++] = '\r';
+                JVMSPI_PrintRaw_buffer[JVMSPI_PrintRaw_buffer_length++] = '\n';
+                JVMSPI_PrintRaw_buffer[JVMSPI_PrintRaw_buffer_length++] = '\0';
+                pcsl_print(JVMSPI_PrintRaw_buffer);
+                JVMSPI_PrintRaw_buffer[0] = s[0];
+                JVMSPI_PrintRaw_buffer[1] = '\0';
+                JVMSPI_PrintRaw_buffer_length = 1;
             }
         }
     } else {
-        if (sLength + length > 250) {
-            if (length > 0) {
-                buffer[length++] = '\r';
-                buffer[length++] = '\n';
-                buffer[length++] = '\0';
-                pcsl_print(buffer);
-                buffer[0] = '\0';
-                length = 0;
+        if (sLength + JVMSPI_PrintRaw_buffer_length > 250) {
+            if (JVMSPI_PrintRaw_buffer_length > 0) {
+                JVMSPI_PrintRaw_buffer[JVMSPI_PrintRaw_buffer_length++] = '\r';
+                JVMSPI_PrintRaw_buffer[JVMSPI_PrintRaw_buffer_length++] = '\n';
+                JVMSPI_PrintRaw_buffer[JVMSPI_PrintRaw_buffer_length++] = '\0';
+                pcsl_print(JVMSPI_PrintRaw_buffer);
+                JVMSPI_PrintRaw_buffer[0] = '\0';
+                JVMSPI_PrintRaw_buffer_length = 0;
             }
             pcsl_print(s);
         } else {
             for (i=0; i<sLength; i++) {
-                buffer[length++] = s[i];
+                JVMSPI_PrintRaw_buffer[JVMSPI_PrintRaw_buffer_length++] = s[i];
                 if (s[i] == '\n') {
-                    buffer[length++] = '\r';
-                    buffer[length++] = '\n';
-                    buffer[length++] = '\0';
-                    pcsl_print(buffer);
-                    buffer[0] = '\0';
-                    length = 0;
+                    JVMSPI_PrintRaw_buffer[JVMSPI_PrintRaw_buffer_length++] = '\r';
+                    JVMSPI_PrintRaw_buffer[JVMSPI_PrintRaw_buffer_length++] = '\n';
+                    JVMSPI_PrintRaw_buffer[JVMSPI_PrintRaw_buffer_length++] = '\0';
+                    pcsl_print(JVMSPI_PrintRaw_buffer);
+                    JVMSPI_PrintRaw_buffer[0] = '\0';
+                    JVMSPI_PrintRaw_buffer_length = 0;
                 }
             }
-            buffer[length] = '\0';
+            JVMSPI_PrintRaw_buffer[JVMSPI_PrintRaw_buffer_length] = '\0';
         }
     }
 }

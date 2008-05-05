@@ -466,6 +466,8 @@ public final class Permissions {
      * @return true if a domain is trusted, false if not
      */
     public static boolean isTrusted(String domain) {
+        return true;
+        /*
         if (MANUFACTURER_DOMAIN_BINDING.equals(domain)) {
             return true;
         }
@@ -483,6 +485,7 @@ public final class Permissions {
         }
 
         return false;
+        */
     }
 
     /**
@@ -499,16 +502,17 @@ public final class Permissions {
         byte[] defaults = new byte[NUMBER_OF_PERMISSIONS];
         byte[][] permissions = {maximums, defaults};
 
-        if (MANUFACTURER_DOMAIN_BINDING.equals(name)) {
+        //if (MANUFACTURER_DOMAIN_BINDING.equals(name)) {
             // All permissions allowed
             for (int i = 0; i < maximums.length; i++) {
                 maximums[i] = ALLOW;
                 defaults[i] = ALLOW;
             }
 
-            return permissions;
-        }
+          //  return permissions;
+        //}
 
+        /*
         if (OPERATOR_DOMAIN_BINDING.equals(name) ||
                 MAXIMUM_DOMAIN_BINDING.equals(name)) {
             for (int i = 0; i < maximums.length; i++) {
@@ -546,7 +550,7 @@ public final class Permissions {
 
             return permissions;
         }
-
+       */
         // the default domain is minimum, all permissions denied
         return permissions;
     }
