@@ -255,7 +255,7 @@ media_interface* fmt_enum2itf( jc_fmt fmt )
         return &g_audio_itf;    // was: AUDIO_MP3, AUDIO_MPEG4, AUDIO_AAC, AUDIO_MP3_2
 #endif /* ENABLE_MMAPI_LIME */
 
-#ifdef EANBLE_AMR
+#ifdef ENABLE_AMR
     case JC_FMT_AMR:
     case JC_FMT_AMR_WB:
     case JC_FMT_AMR_WB_PLUS:
