@@ -182,7 +182,7 @@ public class InvocationStore {
         if (tid != 0 && next) {
             mode = MODE_TID_NEXT;
         }
-        invoc.suiteId = AppProxy.INVALID_SUITE_ID;
+        invoc.suiteId = AppProxy.EXTERNAL_SUITE_ID;
         invoc.classname = null;
         invoc.tid = tid;
         

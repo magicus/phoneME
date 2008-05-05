@@ -16,7 +16,7 @@ public final class InvocationStoreProxy {
 		}
         // check if it is native handler
         /* IMPL_NOTE: null suite ID is an indication of platform request */
-        if (invoc.suiteId == AppProxy.INVALID_SUITE_ID){
+        if (invoc.suiteId == AppProxy.EXTERNAL_SUITE_ID){
         	// call native handler only for unprocessed invocations
         	// status is returned without launching of a handler
         	if( invoc.getStatus() == Invocation.WAITING ) {

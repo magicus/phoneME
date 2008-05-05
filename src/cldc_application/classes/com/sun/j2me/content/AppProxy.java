@@ -106,7 +106,7 @@ class AppProxy {
     private static AppProxy currentApp;
 
     /** The log flag to enable informational messages. */
-    static final Logger LOGGER = null; // new Logger();
+    static final Logger LOGGER = new Logger();
 
     /** The known AppProxy instances. Key is classname. */
     protected Hashtable appmap;
@@ -140,7 +140,7 @@ class AppProxy {
     /** MIDlet property for the suite vendor. */
     static final String VENDOR_PROP        = "MIDlet-Vendor";
     
-    static final int INVALID_SUITE_ID = MIDletSuite.INTERNAL_SUITE_ID;
+    static final int EXTERNAL_SUITE_ID = MIDletSuite.UNUSED_SUITE_ID;
 
     /**
      * Sets the security token used for privileged operations.
