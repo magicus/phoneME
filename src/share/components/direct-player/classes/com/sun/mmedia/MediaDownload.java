@@ -37,13 +37,13 @@ class MediaDownload implements Runnable {
      * the stream instance
      */
     private SourceStream stream;
-    long contLength = -1;
-    int packetSize = 0;
-    int javaBufSize = 0; /* unused in current version */
-    byte[] buffer = null;
-    boolean eom = false;
-    int hNative;
-    boolean needMoreData = false;
+    private long contLength = -1;
+    private int packetSize = 0;
+    private int javaBufSize = 0;
+    private byte[] buffer = null;
+    private boolean eom = false;
+    private int hNative;
+    private boolean needMoreData = false;
 
 
     // get java buffer size to determine media format
@@ -69,7 +69,7 @@ class MediaDownload implements Runnable {
         contLength = -1;
     }
     
-    synchronized public void download(boolean inBackground) throws MediaException, IOException {
+    synchronized private void download(boolean inBackground) throws MediaException, IOException {
         int roffset = 0;
         int woffset = 0;
 
@@ -95,7 +95,7 @@ class MediaDownload implements Runnable {
             }
 
             if (inBackground) {
-                woffset = BgDownloadAndWait(roffset, woffset);
+                woffset = bgDownloadAndWait(woffset);
             }
 
             do {
@@ -146,7 +146,7 @@ class MediaDownload implements Runnable {
                 if (inBackground && !needMoreData) {
                     woffset = moveBuff(roffset, woffset);
                     roffset = 0;
-                    woffset = BgDownloadAndWait(roffset, woffset);
+                    woffset = bgDownloadAndWait(woffset);
                 }
             }while (needMoreData && !eom);
             if (eom) {
@@ -163,18 +163,18 @@ class MediaDownload implements Runnable {
         return woffset-roffset;
     }
 
-    private int BgDownloadAndWait(int roffset, int woffset) throws IOException {
+    private int bgDownloadAndWait(int offset) throws IOException {
         while (!needMoreData) {
-            if (woffset<javaBufSize && !eom) {
+            if (offset<javaBufSize && !eom) {
                 int num_read = packetSize;
-                if (woffset + num_read >javaBufSize) {
-                    num_read = javaBufSize - woffset;
+                if (offset + num_read >javaBufSize) {
+                    num_read = javaBufSize - offset;
                 }
-                int ret = stream.read(buffer, woffset, num_read);
+                int ret = stream.read(buffer, offset, num_read);
                 if (ret == -1) {
                     eom = true;
                 } else {
-                    woffset += ret;
+                    offset += ret;
                 }
             } else {
                 try {
@@ -182,7 +182,7 @@ class MediaDownload implements Runnable {
                 } catch (Exception e) {}
             }
         };
-        return woffset;
+        return offset;
     }
     
     /**
@@ -196,7 +196,7 @@ class MediaDownload implements Runnable {
         }
     }
     
-    void deallocate() {
+    protected void deallocate() {
         eom = false;
         contLength = -1;
         buffer = null;
@@ -207,14 +207,14 @@ class MediaDownload implements Runnable {
     /**
      * 
      */
-    public void fgDownload() throws IOException, MediaException {
+    protected void fgDownload() throws IOException, MediaException {
         download(false);
     }
 
     /**
      * 
      */
-    public boolean bgDownload() {
+    protected boolean bgDownload() {
         if (!eom) {
             try {
                 new Thread(this).start();
@@ -225,7 +225,7 @@ class MediaDownload implements Runnable {
         return true;
     }
     
-    synchronized public void continueDownload() {
+    synchronized protected void continueDownload() {
         needMoreData = true;
         notifyAll();
     }

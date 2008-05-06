@@ -112,8 +112,6 @@ public class PlayerImpl implements Player {
 
     private static String PL_ERR_SH = "Cannot create a Player: ";
     
-    MediaDownload mediaDownload = null;
-    
     /**
      * Constructor 
      */
@@ -219,6 +217,8 @@ public class PlayerImpl implements Player {
             throw new MediaException("Can not realize");
         }
 
+        MediaDownload mediaDownload = null;
+
         if (!handledByDevice && !handledByJava) {
             mediaFormat = nGetMediaFormat(hNative);
             if (mediaFormat.equals(BasicPlayer.MEDIA_FORMAT_UNSUPPORTED)) {
@@ -236,6 +236,7 @@ public class PlayerImpl implements Player {
             }
             /* predownload media data to recognize media format and/or 
                specific media parameters (e.g. duration) */
+    
             if (!mediaFormat.equals(BasicPlayer.MEDIA_FORMAT_TONE)) {
                 mediaDownload = new MediaDownload(hNative, stream);
                 try {
