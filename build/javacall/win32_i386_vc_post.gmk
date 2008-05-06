@@ -33,6 +33,8 @@ wtkbin: $(SUBSYSTEM_AMS_EXECUTABLES)
          $(WTK_BIN_DIR)/bin/zayit.exe)
 	$(AT)$(call copy_file_if_exists, $(MIDP_OUTPUT_DIR)/bin/i386/runMidlet*.pdb, \
          $(WTK_BIN_DIR)/bin/)
+	$(AT)$(call copy_file_if_exists, $(JAVACALL_LIB_DIR)/sublime*.dll, \
+         $(WTK_BIN_DIR)/bin/sublime.dll)
 	$(AT)$(call copy_file, $(MIDP_OUTPUT_DIR)/bin/i386/kdp.jar, \
          $(WTK_BIN_DIR)/wtklib/kdp.jar)
 	$(AT)$(call copy_file, $(MIDP_OUTPUT_DIR)/appdb/_main.ks, \
