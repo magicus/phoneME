@@ -28,8 +28,6 @@ import com.sun.mmedia.rtsp.protocol.Message;
 /**
  * The listener interface for incoming RTSP requests.
  *
- * @author     Marc Owerfeldt
- * @created    June 7, 2003
  */
 
 public interface RtspListener {

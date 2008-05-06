@@ -28,8 +28,6 @@ import java.io.IOException;
 /**
  * Encapsulates an RTSP URL of the form rtsp://host:port/file.
  *
- * @author     Marc Owerfeldt
- * @created    June 7, 2003
  */
 public class RtspUrl {
     /**

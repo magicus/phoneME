@@ -34,8 +34,6 @@ import com.sun.mmedia.rtsp.sdp.*;
 /**
  * Manager for RTSP connections.
  *
- * @author     Marc Owerfeldt
- * @created    September 11, 2002
  */
 public class RtspManager {
     private final boolean RTSP_DEBUG;

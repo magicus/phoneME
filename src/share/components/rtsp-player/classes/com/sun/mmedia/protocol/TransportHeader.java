@@ -26,8 +26,6 @@ package com.sun.mmedia.rtsp.protocol;
 /**
  * Parses the Transport Header in the RTSP response message.
  *
- * @author     Marc Owerfeldt
- * @created    June 7, 2003
  */
 public class TransportHeader {
     /**

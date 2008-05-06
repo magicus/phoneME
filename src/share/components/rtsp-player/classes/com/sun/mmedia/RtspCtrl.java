@@ -33,8 +33,6 @@ import javax.microedition.media.Control;
  * state of the RTSP player, for example 'Negotiating',
  * 'Buffering', 'Streaming', 'File not found' etc.
  *
- * @author     Marc Owerfeldt
- * @created    September 25, 2002
  */
 public class RtspCtrl implements Control {
     // Status message informing the user about RTSP client/server

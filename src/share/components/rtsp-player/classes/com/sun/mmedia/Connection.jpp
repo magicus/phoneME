@@ -35,8 +35,6 @@ import java.net.*;
 /**
  * The Connection object encapsulates a TCP/IP connection to an RTSP Server.
  *
- * @author     Marc Owerfeldt
- * @created    September 11, 2002
  */
 public class Connection extends Thread implements Runnable {
 
