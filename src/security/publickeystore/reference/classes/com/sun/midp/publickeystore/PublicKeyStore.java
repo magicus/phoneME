@@ -41,7 +41,7 @@ public class PublicKeyStore {
      * Constructor for subclasses.
      */
     protected PublicKeyStore() {
-    };
+    }
 
     /**
      * Constructs a read-only keystore from a serialized keystore created

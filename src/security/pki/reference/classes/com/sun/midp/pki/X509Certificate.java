@@ -797,12 +797,12 @@ public class X509Certificate implements Certificate {
                 }
             } else {
                 // Check for AuthorityInfoAccess extension: id-pe 1
-                authAccessLocation = "";
-                
                 if ((end - extIdIdx > ID_AIA.length) &&
                          Utils.byteMatch(enc, extIdIdx, ID_AIA,
                                          0, ID_AIA.length)) {
                     extId = "AIA";
+
+                    authAccessLocation = "";
 
                     /*
                      * AuthorityInfoAccessSyntax  ::=

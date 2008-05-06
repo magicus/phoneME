@@ -39,7 +39,7 @@ import com.sun.midp.pki.X509Certificate;
 import com.sun.midp.pki.DerValue;
 import com.sun.midp.pki.Extension;
 import com.sun.midp.pki.Utils;
-import com.sun.midp.publickeystore.WebPublicKeyStore;
+import com.sun.midp.pki.CertStore;
 
 import com.sun.midp.crypto.Signature;
 import com.sun.midp.crypto.SignatureException;
@@ -152,7 +152,7 @@ class OCSPResponse {
      */
     // used by OCSPValidatorImpl
     OCSPResponse(byte[] bytes, Vector certs, CertId reqCertId,
-                 X509Certificate issuerCert)
+                 X509Certificate issuerCert, CertStore keyStore)
             throws IOException, OCSPException {
 
         try {
@@ -347,6 +347,8 @@ class OCSPResponse {
                 }
             }
 
+            boolean usedCertFromResponse = false;
+
             if (x509Certs != null && x509Certs[0] != null) {
                 /*
                  * If there is a certificate specified in the response having
@@ -372,8 +374,6 @@ class OCSPResponse {
                      * Check whether the cert returned by the responder
                      * is trusted.
                      */
-                    WebPublicKeyStore keyStore =
-                            WebPublicKeyStore.getTrustedKeyStore();
                     Vector respCertVector = new Vector(1);
                     respCertVector.addElement(certFromResponse);
 
@@ -391,6 +391,7 @@ class OCSPResponse {
                          * from the response first.
                          */
                         certs.insertElementAt(x509Certs[0], 0);
+                        usedCertFromResponse = true;
                     } catch (CertificateException ce) {
                         /*
                          * The key used to sign the response can belong to
@@ -404,6 +405,7 @@ class OCSPResponse {
                                         X509Certificate.OCSP_EXT_KEY_USAGE,
                                         keyStore, null);
                             certs.insertElementAt(x509Certs[0], 0);
+                            usedCertFromResponse = true;
                         } catch (CertificateException cex) {
                             // ignore, don't use the certificate from the resp.
                         }
@@ -431,6 +433,15 @@ class OCSPResponse {
                         */
                         verified = false;
                     }
+                }
+
+                if (usedCertFromResponse) {
+                    /*
+                     * Remove the certificate we've previously added to certs
+                     * to prevent modification of the vector passed as a
+                     * parameter to this function.
+                     */
+                    certs.removeElementAt(0);
                 }
 
                 if (!verified) {

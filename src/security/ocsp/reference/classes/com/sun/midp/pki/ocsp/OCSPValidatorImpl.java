@@ -244,7 +244,8 @@ public class OCSPValidatorImpl implements OCSPValidator {
             byte[] responseBuf = new byte[total];
             System.arraycopy(tmpBuf, 0, responseBuf, 0, total);
 
-            return new OCSPResponse(responseBuf, caCerts, reqCertId, issuerCert);
+            return new OCSPResponse(responseBuf, caCerts, reqCertId, 
+                    issuerCert, WebPublicKeyStore.getTrustedKeyStore());
         } catch (IOException ioe) {
             throw new OCSPException(OCSPException.SERVER_NOT_RESPONDING,
                                     ioe.getMessage());
