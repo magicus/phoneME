@@ -39,6 +39,7 @@ import com.sun.midp.pki.X509Certificate;
 import com.sun.midp.pki.DerValue;
 import com.sun.midp.pki.Extension;
 import com.sun.midp.pki.Utils;
+import com.sun.midp.pki.CertStore;
 
 import com.sun.midp.crypto.Signature;
 import com.sun.midp.crypto.SignatureException;
@@ -150,7 +151,8 @@ class OCSPResponse {
      * Create an OCSP response from its ASN.1 DER encoding.
      */
     // used by OCSPValidatorImpl
-    OCSPResponse(byte[] bytes, Vector certs, CertId reqCertId)
+    OCSPResponse(byte[] bytes, Vector certs, CertId reqCertId,
+                 X509Certificate issuerCert, CertStore keyStore)
             throws IOException, OCSPException {
 
         try {
@@ -345,12 +347,70 @@ class OCSPResponse {
                 }
             }
 
-            // Check whether the cert returned by the responder is trusted
+            boolean usedCertFromResponse = false;
+
             if (x509Certs != null && x509Certs[0] != null) {
-                /* IMPL_NOTE: if there is a certificate specified in the
-                 * responce, we can verify it first and if it is trusted then
-                 * use it to verify signature. By now we do nothing with it.
+                /*
+                 * If there is a certificate specified in the response having
+                 * "OCSP Signing" in the extended key usages field, we verify
+                 * it first and if it is trusted then use it to verify the
+                 * signature on the OCSP response.
                  */
+
+                X509Certificate certFromResponse = null;
+
+                for (int i = 0; i < x509Certs.length; i++) {
+                    int extKeyUsage = x509Certs[i].getExtKeyUsage();
+                    if (extKeyUsage != -1 &&
+                            (extKeyUsage & X509Certificate.OCSP_EXT_KEY_USAGE)
+                                 == extKeyUsage) {
+                        certFromResponse = x509Certs[i];
+                        break;
+                    }
+                }
+
+                if (certFromResponse != null) {
+                    /*
+                     * Check whether the cert returned by the responder
+                     * is trusted.
+                     */
+                    Vector respCertVector = new Vector(1);
+                    respCertVector.addElement(certFromResponse);
+
+                    try {
+                        /*
+                         * Check if the key used to sign the response
+                         * is issued by known CA. 
+                         */
+                        X509Certificate.verifyChain(respCertVector,
+                                        X509Certificate.DIGITAL_SIG_KEY_USAGE,
+                                        X509Certificate.OCSP_EXT_KEY_USAGE,
+                                        keyStore, null);
+                        /*
+                         * When checking the signature, use the certificate
+                         * from the response first.
+                         */
+                        certs.insertElementAt(x509Certs[0], 0);
+                        usedCertFromResponse = true;
+                    } catch (CertificateException ce) {
+                        /*
+                         * The key used to sign the response can belong to
+                         * the CA who issued the certificate in question.
+                         */
+                        respCertVector.addElement(issuerCert);
+
+                        try {
+                            X509Certificate.verifyChain(respCertVector,
+                                        X509Certificate.DIGITAL_SIG_KEY_USAGE,
+                                        X509Certificate.OCSP_EXT_KEY_USAGE,
+                                        keyStore, null);
+                            certs.insertElementAt(x509Certs[0], 0);
+                            usedCertFromResponse = true;
+                        } catch (CertificateException cex) {
+                            // ignore, don't use the certificate from the resp.
+                        }
+                    }
+                }
             }
 
             if (certs != null) {
@@ -359,17 +419,29 @@ class OCSPResponse {
                 boolean verified = false;
                 for (int i = 0; (!verified) && (i < certs.size()); i++) {
                     try {
+                        X509Certificate currCert =
+                            (X509Certificate)certs.elementAt(i);
                         verified = verifyResponse(responseDataDer,
-                            ((X509Certificate)certs.elementAt(i)).getPublicKey(),
-                            sigAlgId, signature);
+                            currCert.getPublicKey(), sigAlgId, signature);
                     }  catch (SignatureException e) {
-                       /* IMPL_NOTE: if the key usage does not include
+                       /*
+                        * IMPL_NOTE: if the key usage does not include
                         * KP_OCSP_SIGNING_OID then SignatureException
-                        * is thrown. We should check the key usages
-                        * first and remove this try-catch.
+                        * is thrown. We should check the key usages first
+                        * and remove this try-catch, but certificates
+                        * in certs vector don't contain this information.
                         */
                         verified = false;
                     }
+                }
+
+                if (usedCertFromResponse) {
+                    /*
+                     * Remove the certificate we've previously added to certs
+                     * to prevent modification of the vector passed as a
+                     * parameter to this function.
+                     */
+                    certs.removeElementAt(0);
                 }
 
                 if (!verified) {

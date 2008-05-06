@@ -144,7 +144,9 @@ public class X509Certificate implements Certificate {
     public static final int IPSEC_USER_EXT_KEY_USAGE = 0x00000080;
     /** Bit time stamping mask for extended key usage. */
     public static final int TIME_STAMP_EXT_KEY_USAGE = 0x00000100;
-    
+    /** Bit mask OCSP for extended key usage. */
+    public static final int OCSP_EXT_KEY_USAGE = 0x00000200;
+
     /**
      * The validity period is contained in thirteen bytes
      * yymmddhhmmss followed by 'Z' (for zulu ie GMT), if yy < 50
@@ -756,22 +758,25 @@ public class X509Certificate implements Certificate {
 
                     getLen(SEQUENCE_TYPE);
                     int kuOidLen;
+                    boolean hasUnrecognizedUsage = false;
+
                     while (idx < extValIdx + extValLen) {
                         kuOidLen = getLen(OID_TYPE);
                         if ((kuOidLen == ID_KP.length + 1) &&
                             Utils.byteMatch(enc, idx, 
                                             ID_KP, 0, ID_KP.length) &&
                             (enc[idx + ID_KP.length] > 0) &&
-                            (enc[idx + ID_KP.length] < 9)) {
+                            (enc[idx + ID_KP.length] <= 9)) {
                             extKeyUsage |= 
                                 (1 << (enc[idx + ID_KP.length]));
                         } else {
+                            hasUnrecognizedUsage = true;
                             if (crit) badExt = true;
                         }
                         idx += kuOidLen;
                     }
 
-                    if (!crit) {
+                    if (!crit && hasUnrecognizedUsage) {
                         // ignore extended key usage if not critical
                         extKeyUsage = -1;
                     }
@@ -792,12 +797,12 @@ public class X509Certificate implements Certificate {
                 }
             } else {
                 // Check for AuthorityInfoAccess extension: id-pe 1
-                authAccessLocation = "";
-                
                 if ((end - extIdIdx > ID_AIA.length) &&
                          Utils.byteMatch(enc, extIdIdx, ID_AIA,
                                          0, ID_AIA.length)) {
                     extId = "AIA";
+
+                    authAccessLocation = "";
 
                     /*
                      * AuthorityInfoAccessSyntax  ::=
@@ -1212,7 +1217,7 @@ public class X509Certificate implements Certificate {
      *      is present
      * @param certStore store of trusted CA certificates
      * @param outIssuer [out] trusted CA authorized the last certificate
-     *                  in certs
+     *                  in certs; can be NULL
      *
      * @return authorization path: an array of names from most trusted to
      *    least trusted from the certificate chain
