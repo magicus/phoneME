@@ -929,7 +929,7 @@ public final class RegistryImpl {
             }
 
             // Make an attempt to gain the foreground
-            if (invoc.invokingSuiteId != AppProxy.INVALID_SUITE_ID &&
+            if (invoc.invokingSuiteId != AppProxy.EXTERNAL_SUITE_ID &&
                     invoc.invokingClassname != null) {
 
                 // Strong FG transition requested
