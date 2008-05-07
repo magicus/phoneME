@@ -1359,8 +1359,7 @@ static jboolean modeCheck(StoredInvoc* invoc, int mode) {
          * That's everything except HOLD.
          */
         return (invoc->status == STATUS_ACTIVE ||
-               (invoc->cleanup == KNI_TRUE &&
-                invoc->status != STATUS_HOLD));
+               (invoc->cleanup == KNI_TRUE && invoc->status != STATUS_HOLD));
     }
     return KNI_FALSE;
 }

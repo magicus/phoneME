@@ -304,6 +304,7 @@ public class CHManagerImpl extends com.sun.midp.content.CHManager
     public void midletStartError(int externalAppId, int suiteId, String className,
                           int errorCode, String errorDetails) {
 		// Cleanup unprocessed Invocations
+    	InvocationStore.setCleanup(suiteId, className, true);
 		RegistryImpl.cleanup(suiteId, className);
 		AppProxy.midletIsRemoved( suiteId, className );
 		// Check for and execute a pending MIDlet suite

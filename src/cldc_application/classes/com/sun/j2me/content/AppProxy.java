@@ -103,7 +103,7 @@ class AppProxy {
     private static AppProxy currentApp;
 
     /** The log flag to enable informational messages. */
-    static final Logger LOGGER = new Logger();
+    static final Logger LOGGER = null; // new Logger();
 
     /** The known AppProxy instances. Key is classname. */
     protected Hashtable appmap;
