@@ -68,11 +68,13 @@ public class CommonDS extends BasicDS implements SourceStream {
         } catch (IOException ioe) {
                 //ignore
         }
+/*
         try {
             contentLength = is.available();
         } catch(IOException e) {
             contentLength = -1;
         }
+*/
     }
 
     public void connect() throws IOException {

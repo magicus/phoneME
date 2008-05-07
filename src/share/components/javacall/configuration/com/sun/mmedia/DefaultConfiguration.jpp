@@ -159,7 +159,6 @@ public class DefaultConfiguration extends Configuration {
             return new String[0];
         }
         // #endif ]
-
         String arr[] = super.getSupportedContentTypes(protocol);
         Vector v = new Vector(arr.length);
         for (int i=0; i<arr.length; i++) v.addElement(arr[i]);

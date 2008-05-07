@@ -281,7 +281,13 @@ public class DirectPlayer extends BasicPlayer
 
         if (!handledByDevice) {
             /* predownload media data to fill native buffers */
-            PlayerImpl.doBuffering(hNative, stream);
+            if (mediaDownload != null) {
+                try {
+                    mediaDownload.fgDownload();
+                } catch (IOException ex) {
+                    throw new MediaException("Can not start media download thread : " + ex.getMessage());
+                }
+            }
         }
     }
     
@@ -370,6 +376,18 @@ public class DirectPlayer extends BasicPlayer
             midiControl.playerStarted();
         }
         // #endif ]
+        
+        if (mediaDownload != null) {
+            try {
+                mediaDownload.bgDownload();
+            } catch(Exception ex) {
+                try {
+                    stop();
+                } catch(MediaException mEx) {
+                }
+            }
+        }
+
     }
     
     /**
@@ -393,8 +411,15 @@ public class DirectPlayer extends BasicPlayer
         } else {
             ret = nResume(hNative);    
         }
-
+        
         return ret;
+    }
+
+    protected void continueDownload() {
+        /* predownload media data to fill native buffers */
+        if (mediaDownload != null) {
+            mediaDownload.continueDownload();
+        }
     }
     
     /**
@@ -484,6 +509,9 @@ public class DirectPlayer extends BasicPlayer
             try {
                 // seek to start position
                 stream.seek(0);
+                if (mediaDownload != null) {
+                    mediaDownload.deallocate();
+                }
             } catch(IOException e) {
                 if (debug) System.out.println("[direct] doDeallocate seek IOException");
                 return; // just return

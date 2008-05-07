@@ -78,6 +78,8 @@ public abstract class BasicPlayer implements Player
 
     protected Player notificationSource = null; // if not null, will substitute 'this'
                                                 // in playerUpdate calls
+                                                
+    protected MediaDownload mediaDownload = null;                                                   
     
     /**
      * the state of this player
@@ -596,6 +598,9 @@ public abstract class BasicPlayer implements Player
     }
 
 
+    protected void continueDownload() {
+    }
+    
     /**
      * Stops the <code>Player</code>.  It will pause the playback at
      * the current media time.

@@ -31,6 +31,7 @@ import  java.util.Enumeration;
 import  java.util.Hashtable;
 import  java.util.Vector;
 import  com.sun.j2me.app.AppPackage;
+import  com.sun.j2me.app.AppIsolate;
 import  com.sun.mmedia.PlayerStateSubscriber;
 
 
@@ -107,16 +108,6 @@ public class PlayerImpl implements Player {
 
     // Realize native player
     protected native boolean nRealize(int handle, String mime);
-    // get java buffer size to determine media format
-    protected static native int nGetJavaBufferSize(int handle);
-    // get first packet size to determine media format
-    protected static native int nGetFirstPacketSize(int handle);
-    // buffering media data
-    protected static native int nBuffering(int handle, byte[] buffer, int size);
-    // ask Native Player if it needs more data immediatelly
-    protected static native boolean nNeedMoreDataImmediatelly(int hNative);    
-    // Provide whole media content size, if known
-    protected static native void nSetWholeContentSize(int hNative, long contentSize);
 
     private static String PL_ERR_SH = "Cannot create a Player: ";
     
@@ -127,7 +118,7 @@ public class PlayerImpl implements Player {
 
     public PlayerImpl(DataSource source) throws MediaException, IOException {
         // Get current application ID to support MVM
-        int appId = AppPackage.getInstance().getId();
+        int appId = AppIsolate.getIsolateId();
 
         synchronized (idLock) {
             pcount = (pcount + 1) % 32767;
@@ -225,6 +216,8 @@ public class PlayerImpl implements Player {
             throw new MediaException("Can not realize");
         }
 
+        MediaDownload mediaDownload = null;
+
         if (!handledByDevice && !handledByJava) {
             mediaFormat = nGetMediaFormat(hNative);
             if (mediaFormat.equals(BasicPlayer.MEDIA_FORMAT_UNSUPPORTED)) {
@@ -243,7 +236,14 @@ public class PlayerImpl implements Player {
             /* predownload media data to recognize media format and/or 
                specific media parameters (e.g. duration) */
             if (!mediaFormat.equals(BasicPlayer.MEDIA_FORMAT_TONE)) {
-                doBuffering(hNative, stream);
+                mediaDownload = new MediaDownload(hNative, stream);
+                try {
+                    mediaDownload.fgDownload();
+                } catch(IOException ex1) {
+                    throw new MediaException("Can not start download Thread: " + ex1.getMessage());
+                }catch(Exception ex) {
+                    throw new MediaException("Can not start download Thread: " + ex.getMessage());
+                }
             }
         }
 
@@ -267,6 +267,7 @@ public class PlayerImpl implements Player {
         playerInst.mediaFormat        = mediaFormat;
         playerInst.handledByDevice    = handledByDevice;
         playerInst.pID                = pID;
+        playerInst.mediaDownload      = mediaDownload;
 
         playerInst.setSource(source);
 
@@ -283,79 +284,6 @@ public class PlayerImpl implements Player {
         playerInst.realize();
         if (null != state_subscriber) {
             state_subscriber.PlayerRealized(this);
-        }
-    };
-
-    /**
-     *  Buffering portion of media data
-     *
-     * @param  hNative             Descriptor of native player
-     * @param  stream              Source stream
-     *
-     * @exception  MediaException     read from Source Stream error
-     */
-    static void doBuffering(int hNative, SourceStream stream) 
-        throws MediaException {
-
-        long contLength = stream.getContentLength();
-        boolean need_more = true;
-
-        if (contLength > 0) {
-            nSetWholeContentSize(hNative, contLength);
-        }
-        /* first loop - allocate java buffer*/
-        int javaBufSize = nGetJavaBufferSize(hNative);
-        int packetSize  = nGetFirstPacketSize(hNative);
-        if (packetSize > 0) {
-            if (javaBufSize <= 0) {
-                javaBufSize = 1024;
-            }
-
-            byte[] buffer;
-            try {
-                buffer = new byte[(int)javaBufSize];
-            } catch(OutOfMemoryError ome) {
-                throw new MediaException("Not enough memory");
-            }
-
-            boolean endOfStreamReached = false;
-            do {
-                int num_read = 0;
-                int ret;
-                if (packetSize > javaBufSize) {
-                    packetSize = javaBufSize;
-                }
-                do {
-                    try {
-                        // read from source stream
-                        ret = stream.read(buffer, num_read, packetSize - num_read);
-                    } catch(IOException e) {
-                        throw new MediaException("Read from source error");
-                    }
-                    if (ret > 0) {
-                        num_read += ret;
-                    }
-                    if (ret == -1) {
-                        need_more = false;
-                        endOfStreamReached = true;
-                        break;
-                    }
-                } while(num_read < packetSize);
-                if (num_read > 0) {
-                    packetSize = nBuffering(hNative, buffer, num_read);
-                    if (packetSize >=0) {
-                        need_more = !endOfStreamReached && nNeedMoreDataImmediatelly(hNative);
-                    } else {
-                        throw new MediaException("Buffering media data error");
-                    }
-                }
-            } while (need_more);
-            if (endOfStreamReached) {
-                /* end of input stream */
-                if (nBuffering(hNative, null, 0) < 0) {
-                    throw new MediaException("Buffering media data error");
-                }
-            }
         }
     };
 
@@ -1045,3 +973,4 @@ public class PlayerImpl implements Player {
     }
 
 }
+

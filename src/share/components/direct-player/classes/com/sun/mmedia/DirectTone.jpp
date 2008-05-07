@@ -169,11 +169,11 @@ public final class DirectTone extends DirectPlayer {
 
         long contentSize = sequence.length;
         if (contentSize > 0) {
-            PlayerImpl.nSetWholeContentSize(hNative, contentSize);
+            MediaDownload.nSetWholeContentSize(hNative, contentSize);
         }
 
-        PlayerImpl.nBuffering(hNative, sequence, sequence.length);
-        PlayerImpl.nBuffering(hNative, null, 0);
+        MediaDownload.nBuffering(hNative, sequence,  0, sequence.length);
+        MediaDownload.nBuffering(hNative, null, 0, 0);
 
         hasToneSequenceSet = true;
     }
