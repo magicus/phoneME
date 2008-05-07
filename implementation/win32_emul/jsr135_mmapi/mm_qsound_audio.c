@@ -42,7 +42,8 @@
  **********************************/
 globalMan g_QSoundGM[GLOBMAN_INDEX_MAX];   // IMPL_NOTE... NEED REVISIT
 
-extern int wav_setStreamPlayerData(ah_wav *handle);   // IMPL_NOTE...
+extern int wav_setStreamPlayerData(ah_wav *handle, const void* buffer, long length);
+
 
 size_t mmaudio_get_isolate_mix( void *buffer, size_t length, void* param );
 
@@ -52,6 +53,12 @@ static int   g_iExternalBankSize = 0;
 #endif /*INTERNAL_SOUNDBANK*/
 
 static void doProcessHeader(ah* h, const void* buf, long buf_length);
+static javacall_result audio_qs_get_duration(javacall_handle handle, long* ms);
+
+
+#define PCM_PACKET_SIZE(wav) (wav.rate*wav.channels*(wav.bits>>3))
+#define MIN_PCM_BUFFERED_SIZE(wav) (3*PCM_PACKET_SIZE(wav))
+#define MAX_PCM_BUFFERED_SIZE(wav) (5*PCM_PACKET_SIZE(wav))
 
 /******************************************************************************/
 
@@ -62,6 +69,15 @@ static void sendEOM(int appId, int playerId, long duration)
 
     javanotify_on_media_notification(JAVACALL_EVENT_MEDIA_END_OF_MEDIA,
         appId, playerId, JAVACALL_OK, (void*)duration);
+}
+
+static void sendBuffering(int appId, int playerId)
+{
+    JC_MM_DEBUG_PRINT2("sendBuffering app=%d player=%d\n",
+                       appId, playerId);
+
+    javanotify_on_media_notification(JAVACALL_EVENT_MEDIA_NEED_MORE_MEDIA_DATA,
+        appId, playerId, JAVACALL_OK, NULL);
 }
 
 
@@ -134,7 +150,7 @@ static void* getNextSamples(void* userData, int bytesCnt, int* pBytesGet)
                 return NULL;
             currentPos = pWAV->currentPos;
 
-            if(currentPos >= pWAV->streamBufferLen) {
+            if(currentPos >= pWAV->streamBufferLen && pWAV->streamBufferFull) {
                 if (pWAV->eom) {
                     return NULL;
                 } else {
@@ -156,6 +172,27 @@ static void* getNextSamples(void* userData, int bytesCnt, int* pBytesGet)
             pWAV->currentPos += bytesCnt;
             if (pBytesGet)
                 *pBytesGet = bytesCnt;
+
+            if (pHDR->mediaType == JC_FMT_MS_PCM) {
+                if(pWAV->bufferingMode && 
+                    ( (pWAV->streamBufferLen != pWAV->currentPos) || 
+                      (pWAV->streamBufferFull))) {
+                    javanotify_on_media_notification(JAVACALL_EVENT_MEDIA_BUFFERING_STOPPED,
+                            pWAV->hdr.isolateID,pWAV->hdr.playerID, JAVACALL_OK, 
+                            (void*)(pWAV->currentPos / pWAV->bytesPerMilliSec));
+                    pWAV->bufferingMode = JAVACALL_FALSE;
+                }
+                if (!pWAV->streamBufferFull && 
+                    (pWAV->streamBufferLen-pWAV->currentPos)<=MIN_PCM_BUFFERED_SIZE((*pWAV))) {
+                    sendBuffering(pWAV->hdr.isolateID,pWAV->hdr.playerID);
+                    if(!pWAV->bufferingMode && pWAV->streamBufferLen == pWAV->currentPos) {
+                        javanotify_on_media_notification(JAVACALL_EVENT_MEDIA_BUFFERING_STARTED,
+                                pWAV->hdr.isolateID,pWAV->hdr.playerID, JAVACALL_OK, 
+                                (void*)(pWAV->currentPos / pWAV->bytesPerMilliSec));
+                        pWAV->bufferingMode = JAVACALL_TRUE;
+                    }
+                }
+            }
          }
          break;
 
@@ -429,7 +466,6 @@ static int gmInit(int isolateID, int gmIdx)
     MQ234_SynthConfig synthConfig;
     MQ234_HostBlock dlsData;
     MQ234_ERROR err;
-
     memset(&opts, '\0', sizeof(opts));
 
     opts.mutexCreateParams = NULL;
@@ -772,7 +808,11 @@ static javacall_handle audio_qs_create(int appId, int playerId,
             newHandle->hdr.dataBuffer       = NULL;
             newHandle->wav.originalData     = NULL;
             newHandle->wav.originalDataLen  = 0;
+            newHandle->wav.originalDataOffset = 0;
+            newHandle->wav.originalDataFull = JAVACALL_FALSE;
             newHandle->wav.em               = NULL;
+            newHandle->wav.streamBufferFull = JAVACALL_FALSE;
+            newHandle->wav.bufferingMode    = JAVACALL_FALSE;
 
             ef = g_QSoundGM[gmIdx].EM135;
 
@@ -795,6 +835,7 @@ static javacall_handle audio_qs_create(int appId, int playerId,
     JC_MM_DEBUG_INFO_PRINT3("audio_create: mt:%d nh:%d gmi:%d\n",
                             mediaType, (int)newHandle, gmIdx);
 
+    newHandle->hdr.state = PL135_UNREALIZED;
     return (javacall_handle)newHandle;
 }
 
@@ -921,6 +962,7 @@ static javacall_result audio_qs_close(javacall_handle handle){
             JC_MM_DEBUG_PRINT1("[jc-media] Trying to close unsupported media type %d\n", h->hdr.mediaType);
             JC_MM_ASSERT( FALSE );
     }
+    h->hdr.state = PL135_CLOSED;
 
     return r;
 }
@@ -1060,10 +1102,11 @@ static javacall_result audio_qs_acquire_device(javacall_handle handle)
                 mQ234_WaveStream_Destroy( h->wav.stream );
                 h->wav.stream = NULL;
             }
-
+/*
             if (1 != wav_setStreamPlayerData(&(h->wav))) {
                 return JAVACALL_FAIL;
             }
+*/
             sRate = h->wav.rate;
 
             if(16 == h->wav.bits)
@@ -1196,6 +1239,26 @@ static javacall_result audio_qs_release_device(javacall_handle handle){
     return JAVACALL_OK;
 }
 
+
+/**
+ *
+ */
+static javacall_result audio_qs_releaze(javacall_handle handle, javacall_const_utf16_string mime, long mimeLength){
+    ah*         h     = (ah *)handle;
+    h->hdr.state = PL135_REALIZED;
+    return JAVACALL_OK;
+}
+
+/**
+ *
+ */
+static javacall_result audio_qs_prefetch(javacall_handle handle){
+    ah*         h     = (ah *)handle;
+    h->hdr.state = PL135_PREFETCHED;
+    return JAVACALL_OK;
+}
+
+
 #define DEFAULT_BUFFER_SIZE  1000 * 1024
 #define DEFAULT_PACKET_SIZE  1024
 static javacall_result audio_qs_get_java_buffer_size(javacall_handle handle,
@@ -1208,6 +1271,14 @@ static javacall_result audio_qs_get_java_buffer_size(javacall_handle handle,
         *java_buffer_size = h->hdr.wholeContentSize;
         *first_data_size  = 0;
     } else {
+        if (h->hdr.dataBufferLen == 0) {
+            *java_buffer_size = DEFAULT_BUFFER_SIZE;
+            *first_data_size  = DEFAULT_PACKET_SIZE;
+        } else {
+            *java_buffer_size = h->hdr.dataBufferLen;
+            *first_data_size  = h->hdr.dataBufferLen;
+        }
+/*
         if (h->hdr.wholeContentSize <= 0) {
             *java_buffer_size = DEFAULT_BUFFER_SIZE;
             *first_data_size  = DEFAULT_PACKET_SIZE;
@@ -1215,6 +1286,7 @@ static javacall_result audio_qs_get_java_buffer_size(javacall_handle handle,
             *java_buffer_size = h->hdr.wholeContentSize;
             *first_data_size  = h->hdr.wholeContentSize;
         }
+        */
     }
     return JAVACALL_OK;
 }
@@ -1236,7 +1308,6 @@ static javacall_result audio_qs_get_buffer_address(javacall_handle handle,
     ah*         h     = (ah*)handle;
     int         gmIdx = h->hdr.gmIdx;
     long        size;
-
     switch(h->hdr.mediaType)
     {
     case JC_FMT_TONE:
@@ -1249,6 +1320,21 @@ static javacall_result audio_qs_get_buffer_address(javacall_handle handle,
         break;
 
     case JC_FMT_MS_PCM:
+        if (h->hdr.dataBuffer == NULL) {
+            h->hdr.dataBuffer = MALLOC(DEFAULT_PACKET_SIZE);
+            h->hdr.dataBufferLen = DEFAULT_PACKET_SIZE;
+        } else {
+            if (h->wav.rate != 0 && h->hdr.dataBufferLen == DEFAULT_PACKET_SIZE) {
+                h->hdr.dataBufferLen = PCM_PACKET_SIZE(h->wav);
+                h->hdr.dataBuffer = REALLOC(h->hdr.dataBuffer, h->hdr.dataBufferLen);
+            }
+        }
+        h->hdr.dataBufferPos = 0;
+
+        *max_size = h->hdr.dataBufferLen;
+        *buffer = h->hdr.dataBuffer;
+        return JAVACALL_OK;
+
     case JC_FMT_AMR:
         h->wav.originalData = NULL;
         h->wav.originalDataLen = 0;
@@ -1331,6 +1417,34 @@ static javacall_result audio_qs_do_buffering(
             break;
 
         case JC_FMT_MS_PCM:
+            /*
+            if (h->wav.rate == 0) {
+                *need_more_data = JAVACALL_FALSE;
+            } else {
+                *need_more_data = JAVACALL_TRUE;
+            }*/
+            
+            if (wav_setStreamPlayerData(&h->wav, buffer, *length) != 1) {
+                return JAVACALL_FAIL;
+            }
+            *min_data_size  = h->hdr.dataBufferLen;
+
+            if (h->wav.streamBufferFull) {
+                *need_more_data = JAVACALL_FALSE;
+            } else if (h->hdr.state == PL135_REALIZED) {
+                if (h->wav.rate == 0) {
+                    *need_more_data = JAVACALL_TRUE;
+                } else {
+                    *need_more_data = JAVACALL_FALSE;
+                }
+            } else if ((h->wav.streamBufferLen - h->wav.currentPos) < 
+                        MAX_PCM_BUFFERED_SIZE(h->wav)) {
+                *need_more_data = JAVACALL_TRUE;
+            } else {
+                *need_more_data = JAVACALL_FALSE;
+            }
+            h->hdr.dataBufferPos = 0;
+            return JAVACALL_OK;
         case JC_FMT_AMR:
             h->wav.originalData = h->hdr.dataBuffer;
             h->wav.originalDataLen = h->hdr.dataBufferPos;
@@ -1345,6 +1459,9 @@ static javacall_result audio_qs_do_buffering(
         *need_more_data = JAVACALL_TRUE;
         *min_data_size  = DEFAULT_PACKET_SIZE;
     } else {
+        if (h->hdr.mediaType == JC_FMT_MS_PCM) {
+            wav_setStreamPlayerData(&h->wav, NULL, 0);
+        }
         *need_more_data = JAVACALL_FALSE;
         *min_data_size  = 0;
     }
@@ -1423,12 +1540,14 @@ static javacall_result audio_qs_start(javacall_handle handle){
 
     javacall_result r = JAVACALL_FAIL;
     ah *h = (ah *)handle;
-    long *duration;
-    
+    long duration;
+
+    h->hdr.state = PL135_STARTED;
+   
     if (JAVACALL_OK == audio_qs_get_duration(handle, &duration) && 
             duration != -1) {
         javanotify_on_media_notification(JAVACALL_EVENT_MEDIA_DURATION_UPDATED,
-            h->hdr.isolateID, h->hdr.playerID, JAVACALL_OK, (void*)duration);
+            h->hdr.isolateID, h->hdr.playerID, JAVACALL_OK, (void*)&duration);
     }
     //printf("audio_start...\n");
     switch(h->hdr.mediaType)
@@ -1713,7 +1832,7 @@ static javacall_result audio_qs_get_duration(javacall_handle handle, long* ms) {
         case JC_FMT_MS_PCM:
         case JC_FMT_AMR: // will need revisit when real streaming will be used
         {
-            if(h->wav.bytesPerMilliSec != 0)
+            if(h->wav.bytesPerMilliSec != 0 && h->wav.streamBufferFull)
                 *ms = h->wav.streamBufferLen / h->wav.bytesPerMilliSec;
         }
         break;
@@ -2813,8 +2932,8 @@ static media_basic_interface _audio_qs_basic_itf = {
     audio_qs_destroy,
     audio_qs_acquire_device,
     audio_qs_release_device,
-    NULL,
-    NULL,
+    audio_qs_releaze,
+    audio_qs_prefetch,
     audio_qs_start,
     audio_qs_stop,
     audio_qs_pause,

@@ -120,161 +120,225 @@ int create_wavhead(recorder* h, char *buffer, int buflen)
     return sizeof(wh);
 }
 
-int wav_setStreamPlayerData(ah_wav *handle)
+int wav_setStreamPlayerData(ah_wav *handle, const void* buffer, long length)
 {
     struct wavechnk  *wc;
     struct fmtchnk   *fc;
     struct datachnk  *dc;
     struct listchnk  *lc;
 
-    unsigned char *data = handle->originalData;
-
-    struct riffchnk *rc = (struct riffchnk *)data; 
+    unsigned char *data;
+    unsigned char *end = (unsigned char *)buffer + length;
 
     int chnkSize = 0;
 
-    char *end;
+    javacall_bool parse_next = JAVACALL_TRUE;
 
-    if(data == NULL) return 0;
+    if (buffer == NULL) {
+        if (handle->originalData)
+            FREE(handle->originalData);
+        handle->originalData = NULL;
+        handle->streamBufferFull = JAVACALL_TRUE;
+        return 1;
+    }
 
-    end = data + handle->originalDataLen;
+    if (handle->originalData == NULL && handle->streamBufferLen == 0) {
+        struct riffchnk *rc; 
+        data = (unsigned char *)buffer;
+        end = data + length;
+        rc = (struct riffchnk *)data; 
+        if (rc->chnk_id != 0x46464952)  // RIFF
+            return 0;
 
-    if (rc->chnk_id != 0x46464952)  // RIFF
-        return 0;
+        if (rc->type != 0x45564157)  // WAVE
+            return 0;
 
-    if (rc->type != 0x45564157)  // WAVE
-        return 0;
+        data += sizeof(struct riffchnk);
+        parse_next = JAVACALL_TRUE;
+        handle->originalData_dataChnk = JAVACALL_FALSE;
+    } else {
+        if (handle->originalData_dataChnk) {
+            data = (unsigned char *)buffer;
+            chnkSize = handle->originalData_dataChnkFull - handle->originalData_dataChnkOffset;
+            if (chnkSize <= length) {
+                memcpy(handle->streamBuffer+handle->streamBufferLen, data, chnkSize);
+                handle->streamBufferLen += chnkSize;
+                data += chnkSize;
+                handle->originalData_dataChnk = JAVACALL_FALSE;
+            } else {
+                memcpy(handle->streamBuffer+handle->streamBufferLen, data, length);
+                handle->streamBufferLen += length;
+                data += length;
+                handle->originalData_dataChnkOffset += length;
+            }
+        } else {
+            /* just skip this chunk for now */
+            if (handle->originalDataLen == 4) {
+                data = (unsigned char *)buffer;
+                chnkSize = *((long *)data);
+                data += 4 + chnkSize;
+            } else {
+                data = (unsigned char *)(handle->originalData + 4);
+                chnkSize = *((long *)data);
+                data = (unsigned char *)buffer + (chnkSize - handle->originalDataLen - 8);
+            }
+        }
+    }
 
-    data += sizeof(struct riffchnk);
-
-    while(data<end)
+    while(parse_next && (end - data)>8)
     {
         wc = (struct wavechnk *)data;
-
         switch(wc->chnk_id)
         {
             // fmt.
             case 0x20746D66:
-                fc = (struct fmtchnk *)data;
-            
-                // Only support PCM
-                if(fc->compression_code != 1)
-                    return -1;
+                if ((data + wc->chnk_ds + 8) <= end) {
+                    fc = (struct fmtchnk *)data;
+                
+                    // Only support PCM
+                    if(fc->compression_code != 1)
+                        return -1;
 
-                handle->channels = fc->num_channels;
-                handle->rate = fc->sample_rate;
-                handle->bits = fc->bits;
+                    handle->channels = fc->num_channels;
+                    handle->rate = fc->sample_rate;
+                    handle->bits = fc->bits;
 
-                chnkSize = fc->chnk_ds;
-
-                data += chnkSize + 8; 
-
+                    data += wc->chnk_ds + 8; 
+                } else {
+                    parse_next = 0;
+                }
             break;
-       
+/* Temporary unsupported - just skip
+            // LIST
+            case 0x5453494C:
+            {
+                char *pData = data;
+                lc = (struct listchnk *)pData;
+                chnkSize = lc->chnk_ds;
+                if ((data + chnkSize + 8) <= end )
+                    // Only support INFO currently
+                    if(lc->type == 0x4F464E49)
+                    {
+                        int chnkSizeCnt = 0;
+
+                        char * tmpData = pData + sizeof(struct listchnk);
+                        while(chnkSizeCnt < chnkSize)
+                        {
+                            struct sublistchnk *tmpChnk = 
+                                (struct sublistchnk *)(tmpData + chnkSizeCnt);
+                            char **str = NULL;
+
+                            switch(tmpChnk->chnk_id)
+                            {
+                                // IART
+                                case 0x54524149:
+                                    str = &(handle->metaData.iartData);
+                                break;
+
+                                // ICOP
+                                case 0x504F4349:
+                                    str = &(handle->metaData.icopData);
+                                break;
+
+                                // ICRD
+                                case 0x44524349:
+                                    str = &(handle->metaData.icrdData);
+                                break;
+
+                                case 0x4D414E49:
+                                    str = &(handle->metaData.inamData);
+                                break;
+
+                                default:
+                                    OutputDebugString("Unexpected INFO SubList type\n");
+                                break;
+                            }
+
+                            if(str != NULL)
+                            {
+                                *str = REALLOC(*str, tmpChnk->chnk_ds + 1);
+                                memset(*str, '\0', tmpChnk->chnk_ds + 1);
+                                memcpy(*str, tmpData+sizeof(struct wavechnk), 
+                                    tmpChnk->chnk_ds);
+                            }
+
+                            chnkSizeCnt += tmpChnk->chnk_ds + 8;
+                        }
+
+                        pData += chnkSizeCnt + 8;
+                    }
+                    pData += chnkSize + 8;
+                    data = pData;
+                } else {
+                    parse_next = 0;
+                }
+                break;
+            }
+            break;
+*/
+
             // DATA 
             case 0x61746164:
                 dc = (struct datachnk *)data;
                 chnkSize = dc->chnk_ds;
-
+                data += 8;
                 handle->streamBuffer = 
                     REALLOC(handle->streamBuffer, 
                         handle->streamBufferLen+chnkSize);
-
-                memcpy(handle->streamBuffer+handle->streamBufferLen, 
-                    data+8, chnkSize);
-
-                handle->streamBufferLen += chnkSize;
-
-                data += chnkSize + 8;
-
-            break;
-
-            // LIST
-            case 0x5453494C:
-            {
-                lc = (struct listchnk *)data;
-                chnkSize = lc->chnk_ds;
-
-                // Only support INFO currently
-                if(lc->type == 0x4F464E49)
-                {
-                    int chnkSizeCnt = 0;
-
-                    char * tmpData = data + sizeof(struct listchnk);
-                    while(chnkSizeCnt < chnkSize)
-                    {
-                        struct sublistchnk *tmpChnk = 
-                            (struct sublistchnk *)(tmpData + chnkSizeCnt);
-                        char **str = NULL;
-
-                        switch(tmpChnk->chnk_id)
-                        {
-                            // IART
-                            case 0x54524149:
-                                str = &(handle->metaData.iartData);
-                            break;
-
-                            // ICOP
-                            case 0x504F4349:
-                                str = &(handle->metaData.icopData);
-                            break;
-
-                            // ICRD
-                            case 0x44524349:
-                                str = &(handle->metaData.icrdData);
-                            break;
-
-                            case 0x4D414E49:
-                                str = &(handle->metaData.inamData);
-                            break;
-
-                            default:
-                                OutputDebugString("Unexpected INFO SubList type\n");
-                            break;
-                        }
-
-                        if(str != NULL)
-                        {
-                            *str = REALLOC(*str, tmpChnk->chnk_ds + 1);
-                            memset(*str, '\0', tmpChnk->chnk_ds + 1);
-                            memcpy(*str, tmpData+sizeof(struct wavechnk), 
-                                tmpChnk->chnk_ds);
-                        }
-
-                        chnkSizeCnt += tmpChnk->chnk_ds + 8;
-                    }
-
-                    data += chnkSizeCnt + 8;
+                if ((end - data)>=chnkSize) {
+                    memcpy(handle->streamBuffer+handle->streamBufferLen, 
+                        data, chnkSize);
+                    handle->streamBufferLen += chnkSize;
+                    data += chnkSize;
+                } else {
+                    handle->originalData_dataChnk = JAVACALL_TRUE;
+                    handle->originalData_dataChnkFull = chnkSize;
+                    handle->originalData_dataChnkOffset = end - data;
+                    memcpy(handle->streamBuffer+handle->streamBufferLen, 
+                        data, handle->originalData_dataChnkOffset);
+                    handle->streamBufferLen += handle->originalData_dataChnkOffset;
+                    data += handle->originalData_dataChnkOffset;
                 }
-
-                data += chnkSize + 8;
-                break;
-            }   
-
             break;
 
             // UNKNOWN
             default:
-                chnkSize = wc->chnk_ds;
+                if ((data + wc->chnk_ds + 8) <= end) {
 
-                {
-                    char str[5];
-                    char outstr[256];
-                    memcpy(str, &(wc->chnk_id), 4);
-                    str[4] = '\0';
+                    {
+                        char str[5];
+                        char outstr[256];
+                        memcpy(str, &(wc->chnk_id), 4);
+                        str[4] = '\0';
 
-                    sprintf(outstr, 
-                        "Unexpected chunk desc: %s size:%d\n", str, chnkSize);
+                        sprintf(outstr, 
+                            "Unexpected chunk desc: %s size:%d\n", str, wc->chnk_ds);
 
-                    OutputDebugString(outstr);
+                        OutputDebugString(outstr);
+                    }
+
+                    if(chnkSize < 0)  // Huh? something has gone wrong...
+                        chnkSize = 0;
+
+                    data += wc->chnk_ds + 8;
+                } else {
+                    parse_next = 0;
                 }
-
-                if(chnkSize < 0)  // Huh? something has gone wrong...
-                    chnkSize = 0;
-
-                data += chnkSize + 8;
-
             break;
+        }
+        if (parse_next == 0) {
+            handle->originalDataLen = end - data;
+            if (handle->originalData == NULL) {
+                handle->originalDataFull = handle->originalDataLen;
+                handle->originalData = MALLOC(handle->originalDataFull);
+                memcpy(handle->originalData, data, handle->originalDataLen);
+            } else {
+                if (handle->originalDataFull < handle->originalDataLen) {
+                    handle->originalData = REALLOC(handle->originalData, handle->originalDataLen);
+                    handle->originalDataFull = handle->originalDataLen;
+                }
+                memcpy(handle->originalData, data, handle->originalDataLen);
+            }
         }
     }
 
