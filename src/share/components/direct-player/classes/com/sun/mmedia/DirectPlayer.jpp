@@ -370,10 +370,12 @@ public class DirectPlayer extends BasicPlayer
         // #endif ]
         
         if (mediaDownload != null) {
-            if (!mediaDownload.bgDownload()) {
+            try {
+                mediaDownload.bgDownload();
+            } catch(Exception ex) {
                 try {
                     stop();
-                } catch(MediaException ex) {
+                } catch(MediaException mEx) {
                 }
             }
         }

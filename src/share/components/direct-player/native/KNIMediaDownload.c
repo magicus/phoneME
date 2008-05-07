@@ -101,6 +101,46 @@ KNIDECL(com_sun_mmedia_MediaDownload_nNeedMoreDataImmediatelly) {
     KNI_ReturnBoolean(needMoreData);
 }
 
+static javacall_result doBuffering(KNIDECLARGS KNIPlayerInfo* pKniInfo, long offset, long length, javacall_int32 *returnValue) {
+    void *nBuffer;
+    long nBufferSize;
+    javacall_bool need_more_data;
+    long min_data_size;
+    int ret;
+    
+    KNI_StartHandles(1);
+    KNI_DeclareHandle(bufferHandle);
+    KNI_GetParameterAsObject(2, bufferHandle);
+    
+    if (length > 0) {
+        ret = javacall_media_get_buffer_address(pKniInfo->pNativeHandle, &nBuffer, &nBufferSize);
+        if ((ret == JAVACALL_OK) && (nBuffer != NULL)) {
+            if (nBufferSize < length) {
+                length = nBufferSize;
+            }
+            MMP_DEBUG_STR1("+nBuffering length=%d\n", length);
+            KNI_GetRawArrayRegion(bufferHandle, (int)offset, (int)length, (jbyte*)nBuffer);
+            ret = javacall_media_do_buffering(pKniInfo->pNativeHandle, 
+                    (const void*)nBuffer, &length, &need_more_data, &min_data_size);
+            if (ret == JAVACALL_OK) {
+                *returnValue = (jint)min_data_size;
+                pKniInfo->needMoreData = need_more_data;
+            }
+        }
+    } else {
+        /* Indicate end of buffering by using NULL buffer */
+        length = 0;
+        ret = javacall_media_do_buffering(pKniInfo->pNativeHandle, NULL, &length, &need_more_data, &min_data_size);
+        if (ret == JAVACALL_OK) {
+            *returnValue = 0;
+        }
+    }
+    
+    KNI_EndHandles();
+    
+    return ret;
+}
+
 /*  protected native int nBuffering ( int handle , Object buffer, int offset, int length ) ; */
 KNIEXPORT KNI_RETURNTYPE_INT
 KNIDECL(com_sun_mmedia_MediaDownload_nBuffering) {
@@ -108,47 +148,20 @@ KNIDECL(com_sun_mmedia_MediaDownload_nBuffering) {
     jint handle = KNI_GetParameterAsInt(1);
     long offset = (long)KNI_GetParameterAsInt(3);
     long length = (long)KNI_GetParameterAsInt(4);
-    jint returnValue = -1;
+    javacall_int32 returnValue = -1;
     KNIPlayerInfo* pKniInfo = (KNIPlayerInfo*)handle;
-    jbyte *nBuffer;
-    long nBufferSize;
-    javacall_bool need_more_data;
-    long min_data_size;
     javacall_result ret;
 
-    KNI_StartHandles(1);
-    KNI_DeclareHandle(bufferHandle);
-    KNI_GetParameterAsObject(2, bufferHandle);
-    
 LockAudioMutex();            
     if (pKniInfo && pKniInfo->pNativeHandle) {
-        if (length > 0) {
-            int ret;
-            ret = javacall_media_get_buffer_address(pKniInfo->pNativeHandle, &nBuffer, &nBufferSize);
-            if ((ret == JAVACALL_OK) && (nBuffer != NULL)) {
-                if (nBufferSize < length) {
-                    length = nBufferSize;
-                }
-                MMP_DEBUG_STR1("+nBuffering length=%d\n", length);
-                KNI_GetRawArrayRegion(bufferHandle, (int)offset, (int)length, (jbyte*)nBuffer);
-                ret = javacall_media_do_buffering(pKniInfo->pNativeHandle, 
-                        (const void*)nBuffer, &length, &need_more_data, &min_data_size);
-                if (ret == JAVACALL_OK) {
-                    returnValue = (jint)min_data_size;
-                    pKniInfo->needMoreData = need_more_data;
-                }
-            }
-        } else if (pKniInfo && pKniInfo->pNativeHandle) {
-            /* Indicate end of buffering by using NULL buffer */
-            length = 0;
-            ret = javacall_media_do_buffering(pKniInfo->pNativeHandle, NULL, &length, &need_more_data, &min_data_size);
-            if (ret == JAVACALL_OK) {
-                returnValue = 0;
-            }
-        }
+        JAVACALL_MM_ASYNC_EXEC(
+            ret,
+            doBuffering(KNIPASSARGS pKniInfo, offset, length, &returnValue),
+            pKniInfo->pNativeHandle, pKniInfo->appId, pKniInfo->playerId, JAVACALL_EVENT_MEDIA_BUFFERING_UNBLOCKED,
+            returns_data((&returnValue))
+        );
     }
 UnlockAudioMutex();            
 
-    KNI_EndHandles();
-    KNI_ReturnInt(returnValue);
+    KNI_ReturnInt((jint)returnValue);
 }

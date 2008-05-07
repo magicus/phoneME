@@ -32,7 +32,7 @@ import java.io.IOException;
  * The thread that's downloads media data
  *
  */
-class MediaDownload implements Runnable {
+class MediaDownload {
     /**
      * the stream instance
      */
@@ -47,15 +47,15 @@ class MediaDownload implements Runnable {
 
 
     // get java buffer size to determine media format
-    protected static native int nGetJavaBufferSize(int handle);
+    static native int nGetJavaBufferSize(int handle);
     // get first packet size to determine media format
-    protected static native int nGetFirstPacketSize(int handle);
+    static native int nGetFirstPacketSize(int handle);
     // buffering media data
-    protected static native int nBuffering(int handle, byte[] buffer, int offset, int size);
+    static native int nBuffering(int handle, byte[] buffer, int offset, int size);
     // ask Native Player if it needs more data immediatelly
-    protected static native boolean nNeedMoreDataImmediatelly(int hNative);    
+    static native boolean nNeedMoreDataImmediatelly(int hNative);    
     // Provide whole media content size, if known
-    protected static native void nSetWholeContentSize(int hNative, long contentSize);
+    static native void nSetWholeContentSize(int hNative, long contentSize);
 
     /**
      * The constructor
@@ -67,6 +67,43 @@ class MediaDownload implements Runnable {
         this.stream = stream;
         eom = false;
         contLength = -1;
+    }
+
+    void deallocate() {
+        eom = false;
+        contLength = -1;
+        buffer = null;
+        javaBufSize = 0;
+        packetSize = 0;
+    }
+    
+    /**
+     * 
+     */
+    void fgDownload() throws IOException, MediaException {
+        download(false);
+    }
+
+    /**
+     * 
+     */
+    void bgDownload() {
+        if (!eom) {
+            Thread t = new Thread() {
+                public void run() {
+                    try {
+                        download(true);
+                    } catch (Exception e) {
+                    }
+                }
+            };
+            t.start();
+        }
+    }
+    
+    synchronized void continueDownload() {
+        needMoreData = true;
+        notifyAll();
     }
     
     synchronized private void download(boolean inBackground) throws MediaException, IOException {
@@ -101,6 +138,9 @@ class MediaDownload implements Runnable {
             do {
                 int num_read = woffset - roffset;
                 int ret;
+                if (num_read > packetSize) {
+                    num_read = packetSize;
+                }
                 if (num_read < packetSize && !eom) {
                     if ((roffset + packetSize) > javaBufSize) {
                         woffset = moveBuff(roffset, woffset);
@@ -140,7 +180,10 @@ class MediaDownload implements Runnable {
                 }
                 if (roffset == woffset) {
                     roffset = 0;
-                    woffset = 0;   
+                    woffset = 0;
+                    if (eom) {
+                        break;
+                    }   
                 }
                 needMoreData = nNeedMoreDataImmediatelly(hNative);
                 if (inBackground && !needMoreData) {
@@ -148,7 +191,7 @@ class MediaDownload implements Runnable {
                     roffset = 0;
                     woffset = bgDownloadAndWait(woffset);
                 }
-            }while (needMoreData && !eom);
+            }while (needMoreData);
             if (eom) {
                 packetSize = nBuffering(hNative, null, 0, 0);
                 needMoreData = false;
@@ -184,49 +227,5 @@ class MediaDownload implements Runnable {
         };
         return offset;
     }
-    
-    /**
-     * Event handling thread.
-     */
-    public void run() {
-        try {
-            download(true);
-        } catch(IOException ex1) {
-        } catch(MediaException ex2) {
-        }
-    }
-    
-    protected void deallocate() {
-        eom = false;
-        contLength = -1;
-        buffer = null;
-        javaBufSize = 0;
-        packetSize = 0;
-    }
-    
-    /**
-     * 
-     */
-    protected void fgDownload() throws IOException, MediaException {
-        download(false);
-    }
-
-    /**
-     * 
-     */
-    protected boolean bgDownload() {
-        if (!eom) {
-            try {
-                new Thread(this).start();
-            } catch (Exception e) {
-                return false;
-            }
-        }
-        return true;
-    }
-    
-    synchronized protected void continueDownload() {
-        needMoreData = true;
-        notifyAll();
-    }
 }
+
