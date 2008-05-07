@@ -92,7 +92,7 @@ public class RtspManager {
 
         sequenceNumber = new Random().nextInt();
 
-        userAgent = "User-Agent: MMAPI RTSP Player Version 1.0 Personal Profile";
+        userAgent = "User-Agent: MMAPI RTSP Player Version 1.2";
     }
 
 
