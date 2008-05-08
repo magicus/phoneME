@@ -25,10 +25,17 @@
  
 package com.sun.mmedia;
 
+import javax.microedition.media.Control;
 import javax.microedition.media.MediaException;
 
 public class DirectCamera extends DirectVideo 
 {
+// #ifdef ENABLE_JSR_234 [
+    protected final static String JSR234_CAMERA_PACKAGE_NAME =
+        "javax.microedition.amms.control.camera.";
+    private Jsr234CameraControlsProxy _jsr234CamCtrls;
+// #endif ]
+
     /**
      * It does not need data source
      */
@@ -62,5 +69,58 @@ public class DirectCamera extends DirectVideo
         }
         return data;
     }
-}
 
+// #ifdef ENABLE_JSR_234 [
+    private synchronized Jsr234CameraControlsProxy get234CamCtrls() {
+        if (_jsr234CamCtrls == null) {
+            Class c = null;
+            try {
+                c = Class.forName(
+                    "com.sun.mmedia.Jsr234CameraControlsProxyImpl");
+                _jsr234CamCtrls = (Jsr234CameraControlsProxy)c.newInstance(); 
+                _jsr234CamCtrls.setCameraPlayer(this);
+            } catch (ClassNotFoundException e1) {
+            } catch (IllegalAccessException e2) {
+                throw new RuntimeException(
+                        "Could not access the class" + c.toString());
+            } catch (InstantiationException e3 ) {
+                throw new RuntimeException(
+                        "Could not instantiate the class" + c.toString());
+            }
+            if (_jsr234CamCtrls == null) {
+                try {
+                    c = Class.forName(
+                            "com.sun.mmedia.Jsr234CameraControlsProxyStub");
+                    _jsr234CamCtrls =
+                            (Jsr234CameraControlsProxy)c.newInstance();
+                } catch (ClassNotFoundException e1) {
+                    throw new RuntimeException(
+                            "Could not find camera controls proxy class");
+                } catch (IllegalAccessException e2) {
+                    throw new RuntimeException(
+                            "Could not access the class" + c.toString());
+                } catch (InstantiationException e3) {
+                    throw new RuntimeException(
+                            "Could not instantiate the class" + c.toString());
+                }
+            }
+        }
+        return _jsr234CamCtrls;
+    }
+    
+    protected Control doGetControl(String type) {
+        Control c = super.doGetControl(type);
+        if (c == null) {
+            if (type.startsWith(JSR234_CAMERA_PACKAGE_NAME)) {
+                c = get234CamCtrls().getJsr234CameraControl(type);
+            }
+        }
+        return c;
+    }
+// #endif  ]
+
+    public void checkSnapshotPermission()
+    {
+        checkPermission();
+    }
+}
