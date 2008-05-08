@@ -137,7 +137,7 @@ class AppProxy {
     /** MIDlet property for the suite vendor. */
     static final String VENDOR_PROP        = "MIDlet-Vendor";
     
-    static final int INVALID_SUITE_ID = MIDletSuite.INTERNAL_SUITE_ID;
+    static final int EXTERNAL_SUITE_ID = MIDletSuite.UNUSED_SUITE_ID;
 
     /**
      * Sets the security token used for privileged operations.
@@ -177,12 +177,13 @@ class AppProxy {
     }
 
 	class VAGetter extends MIDletSuiteUser {
-		String ver, auth;
-		void use(MIDletSuite msuite) {  
-	        try {
-	        	auth =((MIDletSuiteImpl)msuite).getInstallInfo().getCA();
-	        } catch (RuntimeException e) {}
-	        ver = msuite.getProperty(VERSION_PROP);
+		void use(MIDletSuite msuite) {
+			if( msuite instanceof MIDletSuiteImpl ){
+		        try {
+		        	authority =((MIDletSuiteImpl)msuite).getInstallInfo().getCA();
+		        } catch (RuntimeException e) {}
+			}
+	        version = msuite.getProperty(VERSION_PROP);
 		}
 	};
 	
@@ -208,17 +209,13 @@ class AppProxy {
         this.msuite = msuite;
         this.storageId = storageId;
         this.classname = classname;
-        VAGetter t = (VAGetter)new VAGetter().execute();
-    	version = t.ver;
-    	authority = t.auth;
+        new VAGetter().execute();
         this.appmap = appmap;
         if (LOGGER != null)
         	LOGGER.println("AppProxy() classname '" + classname + "'");
         if (classname != null) {
             verifyApplication(classname);
-        	new MIDletSuiteUser(){
-				void use(MIDletSuite msuite) { initAppInfo( msuite ); }
-        	}.execute();
+            initAppInfo(new MIDletSuiteUser());
             appmap.put(classname, this);
         }
         if (LOGGER != null)
@@ -238,15 +235,7 @@ class AppProxy {
         this.classname = classname;
         msuite = null;
 
-    	class user extends VAGetter {
-			void use(MIDletSuite msuite) {
-				super.use( msuite );
-				initAppInfo( msuite ); 
-			}
-    	};
-    	VAGetter t = (VAGetter)new user().execute();
-    	version = t.ver;
-    	authority = t.auth;
+		initAppInfo( new VAGetter() ); 
 
         if (LOGGER != null) {
         	LOGGER.println("AppProxy created: " + classname);
@@ -298,9 +287,7 @@ class AppProxy {
         }
 
         // Create a new instance
-        AppProxy curr = new AppProxy(storageId, classname);
-
-        return curr;
+        return new AppProxy(storageId, classname);
     }
 
     /**
@@ -523,7 +510,7 @@ class AppProxy {
      * Initialize application name and application ID
      * from the attributes.
      */
-    protected void initAppInfo( MIDletSuite msuite ) {
+    protected void initAppInfo( final MIDletSuiteUser user ) {
         // Check if it is an internal MIDlet
         if (storageId == MIDletSuite.INTERNAL_SUITE_ID) {
             applicationName = classname.substring(classname.lastIndexOf('.') + 1);
@@ -532,25 +519,30 @@ class AppProxy {
             return;
         }
 
-        // Check if a registered MIDlet
-        String[] minfo = getMIDletInfo(msuite, classname);
-
-        // if a MIDlet, set the application name and application ID
-        if (minfo != null) {
-            applicationName = minfo[0];
-            applicationID = minfo[2];
-            isRegistered = true;
-        }
-
-        // Fill in defaults for appName and applicationID
-        if (applicationName == null || applicationName.length() == 0) {
-            applicationName = msuite.getProperty(
-                                        MIDletSuiteImpl.SUITE_NAME_PROP);
-        }
-
-        if (applicationID == null || applicationID.length() == 0) {
-            applicationID = getDefaultID(msuite);
-        }
+        new MIDletSuiteUser() {
+        	void use( MIDletSuite msuite ){
+		        user.use( msuite );
+		        // Check if a registered MIDlet
+		        String[] minfo = getMIDletInfo(msuite, classname);
+		
+		        // if a MIDlet, set the application name and application ID
+		        if (minfo != null) {
+		            applicationName = minfo[0];
+		            applicationID = minfo[2];
+		            isRegistered = true;
+		        }
+		
+		        // Fill in defaults for appName and applicationID
+		        if (applicationName == null || applicationName.length() == 0) {
+		            applicationName = msuite.getProperty(
+		                                        MIDletSuiteImpl.SUITE_NAME_PROP);
+		        }
+		
+		        if (applicationID == null || applicationID.length() == 0) {
+		            applicationID = getDefaultID(msuite);
+		        }
+        	}
+        }.execute();
     }
 
     /**
@@ -635,14 +627,13 @@ class AppProxy {
         }
     }
     
-    
-    protected abstract class MIDletSuiteUser {
-    	abstract void use( MIDletSuite msuite );
+    protected class MIDletSuiteUser {
+    	void use( MIDletSuite msuite ){};
     	MIDletSuiteUser execute() {
     		if( msuite != null ){
                 if (LOGGER != null) LOGGER.println("msuite isn't null: " + msuite);
     			use( msuite );
-    		} else {
+    		} else if( storageId != MIDletSuite.INTERNAL_SUITE_ID ){
 	            try {
 	                MIDletSuite suite = MIDletSuiteStorage.
 	                        getMIDletSuiteStorage(classSecurityToken).
@@ -657,11 +648,11 @@ class AppProxy {
 	                }
 	            } catch (MIDletSuiteLockedException msle) {
 	                if (LOGGER != null) {
-	                	LOGGER.log("AppProxy creation fails", msle);
+	                	LOGGER.log("AppProxy initialization failed", msle);
 	                }
 	            } catch (MIDletSuiteCorruptedException msce) {
 	                if (LOGGER != null) {
-	                	LOGGER.log("AppProxy creation failed", msce);
+	                	LOGGER.log("AppProxy initialization failed", msce);
 	                }
 	            }
     		}

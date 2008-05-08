@@ -28,7 +28,6 @@ package com.sun.j2me.content;
 
 import java.util.Hashtable;
 
-import com.sun.j2me.content.AppProxy.MIDletSuiteUser;
 import com.sun.midp.installer.InstallState;
 import com.sun.midp.installer.Installer;
 import com.sun.midp.installer.InvalidJadException;
@@ -77,9 +76,7 @@ class AppBundleProxy extends AppProxy {
         // code for classname checking
         if (classname != null) {
             verifyApplication(classname);
-        	new MIDletSuiteUser(){
-				void use(MIDletSuite msuite) { initAppInfo( msuite ); }
-        	}.execute();
+            initAppInfo( new MIDletSuiteUser() );
             this.appmap.put(classname, this);
         }
         

@@ -949,10 +949,12 @@ Java_com_sun_j2me_content_InvocationStore_setStatus0(void) {
             removeEntry(link);
             invocFree(invoc);
             break;
+
         case STATUS_ACTIVE:
         case STATUS_HOLD:
         case STATUS_WAITING:
-            /* No Action. */
+            /* Unblock any waiting threads so they can retrieve this. */
+            unblockWaitingThreads(STATUS_OK);
             break;
         }
     }
@@ -1357,8 +1359,7 @@ static jboolean modeCheck(StoredInvoc* invoc, int mode) {
          * That's everything except HOLD.
          */
         return (invoc->status == STATUS_ACTIVE ||
-               (invoc->cleanup == KNI_TRUE &&
-                invoc->status != STATUS_HOLD));
+               (invoc->cleanup == KNI_TRUE && invoc->status != STATUS_HOLD));
     }
     return KNI_FALSE;
 }
