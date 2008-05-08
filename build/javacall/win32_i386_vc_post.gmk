@@ -1,0 +1,69 @@
+#
+# Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
+# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+# 
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License version
+# 2 only, as published by the Free Software Foundation. 
+# 
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# General Public License version 2 for more details (a copy is
+# included at /legal/license.txt). 
+# 
+# You should have received a copy of the GNU General Public License
+# version 2 along with this work; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+# 02110-1301 USA 
+# 
+# Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+# Clara, CA 95054 or visit www.sun.com if you need additional
+# information or have any questions. 
+#
+######################################################################
+
+WTK_BIN_DIR = $(MIDP_OUTPUT_DIR)/WTK
+WTK_STORAGE_DIR = $(MIDP_OUTPUT_DIR)/WTK_STORAGE
+all:: wtkbin
+wtkbin: $(SUBSYSTEM_AMS_EXECUTABLES)
+	$(AT)$(shell mkdir -p $(WTK_BIN_DIR)/bin $(WTK_BIN_DIR)/wtklib \
+         $(WTK_STORAGE_DIR)/DefaultColorPhone)
+	$(AT)$(call copy_file, $(MIDP_OUTPUT_DIR)/bin/i386/runMidlet*.exe, \
+         $(WTK_BIN_DIR)/bin/zayit.exe)
+	$(AT)$(call copy_file_if_exists, $(MIDP_OUTPUT_DIR)/bin/i386/runMidlet*.pdb, \
+         $(WTK_BIN_DIR)/bin/)
+	$(AT)$(call copy_file_if_exists, $(JAVACALL_LIB_DIR)/sublime.dll, \
+         $(WTK_BIN_DIR)/bin/)
+	$(AT)$(call copy_file, $(MIDP_OUTPUT_DIR)/bin/i386/kdp.jar, \
+         $(WTK_BIN_DIR)/wtklib/kdp.jar)
+	$(AT)$(call copy_file, $(MIDP_OUTPUT_DIR)/appdb/_main.ks, \
+         $(WTK_STORAGE_DIR)/_main.mks)
+	$(AT)$(call copy_file, \
+	 $(MIDP_OUTPUT_DIR)/lib/., $(WTK_STORAGE_DIR)/)
+	$(AT)$(call copy_file, \
+	 $(MIDP_OUTPUT_DIR)/classes.zip, $(WTK_BIN_DIR)/)
+	$(AT)$(call copy_file, \
+	 $(MIDP_OUTPUT_DIR)/appdb/., $(WTK_STORAGE_DIR)/DefaultColorPhone/)
+	$(AT)$(call copy_file, \
+	 $(MIDP_OUTPUT_DIR)/bin/i386/MEKeyTool.jar, $(WTK_BIN_DIR)/bin/)
+	$(AT)$(call copy_file, \
+	 $(MIDP_OUTPUT_DIR)/bin/i386/JadTool.jar, $(WTK_BIN_DIR)/bin/)
+	$(AT)$(call copy_file_if_exists, \
+         $(MIDP_OUTPUT_DIR)/bin/i386/jwc_properties.ini, $(WTK_BIN_DIR)/jwc_properties.ini)
+	$(AT)$(call copy_file_if_exists, \
+         $(JAVACALL_OUTPUT_DIR)/storage/., $(WTK_STORAGE_DIR)/DefaultColorPhone/)
+	$(AT)$(call copy_file_if_exists, \
+         $(MIDP_OUTPUT_DIR)/javacard_classes, $(WTK_BIN_DIR)/)
+	$(AT)$(call copy_file_if_exists, \
+         $(MIDP_OUTPUT_DIR)/bin/jc_eeprom_image, $(WTK_BIN_DIR)/bin/)
+	$(AT)touch $(WTK_STORAGE_DIR)/DefaultColorPhone/alarmlist.txt
+	$(AT)touch $(WTK_STORAGE_DIR)/DefaultColorPhone/pushlist.txt
+
+define copy_file
+    cp -r $(1) $(2)
+endef
+
+define copy_file_if_exists
+    if [ -e $(1) ]; then cp -r $(1) $(2); fi
+endef
