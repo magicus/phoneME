@@ -1,0 +1,1375 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="../share/chameleon/skin_optional.xsl"?>
+
+<!DOCTYPE configuration SYSTEM "../share/configuration.dtd">
+<!--
+        	
+
+        Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+        DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+        
+        This program is free software; you can redistribute it and/or
+        modify it under the terms of the GNU General Public License version
+        2 only, as published by the Free Software Foundation.
+        
+        This program is distributed in the hope that it will be useful, but
+        WITHOUT ANY WARRANTY; without even the implied warranty of
+        MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+        General Public License version 2 for more details (a copy is
+        included at /legal/license.txt).
+        
+        You should have received a copy of the GNU General Public License
+        version 2 along with this work; if not, write to the Free Software
+        Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+        02110-1301 USA
+        
+        Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+        Clara, CA 95054 or visit www.sun.com if you need additional
+        information or have any questions.
+-->
+<configuration>
+<skin>
+<skin_properties KeysClass="com.sun.midp.chameleon.skins.SkinPropertiesIDs">
+  <integer
+        Key="SCREEN_TEXT_ORIENT"
+      Value="Graphics.RIGHT"/>
+
+  <integer
+        Key="SCREEN_PAD_FORM_ITEMS"
+      Value="4"/>
+
+  <integer
+        Key="SCREEN_PAD_LABEL_VERT"
+      Value="2"/>
+
+  <integer
+        Key="SCREEN_PAD_LABEL_HORIZ"
+      Value="3"/>
+
+  <integer
+        Key="SCREEN_COLOR_BG"
+      Value="0xDEDEE6"/>
+
+  <integer
+        Key="SCREEN_COLOR_HS_BG"
+      Value="0xFFFFFF"/>
+
+  <integer
+        Key="SCREEN_COLOR_FG"
+      Value="0x000000"/>
+
+  <integer
+        Key="SCREEN_COLOR_BG_HL"
+      Value="0x33628C"/>
+
+  <integer
+        Key="SCREEN_COLOR_FG_HL"
+      Value="0xffffff"/>
+
+  <integer
+        Key="SCREEN_COLOR_BORDER"
+      Value="0x000000"/>
+
+  <integer
+        Key="SCREEN_COLOR_BORDER_HL"
+      Value="0xFFC726"/>
+
+  <integer
+        Key="SCREEN_COLOR_TRAVERSE_IND"
+      Value="0x33628C"/>
+
+  <integer
+        Key="SCREEN_BORDER_STYLE"
+      Value="Graphics.SOLID"/>
+
+  <integer
+        Key="SCREEN_SCROLL_AMOUNT"
+      Value="15"/>
+      
+  <font
+        Key="SCREEN_FONT_LABEL"
+      Value="FontResources.PROP_P_M"/>
+
+  <font
+        Key="SCREEN_FONT_INPUT_TEXT"
+      Value="FontResources.PROP_P_M"/>
+
+  <font
+        Key="SCREEN_FONT_STATIC_TEXT"
+      Value="FontResources.PROP_P_M"/>
+
+  <image
+        Key="SCREEN_IMAGE_WASH"
+      Value="screen.image_wash"
+    Romized="false"/>
+
+  <image
+        Key="SCREEN_IMAGE_BG"
+      Value="screen.image_bg"
+    Romized="false"/>
+
+  <composite_image
+        Key="SCREEN_IMAGE_BG_W_TITLE"
+      Value=""
+     Pieces="9"
+    Romized="false"/>
+
+  <composite_image
+        Key="SCREEN_IMAGE_BG_WO_TITLE"
+      Value=""
+     Pieces="9"
+    Romized="false"/>
+
+  <image
+        Key="SCREEN_IMAGE_HS_BG_TILE"
+      Value=""
+    Romized="false"/>
+
+  <composite_image
+        Key="SCREEN_IMAGE_HS_BG_W_TITLE"
+      Value=""
+     Pieces="9"
+    Romized="false"/>
+
+  <composite_image
+        Key="SCREEN_IMAGE_HS_BG_WO_TITLE"
+      Value=""
+     Pieces="9"
+    Romized="false"/>
+
+  <integer
+        Key="SCROLL_MODE"
+      Value="ScrollIndSkin.MODE_BAR"/>
+
+  <integer
+        Key="SCROLL_WIDTH"
+      Value="13"/>
+
+  <integer
+        Key="SCROLL_COLOR_BG"
+      Value="0xEDEFF2"/>
+
+  <integer
+        Key="SCROLL_COLOR_FG"
+      Value="0xC5C6CD"/>
+
+  <integer
+        Key="SCROLL_COLOR_FRAME"
+      Value="0"/>
+
+  <integer
+        Key="SCROLL_COLOR_UP_ARROW"
+      Value="0"/>
+
+  <integer
+        Key="SCROLL_COLOR_DN_ARROW"
+      Value="0xFFFFFF"/>
+
+  <composite_image
+        Key="SCROLL_IMAGE_BG"
+      Value="scroll.image_bg"
+     Pieces="3"
+    Romized="false"/>
+
+  <composite_image
+        Key="SCROLL_IMAGE_FG"
+      Value=""
+     Pieces="3"
+    Romized="false"/>
+
+  <image
+        Key="SCROLL_IMAGE_UP"
+      Value="scroll.image_up"
+    Romized="false"/>
+
+  <image
+        Key="SCROLL_IMAGE_DN"
+      Value="scroll.image_dn"
+    Romized="false"/>
+
+  <integer
+        Key="SCROLL_COLOR_AU_BG"
+      Value="0x000000"/>
+
+  <integer
+        Key="SCROLL_COLOR_AU_FG"
+      Value="0xFFFFFF"/>
+
+  <composite_image
+        Key="SCROLL_IMAGE_AU_BG"
+      Value=""
+     Pieces="3"
+    Romized="false"/>
+
+  <composite_image
+        Key="SCROLL_IMAGE_AU_FG"
+      Value=""
+     Pieces="3"
+    Romized="false"/>
+
+  <image
+        Key="SCROLL_IMAGE_AU_UP"
+      Value="scroll.image_au_up"
+    Romized="false"/>
+
+  <image
+        Key="SCROLL_IMAGE_AU_DN"
+      Value="scroll.image_au_dn"
+    Romized="false"/>
+
+  <integer
+        Key="SOFTBTN_HEIGHT"
+      Value="18"/>
+
+  <integer
+        Key="SOFTBTN_NUM_BUTTONS"
+      Value="2"/>
+
+  <integer
+        Key="SOFTBTN_BUTTON_SHD_ALIGN"
+      Value="Graphics.BOTTOM | Graphics.RIGHT"/>
+
+  <integer
+        Key="SOFTBTN_COLOR_FG"
+      Value="0xFFFFFF"/>
+
+  <integer
+        Key="SOFTBTN_COLOR_FG_SHD"
+      Value="0x000000"/>
+
+  <integer
+        Key="SOFTBTN_COLOR_BG"
+      Value="0x264DB6"/>
+
+  <integer
+        Key="SOFTBTN_COLOR_MU_FG"
+      Value="0xFFFFFF"/>
+
+  <integer
+        Key="SOFTBTN_COLOR_MU_FG_SHD"
+      Value="0x000000"/>
+
+  <integer
+        Key="SOFTBTN_COLOR_MU_BG"
+      Value="0xFF9933"/>
+
+  <integer
+        Key="SOFTBTN_COLOR_AU_FG"
+      Value="0xFFFFFF"/>
+
+  <integer
+        Key="SOFTBTN_COLOR_AU_FG_SHD"
+      Value="0x000000"/>
+
+  <integer
+        Key="SOFTBTN_COLOR_AU_BG"
+      Value="0xF06409"/>
+
+  <font
+        Key="SOFTBTN_FONT"
+      Value="FontResources.SYS_B_M"/>
+
+  <string
+        Key="SOFTBTN_TEXT_MENUCMD"
+      Value="Menu"/>
+
+  <string
+        Key="SOFTBTN_TEXT_BACKCMD"
+      Value="Back"/>
+
+  <composite_image
+        Key="SOFTBTN_IMAGE_BG"
+      Value="softbtn.image_bg"
+     Pieces="3"
+    Romized="false"/>
+
+  <composite_image
+        Key="SOFTBTN_IMAGE_MU_BG"
+      Value="softbtn.image_mu_bg"
+     Pieces="3"
+    Romized="false"/>
+
+  <composite_image
+        Key="SOFTBTN_IMAGE_AU_BG"
+      Value="softbtn.image_au_bg"
+     Pieces="3"
+    Romized="false"/>
+
+  <integer
+        Key="TICKER_HEIGHT"
+      Value="17"/>
+
+  <integer
+        Key="TICKER_ALIGN"
+      Value="Graphics.BOTTOM"/>
+
+  <integer
+        Key="TICKER_DIRECTION"
+      Value="Graphics.LEFT"/>
+
+  <integer
+        Key="TICKER_RATE"
+      Value="250"/>
+
+  <integer
+        Key="TICKER_SPEED"
+      Value="5"/>
+
+  <integer
+        Key="TICKER_TEXT_ANCHOR_Y"
+      Value="1"/>
+
+  <integer
+        Key="TICKER_TEXT_SHD_ALIGN"
+      Value="Graphics.BOTTOM | Graphics.RIGHT"/>
+
+  <integer
+        Key="TICKER_COLOR_BG"
+      Value="0x96DBDB"/>
+
+  <integer
+        Key="TICKER_COLOR_FG"
+      Value="0x000000"/>
+
+  <integer
+        Key="TICKER_COLOR_FG_SHD"
+      Value="0xCCCCFF"/>
+
+  <font
+        Key="TICKER_FONT"
+      Value="FontResources.SYS_B_S"/>
+
+  <composite_image
+        Key="TICKER_IMAGE_BG"
+      Value="ticker.image_bg"
+     Pieces="3"
+    Romized="false"/>
+
+  <composite_image
+        Key="TICKER_IMAGE_AU_BG"
+      Value="ticker.image_au_bg"
+     Pieces="3"
+    Romized="false"/>
+
+  <integer
+        Key="INPUT_MODE_COLOR_BG"
+      Value="0xDEDEE6"/>
+
+  <integer
+        Key="INPUT_MODE_COLOR_BDR"
+      Value="0x9C9D9E"/>
+
+  <integer
+        Key="INPUT_MODE_COLOR_FG"
+      Value="0x000000"/>
+
+  <composite_image
+        Key="INPUT_MODE_IMAGE_BG"
+      Value=""
+     Pieces="3"
+     Romized="false"/>
+
+  <integer
+        Key="INPUT_MODE_MARGIN"
+      Value="3"/>
+
+  <font
+        Key="INPUT_MODE_FONT"
+      Value="FontResources.SYS_B_S"/>
+
+  <integer
+        Key="PTI_HEIGHT"
+      Value="17"/>
+  
+  <integer
+        Key="PTI_MARGIN"
+      Value="3"/>
+
+  <integer
+        Key="PTI_COLOR_BG"
+      Value="0xA3E2F8"/>
+
+  <integer
+        Key="PTI_COLOR_FG"
+      Value="0x000000"/>
+
+  <integer
+        Key="PTI_COLOR_BG_HL"
+      Value="0x33628C"/>
+
+  <integer
+        Key="PTI_COLOR_FG_HL"
+      Value="0xffffff"/>
+
+  <integer
+        Key="PTI_COLOR_BDR"
+      Value="0x33628C"/>
+
+  <font
+        Key="PTI_FONT"
+      Value="FontResources.SYS_B_S"/>
+
+  <composite_image
+        Key="PTI_IMAGE_BG"
+      Value="pti.image_bg"
+     Pieces="3"
+    Romized="false"/>
+
+  <image
+        Key="PTI_LEFT_ARROW"
+      Value="pti.left_arrow"
+    Romized="false"/>
+
+  <image
+        Key="PTI_RIGHT_ARROW"
+      Value="pti.right_arrow"
+    Romized="false"/>
+
+  <integer
+        Key="TITLE_HEIGHT"
+      Value="20"/>
+
+  <integer
+        Key="TITLE_MARGIN"
+      Value="5"/>
+
+  <integer
+        Key="TITLE_TEXT_ALIGN_X"
+      Value="Graphics.LEFT"/>
+
+  <integer
+        Key="TITLE_TEXT_SHD_ALIGN"
+      Value="Graphics.BOTTOM | Graphics.RIGHT"/>
+
+  <integer
+        Key="TITLE_COLOR_FG"
+      Value="0xFFFFFF"/>
+
+  <integer
+        Key="TITLE_COLOR_FG_SHD"
+      Value="0x000000"/>
+
+  <integer
+        Key="TITLE_COLOR_BG"
+      Value="0x1F3FB1"/>
+
+  <font
+        Key="TITLE_FONT"
+      Value="FontResources.SYS_B_M"/>
+
+  <composite_image
+        Key="TITLE_IMAGE_BG"
+      Value="title.image_bg"
+     Pieces="3"
+    Romized="false"/>
+
+  <integer
+        Key="ALERT_WIDTH"
+      Value="-1"/>
+
+  <integer
+        Key="ALERT_HEIGHT"
+      Value="125"/>
+
+  <integer
+        Key="ALERT_ALIGN_X"
+      Value="Graphics.HCENTER"/>
+
+  <integer
+        Key="ALERT_ALIGN_Y"
+      Value="Graphics.BOTTOM"/>
+
+  <integer
+        Key="ALERT_MARGIN_H"
+      Value="5"/>
+
+  <integer
+        Key="ALERT_MARGIN_V"
+      Value="0"/>
+
+  <integer
+        Key="ALERT_TITLE_ALIGN"
+      Value="Graphics.LEFT"/>
+
+  <integer
+        Key="ALERT_TITLE_HEIGHT"
+      Value="32"/>
+
+  <integer
+        Key="ALERT_TITLE_MARGIN"
+      Value="5"/>
+
+  <string
+        Key="ALERT_TEXT_TITLE_INFO"
+      Value="Information"/>
+
+  <string
+        Key="ALERT_TEXT_TITLE_WARN"
+      Value="Warning"/>
+
+  <string
+        Key="ALERT_TEXT_TITLE_ERRR"
+      Value="Error"/>
+
+  <string
+        Key="ALERT_TEXT_TITLE_ALRM"
+      Value="Alarm"/>
+
+  <string
+        Key="ALERT_TEXT_TITLE_CNFM"
+      Value="Confirm"/>
+
+  <integer
+        Key="ALERT_PAD_HORIZ"
+      Value="0"/>
+
+  <integer
+        Key="ALERT_PAD_VERT"
+      Value="3"/>
+
+  <integer
+        Key="ALERT_SCROLL_AMOUNT"
+      Value="15"/>
+
+  <integer
+        Key="ALERT_TIMEOUT"
+      Value="2000"/>
+
+  <integer
+        Key="ALERT_COLOR_BG"
+      Value="0xFFC726"/>
+
+  <integer
+        Key="ALERT_COLOR_TITLE"
+      Value="0x000000"/>
+
+  <integer
+        Key="ALERT_COLOR_FG"
+      Value="0x000000"/>
+
+  <font
+        Key="ALERT_FONT_TITLE"
+      Value="FontResources.PROP_B_S"/>
+
+  <font
+        Key="ALERT_FONT_TEXT"
+      Value="FontResources.PROP_P_M"/>
+
+  <composite_image
+        Key="ALERT_IMAGE_BG"
+      Value="alert.image_bg"
+     Pieces="9"
+    Romized="false"/>
+
+  <image
+        Key="ALERT_IMAGE_ICON_INFO"
+      Value="alert.image_icon_info"
+    Romized="false"/>
+
+  <image
+        Key="ALERT_IMAGE_ICON_WARN"
+      Value="alert.image_icon_warn"
+    Romized="false"/>
+
+  <image
+        Key="ALERT_IMAGE_ICON_ERRR"
+      Value="alert.image_icon_errr"
+    Romized="false"/>
+
+  <image
+        Key="ALERT_IMAGE_ICON_ALRM"
+      Value="alert.image_icon_alrm"
+    Romized="false"/>
+
+  <image
+        Key="ALERT_IMAGE_ICON_CNFM"
+      Value="alert.image_icon_cnfm"
+    Romized="false"/>
+
+  <integer
+        Key="BUSYCRSR_WIDTH"
+      Value="40"/>
+
+  <integer
+        Key="BUSYCRSR_HEIGHT"
+      Value="40"/>
+
+  <integer
+        Key="BUSYCRSR_NUM_FRAMES"
+      Value="30"/>
+
+  <integer
+        Key="BUSYCRSR_FRAME_X"
+      Value="0"/>
+
+  <integer
+        Key="BUSYCRSR_FRAME_Y"
+      Value="0"/>
+
+  <integer_seq
+        Key="BUSYCRSR_FRAME_SEQU"
+      Value="1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29"/>
+
+  <image
+        Key="BUSYCRSR_IMAGE_BG"
+      Value="busycrsr.image_bg"
+    Romized="false"/>
+
+  <composite_image
+        Key="BUSYCRSR_IMAGE_FRAME"
+      Value="busycrsr.image_frame"
+     Pieces="30"
+    Romized="false"/>
+
+  <integer
+        Key="CHOICE_WIDTH_IMAGE"
+      Value="16"/>
+
+  <integer
+        Key="CHOICE_HEIGHT_IMAGE"
+      Value="16"/>
+
+  <integer
+        Key="CHOICE_WIDTH_SCROLL"
+      Value="15"/>
+
+  <integer
+        Key="CHOICE_WIDTH_THUMB"
+      Value="3"/>
+
+  <integer
+        Key="CHOICE_HEIGHT_THUMB"
+      Value="4"/>
+
+  <integer
+        Key="CHOICE_PAD_H"
+      Value="4"/>
+
+  <integer
+        Key="CHOICE_PAD_V"
+      Value="2"/>
+
+  <integer
+        Key="CHOICE_COLOR_FG"
+      Value="0x000000"/>
+
+  <integer
+        Key="CHOICE_COLOR_BG"
+      Value="0xF6F6F6"/>
+
+  <integer
+        Key="CHOICE_COLOR_BRDR"
+      Value="0x9c9d9e"/>
+
+  <integer
+        Key="CHOICE_COLOR_BRDR_SHD"
+      Value="0xD3D3D4"/>
+
+  <integer
+        Key="CHOICE_COLOR_SCROLL"
+      Value="0x003366"/>
+
+  <integer
+        Key="CHOICE_COLOR_THUMB"
+      Value="0x003366"/>
+
+  <font
+        Key="CHOICE_FONT"
+      Value="FontResources.PROP_P_M"/>
+
+  <font
+        Key="CHOICE_FONT_FOCUS"
+      Value="FontResources.PROP_P_M"/>
+
+  <composite_image
+        Key="CHOICE_IMAGE_RADIO"
+      Value="choice.image_radio"
+     Pieces="2"
+    Romized="false"/>
+
+  <composite_image
+        Key="CHOICE_IMAGE_CHKBX"
+      Value="choice.image_chkbx"
+     Pieces="2"
+    Romized="false"/>
+
+  <composite_image
+        Key="CHOICE_IMAGE_BG"
+      Value=""
+     Pieces="9"
+    Romized="false"/>
+
+  <composite_image
+        Key="CHOICE_IMAGE_BTN_BG"
+      Value="choice.image_btn_bg"
+     Pieces="9"
+    Romized="false"/>
+
+  <image
+        Key="CHOICE_IMAGE_BTN_ICON"
+      Value="choice.image_btn_icon"
+    Romized="false"/>
+
+  <composite_image
+        Key="CHOICE_IMAGE_POPUP_BG"
+      Value="choice.image_popup_bg"
+     Pieces="9"
+    Romized="false"/>
+
+  <integer
+        Key="DATEEDITOR_HEIGHT"
+      Value="110"/>
+
+  <integer
+        Key="DATEEDITOR_HEIGHT_POPUPS"
+      Value="73"/>
+
+  <integer
+        Key="DATEEDITOR_WIDTH_D"
+      Value="111"/>
+
+  <integer
+        Key="DATEEDITOR_WIDTH_T"
+      Value="99"/>
+
+  <integer
+        Key="DATEEDITOR_WIDTH_DT"
+      Value="167"/>
+
+  <integer
+        Key="DATEEDITOR_COLOR_BG"
+      Value="0xf6f6F6"/>
+
+  <integer
+        Key="DATEEDITOR_COLOR_POPUPS_BG"
+      Value="0xFFFFFF"/>
+
+  <integer
+        Key="DATEEDITOR_COLOR_BRDR"
+      Value="0x8E8F91"/>
+
+  <integer
+        Key="DATEEDITOR_COLOR_TRAV_IND"
+      Value="0x33628C"/>
+
+  <integer
+        Key="DATEEDITOR_COLOR_CLK_LT"
+      Value="0xFFFFFF"/>
+
+  <integer
+        Key="DATEEDITOR_COLOR_CLK_DK"
+      Value="0x9c9d9e"/>
+
+  <font
+        Key="DATEEDITOR_FONT_POPUPS"
+      Value="FontResources.PROP_P_S"/>
+
+  <composite_image
+        Key="DATEEDITOR_IMAGE_BG"
+      Value=""
+     Pieces="9"
+    Romized="false"/>
+
+  <image
+        Key="DATEEDITOR_IMAGE_MON_BG"
+      Value="dateeditor.image_mon_bg"
+    Romized="false"/>
+
+  <image
+        Key="DATEEDITOR_IMAGE_YR_BG"
+      Value="dateeditor.image_yr_bg"
+    Romized="false"/>
+
+  <image
+        Key="DATEEDITOR_IMAGE_CAL_BG"
+      Value="dateeditor.image_cal_bg"
+    Romized="false"/>
+
+  <image
+        Key="DATEEDITOR_IMAGE_DATES"
+      Value="dateeditor.image_dates"
+    Romized="false"/>
+
+  <image
+        Key="DATEEDITOR_IMAGE_DAYS"
+      Value="dateeditor.image_days"
+    Romized="false"/>
+
+  <image
+        Key="DATEEDITOR_IMAGE_TIME_BG"
+      Value="dateeditor.image_time_bg"
+    Romized="false"/>
+
+  <composite_image
+        Key="DATEEDITOR_IMAGE_RADIO"
+      Value="dateeditor.image_radio"
+     Pieces="2"
+    Romized="false"/>
+
+  <image
+        Key="DATEEDITOR_IMAGE_AMPM"
+      Value="dateeditor.image_ampm"
+    Romized="false"/>
+
+  <image
+        Key="DATEEDITOR_IMAGE_CLOCK_BG"
+      Value="dateeditor.image_clock_bg"
+    Romized="false"/>
+
+  <integer
+        Key="DATEFIELD_PAD_H"
+      Value="3"/>
+
+  <integer
+        Key="DATEFIELD_PAD_V"
+      Value="2"/>
+
+  <integer
+        Key="DATEFIELD_BTN_BRDR_W"
+      Value="3"/>
+
+  <font
+        Key="DATEFIELD_FONT"
+      Value="FontResources.PROP_P_M"/>
+
+  <integer
+        Key="DATEFIELD_COLOR_FG"
+      Value="0x000000"/>
+
+  <integer
+        Key="DATEFIELD_COLOR_BG"
+      Value="0xF6F6F6"/>
+
+  <integer
+        Key="DATEFIELD_COLOR_BRDR"
+      Value="0x9c9d9e"/>
+
+  <integer
+        Key="DATEFIELD_COLOR_BRDR_LT"
+      Value="0x8DB0D9"/>
+
+  <integer
+        Key="DATEFIELD_COLOR_BRDR_DK"
+      Value="0x003366"/>
+
+  <integer
+        Key="DATEFIELD_COLOR_BRDR_SHD"
+      Value="0xD3D3D4"/>
+
+  <composite_image
+        Key="DATEFIELD_IMAGE_BG"
+      Value=""
+     Pieces="9"
+    Romized="false"/>
+
+  <composite_image
+        Key="DATEFIELD_IMAGE_BTN_BG"
+      Value="datefield.image_btn_bg"
+     Pieces="9"
+    Romized="false"/>
+
+  <image
+        Key="DATEFIELD_IMAGE_ICON_DATE"
+      Value="datefield.image_icon_date"
+    Romized="false"/>
+
+  <image
+        Key="DATEFIELD_IMAGE_ICON_TIME"
+      Value="datefield.image_icon_time"
+    Romized="false"/>
+
+  <image
+        Key="DATEFIELD_IMAGE_ICON_DATETIME"
+      Value="datefield.image_icon_datetime"
+    Romized="false"/>
+
+  <integer
+        Key="GAUGE_ORIENT"
+      Value="8"/>
+
+  <integer
+        Key="GAUGE_WIDTH"
+      Value="137"/>
+
+  <integer
+        Key="GAUGE_HEIGHT"
+      Value="27"/>
+
+  <integer
+        Key="GAUGE_METER_X"
+      Value="24"/>
+
+  <integer
+        Key="GAUGE_METER_Y"
+      Value="0"/>
+
+  <integer
+        Key="GAUGE_INC_BTN_X"
+      Value="114"/>
+
+  <integer
+        Key="GAUGE_INC_BTN_Y"
+      Value="0"/>
+
+  <integer
+        Key="GAUGE_DEC_BTN_X"
+      Value="0"/>
+
+  <integer
+        Key="GAUGE_DEC_BTN_Y"
+      Value="0"/>
+
+  <integer
+        Key="GAUGE_VALUE_X"
+      Value="88"/>
+
+  <integer
+        Key="GAUGE_VALUE_Y"
+      Value="8"/>
+
+  <integer
+        Key="GAUGE_VALUE_WIDTH"
+      Value="24"/>
+
+  <image
+        Key="GAUGE_IMAGE_BG"
+      Value="gauge.image_bg"
+    Romized="false"/>
+
+  <image
+        Key="GAUGE_IMAGE_MTR_EMPTY"
+      Value="gauge.image_mtr_empty"
+    Romized="false"/>
+
+  <image
+        Key="GAUGE_IMAGE_MTR_FULL"
+      Value="gauge.image_mtr_full"
+    Romized="false"/>
+
+  <image
+        Key="GAUGE_IMAGE_INC_BTN"
+      Value="gauge.image_inc_btn"
+    Romized="false"/>
+
+  <image
+        Key="GAUGE_IMAGE_DEC_BTN"
+      Value="gauge.image_dec_btn"
+    Romized="false"/>
+
+  <image
+        Key="GAUGE_IMAGE_VALUES"
+      Value="gauge.image_values"
+    Romized="false"/>
+
+  <integer
+        Key="IMAGEITEM_COLOR_BG_LNK_FOC"
+      Value="0x33628C"/>
+
+  <integer
+        Key="IMAGEITEM_COLOR_BG_BTN"
+      Value="0x0000ff"/>
+
+  <integer
+        Key="IMAGEITEM_COLOR_BORDER_LT"
+      Value="0x606060"/>
+
+  <integer
+        Key="IMAGEITEM_COLOR_BORDER_DK"
+      Value="0xAFAFAF"/>
+
+  <integer
+        Key="IMAGEITEM_PAD_LNK_H"
+      Value="3"/>
+
+  <integer
+        Key="IMAGEITEM_PAD_LNK_V"
+      Value="3"/>
+
+  <integer
+        Key="IMAGEITEM_PAD_BTN_H"
+      Value="4"/>
+
+  <integer
+        Key="IMAGEITEM_PAD_BTN_V"
+      Value="4"/>
+
+  <integer
+        Key="IMAGEITEM_BTN_BORDER_W"
+      Value="3"/>
+
+  <image
+        Key="IMAGEITEM_IMAGE_LNK_H"
+      Value="imageitem.image_lnk_h"
+    Romized="false"/>
+
+  <image
+        Key="IMAGEITEM_IMAGE_LNK_V"
+      Value="imageitem.image_lnk_v"
+    Romized="false"/>
+
+  <composite_image
+        Key="IMAGEITEM_IMAGE_BUTTON"
+      Value="imageitem.image_btn"
+     Pieces="9"
+    Romized="false"/>
+
+  <integer
+        Key="MENU_WIDTH"
+      Value="144"/>
+
+  <integer
+        Key="MENU_HEIGHT"
+      Value="159"/>
+
+  <integer
+        Key="MENU_ALIGN_X"
+      Value="Graphics.RIGHT"/>
+
+  <integer
+        Key="MENU_ALIGN_Y"
+      Value="Graphics.BOTTOM"/>
+
+  <integer
+        Key="MENU_TITLE_X"
+      Value="80"/>
+
+  <integer
+        Key="MENU_TITLE_Y"
+      Value="2"/>
+
+  <integer
+        Key="MENU_TITLE_MAXWIDTH"
+      Value="100"/>
+
+  <integer
+        Key="MENU_TITLE_ALIGN"
+      Value="Graphics.HCENTER"/>
+
+  <integer
+        Key="MENU_MAX_ITEMS"
+      Value="9"/>
+
+  <integer
+        Key="MENU_ITEM_HEIGHT"
+      Value="15"/>
+
+  <integer
+        Key="MENU_ITEM_TOPOFFSET"
+      Value="21"/>
+
+  <integer
+        Key="MENU_ITEM_INDEX_ANCHOR_X"
+      Value="8"/>
+
+  <integer
+        Key="MENU_ITEM_ANCHOR_X"
+      Value="18"/>
+
+  <integer
+        Key="MENU_COLOR_BG"
+      Value="0xEDEFF2"/>
+
+  <integer
+        Key="MENU_COLOR_BG_SEL"
+      Value="0x33628C"/>
+
+  <integer
+        Key="MENU_COLOR_TITLE"
+      Value="0xFFFFFF"/>
+
+  <integer
+        Key="MENU_COLOR_INDEX"
+      Value="0x000000"/>
+
+  <integer
+        Key="MENU_COLOR_INDEX_SEL"
+      Value="0x000000"/>
+
+  <integer
+        Key="MENU_COLOR_ITEM"
+      Value="0x000000"/>
+
+  <integer
+        Key="MENU_COLOR_ITEM_SEL"
+      Value="0xFFFFFF"/>
+
+  <string
+        Key="MENU_TEXT_TITLE"
+      Value="Menu"/>
+
+  <font
+        Key="MENU_FONT_TITLE"
+      Value="FontResources.SYS_B_S"/>
+
+  <font
+        Key="MENU_FONT_ITEM"
+      Value="FontResources.SYS_P_M"/>
+
+  <font
+        Key="MENU_FONT_ITEM_SEL"
+      Value="FontResources.SYS_B_M"/>
+
+  <composite_image
+        Key="MENU_IMAGE_BG"
+      Value="menu.image_bg"
+     Pieces="9"
+    Romized="false"/>
+
+  <composite_image
+        Key="MENU_IMAGE_ITEM_SEL_BG"
+      Value=""
+     Pieces="3"
+    Romized="false"/>
+
+  <image
+        Key="MENU_IMAGE_SUBMENU"
+      Value="menu.image_submenu"
+    Romized="false"/>
+
+  <image
+        Key="MENU_IMAGE_SUBMENU_HL"
+      Value="menu.image_submenu_hl"
+    Romized="false"/>
+
+  <integer
+        Key="PBAR_ORIENT"
+      Value="8"/>
+
+  <integer
+        Key="PBAR_WIDTH"
+      Value="168"/>
+
+  <integer
+        Key="PBAR_HEIGHT"
+      Value="22"/>
+
+  <integer
+        Key="PBAR_METER_X"
+      Value="36"/>
+
+  <integer
+        Key="PBAR_METER_Y"
+      Value="0"/>
+
+  <integer
+        Key="PBAR_VALUE_X"
+      Value="0"/>
+
+  <integer
+        Key="PBAR_VALUE_Y"
+      Value="3"/>
+
+  <integer
+        Key="PBAR_VALUE_WIDTH"
+      Value="32"/>
+
+  <image
+        Key="PBAR_IMAGE_BG"
+      Value="pbar.image_bg"
+    Romized="false"/>
+
+  <image
+        Key="PBAR_IMAGE_MTR_EMPTY"
+      Value="pbar.image_mtr_empty"
+    Romized="false"/>
+
+  <image
+        Key="PBAR_IMAGE_MTR_FULL"
+      Value="pbar.image_mtr_full"
+    Romized="false"/>
+
+  <image
+        Key="PBAR_IMAGE_VALUES"
+      Value="pbar.image_values"
+    Romized="false"/>
+
+  <image
+        Key="PBAR_IMAGE_PERCENTS"
+      Value="pbar.image_prcnts"
+    Romized="false"/>
+
+  <integer
+        Key="STRINGITEM_PAD_BUTTON_H"
+      Value="6"/>
+
+  <integer
+        Key="STRINGITEM_PAD_BUTTON_V"
+      Value="1"/>
+
+  <integer
+        Key="STRINGITEM_BUTTON_BORDER_W"
+      Value="3"/>
+
+  <integer
+        Key="STRINGITEM_COLOR_FG_LNK"
+      Value="0x295D8B"/>
+
+  <integer
+        Key="STRINGITEM_COLOR_FG_LNK_FOC"
+      Value="0xffffff"/>
+
+  <integer
+        Key="STRINGITEM_COLOR_BG_LNK_FOC"
+      Value="0x33628C"/>
+
+  <integer
+        Key="STRINGITEM_COLOR_FG_BTN"
+      Value="0x000000"/>
+
+  <integer
+        Key="STRINGITEM_COLOR_BG_BTN"
+      Value="0x0000FF"/>
+
+  <integer
+        Key="STRINGITEM_COLOR_BORDER_LT"
+      Value="0x606060"/>
+
+  <integer
+        Key="STRINGITEM_COLOR_BORDER_DK"
+      Value="0xAFAFAF"/>
+
+  <font
+        Key="STRINGITEM_FONT"
+      Value="FontResources.PROP_P_M"/>
+
+  <font
+        Key="STRINGITEM_FONT_LNK"
+      Value="FontResources.PROP_P_M"/>
+
+  <font
+        Key="STRINGITEM_FONT_BTN"
+      Value="FontResources.PROP_P_M"/>
+
+  <image
+        Key="STRINGITEM_IMAGE_LNK"
+      Value="stringitem.image_lnk"
+    Romized="false"/>
+
+  <composite_image
+        Key="STRINGITEM_IMAGE_BTN"
+      Value="stringitem.image_btn"
+     Pieces="9"
+    Romized="false"/>
+
+  <integer
+        Key="TEXTFIELD_PAD_H"
+      Value="3"/>
+
+  <integer
+        Key="TEXTFIELD_PAD_V"
+      Value="2"/>
+
+  <integer
+        Key="TEXTFIELD_BOX_MARGIN"
+      Value="4"/>
+
+  <integer
+        Key="TEXTFIELD_WIDTH_CARET"
+      Value="1"/>
+
+  <integer
+        Key="TEXTFIELD_SCRL_RATE"
+      Value="250"/>
+
+  <integer
+        Key="TEXTFIELD_SCRL_SPD"
+      Value="5"/>
+
+  <integer
+        Key="TEXTFIELD_COLOR_FG"
+      Value="0x000000"/>
+
+  <integer
+        Key="TEXTFIELD_COLOR_BG"
+      Value="0xEDEFF2"/>
+
+  <integer
+        Key="TEXTFIELD_COLOR_BRDR"
+      Value="0x9c9d9e"/>
+
+  <integer
+        Key="TEXTFIELD_COLOR_BRDR_SHD"
+      Value="0xD3D3D4"/>
+
+  <integer
+        Key="TEXTFIELD_COLOR_FG_UE"
+      Value="0x5d5d5d"/>
+
+  <integer
+        Key="TEXTFIELD_COLOR_BG_UE"
+      Value="0xc2c2c2"/>
+
+  <integer
+        Key="TEXTFIELD_COLOR_BRDR_UE"
+      Value="0x000000"/>
+
+  <integer
+        Key="TEXTFIELD_COLOR_BRDR_SHD_UE"
+      Value="0xc2c2c2"/>
+
+  <composite_image
+        Key="TEXTFIELD_IMAGE_BG"
+      Value=""
+     Pieces="9"
+    Romized="false"/>
+
+  <composite_image
+        Key="TEXTFIELD_IMAGE_BG_UE"
+      Value=""
+     Pieces="9"
+    Romized="false"/>
+
+  <integer
+        Key="UPDATEBAR_WIDTH"
+      Value="150"/>
+
+  <integer
+        Key="UPDATEBAR_HEIGHT"
+      Value="25"/>
+
+  <integer
+        Key="UPDATEBAR_NUM_FRAMES"
+      Value="8"/>
+
+  <integer
+        Key="UPDATEBAR_FRAME_X"
+      Value="0"/>
+
+  <integer
+        Key="UPDATEBAR_FRAME_Y"
+      Value="0"/>
+
+  <integer_seq
+        Key="UPDATEBAR_FRAME_SEQU"
+      Value="1,2,3,4,5,6,7,6,5,4,3,2"/>
+
+  <image
+        Key="UPDATEBAR_IMAGE_BG"
+      Value="updatebar.image_bg"
+    Romized="false"/>
+
+  <composite_image
+        Key="UPDATEBAR_IMAGE_FRAME"
+      Value="updatebar.image_frame"
+     Pieces="8"
+    Romized="false"/>
+
+  <integer_seq
+        Key="SOFTBTN_BUTTON_ALIGN_X"
+      Value="Graphics.LEFT,Graphics.RIGHT"/>
+
+  <integer_seq
+        Key="SOFTBTN_BUTTON_MAX_WIDTH"
+      Value="85,85"/>
+
+  <integer_seq
+        Key="SOFTBTN_BUTTON_ANCHOR_X"
+      Value="5,-5"/>
+
+  <integer_seq
+        Key="SOFTBTN_BUTTON_ANCHOR_Y"
+      Value="2,2"/>
+
+</skin_properties>
+</skin>
+</configuration>
