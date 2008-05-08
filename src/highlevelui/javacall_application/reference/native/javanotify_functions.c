@@ -1529,9 +1529,12 @@ javanotify_fluid_load_image_finished (
     ) {
     midp_jc_event_union e;
 
+    /* TODO: the result parameter is ignored and is a subject
+             to be removed from javacall API. */
+
     e.eventType = JSR290_JC_EVENT_FLUID_LOAD_FINISHED;
     e.data.jsr290FluidEvent.fluid_image = fluid_image;
-    e.data.jsr290FluidEvent.result      = result;
+    e.data.jsr290FluidEvent.result      = 0;
 
     midp_jc_event_send(&e);
 }
