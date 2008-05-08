@@ -1,0 +1,26 @@
+#
+# @(#)linux_i386_gcc.gmk	1.19 04/12/01
+#
+# Copyright  1990-2006 Sun Microsystems, Inc. All rights reserved.
+# SUN PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+#
+######################################################################
+#
+# To be included for javacall_i386_gcc platforms
+#
+######################################################################
+
+PCSL_OS=javacall
+PCSL_CPU=i386
+
+FILE_MODULE=javacall
+NETWORK_MODULE=javacall
+MEMORY_PORT_MODULE=javacall
+MEMORY_MODULE=heap
+PRINT_MODULE=javacall
+
+include $(PCSL_DIR)/makefiles/share/gcc.gmk
+include $(PCSL_DIR)/makefiles/share/linux.gmk
+
+# must be included after compiler definition
+include $(PCSL_DIR)/makefiles/share/javacall.gmk
