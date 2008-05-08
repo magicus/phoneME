@@ -59,6 +59,10 @@ public final class JSRInitializer {
 // #ifdef ENABLE_JSR_229
         com.sun.midp.jsr229.Initializer.init();
 // #endif
+
+// #ifdef ENABLE_JSR_290
+        com.sun.midp.jsr290.Initializer.init();
+// #endif
     }
 
     /**

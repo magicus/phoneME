@@ -238,7 +238,6 @@ void checkForSystemSignal(MidpReentryData* pNewSignal,
     case JSR290_JC_EVENT_FLUID_LOAD_FINISHED:
         pNewSignal->waitingFor = JSR290_LOAD_FINISH_SIGNAL;
         pNewSignal->descriptor = event->data.jsr290FluidEvent.fluid_image;
-        pNewSignal->status     = event->data.jsr290FluidEvent.result;
         break;
     case JSR290_JC_EVENT_FLUID_INVALIDATE:
         pNewSignal->waitingFor = JSR290_INVALIDATE_SIGNAL;
