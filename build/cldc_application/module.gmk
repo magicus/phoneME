@@ -68,6 +68,7 @@ ABSTRACTIONS_CLASSES = \
     $(JSROP_ABSTRACTS_JAVASRCDIRS)/com/sun/j2me/security/WMAPermission.java \
     $(JSROP_ABSTRACTS_JAVASRCDIRS)/com/sun/j2me/security/ConnectorPermission.java \
     $(JSROP_ABSTRACTS_JAVASRCDIRS)/com/sun/j2me/security/MMAPIPermission.java \
+    $(JSROP_ABSTRACTS_JAVASRCDIRS)/com/sun/j2me/security/AMMSPermission.java \
     $(JSROP_ABSTRACTS_JAVASRCDIRS)/com/sun/j2me/io/ConnectionBaseInterface.java \
     $(JSROP_ABSTRACTS_JAVASRCDIRS)/com/sun/j2me/io/ConnectionBaseAdapter.java \
     $(JSROP_ABSTRACTS_JAVASRCDIRS)/com/sun/j2me/io/PrivilegedConnector.java \

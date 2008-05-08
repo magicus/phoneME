@@ -78,6 +78,7 @@ ABSTRACTIONS_CLASSES += \
     $(ABSTRACTIONS_CDC_JAVASRCDIRS)/com/sun/j2me/security/WMAPermission.java \
     $(ABSTRACTIONS_CDC_JAVASRCDIRS)/com/sun/j2me/security/SIPPermission.java \
     $(ABSTRACTIONS_CDC_JAVASRCDIRS)/com/sun/j2me/security/MMAPIPermission.java \
+    $(ABSTRACTIONS_CDC_JAVASRCDIRS)/com/sun/j2me/security/AMMSPermission.java \
     $(ABSTRACTIONS_CDC_JAVASRCDIRS)/com/sun/j2me/security/ConnectorPermission.java \
     $(ABSTRACTIONS_CDC_JAVASRCDIRS)/com/sun/j2me/security/ContactlessPermission.java \
     $(ABSTRACTIONS_CDC_JAVASRCDIRS)/com/sun/j2me/i18n/Resource.java \
