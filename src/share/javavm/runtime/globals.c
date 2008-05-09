@@ -1233,10 +1233,10 @@ void CVMdestroyVMGlobalState(CVMExecEnv *ee, CVMGlobalState *gs)
 #endif
 
     if (gs->preallocatedOutOfMemoryError != NULL) {
-	CVMID_freeGlobalRoot(ee, gs->preallocatedStackOverflowError);
+	CVMID_freeGlobalRoot(ee, gs->preallocatedOutOfMemoryError);
     }
     if (gs->preallocatedStackOverflowError != NULL) {
-	CVMID_freeGlobalRoot(ee, gs->preallocatedOutOfMemoryError);
+	CVMID_freeGlobalRoot(ee, gs->preallocatedStackOverflowError);
     }
 
     CVMeeSyncDestroyGlobal(ee, gs);
