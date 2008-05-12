@@ -644,11 +644,6 @@ public class PKIApplet extends Applet {
             ISOException.throwIt((short) 0x9001);
         }
         
-        // check if keyLen & RSA algorithm are supported by card 
-        if (!Pairs.tryKeyPair(keyLen)) {
-            ISOException.throwIt((short) 0x9001);
-        }
-
         if (data[x2] == 1) {
             Util.setShort(data, x0, (short) 0x1234);
             Util.setShort(data, x2, (short) 0x4321);
@@ -686,7 +681,8 @@ public class PKIApplet extends Applet {
                         Data.PINLabelOffset), (short) 32);
             }
 
-            KeyPair p = Pairs.getKeyPair(keyLen);
+            // check if keyLen & RSA algorithm are supported by card 
+            KeyPair p = new KeyPair(KeyPair.ALG_RSA, keyLen);
             p.genKeyPair();
 
             PrivateKey key = new PrivateKey(this, Data.newKeyID, 
@@ -1058,111 +1054,3 @@ class PrivateKey {
     }
 }
 
-/**
- * This class represents private/public key pairs pool.
- */
-class Pairs {
-    /** 
-     * Singleton instance reference. 
-     */
-    private static Pairs instance = null;
-    /** 
-     * Pairs in the pool. 
-     */
-    private KeyPair[] pairs;
-    /** 
-     * Key lengths of pairs stored in pool. 
-     * Initial value is -1. 
-     */
-    private short[] lengths;
-    /** 
-     * Default number of slots in the pool.
-     */
-    private static final short defaultSize = 10;
-    /** 
-     * Number of slots in the pool.
-     */
-    private short poolSize;
-    
-    /**
-     * Constructs new pool using given size.
-     * @param poolSize Number of slots in the pool
-     */
-    private Pairs(short poolSize) {
-        this.poolSize = poolSize;
-        pairs = new KeyPair[poolSize];
-        lengths = new short[poolSize];
-        for (short i = 0; i < poolSize; i++) {
-          lengths[i] = (short)-1;
-        }
-    }
-    
-    /**
-     * Constructs new pool using default size.
-     */
-    private Pairs() {
-        this(defaultSize);
-    }
-    
-    /**
-     * Finds a KeyPair object with keys of given length.
-     * If needed object does not exists in the pool the method 
-     * tries to create it.
-     *
-     * @param length Length of keys.
-     * @return Found KeyPair object or null in case of error.
-     */
-    private KeyPair findPair(short length) {
-        for (short i = 0; i < poolSize; i++) {
-            if (lengths[i] == length) {
-              return pairs[i];
-            }
-        }
-        for (short i = 0; i < instance.poolSize; i++) {
-            if (lengths[i] == (short)-1) {
-                try {
-                    pairs[i] = new KeyPair(KeyPair.ALG_RSA, length);
-                }
-                catch (CryptoException e) {
-                    return null;
-                }
-                lengths[i] = length;
-                return pairs[i];
-            }
-        }
-        return null;
-    }
-    
-    /**
-     * Gets a KeyPair object with keys of given length.
-     * @param length Length of keys.
-     * @return Found KeyPair object.
-     * @exception ISOException if no suitable pairs found or 
-     *                         algorithm or length not valid.
-     */
-    public static KeyPair getKeyPair(short length) {
-        if (instance == null) {
-            instance = new Pairs();
-        }
-        KeyPair pair = instance.findPair(length);
-        if (pair == null) {
-            ISOException.throwIt((short)0x9001);
-        }
-        return pair;
-    }
-    
-    /**
-     * Checks if a suitable KeyPair object can be received from the pool.
-     * @param length Length of keys.
-     * @return true if a KeyPair object is available,
-     *         false in other case.
-     * @exception ISOException if no suitable pairs found or 
-     *                         algorithm or length are not valid.
-     */
-    public static boolean tryKeyPair(short length) {
-        if (instance == null) {
-            instance = new Pairs();
-        }
-        return instance.findPair(length) != null;
-    }
-}
