@@ -171,6 +171,21 @@ typedef enum {
     JAVACALL_SECURITY_DENY_ALWAYS =   0x20  
 } javacall_security_permission_type;
 
+
+/**
+ * @brief Permission state values
+ */
+#define JAVACALL_NEVER     0
+#define JAVACALL_NEVER_STR "never"
+#define JAVACALL_ALLOW   1
+#define JAVACALL_ALLOW_STR "allow"
+#define JAVACALL_BLANKET 4
+#define JAVACALL_BLANKET_STR "blanket"
+#define JAVACALL_SESSION 8
+#define JAVACALL_SESSION_STR "session"
+#define JAVACALL_ONESHOT 16
+#define JAVACALL_ONESHOT_STR "oneshot"
+
 /**
  * Invoke the native permission dialog.
  * When the native permission dialog is displayed, Java guarantees
@@ -220,6 +235,55 @@ javacall_result javacall_security_permission_dialog_display(javacall_utf16* mess
 void javanotify_security_permission_dialog_finish(
 	                    javacall_security_permission_type userPermission);
 
+
+
+/**
+ *
+ *
+ * @param array a placeholder for the domain strings list that returns
+ * @retval number_of_lines The number of lines of the strings list in array or 0 on error
+ */
+int javacall_load_domain_list(void **array);
+/**
+ *
+ *
+ * @param array a placeholder for the groups strings list that returns
+ * @retval number_of_lines The number of lines of the strings list in array or 0 on error
+ */
+int javacall_load_group_list(void **array);
+/**
+ *
+ *
+ * @param list a placeholder for the permission members strings list that returns
+ * @param group The name of the group which members are requested
+ * @retval number_of_lines The number of lines of the strings list in array or 0 on error
+ */
+int javacall_load_group_permissions(void **list, char *group_name);
+/**
+ *
+ *
+ * @param domain_name the name of domain
+ * @param group_name the name of the group
+ * @retval default_value of the default permission action should be taken on that domain/group combiation
+ */
+int javacall_get_default_value(char *domain_name, char *group_name);
+/**
+ *
+ *
+ * @param domain_name the name of domain
+ * @param group_name the name of the group
+ * @retval max_value of the maximum permission action should be taken on that domain/group combiation
+ */
+int javacall_get_max_value(char *domain_name, char *group_name);
+/**
+ *
+ *
+ * @param array a placeholder for the domain strings list that returns
+ * @retval number_of_lines The number of lines of the strings list in array or 0 on error
+ */
+int javacall_load_group_messages(void **list, char *group_name);
+
+
 /** @} */
 
 #ifdef __cplusplus
@@ -227,5 +291,6 @@ void javanotify_security_permission_dialog_finish(
 #endif
 
 #endif  /* JAVACALL_SECURITY_H */
+
 
 
