@@ -32,10 +32,10 @@ import com.sun.j2me.proxy.security.Permissions;
 public class SIPPermission extends Permission {
 
     static public SIPPermission SIP_CONNECTION = new SIPPermission(
-        Permissions.getName(Permissions.SIP), null);
+        "javax.microedition.io.Connector.sip", null);
 
     static public SIPPermission SIPS_CONNECTION = new SIPPermission(
-        Permissions.getName(Permissions.SIPS), null);
+        "javax.microedition.io.Connector.sips", null);
     
     public SIPPermission(String permission, String resource) {
         super(permission, resource);

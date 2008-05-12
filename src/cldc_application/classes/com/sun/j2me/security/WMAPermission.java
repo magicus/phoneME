@@ -32,34 +32,34 @@ import com.sun.midp.security.Permissions;
 public class WMAPermission extends Permission {
 
     static public WMAPermission SMS_SERVER = new WMAPermission(
-        Permissions.getName(Permissions.SMS_SERVER), "sms:open");
+        "javax.microedition.io.Connector.sms", "sms:open");
 
     static public WMAPermission getSmsSendPermission(String host, int numSeg) {
         return new WMAPermission(
-            Permissions.getName(Permissions.SMS_SEND), host, Integer.toString(numSeg));
+            "javax.wireless.messaging.sms.send", host, Integer.toString(numSeg));
     }
 
     static public WMAPermission SMS_RECEIVE = new WMAPermission(
-        Permissions.getName(Permissions.SMS_RECEIVE), "sms:receive");
+        "javax.wireless.messaging.sms.receive", "sms:receive");
 
 
     static public WMAPermission CBS_SERVER = new WMAPermission(
-        Permissions.getName(Permissions.CBS_SERVER), "cbs:open");
+        "javax.microedition.io.Connector.cbs", "cbs:open");
 
     static public WMAPermission CBS_RECEIVE = new WMAPermission(
-        Permissions.getName(Permissions.CBS_RECEIVE), "cbs:receive");
+        "javax.wireless.messaging.cbs.receive", "cbs:receive");
 
 
     static public WMAPermission MMS_SERVER = new WMAPermission(
-        Permissions.getName(Permissions.MMS_SERVER), "mms:open");
+        "javax.microedition.io.Connector.mms", "mms:open");
 
     static public WMAPermission getMmsSendPermission(String addresses, String numSeg) {
         return new WMAPermission(
-            Permissions.getName(Permissions.MMS_SEND), addresses, numSeg);
+            "javax.wireless.messaging.mms.send", addresses, numSeg);
     }
 
     static public WMAPermission MMS_RECEIVE = new WMAPermission(
-        Permissions.getName(Permissions.MMS_RECEIVE), "mms:receive");
+        "javax.wireless.messaging.mms.receive", "mms:receive");
 
     public WMAPermission(String name, String resource) {
         super(name, resource);

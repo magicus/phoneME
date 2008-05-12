@@ -34,22 +34,22 @@ import com.sun.j2me.proxy.security.Permissions;
 public class PIMPermission extends Permission {
     
     static public PIMPermission CONTACT_READ  = new PIMPermission(
-        Permissions.getName(Permissions.PIM_CONTACT_READ), null);
+        "javax.microedition.pim.ContactList.read", null);
 
     static public PIMPermission CONTACT_WRITE = new PIMPermission(
-        Permissions.getName(Permissions.PIM_CONTACT_WRITE), null);
+        "javax.microedition.pim.ContactList.write", null);
 
     static public PIMPermission EVENT_READ = new PIMPermission(
-        Permissions.getName(Permissions.PIM_EVENT_READ), null);
+        "javax.microedition.pim.EventList.read", null);
 
     static public PIMPermission EVENT_WRITE = new PIMPermission(
-        Permissions.getName(Permissions.PIM_EVENT_WRITE), null);
+        "javax.microedition.pim.EventList.write", null);
 
     static public PIMPermission TODO_READ = new PIMPermission(
-        Permissions.getName(Permissions.PIM_TODO_READ), null);
+        "javax.microedition.pim.ToDoList.read", null);
 
     static public PIMPermission TODO_WRITE = new PIMPermission(
-        Permissions.getName(Permissions.PIM_TODO_WRITE), null);
+        "javax.microedition.pim.ToDoList.write", null);
     
     public PIMPermission(String name, String resource) {
         super(name, resource);

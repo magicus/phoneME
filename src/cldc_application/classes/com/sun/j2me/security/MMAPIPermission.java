@@ -32,10 +32,10 @@ import com.sun.midp.security.Permissions;
 public class MMAPIPermission extends Permission {
 
     static public MMAPIPermission SNAPSHOT = new MMAPIPermission(
-        Permissions.getName(Permissions.MM_IMAGE_CAPTURING), null);
+        "javax.microedition.media.control.VideoControl.getSnapshot", null);
 
     static public MMAPIPermission RECORDING = new MMAPIPermission(
-        Permissions.getName(Permissions.MM_RECORD), null);
+        "javax.microedition.media.control.RecordControl", null);
 
     public MMAPIPermission(String name, String resource) {
         super(name, resource);

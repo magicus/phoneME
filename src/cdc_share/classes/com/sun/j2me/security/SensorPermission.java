@@ -34,13 +34,13 @@ import com.sun.j2me.proxy.security.Permissions;
 public class SensorPermission extends Permission {
 
     static public SensorPermission SENSOR_READ = new SensorPermission(
-        Permissions.getName(Permissions.SENSOR), null);
+        "javax.microedition.io.Connector.sensor", null);
     
     static public SensorPermission PRIVATE_READ = new SensorPermission(
-        Permissions.getName(Permissions.PRIVATE_SENSOR), null);
+        "javax.microedition.sensor.PrivateSensor", null);
     
     static public SensorPermission PROTECTED_READ = new SensorPermission(
-        Permissions.getName(Permissions.PROTECTED_SENSOR), null);
+        "javax.microedition.sensor.ProtectedSensor", null);
 
     public SensorPermission(String name, String resource) {
         super(name, resource);
