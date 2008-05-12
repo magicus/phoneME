@@ -69,6 +69,14 @@ JSR_177_APDU_CARDDEVICE ?= platformcarddevice
 # Does SAT applications for testing emulator have to be generated={true|false}
 JSR_177_USE_EMULATOR ?= true
 
+# What specification of IC cards is supported={iso|etsi}
+# iso - ISO/IEC 7816-4 : "Information technology - Identification cards - 
+# Integrated circuit(s) cards with contacts - Part 4: Interindustry commands for 
+# interchange"
+# etsi - ETSI TS 102 221: "Smart Cards; UICC-Terminal interface; Physical and 
+# logical characteristics"
+JSR_177_SPEC_SUPPORT ?= iso
+
 # Javadoc source path
 #
 SUBSYSTEM_SATSA_SOURCEPATH = $(JSR_177_DIR)/src/share/satsa/classes \
@@ -162,6 +170,14 @@ MODULE_SATSA_COMMON_JAVA_FILES = \
     $(JSR_177_DIR)/src/share/satsa/classes/javacard/framework/SystemException.java \
     $(JSR_177_DIR)/src/share/satsa/classes/javacard/framework/UserException.java \
     $(JSR_177_DIR)/src/share/satsa/classes/javacard/security/CryptoException.java
+    
+ifeq ($(JSR_177_SPEC_SUPPORT), etsi)
+MODULE_SATSA_COMMON_JAVA_FILES += \
+    $(JSR_177_COMMON)/etsi/classes/com/sun/satsa/util/Constants.java
+else
+MODULE_SATSA_COMMON_JAVA_FILES += \
+    $(JSR_177_COMMON)/iso/classes/com/sun/satsa/util/Constants.java
+endif
 
 JSR_177_ACL_COMMON_DIR = $(JSR_177_DIR)/src/share/protocol/acl/common
 JSR_177_ACL_CLASSES_DIR = classes/com/sun/satsa/acl

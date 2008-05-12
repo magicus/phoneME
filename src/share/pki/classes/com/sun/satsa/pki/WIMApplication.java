@@ -105,9 +105,9 @@ class WIMApplication {
 
     /** APDUs that must be used for WIM application selection. */
     private static final byte[][] selectAPDUs =
-            {{0, (byte) 0xa4, 4, 0, 12, (byte) 0xA0, 0, 0, 0, 0x63,
+            {{0, (byte) 0xa4, 4, Constants.P2, 12, (byte) 0xA0, 0, 0, 0, 0x63,
               0x50, 0x4B, 0x43, 0x53, 0x2D, 0x31, 0x35, 0x7f},
-             {0, (byte) 0xa4, 4, 0, 12, (byte) 0xA0, 0, 0, 0, 0x63,
+             {0, (byte) 0xa4, 4, Constants.P2, 12, (byte) 0xA0, 0, 0, 0, 0x63,
               0x57, 0x41, 0x50, 0x2D, 0x57, 0x49, 0x4D, 0x7f}};
 
 

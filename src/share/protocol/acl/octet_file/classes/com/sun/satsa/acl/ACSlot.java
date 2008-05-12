@@ -75,17 +75,17 @@ public class ACSlot{
 
     /** Command for the PKCS15 application select */
     static byte[] selectPKCSApp = {
-                                  0x00, (byte) 0xA4, 0x04, 0x00, 0x0C,
+                                  0x00, (byte) 0xA4, 0x04, Constants.P2, 0x0C,
                                   (byte) 0xa0, 0x0, 0x0, 0x0, 0x63, 0x50, 0x4b,
                                   0x43, 0x53, 0x2d, 0x31, 0x35
     };
     /** Command for the MF select */
-    static byte[] selectMF = {0x00, (byte) 0xA4, 0x00, 0x00, 0x02, 0x3F, 0x00,
-                              0x7F};
+    static byte[] selectMF = {0x00, (byte) 0xA4, 0x00, Constants.P2, 0x02, 0x3F,
+                              0x00,  0x7F};
 
     /** Command for the DIR file select */
     static byte[] selectDIR = {
-        0x00, (byte)0xA4, 0x02, 0x00, 0x02, 0x2F, 0x00, 0x7F};
+        0x00, (byte)0xA4, Constants.P1, Constants.P2, 0x02, 0x2F, 0x00, 0x7F};
     /** File not found return code */
     static short FILE_NOT_FOUND = 0x6A82;
     /**

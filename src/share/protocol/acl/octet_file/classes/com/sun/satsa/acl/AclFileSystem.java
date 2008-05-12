@@ -39,9 +39,7 @@ public class AclFileSystem extends FileSystemAbstract {
 
     /** Constant defines size of the card buffer */
     private static final int  CARD_BUFFER = 64;
-    /** Constant defines parameters P1, P2 in the apdu command */
-    private static final int P1_P2 = 0x0200;
-
+    
     /** Internal buffer for ATR */
     private byte[] ATR;
     /** variable defines the unit size in the INS_READ command */
@@ -103,9 +101,11 @@ public class AclFileSystem extends FileSystemAbstract {
      */
     public void select(short id) throws IOException {
 
+        int P1P2 = (int) (Constants.P1 << 8 | Constants.P2);
+        
         byte[] data = apdu.resetCommand().
                            putShort(id).
-                           sendCommand(INS_SELECT, P1_P2);
+                           sendCommand(INS_SELECT, P1P2);
 
         isEFSelected = false;
         currentFileSize = 0;

@@ -54,10 +54,12 @@ public class WimFileSystem extends FileSystemAbstract {
      * @throws IOException if IOError occurs
      */
     public void select(short id) throws IOException {
+        
+        int P1P2 = (int) (P1_P2 | Constants.P2);
 
         byte[] data = apdu.resetCommand().
                            putShort(id).
-                           sendCommand(INS_SELECT, P1_P2);
+                           sendCommand(INS_SELECT, P1P2);
 
         isEFSelected = false;
         currentFileSize = 0;
