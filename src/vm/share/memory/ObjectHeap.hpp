@@ -448,8 +448,8 @@ public:
         available = unused;
       }
     }
-    GUARANTEE(available >= 0, "sanity");
 #endif
+    // available amount can be negative if compiler area contains evictable code
     return available;
   }
 

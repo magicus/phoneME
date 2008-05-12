@@ -689,7 +689,7 @@ jlong Java_java_lang_Runtime_freeMemory( void ) {
   ObjectHeap::accumulate_current_task_memory_usage();
   const int available = ObjectHeap::available_for_current_task();
   ObjectHeap::enable_allocation_trap(allocation_end);
-  return available;
+  return available >= 0 ? available : 0;
 }
 
 jlong Java_java_lang_Runtime_totalMemory() {

@@ -147,14 +147,21 @@ EventLogger::Entry::dump( Stream* s, jlong time ) const {
 }
 
 
-EventLogger::Block*  EventLogger::Block::_head;
-EventLogger::Block** EventLogger::Block::_tail;
-int                  EventLogger::Block::_used;
+EventLogger::Block* EventLogger::Block::_head;
+EventLogger::Block* EventLogger::Block::_tail;
+int                 EventLogger::Block::_used;
+
+EventLogger::Block* EventLogger::Block::allocate ( void ) {
+  Block* block = (Block*) OsMemory_allocate( sizeof( Block ) );
+  block->_next = NULL;
+  _used = 0;
+  return block;
+}
 
 inline void EventLogger::Block::initialize ( void ) {
-  _head = NULL;
-  _tail = &_head;
-  _used = size;
+  Block* block = allocate();
+  _head = block;
+  _tail = block;
 }
 
 inline void EventLogger::Block::terminate ( void ) {
@@ -165,15 +172,10 @@ inline void EventLogger::Block::terminate ( void ) {
   }
 }
 
-inline void EventLogger::Block::allocate ( void ) {
-  Block* block = (Block*)OsMemory_allocate( sizeof( Block ) );
-  block->_next = NULL;
-  *_tail = block;
-  _used = 0;
-}
-
 inline void EventLogger::Block::overflow( void ) {
-  allocate();
+  Block* block = allocate();
+  _tail->_next = block;
+  _tail = block;
 }
 
 inline int EventLogger::Block::used ( void ) const {
@@ -185,7 +187,7 @@ inline void EventLogger::Block::log ( const unsigned type ) {
     overflow();
   }
   const jlong time = EventLogger::Entry::now();
-  (*_tail)->_entries[_used++].set( type, time );
+  _tail->_entries[_used++].set( type, time );
 }
 
 inline jlong
