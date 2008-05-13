@@ -23,6 +23,7 @@
 #
 ######################################################################
 
+ifeq ($(MIDP_BIN_TARGET),wtk)
 WTK_BIN_DIR = $(MIDP_OUTPUT_DIR)/WTK
 WTK_STORAGE_DIR = $(MIDP_OUTPUT_DIR)/WTK_STORAGE
 all:: wtkbin
@@ -67,3 +68,4 @@ endef
 define copy_file_if_exists
     if [ -e $(1) ]; then cp -r $(1) $(2); fi
 endef
+endif
