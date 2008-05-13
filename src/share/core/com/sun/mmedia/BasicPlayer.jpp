@@ -202,6 +202,9 @@ public abstract class BasicPlayer implements Player
 // #ifdef ENABLE_JSR_234 [
     protected final static String rdscName  = 
         "javax.microedition.amms.control.tuner.RDSControl";
+
+    protected final static String tucName = 
+        "javax.microedition.amms.control.tuner.TunerControl";
 // #endif ]
 
     /**

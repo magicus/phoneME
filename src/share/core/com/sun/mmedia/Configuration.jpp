@@ -402,7 +402,7 @@ public abstract class Configuration {
 
     public boolean isRadioSupported()
     {
-        return false;
+        return true;
     }
     
 }
