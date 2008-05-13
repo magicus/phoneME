@@ -39,7 +39,7 @@ INDIRECT_VIDEO_PLAYER = true
 #
 # If you want to support "capture://video, turn on VIDEO_CAPTURE option
 #
-VIDEO_CAPTURE = false
+VIDEO_CAPTURE = true
 
 #
 # If you want to support "capture://audio, turn on AUDIO_CAPTURE option
