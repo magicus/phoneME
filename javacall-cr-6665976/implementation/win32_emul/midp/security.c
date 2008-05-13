@@ -609,14 +609,30 @@ static int check_prefix(char* buff, char *prefix) {
 }
 
 static char *getPolicyFilename(char *def_val) {
-    char *tmpstr;
+	char *storage_path;
+	char *file_name;
+	char *tmpstr;
+	int   storage_len, file_len;
+
+	javacall_get_property("system.default_storage",
+                                      JAVACALL_APPLICATION_PROPERTY,
+                                      &storage_path);
 
     if (javacall_get_property("security.policyfile",
-                                      JAVACALL_INTERNAL_PROPERTY,
-                                      &tmpstr) == JAVACALL_OK)
-        return tmpstr;
-    else
-        return def_val;
+                                      JAVACALL_APPLICATION_PROPERTY,
+                                      &tmpstr) != JAVACALL_OK)
+			tmpstr = def_val;
+	storage_len = strlen(storage_path);
+	file_len = strlen(tmpstr);
+	file_name = javacall_malloc(storage_len + file_len + 1);
+	if (file_name != NULL) {
+		strcpy(file_name, storage_path);
+		strcat(&file_name[storage_len], tmpstr);
+		file_name[storage_len + file_len + 1] = 0;
+	} else
+		file_name = def_val;
+
+	return file_name;
 }
 /*
 int javacall_load_permissions(void **array) {
