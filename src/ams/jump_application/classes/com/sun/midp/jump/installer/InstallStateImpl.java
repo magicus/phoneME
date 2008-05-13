@@ -335,10 +335,11 @@ public class InstallStateImpl implements InstallState, MIDletSuite {
      *   calling thread while this method is waiting to preempt the
      *   display.
      */
-    public void checkForPermission(int permission, String resource,
+    public void checkForPermission(String permissionStr, String resource,
             String extraValue) throws InterruptedException {
 
-        securityHandler.checkForPermission(permission,
+		int permission = Permissions.getId(permissionStr);
+        securityHandler.checkForPermission(permissionStr,
             Permissions.getTitle(permission),
             Permissions.getQuestion(permission),
             Permissions.getOneshotQuestion(permission),

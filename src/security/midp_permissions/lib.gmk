@@ -47,9 +47,14 @@ MIDP_JAVADOC_SOURCEPATH += $(SUBSYSTEM_MIDP_PERMISSIONS_SOURCEPATH)
 # Java files for the library
 #
 SUBSYSTEM_SECURITY_JAVA_FILES += \
-  $(GENERATED_DIR)/classes/com/sun/midp/security/PermissionsTable.java \
+  $(GENERATED_DIR)/classes/com/sun/midp/security/PermissionsStrings.java \
+  $(PERMISSIONS_DIR)/reference/classes/com/sun/midp/security/PolicyDomain.java \
   $(PERMISSIONS_DIR)/reference/classes/com/sun/midp/security/Permissions.java \
   $(PERMISSIONS_DIR)/reference/classes/com/sun/midp/security/PermissionGroup.java
+
+
+vpath % $(PERMISSIONS_DIR)/reference/native
+SUBSYSTEM_SECURITY_NATIVE_FILES += LoadPolicy_kni.c
 
 ifeq ($(USE_I3_TEST), true)
 SUBSYSTEM_SECURITY_I3TEST_JAVA_FILES += \

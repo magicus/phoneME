@@ -2352,13 +2352,14 @@ public abstract class JUMPInstaller {
             }
         }
 
-        if (curLevels[Permissions.PUSH] == Permissions.NEVER) {
+		int PUSH_ID = Permissions.getId("javax.microedition.io.PushRegistry");
+        if (curLevels[PUSH_ID] == Permissions.NEVER) {
             settings.setPushInterruptSetting(Permissions.NEVER);
-        } else if (curLevels[Permissions.PUSH] == Permissions.ALLOW) {
+        } else if (curLevels[PUSH_ID] == Permissions.ALLOW) {
             // Start the default at session for usability when denying.
             settings.setPushInterruptSetting(Permissions.SESSION);
         } else {
-            settings.setPushInterruptSetting(curLevels[Permissions.PUSH]);
+            settings.setPushInterruptSetting(curLevels[PUSH_ID]);
         }
     }
 
