@@ -752,11 +752,15 @@ CPP_INCLUDE_DIRS = \
 
 # Don't use PCSL for the generators. This way you don't need to build
 # two versions of PCSL (host and target) just to build the VM.
+ifndef target_os
+  target_os = $(os_family)
+endif
+
 ifeq ($(ENABLE_PCSL)+$(IsGenerator), true+true)
 override ENABLE_PCSL := false
 export ENABLE_PCSL
 else
-PCSL_DIST_DIR = $(PCSL_OUTPUT_DIR)/$(os_family)_$(arch)
+PCSL_DIST_DIR = $(PCSL_OUTPUT_DIR)/$(target_os)_$(arch)
 endif
 
 ifeq ($(ENABLE_PCSL), true)
@@ -1478,7 +1482,11 @@ GCC_POSTFIX        = $(GCC_POSTFIX_$(gcc_arch))
 
 ifeq ("$(FORCE_GCC)x", "x")
 
+ifeq ($(host_os), solaris)
+ ASM_gcc           = $(GCC_PREFIX)gas
+else
  ASM_gcc           = $(GCC_PREFIX)as
+endif
  CPP_gcc           = $(GCC_PREFIX)g++$(GCC_POSTFIX)
  CC_gcc            = $(GCC_PREFIX)gcc$(GCC_POSTFIX)
  LINK_gcc          = $(GCC_PREFIX)g++$(GCC_POSTFIX)
@@ -1489,7 +1497,11 @@ else
  CPP_gcc           = $(FORCE_GCC)
  CC_gcc            = $(FORCE_GCC)
  LINK_gcc          = $(FORCE_GCC)
+ifeq ($(host_os), solaris)
+ ASM_gcc           = gas
+else
  ASM_gcc           = as
+endif
  LIBMGR_gcc        = ar
 
 endif
