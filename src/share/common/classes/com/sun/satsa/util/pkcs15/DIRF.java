@@ -28,6 +28,7 @@ package com.sun.satsa.util.pkcs15;
 import com.sun.satsa.util.*;
 import java.util.Vector;
 import java.io.IOException;
+import java.util.Enumeration;
 import javax.microedition.io.ConnectionNotFoundException;
 
 /**
@@ -120,20 +121,22 @@ public class DIRF extends PKCS15File {
      * @throws TLVException  if TLV error occurs
      */
     private TLV getApp(byte[] aid) throws TLVException {
-        TLV root = (TLV) DIR.firstElement();
-        if (root.type != APP_CONSTRUCTED_1) {
-            throw new TLVException("The first tag shall be APPLICATION 1");
-        }
-        while (root != null) {
-            TLV t = root.child;  /* APP_PRIMITIVE_15 */
-            if (t.type != APP_PRIMITIVE_15) {
-                throw new TLVException(
-                        "The first tag shall be APPLICATION 15 (AID)");
+        for (Enumeration e = DIR.elements(); e.hasMoreElements();) {
+            TLV root = (TLV) e.nextElement();
+            if (root.type != APP_CONSTRUCTED_1) {
+                throw new TLVException("The first tag shall be APPLICATION 1");
             }
-            if (Utils.byteMatch(aid, t.getValue())) {
-                return root;
+            while (root != null) {
+                TLV t = root.child;  /* APP_PRIMITIVE_15 */
+                if (t.type != APP_PRIMITIVE_15) {
+                    throw new TLVException(
+                            "The first tag shall be APPLICATION 15 (AID)");
+                }
+                if (Utils.byteMatch(aid, t.getValue())) {
+                    return root;
+                }
+                root = root.next;
             }
-            root = root.next;
         }
         return null;
     }
