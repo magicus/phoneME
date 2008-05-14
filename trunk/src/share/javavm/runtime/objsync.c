@@ -437,6 +437,14 @@ CVMfastTryLock(CVMExecEnv* ee, CVMObject* obj)
     if (o == NULL) {
 	return CVM_FALSE;
     }
+#ifdef CVM_JVMTI
+    if (CVMjvmtiIsInDebugMode()) {
+        /* just check for an available lockinfo */
+        if (!CVMjvmtiCheckLockInfo(ee)) {
+            return CVM_FALSE;
+        }
+    }
+#endif
 
     /* %comment l006 */
 #ifdef CVM_DEBUG
@@ -518,13 +526,12 @@ CVMfastTryLock(CVMExecEnv* ee, CVMObject* obj)
 	ee->objLocksFreeOwned = o->next;
 
 	o->next = ee->objLocksOwned;
-#if defined(CVM_JVMTI) && !defined(CVM_JIT)
-	if (CVMjvmtiIsEnabled()) {
-	    CVMjvmtiAddLock(ee, o);
+	ee->objLocksOwned = o;
+#ifdef CVM_JVMTI
+	if (CVMjvmtiIsInDebugMode()) {
+	    CVMjvmtiAddLockInfo(ee, NULL, o, CVM_FALSE);
 	}
 #endif
-	ee->objLocksOwned = o;
-
 	return CVM_TRUE;
     }
 
@@ -564,9 +571,9 @@ fast_reentry_failed:
 	    CVMassert(ee->objLocksFreeOwned == o);
             CVMmonitorAttachObjMonitor2OwnedMonitor(ee, mon);
 	}
-#if defined(CVM_JVMTI) && !defined(CVM_JIT)
-	if (CVMjvmtiIsEnabled()) {
-	    CVMjvmtiAddMon(ee, mon);
+#ifdef CVM_JVMTI
+	if (CVMjvmtiIsInDebugMode()) {
+	    CVMjvmtiAddLockInfo(ee, mon, NULL, CVM_FALSE);
 	}
 #endif
 	return CVM_TRUE;
@@ -666,9 +673,9 @@ CVMfastReentryTryLock(CVMExecEnv *ee, CVMObject *obj)
 #error Unknown value for CVM_FASTLOCK_TYPE
 #endif
     }
-#if defined(CVM_JVMTI) && !defined(CVM_JIT)
-    if (CVMjvmtiIsEnabled()) {
-	CVMjvmtiAddLock(ee, o);
+#ifdef CVM_JVMTI
+    if (CVMjvmtiIsInDebugMode()) {
+	CVMjvmtiAddLockInfo(ee, NULL, o, CVM_FALSE);
     }
 #endif
     return CVM_TRUE;
@@ -1261,9 +1268,9 @@ CVMfastLock(CVMExecEnv* ee, CVMObjectICell* indirectObj)
             CVMassert(mon->state == CVM_OBJMON_OWNED);
         }
     }
-#if defined(CVM_JVMTI) && !defined(CVM_JIT)
-    if (CVMjvmtiIsEnabled()) {
-	CVMjvmtiAddMon(ee, mon);
+#ifdef CVM_JVMTI
+    if (CVMjvmtiIsInDebugMode()) {
+	CVMjvmtiAddLockInfo(ee, mon, NULL, CVM_TRUE);
     }
 #endif
     return CVM_TRUE;
@@ -1291,9 +1298,9 @@ CVMprivateUnlock(CVMExecEnv *ee, CVMObjMonitor *mon)
 
     if (count > 0 && CVMprofiledMonitorGetOwner(&mon->mon) == ee) {
 	CVMassert(mon->state == CVM_OBJMON_OWNED);
-#if defined(CVM_JVMTI) && !defined(CVM_JIT)
-	if (CVMjvmtiIsEnabled()) {
-	    CVMjvmtiRemoveMon(ee, mon);
+#ifdef CVM_JVMTI
+	if (CVMjvmtiIsInDebugMode()) {
+	    CVMjvmtiRemoveLockInfo(ee, mon, NULL);
 	}
 #endif
 	if (count == 1) {
@@ -1554,9 +1561,9 @@ CVMfastTryUnlock(CVMExecEnv* ee, CVMObject* obj)
                    then the CompareAndSwap will fail which means that another
                    thread must be trying to inflate this monitor: */
                 if (oldCount == expectedOldCount) {
-#if defined(CVM_JVMTI) && !defined(CVM_JIT)
-		    if (CVMjvmtiIsEnabled()) {
-			CVMjvmtiRemoveLock(ee, o);
+#ifdef CVM_JVMTI
+		    if (CVMjvmtiIsInDebugMode()) {
+			CVMjvmtiRemoveLockInfo(ee, NULL, o);
 		    }
 #endif
                     return CVM_TRUE;
@@ -1594,9 +1601,9 @@ CVMfastTryUnlock(CVMExecEnv* ee, CVMObject* obj)
 		    result = CVM_TRUE;
 		} else {
 		    CVMobjectMicroUnlock(ee, obj);
-#if defined(CVM_JVMTI) && !defined(CVM_JIT)
-		    if (CVMjvmtiIsEnabled()) {
-			CVMjvmtiRemoveLock(ee, o);
+#ifdef CVM_JVMTI
+		    if (CVMjvmtiIsInDebugMode()) {
+			CVMjvmtiRemoveLockInfo(ee, NULL, o);
 		    }
 #endif
 		    return CVM_TRUE;
@@ -1668,9 +1675,9 @@ CVMfastTryUnlock(CVMExecEnv* ee, CVMObject* obj)
 	    o->u.fast.bits = 0;
 	    o->object = NULL;
 #endif
-#if defined(CVM_JVMTI) && !defined(CVM_JIT)
-	    if (CVMjvmtiIsEnabled()) {
-		CVMjvmtiRemoveLock(ee, o);
+#ifdef CVM_JVMTI
+	    if (CVMjvmtiIsInDebugMode()) {
+		CVMjvmtiRemoveLockInfo(ee, NULL, o);
 	    }
 #endif
             /* Add the released CVMOwnedMonitor record back on to the free list: */
@@ -1945,6 +1952,15 @@ CVMdetTryLock(CVMExecEnv* ee, CVMObject* obj)
     if (ee->objLocksFreeOwned != NULL) {
 	CVMObjMonitor *mon = CVMobjMonitor(obj);
 
+#ifdef CVM_JVMTI
+	if (CVMjvmtiIsInDebugMode()) {
+	    /* just check for an available lockinfo */
+	    if (!CVMjvmtiCheckLockInfo(ee)) {
+		return CVM_FALSE;
+	    }
+	}
+#endif
+
 	CVMtraceDetLock(("detTryLock(%x,%x)\n", ee, obj));
 	CVMassert(CVMobjMonitorState(obj) == CVM_LOCKSTATE_MONITOR);
 
@@ -1955,9 +1971,9 @@ CVMdetTryLock(CVMExecEnv* ee, CVMObject* obj)
         if (CVMprofiledMonitorGetCount(&mon->mon) == 1) {
             CVMmonitorAttachObjMonitor2OwnedMonitor(ee, mon);
 	}
-#if defined(CVM_JVMTI) && !defined(CVM_JIT)
-	if (CVMjvmtiIsEnabled()) {
-	    CVMjvmtiAddMon(ee, mon);
+#ifdef CVM_JVMTI
+	if (CVMjvmtiIsInDebugMode()) {
+	    CVMjvmtiAddLockInfo(ee, mon, NULL, CVM_FALSE);
 	}
 #endif
 	return CVM_TRUE;
@@ -2033,9 +2049,9 @@ CVMdetLock(CVMExecEnv* ee, CVMObjectICell* indirectObj)
     } else {
 	CVMassert(mon->state == CVM_OBJMON_OWNED);
     }
-#if defined(CVM_JVMTI) && !defined(CVM_JIT)
-    if (CVMjvmtiIsEnabled()) {
-	CVMjvmtiAddMon(ee, mon);
+#ifdef CVM_JVMTI
+    if (CVMjvmtiIsInDebugMode()) {
+	CVMjvmtiAddLockInfo(ee, mon, NULL, CVM_TRUE);
     }
 #endif
     return CVM_TRUE;
@@ -3379,14 +3395,18 @@ CVMgcSafeObjectNotifyAll(CVMExecEnv *ee, CVMObjectICell *o)
 void
 CVMobjectMicroLock(CVMExecEnv *ee, CVMObject *obj)
 {
-    CVMassert(CVMD_isgcUnsafe(ee) && ++ee->microLock == 1);
+    CVMassert((CVMD_isgcUnsafe(ee) || CVMgcIsGCThread(ee) ||
+               CVMsysMutexIAmOwner((ee), &CVMglobals.heapLock)) &&
+              ++ee->microLock == 1);
     CVMobjectMicroLockImpl(obj);
 }
 
 void
 CVMobjectMicroUnlock(CVMExecEnv *ee, CVMObject *obj)
 {
-    CVMassert(CVMD_isgcUnsafe(ee) && --ee->microLock == 0);
+    CVMassert((CVMD_isgcUnsafe(ee) || CVMgcIsGCThread(ee) ||
+               CVMsysMutexIAmOwner((ee), &CVMglobals.heapLock)) &&
+              --ee->microLock == 0);
     CVMobjectMicroUnlockImpl(obj);
 }
 #endif

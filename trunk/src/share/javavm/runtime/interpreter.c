@@ -543,7 +543,9 @@ CVMdestroyExecEnv(CVMExecEnv* ee)
     CVMdestroyStack(&ee->localRootsStack);
 
     CVMdestroyJNIEnv(&ee->jniEnv);
-
+#ifdef CVM_JVMTI
+    CVMjvmtiDestroyLockInfo(ee);
+#endif
     /* free the EE buffer used by C stack IO operations */
     CVMCstackFreeBuffer(ee);
 
@@ -2912,6 +2914,7 @@ static void suspendCheckerThreadFunc(void *arg)
         }
     }
     CVMmutexUnlock(lock);
+    CVMthreadDetach(&gs->suspendCheckerThreadInfo);
 }
 
 /* Purpose: Initializes the suspension checker mechanism. */

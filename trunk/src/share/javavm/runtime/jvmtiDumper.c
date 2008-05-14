@@ -58,15 +58,6 @@
 #include "javavm/include/jvmtiCapabilities.h"
 
 
-/* We assume that we can access anything since we lock down the 
- * whole world before dumping the heap
- */
-
-#define CVMjvmtiGetICellDirect(ee_, icellPtr_) \
-   CVMID_icellGetDirectWithAssertion(CVM_TRUE, icellPtr_)
-
-#define CVMjvmtiSetICellDirect(ee_, icellPtr_, directObj_) \
-   CVMID_icellSetDirectWithAssertion(CVM_TRUE, icellPtr_, directObj_)
 /*
  * Object type constants.
  */
@@ -165,6 +156,9 @@ static CVMJvmtiTagNode **jvmtiTagGetTopNode(CVMObject *obj)
 
     CVMassert(CVMD_isgcSafe(ee));
 
+    if (obj == NULL) {
+	return NULL;
+    }
     hashCode = CVMobjectGetHashNoSet(ee, obj);
 
     JVMTI_LOCK(ee);
@@ -310,6 +304,11 @@ CVMjvmtiTagGetTag(jvmtiEnv* jvmtienv,
     CVMExecEnv *ee = CVMgetEE();
     jint slot;
 
+    *tagPtr = CVMlongConstZero();
+    if (object == NULL || CVMID_icellIsNull(object)) {
+	return JVMTI_ERROR_NONE;
+    }
+
     JVMTI_LOCK(ee);
 
     slot = hashRef(object);
@@ -318,7 +317,6 @@ CVMjvmtiTagGetTag(jvmtiEnv* jvmtienv,
     node = CVMglobals.jvmti.statics.objectsByRef[slot];
     prev = NULL;
 
-    *tagPtr = 0L;
     while (node != NULL) {
 	if ((*env)->IsSameObject(env, object, node->ref)) {
 	    break;
@@ -346,6 +344,10 @@ CVMjvmtiTagSetTag(jvmtiEnv *jvmtienv, jobject object, jlong tag)
     /*
      * Add to reference hashtable 
      */
+    if (object == NULL || CVMID_icellIsNull(object)) {
+	return JVMTI_ERROR_INVALID_OBJECT;
+    }
+
     JVMTI_LOCK(ee);
     slot = hashRef(object);
     node = CVMglobals.jvmti.statics.objectsByRef[slot];
@@ -422,10 +424,12 @@ CVMjvmtiPostCallbackUpdateTag(CVMObject *obj, CVMJvmtiTagNode *node, jlong tag)
 	    }
 	    node->tag = tag;
 	    icell = CVMjniCreateLocalRef(ee);
-	    CVMD_gcUnsafeExec(ee, {
-		    CVMID_icellSetDirect(ee, icell, obj);
-		});
-	    node->ref = (*env)->NewWeakGlobalRef(env, icell);
+            CVMjvmtiSetICellDirect(ee, icell, obj);
+            /* Done inline to avoid trying to go unsafe */
+            node->ref = CVMID_getWeakGlobalRoot(ee);
+            if (node->ref != NULL) {
+                CVMjvmtiSetICellDirect(ee, node->ref, obj);
+            }
 	    node->next = *topNode;
 	    *topNode = node;
 	}
@@ -633,9 +637,11 @@ jvmtiStackRefCallback(jvmtiHeapReferenceKind refKind,
     
     objNode = CVMjvmtiTagGetNode(obj);
     objTag = objNode == NULL ? 0L : objNode->tag;
-    CVMjvmtiTagGetTagGC(CVMjvmtiGetICellDirect(ee, CVMcbJavaInstance(objCb)),
+    CVMjvmtiTagGetTagGC(CVMjvmtiGetICellDirect(CVMgetEE(),
+                                               CVMcbJavaInstance(objCb)),
 			&objKlassTag);
-    CVMjvmtiTagGetTagGC(CVMjvmtiGetICellDirect(ee, CVMcurrentThreadICell(ee)),
+    CVMjvmtiTagGetTagGC(CVMjvmtiGetICellDirect(CVMgetEE(),
+                                               CVMcurrentThreadICell(ee)),
 			&threadTag);
     /* apply tag filter */
     if (jvmtiIsFilteredByHeapFilter(objTag, objKlassTag, dc->heapFilter)) {
@@ -1092,7 +1098,7 @@ jvmtiDumpClass(CVMObject *clazz, CVMJvmtiDumpContext *dc)
     }
     {
         CVMObjectICell *classloader = CVMcbClassLoader(cb);
-	if (classloader != NULL) {
+	if (classloader != NULL && !CVMID_icellIsNull(classloader)) {
 	    result = jvmtiObjectRefCallback(JVMTI_HEAP_REFERENCE_CLASS_LOADER,
 				    clazz, cb,
 				    CVMjvmtiGetICellDirect(ee, classloader),
@@ -1104,7 +1110,7 @@ jvmtiDumpClass(CVMObject *clazz, CVMJvmtiDumpContext *dc)
     }
     {
         CVMObjectICell *protectionDomain = CVMcbProtectionDomain(cb);
-	if (protectionDomain != NULL) {
+	if (protectionDomain != NULL && !CVMID_icellIsNull(protectionDomain)) {
 	    result = jvmtiObjectRefCallback(
 				JVMTI_HEAP_REFERENCE_PROTECTION_DOMAIN,
 				clazz, cb,

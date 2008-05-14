@@ -199,6 +199,7 @@ struct CVMJvmtiGlobals {
     CVMBool dataDumpRequested;
     CVMBool isEnabled;
     CVMBool isInDebugMode;
+    CVMBool debugOptionSet;  /* -Xdebug option passed in */
 
     /* Are one or more fields being watched?
      * These flags are accessed by the interpreter to determine if
@@ -710,8 +711,15 @@ typedef struct AttachOperation_ {
 #define CVMjvmtiSetIsEnabled(isEnabled_) \
     (CVMglobals.jvmti.isEnabled = (isEnabled_))
 
+#define CVMjvmtiHasDebugOptionSet() \
+    (CVMglobals.jvmti.debugOptionSet)
+#define CVMjvmtiSetDebugOption(debugOptionSet_) \
+    (CVMglobals.jvmti.debugOptionSet = (debugOptionSet_))
 #define CVMjvmtiIsInDebugMode() \
-    (CVMglobals.jvmti.isInDebugMode)
+    (CVMassert((CVMglobals.jvmti.isInDebugMode &&	\
+		CVMglobals.jvmti.isEnabled) ||		\
+	       !CVMglobals.jvmti.isInDebugMode),	\
+     CVMglobals.jvmti.isInDebugMode)
 #define CVMjvmtiSetIsInDebugMode(isInDebugMode_) \
     (CVMglobals.jvmti.isInDebugMode = (isInDebugMode_))
 
@@ -751,7 +759,6 @@ struct CVMJvmtiExecEnv {
     CVMJvmtiEventEnabled jvmtiEventEnabled;
     jvalue jvmtiEarlyReturnValue;
     CVMUint32 jvmtiEarlyRetOpcode;
-    CVMJvmtiLoadKind jvmtiClassLoadKind;
     CVMJvmtiLockInfo *jvmtiLockInfoFreelist;
 
     /* NOTE: The first pass at implementing JVMTI support will have only one
@@ -814,8 +821,9 @@ struct CVMJvmtiExecEnv {
        (((jlong)1) << CVMjvmtiEvent2EventBit(eventType_))) != 0))
 
 #define CVMjvmtiThreadEventEnabled(ee_, eventType_)			\
-    (((ee_) != NULL) &&							\
-     ((CVMjvmtiEventEnabled(ee_).enabledBits &			\
+    (((ee_) != NULL) && CVMjvmtiIsEnabled() &&                          \
+     CVMjvmtiDebugEventsEnabled(ee_) &&                                 \
+     ((CVMjvmtiEventEnabled(ee_).enabledBits &                          \
        (((jlong)1) << CVMjvmtiEvent2EventBit(eventType_))) != 0))
 
 
@@ -987,11 +995,13 @@ CVMUint32   CVMjvmtiUniqueID();
 void        CVMjvmtiMarkAsObsolete(CVMMethodBlock *oldmb, CVMConstantPool *cp);
 CVMBool     CVMjvmtiMbIsObsoleteX(CVMMethodBlock *mb);
 CVMConstantPool * CVMjvmtiMbConstantPool(CVMMethodBlock *mb);
-void        CVMjvmtiAddLock(CVMExecEnv *ee, CVMOwnedMonitor *o);
-void        CVMjvmtiAddMon(CVMExecEnv *ee, CVMObjMonitor *mon);
-void        CVMjvmtiRemoveLock(CVMExecEnv *ee, CVMOwnedMonitor *o);
-void        CVMjvmtiRemoveMon(CVMExecEnv *ee, CVMObjMonitor *mon);
+CVMBool     CVMjvmtiCheckLockInfo(CVMExecEnv *ee);
+void        CVMjvmtiAddLockInfo(CVMExecEnv *ee, CVMObjMonitor *mon,
+                                CVMOwnedMonitor *o,
+                                CVMBool okToBecomeGCSafe);
+void        CVMjvmtiRemoveLockInfo(CVMExecEnv *ee, CVMObjMonitor *mon,
+                                   CVMOwnedMonitor *o);
 CVMClassBlock* CVMjvmtiGetCurrentRedefinedClass(CVMExecEnv *ee);
-
+void        CVMjvmtiDestroyLockInfo(CVMExecEnv *ee);
 #endif   /* CVM_JVMTI */
 #endif   /* INCLUDED_JVMTI_EXPORT_H */
