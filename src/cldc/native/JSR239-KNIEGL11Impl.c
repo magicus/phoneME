@@ -31,21 +31,12 @@
 
 #include <kni.h>
 
-#include <GLES/gl.h>
+#include <gl.h>
+#include <egl.h>
+
 #include <commonKNIMacros.h>
 #include <ROMStructs.h>
-
 #include <jvm.h>
-
-/*
- * If HYBRID_VERSION is defined and equals 3 then include egl.h from EGL 
- * directory otherwise include it from common standard place (GLES).
- */
-#if (HYBRID_VERSION == 3)
-#include <EGL/egl.h>
-#else
-#include <GLES/egl.h>
-#endif
 
 #include "JSR239-KNIInterface.h"
 
@@ -1265,7 +1256,7 @@ Java_javax_microedition_khronos_egl_EGL10Impl__1getFullDisplayHeight() {
  *
  * @param fullGC boolean indicating whether to do a full GC or not
  */
-KNIEXPORT KNI_RETURNTYPE_INT
+KNIEXPORT KNI_RETURNTYPE_VOID
 Java_javax_microedition_khronos_egl_EGL10Impl__1garbageCollect() {
     jboolean doFullGC = KNI_GetParameterAsBoolean(1);
 

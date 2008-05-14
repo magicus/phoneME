@@ -38,7 +38,7 @@
 #define DEBUG_FLUSH_OR_FINISH do { /* no-op */ } while(0)
 
 #include <kni.h>
-#include <GLES/gl.h>
+#include <gl.h>
 #include "JSR239-GLLimits.h"
 #include "JSR239-GLCommands.h"
 #include "JSR239-KNIInterface.h"
