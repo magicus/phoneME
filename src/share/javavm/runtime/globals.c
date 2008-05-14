@@ -835,7 +835,7 @@ CVMBool CVMinitVMGlobalState(CVMGlobalState *gs, CVMOptions *options)
      * With JVMTI, we do the instrumentation when an agent connects
      */
 #ifdef CVM_JVMTI
-    CVMjvmtiSetIsInDebugMode(options->debugging);
+    CVMjvmtiSetDebugOption(options->debugging);
 #endif    
 
 #ifdef CVM_LVM /* %begin lvm */

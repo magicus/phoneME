@@ -587,7 +587,6 @@ const jboolean JvmtiEventThreaded[] =
 #endif /* TODO */
 
 static CVMJvmtiContext *CVMjvmtiCreateContext();
-static jint CVMjvmtiDestroyContext(CVMJvmtiContext *context);
 
 /* mlam :: REVIEW DONE */
 /* TODO: Change to not rely on 64bit masking if possible.  At least change
@@ -643,31 +642,6 @@ static const jlong	GLOBAL_EVENT_BITS = ~THREAD_FILTERED_EVENT_BITS;
    state.
 */
 
-/* Purpose: Checks to see if it is safe to access object pointers directly. */
-#define CVMjvmtiIsSafeToAccessDirectObject(ee_) \
-    (CVMD_isgcUnsafe(ee_) || CVMgcIsGCThread(ee_) || \
-     CVMsysMutexIAmOwner((ee_), &CVMglobals.heapLock))
-
-/* Purpose: Gets the direct object pointer for the specified ICell. */
-/* NOTE: It is only safe to use this when we are in a GC unsafe state, or we're
-         are at a GC safe all state, or we're holding the thread lock. */
-#define CVMjvmtiGetICellDirect(ee_, icellPtr_) \
-    CVMID_icellGetDirectWithAssertion(CVMjvmtiIsSafeToAccessDirectObject(ee_), \
-                                      icellPtr_)
-
-/* Purpose: Sets the direct object pointer in the specified ICell. */
-/* NOTE: It is only safe to use this when we are in a GC unsafe state, or we're
-         are at a GC safe all state, or we're holding the thread lock. */
-#define CVMjvmtiSetICellDirect(ee_, icellPtr_, directObj_) \
-    CVMID_icellSetDirectWithAssertion(CVMjvmtiIsSafeToAccessDirectObject(ee_), \
-                                      icellPtr_, directObj_)
-
-/* Purpose: Assigns the value of one ICell to another. */
-/* NOTE: It is only safe to use this when we are in a GC unsafe state, or we're
-         are at a GC safe all state, or we're holding the thread lock. */
-#define CVMjvmtiAssignICellDirect(ee_, dstICellPtr_, srcICellPtr_) \
-    CVMjvmtiSetICellDirect((ee_), (dstICellPtr_),		   \
-	CVMjvmtiGetICellDirect((ee_), (srcICellPtr_)))
 
 /* mlam :: REVIEW DONE */
 /* Purpose: Gets the cb pointer from the class object. */
@@ -3152,19 +3126,19 @@ CVMjvmtiSetHashCallback(CVMObject *obj, CVMClassBlock *cb, CVMUint32 size,
     CVMObjectICell *icell = dc->icell;
     CVMJvmtiTagNode *node;
 
-    CVMID_icellSetDirect(ee, icell, obj);
-    CVMD_gcSafeExec(ee, {
+    CVMsysMutexLock(ee, &CVMglobals.heapLock);
+    CVMjvmtiSetICellDirect(ee, icell, obj);
 	JVM_IHashCode(env, icell);
 	/* create tagnode as well */
 	node = CVMjvmtiTagGetNode(obj);
 	if (node == NULL) {
 	    CVMjvmtiPostCallbackUpdateTag(obj, node, 1);
-	    node = CVMjvmtiTagGetNode(obj);
+    	    node = CVMjvmtiTagGetNode(obj);
 	    if (node != NULL) {
 		node->tag = 0L;
 	    }
 	}
-    });
+            CVMsysMutexUnlock(ee, &CVMglobals.heapLock);
     return CVM_TRUE;
 }
 
@@ -3183,22 +3157,34 @@ jvmti_FollowReferences(jvmtiEnv* jvmtienv,
     CVMJvmtiDumpContext dumpContext;
     JNIEnv *env = CVMexecEnv2JniEnv(ee);
     CVMJvmtiVisitStack *currentStack = &CVMglobals.jvmti.statics.currentStack;
+    CVMObjectICell localIcell;
 
     CHECK_JVMTI_ENV;
     CVMJVMTI_CHECK_PHASE(JVMTI_PHASE_LIVE);
 
     memset((void *)currentStack, 0, sizeof(*currentStack));
-    /* Set hash for every object in the heap: */
-    CVMID_localrootBegin(ee) {
-	CVMID_localrootDeclare(CVMObjectICell, localIcell);
-	dumpContext.icell = localIcell;
-	dumpContext.env = env;
-	CVMD_gcUnsafeExec(ee, {
-	    CVMgcimplIterateHeap(ee, CVMjvmtiSetHashCallback,
-				 (void *)&dumpContext);
-	});
-    } CVMID_localrootEnd();
+#ifdef CVM_JIT
+    CVMsysMutexLock(ee, &CVMglobals.jitLock);
+#endif
 
+    CVMsysMutexLock(ee, &CVMglobals.heapLock);
+    /* And get the rest of the GC locks: */
+    CVMlocksForGCAcquire(ee);
+    //    CVMD_gcBecomeSafeAll(ee);
+
+    /* Set hash for every object in the heap: */
+    dumpContext.icell = &localIcell;
+    dumpContext.env = env;
+    CVMgcimplIterateHeap(ee, CVMjvmtiSetHashCallback,
+                         (void *)&dumpContext);
+
+    //    CVMD_gcAllowUnsafeAll(ee);
+
+    CVMlocksForGCRelease(ee);
+    CVMsysMutexUnlock(ee, &CVMglobals.heapLock);
+#ifdef CVM_JIT
+    CVMsysMutexUnlock(ee, &CVMglobals.jitLock);
+#endif
     /* Lock out the GC: */
     /* NOTE: We won't get any interference from GC because this thread
         holds the heapLock.  This is effectively equivalent to disabling
@@ -3543,6 +3529,7 @@ jvmti_GetLocalObject(jvmtiEnv *jvmtienv,
     NOT_NULL(valuePtr);
     CHECK_CAP(can_access_local_variables);
 
+    *valuePtr = NULL;
     err = jthreadToExecEnv(ee, thread, &targetEE);
     if (err != JVMTI_ERROR_NONE) {
 	return err;
@@ -3571,7 +3558,7 @@ jvmti_GetLocalObject(jvmtiEnv *jvmtienv,
     }
 
     err = jvmtiGCUnsafeGetSlot(&iter, slot, &si);
-    if (err == JVMTI_ERROR_NONE) {
+    if (err == JVMTI_ERROR_NONE && !CVMID_icellIsNull(&si->r)) {
 	CVMjvmtiAssignICellDirect(ee, result, &si->r);
 	*valuePtr = result;
     }
@@ -3579,12 +3566,9 @@ jvmti_GetLocalObject(jvmtiEnv *jvmtienv,
  cleanUpAndReturn:
     RESUME_STACK_MUTATION(ee, targetEE);
     CVMsysMutexUnlock(ee, &CVMglobals.heapLock);
-
-    if (err != JVMTI_ERROR_NONE) {
-	JNIEnv *env = CVMexecEnv2JniEnv(ee);
-	CVMjniDeleteLocalRef(env, result);
-	*valuePtr = NULL;
-    }
+    /* local ref on stack of caller and gets flushed when that
+     * local frame goes away
+     */
     return err;
 }
 
@@ -7319,7 +7303,6 @@ jvmti_DisposeEnvironment(jvmtiEnv* jvmtienv)
 
     cap = getCapabilities(context);
     CVMjvmtiRelinquishCapabilities(cap, cap, cap);
-    CVMjvmtiDestroyContext(context);
 
     /* TODO: The following clean up should only be done if we are disposing
        of the last agentLib JVMTI environment.  However, since we only support
@@ -7775,7 +7758,7 @@ static CVMJvmtiContext *CVMjvmtiCreateContext()
 }
 
 /* Destructor for the CVMJvmtiContext. */
-static jint CVMjvmtiDestroyContext(CVMJvmtiContext *context)
+jint CVMjvmtiDestroyContext(CVMJvmtiContext *context)
 {
     CVMassert(CVMglobals.jvmti.statics.context == context);
     CVMglobals.jvmti.statics.context = NULL;

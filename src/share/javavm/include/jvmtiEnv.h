@@ -172,12 +172,38 @@ struct CVMJvmtiContext {
     ((CVMJvmtiContext*)((CVMUint8 *)(jvmtienv_) - \
 			CVMoffsetof(CVMJvmtiContext, jvmtiExternal)))
 
+/* Purpose: Checks to see if it is safe to access object pointers directly. */
+#define CVMjvmtiIsSafeToAccessDirectObject(ee_) \
+    (CVMD_isgcUnsafe(ee_) || CVMgcIsGCThread(ee_) || \
+     CVMsysMutexIAmOwner((ee_), &CVMglobals.heapLock))
+
+/* Purpose: Gets the direct object pointer for the specified ICell. */
+/* NOTE: It is only safe to use this when we are in a GC unsafe state, or we're
+         are at a GC safe all state, or we're holding the thread lock. */
+#define CVMjvmtiGetICellDirect(ee_, icellPtr_) \
+    CVMID_icellGetDirectWithAssertion(CVMjvmtiIsSafeToAccessDirectObject(ee_), \
+                                      icellPtr_)
+
+/* Purpose: Sets the direct object pointer in the specified ICell. */
+/* NOTE: It is only safe to use this when we are in a GC unsafe state, or we're
+         are at a GC safe all state, or we're holding the thread lock. */
+#define CVMjvmtiSetICellDirect(ee_, icellPtr_, directObj_) \
+    CVMID_icellSetDirectWithAssertion(CVMjvmtiIsSafeToAccessDirectObject(ee_), \
+                                      icellPtr_, directObj_)
+
+/* Purpose: Assigns the value of one ICell to another. */
+/* NOTE: It is only safe to use this when we are in a GC unsafe state, or we're
+         are at a GC safe all state, or we're holding the thread lock. */
+#define CVMjvmtiAssignICellDirect(ee_, dstICellPtr_, srcICellPtr_) \
+    CVMjvmtiSetICellDirect((ee_), (dstICellPtr_),		   \
+	CVMjvmtiGetICellDirect((ee_), (srcICellPtr_)))
+
 jvmtiError CVMjvmtiVisitStackPush(CVMObject *obj);
 CVMBool CVMjvmtiVisitStackEmpty();
 void CVMjvmtiCleanupMarked();
 void CVMjvmtiRecomputeEnabled(CVMJvmtiEnvEventEnable *);
 jlong CVMjvmtiRecomputeThreadEnabled(CVMExecEnv *ee, CVMJvmtiEnvEventEnable *);
-
+int CVMjvmtiDestroyContext(CVMJvmtiContext *context);
 /* See also CVMjvmtiClassObject2ClassBlock() in jvmtiExport.h.
    CVMjvmtiClassObject2ClassBlock() takes a direct class object as input while
    CVMjvmtiClassRef2ClassBlock() takes a class ref i.e.  jclass.

@@ -79,13 +79,10 @@
 
 
 /* Convenience macros */
+/* Count of lockinfo structs to allocate if freelist is empty */
+#define JVMTI_LOCKINFO_ALLOC_COUNT 4
 #define CVM_THREAD_LOCK(ee)	  CVMsysMutexLock(ee, &CVMglobals.threadLock)
 #define CVM_THREAD_UNLOCK(ee) CVMsysMutexUnlock(ee, &CVMglobals.threadLock)
-
-/* Purpose: Checks to see if it is safe to access object pointers directly. */
-#define CVMjvmtiIsSafeToAccessDirectObject(ee_)       \
-    (CVMD_isgcUnsafe(ee_) || CVMgcIsGCThread(ee_) ||  \
-     CVMsysMutexIAmOwner(ee_, &CVMglobals.heapLock))
 
 /* NOTE: "Frame pop sentinels" removed in CVM version of JVMTI
    because we don't have two return PC slots and mangling the only
@@ -223,6 +220,40 @@ handleExit(void);
 #endif
 
 
+static void
+jvmtiDeleteObjsByRef()
+{
+    CVMJvmtiTagNode *node, *next;
+    int i;
+
+    for (i = 0; i < HASH_SLOT_COUNT; i++) {
+	node = CVMglobals.jvmti.statics.objectsByRef[i];
+        CVMglobals.jvmti.statics.objectsByRef[i] = NULL;
+	while (node != NULL) {
+	    next = node->next;
+            CVMjvmtiDeallocate((unsigned char *)node);
+	    node = next;
+	}
+    }
+}
+
+static void
+jvmtiDeleteMethodNodes()
+{
+    CVMJvmtiMethodNode *node, *next;
+    int i;
+
+    for (i = 0; i < HASH_SLOT_COUNT; i++) {
+	node = CVMglobals.jvmti.statics.nodeByMB[i];
+        CVMglobals.jvmti.statics.nodeByMB[i] = NULL;
+	while (node != NULL) {
+	    next = node->next;
+            CVMjvmtiDeallocate((unsigned char *)node);
+	    node = next;
+	}
+    }
+}
+
 /*
  * Initialize JVMTI - if and only if it hasn't been initialized.
  * Must be called before anything that accesses event structures.
@@ -293,21 +324,16 @@ CVMjvmtiInitialize(JavaVM *vm)
     if (haveFailure) {
 	return JVMTI_ERROR_OUT_OF_MEMORY;
     }
+    /* isEnabled and debugOptionSet flags need to be in the proper
+     * state before calling CVMjvmtiInitializeCapabilities.
+     */
+    CVMjvmtiSetIsInDebugMode(CVMjvmtiHasDebugOptionSet());
+    CVMjvmtiSetIsEnabled(CVM_TRUE);
+
     CVMjvmtiInitializeCapabilities();
     /*    clks_per_sec = CVMgetClockTicks(); */
 
     CVMjvmtiInstrumentJNINativeInterface();
-#if 0 /* TODO: to be removed. */
-#ifdef CVM_JIT
-    /* FIXME: This should only need to be set if debugging mode is enabled. */
-    /* stack tracing with inlining is not working at this point */
-    CVMglobals.jit.whatToInline = 0;
-#endif
-#endif
-
-    /* Now, we're ready to enable JVMTI functionality: */
-    CVMjvmtiSetIsEnabled(CVM_TRUE);
-
     return JVMTI_ERROR_NONE;
 }
 
@@ -319,7 +345,6 @@ CVMjvmtiDestroy(CVMJvmtiGlobals *globals)
 {
     CVMExecEnv *ee = CVMgetEE();
 
-    CVMjvmtiSetIsEnabled(CVM_FALSE);
 
     CVMjvmtiUninstrumentJNINativeInterface();
     CVMjvmtiDestroyCapabilities();
@@ -331,6 +356,7 @@ CVMjvmtiDestroy(CVMJvmtiGlobals *globals)
        like the main thread: */
     CVM_WALK_ALL_THREADS(ee, currentEE, {
 	    jthread thread = CVMcurrentThreadICell(currentEE);
+            CVMjvmtiDestroyLockInfo(currentEE);
 	    if (!CVMID_icellIsNull(thread)) {
 		CVMjvmtiRemoveThread(ee, thread);
 	    }
@@ -340,6 +366,8 @@ CVMjvmtiDestroy(CVMJvmtiGlobals *globals)
     CVMassert(globals->statics.threadList == NULL);
 
     CVM_THREAD_UNLOCK(ee);
+
+    CVMjvmtiSetIsEnabled(CVM_FALSE);
 
     /* Free up the bags of debugging info: */
     if (globals->statics.breakpoints != NULL) {
@@ -362,7 +390,9 @@ CVMjvmtiDestroy(CVMJvmtiGlobals *globals)
 #ifdef CVM_DEBUG_ASSERTS
     globals->statics.vm = NULL;
 #endif
-
+    jvmtiDeleteObjsByRef();
+    jvmtiDeleteMethodNodes();
+    CVMjvmtiDestroyContext(CVMglobals.jvmti.statics.context);
     /* Note: CVMjvmtiDestroy() can be called long before the VM shutsdown if
        the agentLib calls jvmti_DisposeEnvironment().  Hence, we can't always
        expect the global to be NULL the next time we use JVMTI (which may be
@@ -2124,64 +2154,46 @@ CVMjvmtiClassBeingRedefined(CVMExecEnv *ee, CVMClassBlock *cb)
 }
 
 static CVMJvmtiLockInfo *
-jvmtiGetLockInfoX(CVMJvmtiContext *context, CVMExecEnv *ee)
+jvmtiGetLockInfo(CVMExecEnv *ee, CVMBool okToBecomeGCSafe)
 {
     int i;
     CVMJvmtiLockInfo *li;
 
-    if (ee->jvmtiEE.jvmtiLockInfoFreelist == NULL) {
-	for (i = 0; i < 25; i++) {
-	    /* allocate some lock info elements */
-	    if (CVMjvmtiAllocate(sizeof(CVMJvmtiLockInfo),
-				 (unsigned char **)&li) != JVMTI_ERROR_NONE) {
-		return NULL;
-	    }
-	    li->next = ee->jvmtiEE.jvmtiLockInfoFreelist;
-	    ee->jvmtiEE.jvmtiLockInfoFreelist = li;
-	}
+    CVMassert(CVMD_isgcUnsafe(ee));
+    if (ee->jvmtiEE.jvmtiLockInfoFreelist == NULL && okToBecomeGCSafe) {
+        CVMD_gcSafeExec(ee, {
+            for (i = 0; i < JVMTI_LOCKINFO_ALLOC_COUNT; i++) {
+                /* allocate some lock info elements */
+                if (CVMjvmtiAllocate(sizeof(CVMJvmtiLockInfo),
+                                 (unsigned char **)&li) != JVMTI_ERROR_NONE) {
+                    break;
+                }
+                li->next = ee->jvmtiEE.jvmtiLockInfoFreelist;
+                ee->jvmtiEE.jvmtiLockInfoFreelist = li;
+            }
+        });
     }
     li = ee->jvmtiEE.jvmtiLockInfoFreelist;
     CVMassert(li != NULL);
-    ee->jvmtiEE.jvmtiLockInfoFreelist = li->next;
-    li->next = NULL;
-    return li;
-}
-
-static CVMJvmtiLockInfo *
-jvmtiGetLockInfo(CVMExecEnv *ee)
-{
-    CVMJvmtiLockInfo *li;
-    CVMJvmtiContext *context = GLOBAL_ENV;
-    if (!CVMD_isgcSafe(ee)) {
-	CVMD_gcSafeExec(ee, {
-	    li = jvmtiGetLockInfoX(context, ee);
-	});
-    } else {
-	li = jvmtiGetLockInfoX(context, ee);
+    if (li != NULL) {
+        ee->jvmtiEE.jvmtiLockInfoFreelist = li->next;
+        li->next = NULL;
     }
     return li;
-}
-
-static void
-jvmtiFreeLockInfoX(CVMJvmtiContext *context, CVMExecEnv *ee,
-		   CVMJvmtiLockInfo *li)
-{
-    li->next = ee->jvmtiEE.jvmtiLockInfoFreelist;
-    li->lock = NULL;
-    ee->jvmtiEE.jvmtiLockInfoFreelist = li;
 }
 
 static void
 jvmtiFreeLockInfo(CVMExecEnv *ee, CVMJvmtiLockInfo *li)
 {
-    CVMJvmtiContext *context = GLOBAL_ENV;
-    if (!CVMD_isgcSafe(ee)) {
-	CVMD_gcSafeExec(ee, {
-	    jvmtiFreeLockInfoX(context, ee, li);
-	});
-    } else {
-	jvmtiFreeLockInfoX(context, ee, li);
-    }
+    li->next = ee->jvmtiEE.jvmtiLockInfoFreelist;
+    li->lock = (CVMOwnedMonitor*)-1;
+    ee->jvmtiEE.jvmtiLockInfoFreelist = li;
+}
+
+CVMBool
+CVMjvmtiCheckLockInfo(CVMExecEnv *ee)
+{
+    return (ee->jvmtiEE.jvmtiLockInfoFreelist != NULL);
 }
 
 /*
@@ -2190,32 +2202,25 @@ jvmtiFreeLockInfo(CVMExecEnv *ee, CVMJvmtiLockInfo *li)
  */
 
 void
-CVMjvmtiAddLock(CVMExecEnv *ee, CVMOwnedMonitor *o) {
+CVMjvmtiAddLockInfo(CVMExecEnv *ee,
+                    CVMObjMonitor *mon,
+                    CVMOwnedMonitor *o,
+                    CVMBool okToBecomeGCSafe)
+{
     if (CVMframeIsJava(CVMeeGetCurrentFrame(ee))) {
 	CVMJavaFrame *jframe = CVMgetJavaFrame(CVMeeGetCurrentFrame(ee));
 	CVMJvmtiLockInfo *li;
-	li = jvmtiGetLockInfo(ee);
+        li = jvmtiGetLockInfo(ee, okToBecomeGCSafe);
 	if (li != NULL) {
-	    li->next = jframe->jvmtiLockInfo;
-	    jframe->jvmtiLockInfo = li;
-	    li->lock = o;
-	}
-    }
-}
-
-void
-CVMjvmtiAddMon(CVMExecEnv *ee, CVMObjMonitor *mon) {
-    if (CVMframeIsJava(CVMeeGetCurrentFrame(ee))) {
-	CVMJavaFrame *jframe = CVMgetJavaFrame(CVMeeGetCurrentFrame(ee));
-	CVMJvmtiLockInfo *li = jvmtiGetLockInfo(ee);
-	if (li != NULL) {
-            CVMOwnedMonitor *o = ee->objLocksOwned;
-            if (o->u.heavy.mon != mon) {
-                do {
-                    o = o->next;
-                } while ((o != NULL) && (o->u.heavy.mon != mon));
-                CVMassert (o != NULL);
+            if (mon != NULL) {
+                o = ee->objLocksOwned;
+                if (o->u.heavy.mon != mon) {
+                    do {
+                        o = o->next;
+                    } while ((o != NULL) && (o->u.heavy.mon != mon));
+                }
             }
+            CVMassert (o != NULL);
 	    li->next = jframe->jvmtiLockInfo;
 	    jframe->jvmtiLockInfo = li;
 	    li->lock = o;
@@ -2224,11 +2229,22 @@ CVMjvmtiAddMon(CVMExecEnv *ee, CVMObjMonitor *mon) {
 }
 
 void
-CVMjvmtiRemoveLock(CVMExecEnv *ee, CVMOwnedMonitor *o) {
+CVMjvmtiRemoveLockInfo(CVMExecEnv *ee, CVMObjMonitor *mon,
+                       CVMOwnedMonitor *o)
+{
     if (CVMframeIsJava(CVMeeGetCurrentFrame(ee))) {
 	CVMJavaFrame *jframe = CVMgetJavaFrame(CVMeeGetCurrentFrame(ee));
 	CVMJvmtiLockInfo *li = jframe->jvmtiLockInfo;
 	if (li != NULL) {
+            if (mon != NULL) {
+                o = ee->objLocksOwned;
+                if (o->u.heavy.mon != mon) {
+                    do {
+                        o = o->next;
+                    } while ((o != NULL) && (o->u.heavy.mon != mon));
+                }
+            }
+            CVMassert (o != NULL);
 	    CVMassert(o == li->lock);
 	    jframe->jvmtiLockInfo = li->next;
 	    jvmtiFreeLockInfo(ee, li);
@@ -2237,23 +2253,17 @@ CVMjvmtiRemoveLock(CVMExecEnv *ee, CVMOwnedMonitor *o) {
 }
 
 void
-CVMjvmtiRemoveMon(CVMExecEnv *ee, CVMObjMonitor *mon) {
-    if (CVMframeIsJava(CVMeeGetCurrentFrame(ee))) {
-	CVMJavaFrame *jframe = CVMgetJavaFrame(CVMeeGetCurrentFrame(ee));
-	CVMJvmtiLockInfo *li = jframe->jvmtiLockInfo;
-	if (li != NULL) {
-	    CVMOwnedMonitor *o = ee->objLocksOwned;
-
-	    if (o->u.heavy.mon != mon) {
-		do {
-		    o = o->next;
-		} while ((o != NULL) && (o->u.heavy.mon != mon));
-		CVMassert (o != NULL);
-	    }
-	    CVMassert(o == li->lock);
-	    jframe->jvmtiLockInfo = li->next;
-	    jvmtiFreeLockInfo(ee, li);
-	}
+CVMjvmtiDestroyLockInfo(CVMExecEnv *ee)
+{
+    if (ee != NULL) {
+	CVMJvmtiLockInfo *li = ee->jvmtiEE.jvmtiLockInfoFreelist;
+        CVMJvmtiLockInfo *nextLi;
+        while (li != NULL) {
+            nextLi = li->next;
+            free(li);
+            li = nextLi;
+        }
+        ee->jvmtiEE.jvmtiLockInfoFreelist = NULL;
     }
 }
 
