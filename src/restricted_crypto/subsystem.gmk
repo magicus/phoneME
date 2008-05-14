@@ -60,6 +60,7 @@ R_CRYPTO_JAVA_FILES = \
   $(CRYPTO_REF_DIR)/classes/com/sun/midp/crypto/RSA.java \
   $(CRYPTO_REF_DIR)/classes/com/sun/midp/crypto/ARC4.java \
   $(CRYPTO_REF_DIR)/classes/com/sun/midp/crypto/RSASig.java \
+  $(CRYPTO_REF_DIR)/classes/com/sun/midp/crypto/RsaMd2Sig.java \
   $(CRYPTO_REF_DIR)/classes/com/sun/midp/crypto/RsaMd5Sig.java \
   $(CRYPTO_REF_DIR)/classes/com/sun/midp/crypto/RsaShaSig.java
 
