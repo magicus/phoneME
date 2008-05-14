@@ -40,7 +40,7 @@ Java_java_io_WinNTFileSystem_getDriveDirectory(JNIEnv *env, jobject this,
                                                jint drive) 
 {
     jchar buf[_MAX_PATH];
-    jchar *p = _wgetdcwd(drive, buf, sizeof(buf));
+    jchar *p = _wgetdcwd(drive, buf, _MAX_PATH);
 
     if (p == NULL) return NULL;
     if (iswalpha(*p) && (p[1] == L':')) p += 2;
