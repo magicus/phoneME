@@ -103,8 +103,8 @@ public class AppProxy {
 
     /** The current AppProxy. */
     private static AppProxy currentApp;
-    private static Registry registry;
-    private static AMS ams;
+    static RegistryGate registry;
+    static AMSGate ams;
 
     /** The known AppProxy instances. Key is classname. */
     protected Hashtable appmap;
@@ -489,12 +489,12 @@ public class AppProxy {
         return false;
     }
 
-    public static void setRegistry( Registry registry ) {
+    public static void setRegistry( RegistryGate registry ) {
     	AppProxy.registry = registry;
         System.out.println("AppProxy.setRegistry(" + registry + ")");
     }
 
-    public static void setAMS( AMS ams ) {
+    public static void setAMS( AMSGate ams ) {
     	AppProxy.ams = ams;
         System.out.println("AppProxy.setAMS(" + ams + ")");
     }

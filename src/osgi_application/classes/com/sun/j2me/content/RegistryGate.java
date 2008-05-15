@@ -25,5 +25,10 @@
 
 package com.sun.j2me.content;
 
-public interface AMS {
+public interface RegistryGate {
+	ContentHandlerImpl.Handle register( int suiteId, String classname, 
+									ContentHandlerPersistentData handlerData );
+	boolean unregister( String handlerId );
+	void enumJavaHandlers( ContentHandlerImpl.Handle.Receiver r );
+	void enumHandlers( ContentHandlerImpl.Handle.Receiver r );
 }

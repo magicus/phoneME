@@ -25,5 +25,5 @@
 
 package com.sun.j2me.content;
 
-public interface Registry {
+public interface AMSGate {
 }

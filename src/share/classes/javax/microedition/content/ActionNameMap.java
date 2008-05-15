@@ -26,7 +26,7 @@
 
 package javax.microedition.content;
 
-import com.sun.j2me.content.ContentHandlerImpl;
+import com.sun.j2me.content.ContentHandlerPersistentData;
 
 /**
  * An <code>ActionNameMap</code> provides a mapping between
@@ -94,8 +94,8 @@ public final class ActionNameMap {
 	}
 
 	this.locale = locale;
-	this.actions = ContentHandlerImpl.copy(actions,false,false);
-	this.actionnames = ContentHandlerImpl.copy(actionnames,false,false);
+	this.actions = ContentHandlerPersistentData.copy(actions,false,false);
+	this.actionnames = ContentHandlerPersistentData.copy(actionnames,false,false);
 	if (findDuplicate(this.actions) >= 0) {
 	    throw new IllegalArgumentException("duplicate string");
 	}        
