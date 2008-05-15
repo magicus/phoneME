@@ -911,3 +911,5 @@ LABEL(slowArraycopy)
 #endif /* CVM_JIT_CCM_USE_C_HELPER */
 
 #endif /* CVMJIT_INTRINSICS */
+
+        POOL
