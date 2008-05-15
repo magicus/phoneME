@@ -65,6 +65,14 @@
 #define CVMARM_LR CVMARM_lr
 
 /*
+ * Some platforms may reserve registers that are not normally reserved
+ * on ARM platforms. These registers can be added to CVMARM_RESERVED_REGS.
+ */
+#ifndef CVMARM_RESERVED_REGS
+#define CVMARM_RESERVED_REGS 0
+#endif
+
+/*
  * Macro to map a register name (like v2) to a register number (like 5).
  * Because of the strange way the preprocessor expands macros, we need
  * an extra indirection of macro invocations to get it expanded correctly.
@@ -126,10 +134,10 @@
 #define ARM_PHI_REG_6	(1U << CVMARM_v8)
 #endif
 
-#define CVMCPU_PHI_REG_SET (			\
-	ARM_PHI_REG_1 | ARM_PHI_REG_2 |		\
-	ARM_PHI_REG_3 | ARM_PHI_REG_4 |		\
-	ARM_PHI_REG_5 | ARM_PHI_REG_6		\
+#define CVMCPU_PHI_REG_SET (                                            \
+        (ARM_PHI_REG_1 | ARM_PHI_REG_2 |                                \
+	 ARM_PHI_REG_3 | ARM_PHI_REG_4 |                                \
+	 ARM_PHI_REG_5 | ARM_PHI_REG_6)	& ~(CVMARM_RESERVED_REGS)       \
 )
 
 /* range of registers that regman should look at */
@@ -149,7 +157,7 @@
  * no need to tell regman about CVMCPU_SP_REG because regman already
  * knows that it is busy.
  */
-#define CVMCPU_BUSY_SET (1U<<CVMARM_pc)
+#define CVMCPU_BUSY_SET (1U<<CVMARM_pc | (CVMARM_RESERVED_REGS))
 
 /*
  * The set of all non-volatile registers according to C calling conventions
