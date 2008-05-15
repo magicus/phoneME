@@ -25,14 +25,14 @@
  *
  */
 
-#include <stdio.h>
-#include <stddef.h>
-#include <stdlib.h>
-#include <setjmp.h>
-#include <assert.h>
-#include <string.h>
+#include "javavm/include/porting/ansi/stdio.h"
+#include "javavm/include/porting/ansi/stddef.h"
+#include "javavm/include/porting/ansi/stdlib.h"
+#include "javavm/include/porting/ansi/setjmp.h"
+#include "javavm/include/porting/ansi/assert.h"
+#include "javavm/include/porting/ansi/string.h"
 
-#include <ctype.h>
+#include "javavm/include/porting/ansi/ctype.h"
 
 #include "javavm/export/jni.h"
 #include "portlibs/ansi_c/java.h"
