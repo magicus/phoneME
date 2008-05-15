@@ -103,10 +103,10 @@
 
 #define CALL_VM_FUNCTION(VMFUNCTION)	\
 	mov lr, pc;			\
-	ldr pc, =VMFUNCTION
+	ldr pc, SYMBOL(VMFUNCTION)
 
 #define BRANCH_TO_VM_FUNCTION(CCMFUNCTION)	\
-	ldr pc, =CCMFUNCTION
+	ldr pc, SYMBOL(CCMFUNCTION)
 
 #endif /* CVM_JIT_COPY_CCMCODE_TO_CODECACHE */
 #endif /* __RVCT__ */

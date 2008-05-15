@@ -1621,7 +1621,7 @@ ENTRY1( CVMCCMruntimeI2D_C )
 	 * -1 is to account for the implied high-order bit. Rather
 	 * than masking it out, we just subtract it out here.
 	 */
-	ldr	EXP, =(31+0x3ff-1)
+	ldr	EXP, L_EXP_CONSTANT
 
 	/*
 	 * use shifts to get the high-order bit set.
@@ -2220,7 +2220,7 @@ LABEL(_double_deliver_signed_result)
         orrmi       A1,         A1,         #0x80000000 
         ldmfd       sp!,        DOUBLE_RESTORE_SET      
 LABEL(_double_deliver_NaN)
-        ldr         A1,         =0x7ff80000 
+        ldr         A1,         CONSTANT(0x7ff80000) 
         mov         A2,         #0          
         ldmfd       sp!,        DOUBLE_RESTORE_SET      
 LABEL(_double_deliver_signed_zero)
@@ -2261,7 +2261,7 @@ LABEL(_double_deliver_Infinity)
 	bic	A1,A1,#0x80000000 /* no thinking here */
 	bic	B1,B1,#0x80000000 /* no thinking here */
 	and	FLAGS, FLAGS, #0x80000000 /* clear other flags */
-	ldr	EXPMASK, =DOUBLE_EXPVAL	  /* exponent mask */
+	ldr	EXPMASK, CONSTANT(DOUBLE_EXPVAL)   /* exponent mask */
 	DOUBLE_UNPACK( A1, EXPA, _dmult_normalizeA, _dmult_exceptionalA )
 LABEL(_dmult_unpackB)
 	DOUBLE_UNPACK( B1, EXPB, _dmult_normalizeB, _dmult_exceptionalB )
@@ -2370,7 +2370,7 @@ LABEL(_double_deliver_signed_result)
 	ldmfd	sp!, DOUBLE_RESTORE_SET
 
 LABEL(_double_deliver_NaN)
-	ldr	A1,  =0x7ff80000
+	ldr	A1,  CONSTANT(0x7ff80000)
 	mov	A2, #0
 	ldmfd	sp!, DOUBLE_RESTORE_SET
 
@@ -2914,7 +2914,7 @@ LABEL(_dadd_deliver_a)
 	orrcs	FLAGS, FLAGS, #BNEGFLAG	/* (may not matter) */
 
 LABEL(_dadd_noxchng)
-	ldr	EXPMASK, =DOUBLE_EXPVAL	  /* exponent mask */
+	ldr	EXPMASK, CONSTANT(DOUBLE_EXPVAL)	  /* exponent mask */
 	DOUBLE_UNPACK( A1, EXPA, _dadd_subnormalA, _dadd_exceptionalA )
 LABEL(_dadd_unpackB)
 	DOUBLE_UNPACK( B1, EXPB, _dadd_subnormalB, _dadd_exceptionalB )
@@ -3151,7 +3151,7 @@ ENTRY1( CVMCCMruntimeDDiv_C )
 	bic	A1,A1,#0x80000000 /* no thinking here */
 	bic	B1,B1,#0x80000000 /* no thinking here */
 	and	FLAGS, FLAGS, #0x80000000 /* clear other flags */
-	ldr	EXPMASK, =DOUBLE_EXPVAL	  /* exponent mask */
+	ldr	EXPMASK, CONSTANT(DOUBLE_EXPVAL)	  /* exponent mask */
 	DOUBLE_UNPACK( A1, EXPA, _ddivNormalizeA, _ddivExceptionalA )
 LABEL(_ddivUnpackB)
 	DOUBLE_UNPACK( B1, EXPB, _ddivNormalizeB, _ddivExceptionalB )
@@ -3701,7 +3701,8 @@ LABEL(_idiv_pow_of_2_DeliverRemainder)
 	 * 0 is a problem, 1 is just a special case.
 	 */
 LABEL(_idivByZeroOrOne)
-        blo         CVMCCMruntimeThrowDivideByZeroGlue /* go throw an exception */
+	/* go throw an exception */
+        blo         SYM_NAME(CVMCCMruntimeThrowDivideByZeroGlue)
         mov         QUOT,       R           
         mov         R,          #0          
         b           _idivCorrectResult      
@@ -3825,7 +3826,8 @@ LABEL(_idivNegative)
 	 * 0 is a problem, 1 is just a special case.
 	 */
 LABEL(_idivByZeroOrOne)
-	blo	CVMCCMruntimeThrowDivideByZeroGlue /* go throw an exception */
+	/* go throw an exception */
+	blo	SYM_NAME(CVMCCMruntimeThrowDivideByZeroGlue)
 	mov	QUOT, R
 	mov	R, #0
 	b	_idivCorrectResult
@@ -3856,5 +3858,8 @@ ENTRY1 ( CVMCCMruntimeIRem_C )
 #undef DIVIDE_STEP_INSTRUCTIONS
 #undef DIVIDE_STEP_SIZE
 #undef MAX_ITER
+
+LABEL(L_EXP_CONSTANT)
+        WORD(31+0x3ff-1)
 
 	POOL

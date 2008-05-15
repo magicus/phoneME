@@ -34,6 +34,18 @@
 
 #include "javavm/include/asmmacros_arch.h"
 
+#ifndef SYM_NAME
+#define SYM_NAME(x) x
+#endif
+
+#ifndef SYMBOL
+#define SYMBOL(x) =x
+#endif
+
+#ifndef CONSTANT
+#define CONSTANT(x) =x
+#endif
+
 /*
  * Note the old-fashioned use of an empty comment
  * to do token pasting. This is necessary because

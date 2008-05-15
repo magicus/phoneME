@@ -173,7 +173,7 @@ LABEL(gcNoRetAddrAdjust)
 ENTRY1 ( CVMCCMruntimeThrowNullPointerExceptionGlue )
 	IMPORT(java_lang_NullPointerException_Classblock)
 	FIXUP_FRAMES(JFP, {lr}, 1)
-	ldr	a3, =java_lang_NullPointerException_Classblock
+	ldr	a3, SYMBOL(java_lang_NullPointerException_Classblock)
 	mov	a4, #0  /* exception message */
 	CALL_HELPER_AND_PASS_EE(CVMCCMruntimeThrowClass)
 	SET_SIZE(CVMCCMruntimeThrowNullPointerExceptionGlue)
@@ -185,7 +185,7 @@ ENTRY1 ( CVMCCMruntimeThrowArrayIndexOutOfBoundsExceptionGlue )
 #ifdef ARMASM_LONG_SYMBOL_NAME_BUG
         ldr	a3, L1
 #else
-	ldr	a3, =java_lang_ArrayIndexOutOfBoundsException_Classblock
+	ldr	a3, SYMBOL(java_lang_ArrayIndexOutOfBoundsException_Classblock)
 #endif
 	mov	a4, #0  /* exception message */
 	CALL_HELPER_AND_PASS_EE(CVMCCMruntimeThrowClass)
@@ -198,10 +198,12 @@ L1	DCD	java_lang_ArrayIndexOutOfBoundsException_Classblock
 ENTRY1 ( CVMCCMruntimeThrowDivideByZeroGlue )
 	IMPORT(java_lang_ArithmeticException_Classblock)
 	FIXUP_FRAMES(JFP, {lr}, 1)
-	ldr	a3, =java_lang_ArithmeticException_Classblock
-	ldr	a4, =divideByZeroString /*exception message */
+	adr	a4, divideByZeroString /*exception message */
+	ldr	a3, SYMBOL(java_lang_ArithmeticException_Classblock)
 	CALL_HELPER_AND_PASS_EE(CVMCCMruntimeThrowClass)
-	SET_SIZE(CVMCCMruntimeThrowDivideByZeroGlue)
+LABEL(divideByZeroString)
+	STRING("/ by zero")
+       	SET_SIZE(CVMCCMruntimeThrowDivideByZeroGlue)
 
 /* Throw an object */
 	ENTRY(CVMCCMruntimeThrowObjectGlue)
@@ -341,7 +343,7 @@ ENTRY1 ( CVMCCMruntimeCheckArrayAssignableGlue )
 	cmp	a3, a4		/* check if elemClass(arr) == class(rhs) */
 	moveq	pc, lr
 	IMPORT(java_lang_Object_Classblock)
-	ldr	a1, =java_lang_Object_Classblock
+	ldr	a1, SYMBOL(java_lang_Object_Classblock)
 	cmp	a3, a1		/* check if elemClass(arr) == Object */
 	moveq	pc, lr
 	/* a3 = element cb of array object (with low bits clear) */
@@ -383,7 +385,7 @@ ENTRY1 ( CVMCCMruntimeRunClassInitializerGlue )
 	/* We don't want to patch pre-compiled code through. */
 #ifdef CVM_MTASK
 	IMPORT(CVMJITcodeCacheDecompileStart)
-	ldr	a2, =CVMJITcodeCacheDecompileStart
+	ldr	a2, SYMBOL(CVMJITcodeCacheDecompileStart)
 	ldr	a2, [a2]
 	ldr	a2, [a2]
 	cmp	lr, a2
@@ -392,12 +394,12 @@ ENTRY1 ( CVMCCMruntimeRunClassInitializerGlue )
 #ifdef CVM_AOT
 	IMPORT(CVMJITcodeCacheAOTEnd)
 	IMPORT(CVMJITcodeCacheAOTStart)
-	ldr	a2, =CVMJITcodeCacheAOTEnd
+	ldr	a2, SYMBOL(CVMJITcodeCacheAOTEnd)
 	ldr	a2, [a2]
 	ldr	a2, [a2]
 	cmp	lr, a2
 	bhs	doPatch
-	ldr	a2,  =CVMJITcodeCacheAOTStart
+	ldr	a2,  SYMBOL(CVMJITcodeCacheAOTStart)
 	ldr	a2, [a2]
 	ldr	a2, [a2]
 	cmp	lr, a2
@@ -405,12 +407,12 @@ ENTRY1 ( CVMCCMruntimeRunClassInitializerGlue )
 #endif
 
 LABEL(doPatch)	
-	ldr	a2,  =0xe1a00000   /* get the patch, a nop instruction */
+	ldr	a2,  CONSTANT(0xe1a00000)/* get the patch, a nop instruction */
 	str	a2,  [lr, #-4]     /* apply the patch */
 	/* flush the patched instruction */
 	sub	a1,  lr, #4	  /* begin */
 	add	a2,  a1, #4       /* end */
-	CALL_VM_FUNCTION(CVMJITflushCache)
+	CALL_VM_FUNCTION(CVMflushCache)
 	/* return to the helper */
         ldr	pc,  [JFP, #OFFSET_CVMCompiledFrame_PC]
 	
@@ -452,84 +454,85 @@ LABEL(CVMCCMruntimeResolveGlueLocal)
 #else
 #define RESOLVE_PATCH_OFFSET 20
 #endif
-	ldr	a2,  =MAKE_BRANCH(RESOLVE_PATCH_OFFSET) /* get the patch */
+	ldr	a2,  L_MAKEBRANCH_1 /* get the patch */
 	add	lr, lr, #4
 	str	a2,  [lr, #-RESOLVE_PATCH_OFFSET]       /* apply the patch */
 	/* flush the patched instruction */
 	sub	a1,  lr, #RESOLVE_PATCH_OFFSET  /* begin */
 	add	a2,  a1, #4		        /* end */
-	CALL_VM_FUNCTION(CVMJITflushCache)
+ 	CALL_VM_FUNCTION(CVMflushCache)
 	/* return to compiled code */
         ldr	pc,  [JFP, #OFFSET_CVMCompiledFrame_PC]
-	
+LABEL(L_MAKEBRANCH_1)
+        WORD(MAKE_BRANCH(RESOLVE_PATCH_OFFSET))
 
         ENTRY(CVMCCMruntimeResolveNewClassBlockAndClinitGlue)
 ENTRY1(CVMCCMruntimeResolveNewClassBlockAndClinitGlue)
 	IMPORT(CVMCCMruntimeResolveNewClassBlockAndClinit)
-	ldr     ip, =CVMCCMruntimeResolveNewClassBlockAndClinit
+	ldr     ip, SYMBOL(CVMCCMruntimeResolveNewClassBlockAndClinit)
 	b	CVMCCMruntimeResolveGlueLocal
         SET_SIZE(CVMCCMruntimeResolveNewClassBlockAndClinitGlue)
 
         ENTRY(CVMCCMruntimeResolveGetstaticFieldBlockAndClinitGlue)
 ENTRY1(CVMCCMruntimeResolveGetstaticFieldBlockAndClinitGlue)
 	IMPORT(CVMCCMruntimeResolveGetstaticFieldBlockAndClinit)
-	ldr     ip, =CVMCCMruntimeResolveGetstaticFieldBlockAndClinit
+	ldr     ip, SYMBOL(CVMCCMruntimeResolveGetstaticFieldBlockAndClinit)
 	b	CVMCCMruntimeResolveGlueLocal
         SET_SIZE(CVMCCMruntimeResolveGetstaticFieldBlockAndClinitGlue)
 
         ENTRY(CVMCCMruntimeResolvePutstaticFieldBlockAndClinitGlue)
 ENTRY1(CVMCCMruntimeResolvePutstaticFieldBlockAndClinitGlue)
 	IMPORT(CVMCCMruntimeResolvePutstaticFieldBlockAndClinit)
-	ldr     ip, =CVMCCMruntimeResolvePutstaticFieldBlockAndClinit
+	ldr     ip, SYMBOL(CVMCCMruntimeResolvePutstaticFieldBlockAndClinit)
 	b	CVMCCMruntimeResolveGlueLocal
         SET_SIZE(CVMCCMruntimeResolvePutstaticFieldBlockAndClinitGlue)
 
         ENTRY(CVMCCMruntimeResolveStaticMethodBlockAndClinitGlue)
 ENTRY1(CVMCCMruntimeResolveStaticMethodBlockAndClinitGlue)
 	IMPORT(CVMCCMruntimeResolveStaticMethodBlockAndClinit)
-	ldr     ip, =CVMCCMruntimeResolveStaticMethodBlockAndClinit
+	ldr     ip, SYMBOL(CVMCCMruntimeResolveStaticMethodBlockAndClinit)
 	b	CVMCCMruntimeResolveGlueLocal
         SET_SIZE(CVMCCMruntimeResolveStaticMethodBlockAndClinitGlue)
 
         ENTRY(CVMCCMruntimeResolveClassBlockGlue)
 ENTRY1(CVMCCMruntimeResolveClassBlockGlue)
 	IMPORT(CVMCCMruntimeResolveClassBlock)
-	ldr     ip, =CVMCCMruntimeResolveClassBlock
+	ldr     ip, SYMBOL(CVMCCMruntimeResolveClassBlock)
 	b	CVMCCMruntimeResolveGlueLocal
         SET_SIZE(CVMCCMruntimeResolveClassBlockGlue)
 
         ENTRY(CVMCCMruntimeResolveArrayClassBlockGlue)
 ENTRY1(CVMCCMruntimeResolveArrayClassBlockGlue)
 	IMPORT(CVMCCMruntimeResolveArrayClassBlock)
-	ldr     ip, =CVMCCMruntimeResolveArrayClassBlock
+	ldr     ip, SYMBOL(CVMCCMruntimeResolveArrayClassBlock)
 	b	CVMCCMruntimeResolveGlueLocal
         SET_SIZE(CVMCCMruntimeResolveArrayClassBlockGlue)
 
         ENTRY(CVMCCMruntimeResolveGetfieldFieldOffsetGlue)
 ENTRY1(CVMCCMruntimeResolveGetfieldFieldOffsetGlue)
 	IMPORT(CVMCCMruntimeResolveGetfieldFieldOffset)
-	ldr     ip, =CVMCCMruntimeResolveGetfieldFieldOffset
+	ldr     ip, SYMBOL(CVMCCMruntimeResolveGetfieldFieldOffset)
 	b	CVMCCMruntimeResolveGlueLocal
         SET_SIZE(CVMCCMruntimeResolveGetfieldFieldOffsetGlue)
 
         ENTRY(CVMCCMruntimeResolvePutfieldFieldOffsetGlue)
 ENTRY1(CVMCCMruntimeResolvePutfieldFieldOffsetGlue)
 	IMPORT(CVMCCMruntimeResolvePutfieldFieldOffset)
-	ldr     ip, =CVMCCMruntimeResolvePutfieldFieldOffset
+	ldr     ip, SYMBOL(CVMCCMruntimeResolvePutfieldFieldOffset)
 	b	CVMCCMruntimeResolveGlueLocal
         SET_SIZE(CVMCCMruntimeResolvePutfieldFieldOffsetGlue)
 
         ENTRY(CVMCCMruntimeResolveSpecialMethodBlockGlue)
 ENTRY1(CVMCCMruntimeResolveSpecialMethodBlockGlue)
 	IMPORT(CVMCCMruntimeResolveSpecialMethodBlock)
-	ldr     ip, =CVMCCMruntimeResolveSpecialMethodBlock
+	ldr     ip, SYMBOL(CVMCCMruntimeResolveSpecialMethodBlock)
 	b	CVMCCMruntimeResolveGlueLocal
         SET_SIZE(CVMCCMruntimeResolveSpecialMethodBlockGlue)
 
         ENTRY(CVMCCMruntimeResolveMethodBlockGlue)
 ENTRY1(CVMCCMruntimeResolveMethodBlockGlue)
 	IMPORT(CVMCCMruntimeResolveMethodBlock)
-	ldr     ip, =CVMCCMruntimeResolveMethodBlock
+	ldr     ip, SYMBOL(CVMCCMruntimeResolveMethodBlock)
 	b	CVMCCMruntimeResolveGlueLocal
         SET_SIZE(CVMCCMruntimeResolveMethodBlockGlue)
 
@@ -560,7 +563,7 @@ ENTRY1 ( CVMCCMruntimeResolveMethodTableOffsetGlue )
 	IMPORT(CVMCCMruntimeResolveMethodTableOffset)
         /* a3 = cpIndex */
 	/* lr = address of instruction following call */
-	ldr	ip, =CVMCCMruntimeResolveMethodTableOffset
+	ldr	ip, SYMBOL(CVMCCMruntimeResolveMethodTableOffset)
 	/* setup remaining arguments and call the helper */
 	mov	a1, sp		/* a1 = ccee */
 	ldr	a2, [sp, #OFFSET_CVMCCExecEnv_ee]	/* a2 = ee */
@@ -586,15 +589,17 @@ ENTRY1 ( CVMCCMruntimeResolveMethodTableOffsetGlue )
 	 * case return code, and around the cachedConstant word.
 	 */
 #define RESOLVE_METHOD_TABLE_PATCH_OFFSET (RESOLVE_PATCH_OFFSET+8)
-	ldr	a2,  =MAKE_BRANCH(RESOLVE_METHOD_TABLE_PATCH_OFFSET)
+	ldr	a2,  L_MAKEBRANCH_2
 	add	lr, lr, #4
 	str	a2,  [lr, #-RESOLVE_METHOD_TABLE_PATCH_OFFSET]
 	/* flush the patched instruction */
 	sub	a1,  lr, #RESOLVE_METHOD_TABLE_PATCH_OFFSET  /* begin */
 	add	a2,  a1, #4		        /* end */
-	CALL_VM_FUNCTION(CVMJITflushCache)
+	CALL_VM_FUNCTION(CVMflushCache)
 	/* return to compiled code */
         ldr	pc,  [JFP, #OFFSET_CVMCompiledFrame_PC]
+LABEL(L_MAKEBRANCH_2)
+        WORD(MAKE_BRANCH(RESOLVE_METHOD_TABLE_PATCH_OFFSET))
 
 	/* lookup an interface mb */
 	ENTRY(CVMCCMruntimeLookupInterfaceMBGlue)
@@ -783,13 +788,13 @@ ENTRY1 ( CVMCCMruntimeMonitorEnterGlue )
         textrmuw MICROLOCK, W_MICROLOCK, #0
         cmp     OBJ, #0
 #else
-        ldr     MICROLOCK, =CVMobjGlobalMicroLockPtr
+        ldr     MICROLOCK, SYMBOL(CVMobjGlobalMicroLockPtr)
         /* Make sure that the object is not NULL: */
         cmp     OBJ, #0
 	/* Get address of object microlock */
         ldr     MICROLOCK, [MICROLOCK]        
 #endif
-        beq     CVMCCMruntimeThrowNullPointerExceptionGlue
+        beq     SYM_NAME(CVMCCMruntimeThrowNullPointerExceptionGlue)
         ldr     r3, [MICROLOCK]
 
         /* Acquire the microlock: */
@@ -961,13 +966,13 @@ ENTRY1 ( CVMCCMruntimeMonitorExitGlue )
         textrmuw MICROLOCK, W_MICROLOCK, #0
         cmp     OBJ, #0
 #else
-        ldr     MICROLOCK, =CVMobjGlobalMicroLockPtr
+        ldr     MICROLOCK, SYMBOL(CVMobjGlobalMicroLockPtr)
         /* Make sure that the object is not NULL: */
         cmp     OBJ, #0
 	/* Get address of object microlock */
         ldr     MICROLOCK, [MICROLOCK]
 #endif
-        beq     CVMCCMruntimeThrowNullPointerExceptionGlue
+        beq     SYM_NAME(CVMCCMruntimeThrowNullPointerExceptionGlue)
         ldr     r3, [MICROLOCK]
 
 LABEL(_monexitAcquireMicrolock)
@@ -1151,7 +1156,7 @@ LABEL(_monexitFastTryUnlockFailed)
         ; Make sure that the object is not NULL:
         ldr     EE, [sp, #OFFSET_CVMCCExecEnv_ee]
         cmp     OBJ, #0
-        beq     CVMCCMruntimeThrowNullPointerExceptionGlue
+        beq     SYM_NAME(CVMCCMruntimeThrowNullPointerExceptionGlue)
 
         /* Setup a lock record and assume the object has not been locked
            yet: */
@@ -1356,7 +1361,7 @@ _monenterRecordNotAvailable
         ; Make sure that the object is not NULL:
         ldr     EE, [sp, #OFFSET_CVMCCExecEnv_ee]
         cmp     OBJ, #0
-        beq     CVMCCMruntimeThrowNullPointerExceptionGlue
+        beq     SYM_NAME(CVMCCMruntimeThrowNullPointerExceptionGlue)
 
         /* Check to see if the object is locked with a fastlock: */
         ldr     OWNEDREC, [OBJ, #OFFSET_CVMObjectHeader_various32] /* obits */
@@ -1508,6 +1513,4 @@ _monexitFastTryUnlockFailed
 #error unsupported CVM_FASTLOCK_TYPE or CVM_MICROLOCK_TYPE
 #endif 
 
-LABEL(divideByZeroString)
-	STRING("/ by zero")
 	POOL

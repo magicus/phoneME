@@ -143,6 +143,26 @@ static const CVMCCMCodeCacheCopyEntry ccmCodeCacheCopyEntries[] = {
 #endif
 #endif
 
+    /* intrinsics code */
+#ifdef CVMJIT_INTRINSICS
+#ifndef CVM_JIT_CCM_USE_C_HELPER
+#ifndef CVMCCM_DISABLE_ARM_CVM_SYSTEM_IDENTITYHASHCODE_INTRINSIC
+    ENTRY(CVMCCMARMintrinsic_java_lang_System_identityHashCodeGlue)
+#endif
+#ifndef CVM_JIT_CCM_USE_C_SYNC_HELPER
+    ENTRY(CVMCCMARMintrinsic_java_lang_Object_hashCodeGlue)
+    ENTRY(CVMCCMARMintrinsic_java_lang_String_hashCodeGlue)
+#endif
+#ifdef IAI_IMPLEMENT_INDEXOF_IN_ASSEMBLY
+    ENTRY(CVMCCMintrinsic_java_lang_String_indexOf_II)
+    ENTRY(CVMCCMintrinsic_java_lang_String_indexOf_I)
+#endif
+    ENTRY(CVMCCMintrinsic_sun_misc_CVM_copyCharArray)
+    ENTRY(CVMCCMintrinsic_sun_misc_CVM_copyObjectArray)
+    ENTRY(CVMCCMintrinsic_java_lang_System_arraycopyGlue)
+#endif
+#endif
+
     /* ccm math helpers */
     ENTRY(CVMCCMruntimeFCmp)
     ENTRY(CVMCCMruntimeFSub)
@@ -163,24 +183,7 @@ static const CVMCCMCodeCacheCopyEntry ccmCodeCacheCopyEntries[] = {
     ENTRY(CVMCCMruntimeLShl)
     ENTRY(CVMCCMruntimeIDiv)
     ENTRY(CVMCCMruntimeIRem)
-#ifdef CVMJIT_INTRINSICS
-#ifndef CVM_JIT_CCM_USE_C_HELPER
-#ifndef CVMCCM_DISABLE_ARM_CVM_SYSTEM_IDENTITYHASHCODE_INTRINSIC
-    ENTRY(CVMCCMARMintrinsic_java_lang_System_identityHashCodeGlue)
-#endif
-#ifndef CVM_JIT_CCM_USE_C_SYNC_HELPER
-    ENTRY(CVMCCMARMintrinsic_java_lang_Object_hashCodeGlue)
-    ENTRY(CVMCCMARMintrinsic_java_lang_String_hashCodeGlue)
-#endif
-#ifdef IAI_IMPLEMENT_INDEXOF_IN_ASSEMBLY
-    ENTRY(CVMCCMintrinsic_java_lang_String_indexOf_II)
-    ENTRY(CVMCCMintrinsic_java_lang_String_indexOf_I)
-#endif
-    ENTRY(CVMCCMintrinsic_sun_misc_CVM_copyCharArray)
-    ENTRY(CVMCCMintrinsic_sun_misc_CVM_copyObjectArray)
-    ENTRY(CVMCCMintrinsic_java_lang_System_arraycopyGlue)
-#endif
-#endif
+
     {(CVMUint8*)&CVMCCMcodeCacheCopyEnd, NULL},
 };
 #undef ENTRY

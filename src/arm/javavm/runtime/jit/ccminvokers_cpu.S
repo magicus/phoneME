@@ -85,7 +85,7 @@ LABEL(CVMCCMinvokeNonstaticSyncMethodHelperLocal)
 #define OBITS       r3
 #define MICROLOCK   r8
 #define LOCKREC     ip
-#define TEMP        r9
+#define TEMP        r11
 #define TEMP2       r10
 #define ORIG_LR     TEMP2
 	
@@ -102,7 +102,7 @@ LABEL(CVMCCMinvokeNonstaticSyncMethodHelperLocal)
 	textrmuw MICROLOCK, W_MICROLOCK, #0
 	str     MB, [NEW_JFP, #OFFSET_CVMFrame_mb]
 #else
-        ldr     MICROLOCK, =CVMobjGlobalMicroLockPtr
+        ldr     MICROLOCK, SYMBOL(CVMobjGlobalMicroLockPtr)
 	/* save r0 */
 	str	MB, [NEW_JFP, #OFFSET_CVMFrame_mb]
 	/* Schedule r8 = &microLock early */
@@ -140,7 +140,7 @@ LABEL(_syncInvokeMicrolockMPSafe)
 #endif
 
 #ifdef CVM_GLOBAL_MICROLOCK_CONTENTION_STATS
-	ldr     TEMP, =fastMlockimplCount
+	ldr     TEMP, SYMBOL(fastMlockimplCount)
 	ldr	TEMP2, [TEMP]
 	add	TEMP2, TEMP2, #1
 	str	TEMP2, [TEMP]
@@ -219,7 +219,7 @@ LABEL(jfp_set)
 	mov ORIG_LR, lr
 	mov r1, JFP
 	ldr r0, [sp, #OFFSET_CVMCCExecEnv_ee]
-	bl CVMCCMtraceMethodCallGlue
+	bl SYM_NAME(CVMCCMtraceMethodCallGlue)
 	mov lr, ORIG_LR
 #endif
 
@@ -270,7 +270,7 @@ ENTRY1( CVMARMhandleGCAtInvoke)
 #ifdef IAI_CACHE_GLOBAL_VARIABLES_IN_WMMX
 	textrmuw ip, W_CVMGLOBALS, #0
 #else
-	ldr ip, =CVMglobals
+	ldr ip, SYMBOL(CVMglobals)
 #endif
 
 	/* At this point r0 is guaranteed to contain the ee */
@@ -405,7 +405,7 @@ LABEL(CVMCCMinvokeNonstaticSyncMethodHelperLocal)
 #define EE              ORIG_LR /* r10 */
 #define OBJ             r1
 #define EXPECTED_BITS   r8
-#define OWNEDREC        r9
+#define OWNEDREC        r11
 #define TEMP            ip
 
         ldr     OBJ, [r1]       /* get object to sync on. */
@@ -565,7 +565,7 @@ _fastlockSuccess
         mov ORIG_LR, lr
         mov r1, JFP
         ldr r0, [sp, #OFFSET_CVMCCExecEnv_ee]
-        bl CVMCCMtraceMethodCallGlue
+        bl SYM_NAME(CVMCCMtraceMethodCallGlue)
         mov lr, ORIG_LR
 #endif
 
@@ -614,7 +614,7 @@ LABEL(CVMARMgcPatchPointAtInvokeLocal)
 	strne r1, [r2]					; stash in miscICell
 
 	IMPORT CVMglobals
-	ldr ip, =CVMglobals
+	ldr ip, SYMBOL(CVMglobals)
 	; At this point r0 is guaranteed to contain the ee
         str PREV,[r0,#OFFSET_CVMExecEnv_interpreterStack+OFFSET_CVMStack_currentFrame] 
 	mov r3, #1
@@ -725,7 +725,7 @@ ENTRY1( CVMCCMinvokeCNIMethod )
 	/* trace call */
 	mov	r1, JFP
 	mov	r2, MB		/* r2 = mb */
-	bl CCMtraceFramelessMethodCall
+	bl	SYM_NAME(CCMtraceFramelessMethodCall)
 	ldr	r0, [sp, #OFFSET_CVMCCExecEnv_ee]	    /* r0 = ee */
 	mov	r1, ARGS		/* restore args ptr */
 #endif
@@ -742,7 +742,7 @@ ENTRY1( CVMCCMinvokeCNIMethod )
 	mov	r1, MB		/* r1 = mb */
 	mov	r2, JFP
 	ldr	r0, [sp, #OFFSET_CVMCCExecEnv_ee]	    /* r0 = ee */
-	bl CCMtraceFramelessMethodReturn
+	bl	SYM_NAME(CCMtraceFramelessMethodReturn)
 	ldr	r0, [sp, #OFFSET_CVMCCExecEnv_ccmStorage+4] /* restore result */
 #endif
 
@@ -885,7 +885,7 @@ LABEL(handleGCForReturn)
 #ifdef IAI_CACHE_GLOBAL_VARIABLES_IN_WMMX
 	textrmuw lr, W_CVMGLOBALS, #0
 #else
-	ldr	lr, =CVMglobals
+	ldr	lr, SYMBOL(CVMglobals)
 #endif	
 	
 	/* We will be gc safe soon. Prevent this method from being decompiled */
@@ -917,12 +917,12 @@ LABEL(handleGCForReturn)
  */
 	ENTRY(CVMARMhandleGCForReturnFromMethod)
 ENTRY1( CVMARMhandleGCForReturnFromMethod )
-	ldr	r7, =CVMCCMreturnFromMethod
-	b	handleGCForReturn	
+	ldr	r7, SYMBOL(CVMCCMreturnFromMethod)
+	b	handleGCForReturn
 
 	ENTRY(CVMARMhandleGCForReturnFromSyncMethod)
 ENTRY1( CVMARMhandleGCForReturnFromSyncMethod )
-	ldr	r7, =CVMCCMreturnFromSyncMethod
+	ldr	r7, SYMBOL(CVMCCMreturnFromSyncMethod)
 	b	handleGCForReturn	
 	SET_SIZE( CVMARMhandleGCForReturnFromSyncMethod )
 
@@ -949,7 +949,7 @@ ENTRY1( CVMCCMreturnFromMethod )
 	mov r1, JFP
 	and JFP, PREV, #~CONSTANT_CVM_FRAME_MASK_ALL
 	ldr r0, [sp, #OFFSET_CVMCCExecEnv_ee]
-	bl CCMtraceMethodReturn
+	bl SYM_NAME(CCMtraceMethodReturn)
 #ifdef CVMCPU_HAS_CP_REG
 	ldr CVMARM_CP_REGNAME, [JFP, #OFFSET_CVMCompiledFrame_cpBaseRegX]
 #endif
@@ -1047,7 +1047,7 @@ ENTRY1( CVMCCMreturnFromSyncMethod )
         textrmuw MICROLOCK, W_MICROLOCK, #0
         mov     r3, #CVM_MICROLOCK_LOCKED
 #else
-        ldr     MICROLOCK, =CVMobjGlobalMicroLockPtr
+        ldr     MICROLOCK, SYMBOL(CVMobjGlobalMicroLockPtr)
 	/* Set up r3 for swp below */
         mov     r3, #CVM_MICROLOCK_LOCKED   /* Swap CVM_MICROLOCK_LOCKED into */
 	/* Get address of object microlock */
@@ -1088,7 +1088,7 @@ LABEL(_syncReturnMicrolockMPSafe)
 #endif
 
 #ifdef CVM_GLOBAL_MICROLOCK_CONTENTION_STATS
-	ldr     TEMP, =fastMlockimplCount
+	ldr     TEMP, SYMBOL(fastMlockimplCount)
 	ldr	TEMP2, [TEMP]
 	add	TEMP2, TEMP2, #1
 	str	TEMP2, [TEMP]
@@ -1166,7 +1166,7 @@ LABEL(_fastTryUnlockDone)
         /* Do trace method return: */
         mov     r1, JFP
         ldr     r0, [sp, #OFFSET_CVMCCExecEnv_ee]
-        bl CCMtraceMethodReturn
+        bl	SYM_NAME(CCMtraceMethodReturn)
 #endif
         /* Restore the previous JFP: 
          * Returning from one compiled method to another. 
@@ -1275,7 +1275,7 @@ LABEL(_fastTryUnlockFailed)
 
 #define EE              r8
 #define OBJ             r1
-#define OWNEDREC        r9
+#define OWNEDREC        r11
 #define EXPECTED_CNT    r10
 #define TEMP            r3
 #define TEMP2           ip
@@ -1447,7 +1447,7 @@ ENTRY1(CVMCCMtraceMethodCallGlue)
 #ifdef IAI_CACHE_GLOBAL_VARIABLES_IN_WMMX
 	textrmuw ip, W_CVMGLOBALS, #0
 #else
-	ldr ip, =CVMglobals
+	ldr ip, SYMBOL(CVMglobals)
 #endif
 
 	ldr ip, [ip, #OFFSET_CVMGlobalState_debugFlags]
@@ -1467,7 +1467,7 @@ ENTRY1(CCMtraceMethodReturn)
 #ifdef IAI_CACHE_GLOBAL_VARIABLES_IN_WMMX
 	textrmuw ip, W_CVMGLOBALS, #0
 #else
-	ldr ip, =CVMglobals
+	ldr ip, SYMBOL(CVMglobals)
 #endif
 	ldr ip, [ip, #OFFSET_CVMGlobalState_debugFlags]
 	tst ip, #CONSTANT_TRACE_METHOD
@@ -1484,7 +1484,7 @@ ENTRY1(CCMtraceFramelessMethodCall)
 #ifdef IAI_CACHE_GLOBAL_VARIABLES_IN_WMMX
 	textrmuw ip, W_CVMGLOBALS, #0
 #else
-	ldr ip, =CVMglobals
+	ldr ip, SYMBOL(CVMglobals)
 #endif
 	ldr ip, [ip, #OFFSET_CVMGlobalState_debugFlags]
 	tst ip, #CONSTANT_TRACE_METHOD
@@ -1499,7 +1499,7 @@ ENTRY1(CCMtraceFramelessMethodReturn)
 #ifdef IAI_CACHE_GLOBAL_VARIABLES_IN_WMMX
 	textrmuw ip, W_CVMGLOBALS, #0
 #else
-	ldr ip, =CVMglobals
+	ldr ip, SYMBOL(CVMglobals)
 #endif
 	ldr ip, [ip, #OFFSET_CVMGlobalState_debugFlags]
 	tst ip, #CONSTANT_TRACE_METHOD
