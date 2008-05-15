@@ -63,7 +63,7 @@ public class DefaultConfiguration extends Configuration {
         {"GIF", "com.sun.mmedia.GIFPlayer"},
 // #endif ]        
 // #ifdef VIDEO_CAPTURE [
-        {VIDEO_CAPTURE_LOCATOR, "com.sun.mmedia.DirectCamera"},
+        {BasicPlayer.MEDIA_FORMAT_CAPTURE_VIDEO, "com.sun.mmedia.DirectCamera"},
 // #endif ]
 // #ifdef AUDIO_CAPTURE [
         {AUDIO_CAPTURE_LOCATOR, "com.sun.mmedia.DirectPlayer"},
