@@ -111,7 +111,7 @@ LABEL(_objectHashCodeStart)
         /* Get &microlock from wmmx register */
         textrmuw MICROLOCK, W_MICROLOCK, #0
 #else
-        ldr     MICROLOCK, =CVMobjGlobalMicroLockPtr
+        ldr     MICROLOCK, SYMBOL(CVMobjGlobalMicroLockPtr)
         ldr     MICROLOCK, [MICROLOCK]
 #endif
 
@@ -335,7 +335,7 @@ LABEL(String_hashCode_done)
 
         ; Get the address of the object microlock:
         IMPORT CVMobjGlobalMicroLockPtr
-        ldr     MICROLOCK, =CVMobjGlobalMicroLockPtr
+        ldr     MICROLOCK, SYMBOL(CVMobjGlobalMicroLockPtr)
         ldr     MICROLOCK, [MICROLOCK]
 
         /* Acquire the microlock: */
@@ -631,7 +631,7 @@ ENTRY1 ( CVMCCMintrinsic_sun_misc_CVM_copyCharArray )
 	add	r1, r0, #OFFSET_ARRAY_ELEMENTS /* r1 = src+(2*sIdx) + ofst */
 	add	r0, r2, #OFFSET_ARRAY_ELEMENTS /* r0 = dst+(2*dIdx) + ofst */
 	mov	r2, r6, LSL #1	    /* r2 = (length * 2) */
-	b	CVMARMmemmove16Bit
+	b	SYM_NAME(CVMARMmemmove16Bit)
 	SET_SIZE( CVMCCMintrinsic_sun_misc_CVM_copyCharArray )
 
 
@@ -657,7 +657,7 @@ ENTRY1 ( CVMCCMintrinsic_sun_misc_CVM_copyObjectArray )
 #define CARDSTART	ip
 #define CARDEND		r3
 
-	ldr	CARDSTART, =CVMgcCardTableVirtualBasePtr
+	ldr	CARDSTART, SYMBOL(CVMgcCardTableVirtualBasePtr)
 
 	/* Now do the copying.  NOTE: dstAddr is already in r3. */
 	add	r0, r0, r1, LSL #2  /* r0 = src + (4 * sIdx) */
@@ -686,7 +686,7 @@ LABEL(copyObjectArray_markCard)
 #undef CARDSTART
 #undef CARDEND
 
-	b	CVMARMmemmove32Bit
+	b	SYM_NAME(CVMARMmemmove32Bit)
 
 	SET_SIZE ( CVMCCMintrinsic_sun_misc_CVM_copyObjectArray )
 
@@ -808,7 +808,7 @@ LABEL(arraycopy8bit)
 	mov	r2, LENGTH			/* length */
 	add	r3, DST, DSTIDX
 	add	r0, r3, #OFFSET_ARRAY_ELEMENTS	/* dstAddr */
-	b	CVMARMmemmove8Bit
+	b	SYM_NAME(CVMARMmemmove8Bit)
 
 LABEL(arraycopy16bit)
 	add	r1, SRC, SRCIDX, LSL #1
@@ -816,7 +816,7 @@ LABEL(arraycopy16bit)
 	mov	r2, LENGTH, LSL #1		/* length */
 	add	r3, DST, DSTIDX, LSL #1
 	add	r0, r3, #OFFSET_ARRAY_ELEMENTS	/* dstAddr */
-	b	CVMARMmemmove16Bit
+	b	SYM_NAME(CVMARMmemmove16Bit)
 
 LABEL(arraycopy32bit)
 	add	r1, SRC, SRCIDX, LSL #2
@@ -824,7 +824,7 @@ LABEL(arraycopy32bit)
 	mov	r2, LENGTH, LSL #2		/* length */
 	add	r3, DST, DSTIDX, LSL #2
 	add	r0, r3, #OFFSET_ARRAY_ELEMENTS	/* dstAddr */
-	b	CVMARMmemmove32Bit
+	b	SYM_NAME(CVMARMmemmove32Bit)
 
 LABEL(arraycopy64bit)
 	add	r1, SRC, SRCIDX, LSL #3
@@ -832,7 +832,7 @@ LABEL(arraycopy64bit)
 	mov	r2, LENGTH, LSL #3		/* length */
 	add	r3, DST, DSTIDX, LSL #3
 	add	r0, r3, #OFFSET_ARRAY_ELEMENTS	/* dstAddr */
-	b	CVMARMmemmove32Bit
+	b	SYM_NAME(CVMARMmemmove32Bit)
 
 LABEL(arraycopyObject)
 #if (CVM_GCCHOICE == CVM_GC_GENERATIONAL) && !defined(CVM_SEGMENTED_HEAP)
@@ -843,7 +843,7 @@ LABEL(arraycopyObject)
 	/* Compute arguments for CVMARMmemmove32Bit:
 	   dst(r0), src(r1), length(r2)
 	*/
-	ldr	CARDSTART, =CVMgcCardTableVirtualBasePtr
+	ldr	CARDSTART, SYMBOL(CVMgcCardTableVirtualBasePtr)
 	add	r0, SRC, SRCIDX, LSL #2	/* r0 = src + (4 * sIdx) */
 	add	r2, DST, DSTIDX, LSL #2 /* r2 = dst + (4 * dIdx) */
 	ldr	CARDSTART, [CARDSTART]
@@ -871,7 +871,7 @@ LABEL(arraycopyObject_markCard)
 #undef CARDEND
 
 	/* Now do the copying.  NOTE: dstAddr is already in r3. */
-	b	CVMARMmemmove32Bit
+	b	SYM_NAME(CVMARMmemmove32Bit)
 
 #else
 

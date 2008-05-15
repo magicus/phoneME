@@ -104,8 +104,8 @@ ENTRY1 ( CVMCCMcodeCacheCopyStart )
 #include "ccmglue_cpu.S"
 #include "ccmallocators_cpu.S"
 #include "ccminvokers_cpu.S"
-#include "ccmmath_cpu.S"
 #include "ccmintrinsics_asm_cpu.S"
+#include "ccmmath_cpu.S"
 #include "../memory_asm_cpu.S"
 
 /*************************************************************************

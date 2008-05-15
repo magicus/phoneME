@@ -91,7 +91,7 @@ ENTRY1 ( CVMCCMruntimeNewGlue )
         textrmuw a2, W_CVMGLOBALS, #0
 #else
 	IMPORT(CVMglobals)
-	ldr	a2, =CVMglobals
+	ldr	a2, SYMBOL(CVMglobals)
 #endif
         add	LOCK, a2, #OFFSET_CVMGlobalState_fastHeapLock
         mov     a1, #1	       /* locked	 */
@@ -227,12 +227,12 @@ LABEL(GOSLOW)
 	cmp	a1, #0
 	bne	RETURNOBJ
 	mov	a1, v1          /* ee */
-	ldr	a2, =cbString   /* "%C" */
+	adr	a2, cbString    /* "%C" */
 	mov	a3, v2          /* cb */
 	CALL_VM_FUNCTION(CVMthrowOutOfMemoryError)
 	mov	a1, sp
 	IMPORT(CVMJITexitNative)
-	ldr     pc, =CVMJITexitNative
+	ldr     pc, SYMBOL(CVMJITexitNative)
 LABEL(RETURNOBJ)
 	/* Restore JSP/JFP and return to compiled code */
 	ldr	a2,  [sp,  #OFFSET_CVMCCExecEnv_ee]   /* a2 -- ee */
@@ -291,7 +291,7 @@ ENTRY1 ( CVMCCMruntimeNewArrayGlue )
 #ifdef IAI_CACHE_GLOBAL_VARIABLES_IN_WMMX
 	textrmuw a2, W_CVMGLOBALS, #0
 #else
-	ldr	a2, =CVMglobals
+	ldr	a2, SYMBOL(CVMglobals)
 #endif
 	cmp	v3, #(1 << 28)
 	add	a4, a2, #OFFSET_CVMGlobalState_fastHeapLock
@@ -396,7 +396,7 @@ LABEL(SMALL_ARRAY_PLD)
 
 #ifdef CVM_FASTALLOC_STATS
 	/* Count fast locks */
-	ldr	a1, =fastLockCount
+	ldr	a1, SYMBOL(fastLockCount)
 	ldr	a4, [a1]
 	add	a4, a4, #1
 	str	a4, [a1]
@@ -461,11 +461,11 @@ LABEL(ARR_GOSLOW)
 LABEL(ARR_OUT_OF_MEMORY)
 	ldr	a1, [sp, #OFFSET_CVMCCExecEnv_ee]	/* a1 -- ee */
 LABEL(ARR_OUT_OF_MEMORY1)
-	ldr	a2, =cbString   /* "%C" */
+	adr	a2, cbString    /* "%C" */
 	mov	a3, v2          /* cb */
 	CALL_VM_FUNCTION(CVMthrowOutOfMemoryError)
 	mov	a1, sp
-	ldr     pc, =CVMJITexitNative
+	ldr     pc, SYMBOL(CVMJITexitNative)
 LABEL(ARR_BADINDEX)
 	ldr	a1,  [sp,  #OFFSET_CVMCCExecEnv_ee]   /* a1 -- ee */
         ldr     lr, [a1, #OFFSET_CVMExecEnv_interpreterStack+OFFSET_CVMStack_currentFrame] 
@@ -481,7 +481,7 @@ LABEL(ARR_NEGATIVEINDEX)
 	mov	a2, #0
 	CALL_VM_FUNCTION(CVMthrowNegativeArraySizeException)
 	mov	a1, sp
-	ldr	pc, =CVMJITexitNative
+	ldr	pc, SYMBOL(CVMJITexitNative)
 LABEL(ARR_RETURNOBJ)
 	/* Restore JSP/JFP and return to compiled code */
 	ldr	a2,  [sp,  #OFFSET_CVMCCExecEnv_ee]   /* a2 -- ee */
@@ -534,7 +534,7 @@ ENTRY1 ( CVMCCMruntimeANewArrayGlue )
 #ifdef IAI_CACHE_GLOBAL_VARIABLES_IN_WMMX
 	textrmuw a2, W_CVMGLOBALS, #0
 #else
-	ldr	a2, =CVMglobals
+	ldr	a2, SYMBOL(CVMglobals)
 #endif
 
 	/* Check if length is negative or too big. If it is, bail out */
@@ -626,7 +626,7 @@ LABEL(SMALL_AARRAY_PLD)
 
 #ifdef CVM_FASTALLOC_STATS
 	/* Count fast locks */
-	ldr	a1, =fastLockCount
+	ldr	a1, SYMBOL(fastLockCount)
 	ldr	a2, [a1]
 	add	a2, a2, #1
 	str	a2, [a1]
@@ -688,13 +688,13 @@ LABEL(OBJARR_GOSLOW)
 	CALL_VM_FUNCTION(CVMgcAllocNewArrayWithInstanceSize)
 	cmp	a1, #0
 	bne	OBJARR_RETURNOBJ
-	ldr	a2, =cbString   /* "%C" */
+	adr	a2, cbString    /* "%C" */
 	mov	a3, v2          /* cb */
 LABEL(OBJARR_OUT_OF_MEMORY)
 	ldr	a1, [sp, #OFFSET_CVMCCExecEnv_ee]	/* a1 -- ee */
 	CALL_VM_FUNCTION(CVMthrowOutOfMemoryError)
 	mov	a1, sp
-	ldr     pc, =CVMJITexitNative
+	ldr     pc, SYMBOL(CVMJITexitNative)
 LABEL(OBJARR_BADINDEX)
 	ldr	a1,  [sp,  #OFFSET_CVMCCExecEnv_ee]   /* a1 -- ee */
         ldr     lr, [a1, #OFFSET_CVMExecEnv_interpreterStack+OFFSET_CVMStack_currentFrame] 
@@ -705,7 +705,7 @@ LABEL(OBJARR_BADINDEX)
 	blt	OBJARR_NEGATIVEINDEX
 	/* If we are here, the array was too big to even try to allocate */
 	/* Throw out of memory error here */
-	ldr	a2, =cbStringArr /* "[%C" */
+	adr	a2, cbStringArr /* "[%C" */
 	/* a3 already has the element cb here. */
 	b	OBJARR_OUT_OF_MEMORY
 LABEL(OBJARR_NEGATIVEINDEX)
@@ -713,7 +713,7 @@ LABEL(OBJARR_NEGATIVEINDEX)
 	mov	a2, #0
 	CALL_VM_FUNCTION(CVMthrowNegativeArraySizeException)
 	mov	a1, sp
-	ldr	pc, =CVMJITexitNative
+	ldr	pc, SYMBOL(CVMJITexitNative)
 LABEL(OBJARR_RETURNOBJ)
 	/* Restore JSP/JFP and return to compiled code */
 	ldr	a2,  [sp,  #OFFSET_CVMCCExecEnv_ee]   /* a2 -- ee */
