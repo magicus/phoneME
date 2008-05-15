@@ -3561,10 +3561,12 @@ CVMassertHook(const char *filename, int lineno, const char *expr) {
            However, CVMCCMruntimeLazyFixups asserts that ee->microlock != 0,
            so clear it just in case.
         */
+#ifdef CVM_DEBUG
         if (ee->microLock != 0) {
             CVMconsolePrintf("CVMassertHook: ee->microLock != 0\n");
             ee->microLock = 0;
         }
+#endif
         CVMCCMruntimeLazyFixups(ee);
 #endif
         CVMdumpStack(&ee->interpreterStack,0,0,0);
