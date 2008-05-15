@@ -96,7 +96,7 @@ public class AppProxy {
     /** MIDlet property for the suite vendor. */
     static final String VENDOR_PROP        = "MIDlet-Vendor";
     
-    static final int INVALID_SUITE_ID = 0;
+    static final int EXTERNAL_SUITE_ID = 0;
 
     /** The mutex used to avoid corruption between threads. */
     protected static final Object mutex = new Object();
