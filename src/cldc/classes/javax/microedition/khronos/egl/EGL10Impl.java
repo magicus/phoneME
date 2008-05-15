@@ -946,7 +946,7 @@ class EGL10Impl implements EGL10 {
             // IMPL_NOTE: eglCopyBuffers performs an implicit glFlush before
             // it returns.
             // TODO: check if it works for arbitrary Graphics
-            Graphics target = surface.getTarget();
+            Graphics target = ((EGLSurfaceImpl)surface).getTarget();
             retval = eglCopyBuffers(display, surface, target);
 	} else {
 	    // This should never happen
