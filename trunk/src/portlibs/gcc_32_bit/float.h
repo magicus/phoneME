@@ -28,6 +28,13 @@
 #ifndef _GCC_32_BIT_FLOAT_H
 #define _GCC_32_BIT_FLOAT_H
 
+#ifndef longMin
+#define longMin      (0x8000000000000000LL)
+#endif
+#ifndef longMax
+#define longMax      (0x7fffffffffffffffLL)
+#endif
+
 /*
  * See src/share/javavm/include/porting/float.h for full documentation.
  */
@@ -61,13 +68,6 @@ extern CVMJavaLong float2Long(CVMJavaFloat d);
 #endif
 
 #ifdef BOUNDS_CHECK_f2l
-
-#ifndef longMin
-#define longMin      (0x8000000000000000LL)
-#endif
-#ifndef longMax
-#define longMax      (0x7fffffffffffffffLL)
-#endif
 
 #define float2Long0(val) \
     (  ((val) <= -9223372036854775808.0) ? longMin : \
