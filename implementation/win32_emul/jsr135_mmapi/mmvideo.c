@@ -406,6 +406,23 @@ static javacall_result video_get_video_snapshot_data(javacall_handle handle, cha
     return JAVACALL_OK;
 }
 
+static javacall_result video_set_video_fullscreenmode( javacall_handle handle, javacall_bool fullScreenMode )
+{
+    audio_handle* pHandle = (audio_handle*)handle;
+    static LimeFunction *f = NULL;
+    int res = 0;
+
+    if (f == NULL) {
+        f = NewLimeFunction(LIME_MMAPI_PACKAGE,
+                        LIME_MMAPI_CLASS,
+                        "setDisplayFullScreen");
+    }
+    
+    f->call(f, &res, pHandle->hWnd, fullScreenMode);
+
+    return JAVACALL_OK; 
+}
+
 static javacall_result map_frame_to_time(javacall_handle handle, 
                                                  long frameNum, long* ms) {
     audio_handle* pHandle = (audio_handle*)handle;
@@ -561,7 +578,7 @@ static media_video_interface _video_video_itf = {
     video_set_video_visible,
     video_set_video_location,
     video_set_video_color_key,
-    NULL
+    video_set_video_fullscreenmode,
 };
 
 /**
