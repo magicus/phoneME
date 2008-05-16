@@ -117,7 +117,6 @@ endif
 
 ifeq ($(VIDEO_CAPTURE),true)
 JPP_DEFS += -DVIDEO_CAPTURE -DCAPTURE
-DIRECT_CAMERA_PLAYER=true
 endif
 
 ifeq ($(RTP_MPA),true)

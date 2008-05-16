@@ -245,11 +245,6 @@ SUBSYSTEM_JSR_135_JAVA_FILES += \
     $(JSR_135_DIR)/src/share/components/video-renderer/classes/com/sun/mmedia/ImageAccess.java
 endif
 
-ifeq ($(DIRECT_CAMERA_PLAYER), true)
-SUBSYSTEM_JSR_135_JAVA_FILES += \
-    $(JSR_135_DIR)/src/share/components/direct-player/classes/com/sun/mmedia/DirectCamera.java
-endif
-
 ifeq ($(DIRECT_RECORD), true)
 SUBSYSTEM_JSR_135_JAVA_FILES += \
     $(JSR_135_GENERATED_DIR)/classes/com/sun/mmedia/DirectRecord.java
