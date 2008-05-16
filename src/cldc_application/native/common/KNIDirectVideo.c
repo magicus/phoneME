@@ -184,6 +184,29 @@ KNIDECL(com_sun_mmedia_DirectVideo_nSnapShot) {
     KNI_EndHandlesAndReturnObject(returnValueHandle);
 }
 
+KNIEXPORT KNI_RETURNTYPE_BOOLEAN 
+KNIDECL(com_sun_mmedia_DirectVideo_nSetFullScreenMode) {
+    jint     handle  = KNI_GetParameterAsInt(1);
+    jboolean fscreen = KNI_GetParameterAsBoolean(2);
+
+    KNIPlayerInfo* pKniInfo = (KNIPlayerInfo*)handle;
+
+    jboolean returnValue = KNI_FALSE;
+
+    MMP_DEBUG_STR1("[kni_video] +nSetFullScreen(%d)\n", fscreen);
+
+    if (pKniInfo && pKniInfo->pNativeHandle &&
+        JAVACALL_OK == javacall_media_set_video_fullscreenmode(pKniInfo->pNativeHandle, 
+                           (KNI_TRUE == fscreen ? JAVACALL_TRUE : JAVACALL_FALSE))) 
+    {
+        returnValue = KNI_TRUE;
+    }
+
+    MMP_DEBUG_STR1("[kni_video] +nSetFullScreen=%d\n", returnValue);
+
+    KNI_ReturnBoolean(returnValue);
+}
+
 /*  private native boolean nSetVisible ( int handle, boolean visible ) ; */
 KNIEXPORT KNI_RETURNTYPE_BOOLEAN
 KNIDECL(com_sun_mmedia_DirectVideo_nSetVisible) {
