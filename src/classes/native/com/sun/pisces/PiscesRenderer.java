@@ -68,11 +68,7 @@ public final class PiscesRenderer extends PathSink
     }
     
     private void notImplemented() {
-        new RuntimeException().printStackTrace();
         System.out.println("not implemented");
-
-//         throw new RuntimeException("PiscesRendererNativeImpl: " +
-//                 "Not implemented!");
     }
     
     /**
