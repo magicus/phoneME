@@ -36,9 +36,6 @@
  * Float Conversions:
  */
 
-#define longMin      (0x8000000000000000LL)
-#define longMax      (0x7fffffffffffffffLL)
-
 #define CVMfloat2Long(val) \
     float2Long((val))
 
@@ -64,6 +61,13 @@ extern CVMJavaLong float2Long(CVMJavaFloat d);
 #endif
 
 #ifdef BOUNDS_CHECK_f2l
+
+#ifndef longMin
+#define longMin      (0x8000000000000000LL)
+#endif
+#ifndef longMax
+#define longMax      (0x7fffffffffffffffLL)
+#endif
 
 #define float2Long0(val) \
     (  ((val) <= -9223372036854775808.0) ? longMin : \
