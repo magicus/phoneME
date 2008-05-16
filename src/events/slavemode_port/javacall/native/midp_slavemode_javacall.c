@@ -53,6 +53,11 @@
 #include <wmaInterface.h>
 #endif
 
+#if ENABLE_JSR_135
+#include <javanotify_multimedia.h>
+#include <KNICommon.h>
+#endif /* ENABLE_JSR_135 */
+
 #ifdef ENABLE_JSR_75
 #include <fcNotifyIsolates.h>
 #endif
@@ -227,140 +232,6 @@ eventUnblockJavaThread(
     return 0;
 }
 
-#ifdef ENABLE_JSR_135
-/**
- * Unblocks a multimedia Java thread.
- *
- * @param blocked_threads blocked threads
- * @param blocked_threads_count number of blocked threads
- * @param waitingFor signal type
- * @param descriptor platform specific handle
- * @param status error code produced by the operation that unblocked the thread
- *
- * @return <tt>1</tt> if a thread was unblocked, otherwise <tt>0</tt>.
- */
-static int
-eventUnblockMultimediaJavaThread(
-        JVMSPI_BlockedThreadInfo *blocked_threads,
-        int blocked_threads_count, unsigned int waitingFor,
-        int descriptor, int status)
-{
-    /*
-     * IMPL NOTE: this functionality is similar to midp_thread_signal_list.
-     * It differs in that it reports to the caller whether a thread was
-     * unblocked. This is a poor interface and should be removed. However,
-     * the coupling with Push needs to be resolved first. In addition,
-     * freeing of pResult here seems unsafe. Management of pResult needs
-     * to be revisited.
-     */
-    int i;
-    MidpReentryData* pThreadReentryData;
-
-    for (i = 0; i < blocked_threads_count; i++) {
-        pThreadReentryData =
-            (MidpReentryData*)(blocked_threads[i].reentry_data);
-
-        if (pThreadReentryData != NULL
-                && pThreadReentryData->descriptor == descriptor
-                && (pThreadReentryData->waitingFor == (midpSignalType)waitingFor
-                        || NO_SIGNAL == waitingFor)
-                && pThreadReentryData->waitingFor
-                    >= (midpSignalType)MEDIA_START_SIGNAL
-                && pThreadReentryData->waitingFor
-                    <= (midpSignalType)MEDIA_LONG_MIDI_EVENT_SIGNAL) {
-            pThreadReentryData->status = status;
-            midp_thread_unblock(blocked_threads[i].thread_id);
-            return 1;
-        }
-    }
-
-    return 0;
-}
-
-#endif
-
-
-#ifdef ENABLE_JSR_135
-/*
- * Converts a multimedia event to midp internal event
- *
- * @param multimediaEvent event to be converted
- * @param blocked_threads
- * @param blocked_threads_count
- *
- * @return <tt>JAVACALL_OK</tt> on success
- *         <tt>JAVACALL_FAIL</tt> on failure
- *
- */
-javacall_result midpHandleMultimediaEvent(midp_jc_event_multimedia multimediaEvent,
-                                          JVMSPI_BlockedThreadInfo* blocked_threads,
-                                          int blocked_threads_count) {
-    MidpEvent newMidpEvent;
-    int signal = NO_SIGNAL;
-
-    MIDP_EVENT_INITIALIZE(newMidpEvent);
-
-    switch(multimediaEvent.mediaType) {
-    case JAVACALL_EVENT_MEDIA_END_OF_MEDIA:
-        newMidpEvent.type = MM_EOM_EVENT;
-        break;
-    case JAVACALL_EVENT_MEDIA_DURATION_UPDATED:
-        newMidpEvent.type = MM_DURATION_EVENT;
-        break;
-    case JAVACALL_EVENT_MEDIA_RECORD_SIZE_LIMIT:
-        newMidpEvent.type = MM_RECORD_LIMIT_EVENT;
-        break;
-    case JAVACALL_EVENT_MEDIA_RECORD_ERROR:
-        newMidpEvent.type = MM_RECORD_ERROR_EVENT;
-        break;
-    case JAVACALL_EVENT_MEDIA_BUFFERING_STARTED:
-        newMidpEvent.type = MM_BUFFERING_START_EVENT;
-        break;
-    case JAVACALL_EVENT_MEDIA_BUFFERING_STOPPED:
-        newMidpEvent.type = MM_BUFFERING_STOP_EVENT;
-        break;
-    case JAVACALL_EVENT_MEDIA_VOLUME_CHANGED:
-        newMidpEvent.type = MM_VOLUME_CHANGED_EVENT;
-        break;
-    case JAVACALL_EVENT_MEDIA_ERROR:
-        newMidpEvent.type = MM_GENERAL_ERROR_EVENT;
-        break;
-    default:
-        break;
-    }
-
-    if (NO_SIGNAL == signal) {
-         newMidpEvent.intParam1 = multimediaEvent.playerId;
-         newMidpEvent.intParam2 = (long)multimediaEvent.data;
-         newMidpEvent.intParam3 = multimediaEvent.appId;
-
-        REPORT_CALL_TRACE4(LC_MMAPI, "[media event] External event recevied %d %d %d %d\n",
-                           newMidpEvent.type,
-                           multimediaEvent.appId,
-                           newMidpEvent.intParam1,
-                           newMidpEvent.intParam2);
-
-        StoreMIDPEventInVmThread(newMidpEvent, multimediaEvent.appId);
-	 if (MM_GENERAL_ERROR_EVENT == newMidpEvent.type
-	      || MM_RECORD_ERROR_EVENT == newMidpEvent.type
-	      || MM_EOM_EVENT == newMidpEvent.type) {
-            int descriptor = (((multimediaEvent.appId & 0xFFFF) << 16) | (multimediaEvent.playerId & 0xFFFF));
-            eventUnblockMultimediaJavaThread(blocked_threads, blocked_threads_count,
-                                                    signal, descriptor, multimediaEvent.status);
-	 }
-
-    } else {
-        /* HACK - Compose 16 bit of isolate ID and 16 bit of player ID
-                       to generate descriptor */
-        int descriptor = (((multimediaEvent.appId & 0xFFFF) << 16) | (multimediaEvent.playerId & 0xFFFF));
-        REPORT_CALL_TRACE4(LC_MMAPI, "[media event] signal %d, descriptor %d, status %d, data %d\n",
-            signal, descriptor, multimediaEvent.status, multimediaEvent.data);
-        eventUnblockMultimediaJavaThread(blocked_threads, blocked_threads_count,
-                                         signal, descriptor, multimediaEvent.status);
-    }
-    return JAVACALL_OK;
-}
-#endif
 /*
  * This function is called by the VM periodically. Checks if
  * the native platform has sent a signal to MIDP.
@@ -478,8 +349,50 @@ javacall_result checkForSystemSignal(MidpReentryData* pNewSignal,
 
     case MIDP_JC_EVENT_MULTIMEDIA:
 #if ENABLE_JSR_135
-        midpHandleMultimediaEvent(event->data.multimediaEvent,
-                                  blocked_threads, blocked_threads_count);
+        pNewSignal->waitingFor = MEDIA_EVENT_SIGNAL;
+        pNewSignal->status     = event->data.multimediaEvent.status;
+        pNewSignal->pResult    = (void *)event->data.multimediaEvent.data;
+        if (event->data.multimediaEvent.mediaType > 0 &&
+                event->data.multimediaEvent.mediaType <
+                        JAVACALL_EVENT_MEDIA_JAVA_EVENTS_MARKER) {
+            pNewMidpEvent->type         = MMAPI_EVENT;
+            pNewMidpEvent->MM_PLAYER_ID = event->data.multimediaEvent.playerId;
+            pNewMidpEvent->MM_DATA      = event->data.multimediaEvent.data;
+            pNewMidpEvent->MM_ISOLATE   = event->data.multimediaEvent.appId;
+            pNewMidpEvent->MM_EVT_TYPE  = event->data.multimediaEvent.mediaType;
+            pNewMidpEvent->MM_EVT_STATUS= event->data.multimediaEvent.status;
+    
+            /* VOLUME_CHANGED event must be sent to all players.             */
+            /* MM_ISOLATE = -1 causes bradcast by StoreMIDPEventInVmThread() */
+            if(JAVACALL_EVENT_MEDIA_VOLUME_CHANGED == 
+                    event->data.multimediaEvent.mediaType) {
+                pNewMidpEvent->MM_ISOLATE = -1;
+            }
+        }
+        if (event->data.multimediaEvent.mediaType > 
+                                    JAVACALL_EVENT_MEDIA_JAVA_EVENTS_MARKER) {
+            pNewSignal->descriptor =
+                MAKE_PLAYER_DESCRIPTOR(event->data.multimediaEvent.appId,
+                                       event->data.multimediaEvent.playerId,
+                                       event->data.multimediaEvent.mediaType);
+        } else if (event->data.multimediaEvent.mediaType == 
+                            JAVACALL_EVENT_MEDIA_END_OF_MEDIA ||
+                   event->data.multimediaEvent.mediaType == 
+                            JAVACALL_EVENT_MEDIA_RECORD_ERROR ||
+                   event->data.multimediaEvent.mediaType == 
+                            JAVACALL_EVENT_MEDIA_ERROR) {
+            pNewSignal->descriptor =
+                (MAKE_PLAYER_DESCRIPTOR(event->data.multimediaEvent.appId,
+                                       event->data.multimediaEvent.playerId,
+                                       0) & PLAYER_DESCRIPTOR_EVENT_MASK);
+        } else {
+            pNewSignal->descriptor = 0;
+        }
+        REPORT_CALL_TRACE4(LC_NONE, "[media event] External event recevied %d %d %d %d\n",
+                pNewMidpEvent->type,
+                event->data.multimediaEvent.appId,
+                pNewMidpEvent->MM_PLAYER_ID,
+                pNewMidpEvent->MM_DATA);
 #endif
         break;
 #ifdef ENABLE_JSR_234
@@ -562,7 +475,7 @@ javacall_result checkForSystemSignal(MidpReentryData* pNewSignal,
 		break;
 #endif /* ENABLE_JSR_256 */
     default:
-        REPORT_ERROR(LC_CORE,"Unknown event.\n");
+        REPORT_ERROR(LC_CORE,"checkForSystemSignal(): Unknown event %d.\n", event->eventType);
         break;
     };
 
@@ -659,6 +572,32 @@ static int midp_slavemode_handle_events(JVMSPI_BlockedThreadInfo *blocked_thread
             }
 
             break;
+#if (ENABLE_JSR_135 || ENABLE_JSR_234)
+    case MEDIA_EVENT_SIGNAL:
+        if (newMidpEvent.type == MMAPI_EVENT || newMidpEvent.type == AMMS_EVENT) {
+            StoreMIDPEventInVmThread(newMidpEvent, newMidpEvent.MM_ISOLATE);
+        }
+        if (newSignal.descriptor != 0) {
+            int i;
+
+            for (i = 0; i < blocked_threads_count; i++) {
+                MidpReentryData *pThreadReentryData =
+                    (MidpReentryData*)(blocked_threads[i].reentry_data);
+
+                if (pThreadReentryData != NULL &&
+                    pThreadReentryData->waitingFor == newSignal.waitingFor &&
+                    (pThreadReentryData->descriptor == newSignal.descriptor ||
+                        (pThreadReentryData->descriptor & 
+                            PLAYER_DESCRIPTOR_EVENT_MASK) == 
+                                                      newSignal.descriptor)) {
+                    pThreadReentryData->status = newSignal.status;
+                    pThreadReentryData->pResult = newSignal.pResult;
+                    midp_thread_unblock(blocked_threads[i].thread_id);
+                }
+            }
+        }
+        break;
+#endif
 #ifdef ENABLE_JSR_179
         case JSR179_LOCATION_SIGNAL:
             midp_thread_signal_list(blocked_threads,
