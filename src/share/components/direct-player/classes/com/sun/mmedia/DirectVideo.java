@@ -101,6 +101,8 @@ public class DirectVideo extends DirectPlayer implements
     protected native boolean nSetLocation(int handle, int x, int y, int w, int h);
     // Get snapshot
     protected native byte[] nSnapShot(int handle, String imageType);
+    // Set fullscreen
+    protected native boolean nSetFullScreenMode(int handle, boolean fullscreen);
     // Set visible
     protected native boolean nSetVisible(int handle, boolean visible);
     // Get screen full width
@@ -486,18 +488,38 @@ public class DirectVideo extends DirectPlayer implements
      */
     public void setDisplayFullScreen(boolean fullScreenMode) throws MediaException {
         checkState();
-        if (fullScreenMode) {
-            throw new MediaException("No Fullscreen mode");
-        }
+        nSetFullScreenMode(hNative,fullScreenMode);
     }
     
-    /**
-     * There is no snap shot support now
-     */
-    public byte[] getSnapshot(String imageType) throws MediaException {
-        checkPermission();
+    public byte[] getSnapshot(String imageType) throws MediaException
+    {
+        //checkPermission();
         checkState();
-        throw new MediaException("No snapshot support");
+
+        if (null == imageType)
+        {
+            imageType = System.getProperty("video.snapshot.encodings");
+            if (null == imageType)
+            {
+                throw new MediaException("Requested format is not supported");
+            }
+            int spacePos = imageType.indexOf(' ');
+            if (spacePos > 0)
+            {
+                imageType = imageType.substring(0, spacePos);
+            }
+        }
+
+        byte[] data = null;
+        if (hNative != 0)
+        {
+            data = nSnapShot(hNative, imageType.toLowerCase());
+        }
+        if (null == data)
+        {
+            throw new MediaException(imageType + " format is not supported");
+        }
+        return data;
     }
 
     /**
