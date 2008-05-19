@@ -43,6 +43,7 @@
 #define LIME_MMAPI_PACKAGE "com.sun.mmedia"
 #define LIME_MMAPI_CLASS   "JavaCallBridge"
 
+#define DEFAULT_BUFFER_SIZE  1024 * 1024 // default buffer size 1 MB
 
 /**
  * 
@@ -132,20 +133,22 @@ javacall_result audio_get_duration(javacall_handle handle, long* ms) {
     return JAVACALL_OK;
 }
 
+
+
 javacall_result audio_get_java_buffer_size(javacall_handle handle,
         long* java_buffer_size, long* first_data_size) 
 {
     audio_handle* pHandle = (audio_handle *) handle;
     
-    JC_MM_ASSERT( -1 != pHandle->wholeContentSize );
-    
-    *java_buffer_size = pHandle->wholeContentSize;
-    if (pHandle->buffer == NULL) {
-        *first_data_size  = pHandle->wholeContentSize;
+    if (pHandle->wholeContentSize == -1) {
+        *java_buffer_size = DEFAULT_BUFFER_SIZE;
+        *first_data_size  = DEFAULT_BUFFER_SIZE;
+        pHandle->wholeContentSize = DEFAULT_BUFFER_SIZE;
     } else {
-        *first_data_size  = 0;
+        *java_buffer_size = pHandle->wholeContentSize;
+        *first_data_size  = pHandle->wholeContentSize;
     }
-
+        
     return JAVACALL_OK;
 }
 
@@ -248,7 +251,7 @@ static javacall_handle audio_create(int appId, int playerId,
     char *buff = MALLOC(len);
 
     memset(pHandle,0,sizeof(audio_handle));
-    
+
     if (buff == NULL) {
         return NULL;
     }
@@ -710,4 +713,3 @@ media_interface g_audio_itf = {
     NULL,
     NULL
 }; 
-
