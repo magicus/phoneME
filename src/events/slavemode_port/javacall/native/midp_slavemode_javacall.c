@@ -352,6 +352,8 @@ javacall_result checkForSystemSignal(MidpReentryData* pNewSignal,
         pNewSignal->waitingFor = MEDIA_EVENT_SIGNAL;
         pNewSignal->status     = event->data.multimediaEvent.status;
         pNewSignal->pResult    = (void *)event->data.multimediaEvent.data;
+        
+        /* Create Java driven event */
         if (event->data.multimediaEvent.mediaType > 0 &&
                 event->data.multimediaEvent.mediaType <
                         JAVACALL_EVENT_MEDIA_JAVA_EVENTS_MARKER) {
@@ -363,18 +365,22 @@ javacall_result checkForSystemSignal(MidpReentryData* pNewSignal,
             pNewMidpEvent->MM_EVT_STATUS= event->data.multimediaEvent.status;
     
             /* VOLUME_CHANGED event must be sent to all players.             */
-            /* MM_ISOLATE = -1 causes bradcast by StoreMIDPEventInVmThread() */
+            /* MM_ISOLATE = -1 causes broadcast by StoreMIDPEventInVmThread() */
             if(JAVACALL_EVENT_MEDIA_VOLUME_CHANGED == 
                     event->data.multimediaEvent.mediaType) {
                 pNewMidpEvent->MM_ISOLATE = -1;
             }
         }
+        
+        /* This event should simply unblock waiting thread. No Java event is needed */
         if (event->data.multimediaEvent.mediaType > 
                                     JAVACALL_EVENT_MEDIA_JAVA_EVENTS_MARKER) {
             pNewSignal->descriptor =
                 MAKE_PLAYER_DESCRIPTOR(event->data.multimediaEvent.appId,
                                        event->data.multimediaEvent.playerId,
                                        event->data.multimediaEvent.mediaType);
+                
+        /* In case of error or end-of-media unblock all awaiting threads */
         } else if (event->data.multimediaEvent.mediaType == 
                             JAVACALL_EVENT_MEDIA_END_OF_MEDIA ||
                    event->data.multimediaEvent.mediaType == 
@@ -388,11 +394,12 @@ javacall_result checkForSystemSignal(MidpReentryData* pNewSignal,
         } else {
             pNewSignal->descriptor = 0;
         }
-        REPORT_CALL_TRACE4(LC_NONE, "[media event] External event recevied %d %d %d %d\n",
+        REPORT_CALL_TRACE4(LC_NONE, "[media event] External event recevied "
+                "%d %d %d %d\n",
                 pNewMidpEvent->type,
                 event->data.multimediaEvent.appId,
-                pNewMidpEvent->MM_PLAYER_ID,
-                pNewMidpEvent->MM_DATA);
+                event->data.multimediaEvent.playerId,
+                event->data.multimediaEvent.data);
 #endif
         break;
 #ifdef ENABLE_JSR_234
@@ -475,7 +482,7 @@ javacall_result checkForSystemSignal(MidpReentryData* pNewSignal,
 		break;
 #endif /* ENABLE_JSR_256 */
     default:
-        REPORT_ERROR(LC_CORE,"checkForSystemSignal(): Unknown event %d.\n", event->eventType);
+        REPORT_ERROR1(LC_CORE,"checkForSystemSignal(): Unknown event %d.\n", event->eventType);
         break;
     };
 
