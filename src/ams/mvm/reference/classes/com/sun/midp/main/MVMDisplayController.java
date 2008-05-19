@@ -146,7 +146,7 @@ public class MVMDisplayController extends DisplayController {
         }
 
         foreground = midletProxyList.getForegroundMIDlet();
-        if (foreground == null) {
+        if (foreground == null || foreground.wasNotActive) {
             return preempting;
         }
 
