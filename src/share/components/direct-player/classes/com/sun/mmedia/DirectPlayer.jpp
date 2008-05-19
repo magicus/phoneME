@@ -669,9 +669,7 @@ public class DirectPlayer extends BasicPlayer
             }
         }
 // #ifdef ENABLE_JSR_234 [
-        if ( ( null != source.getLocator() ) && 
-               source.getLocator().startsWith(
-                Configuration.RADIO_CAPTURE_LOCATOR ) )
+        if( isRadioPlayer() )
         {
             if( type.equals( rdscName ) )
             {
@@ -686,6 +684,12 @@ public class DirectPlayer extends BasicPlayer
 
         if (debug) System.out.println("[direct] DirectPlayer.doGetControl " + type + " return null");
         return null;
+    }
+
+    private boolean isRadioPlayer() {
+        return ( null != source.getLocator() ) && 
+               source.getLocator().startsWith(
+                Configuration.RADIO_CAPTURE_LOCATOR );
     }
 
     /**
