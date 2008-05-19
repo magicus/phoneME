@@ -1243,8 +1243,26 @@ public class X509Certificate implements Certificate {
             // look up the public key of the certificate issuer
             caCerts = certStore.getCertificates(cert.getIssuer());
             if (caCerts != null) {
-                subjectNames.addElement(caCerts[0].getSubject());
-                break;
+                /*
+                 * Check if the found certificate is really the one authorizing
+                 * "cert".
+                 */
+                boolean isChainComplete = false;
+                for (int j = 0; j < caCerts.length; j++) {
+                    try {
+                        cert.verify(caCerts[j].getPublicKey());
+                        // if no exceptions, we found the right certificate
+                        isChainComplete = true;
+                        subjectNames.addElement(caCerts[j].getSubject());
+                        break;
+                    } catch (CertificateException ce) {
+                        // try the next trusted certificate
+                    }
+                }
+                if (isChainComplete) {
+                    // chain is complete, go to more thorough verification
+                    break;
+                }
             }
             
             if (i >= certs.size()) {
@@ -1287,7 +1305,7 @@ public class X509Certificate implements Certificate {
                 maxPathLen <= prevMaxPathLen) {
                 if (cert.getSubject().equals(cert.getIssuer())) {
                     /*
-                     * This cert is a redundent, self signed CA cert
+                     * This cert is a redundant, self signed CA cert
                      * allowed to be at the end of the chain.
                      * These certificates may version 1, so will not
                      * have extensions. So this really should be the
