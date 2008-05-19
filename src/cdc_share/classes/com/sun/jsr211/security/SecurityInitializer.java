@@ -26,10 +26,11 @@
 package com.sun.jsr211.security;
 
 import com.sun.j2me.security.Token;
+import com.sun.j2me.security.TrustedClass;
 
 /**
  * A utility class that initializes internal security token for 
- * JSR 211 implemenation classes. Modify this class instead of
+ * JSR 211 implementation classes. Modify this class instead of
  * com.sun.midp.security.SecurityInitializer each time another 
  * JSR 211 implementation class requires initializing security token.
  */

@@ -358,14 +358,8 @@ public class Registry {
      * Constructor to create a new Registry with a RegistryImpl
      * and to insert it int the list of known Registry instances.
      * @param impl the RegistryImpl to delegate to
-     *
-     * @exception ContentHandlerException if
-     *  the <code>classname</code> is not registered either
-     *  as a MIDlet or a content handler
      */
-    private Registry(RegistryImpl impl)
-	throws ContentHandlerException
-    {
+    private Registry(RegistryImpl impl) {
         this.impl = impl;
     }
 
