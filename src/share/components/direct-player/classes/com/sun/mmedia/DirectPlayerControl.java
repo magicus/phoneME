@@ -23,3 +23,11 @@
  * information or have any questions.
  */
 
+package com.sun.mmedia;
+
+import javax.microedition.media.Control;
+
+public interface DirectPlayerControl extends Control
+{
+    boolean init( DirectPlayer p );
+}
