@@ -1,6 +1,5 @@
 #
-#
-# Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+# Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
 # 
 # This program is free software; you can redistribute it and/or
@@ -109,6 +108,10 @@ $(JSR_135_GENERATED_DIR)/classes/com/sun/mmedia/DirectMIDI.java: \
 
 $(JSR_135_GENERATED_DIR)/classes/com/sun/mmedia/DirectTone.java: \
   $(JSR_135_DIR)/src/share/components/direct-player/classes/com/sun/mmedia/DirectTone.jpp
+	@$(call runjpp,$^,$@)
+
+$(JSR_135_GENERATED_DIR)/classes/com/sun/mmedia/DirectCamera.java: \
+  $(JSR_135_DIR)/src/share/components/direct-player/classes/com/sun/mmedia/DirectCamera.jpp
 	@$(call runjpp,$^,$@)
 
 SUBSYSTEM_JSR_135_JAVA_FILES += \
@@ -247,7 +250,15 @@ endif
 
 ifeq ($(DIRECT_CAMERA_PLAYER), true)
 SUBSYSTEM_JSR_135_JAVA_FILES += \
-    $(JSR_135_DIR)/src/share/components/direct-player/classes/com/sun/mmedia/DirectCamera.java
+    $(JSR_135_GENERATED_DIR)/classes/com/sun/mmedia/DirectCamera.java \
+    $(JSR_135_DIR)/src/share/components/direct-player/classes/com/sun/mmedia/Jsr234CameraControlsProxy.java
+ifeq ($(USE_JSR_234), true)
+SUBSYSTEM_JSR_135_JAVA_FILES += \
+    $(JSR_135_DIR)/src/share/components/direct-player/classes/com/sun/mmedia/Jsr234CameraControlsProxyImpl.java
+else
+SUBSYSTEM_JSR_135_JAVA_FILES += \
+    $(JSR_135_DIR)/src/share/components/direct-player/classes/com/sun/mmedia/Jsr234CameraControlsProxyStub.java
+endif
 endif
 
 ifeq ($(DIRECT_RECORD), true)

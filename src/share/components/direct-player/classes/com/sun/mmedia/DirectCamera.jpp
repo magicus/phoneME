@@ -1,0 +1,125 @@
+/*
+ * Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+ * 
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License version
+ * 2 only, as published by the Free Software Foundation.
+ * 
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * General Public License version 2 for more details (a copy is
+ * included at /legal/license.txt).
+ * 
+ * You should have received a copy of the GNU General Public License
+ * version 2 along with this work; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA
+ * 
+ * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+ * Clara, CA 95054 or visit www.sun.com if you need additional
+ * information or have any questions.
+ */
+ 
+package com.sun.mmedia;
+
+import javax.microedition.media.Control;
+import javax.microedition.media.MediaException;
+
+public class DirectCamera extends DirectVideo 
+{
+// #ifdef ENABLE_JSR_234 [
+    protected final static String JSR234_CAMERA_PACKAGE_NAME =
+        "javax.microedition.amms.control.camera.";
+    private Jsr234CameraControlsProxy _jsr234CamCtrls;
+// #endif ]
+
+    /**
+     * It does not need data source
+     */
+    public DirectCamera() {
+    }
+
+    /**
+     * Camera snapshot
+     */
+    public byte[] getSnapshot(String imageType) throws MediaException {
+        checkPermission();
+        checkState();
+
+        if (null == imageType) {
+            imageType = System.getProperty("video.snapshot.encodings");
+            if (null == imageType) {
+                throw new MediaException("Requested format is not supported");
+            }
+            int spacePos = imageType.indexOf(' ');
+            if (spacePos > 0) {
+                imageType = imageType.substring(0, spacePos);
+            }
+        }
+        
+        byte[] data = null;
+        if (hNative != 0) {
+            data = nSnapShot(hNative, imageType.toLowerCase());
+        }
+        if (null == data) {
+            throw new MediaException(imageType + " format is not supported");
+        }
+        return data;
+    }
+
+// #ifdef ENABLE_JSR_234 [
+    private synchronized Jsr234CameraControlsProxy get234CamCtrls() {
+        if (_jsr234CamCtrls == null) {
+            Class c = null;
+            try {
+                c = Class.forName(
+                    "com.sun.mmedia.Jsr234CameraControlsProxyImpl");
+                _jsr234CamCtrls = (Jsr234CameraControlsProxy)c.newInstance(); 
+                _jsr234CamCtrls.setCameraPlayer(this);
+            } catch (ClassNotFoundException e1) {
+            } catch (IllegalAccessException e2) {
+                throw new RuntimeException(
+                        "Could not access the class" + c.toString());
+            } catch (InstantiationException e3 ) {
+                throw new RuntimeException(
+                        "Could not instantiate the class" + c.toString());
+            }
+            if (_jsr234CamCtrls == null) {
+                try {
+                    c = Class.forName(
+                            "com.sun.mmedia.Jsr234CameraControlsProxyStub");
+                    _jsr234CamCtrls =
+                            (Jsr234CameraControlsProxy)c.newInstance();
+                } catch (ClassNotFoundException e1) {
+                    throw new RuntimeException(
+                            "Could not find camera controls proxy class");
+                } catch (IllegalAccessException e2) {
+                    throw new RuntimeException(
+                            "Could not access the class" + c.toString());
+                } catch (InstantiationException e3) {
+                    throw new RuntimeException(
+                            "Could not instantiate the class" + c.toString());
+                }
+            }
+        }
+        return _jsr234CamCtrls;
+    }
+    
+    protected Control doGetControl(String type) {
+        Control c = super.doGetControl(type);
+        if (c == null) {
+            if (type.startsWith(JSR234_CAMERA_PACKAGE_NAME)) {
+                c = get234CamCtrls().getJsr234CameraControl(type);
+            }
+        }
+        return c;
+    }
+// #endif  ]
+
+    public void checkSnapshotPermission()
+    {
+        checkPermission();
+    }
+}
