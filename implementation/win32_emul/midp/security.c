@@ -634,43 +634,7 @@ static char *getPolicyFilename(char *def_val) {
 
 	return file_name;
 }
-/*
-int javacall_load_permissions(void **array) {
-    char *file_str;
-    int lines, i1;
-    char **str_list;
-    char *ptr, *ptr0;
 
-    file_str = load_file("Permissions.txt");
-    if (file_str == NULL)
-        return 0;
-
-    do {
-        lines = count_lines(file_str);
-        if (lines == 0)
-            break;
-        //allocate one placeholder for pointers to lines and the lines
-        //for each line we add 1 byte for null terminating byte
-        str_list = (char**)javacall_malloc(lines*(sizeof(char*)+1) + strlen(file_str));
-        if (str_list == NULL) {
-            lines = 0;
-            break;
-        }
-        ptr0 = file_str;
-        ptr = ((char*)str_list) + lines*sizeof(char*);
-        for (i1 = 0; i1 < lines; i1++) {
-            str_list[i1] = ptr;
-            ptr0 += next_line(ptr0, ptr);
-            ptr += strlen(ptr)+1;
-        }
-        
-    } while (0);
-
-    javacall_free(file_str);
-    *array = str_list;
-    return lines;
-}
-*/
 int javacall_load_domain_list(void **array) {
     char *file_str, *ptr0, *ptr1;
     char buff[128];
