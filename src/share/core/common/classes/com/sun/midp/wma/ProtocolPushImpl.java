@@ -30,7 +30,6 @@ import com.sun.midp.io.j2me.push.ProtocolPush;
 import java.io.IOException;
 import java.io.InterruptedIOException;
 import javax.microedition.io.ConnectionNotFoundException;
-import com.sun.midp.security.Permissions;
 import com.sun.midp.midlet.MIDletSuite;
 
 /**
