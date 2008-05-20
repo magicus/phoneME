@@ -1,0 +1,330 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" 
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html><head>
+<title>Getting Started with phoneME Feature Software (MR3)</title> 
+	
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta http-equiv="Content-Style-Type" content="text/css">
+<meta name="version" content="3.5.1.19.8">
+<style type="text/css">
+
+/* <![CDATA[ */
+@import "tigris.css";
+@import "inst.css";
+/* ]]> */
+
+KBD {font-size: larger;}
+ </style></head>
+<body class="composite" style="margin-top: 25px; margin-left: 25px; margin-right: 25px; 
+margin-bottom: 30px;"> 
+  <table id="main" border="0" cellpadding="4" cellspacing="0" width="100%">
+<tbody><tr>
+ <td id="midcol">
+
+<!--  ================= BEGIN PAGE BODY (Ignore Everything Above)  ============ -->
+
+<!-- BEGIN PAGE TITLE -->
+<div id="projecthome" class="app"> <h1><font color="#e76f00">Building a phoneME 
+Feature Software Reference Port<span class="style1"> </span></font></h1>
+<!-- END PAGE TITLE -->
+
+<p>
+<a href="../../index.html">home</a> |
+<a href="./index_feature.html">first</a> | <a href="./cldc_feature.html">prev</a> 
+<p>
+
+The phoneME Feature Software is an Open Source version of Sun Microsystems' commercial 
+implementation, the Sun Java Wireless Client software, version 2.1.  The commercial 
+version is based upon, and incorporates code from, the Open Source MR3 version of phoneME 
+Feature software.  The phoneME Feature software is built on top of CLDC, an Open Source 
+version of Sun Microsystems' Connected Limited Device Configuration, HotSpot Implementation, 
+version 2.1.
+<P>
+This document has the following sections:
+<p>
+<ul>
+<li><a href="#win32">Building phoneME Feature Software on a Windows x86 Build Platform</a>
+<li><a href="#phoneme_docs">Building phoneME Feature Software Documentation</a>
+</ul>
+<p>
+
+For proper building and performance, your system must meet the 
+requirements provided in <A HREF="begin_feature.html">Before You Begin</A>.
+<P>
+
+
+
+<!-- BEGIN SECTION HEAD -->
+<hr noshade="noshade" size="1">
+<a name="win32"></a><h3>Building phoneME Feature Software on a Windows x86 Build Platform</h3>
+<!-- END SECTION HEAD -->
+<p>
+
+This section provides basic instructions for building a default phoneME Feature software 
+implementation for the JavaCall porting layer on a Windows x86 target platform.
+<p>
+
+
+<a name="set_win_var"></a>
+<strong>Setting Variables for a Windows x86 Build Platform</strong>
+<p>
+
+To properly build the phoneME Feature software on a Windows platform, you must set the
+environment variables shown in <a href="#table5-1">TABLE 5-1</A>. 
+<P>
+
+<a name="table5-1"></a>
+<TABLE CLASS="Titled" BORDER=1 BORDERCOLORLIGHT="#FFFFFF" BORDERCOLORDARK="#000000"
+CELLPADDING=5 CELLSPACING=0>
+<CAPTION> <b>TABLE 5-1</b>Required Windows x86 Build Variables</CAPTION>
+<THEAD>
+<TR>
+<TH SCOPE="COL" ROWSPAN="1" COLSPAN="1" BGCOLOR="#CCCCCC">
+<P CLASS="TableHead"><A NAME="pgfId-473082"></A>Name
+</P>
+</TH>
+<TH SCOPE="COL" ROWSPAN="1" COLSPAN="1" BGCOLOR="#CCCCCC">
+<P CLASS="TableHead"><A NAME="pgfId-473084"></A>Description
+</P>
+</TH>
+</TR>
+</THEAD>
+<TBODY>
+<TR>
+<TD SCOPE="ROW" ROWSPAN="1" COLSPAN="1">
+<P><kbd>MIDP_OUTPUT_DIR</kbd>
+</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P>Location where the output from building phoneME Feature is stored. For example,
+<code>MIDP_OUTPUT_DIR=%BUILD_OUTPUT_DIR%/midp</code>.
+</P>
+</TD>
+</TR>
+<TR>
+<TD SCOPE="ROW" ROWSPAN="1" COLSPAN="1">
+<P><KBD> PCSL_OUTPUT_DIR</KBD>
+</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P>Location where the output from building PCSL is stored. Required for phoneME 
+Feature to pick up PCSL libraries. For example,
+<code>PCSL_OUTPUT_DIR=%BUILD_OUTPUT_DIR%/pcsl</code>.
+</P>
+</TD>
+</TR>
+<TR>
+<TD SCOPE="ROW" ROWSPAN="1" COLSPAN="1">
+<P><KBD>CLDC_DIST_DIR</KBD>
+</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P>Required for building phoneME Feature software. Must point to the location of 
+CLDC software build output. For example, 
+<kbd>CLDC_DIST_DIR=%BUILD_OUTPUT_DIR%/cldc/javacall_i386_vc/dist</kbd>.
+</P>
+</TD>
+</TR>
+<TR>
+<TD SCOPE="ROW" ROWSPAN="1" COLSPAN="1">
+<P><KBD>TOOLS_DIR</KBD>
+</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P>Location of tools generated during build process. Required for building 
+phoneME Feature software. For example, <kbd>TOOLS_DIR=%COMPONENTS_DIR%/tools</kbd>. 
+</P>
+</TD>
+</TR>
+<TR>
+<TD SCOPE="ROW" ROWSPAN="1" COLSPAN="1">
+<P><KBD>TOOLS_OUTPUT_DIR</KBD>
+</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P>Defines a directory location for tools-specific output.  For example, 
+<code>TOOLS_OUTPUT_DIR=%BUILD_OUTPUT_DIR%/tools</code>
+</P>
+</TD>
+</TR>
+<TR>
+<TD SCOPE="ROW" ROWSPAN="1" COLSPAN="1">
+<P><KBD>USE_MULTIPLE_ISOLATES</KBD>
+</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P>Required for phoneME Feature to support multitasking.  Must be set to 
+<code>true</code>. If not explicitly set to <code>true</code>, the build 
+defaults to <code>false</code> and phoneME Feature is built without multitasking 
+capability. 
+<p>
+<b>Note:</b> If you set <code>USE_MULTIPLE_ISOLATES=true</code> to build phoneME 
+Feature software, you must also set <code>ENABLE_ISOLATES=true</code> to build 
+CLDC, as described in <a href="./cldc_feature.html">Building a CLDC Reference Port</a>. 
+</P>
+</TD>
+</TR>
+<TR>
+<TD SCOPE="ROW" ROWSPAN="1" COLSPAN="1">
+<P><KBD> JAVACALL_PLATFORM</KBD>
+</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P>Defines the JavaCall porting layer platform, cpu, and compiler. For example, 
+<code>JAVACALL_PLATFORM=win32_i386_vc</code>.
+</P>
+</TD>
+</TR>
+<TR>
+<TD SCOPE="ROW" ROWSPAN="1" COLSPAN="1">
+<P><kbd>JAVACALL_OUTPUT_DIR</kbd>
+</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P>Indicates the location where JavaCall porting layer output is stored. For example, 
+<code>JAVACALL_OUTPUT_DIR=%BUILD_OUTPUT_DIR%/javacall</code>.
+</P>
+</TD>
+</TR>
+</TBODY>
+</TABLE>
+<p>
+
+
+<a name="build_javacall"></a>
+<strong>Building for a Windows x86 Target Platform</strong>
+<p>
+To build the phoneME Feature software for for a Windows x86 target platform, take 
+the following steps.
+<p>
+<ol>
+<b><li>Set the</b> <code>MIDP_OUTPUT_DIR</code> <b>variable, as shown here.</b>
+<p>
+<code>$ set MIDP_OUTPUT_DIR=%BUILD_OUTPUT_DIR%/midp</code>
+<p>
+<b><li>Change to the build directory, as shown here.</b>
+<p>
+<code>$ cd %COMPONENTS_DIR%/midp/build/javacall</code>
+<p>
+<b>Note:</b> You can skip this step and use the <code>make</code> <code>-C</code> 
+build option. For more information, see <a href="./begin_feature.html#dash_c">
+Building with the <code>make -C</code> Option</a>.
+<p>
+<b><li>Run the</b> <code>make</code> <b>command as a single command-line string, as shown here.</b>
+<P>
+<KBD>$ make PCSL_OUTPUT_DIR=%BUILD_OUTPUT_DIR%/pcsl 
+CLDC_DIST_DIR=%BUILD_OUTPUT_DIR%/cldc/javacall_i386_vc/dist TOOLS_DIR=%COMPONENTS_DIR%/tools 
+TOOLS_OUTPUT_DIR=%BUILD_OUTPUT_DIR%/tools USE_MULTIPLE_ISOLATES=true 
+JAVACALL_PLATFORM=win32_i386_vc JAVACALL_OUTPUT_DIR=%BUILD_OUTPUT_DIR%/javacall</KBD>
+<P>
+<b>Note:</b> It is possible to include optional packages in your Windows x86 
+target build.  For more information, see 
+<a href="./begin_feature.html#op_pack">Including Optional Packages in Your Build</a>.
+</ol>
+<p>
+The generated output for Windows x86 target platform is found under 
+<KBD>%BUILD_OUTPUT_DIR%/midp</KBD>.
+<p>
+
+
+<a name="win_usertest"></a>
+<strong>Running phoneME Feature on a Windows x86 Target 
+Platform</strong>  
+<p>
+Once you build an implementation of phoneME Feature software, you can run a MIDlet 
+using the Wireless Toolkit emulation device. However, before you can do this, you 
+must take a few additional steps.
+<p>
+To prepare your phoneME Feature implementation for running, follow these steps:
+<p>
+<ol>
+<li>Ensure you have Wireless Toolkit (WTK) 2.5.2 installed on your machine.
+<p>
+<li>Copy the contents of the <code>/WTK</code> directory (<em>not</em> the directory 
+itself) into your WTK root directory.
+<p>
+<li>Copy the contents of the <code>/WTK_STORAGE</code> directory (<em>not</em> the 
+directory itself) into the WTK storage directory. 
+<p>
+<b>Note:</b> WTK 2.5.2 storage is located under
+<code>C:/Documents and Settings/</code><i>your_user_name</i><code>/j2mewtk/2.5.2/appdb</code>.
+</ol>
+<p>
+To start your phoneME Feature implementation:
+<p>
+<ol>
+<li>Change to the WTK root directory.
+<p>
+<li>Execute the following command:
+<p>
+<code>$ bin/emulator.exe</code>
+<p>
+<b>Note:</b> To get a list of supported parameters, run the <code>bin/emulator.exe</code>
+command with the <code>-help</code> option.
+</ol>
+<p>
+For additional information on running in the WTK Emulator, see the
+<a href="http://java.sun.com/javame/reference/docs/sjwc-2.1/pdf-html/html/build/index.html">
+<i>Sun Java Wireless Client Software Build Guide</i></a>.
+<p>
+
+
+<!-- BEGIN SECTION HEAD -->
+<hr noshade="noshade" size="1">
+<a name="phoneme_docs"></a><h3>Building phoneME Feature Software Documentation</h3>
+<!-- END SECTION HEAD -->
+<p>
+
+You can create HTML API documents for phoneME Feature software from porting interfaces.
+To do this for the phoneME Feature software, use the <KBD>make docs_html</KBD> build
+target.
+<P>
+
+<a name="javadoc"></a>
+<strong>Generating Javadoc Tool Documentation</strong>
+<p>
+
+Building Javadoc tool documentation is the same for all platforms.
+<P>
+<OL>
+<b><LI>Change to the default build directory for your target platform.</b> 
+<p>
+For example, this could be the Windows x86 target platform, as shown here.
+<P>
+<KBD>$ cd %COMPONENTS_DIR%/javacall-com/configuration/phoneMEFeature/win32_emul</KBD>
+<P>
+<b><LI>Build Javadoc tool HTML documentation.</b>
+<P>
+<KBD>$ make docs_html</KBD>
+</OL>
+<p>
+
+<a name="view_docs"></a>
+<strong>Viewing phoneME Feature Software Documents</strong>
+<P>
+Use any browser to display the Javadoc output file at the following URL:
+<P>
+<ul>
+<KBD>file://%MIDP_OUTPUT_DIR%/doc/javadoc/html/index.html</KBD>
+</ul>
+<pre>
+
+
+</pre>
+
+<a href="../../index.html">home</a> |
+<a href="./index_feature.html">first</a> | <a href="./cldc_feature.html">prev</a> 
+<p>
+
+<!-- =================================== END PAGE BODY ================== -->
+
+<p>
+<hr noshade="noshade" size="1">
+
+<p class=copyright>
+<a href="../style/copyright.html">Copyright</a> &#169;
+2008 Sun Microsystems, Inc. All rights reserved.
+</p>
+
+
+</div></td></tr></tbody></table></body></html>

@@ -1,0 +1,252 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" 
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html><head>
+<title>Getting Started with phoneME Feature Software (MR3)</title> 
+ 
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta http-equiv="Content-Style-Type" content="text/css">
+<meta name="version" content="3.5.1.19.8">
+<style type="text/css">
+
+/* <![CDATA[ */
+@import "tigris.css";
+@import "inst.css";
+/* ]]> */
+
+KBD {font-size: larger;}
+ </style></head>
+<body class="composite" style="margin-top: 25px; margin-left: 25px; margin-right: 25px; 
+margin-bottom: 30px;"> 
+  <table id="main" border="0" cellpadding="4" cellspacing="0" width="100%">
+<tbody><tr>
+ <td id="midcol">
+
+<!--  ================= BEGIN PAGE BODY (Ignore Everything Above)  ============ -->
+
+<!-- BEGIN PAGE TITLE -->
+<div id="projecthome" class="app"> <h1><font color="#e76f00">Building a PCSL 
+Reference Port<span class="style1"> </span></font></h1>
+<!-- END PAGE TITLE -->
+
+<p>
+<a href="../../index.html">home</a> |
+<a href="./index_feature.html">first</a> | <a href="./javacall_feature.html">prev</a> | 
+<a href="./cldc_feature.html">next</a> | <a href="./client_feature.html">last</a> 
+<p>
+
+This document contains instructions for building a PCSL reference port. It has the 
+following sections:
+<p>
+<ul>
+<li><a href="#win32">Building PCSL Software on a Windows x86 Build Platform</a> 
+<li><a href="#pcsl_docs">Building PCSL Documentation</a>
+</ul>
+<p>
+
+PCSL libraries are used to build CLDC and the phoneME Feature software client.  PCSL 
+contains several individual services, including file, network, memory, and print.  
+Follow the procedures in this section to build a default PCSL reference port containing 
+libraries, tools, tests, and documentation bundles for the following target platforms:
+<P>
+<ul>
+<li><a href="#javacall_i386">Windows x86</a>
+</ul>
+<b>Note:</b> Although each PCSL service can be individually built, this document 
+describes how to build the full PCSL only. 
+<p>
+
+
+
+<!-- BEGIN SECTION HEAD -->
+<hr noshade="noshade" size="1">
+<a name="win32"></a><h3>Building PCSL Software on a Windows x86 Build Platform</h3>
+<!-- END SECTION HEAD -->
+<p>
+
+This section describes how to build PCSL on the Windows x86 build platform, for a 
+JavaCall porting layer on a Windows x86 target platform, as shown in 
+<a href="#table3-1">Table 3-1</a>.
+<P>
+<b>Note:</b> Make a note of the values you choose for these variables. When building
+the CLDC and phoneME Feature software client, you must set corresponding values.
+<P>
+
+
+<a name="win_env"></a>
+<strong>Setting PCSL Environment Variables for a Windows x86 Build Platform</strong>
+<p>
+
+<TABLE CLASS="Titled" BORDER=1 BORDERCOLORLIGHT="#FFFFFF" BORDERCOLORDARK="#000000"
+CELLPADDING=5 CELLSPACING=0>
+<A NAME="table3-1"></A>
+<CAPTION><b>TABLE 3-1</b>Required PCSL Build Variables for Windows x86</CAPTION>
+<THEAD>
+<TR>
+<TH SCOPE="COL" ROWSPAN="1" COLSPAN="1" BGCOLOR="#CCCCCC">
+<P CLASS="TableHead"><A NAME="pgfId-485154"></A>Name
+</P>
+</TH>
+<TH SCOPE="COL" ROWSPAN="1" COLSPAN="1" BGCOLOR="#CCCCCC">
+<P CLASS="TableHead"><A NAME="pgfId-485156"></A>Description
+</P>
+</TH>
+</TR>
+</THEAD>
+<TBODY>
+<TR>
+<TD SCOPE="ROW" ROWSPAN="1" COLSPAN="1">
+<P>
+<code>PCSL_PLATFORM</code>
+<P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P>
+Identifies the target operating system, the target CPU, and the compiler that the
+build system uses to create the PCSL library. Its value has the form
+<I>os_cpu_compiler</I>.
+<p>
+The value of this variable is <code>javacall_i386_vc</code>.  The <code>vc</code> 
+indicates the Microsoft Visual Studio compiler.
+</TD>
+</TR>
+<TR>
+<TD SCOPE="ROW" ROWSPAN="1" COLSPAN="1">
+<P>
+<KBD>PCSL_OUTPUT_DIR</KBD>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P>
+Specifies the location where the build system puts PCSL output. For example,  this
+could be <KBD>%BUILD_OUTPUT_DIR%/pcsl</KBD>.
+<p>
+<TR>
+<TD SCOPE="ROW" ROWSPAN="1" COLSPAN="1">
+<P>
+<KBD>JAVACALL_OUTPUT_DIR</KBD> <P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P>
+If you are building a JavaCall porting layer implementation, this specifies the 
+location of the JavaCall porting layer output.
+<p>
+</TD>
+</TR>
+
+<TR>
+<TD SCOPE="ROW" ROWSPAN="1" COLSPAN="1">
+<P>
+<KBD>TOOLS_DIR</KBD> <P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P>
+Defines the directory where needed build tools are located. For example, 
+<code>TOOLS_DIR=%COMPONENTS_DIR%/tools</code>.	
+<p>
+</TD>
+</TR>
+
+<TR>
+<TD SCOPE="ROW" ROWSPAN="1" COLSPAN="1">
+<P>
+<KBD>TOOLS_OUTPUT_DIR</KBD> <P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P>
+Defines a directory location for tools-specific output.  For example, 
+<code>TOOLS_OUTPUT_DIR=%BUILD_OUTPUT_SIR%/tools</code>.
+<p>
+</TD>
+</TR>
+
+
+
+</TBODY>
+</TABLE>
+<p>
+
+
+<a name="javacall_i386"></a>
+<strong>Building for a Windows x86 Target Platform</strong>
+<P>
+<ol>
+<p>
+<b><li>Run the</b> <code>make</code> <b>command as a single command-line string, 
+as shown here.</b>
+<P>
+<KBD>$ make -C %COMPONENTS_DIR%/pcsl PCSL_PLATFORM=javacall_i386_vc 
+PCSL_OUTPUT_DIR=%BUILD_OUTPUT_DIR%/pcsl JAVACALL_OUTPUT_DIR=%BUILD_OUTPUT_DIR%/javacall 
+TOOLS_DIR=%COMPONENTS_DIR%/tools TOOLS_OUTPUT_DIR=%BUILD_OUTPUT_DIR%/tools</KBD>
+</ol>
+<p>
+The PCSL build output is found under <code>%PCSL_OUTPUT_DIR%/javacall_i386</code>
+<P>
+
+
+<!-- BEGIN SECTION HEAD -->
+<hr noshade="noshade" size="1">
+<a name="pcsl_docs"></a><h3>Building PCSL Documentation</h3>
+<!-- END SECTION HEAD -->
+<p>
+
+To build Doxygen API documentation in HTML format from PCSL porting interfaces, 
+you must install the Doxygen tool.  It can be acquired from
+<code><A HREF="http://www.doxygen.org">http://www.doxygen.org</A></code> 
+<p>
+
+<strong>Generating Doxygen Documentation</strong>
+<P>
+The procedure for building Doxygen documentation is the same for both Linux and Windows 
+build platforms.
+<P>
+<OL>
+<b><LI>Change to the PCSL directory:</b>
+<P>
+<code>$ cd %COMPONENTS_DIR%/pcsl</code>
+<P>
+<b><LI>Run the</b> <KBD>make doc</KBD> <b>command:</b>
+<P>
+<code>$ make doc</code>
+<p>
+
+<P>
+<b>Note:</b> The build system assumes that the Doxygen executable is in the 
+directory <KBD>/usr/bin/doxygen</KBD>. If your executable is installed in a 
+different location, use the <code>DOXYGEN_CMD</code> variable to define the 
+new location.  For example:
+<p>
+<KBD>$ make DOXYGEN_CMD=<em>doxygen_dir</em> doc</KBD>
+<p>
+where <em>doxygen_dir</em> is the location of your Doxygen executable.
+<p>
+</OL>
+
+
+<strong>Viewing PCSL Documents</strong>
+<P> 
+Use any browser to display the Doxygen output file at the following URL:
+<P>
+<ul>
+<code>file://%PCSL_OUTPUT_DIR%/doc/doxygen/html/index.html</code>
+</ul>
+<pre>
+
+
+</pre>
+
+<a href="../../index.html">home</a> |
+<a href="./index_feature.html">first</a> | <a href="./javacall_feature.html">prev</a> |
+<a href="./cldc_feature.html">next</a> | <a href="./client_feature.html">last</a> 
+<p>
+
+<!-- =================================== END PAGE BODY ================== -->
+
+<p>
+<hr noshade="noshade" size="1">
+
+<p class=copyright>
+<a href="../style/copyright.html">Copyright</a> &#169;
+2008 Sun Microsystems, Inc. All rights reserved.
+</p>
+
+
+</div></td></tr></tbody></table></body></html>

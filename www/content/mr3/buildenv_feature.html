@@ -1,0 +1,330 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" 
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html><head>
+<title>Getting Started with phoneME Feature Software (MR3)</title> 
+
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta http-equiv="Content-Style-Type" content="text/css">
+<meta name="version" content="3.5.1.19.8">
+<style type="text/css">
+
+/* <![CDATA[ */
+@import "tigris.css";
+@import "inst.css";
+/* ]]> */
+
+KBD {font-size: larger;}
+ </style></head>
+<body class="composite" style="margin-top: 25px; margin-left: 25px; margin-right: 25px; 
+margin-bottom: 30px;"> 
+  <table id="main" border="0" cellpadding="4" cellspacing="0" width="100%">
+<tbody><tr>
+ <td id="midcol">
+
+<!-- =========  BEGIN PAGE BODY (Ignore Everything Above)  ====================== -->
+
+<!-- BEGIN PAGE TITLE -->
+<div id="projecthome" class="app"> <h1><font color="#e76f00">Setting Up Your Build 
+Environment<span class="style1"></span></font></h1>
+<!-- END PAGE TITLE -->
+
+<p>
+<a href="../../index.html">home</a> |
+<a href="./index_feature.html">first</a> | <a href="./begin_feature.html">prev</a> |  
+<a href="./javacall_feature.html">next</a> | <a href="./client_feature.html">last</a> 
+<p> 
+
+This section describes how to prepare your Windows x86 build environment for 
+building the JavaCall porting layer, PCSL, CLDC, and phoneME Feature client software.  
+
+<p>
+This document contains the following sections:
+<p>
+<ul>
+<li><a href="#win_setup">Setting Up the Windows x86 Build Environment</a>
+</ul>
+<P>
+To properly use this document, two kinds of variables are set:
+<p>
+<ul>
+<li>Optional - Not required by the phoneME Feature build scripts. However, setting them 
+makes this document easier to follow and use.
+<p> 
+<li>Required - Required by the phoneME Feature build scripts.
+</ul>
+<p>
+Both kinds of variables are described in the following sections. 
+<p>
+
+
+<!-- BEGIN SECTION HEAD -->
+<hr noshade="noshade" size="1">
+<a name="win_setup"></a><h3>Setting Up the Windows x86 Build Environment</h3>
+<!-- END SECTION HEAD -->
+<p>
+
+To set up your Windows x86 platform, you must take the following general steps:
+<P>
+<UL>
+<LI>Install <a href="#cyg4me">Cyg4Me</a></LI>
+<LI>Set up your Windows x86 <a href="#work_env">work environment</a>
+<LI>Set Windows x86 platform <a href="#win_var">environment variables</a></LI>
+</UL>
+<p>
+
+<a name="cyg4me"></a>
+<strong>Installing Cyg4Me</strong>
+<p>
+
+Before you build phoneME Feature on a Windows x86 platform, download and install Cyg4Me,
+version 1.1. Cyg4Me is a standardized version of Cygwin for building Java ME platform
+products on Windows. It provides the necessary UNIX&#174; system tools, such as
+<KBD>sh</KBD> and <KBD>gnumake</KBD>.
+<P>
+<ol>
+<b><li>Download the Cyg4Me zip file
+<a href="ftp://ftp.sunfreeware.com/pub/freeware/contributions/cygwin">
+<code>cyg4me1_1_full.zip</code></a>.</b>
+<P>
+This file contains all the executables and libraries needed to build on the Windows x86
+platform.
+<P>
+<b><li>Unzip the file.</b>
+<P>
+For example, you could unzip the file into
+<KBD>C:&#92;cyg4me</KBD>.
+<P>
+</ol>
+<p>
+
+
+<a name="work_env"></a>
+<strong>Setting Up Your Windows Work Environment</strong>
+<p>
+
+To properly set up your Windows work environment, you must run the Windows batch file, 
+<code>VCVARS32.BAT</code>, as shown here:
+<p>
+<ul>
+<code>C:\Program Files\Microsoft Visual Studio\VC98\Bin\VCVARS32.BAT</code>
+</ul>
+<p>
+The <code>VCVARS32.BAT</code> file sets several Windows variables, including 
+<code>LIB</code>, <code>INCLUDE</code>, and others. 
+<p>
+Due to variations in Windows system configuration, the directory path to the 
+<code>VCVARS32.BAT</code> file might differ from that shown here.  If so, use the 
+Windows Explorer to search for <code>VCVARS32.BAT</code>. 
+<p>
+<b>Note:</b> If using a Windows path with spaces, as shown above, doesn't work, try 
+entering a substitute path using Windows short names.  
+<p>
+To find the short names for your directory path, change to each directory that has 
+spaces and type: 
+<p>
+<ul>
+<code>$ dir /x</code>
+</ul>  
+<p>
+You can use also the <code>cygpath</code> utility (from Cyg4me) to get the 
+Windows short name.  For example:
+<p>
+<ul>
+<code>$ cygpath -ms C:\Program Files\Microsoft Visual Studio\VC98\Bin</code>
+<p>
+</ul>
+delivers the short name 
+<p>
+<ul>
+<code>C:/PROGRA~1/MICROS~2/VC98/Bin</code>
+</ul>
+<p>
+  
+If your compiler is Microsoft Visual Studio 2003, you might better set up your Windows 
+work environment using the file <code>vsvars32.bat</code>.  Run this Windows batch file 
+as shown here: 
+<p>
+<ul>
+<code>C:\Program Files\Microsoft Visual Studio .NET 2003\Common7\Tools\vsvars32.bat</code>
+<p>
+</ul>
+<p>
+<b>Note:</b> Building phoneME Feature using Microsoft Visual Studio .NET 2003 may work, 
+but it is not fully supported.  For best results, use Microsoft Visual C++ Professional 
+Version 6.0, as described in <a href="./index_feature.html#win_req">Requirements for 
+Building on a Windows x86 Platform</a>.
+<p>
+
+
+<a name="win_var"></a>
+<strong>Setting Build Platform Environment Variables</strong>
+<p>
+
+To set up the Windows x86 build environment to build phoneME Feature software for the
+JavaCall porting layer on Windows x86 target platform, set the optional build variables shown in
+<a href="#table1-1">Table1-1</a> and the required build variables as shown
+<a href="#table1-2">Table1-2</a>.
+<P>
+
+<!-- ---------------- START OPTIONAL VARIABLE TABLE ------------ -->
+
+<a name="table1-1"></a>
+<TABLE CLASS="Titled" BORDER=1 BORDERCOLORLIGHT="#FFFFFF" BORDERCOLORDARK="#000000" 
+CELLPADDING=5 CELLSPACING=0 >
+<CAPTION> <b>TABLE 1-1</b>Optional Windows x86 Build Platform Variables</CAPTION>
+<THEAD>
+<TR>
+<TH SCOPE="COL" ROWSPAN="1" COLSPAN="1" BGCOLOR="#CCCCCC">
+<P CLASS="TableHead"><A NAME="pgfId-474006"></A>Name
+</P>
+</TH>
+<TH SCOPE="COL" ROWSPAN="1" COLSPAN="1" BGCOLOR="#CCCCCC">
+<P CLASS="TableHead"><A NAME="pgfId-474008"></A>Description
+</P>
+</TH>
+</TR>
+</THEAD>
+<TBODY>
+<TR>
+<TD SCOPE="ROW" ROWSPAN="1" COLSPAN="1">
+<P><KBD>COMPONENTS_DIR</KBD>
+</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P>The location where you install the phoneME Feature software.  For example,
+<code>COMPONENTS_DIR=C:/home/chocolate/phoneME_feature</code>.
+<p>
+<b>Note:</b> The sample directory <code>/home/chocolate</code> can also be referred to 
+by the convention <em>InstallDir</em>. For example, 
+<em>InstallDir</em><code>/phoneME_feature</code>. 
+</P>
+</TD>
+</TR>
+<TR>
+<TD SCOPE="ROW" ROWSPAN="1" COLSPAN="1">
+<P><KBD>BUILD_OUTPUT_DIR</KBD>
+</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P></A>The location where executables and other build output for phoneME Feature components 
+are stored. For example, <code>BUILD_OUTPUT_DIR=%COMPONENTS_DIR%/build_output</code>.
+</P>
+</TD>
+</TR>
+</TBODY>
+</TABLE>
+<p>
+
+<!-- ----------- START REQUIRED VARIABLE TABLE --------------- -->
+
+<a name="table1-2"></a>
+<TABLE CLASS="Titled" BORDER=1 BORDERCOLORLIGHT="#FFFFFF" BORDERCOLORDARK="#000000"
+CELLPADDING=5 CELLSPACING=0 >
+<CAPTION> <b>TABLE 1-2</b>Required Windows x86 Build Platform Variables</CAPTION>
+<THEAD>
+<TR>
+<TH SCOPE="COL" ROWSPAN="1" COLSPAN="1" BGCOLOR="#CCCCCC">
+<P CLASS="TableHead"><A NAME="pgfId-474006"></A>Name
+</P>
+</TH>
+<TH SCOPE="COL" ROWSPAN="1" COLSPAN="1" BGCOLOR="#CCCCCC">
+<P CLASS="TableHead"><A NAME="pgfId-474008"></A>Description
+</P>
+</TH>
+</TR>
+</THEAD>
+<TBODY>
+<TR>
+<TD SCOPE="ROW" ROWSPAN="1" COLSPAN="1">
+<P><KBD>JDK_DIR</KBD><A NAME="marker-474010"></A><A NAME="marker-474011"></A>
+<A NAME="marker-474012"></A>
+</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P>Directory that contains the JDK software release.  For example, <code>JDK_DIR=C:/java/j2sdk1.4.2</code>.
+</TD>
+</TR>
+<TR>
+<TD SCOPE="ROW" ROWSPAN="1" COLSPAN="1">
+<P><KBD> CYG4ME</KBD><A NAME="marker-474010"></A><A NAME="marker-474011"></A>
+<A NAME="marker-474012"></A>
+</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P>Location where you download and unzip Cyg4Me.  For example, <code>CYG4ME=C:\cyg4me</code>.
+</TD>
+</TR>
+<TR>
+<TD SCOPE="ROW" ROWSPAN="1" COLSPAN="1">
+<P><KBD>PATH</KBD>
+</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P>Must be set to include Cyg4Me and other tools used in the Windows x86 build process.
+</P>
+</TD>
+</TR>
+</TBODY>
+</TABLE>
+<p>
+
+
+<a name="win_build"></a>
+<strong>Setting Build Variables</a></strong>
+<p
+
+<OL>
+<b><li>Set your</b> <code>COMPONENTS_DIR</code> <b>environment variable to the location 
+where you install the</b> <code>phoneME_feature</code> <b>directory.</b>
+<p>
+<code>$ set COMPONENTS_DIR=C:/</code><em>InstallDir</em><code>/phoneME_feature</code>
+<p>
+<b><li>Create the directory</b> <code>build_output</code> <b>as a folder and set 
+the</b> <code>BUILD_OUTPUT_DIR</code> <b>variable.</b> 
+<p>
+<code>$ set BUILD_OUTPUT_DIR=%COMPONENTS_DIR%/build_output</code>
+<p>
+<b><li>Set the</b> <code>JDK_DIR</code> <b>variable.</b>
+<p>
+<code>$ set JDK_DIR=C:/java/j2sdk1.4.2</code>
+<p>
+<b>Note:</b> As shown in this command line, the<b> <code>JDK_DIR</code> </b>path 
+must be set using Linux (forward) slashes.
+<p>
+<b><li>Set the</b> <code>CYG4ME</code> <b>variable, as shown here:</b>
+<p>
+<code>$ set CYG4ME=C:\cyg4me</code>
+<p> 
+<b><li>Add</b> <code>Cyg4Me</code> <b>and</b> <code>JDK_DIR</code> <b>to your</b> 
+<KBD>PATH</KBD> <b>environment variable.  Make the</b> <KBD>bin</KBD> <b>directory 
+of your</b> <code>Cyg4Me</code> <b>installation the first element of your</b>
+<code>PATH</code><b>, as shown here.</b> 
+<P>
+<code>$ set PATH=%CYG4ME%&#92;bin;%JDK_DIR%/bin;%PATH%</code>
+<p>
+</OL>
+<P>
+<b>Note:</b> If you previously installed Cygwin on your Windows x86 platform, remove 
+all <code>PATH</code> elements that point to those previous versions.  
+<PRE>
+
+
+</pre>
+
+<a href="../../index.html">home</a> |
+<a href="./index_feature.html">first</a> | <a href="./begin_feature.html">prev</a> | 
+<a href="./javacall_feature.html">next</a> | <a href="./client_feature.html">last</a> 
+<p>
+
+<!-- =============================== END PAGE BODY ======================= -->
+
+<p>
+<hr noshade="noshade" size="1">
+
+<p class=copyright>
+<a href="../style/copyright.html">Copyright</a> &#169;
+2008 Sun Microsystems, Inc. All rights reserved.
+</p>
+
+
+</div></td></tr></tbody></table></body></html>

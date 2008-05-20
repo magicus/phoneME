@@ -1,0 +1,227 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" 
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html><head>
+<title>Getting Started with phoneME Feature Software (MR3)</title> 
+
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta http-equiv="Content-Style-Type" content="text/css">
+<meta name="version" content="3.5.1.19.8">
+<style type="text/css">
+
+/* <![CDATA[ */
+@import "tigris.css";
+@import "inst.css";
+/* ]]> */
+
+KBD {font-size: larger;}
+ </style></head>
+<body class="composite" style="margin-top: 25px; margin-left: 25px; margin-right: 25px; 
+margin-bottom: 30px;"> 
+  <table id="main" border="0" cellpadding="4" cellspacing="0" width="100%">
+<tbody><tr>
+ <td id="midcol">
+
+<!-- =========  BEGIN PAGE BODY (Ignore Everything Above)  ====================== -->
+
+<!-- BEGIN PAGE TITLE -->
+<div id="projecthome" class="app"> <h1><font color="#e76f00">Before You Begin<span 
+class="style1"></span></font></h1>
+<!-- END PAGE TITLE -->
+
+<p>
+<a href="../../index.html">home</a> |
+<A href="./index_feature.html">first</a> I <a href="./download_feature.html">prev</a> |  
+<a href="./buildenv_feature.html">next</a> | <a href="./client_feature.html">last</a> 
+<p> 
+
+
+This document contains the following sections:
+<p>
+<ul>
+<li><a href="#docs">Document Notes and Conventions</a></l>
+<li><a href="#env">Setting Variables for Your Build Environment</a></li>
+<li><a href="#op_pack">Including Optional Packages in Your Builds</a></li>
+<li><a href="#dash_c">Building with the <code>make -C</code> Option</a></li>
+</ul> 
+<P>
+<b>Note:</b> This section contains information you might find useful while working through 
+the phoneME Feature installation process.  It is for your information only.  If you want
+to begin downloading and installing the phoneME Feature software right away, see
+<a href="./download_feature.html">Downloading the phoneME Feature Software Source Code</a>.  
+<p>
+
+<!-- BEGIN SECTION HEAD -->
+<hr noshade="noshade" size="1">
+<a name="docs"></a><h3>Document Notes and Conventions</h3>
+<!-- END SECTION HEAD  -->
+<p>
+
+For your ease of use, this guide uses the following conventions:
+<p>
+<ul>
+<li>The document variable <code>%COMPONENTS_DIR%</code> means "the location where you have 
+installed the phoneME Feature software."  For example, if you install the phoneME Feature 
+software into the directory <code>/home/chocolate/phoneME_feature</code>, changing directory 
+to <code>%COMPONENTS_DIR%/midp</code> means to change directory to 
+<code>/home/chocolate/phoneME_feature/midp</code>.
+<p>
+<li>For all procedures and examples carried out on the Windows platform, the use of Cygwin
+(Cyg4Me) is assumed.  Instructions for installing Cyg4Me are provided
+<a href="./buildenv_feature.html#cyg4me">here</a>.
+<p>
+</ul>
+
+
+<!-- BEGIN SECTION HEAD -->
+<hr noshade="noshade" size="1">
+<a name="env"></a><h3>Setting Variables for Your Build Environment</h3>
+<!-- END SECTION HEAD -->
+<p>
+
+Preparing your build environment requires you to set environment variables for your 
+Windows x86 build platforms.  The specific variables that need to be set 
+are described in the remainder of this document. 
+
+<p>
+
+Build environment variables can be set in two ways:
+<P>
+<UL>
+<LI><a href="#system">As a system variable</LI></a>
+<LI><a href="#cline">On the command-line, when you run <code>make</code></LI></a>
+</UL>
+<P>
+
+
+<a name="system"><strong>Setting System Variables</strong></a>
+<p>
+
+On a Windows x86 build platform, a system variable is set in the following way:
+<p>
+<ul>
+<code>$ set <i>VARIABLE</i>=<i>value</i></code>
+<P>
+For example, to set the <code>TARGET_CPU</code> as a system variable on a Windows x86
+platform, type:
+<P>
+<code>$ set TARGET_CPU=i386</code>
+<p>
+</ul>
+<p>
+
+
+<a name="cline"><strong>Setting Command-Line Variables</strong></a>
+<p>
+
+On a Windows x86 build platform, a command-line variable is set in the 
+following way:
+<p>
+<ul>
+<code>$ make <i>VARIABLE</i>=<i>value</i> make_target</code>
+<P>
+For example, to set <code>TARGET_CPU</code> on a <code>make</code> command-line
+for a Windows x86 platform, use the following format:
+<P>
+<code>$ make TARGET_CPU=i386 all</code>
+<p>
+</ul>
+<p>
+<b>Note:</b> Typing <code>make</code> on the command-line by itself is the same as 
+typing <code>make all</code>. 
+
+
+<!-- BEGIN SECTION HEAD -->
+<hr noshade="noshade" size="1">
+<a name="op_pack"></a><h3>Including Optional Packages in Your Builds</h3>
+<!-- END SECTION HEAD -->
+
+Optional packages can be included in the JavaCall porting layer and phoneME Feature software 
+client builds by adding the appropriate optional package variable pairs to the <code>make</code> 
+command line.  
+<P>
+To do this, use the following variable format, where <code>XXX</code> is the JSR number:
+<ul>
+<li><code>USE_JSR_XXX=true</code>
+<li><code>JSR_XXX_DIR=</code><em>path-to-jsr-source</em>
+</ul>
+<p>
+For example, to build the JavaCall porting layer to include JSR 120 (Wireless Messaging APIs), 
+the <code>make</code> command-line looks like this:
+<p>
+<ol>
+<code>$ make USE_JSR_120=true JSR_120_DIR=%COMPONENTS_DIR%/jsr120 </code>  
+</ol>
+<p>
+<b>Note:</b> For optional packages with two-digit numbers, the format is <code>USE_JSR_XX</code>
+and <code>JSR_XX_DIR</code>.
+<p>
+In addition to the JSR variables shown above, you must also use the following variables when 
+building optional packages:
+<p>
+<ul>
+<li><code>USE_ABSTRACTIONS=true</code>
+<li><code>ABSTRACTIONS_DIR=</code><em>path-to-abstractions-directory</em>
+</ul>
+<p>
+Certain JSRs have dependencies that must be taken into consideration when building optional 
+packages.  For example, to properly build JSR 234, Advanced Multimedia Supplements API, 
+you <em>must</em> also build JSR 135, Mobile Media API. 
+<p>
+For more information on using optional package variables and the dependencies between specific 
+optional packages, see 
+<a href="http://java.sun.com/javame/reference/docs/sjwc-2.1/pdf-html/html/build/index.html">
+<i>Sun Java Wireless Client Software Build Guide</i></a>.
+
+<p>
+<b>Note:</b> Builds for PCSL and CLDC do not require optional packages to be included, even if they are built 
+in the JavaCall porting layer and the phoneME Feature software client.  However, if optional 
+packages are included in the build for the phoneME Feature client software, the same optional 
+packages <em>must</em> be included in the JavaCall porting layer build.
+<p>
+
+
+<!-- BEGIN SECTION HEAD -->
+<hr noshade="noshade" size="1">
+<a name="dash_c"></a><h3>Building With the <code>make -C</code> Option</h3>
+<!-- END SECTION HEAD -->
+<p>
+When using <code>make</code> to build the JavaCall porting layer, PCSL, CLDC, and phoneME 
+Feature software, the <code>-C</code> option is used to specify the directory where the build 
+is performed.  Using the <code>-C</code> option enables you to build in the correct location 
+without changing to the build directory before the build is launched. 
+<p>
+For improved usability, this guide directs you to change to the build directory before building
+a component. However, if you choose, you can launch your build from any directory using the 
+<code>make -C</code> option.
+<p>
+For example, if the build directory for building the JavaCall porting layer on an Windows x86 
+target platform in the phoneME Feature client is <code>%COMPONENTS_DIR%/midp/build/javacall</code>, 
+enter the following: 
+<p>
+<ol>
+<code>$ make -C %COMPONENTS_DIR%/midp/build/javacall</code> <em>flag1 flag2 flag3</em>
+</ol>
+<p>
+
+
+<pre>
+
+</pre>
+
+<a href="../../index.html">home</a> |
+<a href="./index_feature.html">first</a> | <a href="./download_feature.html">prev</a> | 
+<a href="./buildenv_feature.html">next</a> | <a href="./client_feature.html">last</a> 
+<p>
+
+<!-- =============================== END PAGE BODY ======================= -->
+
+<p>
+<hr noshade="noshade" size="1">
+
+<p class=copyright>
+<a href="../style/copyright.html">Copyright</a> &#169;
+2008 Sun Microsystems, Inc. All rights reserved. 
+</p>
+
+
+</div></td></tr></tbody></table></body></html>

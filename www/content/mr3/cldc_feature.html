@@ -1,0 +1,304 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html><head>
+<title>Getting Started with phoneME Feature Software (MR3)</title>
+
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta http-equiv="Content-Style-Type" content="text/css">
+<meta name="version" content="3.5.1.19.8">
+<style type="text/css">
+
+/* <![CDATA[ */
+@import "tigris.css";
+@import "inst.css";
+/* ]]> */
+
+KBD {font-size: larger;}
+ </style></head>
+<body class="composite" style="margin-top: 25px; margin-left: 25px; margin-right: 25px; 
+margin-bottom: 30px;"> 
+  <table id="main" border="0" cellpadding="4" cellspacing="0" width="100%">
+<tbody><tr>
+ <td id="midcol">
+
+<!--  ================= BEGIN PAGE BODY (Ignore Everything Above)  ============ -->
+
+<!-- BEGIN PAGE TITLE -->
+<div id="projecthome" class="app"> <h1><font color="#e76f00">Building a CLDC 
+Reference Port<span class="style1"> </span></font></h1>
+<!-- END PAGE TITLE -->
+
+<p>
+<a href="../../index.html">home</a> |
+<a href="./index_feature.html">first</a> | <a href="./pcsl_feature.html">prev</a> | 
+<a href="./client_feature.html">next-last</a> 
+<p>
+
+CLDC software is an OSS community version of Sun Microsystems' Connected Limited 
+Device Configuration HotSpot&#153; Implementation virtual machine. Although 
+primarily created from the same shared code base, Sun Microsystems' commercial 
+product might not fully and accurately represent the OSS source base, due to 
+licensing and other legal restrictions.
+<P>
+This document has the following sections:
+<p>
+<ul>
+<li><a href="#win32">Building CLDC Software on a Windows x86 Build Platform</a></li>
+<li><a href="#build_docs">Building CLDC Documentation</a></li>
+</ul>
+<p> 
+For more information about building and running CLDC, see 
+<a href="http://java.sun.com/javame/reference/docs/cldc-hi/index.html">
+CLDC HotSpot Implementation software documentation</a>.
+<p>
+
+
+<!-- BEGIN SECTION HEAD -->
+<hr noshade="noshade" size="1">
+<a name="win32"></a><h3>Building CLDC Software on a Windows x86 Build Platform</h3>
+<!-- END SECTION HEAD -->
+<p>
+Building a default version of CLDC creates the CLDC software executable <KBD>cldc_vm.exe</KBD> 
+for the JavaCall porting layer on a Windows x86 target platform. To properly build the CLDC software on 
+a Windows x86 build platform, you must set the environment variables shown in 
+<a href="#table4-1">TABLE 4-1</A>. 
+<P>
+
+<a name="table4-1"></a>
+<TABLE CLASS="Titled" BORDER=1 BORDERCOLORLIGHT="#FFFFFF" BORDERCOLORDARK="#000000"
+CELLPADDING=5 CELLSPACING=0 >
+<CAPTION> <b>TABLE 4-1</b>Required CLDC Build Variables for Windows x86</CAPTION>
+<THEAD>
+<TR>
+<TH SCOPE="COL" ROWSPAN="1" COLSPAN="1" BGCOLOR="#CCCCCC">
+<P CLASS="TableHead"><A NAME="pgfId-473082"></A>Name
+</P>
+</TH>
+<TH SCOPE="COL" ROWSPAN="1" COLSPAN="1" BGCOLOR="#CCCCCC">
+<P CLASS="TableHead"><A NAME="pgfId-473084"></A>Description
+</P>
+</TH>
+</TR>
+</THEAD>
+<TBODY>
+<TR>
+<TD SCOPE="ROW" ROWSPAN="1" COLSPAN="1">
+<P CLASS="TableText"><A NAME="pgfId-473089"></A><KBD>JVMWorkSpace</KBD>
+</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="TableText"><A NAME="pgfId-473092"></A>The location of your CLDC software
+source code workspace.  For example,
+<KBD>JVMWorkSpace=%COMPONENTS_DIR%/cldc</KBD>.
+<br>
+</P>
+</TD>
+</TR>
+<TR>
+<TD SCOPE="ROW" ROWSPAN="1" COLSPAN="1">
+<P CLASS="TableText"><A NAME="pgfId-473197"></A><KBD>JVMBuildSpace</KBD>
+</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="TableText"><A NAME="pgfId-473199"></A>The location of your CLDC software
+build output. For example,
+<KBD>JVMBuildSpace=%BUILD_OUTPUT_DIR%/cldc</KBD>.
+</P>
+</TD>
+</TR>
+<TR>
+<TD SCOPE="ROW" ROWSPAN="1" COLSPAN="1">
+<P CLASS="TableText"><A NAME="pgfId-473736"></A><KBD>ENABLE_PCSL</KBD>
+</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="TableText"><A NAME="pgfId-473738"></A>Required for building CLDC with
+the PCSL software component. Must be set to <code>true</code>.
+</P>
+</TD>
+</TR>
+<TR>
+<TD SCOPE="ROW" ROWSPAN="1" COLSPAN="1">
+<KBD>PCSL_OUTPUT_DIR</KBD>
+</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="TableText"><A NAME="pgfId-474049"></A>The location of PCSL build output.
+Required for building CLDC if <code>ENABLE_PCSL=true</code>.  For example,
+<KBD>PCSL_OUTPUT_DIR=%BUILD_OUTPUT_DIR%/pcsl</KBD>.
+</P>
+</TD>
+</TR>
+<TR>
+<TD SCOPE="ROW" ROWSPAN="1" COLSPAN="1">
+<P CLASS="TableText"><A NAME="pgfId-473732"></A><KBD>ENABLE_ISOLATES</KBD>
+</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="TableText"><A NAME="pgfId-473734"></A>Required for building a CLDC implementation
+with multitasking capability. Must be set to <KBD>true</KBD>.  If not explicitly set to
+<code>true</code>, the build defaults to <code>false</code> and CLDC is built without
+multitasking capability.
+<p>
+<b>Note:</b> If you set <code>ENABLE_ISOLATES=true</code> to build a CLDC implementation
+with multitasking capability, you must also set <code>USE_MULTIPLE_ISOLATES=true</code>
+to build the phoneME Feature software, as described in <a href="./client_feature.html">
+Building a phoneME Feature Reference Port</a>.
+<p>
+</TD>
+</TR>
+<TR>
+<TD SCOPE="ROW" ROWSPAN="1" COLSPAN="1">
+<P>
+<KBD>JAVACALL_OUTPUT_DIR</KBD> <P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P>
+The location of JavaCall porting layer output. For example, 
+<code>JAVACALL_OUTPUT_DIR=%BUILD_OUTPUT_DIR%/javacall</code>.
+</TD>
+</TR>
+<TR>
+<TD SCOPE="ROW" ROWSPAN="1" COLSPAN="1">
+<P>
+<KBD>TOOLS_DIR</KBD>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P>
+Defines the directory where needed build tools are located.  For example,
+<code>TOOLS_DIR=%COMPONENTS_DIR%/tools</code>.
+<p>
+</TD>
+</TR>
+<TR>
+<TD SCOPE="ROW" ROWSPAN="1" COLSPAN="1">
+<P>
+<KBD>TOOLS_OUTPUT_DIR</KBD>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P>
+Defines a directory location for tools-specific output.  For example,
+<code>TOOLS_OUTPUT_DIR=%BUILD_OUTPUT_DIR%/tools</code>.
+<p>
+</TD>
+</TR>
+</TBODY>
+</TABLE>
+<p>
+
+
+<a name="build_win"></a>
+<strong>Building CLDC for a Windows x86 Target Platform</strong>
+<P>
+<OL>
+<b><LI>Set the</b> <code>JVMWorkSpace</code> <b>variable, as shown here.</b>
+<p>
+<KBD>$ set JVMWorkSpace=%COMPONENTS_DIR%/cldc</KBD>
+<p>
+<b><LI>Set the</b> <code>JVMBuildSpace</code> <b>variable, as shown here.</b>
+<p>
+<KBD>$ set JVMBuildSpace=%BUILD_OUTPUT_DIR%/cldc</KBD>
+<p>
+
+<b><LI>Run the</b> <code>make</code> <b>command as a single command-line string, as shown here.</b>
+<P>
+<KBD>$ make -C %JVMWorkSpace%/build/javacall_i386_vc  ENABLE_PCSL=true 
+PCSL_OUTPUT_DIR=%BUILD_OUTPUT_DIR%/pcsl ENABLE_ISOLATES=true 
+JAVACALL_OUTPUT_DIR=%BUILD_OUTPUT_DIR%/javacall TOOLS_DIR=%COMPONENTS_DIR%/tools 
+TOOLS_OUTPUT_DIR=%BUILD_OUTPUT_DIR%/tools</KBD>
+</OL>
+<P>
+The generated CLDC output is found under <KBD>%JVMBuildSpace%/javacall_i386_vc/dist</KBD>.
+</OL>
+<p>
+
+
+<!-- BEGIN SECTION HEAD -->
+<hr noshade="noshade" size="1">
+<a name="running"></a><h3>Running CLDC Software</h3>
+<!-- END SECTION HEAD -->
+
+<p>
+Once you build the CLDC software, you can invoke it from the command line
+to run a class compiled from the Java programming language. The path to the
+executable depends on the target platform (operating system and processor) for
+which you build the software.
+<P>
+
+<a name="run_win"></a>
+<strong>Running CLDC on a JavaCall porting layer on Windows x86 Target Platform</strong>
+<p>
+<OL>
+<b><LI>Change to the CLDC build space for the JavaCall porting layer on Windows x86 platform:</b>
+<P>
+<KBD>$ cd %JVMBuildSpace%/javacall_i386/dist</KBD>
+<p>
+<b><LI>Enter the following command:</b>
+<P>
+<KBD>$ bin/cldc_vm.exe -classpath</KBD>
+<EM>location-of-compiled-applications</EM><KBD>/classes</KBD> <EM>classname</EM>
+<p>
+For example, to run the <code>HelloWorld</code> application:
+<p>
+<code>$ bin/cldc_vm -classpath C:/src/classes HelloWorld</code>
+</OL>
+<p>
+
+
+<!-- BEGIN SECTION HEAD -->
+<hr noshade="noshade" size="1">
+<a name="build_docs"></a><h3>Building CLDC Documentation</h3>
+<!-- END SECTION HEAD -->
+<p>
+
+You can create HTML documents from CLDC porting interfaces. To do this for the
+CLDC software, use the <KBD>make docs_html</KBD> build target.
+<P>
+
+<a name="javadoc"></a>
+<strong>Generating Javadoc Tool Documentation</strong>
+<P>
+Building Javadoc&#153 tool documentation is the same for all build platforms.
+<P>
+<OL>
+<b><LI>Change to the default build directory for your build platform.</b> 
+<p>
+For example, this could be a Linux on i386 platform, as shown here.
+<P>
+<KBD>$ cd %JVMWorkSpace%/build/linux_i386</KBD>
+<P>
+<b><LI>Build Javadoc tool HTML documentation.</b>
+<P>
+<KBD>$ make docs_html</KBD>
+<P>
+</OL>
+<p>
+
+<a name="view_javadoc"></a>
+<strong>Viewing phoneME Feature Documents</strong>
+<P>
+Use any browser to display the Javadoc tool output file at the following URL:
+<P>
+<ul>
+<KBD>file://%JVMBuildSpace%/doc/javadoc/html/index.html</KBD>
+</ul>
+<pre>
+
+
+</pre>
+
+<a href="../../index.html">home</a> |
+<a href="./index_feature.html">first</a> | <a href="./pcsl_feature.html">prev</a> |
+<a href="./client_feature.html">next-last</a> 
+<p>
+
+<!-- =================================== END PAGE BODY ================== -->
+
+<hr shade="noshade" size="1">
+
+<p class=copyright>
+<a href="../style/copyright.html">Copyright</a> &#169;
+2008 Sun Microsystems, Inc. All rights reserved.
+</p>
+
+
+</div></td></tr></tbody></table></body></html>

@@ -1,0 +1,173 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" 
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html><head>
+<title>Getting Started with phoneME Feature Software (MR3)</title> 
+                                                       
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta http-equiv="Content-Style-Type" content="text/css">
+<meta name="version" content="3.5.1.19.8">
+<style type="text/css">
+
+/* <![CDATA[ */
+@import "tigris.css";
+@import "inst.css";
+/* ]]> */
+
+KBD {font-size: larger;}
+ </style></head>
+<body class="composite" style="margin-top: 25px; margin-left: 25px; margin-right: 25px; 
+margin-bottom: 30px;"  
+  <table id="main" border="0" cellpadding="4" cellspacing="0" width="100%">
+<tbody><tr>
+ <td id="midcol">
+
+<!--  ===============    BEGIN PAGE BODY (Ignore Everything Above)  ============= -->
+
+<!--BEGIN PAGE TITLE -->
+<div id="projecthome" class="app"> <h1><font color="#e76f00"> Getting Started with phoneME 
+Feature Software   &nbsp; <span class="style1"> </span></font></h1>
+<!--END PAGE TITLE -->
+
+<p>
+<a href="../../index.html">home</a> | 
+<a href="./download_feature.html">next</a> | <a href="./client_feature.html">last</a> 
+<p>
+
+This guide contains the following sections:
+<p>
+<ul>
+<li><A HREF="download_feature.html">Downloading phoneME Feature Software Source Code</A>
+<li><A HREF="begin_feature.html">Before You Begin</A>
+<li><A HREF="buildenv_feature.html">Setting Up Your Build Environment</A>
+<li><A HREF="javacall_feature.html">Building the JavaCall Porting Layer</A>
+<li><A HREF="pcsl_feature.html">Building a PCSL Reference Port</A>
+<li><A HREF="cldc_feature.html">Building a CLDC Reference Port</A>
+<li><A HREF="client_feature.html">Building a phoneME Feature Software Reference Port</A>
+</ul>
+<p>
+
+
+<!-- BEGIN SECTION HEAD -->
+<hr noshade="noshade" size="1">
+<a name="intro"></a><h3>Introduction</h3>
+<!-- END SECTION HEAD -->
+<p>
+
+This guide contains information for building and running the phoneME&#153; Feature 
+software, an optimized Java&#153; Platform, Micro Edition stack based on Milestone 
+Release 3 (MR3) of the phoneME Feature software project. 
+<p>
+This guide allows you to take the following general steps:
+<p>
+<UL>
+<LI>Set up and configure the build environment for your build platforms</LI> 
+<LI>Build a default version of the JavaCall&#153; porting layer, PCSL libraries, CLDC, 
+and phoneME Feature software binaries.</LI>
+<LI>Run the phoneME Feature software on your default platform.</LI>
+<LI>Find additional information about phoneME Feature software.</LI>
+</UL>
+<p>
+<b>Note:</b> This document is part of the MR3 release of phoneME Feature software. The contents
+are subject to change at any time, based on community input and ongoing development. 
+<p>
+
+
+<!-- BEGIN SECTION HEAD -->
+<hr noshade="noshade" size="1">
+<a name="intro"></a><h3>Build Requirements</h3>
+<!-- END SECTION HEAD -->
+<p>
+
+When building the phoneME Feature software, the machine where you setup your build
+environment and carry out the build instructions is called your <i>build platform</i>.
+The build platform is the machine where source code is installed, the compilers are run,
+and executable code is built. This executable code is then installed and run on a
+<i>target platform</i>.
+<P>
+The phoneME Feature software supports the following build platforms:
+<P>
+<UL>
+<LI><a href="#win_req">Windows x86</LI></a>
+<P>
+</UL>
+<P>
+The phoneME Feature software supports the following target platforms:
+<P>
+<UL>
+<LI>Windows x86 (emulation mode only)</LI>
+</UL>
+<P>
+<b>Note:</b> The phoneME Feature software also supports building on Linux for the ARM target 
+platform.  For more information on building for this platform (the Texas Instruments
+P2SAMPLE64-V6 board), see the 
+<a href="http://java.sun.com/javame/reference/docs/sjwc-2.1/pdf-html/html/build/index.html">
+<i>Sun Java Wireless Client Software Build Guide</i>.
+<p>
+
+
+<!-- BEGIN SECTION HEAD -->
+<hr noshade="noshade" size="1">
+<a name="win_req"></a><strong>Requirements for Building on a Windows x86 Platform</strong>
+<!-- END SECTION HEAD -->
+<p>
+
+A Windows x86 target platform must meet the following requirements:
+<p>
+<ul>
+<li>Windows 2000 or Windows XP
+<li>JDK&#153; version 1.4.2
+<li>Microsoft Visual C++ (MSVC++) Professional Version 6.0 (with Microsoft Processor Pack 5, 
+version 6.15 or later, and an up-to-date Service Pack) 
+<li>Cyg4Me version 1.1 (a version of Cygwin for building Java ME technology.  Cyg4Me contains 
+GNU Make 3.79.1.)
+</ul>
+<p>
+The following software is optional:
+<p>
+<ul>
+<li>Doxygen version 1.4.1 (used to build API documentation)
+</ul>
+<p>
+For more information on acquiring and installing Windows x86 build platform tools, see 
+<a href="./buildenv_feature.html#win_setup"> Setting Up the Windows x86 Build 
+Environment</a>.
+
+
+<!-- BEGIN SECTION HEAD -->
+<hr noshade="noshade" size="1">
+<a name="docs"></a><h3>Commercial Documentation</h3>
+<!-- END SECTION HEAD  -->
+<p>
+
+This guide provides only the minimal information needed to set up, build, and run the
+phoneME Feature software quickly, using only default settings for each implementation.
+<p>
+For additional information on any topic presented in this document, see the
+<a href="http://java.sun.com/javame/reference/docs/sjwc-2.1/pdf-html/html/build/index.html">
+<i>Sun Java Wireless Client Software Build Guide</i></a>. 
+<p>
+For more information about other phoneME Feature software topics, including porting, 
+multitasking, using Adaptive User Interface Technology, and others, see the 
+<a href="http://java.sun.com/javame/reference/docs/sjwc-2.1/index.html">
+ commercial documentation set</a>.
+<pre>
+
+
+</pre>
+
+<a href="../../index.html">home</a> |
+<a href="./download_feature.html">next</a> | <a href="./client_feature.html">last</a> 
+<p>
+
+<!-- =============================== END PAGE BODY ================================= --> 
+
+<p>
+<hr noshade="noshade" size="1">
+
+<p class=copyright>
+<a href="../style/copyright.html">Copyright</a> &#169;
+2008 Sun Microsystems, Inc. All rights reserved.
+</p>
+
+
+</div></td></tr></tbody></table></body></html>

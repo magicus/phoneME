@@ -1,0 +1,245 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" 
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html><head>
+<title>Getting Started with phoneME Feature Software (MR3)</title> 
+ 
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta http-equiv="Content-Style-Type" content="text/css">
+<meta name="version" content="3.5.1.19.8">
+<style type="text/css">
+
+/* <![CDATA[ */
+@import "tigris.css";
+@import "inst.css";
+/* ]]> */
+
+KBD {font-size: larger;}
+ </style></head>
+<body class="composite" style="margin-top: 25px; margin-left: 25px; margin-right: 25px; 
+margin-bottom: 30px;"> 
+  <table id="main" border="0" cellpadding="4" cellspacing="0" width="100%">
+<tbody><tr>
+ <td id="midcol">
+
+<!--  ================= BEGIN PAGE BODY (Ignore Everything Above)  ============ -->
+
+<!-- BEGIN PAGE TITLE -->
+<div id="projecthome" class="app"> <h1><font color="#e76f00">Building the JavaCall Porting  
+Layer<span class="style1"> </span></font></h1>
+<!-- END PAGE TITLE -->
+
+<p>
+<a href="../../index.html">home</a> |
+<a href="./index_feature.html">first</a> | <a href="./buildenv_feature.html">prev</a> | 
+<a href="./pcsl_feature.html">next</a> | <a href="./client_feature.html">last</a> 
+<p>
+
+The JavaCall porting layer provides a uniform set of APIs that improve and simplify the 
+phoneME Feature software porting process.   
+<p>
+
+To build a default implementation of the JavaCall porting layer, you take the following 
+general steps:
+<p>
+<UL>
+<LI>Set environment <a href="#javacall_var">variables</a> for your platform
+<LI>Run <KBD>make</KBD> to <a href="#build_javacall">build</a> the JavaCall porting layer</LI>
+</UL>
+<P>
+
+<!-- BEGIN SECTION HEAD -->
+<hr noshade="noshade" size="1">
+<a name="javacall_var"></a><h3>Setting JavaCall Porting Layer Environment Variables</h3>
+<!-- END SECTION HEAD -->
+<p>
+
+The JavaCall has five environment variables that must be set, as shown in 
+<a href="#table2-1">Table 2-1</a>. 
+<P>
+<b>Note:</b> Make note of the values you choose for these variables. When executing the
+build procedures for PCSL, CLDC, and the phoneME Feature software client, you must set
+corresponding values.
+<P>
+
+
+<A NAME="table2-1"></A>
+<TABLE CLASS="Titled" BORDER=1 BORDERCOLORLIGHT="#FFFFFF" BORDERCOLORDARK="#000000"
+CELLPADDING=5 CELLSPACING=0 >
+<CAPTION><b>TABLE 2-1</b>Required JavaCall Porting Layer Build Variables</CAPTION>
+<THEAD>
+<TR>
+<TH SCOPE="COL" ROWSPAN="1" COLSPAN="1" BGCOLOR="#CCCCCC">
+<P CLASS="TableHead"><A NAME="pgfId-485154"></A>Name
+</P>
+</TH>
+<TH SCOPE="COL" ROWSPAN="1" COLSPAN="1" BGCOLOR="#CCCCCC">
+<P CLASS="TableHead"><A NAME="pgfId-485156"></A>Description
+</P>
+</TH>
+</TR>
+</THEAD>
+<TBODY>
+<TR>
+<TD SCOPE="ROW" ROWSPAN="1" COLSPAN="1">
+<P>
+<KBD>BuildDir</KBD>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P>
+The location of your phoneME Feature build directory.
+<p>
+For example, 
+<code>BuildDir=%COMPONENTS_DIR%/javacall-com/configuration/phoneMEFeature/win32_emul</code>.
+<p>
+</TD>
+</TR>
+<TR>
+<TD SCOPE="ROW" ROWSPAN="1" COLSPAN="1">
+<P>
+<KBD>JAVACALL_DIR</KBD>
+<P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P>
+Specifies the location of the base JavaCall API source code and makefiles, 
+which contains MIDP and specific optional packages, including the following:
+<p>
+Java Wireless Messaging (JSR 120)
+<br>
+Mobile Media API (JSR 135)
+<br>
+Security and Trust Services (JSR 177)
+<br>
+Content Handler API (JSR 211)
+<P>
+For example, <code>JAVACALL_DIR=%COMPONENTS_DIR%/javacall</code>.
+</TD>
+</TR>
+<TR>
+<TD SCOPE="ROW" ROWSPAN="1" COLSPAN="1">
+<P>
+<KBD>PROJECT_JAVACALL_DIR</KBD>
+<P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P>
+Specifies the location of additional JavaCall API source code and makefiles,
+which includes additional optional packages, including the following:
+<p>
+Personal Information and File Management (JSR 75)
+<br>
+Bluetooth (JSR 82) 
+<br>
+Location API (JSR 179) 
+<br>
+Wireless Messaging (JSR 205)
+<br>
+Advanced Multimedia Supplements (JSR 234)
+<br>
+Mobile Sensor API (JSR 256)
+<p>
+For example, <code>PROJECT_JAVACALL_DIR=%COMMPONENTS_DIR%/javacall-com</code>.   
+</TD>
+</TR>
+<TR>
+<TD SCOPE="ROW" ROWSPAN="1" COLSPAN="1">
+<P>
+<KBD>JAVACALL_OUTPUT_DIR</KBD>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P>
+Defines the directory where the build system places its output.  For example, 
+<code>JAVACALL_OUTPUT_DIR=%BUILD_OUTPUT_DIR%/javacall</code>.
+<p>	
+</TD>
+</TR>
+<TR>
+<TD SCOPE="ROW" ROWSPAN="1" COLSPAN="1">
+<P>
+<KBD>TOOLS_DIR</KBD>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P>
+Defines the directory where needed build tools are located.  For example,
+<code>TOOLS_DIR=%COMPONENTS_DIR%/tools</code>.
+<p>
+</TD>
+</TR>
+<TR>
+<TD SCOPE="ROW" ROWSPAN="1" COLSPAN="1">
+<P>
+<KBD>TOOLS_OUTPUT_DIR</KBD>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P>
+Defines a directory location for tools-specific output.  For example,
+<code>TOOLS_OUTPUT_DIR=%BUILD_OUTPUT_DIR%/tools</code>.
+<p>
+</TD>
+</TR>
+</TBODY>
+</TABLE>
+<p>
+
+<b>Note:</b> The phoneME Feature client software is complex and flexible, and many 
+build options are available. For more information on build options, see
+<a href="http://java.sun.com/javame/reference/docs/sjwc-2.1/pdf-html/html/build/index.html">
+<i>Sun Java Wireless Client Software Build Guide</i></a>.
+<P>
+
+
+<!-- BEGIN SECTION HEAD -->
+<hr noshade="noshade" size="1">
+<a name="build_javacall"></a><h3>Building the JavaCall Porting Layer</h3>
+<!-- END SECTION HEAD -->
+<p>
+
+To build an implementation of the JavaCall porting layer, take the following steps:
+<p>
+<OL>
+<b><LI>Set the</b> <code>BuildDir</code> <b>variable based on where you picked up your 
+JavaCall porting layer source files.</b>
+<p>
+For more information, see <a href="#table2-1">Table 2-1</a>.
+<P>
+<b><LI>Run the</b> <code>make</code> <b>command as a single command-line string, as shown here.</b>
+<p>
+<ol>
+<KBD>$ make -C %BuildDir% JAVACALL_DIR=%COMPONENTS_DIR%/javacall 
+PROJECT_JAVACALL_DIR=%COMPONENTS_DIR%/javacall-com 
+JAVACALL_OUTPUT_DIR=%BUILD_OUTPUT_DIR%/javacall
+TOOLS_DIR=%COMPONENTS_DIR%/tools TOOLS_OUTPUT_DIR=%BUILD_OUTPUT_DIR%/tools</KBD>
+</ol>
+<p>
+<b>Note:</b> It is possible to include optional packages in your JavaCall porting layer 
+build.  The makefiles for building these optional packages are picked up from the repository 
+and zip archive with the JavaCall source, but no optional packages are built unless other 
+variables are set.  For more information, see 
+<a href="./begin_feature.html#op_pack">Including Optional Packages in Your Build</a>.
+</OL>
+<P>
+When the <KBD>make</KBD> command has successfully completed, the JavaCall porting layer 
+output is found  in <KBD>%JAVACALL_OUTPUT_DIR%</KBD>.
+</UL>
+<pre>
+
+
+</pre>
+
+<a href="../../index.html">home</a> |
+<a href="./index_feature.html">first</a> | <a href="./buildenv_feature.html">prev</a> |
+<a href="./pcsl_feature.html">next</a> | <a href="./client_feature.html">last</a> 
+<p>
+
+<!-- =================================== END PAGE BODY ================== -->
+
+<p>
+<hr noshade="noshade" size="1">
+
+<p class=copyright>
+<a href="../style/copyright.html">Copyright</a> &#169;
+2008 Sun Microsystems, Inc. All rights reserved.
+</p>
+
+
+</div></td></tr></tbody></table></body></html>

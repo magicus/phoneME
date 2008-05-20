@@ -1,0 +1,212 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" 
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html><head>
+<title>Getting Started with phoneME Feature Software (MR3)</title> 
+                                                       
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta http-equiv="Content-Style-Type" content="text/css">
+<meta name="version" content="3.5.1.19.8">
+<style type="text/css">
+
+/* <![CDATA[ */
+@import "tigris.css";
+@import "inst.css";
+/* ]]> */
+
+KBD {font-size: larger;}
+ </style></head>
+<body class="composite" style="margin-top: 25px; margin-left: 25px; margin-right: 25px; 
+margin-bottom: 30px;"  
+  <table id="main" border="0" cellpadding="4" cellspacing="0" width="100%">
+<tbody><tr>
+ <td id="midcol">
+
+<!--  ===============    BEGIN PAGE BODY (Ignore Everything Above)  ============= -->
+
+<!--BEGIN PAGE TITLE -->
+<div id="projecthome" class="app"> <h1><font color="#e76f00"> Downloading phoneME 
+Feature Software Source Code  &nbsp; <span class="style1"> </span></font></h1>
+<!--END PAGE TITLE -->
+
+<p>
+<a href="../../index.html">home</a> |
+<a href="./index_feature.html">first-prev</a> | 
+<a href="./begin_feature.html">next</a> | <a href="./client_feature.html">last</a> 
+<p>
+The phoneME Feature software project provides two ways for you to access the source 
+code:
+<p>
+<ul>
+<li>Download the required phoneME Feature software 
+<a href="#zip_file">zip archive</a> files.  These zip archive files include:
+<ul>
+<li>The phoneME Feature download source file, 
+<code>phoneme_feature-mr3-rel-src-</code><i>buildnum</i>-<i>date</i><code>.zip</code>
+<li>The supporting <a href="#zip_files">Lime</a> software libraries binary file, 
+<code>lime.zip</code>
+<li>The supporting <a href="#zip_files">Qsound</a> multimedia libraries binary 
+file, <code>qsound.zip</code>
+</ul>
+<li>Check out the phoneME Feature source code from the Subversion 
+<a href="#repo">repository</a>.
+<p>
+<b>Note:</b> If you choose to check out the phoneME Feature source code from the 
+repository, you <em>must</em> also install the <a href="#zip_files">Lime and 
+Qsound</a> binary zip archive files into your source repostiory location.   
+</ul>
+<p>
+Taken together, the phoneME Feature software source files, plus the Lime and 
+Qsound binary files, provide everything needed to build the phoneME Feature software.
+<p>
+<b>Note:</b> To check out the source code from the Subversion repository you must 
+have a <a href="http://subversion.tigris.org/project_packages.html">
+Subversion client</a> installed on your platform. For more information on using 
+Subversion, see the phoneME Feature 
+<a href="https://phoneme.dev.java.net/servlets/ProjectSource">Access</a> page.
+<p>
+For more information on the structure of the phoneME Feature source code repository and 
+how to work with it, see the 
+<a href="http://wiki.java.net/bin/view/Mobileandembedded/PhoneMERepositoryStructure">
+phoneME Repository Structure</a> page.
+<p>
+
+
+<!-- BEGIN SECTION HEAD -->
+<hr noshade="noshade" size="1">
+<a name="zip_file"></a><h3>Downloading the Source Code Zip Archive File</h3>
+<!-- END SECTION HEAD -->
+<p>
+To download the source code zip file, take the following steps:
+<p>
+<ol>
+<b><li>Create a phoneME Feature directory on your platform.</b>
+<p>
+<code>% mkdir phoneME_feature</code>
+<p>
+<b>Note:</b> Once you have created the <code>phoneME_feature</code> directory, 
+you can assign it to the variable <code>%COMPONENTS_DIR%</code>, as described 
+in <a href="./buildenv_feature.html#table1-1">Table 1-1</a>.
+<p>
+<b><li>Go to the phoneME Feature 
+<a href="https://phoneme.dev.java.net/downloads_page.html">
+Downloads page</a> and click the MR3 zip file name to copy it to your platform.</b>
+<p>
+<b><li>Once the file is downloaded, unzip the file into your</b> 
+<code>phoneME_feature</code>
+<b>directory.</b>
+<p>
+<code>% unzip 
+phoneme_feature-mr3-rel-src-</code><i>buildnum</i>-<i>date</i><code>.zip
+-d %COMPONENTS_DIR%</code>
+</ol>
+<p>
+
+
+<!-- BEGIN SECTION HEAD -->
+<hr noshade="noshade" size="1">
+<a name="zip_files"></a><h3>Downloading the Lime and Qsound Binary Zip Archive 
+Files</h3>
+<!-- END SECTION HEAD -->
+<p>
+Once you have created the <code>phoneME_feature</code> directory and installed 
+the phoneME Feature source files, follow these steps to install the Lime and 
+Qsound libraries:
+<p>
+<ol>
+<b><li>Go to the phoneME Feature
+<a href="https://phoneme.dev.java.net/downloads_page.html">
+downloads page</a> and click the Lime zip file name to copy it to your platform.</b>
+<p>
+<b><li>Once the file is downloaded, unzip the file into your</b>
+<code>phoneME_feature</code><b> directory.</b>
+<p>
+<code>% unzip lime.zip -d %COMPONENTS_DIR%</code>
+<p>
+<b><li>Go to the phoneME Feature
+<a href="https://phoneme.dev.java.net/downloads_page.html">
+downloads page</a> and click the Qsound zip file name to copy it to your platform.</b>
+<p>
+<b><li>Once the file is downloaded, unzip the file into your</b>
+<code>phoneME_feature</code><b> directory.</b>
+<p>
+<code>% unzip qsound.zip -d %COMPONENTS_DIR%</code>
+</ol>
+
+<p>
+
+ 
+<!-- BEGIN SECTION HEAD -->
+<hr noshade="noshade" size="1">
+<a name="repo"></a><h3>Checking Out the Source Code Repository</h3>
+<!-- END SECTION HEAD  -->
+<p>
+To check out the phoneME Feature source code repository, you must first install 
+a Subversion client on your platform.  Once the client is installed, take the 
+following steps:
+<p>
+<ol>
+<b><li>Create a phoneME Feature software directory on your platform and change 
+to it.</b>
+<p>
+<code>% mkdir phoneME_feature</code>
+<br>
+<code>% cd phoneME_feature</code>
+<p>
+<b><li>Check out the source code using the following command:</b>
+<p>
+<code>% svn co 
+https://phoneme.dev.java.net/svn/phoneme/components/</code><em>component_name</em><code>/trunk</code> 
+<em>component_name</em>
+<p>
+<b>Note:</b> In the phoneME Feature URL command string, <em>component_name</em> is the name of the 
+component you are working with. For example, if you are checking out the MIDP component, 
+substitute <code>midp</code> for <em>component_name</em> in both places. 
+<p>
+<b><li>Install the <a href="#zip_files">Lime and Qsound</a> binary zip archives</a>
+into your source repository location.</b>
+</ol>
+<p>
+
+
+<!-- BEGIN SECTION HEAD -->
+<hr noshade="noshade" size="1">
+<a name="docs"></a><h3>Updating the Source Code</h3>
+<!-- END SECTION HEAD  -->
+<p>
+If you are working in the phoneME Feature software source code repository, you can periodically  
+update your code to get the latest checkins and improvements. Do the following:
+<p>
+<ol>
+<b><li>Change to the directory for the component you want to update, for example, MIDP.</b>
+<p>
+<code>% cd phoneME_feature/midp</code>
+<p>
+<b><li>Enter the update command to update the component, as shown here.</b>
+<p>
+<code>% svn update</code>
+<p>
+</ol>
+<p>
+If you want to update other components, repeat the above steps for those components.
+<pre>
+
+
+</pre>
+
+<a href="../../index.html">home</a> |
+<a href="./index_feature.html">first-prev</a> | 
+<a href="./begin_feature.html">next</a> | <a href="./client_feature.html">last</a> 
+<p>
+
+<!-- =============================== END PAGE BODY ================================= --> 
+
+<p>
+<hr noshade="noshade" size="1">
+
+<p class=copyright>
+<a href="../style/copyright.html">Copyright</a> &#169;
+2008 Sun Microsystems, Inc. All rights reserved.
+</p>
+
+
+</div></td></tr></tbody></table></body></html>
