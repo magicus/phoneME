@@ -1,6 +1,5 @@
 /*
- * 
- * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
@@ -22,17 +21,19 @@
  * Clara, CA 95054 or visit www.sun.com if you need additional
  * information or have any questions.
  */
- 
+
 package com.sun.mmedia;
 
-import javax.microedition.media.MediaException;
+import javax.microedition.media.Control;
 
-public class DirectCamera extends DirectVideo 
-{
-    /**
-     * It does not need data source
-     */
-    public DirectCamera() {
+public class Jsr234CameraControlsProxyStub implements 
+        Jsr234CameraControlsProxy {
+    
+    public Jsr234CameraControlsProxyStub() {}
+    
+    public void setCameraPlayer(DirectCamera cam) {}
+
+    public Control getJsr234CameraControl(String control_name) {
+        return null;
     }
 }
-

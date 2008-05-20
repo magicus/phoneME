@@ -1,6 +1,5 @@
 /*
- * 
- * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
@@ -97,6 +96,10 @@ public class DirectPlayer extends BasicPlayer
     // #endif ]
 
     private Control rdsControl;
+
+// #ifdef ENABLE_JSR_234 [
+    private DirectTunerControl tunerControl;
+// #endif ]
 
     // #ifdef ENABLE_MULTIPLE_ISOLATES [
     // Tunnel between media and MIDP
@@ -672,6 +675,11 @@ public class DirectPlayer extends BasicPlayer
                     rdsControl = getRDSControl();
                 }
                 return rdsControl;
+            } else if (type.equals(tucName)) {
+                if (null == tunerControl) {
+                    tunerControl = DirectTunerControl.createInstance(hNative);
+                }
+                return tunerControl;
             }
         }
 
