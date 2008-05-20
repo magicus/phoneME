@@ -1724,8 +1724,8 @@ inline void ClassFileParser::resolve_invoke_special_virtual_conflicts(
   int count = 0;
   int i;
   for (i = 0; i < bitmap_length; i++) {
-    for( int collision = invoke_special_indexes().int_at(i) & 
-                         invoke_virtual_indexes().int_at(i);
+    for( unsigned collision = (unsigned)(invoke_special_indexes().int_at(i) & 
+                                         invoke_virtual_indexes().int_at(i));
          collision; collision >>= 1 ) {
       if (collision & 1) {
         count++;
@@ -1741,8 +1741,8 @@ inline void ClassFileParser::resolve_invoke_special_virtual_conflicts(
   count = 0;
   for (i = 0; i < bitmap_length; i++) {
     int offset = 0;
-    for( int collision = invoke_special_indexes().int_at(i) &
-                         invoke_virtual_indexes().int_at(i);
+    for( unsigned collision = (unsigned)(invoke_special_indexes().int_at(i) &
+                                         invoke_virtual_indexes().int_at(i));
          collision; collision >>= 1 ) {
       if( collision & 1 ) {
         relocation_map().ushort_at_put(2*count, i*BitsPerWord + offset);
