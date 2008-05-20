@@ -194,6 +194,18 @@ public class X509Certificate implements Certificate {
         (byte) 0xf7, (byte) 0x0d, (byte) 0x01, (byte) 0x01,
     };
     
+    /**
+     * DSA OIDs: 1.2.840.10040.4.[1|3]
+     * If the last digit is 1, this is "DSA Signature Keys" OID,
+     * if 3 - the OID identifying id-dsa-with-sha1 signature algorithm.
+     * "Start sequence" (0x30) and "sequence lenght" bytes are not included
+     * in the array.
+     */
+    private static final byte[] DSASeq = {
+        (byte) 0x06, (byte) 0x07, (byte) 0x2a, (byte) 0x86,
+        (byte) 0x48, (byte) 0xce, (byte) 0x38, (byte) 0x04
+    };
+
     /*
      * These signature algorithms are encoded as PKCS1Seq followed by
      * a single byte with the corresponding value shown below, e.g.
@@ -202,7 +214,7 @@ public class X509Certificate implements Certificate {
      *     pkcs-1(1) 4  
      * }
      */
-    /** Uknown algorithm (-1). */
+    /** Unknown algorithm (-1). */
     private static final byte NONE           = -1;
     /** RAS ENCRYPTION (0x01). */
     private static final byte RSA_ENCRYPTION = 0x01;
@@ -214,6 +226,9 @@ public class X509Certificate implements Certificate {
     private static final byte MD5_RSA        = 0x04;
     /** SHA1_RSA algorithm (0x05). */
     private static final byte SHA1_RSA       = 0x05;
+
+    /** DSA algorithm mask. */
+    private static final byte DSA_MASK       = (byte)0x80;
 
     /**
      * Expected prefix in decrypted value when MD2 hash is used for signing
@@ -482,9 +497,29 @@ public class X509Certificate implements Certificate {
         byte val;
         
         try {
-            match(PKCS1Seq);
-            val = enc[idx++];
-            match(NullSeq);
+            int currIdx = idx;
+
+            try {
+                match(PKCS1Seq);
+                val = enc[idx++];
+                match(NullSeq);
+            } catch (Exception e) {
+                // check if this is DSA
+                idx = currIdx;
+
+                int dsaSequenceLen = getLen(SEQUENCE_TYPE);
+                match(DSASeq);
+
+                /*
+                 * The next byte is 1 if this is DSA Signature Keys
+                 * or 3 - if DSAWithSHA1 signature.
+                 */
+                val = (byte)(enc[idx++] | DSA_MASK);
+
+                // skip it: we don't support DSA
+                idx += dsaSequenceLen;
+            }
+
             return val;
         } catch (Exception e) {
             throw new IOException("Algorithm Id parsing failed");
@@ -1039,7 +1074,7 @@ public class X509Certificate implements Certificate {
                     if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
                         Logging.report(Logging.INFORMATION,
                                        LogChannels.LC_SECURITY,
-                               "Subject: " + res.subject);
+                                       "Subject: " + res.subject);
                     }
                 } catch (Exception e) {
                     throw new IOException("Could not parse subject name");
@@ -1049,8 +1084,8 @@ public class X509Certificate implements Certificate {
             
             // Parse the subject public key information
             if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
-            Logging.report(Logging.INFORMATION, LogChannels.LC_SECURITY,
-                           "SubjectPublicKeyInfo follows");
+                Logging.report(Logging.INFORMATION, LogChannels.LC_SECURITY,
+                               "SubjectPublicKeyInfo follows");
             }
 
             publicKeyLen = res.getLen(SEQUENCE_TYPE);
@@ -1066,56 +1101,57 @@ public class X509Certificate implements Certificate {
             if (id != RSA_ENCRYPTION) {
                 // skip the public key
                 res.idx = publicKeyPos + publicKeyLen;
-            }
+                res.pubKey = null;
+            } else {
+                // Get the bit string
+                res.getLen(BITSTRING_TYPE);
+                if (res.enc[res.idx++] != 0x00) {
+                    throw new IOException(
+                        "Bitstring error while parsing public key information");
+                }
 
-            // Get the bit string
-            res.getLen(BITSTRING_TYPE);
-            if (res.enc[res.idx++] != 0x00) {
-                throw new IOException("Bitstring error while parsing public " +
-                                      "key information");
-            }
+                res.getLen(SEQUENCE_TYPE);
+                size = res.getLen(INTEGER_TYPE);
+                if (res.enc[res.idx] == (byte) 0x00) {
+                    // strip off the sign byte
+                    size--;
+                    res.idx++;
+                }
 
-            res.getLen(SEQUENCE_TYPE);
-            size = res.getLen(INTEGER_TYPE);
-            if (res.enc[res.idx] == (byte) 0x00) {
-                // strip off the sign byte
-                size--;
-                res.idx++;
-            }
-            
-            // Build the RSAPublicKey
-            modulusPos = res.idx;
-            modulusLen = size;
+                // Build the RSAPublicKey
+                modulusPos = res.idx;
+                modulusLen = size;
 
-            if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
-                Logging.report(Logging.INFORMATION, LogChannels.LC_SECURITY,
+                if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
+                    Logging.report(Logging.INFORMATION, LogChannels.LC_SECURITY,
                            "Modulus:  " +
-                           Utils.hexEncode(res.enc, modulusPos,
-                                                       modulusLen));
+                           Utils.hexEncode(res.enc, modulusPos, modulusLen));
+                }
+
+                res.idx += size;
+
+                size = res.getLen(INTEGER_TYPE);
+                if (res.enc[res.idx] == (byte) 0x00) {
+                    // strip off the sign byte
+                    size--;
+                    res.idx++;
+                }
+
+                exponentPos = res.idx;
+                exponentLen = size;
+
+                res.pubKey = new RSAPublicKey(res.enc, modulusPos, modulusLen,
+                                              res.enc, exponentPos, exponentLen);
+
+                if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
+                    Logging.report(Logging.INFORMATION, LogChannels.LC_SECURITY,
+                            "Exponent: " +
+                            Utils.hexEncode(res.enc, exponentPos, exponentLen));
+                }
+
+                res.idx += size;
             }
 
-            res.idx += size;
-
-            size = res.getLen(INTEGER_TYPE);
-            if (res.enc[res.idx] == (byte) 0x00) {
-                // strip off the sign byte
-                size--;
-                res.idx++;
-            }
-
-            exponentPos = res.idx;
-            exponentLen = size;
-
-            res.pubKey = new RSAPublicKey(res.enc, modulusPos, modulusLen,
-                                          res.enc, exponentPos, exponentLen);
-
-            if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
-                Logging.report(Logging.INFORMATION, LogChannels.LC_SECURITY,
-                        "Exponent: " +
-                        Utils.hexEncode(res.enc, exponentPos, exponentLen));
-            }
-
-            res.idx += size;
             if (res.idx != sigAlgIdx) {
                 if (res.version < 3) { 
                     throw new IOException(
@@ -1239,6 +1275,8 @@ public class X509Certificate implements Certificate {
         cert = (X509Certificate)certs.elementAt(0);
         checkKeyUsageAndValidity(cert, keyUsage, extKeyUsage);
 
+        int certIdx;
+
         for (int i = 1; ; i++) {
             // look up the public key of the certificate issuer
             caCerts = certStore.getCertificates(cert.getIssuer());
@@ -1248,12 +1286,13 @@ public class X509Certificate implements Certificate {
                  * "cert".
                  */
                 boolean isChainComplete = false;
-                for (int j = 0; j < caCerts.length; j++) {
+                
+                for (certIdx = 0; certIdx < caCerts.length; certIdx++) {
                     try {
-                        cert.verify(caCerts[j].getPublicKey());
+                        cert.verify(caCerts[certIdx].getPublicKey());
                         // if no exceptions, we found the right certificate
                         isChainComplete = true;
-                        subjectNames.addElement(caCerts[j].getSubject());
+                        subjectNames.addElement(caCerts[certIdx].getSubject());
                         break;
                     } catch (CertificateException ce) {
                         // try the next trusted certificate
@@ -1266,8 +1305,9 @@ public class X509Certificate implements Certificate {
             }
             
             if (i >= certs.size()) {
-                throw new CertificateException(cert,
-                    CertificateException.UNRECOGNIZED_ISSUER);
+                throw new CertificateException(cert, (caCerts == null) ?
+                    CertificateException.UNRECOGNIZED_ISSUER :
+                        CertificateException.VERIFICATION_FAILED);
             }
 
             /* Save the name of subject. */
@@ -1335,50 +1375,35 @@ public class X509Certificate implements Certificate {
             prevCert.verify(cert.getPublicKey());
         }
 
-        for (int i = 0; i < caCerts.length; i++) {
-            try {
-                cert.verify(caCerts[i].getPublicKey());
-            } catch (CertificateException ce) {
+        // check the CA key for valid dates
+        try {
+            caCerts[certIdx].checkValidity();
+        } catch (CertificateException ce) {
+            if (ce.getReason() == CertificateException.EXPIRED) {
                 /*
-                 * the exception will be when we get out side of the loop,
-                 * if none of the other keys work
+                 * Change the exception reason, so the
+                 * application knows that the problem is with
+                 * the device and not the server.
                  */
-                continue;
+                throw new CertificateException(caCerts[certIdx],
+                    CertificateException.ROOT_CA_EXPIRED);
             }
 
-            // check the CA key for valid dates
-            try {
-                caCerts[i].checkValidity();
-            } catch (CertificateException ce) {
-                if (ce.getReason() == CertificateException.EXPIRED) {
-                    /*
-                     * Change the exception reason, so the
-                     * application knows that the problem is with
-                     * the device and not the server.
-                     */
-                    throw new CertificateException(caCerts[i],
-                        CertificateException.ROOT_CA_EXPIRED);
-                }
-            
-                throw ce;
-            }
-
-            // Success
-            authPath = new String[subjectNames.size()];
-            for (int j = subjectNames.size() - 1, k = 0; j >= 0;
-                     j--, k++) {
-                authPath[k] = (String)subjectNames.elementAt(j);
-            }
-
-            if (outIssuer != null) {
-                outIssuer.addElement(caCerts[i]);
-            }
-
-            return authPath;
+            throw ce;
         }
 
-        throw new CertificateException(cert,
-            CertificateException.VERIFICATION_FAILED);
+        // Success
+        authPath = new String[subjectNames.size()];
+        for (int j = subjectNames.size() - 1, k = 0; j >= 0;
+                 j--, k++) {
+            authPath[k] = (String)subjectNames.elementAt(j);
+        }
+
+        if (outIssuer != null) {
+            outIssuer.addElement(caCerts[certIdx]);
+        }
+
+        return authPath;
     }
 
     /**
