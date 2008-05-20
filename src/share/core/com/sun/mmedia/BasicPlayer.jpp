@@ -201,10 +201,8 @@ public abstract class BasicPlayer implements Player
      */
     protected final static String vocName = "VolumeControl";
 
-// #ifdef ENABLE_JSR_234 [
     protected final static String rdscName  = 
         "javax.microedition.amms.control.tuner.RDSControl";
-// #endif ]
 
     /**
      * An array containing all available controls in Players
@@ -225,9 +223,7 @@ public abstract class BasicPlayer implements Player
         tocName,
         dtocName,
         vocName,
-// #ifdef ENABLE_JSR_234 [
         rdscName
-// #endif ]
         };
 
     /**
