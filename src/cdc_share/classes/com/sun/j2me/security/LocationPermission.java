@@ -26,7 +26,6 @@
 
 package com.sun.j2me.security;
 
-import com.sun.j2me.proxy.security.Permissions;
 
 /**
  * Location and landmark store access permissions.
@@ -40,8 +39,7 @@ public class LocationPermission extends Permission {
         "javax.microedition.location.Orientation", null);
 
     static public LocationPermission LOCATION_PROXIMITY =
-        new LocationPermission(Permissions.getName(
-            "javax.microedition.location.ProximityListener", null);
+        new LocationPermission("javax.microedition.location.ProximityListener", null);
 
     static public LocationPermission LANDMARK_STORE_READ =
         new LocationPermission("javax.microedition.location.LandmarkStore.read", null);
@@ -50,8 +48,7 @@ public class LocationPermission extends Permission {
         new LocationPermission("javax.microedition.location.LandmarkStore.write", null);
 
     static public LocationPermission LANDMARK_STORE_CATEGORY = 
-        new LocationPermission(Permissions.getName(
-            "javax.microedition.location.LandmarkStore.category", null);
+        new LocationPermission("javax.microedition.location.LandmarkStore.category", null);
 
     static public LocationPermission LANDMARK_STORE_MANAGE = 
         new LocationPermission("javax.microedition.location.LandmarkStore.management", null);
