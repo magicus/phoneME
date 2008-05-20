@@ -24,7 +24,6 @@
 
 package com.sun.j2me.security;
 
-import com.sun.midp.security.Permissions;
 
 public class PIMPermission extends Permission {
     
@@ -55,9 +54,5 @@ public class PIMPermission extends Permission {
 
     public PIMPermission(String name, String resource) {
         super(name, resource);
-    }
-
-    public PIMPermission(String name, String resource, int midpPerm) {
-        super(name, resource, midpPerm);
     }
 }

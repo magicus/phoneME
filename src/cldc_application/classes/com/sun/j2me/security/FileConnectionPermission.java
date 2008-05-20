@@ -24,8 +24,6 @@
 
 package com.sun.j2me.security;
 
-import com.sun.midp.security.Permissions;
-
 /**
  * FileConnection access permissions.
  */
@@ -40,7 +38,4 @@ public class FileConnectionPermission extends Permission {
         super(name, resource);
     }
 
-    public FileConnectionPermission(String name, String resource, int midpPerm) {
-        super(name, resource, midpPerm);
-    }
 }

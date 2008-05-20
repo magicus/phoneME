@@ -26,8 +26,6 @@
 
 package com.sun.j2me.security;
 
-import com.sun.midp.security.Permissions;
-
 /**
  * Location and landmark store access permissions.
  */

@@ -24,8 +24,6 @@
 
 package com.sun.j2me.security;
 
-import com.sun.midp.security.Permissions;
-
 /**
  * Advanced multimedia access permissions.
  */
