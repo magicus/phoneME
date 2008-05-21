@@ -608,31 +608,45 @@ static int check_prefix(char* buff, char *prefix) {
     return 1;
 }
 
-static char *getPolicyFilename(char *def_val) {
-	char *storage_path;
-	char *file_name;
-	char *tmpstr;
-	int   storage_len, file_len;
+char *build_file_name(char* fname) {
+    char *storage_path;
+    char *full_name;
+    int   storage_len, flen;
 
-	javacall_get_property("system.default_storage",
+    javacall_get_property("system.default_storage",
                                       JAVACALL_APPLICATION_PROPERTY,
                                       &storage_path);
 
+    storage_len = strlen(storage_path);
+    flen = strlen(fname);
+    full_name = javacall_malloc(storage_len + flen + 1);
+    if (full_name != NULL) {
+        strcpy(full_name, storage_path);
+        strcat(&full_name[storage_len], fname);
+        full_name[storage_len + flen + 1] = 0;
+    } else
+        full_name = fname;
+
+    return full_name;
+}
+
+static char *getPolicyFilename(char *def_val) {
+    char*tmpstr;
     if (javacall_get_property("security.policyfile",
                                       JAVACALL_APPLICATION_PROPERTY,
                                       &tmpstr) != JAVACALL_OK)
-			tmpstr = def_val;
-	storage_len = strlen(storage_path);
-	file_len = strlen(tmpstr);
-	file_name = javacall_malloc(storage_len + file_len + 1);
-	if (file_name != NULL) {
-		strcpy(file_name, storage_path);
-		strcat(&file_name[storage_len], tmpstr);
-		file_name[storage_len + file_len + 1] = 0;
-	} else
-		file_name = def_val;
+            tmpstr = def_val;
+    return build_file_name(tmpstr);
+}
 
-	return file_name;
+static char *getFuncGroupFilename(char *def_val) {
+    char*tmpstr;
+    if (javacall_get_property("security.messagefile",
+                                      JAVACALL_APPLICATION_PROPERTY,
+                                      &tmpstr) != JAVACALL_OK)
+            tmpstr = def_val;
+
+    return build_file_name(tmpstr);
 }
 
 int javacall_load_domain_list(void **array) {
@@ -886,7 +900,12 @@ int javacall_load_group_messages(void **list, char *group_name) {
     int  i1, found;
     char **str_list;
 
-    file_str = load_file("function_groups.txt");
+    file_str = getFuncGroupFilename("_function_groups.txt");
+
+    if (file_str == NULL)
+        return 0;
+
+    file_str = load_file(file_str);
     if (file_str == NULL)
         return 0;
 
