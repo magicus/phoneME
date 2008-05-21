@@ -36,7 +36,7 @@ ifeq ($(USE_GCI), true)
 else
     MIDP_PLATFORM ?= linux_fb_gcc
 endif
-MIDP_TARGET_OS = $(MIDP_PLATFORM)
+MIDP_TARGET_OS ?= $(MIDP_PLATFORM)
 
 # bootclasspath classes needed to compile midp
 VM_BOOTCLASSPATH0	= $(CVM_BUILDTIME_CLASSESZIP) $(LIB_CLASSESJAR)
