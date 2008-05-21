@@ -41,6 +41,7 @@ import com.sun.j2me.log.LogChannels;
 
 import com.sun.mmedia.DefaultConfiguration;
 import com.sun.mmedia.DirectVolume;
+import com.sun.mmedia.DirectMetaData;
 import javax.microedition.media.Player;
 import javax.microedition.media.PlayerListener;
 import javax.microedition.media.MediaException;
@@ -85,7 +86,8 @@ public class DirectPlayer extends BasicPlayer
     // #endif ]
 
     // Package variables
-    DirectVolume vc;
+    DirectVolume dVolumeControl;
+    DirectMetaData dMetaDataControl;
 
     private long remained;      // remained content length
 
@@ -342,9 +344,9 @@ public class DirectPlayer extends BasicPlayer
     // #endif ]
     
     protected void doPostStart() {
-        if (vc != null) {
-            vc.setToThisPlayerLevel();     /* set to this player's volume level */
-            vc.setToPlayerMute();          /* set to this player's mute state */
+        if (dVolumeControl != null) {
+            dVolumeControl.setToThisPlayerLevel();     /* set to this player's volume level */
+            dVolumeControl.setToPlayerMute();          /* set to this player's mute state */
         }
 
         // #ifndef ABB [
@@ -500,6 +502,8 @@ public class DirectPlayer extends BasicPlayer
         
         releaseRadioAccess();
 
+        doClose();
+
         // To support streaming
         isFirstStart = true;
 
@@ -544,6 +548,16 @@ public class DirectPlayer extends BasicPlayer
             midiControl = null;
         }
         // #endif ]
+
+        if (dMetaDataControl != null) {
+            dMetaDataControl.playerClosed();
+            dMetaDataControl = null;
+        }
+
+        if (dVolumeControl != null) {
+            dVolumeControl.playerClosed();
+            dVolumeControl = null;
+        }
 
         if (hNative != 0) {
             if ( true == nIsNeedBuffering(hNative) ) {
@@ -618,8 +632,11 @@ public class DirectPlayer extends BasicPlayer
 //            if (nIsFramePositioningControlSupported(hNative)) {
 //            }
         } else if (shortType.equals(mdcName)) {
-//            if (nIsMetaDataControlSupported(hNative)) {
-//            }
+            if (nIsMetaDataControlSupported(hNative)) {
+                if (dMetaDataControl == null)
+                    dMetaDataControl == new DirectMetaData(hNative);
+                return dMetaDataControl;
+            }
         } else if (shortType.equals(micName)) {
             if (nIsMIDIControlSupported(hNative)) {
                 if (midiControl == null) 
@@ -663,10 +680,10 @@ public class DirectPlayer extends BasicPlayer
 //            }
         } else if (shortType.equals(vocName)) {
             if (nIsVolumeControlSupported(hNative)) {
-                if (vc == null) {
-                    vc = new DirectVolume(this, hNative);
+                if (dVolumeControl == null) {
+                    dVolumeControl = new DirectVolume(this, hNative);
                 }
-                return vc;
+                return dVolumeControl;
             }
         }
 // #ifdef ENABLE_JSR_234 [
