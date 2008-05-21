@@ -40,80 +40,75 @@ import org.osgi.framework.ServiceRegistration;
 import org.osgi.service.application.ApplicationDescriptor;
 
 import com.sun.j2me.content.AMSGate;
-import com.sun.j2me.content.AppProxy;
-import com.sun.j2me.content.ContentHandlerImpl;
-import com.sun.j2me.content.ContentHandlerPersistentData;
-import com.sun.j2me.content.RegistryGate;
 
 interface CHAPIBridge {
 	void invocationRequestNotify( String contentHandlerServer, String appID );
 	void invocationResponceNotify( String registry, String appID );
 }
 
-public class JSR211Service implements RegistryGate, AMSGate, ServiceFactory {
+public class JSR211Service implements AMSGate, ServiceFactory {
 	
-	class ContentHandlerHandle implements ContentHandlerImpl.Handle {
-		private final ServiceReference	handlerService;
-		private ContentHandlerImpl 	created = null;
-		
-		private final String	handlerID;
-		private final int 		handlerSuiteId;
-		
-		ContentHandlerHandle( ServiceReference sr ){
-			handlerService = sr;
-			handlerID = (String)handlerService.getProperty("service.pid");
-			handlerSuiteId =  
-				((Integer)handlerService.getProperty("ContentHandler.suiteId")).intValue();
-		}
-
-		public ContentHandlerImpl get(){
-			if( created == null ){
-				created = new ContentHandlerImpl(this){{
-					this.ID = handlerID; 
-					this.storageId = handlerSuiteId;
-					this.classname = 
-						(String)handlerService.getProperty("ContentHandler.classname"); 
-					this.registrationMethod = 
-						((Integer)handlerService.getProperty("ContentHandler.registrationMethod")).intValue();
-				}};
-				// initialize fields
-			}
-			return created;
-		}
-		
-		public String getID() { return handlerID; }
-		public int getSuiteId() { return handlerSuiteId; }
-
-		public String[] getArrayField(int fieldId) {
-			String[] result;
-			switch( fieldId ){
-				case FIELD_TYPES:
-					result = (String[])handlerService.getProperty("ContentHandler.types");
-					break;
-				case FIELD_SUFFIXES:
-					result = (String[])handlerService.getProperty("ContentHandler.suffixes");
-					break;
-				case FIELD_ACTIONS:
-					result = (String[])handlerService.getProperty("ContentHandler.actions");
-					break;
-				case FIELD_LOCALES:
-					result = (String[])handlerService.getProperty("ContentHandler.locales");
-					break;
-				case FIELD_ACTION_MAP:
-					result = (String[])handlerService.getProperty("ContentHandler.action_map");
-					break;
-				case FIELD_ACCESSES:
-					result = (String[])handlerService.getProperty("ContentHandler.accesses");
-					break;
-				default:
-					throw new InternalError();
-			}
-			return result;
-		}
-	}
+//	class ContentHandlerHandle implements ContentHandlerImpl.Handle {
+//		private final ServiceReference	handlerService;
+//		private ContentHandlerImpl 	created = null;
+//		
+//		private final String	handlerID;
+//		private final int 		handlerSuiteId;
+//		
+//		ContentHandlerHandle( ServiceReference sr ){
+//			handlerService = sr;
+//			handlerID = (String)handlerService.getProperty("service.pid");
+//			handlerSuiteId =  
+//				((Integer)handlerService.getProperty("ContentHandler.suiteId")).intValue();
+//		}
+//
+//		public ContentHandlerImpl get(){
+//			if( created == null ){
+//				created = new ContentHandlerImpl(this){{
+//					this.ID = handlerID; 
+//					this.storageId = handlerSuiteId;
+//					this.classname = 
+//						(String)handlerService.getProperty("ContentHandler.classname"); 
+//					this.registrationMethod = 
+//						((Integer)handlerService.getProperty("ContentHandler.registrationMethod")).intValue();
+//				}};
+//				// initialize fields
+//			}
+//			return created;
+//		}
+//		
+//		public String getID() { return handlerID; }
+//		public int getSuiteId() { return handlerSuiteId; }
+//
+//		public String[] getArrayField(int fieldId) {
+//			String[] result;
+//			switch( fieldId ){
+//				case FIELD_TYPES:
+//					result = (String[])handlerService.getProperty("ContentHandler.types");
+//					break;
+//				case FIELD_SUFFIXES:
+//					result = (String[])handlerService.getProperty("ContentHandler.suffixes");
+//					break;
+//				case FIELD_ACTIONS:
+//					result = (String[])handlerService.getProperty("ContentHandler.actions");
+//					break;
+//				case FIELD_LOCALES:
+//					result = (String[])handlerService.getProperty("ContentHandler.locales");
+//					break;
+//				case FIELD_ACTION_MAP:
+//					result = (String[])handlerService.getProperty("ContentHandler.action_map");
+//					break;
+//				case FIELD_ACCESSES:
+//					result = (String[])handlerService.getProperty("ContentHandler.accesses");
+//					break;
+//				default:
+//					throw new InternalError();
+//			}
+//			return result;
+//		}
+//	}
 
     public static final String supportedInterfaces[] = {
-    	RegistryGate.class.getName(), 
     	AMSGate.class.getName(),
     };
 
@@ -147,12 +142,12 @@ public class JSR211Service implements RegistryGate, AMSGate, ServiceFactory {
             				new JSR211Service(context), JSR211Service.props );
             context.registerService( CHAPIBridgeFactory.supportedInterfaces, 
             				new CHAPIBridgeFactory(context), CHAPIBridgeFactory.props ); 
-            AppProxy.setRegistry( 
-                    (RegistryGate)context.getService( 
-                            context.getServiceReference( RegistryGate.class.getName() ) ) );
-            AppProxy.setAMS( 
-                    (AMSGate)context.getService( 
-                            context.getServiceReference( AMSGate.class.getName() ) ) );
+//            AppProxy.setRegistry( 
+//                    (RegistryGate)context.getService( 
+//                            context.getServiceReference( RegistryGate.class.getName() ) ) );
+//            AppProxy.setAMS( 
+//                    (AMSGate)context.getService( 
+//                            context.getServiceReference( AMSGate.class.getName() ) ) );
             
             testCode(context);
         }
@@ -180,56 +175,56 @@ public class JSR211Service implements RegistryGate, AMSGate, ServiceFactory {
 		}
 
 		public void stop( BundleContext context ) throws Exception {
-            AppProxy.setRegistry( (RegistryGate)null );
-            AppProxy.setAMS( (AMSGate)null );
+//            AppProxy.setRegistry( (RegistryGate)null );
+//            AppProxy.setAMS( (AMSGate)null );
         }
     }
 
     // RegistryGate methods
     
-	public ContentHandlerImpl.Handle register(int suiteId, String classname, 
-										ContentHandlerPersistentData handlerData) {
-		// all parameters must not be null
-		
-	    final Dictionary props = new Hashtable();
-	    props.put(CHAPIBridgeFactory.SERVICE_PID, handlerData.getID());
-	    
-	    props.put("ContentHandler.suiteId", new Integer(suiteId));
-	    props.put("ContentHandler.classname", classname);
-	    props.put("ContentHandler.registrationMethod", new Integer(handlerData.getRegistrationMethod()));
-	    props.put("ContentHandler.types", handlerData.getTypes());
-	    props.put("ContentHandler.suffixes", handlerData.getSuffixes());
-	    props.put("ContentHandler.actions", handlerData.getActions());
-	    props.put("ContentHandler.locales", null); // TODO
-	    props.put("ContentHandler.action_map", null);
-	    props.put("ContentHandler.accesses", handlerData.getAccessRestricted());
-	    return new ContentHandlerHandle( 
-	    			context.registerService( MidletContentHandler.supportedInterfaces, 
-								new MidletContentHandler( context ), props ).getReference() );
-	}
-
-	public boolean unregister(String handlerId) {
-		// TODO Auto-generated method stub
-		return false;
-	}
-	
-	public void enumJavaHandlers(ContentHandlerHandle.Receiver r) {
-		Bundle javaBundle = context.getBundle();
-		ServiceReference[] services = javaBundle.getRegisteredServices();
-		if( services != null ){
-			for( int i = 0; i < services.length; i++){
-				ServiceReference service = services[i];
-				if( service.isAssignableTo(javaBundle, 
-								MidletContentHandler.class.getName()) ){
-					r.push(new ContentHandlerHandle( service ));
-				}
-			}
-		}
-	}
-
-	public void enumHandlers(ContentHandlerHandle.Receiver r) {
-		enumJavaHandlers( r );
-	}
+//	public ContentHandlerImpl.Handle register(int suiteId, String classname, 
+//										ContentHandlerPersistentData handlerData) {
+//		// all parameters must not be null
+//		
+//	    final Dictionary props = new Hashtable();
+//	    props.put(CHAPIBridgeFactory.SERVICE_PID, handlerData.getID());
+//	    
+//	    props.put("ContentHandler.suiteId", new Integer(suiteId));
+//	    props.put("ContentHandler.classname", classname);
+//	    props.put("ContentHandler.registrationMethod", new Integer(handlerData.getRegistrationMethod()));
+//	    props.put("ContentHandler.types", handlerData.getTypes());
+//	    props.put("ContentHandler.suffixes", handlerData.getSuffixes());
+//	    props.put("ContentHandler.actions", handlerData.getActions());
+//	    props.put("ContentHandler.locales", null); // TODO
+//	    props.put("ContentHandler.action_map", null);
+//	    props.put("ContentHandler.accesses", handlerData.getAccessRestricted());
+//	    return new ContentHandlerHandle( 
+//	    			context.registerService( MidletContentHandler.supportedInterfaces, 
+//								new MidletContentHandler( context ), props ).getReference() );
+//	}
+//
+//	public boolean unregister(String handlerId) {
+//		// TODO Auto-generated method stub
+//		return false;
+//	}
+//	
+//	public void enumJavaHandlers(ContentHandlerHandle.Receiver r) {
+//		Bundle javaBundle = context.getBundle();
+//		ServiceReference[] services = javaBundle.getRegisteredServices();
+//		if( services != null ){
+//			for( int i = 0; i < services.length; i++){
+//				ServiceReference service = services[i];
+//				if( service.isAssignableTo(javaBundle, 
+//								MidletContentHandler.class.getName()) ){
+//					r.push(new ContentHandlerHandle( service ));
+//				}
+//			}
+//		}
+//	}
+//
+//	public void enumHandlers(ContentHandlerHandle.Receiver r) {
+//		enumJavaHandlers( r );
+//	}
 
     // AMSGate methods
 }

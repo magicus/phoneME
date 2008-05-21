@@ -31,8 +31,7 @@
 
 
 # Directory containing application specific native files
-SUBSYSTEM_JSR_211_APPLICATION_NATIVE_DIR = $(JSR_211_DIR)/src/osgi_application/core/native
-
+SUBSYSTEM_JSR_211_APPLICATION_NATIVE_DIR = $(JSR_211_DIR)/src/osgi_application/core/native/
 
 SUBSYSTEM_JSR_211_APPLICATION_CLASSES_DIR = $(JSR_211_DIR)/src/osgi_application/classes/
 
@@ -40,6 +39,7 @@ SUBSYSTEM_JSR_211_APPLICATION_CLASSES_DIR = $(JSR_211_DIR)/src/osgi_application/
 # depeneds on 
 # OSGI_DEMO_CLASSES_DIR
 # OSGI_BUNDLES_DIR
+# INTERNAL_JSR_211_APPLICATION_DIR
 
 JSR211_OSGI_BRIDGE_APPLICATION_NAME = jsr211_agent
 
