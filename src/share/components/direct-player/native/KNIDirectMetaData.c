@@ -25,6 +25,8 @@
 
 #include "KNICommon.h"
 
+#include "javautil_unicode.h"
+
 #define MIN_KEY_LENGTH 16
 #define MAX_KEY_LENGTH 256
 
@@ -54,7 +56,7 @@ KNIDECL(com_sun_mmedia_DirectMetaData_nGetKeyCount) {
 }
 
 /* private native String nGetKey(int hNative, int index); */
-KNIEXPORT KNI_RETURNTYPE_STRING
+KNIEXPORT KNI_RETURNTYPE_OBJECT
 KNIDECL(com_sun_mmedia_DirectMetaData_nGetKey) {
     jint handle = KNI_GetParameterAsInt(1);
     jint index = KNI_GetParameterAsInt(2);
@@ -70,19 +72,21 @@ KNIDECL(com_sun_mmedia_DirectMetaData_nGetKey) {
     MMP_DEBUG_STR("[kni_metadata] +nGetKey\n");
 
     if (pKniInfo && pKniInfo->pNativeHandle) {
-        key = MMP_MALLOC(sizeof(javacall_utf16 * keySize));
+        key = MMP_MALLOC(sizeof(javacall_utf16) * keySize);
         if (key != NULL) {
-            ret = javacall_media_get_metadata_key(pKniInfo->pNativeHandle, index, keySize, &key);
+            ret = javacall_media_get_metadata_key(pKniInfo->pNativeHandle, index, keySize, key);
             while (ret == JAVACALL_OUT_OF_MEMORY && keySize < MAX_KEY_LENGTH) {
                 keySize <<= 1;
-                key = MMP_REALLOC(key, sizeof(javacall_utf16 * keySize));
+                key = MMP_REALLOC(key, sizeof(javacall_utf16) * keySize);
                 if (key == NULL)
                     break;
-                ret = javacall_media_get_metadata_key(pKniInfo->pNativeHandle, index, keySize, &key);
+                ret = javacall_media_get_metadata_key(pKniInfo->pNativeHandle, index, keySize, key);
             }
             if (key != NULL) {
-                if (ret == JAVACALL_OK)
-                    KNI_NewStringUTF(key, stringObj);
+                if (ret == JAVACALL_OK) {
+                    javautil_unicode_utf16_ulength(key, &keySize);
+                    KNI_NewString(key, keySize, stringObj);
+                }
                 MMP_FREE(key);
             }
         }
@@ -94,7 +98,7 @@ KNIDECL(com_sun_mmedia_DirectMetaData_nGetKey) {
 }
 
 /* private native String nGetKeyValue(int hNative, String key); */
-KNIEXPORT KNI_RETURNTYPE_STRING
+KNIEXPORT KNI_RETURNTYPE_OBJECT
 KNIDECL(com_sun_mmedia_DirectMetaData_nGetKeyValue) {
     jint handle = KNI_GetParameterAsInt(1);
     javacall_result ret = JAVACALL_FAIL;
@@ -105,14 +109,16 @@ KNIDECL(com_sun_mmedia_DirectMetaData_nGetKeyValue) {
     KNIPlayerInfo* pKniInfo = (KNIPlayerInfo*)handle;
 
     KNI_StartHandles(2);
-    KNI_GetParameterAsObject(2, keyObj);
+    KNI_DeclareHandle(keyObj);
     KNI_DeclareHandle(valueObj);
+
+    KNI_GetParameterAsObject(2, keyObj);
     KNI_ReleaseHandle(valueObj);
 
     MMP_DEBUG_STR("[kni_metadata] +nGetKeyValue\n");
 
     if (0 < (keyLength = KNI_GetStringLength(keyObj))) {
-        key = MMP_MALLOC((mimeLength + 1) * sizeof(jchar));
+        key = MMP_MALLOC((keyLength + 1) * sizeof(jchar));
         if (key) {
             KNI_GetStringRegion(keyObj, 0, keyLength, key);
             key[keyLength] = 0;
@@ -123,19 +129,21 @@ KNIDECL(com_sun_mmedia_DirectMetaData_nGetKeyValue) {
 
     if (keyLength > 0) {
         if (pKniInfo && pKniInfo->pNativeHandle) {
-            value = MMP_MALLOC(sizeof(javacall_utf16 * valueSize));
+            value = MMP_MALLOC(sizeof(javacall_utf16) * valueSize);
             if (value != NULL) {
-                ret = javacall_media_get_metadata_key(pKniInfo->pNativeHandle, key, valueSize, &value);
+                ret = javacall_media_get_metadata(pKniInfo->pNativeHandle, key, valueSize, value);
                 while (ret == JAVACALL_OUT_OF_MEMORY && valueSize < MAX_VALUE_LENGTH) {
                     valueSize <<= 1;
-                    value = MMP_REALLOC(key, sizeof(javacall_utf16 * valueSize));
+                    value = MMP_REALLOC(key, sizeof(javacall_utf16) * valueSize);
                     if (value == NULL)
                         break;
-                    ret = javacall_media_get_metadata_key(pKniInfo->pNativeHandle, key, valueSize, &value);
+                    ret = javacall_media_get_metadata(pKniInfo->pNativeHandle, key, valueSize, value);
                 }
                 if (key != NULL) {
-                    if (ret == JAVACALL_OK)
-                        KNI_NewStringUTF(value, valueObj);
+                    if (ret == JAVACALL_OK) {
+                        javautil_unicode_utf16_ulength(value, &valueSize);
+                        KNI_NewString(value, valueSize, valueObj);
+                    }
                     MMP_FREE(value);
                 }
             }
