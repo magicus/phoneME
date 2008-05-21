@@ -227,6 +227,7 @@ SUBSYSTEM_JSR_135_JAVA_FILES += \
     $(JSR_135_GENERATED_DIR)/classes/com/sun/mmedia/DirectPlayer.java \
     $(JSR_135_GENERATED_DIR)/classes/com/sun/mmedia/DirectTone.java \
     $(JSR_135_DIR)/src/share/components/direct-player/classes/com/sun/mmedia/DirectVolume.java \
+    $(JSR_135_DIR)/src/share/components/direct-player/classes/com/sun/mmedia/DirectMetaData.java \
     $(JSR_135_DIR)/src/share/components/direct-player/classes/com/sun/mmedia/DirectControls.java
 endif
 
@@ -277,6 +278,7 @@ SUBSYSTEM_JSR_135_CNI_CLASSES += \
     com.sun.mmedia.PlayerImpl \
     com.sun.mmedia.DirectRecord \
     com.sun.mmedia.DirectVolume \
+    com.sun.mmedia.DirectMetaData \
     com.sun.mmedia.MMEventListener \
     com.sun.mmedia.NativeTonePlayer \
     com.sun.mmedia.DefaultConfiguration \
@@ -303,6 +305,7 @@ ifeq ($(DIRECT_PLAYER),true)
 SUBSYSTEM_JSR_135_NATIVE_FILES += \
 	KNIDirectPlayer.c \
 	KNIDirectVolume.c \
+	KNIDirectMetaData.c \
 	KNITonePlayer.c \
 	KNIDirectConfig.c
 endif

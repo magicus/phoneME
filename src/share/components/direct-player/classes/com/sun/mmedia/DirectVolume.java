@@ -130,7 +130,7 @@ public class DirectVolume implements VolumeControl {
     }
 
     public void setMute(boolean mute) {
-        if (_player.state == Player.STARTED && hNative != 0) {
+        if (_player.state == Player.STARTED && _hNative != 0) {
             nSetMute(_hNative, mute);
         }
         _mute = mute ? 1 : 0;

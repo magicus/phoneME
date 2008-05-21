@@ -634,7 +634,7 @@ public class DirectPlayer extends BasicPlayer
         } else if (shortType.equals(mdcName)) {
             if (nIsMetaDataControlSupported(hNative)) {
                 if (dMetaDataControl == null)
-                    dMetaDataControl == new DirectMetaData(hNative);
+                    dMetaDataControl = new DirectMetaData(hNative);
                 return dMetaDataControl;
             }
         } else if (shortType.equals(micName)) {
