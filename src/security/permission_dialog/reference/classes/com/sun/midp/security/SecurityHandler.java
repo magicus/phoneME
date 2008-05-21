@@ -156,7 +156,9 @@ public final class SecurityHandler {
             try {
                 i = Permissions.getId(permission);
                 found = true;
-            } catch (SecurityException e) {i=0;} //not found
+            } catch (SecurityException e) {
+                i=0;  //not found
+            }
 
             if (!found) {
                 // report denied
