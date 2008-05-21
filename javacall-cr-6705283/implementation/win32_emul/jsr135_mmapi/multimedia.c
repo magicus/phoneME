@@ -293,6 +293,9 @@ media_interface* fmt_enum2itf( jc_fmt fmt )
 #define QUERY_MIDI_ITF(_pitf_, _method_)  \
     ( (_pitf_) && (_pitf_)->vptrMidi && (_pitf_)->vptrMidi->##_method_ )
 
+#define QUERY_METADATA_ITF(_pitf_, _method_)  \
+    ( (_pitf_) && (_pitf_)->vptrMetaData && (_pitf_)->vptrMetaData->##_method_ )
+
 #define QUERY_PITCH_ITF(_pitf_, _method_)  \
     ( (_pitf_) && (_pitf_)->vptrPitch && (_pitf_)->vptrPitch->_method_ )
 
@@ -442,7 +445,13 @@ javacall_result javacall_media_create(int appId,
         memcpy( pPlayer->uri, uri, uriLength * sizeof(javacall_utf16) );
         pPlayer->uri[ uriLength ] = (javacall_utf16)0;
 
-        if( 0 == _wcsnicmp( uri, AUDIO_CAPTURE_LOCATOR, 
+        if( NULL != wcsstr( uri, JAVACALL_MEDIA_FORMAT_GEN_VIDEO ) )
+        {
+            pPlayer->mediaType        = JAVACALL_MEDIA_FORMAT_GEN_VIDEO;
+            pPlayer->mediaItfPtr      = &g_gen_video_itf;
+            pPlayer->downloadByDevice = JAVACALL_TRUE;
+        }
+        else if( 0 == _wcsnicmp( uri, AUDIO_CAPTURE_LOCATOR, 
                            min( (long)wcslen( AUDIO_CAPTURE_LOCATOR ), uriLength ) ) )
         {
             pPlayer->mediaType        = JAVACALL_MEDIA_FORMAT_CAPTURE_AUDIO;
@@ -599,7 +608,7 @@ javacall_result javacall_media_get_format(javacall_handle handle,
     jc_fmt fmt = JC_FMT_UNKNOWN;
 
     if (QUERY_BASIC_ITF(pItf, get_format)) {
-        ret = pItf->vptrBasic->get_format(pPlayer->mediaHandle,&fmt);
+        ret = pItf->vptrBasic->get_format(pPlayer->mediaHandle, &fmt);
         if( JAVACALL_OK == ret ) {
             *format = fmt_enum2str( fmt );
         }
@@ -1755,7 +1764,15 @@ javacall_result javacall_media_close_recording(javacall_handle handle) {
 javacall_result javacall_media_get_metadata_key_counts(javacall_handle handle,
                                                        long* keyCounts)
 {
-    return JAVACALL_FAIL;
+    javacall_result ret = JAVACALL_FAIL;
+    javacall_impl_player* pPlayer = (javacall_impl_player*)handle;
+    media_interface* pItf = pPlayer->mediaItfPtr;
+
+    if (QUERY_METADATA_ITF(pItf, get_metadata_key_counts)) {
+        ret = pItf->vptrMetaData->get_metadata_key_counts(pPlayer->mediaHandle, keyCounts);
+    }
+
+    return ret;
 }
 
 javacall_result javacall_media_get_metadata_key(javacall_handle handle,
@@ -1763,7 +1780,15 @@ javacall_result javacall_media_get_metadata_key(javacall_handle handle,
                                                 long bufLength,
                                                 /*OUT*/ javacall_utf16* buf)
 {
-    return JAVACALL_FAIL;
+    javacall_result ret = JAVACALL_FAIL;
+    javacall_impl_player* pPlayer = (javacall_impl_player*)handle;
+    media_interface* pItf = pPlayer->mediaItfPtr;
+
+    if (QUERY_METADATA_ITF(pItf, get_metadata_key)) {
+        ret = pItf->vptrMetaData->get_metadata_key(pPlayer->mediaHandle, index, bugLength, buf);
+    }
+
+    return ret;
 }
 
 javacall_result javacall_media_get_metadata(javacall_handle handle,
@@ -1771,7 +1796,15 @@ javacall_result javacall_media_get_metadata(javacall_handle handle,
                                             long bufLength,
                                             javacall_utf16* buf)
 {
-    return JAVACALL_FAIL;
+    javacall_result ret = JAVACALL_FAIL;
+    javacall_impl_player* pPlayer = (javacall_impl_player*)handle;
+    media_interface* pItf = pPlayer->mediaItfPtr;
+
+    if (QUERY_METADATA_ITF(pItf, get_metadata)) {
+        ret = pItf->vptrMetaData->get_metadata(pPlayer->mediaHandle, key, bufLength, buf);
+    }
+
+    return ret;
 }
 
 /* RateControl functions ***********************************************************/
