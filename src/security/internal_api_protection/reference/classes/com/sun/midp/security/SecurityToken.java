@@ -65,7 +65,6 @@ public final class SecurityToken {
     }
 
     /**
-	 * NOTE: this function is for MIDP and AMS permissions only!
      * Check to see the suite has the ALLOW level for specific permission.
      * This is used for by internal APIs that only provide access to
      * trusted system applications.
@@ -109,7 +108,6 @@ public final class SecurityToken {
             /* totally trusted, all permission allowed */
             return;
         }
-
         if (permission >= 0 && permission < permissions.length &&
             (permissions[permission] == Permissions.ALLOW)) {
             return;
