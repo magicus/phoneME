@@ -25,7 +25,6 @@
 #ifndef __mm_async_exec_H__
 #define __mm_async_exec_H__
 
-extern void javacall_printf(char *format, ...);
 #include <sni.h>
 #include <midpServices.h>
 #define JAVACALL_MM_ASYNC_GET_RESULT_returns_data(ret_args_)  \
@@ -72,4 +71,5 @@ do { \
     (((((event_)-JAVACALL_EVENT_MEDIA_JAVA_EVENTS_MARKER) & 0x3F) << 26) | \
         (((appId_) & 0x3FF) << 16) | ((playerId_) & 0xFFFF))
 
+#define PLAYER_DESCRIPTOR_EVENT_MASK    MAKE_PLAYER_DESCRIPTOR(-1, -1, JAVACALL_EVENT_MEDIA_JAVA_EVENTS_MARKER)
 #endif __mm_async_exec_H__
