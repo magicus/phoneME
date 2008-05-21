@@ -36,7 +36,7 @@ import javax.microedition.content.RequestListener;
 /**
  * The internal structure of a registered content handler.
  */
-public class ContentHandlerImpl extends ContentHandlerPersistentData 
+public class ContentHandlerImpl extends ContentHandlerRegData 
 					implements ContentHandler {
 	
 	public static interface Handle {
@@ -814,10 +814,12 @@ class HandlersCollection implements ContentHandlerImpl.Handle.Receiver {
 	Vector/*<ContentHandlerImpl>*/ vector = new Vector(); 
 	
 	public void push(ContentHandlerImpl.Handle handle) {
-		vector.add( handle.get() );
+		vector.addElement( handle.get() );
 	}
 
 	public ContentHandlerImpl[] getArray() {
-		return (ContentHandlerImpl[])vector.toArray();
+		ContentHandlerImpl[] result = new ContentHandlerImpl[ vector.size() ];
+		vector.copyInto(result);
+		return result;
 	}
 }

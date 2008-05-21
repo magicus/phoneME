@@ -5,7 +5,7 @@ import java.util.Vector;
 
 import javax.microedition.content.ActionNameMap;
 
-public class ContentHandlerPersistentData {
+public class ContentHandlerRegData {
 	
     /**
      * The content handler ID.
@@ -65,10 +65,10 @@ public class ContentHandlerPersistentData {
     /** Empty ActionNameMap to return when needed. */
     final static ActionNameMap[] ZERO_ACTIONNAMES = new ActionNameMap[0];
 
-    ContentHandlerPersistentData(){
+    ContentHandlerRegData(){
     }
     
-    ContentHandlerPersistentData( ContentHandlerPersistentData data ){
+    ContentHandlerRegData( ContentHandlerRegData data ){
         ID = data.ID;
         registrationMethod = data.registrationMethod;
         types = data.types;
@@ -103,7 +103,7 @@ public class ContentHandlerPersistentData {
      *        control character or space (U+0000-U+00020)
      */
     
-    ContentHandlerPersistentData(int registrationMethod, 
+    ContentHandlerRegData(int registrationMethod, 
     					String[] types, String[] suffixes,
     					String[] actions, ActionNameMap[] actionnames,
     					String ID, String[] accessRestricted) {

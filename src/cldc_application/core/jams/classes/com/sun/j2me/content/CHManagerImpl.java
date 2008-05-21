@@ -149,8 +149,8 @@ public class CHManagerImpl extends com.sun.midp.content.CHManager
 		try {
 		    AppBundleProxy bundle =
 		    	new AppBundleProxy(installer, state, msuite, authority);
-            regInstaller = new RegistryInstaller();
-            regInstaller.preInstall(bundle);
+            regInstaller = new RegistryInstaller(bundle);
+            regInstaller.preInstall();
 		} catch (IllegalArgumentException ill) {
 		    throw new InvalidJadException(
 				  InvalidJadException.INVALID_CONTENT_HANDLER, ill.getMessage());

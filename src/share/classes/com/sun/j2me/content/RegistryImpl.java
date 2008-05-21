@@ -414,8 +414,8 @@ public final class RegistryImpl implements Counter {
             int registrationMethod = // non-native, dynamically registered 
             	~ContentHandlerImpl.REGISTERED_STATIC_FLAG & ContentHandlerImpl.REGISTERED_STATIC_FLAG;
 
-        	ContentHandlerPersistentData handlerData = 
-        		new ContentHandlerPersistentData(registrationMethod, 
+        	ContentHandlerRegData handlerData = 
+        		new ContentHandlerRegData(registrationMethod, 
         				types, suffixes, actions, actionnames,
                         id, accessRestricted);
             
