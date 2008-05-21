@@ -42,7 +42,7 @@ else
 	MIDP_PLATFORM ?= $(WIN32_PLATFORM)
 endif
 
-MIDP_MAKEFILE_DIR = build/$(MIDP_PLATFORM)
+MIDP_MAKEFILE_DIR = $(MIDP_DIR)/build/$(MIDP_PLATFORM)
 
 CONFIGURATION_OVERRIDE	= \
         $(MIDP_DIR)/src/configuration/wince/sp176x220.xml
