@@ -62,7 +62,7 @@ $(MIDP_CLASSES_ZIP): $(MIDP_CLASSESZIP_DEPS) force_midp_build
 	@echo "====> start building MIDP classes"
 	$(AT)$(MAKE) $(MAKE_NO_PRINT_DIRECTORY) \
 		     JDK_DIR=$(JDK_DIR) TARGET_VM=$(TARGET_VM) \
-	             TARGET_CPU=$(TARGET_CPU) TARGET_OS=$(TARGET_OS) \
+	             TARGET_CPU=$(TARGET_CPU) TARGET_OS=$(MIDP_TARGET_OS) \
 	             USE_DEBUG=$(USE_DEBUG) \
 	             USE_RESTRICTED_CRYPTO=$(USE_RESTRICTED_CRYPTO) \
 	             VERIFY_BUILD_ENV= \
@@ -88,7 +88,7 @@ $(MIDP_CLASSES_ZIP): $(MIDP_CLASSESZIP_DEPS) force_midp_build
 	             COMPONENTS_DIR=$(COMPONENTS_DIR) \
 	             PROJECT_MIDP_DIR=$(PROJECT_MIDP_DIR) \
 	             JSR_CONFIGURATION_INPUT_FILES="$(JSR_CONFIGURATION_INPUT_FILES)" \
-	             rom -C $(MIDP_DIR)/$(MIDP_MAKEFILE_DIR)
+	             rom -C $(MIDP_MAKEFILE_DIR)
 	@echo "<==== end building MIDP classes"
 
 #
@@ -118,7 +118,7 @@ $(MIDP_CLASSLIST): $(MIDP_PUB_CLASSES_ZIP)
 source_bundle:: $(CVM_BUILD_DEFS_MK) 
 	$(AT)$(MAKE) $(MAKE_NO_PRINT_DIRECTORY) \
 		     JDK_DIR=$(JDK_DIR) TARGET_VM=$(TARGET_VM) \
-	             TARGET_CPU=$(TARGET_CPU) TARGET_OS=$(TARGET_OS) \
+	             TARGET_CPU=$(TARGET_CPU) TARGET_OS=$(MIDP_TARGET_OS) \
 	             USE_DEBUG=$(USE_DEBUG) \
 	             USE_RESTRICTED_CRYPTO=$(USE_RESTRICTED_CRYPTO) \
 	             VERIFY_BUILD_ENV= \
@@ -136,7 +136,7 @@ source_bundle:: $(CVM_BUILD_DEFS_MK)
                      MIDP_PUB_CLASSES_ZIP=$(MIDP_PUB_CLASSES_ZIP) \
 	             MIDP_SHARED_LIB=$(MIDP_SHARED_LIB) \
 	             COMPONENTS_DIR=$(COMPONENTS_DIR) \
-	             source_bundle -C $(MIDP_DIR)/$(MIDP_MAKEFILE_DIR) 
+	             source_bundle -C $(MIDP_MAKEFILE_DIR) 
 	$(AT)$(MAKE) $(MAKE_NO_PRINT_DIRECTORY) \
 		     PCSL_PLATFORM=$(PCSL_PLATFORM) \
 	             NETWORK_MODULE=$(NETWORK_MODULE) \
@@ -160,7 +160,7 @@ $(RUNMIDLET): force_midp_build
 	@echo "====> start building MIDP natives"
 	$(AT)$(MAKE) $(MAKE_NO_PRINT_DIRECTORY) \
 		     JDK_DIR=$(JDK_DIR) TARGET_VM=$(TARGET_VM) \
-	             TARGET_CPU=$(TARGET_CPU) TARGET_OS=$(TARGET_OS) \
+	             TARGET_CPU=$(TARGET_CPU) TARGET_OS=$(MIDP_TARGET_OS) \
 	             USE_DEBUG=$(USE_DEBUG) \
 	             USE_RESTRICTED_CRYPTO=$(USE_RESTRICTED_CRYPTO) \
 	             VERIFY_BUILD_ENV= \
@@ -179,7 +179,7 @@ $(RUNMIDLET): force_midp_build
 	             COMPONENTS_DIR=$(COMPONENTS_DIR) \
 	             PROJECT_MIDP_DIR=$(PROJECT_MIDP_DIR) \
 	             $(MIDP_JSROP_USE_FLAGS) \
-	             -C $(MIDP_DIR)/$(MIDP_MAKEFILE_DIR)
+	             -C $(MIDP_MAKEFILE_DIR)
 ifneq ($(USE_JUMP), true)
   ifeq ($(INCLUDE_SHELL_SCRIPTS), true)
 	$(AT)cp $@ $(CVM_BINDIR)
