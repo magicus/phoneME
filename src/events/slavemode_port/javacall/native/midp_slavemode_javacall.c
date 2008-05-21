@@ -394,7 +394,7 @@ javacall_result checkForSystemSignal(MidpReentryData* pNewSignal,
         } else {
             pNewSignal->descriptor = 0;
         }
-        REPORT_CALL_TRACE4(LC_NONE, "[media event] External event recevied "
+        REPORT_CALL_TRACE4(LC_NONE, "[media event] External event received "
                 "%d %d %d %d\n",
                 pNewMidpEvent->type,
                 event->data.multimediaEvent.appId,
