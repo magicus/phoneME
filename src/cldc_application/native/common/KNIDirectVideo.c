@@ -1,6 +1,5 @@
 /*
- * 
- * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
@@ -49,7 +48,7 @@ KNIDECL(com_sun_mmedia_DirectVideo_nGetWidth) {
             result,
             javacall_media_get_video_size(pKniInfo->pNativeHandle, &width, &height),
             pKniInfo->pNativeHandle, pKniInfo->appId, pKniInfo->playerId, JAVACALL_EVENT_MEDIA_VIDEO_SIZE_GOTTEN,
-            returns_data((&width, &height))
+            returns_data(2(&width, &height))
         );
         if (result == JAVACALL_OK) {
             returnValue = width;
@@ -78,7 +77,7 @@ KNIDECL(com_sun_mmedia_DirectVideo_nGetHeight) {
             result,
             javacall_media_get_video_size(pKniInfo->pNativeHandle, &width, &height),
             pKniInfo->pNativeHandle, pKniInfo->appId, pKniInfo->playerId, JAVACALL_EVENT_MEDIA_VIDEO_SIZE_GOTTEN,
-            returns_data((&width, &height))
+            returns_data(2(&width, &height))
         );
         if (result == JAVACALL_OK) {
             returnValue = height;
