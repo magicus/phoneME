@@ -31,6 +31,8 @@
 #include <midp_jc_event_defs.h>
 #include <midpUtilKni.h>
 
+#include <suspend_resume.h>
+
 #ifdef ENABLE_JSR_75
 extern void notifyDisksChanged();
 #endif
@@ -61,7 +63,8 @@ void checkForSystemSignal(MidpReentryData* pNewSignal,
     javacall_bool res;
     int outEventLen;
     
-    res = javacall_event_receive ((long)timeout, binaryBuffer, BINARY_BUFFER_MAX_LEN, &outEventLen);
+    res = javacall_event_receive((long)timeout, binaryBuffer,
+                                 BINARY_BUFFER_MAX_LEN, &outEventLen);
 
     if (!JAVACALL_SUCCEEDED(res)) {
         return;
@@ -93,13 +96,13 @@ void checkForSystemSignal(MidpReentryData* pNewSignal,
         pNewSignal->waitingFor = AMS_SIGNAL;
         pNewMidpEvent->type    = SHUTDOWN_EVENT;
         break;
-    case MIDP_JC_EVENT_PAUSE:
-        pNewSignal->waitingFor = AMS_SIGNAL;
-        pNewMidpEvent->type    = PAUSE_ALL_EVENT;
-        break;
-    case MIDP_JC_EVENT_RESUME:
-        pNewSignal->waitingFor = AMS_SIGNAL;
-        pNewMidpEvent->type    = ACTIVATE_ALL_EVENT;
+     case MIDP_JC_EVENT_PAUSE: 
+        /*
+         * IMPL_NOTE: if VM is running, the following call will send
+         * PAUSE_ALL_EVENT message to AMS; otherwise, the resources
+         * will be suspended in the context of the caller.
+         */
+        midp_suspend();
         break;
     case MIDP_JC_EVENT_PUSH:
         pNewSignal->waitingFor = PUSH_ALARM_SIGNAL;
@@ -155,8 +158,10 @@ void checkForSystemSignal(MidpReentryData* pNewSignal,
 
         if( JAVACALL_EVENT_MEDIA_SNAPSHOT_FINISHED == event->data.multimediaEvent.mediaType ) {
             pNewSignal->waitingFor = MEDIA_SNAPSHOT_SIGNAL;
-//            pNewSignal->descriptor = (((event->data.multimediaEvent.isolateId & 0xFFFF) << 16) 
-//                                     | (event->data.multimediaEvent.playerId & 0xFFFF));
+            /*
+            pNewSignal->descriptor = (((event->data.multimediaEvent.isolateId & 0xFFFF) << 16)
+                                     | (event->data.multimediaEvent.playerId & 0xFFFF));
+            */
 
             REPORT_CALL_TRACE1(LC_NONE, "[media event] JAVACALL_EVENT_MEDIA_SNAPSHOT_FINISHED %d\n",
                                pNewSignal->descriptor);

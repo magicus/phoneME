@@ -646,7 +646,7 @@ void javanotify_shutdown(void) {
  * Java.
  */
 void javanotify_pause(void) {
-    midp_jc_event_union e;
+    midp_jc_event_union e; 
 
     REPORT_INFO(LC_CORE, "javanotify_pause() >>\n");
 
@@ -660,7 +660,7 @@ void javanotify_pause(void) {
  * and resume Java.
  */
 void javanotify_resume(void) {
-    midp_jc_event_union e;
+    midp_jc_event_union e; 
 
     REPORT_INFO(LC_CORE, "javanotify_resume() >>\n");
 
@@ -710,6 +710,7 @@ void javanotify_internal_pause(void) {
 
     REPORT_INFO(LC_CORE, "javanotify_internal_pause() >>\n");
 
+    /* IMPL_NOTE: currently this event is not handled anywhere */
     e.eventType = MIDP_JC_EVENT_INTERNAL_PAUSE;
 
     midp_jc_event_send(&e);
@@ -724,6 +725,7 @@ void javanotify_internal_resume(void) {
 
     REPORT_INFO(LC_CORE, "javanotify_internal_resume() >>\n");
 
+    /* IMPL_NOTE: currently this event is not handled anywhere */
     e.eventType = MIDP_JC_EVENT_INTERNAL_RESUME;
 
     midp_jc_event_send(&e);
@@ -894,7 +896,7 @@ void javanotify_incoming_mms_available(
 
     e.eventType = MIDP_JC_EVENT_MMS_INCOMING;
 
-    //bodyLen=-1
+    /*bodyLen=-1*/
     mms = jsr205_mms_new_msg_javacall(fromAddress, appID, replyToAppID, -1, (char*)handle);
 
     e.data.mmsIncomingEvent.stub = (int)mms;
