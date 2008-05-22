@@ -767,7 +767,7 @@ void javanotify_pause(void) {
 
     /*
      * IMPL_NOTE: if VM is running, the following call will send PAUSE_ALL_EVENT
-     * message to AMS; otherwise, the resources will be suspended in the content
+     * message to AMS; otherwise, the resources will be suspended in the context
      * of the caller.
      */
     midp_suspend();
