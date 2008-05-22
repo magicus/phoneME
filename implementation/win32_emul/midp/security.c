@@ -650,7 +650,7 @@ static char *getFuncGroupFilename(char *def_val) {
 }
 
 int javacall_load_domain_list(void **array) {
-    char *file_str, *ptr0, *ptr1;
+    char *file_str, *ptr0, *ptr1, *ptr2;
     char buff[128];
     int lines, offset, i1;
     char **str_list;
@@ -683,23 +683,22 @@ int javacall_load_domain_list(void **array) {
             break;
         }
 
-        ptr0 = ptr1;
+		ptr0 = ptr1;
         ptr1 = ((char*)str_list) + lines*sizeof(char*);
         for (i1 = 0; i1 < lines; i1++) {
             str_list[i1] = ptr1;
             while ((offset = next_line(ptr0, buff))) {
+				ptr0 += offset;
                 if (check_prefix(buff, (char*)VdomainPrefix))
                     break;
-                ptr0 += offset;
             }
-            ptr0[strlen(buff)] = 0; //terminate the "domain" line
-            ptr0 += strlen(VdomainPrefix);
+            ptr2 = buff+strlen(VdomainPrefix);
             do {
-                while(*ptr0 == ' ') ptr0++;//skip spaces
-                *ptr1++ = *ptr0++;
-            } while(*ptr0);
+                if (*ptr2 != ' ')
+					*ptr1++ = *ptr2;
+				ptr2++;
+            } while(*ptr2);
             *ptr1++ = 0; //add null terminated
-            ptr0++;
         }
 
     } while (0);
