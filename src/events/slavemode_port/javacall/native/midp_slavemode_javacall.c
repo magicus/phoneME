@@ -46,6 +46,8 @@
 #include <midpEvents.h>
 #include <midpAMS.h>  /* for midpFinalize() */
 
+#include <suspend_resume.h>
+
 #include <javacall_lifecycle.h>
 
 #ifdef ENABLE_JSR_120
@@ -295,6 +297,14 @@ javacall_result checkForSystemSignal(MidpReentryData* pNewSignal,
     case MIDP_JC_EVENT_END:
         pNewSignal->waitingFor = AMS_SIGNAL;
         pNewMidpEvent->type    = SHUTDOWN_EVENT;
+        break;
+     case MIDP_JC_EVENT_PAUSE:
+        /*
+         * IMPL_NOTE: if VM is running, the following call will send
+         * PAUSE_ALL_EVENT message to AMS; otherwise, the resources
+         * will be suspended in the context of the caller.
+         */
+        midp_suspend();
         break;
     case MIDP_JC_EVENT_PUSH:
         pNewSignal->waitingFor = PUSH_ALARM_SIGNAL;

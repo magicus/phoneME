@@ -27,8 +27,7 @@
 #include <suspend_resume_port.h>
 #include <midp_logging.h>
 #include <midpServices.h>
-
-static jboolean g_needToResume = KNI_FALSE;
+#include <midp_jc_event_defs.h>
 
 /**
  * Checks if there is a request for java stack to resume normal operation.
@@ -41,23 +40,18 @@ static jboolean g_needToResume = KNI_FALSE;
  *         if it is not.
  */
 jboolean midp_checkResumeRequest() {
-    jboolean result = KNI_FALSE;
+    midp_jc_event_union *event;
+    static unsigned char binaryBuffer[BINARY_BUFFER_MAX_LEN];
+    javacall_bool res;
 
-    if (g_needToResume) {
-        g_needToResume = KNI_FALSE;
-        result = KNI_TRUE;
+    res = javacall_event_receive(0, binaryBuffer,
+                                 BINARY_BUFFER_MAX_LEN, NULL);
+
+    if (!JAVACALL_SUCCEEDED(res)) {
+        return KNI_FALSE;
     }
 
-    return result;
-}
+    event = (midp_jc_event_union *) binaryBuffer;
 
-/**
- * Forces midp_checkResumeRequest() to return KNI_TRUE.
- */
-void midp_request_resume() {
-    /*
-     * IMPL_NOTE: if called from a native thread different from the
-     * one where MIDP is running, some synchronization may be needed.
-     */
-    g_needToResume = KNI_TRUE;
+    return (event->eventType == MIDP_JC_EVENT_RESUME ? KNI_TRUE : KNI_FALSE);
 }

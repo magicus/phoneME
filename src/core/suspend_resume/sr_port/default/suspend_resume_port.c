@@ -42,13 +42,12 @@ long sr_resume_timeout = DEFAULT_TIMEOUT;
  */
 #define SUSPEND_TIMEOUT 10000
 
-static long lastSuspendStart = -1;
-
 /**
  * This implementation causes java stack to resume after
  * standard timeout after having been suspended.
  */
 jboolean midp_checkResumeRequest() {
+    static long lastSuspendStart = -1;
     long time_passed;
     jboolean result = KNI_FALSE;
 
@@ -65,11 +64,4 @@ jboolean midp_checkResumeRequest() {
     }
 
     return result;
-}
-
-/**
- * Forces midp_checkResumeRequest() to return KNI_TRUE.
- */
-void midp_request_resume() {
-    lastSuspendStart = midp_getCurrentTime() - sr_resume_timeout;
 }

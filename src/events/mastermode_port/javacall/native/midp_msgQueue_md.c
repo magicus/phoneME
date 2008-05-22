@@ -31,6 +31,8 @@
 #include <midp_jc_event_defs.h>
 #include <midpUtilKni.h>
 
+#include <suspend_resume.h>
+
 #ifdef ENABLE_JSR_75
 extern void notifyDisksChanged();
 #endif
@@ -61,7 +63,8 @@ void checkForSystemSignal(MidpReentryData* pNewSignal,
     javacall_bool res;
     int outEventLen;
     
-    res = javacall_event_receive ((long)timeout, binaryBuffer, BINARY_BUFFER_MAX_LEN, &outEventLen);
+    res = javacall_event_receive((long)timeout, binaryBuffer,
+                                 BINARY_BUFFER_MAX_LEN, &outEventLen);
 
     if (!JAVACALL_SUCCEEDED(res)) {
         return;
@@ -92,6 +95,14 @@ void checkForSystemSignal(MidpReentryData* pNewSignal,
     case MIDP_JC_EVENT_END:
         pNewSignal->waitingFor = AMS_SIGNAL;
         pNewMidpEvent->type    = SHUTDOWN_EVENT;
+        break;
+     case MIDP_JC_EVENT_PAUSE: 
+        /*
+         * IMPL_NOTE: if VM is running, the following call will send
+         * PAUSE_ALL_EVENT message to AMS; otherwise, the resources
+         * will be suspended in the context of the caller.
+         */
+        midp_suspend();
         break;
     case MIDP_JC_EVENT_PUSH:
         pNewSignal->waitingFor = PUSH_ALARM_SIGNAL;

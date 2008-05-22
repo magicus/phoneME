@@ -52,11 +52,6 @@ extern "C" {
  */
 extern jboolean midp_checkResumeRequest();
 
-/**
- * Forces midp_checkResumeRequest() to return KNI_TRUE.
- */
-extern void midp_request_resume();
-
 #ifdef __cplusplus
 }
 #endif

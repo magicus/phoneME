@@ -648,14 +648,13 @@ void javanotify_shutdown(void) {
  * Java.
  */
 void javanotify_pause(void) {
+    midp_jc_event_union e; 
+
     REPORT_INFO(LC_CORE, "javanotify_pause() >>\n");
 
-    /*
-     * IMPL_NOTE: if VM is running, the following call will send PAUSE_ALL_EVENT
-     * message to AMS; otherwise, the resources will be suspended in the context
-     * of the caller.
-     */
-    midp_suspend();
+    e.eventType = MIDP_JC_EVENT_PAUSE;
+
+    midp_jc_event_send(&e);
 }
 
 /**
@@ -663,9 +662,13 @@ void javanotify_pause(void) {
  * and resume Java.
  */
 void javanotify_resume(void) {
+    midp_jc_event_union e; 
+
     REPORT_INFO(LC_CORE, "javanotify_resume() >>\n");
 
-    midp_request_resume();
+    e.eventType = MIDP_JC_EVENT_RESUME;
+
+    midp_jc_event_send(&e);
 }
 
 /**
