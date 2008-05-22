@@ -44,7 +44,8 @@ jboolean midp_checkResumeRequest() {
     static unsigned char binaryBuffer[BINARY_BUFFER_MAX_LEN];
     javacall_bool res;
 
-    res = javacall_event_receive(0, binaryBuffer,
+    /* timeout == -1 means "wait forever" */
+    res = javacall_event_receive(-1, binaryBuffer,
                                  BINARY_BUFFER_MAX_LEN, NULL);
 
     if (!JAVACALL_SUCCEEDED(res)) {
