@@ -120,7 +120,10 @@ public final class Permissions {
     public static int NUMBER_OF_PERMISSIONS;
 
     /* list of domains */
-    private static PolicyDomain []    domainsAll=null;
+    private static DomainPolicy []    domainsAll=null;
+
+    /* The domain name for unsigned midlets */
+    private static String unsignedDomain=null;
 
     /* Permissions index lookup table */
     private static Hashtable          permissionsHash;
@@ -229,7 +232,6 @@ public final class Permissions {
      * @return true if a domain is trusted, false if not
      */
     public static boolean isTrusted(String domain) {
-	System.out.println("isTrusted: " + domain);
         if (domainsAll == null)
             init();
         
@@ -238,6 +240,15 @@ public final class Permissions {
                 return domainsAll[i1].isTrusted();
         
         return false;
+    }
+
+    /**
+     * Returns domain for unsigned midlets.
+     *
+     * @return domain name
+     */
+    public static String getUnsignedDomain() {
+        return unsignedDomain;
     }
 
     /**
@@ -257,15 +268,11 @@ public final class Permissions {
         byte[] defaults = new byte[NUMBER_OF_PERMISSIONS];
         byte[][] permissions = {maximums, defaults};
 
-	System.out.println("forDomain: " + name + ", domainsAll: " + domainsAll);
-        // a hack to solve romizer error
-        // at romize time native function doesn't exist
-        if (domainsAll == null) {
-            if (MANUFACTURER_DOMAIN_BINDING.equals(name))  //a hack to enable MIDP and AMS permissions
-                for (int i1 = 0; i1 < NUMBER_OF_PERMISSIONS; i1 ++) {
-                    maximums[i1] = ALLOW;
-                    defaults[i1] = ALLOW;
-                }
+        if (MANUFACTURER_DOMAIN_BINDING.equals(name)) {
+            for (int i1 = 0; i1 < NUMBER_OF_PERMISSIONS; i1 ++) {
+                maximums[i1] = ALLOW;
+                defaults[i1] = ALLOW;
+            }
             return permissions;
         }
 
@@ -275,63 +282,7 @@ public final class Permissions {
                 domainsAll[i1].getPermissionlevels(maximums, MAX_LEVELS);
             }
         
-        if (MANUFACTURER_DOMAIN_BINDING.equals(name)) { //a hack to enable MIDP and AMS permissions
-            maximums[0] = ALLOW;
-            maximums[1] = ALLOW;
-            defaults[0] = ALLOW;
-            defaults[1] = ALLOW;
-        }
         return permissions;
-                
-//        if (MANUFACTURER_DOMAIN_BINDING.equals(name)) {
-//            // All permissions allowed
-//            for (int i = 0; i < maximums.length; i++) {
-//                maximums[i] = ALLOW;
-//                defaults[i] = ALLOW;
-//            }
-//            return permissions;
-//        }
-//
-//        if (OPERATOR_DOMAIN_BINDING.equals(name) ||
-//                MAXIMUM_DOMAIN_BINDING.equals(name)) {
-//            for (int i = 0; i < maximums.length; i++) {
-//                maximums[i] = ALLOW;
-//                defaults[i] = ALLOW;
-//            }
-//
-//            // Only public permissions allowed, never internal
-//            maximums[MIDP] = NEVER;
-//            defaults[MIDP] = NEVER;
-//            maximums[AMS] = NEVER;
-//            defaults[AMS] = NEVER;
-//
-//            return permissions;
-//        }
-//
-//        if (IDENTIFIED_DOMAIN_BINDING.equals(name)) {
-//            for (int i = 2; i < maximums.length; i++) {
-//                maximums[i] =
-//                    permissionSpecs[i].group.getIdentifiedMaxiumLevel();
-//                defaults[i] =
-//                    permissionSpecs[i].group.getIdentifiedDefaultLevel();
-//            }
-//
-//            return permissions;
-//        }
-//
-//        if (UNIDENTIFIED_DOMAIN_BINDING.equals(name)) {
-//            for (int i = 2; i < maximums.length; i++) {
-//                maximums[i] =
-//                    permissionSpecs[i].group.getUnidentifiedMaxiumLevel();
-//                defaults[i] =
-//                    permissionSpecs[i].group.getUnidentifiedDefaultLevel();
-//            }
-//
-//            return permissions;
-//        }
-//
-//        // the default domain is minimum, all permissions denied
-//        return permissions;
     }
 
     /**
@@ -416,7 +367,6 @@ public final class Permissions {
     public static void setPermissionGroup(byte[] current,
             byte pushInterruptLevel, PermissionGroup group, byte level)
             throws SecurityException {
-
         checkForMutuallyExclusiveCombination(current, pushInterruptLevel,
                                              group, level);
 
@@ -707,7 +657,7 @@ public final class Permissions {
 
     private static void init() {
         try {
-	    // initialization process
+            // initialization process
             // step 1: permissions list and hashtable
             int i1, i2;
             String [] list;
@@ -724,26 +674,26 @@ public final class Permissions {
                 permissionSpecs[i1] = new PermissionSpec(permList[i1-2], NEVER_GROUP);
             }
 
-	    //step 2: groups list
+            //step 2: groups list
             list =  loadGroupList();
             groupsAll = new PermissionGroup[list.length];
             String [] messages = new String[6];
             for (i1 = 0; i1 < groupsAll.length; i1++) {
                 String [] tmp = getGroupMessages(list[i1]);
-		if (tmp != null) {
-		    for (i2 = 0; i2 < tmp.length; i2++)
-			messages[i2] = replaceCRLF(tmp[i2]); 
-		} else {
-		    messages[0] = list[i1];
-		    i2 = 1;
-		}
-		for (; i2 < messages.length; i2++)
-		    messages[i2] = "n/a";
-		    
+                if (tmp != null) {
+                    for (i2 = 0; i2 < tmp.length; i2++)
+                        messages[i2] = replaceCRLF(tmp[i2]); 
+                } else {
+                    messages[0] = list[i1];
+                    i2 = 1;
+                }
+                for (; i2 < messages.length; i2++)
+                    messages[i2] = "n/a";
+                    
                 groupsAll[i1] = new PermissionGroup(list[i1], 
-					messages[0], messages[1],
-				        messages[2], messages[3],
-				        messages[4], messages[5]);
+                                        messages[0], messages[1],
+                                        messages[2], messages[3],
+                                        messages[4], messages[5]);
             }
 
             //step 3: group's permissions members
@@ -758,22 +708,27 @@ public final class Permissions {
                         
             // step 4: Domains list
             list = loadDomainList();
-            domainsAll = new PolicyDomain[list.length];
+            domainsAll = new DomainPolicy[list.length+1]; // internal 'manufacturer' domain always exist
+            domainsAll[0] = new DomainPolicy(MANUFACTURER_DOMAIN_BINDING, true);
             for (i1 = 0; i1 < list.length; i1++) {
                 String item = list[i1];
-                boolean isTrusted = true;
+
+                if (MANUFACTURER_DOMAIN_BINDING.startsWith(item))
+                    continue;
+
+                boolean isTrusted = false;
                 String name;
                 int pos = item.indexOf(',');
                 if (pos > 0) {
                     name = item.substring(0,pos);
-                    if (item.charAt(pos+1) == 'u')
-                        isTrusted = false;
-                } else {
+                    if (item.charAt(pos+1) == 't')
+                        isTrusted = true;
+                } else
                     name = item;
-                    isTrusted = false;
-                }
-		System.out.println("domain: " + name + ", trusted: " + isTrusted);
-                domainsAll[i1] = new PolicyDomain(name, isTrusted);
+
+                domainsAll[i1+1] = new DomainPolicy(name, isTrusted);
+                if (name.startsWith("untrusted") || name.startsWith("unidentified"))
+                    unsignedDomain = name;
             }
             
             // fill hack groups
@@ -794,15 +749,15 @@ public final class Permissions {
     }
 
     private static String replaceCRLF(String value) {
-	int posCRLF, pos = 0;
-	String result = "";
+        int posCRLF, pos = 0;
+        String result = "";
 
-	while ((posCRLF = value.indexOf("\\n", pos)) != -1) {
-	    result += value.substring(pos,  posCRLF) + "\n";
-	    pos = posCRLF + 2;
-	}
+        while ((posCRLF = value.indexOf("\\n", pos)) != -1) {
+            result += value.substring(pos,  posCRLF) + "\n";
+            pos = posCRLF + 2;
+        }
 
-	return result + value.substring(pos);
+        return result + value.substring(pos);
     }
 
     private static native String [] loadDomainList();
