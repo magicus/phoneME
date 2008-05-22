@@ -1,0 +1,153 @@
+<?xml version="1.0"?>
+<!--
+Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+
+This program is free software; you can redistribute it and/or
+modify it under the terms of the GNU General Public License version
+2 only, as published by the Free Software Foundation.
+
+This program is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+General Public License version 2 for more details (a copy is
+included at /legal/license.txt).
+
+You should have received a copy of the GNU General Public License
+version 2 along with this work; if not, write to the Free Software
+Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+02110-1301 USA
+
+Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+Clara, CA 95054 or visit www.sun.com if you need additional
+information or have any questions.
+-->
+<project basedir="." default="compile-executive" name="jump-impl-executive">
+
+<property name="package" value="com/sun/jumpimpl/executive"/>
+<property name="module-factories.basename" value="JUMPFactories.java"/>
+
+
+<target name="gen-module-factories-initializer.tmp">
+    <condition
+        property="module-factories"
+        value="${module-factories-configuration}"
+        else="">
+        <isset property="module-factories-configuration"/>
+    </condition>
+
+    <pathconvert property="module-factories.antcalls" dirsep="/" pathsep="&#10;">
+        <path path="${module-factories}"/>
+        <mapper>
+            <chainedmapper>
+                <globmapper from="${basedir}${file.separator}" to=""/>
+                <filtermapper>
+                    <tokenfilter>
+                        <stringtokenizer delims="\r\n\t ,:;" suppressdelims="true"/>
+                        <replaceregex
+                            pattern="(.+)"
+                            replace="&lt;antcall target=&quot;loadModule&quot;&gt;&lt;param name=&quot;factory-glob&quot; value=&quot;**/\1.java&quot;/&gt;&lt;/antcall&gt;&#10;"/>
+                    </tokenfilter>
+                </filtermapper>
+            </chainedmapper>
+        </mapper>
+    </pathconvert>
+
+    <property
+        name="module-factories.file"
+        value="${d.gen.dir}/${package}/${module-factories.basename}"/>
+
+    <concat destfile="${d.gen.dir}/module-factories-generator.xml"><![CDATA[<?xml version="1.0"?>
+<!-- This file contains information determined at a build time -->
+<!-- AUTO-GENERATED - DO NOT EDIT -->
+
+<project basedir="." default="all" name="module-factories-generator">
+    <target name="all">
+        <concat destfile="${module-factories.file}.tmp">
+/* This file contains information determined at a build time */
+/* AUTO-GENERATED - DO NOT EDIT */
+
+package com.sun.jumpimpl.executive;
+
+import java.util.Map;
+
+import com.sun.jump.module.JUMPModuleFactory;
+
+
+class JUMPFactories {
+    static void loadModule(Map config, String partialName)
+        throws InstantiationException, IllegalAccessException, ClassNotFoundException {
+        String s = "com.sun.jumpimpl.module."+partialName;
+        System.err.println("Loading "+s);
+	Object o = Class.forName(s).newInstance();
+	((JUMPModuleFactory)o).load(config);
+    }
+
+    static void init(Map config) {
+        try {
+</concat>
+${module-factories.antcalls}
+    <concat destfile="${module-factories.file}.tmp" append="true">
+        } catch(Exception e) {
+            e.printStackTrace();
+            throw new RuntimeException("module factories initialization failed");
+        }
+    }
+}
+</concat>
+    </target>
+
+    <target name="loadModule">
+        <pathconvert property="loadModule" dirsep="/" pathsep="&#10;">
+            <path>
+                <fileset
+                    dir="${s.share.impl.dir}" includes="${factory-glob}"/>
+            </path>
+            <mapper>
+                <chainedmapper>
+                    <filtermapper>
+                        <replacestring from="${file.separator}" to="."/>
+                        <replacestring from=".java" to=""/>
+                    </filtermapper>
+                    <regexpmapper
+                        from="com.sun.jumpimpl.module.(.*)$$"
+                        to="            loadModule(config, &quot;\1&quot;);"/>
+                </chainedmapper>
+            </mapper>
+        </pathconvert>
+        <echo message="${loadModule}&#10;" append="true" file="${module-factories.file}.tmp"/>
+    </target>
+</project>
+]]></concat>
+
+<ant antfile="${d.gen.dir}/module-factories-generator.xml"/>
+    <condition property="update-module-factories.file">
+        <not>
+            <filesmatch
+                file1="${module-factories.file}.tmp"
+                file2="${module-factories.file}"/>
+        </not>
+    </condition>
+</target>
+
+<target
+    name="gen-module-factories-initializer"
+    depends="gen-module-factories-initializer.tmp"
+    if="update-module-factories.file">
+
+    <move
+        file="${module-factories.file}.tmp"
+        tofile="${module-factories.file}"/>
+</target>
+
+<target name="compile-executive" depends="gen-module-factories-initializer">
+    <delete file="${module-factories.file}.tmp" quiet="true"/>
+    <jump.javac srcdir="${d.gen.dir}">
+        <include name="${package}/**/${module-factories.basename}" />
+    </jump.javac>
+    <jump.javac srcdir="${s.share.impl.dir}/executive/classes">
+        <include name="${package}/**/*.java" />
+    </jump.javac>
+</target>
+
+</project>
