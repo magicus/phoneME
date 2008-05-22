@@ -35,8 +35,6 @@
 #include <midp_logging.h>
 #include <localeMethod.h>
 #include <midp_jc_event_defs.h>
-#include <suspend_resume.h>
-#include <suspend_resume_port.h>
 
 #include <javacall_datagram.h>
 #include <javacall_events.h>
