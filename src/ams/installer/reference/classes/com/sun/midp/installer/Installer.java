@@ -175,7 +175,7 @@ public abstract class Installer {
 
     /** Use this to be the security domain for unsigned suites. */
     protected String unsignedSecurityDomain =
-        Permissions.UNIDENTIFIED_DOMAIN_BINDING;
+        Permissions.getUnsignedDomain();
 
     /**
      * Include this permissions into the list of permissions
@@ -1077,7 +1077,7 @@ public abstract class Installer {
              * The unidentified suites do not get checked for requested
              * permissions.
              */
-            if (Permissions.UNIDENTIFIED_DOMAIN_BINDING.equals(info.domain)) {
+            if (!Permissions.isTrusted(info.domain)) {
 
                 settings.setPermissions((Permissions.forDomain(
                     info.domain)) [Permissions.CUR_LEVELS]);
