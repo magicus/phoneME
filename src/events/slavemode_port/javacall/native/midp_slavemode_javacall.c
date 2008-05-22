@@ -34,7 +34,6 @@
 #include <push_server_export.h>
 #include <midp_thread.h>
 #include <midp_run_vm.h>
-#include <suspend_resume.h>
 
 #include <midp_logging.h>
 #include <midp_slavemode_port.h>
@@ -45,7 +44,7 @@
 
 #include <midpServices.h>
 #include <midpEvents.h>
-#include <midpAMS.h>  // for midpFinalize()
+#include <midpAMS.h>  /* for midpFinalize() */
 
 #include <javacall_lifecycle.h>
 
@@ -259,7 +258,7 @@ javacall_result checkForSystemSignal(MidpReentryData* pNewSignal,
      /* convert jlong to long */
     if (timeout > 0x7FFFFFFF) {
         timeTowaitInMillisec = -1;
-    } else if (timeout < 0) {//
+    } else if (timeout < 0) {
     	 timeTowaitInMillisec = -1;
     }	else {
         timeTowaitInMillisec = (long)(timeout&0x7FFFFFFF);
@@ -296,14 +295,6 @@ javacall_result checkForSystemSignal(MidpReentryData* pNewSignal,
     case MIDP_JC_EVENT_END:
         pNewSignal->waitingFor = AMS_SIGNAL;
         pNewMidpEvent->type    = SHUTDOWN_EVENT;
-        break;
-    case MIDP_JC_EVENT_PAUSE:
-        pNewSignal->waitingFor = AMS_SIGNAL;
-        pNewMidpEvent->type    = PAUSE_ALL_EVENT;
-        break;
-    case MIDP_JC_EVENT_RESUME:
-        pNewSignal->waitingFor = AMS_SIGNAL;
-        pNewMidpEvent->type    = ACTIVATE_ALL_EVENT;
         break;
     case MIDP_JC_EVENT_PUSH:
         pNewSignal->waitingFor = PUSH_ALARM_SIGNAL;
@@ -524,7 +515,7 @@ static int midp_slavemode_handle_events(JVMSPI_BlockedThreadInfo *blocked_thread
             }
 
             break;
-#endif // ENABLE_JAVA_DEBUGGER
+#endif /* ENABLE_JAVA_DEBUGGER */
 
         case AMS_SIGNAL:
             midpStoreEventAndSignalAms(newMidpEvent);

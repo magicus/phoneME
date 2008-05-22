@@ -93,14 +93,6 @@ void checkForSystemSignal(MidpReentryData* pNewSignal,
         pNewSignal->waitingFor = AMS_SIGNAL;
         pNewMidpEvent->type    = SHUTDOWN_EVENT;
         break;
-    case MIDP_JC_EVENT_PAUSE:
-        pNewSignal->waitingFor = AMS_SIGNAL;
-        pNewMidpEvent->type    = PAUSE_ALL_EVENT;
-        break;
-    case MIDP_JC_EVENT_RESUME:
-        pNewSignal->waitingFor = AMS_SIGNAL;
-        pNewMidpEvent->type    = ACTIVATE_ALL_EVENT;
-        break;
     case MIDP_JC_EVENT_PUSH:
         pNewSignal->waitingFor = PUSH_ALARM_SIGNAL;
         pNewSignal->descriptor = event->data.pushEvent.alarmHandle;
@@ -155,8 +147,10 @@ void checkForSystemSignal(MidpReentryData* pNewSignal,
 
         if( JAVACALL_EVENT_MEDIA_SNAPSHOT_FINISHED == event->data.multimediaEvent.mediaType ) {
             pNewSignal->waitingFor = MEDIA_SNAPSHOT_SIGNAL;
-//            pNewSignal->descriptor = (((event->data.multimediaEvent.isolateId & 0xFFFF) << 16) 
-//                                     | (event->data.multimediaEvent.playerId & 0xFFFF));
+            /*
+            pNewSignal->descriptor = (((event->data.multimediaEvent.isolateId & 0xFFFF) << 16)
+                                     | (event->data.multimediaEvent.playerId & 0xFFFF));
+            */
 
             REPORT_CALL_TRACE1(LC_NONE, "[media event] JAVACALL_EVENT_MEDIA_SNAPSHOT_FINISHED %d\n",
                                pNewSignal->descriptor);

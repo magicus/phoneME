@@ -102,8 +102,6 @@ typedef enum {
     MIDP_JC_EVENT_MMS_INCOMING         ,
 #endif
     MIDP_JC_EVENT_MULTIMEDIA           ,
-    MIDP_JC_EVENT_PAUSE                ,
-    MIDP_JC_EVENT_RESUME               ,
     MIDP_JC_EVENT_INTERNAL_PAUSE       ,
     MIDP_JC_EVENT_INTERNAL_RESUME      ,
     MIDP_JC_EVENT_TEXTFIELD            ,

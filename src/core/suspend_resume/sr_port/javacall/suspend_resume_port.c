@@ -24,24 +24,14 @@
  * information or have any questions.
  */
 
-#ifndef _SUSPEND_RESUME_PORT_H_
-#define _SUSPEND_RESUME_PORT_H_
+#include <suspend_resume_port.h>
+#include <midp_logging.h>
+#include <midpServices.h>
 
-#include <kni.h>
-
-/**
- * @file SUSPEND_RESUME_PORT_port.h
- *
- * Suspend/Resume porting interface
- */
-
-#ifdef __cplusplus
-extern "C" {
-#endif
+static jboolean g_needToResume = KNI_FALSE;
 
 /**
  * Checks if there is a request for java stack to resume normal operation.
- * This function is called from midp_checkAndResume() and requires porting.
  *
  * This function requires porting only if midp_checkAndResume() is used for
  * stack resuming. In case midp_resume() is called directly, this function
@@ -50,15 +40,24 @@ extern "C" {
  * @return KNI_TRUE if java stack is requested to resume, KNI_FALSE
  *         if it is not.
  */
-extern jboolean midp_checkResumeRequest();
+jboolean midp_checkResumeRequest() {
+    jboolean result = KNI_FALSE;
+
+    if (g_needToResume) {
+        g_needToResume = KNI_FALSE;
+        result = KNI_TRUE;
+    }
+
+    return result;
+}
 
 /**
  * Forces midp_checkResumeRequest() to return KNI_TRUE.
  */
-extern void midp_request_resume();
-
-#ifdef __cplusplus
+void midp_request_resume() {
+    /*
+     * IMPL_NOTE: if called from a native thread different from the
+     * one where MIDP is running, some synchronization may be needed.
+     */
+    g_needToResume = KNI_TRUE;
 }
-#endif
-
-#endif /* _SUSPEND_RESUME_PORT_H_ */

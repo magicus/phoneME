@@ -122,7 +122,7 @@ void midp_check_events(JVMSPI_BlockedThreadInfo *blocked_threads,
         }
 
         break;
-#endif // ENABLE_JAVA_DEBUGGER
+#endif /* ENABLE_JAVA_DEBUGGER */
 
     case AMS_SIGNAL:
         midpStoreEventAndSignalAms(newMidpEvent);

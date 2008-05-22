@@ -35,6 +35,8 @@
 #include <midp_logging.h>
 #include <localeMethod.h>
 #include <midp_jc_event_defs.h>
+#include <suspend_resume.h>
+#include <suspend_resume_port.h>
 
 #include <javacall_datagram.h>
 #include <javacall_events.h>
@@ -646,13 +648,14 @@ void javanotify_shutdown(void) {
  * Java.
  */
 void javanotify_pause(void) {
-    midp_jc_event_union e;
-
     REPORT_INFO(LC_CORE, "javanotify_pause() >>\n");
 
-    e.eventType = MIDP_JC_EVENT_PAUSE;
-
-    midp_jc_event_send(&e);
+    /*
+     * IMPL_NOTE: if VM is running, the following call will send PAUSE_ALL_EVENT
+     * message to AMS; otherwise, the resources will be suspended in the content
+     * of the caller.
+     */
+    midp_suspend();
 }
 
 /**
@@ -660,13 +663,9 @@ void javanotify_pause(void) {
  * and resume Java.
  */
 void javanotify_resume(void) {
-    midp_jc_event_union e;
-
     REPORT_INFO(LC_CORE, "javanotify_resume() >>\n");
 
-    e.eventType = MIDP_JC_EVENT_RESUME;
-
-    midp_jc_event_send(&e);
+    midp_request_resume();
 }
 
 /**
@@ -710,6 +709,7 @@ void javanotify_internal_pause(void) {
 
     REPORT_INFO(LC_CORE, "javanotify_internal_pause() >>\n");
 
+    /* IMPL_NOTE: currently this event is not handled anywhere */
     e.eventType = MIDP_JC_EVENT_INTERNAL_PAUSE;
 
     midp_jc_event_send(&e);
@@ -724,6 +724,7 @@ void javanotify_internal_resume(void) {
 
     REPORT_INFO(LC_CORE, "javanotify_internal_resume() >>\n");
 
+    /* IMPL_NOTE: currently this event is not handled anywhere */
     e.eventType = MIDP_JC_EVENT_INTERNAL_RESUME;
 
     midp_jc_event_send(&e);
@@ -894,7 +895,7 @@ void javanotify_incoming_mms_available(
 
     e.eventType = MIDP_JC_EVENT_MMS_INCOMING;
 
-    //bodyLen=-1
+    /*bodyLen=-1*/
     mms = jsr205_mms_new_msg_javacall(fromAddress, appID, replyToAppID, -1, (char*)handle);
 
     e.data.mmsIncomingEvent.stub = (int)mms;
