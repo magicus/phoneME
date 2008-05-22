@@ -27,13 +27,25 @@
 
 #include <sni.h>
 #include <midpServices.h>
-#define JAVACALL_MM_ASYNC_GET_RESULT_returns_data(ret_args_)  \
-    do { \
-        void *args__[] = {ret_args_}; \
-        javacall_media_get_event_data(handle__, javacall_event__, ctx__->pResult, sizeof args__ / sizeof args__[0], args__); \
-    } while (0) \
 
-#define JAVACALL_MM_ASYNC_GET_RESULT_returns_no_data  (void)ctx__ /* empty */
+/*
+ * These two macros are needed to avoid compilation errors with some compilers
+ * that do not accept "void *arr[] = {&a, &b}" initializers.
+ */
+#define JAVACALL_MM_ASYNC_RET_DATA_ARG(a1_) \
+    void *args__[1]; \
+    args__[0] = a1_; \
+
+#define JAVACALL_MM_ASYNC_RET_DATA_ARG2(a1_,a2_) \
+    void *args__[2]; \
+    args__[0] = a1_; \
+    args__[1] = a2_; \
+
+#define JAVACALL_MM_ASYNC_GET_RESULT_returns_data(ret_args_)  \
+    JAVACALL_MM_ASYNC_RET_DATA_ARG##ret_args_ \
+    javacall_media_get_event_data(handle__, javacall_event__, ctx__->pResult, sizeof args__ / sizeof args__[0], args__); \
+
+#define JAVACALL_MM_ASYNC_GET_RESULT_returns_no_data  (void)ctx__; /* empty */
 
 #define JAVACALL_MM_ASYNC_EXEC(status_,code_,handle_,app_id_,player_id_,javacall_event_,args_) \
 do { \
@@ -46,7 +58,7 @@ do { \
     } else { \
         (result__ = ctx__->status); \
         if (result__ == JAVACALL_OK) { \
-            JAVACALL_MM_ASYNC_GET_RESULT_##args_; \
+            JAVACALL_MM_ASYNC_GET_RESULT_##args_ \
         } \
     } \
     if (result__ == JAVACALL_WOULD_BLOCK) { \
@@ -72,4 +84,4 @@ do { \
         (((appId_) & 0x3FF) << 16) | ((playerId_) & 0xFFFF))
 
 #define PLAYER_DESCRIPTOR_EVENT_MASK    MAKE_PLAYER_DESCRIPTOR(-1, -1, JAVACALL_EVENT_MEDIA_JAVA_EVENTS_MARKER)
-#endif __mm_async_exec_H__
+#endif /* __mm_async_exec_H__ */
