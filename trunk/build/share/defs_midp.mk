@@ -36,7 +36,8 @@ ifeq ($(USE_GCI), true)
 else
     MIDP_PLATFORM ?= linux_fb_gcc
 endif
-MIDP_TARGET_OS ?= $(MIDP_PLATFORM)
+
+MIDP_TARGET_OS ?= linux
 
 # bootclasspath classes needed to compile midp
 VM_BOOTCLASSPATH0	= $(CVM_BUILDTIME_CLASSESZIP) $(LIB_CLASSESJAR)
@@ -94,9 +95,9 @@ else
 PROJECT_MIDP_DIR ?= $(MIDP_DIR)
 endif
 
-MIDP_MAKEFILE_DIR 	?= $(MIDP_DIR)/build/$(MIDP_TARGET_OS)
+MIDP_MAKEFILE_DIR 	?= $(MIDP_DIR)/build/$(MIDP_PLATFORM)
 
-MIDP_OUTPUT_DIR		?= $(CVM_MIDP_BUILDDIR)/midp_$(MIDP_TARGET_OS)
+MIDP_OUTPUT_DIR		?= $(CVM_MIDP_BUILDDIR)/midp_$(MIDP_PLATFORM)
 export MIDP_OUTPUT_DIR
 USE_SSL			?= false
 USE_RESTRICTED_CRYPTO	?= false
