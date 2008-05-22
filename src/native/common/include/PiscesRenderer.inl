@@ -1032,9 +1032,10 @@ updateInternalColor(Renderer* rdr) {
     switch (rdr->_imageType) {
         case TYPE_USHORT_565_RGB:
         case TYPE_USHORT_5658:
-            rdr->_cred = _Pisces_convert8To5[rdr->_ored];
-            rdr->_cgreen = _Pisces_convert8To6[rdr->_ogreen];
-            rdr->_cblue = _Pisces_convert8To5[rdr->_oblue];
+            rdr->_cred = rdr->_ored >> 3;
+            rdr->_cgreen = rdr->_ogreen >> 2;
+            rdr->_cblue = rdr->_oblue >> 3;
+
             break;
         default:
             // TYPE_INT_RGB

@@ -30,58 +30,10 @@
 
 #define POINTER_32
 
-// Depth conversion
-
-jint* _Pisces_convert8To5 = NULL;
-jint* _Pisces_convert8To6 = NULL;
-
 // Stroke bias
 
 jint PISCES_STROKE_X_BIAS;
 jint PISCES_STROKE_Y_BIAS;
-
-jboolean
-piscesutil_moduleInitialize() {
-    if (_Pisces_convert8To5 == NULL) {
-        jint i;
-        jint* convert8To5;
-        jint* convert8To6;
-
-        convert8To5 = (jint*)PISCESmalloc(256*sizeof(jint));
-        ASSERT_ALLOC_BOOLEAN(convert8To5);
-
-        convert8To6 = (jint*)PISCESmalloc(256*sizeof(jint));
-        ASSERT_ALLOC_BOOLEAN(convert8To6);
-
-        if ((convert8To5 == NULL) ||
-                (convert8To6 == NULL)) {
-            if (convert8To5 != NULL) {
-                PISCESfree(convert8To5);
-            }
-            if (convert8To6 != NULL) {
-                PISCESfree(convert8To6);
-            }
-            return XNI_FALSE;
-        }
-        for (i = 0; i < 256; i++) {
-            convert8To5[i] = (i*31 + 127)/255;
-            convert8To6[i] = (i*63 + 127)/255;
-        }
-
-        _Pisces_convert8To5 = convert8To5;
-        _Pisces_convert8To6 = convert8To6;
-    }
-
-    return XNI_TRUE;
-}
-
-void
-piscesutil_moduleFinalize() {
-    my_free(_Pisces_convert8To5);
-    my_free(_Pisces_convert8To6);
-    _Pisces_convert8To5 = NULL;
-    _Pisces_convert8To6 = NULL;
-}
 
 void
 piscesutil_setStrokeBias(jint xbias, jint ybias) {

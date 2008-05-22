@@ -906,7 +906,7 @@ blitPTSrc5658(Renderer *rdr, jint height) {
     jint *minTouched = rdr->_minTouched;
     jint *maxTouched = rdr->_maxTouched;
     jint aaAlphaShift = rdr->_AA_ALPHA_SHIFT;
-    jint cred5, cgreen6, cblue5, calpha;
+    jint calpha;
     
     jbyte *a, *am;
     jint *alphaMap = rdr->_paintAlphaMap;
@@ -935,13 +935,8 @@ blitPTSrc5658(Renderer *rdr, jint height) {
 
             cval = paint[aidx];
             aa = alphaMap[(cval >> 24) & 0xff];
-            
-            cred5 = _Pisces_convert8To5[(cval >> 16) & 0xff];
-            cgreen6 = _Pisces_convert8To6[(cval >> 8) & 0xff];
-            cblue5 = _Pisces_convert8To5[cval & 0xff];
             calpha = (cval >> 24) && 0xff;
-
-            cval = ((cred5 << 11) | (cgreen6 << 5) | cblue5);
+            cval = CONVERT_888_TO_565(cval);
 
             /* Scale combined alpha into [0, MAX_ALPHA] */
             aval = (aa * (*a & 0xff) * MAX_ALPHA + denom2) / denom;
@@ -951,9 +946,9 @@ blitPTSrc5658(Renderer *rdr, jint height) {
             } else if (aval > 0) {
                 blendSrc5658(&shortData[iidx], &alphaData[iidx], aval,
                              256 - (*a << aaAlphaShift), 
-                             cred5, 
-                             cgreen6, 
-                             cblue5);
+                             (cval >> 11) & 0x1f, // cred5
+                             (cval >> 5) & 0x3f, // cgreen6
+                             cval & 0x1f); // cblue5
             }
 
             ++a;
@@ -1081,17 +1076,10 @@ blitPTSrc565(Renderer *rdr, jint height) {
         a = alpha + aidx;
         am = a + w;
         while (a < am) {
-            jint cred5, cgreen6, cblue5;
-
             assert(aidx >= 0);
             assert(aidx < rdr->_paint_length / 4);
 
-            cval = paint[aidx];
-            cred5 = _Pisces_convert8To5[(cval >> 16) & 0xff];
-            cgreen6 = _Pisces_convert8To6[(cval >> 8) & 0xff];
-            cblue5 = _Pisces_convert8To5[cval & 0xff];
-
-            cval = ((cred5 << 11) | (cgreen6 << 5) | cblue5);
+            cval = CONVERT_888_TO_565(paint[aidx]);
 
             aval = *a++ << aaAlphaShift;
             if (aval == MAX_ALPHA) {
@@ -1959,7 +1947,7 @@ blitPTSrcOver5658(Renderer *rdr, jint height) {
     jint width = rdr->_alphaWidth;
     jint *minTouched = rdr->_minTouched;
     jint *maxTouched = rdr->_maxTouched;
-    jint cred5, cgreen6, cblue5, calpha;
+    jint calpha;
     
     jbyte *a, *am;
     jint *alphaMap = rdr->_paintAlphaMap;
@@ -1988,13 +1976,8 @@ blitPTSrcOver5658(Renderer *rdr, jint height) {
 
             cval = paint[aidx];
             aa = alphaMap[(cval >> 24) & 0xff];
-
-            cred5 = _Pisces_convert8To5[(cval >> 16) & 0xff];
-            cgreen6 = _Pisces_convert8To6[(cval >> 8) & 0xff];
-            cblue5 = _Pisces_convert8To5[cval & 0xff];
             calpha = (cval >> 24) && 0xff;
-
-            cval = ((cred5 << 11) | (cgreen6 << 5) | cblue5);
+            cval = CONVERT_888_TO_565(cval);
 
             /* Scale combined alpha into [0, MAX_ALPHA] */
             aval = (aa * (*a & 0xff) * MAX_ALPHA + denom2) / denom;
@@ -2003,7 +1986,9 @@ blitPTSrcOver5658(Renderer *rdr, jint height) {
                 alphaData[iidx] = calpha;
             } else if (aval > 0) {
                 blendSrcOver5658(&shortData[iidx], &alphaData[iidx], aval, 
-                                 cred5, cgreen6, cblue5);
+                    (cval >> 11) & 0x1f, // cred5
+                    (cval >> 5) & 0x3f, // cgreen6
+                    cval & 0x1f); // cblue5
             }
 
             ++a;
@@ -2128,18 +2113,12 @@ blitPTSrcOver565(Renderer *rdr, jint height) {
         a = alpha + aidx;
         am = a + w;
         while (a < am) {
-            jint cred5, cgreen6, cblue5;
-
             assert(aidx >= 0);
             assert(aidx < rdr->_paint_length / 4);
 
             cval = paint[aidx];
             aa = alphaMap[(cval >> 24) & 0xff];
-            cred5 = _Pisces_convert8To5[(cval >> 16) & 0xff];
-            cgreen6 = _Pisces_convert8To6[(cval >> 8) & 0xff];
-            cblue5 = _Pisces_convert8To5[cval & 0xff];
-
-            cval = ((cred5 << 11) | (cgreen6 << 5) | cblue5);
+            cval = CONVERT_888_TO_565(cval);
 
             /* Scale combined alpha into [0, MAX_ALPHA] */
             aval = (aa * (*a & 0xff) * MAX_ALPHA + denom2) / denom;
@@ -2273,9 +2252,8 @@ clearRect5658(Renderer *rdr, jint x, jint y, jint w, jint h) {
 
 void
 clearRect565(Renderer *rdr, jint x, jint y, jint w, jint h) {
-    jshort cval = (jshort)((_Pisces_convert8To5[rdr->_cred] << 11) |
-                           (_Pisces_convert8To6[rdr->_cgreen] << 5) |
-                           _Pisces_convert8To5[rdr->_cblue]);
+    jshort cval = (jshort) CONVERT_888_TO_565_VALS(rdr->_cred, rdr->_cgreen, rdr->_cblue);
+
     jint pixelStride = rdr->_imagePixelStride;
     jint scanlineSkip = rdr->_imageScanlineStride - w * pixelStride;
     jshort* shortData = (jshort*)rdr->_data + rdr->_imageOffset +

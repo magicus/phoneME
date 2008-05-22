@@ -38,10 +38,8 @@ pisces_moduleInitialize() {
         return initializationResult;
     }
     alreadyInitialized = XNI_TRUE;
-    if (!piscesmath_moduleInitialize() ||
-            !piscesutil_moduleInitialize()) {
+    if (!piscesmath_moduleInitialize()) {
         piscesmath_moduleFinalize();
-        piscesutil_moduleFinalize();
         initializationResult = XNI_FALSE;
         return XNI_FALSE;
     }
@@ -54,7 +52,6 @@ void
 pisces_moduleFinalize() {
     if (alreadyInitialized) {
         piscesmath_moduleFinalize();
-        piscesutil_moduleFinalize();
         alreadyInitialized = XNI_FALSE;
     }
 }
