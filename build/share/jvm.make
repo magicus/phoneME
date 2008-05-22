@@ -2161,7 +2161,7 @@ $(DIST_LIB_DIR)/$(JVM_MAK_NAME)::
 	$(A)echo "JVM_ENABLE_METHOD_TRAPS  = $(ENABLE_METHOD_TRAPS)"      >> $@
 	$(A)echo "JVM_ENABLE_PROFILER      = $(ENABLE_PROFILER)"          >> $@
 	$(A)echo "JVM_PATHSEP              = $(PATHSEP)"                  >> $@
-	$(A)echo "JVM_os                   = $(os_family)"                >> $@
+	$(A)echo "JVM_os                   = $(target_os)"                >> $@
 	$(A)echo "JVM_arch                 = $(arch)"                     >> $@
 	$(A)echo "JVM_host_os              = $(host_os)"                  >> $@
 	$(A)echo "JVM_host_arch            = $(host_arch)"                >> $@
