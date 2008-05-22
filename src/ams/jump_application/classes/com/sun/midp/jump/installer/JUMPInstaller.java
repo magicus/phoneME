@@ -191,7 +191,7 @@ public abstract class JUMPInstaller {
 
     /** Use this to be the security domain for unsigned suites. */
     protected String unsignedSecurityDomain =
-        Permissions.UNIDENTIFIED_DOMAIN_BINDING;
+        Permissions.getUnsignedDomain();
 
     /* SecurityToken provided by the user of the JUMPInstaller */
     protected SecurityToken token = null;
@@ -1037,7 +1037,7 @@ public abstract class JUMPInstaller {
              * The unidentified suites do not get checked for requested
              * permissions.
              */
-            if (Permissions.UNIDENTIFIED_DOMAIN_BINDING.equals(info.domain)) {
+            if (Permissions.getUnsignedDomain().equals(info.domain)) {
 
                 settings.setPermissions((Permissions.forDomain(
                     info.domain)) [Permissions.CUR_LEVELS]);
