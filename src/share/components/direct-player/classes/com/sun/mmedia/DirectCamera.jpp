@@ -112,6 +112,21 @@ public class DirectCamera extends DirectVideo
         if (c == null) {
             if (type.startsWith(JSR234_CAMERA_PACKAGE_NAME)) {
                 c = get234CamCtrls().getJsr234CameraControl(type);
+            } else if (type.equals(ifcName)) {
+                try {
+                    c = (Control)Class.forName(
+                        "com.sun.amms.imageprocessor.ImageFormatProxy").
+                        newInstance();
+                } catch (ClassNotFoundException e) {
+                    throw new RuntimeException(
+                        "Could not find ImageFormatProxy class");
+                } catch (IllegalAccessException e) {
+                    throw new RuntimeException(
+                        "Could not access ImageFormatProxy class");
+                } catch (InstantiationException e) {
+                    throw new RuntimeException(
+                        "Could not instantiate ImageFormatProxy class");
+                }
             }
         }
         return c;

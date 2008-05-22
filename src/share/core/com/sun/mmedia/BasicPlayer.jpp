@@ -201,6 +201,27 @@ public abstract class BasicPlayer implements Player
     protected final static String vocName = "VolumeControl";
 
 // #ifdef ENABLE_JSR_234 [
+    protected final static String ccName =
+        "javax.microedition.amms.control.camera.CameraControl";
+
+    protected final static String cecName =
+        "javax.microedition.amms.control.camera.ExposureControl";
+
+    protected final static String cflcName =
+        "javax.microedition.amms.control.camera.FlashControl";
+
+    protected final static String cfocName =
+        "javax.microedition.amms.control.camera.FocusControl";
+
+    protected final static String cscName =
+        "javax.microedition.amms.control.camera.SnapshotControl";
+
+    protected final static String czcName =
+        "javax.microedition.amms.control.camera.ZoomControl";
+
+    protected final static String ifcName = 
+        "javax.microedition.amms.control.ImageFormatControl";
+
     protected final static String rdscName  = 
         "javax.microedition.amms.control.tuner.RDSControl";
 
@@ -228,6 +249,13 @@ public abstract class BasicPlayer implements Player
         dtocName,
         vocName,
 // #ifdef ENABLE_JSR_234 [
+        ccName,
+        cecName,
+        cflcName,
+        cfocName,
+        cscName,
+        czcName,
+        ifcName,
         rdscName
 // #endif ]
         };
