@@ -239,6 +239,17 @@ void checkForSystemSignal(MidpReentryData* pNewSignal,
         break;
 #endif /* ENABLE_JSR_211 */
 
+#ifdef ENABLE_JSR_290
+    case JSR290_JC_EVENT_FLUID_LOAD_FINISHED:
+        pNewSignal->waitingFor = JSR290_LOAD_FINISH_SIGNAL;
+        pNewSignal->descriptor = event->data.jsr290FluidEvent.fluid_image;
+        break;
+    case JSR290_JC_EVENT_FLUID_INVALIDATE:
+        pNewSignal->waitingFor = JSR290_INVALIDATE_SIGNAL;
+        pNewSignal->descriptor = event->data.jsr290FluidEvent.fluid_image;
+        break;
+#endif /* ENABLE_JSR_290 */
+
 #ifdef ENABLE_JSR_177
     case MIDP_JC_EVENT_CARDDEVICE:
         switch (event->data.carddeviceEvent.eventType) {

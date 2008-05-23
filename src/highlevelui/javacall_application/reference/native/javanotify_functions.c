@@ -1522,6 +1522,41 @@ void javanotify_chapi_java_invoke(
 
 #endif /* ENABLE_JSR_211 */
 
+#ifdef ENABLE_JSR_290
+
+void
+javanotify_fluid_load_image_finished (
+    javacall_handle                       fluid_image,
+    javacall_result                       result
+    ) {
+    midp_jc_event_union e;
+
+    /* TODO: the result parameter is ignored and is a subject
+             to be removed from javacall API. */
+
+    e.eventType = JSR290_JC_EVENT_FLUID_LOAD_FINISHED;
+    e.data.jsr290FluidEvent.fluid_image = fluid_image;
+    e.data.jsr290FluidEvent.result      = 0;
+
+    midp_jc_event_send(&e);
+}
+
+void
+javanotify_fluid_image_notify_dirty (
+    javacall_handle                       fluid_image
+    ) {
+
+    midp_jc_event_union e;
+
+    e.eventType = JSR290_JC_EVENT_FLUID_INVALIDATE;
+    e.data.jsr290FluidEvent.fluid_image = fluid_image;
+    e.data.jsr290FluidEvent.result      = 0;
+
+    midp_jc_event_send(&e);
+}
+
+#endif /* ENABLE_JSR_290 */
+
 /**
  * The platform calls this callback notify function when the permission dialog
  * is dismissed. The platform will invoke the callback in platform context.
