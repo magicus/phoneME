@@ -32,7 +32,7 @@
  * These two macros are needed to avoid compilation errors with some compilers
  * that do not accept "void *arr[] = {&a, &b}" initializers.
  */
-#define JAVACALL_MM_ASYNC_RET_DATA_ARG(a1_) \
+#define JAVACALL_MM_ASYNC_RET_DATA_ARG1(a1_) \
     void *args__[1]; \
     args__[0] = a1_; \
 
@@ -41,8 +41,8 @@
     args__[0] = a1_; \
     args__[1] = a2_; \
 
-#define JAVACALL_MM_ASYNC_GET_RESULT_returns_data(ret_args_)  \
-    JAVACALL_MM_ASYNC_RET_DATA_ARG##ret_args_ \
+#define JAVACALL_MM_ASYNC_GET_RESULT_returns_data(num_args_,ret_args_)  \
+    JAVACALL_MM_ASYNC_RET_DATA_ARG##num_args_ ret_args_ \
     javacall_media_get_event_data(handle__, javacall_event__, ctx__->pResult, sizeof args__ / sizeof args__[0], args__); \
 
 #define JAVACALL_MM_ASYNC_GET_RESULT_returns_no_data  (void)ctx__; /* empty */
