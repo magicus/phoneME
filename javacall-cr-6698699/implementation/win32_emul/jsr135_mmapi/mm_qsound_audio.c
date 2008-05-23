@@ -44,6 +44,10 @@ globalMan g_QSoundGM[GLOBMAN_INDEX_MAX];   // IMPL_NOTE... NEED REVISIT
 
 extern int wav_setStreamPlayerData(ah_wav *handle, const void* buffer, long length);
 
+#if( defined( USE_QT_SDK ) )
+extern javacall_result MMAPIQTDecoder(ah_wav *wav, jc_fmt mType);
+#endif // USE_QT_SDK
+
 
 size_t mmaudio_get_isolate_mix( void *buffer, size_t length, void* param );
 
@@ -143,6 +147,7 @@ static void* getNextSamples(void* userData, int bytesCnt, int* pBytesGet)
     {
         case JC_FMT_MS_PCM:
         case JC_FMT_AMR:
+        case JC_FMT_MPEG1_LAYER3:
         {
             ah_wav* pWAV = (ah_wav *)userData;
 
@@ -794,6 +799,7 @@ static javacall_handle audio_qs_create(int appId, int playerId,
 
         case JC_FMT_MS_PCM:
         case JC_FMT_AMR:
+        case JC_FMT_MPEG1_LAYER3:
         {
             IEffectModule* ef;
             newHandle = MALLOC(sizeof(ah_wav));
@@ -844,7 +850,6 @@ static javacall_handle audio_qs_create(int appId, int playerId,
  */
 static javacall_result audio_qs_get_format(javacall_handle handle, jc_fmt* fmt) {
     ah *h             = (ah*)handle;
-    
     *fmt = h->hdr.mediaType;
     JC_MM_DEBUG_INFO_PRINT1("audio_format: %d \n",
                             h->hdr.mediaType);
@@ -902,6 +907,7 @@ static javacall_result audio_qs_destroy(javacall_handle handle)
 
         case JC_FMT_MS_PCM:
         case JC_FMT_AMR:
+        case JC_FMT_MPEG1_LAYER3:
         {
             mQ234_WaveStream_Destroy(h->wav.stream);
             if (h->wav.streamBuffer != NULL) {
@@ -950,6 +956,7 @@ static javacall_result audio_qs_close(javacall_handle handle){
 
         case JC_FMT_MS_PCM:
         case JC_FMT_AMR:
+        case JC_FMT_MPEG1_LAYER3:
         {
             if( NULL != h->wav.em )
                 mQ234_EffectModule_removePlayer(h->wav.em, h->wav.stream);
@@ -995,6 +1002,7 @@ static javacall_result audio_qs_get_player_controls(javacall_handle handle,
             break;
         case JC_FMT_MS_PCM:
         case JC_FMT_AMR:
+        case JC_FMT_MPEG1_LAYER3:
             *controls |= JAVACALL_MEDIA_CTRL_RATE;
             break;
         default:
@@ -1017,7 +1025,6 @@ static javacall_result audio_qs_acquire_device(javacall_handle handle)
 
     MQ234_ERROR e;
     int         sRate;
-
     switch(h->hdr.mediaType)
     {
         case JC_FMT_TONE:
@@ -1102,11 +1109,7 @@ static javacall_result audio_qs_acquire_device(javacall_handle handle)
                 mQ234_WaveStream_Destroy( h->wav.stream );
                 h->wav.stream = NULL;
             }
-/*
-            if (1 != wav_setStreamPlayerData(&(h->wav))) {
-                return JAVACALL_FAIL;
-            }
-*/
+
             sRate = h->wav.rate;
 
             if(16 == h->wav.bits)
@@ -1173,9 +1176,11 @@ static javacall_result audio_qs_acquire_device(javacall_handle handle)
                 h->wav.streamBufferLen, h->wav.rate,
                 h->wav.channels, h->wav.bits);
         break;
-
-#if( defined( ENABLE_AMR ) && defined( AMR_USE_QSOUND ) )
+#if( defined( ENABLE_AMR ) && ( defined( AMR_USE_QSOUND ) || defined( USE_QT_SDK )))
         case JC_FMT_AMR:
+#if( defined( USE_QT_SDK ))
+        case JC_FMT_MPEG1_LAYER3:
+#endif 
             if( NULL != h->wav.stream )
             {
                 if( NULL != h->wav.em )
@@ -1187,10 +1192,18 @@ static javacall_result audio_qs_acquire_device(javacall_handle handle)
                 h->wav.stream = NULL;
             }
 
-            if (1 != AMRDecoder_setStreamPlayerData(&(h->wav))) {
+#if( defined( AMR_USE_QSOUND ))
+            if (h->hdr.mediaType == JC_FMT_AMR) { 
+                if (1 != AMRDecoder_setStreamPlayerData(&(h->wav))) {
+                    return JAVACALL_FAIL;
+                }
+            }
+#endif 
+#if( defined( USE_QT_SDK ))
+            if (JAVACALL_OK != MMAPIQTDecoder(&h->wav, h->hdr.mediaType)) {
                 return JAVACALL_FAIL;
             }
-
+#endif 
             switch( h->wav.channels )
             {
             case 1:
@@ -1336,6 +1349,7 @@ static javacall_result audio_qs_get_buffer_address(javacall_handle handle,
         return JAVACALL_OK;
 
     case JC_FMT_AMR:
+    case JC_FMT_MPEG1_LAYER3:
         h->wav.originalData = NULL;
         h->wav.originalDataLen = 0;
         break;
@@ -1350,6 +1364,9 @@ static javacall_result audio_qs_get_buffer_address(javacall_handle handle,
             size = DEFAULT_BUFFER_SIZE;
         } else {
             size = h->hdr.wholeContentSize;
+            if (size%DEFAULT_PACKET_SIZE != 0) {
+                size += size%DEFAULT_PACKET_SIZE;
+            }
         }
         h->hdr.dataBuffer = MALLOC(size);
         if (h->hdr.dataBuffer == NULL) {
@@ -1377,7 +1394,6 @@ static javacall_result audio_qs_get_buffer_address(javacall_handle handle,
                 h->hdr.dataBufferPos = 0;
                 return JAVACALL_OUT_OF_MEMORY;
             }
-            h->hdr.dataBufferPos = h->hdr.dataBufferLen;
             h->hdr.dataBufferLen = new_size;
             size = h->hdr.dataBufferLen - h->hdr.dataBufferPos;
         }
@@ -1446,6 +1462,7 @@ static javacall_result audio_qs_do_buffering(
             h->hdr.dataBufferPos = 0;
             return JAVACALL_OK;
         case JC_FMT_AMR:
+        case JC_FMT_MPEG1_LAYER3:
             h->wav.originalData = h->hdr.dataBuffer;
             h->wav.originalDataLen = h->hdr.dataBufferPos;
             break;
@@ -1506,6 +1523,7 @@ static javacall_result audio_qs_clear_buffer(javacall_handle handle){
     
             case JC_FMT_MS_PCM:
             case JC_FMT_AMR:
+            case JC_FMT_MPEG1_LAYER3:
                 if(h->wav.originalData != NULL)
                 {
                     h->wav.originalDataLen = 0;
@@ -1554,6 +1572,7 @@ static javacall_result audio_qs_start(javacall_handle handle){
     {
         case JC_FMT_MS_PCM:
         case JC_FMT_AMR:
+        case JC_FMT_MPEG1_LAYER3:
         {
             if (h->wav.stream != NULL) {
                 h->wav.playing = 1;
@@ -1602,6 +1621,7 @@ static javacall_result audio_qs_stop(javacall_handle handle){
     {
         case JC_FMT_MS_PCM:
         case JC_FMT_AMR:
+        case JC_FMT_MPEG1_LAYER3:
         {
             h->wav.playing = 0;
             r = JAVACALL_OK;
@@ -1643,6 +1663,7 @@ static javacall_result audio_qs_pause(javacall_handle handle){
     {
         case JC_FMT_MS_PCM:
         case JC_FMT_AMR:
+        case JC_FMT_MPEG1_LAYER3:
         {
             h->wav.playing = 0;
             r = JAVACALL_OK;
@@ -1684,6 +1705,7 @@ static javacall_result audio_qs_resume(javacall_handle handle){
     {
         case JC_FMT_MS_PCM:
         case JC_FMT_AMR:
+        case JC_FMT_MPEG1_LAYER3:
         {
             h->wav.playing = 1;
             r = JAVACALL_OK;
@@ -1727,6 +1749,7 @@ static javacall_result audio_qs_get_time(javacall_handle handle, long* ms){
     {
         case JC_FMT_MS_PCM:
         case JC_FMT_AMR:
+        case JC_FMT_MPEG1_LAYER3:
         {
             if(h->wav.bytesPerMilliSec != 0)
                 *ms = h->wav.currentPos / h->wav.bytesPerMilliSec;
@@ -1779,6 +1802,7 @@ static javacall_result audio_qs_set_time(javacall_handle handle, long* ms){
 
         case JC_FMT_MS_PCM:
         case JC_FMT_AMR: // will need revisit when real streaming will be used
+        case JC_FMT_MPEG1_LAYER3:
         {
             int newPos = h->wav.bytesPerMilliSec * (*ms);
 
@@ -1831,6 +1855,7 @@ static javacall_result audio_qs_get_duration(javacall_handle handle, long* ms) {
 
         case JC_FMT_MS_PCM:
         case JC_FMT_AMR: // will need revisit when real streaming will be used
+        case JC_FMT_MPEG1_LAYER3:
         {
             if(h->wav.bytesPerMilliSec != 0 && h->wav.streamBufferFull)
                 *ms = h->wav.streamBufferLen / h->wav.bytesPerMilliSec;
@@ -1887,6 +1912,7 @@ static javacall_result audio_qs_get_volume(javacall_handle handle, long* level) 
         case JC_FMT_AMR:
         case JC_FMT_DEVICE_TONE:
         case JC_FMT_DEVICE_MIDI:
+        case JC_FMT_MPEG1_LAYER3:
         {
             *level = (long) mQ135_Volume_GetLevel(
                 (IVolumeControl*)h->hdr.controls[CON135_VOLUME]);
@@ -1921,6 +1947,7 @@ static javacall_result audio_qs_set_volume(javacall_handle handle, long* level) 
         case JC_FMT_AMR:
         case JC_FMT_DEVICE_TONE:
         case JC_FMT_DEVICE_MIDI:
+        case JC_FMT_MPEG1_LAYER3:
         {
             *level = (long) mQ135_Volume_SetLevel(
                 (IVolumeControl*)h->hdr.controls[CON135_VOLUME], (int)(*level));
@@ -1957,6 +1984,7 @@ static javacall_result audio_qs_is_mute(javacall_handle handle, javacall_bool* m
         case JC_FMT_AMR:
         case JC_FMT_DEVICE_TONE:
         case JC_FMT_DEVICE_MIDI:
+        case JC_FMT_MPEG1_LAYER3:
         {
             muted = (long) mQ135_Volume_IsMuted(
                 (IVolumeControl*)h->hdr.controls[CON135_VOLUME]);
@@ -1994,6 +2022,7 @@ static javacall_result audio_qs_set_mute(javacall_handle handle,
         case JC_FMT_AMR:
         case JC_FMT_DEVICE_TONE:
         case JC_FMT_DEVICE_MIDI:
+        case JC_FMT_MPEG1_LAYER3:
         {
             mQ135_Volume_SetMute(
                 (IVolumeControl*)h->hdr.controls[CON135_VOLUME],
@@ -2378,6 +2407,7 @@ static javacall_result audio_qs_get_max_rate(javacall_handle handle, long *maxRa
         case JC_FMT_AMR:
         case JC_FMT_DEVICE_TONE:
         case JC_FMT_DEVICE_MIDI:
+        case JC_FMT_MPEG1_LAYER3:
         {
             *maxRate = mQ135_Rate_GetMaxRate((
                 IRateControl*)h->hdr.controls[CON135_RATE]);
@@ -2408,6 +2438,7 @@ static javacall_result audio_qs_get_min_rate(javacall_handle handle, long *minRa
         case JC_FMT_AMR:
         case JC_FMT_DEVICE_TONE:
         case JC_FMT_DEVICE_MIDI:
+        case JC_FMT_MPEG1_LAYER3:
         {
             *minRate = mQ135_Rate_GetMinRate(
                 (IRateControl*)h->hdr.controls[CON135_RATE]);
@@ -2438,6 +2469,7 @@ static javacall_result audio_qs_set_rate(javacall_handle handle, long rate)
         case JC_FMT_AMR:
         case JC_FMT_DEVICE_TONE:
         case JC_FMT_DEVICE_MIDI:
+        case JC_FMT_MPEG1_LAYER3:
         {
             setRate = mQ135_Rate_SetRate(
                 (IRateControl*)h->hdr.controls[CON135_RATE], rate);
@@ -2466,6 +2498,7 @@ static javacall_result audio_qs_get_rate(javacall_handle handle, long* rate)
         case JC_FMT_AMR:
         case JC_FMT_DEVICE_TONE:
         case JC_FMT_DEVICE_MIDI:
+        case JC_FMT_MPEG1_LAYER3:
         {
             *rate = mQ135_Rate_GetRate(
                 (IRateControl*)h->hdr.controls[CON135_RATE]);
