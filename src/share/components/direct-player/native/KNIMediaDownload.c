@@ -158,7 +158,7 @@ LockAudioMutex();
             ret,
             doBuffering(KNIPASSARGS pKniInfo, offset, length, &returnValue),
             pKniInfo->pNativeHandle, pKniInfo->appId, pKniInfo->playerId, JAVACALL_EVENT_MEDIA_BUFFERING_UNBLOCKED,
-            returns_data((&returnValue))
+            returns_data(1, (&returnValue))
         );
     }
 UnlockAudioMutex();            

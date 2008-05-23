@@ -282,7 +282,7 @@ LockAudioMutex();
             ret,
             javacall_media_set_time(pKniInfo->pNativeHandle, &ms),
             pKniInfo->pNativeHandle, pKniInfo->appId, pKniInfo->playerId, JAVACALL_EVENT_MEDIA_TIME_SET,
-            returns_data((&ms))
+            returns_data(1, (&ms))
         );
 
 UnlockAudioMutex();            
@@ -313,7 +313,7 @@ LockAudioMutex();
             ret,
             javacall_media_get_duration(pKniInfo->pNativeHandle, &ms),
             pKniInfo->pNativeHandle, pKniInfo->appId, pKniInfo->playerId, JAVACALL_EVENT_MEDIA_DURATION_GOTTEN,
-            returns_data((&ms))
+            returns_data(1, (&ms))
         );
         
 UnlockAudioMutex();            
