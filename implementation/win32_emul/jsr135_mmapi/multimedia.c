@@ -45,6 +45,10 @@ static javacall_media_caps g_caps[] =
     { JAVACALL_MEDIA_FORMAT_MPEG_1,  "video/mpeg",           JAVACALL_MEDIA_MEMORY_PROTOCOL, 0 },
     { JAVACALL_MEDIA_FORMAT_MOV,     "video/quicktime",      JAVACALL_MEDIA_MEMORY_PROTOCOL, 0 },
 #endif /* ENABLE_MMAPI_LIME */    
+#ifdef USE_QT_SDK
+    { JAVACALL_MEDIA_FORMAT_MPEG1_LAYER3, "audio/mpeg",      JAVACALL_MEDIA_MEMORY_PROTOCOL, 0 },
+#endif /* USE_QT_SDK */    
+
     { NULL,                          NULL,                   0,                              0 }
 };
 
@@ -260,12 +264,16 @@ media_interface* fmt_enum2itf( jc_fmt fmt )
     case JC_FMT_AMR:
     case JC_FMT_AMR_WB:
     case JC_FMT_AMR_WB_PLUS:
-  #if( defined( AMR_USE_QSOUND ) )
+  #if( defined( AMR_USE_QSOUND ) || defined( USE_QT_SDK ) )
         return &g_amr_audio_itf;
   #elif( defined( AMR_USE_LIME ) )
         return &g_audio_itf;
   #endif // AMR_USE_**
 #endif // ENABLE_AMR
+#if( defined( USE_QT_SDK ) )
+    case JC_FMT_MPEG1_LAYER3:
+        return &g_qsound_itf;
+#endif // USE_QT_SDK
 
     default:
         return NULL;
@@ -328,6 +336,9 @@ javacall_media_format_type fmt_guess_from_url(javacall_const_utf16_string uri,
         { L".mpg",  JAVACALL_MEDIA_FORMAT_MPEG_1       },
         { L".mov",  JAVACALL_MEDIA_FORMAT_MOV          },
 #endif /* ENABLE_MMAPI_LIME */
+#ifdef USE_QT_SDK
+        { L".mp3",  JAVACALL_MEDIA_FORMAT_MPEG1_LAYER3 },
+#endif // USE_QT_SDK
         { L".gif",  JAVACALL_MEDIA_FORMAT_UNSUPPORTED   },
         { L".wmv",  JAVACALL_MEDIA_FORMAT_UNSUPPORTED   }
     };
@@ -427,7 +438,6 @@ javacall_result javacall_media_create(int appId,
     pPlayer = MALLOC(sizeof(javacall_impl_player));
 
     if( NULL == pPlayer ) return JAVACALL_OUT_OF_MEMORY;
-
     pPlayer->appId            = appId;
     pPlayer->playerId         = playerId;
     pPlayer->uri              = NULL;
