@@ -101,4 +101,7 @@ public class LogChannels {
    /** I18N module channel */
    public final static int LC_JSR238 = 12500;
    
+   /** JSR290 module channel */
+   public final static int LC_JSR290 = 14000;
+
 }
