@@ -1,7 +1,7 @@
 /*
  *   
  *
- * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
@@ -54,10 +54,12 @@ public class WimFileSystem extends FileSystemAbstract {
      * @throws IOException if IOError occurs
      */
     public void select(short id) throws IOException {
+        
+        int P1P2 = (int) (P1_P2 | Constants.P2);
 
         byte[] data = apdu.resetCommand().
                            putShort(id).
-                           sendCommand(INS_SELECT, P1_P2);
+                           sendCommand(INS_SELECT, P1P2);
 
         isEFSelected = false;
         currentFileSize = 0;

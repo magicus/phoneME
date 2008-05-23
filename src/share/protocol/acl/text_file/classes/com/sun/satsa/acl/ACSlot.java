@@ -73,8 +73,10 @@ public class ACSlot{
         InputStream permIS;
 
         try {
+            System.out.println("!!!!!");
             String storeName = FileAccess.getStorageRoot(FileAccess.INTERNAL_STORAGE_ID) +
 	        "acl_" + slotNum;
+            System.out.println("!!!!!" + storeName);
             storage = FileAccess.getInstance(storeName, securityToken);
             storage.connect(Connector.READ);
             permIS = storage.openInputStream();

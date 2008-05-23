@@ -1,7 +1,7 @@
 /*
  *   
  *
- * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
@@ -86,11 +86,13 @@ abstract public class FileSystemAbstract {
      * @throws IOException if IO error occurs
      */
     public void selectRoot(short[] root) throws IOException {
+        int P1P2 = (int) (0x0100 | Constants.P2);
+        
         setRoot(root);
         for (int i = 0; i < root.length; i++) {
             byte[] data = apdu.resetCommand().
                           putShort(root[i]).
-                          sendCommand(INS_SELECT, 0x0100);
+                          sendCommand(INS_SELECT, P1P2);
         }
     }
 

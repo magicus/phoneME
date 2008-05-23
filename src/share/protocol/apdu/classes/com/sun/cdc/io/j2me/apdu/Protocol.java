@@ -1,5 +1,5 @@
 /*
- * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
@@ -33,6 +33,7 @@ import com.sun.satsa.acl.ACLPermissions;
 import com.sun.satsa.acl.AccessControlManager;
 import com.sun.satsa.acl.APDUPermissions;
 import com.sun.satsa.util.Utils;
+import com.sun.satsa.util.Constants;
 
 import java.io.*;
 
@@ -162,6 +163,7 @@ public class Protocol implements APDUConnection, ConnectionBaseInterface,
             byte[] apdu = new byte[32];
             apdu[1] = (byte) 0xa4;
             apdu[2] = 4;
+            apdu[3] = Constants.P2;
 
             boolean ok;
             try {
