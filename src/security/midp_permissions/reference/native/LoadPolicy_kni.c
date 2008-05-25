@@ -17,7 +17,7 @@ KNI_RETURNTYPE_OBJECT
 KNIDECL(com_sun_midp_security_Permissions_loadDomainList)
 {
     int lines, i1;
-    void *array;
+    javacall_utf8_string array;
 
     KNI_StartHandles(2);
     KNI_DeclareHandle(domains);
@@ -25,7 +25,7 @@ KNIDECL(com_sun_midp_security_Permissions_loadDomainList)
 
     lines = javacall_load_domain_list(&array);
     if (lines > 0) {
-        char **list = (char**)array;
+        javacall_utf8_string* list = (javacall_utf8_string*)array;
         SNI_NewArray(SNI_STRING_ARRAY,  lines, domains);
         if (KNI_IsNullHandle(domains))
             KNI_ThrowNew(midpOutOfMemoryError, NULL);
@@ -36,7 +36,7 @@ KNIDECL(com_sun_midp_security_Permissions_loadDomainList)
             }
         javacall_free(array);
     } else
-        KNI_ReleaseHandle(domains);  //set object to NULL
+        KNI_ReleaseHandle(domains);  /* set object to NULL */
 
     KNI_EndHandlesAndReturnObject(domains);
 }
@@ -45,7 +45,7 @@ KNI_RETURNTYPE_OBJECT
 KNIDECL(com_sun_midp_security_Permissions_loadGroupList)
 {
     int lines, i1;
-    void *array;
+    javacall_utf8_string array;
 
     KNI_StartHandles(2);
     KNI_DeclareHandle(groups);
@@ -53,7 +53,7 @@ KNIDECL(com_sun_midp_security_Permissions_loadGroupList)
     
     lines = javacall_load_group_list(&array);
     if (lines > 0) {
-        char **list = (char**)array;
+        javacall_utf8_string* list = (javacall_utf8_string*)array;
         SNI_NewArray(SNI_STRING_ARRAY,  lines, groups);
         if (KNI_IsNullHandle(groups))
             KNI_ThrowNew(midpOutOfMemoryError, NULL);
@@ -64,7 +64,7 @@ KNIDECL(com_sun_midp_security_Permissions_loadGroupList)
             }
         javacall_free(array);
     } else
-        KNI_ReleaseHandle(groups);  //set object to NULL
+        KNI_ReleaseHandle(groups); /* set object to NULL */
 
     KNI_EndHandlesAndReturnObject(groups);
 }
@@ -86,8 +86,8 @@ KNIDECL(com_sun_midp_security_Permissions_loadGroupPermissions)
     if (!KNI_IsNullHandle(group)) {
         str_len = KNI_GetStringLength(group);
         KNI_GetStringRegion(group, 0, str_len, jbuff);
-        if (javautil_unicode_utf16_to_utf8(jbuff, str_len, group_name, sizeof(group_name), &i1) ==
-            JAVACALL_OK) {
+        if (javautil_unicode_utf16_to_utf8(jbuff, str_len, group_name,
+                                 sizeof(group_name), &i1) == JAVACALL_OK) {
             if (i1 > 0) {
                 group_name[i1] = 0;
                 lines = javacall_load_group_permissions(&array, group_name);
@@ -99,11 +99,12 @@ KNIDECL(com_sun_midp_security_Permissions_loadGroupPermissions)
                     else
                         for (i1 = 0; i1 < lines; i1++) {
                             KNI_NewStringUTF(list[i1], tmpString);
-                            KNI_SetObjectArrayElement(members, (jint)i1, tmpString);
+                            KNI_SetObjectArrayElement(members, (jint)i1,
+                                                                tmpString);
                         }
                     javacall_free(array);
                 } else
-                    KNI_ReleaseHandle(members);  //set object to NULL
+                    KNI_ReleaseHandle(members);  /* set object to NULL */
             }
         }
     } else
@@ -132,11 +133,13 @@ KNIDECL(com_sun_midp_security_Permissions_getDefaultValue) {
     if (!KNI_IsNullHandle(domain) && !KNI_IsNullHandle(group)) {
         str_len = KNI_GetStringLength(domain);
         KNI_GetStringRegion(domain, 0, str_len, jbuff);
-        javautil_unicode_utf16_to_utf8(jbuff, str_len, domain_name, sizeof(domain_name), &i1);
+        javautil_unicode_utf16_to_utf8(jbuff, str_len, domain_name, 
+                                            sizeof(domain_name), &i1);
         domain_name[i1] = 0;
         str_len = KNI_GetStringLength(group);
         KNI_GetStringRegion(group, 0, str_len, jbuff);
-        javautil_unicode_utf16_to_utf8(jbuff, str_len, group_name, sizeof(group_name), &i1);
+        javautil_unicode_utf16_to_utf8(jbuff, str_len, group_name,
+                                                sizeof(group_name), &i1);
         group_name[i1] = 0;
         value = (jbyte)javacall_get_default_value(domain_name, group_name);
     }
@@ -164,11 +167,13 @@ KNIDECL(com_sun_midp_security_Permissions_getMaxValue) {
     if (!KNI_IsNullHandle(domain) && !KNI_IsNullHandle(group)) {
         str_len = KNI_GetStringLength(domain);
         KNI_GetStringRegion(domain, 0, str_len, jbuff);
-        javautil_unicode_utf16_to_utf8(jbuff, str_len, domain_name, sizeof(domain_name), &i1);
+        javautil_unicode_utf16_to_utf8(jbuff, str_len, domain_name,
+                                                sizeof(domain_name), &i1);
         domain_name[i1] = 0;
         str_len = KNI_GetStringLength(group);
         KNI_GetStringRegion(group, 0, str_len, jbuff);
-        javautil_unicode_utf16_to_utf8(jbuff, str_len, group_name, sizeof(group_name), &i1);
+        javautil_unicode_utf16_to_utf8(jbuff, str_len, group_name,
+                                                sizeof(group_name), &i1);
         group_name[i1] = 0;
         value = (jbyte)javacall_get_max_value(domain_name, group_name);
     }
@@ -193,8 +198,8 @@ KNIDECL(com_sun_midp_security_Permissions_getGroupMessages) {
     if (!KNI_IsNullHandle(group)) {
         str_len = KNI_GetStringLength(group);
         KNI_GetStringRegion(group, 0, str_len, jbuff);
-        if (javautil_unicode_utf16_to_utf8(jbuff, str_len, group_name, sizeof(group_name), &i1) ==
-            JAVACALL_OK) {
+        if (javautil_unicode_utf16_to_utf8(jbuff, str_len, group_name,
+                                sizeof(group_name), &i1) == JAVACALL_OK) {
             if (i1 > 0) {
                 group_name[i1] = 0;
                 lines = javacall_load_group_messages(&array, group_name);
@@ -206,11 +211,12 @@ KNIDECL(com_sun_midp_security_Permissions_getGroupMessages) {
                     else
                         for (i1 = 0; i1 < lines; i1++) {
                             KNI_NewStringUTF(list[i1], tmpString);
-                            KNI_SetObjectArrayElement(messages, (jint)i1, tmpString);
+                            KNI_SetObjectArrayElement(messages, (jint)i1,
+                                                                tmpString);
                         }
                     javacall_free(array);
                 } else
-                    KNI_ReleaseHandle(messages);  //set object to NULL
+                    KNI_ReleaseHandle(messages);  /* set object to NULL */
             }
         }
     } else
