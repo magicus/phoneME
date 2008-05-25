@@ -233,55 +233,61 @@ javacall_result javacall_security_permission_dialog_display(javacall_utf16* mess
  * @param userPermission the permission level the user chose
  */
 void javanotify_security_permission_dialog_finish(
-	                    javacall_security_permission_type userPermission);
+                        javacall_security_permission_type userPermission);
 
 
 
 /**
- *
  *
  * @param array a placeholder for the domain strings list that returns
- * @retval number_of_lines The number of lines of the strings list in array or 0 on error
+ * @retval number_of_lines The number of lines of the strings list in array 
+ * or 0 on error
  */
-int javacall_load_domain_list(void **array);
+int javacall_load_domain_list(javacall_utf8_string* array);
+
 /**
- *
- *
  * @param array a placeholder for the groups strings list that returns
- * @retval number_of_lines The number of lines of the strings list in array or 0 on error
+ * @retval number_of_lines The number of lines of the strings list in array 
+ * or 0 on error
  */
-int javacall_load_group_list(void **array);
+int javacall_load_group_list(javacall_utf8_string* array);
+
 /**
- *
- *
- * @param list a placeholder for the permission members strings list that returns
- * @param group The name of the group which members are requested
- * @retval number_of_lines The number of lines of the strings list in array or 0 on error
+ * @param list a placeholder for the permission members strings list that 
+ * returns
+ * @param group_name The name of the group which members are requested
+ * @retval number_of_lines The number of lines of the strings list in array 
+ * or 0 on error
  */
-int javacall_load_group_permissions(void **list, char *group_name);
+int javacall_load_group_permissions(javacall_utf8_string* list, 
+                                    javacall_utf8_string group_name);
+
 /**
- *
- *
  * @param domain_name the name of domain
  * @param group_name the name of the group
- * @retval default_value of the default permission action should be taken on that domain/group combiation
+ * @retval default_value of the default permission action should be taken on 
+ * that domain/group combiation
  */
-int javacall_get_default_value(char *domain_name, char *group_name);
+int javacall_get_default_value(javacall_utf8_string domain_name,
+                               javacall_utf8_string group_name);
+
 /**
- *
- *
  * @param domain_name the name of domain
  * @param group_name the name of the group
- * @retval max_value of the maximum permission action should be taken on that domain/group combiation
+ * @retval max_value of the maximum permission action should be taken on 
+ * that domain/group combiation
  */
-int javacall_get_max_value(char *domain_name, char *group_name);
+int javacall_get_max_value(javacall_utf8_string domain_name,
+                           javacall_utf8_string group_name);
+
 /**
- *
- *
- * @param array a placeholder for the domain strings list that returns
- * @retval number_of_lines The number of lines of the strings list in array or 0 on error
+ * @param list a placeholder for the groups strings list that returns
+ * @param group_name the name of the group
+ * @retval number_of_lines The number of lines of the strings list in 
+ * array or 0 on error
  */
-int javacall_load_group_messages(void **list, char *group_name);
+int javacall_load_group_messages(javacall_utf8_string* list,
+                                 javacall_utf8_string group_name);
 
 
 /** @} */
@@ -293,4 +299,4 @@ int javacall_load_group_messages(void **list, char *group_name);
 #endif  /* JAVACALL_SECURITY_H */
 
 
-
+\
