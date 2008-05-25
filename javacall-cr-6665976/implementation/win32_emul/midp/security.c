@@ -538,16 +538,17 @@ static char* load_file(char *fname) {
     char  *ptr = NULL;
     
     memset(uni_fname, 0, sizeof(uni_fname));
-    javautil_unicode_utf8_to_utf16(fname, strlen(fname), uni_fname, JAVACALL_MAX_FILE_NAME_LENGTH, &len);
+    javautil_unicode_utf8_to_utf16(fname, strlen(fname), uni_fname, 
+                                        JAVACALL_MAX_FILE_NAME_LENGTH, &len);
     ret = javacall_file_open(uni_fname, len, JAVACALL_FILE_O_RDONLY, &hFile);
     if (ret == JAVACALL_OK) {
         len = (long)javacall_file_sizeofopenfile(hFile);
         if (len > 0) {
-            len += 1; //for null terminated byte
+            len += 1; /* for null terminated byte */
             ptr = (char*)javacall_malloc(len);
             if (ptr != NULL) {
                 len1 = javacall_file_read(hFile, ptr, len);
-                while (len1 < len) ptr[len1++] = 0; //pad with nulls
+                while (len1 < len) ptr[len1++] = 0; /* pad with nulls */
             }
         } else
             ptr = "";
@@ -557,7 +558,7 @@ static char* load_file(char *fname) {
     return ptr;
 }
 
-//returns number of text lines 
+/* returns number of text lines */
 static long count_lines(char* buffer) {
     char one_char;
     int  new_line=1;
@@ -576,14 +577,15 @@ static long count_lines(char* buffer) {
     return lines;
 }
 
-// fill dst with the next line from buffer0, returns bytes skipped
+/* fill dst with the next line from buffer0, returns bytes skipped */
 static int next_line(char *buffer0, char *dst) {
     char *buffer_ptr = buffer0;
     char one_char;
     int len = 0;
 
-    //skip  preceding newlines
-    while (*buffer_ptr && (*buffer_ptr == '\n' || *buffer_ptr == '\r')) buffer_ptr++; 
+    /* skip  preceding newlines */
+    while (*buffer_ptr && (*buffer_ptr == '\n' || *buffer_ptr == '\r'))
+        buffer_ptr++; 
     while (*buffer_ptr) {
         one_char = *buffer_ptr++;
         if (one_char == '\n' || one_char == '\r') {
@@ -594,7 +596,7 @@ static int next_line(char *buffer0, char *dst) {
         dst[len++] = one_char;
     }
 
-    dst[len] = 0;//terminate the line
+    dst[len] = 0; /* terminate the line */
     return buffer_ptr - buffer0;
 }
 
@@ -649,7 +651,7 @@ static char *getFuncGroupFilename(char *def_val) {
     return build_file_name(tmpstr);
 }
 
-int javacall_load_domain_list(void **array) {
+int javacall_load_domain_list(javacall_utf8_string* array) {
     char *file_str, *ptr0, *ptr1, *ptr2;
     char buff[128];
     int lines, offset, i1;
@@ -669,36 +671,40 @@ int javacall_load_domain_list(void **array) {
         if (check_prefix(buff, (char*)VdomainPrefix)) {
             lines++;
             if (ptr1 == NULL)
-                ptr1 = ptr0; //save the location of first "domain" line
+                ptr1 = ptr0;  /* save the location of first "domain" line */
         }
         ptr0 += offset;
     }
 
     do {
-        //allocate one placeholder for pointers to domain strings and the string
-        //we allocate more than needed but don't care - this buffer is immediatly freed
-        str_list = (char**)javacall_malloc(lines*(sizeof(char*) + sizeof(buff)));
+        /* 
+         * allocate one placeholder for pointers to domain strings and the 
+         * string we allocate more than needed but don't care - this buffer 
+         * is immediatly freed
+         */
+        str_list = (char**)javacall_malloc(lines*(sizeof(char*) + 
+                                                    sizeof(buff)));
         if (str_list == NULL) {
             lines = 0;
             break;
         }
 
-		ptr0 = ptr1;
+        ptr0 = ptr1;
         ptr1 = ((char*)str_list) + lines*sizeof(char*);
         for (i1 = 0; i1 < lines; i1++) {
             str_list[i1] = ptr1;
             while ((offset = next_line(ptr0, buff))) {
-				ptr0 += offset;
+                ptr0 += offset;
                 if (check_prefix(buff, (char*)VdomainPrefix))
                     break;
             }
             ptr2 = buff+strlen(VdomainPrefix);
             do {
                 if (*ptr2 != ' ')
-					*ptr1++ = *ptr2;
-				ptr2++;
+                    *ptr1++ = *ptr2;
+                ptr2++;
             } while(*ptr2);
-            *ptr1++ = 0; //add null terminated
+            *ptr1++ = 0; /* add null terminated */
         }
 
     } while (0);
@@ -708,7 +714,7 @@ int javacall_load_domain_list(void **array) {
     return lines;
 }
 
-int javacall_load_group_list(void **array) {
+int javacall_load_group_list(javacall_utf8_string* array) {
     char *file_str, *ptr0, *ptr1;
     char buff[128];
     int lines, offset, i1;
@@ -727,15 +733,19 @@ int javacall_load_group_list(void **array) {
         if (check_prefix(buff, (char*)VgroupPrefix))
             lines++;
         else if (check_prefix(buff, (char*)VdomainPrefix)) {
-            *ptr0 = 0; //groups at the beginning, no need for the rest of the file!!!
+            /*groups at the beginning, rest of the file in no needed */
+            *ptr0 = 0;
             break;
         }
         ptr0 += offset;
     }
 
     do {
-        //allocate one placeholder for pointers to group strings and the string
-        str_list = (char**)javacall_malloc(lines*(sizeof(char*) + sizeof(buff)));
+        /* allocate one placeholder for pointers to group strings and the 
+         * string
+         */
+        str_list = (char**)javacall_malloc(lines*(sizeof(char*) + 
+                                                        sizeof(buff)));
         if (str_list == NULL) {
             lines = 0;
             break;
@@ -753,9 +763,9 @@ int javacall_load_group_list(void **array) {
             } while (1);
 
             ptr2 = buff+strlen(VgroupPrefix);
-            while(*ptr2 == ' ') ptr2++;//skip spaces
-            while(*ptr2) *ptr1++ = *ptr2++;  //copy the group name
-            *ptr1++ = 0; //add null terminated
+            while(*ptr2 == ' ') ptr2++; /* skip spaces */
+            while(*ptr2) *ptr1++ = *ptr2++;  /*copy the group name */
+            *ptr1++ = 0; /* add null terminated */
         }
 
     } while (0);
@@ -765,7 +775,8 @@ int javacall_load_group_list(void **array) {
     return lines;
 }
 
-int javacall_load_group_permissions(void **list, char *group_name) {
+int javacall_load_group_permissions(javacall_utf8_string* list,
+                                    javacall_utf8_string group_name) {
     char *file_str, *ptr0, *ptr1;
     char buff[128];
     int lines, offset, i1;
@@ -784,12 +795,14 @@ int javacall_load_group_permissions(void **list, char *group_name) {
         ptr0 += offset;
         if (check_prefix(buff, (char*)VgroupPrefix)) {
             ptr1 = buff + strlen(VgroupPrefix);
-            while(*ptr1 == ' ') ptr1++;//skip spaces
-            if (check_prefix(ptr1, group_name) != 0) { // found, count the next permission lines
+            while(*ptr1 == ' ') ptr1++; /* skip spaces */
+            if (check_prefix(ptr1, group_name) != 0) {
+                /* found, count the next permission lines */
                 ptr1 = ptr0;
                 do {
                     ptr1 += next_line(ptr1, buff);
-                    if (check_prefix(buff, (char*)VgroupPrefix) || // if reach next group or first domain
+                    /* if reach next group or first domain */
+                    if (check_prefix(buff, (char*)VgroupPrefix) ||
                         check_prefix(buff, (char*)VdomainPrefix))
                         break;
                     lines++;
@@ -800,10 +813,13 @@ int javacall_load_group_permissions(void **list, char *group_name) {
     }
 
     do {
-        if (lines == 0) //group not found
+        if (lines == 0) /* group not found */
             break;
-        //allocate one placeholder for pointers to permission strings and the string
-        str_list = (char**)javacall_malloc(lines*(sizeof(char*) + sizeof(buff)));
+        /* allocate one placeholder for pointers to permission strings and
+         * the string
+         */
+        str_list = (char**)javacall_malloc(lines*(sizeof(char*) + 
+                                                    sizeof(buff)));
         if (str_list == NULL) {
             lines = 0;
             break;
@@ -840,7 +856,9 @@ static int value_str_to_int (char *str) {
     return JAVACALL_NEVER;
 }
 
-static int get_group_value(char *domain_name, char *group_name, int getMaxValue) {
+static int get_group_value(javacall_utf8_string domain_name,
+                           javacall_utf8_string group_name,
+                           int getMaxValue) {
     char *file_str, *ptr0;
     char buff[128];
     int value;
@@ -856,7 +874,8 @@ static int get_group_value(char *domain_name, char *group_name, int getMaxValue)
     value = JAVACALL_NEVER;
     do {
         ptr0 += next_line(ptr0, buff);
-        if (check_prefix(buff, (char*)VdomainPrefix) && (strstr(buff, domain_name) != NULL))
+        if (check_prefix(buff, (char*)VdomainPrefix) && 
+                            (strstr(buff, domain_name) != NULL))
             break;
     } while (*ptr0);
 
@@ -884,16 +903,19 @@ static int get_group_value(char *domain_name, char *group_name, int getMaxValue)
     return value;
 }
 
-int javacall_get_default_value(char *domain_name, char *group_name) {
+int javacall_get_default_value(javacall_utf8_string domain_name, 
+                               javacall_utf8_string group_name) {
     return get_group_value(domain_name, group_name, 0);
 }
 
-int javacall_get_max_value(char *domain_name, char *group_name) {
+int javacall_get_max_value(javacall_utf8_string domain_name,
+                           javacall_utf8_string group_name) {
     return get_group_value(domain_name, group_name, 1);
 }
 
 #define DEF_NUM_OF_LINES 6
-int javacall_load_group_messages(void **list, char *group_name) {
+int javacall_load_group_messages(javacall_utf8_string* list,
+                                 javacall_utf8_string group_name) {
     char *file_str, *ptr0, *ptr1;
     char buff[256];
     int  i1, found;
@@ -921,7 +943,8 @@ int javacall_load_group_messages(void **list, char *group_name) {
     if (!found)
         return 0;
 
-    str_list = (char**)javacall_malloc(DEF_NUM_OF_LINES*(sizeof(char*) + sizeof(buff)));
+    str_list = (char**)javacall_malloc(DEF_NUM_OF_LINES*(sizeof(char*)
+                                                          + sizeof(buff)));
     if (str_list == NULL)
         return 0;
     memset(str_list, 0, DEF_NUM_OF_LINES*(sizeof(char*)));
@@ -929,11 +952,11 @@ int javacall_load_group_messages(void **list, char *group_name) {
     for (i1 = 0; i1 < DEF_NUM_OF_LINES; i1++) {
         str_list[i1] = ptr1;
         ptr0 += next_line(ptr0, buff);
-        if (buff[0] != ' ') // reaching next group
+        if (buff[0] != ' ') /* reaching next group */
             break;
         strcpy(ptr1, &buff[1]);
         ptr1 += strlen(ptr1);
-        *ptr1++ = 0; //null terminating
+        *ptr1++ = 0; /* null terminating */
     }
 
     javacall_free(file_str);
