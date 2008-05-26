@@ -218,8 +218,8 @@ typedef struct {
  */
 typedef struct {
     javacall_result (*get_metadata_key_counts)(javacall_handle handle, long* keyCounts); 
-    javacall_result (*get_metadata_key)(javacall_handle handle, long index, long bufLength, char* buf);
-    javacall_result (*get_metadata)(javacall_handle handle, const char* key, long bufLength, char *buf);
+    javacall_result (*get_metadata_key)(javacall_handle handle, long index, long bufLength, javacall_utf16* buf);
+    javacall_result (*get_metadata)(javacall_handle handle, javacall_const_utf16_string key, long bufLength, javacall_utf16* buf);
 } media_metadata_interface;
 
 /**
