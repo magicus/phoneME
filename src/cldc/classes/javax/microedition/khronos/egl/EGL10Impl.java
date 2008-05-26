@@ -140,7 +140,7 @@ class EGL10Impl implements EGL10 {
     private native int _getFullDisplayWidth();
     private native int _getFullDisplayHeight();
 
-    private native int _garbageCollect(boolean fullGC);
+    private native void _garbageCollect(boolean fullGC);
 
     public static EGL10Impl getInstance() {
         return theInstance;
@@ -920,11 +920,39 @@ class EGL10Impl implements EGL10 {
 	    throwIAE(Errors.EGL_SURFACE_NULL);
 	}
 
-	// Need revisit - what if pixmap or pbuffer?
-        GL10Impl.grabContext();
-	boolean retval = EGL_TRUE ==
-	    _eglSwapBuffers(((EGLDisplayImpl)display).nativeId(),
+        boolean retval;
+        // TODO: pass valid identifier to _getWindowStrategy
+	int strategy = _getWindowStrategy(null);
+	if (strategy == STRATEGY_USE_WINDOW) {
+            GL10Impl.grabContext();
+            retval = EGL_TRUE ==
+	        _eglSwapBuffers(((EGLDisplayImpl)display).nativeId(),
 			    ((EGLSurfaceImpl)surface).nativeId());
+
+	} else if (strategy == STRATEGY_USE_PIXMAP) {
+	    // IMPL_NOTE: eglSwapBuffers performs an implicit glFlush before it
+            // returns if called for window surface, imitate this behavior
+            // if window surface is emulated using pixel buffer or a pixmap.
+            // IMPL_NOTE: On the CLDC/MIDP platform, calling eglSwapBuffers is
+            // equivalent to calling glFinish when drawing to a GameCanvas and
+            // (Canvas?).
+            // IMPL_NOTE: we may consider glFinish encloses glFlush.
+            EGLContextImpl cimpl = (EGLContextImpl)eglGetCurrentContext();
+            GL currGL = cimpl.getGL();
+ 	    ((GL10)currGL).glFinish();
+            retval = true;
+        } else if (strategy == STRATEGY_USE_PBUFFER) {
+            // Emulate posting of EGL surface color buffer to a native window.
+            // IMPL_NOTE: eglCopyBuffers performs an implicit glFlush before
+            // it returns.
+            // TODO: check if it works for arbitrary Graphics
+            Graphics target = ((EGLSurfaceImpl)surface).getTarget();
+            retval = eglCopyBuffers(display, surface, target);
+	} else {
+	    // This should never happen
+	    throw new RuntimeException(Errors.EGL_CANT_HAPPEN);
+	}
+
         return retval;
     }
     

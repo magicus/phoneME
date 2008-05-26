@@ -37,11 +37,12 @@
  * Return the window implementation strategy for the window accessed by the
  * given javax.microedition.lcdui.Graphics object.
  *
- * Currently, only STRATEGY_USE_PIXMAP is supported, which associates
- * a main-memory pixmap with the window.
+ * Currently, STRATEGY_USE_PIXMAP and STRATEGY_USE_PBUFFER are supported
+ * but STRATEGY_USE_WINDOW is not.
  */
 jint
 JSR239_getWindowStrategy(jobject winHandle) {
+    (void)winHandle;
 #ifdef DEBUG
     printf("JSR239_getWindowStrategy\n");
 #endif
@@ -59,6 +60,7 @@ JSR239_getWindowStrategy(jobject winHandle) {
  */
 jint
 JSR239_getWindowNativeID(jobject winHandle) {
+    (void)winHandle;
 #ifdef DEBUG
     printf("JSR239_getWindowNativeID\n");
 #endif
