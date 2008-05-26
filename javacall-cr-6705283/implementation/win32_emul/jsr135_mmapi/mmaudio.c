@@ -45,6 +45,9 @@
 
 #define DEFAULT_BUFFER_SIZE  1024 * 1024 // default buffer size 1 MB
 
+/* forward declaration */
+javacall_result audio_start(javacall_handle handle);
+
 /**
  * 
  */

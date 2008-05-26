@@ -194,8 +194,8 @@ javacall_result fmt_str2mime(
     int i;
     for (i = 0; i < sizeof g_caps / sizeof g_caps[0] - 1; i++) {
         if (!strcmp(fmt, g_caps[i].mediaFormat)) {
-            char *s = g_caps[i].contentTypes;
-            char *p = strchr(s, ' ');
+            const char *s = g_caps[i].contentTypes;
+            const char *p = strchr(s, ' ');
             int len;
             
             if (p == NULL) {
@@ -445,13 +445,7 @@ javacall_result javacall_media_create(int appId,
         memcpy( pPlayer->uri, uri, uriLength * sizeof(javacall_utf16) );
         pPlayer->uri[ uriLength ] = (javacall_utf16)0;
 
-        if( NULL != wcsstr( uri, JAVACALL_MEDIA_FORMAT_GEN_VIDEO ) )
-        {
-            pPlayer->mediaType        = JAVACALL_MEDIA_FORMAT_GEN_VIDEO;
-            pPlayer->mediaItfPtr      = &g_gen_video_itf;
-            pPlayer->downloadByDevice = JAVACALL_TRUE;
-        }
-        else if( 0 == _wcsnicmp( uri, AUDIO_CAPTURE_LOCATOR, 
+        if( 0 == _wcsnicmp( uri, AUDIO_CAPTURE_LOCATOR, 
                            min( (long)wcslen( AUDIO_CAPTURE_LOCATOR ), uriLength ) ) )
         {
             pPlayer->mediaType        = JAVACALL_MEDIA_FORMAT_CAPTURE_AUDIO;
@@ -1785,7 +1779,7 @@ javacall_result javacall_media_get_metadata_key(javacall_handle handle,
     media_interface* pItf = pPlayer->mediaItfPtr;
 
     if (QUERY_METADATA_ITF(pItf, get_metadata_key)) {
-        ret = pItf->vptrMetaData->get_metadata_key(pPlayer->mediaHandle, index, bugLength, buf);
+        ret = pItf->vptrMetaData->get_metadata_key(pPlayer->mediaHandle, index, bufLength, buf);
     }
 
     return ret;

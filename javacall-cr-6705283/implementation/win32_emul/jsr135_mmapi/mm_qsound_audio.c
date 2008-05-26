@@ -32,6 +32,7 @@
 #endif // ENABLE_AMR
 
 #include "javacall_memory.h"
+#include "javautil_unicode.h"
 
 #if( 1 == INTERNAL_SOUNDBANK )
 #include "mQCore/soundbank.incl"
@@ -59,6 +60,8 @@ static javacall_result audio_qs_get_duration(javacall_handle handle, long* ms);
 #define PCM_PACKET_SIZE(wav) (wav.rate*wav.channels*(wav.bits>>3))
 #define MIN_PCM_BUFFERED_SIZE(wav) (3*PCM_PACKET_SIZE(wav))
 #define MAX_PCM_BUFFERED_SIZE(wav) (5*PCM_PACKET_SIZE(wav))
+
+#define MAX_METADATA_KEYS 64
 
 /******************************************************************************/
 
@@ -994,6 +997,7 @@ static javacall_result audio_qs_get_player_controls(javacall_handle handle,
             *controls |= JAVACALL_MEDIA_CTRL_PITCH;
             break;
         case JC_FMT_MS_PCM:
+            *controls |= JAVACALL_MEDIA_CTRL_METADATA;
         case JC_FMT_AMR:
             *controls |= JAVACALL_MEDIA_CTRL_RATE;
             break;
@@ -1029,7 +1033,6 @@ static javacall_result audio_qs_acquire_device(javacall_handle handle)
             {
                 MQ234_HostBlock *pHostBlock = NULL;
                 ISynthPerformance *sp = NULL;
-                MQ234_ERROR e;
 
                 /* if HostStorage is still not created, create it! */
                 if( h->midi.storage == NULL )
@@ -2271,12 +2274,15 @@ static javacall_result audio_qs_get_metadata_key_counts(javacall_handle handle,
             IMetaDataControl* mdc 
                 = (IMetaDataControl*)( h->hdr.controls[CON135_METADATA] );
 
-            char *keys[50];
+            char *keys[MAX_METADATA_KEYS];
             int i = 0;
-            mQ135_MetaData_getKeys(mdc, keys, 50);
+            mQ135_MetaData_getKeys(mdc, keys, MAX_METADATA_KEYS);
             while(keys[i] != NULL) i++;
             *keyCounts = (long)i;
         }
+        break;
+
+        case JC_FMT_MS_PCM:
         break;
 
         default:
@@ -2292,12 +2298,13 @@ static javacall_result audio_qs_get_metadata_key_counts(javacall_handle handle,
 
 static javacall_result audio_qs_get_metadata_key(javacall_handle handle,
                                                  long index, long bufLength,
-                                                 char *buf)
+                                                 javacall_utf16* buf)
 {
     ah *h = (ah *)handle;
     javacall_result r = JAVACALL_OK;
-    char *keys[50];
-    int l;
+    char *keys[MAX_METADATA_KEYS];
+    int l, newl = 0;
+    IMetaDataControl* mdc = NULL;
 
     switch(h->hdr.mediaType)
     {
@@ -2307,14 +2314,23 @@ static javacall_result audio_qs_get_metadata_key(javacall_handle handle,
         case JC_FMT_DEVICE_TONE:
         case JC_FMT_DEVICE_MIDI:
         {
-            IMetaDataControl* mdc 
-                = (IMetaDataControl*)( h->hdr.controls[CON135_METADATA] );
+            if (index < MAX_METADATA_KEYS || index < 0) {
+                r = JAVACALL_FAIL;
+                break;
+            }
+            mdc = (IMetaDataControl*)( h->hdr.controls[CON135_METADATA] );
 
-            mQ135_MetaData_getKeys( mdc, keys, 50);
+            mQ135_MetaData_getKeys(mdc, keys, MAX_METADATA_KEYS);
             l = strlen(keys[index]);
-            memset(buf, '\0', bufLength);
-            memcpy(buf, keys[index], bufLength < l ? bufLength : l);
+            javautil_unicode_utf8_to_utf16(keys[index], l, buf, bufLength, &newl);
+            if (newl < bufLength)
+                buf[newl] = 0;
+            else
+                buf[bufLength - 1] = 0;
         }
+        break;
+
+        case JC_FMT_MS_PCM:
         break;
 
         default:
@@ -2329,11 +2345,13 @@ static javacall_result audio_qs_get_metadata_key(javacall_handle handle,
 }
 
 static javacall_result audio_qs_get_metadata(javacall_handle handle,
-                                             const char* key, long bufLength,
-                                             char *buf)
+                                             javacall_const_utf16_string key, long bufLength,
+                                             javacall_utf16* buf)
 {
     ah *h = (ah *)handle;
     javacall_result r = JAVACALL_OK;
+    int keyLen8 = 0, newl = 0;
+    char *key8 = NULL, *val8 = NULL;
 
     switch(h->hdr.mediaType)
     {
@@ -2346,9 +2364,28 @@ static javacall_result audio_qs_get_metadata(javacall_handle handle,
             IMetaDataControl* mdc 
                 = (IMetaDataControl*)( h->hdr.controls[CON135_METADATA] );
 
-            memset(buf, '\0', bufLength);
-            mQ135_MetaData_getKeyValue(mdc, key, buf, bufLength);
+            r = javautil_unicode_utf16_to_utf8(key, wcslen(key), 0, 0, &keyLen8);
+            if (r == JAVACALL_OK) {
+                key8 = MALLOC(keyLen8 + 1);
+                javautil_unicode_utf16_to_utf8(key, wcslen(key), key8, keyLen8, &keyLen8);
+                key8[keyLen8] = 0;
+
+                val8 = MALLOC(bufLength);
+                mQ135_MetaData_getKeyValue(mdc, key8, val8, bufLength);
+                
+                javautil_unicode_utf8_to_utf16(val8, strlen(val8), buf, bufLength, &newl);
+                if (newl < bufLength)
+                    buf[newl] = 0;
+                else
+                    buf[bufLength - 1] = 0;
+
+                FREE(val8);
+                FREE(key8);
+            }
         }
+        break;
+
+        case JC_FMT_MS_PCM:
         break;
 
         default:
