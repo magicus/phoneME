@@ -41,7 +41,7 @@ public class DirectMetaData implements MetaDataControl {
             newKeys = nGetKeyCount(hNative);
 
         if (newKeys > 0) {
-            if (newKeys != keys.length) {
+            if (keys == null || newKeys != keys.length) {
                 keys = new String[newKeys];
                 for (int i = 0; i < newKeys; i++) {
                     keys[i] = nGetKey(hNative, i);
