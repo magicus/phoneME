@@ -281,6 +281,7 @@ public class HttpInstaller extends Installer {
         String retryAfterField;
         int retryInterval;
         String mediaType;
+        boolean resourceMoved = false;
 
         try {
             for (; ; ) {
@@ -353,6 +354,30 @@ public class HttpInstaller extends Installer {
                     }
 
                     throw new InvalidJadException(serverNotFoundCode, url);
+                }
+
+                if (responseCode == HttpConnection.HTTP_MOVED_PERM ||
+                        responseCode == HttpConnection.HTTP_MOVED_TEMP ||
+                            responseCode == HttpConnection.HTTP_TEMP_REDIRECT ||
+                                responseCode == HttpConnection.HTTP_SEE_OTHER) {
+                    // prevent multiple redirection attempts
+                    if (resourceMoved) {
+                        // exception will be thrown bellow
+                        break;
+                    }
+
+                    /*
+                     * Resource was moved, get a new location and retry
+                     * the operation.
+                     */
+                    resourceMoved = true;
+                    url = httpConnection.getHeaderField("Location");
+                    try {
+                        httpConnection.close();
+                    } catch (Exception e) {
+                        // ignore
+                    }
+                    continue;
                 }
 
                 if (responseCode != HttpConnection.HTTP_UNAVAILABLE) {
