@@ -4291,7 +4291,7 @@ doRet(CVMJITCompilationContext* con, CVMJITIRBlock* curbk, CVMUint16 localNo)
     /* We marked all Jsr return targets in the first pass. Now
        connect the flow and merge the local states into the successors.*/
     for (entry = (CVMJITJsrRetEntry*)con->jsrRetTargetList.head; 
-         entry != NULL; entry = entry->next) {
+         entry != NULL; entry = CVMJITjsrRetEntryGetNext(entry)) {
       if (entry->jsrTargetPC == targetPC) {
           CVMJITirblockConnectFlow(con, curbk, entry->jsrRetBk);
       }
@@ -4884,7 +4884,7 @@ translateRange(CVMJITCompilationContext* con,
 
     if (con->mc->compilationDepth == 0) {
 	if (CVMJITirblockIsExcHandler(curbk)) {
-	    if (pc == curbk->blockPC) {
+	    if (pc == CVMJITirblockGetBlockPC(curbk)) {
 		/* Force a MAP_PC node before the EXCEPTION_OBJECT node that
 		 * CVMJITirblockIsExcHandler will create. */
 		createMapPcNodeIfNeeded(con, curbk,
@@ -5492,7 +5492,27 @@ translateRange(CVMJITCompilationContext* con,
 	}
 
 	/* Branch if integer comparison with zero succeeds */
-	case opc_ifeq:
+	case opc_ifeq: {
+	    CVMBool contains;
+
+	    CVMJITsetContains(&mc->notSeq, pc, contains);
+            if (contains) {
+                /* If we get here, then we have found a NOT sequence: */
+                unaryStackOp(con, CVMJIT_NOT, CVM_TYPEID_INT,
+                             CVMJITUNOP_ARITHMETIC);
+                {
+                    CVMJITIRNode *node = CVMJITirnodeStackPop(con);
+                    node = CVMJIToptimizeUnaryIntExpression(con, node);
+                    CVMJITirnodeStackPush(con, node);
+                }
+
+                /* Treat the whole sequence as one big opcode: */
+                instrLength = CVMJITOPT_SIZE_OF_NOT_SEQUENCE;
+                break;
+            }
+            /* Else, fall thru to the case below: */
+	}
+
 	case opc_ifne:
 	case opc_iflt:
 	case opc_ifle:
@@ -7299,7 +7319,7 @@ dumpIncomingLocals(CVMJITIRBlock* bk, const char * prefix)
     if (bk->incomingLocalsCount > 0) {
 	int i;
 	CVMconsolePrintf("%s bkID(%d) Incoming Locals(%d 0x%x): ", prefix,
-			 bk->blockID,
+                         CVMJITirblockGetBlockID(bk),
 			 bk->incomingLocalsCount,
 			 bk->orderedIncomingLocals);
 	for (i = 0; i < bk->incomingLocalsCount; i++) {
@@ -7350,7 +7370,7 @@ mergeIncomingLocalsFromSuccessorBlocks(CVMJITCompilationContext* con,
 
 	/* If no successor blocks, then nothing to merge */
 	if (bk->successorBlocksCount == 0) {
-	    bk = bk->prev;
+	    bk = CVMJITirblockGetPrev(bk);
 	    continue;
 	}
 
@@ -7364,7 +7384,7 @@ mergeIncomingLocalsFromSuccessorBlocks(CVMJITCompilationContext* con,
 
 	/* Don't merge anything if we have incoming phis. */
 	if (bk->phiCount > 0) {
-	    bk = bk->prev;
+	    bk = CVMJITirblockGetPrev(bk);
 	    continue;
 	}
 
@@ -7468,7 +7488,7 @@ mergeIncomingLocalsFromSuccessorBlocks(CVMJITCompilationContext* con,
 	}
 
 	CVMtraceJITRegLocalsExec(dumpIncomingLocals(bk, "o1  "));
-	bk = bk->prev;
+	bk = CVMJITirblockGetPrev(bk);
     }
 
     return;
@@ -7520,7 +7540,7 @@ orderLocal(CVMJITIRBlock* srcBk, CVMJITIRBlock* dstBk, int srcIdx)
 	return; /* not found */
     }
     CVMtraceJITRegLocals(("dstBk(%d) local(%d %d) found in slot(%d)\n",
-			  dstBk->blockID, srcIdx,
+                          CVMJITirblockGetBlockID(dstBk), srcIdx,
 			  getLocalNo(localNode), dstIdx));
 
     /* if local is in same slot in both blocks, then we are done */
@@ -7603,7 +7623,7 @@ orderIncomingLocalsForBlocks(CVMJITCompilationContext* con,
 	    }
 	    bkLocalNo = getLocalNo(bk->incomingLocals[bkLocalIdx]);
 	    CVMtraceJITRegLocals(("bkID(%d) local(%d #%d) ",
-				  bk->blockID, bkLocalIdx, bkLocalNo));
+                CVMJITirblockGetBlockID(bk), bkLocalIdx, bkLocalNo));
 
 	    /* if local not in current goalBk, then skip */
 	    goalBkLocalIdx = CVMJITirblockFindIncomingLocal(goalBk, bkLocalNo);
@@ -7615,7 +7635,7 @@ orderIncomingLocalsForBlocks(CVMJITCompilationContext* con,
 	    if (localAlreadyOrdered(goalBk, goalBkLocalIdx)) {
 		/* Already ordered in goalBk, so force that order on bk. */
 		CVMtraceJITRegLocals((" ordered in goalBk(%d)\n",
-				      goalBk->blockID));
+                                      CVMJITirblockGetBlockID(goalBk)));
 		CVMtraceJITRegLocalsExec(dumpIncomingLocals(bk, "-bk "));
 		orderLocal(goalBk, bk, goalBkLocalIdx);
 		CVMtraceJITRegLocalsExec(dumpIncomingLocals(bk, "+bk "));
@@ -7804,7 +7824,8 @@ orderIncomingLocals(CVMJITCompilationContext* con, CVMJITIRBlock* lastBlock)
 	/* Pop current block if backward branch target in goalBks */
 	if (goalBksCount > 0 && goalBks[goalBksCount-1] == bk) {
 	    goalBksCount--;
-	    CVMtraceJITRegLocals(("Popping blockID(%d)\n", bk->blockID));
+            CVMtraceJITRegLocals(("Popping blockID(%d)\n",
+                                  CVMJITirblockGetBlockID(bk)));
 	}
 
 	/* Add any successor blocks that are backward branch targets */
@@ -7816,11 +7837,12 @@ orderIncomingLocals(CVMJITCompilationContext* con, CVMJITIRBlock* lastBlock)
 		    goalBksCount--;
 		}
 		goalBks[goalBksCount++] = sbk;
-		CVMtraceJITRegLocals(("Pushing blockID(%d)\n", sbk->blockID));
+                CVMtraceJITRegLocals(("Pushing blockID(%d)\n",
+                                      CVMJITirblockGetBlockID(sbk)));
 	    }
 	}
 	
-	bk = bk->prev;
+	bk = CVMJITirblockGetPrev(bk);
     }
 
     /*
@@ -7954,7 +7976,7 @@ orderIncomingLocals(CVMJITCompilationContext* con, CVMJITIRBlock* lastBlock)
 	    /* Retry the current index since we just swapped it */
 	    i--;
 	}
-	bk = bk->next;
+	bk = CVMJITirblockGetNext(bk);
     }
 }
 
@@ -8119,8 +8141,8 @@ secondPass(CVMJITCompilationContext* con)
     if (CVMglobals.jit.registerLocals) {
 	CVMJITIRBlock *lastBlock =
 	    (CVMJITIRBlock*)CVMJITirlistGetHead(&con->bkList);
-	while (lastBlock->next != NULL) {
-	    lastBlock = lastBlock->next;
+	while (CVMJITirblockGetNext(lastBlock) != NULL) {
+	    lastBlock = CVMJITirblockGetNext(lastBlock);
 	}
 	/*
 	 * Merge incoming locals from each block's successor block. Doing this
@@ -8279,7 +8301,7 @@ blockCodeChangesLocalInfo(CVMJITCompilationContext* con,
 	     */
 	    nFound = 0;
 	    for (entry = (CVMJITJsrRetEntry*)con->jsrRetTargetList.head; 
-		 entry != NULL; entry = entry->next) {
+		 entry != NULL; entry = CVMJITjsrRetEntryGetNext(entry)) {
 		if (entry->jsrTargetPC == targetPC) {
 		    nFound += 1;
 		    if (CVMJITirblockMergeLocalRefs(con, entry->jsrRetBk)) {
@@ -8502,6 +8524,7 @@ pushMethodContext(CVMJITCompilationContext* con,
     CVMJITsetInit(con, &mc->labelsSet); /* create label set */
     CVMJITsetInit(con, &mc->gcPointsSet); /* create GC points set */
     CVMJITsetInit(con, &mc->mapPcSet); /* create map pc set */
+    CVMJITsetInit(con, &mc->notSeq);
     mc->removeNullChecksOfLocal_0 = !CVMmbIs(mb, STATIC);
 
     /* First pass to traverse the bytecodes instructions in method block */

@@ -104,6 +104,8 @@ static const char *const opcodeTagMap[] = {
     "CONVERT_FLOAT",
     "CONVERT_DOUBLE",
     "NEG",
+    "NOT",
+    "INT2BIT",
     "RET",
     "RETURN_VALUE",
     "IDENTITY",
@@ -724,7 +726,7 @@ CVMJITirdumpIRBlock(CVMJITCompilationContext* con, CVMJITIRBlock* bk)
 	    int j;
 	    CVMconsolePrintf("\tID(%d) LocalOrder(%d) AssignOrder(%d)"
 			     " RefsOK(%d) Locals(",
-			     successorBk->blockID,
+                             CVMJITirblockGetBlockID(successorBk),
 			     bk->successorBlocksLocalOrder[i],
 			     bk->successorBlocksAssignOrder[i],
 			     bk->okToMergeSuccessorBlockRefs[i]);

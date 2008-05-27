@@ -1126,6 +1126,21 @@ CVMCPUemitUnaryALUConditional(CVMJITCompilationContext *con, int opcode,
 			      CVMBool setcc, CVMCPUCondCode condCode)
 {
     switch (opcode) {
+        case CVMCPU_NOT_OPCODE:
+            /* reg32 = (reg32 == 0)?1:0. */
+            CVMassert(condCode = CVMCPU_COND_AL);
+            CVMCPUemitCompareConstant(con, CVMCPU_CMP_OPCODE, CVMCPU_COND_AL,
+                                      srcRegID, 0);
+            CVMCPUemitLoadConstantConditional(con, destRegID, 0, CVMCPU_COND_NE);
+            CVMCPUemitLoadConstantConditional(con, destRegID, 1, CVMCPU_COND_EQ);
+            break;
+        case CVMCPU_INT2BIT_OPCODE:
+            /* reg32 = (reg32 != 0)?1:0. */
+            CVMassert(condCode = CVMCPU_COND_AL);
+            CVMCPUemitBinaryALUConstant(con, CVMCPU_SUB_OPCODE, destRegID,
+                srcRegID, 0, CVMJIT_SETCC);
+            CVMCPUemitLoadConstantConditional(con, destRegID, 1, CVMCPU_COND_NE);
+            break;
         case CVMCPU_NEG_OPCODE:
             CVMCPUemitBinaryALUConditional(con, ARM_RSB_OPCODE, destRegID,
                 srcRegID, CVMCPUALURhsTokenConstZero, setcc, condCode);

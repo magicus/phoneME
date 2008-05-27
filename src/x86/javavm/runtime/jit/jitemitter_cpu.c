@@ -798,7 +798,6 @@ void CVMX86movzxb_reg_reg(CVMJITCompilationContext* con, CVMX86Register dst, CVM
     CVMconsolePrintf("	movzxb	%s, %s", destRegBuf, srcRegBuf);
   });  
 
-
   CVMassert(CVMX86has_byte_register(src) /* must have byte register */);
   CVMX86emit_byte(con, 0x0F);
   CVMX86emit_byte(con, 0xB6);
@@ -4251,17 +4250,34 @@ CVMCPUemitUnaryALU(CVMJITCompilationContext *con, int opcode,
                    int destRegID, int srcRegID, CVMBool setcc)
 {
     switch (opcode) {
-       case CVMCPU_NEG_OPCODE: 
-       {
-	  if(destRegID != srcRegID)
-	  {
-	     CVMX86movl_reg_reg(con,destRegID,srcRegID);
-	  }
-	  CVMX86negl_reg(con,destRegID);       
-	  break;
-       }
-       default:
-	  CVMassert(CVM_FALSE);
+    case CVMCPU_NEG_OPCODE: 
+        if(destRegID != srcRegID) {
+            CVMX86movl_reg_reg(con, destRegID, srcRegID);
+        }
+        CVMX86negl_reg(con, destRegID);       
+        break;
+
+    case CVMCPU_NOT_OPCODE: 
+        if(destRegID != srcRegID) {
+            CVMX86movl_reg_reg(con, destRegID, srcRegID);
+        }
+        /* CVMX86notl_reg(con, destRegID);       */
+        CVMX86testl_reg_reg(con, destRegID, destRegID); /* AND with self. */
+        CVMX86setb_reg(con, CVMX86zero, destRegID); /* Set byte to 1 if 0. */
+        CVMX86movzxb_reg_reg(con, destRegID, destRegID); /* Zero extend. */
+        break;
+
+    case CVMCPU_INT2BIT_OPCODE: 
+        if(destRegID != srcRegID) {
+            CVMX86movl_reg_reg(con, destRegID, srcRegID);
+        }
+        CVMX86testl_reg_reg(con, destRegID, destRegID); /* AND with self. */
+        CVMX86setb_reg(con, CVMX86notZero, destRegID); /* Set to 1 if not 0. */
+        CVMX86movzxb_reg_reg(con, destRegID, destRegID); /* Zero extend. */
+        break;
+
+    default:
+        CVMassert(CVM_FALSE);
     }
 }
 

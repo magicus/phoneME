@@ -34,9 +34,38 @@
 #include "javavm/include/jit/jitcontext.h"
 #include "javavm/include/jit/jitirnode.h"
 
+#define CVMJITOPT_SIZE_OF_NOT_SEQUENCE     8
+
+/*======================================================================
+// Code Sequence list management utilities: 
+*/
+
+/* Purpose: Add the specified PC to the list of code sequences. */
+extern void
+CVMJIToptAddCodeSequence(CVMJITCompilationContext *con, CVMUint16 pcIndex,
+                         CVMUint32 sequenceType);
+
+/*======================================================================
+// Code Sequence recognition utilities: 
+*/
+
+/* Purpose: Checks if the bytecode steam at the specified location is a NOT
+   expression. */
+extern CVMBool
+CVMJIToptPatternIsNotSequence(CVMJITCompilationContext* con, CVMUint8 *absPc);
+
+/*======================================================================
+// Strength reduction and constant folding optimizers: 
+*/
+
 /* Purpose: Optimizes the specified binary int expression. */
 extern CVMJITIRNode *
 CVMJIToptimizeBinaryIntExpression(CVMJITCompilationContext* con,
                                   CVMJITIRNode* node);
+
+/* Purpose: Optimizes the specified binary int expression. */
+extern CVMJITIRNode *
+CVMJIToptimizeUnaryIntExpression(CVMJITCompilationContext* con,
+                                 CVMJITIRNode* node);
 
 #endif /* _INCLUDED_JITOPT_H */

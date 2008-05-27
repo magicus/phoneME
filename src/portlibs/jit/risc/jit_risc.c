@@ -405,7 +405,7 @@ CVMJITcompileGenerateCode(CVMJITCompilationContext* con)
 		    CVMJITaddCodegenComment((con,
 		        "fallthrough to block L%d, which is "
 			"backward branch target",
-			target->blockID));
+                        CVMJITirblockGetBlockID(target)));
 		    CVMCPUemitBranchNeedFixup(con, target->logicalAddress, 
 					      CVMCPU_COND_AL,
 					      &(target->branchFixupList));

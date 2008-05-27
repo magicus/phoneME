@@ -151,6 +151,9 @@ enum {
 
     /* 32 bit unary ALU opcodes */
     CVMCPU_NEG_OPCODE,    /* reg32 = -reg32. */
+    CVMCPU_NOT_OPCODE,     /* reg32 = (reg32 == 0)?1:0. */
+    CVMCPU_INT2BIT_OPCODE, /* reg32 = (reg32 != 0)?1:0. */
+
 #ifdef CVM_PPC_E500V1
     CVME500_FNEG_OPCODE,  /* reg32 = -reg32. */
     CVME500_I2F_OPCODE,   /* reg32 = (float) reg32. */

@@ -124,8 +124,10 @@ typedef enum CVMCPUCondCode CVMCPUCondCode;
 #define CVMCPU_OR_OPCODE    (0x02 << 19) /* reg32 = reg32 OR aluRhs32. */
 #define CVMCPU_XOR_OPCODE   (0x03 << 19) /* reg32 = reg32 XOR aluRhs32. */
 #define CVMCPU_BIC_OPCODE   CVMSPARC_ANDN_OPCODE /*reg32 = reg32 AND ~aluRhs32*/
-#define CVMCPU_MOV_OPCODE   (0x00000001) /* reg32 = aluRhs32. */
-#define CVMCPU_NEG_OPCODE   (0x00000002) /* reg32 = -reg32. */
+#define CVMCPU_MOV_OPCODE     (0x00000001) /* reg32 = aluRhs32. */
+#define CVMCPU_NEG_OPCODE     (0x00000002) /* reg32 = -reg32. */
+#define CVMCPU_NOT_OPCODE     (0x0000000b) /* reg32 = (reg32 == 0)?1:0. */
+#define CVMCPU_INT2BIT_OPCODE (0x0000000c) /* reg32 = (reg32 != 0)?1:0. */
 
 #define CVMCPU_SLL_OPCODE       (0x25 << 19) /* Shift Left Logical */
 #define CVMCPU_SRL_OPCODE       (0x26 << 19) /* Shift Right Logical */

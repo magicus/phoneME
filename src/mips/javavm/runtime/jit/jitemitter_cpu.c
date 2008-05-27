@@ -2001,6 +2001,22 @@ CVMCPUemitUnaryALU(CVMJITCompilationContext *con, int opcode,
                                     setcc);
         break;
     }
+    case CVMCPU_NOT_OPCODE: {
+        /* Unsigned Compare: x < 1? 1 : 0. 
+           Since only 0 is less 1, x == 0 yields a 1, and
+           all other values of x yields a 0. */
+        CVMMIPSemitSLT(con, MIPS_SLTIU_OPCODE, 
+                       destRegID, srcRegID, 0x1);
+        break;
+    }
+    case CVMCPU_INT2BIT_OPCODE: {
+        /* Unsigned Compare: 0 < x? 1 : 0. 
+           Since only 0 is less than all non-0 values, x == 0 yields a 0, and
+           all other values of x yields a 1. */
+        CVMMIPSemitSLT(con, MIPS_SLTU_OPCODE, 
+                       destRegID, CVMMIPS_zero, srcRegID);
+        break;
+    }
     default:
         CVMassert(CVM_FALSE);
     }

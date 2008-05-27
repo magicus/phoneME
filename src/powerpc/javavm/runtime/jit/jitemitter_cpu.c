@@ -1579,6 +1579,50 @@ CVMCPUemitUnaryALU(CVMJITCompilationContext *con, int opcode,
 	});
         break;
     }
+    case CVMCPU_NOT_OPCODE: {
+        /* reg32 = (reg32 == 0)?1:0. */
+	emitInstruction(con, PPC_SUBFIC_OPCODE |
+			CVMPPC_r0 << PPC_RD_SHIFT |
+			srcRegID << PPC_RA_SHIFT | 0);
+	CVMtraceJITCodegenExec({
+	    printPC(con);
+	    CVMconsolePrintf("	subfic	r%s, r%s, 0\n",
+			     regName(CVMPPC_r0), regName(srcRegID));
+	});
+	emitInstruction(con, PPC_ADDE_OPCODE | (setcc ? PPC_RECORD_BIT : 0) |
+			destRegID << PPC_RD_SHIFT |
+			CVMPPC_r0 << PPC_RA_SHIFT |
+			srcRegID << PPC_RB_SHIFT);
+	CVMtraceJITCodegenExec({
+	    printPC(con);
+	    CVMconsolePrintf("	adde%s	r%s, r%s, r%s",
+			     setcc ? "." : "",
+			     regName(destRegID), regName(CVMPPC_r0), regName(srcRegID));
+	});
+        break;
+    }
+    case CVMCPU_INT2BIT_OPCODE: {
+        /* reg32 = (reg32 != 0)?1:0. */
+	emitInstruction(con, PPC_ADDIC_OPCODE |
+			CVMPPC_r0 << PPC_RD_SHIFT |
+			srcRegID << PPC_RA_SHIFT | 0xffff /* 16-bit -1 */);
+	CVMtraceJITCodegenExec({
+	    printPC(con);
+	    CVMconsolePrintf("	addic	r%s, r%s, -1\n",
+			     regName(CVMPPC_r0), regName(srcRegID));
+	});
+	emitInstruction(con, PPC_SUBFE_OPCODE | (setcc ? PPC_RECORD_BIT : 0) |
+			destRegID << PPC_RD_SHIFT |
+			CVMPPC_r0 << PPC_RA_SHIFT |
+			srcRegID << PPC_RB_SHIFT);
+	CVMtraceJITCodegenExec({
+	    printPC(con);
+	    CVMconsolePrintf("	subfe%s	r%s, r%s, r%s",
+			     setcc ? "." : "",
+			     regName(destRegID), regName(CVMPPC_r0), regName(srcRegID));
+	});
+        break;
+    }
 #ifdef CVM_PPC_E500V1
     case CVME500_FNEG_OPCODE: {
 	CVMassert(!setcc);

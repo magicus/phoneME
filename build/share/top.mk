@@ -322,6 +322,42 @@ ifndef COMPONENTS_DIR
 COMPONENTS_DIR     := $(call ABSPATH, ../../..)
 endif
 
+# If CVM_BUILD_SUBDIR_NAME was specified, then it is reasonable to assume
+# that CVM_BUILD_SUBDIR should be enabled.  This saves the user from
+# having to specify both CVM_BUILD_SUBDIR and CVM_BUILD_SUBDIR_NAME.
+# Specifying CVM_BUILD_SUBDIR_NAME automatically implies CVM_BUILD_SUBDIR.
+ifneq ($(CVM_BUILD_SUBDIR_NAME),)
+    CVM_BUILD_SUBDIR = true
+else
+    CVM_BUILD_SUBDIR_NAME = .
+endif
+
+ifeq ($(CVM_BUILD_SUBDIR), true)
+  ifeq ($(CVM_DEBUG), true)
+    CVM_BUILD_SUBDIR_NAME=$(J2ME_CLASSLIB)_dbg
+  else
+    CVM_BUILD_SUBDIR_NAME=$(J2ME_CLASSLIB)
+  endif
+else
+  override CVM_BUILD_SUBDIR_NAME=.
+endif
+
+ifeq ($(CVM_BUILD_SUBDIR), true)
+# There should no longer be a need to use CVM_BUILD_SUBDIR_UP now that paths
+# are abosolute instead of relative. The folowing is left in to make errors
+# more obvious.
+#CVM_BUILD_SUBDIR_UP = ../
+CVM_BUILD_SUBDIR_UP = "Do not use CVM_BUILD_SUBDIR_UP"
+endif
+
+# If requested, load build flags from previous build. This must be done
+# before any makefile logic that is dependent on the build flags
+# that are read in.
+CVM_BUILD_FLAGS_FILE=$(CVM_BUILD_SUBDIR_NAME)/.previous.build.flags
+ifeq ($(CVM_REBUILD),true)
+-include $(CVM_BUILD_FLAGS_FILE)
+endif
+
 # Include JavaSE setup if necessary:
 ifeq ($(USE_JAVASE),true)
 PROFILE_DIR ?= $(COMPONENTS_DIR)/cvmjavase
@@ -358,39 +394,6 @@ ifneq ($(J2ME_PLATFORM),)
 include $(CDC_DIR)/build/share/defs_$(J2ME_PLATFORM).mk
 endif
 
-# If CVM_BUILD_SUBDIR_NAME was specified, then it is reasonable to assume
-# that CVM_BUILD_SUBDIR should be enabled.  This saves the user from
-# having to specify both CVM_BUILD_SUBDIR and CVM_BUILD_SUBDIR_NAME.
-# Specifying CVM_BUILD_SUBDIR_NAME automatically implies CVM_BUILD_SUBDIR.
-ifneq ($(CVM_BUILD_SUBDIR_NAME),)
-    CVM_BUILD_SUBDIR = true
-else
-    CVM_BUILD_SUBDIR_NAME = .
-endif
-
-ifeq ($(CVM_BUILD_SUBDIR), true)
-  ifeq ($(CVM_DEBUG), true)
-    CVM_BUILD_SUBDIR_NAME=$(J2ME_CLASSLIB)_dbg
-  else
-    CVM_BUILD_SUBDIR_NAME=$(J2ME_CLASSLIB)
-  endif
-else
-  override CVM_BUILD_SUBDIR_NAME=.
-endif
-
-ifeq ($(CVM_BUILD_SUBDIR), true)
-# There should no longer be a need to use CVM_BUILD_SUBDIR_UP now that paths
-# are abosolute instead of relative. The folowing is left in to make errors
-# more obvious.
-#CVM_BUILD_SUBDIR_UP = ../
-CVM_BUILD_SUBDIR_UP = "Do not use CVM_BUILD_SUBDIR_UP"
-endif
-
-CVM_BUILD_FLAGS_FILE=$(CVM_BUILD_SUBDIR_NAME)/.previous.build.flags
-# If requested, load build flags from previous build
-ifeq ($(CVM_REBUILD),true)
--include $(CVM_BUILD_FLAGS_FILE)
-endif
 
 # Handle deprecated uses of CVM_INCLUDE_MIDP and CVM_INCLUDE_JUMP here
 # since we rely on the proper setting of USE_MIDP and USE_JUMP just below.

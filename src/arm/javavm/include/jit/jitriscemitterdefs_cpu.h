@@ -129,6 +129,8 @@ typedef enum CVMCPUCondCode {
 /* 32 bit ALU opcodes: */
 #define CVMCPU_MOV_OPCODE   (0x1a << 20) /* reg32 = aluRhs32. */
 #define CVMCPU_NEG_OPCODE   0x00000003   /* reg32 = -reg32. */
+#define CVMCPU_NOT_OPCODE   0x00000004   /* reg32 = (reg32 == 0)?1:0. */
+#define CVMCPU_INT2BIT_OPCODE 0x00000005 /* reg32 = (reg32 != 0)?1:0. */
 #define CVMCPU_ADD_OPCODE   (0x08 << 20) /* reg32 = reg32 + aluRhs32. */
 #define CVMCPU_SUB_OPCODE   (0x04 << 20) /* reg32 = reg32 - aluRhs32. */
 #define CVMCPU_AND_OPCODE   (0x00 << 20) /* reg32 = reg32 AND aluRhs32. */
