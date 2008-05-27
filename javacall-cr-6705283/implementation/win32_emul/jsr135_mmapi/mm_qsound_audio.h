@@ -86,10 +86,10 @@ typedef struct {
 
 
 struct wav_meta_data {
-    char *iartData;
-    char *icopData;
-    char *icrdData;
-    char *inamData;
+    char *iartData; /* artist -> AUTHOR_KEY */
+    char *icopData; /* copyright -> COPYRIGHT_KEY */
+    char *icrdData; /* creation date -> DATE_KEY */
+    char *inamData; /* name -> TITLE_KEY */
 };
 
 typedef struct {
