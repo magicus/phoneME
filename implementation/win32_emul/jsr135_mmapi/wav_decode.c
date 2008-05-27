@@ -91,6 +91,18 @@ struct std_head
 };
 #pragma pack()
 
+#define CHUNKID_RIFF 0x46464952
+#define TYPE_WAVE    0x45564157
+#define CHUNKID_data 0x61746164
+#define CHUNKID_fmt  0x20746D66
+#define CHUNKID_LIST 0x5453494C
+#define TYPE_INFO    0x4F464E49
+#define INFOID_IART  0x54524149
+#define INFOID_ICOP  0x504F4349
+#define INFOID_ICRD  0x44524349
+#define INFOID_INAM  0x4D414E49
+
+
 int create_wavhead(recorder* h, char *buffer, int buflen)
 {
     struct std_head wh;
@@ -100,20 +112,20 @@ int create_wavhead(recorder* h, char *buffer, int buflen)
 
     memset(&wh, '\0', sizeof(wh));
 
-    wh.rc.chnk_id          = 0x46464952; // RIFF
+    wh.rc.chnk_id          = CHUNKID_RIFF;
     wh.rc.chnk_ds          = 4;
-    wh.rc.type             = 0x45564157; // WAVE
+    wh.rc.type             = TYPE_WAVE;
 
-    wh.fc.chnk_id          = 0x20746D66;  //fmt.
+    wh.fc.chnk_id          = CHUNKID_fmt ;
     wh.fc.chnk_ds          = 16;
     wh.fc.compression_code = 1;
     wh.fc.num_channels     = h->channels;
     wh.fc.sample_rate      = h->rate;
-    wh.fc.bytes_per_second = 0;  // ??? NEED REVISIT
-    wh.fc.block_align      = 0;   // ?? NEED REVISIT
+    wh.fc.bytes_per_second = 0;          /* ??? NEED REVISIT */
+    wh.fc.block_align      = 0;          /* ?? NEED REVISIT */
     wh.fc.bits             = h->bits;
 
-    wh.dc.chnk_id          = 0x61746164;
+    wh.dc.chnk_id          = CHUNKID_data;
     wh.dc.chnk_ds          = h->recordLen;
 
     memcpy(buffer, &wh, sizeof(wh));
@@ -147,10 +159,10 @@ int wav_setStreamPlayerData(ah_wav *handle, const void* buffer, long length)
         data = (unsigned char *)buffer;
         end = data + length;
         rc = (struct riffchnk *)data; 
-        if (rc->chnk_id != 0x46464952)  // RIFF
+        if (rc->chnk_id != CHUNKID_RIFF)
             return 0;
 
-        if (rc->type != 0x45564157)  // WAVE
+        if (rc->type != TYPE_WAVE)
             return 0;
 
         data += sizeof(struct riffchnk);
@@ -190,12 +202,11 @@ int wav_setStreamPlayerData(ah_wav *handle, const void* buffer, long length)
         wc = (struct wavechnk *)data;
         switch(wc->chnk_id)
         {
-            // fmt.
-            case 0x20746D66:
+            case CHUNKID_fmt:
                 if ((data + wc->chnk_ds + 8) <= end) {
                     fc = (struct fmtchnk *)data;
                 
-                    // Only support PCM
+                    /* Only support PCM */
                     if(fc->compression_code != 1)
                         return -1;
 
@@ -208,64 +219,49 @@ int wav_setStreamPlayerData(ah_wav *handle, const void* buffer, long length)
                     parse_next = 0;
                 }
             break;
-/* Temporary unsupported - just skip
-            // LIST
-            case 0x5453494C:
+            case CHUNKID_LIST:
             {
                 char *pData = data;
                 lc = (struct listchnk *)pData;
                 chnkSize = lc->chnk_ds;
-                if ((data + chnkSize + 8) <= end )
-                    // Only support INFO currently
-                    if(lc->type == 0x4F464E49)
-                    {
+                if ((data + chnkSize + 8) <= end ) {
+                    /* Currently supporting only INFO */
+                    if (lc->type == TYPE_INFO) {
                         int chnkSizeCnt = 0;
-
                         char * tmpData = pData + sizeof(struct listchnk);
-                        while(chnkSizeCnt < chnkSize)
-                        {
+
+                        while(chnkSizeCnt < chnkSize) {
                             struct sublistchnk *tmpChnk = 
                                 (struct sublistchnk *)(tmpData + chnkSizeCnt);
                             char **str = NULL;
 
-                            switch(tmpChnk->chnk_id)
-                            {
-                                // IART
-                                case 0x54524149:
+                            switch(tmpChnk->chnk_id) {
+                                case INFOID_IART:
                                     str = &(handle->metaData.iartData);
-                                break;
-
-                                // ICOP
-                                case 0x504F4349:
+                                    break;
+                                case INFOID_ICOP:
                                     str = &(handle->metaData.icopData);
-                                break;
-
-                                // ICRD
-                                case 0x44524349:
+                                    break;
+                                case INFOID_ICRD:
                                     str = &(handle->metaData.icrdData);
-                                break;
-
-                                case 0x4D414E49:
+                                    break;
+                                case INFOID_INAM:
                                     str = &(handle->metaData.inamData);
-                                break;
-
+                                    break;
                                 default:
                                     OutputDebugString("Unexpected INFO SubList type\n");
-                                break;
+                                    break;
                             }
 
-                            if(str != NULL)
-                            {
+                            if(str != NULL) {
                                 *str = REALLOC(*str, tmpChnk->chnk_ds + 1);
                                 memset(*str, '\0', tmpChnk->chnk_ds + 1);
                                 memcpy(*str, tmpData+sizeof(struct wavechnk), 
                                     tmpChnk->chnk_ds);
                             }
-
                             chnkSizeCnt += tmpChnk->chnk_ds + 8;
                         }
-
-                        pData += chnkSizeCnt + 8;
+                        /* pData += chnkSizeCnt + 8; */
                     }
                     pData += chnkSize + 8;
                     data = pData;
@@ -275,10 +271,9 @@ int wav_setStreamPlayerData(ah_wav *handle, const void* buffer, long length)
                 break;
             }
             break;
-*/
 
-            // DATA 
-            case 0x61746164:
+            /* DATA */
+            case CHUNKID_data:
                 dc = (struct datachnk *)data;
                 chnkSize = dc->chnk_ds;
                 data += 8;
@@ -301,7 +296,7 @@ int wav_setStreamPlayerData(ah_wav *handle, const void* buffer, long length)
                 }
             break;
 
-            // UNKNOWN
+            /* UNKNOWN */
             default:
                 if ((data + wc->chnk_ds + 8) <= end) {
 
@@ -317,7 +312,7 @@ int wav_setStreamPlayerData(ah_wav *handle, const void* buffer, long length)
                         OutputDebugString(outstr);
                     }
 
-                    if(chnkSize < 0)  // Huh? something has gone wrong...
+                    if(chnkSize < 0)  /* Huh? something has gone wrong... */
                         chnkSize = 0;
 
                     data += wc->chnk_ds + 8;

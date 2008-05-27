@@ -63,6 +63,15 @@ static javacall_result audio_qs_get_duration(javacall_handle handle, long* ms);
 
 #define MAX_METADATA_KEYS 64
 
+#define WAV_METADATA_KEYS_COUNT 4
+
+javacall_const_utf16_string s_wav_metadata_keys[WAV_METADATA_KEYS_COUNT] = {
+    METADATA_KEY_AUTHOR,
+    METADATA_KEY_COPYRIGHT,
+    METADATA_KEY_DATE,
+    METADATA_KEY_TITLE
+};
+
 /******************************************************************************/
 
 static void sendEOM(int appId, int playerId, long duration)
@@ -997,7 +1006,11 @@ static javacall_result audio_qs_get_player_controls(javacall_handle handle,
             *controls |= JAVACALL_MEDIA_CTRL_PITCH;
             break;
         case JC_FMT_MS_PCM:
-            *controls |= JAVACALL_MEDIA_CTRL_METADATA;
+            if (h->wav.metaData.iartData ||
+                h->wav.metaData.icopData ||
+                h->wav.metaData.icrdData ||
+                h->wav.metaData.inamData)
+                *controls |= JAVACALL_MEDIA_CTRL_METADATA;
         case JC_FMT_AMR:
             *controls |= JAVACALL_MEDIA_CTRL_RATE;
             break;
@@ -1365,7 +1378,7 @@ static javacall_result audio_qs_get_buffer_address(javacall_handle handle,
         h->hdr.dataBufferPos = 0;
     } else {
         size = h->hdr.dataBufferLen - h->hdr.dataBufferPos;
-        if (size < DEFAULT_PACKET_SIZE) {
+        if (h->hdr.wholeContentSize != h->hdr.dataBufferLen && size < DEFAULT_PACKET_SIZE) {
             long new_size = h->hdr.dataBufferLen * 2;
             
             if (new_size < DEFAULT_PACKET_SIZE) {
@@ -1380,7 +1393,6 @@ static javacall_result audio_qs_get_buffer_address(javacall_handle handle,
                 h->hdr.dataBufferPos = 0;
                 return JAVACALL_OUT_OF_MEMORY;
             }
-            h->hdr.dataBufferPos = h->hdr.dataBufferLen;
             h->hdr.dataBufferLen = new_size;
             size = h->hdr.dataBufferLen - h->hdr.dataBufferPos;
         }
@@ -2283,6 +2295,18 @@ static javacall_result audio_qs_get_metadata_key_counts(javacall_handle handle,
         break;
 
         case JC_FMT_MS_PCM:
+        {
+            int i = 0;
+            if (h->wav.metaData.iartData)
+                i++;
+            if (h->wav.metaData.icopData)
+                i++;
+            if (h->wav.metaData.icrdData)
+                i++;
+            if (h->wav.metaData.inamData)
+                i++;
+            *keyCounts = (long)i;
+        }
         break;
 
         default:
@@ -2314,7 +2338,7 @@ static javacall_result audio_qs_get_metadata_key(javacall_handle handle,
         case JC_FMT_DEVICE_TONE:
         case JC_FMT_DEVICE_MIDI:
         {
-            if (index < MAX_METADATA_KEYS || index < 0) {
+            if (index >= MAX_METADATA_KEYS || index < 0) {
                 r = JAVACALL_FAIL;
                 break;
             }
@@ -2331,6 +2355,22 @@ static javacall_result audio_qs_get_metadata_key(javacall_handle handle,
         break;
 
         case JC_FMT_MS_PCM:
+        {
+            char **key = &(h->wav.metaData.iartData);
+            int i = 0, len;
+            for (; i < WAV_METADATA_KEYS_COUNT; i++) {
+                if (key[i]) {
+                    if (index == 0) {
+                        len = wcslen(s_wav_metadata_keys[i]);
+                        if (bufLength <= len)
+                            len = bufLength - 1;
+                        memcpy(buf, s_wav_metadata_keys[i], len * sizeof(javacall_utf16));
+                        buf[len] = 0;
+                    } else
+                        index--;
+                }
+            }
+        }
         break;
 
         default:
@@ -2386,6 +2426,20 @@ static javacall_result audio_qs_get_metadata(javacall_handle handle,
         break;
 
         case JC_FMT_MS_PCM:
+        {
+            int i = 0;
+            const char* value;
+            for (; i < WAV_METADATA_KEYS_COUNT; i++) {
+                if (0 == wcscmp(s_wav_metadata_keys[i], key)) {
+                    value = &(h->wav.metaData.iartData)[i];
+                    javautil_unicode_utf8_to_utf16(value, strlen(value), buf, bufLength, &newl);
+                    if (newl < bufLength)
+                        buf[newl] = 0;
+                    else
+                        buf[bufLength - 1] = 0;
+                }
+            }
+        }
         break;
 
         default:
