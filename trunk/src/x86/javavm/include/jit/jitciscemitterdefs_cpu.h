@@ -150,6 +150,8 @@ enum CVMCPUOpCode
    CVMCPU_XOR_OPCODE   /* reg32 <- reg32 XOR aluRhs32. */,
    CVMCPU_MOV_OPCODE   /* reg32 <- aluRhs32. */,
    CVMCPU_NEG_OPCODE   /* reg32 <- -reg32. */,
+   CVMCPU_NOT_OPCODE   /* reg32 <- (reg32 == 0) ? 1 : 0. */,
+   CVMCPU_INT2BIT_OPCODE /* reg32 <- (reg32 != 0) ? 1 : 0. */,
    CVMCPU_SLL_OPCODE   /* Shift Left Logical */,
    CVMCPU_SRL_OPCODE   /* Shift Right Logical */,
    CVMCPU_SRA_OPCODE   /* Shift Right Arithmetic */,

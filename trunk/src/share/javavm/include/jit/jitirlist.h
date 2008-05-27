@@ -73,9 +73,6 @@ void
 CVMJITirlistRemove(CVMJITCompilationContext* con, CVMJITIRList* lst,
     void* item);
 
-extern void 
-CVMJITirlistInit(CVMJITCompilationContext* con, CVMJITIRList* lst);
-
 void
 CVMJITirlistAppendList(CVMJITCompilationContext* con, CVMJITIRList* to,
 		    	CVMJITIRList* from);

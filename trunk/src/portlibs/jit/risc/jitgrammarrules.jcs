@@ -147,12 +147,13 @@
 // operations on word-sized values
 //
 %unary  INEG32		// one-word integer unary -
+%unary  NOT32	        // one-word integer !  i.e. (x == 0)?1:0
+%unary  INT2BIT32	// one-word integer !! i.e. (x != 0)?1:0
 %binary IADD32		// one-word integer +
 %binary ISUB32		// one-word integer binary -
 %binary IMUL32		// one-word integer *
 %binary IDIV32		// one-word integer /
 %binary IREM32		// one-word integer %
-//%unary  NOT32		// one-word bitwise NOT
 %binary AND32		// one-word bitwise AND
 %binary OR32		// one-word bitwise OR
 %binary XOR32		// one-word bitwise XOR
@@ -1577,6 +1578,12 @@ reg32: CLASS_BLOCK : 20 : : : : {
 
 reg32: INEG32 reg32 : 10 : : : :
 	wordUnaryOp(con, CVMCPU_NEG_OPCODE, $$, GET_REGISTER_GOALS);
+
+reg32: NOT32 reg32 : 10 : : : :
+	wordUnaryOp(con, CVMCPU_NOT_OPCODE, $$, GET_REGISTER_GOALS);
+
+reg32: INT2BIT32 reg32 : 10 : : : :
+	wordUnaryOp(con, CVMCPU_INT2BIT_OPCODE, $$, GET_REGISTER_GOALS);
 
 %{
 #ifdef CVMJIT_INTRINSICS
@@ -6342,7 +6349,7 @@ loadIncomingLocals(CVMJITCompilationContext* con,
 	b->loadLocalsLogicalAddress = CVMJITcbufGetLogicalPC(con);
 	CVMtraceJITCodegen((
             "\tL%d:\t%d:\t@ entry point when locals need to be loaded\n",
-             b->blockID, CVMJITcbufGetLogicalPC(con)));
+            CVMJITirblockGetBlockID(b), CVMJITcbufGetLogicalPC(con)));
 	CVMRMpinAllIncomingLocals(con, b, CVM_TRUE);
 	CVMRMunpinAllIncomingLocals(con, b);
     }
@@ -6373,7 +6380,7 @@ CVMJITcheckGC(CVMJITCompilationContext* con, CVMJITIRBlock *b)
     
     /* This is where branches to the block will branch to. */
     CVMtraceJITCodegen(("\tL%d:\t%d:\t@ entry point for branches\n",
-			b->blockID, CVMJITcbufGetLogicalPC(con)));
+        CVMJITirblockGetBlockID(b), CVMJITcbufGetLogicalPC(con)));
 
     /* this is where we branch to when a gc is needed (do_gc label) */
     b->gcLogicalAddress = CVMJITcbufGetLogicalPC(con);
@@ -6647,7 +6654,7 @@ CVMJITcheckGC(CVMJITCompilationContext* con, CVMJITIRBlock *b)
          */
 
         CVMtraceJITCodegen(("\tL%d:\t%d:\t@ Patchable GC Check point\n",
-		 	     b->blockID, CVMJITcbufGetLogicalPC(con)));
+             CVMJITirblockGetBlockID(b), CVMJITcbufGetLogicalPC(con)));
 
         /* this is where we branch to when a gc is needed (do_gc label) */
         b->gcLogicalAddress = CVMJITcbufGetLogicalPC(con);
@@ -6736,7 +6743,7 @@ CVMJITcheckGC(CVMJITCompilationContext* con, CVMJITIRBlock *b)
          * the loading of locals, since the locals will already be loaded
          */
         CVMtraceJITCodegen(("\tL%d:\t%d:\t@ entry point for branches\n",
-		 	    b->blockID, CVMJITcbufGetLogicalPC(con)));
+            CVMJITirblockGetBlockID(b), CVMJITcbufGetLogicalPC(con)));
         b->logicalAddress = CVMJITcbufGetLogicalPC(con);
         CVMJITcsClearEmitInPlace(con);
     }
@@ -6772,7 +6779,8 @@ branchToBlock(
     if (CVMJITirblockIsBackwardBranchTarget(target)) {
 	targetAddress = target->gcLogicalAddress;
     }
-    CVMJITaddCodegenComment((con, "branch to block L%d", target->blockID));
+    CVMJITaddCodegenComment((con, "branch to block L%d",
+                            CVMJITirblockGetBlockID(target)));
     CVMCPUemitBranchNeedFixup(con, targetAddress, condcode, fixupList);
 #else /* !CVMJIT_TRAP_BASED_GC_CHECKS && !CVMJIT_PATCH_BASED_GC_CHECKS */
 
@@ -6793,7 +6801,7 @@ branchToBlock(
 #endif
         }
         CVMJITaddCodegenComment(
-            (con, "branch to block L%d", target->blockID));
+            (con, "branch to block L%d", CVMJITirblockGetBlockID(target)));
         CVMCPUemitBranchNeedFixup(con, targetAddress, condcode, fixupList);
     }
 #endif
@@ -6815,7 +6823,7 @@ branchToBlock(
 
             CVMassert(con->gcCheckPcsIndex < con->gcCheckPcsSize);
 	    CVMJITaddCodegenComment(
-                (con, "branch to block L%d", target->blockID));
+                (con, "branch to block L%d", CVMJITirblockGetBlockID(target)));
 
             if (!(target->flags & CVMJITIRBLOCK_ADDRESS_FIXED)) {
                 /* This must be a forward branch. */
@@ -6891,7 +6899,7 @@ branchToBlock(
                 }
 	        /* now emit branch to normal block entry which won't gc */
 	        CVMJITaddCodegenComment((con, "branch to block L%d, skip GC",
-				         target->blockID));
+                                         CVMJITirblockGetBlockID(target)));
                 CVMCPUemitBranch(con, targetAddress, condcode);
                 if (targetAddress != target->gcLogicalAddress) {
 	            if (CVMJITcbufGetLogicalPC(con) - patchPC !=
@@ -6903,7 +6911,7 @@ branchToBlock(
             }
          } else {
 	    CVMJITaddCodegenComment(
-                (con, "branch to block L%d", target->blockID));
+                (con, "branch to block L%d", CVMJITirblockGetBlockID(target)));
 	    CVMCPUemitBranchNeedFixup(con, targetAddress,
                                       condcode, fixupList);
          }
@@ -6918,7 +6926,8 @@ jsrToBlock(
     CVMJITCompilationContext* con,
     CVMJITIRBlock* target)
 {
-    CVMJITaddCodegenComment((con, "jsr to block L%d", target->blockID));
+    CVMJITaddCodegenComment((con, "jsr to block L%d",
+                             CVMJITirblockGetBlockID(target)));
     if (!(target->flags & CVMJITIRBLOCK_ADDRESS_FIXED)) {
         CVMCPUemitBranchLinkNeedFixup(con, target->logicalAddress,
                                       &(target->branchFixupList));

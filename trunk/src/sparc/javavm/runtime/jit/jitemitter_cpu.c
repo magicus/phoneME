@@ -960,6 +960,22 @@ CVMCPUemitUnaryALU(CVMJITCompilationContext *con, int opcode,
 			    destRegID, CVMSPARC_g0, rhsToken, setcc);
         break;
     }
+    case CVMCPU_NOT_OPCODE: {
+        /* reg32 = (reg32 == 0)?1:0. */
+        CVMCPUemitCompareRegister(con, CVMCPU_CMP_OPCODE, CVMCPU_COND_AL,
+				  CVMSPARC_g0, srcRegID);
+        CVMCPUemitBinaryALUConstant(con, SPARC_SUBX_OPCODE,
+                                    destRegID, CVMSPARC_g0, -1, setcc);        
+        break;
+    }
+    case CVMCPU_INT2BIT_OPCODE: {
+        /* reg32 = (reg32 != 0)?1:0. */
+        CVMCPUemitCompareRegister(con, CVMCPU_CMP_OPCODE, CVMCPU_COND_AL,
+				  CVMSPARC_g0, srcRegID);
+        CVMCPUemitBinaryALUConstant(con, SPARC_ADDX_OPCODE,
+                                    destRegID, CVMSPARC_g0, 0, setcc);        
+        break;
+    }
     default:
         CVMassert(CVM_FALSE);
     }

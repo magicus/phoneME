@@ -1106,6 +1106,10 @@ dumpNestedLoops(CVMJITCompilationContext* con)
 #endif /* Temporarily commented out. */
 
 
+/*======================================================================
+// Strength reduction and constant folding optimizers: 
+*/
+
 #undef getNodeOpcode
 #define getNodeOpcode(node) (CVMJITgetOpcode(node) >> CVMJIT_SHIFT_OPCODE)
 
@@ -1638,6 +1642,38 @@ CVMJIToptimizeBinaryIntExpression(CVMJITCompilationContext* con,
 
     return node;
 }
+
+/*======================================================================
+// Code Sequence recognition utilities: 
+*/
+#ifndef USE_CDC_COM
+/* Purpose: Checks if the bytecode steam at the specified location is a NOT
+   expression. */
+CVMBool
+CVMJIToptPatternIsNotSequence(CVMJITCompilationContext* con, CVMUint8 *absPc)
+{
+    return CVM_FALSE;
+}
+
+/* Purpose: Checks if the bytecode steam at the specified location is a NOT
+   expression. */
+
+/* Purpose: Applies constant folding and strength reduction to NOT
+            expressions. */
+static CVMJITIRNode *
+CVMJIToptimizeNotExpression(CVMJITCompilationContext* con, CVMJITIRNode* node)
+{
+    return node;
+}
+
+/* Purpose: Optimizes the specified binary int expression. */
+CVMJITIRNode *
+CVMJIToptimizeUnaryIntExpression(CVMJITCompilationContext* con,
+                                 CVMJITIRNode* node)
+{
+    return node;
+}
+#endif
 
 #undef getNodeOpcode
 

@@ -43,6 +43,7 @@
 #include "javavm/include/jit/jitir.h"
 #include "javavm/include/jit/jitcontext.h"
 #include "javavm/include/jit/jitmemory.h"
+#include "javavm/include/jit/jitopt.h"
 #include "javavm/include/jit/jitirnode.h"
 #include "javavm/include/jit/jitirblock.h"
 #include "javavm/include/jit/jitirrange.h"
@@ -61,7 +62,7 @@ static void
 CVMJITirblockInit(CVMJITCompilationContext* con, CVMJITIRBlock* bk, 
     CVMUint16 pc)
 {
-    bk->blockPC = pc;
+    CVMJITirblockSetBlockPC(bk, pc);
     CVMJITirblockSetBlockID(bk, 0);
     CVMJITirblockSetCseID(bk, 0);
     CVMJITirblockSetRefCount(bk, 0);
@@ -106,8 +107,9 @@ CVMJITirblockNewLabelForPC0(CVMJITCompilationContext* con, CVMUint16 pc)
     CVMJITIRBlock* bk = mc->pcToBlock[pc]; 
 
     if (bk != NULL) {
-  	return bk;
+        return bk;
     }
+
     bk = CVMJITirblockCreate(con, pc); 
 
     /* enter java bytecode pc to the pcToBlock map table 
@@ -149,7 +151,10 @@ CVMJITirblockCreate(CVMJITCompilationContext* con, CVMUint16 pc)
     CVMJITsetInit(con, &bk->dominators);
     CVMJITlocalrefsInit(con, &bk->localRefs);
 
-    bk->blockID = con->blockIDCounter++;
+    CVMJITirblockSetBlockID(bk, con->blockIDCounter++);
+
+    CVMassert(CVMJITirblockGetNext(bk) == NULL);
+    CVMassert(CVMJITirblockGetPrev(bk) == NULL);
 
     return bk;
 }
@@ -161,8 +166,8 @@ static void
 CVMJITirblockAddArc(CVMJITCompilationContext* con, CVMJITIRBlock* curbk, 
     CVMJITIRBlock* targetbk)
 {
-    CVMJITsetAdd(con, &curbk->successors, targetbk->blockID);
-    CVMJITsetAdd(con, &targetbk->predecessors, curbk->blockID);
+    CVMJITsetAdd(con, &curbk->successors, CVMJITirblockGetBlockID(targetbk));
+    CVMJITsetAdd(con, &targetbk->predecessors, CVMJITirblockGetBlockID(curbk));
     CVMJITirblockIncRefCount(targetbk);  
 }
 
@@ -174,8 +179,9 @@ static void
 CVMJITirblockRemoveArc(CVMJITCompilationContext* con, 
     CVMJITIRBlock* curbk, CVMJITIRBlock* targetbk)
 {
-    CVMJITsetRemove(con, &curbk->successors, targetbk->blockID);
-    CVMJITsetRemove(con, &targetbk->predecessors, curbk->blockID);
+    CVMJITsetRemove(con, &curbk->successors, CVMJITirblockGetBlockID(targetbk));
+    CVMJITsetRemove(con, &targetbk->predecessors,
+                    CVMJITirblockGetBlockID(curbk));
     CVMJITirblockDecRefCount(targetbk);  
 }
 #endif
@@ -324,8 +330,10 @@ markJsrTargets(CVMJITCompilationContext* con,
     /* Create a new entry for jsr return target */
     entry = (CVMJITJsrRetEntry*)CVMJITmemNew(con, 
                      JIT_ALLOC_IRGEN_OTHER, sizeof(CVMJITJsrRetEntry));
-    entry->next = NULL;
-    entry->prev = NULL;
+
+    CVMJITjsrRetEntrySetNext(entry, NULL);
+    CVMJITjsrRetEntrySetPrev(entry, NULL);
+
     entry->jsrTargetPC = jsrTargetPC;
     entry->jsrRetBk = jsrRetBk;
 
@@ -344,6 +352,9 @@ newLabel(CVMJITCompilationContext* con, CVMUint16 currPC, CVMUint16 targetPC)
     return targetbk;
 }
 
+static void
+CVMJITsplitNot(CVMJITCompilationContext *con, CVMUint32 i, void *data);
+
 /*
  * This piece of code finds all block headers.
  * It also marks GC points
@@ -358,6 +369,8 @@ CVMJITirblockFindAllNormalLabels(CVMJITCompilationContext* con)
     CVMUint16  codeLength = CVMmbCodeLength(mb);
     CVMUint8*  codeEnd = &codeBegin[codeLength];
     CVMUint8*  pc = codeBegin;
+
+    CVMJITsetClear(con, &mc->notSeq);
 
     /* Mark the first instruction as a GC point */
     CVMJITsetAdd(con, &mc->gcPointsSet, 0);
@@ -460,6 +473,24 @@ CVMJITirblockFindAllNormalLabels(CVMJITCompilationContext* con)
             	    break;
 		}
 
+                case opc_ifeq:
+                    if (CVMJIToptPatternIsNotSequence(con, pc)) {
+                        CVMInt32 pcIndex = pc - codeBegin;
+                        /* We need to check later to see if there are branches
+                           into any of the internal labels in this sequence.
+                           If so, we should abandon this NOT sequence and treat
+                           them as blocks.  So, we record the sequence locations
+                           (in a linked list) for a second pass examination
+                           later to check for this: */
+
+			CVMJITsetAdd(con, &mc->notSeq, pcIndex);
+
+                        /* Skip the sequence for now: */
+                        instrLen = CVMJITOPT_SIZE_OF_NOT_SEQUENCE;
+                        break;
+                    }
+                    /* Else, fault thru to the default below. */
+
                 default: {
                     CVMInt16 skip;
                     CVMUint16 codeOffset;
@@ -500,7 +531,65 @@ CVMJITirblockFindAllNormalLabels(CVMJITCompilationContext* con)
 	    }
 	}
     } /* end of while */
+
+    /* Now scan all the NOT sequences and see if we need to break them
+       into blocks: */
+    CVMJITsetIterate(con, &mc->notSeq, CVMJITsplitNot, NULL);
+
     return;
+}
+
+static void
+CVMJITsplitNot(CVMJITCompilationContext *con, CVMUint32 i, void *data)
+{
+    CVMJITMethodContext* mc = con->mc;
+    CVMUint16 pcIndex = i;
+
+    /* The NOT sequence looks like this:
+
+       0 ifeq absPC+7
+       3 iconst_0
+       4 goto absPC+4
+       7 iconst_1
+    */
+
+#ifdef CVM_DEBUG_ASSERTS
+{
+    CVMJavaMethodDescriptor* jmd = mc->jmd;
+    CVMUint8*  codeBegin = CVMjmdCode(jmd);
+    CVMassert(codeBegin[pcIndex] == opc_ifeq);
+}
+#endif
+
+    /* Check if anyone branches to the iconst_0 bytecode: */
+    /* Check if anyone branches to the goto bytecode: */
+    /* Check if anyone branches to the iconst_1 bytecode: */
+    if (mc->pcToBlock[pcIndex + 3] == NULL &&
+	mc->pcToBlock[pcIndex + 4] == NULL &&
+	mc->pcToBlock[pcIndex + 7] == NULL)
+    {
+	return;
+    }
+
+    /* If we get here, then we now that someone will branch into the middle
+       of this sequence.  We don't need to care about those incoming
+       branches here.  All we need to take care of is to make sure that the
+       branch targets of the ifeq and goto is setup as blocks now. 
+
+       The ifge's target block is the iconst_1 bytecode.
+       The goto's target block is the bytecode after the iconst_1.
+
+       Note: we can just call newLabel() directly.  It will check if a
+       block has been created already, and not create a redundant
+       block if one already exists for the target.
+    */
+
+    /* Make sure the ifeq target is a block if not already: */
+    newLabel(con, /* ifeq */ pcIndex, /* iconst_1 */ pcIndex + 7);
+	      
+    /* Make sure the goto target is a block if not already: */
+    newLabel(con, /* goto */ pcIndex + 4, /* end */ pcIndex + 8);
+
 }
 
 /*

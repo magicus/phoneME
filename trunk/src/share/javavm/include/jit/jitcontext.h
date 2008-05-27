@@ -110,6 +110,8 @@ struct CVMJITMethodContext {
      */
     CVMJITSet		     mapPcSet;
 
+    CVMJITSet		     notSeq;
+
     /* 
      * If this boolean is true, it is safe to remove all null checks
      * of locals[0] because we know that them method is not static

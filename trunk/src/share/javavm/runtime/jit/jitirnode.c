@@ -706,6 +706,20 @@ CVMJITirnodeDeleteBinaryOp(CVMJITCompilationContext *con, CVMJITIRNode *node)
     CVMassert(rhs != NULL);
 }
 
+/* Purpose: Delete the specified unary node and adjust all the refCount of
+            its operands accordingly. */
+void
+CVMJITirnodeDeleteUnaryOp(CVMJITCompilationContext *con, CVMJITIRNode *node)
+{
+    CVMJITUnaryOp *unOpNode;
+    CVMJITIRNode *operand;
+
+    CVMassert(CVMJITnodeTagIs(node, UNARY));
+    unOpNode = &node->type_node.unOp;
+    operand = unOpNode->operand;
+    CVMassert(operand != NULL);
+}
+
 /* This is an arbitrary limit. */
 #define CVM_MAX_BINARY_TREE_DEPTH 64
 

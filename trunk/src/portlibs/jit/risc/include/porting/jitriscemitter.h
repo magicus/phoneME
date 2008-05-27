@@ -129,6 +129,8 @@
     // 32 bit ALU opcodes:
     CVMCPU_MOV_OPCODE       // reg32 = aluRhs32.
     CVMCPU_NEG_OPCODE       // reg32 = -reg32.
+    CVMCPU_NOT_OPCODE       // reg32 = (reg32 == 0)?1:0.
+    CVMCPU_INT2BIT_OPCODE   // reg32 = (reg32 != 0)?1:0.
     CVMCPU_ADD_OPCODE       // reg32 = reg32 + aluRhs32.
     CVMCPU_SUB_OPCODE       // reg32 = reg32 - aluRhs32.
     CVMCPU_AND_OPCODE       // reg32 = reg32 AND aluRhs32.

@@ -2197,7 +2197,7 @@ CVMRMbeginBlock(CVMJITCompilationContext* con, CVMJITIRBlock* b)
     } else if (CVMJITirblockIsExcHandler(b)){
 	CVMtraceJITCodegen((
             "\tL%d:\t%d:\t@ entry point for exception handler\n",
-	    b->blockID, CVMJITcbufGetLogicalPC(con)));
+            CVMJITirblockGetBlockID(b), CVMJITcbufGetLogicalPC(con)));
 	b->logicalAddress = CVMJITcbufGetLogicalPC(con);
 	/* Must always write a stackmap at the top of each exception handler.*/
 	CVMJITcaptureStackmap(con, 0);
@@ -2208,12 +2208,12 @@ CVMRMbeginBlock(CVMJITCompilationContext* con, CVMJITIRBlock* b)
 	    /* Start of method. Need to preload locals explicitly. */
 	    CVMtraceJITCodegen((
                 "\tL%d:\t%d:\t@ entry point for first block\n",
-		b->blockID, CVMJITcbufGetLogicalPC(con)));
+                CVMJITirblockGetBlockID(b), CVMJITcbufGetLogicalPC(con)));
 	    CVMRMpinAllIncomingLocals(con, b, CVM_TRUE);
 	    CVMRMunpinAllIncomingLocals(con, b);
 	} else {
 	    CVMtraceJITCodegen(("\tL%d:\t%d:\t@ entry point for branches\n",
-				b->blockID, CVMJITcbufGetLogicalPC(con)));
+                CVMJITirblockGetBlockID(b), CVMJITcbufGetLogicalPC(con)));
 #ifdef CVM_JIT_REGISTER_LOCALS
 	    /* Locals already loaded. Bind them. */
 	    CVMRMbindAllIncomingLocalNodes(con, b);
@@ -2323,7 +2323,7 @@ CVMRMgetRegSandboxResources(CVMJITRMContext* con,
     for (i = 0; i < numOfRegs; i++) {
         CVMRMResource* rp = CVMRMgetResource(con, target, avoid, 1);
         CVMtraceJITCodegen((":::::Reserve reg(%d) for block ID: %d\n",
-                            CVMRMgetRegisterNumber(rp), b->blockID));
+            CVMRMgetRegisterNumber(rp), CVMJITirblockGetBlockID(b)));
         b->sandboxRegSet |= rp->rmask;
         sandboxRes->num++;
         sandboxRes->res[i] = rp;

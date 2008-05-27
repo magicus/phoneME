@@ -60,8 +60,9 @@ struct CVMJITIRBlock {
 
     CVMJITIRBlock* qnext;
 
-    CVMUint16      blockPC; /* range original Java bytecode PC */ 
+    CVMUint16      blockPCIndex; /* range original Java bytecode PC */
     CVMUint16      blockID; /* block compact id */ 
+
     CVMUint16	   cseID;
     CVMUint16      refCount;
 
@@ -216,6 +217,15 @@ struct CVMJITJsrRetEntry {
     CVMJITIRBlock*  jsrRetBk;    /* Jsr return target */
 };
 
+#define CVMJITjsrRetEntryGetNext(entry) \
+    ((CVMJITJsrRetEntry *)(entry)->next)
+#define CVMJITjsrRetEntryGetPrev(entry) \
+    ((CVMJITJsrRetEntry *)(entry)->prev)
+#define CVMJITjsrRetEntrySetNext(entry, value) \
+    (*(CVMJITJsrRetEntry **)&(entry)->next = (value))
+#define CVMJITjsrRetEntrySetPrev(entry, value) \
+    (*(CVMJITJsrRetEntry **)&(entry)->prev = (value))
+
 /*
  * CVMJITIRBlock macro defines and interface APIs
  */
@@ -224,28 +234,30 @@ struct CVMJITJsrRetEntry {
 #define CVMJITirblockSetDominators(bk, dominator) \
     (CVMJITirblockGetDominators(bk) = dominator)
 
+#define CVMJITirblockSetBlockPC(bk, pc) \
+    (CVMJITirblockGetBlockPC(bk) = (pc))
 #define CVMJITirblockSetBlockID(bk, id) \
-    (CVMJITirblockGetBlockID(bk) = id)
+    (CVMJITirblockGetBlockID(bk) = (id))
 #define CVMJITirblockSetCseID(bk, cseID) \
-    (CVMJITirblockGetCseID(bk) = cseID)
+    (CVMJITirblockGetCseID(bk) = (cseID))
 #define CVMJITirblockSetRefCount(bk, rcnt) \
-    (CVMJITirblockGetCseID(bk) = rcnt)
+    (CVMJITirblockGetRefCount(bk) = (rcnt))
 #define CVMJITirblockSetFlags(bk, flags) \
-    (CVMJITirblockGetflags(bk) = flags)
+    (CVMJITirblockGetflags(bk) = (flags))
 #define CVMJITirblockAddFlags(bk, flags) \
-    (CVMJITirblockGetflags(bk) |= flags)
+    (CVMJITirblockGetflags(bk) |= (flags))
 #define CVMJITirblockClearFlags(bk, flags) \
     (CVMJITirblockGetflags(bk) &= ~(flags))
 #define CVMJITirblockSetNext(bk, new_bk) \
-    (CVMJITirblockGetNext(bk) = new_bk) 
+    (*(CVMJITIRBlock **)&(bk)->next = (new_bk))
 #define CVMJITirblockSetPrev(bk, new_bk) \
-    (CVMJITirblockGetPrev(bk) = new_bk) 
+    (*(CVMJITIRBlock **)&(bk)->prev = (new_bk))
 
 #define CVMJITirblockInitRootList(con, bk) \
     (CVMJITirlistInit(con, &(bk)->rootList))
 
 /* Get members */
-#define CVMJITirblockGetBlockPC(bk)	     ((bk)->blockPC)
+#define CVMJITirblockGetBlockPC(bk)	     ((bk)->blockPCIndex)
 #define CVMJITirblockGetBlockID(bk)	     ((bk)->blockID)
 #define CVMJITirblockGetCseID(bk)	     ((bk)->cseID)
 #define CVMJITirblockGetRefCount(bk)	     ((bk)->refCount)
@@ -253,8 +265,11 @@ struct CVMJITJsrRetEntry {
 #define CVMJITirblockGetPredecessors(bk)     ((bk)->predecessors)
 #define CVMJITirblockGetSuccessors(bk)	     ((bk)->successors)
 #define CVMJITirblockGetDominators(bk)	     ((bk)->dominators)
-#define CVMJITirblockGetNext(bk)             ((bk)->next) 
-#define CVMJITirblockGetPrev(bk)             ((bk)->prev) 
+#define CVMJITirblockGetNext(bk) \
+    ((CVMJITIRBlock *)(bk)->next)
+#define CVMJITirblockGetPrev(bk) \
+    ((CVMJITIRBlock *)(bk)->prev)
+
 #define CVMJITirblockGetRootList(bk)	     (&(bk)->rootList)
 
 #define CVMJITirblockIncCseID(bk)            ((bk)->cseID++)

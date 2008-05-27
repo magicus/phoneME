@@ -124,6 +124,8 @@ enum {
 
     /* 32 bit unary ALU opcodes */
     CVMCPU_NEG_OPCODE,     /* reg32 = -reg32. */
+    CVMCPU_NOT_OPCODE,     /* reg32 = (reg32 == 0)?1:0. */
+    CVMCPU_INT2BIT_OPCODE, /* reg32 = (reg32 != 0)?1:0. */
     
     /* 32 bit shift opcodes */
     CVMCPU_SLL_OPCODE, /* Shift Left Logical */
