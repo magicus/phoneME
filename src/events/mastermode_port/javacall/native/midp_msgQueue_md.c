@@ -31,7 +31,9 @@
 #include <midp_jc_event_defs.h>
 #include <midpUtilKni.h>
 
+#if !ENABLE_CDC
 #include <suspend_resume.h>
+#endif
 
 #ifdef ENABLE_JSR_75
 extern void notifyDisksChanged();
@@ -96,6 +98,7 @@ void checkForSystemSignal(MidpReentryData* pNewSignal,
         pNewSignal->waitingFor = AMS_SIGNAL;
         pNewMidpEvent->type    = SHUTDOWN_EVENT;
         break;
+#if !ENABLE_CDC
      case MIDP_JC_EVENT_PAUSE: 
         /*
          * IMPL_NOTE: if VM is running, the following call will send
@@ -104,6 +107,7 @@ void checkForSystemSignal(MidpReentryData* pNewSignal,
          */
         midp_suspend();
         break;
+#endif	
     case MIDP_JC_EVENT_PUSH:
         pNewSignal->waitingFor = PUSH_ALARM_SIGNAL;
         pNewSignal->descriptor = event->data.pushEvent.alarmHandle;
