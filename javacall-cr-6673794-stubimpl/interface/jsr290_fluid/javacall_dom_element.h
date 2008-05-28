@@ -32,24 +32,24 @@ javacall_dom_element_get_tag_name(javacall_handle handle,
 
 javacall_result
 javacall_dom_element_get_attribute(javacall_handle handle,
-                                   javacall_utf16_string name,
+                                   javacall_const_utf16_string name,
                                    /* OUT */ javacall_utf16_string retValue,
                                    /* OUT */ javacall_uint32* retValueLen);
 
 javacall_result
 javacall_dom_element_set_attribute(javacall_handle handle,
-                                   javacall_utf16_string name,
-                                   javacall_utf16_string value,
+                                   javacall_const_utf16_string name,
+                                   javacall_const_utf16_string value,
                                    /* OUT */ javacall_utf8_string exceptionValue);
 
 javacall_result
 javacall_dom_element_remove_attribute(javacall_handle handle,
-                                      javacall_utf16_string name,
+                                      javacall_const_utf16_string name,
                                       /* OUT */ javacall_utf8_string exceptionValue);
 
 javacall_result
 javacall_dom_element_get_attribute_node(javacall_handle handle,
-                                        javacall_utf16_string name,
+                                        javacall_const_utf16_string name,
                                         /* OUT */ javacall_handle* retValue);
 
 javacall_result
@@ -66,34 +66,34 @@ javacall_dom_element_remove_attribute_node(javacall_handle handle,
 
 javacall_result
 javacall_dom_element_get_elements_by_tag_name(javacall_handle handle,
-                                              javacall_utf16_string name,
+                                              javacall_const_utf16_string name,
                                               /* OUT */ javacall_handle* retValue);
 
 javacall_result
 javacall_dom_element_get_attribute_ns(javacall_handle handle,
-                                      javacall_utf16_string namespaceURI,
-                                      javacall_utf16_string localName,
+                                      javacall_const_utf16_string namespaceURI,
+                                      javacall_const_utf16_string localName,
                                       /* OUT */ javacall_utf16_string retValue,
                                       /* OUT */ javacall_uint32* retValueLen,
                                       /* OUT */ javacall_utf8_string exceptionValue);
 
 javacall_result
 javacall_dom_element_set_attribute_ns(javacall_handle handle,
-                                      javacall_utf16_string namespaceURI,
-                                      javacall_utf16_string qualifiedName,
-                                      javacall_utf16_string value,
+                                      javacall_const_utf16_string namespaceURI,
+                                      javacall_const_utf16_string qualifiedName,
+                                      javacall_const_utf16_string value,
                                       /* OUT */ javacall_utf8_string exceptionValue);
 
 javacall_result
 javacall_dom_element_remove_attribute_ns(javacall_handle handle,
-                                         javacall_utf16_string namespaceURI,
-                                         javacall_utf16_string localName,
+                                         javacall_const_utf16_string namespaceURI,
+                                         javacall_const_utf16_string localName,
                                          /* OUT */ javacall_utf8_string exceptionValue);
 
 javacall_result
 javacall_dom_element_get_attribute_node_ns(javacall_handle handle,
-                                           javacall_utf16_string namespaceURI,
-                                           javacall_utf16_string localName,
+                                           javacall_const_utf16_string namespaceURI,
+                                           javacall_const_utf16_string localName,
                                            /* OUT */ javacall_handle* retValue,
                                            /* OUT */ javacall_utf8_string exceptionValue);
 
@@ -105,33 +105,33 @@ javacall_dom_element_set_attribute_node_ns(javacall_handle handle,
 
 javacall_result
 javacall_dom_element_get_elements_by_tag_name_ns(javacall_handle handle,
-                                                 javacall_utf16_string namespaceURI,
-                                                 javacall_utf16_string localName,
+                                                 javacall_const_utf16_string namespaceURI,
+                                                 javacall_const_utf16_string localName,
                                                  /* OUT */ javacall_handle* retValue,
                                                  /* OUT */ javacall_utf8_string exceptionValue);
 
 javacall_result
 javacall_dom_element_has_attribute(javacall_handle handle,
-                                   javacall_utf16_string name,
+                                   javacall_const_utf16_string name,
                                    /* OUT */ javacall_bool* retValue);
 
 javacall_result
 javacall_dom_element_has_attribute_ns(javacall_handle handle,
-                                      javacall_utf16_string namespaceURI,
-                                      javacall_utf16_string localName,
+                                      javacall_const_utf16_string namespaceURI,
+                                      javacall_const_utf16_string localName,
                                       /* OUT */ javacall_bool* retValue,
                                       /* OUT */ javacall_utf8_string exceptionValue);
 
 javacall_result
 javacall_dom_element_set_id_attribute(javacall_handle handle,
-                                      javacall_utf16_string name,
+                                      javacall_const_utf16_string name,
                                       javacall_bool isId,
                                       /* OUT */ javacall_utf8_string exceptionValue);
 
 javacall_result
 javacall_dom_element_set_id_attribute_ns(javacall_handle handle,
-                                         javacall_utf16_string namespaceURI,
-                                         javacall_utf16_string localName,
+                                         javacall_const_utf16_string namespaceURI,
+                                         javacall_const_utf16_string localName,
                                          javacall_bool isId,
                                          /* OUT */ javacall_utf8_string exceptionValue);
 

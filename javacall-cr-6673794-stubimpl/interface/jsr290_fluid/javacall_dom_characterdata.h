@@ -33,7 +33,7 @@ javacall_dom_characterdata_get_data(javacall_handle handle,
 
 javacall_result
 javacall_dom_characterdata_set_data(javacall_handle handle,
-                                    javacall_utf16_string data,
+                                    javacall_const_utf16_string data,
                                     /* OUT */ javacall_utf8_string exceptionValue);
 
 javacall_result
@@ -50,13 +50,13 @@ javacall_dom_characterdata_substring_data(javacall_handle handle,
 
 javacall_result
 javacall_dom_characterdata_append_data(javacall_handle handle,
-                                       javacall_utf16_string arg,
+                                       javacall_const_utf16_string arg,
                                        /* OUT */ javacall_utf8_string exceptionValue);
 
 javacall_result
 javacall_dom_characterdata_insert_data(javacall_handle handle,
                                        javacall_int32 offset,
-                                       javacall_utf16_string arg,
+                                       javacall_const_utf16_string arg,
                                        /* OUT */ javacall_utf8_string exceptionValue);
 
 javacall_result
@@ -69,6 +69,6 @@ javacall_result
 javacall_dom_characterdata_replace_data(javacall_handle handle,
                                         javacall_int32 offset,
                                         javacall_int32 count,
-                                        javacall_utf16_string arg,
+                                        javacall_const_utf16_string arg,
                                         /* OUT */ javacall_utf8_string exceptionValue);
 

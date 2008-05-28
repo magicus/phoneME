@@ -27,29 +27,29 @@
 
 javacall_result
 javacall_dom_domimplementation_has_feature(javacall_handle handle,
-                                           javacall_utf16_string feature,
-                                           javacall_utf16_string version,
+                                           javacall_const_utf16_string feature,
+                                           javacall_const_utf16_string version,
                                            /* OUT */ javacall_bool* retValue);
 
 javacall_result
 javacall_dom_domimplementation_create_document_type(javacall_handle handle,
-                                                    javacall_utf16_string qualifiedName,
-                                                    javacall_utf16_string publicId,
-                                                    javacall_utf16_string systemId,
+                                                    javacall_const_utf16_string qualifiedName,
+                                                    javacall_const_utf16_string publicId,
+                                                    javacall_const_utf16_string systemId,
                                                     /* OUT */ javacall_handle* retValue,
                                                     /* OUT */ javacall_utf8_string exceptionValue);
 
 javacall_result
 javacall_dom_domimplementation_create_document(javacall_handle handle,
-                                               javacall_utf16_string namespaceURI,
-                                               javacall_utf16_string qualifiedName,
+                                               javacall_const_utf16_string namespaceURI,
+                                               javacall_const_utf16_string qualifiedName,
                                                javacall_handle doctype,
                                                /* OUT */ javacall_handle* retValue,
                                                /* OUT */ javacall_utf8_string exceptionValue);
 
 javacall_result
 javacall_dom_domimplementation_get_feature(javacall_handle handle,
-                                           javacall_utf16_string feature,
-                                           javacall_utf16_string version,
+                                           javacall_const_utf16_string feature,
+                                           javacall_const_utf16_string version,
                                            /* OUT */ javacall_handle* retValue);
 
