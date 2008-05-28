@@ -139,18 +139,27 @@ ROMGEN_ARGS += -romconfig $(ROMGEN_CFG_LST)
 ROMGEN_ARGS += +GenerateROMStructs
 ROMGEN_ARGS += +EnableROMCompilation
 
-ifeq ($(USE_DEBUG), true)
-    ifeq ($(USE_JAVA_DEBUGGER), true)
-	ROMGEN_ARGS += +MakeROMDebuggable
-    endif
+ifeq ($(USE_WTK_DEBUG), true)
+    ROMGEN_ARGS += +MakeROMDebuggable
 else
-    ifneq ($(USE_I3_TEST), true)
-	ROMGEN_ARGS += +EnableAllROMOptimizations
-	ifeq ($(USE_JAVA_PROFILER), true)
-	ROMGEN_ARGS += -RenameNonPublicROMClasses -RenameNonPublicROMSymbols
-	endif
-	ifeq ($(TARGET_OS), armsd)
-	ROMGEN_ARGS += -RenameNonPublicROMClasses -RenameNonPublicROMSymbols
+    ifeq ($(USE_DEBUG), true)
+        ifeq ($(USE_JAVA_DEBUGGER), true)
+            ROMGEN_ARGS += +MakeROMDebuggable
+        endif
+    endif
+endif
+
+ifneq ($(USE_DEBUG), true)
+    ifneq ($(USE_WTK_DEBUG), true)
+        ifneq ($(USE_I3_TEST), true)
+            # ROM optimizations do not work with DEBUG, WTK_DEBUG or I3_TEST
+            ROMGEN_ARGS += +EnableAllROMOptimizations
+            ifeq ($(USE_JAVA_PROFILER), true)
+                ROMGEN_ARGS += -RenameNonPublicROMClasses -RenameNonPublicROMSymbols
+            endif
+            ifeq ($(TARGET_OS), armsd)
+                ROMGEN_ARGS += -RenameNonPublicROMClasses -RenameNonPublicROMSymbols
+            endif
 	endif
     endif
 endif
