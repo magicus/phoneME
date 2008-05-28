@@ -222,7 +222,7 @@ video_do_buffering(javacall_handle handle,
 }
 
 static javacall_result video_clear_buffer(javacall_handle handle) {
-    return JAVACALL_OK;
+    return audio_clear_buffer(handle);
 }
 
 static javacall_result video_get_time(javacall_handle handle, long* ms)
