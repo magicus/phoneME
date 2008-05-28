@@ -41,7 +41,7 @@ javacall_dom_attr_get_value(javacall_handle handle,
 
 javacall_result
 javacall_dom_attr_set_value(javacall_handle handle,
-                            javacall_utf16_string value,
+                            javacall_const_utf16_string value,
                             /* OUT */ javacall_utf8_string exceptionValue);
 
 javacall_result

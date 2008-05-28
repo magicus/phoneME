@@ -38,7 +38,7 @@ javacall_dom_node_get_node_value(javacall_handle handle,
 
 javacall_result
 javacall_dom_node_set_node_value(javacall_handle handle,
-                                 javacall_utf16_string nodeValue,
+                                 javacall_const_utf16_string nodeValue,
                                  /* OUT */ javacall_utf8_string exceptionValue);
 
 javacall_result
@@ -117,8 +117,8 @@ javacall_dom_node_normalize(javacall_handle handle);
 
 javacall_result
 javacall_dom_node_is_supported(javacall_handle handle,
-                               javacall_utf16_string feature,
-                               javacall_utf16_string version,
+                               javacall_const_utf16_string feature,
+                               javacall_const_utf16_string version,
                                /* OUT */ javacall_bool* retValue);
 
 javacall_result
@@ -133,7 +133,7 @@ javacall_dom_node_get_prefix(javacall_handle handle,
 
 javacall_result
 javacall_dom_node_set_prefix(javacall_handle handle,
-                             javacall_utf16_string prefix,
+                             javacall_const_utf16_string prefix,
                              /* OUT */ javacall_utf8_string exceptionValue);
 
 javacall_result
@@ -153,24 +153,24 @@ javacall_dom_node_get_text_content(javacall_handle handle,
 
 javacall_result
 javacall_dom_node_set_text_content(javacall_handle handle,
-                                   javacall_utf16_string textContent,
+                                   javacall_const_utf16_string textContent,
                                    /* OUT */ javacall_utf8_string exceptionValue);
 
 javacall_result
 javacall_dom_node_get_feature(javacall_handle handle,
-                              javacall_utf16_string feature,
-                              javacall_utf16_string version,
+                              javacall_const_utf16_string feature,
+                              javacall_const_utf16_string version,
                               /* OUT */ javacall_handle* retValue);
 
 javacall_result
 javacall_dom_node_set_user_data(javacall_handle handle,
-                                javacall_utf16_string key,
+                                javacall_const_utf16_string key,
                                 javacall_handle data,
                                 javacall_handle handler,
                                 /* OUT */ javacall_handle* retValue);
 
 javacall_result
 javacall_dom_node_get_user_data(javacall_handle handle,
-                                javacall_utf16_string key,
+                                javacall_const_utf16_string key,
                                 /* OUT */ javacall_handle* retValue);
 

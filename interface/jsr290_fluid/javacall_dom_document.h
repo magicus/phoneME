@@ -39,7 +39,7 @@ javacall_dom_document_get_document_element(javacall_handle handle,
 
 javacall_result
 javacall_dom_document_create_element(javacall_handle handle,
-                                     javacall_utf16_string tagName,
+                                     javacall_const_utf16_string tagName,
                                      /* OUT */ javacall_handle* retValue,
                                      /* OUT */ javacall_utf8_string exceptionValue);
 
@@ -49,42 +49,42 @@ javacall_dom_document_create_document_fragment(javacall_handle handle,
 
 javacall_result
 javacall_dom_document_create_text_node(javacall_handle handle,
-                                       javacall_utf16_string data,
+                                       javacall_const_utf16_string data,
                                        /* OUT */ javacall_handle* retValue);
 
 javacall_result
 javacall_dom_document_create_comment(javacall_handle handle,
-                                     javacall_utf16_string data,
+                                     javacall_const_utf16_string data,
                                      /* OUT */ javacall_handle* retValue);
 
 javacall_result
 javacall_dom_document_create_cdata_section(javacall_handle handle,
-                                           javacall_utf16_string data,
+                                           javacall_const_utf16_string data,
                                            /* OUT */ javacall_handle* retValue,
                                            /* OUT */ javacall_utf8_string exceptionValue);
 
 javacall_result
 javacall_dom_document_create_processing_instruction(javacall_handle handle,
-                                                    javacall_utf16_string target,
-                                                    javacall_utf16_string data,
+                                                    javacall_const_utf16_string target,
+                                                    javacall_const_utf16_string data,
                                                     /* OUT */ javacall_handle* retValue,
                                                     /* OUT */ javacall_utf8_string exceptionValue);
 
 javacall_result
 javacall_dom_document_create_attribute(javacall_handle handle,
-                                       javacall_utf16_string name,
+                                       javacall_const_utf16_string name,
                                        /* OUT */ javacall_handle* retValue,
                                        /* OUT */ javacall_utf8_string exceptionValue);
 
 javacall_result
 javacall_dom_document_create_entity_reference(javacall_handle handle,
-                                              javacall_utf16_string name,
+                                              javacall_const_utf16_string name,
                                               /* OUT */ javacall_handle* retValue,
                                               /* OUT */ javacall_utf8_string exceptionValue);
 
 javacall_result
 javacall_dom_document_get_elements_by_tag_name(javacall_handle handle,
-                                               javacall_utf16_string tagname,
+                                               javacall_const_utf16_string tagname,
                                                /* OUT */ javacall_handle* retValue);
 
 javacall_result
@@ -96,27 +96,27 @@ javacall_dom_document_import_node(javacall_handle handle,
 
 javacall_result
 javacall_dom_document_create_element_ns(javacall_handle handle,
-                                        javacall_utf16_string namespaceURI,
-                                        javacall_utf16_string qualifiedName,
+                                        javacall_const_utf16_string namespaceURI,
+                                        javacall_const_utf16_string qualifiedName,
                                         /* OUT */ javacall_handle* retValue,
                                         /* OUT */ javacall_utf8_string exceptionValue);
 
 javacall_result
 javacall_dom_document_create_attribute_ns(javacall_handle handle,
-                                          javacall_utf16_string namespaceURI,
-                                          javacall_utf16_string qualifiedName,
+                                          javacall_const_utf16_string namespaceURI,
+                                          javacall_const_utf16_string qualifiedName,
                                           /* OUT */ javacall_handle* retValue,
                                           /* OUT */ javacall_utf8_string exceptionValue);
 
 javacall_result
 javacall_dom_document_get_elements_by_tag_name_ns(javacall_handle handle,
-                                                  javacall_utf16_string namespaceURI,
-                                                  javacall_utf16_string localName,
+                                                  javacall_const_utf16_string namespaceURI,
+                                                  javacall_const_utf16_string localName,
                                                   /* OUT */ javacall_handle* retValue);
 
 javacall_result
 javacall_dom_document_get_element_by_id(javacall_handle handle,
-                                        javacall_utf16_string elementId,
+                                        javacall_const_utf16_string elementId,
                                         /* OUT */ javacall_handle* retValue);
 
 javacall_result

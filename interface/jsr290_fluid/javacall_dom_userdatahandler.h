@@ -28,7 +28,7 @@
 javacall_result
 javacall_dom_userdatahandler_handle(javacall_handle handle,
                                     javacall_uint16 operation,
-                                    javacall_utf16_string key,
+                                    javacall_const_utf16_string key,
                                     javacall_handle data,
                                     javacall_handle src,
                                     javacall_handle dst);
