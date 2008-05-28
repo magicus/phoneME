@@ -94,9 +94,7 @@ loop:
 
     } 
 }
-#endif // UNDER_ADS
-
-#if defined(__GNUC__) && defined(ARM)
+#elif defined(__GNUC__) && defined(ARM)
 // For more info on GNU/ARM inline-asm, see
 // http://www.ibiblio.org/gferg/ldp/GCC-Inline-Assembly-HOWTO.html
 // http://lists.arm.linux.org.uk/pipermail/linux-arm/2005-July/010365.html

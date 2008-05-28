@@ -70,6 +70,8 @@
 extern "C" {
 #endif
 
+#if ENABLE_MIDP_MALLOC
+
 /**
  * FUNCTION:      midpInitializeMemory()
  * TYPE:          public operation
@@ -241,9 +243,6 @@ midpGetFreeHeap() {
 
     return pcsl_mem_get_free_heap();
 }
-
-
-#if ENABLE_MIDP_MALLOC
 
 /* Set countMemoryLeaksOnly = 0 in order to get more verbose information */
 int midpMallocDumpMemory(int countMemoryLeaksOnly) {

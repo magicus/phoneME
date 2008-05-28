@@ -24,6 +24,8 @@
  * information or have any questions.
  */
 
+#include <kni.h>
+
 #include <midp_logging.h>
 #include <midp_mastermode_port.h>
 
