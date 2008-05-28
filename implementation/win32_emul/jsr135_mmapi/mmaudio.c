@@ -430,22 +430,20 @@ javacall_result audio_do_buffering(javacall_handle handle,
     int res;
     char *sendBuffer=(char *)buffer;
     
-    if (f == NULL) {
-        f = NewLimeFunction(LIME_MMAPI_PACKAGE,
-                            LIME_MMAPI_CLASS,
-                            "doBuffering");
+    if (NULL != buffer) {
+        if (f == NULL) {
+            f = NewLimeFunction(LIME_MMAPI_PACKAGE,
+                                LIME_MMAPI_CLASS,
+                                "doBuffering");
+        }
+    
+        f->call(f, &res, pHandle->hWnd, sendBuffer, *length);
+    
+        *need_more_data = JAVACALL_FALSE;
+        *min_data_size  = 0;
+        
+        pHandle->isBuffered = JAVACALL_TRUE;
     }
-    
-    if (NULL == buffer) {
-        return JAVACALL_FAIL;
-    }
-    
-    f->call(f, &res, pHandle->hWnd, sendBuffer, *length);
-
-    *need_more_data = JAVACALL_FALSE;
-    *min_data_size  = 0;
-    
-    pHandle->isBuffered = JAVACALL_TRUE;
     
     return JAVACALL_OK;
 }
@@ -459,6 +457,9 @@ javacall_result audio_clear_buffer(javacall_handle hLIB){
 
     /* Reset offset */
     pHandle->offset = 0;
+    if (pHandle->buffer != NULL) {
+        FREE(pHandle->buffer);
+    }
     //DeleteFile(pHandle->fileName);
     
     return JAVACALL_OK;
