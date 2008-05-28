@@ -131,18 +131,18 @@ public abstract class BasicPlayer implements Player
      *  <li>Add new control name here. If it is not in the package
      *     javax.microedition.media.control, then the full package
      *     name of the control must be used.
-     *  <li>Add the control's name field to the allCtrls array (see below)
+     *  <li>Add the control's name field to the allJsr135Ctrls array (see below)
      * </ol>
      * <p>
-     * Size note: it would be space saving to declare the array allCtrls
+     * Size note: it would be space saving to declare the array allJsr135Ctrls
      * with the strings directly and not define the strings constants here.
      * However, it is more convenient for descendants to use
      * these constants, instead of e.g.
-     * <code>&nbsp;&nbsp;&nbsp;allCtrls[4]; // RateControl</code>
+     * <code>&nbsp;&nbsp;&nbsp;allJsr135Ctrls[4]; // RateControl</code>
      *
      * @see    #getControls()
      * @see    #doGetControl(String)
-     * @see    #allCtrls
+     * @see    #allJsr135Ctrls
      */
 
     protected final static String fpcName = "FramePositioningControl";
@@ -200,40 +200,11 @@ public abstract class BasicPlayer implements Player
      */
     protected final static String vocName = "VolumeControl";
 
-// #ifdef ENABLE_JSR_234 [
-    protected final static String ccName =
-        "javax.microedition.amms.control.camera.CameraControl";
-
-    protected final static String cecName =
-        "javax.microedition.amms.control.camera.ExposureControl";
-
-    protected final static String cflcName =
-        "javax.microedition.amms.control.camera.FlashControl";
-
-    protected final static String cfocName =
-        "javax.microedition.amms.control.camera.FocusControl";
-
-    protected final static String cscName =
-        "javax.microedition.amms.control.camera.SnapshotControl";
-
-    protected final static String czcName =
-        "javax.microedition.amms.control.camera.ZoomControl";
-
-    protected final static String ifcName = 
-        "javax.microedition.amms.control.ImageFormatControl";
-
-    protected final static String rdscName  = 
-        "javax.microedition.amms.control.tuner.RDSControl";
-
-    protected final static String tucName = 
-        "javax.microedition.amms.control.tuner.TunerControl";
-// #endif ]
-
     /**
-     * An array containing all available controls in Players
+     * An array containing all available JSR-135 controls in Players
      * extending BasicPlayer.
      */
-    private final static String[] allCtrls = {
+    private final static String[] allJsr135Ctrls = {
         fpcName,
         mdcName,
         micName,
@@ -248,18 +219,16 @@ public abstract class BasicPlayer implements Player
         tocName,
         dtocName,
         vocName,
-// #ifdef ENABLE_JSR_234 [
-        ccName,
-        cecName,
-        cflcName,
-        cfocName,
-        cscName,
-        czcName,
-        ifcName,
-        rdscName
-// #endif ]
         };
 
+    /**
+     * An array containing all available controls
+     * in Players extending BasicPlayer, including JSR-234 controls
+     * if available. 
+     * DO NOT USE DIRECTLY! Use getPossibleControlNames() instead.
+     */
+    private static String[] allCtrls;
+    
     /**
      * Locator string
      */
@@ -999,8 +968,10 @@ public abstract class BasicPlayer implements Player
 
         Vector v = new Vector(3);
         // average maximum number of controls
-        for (int i = 0; i < allCtrls.length; i++) {
-            Object c = getControl(allCtrls[i]);
+        
+        String [] ctrlNames = getPossibleControlNames();
+        for (int i = 0; i < ctrlNames.length; i++) {
+            Object c = getControl(ctrlNames[i]);
             if ((c != null) && !v.contains(c)) {
                 v.addElement(c);
             }
@@ -1033,16 +1004,16 @@ public abstract class BasicPlayer implements Player
         // have the package prefix.
         if (type.indexOf('.') < 0) {
             // for non-fully qualified control names,
-            // look up the package in the allCtrls array
-            for (int i = 0; i < allCtrls.length; i++) {
-                if (allCtrls[i].equals(type)) {
+            // look up the package in the allJsr135Ctrls array
+            for (int i = 0; i < allJsr135Ctrls.length; i++) {
+                if (allJsr135Ctrls[i].equals(type)) {
                     // standard controls are specified
-                    // without package name in allCtrls
+                    // without package name in allJsr135Ctrls
                     return doGetControl(pkgName + type);
-                } else if (allCtrls[i].endsWith(type)) {
+                } else if (allJsr135Ctrls[i].endsWith(type)) {
                     // non-standard controls are with
-                    // full package name in allCtrls
-                    return doGetControl(allCtrls[i]);
+                    // full package name in allJsr135Ctrls
+                    return doGetControl(allJsr135Ctrls[i]);
                 }
             }
         }
@@ -1050,6 +1021,32 @@ public abstract class BasicPlayer implements Player
     }
 
 
+    /**
+     * Returns the array containing all available JSR-135 and JSR-234 controls
+     * in Players extending BasicPlayer. 
+     */
+    private static String [] getPossibleControlNames()
+    {
+        if( null == allCtrls )
+        {
+            String [] ammsCtrlNames = 
+                    Jsr234Proxy.getInstance().getJsr234PlayerControlNames();
+            allCtrls = new 
+                    String [ all135Ctrls.length + ammsCtrlNames.length ];
+            int i = 0;
+            for( i = 0; i < all135Ctrls.length; i++ )
+            {
+                allCtrls[ i ] = all135Ctrls[ i ];
+            }
+            for(      ; i < allCtrls.length; i++ )
+            {
+                allCtrls[ i ] = ammsCtrlNames[ i ];
+            }
+        }
+        return allCtrls;
+        
+    }
+    
     /**
      * The worker method to actually obtain the control.
      *
