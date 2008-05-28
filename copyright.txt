@@ -12,35 +12,29 @@ U.S. Government Rights - Commercial software. Government users are subject to
 the Sun Microsystems, Inc. standard license agreement and applicable provisions
 of the FAR and its supplements.
 
+Use is subject to license terms.
+
 This distribution may include materials developed by third parties.
 
 Sun, Sun Microsystems, the Sun logo, Java, Solaris, phoneME, HotSpot, J2ME,
-J2SE, JavaCall, Javadoc and JDK are trademarks or registered trademarks of Sun
+J2SE, Java Card, JavaCall and JDK are trademarks or registered trademarks of Sun
 Microsystems, Inc. in the U.S. and other countries.
-
-UNIX is a registered trademark in the U.S. and other countries, exclusively
-licensed through X/Open Company, Ltd.
+Parts of the product may be derived from Berkeley BSD systems, licensed from the
+University of California. UNIX is a registered trademark in the U.S. and other
+countries, exclusively licensed through X/Open Company, Ltd.
 
 Intel is a trademark or registered trademark of Intel Corporation or its
 subsidiaries in the United States and other countries.
 
 OpenGL is a registered trademark of Silicon Graphics, Inc.
 
-Products covered by and information contained in this service manual are
-controlled by U.S. Export Control laws and may be subject to the export or
-import laws in other countries. Nuclear, missile, chemical biological weapons
-or nuclear maritime end uses or end users, whether direct or indirect, are
-strictly prohibited. Export or reexport to countries subject to U.S. embargo or
-to entities identified on U.S. export exclusion lists, including, but not limited
-to, the denied persons and specially designated nationals lists is strictly
-prohibited.
-
-DOCUMENTATION IS PROVIDED "AS IS" AND ALL EXPRESS OR IMPLIED CONDITIONS,
-REPRESENTATIONS AND WARRANTIES, INCLUDING ANY IMPLIED WARRANTY OF
-MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE OR NON-INFRINGEMENT, ARE
-DISCLAIMED, EXCEPT TO THE EXTENT THAT SUCH DISCLAIMERS ARE HELD TO BE LEGALLY
-INVALID.
-
+This product is covered and controlled by U.S. Export Control laws and may be
+subject to the export or import laws in other countries. Nuclear, missile,
+chemical biological weapons or nuclear maritime end uses or end users,
+whether direct or indirect, are strictly prohibited. Export or reexport to
+countries subject to U.S. embargo or to entities identified on U.S. export
+exclusion lists, including, but not limited to, the denied persons and
+specially designated nationals lists is strictly prohibited.
 
 French: 
 Copyright © 2008 Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
@@ -58,36 +52,33 @@ utilisateur du gouvernement des États-Unis sont soumis aux termes de la licence
 standard Sun Microsystems et aux conditions appliquées de la FAR et de ces
 compléments.
 
+L'utilisation est soumise aux termes de la Licence.
+
 Cette distribution peut inclure des elements développés par des tiers.
 
 Sun, Sun Microsystems, le logo Sun, Java, Solaris, phoneME, HotSpot, J2ME, J2SE,
-JavaCall, Javadoc et JDK sont des marques de fabrique ou des marques déposées de
-Sun Microsystems, Inc. aux États-Unis et dans d'autres pays.
+Java Card, JavaCall et JDK sont des marques de fabrique ou des marques déposées
+de Sun Microsystems, Inc. aux États-Unis et dans d'autres pays.
 
-UNIX est une marque déposée aux États-Unis et dans d'autres pays et sous licence
-exclusive de X/Open Company, Ltd.
+Des parties de ce produit pourront être dérivées des systèmes Berkeley BSD
+licenciés par l'Université de Californie. UNIX est une marque déposée aux
+États-Unis et dans d'autres pays et sous licence exclusive de X/Open Company,
+Ltd.
 
-Intel est une marque déposée de Intel Corporation ou de sa filiale aux
-États-Unis et dans d'autres pays.
+Intel est une marque de fabrique ou une marque déposée de Intel Corporation ou
+de sa filiales aux États-Unis et dans d'autres pays.
 
 OpenGL est une marque déposée de Silicon Graphics, Inc.
 
-Les produits qui font l'objet de ce manuel d'entretien et les informations qu'il
-contient sont régis par la législation américaine en matière de contrôlé des
-exportations et peuvent être soumis au droit d'autres pays dans le domaine des
-exportations et importations. Les utilisations finales, ou utilisateurs finaux,
-pour des armes nucléaires, des missiles, des armes biologiques et chimiques ou
-du nucléaire maritime, directement ou indirectement, sont strictement interdites.
-Les exportations ou réexportations vers des pays sous embargo des États-Unis, ou
-vers des entités figurant sur les listes d'exclusion d'exportation américaines,
-y compris, mais de maniéré non exclusive, la liste de personnes qui font objet
-d'un ordre de ne pas participer, d'une façon directe ou indirecte, aux
-exportations des produits ou des services qui sont régi par la législation
-américaine en matière de contrôlé des exportations et la liste de ressortissants
-spécifiquement désignes, sont rigoureusement interdites.
-
-LA DOCUMENTATION EST FOURNIE "EN L'ÉTAT" ET TOUTES AUTRES CONDITIONS,
-DÉCLARATIONS ET GARANTIES EXPRESSÉS OU TACITES SONT FORMELLEMENT EXCLUES, DANS
-LA MESURE AUTORISÉE PAR LA LOI APPLICABLE, Y COMPRIS NOTAMMENT TOUTE GARANTIE
-IMPLICITE RELATIVE A LA QUALITÉ MARCHANDE, A L'APTITUDE A UNE UTILISATION
-PARTICULIÈRE OU A L'ABSENCE DE CONTREFAÇON.
+Ce produit est soumis à la législation américaine en matière de contrôlé des
+exportations et peut être soumis à la réglementation en vigueur dans d'autres
+pays dans le domaine des exportations et importations. Les utilisations finales,
+ou utilisateurs finaux, pour des armes nucléaires,des missiles, des armes
+biologiques et chimiques ou du nucléaire maritime, directement ou indirectement,
+sont strictement interdites. Les exportations ou réexportations vers les pays
+sous embargo américain, ou vers des entités figurant sur les listes d'exclusion
+d'exportation américaines, y compris, mais de maniéré non exhaustive, la liste
+de personnes qui font objet d'un ordre de ne pas participer, d'une façon directe
+ou indirecte, aux exportations des produits ou des services qui sont régis par
+la législation américaine en matière de contrôlé des exportations et la liste de
+ressortissants spécifiquement désignés, sont rigoureusement interdites.
