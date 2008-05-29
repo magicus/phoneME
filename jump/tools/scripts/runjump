@@ -1,0 +1,600 @@
+#!/bin/sh
+#
+# Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+#  
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License version
+# 2 only, as published by the Free Software Foundation. 
+#  
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# General Public License version 2 for more details (a copy is
+# included at /legal/license.txt). 
+#  
+# You should have received a copy of the GNU General Public License
+# version 2 along with this work; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+# 02110-1301 USA 
+#  
+# Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+# Clara, CA 95054 or visit www.sun.com if you need additional
+# information or have any questions.
+#
+
+#
+#  Usage:
+#    runjump [ server | executive | system | command | cvmc | cleanup | status | output | debug | getpid ]
+#
+#
+# Example commands:
+#
+#     Command: runjump
+#     Action : does a cleanup, then runs the server and executive
+#
+#     Command: runjump server
+#     Action : run the server only
+#
+#     Command: runjump executive
+#     Action : run the executive only
+#
+#     Command: runjump system
+#     Action : run the server and the executive
+#
+#     Command: runjump output
+#     Action : print the server output
+#
+#     Command: runjump command <server command>
+#     Action : give a command to the server
+#
+#     Command: runjump cleanup
+#     Action : kill all processes created by server, in addition to the server itself.
+#              This will also kill qvfb if it is running
+#
+#     Command: runjump status 
+#     Action : get the status of the server
+#
+########################### VARIABLE EXPLANATION ################################
+#
+# Name:  PHONEME_DIR
+# Desc:  Location of the root of the phoneme workspace.  This should only be used for
+#        linux-86-suse or linux-arm-zaurus builds which are run from within a
+#        development workspace.
+# Dflt:  /home/$WHOAMI/phoneme
+#
+# Name:  PHONEME_DIST
+# Desc:  Location of the phoneme build
+# Dflt:  On linux-x86-suse, default is $PHONEME_DIR/build/linux-x86-suse/$CDC_SUBDIR
+#        On linux-arm-zaurus, default is /home/cdcams.
+#
+# Name:  CDC_SUBDIR
+# Desc:  Subdirectory name of phoneme build
+# Dflt:  none
+#
+# Name:  JUMP_CONTENT_STORE_DIR
+# Desc:  Root of content store
+# Dflt:  data (default value is determined in modules-config.properties)
+#
+# Name:  USE_GCI
+# Desc:  Determines if GCI/directfb will be used to display
+# Dflt:  false
+#
+# Name:  USE_QVFB
+# Desc:  Decides if Qtopia's qvfb is used for display purposes, will automatically
+#         start if set to true.
+# Dflt:  false
+#
+# Name:  QTOPIA_HOME
+# Desc:  Location of Qtopia on a linux x86 machine, for use with linux x86 only.
+#        The qvfb binary is assumed to be located in $QTOPIA_HOME/bin.  
+# Dflt:  /opt/Qtopia
+#
+# Name:  QWS_DISPLAY
+# Desc:  For running with Qtopia's qvfb
+# Dflt:  :2
+#
+# Name:  QVFB_WIDTH
+# Desc:  For running with Qtopia's qvfb
+# Dflt:  240
+#
+# Name:  QWS_HEIGHT
+# Desc:  For running with Qtopia's qvfb
+# Dflt:  320
+#
+# Name:  PROVISIONING_SERVER_URL
+# Desc:  URL to a provisioning server
+# Dflt:  None
+#
+
+WHOAMI=`whoami`
+ 
+##### Start: Possible Variables Needing Modification #####
+
+if [ -z "$CVM_DEBUG" ] ; then 
+  CVM_DEBUG=false
+fi
+
+PHONEME_PLATFORM=`uname -a | cut -d ' ' -f 12`
+if [ "$PHONEME_PLATFORM" = "unknown" ] ; then
+  PHONEME_PLATFORM=`uname -a | cut -d ' ' -f 11`
+fi
+
+# PHONEME_DIR is primarily used when running from a build within your workspace.
+# It sets PHONEME_DIST, which is the important variable for determining the location
+# of the build.  PHONEME_DIR is strategically used to determine PHONEME_DIST.
+# Note: PHONEME_DIR is when PHONEME_DIST is set by the user.
+if [ -z "$PHONEME_DIR" ] ; then
+    export PHONEME_DIR=/home/$WHOAMI/phoneme
+fi
+
+# Subdirectory name used in Phoneme build
+if [ -z "$CDC_SUBDIR" ] ; then
+    export SUBDIR=./
+else
+    export SUBDIR=$CDC_SUBDIR
+fi
+
+# Default port for debugging
+if [ -z "$CDC_DEBUG_PORT" ] ; then
+  export CDC_DEBUG_PORT=8000
+fi
+
+# For running with Qtopia's qvfb
+if [ "$USE_QVFB" = "true" ] && [ -z "$QWS_DISPLAY" ] ; then
+  export QWS_DISPLAY=:2
+fi
+
+# Location of Qtopia used for qvfb
+if [ "$USE_QVFB" = "true" ] && [ -z "$QTOPIA_HOME" ] ; then
+  QTOPIA_HOME=/opt/Qtopia
+fi
+
+# The root of content store
+if [ "$USE_QVFB" = "true" ] ; then
+  if [ -z "$PBP_SCREEN_BOUNDS" ] ; then
+    PBP_SCREEN_BOUNDS=0,50-640x392
+  fi
+fi
+
+if [ "$USE_QVFB" = "true" ] && [ "$USE_GCI" = "true" ] ; then
+  echo "USE_QVFB and USE_GCI cannot both be true."
+  exit 0
+fi
+
+if [ "$USE_GCI" = "true" ] ; then  
+  if [ -z "$PBP_SCREEN_BOUNDS" ] ; then
+    PBP_SCREEN_BOUNDS=0,50-240x270
+  fi
+fi
+
+### Try to determine a default build platform.
+### This is just a simple way to determine it.
+### This should be adjusted to fit more platforms.
+if [ -z "$DEFAULT_LINUX_PLATFORM" ] ; then
+  tmp=`uname -a | awk '{ print $3 }' | grep generic`
+  if [ "$tmp" != "" ] ; then
+    DEFAULT_LINUX_PLATFORM=linux-x86-generic
+  else
+    DEFAULT_LINUX_PLATFORM=linux-x86-suse  
+  fi
+fi
+
+################# ZAURUS SECTION ########################
+if [ "$PHONEME_PLATFORM" = "armv5tel" ] ; then
+   if [ -z "$PHONEME_DIST" ] ; then
+       export PHONEME_DIST=/home/cdcams    
+   fi
+   export USE_JIT=true
+   export LOGNAME=$WHOAMI
+   export QTDIR=/home/QtPalmtop
+   export USE_QVFB=false
+################ LINUX X86 SECTION ######################
+elif [ "$PHONEME_PLATFORM" = "i686" ] ; then
+   if [ -z "$PHONEME_DIST" ] ; then
+       export PHONEME_DIST=$PHONEME_DIR/build/$DEFAULT_LINUX_PLATFORM/$SUBDIR
+   fi
+fi
+
+MIDP_PROPERTIES=""
+EXECUTIVE_PROPERTIES=""
+EXECUTIVE_ARGUMENTS=""
+
+if [ "$JUMP_CONTENT_STORE_DIR" != "" ] ; then
+  SYSTEM_PROPERTIES="-Dcontentstore.root=$JUMP_CONTENT_STORE_DIR"
+fi
+
+if [ "$PROVISIONING_SERVER_URL" != "" ] ; then
+  EXECUTIVE_PROPERTIES="$EXECUTIVE_PROPERTIES -Djump.installer.provisionURL=$PROVISIONING_SERVER_URL"
+fi
+
+SERVER_JARFILE=$PHONEME_DIST/lib/jump.jar
+EXECUTIVE_JARFILE=$PHONEME_DIST/lib/executive-jump.jar
+CVMC=$PHONEME_DIST/bin/cvmc
+
+##### End: Possible Variables Needing Modification #####
+
+DO_SETTINGS=true
+DO_CLEANUP=false
+DO_SERVER=false
+DO_WARMUP=false
+DO_EXECUTIVE=false
+DO_COMMAND=false
+DO_GETPID=false
+DO_OUTPUT=false
+DO_CVMC=false
+
+if [ "$1" = "server" ] ; then
+    DO_CLEANUP=true
+    DO_SERVER=true
+elif [ "$1" = "executive" ] ; then
+    DO_CLEANUP=false
+    DO_EXECUTIVE=true
+    shift
+    EXECUTIVE_ARGUMENTS="$EXECUTIVE_ARGUMENTS $*"
+elif [ "$1" = "system" ] ; then
+    DO_CLEANUP=true
+    DO_SERVER=true
+    DO_EXECUTIVE=true
+    shift
+    EXECUTIVE_ARGUMENTS="$EXECUTIVE_ARGUMENTS $*"
+elif [ "$1" = "run" ] ; then
+    DO_COMMAND=true
+elif [ "$1" = "cleanup" ] ; then
+    DO_CLEANUP=true
+elif [ "$1" = "status" ] ; then
+    DO_STATUS=true
+# -qcop is something that is returned when launching an icon from the Zaurus
+elif [ "$1" = "-qcop" ] ; then
+    DO_CLEANUP=true
+    DO_SERVER=true
+    DO_EXECUTIVE=true
+elif [ "$1" = "" ] ; then
+    DO_CLEANUP=true
+    DO_SERVER=true
+    DO_EXECUTIVE=true
+elif [ "$1" = "debug" ] ; then
+    DEBUG_OPTIONS="-Xdebug -Xrunjdwp:transport=dt_socket,server=y,address=$CDC_DEBUG_PORT -Dsun.boot.library.path=$PHONEME_DIST/lib"
+    DO_CLEANUP=true
+    DO_SERVER=true
+    DO_EXECUTIVE=true
+elif [ "$1" = "launch" ] ; then
+    DO_COMMAND=true
+elif [ "$1" = "getpid" ] ; then
+    DO_GETPID=true
+elif [ "$1" = "output" ] ; then
+    DO_OUTPUT=true
+elif [ "$1" = "cvmc" ] ; then
+    DO_CVMC=true
+elif [ "$1" = "install" ] ; then
+    DO_CLEANUP=true
+    DO_SERVER=true
+    DO_EXECUTIVE=true     
+else
+    echo "Usage: "
+    echo "    runjump [ server | executive | system | command | cvmc | cleanup | status | output | debug | getpid ]"
+    echo "  Please read the documentation in the top section of this script for more information."
+    exit 0
+fi
+ 
+if [ "$USE_QVFB" = "true" ]; then
+    unset QTDIR
+    export QTDIR=$QTOPIA_HOME
+    export USE_DASH_QWS=true
+    if [ -z "$QVFB_WIDTH" ] ; then
+       export QVFB_WIDTH=240
+    fi
+    if [ -z "$QVFB_HEIGHT" ] ; then
+        export QVFB_HEIGHT=320
+    fi
+    export LD_LIBRARY_PATH=$QTDIR/lib:$PHONEME_DIST/lib
+else
+    # TBD just keeping old stuff, this line might need to be removed (and in this case the whole if should be simplified into then part)
+    export LD_LIBRARY_PATH=$PHONEME_DIST/lib:$DIRECTFB_DIR/lib
+fi
+ 
+############# Output log files
+CLEANUP_LOGFILE=/tmp/jump_cleanup_$WHOAMI
+SERVER_LOGFILE=/tmp/jump_server_$WHOAMI
+WARMUP_LOGFILE=/tmp/jump_warmup_$WHOAMI
+APP_LOGFILE=/tmp/jump_app_$WHOAMI
+SETTINGS_LOGFILE=/tmp/jump_settings_$WHOAMI
+SERVER_PID_LOGFILE=/tmp/jump_serverpid_$WHOAMI
+CVMC_LOGFILE=/tmp/jump_cvmc_$WHOAMI
+
+################################################################################
+
+cd $PHONEME_DIST
+
+if [ "$DO_SETTINGS" = "true" ] ; then
+
+  rm -f $SETTINGS_LOGFILE
+  touch $SETTINGS_LOGFILE
+####### Write out user JUMP settings to shell & output file #############
+  echo "************** JUMP Settings *******************" >> $SETTINGS_LOGFILE
+  echo "PHONEME_DIR:            $PHONEME_DIR" >> $SETTINGS_LOGFILE
+  echo "PHONEME_DIST:           $PHONEME_DIST" >> $SETTINGS_LOGFILE
+  echo "PHONEME_PLATFORM:       $PHONEME_PLATFORM" >> $SETTINGS_LOGFILE
+if [ -z "$CDC_SUBDIR" ] ; then
+  echo "CDC_SUBDIR:             <none>" >> $SETTINGS_LOGFILE
+else
+  echo "CDC_SUBDIR:             $CDC_SUBDIR" >> $SETTINGS_LOGFILE
+fi
+  echo "CDC_DEBUG_PORT:         $CDC_DEBUG_PORT" >> $SETTINGS_LOGFILE
+  echo "JUMP_CONTENT_STORE_DIR  $JUMP_CONTENT_STORE_DIR" >> $SETTINGS_LOGFILE
+  echo "USE_QVFB:               $USE_QVFB" >> $SETTINGS_LOGFILE
+  if [ "$USE_QVFB" = "true" ] ; then
+      echo "QTOPIA_HOME:            $QTOPIA_HOME" >> $SETTINGS_LOGFILE
+      echo "QWS_DISPLAY:            $QWS_DISPLAY" >> $SETTINGS_LOGFILE
+      echo "QVFB_WIDTH:             $QVFB_WIDTH" >> $SETTINGS_LOGFILE
+      echo "QVFB_HEIGHT:            $QVFB_HEIGHT" >> $SETTINGS_LOGFILE
+  fi
+  echo "USE_GCI:                $USE_GCI" >> $SETTINGS_LOGFILE
+  echo "LD_LIBRARY_PATH         $LD_LIBRARY_PATH" >> $SETTINGS_LOGFILE
+  echo "PBP_SCREEN_BOUNDS       $PBP_SCREEN_BOUNDS" >> $SETTINGS_LOGFILE
+  echo "***********************************************"  >> $SETTINGS_LOGFILE
+
+  cat $SETTINGS_LOGFILE
+fi
+
+### Remove any current instances of the server.
+if [ "$DO_CLEANUP" = "true" ] ; then
+ 
+  rm -f $CLEANUP_LOGFILE
+  touch $CLEANUP_LOGFILE 
+ 
+### Now, kill the clones and then the server
+  if [ -f $SERVER_PID_LOGFILE ] ; then
+      SERVER_PID=`cat $SERVER_PID_LOGFILE`
+  fi
+  if [ "$SERVER_PID" != "" ] ; then
+      CLEANUP_APPLICATIONS_COMMAND="$CVMC -killall"
+      $CLEANUP_APPLICATIONS_COMMAND >> $CLEANUP_LOGFILE 2>&1
+      
+      sleep 1
+
+      CLEANUP_SERVER_COMMAND="$CVMC -killserver"
+      $CLEANUP_SERVER_COMMAND >> $CLEANUP_LOGFILE 2>&1
+  fi
+
+  # Use the brute force method of killing apps.
+  process_ids=`ps auxww | grep $WHOAMI | grep cvm | grep -v grep | sed 's/  */ /1' | cut -d ' ' -f 2`
+  if [ ! "$process_ids" = "" ] ; then
+    echo "Cleaning up running processes..."
+    for id in $process_ids; do \
+        CLEANUP_PROCESSES_COMMAND="kill -9 $id"
+        $CLEANUP_PROCESSES_COMMAND >> $CLEANUP_LOGFILE 2>&1   
+    done;
+  fi
+
+  # Remove message queues
+mesgqs=`ipcs -q | awk '{ print $2 }'| grep -v Message | grep -v msqid`
+for id in $mesgqs; do \
+    CLEANUP_MESSAGE_QUEUES_COMMAND="ipcrm -q $id"
+    $CLEANUP_MESSAGE_QUEUES_COMMAND >> $CLEANUP_LOGFILE 2>&1
+done;
+
+  # Kill qvfb if it's running
+if [ "$USE_QVFB" = "true" ] ; then
+  process_ids=`ps auxww | grep $WHOAMI | grep qvfb | grep -v grep | sed 's/  */ /1' | cut -d ' ' -f 2`
+  if [ ! "$process_ids" = "" ] ; then
+    echo "qvfb instance found... removing."
+    for id in $process_ids; do \
+        CLEANUP_PROCESSES_COMMAND="kill -9 $id"
+        $CLEANUP_PROCESSES_COMMAND >> $CLEANUP_LOGFILE 2>&1 
+    done;
+  fi
+fi
+
+  ### Remove output files
+  rm -f $SERVER_LOGFILE $WARMUP_LOGFILE $APP_LOGFILE $SETTINGS_LOGFILE $SERVER_PID_LOGFILE $CVMC_LOGFILE
+ 
+  sleep 2
+
+  echo "Done with cleanup."
+ 
+fi
+ 
+##### Commands to start the JUMP server
+if [ "$DO_SERVER" = "true" ] ; then
+
+    ### Create output file
+    touch $SERVER_LOGFILE
+
+    if [ "$USE_QVFB" = "true" ]; then
+       QVFB_COMMAND="$QTOPIA_HOME/bin/qvfb -width $QVFB_WIDTH -height $QVFB_HEIGHT -depth 16 -qwsdisplay $QWS_DISPLAY"
+       echo $QVFB_COMMAND
+       $QVFB_COMMAND >> $SERVER_LOGFILE 2>&1 &
+       sleep 1
+    fi
+   
+    PHONEME_SERVER_OPTIONS="-Xbootclasspath/a=$SERVER_JARFILE $MIDP_PROPERTIES -Xserver"
+    if [ "$USE_JIT" = "true" ]; then
+       PHONEME_SERVER_OPTIONS="$PHONEME_SERVER_OPTIONS -Xjit:codeCacheSize=1300K"
+    fi  
+
+    PHONEME_SERVER_COMMAND="$PHONEME_DIST/bin/cvm $PHONEME_SERVER_OPTIONS"
+    echo "Server Command: $PHONEME_SERVER_COMMAND"
+    $PHONEME_SERVER_COMMAND >> $SERVER_LOGFILE 2>&1 &
+
+    ### We need to wait until the server is done being launched.  Wait here until
+    ### the server ouput file SERVER_LOGFILE prints out the message about server status.
+    numAttempts=0
+    numAttemptsMax=100
+    while [ "$numAttempts" -ne "$numAttemptsMax" ] ; do
+      if [ ! -f $SERVER_LOGFILE ] ; then
+        numAttempts=`expr $numAttempts + 1`
+        echo -n "."
+        sleep 1
+      else
+        output=`cat $SERVER_LOGFILE | grep "Starting mTASK server at pid=" | grep "done"`
+        if [ ! "$output" = "" ] ; then
+          numAttempts=100
+          echo ""
+        else
+          numAttempts=`expr $numAttempts + 1`
+          echo -n "."
+          sleep 1
+        fi
+      fi
+    done
+
+    echo ""
+    
+    PHONEME_SERVER_PID=`echo $output | awk '{ print $5 }' | sed 's/pid=//'`
+    if [ "$PHONEME_SERVER_PID" != "" ] ; then
+        rm -f $SERVER_PID_LOGFILE
+        echo $PHONEME_SERVER_PID > $SERVER_PID_LOGFILE    
+        echo "JUMP Server running with pid: $PHONEME_SERVER_PID"
+    else
+        echo "JUMP Server could not be launched successfully."
+        exit 0       
+    fi
+fi
+ 
+### Warmup Command ###
+if  [ "$DO_WARMUP" = "true" ] ; then
+
+    if [ -f $SERVER_PID_LOGFILE ] ; then
+        SERVER_PID=`cat $SERVER_PID_LOGFILE`
+    fi
+
+    if [ "$SERVER_PID" = "" ] ; then
+        echo ""
+        echo "A JUMP Server is not running, cannot run command."
+        exit 0
+    fi
+
+    WARMUP_COMMAND="$CVMC -target $SERVER_PID -warmup -initClasses $JUMP_CLASSES_WARMUP_LIST -precompileMethods $JUMP_METHODS_WARMUP_LIST"
+ 
+    echo "Executing warmup command: $WARMUP_COMMAND"
+    echo ""
+
+    rm -f $WARMUP_LOGFILE
+    touch $WARMUP_LOGFILE
+    $WARMUP_COMMAND >> $WARMUP_LOGFILE 2>&1 &
+ 
+fi  ### DO_WARMUP
+ 
+
+##### Start the JUMP Executive
+if [ "$DO_EXECUTIVE" = "true" ] ; then
+  if [ -f $SERVER_PID_LOGFILE ] ; then
+      SERVER_PID=`cat $SERVER_PID_LOGFILE`
+  fi
+
+  if [ "$SERVER_PID" = "" ] ; then
+      echo ""
+      echo "A JUMP Server is not running, cannot run command."
+      exit 0
+  fi
+
+  EXECUTIVE_COMMAND="$CVMC -target $SERVER_PID -command JDETACH $EXECUTIVE_PROPERTIES -Xbootclasspath/a=$EXECUTIVE_JARFILE com.sun.jumpimpl.executive.JUMPExecutiveImpl $EXECUTIVE_ARGUMENTS"
+  $EXECUTIVE_COMMAND >> $SERVER_LOGFILE 2>&1 &
+
+  EXECUTIVE_COMMAND="$CVMC -target $SERVER_PID -setenv PBP_SCREEN_BOUNDS=$PBP_SCREEN_BOUNDS"
+  $EXECUTIVE_COMMAND >> $SERVER_LOGFILE 2>&1 &
+
+  if  [ "USE_QVFB" = "true" ] ; then
+    EXECUTIVE_COMMAND="$CVMC -target $SERVER_PID -setenv QWS_CLIENT=true"
+    $EXECUTIVE_COMMAND >> $SERVER_LOGFILE 2>&1 &
+    #$EXECUTIVE_COMMAND 2>&1 &
+  fi
+
+fi
+
+### Server Command
+if  [ "$DO_COMMAND" = "true" ] ; then
+
+    if [ -f $SERVER_PID_LOGFILE ] ; then
+        SERVER_PID=`cat $SERVER_PID_LOGFILE`
+    fi
+
+    if [ "$SERVER_PID" = "" ] ; then
+        echo ""
+        echo "A JUMP Server is not running, cannot run command."
+        exit 0
+    fi
+
+    shift
+    APP_COMMAND="$CVMC -target $SERVER_PID $*"
+
+    echo "Executing App command: $APP_COMMAND"
+    echo ""
+
+    rm -f $APP_LOGFILE
+    $APP_COMMAND > $APP_LOGFILE 2>&1 &
+fi  ### DO_COMMAND
+ 
+### Debug Command
+if  [ "$DO_DEBUG" = "true" ] ; then
+
+    SERVER_PID=`cat $SERVER_PID_LOGFILE`
+    if [ $SERVER_PID = "" ] ; then
+        echo ""
+        echo "A JUMP Server is not running, cannot run command."
+        exit 0
+    fi
+
+    shift
+    DEBUG_COMMAND="$CVMC -target $SERVER_PID $DEBUG_OPTIONS $*"
+
+    echo "Executing Debug command: $DEBUG_COMMAND"
+    echo ""
+
+    rm -f $APP_LOGFILE
+    $DEBUG_COMMAND > $APP_LOGFILE 2>&1 &
+fi  ### DO_DEBUG
+
+### Status Command
+if [ "$DO_STATUS" = "true" ] ; then
+
+    SERVER_PID=`cat $SERVER_PID_LOGFILE`
+    if [ $SERVER_PID != "" ] ; then
+        echo ""
+        echo "A JUMP Server is running with pid: $SERVER_PID."
+    else
+        echo ""
+        echo "A JUMP Server is not running."
+    fi
+fi
+
+### Output Command
+if [ "$DO_OUTPUT" = "true" ] ; then
+    if [ -f $SERVER_LOGFILE ] ; then
+        cat $SERVER_LOGFILE
+    fi
+fi
+
+### Run CVMC Command
+if [ "$DO_CVMC" = "true" ] ; then
+    SERVER_PID=`cat $SERVER_PID_LOGFILE`
+    if [ $SERVER_PID != "" ] ; then
+        echo ""
+        shift
+        CVMC_COMMAND="$CVMC -target $SERVER_PID $*"
+        echo "CVMC command: $CVMC_COMMAND"
+        echo ""
+  
+        rm -f $CVMC_LOGFILE
+        touch $CVMC_LOGFILE
+        #$CVMC_COMMAND >> $CVMC_LOGFILE 2>&1
+        $CVMC_COMMAND 2>&1
+    else
+        echo ""
+        echo "A JUMP Server is not running."
+    fi
+fi
+
+### Get PID of server
+if [ "$DO_GETPID" = "true" ] ; then
+    SERVER_PID=`cat $SERVER_PID_LOGFILE`
+    if [ $SERVER_PID != "" ] ; then
+        echo ""
+        echo "PID of running JUMP Server: $SERVER_PID."
+    else
+        echo ""
+        echo "A JUMP Server is not running."
+    fi
+fi
+
