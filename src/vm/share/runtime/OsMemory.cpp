@@ -1,24 +1,24 @@
 /*
- *   
+ *
  *
  * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
- * 
+ *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
  * 2 only, as published by the Free Software Foundation.
- * 
+ *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
  * included at /legal/license.txt).
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA
- * 
+ *
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
  * information or have any questions.
@@ -36,7 +36,6 @@ extern "C" {
 #include <pcsl_memory.h>
 }
 
-#ifndef UNDER_CE
 void *OsMemory_allocate(size_t size) {
   return pcsl_mem_malloc(size);
 }
@@ -44,12 +43,11 @@ void *OsMemory_allocate(size_t size) {
 void OsMemory_free(void *p) {
   pcsl_mem_free(p);
 }
-#endif
 
 address OsMemory_allocate_chunk(size_t initial_size,
                                 size_t max_size, size_t alignment) {
   return (address)pcsl_mem_allocate_chunk((unsigned int)initial_size,
-                                          (unsigned int)max_size, 
+                                          (unsigned int)max_size,
                                           (unsigned int)alignment);
 }
 
@@ -78,7 +76,7 @@ static address chunks_orig[MAX_CHUNKS] = {NULL, NULL};
 static size_t max_chunk_size[MAX_CHUNKS];
 static size_t cur_chunk_size[MAX_CHUNKS];
 
-//#ifndef PRODUCT 
+//#ifndef PRODUCT
 #ifdef AZZERT
 static int _cnt[MAX_CHUNKS] = {0, 0};
 
@@ -182,8 +180,8 @@ size_t OsMemory_heap_initial_size(size_t /*min_size*/, size_t max_size) {
   return max_size;
 }
 
-size_t OsMemory_heap_expansion_target(size_t /*current_size*/, 
-                                      size_t /*required_size*/, 
+size_t OsMemory_heap_expansion_target(size_t /*current_size*/,
+                                      size_t /*required_size*/,
                                       size_t max_size,
                                       const bool /*is_full_collect*/) {
   return max_size;
@@ -238,8 +236,8 @@ size_t OsMemory_heap_initial_size(size_t min_size, size_t max_size) {
   return init_size;
 }
 
-size_t OsMemory_heap_expansion_target(size_t current_size, 
-                                      size_t required_size, 
+size_t OsMemory_heap_expansion_target(size_t current_size,
+                                      size_t required_size,
                                       size_t max_size,
                                       const bool is_full_collect) {
   // In this sample implementation, we grow the heap only after a full

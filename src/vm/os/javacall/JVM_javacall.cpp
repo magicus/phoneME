@@ -37,6 +37,10 @@
 #include "incls/_precompiled.incl"
 #include "incls/_JVM_javacall.cpp.incl"
 
+#if defined(UNDER_CE)
+int _system_address = 0;
+#endif
+
 static int executeVM( void ) {
   const int result = JVM::start();
   Arguments::finalize();
