@@ -115,6 +115,7 @@ typedef struct {
     int                     bytesPerMilliSec;
     javacall_bool           bufferingMode;
     struct wav_meta_data    metaData;
+    javacall_handle         decoder;
 } ah_wav;
 
 typedef union {
