@@ -527,7 +527,7 @@ $(JAVACARD_CLASSES)/aclapplet.scr: $(JAVACARD_CLASSES)/$(JC_ACL_APPLET_PATH)/jav
 #
 # actions    - returns name of applet without path and extension
 define appletName
-$(lastword $(strip $(foreach app, $(APPLETS_LIST),$(findstring $(app),$(1)))))
+$(basename $(notdir $(1)))
 endef
 
 # simtoolkit(appTarget, command)
