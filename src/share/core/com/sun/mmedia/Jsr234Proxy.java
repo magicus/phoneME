@@ -24,6 +24,8 @@
 
 package com.sun.mmedia;
 
+import javax.microedition.media.Control;
+
 public class Jsr234Proxy {
     static private Jsr234Proxy _instance;
     static private String [] _emptyNamesList = {};
@@ -47,5 +49,15 @@ public class Jsr234Proxy {
     
     public String [] getJsr234PlayerControlNames() {
         return _emptyNamesList;
+    }
+    
+    public Control getRDSControl( DirectPlayer p )
+    {
+        return null;
+    }
+    
+    public Control getTunerControl( DirectPlayer p )
+    {
+        return null;
     }
 }
