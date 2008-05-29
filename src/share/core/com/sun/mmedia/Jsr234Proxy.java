@@ -60,4 +60,39 @@ public class Jsr234Proxy {
     {
         return null;
     }
+
+    public Control getCameraControl( DirectCamera cam )
+    {
+        return null;
+    }
+
+    public Control getExposureControl( DirectPlayer p )
+    {
+        return null;
+    }
+    
+    public Control getFlashControl( DirectPlayer p )
+    {
+        return null;
+    }
+
+    public Control getFocusControl( DirectCamera cam )
+    {
+        return null;
+    }
+
+    public Control getSnapshotControl( DirectCamera cam )
+    {
+        return null;
+    }
+
+    public Control getZoomControl( DirectPlayer p )
+    {
+        return null;
+    }
+
+    public Control getImageFormatControl( DirectCamera cam )
+    {
+        return null;
+    }
 }

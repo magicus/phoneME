@@ -29,11 +29,16 @@ import javax.microedition.media.MediaException;
 
 public class DirectCamera extends DirectVideo 
 {
-// #ifdef ENABLE_JSR_234 [
+    private Control _cameraControl;
+    private Control _exposureControl;
+    private Control _flashControl;
+    private Control _focusControl;
+    private Control _snapshotControl;
+    private Control _zoomControl;
+    private Control _imgFmtControl;
+    
     protected final static String JSR234_CAMERA_PACKAGE_NAME =
         "javax.microedition.amms.control.camera.";
-    private Jsr234CameraControlsProxy _jsr234CamCtrls;
-// #endif ]
 
     /**
      * It does not need data source
@@ -69,69 +74,73 @@ public class DirectCamera extends DirectVideo
         return data;
     }
 
-// #ifdef ENABLE_JSR_234 [
-    private synchronized Jsr234CameraControlsProxy get234CamCtrls() {
-        if (_jsr234CamCtrls == null) {
-            Class c = null;
-            try {
-                c = Class.forName(
-                    "com.sun.mmedia.Jsr234CameraControlsProxyImpl");
-                _jsr234CamCtrls = (Jsr234CameraControlsProxy)c.newInstance(); 
-                _jsr234CamCtrls.setCameraPlayer(this);
-            } catch (ClassNotFoundException e1) {
-            } catch (IllegalAccessException e2) {
-                throw new RuntimeException(
-                        "Could not access the class" + c.toString());
-            } catch (InstantiationException e3 ) {
-                throw new RuntimeException(
-                        "Could not instantiate the class" + c.toString());
-            }
-            if (_jsr234CamCtrls == null) {
-                try {
-                    c = Class.forName(
-                            "com.sun.mmedia.Jsr234CameraControlsProxyStub");
-                    _jsr234CamCtrls =
-                            (Jsr234CameraControlsProxy)c.newInstance();
-                } catch (ClassNotFoundException e1) {
-                    throw new RuntimeException(
-                            "Could not find camera controls proxy class");
-                } catch (IllegalAccessException e2) {
-                    throw new RuntimeException(
-                            "Could not access the class" + c.toString());
-                } catch (InstantiationException e3) {
-                    throw new RuntimeException(
-                            "Could not instantiate the class" + c.toString());
-                }
-            }
-        }
-        return _jsr234CamCtrls;
-    }
-    
     protected Control doGetControl(String type) {
         Control c = super.doGetControl(type);
         if (c == null) {
             if (type.startsWith(JSR234_CAMERA_PACKAGE_NAME)) {
-                c = get234CamCtrls().getJsr234CameraControl(type);
-            } else if (type.equals(ifcName)) {
-                try {
-                    c = (Control)Class.forName(
-                        "com.sun.amms.imageprocessor.ImageFormatProxy").
-                        newInstance();
-                } catch (ClassNotFoundException e) {
-                    throw new RuntimeException(
-                        "Could not find ImageFormatProxy class");
-                } catch (IllegalAccessException e) {
-                    throw new RuntimeException(
-                        "Could not access ImageFormatProxy class");
-                } catch (InstantiationException e) {
-                    throw new RuntimeException(
-                        "Could not instantiate ImageFormatProxy class");
+                String camType = type.substring( 
+                        JSR234_CAMERA_PACKAGE_NAME.length() );
+                if( camType.equals( "CameraControl" ) )
+                {
+                    if( null == _cameraControl )
+                    {
+                        _cameraControl = 
+                           Jsr234Proxy.getInstance().getCameraControl( this );
+                    }
+                    return _cameraControl;
+                } else if( camType.equals( "ExposureControl" ) )
+                {
+                    if( null == _exposureControl )
+                    {
+                        _exposureControl = 
+                          Jsr234Proxy.getInstance().getExposureControl( this );
+                    }
+                    return _exposureControl;
+                } else if ( camType.equals( "FlashControl" ) )
+                {
+                    if( null == _flashControl )
+                    {
+                        _flashControl = 
+                           Jsr234Proxy.getInstance().getFlashControl( this );
+                    }
+                    return _flashControl;
+                } else if( camType.equals( "FocusControl" ) )
+                {
+                    if( null == _focusControl )
+                    {
+                        _focusControl = 
+                           Jsr234Proxy.getInstance().getFocusControl( this );
+                    }
+                    return _focusControl;
+                } else if( camType.equals( "SnapshotControl" ) )
+                {
+                    if( null == _snapshotControl )
+                    {
+                        _snapshotControl = 
+                          Jsr234Proxy.getInstance().getSnapshotControl( this );
+                    }
+                    return _snapshotControl;
+                } else if( camType.equals( "ZoomControl" ) )
+                {
+                    if( null == _zoomControl )
+                    {
+                        _zoomControl = 
+                              Jsr234Proxy.getInstance().getZoomControl( this );
+                    }
+                    return _zoomControl;
                 }
+                
+            } else if (type.equals( 
+                    "javax.microedition.amms.control.ImageFormatControl" )) {
+                if( null == _imgFmtControl )
+                {
+                    _imgFmtControl = 
+                       Jsr234Proxy.getInstance().getImageFormatControl( this );
+                }
+                return _imgFmtControl;
             }
         }
-        return c;
     }
-// #endif  ]
 
     public void checkSnapshotPermission()
     {
