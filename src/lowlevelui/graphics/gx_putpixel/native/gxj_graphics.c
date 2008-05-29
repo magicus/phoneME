@@ -97,7 +97,7 @@ gxj_screen_buffer* gxj_get_image_screen_buffer_impl(const java_imagedata *img,
  * Draw triangle
  */
 void
-gx_fill_triangle(int color, const jshort *clip, 
+gx_fill_triangle(jint color, const jshort *clip, 
 		  const java_imagedata *dst, int dotted, 
                   int x1, int y1, int x2, int y2, int x3, int y3) {
   gxj_screen_buffer screen_buffer;
@@ -288,8 +288,8 @@ gx_draw_rgb(const jshort *clip,
  * Obtain the color that will be final shown 
  * on the screen after the system processed it.
  */
-int
-gx_get_displaycolor(int color) {
+jint
+gx_get_displaycolor(jint color) {
     int newColor = GXJ_RGB16TORGB24(GXJ_RGB24TORGB16(color));
 
     REPORT_CALL_TRACE1(LC_LOWUI, "gx_getDisplayColor(%d)\n", color);
@@ -306,7 +306,7 @@ gx_get_displaycolor(int color) {
  * Draw a line between two points (x1,y1) and (x2,y2).
  */
 void
-gx_draw_line(int color, const jshort *clip, 
+gx_draw_line(jint color, const jshort *clip, 
 	      const java_imagedata *dst, int dotted, 
               int x1, int y1, int x2, int y2)
 {
@@ -329,7 +329,7 @@ gx_draw_line(int color, const jshort *clip,
  *       need to test for special case anymore.
  */
 void 
-gx_draw_rect(int color, const jshort *clip, 
+gx_draw_rect(jint color, const jshort *clip, 
 	      const java_imagedata *dst, int dotted, 
               int x, int y, int width, int height)
 {
@@ -385,7 +385,7 @@ void fastFill_rect(unsigned short color, gxj_screen_buffer *sbuf, int x, int y, 
  * Fill a rectangle at (x,y) with the given width and height.
  */
 void 
-gx_fill_rect(int color, const jshort *clip, 
+gx_fill_rect(jint color, const jshort *clip, 
 	      const java_imagedata *dst, int dotted, 
               int x, int y, int width, int height) {
 
@@ -416,7 +416,7 @@ gx_fill_rect(int color, const jshort *clip,
  * arcHeight, if nonzero, indicate how much of the corners to round off.
  */
 void 
-gx_draw_roundrect(int color, const jshort *clip, 
+gx_draw_roundrect(jint color, const jshort *clip, 
 		   const java_imagedata *dst, int dotted, 
                    int x, int y, int width, int height,
                    int arcWidth, int arcHeight)
@@ -440,7 +440,7 @@ gx_draw_roundrect(int color, const jshort *clip,
  * arcHeight, if nonzero, indicate how much of the corners to round off.
  */
 void 
-gx_fill_roundrect(int color, const jshort *clip, 
+gx_fill_roundrect(jint color, const jshort *clip, 
 		   const java_imagedata *dst, int dotted, 
                    int x, int y, int width, int height,
                    int arcWidth, int arcHeight)
@@ -468,7 +468,7 @@ gx_fill_roundrect(int color, const jshort *clip,
  * @note: check for width, height <0 is done in share layer
  */
 void 
-gx_draw_arc(int color, const jshort *clip, 
+gx_draw_arc(jint color, const jshort *clip, 
 	     const java_imagedata *dst, int dotted, 
              int x, int y, int width, int height,
              int startAngle, int arcAngle)
@@ -490,7 +490,7 @@ gx_draw_arc(int color, const jshort *clip,
  * degrees.  arcAngle may not be negative.
  */
 void 
-gx_fill_arc(int color, const jshort *clip, 
+gx_fill_arc(jint color, const jshort *clip, 
 	     const java_imagedata *dst, int dotted, 
              int x, int y, int width, int height,
              int startAngle, int arcAngle)
@@ -511,8 +511,8 @@ gx_fill_arc(int color, const jshort *clip,
 /**
  * Return the pixel value.
  */
-int
-gx_get_pixel(int rgb, int gray, int isGray) {
+jint
+gx_get_pixel(jint rgb, int gray, int isGray) {
 
     REPORT_CALL_TRACE3(LC_LOWUI, "gx_getPixel(%x, %x, %d)\n",
             rgb, gray, isGray);
