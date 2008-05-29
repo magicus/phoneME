@@ -31,6 +31,9 @@ ifeq ($(USE_MIDP),true)
 -include $(CDC_OS_COMPONENT_DIR)/build/$(TARGET_OS)/defs_midp.mk
 -include $(CDC_DEVICE_COMPONENT_DIR)/build/$(TARGET_OS)-$(TARGET_CPU_FAMILY)-$(TARGET_DEVICE)/defs_midp.mk
 
+# Don't use MIDP private memory management implementation by default.
+USE_MIDP_MALLOC  ?= false
+
 ifeq ($(USE_GCI), true)
     MIDP_PLATFORM ?= linux_gci
 else
@@ -67,6 +70,8 @@ PCSL_TARGET		?= $(TARGET_OS)_$(TARGET_CPU)
 PCSL_PLATFORM		?= $(PCSL_TARGET)_gcc
 NETWORK_MODULE		?= bsd/generic
 PCSL_MAKE_OPTIONS 	?=
+MEMORY_MODULE		?= malloc
+MEMORY_PORT_MODULE	?= malloc
 
 ifeq ($(findstring javacall,$(PCSL_PLATFORM)),javacall)
 PCSL_DEPENDENCIES       += $(JAVACALL_LIBRARY)
