@@ -40,6 +40,8 @@ else
 CFLAGS= -O2 -Otime -c -W
 endif
 
+CFLAGS+= $(EXTRA_CFLAGS)
+
 LD_FLAGS=
 
 CC_OUTPUT=-o 
