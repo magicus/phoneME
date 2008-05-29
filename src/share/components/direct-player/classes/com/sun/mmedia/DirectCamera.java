@@ -140,6 +140,7 @@ public class DirectCamera extends DirectVideo
                 return _imgFmtControl;
             }
         }
+        return c;
     }
 
     public void checkSnapshotPermission()
