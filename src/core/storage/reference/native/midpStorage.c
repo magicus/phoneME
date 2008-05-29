@@ -41,6 +41,8 @@
 
 #ifndef UNDER_CE
 #include <errno.h>
+#else
+#include <windows.h>
 #endif
 
 #include <midpUtilKni.h>
@@ -773,7 +775,9 @@ static char*
 getLastError(char* pszFunction) {
     char* temp;
 
+#ifndef UNDER_CE
     temp = strerror(errno);
+#endif
     if (temp == NULL) {
         return "Unspecified Error";
     }
@@ -792,7 +796,38 @@ storage_get_last_file_error(char* pszFunction, const pcsl_string* filename_str) 
     int j;
     int lim;
 
+#ifndef UNDER_CE
     temp = strerror(errno);
+#else
+    LPVOID lpMsgBuf;
+    int convertedLength;
+    DWORD orgLength;
+
+    orgLength = FormatMessage(
+        FORMAT_MESSAGE_ALLOCATE_BUFFER |
+        FORMAT_MESSAGE_FROM_SYSTEM |
+        FORMAT_MESSAGE_IGNORE_INSERTS,
+        NULL,
+        GetLastError(),
+        0, /* Default language */
+        (LPTSTR)&lpMsgBuf,
+        0,
+        NULL
+    );
+
+    if (orgLength == 0) {
+        return "Unspecified Error";
+    }
+
+    convertedLength = WideCharToMultiByte(CP_UTF8, 0, (LPCWSTR)lpMsgBuf,
+            orgLength, errorBuffer, MAX_ERROR_LEN, NULL, NULL);
+
+    LocalFree(lpMsgBuf);
+
+    errorBuffer[convertedLength] = 0x0;
+    return errorBuffer;
+#endif
+
     if (temp == NULL) {
         return "Unspecified Error";
     }

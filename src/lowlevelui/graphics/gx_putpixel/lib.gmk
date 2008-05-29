@@ -51,7 +51,9 @@ vpath % \
 # (IMPL_NOTE remove this dependency)
 
 SUBSYSTEM_GRAPHICS_EXTRA_INCLUDES += \
-    -I$(SUBSYSTEM_LOWUI_DIR)/graphics/gx_putpixel/include
+    -I$(SUBSYSTEM_LOWUI_DIR)/graphics/gx_putpixel/include \
+    -I$(SUBSYSTEM_LOWUI_DIR)/graphics/gx_putpixel/native
+
 
 # Native files for putpixel module
 SUBSYSTEM_GRAPHICS_NATIVE_FILES += \
@@ -73,6 +75,19 @@ $(OBJ_DIR)/gxj_graphics_asm_wince.o: \
 
 endif
 endif
+
+ifeq ($(TARGET_PLATFORM), javacall)
+ifeq ($(TARGET_CPU), arm)
+
+
+OBJ_FILES += $(OBJ_DIR)/gxj_graphics_asm_wince.o
+$(OBJ_DIR)/gxj_graphics_asm_wince.o: \
+    $(GRAPHICS_MODULE_DIR)/native/gxj_graphics_asm_wince.s
+	$(ASM) -o $@ $<
+
+endif
+endif
+
 
 # I3test files
 ifeq ($(USE_I3_TEST), true)
