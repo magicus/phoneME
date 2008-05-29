@@ -86,7 +86,7 @@ int pcsl_mem_malloc_dump_impl0(int countMemoryLeaksOnly);
 #define pcsl_mem_get_free_heap_impl()  pcsl_mem_get_free_heap_impl0()
 #define pcsl_mem_malloc_dump_impl(x)	 pcsl_mem_malloc_dump_impl0((x))
 
-#ifdef PCSL_DEBUG
+#ifdef PCSL_VERBOSE
 
 /**
  * Allocates memory from the private PCSL memory pool.
@@ -272,7 +272,7 @@ extern void  pcsl_mem_free_impl0(void*);
  */
 #define pcsl_mem_free_impl(x)       pcsl_mem_free_impl0((x))
 
-#endif /* if PCSL_DEBUG */
+#endif /* if PCSL_VERBOSE */
 
 #ifdef __cplusplus
 }

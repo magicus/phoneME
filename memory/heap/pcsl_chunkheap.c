@@ -64,10 +64,8 @@ static ChunkInfo *get_chunk_info(void* chunk_ptr) {
         }
     }
 
-#ifdef PCSL_DEBUG
     /* should not reach here */
     pcsl_print("ERROR: get_chunk_info failed to find requested chunk\n");
-#endif
     return NULL;
 }
 
@@ -123,9 +121,7 @@ unsigned int pcsl_mem_adjust_chunk(void *chunk_ptr, unsigned int new_size){
     ChunkInfo* ci = get_chunk_info(chunk_ptr);
 
     if (new_size > ci->max_size) {
-#ifdef PCSL_DEBUG
         pcsl_print("DEBUG:  pcsl_mem_adjust_chunk size check failed\n");
-#endif
         return 0;
     }
 
@@ -153,8 +149,6 @@ void pcsl_mem_free_chunk(void *chunk_ptr){
             return;
         }
     }
-#ifdef PCSL_DEBUG
     /* should not reach here! */
     pcsl_print("ERROR: pcsl_free_chunk() could not find the required chunk to free\n");
-#endif
 }

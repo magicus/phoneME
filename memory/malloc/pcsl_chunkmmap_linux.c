@@ -67,10 +67,8 @@ static ChunkInfo *get_chunk_info(void* chunk_ptr) {
         }
     }
 
-#ifdef PCSL_DEBUG
     /* should not reach here */
     pcsl_print("ERROR: get_chunk_info failed to find requested chunk\n");
-#endif
     return NULL;
 }
 
@@ -123,14 +121,12 @@ void * pcsl_mem_allocate_chunk(unsigned int initial_size,
         return NULL;
     }
 
-#ifdef PCSL_DEBUG
     if (((unsigned int)chunk % alignment) != 0) {
         pcsl_print("ERROR: anon_mmap() must return algined address");
     }
     if (((unsigned int)chunk % sysconf(_SC_PAGE_SIZE)) != 0) {
         pcsl_print("ERROR: anon_mmap() must return page-algined address");
     }
-#endif  
 
     aligned_size = page_align_up(initial_size);  
     alloc_chunk(chunk, aligned_size, max_size);
@@ -166,9 +162,7 @@ unsigned int pcsl_mem_adjust_chunk(void *chunk_ptr, unsigned int new_size) {
 
         return old_size;
     } else {
-#ifdef PCSL_DEBUG
-	pcsl_print("DEBUG:  pcsl_mem_adjust_chunk size check failed\n");
-#endif
+	    pcsl_print("DEBUG:  pcsl_mem_adjust_chunk size check failed\n");
       	return 0;
     }
 
@@ -189,8 +183,6 @@ void pcsl_mem_free_chunk(void *chunk_ptr) {
             return;
         }
     }
-#ifdef PCSL_DEBUG
     /* should not reach here! */
     pcsl_print("ERROR: pcsl_free_chunk() could not find the required chunk to free\n");
-#endif
 }

@@ -45,9 +45,9 @@ int
 pcsl_file_init() {
     int ret = javacall_file_init();
 
-#ifdef PCSL_DEBUG
-    if (ret != JAVACALL_OK)
-      pcsl_print("pcsl_file_init Error\n");
+#ifdef PCSL_VERBOSE
+    if(ret != JAVACALL_OK)
+        pcsl_print("pcsl_file_init Error\n");
 #endif
     return ret;
 }
@@ -61,9 +61,9 @@ int
 pcsl_file_finalize() {
     int ret = javacall_file_finalize();
 
-#ifdef PCSL_DEBUG
-    if (ret != JAVACALL_OK)
-      pcsl_print("pcsl_file_finalize Error\n");
+#ifdef PCSL_VERBOSE
+    if(ret != JAVACALL_OK)
+        pcsl_print("pcsl_file_finalize Error\n");
 #endif
     return ret;
 }
@@ -90,26 +90,25 @@ pcsl_file_finalize() {
  */
 int
 pcsl_file_open(const pcsl_string * fileName, int flags, void **handle) {
-  int ret;
+    int ret;
 
-#ifdef PCSL_DEBUG
-  if (MAX_FILE_LEN < pcsl_string_utf16_length (fileName)) {
-    pcsl_print("pcsl_file_open() Error file length is too large");
-  }
-#endif
+    if(MAX_FILE_LEN < pcsl_string_utf16_length (fileName)) {
+        pcsl_print("pcsl_file_open() Error file length is too large");
+        return -1;
+    }
 
-  {
-    javacall_utf16 utf16_fileName[MAX_FILE_LEN+1] = {0};
-    jsize converted_length;
-    
-    if (PCSL_STRING_OK == pcsl_string_convert_to_utf16 (fileName, utf16_fileName,
-                                                        MAX_FILE_LEN+1, &converted_length))
-      ret = (JAVACALL_OK == javacall_file_open(utf16_fileName, converted_length, flags, handle)) ? 0 : -1;
-    else 
-      ret = -1;
-  }
+    {
+        javacall_utf16 utf16_fileName[MAX_FILE_LEN+1] = {0};
+        jsize converted_length;
 
-  return ret;
+        if(PCSL_STRING_OK == pcsl_string_convert_to_utf16 (fileName, utf16_fileName,
+                                                           MAX_FILE_LEN+1, &converted_length))
+            ret = (JAVACALL_OK == javacall_file_open(utf16_fileName, converted_length, flags, handle)) ? 0 : -1;
+        else
+            ret = -1;
+    }
+
+    return ret;
 }
 
 
@@ -122,10 +121,9 @@ int
 pcsl_file_close(void *handle) {
     int ret = javacall_file_close(handle);
 
-#ifdef PCSL_DEBUG
-    if (ret != JAVACALL_OK)
-      pcsl_print("pcsl_file_close Error\n");
-#endif
+    if(ret != JAVACALL_OK) {
+        pcsl_print("pcsl_file_close Error\n");
+    }
     return ret;
 }
 
@@ -142,10 +140,9 @@ int
 pcsl_file_read(void *handle, unsigned char *buf, long size) {
     int ret = javacall_file_read(handle, buf, size);
 
-#ifdef PCSL_DEBUG
-    if (ret < 0)
-    pcsl_print("pcsl_file_read Error\n");
-#endif
+    if(ret < 0) {
+        pcsl_print("pcsl_file_read Error\n");
+    }
     return ret;
 }
 
@@ -163,11 +160,10 @@ int
 pcsl_file_write(void *handle, unsigned char *buffer, long length) {
     int ret = javacall_file_write(handle, buffer, length);
 
-        
-#ifdef PCSL_DEBUG
-    if (ret < 0)
-    pcsl_print("pcsl_file_write Error\n");
-#endif
+
+    if(ret < 0) {
+        pcsl_print("pcsl_file_write Error\n");
+    }
     return ret;
 }
 
@@ -181,24 +177,24 @@ int
 pcsl_file_unlink(const pcsl_string * fileName) {
     int ret;
 
-#ifdef PCSL_DEBUG
-  if (MAX_FILE_LEN < pcsl_string_utf16_length (fileName)) {
-    pcsl_print("pcsl_file_open() Error file length is too large");
-  }
-#endif
-
-  {
     javacall_utf16 utf16_fileName[MAX_FILE_LEN+1] = {0};
     jsize converted_length;
-    
-    if (PCSL_STRING_OK == pcsl_string_convert_to_utf16 (fileName, utf16_fileName,
-                                                        MAX_FILE_LEN+1, &converted_length))
-      ret = (JAVACALL_OK == javacall_file_delete(utf16_fileName, converted_length)) ? 0 : -1;
-    else 
-      ret = -1;
-  }
 
-  return ret;
+    if(MAX_FILE_LEN < pcsl_string_utf16_length (fileName)) {
+        pcsl_print("pcsl_file_open() Error file length is too large");
+    }
+
+
+
+    if(PCSL_STRING_OK == pcsl_string_convert_to_utf16 (fileName, utf16_fileName,
+                                                       MAX_FILE_LEN+1, &converted_length)) {
+        ret = (JAVACALL_OK == javacall_file_delete(utf16_fileName, converted_length)) ? 0 : -1;
+    } else {
+        ret = -1;
+    }
+
+
+    return ret;
 }
 
 
@@ -213,10 +209,9 @@ int
 pcsl_file_truncate(void *handle, long size) {
     int ret = javacall_file_truncate(handle, size);
 
-#ifdef PCSL_DEBUG
-    if (ret != JAVACALL_OK)
-    pcsl_print("pcsl_file_truncate Error\n");
-#endif
+    if(ret != JAVACALL_OK) {
+        pcsl_print("pcsl_file_truncate Error\n");
+    }
     return ret;
 }
 
@@ -236,10 +231,9 @@ long
 pcsl_file_seek(void *handle, long offset, long position) {
     long ret = (long)javacall_file_seek(handle, offset, position);
 
-#ifdef PCSL_DEBUG
-    if (ret == -1)
-    pcsl_print("pcsl_file_seek Error\n");
-#endif
+    if(ret == -1) {
+        pcsl_print("pcsl_file_seek Error\n");
+    }
     return ret;
 }
 
@@ -251,9 +245,6 @@ long
 pcsl_file_sizeofopenfile(void *handle) {
     long ret = (long)javacall_file_sizeofopenfile(handle);
 
-#ifdef PCSL_DEBUG
-    pcsl_print("pcsl_file_sizeofopenfile returned\n");
-#endif
     return ret;
 }
 
@@ -264,26 +255,23 @@ pcsl_file_sizeofopenfile(void *handle) {
  */
 long
 pcsl_file_sizeof(const pcsl_string * fileName) {
-  long ret;
-
-#ifdef PCSL_DEBUG
-  if (MAX_FILE_LEN < pcsl_string_utf16_length (fileName)) {
-    pcsl_print("pcsl_file_open() Error file length is too large");
-  }
-#endif
-
-  {
+    long ret;
     javacall_utf16 utf16_fileName[MAX_FILE_LEN+1] = {0};
     jsize converted_length;
-    
-    if (PCSL_STRING_OK == pcsl_string_convert_to_utf16 (fileName, utf16_fileName,
-                                                        MAX_FILE_LEN+1, &converted_length))
-      ret = (long)javacall_file_sizeof(utf16_fileName, converted_length);
-    else 
-      ret = -1;
-  }
 
-  return ret;
+    if(MAX_FILE_LEN < pcsl_string_utf16_length (fileName)) {
+        pcsl_print("pcsl_file_open() Error file length is too large");
+    }
+
+
+    if(PCSL_STRING_OK == pcsl_string_convert_to_utf16 (fileName, utf16_fileName,
+                                                       MAX_FILE_LEN+1, &converted_length)) {
+        ret = (long)javacall_file_sizeof(utf16_fileName, converted_length);
+    } else {
+        ret = -1;
+    }
+
+    return ret;
 }
 
 /**
@@ -292,26 +280,22 @@ pcsl_file_sizeof(const pcsl_string * fileName) {
  */
 int
 pcsl_file_exist(const pcsl_string * fileName) {
-  int ret;
-
-#ifdef PCSL_DEBUG
-  if (MAX_FILE_LEN < pcsl_string_utf16_length (fileName)) {
-    pcsl_print("pcsl_file_open() Error file length is too large");
-  }
-#endif
-
-  {
+    int ret;
     javacall_utf16 utf16_fileName[MAX_FILE_LEN+1] = {0};
     jsize converted_length;
-    
-    if (PCSL_STRING_OK == pcsl_string_convert_to_utf16 (fileName, utf16_fileName,
-                                                        MAX_FILE_LEN+1, &converted_length))
-      ret = (JAVACALL_OK == javacall_file_exist(utf16_fileName, converted_length)) ? PCSL_TRUE : PCSL_FALSE;
-    else 
-      ret = -1;
-  }
 
-  return ret;
+    if(MAX_FILE_LEN < pcsl_string_utf16_length (fileName)) {
+        pcsl_print("pcsl_file_open() Error file length is too large");
+    }
+
+    if(PCSL_STRING_OK == pcsl_string_convert_to_utf16 (fileName, utf16_fileName,
+                                                       MAX_FILE_LEN+1, &converted_length)) {
+        ret = (JAVACALL_OK == javacall_file_exist(utf16_fileName, converted_length)) ? PCSL_TRUE : PCSL_FALSE;
+    } else {
+        ret = -1;
+    }
+
+    return ret;
 }
 
 /* Force the data to be written into the FS storage */
@@ -331,32 +315,28 @@ pcsl_file_commitwrite(void *handle) {
  */
 int
 pcsl_file_rename(const pcsl_string * oldName, const pcsl_string * newName) {
-  int ret;
-
-#ifdef PCSL_DEBUG
-  if ( (MAX_FILE_LEN < pcsl_string_utf16_length (oldName)) || 
-       (MAX_FILE_LEN < pcsl_string_utf16_length (oldName)) ) {
-    pcsl_print("pcsl_file_open() Error file length is too large");
-  }
-#endif
-
-  {
+    int ret;
     javacall_utf16 utf16_oldName[MAX_FILE_LEN+1] = {0};
     jsize converted_length_old;
     javacall_utf16 utf16_newName[MAX_FILE_LEN+1] = {0};
     jsize converted_length_new;
-    
-    if ( (PCSL_STRING_OK == pcsl_string_convert_to_utf16 (oldName, utf16_oldName,
-                                                          MAX_FILE_LEN+1, &converted_length_old)) &&
-         (PCSL_STRING_OK == pcsl_string_convert_to_utf16 (newName, utf16_newName,
-                                                          MAX_FILE_LEN+1, &converted_length_new)) )
-      ret = (JAVACALL_OK == javacall_file_rename(utf16_oldName, converted_length_old,
-                                                 utf16_newName, converted_length_new)) ? 0 : -1;
-    else 
-      ret = -1;
-  }
 
-  return ret;
+    if((MAX_FILE_LEN < pcsl_string_utf16_length (oldName)) || 
+       (MAX_FILE_LEN < pcsl_string_utf16_length (oldName))) {
+        pcsl_print("pcsl_file_open() Error file length is too large");
+    }
+
+    if((PCSL_STRING_OK == pcsl_string_convert_to_utf16 (oldName, utf16_oldName,
+                                                        MAX_FILE_LEN+1, &converted_length_old)) &&
+       (PCSL_STRING_OK == pcsl_string_convert_to_utf16 (newName, utf16_newName,
+                                                        MAX_FILE_LEN+1, &converted_length_new))) {
+        ret = (JAVACALL_OK == javacall_file_rename(utf16_oldName, converted_length_old,
+                                                   utf16_newName, converted_length_new)) ? 0 : -1;
+    } else {
+        ret = -1;
+    }
+
+    return ret;
 }
 
 
@@ -375,41 +355,38 @@ pcsl_file_rename(const pcsl_string * oldName, const pcsl_string * newName) {
  */
 void *
 pcsl_file_openfilelist(const pcsl_string * string) {
-  void * ret;
-  pcsl_string path = PCSL_STRING_NULL_INITIALIZER;
-  const char wd[] = ".";
-  jchar sep;
-  jint pathLen;
-
-#ifdef PCSL_DEBUG
-  if (MAX_FILE_LEN < pcsl_string_utf16_length (string)) {
-    pcsl_print("pcsl_file_open() Error file length is too large");
-  }
-#endif
-
-  sep = pcsl_file_getfileseparator ();
-  pathLen = pcsl_string_last_index_of (string, sep);
-  if (pathLen <= 0) {
-    if (PCSL_STRING_OK != pcsl_string_convert_from_utf8 ((jbyte *)wd, 1, &path))
-      return NULL;
-  } else {
-    if (PCSL_STRING_OK != pcsl_string_substring (string, 0, pathLen, &path))
-      return NULL;
-  }
-
-  {
+    void * ret;
+    pcsl_string path = PCSL_STRING_NULL_INITIALIZER;
+    const char wd[] = ".";
+    jchar sep;
+    jint pathLen;
     javacall_utf16 utf16_dirName[MAX_FILE_LEN+1] = {0};
     jsize converted_length;
-    
-    if (PCSL_STRING_OK == pcsl_string_convert_to_utf16 (&path, utf16_dirName,
-                                                        MAX_FILE_LEN+1, &converted_length))
-      ret = javacall_dir_open(utf16_dirName, converted_length);
-    else 
-      ret = NULL;
-  }
 
-  pcsl_string_free (&path);
-  return ret;
+    if(MAX_FILE_LEN < pcsl_string_utf16_length (string)) {
+        pcsl_print("pcsl_file_open() Error file length is too large");
+    }
+
+    sep = pcsl_file_getfileseparator ();
+    pathLen = pcsl_string_last_index_of (string, sep);
+    if(pathLen <= 0) {
+        if(PCSL_STRING_OK != pcsl_string_convert_from_utf8 ((jbyte *)wd, 1, &path))
+            return NULL;
+    } else {
+        if(PCSL_STRING_OK != pcsl_string_substring (string, 0, pathLen, &path))
+            return NULL;
+    }
+
+
+    if(PCSL_STRING_OK == pcsl_string_convert_to_utf16 (&path, utf16_dirName,
+                                                       MAX_FILE_LEN+1, &converted_length)) {
+        ret = javacall_dir_open(utf16_dirName, converted_length);
+    } else {
+        ret = NULL;
+    }
+
+    pcsl_string_free (&path);
+    return ret;
 
 }
 
@@ -422,10 +399,8 @@ pcsl_file_openfilelist(const pcsl_string * string) {
  */
 int
 pcsl_file_closefilelist(void *handle) {
-    if (handle == 0) {
-#ifdef PCSL_DEBUG
+    if(handle == 0) {
         pcsl_print("pcsl_file_closefilelist() Invalid Handle\n");
-#endif
         return -1;
     }
 
@@ -441,9 +416,9 @@ pcsl_file_closefilelist(void *handle) {
 long
 pcsl_file_getfreespace() {
 
-  long ret = (long)javacall_dir_get_free_space_for_java();
+    long ret = (long)javacall_dir_get_free_space_for_java();
 
-  return ret;
+    return ret;
 }
 
 /**
@@ -454,7 +429,7 @@ pcsl_file_getfreespace() {
  * @return size of used spacereturns -1 in case of an error,
  */
 long pcsl_file_getusedspace(const pcsl_string * dirName) {
-  return 0;
+    return 0;
 }
 
 
@@ -464,49 +439,49 @@ pcsl_file_getnextentry(void *handle,
                        const pcsl_string * string,
                        pcsl_string * result) {
 
-  pcsl_string prefix = PCSL_STRING_NULL_INITIALIZER;
-  pcsl_string match = PCSL_STRING_NULL_INITIALIZER;
-  jchar sep;
-  jint pathLen;
-  javacall_utf16 * tmp;
-  int utfMatchLen;
+    pcsl_string prefix = PCSL_STRING_NULL_INITIALIZER;
+    pcsl_string match = PCSL_STRING_NULL_INITIALIZER;
+    jchar sep;
+    jint pathLen;
+    javacall_utf16 * tmp;
+    int utfMatchLen;
 
-  sep = pcsl_file_getfileseparator ();
-  pathLen = pcsl_string_last_index_of (string, sep);
-  if (pathLen < 0)
-    pathLen = -1;
-  
-  if (PCSL_STRING_OK != pcsl_string_substring (string, pathLen+1, pcsl_string_length (string), &prefix))
-    return -1;
+    sep = pcsl_file_getfileseparator ();
+    pathLen = pcsl_string_last_index_of (string, sep);
+    if(pathLen < 0)
+        pathLen = -1;
 
-  while (PCSL_TRUE) {
-    tmp = javacall_dir_get_next (handle, &utfMatchLen);
-    if (NULL == tmp) {
-      pcsl_string_free (&prefix);
-      return -1;
+    if(PCSL_STRING_OK != pcsl_string_substring (string, pathLen+1, pcsl_string_length (string), &prefix))
+        return -1;
+
+    while(PCSL_TRUE) {
+        tmp = javacall_dir_get_next (handle, &utfMatchLen);
+        if(NULL == tmp) {
+            pcsl_string_free (&prefix);
+            return -1;
+        };
+
+        if(PCSL_STRING_OK != pcsl_string_convert_from_utf16 (tmp, utfMatchLen, &match)) {
+            pcsl_string_free (&prefix);
+            return -1;
+        };
+
+        if(pcsl_string_starts_with (&match, &prefix))
+            break;
+
+        pcsl_string_free (&match);
     };
-    
-    if (PCSL_STRING_OK != pcsl_string_convert_from_utf16 (tmp, utfMatchLen, &match)) {
-      pcsl_string_free (&prefix);
-      return -1;
-    };
 
-    if (pcsl_string_starts_with (&match, &prefix))
-      break;
-
+    pcsl_string_free (&prefix);
     pcsl_string_free (&match);
-  };
 
-  pcsl_string_free (&prefix);
-  pcsl_string_free (&match);
-
-  if ( (PCSL_STRING_OK == pcsl_string_substring (string, 0, pathLen+1, result))  &&
-       (PCSL_STRING_OK == pcsl_string_append_buf (result, tmp, utfMatchLen)) )
-    return 0;
-  else {
-    pcsl_string_free (result);
-    return -1;
-  }
+    if((PCSL_STRING_OK == pcsl_string_substring (string, 0, pathLen+1, result))  &&
+       (PCSL_STRING_OK == pcsl_string_append_buf (result, tmp, utfMatchLen)))
+        return 0;
+    else {
+        pcsl_string_free (result);
+        return -1;
+    }
 }
 
 
@@ -529,5 +504,5 @@ pcsl_file_getfileseparator() {
  */
 jchar
 pcsl_file_getpathseparator() {
-  return ':';
+    return ':';
 }

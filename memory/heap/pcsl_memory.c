@@ -63,16 +63,6 @@
 #include <pcsl_print.h>
 #include <pcsl_memory_port.h>
 
-#ifdef PCSL_DEBUG
-/* 
- * define debug macros and function which use pcsl_print() for output 
- */
-#define REPORT(msg) report(msg)
-#define REPORT1(msg, a1) report(msg, a1)
-#define REPORT2(msg, a1, a2) report(msg, a1, a2)
-#define REPORT3(msg, a1, a2, a3) report(msg, a1, a2, a3)
-#define REPORT4(msg, a1, a2, a3, a4) report(msg, a1, a2, a3, a4)
-
 /*
  * maximum lenght of debug output using report methods
  */
@@ -120,8 +110,19 @@ static void report(char* message, ...){
     }
 }
 
+
+#ifdef PCSL_VERBOSE
+/* 
+ * define debug macros and function which use pcsl_print() for output 
+ */
+#define REPORT(msg) report(msg)
+#define REPORT1(msg, a1) report(msg, a1)
+#define REPORT2(msg, a1, a2) report(msg, a1, a2)
+#define REPORT3(msg, a1, a2, a3) report(msg, a1, a2, a3)
+#define REPORT4(msg, a1, a2, a3, a4) report(msg, a1, a2, a3, a4)
+
 /**
- * An internal helper function used when PCSL_DEBUG is defined.
+ * An internal helper function used when PCSL_VERBOSE is defined.
  * 
  * print_alloc( what, filename, lineno);
  */
@@ -130,7 +131,7 @@ static void print_alloc(const char* what, char* filename, int lineno) {
            what, filename, lineno);
 }
 
-#else  /* PCSL_DEBUG is not defined */
+#else  /* PCSL_VERBOSE is not defined */
 
 #define REPORT(msg)
 #define REPORT1(msg, a1)
@@ -146,13 +147,13 @@ static void print_alloc(const char* what, char* filename, int lineno) {
 typedef struct _pcslMemStruct {
     unsigned short magic;                                    /* magic number */
     char           free;           /* 1 == block is free, 0 == block is used */
-#ifdef PCSL_DEBUG
+#ifdef PCSL_VERBOSE
     char           guardSize;           /* Size of tail guard data; in bytes */
 #else
     char           reserved;
 #endif 
     unsigned int   size;                                    /* size of block */
-#ifdef PCSL_DEBUG
+#ifdef PCSL_VERBOSE
     char*          filename;         /* filename where allocation took place */
     unsigned int   lineno;        /* line number wehre allocation took place */
     unsigned int   guard;                                    /* memory guard */
@@ -233,7 +234,7 @@ pcsl_end_memory(int* count, int* size) {
                     pcslMemoryPtr);
             return -1;
         }
-#ifdef PCSL_DEBUG
+#ifdef PCSL_VERBOSE
         if (pcslMemoryHdr->guard != GUARD_WORD) {
             report("ERROR: Corrupted end of memory header: 0x%p\n",
                    pcslMemoryPtr);
@@ -252,7 +253,7 @@ pcsl_end_memory(int* count, int* size) {
 
         if (pcslMemoryHdr->free != 1) {
 
-#ifdef PCSL_DEBUG
+#ifdef PCSL_VERBOSE
             report("WARNING: memory leak: size= %d  address= 0x%p\n",
                    pcslMemoryHdr->size,
                    (void*)((char*)pcslMemoryHdr + sizeof(_PcslMemHdr)));
@@ -324,7 +325,7 @@ pcsl_mem_initialize_impl0(void *startAddr, int size) {
     pcslMemoryHdr->free  = 1;
     pcslMemoryHdr->size  = (PcslMemory - PcslMemoryStart)
                            + size - sizeof(_PcslMemHdr);
-#ifdef PCSL_DEBUG
+#ifdef PCSL_VERBOSE
     pcslMemoryHdr->guard = GUARD_WORD;
     pcslMemoryHdr->guardSize = 0;
 #endif
@@ -347,14 +348,13 @@ pcsl_mem_finalize_impl0() {
 
     ret = pcsl_end_memory(&count, &size);
 
-#ifdef PCSL_DEBUG
+
     if (ret > 0) {
       report("WARNING: %d memory leak(s); %d bytes!\n",
              count, size);
     }
     report("** Total memory: %d\n** Highwater mark:%d",
            pcsl_mem_get_total_heap_impl0(), PcslMemoryHighWaterMark);
-#endif 
 
 #ifndef PCSL_MEMORY_USE_STATIC       
     pcsl_heap_deallocate_port(PcslMemory);
@@ -376,7 +376,7 @@ pcsl_mem_finalize_impl0() {
  *   returns:     pointer to the newly allocated memory
  *                
  */
-#ifdef PCSL_DEBUG
+#ifdef PCSL_VERBOSE
 void*
 pcsl_mem_malloc_impl0(unsigned int size, char* filename, int lineno) {
 #else
@@ -390,7 +390,7 @@ pcsl_mem_malloc_impl0(unsigned int size) {
     char*          pcslMemoryPtr;
     _PcslMemHdrPtr pcslMemoryHdr;
 
-#ifdef PCSL_DEBUG
+#ifdef PCSL_VERBOSE
     int   guardSize = 0;
     void* guardPos = NULL;
     int   i = 0;
@@ -425,7 +425,7 @@ pcsl_mem_malloc_impl0(unsigned int size) {
                         /* then coalesce */
                         pcslMemoryHdr->size += tempHdr->size
                             + sizeof(_PcslMemHdr);
-#ifdef PCSL_DEBUG
+#ifdef PCSL_VERBOSE
                         pcslMemoryHdr->guardSize = 0;
 #endif
                         REPORT2("DEBUG: Coalescing blocks 0x%p and 0x%p\n",
@@ -454,7 +454,7 @@ pcsl_mem_malloc_impl0(unsigned int size) {
                     nextHdr->size = pcslMemoryHdr->size 
                                     - numBytesToAllocate 
                                     - sizeof(_PcslMemHdr);
-#ifdef PCSL_DEBUG
+#ifdef PCSL_VERBOSE
                     nextHdr->guard    = GUARD_WORD;
                     nextHdr->guardSize = 0;
 #endif
@@ -463,7 +463,7 @@ pcsl_mem_malloc_impl0(unsigned int size) {
                 pcslMemoryHdr->free     = 0;
                 loc = (void*)((char*)pcslMemoryHdr + sizeof(_PcslMemHdr));
 
-#ifdef PCSL_DEBUG
+#ifdef PCSL_VERBOSE
                 pcslMemoryHdr->guard    = GUARD_WORD;      /* Add head guard */
                 pcslMemoryHdr->filename = filename;
                 pcslMemoryHdr->lineno   = lineno;
@@ -508,7 +508,7 @@ pcsl_mem_malloc_impl0(unsigned int size) {
  *   returns:     pointer to the newly allocated and cleared memory
  *                
  */
-#ifdef PCSL_DEBUG
+#ifdef PCSL_VERBOSE
 void*
 pcsl_mem_calloc_impl0(unsigned int nelem, unsigned int elsize, 
                      char* filename, int lineno) {
@@ -546,7 +546,7 @@ pcsl_mem_calloc_impl0(unsigned int nelem, unsigned int elsize) {
  *   returns:     pointer to the re-allocated memory
  *                
  */
-#ifdef PCSL_DEBUG
+#ifdef PCSL_VERBOSE
 void*
 pcsl_mem_realloc_impl0(void* ptr, unsigned int size, char* filename, int lineno) {
 #else
@@ -558,7 +558,7 @@ pcsl_mem_realloc_impl0(void* ptr, unsigned int size) {
 
     /* If ptr is NULL, realloc() behaves like malloc() for the given size. */
     if (ptr == NULL) {
-#ifdef PCSL_DEBUG
+#ifdef PCSL_VERBOSE
         ptr = pcsl_mem_malloc_impl0(size, filename, lineno);
 #else
         ptr = pcsl_mem_malloc_impl0(size);
@@ -570,7 +570,7 @@ pcsl_mem_realloc_impl0(void* ptr, unsigned int size) {
 
     if (memHdr->size != size) {
         if (size != 0) {
-#ifdef PCSL_DEBUG
+#ifdef PCSL_VERBOSE
             newPtr = pcsl_mem_malloc_impl0(size, filename, lineno);
 #else
             newPtr = pcsl_mem_malloc_impl0(size);
@@ -581,7 +581,7 @@ pcsl_mem_realloc_impl0(void* ptr, unsigned int size) {
                 } else {
                     memcpy(newPtr, ptr, size);
                 }
-#ifdef PCSL_DEBUG
+#ifdef PCSL_VERBOSE
                 pcsl_mem_free_impl0(ptr, filename, lineno);
 #else
                 pcsl_mem_free_impl0(ptr);
@@ -589,7 +589,7 @@ pcsl_mem_realloc_impl0(void* ptr, unsigned int size) {
             }
         } else {
             /* When size == 0, realloc() acts just like free() */
-#ifdef PCSL_DEBUG
+#ifdef PCSL_VERBOSE
             pcsl_mem_free_impl0(ptr, filename, lineno);
 #else
             pcsl_mem_free_impl0(ptr);
@@ -615,7 +615,7 @@ pcsl_mem_realloc_impl0(void* ptr, unsigned int size) {
  *                
  */
 
-#ifdef PCSL_DEBUG
+#ifdef PCSL_VERBOSE
 
 char*
 pcsl_mem_strdup_impl0(const char *s1, char* filename, int lineno) {
@@ -655,7 +655,7 @@ pcsl_mem_strdup_impl0(const char *s1) {
  *                
  */
 
-#ifdef PCSL_DEBUG
+#ifdef PCSL_VERBOSE
 	
 void
 pcsl_mem_free_impl0(void *ptr, char *filename, int lineno) {
@@ -722,7 +722,7 @@ pcsl_mem_free_impl0(void *ptr) {
 }
 #endif
 
-#ifdef PCSL_DEBUG
+#ifdef PCSL_VERBOSE
 
 /**
  * @internal
@@ -792,7 +792,7 @@ pcsl_mem_get_free_heap_impl0() {
 
         pcslMemoryHdr = (_PcslMemHdrPtr)pcslMemoryPtr;
 
-#ifdef PCSL_DEBUG
+#ifdef PCSL_VERBOSE
         if (pcslMemoryHdr->magic != MAGIC) {
             report("ERROR: Corrupted start of memory header: 0x%p\n", 
                    pcslMemoryPtr);
@@ -857,7 +857,7 @@ int pcsl_mem_malloc_dump_impl0(int countMemoryLeaksOnly)
 
             if (localpcslMallocMemHdr->free != 1) {
                 numberOfAllocatedBlocks += 1;
-#ifdef PCSL_DEBUG
+#ifdef PCSL_VERBOSE
                 report("WARNING: memory leak: size=%d  address=0x%p\n",
                        localpcslMallocMemHdr->size, 
                        (void*)((char*)localpcslMallocMemHdr + 
