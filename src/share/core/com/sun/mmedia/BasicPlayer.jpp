@@ -1038,9 +1038,9 @@ public abstract class BasicPlayer implements Player
             {
                 allCtrls[ i ] = all135Ctrls[ i ];
             }
-            for(      ; i < allCtrls.length; i++ )
+            for( int j = 0; i < allCtrls.length; i++, j++ )
             {
-                allCtrls[ i ] = ammsCtrlNames[ i ];
+                allCtrls[ i ] = ammsCtrlNames[ j ];
             }
         }
         return allCtrls;
