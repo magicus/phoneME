@@ -47,9 +47,9 @@ extern int wav_setStreamPlayerData(ah_wav *handle, const void* buffer, long leng
 #if( defined( USE_QT_SDK ) )
 extern javacall_handle MMAPIQTDecoderOpen(ah_wav *wav);
 extern javacall_result MMAPIQTDecoderClose(javacall_handle h);
-extern javacall_result MMAPIQTDecoder(javacall_handle h);
-extern javacall_result StartQtDecode( javacall_handle h);
-extern javacall_result DoQtDecode( javacall_handle h, void* buffer, int samples);
+extern javacall_result MMAPIQTStartDecode( javacall_handle h);
+extern javacall_result MMAPIQTDecode( javacall_handle h, void* buffer, int samples);
+extern javacall_result MMAPIQTSetTime(javacall_handle h, long *ms);
 #endif // USE_QT_SDK
 
 
@@ -154,7 +154,7 @@ static void MQ234_CALLBACK fill_qt(void* userData,
             pWAV->playing = 0;
             memset(buffer, 0, bytesCnt);
         } else {
-            DoQtDecode( pWAV->decoder, buffer, samples);
+            MMAPIQTDecode( pWAV->decoder, buffer, samples);
         }
     }
 }
@@ -1236,13 +1236,15 @@ static javacall_result audio_qs_acquire_device(javacall_handle handle)
             }
 #elif( defined( AMR_USE_QT ) )
             h->wav.decoder = MMAPIQTDecoderOpen(&(h->wav));
-            if (h->wav.decoder) {
-                if (JAVACALL_OK != MMAPIQTDecoder(h->wav.decoder)) {
-                    return JAVACALL_FAIL;
-                }
+            if (h->wav.decoder == NULL) {
+                return JAVACALL_FAIL;
             }
-            if (JAVACALL_OK == StartQtDecode(h->wav.decoder)) {
+            if (JAVACALL_OK == MMAPIQTStartDecode(h->wav.decoder)) {
                 h->wav.stream = mQ234_CreateWaveStreamPlayer(&(h->wav), fill_qt, h->wav.channels, h->wav.rate );
+            } else {
+                MMAPIQTDecoderClose(h->wav.decoder);
+                h->wav.decoder = NULL;
+                return JAVACALL_FAIL;
             }
 #endif 
             if( NULL != h->wav.originalData )
@@ -1813,7 +1815,17 @@ static javacall_result audio_qs_set_time(javacall_handle handle, long* ms){
         case JC_FMT_MS_PCM:
         case JC_FMT_AMR: // will need revisit when real streaming will be used
         {
-            int newPos = h->wav.bytesPerMilliSec * (*ms);
+            int newPos;
+#if( defined( AMR_USE_QT ) )
+            if (h->hdr.mediaType == JC_FMT_AMR) {
+                if (h->wav.decoder != NULL) {
+                    MMAPIQTSetTime(h->wav.decoder, ms);
+                } else {
+                    return JAVACALL_FAIL;
+                }
+            }
+#endif
+            newPos = h->wav.bytesPerMilliSec * (*ms);
 
             if(newPos > h->wav.streamBufferLen) newPos = h->wav.streamBufferLen;
 
