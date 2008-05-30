@@ -1314,7 +1314,11 @@ static javacall_result audio_qs_get_java_buffer_size(javacall_handle handle,
         *first_data_size  = 0;
     } else {
         if (h->hdr.dataBufferLen == 0) {
-            *java_buffer_size = DEFAULT_BUFFER_SIZE;
+            if (h->hdr.wholeContentSize > 0 && h->hdr.wholeContentSize < DEFAULT_BUFFER_SIZE) {
+                *java_buffer_size = h->hdr.wholeContentSize;
+            } else {
+                *java_buffer_size = DEFAULT_BUFFER_SIZE;
+            }
             *first_data_size  = DEFAULT_PACKET_SIZE;
         } else {
             *java_buffer_size = h->hdr.dataBufferLen;
