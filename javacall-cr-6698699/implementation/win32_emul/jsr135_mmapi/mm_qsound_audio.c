@@ -47,9 +47,9 @@ extern int wav_setStreamPlayerData(ah_wav *handle, const void* buffer, long leng
 #if( defined( USE_QT_SDK ) )
 extern javacall_handle MMAPIQTDecoderOpen(ah_wav *wav);
 extern javacall_result MMAPIQTDecoderClose(javacall_handle h);
-extern javacall_result MMAPIQTStartDecode( javacall_handle h);
-extern javacall_result MMAPIQTDecode( javacall_handle h, void* buffer, int samples);
-extern javacall_result MMAPIQTSetTime(javacall_handle h, long *ms);
+extern javacall_result MMAPIQTStartDecode( javacall_handle h, ah_wav *wav);
+extern javacall_result MMAPIQTDecode( javacall_handle h, ah_wav *wav, void* buffer, int samples);
+extern javacall_result MMAPIQTSetTime(javacall_handle h, ah_wav *wav, long *ms);
 #endif // USE_QT_SDK
 
 
@@ -154,7 +154,7 @@ static void MQ234_CALLBACK fill_qt(void* userData,
             pWAV->playing = 0;
             memset(buffer, 0, bytesCnt);
         } else {
-            MMAPIQTDecode( pWAV->decoder, buffer, samples);
+            MMAPIQTDecode( pWAV->decoder, pWAV, buffer, samples);
         }
     }
 }
@@ -1239,7 +1239,7 @@ static javacall_result audio_qs_acquire_device(javacall_handle handle)
             if (h->wav.decoder == NULL) {
                 return JAVACALL_FAIL;
             }
-            if (JAVACALL_OK == MMAPIQTStartDecode(h->wav.decoder)) {
+            if (JAVACALL_OK == MMAPIQTStartDecode(h->wav.decoder, &(h->wav))) {
                 h->wav.stream = mQ234_CreateWaveStreamPlayer(&(h->wav), fill_qt, h->wav.channels, h->wav.rate );
             } else {
                 MMAPIQTDecoderClose(h->wav.decoder);
@@ -1823,7 +1823,7 @@ static javacall_result audio_qs_set_time(javacall_handle handle, long* ms){
 #if( defined( AMR_USE_QT ) )
             if (h->hdr.mediaType == JC_FMT_AMR) {
                 if (h->wav.decoder != NULL) {
-                    MMAPIQTSetTime(h->wav.decoder, ms);
+                    MMAPIQTSetTime(h->wav.decoder, &(h->wav), ms);
                 } else {
                     return JAVACALL_FAIL;
                 }
