@@ -38,12 +38,9 @@ public class Jsr234Proxy {
             try {
                 _instance = ( Jsr234Proxy )Class.forName( "com.sun.amms." +
                         "SupplementsToMMAPI" ).newInstance();
-                System.out.println( "!!! DEBUG !! JSR-234 Proxy is normal" );
             } catch ( Throwable t )
             {
-                t.printStackTrace();
                 _instance = new Jsr234Proxy();
-                System.out.println( "!!! DEBUG !! JSR-234 Proxy stubbed" );
             }
         }
         
