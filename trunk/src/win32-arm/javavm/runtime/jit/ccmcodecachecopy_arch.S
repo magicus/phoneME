@@ -48,8 +48,8 @@
 #include "javavm/runtime/jit/ccmglue_cpu.S"
 #include "javavm/runtime/jit/ccmallocators_cpu.S"
 #include "javavm/runtime/jit/ccminvokers_cpu.S"
-#include "javavm/runtime/jit/ccmmath_cpu.S"
 #include "javavm/runtime/jit/ccmintrinsics_asm_cpu.S"
+#include "javavm/runtime/jit/ccmmath_cpu.S"
 #include "javavm/runtime/memory_asm_cpu.S"
 
 /*************************************************************************
