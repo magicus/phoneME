@@ -256,9 +256,10 @@ pcsl_end_memory(int* count, int* size) {
             report("WARNING: memory leak: size= %d  address= 0x%p\n",
                    pcslMemoryHdr->size,
                    (void*)((char*)pcslMemoryHdr + sizeof(_PcslMemHdr)));
+#ifdef PCSL_MEMORY_DEBUG
             print_alloc("allocated", 
                         pcslMemoryHdr->filename, pcslMemoryHdr->lineno);
-
+#endif 
             pcsl_mem_free((void*)((char*)pcslMemoryHdr + sizeof(_PcslMemHdr)));
             *count += 1;
             *size  += pcslMemoryHdr->size;
@@ -701,9 +702,8 @@ void pcsl_mem_free_impl0(void *ptr) {
                             pcslMemoryHdr->filename, 
                             pcslMemoryHdr->lineno);
                 print_alloc("freed from", filename, lineno);
-#endif 
             }
-
+#endif 
             report("DEBUG: free %d bytes: 0x%p\n", pcslMemoryHdr->size, ptr);
 #ifdef PCSL_MEMORY_DEBUG
             print_alloc("allocated", pcslMemoryHdr->filename, pcslMemoryHdr->lineno);
@@ -816,8 +816,7 @@ pcsl_mem_get_free_heap_impl0() {
 
 
 /* Set countMemoryLeaksOnly = 0 in order to get more verbose information */
-int pcsl_mem_malloc_dump_impl0(int countMemoryLeaksOnly)
-{
+int pcsl_mem_malloc_dump_impl0(int countMemoryLeaksOnly) {
     char *localpcslMallocMemPtr = NULL;
     char *localpcslMallocMemStart = PcslMemoryStart;
     char *localpcslMallocMemEnd = PcslMemoryEnd;
@@ -850,17 +849,19 @@ int pcsl_mem_malloc_dump_impl0(int countMemoryLeaksOnly)
 
             if (localpcslMallocMemHdr->free != 1) {
                 numberOfAllocatedBlocks += 1;
-#ifdef PCSL_MEMORY_DEBUG
+
                 report("WARNING: memory leak: size=%d  address=0x%p\n",
                        localpcslMallocMemHdr->size, 
                        (void*)((char*)localpcslMallocMemHdr + 
                                sizeof(_PcslMemHdr)));
+#ifdef PCSL_MEMORY_DEBUG
                 print_alloc("allocated", 
                             localpcslMallocMemHdr->filename, 
                             localpcslMallocMemHdr->lineno);
 #endif
             }
         }
-    }
+    } /* end of for */
     return numberOfAllocatedBlocks;
 }
+
