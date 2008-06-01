@@ -56,6 +56,11 @@ SUBSYSTEM_SECURITY_JAVA_FILES += \
 vpath % $(PERMISSIONS_DIR)/reference/native
 SUBSYSTEM_SECURITY_NATIVE_FILES += LoadPolicy_kni.c
 
+# Include system properties in Configuration
+SUBSYSTEM_CONFIGURATION_INPUT_FILES += \
+	 $(PERMISSIONS_DIR)/reference/config/properties_security.xml
+
+
 ifeq ($(USE_I3_TEST), true)
 SUBSYSTEM_SECURITY_I3TEST_JAVA_FILES += \
     $(PERMISSIONS_DIR)/reference/i3test/com/sun/midp/security/TestPermissions.java
