@@ -98,9 +98,9 @@ generate_config:
 	@echo '#ifndef _PCSL_CONFIG_H_' >> $(PCSL_CONFIG_FILENAME)
 	@echo '#define _PCSL_CONFIG_H_' >> $(PCSL_CONFIG_FILENAME)
 	@echo  >> $(PCSL_CONFIG_FILENAME)
-ifeq ($(USE_PCSL_VERBOSE), true)
+ifeq ($(USE_PCSL_MEMORY_DEBUG), true)
 	@echo '/* Build PCSL library with DEBUG support */' >> $(PCSL_CONFIG_FILENAME)
-	@echo '#define PCSL_VERBOSE' >> $(PCSL_CONFIG_FILENAME)
+	@echo '#define PCSL_MEMORY_DEBUG' >> $(PCSL_CONFIG_FILENAME)
 endif
 ifeq ($(USE_DATAGRAM), true)
 	@echo '/* Enable datagram API */' >> $(PCSL_CONFIG_FILENAME)

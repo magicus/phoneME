@@ -187,8 +187,9 @@ extern "C" {
 /**
  * Maximum host name length
  */
+#ifndef MAX_HOST_LENGTH
 #define MAX_HOST_LENGTH MAX_HOST_LENGTH_MD
-
+#endif 
 /**
  * Performs platform-specific initialization of the networking system.
  * 
@@ -196,6 +197,16 @@ extern "C" {
  *         PCSL_NET_IOERROR for an error
  */
 extern int pcsl_network_init(void);
+
+extern int pcsl_network_init_start(void);
+extern int pcsl_network_init_finish(void);
+
+
+int pcsl_network_finalize_start(void);
+int pcsl_network_finalize_finish(void);
+
+void pcsl_network_init_finalize_request(int milliSecondsFromNow);
+void pcsl_network_cancel_finalize_request(void);
 
 /**
  * Initiates lookup of the given host name to find its IP address.
