@@ -22,9 +22,39 @@
  * information or have any questions.
  */
 
-//#include "lime.h"
+#include "lime.h"
 #include "multimedia.h"
 #include "mmmididev.h"
+#include <stdio.h>
+
+//=============================================================================
+
+#define LIME_MMAPI_PACKAGE "com.sun.mmedia"
+#define LIME_MMAPI_CLASS "JavaCallBridge"
+
+void mmSetStatusLine( const char* fmt, ... ) {
+    char           str8[ 256 ];
+    wchar_t        str16[ 256 ];
+    int            str16_len;
+	va_list        args;
+    javacall_int64 res;
+
+    static LimeFunction* f = NULL;
+
+	va_start(args, fmt);
+    vsprintf( str8, fmt, args );
+	va_end(args);
+
+    str16_len = swprintf( str16, 256, L"%S", str8 );
+
+    if( NULL == f ) {
+        f = NewLimeFunction( LIME_MMAPI_PACKAGE,
+                             LIME_MMAPI_CLASS,
+                             "put_status_string" );
+    }
+
+    f->call( f, &res, str16, str16_len );
+}
 
 //=============================================================================
 
