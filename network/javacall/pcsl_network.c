@@ -37,8 +37,6 @@
 
 #include <javacall_network.h>
 #include <javacall_socket.h>
-#include <javacall_logging.h>
-#include <javacall_time.h>
 
 #include <stdio.h>
 #include <string.h>
@@ -403,32 +401,4 @@ int pcsl_network_addrToString(unsigned char *ipBytes,
  */
 char * pcsl_inet_ntoa (void *ipBytes) {
     return javacall_inet_ntoa (ipBytes);
-}
-
-
-static javacall_handle timer_handle= NULL;
-
-static void networkFinalizeCallback(javacall_handle handle) {
-    javacall_print("networkFinalizeCallback: notify JAVACALL_NETWORK_NOT_INUSE\n"); 
-    javanotify_network_event(JAVACALL_NETWORK_DOWN_REQUEST);
-}
-
-void pcsl_network_init_finalize_request(int milliSecondsFromNow) {
-    javacall_result rtn;
-
-    /* If there is a previous network close request, cancel it 1st */
-    pcsl_network_cancel_finalize_request();
-    
-    rtn = javacall_time_initialize_timer(milliSecondsFromNow,JAVACALL_FALSE,networkFinalizeCallback,&timer_handle);
-    if (rtn != JAVACALL_OK) {
-        javacall_print("requestNetworkClose: javacall_time_initialize_timer error\n"); 
-    }
-}
-
-void pcsl_network_cancel_finalize_request(void) {
-    if (timer_handle != NULL) {
-        javacall_time_finalize_timer(timer_handle);
-        timer_handle=NULL;
-        javacall_print("cancelNetworkClose: cancelled pending network close\n"); 
-    }
 }
