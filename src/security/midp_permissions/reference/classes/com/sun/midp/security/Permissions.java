@@ -716,12 +716,12 @@ public final class Permissions {
                 if (MANUFACTURER_DOMAIN_BINDING.startsWith(item))
                     continue;
 
-                boolean isTrusted = false;
+                boolean isTrusted = true;
                 String name;
                 int pos = item.indexOf(',');
                 if (pos > 0) {
                     name = item.substring(0,pos);
-                    if (item.charAt(pos+1) == 't')
+                    if (item.charAt(pos+1) == 'u')
                         isTrusted = true;
                 } else
                     name = item;
