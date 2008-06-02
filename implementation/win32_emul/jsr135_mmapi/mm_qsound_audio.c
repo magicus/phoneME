@@ -44,6 +44,14 @@ globalMan g_QSoundGM[GLOBMAN_INDEX_MAX];   // IMPL_NOTE... NEED REVISIT
 
 extern int wav_setStreamPlayerData(ah_wav *handle, const void* buffer, long length);
 
+#if( defined( USE_QT_SDK ) )
+extern javacall_handle MMAPIQTDecoderOpen(ah_wav *wav);
+extern javacall_result MMAPIQTDecoderClose(javacall_handle h);
+extern javacall_result MMAPIQTStartDecode( javacall_handle h, ah_wav *wav);
+extern javacall_result MMAPIQTDecode( javacall_handle h, ah_wav *wav, void* buffer, int samples);
+extern javacall_result MMAPIQTSetTime(javacall_handle h, ah_wav *wav, long *ms);
+#endif // USE_QT_SDK
+
 
 size_t mmaudio_get_isolate_mix( void *buffer, size_t length, void* param );
 
@@ -128,6 +136,28 @@ static void MQ234_CALLBACK fill_midi(void* userData,
 }
 
 /******************************************************************************/
+/* convert original media data to 16bit PCM */
+static void MQ234_CALLBACK fill_qt(void* userData,
+                                   void* buffer, int samples) {
+    ah_wav* pWAV = (ah_wav *)userData;
+    int bytesCnt = samples * pWAV->channels * 2;
+    if (!pWAV->playing) {
+        memset(buffer, 0, bytesCnt);
+        return;
+    } else {
+        if (pWAV->streamBufferFull) {
+            int ms = (pWAV->bytesPerMilliSec != 0)
+                ? (pWAV->currentPos / pWAV->bytesPerMilliSec)
+                : 0;
+            sendEOM(pWAV->hdr.isolateID, pWAV->hdr.playerID, ms);
+            pWAV->eom = 1;
+            pWAV->playing = 0;
+            memset(buffer, 0, bytesCnt);
+        } else {
+            MMAPIQTDecode( pWAV->decoder, pWAV, buffer, samples);
+        }
+    }
+}
 
 // POST-condition: value (*pBytesGet) is correct or 0
 static void* getNextSamples(void* userData, int bytesCnt, int* pBytesGet)
@@ -844,7 +874,6 @@ static javacall_handle audio_qs_create(int appId, int playerId,
  */
 static javacall_result audio_qs_get_format(javacall_handle handle, jc_fmt* fmt) {
     ah *h             = (ah*)handle;
-    
     *fmt = h->hdr.mediaType;
     JC_MM_DEBUG_INFO_PRINT1("audio_format: %d \n",
                             h->hdr.mediaType);
@@ -954,6 +983,12 @@ static javacall_result audio_qs_close(javacall_handle handle){
             if( NULL != h->wav.em )
                 mQ234_EffectModule_removePlayer(h->wav.em, h->wav.stream);
             r = JAVACALL_OK;
+#if( defined( AMR_USE_QT ) )
+            if (h->hdr.mediaType == JC_FMT_AMR) {
+                MMAPIQTDecoderClose(h->wav.decoder);
+                h->wav.decoder = NULL;
+            }
+#endif
         }
 
         break;
@@ -1017,7 +1052,6 @@ static javacall_result audio_qs_acquire_device(javacall_handle handle)
 
     MQ234_ERROR e;
     int         sRate;
-
     switch(h->hdr.mediaType)
     {
         case JC_FMT_TONE:
@@ -1102,11 +1136,7 @@ static javacall_result audio_qs_acquire_device(javacall_handle handle)
                 mQ234_WaveStream_Destroy( h->wav.stream );
                 h->wav.stream = NULL;
             }
-/*
-            if (1 != wav_setStreamPlayerData(&(h->wav))) {
-                return JAVACALL_FAIL;
-            }
-*/
+
             sRate = h->wav.rate;
 
             if(16 == h->wav.bits)
@@ -1173,8 +1203,7 @@ static javacall_result audio_qs_acquire_device(javacall_handle handle)
                 h->wav.streamBufferLen, h->wav.rate,
                 h->wav.channels, h->wav.bits);
         break;
-
-#if( defined( ENABLE_AMR ) && defined( AMR_USE_QSOUND ) )
+#if( defined( ENABLE_AMR ) && ( defined( AMR_USE_QSOUND ) || defined( AMR_USE_QT )))
         case JC_FMT_AMR:
             if( NULL != h->wav.stream )
             {
@@ -1187,10 +1216,12 @@ static javacall_result audio_qs_acquire_device(javacall_handle handle)
                 h->wav.stream = NULL;
             }
 
-            if (1 != AMRDecoder_setStreamPlayerData(&(h->wav))) {
-                return JAVACALL_FAIL;
+#if( defined( AMR_USE_QSOUND ))
+            if (h->hdr.mediaType == JC_FMT_AMR) { 
+                if (1 != AMRDecoder_setStreamPlayerData(&(h->wav))) {
+                    return JAVACALL_FAIL;
+                }
             }
-
             switch( h->wav.channels )
             {
             case 1:
@@ -1203,14 +1234,25 @@ static javacall_result audio_qs_acquire_device(javacall_handle handle)
                 h->wav.stream = NULL;
                 break;
             }
-
+#elif( defined( AMR_USE_QT ) )
+            h->wav.decoder = MMAPIQTDecoderOpen(&(h->wav));
+            if (h->wav.decoder == NULL) {
+                return JAVACALL_FAIL;
+            }
+            if (JAVACALL_OK == MMAPIQTStartDecode(h->wav.decoder, &(h->wav))) {
+                h->wav.stream = mQ234_CreateWaveStreamPlayer(&(h->wav), fill_qt, h->wav.channels, h->wav.rate );
+            } else {
+                MMAPIQTDecoderClose(h->wav.decoder);
+                h->wav.decoder = NULL;
+                return JAVACALL_FAIL;
+            }
+#endif 
             if( NULL != h->wav.originalData )
             {
                 h->wav.originalData = NULL;
             }
             h->wav.originalDataLen = 0;
 
-            //h->amr.bytesPerMilliSec = 2;
             h->wav.bytesPerMilliSec = (h->wav.rate * h->wav.channels * (16 >> 3)) / 1000;
 
             if(h->wav.stream != NULL)
@@ -1272,21 +1314,16 @@ static javacall_result audio_qs_get_java_buffer_size(javacall_handle handle,
         *first_data_size  = 0;
     } else {
         if (h->hdr.dataBufferLen == 0) {
-            *java_buffer_size = DEFAULT_BUFFER_SIZE;
+            if (h->hdr.wholeContentSize > 0 && h->hdr.wholeContentSize < DEFAULT_BUFFER_SIZE) {
+                *java_buffer_size = h->hdr.wholeContentSize;
+            } else {
+                *java_buffer_size = DEFAULT_BUFFER_SIZE;
+            }
             *first_data_size  = DEFAULT_PACKET_SIZE;
         } else {
             *java_buffer_size = h->hdr.dataBufferLen;
             *first_data_size  = h->hdr.dataBufferLen;
         }
-/*
-        if (h->hdr.wholeContentSize <= 0) {
-            *java_buffer_size = DEFAULT_BUFFER_SIZE;
-            *first_data_size  = DEFAULT_PACKET_SIZE;
-        } else {
-            *java_buffer_size = h->hdr.wholeContentSize;
-            *first_data_size  = h->hdr.wholeContentSize;
-        }
-        */
     }
     return JAVACALL_OK;
 }
@@ -1350,6 +1387,9 @@ static javacall_result audio_qs_get_buffer_address(javacall_handle handle,
             size = DEFAULT_BUFFER_SIZE;
         } else {
             size = h->hdr.wholeContentSize;
+            if (size%DEFAULT_PACKET_SIZE != 0) {
+                size += (DEFAULT_PACKET_SIZE - size%DEFAULT_PACKET_SIZE);
+            }
         }
         h->hdr.dataBuffer = MALLOC(size);
         if (h->hdr.dataBuffer == NULL) {
@@ -1377,7 +1417,6 @@ static javacall_result audio_qs_get_buffer_address(javacall_handle handle,
                 h->hdr.dataBufferPos = 0;
                 return JAVACALL_OUT_OF_MEMORY;
             }
-            h->hdr.dataBufferPos = h->hdr.dataBufferLen;
             h->hdr.dataBufferLen = new_size;
             size = h->hdr.dataBufferLen - h->hdr.dataBufferPos;
         }
@@ -1780,7 +1819,17 @@ static javacall_result audio_qs_set_time(javacall_handle handle, long* ms){
         case JC_FMT_MS_PCM:
         case JC_FMT_AMR: // will need revisit when real streaming will be used
         {
-            int newPos = h->wav.bytesPerMilliSec * (*ms);
+            int newPos;
+#if( defined( AMR_USE_QT ) )
+            if (h->hdr.mediaType == JC_FMT_AMR) {
+                if (h->wav.decoder != NULL) {
+                    MMAPIQTSetTime(h->wav.decoder, &(h->wav), ms);
+                } else {
+                    return JAVACALL_FAIL;
+                }
+            }
+#endif
+            newPos = h->wav.bytesPerMilliSec * (*ms);
 
             if(newPos > h->wav.streamBufferLen) newPos = h->wav.streamBufferLen;
 

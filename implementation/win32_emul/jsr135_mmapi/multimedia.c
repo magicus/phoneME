@@ -290,13 +290,12 @@ media_interface* fmt_enum2itf( jc_fmt fmt )
     case JC_FMT_AMR:
     case JC_FMT_AMR_WB:
     case JC_FMT_AMR_WB_PLUS:
-  #if( defined( AMR_USE_QSOUND ) )
+  #if( defined( AMR_USE_QSOUND ) || defined( AMR_USE_QT ) )
         return &g_amr_audio_itf;
   #elif( defined( AMR_USE_LIME ) )
         return &g_audio_itf;
   #endif // AMR_USE_**
 #endif // ENABLE_AMR
-
     default:
         return NULL;
     }
@@ -457,7 +456,6 @@ javacall_result javacall_media_create(int appId,
     pPlayer = MALLOC(sizeof(javacall_impl_player));
 
     if( NULL == pPlayer ) return JAVACALL_OUT_OF_MEMORY;
-
     pPlayer->appId            = appId;
     pPlayer->playerId         = playerId;
     pPlayer->uri              = NULL;
