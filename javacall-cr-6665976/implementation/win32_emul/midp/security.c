@@ -92,7 +92,7 @@ static unsigned char  *local_exponent;
 static unsigned char  *local_domain;
 
 static const char *VdomainPrefix="domain:";
-static const char *VgroupPrefix="group:";
+static const char *VgroupPrefix="alias:";
 static       char *VpolicyFilename = NULL;
 
 javacall_result javacall_security_keystore_start(javacall_handle* jc_h) {
