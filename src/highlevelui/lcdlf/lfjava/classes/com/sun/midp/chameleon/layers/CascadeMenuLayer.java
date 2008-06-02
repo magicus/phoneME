@@ -339,7 +339,8 @@ public class CascadeMenuLayer extends ScrollablePopupLayer {
                 && (cmdIndex - scrollIndex < MenuSkin.MAX_ITEMS);
             cmdIndex++)
         {
-            
+
+            int itemOffset = 0;
             if (cmdIndex == selI) {
                 if (MenuSkin.IMAGE_ITEM_SEL_BG != null) {
                     // We want to draw the selected item background
@@ -349,8 +350,15 @@ public class CascadeMenuLayer extends ScrollablePopupLayer {
                         bounds[W] - 3,
                         MenuSkin.IMAGE_ITEM_SEL_BG);
                 } else {
+                    if (ScreenSkin.RL_DIRECTION) {
+                            itemOffset = bounds[W] - MenuSkin.ITEM_ANCHOR_X + 2 -
+                                MenuSkin.FONT_ITEM_SEL.stringWidth(
+                                menuCmds[cmdIndex].getLabel()) - 4;
+                        } else {
+                            itemOffset = MenuSkin.ITEM_ANCHOR_X - 2;
+                        }
                     g.setColor(MenuSkin.COLOR_BG_SEL);
-                    g.fillRoundRect(MenuSkin.ITEM_ANCHOR_X - 2,
+                    g.fillRoundRect(itemOffset,
                         ((selI - scrollIndex) * MenuSkin.ITEM_HEIGHT),
                         MenuSkin.FONT_ITEM_SEL.stringWidth(
                             menuCmds[cmdIndex].getLabel()) + 4,
@@ -358,7 +366,7 @@ public class CascadeMenuLayer extends ScrollablePopupLayer {
                         3, 3);
                 }
             }
-            
+
             if (cmdIndex < 9) {
                 g.setFont((selI == cmdIndex) ?
                            MenuSkin.FONT_ITEM_SEL :
@@ -366,16 +374,26 @@ public class CascadeMenuLayer extends ScrollablePopupLayer {
                 g.setColor((selI == cmdIndex) ? 
                            MenuSkin.COLOR_INDEX_SEL :
                            MenuSkin.COLOR_INDEX);
-                g.drawString("" + (cmdIndex + 1),
-                             MenuSkin.ITEM_INDEX_ANCHOR_X,
-                             y, Graphics.TOP | Graphics.LEFT);
+                if (ScreenSkin.RL_DIRECTION) {
+                     itemOffset = bounds[W] - MenuSkin.ITEM_INDEX_ANCHOR_X;
+                } else {
+                     itemOffset = MenuSkin.ITEM_INDEX_ANCHOR_X;
+                 } 
+
+                 g.drawString("" + (cmdIndex + 1), itemOffset,
+                             y, Graphics.TOP | ScreenSkin.TEXT_ORIENT);
             }
             
             g.setFont(MenuSkin.FONT_ITEM);                
             g.setColor((selI == cmdIndex) ? MenuSkin.COLOR_ITEM_SEL :
                        MenuSkin.COLOR_ITEM);
-            g.drawString(menuCmds[cmdIndex].getLabel(),
-                         MenuSkin.ITEM_ANCHOR_X,
+            if (ScreenSkin.RL_DIRECTION) {
+                 itemOffset = bounds[W] - MenuSkin.ITEM_ANCHOR_X;
+             } else { 
+                 itemOffset = MenuSkin.ITEM_ANCHOR_X;
+             }
+
+             g.drawString(menuCmds[cmdIndex].getLabel(), itemOffset,
                          y, Graphics.TOP | Graphics.LEFT);
                          
             y += MenuSkin.ITEM_HEIGHT;                 

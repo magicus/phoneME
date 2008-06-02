@@ -1463,10 +1463,18 @@ class TextFieldLFImpl extends ItemLFImpl implements
         case Canvas.LEFT:
             if (editable) {
                 keyClicked(dir);
-                if (cursor.index > 0) {
-                    cursor.option = Text.PAINT_USE_CURSOR_INDEX;
-                    keyUsed = true;
-                    cursor.index--;
+                if (ScreenSkin.RL_DIRECTION) {
+                    if (cursor.index < tf.buffer.length()) {
+                        cursor.option = Text.PAINT_USE_CURSOR_INDEX;
+                        keyUsed = true;
+                        cursor.index++;
+                    }
+                } else {
+                    if (cursor.index > 0) {
+                        cursor.option = Text.PAINT_USE_CURSOR_INDEX;
+                        keyUsed = true;
+                        cursor.index--;
+                    }
                 }
             }
         break;
@@ -1474,10 +1482,18 @@ class TextFieldLFImpl extends ItemLFImpl implements
         case Canvas.RIGHT:
             if (editable) {
                 keyClicked(dir);
-                if (cursor.index < tf.buffer.length()) {                    
-                    cursor.option = Text.PAINT_USE_CURSOR_INDEX;
-                    keyUsed = true;
-                    cursor.index++;
+                if (ScreenSkin.RL_DIRECTION) {
+                    if (cursor.index > 0) {
+                        cursor.option = Text.PAINT_USE_CURSOR_INDEX;
+                        keyUsed = true;
+                        cursor.index--;
+                    }
+                } else {
+                    if (cursor.index > 0) {
+                        cursor.option = Text.PAINT_USE_CURSOR_INDEX;
+                        keyUsed = true;
+                        cursor.index--;
+                    }
                 }
             }
         break;

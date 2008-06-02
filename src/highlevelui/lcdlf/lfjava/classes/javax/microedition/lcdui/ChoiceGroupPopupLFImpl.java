@@ -138,7 +138,7 @@ class ChoiceGroupPopupLFImpl extends ChoiceGroupLFImpl {
             }
             width -= (w + 1);
 
-           if (ScreenSkin.TEXT_ORIENT == Graphics.RIGHT) {
+           if (ScreenSkin.RL_DIRECTION) {
               textOffset = 0;
             } else {
               textOffset = width;
@@ -168,8 +168,11 @@ class ChoiceGroupPopupLFImpl extends ChoiceGroupLFImpl {
             int iW = g.getClipWidth();
             int iH = g.getClipHeight();
 
-            if (ScreenSkin.TEXT_ORIENT == Graphics.RIGHT)
+            if (ScreenSkin.RL_DIRECTION) {
                 textOffset = width;
+            } else {
+                textOffset = 0;
+            }
 
             g.clipRect(textOffset, 0,
                        ChoiceGroupSkin.WIDTH_IMAGE,
@@ -178,12 +181,15 @@ class ChoiceGroupPopupLFImpl extends ChoiceGroupLFImpl {
                         textOffset, 0,
                         Graphics.LEFT | Graphics.TOP);
             g.setClip(iX, iY, iW, iH);
+
+            textOffset = ChoiceGroupSkin.WIDTH_IMAGE +
+                ChoiceGroupSkin.PAD_H;
+        } else {
+            textOffset = 0;
         }
 
-        textOffset = ChoiceGroupSkin.WIDTH_IMAGE +
-                ChoiceGroupSkin.PAD_H;
 
-        if (ScreenSkin.TEXT_ORIENT != Graphics.RIGHT) {
+        if (!ScreenSkin.RL_DIRECTION) {
             g.translate(textOffset, 0);
         }
         Text.drawTruncString(g,
@@ -192,7 +198,7 @@ class ChoiceGroupPopupLFImpl extends ChoiceGroupLFImpl {
                         (hasFocus) ? ScreenSkin.COLOR_FG_HL :
                             ChoiceGroupSkin.COLOR_FG,
                         width);
-        if (ScreenSkin.TEXT_ORIENT != Graphics.RIGHT) {
+        if (!ScreenSkin.RL_DIRECTION) {
             g.translate(-textOffset, 0);
         }
         
@@ -594,7 +600,7 @@ class ChoiceGroupPopupLFImpl extends ChoiceGroupLFImpl {
             if (sbVisible && ScrollIndSkin.MODE ==
                     ScrollIndResourcesConstants.MODE_ARROWS) {
                 int sbX;
-                if (ScreenSkin.TEXT_ORIENT == Graphics.RIGHT) {
+                if (ScreenSkin.RL_DIRECTION) {
                     sbX = (ChoiceGroupSkin.WIDTH_SCROLL / 2) + 1;  
                 } else {
                     sbX = bounds[WIDTH] -(ChoiceGroupSkin.WIDTH_SCROLL / 2) - 1;

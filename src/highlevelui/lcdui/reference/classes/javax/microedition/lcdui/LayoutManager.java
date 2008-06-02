@@ -29,21 +29,25 @@ package javax.microedition.lcdui;
 import com.sun.midp.log.Logging;
 import com.sun.midp.log.LogChannels;
 import com.sun.midp.configurator.Constants;
-import com.sun.midp.chameleon.skins.ScreenSkin;
 
 /**
  * Layout management class for <code>Form</code>.
  * See DisplayableLF.java for naming convention.
  */
 class LayoutManager {
-    
+
     // Required test: multiple/simultaneous forms with different layout
 
     /**
      * Singleton design pattern. Obtain access using instance() method.
      */
     LayoutManager() {
-	sizingBox = new int[3]; // x,y,width
+    	sizingBox = new int[3]; // x,y,width
+        if (locale.equals("he-IL")) {
+            layoutDirection = Graphics.RIGHT;
+        } else {
+            layoutDirection = Graphics.LEFT;
+        }
     }
 
     /**
@@ -907,6 +911,9 @@ class LayoutManager {
      *         index
      */
     private int  getCurHorAlignment(ItemLFImpl[] itemLFs, int index) {
+        if (layoutDirection == Graphics.RIGHT) {
+            return Item.LAYOUT_RIGHT;
+        }
         for (int hAlign, i = index; i >= 0; i--) {
             hAlign = itemLFs[i].getLayout() & LAYOUT_HMASK;
 
@@ -915,7 +922,7 @@ class LayoutManager {
         }
 
         // default layout is LAYOUT_LEFT
-        return (layoutDirection == Graphics.LEFT) ? Item.LAYOUT_LEFT : Item.LAYOUT_RIGHT; 
+        return Item.LAYOUT_LEFT; 
     }
 
     /**
@@ -1119,7 +1126,7 @@ class LayoutManager {
                                                  space,
                                                  itemLFs));
 
-                itemLFs[i].lGetContentSize(itemLFs[i].contentBounds,itemLFs[i].bounds[WIDTH] + space);
+                itemLFs[i].lGetContentSize(itemLFs[i].lGetContentBounds(),itemLFs[i].bounds[WIDTH] + space);
 
 
 
@@ -1320,9 +1327,6 @@ class LayoutManager {
      */
     static final int LAYOUT_VMASK = 0x30;
 
-     // layout derection depend on the language conventions in use
-     public static int layoutDirection = ScreenSkin.TEXT_ORIENT;
-
     /**
      * 'sizingBox' is a [x,y,w,h] array used for dynamic sizing of 
      * <code>Item</code>s during the layout. It starts with the size of the 
@@ -1343,6 +1347,11 @@ class LayoutManager {
      * Single instance of the LayoutManager class.
      */
     static LayoutManager singleInstance = new LayoutManager();
+
+    // layout derection depend on the language conventions in use
+    private String locale = System.getProperty("microedition.locale");;
+    private int layoutDirection;
+
 
     /** Used as an index into the viewport[], for the x origin. */
     final static int X      = DisplayableLFImpl.X;

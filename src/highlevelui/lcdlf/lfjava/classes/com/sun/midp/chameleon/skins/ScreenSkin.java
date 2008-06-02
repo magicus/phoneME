@@ -202,6 +202,8 @@ public class    ScreenSkin {
      * should be used.
      */
     public static Image[] IMAGE_HS_BG_WO_TITLE;
+
+    public static boolean RL_DIRECTION;
     
 
     // private constructor

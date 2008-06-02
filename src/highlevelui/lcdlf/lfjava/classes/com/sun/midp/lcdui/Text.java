@@ -31,6 +31,7 @@ import javax.microedition.lcdui.Graphics;
 
 import com.sun.midp.chameleon.skins.StringItemSkin;
 import com.sun.midp.chameleon.skins.ScreenSkin;
+import com.sun.midp.chameleon.skins.TextFieldSkin;
 import com.sun.midp.i18n.Resource;
 import com.sun.midp.i18n.ResourceConstants;
 
@@ -193,7 +194,8 @@ public class Text {
 	    // IMPL_NOTE: optimize this with math instead of iteration
 
         cursor.x = pos;
-        if (ScreenSkin.TEXT_ORIENT == Graphics.RIGHT) {
+        if (ScreenSkin.RL_DIRECTION) {
+
             cursor.x = w - pos;
             if (cursor.x <= 0) {
             while (cursor.x <= 0) {
@@ -201,8 +203,8 @@ public class Text {
                 cursor.x += scrollPix;
             }
             } else {
-            while ((cursor.x > w / 2) && (offset > w)) {
-                offset -= scrollPix;
+            while ((cursor.x > w / 2) && (offset < 0)) {
+                offset += scrollPix;
                 cursor.x -= scrollPix;
             }
             }
@@ -227,7 +229,7 @@ public class Text {
 	    cursor = null;
 	}
 
-    g.drawChars(text, 0, text.length,  (ScreenSkin.TEXT_ORIENT == Graphics.RIGHT) ? w - offset : offset, h,
+    g.drawChars(text, 0, text.length,  (ScreenSkin.RL_DIRECTION) ? w - offset : offset, h,
 		    Graphics.BOTTOM | ScreenSkin.TEXT_ORIENT);
 
     return offset;
@@ -255,7 +257,9 @@ public class Text {
     public static boolean updateTextInfo(String str, Font font, 
 					 int w, int h, int offset, int options,
 					 TextCursor cursor, TextInfo info) {
-	if (w <= 0 || 
+
+
+    if (w <= 0 ||
 	    (cursor == null && (str == null || str.length() == 0))) {
 	    return false;
 	}
@@ -325,37 +329,50 @@ public class Text {
 		// cursor.y == height) {
 
 		int curLine = (cursor.y / fontHeight) - 1;
-		int curX = curLine == 0 ? offset : 0;
-		int curY = cursor.y;
+
+        int curX;
+        int bestIndex;// = info.lineStart[curLine];
+            if (ScreenSkin.RL_DIRECTION) {
+                curX = curLine == 0 ? w - offset : w;
+                bestIndex = info.lineEnd[curLine] - 1 ;
+            } else {
+                curX = curLine == 0 ? offset : 0;
+                bestIndex = info.lineStart[curLine];
+            }
+        int curY = cursor.y;
 		int bestX = curX;
-		int bestIndex = info.lineStart[curLine];
 
 		// take one character at a time and check its position
 		// against the supplied coordinates in cursor
 		//
-		int lineStart = info.lineStart[curLine];
-		int lineEnd = info.lineEnd[curLine];
+        int lineStart = info.lineStart[curLine];
+        int lineEnd = info.lineEnd[curLine];
 
-		for (int i = lineStart; i < lineEnd; i++) {
-		    
-		    char ch = text[i];
-		    if (Math.abs(curX - cursor.preferredX) <
-			Math.abs(bestX - cursor.preferredX)) {
-			bestIndex = i;
-			bestX = curX;
-		    }
-		    curX += font.charWidth(ch);
-		}
 
-		if (Math.abs(curX - cursor.preferredX) <
+        for (int i = lineStart; i < lineEnd; i++) {
+
+            char ch = text[i];
+            if (Math.abs(curX - cursor.preferredX) <
+                 Math.abs(bestX - cursor.preferredX)) {
+                 bestIndex = i;
+                   bestX = curX;
+            }
+            if (ScreenSkin.RL_DIRECTION) {
+                curX -= font.charWidth(ch);
+            } else {
+                curX += font.charWidth(ch);
+            }
+        }
+
+        if (Math.abs(curX - cursor.preferredX) <
 		    Math.abs(bestX - cursor.preferredX)) {
 		    bestIndex = lineEnd;
-		    bestX = curX;
-		}
-		    
-		cursor.index = bestIndex;
+            bestX = curX;
+        }
+
+        cursor.index = bestIndex;
 		cursor.x = bestX;
-		// cursor.y = height;
+        // cursor.y = height;
 		cursor.option = PAINT_USE_CURSOR_INDEX;
 		info.cursorLine = curLine;
 	    }
@@ -445,13 +462,14 @@ public class Text {
 	int height = currentLine * fontHeight;
 	int y = 0;
 
-    if (ScreenSkin.TEXT_ORIENT == Graphics.RIGHT) {
+    if (ScreenSkin.RL_DIRECTION) {
         offset = w - offset;
     }
 
     while (currentLine < (info.topVis + info.visLines)) {
-	    height += fontHeight;
-	    y += fontHeight;
+        height += fontHeight;
+
+        y += fontHeight;
 
         g.drawChars(text, info.lineStart[currentLine],
 			info.lineEnd[currentLine] - info.lineStart[currentLine],
@@ -460,28 +478,34 @@ public class Text {
 
         // draw the vertical cursor indicator if needed
 	    // update the cursor.x and cursor.y info
-	    if (cursor != null &&
+        if (cursor != null &&
 		cursor.option == PAINT_USE_CURSOR_INDEX &&
 		cursor.index >= info.lineStart[currentLine] &&
 		cursor.index <= info.lineEnd[currentLine]) {
 
 		int off = offset;
 		if (cursor.index > info.lineStart[currentLine]) {
-		    off += font.charsWidth(text, info.lineStart[currentLine],
+            if (ScreenSkin.RL_DIRECTION) {
+                off -= font.charsWidth(text, info.lineStart[currentLine],
 					   cursor.index -
 					   info.lineStart[currentLine]);
-		}
+            } else {
+                off += font.charsWidth(text, info.lineStart[currentLine],
+					   cursor.index -
+					   info.lineStart[currentLine]);
+            }
+        }
 
 		cursor.x      = off;
-		cursor.y      = height;
-		cursor.width  = 1;  // IMPL_NOTE: must these always be set?
+        cursor.y      = height;
+        cursor.width  = 1;  // IMPL_NOTE: must these always be set?
 		cursor.height = fontHeight;
 
 		cursor.paint(g);
 		cursor = null;
 	    }
 
-        if (ScreenSkin.TEXT_ORIENT == Graphics.RIGHT) {
+        if (ScreenSkin.RL_DIRECTION) {
             offset = w;
         } else {
             offset = 0;
@@ -532,7 +556,7 @@ public class Text {
 
         int[] inout = initGNL(font, w, h, options, offset );
 
-        if (ScreenSkin.TEXT_ORIENT == Graphics.RIGHT) {
+        if (ScreenSkin.RL_DIRECTION) {
             offset = w - offset;
         }
 
@@ -605,7 +629,11 @@ public class Text {
                             bestX = curX;
                         }
 
-                        curX += font.charWidth(ch);
+                        if (ScreenSkin.RL_DIRECTION) {
+                            curX -= font.charWidth(ch);
+                        } else {
+                            curX += font.charWidth(ch);
+                        }
                     }
                     
                     if (Math.abs(curX - cursor.preferredX) <
@@ -670,7 +698,7 @@ public class Text {
     
             inout[GNL_LINE_START] = newLineStart;
             inout[GNL_OFFSET] = 0;
-            if (ScreenSkin.TEXT_ORIENT == Graphics.RIGHT) {
+            if (ScreenSkin.RL_DIRECTION) {
                 offset = w;
             } else {
                 offset = 0;
@@ -702,6 +730,9 @@ public class Text {
         int oldClipW = g.getClipWidth();
         int oldClipY = g.getClipY();
         int oldClipH = g.getClipHeight();
+
+        if (ScreenSkin.RL_DIRECTION)
+             x -= w;
 
         g.clipRect(x, oldClipY, w, oldClipH);
 
@@ -809,7 +840,7 @@ public class Text {
 
 	int[] tmpSize = new int[] {0, 0, 0, 0};
 
-    if (ScreenSkin.TEXT_ORIENT == Graphics.RIGHT) {
+    if (ScreenSkin.RL_DIRECTION) {
         offset = width - offset;
     }
 
@@ -1223,7 +1254,7 @@ public class Text {
     public static void drawTruncString(Graphics g, String str,
                                        Font font, int fgColor, int width) {
         int offset = 0;
-        if (ScreenSkin.TEXT_ORIENT == Graphics.RIGHT) {
+        if (ScreenSkin.RL_DIRECTION) {
             offset = width - offset;
         }
         g.setFont(font);

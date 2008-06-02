@@ -579,27 +579,51 @@ class TextBoxLFImpl extends TextFieldLFImpl implements TextFieldLF {
 	case Canvas.LEFT:
 	    if (editable) {
             keyClicked(dir);
-            if (cursor.index > 0) {
-                cursor.index--;
-                cursor.option = Text.PAINT_USE_CURSOR_INDEX;
-                myInfo.isModified = myInfo.scrollX = keyUsed = true;
+            if (ScreenSkin.RL_DIRECTION) {
+                if (cursor.index < tf.buffer.length()) {
+                    cursor.index++;
+                    cursor.option = Text.PAINT_USE_CURSOR_INDEX;
+                    myInfo.isModified = myInfo.scrollX = keyUsed = true;
+                }
+            } else {
+                if (cursor.index > 0) {
+                    cursor.index--;
+                    cursor.option = Text.PAINT_USE_CURSOR_INDEX;
+                    myInfo.isModified = myInfo.scrollX = keyUsed = true;
+                }
             }
-	    } else {
-            keyUsed = myInfo.scroll(TextInfo.BACK);
-	    }
+        } else {
+            if (ScreenSkin.RL_DIRECTION) {
+                keyUsed = myInfo.scroll(TextInfo.FORWARD);
+            } else {
+                keyUsed = myInfo.scroll(TextInfo.BACK);
+            }
+        }
 	    break;
 
 	case Canvas.RIGHT:
 	    if (editable) {
             keyClicked(dir);
-            if (cursor.index < tf.buffer.length()) {
-                cursor.index++;
-                cursor.option = Text.PAINT_USE_CURSOR_INDEX;
-                myInfo.isModified = myInfo.scrollX = keyUsed = true;
+            if (ScreenSkin.RL_DIRECTION) {
+                if (cursor.index > 0) {
+                    cursor.index--;
+                    cursor.option = Text.PAINT_USE_CURSOR_INDEX;
+                    myInfo.isModified = myInfo.scrollX = keyUsed = true;
+                }
+            } else {
+                if (cursor.index < tf.buffer.length()) {
+                    cursor.index++;
+                    cursor.option = Text.PAINT_USE_CURSOR_INDEX;
+                    myInfo.isModified = myInfo.scrollX = keyUsed = true;
+                }
             }
-	    } else {
-            keyUsed = myInfo.scroll(TextInfo.FORWARD);
-	    }
+        } else {
+            if (ScreenSkin.RL_DIRECTION) {
+                 keyUsed = myInfo.scroll(TextInfo.BACK);
+            } else {
+                keyUsed = myInfo.scroll(TextInfo.FORWARD);
+            }
+        }
 	    break;
 	    
 	case Canvas.UP:
@@ -615,7 +639,7 @@ class TextBoxLFImpl extends TextFieldLFImpl implements TextFieldLF {
 	    } else {
             keyUsed = myInfo.scroll(TextInfo.BACK);
 	    }
-	    break;
+        break;
         
         case Canvas.DOWN:
             if (editable) {

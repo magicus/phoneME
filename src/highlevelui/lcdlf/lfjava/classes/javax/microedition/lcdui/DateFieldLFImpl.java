@@ -36,6 +36,7 @@ import com.sun.midp.chameleon.*;
 import com.sun.midp.chameleon.skins.DateFieldSkin;
 import com.sun.midp.chameleon.skins.resources.DateFieldResources;
 import com.sun.midp.chameleon.skins.DateEditorSkin;
+import com.sun.midp.chameleon.skins.ScreenSkin;
 import com.sun.midp.chameleon.skins.resources.DateEditorResources;
 import com.sun.midp.log.Logging;
 import com.sun.midp.log.LogChannels;
@@ -226,6 +227,7 @@ class DateFieldLFImpl extends ItemLFImpl implements DateFieldLF {
                     
         // draw icon
         int iconWidth = 0;
+        int btnOffset = 0;
         switch (mode) {
             case DateField.DATE:
                 if (DateFieldSkin.IMAGE_ICON_DATE != null) {
@@ -237,9 +239,11 @@ class DateFieldLFImpl extends ItemLFImpl implements DateFieldLF {
                     } else {
                         yOffset = 0;
                     }
-                    drawButtonBG(g, width - iconWidth, 0, iconWidth, height);
+                    if (!ScreenSkin.RL_DIRECTION)
+                        btnOffset = width - iconWidth;
+                    drawButtonBG(g, btnOffset, 0, iconWidth, height);
                     g.drawImage(DateFieldSkin.IMAGE_ICON_DATE,
-                                width - iconWidth, yOffset, 
+                                btnOffset, yOffset, 
                                 Graphics.LEFT | Graphics.TOP);
                 }
                 break;
@@ -253,9 +257,11 @@ class DateFieldLFImpl extends ItemLFImpl implements DateFieldLF {
                     } else {
                         yOffset = 0;
                     }
-                    drawButtonBG(g, width - iconWidth, 0, iconWidth, height);
+                    if (!ScreenSkin.RL_DIRECTION)
+                        btnOffset = width - iconWidth;
+                    drawButtonBG(g, btnOffset, 0, iconWidth, height);
                     g.drawImage(DateFieldSkin.IMAGE_ICON_TIME,
-                                width - iconWidth, yOffset, 
+                                btnOffset, yOffset,
                                 Graphics.LEFT | Graphics.TOP);
                 }
                 break;
@@ -269,9 +275,11 @@ class DateFieldLFImpl extends ItemLFImpl implements DateFieldLF {
                     } else {
                         yOffset = 0;
                     }
-                    drawButtonBG(g, width - iconWidth, 0, iconWidth, height);
+                    if (!ScreenSkin.RL_DIRECTION)
+                        btnOffset = width - iconWidth;
+                    drawButtonBG(g, btnOffset, 0, iconWidth, height);
                     g.drawImage(DateFieldSkin.IMAGE_ICON_DATETIME,
-                                width - iconWidth, yOffset, 
+                                btnOffset, yOffset, 
                                 Graphics.LEFT | Graphics.TOP);
                 }
                 break;
@@ -282,20 +290,32 @@ class DateFieldLFImpl extends ItemLFImpl implements DateFieldLF {
                 break;
         }
 
+
+        int textOffset = DateFieldSkin.PAD_H;
+         String currentStr = toString(currentDate, mode, df.initialized);
+         if (ScreenSkin.RL_DIRECTION) {
+             textOffset = width - DateFieldSkin.PAD_H;
+         }
         // we clip in case our text is too long
-        g.clipRect(DateFieldSkin.PAD_H, DateFieldSkin.PAD_V,
+        g.clipRect(ScreenSkin.RL_DIRECTION ? DateFieldSkin.PAD_H + iconWidth : DateFieldSkin.PAD_H,
+            DateFieldSkin.PAD_V,
             width - (2 * DateFieldSkin.PAD_H) - iconWidth,
             height - (2 * DateFieldSkin.PAD_V));
 
-        g.translate(DateFieldSkin.PAD_H, DateFieldSkin.PAD_V);        
+        if (!ScreenSkin.RL_DIRECTION) {
+            g.translate(DateFieldSkin.PAD_H, DateFieldSkin.PAD_V);
+            textOffset = 0;
+        }
         
         // paint value
         g.setFont(DateFieldSkin.FONT);
         g.setColor(DateFieldSkin.COLOR_FG);
-        g.drawString(toString(currentDate, mode, df.initialized), 
-                     0, 0, Graphics.LEFT | Graphics.TOP);
-        
-        g.translate(-DateFieldSkin.PAD_H, -DateFieldSkin.PAD_V);
+        g.drawString(currentStr,
+                     textOffset, 0, ScreenSkin.TEXT_ORIENT | Graphics.TOP);
+
+        if (!ScreenSkin.RL_DIRECTION) {
+            g.translate(-DateFieldSkin.PAD_H, -DateFieldSkin.PAD_V);
+        }
         if (editor.isPopupOpen() && editor.isSizeChanged()) {
             setPopupLocation();
         }

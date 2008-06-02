@@ -369,7 +369,7 @@ gx_draw_chars(jint pixel, const jshort *clip,
     /* Get locale to detect whether right-to-left output is needed */
     // TODO: move this check to the place where inicialization is performed
     const char* locale = getSystemProperty("microedition.locale");
-    int direction = (strcmp(locale, "he") == 0) ?
+    int direction = (strcmp(locale, "he-IL") == 0) ?
                RIGHT_TO_LEFT : LEFT_TO_RIGHT;
 
     drawString(pixel, clip, dst, dotted, face, style, size,
