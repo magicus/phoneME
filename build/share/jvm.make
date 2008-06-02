@@ -1,7 +1,7 @@
 #
 #
 #
-# Portions Copyright  2000-2007 Sun Microsystems, Inc. All Rights
+# Portions Copyright  2000-2008 Sun Microsystems, Inc. All Rights
 # Reserved.  Use is subject to license terms.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
 #
@@ -100,7 +100,6 @@ endif
 
 # used to be verbose on what make is really doing
 # duplicated in root.make
-VERBOSE_BUILD = true
 ifndef VERBOSE_BUILD
 A = @
 else
@@ -635,7 +634,7 @@ $(GEN_DIR)/jvmconfig.h:	$(BUILDTOOL_JAR) $(BUILD_FLAGS_HPP) $(GEN_DIR)/platform
 	$(A)if test ! -d $(GEN_DIR); then \
 	    mkdir $(GEN_DIR); \
 	fi
-	$(JAVA) -jar $(BUILDTOOL_JAR) config $(GEN_DIR)/platform \
+	$(A)$(JAVA) -jar $(BUILDTOOL_JAR) config $(GEN_DIR)/platform \
                 $(BUILD_FLAGS_HPP) $@ $(EXTRA_JVMCONFIG)
 
 $(GEN_DIR):
@@ -943,16 +942,13 @@ BUILD_PCH               = _build_pch_visCPP.obj
 $(Obj_Files):            $(BUILD_PCH)
 InterpreterSkeleton.obj: $(BUILD_PCH)
 
-
 $(BUILD_PCH): $(Precompiled_Headers) $(GEN_DIR)/jvmconfig.h
 	$(A)echo Generating $@ ...
-	echo CPP_INCLUDE_DIRS is $(CPP_INCLUDE_DIRS)
-	echo CPP is $(CPP)
 	$(A)echo '#include "incls/_precompiled.incl"' > \
 		$(GEN_DIR)/_build_pch_visCPP.cpp
-	$(CPP) $(CPP_OPT_FLAGS) $(CPP_FLAGS) /Fp"cldchi.pch" \
+	$(A)$(CPP) $(CPP_OPT_FLAGS) $(CPP_FLAGS) /Fp"cldchi.pch" \
 	    /Yc"incls/_precompiled.incl" /c $(GEN_DIR)/_build_pch_visCPP.cpp
-	echo '    done'
+	$(A)echo '    done'
 
 ifeq ($(ENABLE_C_INTERPRETER), true)
 
@@ -1187,6 +1183,7 @@ endif
 #----------------------------------------------------------------------
 
 ifeq ($(compiler), evc)
+
 ifneq ($(findstring CYGWIN, $(shell uname)), CYGWIN)
     define fixcygpath
     echo $(1)
@@ -1281,24 +1278,13 @@ LIB_FLAGS_product       =
 LIB_FLAGS               = /nologo $(LIB_FLAGS_$(BUILD))
 
 ifeq ($(ENABLE_PCSL), true)
-    ifeq ($(USE_VS2005), true)
-    PCSL_LIBS               = `$(call fixcygpath, $(PCSL_DIST_DIR)/lib/libpcsl_memory.lib)`   \
-                              `$(call fixcygpath, $(PCSL_DIST_DIR)/lib/libpcsl_print.lib)`    \
-                              `$(call fixcygpath, $(PCSL_DIST_DIR)/lib/libpcsl_network.lib)`  \
-                              `$(call fixcygpath, $(PCSL_DIST_DIR)/lib/libpcsl_string.lib)`   \
-                              `$(call fixcygpath, $(PCSL_DIST_DIR)/lib/libpcsl_file.lib)`
-    else
     PCSL_LIBS               = $(PCSL_DIST_DIR)/lib/libpcsl_memory.lib   \
                               $(PCSL_DIST_DIR)/lib/libpcsl_print.lib    \
                               $(PCSL_DIST_DIR)/lib/libpcsl_network.lib  \
                               $(PCSL_DIST_DIR)/lib/libpcsl_string.lib   \
                               $(PCSL_DIST_DIR)/lib/libpcsl_file.lib
-    endif
     MAKE_EXPORT_EXTRA_LIBS += $(PCSL_LIBS)
 endif
-
-
-
 
 LINK_OPT_FLAGS_debug    = /pdb:$(basename $@).pdb
 LINK_OPT_FLAGS_release  =
@@ -1314,15 +1300,12 @@ LINK_ARCH_FLAGS_i386   += /MACHINE:ix86 /SUBSYSTEM:$(CESubsystem) \
 LINK_ARCH_FLAGS         = $(LINK_ARCH_FLAGS_$(arch)) /LIBPATH:$(EVC_LIB_PATH) \
                           /VERBOSE:LIB
 
-
 LINK_FLAGS_EXPORT       = /incremental:no /nologo /entry:"WinMainCRTStartup" \
-                          /MAP $(LINK_ARCH_FLAGS) \
+                          /MAP $(LINK_ARCH_FLAGS) corelibc.lib aygshell.lib \
+                          /nodefaultlib:libc.lib \
                           /nodefaultlib:libcd.lib /nodefaultlib:libcmt.lib \
                           /nodefaultlib:libcmtd.lib /nodefaultlib:msvcrt.lib \
-                          /nodefaultlib:msvcrtd.lib
-
-
-
+                          /nodefaultlib:msvcrtd.lib /nodefaultlib:oldnames.lib
 
 LINK_FLAGS_EXPORT      += $(LINK_OPT_FLAGS_EXPORT_$(BUILD))
 LINK_FLAGS              = $(LINK_FLAGS_EXPORT)
@@ -1341,8 +1324,7 @@ $(BUILD_PCH): $(Precompiled_Headers)
 # Special case (fails to compile with precompiled header files)
 
 OS_$(os_family).obj: $(WorkSpace)/src/vm/os/$(os_family)/OS_$(os_family).cpp
-	$(A)$(CPP) $(CPP_OPT_FLAGS) $(CPP_FLAGS) -c \
-		`$(call fixcygpath, $<)`
+	$(A)$(CPP) $(CPP_OPT_FLAGS) $(CPP_FLAGS) -c $<
 
 # Can't use precompiled headers
 ifneq ($(CompileROMImageSeparately), true)
@@ -1423,7 +1405,7 @@ resources.res: $(WorkSpace)/src/vm/os/wince/resources.rc \
 	@echo creating $@
 	$(A)$(RC) -D_WIN32_WCE=$(CEVersion) /I"${EVC_INCLUDE_PATH}" \
 		-DUNDER_CE=$(CEVersion) /d "UNICODE" /d "_UNICODE" /fo"$@" \
-		`$(call fixcygpath, $(WorkSpace)/src/vm/os/wince/resources.rc)`
+		$(WorkSpace)/src/vm/os/wince/resources.rc
 
 ifeq ($(SeparateROMImage), true)
 ifeq ($(CompileROMImageSeparately), true)
@@ -1471,15 +1453,15 @@ $(ROM_SEGMENTS):
 endif
 
 $(JVM_LIB): $(BIN_DIR) $(BUILD_PCH) $(LIB_OBJS)
-	$(LIBMGR) $(LIB_FLAGS) /out:$@ $(LIB_OBJS)
+	$(A)$(LIBMGR) $(LIB_FLAGS) /out:$@ $(LIB_OBJS)
 	$(A)echo generated `pwd`/$@
 
 $(JVMX_LIB): $(BIN_DIR) $(BUILD_PCH) $(LIBX_OBJS)
-	$(LIBMGR) $(LIB_FLAGS) /out:$@ $(LIBX_OBJS)
+	$(A)$(LIBMGR) $(LIB_FLAGS) /out:$@ $(LIBX_OBJS)
 	$(A)echo generated `pwd`/$@
 
 $(JVMTEST_LIB): $(BIN_DIR) $(BUILD_PCH) $(LIBTEST_OBJS)
-	$(LIBMGR) $(LIB_FLAGS) /out:$@ $(LIBTEST_OBJS)
+	$(A)$(LIBMGR) $(LIB_FLAGS) /out:$@ $(LIBTEST_OBJS)
 	$(A)echo generated `pwd`/$@
 
 $(JVM_EXE): $(BIN_DIR) $(BUILD_PCH) $(JVMX_LIB) $(JVMTEST_LIB) \
@@ -2430,11 +2412,6 @@ DIST_FILES=
 endif
 
 all: $(PRINT_CONFIG) dependencies $(BIN_DIR) $(DIST_DIRS) $(OUTPUT_FILES)
-	echo "target is $(target) dependencies are: $(dependencies)"
-
-#echo target is $(target) dependencies are: $(dependencies)
-
-
 all: $(DIST_FILES)
 
 all: $(EXTRA_OUTPUT_FILES) $(EXTRA_DIST_FILES)

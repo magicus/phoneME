@@ -1,5 +1,5 @@
 @REM
-@REM Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+@REM Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
 @REM DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
 @REM
 @REM This program is free software; you can redistribute it and/or
@@ -42,8 +42,6 @@ set INCLUDE=%VS2005_ROOT%/vc/include;%VS2005_ROOT%/vc/PlatformSDK/include
 
 @REM Settings for the target build
 
-@REM set VS2005_CE_ARM_LIB="C:/Program Files/Windows Mobile 6 SDK/PocketPC/lib/armv4i"
-@REM set VS2005_CE_ARM_INCLUDE="C:/Program Files/Windows Mobile 6 SDK/PocketPC/include/armv4i"
 set VS2005_CE_ARM_LIB=C:/PROGRA~1/WINDOW~4/PocketPC/Lib/Armv4i
 set VS2005_CE_ARM_INCLUDE=C:/PROGRA~1/WINDOW~4/PocketPC/include/Armv4i
 set VS2005_CE_ARM_PATH=%VS2005_ROOT%/vc/ce/bin/x86_arm
