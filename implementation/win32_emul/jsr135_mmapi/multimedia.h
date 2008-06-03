@@ -348,6 +348,11 @@ typedef struct {
     long                wholeContentSize;
     void *              buffer;
     javacall_bool       isBuffered;
+
+#ifdef ENABLE_EXTRA_CAMERA_CONTROLS
+    void *              pExtraCC;
+#endif //ENABLE_EXTRA_CAMERA_CONTROLS
+
 } audio_handle;
 
 #ifdef __cplusplus
