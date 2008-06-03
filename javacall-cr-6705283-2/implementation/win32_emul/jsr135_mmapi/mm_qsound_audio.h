@@ -65,61 +65,57 @@ typedef struct {
     int                     playerID;
     int                     gmIdx;
     long                    wholeContentSize;
+    int                     playing;
+    int                     eom;
+    
+    /* Buffering variables */
     unsigned char           *dataBuffer;
     int                     dataBufferLen;
-    int                     dataBufferPos;
-    int                     dataBufferOffset;
+    int                     dataPos;
+    javacall_bool           dataStopped; /* No more data now */
+    javacall_bool           dataEnded; /* All data transferred */
+    
     IControl*               controls[CONT_MAX];
     javacall_bool           needProcessHeader;
     player_state_enum       state;
-} ah_hdr;
+} ah_common;
 
 typedef struct {
-    ah_hdr                  hdr;
+    ah_common               hdr;
     IPlayControl            *synth;
     IEventTrigger           *doneCallback;
     MQ234_HostBlock         *midiStream;
-    unsigned char           *midiBuffer;
-    int                     midiBufferLen;
     IHostStorage            *storage;
 } ah_midi;
 
 
 struct wav_meta_data {
-    char *iartData;
-    char *icopData;
-    char *icrdData;
-    char *inamData;
+    char *iartData; /* artist -> AUTHOR_KEY */
+    char *icopData; /* copyright -> COPYRIGHT_KEY */
+    char *icrdData; /* creation date -> DATE_KEY */
+    char *inamData; /* name -> TITLE_KEY */
 };
 
 typedef struct {
-    ah_hdr                  hdr;
+    ah_common               hdr;
     int                     bits;
     int                     rate;
     int                     channels;
-    int                     playing;
-    int                     eom;
     IWaveStream             *stream;
-    IEffectModule           *em;              // current effect module
-    unsigned char           *originalData;
-    int                     originalDataLen;
-    int                     originalDataOffset;
-    javacall_bool           originalDataFull;
-    javacall_bool           originalData_dataChnk;
-    int                     originalData_dataChnkFull;
-    int                     originalData_dataChnkOffset;
-    unsigned char           *streamBuffer;
-    int                     streamBufferLen;
-    javacall_bool           streamBufferFull;
-    int                     currentPos;
+    IEffectModule           *em;
+    /* Decoded data variables */
+    unsigned char           *playBuffer;
+    int                     playBufferLen;
+    int                     playPos;
     int                     bytesPerMilliSec;
-    javacall_bool           bufferingMode;
+    javacall_bool           buffering;
     struct wav_meta_data    metaData;
+    int                     lastChunkOffset;
     javacall_handle         decoder;
 } ah_wav;
 
 typedef union {
-    ah_hdr                  hdr;
+    ah_common               hdr; /* Used when format is unknown */
     ah_midi                 midi;
     ah_wav                  wav;
 } ah; 
