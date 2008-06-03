@@ -140,8 +140,9 @@ abstract public class Resource {
      */
     public static String getString(int key, String[] values) {
         String str = getString(key);
-		if (str == null)
-			return null;
+		if (str == null) {
+                    return null;
+		}
 		return getString(str, values);
 	}
 
