@@ -1317,17 +1317,19 @@ BUNDLE_FLAGS += USE_CDC_COM=$(USE_CDC_COM)
 BUNDLE_FLAGS += CDC_COM_DIR=$(CDC_COM_DIR)
 BUNDLE_FLAGS += USE_VERBOSE_MAKE=$(USE_VERBOSE_MAKE)
 BUNDLE_FLAGS += AT=$(AT)
+BUNDLE_FLAGS += INSTALLDIR=$(INSTALLDIR)
 
 # Build the cdc source bundle
 source_bundle::
 	@echo " ... cdc source bundle"
+	$(AT)cd $(CVM_TOP)/build/share
 	$(AT)$(MAKE) $(MAKE_NO_PRINT_DIRECTORY) \
 		     -f $(CVM_TOP)/build/share/bundle.mk $(BUNDLE_FLAGS)
 	$(AT)$(UNZIP) -q $(INSTALLDIR)/$(CDC_SOURCE_OUTPUT_SUBDIR).zip \
 	      -d $(SOURCE_OUTPUT_DIR)
 	$(AT)rm $(INSTALLDIR)/$(CDC_SOURCE_OUTPUT_SUBDIR).zip
 
-# Note only trigger source_bundle rules, but also setup the legal
+# Not only trigger source_bundle rules, but also setup the legal
 # directory properly, and zip it all up.
 source_bundles::  clean_source_bundles source_bundle_dir source_bundle
 	@echo " ... moving legal docs to source bundle root"

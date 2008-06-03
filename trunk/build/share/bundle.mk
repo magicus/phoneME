@@ -181,16 +181,11 @@ BUNDLE_PORTS = linux-x86-*
 endif
 
 # Do wildcard expansion of ports listed in BUNDLE_PORTS
-override BUNDLE_PORTS := $(addprefix $(CVM_TOP)/build/, $(BUNDLE_PORTS))
+override BUNDLE_PORTS := $(addprefix $(CDC_DIR)/build/, $(BUNDLE_PORTS))
 override BUNDLE_PORTS := $(foreach port, $(BUNDLE_PORTS), $(wildcard $(port)))
-override BUNDLE_DEVICE_PORTS := $(notdir $(BUNDLE_PORTS))
 
 # list of all device ports in the form <os>-<cpu>-<device>
-BUNDLE_DEVICE_PORTS = $(foreach port, $(BUNDLE_PORTS), \
-	$(port)					\
-	$(word 1, $(subst -,$(space),$(port)))	\
-	$(word 2, $(subst -,$(space),$(port)))	\
-	$(word 1, $(subst -,$(space),$(port)))-$(word 2, $(subst -,$(space),$(port))))
+BUNDLE_DEVICE_PORTS = $(notdir $(BUNDLE_PORTS))
 
 # list of all OS ports in the form <os>
 BUNDLE_OS_PORTS = \
@@ -597,7 +592,7 @@ ifeq ($(USE_VERBOSE_MAKE), true)
 
 	@echo ">>>Supported features:"
 	@for f in $(FEATURE_LIST_WITH_VALUES); do \
-		formattedF=`echo $$f | sed 's/=/:\t\t/'`; \
+		formattedF=`echo $$f | sed 's/=/:		/'`; \
 		printf "\t%s\n" "$$formattedF" ; \
 	done
 endif
