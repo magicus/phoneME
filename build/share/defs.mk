@@ -107,7 +107,7 @@ ifeq ($(wildcard $(TOOLS_DIR)/tools.gmk),)
 $(error TOOLS_DIR must point to the shared tools directory: $(TOOLS_DIR))
 endif
 
-# include tools component makefile. Don't do this until after HOSE_OS is setup
+# include tools component makefile. Don't do this until after HOST_OS is setup
 include $(TOOLS_DIR)/tools.gmk
 
 TOOL_WHICH	?= PATH="$(PATH)" which "$(1)"
