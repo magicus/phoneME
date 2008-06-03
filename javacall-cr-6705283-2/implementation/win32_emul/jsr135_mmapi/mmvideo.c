@@ -53,6 +53,7 @@ extern javacall_result audio_start(javacall_handle handle);
 extern javacall_result audio_do_buffering(javacall_handle handle,
                                const void* buffer, long *length,
                                javacall_bool *need_more_data, long *min_data_size);
+extern javacall_result audio_clear_buffer(javacall_handle handle);
 extern javacall_result audio_get_time(javacall_handle handle, long* ms);
 extern javacall_result audio_set_time(javacall_handle handle, long* ms);
 extern javacall_result audio_get_duration(javacall_handle handle, long* ms);

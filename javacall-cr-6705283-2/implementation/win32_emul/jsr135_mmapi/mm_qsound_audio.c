@@ -1366,8 +1366,6 @@ static javacall_result audio_qs_do_buffering(
                             long *min_data_size){
 
     ah* h = (ah *)handle;
-    int startPos;
-    
     JC_MM_ASSERT(h->hdr.dataBuffer != NULL);
 
     if (NULL != buffer) {
