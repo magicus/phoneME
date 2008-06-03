@@ -140,6 +140,7 @@ source_bundle:: $(CVM_BUILD_DEFS_MK)
                      MIDP_PUB_CLASSES_ZIP=$(MIDP_PUB_CLASSES_ZIP) \
 	             MIDP_SHARED_LIB=$(MIDP_SHARED_LIB) \
 	             COMPONENTS_DIR=$(COMPONENTS_DIR) \
+	             PROJECT_MIDP_DIR=$(PROJECT_MIDP_DIR) \
 	             source_bundle -C $(MIDP_MAKEFILE_DIR) 
 	$(AT)$(MAKE) $(MAKE_NO_PRINT_DIRECTORY) \
 		     PCSL_PLATFORM=$(PCSL_PLATFORM) \
@@ -148,7 +149,6 @@ source_bundle:: $(CVM_BUILD_DEFS_MK)
 	             GNU_TOOLS_BINDIR=$(GNU_TOOLS_BINDIR) \
 		     SOURCE_OUTPUT_DIR=$(SOURCE_OUTPUT_DIR) \
 		     COMPONENTS_DIR=$(COMPONENTS_DIR) \
-	             PROJECT_MIDP_DIR=$(PROJECT_MIDP_DIR) \
 	             source_bundle -C $(PCSL_DIR) $(PCSL_MAKE_OPTIONS)
 
 #
