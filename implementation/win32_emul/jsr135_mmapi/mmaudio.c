@@ -459,6 +459,7 @@ javacall_result audio_clear_buffer(javacall_handle hLIB){
     pHandle->offset = 0;
     if (pHandle->buffer != NULL) {
         FREE(pHandle->buffer);
+        pHandle->buffer = NULL;
     }
     //DeleteFile(pHandle->fileName);
     
