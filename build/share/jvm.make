@@ -1520,7 +1520,9 @@ CEVersion               = $(CE_VERSION)
 
 CEPlatform              = $(CE_PLATFORM)
 
-LIBS                    = coredll.lib corelibc.lib aygshell.lib Ws2.lib
+LIBS                    = coredll.lib corelibc.lib aygshell.lib \
+		          Ws2.lib ole32.lib
+
 LIBS                   += $(LIBS_EXTERNAL)
 
 ifeq ($(ENABLE_PCSL), true)
