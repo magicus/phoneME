@@ -1536,6 +1536,7 @@ class MethodInfo extends ClassMemberInfo implements Const, Cloneable
 	      case opc_invokevirtual:
 	      case opc_invokestatic:
 	      case opc_invokespecial:  
+	      case opc_anewarray:
 	      case opc_anewarray_quick:
 	      case opc_checkcast_quick:
 	      case opc_agetstatic_quick:

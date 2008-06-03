@@ -168,7 +168,7 @@ CVMpreloaderLookupFromType0(CVMClassTypeID typeID)
 	    return NULL; /* not here! */
 	}
 	cb = CVM_ROMClassblocks[i];
-        CVMassert(CVMcbClassName(cb) == typeID);
+        CVMassert(cb == NULL || CVMcbClassName(cb) == typeID);
 	return (CVMClassBlock*)cb;
     }
 
@@ -269,6 +269,9 @@ CVMpreloaderCheckROMClassInitState(CVMExecEnv* ee)
     int i;
     for (i = 0; i < CVM_nROMClasses; ++i) {
 	const CVMClassBlock* cb = CVM_ROMClassblocks[i];
+	if (cb == NULL) {
+	    continue;
+	}
 	CVMassert(CVMcbIsInROM(cb));
 	CVMassert(CVMcbCheckRuntimeFlag(cb, LINKED));
 	CVMassert(CVMcbGetClinitEE(ee, cb) == NULL);
@@ -456,12 +459,18 @@ CVMpreloaderInit()
 		  (randomHash != CVMrandomNext()));
 
 	for (i = 0; i < CVM_nTotalROMClasses; ++i) {
-	    const CVMClassBlock* cb = CVM_ROMClassblocks[i];
-	    struct java_lang_Class ** cbInstanceICell = 
-		(struct java_lang_Class **)CVMcbJavaInstance(cb);
-	    struct java_lang_Class * cbInstance = *cbInstanceICell;
+	    const CVMClassBlock *cb = CVM_ROMClassblocks[i];
+	    struct java_lang_Class **cbInstanceICell;
+	    struct java_lang_Class *cbInstance;
 	    CVMInt32 hash;
 	    int shift = i & 0x1f;
+
+	    if (cb == NULL) {
+		continue;
+	    }
+
+	    cbInstanceICell = (struct java_lang_Class **)CVMcbJavaInstance(cb);
+	    cbInstance = *cbInstanceICell;
 
 	    hash = ((CVMAddr)cbInstance >> 4) ^ ((CVMAddr)cb >> 5);
 	    hash = (((CVMUint32)hash >> shift) |
@@ -616,7 +625,9 @@ CVMpreloaderInit()
 	int i, j;
 	for (i = 0; i < CVM_nTotalROMClasses; ++i) {
 	    const CVMClassBlock* cb = CVM_ROMClassblocks[i];
-	    if (CVMcbIs(cb, PRIMITIVE) || CVMcbMethodTablePtr(cb) == NULL) {
+	    if (cb == NULL || CVMcbIs(cb, PRIMITIVE) ||
+		CVMcbMethodTablePtr(cb) == NULL)
+	    {
 		continue;
 	    }
 	    for (j = 0; j < CVMcbMethodTableCount(cb); ++j) {
@@ -721,8 +732,13 @@ CVMpreloaderDisambiguateAllMethods(CVMExecEnv* ee)
 
     for (i = 0; i < CVM_nROMClasses; ++i) {
 	const CVMClassBlock* cb = CVM_ROMClassblocks[i];
-	int nmethods = CVMcbMethodCount(cb);
+	int nmethods;
 	int j;
+
+	if (cb == NULL) {
+	    continue;
+	}
+	nmethods = CVMcbMethodCount(cb);
 	for (j = 0; j < nmethods; j++) {
 	    CVMMethodBlock* mb = CVMcbMethodSlot(cb, j);
 	    if (CVMmbInvokerIdx(mb) < CVM_INVOKE_CNI_METHOD) {
@@ -781,6 +797,9 @@ CVMpreloaderInitInvokeCost()
     
     for (i = 0; i < CVM_nROMClasses; ++i) {
 	const CVMClassBlock* cb = CVM_ROMClassblocks[i];
+	if (cb == NULL) {
+	    continue;
+	}
 	for (j = 0; j < CVMcbMethodCount(cb); ++j) {
 	    CVMMethodBlock *mb = CVMcbMethodSlot(cb, j);
 #ifndef CVM_MTASK
@@ -818,7 +837,7 @@ CVMpreloaderVerifyGCMaps()
 	 * We don't check java_lang_Object, array classes or
 	 * primitive clases.
 	 */
-	if (cb != CVMsystemClass(java_lang_Object) &&
+	if (cb != NULL && cb != CVMsystemClass(java_lang_Object) &&
 	    !CVMisArrayClass(cb) && !CVMcbIs(cb, PRIMITIVE)) {
 	    CVMpreloaderVerifyGCMap(cb);
 	}

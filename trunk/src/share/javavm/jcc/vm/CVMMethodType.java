@@ -41,7 +41,7 @@ public
 class CVMMethodType implements CVMTypeCode, util.ClassFileConst {
 
 /* instance fields */
-    public int		  entryNo;
+    public int		  entryNo = -1;
     public CVMMethodType  next;	// hash chain
     public CVMSigForm	  form;
     public int		  nDetails;

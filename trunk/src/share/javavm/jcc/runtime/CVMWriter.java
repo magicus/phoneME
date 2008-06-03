@@ -2381,6 +2381,26 @@ public class CVMWriter implements CoreImageWriter, Const, CVMConst {
 	return v;
     }
 
+    // This must be called before enumerateMethodTypes() if 
+    // there are unresolved CP entries.
+    // Find NameAndType constants for unresolved MethodRefs
+    // so they are added to MethodTypes.
+    private void lookupUnresolvedMethodSignatures(ConstantPool cp) {
+	ConstantObject constants[] = cp.getConstants();
+	int clen = constants.length;
+	for (int i = 1; i < clen; i += constants[i].nSlots) {
+	    ConstantObject co = constants[i];
+	    if (co.tag == CONSTANT_NAMEANDTYPE) {
+		NameAndTypeConstant ntcon = (NameAndTypeConstant)co;
+		int nameid = CVMMemberNameEntry.lookupEnter(getUTF(ntcon.name));
+		String sigString = getUTF(ntcon.type);
+		if  (sigString.charAt(0)==SIGC_METHOD) {
+		    CVMMethodType mt = CVMMethodType.parseSignature(sigString);
+		}
+	    }
+	}
+    }
+
     private void
     enumerateMethodTypes(){
 	methodTypes = new CVMMethodType[4];
@@ -2896,6 +2916,7 @@ public class CVMWriter implements CoreImageWriter, Const, CVMConst {
 	String  name;
 	int	nClasses;
 	CVMClass classVector[];
+	Vector  classes;
         boolean foundFirstSingleDimensionArrayClass;
         boolean foundLastSingleDimensionArrayClass;
         boolean foundFirstNonPrimitiveClass;
@@ -2905,10 +2926,10 @@ public class CVMWriter implements CoreImageWriter, Const, CVMConst {
 
 	ClassTable( int nMax, String nm ){
 	    name = nm;
-	    classVector = new CVMClass[nMax];
 	    nClasses = 0;
             foundFirstSingleDimensionArrayClass = false;
             foundLastSingleDimensionArrayClass = false;
+	    classes = new Vector(nMax);
 	}
 
         /**
@@ -2995,7 +3016,15 @@ public class CVMWriter implements CoreImageWriter, Const, CVMConst {
                     foundLastSingleDimensionArrayClass = true;
 		}
 	    }
-	    classVector[nClasses++] = c;
+	    if (classid_depth == 0) {
+		int tid = classid - CVMTypeCode.CVMtypeLastScalar - 1;
+		while (tid > nClasses) {
+		    ++nClasses;
+		    classes.add(null);
+		}
+	    }
+	    ++nClasses;
+	    classes.add(c);
 	}
 
         /**
@@ -3045,15 +3074,22 @@ public class CVMWriter implements CoreImageWriter, Const, CVMConst {
 	}
 
         void writeClassList() {
+	    classVector = new CVMClass[nClasses];
+	    classes.copyInto(classVector);
+
 	    int n = nClasses;
 	    CVMClass classes[] = classVector;
 	    //auxOut.println("const CVMClassBlock * const CVM_" + name +
             //               "ROMClassBlocks[] = {");
 	    for (int i=0; i<n; i++){
 		CVMClass c = classVector[i];
-		auxOut.print("    &");
-		auxOut.print(cbName(c));
-		auxOut.println(",");
+		if (c == null) {
+		    auxOut.println("(const CVMClassBlock *)0,");
+		} else {
+		    auxOut.print("    &");
+		    auxOut.print(cbName(c));
+		    auxOut.println(",");
+		}
 	    }
 	    //auxOut.println("};");
 	}
@@ -3079,6 +3115,7 @@ public class CVMWriter implements CoreImageWriter, Const, CVMConst {
 	    int classid = c.getClassId();
 	    classTable.addClass(c);
 	}
+
         auxOut.println("const CVMClassBlock * const CVM_ROMClassblocks[] = {");
         classTable.writeClassList();
 	auxOut.println("};" );
@@ -3135,6 +3172,14 @@ public class CVMWriter implements CoreImageWriter, Const, CVMConst {
 
         // after all classes processed once by classMaker
         // ... but before we write the classes.
+	if (doShared) {
+	    lookupUnresolvedMethodSignatures(sharedconsts);
+	} else {
+	    for (int i = 0; i < nClasses; ++i) {
+		ConstantPool cp = classes[i].classInfo.getConstantPool();
+		lookupUnresolvedMethodSignatures(cp);
+	    }
+	}
 	enumerateMethodTypes();
 	
 	// write out some constant pool stuff here,

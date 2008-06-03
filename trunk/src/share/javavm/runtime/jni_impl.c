@@ -3491,13 +3491,6 @@ static CVMBool initializeClassList(CVMExecEnv* ee,
 static char*
 initializeSystemClass(JNIEnv* env)
 {
-#ifdef CVM_CLASSLOADING
-    /* init bootclasspath before doing System.initializeSystemClass()*/
-    if (!CVMclassBootClassPathInit(env)) {
-	return "Failed to initialize bootclasspath";
-    }
-#endif
-
     {
 	/* Call System.initializeSystemClass() via the JNI. This sets
 	   up the global properties table which
@@ -3869,6 +3862,13 @@ initializeSystemClasses(JNIEnv* env,
 {
     CVMExecEnv* ee = CVMjniEnv2ExecEnv(env);
     char* errorStr;
+
+#ifdef CVM_CLASSLOADING
+    /* init bootclasspath before doing System.initializeSystemClass()*/
+    if (!CVMclassBootClassPathInit(env)) {
+	return "Failed to initialize bootclasspath";
+    }
+#endif
 
     /* First ensure that we have no clinit for sun_misc_CVM before proceeding
        with class initialization of system classes: */
