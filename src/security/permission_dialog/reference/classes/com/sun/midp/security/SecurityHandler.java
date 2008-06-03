@@ -149,20 +149,13 @@ public final class SecurityHandler {
      *  -1 if the status is unknown
      */
     public int checkPermission(String permission) {
-        boolean found = false;
         int i;
 
         synchronized (this) {
             try {
                 i = Permissions.getId(permission);
-                found = true;
             } catch (SecurityException e) {
-                i=0;  //not found
-            }
-
-            if (!found) {
-                // report denied
-                return 0;
+                return 0;  //not found, report denied
             }
 
             switch (permissions[i]) {
