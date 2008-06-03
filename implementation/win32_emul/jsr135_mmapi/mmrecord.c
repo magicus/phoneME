@@ -24,6 +24,39 @@
 
 #include <limits.h>
 #include "mmrecord.h"
+#include "wav_struct.h"
+
+int create_wavhead(recorder* h, char *buffer, int buflen)
+{
+    struct std_head *wh;
+
+    if (buffer == NULL)
+        return sizeof(struct std_head);
+
+    JC_MM_ASSERT(buflen >= sizeof(struct std_head));
+
+    wh = (struct std_head *)buffer;
+
+    memset(wh, 0, sizeof(struct std_head));
+
+    wh->rc.chnk_id          = CHUNKID_RIFF;
+    wh->rc.chnk_ds          = 4;
+    wh->rc.type             = TYPE_WAVE;
+
+    wh->fc.chnk_id          = CHUNKID_fmt ;
+    wh->fc.chnk_ds          = 16;
+    wh->fc.compression_code = 1;
+    wh->fc.num_channels     = h->channels;
+    wh->fc.sample_rate      = h->rate;
+    wh->fc.bytes_per_second = 0;          /* ??? NEED REVISIT */
+    wh->fc.block_align      = 0;          /* ?? NEED REVISIT */
+    wh->fc.bits             = h->bits;
+
+    wh->dc.chnk_id          = CHUNKID_data;
+    wh->dc.chnk_ds          = h->recordLen;
+
+    return sizeof(struct std_head);
+}
 
 /*******************************************************************************/
 
