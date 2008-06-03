@@ -1200,6 +1200,15 @@ abstract class ItemLFImpl implements ItemLF {
     void lGetContentSize(int size[], int availableWidth) {
     }
 
+
+    /**
+     * Return the content size
+     * @return  array of content size
+     */
+    int[] lGetContentBounds() {
+        return contentBounds;
+    }
+
     /**
      * Sets the label size in the passed in array.
      * Content is calculated based on the availableWidth.

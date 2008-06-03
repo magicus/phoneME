@@ -212,7 +212,7 @@ public class BodyLayer extends CLayer
                 ScrollIndSkin.MODE == ScrollIndResourcesConstants.MODE_BAR &&
                 scrollInd.isVisible()) {
                 bounds[W] += scrollInd.bounds[W];
-                if (ScreenSkin.TEXT_ORIENT == Graphics.RIGHT) {
+                if (ScreenSkin.RL_DIRECTION) {
                     bounds[X] -= scrollInd.bounds[W];
                 }
 
@@ -235,7 +235,7 @@ public class BodyLayer extends CLayer
                         ScrollIndSkin.MODE == ScrollIndResourcesConstants.MODE_BAR &&
                         vis) {
                         bounds[W] += scrollInd.bounds[W];
-                        if (ScreenSkin.TEXT_ORIENT == Graphics.RIGHT) {
+                        if (ScreenSkin.RL_DIRECTION) {
                             bounds[X] -= scrollInd.bounds[W];
                         }
 
@@ -284,7 +284,7 @@ public class BodyLayer extends CLayer
                 if (ScrollIndSkin.MODE == ScrollIndResourcesConstants.MODE_BAR) {
                     int w = scrollInd.bounds[W];
                     bounds[W] += scrollVisible? -w: +w;
-                    if (ScreenSkin.TEXT_ORIENT == Graphics.RIGHT) {
+                    if (ScreenSkin.RL_DIRECTION) {
                            bounds[X] -= scrollVisible? -w: +w;
                     }
                     addDirtyRegion();
@@ -343,7 +343,7 @@ public class BodyLayer extends CLayer
             if (ScrollIndSkin.MODE == ScrollIndResourcesConstants.MODE_BAR &&
                 scrollInd.isVisible()) {
                 bounds[W] -= scrollInd.bounds[W];
-                if (ScreenSkin.TEXT_ORIENT == Graphics.RIGHT) {
+                if (ScreenSkin.RL_DIRECTION) {
                     bounds[X] += scrollInd.bounds[W];
                 }
             }

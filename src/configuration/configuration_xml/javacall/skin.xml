@@ -1371,7 +1371,25 @@
   <integer_seq
         Key="SOFTBTN_BUTTON_ANCHOR_Y"
       Value="2,2"/>
+  <image
+         Key="DATEEDITOR_IMAGE_MON_HE_BG"
+       Value="dateeditor.image_mon_he_bg"
+     Romized="true"/>
 
+   <image
+         Key="DATEEDITOR_IMAGE_DAY_HE_BG"
+       Value=""
+     Romized="true"/>
+
+   <image
+         Key="DATEEDITOR_IMAGE_YR_HE_BG"
+       Value="dateeditor.image_yr_he_bg"
+     Romized="true"/>
+
+   <image
+         Key="DATEEDITOR_IMAGE_TIME_HE_BG"
+       Value="dateeditor.image_time_he_bg"
+     Romized="true"/>
 </skin_properties>
 </skin>
 </configuration>

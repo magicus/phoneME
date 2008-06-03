@@ -2303,6 +2303,25 @@
             Name="SOFTBTN_BUTTON_ANCHOR_Y"
             Comment="The y-coordinate for the anchor point of a button. Its
                      a sequence of SOFTBTN_NUM_BUTTONS integer numbers."/>
+   <constant Type="int"
+                         Name="DATEEDITOR_IMAGE_MON_HE_BG"
+                         Comment="The background image for the drop-down month selector
+                                         if microedition.locale is set to a country where RTL text orientation is used"/>
+
+   <constant Type="int"
+                         Name="DATEEDITOR_IMAGE_DAY_HE_BG"
+                         Comment="The background image for the drop-down day selector
+                                         if microedition.locale is set to a country where uses RIGHT-TO-LEFT note (Hebrew)"/>
+
+   <constant Type="int"
+                         Name="DATEEDITOR_IMAGE_YR_HE_BG"
+                         Comment="The background image for the drop-down year selector
+                                         if microedition.locale is set to a country where uses RIGHT-TO-LEFT note (Hebrew)"/>
+
+   <constant Type="int"
+                         Name="DATEEDITOR_IMAGE_TIME_HE_BG"
+                         Comment="The background image for the drop-down time selector
+                                         if microedition.locale is set to a country where uses RIGHT-TO-LEFT note (Hebrew)"/>     
 </constant_class>
 </constants>
 </configuration>

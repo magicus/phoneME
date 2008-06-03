@@ -168,6 +168,30 @@ public class DateEditorSkin {
      * See its comment for further details.
      */
     public static Image IMAGE_CLOCK_BG;
+
+/**
+      * This field corresponds to DATEEDITOR_IMAGE_MON_HE_BG skin property.
+      * See its comment for further details.
+      */
+     public static Image IMAGE_MONTH_HE_BG;
+
+     /**
+      * This field corresponds to DATEEDITOR_IMAGE_DAY_HE_BG skin property.
+      * See its comment for further details.
+      */
+     public static Image IMAGE_DAY_HE_BG;
+
+     /**
+      * This field corresponds to DATEEDITOR_IMAGE_YR_HE_BG skin property.
+      * See its comment for further details.
+      */
+     public static Image IMAGE_YEAR_HE_BG;
+
+     /**
+      * This field corresponds to DATEEDITOR_IMAGE_TIME_HE_BG skin property.
+      * See its comment for further details.
+      */
+     public static Image IMAGE_TIME_HE_BG;    
     
     // private constructor
     private DateEditorSkin() {
