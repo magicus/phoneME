@@ -35,22 +35,28 @@ public class LocationPermission extends Permission {
         "javax.microedition.location.Location", null);
 
     static public LocationPermission ORIENTATION = 
-		new LocationPermission("javax.microedition.location.Orientation", null);
+        new LocationPermission(
+	    "javax.microedition.location.Orientation", null);
 
     static public LocationPermission LOCATION_PROXIMITY =
-        new LocationPermission("javax.microedition.location.ProximityListener", null);
+        new LocationPermission(
+	    "javax.microedition.location.ProximityListener", null);
 
     static public LocationPermission LANDMARK_STORE_READ =
-        new LocationPermission("javax.microedition.location.LandmarkStore.read", null);
+        new LocationPermission(
+	    "javax.microedition.location.LandmarkStore.read", null);
 
     static public LocationPermission LANDMARK_STORE_WRITE = 
-        new LocationPermission("javax.microedition.location.LandmarkStore.write", null);
+        new LocationPermission(
+	    "javax.microedition.location.LandmarkStore.write", null);
 
     static public LocationPermission LANDMARK_STORE_CATEGORY = 
-        new LocationPermission("javax.microedition.location.LandmarkStore.category", null);
+        new LocationPermission(
+	    "javax.microedition.location.LandmarkStore.category", null);
 
     static public LocationPermission LANDMARK_STORE_MANAGE = 
-        new LocationPermission("javax.microedition.location.LandmarkStore.management", null);
+        new LocationPermission(
+	    "javax.microedition.location.LandmarkStore.management", null);
 
     public LocationPermission(String name, String resource) {
         super(name, resource);
