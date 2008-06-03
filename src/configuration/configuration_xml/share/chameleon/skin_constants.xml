@@ -2306,7 +2306,7 @@
    <constant Type="int"
                          Name="DATEEDITOR_IMAGE_MON_HE_BG"
                          Comment="The background image for the drop-down month selector
-                                         if microedition.locale is set to a country where uses RIGHT-TO-LEFT note (Hebrew)"/>
+                                         if microedition.locale is set to a country where RTL text orientation is used"/>
 
    <constant Type="int"
                          Name="DATEEDITOR_IMAGE_DAY_HE_BG"

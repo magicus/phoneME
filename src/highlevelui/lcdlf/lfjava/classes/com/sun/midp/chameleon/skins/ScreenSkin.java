@@ -203,6 +203,9 @@ public class    ScreenSkin {
      */
     public static Image[] IMAGE_HS_BG_WO_TITLE;
 
+    /**
+     * Layout diraction. True if current diraction is right-to-left
+     */
     public static boolean RL_DIRECTION;
     
 

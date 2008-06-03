@@ -239,8 +239,9 @@ class DateFieldLFImpl extends ItemLFImpl implements DateFieldLF {
                     } else {
                         yOffset = 0;
                     }
-                    if (!ScreenSkin.RL_DIRECTION)
+                    if (!ScreenSkin.RL_DIRECTION) {
                         btnOffset = width - iconWidth;
+                    }
                     drawButtonBG(g, btnOffset, 0, iconWidth, height);
                     g.drawImage(DateFieldSkin.IMAGE_ICON_DATE,
                                 btnOffset, yOffset, 
@@ -257,8 +258,9 @@ class DateFieldLFImpl extends ItemLFImpl implements DateFieldLF {
                     } else {
                         yOffset = 0;
                     }
-                    if (!ScreenSkin.RL_DIRECTION)
+                    if (!ScreenSkin.RL_DIRECTION) {
                         btnOffset = width - iconWidth;
+                    }
                     drawButtonBG(g, btnOffset, 0, iconWidth, height);
                     g.drawImage(DateFieldSkin.IMAGE_ICON_TIME,
                                 btnOffset, yOffset,
@@ -275,8 +277,9 @@ class DateFieldLFImpl extends ItemLFImpl implements DateFieldLF {
                     } else {
                         yOffset = 0;
                     }
-                    if (!ScreenSkin.RL_DIRECTION)
+                    if (!ScreenSkin.RL_DIRECTION) {
                         btnOffset = width - iconWidth;
+                    }
                     drawButtonBG(g, btnOffset, 0, iconWidth, height);
                     g.drawImage(DateFieldSkin.IMAGE_ICON_DATETIME,
                                 btnOffset, yOffset, 
@@ -292,10 +295,9 @@ class DateFieldLFImpl extends ItemLFImpl implements DateFieldLF {
 
 
         int textOffset = DateFieldSkin.PAD_H;
-         String currentStr = toString(currentDate, mode, df.initialized);
-         if (ScreenSkin.RL_DIRECTION) {
-             textOffset = width - DateFieldSkin.PAD_H;
-         }
+        if (ScreenSkin.RL_DIRECTION) {
+            textOffset = width - DateFieldSkin.PAD_H;
+        }
         // we clip in case our text is too long
         g.clipRect(ScreenSkin.RL_DIRECTION ? DateFieldSkin.PAD_H + iconWidth : DateFieldSkin.PAD_H,
             DateFieldSkin.PAD_V,
@@ -310,7 +312,7 @@ class DateFieldLFImpl extends ItemLFImpl implements DateFieldLF {
         // paint value
         g.setFont(DateFieldSkin.FONT);
         g.setColor(DateFieldSkin.COLOR_FG);
-        g.drawString(currentStr,
+        g.drawString(toString(currentDate, mode, df.initialized),
                      textOffset, 0, ScreenSkin.TEXT_ORIENT | Graphics.TOP);
 
         if (!ScreenSkin.RL_DIRECTION) {

@@ -394,7 +394,7 @@ public class CascadeMenuLayer extends ScrollablePopupLayer {
              }
 
              g.drawString(menuCmds[cmdIndex].getLabel(), itemOffset,
-                         y, Graphics.TOP | Graphics.LEFT);
+                         y, Graphics.TOP | ScreenSkin.TEXT_ORIENT);
                          
             y += MenuSkin.ITEM_HEIGHT;                 
         }

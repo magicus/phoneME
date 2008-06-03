@@ -1393,7 +1393,7 @@
 
    <image
          Key="DATEEDITOR_IMAGE_TIME_HE_BG"
-       Value=""
+       Value="dateeditor.image_time_he_bg"
      Romized="true"/>
 
 </skin_properties>

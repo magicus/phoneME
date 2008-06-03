@@ -582,16 +582,14 @@ class TextBoxLFImpl extends TextFieldLFImpl implements TextFieldLF {
             if (ScreenSkin.RL_DIRECTION) {
                 if (cursor.index < tf.buffer.length()) {
                     cursor.index++;
-                    cursor.option = Text.PAINT_USE_CURSOR_INDEX;
-                    myInfo.isModified = myInfo.scrollX = keyUsed = true;
                 }
             } else {
                 if (cursor.index > 0) {
                     cursor.index--;
-                    cursor.option = Text.PAINT_USE_CURSOR_INDEX;
-                    myInfo.isModified = myInfo.scrollX = keyUsed = true;
                 }
             }
+            cursor.option = Text.PAINT_USE_CURSOR_INDEX;
+            myInfo.isModified = myInfo.scrollX = keyUsed = true;
         } else {
             if (ScreenSkin.RL_DIRECTION) {
                 keyUsed = myInfo.scroll(TextInfo.FORWARD);
@@ -607,16 +605,14 @@ class TextBoxLFImpl extends TextFieldLFImpl implements TextFieldLF {
             if (ScreenSkin.RL_DIRECTION) {
                 if (cursor.index > 0) {
                     cursor.index--;
-                    cursor.option = Text.PAINT_USE_CURSOR_INDEX;
-                    myInfo.isModified = myInfo.scrollX = keyUsed = true;
                 }
             } else {
                 if (cursor.index < tf.buffer.length()) {
                     cursor.index++;
-                    cursor.option = Text.PAINT_USE_CURSOR_INDEX;
-                    myInfo.isModified = myInfo.scrollX = keyUsed = true;
                 }
             }
+            cursor.option = Text.PAINT_USE_CURSOR_INDEX;
+            myInfo.isModified = myInfo.scrollX = keyUsed = true;
         } else {
             if (ScreenSkin.RL_DIRECTION) {
                  keyUsed = myInfo.scroll(TextInfo.BACK);

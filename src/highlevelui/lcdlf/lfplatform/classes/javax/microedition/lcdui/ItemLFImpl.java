@@ -728,6 +728,10 @@ abstract class ItemLFImpl implements ItemLF {
     void lGetContentSize(int size[], int availableWidth) {
     }
 
+    /**
+     * Return the content size
+     * @return  array of content size
+     */
     int[] lGetContentBounds() {
         return null;
     }

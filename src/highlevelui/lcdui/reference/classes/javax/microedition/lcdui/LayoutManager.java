@@ -1348,8 +1348,10 @@ class LayoutManager {
      */
     static LayoutManager singleInstance = new LayoutManager();
 
+    // 
+    private String locale = System.getProperty("microedition.locale");
+
     // layout derection depend on the language conventions in use
-    private String locale = System.getProperty("microedition.locale");;
     private int layoutDirection;
 
 

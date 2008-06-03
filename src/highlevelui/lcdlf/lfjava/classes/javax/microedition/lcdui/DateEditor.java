@@ -687,7 +687,7 @@ class DateEditor extends PopupLayer implements CommandListener {
      * Draws year popup content.
      * @param g The Graphics object to paint to
      */
-    protected void drawYearComonent(Graphics g) {
+    protected void drawYearComponent(Graphics g) {
 
         Image bgImg;
         int w = 0;
@@ -806,7 +806,7 @@ class DateEditor extends PopupLayer implements CommandListener {
         g.translate(-month_bounds[X], -month_bounds[Y]);
 
         g.translate(year_bounds[X], year_bounds[Y]);
-        drawYearComonent(g);
+        drawYearComponent(g);
         g.translate(-year_bounds[X], -year_bounds[Y]);
         
         g.translate(calendar_bounds[X], calendar_bounds[Y]);

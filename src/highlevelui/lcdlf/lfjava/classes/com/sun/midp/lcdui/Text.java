@@ -731,8 +731,9 @@ public class Text {
         int oldClipY = g.getClipY();
         int oldClipH = g.getClipHeight();
 
-        if (ScreenSkin.RL_DIRECTION)
+        if (ScreenSkin.RL_DIRECTION) {
              x -= w;
+        }
 
         g.clipRect(x, oldClipY, w, oldClipH);
 

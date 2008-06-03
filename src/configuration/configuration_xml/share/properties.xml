@@ -175,7 +175,7 @@
 		Scope="system"
 		Comment="Profile information."/>
   <property Key="microedition.locale" 
-		Value="he-IL"
+		Value="en-US"
 		Scope="system"
 		Comment="System locale."/>
   <property Key="microedition.platform" 

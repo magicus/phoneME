@@ -1465,17 +1465,15 @@ class TextFieldLFImpl extends ItemLFImpl implements
                 keyClicked(dir);
                 if (ScreenSkin.RL_DIRECTION) {
                     if (cursor.index < tf.buffer.length()) {
-                        cursor.option = Text.PAINT_USE_CURSOR_INDEX;
-                        keyUsed = true;
                         cursor.index++;
                     }
                 } else {
                     if (cursor.index > 0) {
-                        cursor.option = Text.PAINT_USE_CURSOR_INDEX;
-                        keyUsed = true;
                         cursor.index--;
                     }
                 }
+                cursor.option = Text.PAINT_USE_CURSOR_INDEX;
+                keyUsed = true;
             }
         break;
         
@@ -1484,17 +1482,15 @@ class TextFieldLFImpl extends ItemLFImpl implements
                 keyClicked(dir);
                 if (ScreenSkin.RL_DIRECTION) {
                     if (cursor.index > 0) {
-                        cursor.option = Text.PAINT_USE_CURSOR_INDEX;
-                        keyUsed = true;
                         cursor.index--;
                     }
                 } else {
-                    if (cursor.index > 0) {
-                        cursor.option = Text.PAINT_USE_CURSOR_INDEX;
-                        keyUsed = true;
-                        cursor.index--;
+                    if (cursor.index < tf.buffer.length()) {
+                        cursor.index++;
                     }
                 }
+                cursor.option = Text.PAINT_USE_CURSOR_INDEX;
+                        keyUsed = true;
             }
         break;
 

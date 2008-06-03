@@ -301,10 +301,13 @@ class AppManagerUI extends Form
                                            (ResourceConstants.NO),
                                            Command.BACK, 1);
 
+    // Current locale
     private String locale = System.getProperty("microedition.locale");
 
+    // Layout direction. True if direction is right-to-left
     private boolean RL_DIRECTION;
 
+    // Orientation of text, can be Graphics.RIGHT or Graphics.Left
     private int TEXT_ORIENT;
 
     /** Display for the Manager MIDlet. */
@@ -470,7 +473,7 @@ class AppManagerUI extends Form
             TEXT_ORIENT = Graphics.RIGHT;
         } else {
             RL_DIRECTION = false;
-            TEXT_ORIENT = Graphics.RIGHT;
+            TEXT_ORIENT = Graphics.LEFT;
         }
     }
 
@@ -1806,7 +1809,7 @@ class AppManagerUI extends Form
 
                     if (RL_DIRECTION) {
                         g.clipRect(truncate ? truncWidth + ITEM_PAD : ITEM_PAD, 0,
-                            truncate ? w - bgIconW - 2 * ITEM_PAD :
+                            truncate ? w - truncWidth - bgIconW - 2 * ITEM_PAD :
                                     w - bgIconW - 2 * ITEM_PAD, h);
                         g.drawChars(text, 0, textLen,
                             w - (bgIconW + ITEM_PAD + xScrollOffset), (h - ICON_FONT.getHeight())/2,

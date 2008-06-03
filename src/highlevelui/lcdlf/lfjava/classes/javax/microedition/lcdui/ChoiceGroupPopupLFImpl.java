@@ -182,26 +182,26 @@ class ChoiceGroupPopupLFImpl extends ChoiceGroupLFImpl {
                         Graphics.LEFT | Graphics.TOP);
             g.setClip(iX, iY, iW, iH);
 
-            textOffset = ChoiceGroupSkin.WIDTH_IMAGE +
-                ChoiceGroupSkin.PAD_H;
+            if (ScreenSkin.RL_DIRECTION) {
+                textOffset = 0;
+            } else {
+                textOffset = ChoiceGroupSkin.WIDTH_IMAGE +
+                        ChoiceGroupSkin.PAD_H;
+            }
         } else {
             textOffset = 0;
         }
 
 
-        if (!ScreenSkin.RL_DIRECTION) {
-            g.translate(textOffset, 0);
-        }
+        g.translate(textOffset, 0);
         Text.drawTruncString(g,
                         cg.cgElements[s].stringEl,
                         cg.cgElements[s].getFont(),
                         (hasFocus) ? ScreenSkin.COLOR_FG_HL :
                             ChoiceGroupSkin.COLOR_FG,
                         width);
-        if (!ScreenSkin.RL_DIRECTION) {
-            g.translate(-textOffset, 0);
-        }
-        
+        g.translate(-textOffset, 0);
+
         g.translate(-ChoiceGroupSkin.PAD_H, -ChoiceGroupSkin.PAD_V);
 
         if (popupLayer.isSizeChanged() && cachedWidth != INVALID_SIZE) {
@@ -727,6 +727,7 @@ class ChoiceGroupPopupLFImpl extends ChoiceGroupLFImpl {
 
             if (ScrollIndSkin.MODE == ScrollIndResourcesConstants.MODE_BAR) {
                 setScrollInd(ScrollIndLayer.getInstance(ScrollIndSkin.MODE));
+                
 //                setBackground(sbVisible ? null : ChoiceGroupSkin.IMAGE_POPUP_BG,
 //                              ChoiceGroupSkin.COLOR_BG);
             }
