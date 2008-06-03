@@ -234,11 +234,10 @@ public final class Permissions {
     public static boolean isTrusted(String domain) {
         if (domainsAll == null)
             init();
-        
         for (int i1 = 0; i1 < domainsAll.length;i1++)
             if (domainsAll[i1].getName().equals(domain))
                 return domainsAll[i1].isTrusted();
-        
+
         return false;
     }
 
@@ -708,8 +707,9 @@ public final class Permissions {
                         
             // step 4: Domains list
             list = loadDomainList();
-            domainsAll = new DomainPolicy[list.length+1]; // internal 'manufacturer' domain always exist
-            domainsAll[0] = new DomainPolicy(MANUFACTURER_DOMAIN_BINDING, true);
+            DomainPolicy [] domains = new DomainPolicy[list.length+1]; // internal 'manufacturer' domain always exist
+            domains[0] = new DomainPolicy(MANUFACTURER_DOMAIN_BINDING, true);
+            int domainsCounter = 1;
             for (i1 = 0; i1 < list.length; i1++) {
                 String item = list[i1];
 
@@ -722,14 +722,16 @@ public final class Permissions {
                 if (pos > 0) {
                     name = item.substring(0,pos);
                     if (item.charAt(pos+1) == 'u')
-                        isTrusted = true;
+                        isTrusted = false;
                 } else
                     name = item;
 
-                domainsAll[i1+1] = new DomainPolicy(name, isTrusted);
+                domains[domainsCounter++] = new DomainPolicy(name, isTrusted);
                 if (name.startsWith("untrusted") || name.startsWith("unidentified"))
                     unsignedDomain = name;
             }
+            domainsAll = new DomainPolicy[domainsCounter];
+            System.arraycopy(domains, 0, domainsAll, 0, domainsCounter);
             
             // fill hack groups
             Hashtable hack = new Hashtable(groupsAll.length);
