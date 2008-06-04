@@ -1,7 +1,7 @@
 #
 # @(#)README.txt	1.8 06/01/28
 #
-# Copyright 2006 Sun Microsystems, Inc. All rights reserved.
+# Copyright 2008 Sun Microsystems, Inc. All rights reserved.
 # SUN PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
 #
 
