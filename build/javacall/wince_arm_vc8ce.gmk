@@ -1,0 +1,37 @@
+#
+#
+#
+# Copyright 2006 Sun Microsystems, Inc. All rights reserved.
+# SUN PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+#
+######################################################################
+#
+# Makefile for building and packaging.
+#
+######################################################################
+
+# Definition of platform to build on
+HOST_PLATFORM		= win32
+HOST_OS			= win32
+HOST_CPU		= i386
+HOST_COMPILER	= vc8ce
+
+# Definition of platform to run on
+TARGET_PLATFORM		= javacall
+TARGET_OS		= javacall
+TARGET_CPU		= arm
+TARGET_COMPILER	= vc8ce
+TARGET_VM		= cldc_vm
+
+# Platform-specific dependencies
+MIDP_DEPS += $(JAVACALL_LIB_DIR)/javacall$(g).lib
+#MIDP_DEPS += $(JAVACALL_LIB_DIR)/emulator.res
+
+# Platform-specific compiler flags
+#EXTRA_CPPFLAGS += /Zm400
+
+# Platform-specific linker flags and libraries
+
+LIBS += $(JAVACALL_LIB_DIR)/javacall$(g).lib
+#LIBS += $(JAVACALL_LIB_DIR)/emulator.res
+#LIBS += Comdlg32.lib shell32.lib dsound.lib advapi32.lib

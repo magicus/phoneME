@@ -78,6 +78,7 @@
 #endif /* ENABLE_ON_DEVICE_DEBUG */
 
 static char urlAddress[BINARY_BUFFER_MAX_LEN];
+static char localResAddress[BINARY_BUFFER_MAX_LEN];
 
 #define MAX_PHONE_NUMBER_LENGTH 48
 static char selectedNumber[MAX_PHONE_NUMBER_LENGTH];
@@ -139,6 +140,16 @@ void javanotify_pen_event(int x, int y, javacall_penevent_type type) {
 
     midp_jc_event_send(&e);
 }
+
+void javanotify_alarm_expiration() {
+    midp_jc_event_union e;
+    e.eventType  = MIDP_JC_EVENT_PUSH;
+    e.data.pushEvent.alarmHandle = 0;
+    midp_jc_event_send(&e);
+}
+
+
+
 
 /**
  * The platform should invoke this function in platform context to start
@@ -348,6 +359,9 @@ void javanotify_start_handler(char* handlerID, char* url, char* action) {
     midp_jc_event_send(&e);
 }
 
+/** from midp_run.c file */
+extern void javautil_set_wap_browser_download(int value);
+
 /**
  * A notification function for telling Java to perform installation of
  * a MIDlet
@@ -390,6 +404,39 @@ void javanotify_install_midlet(const char *httpUrl) {
     data->argv[data->argc++] = urlAddress;
 
     midp_jc_event_send(&e);
+}
+
+/**
+ * A notification function for telling Java to perform installation of
+ * a MIDlet.
+ * 
+ * The difference to javanotify_install_midlet() is .jad or .jar file 
+ * has been downloaded by browser. Java should read and install it from
+ * file system.
+ *
+ */
+void javanotify_install_midlet_from_browser(const char * browserUrl, const char* localResPath) {
+       int length1, length2;
+       midp_jc_event_union e;
+
+       REPORT_INFO2(LC_CORE,"javanotify_install_midlet_from_browser() %s %s>>\n", browserUrl, localResPath);
+
+       e.eventType = MIDP_JC_EVENT_START_INSTALL;
+       e.data.lifecycleEvent.silentInstall = 0;
+       javautil_set_wap_browser_download(1);
+
+       length1 = strlen(browserUrl);
+       length2 = strlen(localResPath);
+
+       if (length1 < BINARY_BUFFER_MAX_LEN && length2 < BINARY_BUFFER_MAX_LEN) {
+           memset(urlAddress, 0, BINARY_BUFFER_MAX_LEN);
+           memcpy(urlAddress, browserUrl, length1);
+           memset(localResAddress, 0, BINARY_BUFFER_MAX_LEN);
+           memcpy(localResAddress, localResPath, length2);
+           e.data.lifecycleEvent.urlAddress = urlAddress;
+           e.data.lifecycleEvent.localResPath = localResAddress;
+           midp_jc_event_send(&e);
+      }
 }
 
 /**
@@ -1720,6 +1767,30 @@ void /* OPTIONAL */ javanotify_rotation() {
     midp_jc_event_union e;
 
     e.eventType = MIDP_JC_EVENT_ROTATION;
+    midp_jc_event_send(&e);
+}
+
+void javanotify_widget_menu_selection(int cmd) {
+    // This command comes from a menu item dynamically
+    // created in the native method 
+    // SoftButtonLayer.setNativePopupMenu()
+    midp_jc_event_union e;
+
+    e.eventType = MIDP_JC_EVENT_MENU_SELECTION;
+    e.data.menuSelectionEvent.menuIndex = cmd;
+
+    midp_jc_event_send(&e);
+}
+
+
+/**
+ * Notfy native peer widget state changed, such as key pressed in editor control.
+ * Now only java TextField/TextBox has native peer. 
+ */
+void javanotify_peerchanged_event(void) {
+    midp_jc_event_union e;
+
+    e.eventType = MIDP_JC_EVENT_PEER_CHANGED;
     midp_jc_event_send(&e);
 }
 

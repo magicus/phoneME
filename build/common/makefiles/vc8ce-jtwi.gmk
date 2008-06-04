@@ -1,0 +1,48 @@
+#
+# @(#)vc8ce-jtwi.gmk
+#
+# Copyright 2006 Sun Microsystems, Inc. All rights reserved.
+# SUN PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+#
+######################################################################
+#
+# JTWI specific defines for compiler
+# Generic defines are in vc.gmk
+# This file should be included after common/makefiles/Defs.gmk
+#
+######################################################################
+ifndef _VC8CE_JTWI_GMK_
+_VC8CE_JTWI_GMK_ =
+
+# CLDC HI library
+LIBS		+= $(CLDC_DIST_DIR)/lib/cldc_vm$(g)$(r)$(LIB_SUFFIX)
+MIDP_DEPS	+= $(CLDC_DIST_DIR)/lib/cldc_vm$(g)$(r)$(LIB_SUFFIX)
+
+# SSL library
+#ifeq ($(USE_SSL), true)
+#ifneq ($(BUILD_SSL), true)
+#LIBS        += $(SSL_OUTPUT_MAKE_DIR)/libssl_arm.lib
+#endif
+#endif
+
+ifeq ($(USE_MULTIPLE_ISOLATES), true)
+ifeq ($(USE_I3_TEST), true)
+LIBS		+= $(CLDC_DIST_DIR)/lib/cldc_hitest$(g)$(r)$(LIB_SUFFIX)
+MIDP_DEPS   += $(CLDC_DIST_DIR)/lib/cldc_vmtest$(g)$(r)$(LIB_SUFFIX)
+endif
+endif
+
+PCSL_TARGET_DIR  = $(PCSL_OUTPUT_DIR)/$(TARGET_OS)_$(TARGET_CPU)
+LD_FLAGS	    += -libpath:$(PCSL_TARGET_DIR)/lib
+
+EXTRA_INCLUDES	+= -I$(PCSL_TARGET_DIR)/inc
+LIBS		    += libpcsl_file.lib libpcsl_memory.lib libpcsl_print.lib \
+                   libpcsl_string.lib libpcsl_network.lib
+
+MIDP_DEPS       += $(PCSL_TARGET_DIR)/lib/libpcsl_file.lib
+MIDP_DEPS       += $(PCSL_TARGET_DIR)/lib/libpcsl_memory.lib
+MIDP_DEPS       += $(PCSL_TARGET_DIR)/lib/libpcsl_print.lib
+MIDP_DEPS       += $(PCSL_TARGET_DIR)/lib/libpcsl_string.lib
+MIDP_DEPS       += $(PCSL_TARGET_DIR)/lib/libpcsl_network.lib
+
+endif
