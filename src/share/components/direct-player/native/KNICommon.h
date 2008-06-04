@@ -37,9 +37,10 @@
 
 #define MMP_MAX_TEMPBUF_SIZE 256
 
-#define MMP_MALLOC(_size_)      JAVAME_MALLOC((_size_))
-#define MMP_FREE(_p_)           JAVAME_FREE((_p_))
-#define MMP_GET_FREE_SPACE()    (0)
+#define MMP_MALLOC(_size_)       JAVAME_MALLOC((_size_))
+#define MMP_FREE(_p_)            JAVAME_FREE((_p_))
+#define MMP_REALLOC(_p_, _size_) JAVAME_REALLOC((_p_), (_size_))
+#define MMP_GET_FREE_SPACE()     (0)
 
 #define MMP_DEBUG_STR(_x_) \
     REPORT_INFO(LC_MMAPI, (_x_))

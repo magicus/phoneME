@@ -54,17 +54,25 @@ public class DirectVolume implements VolumeControl {
     }
     
     void setToThisPlayerLevel() {
-        if (_level == -1) return;
-        nSetVolume(_hNative, _level);
+        if (_level == -1)
+            return;
+        if (_hNative != 0)
+            nSetVolume(_hNative, _level);
     }
 
     void setToPlayerMute() {
-        if (_mute == -1) return;
-        nSetMute(_hNative, _mute == 1);
+        if (_mute == -1)
+            return;
+        if (_hNative != 0)
+            nSetMute(_hNative, _mute == 1);
+    }
+
+    void playerClosed() {
+    	_hNative = 0;
     }
 
     public int getLevel() {
-        if (_level == -1) {
+        if (_hNative != 0 && _level == -1) {
             _level = nGetVolume(_hNative);
         }
         return _level;
@@ -85,15 +93,15 @@ public class DirectVolume implements VolumeControl {
             level = 100;
         }
 
-        // Volume value is same. just return.
-        if (_level == level) {
+        // Volume value is the same or player is closed. Just return.
+        if (_level == level || _hNative == 0) {
             return _level;
         }
 
-        // If this player is not started yet, this new volume will be setted 
-        // when this player start
-        if (   _player.state == Player.STARTED || 
-             ( _player.state == Player.PREFETCHED && 
+        // If this player is not started yet, new volume will be set
+        // when this player starts
+        if ( _player.state == Player.STARTED || 
+                ( _player.state == Player.PREFETCHED && 
                 _player.getLocator().equals(Manager.MIDI_DEVICE_LOCATOR ) ) ) {
             if (-1 == nSetVolume(_hNative, level)) {
                 if (Logging.REPORT_LEVEL <= Logging.ERROR) {
@@ -110,8 +118,9 @@ public class DirectVolume implements VolumeControl {
     }
 
     public boolean isMuted() {
-        if (_mute != -1) return (_mute == 1);
-        if (true == nIsMuted(_hNative)) {
+        if (_hNative == 0 || _mute != -1)
+            return (_mute == 1);
+        if (nIsMuted(_hNative)) {
             _mute = 1;
             return true;
         } else {
@@ -121,7 +130,7 @@ public class DirectVolume implements VolumeControl {
     }
 
     public void setMute(boolean mute) {
-        if (_player.state == Player.STARTED) {
+        if (_player.state == Player.STARTED && _hNative != 0) {
             nSetMute(_hNative, mute);
         }
         _mute = mute ? 1 : 0;
