@@ -70,7 +70,9 @@ typedef enum {
     /** Pen is released. */
     JAVACALL_PENRELEASED = 2,
     /** Pen is dragged. */
-    JAVACALL_PENDRAGGED = 3
+    JAVACALL_PENDRAGGED = 3,
+    /** Pen is hold. */
+    JAVACALL_PENHOLD = 4
 } javacall_penevent_type;
 
 /**

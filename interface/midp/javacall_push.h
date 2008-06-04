@@ -151,6 +151,7 @@ javacall_push_getRegisteredSuite(const javacall_utf16_string connection,
                                  javacall_utf16_string midlet,
                                  int maxLen);
 
+void javanotify_alarm_expiration(void);
 /** @} */
 
 
