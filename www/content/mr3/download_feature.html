@@ -53,11 +53,11 @@ code:
 <a href="#zip_file">zip archive</a> files.  These zip archive files include:
 <ul>
 <li>The phoneME Feature download source file, 
-<kbd>phoneme_feature-mr3-rel-src-</kbd><i>buildnum</i>-<i>date</i><kbd>.zip</kbd>
+<code>phoneme_feature-mr3-rel-src-</code><i>buildnum</i>-<i>date</i><code>.zip</>
 <li>The supporting <a href="#zip_files">Lime</a> software libraries binary file, 
-<kbd>lime.zip</kbd>
+<code>lime.zip</code>
 <li>The supporting <a href="#zip_files">Qsound</a> multimedia libraries binary 
-file, <kbd>qsound.zip</kbd>
+file, <code>qsound.zip</code>
 </ul>
 <li>Check out the phoneME Feature source code from the Subversion 
 <a href="#repo">repository</a>.
@@ -98,10 +98,10 @@ To download the source code zip file, take the following steps:
 <ol>
 <b><li>Create a phoneME Feature directory on your platform.</b>
 <p>
-<kbd>% mkdir phoneME_feature</kbd>
+<code>% mkdir phoneME_feature</code>
 <p>
-<b>Note:</b> Once you have created the <kbd>phoneME_feature</kbd> directory, 
-you can assign it to the variable <kbd>%COMPONENTS_DIR%</kbd>, as described 
+<b>Note:</b> Once you have created the <code>phoneME_feature</code> directory, 
+you can assign it to the variable <code>%COMPONENTS_DIR%</code>, as described 
 in <a href="./buildenv_feature.html#table1-1">Table 1-1</a>.
 <p>
 <b><li>Go to the phoneME Feature 
@@ -109,12 +109,12 @@ in <a href="./buildenv_feature.html#table1-1">Table 1-1</a>.
 Downloads page</a> and click the MR3 zip file name to copy it to your platform.</b>
 <p>
 <b><li>Once the file is downloaded, unzip the file into your</b> 
-<kbd>phoneME_feature</kbd>
+<code>phoneME_feature</code>
 <b>directory.</b>
 <p>
-<kbd>% unzip 
-phoneme_feature-mr3-rel-src-</kbd><i>buildnum</i>-<i>date</i><kbd>.zip
--d %COMPONENTS_DIR%</kbd>
+<code>% unzip 
+phoneme_feature-mr3-rel-src-</code><i>buildnum</i>-<i>date</i><code>.zip
+-d %COMPONENTS_DIR%</code>
 </ol>
 <p>
 
@@ -125,7 +125,7 @@ phoneme_feature-mr3-rel-src-</kbd><i>buildnum</i>-<i>date</i><kbd>.zip
 Files</h3>
 <!-- END SECTION HEAD -->
 <p>
-Once you have created the <kbd>phoneME_feature</kbd> directory and installed 
+Once you have created the <code>phoneME_feature</code> directory and installed 
 the phoneME Feature source files, follow these steps to install the Lime and 
 Qsound libraries:
 <p>
@@ -135,18 +135,18 @@ Qsound libraries:
 downloads page</a> and click the Lime zip file name to copy it to your platform.</b>
 <p>
 <b><li>Once the file is downloaded, unzip the file into your</b>
-<kbd>phoneME_feature</kbd><b> directory.</b>
+<code>phoneME_feature</code><b> directory.</b>
 <p>
-<kbd>% unzip lime.zip -d %COMPONENTS_DIR%</kbd>
+<code>% unzip lime.zip -d %COMPONENTS_DIR%</code>
 <p>
 <b><li>Go to the phoneME Feature
 <a href="https://phoneme.dev.java.net/downloads_page.html">
 downloads page</a> and click the Qsound zip file name to copy it to your platform.</b>
 <p>
 <b><li>Once the file is downloaded, unzip the file into your</b>
-<kbd>phoneME_feature</kbd><b> directory.</b>
+<code>phoneME_feature</code><b> directory.</b>
 <p>
-<kbd>% unzip qsound.zip -d %COMPONENTS_DIR%</kbd>
+<code>% unzip qsound.zip -d %COMPONENTS_DIR%</code>
 </ol>
 
 <p>
@@ -165,19 +165,19 @@ following steps:
 <b><li>Create a phoneME Feature software directory on your platform and change 
 to it.</b>
 <p>
-<kbd>% mkdir phoneME_feature</kbd>
+<code>% mkdir phoneME_feature</code>
 <br>
-<kbd>% cd phoneME_feature</kbd>
+<code>% cd phoneME_feature</code>
 <p>
 <b><li>Check out the source code using the following command:</b>
 <p>
-<kbd>% svn co 
-https://phoneme.dev.java.net/svn/phoneme/components/</kbd><em>component_name</em><kbd>/trunk</kbd> 
+<code>% svn co 
+https://phoneme.dev.java.net/svn/phoneme/components/</code><em>component_name</em><code>/trunk</code> 
 <em>component_name</em>
 <p>
 <b>Note:</b> In the phoneME Feature URL command string, <em>component_name</em> is the name of the 
 component you are working with. For example, if you are checking out the MIDP component, 
-substitute <kbd>midp</kbd> for <em>component_name</em> in both places. 
+substitute <code>midp</code> for <em>component_name</em> in both places. 
 <p>
 <b><li>Install the <a href="#zip_files">Lime and Qsound</a> binary zip archives</a>
 into your source repository location.</b>
@@ -196,11 +196,11 @@ update your code to get the latest checkins and improvements. Do the following:
 <ol>
 <b><li>Change to the directory for the component you want to update, for example, MIDP.</b>
 <p>
-<kbd>% cd phoneME_feature/midp</kbd>
+<code>% cd phoneME_feature/midp</code>
 <p>
 <b><li>Enter the update command to update the component, as shown here.</b>
 <p>
-<kbd>% svn update</kbd>
+<code>% svn update</code>
 <p>
 </ol>
 <p>
