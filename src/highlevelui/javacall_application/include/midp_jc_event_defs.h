@@ -90,6 +90,7 @@ typedef enum {
     MIDP_JC_EVENT_KILL                 ,
     MIDP_JC_EVENT_SOCKET               ,
     MIDP_JC_EVENT_NETWORK              ,
+    MIDP_JC_EVENT_COMM                 ,
     MIDP_JC_EVENT_TIMER                ,
     MIDP_JC_EVENT_PUSH                 ,
 #ifdef ENABLE_JSR_120

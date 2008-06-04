@@ -51,6 +51,7 @@
 #include <javacall_time.h>
 #include <javautil_unicode.h>
 #include <javacall_properties.h>
+#include <javacall_serial.h>
 #include "runMidlet.h"
 
 #ifdef ENABLE_JSR_120
@@ -1877,3 +1878,60 @@ void javanotify_enable_odd() {
      midp_jc_event_send(&e);
 }
 #endif
+
+
+/**
+ * A callback function to be called for notification of comm port 
+ * related events.
+ * The platform will invoke the call back in platform context.
+ *
+ * @param type type of indication: 
+ *          JAVACALL_EVENT_SERIAL_RECEIVE
+ * @param hPort handle of port related to the notification
+ * @param operation_result <tt>JAVACALL_OK</tt> if operation 
+ *        completed successfully, 
+ *        <tt>JAVACALL_FAIL</tt> or negative value on failure
+ */
+void javanotify_serial_event(
+                             javacall_serial_callback_type type, 
+                             javacall_handle hPort,
+                             javacall_result operation_result)
+{
+    midp_jc_event_union e;
+
+    REPORT_ERROR(LC_AMS, "javanotify_socket_event(): Slave Mode method to be revised\n");
+    REPORT_INFO(LC_CORE, "javanotify_socket_event() >>\n");
+    e.eventType = MIDP_JC_EVENT_COMM;
+    e.data.socketEvent.handle = hPort;
+    e.data.socketEvent.status = operation_result;
+
+    e.data.socketEvent.extraData = NULL;
+
+    switch (type) {
+        case JAVACALL_EVENT_SERIAL_RECEIVE:
+            e.data.socketEvent.waitingFor = COMM_WRITE_SIGNAL;
+            break;
+
+        case JAVACALL_EVENT_SERIAL_WRITE:
+            e.data.socketEvent.waitingFor = COMM_READ_SIGNAL;
+            break;
+
+        case JAVACALL_EVENT_SERIAL_OPEN:
+            e.data.socketEvent.waitingFor = COMM_OPEN_SIGNAL;
+            break;
+
+        case JAVACALL_EVENT_SERIAL_CLOSE:
+            e.data.socketEvent.waitingFor = COMM_CLOSE_SIGNAL;
+            break;
+
+        default:
+            /* IMPL_NOTE: decide what to do */
+            return;                 /* do not send event to java */
+
+
+            /* IMPL_NOTE: NETWORK_EXCEPTION_SIGNAL is not assigned by any indication */
+    }
+
+    midp_jc_event_send(&e);
+
+}

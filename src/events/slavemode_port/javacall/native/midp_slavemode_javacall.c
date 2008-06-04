@@ -482,6 +482,14 @@ javacall_result checkForSystemSignal(MidpReentryData* pNewSignal,
         pNewSignal->descriptor = (int)event->data.jsr256_jc_event_sensor.sensor;
 		break;
 #endif /* ENABLE_JSR_256 */
+
+    case MIDP_JC_EVENT_COMM:
+        pNewSignal->waitingFor = event->data.socketEvent.waitingFor;
+        pNewSignal->descriptor = (int)event->data.socketEvent.handle;
+        pNewSignal->status     = event->data.socketEvent.status;
+        pNewSignal->pResult    = (void *) event->data.socketEvent.extraData;
+        break;
+
     default:
         REPORT_ERROR1(LC_CORE,"checkForSystemSignal(): Unknown event %d.\n", event->eventType);
         break;
@@ -639,6 +647,22 @@ static int midp_slavemode_handle_events(JVMSPI_BlockedThreadInfo *blocked_thread
             }
             break;
 #endif /* ENABLE_JSR_256 */
+
+        case COMM_OPEN_SIGNAL:
+            midp_thread_signal_list(blocked_threads, 
+                                    blocked_threads_count,
+                                    newSignal.waitingFor, 
+                                    newSignal.descriptor,
+                                    newSignal.status);
+
+            break;
+
+        case COMM_WRITE_SIGNAL:
+        case COMM_READ_SIGNAL:
+        case COMM_CLOSE_SIGNAL:
+            REPORT_ERROR(LC_CORE,"UnHandle Comm event.\n");
+            break;
+
         default:
             break;
         } /* switch */
