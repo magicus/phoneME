@@ -1,6 +1,6 @@
 /*
  *
- * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  *
  * This program is free software; you can redistribute it and/or
@@ -22,6 +22,8 @@
  * Clara, CA 95054 or visit www.sun.com if you need additional
  * information or have any questions.
  */
+
+
 #ifndef __JAVACALL_LIFECYCLE_H_
 #define __JAVACALL_LIFECYCLE_H_
 
@@ -116,13 +118,13 @@ void javanotify_install_midlet(const char * httpUrl);
 /**
  * A notification function for telling Java to perform installation of
  * a MIDlet.
- * 
- * The difference to javanotify_install_midlet() is .jad or .jar file 
+ *
+ * The difference to javanotify_install_midlet() is .jad or .jar file
  * has been downloaded by browser. Java should read and install it from
  * file system.
  *
  */
-void javanotify_install_midlet_from_browser(const char * browserUrl, const char* localResPath); 
+void javanotify_install_midlet_from_browser(const char * browserUrl, const char* localResPath);
 
 /**
  * A notification function for telling Java to perform installation of
