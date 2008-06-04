@@ -181,7 +181,9 @@ BUNDLE_PORTS = linux-x86-*
 endif
 
 # Do wildcard expansion of ports listed in BUNDLE_PORTS
-override BUNDLE_PORTS := $(addprefix $(CDC_DIR)/build/, $(BUNDLE_PORTS))
+override BUNDLE_PORTS := \
+	$(addprefix $(CDC_DIR)/build/, $(BUNDLE_PORTS)) \
+	$(addprefix $(CVM_TOP)/build/, $(BUNDLE_PORTS))
 override BUNDLE_PORTS := $(foreach port, $(BUNDLE_PORTS), $(wildcard $(port)))
 
 # list of all device ports in the form <os>-<cpu>-<device>
@@ -599,7 +601,7 @@ endif
 
 	$(AT)rm -rf $(INSTALLDIR)/$(SRC_BUNDLE_DIRNAME)
 	$(AT)mkdir -p $(INSTALLDIR)/$(SRC_BUNDLE_DIRNAME)
-	$(AT)ln -ns $(CVM_TOP)/* $(INSTALLDIR)/$(SRC_BUNDLE_DIRNAME)
+	$(AT)ln -ns $(CDC_DIR)/* $(INSTALLDIR)/$(SRC_BUNDLE_DIRNAME)
 	$(AT)rm -rf $(INSTALLDIR)/$(SRC_BUNDLE_NAME).zip
 
 ifneq ($(JAVAME_LEGAL_DIR),)
