@@ -192,6 +192,8 @@ javacall_pixel* javacall_lcd_get_screen(javacall_lcd_screen_type screenType,
  */
 javacall_result javacall_lcd_set_full_screen_mode(javacall_bool useFullScreen);
 
+javacall_bool javacall_lcd_get_full_screen_mode();
+
 /**
  * The following function is used to flush the image from the Video RAM raster
  * to the LCD display. \n
