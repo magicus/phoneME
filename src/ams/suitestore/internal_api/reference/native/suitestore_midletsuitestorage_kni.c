@@ -1748,6 +1748,7 @@ KNIDECL(com_sun_midp_midletsuite_MIDletSuiteStorage_loadCachedIcon0) {
 #else
     KNI_StartHandles(1);
     KNI_DeclareHandle(tempHandle);
+    KNI_ReleaseHandle(tempHandle);
     KNI_EndHandlesAndReturnObject(tempHandle);
 #endif
 }
