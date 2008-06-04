@@ -30,6 +30,10 @@
  * Implementation of javacall notification functions.
  */
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <string.h>
 #include <midpServices.h>
 #include <midp_logging.h>
@@ -791,8 +795,7 @@ static SmsMessage* jsr120_sms_new_msg_javacall(jchar  encodingType,
 
     if (msgBuffer != NULL) {
         memcpy(sms->msgBuffer, msgBuffer, msgLen);
-    }
-    
+    }  
 
     return sms;
 }
@@ -1538,7 +1541,7 @@ void javanotify_security_permission_dialog_finish(
 
 /**
  * A notification function for telling Java to perform installation of
- * a content via http, for SprintAMS.
+ * a content via http, for EXTERNAL API's AMS.
  *
  * This function requires that the descriptor (JADfile, or GCDfile)
  * has already been downloaded and resides somewhere on the file system.
@@ -1685,6 +1688,30 @@ void /* OPTIONAL */ javanotify_rotation() {
     e.eventType = MIDP_JC_EVENT_ROTATION;
     midp_jc_event_send(&e);
 }
+
+/**
+ * 
+ * The implementation calls this callback notify function when master volume dialog
+ * is dismissed. The platfrom will invoke the callback in platform context.
+ * This function is used only for asynchronous mode of the function
+ * javacall_prompt_volume.
+ * 
+ */
+void javanotify_prompt_volume_finish(void) {
+    midp_jc_event_union e;
+    REPORT_INFO1(LC_PROTOCOL, 
+                 "[javanotify_prompt_volume_finish] status=%d",
+                 JAVACALL_OK);
+    e.eventType = MIDP_JC_EVENT_VOLUME;
+    e.data.VolumeEvent.stub = 0;
+    midp_jc_event_send(&e);
+
+}
+
+#ifdef __cplusplus
+}
+#endif
+
 
 #if ENABLE_ON_DEVICE_DEBUG
 /**
