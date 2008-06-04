@@ -1,7 +1,7 @@
 /*
  *
  *
- * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  *
  * This program is free software; you can redistribute it and/or
@@ -409,8 +409,8 @@ void javanotify_install_midlet(const char *httpUrl) {
 /**
  * A notification function for telling Java to perform installation of
  * a MIDlet.
- * 
- * The difference to javanotify_install_midlet() is .jad or .jar file 
+ *
+ * The difference to javanotify_install_midlet() is .jad or .jar file
  * has been downloaded by browser. Java should read and install it from
  * file system.
  *
@@ -693,7 +693,7 @@ void javanotify_shutdown(void) {
  * Java.
  */
 void javanotify_pause(void) {
-    midp_jc_event_union e; 
+    midp_jc_event_union e;
 
     REPORT_INFO(LC_CORE, "javanotify_pause() >>\n");
 
@@ -707,7 +707,7 @@ void javanotify_pause(void) {
  * and resume Java.
  */
 void javanotify_resume(void) {
-    midp_jc_event_union e; 
+    midp_jc_event_union e;
 
     REPORT_INFO(LC_CORE, "javanotify_resume() >>\n");
 
@@ -1772,7 +1772,7 @@ void /* OPTIONAL */ javanotify_rotation() {
 
 void javanotify_widget_menu_selection(int cmd) {
     // This command comes from a menu item dynamically
-    // created in the native method 
+    // created in the native method
     // SoftButtonLayer.setNativePopupMenu()
     midp_jc_event_union e;
 
@@ -1785,7 +1785,7 @@ void javanotify_widget_menu_selection(int cmd) {
 
 /**
  * Notfy native peer widget state changed, such as key pressed in editor control.
- * Now only java TextField/TextBox has native peer. 
+ * Now only java TextField/TextBox has native peer.
  */
 void javanotify_peerchanged_event(void) {
     midp_jc_event_union e;
