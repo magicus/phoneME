@@ -1,7 +1,7 @@
 /*
  * @(#)hprof_md.c	1.28 05/12/07
  * 
- * Copyright (c) 2006 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright (c) 1990-2008 Sun Microsystems, Inc. All Rights Reserved.
  * 
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
