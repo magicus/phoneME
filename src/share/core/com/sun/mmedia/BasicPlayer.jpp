@@ -479,6 +479,11 @@ public abstract class BasicPlayer implements Player
 
         doPrefetch();
 
+        VolumeControl vc = (VolumeControl)doGetControl(pkgName + vocName);
+        if (vc != null && (vc.getLevel() == -1)) {
+               vc.setLevel(100);
+        }
+
         state = PREFETCHED;
     }
 
