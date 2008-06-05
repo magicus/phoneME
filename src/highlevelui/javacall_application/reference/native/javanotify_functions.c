@@ -1708,11 +1708,6 @@ void javanotify_prompt_volume_finish(void) {
 
 }
 
-#ifdef __cplusplus
-}
-#endif
-
-
 #if ENABLE_ON_DEVICE_DEBUG
 /**
  * The platform calls this function to inform VM that
@@ -1723,5 +1718,9 @@ void javanotify_enable_odd() {
 
      e.eventType = MIDP_JC_ENABLE_ODD_EVENT;    
      midp_jc_event_send(&e);
+}
+#endif
+
+#ifdef __cplusplus
 }
 #endif

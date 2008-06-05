@@ -1,7 +1,7 @@
 /*
  *
  *
- * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
@@ -119,18 +119,7 @@ void jcapp_finalize() {
 #define TRACE_LCD_REFRESH
 void jcapp_refresh(int x1, int y1, int x2, int y2)
 {
-#ifdef  TRACE_LCD_REFRESH
-    {
-// lcd_updates is used to trace how many lcd updates for given interval
-// lcd_updates is defined in midp_slavemode_javacall.c
-// 
- //ANAT- 
-        //extern int lcd_updates;
-        //lcd_updates++;
-    }
-#endif
-
-    //block any refresh calls in case of native master volume
+    /*block any refresh calls in case of native master volume*/
     if(disableRefresh==KNI_TRUE){
         return;
     }
@@ -205,8 +194,6 @@ jboolean jcapp_is_native_softbutton_layer_supported() {
 	javacall_lcd_set_native_softbutton_label(label, len, index);
 }
 
-
-    /*EXTERNAL API'S*/
     void LCDUI_disable_refresh(void){
      disableRefresh=KNI_TRUE;
     }
