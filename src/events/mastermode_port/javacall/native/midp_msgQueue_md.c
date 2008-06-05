@@ -46,6 +46,10 @@ extern void notifyDisksChanged();
 #include <carddevice.h>
 #endif /* ENABLE_JSR_177 */
 
+#ifdef ENABLE_JSR_234
+#include <javanotify_multimedia_advanced.h>
+#endif /*ENABLE_JSR_234*/
+
 /*
  * This function is called by the VM periodically. It has to check if
  * system has sent a signal to MIDP and return the result in the
@@ -206,6 +210,20 @@ void checkForSystemSignal(MidpReentryData* pNewSignal,
         pNewMidpEvent->MM_DATA      = event->data.multimediaEvent.data;
         pNewMidpEvent->MM_ISOLATE   = event->data.multimediaEvent.appId;
         pNewMidpEvent->MM_EVT_TYPE  = event->data.multimediaEvent.mediaType;
+
+        switch( event->data.multimediaEvent.mediaType )
+        {
+        case JAVACALL_EVENT_AMMS_SNAP_SHOOTING_STOPPED:
+        case JAVACALL_EVENT_AMMS_SNAP_STORAGE_ERROR:
+            {
+                int len = 0;
+                javacall_utf16_string str = (jchar*)event->data.multimediaEvent.data;
+                while( str[len] != 0 ) len++;
+                pcsl_string_convert_from_utf16( str, len, &pNewMidpEvent->MM_STRING );
+                pNewMidpEvent->MM_DATA = 0;
+            }
+            break;
+        }
 
         REPORT_CALL_TRACE4(LC_NONE, "[jsr234 event] External event recevied %d %d %d %d\n",
             pNewMidpEvent->type, 
