@@ -292,6 +292,8 @@ static javacall_handle audio_create(int appId, int playerId,
     pHandle->buffer           = NULL;
     pHandle->wholeContentSize = -1;
     pHandle->isBuffered       = JAVACALL_FALSE;
+    pHandle->volume           = -1;
+    pHandle->mute             = JAVACALL_FALSE;
 
     // set the file name to the URI
     if (NULL != URI && uriLength>0) {
