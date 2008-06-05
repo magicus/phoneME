@@ -710,7 +710,7 @@ int javacall_load_domain_list(javacall_utf8_string* array) {
     } while (0);
 
     javacall_free(file_str);
-    *array = str_list;
+    *array = (void*)str_list;
     return lines;
 }
 
@@ -771,7 +771,7 @@ int javacall_load_group_list(javacall_utf8_string* array) {
     } while (0);
 
     javacall_free(file_str);
-    *array = str_list;
+    *array = (void*)str_list;
     return lines;
 }
 
@@ -840,7 +840,7 @@ int javacall_load_group_permissions(javacall_utf8_string* list,
     } while (0);
 
     javacall_free(file_str);
-    *list = str_list;
+    *list = (void*)str_list;
     return lines;
 }
 
@@ -963,7 +963,7 @@ int javacall_load_group_messages(javacall_utf8_string* list,
     if (i1 == 0)
         javacall_free(str_list);
     
-    *list = str_list;
+    *list = (void*)str_list;
     return i1;
 }
 
