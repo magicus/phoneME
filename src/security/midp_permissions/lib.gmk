@@ -56,6 +56,12 @@ SUBSYSTEM_SECURITY_JAVA_FILES += \
 vpath % $(PERMISSIONS_DIR)/reference/native
 SUBSYSTEM_SECURITY_NATIVE_FILES += LoadPolicy_kni.c
 
+ifeq ($(TARGET_OS), javacall)
+SUBSYSTEM_SECURITY_NATIVE_FILES += javacall_policy_load.c
+else
+SUBSYSTEM_SECURITY_NATIVE_FILES += generic_policy_load.c
+endif
+
 # Include system properties in Configuration
 SUBSYSTEM_CONFIGURATION_INPUT_FILES += \
 	 $(PERMISSIONS_DIR)/reference/config/properties_security.xml
