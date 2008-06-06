@@ -1202,8 +1202,8 @@ static javacall_result audio_qs_acquire_device(javacall_handle handle)
             if (MMAPIQTDecoderOpen(&h->wav) != JAVACALL_OK) {
                 return JAVACALL_FAIL;
             }
-            if (JAVACALL_OK == MMAPIQTStartDecode(&h->wav) {
-                h->wav.stream = mQ234_CreateWaveStreamPlayer(&(h->wav), fill_qt, h->wav.channels, h->wav.rate );
+            if (JAVACALL_OK == MMAPIQTStartDecode(&h->wav)) {
+                h->wav.stream = mQ234_CreateWaveStreamPlayer(&h->wav, fill_qt, h->wav.channels, h->wav.rate);
             } else {
                 MMAPIQTDecoderClose(&h->wav);
                 return JAVACALL_FAIL;
