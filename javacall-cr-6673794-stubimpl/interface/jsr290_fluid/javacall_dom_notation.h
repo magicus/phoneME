@@ -27,10 +27,13 @@
 javacall_result
 javacall_dom_notation_get_public_id(javacall_handle handle,
                                     /* OUT */ javacall_utf16_string retValue,
-                                    /* OUT */ javacall_uint32* retValueLen);
+                                    /* INOUT */ javacall_uint32* retValueLen);
 
 javacall_result
 javacall_dom_notation_get_system_id(javacall_handle handle,
                                     /* OUT */ javacall_utf16_string retValue,
-                                    /* OUT */ javacall_uint32* retValueLen);
+                                    /* INOUT */ javacall_uint32* retValueLen);
+
+javacall_result
+javacall_dom_notation_finalize();
 

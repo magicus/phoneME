@@ -27,22 +27,22 @@
 javacall_result
 javacall_dom_node_get_node_name(javacall_handle handle,
                                 /* OUT */ javacall_utf16_string retValue,
-                                /* OUT */ javacall_uint32* retValueLen);
+                                /* INOUT */ javacall_uint32* retValueLen);
 
 javacall_result
 javacall_dom_node_get_node_value(javacall_handle handle,
                                  /* OUT */ javacall_utf16_string retValue,
-                                 /* OUT */ javacall_uint32* retValueLen,
-                                 /* OUT */ javacall_utf8_string exceptionValue);
+                                 /* INOUT */ javacall_uint32* retValueLen,
+                                 /* OUT */ javacall_int16 exceptionCode);
 
 javacall_result
 javacall_dom_node_set_node_value(javacall_handle handle,
                                  javacall_const_utf16_string nodeValue,
-                                 /* OUT */ javacall_utf8_string exceptionValue);
+                                 /* OUT */ javacall_int16 exceptionCode);
 
 javacall_result
 javacall_dom_node_get_node_type(javacall_handle handle,
-                                /* OUT */ javacall_uint16* retValue);
+                                /* OUT */ javacall_int16* retValue);
 
 javacall_result
 javacall_dom_node_get_parent_node(javacall_handle handle,
@@ -81,26 +81,26 @@ javacall_dom_node_insert_before(javacall_handle handle,
                                 javacall_handle newChild,
                                 javacall_handle refChild,
                                 /* OUT */ javacall_handle* retValue,
-                                /* OUT */ javacall_utf8_string exceptionValue);
+                                /* OUT */ javacall_int16 exceptionCode);
 
 javacall_result
 javacall_dom_node_replace_child(javacall_handle handle,
                                 javacall_handle newChild,
                                 javacall_handle oldChild,
                                 /* OUT */ javacall_handle* retValue,
-                                /* OUT */ javacall_utf8_string exceptionValue);
+                                /* OUT */ javacall_int16 exceptionCode);
 
 javacall_result
 javacall_dom_node_remove_child(javacall_handle handle,
                                javacall_handle oldChild,
                                /* OUT */ javacall_handle* retValue,
-                               /* OUT */ javacall_utf8_string exceptionValue);
+                               /* OUT */ javacall_int16 exceptionCode);
 
 javacall_result
 javacall_dom_node_append_child(javacall_handle handle,
                                javacall_handle newChild,
                                /* OUT */ javacall_handle* retValue,
-                               /* OUT */ javacall_utf8_string exceptionValue);
+                               /* OUT */ javacall_int16 exceptionCode);
 
 javacall_result
 javacall_dom_node_has_child_nodes(javacall_handle handle,
@@ -123,22 +123,22 @@ javacall_dom_node_is_supported(javacall_handle handle,
 javacall_result
 javacall_dom_node_get_namespace_uri(javacall_handle handle,
                                     /* OUT */ javacall_utf16_string retValue,
-                                    /* OUT */ javacall_uint32* retValueLen);
+                                    /* INOUT */ javacall_uint32* retValueLen);
 
 javacall_result
 javacall_dom_node_get_prefix(javacall_handle handle,
                              /* OUT */ javacall_utf16_string retValue,
-                             /* OUT */ javacall_uint32* retValueLen);
+                             /* INOUT */ javacall_uint32* retValueLen);
 
 javacall_result
 javacall_dom_node_set_prefix(javacall_handle handle,
                              javacall_const_utf16_string prefix,
-                             /* OUT */ javacall_utf8_string exceptionValue);
+                             /* OUT */ javacall_int16 exceptionCode);
 
 javacall_result
 javacall_dom_node_get_local_name(javacall_handle handle,
                                  /* OUT */ javacall_utf16_string retValue,
-                                 /* OUT */ javacall_uint32* retValueLen);
+                                 /* INOUT */ javacall_uint32* retValueLen);
 
 javacall_result
 javacall_dom_node_has_attributes(javacall_handle handle,
@@ -147,13 +147,13 @@ javacall_dom_node_has_attributes(javacall_handle handle,
 javacall_result
 javacall_dom_node_get_text_content(javacall_handle handle,
                                    /* OUT */ javacall_utf16_string retValue,
-                                   /* OUT */ javacall_uint32* retValueLen,
-                                   /* OUT */ javacall_utf8_string exceptionValue);
+                                   /* INOUT */ javacall_uint32* retValueLen,
+                                   /* OUT */ javacall_int16 exceptionCode);
 
 javacall_result
 javacall_dom_node_set_text_content(javacall_handle handle,
                                    javacall_const_utf16_string textContent,
-                                   /* OUT */ javacall_utf8_string exceptionValue);
+                                   /* OUT */ javacall_int16 exceptionCode);
 
 javacall_result
 javacall_dom_node_get_feature(javacall_handle handle,
@@ -162,14 +162,5 @@ javacall_dom_node_get_feature(javacall_handle handle,
                               /* OUT */ javacall_handle* retValue);
 
 javacall_result
-javacall_dom_node_set_user_data(javacall_handle handle,
-                                javacall_const_utf16_string key,
-                                javacall_handle data,
-                                javacall_handle handler,
-                                /* OUT */ javacall_handle* retValue);
-
-javacall_result
-javacall_dom_node_get_user_data(javacall_handle handle,
-                                javacall_const_utf16_string key,
-                                /* OUT */ javacall_handle* retValue);
+javacall_dom_node_finalize();
 

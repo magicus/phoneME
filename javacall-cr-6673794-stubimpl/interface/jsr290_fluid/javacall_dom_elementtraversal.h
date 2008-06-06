@@ -44,3 +44,6 @@ javacall_result
 javacall_dom_elementtraversal_get_previous_element_sibling(javacall_handle handle,
                                                            /* OUT */ javacall_handle* retValue);
 
+javacall_result
+javacall_dom_elementtraversal_finalize();
+

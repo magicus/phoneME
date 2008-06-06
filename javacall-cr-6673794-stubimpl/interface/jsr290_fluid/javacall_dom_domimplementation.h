@@ -36,7 +36,7 @@ javacall_dom_domimplementation_create_document_type(javacall_handle handle,
                                                     javacall_const_utf16_string publicId,
                                                     javacall_const_utf16_string systemId,
                                                     /* OUT */ javacall_handle* retValue,
-                                                    /* OUT */ javacall_utf8_string exceptionValue);
+                                                    /* OUT */ javacall_int16 exceptionCode);
 
 javacall_result
 javacall_dom_domimplementation_create_document(javacall_handle handle,
@@ -44,11 +44,14 @@ javacall_dom_domimplementation_create_document(javacall_handle handle,
                                                javacall_const_utf16_string qualifiedName,
                                                javacall_handle doctype,
                                                /* OUT */ javacall_handle* retValue,
-                                               /* OUT */ javacall_utf8_string exceptionValue);
+                                               /* OUT */ javacall_int16 exceptionCode);
 
 javacall_result
 javacall_dom_domimplementation_get_feature(javacall_handle handle,
                                            javacall_const_utf16_string feature,
                                            javacall_const_utf16_string version,
                                            /* OUT */ javacall_handle* retValue);
+
+javacall_result
+javacall_dom_domimplementation_finalize();
 
