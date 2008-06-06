@@ -148,7 +148,7 @@ public class DirectCamera extends DirectVideo
         checkPermission();
     }
 
-    public void setQuality( byte quality )
+    public void setQuality( int quality )
     {
     }
 }
