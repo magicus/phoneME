@@ -1,7 +1,6 @@
 #
-# @(#)rules.mk	1.175 06/10/27
 # 
-# Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+# Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
 # 
 # This program is free software; you can redistribute it and/or
@@ -1113,6 +1112,15 @@ $(CVM_POLICY_BUILD): $(CVM_POLICY_SRC)
 #	revision number to the end of BINARY_BUNDLE_NAME and 
 #	BINARY_BUNDLE_DIRNAME
 #
+# To build the device  binary bundle, just add the "device_bin" target to your
+# make command. You will also need to set some of the following options:
+# 
+# - DEVICE_BUNDLE_NAME: name of the device binary bundle, excluding .zip
+#	extension.
+# - DEVICE_BUNDLE_DIRNAME: directory name the device binary bundle will unzip
+# 	into. Defaults to $(DEVICE_BUNDLE_NAME).
+# - JAVAME_LEGAL_DIR and BINARY_BUNDLE_APPEND_REVISION also work
+#       with the device bundle target
 
 # Make sure the "legal" directory is available if set.
 ifneq ($(JAVAME_LEGAL_DIR),,)
@@ -1166,6 +1174,32 @@ endif
 		> $(INSTALLDIR)/$(BINARY_BUNDLE_NAME).zip;
 	$(AT)rm -rf $(INSTALLDIR)/$(BINARY_BUNDLE_DIRNAME)
 	@echo "<<<Finished binary bundle" ;
+
+.PHONY :  device_bin
+
+device_bin: all  device_bin_prep device_bin_legal device_bin_zip
+
+device_bin_zip:
+	@echo ">>>Making device binary bundle ..."
+	@echo "	DEVICE_BUNDLE_NAME	= $(DEVICE_BUNDLE_NAME)"
+	@echo "	JAVAME_LEGAL_DIR	= $(JAVAME_LEGAL_DIR)"
+	@echo "	JAVAME_LEGAL_REPOSITORY = $(JAVAME_LEGAL_REPOSITORY)"
+	$(AT)(cd $(INSTALLDIR); \
+	 $(ZIP) -rq  - $(DEVICE_BUNDLE_NAME) ) \
+		> $(INSTALLDIR)/$(DEVICE_BUNDLE_NAME).zip;
+	@echo "<<<Finished device binary bundle" ;
+
+device_bin_prep ::
+	$(AT)rm -f $(INSTALLDIR)/$(DEVICE_BUNDLE_NAME).zip
+	$(AT)mkdir -p $(INSTALLDIR)/$(DEVICE_BUNDLE_DIRNAME)
+
+device_bin_legal:
+ifneq ($(JAVAME_LEGAL_DIR),)
+	$(AT)ln -ns $(JAVAME_LEGAL_DIR) $(INSTALLDIR)/$(DEVICE_BUNDLE_DIRNAME)
+else
+	$(AT)svn export -q --force $(JAVAME_LEGAL_REPOSITORY) $(INSTALLDIR)/$(DEVICE_BUNDLE_DIRNAME)/legal
+endif
+
 
 ################################################
 # Include target makefiles last
