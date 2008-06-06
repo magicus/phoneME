@@ -27,13 +27,13 @@
 javacall_result
 javacall_dom_characterdata_get_data(javacall_handle handle,
                                     /* OUT */ javacall_utf16_string retValue,
-                                    /* OUT */ javacall_uint32* retValueLen,
-                                    /* OUT */ javacall_utf8_string exceptionValue);
+                                    /* INOUT */ javacall_uint32* retValueLen,
+                                    /* OUT */ javacall_int16 exceptionCode);
 
 javacall_result
 javacall_dom_characterdata_set_data(javacall_handle handle,
                                     javacall_const_utf16_string data,
-                                    /* OUT */ javacall_utf8_string exceptionValue);
+                                    /* OUT */ javacall_int16 exceptionCode);
 
 javacall_result
 javacall_dom_characterdata_get_length(javacall_handle handle,
@@ -44,30 +44,33 @@ javacall_dom_characterdata_substring_data(javacall_handle handle,
                                           javacall_int32 offset,
                                           javacall_int32 count,
                                           /* OUT */ javacall_utf16_string retValue,
-                                          /* OUT */ javacall_uint32* retValueLen,
-                                          /* OUT */ javacall_utf8_string exceptionValue);
+                                          /* INOUT */ javacall_uint32* retValueLen,
+                                          /* OUT */ javacall_int16 exceptionCode);
 
 javacall_result
 javacall_dom_characterdata_append_data(javacall_handle handle,
                                        javacall_const_utf16_string arg,
-                                       /* OUT */ javacall_utf8_string exceptionValue);
+                                       /* OUT */ javacall_int16 exceptionCode);
 
 javacall_result
 javacall_dom_characterdata_insert_data(javacall_handle handle,
                                        javacall_int32 offset,
                                        javacall_const_utf16_string arg,
-                                       /* OUT */ javacall_utf8_string exceptionValue);
+                                       /* OUT */ javacall_int16 exceptionCode);
 
 javacall_result
 javacall_dom_characterdata_delete_data(javacall_handle handle,
                                        javacall_int32 offset,
                                        javacall_int32 count,
-                                       /* OUT */ javacall_utf8_string exceptionValue);
+                                       /* OUT */ javacall_int16 exceptionCode);
 
 javacall_result
 javacall_dom_characterdata_replace_data(javacall_handle handle,
                                         javacall_int32 offset,
                                         javacall_int32 count,
                                         javacall_const_utf16_string arg,
-                                        /* OUT */ javacall_utf8_string exceptionValue);
+                                        /* OUT */ javacall_int16 exceptionCode);
+
+javacall_result
+javacall_dom_characterdata_finalize();
 

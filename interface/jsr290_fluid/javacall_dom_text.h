@@ -28,5 +28,8 @@ javacall_result
 javacall_dom_text_split_text(javacall_handle handle,
                              javacall_int32 offset,
                              /* OUT */ javacall_handle* retValue,
-                             /* OUT */ javacall_utf8_string exceptionValue);
+                             /* OUT */ javacall_int16 exceptionCode);
+
+javacall_result
+javacall_dom_text_finalize();
 

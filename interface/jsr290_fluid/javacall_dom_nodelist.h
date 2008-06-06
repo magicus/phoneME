@@ -33,3 +33,6 @@ javacall_result
 javacall_dom_nodelist_get_length(javacall_handle handle,
                                  /* OUT */ javacall_int32* retValue);
 
+javacall_result
+javacall_dom_nodelist_finalize();
+

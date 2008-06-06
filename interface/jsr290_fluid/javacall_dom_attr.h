@@ -27,7 +27,7 @@
 javacall_result
 javacall_dom_attr_get_name(javacall_handle handle,
                            /* OUT */ javacall_utf16_string retValue,
-                           /* OUT */ javacall_uint32* retValueLen);
+                           /* INOUT */ javacall_uint32* retValueLen);
 
 javacall_result
 javacall_dom_attr_get_specified(javacall_handle handle,
@@ -36,12 +36,12 @@ javacall_dom_attr_get_specified(javacall_handle handle,
 javacall_result
 javacall_dom_attr_get_value(javacall_handle handle,
                             /* OUT */ javacall_utf16_string retValue,
-                            /* OUT */ javacall_uint32* retValueLen);
+                            /* INOUT */ javacall_uint32* retValueLen);
 
 javacall_result
 javacall_dom_attr_set_value(javacall_handle handle,
                             javacall_const_utf16_string value,
-                            /* OUT */ javacall_utf8_string exceptionValue);
+                            /* OUT */ javacall_int16 exceptionCode);
 
 javacall_result
 javacall_dom_attr_get_owner_element(javacall_handle handle,
@@ -50,4 +50,7 @@ javacall_dom_attr_get_owner_element(javacall_handle handle,
 javacall_result
 javacall_dom_attr_is_id(javacall_handle handle,
                         /* OUT */ javacall_bool* retValue);
+
+javacall_result
+javacall_dom_attr_finalize();
 

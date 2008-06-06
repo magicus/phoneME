@@ -33,13 +33,13 @@ javacall_result
 javacall_dom_namednodemap_set_named_item(javacall_handle handle,
                                          javacall_handle arg,
                                          /* OUT */ javacall_handle* retValue,
-                                         /* OUT */ javacall_utf8_string exceptionValue);
+                                         /* OUT */ javacall_int16 exceptionCode);
 
 javacall_result
 javacall_dom_namednodemap_remove_named_item(javacall_handle handle,
                                             javacall_const_utf16_string name,
                                             /* OUT */ javacall_handle* retValue,
-                                            /* OUT */ javacall_utf8_string exceptionValue);
+                                            /* OUT */ javacall_int16 exceptionCode);
 
 javacall_result
 javacall_dom_namednodemap_item(javacall_handle handle,
@@ -60,12 +60,15 @@ javacall_result
 javacall_dom_namednodemap_set_named_item_ns(javacall_handle handle,
                                             javacall_handle arg,
                                             /* OUT */ javacall_handle* retValue,
-                                            /* OUT */ javacall_utf8_string exceptionValue);
+                                            /* OUT */ javacall_int16 exceptionCode);
 
 javacall_result
 javacall_dom_namednodemap_remove_named_item_ns(javacall_handle handle,
                                                javacall_const_utf16_string namespaceURI,
                                                javacall_const_utf16_string localName,
                                                /* OUT */ javacall_handle* retValue,
-                                               /* OUT */ javacall_utf8_string exceptionValue);
+                                               /* OUT */ javacall_int16 exceptionCode);
+
+javacall_result
+javacall_dom_namednodemap_finalize();
 

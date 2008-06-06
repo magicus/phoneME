@@ -40,7 +40,7 @@ javacall_result
 javacall_dom_document_create_element(javacall_handle handle,
                                      javacall_const_utf16_string tagName,
                                      /* OUT */ javacall_handle* retValue,
-                                     /* OUT */ javacall_utf8_string exceptionValue);
+                                     /* OUT */ javacall_int16 exceptionCode);
 
 javacall_result
 javacall_dom_document_create_document_fragment(javacall_handle handle,
@@ -60,26 +60,26 @@ javacall_result
 javacall_dom_document_create_cdata_section(javacall_handle handle,
                                            javacall_const_utf16_string data,
                                            /* OUT */ javacall_handle* retValue,
-                                           /* OUT */ javacall_utf8_string exceptionValue);
+                                           /* OUT */ javacall_int16 exceptionCode);
 
 javacall_result
 javacall_dom_document_create_processing_instruction(javacall_handle handle,
                                                     javacall_const_utf16_string target,
                                                     javacall_const_utf16_string data,
                                                     /* OUT */ javacall_handle* retValue,
-                                                    /* OUT */ javacall_utf8_string exceptionValue);
+                                                    /* OUT */ javacall_int16 exceptionCode);
 
 javacall_result
 javacall_dom_document_create_attribute(javacall_handle handle,
                                        javacall_const_utf16_string name,
                                        /* OUT */ javacall_handle* retValue,
-                                       /* OUT */ javacall_utf8_string exceptionValue);
+                                       /* OUT */ javacall_int16 exceptionCode);
 
 javacall_result
 javacall_dom_document_create_entity_reference(javacall_handle handle,
                                               javacall_const_utf16_string name,
                                               /* OUT */ javacall_handle* retValue,
-                                              /* OUT */ javacall_utf8_string exceptionValue);
+                                              /* OUT */ javacall_int16 exceptionCode);
 
 javacall_result
 javacall_dom_document_get_elements_by_tag_name(javacall_handle handle,
@@ -91,21 +91,21 @@ javacall_dom_document_import_node(javacall_handle handle,
                                   javacall_handle importedNode,
                                   javacall_bool deep,
                                   /* OUT */ javacall_handle* retValue,
-                                  /* OUT */ javacall_utf8_string exceptionValue);
+                                  /* OUT */ javacall_int16 exceptionCode);
 
 javacall_result
 javacall_dom_document_create_element_ns(javacall_handle handle,
                                         javacall_const_utf16_string namespaceURI,
                                         javacall_const_utf16_string qualifiedName,
                                         /* OUT */ javacall_handle* retValue,
-                                        /* OUT */ javacall_utf8_string exceptionValue);
+                                        /* OUT */ javacall_int16 exceptionCode);
 
 javacall_result
 javacall_dom_document_create_attribute_ns(javacall_handle handle,
                                           javacall_const_utf16_string namespaceURI,
                                           javacall_const_utf16_string qualifiedName,
                                           /* OUT */ javacall_handle* retValue,
-                                          /* OUT */ javacall_utf8_string exceptionValue);
+                                          /* OUT */ javacall_int16 exceptionCode);
 
 javacall_result
 javacall_dom_document_get_elements_by_tag_name_ns(javacall_handle handle,
@@ -122,5 +122,8 @@ javacall_result
 javacall_dom_document_adopt_node(javacall_handle handle,
                                  javacall_handle source,
                                  /* OUT */ javacall_handle* retValue,
-                                 /* OUT */ javacall_utf8_string exceptionValue);
+                                 /* OUT */ javacall_int16 exceptionCode);
+
+javacall_result
+javacall_dom_document_finalize();
 

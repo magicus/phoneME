@@ -27,15 +27,18 @@
 javacall_result
 javacall_dom_processinginstruction_get_target(javacall_handle handle,
                                               /* OUT */ javacall_utf16_string retValue,
-                                              /* OUT */ javacall_uint32* retValueLen);
+                                              /* INOUT */ javacall_uint32* retValueLen);
 
 javacall_result
 javacall_dom_processinginstruction_get_data(javacall_handle handle,
                                             /* OUT */ javacall_utf16_string retValue,
-                                            /* OUT */ javacall_uint32* retValueLen);
+                                            /* INOUT */ javacall_uint32* retValueLen);
 
 javacall_result
 javacall_dom_processinginstruction_set_data(javacall_handle handle,
                                             javacall_const_utf16_string data,
-                                            /* OUT */ javacall_utf8_string exceptionValue);
+                                            /* OUT */ javacall_int16 exceptionCode);
+
+javacall_result
+javacall_dom_processinginstruction_finalize();
 
