@@ -1,7 +1,6 @@
 #
-# @(#)defs.mk	1.515 06/10/31
 # 
-# Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+# Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
 # 
 # This program is free software; you can redistribute it and/or
@@ -1191,6 +1190,10 @@ BINARY_BUNDLE_NAME	= \
 	$(BUNDLE_PRODUCT_NAME)-$(BUNDLE_VERSION)-$(BUNDLE_TARGET)-bin
 BINARY_BUNDLE_DIRNAME	= $(BINARY_BUNDLE_NAME)
 
+DEVICE_BUNDLE_NAME	= \
+	$(BUNDLE_PRODUCT_NAME)-$(BUNDLE_VERSION)-$(BUNDLE_TARGET)-dev
+DEVICE_BUNDLE_DIRNAME	= $(DEVICE_BUNDLE_NAME)
+ 
 # Location of legal documents in case JAVAME_LEGAL_DIR is not set.
 JAVAME_LEGAL_REPOSITORY = https://phoneme.dev.java.net/svn/phoneme/legal
 
@@ -1208,6 +1211,8 @@ endif
 # BINARY_BUNDLE_NAME, and we don't want the revision number in there twice.
 override BINARY_BUNDLE_DIRNAME := $(BINARY_BUNDLE_DIRNAME)-rev$(REVISION_NUMBER)
 override BINARY_BUNDLE_NAME := $(BINARY_BUNDLE_NAME)-rev$(REVISION_NUMBER)
+override DEVICE_BUNDLE_DIRNAME := $(DEVICE_BUNDLE_DIRNAME)-rev$(REVISION_NUMBER)
+override DEVICE_BUNDLE_NAME := $(DEVICE_BUNDLE_NAME)-rev$(REVISION_NUMBER)
 endif
 
 
