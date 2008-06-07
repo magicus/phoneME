@@ -86,4 +86,18 @@ public interface InstallListener {
      * @return true if the user wants to continue, false to stop the install
      */
     public boolean confirmAuthPath(InstallState state);
+
+    /**
+     * Called with the current state of the install and the URL where the
+     * request is attempted to be redirected so the user can be asked
+     * to confirm if he really wants to install from the new location.
+     * If false is returned, the an I/O exception thrown and
+     * {@link Installer#wasStopped()} will return true if called.
+     *
+     * @param state current state of the install.
+     * @param newLocation new url of the resource to install.
+     *
+     * @return true if the user wants to continue, false to stop the install
+     */
+    public boolean confirmRedirect(InstallState state, String newLocation);
 }
