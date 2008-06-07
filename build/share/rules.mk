@@ -1185,7 +1185,7 @@ device_bin_zip:
 	@echo "	JAVAME_LEGAL_DIR	= $(JAVAME_LEGAL_DIR)"
 	@echo "	JAVAME_LEGAL_REPOSITORY = $(JAVAME_LEGAL_REPOSITORY)"
 	$(AT)(cd $(INSTALLDIR); \
-	 $(ZIP) -rq  - $(DEVICE_BUNDLE_NAME) ) \
+	 $(ZIP) -rq  - $(DEVICE_BUNDLE_DIRNAME) ) \
 		> $(INSTALLDIR)/$(DEVICE_BUNDLE_NAME).zip;
 	@echo "<<<Finished device binary bundle" ;
 
