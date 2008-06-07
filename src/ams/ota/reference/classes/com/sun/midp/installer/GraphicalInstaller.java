@@ -1275,8 +1275,6 @@ public class GraphicalInstaller extends MIDlet implements CommandListener {
     private void displayKeepRMSForm(InstallState state) {
         Form infoForm;
         String name;
-        String desc;
-        StringBuffer label = new StringBuffer(40);
         StringBuffer value = new StringBuffer(40);
         String[] values = new String[1];
 
@@ -1329,7 +1327,6 @@ public class GraphicalInstaller extends MIDlet implements CommandListener {
         String authPath[];
         String temp;
         StringBuffer label = new StringBuffer(40);
-        StringBuffer value = new StringBuffer(40);
 
         name = state.getAppProperty(MIDletSuite.SUITE_NAME_PROP);
 
@@ -1374,6 +1371,50 @@ public class GraphicalInstaller extends MIDlet implements CommandListener {
             displayException(Resource.getString
                              (ResourceConstants.AMS_CANT_ACCESS),
                              sb.toString());
+        }
+    }
+
+    /**
+     * Confirm redirection with the user.
+     *
+     * @param state current state of the install.
+     * @param newLocation new url of the resource to install.
+     */
+    private void displayRedirectConfirmation(InstallState state,
+                                             String newLocation) {
+        Form infoForm;
+        StringBuffer value = new StringBuffer(40);
+        String[] values = new String[1];
+
+        try {
+            infoForm = new Form(null);
+
+            infoForm.setTitle(Resource.getString(
+                                  ResourceConstants.AMS_CONFIRMATION));
+
+            values[0] = newLocation;
+            value.append(Resource.getString(
+                             ResourceConstants.AMS_GRA_INTLR_CONFIRM_REDIRECT,
+                                 values));
+            infoForm.append(value.toString());
+
+            infoForm.addCommand(continueCmd);
+            infoForm.addCommand(cancelCmd);
+            infoForm.setCommandListener(this);
+
+            // We need to prevent "flashing" on fast development platforms.
+            preventScreenFlash();
+
+            display.setCurrent(infoForm);
+        } catch (Exception ex) {
+            StringBuffer sb = new StringBuffer();
+
+            sb.append(Resource.getString(ResourceConstants.EXCEPTION));
+            sb.append(": ");
+            sb.append(ex.toString());
+            displayException(Resource.getString(
+                                 ResourceConstants.AMS_CANT_ACCESS),
+                                     sb.toString());
         }
     }
 
@@ -1859,6 +1900,23 @@ public class GraphicalInstaller extends MIDlet implements CommandListener {
          */
         public boolean confirmAuthPath(InstallState state) {
             parent.displayAuthPathConfirmation(state);
+            return waitForUser();
+        }
+
+        /**
+         * Called with the current state of the install and the URL where the
+         * request is attempted to be redirected so the user can be asked
+         * to confirm if he really wants to install from the new location.
+         * If false is returned, the an I/O exception thrown and
+         * {@link Installer#wasStopped()} will return true if called.
+         *
+         * @param state       current state of the install.
+         * @param newLocation new url of the resource to install.
+         * 
+         * @return true if the user wants to continue, false to stop the install
+         */
+        public boolean confirmRedirect(InstallState state, String newLocation) {
+            parent.displayRedirectConfirmation(state, newLocation);
             return waitForUser();
         }
 

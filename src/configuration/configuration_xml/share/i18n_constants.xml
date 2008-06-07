@@ -775,6 +775,9 @@
             Name="AMS_GRA_INTLR_NEW_OLD_VERSION"
             Comment="AMS: com.sun.midp.installer.GraphicalInstaller"/>
   <constant Type="int"
+            Name="AMS_GRA_INTLR_CONFIRM_REDIRECT"
+            Comment="AMS: com.sun.midp.installer.GraphicalInstaller"/>
+  <constant Type="int"
             Name="AMS_GRA_INTLR_NO_INFO"
             Comment="AMS: com.sun.midp.installer.GraphicalInstaller"/>
   <constant Type="int"

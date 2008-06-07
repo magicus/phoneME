@@ -531,6 +531,8 @@
                 Value="The password has not been entered."/>
 <localized_string Key="AMS_GRA_INTLR_WANT_INSTALL"
                 Value="Are you sure you want to install &quot;%1&quot;?"/>
+<localized_string Key="AMS_GRA_INTLR_CONFIRM_REDIRECT"
+                Value="Installation request was redirected to the following URL: &quot;%1&quot;. Are you sure you want to install from this location?"/>
 <localized_string Key="AMS_GRA_INTLR_NEW_OLD_VERSION"
                 Value="Do you want the new version of %1 to be able to use the information stored by the old version of %1?"/>
 <localized_string Key="AMS_GRA_INTLR_NO_INFO"
