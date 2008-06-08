@@ -32,30 +32,119 @@ extern "C" {
 
 #include "javacall_defs.h"
 
-/* Maximum size of exception message */
-#define JAVACALL_DOM_BUFFER_SIZE 128
-    
-/** 
- * Types of Exceptions
+/**
+ * @enum javacall_dom_exceptions
+ * @brief types of DOM exceptions
  */
-typedef enum JAVACALL_DOM_EXCEPTIONS_ENUM {
+typedef enum {
+    /** 
+     * If index or size is negative, or greater than the allowed value 
+     */
     JAVACALL_DOM_INDEX_SIZE_ERR              =  0x1,
+    /**
+     * If the specified range of text does not fit into a DOMString
+     */    
     JAVACALL_DOM_DOMSTRING_SIZE_ERR          =  0x2,
+    /**
+     * If any node is inserted somewhere it doesn't belong
+     */
     JAVACALL_DOM_HIERARCHY_REQUEST_ERR       =  0x3,
+    /**
+     * If a node is used in a different document than the one that created it 
+     * (that doesn't support it)
+     */
     JAVACALL_DOM_WRONG_DOCUMENT_ERR          =  0x4,
+    /**
+     * If an invalid or illegal character is specified, such as in a name. See 
+     * production 2 in the XML specification for the definition of a legal 
+     * character, and production 5 for the definition of a legal name 
+     * character.
+     */
     JAVACALL_DOM_INVALID_CHARACTER_ERR       =  0x5,
+    /**
+     * If data is specified for a node which does not support data
+     */
     JAVACALL_DOM_NO_DATA_ALLOWED_ERR         =  0x6,
+    /**
+     * If an attempt is made to modify an object where modifications are not 
+     * allowed
+     */
     JAVACALL_DOM_NO_MODIFICATION_ALLOWED_ERR =  0x7,
+    /**
+     * If an attempt is made to reference a node in a context where it does 
+     * not exist
+     */
     JAVACALL_DOM_NOT_FOUND_ERR               =  0x8,
+    /**
+     * If the implementation does not support the requested type of object or 
+     * operation.
+     */
     JAVACALL_DOM_NOT_SUPPORTED_ERR           =  0x9,
+    /**
+     * If an attempt is made to add an attribute that is already in use 
+     * elsewhere
+     */
     JAVACALL_DOM_INUSE_ATTRIBUTE_ERR         =  0xA,
+    /**
+     * If an attempt is made to use an object that is not, or is no longer, 
+     * usable.
+     */
     JAVACALL_DOM_INVALID_STATE_ERR           =  0xB,
+    /**
+     * If an invalid or illegal string is specified.
+     */
     JAVACALL_DOM_SYNTAX_ERR                  =  0xC,
+    /** 
+     * If an attempt is made to modify the type of the underlying object. 
+     */
     JAVACALL_DOM_INVALID_MODIFICATION_ERR    =  0xD,
+    /** 
+     * If an attempt is made to create or change an object in a way which is 
+     * incorrect with regard to namespaces. 
+     */
     JAVACALL_DOM_NAMESPACE_ERR               =  0xE,
+    /**
+     * If a parameter or an operation is not supported by the underlying 
+     * object. 
+     */
     JAVACALL_DOM_INVALID_ACCESS_ERR          =  0xF,
+    /** 
+     * If the type of an object is incompatible with the expected type of the 
+     * parameter associated to the object. 
+     */
     JAVACALL_DOM_TYPE_MISMATCH_ERR           = 0x10
-} JAVACALL_DOM_EXCEPTIONS;
+} javacall_dom_exceptions;
+
+/**
+ * @enum javacall_dom_node_types
+ * @brief types of DOM nodes
+ */
+typedef enum {
+    /** The node is an <code>Element</code>. */    
+    JAVACALL_DOM_ELEMENT_NODE                = 0x1,
+    /** The node is an <code>Attr</code>. */    
+    JAVACALL_DOM_ATTRIBUTE_NODE              = 0x2,
+    /** The node is a <code>Text</code> node. */    
+    JAVACALL_DOM_TEXT_NODE                   = 0x3,
+    /** The node is a <code>CDATASection</code>. */    
+    JAVACALL_DOM_CDATA_SECTION_NODE          = 0x4,
+    /** The node is an <code>EntityReference</code>. */    
+    JAVACALL_DOM_ENTITY_REFERENCE_NODE       = 0x5,
+    /** The node is an <code>Entity</code>. */    
+    JAVACALL_DOM_ENTITY_NODE                 = 0x6,
+    /** The node is a <code>ProcessingInstruction</code>. */    
+    JAVACALL_DOM_PROCESSING_INSTRUCTION_NODE = 0x7,
+    /** The node is a <code>Comment</code>. */    
+    JAVACALL_DOM_COMMENT_NODE                = 0x8,
+    /** The node is a <code>Document</code>. */    
+    JAVACALL_DOM_DOCUMENT_NODE               = 0x9,
+    /** The node is a <code>DocumentType</code>. */    
+    JAVACALL_DOM_DOCUMENT_TYPE_NODE          = 0xA,
+    /** The node is a <code>DocumentFragment</code>. */
+    JAVACALL_DOM_DOCUMENT_FRAGMENT_NODE      = 0xB,
+    /** The node is a <code>Notation</code>. */
+    JAVACALL_DOM_NOTATION_NODE               = 0xC
+} javacall_dom_node_types;
 
 #ifdef __cplusplus
 }
