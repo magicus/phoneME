@@ -28,6 +28,10 @@
  * Returns the name of this node, depending on its type; see 
  * <code>javacall_dom_node_types</code>. 
  * 
+ * Note: If retValueLen is less then length of the returned string this function 
+ *       has to return with JAVACALL_OUT_OF_MEMORY code and fill retValueLen 
+ *       with actual length of the returned string.
+ *
  * @param handle Pointer to the object representing this node.
  * @param retValue the name of this node
  * @param retValueLen Length of the returned string
@@ -76,10 +80,6 @@ javacall_dom_node_get_node_value(javacall_handle handle,
  * When it is defined to be <code>NULL</code>, setting it has no effect,
  * including if the node is read-only.
  * 
- * Note: If retValueLen is less then length of the returned string this function 
- *       has to return with JAVACALL_OUT_OF_MEMORY code and fill retValueLen 
- *       with actual length of the returned string.
- *
  * @param handle Pointer to the object representing this node.
  * @param nodeValue the value of the node
  * @param exceptionCode Code of the error if function fails; 
@@ -248,10 +248,6 @@ javacall_dom_node_get_owner_document(javacall_handle handle,
  * <p ><b>Note:</b>  Inserting a node before itself is implementation 
  * dependent. 
  * 
- * Note: If retValueLen is less then length of the returned string this function 
- *       has to return with JAVACALL_OUT_OF_MEMORY code and fill retValueLen 
- *       with actual length of the returned string.
- *
  * @param handle Pointer to the object representing this node.
  * @param newChild Pointer to the object of
  *   the node to insert.
@@ -284,10 +280,6 @@ javacall_dom_node_insert_before(javacall_handle handle,
  * same order. If the <code>newChild</code> is already in the tree, it 
  * is first removed.
  * 
- * Note: If retValueLen is less then length of the returned string this function 
- *       has to return with JAVACALL_OUT_OF_MEMORY code and fill retValueLen 
- *       with actual length of the returned string.
- *
  * @param handle Pointer to the object representing this node.
  * @param newChild Pointer to the object of
  *   the new node to put in the child list.
@@ -314,10 +306,6 @@ javacall_dom_node_replace_child(javacall_handle handle,
  * Removes the child node indicated by <code>oldChild</code> from the list 
  * of children, and returns it.
  * 
- * Note: If retValueLen is less then length of the returned string this function 
- *       has to return with JAVACALL_OUT_OF_MEMORY code and fill retValueLen 
- *       with actual length of the returned string.
- *
  * @param handle Pointer to the object representing this node.
  * @param oldChild Pointer to the object of
  *   the node being removed.
@@ -342,10 +330,6 @@ javacall_dom_node_remove_child(javacall_handle handle,
  * of this node. If the <code>newChild</code> is already in the tree, it 
  * is first removed.
  * 
- * Note: If retValueLen is less then length of the returned string this function 
- *       has to return with JAVACALL_OUT_OF_MEMORY code and fill retValueLen 
- *       with actual length of the returned string.
- *
  * @param handle Pointer to the object representing this node.
  * @param newChild Pointer to the object of
  *   the node to add.If it is a <code>DocumentFragment</code>
@@ -490,6 +474,10 @@ javacall_dom_node_is_supported(javacall_handle handle,
  * its namespace from the element it is attached to. If an attribute is 
  * not explicitly given a namespace, it simply has no namespace.
  * 
+ * Note: If retValueLen is less then length of the returned string this function 
+ *       has to return with JAVACALL_OUT_OF_MEMORY code and fill retValueLen 
+ *       with actual length of the returned string.
+ *
  * @param handle Pointer to the object representing this node.
  * @param retValue  The namespace URI of this node, or <code>NULL</code>
  * @param retValueLen Length of the returned string
@@ -524,6 +512,10 @@ javacall_dom_node_get_namespace_uri(javacall_handle handle,
  * method, such as <code>createElement</code> from the 
  * <code>Document</code> interface, this is always <code>NULL</code>.
  * 
+ * Note: If retValueLen is less then length of the returned string this function 
+ *       has to return with JAVACALL_OUT_OF_MEMORY code and fill retValueLen 
+ *       with actual length of the returned string.
+ *
  * @param handle Pointer to the object representing this node.
  * @param retValue The namespace prefix of this node, or <code>NULL</code>
  * @param retValueLen Length of the returned string
@@ -564,10 +556,6 @@ javacall_dom_node_get_prefix(javacall_handle handle,
  * exception.</i>
  * 
  * 
- * Note: If retValueLen is less then length of the returned string this function 
- *       has to return with JAVACALL_OUT_OF_MEMORY code and fill retValueLen 
- *       with actual length of the returned string.
- *
  * @param handle Pointer to the object representing this node.
  * @param prefix This node namespace prefix.
  * @param exceptionCode Code of the error if function fails; 
@@ -590,6 +578,10 @@ javacall_dom_node_set_prefix(javacall_handle handle,
  * method, such as <code>Document.createElement</code>, this is always
  * <code>NULL</code>.
  * 
+ * Note: If retValueLen is less then length of the returned string this function 
+ *       has to return with JAVACALL_OUT_OF_MEMORY code and fill retValueLen 
+ *       with actual length of the returned string.
+ *
  * @param handle Pointer to the object representing this node.
  * @param retValue the local part of the qualified name of this node
  * @param retValueLen Length of the returned string
@@ -725,10 +717,6 @@ javacall_dom_node_get_text_content(javacall_handle handle,
  * </tr>
  * </table>
  * 
- * Note: If retValueLen is less then length of the returned string this function 
- *       has to return with JAVACALL_OUT_OF_MEMORY code and fill retValueLen 
- *       with actual length of the returned string.
- *
  * @param handle Pointer to the object representing this node.
  * @param textContent a String containing the new text content for this node
  * @param exceptionCode Code of the error if function fails; 

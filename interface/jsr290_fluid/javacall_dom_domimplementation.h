@@ -63,10 +63,6 @@ javacall_dom_domimplementation_has_feature(javacall_handle handle,
  * future version of the DOM will provide a way for populating a 
  * <code>DocumentType</code>.
  * 
- * Note: If retValueLen is less then length of the returned string this function 
- *       has to return with JAVACALL_OUT_OF_MEMORY code and fill retValueLen 
- *       with actual length of the returned string.
- *
  * @param handle Pointer to the object representing this domimplementation.
  * @param qualifiedName The qualified name of the document type to be 
  *   created. 
@@ -95,10 +91,6 @@ javacall_dom_domimplementation_create_document_type(javacall_handle handle,
  * Creates an XML <code>Document</code> object of the specified type with 
  * its document element. 
  * 
- * Note: If retValueLen is less then length of the returned string this function 
- *       has to return with JAVACALL_OUT_OF_MEMORY code and fill retValueLen 
- *       with actual length of the returned string.
- *
  * @param handle Pointer to the object representing this domimplementation.
  * @param namespaceURI The namespace URI of the document element to create.
  * @param qualifiedName The qualified name of the document element to be 

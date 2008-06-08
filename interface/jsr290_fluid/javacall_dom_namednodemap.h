@@ -52,10 +52,6 @@ javacall_dom_namednodemap_get_named_item(javacall_handle handle,
  * names would clash. This is seen as preferable to allowing nodes to be 
  * aliased.
  * 
- * Note: If retValueLen is less then length of the returned string this function 
- *       has to return with JAVACALL_OUT_OF_MEMORY code and fill retValueLen 
- *       with actual length of the returned string.
- *
  * @param handle Pointer to the object representing this namednodemap.
  * @param arg Pointer to the object of
  *   a node to store in this map. The node will later be 
@@ -85,10 +81,6 @@ javacall_dom_namednodemap_set_named_item(javacall_handle handle,
  * default value as well as the corresponding namespace URI, local name, 
  * and prefix when applicable.
  * 
- * Note: If retValueLen is less then length of the returned string this function 
- *       has to return with JAVACALL_OUT_OF_MEMORY code and fill retValueLen 
- *       with actual length of the returned string.
- *
  * @param handle Pointer to the object representing this namednodemap.
  * @param name The <code>nodeName</code> of the node to remove.
  * @param retValue Pointer to the object representing 
@@ -167,10 +159,6 @@ javacall_dom_namednodemap_get_named_item_ns(javacall_handle handle,
  * local name is already present in this map, it is replaced by the new 
  * one.
  * 
- * Note: If retValueLen is less then length of the returned string this function 
- *       has to return with JAVACALL_OUT_OF_MEMORY code and fill retValueLen 
- *       with actual length of the returned string.
- *
  * @param handle Pointer to the object representing this namednodemap.
  * @param arg Pointer to the object of
  *   a node to store in this map. The node will later be 
@@ -202,10 +190,6 @@ javacall_dom_namednodemap_set_named_item_ns(javacall_handle handle,
  * immediately appears containing the default value as well as the 
  * corresponding namespace URI, local name, and prefix when applicable.
  * 
- * Note: If retValueLen is less then length of the returned string this function 
- *       has to return with JAVACALL_OUT_OF_MEMORY code and fill retValueLen 
- *       with actual length of the returned string.
- *
  * @param handle Pointer to the object representing this namednodemap.
  * @param namespaceURI The namespace URI of the node to remove.
  * @param localName The local name of the node to remove.

@@ -28,6 +28,10 @@
  * Returns the public identifier of this notation. If the public identifier was 
  * not specified, this is <code>NULL</code>.
  * 
+ * Note: If retValueLen is less then length of the returned string this function 
+ *       has to return with JAVACALL_OUT_OF_MEMORY code and fill retValueLen 
+ *       with actual length of the returned string.
+ *
  * @param handle Pointer to the object representing this notation.
  * @param retValue The public identifier of this notation, or <code>NULL</code>
  * @param retValueLen Length of the returned string
@@ -46,6 +50,10 @@ javacall_dom_notation_get_public_id(javacall_handle handle,
  * Returns the system identifier of this notation. If the system identifier was 
  * not specified, this is <code>NULL</code>.
  * 
+ * Note: If retValueLen is less then length of the returned string this function 
+ *       has to return with JAVACALL_OUT_OF_MEMORY code and fill retValueLen 
+ *       with actual length of the returned string.
+ *
  * @param handle Pointer to the object representing this notation.
  * @param retValue The system identifier of this notation, or <code>NULL</code>
  * @param retValueLen Length of the returned string

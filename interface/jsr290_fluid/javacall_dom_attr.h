@@ -28,6 +28,10 @@
  * Returns returns the name of this attribute. If <code>Node.localName</code> is 
  * different from <code>NULL</code>, this attribute is a qualified name.
  * 
+ * Note: If retValueLen is less then length of the returned string this function 
+ *       has to return with JAVACALL_OUT_OF_MEMORY code and fill retValueLen 
+ *       with actual length of the returned string.
+ *
  * @param handle Pointer to the object representing this attr.
  * @param retValue the attribute name
  * @param retValueLen Length of the returned string
@@ -92,6 +96,10 @@ javacall_dom_attr_get_specified(javacall_handle handle,
  * mutation; in such case, the value on retrieval may differ from the 
  * value on setting.
  * 
+ * Note: If retValueLen is less then length of the returned string this function 
+ *       has to return with JAVACALL_OUT_OF_MEMORY code and fill retValueLen 
+ *       with actual length of the returned string.
+ *
  * @param handle Pointer to the object representing this attr.
  * @param retValue a String containing the value of this attribute
  * @param retValueLen Length of the returned string
@@ -117,10 +125,6 @@ javacall_dom_attr_get_value(javacall_handle handle,
  * mutation; in such case, the value on retrieval may differ from the 
  * value on setting.
  * 
- * Note: If retValueLen is less then length of the returned string this function 
- *       has to return with JAVACALL_OUT_OF_MEMORY code and fill retValueLen 
- *       with actual length of the returned string.
- *
  * @param handle Pointer to the object representing this attr.
  * @param value a String containing the value of this attribute
  * @param exceptionCode Code of the error if function fails; 
