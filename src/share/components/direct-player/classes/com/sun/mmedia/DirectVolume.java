@@ -98,18 +98,13 @@ public class DirectVolume implements VolumeControl {
             return _level;
         }
 
-        // If this player is not started yet, new volume will be set
-        // when this player starts
-        if ( _player.state == Player.STARTED || 
-                ( _player.state == Player.PREFETCHED && 
-                _player.getLocator().equals(Manager.MIDI_DEVICE_LOCATOR ) ) ) {
-            if (-1 == nSetVolume(_hNative, level)) {
-                if (Logging.REPORT_LEVEL <= Logging.ERROR) {
-                    Logging.report(Logging.ERROR, LogChannels.LC_MMAPI, 
-                        "set volume failed volume=" + _level);
-                }
-            }
-        }
+	// Try to set the native player volume 
+	if (-1 == nSetVolume(_hNative, level)) {
+	    if (Logging.REPORT_LEVEL <= Logging.ERROR) {
+		Logging.report(Logging.ERROR, LogChannels.LC_MMAPI, 
+		    "set volume failed volume=" + _level);
+	    }
+	}
 
         _level = level;
         _player.sendEvent(PlayerListener.VOLUME_CHANGED, this);
