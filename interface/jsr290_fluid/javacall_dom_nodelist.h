@@ -24,15 +24,49 @@
 
 #include <javacall_dom.h>
 
+/**
+ * Returns the <code>index</code>th item in the collection. If 
+ * <code>index</code> is greater than or equal to the number of nodes in 
+ * the list, this returns <code>NULL</code>. The range of valid child
+ *  node indices is 0 to <code>length-1</code> inclusive.
+ * 
+ * @param handle Pointer to the object representing this nodelist.
+ * @param index Index into the collection.
+ * @param retValue Pointer to the object representing 
+ *   the node at the <code>index</code>th position in the 
+ *   <code>NodeList</code>, or <code>NULL</code> if that is not a valid 
+ *   index.
+ * 
+ * @return JAVACALL_OK if all done successfuly,
+ *         JAVACALL_NOT_IMPLEMENTED when the stub was called
+ */
 javacall_result
 javacall_dom_nodelist_item(javacall_handle handle,
                            javacall_int32 index,
                            /* OUT */ javacall_handle* retValue);
 
+/**
+ * Returns the number of nodes in the list. The range of valid child node indices 
+ * is 0 to <code>length-1</code> inclusive. 
+ * 
+ * @param handle Pointer to the object representing this nodelist.
+ * @param retValue The number of nodes in the list
+ * 
+ * @return JAVACALL_OK if all done successfuly,
+ *         JAVACALL_NOT_IMPLEMENTED when the stub was called
+ */
 javacall_result
 javacall_dom_nodelist_get_length(javacall_handle handle,
                                  /* OUT */ javacall_int32* retValue);
 
+/** 
+ * Deletes object representing this nodelist
+ * 
+ * @param handle Pointer to the object representing this nodelist.
+ * 
+ * @return JAVACALL_OK if all done successfuly,
+ *         JAVACALL_NOT_IMPLEMENTED when the stub was called
+ */
 javacall_result
-javacall_dom_nodelist_finalize();
+javacall_dom_nodelist_finalize(javacall_handle handle);
 

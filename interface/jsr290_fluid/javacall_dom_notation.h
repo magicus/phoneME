@@ -24,16 +24,50 @@
 
 #include <javacall_dom.h>
 
+/**
+ * Returns the public identifier of this notation. If the public identifier was 
+ * not specified, this is <code>NULL</code>.
+ * 
+ * @param handle Pointer to the object representing this notation.
+ * @param retValue The public identifier of this notation, or <code>NULL</code>
+ * @param retValueLen Length of the returned string
+ * 
+ * @return JAVACALL_OK if all done successfuly,
+ *         JAVACALL_OUT_OF_MEMORY if length of the returend string is more then 
+ *                                specified in retValueLen,
+ *         JAVACALL_NOT_IMPLEMENTED when the stub was called
+ */
 javacall_result
 javacall_dom_notation_get_public_id(javacall_handle handle,
                                     /* OUT */ javacall_utf16_string retValue,
                                     /* INOUT */ javacall_uint32* retValueLen);
 
+/**
+ * Returns the system identifier of this notation. If the system identifier was 
+ * not specified, this is <code>NULL</code>.
+ * 
+ * @param handle Pointer to the object representing this notation.
+ * @param retValue The system identifier of this notation, or <code>NULL</code>
+ * @param retValueLen Length of the returned string
+ * 
+ * @return JAVACALL_OK if all done successfuly,
+ *         JAVACALL_OUT_OF_MEMORY if length of the returend string is more then 
+ *                                specified in retValueLen,
+ *         JAVACALL_NOT_IMPLEMENTED when the stub was called
+ */
 javacall_result
 javacall_dom_notation_get_system_id(javacall_handle handle,
                                     /* OUT */ javacall_utf16_string retValue,
                                     /* INOUT */ javacall_uint32* retValueLen);
 
+/** 
+ * Deletes object representing this notation
+ * 
+ * @param handle Pointer to the object representing this notation.
+ * 
+ * @return JAVACALL_OK if all done successfuly,
+ *         JAVACALL_NOT_IMPLEMENTED when the stub was called
+ */
 javacall_result
-javacall_dom_notation_finalize();
+javacall_dom_notation_finalize(javacall_handle handle);
 
