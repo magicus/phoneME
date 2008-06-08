@@ -36,6 +36,10 @@
  * the <code>tagName</code> of an HTML element in the canonical
  * uppercase form, regardless of the case in the source HTML document.
  * 
+ * Note: If retValueLen is less then length of the returned string this function 
+ *       has to return with JAVACALL_OUT_OF_MEMORY code and fill retValueLen 
+ *       with actual length of the returned string.
+ *
  * @param handle Pointer to the object representing this element.
  * @param retValue a String containing the name of the element
  * @param retValueLen Length of the returned string
@@ -53,6 +57,10 @@ javacall_dom_element_get_tag_name(javacall_handle handle,
 /**
  * Returns retrieves an attribute value by name.
  * 
+ * Note: If retValueLen is less then length of the returned string this function 
+ *       has to return with JAVACALL_OUT_OF_MEMORY code and fill retValueLen 
+ *       with actual length of the returned string.
+ *
  * @param handle Pointer to the object representing this element.
  * @param name The name of the attribute to retrieve.
  * @param retValue The <code>Attr</code> value as a string, or the empty string 
@@ -85,10 +93,6 @@ javacall_dom_element_get_attribute(javacall_handle handle,
  * <br>To set an attribute with a qualified name and namespace URI, use 
  * the <code>setAttributeNS</code> method.
  * 
- * Note: If retValueLen is less then length of the returned string this function 
- *       has to return with JAVACALL_OUT_OF_MEMORY code and fill retValueLen 
- *       with actual length of the returned string.
- *
  * @param handle Pointer to the object representing this element.
  * @param name The name of the attribute to create or alter.
  * @param value Value to set in string form.
@@ -115,10 +119,6 @@ javacall_dom_element_set_attribute(javacall_handle handle,
  * <br>To remove an attribute by local name and namespace URI, use the 
  * <code>removeAttributeNS</code> method.
  * 
- * Note: If retValueLen is less then length of the returned string this function 
- *       has to return with JAVACALL_OUT_OF_MEMORY code and fill retValueLen 
- *       with actual length of the returned string.
- *
  * @param handle Pointer to the object representing this element.
  * @param name The name of the attribute to remove.
  * @param exceptionCode Code of the error if function fails; 
@@ -163,10 +163,6 @@ javacall_dom_element_get_attribute_node(javacall_handle handle,
  * <br>To add a new attribute node with a qualified name and namespace 
  * URI, use the <code>setAttributeNodeNS</code> method.
  * 
- * Note: If retValueLen is less then length of the returned string this function 
- *       has to return with JAVACALL_OUT_OF_MEMORY code and fill retValueLen 
- *       with actual length of the returned string.
- *
  * @param handle Pointer to the object representing this element.
  * @param newAttr Pointer to the object of
  *   the <code>Attr</code> node to add to the attribute list.
@@ -194,10 +190,6 @@ javacall_dom_element_set_attribute_node(javacall_handle handle,
  * immediately appears with the default value as well as the 
  * corresponding namespace URI, local name, and prefix when applicable. 
  * 
- * Note: If retValueLen is less then length of the returned string this function 
- *       has to return with JAVACALL_OUT_OF_MEMORY code and fill retValueLen 
- *       with actual length of the returned string.
- *
  * @param handle Pointer to the object representing this element.
  * @param oldAttr Pointer to the object of
  *   the <code>Attr</code> node to remove from the attribute 
@@ -291,10 +283,6 @@ javacall_dom_element_get_attribute_ns(javacall_handle handle,
  * <code>namespaceURI</code> parameter for methods if they wish to have 
  * no namespace.
  * 
- * Note: If retValueLen is less then length of the returned string this function 
- *       has to return with JAVACALL_OUT_OF_MEMORY code and fill retValueLen 
- *       with actual length of the returned string.
- *
  * @param handle Pointer to the object representing this element.
  * @param namespaceURI The namespace URI of the attribute to create or 
  *   alter.
@@ -328,10 +316,6 @@ javacall_dom_element_set_attribute_ns(javacall_handle handle,
  * <code>namespaceURI</code> parameter for methods if they wish to have 
  * no namespace.
  * 
- * Note: If retValueLen is less then length of the returned string this function 
- *       has to return with JAVACALL_OUT_OF_MEMORY code and fill retValueLen 
- *       with actual length of the returned string.
- *
  * @param handle Pointer to the object representing this element.
  * @param namespaceURI The namespace URI of the attribute to remove.
  * @param localName The local name of the attribute to remove.
@@ -356,10 +340,6 @@ javacall_dom_element_remove_attribute_ns(javacall_handle handle,
  * <code>namespaceURI</code> parameter for methods if they wish to have 
  * no namespace. 
  * 
- * Note: If retValueLen is less then length of the returned string this function 
- *       has to return with JAVACALL_OUT_OF_MEMORY code and fill retValueLen 
- *       with actual length of the returned string.
- *
  * @param handle Pointer to the object representing this element.
  * @param namespaceURI The namespace URI of the attribute to retrieve.
  * @param localName The local name of the attribute to retrieve.
@@ -391,10 +371,6 @@ javacall_dom_element_get_attribute_node_ns(javacall_handle handle,
  * <code>namespaceURI</code> parameter for methods if they wish to have 
  * no namespace.
  * 
- * Note: If retValueLen is less then length of the returned string this function 
- *       has to return with JAVACALL_OUT_OF_MEMORY code and fill retValueLen 
- *       with actual length of the returned string.
- *
  * @param handle Pointer to the object representing this element.
  * @param newAttr Pointer to the object of
  *   the <code>Attr</code> node to add to the attribute list.
@@ -422,10 +398,6 @@ javacall_dom_element_set_attribute_node_ns(javacall_handle handle,
  * <code>Elements</code> with a given local name and namespace URI in 
  * document order.
  * 
- * Note: If retValueLen is less then length of the returned string this function 
- *       has to return with JAVACALL_OUT_OF_MEMORY code and fill retValueLen 
- *       with actual length of the returned string.
- *
  * @param handle Pointer to the object representing this element.
  * @param namespaceURI The namespace URI of the elements to match on. The 
  *   special value "*" matches all namespaces.
@@ -477,10 +449,6 @@ javacall_dom_element_has_attribute(javacall_handle handle,
  * <code>namespaceURI</code> parameter for methods if they wish to have 
  * no namespace.
  * 
- * Note: If retValueLen is less then length of the returned string this function 
- *       has to return with JAVACALL_OUT_OF_MEMORY code and fill retValueLen 
- *       with actual length of the returned string.
- *
  * @param handle Pointer to the object representing this element.
  * @param namespaceURI The namespace URI of the attribute to look for.
  * @param localName The local name of the attribute to look for.
@@ -513,10 +481,6 @@ javacall_dom_element_has_attribute_ns(javacall_handle handle,
  * <br> To specify an attribute by local name and namespace URI, use the 
  * <code>setIdAttributeNS</code> method. 
  * 
- * Note: If retValueLen is less then length of the returned string this function 
- *       has to return with JAVACALL_OUT_OF_MEMORY code and fill retValueLen 
- *       with actual length of the returned string.
- *
  * @param handle Pointer to the object representing this element.
  * @param name The name of the attribute.
  * @param isId Whether the attribute is a of type ID.
@@ -543,10 +507,6 @@ javacall_dom_element_set_id_attribute(javacall_handle handle,
  * <code>isId</code> to undeclare an attribute for being a 
  * user-determined ID attribute. 
  * 
- * Note: If retValueLen is less then length of the returned string this function 
- *       has to return with JAVACALL_OUT_OF_MEMORY code and fill retValueLen 
- *       with actual length of the returned string.
- *
  * @param handle Pointer to the object representing this element.
  * @param namespaceURI The namespace URI of the attribute.
  * @param localName The local name of the attribute.
@@ -575,10 +535,6 @@ javacall_dom_element_set_id_attribute_ns(javacall_handle handle,
  * <code>isId</code> to undeclare an attribute for being a 
  * user-determined ID attribute. 
  * 
- * Note: If retValueLen is less then length of the returned string this function 
- *       has to return with JAVACALL_OUT_OF_MEMORY code and fill retValueLen 
- *       with actual length of the returned string.
- *
  * @param handle Pointer to the object representing this element.
  * @param idAttr Pointer to the object of
  *   the attribute node.

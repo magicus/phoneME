@@ -28,6 +28,10 @@
  * Returns the public identifier associated with the entity, if specified. If the 
  * public identifier was not specified, this is <code>NULL</code>.
  * 
+ * Note: If retValueLen is less then length of the returned string this function 
+ *       has to return with JAVACALL_OUT_OF_MEMORY code and fill retValueLen 
+ *       with actual length of the returned string.
+ *
  * @param handle Pointer to the object representing this entity.
  * @param retValue The public identifier associated with the entity, or <code>NULL</code>
  * @param retValueLen Length of the returned string
@@ -46,6 +50,10 @@ javacall_dom_entity_get_public_id(javacall_handle handle,
  * Returns the system identifier associated with the entity, if specified. If the 
  * system identifier was not specified, this is <code>NULL</code>.
  * 
+ * Note: If retValueLen is less then length of the returned string this function 
+ *       has to return with JAVACALL_OUT_OF_MEMORY code and fill retValueLen 
+ *       with actual length of the returned string.
+ *
  * @param handle Pointer to the object representing this entity.
  * @param retValue The system identifier associated with the entity or <code>NULL</code>
  * @param retValueLen Length of the returned string
@@ -64,6 +72,10 @@ javacall_dom_entity_get_system_id(javacall_handle handle,
  * Returns for unparsed entities, the name of the notation for the entity. For 
  * parsed entities, this is <code>NULL</code>. 
  * 
+ * Note: If retValueLen is less then length of the returned string this function 
+ *       has to return with JAVACALL_OUT_OF_MEMORY code and fill retValueLen 
+ *       with actual length of the returned string.
+ *
  * @param handle Pointer to the object representing this entity.
  * @param retValue the name of the notation for the entity or <code>NULL</code>
  * @param retValueLen Length of the returned string

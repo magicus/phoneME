@@ -65,10 +65,6 @@ javacall_dom_characterdata_get_data(javacall_handle handle,
  * may call <code>substringData</code> to retrieve the data in 
  * appropriately sized pieces.
  * 
- * Note: If retValueLen is less then length of the returned string this function 
- *       has to return with JAVACALL_OUT_OF_MEMORY code and fill retValueLen 
- *       with actual length of the returned string.
- *
  * @param handle Pointer to the object representing this characterdata.
  * @param data character data to add to the node, may not be NULL
  * @param exceptionCode Code of the error if function fails; 
@@ -136,10 +132,6 @@ javacall_dom_characterdata_substring_data(javacall_handle handle,
  * success, <code>data</code> provides access to the concatenation of 
  * <code>data</code> and the <code>DOMString</code> specified.
  * 
- * Note: If retValueLen is less then length of the returned string this function 
- *       has to return with JAVACALL_OUT_OF_MEMORY code and fill retValueLen 
- *       with actual length of the returned string.
- *
  * @param handle Pointer to the object representing this characterdata.
  * @param arg The <code>DOMString</code> to append.
  * @param exceptionCode Code of the error if function fails; 
@@ -158,10 +150,6 @@ javacall_dom_characterdata_append_data(javacall_handle handle,
 /**
  * Insert a string at the specified 16-bit unit offset.
  * 
- * Note: If retValueLen is less then length of the returned string this function 
- *       has to return with JAVACALL_OUT_OF_MEMORY code and fill retValueLen 
- *       with actual length of the returned string.
- *
  * @param handle Pointer to the object representing this characterdata.
  * @param offset The character offset at which to insert.
  * @param arg The <code>DOMString</code> to insert.
@@ -183,10 +171,6 @@ javacall_dom_characterdata_insert_data(javacall_handle handle,
  * Remove a range of 16-bit units from the node. Upon success, 
  * <code>data</code> and <code>length</code> reflect the change.
  * 
- * Note: If retValueLen is less then length of the returned string this function 
- *       has to return with JAVACALL_OUT_OF_MEMORY code and fill retValueLen 
- *       with actual length of the returned string.
- *
  * @param handle Pointer to the object representing this characterdata.
  * @param offset The offset from which to start removing.
  * @param count The number of 16-bit units to delete. If the sum of 
@@ -211,10 +195,6 @@ javacall_dom_characterdata_delete_data(javacall_handle handle,
  * Replace the characters starting at the specified 16-bit unit offset 
  * with the specified string.
  * 
- * Note: If retValueLen is less then length of the returned string this function 
- *       has to return with JAVACALL_OUT_OF_MEMORY code and fill retValueLen 
- *       with actual length of the returned string.
- *
  * @param handle Pointer to the object representing this characterdata.
  * @param offset The offset from which to start replacing.
  * @param count The number of 16-bit units to replace. If the sum of 

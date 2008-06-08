@@ -28,6 +28,10 @@
  * Returns the name of DTD; i.e., the name immediately following the 
  * <code>DOCTYPE</code> keyword.
  * 
+ * Note: If retValueLen is less then length of the returned string this function 
+ *       has to return with JAVACALL_OUT_OF_MEMORY code and fill retValueLen 
+ *       with actual length of the returned string.
+ *
  * @param handle Pointer to the object representing this documenttype.
  * @param retValue the name of the DTD
  * @param retValueLen Length of the returned string
@@ -90,6 +94,10 @@ javacall_dom_documenttype_get_notations(javacall_handle handle,
 /**
  * Returns the public identifier of the external subset.
  * 
+ * Note: If retValueLen is less then length of the returned string this function 
+ *       has to return with JAVACALL_OUT_OF_MEMORY code and fill retValueLen 
+ *       with actual length of the returned string.
+ *
  * @param handle Pointer to the object representing this documenttype.
  * @param retValue the public identifier of the external subset
  * @param retValueLen Length of the returned string
@@ -107,6 +115,10 @@ javacall_dom_documenttype_get_public_id(javacall_handle handle,
 /**
  * Returns the system identifier of the external subset.
  * 
+ * Note: If retValueLen is less then length of the returned string this function 
+ *       has to return with JAVACALL_OUT_OF_MEMORY code and fill retValueLen 
+ *       with actual length of the returned string.
+ *
  * @param handle Pointer to the object representing this documenttype.
  * @param retValue The system identifier of the external subset
  * @param retValueLen Length of the returned string
@@ -128,6 +140,10 @@ javacall_dom_documenttype_get_system_id(javacall_handle handle,
  * depending on various parameters, including the XML processor used to
  * build the document.
  * 
+ * Note: If retValueLen is less then length of the returned string this function 
+ *       has to return with JAVACALL_OUT_OF_MEMORY code and fill retValueLen 
+ *       with actual length of the returned string.
+ *
  * @param handle Pointer to the object representing this documenttype.
  * @param retValue a String containing a representation of the internal subset
  * @param retValueLen Length of the returned string

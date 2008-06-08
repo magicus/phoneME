@@ -34,10 +34,6 @@
  * of the original node. When the <code>offset</code> is equal to the 
  * length of this node, the new node has no data.
  * 
- * Note: If retValueLen is less then length of the returned string this function 
- *       has to return with JAVACALL_OUT_OF_MEMORY code and fill retValueLen 
- *       with actual length of the returned string.
- *
  * @param handle Pointer to the object representing this text.
  * @param offset The 16-bit unit offset at which to split, starting from 
  *   <code>0</code>.

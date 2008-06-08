@@ -94,10 +94,6 @@ javacall_dom_document_get_document_element(javacall_handle handle,
  * <br>To create an element with a qualified name and namespace URI, use 
  * the <code>createElementNS</code> method.
  * 
- * Note: If retValueLen is less then length of the returned string this function 
- *       has to return with JAVACALL_OUT_OF_MEMORY code and fill retValueLen 
- *       with actual length of the returned string.
- *
  * @param handle Pointer to the object representing this document.
  * @param tagName The name of the element type to instantiate. For XML, 
  *   this is case-sensitive. otherwise it depends on the 
@@ -173,10 +169,6 @@ javacall_dom_document_create_comment(javacall_handle handle,
  * Creates a <code>CDATASection</code> node whose value is the specified 
  * string.
  * 
- * Note: If retValueLen is less then length of the returned string this function 
- *       has to return with JAVACALL_OUT_OF_MEMORY code and fill retValueLen 
- *       with actual length of the returned string.
- *
  * @param handle Pointer to the object representing this document.
  * @param data The data for the <code>CDATASection</code> contents.
  * @param retValue Pointer to the object representing 
@@ -199,10 +191,6 @@ javacall_dom_document_create_cdata_section(javacall_handle handle,
  * Creates a <code>ProcessingInstruction</code> node given the specified 
  * name and data strings.
  * 
- * Note: If retValueLen is less then length of the returned string this function 
- *       has to return with JAVACALL_OUT_OF_MEMORY code and fill retValueLen 
- *       with actual length of the returned string.
- *
  * @param handle Pointer to the object representing this document.
  * @param target The target part of the processing instruction. Unlike 
  *   <code>Document.createElementNS</code> or 
@@ -233,10 +221,6 @@ javacall_dom_document_create_processing_instruction(javacall_handle handle,
  * <br>To create an attribute with a qualified name and namespace URI, use 
  * the <code>createAttributeNS</code> method.
  * 
- * Note: If retValueLen is less then length of the returned string this function 
- *       has to return with JAVACALL_OUT_OF_MEMORY code and fill retValueLen 
- *       with actual length of the returned string.
- *
  * @param handle Pointer to the object representing this document.
  * @param name The name of the attribute.
  * @param retValue Pointer to the object representing 
@@ -270,10 +254,6 @@ javacall_dom_document_create_attribute(javacall_handle handle,
  * 3 do not support any mechanism to resolve namespace prefixes in this 
  * case.
  * 
- * Note: If retValueLen is less then length of the returned string this function 
- *       has to return with JAVACALL_OUT_OF_MEMORY code and fill retValueLen 
- *       with actual length of the returned string.
- *
  * @param handle Pointer to the object representing this document.
  * @param name The name of the entity to reference. Unlike 
  *   <code>Document.createElementNS</code> or 
@@ -407,10 +387,6 @@ javacall_dom_document_get_elements_by_tag_name(javacall_handle handle,
  * on this type of nodes since they cannot have any children.</dd>
  * </dl> 
  * 
- * Note: If retValueLen is less then length of the returned string this function 
- *       has to return with JAVACALL_OUT_OF_MEMORY code and fill retValueLen 
- *       with actual length of the returned string.
- *
  * @param handle Pointer to the object representing this document.
  * @param importedNode Pointer to the object of
  *   the node to import.
@@ -442,10 +418,6 @@ javacall_dom_document_import_node(javacall_handle handle,
  * , applications must use the value <code>NULL</code> as the 
  * namespaceURI parameter for methods if they wish to have no namespace.
  * 
- * Note: If retValueLen is less then length of the returned string this function 
- *       has to return with JAVACALL_OUT_OF_MEMORY code and fill retValueLen 
- *       with actual length of the returned string.
- *
  * @param handle Pointer to the object representing this document.
  * @param namespaceURI The namespace URI of the element to create.
  * @param qualifiedName The qualified name of the element type to 
@@ -507,10 +479,6 @@ javacall_dom_document_create_element_ns(javacall_handle handle,
  * <code>namespaceURI</code> parameter for methods if they wish to have 
  * no namespace.
  * 
- * Note: If retValueLen is less then length of the returned string this function 
- *       has to return with JAVACALL_OUT_OF_MEMORY code and fill retValueLen 
- *       with actual length of the returned string.
- *
  * @param handle Pointer to the object representing this document.
  * @param namespaceURI The namespace URI of the attribute to create.
  * @param qualifiedName The qualified name of the attribute to instantiate.
@@ -672,10 +640,6 @@ javacall_dom_document_get_element_by_id(javacall_handle handle,
  * <code>Document.importNode()</code> method, this method does not raise 
  * an <code>INVALID_CHARACTER_ERR</code> exception.
  * 
- * Note: If retValueLen is less then length of the returned string this function 
- *       has to return with JAVACALL_OUT_OF_MEMORY code and fill retValueLen 
- *       with actual length of the returned string.
- *
  * @param handle Pointer to the object representing this document.
  * @param source Pointer to the object of
  *   the node to move into this document.

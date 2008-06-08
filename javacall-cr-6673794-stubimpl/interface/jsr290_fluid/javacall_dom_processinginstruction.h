@@ -29,6 +29,10 @@
  * the first token following the markup that begins the processing 
  * instruction.
  * 
+ * Note: If retValueLen is less then length of the returned string this function 
+ *       has to return with JAVACALL_OUT_OF_MEMORY code and fill retValueLen 
+ *       with actual length of the returned string.
+ *
  * @param handle Pointer to the object representing this processinginstruction.
  * @param retValue The target of this processing instruction.
  * @param retValueLen Length of the returned string
@@ -48,6 +52,10 @@ javacall_dom_processinginstruction_get_target(javacall_handle handle,
  * white space character after the target to the character immediately 
  * preceding the <code>?&gt;</code>.
  * 
+ * Note: If retValueLen is less then length of the returned string this function 
+ *       has to return with JAVACALL_OUT_OF_MEMORY code and fill retValueLen 
+ *       with actual length of the returned string.
+ *
  * @param handle Pointer to the object representing this processinginstruction.
  * @param retValue The content of this processing instruction
  * @param retValueLen Length of the returned string
@@ -67,10 +75,6 @@ javacall_dom_processinginstruction_get_data(javacall_handle handle,
  * white space character after the target to the character immediately 
  * preceding the <code>?&gt;</code>.
  * 
- * Note: If retValueLen is less then length of the returned string this function 
- *       has to return with JAVACALL_OUT_OF_MEMORY code and fill retValueLen 
- *       with actual length of the returned string.
- *
  * @param handle Pointer to the object representing this processinginstruction.
  * @param data character data to add to the node, may not be NULL
  * @param exceptionCode Code of the error if function fails; 
