@@ -31,11 +31,19 @@
  * @brief Javacall DOM interfaces for Text
  */
 
-#include <javacall_dom.h>
-
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+#include <javacall_dom.h>
+
+/**
+ * @defgroup JSR290DOM JSR290 DOM API
+ *
+ * The following API definitions are required by DOM part of the JSR-290.
+ *
+ * @{
+ */
 
 /**
  * Breaks this node into two nodes at the specified <code>offset</code>, 
@@ -77,6 +85,8 @@ javacall_dom_text_split_text(javacall_handle handle,
 javacall_result
 javacall_dom_text_finalize(javacall_handle handle);
 
+
+/** @} */
 
 #ifdef __cplusplus
 }
