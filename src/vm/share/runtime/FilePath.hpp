@@ -52,6 +52,9 @@ public:
   static const JvmPathChar rom_optimizer_file[];
   static const JvmPathChar rom_summary_file[];
   static const JvmPathChar rom_reloc_file[];
+#if ENABLE_JNI
+  static const JvmPathChar rom_jni_adapters_file[];  
+#endif
   static const JvmPathChar rom_kvm_natives_file[];  
 
 #if ENABLE_SEGMENTED_ROM_TEXT_BLOCK

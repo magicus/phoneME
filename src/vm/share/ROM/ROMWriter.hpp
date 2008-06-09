@@ -112,6 +112,7 @@
  template(FileStreamState, declare_stream_state, "") \
  template(FileStreamState, main_stream_state, "") \
  template(FileStreamState, reloc_stream_state, "") \
+ template(FileStreamState, jni_stream_state, "") \
  template(FileStreamState, kvm_stream_state, "")
 
 #define ROMWRITER_INT_FIELDS_DO_BINARY(template) \

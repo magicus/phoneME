@@ -1119,6 +1119,24 @@ $(ROM_SEGMENTS):
 
 endif
 
+ifeq ($(IsTarget)+$(ENABLE_JNI), true+true)
+
+JNI_ADAPTERS = JniAdapters.cpp
+JNI_ADAPTERS_OBJ = JniAdapters.obj
+
+# Use $(GENERATED_ROM_FILE) as a marker to regenerate $(JNI_ADAPTERS).
+$(JNI_ADAPTERS_OBJ): $(GENERATED_ROM_FILE)
+$(GENERATED_ROM_FILE): $(JNI_ADAPTERS)
+$(JNI_ADAPTERS):
+
+# Can't use precompiled headers
+$(JNI_ADAPTERS_OBJ): $(JNI_ADAPTERS)
+	$(A)echo " ... $(notdir $<)"
+	$(A)$(CPP) $(CPP_OPT_FLAGS) $(CPP_FLAGS) -c `$(call fixcygpath, $<)`
+
+EXE_OBJS += $(JNI_ADAPTERS_OBJ)
+
+endif
 
 $(JVM_LIB): $(BIN_DIR) $(BUILD_PCH) $(LIB_OBJS)
 	$(A)$(LIBMGR) $(LIB_FLAGS) /out:$@ $(LIB_OBJS)
@@ -1427,6 +1445,25 @@ ROM_SEGMENTS = $(GEN_DIR)/ROMImage_00.cpp \
 # without overriding the command for $(GENERATED_ROM_FILE) target.
 $(GENERATED_ROM_FILE): $(ROM_SEGMENTS)
 $(ROM_SEGMENTS):
+
+endif
+
+ifeq ($(IsTarget)+$(ENABLE_JNI), true+true)
+
+JNI_ADAPTERS = JniAdapters.cpp
+JNI_ADAPTERS_OBJ = JniAdapters.obj
+
+# Use $(GENERATED_ROM_FILE) as a marker to regenerate $(JNI_ADAPTERS).
+$(JNI_ADAPTERS_OBJ): $(GENERATED_ROM_FILE)
+$(GENERATED_ROM_FILE): $(JNI_ADAPTERS)
+$(JNI_ADAPTERS):
+
+# Can't use precompiled headers
+$(JNI_ADAPTERS_OBJ): $(JNI_ADAPTERS)
+	$(A)echo " ... $(notdir $<)"
+	$(A)$(CPP) $(CPP_OPT_FLAGS) $(CPP_FLAGS) -c `$(call fixcygpath, $<)`
+
+EXE_OBJS += $(JNI_ADAPTERS_OBJ)
 
 endif
 
@@ -1851,6 +1888,20 @@ $(GENERATED_ROM_FILE): $(ROM_SEGMENTS)
 $(ROM_SEGMENTS):
 endif
 
+ifeq ($(IsTarget)+$(ENABLE_JNI), true+true)
+
+JNI_ADAPTERS = JniAdapters.cpp
+JNI_ADAPTERS_OBJ = JniAdapters$(OBJ_SUFFIX)
+
+# Use $(GENERATED_ROM_FILE) as a marker to regenerate $(JNI_ADAPTERS).
+$(JNI_ADAPTERS_OBJ): $(GENERATED_ROM_FILE)
+$(GENERATED_ROM_FILE): $(JNI_ADAPTERS)
+$(JNI_ADAPTERS):
+
+EXE_OBJS += $(JNI_ADAPTERS_OBJ)
+
+endif
+
 ifneq ($(ENABLE_C_INTERPRETER), true)
 LIB_OBJS += Interpreter_$(arch)$(OBJ_SUFFIX)
 endif
@@ -2049,6 +2100,10 @@ DIST_FILES   = $(DIST_BIN_DIR)/NativesTableGen.jar \
                $(DIST_INC_DIR)/kvmcompat.h \
                $(DIST_INC_DIR)/NativesTable.hpp \
                $(DIST_INC_DIR)/ROMImage.hpp
+
+ifeq ($(IsTarget)+$(ENABLE_JNI), true+true)
+  DIST_FILES += $(DIST_INC_DIR)/jni.h
+endif
 
 ifeq ($(IsRomGen), true)
 OUTPUT_FILES = $(NATIVES_TABLE) $(ROM_GENERATOR)
@@ -2355,6 +2410,12 @@ $(DIST_INC_DIR)/kni.h: $(VMSRC_DIR)/share/natives/kni.h
 	$(A)echo installed $@
 
 $(DIST_INC_DIR)/kni_md.h: $(VMSRC_DIR)/cpu/$(arch)/kni_md.h
+	$(A)rm -f $@
+	$(A)cp $< $@
+	$(A)$(CHMOD) u+w $@
+	$(A)echo installed $@
+
+$(DIST_INC_DIR)/jni.h: $(VMSRC_DIR)/share/natives/jni.h
 	$(A)rm -f $@
 	$(A)cp $< $@
 	$(A)$(CHMOD) u+w $@

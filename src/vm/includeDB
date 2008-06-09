@@ -1256,6 +1256,8 @@ LiteralPoolElement.hpp           BinaryLabel.hpp
 LiteralPoolElement.cpp           Compiler.hpp
 
 // Natives
+jni.cpp                          jni.h
+
 BuildFlags.hpp                   BuildFlags_<os_family>.hpp
 kni_md.h                         BuildFlags.hpp
 kni.h                            kni_md.h

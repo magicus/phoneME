@@ -512,6 +512,9 @@
 //
 // ENABLE_CONDITIONAL_BRANCH_OPTIMIZATIONS 1,1 Use flags set by arithmetic
 //                                          instructions
+//
+// ENABLE_JNI                           0,0 Enable (partial) JNI support.
+//
 //============================================================================
 // ENABLE_FLAGS_END }}
 //============================================================================
@@ -1177,4 +1180,8 @@
 #  define USE_EVENT_LOG_TIMER_DOWNSAMPLING  1
 #else
 #  define USE_EVENT_LOG_TIMER_DOWNSAMPLING  0
+#endif
+
+#if ENABLE_JNI && !ENABLE_FLOAT
+#  error "ENABLE_FLOAT must be set for ENABLE_JNI"
 #endif

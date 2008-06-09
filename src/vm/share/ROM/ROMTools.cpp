@@ -445,7 +445,7 @@ void ROMTools::shrink_object(Oop *obj, size_t old_size, size_t reduction) {
   GUARANTEE(oop->object_size() == reduction, "sanity");
 }
 
-int ROMVector::index_of(Oop *value) {  
+int ROMVector::index_of(Oop *value) const {  
   const int vect_size = size();
   for (int i = 0; i < vect_size; i++) {
     Oop::Raw element = element_at(i);

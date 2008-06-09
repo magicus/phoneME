@@ -463,6 +463,10 @@ public class Database {
             // ROM image is not part of VM library.
             return true;
         }
+        if (file.equals("JniAdapters.cpp")) {
+            // JNI adapters are not part of VM library.
+            return true;
+        }
         if (file.equals("NativesTable.cpp")) {
             // Natives Table is not part of VM library.
             return true;

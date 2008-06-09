@@ -812,6 +812,11 @@ void SourceObjectWriter::put_c_function(Method *method, address addr,
       if (is_kvm_native(method)) {
         prefix = "__kvm_";
         write_kvm_method_stub(method, name);
+#if ENABLE_JNI
+      } else if (is_jni_native(method)) {
+        prefix = "__jni_";
+        write_jni_method_adapter(method, name);
+#endif
       } else {
         _declare_stream->print_cr("extern \"C\" %s %s();", 
                                   get_native_function_return_type(method),
@@ -823,8 +828,9 @@ void SourceObjectWriter::put_c_function(Method *method, address addr,
   output_stream->print("(int) %s%s", prefix, name);
 }
 
-bool SourceObjectWriter::is_kvm_native(Method *method) {
-  ObjArray::Raw array = _writer->_optimizer.kvm_native_methods_table()->obj();
+bool SourceObjectWriter::is_method_in_table(const Method * method, 
+                                            const ObjArray * table) {
+  ObjArray::Raw array = table->obj();
   if (array.not_null()) {
     int size = array().length();
     if (size > 0) {
@@ -963,6 +969,209 @@ void SourceObjectWriter::write_kvm_method_stub(Method *method, char *name) {
   s->print_cr("}");
   s->print_cr("}");
 }
+
+#if ENABLE_JNI
+void SourceObjectWriter::write_jni_method_adapter(Method *method, 
+                                                  char *native_name) {
+  const struct _type_info {
+    const char * type_name;
+    const char * return_type_name;
+    const char * return_func_name;
+    const char * get_param_name;
+  } type_info[] = {
+    { NULL, NULL, NULL, NULL }, /* 0 */
+    { NULL, NULL, NULL, NULL }, /* 1 */
+    { NULL, NULL, NULL, NULL }, /* 2 */
+    { NULL, NULL, NULL, NULL }, /* 3 */
+    { "jboolean", "KNI_RETURNTYPE_BOOLEAN", 
+      "KNI_ReturnBoolean","KNI_GetParameterAsBoolean" },
+    { "jchar",    "KNI_RETURNTYPE_CHAR",
+      "KNI_ReturnChar",   "KNI_GetParameterAsChar" },
+    { "jfloat",   "KNI_RETURNTYPE_FLOAT",
+      "KNI_ReturnFloat",  "KNI_GetParameterAsFloat" },
+    { "jdouble",  "KNI_RETURNTYPE_DOUBLE",
+      "KNI_ReturnDouble", "KNI_GetParameterAsDouble" },
+    { "jbyte",    "KNI_RETURNTYPE_BYTE",
+      "KNI_ReturnByte",   "KNI_GetParameterAsByte" },
+    { "jshort",   "KNI_RETURNTYPE_SHORT",
+      "KNI_ReturnShort",  "KNI_GetParameterAsShort" },
+    { "jint",     "KNI_RETURNTYPE_INT",
+      "KNI_ReturnInt",    "KNI_GetParameterAsInt" },
+    { "jlong",    "KNI_RETURNTYPE_LONG",
+      "KNI_ReturnLong",   "KNI_GetParameterAsLong" },
+    { "jobject",  "KNI_RETURNTYPE_OBJECT",
+      NULL,                       NULL },
+    { "jarray",   "KNI_RETURNTYPE_OBJECT",
+      NULL,                       NULL },
+  };
+
+  const bool is_static = method->is_static();
+  Signature::Raw sig = method->signature();
+  const BasicType return_type = sig().return_type();
+  const struct _type_info * return_type_info = &type_info[return_type];
+
+  Stream *s = &((SourceROMWriter*)_writer)->_declare_stream;
+  s->print_cr("KNIEXPORT %s __jni_%s();", 
+              return_type_info->return_type_name, native_name);
+
+  s = &((SourceROMWriter*)_writer)->_jni_stream;
+  s->print("JNIEXPORT %s %s(JNIEnv*, %s", 
+           return_type_info->type_name, native_name,
+           is_static ? "jclass" : "jobject");
+
+  {
+    for (SignatureStream ss(&sig, true/*skip first param*/, true/*fast*/); 
+         !ss.eos(); ss.next()) {
+      const BasicType arg_type = ss.type();
+      const struct _type_info * arg_info = &type_info[arg_type];
+      s->print(", %s", arg_info->type_name);
+    }
+  }
+
+  s->print_cr(");");
+
+  s->print_cr("KNIEXPORT %s __jni_%s() {", 
+              return_type_info->return_type_name, native_name);
+
+  /*
+   * Count the handles we need for the call.
+   * We always need only handle for this pointer or for class pointer.
+   */
+  int handle_count = 1;
+  {
+    SignatureStream ss(&sig, true/* skip first param */, true /*fast*/);
+    while (!ss.eos()) {
+      if (ss.type() == T_OBJECT) {
+        handle_count++;
+      }
+      ss.next();
+    }
+
+    // Check return type
+    if (ss.type() == T_OBJECT) {
+      handle_count++;
+    }
+  }
+
+  const char * const zero_param_name = is_static ? "clazz" : "thisObj";
+
+  switch (return_type) {
+    case T_BOOLEAN:
+    case T_CHAR:
+    case T_BYTE:
+    case T_SHORT:
+    case T_INT:
+    case T_LONG:
+    case T_FLOAT:
+    case T_DOUBLE:
+      s->print_cr("  %s ret;", return_type_info->type_name);
+  }
+
+  s->print_cr("  KNI_StartHandles(%d);", handle_count);
+  s->print_cr("  KNI_DeclareHandle(%s);", zero_param_name);
+  s->print_cr("  %s(%s);", 
+              is_static ? "KNI_GetClassPointer" : "KNI_GetThisPointer",
+              zero_param_name);
+
+  // KNI: the leftmost parameter has index 1
+  int arg_count = 1;
+  int arg_position = 1;
+  for (SignatureStream ss(&sig, true/* skip first param */, true/*fast*/); 
+       !ss.eos(); ss.next()) {
+    const BasicType arg_type = ss.type();
+    const struct _type_info * arg_info = &type_info[arg_type];
+
+    switch (arg_type) {
+    case T_BOOLEAN:
+    case T_CHAR:
+    case T_BYTE:
+    case T_SHORT:
+    case T_INT:
+    case T_LONG:
+    case T_FLOAT:
+    case T_DOUBLE:
+      s->print_cr("  const %s param%d = %s(%d);", 
+                  arg_info->type_name, arg_count, 
+                  arg_info->get_param_name, arg_position);
+      break;
+    case T_OBJECT:
+    case T_ARRAY:
+      s->print_cr("  KNI_DeclareHandle(param%d);", arg_count);
+      s->print_cr("  KNI_GetParameterAsObject(%d, param%d);", 
+                  arg_position, arg_count);
+      break;
+    case T_VOID:
+    case T_SYMBOLIC:
+    case T_ILLEGAL:
+    default:
+      SHOULD_NOT_REACH_HERE();
+    }
+
+    arg_position += ss.word_size();
+    arg_count++;
+  }
+
+  switch (return_type) {
+  case T_OBJECT:
+  case T_ARRAY:
+    s->print_cr("  KNI_DeclareHandle(ret);");
+    // Fall through
+  case T_BOOLEAN:
+  case T_CHAR:
+  case T_BYTE:
+  case T_SHORT:
+  case T_INT:
+  case T_LONG:
+  case T_FLOAT:
+  case T_DOUBLE: 
+    s->print("  ret = ");
+    break;
+  case T_VOID:
+    s->print("  ");
+    break;
+  case T_SYMBOLIC:
+  case T_ILLEGAL:
+  default:
+    SHOULD_NOT_REACH_HERE();
+  }
+
+  s->print("%s(&_jni_env, %s", native_name, zero_param_name);
+  for (int i = 1; i < arg_count; i++) {
+    s->print(", param%d", i);
+  }
+   
+  s->print_cr(");");
+
+  switch (return_type) {
+  case T_OBJECT:
+  case T_ARRAY:
+    s->print_cr("  KNI_EndHandlesAndReturnObject(ret);");
+    break;
+  case T_BOOLEAN:
+  case T_CHAR:
+  case T_BYTE:
+  case T_SHORT:
+  case T_INT:
+  case T_LONG:
+  case T_FLOAT:
+  case T_DOUBLE: 
+    s->print_cr("  KNI_EndHandles();");
+    s->print_cr("  %s(ret);", return_type_info->return_func_name);
+    break;
+  case T_VOID:
+    s->print_cr("  KNI_EndHandles();");
+    s->print_cr("  KNI_ReturnVoid();");
+    break;
+  case T_SYMBOLIC:
+  case T_ILLEGAL:
+  default:
+    SHOULD_NOT_REACH_HERE();
+  }
+
+  s->print_cr("}");
+  s->cr();
+}
+#endif
 
 void SourceObjectWriter::print_entry_declarations() {
   for (int n=0; n<2; n++) {

@@ -122,9 +122,16 @@ OBJS                 = ../../target/$(BUILD)/jvmspi$(OBJ_SUFFIX) \
                        ROMImage$(OBJ_SUFFIX) \
                        NativesTable$(OBJ_SUFFIX) \
                        InternalNatives$(OBJ_SUFFIX) \
+                       JniNatives$(OBJ_SUFFIX)  \
                        KniNatives$(OBJ_SUFFIX) \
                        SniNatives$(OBJ_SUFFIX) \
                        IsolateTestNatives$(OBJ_SUFFIX)
+
+ifeq ($(ENABLE_JNI), true)
+
+  OBJS += JniAdapters$(OBJ_SUFFIX)
+
+endif
 
 SNI_OBJS             = $(OBJS) \
                        ../../target/$(BUILD)/Main_$(os_family)$(OBJ_SUFFIX) \
@@ -189,47 +196,64 @@ $(ANI_ROMTESTVM): $(ANI_OBJS) $(JVMX_LIB) $(JVMTEST_LIB) $(JVM_LIB)
 
 ROMImage$(OBJ_SUFFIX): ../ROMImage.cpp
 	@echo compiling $< ...
-	@$(CPP) $(CPP_FLAGS) -c $< -o $@
+	@$(CPP) $(CPP_FLAGS) $(CPP_OPT_FLAGS) -c $< -o $@
 
 NativesTable$(OBJ_SUFFIX): ../NativesTable.cpp
 	@echo compiling $< ...
-	@$(CPP) $(CPP_FLAGS) -c $< -o $@
+	@$(CPP) $(CPP_FLAGS) $(CPP_OPT_FLAGS) -c $< -o $@
+
+ifeq ($(ENABLE_JNI), true)
+
+JniAdapters$(OBJ_SUFFIX): ../JniAdapters.cpp
+	@echo compiling $< ...
+	@$(CPP) $(CPP_FLAGS) $(CPP_OPT_FLAGS) -c $< -o $@
+
+# Use ROM image as a marker to regenerate $(JNI_ADAPTERS).
+JniAdapters$(OBJ_SUFFIX): ../ROMImage.cpp
+../ROMImage.cpp: ../JniAdapters.cpp
+../JniAdapters.cpp:
+
+endif
 
 InternalNatives$(OBJ_SUFFIX): $(TEST_SRC_DIR)/natives/InternalNatives.cpp
 	@echo compiling $< ...
-	@$(CPP) $(CPP_FLAGS) -c $< -o $@
+	@$(CPP) $(CPP_FLAGS) $(CPP_OPT_FLAGS) -c $< -o $@
 
 DLLNatives$(OBJ_SUFFIX): $(TEST_SRC_DIR)/natives/DLLNatives.cpp
 	@echo compiling $< ...
-	@$(CPP) $(CPP_FLAGS) -c $< -o $@
+	@$(CPP) $(CPP_FLAGS) $(CPP_OPT_FLAGS) -c $< -o $@
+
+JniNatives$(OBJ_SUFFIX): $(TEST_SRC_DIR)/natives/JniNatives.cpp
+	@echo compiling $< ...
+	@$(CPP) $(CPP_FLAGS) $(CPP_OPT_FLAGS) -c $< -o $@
 
 KniNatives$(OBJ_SUFFIX): $(TEST_SRC_DIR)/natives/KniNatives.cpp
 	@echo compiling $< ...
-	@$(CPP) $(CPP_FLAGS) -c $< -o $@
+	@$(CPP) $(CPP_FLAGS) $(CPP_OPT_FLAGS) -c $< -o $@
 
 SniNatives$(OBJ_SUFFIX): $(TEST_SRC_DIR)/natives/SniNatives.cpp
 	@echo compiling $< ...
-	@$(CPP) $(CPP_FLAGS) -c $< -o $@
+	@$(CPP) $(CPP_FLAGS) $(CPP_OPT_FLAGS) -c $< -o $@
 
 IsolateTestNatives$(OBJ_SUFFIX): $(TEST_SRC_DIR)/natives/IsolateTestNatives.cpp
 	@echo compiling $< ...
-	@$(CPP) $(CPP_FLAGS) -c $< -o $@
+	@$(CPP) $(CPP_FLAGS) $(CPP_OPT_FLAGS) -c $< -o $@
 
 AniNatives$(OBJ_SUFFIX): $(TEST_SRC_DIR)/natives/AniNatives.cpp
 	@echo compiling $< ...
-	@$(CPP) $(CPP_FLAGS) -c $< -o $@
+	@$(CPP) $(CPP_FLAGS) $(CPP_OPT_FLAGS) -c $< -o $@
 
 AmsMain$(OBJ_SUFFIX): $(TEST_SRC_DIR)/natives/AmsMain.cpp
 	@echo compiling $< ...
-	@$(CPP) $(CPP_FLAGS) -c $< -o $@
+	@$(CPP) $(CPP_FLAGS) $(CPP_OPT_FLAGS) -c $< -o $@
 
 AniMain$(OBJ_SUFFIX): $(TEST_SRC_DIR)/natives/AniMain.cpp
 	@echo compiling $< ...
-	@$(CPP) $(CPP_FLAGS) -c $< -o $@
+	@$(CPP) $(CPP_FLAGS) $(CPP_OPT_FLAGS) -c $< -o $@
 
 AniNativesDummies$(OBJ_SUFFIX): $(TEST_SRC_DIR)/natives/AniNativesDummies.cpp
 	@echo compiling $< ...
-	@$(CPP) $(CPP_FLAGS) -c $< -o $@
+	@$(CPP) $(CPP_FLAGS) $(CPP_OPT_FLAGS) -c $< -o $@
 
 #----------------------------------------------------------------------
 #

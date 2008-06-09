@@ -87,6 +87,9 @@ public:
   FileStream  _main_stream;             // used to generate ROMImage.cpp
   FileStream  _reloc_stream;            // used to generate ROMImage.cpp
   FileStream  _kvm_stream;              // used to generate KvmNatives.cpp
+#if ENABLE_JNI
+  FileStream  _jni_stream;              // used to generate JniNatives.cpp
+#endif
 
 private:
   virtual FileStream* main_stream() {
@@ -254,6 +257,8 @@ class SourceObjectWriter : public ObjectWriter {
     WORDS_PER_LINE = 4
   };
 
+  static bool is_method_in_table(const Method * method, 
+                                 const ObjArray * table);
 public:
   SourceObjectWriter(FileStream *declare, FileStream *stream,
                      FileStream *reloc,
@@ -302,7 +307,19 @@ public:
   void print_oopmap_declarations();
   void count(Oop *object, int adjustment);
   void count(class MemCounter& counter, int bytes) PRODUCT_RETURN;
-  bool is_kvm_native(Method *method);
+
+#if ENABLE_JNI
+  bool is_jni_native(const Method * method) {
+    ObjArray::Raw table = _writer->_optimizer.jni_native_methods_table();
+    return is_method_in_table(method, &table);
+  }
+  void write_jni_method_adapter(Method *method, char *name);
+#endif
+
+  bool is_kvm_native(const Method * method) {
+    ObjArray::Raw table = _writer->_optimizer.kvm_native_methods_table();
+    return is_method_in_table(method, &table);
+  }
   void write_kvm_method_stub(Method *method, char *name);
   void put_c_function(Method *owner, address addr, Stream *stream JVM_TRAPS);
   void put_oopmap(Oop *owner, address addr);

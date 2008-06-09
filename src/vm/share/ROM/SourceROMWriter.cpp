@@ -50,6 +50,9 @@ void SourceROMWriter::save_file_streams() {
   _declare_stream.save(&_declare_stream_state);
   _main_stream.save(&_main_stream_state);
   _reloc_stream.save(&_reloc_stream_state);
+#if ENABLE_JNI
+  _jni_stream.save(&_jni_stream_state);
+#endif
   _kvm_stream.save(&_kvm_stream_state);
 }
 
@@ -59,6 +62,9 @@ void SourceROMWriter::restore_file_streams() {
   _declare_stream.restore(&_declare_stream_state);
   _main_stream.restore(&_main_stream_state);
   _reloc_stream.restore(&_reloc_stream_state);
+#if ENABLE_JNI
+  _jni_stream.restore(&_jni_stream_state);
+#endif
   _kvm_stream.restore(&_kvm_stream_state);
 
   _comment_stream = &_main_stream;
@@ -242,9 +248,24 @@ void SourceROMWriter::init_streams() {
 
   _summary_log_stream.open(FilePath::rom_summary_file);
   _optimizer_log_stream.open(FilePath::rom_optimizer_file);
+#if ENABLE_JNI
+  _jni_stream.open(FilePath::rom_jni_adapters_file);
+#endif
   _kvm_stream.open(FilePath::rom_kvm_natives_file);
   
   write_copyright(&_summary_log_stream, false);
+
+#if ENABLE_JNI
+  write_copyright(&_jni_stream, true);
+  _jni_stream.cr();
+  _jni_stream.print_cr("#include \"jvmconfig.h\"");
+  _jni_stream.print_cr("#include \"ROMImage.hpp\"");
+  _jni_stream.print_cr("#include \"kni.h\"");
+  _jni_stream.print_cr("#include \"jni.h\"");
+  _jni_stream.cr();
+  _jni_stream.print_cr("extern \"C\" JNIEnv _jni_env;");
+  _jni_stream.cr();
+#endif
 
   _kvm_stream.print_cr("#include \"jvmconfig.h\"");
   _kvm_stream.print_cr("#include \"ROMImage.hpp\"");
@@ -1650,6 +1671,9 @@ void SourceROMWriter::combine_output_files() {
   _declare_stream.close();
   _main_stream.close();
   _reloc_stream.close();
+#if ENABLE_JNI
+  _jni_stream.close();
+#endif
   _kvm_stream.close();
 
   _summary_log_stream.close();
@@ -1833,7 +1857,6 @@ void SourceROMWriter::fixup_image(JVM_SINGLE_ARG_TRAPS) {
 
   ROMWriter::fixup_image(JVM_SINGLE_ARG_CHECK);
 }
-
 
 #if ENABLE_COMPILER
 void SourceROMWriter::write_aot_symbol_table(JVM_SINGLE_ARG_TRAPS) {

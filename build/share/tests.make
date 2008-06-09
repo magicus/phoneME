@@ -236,7 +236,7 @@ ROM_CFG = $(WorkSpace)/src/tests/test_rom.cfg
 
 ROMImage.cpp: $(ROMCLASSES_ZIP) $(ROM_CFG) $(ROM_GENERATOR) 
 	$(ROM_GENERATOR) -cp $(ROMCLASSES_ZIP)$(PATHSEP)$(RESOURCES_ZIP) \
-		-romize =HeapCapacity8M \
+		-romize =HeapCapacity16M \
 		-romconfig $(ROM_CFG) \
 		-romincludepath $(WorkSpace)/src/vm \
 		+EnableAllROMOptimizations \

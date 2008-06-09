@@ -298,7 +298,7 @@ public:
    * Returns the element at the given index. The first added element has
    * index=0, etc.
    */
-  ReturnOop element_at(jint index) {
+  ReturnOop element_at(jint index) const {
     GUARANTEE(index < size(), "sanity");
     ObjArray::Raw array = this->array();
     return array().obj_at(index);
@@ -341,14 +341,14 @@ public:
   /**
    * Returns true if this Vector contains the specified element.
    */
-  bool contains(Oop *value) {
+  bool contains(Oop *value) const {
     return index_of(value) != -1;
   }
 
   /**
    * Returns the index of an object in ROMVector.
    */
-  int index_of(Oop *value);
+  int index_of(Oop *value) const;
 protected:
   /**
    * Compares the order of two Method objects.

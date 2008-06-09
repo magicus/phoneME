@@ -67,6 +67,10 @@ extern "C" {
 extern "C" void loopgen_check_oopmaps();
 extern "C" void romgen_check_oopmaps();
 
+#if ENABLE_JNI
+extern "C" void jni_initialize();
+#endif
+
 ReturnOop JVM::resolve_class(char* class_name JVM_TRAPS) {
   UsingFastOops fast_oops;
   Symbol::Fast class_name_symbol =
@@ -320,6 +324,10 @@ inline bool JVM::initialize( void ) {
   loopgen_check_oopmaps();
   romgen_check_oopmaps();
   initialize_non_product();
+#endif
+
+#if ENABLE_JNI
+  jni_initialize();
 #endif
 
   GUARANTEE(AssemblerLoopFlags::GeneratedInterpreterLoop(),
