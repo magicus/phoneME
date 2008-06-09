@@ -22,7 +22,20 @@
 * information or have any questions.
 */
 
+#ifndef __JAVACALL_DOM_TEXT_H_
+#define __JAVACALL_DOM_TEXT_H_
+
+/**
+ * @file javacall_dom_text.h
+ * @ingroup JSR290DOM
+ * @brief Javacall DOM interfaces for Text
+ */
+
 #include <javacall_dom.h>
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /**
  * Breaks this node into two nodes at the specified <code>offset</code>, 
@@ -64,3 +77,9 @@ javacall_dom_text_split_text(javacall_handle handle,
 javacall_result
 javacall_dom_text_finalize(javacall_handle handle);
 
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif /* ifndef __JAVACALL_DOM_TEXT_H_ */

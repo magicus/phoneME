@@ -22,7 +22,20 @@
 * information or have any questions.
 */
 
+#ifndef __JAVACALL_DOM_DOCUMENT_H_
+#define __JAVACALL_DOM_DOCUMENT_H_
+
+/**
+ * @file javacall_dom_document.h
+ * @ingroup JSR290DOM
+ * @brief Javacall DOM interfaces for Document
+ */
+
 #include <javacall_dom.h>
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /**
  * Returns the Document Type Declaration (see <code>DocumentType</code>) 
@@ -672,3 +685,9 @@ javacall_dom_document_adopt_node(javacall_handle handle,
 javacall_result
 javacall_dom_document_finalize(javacall_handle handle);
 
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif /* ifndef __JAVACALL_DOM_DOCUMENT_H_ */

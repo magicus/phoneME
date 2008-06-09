@@ -22,7 +22,20 @@
 * information or have any questions.
 */
 
+#ifndef __JAVACALL_DOM_ELEMENTTRAVERSAL_H_
+#define __JAVACALL_DOM_ELEMENTTRAVERSAL_H_
+
+/**
+ * @file javacall_dom_elementtraversal.h
+ * @ingroup JSR290DOM
+ * @brief Javacall DOM interfaces for ElementTraversal
+ */
+
 #include <javacall_dom.h>
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /**
  * Returns retrieves the number of child elements.
@@ -116,3 +129,9 @@ javacall_dom_elementtraversal_get_previous_element_sibling(javacall_handle handl
 javacall_result
 javacall_dom_elementtraversal_finalize(javacall_handle handle);
 
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif /* ifndef __JAVACALL_DOM_ELEMENTTRAVERSAL_H_ */

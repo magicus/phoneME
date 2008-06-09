@@ -22,7 +22,20 @@
 * information or have any questions.
 */
 
+#ifndef __JAVACALL_DOM_NODELIST_H_
+#define __JAVACALL_DOM_NODELIST_H_
+
+/**
+ * @file javacall_dom_nodelist.h
+ * @ingroup JSR290DOM
+ * @brief Javacall DOM interfaces for NodeList
+ */
+
 #include <javacall_dom.h>
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /**
  * Returns the <code>index</code>th item in the collection. If 
@@ -70,3 +83,9 @@ javacall_dom_nodelist_get_length(javacall_handle handle,
 javacall_result
 javacall_dom_nodelist_finalize(javacall_handle handle);
 
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif /* ifndef __JAVACALL_DOM_NODELIST_H_ */

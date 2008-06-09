@@ -22,7 +22,20 @@
 * information or have any questions.
 */
 
+#ifndef __JAVACALL_DOM_ATTR_H_
+#define __JAVACALL_DOM_ATTR_H_
+
+/**
+ * @file javacall_dom_attr.h
+ * @ingroup JSR290DOM
+ * @brief Javacall DOM interfaces for Attr
+ */
+
 #include <javacall_dom.h>
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /**
  * Returns returns the name of this attribute. If <code>Node.localName</code> is 
@@ -192,3 +205,9 @@ javacall_dom_attr_is_id(javacall_handle handle,
 javacall_result
 javacall_dom_attr_finalize(javacall_handle handle);
 
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif /* ifndef __JAVACALL_DOM_ATTR_H_ */

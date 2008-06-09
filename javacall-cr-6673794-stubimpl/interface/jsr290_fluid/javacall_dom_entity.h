@@ -22,7 +22,20 @@
 * information or have any questions.
 */
 
+#ifndef __JAVACALL_DOM_ENTITY_H_
+#define __JAVACALL_DOM_ENTITY_H_
+
+/**
+ * @file javacall_dom_entity.h
+ * @ingroup JSR290DOM
+ * @brief Javacall DOM interfaces for Entity
+ */
+
 #include <javacall_dom.h>
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /**
  * Returns the public identifier associated with the entity, if specified. If the 
@@ -101,3 +114,9 @@ javacall_dom_entity_get_notation_name(javacall_handle handle,
 javacall_result
 javacall_dom_entity_finalize(javacall_handle handle);
 
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif /* ifndef __JAVACALL_DOM_ENTITY_H_ */

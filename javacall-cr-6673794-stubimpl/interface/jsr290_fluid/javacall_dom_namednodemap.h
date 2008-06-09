@@ -22,7 +22,20 @@
 * information or have any questions.
 */
 
+#ifndef __JAVACALL_DOM_NAMEDNODEMAP_H_
+#define __JAVACALL_DOM_NAMEDNODEMAP_H_
+
+/**
+ * @file javacall_dom_namednodemap.h
+ * @ingroup JSR290DOM
+ * @brief Javacall DOM interfaces for NamedNodeMap
+ */
+
 #include <javacall_dom.h>
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /**
  * Returns retrieves a node specified by name.
@@ -222,3 +235,9 @@ javacall_dom_namednodemap_remove_named_item_ns(javacall_handle handle,
 javacall_result
 javacall_dom_namednodemap_finalize(javacall_handle handle);
 
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif /* ifndef __JAVACALL_DOM_NAMEDNODEMAP_H_ */
