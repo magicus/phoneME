@@ -147,4 +147,8 @@ public class DirectCamera extends DirectVideo
     {
         checkPermission();
     }
+
+    public void setSnapshotQuality( int quality )
+    {
+    }
 }
