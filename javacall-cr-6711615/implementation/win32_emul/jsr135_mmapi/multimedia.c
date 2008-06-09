@@ -84,7 +84,7 @@ javacall_result javacall_media_get_configuration(const javacall_media_configurat
 {
     g_cfg.audioEncoding         = "encoding=pcm&rate=22050&bits=16&channels=1";
     g_cfg.videoEncoding         = "encoding=rgb565";
-    g_cfg.videoSnapshotEncoding = "encoding=jpeg";
+    g_cfg.videoSnapshotEncoding = "encoding=jpeg encoding=jpeg&quality=80";
 
     g_cfg.supportMixing         = JAVACALL_TRUE;
     g_cfg.supportRecording      = JAVACALL_TRUE;
