@@ -39,6 +39,14 @@ extern "C" {
 #include "javacall_defs.h"
 
 /**
+ * @defgroup JSR290DOM JSR290 DOM API
+ *
+ * The following API definitions are required by DOM part of the JSR-290.
+ *
+ * @{
+ */
+    
+/**
  * @enum javacall_dom_exceptions
  * @brief types of DOM exceptions
  */
@@ -151,6 +159,8 @@ typedef enum {
     /** The node is a <code>Notation</code>. */
     JAVACALL_DOM_NOTATION_NODE               = 0xC
 } javacall_dom_node_types;
+
+/** @} */
 
 #ifdef __cplusplus
 }
