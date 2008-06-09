@@ -31,11 +31,19 @@
  * @brief Javacall DOM interfaces for ElementTraversal
  */
 
-#include <javacall_dom.h>
-
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+#include <javacall_dom.h>
+
+/**
+ * @defgroup JSR290DOM JSR290 DOM API
+ *
+ * The following API definitions are required by DOM part of the JSR-290.
+ *
+ * @{
+ */
 
 /**
  * Returns retrieves the number of child elements.
@@ -129,6 +137,8 @@ javacall_dom_elementtraversal_get_previous_element_sibling(javacall_handle handl
 javacall_result
 javacall_dom_elementtraversal_finalize(javacall_handle handle);
 
+
+/** @} */
 
 #ifdef __cplusplus
 }

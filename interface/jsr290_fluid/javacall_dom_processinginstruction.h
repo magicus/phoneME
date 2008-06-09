@@ -31,11 +31,19 @@
  * @brief Javacall DOM interfaces for ProcessingInstruction
  */
 
-#include <javacall_dom.h>
-
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+#include <javacall_dom.h>
+
+/**
+ * @defgroup JSR290DOM JSR290 DOM API
+ *
+ * The following API definitions are required by DOM part of the JSR-290.
+ *
+ * @{
+ */
 
 /**
  * Returns the target of this processing instruction. XML defines this as being 
@@ -114,6 +122,8 @@ javacall_dom_processinginstruction_set_data(javacall_handle handle,
 javacall_result
 javacall_dom_processinginstruction_finalize(javacall_handle handle);
 
+
+/** @} */
 
 #ifdef __cplusplus
 }

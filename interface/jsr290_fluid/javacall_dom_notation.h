@@ -31,11 +31,19 @@
  * @brief Javacall DOM interfaces for Notation
  */
 
-#include <javacall_dom.h>
-
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+#include <javacall_dom.h>
+
+/**
+ * @defgroup JSR290DOM JSR290 DOM API
+ *
+ * The following API definitions are required by DOM part of the JSR-290.
+ *
+ * @{
+ */
 
 /**
  * Returns the public identifier of this notation. If the public identifier was 
@@ -92,6 +100,8 @@ javacall_dom_notation_get_system_id(javacall_handle handle,
 javacall_result
 javacall_dom_notation_finalize(javacall_handle handle);
 
+
+/** @} */
 
 #ifdef __cplusplus
 }

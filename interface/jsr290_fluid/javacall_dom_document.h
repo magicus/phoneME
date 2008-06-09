@@ -31,11 +31,19 @@
  * @brief Javacall DOM interfaces for Document
  */
 
-#include <javacall_dom.h>
-
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+#include <javacall_dom.h>
+
+/**
+ * @defgroup JSR290DOM JSR290 DOM API
+ *
+ * The following API definitions are required by DOM part of the JSR-290.
+ *
+ * @{
+ */
 
 /**
  * Returns the Document Type Declaration (see <code>DocumentType</code>) 
@@ -685,6 +693,8 @@ javacall_dom_document_adopt_node(javacall_handle handle,
 javacall_result
 javacall_dom_document_finalize(javacall_handle handle);
 
+
+/** @} */
 
 #ifdef __cplusplus
 }

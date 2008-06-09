@@ -31,11 +31,19 @@
  * @brief Javacall DOM interfaces for Element
  */
 
-#include <javacall_dom.h>
-
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+#include <javacall_dom.h>
+
+/**
+ * @defgroup JSR290DOM JSR290 DOM API
+ *
+ * The following API definitions are required by DOM part of the JSR-290.
+ *
+ * @{
+ */
 
 /**
  * Returns the name of the element. If <code>Node.localName</code> is different
@@ -577,6 +585,8 @@ javacall_dom_element_set_id_attribute_node(javacall_handle handle,
 javacall_result
 javacall_dom_element_finalize(javacall_handle handle);
 
+
+/** @} */
 
 #ifdef __cplusplus
 }

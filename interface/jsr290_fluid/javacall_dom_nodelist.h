@@ -31,11 +31,19 @@
  * @brief Javacall DOM interfaces for NodeList
  */
 
-#include <javacall_dom.h>
-
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+#include <javacall_dom.h>
+
+/**
+ * @defgroup JSR290DOM JSR290 DOM API
+ *
+ * The following API definitions are required by DOM part of the JSR-290.
+ *
+ * @{
+ */
 
 /**
  * Returns the <code>index</code>th item in the collection. If 
@@ -83,6 +91,8 @@ javacall_dom_nodelist_get_length(javacall_handle handle,
 javacall_result
 javacall_dom_nodelist_finalize(javacall_handle handle);
 
+
+/** @} */
 
 #ifdef __cplusplus
 }

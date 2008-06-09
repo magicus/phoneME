@@ -31,11 +31,19 @@
  * @brief Javacall DOM interfaces for NamedNodeMap
  */
 
-#include <javacall_dom.h>
-
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+#include <javacall_dom.h>
+
+/**
+ * @defgroup JSR290DOM JSR290 DOM API
+ *
+ * The following API definitions are required by DOM part of the JSR-290.
+ *
+ * @{
+ */
 
 /**
  * Returns retrieves a node specified by name.
@@ -235,6 +243,8 @@ javacall_dom_namednodemap_remove_named_item_ns(javacall_handle handle,
 javacall_result
 javacall_dom_namednodemap_finalize(javacall_handle handle);
 
+
+/** @} */
 
 #ifdef __cplusplus
 }
