@@ -26,6 +26,12 @@
 #ifndef __JAVACALL_DOM_H_
 #define __JAVACALL_DOM_H_
 
+/**
+ * @file javacall_dom.h
+ * @ingroup JSR290DOM
+ * @brief Common javacall definitions for DOM
+ */
+
 #ifdef __cplusplus
 extern "C" {
 #endif
