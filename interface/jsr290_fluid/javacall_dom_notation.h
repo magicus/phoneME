@@ -22,7 +22,20 @@
 * information or have any questions.
 */
 
+#ifndef __JAVACALL_DOM_NOTATION_H_
+#define __JAVACALL_DOM_NOTATION_H_
+
+/**
+ * @file javacall_dom_notation.h
+ * @ingroup JSR290DOM
+ * @brief Javacall DOM interfaces for Notation
+ */
+
 #include <javacall_dom.h>
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /**
  * Returns the public identifier of this notation. If the public identifier was 
@@ -79,3 +92,9 @@ javacall_dom_notation_get_system_id(javacall_handle handle,
 javacall_result
 javacall_dom_notation_finalize(javacall_handle handle);
 
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif /* ifndef __JAVACALL_DOM_NOTATION_H_ */

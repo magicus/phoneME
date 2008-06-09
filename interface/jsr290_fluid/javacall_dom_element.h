@@ -22,7 +22,20 @@
 * information or have any questions.
 */
 
+#ifndef __JAVACALL_DOM_ELEMENT_H_
+#define __JAVACALL_DOM_ELEMENT_H_
+
+/**
+ * @file javacall_dom_element.h
+ * @ingroup JSR290DOM
+ * @brief Javacall DOM interfaces for Element
+ */
+
 #include <javacall_dom.h>
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /**
  * Returns the name of the element. If <code>Node.localName</code> is different
@@ -564,3 +577,9 @@ javacall_dom_element_set_id_attribute_node(javacall_handle handle,
 javacall_result
 javacall_dom_element_finalize(javacall_handle handle);
 
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif /* ifndef __JAVACALL_DOM_ELEMENT_H_ */

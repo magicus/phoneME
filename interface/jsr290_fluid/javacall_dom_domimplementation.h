@@ -22,7 +22,20 @@
 * information or have any questions.
 */
 
+#ifndef __JAVACALL_DOM_DOMIMPLEMENTATION_H_
+#define __JAVACALL_DOM_DOMIMPLEMENTATION_H_
+
+/**
+ * @file javacall_dom_domimplementation.h
+ * @ingroup JSR290DOM
+ * @brief Javacall DOM interfaces for DOMImplementation
+ */
+
 #include <javacall_dom.h>
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /**
  * Test if the DOM implementation implements a specific feature.
@@ -171,3 +184,9 @@ javacall_dom_domimplementation_get_feature(javacall_handle handle,
 javacall_result
 javacall_dom_domimplementation_finalize(javacall_handle handle);
 
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif /* ifndef __JAVACALL_DOM_DOMIMPLEMENTATION_H_ */

@@ -22,7 +22,20 @@
 * information or have any questions.
 */
 
+#ifndef __JAVACALL_DOM_DOCUMENTTYPE_H_
+#define __JAVACALL_DOM_DOCUMENTTYPE_H_
+
+/**
+ * @file javacall_dom_documenttype.h
+ * @ingroup JSR290DOM
+ * @brief Javacall DOM interfaces for DocumentType
+ */
+
 #include <javacall_dom.h>
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /**
  * Returns the name of DTD; i.e., the name immediately following the 
@@ -169,3 +182,9 @@ javacall_dom_documenttype_get_internal_subset(javacall_handle handle,
 javacall_result
 javacall_dom_documenttype_finalize(javacall_handle handle);
 
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif /* ifndef __JAVACALL_DOM_DOCUMENTTYPE_H_ */

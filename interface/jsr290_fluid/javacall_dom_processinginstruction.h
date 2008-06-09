@@ -22,7 +22,20 @@
 * information or have any questions.
 */
 
+#ifndef __JAVACALL_DOM_PROCESSINGINSTRUCTION_H_
+#define __JAVACALL_DOM_PROCESSINGINSTRUCTION_H_
+
+/**
+ * @file javacall_dom_processinginstruction.h
+ * @ingroup JSR290DOM
+ * @brief Javacall DOM interfaces for ProcessingInstruction
+ */
+
 #include <javacall_dom.h>
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /**
  * Returns the target of this processing instruction. XML defines this as being 
@@ -101,3 +114,9 @@ javacall_dom_processinginstruction_set_data(javacall_handle handle,
 javacall_result
 javacall_dom_processinginstruction_finalize(javacall_handle handle);
 
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif /* ifndef __JAVACALL_DOM_PROCESSINGINSTRUCTION_H_ */

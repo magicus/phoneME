@@ -22,7 +22,20 @@
 * information or have any questions.
 */
 
+#ifndef __JAVACALL_DOM_NODE_H_
+#define __JAVACALL_DOM_NODE_H_
+
+/**
+ * @file javacall_dom_node.h
+ * @ingroup JSR290DOM
+ * @brief Javacall DOM interfaces for Node
+ */
+
 #include <javacall_dom.h>
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /**
  * Returns the name of this node, depending on its type; see 
@@ -782,3 +795,9 @@ javacall_dom_node_get_feature(javacall_handle handle,
 javacall_result
 javacall_dom_node_finalize(javacall_handle handle);
 
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif /* ifndef __JAVACALL_DOM_NODE_H_ */
