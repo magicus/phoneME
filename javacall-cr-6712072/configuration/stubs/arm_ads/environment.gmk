@@ -1,0 +1,116 @@
+#
+# Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
+# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+#
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License version
+# 2 only, as published by the Free Software Foundation.
+#
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# General Public License version 2 for more details (a copy is
+# included at /legal/license.txt).
+#
+# You should have received a copy of the GNU General Public License
+# version 2 along with this work; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+# 02110-1301 USA
+#
+# Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+# Clara, CA 95054 or visit www.sun.com if you need additional
+# information or have any questions.
+#
+
+ifeq ($(JAVACALL_DIR),)
+$(error JAVACALL_DIR is not set.)
+endif
+
+#Flag USE_JSR_XX means that JSR_XX will be included to the javacall library if the flag
+#is set to 'true' (example: USE_JSR_XX=true). JSR_XX will not be included to the javacall
+#library if the flag USE_JSR_XX is not 'true' (example: USE_JSR_XX=false). 
+#
+#For each used JSR path to its particular implementation shall be specified explicitly as javacall
+#library can be formed from JSRs taken from different locations
+#JSR_XX_JC_IMPL_PATH varibale sets path to implementation 
+#
+#For 'midp' USE_MIDP and MIDP_JC_IMPL_PATH variables are used
+#For 'nams' USE_NATIVE_AMS_JC and NATIVE_AMS_JC_IMPL_PATH variables are used
+
+JSR_LIST = COMMON MIDP JSR_120 JSR_135 JSR_177 JSR_211
+
+IMPL_DIR_NAME=stubs
+
+USE_MIDP=true
+USE_COMMON=true
+
+MIDP_JC_IMPL_PATH=$(JAVACALL_DIR)/implementation/${IMPL_DIR_NAME}
+
+COMMON_JC_IMPL_PATH = $(JAVACALL_DIR)/implementation/${IMPL_DIR_NAME}
+
+JSR_120_JC_IMPL_PATH=$(JAVACALL_DIR)/implementation/${IMPL_DIR_NAME}
+
+JSR_135_JC_IMPL_PATH=$(JAVACALL_DIR)/implementation/${IMPL_DIR_NAME}
+
+JSR_177_JC_IMPL_PATH=$(JAVACALL_DIR)/implementation/${IMPL_DIR_NAME}
+
+JSR_211_JC_IMPL_PATH=$(JAVACALL_DIR)/implementation/${IMPL_DIR_NAME}
+
+ifeq ($(USE_NATIVE_AMS_JC),)
+USE_NATIVE_AMS_JC=false
+endif
+
+ifneq ($(USE_STATIC_PROPERTIES),true)
+SPECIFIC_DEFINITIONS += -DUSE_PROPERTIES_FROM_FS
+endif
+
+# Switch native AMS function on/off
+ifeq ($(USE_NATIVE_AMS_JC), true)
+
+JSR_LIST += NATIVE_AMS
+NATIVE_AMS_JC_IMPL_PATH = $(JAVACALL_DIR)/implementation/${IMPL_DIR_NAME}
+SPECIFIC_DEFINITIONS += -DENABLE_NATIVE_AMS=1
+
+else
+
+SPECIFIC_DEFINITIONS += -DENABLE_NATIVE_AMS=0
+
+endif
+
+#For each project location for basic definitions shall be specified
+#(location of the used javacall_platform_defs.h)
+JAVACALL_PLATFORM_DEFS_DIR=$(JAVACALL_DIR)/implementation/linux_x86
+
+SOURCE_OUTPUT_LIST += $(foreach jsr,$(JSR_LIST), $(if $(PREFIX_$(USE_$(jsr))), $($(jsr)_JC_IMPL_PATH)/$($(jsr)_JC_DIR) javacall/implementation/${IMPL_DIR_NAME}))
+SOURCE_OUTPUT_LIST += $(JAVACALL_PLATFORM_DEFS_DIR)/javacall_platform_defs.h javacall/implementation/linux_x86
+SOURCE_OUTPUT_LIST += $(JAVACALL_DIR)/configuration/stubs/arm_ads javacall/configuration/stubs
+
+#Specify list of utility objects necessary for the build
+UTILITIES = \
+        javautil_jad_parser \
+        javautil_string     \
+	javautil_unicode    \
+	javautil_printf
+
+#Compile options that are not common for all configurations can be specified in
+#SPECIFIC_DEFINITIONS variable
+SPECIFIC_DEFINITIONS+=-I$(COMMON_JC_IMPL_PATH)/$(COMMON_JC_DIR)/
+SPECIFIC_DEFINITIONS+=-I$(MIDP_JC_IMPL_PATH)/$(MIDP_JC_DIR)/
+
+#Porting objects that are added to PORTING_OBJECTS by default rules can be excluded
+#from the javacall library by setting FILTER_OBJECTS variable
+
+# Implementation of javacall events is different for cdc and cldc
+# VPATH+=$(JAVACALL_DIR)/implementation/${IMPL_DIR_NAME}/common
+
+ifdef SUBSYSTEM_EVENTS_MODULES
+   ifeq ($(SUBSYSTEM_EVENTS_MODULES), slave_mode)
+      PORTING_SOURCE+=events_slave_mode.c
+   else
+      PORTING_SOURCE+=events.c
+   endif
+else
+   PORTING_SOURCE+=events.c
+endif
+
+CONFIGURATION_PROPERTIES_FILE = $(JAVACALL_DIR)/configuration/stubs/arm_ads/properties.xml
