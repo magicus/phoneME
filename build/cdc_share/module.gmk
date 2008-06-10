@@ -1,7 +1,5 @@
 #
-#   
-#
-# Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+# Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
 # 
 # This program is free software; you can redistribute it and/or
@@ -78,6 +76,7 @@ ABSTRACTIONS_CLASSES += \
     $(ABSTRACTIONS_CDC_JAVASRCDIRS)/com/sun/j2me/security/WMAPermission.java \
     $(ABSTRACTIONS_CDC_JAVASRCDIRS)/com/sun/j2me/security/SIPPermission.java \
     $(ABSTRACTIONS_CDC_JAVASRCDIRS)/com/sun/j2me/security/MMAPIPermission.java \
+    $(ABSTRACTIONS_CDC_JAVASRCDIRS)/com/sun/j2me/security/AMMSPermission.java \
     $(ABSTRACTIONS_CDC_JAVASRCDIRS)/com/sun/j2me/security/ConnectorPermission.java \
     $(ABSTRACTIONS_CDC_JAVASRCDIRS)/com/sun/j2me/security/ContactlessPermission.java \
     $(ABSTRACTIONS_CDC_JAVASRCDIRS)/com/sun/j2me/i18n/Resource.java \

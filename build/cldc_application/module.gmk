@@ -1,7 +1,5 @@
 #
-#   
-#
-# Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+# Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
 # 
 # This program is free software; you can redistribute it and/or
@@ -68,6 +66,7 @@ ABSTRACTIONS_CLASSES = \
     $(JSROP_ABSTRACTS_JAVASRCDIRS)/com/sun/j2me/security/WMAPermission.java \
     $(JSROP_ABSTRACTS_JAVASRCDIRS)/com/sun/j2me/security/ConnectorPermission.java \
     $(JSROP_ABSTRACTS_JAVASRCDIRS)/com/sun/j2me/security/MMAPIPermission.java \
+    $(JSROP_ABSTRACTS_JAVASRCDIRS)/com/sun/j2me/security/AMMSPermission.java \
     $(JSROP_ABSTRACTS_JAVASRCDIRS)/com/sun/j2me/io/ConnectionBaseInterface.java \
     $(JSROP_ABSTRACTS_JAVASRCDIRS)/com/sun/j2me/io/ConnectionBaseAdapter.java \
     $(JSROP_ABSTRACTS_JAVASRCDIRS)/com/sun/j2me/io/PrivilegedConnector.java \
