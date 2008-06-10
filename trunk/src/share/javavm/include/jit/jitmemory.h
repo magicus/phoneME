@@ -35,7 +35,6 @@
 #include "javavm/include/assert.h"
 #include "javavm/include/jit/jit_defs.h"
 
-typedef enum CVMJITAllocationTag CVMJITAllocationTag;
 enum CVMJITAllocationTag {
     JIT_ALLOC_IRGEN_NODE = 0,/* IR node allocation */
     JIT_ALLOC_IRGEN_OTHER,   /* Other front-end allocation */
@@ -52,6 +51,7 @@ enum CVMJITAllocationTag {
 #endif /* IAI_CODE_SCHEDULER_SCORE_BOARD */
     JIT_ALLOC_NUM_ALLOCATION_KINDS
 };
+typedef enum CVMJITAllocationTag CVMJITAllocationTag;
 
 /*
  * Memory allocation. A few well-known sizes are expected: we expect
