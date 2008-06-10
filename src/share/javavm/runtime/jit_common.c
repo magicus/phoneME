@@ -1626,6 +1626,7 @@ CVMjitSetInliningThresholds(CVMExecEnv* ee, CVMJITGlobalState* jgs)
     */
 #define QUAD_COEFFICIENT                100
 #define EFFECTIVE_MAX_DEPTH_THRESHOLD   6
+#undef MIN
 #define MIN(x, y)                       (((x) < (y)) ? (x) : (y))
 
     if (depth == 0) {

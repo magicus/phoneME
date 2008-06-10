@@ -707,6 +707,7 @@ LABEL(copyObjectArray_markCard)
 #define SRCCB	ip
 #define DSTCB	r0
 #define	TYPE	r0
+#undef  TEMP
 #define TEMP	ip
 
 	ENTRY(CVMCCMintrinsic_java_lang_System_arraycopyGlue)

@@ -131,6 +131,10 @@ CVMJITgetMassagedIROpcode(CVMJITCompilationContext *con, CVMJITIRNode *ip);
 #define SRL64		CVMJIT_ENCODE_LBINARY(CVMJIT_USHR)
 #define SRA64		CVMJIT_ENCODE_LBINARY(CVMJIT_SHR)
 
+#undef  FADD
+#undef  FSUB
+#undef  FMUL
+#undef  FDIV
 #define FNEG            CVMJIT_ENCODE_FUNARY(CVMJIT_NEG)
 #define FADD            CVMJIT_ENCODE_FBINARY(CVMJIT_ADD)
 #define FSUB            CVMJIT_ENCODE_FBINARY(CVMJIT_SUB)
