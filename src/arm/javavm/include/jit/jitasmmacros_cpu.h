@@ -89,6 +89,8 @@
 	MEND
 #endif /* CVM_JIT_COPY_CCMCODE_TO_CODECACHE */
 
+#define BIT_AND :AND:
+
 #else /* !__RVCT__ */
 
 #ifndef CVM_JIT_COPY_CCMCODE_TO_CODECACHE
@@ -109,6 +111,9 @@
 	ldr pc, SYMBOL(CCMFUNCTION)
 
 #endif /* CVM_JIT_COPY_CCMCODE_TO_CODECACHE */
+
+#define BIT_AND &
+
 #endif /* __RVCT__ */
 
 #ifndef __RVCT__
