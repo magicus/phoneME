@@ -317,6 +317,14 @@ public class MIDletSuiteStorage {
      */
     public native static int getMidletSuiteStorageId(int id);
 
+    /**
+     * Get the folder id for a suite.
+     *
+     * @param suiteId unique ID of the suite
+     *
+     * @return folder id or -1 if the suite does not exist
+     */
+    public native static int getMidletSuiteFolderId(int id);
 
     /**
      * Gets the unique identifier of MIDlet suite.

@@ -27,6 +27,7 @@
 #include <suspend_resume_port.h>
 #include <midp_logging.h>
 #include <midpServices.h>
+#include <midpNativeThread.h>
 
 /* Only required for default (testing) port. See midp_checkResumeRequest(). */
 #include <suspend_resume_test.h>
@@ -61,6 +62,14 @@ jboolean midp_checkResumeRequest() {
         lastSuspendStart = -1;
         sr_resume_timeout = DEFAULT_TIMEOUT;
         result = KNI_TRUE;
+    } else {
+        /*
+         * IMPL_NOTE: Sleep delay 1 here means 1 second since
+         * midp_sleepNativeThread() takes seconds. Beter solution
+         * is rewriting midp_sleepNativeThread() for it to take
+         * milliseconds and use SR_RESUME_CHECK_TIMEOUT here.
+         */
+        midp_sleepNativeThread(1);
     }
 
     return result;

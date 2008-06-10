@@ -43,7 +43,6 @@ import com.sun.midp.log.Logging;
 import com.sun.midp.log.LogChannels;
 
 import com.sun.midp.payment.PAPICleanUp;
-import com.sun.midp.chameleon.skins.ScreenSkin;
 
 import java.io.*;
 import javax.microedition.rms.*;
@@ -302,6 +301,15 @@ class AppManagerUI extends Form
                                            (ResourceConstants.NO),
                                            Command.BACK, 1);
 
+    // Current locale
+    private String locale = System.getProperty("microedition.locale");
+
+    // Layout direction. True if direction is right-to-left
+    private boolean RL_DIRECTION;
+
+    // Orientation of text, can be Graphics.RIGHT or Graphics.Left
+    private int TEXT_ORIENT;
+
     /** Display for the Manager MIDlet. */
     ApplicationManager manager;
 
@@ -458,6 +466,14 @@ class AppManagerUI extends Form
                     }
                 } // ms != null
             }
+        }
+
+        if (locale.equals("he-IL")) {
+            RL_DIRECTION = true;
+            TEXT_ORIENT = Graphics.RIGHT;
+        } else {
+            RL_DIRECTION = false;
+            TEXT_ORIENT = Graphics.LEFT;
         }
     }
 
@@ -1694,6 +1710,7 @@ class AppManagerUI extends Form
             if (textScrollTimer == null) {
                 textScrollTimer = new Timer();
             }
+
             xScrollOffset = 0;
 
         }
@@ -1790,20 +1807,20 @@ class AppManagerUI extends Form
 
                     boolean truncate = (xScrollOffset == 0) && truncated;
 
-                    if (ScreenSkin.TEXT_ORIENT == Graphics.RIGHT) {
-                        g.clipRect(truncWidth + ITEM_PAD, 0,
+                    if (RL_DIRECTION) {
+                        g.clipRect(truncate ? truncWidth + ITEM_PAD : ITEM_PAD, 0,
                             truncate ? w - truncWidth - bgIconW - 2 * ITEM_PAD :
                                     w - bgIconW - 2 * ITEM_PAD, h);
                         g.drawChars(text, 0, textLen,
                             w - (bgIconW + ITEM_PAD + xScrollOffset), (h - ICON_FONT.getHeight())/2,
-                                ScreenSkin.TEXT_ORIENT | Graphics.TOP);
+                                TEXT_ORIENT | Graphics.TOP);
                         g.setClip(cX, cY, cW, cH);
 
                         if (truncate) {
                             g.drawChar(truncationMark, truncWidth,
                                 (h - ICON_FONT.getHeight())/2, Graphics.RIGHT | Graphics.TOP);
                         }
-                    } else {
+                    } else {                        
                         g.clipRect(bgIconW + ITEM_PAD, 0,
                         truncate ? w - truncWidth - bgIconW - 2 * ITEM_PAD :
                                    w - bgIconW - 2 * ITEM_PAD, h);
@@ -1822,7 +1839,7 @@ class AppManagerUI extends Form
             }
 
             if (cX < bgIconW) {
-                if (ScreenSkin.TEXT_ORIENT == Graphics.RIGHT) {
+                if (RL_DIRECTION) {
                     if (hasFocus) {
                         g.drawImage(ICON_BG, w - bgIconW, (h - bgIconH)/2,
                                     Graphics.TOP | Graphics.LEFT);
@@ -1903,7 +1920,11 @@ class AppManagerUI extends Form
             xScrollOffset = 0;
             textScrollPainter.cancel();
             textScrollPainter = null;
-            repaint(bgIconW, 0, width, height);
+            if (RL_DIRECTION) {
+                    repaint(0, 0, width, height);
+                } else {
+                    repaint(bgIconW, 0, width, height);
+                }
         }
 
         /**
@@ -1911,8 +1932,13 @@ class AppManagerUI extends Form
         */
         protected void repaintScrollText() {
             if (-xScrollOffset < scrollWidth) {
-                xScrollOffset -= SCROLL_SPEED;
-                repaint(bgIconW, 0, width, height);
+                    xScrollOffset -= SCROLL_SPEED;
+                if (RL_DIRECTION) {
+                    repaint(0, 0, width, height);
+                } else {
+                    repaint(bgIconW, 0, width, height);
+                }
+
             } else {
                 // already scrolled to the end of text
                 stopScroll();

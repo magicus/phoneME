@@ -24,50 +24,35 @@
  * information or have any questions.
  */
 
-package com.sun.midp.jsr;
+#include <suspend_resume_port.h>
+#include <midp_logging.h>
+#include <midpServices.h>
+#include <midp_jc_event_defs.h>
 
 /**
- * Initializes JSRs.
+ * Checks if there is a request for java stack to resume normal operation.
+ *
+ * This function requires porting only if midp_checkAndResume() is used for
+ * stack resuming. In case midp_resume() is called directly, this function
+ * can be removed from the implementation as well as midp_checkAndResume().
+ *
+ * @return KNI_TRUE if java stack is requested to resume, KNI_FALSE
+ *         if it is not.
  */
-public final class JSRInitializer {
-    /**
-     * Initializes JSRs.
-     */
-    public static void init() {
-// #ifdef ENABLE_JSR_75
-        com.sun.midp.jsr075.Initializer.init();
-// #endif
+jboolean midp_checkResumeRequest() {
+    midp_jc_event_union *event;
+    static unsigned char binaryBuffer[BINARY_BUFFER_MAX_LEN];
+    javacall_bool res;
 
-// #ifdef ENABLE_JSR_82
-        com.sun.midp.jsr082.Initializer.init();
-// #endif
+    /* timeout == -1 means "wait forever" */
+    res = javacall_event_receive(-1, binaryBuffer,
+                                 BINARY_BUFFER_MAX_LEN, NULL);
 
-// #ifdef ENABLE_JSR_184
-        com.sun.midp.jsr184.Initializer.init();
-// #endif
-
-// #ifdef ENABLE_JSR_211
-// #ifdef ENABLE_NATIVE_AMS
-        com.sun.midp.jsr211.Initializer.init();
-// #endif ENABLE_NATIVE_AMS
-// #endif
-
-// #ifdef ENABLE_JSR_226
-        com.sun.pisces.PiscesFinalizer.init();
-// #endif
-
-// #ifdef ENABLE_JSR_229
-        com.sun.midp.jsr229.Initializer.init();
-// #endif
-
-// #ifdef ENABLE_JSR_290
-        com.sun.midp.jsr290.Initializer.init();
-// #endif
+    if (!JAVACALL_SUCCEEDED(res)) {
+        return KNI_FALSE;
     }
 
-    /**
-     * Finalizes JSRs.
-     */
-    public static void cleanup() {
-    }
+    event = (midp_jc_event_union *) binaryBuffer;
+
+    return (event->eventType == MIDP_JC_EVENT_RESUME ? KNI_TRUE : KNI_FALSE);
 }

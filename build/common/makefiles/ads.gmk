@@ -1,7 +1,5 @@
 #
-#   
-#
-# Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+# Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
 # 
 # This program is free software; you can redistribute it and/or
@@ -54,6 +52,9 @@ MRI_ADD =
 MRI_CREATE = -crs 
 MRI_SAVE = 
 MRI_OPT = -via 
+
+# refer to src/ams/objlib.gmk
+RANLIB = true
 
 LD              = armlink
 # THERE MUST BE A WHITESPACE AFTER the -o THE BUILD WILL FAIL OTHERWISE

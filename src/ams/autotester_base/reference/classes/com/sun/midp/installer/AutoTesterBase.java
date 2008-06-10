@@ -100,9 +100,6 @@ class AutoTesterBase extends MIDlet implements CommandListener,
     /** How many iterations to run the suite */
     int loopCount = -1;
 
-    /** The InstallListener to use when creating the Installer. */
-    protected InstallListener installListener;
-
     /**
      * Create and initialize a new auto tester MIDlet.
      */

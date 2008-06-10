@@ -52,6 +52,7 @@
 #include <javautil_unicode.h>
 #include <javacall_properties.h>
 #include "runMidlet.h"
+
 #ifdef ENABLE_JSR_120
 #include <javacall_sms.h>
 #include <javacall_cbs.h>
@@ -758,7 +759,7 @@ void javanotify_shutdown(void) {
  * Java.
  */
 void javanotify_pause(void) {
-    midp_jc_event_union e;
+    midp_jc_event_union e; 
 
     REPORT_ERROR(LC_AMS, "javanotify_pause(): Slave Mode method to be revised\n");
     REPORT_INFO(LC_CORE, "javanotify_pause() >>\n");
@@ -773,7 +774,7 @@ void javanotify_pause(void) {
  * and resume Java.
  */
 void javanotify_resume(void) {
-    midp_jc_event_union e;
+    midp_jc_event_union e; 
 
     REPORT_ERROR(LC_AMS, "javanotify_resume(): Slave Mode method to be revised\n");
     REPORT_INFO(LC_CORE, "javanotify_resume() >>\n");

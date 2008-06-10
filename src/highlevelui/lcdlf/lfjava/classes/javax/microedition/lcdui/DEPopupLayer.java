@@ -35,6 +35,7 @@ import com.sun.midp.chameleon.skins.ChoiceGroupSkin;
 import com.sun.midp.chameleon.layers.ScrollIndLayer;
 import com.sun.midp.chameleon.layers.ScrollablePopupLayer;
 import com.sun.midp.chameleon.skins.ScrollIndSkin;
+import com.sun.midp.chameleon.skins.ScreenSkin;
 import com.sun.midp.chameleon.skins.resources.ScrollIndResourcesConstants;
 
 
@@ -262,7 +263,7 @@ class DEPopupLayer extends ScrollablePopupLayer {
             }
         
             g.setColor(0);
-            g.drawString(elements[i], 2, 0, 0);
+            g.drawString(elements[i], 2, 0, ScreenSkin.TEXT_ORIENT | Graphics.TOP);
             g.translate(0, transY);
             translatedY += transY;
         }

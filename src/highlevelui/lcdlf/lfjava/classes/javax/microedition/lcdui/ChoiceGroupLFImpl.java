@@ -819,15 +819,15 @@ class ChoiceGroupLFImpl extends ItemLFImpl implements ChoiceGroupLF {
                                            i == selectedIndex);
             
             if (choiceImg != null) {
-                if (ScreenSkin.TEXT_ORIENT == Graphics.LEFT) {
-                    g.drawImage(choiceImg, 0, 0,
-                            Graphics.LEFT | Graphics.TOP);
-                    offSetX = ChoiceGroupSkin.PAD_H + choiceImg.getWidth();
-                } else {
+                if (ScreenSkin.RL_DIRECTION) {
                     g.drawImage(choiceImg, bounds[WIDTH]
                             - 2 * ChoiceGroupSkin.PAD_H - choiceImg.getWidth(),
                             0, Graphics.LEFT | Graphics.TOP);
                     offSetX = ChoiceGroupSkin.PAD_H;
+                } else {
+                    g.drawImage(choiceImg, 0, 0,
+                            Graphics.LEFT | Graphics.TOP);
+                    offSetX = ChoiceGroupSkin.PAD_H + choiceImg.getWidth();
                 }
             } else {
                 g.setColor(ChoiceGroupSkin.COLOR_FG);
@@ -879,9 +879,9 @@ class ChoiceGroupLFImpl extends ItemLFImpl implements ChoiceGroupLF {
                 iW = g.getClipWidth();
                 iH = g.getClipHeight();
 
-                if (ScreenSkin.TEXT_ORIENT == Graphics.RIGHT) {
+                if (ScreenSkin.RL_DIRECTION) {
                     if (choiceImg != null) {
-                        textOffset = w - ChoiceGroupSkin.WIDTH_IMAGE - choiceImg.getWidth() - ChoiceGroupSkin.PAD_H;
+                        textOffset = w - ChoiceGroupSkin.WIDTH_IMAGE - choiceImg.getWidth() - 2 * ChoiceGroupSkin.PAD_H;
                     } else {
                         textOffset = w - ChoiceGroupSkin.WIDTH_IMAGE - ChoiceGroupSkin.PAD_H;                        
                     }
@@ -893,12 +893,8 @@ class ChoiceGroupLFImpl extends ItemLFImpl implements ChoiceGroupLF {
                             textOffset , 0,
                             Graphics.LEFT | Graphics.TOP);
                 g.setClip(iX, iY, iW, iH);
-                if (ScreenSkin.TEXT_ORIENT == Graphics.RIGHT) {
-                    textOffset = 2 * ChoiceGroupSkin.PAD_H;    
-                } else {
-                    textOffset = ChoiceGroupSkin.WIDTH_IMAGE +
+                textOffset = ChoiceGroupSkin.WIDTH_IMAGE +
                         ChoiceGroupSkin.PAD_H;
-                }
             }
 
             g.translate(0, -1);

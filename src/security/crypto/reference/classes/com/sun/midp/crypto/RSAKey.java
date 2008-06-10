@@ -193,10 +193,10 @@ class RSAKey implements Key {
      */
     private void setModulus(byte[] buf, int off, int len) {
         // move modulus len out to a multiple of 64 bits (8 bytes)
-        len = (len + 7) / 8 * 8;
+        int len8m = (len + 7) / 8 * 8;
 
-        mod = new byte[len];
-        System.arraycopy(buf, off, mod, 0, len);
+        mod = new byte[len8m];
+        System.arraycopy(buf, off, mod, len8m - len, len);
     }
 
     /**

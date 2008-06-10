@@ -24,8 +24,6 @@
  * information or have any questions.
  */
 
-#include <stdio.h>
-
 #include <pcsl_network.h>
 #include <gcf_export.h>
 
@@ -47,6 +45,6 @@ getLocalHostName() {
         return hostname;
     }
 
-    return NULL;
+    return 0;
 }
 

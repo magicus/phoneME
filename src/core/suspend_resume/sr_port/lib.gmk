@@ -41,6 +41,10 @@ SR_PORT_DIR = $(SUSPEND_RESUME_DIR)/$(SR_PORT_LIB)
 SUBSYSTEM_SUSPEND_RESUME_EXTRA_INCLUDES += \
     -I$(SR_PORT_DIR)/include
 
+ifeq ($(TARGET_PLATFORM), javacall)
+vpath % $(SR_PORT_DIR)/javacall
+else
 vpath % $(SR_PORT_DIR)/default
+endif
 
 SUBSYSTEM_SUSPEND_RESUME_NATIVE_FILES += suspend_resume_port.c

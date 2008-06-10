@@ -717,6 +717,26 @@ abstract class ItemLFImpl implements ItemLF {
     }
 
     /**
+     * Sets the content size in the passed in array.
+     * Content is calculated based on the availableWidth.
+     * size[WIDTH] and size[HEIGHT] should be set by this method.
+     * Subclasses need to override this method for correct layout.
+     * @param size The array that holds Item content size and location
+     *             in Item internal bounds coordinate system.
+     * @param availableWidth The width available for this Item
+     */
+    void lGetContentSize(int size[], int availableWidth) {
+    }
+
+    /**
+     * Return the content size
+     * @return  array of content size
+     */
+    int[] lGetContentBounds() {
+        return null;
+    }
+
+    /**
      * Moves item's location by delta. Both deltaX and deltaY can be
      * positive and negative.
      *

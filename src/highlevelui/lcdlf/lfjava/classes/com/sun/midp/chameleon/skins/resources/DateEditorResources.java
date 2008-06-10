@@ -96,6 +96,18 @@ public class DateEditorResources {
                 SkinPropertiesIDs.DATEEDITOR_IMAGE_AMPM);
         DateEditorSkin.IMAGE_CLOCK_BG = SkinResources.getImage(
                 SkinPropertiesIDs.DATEEDITOR_IMAGE_CLOCK_BG);
+        /*
+          Locale is set to a country where uses RIGHT-TO-LEFT note
+          e.g Hebrew, Arabic
+          */
+        DateEditorSkin.IMAGE_MONTH_HE_BG = SkinResources.getImage(
+                 SkinPropertiesIDs.DATEEDITOR_IMAGE_MON_HE_BG);
+         DateEditorSkin.IMAGE_DAY_HE_BG = SkinResources.getImage(
+                 SkinPropertiesIDs.DATEEDITOR_IMAGE_DAY_HE_BG);
+         DateEditorSkin.IMAGE_YEAR_HE_BG = SkinResources.getImage(
+                 SkinPropertiesIDs.DATEEDITOR_IMAGE_YR_HE_BG);
+         DateEditorSkin.IMAGE_TIME_HE_BG = SkinResources.getImage(
+                 SkinPropertiesIDs.DATEEDITOR_IMAGE_TIME_HE_BG);   
 
         init = true;
     }
