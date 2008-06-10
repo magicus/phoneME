@@ -695,6 +695,18 @@ public abstract class BasicPlayer implements Player
         }
 
         doDeallocate();
+
+        if (stream != null) {
+            // if stream is not seekable, just return
+            if (NOT_SEEKABLE == stream.getSeekType()) return;
+            try {
+                // seek to start position
+                stream.seek(0);
+            } catch(IOException e) {
+                if (debug) System.out.println("[direct] doDeallocate seek IOException");
+            }
+        }
+
         state = REALIZED;
     }
 
@@ -722,7 +734,15 @@ public abstract class BasicPlayer implements Player
             return;
         }
 
-        deallocate();
+        if (state == STARTED) {
+            try {
+                stop();
+            } catch (MediaException e) {
+                // Not much we can do here.
+            }
+        }
+
+        doDeallocate();
         doClose();
 
         state = CLOSED;

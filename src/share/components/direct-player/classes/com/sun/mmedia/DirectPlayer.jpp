@@ -494,26 +494,13 @@ public class DirectPlayer extends BasicPlayer
         
         releaseRadioAccess();
 
+        if (mediaDownload != null) {
+            mediaDownload.deallocate();
+        }
+
         doClose();
 
-        // To support streaming
         isFirstStart = true;
-
-        if (stream != null) {
-            // if stream is not seekable, just return
-            if (NOT_SEEKABLE == stream.getSeekType()) return;
-    
-            try {
-                // seek to start position
-                stream.seek(0);
-                if (mediaDownload != null) {
-                    mediaDownload.deallocate();
-                }
-            } catch(IOException e) {
-                if (debug) System.out.println("[direct] doDeallocate seek IOException");
-                return; // just return
-            }
-        }
     }
     
     /**
