@@ -980,7 +980,6 @@ static javacall_result audio_qs_get_player_controls(javacall_handle handle,
         case JC_FMT_TONE:
         case JC_FMT_DEVICE_TONE:
             *controls |= JAVACALL_MEDIA_CTRL_TONE;
-            *controls |= JAVACALL_MEDIA_CTRL_METADATA;
             *controls |= JAVACALL_MEDIA_CTRL_TEMPO;
             *controls |= JAVACALL_MEDIA_CTRL_RATE;
             *controls |= JAVACALL_MEDIA_CTRL_PITCH;
@@ -1270,7 +1269,7 @@ static javacall_result audio_qs_get_java_buffer_size(javacall_handle handle,
         *java_buffer_size = h->hdr.wholeContentSize;
         *first_data_size  = 0;
     } else {
-        if (h->hdr.dataBufferLen == 0) {
+        if (h->hdr.dataBufferLen == 0 || h->hdr.mediaType == JC_FMT_MS_PCM) {
             if (h->hdr.wholeContentSize > 0 && h->hdr.wholeContentSize < DEFAULT_BUFFER_SIZE) {
                 *java_buffer_size = h->hdr.wholeContentSize;
             } else {
