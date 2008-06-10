@@ -32,11 +32,9 @@ ABSTRACTIONS_INCLUDE_DIRS += \
 
 # dirs containing native source files
 ABSTRACTIONS_SRCDIRS += \
-	$(ABSTRACTIONS_DIR)/src/cdc_share/native/share \
-	$(ABSTRACTIONS_DIR)/src/cdc_share/native/$(TARGET_OS)
+	$(ABSTRACTIONS_DIR)/src/cdc_share/native
 
 ABSTRACTIONS_NATIVES += \
-	os_sync.c \
     internal_props.c \
 	exceptions.c \
 	kni_utils.c
