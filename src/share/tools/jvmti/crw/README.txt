@@ -2,7 +2,6 @@
 # @(#)README.txt	1.8 06/01/28
 #
 # Copyright 2008 Sun Microsystems, Inc. All rights reserved.
-# SUN PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
 #
 
 java_crw_demo Library: @(#)README.txt	1.8 06/01/28
