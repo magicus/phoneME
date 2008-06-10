@@ -855,7 +855,7 @@ LABEL(letInterpreterDoInvoke)
         str JSP,[JFP,#OFFSET_CVMFrame_topOfStack] 
         str JFP,[r1,#OFFSET_CVMExecEnv_interpreterStack+OFFSET_CVMStack_currentFrame] 
 	/* Keep sp 64-bit aligned for AAPCS */
-	add	sp, sp, #((CONSTANT_CVMCCExecEnv_size+7) & ~7)
+	add	sp, sp, #((CONSTANT_CVMCCExecEnv_size+7) BIT_AND ~7)
 #ifdef WINCE
 	ldmfd	sp, {v1-v7, fp, sp, pc}
 #else
@@ -989,7 +989,7 @@ LABEL(returnToInterpreter0)
         mov r0,#0
 LABEL(returnToInterpreter1)
 	/* Align sp to 64-bit for AAPCS */
-	add	sp, sp, #((CONSTANT_CVMCCExecEnv_size+7) & ~7)
+	add	sp, sp, #((CONSTANT_CVMCCExecEnv_size+7) BIT_AND ~7)
 #ifdef WINCE
 	ldmfd	sp, {v1-v7, fp, sp, pc}
 #else

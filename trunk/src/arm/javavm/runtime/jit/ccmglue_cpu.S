@@ -58,7 +58,7 @@
 #define MAKE_BRANCH(offset)					\
     ((14 << 28) :OR:			 /* COND_AL */		\
      (5 << 25) :OR:			 /* branch opcode */	\
-     (((offset - 8) >> 2) & 0x00ffffff)) /* branch offset */ 
+     (((offset - 8) >> 2) :AND: 0x00ffffff)) /* branch offset */ 
 #else
 #define MAKE_BRANCH(offset)					\
     ((14 << 28) |			 /* COND_AL */		\

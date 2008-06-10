@@ -82,7 +82,7 @@ ENTRY1( CVMJITgoNative )
 	stmfd	sp!, {v1-v7, fp, ip, lr}
 #ifdef CVMJIT_HAVE_STATIC_CODECACHE
 	/* Keep sp 64-bit aligned for AAPCS */
-	sub	sp, sp, #((CONSTANT_CVMCCExecEnv_size+7) & ~7)
+	sub	sp, sp, #((CONSTANT_CVMCCExecEnv_size+7) BIT_AND ~7)
 	PROLOG_END
 #endif
 
@@ -105,7 +105,7 @@ ENTRY1( CVMJITgoNative )
 	ldr	a3, [a2, #OFFSET_CVMExecEnv_interpreterStack+OFFSET_CVMStack_stackChunkEnd]
 #ifndef CVMJIT_HAVE_STATIC_CODECACHE
 	/* Keep sp 64-bit aligned for AAPCS */
-	sub	sp, sp, #((CONSTANT_CVMCCExecEnv_size+7) & ~7)
+	sub	sp, sp, #((CONSTANT_CVMCCExecEnv_size+7) BIT_AND ~7)
 #endif
 	str	a2, [sp, #OFFSET_CVMCCExecEnv_ee]
 	str	a3, [sp, #OFFSET_CVMCCExecEnv_stackChunkEnd]
@@ -166,7 +166,7 @@ ENTRY1( CVMJITexitNative )
          * to take any further action on our behalf 
 	 */
 	/* Keep sp 64-bit aligned for AAPCS */
-	add	sp, a1, #((CONSTANT_CVMCCExecEnv_size+7) & ~7)
+	add	sp, a1, #((CONSTANT_CVMCCExecEnv_size+7) BIT_AND ~7)
         mov	a1,#0
 #ifdef WINCE
 	/* WinCE epilogue */
