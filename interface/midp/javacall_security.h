@@ -312,5 +312,3 @@ int javacall_load_group_messages(javacall_utf8_string* list,
 
 #endif  /* JAVACALL_SECURITY_H */
 
-
-\
