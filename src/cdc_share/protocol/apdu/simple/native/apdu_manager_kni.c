@@ -25,7 +25,7 @@
 #include <kni.h>
 #include <sni.h>
 #include <jsrop_exceptions.h>
-#include <thread_sync.h>
+#include <javacall_os.h>
 #include <internal_props.h>
 
 #include <javacall_carddevice.h>
@@ -41,8 +41,8 @@ static char hostsandports[] = "com.sun.io.j2me.apdu.hostsandports";
 static char satselectapdu[] = "com.sun.io.j2me.apdu.satselectapdu";
 
 /** Thread synchronization variables */
-static ThreadMutex cardReaderMutex;
-static ThreadCond cardReaderCond;
+static javacall_mutex cardReaderMutex;
+static javacall_cond cardReaderCond;
 
 #define BUFFER_SIZE 128
 #define PROP_BUF_SIZE 128
@@ -80,12 +80,12 @@ KNIDECL (com_sun_cdc_io_j2me_apdu_APDUManager_init0) {
         }
     }
  
-    cardReaderMutex = threadMutexCreate();
+    cardReaderMutex = javacall_os_mutex_create();
     if (cardReaderMutex == NULL) {
         goto sync_err;
     }
 
-    cardReaderCond = threadCondCreate(cardReaderMutex);
+    cardReaderCond = javacall_os_cond_create(cardReaderMutex);
     if (cardReaderCond == NULL) {
 sync_err:
         KNI_ThrowNew(cardDeviceException, "Thread synchronization failed");
@@ -154,7 +154,7 @@ KNIDECL(com_sun_cdc_io_j2me_apdu_APDUManager_isSAT) {
     int slotIndex = KNI_GetParameterAsInt(1);
     
     CVMD_gcSafeExec(_ee, {
-        if (threadMutexLock(cardReaderMutex) != THREAD_SYNC_OK) {
+        if (javacall_os_mutex_lock(cardReaderMutex) != JAVACALL_OK) {
             KNI_ThrowNew(jsropIOException, "Thread synchronization failed");
             goto end;
         }
@@ -165,7 +165,7 @@ KNIDECL(com_sun_cdc_io_j2me_apdu_APDUManager_isSAT) {
         switch (status_code) {
         case JAVACALL_WOULD_BLOCK:
             CVMD_gcSafeExec(_ee, {
-                threadCondWait(cardReaderCond, 0);
+                javacall_os_cond_wait(cardReaderCond, 0);
             });
             break;
         case JAVACALL_OK:
@@ -181,7 +181,7 @@ KNIDECL(com_sun_cdc_io_j2me_apdu_APDUManager_isSAT) {
     status_code = javacall_carddevice_is_sat_start(slotIndex, &result, &context);
     while (status_code == JAVACALL_WOULD_BLOCK) {
         CVMD_gcSafeExec(_ee, {
-            if (threadCondWait(cardReaderCond, 0) == THREAD_SYNC_OK) {
+            if (javacall_os_cond_wait(cardReaderCond, 0) == JAVACALL_OK) {
                 status_code = javacall_carddevice_is_sat_finish(slotIndex, &result, context);                
             }
         });
@@ -210,7 +210,7 @@ KNIDECL(com_sun_cdc_io_j2me_apdu_APDUManager_isSAT) {
     }
  
     //GlobalUnlock - if in native !!!        
-    threadMutexUnlock(cardReaderMutex);
+    javacall_os_mutex_unlock(cardReaderMutex);
 
 end:
     KNI_ReturnInt(result);
@@ -260,7 +260,7 @@ KNIDECL(com_sun_cdc_io_j2me_apdu_APDUManager_reset0) {
     
     atr_length = sizeof atr_buffer;
     CVMD_gcSafeExec(_ee, {
-        if (threadMutexLock(cardReaderMutex) != THREAD_SYNC_OK) {
+        if (javacall_os_mutex_lock(cardReaderMutex) != JAVACALL_OK) {
             KNI_ThrowNew(jsropIOException, "Thread synchronization failed");
             goto end;
         }
@@ -271,7 +271,7 @@ KNIDECL(com_sun_cdc_io_j2me_apdu_APDUManager_reset0) {
         switch (status_code) {
         case JAVACALL_WOULD_BLOCK:
             CVMD_gcSafeExec(_ee, {
-                threadCondWait(cardReaderCond, 0);
+                javacall_os_cond_wait(cardReaderCond, 0);
             });            
             break;
         case JAVACALL_OK:
@@ -294,7 +294,7 @@ KNIDECL(com_sun_cdc_io_j2me_apdu_APDUManager_reset0) {
     
     while (status_code == JAVACALL_WOULD_BLOCK) {
         CVMD_gcSafeExec(_ee, {
-            if (threadCondWait(cardReaderCond, 0) == THREAD_SYNC_OK) {
+            if (javacall_os_cond_wait(cardReaderCond, 0) == JAVACALL_OK) {
                 status_code = javacall_carddevice_reset_finish(atr_buffer, &atr_length, context);                
             }
         });        
@@ -322,7 +322,7 @@ KNIDECL(com_sun_cdc_io_j2me_apdu_APDUManager_reset0) {
             slot_locked = KNI_FALSE;
         }
         
-        threadMutexUnlock(cardReaderMutex);
+        javacall_os_mutex_unlock(cardReaderMutex);
         goto end;
     }
     
@@ -341,7 +341,7 @@ KNIDECL(com_sun_cdc_io_j2me_apdu_APDUManager_reset0) {
     SNI_NewArray(SNI_BYTE_ARRAY, atr_length, atr_handle);
     KNI_SetRawArrayRegion(atr_handle, 0, atr_length, (jbyte*)atr_buffer);
     
-    threadMutexUnlock(cardReaderMutex);
+    javacall_os_mutex_unlock(cardReaderMutex);
 
 end:
     //GlobalUnlock - if in native !!!
@@ -537,7 +537,7 @@ KNIDECL (com_sun_cdc_io_j2me_apdu_APDUManager_exchangeAPDU0) {
     cur = rx_buffer;
 
     CVMD_gcSafeExec(_ee, {
-        if (threadMutexLock(cardReaderMutex) != THREAD_SYNC_OK) {
+        if (javacall_os_mutex_lock(cardReaderMutex) != JAVACALL_OK) {
             KNI_ThrowNew(jsropIOException, "Thread synchronization failed");
             goto free_end;
         }
@@ -548,7 +548,7 @@ KNIDECL (com_sun_cdc_io_j2me_apdu_APDUManager_exchangeAPDU0) {
         switch (status_code) {
         case JAVACALL_WOULD_BLOCK:
             CVMD_gcSafeExec(_ee, {
-                threadCondWait(cardReaderCond, 0);
+                javacall_os_cond_wait(cardReaderCond, 0);
             });            
             break;
         case JAVACALL_OK:
@@ -598,7 +598,7 @@ KNIDECL (com_sun_cdc_io_j2me_apdu_APDUManager_exchangeAPDU0) {
 
         while (status_code == JAVACALL_WOULD_BLOCK) {
             CVMD_gcSafeExec(_ee, {
-                if (threadCondWait(cardReaderCond, 0) == THREAD_SYNC_OK) {
+                if (javacall_os_cond_wait(cardReaderCond, 0) == JAVACALL_OK) {
                     status_code = javacall_carddevice_xfer_data_finish(tx_buffer, 
                                                                        tx_length, 
                                                                        cur, 
@@ -682,7 +682,7 @@ unlock_end:
     }
 
 destroy_end:
-    threadMutexUnlock(cardReaderMutex);
+    javacall_os_mutex_unlock(cardReaderMutex);
 
 free_end:
     KNI_SetRawArrayRegion(response_handle, 0, retcode,(jbyte *)rx_buffer);    
@@ -696,8 +696,8 @@ end:
 
 void javanotify_carddevice_event(javacall_carddevice_event event,
                                  void *context) {
-    threadMutexLock(cardReaderMutex);
-    threadCondSignal(cardReaderCond);    
-    threadMutexUnlock(cardReaderMutex);
+    javacall_os_mutex_lock(cardReaderMutex);
+    javacall_os_cond_signal(cardReaderCond);    
+    javacall_os_mutex_unlock(cardReaderMutex);
     return;
 }
