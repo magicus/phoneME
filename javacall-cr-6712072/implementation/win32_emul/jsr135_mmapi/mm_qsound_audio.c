@@ -980,7 +980,6 @@ static javacall_result audio_qs_get_player_controls(javacall_handle handle,
         case JC_FMT_TONE:
         case JC_FMT_DEVICE_TONE:
             *controls |= JAVACALL_MEDIA_CTRL_TONE;
-            *controls |= JAVACALL_MEDIA_CTRL_METADATA;
             *controls |= JAVACALL_MEDIA_CTRL_TEMPO;
             *controls |= JAVACALL_MEDIA_CTRL_RATE;
             *controls |= JAVACALL_MEDIA_CTRL_PITCH;
