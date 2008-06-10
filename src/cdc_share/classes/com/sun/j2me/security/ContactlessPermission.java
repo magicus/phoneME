@@ -24,8 +24,6 @@
 
 package com.sun.j2me.security;
 
-import com.sun.j2me.proxy.security.Permissions;
-
 /**
  * ContactlessPermission access permissions.
  */
