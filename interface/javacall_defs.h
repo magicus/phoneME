@@ -115,7 +115,9 @@ typedef enum {
     * incorrectly formatted property */
    JAVACALL_BAD_JAD_PROPERTIES = -13,
     /** javacall properties db value not found */
-    JAVACALL_VALUE_NOT_FOUND = -14
+   JAVACALL_VALUE_NOT_FOUND = -14,
+    /** Invalid state */
+   JAVACALL_INVALID_STATE = -15
 } javacall_result;
 
 #define JAVACALL_SUCCEEDED(Status) ((javacall_result)(Status) >= 0) 

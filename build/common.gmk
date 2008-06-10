@@ -215,6 +215,6 @@ SOURCE_OUTPUT_LIST += $(JAVACALL_DIR)/interface/javacall_defs.h javacall/interfa
 SOURCE_OUTPUT_LIST += $(JAVACALL_DIR)/build javacall
 
 source_bundle:: SOURCE_OUTPUT_DIR
-	@echo  ... javacall source bundle;
+	@echo " ... javacall source bundle"
 	@$(call make_source_bundle, $(SOURCE_OUTPUT_LIST), $(SOURCE_CLEANUP_LIST))
 

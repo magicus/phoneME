@@ -51,15 +51,13 @@ extern "C" {
 #include <stdio.h>
 #include <tchar.h>
 
-//#include <math.h>
-
 #include "javacall_multimedia.h"
 #include "javanotify_multimedia.h"
 #include "mmdebug.h"
 
-//=============================================================================
-//                    M E M O R Y   A L L O C A T I O N
-//=============================================================================
+/*****************************************************************************
+ *                    M E M O R Y   A L L O C A T I O N
+ *****************************************************************************/
 
 #define MALLOC(_size_)            malloc((_size_))
 #define REALLOC(_ptr_, _size_)    realloc((_ptr_), (_size_))
@@ -67,9 +65,9 @@ extern "C" {
 
 #define MAX_MIMETYPE_LENGTH       0xFF
     
-//=============================================================================
-//         I N T E R N A L   F O R M A T   P R E S E N T A T I O N
-//=============================================================================
+/*****************************************************************************
+ *         I N T E R N A L   F O R M A T   P R E S E N T A T I O N
+ *****************************************************************************/
 
 typedef enum _jc_fmt {
     JC_FMT_MPEG1_LAYER2 = 0  ,
@@ -122,7 +120,7 @@ typedef enum _jc_fmt {
     JC_FMT_CAPTURE_AUDIO     ,
     JC_FMT_CAPTURE_RADIO     ,
     JC_FMT_CAPTURE_VIDEO     ,
-    //JC_FMT_UNKNOWN excluded, it will be mapped to -1
+    /* JC_FMT_UNKNOWN excluded, it will be mapped to -1 */
     JC_FMT_UNSUPPORTED       ,
 
     JC_FMT_UNKNOWN = -1
@@ -133,15 +131,32 @@ javacall_media_format_type fmt_enum2str( jc_fmt                     fmt );
 javacall_result            fmt_str2mime(
         javacall_media_format_type fmt, char *buf, int buf_len);
 
-//=============================================================================
-//                  M A I N   W I N D O W   A C C E S S
-//=============================================================================
+/*****************************************************************************
+ *                     M E T A D A T A   K E Y S
+ *****************************************************************************/
+
+#define METADATA_KEY_AUTHOR    L"author"
+#define METADATA_KEY_COPYRIGHT L"copyright"
+#define METADATA_KEY_DATE      L"date"
+#define METADATA_KEY_TITLE     L"title"
+
+/*****************************************************************************
+ *                  M A I N   W I N D O W   A C C E S S
+ *****************************************************************************/
 
 #define GET_MCIWND_HWND()         (midpGetWindowHandle())
 
 extern HWND midpGetWindowHandle();
 
-//=============================================================================
+/*****************************************************************************/
+
+/*****************************************************************************
+ *                      S T A T U S   M E S S A G E
+ *****************************************************************************/
+
+void mmSetStatusLine( const char* fmt, ... );
+
+/*****************************************************************************/
 
 /**
  * Win32 native player's handle information
@@ -218,8 +233,8 @@ typedef struct {
  */
 typedef struct {
     javacall_result (*get_metadata_key_counts)(javacall_handle handle, long* keyCounts); 
-    javacall_result (*get_metadata_key)(javacall_handle handle, long index, long bufLength, char* buf);
-    javacall_result (*get_metadata)(javacall_handle handle, const char* key, long bufLength, char *buf);
+    javacall_result (*get_metadata_key)(javacall_handle handle, long index, long bufLength, javacall_utf16* buf);
+    javacall_result (*get_metadata)(javacall_handle handle, javacall_const_utf16_string key, long bufLength, javacall_utf16* buf);
 } media_metadata_interface;
 
 /**
@@ -340,6 +355,11 @@ typedef struct {
     long                wholeContentSize;
     void *              buffer;
     javacall_bool       isBuffered;
+
+#ifdef ENABLE_EXTRA_CAMERA_CONTROLS
+    void *              pExtraCC;
+#endif //ENABLE_EXTRA_CAMERA_CONTROLS
+
 } audio_handle;
 
 #ifdef __cplusplus
