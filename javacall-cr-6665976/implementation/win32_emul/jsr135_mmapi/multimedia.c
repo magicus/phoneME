@@ -22,9 +22,39 @@
  * information or have any questions.
  */
 
-//#include "lime.h"
+#include "lime.h"
 #include "multimedia.h"
 #include "mmmididev.h"
+#include <stdio.h>
+
+//=============================================================================
+
+#define LIME_MMAPI_PACKAGE "com.sun.mmedia"
+#define LIME_MMAPI_CLASS "JavaCallBridge"
+
+void mmSetStatusLine( const char* fmt, ... ) {
+    char           str8[ 256 ];
+    wchar_t        str16[ 256 ];
+    int            str16_len;
+	va_list        args;
+    javacall_int64 res;
+
+    static LimeFunction* f = NULL;
+
+	va_start(args, fmt);
+    vsprintf( str8, fmt, args );
+	va_end(args);
+
+    str16_len = swprintf( str16, 256, L"%S", str8 );
+
+    if( NULL == f ) {
+        f = NewLimeFunction( LIME_MMAPI_PACKAGE,
+                             LIME_MMAPI_CLASS,
+                             "put_status_string" );
+    }
+
+    f->call( f, &res, str16, str16_len );
+}
 
 //=============================================================================
 
@@ -54,7 +84,7 @@ javacall_result javacall_media_get_configuration(const javacall_media_configurat
 {
     g_cfg.audioEncoding         = "encoding=pcm&rate=22050&bits=16&channels=1";
     g_cfg.videoEncoding         = "encoding=rgb565";
-    g_cfg.videoSnapshotEncoding = NULL;
+    g_cfg.videoSnapshotEncoding = "encoding=jpeg encoding=jpeg&quality=80";
 
     g_cfg.supportMixing         = JAVACALL_TRUE;
     g_cfg.supportRecording      = JAVACALL_TRUE;
@@ -194,8 +224,8 @@ javacall_result fmt_str2mime(
     int i;
     for (i = 0; i < sizeof g_caps / sizeof g_caps[0] - 1; i++) {
         if (!strcmp(fmt, g_caps[i].mediaFormat)) {
-            char *s = g_caps[i].contentTypes;
-            char *p = strchr(s, ' ');
+            const char *s = g_caps[i].contentTypes;
+            const char *p = strchr(s, ' ');
             int len;
             
             if (p == NULL) {
@@ -260,13 +290,12 @@ media_interface* fmt_enum2itf( jc_fmt fmt )
     case JC_FMT_AMR:
     case JC_FMT_AMR_WB:
     case JC_FMT_AMR_WB_PLUS:
-  #if( defined( AMR_USE_QSOUND ) )
+  #if( defined( AMR_USE_QSOUND ) || defined( AMR_USE_QT ) )
         return &g_amr_audio_itf;
   #elif( defined( AMR_USE_LIME ) )
         return &g_audio_itf;
   #endif // AMR_USE_**
 #endif // ENABLE_AMR
-
     default:
         return NULL;
     }
@@ -292,6 +321,9 @@ media_interface* fmt_enum2itf( jc_fmt fmt )
 
 #define QUERY_MIDI_ITF(_pitf_, _method_)  \
     ( (_pitf_) && (_pitf_)->vptrMidi && (_pitf_)->vptrMidi->##_method_ )
+
+#define QUERY_METADATA_ITF(_pitf_, _method_)  \
+    ( (_pitf_) && (_pitf_)->vptrMetaData && (_pitf_)->vptrMetaData->##_method_ )
 
 #define QUERY_PITCH_ITF(_pitf_, _method_)  \
     ( (_pitf_) && (_pitf_)->vptrPitch && (_pitf_)->vptrPitch->_method_ )
@@ -427,7 +459,6 @@ javacall_result javacall_media_create(int appId,
     pPlayer = MALLOC(sizeof(javacall_impl_player));
 
     if( NULL == pPlayer ) return JAVACALL_OUT_OF_MEMORY;
-
     pPlayer->appId            = appId;
     pPlayer->playerId         = playerId;
     pPlayer->uri              = NULL;
@@ -599,7 +630,7 @@ javacall_result javacall_media_get_format(javacall_handle handle,
     jc_fmt fmt = JC_FMT_UNKNOWN;
 
     if (QUERY_BASIC_ITF(pItf, get_format)) {
-        ret = pItf->vptrBasic->get_format(pPlayer->mediaHandle,&fmt);
+        ret = pItf->vptrBasic->get_format(pPlayer->mediaHandle, &fmt);
         if( JAVACALL_OK == ret ) {
             *format = fmt_enum2str( fmt );
         }
@@ -1755,7 +1786,15 @@ javacall_result javacall_media_close_recording(javacall_handle handle) {
 javacall_result javacall_media_get_metadata_key_counts(javacall_handle handle,
                                                        long* keyCounts)
 {
-    return JAVACALL_FAIL;
+    javacall_result ret = JAVACALL_FAIL;
+    javacall_impl_player* pPlayer = (javacall_impl_player*)handle;
+    media_interface* pItf = pPlayer->mediaItfPtr;
+
+    if (QUERY_METADATA_ITF(pItf, get_metadata_key_counts)) {
+        ret = pItf->vptrMetaData->get_metadata_key_counts(pPlayer->mediaHandle, keyCounts);
+    }
+
+    return ret;
 }
 
 javacall_result javacall_media_get_metadata_key(javacall_handle handle,
@@ -1763,7 +1802,15 @@ javacall_result javacall_media_get_metadata_key(javacall_handle handle,
                                                 long bufLength,
                                                 /*OUT*/ javacall_utf16* buf)
 {
-    return JAVACALL_FAIL;
+    javacall_result ret = JAVACALL_FAIL;
+    javacall_impl_player* pPlayer = (javacall_impl_player*)handle;
+    media_interface* pItf = pPlayer->mediaItfPtr;
+
+    if (QUERY_METADATA_ITF(pItf, get_metadata_key)) {
+        ret = pItf->vptrMetaData->get_metadata_key(pPlayer->mediaHandle, index, bufLength, buf);
+    }
+
+    return ret;
 }
 
 javacall_result javacall_media_get_metadata(javacall_handle handle,
@@ -1771,7 +1818,15 @@ javacall_result javacall_media_get_metadata(javacall_handle handle,
                                             long bufLength,
                                             javacall_utf16* buf)
 {
-    return JAVACALL_FAIL;
+    javacall_result ret = JAVACALL_FAIL;
+    javacall_impl_player* pPlayer = (javacall_impl_player*)handle;
+    media_interface* pItf = pPlayer->mediaItfPtr;
+
+    if (QUERY_METADATA_ITF(pItf, get_metadata)) {
+        ret = pItf->vptrMetaData->get_metadata(pPlayer->mediaHandle, key, bufLength, buf);
+    }
+
+    return ret;
 }
 
 /* RateControl functions ***********************************************************/

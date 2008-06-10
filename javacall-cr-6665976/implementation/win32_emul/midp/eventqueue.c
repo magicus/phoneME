@@ -102,7 +102,7 @@ javacall_result javacall_destroy_event_queue_lock(void){
 javacall_result javacall_wait_and_lock_event_queue(void){
     HANDLE *mutex = (HANDLE*) TlsGetValue(specialId);
 
-    if (0 == *mutex) {
+    if (0 == mutex || 0 == *mutex) {
         return JAVACALL_FAIL;
     }
 
@@ -122,7 +122,7 @@ javacall_result javacall_wait_and_lock_event_queue(void){
 javacall_result javacall_unlock_event_queue(void){
     HANDLE *mutex = (HANDLE*) TlsGetValue(specialId);
 
-    if (0 == *mutex) {
+    if (0 == mutex || 0 == *mutex) {
         return JAVACALL_FAIL;
     }
     if (0 == ReleaseMutex(*mutex)) {

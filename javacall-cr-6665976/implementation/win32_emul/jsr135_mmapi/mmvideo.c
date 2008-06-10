@@ -53,6 +53,7 @@ extern javacall_result audio_start(javacall_handle handle);
 extern javacall_result audio_do_buffering(javacall_handle handle,
                                const void* buffer, long *length,
                                javacall_bool *need_more_data, long *min_data_size);
+extern javacall_result audio_clear_buffer(javacall_handle handle);
 extern javacall_result audio_get_time(javacall_handle handle, long* ms);
 extern javacall_result audio_set_time(javacall_handle handle, long* ms);
 extern javacall_result audio_get_duration(javacall_handle handle, long* ms);
@@ -77,6 +78,11 @@ extern javacall_result audio_get_max_rate(javacall_handle handle, long* maxRate)
 extern javacall_result audio_get_min_rate(javacall_handle handle, long* minRate);
 extern javacall_result audio_set_rate(javacall_handle handle, long rate);
 extern javacall_result audio_get_rate(javacall_handle handle, long* rate);
+
+#ifdef ENABLE_EXTRA_CAMERA_CONTROLS
+extern void extra_camera_controls_init( audio_handle * pHandle );
+extern void extra_camera_controls_cleanup( audio_handle * pHandle );
+#endif //ENABLE_EXTRA_CAMERA_CONTROLS
 
 /**
  * 
@@ -133,6 +139,17 @@ static javacall_handle video_create(int appId, int playerId,
     pHandle->buffer           = NULL;
     pHandle->wholeContentSize = -1;
     pHandle->isBuffered       = JAVACALL_FALSE;
+    pHandle->volume           = -1;
+    pHandle->mute             = JAVACALL_FALSE;
+
+#ifdef ENABLE_EXTRA_CAMERA_CONTROLS
+    pHandle->pExtraCC         = NULL;
+
+    if( JC_FMT_CAPTURE_VIDEO == mediaType )
+    {
+        extra_camera_controls_init( pHandle );
+    }
+#endif //ENABLE_EXTRA_CAMERA_CONTROLS
     
     // set the file name to the URI
     if (NULL != URI && uriLength>0) {
@@ -151,6 +168,15 @@ static javacall_handle video_create(int appId, int playerId,
  */
 static javacall_result video_close(javacall_handle handle)
 {
+#ifdef ENABLE_EXTRA_CAMERA_CONTROLS
+    audio_handle* pHandle = (audio_handle*)handle;
+
+    if( JC_FMT_CAPTURE_VIDEO == pHandle->mediaType )
+    {
+        extra_camera_controls_cleanup( pHandle );
+    }
+#endif //ENABLE_EXTRA_CAMERA_CONTROLS
+
     return audio_close(handle);
 }
 
@@ -222,7 +248,7 @@ video_do_buffering(javacall_handle handle,
 }
 
 static javacall_result video_clear_buffer(javacall_handle handle) {
-    return JAVACALL_OK;
+    return audio_clear_buffer(handle);
 }
 
 static javacall_result video_get_time(javacall_handle handle, long* ms)
@@ -406,6 +432,23 @@ static javacall_result video_get_video_snapshot_data(javacall_handle handle, cha
     return JAVACALL_OK;
 }
 
+static javacall_result video_set_video_fullscreenmode( javacall_handle handle, javacall_bool fullScreenMode )
+{
+    audio_handle* pHandle = (audio_handle*)handle;
+    static LimeFunction *f = NULL;
+    int res = 0;
+
+    if (f == NULL) {
+        f = NewLimeFunction(LIME_MMAPI_PACKAGE,
+                        LIME_MMAPI_CLASS,
+                        "setDisplayFullScreen");
+    }
+    
+    f->call(f, &res, pHandle->hWnd, fullScreenMode);
+
+    return JAVACALL_OK; 
+}
+
 static javacall_result map_frame_to_time(javacall_handle handle, 
                                                  long frameNum, long* ms) {
     audio_handle* pHandle = (audio_handle*)handle;
@@ -561,7 +604,7 @@ static media_video_interface _video_video_itf = {
     video_set_video_visible,
     video_set_video_location,
     video_set_video_color_key,
-    NULL
+    video_set_video_fullscreenmode,
 };
 
 /**
