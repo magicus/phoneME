@@ -93,7 +93,7 @@ javacall_dom_characterdata_get_data(javacall_handle handle,
  * 
  * @return JAVACALL_OK if all done successfuly,
  *         JAVACALL_FAIL if error occured; in this case exceptionCode has to be 
-                                  filled,
+ *                                filled,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
@@ -160,7 +160,7 @@ javacall_dom_characterdata_substring_data(javacall_handle handle,
  * 
  * @return JAVACALL_OK if all done successfuly,
  *         JAVACALL_FAIL if error occured; in this case exceptionCode has to be 
-                                  filled,
+ *                                filled,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
@@ -179,7 +179,7 @@ javacall_dom_characterdata_append_data(javacall_handle handle,
  * 
  * @return JAVACALL_OK if all done successfuly,
  *         JAVACALL_FAIL if error occured; in this case exceptionCode has to be 
-                                  filled,
+ *                                filled,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
@@ -203,7 +203,7 @@ javacall_dom_characterdata_insert_data(javacall_handle handle,
  * 
  * @return JAVACALL_OK if all done successfuly,
  *         JAVACALL_FAIL if error occured; in this case exceptionCode has to be 
-                                  filled,
+ *                                filled,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
@@ -231,7 +231,7 @@ javacall_dom_characterdata_delete_data(javacall_handle handle,
  * 
  * @return JAVACALL_OK if all done successfuly,
  *         JAVACALL_FAIL if error occured; in this case exceptionCode has to be 
-                                  filled,
+ *                                filled,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
