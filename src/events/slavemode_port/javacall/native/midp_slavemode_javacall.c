@@ -67,6 +67,10 @@
 #include <fcNotifyIsolates.h>
 #endif
 
+#ifdef ENABLE_JSR_177
+#include <carddevice.h>
+#endif
+
 extern void measureStack(int clearStack);
 extern jlong midp_slavemode_time_slice(void);
 
