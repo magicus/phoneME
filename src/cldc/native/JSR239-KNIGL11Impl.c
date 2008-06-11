@@ -410,8 +410,8 @@ runQueue(int *q, int count)
         case CMD_DELETE_BUFFERS:
             {
                 GLsizei n = (GLsizei)q[i++];
-                const GLuint *_uptr = (const GLuint *)&q[i];
-                glDeleteBuffers(n, _uptr);
+                const GLuint *_uptr1 = (const GLuint *)&q[i];
+                glDeleteBuffers(n, _uptr1);
                 i += n;
             }
             break;
@@ -419,8 +419,8 @@ runQueue(int *q, int count)
         case CMD_DELETE_BUFFERSB:
             {
                 GLsizei n = (GLsizei)q[i++];
-                const GLuint *_uptr = (const GLuint *)q[i++];
-                glDeleteBuffers(n, _uptr);
+                const GLuint *_uptr2 = (const GLuint *)q[i++];
+                glDeleteBuffers(n, _uptr2);
             }
             break;
 
@@ -570,8 +570,8 @@ runQueue(int *q, int count)
 
         case CMD_DRAW_TEXSB:
             {
-                GLshort *_sptr = (GLshort *)q[i++];
-                glDrawTexsvOES(_sptr);
+                GLshort *_sptr1 = (GLshort *)q[i++];
+                glDrawTexsvOES(_sptr1);
             }
             break;
 
@@ -718,16 +718,16 @@ runQueue(int *q, int count)
 	case CMD_GEN_BUFFERSB:
 	    {
 		GLsizei _s = (GLsizei)q[i++];
-		GLuint *_uptr = (GLuint *)q[i++];
-		glGenBuffers(_s, _uptr);
+		GLuint *_uptr9 = (GLuint *)q[i++];
+		glGenBuffers(_s, _uptr9);
 	    }
 	    break;
 
 	case CMD_GEN_TEXTURESB:
 	    {
 		GLsizei _s = (GLsizei)q[i++];
-		GLuint *_uptr = (GLuint *)q[i++];
-		glGenBuffers(_s, _uptr);
+		GLuint *_uptr10 = (GLuint *)q[i++];
+		glGenBuffers(_s, _uptr10);
 	    }
 	    break;
 
@@ -1831,9 +1831,9 @@ runQueue(int *q, int count)
 	case CMD_DELETE_RENDERBUFFERS:
 	  {
 	      GLsizei n = (GLsizei)q[i++];
-	      const GLuint *_uptr = (const GLuint *)&q[i];
+	      const GLuint *_uptr3 = (const GLuint *)&q[i];
 #ifdef GL_OES_framebuffer_object
-	      glDeleteRenderbuffersOES(_n, _uptr);
+	      glDeleteRenderbuffersOES(_n, _uptr3);
 #endif
 	      i += n;
 	  }
@@ -1842,9 +1842,9 @@ runQueue(int *q, int count)
 	case CMD_DELETE_RENDERBUFFERSB:
 	  {
 	      GLsizei _s = (GLsizei)q[i++];
-	      const GLuint *_uptr = (const GLuint *)q[i++];
+	      const GLuint *_uptr4 = (const GLuint *)q[i++];
 #ifdef GL_OES_framebuffer_object
-	      glDeleteRenderbuffersOES(_s, _uptr);
+	      glDeleteRenderbuffersOES(_s, _uptr4);
 #endif
 	  }
 	  break;
@@ -1852,9 +1852,9 @@ runQueue(int *q, int count)
 	case CMD_GEN_RENDERBUFFERSB:
 	    {
 		GLsizei _s = (GLsizei)q[i++];
-		GLuint *_uptr = (GLuint *)q[i++];
+		GLuint *_uptr8 = (GLuint *)q[i++];
 #ifdef GL_OES_framebuffer_object
-		glGenRenderbuffersOES(_s, _uptr);
+		glGenRenderbuffersOES(_s, _uptr8);
 #endif
 	    }
 	    break;
@@ -1884,9 +1884,9 @@ runQueue(int *q, int count)
 	case CMD_DELETE_FRAMEBUFFERS:
 	  {
 	      GLsizei n = (GLsizei)q[i++];
-	      const GLuint *_uptr = (const GLuint *)&q[i];
+	      const GLuint *_uptr5 = (const GLuint *)&q[i];
 #ifdef GL_OES_framebuffer_object
-	      glDeleteFramebuffersOES(_n, _uptr);
+	      glDeleteFramebuffersOES(_n, _uptr5);
 #endif
 	      i += n;
 	  }
@@ -1895,9 +1895,9 @@ runQueue(int *q, int count)
 	case CMD_DELETE_FRAMEBUFFERSB:
 	  {
 	      GLsizei _s = (GLsizei)q[i++];
-	      const GLuint *_uptr = (const GLuint *)q[i++];
+	      const GLuint *_uptr6 = (const GLuint *)q[i++];
 #ifdef GL_OES_framebuffer_object
-	      glDeleteFramebuffersOES(_s,_uptr);
+	      glDeleteFramebuffersOES(_s,_uptr6);
 #endif
 	  }
 	  break;
@@ -1905,9 +1905,9 @@ runQueue(int *q, int count)
 	case CMD_GEN_FRAMEBUFFERSB:
 	    {
 		GLsizei _s = (GLsizei)q[i++];
-		GLuint *_uptr = (GLuint *)q[i++];
+		GLuint *_uptr7 = (GLuint *)q[i++];
 #ifdef GL_OES_framebuffer_object
-		glGenFramebuffersOES(_s, _uptr);
+		glGenFramebuffersOES(_s, _uptr7);
 #endif
 	    }
 	    break;
