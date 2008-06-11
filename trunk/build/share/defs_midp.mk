@@ -61,6 +61,7 @@ endif
 #
 TARGET_CPU		?= $(TARGET_CPU_FAMILY)
 PCSL_DIR		?= $(COMPONENTS_DIR)/pcsl
+export PCSL_DIR
 ifeq ($(wildcard $(PCSL_DIR)/donuts),)
 $(error PCSL_DIR must point to the PCSL directory: $(PCSL_DIR))
 endif
@@ -88,6 +89,15 @@ MIDP_DIR		?= $(COMPONENTS_DIR)/midp
 MIDP_DEFS_CDC_MK	= $(MIDP_DIR)/build/common/cdc_vm/defs_cdc.mk
 ifeq ($(wildcard $(MIDP_DEFS_CDC_MK)),)
 $(error MIDP_DIR must point to the MIDP directory: $(MIDP_DIR))
+endif
+
+# Setup JPEG_DIR
+ifeq ($(USE_JPEG), true)
+export JPEG_DIR ?= $(COMPONENTS_DIR)/jpeg
+JPEG_MAKE_FILE = $(JPEG_DIR)/$(SUBSYSTEM_MAKE_FILE)
+ifeq ($(wildcard $(JPEG_MAKE_FILE)),)
+$(error JPEG_DIR must point to a directory containing jpeg sources: $(JPEG_DIR))
+endif
 endif
 
 # Locate the midp-com component
