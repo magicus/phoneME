@@ -122,7 +122,7 @@ javacall_dom_element_get_attribute(javacall_handle handle,
  * 
  * @return JAVACALL_OK if all done successfuly,
  *         JAVACALL_FAIL if error occured; in this case exceptionCode has to be 
-                                  filled,
+ *                                filled,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
@@ -147,7 +147,7 @@ javacall_dom_element_set_attribute(javacall_handle handle,
  * 
  * @return JAVACALL_OK if all done successfuly,
  *         JAVACALL_FAIL if error occured; in this case exceptionCode has to be 
-                                  filled,
+ *                                filled,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
@@ -196,7 +196,7 @@ javacall_dom_element_get_attribute_node(javacall_handle handle,
  * 
  * @return JAVACALL_OK if all done successfuly,
  *         JAVACALL_FAIL if error occured; in this case exceptionCode has to be 
-                                  filled,
+ *                                filled,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
@@ -222,7 +222,7 @@ javacall_dom_element_set_attribute_node(javacall_handle handle,
  * 
  * @return JAVACALL_OK if all done successfuly,
  *         JAVACALL_FAIL if error occured; in this case exceptionCode has to be 
-                                  filled,
+ *                                filled,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
@@ -315,7 +315,7 @@ javacall_dom_element_get_attribute_ns(javacall_handle handle,
  * 
  * @return JAVACALL_OK if all done successfuly,
  *         JAVACALL_FAIL if error occured; in this case exceptionCode has to be 
-                                  filled,
+ *                                filled,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
@@ -345,7 +345,7 @@ javacall_dom_element_set_attribute_ns(javacall_handle handle,
  * 
  * @return JAVACALL_OK if all done successfuly,
  *         JAVACALL_FAIL if error occured; in this case exceptionCode has to be 
-                                  filled,
+ *                                filled,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
@@ -373,7 +373,7 @@ javacall_dom_element_remove_attribute_ns(javacall_handle handle,
  * 
  * @return JAVACALL_OK if all done successfuly,
  *         JAVACALL_FAIL if error occured; in this case exceptionCode has to be 
-                                  filled,
+ *                                filled,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
@@ -405,7 +405,7 @@ javacall_dom_element_get_attribute_node_ns(javacall_handle handle,
  * 
  * @return JAVACALL_OK if all done successfuly,
  *         JAVACALL_FAIL if error occured; in this case exceptionCode has to be 
-                                  filled,
+ *                                filled,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
@@ -432,7 +432,7 @@ javacall_dom_element_set_attribute_node_ns(javacall_handle handle,
  * 
  * @return JAVACALL_OK if all done successfuly,
  *         JAVACALL_FAIL if error occured; in this case exceptionCode has to be 
-                                  filled,
+ *                                filled,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
@@ -481,7 +481,7 @@ javacall_dom_element_has_attribute(javacall_handle handle,
  * 
  * @return JAVACALL_OK if all done successfuly,
  *         JAVACALL_FAIL if error occured; in this case exceptionCode has to be 
-                                  filled,
+ *                                filled,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
@@ -510,7 +510,7 @@ javacall_dom_element_has_attribute_ns(javacall_handle handle,
  * 
  * @return JAVACALL_OK if all done successfuly,
  *         JAVACALL_FAIL if error occured; in this case exceptionCode has to be 
-                                  filled,
+ *                                filled,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
@@ -537,7 +537,7 @@ javacall_dom_element_set_id_attribute(javacall_handle handle,
  * 
  * @return JAVACALL_OK if all done successfuly,
  *         JAVACALL_FAIL if error occured; in this case exceptionCode has to be 
-                                  filled,
+ *                                filled,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
@@ -565,7 +565,7 @@ javacall_dom_element_set_id_attribute_ns(javacall_handle handle,
  * 
  * @return JAVACALL_OK if all done successfuly,
  *         JAVACALL_FAIL if error occured; in this case exceptionCode has to be 
-                                  filled,
+ *                                filled,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result

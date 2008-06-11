@@ -131,7 +131,7 @@ javacall_dom_document_get_document_element(javacall_handle handle,
  * 
  * @return JAVACALL_OK if all done successfuly,
  *         JAVACALL_FAIL if error occured; in this case exceptionCode has to be 
-                                  filled,
+ *                                filled,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
@@ -199,7 +199,7 @@ javacall_dom_document_create_comment(javacall_handle handle,
  * 
  * @return JAVACALL_OK if all done successfuly,
  *         JAVACALL_FAIL if error occured; in this case exceptionCode has to be 
-                                  filled,
+ *                                filled,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
@@ -225,7 +225,7 @@ javacall_dom_document_create_cdata_section(javacall_handle handle,
  * 
  * @return JAVACALL_OK if all done successfuly,
  *         JAVACALL_FAIL if error occured; in this case exceptionCode has to be 
-                                  filled,
+ *                                filled,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
@@ -254,7 +254,7 @@ javacall_dom_document_create_processing_instruction(javacall_handle handle,
  * 
  * @return JAVACALL_OK if all done successfuly,
  *         JAVACALL_FAIL if error occured; in this case exceptionCode has to be 
-                                  filled,
+ *                                filled,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
@@ -287,7 +287,7 @@ javacall_dom_document_create_attribute(javacall_handle handle,
  * 
  * @return JAVACALL_OK if all done successfuly,
  *         JAVACALL_FAIL if error occured; in this case exceptionCode has to be 
-                                  filled,
+ *                                filled,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
@@ -423,7 +423,7 @@ javacall_dom_document_get_elements_by_tag_name(javacall_handle handle,
  * 
  * @return JAVACALL_OK if all done successfuly,
  *         JAVACALL_FAIL if error occured; in this case exceptionCode has to be 
-                                  filled,
+ *                                filled,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
@@ -483,7 +483,7 @@ javacall_dom_document_import_node(javacall_handle handle,
  * 
  * @return JAVACALL_OK if all done successfuly,
  *         JAVACALL_FAIL if error occured; in this case exceptionCode has to be 
-                                  filled,
+ *                                filled,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
@@ -548,7 +548,7 @@ javacall_dom_document_create_element_ns(javacall_handle handle,
  * 
  * @return JAVACALL_OK if all done successfuly,
  *         JAVACALL_FAIL if error occured; in this case exceptionCode has to be 
-                                  filled,
+ *                                filled,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
@@ -673,7 +673,7 @@ javacall_dom_document_get_element_by_id(javacall_handle handle,
  * 
  * @return JAVACALL_OK if all done successfuly,
  *         JAVACALL_FAIL if error occured; in this case exceptionCode has to be 
-                                  filled,
+ *                                filled,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result

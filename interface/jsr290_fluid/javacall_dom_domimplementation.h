@@ -97,7 +97,7 @@ javacall_dom_domimplementation_has_feature(javacall_handle handle,
  * 
  * @return JAVACALL_OK if all done successfuly,
  *         JAVACALL_FAIL if error occured; in this case exceptionCode has to be 
-                                  filled,
+ *                                filled,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
@@ -128,7 +128,7 @@ javacall_dom_domimplementation_create_document_type(javacall_handle handle,
  * 
  * @return JAVACALL_OK if all done successfuly,
  *         JAVACALL_FAIL if error occured; in this case exceptionCode has to be 
-                                  filled,
+ *                                filled,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
