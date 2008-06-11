@@ -70,6 +70,7 @@ source_bundle::
 	$(AT)make -C $(JAVACALL_DIR)/configuration/phoneMEAdvanced/$(JAVACALL_TARGET) \
 	JAVACALL_DIR=$(JAVACALL_DIR) \
 	SOURCE_OUTPUT_DIR=$(SOURCE_OUTPUT_DIR) \
+	VC_PATH="$(VC_PATH)" \
 	$(JAVACALL_FLAGS) \
 	source_bundle
 
