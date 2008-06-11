@@ -701,6 +701,8 @@ public final class Permissions {
                 members = loadGroupPermissions(groupsAll[i1].getNativeName());
                 for (i2 = 0; i2 < members.length; i2++) {
                     Integer c = (Integer)permissionsHash.get(members[i2]);
+                    if (c == null)
+                        throw new NullPointerException("unknown permission: " + members[i2]);
                     permissionSpecs[c.intValue()] = new PermissionSpec(members[i2], groupsAll[i1]);
                 }
             }
