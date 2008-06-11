@@ -323,6 +323,17 @@ long storageRelativePosition(char** ppszError, int handle, long offset);
  */
 long storageSizeOf(char** ppszError, int handle);
 
+/*
+ * Return the size of file with the given name in storage.
+ *
+ * If not successful *ppszError will set to point to an error string,
+ * on success it will be set to NULL.
+ *
+ * @return size of file in bytes if successful, -1 otherwise
+ */
+long storage_size_of_file_by_name(char** ppszError,
+                                  const pcsl_string* pFileName);
+
 /**
  * Truncates the size of the given open native-storage file to the
  * given number of bytes.
@@ -365,7 +376,7 @@ int storage_file_exists(const pcsl_string* filename);
  * @param newFilename the name to change the file to
  */
 void storage_rename_file(char** ppszError, const pcsl_string* oldFilename,
-                       const pcsl_string* newFilename);
+                         const pcsl_string* newFilename);
 
 /**
  * Deletes the given native-storage file. This function does not

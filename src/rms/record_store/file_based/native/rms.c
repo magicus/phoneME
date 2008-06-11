@@ -199,14 +199,14 @@ static const char* const FILE_LOCK_ERROR = "File is locked, can not open";
 typedef struct _lockFileList {
     SuiteIdType suiteId;
     pcsl_string recordStoreName;
-    int handle;      //32-bit file handle, useful in close operation
+    int handle;      /* 32-bit file handle, useful in close operation */
     struct _lockFileList* next;
 } lockFileList;
 static lockFileList* lockFileListPtr = NULL;
 
 typedef lockFileList olockFileList;
 
-// Forward declarations for local functions
+/* Forward declarations for local functions */
 
 static int recordStoreCreateLock(SuiteIdType suiteId,
                                  const pcsl_string * name_str, int handle);
@@ -321,7 +321,7 @@ rmsdb_get_unique_id_path(SuiteIdType suiteId, StorageIdType storageId,
     MIDP_ERROR midpErr;
     pcsl_string_status pcslErr;
 
-    *res_path = PCSL_STRING_NULL; // null in case of any error
+    *res_path = PCSL_STRING_NULL; /* null in case of any error */
 
     if (pcsl_string_is_null(name)) {
         return MIDP_ERROR_ILLEGAL_ARGUMENT;
@@ -416,7 +416,7 @@ rmsdb_record_store_delete(char** ppszError,
 
     *ppszError = NULL;
 
-    if ((extension == DB_EXTENSION_INDEX)&&(lockFileListPtr != NULL)) {
+    if ((extension == DB_EXTENSION_INDEX) && (lockFileListPtr != NULL)) {
         /* linked list is already initialised for a db file */
         searchedNodePtr = findLockById(suiteId, name_str);
         if (searchedNodePtr != NULL) {
@@ -574,7 +574,7 @@ rmsdb_get_record_store_list(SuiteIdType suiteId, pcsl_string* *const ppNames) {
     }
 
     /* the main loop */
-    for(i=0,f_errc=0,s_errc=0;;) {
+    for (i=0,f_errc=0,s_errc=0;;) {
         f_errc = storage_get_next_file_in_iterator(&root, handle, &filename);
         if (0 != f_errc) {
             f_errc = 0;
