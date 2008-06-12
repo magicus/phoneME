@@ -680,8 +680,6 @@ void Java_java_lang_Runtime_exitInternal(JVM_SINGLE_ARG_TRAPS) {
   }
 }
 
-static jlong previous_gc_time;
-
 void Java_java_lang_Runtime_gc(JVM_SINGLE_ARG_TRAPS) {
 /**NOTE:
   * Here we have two ways for implementing Runtime_gc():
@@ -693,9 +691,9 @@ void Java_java_lang_Runtime_gc(JVM_SINGLE_ARG_TRAPS) {
   * here we use the first way.
   * But some project may use second way if they want to pass JDTS and don't consider gc() 's affect for performance.
 **/
-#if 1 /*first way*/
+#ifdef ENABLE_FREQUENT_FORCED_GC_SUPPRESSION
   jlong free = ObjectHeap::available_for_current_task();
-
+  static jlong previous_gc_time;
   if (free < 2 * 1024 * 1024) {
       jlong current_gc_time = Os::java_time_millis();
       /*
@@ -703,13 +701,13 @@ void Java_java_lang_Runtime_gc(JVM_SINGLE_ARG_TRAPS) {
        * called within 500ms of the previous call.
        */
       if ((current_gc_time - previous_gc_time) >= 500) {
-  ObjectHeap::full_collect(JVM_SINGLE_ARG_NO_CHECK_AT_BOTTOM);
+        ObjectHeap::full_collect(JVM_SINGLE_ARG_NO_CHECK_AT_BOTTOM);
         previous_gc_time = current_gc_time;
       }
   }
-#else /*second way*/
+#else
   ObjectHeap::full_collect(JVM_SINGLE_ARG_NO_CHECK_AT_BOTTOM);
-#endif
+#endif /* ENABLE_FREQUENT_FORCED_GC_SUPPRESSION */
 }
 
 jlong Java_java_lang_Runtime_freeMemory( void ) {
