@@ -66,22 +66,30 @@ public final class PermissionGroup {
     PermissionGroup(String theName, String theSettingsQuestion,
         String theDisableSettingChoice, String theRuntimeDialogTitle,
         String theRuntimeQuestion, String theRuntimeOneshotQuestion) {
-	this (theName, theName,
-	      theSettingsQuestion, theDisableSettingChoice,
-	      theRuntimeDialogTitle, theRuntimeQuestion,
-	      theRuntimeOneshotQuestion);
+        this (theName, theName,
+              theSettingsQuestion, theDisableSettingChoice,
+              theRuntimeDialogTitle, theRuntimeQuestion,
+              theRuntimeOneshotQuestion);
     }
 
     PermissionGroup(String nativeName, String theName, String theSettingsQuestion,
         String theDisableSettingChoice, String theRuntimeDialogTitle,
         String theRuntimeQuestion, String theRuntimeOneshotQuestion) {
 
-	this.nativeName = nativeName;
+        this.nativeName = nativeName;
         name = theName;
         settingsQuestion = theSettingsQuestion;
+        if (settingsQuestion == null)
+            settingsQuestion = "n/a";
         disableSettingChoice = theDisableSettingChoice;
+        if (disableSettingChoice == null)
+            disableSettingChoice = "n/a";
         runtimeDialogTitle = theRuntimeDialogTitle;
+        if (runtimeDialogTitle == null)
+            runtimeDialogTitle = "n/a";
         runtimeQuestion = theRuntimeQuestion;
+        if (runtimeQuestion == null)
+            runtimeQuestion = "n/a";
         if (theRuntimeOneshotQuestion == null)
             runtimeOneshotQuestion = runtimeQuestion;
     }

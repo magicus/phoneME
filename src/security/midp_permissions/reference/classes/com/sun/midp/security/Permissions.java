@@ -684,11 +684,7 @@ public final class Permissions {
                         messages[i2] = replaceCRLF(tmp[i2]); 
                 } else {
                     messages[0] = list[i1];
-                    i2 = 1;
                 }
-                for (; i2 < messages.length; i2++)
-                    messages[i2] = "n/a";
-                    
                 groupsAll[i1] = new PermissionGroup(list[i1], 
                                         messages[0], messages[1],
                                         messages[2], messages[3],
