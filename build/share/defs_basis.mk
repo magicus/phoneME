@@ -36,7 +36,7 @@
 # check the target-specific makefiles to set this
 #
 AWT_IMPLEMENTATION ?= qt
-AWT_IMPLEMENTATION_DIR ?= ../..
+AWT_IMPLEMENTATION_DIR ?= $(CDC_DIR)
 
 #
 # Include awt implementation makefiles for the profile.
