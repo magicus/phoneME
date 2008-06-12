@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE configuration SYSTEM "../share/configuration.dtd">
+<!--
+        	
+
+        Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+        DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+        
+        This program is free software; you can redistribute it and/or
+        modify it under the terms of the GNU General Public License version
+        2 only, as published by the Free Software Foundation.
+        
+        This program is distributed in the hope that it will be useful, but
+        WITHOUT ANY WARRANTY; without even the implied warranty of
+        MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+        General Public License version 2 for more details (a copy is
+        included at /legal/license.txt).
+        
+        You should have received a copy of the GNU General Public License
+        version 2 along with this work; if not, write to the Free Software
+        Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+        02110-1301 USA
+        
+        Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+        Clara, CA 95054 or visit www.sun.com if you need additional
+        information or have any questions.
+        
+        This source file is specific for Qt-based configurations.
+-->
+<configuration>
+<constants>
+<constant_class Package="com.sun.midp.configurator" Name="Constants" Scope="public">
+<!-- Package javax.microedition.lcdui -->
+  <constant Type="int"
+	    Name="ALERT_NUM_OF_BUTTONS"
+	    Value="3"
+	    Comment="Number of buttons for abstract commands."/>
+  <constant Type="int"
+	    Name="ALERT_BUTTON_WIDTH"
+	    Value="40"
+	    Comment="Width of an abstract command."/>
+  <constant Type="int"
+	    Name="ALERT_BUTTON_HEIGHT"
+	    Value="20"
+	    Comment="Height of an abstract command."/>
+  <constant Type="int"
+	    Name="ALERT_CELL_SPACING"
+	    Value="4"
+	    Comment="Space between image, text and buttons."/>
+  <constant Type="int"
+	    Name="ALERT_WIDTH"
+	    Value="140"
+	    Comment="Width of the alert dialog window."/>
+  <constant Type="int"
+	    Name="ALERT_HEIGHT"
+	    Value="120"
+	    Comment="Height of the alert dialog window."/>
+  <constant Type="int"
+        Name="PAD_CHOICE_POPUP_BUTTON"
+        Value="16"
+        NativeOnly="true"
+        Comment="Subtract this constant from the button width() to get
+                 space available for the button text."/>
+    <constant Type="int"
+          Name="PAD_CAPTION"
+          Value="8"
+          NativeOnly="true"
+          Comment="Space between buttons and around the text, in pixels.
+                   Qt's qwsDecoration does not take it into account."/>
+ </constant_class>
+</constants>
+</configuration>
