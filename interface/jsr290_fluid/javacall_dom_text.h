@@ -58,21 +58,23 @@ extern "C" {
  * @param handle Pointer to the object representing this text.
  * @param offset The 16-bit unit offset at which to split, starting from 
  *   <code>0</code>.
- * @param retValue Pointer to the object representing 
+ * @param ret_value Pointer to the object representing 
  *   the new node, of the same type as this node.
- * @param exceptionCode Code of the error if function fails; 
- *                      see javacall_dom_exceptions 
+ * @param exception_code Code of the error if function fails; the following 
+ *                       codes are acceptable: 
+ *                            JAVACALL_DOM_INDEX_SIZE_ERR
+ *                            JAVACALL_DOM_NO_MODIFICATION_ALLOWED_ERR
  * 
  * @return JAVACALL_OK if all done successfuly,
- *         JAVACALL_FAIL if error occured; in this case exceptionCode has to be 
+ *         JAVACALL_FAIL if error occured; in this case exception_code has to be 
  *                                filled,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
 javacall_dom_text_split_text(javacall_handle handle,
                              javacall_int32 offset,
-                             /* OUT */ javacall_handle* retValue,
-                             /* OUT */ javacall_dom_exceptions* exceptionCode);
+                             /* OUT */ javacall_handle* ret_value,
+                             /* OUT */ javacall_dom_exceptions* exception_code);
 
 /** 
  * Deletes object representing this text

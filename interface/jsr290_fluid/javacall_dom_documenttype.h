@@ -49,23 +49,23 @@ extern "C" {
  * Returns the name of DTD; i.e., the name immediately following the 
  * <code>DOCTYPE</code> keyword.
  * 
- * Note: If retValueLen is less then length of the returned string this function 
- *       has to return with JAVACALL_OUT_OF_MEMORY code and fill retValueLen 
+ * Note: If ret_value_len is less then length of the returned string this function 
+ *       has to return with JAVACALL_OUT_OF_MEMORY code and fill ret_value_len 
  *       with actual length of the returned string.
  *
  * @param handle Pointer to the object representing this documenttype.
- * @param retValue the name of the DTD
- * @param retValueLen Length of the returned string
+ * @param ret_value the name of the DTD
+ * @param ret_value_len Length of the returned string
  * 
  * @return JAVACALL_OK if all done successfuly,
  *         JAVACALL_OUT_OF_MEMORY if length of the returend string is more then 
- *                                specified in retValueLen,
+ *                                specified in ret_value_len,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
 javacall_dom_documenttype_get_name(javacall_handle handle,
-                                   /* OUT */ javacall_utf16_string retValue,
-                                   /* INOUT */ javacall_uint32* retValueLen);
+                                   /* OUT */ javacall_utf16_string ret_value,
+                                   /* INOUT */ javacall_uint32* ret_value_len);
 
 /**
  * Returns a <code>NamedNodeMap</code> containing the general entities, both 
@@ -83,7 +83,7 @@ javacall_dom_documenttype_get_name(javacall_handle handle,
  * <code>entities</code> cannot be altered in any way.
  * 
  * @param handle Pointer to the object representing this documenttype.
- * @param retValue Pointer to the object representing 
+ * @param ret_value Pointer to the object representing 
  *   a <code>NamedNodeMap</code> containing the general entities 
  * contained in the DTD
  * 
@@ -92,7 +92,7 @@ javacall_dom_documenttype_get_name(javacall_handle handle,
  */
 javacall_result
 javacall_dom_documenttype_get_entities(javacall_handle handle,
-                                       /* OUT */ javacall_handle* retValue);
+                                       /* OUT */ javacall_handle* ret_value);
 
 /**
  * Returns a <code>NamedNodeMap</code> containing the notations declared in the 
@@ -102,7 +102,7 @@ javacall_dom_documenttype_get_entities(javacall_handle handle,
  * <code>notations</code> cannot be altered in any way.
  * 
  * @param handle Pointer to the object representing this documenttype.
- * @param retValue Pointer to the object representing 
+ * @param ret_value Pointer to the object representing 
  *   a <code>NamedNodeMap</code> containing the notations declared in the DTD
  * 
  * @return JAVACALL_OK if all done successfuly,
@@ -110,49 +110,49 @@ javacall_dom_documenttype_get_entities(javacall_handle handle,
  */
 javacall_result
 javacall_dom_documenttype_get_notations(javacall_handle handle,
-                                        /* OUT */ javacall_handle* retValue);
+                                        /* OUT */ javacall_handle* ret_value);
 
 /**
  * Returns the public identifier of the external subset.
  * 
- * Note: If retValueLen is less then length of the returned string this function 
- *       has to return with JAVACALL_OUT_OF_MEMORY code and fill retValueLen 
+ * Note: If ret_value_len is less then length of the returned string this function 
+ *       has to return with JAVACALL_OUT_OF_MEMORY code and fill ret_value_len 
  *       with actual length of the returned string.
  *
  * @param handle Pointer to the object representing this documenttype.
- * @param retValue the public identifier of the external subset
- * @param retValueLen Length of the returned string
+ * @param ret_value the public identifier of the external subset
+ * @param ret_value_len Length of the returned string
  * 
  * @return JAVACALL_OK if all done successfuly,
  *         JAVACALL_OUT_OF_MEMORY if length of the returend string is more then 
- *                                specified in retValueLen,
+ *                                specified in ret_value_len,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
 javacall_dom_documenttype_get_public_id(javacall_handle handle,
-                                        /* OUT */ javacall_utf16_string retValue,
-                                        /* INOUT */ javacall_uint32* retValueLen);
+                                        /* OUT */ javacall_utf16_string ret_value,
+                                        /* INOUT */ javacall_uint32* ret_value_len);
 
 /**
  * Returns the system identifier of the external subset.
  * 
- * Note: If retValueLen is less then length of the returned string this function 
- *       has to return with JAVACALL_OUT_OF_MEMORY code and fill retValueLen 
+ * Note: If ret_value_len is less then length of the returned string this function 
+ *       has to return with JAVACALL_OUT_OF_MEMORY code and fill ret_value_len 
  *       with actual length of the returned string.
  *
  * @param handle Pointer to the object representing this documenttype.
- * @param retValue The system identifier of the external subset
- * @param retValueLen Length of the returned string
+ * @param ret_value The system identifier of the external subset
+ * @param ret_value_len Length of the returned string
  * 
  * @return JAVACALL_OK if all done successfuly,
  *         JAVACALL_OUT_OF_MEMORY if length of the returend string is more then 
- *                                specified in retValueLen,
+ *                                specified in ret_value_len,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
 javacall_dom_documenttype_get_system_id(javacall_handle handle,
-                                        /* OUT */ javacall_utf16_string retValue,
-                                        /* INOUT */ javacall_uint32* retValueLen);
+                                        /* OUT */ javacall_utf16_string ret_value,
+                                        /* INOUT */ javacall_uint32* ret_value_len);
 
 /**
  * Returns the internal subset as a string, or <code>NULL</code> if there is none.
@@ -161,23 +161,23 @@ javacall_dom_documenttype_get_system_id(javacall_handle handle,
  * depending on various parameters, including the XML processor used to
  * build the document.
  * 
- * Note: If retValueLen is less then length of the returned string this function 
- *       has to return with JAVACALL_OUT_OF_MEMORY code and fill retValueLen 
+ * Note: If ret_value_len is less then length of the returned string this function 
+ *       has to return with JAVACALL_OUT_OF_MEMORY code and fill ret_value_len 
  *       with actual length of the returned string.
  *
  * @param handle Pointer to the object representing this documenttype.
- * @param retValue a String containing a representation of the internal subset
- * @param retValueLen Length of the returned string
+ * @param ret_value a String containing a representation of the internal subset
+ * @param ret_value_len Length of the returned string
  * 
  * @return JAVACALL_OK if all done successfuly,
  *         JAVACALL_OUT_OF_MEMORY if length of the returend string is more then 
- *                                specified in retValueLen,
+ *                                specified in ret_value_len,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
 javacall_dom_documenttype_get_internal_subset(javacall_handle handle,
-                                              /* OUT */ javacall_utf16_string retValue,
-                                              /* INOUT */ javacall_uint32* retValueLen);
+                                              /* OUT */ javacall_utf16_string ret_value,
+                                              /* INOUT */ javacall_uint32* ret_value_len);
 
 /** 
  * Deletes object representing this documenttype

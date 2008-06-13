@@ -49,23 +49,23 @@ extern "C" {
  * Returns returns the name of this attribute. If <code>Node.localName</code> is 
  * different from <code>NULL</code>, this attribute is a qualified name.
  * 
- * Note: If retValueLen is less then length of the returned string this function 
- *       has to return with JAVACALL_OUT_OF_MEMORY code and fill retValueLen 
+ * Note: If ret_value_len is less then length of the returned string this function 
+ *       has to return with JAVACALL_OUT_OF_MEMORY code and fill ret_value_len 
  *       with actual length of the returned string.
  *
  * @param handle Pointer to the object representing this attr.
- * @param retValue the attribute name
- * @param retValueLen Length of the returned string
+ * @param ret_value the attribute name
+ * @param ret_value_len Length of the returned string
  * 
  * @return JAVACALL_OK if all done successfuly,
  *         JAVACALL_OUT_OF_MEMORY if length of the returend string is more then 
- *                                specified in retValueLen,
+ *                                specified in ret_value_len,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
 javacall_dom_attr_get_name(javacall_handle handle,
-                           /* OUT */ javacall_utf16_string retValue,
-                           /* INOUT */ javacall_uint32* retValueLen);
+                           /* OUT */ javacall_utf16_string ret_value,
+                           /* INOUT */ javacall_uint32* ret_value_len);
 
 /**
  * Returns if this attribute was explicitly given a value in the original 
@@ -93,14 +93,14 @@ javacall_dom_attr_get_name(javacall_handle handle,
  * <code>true</code>. 
  * 
  * @param handle Pointer to the object representing this attr.
- * @param retValue <code>true</code> if this attribute was explicitly specified, otherwise <code>false</code>
+ * @param ret_value <code>true</code> if this attribute was explicitly specified, otherwise <code>false</code>
  * 
  * @return JAVACALL_OK if all done successfuly,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
 javacall_dom_attr_get_specified(javacall_handle handle,
-                                /* OUT */ javacall_bool* retValue);
+                                /* OUT */ javacall_bool* ret_value);
 
 /**
  * Returns returns the value of this attribute. 
@@ -117,23 +117,23 @@ javacall_dom_attr_get_specified(javacall_handle handle,
  * mutation; in such case, the value on retrieval may differ from the 
  * value on setting.
  * 
- * Note: If retValueLen is less then length of the returned string this function 
- *       has to return with JAVACALL_OUT_OF_MEMORY code and fill retValueLen 
+ * Note: If ret_value_len is less then length of the returned string this function 
+ *       has to return with JAVACALL_OUT_OF_MEMORY code and fill ret_value_len 
  *       with actual length of the returned string.
  *
  * @param handle Pointer to the object representing this attr.
- * @param retValue a String containing the value of this attribute
- * @param retValueLen Length of the returned string
+ * @param ret_value a String containing the value of this attribute
+ * @param ret_value_len Length of the returned string
  * 
  * @return JAVACALL_OK if all done successfuly,
  *         JAVACALL_OUT_OF_MEMORY if length of the returend string is more then 
- *                                specified in retValueLen,
+ *                                specified in ret_value_len,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
 javacall_dom_attr_get_value(javacall_handle handle,
-                            /* OUT */ javacall_utf16_string retValue,
-                            /* INOUT */ javacall_uint32* retValueLen);
+                            /* OUT */ javacall_utf16_string ret_value,
+                            /* INOUT */ javacall_uint32* ret_value_len);
 
 /**
  * Sets sets the value of this attribute. 
@@ -148,25 +148,21 @@ javacall_dom_attr_get_value(javacall_handle handle,
  * 
  * @param handle Pointer to the object representing this attr.
  * @param value a String containing the value of this attribute
- * @param exceptionCode Code of the error if function fails; 
- *                      see javacall_dom_exceptions 
  * 
  * @return JAVACALL_OK if all done successfuly,
- *         JAVACALL_FAIL if error occured; in this case exceptionCode has to be 
- *                                filled,
+ *         JAVACALL_FAIL if NO_MODIFICATION_ALLOWED_ERR occured,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
 javacall_dom_attr_set_value(javacall_handle handle,
-                            javacall_const_utf16_string value,
-                            /* OUT */ javacall_dom_exceptions* exceptionCode);
+                            javacall_const_utf16_string value);
 
 /**
  * Returns the <code>Element</code> node this attribute is attached to or 
  * <code>NULL</code> if this attribute is not in use.
  * 
  * @param handle Pointer to the object representing this attr.
- * @param retValue Pointer to the object representing 
+ * @param ret_value Pointer to the object representing 
  *   the <code>Element</code> node this attribute is attached to, or <code>NULL</code>
  * 
  * @return JAVACALL_OK if all done successfuly,
@@ -174,7 +170,7 @@ javacall_dom_attr_set_value(javacall_handle handle,
  */
 javacall_result
 javacall_dom_attr_get_owner_element(javacall_handle handle,
-                                    /* OUT */ javacall_handle* retValue);
+                                    /* OUT */ javacall_handle* ret_value);
 
 /**
  * Returns whether this attribute is known to be of type ID or not. 
@@ -193,14 +189,14 @@ javacall_dom_attr_get_owner_element(javacall_handle handle,
  * </ul>
  * 
  * @param handle Pointer to the object representing this attr.
- * @param retValue <code>true</code> if the attribute is of type ID, otherwise <code>false</code>
+ * @param ret_value <code>true</code> if the attribute is of type ID, otherwise <code>false</code>
  * 
  * @return JAVACALL_OK if all done successfuly,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
 javacall_dom_attr_is_id(javacall_handle handle,
-                        /* OUT */ javacall_bool* retValue);
+                        /* OUT */ javacall_bool* ret_value);
 
 /** 
  * Deletes object representing this attr
