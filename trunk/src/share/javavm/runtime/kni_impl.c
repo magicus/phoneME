@@ -311,8 +311,9 @@ KNIEXPORT void								\
 KNI_SetStatic##elemType_##Field(jclass classHandle, jfieldID fieldID,	\
 				jType_ value)				\
 {									\
+    CVMExecEnv* ee = CVMgetEE();					\
     KNI_FIELD_ASSERTS(classHandle, fieldID, CVM_TRUE);			\
-    CVMfbStaticField(CVMgetEE(), fieldID).unionField_ = value;		\
+    CVMfbStaticField(ee, fieldID).unionField_ = value;			\
 }
 
 CVM_DEFINE_KNI_STATIC_GETTER(jboolean, Boolean, i)
