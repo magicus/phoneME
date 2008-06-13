@@ -160,14 +160,12 @@ public class CardSlot {
         boolean alive = doIsAlive();
         if (!alive) {
             try {
-                if (!alive) {
-                    lockSlot();
-                    boolean changed = isCardChanged();
-                    unlockSlot();
-                    if (changed) {
-                        alive = doIsAlive();
-                    }
-                }
+                lockSlot();
+                boolean changed = isCardChanged();
+                unlockSlot();
+                if (changed) {
+                    alive = doIsAlive();
+                }                
             } catch (IOException e) {
                 alive = false;
             }
@@ -279,6 +277,9 @@ public class CardSlot {
      */
     public void initACL() {
         boolean changed;
+        
+        /* Make changed event occur if it was opened new cref connection */
+        doIsAlive();
         try {
             lockSlot();
             changed = isCardChanged();
