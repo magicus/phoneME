@@ -111,6 +111,11 @@ extern int midpIncResourceCount(RscType type, int delta);
  */
 extern int midpDecResourceCount(RscType type, int delta);
 
+/**
+ * Finalize the Resource limit structures.
+ */
+extern void finalizeResourceLimit(void);
+
 #ifdef __cplusplus
 }
 #endif

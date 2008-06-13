@@ -29,6 +29,7 @@
 #include <midpMalloc.h>
 #include <midpAMS.h>
 #include <midpStorage.h>
+#include <midpResourceLimit.h>
 #include <midp_properties_port.h>
 #include <midpInit.h>
 #include <suitestore_common.h>
@@ -290,6 +291,7 @@ void midpFinalize() {
 #endif
     if (initLevel > MEM_LEVEL) {
         /* Cleanup native code resources on exit */
+        finalizeResourceLimit();
         finalizeConfig();
 
         /*
