@@ -2081,6 +2081,7 @@ JVM_StartThread(JNIEnv *env, jobject thisObj, jint priority)
 #ifdef CVM_DEBUG
 	    msg = "CVMthreadCreate failed";
 #endif
+	    CVMmutexUnlock(&info->parentLock);
 	    goto out_of_memory2;
 	}
     }
