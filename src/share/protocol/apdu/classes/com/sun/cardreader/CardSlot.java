@@ -278,7 +278,7 @@ public class CardSlot {
     public void initACL() {
         boolean changed;
         
-        /* Make changed event occur if it was opened new cref connection */
+        /* Make CARD_CHANGED event occur if new cref connection was opened */
         doIsAlive();
         try {
             lockSlot();
