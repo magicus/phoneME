@@ -154,7 +154,7 @@ static void initResourceLimit(void) {
     int i, j;
 
 #if ENABLE_CDC
-    // CDC does not have isolates.
+    /* CDC does not have isolates. */
     max_isolates = 1;
 #else
 
@@ -204,7 +204,7 @@ static void initResourceLimit(void) {
 /**
  * Finalize the Resource limit structures.
  */
-void finalizeResourceLimit(void) {
+void midpFinalizeResourceLimit(void) {
     if (isInitialized) {
         if (gIsolateResourceUsage) {
             midpFree(gIsolateResourceUsage);

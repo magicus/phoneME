@@ -54,7 +54,7 @@ typedef enum {
     RSC_TYPE_AUDIO_CHA,
     RSC_TYPE_IMAGE_MUT,
     RSC_TYPE_IMAGE_IMMUT,
-    RSC_TYPE_COUNT // Total number of resources
+    RSC_TYPE_COUNT /* Total number of resources */
 } RscType; 
 
 /**
@@ -114,7 +114,7 @@ extern int midpDecResourceCount(RscType type, int delta);
 /**
  * Finalize the Resource limit structures.
  */
-extern void finalizeResourceLimit(void);
+extern void midpFinalizeResourceLimit(void);
 
 #ifdef __cplusplus
 }

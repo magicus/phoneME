@@ -197,8 +197,10 @@ int midpInitCallback(int level, int (*init)(void), void (*final)(void)) {
             MIDPError status;
             int err;
 
-            // initializing suspend/resume system first, other systems may then
-            // register their resources there.
+            /* 
+             * initializing suspend/resume system first, other systems may then
+             * register their resources there. 
+             */
 #if !ENABLE_CDC
             sr_initSystem();
 #endif
@@ -291,7 +293,7 @@ void midpFinalize() {
 #endif
     if (initLevel > MEM_LEVEL) {
         /* Cleanup native code resources on exit */
-        finalizeResourceLimit();
+        midpFinalizeResourceLimit();
         finalizeConfig();
 
         /*
