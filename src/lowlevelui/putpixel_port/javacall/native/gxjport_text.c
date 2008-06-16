@@ -74,7 +74,7 @@ int gxjport_draw_chars(int pixel, const jshort *clip, gxj_screen_buffer *dst,
         return KNI_FALSE;
     }
 
-    result = javacall_font_draw((javacall_pixel)pixel,
+    result = javacall_font_draw(GXJ_RGB24TORGB16(pixel),
                                      clip[0],
                                      clip[1],
                                      clip[2],
