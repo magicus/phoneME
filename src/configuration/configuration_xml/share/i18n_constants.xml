@@ -334,6 +334,9 @@
             Name="LCDUI_TF_CAPS_ON_LB_PTI"
             Comment="Input Methods: Lable name for 'PTI' caps on"/>
   <constant Type="int"
+            Name="LCDUI_TF_NATIVE_VKBD"
+            Comment="Input Methods: Name for 'Native Virtual Keyboard'"/>
+  <constant Type="int"
             Name="AMS_SELECT_FOLDER"
             Comment="AMS: general"/>
   <constant Type="int"
