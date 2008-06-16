@@ -1791,7 +1791,7 @@ class AppManagerUI extends Form
             int cH = g.getClipHeight();
 
             if ((cW + cX) > bgIconW) {
-                if (text != null && h > ICON_FONT.getHeight()) {
+                if (text != null && h >= ICON_FONT.getHeight()) {
 
                     int color;
                     if (msi.proxy == null) {
