@@ -986,8 +986,8 @@ static javacall_result audio_qs_get_player_controls(javacall_handle handle,
             break;
         case JC_FMT_MIDI:
         case JC_FMT_SP_MIDI:
-        case JC_FMT_DEVICE_MIDI:
             *controls |= JAVACALL_MEDIA_CTRL_METADATA;
+        case JC_FMT_DEVICE_MIDI:
             *controls |= JAVACALL_MEDIA_CTRL_MIDI;
             *controls |= JAVACALL_MEDIA_CTRL_TEMPO;
             *controls |= JAVACALL_MEDIA_CTRL_RATE;
