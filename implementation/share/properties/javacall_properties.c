@@ -72,6 +72,7 @@ javacall_result javacall_initialize_configurations(void) {
 
     handle = javacall_configdb_load(property_file_name, file_name_len);
     if (handle == NULL) {
+        init_state = PROPERTIES_INIT_NOT_STARTED;
         return JAVACALL_FAIL;
     }
     init_state = PROPERTIES_INIT_COMPLETED;
@@ -96,6 +97,7 @@ void javacall_finalize_configurations(void) {
     }
     javacall_configdb_free(handle);
     handle = NULL;
+    init_state = PROPERTIES_INIT_NOT_STARTED;
 }
 
 /**
