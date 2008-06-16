@@ -51,6 +51,6 @@ MIDP_DEPS += $(JAVACALL_LIB_DIR)/javacall$(g).lib
 # Platform-specific linker flags and libraries
 
 LIBS += $(JAVACALL_LIB_DIR)/javacall$(g).lib
-LIBS += $(JAVACALL_LIB_DIR)/resources.res
+LIBS += $(JAVACALL_OBJ_DIR)/resources.res
 #LIBS += $(JAVACALL_LIB_DIR)/emulator.res
 #LIBS += Comdlg32.lib shell32.lib dsound.lib advapi32.lib
