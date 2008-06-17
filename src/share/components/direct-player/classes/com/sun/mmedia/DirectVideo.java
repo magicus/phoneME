@@ -72,11 +72,14 @@ public class DirectVideo extends DirectPlayer implements
     private int sw;
     private int sh;
 
-    // Display position and size
-    private int dx;
-    private int dy;
-    private int dw;
-    private int dh;
+    // Display position and size + temporary values for fullscreen mode
+    private int dx, tmp_dx;
+    private int dy, tmp_dy;
+    private int dw, tmp_dw;
+    private int dh, tmp_dh;
+
+    // Fullscreen mode flag
+    private boolean fsmode = false;
 
     // visible?
     private boolean visible = false;
@@ -168,7 +171,7 @@ public class DirectVideo extends DirectPlayer implements
         int diffy = g.getTranslateY();
         int px, py, pw, ph;
  
-        // Calcurate positions
+        // Calculate positions
         // And, do a physical clipping
         // Currently, Zoran chipset does not support negative position and exceed position
         px = x + diffx;
@@ -385,12 +388,19 @@ public class DirectVideo extends DirectPlayer implements
         }
         checkState();
         if (displayMode == USE_DIRECT_VIDEO) {
-            synchronized(boundLock) {
-                dx = x;
-                dy = y;
-            }
-            if (dw != 0 && dh !=0) {
-                repaint();
+            if (fsmode) {
+                synchronized(boundLock) {
+                    tmp_dx = x;
+                    tmp_dy = y;
+                }
+            } else {
+                synchronized(boundLock) {
+                    dx = x;
+                    dy = y;
+                }
+                if (dw != 0 && dh !=0) {
+                    repaint();
+                }
             }
         }
     }
@@ -411,20 +421,27 @@ public class DirectVideo extends DirectPlayer implements
             throw new IllegalArgumentException("invalid size");
         }
 
-        synchronized(boundLock) {
-            if (dw != width && dh != height) sizeChanged = true;
-            dw = width;
-            dh = height;
-        }
-        if (item != null) {
-            // this will raise sizeChanged event
-            // and sizeChanged shall raise paint event also
-            item.setPreferredSize( width, height );
-        }
-        repaint();
-        
-        if (sizeChanged) {
-            sendEvent(PlayerListener.SIZE_CHANGED, this);
+        if (fsmode) {
+            synchronized(boundLock) {
+                tmp_dw = width;
+                tmp_dh = height;
+            }
+        } else {
+            synchronized(boundLock) {
+                if (dw != width && dh != height) sizeChanged = true;
+                dw = width;
+                dh = height;
+            }
+            if (item != null) {
+                // this will raise sizeChanged event
+                // and sizeChanged shall raise paint event also
+                item.setPreferredSize( width, height );
+            }
+            repaint();
+
+            if (sizeChanged) {
+                sendEvent(PlayerListener.SIZE_CHANGED, this);
+            }
         }
     }
     
@@ -483,12 +500,22 @@ public class DirectVideo extends DirectPlayer implements
         }
     }
     
-    /**
-     * There is no full screen mode now
-     */
     public void setDisplayFullScreen(boolean fullScreenMode) throws MediaException {
         checkState();
         nSetFullScreenMode(hNative,fullScreenMode);
+        fsmode = fullScreenMode;
+
+        if (fsmode) {
+            synchronized( boundLock ) {
+                tmp_dx = dx;
+                tmp_dy = dy;
+                tmp_dw = dw;
+                tmp_dh = dh;
+            }
+        } else {
+            setDisplayLocation( tmp_dx, tmp_dy );
+            setDisplaySize( tmp_dw, tmp_dh );
+        }
     }
     
     public byte[] getSnapshot(String imageType) throws MediaException
