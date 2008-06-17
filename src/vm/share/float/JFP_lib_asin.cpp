@@ -88,37 +88,37 @@ double jvm_fplib_asin(double x) {
   if(ix>= 0x3ff00000) {		/* |x|>= 1 */
     if(((ix-0x3ff00000)|__JLO(x))==0)
       /* asin(1)=+-pi/2 with inexact */
-      return x*as_pio2_hi+x*as_pio2_lo;
-    return (x-x)/(x-x);		/* asin(|x|>1) is NaN */
+      return jvm_dadd(jvm_dmul(x, as_pio2_hi), jvm_dmul(x, as_pio2_lo));
+    return jvm_ddiv(jvm_dsub(x, x), jvm_dsub(x, x));		/* asin(|x|>1) is NaN */
   } else if (ix<0x3fe00000) {	/* |x|<0.5 */
     if(ix<0x3e400000) {		/* if |x| < 2**-27 */
-      if(as_huge+x>as_one) return x;/* return x with inexact if x!=0*/
+      if(jvm_dcmpl(jvm_dadd(as_huge, x), as_one) > 0) return x;/* return x with inexact if x!=0*/
     } else
-      t = x*x;
-    p = t*(as_pS0+t*(as_pS1+t*(as_pS2+t*(as_pS3+t*(as_pS4+t*as_pS5)))));
-    q = as_one+t*(as_qS1+t*(as_qS2+t*(as_qS3+t*as_qS4)));
-    w = p/q;
-    return x+x*w;
+      t = jvm_dmul(x, x);
+    p = jvm_dmul(t, jvm_dadd(as_pS0, jvm_dmul(t, jvm_dadd(as_pS1, jvm_dmul(t, jvm_dadd(as_pS2, jvm_dmul(t, jvm_dadd(as_pS3, jvm_dmul(t, jvm_dadd(as_pS4, jvm_dmul(t, as_pS5)))))))))));
+    q = jvm_dadd(as_one, jvm_dmul(t, jvm_dadd(as_qS1, jvm_dmul(t, jvm_dadd(as_qS2, jvm_dmul(t, jvm_dadd(as_qS3, jvm_dmul(t, as_qS4))))))));
+    w = jvm_ddiv(p, q);
+    return jvm_dadd(x, jvm_dmul(x, w));
   }
   /* 1> |x|>= 0.5 */
-  w = as_one-fabs(x);
-  t = w*0.5;
-  p = t*(as_pS0+t*(as_pS1+t*(as_pS2+t*(as_pS3+t*(as_pS4+t*as_pS5)))));
-  q = as_one+t*(as_qS1+t*(as_qS2+t*(as_qS3+t*as_qS4)));
+  w = jvm_dsub(as_one, jvm_fabs(x));
+  t = jvm_dmul(w, 0.5);
+  p = jvm_dmul(t, jvm_dadd(as_pS0, jvm_dmul(t, jvm_dadd(as_pS1, jvm_dmul(t, jvm_dadd(as_pS2, jvm_dmul(t, jvm_dadd(as_pS3, jvm_dmul(t, jvm_dadd(as_pS4, jvm_dmul(t, as_pS5)))))))))));
+  q = jvm_dadd(as_one, jvm_dmul(t, jvm_dadd(as_qS1, jvm_dmul(t, jvm_dadd(as_qS2, jvm_dmul(t, jvm_dadd(as_qS3, jvm_dmul(t, as_qS4))))))));
   s = ieee754_sqrt(t);
   if(ix>=0x3FEF3333) { 	/* if |x| > 0.975 */
-    w = p/q;
-    t = as_pio2_hi-(2.0*(s+s*w)-as_pio2_lo);
+    w = jvm_ddiv(p, q);
+    t = jvm_dsub(as_pio2_hi, jvm_dsub(jvm_dmul(2.0, jvm_dadd(s, jvm_dmul(s, w))), as_pio2_lo));
   } else {
     w  = s;
     __JLO(w) = 0;
-    c  = (t-w*w)/(s+w);
-    r  = p/q;
-    p  = 2.0*s*r-(as_pio2_lo-2.0*c);
-    q  = as_pio4_hi-2.0*w;
-    t  = as_pio4_hi-(p-q);
+    c  = jvm_ddiv(jvm_dsub(t, jvm_dmul(w, w)), jvm_dadd(s, w));
+    r  = jvm_ddiv(p, q);
+    p  = jvm_dsub(jvm_dmul(jvm_dmul(2.0, s), r), jvm_dsub(as_pio2_lo, jvm_dmul(2.0, c)));
+    q  = jvm_dsub(as_pio4_hi, jvm_dmul(2.0, w));
+    t  = jvm_dsub(as_pio4_hi, jvm_dsub(p, q));
   }
-  if(hx>0) return t; else return -t;
+  if(hx>0) return t; else return jvm_dneg(t);
 }
 
 #ifdef __cplusplus

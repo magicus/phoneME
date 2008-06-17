@@ -91,39 +91,39 @@ double jvm_fplib_atan(double x) {
   if(ix>=0x44100000) {	/* if |x| >= 2^66 */
     if(ix>0x7ff00000||
        (ix==0x7ff00000&&(__JLO(x)!=0)))
-      return x+x;		/* NaN */
-    if(hx>0) return  atanhi[3]+atanlo[3];
-    else     return -atanhi[3]-atanlo[3];
+      return jvm_dadd(x, x);		/* NaN */
+    if(hx>0) return          jvm_dadd(atanhi[3], atanlo[3]);
+    else     return jvm_dneg(jvm_dadd(atanhi[3], atanlo[3]));
   } if (ix < 0x3fdc0000) {	/* |x| < 0.4375 */
     if (ix < 0x3e200000) {	/* |x| < 2^-29 */
-      if(atan_huge+x>atan_one) return x;	/* raise inexact */
+      if(jvm_dcmpl(jvm_dadd(atan_huge, x), atan_one) > 0) return x;	/* raise inexact */
     }
     id = -1;
   } else {
     x = jvm_fabs(x);
     if (ix < 0x3ff30000) {		/* |x| < 1.1875 */
       if (ix < 0x3fe60000) {	/* 7/16 <=|x|<11/16 */
-        id = 0; x = (2.0*x-atan_one)/(2.0+x);
+        id = 0; x = jvm_ddiv(jvm_dsub(jvm_dmul(2.0, x), atan_one), jvm_dadd(2.0, x));
       } else {			/* 11/16<=|x|< 19/16 */
-        id = 1; x  = (x-atan_one)/(x+atan_one);
+        id = 1; x  = jvm_ddiv(jvm_dsub(x, atan_one), jvm_dadd(x, atan_one));
       }
     } else {
       if (ix < 0x40038000) {	/* |x| < 2.4375 */
-        id = 2; x  = (x-1.5)/(atan_one+1.5*x);
+        id = 2; x  = jvm_ddiv(jvm_dsub(x, 1.5), jvm_dadd(atan_one, jvm_dmul(1.5, x)));
       } else {			/* 2.4375 <= |x| < 2^66 */
-        id = 3; x  = -1.0/x;
+        id = 3; x  = jvm_ddiv(-1.0, x);
       }
     }}
   /* end of argument reduction */
-  z = x*x;
-  w = z*z;
+  z = jvm_dmul(x, x);
+  w = jvm_dmul(z, z);
   /* break sum from i=0 to 10 aT[i]z**(i+1) into odd and even poly */
-  s1 = z*(aT[0]+w*(aT[2]+w*(aT[4]+w*(aT[6]+w*(aT[8]+w*aT[10])))));
-  s2 = w*(aT[1]+w*(aT[3]+w*(aT[5]+w*(aT[7]+w*aT[9]))));
-  if (id<0) return x - x*(s1+s2);
+  s1 = jvm_dmul(z, jvm_dadd(aT[0], jvm_dmul(w, jvm_dadd(aT[2], jvm_dmul(w, jvm_dadd(aT[4], jvm_dmul(w, jvm_dadd(aT[6], jvm_dmul(w, jvm_dadd(aT[8], jvm_dmul(w, aT[10])))))))))));
+  s2 = jvm_dmul(w, jvm_dadd(aT[1], jvm_dmul(w, jvm_dadd(aT[3], jvm_dmul(w, jvm_dadd(aT[5], jvm_dmul(w, jvm_dadd(aT[7], jvm_dmul(w, aT[9])))))))));
+  if (id<0) return jvm_dsub(x, jvm_dmul(x, jvm_dadd(s1, s2)));
   else {
-    z = atanhi[id] - ((x*(s1+s2) - atanlo[id]) - x);
-    return (hx<0)? -z:z;
+    z = jvm_dsub(atanhi[id], jvm_dsub(jvm_dsub(jvm_dmul(x, jvm_dadd(s1, s2)), atanlo[id]), x));
+    return (hx<0)? jvm_dneg(z):z;
   }
 }
 

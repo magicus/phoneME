@@ -82,34 +82,34 @@ double jvm_fplib_acos(double x) {
       if(hx>0) return 0.0;		/* acos(1) = 0  */
       else return ac_pi+2.0*ac_pio2_lo;	/* acos(-1)= pi */
     }
-    return (x-x)/(x-x);		/* acos(|x|>1) is NaN */
+    return jvm_ddiv(jvm_dsub(x, x), jvm_dsub(x, x));		/* acos(|x|>1) is NaN */
   }
   if(ix<0x3fe00000) {	/* |x| < 0.5 */
     if(ix<=0x3c600000) return ac_pio2_hi+ac_pio2_lo;/*if|x|<2**-57*/
-    z = x*x;
-    p = z*(ac_pS0+z*(ac_pS1+z*(ac_pS2+z*(ac_pS3+z*(ac_pS4+z*ac_pS5)))));
-    q = ac_one+z*(ac_qS1+z*(ac_qS2+z*(ac_qS3+z*ac_qS4)));
-    r = p/q;
-    return ac_pio2_hi - (x - (ac_pio2_lo-x*r));
+    z = jvm_dmul(x, x);
+    p = jvm_dmul(z, jvm_dadd(ac_pS0, jvm_dmul(z, jvm_dadd(ac_pS1, jvm_dmul(z, jvm_dadd(ac_pS2, jvm_dmul(z, jvm_dadd(ac_pS3, jvm_dmul(z, jvm_dadd(ac_pS4, jvm_dmul(z, ac_pS5)))))))))));
+    q = jvm_dadd(ac_one, jvm_dmul(z, jvm_dadd(ac_qS1, jvm_dmul(z, jvm_dadd(ac_qS2, jvm_dmul(z, jvm_dadd(ac_qS3, jvm_dmul(z, ac_qS4))))))));
+    r = jvm_ddiv(p, q);
+    return jvm_dsub(ac_pio2_hi, jvm_dsub(x, jvm_dsub(ac_pio2_lo, jvm_dmul(x, r))));
   } else  if (hx<0) {		/* x < -0.5 */
-    z = (ac_one+x)*0.5;
-    p = z*(ac_pS0+z*(ac_pS1+z*(ac_pS2+z*(ac_pS3+z*(ac_pS4+z*ac_pS5)))));
-    q = ac_one+z*(ac_qS1+z*(ac_qS2+z*(ac_qS3+z*ac_qS4)));
+    z = jvm_dmul(jvm_dadd(ac_one, x), 0.5);
+    p = jvm_dmul(z, jvm_dadd(ac_pS0, jvm_dmul(z, jvm_dadd(ac_pS1, jvm_dmul(z, jvm_dadd(ac_pS2, jvm_dmul(z, jvm_dadd(ac_pS3, jvm_dmul(z, jvm_dadd(ac_pS4, jvm_dmul(z, ac_pS5)))))))))));
+    q = jvm_dadd(ac_one, jvm_dmul(z, jvm_dadd(ac_qS1, jvm_dmul(z, jvm_dadd(ac_qS2, jvm_dmul(z, jvm_dadd(ac_qS3, jvm_dmul(z, ac_qS4))))))));
     s = ieee754_sqrt(z);
-    r = p/q;
-    w = r*s-ac_pio2_lo;
-    return ac_pi - 2.0*(s+w);
+    r = jvm_ddiv(p, q);
+    w = jvm_dsub(jvm_dmul(r, s), ac_pio2_lo);
+    return jvm_dsub(ac_pi, jvm_dmul(2.0, jvm_dadd(s, w)));
   } else {			/* x > 0.5 */
-    z = (ac_one-x)*0.5;
+    z = jvm_dmul(jvm_dsub(ac_one, x), 0.5);
     s = ieee754_sqrt(z);
     df = s;
     __JLO(df) = 0;
-    c  = (z-df*df)/(s+df);
-    p = z*(ac_pS0+z*(ac_pS1+z*(ac_pS2+z*(ac_pS3+z*(ac_pS4+z*ac_pS5)))));
-    q = ac_one+z*(ac_qS1+z*(ac_qS2+z*(ac_qS3+z*ac_qS4)));
-    r = p/q;
-    w = r*s+c;
-    return 2.0*(df+w);
+    c  = jvm_ddiv(jvm_dsub(z, jvm_dmul(df, df)), jvm_dadd(s, df));
+    p = jvm_dmul(z, jvm_dadd(ac_pS0, jvm_dmul(z, jvm_dadd(ac_pS1, jvm_dmul(z, jvm_dadd(ac_pS2, jvm_dmul(z, jvm_dadd(ac_pS3, jvm_dmul(z, jvm_dadd(ac_pS4, jvm_dmul(z, ac_pS5)))))))))));
+    q = jvm_dadd(ac_one, jvm_dmul(z, jvm_dadd(ac_qS1, jvm_dmul(z, jvm_dadd(ac_qS2, jvm_dmul(z, jvm_dadd(ac_qS3, jvm_dmul(z, ac_qS4))))))));
+    r = jvm_ddiv(p, q);
+    w = jvm_dadd(jvm_dmul(r, s), c);
+    return jvm_dmul(2.0, jvm_dadd(df, w));
   }
 }
 

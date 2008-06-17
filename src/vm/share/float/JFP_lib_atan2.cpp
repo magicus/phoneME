@@ -54,7 +54,7 @@ double jvm_fplib_atan2(double x, double y) {
   ly = __JLO(y);
   if(((ix|((lx|-(int)lx)>>31))>0x7ff00000)||
      ((iy|((ly|-(int)ly)>>31))>0x7ff00000))	/* x or y is NaN */
-    return x+y;
+    return jvm_dadd(x, y);
   if(((hx-0x3ff00000)|lx)==0) return jvm_fplib_atan(y);   /* x=1.0 */
   m = ((hy>>31)&1)|((hx>>30)&2);	/* 2*sign(x)+sign(y) */
   
@@ -97,14 +97,14 @@ double jvm_fplib_atan2(double x, double y) {
   k = (iy-ix)>>20;
   if(k > 60) z=atan2_pi_o_2+0.5*atan2_pi_lo; 	/* |y/x| >  2**60 */
   else if(hx<0&&k<-60) z=0.0; 	/* |y|/x < -2**60 */
-  else z=jvm_fplib_atan(jvm_fabs(y/x));		/* safe to do y/x */
+  else z=jvm_fplib_atan(jvm_fabs(jvm_ddiv(y, x)));		/* safe to do y/x */
   switch (m) {
   case 0: return       z  ;	/* atan(+,+) */
   case 1: __JHI(z) ^= 0x80000000;
     return       z  ;	/* atan(-,+) */
-  case 2: return  atan2_pi-(z-atan2_pi_lo);/* atan(+,-) */
+  case 2: return  jvm_dsub(atan2_pi, jvm_dsub(z, atan2_pi_lo));/* atan(+,-) */
   default: /* case 3 */
-    return  (z-atan2_pi_lo)-atan2_pi;/* atan(-,-) */
+    return  jvm_dsub(jvm_dsub(z, atan2_pi_lo), atan2_pi);/* atan(-,-) */
   }
 }
 
