@@ -26,6 +26,9 @@
 #define __JAVACALL_OS_H
 
 
+#include "javacall_defs.h"
+
+
 /**
  * A mutex abstraction.
  */
