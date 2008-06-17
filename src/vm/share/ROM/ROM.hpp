@@ -219,13 +219,16 @@ public:
  bool remove_if_not_currently_shared(); 
  bool is_shared(const Task* const task);
 #ifdef AZZERT
- bool is_shared();
+ bool is_shared( void ) const;
 #endif
 #else
   void add_to_global_binary_images();
+#ifdef AZZERT
+  bool is_shared( void ) const { return false; }
 #endif
-  bool remove_from_global_binary_images();
-#else
+#endif
+  void remove_from_global_binary_images();
+#else // ENABLE_ISOLATES
   void add_to_global_binary_images() {}
   void remove_from_global_binary_images() {}
 #endif  
@@ -330,7 +333,17 @@ public:
 #endif
   static void oops_do(void do_oop(OopDesc**), bool do_all_data_objects,
                       bool do_method_variable_parts);
-  static size_t get_max_offset();
+
+  static size_t get_max_offset( void ) {
+#if ENABLE_SEGMENTED_ROM_TEXT_BLOCK
+    const size_t text_size = _text_total_size;
+#else
+    const size_t text_size = _rom_text_block_size;
+#endif
+    const size_t data_size = _rom_data_block_size;
+    const size_t max_offset = text_size > data_size ? text_size : data_size;
+    return max_offset << 1;
+  }
 
 #if !defined(PRODUCT) || USE_PRODUCT_BINARY_IMAGE_GENERATOR
   static bool is_synchronized_method_allowed(Method *method);

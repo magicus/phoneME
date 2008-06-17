@@ -690,8 +690,7 @@ void ROM::dispose_binary_images() {
   // if USE_IMAGE_MAPPING, because in USE_IMAGE_PRELOADING or 
   // USE_LARGE_OBJECT_AREA cases there's no opened files left after the image
   // is loaded.
-  FOREACH_TASK(t)
-  {
+  FOREACH_TASK(t) {
     t->free_binary_images();
   }
   ENDEACH_TASK;
@@ -921,110 +920,79 @@ bool ROMBundle::remove_if_not_currently_shared( void  ) {
 
 bool ROMBundle::is_shared(const Task* dead_task) {
   TaskList::Raw tlist = Universe::task_list()->obj();
-  int task_id;
   const int len = tlist().length();
-  Task::Raw task;
-  ObjArray::Raw images;
-  for (task_id = Task::FIRST_TASK; task_id < len; task_id++) {
-    task =  tlist().obj_at(task_id);
-    if (task.is_null()) continue;
+  for( int task_id = Task::FIRST_TASK; task_id < len; task_id++ ) {
+    Task::Raw task =  tlist().obj_at(task_id);
+    if( task.is_null() ) continue;
     if (task.obj() == dead_task->obj()) continue;
-    images = task().binary_images();
+
+    ObjArray::Raw images = task().binary_images();
     if (images.is_null()) continue;
+
     const int images_len = images().length();
-    for (int i = 0; i < images_len; i++) {
-      if (images().obj_at(i) == (OopDesc*)this) return true;
+    for( int i = 0; i < images_len; i++ ) {
+      if( images().obj_at(i) == (OopDesc*)this ) {
+        return true;
+      }
     }
   }
   return false;
 }
+
 #ifdef AZZERT
-bool ROMBundle::is_shared() {
+inline bool ROMBundle::is_shared( void ) const {
   TaskList::Raw tlist = Universe::task_list()->obj();
-  int task_id;
   const int len = tlist().length();
-  Task::Raw task;
-  ObjArray::Raw images;
   int count = 0;
-  for (task_id = Task::FIRST_TASK; task_id < len; task_id++) {
-    task =  tlist().obj_at(task_id);    
+  for( int task_id = Task::FIRST_TASK; task_id < len; task_id++ ) {
+    Task::Raw task =  tlist().obj_at(task_id);    
     if (task.is_null()) continue;
-    images = task().binary_images();
+
+    ObjArray::Raw images = task().binary_images();
     if (images.is_null()) continue;
+
     const int images_len = images().length();
-    for (int i = 0; i < images_len; i++) {
-      if (images().obj_at(i) == (OopDesc*)this) count++;
+    for( int i = 0; i < images_len; i++ ) {
+      if( images().obj_at(i) == (OopDesc*)this && ++count > 1 ) {
+        return true;
+      }
     }
   }
-  return count > 1;
+  return false;
 }
 #endif //AZZERT
-bool ROMBundle::remove_from_global_binary_images() {  
-#ifdef AZZERT
+#endif //ENABLE_LIB_IMAGES
+
+void ROMBundle::remove_from_global_binary_images( void ) {    
   GUARANTEE(!is_shared(), "cannot remove shared image from global list!"); 
-#endif //AZZERT
-  ObjArray::Raw list = Universe::global_binary_images();  
-  int last;
-  for (last=0; last<list().length(); last++) {
-    if (list().obj_at(last) == NULL) {
-      break;
-    }
-  }
-  GUARANTEE(last > 0, "must have at least one item in the list");  
-  for (int i=0; i<list().length(); i++) {
-    if (list().obj_at(i) == (OopDesc*)this) {           
-#if USE_IMAGE_MAPPING
-      OsFile_MappedImage* image_handle = (OsFile_MappedImage*)
-                              Universe::global_image_handles()->int_at(i);
-      OsFile_UnmapImage(image_handle);
-      Universe::global_image_handles()->int_at_put(i, 0);        
-#endif
-      if (i == last - 1) {
-        list().obj_at_clear(i);
-      } else {
-        last --;
-        list().obj_at_put(i, list().obj_at(last));
-        list().obj_at_clear(last);
-#if USE_IMAGE_MAPPING
-        Universe::global_image_handles()->int_at_put(i, 
-                       Universe::global_image_handles()->int_at(last));
-        Universe::global_image_handles()->int_at_put(last, 0);
-#endif
-      }
-      return true;
-    }
-  }  
-  SHOULD_NOT_REACH_HERE();
-  return true;
-}
 
-#else //ENABLE_LIB_IMAGES
-bool ROMBundle::remove_from_global_binary_images() {    
-  ObjArray::Raw list = Universe::global_binary_images();  
-  int last;
-  for (last=0; last<list().length(); last++) {
-    if (list().obj_at(last) == NULL) {
-      break;
-    }
+  ObjArray::Raw list = Universe::global_binary_images();
+  int i = list().length(); 
+  while( list().obj_at( --i ) ) {
+    GUARANTEE( i > 0, "must have at least one item in the list");
   }
-  GUARANTEE(last > 0, "must have at least one item in the list");
-  for (int i=0; i<MAX_TASKS; i++) {
-    if (list().obj_at(i) == (OopDesc*)this) {
-      if (i == last - 1) {
-        list().obj_at_clear(i);
-      } else {
-        last --;
-        list().obj_at_put(i, list().obj_at(last));
-        list().obj_at_clear(last);
-      }
-      return true;
-    }
-  }
-  SHOULD_NOT_REACH_HERE();
-  return true;
-}
 
-#endif //!ENABLE_LIB_IMAGES
+  const int last = i;
+  for( ; list().obj_at( i ) != (OopDesc*)this; i-- ) {
+    GUARANTEE( i > 0, "'this' must be in the list");
+  }
+  
+#if USE_IMAGE_MAPPING
+  TypeArray::Raw handles = Universe::global_image_handles();
+  OsFile_UnmapImage( (OsFile_MappedImage*) handles->int_at( i ) );
+#endif
+
+  if( i != last ) {
+    list().smart_obj_at_put( i, list().obj_at(last) );
+#if USE_IMAGE_MAPPING
+    handles().int_at_put( i, handles().int_at( last ) );
+#endif
+  }
+  list().obj_at_clear( last );
+#if USE_IMAGE_MAPPING
+  handles().int_at_put( last, 0 );
+#endif
+}
 
 #endif // ENABLE_ISOLATES
 
@@ -1208,7 +1176,6 @@ void ROM::on_task_switch(int tid) {
     if (images.not_null()) {
       ROMBundle* bundle = (ROMBundle*) images().obj_at(0);
       ROMBundle::set_current(bundle);
-
     }
   }
 #endif
@@ -1227,32 +1194,36 @@ void ROMBundle::p() {
 }
 
 #if ENABLE_ISOLATES
-void ROMBundle::print_all() {
-  int i;
-  ObjArray::Raw list = Universe::global_binary_images();
+void ROMBundle::print_all( void ) {
   GUARANTEE(!ENABLE_LIB_IMAGES, "doesn't implemented");
-  /*IMPL_NOTE: here shall be list().length() which is != MAX_TASKS in case of ENABLE_LIB_IMAGES*/
-  for (i=0; i<MAX_TASKS; i++) {
-    if (list().obj_at(i) != NULL) {
-      tty->print_cr("Universe::binary_images[%d] = 0x%08x", i,
-                    int(list().obj_at(i)));
+  {
+    ObjArray::Raw list = Universe::global_binary_images();
+    const int length = list().length();
+    for( int i = 0; i < length; i++ ) {
+      const OopDesc* p = list().obj_at(i);
+      if( p ) {
+        tty->print_cr("Universe::binary_images[%d] = 0x%08x", i, int(p) );
+      }
     }
   }
 
-  list = Universe::task_list();
-  for (i=0; i<MAX_TASKS; i++) {
-    Task::Raw t = list().obj_at(i);
-    if (t.not_null()) {
-      tty->print("task_%d.binary_images = ", i);
-      const char* prefix = "";
+  {
+    ObjArray::Raw list = Universe::task_list();
+    const int length = list().length();
+    for( int i = 0; i < length; i++ ) {
+      Task::Raw t = list().obj_at(i);
+      if( t.not_null() ) {
+        tty->print("task_%d.binary_images = ", i);
+        const char* prefix = "";
       ObjArray::Raw images = t().binary_images();
-      if (images.not_null()) {
-        for (int n=0; n<images().length(); n++) {
+        if( images.not_null() ) {
+          for( int n = 0; n < images().length(); n++ ) {
           tty->print("%s0x%08x\n", prefix, int(images().obj_at(n)));
-          prefix = ", ";
+            prefix = ", ";
+          }
         }
+        tty->cr();
       }
-      tty->cr();
     }
   }
 }

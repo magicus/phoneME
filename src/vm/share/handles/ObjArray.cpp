@@ -38,6 +38,15 @@ void ObjArray::obj_at_put(int index, OopDesc* value) {
   obj_field_put(offset_from_index(index), value);
 }
 
+void ObjArray::smart_obj_at_put(int index, OopDesc* value) {
+  const int offset = offset_from_index(index);
+  if( ObjectHeap::is_gc_active() ) {
+    int_field_put( offset, int(value) );
+  } else {
+    obj_field_put( offset, value );
+  }
+}
+
 void oop_write_barrier_range(OopDesc** start, int len) {
   juint start_offset;
   juint head, main, tail;

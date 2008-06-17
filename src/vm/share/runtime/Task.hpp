@@ -113,11 +113,14 @@ public:
   }
 
 #if USE_BINARY_IMAGE_LOADER
-  static int binary_images_offset() {
+  static int binary_images_offset( void ) {
     return FIELD_OFFSET(TaskDesc, _binary_images);
   }
-  ReturnOop binary_images() const {
+  ReturnOop binary_images( void ) const {
     return obj_field(binary_images_offset());
+  }
+  void set_binary_images(OopDesc* value) {
+    obj_field_put(binary_images_offset(), value);
   }
   void set_binary_images(ObjArray *value) {
     obj_field_put(binary_images_offset(), value);

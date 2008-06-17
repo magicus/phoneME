@@ -385,52 +385,50 @@ void ROM::init_debug_symbols(JVM_SINGLE_ARG_TRAPS) {
        || ENABLE_JVMPI_PROFILE || ENABLE_TTY_TRACE
 
 void ROM::initialize_original_class_name_list(JVM_SINGLE_ARG_TRAPS) {
-  int count = _rom_original_class_info_count;
+  const int count = _rom_original_class_info_count;
 
-  ObjArray name_list;
-  if (count == 0) {
+  if( count == 0 ) {
     _original_class_name_list = NULL;
     return;
-  } else {
-    name_list = Universe::new_obj_array(count JVM_CHECK);
-    _original_class_name_list = name_list.obj();
   }
 
-  for (int i=0; i<count; i++) {
-    const OriginalClassInfo *clsinfo = &_rom_original_class_info[i];
-    if (clsinfo->name != NULL) {
+  ObjArray name_list = Universe::new_obj_array(count JVM_CHECK);
+  _original_class_name_list = name_list.obj();
+
+  for( int i=0; i < count; i++ ) {
+    const OriginalClassInfo* clsinfo = &_rom_original_class_info[i];
+    if( clsinfo->name != NULL ) {
       // +1 to skip the first char, which is the type of this symbol 
       // (always == 3 in this case).
-      Symbol name = SymbolTable::symbol_for(clsinfo->name+1 JVM_CHECK);
+      Symbol::Raw name = SymbolTable::symbol_for(clsinfo->name+1 JVM_CHECK);
       name_list.obj_at_put(i, &name);
     }
   }
 }
 
 void ROM::initialize_original_method_info_list(JVM_SINGLE_ARG_TRAPS) {
-  int count = _rom_original_class_info_count;
+  const int count = _rom_original_class_info_count;
 
-  ObjArray info_list;
-  if (count == 0) {
+  if( count == 0 ) {
     _original_method_info_list = NULL;
     return;
-  } else {
-    info_list = Universe::new_obj_array(count JVM_CHECK);
-    _original_method_info_list = info_list.obj();
   }
 
-  for (int i=0; i<count; i++) {
-    const OriginalClassInfo *clsinfo = &_rom_original_class_info[i];
-    const OriginalMethodInfo *minfo = clsinfo->methods;
+  ObjArray info_list = Universe::new_obj_array(count JVM_CHECK);
+  _original_method_info_list = info_list.obj();
 
-    for (int n=0; n<clsinfo->num_methods; n++, minfo++) {
+  for( int i = 0; i < count; i++ ) {
+    const OriginalClassInfo* clsinfo = &_rom_original_class_info[i];
+    const OriginalMethodInfo* minfo = clsinfo->methods;
+
+    for( int n = 0; n < clsinfo->num_methods; n++, minfo++ ) {
       Method method = (OopDesc*)minfo->method;
       if (method.not_null()) {
         ObjArray old  = info_list.obj_at(i);
         ObjArray info = Universe::new_obj_array(3 JVM_CHECK);
         // +1 to skip the first char, which is the type of this symbol 
         // (always == 3 in this case).
-        Symbol name = SymbolTable::symbol_for(minfo->name+1 JVM_CHECK);
+        Symbol::Raw name = SymbolTable::symbol_for(minfo->name+1 JVM_CHECK);
 
         info.obj_at_put(INFO_OFFSET_METHOD, &method);
         info.obj_at_put(INFO_OFFSET_NAME,   &name);
@@ -513,7 +511,7 @@ bool ROM::is_restricted_package(const char *name, int pkg_length) {
   char *rp2;
 
   while (*rp) {
-    int len = *((unsigned char*)rp); // may be up to 255;
+    const int len = *((unsigned char*)rp); // may be up to 255;
     rp ++;
    
     //Checking for the asterisk case...
@@ -528,36 +526,15 @@ bool ROM::is_restricted_package(const char *name, int pkg_length) {
       }
     }
 
-    if (len == pkg_length) {
-      if (jvm_memcmp(rp, name, pkg_length) == 0) {
-        return true; // we have a match. The package is restricted.
-      }
+    if( len == pkg_length && jvm_memcmp(rp, name, pkg_length) == 0 ) {
+      return true; // we have a match. The package is restricted.
     }
     rp += len;
   }
   return false;
 }
 
-size_t ROM::get_max_offset() {
-#if ENABLE_SEGMENTED_ROM_TEXT_BLOCK
-  size_t text_size = _text_total_size;
-#else
-  size_t text_size = _rom_text_block_size;
-#endif
-  size_t data_size = _rom_data_block_size;
-  size_t max_offset;
-
-  if (text_size > data_size) {
-    max_offset = text_size;
-  } else {
-    max_offset = data_size;
-  }
-
-  max_offset <<= 1;
-  return max_offset;
-}
-
-void ROM::relocate_data_block() {
+void ROM::relocate_data_block( void ) {
   OopDesc* obj = (OopDesc*)_rom_data_block;
   OopDesc* end = DERIVED(OopDesc*, _rom_data_block, _rom_data_block_size);
 
@@ -682,7 +659,7 @@ void ROM::oops_do(void do_oop(OopDesc**), bool do_all_data_objects,
     ObjArray::Raw list = Task::current()->binary_images();
 #endif
 
-    if (list.not_null()) {
+    if( list.not_null() ) {
       for (int i=0; i<list().length(); i++) {
         ROMBundle *bundle = (ROMBundle*)list().obj_at(i);
         if (bundle == NULL) {
