@@ -26,9 +26,8 @@
 
 package com.sun.midp.pki.ocsp;
 
-import com.sun.midp.pki.X509Certificate;
 import com.sun.midp.pki.SerialNumber;
-import com.sun.midp.pki.ObjectIdentifier;
+import com.sun.midp.pki.X509Certificate;
 import com.sun.midp.pki.BigInteger;
 import com.sun.midp.pki.DerOutputStream;
 import com.sun.midp.pki.DerValue;
@@ -165,7 +164,8 @@ public class OCSPRequest {
             // write context tag [2], EXPLICIT, constructed
             tmp.write(new byte[] {
                     DerValue.createTag(DerValue.TAG_CONTEXT, true, (byte)2),
-                    (byte)tmp1.toByteArray().length}
+                    (byte)(tmp1.toByteArray().length + 2)
+                }
             );
             tmp.write(DerValue.tag_Sequence, tmp1);
         }

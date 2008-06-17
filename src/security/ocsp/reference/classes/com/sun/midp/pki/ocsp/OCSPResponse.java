@@ -327,7 +327,7 @@ class OCSPResponse {
                     throw new IOException(
                             "nonce extension is missing in the response.");
                 }
-
+                
                 // get response nonce bytes
                 if ((reqNonce.length != respNonce.length) ||
                            !Utils.byteMatch(reqNonce, 0, respNonce, 0,
