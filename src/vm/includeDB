@@ -778,6 +778,7 @@ Value.cpp                        InstanceClass.hpp
 
 Relocation.hpp                   CompiledMethod.hpp
 Relocation.cpp                   Relocation.hpp
+Relocation.cpp                   CallInfo.hpp
 
 Compiler.hpp                     CompilationQueue.hpp
 Compiler.hpp                     Method.hpp
