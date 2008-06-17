@@ -33,6 +33,7 @@ public class InputModeFactory {
     public static final int ALPHANUMERIC_INPUT_MODE = 3;
     public static final int PREDICTIVE_TEXT_INPUT_MODE = 4;
     public static final int SYMBOL_INPUT_MODE = 5;
+    public static final int VIRTUAL_INPUT_MODE = 6;
     public static final int NATIVE_INPUT_MODE_START = 100;
 
     public static native int [] getInputModeIds();
@@ -48,6 +49,7 @@ public class InputModeFactory {
                 case ALPHANUMERIC_INPUT_MODE: im = new AlphaNumericInputMode(); break;
                 case PREDICTIVE_TEXT_INPUT_MODE: im = new PredictiveTextInputMode(); break;
                 case SYMBOL_INPUT_MODE: im = new SymbolInputMode(); break;
+                case VIRTUAL_INPUT_MODE: im = new VirtualInputMode(); break;
                 default: throw new IllegalArgumentException("bad java input mode id: "+id);
             }
             return im;
