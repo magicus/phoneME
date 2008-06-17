@@ -36,9 +36,6 @@
 #include <midp_thread.h>
 #include <midp_run_vm.h>
 #include <suspend_resume.h>
-#include <midp_jc_event_defs.h>
-
-#include <javacall_logging.h>
 
 #if (ENABLE_JSR_120 || ENABLE_JSR_205)
 #include <wmaInterface.h>

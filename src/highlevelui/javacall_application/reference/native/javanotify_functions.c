@@ -1689,6 +1689,8 @@ void /* OPTIONAL */ javanotify_rotation() {
     midp_jc_event_send(&e);
 }
 
+#ifdef ENABLE_API_EXTENSIONS
+
 /**
  * 
  * The implementation calls this callback notify function when master volume dialog
@@ -1707,6 +1709,7 @@ void javanotify_prompt_volume_finish(void) {
     midp_jc_event_send(&e);
 
 }
+#endif /*ENABLE_API_EXTENSIONS*/
 
 #if ENABLE_ON_DEVICE_DEBUG
 /**

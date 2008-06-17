@@ -286,11 +286,13 @@ void checkForSystemSignal(MidpReentryData* pNewSignal,
         pNewSignal->descriptor = (int)event->data.jsr256_jc_event_sensor.sensor;
         break;
 #endif /* ENABLE_JSR_256 */
+#ifdef ENABLE_API_EXTENSIONS
 case MIDP_JC_EVENT_VOLUME:
 		pNewSignal->waitingFor = VOLUME_SIGNAL;
 		pNewSignal->status     = JAVACALL_OK;
 	
 	break;
+#endif /* ENABLE_API_EXTENSIONS */
 	default:
 
         REPORT_ERROR(LC_CORE,"Unknown event.\n");

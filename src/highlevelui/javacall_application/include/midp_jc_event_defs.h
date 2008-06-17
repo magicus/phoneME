@@ -114,8 +114,10 @@ typedef enum {
     JSR179_LOCATION_JC_EVENT           ,
     JSR179_PROXIMITY_JC_EVENT          ,
 #endif /* ENABLE_JSR_179 */
-    MIDP_JC_EVENT_VOLUME ,
-    MIDP_JC_EVENT_STATE_CHANGE  ,
+#ifdef ENABLE_API_EXTENSIONS
+    MIDP_JC_EVENT_VOLUME 			   ,
+#endif /* ENABLE_API_EXTENSIONS */
+    MIDP_JC_EVENT_STATE_CHANGE  	   ,
     MIDP_JC_EVENT_PHONEBOOK            ,
     MIDP_JC_EVENT_INSTALL_CONTENT      ,
     MIDP_JC_EVENT_SWITCH_FOREGROUND    ,
@@ -370,9 +372,10 @@ typedef struct {
         jsr256_jc_event_sensor_t           jsr256_jc_event_sensor;
 #endif /* ENABLE_JSR_256 */
 
-   /*EXTERNAL API'S*/
+#ifdef ENABLE_API_EXTENSIONS
         midp_event_volume     VolumeEvent;
         midp_event_launch_push_entry        launchPushEntryEvent;
+#endif /* ENABLE_API_EXTENSIONS */
 
     } data;
 
