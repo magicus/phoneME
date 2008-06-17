@@ -44,6 +44,7 @@
 #include <midp_libc_ext.h>
 #include <kni_globals.h>
 #include <midpUtilKni.h>
+#include <javacall_defs.h>
 
 /**
  * @file
@@ -870,8 +871,37 @@ Java_com_sun_midp_io_j2me_socket_Protocol_shutdownOutput0(void) {
  */
 KNIEXPORT KNI_RETURNTYPE_VOID
 Java_com_sun_midp_io_NetworkConnectionBase_initializeInternal(void) {
+    MidpReentryData* info;
+    int status = PCSL_NET_SUCCESS;
     ANC_INIT_NETWORK_INDICATOR;
-    pcsl_network_init();
+
+    REPORT_INFO(LC_CORE, "socket_Protocol_initializeNetwork0 >>");
+
+    info = (MidpReentryData*)SNI_GetReentryData(NULL);
+    if (info == NULL){
+       status = pcsl_network_init_start();
+    }
+    else {
+       status = javacall_to_pcsl_result((javacall_result)(info->status));
+       pcsl_network_init_finish();
+    }
+
+   REPORT_INFO2(LC_CORE, "pcsl_network_init(%d) returned %d\n",
+                                   (int)(info !=NULL), (int)status);
+
+    switch(status){
+    case PCSL_NET_SUCCESS:
+        break;
+    case PCSL_NET_WOULDBLOCK:
+        midp_thread_wait(NETWORK_STATUS_SIGNAL, 0, NULL);
+        break;
+    default:
+        REPORT_ERROR2(LC_CORE, "pcsl_network_init(%d) failed with code %d\n",
+                                   (int)(info!=NULL), (int)status);
+        break;
+    }
+    REPORT_INFO(LC_CORE, "socket_Protocol_initializeNetwork0 <<");
+
     KNI_ReturnVoid();
 }
 
