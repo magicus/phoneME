@@ -65,6 +65,10 @@ $(GENERATED_DIR)/classes/com/sun/midp/chameleon/skins/resources/SkinResources.ja
 $(GENERATED_DIR)/classes/com/sun/midp/chameleon/input/NativeInputMode.java : $(LCDLF_J_DIR)/classes/com/sun/midp/chameleon/input/NativeInputMode.jpp
 	@$(call runjpp,$^,$@)
 
+$(GENERATED_DIR)/classes/com/sun/midp/chameleon/input/VirtualInputMode.java : $(LCDLF_J_DIR)/classes/com/sun/midp/chameleon/input/VirtualInputMode.jpp
+	@$(call runjpp,$^,$@)
+
+
 # Java files for the library
 #
 SUBSYSTEM_LCDLF_JAVA_FILES += \
@@ -180,7 +184,7 @@ SUBSYSTEM_LCDLF_JAVA_FILES += \
 
 ifeq ($(TARGET_OS), win32)
 ifeq ($(TARGET_CPU), arm)
-SUBSYSTEM_LCDLF_JAVA_FILES += $(LCDLF_J_DIR)/classes/com/sun/midp/chameleon/input/VirtualInputMode.java
+SUBSYSTEM_LCDLF_JAVA_FILES += $(GENERATED_DIR)/classes/com/sun/midp/chameleon/input/VirtualInputMode.java
 endif
 endif
 

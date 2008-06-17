@@ -33,21 +33,28 @@ import com.sun.midp.i18n.ResourceConstants;
  */
 public class VirtualInputMode extends KeyboardInputMode {
 
+// #ifdef WINCE
     private static native void showNativeKeyboard();
     private static native void hideNativeKeyboard();
+// #endif
+
     private static String modeName;
     static {
         modeName = Resource.getString(ResourceConstants.LCDUI_TF_NATIVE_VKBD);
     }
 
     public void beginInput(InputModeMediator mediator, String inputSubset, int constraints) {
+// #ifdef WINCE
         showNativeKeyboard();
         super.beginInput(mediator, inputSubset, constraints);
+// #endif
     }
 
     public void endInput() throws IllegalStateException {
         super.endInput();
+// #ifdef WINCE
         hideNativeKeyboard();
+// #endif
     }
 
     public String getName() {
