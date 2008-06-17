@@ -28,8 +28,13 @@ package com.sun.midp.pki.ocsp;
 
 import com.sun.midp.io.Base64;
 import com.sun.midp.main.Configuration;
+
 import com.sun.midp.pki.ObjectIdentifier;
 import com.sun.midp.pki.X509Certificate;
+import com.sun.midp.pki.DerOutputStream;
+import com.sun.midp.pki.DerValue;
+import com.sun.midp.pki.Extension;
+
 import com.sun.midp.publickeystore.WebPublicKeyStore;
 import com.sun.midp.publickeystore.PublicKeyInfo;
 import com.sun.midp.security.Permissions;
@@ -43,6 +48,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.IOException;
 import java.util.Vector;
+import java.util.Random;
 
 /**
  * Validates the certificates.
@@ -62,17 +68,22 @@ public class OCSPValidatorImpl implements OCSPValidator {
     /** Input stream to read a response from OCSP server. */
     private InputStream httpInputStream;
 
-    // Supported extensions
+    /** Supported extensions: nonce. */
     private static final int OCSP_NONCE_DATA[] =
         { 1, 3, 6, 1, 5, 5, 7, 48, 1, 2 };
+    /** nonce extension OID. */
     private static final ObjectIdentifier OCSP_NONCE_OID;
 
+    /** Size of nonce number, in bytes */
+    private static final int NONCE_SIZE = 30;
+
+    /** Initial size of buffer that is used when receiving HTTP response. */
     private static final int CHUNK_SIZE = 10 * 1024;
 
     static {
         OCSP_NONCE_OID = ObjectIdentifier.newInternal(OCSP_NONCE_DATA);
     }
-    
+
     /**
      * Retrieves the status of the given certificate.
      *
@@ -101,9 +112,19 @@ public class OCSPValidatorImpl implements OCSPValidator {
 
             openConnection(responderUrl);
 
+            // add nonce extension
+            DerOutputStream tmp = new DerOutputStream();
+            byte[] nonce = generateNonce();
+            tmp.write(DerValue.tag_OctetString, nonce);
+
+            Extension[] requestExtensions = new Extension[1];
+            requestExtensions[0] =
+                new Extension(OCSP_NONCE_OID, false, tmp.toByteArray());
+
             OCSPRequest request =
                     new OCSPRequest((X509Certificate)cert,
-                            (X509Certificate)issuerCert);
+                            (X509Certificate)issuerCert, requestExtensions);
+
             sendRequest(request);
             // certId field becomes valid only after the request is sent
             // or after getRequestAsByteArray() is called
@@ -123,7 +144,7 @@ public class OCSPValidatorImpl implements OCSPValidator {
             }
 
             OCSPResponse response = receiveResponse(caCerts, certId,
-                    (X509Certificate)issuerCert);
+                    (X509Certificate)issuerCert, nonce);
 
             // Check that response applies to the cert that was supplied
             if (! certId.equals(response.getCertId())) {
@@ -211,11 +232,13 @@ public class OCSPValidatorImpl implements OCSPValidator {
      * @param reqCertId ID of the certificate specified in the request 
      * @param issuerCert certificate of the trusted authority issued
      *                   the certificate being verified
+     * @param reqNonce bytes of the nonce extension specified in the OCSP
+     *                 request; can be NULL
      * @return OCSP response received from the server
      * @throws OCSPException if an error occured while receiving response
      */
     private OCSPResponse receiveResponse(Vector caCerts, CertId reqCertId,
-            X509Certificate issuerCert) throws OCSPException {
+            X509Certificate issuerCert, byte[] reqNonce) throws OCSPException {
         try {
             httpInputStream = httpConnection.openInputStream();
 
@@ -245,11 +268,28 @@ public class OCSPValidatorImpl implements OCSPValidator {
             System.arraycopy(tmpBuf, 0, responseBuf, 0, total);
 
             return new OCSPResponse(responseBuf, caCerts, reqCertId, 
-                    issuerCert, WebPublicKeyStore.getTrustedKeyStore());
+                    issuerCert, WebPublicKeyStore.getTrustedKeyStore(),
+                    reqNonce);
         } catch (IOException ioe) {
             throw new OCSPException(OCSPException.SERVER_NOT_RESPONDING,
                                     ioe.getMessage());
         }
+    }
+
+    /**
+     * Generates Base64-encoded nonce.
+     *
+     * @return nonce as a byte array
+     */
+    private static byte[] generateNonce() {
+        Random random = new Random(System.currentTimeMillis());
+        byte[] randomData = new byte[NONCE_SIZE];
+
+        for (int i = 0; i < NONCE_SIZE; i++) {
+            randomData[i] = (byte)random.nextInt(Byte.MAX_VALUE + 1);
+        }
+
+        return randomData;
     }
 
     /**
