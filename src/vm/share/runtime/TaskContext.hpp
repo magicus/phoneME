@@ -27,7 +27,8 @@
 #if ENABLE_ISOLATES
 class TaskContextSave {
 protected:
-  static TaskContextSave _global_context;
+  static int _global_current_task_id;
+  static int _global_number_of_java_classes;
   int _number_of_java_classes;
   int _prev_task_id;
   int _current_task_id;
@@ -78,14 +79,14 @@ public:
   TaskContext() {}
 
   static void set_current_task_id( const int task_id ) {
-    _global_context._current_task_id = task_id;
+    _global_current_task_id = task_id;
   }
   static int current_task_id( void ) {
-    return _global_context._current_task_id;
+    return _global_current_task_id;
   }
 
   static int number_of_java_classes( void ) {
-    return _global_context._number_of_java_classes;
+    return _global_number_of_java_classes;
   }
   static void set_number_of_java_classes(int number);
   static void set_current_task(int task_id);

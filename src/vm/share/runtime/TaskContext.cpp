@@ -30,7 +30,8 @@
 #if ENABLE_ISOLATES
 
 // The global TaskContext instance
-TaskContextSave TaskContextSave::_global_context;
+int TaskContextSave::_global_current_task_id = 0;
+int TaskContextSave::_global_number_of_java_classes = 0;
 
 #ifdef AZZERT
 int TaskContextSave::_count = 0;
@@ -39,19 +40,19 @@ int TaskContextSave::_count = 0;
 
 void TaskContextSave::init() {
 #ifdef AZZERT
-  level = _global_context._count++;
+  level = _count++;
 #endif
   _number_of_java_classes = 0;
-  _prev_task_id = _global_context._current_task_id;
+  _prev_task_id = _global_current_task_id;
   _valid = false;
 }
 
 void TaskContextSave::dispose() {
 #ifdef AZZERT
-  _global_context._count--;
+  _count--;
   GUARANTEE(level == _count, "Out of order context switch.");
 #endif
-  if (_prev_task_id != _global_context._current_task_id) {
+  if (_prev_task_id != _global_current_task_id) {
     GUARANTEE(Universe::task_from_id(_prev_task_id), "task must be alive");
     TaskContext::set_current_task(_prev_task_id);
   }
@@ -63,7 +64,7 @@ void TaskContext::init(int task_id) {
   }
 
   GUARANTEE(!ObjectHeap::is_gc_active() ||
-    task_id == _global_context._current_task_id, "Can't switch tasks during GC");
+    task_id == _global_current_task_id, "Can't switch tasks during GC");
   _valid = true;
   set_current_task(task_id);
 }
@@ -89,8 +90,8 @@ void TaskGCContext::init(const OopDesc* object) {
 void TaskGCContext::set(const int task_id) {
   Task::Raw task = Universe::task_from_id(task_id);
   if( task.not_null() ) {
-    _global_context._current_task_id = task_id;
-    _global_context._number_of_java_classes = task().class_count();
+    _global_current_task_id = task_id;
+    _global_number_of_java_classes = task().class_count();
     _class_list_base =((address)task().class_list() ) + ObjArray::base_offset();
     _mirror_list_base=((address)task().mirror_list()) + ObjArray::base_offset();
     _valid = true;
@@ -137,7 +138,7 @@ void TaskGCContextDebug::init(int class_id, int tag) {
         if (TraceGC) {
           //          tty->print("new: 0x%x,", (int)_class_list_base);
         }
-        _global_context._number_of_java_classes = task().class_count();
+        _global_number_of_java_classes = task().class_count();
       }
     }
   }
@@ -158,7 +159,7 @@ void TaskGCContextDebug::dispose() {
       if (TraceGC) {
         //        tty->print_cr("new: 0x%x, ", (int)_class_list_base);
       }
-      _global_context._number_of_java_classes = task().class_count();
+      _global_number_of_java_classes = task().class_count();
     }
   }
 }
@@ -166,15 +167,15 @@ void TaskGCContextDebug::dispose() {
 
 void TaskContext::set_current_task(int task_id) {
   if (TraceTaskContext) {
-    tty->print_cr("TSC: %d, %d", task_id, _global_context._current_task_id);
+    tty->print_cr("TSC: %d, %d", task_id, _global_current_task_id);
   }
   Task::Raw task = Universe::task_from_id(task_id);
   *Universe::current_task_obj() = task.obj();
 
-  if (task_id != _global_context._current_task_id) {
-    Task::Raw prev_task = Universe::task_from_id(_global_context._current_task_id);
+  if (task_id != _global_current_task_id) {
+    Task::Raw prev_task = Universe::task_from_id(_global_current_task_id);
     if (prev_task.not_null()) {
-      prev_task().set_class_count(_global_context._number_of_java_classes);
+      prev_task().set_class_count(_global_number_of_java_classes);
     }
     *Universe::class_list()         = task().class_list();
     *Universe::mirror_list()        = task().mirror_list();
@@ -182,9 +183,9 @@ void TaskContext::set_current_task(int task_id) {
     *StringTable::current()         = task().string_table();
     *SymbolTable::current()         = task().symbol_table();
     *RefArray::current()            = task().global_references();
-    _global_context._number_of_java_classes = task().class_count();
+    _global_number_of_java_classes = task().class_count();
     _current_task = task.obj();
-    _global_context._current_task_id = task_id;
+    _global_current_task_id = task_id;
 #if USE_BINARY_IMAGE_LOADER
     ROM::on_task_switch(task_id);
 #endif
@@ -218,7 +219,7 @@ void TaskContext::set_class_list(ObjArray *cl) {
 }
 
 void TaskContext::set_number_of_java_classes(int number) {
-  _global_context._number_of_java_classes = number;
+  _global_number_of_java_classes = number;
   if (Task::current()->not_null()) {
     Task::current()->set_class_count(number);
   }
