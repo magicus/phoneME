@@ -2067,8 +2067,9 @@ int ClassFileParser::found_all_interfaces(OopDesc* local_interface_indices_obj,
   TypeArray::Raw bitmap = bitmap_obj;
   const int size = local_interface_indices().length();
   if (size != 0) {
-    TypeArray::array_copy(&local_interface_indices, 0, &all_interface_indices,
-                          already_in_table, size);
+    TypeArray::array_copy(&local_interface_indices, 0, 
+                          &all_interface_indices, already_in_table, size,
+                          Universe::short_array_class()->scale());
     already_in_table += size;  
     for (int i = 0; i < size; i++) {
       const int id = local_interface_indices().ushort_at(i);

@@ -165,6 +165,10 @@ class TypeArray: public Array {
   static void array_copy(TypeArray* src, jint src_pos, 
                          TypeArray* dst, jint dst_pos, jint length);
 
+  static void array_copy(TypeArray* src, jint src_pos, 
+                         TypeArray* dst, jint dst_pos, jint length, 
+                         jint scale);
+
   // Operations for char array
   // Tells whether the char array includes c
   void *data() {

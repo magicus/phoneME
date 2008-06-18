@@ -34,14 +34,22 @@ void TypeArray::array_copy(TypeArray* src, jint src_pos,
   TypeArrayClass::Raw src_class = src->blueprint();
   jint scale = src_class().scale();
 
+  array_copy(src, src_pos, dst, dst_pos, length, scale);
+}
+
+void TypeArray::array_copy(TypeArray* src, jint src_pos,
+                           TypeArray* dst, jint dst_pos, 
+                           jint length, jint scale) {
 #ifdef AZZERT
+  TypeArrayClass::Raw src_class = src->blueprint();
   TypeArrayClass::Raw dst_class = dst->blueprint();
-  GUARANTEE(scale == dst_class().scale(), "sanity check");
+  GUARANTEE(scale == src_class().scale(), "src scale mismatch");
+  GUARANTEE(scale == dst_class().scale(), "dst scale mismatch");
 #endif
 
   address src_start =(address)src->field_base(base_offset() + src_pos * scale);
   address dst_start =(address)dst->field_base(base_offset() + dst_pos * scale);
-  jvm_memmove(dst_start, src_start, length * src_class().scale());
+  jvm_memmove(dst_start, src_start, length * scale);
 }
 
 #ifndef PRODUCT
