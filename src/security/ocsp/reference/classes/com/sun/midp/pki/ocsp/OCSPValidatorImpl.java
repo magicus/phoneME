@@ -39,6 +39,9 @@ import com.sun.midp.publickeystore.WebPublicKeyStore;
 import com.sun.midp.publickeystore.PublicKeyInfo;
 import com.sun.midp.security.Permissions;
 
+import com.sun.midp.crypto.SecureRandom;
+import com.sun.midp.crypto.NoSuchAlgorithmException;
+
 import javax.microedition.pki.Certificate;
 import javax.microedition.io.HttpConnection;
 import javax.microedition.io.Connector;
@@ -48,7 +51,6 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.IOException;
 import java.util.Vector;
-import java.util.Random;
 
 /**
  * Validates the certificates.
@@ -277,17 +279,30 @@ public class OCSPValidatorImpl implements OCSPValidator {
     }
 
     /**
-     * Generates Base64-encoded nonce.
+     * Generates nonce.
+     *
+     * IMPL_NOTE: SecureRandom implementation used in this function is based on
+     *            com.sun.midp.crypto.PRand pseudo random number generator that
+     *            uses a constant seed. This seed is just an example
+     *            implementation and IS NOT secure (unpredictable).
+     *            To make PRand secure, the seed MUST be derived from
+     *            unpredicatable data in a production device at the native
+     *            level.
      *
      * @return nonce as a byte array
      */
     private static byte[] generateNonce() {
-        Random random = new Random(System.currentTimeMillis());
-        byte[] randomData = new byte[NONCE_SIZE];
+        SecureRandom random;
 
-        for (int i = 0; i < NONCE_SIZE; i++) {
-            randomData[i] = (byte)random.nextInt(Byte.MAX_VALUE + 1);
+        try {
+            random = SecureRandom.getInstance(SecureRandom.ALG_SECURE_RANDOM);
+        } catch (NoSuchAlgorithmException e) {
+            // should not happen: SecureRandom.ALG_SECURE_RANDOM exists
+            throw new RuntimeException(e.getMessage());
         }
+
+        byte[] randomData = new byte[NONCE_SIZE];
+        random.nextBytes(randomData, 0, NONCE_SIZE);
 
         return randomData;
     }

@@ -114,6 +114,7 @@ SUBSYSTEM_LCDLF_JAVA_FILES += \
     $(LCDLF_J_DIR)/classes/com/sun/midp/chameleon/input/SymbolInputMode.java \
     $(LCDLF_J_DIR)/classes/com/sun/midp/chameleon/input/PredictiveTextInputMode.java \
     $(GENERATED_DIR)/classes/com/sun/midp/chameleon/input/NativeInputMode.java \
+    $(GENERATED_DIR)/classes/com/sun/midp/chameleon/input/VirtualInputMode.java \
     $(LCDLF_J_DIR)/classes/com/sun/midp/chameleon/input/InputModeFactory.java \
     $(LCDLF_J_DIR)/classes/com/sun/midp/chameleon/input/PTDictionary.java \
     $(LCDLF_J_DIR)/classes/com/sun/midp/chameleon/input/PTIterator.java \
@@ -181,12 +182,6 @@ SUBSYSTEM_LCDLF_JAVA_FILES += \
     $(LCDLF_J_DIR)/classes/com/sun/midp/chameleon/layers/WashLayer.java \
     $(LCDLF_J_DIR)/classes/com/sun/midp/chameleon/layers/InputModeLayer.java \
     $(LCDLF_J_DIR)/classes/com/sun/midp/chameleon/layers/PTILayer.java
-
-ifeq ($(TARGET_OS), win32)
-ifeq ($(TARGET_CPU), arm)
-SUBSYSTEM_LCDLF_JAVA_FILES += $(GENERATED_DIR)/classes/com/sun/midp/chameleon/input/VirtualInputMode.java
-endif
-endif
 
 # generated skin files 
 SUBSYSTEM_LCDLF_GENERATED_SKIN_BIN_FILE = $(GENERATED_DIR)/lib/skin.bin 
