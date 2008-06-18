@@ -111,7 +111,7 @@ public final class Permissions {
 
     /** Third Party Never permission group. */
     static final PermissionGroup NEVER_GROUP =
-        new PermissionGroup(null, null, null, null, null, null);
+        new PermissionGroup("", null, null, null, null, null);
 
     /** Permission to group map table. */
     static PermissionSpec[]  permissionSpecs = null;
