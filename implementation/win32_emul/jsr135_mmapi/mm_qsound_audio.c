@@ -1209,6 +1209,7 @@ static javacall_result audio_qs_acquire_device(javacall_handle handle)
             }
 #endif 
             h->wav.bytesPerMilliSec = (h->wav.rate * h->wav.channels * (16 >> 3)) / 1000;
+            h->hdr.dataEnded        = TRUE;
 
             if(h->wav.stream != NULL)
             {
