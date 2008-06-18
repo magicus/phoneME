@@ -420,7 +420,6 @@ ifeq ($(USE_JSR_234), true)
 # JSR 234 AMMS
 #
 $(MIDP_CLASSES_ZIP):: $(SUBSYSTEM_JSR_234_JAVA_FILES)
-	@echo "Step 1"
 	$(appendjavafiles)
 JTWI_NATIVE_FILES	+= $(SUBSYSTEM_JSR_234_NATIVE_FILES)
 endif

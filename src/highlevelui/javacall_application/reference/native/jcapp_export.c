@@ -147,12 +147,15 @@ jboolean jcapp_reverse_orientation() {
     jboolean res = javacall_lcd_reverse_orientation(); 
     jcapp_get_screen_buffer();
 
-    // Whether current Displayable won't repaint the entire screen on
-    // resize event, the artefacts from the old screen content can appear.
-    // That's why the buffer content is not preserved.
-    jcapp_reset_screen_buffer();
-    return res;
+	/** Whether current Displayable won't repaint the entire screen
+	*  on resize event, the artefacts from the old screen content
+	* can appear. That's why the buffer content is not preserved. 
+    */ 
+
+	jcapp_reset_screen_buffer();
+	return res;
 }
+	 
 
 /**
  * Get screen orientation flag
@@ -194,9 +197,12 @@ jboolean jcapp_is_native_softbutton_layer_supported() {
 	javacall_lcd_set_native_softbutton_label(label, len, index);
 }
 
-    void LCDUI_disable_refresh(void){
-     disableRefresh=KNI_TRUE;
-    }
-    void LCDUI_enable_refresh(void){
-     disableRefresh=KNI_FALSE;
-    }
+/*Disables the refresh of the screen*/
+void LCDUI_disable_refresh(void){
+ disableRefresh=KNI_TRUE;
+}
+
+ /*Enables the refresh of the screen*/
+void LCDUI_enable_refresh(void){
+ disableRefresh=KNI_FALSE;
+}

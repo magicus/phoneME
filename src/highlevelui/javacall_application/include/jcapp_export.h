@@ -112,7 +112,7 @@ extern void jcapp_set_softbutton_label_on_native_layer (unsigned short *label,
 
 /*Disables the refresh of the screen*/
  void LCDUI_disable_refresh(void);
- /*Enables the refresh of the screen*/
+/*Enables the refresh of the screen*/
  void LCDUI_enable_refresh(void);
 
 #ifdef __cplusplus
