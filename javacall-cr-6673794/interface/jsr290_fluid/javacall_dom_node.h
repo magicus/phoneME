@@ -116,7 +116,7 @@ javacall_result
 javacall_dom_node_has_child_nodes(javacall_handle handle, javacall_bool *result);
 
 javacall_result
-javacall_dom_node_clone_node(javacall_handle handle, javacall_bool deep);
+javacall_dom_node_clone_node(javacall_handle handle, javacall_bool deep, javacall_handle *ret_handle);
 
 javacall_result
 javacall_dom_node_normalize(javacall_handle handle);
