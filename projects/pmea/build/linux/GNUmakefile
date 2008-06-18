@@ -1,5 +1,5 @@
 #
-# Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+# Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
 # 
 # This program is free software; you can redistribute it and/or
@@ -28,10 +28,10 @@
 # for any or all build flavors by adding flags on the gnumake command line.
 # For example:
 #
-# cd $COMPONENTS_DIR/cdc/build/linux-arm-generic
-# make -f \
-#   $COMPONENTS_DIR/tools/projects/pmea/build/linux-arm/GNUmakefile \
-#   opt_nosym USE_VERBOSE_MAKE=false
+#   cd $COMPONENTS_DIR/cdc/build/linux-arm-generic
+#   make -f \
+#     $COMPONENTS_DIR/tools/projects/pmea/build/linux/GNUmakefile \
+#     opt_nosym USE_VERBOSE_MAKE=false
 #
 # Supported targets are:
 #	all:            build all build flavors
