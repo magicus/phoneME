@@ -63,9 +63,9 @@ alias: location
   javax.microedition.location.LandmarkStore.category,
   javax.microedition.location.LandmarkStore.management
 
-domain: minimum,untrusted
+domain: minimum,unsecured
 
-domain: maximum,untrusted
+domain: maximum,unsecured
 allow: net_access
 allow: application_auto_invocation
 allow: local_connectivity
@@ -87,7 +87,7 @@ allow: write_user_data_access
 allow: location
 allow: all_satsa
 
-domain: untrusted,untrusted
+domain: untrusted,unsecured
 session(session): net_access
 session(session): application_auto_invocation
 blanket(session): local_connectivity

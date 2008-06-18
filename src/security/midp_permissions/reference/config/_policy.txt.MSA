@@ -80,9 +80,9 @@ alias: payment
 alias: satsa
   javax.microedition.apdu.sat
 
-domain: minimum,untrusted
+domain: minimum,unsecured
 
-domain: maximum,untrusted
+domain: maximum,unsecured
 allow: net_access
 allow: low_level_net_access
 allow: application_auto_invocation
@@ -135,7 +135,7 @@ allow: payment
 blanket(session): authentication
 blanket(session): smart_card
 
-domain: unidentified_third_party,untrusted
+domain: unidentified_third_party,unsecured
 session(oneshot): net_access
 session(oneshot): low_level_net_access
 oneshot(oneshot): call_control
