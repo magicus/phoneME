@@ -112,6 +112,13 @@ public class DomainPolicy {
      * Permissions.java 
      */
     private void loadValues() {
+        PermissionGroup [] list = Permissions.getSettingGroups();
+        byte [] groupDefValues = new byte[list.length];
+        byte [] groupMaxValues = new byte[list.length];
+        for (int i1 = 0; i1 < list.length; i1++) {
+            groupDefValues[i1] = Permissions.getDefaultValue(name, list[i1].getNativeName());
+            groupMaxValues[i1] = Permissions.getMaxValue(name, list[i1].getNativeName());
+        }
         defValues = new byte[Permissions.NUMBER_OF_PERMISSIONS];
         maxValues = new byte[Permissions.NUMBER_OF_PERMISSIONS];
         defValues[Permissions.MIDP] = Permissions.NEVER;
@@ -120,8 +127,11 @@ public class DomainPolicy {
         maxValues[Permissions.AMS] = Permissions.NEVER;
         for (int i1 = 2; i1 < defValues.length; i1++) {
             String group = Permissions.permissionSpecs[i1].group.getNativeName();
-            defValues[i1] = Permissions.getDefaultValue(name, group);
-            maxValues[i1] = Permissions.getMaxValue(name, group);
+            for (int i2 = 0; i2 < list.length; i2++)
+                if (group.equals(list[i2]).getNativeName()) {
+                    defValues[i1] = groupDefValues[i2];
+                    maxValues[i1] = groupMaxValues[i2];
+                }
         }
     }
 }
