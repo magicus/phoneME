@@ -24,7 +24,6 @@
 
 package com.sun.j2me.security;
 
-import com.sun.j2me.proxy.security.Permissions;
 
 /**
  * SATSA access permissions.
@@ -32,16 +31,16 @@ import com.sun.j2me.proxy.security.Permissions;
 public class SatsaPermission extends Permission {
     
     static public SatsaPermission APDU_CONNECTION_OPEN = new SatsaPermission(
-        Permissions.getName(Permissions.APDU_CONNECTION), "apdu:open");
+        "javax.microedition.apdu.aid", "apdu:open");
 
     static public SatsaPermission JCRMI_CONNECTION = new SatsaPermission(
-        Permissions.getName(Permissions.JCRMI_CONNECTION), null);
+        "javax.microedition.jcrmi", null);
 
     static public SatsaPermission SIGN_SERVICE = new SatsaPermission(
-        Permissions.getName(Permissions.SIGN_SERVICE), null);
+        "javax.microedition.securityservice.CMSMessageSignatureService", null);
 
     static public SatsaPermission APDU_CHANNEL0_SAT_OPEN = new SatsaPermission(
-        Permissions.getName(Permissions.APDU_CHANNEL0), "apdu:satopen");
+        "javax.microedition.apdu.sat", "apdu:satopen");
     
     public SatsaPermission(String permission, String resource) {
         super(permission, resource);

@@ -24,21 +24,19 @@
 
 package com.sun.j2me.security;
 
-import com.sun.midp.security.Permissions;
-
 /**
  * Connector access permissions.
  */
 public class ConnectorPermission extends Permission {
 
     static public ConnectorPermission HTTP = new ConnectorPermission(
-        Permissions.getName(Permissions.HTTP), null);
+        "javax.microedition.io.Connector.http", null);
 
     static public ConnectorPermission HTTPS = new ConnectorPermission(
-        Permissions.getName(Permissions.HTTPS), null);
+        "javax.microedition.io.Connector.https", null);
 
     static public ConnectorPermission TCP = new ConnectorPermission(
-        Permissions.getName(Permissions.TCP), null);
+        "javax.microedition.io.Connector.socket", null);
 
     public ConnectorPermission(String name, String resource) {
         super(name, resource);

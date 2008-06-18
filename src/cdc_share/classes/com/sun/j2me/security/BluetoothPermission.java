@@ -24,7 +24,6 @@
 
 package com.sun.j2me.security;
 
-import com.sun.j2me.proxy.security.Permissions;
 
 /**
  * Bluetooth access permissions.
@@ -32,16 +31,16 @@ import com.sun.j2me.proxy.security.Permissions;
 public class BluetoothPermission extends Permission {
 
     static public BluetoothPermission BLUETOOTH_CLIENT = new BluetoothPermission(
-        Permissions.getName(Permissions.BLUETOOTH_CLIENT), null);
+        "javax.microedition.io.Connector.bluetooth.client", null);
 
     static public BluetoothPermission BLUETOOTH_SERVER = new BluetoothPermission(
-        Permissions.getName(Permissions.BLUETOOTH_SERVER), null);
+        "javax.microedition.io.Connector.bluetooth.server", null);
 
     static public BluetoothPermission OBEX_CLIENT = new BluetoothPermission(
-        Permissions.getName(Permissions.OBEX_CLIENT), null);
+        "javax.microedition.io.Connector.obex.client", null);
 
     static public BluetoothPermission OBEX_SERVER = new BluetoothPermission(
-        Permissions.getName(Permissions.OBEX_SERVER), null);
+        "javax.microedition.io.Connector.obex.server", null);
 
     public BluetoothPermission(String name, String resource) {
         super(name, resource);

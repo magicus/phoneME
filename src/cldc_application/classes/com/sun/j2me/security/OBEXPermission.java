@@ -29,10 +29,14 @@ package com.sun.j2me.security;
  */
 public class OBEXPermission extends Permission {
 
-    static String STR_OBEX_CLIENT = "javax.microedition.io.Connector.obex.client";
-    static String STR_OBEX_SERVER = "javax.microedition.io.Connector.obex.server";
-    static String STR_TCP_OBEX_CLIENT = "javax.microedition.io.Connector.obex.client.tcp";
-    static String STR_TCP_OBEX_SERVER = "javax.microedition.io.Connector.obex.server.tcp";
+    static String STR_OBEX_CLIENT = 
+	                  "javax.microedition.io.Connector.obex.client";
+    static String STR_OBEX_SERVER = 
+	                  "javax.microedition.io.Connector.obex.server";
+    static String STR_TCP_OBEX_CLIENT = 
+	                  "javax.microedition.io.Connector.obex.client.tcp";
+    static String STR_TCP_OBEX_SERVER = 
+	                  "javax.microedition.io.Connector.obex.server.tcp";
 
     static public OBEXPermission OBEX_CLIENT =
         new OBEXPermission(STR_OBEX_CLIENT, null);

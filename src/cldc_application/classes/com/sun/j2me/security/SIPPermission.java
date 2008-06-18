@@ -24,18 +24,16 @@
 
 package com.sun.j2me.security;
 
-import com.sun.midp.security.Permissions;
-
 /**
  * Satsa access permissions.
  */
 public class SIPPermission extends Permission {
 
     static public SIPPermission SIP_CONNECTION = new SIPPermission(
-        Permissions.getName(Permissions.SIP), null);
+        "javax.microedition.io.Connector.sip", null);
 
     static public SIPPermission SIPS_CONNECTION = new SIPPermission(
-        Permissions.getName(Permissions.SIPS), null);
+        "javax.microedition.io.Connector.sips", null);
     
     public SIPPermission(String permission, String resource) {
         super(permission, resource);

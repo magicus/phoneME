@@ -24,24 +24,22 @@
 
 package com.sun.j2me.security;
 
-import com.sun.midp.security.Permissions;
-
 /**
  * Satsa access permissions.
  */
 public class SatsaPermission extends Permission {
 
     static public SatsaPermission APDU_CHANNEL0_SAT_OPEN = new SatsaPermission(
-        Permissions.getName(Permissions.APDU_CHANNEL0), "apdu:satopen");
+        "javax.microedition.apdu.sat", "apdu:satopen");
 
     static public SatsaPermission APDU_CONNECTION_OPEN = new SatsaPermission(
-        Permissions.getName(Permissions.APDU_CONNECTION), "apdu:open");
+        "javax.microedition.apdu.aid", "apdu:open");
 
     static public SatsaPermission JCRMI_CONNECTION = new SatsaPermission(
-        Permissions.getName(Permissions.JCRMI_CONNECTION), null);
+        "javax.microedition.jcrmi", null);
 
     static public SatsaPermission SIGN_SERVICE = new SatsaPermission(
-        Permissions.getName(Permissions.SIGN_SERVICE), null);
+        "javax.microedition.securityservice.CMSMessageSignatureService", null);
 
     public SatsaPermission(String name, String resource) {
         super(name, resource);
