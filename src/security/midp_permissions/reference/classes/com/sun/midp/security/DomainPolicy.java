@@ -128,7 +128,7 @@ public class DomainPolicy {
         for (int i1 = 2; i1 < defValues.length; i1++) {
             String group = Permissions.permissionSpecs[i1].group.getNativeName();
             for (int i2 = 0; i2 < list.length; i2++)
-                if (group.equals(list[i2]).getNativeName()) {
+                if (group.equals(list[i2].getNativeName())) {
                     defValues[i1] = groupDefValues[i2];
                     maxValues[i1] = groupMaxValues[i2];
                 }
