@@ -450,8 +450,8 @@ javacall_result checkForSystemSignal(MidpReentryData* pNewSignal,
         pNewSignal->descriptor = (int)event->data.jsr179LocationEvent.provider;
         pNewSignal->status = event->data.jsr179LocationEvent.operation_result;
         REPORT_CALL_TRACE2(LC_NONE, "[jsr179 event] JSR179_LOCATION_SIGNAL %d %d\n", pNewSignal->descriptor, pNewSignal->status);
-        break;
-#endif
+        break; 
+#endif /*ENABLE_JSR_179*/
 #ifdef ENABLE_JSR_177
     case MIDP_JC_EVENT_CARDDEVICE:
         switch (event->data.carddeviceEvent.eventType) {
