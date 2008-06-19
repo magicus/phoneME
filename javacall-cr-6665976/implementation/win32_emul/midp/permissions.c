@@ -144,6 +144,10 @@ char *build_file_name(char* fname) {
     storage_path[0] = 0;
     if (javacall_dir_get_config_path(configPath, &config_len) ==
                                                             JAVACALL_OK) {
+		javacall_utf16 sep = javacall_get_file_separator();
+		if (configPath[config_len-1] != sep) {
+			configPath[config_len++] = sep;
+		}
         javautil_unicode_utf16_to_utf8(configPath, config_len,
                                        storage_path, sizeof(storage_path),
                                        &storage_len);
