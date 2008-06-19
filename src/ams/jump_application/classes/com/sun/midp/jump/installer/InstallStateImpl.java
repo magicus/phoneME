@@ -300,9 +300,7 @@ public class InstallStateImpl implements InstallState, MIDletSuite {
      * Checks for permission and throw an exception if not allowed.
      * May block to ask the user a question.
      *
-     * @param permission ID of the permission to check for,
-     *      the ID must be from
-     *      {@link com.sun.midp.security.Permissions}
+     * @param permission name of the permission to check
      * @param resource string to insert into the question, can be null if
      *        no %2 in the question
      *
@@ -312,7 +310,7 @@ public class InstallStateImpl implements InstallState, MIDletSuite {
      *   calling thread while this method is waiting to preempt the
      *   display.
      */
-    public void checkForPermission(int permission, String resource)
+    public void checkForPermission(String permission, String resource)
             throws InterruptedException {
         checkForPermission(permission, resource, null);
     }
@@ -517,13 +515,12 @@ public class InstallStateImpl implements InstallState, MIDletSuite {
      * Only trust this method if the object has been obtained from the
      * MIDletStateHandler of the suite.
      *
-     * @param permission permission ID from
-     *      {@link com.sun.midp.security.Permissions}
+     * @param permission permission name
      *
      * @exception SecurityException if the suite is not
      *            allowed to perform the specified action
      */
-    public void checkIfPermissionAllowed(int permission) {
+    public void checkIfPermissionAllowed(String permission) {
         throw new RuntimeException("Not Implemented");
     }
 
