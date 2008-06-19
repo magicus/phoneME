@@ -40,6 +40,7 @@ extern "C" {
 #include <string.h>
 
 #include "javacall_security.h"
+#include "javacall_dir.h"
 #include "javacall_file.h"
 #include "javacall_logging.h"
 #include "javacall_memory.h" 
@@ -133,21 +134,27 @@ static int check_prefix(char* buff, char *prefix) {
 }
 
 char *build_file_name(char* fname) {
-    char *storage_path;
+    javacall_utf16 configPath[256];
+    unsigned char storage_path[256];
     char *full_name;
-    int   storage_len, flen;
+    int   config_len, flen;
+	javacall_int32 storage_len;
 
-    javacall_get_property("system.default_storage",
-                                      JAVACALL_APPLICATION_PROPERTY,
-                                      &storage_path);
+    config_len = sizeof(configPath)/2;
+    storage_path[0] = 0;
+    if (javacall_dir_get_config_path(configPath, &config_len) ==
+                                                            JAVACALL_OK) {
+        javautil_unicode_utf16_to_utf8(configPath, config_len,
+                                       storage_path, sizeof(storage_path),
+                                       &storage_len);
+    }
 
-    storage_len = strlen(storage_path);
+    storage_path[storage_len] = 0;
     flen = strlen(fname);
     full_name = javacall_malloc(storage_len + flen + 1);
     if (full_name != NULL) {
         strcpy(full_name, storage_path);
-        strcat(&full_name[storage_len], fname);
-        full_name[storage_len + flen + 1] = 0;
+        strcpy(&full_name[storage_len], fname);
     } else
         full_name = fname;
 
