@@ -26,7 +26,6 @@
 
 package com.sun.midp.midlet;
 
-import com.sun.midp.security.Permissions;
 import com.sun.midp.security.SecurityToken;
 
 /**
@@ -144,11 +143,12 @@ public interface MIDletSuite {
      * This is used for by internal APIs that only provide access to
      * trusted system applications.
      * <p>
-     * Only trust this method if the object has been obtained from the
-     * Scheduler of the suite.
+     * @deprecated To maintain compatiblity
+     * with future security models like Java SE and CDC, APIs should use
+     * <code>com.sun.j2me.security.AccessController.checkPermission</code>
+     * instead of this method.
      *
-     * @param permission permission ID from
-     *      {@link com.sun.midp.security.Permissions}
+     * @param permission permission name from JCP spec or OEM spec
      *
      * @exception SecurityException if the suite is not
      *            allowed to perform the specified action.
@@ -158,10 +158,13 @@ public interface MIDletSuite {
     /**
      * Check for permission and throw an exception if not allowed.
      * May block to ask the user a question.
+     * <p>
+     * @deprecated To maintain compatiblity
+     * with future security models like Java SE and CDC, APIs should use
+     * <code>com.sun.j2me.security.AccessController.checkPermission</code>
+     * instead of this method.
      *
-     * @param permission ID of the permission to check for,
-     *      the ID must be from
-     *      {@link com.sun.midp.security.Permissions}
+     * @param permission permission name from JCP spec or OEM spec
      * @param resource string to insert into the question, can be null if
      *        no %2 in the question
      *
@@ -177,10 +180,13 @@ public interface MIDletSuite {
     /**
      * Checks for permission and throw an exception if not allowed.
      * May block to ask the user a question.
+     * <p>
+     * @deprecated To maintain compatiblity
+     * with future security models like Java SE and CDC, APIs should use
+     * <code>com.sun.j2me.security.AccessController.checkPermission</code>
+     * instead of this method.
      *
-     * @param permission ID of the permission to check for,
-     *      the ID must be from
-     *      {@link com.sun.midp.security.Permissions}
+     * @param permission permission name from JCP spec or OEM spec
      * @param resource string to insert into the question, can be null if
      *        no %2 in the question
      * @param extraValue string to insert into the question,

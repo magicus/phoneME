@@ -70,7 +70,8 @@ MIDP_CNI_CLASSES += \
         javax.microedition.lcdui.ImageData \
         javax.microedition.lcdui.ImageDataFactory \
         javax.microedition.lcdui.KeyConverter \
-        com.sun.midp.util.ResourceHandler
+        com.sun.midp.util.ResourceHandler \
+        com.sun.midp.security.Permissions
 
 ifeq ($(USE_PISCES), true)
 MIDP_CNI_CLASSES += \
