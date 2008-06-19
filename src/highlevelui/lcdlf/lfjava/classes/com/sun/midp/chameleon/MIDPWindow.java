@@ -10,7 +10,7 @@
  * 
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * MERCHANTABILITY or FITNESS FOR A PARTCULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
  * included at /legal/license.txt).
  * 
@@ -39,7 +39,6 @@ import javax.microedition.lcdui.*;
  * such as a title bar, soft buttons, ticker, etc.
  */
 public class MIDPWindow extends CWindow {
-
     // The order of layers id is impotant during creation and updating
 
     /** Id of layer containing the alert wash */
@@ -171,6 +170,51 @@ public class MIDPWindow extends CWindow {
         }
         requestRepaint();
     }
+
+    /** 
+     * Calculate the width of some invisible Body layer depending on the screen mode and 
+     * the layers attached to the screen 
+     * @param isFullScn true if the full scren is set for the body layer      
+     * @param scrollBarIsVisible true if the scroll bar is in use for the body layer 
+     * @return width of the paticular body layer
+     */
+    public static int getInvisibleBodyWidth(boolean isFullScn, boolean scrollBarIsVisible) {
+	int w = isFullScn ? ScreenSkin.WIDTH_FS : ScreenSkin.WIDTH_NM;
+	// TODO: scroll arrows (bar? ) indicator has to be hidden?
+	if (scrollBarIsVisible) {
+	    w -= ScrollIndSkin.WIDTH;
+        }
+	return w;
+    }
+
+    /** 
+     * Calculate the height of some invisible Body layer depending on the screen mode and 
+     * the layers attached to the screen 
+     * @param isFullScn true if the full scren is set for the body layer      
+     * @param titleIsVisible true if the title is attached      
+     * @param tickerIsVisible true if the ticker is attached 
+     * @param softBtnLayerIsVisible true if command layer is visible
+     * @return height of the paticular body layer
+     */
+    public static int getInvisibleBodyHeight(boolean isFullScn, 
+					     boolean titleIsVisible, 
+					     boolean tickerIsVisible, 
+			       	     boolean softBtnLayerIsVisible) {
+	int h = isFullScn ? ScreenSkin.HEIGHT_FS : ScreenSkin.HEIGHT_NM;
+	if (!isFullScn) {
+	    if (titleIsVisible) {
+		h -= TitleSkin.HEIGHT;
+	    }
+	    if (tickerIsVisible) {
+		h -= TickerSkin.HEIGHT;
+	    }
+	    if (softBtnLayerIsVisible) {
+		h -= SoftButtonSkin.HEIGHT;
+	    }
+	}
+	return h;
+    }
+
 
     /**
      * Set the ticker of this MIDPWindow. This would typically
@@ -405,6 +449,7 @@ public class MIDPWindow extends CWindow {
                                   itemCmdListener,
                                   scrCommands, scrCmdCount,
                                   scrCmdListener);
+	resize();
     }
 
     /**
@@ -721,7 +766,11 @@ public class MIDPWindow extends CWindow {
                     (titleLayer.getTitle() != null);
                 tickerLayer.visible =
                     (tickerLayer.getText() != null);
-                buttonLayer.visible = true;
+
+		buttonLayer.visible = !bodyLayer.opaque ||
+		    getSoftOne() != null || 
+		    getSoftTwo() != null;
+
                 break;
             default:
                 Logging.report(Logging.ERROR, LogChannels.LC_HIGHUI,

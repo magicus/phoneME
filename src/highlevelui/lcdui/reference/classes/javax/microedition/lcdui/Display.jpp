@@ -728,6 +728,9 @@ public class Display {
         cham_tunnel = new ChameleonTunnel();
         window = new MIDPWindow(cham_tunnel);
         region = new int[4];
+
+	updateScreenSizeConst();
+
         // #endif ENABLE_CHAMELEON
 
         drawTrustedIcon0(displayId, drawSuiteTrustedIcon);
@@ -736,6 +739,21 @@ public class Display {
         current.lSetDisplay(Display.this);
         pendingCurrent = initialDisplayable;
     }
+
+    // #ifdef ENABLE_CHAMELEON	
+    /** 
+     * Update screen size constants in skin resources for full screen and normal modes
+     */
+    void updateScreenSizeConst() {
+	setFullScreen0(displayId, !lastFullScnMode);
+	if (lastFullScnMode) {
+	    SkinResources.setScreenSizeConst(getScreenWidth0(), getScreenHeight0(), WIDTH, HEIGHT);
+	} else {
+	    SkinResources.setScreenSizeConst(WIDTH, HEIGHT, getScreenWidth0(), getScreenHeight0());
+	}
+	setFullScreen0(displayId, lastFullScnMode);
+    }
+    // #endif ENABLE_CHAMELEON
 
     /**
      * Initializes the display class. Shall be called only from
@@ -2375,6 +2393,32 @@ public class Display {
         return  (current instanceof AlertLF) ? window.getAlertHeight() : window.getBodyHeight();
     }
 
+    /** Get the width of some invisible displayable depending on the screen mode and 
+     * the layers attached to the screen 
+     * @param isFullScn true if the full scren is set for the displayable      
+     * @param withScrollBar true if the scroll bar is in use for the  displayable
+     * @return width of the paticular displayable
+     */
+    static int getInvisibleDisplayableWidth(boolean isFullScn, boolean withScrollBar) {
+	return MIDPWindow.getInvisibleBodyWidth(isFullScn, withScrollBar);
+    }
+    
+    /** 
+     * Get the height of some invisible displayable depending on the screen mode and 
+     * the layers attached to the screen 
+     * @param isFullScn true if the full scren is set for the body layer      
+     * @param withTitle true if the title is attached      
+     * @param withTicker true if the ticker is attached 
+     * @param withCmds true if command layer is visible
+     * @return height of the paticular body layer
+     */
+    static int getInvisibleDisplayableHeight(boolean isFullScn, 
+					     boolean withTitle, 
+					     boolean withTicker, 
+					     boolean withCmds) {
+	return MIDPWindow.getInvisibleBodyHeight(isFullScn, withTitle, withTicker, withCmds);
+    }
+    
     // #endif ENABLE_CHAMELEON
 
     /**
@@ -2453,6 +2497,7 @@ public class Display {
         public void scheduleRepaint() {
             Display.this.scheduleRepaint();
         }
+
 
         /**
          * Called from Chameleon to notify a listener of an item
@@ -3198,6 +3243,7 @@ public class Display {
             
             // #ifdef ENABLE_CHAMELEON
             SkinResources.adjustScreen();
+	    Display.this.updateScreenSizeConst();
 
             MIDPWindow windowCopy;
             DisplayableLF currentCopy;

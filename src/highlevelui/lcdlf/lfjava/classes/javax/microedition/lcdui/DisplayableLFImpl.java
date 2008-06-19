@@ -942,26 +942,27 @@ class DisplayableLFImpl implements DisplayableLF {
     public int getDisplayableHeight() {
         int h = 0;                
         
-        if (!owner.isInFullScreenMode) {
-            h = currentDisplay != null ?
+
+	h = currentDisplay != null ?
             currentDisplay.getDisplayableHeight() :
-            ScreenSkin.HEIGHT;
-        } else {
-            h = ScreenSkin.HEIGHT;
-        }
+            Display.getInvisibleDisplayableHeight(owner.isInFullScreenMode, 
+						  owner.getTitle() != null, 
+						  owner.getTicker() != null, 
+						  owner.numCommands > 0);
         return h;
     }
 
     /**
      * Calculate the width a displayable would occupy if it was to
-     * be displayed
+     * be display
      *
      * @return the width a displayable would occupy 
      */
     public int getDisplayableWidth() {
         int w = currentDisplay != null ?
             currentDisplay.getDisplayableWidth() :
-            ScreenSkin.WIDTH;
+            Display.getInvisibleDisplayableWidth(owner.isInFullScreenMode, 
+						 getVerticalScrollProportion() != 100);
         return w;
     }
     
