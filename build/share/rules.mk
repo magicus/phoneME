@@ -564,7 +564,7 @@ endif
 
 $(CVM_DERIVEDROOT)/empty.mk: $(CVM_SRCDIRS) $(JAVA_SRCDIRS)
 	touch $(CVM_DERIVEDROOT)/empty.mk
-include $(CVM_DERIVEDROOT)/empty.mk
+-include $(CVM_DERIVEDROOT)/empty.mk
 
 
 #####################################
