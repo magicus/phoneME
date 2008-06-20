@@ -1,0 +1,13 @@
+@(#)README	1.6 06/10/26
+
+
+When new version of Olson's public zone info is released ...
+============================================================
+
+1. Update *ALL* data file, not only updated file. 
+
+2. Update VERSION file besides Olson's data file.
+   This file has version information of Olson's data in this directory,
+   and is used to record that which version of Olson's data is used to
+   generate zoneinfo file(zi.jar).
+
