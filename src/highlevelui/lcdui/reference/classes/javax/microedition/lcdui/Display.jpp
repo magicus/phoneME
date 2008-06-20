@@ -729,8 +729,6 @@ public class Display {
         window = new MIDPWindow(cham_tunnel);
         region = new int[4];
 
-	updateScreenSizeConst();
-
         // #endif ENABLE_CHAMELEON
 
         drawTrustedIcon0(displayId, drawSuiteTrustedIcon);
@@ -739,21 +737,6 @@ public class Display {
         current.lSetDisplay(Display.this);
         pendingCurrent = initialDisplayable;
     }
-
-    // #ifdef ENABLE_CHAMELEON	
-    /** 
-     * Update screen size constants in skin resources for full screen and normal modes
-     */
-    void updateScreenSizeConst() {
-	setFullScreen0(displayId, !lastFullScnMode);
-	if (lastFullScnMode) {
-	    SkinResources.setScreenSizeConst(getScreenWidth0(), getScreenHeight0(), WIDTH, HEIGHT);
-	} else {
-	    SkinResources.setScreenSizeConst(WIDTH, HEIGHT, getScreenWidth0(), getScreenHeight0());
-	}
-	setFullScreen0(displayId, lastFullScnMode);
-    }
-    // #endif ENABLE_CHAMELEON
 
     /**
      * Initializes the display class. Shall be called only from
@@ -2173,17 +2156,11 @@ public class Display {
         // #ifndef ENABLE_GCI
         setFullScreen0(displayId, wantFullScnMode);
 
-        Display.WIDTH = getScreenWidth0();
-        Display.HEIGHT = getScreenHeight0();
         // #else
         // TBD: not implemented for GCI yet
         // #endif ENABLE_GCI
 
-        screenGraphics.setDimensions(Display.WIDTH, Display.HEIGHT);
-        screenGraphics.reset();
-
         // #ifdef ENABLE_CHAMELEON
-        SkinResources.adjustScreen();
         // Notify Chameleon that the current displayable should be shown
         // in fullscreen mode.
         // This call will not result in any call into application code
@@ -3243,7 +3220,6 @@ public class Display {
             
             // #ifdef ENABLE_CHAMELEON
             SkinResources.adjustScreen();
-	    Display.this.updateScreenSizeConst();
 
             MIDPWindow windowCopy;
             DisplayableLF currentCopy;

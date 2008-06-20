@@ -48,16 +48,6 @@ public class    ScreenSkin {
     public static int HEIGHT;
     
     
-    /** Full Screen display width. */
-    public static int WIDTH_FS;
-    /** Full Screen display height. */
-    public static int HEIGHT_FS;
-
-    /** Normal mode display width. */
-    public static int WIDTH_NM;
-    /** Normal mode display height. */
-    public static int HEIGHT_NM;
-
     /**
      * This field corresponds to SCREEN_TEXT_ORIENT skin property.
      * See its comment for further details.

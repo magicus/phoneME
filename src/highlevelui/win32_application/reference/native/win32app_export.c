@@ -68,7 +68,7 @@
  * Defines Java code paintable region
  */
 #define DISPLAY_WIDTH   CHAM_WIDTH
-#define DISPLAY_HEIGHT  CHAM_FULLHEIGHT
+#define DISPLAY_HEIGHT  CHAM_HEIGHT
 #define DISPLAY_X       X_SCREEN_OFFSET
 #define DISPLAY_Y       (Y_SCREEN_OFFSET + TOP_BAR_HEIGHT)
 
@@ -960,22 +960,14 @@ WndProc (HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam) {
  * Return screen width
  */
 int win32app_get_screen_width() {
-    if (reverse_orientation) {
-        return inFullScreenMode ? CHAM_FULLHEIGHT : CHAM_HEIGHT;
-    } else {
-        return inFullScreenMode ? CHAM_FULLWIDTH : CHAM_WIDTH;
-    }
+    return reverse_orientation ? CHAM_HEIGHT : CHAM_WIDTH;
 }
 
 /**
  * Return screen height
  */
 int win32app_get_screen_height() {
-    if (reverse_orientation) {
-        return inFullScreenMode ? CHAM_FULLWIDTH : CHAM_WIDTH;
-    } else {
-        return inFullScreenMode ? CHAM_FULLHEIGHT : CHAM_HEIGHT;
-    }
+    return reverse_orientation ? CHAM_WIDTH : CHAM_HEIGHT;
 }
 
 /**

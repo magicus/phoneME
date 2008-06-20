@@ -83,8 +83,8 @@ void ChameleonMScreen::init() {
    * -Height 
    * -Width 
    */
-  DISPLAY_FULLHEIGHT = CHAM_FULLHEIGHT;
-  DISPLAY_FULLWIDTH  = CHAM_FULLWIDTH;
+  DISPLAY_FULLHEIGHT = CHAM_HEIGHT;
+  DISPLAY_FULLWIDTH  = CHAM_WIDTH;
 
   /* Set up coordinate for the whole screen */
   /* SCREEN excludes the scroll bar */

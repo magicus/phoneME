@@ -145,24 +145,12 @@ void fbapp_set_fullscreen_mode(int mode) {
 
 /** Return screen width */
 int fbapp_get_screen_width() {
-    if (reverse_orientation) {
-        return (isFullScreen == 1) ?
-            CHAM_FULLHEIGHT : CHAM_HEIGHT;
-    } else {
-        return (isFullScreen == 1) ?
-            CHAM_FULLWIDTH : CHAM_WIDTH;
-    }
+    return reverse_orientation ? CHAM_HEIGHT : CHAM_WIDTH;
 }
 
 /** Return screen height */
 int fbapp_get_screen_height() {
-    if (reverse_orientation) {
-        return (isFullScreen == 1) ?
-            CHAM_FULLWIDTH : CHAM_WIDTH;
-    } else {
-        return (isFullScreen == 1) ?
-            CHAM_FULLHEIGHT : CHAM_HEIGHT;
-    }
+    return reverse_orientation ? CHAM_WIDTH : CHAM_HEIGHT;
 }
 
 /** Return screen x */

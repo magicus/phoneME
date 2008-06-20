@@ -53,10 +53,6 @@
             Name="CHAM_HEIGHT"
             Value="286"
             Comment="(Chameleon Only) display height"/>
-  <constant Type="int"
-            Name="CHAM_FULLHEIGHT"
-            Value="320"
-            Comment="(Chameleon Only) full display height"/>
   <constant Type="boolean"
             Name="TRAVERSAL2D"
             Value="true"

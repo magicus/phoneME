@@ -60,17 +60,9 @@
             Value="176"
             Comment="(Chameleon Only) display width"/>
   <constant Type="int"
-            Name="CHAM_FULLWIDTH"
-            Value="176"
-            Comment="(Chameleon Only) full display width"/>
-  <constant Type="int"
             Name="CHAM_HEIGHT"
             Value="220"
             Comment="(Chameleon Only) display height"/>
-  <constant Type="int"
-            Name="CHAM_FULLHEIGHT"
-            Value="220"
-            Comment="(Chameleon Only) full display height"/>
   <constant Type="boolean"
             Name="TRAVERSAL2D"
             Value="true"

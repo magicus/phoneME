@@ -53,10 +53,6 @@
             Name="CHAM_HEIGHT"
             Value="294"
             Comment="(Chameleon Only) display height (QVA PocketPC)"/>
-  <constant Type="int"
-            Name="CHAM_FULLHEIGHT"
-            Value="294"
-            Comment="(Chameleon Only) full display height (QVA PocketPC)"/>
   <constant Type="boolean"
             Name="TRAVERSAL2D"
             Value="true"

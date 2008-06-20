@@ -562,20 +562,6 @@ public class SkinResources {
     }
 
     /**
-     * Set the screen size constants for normal screen mode and for full screen mode
-     * @param width_nm screen width for the normal mode     
-     * @param height_nm screen height for the normal mode
-     * @param width_fs screen width for the full screen mode 
-     * @param height_fs screen height for the full screen mode
-     */
-    public static void setScreenSizeConst(int width_nm, int height_nm, int width_fs, int height_fs) {
-	ScreenSkin.WIDTH_NM = width_nm;
-	ScreenSkin.HEIGHT_NM = height_nm;
-	ScreenSkin.WIDTH_FS = width_fs;    
-	ScreenSkin.HEIGHT_FS = height_fs;
-    }
-		
-    /**
      * Native method to store a strong cross-isolate reference
      * to the resource pool Object. This will allow the CSkin
      * class in all isolates to share the same loaded resources.

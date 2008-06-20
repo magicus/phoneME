@@ -38,11 +38,6 @@
             Value="266"
             Comment="(Chameleon Only) display height (QVA PocketPC)"/>
   <constant Type="int"
-            Name="CHAM_FULLHEIGHT"
-            Value="266"
-            Comment="(Chameleon Only) full display height (QVA PocketPC)"/>
-
-  <constant Type="int"
             Name="FULLWIDTH"
             Value="240"
             Comment="(Fixed) full display width"/>
