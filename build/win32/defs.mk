@@ -137,8 +137,19 @@ ifeq ($(USE_SPLASH_SCREEN),true)
 ifeq ($(WIN32_PLATFORM),wince)
 SPLASH_RES = $(CVM_OBJDIR)/splash.res
 
+ifeq ($(USE_CDC_COM),true)
+ifdef CDC_PROJECT
+SPLASH_RC ?= $(CDC_COM_DIR)/projects/$(CDC_PROJECT)/resources/win32/splash.rc
+endif
+endif
+
 ifeq ($(SPLASH_RC),)
-$(error SPLASH_RC must point to a .rc file if USE_SPLASH_SCREEN is true)
+$(error SPLASH_RC must point to a .rc file if USE_SPLASH_SCREEN=true)
+endif
+
+ifeq ($(wildcard $(SPLASH_RC)),)
+$(error SPLASH_RC must point to a .rc file if USE_SPLASH_SCREEN=true: \
+	"$(SPLASH_RC)")
 endif
 
 ifeq ($(CVM_DLL),false)
