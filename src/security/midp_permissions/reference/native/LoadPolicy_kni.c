@@ -76,7 +76,8 @@ KNIDECL(com_sun_midp_security_Permissions_loadGroupList)
 KNI_RETURNTYPE_OBJECT
 KNIDECL(com_sun_midp_security_Permissions_loadGroupPermissions)
 {
-    int lines, i1, str_len;
+    int lines, i1;
+	unsigned int str_len;
     void *array;
     jchar jbuff[64];
     char  group_name[64];
@@ -123,8 +124,7 @@ KNIDECL(com_sun_midp_security_Permissions_getDefaultValue) {
     jchar jbuff[64];
     char  domain_name[64], group_name[64];
 
-    KNI_StartHandles(3);
-    KNI_DeclareHandle(tmpString);
+    KNI_StartHandles(2);
     KNI_DeclareHandle(domain);
     KNI_DeclareHandle(group);
 
@@ -153,8 +153,7 @@ KNIDECL(com_sun_midp_security_Permissions_getMaxValue) {
     jchar jbuff[64];
     char  domain_name[64], group_name[64];
 
-    KNI_StartHandles(3);
-    KNI_DeclareHandle(tmpString);
+    KNI_StartHandles(2);
     KNI_DeclareHandle(domain);
     KNI_DeclareHandle(group);
 
