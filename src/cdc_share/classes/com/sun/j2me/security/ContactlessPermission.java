@@ -30,7 +30,7 @@ package com.sun.j2me.security;
 public class ContactlessPermission extends Permission {
     
     static public ContactlessPermission DISCOVERY_MANAGER =
-        new ContactlessPermission("javax.microedition.contactless.DiscoveryManager"), null);
+        new ContactlessPermission("javax.microedition.contactless.DiscoveryManager", null);
     static public ContactlessPermission NDEF_TAG_CONNECTION_WRITE =
         new ContactlessPermission("javax.microedition.contactless.ndef.NDEFTagConnection", null);
     static public ContactlessPermission CONNECTOR_NDEF =
