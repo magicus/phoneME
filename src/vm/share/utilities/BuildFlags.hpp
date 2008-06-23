@@ -1,25 +1,25 @@
 /*
- *   
+ *
  *
  * Portions Copyright  2000-2007 Sun Microsystems, Inc. All Rights
  * Reserved.  Use is subject to license terms.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
- * 
+ *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
  * 2 only, as published by the Free Software Foundation.
- * 
+ *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
  * included at /legal/license.txt).
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA
- * 
+ *
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
  * information or have any questions.
@@ -172,7 +172,7 @@
 // ENABLE_CLDC_11                1,1  Support CLDC 1.1 Specification instead
 //                                    of CLDC 1.0.
 //
-// ENABLE_CLDC_111               0,0  Support CLDC 1.1.1 Specification 
+// ENABLE_CLDC_111               0,0  Support CLDC 1.1.1 Specification
 //                                    instead of CLDC 1.0.
 //
 // ENABLE_CODE_OPTIMIZER         0,0  Enable optimization of code generated
@@ -191,19 +191,19 @@
 //
 // ENABLE_DISPATCH_TABLE_PADDING 0,0  Add extra entries to the dispatch table
 //
-// ENABLE_DYNAMIC_NATIVE_METHODS 0,0  Add ability to execute user classes 
+// ENABLE_DYNAMIC_NATIVE_METHODS 0,0  Add ability to execute user classes
 //                                    containing native methods.
 //
 // ENABLE_DYNAMIC_RESTRICTED_PACKAGE 0,0 Allow restricted packages to
 //                                    be dynamically specified.
 //
-// ENABLE_FAST_CRC32             1,1  Use fast CRC32 routine? Adds 1KB 
+// ENABLE_FAST_CRC32             1,1  Use fast CRC32 routine? Adds 1KB
 //                                    footprint.
 //
 // ENABLE_FAST_MEM_ROUTINES      1,1  Use built-in memcmp and memcpy routines
 //                                    in the generated interpreter loop.
 //
-// ENABLE_INLINEASM_INTERPRETER  0,0  If true, the interpreter loop is 
+// ENABLE_INLINEASM_INTERPRETER  0,0  If true, the interpreter loop is
 //                                    generated as a C file with
 //                                    inlined assembly code.  This
 //                                    option is used on x86 only.
@@ -241,11 +241,11 @@
 //
 // ENABLE_HEAP_NEARS_IN_HEAP     0,0  Ensure all nears of romized HEAP objects and prototypical nears
 //                                    of all classes are in ROM HEAP block by cloning those nears
-//                                    from ROM TEXT and DATA blocks to the ROM HEAP block. 
-//                                    Speeds up GC, but slightly increases footprint. 
+//                                    from ROM TEXT and DATA blocks to the ROM HEAP block.
+//                                    Speeds up GC, but slightly increases footprint.
 //
 // ENABLE_PREINITED_TASK_MIRRORS 1,1  Put TaskMirror to a separate section of SystemROM image
-//                                    to allow loading them during startup of each task.                                   
+//                                    to allow loading them during startup of each task.
 //
 // ENABLE_LIB_IMAGES             0,0  (unsupported) allow loading of multiple
 //                                    binary images into the same task.
@@ -306,7 +306,7 @@
 //                                    and loading) of binary application
 //                                    image files for fast class loading.
 //
-// ENABLE_MONET_COMPILATION      0,0  Enable on-device method precompilation 
+// ENABLE_MONET_COMPILATION      0,0  Enable on-device method precompilation
 //                                    Requires ENABLE_MONET.
 //
 // ENABLE_MONET_DEBUG_DUMP       1,0  Create debug dump files that describe
@@ -320,7 +320,7 @@
 //                                    Java method invocation.
 //                                    Used for startup time measurements.
 //
-// ENABLE_PCSL                   0,0  Enable support for the Portable Common 
+// ENABLE_PCSL                   0,0  Enable support for the Portable Common
 //                                    Services Library.
 //
 // ENABLE_PERFORMANCE_COUNTERS   1,0  Enable coarse-grain performance counters.
@@ -367,7 +367,7 @@
 //
 // ENABLE_SEMAPHORE              1,1  Include com.sun.cldc.util.Semaphore class
 //
-// ENABLE_ROM_GENERATOR          1,0  Include code for generating 
+// ENABLE_ROM_GENERATOR          1,0  Include code for generating
 //                                    (source or binary) ROM image.
 //
 // ENABLE_INTERPRETER_GENERATOR  1,-  Include code for generating interpreter
@@ -427,7 +427,7 @@
 //                                    code of that method.
 //
 // ENABLE_COMPRESSED_VSF         0,0  Compiler-specific.
-//                                    Include table of compressed VSF 
+//                                    Include table of compressed VSF
 //                                    in the Relocation of CompiledMethod
 //                                    to reduce the produced code size.
 //
@@ -469,7 +469,7 @@
 // ENABLE_INLINE                        1,1 Inline simple methods into their
 //                                          callers in compiled code.
 //
-// ENABLE_REMEMBER_ARRAY_CHECK          0,0 Remember the length 
+// ENABLE_REMEMBER_ARRAY_CHECK          0,0 Remember the length
 //                                          checking result of a un-changed
 //                                          local variable.
 //
@@ -483,7 +483,7 @@
 //                                          prediction.
 //
 // ENABLE_CSE                           0,0 Eliminate memory access related
-//                                          common byte code  
+//                                          common byte code
 //
 // ENABLE_HARDWARE_TIMER_FOR_TICKS      0,0 Nucleus-XScale only.  Include code
 //                                          to set up a hardware timer to
@@ -506,12 +506,15 @@
 //
 // ENABLE_JVMPI_PROFILE_VERIFY          0,0 To support JVMPI profiler
 //                                          verification.
-// 
+//
 // ENABLE_CODE_PATCHING                 0,0 Use code patching mechanism for
 //                                          timer tick checking optimizations.
 //
 // ENABLE_CONDITIONAL_BRANCH_OPTIMIZATIONS 1,1 Use flags set by arithmetic
 //                                          instructions
+//
+// ENABLE_FREQUENT_FORCED_GC_SUPPRESSION 0,0 Enable garbage collection
+//                                           optimization
 //============================================================================
 // ENABLE_FLAGS_END }}
 //============================================================================
@@ -715,7 +718,7 @@
 #endif
 
 //
-// USE_SINGLE_METHOD_FLUSHING         During code patching use the single 
+// USE_SINGLE_METHOD_FLUSHING         During code patching use the single
 //                                    flush icache for the method instead of
 //                                    several flushes for each instruction.
 //
@@ -773,7 +776,7 @@
 #endif
 #endif
 
-#ifndef USE_ROM_LOGGING 
+#ifndef USE_ROM_LOGGING
 #  if ENABLE_ROM_GENERATOR && !defined(PRODUCT)
 #    define USE_ROM_LOGGING 1
 #  else
@@ -841,7 +844,7 @@
 #else
 #  define USE_LITERAL_POOL 0
 #endif
-  
+
 
 #define USE_COMPILER_FPU_MAP     !USE_LITERAL_POOL
 #define USE_COMPILER_LITERALS_MAP USE_LITERAL_POOL
@@ -873,7 +876,7 @@
 
 // MAX_METHOD_TO_COMPILE              Default size for the MaxMethodToCompile
 //                                    run-time option. The system default
-//                                    is 6000 bytes. Platforms can override 
+//                                    is 6000 bytes. Platforms can override
 //                                    this in Globals_<os_family>.hpp or in
 //                                    Makefiles.
 #ifndef MAX_METHOD_TO_COMPILE
@@ -932,7 +935,7 @@
 #define SUPPORTS_CUSTOM_HEAP_ADJUSTMENT 0
 #endif
 
-#ifndef SUPPORTS_PROFILER_CONTROL 
+#ifndef SUPPORTS_PROFILER_CONTROL
 #define SUPPORTS_PROFILER_CONTROL 0
 #endif
 
@@ -942,7 +945,7 @@
 
 
 #ifndef HOST_LITTLE_ENDIAN
-// This should have be set in makefiles, but need to set a default value 
+// This should have be set in makefiles, but need to set a default value
 // for win32_i386_ide build.
 #  define HOST_LITTLE_ENDIAN 1
 #endif
@@ -952,7 +955,7 @@
 //                                    the JVM_SetHeapLimit API to
 //                                    implement a user-administered
 //                                    space in the Java heap.
-#ifndef USE_SET_HEAP_LIMIT 
+#ifndef USE_SET_HEAP_LIMIT
 #  define USE_SET_HEAP_LIMIT 1
 #endif
 
@@ -973,9 +976,9 @@
 // USE_IMAGE_MAPPING                  Load the Monet image(s) using an
 //                                    OS-specific file mapping API (such as
 //                                    mmap() on Linux). This is the most
-//                                    efficient method of loading images, 
-//                                    since it potentially supports 
-//                                    direct-mapping of Flash to reduce 
+//                                    efficient method of loading images,
+//                                    since it potentially supports
+//                                    direct-mapping of Flash to reduce
 //                                    RAM consumption.
 //
 // USE_IMAGE_PRELOADING               Load the Monet image(s) at the beginning
@@ -1031,7 +1034,7 @@
 // USE_VERBOSE_ERROR_MSG              Use a descriptive character string
 //                                    in errors thrown by the VM
 
-#if ENABLE_INTERPRETER_GENERATOR || USE_SOURCE_IMAGE_GENERATOR 
+#if ENABLE_INTERPRETER_GENERATOR || USE_SOURCE_IMAGE_GENERATOR
 // The loopgen and source romgen always need the debug printing code.
 #  define USE_DEBUG_PRINTING        1
 #  define USE_COMPILER_COMMENTS     ENABLE_COMPILER
@@ -1132,8 +1135,8 @@
 #endif
 
 //
-// USE_FP_RESULT_IN_VFP_REGISTER      Return floating point retult in VFP 
-//                                    registers. 
+// USE_FP_RESULT_IN_VFP_REGISTER      Return floating point retult in VFP
+//                                    registers.
 //
 #define USE_FP_RESULT_IN_VFP_REGISTER (ENABLE_ARM_VFP)
 
