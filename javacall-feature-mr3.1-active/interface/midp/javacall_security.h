@@ -246,7 +246,7 @@ void javanotify_security_permission_dialog_finish(
  * @retval The number of strings in the list or 0 on error
  * 
  */
-int javacall_load_domain_list(javacall_utf8_string* array);
+int javacall_permissions_load_domain_list(javacall_utf8_string* array);
 
 /**
  *  Load list of groups. The function returns in
@@ -257,7 +257,7 @@ int javacall_load_domain_list(javacall_utf8_string* array);
  *  that returns
  *  @retval The number of strings in the list or 0 on error 
  */
-int javacall_load_group_list(javacall_utf8_string* array);
+int javacall_permissions_load_group_list(javacall_utf8_string* array);
 
 /** 
  * Load list of permissions members of the requested group. The 
@@ -269,7 +269,7 @@ int javacall_load_group_list(javacall_utf8_string* array);
  * @param group_name The name of the group which members are requested
  * @retval The number of strings in the list or 0 on error 
  */
-int javacall_load_group_permissions(javacall_utf8_string* list, 
+int javacall_permissions_load_group_permissions(javacall_utf8_string* list, 
                                     javacall_utf8_string group_name);
 
 /**
@@ -278,7 +278,7 @@ int javacall_load_group_permissions(javacall_utf8_string* list,
  * @retval Default value of permission action should
  * be taken on that domain/group combiation 
  */
-int javacall_get_default_value(javacall_utf8_string domain_name,
+int javacall_permissions_get_default_value(javacall_utf8_string domain_name,
                                javacall_utf8_string group_name);
 
 /**
@@ -287,7 +287,7 @@ int javacall_get_default_value(javacall_utf8_string domain_name,
  * @retval Maximum value of permission action should
  * be taken on that domain/group combiation 
  */
-int javacall_get_max_value(javacall_utf8_string domain_name,
+int javacall_permissions_get_max_value(javacall_utf8_string domain_name,
                            javacall_utf8_string group_name);
 
 /**
@@ -300,7 +300,7 @@ int javacall_get_max_value(javacall_utf8_string domain_name,
  * @param group_name the name of the group
  * @retval The number of strings in the list or 0 on error
  */
-int javacall_load_group_messages(javacall_utf8_string* list,
+int javacall_permissions_load_group_messages(javacall_utf8_string* list,
                                  javacall_utf8_string group_name);
 
 
