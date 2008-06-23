@@ -314,6 +314,9 @@ javacall_result checkForSystemSignal(MidpReentryData* pNewSignal,
          */
         midp_suspend();
         break;
+    case MIDP_JC_EVENT_RESUME:
+        midp_resume();
+        break;
     case MIDP_JC_EVENT_PUSH:
         pNewSignal->waitingFor = PUSH_ALARM_SIGNAL;
         pNewSignal->descriptor = event->data.pushEvent.alarmHandle;
