@@ -102,7 +102,7 @@ typedef enum {
     MIDP_JC_EVENT_MMS_INCOMING         ,
 #endif
     MIDP_JC_EVENT_MULTIMEDIA           ,
-    MIDP_JC_EVENT_PAUSE                ,
+    MIDP_JC_EVENT_PAUSE                , 
     MIDP_JC_EVENT_RESUME               ,
     MIDP_JC_EVENT_INTERNAL_PAUSE       ,
     MIDP_JC_EVENT_INTERNAL_RESUME      ,
@@ -148,6 +148,10 @@ typedef enum {
     JSR256_JC_EVENT_SENSOR_OPEN_CLOSE  ,
     JSR256_JC_EVENT_SENSOR_DATA_READY
 #endif /*ENABLE_JSR_256*/
+#if ENABLE_JSR_290
+    ,JSR290_JC_EVENT_FLUID_LOAD_FINISHED
+    ,JSR290_JC_EVENT_FLUID_INVALIDATE
+#endif /*ENABLE_JSR_290*/
 } midp_jc_event_type;
 
 
@@ -282,6 +286,13 @@ typedef struct {
 } jsr256_jc_event_sensor_t;
 #endif /* ENABLE_JSR_256 */
 
+#ifdef ENABLE_JSR_290
+typedef struct {
+    javacall_handle fluid_image;
+    javacall_result result;
+} jsr290_jc_event_fluid;
+#endif /* ENABLE_JSR_290 */
+
 typedef struct {
     javacall_penevent_type type;
     int x;
@@ -361,6 +372,9 @@ typedef struct {
         jsr256_jc_event_sensor_available   jsr256SensorAvailable;
         jsr256_jc_event_sensor_t           jsr256_jc_event_sensor;
 #endif /* ENABLE_JSR_256 */
+#ifdef ENABLE_JSR_290
+        jsr290_jc_event_fluid              jsr290FluidEvent;
+#endif /* ENABLE_JSR_290 */
     } data;
 
 } midp_jc_event_union;

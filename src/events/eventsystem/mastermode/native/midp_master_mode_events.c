@@ -122,7 +122,7 @@ void midp_check_events(JVMSPI_BlockedThreadInfo *blocked_threads,
         }
 
         break;
-#endif // ENABLE_JAVA_DEBUGGER
+#endif /* ENABLE_JAVA_DEBUGGER */
 
     case AMS_SIGNAL:
         midpStoreEventAndSignalAms(newMidpEvent);
@@ -242,6 +242,14 @@ void midp_check_events(JVMSPI_BlockedThreadInfo *blocked_threads,
         }
         break;
 #endif /* ENABLE_JSR_256 */
+#ifdef ENABLE_JSR_290
+    case JSR290_LOAD_FINISH_SIGNAL:
+    case JSR290_INVALIDATE_SIGNAL:
+        midp_thread_signal_list(blocked_threads, blocked_threads_count,
+                                newSignal.waitingFor, newSignal.descriptor,
+                                newSignal.status);
+        break;
+#endif /* ENABLE_JSR_290 */
     default:
         break;
     } /* switch */

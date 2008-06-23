@@ -32,7 +32,6 @@
 #include <midpInit.h>
 #include <midpMalloc.h>
 #include <midpError.h>
-#include <midpNativeThread.h>
 #include <midpPauseResume.h>
 
 /** Suspendable resource that reprsents the VM. */
@@ -129,6 +128,14 @@ void resume_resources() {
     }
 }
 
+/**
+ * Requests java stack to release resources and suspend.
+ * When the stack s suspended, there are two ways of requesting the stack
+ * to resume. One is to pass control to midp_checkAndResume() and provide
+ * midp_checkResumeRequest() to return KNI_TRUE. Another one is to simply
+ * call midp_resume(). The ways are logically equivalent but one of them may
+ * be more convenent on a port to a particular patform.
+ */
 void midp_suspend() {
     REPORT_INFO(LC_LIFECYCLE, "midp_suspend()");
 
@@ -168,6 +175,10 @@ void resume_java() {
     REPORT_INFO(LC_LIFECYCLE, "midp_resume(): midp resumed");
 }
 
+/**
+ * Requests java stack to resume normal processing restoring resources
+ * where possible.
+ */
 void midp_resume() {
     REPORT_INFO(LC_LIFECYCLE, "midp_resume()");
 
@@ -195,7 +206,8 @@ KNIEXPORT KNI_RETURNTYPE_VOID
 KNIDECL(com_sun_midp_suspend_SuspendSystem_00024MIDPSystem_suspended0) {
     allMidletsKilled = KNI_GetParameterAsBoolean(1);
 
-    /* Checking that midp_resume() has not been called during suspending
+    /*
+     * Checking that midp_resume() has not been called during suspending
      * of java side.
      */
     if (sr_state == SR_SUSPENDING) {
@@ -282,6 +294,15 @@ void sr_finalizeSystem() {
     sr_state = SR_INVALID;
 }
 
+/**
+ * Checks if there is active request for java stack to resume and invokes
+ * stack resuming routines if requested. Makes nothing in case the java
+ * stack is not currently suspended. There is no need to call this function
+ * from the outside of java stack, it is called automatically if suspended
+ * stack receives control.
+ *
+ * @return KNI_TRUE if java stack resuming procedures were invoked.
+ */
 jboolean midp_checkAndResume() {
     jboolean res = KNI_FALSE;
     SRState s = midp_getSRState();
@@ -297,6 +318,17 @@ jboolean midp_checkAndResume() {
     return res;
 }
 
+/**
+ * Waits while java stack stays suspended then calls midp_resume().
+ * If java stack is not currently suspened, returns false immediately.
+ * Otherwise calls midp_checkAndResume() in cycle until it detects
+ * resume request and performs resuming routines.
+ *
+ * Used in VM maser mode only.
+ *
+ * @retrun KNI_TRUE if java stack was suspended and resume request
+ *         was detected within this call, KNI_FALSE otherwise
+ */
 jboolean midp_waitWhileSuspended() {
     jboolean ret = KNI_FALSE;
 
@@ -304,20 +336,14 @@ jboolean midp_waitWhileSuspended() {
         ret = KNI_TRUE;
         midp_checkAndResume();
 
-        /* IMPL_NOTE: condition here is not midp_checkAndResume() to
+        /*
+         * IMPL_NOTE: condition here is not midp_checkAndResume() to
          * support special testing scenario when system is suspended
          * but VM continues working.
          */
         if (!vm.isSuspended) {
             break;
         }
-
-        /* IMPL_NOTE: Sleep delay 1 here means 1 second since
-         * midp_sleepNativeThread() takes seconds. Beter solution
-         * is rewriting midp_sleepNativeThread() for it to take
-         * milliseconds and use SR_RESUME_CHECK_TIMEOUT here.
-         */
-        midp_sleepNativeThread(1);
     }
 
     return ret;

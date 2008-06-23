@@ -191,7 +191,7 @@ public abstract class JUMPInstaller {
 
     /** Use this to be the security domain for unsigned suites. */
     protected String unsignedSecurityDomain =
-        Permissions.UNIDENTIFIED_DOMAIN_BINDING;
+        Permissions.getUnsignedDomain();
 
     /* SecurityToken provided by the user of the JUMPInstaller */
     protected SecurityToken token = null;
@@ -1037,7 +1037,7 @@ public abstract class JUMPInstaller {
              * The unidentified suites do not get checked for requested
              * permissions.
              */
-            if (Permissions.UNIDENTIFIED_DOMAIN_BINDING.equals(info.domain)) {
+            if (Permissions.getUnsignedDomain().equals(info.domain)) {
 
                 settings.setPermissions((Permissions.forDomain(
                     info.domain)) [Permissions.CUR_LEVELS]);
@@ -2352,13 +2352,14 @@ public abstract class JUMPInstaller {
             }
         }
 
-        if (curLevels[Permissions.PUSH] == Permissions.NEVER) {
+		int PUSH_ID = Permissions.getId("javax.microedition.io.PushRegistry");
+        if (curLevels[PUSH_ID] == Permissions.NEVER) {
             settings.setPushInterruptSetting(Permissions.NEVER);
-        } else if (curLevels[Permissions.PUSH] == Permissions.ALLOW) {
+        } else if (curLevels[PUSH_ID] == Permissions.ALLOW) {
             // Start the default at session for usability when denying.
             settings.setPushInterruptSetting(Permissions.SESSION);
         } else {
-            settings.setPushInterruptSetting(curLevels[Permissions.PUSH]);
+            settings.setPushInterruptSetting(curLevels[PUSH_ID]);
         }
     }
 

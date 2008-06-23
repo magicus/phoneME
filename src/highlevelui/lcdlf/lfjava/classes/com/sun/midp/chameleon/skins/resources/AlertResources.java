@@ -132,7 +132,7 @@ public class AlertResources {
     public static void checkLocale() {
         String locale = System.getProperty("microedition.locale");
 
-        if (locale.equals("he")) {
+        if (locale.equals("he-IL")) {
             AlertSkin.TITLE_ALIGN = Graphics.RIGHT;
             AlertSkin.ALIGN_X = Graphics.RIGHT;
         } else {

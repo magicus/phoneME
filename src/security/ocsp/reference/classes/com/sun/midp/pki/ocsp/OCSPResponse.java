@@ -152,7 +152,8 @@ class OCSPResponse {
      */
     // used by OCSPValidatorImpl
     OCSPResponse(byte[] bytes, Vector certs, CertId reqCertId,
-                 X509Certificate issuerCert, CertStore keyStore)
+                 X509Certificate issuerCert, CertStore keyStore,
+                 byte[] reqNonce)
             throws IOException, OCSPException {
 
         try {
@@ -161,7 +162,7 @@ class OCSPResponse {
             int version;
             Date producedAtDate;
             AlgorithmId sigAlgId;
-            byte[] ocspNonce;
+            byte[] respNonce = null;
 
             // OCSPResponse
             if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
@@ -309,7 +310,7 @@ class OCSPResponse {
 
                         if ((responseExtension[i].getExtensionId()).equals(
                             OCSP_NONCE_EXTENSION_OID)) {
-                            ocspNonce =
+                            respNonce =
                                 responseExtension[i].getExtensionValue();
                         } else if (responseExtension[i].isCritical())  {
                             throw new IOException(
@@ -317,6 +318,22 @@ class OCSPResponse {
                                 responseExtension[i].getExtensionId());
                         }
                     }
+                }
+            }
+
+            // Check that the nonce value is the same as given in the request.
+            if (reqNonce != null) {
+                if (respNonce == null)  {
+                    throw new IOException(
+                            "nonce extension is missing in the response.");
+                }
+                
+                // get response nonce bytes
+                if ((reqNonce.length != respNonce.length) ||
+                           !Utils.byteMatch(reqNonce, 0, respNonce, 0,
+                                            reqNonce.length)) {
+                    throw new IOException(
+                            "Invalid nonce value in the response.");
                 }
             }
 

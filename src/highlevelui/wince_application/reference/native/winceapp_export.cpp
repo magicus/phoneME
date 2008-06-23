@@ -76,8 +76,11 @@ extern "C" {
 extern int inMidpEventLoop;
 extern int lastWmSettingChangeTick;
 
+jboolean bVirtualModeEnabled = KNI_FALSE;
+
 gxj_screen_buffer gxj_system_screen_buffer;
 
+static HWND hwndToolbar = NULL;
 static HWND hwndMain = NULL;
 static HWND hwndTextActive = NULL;
 static HWND hwndTextField = NULL;
@@ -229,22 +232,41 @@ static void createEditors() {
     SetWindowLong(hwndTextBox, GWL_WNDPROC, (LONG)&myTextBoxProc);
 }
 
+static void showToolbar(bool bShow) {
+    ShowWindow(hwndToolbar, bShow ? SW_SHOWNORMAL : SW_HIDE);
+    UpdateWindow(hwndToolbar);
+}
+
 static void updateDimensions() {
     SIPINFO sipinfo;
     RECT rc;
 
     memset(&sipinfo, 0, sizeof(sipinfo));
     sipinfo.cbSize = sizeof(SIPINFO);
-    SHSipInfo(SPI_GETSIPINFO, 0, &sipinfo, 0);
-    rcVisibleDesktop = sipinfo.rcVisibleDesktop;
+    SipGetInfo(&sipinfo);
 
-    SHFullScreen(hwndMain, SHFS_HIDESIPBUTTON);
-    GetWindowRect(hwndMain, &rc);
+    if (bVirtualModeEnabled) {
+        memcpy(&rc, &sipinfo.rcVisibleDesktop, sizeof(rc));
+        if (sipinfo.fdwFlags & SIPF_ON) {
+            rc.bottom = sipinfo.rcSipRect.top;
+        } else {
+            RECT rcToolbar;
+            GetWindowRect(hwndToolbar, &rcToolbar);
+            rc.bottom = rcToolbar.top;
+        }
+    } else {
+        SHFullScreen(hwndMain, SHFS_HIDESIPBUTTON);
+        GetWindowRect(hwndMain, &rc);
+        rc.bottom = GetSystemMetrics(SM_CYSCREEN);
+    }
+    rcVisibleDesktop = rc;
+
     gxj_system_screen_buffer.width = rc.right - rc.left;
-    gxj_system_screen_buffer.height = GetSystemMetrics(SM_CYSCREEN) - rc.top;
+    gxj_system_screen_buffer.height = rc.bottom - rc.top;
 
     MoveWindow(hwndMain, rc.left, rc.top, gxj_system_screen_buffer.width,
         gxj_system_screen_buffer.height, TRUE);
+    showToolbar(bVirtualModeEnabled);
 }
 
 static void initPutpixelSurface() {
@@ -417,8 +439,23 @@ static BOOL InitApplication(HINSTANCE hInstance) {
     wc.hbrBackground = (HBRUSH) GetStockObject(WHITE_BRUSH);
     wc.lpszMenuName = NULL;
     wc.lpszClassName = _szAppName;
+    _hInstance = hInstance;
 
     return RegisterClass(&wc);
+}
+
+static void CreateMenuBar() {
+    SHMENUBARINFO mbi;
+    
+    memset(&mbi, 0, sizeof(SHMENUBARINFO));
+    mbi.cbSize = sizeof(SHMENUBARINFO);
+    mbi.hwndParent = hwndMain;
+    mbi.dwFlags = SHCMBF_EMPTYBAR | SHCMBF_HIDDEN;
+    mbi.hInstRes = _hInstance;
+    
+    if (SHCreateMenuBar(&mbi)) {
+        hwndToolbar = mbi.hwndMB;
+    }
 }
 
 static BOOL InitInstance(HINSTANCE hInstance, int CmdShow) {
@@ -478,6 +515,7 @@ DWORD WINAPI CreateWinCEWindow(LPVOID lpParam) {
         MessageBox(NULL, TEXT("Failed to start JWC"), TEXT("Bye"), MB_OK);
     }
 
+    CreateMenuBar();
     initPutpixelSurface();
     if (eventWindowInit) {
         SetEvent(eventWindowInit);
@@ -579,12 +617,13 @@ LRESULT CALLBACK winceapp_wndproc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) {
     int cmd;
     DWORD err;
     static int ignoreCancelMode = 0;
-    int result = 0;
-    int action = 0;
+    static HANDLE hEvent = CreateEvent(NULL, FALSE, TRUE, NULL);
+    static bool bButtonDown = false;
+    LRESULT result = 0;
 
     switch (msg) {
     case WM_CREATE:
-        return 0;
+        break;
 
     case WM_HOTKEY:
         /* If back key is overriden, back button messages are sent in
@@ -607,36 +646,25 @@ LRESULT CALLBACK winceapp_wndproc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) {
 #endif
             }
         }
-        return 1;
+        result = 1;
+        break;
 
     case WM_SETTINGCHANGE:
-        if (SETTINGCHANGE_RESET == wp) {
+        if (SETTINGCHANGE_RESET == wp || SPI_SETSIPINFO == wp || SPI_SETCURRENTIM == wp || SPI_SIPMOVE == wp) {
             updateDimensions();
             updateEditorForRotation();
             lastWmSettingChangeTick = GetTickCount();
-
+            
             pMidpEventResult->type = ROTATION_EVENT;
             pSignalResult->waitingFor = UI_SIGNAL;
             pMidpEventResult->DISPLAY = gForegroundDisplayId;
             sendMidpKeyEvent(pMidpEventResult, sizeof(*pMidpEventResult));
-
-            /* Handle Virtual Keyboard change */
-            /*
-            RECT virtualKeyboardRect = {0, 0};
-            HWND hWndInputPanel = FindWindow(TEXT("SipWndClass"), NULL);
-            if (hWndInputPanel != NULL) {
-                if (IsWindowVisible(hWndInputPanel)) {
-                    GetWindowRect(hWndInputPanel, &virtualKeyboardRect);
-                }
-            }
-            virtualKeyboardHeight = 
-	            virtualKeyboardRect.bottom - virtualKeyboardRect.top;
-            */
-            return DefWindowProc(hwnd, msg, wp, lp);
+            result = 0;
+            enablePaint();
         }
-
+        break;
     case WM_TIMER:
-        return 0;
+        break;
 
     case WM_COMMAND:
         switch ((cmd = GET_WM_COMMAND_ID(wp, lp))) {
@@ -665,9 +693,9 @@ LRESULT CALLBACK winceapp_wndproc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) {
              */
             if (!midpPaintAllowed)
                 enablePaint();
-            return 0;
+            break;
         default:
-                return DefWindowProc(hwnd, msg, wp, lp);
+            result = DefWindowProc(hwnd, msg, wp, lp);
         }
         break;
 
@@ -683,11 +711,13 @@ LRESULT CALLBACK winceapp_wndproc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) {
 #endif
             disablePaint();
         }
-        return DefWindowProc(hwnd, msg, wp, lp);
+        result = DefWindowProc(hwnd, msg, wp, lp);
+        break;
 
     case WM_EXITMENULOOP:
         enablePaint();
-        return DefWindowProc(hwnd, msg, wp, lp);
+        result = DefWindowProc(hwnd, msg, wp, lp);
+        break;
 
     case WM_CANCELMODE:
         if (!ignoreCancelMode) {
@@ -696,7 +726,8 @@ LRESULT CALLBACK winceapp_wndproc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) {
             ignoreCancelMode--;
         }
         /* We have to do this, or else windows is unhappy. */
-        return DefWindowProc(hwnd, msg, wp, lp);
+        result = DefWindowProc(hwnd, msg, wp, lp);
+        break;
 
     case WM_PAINT:
         hdc = BeginPaint(hwnd, &ps);
@@ -704,10 +735,7 @@ LRESULT CALLBACK winceapp_wndproc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) {
         enablePaint();
         if (editBoxShown)
             SetFocus(hwndTextActive);
-        return 0;
-
-    case WM_CLOSE:
-        return DefWindowProc(hwnd, msg, wp, lp);
+        break;
 
     case WM_DESTROY:
         winceapp_finalize();
@@ -717,10 +745,12 @@ LRESULT CALLBACK winceapp_wndproc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) {
 #endif
         PostQuitMessage(0);
         exit(0);
-        return 0;
+        break;
 
-    case WM_MOUSEMOVE:
     case WM_LBUTTONDOWN:
+        //ResetEvent(hEvent);
+        bButtonDown = true;
+    case WM_MOUSEMOVE:
     case WM_LBUTTONUP:
         {
             lastUserInputTick = GetTickCount();
@@ -740,8 +770,12 @@ LRESULT CALLBACK winceapp_wndproc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) {
             pSignalResult->waitingFor = UI_SIGNAL;
             pMidpEventResult->DISPLAY = gForegroundDisplayId;
             sendMidpKeyEvent(pMidpEventResult, sizeof(*pMidpEventResult));
+            if (msg == WM_LBUTTONUP) {
+                bButtonDown=false;
+                //SetEvent(hEvent);
+            }
         }
-        return 0;
+        break;
     case WM_KEYDOWN: /* fall through */
     case WM_KEYUP:
         switch (wp) {
@@ -754,12 +788,13 @@ LRESULT CALLBACK winceapp_wndproc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) {
         case VK_RIGHT:
         case VK_TSOFT1:
         case VK_TSOFT2:
-            return processKey(hwnd, mapAction(msg, lp), mapKey(wp, lp));
+            result = processKey(hwnd, mapAction(msg, lp), mapKey(wp, lp));
+            break;
         case VK_THOME:
         case VK_TTALK:
         case VK_TEND:
             if (WM_KEYDOWN == msg)
-                return processSystemKey(hwnd, mapKey(wp, lp));
+                result = processSystemKey(hwnd, mapKey(wp, lp));
             break;
         default:
             // May need special handling for soft keys?  Not sure yet...
@@ -769,20 +804,17 @@ LRESULT CALLBACK winceapp_wndproc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) {
             }
             lastKeyPressed = 0;
         }
-        return result;
+        break;
     case WM_CHAR:
         if (wp >= 0x20 && wp <= 0x7f) {
             lastKeyPressed = wp;
             result = processKey(hwnd, mapAction(msg, lp), lastKeyPressed);
         }
-        return result;
-    case WM_SETFOCUS:
-        SHFullScreen(hwnd, SHFS_HIDESIPBUTTON);
         break;
     default:
-        return DefWindowProc(hwnd, msg, wp, lp);
+        result = DefWindowProc(hwnd, msg, wp, lp);
     }
-    return DefWindowProc(hwnd, msg, wp, lp);
+    return result;
 }
 
 static LRESULT processKey(HWND hwnd, UINT action, int key) {

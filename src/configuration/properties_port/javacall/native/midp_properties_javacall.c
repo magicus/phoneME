@@ -94,6 +94,7 @@ initializeConfig(void) {
  */
 void
 finalizeConfig(void) {
+    javacall_finalize_configurations();
 }
 
 /**
