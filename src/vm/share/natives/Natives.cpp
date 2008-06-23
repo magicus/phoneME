@@ -1,24 +1,24 @@
 /*
- *   
  *
- * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+ *
+ * Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
- * 
+ *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
  * 2 only, as published by the Free Software Foundation.
- * 
+ *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
  * included at /legal/license.txt).
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA
- * 
+ *
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
  * information or have any questions.
@@ -196,7 +196,7 @@ address Natives::load_dynamic_native_code(Method* method JVM_TRAPS) {
   if (Universe::dynamic_lib_count != 0) {
     int i;
     address handle = NULL;
-    TypeArray name_array = 
+    TypeArray name_array =
       Natives::get_native_function_name(method JVM_CHECK_0);
     const char * name = (const char *)name_array.data();
     for (i = 0; i < Universe::dynamic_lib_count; i++) {
@@ -205,13 +205,13 @@ address Natives::load_dynamic_native_code(Method* method JVM_TRAPS) {
       if (fptr != NULL) {
         method->set_native_code(fptr);
 #if ENABLE_COMPILER
-        // The pointer to the old native code is hardcoded 
+        // The pointer to the old native code is hardcoded
         // in compiled code. Must recompile.
         method->unlink_compiled_code();
 #endif
         return fptr;
       }
-    } 
+    }
   }
 
   Throw::unsatisfied_link_error(method JVM_THROW_0);
@@ -264,7 +264,7 @@ void Java_void_unimplemented(JVM_SINGLE_ARG_TRAPS) {
   Method::Fast method = frame.method();
 
 #if ENABLE_DYNAMIC_NATIVE_METHODS
-  void (*fptr)(void) = 
+  void (*fptr)(void) =
     (void(*)())Natives::load_dynamic_native_code(&method JVM_CHECK);
   GUARANTEE(fptr != NULL, "Error must have been thrown");
 
@@ -304,7 +304,7 @@ void Java_com_sun_cldchi_jvm_JVM_loadLibrary(JVM_SINGLE_ARG_TRAPS) {
     JVM_DELAYED_CHECK;
   }
 
-  int length = Universe::dynamic_lib_handles()->length(); 
+  int length = Universe::dynamic_lib_handles()->length();
   if(Universe::dynamic_lib_count == length) {
     const int task = ObjectHeap::start_system_allocation();
     TypeArray::Raw new_array = Universe::new_int_array(length + 4 JVM_NO_CHECK);
@@ -312,7 +312,7 @@ void Java_com_sun_cldchi_jvm_JVM_loadLibrary(JVM_SINGLE_ARG_TRAPS) {
     JVM_DELAYED_CHECK;
     TypeArray::array_copy(Universe::dynamic_lib_handles(), 0, &new_array, 0, length);
     *Universe::dynamic_lib_handles() = new_array;
-    
+
   }
 
   UsingFastOops fast_oops;
@@ -323,8 +323,8 @@ void Java_com_sun_cldchi_jvm_JVM_loadLibrary(JVM_SINGLE_ARG_TRAPS) {
   if(!handle) {
     Throw::error(unsatisfied_link_error JVM_THROW);
   }
- 
-  Universe::dynamic_lib_handles()->int_at_put(Universe::dynamic_lib_count++, 
+
+  Universe::dynamic_lib_handles()->int_at_put(Universe::dynamic_lib_count++,
                                               (int)handle);
 #else
   JVM_IGNORE_TRAPS;
@@ -562,9 +562,9 @@ void Java_java_lang_System_arraycopy(JVM_SINGLE_ARG_TRAPS) {
 }
 
 void Java_java_lang_System_quickNativeThrow() {
-  GUARANTEE(_jvm_quick_native_exception, 
+  GUARANTEE(_jvm_quick_native_exception,
             "must have pending exception by quick native method");
-  GUARANTEE(!_jvm_in_quick_native_method, 
+  GUARANTEE(!_jvm_in_quick_native_method,
             "this method must not be quick native");
   KNI_ThrowNew(_jvm_quick_native_exception, NULL);
   _jvm_quick_native_exception = NULL;
@@ -577,7 +577,7 @@ void Java_com_sun_cldchi_jvm_JVM_createSysImage(JVM_SINGLE_ARG_TRAPS) {
   bool suspended = rom_writer.execute(JVM_SINGLE_ARG_NO_CHECK);
   if (suspended && USE_SOURCE_IMAGE_GENERATOR) {
     // This is a temporary fix for source romizer -- we want to invoke
-    // JVM.generateRomImage() in a loop, so that we can run the pending 
+    // JVM.generateRomImage() in a loop, so that we can run the pending
     // entries (created as part of class initialization) in between calls
     // to JVM.generateRomImage(). However, during source romizations,
     // constants pools and bytecodes are rewritten, it's not safe to be
@@ -681,7 +681,33 @@ void Java_java_lang_Runtime_exitInternal(JVM_SINGLE_ARG_TRAPS) {
 }
 
 void Java_java_lang_Runtime_gc(JVM_SINGLE_ARG_TRAPS) {
+/**NOTE:
+  * Here we have two ways for implementing Runtime_gc():
+  * 1) don't collect if we are within 500ms(configurable value) of previous call.
+  *     This way may satisfy performance of some benchmarks and real applications which make unnecessary
+  *     System.gc() calls, but it has potential risks and will fail some CLDC JDTS test cases, for example,
+  *     com.sun.cldc.cldc1_1.functional.lang.ref.WeakReferenceTest.Get05/07/08/09/11,though the cases are not very reasonable.
+  * 2) call ObjectHeap::full_collect() unconditionally.
+  * here we use the first way.
+  * But some project may use second way if they want to pass JDTS and don't consider gc() 's affect for performance.
+**/
+#ifdef ENABLE_FREQUENT_FORCED_GC_SUPPRESSION
+  jlong free = ObjectHeap::available_for_current_task();
+  static jlong previous_gc_time;
+  if (free < 2 * 1024 * 1024) {
+      jlong current_gc_time = Os::java_time_millis();
+      /*
+       * For performance reasons don't collect if we are
+       * called within 500ms of the previous call.
+       */
+      if ((current_gc_time - previous_gc_time) >= 500) {
+        ObjectHeap::full_collect(JVM_SINGLE_ARG_NO_CHECK_AT_BOTTOM);
+        previous_gc_time = current_gc_time;
+      }
+  }
+#else
   ObjectHeap::full_collect(JVM_SINGLE_ARG_NO_CHECK_AT_BOTTOM);
+#endif /* ENABLE_FREQUENT_FORCED_GC_SUPPRESSION */
 }
 
 jlong Java_java_lang_Runtime_freeMemory( void ) {
@@ -705,7 +731,7 @@ OopDesc* Java_java_lang_Class_getName(JVM_SINGLE_ARG_TRAPS) {
 
 #if ENABLE_REFLECTION
   if (receiver().is_primitive()) {
-    const char * name = 
+    const char * name =
       ParsedTypeSymbol::type_name_for(receiver().type_symbol());
     GUARANTEE(name != NULL, "sanity");
     return Universe::new_string(name, jvm_strlen(name) JVM_NO_CHECK_AT_BOTTOM);
@@ -805,11 +831,11 @@ ReturnOop Java_java_lang_Class_forName(JVM_SINGLE_ARG_TRAPS) {
   // For hidden classes we throw ClassNotFoundException if lookup
   // is directly performed by user's code.
   // Also note that we have to test 2 frames, as first one is always one
-  // containing Class.forName() call, so if you'll write additional 
+  // containing Class.forName() call, so if you'll write additional
   // wrapper for forName() increase argument to has_user_frames_until()
   if (cl().is_hidden() && Thread::current()->has_user_frames_until(2)) {
     Throw::class_not_found(&class_name, ErrorOnFailure JVM_THROW_0);
-  } 
+  }
 
 #if ENABLE_ISOLATES
   JavaClassObj::Fast result =
@@ -842,7 +868,7 @@ OopDesc* Java_java_lang_Class_newInstance(JVM_SINGLE_ARG_TRAPS) {
                                           // java.lang.Class.newInstance()
   InstanceClass::Fast sender_class = method().holder();
 
-  return receiver_class().new_initialized_instance(&sender_class, thread 
+  return receiver_class().new_initialized_instance(&sender_class, thread
                                                    JVM_NO_CHECK_AT_BOTTOM_0);
 }
 
@@ -872,7 +898,7 @@ jint Java_java_lang_Class_isAssignableFrom(JVM_SINGLE_ARG_TRAPS) {
   if (argument.is_null()) {
     Throw::null_pointer_exception(empty_message JVM_THROW_0);
   }
-  
+
 #if ENABLE_REFLECTION
   if (receiver().is_primitive()) {
     return receiver.equals(&argument);
@@ -1250,21 +1276,21 @@ void Java_java_lang_Throwable_fillInStackTrace() {
 #if ENABLE_CLDC_111
 jobject Java_java_lang_Throwable_obtainBackTrace() {
   UsingFastOops fast;
-  Throwable::Fast throwable = GET_PARAMETER_AS_OOP(0);  
-  ObjArray::Fast backtrace;  
+  Throwable::Fast throwable = GET_PARAMETER_AS_OOP(0);
+  ObjArray::Fast backtrace;
 #if ENABLE_STACK_TRACE
   SETUP_ERROR_CHECKER_ARG;
   ObjArray::Fast compr_backtrace = throwable().backtrace();
-  if (compr_backtrace.is_null()) {    
+  if (compr_backtrace.is_null()) {
     return NULL;
   }
-  
-  TypeArray::Fast offsets = compr_backtrace().obj_at(1);      
+
+  TypeArray::Fast offsets = compr_backtrace().obj_at(1);
   if (offsets.is_null()) {
     return NULL;
   }
   int length = offsets().length();
-  
+
   backtrace = Universe::new_obj_array(3 JVM_CHECK_0);
   ObjArray::Fast class_names = Universe::new_obj_array(length JVM_CHECK_0);
   ObjArray::Fast method_names = Universe::new_obj_array(length JVM_CHECK_0);
@@ -1272,18 +1298,18 @@ jobject Java_java_lang_Throwable_obtainBackTrace() {
   backtrace().obj_at_put(0, &class_names);
   backtrace().obj_at_put(1, &method_names);
   backtrace().obj_at_put(2, &offsets);
-  
+
   ObjArray::Fast methods = compr_backtrace().obj_at(0);
   Method::Fast m;
   Symbol::Fast method_name;
   Symbol::Fast class_name;
   if (!methods.is_null() && !offsets.is_null()) {
-    int i;      
+    int i;
     for (i=0; i<methods().length(); i++) {
       m = methods().obj_at(i);
       if (m.is_null()) {          break;        }
        method_name = m().name();
-#ifndef PRODUCT        
+#ifndef PRODUCT
       // Non-public methods in a romized image may be renamed to
       // .unknown. to save space. In non-product mode, to aid
       // debugging, we retrieve the original name using
@@ -1292,13 +1318,13 @@ jobject Java_java_lang_Throwable_obtainBackTrace() {
         method_name = ROM::get_original_method_name(&m);
       }
 #endif
-      String::Raw method_name_str = Universe::new_string(&method_name JVM_CHECK_0);      
+      String::Raw method_name_str = Universe::new_string(&method_name JVM_CHECK_0);
       method_names().obj_at_put(i, &method_name_str);
-      
+
       InstanceClass::Raw ic = m().holder();
       class_name = ic().name();
-      String::Raw class_name_str = Universe::new_string(&class_name JVM_CHECK_0);      
-      class_names().obj_at_put(i, &class_name_str);      
+      String::Raw class_name_str = Universe::new_string(&class_name JVM_CHECK_0);
+      class_names().obj_at_put(i, &class_name_str);
     }
   }
 #endif
@@ -1356,7 +1382,7 @@ int Java_com_sun_cldc_io_ResourceInputStream_bytesRemain() {
 int Java_com_sun_cldc_io_ResourceInputStream_readByte(JVM_SINGLE_ARG_TRAPS) {
   UsingFastOops fast_oops;
   unsigned char result;
-  ArrayPointer destination(&result);  
+  ArrayPointer destination(&result);
   FileDecoder::Fast fd = GET_PARAMETER_AS_OOP(1);
   if (fd().bytes_remain() <= 0) {
     return -1;
@@ -1371,7 +1397,7 @@ int Java_com_sun_cldc_io_ResourceInputStream_readBytes(JVM_SINGLE_ARG_TRAPS) {
   FileDecoder::Fast fd = GET_PARAMETER_AS_OOP(1);
   TypeArray::Fast b = GET_PARAMETER_AS_OOP(2);
   int len = KNI_GetParameterAsInt(4);
-  ArrayPointer destination(&b, KNI_GetParameterAsInt(3)); 
+  ArrayPointer destination(&b, KNI_GetParameterAsInt(3));
   if (fd().bytes_remain() <= 0) {
     return -1;
   }
