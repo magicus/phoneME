@@ -334,7 +334,7 @@ void javanotify_start_tck(char *tckUrl, javacall_lifecycle_tck_domain domain_typ
     memset(urlAddress, 0, BINARY_BUFFER_MAX_LEN);
     memcpy(urlAddress, tckUrl, length);
     if (strcmp(urlAddress, "none") != 0) {
-	    argv[argc++] = urlAddress;
+        argv[argc++] = urlAddress;
     }
 
     if (domain_type == JAVACALL_LIFECYCLE_TCK_DOMAIN_UNTRUSTED) {
@@ -1287,7 +1287,7 @@ void /* OPTIONAL */ javanotify_server_socket_event(javacall_server_socket_callba
         /* If the platform is not able to provide the socket handle in the callback,
            it should pass 0. */
         if (operation_result == JAVACALL_OK) {
-		e.data.socketEvent.status = (javacall_result) new_socket_handle;
+            e.data.socketEvent.status = (javacall_result)((int)new_socket_handle);
         } else {
             e.data.socketEvent.status = operation_result;
         }
