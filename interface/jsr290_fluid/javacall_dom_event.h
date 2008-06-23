@@ -247,6 +247,33 @@ javacall_dom_event_init_event(javacall_handle handle,
                               javacall_bool can_bubble_arg,
                               javacall_bool cancelable_arg);
 
+/**
+ *  The <code>initEventNS</code> method is used to initialize the value of 
+ * an <code>Event</code> object and has the same behavior as 
+ * <code>Event.initEvent()</code>. 
+ * 
+ * @param handle Pointer to the object representing this event.
+ * @param namespace_uri_arg  Specifies <code>Event.namespaceURI</code>, the 
+ *   namespace URI associated with this event, or <code>NULL</code> if 
+ *   no namespace. 
+ * @param event_type_arg  Refer to the <code>Event.initEvent()</code> 
+ *   method for a description of this parameter. 
+ * @param can_bubble_arg  Refer to the <code>Event.initEvent()</code> 
+ *   method for a description of this parameter. 
+ * @param cancelable_arg  Refer to the <code>Event.initEvent()</code> 
+ *   method for a description of this parameter.
+ *
+ * 
+ * @return JAVACALL_OK if all done successfuly,
+ *         JAVACALL_NOT_IMPLEMENTED when the stub was called
+ */
+javacall_result
+javacall_dom_event_init_event_ns(javacall_handle handle,
+                                 javacall_const_utf16_string namespace_uri_arg,
+                                 javacall_const_utf16_string event_type_arg,
+                                 javacall_bool can_bubble_arg,
+                                 javacall_bool cancelable_arg);
+
 /** 
  * Deletes object representing this event
  * 
