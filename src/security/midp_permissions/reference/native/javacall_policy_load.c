@@ -39,29 +39,29 @@ extern "C" {
 
 
 int permissions_load_domain_list(char** array) {
-    return javacall_load_domain_list((javacall_utf8_string*)array);
+    return javacall_permissions_load_domain_list((javacall_utf8_string*)array);
 }
 int permissions_load_group_list(char** array) {
-    return javacall_load_group_list((javacall_utf8_string*)array);
+    return javacall_permissions_load_group_list((javacall_utf8_string*)array);
 }
 
 int permissions_load_group_permissions(char** array, char* group_name) {
-    return javacall_load_group_permissions((javacall_utf8_string*)array,
+    return javacall_permissions_load_group_permissions((javacall_utf8_string*)array,
                                             (javacall_utf8_string)group_name);
 }
 
 int permissions_get_default_value(char* domain_name, char* group_name) {
-    return javacall_get_default_value((javacall_utf8_string)domain_name,
+    return javacall_permissions_get_default_value((javacall_utf8_string)domain_name,
                                       (javacall_utf8_string) group_name);
 }
 
 int permissions_get_max_value(char* domain_name, char* group_name) {
-    return javacall_get_max_value((javacall_utf8_string)domain_name,
+    return javacall_permissions_get_max_value((javacall_utf8_string)domain_name,
                                   (javacall_utf8_string)group_name);
 }
 
 int permissions_load_group_messages(char** array, char* group_name) {
-    return javacall_load_group_messages((javacall_utf8_string*)array,
+    return javacall_permissions_load_group_messages((javacall_utf8_string*)array,
                                         (javacall_utf8_string)group_name);
 }
 
