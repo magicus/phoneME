@@ -1589,7 +1589,6 @@ MATHOBJS = \
 	w_atan2.o \
 	w_exp.o \
 	w_fmod.o \
-	w_gamma.o \
 	w_log.o \
 	w_pow.o \
 	w_remainder.o \
@@ -1633,6 +1632,7 @@ X_MATHOBJS += \
 	w_acosh.o \
 	w_atanh.o \
 	w_cosh.o \
+	w_gamma.o \
 	w_gamma_r.o \
 	w_hypot.o \
 	w_j0.o \
