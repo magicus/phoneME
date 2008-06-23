@@ -43,9 +43,6 @@ extern "C" {
 #include "javacall_file.h"
 #include "javacall_dir.h"
 #include "javacall_logging.h"
-#include "javacall_memory.h" 
-#include "javautil_unicode.h"
-#include "javacall_properties.h"
 
 extern char* unicode_to_char(unsigned short* str);
 
@@ -91,9 +88,6 @@ static unsigned char  *local_modulus;
 static unsigned char  *local_exponent;
 static unsigned char  *local_domain;
 
-static const char *VdomainPrefix="domain:";
-static const char *VgroupPrefix="alias:";
-static       char *VpolicyFilename = NULL;
 
 javacall_result javacall_security_keystore_start(javacall_handle* jc_h) {
 
