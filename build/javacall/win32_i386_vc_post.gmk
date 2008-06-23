@@ -60,6 +60,14 @@ wtkbin: $(SUBSYSTEM_AMS_EXECUTABLES)
          $(MIDP_OUTPUT_DIR)/bin/jc_eeprom_image, $(WTK_BIN_DIR)/bin/)
 	$(AT)touch $(WTK_STORAGE_DIR)/DefaultColorPhone/alarmlist.txt
 	$(AT)touch $(WTK_STORAGE_DIR)/DefaultColorPhone/pushlist.txt
+	$(AT)$(call copy_file, $(MIDP_OUTPUT_DIR)/lib/*.JTWI, \
+		$(WTK_STORAGE_DIR))
+	$(AT)$(call copy_file, $(MIDP_OUTPUT_DIR)/lib/*.MSA, \
+		$(WTK_STORAGE_DIR))
+	$(AT)$(call copy_file, $(WTK_STORAGE_DIR)/_policy.txt.MSA, \
+		$(WTK_STORAGE_DIR))/_policy.txt
+	$(AT)$(call copy_file, $(WTK_STORAGE_DIR)/_function_groups.txt.MSA, \
+		$(WTK_STORAGE_DIR))/_function_groups.txt
 
 define copy_file
     cp -r $(1) $(2)
