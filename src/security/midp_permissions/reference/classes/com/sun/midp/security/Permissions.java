@@ -29,7 +29,7 @@ package com.sun.midp.security;
 import java.util.Hashtable;
 import com.sun.midp.i18n.Resource;
 import com.sun.midp.i18n.ResourceConstants;
-
+import java.io.IOException;
 /**
  * This class is a standard list of permissions that
  * a suite can do and is used by all internal security
@@ -675,6 +675,9 @@ public final class Permissions {
 
             //step 2: groups list
             list =  loadGroupList();
+            if (list == null) {
+                throw new IOException("Policy file not found");
+            }
             groupsAll = new PermissionGroup[list.length];
             String [] messages = new String[6];
             for (i1 = 0; i1 < groupsAll.length; i1++) {
@@ -698,8 +701,11 @@ public final class Permissions {
                 for (i2 = 0; i2 < members.length; i2++) {
                     Integer c = (Integer)permissionsHash.get(members[i2]);
                     if (c == null)
-                        throw new NullPointerException("unknown permission: " + members[i2]);
-                    permissionSpecs[c.intValue()] = new PermissionSpec(members[i2], groupsAll[i1]);
+                        throw new NullPointerException(
+                            "unknown permission in policy file: "
+                                                        + members[i2]);
+                    permissionSpecs[c.intValue()] = 
+                            new PermissionSpec(members[i2], groupsAll[i1]);
                 }
             }
                         
@@ -742,9 +748,9 @@ public final class Permissions {
             READ_USER_DATA_GROUP = (PermissionGroup)tmpList.get("read_user_data_access");
             MULTIMEDIA_GROUP = (PermissionGroup)tmpList.get("multimedia_recording");
             LOCAL_CONN_GROUP = (PermissionGroup)tmpList.get("local_connectivity");
-            
+           
         } catch (Throwable e) {
-            System.out.println("init() error: " + e.toString());
+              System.out.println ("Permissions init() error: " + e.toString());
         }
     }
 
