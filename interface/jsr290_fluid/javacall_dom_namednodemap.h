@@ -50,7 +50,7 @@ extern "C" {
  * 
  * @param handle Pointer to the object representing this namednodemap.
  * @param name The <code>nodeName</code> of a node to retrieve.
- * @param retValue Pointer to the object representing 
+ * @param ret_value Pointer to the object representing 
  *   a <code>Node</code> (of any type) with the specified 
  *   <code>nodeName</code>, or <code>NULL</code> if it does not identify 
  *   any node in this map.
@@ -61,7 +61,7 @@ extern "C" {
 javacall_result
 javacall_dom_namednodemap_get_named_item(javacall_handle handle,
                                          javacall_const_utf16_string name,
-                                         /* OUT */ javacall_handle* retValue);
+                                         /* OUT */ javacall_handle* ret_value);
 
 /**
  * Sets adds a node using its <code>nodeName</code> attribute. If a node with 
@@ -77,23 +77,27 @@ javacall_dom_namednodemap_get_named_item(javacall_handle handle,
  * @param arg Pointer to the object of
  *   a node to store in this map. The node will later be 
  *   accessible using the value of its <code>nodeName</code> attribute.
- * @param retValue Pointer to the object representing 
+ * @param ret_value Pointer to the object representing 
  *   if the new <code>Node</code> replaces an existing node the 
  *   replaced <code>Node</code> is returned, otherwise <code>NULL</code> 
  *   is returned.
- * @param exceptionCode Code of the error if function fails; 
- *                      see javacall_dom_exceptions 
+ * @param exception_code Code of the error if function fails; the following 
+ *                       codes are acceptable: 
+ *                            JAVACALL_DOM_WRONG_DOCUMENT_ERR
+ *                            JAVACALL_DOM_NO_MODIFICATION_ALLOWED_ERR
+ *                            JAVACALL_DOM_INUSE_ATTRIBUTE_ERR
+ *                            JAVACALL_DOM_HIERARCHY_REQUEST_ERR
  * 
  * @return JAVACALL_OK if all done successfuly,
- *         JAVACALL_FAIL if error occured; in this case exceptionCode has to be 
+ *         JAVACALL_FAIL if error occured; in this case exception_code has to be 
  *                                filled,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
 javacall_dom_namednodemap_set_named_item(javacall_handle handle,
                                          javacall_handle arg,
-                                         /* OUT */ javacall_handle* retValue,
-                                         /* OUT */ javacall_dom_exceptions* exceptionCode);
+                                         /* OUT */ javacall_handle* ret_value,
+                                         /* OUT */ javacall_dom_exceptions* exception_code);
 
 /**
  * Removes a node specified by name. When this map contains the attributes 
@@ -104,22 +108,24 @@ javacall_dom_namednodemap_set_named_item(javacall_handle handle,
  * 
  * @param handle Pointer to the object representing this namednodemap.
  * @param name The <code>nodeName</code> of the node to remove.
- * @param retValue Pointer to the object representing 
+ * @param ret_value Pointer to the object representing 
  *   the node removed from this map if a node with such a name 
  *   exists.
- * @param exceptionCode Code of the error if function fails; 
- *                      see javacall_dom_exceptions 
+ * @param exception_code Code of the error if function fails; the following 
+ *                       codes are acceptable: 
+ *                            JAVACALL_DOM_NOT_FOUND_ERR
+ *                            JAVACALL_DOM_NO_MODIFICATION_ALLOWED_ERR
  * 
  * @return JAVACALL_OK if all done successfuly,
- *         JAVACALL_FAIL if error occured; in this case exceptionCode has to be 
+ *         JAVACALL_FAIL if error occured; in this case exception_code has to be 
  *                                filled,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
 javacall_dom_namednodemap_remove_named_item(javacall_handle handle,
                                             javacall_const_utf16_string name,
-                                            /* OUT */ javacall_handle* retValue,
-                                            /* OUT */ javacall_dom_exceptions* exceptionCode);
+                                            /* OUT */ javacall_handle* ret_value,
+                                            /* OUT */ javacall_dom_exceptions* exception_code);
 
 /**
  * Returns the <code>index</code>th item in the map. If <code>index</code> 
@@ -128,7 +134,7 @@ javacall_dom_namednodemap_remove_named_item(javacall_handle handle,
  * 
  * @param handle Pointer to the object representing this namednodemap.
  * @param index Index into this map.
- * @param retValue Pointer to the object representing 
+ * @param ret_value Pointer to the object representing 
  *   the node at the <code>index</code>th position in the map, or 
  *   <code>NULL</code> if that is not a valid index.
  * 
@@ -138,29 +144,29 @@ javacall_dom_namednodemap_remove_named_item(javacall_handle handle,
 javacall_result
 javacall_dom_namednodemap_item(javacall_handle handle,
                                javacall_int32 index,
-                               /* OUT */ javacall_handle* retValue);
+                               /* OUT */ javacall_handle* ret_value);
 
 /**
  * Returns the number of nodes in this map. The range of valid child node indices 
  * is <code>0</code> to <code>length-1</code> inclusive. 
  * 
  * @param handle Pointer to the object representing this namednodemap.
- * @param retValue The number of nodes in this map
+ * @param ret_value The number of nodes in this map
  * 
  * @return JAVACALL_OK if all done successfuly,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
 javacall_dom_namednodemap_get_length(javacall_handle handle,
-                                     /* OUT */ javacall_int32* retValue);
+                                     /* OUT */ javacall_int32* ret_value);
 
 /**
  * Returns retrieves a node specified by local name and namespace URI. 
  * 
  * @param handle Pointer to the object representing this namednodemap.
- * @param namespaceURI The namespace URI of the node to retrieve.
- * @param localName The local name of the node to retrieve.
- * @param retValue Pointer to the object representing 
+ * @param namespace_uri The namespace URI of the node to retrieve.
+ * @param local_name The local name of the node to retrieve.
+ * @param ret_value Pointer to the object representing 
  *   a <code>Node</code> (of any type) with the specified local 
  *   name and namespace URI, or <code>NULL</code> if they do not 
  *   identify any node in this map.
@@ -170,9 +176,9 @@ javacall_dom_namednodemap_get_length(javacall_handle handle,
  */
 javacall_result
 javacall_dom_namednodemap_get_named_item_ns(javacall_handle handle,
-                                            javacall_const_utf16_string namespaceURI,
-                                            javacall_const_utf16_string localName,
-                                            /* OUT */ javacall_handle* retValue);
+                                            javacall_const_utf16_string namespace_uri,
+                                            javacall_const_utf16_string local_name,
+                                            /* OUT */ javacall_handle* ret_value);
 
 /**
  * Sets adds a node using its <code>namespaceURI</code> and 
@@ -185,23 +191,27 @@ javacall_dom_namednodemap_get_named_item_ns(javacall_handle handle,
  *   a node to store in this map. The node will later be 
  *   accessible using the value of its <code>namespaceURI</code> and 
  *   <code>localName</code> attributes.
- * @param retValue Pointer to the object representing 
+ * @param ret_value Pointer to the object representing 
  *   if the new <code>Node</code> replaces an existing node the 
  *   replaced <code>Node</code> is returned, otherwise <code>NULL</code> 
  *   is returned.
- * @param exceptionCode Code of the error if function fails; 
- *                      see javacall_dom_exceptions 
+ * @param exception_code Code of the error if function fails; the following 
+ *                       codes are acceptable: 
+ *                            JAVACALL_DOM_WRONG_DOCUMENT_ERR
+ *                            JAVACALL_DOM_NO_MODIFICATION_ALLOWED_ERR
+ *                            JAVACALL_DOM_INUSE_ATTRIBUTE_ERR
+ *                            JAVACALL_DOM_HIERARCHY_REQUEST_ERR
  * 
  * @return JAVACALL_OK if all done successfuly,
- *         JAVACALL_FAIL if error occured; in this case exceptionCode has to be 
+ *         JAVACALL_FAIL if error occured; in this case exception_code has to be 
  *                                filled,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
 javacall_dom_namednodemap_set_named_item_ns(javacall_handle handle,
                                             javacall_handle arg,
-                                            /* OUT */ javacall_handle* retValue,
-                                            /* OUT */ javacall_dom_exceptions* exceptionCode);
+                                            /* OUT */ javacall_handle* ret_value,
+                                            /* OUT */ javacall_dom_exceptions* exception_code);
 
 /**
  * Removes a node specified by local name and namespace URI. A removed 
@@ -212,25 +222,27 @@ javacall_dom_namednodemap_set_named_item_ns(javacall_handle handle,
  * corresponding namespace URI, local name, and prefix when applicable.
  * 
  * @param handle Pointer to the object representing this namednodemap.
- * @param namespaceURI The namespace URI of the node to remove.
- * @param localName The local name of the node to remove.
- * @param retValue Pointer to the object representing 
+ * @param namespace_uri The namespace URI of the node to remove.
+ * @param local_name The local name of the node to remove.
+ * @param ret_value Pointer to the object representing 
  *   the node removed from this map if a node with such a local 
  *   name and namespace URI exists.
- * @param exceptionCode Code of the error if function fails; 
- *                      see javacall_dom_exceptions 
+ * @param exception_code Code of the error if function fails; the following 
+ *                       codes are acceptable: 
+ *                            JAVACALL_DOM_NOT_FOUND_ERR
+ *                            JAVACALL_DOM_NO_MODIFICATION_ALLOWED_ERR
  * 
  * @return JAVACALL_OK if all done successfuly,
- *         JAVACALL_FAIL if error occured; in this case exceptionCode has to be 
+ *         JAVACALL_FAIL if error occured; in this case exception_code has to be 
  *                                filled,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
 javacall_dom_namednodemap_remove_named_item_ns(javacall_handle handle,
-                                               javacall_const_utf16_string namespaceURI,
-                                               javacall_const_utf16_string localName,
-                                               /* OUT */ javacall_handle* retValue,
-                                               /* OUT */ javacall_dom_exceptions* exceptionCode);
+                                               javacall_const_utf16_string namespace_uri,
+                                               javacall_const_utf16_string local_name,
+                                               /* OUT */ javacall_handle* ret_value,
+                                               /* OUT */ javacall_dom_exceptions* exception_code);
 
 /** 
  * Deletes object representing this namednodemap
