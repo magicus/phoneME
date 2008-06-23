@@ -90,4 +90,19 @@ javacall_result javacall_initialize_configurations(void);
  */
 void javacall_finalize_configurations(void);
 
+/**
+ * Sets the name of the file used to load from or save the properties to. It 
+ * should be set before calling <tt>javacall_initialize_configurations</tt>
+ * in order to have any effect on the loaded properties. If no configuration
+ * file name is set, is set to an empty string or <tt>NULL</tt>, the default 
+ * configuration file is used.
+ * 
+ * @param unicodeFileName the file name as an unicode string
+ * @param fileNameLen the length of the file name in UTF16 characters
+ * @return <tt>JAVACALL_OK</tt> if successful, <tt>JAVACALL_FAIL</tt> otherwise 
+ */ 
+javacall_result javacall_set_properties_file_name(
+        const javacall_utf16* unicodeFileName, 
+        int fileNameLen);
+
 #endif  /* _JAVACALL_PROPERTIES_H_ */
