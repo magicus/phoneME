@@ -37,6 +37,7 @@
 SUBSYSTEM_SECURITY_MODULES += midp_permissions
 
 PERMISSIONS_DIR = $(SUBSYSTEM_DIR)/security/midp_permissions
+PERMISSIONS_CONFIG_DIR = $(PERMISSIONS_DIR)/reference/config
 
 # Javadoc source path
 SUBSYSTEM_MIDP_PERMISSIONS_SOURCEPATH += $(PERMISSIONS_DIR)/reference/classes
@@ -64,10 +65,24 @@ endif
 
 # Include system properties in Configuration
 SUBSYSTEM_CONFIGURATION_INPUT_FILES += \
-	 $(PERMISSIONS_DIR)/reference/config/properties_security.xml
+	 $(PERMISSIONS_CONFIG_DIR)/properties_security.xml
 
 
 ifeq ($(USE_I3_TEST), true)
 SUBSYSTEM_SECURITY_I3TEST_JAVA_FILES += \
     $(PERMISSIONS_DIR)/reference/i3test/com/sun/midp/security/TestPermissions.java
 endif
+
+
+ifeq ($(TARGET_OS), javacall)
+POLICY_FILES = $(PERMISSIONS_CONFIG_DIR)/_function_groups.txt.JTWI \
+	$(PERMISSIONS_CONFIG_DIR)/_policy.txt.JTWI \
+	$(PERMISSIONS_CONFIG_DIR)/_function_groups.txt.MSA \
+	$(PERMISSIONS_CONFIG_DIR)/_policy.txt.MSA 
+
+javacall_policy_load.c : policy_files
+
+policy_files :
+	cp  $(POLICY_FILES) $(MIDP_OUTPUT_DIR)/lib
+endif
+
