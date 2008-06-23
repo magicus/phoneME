@@ -192,6 +192,7 @@ MATHOBJS += \
 	w_acosh.o \
 	w_atanh.o \
 	w_cosh.o \
+	w_gamma.o \
 	w_gamma_r.o \
 	w_hypot.o \
 	w_j0.o \
