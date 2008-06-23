@@ -35,7 +35,6 @@ extern "C" {
 #endif
 
 #include <stdio.h>
-#include <malloc.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -73,8 +72,7 @@ static char* load_file(char *fname) {
                 len1 = javacall_file_read(hFile, ptr, len);
                 while (len1 < len) ptr[len1++] = 0; /* pad with nulls */
             }
-        } else
-            ptr = "";
+        }
         javacall_file_close(hFile);
     }
 
@@ -141,6 +139,7 @@ char *build_file_name(char* fname) {
     javacall_int32 storage_len;
 
     config_len = sizeof(configPath)/2;
+    storage_len = sizeof(storage_path);
     storage_path[0] = 0;
     if (javacall_dir_get_config_path(configPath, &config_len) ==
                                                             JAVACALL_OK) {
@@ -149,7 +148,7 @@ char *build_file_name(char* fname) {
             configPath[config_len++] = sep;
         }
         javautil_unicode_utf16_to_utf8(configPath, config_len,
-                                       storage_path, sizeof(storage_path),
+                                       storage_path, storage_len,
                                        &storage_len);
     }
 
@@ -165,21 +164,26 @@ char *build_file_name(char* fname) {
     return full_name;
 }
 
-static char *getPolicyFilename(char *def_val) {
+static char *getPolicyFilename() {
     char*tmpstr;
     if (javacall_get_property("security.policyfile",
                                       JAVACALL_APPLICATION_PROPERTY,
-                                      &tmpstr) != JAVACALL_OK)
-            tmpstr = def_val;
+                                      &tmpstr) != JAVACALL_OK) {
+        javacall_print("(E) property: security.policyfile is not found in ini file");
+        return NULL;
+    }
+
     return build_file_name(tmpstr);
 }
 
-static char *getFuncGroupFilename(char *def_val) {
+static char *getFuncGroupFilename() {
     char*tmpstr;
     if (javacall_get_property("security.messagefile",
                                       JAVACALL_APPLICATION_PROPERTY,
-                                      &tmpstr) != JAVACALL_OK)
-            tmpstr = def_val;
+                                      &tmpstr) != JAVACALL_OK) {
+        javacall_print("(E) property: security.messagefile is not found in ini file");
+        return NULL;
+    }
 
     return build_file_name(tmpstr);
 }
@@ -190,8 +194,11 @@ int javacall_permissions_load_domain_list(javacall_utf8_string* array) {
     int lines, offset, i1;
     char **str_list;
 
-    if (VpolicyFilename == NULL)
-        VpolicyFilename = getPolicyFilename("MSA.txt");
+    if (VpolicyFilename == NULL) {
+        VpolicyFilename = getPolicyFilename();
+        if (VpolicyFilename == NULL)
+            return 0;
+    }
 
     file_str = load_file(VpolicyFilename);
     if (file_str == NULL)
@@ -253,8 +260,11 @@ int javacall_permissions_load_group_list(javacall_utf8_string* array) {
     int lines, offset, i1;
     char **str_list;
 
-    if (VpolicyFilename == NULL)
-        VpolicyFilename = getPolicyFilename("MSA.txt");
+    if (VpolicyFilename == NULL) {
+        VpolicyFilename = getPolicyFilename();
+        if (VpolicyFilename == NULL)
+            return 0;
+    }
 
     file_str = load_file(VpolicyFilename);
     if (file_str == NULL)
@@ -315,8 +325,11 @@ int javacall_permissions_load_group_permissions(javacall_utf8_string* list,
     int lines, offset, i1;
     char **str_list;
 
-    if (VpolicyFilename == NULL)
-        VpolicyFilename = getPolicyFilename("MSA.txt");
+    if (VpolicyFilename == NULL) {
+        VpolicyFilename = getPolicyFilename();
+        if (VpolicyFilename == NULL)
+            return 0;
+    }
 
     file_str = load_file(VpolicyFilename);
     if (file_str == NULL)
@@ -396,8 +409,11 @@ static int get_group_value(javacall_utf8_string domain_name,
     char buff[128];
     int value;
 
-    if (VpolicyFilename == NULL)
-        VpolicyFilename = getPolicyFilename("MSA.txt");
+    if (VpolicyFilename == NULL) {
+        VpolicyFilename = getPolicyFilename();
+        if (VpolicyFilename == NULL)
+            return 0;
+    }
 
     file_str = load_file(VpolicyFilename);
     if (file_str == NULL)
@@ -454,7 +470,7 @@ int javacall_permissions_load_group_messages(javacall_utf8_string* list,
     int  i1, found;
     char **str_list;
 
-    file_str = getFuncGroupFilename("_function_groups.txt");
+    file_str = getFuncGroupFilename();
 
     if (file_str == NULL)
         return 0;
