@@ -269,7 +269,7 @@ static int permissions_get1_value(values *tbl, char *group_name, int isMax) {
     return NEVER;
 }
 static int permissions_get_value(char* domain_name, char* group_name, int isMax) {
-    int val;
+    int val = NEVER;
     if (strcmp("manufacturer", domain_name) == 0 ||
         strcmp("maximum", domain_name) == 0 ){
         return ALLOW;
