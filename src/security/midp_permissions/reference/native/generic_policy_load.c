@@ -250,6 +250,7 @@ int permissions_load_group_permissions(void** array, char* group_name) {
         if (strcmp(groupTBL[i1], group_name) == 0) {
             *array = group_membersTBL[i1].list;
             ret = group_membersTBL[i1].size;
+            break;
         }
     }
     return ret;
@@ -263,6 +264,7 @@ static int permissions_get1_value(values *tbl, char *group_name, int isMax) {
                 return (int)tbl[i1].maxval;
             } else
                 return (int)tbl[i1].defval;
+            break;
         }
     return NEVER;
 }
@@ -390,16 +392,16 @@ static struct _messages {
 };
 
 int permissions_load_group_messages(void** array, char* group_name) {
-    int i1;
+    int i1, i2;
     int ret = 0;
     for (i1 = 0; i1 < groupTBLsize; i1++) {
         if (strcmp(groupTBL[i1], group_name) == 0) {
             *array = messagesTBL[i1].list;
-        }
-    }
-    for (i1 = 0; i1 < DEF_NUM_OF_LINES; i1++) {
-        if (messagesTBL[i1].list == NULL) {
-            ret = i1;
+            for (i2 = DEF_NUM_OF_LINES-1; i2 >= 0; i2--) {
+                if (messagesTBL[i1].list[i2] != NULL)
+                    break;
+            }
+            ret = i2+1;
             break;
         }
     }
