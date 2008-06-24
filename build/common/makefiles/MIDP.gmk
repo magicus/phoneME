@@ -229,6 +229,21 @@ $(LIBDIR)/internal.config $(LIBDIR)/system.config: $(LIBDIR) $(SUBSYSTEM_CONFIGU
 endif
 endif
 
+ifeq ($(TARGET_OS), javacall)
+MIDP_DEPS += $(STORAGEDIR)/_function_groups.txt.JTWI \
+	$(STORAGEDIR)/_policy.txt.JTWI $(STORAGEDIR)/_function_groups.txt.MSA \
+	$(STORAGEDIR)/_policy.txt.MSA
+
+PERMISSIONS_CONFIG_DIR = $(SUBSYSTEM_DIR)/security/midp_permissions/reference/config
+
+%.JTWI:
+	cp $(PERMISSIONS_CONFIG_DIR)/$(@F) $@ 
+
+%.MSA: 
+	cp $(PERMISSIONS_CONFIG_DIR)/$(@F) $@ 
+
+endif
+
 ifeq ($(TARGET_VM), cdc_vm)
    ifneq ($(CVM_STATICLINK_LIBS), true)
       MIDP_DEPS += $(MIDP_SHARED_LIB)
