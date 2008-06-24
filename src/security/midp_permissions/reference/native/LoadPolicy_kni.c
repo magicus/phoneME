@@ -21,8 +21,7 @@ static void jchar_to_char(jchar *src, char *dst, int len) {
 KNI_RETURNTYPE_OBJECT
 KNIDECL(com_sun_midp_security_Permissions_loadDomainList)
 {
-	blabla
-	int lines, i1;
+    int lines, i1;
     void* array;
 
     KNI_StartHandles(2);
