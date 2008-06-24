@@ -377,7 +377,7 @@ class AppProxy {
     	new MIDletSuiteUser(){
 			void use(MIDletSuite msuite) {
 		        try {
-		            msuite.checkForPermission("javax.microedition.content.ContentHandler",
+		            msuite.checkForPermission(Permissions.CHAPI_REGISTER,
 	                          getApplicationName(), reason);
 		        } catch (InterruptedException ie) {
 		            throw new SecurityException("interrupted");
@@ -393,12 +393,12 @@ class AppProxy {
      */
     final static void checkAPIPermission(SecurityToken securityToken) {
         if (securityToken != null) {
-            securityToken.checkIfPermissionAllowed(Permissions.MIDP_PERMISSION_NAME);
+            securityToken.checkIfPermissionAllowed(Permissions.MIDP);
         } else {
             MIDletSuite msuite =
                 MIDletStateHandler.getMidletStateHandler().getMIDletSuite();
             if (msuite != null) {
-                msuite.checkIfPermissionAllowed(Permissions.AMS_PERMISSION_NAME);
+                msuite.checkIfPermissionAllowed(Permissions.AMS);
             }
         }
     }
