@@ -25,11 +25,11 @@
  */
 
 package com.sun.midp.wma;
-import com.sun.j2me.security.WMAPermission;
 import com.sun.midp.io.j2me.push.ProtocolPush;
 import java.io.IOException;
 import java.io.InterruptedIOException;
 import javax.microedition.io.ConnectionNotFoundException;
+import com.sun.midp.security.Permissions;
 import com.sun.midp.midlet.MIDletSuite;
 
 /**
@@ -139,7 +139,7 @@ public class ProtocolPushImpl extends ProtocolPush {
              * and close the connection immediately.
              */
             try {
-                midletSuite.checkForPermission(WMAPermission.SMS_SERVER.getName(),
+                midletSuite.checkForPermission(Permissions.SMS_SERVER,
                    connection);
             } catch (InterruptedException ie) {
                 throw new InterruptedIOException(
@@ -154,7 +154,7 @@ public class ProtocolPushImpl extends ProtocolPush {
             }
 
             try {
-                midletSuite.checkForPermission(WMAPermission.CBS_SERVER.getName(),
+                midletSuite.checkForPermission(Permissions.CBS_SERVER,
                    connection);
             } catch (InterruptedException ie) {
                 throw new InterruptedIOException(
