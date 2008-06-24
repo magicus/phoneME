@@ -330,7 +330,7 @@ public class Protocol extends NetworkConnectionBase
             throws InterruptedIOException {
             
         if (token != null) {
-            token.checkIfPermissionAllowed(CLIENT_PERMISSION_NAME);
+            token.checkIfPermissionAllowed(Permissions.TCP);
         
             /* Any caller with the com.sun.midp permission is trusted. */
             ownerTrusted = true;

@@ -153,7 +153,7 @@ public interface MIDletSuite {
      * @exception SecurityException if the suite is not
      *            allowed to perform the specified action.
      */
-    public void checkIfPermissionAllowed(String permission);
+    public void checkIfPermissionAllowed(int permission);
 
     /**
      * Check for permission and throw an exception if not allowed.
@@ -171,7 +171,7 @@ public interface MIDletSuite {
      *   calling thread while this method is waiting to preempt the
      *   display.
      */
-    public void checkForPermission(String permission, String resource)
+    public void checkForPermission(int permission, String resource)
         throws InterruptedException;
 
     /**
@@ -192,7 +192,7 @@ public interface MIDletSuite {
      *   calling thread while this method is waiting to preempt the
      *   display.
      */
-    public void checkForPermission(String permission, String resource,
+    public void checkForPermission(int permission, String resource,
         String extraValue) throws InterruptedException;
 
     /**

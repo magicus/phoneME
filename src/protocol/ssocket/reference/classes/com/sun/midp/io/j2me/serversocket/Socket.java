@@ -102,7 +102,7 @@ public class Socket implements ServerSocketConnection, ServerSocket {
             MIDletSuite midletSuite;
 
 	    if (token != null) {
-		token.checkIfPermissionAllowed(SERVER_PERMISSION_NAME);
+		token.checkIfPermissionAllowed(Permissions.TCP_SERVER);
 		privilegedSecurityToken = token;
 	    } else {
                 AccessController.checkPermission(SERVER_PERMISSION_NAME,
@@ -283,6 +283,5 @@ public class Socket implements ServerSocketConnection, ServerSocket {
      */
     private native int getLocalPort0();
 }
-
 
 

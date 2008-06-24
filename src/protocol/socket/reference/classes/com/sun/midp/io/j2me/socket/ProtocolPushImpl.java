@@ -111,7 +111,7 @@ public class ProtocolPushImpl extends ProtocolPush {
         }
 
         try {
-            midletSuite.checkForPermission("javax.microedition.io.Connector.serversocket",
+            midletSuite.checkForPermission(Permissions.TCP_SERVER,
                                             connection);
         } catch (InterruptedException ie) {
             throw new InterruptedIOException(

@@ -157,8 +157,8 @@ public final class SecurityHandler {
      *   calling thread while this method is waiting to preempt the
      *   display.
      */
-    public boolean checkForPermission(String permission, String title, String question,
-        String oneshotQuestion, String app, String resource, String extraValue)
+    public boolean checkForPermission(int permission, int title, int question,
+        int oneshotQuestion, String app, String resource, String extraValue)
         throws InterruptedException {
 
         return checkForPermission(permission, title, question,
@@ -203,8 +203,8 @@ public final class SecurityHandler {
      *   calling thread while this method is waiting to preempt the
      *   display.
      */
-    public boolean checkForPermission(String permission, String title, String question,
-        String oneShotQuestion, String app, String resource, String extraValue,
+    public boolean checkForPermission(int permission, int title, int question,
+        int oneShotQuestion, String app, String resource, String extraValue,
         String exceptionMsg) throws InterruptedException {
     	
     	MIDletSuite current =
@@ -214,7 +214,8 @@ public final class SecurityHandler {
 	    // Deny. Internal suite should not call this function
 	    return true;
         } else {
-	    return !checkPermission0(current.getID(), permission);
+	    return !checkPermission0(current.getID(),
+				     Permissions.getName(permission));
         }
     }
 
@@ -241,7 +242,7 @@ public final class SecurityHandler {
      *   display.
      */
     public static boolean askUserForPermission(SecurityToken token,
-            String title, String question, String app, String resource,
+            int title, int question, String app, String resource,
             String extraValue) throws InterruptedException {
     	// Allow Push interrupt since the decision is already made
 	// at native Push level

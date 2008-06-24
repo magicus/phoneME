@@ -149,13 +149,20 @@ public final class SecurityHandler {
      *  -1 if the status is unknown
      */
     public int checkPermission(String permission) {
+        boolean found = false;
         int i;
 
         synchronized (this) {
-            try {
-                i = Permissions.getId(permission);
-            } catch (SecurityException e) {
-                return 0;  //not found, report denied
+            for (i = 0; i < Permissions.NUMBER_OF_PERMISSIONS; i++) {
+                if (Permissions.getName(i).equals(permission)) {
+                    found = true;
+                    break;
+                }
+            }
+
+            if (!found) {
+                // report denied
+                return 0;
             }
 
             switch (permissions[i]) {
@@ -227,8 +234,8 @@ public final class SecurityHandler {
      *   calling thread while this method is waiting to preempt the
      *   display.
      */
-    public boolean checkForPermission(String permission, String title, String question,
-        String oneshotQuestion, String app, String resource, String extraValue)
+    public boolean checkForPermission(int permission, int title, int question,
+        int oneshotQuestion, String app, String resource, String extraValue)
         throws InterruptedException {
 
         return checkForPermission(permission, title, question,
@@ -273,8 +280,8 @@ public final class SecurityHandler {
      *   calling thread while this method is waiting to preempt the
      *   display.
      */
-    public boolean checkForPermission(String permissionStr, String title, String question,
-        String oneShotQuestion, String app, String resource, String extraValue,
+    public boolean checkForPermission(int permission, int title, int question,
+        int oneShotQuestion, String app, String resource, String extraValue,
         String exceptionMsg) throws InterruptedException {
 
         if (permissions == null) {
@@ -283,12 +290,6 @@ public final class SecurityHandler {
         }
 
         synchronized (this) {
-			int permission;
-			try {
-				permission = Permissions.getId(permissionStr);
-			} catch (SecurityException e) {
-				throw new SecurityException(exceptionMsg);
-			}
             if (permission >= 0 && permission < permissions.length) {
                 switch (permissions[permission]) {
                 case Permissions.ALLOW:
@@ -381,7 +382,7 @@ public final class SecurityHandler {
      *   display.
      */
     public static boolean askUserForPermission(SecurityToken token,
-            boolean trusted, String title, String question, String app,
+            boolean trusted, int title, int question, String app,
             String resource, String extraValue) throws InterruptedException {
 
         PermissionDialog dialog =
@@ -456,8 +457,8 @@ class PermissionDialog implements CommandListener {
      *   calling thread while this method is waiting to preempt the
      *   display.
      */
-    PermissionDialog(SecurityToken token, boolean trusted, String title,
-            String question, String app, String resource, String extraValue)
+    PermissionDialog(SecurityToken token, boolean trusted, int title,
+            int question, String app, String resource, String extraValue)
             throws InterruptedException {
         String[] substitutions = {app, resource, extraValue};
         String iconFilename;

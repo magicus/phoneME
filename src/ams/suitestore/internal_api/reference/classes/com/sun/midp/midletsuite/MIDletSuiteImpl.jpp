@@ -186,8 +186,8 @@ public final class MIDletSuiteImpl implements MIDletSuite {
      *
      * @exception SecurityException if the suite is not allowed the permission
      */
-    public void checkIfPermissionAllowed(String permission) {
-        if (checkPermission(permission) != 1) {
+    public void checkIfPermissionAllowed(int permission) {
+        if (checkPermission(Permissions.getName(permission)) != 1) {
             throw new SecurityException(SecurityToken.STD_EX_MSG);
         }
     }
@@ -208,7 +208,7 @@ public final class MIDletSuiteImpl implements MIDletSuite {
      *   calling thread while this method is waiting to preempt the
      *   display.
      */
-    public void checkForPermission(String permission, String resource)
+    public void checkForPermission(int permission, String resource)
             throws InterruptedException {
         guaranteeMIDletSuiteLocked("checkForPermission");
         checkForPermission(permission,
@@ -233,7 +233,7 @@ public final class MIDletSuiteImpl implements MIDletSuite {
      *   calling thread while this method is waiting to preempt the
      *   display.
      */
-    public void checkForPermission(String permission, String resource,
+    public void checkForPermission(int permission, String resource,
             String extraValue) throws InterruptedException {
         guaranteeMIDletSuiteLocked("checkForPermission");
         checkForPermission(permission,
@@ -259,15 +259,14 @@ public final class MIDletSuiteImpl implements MIDletSuite {
      *   calling thread while this method is waiting to preempt the
      *   display.
      */
-    private void checkForPermission(String permissionStr, String name,
+    private void checkForPermission(int permission, String name,
             String resource, String extraValue) throws InterruptedException {
         boolean settingsChanged = true; // assume they changed
         suiteSettings.load();
 
         try {
-			int permission = Permissions.getId(permissionStr);
             settingsChanged = getSecurityHandler().checkForPermission(
-                                  permissionStr,
+                                  permission,
                                   Permissions.getTitle(permission),
                                   Permissions.getQuestion(permission),
                                   Permissions.getOneshotQuestion(permission),
@@ -365,8 +364,8 @@ public final class MIDletSuiteImpl implements MIDletSuite {
         try {
             interruptOk = SecurityHandler.askUserForPermission(
                           classSecurityToken, isTrusted(),
-                          Resource.getString(ResourceConstants.AMS_MIDLETSUITEIMPL_INTRPT_QUE),
-                          Resource.getString(question),
+                          ResourceConstants.AMS_MIDLETSUITEIMPL_INTRPT_QUE,
+                          question,
                           name, currentName, null);
             switch (suiteSettings.getPushInterruptSetting()) {
             case Permissions.BLANKET:

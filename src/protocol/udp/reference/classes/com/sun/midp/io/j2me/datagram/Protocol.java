@@ -255,7 +255,7 @@ public class Protocol implements UDPDatagramConnection,
      */
     public Connection openPrim(SecurityToken token, String name,
                                int mode, boolean timeouts) throws IOException {
-        token.checkIfPermissionAllowed(CLIENT_PERMISSION_NAME);
+        token.checkIfPermissionAllowed(Permissions.UDP);
         return openPrimCommon(false, name, mode);
     }
 

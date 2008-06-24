@@ -92,7 +92,7 @@ class AutoTesterBase extends MIDlet implements CommandListener,
     /** URL of the test suite. */
     String url;
     /** Security domain to assign to unsigned suites. */
-    String domain = Permissions.getUnsignedDomain();
+    String domain = Permissions.UNIDENTIFIED_DOMAIN_BINDING;
     /** MIDlet suite storage object. */
     MIDletSuiteStorage midletSuiteStorage;
     /** The installer. */
