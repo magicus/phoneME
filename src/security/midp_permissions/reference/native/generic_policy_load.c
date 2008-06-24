@@ -235,11 +235,11 @@ static values unidentifiedTBL[] = {
 
 
 int permissions_load_domain_list(void** array) {
-    *array = domainTBL;
+    *array = (void *)domainTBL;
     return domainTBLsize;
 }
 int permissions_load_group_list(void** array) {
-    *array = groupTBL;
+    *array = (void *)groupTBL;
     return groupTBLsize;
 }
 
@@ -248,7 +248,7 @@ int permissions_load_group_permissions(void** array, char* group_name) {
     int ret = 0;
     for (i1 = 0; i1 < groupTBLsize; i1++) {
         if (strcmp(groupTBL[i1], group_name) == 0) {
-            *array = group_membersTBL[i1].list;
+            *array = (void *)group_membersTBL[i1].list;
             ret = group_membersTBL[i1].size;
             break;
         }
@@ -396,7 +396,7 @@ int permissions_load_group_messages(void** array, char* group_name) {
     int ret = 0;
     for (i1 = 0; i1 < groupTBLsize; i1++) {
         if (strcmp(groupTBL[i1], group_name) == 0) {
-            *array = messagesTBL[i1].list;
+            *array = (void *)messagesTBL[i1].list;
             for (i2 = DEF_NUM_OF_LINES-1; i2 >= 0; i2--) {
                 if (messagesTBL[i1].list[i2] != NULL)
                     break;
