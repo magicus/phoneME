@@ -50,6 +50,6 @@ public final class Token {
      *            allowed by this token
      */
     public void checkIfPermissionAllowed(Permission permission) {
-        securityToken.checkIfPermissionAllowed(permission.getName());
+        securityToken.checkIfPermissionAllowed(permission.getMIDPPermission());
     }
 }

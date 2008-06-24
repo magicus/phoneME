@@ -26,37 +26,38 @@
 
 package com.sun.j2me.security;
 
+import com.sun.midp.security.Permissions;
+
 /**
  * Location and landmark store access permissions.
  */
 public class LocationPermission extends Permission {
 
     static public LocationPermission LOCATION = new LocationPermission(
-        "javax.microedition.location.Location", null);
+        Permissions.getName(Permissions.LOCATION), null);
 
-    static public LocationPermission ORIENTATION = 
-        new LocationPermission(
-	    "javax.microedition.location.Orientation", null);
+    static public LocationPermission ORIENTATION = new LocationPermission(
+        Permissions.getName(Permissions.ORIENTATION), null);
 
     static public LocationPermission LOCATION_PROXIMITY =
-        new LocationPermission(
-	    "javax.microedition.location.ProximityListener", null);
+        new LocationPermission(Permissions.getName(
+            Permissions.LOCATION_PROXIMITY), null);
 
     static public LocationPermission LANDMARK_STORE_READ =
-        new LocationPermission(
-	    "javax.microedition.location.LandmarkStore.read", null);
+        new LocationPermission(Permissions.getName(Permissions.LANDMARK_READ),
+        null);
 
     static public LocationPermission LANDMARK_STORE_WRITE = 
-        new LocationPermission(
-	    "javax.microedition.location.LandmarkStore.write", null);
+        new LocationPermission(Permissions.getName(Permissions.LANDMARK_WRITE),
+        null);
 
     static public LocationPermission LANDMARK_STORE_CATEGORY = 
-        new LocationPermission(
-	    "javax.microedition.location.LandmarkStore.category", null);
+        new LocationPermission(Permissions.getName(
+            Permissions.LANDMARK_CATEGORY), null);
 
     static public LocationPermission LANDMARK_STORE_MANAGE = 
-        new LocationPermission(
-	    "javax.microedition.location.LandmarkStore.management", null);
+        new LocationPermission(Permissions.getName(Permissions.LANDMARK_MANAGE),
+        null);
 
     public LocationPermission(String name, String resource) {
         super(name, resource);

@@ -24,16 +24,18 @@
 
 package com.sun.j2me.security;
 
+import com.sun.midp.security.Permissions;
+
 /**
  * Multimedia access permissions.
  */
 public class MMAPIPermission extends Permission {
 
     static public MMAPIPermission SNAPSHOT = new MMAPIPermission(
-        "javax.microedition.media.control.VideoControl.getSnapshot", null);
+        Permissions.getName(Permissions.MM_IMAGE_CAPTURING), null);
 
     static public MMAPIPermission RECORDING = new MMAPIPermission(
-        "javax.microedition.media.control.RecordControl", null);
+        Permissions.getName(Permissions.MM_RECORD), null);
 
     public MMAPIPermission(String name, String resource) {
         super(name, resource);

@@ -24,16 +24,18 @@
 
 package com.sun.j2me.security;
 
+import com.sun.midp.security.Permissions;
+
 /**
  * Advanced multimedia access permissions.
  */
 public class AMMSPermission extends Permission {
 
     static public AMMSPermission CAMERA_SHUTTERFEEDBACK = new AMMSPermission(
-        "javax.microedition.amms.control.camera.enableShutterFeedback", null);
+        Permissions.getName(Permissions.AMMS_CAMERA_SHUTTERFEEDBACK), null);
 
     static public AMMSPermission TUNER_SETPRESET = new AMMSPermission(
-        "javax.microedition.amms.control.tuner.setPreset", null);
+        Permissions.getName(Permissions.AMMS_TUNER_SETPRESET), null);
 
     public AMMSPermission(String name, String resource) {
         super(name, resource);

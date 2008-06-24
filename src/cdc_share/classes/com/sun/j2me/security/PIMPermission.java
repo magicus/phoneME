@@ -26,6 +26,7 @@
 
 package com.sun.j2me.security;
 
+import com.sun.j2me.proxy.security.Permissions;
 
 /**
  * PIM access permissions.
@@ -33,22 +34,22 @@ package com.sun.j2me.security;
 public class PIMPermission extends Permission {
     
     static public PIMPermission CONTACT_READ  = new PIMPermission(
-        "javax.microedition.pim.ContactList.read", null);
+        Permissions.getName(Permissions.PIM_CONTACT_READ), null);
 
     static public PIMPermission CONTACT_WRITE = new PIMPermission(
-        "javax.microedition.pim.ContactList.write", null);
+        Permissions.getName(Permissions.PIM_CONTACT_WRITE), null);
 
     static public PIMPermission EVENT_READ = new PIMPermission(
-        "javax.microedition.pim.EventList.read", null);
+        Permissions.getName(Permissions.PIM_EVENT_READ), null);
 
     static public PIMPermission EVENT_WRITE = new PIMPermission(
-        "javax.microedition.pim.EventList.write", null);
+        Permissions.getName(Permissions.PIM_EVENT_WRITE), null);
 
     static public PIMPermission TODO_READ = new PIMPermission(
-        "javax.microedition.pim.ToDoList.read", null);
+        Permissions.getName(Permissions.PIM_TODO_READ), null);
 
     static public PIMPermission TODO_WRITE = new PIMPermission(
-        "javax.microedition.pim.ToDoList.write", null);
+        Permissions.getName(Permissions.PIM_TODO_WRITE), null);
     
     public PIMPermission(String name, String resource) {
         super(name, resource);

@@ -29,14 +29,10 @@ package com.sun.j2me.security;
  */
 public class BluetoothPermission extends Permission {
 
-    static String STR_BLUETOOTH_CLIENT = 
-                            "javax.microedition.io.Connector.bluetooth.client";
-    static String STR_BLUETOOTH_SERVER = 
-	                    "javax.microedition.io.Connector.bluetooth.server";
-    static String STR_OBEX_CLIENT = 
-	                    "javax.microedition.io.Connector.obex.client";
-    static String STR_OBEX_SERVER = 
-	                    "javax.microedition.io.Connector.obex.server";
+    static String STR_BLUETOOTH_CLIENT = "javax.microedition.io.Connector.bluetooth.client";
+    static String STR_BLUETOOTH_SERVER = "javax.microedition.io.Connector.bluetooth.server";
+    static String STR_OBEX_CLIENT = "javax.microedition.io.Connector.obex.client";
+    static String STR_OBEX_SERVER = "javax.microedition.io.Connector.obex.server";
 
     static public BluetoothPermission BLUETOOTH_CLIENT =
         new BluetoothPermission(STR_BLUETOOTH_CLIENT, null);

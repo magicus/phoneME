@@ -24,30 +24,25 @@
 
 package com.sun.j2me.security;
 
+import com.sun.midp.security.Permissions;
+
 /**
  * ContactlessPermission access permissions.
  */
 public class ContactlessPermission extends Permission {
     
     static public ContactlessPermission DISCOVERY_MANAGER =
-        new ContactlessPermission(
-            "javax.microedition.contactless.DiscoveryManager", null);
+        new ContactlessPermission(Permissions.getName(Permissions.CONTACTLESS_DISCOVERY), null);
     static public ContactlessPermission NDEF_TAG_CONNECTION_WRITE =
-        new ContactlessPermission(
-	    "javax.microedition.contactless.ndef.NDEFTagConnection.write",
-	                                                             null);
+        new ContactlessPermission(Permissions.getName(Permissions.CONTACTLESS_NDEF_WRITE), null);
     static public ContactlessPermission CONNECTOR_NDEF =
-        new ContactlessPermission(
-	    "javax.microedition.io.Connector.ndef", null);
+        new ContactlessPermission(Permissions.getName(Permissions.CONTACTLESS_NDEF), null);
     static public ContactlessPermission CONNECTOR_RF =
-        new ContactlessPermission(
-	    "javax.microedition.io.Connector.rf", null);
+        new ContactlessPermission(Permissions.getName(Permissions.CONTACTLESS_RF), null);
     static public ContactlessPermission CONNECTOR_SC =
-        new ContactlessPermission(
-	    "javax.microedition.io.Connector.sc", null);
+        new ContactlessPermission(Permissions.getName(Permissions.CONTACTLESS_SC), null);
     static public ContactlessPermission CONNECTOR_VTAG =
-        new ContactlessPermission(
-	    "javax.microedition.io.Connector.vtag", null);
+        new ContactlessPermission(Permissions.getName(Permissions.CONTACTLESS_VTAG), null);
 
     public ContactlessPermission(String name, String resource) {
         super(name, resource);

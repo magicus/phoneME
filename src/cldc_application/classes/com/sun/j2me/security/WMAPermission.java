@@ -24,40 +24,42 @@
 
 package com.sun.j2me.security;
 
+import com.sun.midp.security.Permissions;
+
 /**
  * FileConnection access permissions.
  */
 public class WMAPermission extends Permission {
 
     static public WMAPermission SMS_SERVER = new WMAPermission(
-        "javax.microedition.io.Connector.sms", "sms:open");
+        Permissions.getName(Permissions.SMS_SERVER), "sms:open");
 
     static public WMAPermission getSmsSendPermission(String host, int numSeg) {
         return new WMAPermission(
-            "javax.wireless.messaging.sms.send", host, Integer.toString(numSeg));
+            Permissions.getName(Permissions.SMS_SEND), host, Integer.toString(numSeg));
     }
 
     static public WMAPermission SMS_RECEIVE = new WMAPermission(
-        "javax.wireless.messaging.sms.receive", "sms:receive");
+        Permissions.getName(Permissions.SMS_RECEIVE), "sms:receive");
 
 
     static public WMAPermission CBS_SERVER = new WMAPermission(
-        "javax.microedition.io.Connector.cbs", "cbs:open");
+        Permissions.getName(Permissions.CBS_SERVER), "cbs:open");
 
     static public WMAPermission CBS_RECEIVE = new WMAPermission(
-        "javax.wireless.messaging.cbs.receive", "cbs:receive");
+        Permissions.getName(Permissions.CBS_RECEIVE), "cbs:receive");
 
 
     static public WMAPermission MMS_SERVER = new WMAPermission(
-        "javax.microedition.io.Connector.mms", "mms:open");
+        Permissions.getName(Permissions.MMS_SERVER), "mms:open");
 
     static public WMAPermission getMmsSendPermission(String addresses, String numSeg) {
         return new WMAPermission(
-            "javax.wireless.messaging.mms.send", addresses, numSeg);
+            Permissions.getName(Permissions.MMS_SEND), addresses, numSeg);
     }
 
     static public WMAPermission MMS_RECEIVE = new WMAPermission(
-        "javax.wireless.messaging.mms.receive", "mms:receive");
+        Permissions.getName(Permissions.MMS_RECEIVE), "mms:receive");
 
     public WMAPermission(String name, String resource) {
         super(name, resource);
