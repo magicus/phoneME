@@ -88,7 +88,6 @@ static unsigned char  *local_modulus;
 static unsigned char  *local_exponent;
 static unsigned char  *local_domain;
 
-
 javacall_result javacall_security_keystore_start(javacall_handle* jc_h) {
 
     javacall_utf16 rootPath[JAVACALL_MAX_FILE_NAME_LENGTH];
@@ -118,8 +117,8 @@ javacall_result javacall_security_keystore_start(javacall_handle* jc_h) {
         }
         rootPathLen+=i;
     } else {
-         javautil_debug_print (JAVACALL_LOG_ERROR, "security",
-        "javacall_security.c : File name %d, is to long.\n",
+    	 javautil_debug_print (JAVACALL_LOG_ERROR, "security",
+		"javacall_security.c : File name %d, is to long.\n",
                unicode_to_char(rootPath));
         return JAVACALL_FAIL;
     }
@@ -133,15 +132,15 @@ javacall_result javacall_security_keystore_start(javacall_handle* jc_h) {
                                 JAVACALL_FILE_O_RDONLY,
                                 &handle);
     if(result == JAVACALL_FAIL) {
-     javautil_debug_print (JAVACALL_LOG_ERROR, "security", "Can't open %s.\n", unicode_to_char(rootPath));
+	 javautil_debug_print (JAVACALL_LOG_ERROR, "security", "Can't open %s.\n", unicode_to_char(rootPath));
         return JAVACALL_FAIL;
     }
 
     main_ks_size = (int)javacall_file_sizeofopenfile(handle);
     if(-1 == main_ks_size) {
         javacall_file_close(handle);
-     javautil_debug_print (JAVACALL_LOG_ERROR, "security",
-        "Can't get javacall_file_sizeofopenfile() %s\n",
+	 javautil_debug_print (JAVACALL_LOG_ERROR, "security",
+	 	"Can't get javacall_file_sizeofopenfile() %s\n",
                unicode_to_char(rootPath));
         return JAVACALL_FAIL;
     }
@@ -154,7 +153,7 @@ javacall_result javacall_security_keystore_start(javacall_handle* jc_h) {
 
     res = javacall_file_read(handle, _main_ks_content, main_ks_size);
     if(res <= 0 ) {
-     javautil_debug_print (JAVACALL_LOG_ERROR, "security","Can't read this key storage. Current version isn't correct\n");
+	 javautil_debug_print (JAVACALL_LOG_ERROR, "security","Can't read this key storage. Current version isn't correct\n");
         free(_main_ks_content);
         javacall_file_close(handle);
         return JAVACALL_FAIL;
@@ -164,7 +163,7 @@ javacall_result javacall_security_keystore_start(javacall_handle* jc_h) {
     currentPosition  = _main_ks_content;
 
     if(*currentPosition !=  CURRENT_VERSION) {
-     javautil_debug_print (JAVACALL_LOG_ERROR, "security","Can't read this key storage. Current version isn't correct\n");
+	 javautil_debug_print (JAVACALL_LOG_ERROR, "security","Can't read this key storage. Current version isn't correct\n");
         free(_main_ks_content);
         currentPosition = NULL;
         return JAVACALL_FAIL;
@@ -217,7 +216,7 @@ javacall_security_keystore_get_next(javacall_handle keyStoreHandle,
 
     *owner = (unsigned short*) malloc(tmp_size);
     if(*owner == NULL) {
-     javautil_debug_print (JAVACALL_LOG_ERROR, "security","Can not allocate memory for owner.\n");
+	 javautil_debug_print (JAVACALL_LOG_ERROR, "security","Can not allocate memory for owner.\n");
         return JAVACALL_FAIL;
     }
 
@@ -263,7 +262,7 @@ javacall_security_keystore_get_next(javacall_handle keyStoreHandle,
     tmp_size = (*modulusSize)+2;
     *modulus = (unsigned char*)malloc(tmp_size);
     if(*modulus == NULL) {
-     javautil_debug_print (JAVACALL_LOG_ERROR, "security", "Can not allocate memory for modulus data\n");
+	 javautil_debug_print (JAVACALL_LOG_ERROR, "security", "Can not allocate memory for modulus data\n");
         return JAVACALL_FAIL;
     }
 
@@ -285,7 +284,7 @@ javacall_security_keystore_get_next(javacall_handle keyStoreHandle,
     tmp_size = (*exponentSize)+2;
     *exponent = (unsigned char*)malloc(tmp_size);
     if(*exponent == NULL) {
-     javautil_debug_print (JAVACALL_LOG_ERROR, "security", "Can not allocate memory for exponent data\n");
+	 javautil_debug_print (JAVACALL_LOG_ERROR, "security", "Can not allocate memory for exponent data\n");
         return JAVACALL_FAIL;
     }
 
@@ -308,7 +307,7 @@ javacall_security_keystore_get_next(javacall_handle keyStoreHandle,
     tmp_size = (*domainSize)+2;
     *domain = malloc(tmp_size);
     if(*domain == NULL) {
-     javautil_debug_print (JAVACALL_LOG_ERROR, "security", "Can not allocate memory for domain data\n");
+	 javautil_debug_print (JAVACALL_LOG_ERROR, "security", "Can not allocate memory for domain data\n");
         return JAVACALL_FAIL;
     }
 
@@ -459,19 +458,19 @@ int example_main(void) {
         printf("domainSize is: %d\n", domainSize);
         printf("=================================================\n");
 */
-     javautil_debug_print (JAVACALL_LOG_ERROR, "security", "=================================================\n");
-     javautil_debug_print (JAVACALL_LOG_ERROR, "security", "owner is: %s\n",owner);
-     javautil_debug_print (JAVACALL_LOG_ERROR, "security", "ownerSize is: %d\n", ownerSize);
-     javautil_debug_print (JAVACALL_LOG_ERROR, "security", "validityStartMillissec is: 0x%x\n", validityStartMillissec);
-     javautil_debug_print (JAVACALL_LOG_ERROR, "security", "validityEndMillisec is: 0x%x\n", validityEndMillisec);
-     javautil_debug_print (JAVACALL_LOG_ERROR, "security", "modulus is:\n");
-     javautil_debug_print (JAVACALL_LOG_ERROR, "security", "modulusSize is: %d\n", modulusSize);
-     javautil_debug_print (JAVACALL_LOG_ERROR, "security", "exponent is: [%c %c %c]\n",
-                                                            exponent[0]+'0',exponent[1]+'0',exponent[2]+'0');
-     javautil_debug_print (JAVACALL_LOG_ERROR, "security", "exponentSize is: %d\n", exponentSize);
-     javautil_debug_print (JAVACALL_LOG_ERROR, "security", "domain is: %s\n", domain);
-     javautil_debug_print (JAVACALL_LOG_ERROR, "security", "domainSize is: %d\n", domainSize);
-     javautil_debug_print (JAVACALL_LOG_ERROR, "security", "=================================================\n");
+	 javautil_debug_print (JAVACALL_LOG_ERROR, "security", "=================================================\n");
+	 javautil_debug_print (JAVACALL_LOG_ERROR, "security", "owner is: %s\n",owner);
+	 javautil_debug_print (JAVACALL_LOG_ERROR, "security", "ownerSize is: %d\n", ownerSize);
+	 javautil_debug_print (JAVACALL_LOG_ERROR, "security", "validityStartMillissec is: 0x%x\n", validityStartMillissec);
+	 javautil_debug_print (JAVACALL_LOG_ERROR, "security", "validityEndMillisec is: 0x%x\n", validityEndMillisec);
+	 javautil_debug_print (JAVACALL_LOG_ERROR, "security", "modulus is:\n");
+	 javautil_debug_print (JAVACALL_LOG_ERROR, "security", "modulusSize is: %d\n", modulusSize);
+	 javautil_debug_print (JAVACALL_LOG_ERROR, "security", "exponent is: [%c %c %c]\n",
+               												exponent[0]+'0',exponent[1]+'0',exponent[2]+'0');
+	 javautil_debug_print (JAVACALL_LOG_ERROR, "security", "exponentSize is: %d\n", exponentSize);
+	 javautil_debug_print (JAVACALL_LOG_ERROR, "security", "domain is: %s\n", domain);
+	 javautil_debug_print (JAVACALL_LOG_ERROR, "security", "domainSize is: %d\n", domainSize);
+	 javautil_debug_print (JAVACALL_LOG_ERROR, "security", "=================================================\n");
     }
 
     javacall_security_keystore_end(h);
@@ -521,11 +520,7 @@ javacall_result javacall_security_permission_dialog_display(javacall_utf16* mess
     return JAVACALL_NOT_IMPLEMENTED;
 }
 
-
-
-
 #ifdef __cplusplus
 }
 #endif
-
 

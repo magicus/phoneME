@@ -171,21 +171,6 @@ typedef enum {
     JAVACALL_SECURITY_DENY_ALWAYS =   0x20  
 } javacall_security_permission_type;
 
-
-/**
- * @brief Permission state values
- */
-#define JAVACALL_NEVER     0
-#define JAVACALL_NEVER_STR "never"
-#define JAVACALL_ALLOW   1
-#define JAVACALL_ALLOW_STR "allow"
-#define JAVACALL_BLANKET 4
-#define JAVACALL_BLANKET_STR "blanket"
-#define JAVACALL_SESSION 8
-#define JAVACALL_SESSION_STR "session"
-#define JAVACALL_ONESHOT 16
-#define JAVACALL_ONESHOT_STR "oneshot"
-
 /**
  * Invoke the native permission dialog.
  * When the native permission dialog is displayed, Java guarantees
@@ -233,76 +218,7 @@ javacall_result javacall_security_permission_dialog_display(javacall_utf16* mess
  * @param userPermission the permission level the user chose
  */
 void javanotify_security_permission_dialog_finish(
-                        javacall_security_permission_type userPermission);
-
-
-
-/**
- *  Load list of security domains. The function returns in
- *  <code>array</code> an array of C strings contains the list.
- *  The caller is responsible to free the return pointer with
- *  javacall_free()
- * @param array a placeholder for the domain strings list that returns
- * @retval The number of strings in the list or 0 on error
- * 
- */
-int javacall_permissions_load_domain_list(javacall_utf8_string* array);
-
-/**
- *  Load list of groups. The function returns in
- *  <code>array</code> an array of C strings contains the list.
- *  The caller is responsible to free the return pointer with
- *  javacall_free()
- *  @param array a placeholder for the groups strings list
- *  that returns
- *  @retval The number of strings in the list or 0 on error 
- */
-int javacall_permissions_load_group_list(javacall_utf8_string* array);
-
-/** 
- * Load list of permissions members of the requested group. The 
- * function returns in <code>list</code> an array of C strings 
- *  contains the list. The caller is responsible to free the
- *  return pointer with javacall_free()
- * @param list a placeholder for the permission members strings list that 
- * returns
- * @param group_name The name of the group which members are requested
- * @retval The number of strings in the list or 0 on error 
- */
-int javacall_permissions_load_group_permissions(javacall_utf8_string* list, 
-                                    javacall_utf8_string group_name);
-
-/**
- * @param domain_name the name of domain
- * @param group_name the name of the group
- * @retval Default value of permission action should
- * be taken on that domain/group combiation 
- */
-int javacall_permissions_get_default_value(javacall_utf8_string domain_name,
-                               javacall_utf8_string group_name);
-
-/**
- * @param domain_name the name of domain
- * @param group_name the name of the group
- * @retval Maximum value of permission action should
- * be taken on that domain/group combiation 
- */
-int javacall_permissions_get_max_value(javacall_utf8_string domain_name,
-                           javacall_utf8_string group_name);
-
-/**
- * Load list of messages that are used in the UI dialogs when
- * propmting the user of specific action of the group. The 
- * function returns in <code>list</code> an array of C strings 
- *  contains the list. The caller is responsible to free the
- *  return pointer with javacall_free()
- * @param list a placeholder for the groups strings list that returns
- * @param group_name the name of the group
- * @retval The number of strings in the list or 0 on error
- */
-int javacall_permissions_load_group_messages(javacall_utf8_string* list,
-                                 javacall_utf8_string group_name);
-
+	                    javacall_security_permission_type userPermission);
 
 /** @} */
 
@@ -311,4 +227,5 @@ int javacall_permissions_load_group_messages(javacall_utf8_string* list,
 #endif
 
 #endif  /* JAVACALL_SECURITY_H */
+
 
