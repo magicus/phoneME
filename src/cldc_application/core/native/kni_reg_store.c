@@ -148,7 +148,9 @@ static int initializeFields(KNIDECLARGS int dummy) {
     static const char* STRING_TYPE = "Ljava/lang/String;";
     static const char* S_ARRAY_TYPE = "[Ljava/lang/String;";
     static const char* ANM_ARRAY_TYPE = "[Ljavax/microedition/content/ActionNameMap;";
-    static const char* ANM_CLASS_NAME = "javax/microedition/content/ActionNameMap";
+
+#define ANM_CLASS_NAME "javax/microedition/content/ActionNameMap"
+
     int ret;    // returned result code
     KNI_StartHandles(1);
     KNI_DeclareHandle(clObj);   // clazz object
@@ -212,6 +214,9 @@ static int initializeFields(KNIDECLARGS int dummy) {
     } while (0);
 
     KNI_EndHandles();
+
+#undef ANM_CLASS_NAME
+
     return ret;
 }
 
