@@ -31,6 +31,15 @@
 
 #include <native/common/jni_util.h>
 
+const char* get_system_property_supports_mixing();
+const char* get_system_property_supports_audio_capture();
+const char* get_system_property_supports_video_capture();
+const char* get_system_property_supports_recording();
+const char* get_system_property_audio_encodings();
+const char* get_system_property_video_encodings();
+const char* get_system_property_video_snapshot_encodings();
+const char* get_system_property_streamable_contents();
+
 /**
  * Returns current value for the dynamic property
  *
