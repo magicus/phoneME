@@ -163,10 +163,10 @@ class MulticastSocket extends DatagramSocket {
 	// Enable SO_REUSEADDR before binding
 	setReuseAddress(true);
 
+        getImpl().setIsMulticastSocket();
 	if (bindaddr != null) {
 	    bind(bindaddr);
 	}
-        getImpl().setIsMulticastSocket();
     }
 
     /**

@@ -242,6 +242,6 @@ public abstract class DatagramSocketImpl implements SocketOptions {
 	return fd;
     }
 
-    void setIsMulticastSocket() {
+    void setIsMulticastSocket() throws SocketException {
     }
 }

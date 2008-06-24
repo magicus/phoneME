@@ -321,7 +321,8 @@ CVMclassLookupFromClassLoader(CVMExecEnv* ee,
     }
 
 #ifdef CVM_CLASSLOADING
-    if (cb != NULL) {
+    /* Fix for 6708366, don't check array class access */
+    if (cb != NULL && !CVMtypeidIsArray(typeID)) {
 	if (!CVMloaderCacheCheckPackageAccess(ee, loader, cb, pd)) {
 	    cb = NULL;
 	}
