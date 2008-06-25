@@ -377,6 +377,9 @@ typedef struct {
         midp_event_launch_push_entry        launchPushEntryEvent;
 #endif /* ENABLE_API_EXTENSIONS */
 
+#ifdef ENABLE_JSR_290
+        jsr290_jc_event_fluid              jsr290FluidEvent;
+#endif /* ENABLE_JSR_290 */
     } data;
 
 } midp_jc_event_union;
