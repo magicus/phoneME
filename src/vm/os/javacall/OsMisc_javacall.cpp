@@ -31,6 +31,8 @@
 #include "incls/_precompiled.incl"
 #include "incls/_OsMisc_javacall.cpp.incl"
 
+#include <javacall_os.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -52,8 +54,7 @@ void OsMisc_flush_icache(address start, int size) {
    * code segment that is deoptimized or moved during a garbage
    * collection.
    */
-  (void)start;
-  (void)size;
+  javacall_os_flush_icache((unsigned char*)start, size);
 }
 
 #if !defined(PRODUCT) || ENABLE_TTY_TRACE
