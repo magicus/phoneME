@@ -26,7 +26,7 @@
 
 #include <kni.h>
 #include <jsrop_exceptions.h>
-#include <thread_sync.h>
+#include <javacall_os.h>
 #include <javacall_carddevice.h>
 #include <internal_props.h>
 
@@ -39,8 +39,8 @@ static char hostsandports[] = "com.sun.io.j2me.apdu.hostsandports";
 static char satselectapdu[] = "com.sun.io.j2me.apdu.satselectapdu";
 
 /** Thread synchronization variables */
-static ThreadMutex cardReaderMutex;
-static ThreadCond cardReaderCond;
+static javacall_mutex cardReaderMutex;
+static javacall_cond cardReaderCond;
 
 #define PROP_BUF_SIZE 128
 
@@ -76,12 +76,12 @@ KNIDECL (com_sun_cardreader_PlatformCardDevice_init0) {
         }
     }
 
-    cardReaderMutex = threadMutexCreate();
+    cardReaderMutex = javacall_os_mutex_create();
     if (cardReaderMutex == NULL) {
         goto end;
     }
 
-    cardReaderCond = threadCondCreate(cardReaderMutex);
+    cardReaderCond = javacall_os_cond_create(cardReaderMutex);
     if (cardReaderCond == NULL) {
         goto end;
     }
@@ -149,8 +149,8 @@ end:
 KNIEXPORT KNI_RETURNTYPE_VOID
 KNIDECL(com_sun_cardreader_PlatformCardDevice_finalize0) {
     //Global Unlock - if in native
-    threadMutexDestroy(cardReaderMutex);
-    threadCondDestroy(cardReaderCond);
+    javacall_os_mutex_destroy(cardReaderMutex);
+    javacall_os_cond_destroy(cardReaderCond);
     javacall_carddevice_finalize();
     KNI_ReturnVoid();
 }
@@ -170,7 +170,7 @@ KNIDECL(com_sun_cardreader_PlatformCardDevice_lock0) {
     
     // Global Lock if native
     CVMD_gcSafeExec(_ee, {
-        if (threadMutexLock(cardReaderMutex) != THREAD_SYNC_OK) {
+        if (javacall_os_mutex_lock(cardReaderMutex) != JAVACALL_OK) {
             goto end;
         }
     });
@@ -180,7 +180,7 @@ KNIDECL(com_sun_cardreader_PlatformCardDevice_lock0) {
         switch (lock_retcode) {
         case JAVACALL_WOULD_BLOCK:
             CVMD_gcSafeExec(_ee, {
-                threadCondWait(cardReaderCond, 0);
+                javacall_os_cond_wait(cardReaderCond, 0);
             });
             break;
         case JAVACALL_OK:
@@ -191,7 +191,7 @@ KNIDECL(com_sun_cardreader_PlatformCardDevice_lock0) {
             break;
         }
     } while (lock_retcode == JAVACALL_WOULD_BLOCK);
-    threadMutexUnlock(cardReaderMutex);
+    javacall_os_mutex_unlock(cardReaderMutex);
 
 end:
     KNI_ReturnInt(retcode);
@@ -285,7 +285,7 @@ KNIDECL(com_sun_cardreader_PlatformCardDevice_isSatSlot0) {
     int slotIndex = KNI_GetParameterAsInt(1);
 
     CVMD_gcSafeExec(_ee, {
-        if (threadMutexLock(cardReaderMutex) != THREAD_SYNC_OK) {
+        if (javacall_os_mutex_lock(cardReaderMutex) != JAVACALL_OK) {
             goto end;
         }
     });
@@ -293,12 +293,12 @@ KNIDECL(com_sun_cardreader_PlatformCardDevice_isSatSlot0) {
     status_code = javacall_carddevice_is_sat_start(slotIndex, &result, &context);
     while (status_code == JAVACALL_WOULD_BLOCK) {
         CVMD_gcSafeExec(_ee, {
-            if (threadCondWait(cardReaderCond, 0) == THREAD_SYNC_OK) {
+            if (javacall_os_cond_wait(cardReaderCond, 0) == JAVACALL_OK) {
                 status_code = javacall_carddevice_is_sat_finish(slotIndex, &result, context);                
             }
         });
     }
-    threadMutexUnlock(cardReaderMutex);
+    javacall_os_mutex_unlock(cardReaderMutex);
 
     if (status_code == JAVACALL_OK) {
         if (result == JAVACALL_FALSE) {
@@ -352,7 +352,7 @@ KNIDECL(com_sun_cardreader_PlatformCardDevice_reset0) {
     }
 
     CVMD_gcSafeExec(_ee, {
-        if (threadMutexLock(cardReaderMutex) != THREAD_SYNC_OK) {
+        if (javacall_os_mutex_lock(cardReaderMutex) != JAVACALL_OK) {
             goto free_end;
         }
     });
@@ -360,12 +360,12 @@ KNIDECL(com_sun_cardreader_PlatformCardDevice_reset0) {
     status_code = javacall_carddevice_reset_start(atr_buffer, &atr_length, &context);
     while (status_code == JAVACALL_WOULD_BLOCK) {
         CVMD_gcSafeExec(_ee, {
-            if (threadCondWait(cardReaderCond, 0) == THREAD_SYNC_OK) {
+            if (javacall_os_cond_wait(cardReaderCond, 0) == JAVACALL_OK) {
                 status_code = javacall_carddevice_reset_finish(atr_buffer, &atr_length, context);                
             }
         });        
     }
-    threadMutexUnlock(cardReaderMutex);
+    javacall_os_mutex_unlock(cardReaderMutex);
     KNI_SetRawArrayRegion(atr_handle, 0, atr_length,(jbyte *)atr_buffer);
 
     if (status_code == JAVACALL_OK) {
@@ -451,7 +451,7 @@ KNIDECL(com_sun_cardreader_PlatformCardDevice_cmdXfer0) {
     }
 
     CVMD_gcSafeExec(_ee, {
-        if (threadMutexLock(cardReaderMutex) != THREAD_SYNC_OK) {
+        if (javacall_os_mutex_lock(cardReaderMutex) != JAVACALL_OK) {
             goto free_end;
         }
     });
@@ -463,7 +463,7 @@ KNIDECL(com_sun_cardreader_PlatformCardDevice_cmdXfer0) {
 
     while (status_code == JAVACALL_WOULD_BLOCK) {
         CVMD_gcSafeExec(_ee, {
-            if (threadCondWait(cardReaderCond, 0) == THREAD_SYNC_OK) {
+            if (javacall_os_cond_wait(cardReaderCond, 0) == JAVACALL_OK) {
                 status_code = javacall_carddevice_xfer_data_finish(tx_buffer, 
                                                                    tx_length, 
                                                                    rx_buffer, 
@@ -471,7 +471,7 @@ KNIDECL(com_sun_cardreader_PlatformCardDevice_cmdXfer0) {
             }
         });                
     }
-    threadMutexUnlock(cardReaderMutex);
+    javacall_os_mutex_unlock(cardReaderMutex);
     KNI_SetRawArrayRegion(response_handle, 0, rx_length,(jbyte *)rx_buffer);    
 
     if (status_code == JAVACALL_OK) {
@@ -532,8 +532,8 @@ KNIDECL(com_sun_cardreader_PlatformCardDevice_checkCardMovement0) {
 
 void javanotify_carddevice_event(javacall_carddevice_event event,
                                  void *context) {
-    threadMutexLock(cardReaderMutex);
-    threadCondSignal(cardReaderCond);    
-    threadMutexUnlock(cardReaderMutex);
+    javacall_os_mutex_lock(cardReaderMutex);
+    javacall_os_cond_signal(cardReaderCond);    
+    javacall_os_mutex_unlock(cardReaderMutex);
     return;
 }
