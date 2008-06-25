@@ -1,5 +1,4 @@
 /*
- *
  * Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  *
@@ -40,7 +39,6 @@ void javacall_os_initialize(void){
     return;
 }
 
-
 /*
  * Performs a clean-up of all threads and other OS related activity
  * to allow for a clean and complete restart.  This should undo
@@ -49,7 +47,6 @@ void javacall_os_initialize(void){
 void javacall_os_dispose(){
     return;
 }
-
 
 /** 
  * javacall_os_flush_icache is used, for example, to flush any caches used by a
@@ -61,6 +58,130 @@ void javacall_os_dispose(){
  */
 void javacall_os_flush_icache(unsigned char* address, int size) {
 }
+
+/**
+ * Creates new mutex.
+ * @return new mutex, <code>NULL</code> in case of any error.
+ */
+javacall_mutex javacall_os_mutex_create() {
+    return NULL;
+}
+
+/**
+ * Destroys the mutex.
+ * @param mutex the mutex to destroy.
+ */
+void javacall_os_mutex_destroy(javacall_mutex mutex) {
+}
+
+/**
+ * Acquires the mutex, waits if the mutex is busy.
+ * @param mutex the mutex.
+ * @retval JAVACALL_OK in case of success 
+ * @retval JAVACALL_OUT_OF_MEMORY in case of lack of memory 
+ * @retval JAVACALL_FAIL in case of any other error 
+ */
+javacall_result javacall_os_mutex_lock(javacall_mutex mutex) {
+    return JAVACALL_NOT_IMPLEMENTED;
+}
+
+/**
+ * Tries to acquire the Mutex, returns immidiately.
+ * @param mutex the mutex.
+ * @retval JAVACALL_OK in case of success 
+ * @retval JAVACALL_OUT_OF_MEMORY in case of lack of memory 
+ * @retval JAVACALL_FAIL in case of any other error 
+ * @retval JAVACALL_WOULD_BLOCK if the mutex is acquired by somebody else 
+ */
+javacall_result javacall_os_mutex_try_lock(javacall_mutex mutex) {
+    return JAVACALL_NOT_IMPLEMENTED;
+}
+
+/**
+ * Frees the mutex.
+ * @param mutex the mutex.
+ * @retval JAVACALL_OK in case of success 
+ * @retval JAVACALL_OUT_OF_MEMORY in case of lack of memory 
+ * @retval JAVACALL_FAIL in case of any other error 
+ */
+javacall_result javacall_os_mutex_unlock(javacall_mutex mutex) {
+    return JAVACALL_NOT_IMPLEMENTED;
+}
+
+/**
+ * Creates new condition variable.
+ * @param mutex a mutex that will be bound with the condition variable
+ * in <code>javacall_os_cond_wait</code>.
+ * @return new condition variable, <code>NULL</code> in case of any error.
+ */
+javacall_cond javacall_os_cond_create(javacall_mutex mutex) {
+    return NULL;
+}
+
+/**
+ * Gets the mutex from the condition variable. This mutex was passed 
+ * to <code>javacall_os_cond_create</code>.
+ * @param cond the condition variable.
+ * @return the mutex, <code>NULL</code> in case of any error.
+ */
+javacall_mutex javacall_os_cond_get_mutex(javacall_cond cond) {
+    return NULL;
+}
+
+/**
+ * Destroys the condition variable.
+ * @param cond the condition variable to destroy.
+ */
+void javacall_os_cond_destroy(javacall_cond cond) {
+}
+
+/**
+ * Blocks current thread on the condition variable.
+ * The mutex that has been provided at creation time
+ * (@see javacall_os_cond_create)
+ * will be used in this call. See details in POSIX's 
+ * <code>pthread_cond_wait</code>. If the <code>millis</code> parameter
+ * is not <code>0</code> this method will return 
+ * <code>JAVACALL_TIMEOUT</code> when <code>millis</code> milliseconds
+ * elapse.
+ * @param cond the condition variable.
+ * @param millis the timeout in milliseconds
+ * @retval JAVACALL_OK in case of success 
+ * @retval JAVACALL_OUT_OF_MEMORY in case of lack of memory 
+ * @retval JAVACALL_TIMEOUT when <code>millis</code> milliseconds elapsed 
+ * @retval JAVACALL_FAIL in case of any other error 
+ */
+javacall_result javacall_os_cond_wait(javacall_cond cond, long millis) {
+    return JAVACALL_NOT_IMPLEMENTED;
+}
+
+/**
+ * Unblocks a thread that was blocked on the condition variable by 
+ * <code>javacall_os_cond_wait</code>.
+ * See details in POSIX's <code>pthread_cond_signal</code>. Implementation
+ * can unblock more than one thread.
+ * @param cond the condition variable.
+ * @retval JAVACALL_OK in case of success 
+ * @retval JAVACALL_OUT_OF_MEMORY in case of lack of memory 
+ * @retval JAVACALL_FAIL in case of any other error 
+ */
+javacall_result javacall_os_cond_signal(javacall_cond cond) {
+    return JAVACALL_NOT_IMPLEMENTED;
+}
+
+/**
+ * Unblocks all threads that were blocked on the condition variable by 
+ * <code>javacall_os_cond_wait</code>.
+ * See details in POSIX's <code>pthread_cond_broadcast</code>.
+ * @param cond the condition variable.
+ * @retval JAVACALL_OK in case of success 
+ * @retval JAVACALL_OUT_OF_MEMORY in case of lack of memory 
+ * @retval JAVACALL_FAIL in case of any other error 
+ */
+javacall_result javacall_os_cond_broadcast(javacall_cond cond) {
+    return JAVACALL_NOT_IMPLEMENTED;
+}
+
 
 #ifdef __cplusplus
 }
