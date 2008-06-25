@@ -126,6 +126,10 @@
             Name="LC_MMAPI"
             Value="13000"
             Comment="MMAPI module channel"/>
+  <constant Type="int"
+            Name="LC_JSR290"
+            Value="14000"
+            Comment="JSR290 module channel"/>
 </constant_class>
 <!-- Memory limits -->
 <constant_class Package="com.sun.midp.configurator" Name="Constants"

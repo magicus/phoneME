@@ -136,7 +136,7 @@ public class TitleLayer extends CLayer {
                     titlex = TitleSkin.MARGIN;
                     break;
                 default:
-                    if (ScreenSkin.TEXT_ORIENT == Graphics.RIGHT) {
+                    if (ScreenSkin.RL_DIRECTION) {
                         titlex =
                         (ScreenSkin.WIDTH - TitleSkin.MARGIN - titlew);
                     } else {

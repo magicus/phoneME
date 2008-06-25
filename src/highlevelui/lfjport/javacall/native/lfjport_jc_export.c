@@ -24,6 +24,8 @@
  * information or have any questions.
  */
 
+#include <kni.h>
+
 #include <midp_logging.h>
 #include <lfjport_export.h>
 

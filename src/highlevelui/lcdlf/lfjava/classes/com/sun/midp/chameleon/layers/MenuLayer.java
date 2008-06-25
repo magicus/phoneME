@@ -430,19 +430,28 @@ public class MenuLayer extends ScrollablePopupLayer {
                         x = arrow.getWidth() + 2;
                     }
                 }
-                
+
+                int itemOffset;
                 if (cmdIndex == selI && !cascadeMenuUp) {
                     if (MenuSkin.IMAGE_ITEM_SEL_BG != null) {
                         // We want to draw the selected item background
-                        CGraphicsUtil.draw3pcsBackground(g, 3, 
-                            ((selI - scrollIndex) * MenuSkin.ITEM_HEIGHT) + 
+
+                        CGraphicsUtil.draw3pcsBackground(g, 3,
+                            ((selI - scrollIndex) * MenuSkin.ITEM_HEIGHT) +
                                 MenuSkin.IMAGE_BG[0].getHeight(),
                             bounds[W] - 3,
                             MenuSkin.IMAGE_ITEM_SEL_BG);
                     } else {
+                        if (ScreenSkin.RL_DIRECTION) {
+                            itemOffset = bounds[W] - MenuSkin.ITEM_ANCHOR_X + 2 -
+                                MenuSkin.FONT_ITEM_SEL.stringWidth(
+                                menuCmds[cmdIndex].getLabel()) - 4 - x;
+                        } else {
+                            itemOffset = MenuSkin.ITEM_ANCHOR_X - 2;
+                        }
                         g.setColor(MenuSkin.COLOR_BG_SEL);
-                        g.fillRoundRect(MenuSkin.ITEM_ANCHOR_X - 2,
-                            ((selI - scrollIndex) * MenuSkin.ITEM_HEIGHT) + 
+                        g.fillRoundRect(itemOffset,
+                            ((selI - scrollIndex) * MenuSkin.ITEM_HEIGHT) +
                                 MenuSkin.ITEM_TOPOFFSET,
                             MenuSkin.FONT_ITEM_SEL.stringWidth(
                                 menuCmds[cmdIndex].getLabel()) + 4 + x,
@@ -450,7 +459,7 @@ public class MenuLayer extends ScrollablePopupLayer {
                             3, 3);
                     }
                 }
-                
+
                 if (cmdIndex < 9) {
                     g.setFont((selI == cmdIndex) ?
                                MenuSkin.FONT_ITEM_SEL :
@@ -458,23 +467,39 @@ public class MenuLayer extends ScrollablePopupLayer {
                     g.setColor((selI == cmdIndex) ? 
                                MenuSkin.COLOR_INDEX_SEL :
                                MenuSkin.COLOR_INDEX);
-                    g.drawString("" + (cmdIndex + 1),
-                                 MenuSkin.ITEM_INDEX_ANCHOR_X,
-                                 y, Graphics.TOP | Graphics.LEFT);
+
+                     if (ScreenSkin.RL_DIRECTION) {
+                         itemOffset = MenuSkin.WIDTH - MenuSkin.ITEM_INDEX_ANCHOR_X;                                                     
+                     } else {
+                         itemOffset = MenuSkin.ITEM_INDEX_ANCHOR_X;
+                     }
+
+                     g.drawString("" + (cmdIndex + 1), itemOffset,
+                                 y, Graphics.TOP | ScreenSkin.TEXT_ORIENT);
                 }
                 
                 g.setFont(MenuSkin.FONT_ITEM);                
                 g.setColor((selI == cmdIndex) ? MenuSkin.COLOR_ITEM_SEL :
                            MenuSkin.COLOR_ITEM);
-                 
+
+                if (ScreenSkin.RL_DIRECTION) {
+                         itemOffset = MenuSkin.WIDTH - MenuSkin.ITEM_ANCHOR_X;
+                     } else {
+                         itemOffset = MenuSkin.ITEM_ANCHOR_X;
+                     }
                 if (arrow != null) {
-                    g.drawImage(arrow, MenuSkin.ITEM_ANCHOR_X, y + 2,
-                                Graphics.TOP | Graphics.LEFT);
+                    g.drawImage(arrow, itemOffset, y + 2,
+                                Graphics.TOP | ScreenSkin.TEXT_ORIENT);
                     arrow = null;
                 }
+                if (ScreenSkin.RL_DIRECTION) {
+                         itemOffset = MenuSkin.WIDTH - MenuSkin.ITEM_ANCHOR_X - x;                                                     
+                     } else {
+                         itemOffset = MenuSkin.ITEM_ANCHOR_X;
+                     }
                 g.drawString(menuCmds[cmdIndex].getLabel(),
-                             MenuSkin.ITEM_ANCHOR_X + x,
-                             y, Graphics.TOP | Graphics.LEFT);
+                             itemOffset,
+                             y, Graphics.TOP | ScreenSkin.TEXT_ORIENT);
                             
                 x = 0;
                 y += MenuSkin.ITEM_HEIGHT;                 

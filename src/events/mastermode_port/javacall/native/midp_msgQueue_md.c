@@ -24,12 +24,18 @@
  * information or have any questions.
  */
 
+#include <kni.h>
+
 #include <midp_logging.h>
 #include <midp_mastermode_port.h>
 
 #include <javacall_events.h>
 #include <midp_jc_event_defs.h>
 #include <midpUtilKni.h>
+
+#if !ENABLE_CDC
+#include <suspend_resume.h>
+#endif
 
 #ifdef ENABLE_JSR_75
 extern void notifyDisksChanged();
@@ -39,6 +45,10 @@ extern void notifyDisksChanged();
 /* define needed signal constants from carddevice.h */ 
 #include <carddevice.h>
 #endif /* ENABLE_JSR_177 */
+
+#ifdef ENABLE_JSR_234
+#include <javanotify_multimedia_advanced.h>
+#endif /*ENABLE_JSR_234*/
 
 /*
  * This function is called by the VM periodically. It has to check if
@@ -61,7 +71,8 @@ void checkForSystemSignal(MidpReentryData* pNewSignal,
     javacall_bool res;
     int outEventLen;
     
-    res = javacall_event_receive ((long)timeout, binaryBuffer, BINARY_BUFFER_MAX_LEN, &outEventLen);
+    res = javacall_event_receive((long)timeout, binaryBuffer,
+                                 BINARY_BUFFER_MAX_LEN, &outEventLen);
 
     if (!JAVACALL_SUCCEEDED(res)) {
         return;
@@ -93,14 +104,16 @@ void checkForSystemSignal(MidpReentryData* pNewSignal,
         pNewSignal->waitingFor = AMS_SIGNAL;
         pNewMidpEvent->type    = SHUTDOWN_EVENT;
         break;
-    case MIDP_JC_EVENT_PAUSE:
-        pNewSignal->waitingFor = AMS_SIGNAL;
-        pNewMidpEvent->type    = PAUSE_ALL_EVENT;
+#if !ENABLE_CDC
+     case MIDP_JC_EVENT_PAUSE: 
+        /*
+         * IMPL_NOTE: if VM is running, the following call will send
+         * PAUSE_ALL_EVENT message to AMS; otherwise, the resources
+         * will be suspended in the context of the caller.
+         */
+        midp_suspend();
         break;
-    case MIDP_JC_EVENT_RESUME:
-        pNewSignal->waitingFor = AMS_SIGNAL;
-        pNewMidpEvent->type    = ACTIVATE_ALL_EVENT;
-        break;
+#endif	
     case MIDP_JC_EVENT_PUSH:
         pNewSignal->waitingFor = PUSH_ALARM_SIGNAL;
         pNewSignal->descriptor = event->data.pushEvent.alarmHandle;
@@ -155,8 +168,10 @@ void checkForSystemSignal(MidpReentryData* pNewSignal,
 
         if( JAVACALL_EVENT_MEDIA_SNAPSHOT_FINISHED == event->data.multimediaEvent.mediaType ) {
             pNewSignal->waitingFor = MEDIA_SNAPSHOT_SIGNAL;
-//            pNewSignal->descriptor = (((event->data.multimediaEvent.isolateId & 0xFFFF) << 16) 
-//                                     | (event->data.multimediaEvent.playerId & 0xFFFF));
+            /*
+            pNewSignal->descriptor = (((event->data.multimediaEvent.isolateId & 0xFFFF) << 16)
+                                     | (event->data.multimediaEvent.playerId & 0xFFFF));
+            */
 
             REPORT_CALL_TRACE1(LC_NONE, "[media event] JAVACALL_EVENT_MEDIA_SNAPSHOT_FINISHED %d\n",
                                pNewSignal->descriptor);
@@ -196,6 +211,20 @@ void checkForSystemSignal(MidpReentryData* pNewSignal,
         pNewMidpEvent->MM_ISOLATE   = event->data.multimediaEvent.appId;
         pNewMidpEvent->MM_EVT_TYPE  = event->data.multimediaEvent.mediaType;
 
+        switch( event->data.multimediaEvent.mediaType )
+        {
+        case JAVACALL_EVENT_AMMS_SNAP_SHOOTING_STOPPED:
+        case JAVACALL_EVENT_AMMS_SNAP_STORAGE_ERROR:
+            {
+                int len = 0;
+                javacall_utf16_string str = (jchar*)event->data.multimediaEvent.data;
+                while( str[len] != 0 ) len++;
+                pcsl_string_convert_from_utf16( str, len, &pNewMidpEvent->MM_STRING );
+                pNewMidpEvent->MM_DATA = 0;
+            }
+            break;
+        }
+
         REPORT_CALL_TRACE4(LC_NONE, "[jsr234 event] External event recevied %d %d %d %d\n",
             pNewMidpEvent->type, 
             event->data.multimediaEvent.appId, 
@@ -233,6 +262,17 @@ void checkForSystemSignal(MidpReentryData* pNewSignal,
         pNewMidpEvent->type    = CHAPI_EVENT;
         break;
 #endif /* ENABLE_JSR_211 */
+
+#ifdef ENABLE_JSR_290
+    case JSR290_JC_EVENT_FLUID_LOAD_FINISHED:
+        pNewSignal->waitingFor = JSR290_LOAD_FINISH_SIGNAL;
+        pNewSignal->descriptor = event->data.jsr290FluidEvent.fluid_image;
+        break;
+    case JSR290_JC_EVENT_FLUID_INVALIDATE:
+        pNewSignal->waitingFor = JSR290_INVALIDATE_SIGNAL;
+        pNewSignal->descriptor = event->data.jsr290FluidEvent.fluid_image;
+        break;
+#endif /* ENABLE_JSR_290 */
 
 #ifdef ENABLE_JSR_177
     case MIDP_JC_EVENT_CARDDEVICE:

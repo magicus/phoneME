@@ -26,9 +26,10 @@
 
 package com.sun.midp.security;
 
+import java.util.Hashtable;
 import com.sun.midp.i18n.Resource;
 import com.sun.midp.i18n.ResourceConstants;
-
+import java.io.IOException;
 /**
  * This class is a standard list of permissions that
  * a suite can do and is used by all internal security
@@ -83,135 +84,6 @@ public final class Permissions {
     public static final int MIDP = 0;
     /** com.sun.midp.ams permission ID. */
     public static final int AMS = 1;
-    /** javax.microedition.io.Connector.http permission ID. */
-    public static final int HTTP = 2;
-    /** javax.microedition.io.Connector.socket permission ID. */
-    public static final int TCP = 3;
-    /** javax.microedition.io.Connector.https permission ID. */
-    public static final int HTTPS = 4;
-    /** javax.microedition.io.Connector.ssl permission ID. */
-    public static final int SSL = 5;
-    /** javax.microedition.io.Connector.serversocket permission ID. */
-    public static final int TCP_SERVER = 6;
-    /** javax.microedition.io.Connector.datagram permission ID. */
-    public static final int UDP = 7;
-    /** javax.microedition.io.Connector.datagramreceiver permission ID. */
-    public static final int UDP_SERVER = 8;
-    /** javax.microedition.io.Connector.comm permission ID. */
-    public static final int COMM = 9;
-    /** javax.microedition.io.PushRegistry permission ID. */
-    public static final int PUSH = 10;
-    /** javax.microedition.io.Connector.sms permission ID. */
-    public static final int SMS_SERVER = 11;
-    /** javax.microedition.io.Connector.cbs permission ID. */
-    public static final int CBS_SERVER = 12;
-    /** javax.wireless.messaging.sms.send permission ID. */
-    public static final int SMS_SEND = 13;
-    /** javax.wireless.messaging.sms.receive permission ID. */
-    public static final int SMS_RECEIVE = 14;
-    /** javax.wireless.messaging.scbs.receive permission ID. */
-    public static final int CBS_RECEIVE = 15;
-    /** javax.microedition.media.RecordControl permission ID. */
-    public static final int MM_RECORD = 16;
-    /** javax.microedition.media.VideoControl.getSnapshot permission ID. */
-    public static final int MM_IMAGE_CAPTURING = 17;
-    /** javax.microedition.io.Connector.mms permission ID. */
-    public static final int MMS_SERVER = 18;
-    /** javax.wireless.messaging.mms.send permission ID. */
-    public static final int MMS_SEND = 19;
-    /** javax.wireless.messaging.mms.receive permission ID. */
-    public static final int MMS_RECEIVE = 20;
-    /** javax.microedition.apdu.aid permission ID. */
-    public static final int APDU_CONNECTION = 21;
-    /** javax.microedition.jcrmi permission ID. */
-    public static final int JCRMI_CONNECTION = 22;
-    /**
-     * javax.microedition.securityservice.CMSSignatureService
-     * permission ID.
-     */
-    public static final int SIGN_SERVICE = 23;
-    /** javax.microedition.apdu.sat permission ID. */
-    public static final int APDU_CHANNEL0 = 24;
-
-    /** javax.microedition.content.ContentHandler permission ID. */
-    public static final int CHAPI_REGISTER = 25;
-
-    /** javax.microedition.pim.ContactList.read ID. */
-    public static final int PIM_CONTACT_READ = 26;
-    /** javax.microedition.pim.ContactList.write ID. */
-    public static final int PIM_CONTACT_WRITE = 27;
-    /** javax.microedition.pim.EventList.read ID. */
-    public static final int PIM_EVENT_READ = 28;
-    /** javax.microedition.pim.EventList.write ID. */
-    public static final int PIM_EVENT_WRITE = 29;
-    /** javax.microedition.pim.ToDoList.read ID. */
-    public static final int PIM_TODO_READ = 30;
-    /** javax.microedition.pim.ToDoList.write ID. */
-    public static final int PIM_TODO_WRITE = 31;
-    /** javax.microedition.io.Connector.file.read ID. */
-    public static final int FILE_CONNECTION_READ = 32;
-    /** javax.microedition.io.Connector.file.write ID. */
-    public static final int FILE_CONNECTION_WRITE = 33;
-
-    /** javax.microedition.io.Connector.obex.client ID. */
-    public static final int OBEX_CLIENT = 34;
-    /** javax.microedition.io.Connector.obex.server ID. */
-    public static final int OBEX_SERVER = 35;
-    /** javax.microedition.io.Connector.obex.client.tcp ID. */
-    public static final int TCP_OBEX_CLIENT = 36;
-    /** javax.microedition.io.Connector.obex.server.tcp ID. */
-    public static final int TCP_OBEX_SERVER = 37;
-
-    /** javax.microedition.io.Connector.bluetooth.client ID. */
-    public static final int BLUETOOTH_CLIENT = 38;
-    /** javax.microedition.io.Connector.bluetooth.server ID. */
-    public static final int BLUETOOTH_SERVER = 39;
-
-    /** javax.microedition.location.Location ID. */
-    public static final int LOCATION = 40;
-    /** javax.microedition.location.Orientation ID. */
-    public static final int ORIENTATION = 41;
-    /** javax.microedition.location.ProximityListener ID. */
-    public static final int LOCATION_PROXIMITY = 42;
-
-    /** javax.microedition.location.LandmarkStore.read ID. */
-    public static final int LANDMARK_READ = 43;
-    /** javax.microedition.location.LandmarkStore.write ID. */
-    public static final int LANDMARK_WRITE = 44;
-    /** javax.microedition.location.LandmarkStore.category ID. */
-    public static final int LANDMARK_CATEGORY = 45;
-    /** javax.microedition.location.LandmarkStore.management ID. */
-    public static final int LANDMARK_MANAGE = 46;
-    /** javax.microedition.io.Connector.sip permission ID. */
-    public static final int SIP = 47;
-    /** javax.microedition.io.Connector.sips permission ID. */
-    public static final int SIPS = 48;
-    /** javax.microedition.payment.process permission ID. */
-    public static final int PAYMENT = 49;
-
-    /** javax.microedition.amms.control.camera.enableShutterFeedback perm. ID */
-    public static final int AMMS_CAMERA_SHUTTERFEEDBACK = 50;
-    /** javax.microedition.amms.control.tuner.setPreset permission ID. */
-    public static final int AMMS_TUNER_SETPRESET = 51;
-    /** javax.microedition.io.Connector.sensor permission ID. */
-    public static final int SENSOR = 52;
-    /** javax.microedition.io.Connector.PrivateSensor permission ID. */
-    public static final int PRIVATE_SENSOR = 53;
-    /** javax.microedition.io.Connector.ProtectedSensor permission ID. */
-    public static final int PROTECTED_SENSOR = 54;
-
-    /** javax.microedition.contactless.DiscoveryManager ID. */
-    public static final int CONTACTLESS_DISCOVERY = 55;
-    /** javax.microedition.contactless.ndef.NDEFTagConnection.write ID. */
-    public static final int CONTACTLESS_NDEF_WRITE = 56;
-    /** javax.microedition.io.Connector.ndef ID. */
-    public static final int CONTACTLESS_NDEF = 57;
-    /** javax.microedition.io.Connector.rf ID. */
-    public static final int CONTACTLESS_RF = 58;
-    /** javax.microedition.io.Connector.sc ID. */
-    public static final int CONTACTLESS_SC = 59;
-    /** javax.microedition.io.Connector.vtag ID. */
-    public static final int CONTACTLESS_VTAG = 60;
 
     /** Never allow the permission. */
     public static final byte NEVER = 0;
@@ -239,162 +111,34 @@ public final class Permissions {
 
     /** Third Party Never permission group. */
     static final PermissionGroup NEVER_GROUP =
-        new PermissionGroup(0, 0, 0, 0, 0, 0, NEVER, NEVER, NEVER, NEVER);
+        new PermissionGroup("", null, null, null, null, null);
 
-    /** Third Party Allowed permission group. */
-    static final PermissionGroup ALLOWED_GROUP =
-        new PermissionGroup(0, 0, 0, 0, 0, 0, ALLOW, ALLOW, ALLOW, ALLOW);
-
-    /** Idenitified Third Party Allowed permission group. */
-    static final PermissionGroup ID_ALLOWED_GROUP =
-        new PermissionGroup(0, 0, 0, 0, 0, 0, ALLOW, ALLOW, NEVER, NEVER);
-
-    /** Net Access permission group. */
-    static final PermissionGroup NET_ACCESS_GROUP = new PermissionGroup(
-        ResourceConstants.AMS_MGR_NET_SETTINGS,
-        ResourceConstants.AMS_MGR_NET_SETTINGS_QUE,
-        ResourceConstants.AMS_MGR_NET_SETTINGS_QUE_DONT,
-        ResourceConstants.PERMISSION_NET_ACCESS_DIALOG_TITLE,
-        ResourceConstants.PERMISSION_NET_ACCESS_QUE, 0,
-        BLANKET, SESSION, SESSION, ONESHOT);
-
-    /** Read Message permission group. */
-    static final PermissionGroup READ_MESSAGE_GROUP = new PermissionGroup(
-        0, 0, 0,
-        ResourceConstants.PERMISSION_RECEIVE_MESSAGE_DIALOG_TITLE,
-        ResourceConstants.PERMISSION_RECEIVE_MESSAGE_QUE, 0,
-        BLANKET, BLANKET, BLANKET, BLANKET);
-
-    /**
-     * Send Message permission group. Send was broken out because send
-     * is treated as one shot even though it is in the messaging group.
-     */
-    static final PermissionGroup SEND_MESSAGE_GROUP = new PermissionGroup(
-        ResourceConstants.AMS_MGR_MSG_SETTINGS,
-        ResourceConstants.AMS_MGR_MSG_SETTINGS_QUE,
-        ResourceConstants.AMS_MGR_MSG_SETTINGS_QUE_DONT,
-        ResourceConstants.PERMISSION_SEND_MESSAGE_DIALOG_TITLE,
-        ResourceConstants.PERMISSION_SEND_MESSAGE_QUE, 0,
-        ONESHOT, ONESHOT, ONESHOT, ONESHOT);
-
-    /** Application Auto Invocation permission group. */
-    static final PermissionGroup AUTO_INVOCATION_GROUP = new PermissionGroup(
-        ResourceConstants.AMS_MGR_AUTO_START_SETTINGS,
-        ResourceConstants.AMS_MGR_AUTO_START_SETTINGS_QUE,
-        ResourceConstants.AMS_MGR_AUTO_START_SETTINGS_QUE_DONT,
-        ResourceConstants.PERMISSION_AUTO_START_DIALOG_TITLE,
-        ResourceConstants.PERMISSION_AUTO_START_QUE, 0,
-        BLANKET, ONESHOT, SESSION, ONESHOT);
-
-    /** Local Connectivity permission group. */
-    static final PermissionGroup LOCAL_CONN_GROUP = new PermissionGroup(
-        ResourceConstants.AMS_MGR_LOCAL_CONN_SETTINGS,
-        ResourceConstants.AMS_MGR_LOCAL_CONN_SETTINGS_QUE,
-        ResourceConstants.AMS_MGR_LOCAL_CONN_SETTINGS_QUE_DONT,
-        ResourceConstants.PERMISSION_LOCAL_CONN_DIALOG_TITLE,
-        ResourceConstants.PERMISSION_LOCAL_CONN_QUE, 0,
-        BLANKET, SESSION, BLANKET, ONESHOT);
-
-    /** Multimedia Recording permission group. */
-    static final PermissionGroup MULTIMEDIA_GROUP = new PermissionGroup(
-        ResourceConstants.AMS_MGR_REC_SETTINGS,
-        ResourceConstants.AMS_MGR_REC_SETTINGS_QUE,
-        ResourceConstants.AMS_MGR_REC_SETTINGS_QUE_DONT,
-        ResourceConstants.PERMISSION_MULTIMEDIA_DIALOG_TITLE,
-        ResourceConstants.PERMISSION_MULTIMEDIA_QUE, 0,
-        BLANKET, SESSION, SESSION, ONESHOT);
-
-    /** Read User Data permission group. */
-    static final PermissionGroup READ_USER_DATA_GROUP = new PermissionGroup(
-        ResourceConstants.AMS_MGR_READ_USER_DATA_SETTINGS,
-        ResourceConstants.AMS_MGR_READ_USER_DATA_SETTINGS_QUE,
-        ResourceConstants.AMS_MGR_READ_USER_DATA_SETTINGS_QUE_DONT,
-        ResourceConstants.PERMISSION_READ_USER_DATA_TITLE,
-        ResourceConstants.PERMISSION_READ_USER_DATA_QUE, 0,
-        BLANKET, ONESHOT, ONESHOT, ONESHOT);
-
-    /** Write User Data permission group. */
-    static final PermissionGroup WRITE_USER_DATA_GROUP = new PermissionGroup(
-        ResourceConstants.AMS_MGR_WRITE_USER_DATA_SETTINGS,
-        ResourceConstants.AMS_MGR_WRITE_USER_DATA_SETTINGS_QUE,
-        ResourceConstants.AMS_MGR_WRITE_USER_DATA_SETTINGS_QUE_DONT,
-        ResourceConstants.PERMISSION_WRITE_USER_DATA_TITLE,
-        ResourceConstants.PERMISSION_WRITE_USER_DATA_QUE,
-        ResourceConstants.PERMISSION_WRITE_USER_DATA_ONESHOT_QUE,
-        BLANKET, ONESHOT, ONESHOT, ONESHOT);
-
-    /** Location permission group. */
-    static final PermissionGroup LOCATION_GROUP = new PermissionGroup(
-        ResourceConstants.AMS_MGR_LOC_SETTINGS,
-        ResourceConstants.AMS_MGR_LOC_SETTINGS_QUE,
-        ResourceConstants.AMS_MGR_LOC_SETTINGS_QUE_DONT,
-        ResourceConstants.PERMISSION_LOCATION_TITLE,
-        ResourceConstants.PERMISSION_LOCATION_QUE, 0,
-        BLANKET, SESSION, SESSION, ONESHOT);
-
-    /** Landmark store permission group. */
-    static final PermissionGroup LANDMARK_GROUP = new PermissionGroup(
-        ResourceConstants.AMS_MGR_LANDMARK_SETTINGS,
-        ResourceConstants.AMS_MGR_LANDMARK_SETTINGS_QUE,
-        ResourceConstants.AMS_MGR_LANDMARK_SETTINGS_QUE_DONT,
-        ResourceConstants.PERMISSION_LANDMARK_TITLE, 0,
-        ResourceConstants.PERMISSION_LANDMARK_QUE,
-        BLANKET, SESSION, SESSION, ONESHOT);
-
-    /** Smart card permission group. */
-    static final PermissionGroup SMART_CARD_GROUP = new PermissionGroup(
-        ResourceConstants.AMS_MGR_SMART_CARD_SETTINGS,
-        ResourceConstants.AMS_MGR_SMART_CARD_SETTINGS_QUE,
-        ResourceConstants.AMS_MGR_SMART_CARD_SETTINGS_QUE_DONT,
-        ResourceConstants.PERMISSION_SMART_CARD_TITLE, 0,
-        ResourceConstants.PERMISSION_SMART_CARD_QUE,
-        BLANKET, SESSION, NEVER, NEVER);
-
-    /** Authentication (identification) permission group. */
-    static final PermissionGroup AUTHENTICATION_GROUP = new PermissionGroup(
-        ResourceConstants.AMS_MGR_AUTHENTICATION_SETTINGS,
-        ResourceConstants.AMS_MGR_AUTHENTICATION_SETTINGS_QUE,
-        ResourceConstants.AMS_MGR_AUTHENTICATION_SETTINGS_QUE_DONT,
-        ResourceConstants.PERMISSION_SIGNATURE_DIALOG_TITLE,
-        ResourceConstants.PERMISSION_SIGNATURE_QUE, 0,
-        BLANKET, SESSION, NEVER, NEVER);
-
-    /** Call Control (restricted network connection) permission group. */
-    static final PermissionGroup CALL_CONTROL_GROUP = new PermissionGroup(
-        ResourceConstants.AMS_MGR_CALL_CONTROL_SETTINGS,
-        ResourceConstants.AMS_MGR_CALL_CONTROL_SETTINGS_QUE,
-        ResourceConstants.AMS_MGR_CALL_CONTROL_SETTINGS_QUE_DONT,
-        ResourceConstants.PERMISSION_CALL_CONTROL_TITLE,
-        ResourceConstants.PERMISSION_CALL_CONTROL_QUE, 0,
-        BLANKET, ONESHOT, ONESHOT, ONESHOT);
-
-    /** Sensor permission group. */
-    static final PermissionGroup SENSOR_GROUP = new PermissionGroup(
-        ResourceConstants.AMS_MGR_SENSOR_SETTINGS,
-        ResourceConstants.AMS_MGR_SENSOR_SETTINGS_QUE,
-        ResourceConstants.AMS_MGR_SENSOR_SETTINGS_QUE_DONT,
-        ResourceConstants.PERMISSION_SENSOR_TITLE,
-        ResourceConstants.PERMISSION_SENSOR_QUE, 0,
-        BLANKET, ONESHOT, ONESHOT, ONESHOT);
-
-    /** Contactless permission group. */
-    static final PermissionGroup CONTACTLESS_GROUP = new PermissionGroup(
-        ResourceConstants.AMS_MGR_CONTACTLESS_SETTINGS,
-        ResourceConstants.AMS_MGR_CONTACTLESS_SETTINGS_QUE,
-        ResourceConstants.AMS_MGR_CONTACTLESS_SETTINGS_QUE_DONT,
-        ResourceConstants.PERMISSION_CONTACTLESS_TITLE,
-        ResourceConstants.PERMISSION_CONTACTLESS_QUE, 0,
-        BLANKET, ONESHOT, ONESHOT, ONESHOT);
-
-
-    /** Permission specifications. */
-    static final PermissionSpec[] permissionSpecs =
-        PermissionsTable.permissionSpecs;
+    /** Permission to group map table. */
+    static PermissionSpec[]  permissionSpecs = null;
 
     /** Number of permissions. */
-    public static final int NUMBER_OF_PERMISSIONS =
-        PermissionsTable.NUMBER_OF_PERMISSIONS;
+    public static int NUMBER_OF_PERMISSIONS;
 
+    /* list of domains */
+    private static DomainPolicy []    domainsAll=null;
+
+    /* The domain name for unsigned midlets */
+    private static String unsignedDomain=null;
+
+    /* Permissions index lookup table */
+    private static Hashtable          permissionsHash;
+
+    /* list of groups */
+    private static PermissionGroup [] groupsAll=null;
+    
+    // Internal defined groups
+    private static PermissionGroup NET_ACCESS_GROUP;
+    private static PermissionGroup SEND_MESSAGE_GROUP;
+    private static PermissionGroup READ_MESSAGE_GROUP;
+    private static PermissionGroup AUTO_INVOCATION_GROUP;
+    private static PermissionGroup READ_USER_DATA_GROUP;
+    private static PermissionGroup MULTIMEDIA_GROUP;
+    private static PermissionGroup LOCAL_CONN_GROUP;
     /**
      * Get the name of a permission.
      *
@@ -405,10 +149,9 @@ public final class Permissions {
      * @exception SecurityException if the permission is invalid
      */
     public static String getName(int permission) {
-        if (permission < 0 || permission >= permissionSpecs.length) {
+    if (permission < 0 || permission >= permissionSpecs.length) {
             throw new SecurityException(SecurityToken.STD_EX_MSG);
         }
-
         return permissionSpecs[permission].name;
     }
 
@@ -420,7 +163,7 @@ public final class Permissions {
      * @return Resource constant for the permission dialog title
      * @exception SecurityException if the permission is invalid
      */
-    public static int getTitle(int permission) {
+    public static String getTitle(int permission) {
         if (permission < 0 || permission >= permissionSpecs.length) {
             throw new SecurityException(SecurityToken.STD_EX_MSG);
         }
@@ -437,7 +180,7 @@ public final class Permissions {
      *
      * @exception SecurityException if the permission is invalid
      */
-    public static int getQuestion(int permission) {
+    public static String getQuestion(int permission) {
         if (permission < 0 || permission >= permissionSpecs.length) {
             throw new SecurityException(SecurityToken.STD_EX_MSG);
         }
@@ -454,7 +197,7 @@ public final class Permissions {
      *
      * @exception SecurityException if the permission is invalid
      */
-    public static int getOneshotQuestion(int permission) {
+    public static String getOneshotQuestion(int permission) {
         if (permission < 0 || permission >= permissionSpecs.length) {
             throw new SecurityException(SecurityToken.STD_EX_MSG);
         }
@@ -472,13 +215,13 @@ public final class Permissions {
      * @exception SecurityException if the permission is invalid
      */
     public static int getId(String name) {
-        for (int i = 0; i < permissionSpecs.length; i++) {
-            if (permissionSpecs[i].name.equals(name)) {
-                return i;
-            }
+        int index;
+        try {
+            index = ((Integer)permissionsHash.get(name)).intValue();
+            return index;
+        } catch (Exception e){
+            throw new SecurityException(SecurityToken.STD_EX_MSG);
         }
-
-        throw new SecurityException(SecurityToken.STD_EX_MSG);
     }
 
     /**
@@ -489,23 +232,22 @@ public final class Permissions {
      * @return true if a domain is trusted, false if not
      */
     public static boolean isTrusted(String domain) {
-        if (MANUFACTURER_DOMAIN_BINDING.equals(domain)) {
-            return true;
-        }
-
-        if (OPERATOR_DOMAIN_BINDING.equals(domain)) {
-            return true;
-        }
-
-        if (MAXIMUM_DOMAIN_BINDING.equals(domain)) {
-            return true;
-        }
-
-        if (IDENTIFIED_DOMAIN_BINDING.equals(domain)) {
-            return true;
-        }
+        if (domainsAll == null)
+            init();
+        for (int i1 = 0; i1 < domainsAll.length;i1++)
+            if (domainsAll[i1].getName().equals(domain))
+                return domainsAll[i1].isTrusted();
 
         return false;
+    }
+
+    /**
+     * Returns domain for unsigned midlets.
+     *
+     * @return domain name
+     */
+    public static String getUnsignedDomain() {
+        return unsignedDomain;
     }
 
     /**
@@ -518,59 +260,27 @@ public final class Permissions {
      *     for each permission supported
      */
     public static byte[][] forDomain(String name) {
+        if (domainsAll == null)
+            init();
+                
         byte[] maximums = new byte[NUMBER_OF_PERMISSIONS];
         byte[] defaults = new byte[NUMBER_OF_PERMISSIONS];
         byte[][] permissions = {maximums, defaults};
 
         if (MANUFACTURER_DOMAIN_BINDING.equals(name)) {
-            // All permissions allowed
-            for (int i = 0; i < maximums.length; i++) {
-                maximums[i] = ALLOW;
-                defaults[i] = ALLOW;
+            for (int i1 = 0; i1 < NUMBER_OF_PERMISSIONS; i1 ++) {
+                maximums[i1] = ALLOW;
+                defaults[i1] = ALLOW;
             }
-
             return permissions;
         }
 
-        if (OPERATOR_DOMAIN_BINDING.equals(name) ||
-                MAXIMUM_DOMAIN_BINDING.equals(name)) {
-            for (int i = 0; i < maximums.length; i++) {
-                maximums[i] = ALLOW;
-                defaults[i] = ALLOW;
+        for (int i1 = 0; i1 < domainsAll.length; i1++)
+            if (domainsAll[i1].getName().equals(name)) {
+                domainsAll[i1].getPermissionlevels(defaults, CUR_LEVELS);
+                domainsAll[i1].getPermissionlevels(maximums, MAX_LEVELS);
             }
-
-            // Only public permissions allowed, never internal
-            maximums[MIDP] = NEVER;
-            defaults[MIDP] = NEVER;
-            maximums[AMS] = NEVER;
-            defaults[AMS] = NEVER;
-
-            return permissions;
-        }
-
-        if (IDENTIFIED_DOMAIN_BINDING.equals(name)) {
-            for (int i = 2; i < maximums.length; i++) {
-                maximums[i] =
-                    permissionSpecs[i].group.getIdentifiedMaxiumLevel();
-                defaults[i] =
-                    permissionSpecs[i].group.getIdentifiedDefaultLevel();
-            }
-
-            return permissions;
-        }
-
-        if (UNIDENTIFIED_DOMAIN_BINDING.equals(name)) {
-            for (int i = 2; i < maximums.length; i++) {
-                maximums[i] =
-                    permissionSpecs[i].group.getUnidentifiedMaxiumLevel();
-                defaults[i] =
-                    permissionSpecs[i].group.getUnidentifiedDefaultLevel();
-            }
-
-            return permissions;
-        }
-
-        // the default domain is minimum, all permissions denied
+        
         return permissions;
     }
 
@@ -597,24 +307,8 @@ public final class Permissions {
      * @return array of permission groups
      */
     public static PermissionGroup[] getSettingGroups() {
-        PermissionGroup[] groups = new PermissionGroup[14];
+        return groupsAll;
 
-        groups[0] = NET_ACCESS_GROUP;
-        groups[1] = SEND_MESSAGE_GROUP;
-        groups[2] = AUTO_INVOCATION_GROUP;
-        groups[3] = LOCAL_CONN_GROUP;
-        groups[4] = MULTIMEDIA_GROUP;
-        groups[5] = READ_USER_DATA_GROUP;
-        groups[6] = WRITE_USER_DATA_GROUP;
-        groups[7] = LOCATION_GROUP;
-        groups[8] = LANDMARK_GROUP;
-        groups[9] = SMART_CARD_GROUP;
-        groups[10] = AUTHENTICATION_GROUP;
-        groups[11] = CALL_CONTROL_GROUP;
-        groups[12] = SENSOR_GROUP;
-        groups[13] = CONTACTLESS_GROUP;
-
-        return groups;
     }
 
     /**
@@ -672,7 +366,6 @@ public final class Permissions {
     public static void setPermissionGroup(byte[] current,
             byte pushInterruptLevel, PermissionGroup group, byte level)
             throws SecurityException {
-
         checkForMutuallyExclusiveCombination(current, pushInterruptLevel,
                                              group, level);
 
@@ -782,7 +475,7 @@ public final class Permissions {
         level = getPermissionGroupLevel(current, NET_ACCESS_GROUP);
         if (level == BLANKET_GRANTED || level == BLANKET) {
             throw new SecurityException(createMutuallyExclusiveErrorMessage(
-                ResourceConstants.AMS_MGR_INTRUPT,
+                Resource.getString(ResourceConstants.AMS_MGR_INTRUPT),
                 NET_ACCESS_GROUP.getName()));
         }
     }
@@ -842,7 +535,7 @@ public final class Permissions {
                 throw new SecurityException(
                     createMutuallyExclusiveErrorMessage(
                         NET_ACCESS_GROUP.getName(),
-                        ResourceConstants.AMS_MGR_INTRUPT));
+                        Resource.getString(ResourceConstants.AMS_MGR_INTRUPT)));
             }
 
             level = getPermissionGroupLevel(current, AUTO_INVOCATION_GROUP);
@@ -954,14 +647,131 @@ public final class Permissions {
      * @return Translated error message with both group names in it
      */
     private static String createMutuallyExclusiveErrorMessage(
-            int nameId, int otherNameId) {
-        String[] values = {Resource.getString(nameId),
-                           Resource.getString(otherNameId)};
-
+            String nameId, String otherNameId) {
+        String[] values = {nameId, otherNameId};
         return Resource.getString(
             ResourceConstants.PERMISSION_MUTUALLY_EXCLUSIVE_ERROR_MESSAGE,
                 values);
     }
+
+    private static void init() {
+        try {
+            // initialization process
+            // step 1: permissions list and hashtable
+            int i1, i2;
+            String [] list;
+            String [] permList = PermissionsStrings.PERMISSION_STRINGS;
+            permissionSpecs = new PermissionSpec[permList.length+2];
+            permissionSpecs[0] = new PermissionSpec(MIDP_PERMISSION_NAME, NEVER_GROUP);
+            permissionSpecs[1] = new PermissionSpec(AMS_PERMISSION_NAME, NEVER_GROUP);
+            NUMBER_OF_PERMISSIONS = permissionSpecs.length;
+            permissionsHash = new Hashtable(NUMBER_OF_PERMISSIONS);
+            permissionsHash.put(MIDP_PERMISSION_NAME, new Integer(0));
+            permissionsHash.put(AMS_PERMISSION_NAME, new Integer(1));
+            for (i1 = 2; i1 < NUMBER_OF_PERMISSIONS; i1++) {
+                permissionsHash.put(permList[i1-2], new Integer(i1));
+                permissionSpecs[i1] = new PermissionSpec(permList[i1-2], NEVER_GROUP);
+            }
+
+            //step 2: groups list
+            list =  loadGroupList();
+            if (list == null) {
+                throw new IOException("Policy file not found");
+            }
+            groupsAll = new PermissionGroup[list.length];
+            String [] messages = new String[6];
+            for (i1 = 0; i1 < groupsAll.length; i1++) {
+                String [] tmp = getGroupMessages(list[i1]);
+                if (tmp != null) {
+                    for (i2 = 0; i2 < tmp.length; i2++)
+                        messages[i2] = replaceCRLF(tmp[i2]); 
+                } else {
+                    messages[0] = list[i1];
+                }
+                groupsAll[i1] = new PermissionGroup(list[i1], 
+                                        messages[0], messages[1],
+                                        messages[2], messages[3],
+                                        messages[4], messages[5]);
+            }
+
+            //step 3: group's permissions members
+            String [] members;
+            for (i1 = 0; i1 < groupsAll.length; i1++) {
+                members = loadGroupPermissions(groupsAll[i1].getNativeName());
+                for (i2 = 0; i2 < members.length; i2++) {
+                    Integer c = (Integer)permissionsHash.get(members[i2]);
+                    if (c == null)
+                        throw new NullPointerException(
+                            "unknown permission in policy file: "
+                                                        + members[i2]);
+                    permissionSpecs[c.intValue()] = 
+                            new PermissionSpec(members[i2], groupsAll[i1]);
+                }
+            }
+                        
+            // step 4: Domains list
+            list = loadDomainList();
+            DomainPolicy [] domains = new DomainPolicy[list.length+1]; // internal 'manufacturer' domain always exist
+            domains[0] = new DomainPolicy(MANUFACTURER_DOMAIN_BINDING, true);
+            int domainsCounter = 1;
+            for (i1 = 0; i1 < list.length; i1++) {
+                String item = list[i1];
+
+                if (MANUFACTURER_DOMAIN_BINDING.startsWith(item))
+                    continue;
+
+                boolean isTrusted = true;
+                String name;
+                int pos = item.indexOf(',');
+                if (pos > 0) {
+                    name = item.substring(0,pos);
+                    if (item.charAt(pos+1) == 'u')
+                        isTrusted = false;
+                } else
+                    name = item;
+
+                domains[domainsCounter++] = new DomainPolicy(name, isTrusted);
+                if (name.startsWith("untrusted") || name.startsWith("unidentified"))
+                    unsignedDomain = name;
+            }
+            domainsAll = new DomainPolicy[domainsCounter];
+            System.arraycopy(domains, 0, domainsAll, 0, domainsCounter);
+            
+            // fill internal groups
+            Hashtable tmpList = new Hashtable(groupsAll.length);
+            for (i1 = 0; i1 < groupsAll.length; i1++)
+                tmpList.put(groupsAll[i1].getNativeName(), groupsAll[i1]);
+            NET_ACCESS_GROUP = (PermissionGroup)tmpList.get("net_access");
+            SEND_MESSAGE_GROUP = (PermissionGroup)tmpList.get("messaging");
+            READ_MESSAGE_GROUP = (PermissionGroup)tmpList.get("messaging");
+            AUTO_INVOCATION_GROUP = (PermissionGroup)tmpList.get("application_auto_invocation");
+            READ_USER_DATA_GROUP = (PermissionGroup)tmpList.get("read_user_data_access");
+            MULTIMEDIA_GROUP = (PermissionGroup)tmpList.get("multimedia_recording");
+            LOCAL_CONN_GROUP = (PermissionGroup)tmpList.get("local_connectivity");
+           
+        } catch (Throwable e) {
+              System.out.println ("Permissions init() error: " + e.toString());
+        }
+    }
+
+    private static String replaceCRLF(String value) {
+        int posCRLF, pos = 0;
+        String result = "";
+
+        while ((posCRLF = value.indexOf("\\n", pos)) != -1) {
+            result += value.substring(pos,  posCRLF) + "\n";
+            pos = posCRLF + 2;
+        }
+
+        return result + value.substring(pos);
+    }
+
+    private static native String [] loadDomainList();
+    private static native String [] loadGroupList();
+    static native String [] loadGroupPermissions(String group);
+    static native String [] getGroupMessages(String group);
+    static native byte      getMaxValue(String domain, String group);
+    static native byte      getDefaultValue(String domain, String group);
 }
 
 /** Specifies a permission name and its group. */

@@ -31,6 +31,7 @@ import com.sun.midp.pki.X509Certificate;
 import com.sun.midp.pki.BigInteger;
 import com.sun.midp.pki.DerOutputStream;
 import com.sun.midp.pki.DerValue;
+import com.sun.midp.pki.Extension;
 import com.sun.midp.pki.Utils;
 
 import com.sun.midp.log.Logging;
@@ -78,14 +79,17 @@ import java.io.IOException;
  */
 
 public class OCSPRequest {
-    // Serial number of the certificates to be checked for revocation
+    /** Serial number of the certificates to be checked for revocation */
     private SerialNumber serialNumber;
 
-    // Issuer's certificate (for computing certId hash values)
+    /** Issuer's certificate (for computing certId hash values) */
     private X509Certificate issuerCert;
 
-    // CertId of the certificate to be checked
+    /** CertId of the certificate to be checked */
     private CertId certId = null;
+
+    /** Extensions of this request (currently only nonce is supported) */
+    private final Extension extensions[];
 
     /**
      * Constructs an OCSPRequest. This constructor is used
@@ -93,13 +97,17 @@ public class OCSPRequest {
      *
      * @param userCert certificate to check
      * @param issuerCert certificate of the userCert's issuer
+     * @param requestExtensions array of request extensions (currently only
+     *                          nonce is supported); can be NULL
      */
-    OCSPRequest(X509Certificate userCert, X509Certificate issuerCert) {
+    OCSPRequest(X509Certificate userCert, X509Certificate issuerCert,
+                final Extension[] requestExtensions) {
         if (issuerCert == null) {
             throw new IllegalArgumentException("Null IssuerCertificate");
         }
         
         this.issuerCert = issuerCert;
+        extensions = requestExtensions;
 
         byte[] sn = userCert.getRawSerialNumber();
         if (sn != null) {
@@ -145,8 +153,23 @@ public class OCSPRequest {
         singleRequest.encode(derSingleReqList);
         tmp.write(DerValue.tag_Sequence, derSingleReqList);
 
-        // No extensions supported
         DerOutputStream tbsRequest = new DerOutputStream();
+
+        // Encode request extensions (if any)
+        if (extensions != null) {
+            DerOutputStream tmp1 = new DerOutputStream();
+            for (int i = 0; i < extensions.length; i++) {
+                extensions[i].encode(tmp1);
+            }
+            // write context tag [2], EXPLICIT, constructed
+            tmp.write(new byte[] {
+                    DerValue.createTag(DerValue.TAG_CONTEXT, true, (byte)2),
+                    (byte)(tmp1.toByteArray().length + 2)
+                }
+            );
+            tmp.write(DerValue.tag_Sequence, tmp1);
+        }
+
         tbsRequest.write(DerValue.tag_Sequence, tmp);
 
         // OCSPRequest without the signature

@@ -338,7 +338,7 @@ public class AutoTesterMulti extends AutoTesterBase
                         // force an overwrite and remove the RMS data
                         suiteId = installer.installJad(url,
                             Constants.INTERNAL_STORAGE_ID, true,
-                                true, installListener);
+                                true, null);
                     }
                     return suiteId;
 

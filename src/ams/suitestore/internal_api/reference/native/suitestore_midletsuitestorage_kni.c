@@ -913,7 +913,8 @@ KNIDECL(com_sun_midp_midletsuite_SuiteSettings_save0) {
         }
 
         status = write_settings(&pszError, suiteId, enabled, pushInterrupt,
-                                pushOptions, pPermissions, permissionsLen);
+                                pushOptions, pPermissions, permissionsLen,
+                                NULL);
         if (status != ALL_OK) {
             if (pszError != NULL) {
                 KNI_ThrowNew(midpIOException, pszError);
@@ -1746,7 +1747,10 @@ KNIDECL(com_sun_midp_midletsuite_MIDletSuiteStorage_loadCachedIcon0) {
 
     KNI_EndHandlesAndReturnObject(iconBytesArray);
 #else
-    return NULL;
+    KNI_StartHandles(1);
+    KNI_DeclareHandle(tempHandle);
+    KNI_ReleaseHandle(tempHandle);
+    KNI_EndHandlesAndReturnObject(tempHandle);
 #endif
 }
 

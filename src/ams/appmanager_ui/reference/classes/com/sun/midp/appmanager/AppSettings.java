@@ -82,6 +82,8 @@ public class AppSettings extends Form
     private byte[] maxLevels;
     /** Holds the updated permissions. */
     private byte[] curLevels;
+    /** Holds the PUSH permission index */
+	private int PUSH_ID;
     /** Holds the updated push interrupt level. */
     private byte pushInterruptSetting;
     /** Holds the updated push options. */
@@ -134,7 +136,7 @@ public class AppSettings extends Form
 
         this.display = display;
         this.nextScreen = nextScreen;
-
+		PUSH_ID = Permissions.getId("javax.microedition.io.PushRegistry");
         displayApplicationSettings(suiteId);
     }
 
@@ -250,10 +252,10 @@ public class AppSettings extends Form
                 Resource.getString(ResourceConstants.AMS_MGR_PREFERENCES),
                     true);
 
-            if (maxLevels[Permissions.PUSH] == Permissions.ALLOW) {
+            if (maxLevels[PUSH_ID] == Permissions.ALLOW) {
                 maxLevel = Permissions.BLANKET;
             } else {
-                maxLevel = maxLevels[Permissions.PUSH];
+                maxLevel = maxLevels[PUSH_ID];
             }
 
             if ((pushOptions &
@@ -265,10 +267,10 @@ public class AppSettings extends Form
 
             interruptChoice =
                 newSettingChoice(settingsPopup,
-                    ResourceConstants.AMS_MGR_INTRUPT,
+                    Resource.getString(ResourceConstants.AMS_MGR_INTRUPT),
                     INTERRUPT_CHOICE_ID,
-                    ResourceConstants.AMS_MGR_INTRUPT_QUE,
-                    ResourceConstants.AMS_MGR_INTRUPT_QUE_DONT,
+                    Resource.getString(ResourceConstants.AMS_MGR_INTRUPT_QUE),
+                    Resource.getString(ResourceConstants.AMS_MGR_INTRUPT_QUE_DONT),
                     maxLevel,
                     interruptSetting, suiteDisplayName,
                     ResourceConstants.AMS_MGR_SETTINGS_PUSH_OPT_ANSWER,
@@ -351,14 +353,14 @@ public class AppSettings extends Form
      *           or null if setting cannot be modified
      */
     private RadioButtonSet newSettingChoice(RadioButtonSet popup,
-            int groupName, int groupID, int question, int denyAnswer,
+            String groupName, int groupID, String question, String denyAnswer,
             int maxLevel, int level, String name, int extraAnswer,
             int extraAnswerId) {
         String[] values = {name};
         int initValue;
         RadioButtonSet choice;
 
-        if (question <= 0 ||
+        if (question == null ||
             maxLevel == Permissions.ALLOW || maxLevel == Permissions.NEVER ||
             level == Permissions.ALLOW || level == Permissions.NEVER) {
 
@@ -368,7 +370,7 @@ public class AppSettings extends Form
         choice = new RadioButtonSet(Resource.getString(question, values),
                                     false);
 
-        settingsPopup.append(Resource.getString(groupName), groupID);
+        settingsPopup.append(groupName, groupID);
 
         switch (maxLevel) {
         case Permissions.BLANKET:
@@ -394,14 +396,14 @@ public class AppSettings extends Form
                 choice.append(Resource.getString(extraAnswer), extraAnswerId);
             }
 
-            choice.append(Resource.getString(denyAnswer),
+            choice.append(denyAnswer,
                           Permissions.BLANKET_DENIED);
             break;
         }
 
         if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
             Logging.report(Logging.INFORMATION, LogChannels.LC_AMS,
-                "AppSettings: " + Resource.getString(groupName) +
+                "AppSettings: " + groupName +
                 " level = " + level);
         }
 
@@ -447,10 +449,10 @@ public class AppSettings extends Form
                 byte maxInterruptSetting;
                 int interruptSetting = interruptChoice.getSelectedButton();
 
-                if (maxLevels[Permissions.PUSH] == Permissions.ALLOW) {
+                if (maxLevels[PUSH_ID] == Permissions.ALLOW) {
                     maxInterruptSetting = Permissions.BLANKET_GRANTED;
                 } else {
-                    maxInterruptSetting = maxLevels[Permissions.PUSH];
+                    maxInterruptSetting = maxLevels[PUSH_ID];
                 }
 
                 if (interruptSetting == PUSH_OPTION_1_ID) {

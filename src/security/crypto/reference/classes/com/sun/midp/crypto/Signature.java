@@ -1,7 +1,7 @@
 /*
  *   
  *
- * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
@@ -98,7 +98,9 @@ public abstract class Signature {
         try {
             Class sigClass;
 
-            if (algorithm.equals("MD5WITHRSA")) {
+            if (algorithm.equals("MD2WITHRSA")) {
+                sigClass = Class.forName("com.sun.midp.crypto.RsaMd2Sig");
+            } else if (algorithm.equals("MD5WITHRSA")) {
                 sigClass = Class.forName("com.sun.midp.crypto.RsaMd5Sig");
             } else if (algorithm.equals("SHA1WITHRSA")) {
                 sigClass = Class.forName("com.sun.midp.crypto.RsaShaSig");

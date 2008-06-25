@@ -1,7 +1,7 @@
 /*
  *   
  *
- * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
@@ -34,7 +34,7 @@
  * as possible, since Java threads are waiting to be run.
  */
 extern "C"
-void midp_slavemode_port_schedule_vm_timeslice(void) {
+void midp_slavemode_schedule_vm_timeslice(void) {
     qteapp_get_mscreen()->setNextVMTimeSlice(0);
 }
 
@@ -42,7 +42,7 @@ void midp_slavemode_port_schedule_vm_timeslice(void) {
  * Runs the platform-specific event loop.
  */
 extern "C"
-void midp_slavemode_port_event_loop(void) {
+void midp_slavemode_event_loop(void) {
   qteapp_get_mscreen()->startVM();
   qteapp_get_application()->enter_loop();
   qteapp_get_mscreen()->stopVM();

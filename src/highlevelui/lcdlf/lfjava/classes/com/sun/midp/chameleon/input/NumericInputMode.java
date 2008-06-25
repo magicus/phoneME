@@ -220,12 +220,14 @@ public class NumericInputMode extends BasicInputMode {
             Logging.report(Logging.INFORMATION, LogChannels.LC_HIGHUI,
                 "getCharOptions returning:");
         }
-        for (int i = 0; i < chars.length; i++) {
-            if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
-                Logging.report(Logging.INFORMATION, LogChannels.LC_HIGHUI,
-                    chars[i] + ",");
-            }
-        }
+	if (chars != null) {
+	    for (int i = 0; i < chars.length; i++) {
+		if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
+		    Logging.report(Logging.INFORMATION, LogChannels.LC_HIGHUI,
+				   chars[i] + ",");
+		}
+	    }
+	}
         return chars;
     }
 

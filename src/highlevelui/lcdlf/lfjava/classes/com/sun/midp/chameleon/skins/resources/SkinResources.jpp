@@ -532,29 +532,25 @@ public class SkinResources {
             UpdateBarResources.load();
         }
 
-        // checkLocale();
+        checkLocale();
     }
 
     public static void checkLocale() {
         String locale = System.getProperty("microedition.locale");
 
 
-        // Should change "en-US" to any appropriate locale
-        if (locale.equals("en-US")) {
-
-            if (ScreenSkin.TEXT_ORIENT == Graphics.LEFT) {
-                ScreenSkin.TEXT_ORIENT = Graphics.RIGHT;
-            }
-
-            if (TickerSkin.DIRECTION == Graphics.LEFT) {
-                TickerSkin.DIRECTION = Graphics.RIGHT;
-            }
-
-            if (TitleSkin.TEXT_ALIGN_X == Graphics.LEFT) {
-                TitleSkin.TEXT_ALIGN_X = Graphics.RIGHT;
-            }
-
+        if (locale.equals("he-IL")) {
+            ScreenSkin.TEXT_ORIENT = Graphics.RIGHT;
+            TickerSkin.DIRECTION = Graphics.RIGHT;
+            TitleSkin.TEXT_ALIGN_X = Graphics.RIGHT;
+            ScreenSkin.RL_DIRECTION = true;
+        } else {
+            ScreenSkin.TEXT_ORIENT = Graphics.LEFT;
+            TickerSkin.DIRECTION = Graphics.LEFT;
+            TitleSkin.TEXT_ALIGN_X = Graphics.LEFT;
+            ScreenSkin.RL_DIRECTION = false;
         }
+
     }
 
     /**

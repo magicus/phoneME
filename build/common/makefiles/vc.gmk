@@ -45,7 +45,12 @@ CC		= cl
 CPP		= cl
 CC_OUTPUT	= -Fo
 
+ifeq ($(CREATE_RUNMIDLET_LIB), true)
+LD 		= lib
+else
 LD		= link
+endif
+
 LD_OUTPUT	= -out:
 LINKER_OUTPUT	= $(LD_OUTPUT)
 LIBS		+= user32.lib gdi32.lib kernel32.lib winmm.lib wsock32.lib vfw32.lib

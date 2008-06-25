@@ -1,7 +1,7 @@
 /*
  *   
  *
- * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
@@ -185,6 +185,7 @@ extern "C" {
 #define MM_ISOLATE      intParam3
 #define MM_EVT_TYPE     intParam4
 #define MM_EVT_STATUS   intParam5
+#define MM_STRING       stringParam1
 /** @} */
 
 /**

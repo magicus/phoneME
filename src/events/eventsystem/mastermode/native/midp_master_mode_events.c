@@ -244,7 +244,15 @@ void midp_check_events(JVMSPI_BlockedThreadInfo *blocked_threads,
         }
         break;
 #endif /* ENABLE_JSR_256 */
-	default:
+#ifdef ENABLE_JSR_290
+    case JSR290_LOAD_FINISH_SIGNAL:
+    case JSR290_INVALIDATE_SIGNAL:
+        midp_thread_signal_list(blocked_threads, blocked_threads_count,
+                                newSignal.waitingFor, newSignal.descriptor,
+                                newSignal.status);
+        break;
+#endif /* ENABLE_JSR_290 */
+    default:
 #ifdef ENABLE_API_EXTENSIONS
         check_extrnal_api_events(blocked_threads, blocked_threads_count, timeout) ;
 #endif /*ENABLE_API_EXTENSIONS*/

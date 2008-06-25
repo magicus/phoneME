@@ -124,6 +124,31 @@ class StringItemLFImpl extends ItemLFImpl implements StringItemLF {
     }
 
     /**
+     * Get the minimum width of this Item. 
+     * Calculate the minimum width as the width of double "W". If the calculated 
+     * width is greater than available width just return available width. 
+     *
+     * @return the minimum width
+     */
+    public int lGetMinimumWidth() {
+	int minWidth = strItem.font.charWidth('W') * 2;
+	int availableWidth = lGetAvailableWidth();
+
+	return (minWidth > availableWidth ? availableWidth : minWidth);
+    }
+
+
+    /**
+     * Get the minimum height of this Item. 
+     * Calculate the minimum height as the height of the font.
+     *
+     * @return the minimum height
+     */
+    public int lGetMinimumHeight() {
+	return strItem.font.getHeight();
+    }
+
+    /**
      * Notifies L&amps;F of a command addition in the corresponding StringItem.
      * @param cmd the newly added command
      * @param i the index of the added command in the StringItem's

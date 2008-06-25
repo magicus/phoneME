@@ -241,6 +241,7 @@ class MIDletControllerEventListener implements EventListener {
                 midletControllerEventConsumer.handleMIDletResumeRequestEvent(
                     nativeEvent.intParam1,
                     nativeEvent.stringParam1);
+                return;
 
             case EventTypes.MIDLET_RS_PAUSED_NOTIFICATION:
                 midletControllerEventConsumer.handleMIDletRsPauseNotifyEvent(
