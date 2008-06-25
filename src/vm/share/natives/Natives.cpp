@@ -684,26 +684,25 @@ void Java_java_lang_Runtime_gc(JVM_SINGLE_ARG_TRAPS) {
 /**NOTE:
   * Here we have two ways for implementing Runtime_gc():
   * 1) don't collect if we are within 500ms(configurable value) of previous call.
-  *     This way may satisfy performance of some benchmarks and real applications which make unnecessary
-  *     System.gc() calls, but it has potential risks and will fail some CLDC JDTS test cases, for example,
-  *     com.sun.cldc.cldc1_1.functional.lang.ref.WeakReferenceTest.Get05/07/08/09/11,though the cases are not very reasonable.
+  *   This way may satisfy performance of some benchmarks and real applications
+  *   which make unnecessary System.gc() calls, but it has potential risks and
+  *   will fail some CLDC JDTS test cases, for example,
+  *   com.sun.cldc.cldc1_1.functional.lang.ref.WeakReferenceTest.Get
   * 2) call ObjectHeap::full_collect() unconditionally.
-  * here we use the first way.
-  * But some project may use second way if they want to pass JDTS and don't consider gc() 's affect for performance.
 **/
-#ifdef ENABLE_FREQUENT_FORCED_GC_SUPPRESSION
-  jlong free = ObjectHeap::available_for_current_task();
-  static jlong previous_gc_time;
-  if (free < 2 * 1024 * 1024) {
-      jlong current_gc_time = Os::java_time_millis();
-      /*
-       * For performance reasons don't collect if we are
-       * called within 500ms of the previous call.
-       */
-      if ((current_gc_time - previous_gc_time) >= 500) {
-        ObjectHeap::full_collect(JVM_SINGLE_ARG_NO_CHECK_AT_BOTTOM);
-        previous_gc_time = current_gc_time;
-      }
+#if !ENABLE_FREQUENT_FORCED_GC_SUPPRESSION
+  const jlong free = ObjectHeap::available_for_current_task();
+  enum { min_free = 2 * 1024 * 1024 };  
+  if( free < min_free ) {
+    static jlong previous_gc_time;
+    const jlong current_gc_time = Os::java_time_millis();
+    // For performance reasons don't collect if we are
+    // called within 500ms of the previous call.
+    enum { min_interval = 500 };  
+    if ((current_gc_time - previous_gc_time) >= min_interval) {
+      ObjectHeap::full_collect(JVM_SINGLE_ARG_NO_CHECK_AT_BOTTOM);
+      previous_gc_time = current_gc_time;
+    }
   }
 #else
   ObjectHeap::full_collect(JVM_SINGLE_ARG_NO_CHECK_AT_BOTTOM);
