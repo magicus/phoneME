@@ -51,6 +51,16 @@ void javacall_os_dispose(){
 }
 
 
+/** 
+ * javacall_os_flush_icache is used, for example, to flush any caches used by a
+ * code segment that is deoptimized or moved during a garbage collection.
+ * flush at least [address, address + size] (may flush complete icache).
+ *
+ * @param address   Start address to flush
+ * @param size      Size to flush
+ */
+void javacall_os_flush_icache(unsigned char* address, int size) {
+}
 
 #ifdef __cplusplus
 }
