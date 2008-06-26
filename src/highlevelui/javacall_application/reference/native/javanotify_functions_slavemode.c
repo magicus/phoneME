@@ -1396,7 +1396,21 @@ void javanotify_on_amms_notification(javacall_amms_notification_type type,
     e.data.multimediaEvent.mediaType = type;
     e.data.multimediaEvent.appId = (int)((processorId >> 32) & 0xFFFF);
     e.data.multimediaEvent.playerId = (int)(processorId & 0xFFFF);
-    e.data.multimediaEvent.data = (int) data;
+
+    switch( type )
+    {
+    case JAVACALL_EVENT_AMMS_SNAP_SHOOTING_STOPPED:
+    case JAVACALL_EVENT_AMMS_SNAP_STORAGE_ERROR:
+        {
+            size_t size = sizeof( wchar_t ) * ( 1 + wcslen( (javacall_utf16_string)data ) );
+            e.data.multimediaEvent.str16 = (javacall_utf16_string)malloc( size );
+            wcscpy( e.data.multimediaEvent.str16, (javacall_utf16_string)data );
+        }
+        break;
+    default:
+        e.data.multimediaEvent.data = (int) data;
+        break;
+    }
 
     REPORT_INFO1(LC_NONE,
             "[javanotify_on_amms_notification] type=%d\n", type);
