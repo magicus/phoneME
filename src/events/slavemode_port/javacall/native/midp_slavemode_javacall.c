@@ -77,19 +77,6 @@ extern jlong midp_slavemode_time_slice(void);
 static jlong midpTimeSlice(void);
 
 /**
- * Data struct for linked list with each node encapsulating a single event
- */
-typedef struct _Event {
-    unsigned char data[100];
-    int dataLen;
-} Event;
-
-Event eventsArray[MAX_EVENTS];
-
-static int index = 0;
-static int size = 0;
-
-/**
  * Free the event result. Called when no waiting Java thread was found to
  * receive the result. This may be empty on some systems.
  *
@@ -100,86 +87,6 @@ void midpFreeEventResult(int waitingFor, void* pResult) {
     (void)waitingFor;
     (void)pResult;
 }
-
-
-/**
- * Waits for an incoming event message and copies it to user supplied
- * data buffer
- * @param waitForever indicate if the function should block forever
- * @param timeTowaitInMillisec max number of seconds to wait
- *              if waitForever is false
- * @param binaryBuffer user-supplied buffer to copy event to
- * @param binaryBufferMaxLen maximum buffer size that an event can be
- *              copied to.
- *              If an event exceeds the binaryBufferMaxLen, then the first
- *              binaryBufferMaxLen bytes of the events will be copied
- *              to user-supplied binaryBuffer, and JAVACALL_OUT_OF_MEMORY will
- *              be returned
- * @param outEventLen user-supplied pointer to variable that will hold actual
- *              event size received
- *              Platform is responsible to set this value on success to the
- *              size of the event received, or 0 on failure.
- *              If outEventLen is NULL, the event size is not returned.
- * @return <tt>JAVACALL_OK</tt> if an event successfully received,
- *         <tt>JAVACALL_FAIL</tt> or if failed or no messages are avaialable
- *         <tt>JAVACALL_OUT_OF_MEMORY</tt> If an event's size exceeds the
- *         binaryBufferMaxLen
- */
-
-javacall_result javacall_event_receive(
-                                    long            timeTowaitInMillisec,
-                            /*OUT*/ unsigned char*  binaryBuffer,
-                            /*IN*/  int             binaryBufferMaxLen,
-                            /*OUT*/ int*            outEventLen) {
-
-
-    if (size == 0) {
-        return JAVACALL_FAIL;
-    }
-
-    if (index == 0) {
-        index = MAX_EVENTS - 1;
-    }
-    else {
-        index--;
-    }
-
-    if(eventsArray[index].dataLen > binaryBufferMaxLen) {
-        /*if not enough memory, we keep the event in the list so that client code can re-invoke with bigger buffer*/
-        *outEventLen = 0;
-        return JAVACALL_OUT_OF_MEMORY;
-    }
-
-    *outEventLen = eventsArray[index].dataLen;
-    memcpy(binaryBuffer, eventsArray[index].data, *outEventLen);
-
-	size--;
-
-    return JAVACALL_OK;
-}
-
-/**
- * copies a user supplied event message to a queue of messages
- *
- * @param binaryBuffer a pointer to binary event buffer to send
- *        The platform should make a private copy of this buffer as
- *        access to it is not allowed after the function call.
- * @param binaryBufferLen size of binary event buffer to send
- * @return <tt>JAVACALL_OK</tt> if an event successfully sent,
- *         <tt>JAVACALL_FAIL</tt> or negative value if failed
- */
-javacall_result javacall_event_send(unsigned char* binaryBuffer,
-                                    int binaryBufferLen) {
-    if (size == MAX_EVENTS) {
-        return JAVACALL_FAIL;
-    }
-    eventsArray[index].dataLen = binaryBufferLen;
-    memcpy(eventsArray[index].data, binaryBuffer, binaryBufferLen);
-    index = (index + 1) % MAX_EVENTS;
-    size++;
-    return JAVACALL_OK;
-}
-
 
 /**
  * Unblock a Java thread.
