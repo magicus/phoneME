@@ -372,8 +372,9 @@ typedef struct {
         midp_event_heap_size               heap_size;
         midp_event_remove_midlet           removeMidletEvent;
 #ifdef ENABLE_JSR_256
-        jsr256_jc_event_sensor_available   jsr256SensorAvailable;
-        jsr256_jc_event_sensor_t           jsr256_jc_event_sensor;
+        jsr256_jc_event_sensor_available    jsr256SensorAvailable;
+        jsr256_jc_event_sensor_t            jsr256_jc_event_sensor;
+		jsr256_jc_event_sensor_data_ready_t jsr256_jc_event_sensor_data_ready;
 #endif /* ENABLE_JSR_256 */
 #ifdef ENABLE_JSR_290
         jsr290_jc_event_fluid              jsr290FluidEvent;
