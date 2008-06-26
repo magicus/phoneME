@@ -2442,7 +2442,7 @@ void bc_dcmp::generate(int arg) {
   switch(arg) {
     case -1:  name = "jvm_dcmpl"; break;
     case 1:   name = "jvm_dcmpg"; break;
-    default:  SHOULD_NOT_REACH_HERE(); name = "undefined"; break;
+    default:  SHOULD_NOT_REACH_HERE(); name = "jvm_dcmp_undefined"; break;
   }
   simple_c_bytecode(name, T_INT, T_DOUBLE, T_DOUBLE);
 }
@@ -2452,7 +2452,7 @@ void bc_fcmp::generate(int arg) {
   switch(arg) {
     case -1:  name = "jvm_fcmpl"; break;
     case 1:   name = "jvm_fcmpg"; break;
-    default:  SHOULD_NOT_REACH_HERE(); name = "undefined"; break;
+    default:  SHOULD_NOT_REACH_HERE(); name = "jvm_fcmp_undefined"; break;
   }
   simple_c_bytecode(name, T_INT, T_FLOAT, T_FLOAT);
 }
