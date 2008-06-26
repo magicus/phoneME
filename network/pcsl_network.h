@@ -198,6 +198,23 @@ extern "C" {
 extern int pcsl_network_init(void);
 
 /**
+ * Performs platform-specific initialization of the networking system.
+ * 
+ * @return PCSL_NET_SUCCESS upon success;\n 
+ *         PCSL_NET_IOERROR for an error
+ */
+extern int pcsl_network_init_start(void);
+
+/**
+ * Performs platform-specific initialization of the networking system.
+ * 
+ * @return PCSL_NET_SUCCESS upon success;\n 
+ *         PCSL_NET_IOERROR for an error
+ */
+extern int pcsl_network_init_finish(void);
+
+
+/**
  * Initiates lookup of the given host name to find its IP address.
  *
  * @param hostname the host name for which an ip address is needed,
