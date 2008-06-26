@@ -49,45 +49,45 @@ extern "C" {
  * Returns the public identifier of this notation. If the public identifier was 
  * not specified, this is <code>NULL</code>.
  * 
- * Note: If retValueLen is less then length of the returned string this function 
- *       has to return with JAVACALL_OUT_OF_MEMORY code and fill retValueLen 
+ * Note: If ret_value_len is less then length of the returned string this function 
+ *       has to return with JAVACALL_OUT_OF_MEMORY code and fill ret_value_len 
  *       with actual length of the returned string.
  *
  * @param handle Pointer to the object representing this notation.
- * @param retValue The public identifier of this notation, or <code>NULL</code>
- * @param retValueLen Length of the returned string
+ * @param ret_value The public identifier of this notation, or <code>NULL</code>
+ * @param ret_value_len Length of the returned string
  * 
  * @return JAVACALL_OK if all done successfuly,
  *         JAVACALL_OUT_OF_MEMORY if length of the returend string is more then 
- *                                specified in retValueLen,
+ *                                specified in ret_value_len,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
 javacall_dom_notation_get_public_id(javacall_handle handle,
-                                    /* OUT */ javacall_utf16_string retValue,
-                                    /* INOUT */ javacall_uint32* retValueLen);
+                                    /* OUT */ javacall_utf16_string ret_value,
+                                    /* INOUT */ javacall_uint32* ret_value_len);
 
 /**
  * Returns the system identifier of this notation. If the system identifier was 
  * not specified, this is <code>NULL</code>.
  * 
- * Note: If retValueLen is less then length of the returned string this function 
- *       has to return with JAVACALL_OUT_OF_MEMORY code and fill retValueLen 
+ * Note: If ret_value_len is less then length of the returned string this function 
+ *       has to return with JAVACALL_OUT_OF_MEMORY code and fill ret_value_len 
  *       with actual length of the returned string.
  *
  * @param handle Pointer to the object representing this notation.
- * @param retValue The system identifier of this notation, or <code>NULL</code>
- * @param retValueLen Length of the returned string
+ * @param ret_value The system identifier of this notation, or <code>NULL</code>
+ * @param ret_value_len Length of the returned string
  * 
  * @return JAVACALL_OK if all done successfuly,
  *         JAVACALL_OUT_OF_MEMORY if length of the returend string is more then 
- *                                specified in retValueLen,
+ *                                specified in ret_value_len,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
 javacall_dom_notation_get_system_id(javacall_handle handle,
-                                    /* OUT */ javacall_utf16_string retValue,
-                                    /* INOUT */ javacall_uint32* retValueLen);
+                                    /* OUT */ javacall_utf16_string ret_value,
+                                    /* INOUT */ javacall_uint32* ret_value_len);
 
 /** 
  * Deletes object representing this notation
