@@ -71,7 +71,7 @@
 #endif
 
 #ifdef ENABLE_JSR_179
-#include <javacall_location.h>
+#include <javanotify_location.h>
 #endif
 
 #ifdef ENABLE_JSR_234
