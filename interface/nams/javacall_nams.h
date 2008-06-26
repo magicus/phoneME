@@ -645,13 +645,15 @@ void javacall_ams_ui_state_changed(javacall_midlet_ui_state state,
  * @param suiteID Unique ID of the MIDlet suite.
  * @param path    A buffer allocated to contain the returned path name string.
  *                The returned string must be double-'\0' terminated.
- * @param maxPath Buffer length of path
+ * @param maxPath A pointer to the buffer length of path, after 
+ *                function returns it contains the length of the
+ *  			  path string
  * @return <tt>JAVACALL_OK</tt> on success, 
  *         <tt>JAVACALL_FAIL</tt>
  */
-javacall_result javacall_ams_get_rms_path(javacall_suite_id suiteID, 
-                                          javacall_utf16_string path, 
-                                          int maxPath);
+javacall_result javacall_ams_get_rms_path(/*out*/javacall_suite_id suiteID, 
+                                          /*in/out*/javacall_utf16_string path, 
+                                          /*in/out*/int *maxPath);
 
 /**
  * Get domain information of the suite
