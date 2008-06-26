@@ -259,6 +259,11 @@ public class Protocol extends NetworkConnectionBase
             throw new IllegalArgumentException("Missing port number");
         }
 
+        result = initializeNetwork0();
+        if(result == -1) {
+            throw new IOException("Socket:Could not initialize network");
+        }
+
         result = getIpNumber0(host, ipBytes);
         if (result == -1) {
             throw new
@@ -741,6 +746,14 @@ public class Protocol extends NetworkConnectionBase
      * Native finalizer
      */
     private native void finalize();
+
+    /**
+     * Initializes the network system.
+     *  
+     * @return     -1 for error or 0 if no error occured
+     */
+    public static native int initializeNetwork0();
+
 
     /**
      * Gets a byte array that represents an IPv4 or IPv6 address 

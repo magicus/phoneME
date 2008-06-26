@@ -45,6 +45,10 @@
 #include <kni_globals.h>
 #include <midpUtilKni.h>
 
+#include <javacall_network.h>
+
+extern int javacall_to_pcsl_result( javacall_result res );
+
 /**
  * @file
  * 
@@ -274,9 +278,6 @@ Java_com_sun_midp_io_j2me_socket_Protocol_read0(void) {
                 }
                 ANC_DEC_NETWORK_INDICATOR;
             } else {
-                REPORT_INFO1(LC_PROTOCOL, "socket::read error=%d\n",
-                             pcsl_network_error(pcslHandle));
-
                 if (status == PCSL_NET_WOULDBLOCK) {
                     midp_thread_wait(NETWORK_READ_SIGNAL, (int)pcslHandle, context);
                 } else if (status == PCSL_NET_INTERRUPTED) {
@@ -615,6 +616,11 @@ Java_com_sun_midp_io_j2me_socket_Protocol_getIpNumber0(void) {
     if (info == NULL) {  /* First invocation */
         GET_PARAMETER_AS_PCSL_STRING(1, host)
             const jbyte * const host_bytes = pcsl_string_get_utf8_data(&host);
+
+            if (host_bytes != NULL)
+                REPORT_INFO1(LC_PROTOCOL, "socket_Protocol_getIpNumber0 >> url = %s\n",
+                                          host_bytes);
+        
             status = pcsl_network_gethostbyname_start(
                     (char*)host_bytes,
                     ipBytes, MAX_ADDR_LENGTH, &len, &pcslHandle, &context);
@@ -629,6 +635,8 @@ Java_com_sun_midp_io_j2me_socket_Protocol_getIpNumber0(void) {
         context = (void*)info->status;
         status = pcsl_network_gethostbyname_finish(ipBytes, MAX_ADDR_LENGTH,
                                                   &len, pcslHandle, context);
+        REPORT_INFO4(LC_PROTOCOL, "socket_Protocol_getIpNumber0 <<  %d.%d.%d.%d\n",
+                                  ipBytes[0], ipBytes[1], ipBytes[2], ipBytes[3]);        
     }
 
     if (status == PCSL_NET_SUCCESS) {
@@ -871,7 +879,9 @@ Java_com_sun_midp_io_j2me_socket_Protocol_shutdownOutput0(void) {
 KNIEXPORT KNI_RETURNTYPE_VOID
 Java_com_sun_midp_io_NetworkConnectionBase_initializeInternal(void) {
     ANC_INIT_NETWORK_INDICATOR;
-    pcsl_network_init();
+
+    // do nothing
+    
     KNI_ReturnVoid();
 }
 
@@ -929,4 +939,51 @@ Java_com_sun_midp_io_j2me_socket_Protocol_notifyClosedOutput0(void) {
 
     KNI_EndHandles();
     KNI_ReturnVoid();
+}
+
+/**
+ * Initializes the network.
+ * <p>
+ * Java declaration:
+ * <pre>
+ *     initializeInternal(V)V
+ * </pre>
+ */
+KNIEXPORT KNI_RETURNTYPE_INT
+Java_com_sun_midp_io_j2me_socket_Protocol_initializeNetwork0(void) {
+    MidpReentryData* info;
+    int status = PCSL_NET_SUCCESS;
+    jint ret = -1;
+    ANC_INIT_NETWORK_INDICATOR;
+
+    REPORT_INFO(LC_CORE, "socket_Protocol_initializeNetwork0 >>");
+
+    info = (MidpReentryData*)SNI_GetReentryData(NULL);
+    if (info == NULL){
+       status = pcsl_network_init_start();     
+    }
+    else {
+       status = javacall_to_pcsl_result((javacall_result)info->status);
+       pcsl_network_init_finish();
+    }
+
+   REPORT_INFO2(LC_CORE, "pcsl_network_init(%d) returned %d\n",
+                                   (int)(info !=NULL), (int)status);        
+
+    switch(status){
+    case PCSL_NET_SUCCESS:
+        ret = 0;
+        break;
+    case PCSL_NET_WOULDBLOCK:
+        midp_thread_wait(NETWORK_STATUS_SIGNAL, 0, NULL);
+        break;
+    default:
+        ret = -1;
+        REPORT_ERROR2(LC_CORE, "pcsl_network_init(%d) failed with code %d\n",
+                                   (int)(info!=NULL), (int)status);        
+        break;
+    }
+    REPORT_INFO(LC_CORE, "socket_Protocol_initializeNetwork0 <<");
+    
+    KNI_ReturnInt(ret);
 }

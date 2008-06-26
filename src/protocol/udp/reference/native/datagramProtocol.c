@@ -46,6 +46,11 @@
 #include <suitestore_common.h>
 #include <midpUtilKni.h>
 
+#include <javacall_network.h>
+
+extern int javacall_to_pcsl_result( javacall_result res );
+
+
 /**
  * @file
  *
@@ -810,4 +815,52 @@ Java_com_sun_midp_io_j2me_datagram_Protocol_getPort0(void) {
 
     KNI_EndHandles();
     KNI_ReturnInt((jint)port);
+}
+
+
+/**
+ * Initializes the network.
+ * <p>
+ * Java declaration:
+ * <pre>
+ *     initializeInternal(V)V
+ * </pre>
+ */
+KNIEXPORT KNI_RETURNTYPE_INT
+Java_com_sun_midp_io_j2me_datagram_Protocol_initializeNetwork0(void) {
+    MidpReentryData* info;
+    int status = PCSL_NET_SUCCESS;
+    jint ret = -1;
+    ANC_INIT_NETWORK_INDICATOR;
+
+    REPORT_INFO(LC_CORE, "datagram_Protocol_initializeNetwork0 >>");
+
+    info = (MidpReentryData*)SNI_GetReentryData(NULL);
+    if (info == NULL){
+       status = pcsl_network_init_start();     
+    }
+    else {
+       status = javacall_to_pcsl_result(info->status);
+       pcsl_network_init_finish();
+    }
+
+   REPORT_INFO2(LC_CORE, "pcsl_network_init(%d) returned %d\n",
+                                   (int)(info !=NULL), (int)status);        
+
+    switch(status){
+    case PCSL_NET_SUCCESS:
+        ret = 0;
+        break;
+    case PCSL_NET_WOULDBLOCK:
+        midp_thread_wait(NETWORK_STATUS_SIGNAL, 0, NULL);
+        break;
+    default:
+        ret = -1;
+        REPORT_ERROR2(LC_CORE, "pcsl_network_init(%d) failed with code %d\n",
+                                   (int)(info!=NULL), (int)status);        
+        break;
+    }
+    REPORT_INFO(LC_CORE, "datagram_Protocol_initializeNetwork0 <<");
+    
+    KNI_ReturnInt(ret);
 }

@@ -225,6 +225,11 @@ public class Protocol implements UDPDatagramConnection,
         default:
             throw new IllegalArgumentException("Illegal mode");
         }
+        
+        int result = initializeNetwork0();
+        if(result == -1) {
+            throw new IOException("Datagram:Could not initialize network");
+        }
 
         open0(incomingPort, midletSuite.getID());
         open = true;
@@ -777,4 +782,11 @@ public class Protocol implements UDPDatagramConnection,
      * @return the port number
      */
     private native int getPort0();
+
+   /**
+     * Initializes the network system.
+     *  
+     * @return     -1 for error or 0 if no error occured
+     */
+    public static native int initializeNetwork0();
 }

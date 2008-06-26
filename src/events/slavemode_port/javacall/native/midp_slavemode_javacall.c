@@ -209,6 +209,15 @@ javacall_result checkForSystemSignal(MidpReentryData* pNewSignal,
         pNewSignal->status     = event->data.socketEvent.status;
         pNewSignal->pResult    = (void *) event->data.socketEvent.extraData;
         break;
+     case MIDP_JC_EVENT_NETWORK:
+        pNewSignal->waitingFor = NETWORK_STATUS_SIGNAL;
+        pNewSignal->descriptor = 0;
+        if (event->data.networkEvent.netType == MIDP_NETWORK_UP)
+            pNewSignal->status = (int)JAVACALL_OK;
+        else
+            pNewSignal->status = (int)JAVACALL_FAIL;
+        pNewSignal->pResult = NULL;
+        break;   
     case MIDP_JC_EVENT_END:
         pNewSignal->waitingFor = AMS_SIGNAL;
         pNewMidpEvent->type    = SHUTDOWN_EVENT;
@@ -571,7 +580,18 @@ static int midp_slavemode_handle_events(JVMSPI_BlockedThreadInfo *blocked_thread
             }
             break;
 #endif /* ENABLE_JSR_256 */
+        case NETWORK_STATUS_SIGNAL:
+            midp_thread_signal_list(blocked_threads, blocked_threads_count,
+                                                     newSignal.waitingFor, newSignal.descriptor, 
+                                                     newSignal.status);
+            break;
         default:
+            REPORT_ERROR1(LC_CORE, "midp_slavemode_handle_events: handle event(%d) by default\n",
+                                       newSignal.waitingFor);
+            midp_thread_signal_list(blocked_threads, blocked_threads_count,
+                                                     newSignal.waitingFor, newSignal.descriptor, 
+                                                     newSignal.status);
+
             break;
         } /* switch */
         ret = 0;
