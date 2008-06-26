@@ -40,6 +40,7 @@ information or have any questions.
 
     <property name="out.root"               location="../out"/>
     <property name="out.classes"            location="${out.root}/classes"/>
+    <property name="out.utest.classes"      location="${out.root}/utest_classes"/>
     <property name="out.src"                location="${out.root}/generated/classes"/>
     <property name="generated.files.list"   location="${out.root}/generated/file_list"/>
 
@@ -142,6 +143,39 @@ information or have any questions.
                 <prefixlines prefix="${makefile.files_list.varname} :="/>
             </filterchain>
         </copy>
+    </target>
+
+    <target name="javac-unit-tests">
+        <description>Compiles unit tests for things other then generated sources
+        </description>
+
+        <!-- Build unit tests -->
+        <mkdir dir="${out.utest.classes}"/>
+        <javac  srcdir="../test:../src/classes/shared"
+                destdir="${out.utest.classes}"
+                debug="true">
+            <include name="**/AllTests.java"/>
+            <include name="**/BaseScreenStack.java"/>
+            <include name="**/TestBaseScreenStack.java"/>
+        </javac>
+    </target>
+
+    <target name="run-unit-tests" depends="javac-unit-tests">
+        <description>Runs unit tests for things other then generated sources
+        </description>
+
+        <condition  property="run-unit-tests.java.jvmargs"
+                    value="-Xdebug -Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=${debug.port}"
+                    else="">
+            <not><equals arg1="${debug.port}" arg2="" trim="true"/></not>
+        </condition>
+
+        <!-- Run unit tests -->
+        <java   classname="com.sun.ams.ui.AllTests"
+                classpath="${out.utest.classes}"
+                fork="true">
+            <jvmarg line="${run-unit-tests.java.jvmargs}"/>
+        </java>
     </target>
 
     <target name="javac" depends="gen-with-unit-tests">

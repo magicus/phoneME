@@ -56,11 +56,6 @@ public abstract class BaseScreenStack {
 
         synchronized (screen) {
             if (screen.stack == this) {
-                if (screens.peek() == screen) {
-                    // already the topmost visible screen
-                    return;
-                }
-
                 screens.removeElement(screen);
             } else if (screen.stack != null) {
                 throw new IllegalArgumentException(
@@ -69,7 +64,7 @@ public abstract class BaseScreenStack {
 
             if (screens == null) {
                 screens = new Stack();
-            } else if (!screens.contains(screen)) {
+            } else if (screens.contains(screen)) {
                 // should never get here, but just in case...
                 throw new IllegalArgumentException(
                     "Screen is already on a stack");
@@ -79,6 +74,10 @@ public abstract class BaseScreenStack {
             screens.push(screen);
         }
 
+        // This should be called for a screen even if it is already
+        // the topmost. It is derived class responsibility to add
+        // extra optimizations whenever it can ignore this call if the screen
+        // is already the topmost visible one.
         showScreen(screen);
     }
 
@@ -112,18 +111,24 @@ public abstract class BaseScreenStack {
 
         show(screen);
         try {
-            while (screens.peek() == screens) {
+            long time = System.currentTimeMillis();
+            while (!destroyed && screens.peek() == screen) {
                 wait(timeout);
+                if (timeout <= System.currentTimeMillis() - time) {
+                    break;
+                }
             }
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
 
-        if (autoHide) {
+        if (autoHide && screens.size() > 1) {
             synchronized (screen) {
                 screens.removeElement(screen);
                 screen.stack = null;
             }
+
+            showScreen((Screen)screens.peek());
         }
     }
 
@@ -133,10 +138,6 @@ public abstract class BaseScreenStack {
             screens.pop();
             screen.stack = null;
         }
-
-        showScreen((Screen)screens.peek());
-
-        notifyAll();
     }
 
     /**
@@ -179,9 +180,10 @@ public abstract class BaseScreenStack {
                 } else {
                     screens.removeElement(screen);
                     screen.stack = null;
-
-                    notifyAll();
                 }
+
+                showScreen((Screen)screens.peek());
+                notifyAll();
             }
 
             return (screen.stack == null);
@@ -209,6 +211,7 @@ public abstract class BaseScreenStack {
             for (int i = 0, count = screens.size(); i < count; ++i) {
                 pop();
             }
+            notifyAll();
         }
 
         destroyImpl();

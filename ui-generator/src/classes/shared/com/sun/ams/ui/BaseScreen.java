@@ -74,8 +74,7 @@ public abstract class BaseScreen implements StringIds {
         this.props = props;
     }
 
-    private static void
-    test(String format, String expected) {
+    private static void test(String format, String expected) {
         String res =
             BaseScreen.printfImpl(format, new Object[] { "One", "Two" });
         if (!expected.equals(res)) {
@@ -83,8 +82,7 @@ public abstract class BaseScreen implements StringIds {
         }
     }
 
-    public static void
-    main(String args[]) {
+    public static void main(String args[]) {
         test(
             "Sha\nving %0 to %1  abc\nPlease Wait...",
             "Sha\nving One to Two  abc\nPlease Wait...");
