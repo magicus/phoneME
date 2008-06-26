@@ -39,6 +39,7 @@ MIDP_CNI_CLASSES += \
         com.sun.midp.crypto.MD2 \
         com.sun.midp.crypto.MD5 \
         com.sun.midp.crypto.SHA \
+        com.sun.midp.security.Permissions \
         com.sun.midp.events.EventQueue \
         com.sun.midp.events.NativeEventMonitor \
         com.sun.midp.jarutil.JarReader \
