@@ -34,12 +34,43 @@
 
 include $(SUBSYSTEM_DIR)/ams/ams_common.gmk
 
+#Default libraries path
+AMS_API	                 ?= $(SUBSYSTEM_AMS_DIR)/ams_api/lib.gmk
+AMS_BASE                 ?= $(SUBSYSTEM_AMS_DIR)/ams_base/lib.gmk
+AMS_BASE_CLDC            ?= $(SUBSYSTEM_AMS_DIR)/ams_base_cldc/lib.gmk
+AMS_UTIL                 ?= $(SUBSYSTEM_AMS_DIR)/ams_util/lib.gmk
+AMS_JSR_INTERFACE        ?= $(SUBSYSTEM_AMS_DIR)/ams_jsr_interface/lib.gmk
+AMS_APP_IMAGE_GEN_BASE   ?= $(SUBSYSTEM_AMS_DIR)/app_image_gen_base/lib.gmk
+AMS_APP_IMAGE_GEN        ?= $(SUBSYSTEM_AMS_DIR)/app_image_gen/lib.gmk
+AMS_AUTOTESTER_BASE      ?= $(SUBSYSTEM_AMS_DIR)/autotester_base/lib.gmk
+AMS_AUTOTESTER           ?= $(SUBSYSTEM_AMS_DIR)/autotester/lib.gmk
+AMS_INSTALLER            ?= $(SUBSYSTEM_AMS_DIR)/installer/lib.gmk
+AMS_MIDLET_SUITE_INFO    ?= $(SUBSYSTEM_AMS_DIR)/midlet_suite_info/lib.gmk
+AMS_OTA                  ?= $(SUBSYSTEM_AMS_DIR)/ota/lib.gmk
+AMS_PLATFORM_REQUEST     ?= $(SUBSYSTEM_AMS_DIR)/platform_request/lib.gmk
+AMS_SUITESTORE           ?= $(SUBSYSTEM_AMS_DIR)/suitestore/subsystem.gmk
+AMS_VERIFIER             ?= $(SUBSYSTEM_AMS_DIR)/verifier/lib.gmk
+AMS_MIDLET_SELECTOR_BASE ?= $(SUBSYSTEM_AMS_DIR)/midlet_selector_base/lib.gmk
+AMS_MIDLET_SELECTOR      ?= $(SUBSYSTEM_AMS_DIR)/midlet_selector/lib.gmk
+AMS_AMS_FOLDERS          ?= $(SUBSYSTEM_AMS_DIR)/ams_folders/lib.gmk
+AMS_AMS_DEBUG            ?= $(SUBSYSTEM_AMS_DIR)/ams_debug/lib.gmk
+
+#Default libraries for JAMS
+AMS_APPMANAGER_UI_RESOURCES ?= $(SUBSYSTEM_AMS_DIR)/appmanager_ui_resources/lib.gmk
+AMS_APPMANAGER_UI           ?= $(SUBSYSTEM_AMS_DIR)/appmanager_ui/lib.gmk
+#end JAMS
+
 SUBSYSTEM_AMS_PACKAGES += \
     com.sun.midp.main \
     com.sun.midp.midlet \
     com.sun.midp.midletsuite \
     com.sun.midp.installer \
     com.sun.midp.appmanager
+
+#Add packages if supplied
+ifdef AMS_ADDITIONAL_PACKAGES
+$(foreach AMS_ADDITIANAL_PACKAGES,$(_AMS_PACK),SUBSYSTEM_AMS_PACKAGES +=$(_AMS_PACK))
+endif
 
 # echo $(MIDP_JAVADOC_PACKAGES) | tr ' ' '\n' | sort | uniq
 
@@ -58,25 +89,30 @@ endif
 
 # AppManagerUI depends on jams (AppManager)
 
-include $(SUBSYSTEM_AMS_DIR)/ams_api/lib.gmk
-include $(SUBSYSTEM_AMS_DIR)/ams_base/lib.gmk
-include $(SUBSYSTEM_AMS_DIR)/ams_base_cldc/lib.gmk
-include $(SUBSYSTEM_AMS_DIR)/ams_util/lib.gmk
-include $(SUBSYSTEM_AMS_DIR)/ams_jsr_interface/lib.gmk
-include $(SUBSYSTEM_AMS_DIR)/app_image_gen_base/lib.gmk
-include $(SUBSYSTEM_AMS_DIR)/app_image_gen/lib.gmk
-include $(SUBSYSTEM_AMS_DIR)/autotester_base/lib.gmk
-include $(SUBSYSTEM_AMS_DIR)/autotester/lib.gmk
-include $(SUBSYSTEM_AMS_DIR)/installer/lib.gmk
-include $(SUBSYSTEM_AMS_DIR)/midlet_suite_info/lib.gmk
-include $(SUBSYSTEM_AMS_DIR)/ota/lib.gmk
-include $(SUBSYSTEM_AMS_DIR)/platform_request/lib.gmk
-include $(SUBSYSTEM_AMS_DIR)/suitestore/subsystem.gmk
-include $(SUBSYSTEM_AMS_DIR)/verifier/lib.gmk
-include $(SUBSYSTEM_AMS_DIR)/midlet_selector_base/lib.gmk
-include $(SUBSYSTEM_AMS_DIR)/midlet_selector/lib.gmk
-include $(SUBSYSTEM_AMS_DIR)/ams_folders/lib.gmk
-include $(SUBSYSTEM_AMS_DIR)/ams_debug/lib.gmk
+include $(AMS_API)
+include $(AMS_BASE)
+include $(AMS_BASE_CLDC)
+include $(AMS_UTIL)
+include $(AMS_JSR_INTERFACE)
+include $(AMS_APP_IMAGE_GEN_BASE)
+include $(AMS_APP_IMAGE_GEN)
+include $(AMS_AUTOTESTER_BASE)
+include $(AMS_AUTOTESTER)
+include $(AMS_INSTALLER)
+include $(AMS_MIDLET_SUITE_INFO)
+include $(AMS_OTA)
+include $(AMS_PLATFORM_REQUEST)
+include $(AMS_SUITESTORE)
+include $(AMS_VERIFIER)
+include $(AMS_MIDLET_SELECTOR_BASE)
+include $(AMS_MIDLET_SELECTOR)
+include $(AMS_AMS_FOLDERS)
+include $(AMS_AMS_DEBUG)
+
+#Add more subsystem/libraries if supplied
+ifdef AMS_ADDITIONAL_LIBRARIES
+$(foreach AMS_ADDITIONAL_LIBRARIES,$(_AMS_LIB), include $(_AMS_LIB))
+endif
 
 ifeq ($(USE_ON_DEVICE_DEBUG), true)
 include $(PROJECT_MIDP_DIR)/src/ams/on_device_debug_base/lib.gmk
@@ -86,8 +122,8 @@ include $(SUBSYSTEM_AMS_DIR)/on_device_debug_stubs/lib.gmk
 endif
 
 ifeq ($(USE_NATIVE_AMS), false)
-    include $(SUBSYSTEM_AMS_DIR)/appmanager_ui_resources/lib.gmk
-    include $(SUBSYSTEM_AMS_DIR)/appmanager_ui/lib.gmk
+    include $(AMS_APPMANAGER_UI_RESOURCES)
+    include $(AMS_APPMANAGER_UI)
 else    
 ifeq ($(TARGET_PLATFORM), javacall)
     include $(SUBSYSTEM_AMS_DIR)/nams_javacall/lib.gmk
