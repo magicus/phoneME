@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-        Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+        Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
         DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
         
         This program is free software; you can redistribute it and/or
@@ -22,12 +22,6 @@
         Clara, CA 95054 or visit www.sun.com if you need additional
         information or have any questions.
 -->
-<!--
-    This stylesheet generates source code of com.sun.cdc.config.PackageManager
-    class. Output code is intended for temporary use only, until real
-    PackageManager with capability of enumerating dynamically loaded
-    packages is implemented.
--->
 <xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
 <xsl:output method="text"/>
 
@@ -36,7 +30,7 @@
 
 <xsl:template match="/">
 <xsl:text>/*
- * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
@@ -68,8 +62,38 @@
 <xsl:if test="$output='java'">
 <xsl:text>package com.sun.midp.security;
 
-public final class PermissionsStrings {
+public final class PermissionsStrings {</xsl:text>
+</xsl:if>
+<xsl:variable name="perm_ids">
+    <xsl:for-each select="/configuration/permissions/group">
+        <xsl:for-each select="permission">
+<xsl:text>
+    /** </xsl:text>
+<xsl:value-of select="@Name"/>
+<xsl:text> permission ID. */
+    public static final int </xsl:text>
+<xsl:value-of select="@ID"/>
+<xsl:text> = </xsl:text>
+<xsl:text>;</xsl:text>
+        </xsl:for-each>
+    </xsl:for-each>
+</xsl:variable>
 
+<xsl:variable name="perm_number" select="55"/>
+
+<xsl:if test="$output='native'">
+<xsl:text>/** Total number of permissions. */
+#define NUMBER_OF_PERMISSIONS    </xsl:text>
+    <xsl:call-template name="generateNumberOfPermissions">
+        <xsl:with-param name="text" select="$perm_ids"/>
+        <xsl:with-param name="nextID" select="$perm_number"/>
+    </xsl:call-template>
+<xsl:text>
+</xsl:text>
+</xsl:if>
+
+<xsl:if test="$output='java'">
+<xsl:text>
     /* Permission Strings. */
     static final String [] PERMISSION_STRINGS =  {
         "javax.microedition.io.Connector.http",
@@ -130,13 +154,37 @@ public final class PermissionsStrings {
         "javax.microedition.io.Connector.ndef",
         "javax.microedition.io.Connector.rf",
         "javax.microedition.io.Connector.sc",
-        "javax.microedition.io.Connector.vtag"
-    };
+        "javax.microedition.io.Connector.vtag",
+</xsl:text>
+        <xsl:for-each select="/configuration/permissions/group">
+            <xsl:for-each select="permission">
+<xsl:text>        "</xsl:text>
+<xsl:value-of select="@Name"/>
+<xsl:text>",
+</xsl:text>
+            </xsl:for-each>
+        </xsl:for-each>
+<xsl:text>    };
 }
 </xsl:text>
 </xsl:if>
 </xsl:template>
 
-
+<xsl:template name="generateNumberOfPermissions">
+    <xsl:param name="text"/>
+    <xsl:param name="nextID"/>
+<xsl:choose>
+    <!-- when there is more than one element in the list -->
+    <xsl:when test="contains($text,';')">
+        <xsl:call-template name="generateNumberOfPermissions">
+            <xsl:with-param name="text" select="substring-after($text,';')"/>
+            <xsl:with-param name="nextID" select="$nextID + 1"/>
+        </xsl:call-template>
+    </xsl:when>
+    <xsl:otherwise>
+        <xsl:value-of select="$nextID"/>
+    </xsl:otherwise>
+</xsl:choose>
+</xsl:template>
 
 </xsl:stylesheet>
