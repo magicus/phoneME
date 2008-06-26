@@ -927,8 +927,18 @@ extern "C" jlong JVM_JavaMilliSeconds() {
   return Os::java_time_millis();
 }
 
+int JVM_IsStarted(void) {
+  if (JVM::is_started()) {
+    return 1;
+  }
+  return 0;
+}
+
 int JVM_CleanUp(void) {
   GUARANTEE(SlaveMode, "sanity");
+  if (!JVM::is_started()) {
+    return 0;
+  }
   JVM::cleanup();
   return JVM::exit_code();
 }

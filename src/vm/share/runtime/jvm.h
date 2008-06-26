@@ -165,6 +165,14 @@ void JVM_Stop(int exit_code);
 jlong JVM_TimeSlice(void);
 
 /*
+ * For use in SlaveMode only -- check if the VM is started now.
+ *
+ * Return 1 if the VM is started.
+ * Return 0 if not.
+ */
+int JVM_IsStarted(void);
+
+/*
  * For use in SlaveMode only -- clean up the VM and returns exit
  * code.
  */
