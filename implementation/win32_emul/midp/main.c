@@ -159,7 +159,7 @@ main(int argc, char *argv[]) {
     char* odtAgentSettings = NULL;
     char* mvmManagerArgument = NULL;
     javacall_utf16* propFileName;
-    int propFileNameLen;
+    int propFileNameLen = 0;
 
     /* uncomment this like to force the debugger to start */
     /* _asm int 3; */
@@ -167,14 +167,18 @@ main(int argc, char *argv[]) {
     /* get the configuration file name */
     propFileName = get_properties_file_name(&propFileNameLen, 
                                             argv + 1, argc - 1);
-    if (propFileName != NULL) {
-        /* apply the configuration file name */
-        javacall_set_properties_file_name(propFileName, propFileNameLen);
-        javacall_free(propFileName);
-    }    
 
-    if (JAVACALL_OK != javacall_initialize_configurations()) {
+    if (javacall_initialize_configurations_from_file(
+            propFileName, propFileNameLen) != JAVACALL_OK) {
+        if (propFileName != NULL) {
+            javacall_free(propFileName);
+        }
+    
         return -1;
+    }
+
+    if (propFileName != NULL) {
+        javacall_free(propFileName);
     }
 
     for (i = 1; i < argc; i++) {
