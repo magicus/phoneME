@@ -32,29 +32,23 @@
 # other def. (like VPATH)
 ############################################################
 
-# Add to global SUBSYSTEMS list
-#
-#SUBSYSTEMS += appmanager_ui
-
 # Name of the library
-APPMANAGER_UI_NAME = appmanager_ui
+APPMANAGER_UI_REFERENCE_NAME = appmanager_ui/reference
 
 # Local module directory
-APPMANAGER_UI_DIR = $(SUBSYSTEM_AMS_DIR)/$(APPMANAGER_UI_NAME)
+APPMANAGER_UI_REFERENCE_DIR = $(SUBSYSTEM_AMS_DIR)/$(APPMANAGER_UI_REFERENCE_NAME)
 
 # Javadoc source path
-MIDP_JAVADOC_SOURCEPATH += $(APPMANAGER_UI_DIR)/classes
+MIDP_JAVADOC_SOURCEPATH += $(APPMANAGER_UI_REFERENCE_DIR)/classes
 
 # Java files for the sub-system
 #
 SUBSYSTEM_AMS_JAVA_FILES += \
-    $(APPMANAGER_UI_DIR)/classes/com/sun/midp/appmanager/TaskManagerUI.java 
+    $(APPMANAGER_UI_REFERENCE_DIR)/classes/com/sun/midp/appmanager/AppInfo.java \
+    $(APPMANAGER_UI_REFERENCE_DIR)/classes/com/sun/midp/appmanager/TaskManagerUIImpl.java \
+    $(APPMANAGER_UI_REFERENCE_DIR)/classes/com/sun/midp/appmanager/FolderList.java \
+    $(APPMANAGER_UI_REFERENCE_DIR)/classes/com/sun/midp/appmanager/MIDletSelector.java \
+    $(APPMANAGER_UI_REFERENCE_DIR)/classes/com/sun/midp/appmanager/MIDletSwitcher.java \
+    $(APPMANAGER_UI_REFERENCE_DIR)/classes/com/sun/midp/appmanager/SplashScreen.java
 
-# IMPL NOTE: Use library configuration file to select switch library
-#
-ifeq ($(USE_REFERENCE_AMS_UI), true)
-include $(APPMANAGER_UI_DIR)/reference/lib.gmk
-else
-include $(APPMANAGER_UI_DIR)/stubs/lib.gmk
-endif
 

@@ -57,7 +57,7 @@ class MIDletSwitcher extends javax.microedition.lcdui.List
     ApplicationManager manager;
 
     /** Application Manager main form. */
-    AppManagerUI managerUI;
+    TaskManagerUI managerUI;
 
     /** Display for the Manager MIDlet. */
     Display display; // = null
@@ -73,7 +73,7 @@ class MIDletSwitcher extends javax.microedition.lcdui.List
      * @param manager the parent application manager
      * @param display the Display
      */
-    MIDletSwitcher(AppManagerUI managerUI, ApplicationManager manager,
+    MIDletSwitcher(TaskManagerUI managerUI, ApplicationManager manager,
                    Display display) {
         super("", Choice.IMPLICIT);
         this.manager = manager;
@@ -173,7 +173,7 @@ class MIDletSwitcher extends javax.microedition.lcdui.List
             if (ind != -1) {
                 manager.moveToForeground(minfo[ind]);
             }
-            display.setCurrent(managerUI);
+            display.setCurrent(managerUI.getMainDisplayable());
         }
     }
 

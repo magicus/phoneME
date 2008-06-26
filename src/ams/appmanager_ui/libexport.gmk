@@ -25,6 +25,4 @@
 #
 
 LIB_EXPORT_JAVA_FILES= \
-    com/sun/midp/appmanager/AppManagerUI.java \
-    com/sun/midp/appmanager/DisplayError.java \
-    com/sun/midp/appmanager/SplashScreen.java
+    com/sun/midp/appmanager/TaskManagerUI.java

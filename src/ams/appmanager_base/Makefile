@@ -1,3 +1,4 @@
+#
 #   
 #
 # Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
@@ -23,38 +24,4 @@
 # information or have any questions.
 #
 
-############################################################
-# Module's Component Configuration file
-#
-# Remember: It is up to the module itself to impose rules of
-# how to compile the options. All the global Makefile needs
-# is the final def. of Java and native file lists and some
-# other def. (like VPATH)
-############################################################
-
-# Add to global SUBSYSTEMS list
-#
-#SUBSYSTEMS += appmanager_ui
-
-# Name of the library
-APPMANAGER_UI_NAME = appmanager_ui
-
-# Local module directory
-APPMANAGER_UI_DIR = $(SUBSYSTEM_AMS_DIR)/$(APPMANAGER_UI_NAME)
-
-# Javadoc source path
-MIDP_JAVADOC_SOURCEPATH += $(APPMANAGER_UI_DIR)/classes
-
-# Java files for the sub-system
-#
-SUBSYSTEM_AMS_JAVA_FILES += \
-    $(APPMANAGER_UI_DIR)/classes/com/sun/midp/appmanager/TaskManagerUI.java 
-
-# IMPL NOTE: Use library configuration file to select switch library
-#
-ifeq ($(USE_REFERENCE_AMS_UI), true)
-include $(APPMANAGER_UI_DIR)/reference/lib.gmk
-else
-include $(APPMANAGER_UI_DIR)/stubs/lib.gmk
-endif
-
+include $(CURDIR)/../../../build/share/genroot.make
