@@ -980,6 +980,16 @@ class TaskManager implements CommandListener {
     public void cleanUp() {
         appManagerUI.cleanUp();
     }
+
+    /**
+     * Called to determine MidletSuiteInfo of the last selected Item.
+     *
+     * @return last selected MidletSuiteInfo
+     */
+    public RunningMIDletSuiteInfo getSelectedMIDletSuiteInfo() {
+        return appManagerUI.getSelectedMIDletSuiteInfo();
+    }
+
     
 }
 

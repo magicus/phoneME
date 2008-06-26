@@ -52,9 +52,10 @@ SUBSYSTEM_AMS_JAVA_FILES += \
 
 # IMPL NOTE: Use library configuration file to select switch library
 #
-ifeq ($(USE_REFERENCE_AMS_UI), true)
-include $(APPMANAGER_UI_DIR)/reference/lib.gmk
-else
-include $(APPMANAGER_UI_DIR)/stubs/lib.gmk
+
+ifeq ($(AMS_UI_IMPL)X, X)
+AMS_UI_IMPL = reference
 endif
+
+include $(APPMANAGER_UI_DIR)/$(AMS_UI_IMPL)/lib.gmk
 

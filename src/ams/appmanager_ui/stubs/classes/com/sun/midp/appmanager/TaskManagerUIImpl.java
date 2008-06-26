@@ -26,13 +26,43 @@
 
 package com.sun.midp.appmanager;
 
+import javax.microedition.lcdui.*;
 import com.sun.midp.main.*;
 
 import javax.microedition.lcdui.Displayable;
 
+class TaskManagerUIImpl implements TaskManagerUI {
 
-interface TaskManagerUI {
+    /**
+     * Creates the Application Selector Screen.
+     * Called if this is the first time AppSelector is being shown.
+     *
+     * @param manager - The application manager that invoked it
+     * @param taskManager - The task manager
+     * @param display - The display instance associated with the manager
+     * @param displayError - The UI used to display error messages
+     * @param foldersOn - if folders are used
+     */
+    TaskManagerUIImpl(ApplicationManager manager, TaskManager taskManager,
+                 Display display, DisplayError displayError, boolean foldersOn) {
 
+    }
+
+    /**
+     * Creates the Application Selector Screen.
+     * @param manager - The application manager that invoked it
+     * @param taskManager - The task manager
+     * @param display - The display instance associated with the manager
+     * @param displayError - The UI used to display error messages
+     * @param foldersOn - if folders are used
+     * @param askUserIfLaunchMidlet - If true, it is expected that dialog be shown asking
+     *             user if last installed midlet should be launched.
+     */
+    TaskManagerUIImpl(ApplicationManager manager, TaskManager taskManager,
+                 Display display, DisplayError displayError, boolean foldersOn,
+                 boolean askUserIfLaunchMidlet) {
+    }
+    
     /**
      * The AppManager manages list of available MIDlet suites
      * and informs AppManagerUI regarding changes in list through
@@ -40,7 +70,9 @@ interface TaskManagerUI {
      *  
      * @param suiteInfo
      */
-    void itemAppended(RunningMIDletSuiteInfo suiteInfo);
+    public void itemAppended(RunningMIDletSuiteInfo suiteInfo) {
+
+    }
 
     /**
      * The AppManager manages list of available MIDlet suites
@@ -49,39 +81,51 @@ interface TaskManagerUI {
      *
      * @param suiteInfo
      */
-    void itemRemoved(RunningMIDletSuiteInfo suiteInfo);
+    public void itemRemoved(RunningMIDletSuiteInfo suiteInfo) {
+
+    }
 
     /**
      *  Called when a new internal midlet was launched
      * @param midlet proxy of a newly launched MIDlet
      */
-    void notifyInternalMidletStarted(MIDletProxy midlet);
+    public void notifyInternalMidletStarted(MIDletProxy midlet) {
+
+    }
 
     /**
      * Called when a new not internal midlet was launched.
      *
      * @param si corresponding midlet suite info
      */
-    void notifyMidletStarted(RunningMIDletSuiteInfo si);
+    public void notifyMidletStarted(RunningMIDletSuiteInfo si) {
+
+    }
 
     /**
      * Called when state of a running midlet has changed.
      *
      * @param si corresponding midlet suite info
      */
-    void notifyMidletStateChanged(RunningMIDletSuiteInfo si);
+    public void notifyMidletStateChanged(RunningMIDletSuiteInfo si) {
+
+    }
 
     /**
      * Called when a running internal midlet exited.
      * @param midlet
      */
-    void notifyInternalMidletExited(MIDletProxy midlet);
+    public void notifyInternalMidletExited(MIDletProxy midlet) {
+
+    }
 
     /**
      * Called when a running non internal midlet exited.
      * @param si corresponding midlet suite info
      */
-    void notifyMidletExited(RunningMIDletSuiteInfo si);
+    public void notifyMidletExited(RunningMIDletSuiteInfo si) {
+
+    }
 
     /**
      * Called by ApplicationManager after a MIDlet suite
@@ -90,31 +134,41 @@ interface TaskManagerUI {
      * a MIDlet from the suite. 
      * @param si corresponding suite info
      */
-    void notifySuiteInstalled(RunningMIDletSuiteInfo si);
+    public void notifySuiteInstalled(RunningMIDletSuiteInfo si) {
+
+    }
 
     /**
      * Called when a new MIDlet suite is installed externally.
      * @param si corresponding suite info
      */
-    void notifySuiteInstalledExt(RunningMIDletSuiteInfo si);
+    public void notifySuiteInstalledExt(RunningMIDletSuiteInfo si) {
+
+    }
 
     /**
      * Called when a MIDlet suite has been removed externally.
      * @param si corresponding suite info
      */
-    void notifySuiteRemovedExt(RunningMIDletSuiteInfo si);
+    public void notifySuiteRemovedExt(RunningMIDletSuiteInfo si) {
+
+    }
 
     /**
      * Called when MIDlet suite being enabled
      * @param si corresponding suite info
      */
-    void notifyMIDletSuiteEnabled(RunningMIDletSuiteInfo si);
+    public void notifyMIDletSuiteEnabled(RunningMIDletSuiteInfo si) {
+
+    }
 
     /**
      * Called when MIDlet suite icon hase changed
      * @param si corresponding suite info
      */
-    void notifyMIDletSuiteIconChaged(RunningMIDletSuiteInfo si);
+    public void notifyMIDletSuiteIconChaged(RunningMIDletSuiteInfo si) {
+
+    }
 
     /**
      * Called when a midlet could not be launched.
@@ -124,13 +178,19 @@ interface TaskManagerUI {
      * @param errorCode error code
      * @param errorDetails error code details
      */
-    void notifyMidletStartError(int suiteId, String className, int errorCode,
-                                String errorDetails);
+    public void notifyMidletStartError(int suiteId, String className, int errorCode,
+                                String errorDetails) {
 
-    void notifyMIDletSuiteStateChaged(RunningMIDletSuiteInfo si,
-                                             RunningMIDletSuiteInfo newSi);
+    }
 
-    void setCurrentItem(RunningMIDletSuiteInfo item);
+    public void notifyMIDletSuiteStateChaged(RunningMIDletSuiteInfo si,
+                                             RunningMIDletSuiteInfo newSi) {
+
+    }
+
+    public void setCurrentItem(RunningMIDletSuiteInfo item) {
+
+    }
 
     /**
      * Called to determine MidletSuiteInfo of the last selected Item.
@@ -138,7 +198,9 @@ interface TaskManagerUI {
      *
      * @return last selected MidletSuiteInfo
      */
-    RunningMIDletSuiteInfo getSelectedMIDletSuiteInfo();
+    public RunningMIDletSuiteInfo getSelectedMIDletSuiteInfo() {
+        return null;
+    }
 
     /**
      * Called when midlet selector needed.
@@ -147,14 +209,20 @@ interface TaskManagerUI {
      *        be selected from the list of already launched midlets,
      *        if false then possibility to launch midlet is needed.
      */
-    void showMidletSwitcher(boolean onlyFromLaunchedList);
+    public void showMidletSwitcher(boolean onlyFromLaunchedList) {
+
+    }
 
     /**
      * Called by Manager when destroyApp happens to clean up data.
      */
-    void cleanUp();
+    public void cleanUp() {
 
-    Displayable getMainDisplayable();
+    }
+
+    public Displayable getMainDisplayable() {
+        return null;
+    }
     
 
 
