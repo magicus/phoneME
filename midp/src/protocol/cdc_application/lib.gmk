@@ -1,0 +1,72 @@
+#
+#
+# Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+# 
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License version
+# 2 only, as published by the Free Software Foundation.
+# 
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# General Public License version 2 for more details (a copy is
+# included at /legal/license.txt).
+# 
+# You should have received a copy of the GNU General Public License
+# version 2 along with this work; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+# 02110-1301 USA
+# 
+# Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+# Clara, CA 95054 or visit www.sun.com if you need additional
+# information or have any questions.
+#
+
+SUBSYSTEM_PROTOCOL_DIR = $(SUBSYSTEM_DIR)/protocol
+
+#####################################################################
+# Generic Connection Framework
+# Description: GCF classes not specific to any particular protocol
+#####################################################################
+
+include $(SUBSYSTEM_PROTOCOL_DIR)/gcf/$(LIB_MAKE_FILE)
+
+SUBSYSTEM_PROTOCOL_JAVA_FILES += $(SUBSYSTEM_GCF_JAVA_FILES)
+SUBSYSTEM_PROTOCOL_NATIVE_FILES += $(SUBSYSTEM_FILE_NATIVE_FILES)
+SUBSYSTEM_PROTOCOL_EXTRA_INCLUDES += $(SUBSYSTEM_FILE_EXTRA_INCLUDES)
+
+
+#####################################################################
+# File
+# Description: GCF File protocol
+#####################################################################
+
+include $(SUBSYSTEM_PROTOCOL_DIR)/file/$(LIB_MAKE_FILE)
+
+SUBSYSTEM_PROTOCOL_JAVA_FILES += $(SUBSYSTEM_FILE_JAVA_FILES)
+SUBSYSTEM_PROTOCOL_NATIVE_FILES += $(SUBSYSTEM_GCF_NATIVE_FILES)
+SUBSYSTEM_PROTOCOL_EXTRA_INCLUDES += $(SUBSYSTEM_GCF_EXTRA_INCLUDES)
+
+# Local module directory
+CDC_PROTOCOL_DIR = $(SUBSYSTEM_PROTOCOL_DIR)/cdc_application
+
+# Javadoc source path
+MIDP_JAVADOC_SOURCEPATH += $(CDC_PROTOCOL_DIR)/classes
+
+# Java files for the sub-system
+#
+SUBSYSTEM_PROTOCOL_JAVA_FILES += \
+    $(SUBSYSTEM_FILE_JAVA_FILES) \
+    $(CDC_PROTOCOL_DIR)/classes/com/sun/midp/io/j2me/socket/Protocol.java \
+    $(CDC_PROTOCOL_DIR)/classes/com/sun/midp/io/j2me/http/Protocol.java \
+    $(CDC_PROTOCOL_DIR)/classes/com/sun/midp/io/j2me/datagram/Protocol.java \
+    $(CDC_PROTOCOL_DIR)/classes/com/sun/midp/io/j2me/serversocket/Protocol.java
+
+ifeq ($(USE_SECOP),true)
+SUBSYSTEM_PROTOCOL_JAVA_FILES += \
+    $(CDC_PROTOCOL_DIR)/classes/com/sun/midp/io/j2me/https/Protocol.java \
+    $(CDC_PROTOCOL_DIR)/classes/com/sun/midp/io/j2me/ssl/Protocol.java
+endif
+
+#    $(CDC_PROTOCOL_DIR)/classes/com/sun/midp/io/j2me/comm/Protocol.java \
