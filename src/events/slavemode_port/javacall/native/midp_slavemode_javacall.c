@@ -341,6 +341,7 @@ javacall_result checkForSystemSignal(MidpReentryData* pNewSignal,
                 javacall_utf16_string str = (jchar*)event->data.multimediaEvent.data;
                 while( str[len] != 0 ) len++;
                 pcsl_string_convert_from_utf16( str, len, &pNewMidpEvent->MM_STRING );
+                free( str );
                 pNewMidpEvent->MM_DATA = 0;
             }
             break;
