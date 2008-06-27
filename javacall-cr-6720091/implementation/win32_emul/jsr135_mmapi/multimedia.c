@@ -155,8 +155,8 @@ javacall_media_caps *get_capabilities_from_properties() {
     
     static const char* prefix = "mmapi.content";
     
-    // property key & value
-    char key[16]; // 13 for the prefix + 2 for the number + '\0' (allows 0..99)
+    char key[24]; // 13 for the prefix + 10 for the number + '\0'
+    char number[11]; // 10 decimal ciphers (2^32)
     char *value;
 
     cap_item* item;
@@ -166,10 +166,9 @@ javacall_media_caps *get_capabilities_from_properties() {
     strcpy(key, prefix);
     value = (char *) javacall_malloc(DEFAULT_VALUE_LEN);
     while (1) {
-
-        itoa(i, key + strlen(prefix), 10);
-        
-        key[strlen(prefix)+1] = '\0'; // REMOVE THIS - count the length of the number
+        itoa(i, number, 10);
+        strcpy(key + strlen(prefix), number);
+        key[strlen(prefix) + strlen(number)] = '\0';
 
         if (JAVACALL_FAIL == 
                  javacall_get_property(key, JAVACALL_INTERNAL_PROPERTY, &value)) {
