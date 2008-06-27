@@ -55,7 +55,7 @@ typedef struct {
 // On x86 platforms with qt-3.3.3, QKeyEvent has a key value of Key_BackTab
 // for Shift+Tab.  We will map this to Java's VK_TAB with Shift modifier set.
 
-const static keyMapType keyCodesMap[SIZEOF_KEYMAP] =
+static const keyMapType keyCodesMap[SIZEOF_KEYMAP] =
 {
   { java_awt_event_KeyEvent_VK_ENTER,		        Qt::Key_Return },
   { java_awt_event_KeyEvent_VK_ENTER,		        Qt::Key_Enter },
