@@ -125,7 +125,7 @@ javacall_result javautil_string_parse_int(char* str, int* number);
  * @param nchars max number of copied wide-characters
  * @return number of copied wide-characters
  */
-size_t javautil_wcsncpy(javacall_utf16 * dst, javacall_const_utf16_string src, size_t nchars)
+size_t javautil_wcsncpy(javacall_utf16 * dst, javacall_const_utf16_string src, size_t nchars);
 
 /**
  * Compare characters of two strings without regard to case.
@@ -143,7 +143,7 @@ size_t javautil_wcsncpy(javacall_utf16 * dst, javacall_const_utf16_string src, s
  */
 int javautil_strnicmp(const char* string1, const char* string2, size_t nchars);
 int javautil_stricmp(const char* string1, const char* string2);
-int javautil_wcsnicmp(javacall_const_utf16_string string1, javacall_const_utf16_string string2, size_t nchars)
+int javautil_wcsnicmp(javacall_const_utf16_string string1, javacall_const_utf16_string string2, size_t nchars);
 
 /**
  * Returns a new string that is a concatenation of two input strings.
