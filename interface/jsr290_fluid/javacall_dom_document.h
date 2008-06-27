@@ -137,6 +137,46 @@ javacall_dom_document_create_element(javacall_handle handle,
                                      /* OUT */ javacall_handle* ret_value);
 
 /**
+ * Create an Event.
+ *
+ * @param handle Pointer to the object representing this document.
+ * @param eventType  The <code>eventType</code> parameter specifies the 
+ *   name of the DOM Events interface to be supported by the created 
+ *   event object, e.g. <code>"Event"</code>, <code>"MouseEvent"</code>, 
+ *   <code>"MutationEvent"</code> and so on. If the <code>Event</code> 
+ *   is to be dispatched via the <code>EventTarget.dispatchEvent()</code>
+ *   method the appropriate event init method must be called after 
+ *   creation in order to initialize the <code>Event</code>'s values.  
+ *   As an example, a user wishing to synthesize some kind of 
+ *   <code>UIEvent</code> would invoke 
+ *   <code>DocumentEvent.createEvent("UIEvent")</code>. The 
+ *   <code>UIEvent.initUIEventNS()</code> method could then be called on 
+ *   the newly created <code>UIEvent</code> object to set the specific 
+ *   type of user interface event to be dispatched, DOMActivate for 
+ *   example, and set its context information, e.g. 
+ *   <code>UIEvent.detail</code> in this example. 
+ * <p><b>Note:</b>    For backward compatibility reason, "UIEvents", 
+ *   "MouseEvents", "MutationEvents", and "HTMLEvents" feature names are 
+ *   valid values for the parameter <code>eventType</code> and represent 
+ *   respectively the interfaces "UIEvent", "MouseEvent", 
+ *   "MutationEvent", and "Event". 
+ * <p><b>Note:</b>  JSR 280 follows the DOM 3 rule for <code>Event.type</code>
+ * and considers it to be case-sensitive. This differs from DOM 2, which
+ * considers it to be case-insensitive.
+ * @param ret_value Pointer to the object representing 
+ *   a new <code>Event<code> object of the class specified in
+ *   <code>eventType</code> parameter.
+ * 
+ * @return JAVACALL_OK if all done successfuly,
+ *         JAVACALL_FAIL if NOT_SUPPORTED_ERR occured
+ *         JAVACALL_NOT_IMPLEMENTED when the stub was called
+ */
+javacall_result
+javacall_dom_document_create_event(javacall_handle handle,
+                                   javacall_const_utf16_string event_type,
+                                   /* OUT */ javacall_handle* ret_value);
+
+/**
  * Creates an empty <code>DocumentFragment</code> object. 
  * 
  * @param handle Pointer to the object representing this document.
