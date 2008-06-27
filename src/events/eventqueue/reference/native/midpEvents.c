@@ -131,8 +131,16 @@ static EventQueue* getIsolateEventQueue(int isolateId) {
      * here for performance reasons and should NOT
      * be used in other parts of the system. In other parts of
      * the system something like a matching search should be used.
+     *
+     * In MVM the first isolate has number 1, and we've allocated one
+     * more entry in pEventQueues[], thus the condition bellow is
+     * isolateId > maxIsolates rather than >= .
      */
-    if (isolateId < 0 || isolateId >= maxIsolates) {
+#if ENABLE_MULTIPLE_ISOLATES
+    if (isolateId < 0 || isolateId > maxIsolates) {
+#else
+    if (isolateId != 0) {
+#endif
         REPORT_CRIT1(LC_CORE,
                      "Assertion failed: Isolate ID (%d) out of bounds",
                      isolateId);
@@ -280,9 +288,18 @@ InitializeEvents(void) {
         sprintf(maxIsolatesStr, "%d", maxIsolates);
         setInternalProperty("MAX_ISOLATES", maxIsolatesStr);
     }
+
+    /*
+     * In MVM the first isolate has number 1, but 0 still can be returned
+     * by midpGetAmsIsolate() if JVM is not running. So in MVM we allocate
+     * one more entry in pEventQueues[] to make indeces from 0 to maxIsolates
+     * inclusively valid.
+     */
+    sizeInBytes = (maxIsolates + 1) * sizeof (EventQueue);
+#else
+    sizeInBytes = maxIsolates * sizeof (EventQueue);
 #endif
 
-    sizeInBytes = maxIsolates * sizeof (EventQueue);
 
     pEventQueues = midpMalloc(sizeInBytes);
     if (NULL == pEventQueues) {
