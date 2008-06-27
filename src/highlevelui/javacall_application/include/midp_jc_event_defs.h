@@ -68,6 +68,7 @@ extern "C" {
 #endif /* ENABLE_JSR_177 */
 #ifdef ENABLE_JSR_179
 #include "javacall_location.h"
+#include "javanotify_location.h"
 #endif /* ENABLE_JSR_179 */
 #ifdef ENABLE_JSR_211
 #include "jsr211_platform_invoc.h"
