@@ -1808,19 +1808,22 @@ static const CVMJITSimpleSyncMethodName CVMJITsimpleSyncMethodNames[] = {
 	/* java.util.Random.next(I)I */
 	CVMsystemClass(java_util_Random),
 	"next", "(I)I",
-	"nextSimpleSync"
+	"nextSimpleSync",
+        0
     },
     {
 	/* java.util.Hashtable.size()I */
 	CVMsystemClass(java_util_Hashtable),
 	"size", "()I",
-	"sizeSimpleSync"
+	"sizeSimpleSync",
+        0
     },
     {
 	/* java.util.Hashtable.isEmpty()Z */
 	CVMsystemClass(java_util_Hashtable),
 	"isEmpty", "()Z",
-	"isEmptySimpleSync"
+	"isEmptySimpleSync",
+        0
     },
     {
 	/* java.lang.String.<init>(Ljava.lang.StringBuffer;) */
@@ -1834,43 +1837,50 @@ static const CVMJITSimpleSyncMethodName CVMJITsimpleSyncMethodNames[] = {
 	/* java.lang.StringBuffer.length()I */
 	CVMsystemClass(java_lang_StringBuffer),
 	"length", "()I",
-	"lengthSimpleSync"
+	"lengthSimpleSync",
+        0
     },
     {
 	/* java.lang.StringBuffer.capacity()I */
 	CVMsystemClass(java_lang_StringBuffer),
 	"capacity", "()I",
-	"capacitySimpleSync"
+	"capacitySimpleSync",
+        0
     },
     {
 	/* java.lang.StringBuffer.charAt(I)C */
 	CVMsystemClass(java_lang_StringBuffer),
 	"charAt", "(I)C",
-	"charAtSimpleSync"
+	"charAtSimpleSync",
+        0
     },
     {
 	/* java.lang.StringBuffer.append(C)Ljava/lang/StringBuffer; */
 	CVMsystemClass(java_lang_StringBuffer),
 	"append", "(C)Ljava/lang/StringBuffer;",
-	"appendSimpleSync"
+	"appendSimpleSync",
+        0
     },
     {
 	/* java.util.Vector.capacity()I */
 	CVMsystemClass(java_util_Vector),
 	"capacity", "()I",
-	"capacitySimpleSync"
+	"capacitySimpleSync",
+        0
     },
     {
 	/* java.util.Vector.size()I */
 	CVMsystemClass(java_util_Vector),
 	"size", "()I",
-	"sizeSimpleSync"
+	"sizeSimpleSync",
+        0
     },
     {
 	/* java.util.Vector.isEmpty()Z */
 	CVMsystemClass(java_util_Vector),
 	"isEmpty", "()Z",
-	"isEmptySimpleSync"
+	"isEmptySimpleSync",
+        0
     },
     {
 	/* java.util.Vector.elementAt(I)Ljava/lang/Object; */
@@ -1892,7 +1902,8 @@ static const CVMJITSimpleSyncMethodName CVMJITsimpleSyncMethodNames[] = {
 	/* java.util.Vector.lastElement()Ljava/lang/Object; */
 	CVMsystemClass(java_util_Vector),
 	"lastElement", "()Ljava/lang/Object;",
-	"lastElementSimpleSync"
+	"lastElementSimpleSync",
+        0
     },
     {
 	/* java.util.Vector.setElementAt(Ljava/lang/Object;I)V */
@@ -1906,7 +1917,8 @@ static const CVMJITSimpleSyncMethodName CVMJITsimpleSyncMethodNames[] = {
 	/* java.util.Vector.addElement(Ljava/lang/Object;)V */
 	CVMsystemClass(java_util_Vector),
 	"addElement", "(Ljava/lang/Object;)V",
-	"addElementSimpleSync"
+	"addElementSimpleSync",
+        0
     },
     {
 	/* java.util.Vector.get(I)Ljava/lang/Object; */
@@ -1928,7 +1940,8 @@ static const CVMJITSimpleSyncMethodName CVMJITsimpleSyncMethodNames[] = {
 	/* java.util.Vector$1.nextElement()Ljava/lang/Object; */
 	CVMsystemClass(java_util_Vector_1),
 	"nextElement", "()Ljava/lang/Object;",
-	"nextElementSimpleSync"
+	"nextElementSimpleSync",
+        0
     },
 };
 

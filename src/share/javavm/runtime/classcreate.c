@@ -891,8 +891,8 @@ CVMclassCreateInternalClass(CVMExecEnv* ee,
     int i, j, cpIdx;
     CICcontext context_block;
     CICcontext *context = &context_block;
-    CVMUint8 *buffer = (CVMUint8 *) externalClass;
-    CVMInt32 bufferLength = classSize;
+    CVMUint8 * volatile buffer = (CVMUint8 *) externalClass;
+    volatile CVMInt32 bufferLength = classSize;
 #ifdef CVM_JVMTI
     CVMUint8 *newBuffer = NULL;
     CVMInt32 newBufferLength = 0;
@@ -938,8 +938,9 @@ CVMclassCreateInternalClass(CVMExecEnv* ee,
 #ifdef CVM_JVMPI
 
     if (CVMjvmpiEventClassLoadHookIsEnabled()) {
-        CVMjvmpiPostClassLoadHookEvent(&buffer, &bufferLength,
-                                        (void *(*)(unsigned int))&malloc);
+        CVMjvmpiPostClassLoadHookEvent((CVMUint8**)&buffer,
+                                       (CVMInt32*)&bufferLength,
+                                       (void *(*)(unsigned int))&malloc);
 
         /* If buffer is NULL, then the profiler must have attempted to allocate
          * a buffer of its own for instrumentation and failed: */
@@ -1957,9 +1958,10 @@ CVMreadConstantPool(CVMExecEnv* ee, CICcontext *context)
 	}
 	    
 	case CVM_CONSTANT_Long: {
-	    CVMJavaVal64 value; /* The space for the 2 word constant */
+	    volatile CVMJavaVal64 value;/* The space for the 2 word constant */
 #ifdef CVM_64
-	    value.v[0] = (((CVMAddr)(get4bytes(context))<<32) | ((CVMAddr)(get4bytes(context))&0x0ffffffff));
+	    value.v[0] = (((CVMAddr)(get4bytes(context))<<32) | 
+                          ((CVMAddr)(get4bytes(context))&0x0ffffffff));
 	    value.v[1] = 0;
 #else
 #ifndef CVM_ENDIANNESS
@@ -1983,9 +1985,10 @@ CVMreadConstantPool(CVMExecEnv* ee, CICcontext *context)
 	    break;
 	}
 	case CVM_CONSTANT_Double: {
-	    CVMJavaVal64 value; /* The space for the 2 word constant */
+	    volatile CVMJavaVal64 value;/* The space for the 2 word constant */
 #ifdef CVM_64
-	    value.v[0] = (((CVMAddr)(get4bytes(context))<<32) | ((CVMAddr)(get4bytes(context))&0x0ffffffff));
+	    value.v[0] = (((CVMAddr)(get4bytes(context))<<32) |
+                          ((CVMAddr)(get4bytes(context))&0x0ffffffff));
 	    value.v[1] = 0;
 #else
 #ifndef CVM_DOUBLE_ENDIANNESS

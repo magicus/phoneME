@@ -1561,7 +1561,7 @@ CVM_EXECUTE_JAVA_METHOD(CVMExecEnv* volatile ee, /* see note above */
 
 #ifdef CVM_USELABELS
 #include "generated/javavm/include/opcodeLabels.h"
-    const static void* const opclabels_data[256] = { 
+    static const void* const opclabels_data[256] = { 
 	&&opc_0, &&opc_1, &&opc_2, &&opc_3, &&opc_4, &&opc_5,
 	&&opc_6, &&opc_7, &&opc_8, &&opc_9, &&opc_10, &&opc_11,
 	&&opc_12, &&opc_13, &&opc_14, &&opc_15, &&opc_16, &&opc_17,

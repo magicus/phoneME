@@ -2133,8 +2133,9 @@ void CVMX86rep_set(CVMJITCompilationContext* con) {
 }
 
 
-void CVMX86setb_reg(CVMJITCompilationContext* con, CVMX86Condition cc, CVMX86Register dst) {
-  CVMassert(0 <= cc && cc < 16 /* illegal cc */);
+void CVMX86setb_reg(CVMJITCompilationContext* con,
+                    CVMX86Condition cc, CVMX86Register dst) {
+  CVMassert(0 <= (int)cc && cc < 16 /* illegal cc */);
 
   CVMtraceJITCodegenExec({
     char ccBuf[30];
@@ -2292,9 +2293,10 @@ void CVMX86jmp_mem(CVMJITCompilationContext* con, CVMX86Address adr) {
 }
 
 
-void CVMX86jcc_imm8(CVMJITCompilationContext* con, CVMX86Condition cc, CVMX86address dst) {
+void CVMX86jcc_imm8(CVMJITCompilationContext* con,
+                    CVMX86Condition cc, CVMX86address dst) {
     CVMInt32 offset = (int)dst - (int)con->curPhysicalPC - 2 /* size of jcc_imm8 */;
-    CVMassert((0 <= cc) && (cc < 16) /* illegal cc */);
+    CVMassert((0 <= (int)cc) && (cc < 16) /* illegal cc */);
     CVMassert(dst != NULL /* jcc most probably wrong */);
     CVMassert(-128 <= offset && offset < 128 /* not a signed 8 bit value */);
     CVMtraceJITCodegenExec({
@@ -2311,9 +2313,10 @@ void CVMX86jcc_imm8(CVMJITCompilationContext* con, CVMX86Condition cc, CVMX86add
 }
 
 
-void CVMX86jcc_imm32(CVMJITCompilationContext* con, CVMX86Condition cc, CVMX86address dst) {
+void CVMX86jcc_imm32(CVMJITCompilationContext* con, 
+                     CVMX86Condition cc, CVMX86address dst) {
   CVMUint32 offset = (int)dst - (int)con->curPhysicalPC - 6 /* size of jcc_imm32 */;
-  CVMassert((0 <= cc) && (cc < 16) /* illegal cc */);
+  CVMassert((0 <= (int)cc) && (cc < 16) /* illegal cc */);
   /* 0000 1111 1000 tttn #32-bit disp */
   /* InstructionMark im(this); */
 

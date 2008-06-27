@@ -1458,7 +1458,8 @@ enum {
 			  {clinitEE}, (CVMUint16*)checkedExceptions,	\
 			  CVM_INIT_SOURCEFILENAME(sourceFileName)	\
 			  (CVMMethodBlock**)methodTablePtr,		\
-			  (CVMInnerClassesInfo*)innerClassesInfo}
+                          (CVMInnerClassesInfo*)innerClassesInfo,	\
+                          0,0}
 
 #ifdef CVM_METHODBLOCK_HAS_CB
 #define CVM_INIT_METHODBLOCK_CB_FIELD(cb) (CVMClassBlock*)cb,

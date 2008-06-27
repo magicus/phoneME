@@ -2122,11 +2122,27 @@ CVM_ANT         ?= ant
 # Compiler and linker flags
 #
 
+# don't enable extra gcc warnings if using gcc version 2.x
+GET_GCC_VERSION := $(shell $(TARGET_CC) -dumpversion  2> /dev/null)
+ifeq ($(findstring 2.95, $(GET_GCC_VERSION)), 2.95)
+USE_EXTRA_GCC_WARNINGS ?= false
+endif
+ifeq ($(findstring 2.96, $(GET_GCC_VERSION)), 2.96)
+USE_EXTRA_GCC_WARNINGS ?= false
+endif
+
+USE_EXTRA_GCC_WARNINGS ?= true
+ifeq ($(USE_EXTRA_GCC_WARNINGS),true)
+EXTRA_CC_WARNINGS ?= -W -Wno-unused-parameter -Wno-sign-compare
+endif
+
 # for creating gnumake .d files
 CCDEPEND   	= -MM
 
 ASM_FLAGS	= -c -fno-common $(ASM_ARCH_FLAGS)
-CCFLAGS     	= -c -fno-common -Wall -fno-strict-aliasing $(CC_ARCH_FLAGS)
+CCFLAGS     	= -c -fno-common -Wall \
+			$(EXTRA_CC_WARNINGS) \
+			-fno-strict-aliasing $(CC_ARCH_FLAGS)
 CCCFLAGS 	= -fno-rtti
 ifeq ($(CVM_OPTIMIZED), true)
 CCFLAGS_SPEED	= $(CCFLAGS) -O4

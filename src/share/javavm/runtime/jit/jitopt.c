@@ -1655,17 +1655,6 @@ CVMJIToptPatternIsNotSequence(CVMJITCompilationContext* con, CVMUint8 *absPc)
     return CVM_FALSE;
 }
 
-/* Purpose: Checks if the bytecode steam at the specified location is a NOT
-   expression. */
-
-/* Purpose: Applies constant folding and strength reduction to NOT
-            expressions. */
-static CVMJITIRNode *
-CVMJIToptimizeNotExpression(CVMJITCompilationContext* con, CVMJITIRNode* node)
-{
-    return node;
-}
-
 /* Purpose: Optimizes the specified binary int expression. */
 CVMJITIRNode *
 CVMJIToptimizeUnaryIntExpression(CVMJITCompilationContext* con,
