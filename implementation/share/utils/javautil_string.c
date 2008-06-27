@@ -269,36 +269,40 @@ int javautil_stricmp(const char* string1, const char* string2)
     return ch1 - ch2;
 }
 
-size_t javautil_wcsncpy(javacall_uft16 * dst, const javacall_uft16 * src, size_t nchars)
+size_t javautil_wcsncpy(javacall_utf16 * dst, const javacall_utf16 * src, size_t nchars)
 {
     int count = nchars;
     while( count-- ){
         *dst++ = *src;
-        if( !*src++ ) break;
+        if( !*src++ ) 
+            return nchars - count;
     }
-    return nchars - count;
+    return nchars;
 }
 
-int javautil_wcsnicmp(const javacall_uft16 * string1, const javacall_uft16 * string2, size_t nchars)
+int javautil_wcsnicmp(const javacall_utf16 * string1, const javacall_utf16 * string2, size_t nchars)
 {
 #define BUFFER_SIZE 0x20
     javacall_utf16 buff1[ BUFFER_SIZE ], buff2[ BUFFER_SIZE ];
 
     while( nchars ){
-        size_t len = BUFFER_SIZE, i;
+        size_t len = BUFFER_SIZE, count;
         const javacall_utf16 * p1 = buff1, * p2 = buff2;
         if( len > nchars ) len = nchars;
         javacall_towlower( buff1, javautil_wcsncpy( buff1, string1, len ) );
         javacall_towlower( buff2, javautil_wcsncpy( buff2, string2, len ) );
 
-        for( i = 0; i < len; i++){
-            if( *p1 != *p2++ ) // strings are different
-                return string1[i] - string2[i];
-            if( !*p1++ ) // strings are equal (zero char is reached)
+        for( count = len; count--; ){
+            javacall_utf16 ch = *p1++;
+            if( ch != *p2++ ) // strings are different
+                return ch - *--p2;
+            if( !ch ) // strings are equal (zero char is reached)
                 return 0;
         }
 
-        nchars -= len; string1 += len; string2 += len;
+        nchars -= len; 
+        string1 += len; 
+        string2 += len;
     }
 #undef BUFFER_SIZE
     return 0;
