@@ -220,7 +220,7 @@ javacall_result javautil_string_parse_int(char* str, int* number) {
     return JAVACALL_OK;
 }
 
-#define ISALFA(c) ('a' <= (c & ~0x20) && (c & ~0x20) <= 'z')
+#define ISALFA(c) ('A' <= (c & ~0x20) && (c & ~0x20) <= 'Z')
 
 /**
  * Compare characters of two strings without regard to case.
@@ -269,7 +269,7 @@ int javautil_stricmp(const char* string1, const char* string2)
     return ch1 - ch2;
 }
 
-size_t javautil_wcsncpy(javacall_utf16 * dst, const javacall_utf16 * src, size_t nchars)
+size_t javautil_wcsncpy(javacall_utf16 * dst, javacall_const_utf16_string src, size_t nchars)
 {
     int count = nchars;
     while( count-- ){
@@ -280,7 +280,7 @@ size_t javautil_wcsncpy(javacall_utf16 * dst, const javacall_utf16 * src, size_t
     return nchars;
 }
 
-int javautil_wcsnicmp(const javacall_utf16 * string1, const javacall_utf16 * string2, size_t nchars)
+int javautil_wcsnicmp(javacall_const_utf16_string string1, javacall_const_utf16_string string2, size_t nchars)
 {
 #define BUFFER_SIZE 0x20
     javacall_utf16 buff1[ BUFFER_SIZE ], buff2[ BUFFER_SIZE ];
