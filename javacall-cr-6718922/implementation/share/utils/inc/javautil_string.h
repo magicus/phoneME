@@ -128,7 +128,7 @@ javacall_result javautil_string_parse_int(char* str, int* number);
  */
 int javautil_strnicmp(const char* string1, const char* string2, size_t nchars);
 int javautil_stricmp(const char* string1, const char* string2);
-int javautil_wcsnicmp(const javacall_uft16 * string1, const javacall_uft16 * string2, size_t nchars);
+int javautil_wcsnicmp(const javacall_utf16 * string1, const javacall_utf16 * string2, size_t nchars);
 
 /**
  * Returns a new string that is a concatenation of two input strings.

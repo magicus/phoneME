@@ -26,12 +26,25 @@
 #ifndef __JAVACALL_STRING_H
 #define __JAVACALL_STRING_H
 
+/**
+* @file javacall_string.h
+* @ingroup StringUtils
+* @brief Javacall interfaces string and characters utilities
+*/
+
 #include "javacall_defs.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
+/**
+* @defgroup StringUtils String Utilities API
+* @ingroup JTWI
+*
+* @{
+*/
+    
 /** 
  * Converts lower case utf16 alpha characters into upper case. Other characters remain unchanged.
  * 
@@ -51,6 +64,8 @@ javacall_result javacall_towupper(javacall_utf16 * chars, unsigned int count);
  */
 
 javacall_result javacall_towlower(javacall_utf16 * chars, unsigned int count);
+
+/** @} */
 
 #ifdef __cplusplus
 } // extern "C"
