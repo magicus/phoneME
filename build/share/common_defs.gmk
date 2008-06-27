@@ -53,7 +53,6 @@ JSR_120_PACKAGES = \
     com.sun.midp.wma         \
     javax.wireless.messaging 
 
-JSR_120_EXTRA_CFLAGS += -DENABLE_JSR_120=1
 JPP_DEFS             += -DENABLE_JSR_120
 
 JAVADOC_ALL_SOURCEPATH += $(JSR_120_SOURCEPATH)
