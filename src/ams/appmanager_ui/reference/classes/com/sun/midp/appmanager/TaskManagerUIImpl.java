@@ -99,22 +99,6 @@ import java.util.*;
 class TaskManagerUIImpl extends Form
     implements TaskManagerUI, ItemCommandListener, CommandListener {
 
-    /** Constant for the discovery application class name. */
-    private static final String DISCOVERY_APP =
-        "com.sun.midp.installer.DiscoveryApp";
-
-    /** Constant for the certificate manager class name */
-    private static final String CA_MANAGER =
-        "com.sun.midp.appmanager.CaManager";
-
-    /** Constant for the graphical installer class name. */
-    private static final String INSTALLER =
-        "com.sun.midp.installer.GraphicalInstaller";
-
-    /** Constant for the ODT Agent class name. */
-    private static final String ODT_AGENT =
-        "com.sun.midp.odd.ODTAgentMIDlet";
-
     /**
      * The font used to paint midlet names in the AppSelector.
      * Inner class cannot have static variables thus it has to be here.
@@ -428,6 +412,12 @@ class TaskManagerUIImpl extends Form
         }
    }
 
+    /**
+     * Requests that the ui element, associated with the specified midlet
+     * suite, be visible and active.
+     *
+     * @param item corresponding suite info
+     */
     public void setCurrentItem(RunningMIDletSuiteInfo msi) {
         for (int i = 0; i < mciVector.size(); i++) {
             MidletCustomItem mci = (MidletCustomItem)mciVector.elementAt(i);
@@ -483,6 +473,8 @@ class TaskManagerUIImpl extends Form
      *        if false then possibility to launch midlet is needed.
      */
     public void showMidletSwitcher(boolean onlyFromLaunchedList) {
+        System.err.println("showMidletSwitcher, onlyFromLaunchedList = " + onlyFromLaunchedList
+                + ", midletSwitcher.hasItems() = " + midletSwitcher.hasItems());
         if (onlyFromLaunchedList && midletSwitcher.hasItems()) {
             display.setCurrent(midletSwitcher);
         } else {
@@ -706,6 +698,7 @@ class TaskManagerUIImpl extends Form
 
     /**
      *  Called when a new internal midlet was launched
+     * 
      * @param midlet proxy of a newly launched MIDlet
      */
     public void notifyInternalMidletStarted(MIDletProxy midlet) {
@@ -713,7 +706,7 @@ class TaskManagerUIImpl extends Form
     }
 
     /**
-     * Called when a new not internal midlet was launched.
+     * Called when a new midlet was launched.
      *
      * @param si corresponding midlet suite info
      */
@@ -735,10 +728,8 @@ class TaskManagerUIImpl extends Form
 
                 ci.setDefaultCommand(fgCmd);
                 ci.addCommand(endCmd);
-                if (ci.msi.proxy == null) {
-                    // add item to midlet switcher
-                    midletSwitcher.append(ci.msi);
-                }
+                // add item to midlet switcher
+                midletSwitcher.append(ci.msi);
                 return;
             }
         }
@@ -769,7 +760,7 @@ class TaskManagerUIImpl extends Form
     }
 
     /**
-     * Called when a running non internal midlet exited.
+     * Called when a running midlet exited.
      * @param si corresponding midlet suite info
      */
     public void notifyMidletExited(RunningMIDletSuiteInfo si) {
@@ -796,7 +787,7 @@ class TaskManagerUIImpl extends Form
                         ci.setDefaultCommand(launchCmd);
                     }
                 }
-
+System.err.println("going to call midletSwitcher.remove(ci.msi)");
                 midletSwitcher.remove(ci.msi);
                 ci.update();
 
@@ -922,11 +913,11 @@ class TaskManagerUIImpl extends Form
     }
 
     /**
-     * The AppManager manages list of available MIDlet suites
-     * and informs AppManagerUI regarding changes in list through
+     * The TaskManager manages list of available MIDlet suites
+     * and informs TaskManagerUI regarding changes in list through
      * itemRemoved callback when item is removed from the list.
      *
-     * @param suiteInfo
+     * @param suiteInfo the midlet suite info
      */
     public void itemRemoved(RunningMIDletSuiteInfo suiteInfo) {
         MidletCustomItem mci = null;
@@ -956,6 +947,10 @@ class TaskManagerUIImpl extends Form
         }
     }
 
+    /**
+     * Called when MIDlet suite being enabled
+     * @param si corresponding suite info
+     */
     public void notifyMIDletSuiteEnabled(RunningMIDletSuiteInfo msi) {
         MidletCustomItem mci = findItem(msi);
 
@@ -973,16 +968,31 @@ class TaskManagerUIImpl extends Form
     }
 
 
+    /**
+     * Called when state of the midlet changes.
+     *
+     * @param si corresponding suite info
+     * @param newSi new suite info
+     */
     public void notifyMIDletSuiteStateChaged(RunningMIDletSuiteInfo si,
                                              RunningMIDletSuiteInfo newSi) {
         midletSwitcher.update(si, newSi);
+
     }
 
+    /**
+     * Called when MIDlet suite icon hase changed
+     * @param si corresponding suite info
+     */
     public void notifyMIDletSuiteIconChaged(RunningMIDletSuiteInfo si) {
         MidletCustomItem mci = findItem(si);
         mci.icon = si.icon;
     }
 
+    /**
+     * Finds MidletCustomItem for specified midlet
+     * @param si corresponding suite info
+     */
     private MidletCustomItem findItem(RunningMIDletSuiteInfo si) {
         for (int i = 0; i < mciVector.size(); i++) {
             MidletCustomItem mci = (MidletCustomItem)mciVector.elementAt(i);
@@ -994,24 +1004,25 @@ class TaskManagerUIImpl extends Form
     }
 
     /**
-     * Appends a MidletCustomItem to the App Selector Screen
+     * The TaskManager manages list of available MIDlet suites
+     * and informs TaskManagerUI regarding changes in list through
+     * itemAppended callback when new item is appended to the list.
      *
      * @param suiteInfo the midlet suite info
-     *                  of the recently started midlet
      */
     public void itemAppended(RunningMIDletSuiteInfo suiteInfo) {
         MidletCustomItem ci = new MidletCustomItem(suiteInfo);
 
         if (suiteInfo.midletToRun != null &&
-            suiteInfo.midletToRun.equals(DISCOVERY_APP)) {
+            suiteInfo.midletToRun.equals(taskManager.DISCOVERY_APP)) {
             // setDefaultCommand will add default command first
             ci.setDefaultCommand(launchInstallCmd);
         } else if (taskManager.caManagerIncluded() && suiteInfo.midletToRun != null &&
-                   suiteInfo.midletToRun.equals(CA_MANAGER)) {
+                   suiteInfo.midletToRun.equals(taskManager.CA_MANAGER)) {
             // setDefaultCommand will add default command first
             ci.setDefaultCommand(launchCaManagerCmd);
         } else if (taskManager.oddEnabled() && suiteInfo.midletToRun != null &&
-                   suiteInfo.midletToRun.equals(ODT_AGENT)) {
+                   suiteInfo.midletToRun.equals(taskManager.ODT_AGENT)) {
             ci.setDefaultCommand(launchODTAgentCmd);
         } else {
             ci.addCommand(infoCmd);
@@ -1224,6 +1235,14 @@ class TaskManagerUIImpl extends Form
         alert.setTimeout(Alert.FOREVER);
 
         display.setCurrent(alert);
+    }
+
+    /**
+     * Returns the main displayable of TaskManagerUI.
+     * @return main screen
+     */
+    public Displayable getMainDisplayable() {
+        return this;
     }
 
     /**
@@ -1664,10 +1683,6 @@ class TaskManagerUIImpl extends Form
         
         /** current default command */
         Command default_command; // = null
-    }
-
-    public Displayable getMainDisplayable() {
-        return this;
     }
 
 }

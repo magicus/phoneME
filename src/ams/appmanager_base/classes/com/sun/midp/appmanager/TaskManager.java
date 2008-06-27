@@ -218,32 +218,6 @@ class TaskManager implements CommandListener {
                         displayError, foldersOn, true);
                 currentItem = msi;
             } else {
-
-                if (ms != null) {
-                    // Find item to select
-                    if (ms.suiteId == MIDletSuite.INTERNAL_SUITE_ID) {
-                        for (int i = 0; i < msiVector.size(); i++) {
-                            RunningMIDletSuiteInfo mi =
-                                    (RunningMIDletSuiteInfo)msiVector.elementAt(i);
-                            if ((mi.suiteId ==
-                                    MIDletSuite.INTERNAL_SUITE_ID) &&
-                                    mi.midletToRun.equals(ms.midletToRun)) {
-                                currentItem = mi;
-                                break;
-                            }
-                        }
-                    } else {
-                        for (int i = 0; i < msiVector.size(); i++) {
-                            RunningMIDletSuiteInfo mi =
-                                    (RunningMIDletSuiteInfo)msiVector.elementAt(i);
-                            if (mi.suiteId == ms.suiteId) {
-                                currentItem = mi;
-                                break;
-                            }
-                        }
-                    }
-                } // ms != null
-
                 appManagerUI = new TaskManagerUIImpl(manager, this, display,
                         displayError, foldersOn, false);
             }
@@ -254,6 +228,32 @@ class TaskManager implements CommandListener {
         updateContent();
         if (null != currentItem) {
             appManagerUI.setCurrentItem(currentItem);
+        } else {
+            if (ms != null) {
+                // Find item to select
+                if (ms.suiteId == MIDletSuite.INTERNAL_SUITE_ID) {
+                    for (int i = 0; i < msiVector.size(); i++) {
+                        RunningMIDletSuiteInfo mi =
+                                (RunningMIDletSuiteInfo)msiVector.elementAt(i);
+                        if ((mi.suiteId ==
+                                MIDletSuite.INTERNAL_SUITE_ID) &&
+                                mi.midletToRun.equals(ms.midletToRun)) {
+                            currentItem = mi;
+                            break;
+                        }
+                    }
+                } else {
+                    for (int i = 0; i < msiVector.size(); i++) {
+                        RunningMIDletSuiteInfo mi =
+                                (RunningMIDletSuiteInfo)msiVector.elementAt(i);
+                        if (mi.suiteId == ms.suiteId) {
+                            currentItem = mi;
+                            break;
+                        }
+                    }
+                }
+                appManagerUI.setCurrentItem(currentItem);
+            } // ms != null
         }
     }
 
@@ -693,77 +693,6 @@ class TaskManager implements CommandListener {
 
         display.setCurrent(appManagerUI.getMainDisplayable());
     }
-
-    /**
-     * Confirm the removal of a suite.
-     *
-     * @param suiteInfo information for suite to remove
-     */
-    /*
-    private void confirmRemove(RunningMIDletSuiteInfo suiteInfo) {
-        Form confirmForm;
-        StringBuffer temp = new StringBuffer(40);
-        Item item;
-        String extraConfirmMsg;
-        String[] values = new String[1];
-        MIDletSuiteImpl midletSuite = null;
-        String[] msgs = new String[4];
-        String[] recordStores;
-        String[] midletNames;
-        
-
-        try {
-            midletSuite = midletSuiteStorage.getMIDletSuite(suiteInfo.suiteId,
-                                                            false);
-            if (suiteInfo.hasSingleMidlet()) {
-                values[0] = suiteInfo.displayName;
-            } else {
-                values[0] =
-                    midletSuite.getProperty(MIDletSuiteImpl.SUITE_NAME_PROP);
-            }
-
-            msgs[0] = new String(Resource.getString(
-                       ResourceConstants.AMS_MGR_REMOVE_QUE,
-                       values));
-
-            extraConfirmMsg =
-                PAPICleanUp.checkMissedTransactions(midletSuite.getID());
-            if (extraConfirmMsg != null) {
-                msgs[1] = new String(extraConfirmMsg);
-            }
-
-            extraConfirmMsg = midletSuite.getProperty("MIDlet-Delete-Confirm");
-            if (extraConfirmMsg != null) {
-                msgs[2] = new String(extraConfirmMsg);
-            }
-
-            if (!suiteInfo.hasSingleMidlet()) {
-                midletNames = getMIDletsNames(midletSuite);
-            }
-
-            recordStores = midletSuiteStorage.listRecordStores(suiteInfo.suiteId);
-
-            msgs[3] = new String(Resource.getString
-                        (ResourceConstants.AMS_MGR_REM_REINSTALL, values));
-        } catch (Throwable t) {
-            appManagerUI.showError(suiteInfo.displayName, t,
-                                   Resource.getString
-                                   (ResourceConstants.AMS_CANT_ACCESS),
-                                   null);
-            return;
-        } finally {
-            if (midletSuite != null) {
-                midletSuite.close();
-            }
-        }
-
-        removeMsi = suiteInfo;
-        
-        appManangerUI.showConfirmRemoveDialog(Resource.getString
-                (ResourceConstants.AMS_CONFIRMATION), 
-                msgs, midletNames, recordStores);
-    }                                             */
-    
 
     /**
      * Appends a names of all the MIDlets in a suite to a Form, one per line.

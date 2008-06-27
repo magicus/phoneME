@@ -34,31 +34,32 @@ import javax.microedition.lcdui.Displayable;
 interface TaskManagerUI {
 
     /**
-     * The AppManager manages list of available MIDlet suites
-     * and informs AppManagerUI regarding changes in list through
+     * The TaskManager manages list of available MIDlet suites
+     * and informs TaskManagerUI regarding changes in list through
      * itemAppended callback when new item is appended to the list.
      *  
-     * @param suiteInfo
+     * @param suiteInfo the midlet suite info
      */
     void itemAppended(RunningMIDletSuiteInfo suiteInfo);
 
     /**
-     * The AppManager manages list of available MIDlet suites
-     * and informs AppManagerUI regarding changes in list through
+     * The TaskManager manages list of available MIDlet suites
+     * and informs TaskManagerUI regarding changes in list through
      * itemRemoved callback when item is removed from the list.
      *
-     * @param suiteInfo
+     * @param suiteInfo the midlet suite info
      */
     void itemRemoved(RunningMIDletSuiteInfo suiteInfo);
 
     /**
-     *  Called when a new internal midlet was launched
+     * Called when a new internal midlet was launched
+     *
      * @param midlet proxy of a newly launched MIDlet
      */
     void notifyInternalMidletStarted(MIDletProxy midlet);
 
     /**
-     * Called when a new not internal midlet was launched.
+     * Called when a new midlet was launched.
      *
      * @param si corresponding midlet suite info
      */
@@ -78,16 +79,16 @@ interface TaskManagerUI {
     void notifyInternalMidletExited(MIDletProxy midlet);
 
     /**
-     * Called when a running non internal midlet exited.
+     * Called when a running midlet exited.
      * @param si corresponding midlet suite info
      */
     void notifyMidletExited(RunningMIDletSuiteInfo si);
 
     /**
-     * Called by ApplicationManager after a MIDlet suite
+     * Called by TaskManager after a MIDlet suite
      * is successfully installed on the device,
      * to ask the user whether or not to launch
-     * a MIDlet from the suite. 
+     * the MIDlet from the suite. 
      * @param si corresponding suite info
      */
     void notifySuiteInstalled(RunningMIDletSuiteInfo si);
@@ -127,9 +128,21 @@ interface TaskManagerUI {
     void notifyMidletStartError(int suiteId, String className, int errorCode,
                                 String errorDetails);
 
+    /**
+     * Called when state of the midlet changes.
+     *
+     * @param si corresponding suite info
+     * @param newSi new suite info
+     */
     void notifyMIDletSuiteStateChaged(RunningMIDletSuiteInfo si,
                                              RunningMIDletSuiteInfo newSi);
 
+    /**
+     * Requests that the ui element, associated with the specified midlet
+     * suite, be visible and active.
+     * 
+     * @param item corresponding suite info
+     */
     void setCurrentItem(RunningMIDletSuiteInfo item);
 
     /**
@@ -154,9 +167,11 @@ interface TaskManagerUI {
      */
     void cleanUp();
 
+    /**
+     * Returns the main displayable of the TaskManagerUI.
+     * @return main screen
+     */
     Displayable getMainDisplayable();
-    
-
 
 }
 
