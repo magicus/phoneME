@@ -65,7 +65,10 @@ else
     endef
 endif
 
-CFLAGS+=-c -O2 $(LOCAL_CFLAGS_$(BUILD))
+LOCAL_CFLAGS_debug = -g -gtp -O0
+LOCAL_CFLAGS_nodebug = -g- -O2 -Otime
+
+CFLAGS += -c $(LOCAL_CFLAGS_$(BUILD))
 CPPFLAGS+= -I`$(call fixcygpath, $(JAVACALL_OUTPUT_INCLUDE_DIR))`
 CPPFLAGS+= $(SPECIFIC_DEFINITIONS)
 
