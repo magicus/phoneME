@@ -640,7 +640,7 @@ public class CalendarImpl extends Calendar {
                 this.fields[AM_PM] = PM;
             } else {
                 if (this.fields[AM_PM] == PM) {
-                    this.fields[HOUR_OF_DAY] = value + 12;
+                    this.fields[HOUR_OF_DAY] = (value % 12) + 12;
                 } else {
                     this.fields[HOUR_OF_DAY] = value;
                 }
