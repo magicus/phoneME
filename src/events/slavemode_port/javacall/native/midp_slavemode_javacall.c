@@ -360,7 +360,7 @@ javacall_result checkForSystemSignal(MidpReentryData* pNewSignal,
 #if ENABLE_JSR_135
         pNewSignal->waitingFor = MEDIA_EVENT_SIGNAL;
         pNewSignal->status     = event->data.multimediaEvent.status;
-        pNewSignal->pResult    = (void *)event->data.multimediaEvent.data;
+        pNewSignal->pResult    = (void *)event->data.multimediaEvent.data.num32;
         
         /* Create Java driven event */
         if (event->data.multimediaEvent.mediaType > 0 &&
@@ -368,7 +368,7 @@ javacall_result checkForSystemSignal(MidpReentryData* pNewSignal,
                         JAVACALL_EVENT_MEDIA_JAVA_EVENTS_MARKER) {
             pNewMidpEvent->type         = MMAPI_EVENT;
             pNewMidpEvent->MM_PLAYER_ID = event->data.multimediaEvent.playerId;
-            pNewMidpEvent->MM_DATA      = event->data.multimediaEvent.data;
+            pNewMidpEvent->MM_DATA      = event->data.multimediaEvent.data.num32;
             pNewMidpEvent->MM_ISOLATE   = event->data.multimediaEvent.appId;
             pNewMidpEvent->MM_EVT_TYPE  = event->data.multimediaEvent.mediaType;
             pNewMidpEvent->MM_EVT_STATUS= event->data.multimediaEvent.status;
@@ -408,7 +408,7 @@ javacall_result checkForSystemSignal(MidpReentryData* pNewSignal,
                 pNewMidpEvent->type,
                 event->data.multimediaEvent.appId,
                 event->data.multimediaEvent.playerId,
-                event->data.multimediaEvent.data);
+                event->data.multimediaEvent.data.num32);
 #endif
         break;
 #ifdef ENABLE_JSR_234
@@ -418,7 +418,6 @@ javacall_result checkForSystemSignal(MidpReentryData* pNewSignal,
 
         pNewMidpEvent->type         = AMMS_EVENT;
         pNewMidpEvent->MM_PLAYER_ID = event->data.multimediaEvent.playerId;
-        pNewMidpEvent->MM_DATA      = event->data.multimediaEvent.data;
         pNewMidpEvent->MM_ISOLATE   = event->data.multimediaEvent.appId;
         pNewMidpEvent->MM_EVT_TYPE  = event->data.multimediaEvent.mediaType;
 
@@ -428,12 +427,14 @@ javacall_result checkForSystemSignal(MidpReentryData* pNewSignal,
         case JAVACALL_EVENT_AMMS_SNAP_STORAGE_ERROR:
             {
                 int len = 0;
-                javacall_utf16_string str = (jchar*)event->data.multimediaEvent.data;
+                javacall_utf16_string str = event->data.multimediaEvent.data.str16;
                 while( str[len] != 0 ) len++;
                 pcsl_string_convert_from_utf16( str, len, &pNewMidpEvent->MM_STRING );
                 free( str );
-                pNewMidpEvent->MM_DATA = 0;
             }
+            break;
+        default:
+            pNewMidpEvent->MM_DATA = event->data.multimediaEvent.data.num32;
             break;
         }
 

@@ -1225,11 +1225,11 @@ void javanotify_on_media_notification(javacall_media_notification_type type,
     REPORT_INFO4(LC_MMAPI, "javanotify_on_media_notification type=%d appId=%d playerId%d status=%d\n", type, appId, playerId, status);
 
     e.eventType = MIDP_JC_EVENT_MULTIMEDIA;
-    e.data.multimediaEvent.mediaType = type;
-    e.data.multimediaEvent.appId = appId;
-    e.data.multimediaEvent.playerId = playerId;
-    e.data.multimediaEvent.status = (int) status;
-    e.data.multimediaEvent.data = (int) data;
+    e.data.multimediaEvent.mediaType  = type;
+    e.data.multimediaEvent.appId      = appId;
+    e.data.multimediaEvent.playerId   = playerId;
+    e.data.multimediaEvent.status     = (int) status;
+    e.data.multimediaEvent.data.num32 = (int) data;
 
     midp_jc_event_send(&e);
 #endif
@@ -1260,12 +1260,12 @@ void javanotify_on_amms_notification(javacall_amms_notification_type type,
     case JAVACALL_EVENT_AMMS_SNAP_STORAGE_ERROR:
         {
             size_t size = sizeof( wchar_t ) * ( 1 + wcslen( (javacall_utf16_string)data ) );
-            e.data.multimediaEvent.str16 = (javacall_utf16_string)malloc( size );
-            wcscpy( e.data.multimediaEvent.str16, (javacall_utf16_string)data );
+            e.data.multimediaEvent.data.str16 = (javacall_utf16_string)malloc( size );
+            wcscpy( e.data.multimediaEvent.data.str16, (javacall_utf16_string)data );
         }
         break;
     default:
-        e.data.multimediaEvent.data = (int) data;
+        e.data.multimediaEvent.data.num32 = (int) data;
         break;
     }
 

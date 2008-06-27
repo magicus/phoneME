@@ -237,9 +237,9 @@ typedef struct {
     int playerId;
     int status;
     union {
-        long data;
+        long num32;
         javacall_utf16_string str16;
-    };
+    } data;
 } midp_jc_event_multimedia;
 #endif
 
