@@ -39,6 +39,7 @@ endif
 AWT_PEERSET_NAME    = $(AWT_PEERSET)
 MOC_OUTPUT_DIR		= $(CVM_DERIVEDROOT)/personal/$(AWT_PEERSET_NAME)/moc
 CVM_BUILDDIRS		+= $(MOC_OUTPUT_DIR)
+CVM_SRCDIRS		+= $(MOC_OUTPUT_DIR)
 
 #
 # These are exported as system properties by defs_basis.mk
