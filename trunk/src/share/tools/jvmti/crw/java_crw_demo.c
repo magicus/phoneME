@@ -1739,7 +1739,7 @@ write_stackmap_table(MethodImage *mi)
         ByteOffset new_pc = 0;    /* new pc in instrumented code */
         unsigned   ft;        /* frame_type */
         int        delta = 0;     /* pc delta */
-        int        new_delta; /* new pc delta */
+        int        new_delta = -1; /* new pc delta */
 
         ft = readU1(ci);
         if ( ft <= 63 ) {

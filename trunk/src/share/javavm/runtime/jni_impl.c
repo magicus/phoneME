@@ -3156,10 +3156,11 @@ CVMjniGetDirectBufferCapacity(JNIEnv *env, jobject buf)
    will instrument it if necessary, and the "checked" version of the
    JNI may do so also if we add that later. */
 
+static
 #ifndef CVM_JVMTI
 const
 #endif
-static struct JNINativeInterface CVMmainJNIfuncs =
+struct JNINativeInterface CVMmainJNIfuncs =
 {
     NULL,
     NULL,

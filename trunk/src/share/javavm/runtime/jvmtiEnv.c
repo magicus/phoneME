@@ -7355,7 +7355,7 @@ jvmti_GetErrorName(jvmtiEnv* jvmtienv,
     JVMTI_ENABLED();
     NOT_NULL(namePtr);
 
-    if (error < JVMTI_ERROR_NONE || error > JVMTI_ERROR_MAX) {
+    if ((int)error < JVMTI_ERROR_NONE || error > JVMTI_ERROR_MAX) {
 	return JVMTI_ERROR_ILLEGAL_ARGUMENT;
     }
     name = jvmtiErrorNames[error];

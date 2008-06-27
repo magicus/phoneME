@@ -337,7 +337,7 @@ void CVMgcReplaceWithPlaceHolderObject(CVMObject *currObj, CVMUint32 objSize)
 	sizeOfArrayHeader += sizeof(CVMUint32) /* pad */;
 #endif
         arrayLength = (objSize - sizeOfArrayHeader) / sizeof(CVMJavaInt);
-	CVMassert(arrayLength >= 0);
+	CVMassert(objSize >= sizeOfArrayHeader);
 	array->length = arrayLength;
 
         objCb = CVMsystemClass(manufacturedArrayOfInt);

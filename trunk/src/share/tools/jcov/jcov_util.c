@@ -206,11 +206,12 @@ void print_cp_entry(cp_entry_t *cp_entry) {
     case JVM_CONSTANT_Integer:
     case JVM_CONSTANT_Float:
             /* we're not interested in the rest of tags */
-            printf("0x%x\n", cp_entry->u.Integer.val);
+            printf("0x%x\n", (unsigned)cp_entry->u.Integer.val);
             break;
     case JVM_CONSTANT_Long:
     case JVM_CONSTANT_Double:
-        printf("hi: 0x%x, lo: 0x%x\n", cp_entry->u.Long.hi, cp_entry->u.Long.lo);
+        printf("hi: 0x%x, lo: 0x%x\n",
+               (unsigned)cp_entry->u.Long.hi, (unsigned)cp_entry->u.Long.lo);
         break;
     case JVM_CONSTANT_String:
         printf("#%d\n", cp_entry->u.String.cp_index);

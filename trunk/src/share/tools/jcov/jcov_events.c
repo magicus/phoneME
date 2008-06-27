@@ -597,7 +597,7 @@ void jcov_class_load_event(JVMPI_Event *event) {
 
 void jcov_req_class_load_event(JVMPI_Event *event) {
     jcov_class_t *found_class, class;
-    bin_class_context_t ctx = { 0 };
+    bin_class_context_t ctx = { 0, 0, 0, 0, 0, 0, 0 };
     UINT8 *class_buf = NULL;
     char *tmp;
     Bool res;

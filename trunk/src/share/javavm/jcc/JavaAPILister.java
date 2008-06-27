@@ -680,7 +680,7 @@ public class JavaAPILister extends LinkerUtil {
 	    out.print(nClasses + ", ");
 	    out.println("cre};");
 	} else {
-	    out.print("const struct CVMClassRestrictions CVMdualStackMemberFilter = {0, NULL};");
+	    out.println("const struct CVMClassRestrictions CVMdualStackMemberFilter = {0, NULL};");
 	}
 
         out.flush();

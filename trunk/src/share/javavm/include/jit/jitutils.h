@@ -112,7 +112,7 @@ CVMJITstackInit(CVMJITCompilationContext* con, CVMJITStack* stack,
 #define CVMJITstackResetCnt(con, stack) ((stack)->todoIdx = 0)
 
 #define CVMJITstackSetCount(con, stack, newTopIndex) \
-    (CVMassert(newTopIndex >= 0), ((stack)->todoIdx = newTopIndex))
+    (CVMassert((CVMInt32)newTopIndex >= 0), ((stack)->todoIdx = newTopIndex))
 
 /*************************************
  * CVMJITGrowableArray
