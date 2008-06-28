@@ -5071,9 +5071,6 @@ fixupCallback(CVMExecEnv* ee,
     CVMConstantPool *cp = CVMcbConstantPool(cb);
     int i;
 
-    if (cb == oldcb) {
-	return;
-    }
     if ((cp != NULL) && (CVMcpTypes(cp) != NULL)) {
         for (i = 1; i < CVMcbConstantPoolCount(cb); i++) {
             CVMConstantPoolEntryType cpType = CVMcpEntryType(cp, i);
@@ -5093,6 +5090,12 @@ fixupCallback(CVMExecEnv* ee,
 	}
     }
     /* Fixup method table as well */
+    if (cb == oldcb) {
+        /* no need to update the cb methodtableptr entries as we
+         * replace the methodtableptr 
+         */
+	return;
+    }
 
     if (CVMcbMethodTablePtr(cb) != NULL) {
 	for (i = 0; i < CVMcbMethodTableCount(cb); i++) {
