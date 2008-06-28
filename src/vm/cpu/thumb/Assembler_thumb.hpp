@@ -38,7 +38,7 @@
 // machine code. All functions representing machine instructions
 // generate exactly one instruction (no optimizations!).
 
-class Assembler: public GlobalObj {
+class Assembler: public AssemblerCommon {
 
 #if !defined(PRODUCT) || ENABLE_COMPILER || USE_COMPILER_STRUCTURES
 

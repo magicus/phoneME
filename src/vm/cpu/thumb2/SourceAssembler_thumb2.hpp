@@ -1,5 +1,5 @@
 /*
- *   
+ *
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -46,13 +46,13 @@ class SourceAssembler: public Macros {
 
   // helper routines for symbolic output
   static const char* cond_name(Condition cond) {
-    return Disassembler::cond_name(cond);
+    return Disassembler::condition_name(cond);
   }
 
   static const char* reg_name(Register reg) {
-    return Disassembler::reg_name(reg);
+    return Disassembler::register_name(reg);
   }
-  
+
   // If we're generating glue code, we cannot use b or bl instructions
   static void set_in_glue_code(bool state) {
     _in_glue_code = state;
@@ -116,7 +116,7 @@ class SourceAssembler: public Macros {
     Label(const char* symbol = NULL, bool data_label = false);
     ~Label();
 
-   
+
     int id() const                               { return _id; }
     const char* symbol() const                   { return _symbol; }
   };
@@ -165,8 +165,8 @@ class SourceAssembler: public Macros {
    public:
     // creation/destruction
     LiteralBuffer() : _length(0)       {}
-    ~LiteralBuffer()                   { 
-        GUARANTEE(_length == 0, "buffer must be empty"); 
+    ~LiteralBuffer()                   {
+        GUARANTEE(_length == 0, "buffer must be empty");
     }
 
     // manipulation
@@ -216,7 +216,7 @@ class SourceAssembler: public Macros {
   // accessors
   Stream* stream() const {
     return _stream;
-  } 
+  }
   Disassembler& disassembler() {
     return _disasm;
   }

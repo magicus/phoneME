@@ -38,7 +38,7 @@
 // generate exactly one instruction (no optimizations!).
 
 class PostIndex {
-public: 
+public:
   int value;
   PostIndex(int p_value) {value = p_value;};
 };
@@ -49,7 +49,7 @@ public :
   PreIndex(int p_value) {value = p_value;};
 };
 
-class Assembler: public GlobalObj {
+class Assembler: public AssemblerCommon {
 
 #if !PRODUCT || ENABLE_COMPILER || USE_COMPILER_STRUCTURES
 
@@ -146,7 +146,35 @@ protected:
     // position and order is relevant!
     r0, r1, r2 , r3 , r4 , r5 , r6 , r7 ,
     r8, r9, r10, r11, r12, r13, r14, r15,
+
+#if ENABLE_ARM_VFP
+    // Single-precision floating point registers.
+    s0,  s1,  s2,  s3,  s4,  s5,  s6,  s7,
+    s8,  s9,  s10, s11, s12, s13, s14, s15,
+    s16, s17, s18, s19, s20, s21, s22, s23,
+    s24, s25, s26, s27, s28, s29, s30, s31,
+#endif
     number_of_registers,
+
+#if ENABLE_ARM_VFP
+    // Double-precision floating point registers.
+    d0  = s0,
+    d1  = s2,
+    d2  = s4,
+    d3  = s6,
+    d4  = s8,
+    d5  = s10,
+    d6  = s12,
+    d7  = s14,
+    d8  = s16,
+    d9  = s18,
+    d10 = s20,
+    d11 = s22,
+    d12 = s24,
+    d13 = s26,
+    d14 = s28,
+    d15 = s30,
+#endif
 
     // for platform-independant code
     return_register = r0,
@@ -196,16 +224,22 @@ protected:
     pc      =  r15, // FIXED BY HARDWARE
 #endif
 
-   // set to stack type on method return
+    // set to stack type on method return
     method_return_type = r2,
+
+#if ENABLE_ARM_VFP
+    last_register             = s31,
+    number_of_float_registers =  32,
+#else
+    last_register             = r15,
+    number_of_float_registers =   0,
+#endif
+    number_of_gp_registers    =  16,
 
     // for linkage w/ shared code - will probably need to change
     no_reg                    =  -1,
     first_register            =  r0,
-    last_register             = r15,
-    number_of_float_registers =   0,
-
-    first_allocatable_register = r0,
+    first_allocatable_register=  r0
   };
 
   enum RegisterSet {
@@ -215,14 +249,29 @@ protected:
     tmp01 = 1 << tmp0   ,
     tmp23 = 1 << tmp2   ,
     tmp45 = 1 << tmp4   ,
-    forceaddress4=0x10000000  // force Address4 to be int size
+    forceRegisterSet=0x10000000  // force Address4 to be int size
   };
 
-  static Register as_register(int encoding) {
-    GUARANTEE(0 <= encoding && encoding < number_of_registers,
-              "illegal register");
-    return (Register)encoding;
+  static Register as_register(const unsigned encoding) {
+    GUARANTEE( encoding < number_of_registers, "illegal register");
+    return Register(encoding);
   };
+
+#if ENABLE_ARM_VFP
+  static bool is_vfp_register(const Register reg) {
+    return unsigned(reg - s0) < unsigned(number_of_float_registers);
+  }
+
+  static bool is_arm_register(const Register reg) {
+    return unsigned(reg) < unsigned(s0);
+  }
+
+  enum VFPSystemRegister {
+    fpsid = 0,
+    fpscr = 1,
+    fpexc = 8
+  };
+#endif
 
   // addressing mode 2 - load and store word or unsigned byte
   enum Address2 {
@@ -286,14 +335,13 @@ protected:
     return x >= r4 && x != r12 && x != r14;
   }
 
-  static Condition as_condition(int encoding) {
-    GUARANTEE(0 <= encoding && encoding < number_of_conditions,
-              "illegal condition");
-    return (Condition)encoding;
+  static Condition as_condition( const unsigned encoding) {
+    GUARANTEE( encoding < number_of_conditions, "illegal condition");
+    return Condition(encoding);
   }
 
-  static Condition not_cond(Condition cond) {
-    return (Condition)(cond ^ 1);
+  static Condition not_cond(const Condition cond) {
+    return Condition(cond ^ 1);
   }
 
   static Imm12 imm12(int value) {
@@ -318,10 +366,9 @@ protected:
    lsl_shift_3 = 3
   };
 
-  static Shift as_shift(int encoding) {
-    GUARANTEE(0 <= encoding && encoding < number_of_shifts,
-              "illegal shift");
-    return (Shift)encoding;
+  static Shift as_shift(const unsigned encoding) {
+    GUARANTEE( encoding < number_of_shifts, "illegal shift");
+    return Shift(encoding);
   }
 
   enum Mode {
@@ -405,8 +452,8 @@ protected:
 #undef F
 
 
-  void mov(Register rd, Register rm) {                 
-    emit(7 << 10 | rm << 3 | rd);                         
+  void mov(Register rd, Register rm) {
+    emit(7 << 10 | rm << 3 | rd);
   }
 
 #define F(mnemonic, opcode)                                 \
@@ -451,7 +498,7 @@ protected:
   }
   F(add_imm3, 0)
   F(sub_imm3, 1)
-#undef F  
+#undef F
 
   // add, cmp, mov high register instructions
 #define F(mnemonic, opcode)                                 \
@@ -505,14 +552,19 @@ protected:
   F(str_sp_imm8x4,  0, 0)
 #undef F
 
- // load offset instructions
+// load offset instructions
 #define F(mnemonic, l, b)                                   \
-  void mnemonic(Register rd, int offset = 0) {              \
+  void mnemonic(Register rd, const int offset = 0) {        \
      check_imm(offset, 8);                                  \
-     emit(4 << 12 | l << 11 | rd << 8 | offset);       	    \
+     emit(4 << 12 | l << 11 | rd << 8 | offset);            \
   }
   F(ldr_pc_imm8x4,  1, 0)
 #undef F
+
+  void ldr_pc_stub( Register rd, const int offset ) {
+    check_imm( abs(offset), 10 );
+    emit( short(1 << 14 | rd << 11 | (offset & 0x7FF)) );
+  }
 
 // load offset instructions
 #define F(mnemonic, l, b)                                   \
@@ -526,7 +578,7 @@ protected:
   F(ldrb_imm5, 1, 1)
   F(str_imm5x4,  0, 0)//untested
   F(strb_imm5, 0, 1)//untested
-#undef F  
+#undef F
 
 
   // load register instructions
@@ -569,16 +621,16 @@ protected:
     emit(0x15 << 10 | rm << 6 | rn << 3 | rd);
   }
 
-  void ldrh_imm5x2(Register rd, Register rn, int offset = 0) {     
+  void ldrh_imm5x2(Register rd, Register rn, int offset = 0) {
     check_imm(offset, 5);
-    GUARANTEE(rd < r8 && rd < r8, "invalid register");          
-    emit(8 << 12 | 1 << 11 | offset << 6 | rn << 3 | rd);                                     
+    GUARANTEE(rd < r8 && rd < r8, "invalid register");
+    emit(8 << 12 | 1 << 11 | offset << 6 | rn << 3 | rd);
   }
 
-  void strh_imm5x2(Register rd, Register rn, int offset = 0) {     
+  void strh_imm5x2(Register rd, Register rn, int offset = 0) {
     check_imm(offset, 5);
-    GUARANTEE(rd < r8 && rn < r8, "invalid register");          
-    emit(1 << 15 | offset << 6 | rn << 3 | rd);  
+    GUARANTEE(rd < r8 && rn < r8, "invalid register");
+    emit(1 << 15 | offset << 6 | rn << 3 | rd);
   }
 
 #define F(mnemonic, l)                                      \
@@ -635,13 +687,220 @@ protected:
     emit(0x8F << 7 | rm << 3);
   }
 
+#if ENABLE_ARM_VFP
+  // addressing mode 5 - coprocessor
+  enum Address5 {
+    forceaddress5=0x10000000  // force Address3 to be int size
+  };
+
+  static Address5 vfp_imm_index8x4( const Register rn, const int offset_8 = 0,
+                                              Mode mode = offset)
+  {
+    GUARANTEE(rn != r15 || mode == offset, "unpredictable instruction");
+    check_imm(abs(offset_8), 8);
+    if( mode == post_indexed ) {
+      // I don't know why these is different for coprocessors
+      mode = Mode(1 << 21);
+    }
+    return Address5(mode | (up(offset_8) << 23) | rn << 16 | abs(offset_8) & 0xff);
+  }
+
+  static Address5 vfp_imm_index( const Register rn, const int offset = 0,
+                                                    const Mode mode = offset)
+  {
+    GUARANTEE( offset % 4 == 0, "Offset must be multiple of 4");
+    return vfp_imm_index8x4( rn, offset / 4, mode );
+  }
+
+  static Address5 unindexed5(const Register /*rn*/, const int options) {
+    check_imm(options, 8);
+    // The "sign" bit is required to be set.
+    return (Address5) ((1 << 23) | options);
+  }
+
+private:
+ void coprocessor( const int crn, const int rn, const int base ) {
+   emit_w( base | crn << 16 | rn << 12 );
+ }
+
+ void fmsr_fmrs( Register sn, Register rd, int base ) {
+   const unsigned CRn  = sn - s0;
+   coprocessor( CRn >> 1, rd, ((CRn & 1) << 7) | base );
+ }
+
+public:
+  // sn <- rd
+  void fmsr( Register sn, Register rd ) {
+    fmsr_fmrs( sn, rd, 0xEE000A10 );
+  }
+
+  // rd <- sn
+  void fmrs( Register rd, Register sn ) {
+    fmsr_fmrs( sn, rd, 0xEE100A10 );
+  }
+
+  // system reg <- rd
+  void fmxr( VFPSystemRegister reg, Register rd ) {
+    coprocessor( reg, rd, 0xEEE00A10 );
+  }
+
+  // rd <- system reg
+  void fmrx( Register rd, VFPSystemRegister reg ) {
+    coprocessor( reg, rd, 0xEEF00A10 );
+  }
+
+  // dm <- rd rn
+  void fmdrr( Register sm, Register rd, Register rn ) {
+    const unsigned m = sm - s0;
+    coprocessor( rn, rd, (m >> 1) | 0xEC40B10 );
+  }
+
+  // rd rn <- dm
+  void fmrrd( Register rd, Register rn, Register sm ) {
+    const unsigned m = sm - s0;
+    coprocessor( rn, rd, (m >> 1) | 0xEC50B10 );
+  }
+
+  void fmstat( void ) {
+    emit_w( 0xEEF1FA10 );
+  }
+
+#define F(mnemonic, Fn, N, cpnum) \
+  void mnemonic( Register sd, Register sm ) { \
+    jint d = sd - s0; \
+    jint m = sm - s0; \
+    jint Fd = d >> 1;   /* top 4 bits */ \
+    jint Fm = m >> 1;   /* top 4 bits */ \
+    jint D  = d &  1;   /* bottom bit */ \
+    jint M  = m &  1;   /* bottom bit */ \
+    \
+    emit_w( 0xEEB00040 | D << 22 | Fn << 16 | Fd << 12 | \
+            cpnum << 8 | N << 7  | M  << 5  | Fm ); \
+  }
+  F(fcpys,   0x0, 0, 10) // sd =  sm
+  F(fabss,   0x0, 1, 10) // sd =  abs(sm)
+  F(fnegs,   0x1, 0, 10) // sd = -sm
+  F(fsqrts,  0x1, 1, 10) // sd =  sqrt(sm)
+  F(fcmps,   0x4, 0, 10)
+  F(fcmpes,  0x4, 1, 10)
+  F(fcmpzs,  0x5, 0, 10)
+  F(fcmpezs, 0x5, 1, 10)
+  F(fcvtds,  0x7, 1, 10)
+  F(fuitos,  0x8, 0, 10)
+  F(fsitos,  0x8, 1, 10)
+  F(ftouis,  0xc, 0, 10)
+  F(ftouizs, 0xc, 1, 10)
+  F(ftosis,  0xd, 0, 10)
+  F(ftosizs, 0xd, 1, 10)
+
+  F(fcpyd,   0x0, 0, 11) // sd =  sm
+  F(fabsd,   0x0, 1, 11) // sd =  abs(sm)
+  F(fnegd,   0x1, 0, 11) // sd = -sm
+  F(fsqrtd,  0x1, 1, 11) // sd =  sqrt(sm)
+  F(fcmpd,   0x4, 0, 11)
+  F(fcmped,  0x4, 1, 11)
+  F(fcmpzd,  0x5, 0, 11)
+  F(fcmpezd, 0x5, 1, 11)
+  F(fcvtsd,  0x7, 1, 11)
+  F(fuitod,  0x8, 0, 11)
+  F(fsitod,  0x8, 1, 11)
+  F(ftouid,  0xc, 0, 11)
+  F(ftouizd, 0xc, 1, 11)
+  F(ftosid,  0xd, 0, 11)
+  F(ftosizd, 0xd, 1, 11)
+#undef F
+
+#define F(mnemonic, p, q, r, s, cpnum) \
+  void mnemonic( Register sd, Register sn, Register sm ) {\
+    sd = Register(sd - s0); \
+    sm = Register(sm - s0); \
+    sn = Register(sn - s0); \
+    jint Fd = sd >> 1;  /* top 4 bits */ \
+    jint Fm = sm >> 1;  /* top 4 bits */ \
+    jint Fn = sn >> 1;  /* top 4 bits */ \
+    jint D  = sd &  1;  /* bottom bit */ \
+    jint M  = sm &  1;  /* bottom bit */ \
+    jint N  = sn &  1;  /* bottom bit */ \
+    \
+    emit_w( 0xEE << 24 | p << 23 | D << 22 | q << 21 | \
+            r << 20 | Fn << 16 |  \
+            Fd << 12 | cpnum << 8 | N << 7 | s << 6 | M << 5 | Fm); \
+  }
+  F(fmacs,  0, 0, 0, 0, 10)
+  F(fnmacs, 0, 0, 0, 1, 10)
+  F(fmscs,  0, 0, 1, 0, 10)
+  F(fnmscs, 0, 0, 1, 1, 10)
+  F(fmuls,  0, 1, 0, 0, 10)
+  F(fnmuls, 0, 1, 0, 1, 10)
+  F(fadds,  0, 1, 1, 0, 10)
+  F(fsubs,  0, 1, 1, 1, 10)
+  F(fdivs,  1, 0, 0, 0, 10)
+
+  F(fmacd,  0, 0, 0, 0, 11)
+  F(fnmacd, 0, 0, 0, 1, 11)
+  F(fmscd,  0, 0, 1, 0, 11)
+  F(fnmscd, 0, 0, 1, 1, 11)
+  F(fmuld,  0, 1, 0, 0, 11)
+  F(fnmuld, 0, 1, 0, 1, 11)
+  F(faddd,  0, 1, 1, 0, 11)
+  F(fsubd,  0, 1, 1, 1, 11)
+  F(fdivd,  1, 0, 0, 0, 11)
+#undef F
+
+#define F(mnemonic, L, cpnum) \
+  void mnemonic( Register sd, Address5 address5 ) { \
+    sd = Register(sd - s0); \
+    jint Fd = sd >> 1;  /* top 4 bits */ \
+    jint D  = sd &  1;  /* bottom bit */ \
+    \
+    emit_w(0xED10 << 16 | D << 22 | L << 20 | Fd << 12 | cpnum << 8 | address5); \
+  }
+
+  F(flds, 1, 10)
+  F(fsts, 0, 10)
+  F(fldd, 1, 11)
+  F(fstd, 0, 11)
+#undef F
+
+#if USE_ARM_VFP_LITERALS
+  void flds_stub( Register sd, const int offset ) {
+    check_imm( abs(offset), 15 );
+    emit( short( offset  ) );
+    emit( short( sd - s0 ) );
+  }
+#endif
+
+#define F(mnemonic, P, U, L, cpnum) \
+  void mnemonic(Register rn, Register beg, int size, WritebackMode w = no_writeback ) { \
+    beg = Register(beg - s0); \
+    jint Fd = beg >> 1; /* top 4 bits */ \
+    jint D  = beg &  1; /* bottom bit */ \
+    \
+    GUARANTEE(size != 0 && beg >= 0 && beg+size <= number_of_float_registers, "Invalid Register List"); \
+    emit_w( 0xE << 28 | 0x06 << 25 | P << 24 | U << 23 | D << 22 | w << 21 | \
+            L << 20 | rn << 16 | Fd << 12 | cpnum << 8 | size); \
+  }
+
+  // Non stack                // stack
+  F(fldmiad, 0, 1, 1, 11)   F(fldmfdd, 0, 1, 1, 11)
+  F(fldmias, 0, 1, 1, 10)   F(fldmfds, 0, 1, 1, 10)
+  F(fldmdbd, 1, 0, 1, 11)   F(fldmead, 1, 0, 1, 11)
+  F(fldmdbs, 1, 0, 1, 10)   F(fldmeas, 1, 0, 1, 10)
+  F(fstmiad, 0, 1, 0, 11)   F(fstmead, 0, 1, 0, 11)
+  F(fstmias, 0, 1, 0, 10)   F(fstmeas, 0, 1, 0, 10)
+  F(fstmdbd, 1, 0, 0, 11)   F(fstmfdd, 1, 0, 0, 11)
+  F(fstmdbs, 1, 0, 0, 10)   F(fstmfds, 1, 0, 0, 10)
+#undef F
+
+#endif  // ENABLE_ARM_VFP
+
   void swi(int imm_8) {
     check_imm(imm_8, 8);
     emit(0xdf << 8 | imm_8);
   }
 
   void breakpoint(Condition cond = al) {
-    // IMPL_NOTE: we need to make this portable on platforms 
+    // IMPL_NOTE: we need to make this portable on platforms
     // that may use a different method of breakpoints.
     if (cond != al) {
       it(cond);
@@ -659,11 +918,11 @@ protected:
 #define XYOOXYOO_FORMAT (2 << 8)
 #define XYXYXYXY_FORMAT (3 << 8)
 
-  bool encode_imm(unsigned int p_value, int& result) {    
-    if (p_value < 256) {      
-      result = p_value;      
-      return true;    
-    }    
+  bool encode_imm(unsigned int p_value, int& result) {
+    if (p_value < 256) {
+      result = p_value;
+      return true;
+    }
     if ((p_value >> 16) == (p_value & 0xFFFF)) {
       int first_8_bits = p_value & 0xFF;
       int second_8_bits = (p_value >> 8) & 0xFF;
@@ -679,27 +938,27 @@ protected:
           result = first_8_bits | XYXYXYXY_FORMAT;
           return true;
         }
-      }      
+      }
     }
     //check if it could be shifted 8-bits value
-    int low_bit = -1;    
-    int hi_bit = -1;    
-    int bit_num;    
-    int temp_value = p_value;    
-    for (bit_num = 0; bit_num < 32; bit_num++) {      
-      if (temp_value & 1) {        
-        if (low_bit == -1) low_bit = bit_num;        
-        hi_bit = bit_num;      
-      }      
-      temp_value >>= 1;    
-    }    
-    if (hi_bit - low_bit < 8) {      
+    int low_bit = -1;
+    int hi_bit = -1;
+    int bit_num;
+    int temp_value = p_value;
+    for (bit_num = 0; bit_num < 32; bit_num++) {
+      if (temp_value & 1) {
+        if (low_bit == -1) low_bit = bit_num;
+        hi_bit = bit_num;
+      }
+      temp_value >>= 1;
+    }
+    if (hi_bit - low_bit < 8) {
       int shift = (32 + 7 - hi_bit);
       result = (((unsigned int)p_value >> (hi_bit - 7)) & ~0x80) | shift << 7;
-      return true;    
-    }    
-    return false;    
-  } 
+      return true;
+    }
+    return false;
+  }
 
 #define MASK_11   0x1 << 11
 #define MASK_8_10 0x7 << 8
@@ -716,7 +975,7 @@ protected:
     check_imm(imm, 12);                                                   \
     emit_w(0x1e << 27 | op << 21 | S << 20 |                              \
            ENCODE_RD | ENCODE_RN | ENCODE_IMM );                          \
-  }                                                                       
+  }
   F(adc_imm12_w,  0xA)
   F(add_imm12_w,  0x8)
   F(and_imm12_w,  0x0)
@@ -765,7 +1024,7 @@ protected:
 #undef F
 
 #define MASK_12_15 (0xF << 12)
-#define ENCODE_IMM_16 (imm & MASK_12_15) << 4 | (imm & MASK_11) << 15 | (imm & MASK_8_10) << 4 | (imm & MASK_0_7) 
+#define ENCODE_IMM_16 (imm & MASK_12_15) << 4 | (imm & MASK_11) << 15 | (imm & MASK_8_10) << 4 | (imm & MASK_0_7)
 
 #define F(mnemonic, op1, op2)                                             \
   void mnemonic(Register rd, int imm) {                                   \
@@ -779,37 +1038,37 @@ protected:
 
 #define ENCODE_LSB(lsb) (lsb & 0x7 << 2) << 10 | (lsb & 0x3) << 6
 
-  void bfc_w(Register rd, int lsb, int width) {    
+  void bfc_w(Register rd, int lsb, int width) {
     check_imm(lsb, 5);
     check_imm(width + lsb - 1, 5);
     emit_w(0x1e << 27 | 0x3 << 24 | 0x3 << 21 | \
-      0xF << 16 | ENCODE_RD | ENCODE_LSB(lsb) | (width + lsb - 1)); 
+      0xF << 16 | ENCODE_RD | ENCODE_LSB(lsb) | (width + lsb - 1));
   }
 
-  void bfi_w(Register rd, Register rn, int lsb, int width) {    
+  void bfi_w(Register rd, Register rn, int lsb, int width) {
     check_imm(lsb, 5);
     check_imm(width + lsb - 1, 5);
     emit_w(0x1e << 27 | 0x3 << 24 | 0x3 << 21 | \
-      ENCODE_RN | ENCODE_RD | ENCODE_LSB(lsb) | (width + lsb - 1)); 
+      ENCODE_RN | ENCODE_RD | ENCODE_LSB(lsb) | (width + lsb - 1));
   }
 
-  void sbfx_w(Register rd, Register rn, int lsb, int width, int is_signed = 0) {    
+  void sbfx_w(Register rd, Register rn, int lsb, int width, int is_signed = 0) {
     check_imm(lsb, 5);
     check_imm(width - 1, 5);
     emit_w(0x1e << 27 | 0x3 << 24 | is_signed << 23 | 2 << 21 | \
-      ENCODE_RN | ENCODE_RD | ENCODE_LSB(lsb) | (width- 1)); 
+      ENCODE_RN | ENCODE_RD | ENCODE_LSB(lsb) | (width- 1));
   }
 
   void ubfx_w(Register rd, Register rn, int lsb, int width) {
     sbfx_w(rd, rn, lsb, width, 1);
   }
 
-  void ssat_w(Register rd, int imm, Register rn, 
+  void ssat_w(Register rd, int imm, Register rn,
               Shift shift = lsl_shift, int shift_count = 0, int is_signed = 0) {
     check_imm(imm, 5);
-    GUARANTEE(shift == lsl_shift || shift == asr_shift, "only this shifts are supported"); 
+    GUARANTEE(shift == lsl_shift || shift == asr_shift, "only this shifts are supported");
     emit_w(0x1e << 27 | 0x3 << 24 | is_signed << 23 | shift << 20 | \
-      ENCODE_RN | ENCODE_RD | ENCODE_LSB(imm) | shift_count); 
+      ENCODE_RN | ENCODE_RD | ENCODE_LSB(imm) | shift_count);
   }
 
   void usat_w(Register rd, int imm, Register rn, Shift shift = lsl_shift, int shift_count = 0) {
@@ -819,7 +1078,7 @@ protected:
   void ssat16_w(Register rd, int imm, Register rn, int is_signed = 0) {
     check_imm(imm - 1, 5);
     emit_w(0x1e << 27 | 0x3 << 24 | is_signed << 23 | 0x1 << 21 | \
-      ENCODE_RN | ENCODE_RD | (imm - 1)); 
+      ENCODE_RN | ENCODE_RD | (imm - 1));
   }
 
   void usat16_w(Register rd, int imm, Register rn) {
@@ -860,7 +1119,7 @@ protected:
   F(cmp_w, 0xD, 1)
   F(teq_w, 0x4, 1)
   F(tst_w, 0x0, 1)
-#undef F  
+#undef F
 
 // LDR [PC, +-imm12]
 #define F(mnemonic, S, size) \
@@ -1164,7 +1423,7 @@ protected:
     | rd_lo << 12 | ENCODE_RD | op2 << 4 | rm ); \
   }
   F(smull_w  ,   0x0, 0x0)
-  F(umull_w  ,   0x2, 0x0)  
+  F(umull_w  ,   0x2, 0x0)
   F(udiv_w   ,   0x3, 0xF)
   F(smlal_w  ,   0x4, 0x0)
   F(smlalbb_w,   0x4, 0x8)
@@ -1240,21 +1499,21 @@ protected:
   F(strexh_w, 0x5)
 #undef F
 
-  void ldrexd_w(Register rxf, Register rxf2, Register rn) {    
-    GUARANTEE(rxf != 0xF, " see limits"); 
-    GUARANTEE(rn != 0xF, " see limits"); 
-    GUARANTEE(rxf2 != 0xF, " see limits"); 
+  void ldrexd_w(Register rxf, Register rxf2, Register rn) {
+    GUARANTEE(rxf != 0xF, " see limits");
+    GUARANTEE(rn != 0xF, " see limits");
+    GUARANTEE(rxf2 != 0xF, " see limits");
     emit_w(0x746 << 21 | 1 << 20\
-            | rn << 16 | rxf << 12 | rxf2 << 8 | 0x7 << 4 | 0xF); 
+            | rn << 16 | rxf << 12 | rxf2 << 8 | 0x7 << 4 | 0xF);
   }
 
-  void ldrexd_w(Register rd, Register rxf, Register rxf2, Register rn) {    
-    GUARANTEE(rxf != 0xF, " see limits"); 
-    GUARANTEE(rn != 0xF, " see limits"); 
-    GUARANTEE(rxf2 != 0xF, " see limits"); 
-    GUARANTEE(rd != 0xF, " see limits"); 
+  void ldrexd_w(Register rd, Register rxf, Register rxf2, Register rn) {
+    GUARANTEE(rxf != 0xF, " see limits");
+    GUARANTEE(rn != 0xF, " see limits");
+    GUARANTEE(rxf2 != 0xF, " see limits");
+    GUARANTEE(rd != 0xF, " see limits");
     emit_w(0x746 << 21 \
-            | rn << 16 | rxf << 12 | rxf2 << 8 | 0x7 << 4 | rd); 
+            | rn << 16 | rxf << 12 | rxf2 << 8 | 0x7 << 4 | rd);
   }
 
  #define F(mnemonic, op) \
@@ -1299,19 +1558,19 @@ protected:
   F(srsdb_w, 0x0)
 #undef F
 
-  void b_short(int offset, Condition cond = al) {             
-    GUARANTEE(!(offset & 0x1), "Imm not half-word aligned");  
-    offset = offset - 4; /* Offset from the current insn */   
-    if (cond == al) {                                         
-      GUARANTEE(offset <= 2046  &&                            
+  void b_short(int offset, Condition cond = al) {
+    GUARANTEE(!(offset & 0x1), "Imm not half-word aligned");
+    offset = offset - 4; /* Offset from the current insn */
+    if (cond == al) {
+      GUARANTEE(offset <= 2046  &&
                 offset >= -2048, "Imm too large, use b_wide");
-      emit(0x7 << 13 | (offset & 0xFFF) >> 1);                
-    } else {                                                  
-      GUARANTEE(offset <= 254 &&                              
-                offset >= -256, "Imm too large, use b_wide"); 
-      GUARANTEE(cond != al, "This is a conditional branch!"); 
-      emit(0xD << 12 | cond << 8 | (offset & 0x1FF) >> 1);    
-    }                                                         
+      emit(0x7 << 13 | (offset & 0xFFF) >> 1);
+    } else {
+      GUARANTEE(offset <= 254 &&
+                offset >= -256, "Imm too large, use b_wide");
+      GUARANTEE(cond != al, "This is a conditional branch!");
+      emit(0xD << 12 | cond << 8 | (offset & 0x1FF) >> 1);
+    }
   }
 
 #define F(mnemonic, L, A)                                    \
@@ -1334,9 +1593,9 @@ protected:
   F(blx_w, 1, 0)
 #undef F
 
-  void b_w(int offset, Condition cond) {                  \
+  void b_w(int offset, Condition cond) {                     \
     if (cond == al) {                                        \
-      b_w(offset);                                        \
+      b_w(offset);                                           \
       return;                                                \
     }                                                        \
     offset = offset - 4; /* Offset from the current insn */  \
@@ -1351,20 +1610,20 @@ protected:
            1 << 15 | cond << 22 |                            \
            (offset & 0x3F000) << 4 | (offset & 0xFFF) >> 1); \
   }
-    
+
   void smi_w(short imm) {
     emit_w(0xF7F << 20 | (imm & 0xF) << 16 | 1 << 15 \
-          | (imm & 0xFF0) | (imm & 0xF000) >> 12 ); 
+          | (imm & 0xFF0) | (imm & 0xF000) >> 12 );
   }
 
-  void msr_w(Register rn, bool spsr, int control, int extension, int status, 
+  void msr_w(Register rn, bool spsr, int control, int extension, int status,
             int flags) {
     GUARANTEE(!(control & ~0x1), " see limits"); \
     GUARANTEE(!(extension & ~0x1), " see limits"); \
     GUARANTEE(!(status & ~0x1), " see limits"); \
     GUARANTEE(!(flags & ~0x1), " see limits"); \
     emit_w(0xF38 << 20 | rn << 16 | (spsr ? 1 : 0) << 20 | 1 << 15 \
-          | control << 11 | extension << 10 | status << 9 | flags << 8); 
+          | control << 11 | extension << 10 | status << 9 | flags << 8);
   }
 
 #define F(mnemonic, effect) \
@@ -1382,16 +1641,16 @@ protected:
 #undef F
 
   void bxj_w(Register rm) {
-    emit_w(0xF3B << 20 | rm << 16 | 1 << 15 | 0xF << 8); 
+    emit_w(0xF3B << 20 | rm << 16 | 1 << 15 | 0xF << 8);
   }
 
-  void msr_w(Register rd, bool spsr) {  
-    emit_w(0xF3F << 20 | 0xF << 16 | (spsr ? 1 : 0) << 20 | 1 << 15 | rd << 8); 
+  void msr_w(Register rd, bool spsr) {
+    emit_w(0xF3F << 20 | 0xF << 16 | (spsr ? 1 : 0) << 20 | 1 << 15 | rd << 8);
   }
 
   void bxj_w(int imm8) {
     check_imm(abs(imm8), 8);
-    emit_w(0xF3DE8F<< 8 | (imm8 & 0xFF)); 
+    emit_w(0xF3DE8F<< 8 | (imm8 & 0xFF));
   }
 
 #define F(mnemonic, hint) \
@@ -1427,18 +1686,20 @@ protected:
 #undef F
 
   // IT cond, mask
-  void it(Condition condition, ConditionMask mask = SINGLE) {
-    check_imm(mask, 8);
-    int it_scope_size = 1;
-    if ((condition & 1) == 1) {
-      it_scope_size = 4;
-    } else if (condition >> 1 == 1) {
-      it_scope_size = 3;
-    } else if (condition >> 3 == 1) {
-      it_scope_size = 2;
+  void it(const Condition condition, const ConditionMask mask = SINGLE) {
+    if( condition == always ) {
+      check_imm(mask, 8);
+      int it_scope_size = 1;
+      if ((condition & 1) == 1) {
+        it_scope_size = 4;
+      } else if (condition >> 1 == 1) {
+        it_scope_size = 3;
+      } else if (condition >> 3 == 1) {
+        it_scope_size = 2;
+      }
+      set_in_it_scope(it_scope_size);
+      emit((short)(0xBF << 8 | condition << 4 | ((condition & 1) ? 16 - mask : mask)));
     }
-    set_in_it_scope(it_scope_size);
-    emit((short)(0xBF << 8 | condition << 4 | ((condition & 1) ? 16 - mask : mask))); 
   }
 
 #if ENABLE_ARM_V7
@@ -1461,7 +1722,7 @@ protected:
 #undef F
 #endif
 
-  void chka(Register rn, Register rm) {  
+  void chka(Register rn, Register rm) {
     emit(0xCA00 | (rn & 0x7) | (rm << 3) | (rn & 0x8) << 4);
   }
 
@@ -1536,7 +1797,7 @@ protected:
     emit_w(0xEE000000 | (k << 28) | (opcode1 << 21)                \
          | (l << 20) | (crn << 16) | (rd << 12) | (coproc << 8)    \
          | (opcode2 << 5) | (1 << 4) | crm);                       \
-  }                                                                
+  }
   F(mcr_w,  0, 0)
   F(mcr2_w, 0, 1)
   F(mrc_w,  1, 0)
@@ -1574,7 +1835,7 @@ void add_sub_big_integer(Register rd, Register rn, int imm, bool is_add);
 protected:
   Imm12 try_modified_imm12(int big_number);
   Imm12 modified_imm12(int big_number);
-public: 
+public:
 
   void it(Condition cond, ConditionMask mask = SINGLE) {
     if (cond != al) {
@@ -1654,7 +1915,7 @@ public:
       } \
       Assembler:: mnemonic##_w(rd, rn, rm, shift, shift_count, S); \
     } \
-  } 
+  }
 
   F(add,  0x8)
   F(sub,  0xD)
@@ -1677,11 +1938,11 @@ public:
   void cmp(Register rd, int imm, Condition cond = al) {
     if (has_room_for_imm(abs(imm), 8) && (rd < r8)) {
       it(cond);
-      if (imm >= 0) {                                       
-        cmp_imm8(rd, imm);  
+      if (imm >= 0) {
+        cmp_imm8(rd, imm);
       } else {
         cmn_imm12_w(rd, imm12(-imm));
-      }                                                     
+      }
     } else {
       Imm12 modified_imm12 = try_modified_imm12(imm);
       if (modified_imm12 != invalid_imm12) {
@@ -1693,7 +1954,7 @@ public:
           it(cond);
           cmn_imm12_w(rd, modified_imm12);
         } else {
-          Register rn = alloc_tmp_register(false);              
+          Register rn = alloc_tmp_register(false);
           ldr_big_integer(rn, imm, cond);
           // IMPL_NOTE: eliminate extra it instructions
           it(cond);
@@ -1701,8 +1962,8 @@ public:
             Assembler::cmp(rd, rn);
           } else {
             Assembler::cmp_w(rd, rn);
-          }          
-          release_tmp_register(rn);                             
+          }
+          release_tmp_register(rn);
         }
       }
     }
@@ -1715,7 +1976,7 @@ public:
     } else {
       cmp_hi(rd, rn);
     }
-    
+
   }
 
   void mov(Register rd, int imm, Condition cond = al, CCMode S = any_CC) {
@@ -1727,7 +1988,7 @@ public:
         it(cond, THEN);
         mov_imm8(rd, abs(imm));
         neg(rd, rd);
-      }                                                     
+      }
     } else {
       if (S == any_CC) {
         S = no_CC;
@@ -1769,7 +2030,7 @@ public:
       GUARANTEE(S != set_CC, "mov_hi doesn't change conditional flags");
       GUARANTEE(rd > r7 || rm > r7, "Wrong arguments for mov_hi");
       mov_hi(rd, rm);
-    } 
+    }
   }
 
 /***LDR/STR SECTION*****************************************************************************/
@@ -1839,9 +2100,9 @@ public:
         it(cond);
         ldr_imm12_w(rd, rn, offset);
       } else {
-        if (ENABLE_ARM_V7) {                                    
-          offset >>= 2;                                         
-        }                                                       
+        if (ENABLE_ARM_V7) {
+          offset >>= 2;
+        }
         if (rd == rn) {
           rm = alloc_tmp_register(false);
           GUARANTEE(rm != rd, "ldr/ldrb: Invalid register allocation");
@@ -1869,7 +2130,7 @@ public:
   }
 
   void ldrb(Register rd, Register rn, int offset = 0) {
-    
+
     Register rm = rd;
     if ((rd < r8) && (rn < r8) && has_room_for_imm(offset, 5)) {
       ldrb_imm5(rd, rn, offset);
@@ -1897,50 +2158,50 @@ public:
     }
   }
 
-  void ldrh(Register rd, Register rn, int offset = 0, 
+  void ldrh(Register rd, Register rn, int offset = 0,
             int code_type = THUMB2_CODE) {
     GUARANTEE((offset & 1) == 0, "Invalid offset alignment");
 
     Register rm = rd;
-    if (rd < r8 && rn < r8 && 
-      offset >= 0 && has_room_for_imm(offset / 2, 5)) {       
-      ldrh_imm5x2(rd, rn, offset / 2);                          
-    } else if ((offset <= 0xFFF) && (offset >= -0xFF)) { 
+    if (rd < r8 && rn < r8 &&
+      offset >= 0 && has_room_for_imm(offset / 2, 5)) {
+      ldrh_imm5x2(rd, rn, offset / 2);
+    } else if ((offset <= 0xFFF) && (offset >= -0xFF)) {
       ldrh_imm12_w(rd, rn, offset);
-    } else {      
- 
+    } else {
+
       if (ENABLE_ARM_V7 && code_type == THUMB2EE_CODE) {
         offset >>= 1;
       } else {
         GUARANTEE(code_type == THUMB2_CODE, "Invalid code type");
       }
 
-      if (rd == rn) {                                         
-        rm = alloc_tmp_register(false) ;                      
+      if (rd == rn) {
+        rm = alloc_tmp_register(false) ;
         GUARANTEE(rm != rd, "ldrh: Invalid register allocation");
-      }                                                       
+      }
       mov(rm, offset);
       if (rd < r8 && rn < r8 && rm < r8) {
         Assembler::ldrh(rd, rn, rm);
       } else {
         Assembler::ldrh_w(rd, rn, rm, 0);
-      }      
-      if (rd == rn) {                                         
-        release_tmp_register(rm);                             
-      }                                                       
-    }                                                         
+      }
+      if (rd == rn) {
+        release_tmp_register(rm);
+      }
+    }
   }
 
   // store halfword (offset/reg) instruction
   void strh(Register rd, Register rn, int offset = 0,
-            int code_type = THUMB2_CODE) {   
+            int code_type = THUMB2_CODE) {
     GUARANTEE((offset & 1) == 0, "Invalid offset alignment");
 
-    if (offset >= 0 && has_room_for_imm(offset/2, 5)) {       
+    if (offset >= 0 && has_room_for_imm(offset/2, 5)) {
       strh_imm5x2(rd, rn, offset/2);
-    } else if ((offset <= 0xFFF) && (offset >= -0xFF)) { 
+    } else if ((offset <= 0xFFF) && (offset >= -0xFF)) {
       strh_imm12_w(rd, rn, offset);
-    } else {                                                  
+    } else {
 
       if (ENABLE_ARM_V7 && code_type == THUMB2EE_CODE) {
         offset >>= 1;
@@ -1948,58 +2209,58 @@ public:
         GUARANTEE(code_type == THUMB2_CODE, "Invalid code type");
       }
 
-      Register rm = alloc_tmp_register(false);                
-      GUARANTEE(rm != rd && rm != rn, "strh: Invalid register allocation");       
+      Register rm = alloc_tmp_register(false);
+      GUARANTEE(rm != rd && rm != rn, "strh: Invalid register allocation");
       ldr_big_integer(rm, offset);
       if (rd < r8 && rn < r8 && rm < r8) {
         Assembler::strh(rd, rn, rm);
       } else {
         Assembler::strh_w(rd, rn, rm, 0);
       }
-      release_tmp_register(rm);                               
-    }                                                         
+      release_tmp_register(rm);
+    }
   }
 
   // store byte (offset/reg) instruction
-  void strb(Register rd, Register rn, int offset = 0) {   
+  void strb(Register rd, Register rn, int offset = 0) {
     if (offset >= 0 && has_room_for_imm(offset, 5) && rd < r8 && rn < r8) {
       strb_imm5(rd, rn, offset);
-    } else if ((offset <= 0xFFF) && (offset >= -0xFF)) { 
-      strb_imm12_w(rd, rn, offset);                                 
-    } else {                                                  
-      Register rm = alloc_tmp_register(false);                
-      GUARANTEE(rm != rd && rm != rn, "strb: Invalid register allocation");       
+    } else if ((offset <= 0xFFF) && (offset >= -0xFF)) {
+      strb_imm12_w(rd, rn, offset);
+    } else {
+      Register rm = alloc_tmp_register(false);
+      GUARANTEE(rm != rd && rm != rn, "strb: Invalid register allocation");
       ldr_big_integer(rm, offset);
       if (rd < r8 && rn < r8 && rm < r8) {
         Assembler::strb(rd, rn, rm);
       } else {
         Assembler::strb_w(rd, rn, rm, 0);
       }
-      release_tmp_register(rm);                               
-    }                                                         
+      release_tmp_register(rm);
+    }
   }
 
-  void str(Register rd, Register rn, int offset = 0, Condition cond = al) { 
+  void str(Register rd, Register rn, int offset = 0, Condition cond = al) {
     GUARANTEE(offset % 4 == 0, "Invalid offset alignment");
 
     if ((rn == sp) && (rd < r8) && has_room_for_imm(offset / 4, 8)) {
       it(cond);
-      str_sp_imm8x4(rd, offset / 4);              
+      str_sp_imm8x4(rd, offset / 4);
     } else {
-      if ((rd < r8) && (rn < r8) && 
+      if ((rd < r8) && (rn < r8) &&
           has_room_for_imm(offset / 4, 5)) {
-        it(cond); 
+        it(cond);
         str_imm5x4(rd, rn, offset / 4);
       } else if ((offset <= 0xFFF) && (offset >= -0xFF)) {
         it(cond);
         str_imm12_w(rd, rn, offset);
       } else {
-        if (ENABLE_ARM_V7) {                           
-          offset >>= 2;                                
-        }                                              
-        Register rm = alloc_tmp_register(false);       
-        GUARANTEE(rm != rd && rm != rn,                
-               "str: Invalid register allocation");    
+        if (ENABLE_ARM_V7) {
+          offset >>= 2;
+        }
+        Register rm = alloc_tmp_register(false);
+        GUARANTEE(rm != rd && rm != rn,
+               "str: Invalid register allocation");
         ldr_big_integer(rm, offset, cond);
         // IMPL_NOTE: avoid extra it instruction
         it(cond);
@@ -2008,7 +2269,7 @@ public:
         } else {
           Assembler::str_w(rd, rn, rm, 0);
         }
-        release_tmp_register(rm);                      
+        release_tmp_register(rm);
       }
     }
   }
@@ -2043,7 +2304,7 @@ public:
 
 
 /***END OF LDR/STR SECTION**********************************************************************/
-  void arith(Opcode opcode, Register rd, Register rm) {             
+  void arith(Opcode opcode, Register rd, Register rm) {
     if ((opcode == 0xA) && ((rd > r7) || (rm > r7))) {
       cmp_hi(rd, rm);
       return;
@@ -2058,10 +2319,10 @@ public:
         sub(rd, rd, rm);
         break;
       case _rsb:
-      case _rsc:    
+      case _rsc:
         SHOULD_NOT_REACH_HERE();
         break;
-      default:      
+      default:
         emit(1 << 14 | opcode << 6 | rm << 3 | rd);
     }
   }
@@ -2085,7 +2346,7 @@ public:
 #endif
 
   void arith_imm(Opcode opcode, Register rd, int imm32,
-                 LiteralAccessor& la);  
+                 LiteralAccessor& la);
 
   // IMPL_NOTE: implent proper Macros for instructions below
   void orr(Register rd, Register rm) {

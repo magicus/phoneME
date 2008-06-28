@@ -1,24 +1,24 @@
 /*
- *   
+ *
  *
  * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
- * 
+ *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
  * 2 only, as published by the Free Software Foundation.
- * 
+ *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
  * included at /legal/license.txt).
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA
- * 
+ *
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
  * information or have any questions.
@@ -39,12 +39,12 @@ class SourceAssembler: public Macros {
   char _eol_comment[1024];
 
   // helper routines for symbolic output
-  static const char* cond_name(Condition cond) {
-    return Disassembler::cond_name(cond);
+  static const char* condition_name(const Condition cond) {
+    return Disassembler::condition_name(cond);
   }
 
-  static const char* reg_name(Register reg) {
-    return Disassembler::reg_name(reg);
+  static const char* register_name(const Register reg) {
+    return Disassembler::register_name(reg);
   }
 
   // If we're generating glue code, we cannot use b or bl instructions
@@ -83,7 +83,7 @@ class SourceAssembler: public Macros {
     Label(const char* symbol = NULL);
     ~Label();
 
-   
+
     int id() const                               { return _id; }
     const char* symbol() const                   { return _symbol; }
   };
@@ -132,8 +132,8 @@ class SourceAssembler: public Macros {
    public:
     // creation/destruction
     LiteralBuffer() : _length(0)       {}
-    ~LiteralBuffer()                   { 
-        GUARANTEE(_length == 0, "buffer must be empty"); 
+    ~LiteralBuffer()                   {
+        GUARANTEE(_length == 0, "buffer must be empty");
     }
 
     // manipulation
@@ -183,7 +183,7 @@ class SourceAssembler: public Macros {
   // accessors
   Stream* stream() const {
     return _stream;
-  } 
+  }
   Disassembler& disassembler() {
     return _disasm;
   }

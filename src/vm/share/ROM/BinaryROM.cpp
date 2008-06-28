@@ -978,10 +978,8 @@ void ROMBundle::remove_from_global_binary_images( void ) {
   }
   
 #if USE_IMAGE_MAPPING
-  {
-    TypeArray::Raw handles = Universe::global_image_handles();
-    OsFile_UnmapImage( (OsFile_MappedImage*) handles().int_at( i ) );
-  }
+  TypeArray::Raw handles = Universe::global_image_handles();
+  OsFile_UnmapImage( (OsFile_MappedImage*) handles().int_at( i ) );
 #endif
 
   if( i != last ) {

@@ -4,22 +4,22 @@
  * Portions Copyright  2000-2007 Sun Microsystems, Inc. All Rights
  * Reserved.  Use is subject to license terms.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
- * 
+ *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
  * 2 only, as published by the Free Software Foundation.
- * 
+ *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
  * included at /legal/license.txt).
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA
- * 
+ *
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
  * information or have any questions.
@@ -86,7 +86,7 @@ void SourceMacros::verify_cpool_register(Register tmp) {
 
 void SourceMacros::debug_on_variable(const char *var, Condition cond, Register tmp) {
   if (GenerateDebugAssembly) {
-    comment("Break if %s %s 0", var, Disassembler::cond_name(cond));
+    comment("Break if %s %s 0", var, Disassembler::condition_name(cond));
     Label skip;
     ldr_label(tmp, var);
     ldr(tmp, imm_index(tmp));
@@ -641,12 +641,12 @@ void SourceMacros::get_method(Register reg, Condition cond) {
 
 void SourceMacros::get_method_parameter_size(Register result, Register method)
 {
-  ldrh(result, imm_index3(method, 
+  ldrh(result, imm_index3(method,
        Method::method_attributes_offset()));
   int num_bits = 32 - Method::RESULT_STORAGE_TYPE_SHIFT;
   mov(result, imm_shift(result, lsl, num_bits));
 
-  eol_comment("%s = parameter size in words", reg_name(result));
+  eol_comment("%s = parameter size in words", register_name(result));
   mov(result, imm_shift(result, lsr, num_bits));
 }
 
@@ -708,8 +708,8 @@ void SourceMacros::interpreter_call_vm(const char *name,
   }
 }
 
-void SourceMacros::wtk_profile_quick_call(int param_size) { 
-  if (!ENABLE_WTK_PROFILER) { 
+void SourceMacros::wtk_profile_quick_call(int param_size) {
+  if (!ENABLE_WTK_PROFILER) {
     return;
   }
   comment("Create temporary frame for the profiler");
@@ -753,8 +753,8 @@ void SourceMacros::wtk_profile_quick_call(int param_size) {
   ldr(lr,    imm_index(fp, JavaFrame::return_address_offset()));
   ldr(fp,    imm_index(fp, JavaFrame::caller_fp_offset()));
   sub_imm(jsp, jsp, JavaStackDirection * JavaFrame::frame_desc_size());
-}      
-      
+}
+
 
 void SourceMacros::check_timer_tick() {
   eol_comment("Timer tick?");
@@ -1028,7 +1028,7 @@ void SourceMacros::update_interpretation_log() {
 }
 #endif
 
-void SourceMacros::return_from_invoker(int prefetch_size, 
+void SourceMacros::return_from_invoker(int prefetch_size,
                                        int result_type) {
   if (!ENABLE_WTK_PROFILER) {
      prefetch(prefetch_size);
@@ -1051,7 +1051,7 @@ void SourceMacros::return_from_invoker(int prefetch_size,
       comment("result is in r0: do nothing");
       break;
     case Method::DOUBLE:
-      comment("result is in r0/r1");      
+      comment("result is in r0/r1");
       push(B);
       mov_reg(r0, A, no_CC);
       break;
@@ -1062,25 +1062,25 @@ void SourceMacros::return_from_invoker(int prefetch_size,
       break;
     case Method::FP_DOUBLE:
       comment("result is in s0/s1");
-      fmrs(r0, A_vfp); 
+      fmrs(r0, A_vfp);
       push(B_vfp);
       break;
 #endif
     default:
-      SHOULD_NOT_REACH_HERE();        
+      SHOULD_NOT_REACH_HERE();
   }
 
-  if (ENABLE_WTK_PROFILER) { 
+  if (ENABLE_WTK_PROFILER) {
     push(tos_val);
     interpreter_call_vm("jprof_record_method_transition", T_VOID);
     prefetch(prefetch_size);
     dispatch(tos_on_stack);
-  } else { 
+  } else {
     dispatch(tos_in_regs);
   }
 }
 
-void SourceMacros::generate_call(Register entry, 
+void SourceMacros::generate_call(Register entry,
                                  Label& label,
                                  int result_type,
                                  int prefetch_size,
@@ -1093,10 +1093,10 @@ void SourceMacros::generate_call(Register entry,
     return;
   }
 
-  GUARANTEE(USE_FP_RESULT_IN_VFP_REGISTER || 
-            ((result_type != Method::FP_SINGLE) && 
+  GUARANTEE(USE_FP_RESULT_IN_VFP_REGISTER ||
+            ((result_type != Method::FP_SINGLE) &&
              (result_type != Method::FP_DOUBLE)), "Wrong result type");
-     
+
   comment("invoke method with result type == %d", result_type);
   call_from_interpreter(entry, 0);
 
@@ -1120,16 +1120,16 @@ void SourceMacros::invoke_method(Register method,  Register entry,
                                  Register tmp, int prefetch_size,
                                  char *deoptimization_entry_name) {
   // callee must contain the method
-  GUARANTEE(method == callee, "sanity");    
-  ldrh(tmp, imm_index3(method, 
-                       Method::method_attributes_offset()));  
-  eol_comment("%s = result type", reg_name(tmp));
-  mov(tmp, imm_shift(tmp, lsr, Method::RESULT_STORAGE_TYPE_SHIFT));    
+  GUARANTEE(method == callee, "sanity");
+  ldrh(tmp, imm_index3(method,
+                       Method::method_attributes_offset()));
+  eol_comment("%s = result type", register_name(tmp));
+  mov(tmp, imm_shift(tmp, lsr, Method::RESULT_STORAGE_TYPE_SHIFT));
 
   ldr(pc, add_index(pc, tmp, lsl, 2));
 
-  Label labels[5];  
-  nop();  
+  Label labels[5];
+  nop();
   define_long(labels[0]);
   define_long(labels[1]);
   define_long(labels[2]);
@@ -1137,7 +1137,7 @@ void SourceMacros::invoke_method(Register method,  Register entry,
   define_long(labels[4]);
 
   for (int i = 0; i < Method::NUMBER_OF_RESULT_STORAGE_TYPES; i++) {
-    generate_call(entry, labels[i], i, prefetch_size, 
+    generate_call(entry, labels[i], i, prefetch_size,
       deoptimization_entry_name);
   }
 }
@@ -1188,7 +1188,7 @@ void SourceMacros::initialize_class_when_needed(Register dst,
   Register status = tmp2;
   Register thread = tmp2;
   Label class_is_initialized, do_initialize;
-  
+
   comment("Get Java mirror for the class");
   ldr(mirror, imm_index(dst, JavaClass::java_mirror_offset()));
   comment("Check if the class is already initialized");

@@ -36,8 +36,8 @@ class BinaryAssembler: public BinaryAssemblerCommon {
   NOT_PRODUCT(virtual) void emit(short instr) {
     // emit instruction
     decrease_current_it_depth();
-#ifndef PRODUCT      
-    if (PrintCompiledCodeAsYouGo) { 
+#ifndef PRODUCT
+    if (PrintCompiledCodeAsYouGo) {
        Disassembler d(tty);
        tty->print("%d:\t", _code_offset);
        tty->print("0x%04x\t\t", instr & 0xffff);
@@ -51,7 +51,7 @@ class BinaryAssembler: public BinaryAssemblerCommon {
   void emit_int(int instr) {
     // emit 32-bit instruction
 #ifndef PRODUCT
-    if (PrintCompiledCodeAsYouGo) { 
+    if (PrintCompiledCodeAsYouGo) {
        tty->print("%d:\t", _code_offset);
        tty->print_cr("0x%08x\t", instr);
     }
@@ -64,7 +64,7 @@ class BinaryAssembler: public BinaryAssemblerCommon {
   void emit_w(int instr) {
     decrease_current_it_depth();
 #ifndef PRODUCT
-    if (PrintCompiledCodeAsYouGo) { 
+    if (PrintCompiledCodeAsYouGo) {
        Disassembler d(tty);
 
        juint w = (juint)instr;
@@ -91,7 +91,7 @@ class BinaryAssembler: public BinaryAssemblerCommon {
   void emit_ci(CallInfo info) {
     // emit call info
 #ifndef PRODUCT
-    if (PrintCompiledCodeAsYouGo) { 
+    if (PrintCompiledCodeAsYouGo) {
        tty->print("%d:\t", _code_offset);
        tty->print("0x%08x\t", info.raw());
        info.print(tty);
@@ -103,7 +103,7 @@ class BinaryAssembler: public BinaryAssemblerCommon {
   }
 #endif // ENABLE_EMBEDDED_CALLINFO
 
-  NOT_PRODUCT(virtual) 
+  NOT_PRODUCT(virtual)
   void ldr_big_integer(Register rd, int imm32, Condition cond = al);
 
   void mov_imm(Register rd, int imm32, LiteralAccessor &la, Condition cond=al);
@@ -124,7 +124,7 @@ protected:
     void start_alternate(JVM_SINGLE_ARG_TRAPS);
     bool emit();
 
-    static void initialize(BinaryAssembler* assembler) { 
+    static void initialize(BinaryAssembler* assembler) {
       assembler->_interleaver = NULL;
     }
 
@@ -153,85 +153,83 @@ protected:
   // the code can be moved around even during code generation (GC).
   typedef BinaryLabel Label;
   class NearLabel : public Label {};
-  
+
 public:
   void branch_helper(Label& L, bool link, bool near, Condition cond);
   void branch_helper(CompilationQueueElement* cqe,
                      bool link, bool near, Condition cond);
 
     // alignment is not used on ARM, but is needed to make
-    // CompilationContinuation::compile() platform-independent. 
-  void bind(Label& L, int alignment = 0); 
+    // CompilationContinuation::compile() platform-independent.
+  void bind(Label& L, int alignment = 0);
   void bind_to(Label& L, jint code_offset);
 
   // void back_patch(Label& L, jint code_offset);
 
   void b  (Label& L, Condition cond = al) {
-     branch_helper(L, false, false, cond);
+    branch_helper(L, false, false, cond);
   }
   void bl (Label& L, Condition cond = al) {
-    branch_helper(L, true , false, cond); 
+    branch_helper(L, true , false, cond);
   }
   void b(CompilationQueueElement* cqe, Condition cond = al) {
     branch_helper(cqe, false, false, cond);
   }
-                                          
-  void b  (NearLabel& L, Condition cond = al)  { 
-    branch_helper(L, false, true, cond); 
+
+  void b  (NearLabel& L, Condition cond = al)  {
+    branch_helper(L, false, true, cond);
   }
-  void bl (NearLabel& L, Condition cond = al)  { 
-    branch_helper(L, true , true, cond); 
+  void bl (NearLabel& L, Condition cond = al)  {
+    branch_helper(L, true , true, cond);
   }
 
-  void jmp(Label& L)                              { 
-    b(L); write_literals(); 
-  } 
-
-  void jmp(CompilationQueueElement* cqe)          { b(cqe); write_literals(); } 
+  void jmp( Label& L )                            { b(L);   write_literals(); }
+  void jmp( CompilationQueueElement* cqe )        { b(cqe); write_literals(); }
 
   // pc-relative addressing
 
-  void ldr_from(Register rd, LiteralPoolElement* lpe, Condition cond = al) { 
-      access_literal_pool(rd, lpe, cond, false);
+  void ldr_from(Register rd, LiteralPoolElement* lpe, const Condition cond = al) {
+    access_literal_pool(rd, lpe, cond, false);
   }
-  void str_to(Register rd, LiteralPoolElement* lpe, Condition cond = al) { 
-      access_literal_pool(rd, lpe, cond, true);
+  void str_to(Register rd, LiteralPoolElement* lpe, const Condition cond = al) {
+    access_literal_pool(rd, lpe, cond, true);
   }
 
-  void ldr_literal(Register rd, OopDesc* obj, const int offset, Condition cond = al);
-  void ldr_oop (Register r, Oop* obj, Condition cond = al);
+  void ldr_literal(Register rd, OopDesc* obj, const int offset,
+                   const Condition cond = al);
+  void ldr_oop (Register r, Oop* obj, const Condition cond = al);
 
   // miscellaneous helpers
   void get_thread(Register reg);
 
-  void generate_sentinel() { 
+  void generate_sentinel() {
     write_literals(true);
 #ifdef AZZERT
     if (GenerateCompilerAssertions) {
       breakpoint();
     }
 #endif
-    emit_sentinel(); 
+    emit_sentinel();
   }
 
-  static int ic_check_code_size() { 
+  static int ic_check_code_size() {
     // no inline caches for ARM (yet)
-    return 0; 
-  } 
+    return 0;
+  }
 
-  void ldr_using_gp(Register reg, address target, Condition cond = al) {
-    int offset = target - (address)&gp_base_label;
+  void ldr_using_gp(Register reg, address target, const Condition cond = al) {
+    const int offset = target - (address)&gp_base_label;
     it(cond);
     ldr_using_gp(reg, offset);
   }
 
-  void ldr_using_gp(Register reg, const char *name) {
-    int offset = find_gp_offset(name); 
+  void ldr_using_gp(const Register reg, const char name[] ) {
+    int offset = find_gp_offset(name);
     GUARANTEE(offset >= 0, "sanity");
     ldr_using_gp(reg, offset);
   }
-  
-  void ldr_using_gp(Register r, int offset) {
+
+  void ldr_using_gp(const Register r, const int offset) {
 #if ENABLE_ARM_V7
     if (offset >= 0 && has_room_for_imm(offset/4, 5) && r < r8) {
       ldr_r10(r, offset >> 2);
@@ -250,28 +248,26 @@ public:
 #endif
   }
 
-int find_gp_offset(const char *name) {
-  int offset = 1 * sizeof(OopDesc*); // skip the nop bytecode
+  int find_gp_offset(const char name[] ) {
+    int offset = 1 * sizeof(OopDesc*); // skip the nop bytecode
 
-  static const GPTemplate gp_templates[] = {
-    GP_SYMBOLS_DO(DEFINE_GP_POINTER, DEFINE_GP_VALUE)
-    {NULL, 0, 0, 0}
-  };
+    static const GPTemplate gp_templates[] = {
+      GP_SYMBOLS_DO(DEFINE_GP_POINTER, DEFINE_GP_VALUE)
+      {NULL, 0, 0, 0}
+    };
 
-  for (const GPTemplate* tmpl = gp_templates; tmpl->name; tmpl++) {
-    if (jvm_strcmp(name, tmpl->name) == 0) {
-      return offset;
+    for (const GPTemplate* tmpl = gp_templates; tmpl->name; tmpl++) {
+      if (jvm_strcmp(name, tmpl->name) == 0) {
+        return offset;
+      }
+      offset += tmpl->size;
+      GUARANTEE((offset % 4) == 0, "must be word aligned");
     }
-    offset += tmpl->size;
-    GUARANTEE((offset % 4) == 0, "must be word aligned");
+
+    return -1;
   }
 
-  return -1;
-}
-
-
-
-  void str_using_gp(Register reg, address target, Condition cond = al) { 
+  void str_using_gp(Register reg, address target, Condition cond = al) {
     int offset = target - (address)&gp_base_label;
     str(reg, gp, offset, cond);
   }
@@ -289,37 +285,37 @@ int find_gp_offset(const char *name) {
 
   GP_GLOBAL_SYMBOLS_DO(pointers_not_used, DEFINE_GP_FOR_BINARY)
 
-  LiteralPoolElement* find_literal(OopDesc* obj, const int offset JVM_TRAPS);
+  void set_delayed_literal_write_threshold( const int offset ) {
+    const int max_code_offset_to_desperately_force_literals =
+      offset - 4 * _unbound_literal_count + _code_offset;
 
-  void append_literal(LiteralPoolElement *literal);
-  void write_literal(LiteralPoolElement *literal);
-  void access_literal_pool(Register rd, LiteralPoolElement* literal, 
-                           Condition cond, bool is_store);
+    const int max_code_offset_to_force_literals =
+      max_code_offset_to_desperately_force_literals - 0x200;
 
-public:
-  void write_literals(bool force = false);
-  void write_literals_if_desperate();
-  void write_value_literals();
+    if (max_code_offset_to_force_literals < _code_offset_to_force_literals) {
+      _code_offset_to_force_literals = max_code_offset_to_force_literals;
+    }
 
-private:
-  enum { maximum_unbound_literal_count = 10 };
-  
-  void increment_literal_count() {
-    _unbound_literal_count++;
-    if (_unbound_literal_count == 1) { 
-       // If this is the first unbound literal, we need to consider forcing
-       // the literal pool if the code grows more than 0xB4 beyond here,
-       // since 0x400 is the maximum offset in a ldr
-       _code_offset_to_force_literals = _code_offset + 0x200;
-       _code_offset_to_desperately_force_literals = _code_offset + 0x3A4;
-    } else if (_unbound_literal_count >= maximum_unbound_literal_count) { 
-      // If we get too many literals, their size might not fit into an
-      // immediate.  So we force a cutoff.
-      _code_offset_to_force_literals = 0; // force at the next chance
-      _code_offset_to_desperately_force_literals = 0;
+    if (max_code_offset_to_desperately_force_literals < _code_offset_to_desperately_force_literals) {
+      _code_offset_to_desperately_force_literals = max_code_offset_to_desperately_force_literals;
     }
   }
 
+  LiteralPoolElement* find_literal(OopDesc* obj, const int imm32,
+                                   const bool is_signed_offset JVM_TRAPS);
+
+  void append_literal( LiteralPoolElement* literal );
+  void write_literal ( LiteralPoolElement* literal );
+  void branch_around_literals( void );
+
+  void access_literal_pool(Register rd, LiteralPoolElement* literal,
+                           const Condition cond, const bool is_store);
+
+public:
+  void write_literals              ( const bool force = false  );
+  void write_literals_if_desperate ( const int extra_bytes = 2 );
+
+private:
   friend class CodeInterleaver;
   friend class Compiler;
 };

@@ -628,24 +628,24 @@ void CompilerStubs::generate_compiler_instanceof() {
   Segment seg(this, code_segment, "Compiler instanceof");
 
 bind_global("compiler_instanceof");
-  comment("%s   = class_id", reg_name(r0));
-  comment("[%s] = object", reg_name(jsp));
+  comment("%s   = class_id", register_name(r0));
+  comment("[%s] = object", register_name(jsp));
   comment("check if object is instance of Universe::class_from_id(class_id)");
 
   Address2 addr = imm_index(jsp, 0);
 
-  eol_comment("%s = object", reg_name(r1));
+  eol_comment("%s = object", register_name(r1));
   ldr(r1, addr);
 
   get_class_list_base(r2);
 
-  eol_comment("%s = near", reg_name(r1));
+  eol_comment("%s = near", register_name(r1));
   ldr(r1, imm_index(r1));
 
-  eol_comment("%s = target_class", reg_name(r2));
+  eol_comment("%s = target_class", register_name(r2));
   ldr_class_from_index_and_base(r2, /*index*/r0, /*base*/r2);
 
-  eol_comment("%s = object_class", reg_name(r1));
+  eol_comment("%s = object_class", register_name(r1));
   ldr(r1, imm_index(r1));
 
   // r0 = _instanceof(thread, object_class(r1), target_class(r2));
@@ -658,33 +658,33 @@ void CompilerStubs::generate_compiler_checkcast() {
   Label loop, found;
 
 bind_global("compiler_checkcast");
-  comment("%s   = class_id", reg_name(tmp0));
-  comment("[%s] = object", reg_name(jsp));
+  comment("%s   = class_id", register_name(tmp0));
+  comment("[%s] = object", register_name(jsp));
   comment("check if object is castable to Universe::class_from_id(class_id)");
 
   Address2 addr = imm_index(jsp, 0);
 
-  eol_comment("%s = object", reg_name(tmp1));
+  eol_comment("%s = object", register_name(tmp1));
   ldr(tmp1, addr);
 
   get_class_list_base(tmp2);
 
-  eol_comment("%s = near", reg_name(tmp1));
+  eol_comment("%s = near", register_name(tmp1));
   ldr(tmp1, imm_index(tmp1));
 
-  eol_comment("%s = target_class", reg_name(tmp0));
+  eol_comment("%s = target_class", register_name(tmp0));
   ldr_class_from_index_and_base(tmp0, tmp0, tmp2);
 
-  eol_comment("%s = class", reg_name(tmp1));
+  eol_comment("%s = class", register_name(tmp1));
   ldr(tmp1, imm_index(tmp1));
 
-  eol_comment("%s = class (copy)", reg_name(tmp2));
+  eol_comment("%s = class (copy)", register_name(tmp2));
   mov(tmp2, reg(tmp1));
 
 bind(loop);
   cmp(tmp1, reg(tmp0));
   b(found, eq);
-  eol_comment("%s = class.super", reg_name(tmp1));
+  eol_comment("%s = class.super", register_name(tmp1));
   ldr(tmp1, imm_index(tmp1, JavaClass::super_offset()));
   cmp(tmp1, imm(0));
   b(loop, ne);
@@ -695,10 +695,10 @@ bind(loop);
   goto_shared_call_vm(T_VOID);
 
 bind(found);
-  eol_comment("%s = class.subtype_cache_1", reg_name(tmp1));
+  eol_comment("%s = class.subtype_cache_1", register_name(tmp1));
   ldr(tmp1, imm_index(tmp2, JavaClass::subtype_cache_1_offset()));
 
-  eol_comment("class.subtype_cache_1 = target_class (%s)", reg_name(tmp0));
+  eol_comment("class.subtype_cache_1 = target_class (%s)", register_name(tmp0));
   str(tmp0, imm_index(tmp2, JavaClass::subtype_cache_1_offset()));
 
   eol_comment("class.subtype_cache_2 = old class.subtype_cache_1");
@@ -708,8 +708,8 @@ bind(found);
   cmp(tmp1, reg(tmp2));
   cmp(tmp0, reg(tmp2), lo);
   eol_comment("return if %s < %s && %s < %s",
-              reg_name(tmp1), reg_name(tmp2),
-              reg_name(tmp0), reg_name(tmp2));
+              register_name(tmp1), register_name(tmp2),
+              register_name(tmp0), register_name(tmp2));
   jmpx(lr, lo);
 
   // We'd come to here only in rare cases. We must check the range since

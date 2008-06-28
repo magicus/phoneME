@@ -27,11 +27,7 @@
 // This file contains the shared part of the source and binary assembler.
 // Ideally, this structure should match the structure for the ARM port.
 
-#if ENABLE_COMPILER
-class Assembler: public CompilerObject {
-#else
-class Assembler: public GlobalObj {
-#endif
+class Assembler: public AssemblerCommon {
  public:
   enum Condition {
     // Order is relevant!

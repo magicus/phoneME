@@ -1,25 +1,25 @@
 /*
- *   
+ *
  *
  * Portions Copyright  2000-2007 Sun Microsystems, Inc. All Rights
  * Reserved.  Use is subject to license terms.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
- * 
+ *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
  * 2 only, as published by the Free Software Foundation.
- * 
+ *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
  * included at /legal/license.txt).
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA
- * 
+ *
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
  * information or have any questions.
@@ -67,14 +67,14 @@ class VirtualStackFrame: public CompilerObject {
   int            _flush_count;
 #if ENABLE_REMEMBER_ARRAY_LENGTH
   //bitmap of _bound_mask
-  //31 30 29 28 27 26 25 24 23 22 21 20 19 18 17 16 15 14 13 12 11 10 9 8 7 6 5 4 3 2 1 0  
+  //31 30 29 28 27 26 25 24 23 22 21 20 19 18 17 16 15 14 13 12 11 10 9 8 7 6 5 4 3 2 1 0
   //|flag       |                                       |base      |boundary  |local index                    |
   //flag:  whether is valid
   //base:  store the index of array base register
   //boundary:  store the the index of array length register
   //local index: store the location index(in the Virstual Stack Frame) of a array boundary checked local variable
-  //We use 4bits to represent the index of ARM register(16 registers). So we use other approach to represent the case 
-  //there's no register assigned for base or boundary. 
+  //We use 4bits to represent the index of ARM register(16 registers). So we use other approach to represent the case
+  //there's no register assigned for base or boundary.
   //we don't adjust register reference when one is cached.
   int            _bound_mask;
 #endif
@@ -83,11 +83,11 @@ class VirtualStackFrame: public CompilerObject {
   FPURegisterMap _fpu_register_map;
 #endif
 
-#if ENABLE_ARM_VFP  
+#if ENABLE_ARM_VFP
   // Literals mask is necessary to distingish zero literals from non-literals
   // in literals map.  If literal map[reg] == 0 && literals_mask & 1 << reg
   // then reg contains zero literal otherwise reg does not contain a literal.
-  int            _literals_mask[2];    
+  int            _literals_mask[2];
 #endif  // ENABLE_ARM_VFP
 
 #if USE_COMPILER_LITERALS_MAP
@@ -115,7 +115,7 @@ class VirtualStackFrame: public CompilerObject {
   //some osr entry is loop entry also
   //so they are unpassable and all the cached notation
   //status should be cleaned.
-  //the osr entry created by "if" is passable. 
+  //the osr entry created by "if" is passable.
   enum osr_const {
     passable = 1,
     unpassable = 0
@@ -136,17 +136,17 @@ class VirtualStackFrame: public CompilerObject {
   //the bci triggest the latest popping from operation stack
   static jint _pop_bci;
 
-  //whether the notations could pass through the 
+  //whether the notations could pass through the
   //osr entry.
   static jint _passable_entry;
 
-  //whether the tracking of byte code snippet of each value 
+  //whether the tracking of byte code snippet of each value
   //in the operation stack should be aborted.
   static bool _abort;
  private:
 
-  //push tag on tag stack.      
-  //the tag will contain the leftest bci 
+  //push tag on tag stack.
+  //the tag will contain the leftest bci
   //of current item.
   //example of current execution stack and tag
   //cur bci = 2:
@@ -161,11 +161,11 @@ class VirtualStackFrame: public CompilerObject {
   //cur bci = 5
   //after execution of iadd bci 5
   //|   4    |bci 5 iadd       tag:(0x1, 0x5)
-  
+
   //high bits of tag2 is 0x1 (begin bci of result of iadd(bci=3) which is the bci of iconst2)
   //low bits of tag2 is 0x5
   void   push_tag();
-  
+
   //pop tag from tag stack.
   //get the leftest bci of current result
   //value
@@ -181,26 +181,26 @@ class VirtualStackFrame: public CompilerObject {
   static inline void  mark_as_passable(void) {
     _passable_entry = passable;
   }
-  
+
   static inline void mark_as_unpassable(void) {
     _passable_entry = unpassable;
   }
-  
+
   static inline bool is_entry_passable(void) {
     return _passable_entry != unpassable;
   }
 
-  //when the entry is passable, we also record the registers whose notation 
+  //when the entry is passable, we also record the registers whose notation
   //shouldn't be cleaned for multi-entry caused by OSR.
   static inline void record_remained_registers(jint bitmap_of_registers) {
     _passable_entry = bitmap_of_registers;
   }
-  
+
   static inline jint remained_registers(void) {
     return _passable_entry;
   }
 
-  //reset the status values for beginning the tracking of byte code snippet 
+  //reset the status values for beginning the tracking of byte code snippet
   //of each value in the operation stack.
   static inline void  init_status_of_current_snippet_tracking(void) {
     _pop_bci = -1;
@@ -208,7 +208,7 @@ class VirtualStackFrame: public CompilerObject {
     _abort = false;
   }
 
-  //reset the status values for aborting from the tracking of byte code snippet 
+  //reset the status values for aborting from the tracking of byte code snippet
   //of each value in the operation stack.
   //aborted status will be set if we want to abort from the generation of the
   //notation of a value in some cases, such as we come across a snippet like the begin_bci > end_bci(
@@ -231,13 +231,13 @@ class VirtualStackFrame: public CompilerObject {
     _abort = false;
   }
 
-  //check whether the _pop_bci is updated due to popping action of 
+  //check whether the _pop_bci is updated due to popping action of
   //operation stack
   static inline bool is_popped(void) {
     return  _pop_bci != -1;
   }
 
-  // get the first bci of the byte code string 
+  // get the first bci of the byte code string
   // from which we get the result.
   // since the value store in _cse_tag is start from 1,
   // we substract 1 here(bci start from zero).
@@ -251,14 +251,14 @@ class VirtualStackFrame: public CompilerObject {
   }
 
   //creat a tag from the current bci and the popped bci.
-  //The popped bci is extract from cse_tag. 
+  //The popped bci is extract from cse_tag.
   //The popped bci will be the leftest bci of an byte code snippet.
   //For example, (1+2)+4, the popped bci of final result 7 should
   //be the bci of iconst 1.
   //if the current bci won't cause a pop operation, the tag is the current  bci
-  
+
   static inline jint create_tag(jint current_bci) {
-    //bci encoded in tag start from 1. 
+    //bci encoded in tag start from 1.
     jint tag = current_bci + 1 ;
     if ( _pop_bci  == current_bci) {
       //the pop item is eat by this bci
@@ -266,15 +266,15 @@ class VirtualStackFrame: public CompilerObject {
       //for example: a iadd is compiled
       if ( (_cse_tag & high_mask) == 0) {
          //the pop item is atomic
-         //we make the bci of that pop item as 
+         //we make the bci of that pop item as
          //the begin bci of current tag
-        tag  |= (( (_cse_tag) & low_mask) << low_bit); 
+        tag  |= (( (_cse_tag) & low_mask) << low_bit);
       } else {
         //the pop item is calculated from a expression
         //we use its begin bci as the begin bci of current tag
         tag  |= ( (_cse_tag) & high_mask);
       }
-    } 
+    }
     return tag;
   }
 
@@ -290,7 +290,7 @@ class VirtualStackFrame: public CompilerObject {
             sizeof(jint));
   }
 
-  //the tag corresponding to the index of item on the operation stack 
+  //the tag corresponding to the index of item on the operation stack
   jint* tag_at(const int index)  {
     GUARANTEE( unsigned(index) < unsigned(method()->max_execution_stack_count()),
                "Tag index out of bounds" );
@@ -304,12 +304,12 @@ class VirtualStackFrame: public CompilerObject {
 
   //clean the register notations whose value should be cleaned due to multi-entry
   void wipe_notation_for_osr_entry();
-#else  
+#else
  private:
   void   push_tag() {}
   void   pop_tag() {}
   static jint size_of_tag_stack(Method* method) {return 0;}
- public: 
+ public:
   void wipe_notation_for_osr_entry() {}
 #endif
   // copy this virtual stack frame to dst
@@ -374,10 +374,10 @@ class VirtualStackFrame: public CompilerObject {
 
   // write all changed locations to memory
   void write_changes();
-  
+
   // update all cached locations by reading from memory
   void update_caches();
-  
+
   // Spill a specific register into all locations it maps. After this
   // operation, all locations that previously mapped to this register will
   // not map to any register.
@@ -404,7 +404,7 @@ class VirtualStackFrame: public CompilerObject {
   void verify_conform_to(VirtualStackFrame* /*other*/) PRODUCT_RETURN;
 
 #ifndef PRODUCT
-  // IMPL_NOTE: temporary workaround for the cases when optimized VSF merge 
+  // IMPL_NOTE: temporary workaround for the cases when optimized VSF merge
   // cannot be applied. Need to revisit these cases.
   bool can_do_optimized_merge(VirtualStackFrame* other);
 #endif
@@ -422,7 +422,7 @@ class VirtualStackFrame: public CompilerObject {
   }
 
   // make sure any other virtual stack frame can be made conformant with this
-  // one 
+  // one
   void conformance_entry(bool merging);
 
   // make sure a frame types conform to the stack map, and discard any
@@ -430,7 +430,7 @@ class VirtualStackFrame: public CompilerObject {
   void conform_to_stack_map(int bci);
 
   // returns if this virtual stack frame fits into the compiled compact
-  // format (lazy tagging) 
+  // format (lazy tagging)
   bool fits_compiled_compact_format() const;
 
 #if ENABLE_EMBEDDED_CALLINFO
@@ -471,18 +471,18 @@ class VirtualStackFrame: public CompilerObject {
 
  public:
   // Accessors for the virtual stack pointer variable.
-  jint virtual_stack_pointer( void ) const { 
-    return _virtual_stack_pointer; 
+  jint virtual_stack_pointer( void ) const {
+    return _virtual_stack_pointer;
   }
-  void set_virtual_stack_pointer( const jint value ) { 
-    _virtual_stack_pointer = value; 
+  void set_virtual_stack_pointer( const jint value ) {
+    _virtual_stack_pointer = value;
   }
   void increment_virtual_stack_pointer( void ) {
     _virtual_stack_pointer++;
   }
-  void decrement_virtual_stack_pointer( void ) { 
+  void decrement_virtual_stack_pointer( void ) {
     _virtual_stack_pointer--;
-  }  
+  }
 
 #if ENABLE_ARM_VFP
   const jint* literals_mask( void ) const { return _literals_mask; }
@@ -517,7 +517,7 @@ class VirtualStackFrame: public CompilerObject {
   }
 
   // Marks the exclusive end of the end of the stack. To iterate all locations:
-  // for (raw_loc = raw_location_at(0); 
+  // for (raw_loc = raw_location_at(0);
   //      raw < raw_location_end(raw_location_at(0));) {
   //     ....;
   //     raw_loc += is_two_word(raw_loc->type()) ? 2 : 1;
@@ -540,35 +540,35 @@ class VirtualStackFrame: public CompilerObject {
     return raw_location_end( raw_location_at(0) );
   }
 
-  void clear_stack( void ) { 
+  void clear_stack( void ) {
     set_virtual_stack_pointer(method()->max_locals() - 1);
   }
 
 #if USE_COMPILER_FPU_MAP
-  const FPURegisterMap& fpu_register_map( void ) const { 
-    return _fpu_register_map;      
+  const FPURegisterMap& fpu_register_map( void ) const {
+    return _fpu_register_map;
   }
-  FPURegisterMap& fpu_register_map( void ) { 
-    return _fpu_register_map;      
+  FPURegisterMap& fpu_register_map( void ) {
+    return _fpu_register_map;
   }
 #endif  // USE_COMPILER_FPU_MAP
 
   // Accessors for the stack pointer variable.
-  jint stack_pointer( void ) const { 
+  jint stack_pointer( void ) const {
     return _real_stack_pointer;
   }
-  void set_real_stack_pointer( const jint value) { 
-    _real_stack_pointer = value; 
+  void set_real_stack_pointer( const jint value) {
+    _real_stack_pointer = value;
   }
-  
-  jint flush_count( void ) const { 
-    return _flush_count;          
+
+  jint flush_count( void ) const {
+    return _flush_count;
   }
-  void set_flush_count( const jint value ) { 
-    _flush_count = value;      
+  void set_flush_count( const jint value ) {
+    _flush_count = value;
   }
-  void clear_flush_count( void ) { 
-    set_flush_count( 0 );           
+  void clear_flush_count( void ) {
+    set_flush_count( 0 );
   }
 
  private:
@@ -592,7 +592,7 @@ class VirtualStackFrame: public CompilerObject {
 #if USE_COMPILER_LITERALS_MAP
   Assembler::Register get_literal(int imm32, LiteralAccessor& la);
 
-  void set_has_literal_value(Assembler::Register reg, const int imm32) {    
+  void set_has_literal_value(Assembler::Register reg, const int imm32) {
     GUARANTEE((int)reg >= 0 && (int)reg < literals_map_size, "range");
     set_literal(reg, imm32);
 #if ENABLE_ARM_VFP
@@ -609,7 +609,7 @@ class VirtualStackFrame: public CompilerObject {
     }
 #endif
   }
-  
+
   jint has_literal(Assembler::Register reg) const {
 #if ENABLE_ARM_VFP
     jint imm32 = get_literal(reg);
@@ -622,23 +622,23 @@ class VirtualStackFrame: public CompilerObject {
       imm32 = (*p >> reg) & 1;
     }
     return imm32;
-#else    
+#else
     return get_literal(reg);
-#endif    
+#endif
   }
-  
+
   void clear_literals(void);
-  
+
   bool has_no_literals(void) const;
-  
+
   jint get_literal(const Assembler::Register reg) const {
     return _literals_map [reg];
   }
-  
+
   void set_literal(const Assembler::Register reg, const jint imm32) {
     _literals_map [reg] = imm32;
   }
-  
+
   void clear_literal(Assembler::Register reg) {
     set_literal( reg, 0 );
 #if ENABLE_ARM_VFP
@@ -648,27 +648,27 @@ class VirtualStackFrame: public CompilerObject {
       reg = Assembler::Register(reg - BitsPerInt);
     }
     *p &=~ (1 << reg);
-#endif    
+#endif
   }
-  
+
 #if ENABLE_ARM_VFP
   Assembler::Register find_zero                 (void) const;
   Assembler::Register find_non_NaN              (void) const;
   Assembler::Register find_double_non_NaN       (void) const;
   Assembler::Register find_double_vfp_literal(const jint lo, const jint hi) const;
-  
+
   static bool is_non_NaN(const jint imm32) {
     enum { NaN_mask = 0x7F800000 };
     return imm32 && (imm32 & NaN_mask) != NaN_mask;
   }
-  
+
   bool result_register_contains(const jint imm32) const {
     const jint s0_value = get_literal(Assembler::s0);
     return imm32 == s0_value &&
       (s0_value || (literals_mask()[0] & (1 << Assembler::s0)));
   }
-  
-  bool result_register_contains(const jint lo, const jint hi) const {    
+
+  bool result_register_contains(const jint lo, const jint hi) const {
     const jint mask = ~literals_mask()[0];
     {
       const jint s0_value = get_literal(Assembler::s0);
@@ -691,8 +691,8 @@ class VirtualStackFrame: public CompilerObject {
     return true;
   }
 
-#endif    
-  
+#endif
+
 #else // !USE_COMPILER_FPU_MAP
   void clear_literal(const Assembler::Register) {}
   void clear_literals(void) {}
@@ -706,7 +706,7 @@ class VirtualStackFrame: public CompilerObject {
     max_value_of_index = 0xfff,
     bound_bits = (0xf <<12), // store the array length
     bound_shift = 12,
-    base_bits = (0xf << 16), // store the array base 
+    base_bits = (0xf << 16), // store the array base
     base_shift = 16,
     flag_bits = (0xf<<28), // store the array access count
     flag_shift = 28,
@@ -714,13 +714,13 @@ class VirtualStackFrame: public CompilerObject {
   };
 
   //return the bound_mask bitmap
-  jint bound_mask( void ) const { 
-    return _bound_mask;      
+  jint bound_mask( void ) const {
+    return _bound_mask;
   }
 
   //set the bound_mask bitmap
-  void set_bound_mask( const jint value) { 
-    _bound_mask = value;      
+  void set_bound_mask( const jint value) {
+    _bound_mask = value;
   }
 
   //get the register which hold the array base address from
@@ -730,21 +730,21 @@ class VirtualStackFrame: public CompilerObject {
   //get the flag of bound_mask
   int  bound_flag(void) const;
 
-  //get the register which hold the length of the array whose 
+  //get the register which hold the length of the array whose
   //address is cached in the base_register();
   Assembler::Register length_register(void) const;
 
-  //index of local variable which did boundary check against 
+  //index of local variable which did boundary check against
   //the value of length_register()
   jint bound_index(void) const ;
 
   //try to cache the array length into the bound mask bitmap
   //the array base address is passwd by base_reg
   Assembler::Register cached_array_length(
-       Assembler::Register base_reg, bool first_time, 
+       Assembler::Register base_reg, bool first_time,
        Assembler::Condition cond);
 
-  //check whether the array whose base register is hold in "reg" is 
+  //check whether the array whose base register is hold in "reg" is
   //cached by boundary mask bitmap
   bool is_cached_array_bound_of(Assembler::Register reg) const;
 
@@ -756,18 +756,18 @@ class VirtualStackFrame: public CompilerObject {
 
   //free the registers allocted for caching of array boundary
   Assembler::Register free_length_register();
-  
-#if  ENABLE_REMEMBER_ARRAY_CHECK && ENABLE_NPCE  
+
+#if  ENABLE_REMEMBER_ARRAY_CHECK && ENABLE_NPCE
   //clear the must_be_index_checked status of all the values in current VSF
   void clear_must_be_index_checked_status_of_values(void);
 
-  //whether the length is cached in bound mask and 
+  //whether the length is cached in bound mask and
   //value is mask as must_be_index_checked
   bool is_value_must_be_index_checked(
         Assembler::Register length, Value &value);
 
-  //mark the value as index_checked, 
-  //the "length" must have been cached in 
+  //mark the value as index_checked,
+  //the "length" must have been cached in
   //bound mask
   void set_value_must_be_index_checked(
         Assembler::Register length, Value &value);
@@ -787,20 +787,20 @@ class VirtualStackFrame: public CompilerObject {
   //set the flag bound mask.
   void set_boundary_flag(void);
 
-  //try to recache the same array base and length into the bound mask 
+  //try to recache the same array base and length into the bound mask
   //with the same base_reg and bound_reg
-  void recache_array_length(Assembler::Register base_reg, 
+  void recache_array_length(Assembler::Register base_reg,
           Assembler::Register bound_reg);
 
   //cache the index of local variable into the bound mask.
-  //the value should have done boundary check against the array 
+  //the value should have done boundary check against the array
   //length cached in the bound mask
   void set_boundary_index(jint index);
 
   //update the base register and length register of
   //the bound mask with the value of parameters
-  void set_boundary_value(Assembler::Register bound_reg, 
-                                       Assembler::Register base_reg); 
+  void set_boundary_value(Assembler::Register bound_reg,
+                                       Assembler::Register base_reg);
 
   //mark the array holding by a local variable isn't first time accessed.
   //so the compiler can omit  the loading of array length in next time.
@@ -828,12 +828,12 @@ class VirtualStackFrame: public CompilerObject {
   Assembler::Register length_register(void) const {return Assembler::no_reg;}
   void clear_bound() {}
   bool is_bound_mask_valid(void) const {return false;}
-  void recache_array_length(Assembler::Register base_reg, 
-          Assembler::Register bound_reg) {}; 
-  void set_bound_mask(jint value) {} 
+  void recache_array_length(Assembler::Register base_reg,
+          Assembler::Register bound_reg) {};
+  void set_bound_mask(jint value) {}
   Assembler::Register try_to_free_length_register() {return Assembler::no_reg;}
 #endif
-  
+
   void set_value_must_be_nonnull(Value &value);
   void set_value_has_known_min_length(Value &value, int length);
 #if ENABLE_COMPILER_TYPE_INFO
@@ -859,7 +859,7 @@ class VirtualStackFrame: public CompilerObject {
   //  - clear compiler literals
   //  - adjust stack pointer
   //  - discard locations with type conflict
-  //  - AZZERT_ONLY: verify that if a target location contains an immediate 
+  //  - AZZERT_ONLY: verify that if a target location contains an immediate
   //    value, the corresponding source location has the same value.
   void conform_to_prologue(VirtualStackFrame* other);
   // Epilogue - misc stuff to be done after the merge:
@@ -867,14 +867,14 @@ class VirtualStackFrame: public CompilerObject {
   void conform_to_epilogue(VirtualStackFrame* other);
 
 #ifndef PRODUCT
-  // First phase - process all required register->memory and immediate->memory 
+  // First phase - process all required register->memory and immediate->memory
   // transfers.
   // Returns true iff a second phase is needed (some location requires
   // register->register transfer).
   bool conform_to_phase_one(VirtualStackFrame* other);
   // Second phase - process all required register->register transfers.
   void conform_to_phase_two(VirtualStackFrame* other);
-  // Third phase - process all required memory->register and immediate->register 
+  // Third phase - process all required memory->register and immediate->register
   // transfers.
   void conform_to_phase_three(VirtualStackFrame* other);
 #endif
@@ -883,8 +883,8 @@ class VirtualStackFrame: public CompilerObject {
   int locals() const { return method()->max_locals(); }
 
   // Get the total amount of locations.
-  int locations() const { 
-    return method()->max_execution_stack_count() - num_stack_lock_words(); 
+  int locations() const {
+    return method()->max_execution_stack_count() - num_stack_lock_words();
   }
 
   // Check if a given location satisfies some criteria.
@@ -908,8 +908,8 @@ class VirtualStackFrame: public CompilerObject {
   void stack_2_1_to_1_2(void);
   void stack_1_to_1_1(void);
   void stack_2_1_to_2_1_2_1(void);
-  void stack_2_1_to_1_2_1(void); 
-  void stack_3_2_1_to_1_3_2_1(void); 
+  void stack_2_1_to_1_2_1(void);
+  void stack_3_2_1_to_1_3_2_1(void);
   void stack_3_2_1_to_2_1_3_2_1(void);
   void stack_4_3_2_1_to_2_1_4_3_2_1(void);
 
@@ -921,10 +921,10 @@ class VirtualStackFrame: public CompilerObject {
 class PreserveVirtualStackFrameState: public StackObj {
  public:
   PreserveVirtualStackFrameState(VirtualStackFrame* vsf JVM_TRAPS): _frame(vsf){
-    save(JVM_SINGLE_ARG_NO_CHECK_AT_BOTTOM);    
+    save(JVM_SINGLE_ARG_NO_CHECK_AT_BOTTOM);
   }
-  ~PreserveVirtualStackFrameState( void ) { 
-    restore(); 
+  ~PreserveVirtualStackFrameState( void ) {
+    restore();
   }
 
  private:
@@ -947,7 +947,7 @@ public:
     next();
   }
   void next();
-  bool eos() { 
+  bool eos() {
     return _index >= Assembler::number_of_registers;
   }
   void reset() {
@@ -988,11 +988,11 @@ public:
       Assembler::Register reg = (Assembler::Register)i;
       if (_register_references[i] != RegisterAllocator::references(reg)) {
 #if ARM | defined(HITACHI_SH)
-        const char* name = Disassembler::reg_name(reg);
+        const char* name = Disassembler::register_name(reg);
 #else
         const char* name = Assembler::name_for_long_register(reg);
 #endif
-        tty->print_cr("register_references[%s] = %d -> %d", name, 
+        tty->print_cr("register_references[%s] = %d -> %d", name,
                       _register_references[i],
                       RegisterAllocator::references(reg));
 #ifdef AZZERT

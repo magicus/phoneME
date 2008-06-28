@@ -197,8 +197,9 @@ bind(class_is_initialized);
 
   int multiplier = is_static ? times_1 : LogBytesPerWord;
   if (is_put) {
-    eol_comment("%s[%s] := %s", 
-            reg_name(object), reg_name(field_offset), reg_name(tos_val));
+    eol_comment("%s[%s] := %s", register_name(object),
+                                register_name(field_offset),
+                                register_name(tos_val));
     switch (type) {
     case T_BYTE  :
       strb(tos_val, add_index(object, field_offset));
@@ -226,8 +227,9 @@ bind(class_is_initialized);
     }
     dispatch(0);
   } else { 
-    eol_comment("%s := %s[%s]", 
-                reg_name(tos_val), reg_name(object), reg_name(field_offset));
+    eol_comment("%s := %s[%s]", register_name(tos_val),
+                                register_name(object),
+                                register_name(field_offset));
     switch (type) {
     case T_BYTE:
       GUARANTEE(!is_static, "only non-static fields are packed");

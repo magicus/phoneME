@@ -30,56 +30,40 @@
 #if !PRODUCT || ENABLE_COMPILER
 // Implementation of Assembler
 
-
 #ifdef PRODUCT
 
 void Assembler::emit(short instr) {
-  BinaryAssembler* ba = (BinaryAssembler*) this;
-  ba->emit(instr);
+  assembler()->emit(instr);
 }
-
 void Assembler::emit_int(int instr) {
-  BinaryAssembler* ba = (BinaryAssembler*) this;
-  ba->emit(instr);
+  assembler()->emit(instr);
 }
-
 void Assembler::emit_w(int instr) {
-  BinaryAssembler* ba = (BinaryAssembler*) this;
-  ba->emit_w(instr);
+  assembler()->emit_w(instr);
 }
-
 void Assembler::ldr_big_integer(Register rd, int imm32, Condition cond) {
-  BinaryAssembler* ba = (BinaryAssembler*) this;
-  ba->ldr_big_integer(rd, imm32, cond);
+  assembler()->ldr_big_integer(rd, imm32, cond);
 }
 
 void Macros::get_bitvector_base(Register rd, Condition cond) {
-  BinaryAssembler* ba = (BinaryAssembler*) this;
-  ba->get_bitvector_base(rd, cond);
+  assembler()->get_bitvector_base(rd, cond);
 }
-
 void Macros::get_heap_start(Register rd, Condition cond) {
-  BinaryAssembler* ba = (BinaryAssembler*) this;
-  ba->get_heap_start(rd, cond);
+  assembler()->get_heap_start(rd, cond);
 }
-
 void Macros::get_heap_top(Register rd, Condition cond) {
-  BinaryAssembler* ba = (BinaryAssembler*) this;
-  ba->get_heap_top(rd, cond);
+  assembler()->get_heap_top(rd, cond);
 }
-
 void Macros::get_old_generation_end(Register rd, Condition cond) {
-  ((BinaryAssembler*) this)->get_old_generation_end( rd, cond );
+  assembler()->get_old_generation_end( rd, cond );
 }
 #else
 void Assembler::set_in_it_scope(int new_depth) {
   current_it_scope_depth = new_depth;
 }
-
 bool Assembler::is_in_it_scope() {
   return current_it_scope_depth > 0;
 }
-
 void Assembler::decrease_current_it_depth() {
   if (current_it_scope_depth > 0) {
     current_it_scope_depth--;
@@ -113,7 +97,7 @@ void Assembler::decrease_current_it_depth() {
 
 enum { alt_NONE, alt_NEG, alt_NOT };
 
-struct OpcodeInfo { 
+struct OpcodeInfo {
   jubyte alt_opcode_type;   // Is there equivalent bytecode with ~arg or -arg
   jubyte alt_opcode;        // Equivalent bytecode with ~arg or -arg
   jubyte twoword_allowed;   // Can immediate argument be split into two?
@@ -182,7 +166,7 @@ void Macros::arith_imm(Opcode opcode, Register rd, int imm32,
     arith(opcode, rd, result);
     return;
   }
-  if (alt_opcode_type != alt_NONE && la.has_literal(alt_imm32, result)) { 
+  if (alt_opcode_type != alt_NONE && la.has_literal(alt_imm32, result)) {
     arith(alt_opcode, rd, result);
     return;
   }
@@ -202,7 +186,7 @@ void Macros::arith_imm(Opcode opcode, Register rd, int imm32,
   // since on the XScale we may want to get of the preceding clause.
   if (opcode != _mov) {
     Register tmp = la.get_literal(imm32);
-    if (tmp != no_reg) { 
+    if (tmp != no_reg) {
       GUARANTEE(rd != tmp, "register must be different");
       arith(opcode, rd, tmp);
       la.free_literal();
@@ -233,7 +217,7 @@ bool Macros::is_mul_imm_simple(Register rd, Register rm, int imm32) {
   }
 
 
-  
+
   return is_simple;
 }
 
@@ -307,7 +291,7 @@ void Assembler::release_tmp_register(Register tmp) {
     mov_hi(gp, r9);
     return;
   }
-  
+
 #if ENABLE_COMPILER
   if (tmp < r8) {
     RegisterAllocator::dereference(tmp);
@@ -316,16 +300,16 @@ void Assembler::release_tmp_register(Register tmp) {
 }
 
 // Produce a constant that can be constructed by
-// (0x80 + seven_bits) << left_shift_count. 
-// <seven_bits> must be in the range of 0x00 ~ 0x7f. 
-Assembler::Imm12 Assembler::modified_imm12(int seven_bits, 
+// (0x80 + seven_bits) << left_shift_count.
+// <seven_bits> must be in the range of 0x00 ~ 0x7f.
+Assembler::Imm12 Assembler::modified_imm12(int seven_bits,
                                            int ror_count) {
   GUARANTEE(juint(seven_bits) <= 0x7f, "sanity");
   GUARANTEE(ror_count >=  1 &&
             ror_count <= 31, "sanity");
   return (Imm12)((ror_count << 7) | seven_bits);
 }
-void Macros::add_sub_big_integer(Register rd, Register rn, int imm, 
+void Macros::add_sub_big_integer(Register rd, Register rn, int imm,
                                     bool is_add) {
   // GUARANTEE(rd < 8 && rn < 8, "sanity"); // IMPL_NOTE: use add_w!
   Register rm = rd;
@@ -420,7 +404,7 @@ void Macros::oop_write_barrier(Register dst, Register tmp1, Register tmp2,
 
 Assembler::Imm12 Macros::try_modified_imm12(int big_number) {
   // This function should be used only by the source assembler to dynamically
-  // generate an encoded Imm12. The compiler should be coded different 
+  // generate an encoded Imm12. The compiler should be coded different
   if (0 <= big_number && big_number <= 0xff) {
     return imm12(big_number);
   }

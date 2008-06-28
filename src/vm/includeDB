@@ -1180,32 +1180,34 @@ FieldType.cpp                    ObjArrayClass.hpp
 FieldType.cpp                    ObjectHeap_<iarch>.hpp
 
 // Assembler
+AssemblerCommon.hpp              CompilerObject.hpp
+
 #if ENABLE_INTERPRETER_GENERATOR
 #ifeq iarch arm
-Assembler_armthumb.hpp           CompilerObject.hpp
+Assembler_armthumb.hpp           AssemblerCommon.hpp
 Assembler_<iarch>.hpp            Assembler_armthumb.hpp
 #endif
 #ifeq iarch thumb2
-Assembler_armthumb.hpp           CompilerObject.hpp
+Assembler_armthumb.hpp           AssemblerCommon.hpp
 Assembler_<iarch>.hpp            Assembler_armthumb.hpp
 #endif
 Assembler_<iarch>.hpp            Allocation.hpp
 Assembler_<iarch>.hpp            Bytecodes.hpp
 Assembler_<iarch>.hpp            Globals.hpp
-Assembler_<iarch>.hpp            CompilerObject.hpp
+Assembler_<iarch>.hpp            AssemblerCommon.hpp
 Assembler_<iarch>.cpp            Assembler_<iarch>.hpp
 #endif
 
 #ifeq carch arm
-Assembler_armthumb.hpp           CompilerObject.hpp
+Assembler_armthumb.hpp           AssemblerCommon.hpp
 Assembler_<carch>.hpp            Assembler_armthumb.hpp
 #endif
 #ifeq carch thumb
-Assembler_armthumb.hpp           CompilerObject.hpp
+Assembler_armthumb.hpp           AssemblerCommon.hpp
 Assembler_<carch>.hpp            Assembler_armthumb.hpp
 #endif
 #ifeq carch thumb2
-Assembler_armthumb.hpp           CompilerObject.hpp
+Assembler_armthumb.hpp           AssemblerCommon.hpp
 Assembler_<carch>.hpp            Assembler_armthumb.hpp
 #endif
 Assembler_<carch>.hpp            Allocation.hpp

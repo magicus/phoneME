@@ -4,22 +4,22 @@
  * Portions Copyright  2000-2007 Sun Microsystems, Inc. All Rights
  * Reserved.  Use is subject to license terms.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
- * 
+ *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
  * 2 only, as published by the Free Software Foundation.
- * 
+ *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
  * included at /legal/license.txt).
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA
- * 
+ *
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
  * information or have any questions.
@@ -64,11 +64,11 @@ void Disassembler::emit_imm_offset(bool u, int imm) {
 void Disassembler::emit_shifted_reg(int instr) {
   // decode shifted register part of an shifter operand or an address
   const Assembler::Shift shift = Assembler::as_shift(instr >> 5 & 0x3);
-  stream()->print(reg_name(rm_field(instr)));
+  stream()->print(register_name(rm_field(instr)));
   if (bit(instr, 4)) {
     // register shift
     GUARANTEE(!bit(instr, 7), "not a register shift");
-    stream()->print(", %s %s", shift_name(shift), reg_name(rs_field(instr)));
+    stream()->print(", %s %s", shift_name(shift), register_name(rs_field(instr)));
   } else {
     // immediate shift
     const int shift_imm = instr >> 7 & 0x1f;
@@ -111,11 +111,11 @@ void Disassembler::emit_register_list(int instr) {
         if (comma) {
           stream()->print(", ");
         }
-        stream()->print(reg_name(Assembler::as_register(b)));
+        stream()->print(register_name(Assembler::as_register(b)));
         if (b < i-1) {
             stream()->print("%s%s",
                             (b == i-2 ? ", " : " - "),
-                            reg_name(Assembler::as_register(i-1)));
+                            register_name(Assembler::as_register(i-1)));
         }
         b = -1; // close range
         comma = true;
@@ -209,7 +209,7 @@ void Disassembler::emit_address2(int instr, int instr_offset) {
   // p = 0, w = 1   =>                 doesn't occur
   // p = 1, w = 0   => [reg, offset]   offset addressing
   // p = 1, w = 1   => [reg, offset]!  pre indexed addressing
-  stream()->print("[%s", reg_name(rn_field(instr)));
+  stream()->print("[%s", register_name(rn_field(instr)));
   if (!p) {
     stream()->put(']');
   }
@@ -259,7 +259,7 @@ void Disassembler::emit_address3(int instr, int instr_offset) {
   const bool u = bit(instr, 23);
   const bool w = bit(instr, 21);
   const int uoffset = instr >> 4 & 0xf0 | instr & 0xf;
-  stream()->print("[%s", reg_name(rn_field(instr)));
+  stream()->print("[%s", register_name(rn_field(instr)));
   if (!p) {
     stream()->put(']');
   }
@@ -269,7 +269,7 @@ void Disassembler::emit_address3(int instr, int instr_offset) {
   } else {
     // register offset
     stream()->print(", %c", u ? '+' : '-');
-    stream()->print(reg_name(rm_field(instr)));
+    stream()->print(register_name(rm_field(instr)));
   }
   if (p) {
     stream()->put(']');
@@ -292,7 +292,7 @@ void Disassembler::emit_address5(int instr, int instr_offset) {
   const bool u = bit(instr, 23);
   const bool w = bit(instr, 21);
   int uoffset = (instr & 0xFF) << 2;
-  stream()->print("[%s", reg_name(rn_field(instr)));
+  stream()->print("[%s", register_name(rn_field(instr)));
   if (!p) {
       stream()->put(']');
   }
@@ -344,24 +344,19 @@ void Disassembler::emit_vfp_register_list(int instr) {
 }
 #endif
 
-const char* Disassembler::cond_name(Assembler::Condition cond) {
-  static const char* cond_names[Assembler::number_of_conditions] = {
+const char* Disassembler::condition_name(const Assembler::Condition cond) {
+  static const char* const cond_names[Assembler::number_of_conditions] = {
     "eq", "ne", "cs", "cc", "mi", "pl", "vs", "vc",
     "hi", "ls", "ge", "lt", "gt", "le", "",   "nv"
   };
-  GUARANTEE(int(Assembler::eq) <= int(cond) &&
-            int(cond) < int(Assembler::number_of_conditions),
-            "illegal condition");
   return cond_names[cond];
 }
 
-const char* Disassembler::reg_name(Assembler::Register reg) {
+const char* Disassembler::register_name(const Assembler::Register reg) {
   static const char* const reg_names[] = {
     "r0", "r1", "r2", "r3", "r4" , "r5", "r6", "r7",
     "r8", "r9", "r10", "fp", "r12", "sp", "lr", "pc"
   };
-  GUARANTEE( unsigned(reg) < unsigned(sizeof reg_names/sizeof *reg_names),
-             "Invalid register" );
   return reg_names[reg];
 }
 
@@ -379,17 +374,14 @@ void Disassembler::vfp_reg_name(const char type, unsigned reg, char buffer[]) {
 
 
 const char* Disassembler::shift_name(Assembler::Shift shift) {
-  static const char* shift_names[Assembler::number_of_shifts] = {
+  static const char* const shift_names[Assembler::number_of_shifts] = {
     "lsl", "lsr", "asr", "ror"
   };
-  GUARANTEE(int(Assembler::lsl) <= int(shift) &&
-            int(shift) < int(Assembler::number_of_shifts),
-            "illegal shift");
   return shift_names[shift];
 }
 
 const char* Disassembler::opcode_name(Assembler::Opcode opcode) {
-  static const char* opcode_names[Assembler::number_of_opcodes] = {
+  static const char* const opcode_names[Assembler::number_of_opcodes] = {
     "and", "eor", "sub", "rsb", "add", "adc", "sbc", "rsc",
     "tst", "teq", "cmp", "cmn", "orr", "mov", "bic", "mvn"
   };
@@ -418,7 +410,7 @@ void Disassembler::disasm(int* addr, int instr, int instr_offset) {
       if (   ((instr & 0x0FB0F000) == 0x0320F000)
           || ((instr & 0x0FB0FFF0) == 0x0120F000)) {
         stream()->print("msr%s\t%s_%s%s%s%s, ",
-                        cond_name(cond),
+                        condition_name(cond),
                         (bit(instr, 22) ? "spsr" : "cpsr"),
                         bit(instr, 19) ? "c" : "",
                         bit(instr, 18) ? "x" : "",
@@ -434,22 +426,23 @@ void Disassembler::disasm(int* addr, int instr, int instr_offset) {
         // we only care about a small number of instructions
         if ((instr & 0x0FFF0FF0) == 0x016f0f10) {
           stream()->print("clz%s\t%s, %s",
-                          cond_name(cond),
-                          reg_name(rd_field(instr)),
-                          reg_name(rm_field(instr)));
+                          condition_name(cond),
+                          register_name(rd_field(instr)),
+                          register_name(rm_field(instr)));
         } else if ((instr & 0x0FFFFFC0) == 0x012fff00) {
-          static const char *names[4] = { NULL, "bx", NULL, "blx" };
-          const char *name = names[(instr >> 4) & 3];
+          static const char* const names[4] = { NULL, "bx", NULL, "blx" };
+          const char* name = names[(instr >> 4) & 3];
           if (name == NULL) {
             emit_unknown(instr);
           } else {
-            stream()->print("%s%s\t%s",
-                            name, cond_name(cond), reg_name(rm_field(instr)));
+            stream()->print("%s%s\t%s", name,
+                                        condition_name(cond),
+                                        register_name(rm_field(instr)));
           }
         } else if ((instr & 0x0FBF0FFF) == 0x010F0000) {
           stream()->print("mrs%s\t%s, %s",
-                          cond_name(cond),
-                          reg_name(rd_field(instr)),
+                          condition_name(cond),
+                          register_name(rd_field(instr)),
                           (bit(instr, 22) ? "spsr" : "cpsr"));
         } else {
           emit_unknown(instr);
@@ -465,14 +458,14 @@ void Disassembler::disasm(int* addr, int instr, int instr_offset) {
           if (bit(instr, 24)) {
             // swap
             stream()->print("swp");
-            stream()->print(cond_name(cond));
+            stream()->print(condition_name(cond));
             if (bit(instr, 22)) {
               stream()->put('b');
             }
             stream()->print("\t%s, %s, [%s]",
-                            reg_name(rd_field(instr)),
-                            reg_name(rm_field(instr)),
-                            reg_name(rn_field(instr)));
+                            register_name(rd_field(instr)),
+                            register_name(rm_field(instr)),
+                            register_name(rn_field(instr)));
           } else {
             // multiply
             const bool l = bit(instr, 23);  // long
@@ -487,15 +480,15 @@ void Disassembler::disasm(int* addr, int instr, int instr_offset) {
             if (l) {
               stream()->put('l');
             }
-            stream()->print(cond_name(cond));
+            stream()->print(condition_name(cond));
             if (s) {
               stream()->put('s');
             }
             // emit operands
-            const char* rd = reg_name(rn_field(instr)); // not rd_field!
-            const char* rn = reg_name(rd_field(instr)); // not rn_field!
-            const char* rs = reg_name(rs_field(instr));
-            const char* rm = reg_name(rm_field(instr));
+            const char* rd = register_name(rn_field(instr)); // not rd_field!
+            const char* rn = register_name(rd_field(instr)); // not rn_field!
+            const char* rs = register_name(rs_field(instr));
+            const char* rm = register_name(rm_field(instr));
             if (l) {
               stream()->print("\t%s, %s, %s, %s", rn, rd, rm, rs);
             } else {
@@ -509,7 +502,7 @@ void Disassembler::disasm(int* addr, int instr, int instr_offset) {
           // The specific instruction depends on bit 20 and sh
           const int xsh = sh + (bit(instr, 20) ? 4 : 0);
           stream()->print((xsh == 1 || xsh == 3) ? "str" : "ldr");
-          stream()->print(cond_name(cond));
+          stream()->print(condition_name(cond));
           switch (xsh) {
             case 1: case 5: stream()->print("h" ); break;
             case 2: case 3: stream()->print("d" );  break;
@@ -517,7 +510,7 @@ void Disassembler::disasm(int* addr, int instr, int instr_offset) {
             case 7:         stream()->print("sh"); break;
             default: SHOULD_NOT_REACH_HERE();
           }
-          stream()->print("\t%s, ", reg_name(rd_field(instr)));
+          stream()->print("\t%s, ", register_name(rd_field(instr)));
           emit_address3(instr, instr_offset);
         }
         break;
@@ -530,9 +523,9 @@ void Disassembler::disasm(int* addr, int instr, int instr_offset) {
       { const Assembler::Opcode opcode =
             Assembler::as_opcode(instr >> 21 & 0xf);
         const char*  s  = bit(instr, 20) ? "s" : "";
-        const char*  rn = reg_name(rn_field(instr));
-        const char*  rd = reg_name(rd_field(instr));
-        stream()->print("%s%s", opcode_name(opcode), cond_name(cond));
+        const char*  rn = register_name(rn_field(instr));
+        const char*  rd = register_name(rd_field(instr));
+        stream()->print("%s%s", opcode_name(opcode), condition_name(cond));
         switch (opcode) {
           case Assembler::_andr: // fall through
           case Assembler::_eor: // fall through
@@ -578,11 +571,11 @@ void Disassembler::disasm(int* addr, int instr, int instr_offset) {
       {
         // load/store word and unsigned byte instructions
         stream()->print(bit(instr, 20) ? "ldr" : "str");
-        stream()->print(cond_name(cond));
+        stream()->print(condition_name(cond));
         if (bit(instr, 22)) {
           stream()->print("b");
         }
-        stream()->print("\t%s, ", reg_name(rd_field(instr)));
+        stream()->print("\t%s, ", register_name(rd_field(instr)));
         emit_address2(instr, instr_offset);
         break;
       }
@@ -594,7 +587,7 @@ void Disassembler::disasm(int* addr, int instr, int instr_offset) {
         const bool u = bit(instr, 23);
         const bool l = bit(instr, 20);
         stream()->print(l ? "ldm" : "stm");
-        stream()->print(cond_name(cond));
+        stream()->print(condition_name(cond));
         if (rn == Assembler::sp || rn == Assembler::jsp) {
           // use stack addressing mnemonics
           stream()->put(l == p ? 'e' : 'f');
@@ -604,7 +597,7 @@ void Disassembler::disasm(int* addr, int instr, int instr_offset) {
           stream()->put(u ? 'i' : 'd');
           stream()->put(p ? 'b' : 'a');
         }
-        stream()->print("\t%s", reg_name(rn));
+        stream()->print("\t%s", register_name(rn));
         if (bit(instr, 21)) {
           stream()->put('!');
         }
@@ -621,7 +614,7 @@ void Disassembler::disasm(int* addr, int instr, int instr_offset) {
         if (bit(instr, 24)) {
           stream()->put('l');
         }
-        stream()->print("%s\t", cond_name(cond));
+        stream()->print("%s\t", condition_name(cond));
         stream()->print("pc + %d\t", offset + 8);
         if (addr != NULL || instr_offset != NO_OFFSET) {
           stream()->print(GenerateGNUCode & !GenerateROMImage ? "/* " : "; ");
@@ -658,7 +651,7 @@ void Disassembler::disasm(int* addr, int instr, int instr_offset) {
 
       stream()->print("%s%s%s\tp%d, c%d, ",
                       (bit(instr, 20) ? "ldc" : "stc"),
-                      cond == Assembler::nv ? "2" : cond_name(cond),
+                      cond == Assembler::nv ? "2" : condition_name(cond),
                       (bit(instr, 22) ? "l"   : ""),  // two word?
                       (instr >> 8) & 0xF,             // coprocessor
                       rd_field(instr));
@@ -689,7 +682,7 @@ void Disassembler::disasm(int* addr, int instr, int instr_offset) {
 
         if (!bit(instr, 4)) {
           stream()->print("cdp%s\tp%d, %d, c%d, c%d, c%d",
-                          cond == Assembler::nv ? "2" : cond_name(cond),
+                          cond == Assembler::nv ? "2" : condition_name(cond),
                           coprocessor,
                           (instr >> 20) & 0xF, // opcode1
                           rd_field(instr), rn_field(instr), rm_field(instr));
@@ -697,16 +690,16 @@ void Disassembler::disasm(int* addr, int instr, int instr_offset) {
           // mcr, mrc
           stream()->print("%s%s\tp%d, %d, %s, c%d, c%d",
                           (bit(instr, 20) ? "mrc" : "mcr"),
-                          cond == Assembler::nv ? "2" : cond_name(cond),
+                          cond == Assembler::nv ? "2" : condition_name(cond),
                           coprocessor,
                           (instr >> 21) & 0x7, // opcode1
-                          reg_name(rd_field(instr)),
+                          register_name(rd_field(instr)),
                           rn_field(instr), rm_field(instr));
         }
         stream()->print(", %d", opcode2);
       } else {
         // swi
-        stream()->print("swi%s\t0x%06x", cond_name(cond), instr & 0xffffff);
+        stream()->print("swi%s\t0x%06x", condition_name(cond), instr & 0xffffff);
       }
       break;
     default: SHOULD_NOT_REACH_HERE();
@@ -755,7 +748,7 @@ void Disassembler::emit_vfp_instruction(int instr, int instr_offset) {
     }
 
     if (pqrs != 0x0f) {
-      stream()->print("%s%c%s\t%s, %s, %s", op, type, cond_name(cond),
+      stream()->print("%s%c%s\t%s, %s, %s", op, type, condition_name(cond),
                       fd, fn, fm);
     } else {
       static const char * const ops[] = {
@@ -798,14 +791,14 @@ void Disassembler::emit_vfp_instruction(int instr, int instr_offset) {
   if (type == 'd') {
     vfp_reg_name('s', (Fd << 1 | D), fd);
     vfp_reg_name('d', (Fm << 1 | M), fm);
-    stream()->print("fcvtsd%s\t%s, %s", cond_name(cond), fd, fm);
+    stream()->print("fcvtsd%s\t%s, %s", condition_name(cond), fd, fm);
   } else {
     vfp_reg_name('d', (Fd << 1 | D), fd);
     vfp_reg_name('s', (Fm << 1 | M), fm);
-    stream()->print("fcvtds%s\t%s, %s", cond_name(cond), fd, fm);
+    stream()->print("fcvtds%s\t%s, %s", condition_name(cond), fd, fm);
   }
       } else {
-        stream()->print("%s%c%s\t%s, %s", op, type, cond_name(cond),
+        stream()->print("%s%c%s\t%s, %s", op, type, condition_name(cond),
                         fd, fm);
       }
     }
@@ -823,19 +816,27 @@ void Disassembler::emit_vfp_instruction(int instr, int instr_offset) {
     }
 
     if (opcode == 0 && cpnum == 10 && L == 0) {
-      stream()->print("fmsr%s\t%s, %s", cond_name(cond), fn, reg_name(rd));
+      stream()->print("fmsr%s\t%s, %s", condition_name(cond),
+                                        fn,
+                                        register_name(rd));
     }
     else if (opcode == 0 && cpnum == 10 && L == 1) {
-      stream()->print("fmrs%s\t%s, %s", cond_name(cond), reg_name(rd), fn);
+      stream()->print("fmrs%s\t%s, %s", condition_name(cond),
+                                        register_name(rd),
+                                        fn);
     }
     else if (opcode == 7 && cpnum == 10 && L == 1 && N == 0 && Fn == 0x1 && Fd == 0xF) {
-      stream()->print("fmstat%s", cond_name(cond));
+      stream()->print("fmstat%s", condition_name(cond));
     }
     else if (opcode == 7 && cpnum == 10 && L == 0 && N == 0) {
-      stream()->print("fmxr%s\t%s, %s", cond_name(cond), vfp_reg, reg_name(rd));
+      stream()->print("fmxr%s\t%s, %s", condition_name(cond),
+                                        vfp_reg,
+                                        register_name(rd));
     }
     else if (opcode == 7 && cpnum == 10 && L == 1 && N == 0) {
-      stream()->print("fmrx%s\t%s, %s", cond_name(cond), reg_name(rd), vfp_reg);
+      stream()->print("fmrx%s\t%s, %s", condition_name(cond),
+                                        register_name(rd),
+                                        vfp_reg);
     } else {
       unknown_vfp_instr(instr);
     }
@@ -847,9 +848,15 @@ void Disassembler::emit_vfp_instruction(int instr, int instr_offset) {
     Register rn  = rn_field(instr);
 
     if (cpnum == 11 && L == 0) {
-      stream()->print("fmdrr%s\t%s, %s, %s", cond_name(cond), fm, reg_name(rd), reg_name(rn));
+      stream()->print("fmdrr%s\t%s, %s, %s", condition_name(cond),
+                                             fm,
+                                             register_name(rd),
+                                             register_name(rn));
     } else if (cpnum == 11 && L == 1) {
-      stream()->print("fmrrd%s\t%s, %s, %s", cond_name(cond), reg_name(rd), reg_name(rn), fm);
+      stream()->print("fmrrd%s\t%s, %s, %s", condition_name(cond),
+                                             register_name(rd),
+                                             register_name(rn),
+                                             fm);
     } else {
       unknown_vfp_instr(instr);
     }
@@ -877,8 +884,8 @@ void Disassembler::emit_vfp_instruction(int instr, int instr_offset) {
           stream()->put(P ? 'b' : 'a');
         }
         stream()->print("%c", type);
-        stream()->print("%s", cond_name(cond));
-        stream()->print("\t%s", reg_name(rn));
+        stream()->print("%s", condition_name(cond));
+        stream()->print("\t%s", register_name(rn));
         if (W) {
           stream()->put('!');
         }
@@ -889,7 +896,7 @@ void Disassembler::emit_vfp_instruction(int instr, int instr_offset) {
       case 4:
       case 6: {
         stream()->print("f%s%c%s\t%s, ", (L ? "ld" : "st"), type,
-                      cond_name(cond), fd);
+                      condition_name(cond), fd);
         emit_address5(instr, instr_offset);
         break;
       }

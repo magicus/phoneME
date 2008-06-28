@@ -1,24 +1,24 @@
 /*
- *   
+ *
  *
  * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
- * 
+ *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
  * 2 only, as published by the Free Software Foundation.
- * 
+ *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
  * included at /legal/license.txt).
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA
- * 
+ *
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
  * information or have any questions.
@@ -35,14 +35,14 @@ int Disassembler::_last_imm_offset;
 int Disassembler::_last_imm;
 
 void Disassembler::emit_unknown(short instr, const char* comment) {
-  if (GenerateGNUCode) { 
+  if (GenerateGNUCode) {
     stream()->print(".word\t0x%04x", (unsigned short)instr);
-    if (comment != NULL) { 
+    if (comment != NULL) {
       stream()->print("\t/* %s */", comment);
     }
   } else {
     stream()->print("DCD\t0x%04x", (unsigned short)instr);
-    if (comment != NULL) { 
+    if (comment != NULL) {
       stream()->print("\t; %s", comment);
     }
   }
@@ -53,8 +53,8 @@ void Disassembler::emit_register_list(short instr) {
   int b = -1;
   bool comma = false;
   // clear upper bits so we can run past last register (see below)!
-  instr &= 0xff; 
-  for (int i = 0; i <= Assembler::number_of_registers; i++) { 
+  instr &= 0xff;
+  for (int i = 0; i <= Assembler::number_of_registers; i++) {
     // run past last register (by 1)!
     // b <  0 => no open range
     // b >= 0 => open range [b, i-1]
@@ -68,11 +68,11 @@ void Disassembler::emit_register_list(short instr) {
         if (comma) {
           stream()->print(", ");
         }
-        stream()->print(reg_name(Assembler::as_register(b)));
+        stream()->print(register_name(b));
         if (b < i-1) {
             stream()->print("%s%s",
                             (b == i-2 ? ", " : " - "),
-                            reg_name(Assembler::as_register(i-1)));
+                            register_name(i-1) );
         }
         b = -1; // close range
         comma = true;
@@ -84,37 +84,31 @@ void Disassembler::emit_register_list(short instr) {
   stream()->put('}');
 }
 
-const char* Disassembler::cond_name(Assembler::Condition cond) {
-  static const char* cond_names[Assembler::number_of_conditions] = {
+const char* Disassembler::condition_name(const Condition cond) {
+  static const char* const cond_names[Assembler::number_of_conditions] = {
     "eq", "ne", "cs", "cc", "mi", "pl", "vs", "vc",
     "hi", "ls", "ge", "lt", "gt", "le", "",   "nv"
   };
-  GUARANTEE(Assembler::eq <= cond && cond < Assembler::number_of_conditions,
-            "illegal condition");
   return cond_names[cond];
 }
 
-const char* Disassembler::reg_name(Assembler::Register reg) {
+const char* Disassembler::register_name(const Register reg) {
   static const char* reg_names[Assembler::number_of_registers] = {
     "r0", "r1", "r2", "r3", "fp" , "gp", "r6", "r7",
     "r8", "r9", "r10", "r11", "r12", "sp", "lr", "pc"
   };
-  GUARANTEE(Assembler::r0 <= reg && reg < Assembler::number_of_registers,
-            "illegal register");
   return reg_names[reg];
 }
 
-const char* Disassembler::shift_name(Assembler::Shift shift) {
-  static const char* shift_names[Assembler::number_of_shifts] = {
+const char* Disassembler::shift_name(const Shift shift) {
+  static const char* const shift_names[Assembler::number_of_shifts] = {
     "lsl", "lsr", "asr", "ror"
   };
-  GUARANTEE(Assembler::lsl_shift <= shift && shift < Assembler::number_of_shifts,
-            "illegal shift");
   return shift_names[shift];
 }
 
-const char* Disassembler::opcode_name(Assembler::Opcode opcode) {
-  static const char* opcode_names[Assembler::number_of_opcodes] = {
+const char* Disassembler::opcode_name(const Opcode opcode) {
+  static const char* const opcode_names[Assembler::number_of_opcodes] = {
     "and", "eor", "lsl", "lsr", "asr", "adc", "sbc", "ror",
     "tst", "neg", "cmp", "cmn", "orr", "mul", "bic", "mvn",
     "add", "sub", "mov"
@@ -156,9 +150,9 @@ const char *Disassembler::find_gp_name(int uoffset) {
 void Disassembler::print_gp_name(int imm) {
    const char *name = find_gp_name(imm);
    if (name != NULL) {
-     if (GenerateGNUCode && !GenerateROMImage) { 
+     if (GenerateGNUCode && !GenerateROMImage) {
        stream()->print("/* = %s */", name);
-     } else { 
+     } else {
        stream()->print("; = %s ", name);
      }
    }
@@ -170,11 +164,11 @@ int Disassembler::disasm(short* addr, short instr, int instr_offset) {
   int num_half_words = 1;
 
   switch (op) {
-    case 0:    
+    case 0:
     {
       bool is_add_sub = (bit(instr, 12) && bit(instr, 11));
-      const char*  rn = reg_name(reg_field(instr, 3));
-      const char*  rd = reg_name(reg_field(instr));
+      const char*  rn = register_name(reg_field(instr, 3));
+      const char*  rd = register_name(reg_field(instr));
 
       if (!is_add_sub) {
         // Shift by immediate
@@ -190,7 +184,7 @@ int Disassembler::disasm(short* addr, short instr, int instr_offset) {
         const char *name = is_sub ? "sub" : "add";
         if (!bit(instr, 10)) {
           // add|sub <Rd>, <Rm>, <Rn>
-          const char* rm = reg_name(reg_field(instr, 6));
+          const char* rm = register_name(reg_field(instr, 6));
           stream()->print("%s\t%s, %s, %s", name, rd, rn, rm);
         } else {
           // add|sub <Rd>, <Rn>, #<3-bit imme.>
@@ -209,7 +203,7 @@ int Disassembler::disasm(short* addr, short instr, int instr_offset) {
     {
       // add|sub|cmp|mov <Rd/Rn>, #<8-bit imme>
       const int opcode = (instr >> 11) & 0x3;
-      const char* rd = reg_name(reg_field(instr, 8));
+      const char* rd = register_name(reg_field(instr, 8));
       switch (opcode) {
         case 0: 
           stream()->print("mov\t%s, #%d", rd, (instr & 0xFF));
@@ -236,7 +230,7 @@ int Disassembler::disasm(short* addr, short instr, int instr_offset) {
     {
       if (((instr >> 11) & 0x1F) == 0x9) {
         // ldr Rd, [PC, #<immed_8> * 4]
-        const char* rd = reg_name(reg_field(instr, 8));
+        const char* rd = register_name(reg_field(instr, 8));
         stream()->print("ldr\t%s, [pc, #%d]", rd, 
                         (instr & 0xFF) * 4);
         int target = (instr_offset & ~3) + 4 + ((instr & 0xFF) * 4);
@@ -255,9 +249,9 @@ int Disassembler::disasm(short* addr, short instr, int instr_offset) {
         }
       } else if (bit(instr, 12)) {
         // ldr|str <Rd>, [<Rn>, <Rm>]
-        const char* rd = reg_name(reg_field(instr, 0));
-        const char* rn = reg_name(reg_field(instr, 3));
-        const char* rm = reg_name(reg_field(instr, 6));
+        const char* rd = register_name(reg_field(instr, 0));
+        const char* rn = register_name(reg_field(instr, 3));
+        const char* rm = register_name(reg_field(instr, 6));
         const int opcode = (instr >> 9) & 0x7;
         switch(opcode) {
           case 0: stream()->print("str"); break;
@@ -270,7 +264,7 @@ int Disassembler::disasm(short* addr, short instr, int instr_offset) {
           case 7: stream()->print("ldrsh"); break;
         }
         stream()->print("\t%s, [%s, %s]", rd, rn, rm);
-        if (rn == reg_name(Assembler::gp)) {
+        if (rn == register_name(Assembler::gp)) {
           if (_last_imm_register == reg_field(instr, 6) && 
               _last_imm_offset == instr_offset - 2) {
             print_gp_name(_last_imm);
@@ -284,8 +278,8 @@ int Disassembler::disasm(short* addr, short instr, int instr_offset) {
         Assembler::Register reg_rm =
                Assembler::as_register((instr >> 3) & 0xF);
 
-        const char* rd = reg_name(reg_rd);
-        const char* rm = reg_name(reg_rm);      
+        const char* rd = register_name(reg_rd);
+        const char* rm = register_name(reg_rm);      
         
         switch (opcode) {
           case 0: 
@@ -306,8 +300,8 @@ int Disassembler::disasm(short* addr, short instr, int instr_offset) {
       } else {
           const Assembler::Opcode opcode =
             Assembler::as_opcode(instr >> 6 & 0xf);
-          const char* rd = reg_name(reg_field(instr, 0));
-          const char*  rn = reg_name(reg_field(instr, 3));
+          const char* rd = register_name(reg_field(instr, 0));
+          const char*  rn = register_name(reg_field(instr, 3));
           stream()->print("%s\t%s, %s", opcode_name(opcode), rd, rn);
         }
         break;
@@ -316,8 +310,8 @@ int Disassembler::disasm(short* addr, short instr, int instr_offset) {
     case 3:    
     {
        // ldrb|strb|ldr|str <Rd>, [<Rn>, #<immed_5> * 4]
-       const char*  rn = reg_name(reg_field(instr, 3));
-       const char*  rd = reg_name(reg_field(instr));
+       const char*  rn = register_name(reg_field(instr, 3));
+       const char*  rd = register_name(reg_field(instr));
        const bool byte_op = bit(instr,12);
        const int imm_shift = byte_op ? 0 : 2;
        if (bit(instr, 11)) {
@@ -332,7 +326,7 @@ int Disassembler::disasm(short* addr, short instr, int instr_offset) {
        }
        else {
          stream()->print(", #%d]", imm);
-         if (rn == reg_name(Assembler::gp)) {
+         if (rn == register_name(Assembler::gp)) {
            print_gp_name(imm);
          }
        }
@@ -341,8 +335,8 @@ int Disassembler::disasm(short* addr, short instr, int instr_offset) {
 
     case 4:
     {
-      const char*  rn = reg_name(reg_field(instr, 3));
-      const char*  rd = reg_name(reg_field(instr));
+      const char*  rn = register_name(reg_field(instr, 3));
+      const char*  rd = register_name(reg_field(instr));
       int imm = 0;
       if (!bit(instr, 12)) {
         // ldrh|strh <Rd>, [<Rn>, #<immed_5> * 4]
@@ -365,7 +359,7 @@ int Disassembler::disasm(short* addr, short instr, int instr_offset) {
     
     case 5:
     {
-       const char*  rd = reg_name(reg_field(instr, 8));
+       const char*  rd = register_name(reg_field(instr, 8));
       if (!bit(instr, 12)) {
         // add <Rd>, PC|SP, #<immed_8> * 4
         stream()->print("add\t%s, %s, #%d", rd, (bit(instr,11) ? "sp" : "pc"),
@@ -391,7 +385,7 @@ int Disassembler::disasm(short* addr, short instr, int instr_offset) {
         const Assembler::Register rn = reg_field(instr, 8);
         const bool l = bit(instr, 11);
         stream()->print(l ? "ldmia" : "stmia");
-        stream()->print("\t%s!", reg_name(rn));
+        stream()->print("\t%s!", register_name(rn));
         stream()->print(", ");
         emit_register_list(instr);
       } else if (type_bits == 0xF) {
@@ -407,7 +401,7 @@ int Disassembler::disasm(short* addr, short instr, int instr_offset) {
         int offset =
              ((instr & 0xFF) | (bit(instr, 7) ? 0xffffff00 : 0)) << 1;  
 
-        stream()->print("b%s\t", cond_name(cond));
+        stream()->print("b%s\t", condition_name(cond));
         int target = offset + 4;
         const char *sign = (target >= 0) ? "+" : "-";
         stream()->print("pc %s %d\t", sign, abs(target));

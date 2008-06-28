@@ -37,11 +37,7 @@
 // machine code. All functions representing machine instructions
 // generate exactly one instruction (no optimizations!).
 
-#if ENABLE_COMPILER
-class Assembler: public CompilerObject {
-#else
-class Assembler: public GlobalObj {
-#endif
+class Assembler: public AssemblerCommon {
 
 #if !defined(PRODUCT) || ENABLE_COMPILER || USE_COMPILER_STRUCTURES
 

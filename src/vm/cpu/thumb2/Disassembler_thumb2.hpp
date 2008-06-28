@@ -27,21 +27,77 @@
 #ifndef PRODUCT
 
 class Disassembler: public StackObj {
+ public:
+
+#if 0
+#define DEF(Name, name)                                         \
+  typedef Assembler::Name Name;                                 \
+  static Name as_##name( const unsigned n ) {                   \
+    return Assembler::as_##name( n );                           \
+  }                                                             \
+  static const char* name##_name ( const Name n );              \
+  static const char* name##_name  ( const unsigned n ) {        \
+    return name##_name( as_##name( n ) );                       \
+  }
+  DEF( Condition, condition )
+  DEF( Register,  register  )
+  DEF( Shift,     shift     )
+  DEF( Opcode,    opcode    )
+#undef DEF
+#endif
+
+  typedef Assembler::Condition  Condition;
+  typedef Assembler::Register   Register;
+  typedef Assembler::Shift      Shift;
+  typedef Assembler::Opcode     Opcode;
+
+  static Condition as_condition( const unsigned n ) {
+    return Assembler::as_condition( n );
+  }
+  static Register as_register( const unsigned n ) {
+    return Assembler::as_register( n );
+  }
+  static Shift as_shift( const unsigned n ) {
+    return Assembler::as_shift( n );
+  }
+  static Opcode as_opcode( const unsigned n ) {
+    return Assembler::as_opcode( n );
+  }
+
+  // textual representation
+  static const char* condition_name  ( const Condition cond   );
+  static const char* register_name   ( const Register  reg    );
+  static const char* shift_name ( const Shift     shift  );
+  static const char* opcode_name( const Opcode    opcode );
+
+  static const char* condition_name  ( const unsigned cond  ) {
+    return condition_name( as_condition( cond ) );
+  }
+  static const char* register_name   ( const unsigned reg   ) {
+    return register_name( as_register( reg ) );
+  }
+  static const char* shift_name ( const unsigned shift ) {
+    return shift_name( as_shift( shift ) );
+  }
+  static const char* opcode_name( const unsigned opcode ) {
+    return opcode_name( as_opcode( opcode ) );
+  }
+
  private:
   Stream* _stream;
-  static char *_eol_comments;
+  static const char* _eol_comments;
 
   // instruction fields
-  static const bool bit(short instr, int i) {
-    return (instr >> i & 0x1) == 1;
+  static short bit(const short instr, const int i) {
+    return (instr >> i) & 1;
   }
 
-  static const Assembler::Register reg_field(short instr, int shift = 0) {
-    return Assembler::as_register((instr >> shift) & 0x7);
+  static Register reg_field( short instr, int shift = 0 ) {
+    return as_register((instr >> shift) & 0x7);
   }
 
-  static const Assembler::Register reg_field_w(int instr, int shift = 0) {
-    return Assembler::as_register((instr >> shift) & 0x0f);
+  static Register reg_field_w( int instr, int shift = 0 ) {
+    return as_register((instr >> shift) & 0x0f);
   }
 
   // disassembler
@@ -63,30 +119,32 @@ class Disassembler: public StackObj {
   int disasm_internal(short* addr, short instr, int instr_offset = NO_OFFSET);
   void disasm_new16bit(short* addr, short instr, int instr_offset = NO_OFFSET);
   void disasm_32bit(short* addr, short instr, int instr_offset = NO_OFFSET);
-  Assembler::Register reg(int n) {
-    GUARANTEE(n >= 0 && n < Assembler::number_of_registers, "sanity");
-    return (Assembler::Register)n;
-  }
   void start_thumb2(int num_bits, short* addr, jushort instr);
   void end_thumb2();
+
+#if ENABLE_ARM_VFP
+  void emit_vfp_register_list(int instr);
+  void emit_vfp_instruction(int instr, int instr_offset);
+  void unknown_vfp_instr(int instr);
+#endif
+
  public:
   // creation
   Disassembler(Stream* stream) : _stream(stream) {}
-  
+
   // accessors
-  Stream* stream() const { return _stream; }
-  
+  Stream* stream( void ) const { return _stream; }
+
   enum { NO_OFFSET = -1 };
   // Returns the number of half-words disassembled
   int disasm(short* addr, short instr, int instr_offset = NO_OFFSET);
 
-  // textual representation
-  static const char* cond_name  (Assembler::Condition cond  );
-  static const char* reg_name   (Assembler::Register  reg   );
-  static const char* shift_name (Assembler::Shift     shift );
-  static const char* opcode_name(Assembler::Opcode    opcode);
+#if ENABLE_ARM_VFP
+  // type is either 's' (float) or 'd' (double)
+  static void vfp_reg_name( const char type, unsigned reg, char buff[] );
+#endif
 
-  static void eol_comment(char *s) {
+  static void eol_comment( const char* s ) {
     _eol_comments = s;
   }
 };

@@ -1,5 +1,5 @@
 /*
- *   
+ *
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -29,7 +29,7 @@
 
 #if ENABLE_COMPILER
 
-void Branch::set_imm(int target) const {
+void Branch::set_imm( const int target ) const {
   const short instr = encoding();
   int offset = target << 1;
 
@@ -38,28 +38,28 @@ void Branch::set_imm(int target) const {
     if (instr_next & (1 << 12)) {
       // unconditional
       GUARANTEE((offset >> 1) < (1 << 23) &&
-                (offset >> 1) >= -(1 << 23), "Imm too large"); 
+                (offset >> 1) >= -(1 << 23), "Imm too large");
       GUARANTEE(!(offset & 0x1), "Imm not halfword-aligned");
 
       const int S = (offset >= 0) ? 0:1;
       const int I1 = ((~(offset >> 23) & 0x1) ^ S) & 0x1;
       const int I2 = ((~(offset >> 22) & 0x1) ^ S) & 0x1;
-      set_encoding(0xF << 12 | S << 10 | (offset & 0x3FF000) >> 12); 
-      set_encoding_next(1 << 15 | I1 << 13 | I2 << 11 | 1 << 12 | 
-                        (offset & 0xFFF) >> 1); 
+      set_encoding(0xF << 12 | S << 10 | (offset & 0x3FF000) >> 12);
+      set_encoding_next(1 << 15 | I1 << 13 | I2 << 11 | 1 << 12 |
+                        (offset & 0xFFF) >> 1);
     } else {
       // conditional
-      GUARANTEE((offset >> 1) < (1 << 19) && 
-                (offset >> 1) >= -(1 << 19), "Imm too large"); 
-      GUARANTEE(!(offset & 0x1), "Imm not halfword-aligned"); 
+      GUARANTEE((offset >> 1) < (1 << 19) &&
+                (offset >> 1) >= -(1 << 19), "Imm too large");
+      GUARANTEE(!(offset & 0x1), "Imm not halfword-aligned");
 
       const int S = (offset >= 0) ? 0:1;
       const int J1 = ((offset >> 19) & 0x1);
       const int J2 = ((offset >> 18) & 0x1);
-      set_encoding(0xF << 12 | S << 10 | (instr & 0x3C0) | 
-                   (offset & 0x3F000) >> 12); 
-      set_encoding_next(J1 << 13 | J2 << 11 | 1 << 15 | 
-                        (offset & 0xFFF) >> 1); 
+      set_encoding(0xF << 12 | S << 10 | (instr & 0x3C0) |
+                   (offset & 0x3F000) >> 12);
+      set_encoding_next(J1 << 13 | J2 << 11 | 1 << 15 |
+                        (offset & 0xFFF) >> 1);
       }
   } else {
     const short type = (instr >> 13) & 0x7;
@@ -84,7 +84,7 @@ void Branch::set_imm(int target) const {
   }
 }
 
-address Branch::target() const {
+address Branch::target( void ) const {
   const short instr = encoding();
   if (is_long_encoding(instr)) {
     const short instr_next = encoding_next();
