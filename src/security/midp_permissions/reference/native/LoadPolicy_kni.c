@@ -17,6 +17,7 @@ static void jchar_to_char(jchar *src, char *dst, int len) {
     }
     *dst = 0; //null
 }
+
 KNI_RETURNTYPE_OBJECT
 KNIDECL(com_sun_midp_security_Permissions_loadDomainList)
 {
@@ -142,7 +143,7 @@ KNIDECL(com_sun_midp_security_Permissions_getDefaultValue) {
     }
 
     KNI_EndHandles();
-    return value;
+    KNI_ReturnByte(value);
 }
 
 KNI_RETURNTYPE_BYTE
@@ -171,7 +172,7 @@ KNIDECL(com_sun_midp_security_Permissions_getMaxValue) {
     }
 
     KNI_EndHandles();
-    return value;
+    KNI_ReturnByte(value);
 }
 
 KNI_RETURNTYPE_OBJECT
