@@ -143,7 +143,7 @@ KNIDECL(com_sun_midp_security_Permissions_getDefaultValue) {
     }
 
     KNI_EndHandles();
-    return value;
+    KNI_ReturnByte(value);
 }
 
 KNI_RETURNTYPE_BYTE
@@ -172,7 +172,7 @@ KNIDECL(com_sun_midp_security_Permissions_getMaxValue) {
     }
 
     KNI_EndHandles();
-    return value;
+    KNI_ReturnByte(value);
 }
 
 KNI_RETURNTYPE_OBJECT
