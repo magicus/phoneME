@@ -56,8 +56,8 @@ AMS_AMS_FOLDERS          ?= $(SUBSYSTEM_AMS_DIR)/ams_folders/lib.gmk
 AMS_AMS_DEBUG            ?= $(SUBSYSTEM_AMS_DIR)/ams_debug/lib.gmk
 
 #Default libraries for JAMS
-AMS_APPMANAGER_UI_RESOURCES ?= $(SUBSYSTEM_AMS_DIR)/appmanager_ui_resources/lib.gmk
-AMS_APPMANAGER_UI           ?= $(SUBSYSTEM_AMS_DIR)/appmanager_ui/lib.gmk
+AMS_APPMANAGER_UI_RESOURCES ?= $(SUBSYSTEM_AMS_DIR)/appmanager_ui_resources
+AMS_APPMANAGER_UI           ?= $(SUBSYSTEM_AMS_DIR)/appmanager_ui
 #end JAMS
 
 SUBSYSTEM_AMS_PACKAGES += \
@@ -122,8 +122,8 @@ include $(SUBSYSTEM_AMS_DIR)/on_device_debug_stubs/lib.gmk
 endif
 
 ifeq ($(USE_NATIVE_AMS), false)
-    include $(AMS_APPMANAGER_UI_RESOURCES)
-    include $(AMS_APPMANAGER_UI)
+    include $(AMS_APPMANAGER_UI_RESOURCES)/lib.gmk
+    include $(AMS_APPMANAGER_UI)/lib.gmk
 else    
 ifeq ($(TARGET_PLATFORM), javacall)
     include $(SUBSYSTEM_AMS_DIR)/nams_javacall/lib.gmk
