@@ -45,7 +45,9 @@
 #include <jsr211_platform_invoc.h>
 #endif
 
+#ifdef ENABLE_API_EXTENSIONS
 extern  check_extrnal_api_events(JVMSPI_BlockedThreadInfo *blocked_threads, int blocked_threads_count, jlong timeout);
+#endif /*ENABLE_API_EXTENSIONS*/
 
 static MidpReentryData newSignal;
 static MidpEvent newMidpEvent;
