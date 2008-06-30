@@ -262,10 +262,10 @@ static int permissions_get1_value(values *tbl, char *group_name, int isMax) {
         if (strcmp(groupTBL[i1], group_name) == 0) {
             if (isMax) 
                 return (int)tbl[i1].maxval;
-            } else
+            else
                 return (int)tbl[i1].defval;
-            break;
         }
+    }
     return NEVER;
 }
 static int permissions_get_value(char* domain_name, char* group_name, int isMax) {
