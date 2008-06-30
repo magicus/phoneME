@@ -196,7 +196,7 @@ javacall_result javautil_string_parse_int(const char* str, int* number) {
     int res = 0;
     int td = 1;
     int len = strlen(str);
-    char* p = str;
+    char* p = (char*)str;
 
     *number = -1;
 
