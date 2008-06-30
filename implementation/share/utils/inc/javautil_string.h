@@ -1,6 +1,6 @@
 /*
  *
- * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
@@ -113,6 +113,21 @@ javacall_result javautil_string_trim(char* str);
  */
 javacall_result javautil_string_parse_int(const char* str, int* number);
 
+/**
+ * Copies at most n wide characters from the wide-character string
+ * pointed to by src, including the terminating L'\0' character, to the array
+ * pointed to by dest.  Exactly n wide characters are written at dest.  If the length
+ * wcslen(src) is greater or equal to n, the string pointed to by dest will not
+ * be L'\0' terminated.
+ *
+ * The strings may not overlap.
+ * 
+ * @param dst destination buffer. At least nchars wide-characters long.
+ * @param src copied string
+ * @param nchars max number of copied wide-characters
+ * @return number of copied wide-characters
+ */
+size_t javautil_wcsncpy(javacall_utf16 * dst, javacall_const_utf16_string src, size_t nchars);
 
 /**
  * Compare characters of two strings without regard to case.
@@ -130,7 +145,7 @@ javacall_result javautil_string_parse_int(const char* str, int* number);
  */
 int javautil_strnicmp(const char* string1, const char* string2, size_t nchars);
 int javautil_stricmp(const char* string1, const char* string2);
-int javautil_wcsnicmp(const unsigned short* string1, const unsigned short* string2, size_t nchars);
+int javautil_wcsnicmp(javacall_const_utf16_string string1, javacall_const_utf16_string string2, size_t nchars);
 
 /**
  * Returns a new string that is a concatenation of two input strings.

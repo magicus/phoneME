@@ -31,6 +31,7 @@
 #include <string.h>
 #include "javautil_string.h"
 #include "javacall_memory.h"
+#include "javacall_string.h"
 
 /**
  * looks for first occurrence of <param>c</param> within <param>str</param>
@@ -220,7 +221,7 @@ javacall_result javautil_string_parse_int(const char* str, int* number) {
     return JAVACALL_OK;
 }
 
-#define ISALFA(c) ((((c) > 0x40) && ((c) < 0x5B)) || (((c) > 0x60) && ((c) < 0x7B)))
+#define ISALFA(c) ('A' <= (c & ~0x20) && (c & ~0x20) <= 'Z')
 
 /**
  * Compare characters of two strings without regard to case.
@@ -269,24 +270,43 @@ int javautil_stricmp(const char* string1, const char* string2)
     return ch1 - ch2;
 }
 
-int javautil_wcsnicmp(const unsigned short* string1, const unsigned short* string2, size_t nchars)
+size_t javautil_wcsncpy(javacall_utf16 * dst, javacall_const_utf16_string src, size_t nchars)
 {
-    unsigned short ch1, ch2;
-    do {
-        if (nchars-- == 0) {
-            return 0;
-        }
-        ch1 = *string1++;
-        ch2 = *string2++;
-
-        if (ch1 != ch2) {
-            if (!ISALFA(ch1) || towupper(ch1) != towupper(ch2))  {
-                break;
-            }
-        }
+    int count = nchars;
+    while( count-- ){
+        *dst++ = *src;
+        if( !*src++ ) 
+            return nchars - count;
     }
-    while (ch1 && ch2);
-    return ch1 - ch2;
+    return nchars;
+}
+
+int javautil_wcsnicmp(javacall_const_utf16_string string1, javacall_const_utf16_string string2, size_t nchars)
+{
+#define BUFFER_SIZE 0x20
+    javacall_utf16 buff1[ BUFFER_SIZE ], buff2[ BUFFER_SIZE ];
+
+    while( nchars ){
+        size_t len = BUFFER_SIZE, count;
+        const javacall_utf16 * p1 = buff1, * p2 = buff2;
+        if( len > nchars ) len = nchars;
+        javacall_towlower( buff1, javautil_wcsncpy( buff1, string1, len ) );
+        javacall_towlower( buff2, javautil_wcsncpy( buff2, string2, len ) );
+
+        for( count = len; count--; ){
+            javacall_utf16 ch = *p1++;
+            if( ch != *p2++ ) // strings are different
+                return ch - *--p2;
+            if( !ch ) // strings are equal (zero char is reached)
+                return 0;
+        }
+
+        nchars -= len; 
+        string1 += len; 
+        string2 += len;
+    }
+#undef BUFFER_SIZE
+    return 0;
 }
 
 /**
