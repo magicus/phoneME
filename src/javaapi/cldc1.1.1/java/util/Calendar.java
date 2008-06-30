@@ -481,8 +481,20 @@ public abstract class Calendar {
      * parameter is received.
      */
     public final void set(int field, int value) {
-        isTimeSet = false;
+        if(field == HOUR_OF_DAY) {
+            isSet[HOUR] = isSet[AM_PM] = false;
+        } else if(field == HOUR) {
+            isSet[HOUR_OF_DAY] = false;
+        } else if(field == AM_PM) {
+            if(value != AM && value != PM) {
+                return;
+            }
+            else {
+                isSet[HOUR_OF_DAY] = false;
+            }
+        }
 
+        isTimeSet = false;
         this.isSet[field] = true;
         this.fields[field] = value;
     }
