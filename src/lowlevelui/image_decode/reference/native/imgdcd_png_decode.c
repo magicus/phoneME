@@ -97,8 +97,8 @@ static int
 PNGdecodeImage_getByte(void *p)
 {
     idatInflateData *d = (idatInflateData *)p;
-    imageSrcPtr    src = d->src;
-    unsigned long chunkType;
+    imageSrcPtr src = d->src;
+    unsigned long chunkType = 0;
     unsigned int  byte;
 
     /* while, because it's possible to have 0-length chunks! */
@@ -121,8 +121,8 @@ static long
 PNGdecodeImage_getBytes(void *p, unsigned char *buffer, long count)
 {
     idatInflateData *d = (idatInflateData *)p;
-    imageSrcPtr    src = d->src;
-    unsigned long chunkType;
+    imageSrcPtr src = d->src;
+    unsigned long chunkType = 0;
 
     /* while, because it's possible to have 0-length chunks! */
     while (d->clen == 0) {
@@ -225,7 +225,7 @@ PNGdecodeImage_real(imageSrcPtr src, imageDstPtr dst,
              saw_tRNS = FALSE;
     pngData      data;
 
-    unsigned long chunkType;
+    unsigned long chunkType = 0;
     long chunkLength;
     unsigned long CRC;
 
