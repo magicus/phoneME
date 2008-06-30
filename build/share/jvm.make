@@ -137,6 +137,9 @@ MakeDepsMain_linux    = UnixPlatform
 ifeq ($(target_platform), linux_javacall)
 MakeDepsMain_javacall = UnixPlatform
 endif
+ifeq ($(target_platform), darwin_javacall)
+MakeDepsMain_javacall = UnixPlatform
+endif
 ifneq ($(MakeDepsMain_$(os_family)_$(compiler)),)
 MakeDepsMain          = $(MakeDepsMain_$(os_family)_$(compiler))
 else
@@ -155,6 +158,9 @@ MakeDepsOpts_win32    = -resolveVpath true
 MakeDepsOpts_wince    = -resolveVpath true
 MakeDepsOpts_linux    = -resolveVpath true
 ifeq ($(target_platform), linux_javacall)
+MakeDepsOpts_javacall = -resolveVpath true
+endif
+ifeq ($(target_platform), darwin_javacall)
 MakeDepsOpts_javacall = -resolveVpath true
 endif
 MakeDepsOpts         += -gendir $(GEN_DIR) -workspace $(WorkSpace)
@@ -1706,7 +1712,7 @@ Interpreter_$(arch)$(OBJ_SUFFIX): Interpreter_$(arch).s
 else
 AsmStubs_$(target_arch)$(OBJ_SUFFIX): $(JVMWorkSpace)/src/vm/cpu/c/AsmStubs_$(target_arch).s
 	$(A)echo "generating CPU stubs $<"
-	$(A)cpp -D$(host_os) $< > $(THIS_DIR)/AsmStubs_$(target_arch).s
+	$(A)$(CPP) -E -D$(host_os) $< > $(THIS_DIR)/AsmStubs_$(target_arch).s
 	$(A)$(ASM) $(ASM_FLAGS) -o $@ $(THIS_DIR)/AsmStubs_$(target_arch).s
 endif
 

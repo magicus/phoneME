@@ -1232,6 +1232,7 @@ SourceAssembler_<iarch>.cpp      ObjectHeap_<iarch>.hpp
 SourceAssembler_<iarch>.cpp      GPTableGenerator_<iarch>.hpp
 #endif
 
+Assembler_<carch>.hpp            AssemblerCommon.hpp
 BinaryAssemblerCommon.hpp        Assembler_<carch>.hpp
 BinaryAssemblerCommon.hpp        CompiledMethod.hpp
 BinaryAssemblerCommon.hpp        LiteralPoolElement.hpp
