@@ -38,7 +38,8 @@ extern "C" {
  * 
  * @param path the name of a directory, but it can be a
  *             partial file name
- * @param pathLen length of directory name
+ * @param pathLen length of directory name or
+ *        JAVACALL_UNKNOWN_LENGTH, which may be used for null terminated string 
  * @return pointer to an opaque filelist structure, that can be used in
  *         javacall_dir_get_next() and javacall_dir_close
  *         NULL returned on error, for example if root directory of the
