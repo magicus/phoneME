@@ -51,7 +51,8 @@
  * @return <code>JAVACALL_OK</code> on success,
  *         <code>JAVACALL_FAIL</code> or any other negative value otherwise.
  */
-javacall_result javautil_string_index_of(char* str, char c, /* OUT */ int* index);
+javacall_result javautil_string_index_of(const char* str, 
+                                         char c, /* OUT */ int* index);
 
 /**
  * Looks for the last occurence of <param>c</param> within <param>str</param>
@@ -62,7 +63,7 @@ javacall_result javautil_string_index_of(char* str, char c, /* OUT */ int* index
  * @return <code>JAVACALL_OK</code> on success,
  *         <code>JAVACALL_FAIL</code> or any other negative value otherwise.
  */
-javacall_result javautil_string_last_index_of(char* str, char c,
+javacall_result javautil_string_last_index_of(const char* str, char c,
                                               /* OUT */ int* index);
 
 /**
@@ -74,7 +75,8 @@ javacall_result javautil_string_last_index_of(char* str, char c,
  * @return <code>JAVACALL_TRUE</code> if equal,
  *         <code>JAVACALL_FALSE</code> otherwise.
  */
-javacall_bool javautil_string_equals(char* str1, char* str2);
+javacall_bool javautil_string_equals(const char* str1, 
+                                     const char* str2);
 
 /**
  * Returns a new string that is a substring of this string. The
@@ -89,7 +91,7 @@ javacall_bool javautil_string_equals(char* str1, char* str2);
  * @return <code>JAVACALL_OK</code> on success,
  *         <code>JAVACALL_FAIL</code> or any other negative value otherwise.
  */
-javacall_result javautil_string_substring(char* src, int begin, int end,
+javacall_result javautil_string_substring(const char* src, int begin, int end,
                                           /*OUT*/ char** dest);
 
 /**
@@ -109,7 +111,7 @@ javacall_result javautil_string_trim(char* str);
  * @return <code>JAVACALL_OK</code> on success,
  *         <code>JAVACALL_FAIL</code> or any other negative value otherwise.
  */
-javacall_result javautil_string_parse_int(char* str, int* number);
+javacall_result javautil_string_parse_int(const char* str, int* number);
 
 
 /**
@@ -171,7 +173,7 @@ void javautil_string_strip(char * s);
  * @param s input string
  * @return a newly allocated string with the same content as s
  */
-char* javautil_string_duplicate(char *s);
+char* javautil_string_duplicate(const char *s);
 
 
 #endif
