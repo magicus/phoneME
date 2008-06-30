@@ -119,14 +119,8 @@ javacall_media_caps* get_cap_item(const char *strItem) {
     
     cap->mediaFormat = mediaFormat;
     cap->contentTypes = contentTypes;
-
-    if (strstr(cap->mediaFormat, "CAPTURE") != NULL) {
-        cap->wholeProtocols = JAVACALL_MEDIA_CAPTURE_PROTOCOL;
-    }
-    else {
-        cap->wholeProtocols = JAVACALL_MEDIA_MEMORY_PROTOCOL;
-    }
-    
+    cap->wholeProtocols = (strstr(mediaFormat, "CAPTURE") != NULL) ?
+        JAVACALL_MEDIA_CAPTURE_PROTOCOL : JAVACALL_MEDIA_MEMORY_PROTOCOL;
     cap->streamingProtocols = 0;
     
     return cap;
@@ -138,7 +132,7 @@ javacall_media_caps* list2array(cap_item *head, const int count) {
     cap_item *pos;
     
     javacall_media_caps *caps_array = (javacall_media_caps *) 
-            malloc (MEDIA_CAPS_SIZE * (count+1));
+            javacall_malloc (MEDIA_CAPS_SIZE * (count+1));
     
     for (i = 0; (i < count) && (head != NULL); i++) {
         memcpy(&(caps_array[i]), head->cap, MEDIA_CAPS_SIZE);
