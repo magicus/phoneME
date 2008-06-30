@@ -145,8 +145,6 @@ javacall_dom_keyboardevent_get_meta_key(javacall_handle handle,
  *   method for a description of this parameter. 
  * @param cancelable_arg  Refer to the <code>UIEvent.initUIEvent()</code> 
  *   method for a description of this parameter. 
- * @param viewArg  Refer to the <code>UIEvent.initUIEvent()</code> method 
- *   for a description of this parameter. 
  * @param key_identifier_arg  Specifies 
  *   <code>KeyboardEvent.keyIdentifier</code>. 
  * @param key_location_arg  Specifies <code>KeyboardEvent.keyLocation</code>
@@ -182,8 +180,6 @@ javacall_dom_keyboardevent_init_keyboard_event(javacall_handle handle,
  * @param can_bubble_arg  Refer to the <code>UIEvent.initUIEventNS()</code> 
  *   method for a description of this parameter. 
  * @param cancelable_arg  Refer to the <code>UIEvent.initUIEventNS()</code>
- *    method for a description of this parameter. 
- * @param viewArg  Refer to the <code>UIEvent.initUIEventNS()</code> 
  *   method for a description of this parameter. 
  * @param key_identifier_arg  Refer to the 
  *   <code>KeyboardEvent.initKeyboardEvent()</code> method for a 
