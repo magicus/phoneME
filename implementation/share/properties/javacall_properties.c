@@ -129,7 +129,9 @@ void javacall_finalize_configurations(void) {
     handle = NULL;
     if (property_file_name != NULL) {
         javacall_free(property_file_name);
+        
         property_file_name = NULL;
+        property_file_name_len = 0;
     }
     init_state = PROPERTIES_INIT_NOT_STARTED;
 }
@@ -241,21 +243,26 @@ javacall_result javacall_set_property(const char* key,
  */ 
 javacall_result set_properties_file_name(const javacall_utf16* unicodeFileName, 
                                          int fileNameLen) {
-    int fileNameSize = (unicodeFileName != NULL) 
-                               ? fileNameLen * sizeof(javacall_utf16)
-                               : 0;
-    javacall_utf16* fileNameCopy = javacall_realloc(property_file_name, 
-                                                    fileNameSize);
+    int fileNameSize;
+    javacall_utf16* fileNameCopy;
+    
+    if ((unicodeFileName == NULL) || (fileNameLen == 0)) {
+        /* the default name is to be used */
+
+        if (property_file_name != NULL) {
+            javacall_free(property_file_name);
             
-    if (fileNameCopy == NULL) {
-        if (fileNameSize == 0) {
-            /* not a failure, the default name is to be used */
             property_file_name = NULL;
             property_file_name_len = 0;
-            
-            return JAVACALL_OK;
         }
         
+        return JAVACALL_OK;
+    }
+    
+    fileNameSize = fileNameLen * sizeof(javacall_utf16);
+    fileNameCopy = javacall_realloc(property_file_name, fileNameSize);
+            
+    if (fileNameCopy == NULL) {
         return JAVACALL_FAIL;
     }
 
