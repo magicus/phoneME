@@ -41,7 +41,7 @@
  * @return <code>JAVACALL_OK</code> on success,
  *         <code>JAVACALL_FAIL</code> or any other negative value otherwise.
  */
-javacall_result javautil_string_index_of(char* str, char c, /* OUT */ int* index) {
+javacall_result javautil_string_index_of(const char* str, char c, /* OUT */ int* index) {
     int i=0;
     int len = strlen(str);
 
@@ -72,7 +72,7 @@ javacall_result javautil_string_index_of(char* str, char c, /* OUT */ int* index
  * @return <code>JAVACALL_OK</code> on success,
  *         <code>JAVACALL_FAIL</code> or any other negative value otherwise.
  */
-javacall_result javautil_string_last_index_of(char* str, char c,
+javacall_result javautil_string_last_index_of(const char* str, char c,
                                               /* OUT */ int* index) {
     int i;
     int len = strlen(str);
@@ -105,7 +105,8 @@ javacall_result javautil_string_last_index_of(char* str, char c,
  * @return <code>JAVACALL_TRUE</code> if equal,
  *         <code>JAVACALL_FALSE</code> otherwise.
  */
-javacall_bool javautil_string_equals(char* str1, char* str2) {
+javacall_bool javautil_string_equals(const char* str1,
+                                     const char* str2) {
 
     if (strcmp(str1, str2) == 0) {
         return JAVACALL_TRUE;
@@ -127,7 +128,7 @@ javacall_bool javautil_string_equals(char* str1, char* str2) {
  * @return <code>JAVACALL_OK</code> on success,
  *         <code>JAVACALL_FAIL</code> or any other negative value otherwise.
  */
-javacall_result javautil_string_substring(char* src, int begin, int end,
+javacall_result javautil_string_substring(const char* src, int begin, int end,
                                           /*OUT*/ char** dest) {
 
     char* result = NULL;
@@ -190,7 +191,7 @@ javacall_result javautil_string_trim(char* str) {
  * @return <code>JAVACALL_OK</code> on success,
  *         <code>JAVACALL_FAIL</code> or any other negative value otherwise.
  */
-javacall_result javautil_string_parse_int(char* str, int* number) {
+javacall_result javautil_string_parse_int(const char* str, int* number) {
     int res = 0;
     int td = 1;
     int len = strlen(str);
@@ -406,7 +407,7 @@ void javautil_string_strip(char* s) {
  * @param s input string
  * @return a newly allocated string with the same content as s
  */
-char* javautil_string_duplicate(char *s) {
+char* javautil_string_duplicate(const char *s) {
     int len;
     char *new_s;
 
