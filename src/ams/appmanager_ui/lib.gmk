@@ -36,31 +36,22 @@
 #
 #SUBSYSTEMS += appmanager_ui
 
+#This is no longer need as we can override the whole path or take the default ams dir
 # Name of the library
-APPMANAGER_UI_NAME = appmanager_ui
+#APPMANAGER_UI_NAME = appmanager_ui
 
 # Local module directory
-AMS_AMS_APPMANAGER_UI_DIR ?= $(SUBSYSTEM_AMS_DIR)/$(APPMANAGER_UI_NAME)/reference
+AMS_APPMANAGER_UI_DIR ?= $(AMS_APPMANAGER_UI)/reference
+
+# Get implementation settings and files
+include $(AMS_APPMANAGER_UI_DIR)/lib.gmk
 
 # Javadoc source path
 MIDP_JAVADOC_SOURCEPATH += $(AMS_APPMANAGER_UI_DIR)/classes
 
-# Java files for the sub-system
-#
-SUBSYSTEM_AMS_JAVA_FILES += \
-    $(AMS_APPMANAGER_UI_DIR)/classes/com/sun/midp/appmanager/AppInfo.java \
-    $(AMS_APPMANAGER_UI_DIR)/classes/com/sun/midp/appmanager/AppManagerUI.java \
-    $(AMS_APPMANAGER_UI_DIR)/classes/com/sun/midp/appmanager/FolderList.java \
-    $(AMS_APPMANAGER_UI_DIR)/classes/com/sun/midp/appmanager/AppSettings.java \
-    $(AMS_APPMANAGER_UI_DIR)/classes/com/sun/midp/appmanager/DisplayError.java \
-    $(AMS_APPMANAGER_UI_DIR)/classes/com/sun/midp/appmanager/MIDletSelector.java \
-    $(AMS_APPMANAGER_UI_DIR)/classes/com/sun/midp/appmanager/MIDletSwitcher.java \
-    $(AMS_APPMANAGER_UI_DIR)/classes/com/sun/midp/appmanager/SplashScreen.java \
-    $(AMS_APPMANAGER_UI_DIR)/classes/com/sun/midp/appmanager/RunningMIDletSuiteInfo.java \
-    $(AMS_APPMANAGER_UI_DIR)/classes/com/sun/midp/appmanager/CaManager.java
-
 
 #Add files to subsystem
+# this is done to be able to extend existing models
 ifdef AMS_APPMANAGER_ADDITIONAL_FILES
 $(foreach AMS_APPMANAGER_ADDITIONAL_FILES, $(_APP_FILES), SUBSYSTEM_AMS_JAVA_FILES +=$(_APP_FILES))
 endif
