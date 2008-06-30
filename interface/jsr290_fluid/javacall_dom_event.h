@@ -161,23 +161,6 @@ javacall_dom_event_get_default_prevented(javacall_handle handle,
                                          /* OUT */ javacall_bool* ret_value);
 
 /**
- * Returns  Used to specify the time (in milliseconds relative to the epoch) at 
- * which the event was created. Due to the fact that some systems may 
- * not provide this information the value of <code>timeStamp</code> may 
- * be not available for all events. When not available, a value of 0 
- * will be returned. Examples of epoch time are the time of the system 
- * start or 0:0:0 UTC 1st January 1970. 
- * 
- * @param handle Pointer to the object representing this event.
- * 
- * @return JAVACALL_OK if all done successfuly,
- *         JAVACALL_NOT_IMPLEMENTED when the stub was called
- */
-javacall_result
-javacall_dom_event_get_time_stamp(javacall_handle handle,
-                                  /* OUT */ javacall_int64* ret_value);
-
-/**
  * The <code>stopPropagation</code> method is used prevent further 
  * propagation of an event during event flow. If this method is called 
  * by any <code>EventListener</code> the event will cease propagating 
