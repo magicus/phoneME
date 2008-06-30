@@ -552,6 +552,7 @@ UnlockAudioMutex();
 KNIEXPORT KNI_RETURNTYPE_VOID
 KNIDECL(com_sun_mmedia_DirectPlayer_finalize) {
     do_finalize(KNIPASSARGS 0);
+    KNI_ReturnVoid();
 }
 
 KNIEXPORT KNI_RETURNTYPE_VOID
