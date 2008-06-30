@@ -30,7 +30,7 @@
 <!-- Visible from System.getProperty() -->
     <!-- JSR135(MMAPI) PROPERTIES -->
     <property Key="microedition.media.version"
-      Value="1.1"
+      Value="1.2"
       Scope="system"
       Comment="Version number."/>
 
