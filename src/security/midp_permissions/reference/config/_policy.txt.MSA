@@ -68,7 +68,7 @@ alias: location
   javax.microedition.location.ProximityListener,
   javax.microedition.location.Orientation
 
-alias: landmark  
+alias: landmark
   javax.microedition.location.LandmarkStore.read,
   javax.microedition.location.LandmarkStore.write,
   javax.microedition.location.LandmarkStore.category,
