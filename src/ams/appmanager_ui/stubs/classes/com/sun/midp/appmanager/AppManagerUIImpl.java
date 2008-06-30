@@ -31,19 +31,19 @@ import com.sun.midp.main.*;
 
 import javax.microedition.lcdui.Displayable;
 
-class TaskManagerUIImpl implements TaskManagerUI {
+class AppManagerUIImpl implements AppManagerUI {
 
     /**
      * Creates the Application Selector Screen.
      * Called if this is the first time AppSelector is being shown.
      *
      * @param manager - The application manager that invoked it
-     * @param taskManager - The task manager
+     * @param appManager - The app manager
      * @param display - The display instance associated with the manager
      * @param displayError - The UI used to display error messages
      * @param foldersOn - if folders are used
      */
-    TaskManagerUIImpl(ApplicationManager manager, TaskManager taskManager,
+    AppManagerUIImpl(ApplicationManager manager, AppManagerPeer appManager,
                  Display display, DisplayError displayError, boolean foldersOn) {
 
     }
@@ -51,21 +51,21 @@ class TaskManagerUIImpl implements TaskManagerUI {
     /**
      * Creates the Application Selector Screen.
      * @param manager - The application manager that invoked it
-     * @param taskManager - The task manager
+     * @param appManager - The app manager
      * @param display - The display instance associated with the manager
      * @param displayError - The UI used to display error messages
      * @param foldersOn - if folders are used
      * @param askUserIfLaunchMidlet - If true, it is expected that dialog be shown asking
      *             user if last installed midlet should be launched.
      */
-    TaskManagerUIImpl(ApplicationManager manager, TaskManager taskManager,
+    AppManagerUIImpl(ApplicationManager manager, AppManagerPeer appManager,
                  Display display, DisplayError displayError, boolean foldersOn,
                  boolean askUserIfLaunchMidlet) {
     }
     
     /**
-     * The TaskManager manages list of available MIDlet suites
-     * and informs TaskManagerUI regarding changes in list through
+     * The AppManagerPeer manages list of available MIDlet suites
+     * and informs AppManagerUI regarding changes in list through
      * itemAppended callback when new item is appended to the list.
      *
      * @param suiteInfo the midlet suite info
@@ -75,8 +75,8 @@ class TaskManagerUIImpl implements TaskManagerUI {
     }
 
     /**
-     * The TaskManager manages list of available MIDlet suites
-     * and informs TaskManagerUI regarding changes in list through
+     * The AppManagerPeer manages list of available MIDlet suites
+     * and informs AppManagerUI regarding changes in list through
      * itemRemoved callback when item is removed from the list.
      *
      * @param suiteInfo the midlet suite info
@@ -128,7 +128,7 @@ class TaskManagerUIImpl implements TaskManagerUI {
     }
 
     /**
-     * Called by TaskManager after a MIDlet suite
+     * Called by AppManagerPeer after a MIDlet suite
      * is successfully installed on the device,
      * to ask the user whether or not to launch
      * a MIDlet from the suite. 
@@ -206,7 +206,7 @@ class TaskManagerUIImpl implements TaskManagerUI {
 
     /**
      * Called to determine MidletSuiteInfo of the last selected Item.
-     * Is used to restore selection in the task manager.
+     * Is used to restore selection in the app manager.
      *
      * @return last selected MidletSuiteInfo
      */
@@ -233,7 +233,7 @@ class TaskManagerUIImpl implements TaskManagerUI {
     }
 
     /**
-     * Returns the main displayable of the TaskManagerUI.
+     * Returns the main displayable of the AppManagerUI.
      * @return main screen
      */
     public Displayable getMainDisplayable() {

@@ -96,8 +96,8 @@ import java.util.*;
  * Running midlets can be distinguished from non-running MIdlets/MIDlet suites
  * by the color of their name.
  */
-class TaskManagerUIImpl extends Form
-    implements TaskManagerUI, ItemCommandListener, CommandListener {
+class AppManagerUIImpl extends Form
+    implements AppManagerUI, ItemCommandListener, CommandListener {
 
     /**
      * The font used to paint midlet names in the AppSelector.
@@ -285,7 +285,7 @@ class TaskManagerUIImpl extends Form
     ApplicationManager manager;
 
     /** task manager */
-    TaskManager taskManager;
+    AppManagerPeer appManager;
 
     /** MIDlet Suite storage object. */
     private MIDletSuiteStorage midletSuiteStorage;
@@ -323,7 +323,7 @@ class TaskManagerUIImpl extends Form
     private MidletCustomItem mciToChangeFolder;
 
 
-    private void init(ApplicationManager manager, TaskManager taskManager,
+    private void init(ApplicationManager manager, AppManagerPeer appManager,
                  Display display, DisplayError displayError, boolean foldersOn) {
         mciToChangeFolder = null;
 
@@ -339,7 +339,7 @@ class TaskManagerUIImpl extends Form
         mciVector = new Vector();
 
         this.manager = manager;
-        this.taskManager = taskManager;
+        this.appManager = appManager;
         this.display = display;
         this.displayError = displayError;
 
@@ -371,16 +371,16 @@ class TaskManagerUIImpl extends Form
      * Called if this is the first time AppSelector is being shown.
      *
      * @param manager - The application manager that invoked it
-     * @param taskManager - The task manager
+     * @param appManager - The app manager
      * @param display - The display instance associated with the manager
      * @param displayError - The UI used to display error messages
      * @param foldersOn - if folders are used
      */
-    TaskManagerUIImpl(ApplicationManager manager, TaskManager taskManager,
+    AppManagerUIImpl(ApplicationManager manager, AppManagerPeer appManager,
                  Display display, DisplayError displayError, boolean foldersOn) {
         super(null);
 
-        init(manager, taskManager, display, displayError, foldersOn);
+        init(manager, appManager, display, displayError, foldersOn);
 
         if (foldersOn) {
             display.setCurrent(new SplashScreen(display, folderList));
@@ -393,18 +393,18 @@ class TaskManagerUIImpl extends Form
     /**
      * Creates the Application Selector Screen.
      * @param manager - The application manager that invoked it
-     * @param taskManager - The task manager
+     * @param appManager - The app manager
      * @param display - The display instance associated with the manager
      * @param displayError - The UI used to display error messages
      * @param foldersOn - if folders are used
      * @param askUserIfLaunchMidlet - If true, it is expected that dialog be shown asking
      *             user if last installed midlet should be launched.
      */
-    TaskManagerUIImpl(ApplicationManager manager, TaskManager taskManager,
+    AppManagerUIImpl(ApplicationManager manager, AppManagerPeer appManager,
                  Display display, DisplayError displayError, boolean foldersOn,
                  boolean askUserIfLaunchMidlet) {
         super(null);
-        init(manager, taskManager, display, displayError, foldersOn);
+        init(manager, appManager, display, displayError, foldersOn);
         if (askUserIfLaunchMidlet) {
             askUserIfLaunchMidlet();
         }  else {
@@ -473,8 +473,6 @@ class TaskManagerUIImpl extends Form
      *        if false then possibility to launch midlet is needed.
      */
     public void showMidletSwitcher(boolean onlyFromLaunchedList) {
-        System.err.println("showMidletSwitcher, onlyFromLaunchedList = " + onlyFromLaunchedList
-                + ", midletSwitcher.hasItems() = " + midletSwitcher.hasItems());
         if (onlyFromLaunchedList && midletSwitcher.hasItems()) {
             display.setCurrent(midletSwitcher);
         } else {
@@ -511,7 +509,7 @@ class TaskManagerUIImpl extends Form
 
             // suite to remove was set in confirmRemove()
             try {
-                taskManager.remove(removeMsi);
+                appManager.remove(removeMsi);
             } catch (Throwable t) {
                 if (Logging.REPORT_LEVEL <= Logging.WARNING) {
                     Logging.report(Logging.WARNING, LogChannels.LC_AMS,
@@ -528,10 +526,10 @@ class TaskManagerUIImpl extends Form
         } else if (c == runYesCmd) {
 
             // user decided run the midlet suite after installation
-            RunningMIDletSuiteInfo msiToRun = taskManager.getLastInstalledMidletItem();
+            RunningMIDletSuiteInfo msiToRun = appManager.getLastInstalledMidletItem();
             if (msiToRun != null) {
                 display.setCurrentItem(findItem(msiToRun));
-                taskManager.launchMidlet(msiToRun);
+                appManager.launchMidlet(msiToRun);
                 return;
             }
 
@@ -543,7 +541,7 @@ class TaskManagerUIImpl extends Form
              * if a MIDlet was just installed
              * we should make the corresponding item active
              */
-            RunningMIDletSuiteInfo isi = taskManager.getLastInstalledMidletItem();
+            RunningMIDletSuiteInfo isi = appManager.getLastInstalledMidletItem();
             if (isi != null) {
                 setCurrentItem(isi);
                 return;
@@ -624,7 +622,7 @@ class TaskManagerUIImpl extends Form
 
         } if (c == launchCmd) {
 
-            taskManager.launchMidlet(msi);
+            appManager.launchMidlet(msi);
             display.setCurrent(this);
 
         } else if (c == infoCmd) {
@@ -644,7 +642,7 @@ class TaskManagerUIImpl extends Form
 
         } else if (c == updateCmd) {
 
-            taskManager.updateSuite(msi);
+            appManager.updateSuite(msi);
 
         } else if (c == appSettingsCmd) {
 
@@ -718,11 +716,11 @@ class TaskManagerUIImpl extends Form
                 ci.removeCommand(launchCmd);
                 ci.removeCommand(launchInstallCmd);
 
-                if (taskManager.caManagerIncluded()) {
+                if (appManager.caManagerIncluded()) {
                     ci.removeCommand(launchCaManagerCmd);
                 }
 
-                if (taskManager.oddEnabled()) {
+                if (appManager.oddEnabled()) {
                     ci.removeCommand(launchODTAgentCmd);
                 }
 
@@ -772,22 +770,21 @@ class TaskManagerUIImpl extends Form
                 ci.removeCommand(endCmd);
 
                 if (ci.msi.midletToRun != null &&
-                    ci.msi.midletToRun.equals(taskManager.DISCOVERY_APP)) {
+                    ci.msi.midletToRun.equals(AppManagerPeer.DISCOVERY_APP)) {
                     ci.setDefaultCommand(launchInstallCmd);
-                } else if (taskManager.caManagerIncluded() &&
+                } else if (appManager.caManagerIncluded() &&
                     ci.msi.midletToRun != null &&
-                    ci.msi.midletToRun.equals(taskManager.CA_MANAGER)) {
+                    ci.msi.midletToRun.equals(AppManagerPeer.CA_MANAGER)) {
                     ci.setDefaultCommand(launchCaManagerCmd);
-                } else if (taskManager.oddEnabled() &&
+                } else if (appManager.oddEnabled() &&
                     ci.msi.midletToRun != null &&
-                    ci.msi.midletToRun.equals(taskManager.ODT_AGENT)) {
+                    ci.msi.midletToRun.equals(AppManagerPeer.ODT_AGENT)) {
                     ci.setDefaultCommand(launchODTAgentCmd);
                 } else {
                     if (ci.msi.enabled) {
                         ci.setDefaultCommand(launchCmd);
                     }
                 }
-System.err.println("going to call midletSwitcher.remove(ci.msi)");
                 midletSwitcher.remove(ci.msi);
                 ci.update();
 
@@ -913,8 +910,8 @@ System.err.println("going to call midletSwitcher.remove(ci.msi)");
     }
 
     /**
-     * The TaskManager manages list of available MIDlet suites
-     * and informs TaskManagerUI regarding changes in list through
+     * The AppManagerPeer manages list of available MIDlet suites
+     * and informs AppManagerUI regarding changes in list through
      * itemRemoved callback when item is removed from the list.
      *
      * @param suiteInfo the midlet suite info
@@ -1004,8 +1001,8 @@ System.err.println("going to call midletSwitcher.remove(ci.msi)");
     }
 
     /**
-     * The TaskManager manages list of available MIDlet suites
-     * and informs TaskManagerUI regarding changes in list through
+     * The AppManagerPeer manages list of available MIDlet suites
+     * and informs AppManagerUI regarding changes in list through
      * itemAppended callback when new item is appended to the list.
      *
      * @param suiteInfo the midlet suite info
@@ -1014,15 +1011,15 @@ System.err.println("going to call midletSwitcher.remove(ci.msi)");
         MidletCustomItem ci = new MidletCustomItem(suiteInfo);
 
         if (suiteInfo.midletToRun != null &&
-            suiteInfo.midletToRun.equals(taskManager.DISCOVERY_APP)) {
+            suiteInfo.midletToRun.equals(AppManagerPeer.DISCOVERY_APP)) {
             // setDefaultCommand will add default command first
             ci.setDefaultCommand(launchInstallCmd);
-        } else if (taskManager.caManagerIncluded() && suiteInfo.midletToRun != null &&
-                   suiteInfo.midletToRun.equals(taskManager.CA_MANAGER)) {
+        } else if (appManager.caManagerIncluded() && suiteInfo.midletToRun != null &&
+                   suiteInfo.midletToRun.equals(AppManagerPeer.CA_MANAGER)) {
             // setDefaultCommand will add default command first
             ci.setDefaultCommand(launchCaManagerCmd);
-        } else if (taskManager.oddEnabled() && suiteInfo.midletToRun != null &&
-                   suiteInfo.midletToRun.equals(taskManager.ODT_AGENT)) {
+        } else if (appManager.oddEnabled() && suiteInfo.midletToRun != null &&
+                   suiteInfo.midletToRun.equals(AppManagerPeer.ODT_AGENT)) {
             ci.setDefaultCommand(launchODTAgentCmd);
         } else {
             ci.addCommand(infoCmd);
@@ -1191,7 +1188,7 @@ System.err.println("going to call midletSwitcher.remove(ci.msi)");
     private void appendMIDletsToForm(MIDletSuiteImpl midletSuite, Form form) {
         StringItem item;
 
-        String names[] = taskManager.getMIDletsNames(midletSuite);
+        String names[] = appManager.getMIDletsNames(midletSuite);
         for (int i = 0; i < names.length; i++) {
             item = new StringItem(null, names[i]);
             item.setLayout(Item.LAYOUT_NEWLINE_AFTER | Item.LAYOUT_2);
@@ -1238,7 +1235,7 @@ System.err.println("going to call midletSwitcher.remove(ci.msi)");
     }
 
     /**
-     * Returns the main displayable of TaskManagerUI.
+     * Returns the main displayable of AppManagerUI.
      * @return main screen
      */
     public Displayable getMainDisplayable() {
@@ -1302,7 +1299,7 @@ System.err.println("going to call midletSwitcher.remove(ci.msi)");
          *         in the App Selector Screen.
          */
         protected int getMinContentWidth() {
-            return TaskManagerUIImpl.this.getWidth();
+            return AppManagerUIImpl.this.getWidth();
         }
 
         /**
@@ -1324,7 +1321,7 @@ System.err.println("going to call midletSwitcher.remove(ci.msi)");
          *         in the App Selector Screen.
          */
         protected int getPrefContentWidth(int height) {
-            return TaskManagerUIImpl.this.getWidth();
+            return AppManagerUIImpl.this.getWidth();
         }
 
         /**
@@ -1574,10 +1571,10 @@ System.err.println("going to call midletSwitcher.remove(ci.msi)");
         }
 
         /**
-         * Sets the owner (TaskManagerUIImpl) of this MidletCustomItem
+         * Sets the owner (AppManagerUIImpl) of this MidletCustomItem
          * @param hs The AppSelector in which this MidletCustomItem is shown
          */
-        void setOwner(TaskManagerUIImpl hs) {
+        void setOwner(AppManagerUIImpl hs) {
             owner = hs;
         }
 
@@ -1589,7 +1586,7 @@ System.err.println("going to call midletSwitcher.remove(ci.msi)");
          * be no default command
          */
         public void setDefaultCommand(Command c) {
-            default_command = c;
+            defaultCommand = c;
             super.setDefaultCommand(c);
         }
 
@@ -1610,7 +1607,7 @@ System.err.println("going to call midletSwitcher.remove(ci.msi)");
             // the AppSelector is made current since it is the top
             // most icon and we reset the traversal to start from the top
             if (msi.suiteId == MIDletSuite.INTERNAL_SUITE_ID) {
-                taskManager.ensureNoInternalMIDletsRunning();
+                appManager.ensureNoInternalMIDletsRunning();
             }
         }
 
@@ -1657,7 +1654,7 @@ System.err.println("going to call midletSwitcher.remove(ci.msi)");
          *   This field has the same name with package private
          *   Item.owner, however the field values are independent.
          */
-        TaskManagerUIImpl owner; // = false
+        AppManagerUIImpl owner; // = false
 
         /** The MIDletSuiteInfo associated with this MidletCustomItem */
         RunningMIDletSuiteInfo msi; // = null
@@ -1682,7 +1679,7 @@ System.err.println("going to call midletSwitcher.remove(ci.msi)");
         Image icon; // = null
         
         /** current default command */
-        Command default_command; // = null
+        Command defaultCommand; // = null
     }
 
 }

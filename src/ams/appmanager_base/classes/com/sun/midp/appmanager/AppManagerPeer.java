@@ -96,9 +96,9 @@ import java.util.*;
  * Running midlets can be distinguished from non-running MIdlets/MIDlet suites
  * by the color of their name.
  */
-class TaskManager implements CommandListener {
+class AppManagerPeer implements CommandListener {
 
-    private TaskManagerUI appManagerUI;
+    private AppManagerUI appManagerUI;
 
     /** Constant for the discovery application class name. */
     public static final String DISCOVERY_APP =
@@ -176,7 +176,7 @@ class TaskManager implements CommandListener {
      *             suites midletToRun should be set, for the other suites
      *             suiteId is enough to find the corresponding item.
      */
-    TaskManager(ApplicationManager manager, Display display,
+    AppManagerPeer(ApplicationManager manager, Display display,
                DisplayError displayError, boolean first, MIDletSuiteInfo ms) {
 
         msiVector = new Vector();
@@ -196,7 +196,7 @@ class TaskManager implements CommandListener {
         RunningMIDletSuiteInfo currentItem = null;
 
         if (first) {
-            appManagerUI = new TaskManagerUIImpl(manager, this, display, displayError, foldersOn);
+            appManagerUI = new AppManagerUIImpl(manager, this, display, displayError, foldersOn);
         } else {
             // if a MIDlet was just installed
             // getLastInstalledMidletItem() will return RunningMIDletSuiteInfo
@@ -214,11 +214,11 @@ class TaskManager implements CommandListener {
                         displayError.showErrorAlert(msi.displayName, t, null, null);
                     }
                 }
-                appManagerUI = new TaskManagerUIImpl(manager, this, display,
+                appManagerUI = new AppManagerUIImpl(manager, this, display,
                         displayError, foldersOn, true);
                 currentItem = msi;
             } else {
-                appManagerUI = new TaskManagerUIImpl(manager, this, display,
+                appManagerUI = new AppManagerUIImpl(manager, this, display,
                         displayError, foldersOn, false);
             }
         }

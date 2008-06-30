@@ -31,11 +31,11 @@ import com.sun.midp.main.*;
 import javax.microedition.lcdui.Displayable;
 
 
-interface TaskManagerUI {
+interface AppManagerUI {
 
     /**
-     * The TaskManager manages list of available MIDlet suites
-     * and informs TaskManagerUI regarding changes in list through
+     * The AppManagerPeer manages list of available MIDlet suites
+     * and informs AppManagerUI regarding changes in list through
      * itemAppended callback when new item is appended to the list.
      *  
      * @param suiteInfo the midlet suite info
@@ -43,8 +43,8 @@ interface TaskManagerUI {
     void itemAppended(RunningMIDletSuiteInfo suiteInfo);
 
     /**
-     * The TaskManager manages list of available MIDlet suites
-     * and informs TaskManagerUI regarding changes in list through
+     * The AppManagerPeer manages list of available MIDlet suites
+     * and informs AppManagerUI regarding changes in list through
      * itemRemoved callback when item is removed from the list.
      *
      * @param suiteInfo the midlet suite info
@@ -85,7 +85,7 @@ interface TaskManagerUI {
     void notifyMidletExited(RunningMIDletSuiteInfo si);
 
     /**
-     * Called by TaskManager after a MIDlet suite
+     * Called by AppManagerPeer after a MIDlet suite
      * is successfully installed on the device,
      * to ask the user whether or not to launch
      * the MIDlet from the suite. 
@@ -147,7 +147,7 @@ interface TaskManagerUI {
 
     /**
      * Called to determine MidletSuiteInfo of the last selected Item.
-     * Is used to restore selection in the task manager.
+     * Is used to restore selection in the app manager.
      *
      * @return last selected MidletSuiteInfo
      */
@@ -168,7 +168,7 @@ interface TaskManagerUI {
     void cleanUp();
 
     /**
-     * Returns the main displayable of the TaskManagerUI.
+     * Returns the main displayable of the AppManagerUI.
      * @return main screen
      */
     Displayable getMainDisplayable();
