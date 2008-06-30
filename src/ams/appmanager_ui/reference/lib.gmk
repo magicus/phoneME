@@ -45,7 +45,7 @@ MIDP_JAVADOC_SOURCEPATH += $(APPMANAGER_UI_REFERENCE_DIR)/classes
 #
 SUBSYSTEM_AMS_JAVA_FILES += \
     $(APPMANAGER_UI_REFERENCE_DIR)/classes/com/sun/midp/appmanager/AppInfo.java \
-    $(APPMANAGER_UI_REFERENCE_DIR)/classes/com/sun/midp/appmanager/TaskManagerUIImpl.java \
+    $(APPMANAGER_UI_REFERENCE_DIR)/classes/com/sun/midp/appmanager/AppManagerUIImpl.java \
     $(APPMANAGER_UI_REFERENCE_DIR)/classes/com/sun/midp/appmanager/FolderList.java \
     $(APPMANAGER_UI_REFERENCE_DIR)/classes/com/sun/midp/appmanager/MIDletSelector.java \
     $(APPMANAGER_UI_REFERENCE_DIR)/classes/com/sun/midp/appmanager/MIDletSwitcher.java \

@@ -48,7 +48,7 @@ MIDP_JAVADOC_SOURCEPATH += $(APPMANAGER_UI_DIR)/classes
 # Java files for the sub-system
 #
 SUBSYSTEM_AMS_JAVA_FILES += \
-    $(APPMANAGER_UI_DIR)/classes/com/sun/midp/appmanager/TaskManagerUI.java 
+    $(APPMANAGER_UI_DIR)/classes/com/sun/midp/appmanager/AppManagerUI.java
 
 # IMPL NOTE: Use library configuration file to select switch library
 #

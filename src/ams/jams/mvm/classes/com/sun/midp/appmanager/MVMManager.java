@@ -83,7 +83,7 @@ public class MVMManager extends MIDlet
     private MIDletSuiteStorage midletSuiteStorage;
 
     /** Screen that displays all installed midlets and installer */
-    private TaskManager taskManager;
+    private AppManagerPeer appManager;
 
     /** MIDlet proxy list reference. */
     private MIDletProxyList midletProxyList;
@@ -143,8 +143,8 @@ public class MVMManager extends MIDlet
         Display display = Display.getDisplay(this);
         displayError = new DisplayError(display);
 
-        // TaskManagerUI will be set to be current at the end of its constructor
-        taskManager = new TaskManager(this, display, displayError, first,
+        // AppManagerUI will be set to be current at the end of its constructor
+        appManager = new AppManagerPeer(this, display, displayError, first,
                                         null);
 
         processArguments();
@@ -158,7 +158,7 @@ public class MVMManager extends MIDlet
      * Processes MIDP_ENABLE_ODD_EVENT
      */
     public void handleEnableODDEvent() {
-        taskManager.showODTAgent();
+        appManager.showODTAgent();
     }
 
     /**
@@ -195,7 +195,7 @@ public class MVMManager extends MIDlet
      * @param suiteId ID of the newly installed MIDlet suite       
      */
     public void handleODDSuiteInstalledEvent(int suiteId) {
-        taskManager.notifySuiteInstalled(suiteId);
+        appManager.notifySuiteInstalled(suiteId);
     }
 
     /**
@@ -206,7 +206,7 @@ public class MVMManager extends MIDlet
      * @param suiteId ID of the removed MIDlet suite          
      */
     public void handleODDSuiteRemovedEvent(int suiteId) {
-        taskManager.notifySuiteRemoved(suiteId);
+        appManager.notifySuiteRemoved(suiteId);
     }
     
     // =================================================================
@@ -238,7 +238,7 @@ public class MVMManager extends MIDlet
          */
         GraphicalInstaller.saveSettings(null, MIDletSuite.UNUSED_SUITE_ID);
 
-        taskManager.cleanUp();
+        appManager.cleanUp();
 
         // Ending the MIDlet ends all others.
         midletProxyList.shutdown();
@@ -255,7 +255,7 @@ public class MVMManager extends MIDlet
      *        if false then possibility to launch midlet is needed.
      */
     public void selectForeground(boolean onlyFromLaunchedList) {
-        taskManager.showMidletSwitcher(onlyFromLaunchedList);
+        appManager.showMidletSwitcher(onlyFromLaunchedList);
     }
 
 
@@ -268,7 +268,7 @@ public class MVMManager extends MIDlet
      * @param midlet The proxy of the MIDlet being added
      */
     public void midletAdded(MIDletProxy midlet) {
-        taskManager.notifyMidletStarted(midlet);
+        appManager.notifyMidletStarted(midlet);
     }
 
     /**
@@ -278,7 +278,7 @@ public class MVMManager extends MIDlet
      * @param fieldId code for which field of the proxy was updated
      */
     public void midletUpdated(MIDletProxy midlet, int fieldId) {
-        taskManager.notifyMidletStateChanged(midlet);
+        appManager.notifyMidletStateChanged(midlet);
     }
 
     /**
@@ -304,7 +304,7 @@ public class MVMManager extends MIDlet
             suiteUnderDebugId = MIDletSuite.UNUSED_SUITE_ID;
         }
 
-        taskManager.notifyMidletExited(midlet);
+        appManager.notifyMidletExited(midlet);
     }
 
     /**
@@ -318,7 +318,7 @@ public class MVMManager extends MIDlet
      */
     public void midletStartError(int externalAppId, int suiteId,
 				 String className, int errorCode, String errorDetails) {
-        taskManager.notifyMidletStartError(suiteId, className,
+        appManager.notifyMidletStartError(suiteId, className,
             errorCode, errorDetails);
     }
 

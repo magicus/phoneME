@@ -85,7 +85,7 @@ public class Manager extends MIDlet implements ApplicationManager,
     private DisplayError displayError;
 
     /** Application Selector Screen. */
-    private TaskManager taskManager;
+    private AppManagerPeer appManager;
 
     /**
      * Create and initialize a new Manager MIDlet.
@@ -103,7 +103,7 @@ public class Manager extends MIDlet implements ApplicationManager,
         Display display = Display.getDisplay(this);
         displayError = new DisplayError(display);
 
-        // Get arguments to create taskManager
+        // Get arguments to create appManager
         String suiteIdStr = getAppProperty("arg-0");
         int suiteId = MIDletSuite.UNUSED_SUITE_ID;
         try {
@@ -118,11 +118,11 @@ public class Manager extends MIDlet implements ApplicationManager,
                 // For internal suites midlet class name should be specified
                 sui.midletToRun = getAppProperty("arg-1");
             }
-            // taskManagerUI will be set to be current at the end of its constructor
-            taskManager = new TaskManager(this, display, displayError, first, sui);
+            // AppManagerUI will be set to be current at the end of its constructor
+            appManager = new AppManagerPeer(this, display, displayError, first, sui);
         } else {
-            // TaskManagerUI will be set to be current at the end of its constructor
-            taskManager = new TaskManager(this, display, displayError, first, null);
+            // AppManagerUI will be set to be current at the end of its constructor
+            appManager = new AppManagerPeer(this, display, displayError, first, null);
         }
 
         if (first) {
@@ -152,7 +152,7 @@ public class Manager extends MIDlet implements ApplicationManager,
     public void destroyApp(boolean unconditional) {
         GraphicalInstaller.saveSettings(null, MIDletSuite.UNUSED_SUITE_ID);
 
-        taskManager.cleanUp();
+        appManager.cleanUp();
 
         if (MIDletSuiteUtils.getNextMIDletSuiteToRun() !=
                 MIDletSuite.UNUSED_SUITE_ID) {
@@ -172,7 +172,7 @@ public class Manager extends MIDlet implements ApplicationManager,
      * Processes MIDP_ENABLE_ODD_EVENT
      */
     public void handleEnableODDEvent() {
-        taskManager.showODTAgent();
+        appManager.showODTAgent();
     }
 
     /**
@@ -366,7 +366,7 @@ public class Manager extends MIDlet implements ApplicationManager,
      * Set this MIDlet to run after the next MIDlet is run.
      */
     private void updateLastSuiteToRun() {
-        MIDletSuiteInfo msi = taskManager.getSelectedMIDletSuiteInfo();
+        MIDletSuiteInfo msi = appManager.getSelectedMIDletSuiteInfo();
         if (msi == null) {
             MIDletSuiteUtils.setLastSuiteToRun(MIDletStateHandler.
                     getMidletStateHandler().getMIDletSuite().getID(),

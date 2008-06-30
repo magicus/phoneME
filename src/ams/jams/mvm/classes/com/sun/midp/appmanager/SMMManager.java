@@ -80,7 +80,7 @@ public class SMMManager extends MIDlet
     private MIDletSuiteStorage midletSuiteStorage;
 
     /** Screen that displays all installed midlets and installer */
-    private TaskManager taskManager;
+    private AppManagerPeer appManager;
 
     /** MIDlet proxy list reference. */
     private MIDletProxyList midletProxyList;
@@ -146,7 +146,7 @@ public class SMMManager extends MIDlet
 	displayError = new DisplayError(display);
 
 	// AppSelector will be set to be current at the end of its constructor
-        taskManager = new TaskManager(this, display, displayError, first, null);
+        appManager = new AppManagerPeer(this, display, displayError, first, null);
 
         if (first) {
             first = false;
@@ -175,7 +175,7 @@ public class SMMManager extends MIDlet
         // IMPL_NOTE: remove this:
         GraphicalInstaller.saveSettings(null, MIDletSuite.UNUSED_SUITE_ID);
 
-        taskManager.cleanUp();
+        appManager.cleanUp();
 
         // Ending this MIDlet ends all others.
         midletProxyList.shutdown();
@@ -190,7 +190,7 @@ public class SMMManager extends MIDlet
      * @param midlet The proxy of the MIDlet being added
      */
     public void midletAdded(MIDletProxy midlet) {
-        taskManager.notifyMidletStarted(midlet);
+        appManager.notifyMidletStarted(midlet);
     }
 
     /**
@@ -200,7 +200,7 @@ public class SMMManager extends MIDlet
      * @param fieldId code for which field of the proxy was updated
      */
     public void midletUpdated(MIDletProxy midlet, int fieldId) {
-        taskManager.notifyMidletStateChanged(midlet);
+        appManager.notifyMidletStateChanged(midlet);
     }
 
     /**
@@ -209,7 +209,7 @@ public class SMMManager extends MIDlet
      * @param midlet The proxy of the removed MIDlet
      */
     public void midletRemoved(MIDletProxy midlet) {
-        taskManager.notifyMidletExited(midlet);
+        appManager.notifyMidletExited(midlet);
     }
 
     /**
@@ -225,7 +225,7 @@ public class SMMManager extends MIDlet
                                  String className, int errorCode,
                                  String errorDetails) {
         allowMidletLaunch = true;
-        taskManager.notifyMidletStartError(suiteId, className,
+        appManager.notifyMidletStartError(suiteId, className,
                 errorCode, errorDetails);
     }
 
