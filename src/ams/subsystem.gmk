@@ -43,7 +43,7 @@ SUBSYSTEM_AMS_PACKAGES += \
     com.sun.midp.appmanager
 
 
-#Add packages if supplied
+#Add additional packages if supplied
 ifdef AMS_ADDITIONAL_PACKAGES
 $(foreach AMS_ADDITIANAL_PACKAGES,$(_AMS_PACK),SUBSYSTEM_AMS_PACKAGES +=$(_AMS_PACK))
 endif
