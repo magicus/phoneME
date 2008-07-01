@@ -22,62 +22,16 @@
  * information or have any questions.
  */
 
-#ifdef ENABLE_MMAPI_LIME
-
 #include "lime.h" // Lime has to be the first include for some reason
-#include <stdlib.h> // for itoa()
-#include "javacall_properties.h"
-#include <string.h>
-
-#endif
 
 #include "multimedia.h"
 #include "mmmididev.h"
 #include <stdio.h>
 
-#ifdef ENABLE_MMAPI_LIME
-
-struct _cap_item {
-    javacall_media_caps *cap;
-    struct _cap_item *next;
-};
-
-typedef struct _cap_item cap_item;
-
-#define DEFAULT_VALUE_LEN       0xFF
-#define MEDIA_CAPS_SIZE         sizeof(javacall_media_caps)
 #define LIME_MMAPI_PACKAGE      "com.sun.mmedia"
 #define LIME_MMAPI_CLASS        "JavaCallBridge"
 
-void mmSetStatusLine( const char* fmt, ... ) {
-    char           str8[ 256 ];
-    wchar_t        str16[ 256 ];
-    int            str16_len;
-	va_list        args;
-    javacall_int64 res;
-
-    static LimeFunction* f = NULL;
-
-	va_start(args, fmt);
-    vsprintf( str8, fmt, args );
-	va_end(args);
-
-    str16_len = swprintf( str16, 256, L"%S", str8 );
-
-    if( NULL == f ) {
-        f = NewLimeFunction( LIME_MMAPI_PACKAGE,
-                             LIME_MMAPI_CLASS,
-                             "put_status_string" );
-    }
-
-    f->call( f, &res, str16, str16_len );
-}
-
-//=============================================================================
-
-static const javacall_media_caps nullCap = { NULL, NULL, 0, 0 };
-
-static const javacall_media_caps g_caps[] = 
+static javacall_media_caps g_caps[] = 
 {
 //    mediaFormat,                   contentTypes,           'whole' protocols,              streaming protocols
     { JAVACALL_MEDIA_FORMAT_MS_PCM,  "audio/x-wav audio/wav",             JAVACALL_MEDIA_MEMORY_PROTOCOL, 0 },
@@ -91,6 +45,24 @@ static const javacall_media_caps g_caps[] =
     { JAVACALL_MEDIA_FORMAT_CAPTURE_RADIO, "audio/x-wav",                 JAVACALL_MEDIA_CAPTURE_PROTOCOL, 0 },
     { NULL,                          NULL,                   0,                              0 }
 };
+
+#ifdef ENABLE_MMAPI_LIME
+
+#include <stdlib.h> // for itoa()
+#include "javacall_properties.h"
+#include <string.h>
+
+struct _cap_item {
+    javacall_media_caps *cap;
+    struct _cap_item *next;
+};
+
+typedef struct _cap_item cap_item;
+
+#define DEFAULT_VALUE_LEN       0xFF
+#define MEDIA_CAPS_SIZE         sizeof(javacall_media_caps)
+
+static javacall_media_caps nullCap = { NULL, NULL, 0, 0 };
 
 javacall_media_caps* get_cap_item(const char *strItem) {
     int mediaFormatLen, contentTypesLen;
@@ -182,6 +154,32 @@ javacall_media_caps *get_capabilities_from_properties() {
 }
 
 #endif // of ENABLE_MMAPI_LIME
+
+void mmSetStatusLine( const char* fmt, ... ) {
+    char           str8[ 256 ];
+    wchar_t        str16[ 256 ];
+    int            str16_len;
+	va_list        args;
+    javacall_int64 res;
+
+    static LimeFunction* f = NULL;
+
+	va_start(args, fmt);
+    vsprintf( str8, fmt, args );
+	va_end(args);
+
+    str16_len = swprintf( str16, 256, L"%S", str8 );
+
+    if( NULL == f ) {
+        f = NewLimeFunction( LIME_MMAPI_PACKAGE,
+                             LIME_MMAPI_CLASS,
+                             "put_status_string" );
+    }
+
+    f->call( f, &res, str16, str16_len );
+}
+
+//=============================================================================
 
 static javacall_media_configuration g_cfg;
 
