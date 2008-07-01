@@ -83,6 +83,7 @@ POLICY_FILES = $(PERMISSIONS_CONFIG_DIR)/_function_groups.txt.JTWI \
 javacall_policy_load.c : policy_files
 
 policy_files :
-	cp  $(POLICY_FILES) $(MIDP_OUTPUT_DIR)/lib
+	@if [ ! -d $(MIDP_OUTPUT_DIR)/lib ]; then mkdir $(MIDP_OUTPUT_DIR)/lib; fi
+	@cp  $(POLICY_FILES) $(MIDP_OUTPUT_DIR)/lib
 endif
 
