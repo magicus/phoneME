@@ -265,7 +265,6 @@ main(int argc, char *argv[]) {
             javacall_set_property("profiler.filename",
                                   argv[i], JAVACALL_TRUE,
                                   JAVACALL_APPLICATION_PROPERTY);
-            i++;
         } else if (strcmp(argv[i], "-tracegarbagecollection") == 0) {
 
             /* It is a CLDC arg, add to CLDC arguments list */
