@@ -35,3 +35,17 @@
 ######################################################################
 
 include $(SUBSYSTEM_DIR)/security/subsystem.gmk
+
+SECURITY_SUBSYSTEM_DIR = $(SUBSYSTEM_DIR)/security/cdc_application
+
+SUBSYSTEM_SECURITY_JAVA_FILES += \
+  $(SECURITY_SUBSYSTEM_DIR)/classes/com/sun/j2me/security/MidpPermission.java
+
+MIDP_BOOTCLASSPATH_CLASSES_LIST += \
+    com.sun.j2me.security.MidpPermission
+
+MIDP_RESOURCES += policies
+
+policies: 
+	$(AT)cp -f $(SECURITY_SUBSYSTEM_DIR)/policies/*.policy $(LIBDIR) $(LOG)
+
