@@ -31,7 +31,7 @@ typedef const char* string;
 static string domainTBL[] = {
     "manufacturer",
     "identified_third_party",
-    "unidentified_third_party",
+    "unidentified_third_party,unsecured",
     "minimum",
     "maximum"
 };
