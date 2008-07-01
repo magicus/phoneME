@@ -118,6 +118,24 @@ allow: landmark
 allow: payment
 allow: satsa
 
+domain: operator
+allow: net_access
+allow: low_level_net_access
+allow: application_auto_invocation
+allow: local_connectivity
+allow: messaging
+allow: restricted_messaging
+allow: authentication
+allow: smart_card
+allow: call_control
+allow: multimedia_recording
+allow: read_user_data_access
+allow: write_user_data_access
+allow: location
+allow: landmark
+allow: payment
+allow: satsa
+
 domain: identified_third_party
 blanket(session): net_access
 blanket(session): low_level_net_access
