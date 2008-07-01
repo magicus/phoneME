@@ -321,6 +321,12 @@ GENERATE_PERMISSIONS_TABLE = \
 	-params output native \
 	-out `$(call fixcygpath, $(GENERATED_DIR)/perm_number.h)`
 
+FUNCTIONGROUPS_XSL_FILE = $(INT_XSL_DIR)/cldc/functionGroups.xsl
+GENERATE_FUNCTIONGROUPS_TXT = \
+	-xml $(INT_MERGED_XML_FILE) \
+	-xsl $(FUNCTIONGROUPS_XSL_FILE) \
+	-out `$(call fixcygpath, $(GENERATED_DIR)/_function_groups.txt)` \
+
 # transformation for genrating the i18n tables (both Java and C files).
 GENERATE_L10N_STRINGS = \
 	-xml $(INT_MERGED_XML_FILE) \
@@ -339,6 +345,8 @@ define generate_configuration
 	@echo " ... generating localized strings"
 	@$(INT_INVOKE_L10N_GENERATOR) \
 		$(GENERATE_L10N_STRINGS)
+	@$(INT_INVOKE_TRANSFORMER) \
+		$(GENERATE_FUNCTIONGROUPS_TXT)
 	@echo $(foreach package, $(INT_PACKAGES_NAMES),\
 		"$(GENERATED_DIR)/classes/$(subst .,/,$(package)).java") \
 		>> $(GENERATED_JAVA_LIST)

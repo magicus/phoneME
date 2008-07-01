@@ -53,6 +53,7 @@
         Key         CDATA                   #REQUIRED
         KeyValue    CDATA                   #IMPLIED
         Value       CDATA                   #REQUIRED
+        Group       CDATA                   #IMPLIED
 >
 
 <!ELEMENT constants (constant_class)*>
