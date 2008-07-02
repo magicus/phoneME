@@ -241,8 +241,8 @@ javacall_result javacall_set_property(const char* key,
  * @param fileNameLen the length of the file name in UTF16 characters
  * @return <tt>JAVACALL_OK</tt> if successful, <tt>JAVACALL_FAIL</tt> otherwise 
  */ 
-javacall_result set_properties_file_name(const javacall_utf16* unicodeFileName, 
-                                         int fileNameLen) {
+static javacall_result set_properties_file_name(
+        const javacall_utf16* unicodeFileName, int fileNameLen) {
     int fileNameSize;
     javacall_utf16* fileNameCopy;
     
@@ -260,7 +260,8 @@ javacall_result set_properties_file_name(const javacall_utf16* unicodeFileName,
     }
     
     fileNameSize = fileNameLen * sizeof(javacall_utf16);
-    fileNameCopy = javacall_realloc(property_file_name, fileNameSize);
+    fileNameCopy = (javacall_utf16*)javacall_realloc(property_file_name, 
+                                                     fileNameSize);
             
     if (fileNameCopy == NULL) {
         return JAVACALL_FAIL;
