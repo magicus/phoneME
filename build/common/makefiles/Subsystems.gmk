@@ -259,6 +259,11 @@ endif
 
 ifeq ($(USE_JSR_280), true)
 JPP_DEFS += -DENABLE_JSR_280
+EXTRA_CFLAGS += -DENABLE_JSR_280=1
+ifeq ($(USE_DOM_EVENT), true)
+JPP_DEFS += -DUSE_DOM_EVENT
+EXTRA_CFLAGS += -DUSE_DOM_EVENT=1
+endif
 include $(JSR_280_DIR)/build/cldc_application/$(SUBSYSTEM_MAKE_FILE)
 endif
 

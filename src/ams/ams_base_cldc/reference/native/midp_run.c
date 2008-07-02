@@ -273,7 +273,11 @@ JVMSPI_GetSystemProperty(char* prop_name) {
             result = getLocalTimeZone();
         }
     }
-
+#if defined(ENABLE_JSR_280) && !defined(USE_DOM_EVENT)
+    if (strcmp(prop_name, "javax.microedition.xmlapi.events.version") == 0) {
+        result = NULL; /* Reset property value according to JSR280 spec */
+    }
+#endif
     return result;
 }
 
