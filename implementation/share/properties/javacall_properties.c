@@ -260,14 +260,17 @@ static javacall_result set_properties_file_name(
     }
     
     fileNameSize = fileNameLen * sizeof(javacall_utf16);
-    fileNameCopy = (javacall_utf16*)javacall_realloc(property_file_name, 
-                                                     fileNameSize);
-            
+    fileNameCopy = (javacall_utf16*)javacall_malloc(fileNameSize);
+    
     if (fileNameCopy == NULL) {
         return JAVACALL_FAIL;
     }
 
     memcpy(fileNameCopy, unicodeFileName, fileNameSize);
+
+    if (property_file_name != NULL) {
+        javacall_free(property_file_name);
+    }
 
     property_file_name = fileNameCopy;
     property_file_name_len = fileNameLen;    
