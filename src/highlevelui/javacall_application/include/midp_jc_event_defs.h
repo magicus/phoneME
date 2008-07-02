@@ -288,6 +288,13 @@ typedef struct {
     javacall_bool isOpen;
     int errCode;
 } jsr256_jc_event_sensor_t;
+
+typedef struct {
+    javacall_sensor_type sensor;
+    int channel;
+    int errCode;
+} jsr256_jc_event_sensor_data_ready_t;
+
 #endif /* ENABLE_JSR_256 */
 
 #ifdef ENABLE_JSR_290
@@ -375,7 +382,7 @@ typedef struct {
 #ifdef ENABLE_JSR_256
         jsr256_jc_event_sensor_available    jsr256SensorAvailable;
         jsr256_jc_event_sensor_t            jsr256_jc_event_sensor;
-		jsr256_jc_event_sensor_data_ready_t jsr256_jc_event_sensor_data_ready;
+	jsr256_jc_event_sensor_data_ready_t jsr256_jc_event_sensor_data_ready;
 #endif /* ENABLE_JSR_256 */
 #ifdef ENABLE_JSR_290
         jsr290_jc_event_fluid              jsr290FluidEvent;
