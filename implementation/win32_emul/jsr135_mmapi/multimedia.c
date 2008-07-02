@@ -65,16 +65,20 @@ static javacall_media_caps g_caps[] =
     { JAVACALL_MEDIA_FORMAT_MIDI,    "audio/midi audio/mid audio/x-midi", JAVACALL_MEDIA_MEMORY_PROTOCOL, 0 },
     { JAVACALL_MEDIA_FORMAT_SP_MIDI, "audio/sp-midi",                     JAVACALL_MEDIA_MEMORY_PROTOCOL, 0 },
     { JAVACALL_MEDIA_FORMAT_TONE,    "audio/x-tone-seq audio/tone",       JAVACALL_MEDIA_MEMORY_PROTOCOL, 0 },
-    { JAVACALL_MEDIA_FORMAT_CAPTURE_AUDIO, "audio/x-wav",                 JAVACALL_MEDIA_CAPTURE_PROTOCOL, 0 },
+
 #ifdef ENABLE_AMR
     { JAVACALL_MEDIA_FORMAT_AMR,     "audio/amr",                         JAVACALL_MEDIA_MEMORY_PROTOCOL, 0 },
 #endif // ENABLE_AMR
+
+    { JAVACALL_MEDIA_FORMAT_CAPTURE_AUDIO, "audio/x-wav",                 JAVACALL_MEDIA_CAPTURE_PROTOCOL, 0 },
     { JAVACALL_MEDIA_FORMAT_CAPTURE_RADIO, "audio/x-wav",                 JAVACALL_MEDIA_CAPTURE_PROTOCOL, 0 },
+    { JAVACALL_MEDIA_FORMAT_CAPTURE_VIDEO, "video/mpeg",                  JAVACALL_MEDIA_CAPTURE_PROTOCOL, 0 },
+
 #ifdef ENABLE_MMAPI_LIME   
     { JAVACALL_MEDIA_FORMAT_MPEG1_LAYER3, "audio/mpeg",      JAVACALL_MEDIA_MEMORY_PROTOCOL, 0 },
     { JAVACALL_MEDIA_FORMAT_MPEG_1,  "video/mpeg",           JAVACALL_MEDIA_MEMORY_PROTOCOL, 0 },
-    { JAVACALL_MEDIA_FORMAT_MOV,     "video/quicktime",      JAVACALL_MEDIA_MEMORY_PROTOCOL, 0 },
 #endif /* ENABLE_MMAPI_LIME */    
+
     { NULL,                          NULL,                   0,                              0 }
 };
 
