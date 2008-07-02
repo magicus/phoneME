@@ -34,61 +34,8 @@
  */
 
 class Disassembler: public StackObj {
- public:
-  typedef Assembler::Register   Register;
-  typedef Assembler::Condition  Condition;
-  typedef Assembler::Shift      Shift;
-  typedef Assembler::Opcode     Opcode;
-
-  static Register as_register( const unsigned n ) {
-    return Assembler::as_register( n );
-  }
-  static Condition as_condition( const unsigned n ) {
-    return Assembler::as_condition( n );
-  }
-  static Shift as_shift( const unsigned n ) {
-    return Assembler::as_shift( n );
-  }
-  static Opcode as_opcode( const unsigned n ) {
-    return Assembler::as_opcode( n );
-  }
-
-  // textual representation
-  static const char* condition_name     (const Assembler::Condition cond  );
-  static const char* shift_name         (const Assembler::Shift     shift );
-  static const char* opcode_name        (const Assembler::Opcode    opcode);
-  static const char* register_name      (const Assembler::Register  reg   );
-
-  static const char* condition_name ( const unsigned cond ) {
-    return condition_name( as_condition( cond ) );
-  }
-  static const char* shift_name ( const unsigned shift ) {
-    return shift_name( as_shift( shift ) );
-  }
-  static const char* opcode_name ( const unsigned opcode) {
-    return opcode_name( as_opcode( opcode ) );
-  }
-  static const char* register_name ( const unsigned reg ) {
-    return register_name( as_register( reg ) );
-  }
-
-  // creation
-  Disassembler(Stream* stream) : _stream(stream) {}
-
-  // accessors
-  Stream* stream() const { return _stream; }
-
-  enum { NO_OFFSET = -1 };
-  // Returns the number of half-words disassembled
-  int disasm(short* addr, short instr, int instr_offset = NO_OFFSET);
-
-  static void eol_comment(const char *s) {
-    _eol_comments = s;
-  }
-
+#include "../arm/Disassembler_armthumb.hpp"
  private:
-  Stream* _stream;
-  static const char *_eol_comments;
   static Assembler::Register _last_imm_register;
   static int _last_imm_offset;
   static int _last_imm;
@@ -98,11 +45,11 @@ class Disassembler: public StackObj {
     return (instr >> i & 0x1) == 1;
   }
 
-  static const Assembler::Register reg_field(short instr, int shift = 0) {
+  static Register reg_field(const short instr, const int shift = 0) {
     return Assembler::as_register((instr >> shift) & 0x7);
   }
 
-  static const Assembler::Register reg_field_w(int instr, int shift = 0) {
+  static Register reg_field_w(const int instr, const int shift = 0) {
     return Assembler::as_register((instr >> shift) & 0x0f);
   }
 

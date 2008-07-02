@@ -34,80 +34,26 @@
 #if !defined(PRODUCT) || USE_COMPILER_DISASSEMBLER
 
 class Disassembler: public StackObj {
- public:
-  // creation
-  Disassembler(Stream* stream) : _stream(stream) {}
-
-  // accessors
-  Stream* stream() const { return _stream; }
-
-  typedef Assembler::Register   Register;
-  typedef Assembler::Condition  Condition;
-  typedef Assembler::Shift      Shift;
-  typedef Assembler::Opcode     Opcode;
-
-  static Register as_register( const unsigned n ) {
-    return Assembler::as_register( n );
-  }
-  static Condition as_condition( const unsigned n ) {
-    return Assembler::as_condition( n );
-  }
-  static Shift as_shift( const unsigned n ) {
-    return Assembler::as_shift( n );
-  }
-  static Opcode as_opcode( const unsigned n ) {
-    return Assembler::as_opcode( n );
-  }
-
-  // textual representation
-  static const char* condition_name     (const Assembler::Condition cond  );
-  static const char* shift_name         (const Assembler::Shift     shift );
-  static const char* opcode_name        (const Assembler::Opcode    opcode);
-  static const char* register_name      (const Assembler::Register  reg   );
-
-  static const char* condition_name ( const unsigned cond ) {
-    return condition_name( as_condition( cond ) );
-  }
-  static const char* shift_name ( const unsigned shift ) {
-    return shift_name( as_shift( shift ) );
-  }
-  static const char* opcode_name ( const unsigned opcode) {
-    return opcode_name( as_opcode( opcode ) );
-  }
-  static const char* register_name ( const unsigned reg ) {
-    return register_name( as_register( reg ) );
-  }
-
-#if ENABLE_ARM_VFP
-  // type is either 's' (float) or 'd' (double)
-  static void vfp_reg_name(const char type, unsigned reg, char buff[]);
-#endif
-
-  // usage
-  enum { NO_OFFSET = -1 };
-  void disasm(int* addr, int instr, int instr_offset = NO_OFFSET);
-
+#include "../arm/Disassembler_armthumb.hpp"
  private:
-  Stream* _stream;
-
   // instruction fields
-  static const bool bit(int instr, int i) {
+  static const bool bit(const int instr, const int i) {
     return (instr >> i & 0x1) == 1;
   }
 
-  static const Assembler::Register  rn_field(int instr) {
+  static Register  rn_field(const int instr) {
     return as_register(instr >> 16 & 0xf);
   }
 
-  static const Assembler::Register  rd_field(int instr) {
+  static Register  rd_field(const int instr) {
     return as_register(instr >> 12 & 0xf);
   }
 
-  static const Assembler::Register  rs_field(int instr)  {
+  static Register  rs_field(const int instr)  {
       return as_register(instr >>  8 & 0xf);
   }
 
-  static const Assembler::Register  rm_field(int instr) {
+  static Register  rm_field(const int instr) {
     return as_register(instr & 0xf);
   }
 
@@ -128,12 +74,6 @@ class Disassembler: public StackObj {
   static const char* wmmx_wreg_name(Assembler::WMMXRegister reg);
   static const char* wmmx_wcgreg_name(Assembler::WCGRegister reg);
   void emit_wmmx_instruction(int instr);
-#endif
-
-#if ENABLE_ARM_VFP
-  void emit_vfp_register_list(int instr);
-  void emit_vfp_instruction(int instr, int instr_offset);
-  void unknown_vfp_instr(int instr);
 #endif
 };
 
