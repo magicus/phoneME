@@ -68,7 +68,6 @@ $(GENERATED_DIR)/classes/com/sun/midp/chameleon/input/NativeInputMode.java : $(L
 $(GENERATED_DIR)/classes/com/sun/midp/chameleon/input/VirtualInputMode.java : $(LCDLF_J_DIR)/classes/com/sun/midp/chameleon/input/VirtualInputMode.jpp
 	@$(call runjpp,$^,$@)
 
-
 # Java files for the library
 #
 SUBSYSTEM_LCDLF_JAVA_FILES += \
