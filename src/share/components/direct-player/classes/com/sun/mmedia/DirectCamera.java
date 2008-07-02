@@ -46,34 +46,6 @@ public class DirectCamera extends DirectVideo
     public DirectCamera() {
     }
 
-    /**
-     * Camera snapshot
-     */
-    public byte[] getSnapshot(String imageType) throws MediaException {
-        checkPermission();
-        checkState();
-
-        if (null == imageType) {
-            imageType = System.getProperty("video.snapshot.encodings");
-            if (null == imageType) {
-                throw new MediaException("Requested format is not supported");
-            }
-            int spacePos = imageType.indexOf(' ');
-            if (spacePos > 0) {
-                imageType = imageType.substring(0, spacePos);
-            }
-        }
-        
-        byte[] data = null;
-        if (hNative != 0) {
-            data = nSnapShot(hNative, imageType.toLowerCase());
-        }
-        if (null == data) {
-            throw new MediaException(imageType + " format is not supported");
-        }
-        return data;
-    }
-
     protected Control doGetControl(String type) {
         Control c = super.doGetControl(type);
         if (c == null) {
@@ -141,14 +113,5 @@ public class DirectCamera extends DirectVideo
             }
         }
         return c;
-    }
-
-    public void checkSnapshotPermission()
-    {
-        checkPermission();
-    }
-
-    public void setSnapshotQuality( int quality )
-    {
     }
 }
