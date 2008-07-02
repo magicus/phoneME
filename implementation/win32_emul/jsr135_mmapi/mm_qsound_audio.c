@@ -1209,7 +1209,6 @@ static javacall_result audio_qs_acquire_device(javacall_handle handle)
             }
 #endif 
             h->wav.bytesPerMilliSec = (h->wav.rate * h->wav.channels * (16 >> 3)) / 1000;
-            h->hdr.dataEnded        = TRUE;
 
             if(h->wav.stream != NULL)
             {
@@ -1762,9 +1761,15 @@ static javacall_result audio_qs_get_duration(javacall_handle handle, long* ms) {
         break;
 
         case JC_FMT_MS_PCM:
-        case JC_FMT_AMR: // will need revisit when real streaming will be used
         {
             if(h->wav.bytesPerMilliSec != 0 && h->hdr.dataEnded)
+                *ms = h->wav.playBufferLen / h->wav.bytesPerMilliSec;
+        }
+        break;
+
+        case JC_FMT_AMR: // will need revisit when real streaming will be used
+        {
+            if(h->wav.bytesPerMilliSec != 0 && h->hdr.dataStopped)
                 *ms = h->wav.playBufferLen / h->wav.bytesPerMilliSec;
         }
         break;
