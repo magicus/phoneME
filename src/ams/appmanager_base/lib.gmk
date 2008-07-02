@@ -34,28 +34,24 @@
 
 # Add to global SUBSYSTEMS list
 #
-#SUBSYSTEMS += appmanager_ui
+#SUBSYSTEMS += appmanager_base
 
 # Name of the library
-APPMANAGER_UI_NAME = appmanager_ui
+APPMANAGER_BASE_NAME = appmanager_base
 
 # Local module directory
-APPMANAGER_UI_DIR = $(SUBSYSTEM_AMS_DIR)/$(APPMANAGER_UI_NAME)
+APPMANAGER_BASE_DIR = $(SUBSYSTEM_AMS_DIR)/$(APPMANAGER_BASE_NAME)
 
 # Javadoc source path
-MIDP_JAVADOC_SOURCEPATH += $(APPMANAGER_UI_DIR)/classes
+MIDP_JAVADOC_SOURCEPATH += $(APPMANAGER_BASE_DIR)/classes
 
 # Java files for the sub-system
 #
 SUBSYSTEM_AMS_JAVA_FILES += \
-    $(APPMANAGER_UI_DIR)/classes/com/sun/midp/appmanager/AppManagerUI.java
+    $(APPMANAGER_BASE_DIR)/classes/com/sun/midp/appmanager/AppManagerPeer.java \
+    $(APPMANAGER_BASE_DIR)/classes/com/sun/midp/appmanager/DisplayError.java \
+    $(APPMANAGER_BASE_DIR)/classes/com/sun/midp/appmanager/AppSettings.java \
+    $(APPMANAGER_BASE_DIR)/classes/com/sun/midp/appmanager/CaManager.java \
+    $(APPMANAGER_BASE_DIR)/classes/com/sun/midp/appmanager/RunningMIDletSuiteInfo.java
 
-# IMPL NOTE: Use library configuration file to select switch library
-#
-
-ifeq ($(AMS_UI_IMPL)X, X)
-AMS_UI_IMPL = reference
-endif
-
-include $(APPMANAGER_UI_DIR)/$(AMS_UI_IMPL)/lib.gmk
 
