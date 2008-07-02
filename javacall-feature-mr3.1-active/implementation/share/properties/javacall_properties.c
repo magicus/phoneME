@@ -38,7 +38,11 @@ typedef enum {
     PROPERTIES_INIT_COMPLETED
 } properties_init_state;
 
-static unsigned short property_file_name[] = {'j','w','c','_','p','r','o','p','e','r','t','i','e','s','.','i','n','i',0};
+static javacall_utf16 default_property_file_name[] = 
+    {'j','w','c','_','p','r','o','p','e','r','t','i','e','s','.','i','n','i'};
+
+static javacall_utf16* property_file_name = NULL;
+static int property_file_name_len = 0;
 
 static javacall_handle handle = NULL;
 static int property_was_updated = 0;
@@ -47,6 +51,9 @@ static properties_init_state init_state = PROPERTIES_INIT_NOT_STARTED;
 static const char application_prefix[] = "application:";
 static const char internal_prefix[] = "internal:";
 
+static javacall_result set_properties_file_name(
+        const javacall_utf16* unicodeFileName, int fileNameLen);
+static javacall_utf16* get_properties_file_name(int* fileNameLen);
 
 /**
  * Initializes the configuration sub-system.
@@ -54,6 +61,7 @@ static const char internal_prefix[] = "internal:";
  * @return <tt>JAVACALL_OK</tt> for success, JAVACALL_FAIL otherwise
  */
 javacall_result javacall_initialize_configurations(void) {
+    javacall_utf16* file_name;
     int file_name_len;
 
     if (PROPERTIES_INIT_COMPLETED == init_state) {
@@ -68,9 +76,9 @@ javacall_result javacall_initialize_configurations(void) {
     init_state = PROPERTIES_INIT_IN_PROGRESS;
     property_was_updated = 0;
 
-    file_name_len = sizeof(property_file_name)/sizeof(unsigned short);
+    file_name = get_properties_file_name(&file_name_len);
 
-    handle = javacall_configdb_load(property_file_name, file_name_len);
+    handle = javacall_configdb_load(file_name, file_name_len);
     if (handle == NULL) {
         init_state = PROPERTIES_INIT_NOT_STARTED;
         return JAVACALL_FAIL;
@@ -80,9 +88,31 @@ javacall_result javacall_initialize_configurations(void) {
 }
 
 /**
+ * Initializes the configuration sub-system, reading the initial set of 
+ * properties from the file with the specified name. If the file name is 
+ * an empty string or <tt>NULL</tt>, the default configuration file is used.
+ *
+ * @param unicodeFileName the file name as an unicode string
+ * @param fileNameLen the length of the file name in UTF16 characters
+ * @return <tt>JAVACALL_OK</tt> for success, <tt>JAVACALL_FAIL</tt> otherwise
+ */
+javacall_result javacall_initialize_configurations_from_file(
+        const javacall_utf16* unicodeFileName, int fileNameLen) {
+    javacall_result result = 
+            set_properties_file_name(unicodeFileName, fileNameLen);
+            
+    if (result != JAVACALL_OK) {
+        return result;
+    }
+    
+    return javacall_initialize_configurations();
+}
+
+/**
  * Finalize the configuration subsystem.
  */
 void javacall_finalize_configurations(void) {
+    javacall_utf16* file_name;
     int file_name_len;
 
     if (PROPERTIES_INIT_COMPLETED != init_state) {
@@ -91,12 +121,18 @@ void javacall_finalize_configurations(void) {
 
     if (property_was_updated != 0) {
 #ifdef USE_PROPERTIES_FROM_FS
-        file_name_len = sizeof(property_file_name)/sizeof(unsigned short);
-        javacall_configdb_dump_ini(handle, property_file_name, file_name_len);
+        file_name = get_properties_file_name(&file_name_len);
+        javacall_configdb_dump_ini(handle, file_name, file_name_len);
 #endif //USE_PROPERTIES_FROM_FS
     }
     javacall_configdb_free(handle);
     handle = NULL;
+    if (property_file_name != NULL) {
+        javacall_free(property_file_name);
+        
+        property_file_name = NULL;
+        property_file_name_len = 0;
+    }
     init_state = PROPERTIES_INIT_NOT_STARTED;
 }
 
@@ -196,7 +232,69 @@ javacall_result javacall_set_property(const char* key,
     return JAVACALL_OK;
 }
 
+/**
+ * Sets the name of the file used to load from or save the properties to. If no 
+ * configuration file name is set, is set to an empty string or <tt>NULL</tt>, 
+ * the default configuration file is used.
+ * 
+ * @param unicodeFileName the file name as an unicode string
+ * @param fileNameLen the length of the file name in UTF16 characters
+ * @return <tt>JAVACALL_OK</tt> if successful, <tt>JAVACALL_FAIL</tt> otherwise 
+ */ 
+javacall_result set_properties_file_name(const javacall_utf16* unicodeFileName, 
+                                         int fileNameLen) {
+    int fileNameSize;
+    javacall_utf16* fileNameCopy;
+    
+    if ((unicodeFileName == NULL) || (fileNameLen == 0)) {
+        /* the default name is to be used */
 
+        if (property_file_name != NULL) {
+            javacall_free(property_file_name);
+            
+            property_file_name = NULL;
+            property_file_name_len = 0;
+        }
+        
+        return JAVACALL_OK;
+    }
+    
+    fileNameSize = fileNameLen * sizeof(javacall_utf16);
+    fileNameCopy = javacall_realloc(property_file_name, fileNameSize);
+            
+    if (fileNameCopy == NULL) {
+        return JAVACALL_FAIL;
+    }
+
+    memcpy(fileNameCopy, unicodeFileName, fileNameSize);
+
+    property_file_name = fileNameCopy;
+    property_file_name_len = fileNameLen;    
+    
+    return JAVACALL_OK;
+}
+
+/**
+ * Returns the name of the properties file set via 
+ * <tt>javacall_set_properties_file_name</tt> or the default properties file
+ * name if the name hasn't been set or has been set to <tt>NULL</tt> or an
+ * empty string.
+ * 
+ * @param fileNameLen pointer to the length of the returned string in utf16
+ *      characters
+ * @return the properties file name    
+ */  
+static javacall_utf16* get_properties_file_name(int* fileNameLen) {
+    if (property_file_name == NULL) {
+        /* return the default name */
+        *fileNameLen = sizeof(default_property_file_name) 
+                           / sizeof(default_property_file_name[0]);
+        return default_property_file_name;
+    }
+    
+    *fileNameLen = property_file_name_len;
+    return property_file_name;    
+} 
 
 #ifdef __cplusplus
 }

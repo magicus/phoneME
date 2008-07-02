@@ -58,6 +58,9 @@ static char* constructODTAgentMVMManagerArgument(
         const char* odtAgentSettings);
 #endif /* ENABLE_MULTIPLE_ISOLATES */
 
+static javacall_utf16* get_properties_file_name(int* fileNameLen, 
+                                                const char* argv[], int argc);
+
 /** Usage text for the run emulator executable. */
 /* IMPL_NOTE: Update usage according to main(...) func */
 static const char* const emulatorUsageText =
@@ -108,10 +111,14 @@ static const char* const emulatorUsageText =
 #define ODT_AGENT_OPTION_LEN \
         (sizeof(ODT_AGENT_OPTION) / sizeof(char) - 1)
 
+#define PREFS_OPTION "-Xprefs"
+#define PREFS_OPTION_LEN \
+        (sizeof(PREFS_OPTION) / sizeof(char) - 1)
+
 #define RUN_ODT_AGENT_PREFIX "-runodtagent"
 #define RUN_ODT_AGENT_PREFIX_LEN \
         (sizeof(RUN_ODT_AGENT_PREFIX) / sizeof(char) - 1)
-
+        
 typedef enum {
     RUN_OTA,
     RUN_LOCAL,
@@ -151,12 +158,27 @@ main(int argc, char *argv[]) {
     int stderrPort         = -1;
     char* odtAgentSettings = NULL;
     char* mvmManagerArgument = NULL;
+    javacall_utf16* propFileName;
+    int propFileNameLen = 0;
 
     /* uncomment this like to force the debugger to start */
     /* _asm int 3; */
 
-    if (JAVACALL_OK != javacall_initialize_configurations()) {
+    /* get the configuration file name */
+    propFileName = get_properties_file_name(&propFileNameLen, 
+                                            argv + 1, argc - 1);
+
+    if (javacall_initialize_configurations_from_file(
+            propFileName, propFileNameLen) != JAVACALL_OK) {
+        if (propFileName != NULL) {
+            javacall_free(propFileName);
+        }
+    
         return -1;
+    }
+
+    if (propFileName != NULL) {
+        javacall_free(propFileName);
     }
 
     for (i = 1; i < argc; i++) {
@@ -406,6 +428,10 @@ main(int argc, char *argv[]) {
                     JAVACALL_TRUE, JAVACALL_INTERNAL_PROPERTY);
             }
 
+        } else if (strncmp(argv[i], PREFS_OPTION ":", PREFS_OPTION_LEN + 1) 
+                           == 0) {
+            /* already processed in get_properties_file_name */
+            /* don't pass the argument further */
         } else if (strncmp(argv[i], "-", 1) == 0) {
             javautil_debug_print (JAVACALL_LOG_INFORMATION, "main",
                                   "Illegal argument %s", argv[i]);
@@ -645,3 +671,56 @@ constructODTAgentMVMManagerArgument(const char* odtAgentSettings) {
 }
 
 #endif /* ENABLE_MULTIPLE_ISOLATES */
+
+/**
+ * Returns the properties file name found in the given argument list or
+ * <tt>NULL</tt> if the name is not specified in the list.
+ * 
+ * @param fileNameLen pointer to the length of the returned string
+ * @param argv pointer to the array of arguments
+ * @param argc the number of arguments in the array
+ * @return the property file name or <code>NULL</code> if the name is not
+ *      specified in the list
+ */      
+static javacall_utf16* 
+get_properties_file_name(int* fileNameLen, const char* argv[], int argc) {
+    int i;
+    
+    for (i = 0; i < argc; ++i) {
+        if (strncmp(argv[i], PREFS_OPTION ":", PREFS_OPTION_LEN + 1) == 0) {
+            /* handle "-Xprefs:<filename>" */
+            
+            /* the file name starts after ':' */
+            const char* mbFileName = argv[i] + PREFS_OPTION_LEN + 1;
+            javacall_utf16* wideFileName;
+            int wideFileNameLen;
+            
+            /* get the length */
+            wideFileNameLen = 
+                    MultiByteToWideChar(CP_ACP, 0, mbFileName, -1, NULL, 0);
+            if (wideFileNameLen <= 1) {
+                return NULL;
+            }
+                        
+            wideFileName = (javacall_utf16*)javacall_malloc(
+                                   wideFileNameLen * sizeof(javacall_utf16));
+            if (wideFileName == NULL) {
+                return NULL;
+            }
+            
+            /* do the conversion, assuming javacall_utf16 ~ WCHAR */
+            if (wideFileNameLen != 
+                    MultiByteToWideChar(CP_ACP, 0, mbFileName, -1, 
+                                        wideFileName, wideFileNameLen)) {
+                javacall_free(wideFileName);
+                return NULL;
+            }
+
+            *fileNameLen = wideFileNameLen - 1;
+            return wideFileName;                        
+        }
+    }
+    
+    /* no properties file argument */
+    return NULL;
+} 

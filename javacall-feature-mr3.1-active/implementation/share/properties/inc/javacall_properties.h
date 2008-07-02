@@ -86,6 +86,18 @@ javacall_result javacall_set_property(const char* key, const char* value,
 javacall_result javacall_initialize_configurations(void);
 
 /**
+ * Initializes the configuration sub-system, reading the initial set of 
+ * properties from the file with the specified name. If the file name is 
+ * an empty string or <tt>NULL</tt>, the default configuration file is used.
+ *
+ * @param unicodeFileName the file name as an unicode string
+ * @param fileNameLen the length of the file name in UTF16 characters
+ * @return <tt>JAVACALL_OK</tt> for success, <tt>JAVACALL_FAIL</tt> otherwise
+ */
+javacall_result javacall_initialize_configurations_from_file(
+        const javacall_utf16* unicodeFileName, int fileNameLen);
+
+/**
  * Finalize the configuration subsystem.
  */
 void javacall_finalize_configurations(void);
