@@ -2235,14 +2235,21 @@ void BlockTypeFinder::find_array_type(Oop *owner, Oop *object JVM_TRAPS) {
     }
   }
 
-#if ENABLE_ROM_JAVA_DEBUGGER || \
-    (USE_BINARY_IMAGE_GENERATOR && (!defined(PRODUCT) || USE_LARGE_OBJECT_AREA))
-  // We skip no headers either in Monet-debug modes or when debugging romized classes, 
+#if USE_BINARY_IMAGE_GENERATOR && (!defined(PRODUCT) || USE_LARGE_OBJECT_AREA)
+  // We skip no headers in Monet-debug mode, 
   // so that we can do run-time type checking (based on object->_obj->_klass) without
   // (a) having multiple passes in TEXT and (b) using a text_klass table
   // for each loaded binary image.
   my_skip_words = 0;
 #endif
+
+#if ENABLE_ROM_JAVA_DEBUGGER
+  // We skip no headers when debugging romized classes.
+  if (MakeROMDebuggable) {
+    my_skip_words = 0;
+  }
+#endif
+
 #if ENABLE_PREINITED_TASK_MIRRORS && USE_SOURCE_IMAGE_GENERATOR && ENABLE_ISOLATES         
   if (owner != NULL) { 
     ROMWriter::BlockType owner_type = writer()->block_type_of(owner JVM_CHECK); 
