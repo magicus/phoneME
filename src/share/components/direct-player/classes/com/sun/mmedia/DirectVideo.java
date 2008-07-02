@@ -121,20 +121,6 @@ public class DirectVideo extends DirectPlayer implements
     }
     
     /**
-     * Check for the multimedia record permission.
-     *
-     * @exception SecurityException if the permission is not
-     *            allowed by this token
-     */
-    void checkPermission() {
-    	try {
-            PermissionAccessor.checkPermissions(getLocator(), PermissionAccessor.PERMISSION_SNAPSHOT);
-    	} catch (InterruptedException e) {
-    	    throw new SecurityException("Interrupted while trying to ask the user permission");
-    	}
-    }
-    
-    /**
      * Is in clipping area?
      */
     private boolean isInClippingArea(Graphics g, int x, int y, int w, int h) {
@@ -517,10 +503,24 @@ public class DirectVideo extends DirectPlayer implements
             setDisplaySize( tmp_dw, tmp_dh );
         }
     }
-    
-    public byte[] getSnapshot(String imageType) throws MediaException
+
+    /**
+     * Check for the multimedia snapshot permission.
+     *
+     * @exception SecurityException if the permission is not
+     *            allowed by this token
+     */
+    public void checkSnapshotPermission() {
+        try {
+            PermissionAccessor.checkPermissions( getLocator(), PermissionAccessor.PERMISSION_SNAPSHOT );
+        } catch( InterruptedException e ) {
+            throw new SecurityException( "Interrupted while trying to ask the user permission" );
+        }
+    }
+
+    public byte[] getSnapshot( String imageType ) throws MediaException
     {
-        //checkPermission();
+        checkSnapshotPermission();
         checkState();
 
         if (null == imageType)
@@ -528,7 +528,7 @@ public class DirectVideo extends DirectPlayer implements
             imageType = System.getProperty("video.snapshot.encodings");
             if (null == imageType)
             {
-                throw new MediaException("Requested format is not supported");
+                throw new MediaException( "No supported snapshot formats found" );
             }
             int spacePos = imageType.indexOf(' ');
             if (spacePos > 0)
@@ -536,6 +536,18 @@ public class DirectVideo extends DirectPlayer implements
                 imageType = imageType.substring(0, spacePos);
             }
         }
+        else
+        {
+            String supported = System.getProperty( "video.snapshot.encodings" );
+            int idx = supported.indexOf( imageType );
+            if( -1 == idx )
+            {
+                throw new MediaException( "Snapshot format ('" +
+                                          imageType +
+                                          "')is not supported" );
+            }
+        }
+
 
         byte[] data = null;
         if (hNative != 0)
@@ -544,9 +556,13 @@ public class DirectVideo extends DirectPlayer implements
         }
         if (null == data)
         {
-            throw new MediaException(imageType + " format is not supported");
+            throw new MediaException( "Snapshot in '" + imageType + "' format failed." );
         }
         return data;
+    }
+
+    public void setSnapshotQuality( int quality )
+    {
     }
 
     /**
