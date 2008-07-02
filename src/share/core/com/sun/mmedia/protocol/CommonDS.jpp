@@ -100,7 +100,7 @@ public class CommonDS extends BasicDS implements SourceStream {
         String fileName = getRemainder(locator);
 
         if (fileName == null) {
-            throw new IOException("bad url");
+            throw new IOException("bad url: " + locator);
         }
 
         try {
