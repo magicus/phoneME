@@ -137,6 +137,8 @@ int wav_setStreamPlayerData(ah_wav *wav) {
             } /* default */
             } /* switch (wc->chnk_id) */
             data += sizeof(struct wavechnk) + wc->chnk_ds;
+        } else {
+            break;
         }
     }
 
