@@ -36,13 +36,8 @@
 #
 #SUBSYSTEMS += appmanager_ui
 
-#This is no longer need as we can override the whole path or take the default ams dir
-#also in subsystem.gmk it is static
-# Name of the library
-#APPMANAGER_UI_NAME = appmanager_ui
-
 # Default local module directory
-AMS_APPMANAGER_UI_DIR ?= $(SUBSYSTEM_AMS_DIR)/appmanager_ui/reference
+AMS_APPMANAGER_UI_DIR = $(SUBSYSTEM_AMS_DIR)/appmanager_ui/reference
 
 # Get implementation settings and files
 include $(AMS_APPMANAGER_UI_DIR)/lib.gmk
@@ -51,8 +46,3 @@ include $(AMS_APPMANAGER_UI_DIR)/lib.gmk
 MIDP_JAVADOC_SOURCEPATH += $(AMS_APPMANAGER_UI_DIR)/classes
 
 
-#Add files to subsystem
-# this is done to be able to extend existing models
-ifdef AMS_APPMANAGER_ADDITIONAL_FILES
-$(foreach AMS_APPMANAGER_ADDITIONAL_FILES, $(_APP_FILES), SUBSYSTEM_AMS_JAVA_FILES +=$(_APP_FILES))
-endif
