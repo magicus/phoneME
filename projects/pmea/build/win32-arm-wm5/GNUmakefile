@@ -125,8 +125,7 @@ source_bundles:
 	$(TRACE_BUILD_START)
 	make source_bundles $(DEFAULT_FLAGS) \
 		SOURCE_OUTPUT_DIR=$(SOURCE_OUTPUT_DIR) \
-		BUNDLE_PORTS=$(BUNDLE_PORTS) \
-		$(MAKEFLAGS)
+		BUNDLE_PORTS=$(BUNDLE_PORTS)
 	$(TRACE_BUILD_END)
 
 #
@@ -136,5 +135,5 @@ source_bundles:
 .PHONY: opt_preload_jit
 opt_preload_jit:
 	$(TRACE_BUILD_START)
-	$(AT)make $(DEFAULT_FLAGS) $(MAKEFLAGS)
+	$(AT)make $(DEFAULT_FLAGS)
 	$(TRACE_BUILD_END)

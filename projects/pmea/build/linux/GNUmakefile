@@ -168,8 +168,7 @@ source_bundles:
 	make source_bundles $(DEFAULT_FLAGS) \
 		SOURCE_OUTPUT_DIR=$(SOURCE_OUTPUT_DIR) \
 		BUNDLE_PORTS=$(BUNDLE_PORTS) \
-		CVM_JIT=true INCLUDE_JCOV=true \
-		$(MAKEFLAGS)
+		CVM_JIT=true INCLUDE_JCOV=true
 	$(TRACE_BUILD_END)
 
 #
@@ -180,104 +179,102 @@ source_bundles:
 nojump:
 	$(TRACE_BUILD_START)
 	$(AT)make $(DEFAULT_FLAGS) $(QT_FLAGS) \
-		USE_JUMP=false CVM_JIT=true CVM_SYMBOLS=false $(MAKEFLAGS)
+		USE_JUMP=false CVM_JIT=true CVM_SYMBOLS=false
 	$(TRACE_BUILD_END)
 
 .PHONY: opt
 opt:
 	$(TRACE_BUILD_START)
-	$(AT)make $(DEFAULT_FLAGS) $(QT_FLAGS) \
-		$(MAKEFLAGS)
+	$(AT)make $(DEFAULT_FLAGS) $(QT_FLAGS)
 	$(TRACE_BUILD_END)
 
 .PHONY: opt_jit
 opt_jit:
 	$(TRACE_BUILD_START)
 	$(AT)make $(DEFAULT_FLAGS) $(QT_FLAGS) \
-		CVM_JIT=true $(MAKEFLAGS)
+		CVM_JIT=true
 	$(TRACE_BUILD_END)
 
 .PHONY: opt_nosym
 opt_nosym:
 	$(TRACE_BUILD_START)
 	$(AT)make $(DEFAULT_FLAGS) $(QT_FLAGS) \
-		CVM_SYMBOLS=false $(MAKEFLAGS)
+		CVM_SYMBOLS=false
 	$(TRACE_BUILD_END)
 
 .PHONY: opt_jit_nosym
 opt_jit_nosym:
 	$(TRACE_BUILD_START)
 	$(AT)make $(DEFAULT_FLAGS) $(QT_FLAGS) \
-		CVM_JIT=true CVM_SYMBOLS=false $(MAKEFLAGS)
+		CVM_JIT=true CVM_SYMBOLS=false
 	$(TRACE_BUILD_END)
 
 .PHONY: opt_preload
 opt_preload:
 	$(TRACE_BUILD_START)
 	$(AT)make $(DEFAULT_FLAGS) $(QT_FLAGS) \
-		CVM_PRELOAD_LIB=true $(MAKEFLAGS)
+		CVM_PRELOAD_LIB=true
 	$(TRACE_BUILD_END)
 
 .PHONY: opt_preload_jit
 opt_preload_jit:
 	$(TRACE_BUILD_START)
 	$(AT)make $(DEFAULT_FLAGS) $(QT_FLAGS) \
-		CVM_PRELOAD_LIB=true CVM_JIT=true $(MAKEFLAGS)
+		CVM_PRELOAD_LIB=true CVM_JIT=true
 	$(TRACE_BUILD_END)
 
 .PHONY: opt_jvmdi
 opt_jvmdi:
 	$(TRACE_BUILD_START)
 	$(AT)make $(DEFAULT_FLAGS) $(QT_FLAGS) \
-		CVM_JVMDI=true $(MAKEFLAGS)
+		CVM_JVMDI=true
 	$(TRACE_BUILD_END)
 
 .PHONY: opt_jvmpi
 opt_jvmpi:
 	$(TRACE_BUILD_START)
 	$(AT)make $(DEFAULT_FLAGS) $(QT_FLAGS) \
-		CVM_JVMPI=true $(MAKEFLAGS)
+		CVM_JVMPI=true
 	$(TRACE_BUILD_END)
 
 .PHONY: dbg
 dbg:
 	$(TRACE_BUILD_START)
 	$(AT)make $(DEFAULT_FLAGS) $(QT_FLAGS) \
-		CVM_DEBUG=true $(MAKEFLAGS)
+		CVM_DEBUG=true
 	$(TRACE_BUILD_END)
 
 .PHONY: dbg_jit
 dbg_jit:
 	$(TRACE_BUILD_START)
 	$(AT)make $(DEFAULT_FLAGS) $(QT_FLAGS) \
-		CVM_DEBUG=true CVM_JIT=true $(MAKEFLAGS)
+		CVM_DEBUG=true CVM_JIT=true
 	$(TRACE_BUILD_END)
 
 .PHONY: dbg_jvmti
 dbg_jvmti:
 	$(TRACE_BUILD_START)
 	$(AT)make $(DEFAULT_FLAGS) $(QT_FLAGS) \
-		CVM_DEBUG=true CVM_JVMTI=true $(MAKEFLAGS)
+		CVM_DEBUG=true CVM_JVMTI=true
 	$(TRACE_BUILD_END)
 
 .PHONY: dbg_jvmpi
 dbg_jvmpi:
 	$(TRACE_BUILD_START)
 	$(AT)make $(DEFAULT_FLAGS) $(QT_FLAGS) \
-		CVM_DEBUG=true CVM_JVMPI=true $(MAKEFLAGS)
+		CVM_DEBUG=true CVM_JVMPI=true
 	$(TRACE_BUILD_END)
 
 .PHONY: dbg_jvmdi
 dbg_jvmdi:
 	$(TRACE_BUILD_START)
 	$(AT)make $(DEFAULT_FLAGS) $(QT_FLAGS) \
-		CVM_DEBUG=true CVM_JVMDI=true $(MAKEFLAGS)
+		CVM_DEBUG=true CVM_JVMDI=true
 	$(TRACE_BUILD_END)
 
 .PHONY: dbg_jcov
 dbg_jcov:
 	$(TRACE_BUILD_START)
 	$(AT)make $(DEFAULT_FLAGS) $(QT_FLAGS) \
-		CVM_DEBUG=true CVM_CLASSLIB_JCOV=true CVM_JVMPI=true \
-		$(MAKEFLAGS)
+		CVM_DEBUG=true CVM_CLASSLIB_JCOV=true CVM_JVMPI=true
 	$(TRACE_BUILD_END)
