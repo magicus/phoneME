@@ -230,17 +230,17 @@ endif
 endif
 
 ifeq ($(TARGET_OS), javacall)
-MIDP_DEPS += $(STORAGEDIR)/_function_groups.txt.JTWI \
-	$(STORAGEDIR)/_policy.txt.JTWI $(STORAGEDIR)/_function_groups.txt.MSA \
-	$(STORAGEDIR)/_policy.txt.MSA
+MIDP_DEPS += $(STORAGEDIR)/_policy.txt.JTWI $(STORAGEDIR)/_policy.txt.MSA
 
 PERMISSIONS_CONFIG_DIR = $(SUBSYSTEM_DIR)/security/midp_permissions/reference/config
 
 %.JTWI:
-	cp $(PERMISSIONS_CONFIG_DIR)/$(@F) $@ 
+	cp $(PERMISSIONS_CONFIG_DIR)/$(@F) $@
+	cp $(GENERATED_DIR)/_function_groups.txt $(@D)/_function_groups.txt.JTWI
 
 %.MSA: 
 	cp $(PERMISSIONS_CONFIG_DIR)/$(@F) $@ 
+	cp $(GENERATED_DIR)/_function_groups.txt $(@D)/_function_groups.txt.MSA
 
 endif
 
