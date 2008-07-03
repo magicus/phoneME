@@ -67,7 +67,7 @@ SOURCE_OUTPUT_LIST += $(JAVACALL_DIR)/implementation/share/utils javacall/implem
 endif
 
 ifeq ($(SUBSYSTEM_EVENTS_MODULES), slave_mode)
-FILTER_OBJECTS=events.obj
+FILTER_OBJECTS+=events.obj
 VPATH+=$(JAVACALL_DIR)/implementation/share/events
 SOURCE_OUTPUT_LIST += $(JAVACALL_DIR)/implementation/share/events javacall/implementation/share
 PORTING_SOURCE+=events_slave_mode.c
