@@ -1,0 +1,75 @@
+#!/bin/bash
+#
+# Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+#
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License version
+# 2 only, as published by the Free Software Foundation.
+#
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# General Public License version 2 for more details (a copy is
+# included at /legal/license.txt).
+#
+# You should have received a copy of the GNU General Public License
+# version 2 along with this work; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+# 02110-1301 USA
+#
+# Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+# Clara, CA 95054 or visit www.sun.com if you need additional
+# information or have any questions.
+#
+
+# Initialize the autotest property file from the command line
+# arguments.
+#
+# Usage:
+#   autotest <TestHarnessURL>
+# e.g.
+#   autotest http://129.148.70.132:8080/test/getNextApp.jad
+
+(echo jump.presentation=com.sun.jumpimpl.presentation.autotester.AutoTester;
+ echo jump.descriptor.url=$1 ) >autotest.properties
+
+# Set up top level directory pointers
+export TOP_DIR=`pwd`
+export JUMP_JAR=$TOP_DIR/lib/jump.jar
+export JUMP_EXECUTIVE_JAR=$TOP_DIR/lib/executive-jump.jar
+
+# Add paths to the JSR OP jars here
+export JSROP_JARS=""
+
+# Find all the jsr op jars
+for i in `find $TOP_DIR/lib -name 'jsr*.jar'`; do
+   JSROP_JARS=$i:$JSROP_JARS
+done
+
+if [ -x $TOP_DIR/lib/abstractions.jar ]; then
+   JSROP_JARS=$JSROP_JARS:$TOP_DIR/lib/abstractions.jar
+fi
+
+
+SERVER_OUTPUT=/tmp/server_out_`whoami`
+
+# Launch the server
+$TOP_DIR/bin/cvm \
+  -Xbootclasspath/a:$JUMP_JAR:$JSROP_JARS \
+  -Xserver 2>&1 | tee $SERVER_OUTPUT &
+
+sleep 3
+
+SERVER_PID=`cat $SERVER_OUTPUT |  \
+    grep "Starting mTASK server at pid="| \
+    awk '{ print $5 }' | sed 's/pid=//'  `
+
+echo "Starting the AutoTester presentation, server PID=$SERVER_PID"
+
+$TOP_DIR/bin/cvmc \
+  -target $SERVER_PID \
+  -command JDETACH \
+  -Xbootclasspath/a:$JUMP_EXECUTIVE_JAR \
+  com.sun.jumpimpl.executive.JUMPExecutiveImpl \
+  --config-file autotest.properties 
