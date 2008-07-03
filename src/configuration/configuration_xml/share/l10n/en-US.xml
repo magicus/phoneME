@@ -312,12 +312,12 @@
                 Value="Are you sure you want to remove %1?"/>
 <localized_string Key="AMS_MGR_INSTALL_WRN"
                 Value="This operation does not apply to Install Application because Install Application is part of the system on this device. Use Install Application to find and install applications."/>
-<localized_string Key="AMS_MGR_NET_SETTINGS" Group="net_access"
-                Value="Airtime"/>
-<localized_string Key="AMS_MGR_NET_SETTINGS_QUE" Group="net_access"
-                Value="How often should %1 ask for permission to use airtime? Using airtime may result in charges."/>
-<localized_string Key="AMS_MGR_NET_SETTINGS_QUE_DONT" Group="net_access"
-                Value="Don't use airtime and don't ask"/>
+<localized_string Key="AMS_MGR_NET_SETTINGS"
+                Value="Airtime" Group="net_access"/>
+<localized_string Key="AMS_MGR_NET_SETTINGS_QUE"
+                Value="How often should %1 ask for permission to use airtime? Using airtime may result in charges." Group="net_access"/>
+<localized_string Key="AMS_MGR_NET_SETTINGS_QUE_DONT"
+                Value="Don't use airtime and don't ask" Group="net_access"/>
 <localized_string Key="AMS_MGR_MSG_SETTINGS" Group="messaging"
                 Value="Messaging"/>
 <localized_string Key="AMS_MGR_MSG_SETTINGS_QUE" Group="messaging"
