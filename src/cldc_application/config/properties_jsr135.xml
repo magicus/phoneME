@@ -82,5 +82,62 @@
       Callout="get_system_property_streamable_contents" 
       Comment="Streamable contents."/>
 
+<!-- MMAPI supported content types -->
+  
+    <property Key="mmapi.content0"
+      Value="MPEG1_layer_3 audio/mpeg"
+      Scope="internal"
+      Comment="MMAPI supported content"/>
+
+    <property Key="mmapi.content1"
+      Value="MPEG_1 video/mpeg"
+      Scope="internal"
+      Comment="MMAPI supported content"/>
+
+    <property Key="mmapi.content2"
+      Value="MS_PCM audio/x-wav audio/wav"
+      Scope="internal"
+      Comment="MMAPI supported content"/>
+
+    <property Key="mmapi.content3"
+      Value="MIDI audio/midi audio/mid audio/x-midi"
+      Scope="internal"
+      Comment="MMAPI supported content"/>
+
+    <property Key="mmapi.content4"
+      Value="SP_MIDI audio/sp-midi"
+      Scope="internal"
+      Comment="MMAPI supported content"/>
+
+    <property Key="mmapi.content5"
+      Value="TONE audio/x-tone-seq audio/tone"
+      Scope="internal"
+      Comment="MMAPI supported content"/>
+
+    <property Key="mmapi.content6"
+      Value="AMR audio/amr"
+      Scope="internal"
+      Comment="MMAPI supported content"/>
+
+    <property Key="mmapi.content7"
+      Value="CAPTURE_AUDIO audio/x-wav"
+      Scope="internal"
+      Comment="MMAPI supported content"/>
+      
+    <property Key="mmapi.content8"
+      Value="CAPTURE_RADIO audio/x-wav"
+      Scope="internal"
+      Comment="MMAPI supported content"/>
+      
+    <property Key="mmapi.content9"
+      Value="MOV video/quicktime"
+      Scope="internal"
+      Comment="MMAPI supported content"/>
+
+    <property Key="mmapi.content10"
+      Value="CAPTURE_VIDEO video/mpeg"
+      Scope="internal"
+      Comment="MMAPI supported content"/>
+
 </properties>
 </configuration>
