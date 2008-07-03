@@ -726,6 +726,7 @@ BytecodePrintClosure.cpp         StackmapList.hpp
 BytecodePrintClosure.cpp         StackmapGenerator.hpp
 
 RegisterAllocator.hpp            Assembler_<carch>.hpp
+RegisterAllocator.hpp            Disassembler_<carch>.hpp
 RegisterAllocator.cpp            RegisterAllocator.hpp
 RegisterAllocator.cpp            Compiler.hpp
 RegisterAllocator_<carch>.cpp    RegisterAllocator.hpp
