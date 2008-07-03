@@ -1,7 +1,5 @@
 /*
- *    
- *
- * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
@@ -77,26 +75,46 @@ JNIEXPORT jstring JNICALL
 Java_com_sun_jsr135_DynamicProperties_nGetPropertyValueAudioEncodings(
     JNIEnv *env, jobject this)
 {
-    return JNU_NewStringPlatform(env, get_system_property_audio_encodings());
+    const char *value = get_system_property_audio_encodings();
+    
+    if (NULL == value) {
+        return NULL;
+    }
+    return JNU_NewStringPlatform(env, value);
 }
 
 JNIEXPORT jstring JNICALL
 Java_com_sun_jsr135_DynamicProperties_nGetPropertyValueVideoEncodings(
     JNIEnv *env, jobject this)
 {
-    return JNU_NewStringPlatform(env, get_system_property_video_encodings());
+    const char *value = get_system_property_video_encodings();
+    
+    if (NULL == value) {
+        return NULL;
+    }
+    return JNU_NewStringPlatform(env, value);
 }
 
 JNIEXPORT jstring JNICALL
 Java_com_sun_jsr135_DynamicProperties_nGetPropertyValueVideoSnapshotEncodings(
     JNIEnv *env, jobject this)
 {
-    return JNU_NewStringPlatform(env, get_system_property_video_snapshot_encodings());
+    const char *value = get_system_property_video_snapshot_encodings();
+    
+    if (NULL == value) {
+        return NULL;
+    }
+    return JNU_NewStringPlatform(env, value);
 }
 
 JNIEXPORT jstring JNICALL
 Java_com_sun_jsr135_DynamicProperties_nGetPropertyValueStreamableContents(
     JNIEnv *env, jobject this)
 {
-    return JNU_NewStringPlatform(env, get_system_property_streamable_contents());
+    const char *value = get_system_property_streamable_contents();
+    
+    if (NULL == value) {
+        return NULL;
+    }
+    return JNU_NewStringPlatform(env, value);
 }

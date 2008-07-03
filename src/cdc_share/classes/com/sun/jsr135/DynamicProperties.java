@@ -1,7 +1,5 @@
 /*
- *   
- *
- * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
@@ -91,10 +89,7 @@ public class DynamicProperties implements PropertyProvider {
     public String getValue(String key, boolean fromCache) {
         String val = null;
         if (fromCache) {
-            val = (String)properties.get(key);
-            if ((val != null) && (val.length()>0)) {
-                return val;
-            }
+            return (String)properties.get(key);
         }
         if (key.equals(propertySupportsMixing)) {
             val = nGetPropertyValueSupportsMixing();
@@ -147,14 +142,22 @@ public class DynamicProperties implements PropertyProvider {
                        nGetPropertyValueSupportsVideoCapture());
         properties.put(propertySupportsRecording,
                        nGetPropertyValueSupportsRecording());
-        properties.put(propertyAudioEncodings,
-                       nGetPropertyValueAudioEncodings());
-        properties.put(propertyVideoEncodings,
-                       nGetPropertyValueVideoEncodings());
-        properties.put(propertyVideoSnapshotEncodings,
-                       nGetPropertyValueVideoSnapshotEncodings());
-        properties.put(propertyStreamableContents,
-                       nGetPropertyValueStreamableContents());
+        String value = nGetPropertyValueAudioEncodings();
+        if (value != null) {
+            properties.put(propertyAudioEncodings, value);
+        }
+        value = nGetPropertyValueVideoEncodings();
+        if (value != null) {
+            properties.put(propertyVideoEncodings, value);
+        }
+        value = nGetPropertyValueVideoSnapshotEncodings();
+        if (value != null) {
+            properties.put(propertyVideoSnapshotEncodings, value);
+        }
+        value = nGetPropertyValueStreamableContents();
+        if (value != null) {
+            properties.put(propertyStreamableContents, value);
+        }
         return true;
     };
 
