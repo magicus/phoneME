@@ -40,7 +40,7 @@ JAMS_NAME = jams
 SUBSYSTEMS += $(JAMS_NAME)
 
 # Local module directory
-JAMS_DIR ?= $(SUBSYSTEM_AMS_DIR)/$(JAMS_NAME)
+JAMS_DIR = $(SUBSYSTEM_AMS_DIR)/$(JAMS_NAME)
 
 
 # Javadoc source path
@@ -50,12 +50,19 @@ MIDP_JAVADOC_SOURCEPATH += $(JAMS_DIR)/classes
 SUBSYSTEM_AMS_JAVA_FILES += \
     $(JAMS_DIR)/classes/com/sun/midp/appmanager/ApplicationManager.java
 
-# Include suite_launcher implementation into the build
-include $(JAMS_DIR)/suite_launcher/lib.gmk
-
-#Include SVM or MVM implementations
-ifeq ($(USE_MULTIPLE_ISOLATES), true)
-include $(JAMS_DIR)/mvm/lib.gmk
-else
-include $(JAMS_DIR)/svm/lib.gmk
+#Set Default path
+ifndef JAMS_IMPL_DIR
+JAMS_IMPL_DIR = $(JAMS_DIR)
 endif
+
+# Include suite_launcher implementation into the build
+include $(JAMS_IMPL_DIR)/suite_launcher/lib.gmk
+
+ifeq ($(USE_MULTIPLE_ISOLATES), true)
+JAMS_VM_IMPL_DIR = $(JAMS_IMPL_DIR)/mvm
+else
+JAMS_VM_IMPL_DIR = $(JAMS_IMPL_DIR)/svm
+endi
+
+#Include implementation settings
+include $(JAMS_VM_IMPL_DIR)/lib.gmk

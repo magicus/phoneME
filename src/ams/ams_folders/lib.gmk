@@ -36,13 +36,19 @@ SUBSYSTEMS += ams_folders
 
 # Name of the library
 AMS_FOLDERS_NAME = ams_folders
-AMS_FOLDERS_DIR ?= $(SUBSYSTEM_AMS_DIR)/$(AMS_FOLDERS_NAME)
+AMS_FOLDERS_DIR = $(SUBSYSTEM_AMS_DIR)/$(AMS_FOLDERS_NAME)
 
 # JavaDoc source path
 MIDP_JAVADOC_SOURCEPATH += $(AMS_FOLDERS_DIR)/classes
 
+#$(AMS_FOLDERS_DIR) can be set to ovveride default implementation folders
+ifndef AMS_FOLDERS_IMPL_DIR
+#if it is not defined use default folder according to $(USE_AMS_FOLDERS) flag
 ifeq ($(USE_AMS_FOLDERS), true)
-include $(AMS_FOLDERS_DIR)/reference/lib.gmk
+AMS_FOLDERS_IMPL_DIR=$(AMS_FOLDERS_DIR)/reference
 else
-include $(AMS_FOLDERS_DIR)/stubs/lib.gmk
-endif
+AMS_FOLDERS_IMPL_DIR=$(AMS_FOLDERS_DIR)/stubs
+endif 
+
+include $(AMS_FOLDERS_IMPL_DIR)/lib.gmk
+

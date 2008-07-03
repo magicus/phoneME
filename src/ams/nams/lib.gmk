@@ -42,6 +42,11 @@ NAMS_NAME = nams
 # Local module directory
 NAMS_DIR ?= $(SUBSYSTEM_AMS_DIR)/$(NAMS_NAME)/reference
 
+# Static Include path for the sub-system
+# To make sure all implementations use it
+SUBSYSTEM_AMS_EXTRA_INCLUDES += \
+    -I$(SUBSYSTEM_AMS_DIR)/$(NAMS_NAME)/include
+
 # Get implementation settings and files
 include $(NAMS_DIR)/lib.gmk
 

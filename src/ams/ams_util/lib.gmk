@@ -36,21 +36,17 @@
 
 # Name of the library
 AMS_UTIL_NAME = ams_util
-AMS_UTIL_DIR ?= $(SUBSYSTEM_AMS_DIR)/$(AMS_UTIL_NAME)
-
-# JavaDoc source path
-#MIDP_JAVADOC_SOURCEPATH += $(AMS_UTIL_DIR)/classes
-
-# Java files for the library
-#
-#SUBSYSTEM_AMS_JAVA_FILES += \
-#    $(AMS_UTIL_DIR)/classes/com/sun/midp/AmsUtil.java
+AMS_UTIL_DIR = $(SUBSYSTEM_AMS_DIR)/$(AMS_UTIL_NAME)
 
 
 # IMPL NOTE: Use library configuration file to select switch library
 #
+ifndef AMS_UTIL_IMPL_DIR
 ifeq ($(USE_MULTIPLE_ISOLATES), true)
-include $(AMS_UTIL_DIR)/mvm/lib.gmk
+AMS_UTIL_IMPL_DIR = $(AMS_UTIL_DIR)/mvm
 else
-include $(AMS_UTIL_DIR)/svm/lib.gmk
+AMS_UTIL_IMPL_DIR = $(AMS_UTIL_DIR)/svm
 endif
+endif
+
+include $(AMS_UTIL_IMPL_DIR)/lib.gmk

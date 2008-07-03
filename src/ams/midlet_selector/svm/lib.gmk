@@ -33,11 +33,11 @@
 ############################################################
 
 # Javadoc source path
-MIDP_JAVADOC_SOURCEPATH += $(MIDLET_SELECTOR_DIR)/svm/classes
+MIDP_JAVADOC_SOURCEPATH += $(MIDLET_SELECTOR_IPML_DIR)/classes
 
 # Java files for the sub-system
 #
 SUBSYSTEM_AMS_JAVA_FILES += \
-    $(MIDLET_SELECTOR_DIR)/svm/classes/com/sun/midp/appmanager/Selector.java
+    $(MIDLET_SELECTOR_IPML_DIR)/classes/com/sun/midp/appmanager/Selector.java
 
 
