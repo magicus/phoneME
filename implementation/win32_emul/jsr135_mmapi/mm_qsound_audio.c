@@ -1763,7 +1763,7 @@ static javacall_result audio_qs_get_duration(javacall_handle handle, long* ms) {
         case JC_FMT_MS_PCM:
         case JC_FMT_AMR: // will need revisit when real streaming will be used
         {
-            if(h->wav.bytesPerMilliSec != 0 && h->hdr.dataEnded)
+            if(h->wav.bytesPerMilliSec != 0 && (h->hdr.dataEnded || h->hdr.dataStopped))
                 *ms = h->wav.playBufferLen / h->wav.bytesPerMilliSec;
         }
         break;
