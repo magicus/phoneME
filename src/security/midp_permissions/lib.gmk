@@ -73,17 +73,16 @@ SUBSYSTEM_SECURITY_I3TEST_JAVA_FILES += \
     $(PERMISSIONS_DIR)/reference/i3test/com/sun/midp/security/TestPermissions.java
 endif
 
-# wrong place to do this stuff, supposed to be fixed soon- ignored by this example
-#
-#ifeq ($(TARGET_OS), javacall)
-#POLICY_FILES = $(PERMISSIONS_CONFIG_DIR)/_function_groups.txt.JTWI \
-#	$(PERMISSIONS_CONFIG_DIR)/_policy.txt.JTWI \
-#	$(PERMISSIONS_CONFIG_DIR)/_function_groups.txt.MSA \
-#	$(PERMISSIONS_CONFIG_DIR)/_policy.txt.MSA 
-#
-#javacall_policy_load.c : policy_files
-#
-#policy_files :
-#	cp  $(POLICY_FILES) $(MIDP_OUTPUT_DIR)/lib
-#endif
+
+ifeq ($(TARGET_OS), javacall)
+POLICY_FILES = $(PERMISSIONS_CONFIG_DIR)/_function_groups.txt.JTWI \
+	$(PERMISSIONS_CONFIG_DIR)/_policy.txt.JTWI \
+	$(PERMISSIONS_CONFIG_DIR)/_function_groups.txt.MSA \
+	$(PERMISSIONS_CONFIG_DIR)/_policy.txt.MSA 
+
+javacall_policy_load.c : policy_files
+
+policy_files :
+	cp  $(POLICY_FILES) $(MIDP_OUTPUT_DIR)/lib
+endif
 

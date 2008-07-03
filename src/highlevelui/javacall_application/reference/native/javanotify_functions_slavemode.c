@@ -338,9 +338,9 @@ void javanotify_start_tck(char *tckUrl, javacall_lifecycle_tck_domain domain_typ
     }
 
     if (domain_type == JAVACALL_LIFECYCLE_TCK_DOMAIN_UNTRUSTED) {
-        argv[argc++] = "unidentified";//"untrusted";
+        argv[argc++] = "untrusted";
     } else if (domain_type == JAVACALL_LIFECYCLE_TCK_DOMAIN_TRUSTED) {
-        argv[argc++] = "manufacturer";//"trusted";
+        argv[argc++] = "trusted";
     } else if (domain_type == JAVACALL_LIFECYCLE_TCK_DOMAIN_UNTRUSTED_MIN) {
         argv[argc++] = "minimum";
     } else if (domain_type == JAVACALL_LIFECYCLE_TCK_DOMAIN_UNTRUSTED_MAX) {
