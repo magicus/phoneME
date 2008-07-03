@@ -630,6 +630,7 @@ read_suites_data(char** ppszError) {
         pPrevData = pData;
     } /* end for (numOfSuites) */
 
+    pcsl_mem_free(pData);
     pcsl_mem_free(buffer);
 
     if (status == ALL_OK) {

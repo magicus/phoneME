@@ -464,6 +464,7 @@ midp_store_suite(const MidpInstallInfo* pInstallInfo,
         status = begin_transaction(TRANSACTION_INSTALL, UNUSED_SUITE_ID,
             &pSuiteData->varSuiteData.pathToJar);
         if (status != ALL_OK) {
+            pcsl_mem_free(pMsd);        
             break;
         }
 
@@ -478,6 +479,7 @@ midp_store_suite(const MidpInstallInfo* pInstallInfo,
             if (pszError != NULL) {
                 storageFreeError(pszError);
             }
+            pcsl_mem_free(pMsd);        
             break;
         }
 
@@ -541,6 +543,7 @@ midp_store_suite(const MidpInstallInfo* pInstallInfo,
             if (pszError != NULL) {
                 storageFreeError(pszError);
             }
+            pcsl_mem_free(pMsd);        
             break;
         }
         pMsd->suiteSize += tmpSize;
@@ -548,6 +551,7 @@ midp_store_suite(const MidpInstallInfo* pInstallInfo,
         status = store_install_properties(suiteId, &pInstallInfo->jadProps,
                                           &pInstallInfo->jarProps, &tmpSize);
         if (status != ALL_OK) {
+            pcsl_mem_free(pMsd);        
             break;
         }
         pMsd->suiteSize += tmpSize;
@@ -561,6 +565,7 @@ midp_store_suite(const MidpInstallInfo* pInstallInfo,
             if (pszError != NULL) {
                 storageFreeError(pszError);
             }
+            pcsl_mem_free(pMsd);        
             break;
         }
         pMsd->suiteSize += tmpSize;
@@ -578,6 +583,7 @@ midp_store_suite(const MidpInstallInfo* pInstallInfo,
                                 pIconData, iconBufLen);
         }
 #endif
+        pcsl_mem_free(pMsd);        
     } while (0);
 
     (void)finish_transaction();
