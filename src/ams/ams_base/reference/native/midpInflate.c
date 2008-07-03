@@ -219,8 +219,8 @@ static int inflateHuffman(InflaterState *state, int fixedHuffman) {
     unsigned int quickDistanceSize = 0;
     unsigned int code;
     unsigned int litxlen;
-    void* lcodesMemHandle;
-    void* dcodesMemHandle;
+    void* lcodesMemHandle = NULL;
+    void* dcodesMemHandle = NULL;
     HuffmanCodeTable* lcodes = NULL;
     HuffmanCodeTable* dcodes = NULL;
 
