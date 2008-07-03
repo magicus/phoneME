@@ -558,7 +558,7 @@ javacall_result javacall_media_realize(javacall_handle handle,
     javacall_impl_player*  pPlayer = (javacall_impl_player*)handle;
     char* cmime;
 
-    if( 0 == strcmp( JAVACALL_MEDIA_FORMAT_UNKNOWN, pPlayer->mediaType ) )
+    if( JC_FMT_UNKNOWN == pPlayer->mediaType )
     {
         if( NULL != mime )
         {
@@ -585,9 +585,9 @@ javacall_result javacall_media_realize(javacall_handle handle,
         }
 
         if( NULL == pPlayer->mediaItfPtr && 
-            0 != strcmp( JAVACALL_MEDIA_FORMAT_UNKNOWN, pPlayer->mediaType ) )
+            ( JC_FMT_UNKNOWN != pPlayer->mediaType ) )
         {
-            pPlayer->mediaItfPtr = fmt_enum2itf( fmt_str2enum(pPlayer->mediaType) );
+            pPlayer->mediaItfPtr = fmt_enum2itf( pPlayer->mediaType );
 
             if( NULL != pPlayer->mediaItfPtr )
             {
