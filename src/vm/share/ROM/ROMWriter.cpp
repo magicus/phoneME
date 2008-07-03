@@ -240,8 +240,7 @@ void ROMWriter::fixup_image(JVM_SINGLE_ARG_TRAPS) {
   // The mirror_list should not have any entries pointing to the
   // task_class_init_marker. We null out any of these entries.
   // They will get re-created correctly when the image is loaded
-  UsingFastOops fast_oops;
-  ObjArray::Fast list = Universe::mirror_list();
+  ObjArray::Raw list = Universe::mirror_list();
   for (i = 0; i < list().length(); i++) {
     TaskMirror::Raw tm = list().obj_at(i);
     GUARANTEE(!tm.is_null(), "null taskmirror in mirror list");
@@ -780,13 +779,12 @@ void ROMWriter::rehash_info_table() {
   if (info_table()->is_null()) {
     return;
   }
-  UsingFastOops fast_oops;
 
-  Oop::Fast o;
-  ROMizerHashEntry::Fast p; 
-  ROMizerHashEntry::Fast prev; 
-  ROMizerHashEntry::Fast curr; 
-  ROMizerHashEntry::Fast next;   
+  Oop::Raw o;
+  ROMizerHashEntry::Raw p; 
+  ROMizerHashEntry::Raw prev; 
+  ROMizerHashEntry::Raw curr; 
+  ROMizerHashEntry::Raw next;   
 
   int new_index, in_chain; 
 

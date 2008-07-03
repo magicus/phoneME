@@ -1526,8 +1526,10 @@ bool ConstantPoolRewriter::shall_create_new_method(Method *method, int* p_new_si
   init_branch_targets(method JVM_CHECK_0);
 
   bool ignore_one_pop = false;
-  for (old_bci = 0, new_bci=0; old_bci != method->code_size();) {
-    GUARANTEE(old_bci < method->code_size(), "invalid bytecode");
+  const int code_size = method->code_size();
+
+  for (old_bci = 0, new_bci=0; old_bci != code_size;) {
+    GUARANTEE(old_bci < code_size, "invalid bytecode");
 
     const Bytecodes::Code code = method->bytecode_at(old_bci);
     const int old_len = method->bytecode_length_for(old_bci);
