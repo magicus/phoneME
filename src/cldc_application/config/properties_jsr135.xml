@@ -134,5 +134,10 @@
       Scope="internal"
       Comment="MMAPI supported content"/>
 
+    <property Key="mmapi.content10"
+      Value="CAPTURE_VIDEO video/mpeg"
+      Scope="internal"
+      Comment="MMAPI supported content"/>
+      
 </properties>
 </configuration>
