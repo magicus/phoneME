@@ -498,8 +498,7 @@ public class DirectVideo extends DirectPlayer implements
                     tmp_dy = dy;
                     tmp_dw = dw;
                     tmp_dh = dh;
-                }
-                else {
+                } else {
                     setDisplayLocation( tmp_dx, tmp_dy );
                     setDisplaySize( tmp_dw, tmp_dh );
                 }
@@ -588,6 +587,7 @@ public class DirectVideo extends DirectPlayer implements
             Logging.report(Logging.INFORMATION, LogChannels.LC_MMAPI, 
                 "paintVideo x=" + x + ",y=" + y + ",w=" + w + ",h=" + h); 
         }
+
         if (canvas != null && !canvas.isShown()) {
             hidden = true;
         }
