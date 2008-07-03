@@ -131,7 +131,6 @@ KNIDECL(com_sun_midp_main_MIDletSuiteVerifier_checkJarHash) {
         } else {
             KNI_ThrowNew(midpOutOfMemoryError, NULL);
         }
-        midpFree(hashValue);
     } RELEASE_PCSL_STRING_PARAMETER;
 
     KNI_EndHandles();

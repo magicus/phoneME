@@ -150,7 +150,6 @@ MIDPError midp_load_suites_icons() {
         /* _icons.dat is absent or empty, it's a normal situation */
         g_pIconCache  = NULL;
         g_iconsLoaded = 1;
-        pcsl_mem_free(buffer);
         return ALL_OK;
     }
 
