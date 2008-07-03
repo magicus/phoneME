@@ -1,0 +1,15 @@
+
+# Javadoc source path
+MIDP_JAVADOC_SOURCEPATH += $(MVM_DIR)/classes
+
+# Java files for the sub-system
+#
+SUBSYSTEM_AMS_JAVA_FILES += \
+        $(MVM_DIR)/classes/com/sun/midp/main/AppIsolateMIDletSuiteLoader.java \
+        $(MVM_DIR)/classes/com/sun/midp/main/IndicatorManager.java \
+        $(MVM_DIR)/classes/com/sun/midp/main/MIDletExecuteEventProducer.java \
+        $(MVM_DIR)/classes/com/sun/midp/main/MVMDisplayController.java \
+        $(MVM_DIR)/classes/com/sun/midp/main/IsolateMonitor.java \
+        $(MVM_DIR)/classes/com/sun/midp/main/IsolateMonitorListener.java \
+        $(MVM_DIR)/classes/com/sun/midp/main/StartMIDletMonitor.java
+

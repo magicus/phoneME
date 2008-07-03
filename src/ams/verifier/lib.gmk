@@ -40,7 +40,7 @@ VERIFIER_NAME = verifier
 SUBSYSTEMS += $(VERIFIER_NAME)
 
 # Local module directory
-VERIFIER_DIR = $(SUBSYSTEM_AMS_DIR)/$(VERIFIER_NAME)
+VERIFIER_DIR ?= $(SUBSYSTEM_AMS_DIR)/$(VERIFIER_NAME)
 
 # Javadoc source path
 MIDP_JAVADOC_SOURCEPATH += $(VERIFIER_DIR)/classes
@@ -60,9 +60,5 @@ endif
 
 endif
 
-# Java files for the sub-system
-#
-SUBSYSTEM_AMS_JAVA_FILES += \
-    $(VERIFIER_DIR)/$(VERIFIER_IMPL)/classes/com/sun/midp/installer/VerifierImpl.java
-
-MIDP_JAVADOC_SOURCEPATH += $(VERIFIER_DIR)/$(VERIFIER_IMPL)/classes
+# Get implementation settings and files
+include $(VERIFIER_DIR)/$(VERIFIER_IMPL)/lib.gmk

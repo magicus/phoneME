@@ -36,26 +36,10 @@
 MIDLET_SELECTOR_NAME = midlet_selector
 
 # Local module directory
-MIDLET_SELECTOR_DIR = $(SUBSYSTEM_AMS_DIR)/$(MIDLET_SELECTOR_NAME)
+MIDLET_SELECTOR_DIR ?= $(SUBSYSTEM_AMS_DIR)/$(MIDLET_SELECTOR_NAME)
 
 ifeq ($(USE_MULTIPLE_ISOLATES), true)
-
-# Javadoc source path
-MIDP_JAVADOC_SOURCEPATH += $(MIDLET_SELECTOR_DIR)/mvm/classes
-
-# Java files for the sub-system
-#
-SUBSYSTEM_AMS_JAVA_FILES += \
-    $(MIDLET_SELECTOR_DIR)/mvm/classes/com/sun/midp/appmanager/Selector.java
-
+include $(MIDLET_SELECTOR_DIR)/mvm/lib.gmk
 else
-
-# Javadoc source path
-MIDP_JAVADOC_SOURCEPATH += $(MIDLET_SELECTOR_DIR)/svm/classes
-
-# Java files for the sub-system
-#
-SUBSYSTEM_AMS_JAVA_FILES += \
-    $(MIDLET_SELECTOR_DIR)/svm/classes/com/sun/midp/appmanager/Selector.java
-
+include $(MIDLET_SELECTOR_DIR)/svm/lib.gmk
 endif

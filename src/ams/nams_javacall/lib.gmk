@@ -40,19 +40,7 @@ NAMS_JAVACALL_NAME = nams_javacall
 SUBSYSTEMS += $(NAMS_JAVACALL_NAME)
 
 # Local module directory
-NAMS_JAVACALL_DIR = $(SUBSYSTEM_AMS_DIR)/$(NAMS_JAVACALL_NAME)/reference
+NAMS_JAVACALL_DIR ?= $(SUBSYSTEM_AMS_DIR)/$(NAMS_JAVACALL_NAME)/reference
 
-# vpath for sub-system
-#
-vpath % \
-    $(NAMS_JAVACALL_DIR)/native
-
-# Include path for the sub-system
-#
-SUBSYSTEM_AMS_EXTRA_INCLUDES += \
-    -I$(NAMS_JAVACALL_DIR)/../include
-
-# Native files for common module
-#
-SUBSYSTEM_AMS_NATIVE_FILES += \
-    javacall_native_ams.c
+# Get implementation settings and files
+include $(NAMS_JAVACALL_DIR)/lib.gmk

@@ -37,7 +37,7 @@
 #SUBSYSTEMS += appmanager_ui
 
 # Default local module directory
-AMS_APPMANAGER_UI_DIR = $(SUBSYSTEM_AMS_DIR)/appmanager_ui/reference
+AMS_APPMANAGER_UI_DIR ?= $(SUBSYSTEM_AMS_DIR)/appmanager_ui/reference
 
 # Get implementation settings and files
 include $(AMS_APPMANAGER_UI_DIR)/lib.gmk

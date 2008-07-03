@@ -39,7 +39,7 @@ SUBSYSTEM_HIGHUI = highlevelui
 
 SUBSYSTEMS += $(SUBSYSTEM_HIGHUI)
 
-SUBSYSTEM_HIGHUI_DIR = $(SUBSYSTEM_DIR)/highlevelui
+SUBSYSTEM_HIGHUI_DIR ?= $(SUBSYSTEM_DIR)/highlevelui
 
 ifndef SUBSYSTEM_LCDUI_MODULES
     SUBSYSTEM_LCDUI_MODULES = chameleon
@@ -106,6 +106,13 @@ else
     # nim -- Native Input Mode support
     include $(SUBSYSTEM_HIGHUI_DIR)/nim_port/lib.gmk
 
+endif
+
+#Add Aditional components if supplied
+ifdef HILEVELUI_ADDITIONAL_COMPONENTS
+$(foreach $(HILEVELUI_ADDITIONAL_COMPONENTS), \
+	$(_HUI_COMP), \
+	include $(SUBSYSTEM_HIGHUI_DIR)/$(_HUI_COMP)/lib.gmk)
 endif
 
 #####################################################################

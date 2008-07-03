@@ -40,29 +40,9 @@ NAMS_NAME = nams
 #SUBSYSTEMS += $(NAMS_NAME)
 
 # Local module directory
-NAMS_DIR = $(SUBSYSTEM_AMS_DIR)/$(NAMS_NAME)/reference
+NAMS_DIR ?= $(SUBSYSTEM_AMS_DIR)/$(NAMS_NAME)/reference
 
-# Javadoc source path
-MIDP_JAVADOC_SOURCEPATH += $(NAMS_DIR)/classes
+# Get implementation settings and files
+include $(NAMS_DIR)/lib.gmk
 
-# Java files for the sub-system
-#
-SUBSYSTEM_AMS_JAVA_FILES += \
-    $(NAMS_DIR)/classes/com/sun/midp/main/NativeAppManagerPeer.java \
-    $(NAMS_DIR)/classes/com/sun/midp/main/NativeDisplayControllerPeer.java
 
-# vpath for sub-system
-#
-vpath % \
-    $(NAMS_DIR)/native
-
-# Include path for the sub-system
-#
-SUBSYSTEM_AMS_EXTRA_INCLUDES += \
-    -I$(NAMS_DIR)/../include
-
-# Native files for common module
-#
-SUBSYSTEM_AMS_NATIVE_FILES += \
-    midpNativeAppManagerPeer.c \
-    midpNativeDisplayControllerPeer.c

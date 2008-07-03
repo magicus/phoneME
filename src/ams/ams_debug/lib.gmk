@@ -36,7 +36,7 @@ SUBSYSTEMS += ams_debug
 
 # Name of the library
 AMS_DEBUG_NAME = ams_debug
-AMS_DEBUG_DIR = $(SUBSYSTEM_AMS_DIR)/$(AMS_DEBUG_NAME)
+AMS_DEBUG_DIR ?= $(SUBSYSTEM_AMS_DIR)/$(AMS_DEBUG_NAME)
 
 ifeq ($(USE_WTK_DEBUG), true)
 

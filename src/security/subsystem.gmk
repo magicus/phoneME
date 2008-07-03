@@ -39,7 +39,7 @@
 SECURITY_SUBSYSTEM = security
 SUBSYSTEMS += $(SECURITY_SUBSYSTEM)
 
-SUBSYSTEM_SECURITY_DIR = $(SUBSYSTEM_DIR)/$(SECURITY_SUBSYSTEM)
+SUBSYSTEM_SECURITY_DIR ?= $(SUBSYSTEM_DIR)/$(SECURITY_SUBSYSTEM)
 
 SUBSYSTEM_SECURITY_PACKAGES = \
     com.sun.midp.security
@@ -64,6 +64,13 @@ include $(SUBSYSTEM_SECURITY_DIR)/ocsp/lib.gmk
 
 ifeq ($(USE_NATIVE_PERMISSION_DIALOG), true)
   include $(SUBSYSTEM_SECURITY_DIR)/native_dialog_port/lib.gmk
+endif
+
+#Add Aditional components if supplied
+ifdef SECURITY_ADDITIONAL_COMPONENTS
+$(foreach $(SECURITY_ADDITIONAL_COMPONENTS), \
+	$(_SECURITY_COMP), \
+	include $(SUBSYSTEM_SECURITY_DIR)/$(_SECURITY_COMP)/lib.gmk)
 endif
 
 #####################################################################

@@ -40,8 +40,8 @@ include $(SUBSYSTEM_DIR)/configuration/configuration_common.gmk
 CONFIG_SUBSYSTEM = configuration
 SUBSYSTEMS += $(CONFIG_SUBSYSTEM)
 
-SUBSYSTEM_CONFIG_DIR = $(SUBSYSTEM_DIR)/$(CONFIG_SUBSYSTEM)
-PROJECT_SUBSYSTEM_CONFIG_DIR = $(PROJECT_SUBSYSTEM_DIR)/$(CONFIG_SUBSYSTEM)
+SUBSYSTEM_CONFIG_DIR ?= $(SUBSYSTEM_DIR)/$(CONFIG_SUBSYSTEM)
+PROJECT_SUBSYSTEM_CONFIG_DIR ?= $(PROJECT_SUBSYSTEM_DIR)/$(CONFIG_SUBSYSTEM)
 
 #####################################################################
 # Configurator Subsystem
@@ -66,6 +66,12 @@ include $(SUBSYSTEM_CONFIG_DIR)/properties_port/lib.gmk
 
 #####################################################################
 
+#Add Aditional components if supplied
+ifdef CONFIGURATION_ADDITIONAL_COMPONENTS
+$(foreach $(CONFIGURATION_ADDITIONAL_COMPONENTS), \
+	$(_CONF_COMP), \
+	include $(SUBSYSTEM_CONFIG_DIR)/$(_CONF_COMP)/lib.gmk)
+endif
 
 SUBSYSTEM_CONFIGURATION_JAVA_FILES +=  \
     $(SUBSYSTEM_PROPERTIES_JAVA_FILES) \

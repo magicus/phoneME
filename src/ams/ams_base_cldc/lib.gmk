@@ -37,57 +37,13 @@ AMS_BASE_CLDC_NAME = ams_base_cldc
 
 
 # Local module directory
-AMS_BASE_CLDC_DIR = $(SUBSYSTEM_AMS_DIR)/$(AMS_BASE_CLDC_NAME)/reference
+AMS_BASE_CLDC_DIR ?= $(SUBSYSTEM_AMS_DIR)/$(AMS_BASE_CLDC_NAME)/reference
+
+# Get implementation settings and files
+include $(AMS_BASE_CLDC_DIR)/lib.gmk
 
 # Javadoc source path
 MIDP_JAVADOC_SOURCEPATH += $(AMS_BASE_CLDC_DIR)/classes
 
-# vpath for sub-system
-#
-vpath % \
-    $(AMS_BASE_CLDC_DIR)/native
 
-# Include path for the sub-system
-#
-SUBSYSTEM_AMS_EXTRA_INCLUDES += \
-    -I$(SUBSYSTEM_AMS_DIR)/ams_base_cldc/include
 
-SUBSYSTEM_AMS_JAVA_FILES += \
-    $(AMS_BASE_CLDC_DIR)/classes/com/sun/midp/main/CldcAccessControlContext.java \
-    $(AMS_BASE_CLDC_DIR)/classes/com/sun/midp/main/CldcForegroundController.java \
-    $(AMS_BASE_CLDC_DIR)/classes/com/sun/midp/main/CldcMIDletLoader.java \
-    $(AMS_BASE_CLDC_DIR)/classes/com/sun/midp/main/CldcMIDletStateListener.java \
-    $(AMS_BASE_CLDC_DIR)/classes/com/sun/midp/main/CldcMIDletSuiteLoader.java \
-    $(AMS_BASE_CLDC_DIR)/classes/com/sun/midp/main/CldcPlatformRequest.java \
-    $(AMS_BASE_CLDC_DIR)/classes/com/sun/midp/main/CommandState.java \
-    $(AMS_BASE_CLDC_DIR)/classes/com/sun/midp/main/RuntimeInfo.java \
-    $(AMS_BASE_CLDC_DIR)/classes/com/sun/midp/main/ExecuteMIDletEventListener.java \
-    $(AMS_BASE_CLDC_DIR)/classes/com/sun/midp/main/DisplayController.java \
-    $(AMS_BASE_CLDC_DIR)/classes/com/sun/midp/main/DisplayControllerListener.java \
-    $(AMS_BASE_CLDC_DIR)/classes/com/sun/midp/main/HeadlessAlert.java \
-    $(AMS_BASE_CLDC_DIR)/classes/com/sun/midp/main/MIDletControllerEventConsumer.java \
-    $(AMS_BASE_CLDC_DIR)/classes/com/sun/midp/main/MIDletControllerEventListener.java \
-    $(AMS_BASE_CLDC_DIR)/classes/com/sun/midp/main/MIDletControllerEventProducer.java \
-    $(AMS_BASE_CLDC_DIR)/classes/com/sun/midp/main/MIDletProxy.java \
-    $(AMS_BASE_CLDC_DIR)/classes/com/sun/midp/main/MIDletProxyList.java \
-    $(AMS_BASE_CLDC_DIR)/classes/com/sun/midp/main/MIDletProxyListListener.java \
-    $(AMS_BASE_CLDC_DIR)/classes/com/sun/midp/main/MIDletSuiteLoader.java \
-    $(AMS_BASE_CLDC_DIR)/classes/com/sun/midp/main/MIDletSuiteUtils.java
-
-SUBSYSTEM_AMS_NATIVE_FILES += \
-    exitInternal.c \
-    midlet.c \
-    midpAppIsolateMidletSuiteLoader.c \
-    midpCommandState.c \
-    midpMIDletProxyList.c \
-    midpMidletSuiteVerifier.c \
-    midpMidletSuiteUtils.c \
-    midp_run.c
-
-#
-# I3test files
-#
-ifeq ($(USE_I3_TEST), true)
-    SUBSYSTEM_AMS_I3TEST_JAVA_FILES = \
-    $(AMS_BASE_CLDC_DIR)/i3test/com/sun/midp/main/TestMIDletControllerEventProducer.java
-endif

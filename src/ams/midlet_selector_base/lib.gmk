@@ -36,12 +36,7 @@
 MIDLET_SELECTOR_BASE_NAME = midlet_selector_base
 
 # Local module directory
-MIDLET_SELECTOR_BASE_DIR = $(SUBSYSTEM_AMS_DIR)/$(MIDLET_SELECTOR_BASE_NAME)
+MIDLET_SELECTOR_BASE_DIR ?= $(SUBSYSTEM_AMS_DIR)/$(MIDLET_SELECTOR_BASE_NAME)
 
-# Javadoc source path
-MIDP_JAVADOC_SOURCEPATH += $(MIDLET_SELECTOR_BASE_DIR)/reference/classes
-
-# Java files for the sub-system
-#
-SUBSYSTEM_AMS_JAVA_FILES += \
-    $(MIDLET_SELECTOR_BASE_DIR)/reference/classes/com/sun/midp/appmanager/SelectorBase.java
+# Get implementation settings and files
+include $(MIDLET_SELECTOR_BASE_DIR)/reference/lib.gmk

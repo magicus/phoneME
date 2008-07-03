@@ -40,12 +40,11 @@ AUTOTESTER_BASE_NAME = autotester_base
 #SUBSYSTEMS += $(AUTOTESTER_BASE_NAME)
 
 # Local module directory
-AUTOTESTER_BASE_DIR = $(SUBSYSTEM_AMS_DIR)/$(AUTOTESTER_BASE_NAME)/reference
+AUTOTESTER_BASE_DIR ?= $(SUBSYSTEM_AMS_DIR)/$(AUTOTESTER_BASE_NAME)/reference
+
+# Get implementation settings and files
+include $(AUTOTESTER_BASE_DIR)/lib.gmk
 
 # Javadoc source path
 MIDP_JAVADOC_SOURCEPATH += $(AUTOTESTER_BASE_DIR)/classes
 
-# Java files for the sub-system
-#
-SUBSYSTEM_AMS_JAVA_FILES += \
-        $(AUTOTESTER_BASE_DIR)/classes/com/sun/midp/installer/AutoTesterBase.java

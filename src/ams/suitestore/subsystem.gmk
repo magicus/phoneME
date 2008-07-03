@@ -37,7 +37,7 @@
 SUBSYSTEM_NAME = suitestore
 SUBSYSTEMS += $(SUBSYSTEM_NAME)
 
-SUBSYSTEM_SUITESTORE_DIR = $(SUBSYSTEM_AMS_DIR)/suitestore
+SUBSYSTEM_SUITESTORE_DIR ?= $(SUBSYSTEM_AMS_DIR)/suitestore
 
 # Initialize a variable containing a list of Java files for the module
 SUBSYSTEM_SUITESTORE_JAVA_FILES =
@@ -57,6 +57,11 @@ include $(SUBSYSTEM_SUITESTORE_DIR)/task_manager_api/lib.gmk
 include $(SUBSYSTEM_SUITESTORE_DIR)/installer_api/lib.gmk
 include $(SUBSYSTEM_SUITESTORE_DIR)/recordstore_api/lib.gmk
 include $(SUBSYSTEM_SUITESTORE_DIR)/secure_api/lib.gmk
+
+# Include more components if supplied
+ifdef AMS_SUITESTORE_ADDITIONAL_COMPONENTS
+$(foreach AMS_SUITESTORE_ADDITIONAL_COMPONENTS,$(_AMS_COMP),include $(SUBSYSTEM_SUITESTORE_DIR)/$(_AMS_COMP)/lib.gmk)
+endif
 
 #SUBSYSTEM_AMS_JAVA_FILES += $(SUBSYSTEM_SUITESTORE_JAVA_FILES)
 #SUBSYSTEM_AMS_EXTRA_INCLUDES += $(SUBSYSTEM_SUITESTORE_EXTRA_INCLUDES)

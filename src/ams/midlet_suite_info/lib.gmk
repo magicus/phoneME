@@ -36,15 +36,12 @@
 
 # Name of the library
 MIDLET_SUITE_INFO_NAME = midlet_suite_info
-MIDLET_SUITE_INFO_DIR = $(SUBSYSTEM_AMS_DIR)/$(MIDLET_SUITE_INFO_NAME)/reference
+MIDLET_SUITE_INFO_DIR ?= $(SUBSYSTEM_AMS_DIR)/$(MIDLET_SUITE_INFO_NAME)/reference
 
-# JavaDoc source path
-MIDP_JAVADOC_SOURCEPATH += $(MIDLET_SUITE_INFO_DIR)/classes$(PATHSEP)$(SUBSYSTEM_AMS_DIR)/$(MIDLET_SUITE_INFO_NAME)/classes
+# Get implementation settings and files
+include $(MIDLET_SUITE_INFO_DIR)/lib.gmk
 
-# Java files for the library
-#
-SUBSYSTEM_AMS_JAVA_FILES += \
-    $(MIDLET_SUITE_INFO_DIR)/classes/com/sun/midp/midletsuite/MIDletSuiteInfo.java
+
 
 
 

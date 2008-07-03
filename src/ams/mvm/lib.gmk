@@ -40,18 +40,7 @@ MVM_NAME = mvm
 #SUBSYSTEMS += $(MVM_NAME)
 
 # Local module directory
-MVM_DIR = $(SUBSYSTEM_AMS_DIR)/$(MVM_NAME)/reference
+MVM_DIR ?= $(SUBSYSTEM_AMS_DIR)/$(MVM_NAME)/reference
 
-# Javadoc source path
-MIDP_JAVADOC_SOURCEPATH += $(MVM_DIR)/classes
-
-# Java files for the sub-system
-#
-SUBSYSTEM_AMS_JAVA_FILES += \
-        $(MVM_DIR)/classes/com/sun/midp/main/AppIsolateMIDletSuiteLoader.java \
-        $(MVM_DIR)/classes/com/sun/midp/main/IndicatorManager.java \
-        $(MVM_DIR)/classes/com/sun/midp/main/MIDletExecuteEventProducer.java \
-        $(MVM_DIR)/classes/com/sun/midp/main/MVMDisplayController.java \
-        $(MVM_DIR)/classes/com/sun/midp/main/IsolateMonitor.java \
-        $(MVM_DIR)/classes/com/sun/midp/main/IsolateMonitorListener.java \
-        $(MVM_DIR)/classes/com/sun/midp/main/StartMIDletMonitor.java
+# Get implementation settings and files
+include $(MVM_DIR)/lib.gmk

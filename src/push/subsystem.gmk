@@ -51,7 +51,7 @@ endif
 PUSH_SUBSYSTEM = push
 SUBSYSTEMS += $(PUSH_SUBSYSTEM)
 
-SUBSYSTEM_PUSH_DIR = $(SUBSYSTEM_DIR)/$(PUSH_SUBSYSTEM)
+SUBSYSTEM_PUSH_DIR ?= $(SUBSYSTEM_DIR)/$(PUSH_SUBSYSTEM)
 
   
 #####################################################################
@@ -100,6 +100,12 @@ include $(SUBSYSTEM_PUSH_DIR)/push_server/lib.gmk
 
 include $(SUBSYSTEM_PUSH_DIR)/push_timer/lib.gmk
 
+#Add Aditional components if supplied
+ifdef PUSH_ADDITIONAL_COMPONENTS
+$(foreach $(PUSH_ADDITIONAL_COMPONENTS), \
+	$(_PUSH_COMP), \
+	include $(SUBSYSTEM_PUSH_DIR)/$(_PUSH_COMP)/lib.gmk)
+endif
 
 ####################################################################
 

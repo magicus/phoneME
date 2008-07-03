@@ -36,7 +36,7 @@ SUBSYSTEMS += ams_folders
 
 # Name of the library
 AMS_FOLDERS_NAME = ams_folders
-AMS_FOLDERS_DIR = $(SUBSYSTEM_AMS_DIR)/$(AMS_FOLDERS_NAME)
+AMS_FOLDERS_DIR ?= $(SUBSYSTEM_AMS_DIR)/$(AMS_FOLDERS_NAME)
 
 # JavaDoc source path
 MIDP_JAVADOC_SOURCEPATH += $(AMS_FOLDERS_DIR)/classes
