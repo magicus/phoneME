@@ -25,10 +25,11 @@
 package com.sun.mmedia;
 
 import javax.microedition.media.control.MetaDataControl;
-
+import java.util.Vector;
 
 public class DirectMetaData implements MetaDataControl {    
     private int hNative;    
+    private Object keysLock = new Object();
     private String [] keys;
     
     private native int nGetKeyCount(int hNative);
@@ -36,19 +37,32 @@ public class DirectMetaData implements MetaDataControl {
     private native String nGetKeyValue(int hNative, String key);
     
     private void updateKeys() {
-        int newKeys = 0;
-        if (hNative != 0)
-            newKeys = nGetKeyCount(hNative);
+        Vector vKeys = new Vector( 5 );
+        int nKeys = ( hNative != 0 ) ? nGetKeyCount( hNative ) : 0;
 
-        if (newKeys > 0) {
-            if (keys == null || newKeys != keys.length) {
-                keys = new String[newKeys];
-                for (int i = 0; i < newKeys; i++) {
-                    keys[i] = nGetKey(hNative, i);
-                }
+        boolean author_key_found = false;
+        boolean title_key_found  = false;
+
+        for( int i = 0; i < nKeys; i++ ) {
+            String key = nGetKey( hNative, i );
+            vKeys.addElement( key );
+            if( AUTHOR_KEY.equals( key ) ) author_key_found = true;
+            if( TITLE_KEY.equals( key ) ) title_key_found = true;
+        }
+
+        if( !author_key_found ) vKeys.addElement( AUTHOR_KEY );
+        if( !title_key_found ) vKeys.addElement( TITLE_KEY );
+
+        nKeys = vKeys.size();
+
+        synchronized( keysLock ) {
+            if( keys == null || nKeys != keys.length ) {
+                keys = new String[ nKeys ];
             }
-        } else {
-            keys = null;
+
+            for( int i = 0; i < nKeys; i++ ) {
+                keys[ i ] = (String)( vKeys.elementAt( i ) );
+            }
         }
     }    
 
@@ -71,11 +85,21 @@ public class DirectMetaData implements MetaDataControl {
             throw new IllegalArgumentException("Key is null");
         }
         updateKeys();
-        for (int i = 0; i < keys.length; i++) {
-            if (key.equals(keys[i])) {
-                return nGetKeyValue(hNative, key);
+
+        synchronized( keysLock ) {
+            for( int i = 0; i < keys.length; i++ ) {
+                if( key.equals( keys[ i ] ) ) {
+                    String s = nGetKeyValue( hNative, key );
+                    if( null == s ) {
+                        if( AUTHOR_KEY.equals( key ) || TITLE_KEY.equals( key ) ) {
+                            s = "Unknown";
+                        }
+                    }
+                    return s;
+                }
             }
         }
+
         throw new IllegalArgumentException("Key is invalid");
     }
 }
