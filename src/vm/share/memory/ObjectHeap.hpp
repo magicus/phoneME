@@ -295,32 +295,53 @@ public:
     STRONG = 0x01,
     WEAK   = 0x02
   };
+
+ private:
+  enum {
+    EncodedRefFlag = 0x1,
+    StrongGlobalRefFlag = 0x2,
+    WeakGlobalRefFlag = 0x4,
+    RefOwnerOffset = 3,
+    RefIndexOffset = 
+      RefOwnerOffset + (ENABLE_ISOLATES ? LOG_MAX_TASKS : 0),
+    RefTypeMask = (1 << RefOwnerOffset) - 1,
+    RefOwnerMask = (1 << RefIndexOffset) - (1 << RefOwnerOffset),
+
+    LocalRefType        = EncodedRefFlag,
+    StrongGlobalRefType = EncodedRefFlag | StrongGlobalRefFlag,
+    WeakGlobalRefType   = EncodedRefFlag | WeakGlobalRefFlag,
+  };
+
+  static int make_reference(unsigned type, unsigned owner, unsigned index);
+  static unsigned get_reference_type(const int ref_index);
+  static unsigned get_reference_owner(const int ref_index);
+  static unsigned get_reference_index(const int ref_index);
+  static ReturnOop get_reference_array(const int ref_index);
+
+  static ReturnOop get_reference_array(unsigned type, unsigned owner);
+  static void set_reference_array(unsigned type, unsigned owner, Array* array);
+
+  static bool is_encoded_reference(const int ref_index);
+  static bool is_local_reference(const int ref_index);
+  static bool is_strong_reference(const int ref_index);
+  static bool is_weak_reference(const int ref_index);
+  static bool is_global_reference(const int ref_index);
+
+ public:
+
+  static OopDesc** decode_reference(const int ref_index);
+
+  static int register_strong_reference(Oop* referent JVM_TRAPS);
+  static int register_weak_reference(Oop* referent JVM_TRAPS);
+
+  static void unregister_strong_reference(const int ref_index);
+  static void unregister_weak_reference(const int ref_index);
+
   static int register_global_ref_object(Oop* referent,
-                       ReferenceType type JVM_TRAPS); // Cannot throw OOME
-  static void unregister_global_ref_object  (const int ref_index);
-  static OopDesc* get_global_ref_object     (const int ref_index);
-  static int make_global_reference( const int i ) {
-#if ENABLE_ISOLATES
-    return (i << LOG_MAX_TASKS) | _current_task_id;
-#else
-    return i;
-#endif
-  }
-  static int get_global_reference_owner( const int ref ) {
-#if ENABLE_ISOLATES
-    return ref & (MAX_TASKS-1);
-#else
-    (void)ref;
-    return 0;
-#endif
-  }
-  static int get_global_reference_index( const int ref ) {
-#if ENABLE_ISOLATES
-    return ref >> LOG_MAX_TASKS;
-#else
-    return ref;
-#endif
-  }
+                                        ReferenceType type JVM_TRAPS);
+  static void unregister_global_ref_object(const int ref_index);
+  static OopDesc* get_global_ref_object(const int ref_index);
+  static int get_global_reference_owner(const int ref_index);
 
   //found the compiled method which contains the instruction pointed 
   //by pc parameter
@@ -831,8 +852,8 @@ private:
   inline static OopDesc* decode_destination(OopDesc* obj,
                                              const QuickVars& qv = _quick_vars);
 
-  // Global reference support
-  static void global_refs_do(void do_oop(OopDesc**), const int mask);
+  // Weak reference support
+  static void weak_refs_do(void do_oop(OopDesc**));
 
   // Finalization support
   static void discover_finalizer_reachable_objects();

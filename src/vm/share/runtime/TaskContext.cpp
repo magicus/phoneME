@@ -182,7 +182,6 @@ void TaskContext::set_current_task(int task_id) {
     *Universe::current_dictionary() = task().dictionary();
     *StringTable::current()         = task().string_table();
     *SymbolTable::current()         = task().symbol_table();
-    *RefArray::current()            = task().global_references();
     _global_number_of_java_classes = task().class_count();
     _current_task = task.obj();
     _global_current_task_id = task_id;

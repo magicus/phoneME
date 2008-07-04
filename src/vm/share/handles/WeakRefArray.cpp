@@ -30,65 +30,32 @@
  */
 
 # include "incls/_precompiled.incl"
-# include "incls/_RefArray.cpp.incl"
+# include "incls/_WeakRefArray.cpp.incl"
 
-HANDLE_CHECK(RefArray, is_type_array())
+HANDLE_CHECK(WeakRefArray, is_type_array())
 
-int RefArray::add(Oop* referent, const int type JVM_TRAPS) {
-  GUARANTEE(referent->not_null(), "NULL not supported for reference!");
-  const int length = this->length();
-
-  // look for an empty slot in the ref array
-  int i;
-  for( i = 0;; i++ ) {
-    if( i == length ) {
-      // reallocate ref array if full
-#ifdef AZZERT
-      handle_uniqueness_verification();
-#endif
-      RefArray::Raw copy = Universe::new_int_array(length * 2 JVM_NO_CHECK);
-      if( copy.is_null() ) {
-        Thread::clear_current_pending_exception();
-        return -1;
-      }
-      jvm_memcpy( copy().base(), base(), length * sizeof(juint) );
-      set_obj( copy.obj() );
-      *current() = copy;
-#if ENABLE_ISOLATES
-      Task::current()->set_global_references(copy);
-#endif
-      break;
-    }
-    if( obj_at(i) == NULL ) {
-      break;
-    }
-  }
-
-  set_obj_at( i, make( referent->obj(), type ) );
-  return i;
+ReturnOop WeakRefArray::create(int length JVM_TRAPS) {
+  GUARANTEE(length > 0, "Invalid length");
+  // Reserve the first element for null references
+  Array::Raw array = Universe::new_int_array(length + 1 JVM_CHECK_0);
+  address base = array().base_address();
+  memset(base + sizeof(jint), -1, length * sizeof(jint));
+  return array.obj();
 }
 
-void RefArray::oops_do(void do_oop(OopDesc**), const int mask) {
+void WeakRefArray::oops_do(void do_oop(OopDesc**)) {
   if( not_null() ) {
     OopDesc** p = base();
     for( OopDesc** const max = p + length(); p < max; p++ ) {
       OopDesc* obj = *p;
-      if( not_null_or_dead( obj ) ) {
-        const unsigned type = get_type( obj );
-        if( type & mask ) {
-          *p = get_value( obj );
-          do_oop( p );
-          obj = *p;
-          if( not_null_or_dead( obj ) ) {
-            *p = make( obj, type );
-          }
-        }
+      if (not_null_or_unused(obj)) {
+        do_oop( p );
       }
     }
   }
 }
 
-void RefArray::clear_non_marked( OopDesc** p ) {
+void WeakRefArray::clear_non_marked( OopDesc** p ) {
   if( ObjectHeap::in_collection_area_unmarked( *p ) ) {
     *p = dead();  // object is not marked. It will be GC'ed
   }

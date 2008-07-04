@@ -77,6 +77,11 @@ protected:
   OopDesc*          _string_table;      // string table for this task
   OopDesc*          _symbol_table;      // symbol table for this task
   OopDesc*          _global_references; // global references for this task
+
+  OopDesc*          _strong_references; // strong global references 
+                                        // for this task
+  OopDesc*          _weak_references;   // weak global references 
+                                        // for this task
 #endif //  ENABLE_ISOLATES
 };
 

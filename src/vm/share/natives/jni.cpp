@@ -29,14 +29,72 @@
 
 #if ENABLE_JNI
 
+static jint JNICALL 
+_JNI_GetVersion(JNIEnv * env) {
+  return JNI_VERSION_1_4;
+}
+
+static jobject JNICALL
+_JNI_NewGlobalRef(JNIEnv* env, jobject obj) {  
+  if (obj == NULL) {
+    return NULL;
+  }
+
+  SETUP_ERROR_CHECKER_ARG;
+  UsingFastOops fast_oops;
+  Oop::Fast oop = *decode_handle(obj);
+
+  const int ref_index = 
+    ObjectHeap::register_strong_reference(&oop JVM_MUST_SUCCEED);
+  
+  return (jobject)ref_index;
+}
+
+static void JNICALL
+_JNI_DeleteGlobalRef(JNIEnv* env, jobject obj) {
+  if (obj == NULL) {
+    return;
+  }
+
+  const int ref_index = (int)obj;
+  ObjectHeap::unregister_strong_reference(ref_index);
+}
+
+static jobject JNICALL
+_JNI_NewWeakGlobalRef(JNIEnv* env, jobject obj) {
+  if (obj == NULL) {
+    return NULL;
+  }
+
+  SETUP_ERROR_CHECKER_ARG;
+  UsingFastOops fast_oops;
+  Oop::Fast oop = *decode_handle(obj);
+
+  const int ref_index = 
+    ObjectHeap::register_weak_reference(&oop JVM_MUST_SUCCEED);
+
+  // IMPL_NOTE: throw OutOfMemoryError in case of failure
+  return (jobject)ref_index;
+}
+
+static void JNICALL
+_JNI_DeleteWeakGlobalRef(JNIEnv* env, jobject obj) {
+  if (obj == NULL) {
+    return;
+  }
+
+  const int ref_index = (int)obj;
+  ObjectHeap::unregister_weak_reference(ref_index);
+}
+
 static struct JNINativeInterface _jni_native_interface = {
-    NULL,
-    NULL,
-    NULL,
+    NULL, // reserved0
+    NULL, // reserved1
+    NULL, // reserved2
 
-    NULL,
+    NULL, // reserved3
 
-    NULL, // GetVersion
+    _JNI_GetVersion, // GetVersion
 
     NULL, // DefineClass
     NULL, // FindClass
@@ -61,8 +119,8 @@ static struct JNINativeInterface _jni_native_interface = {
     NULL, // PushLocalFrame
     NULL, // PopLocalFrame
 
-    NULL, // NewGlobalRef
-    NULL, // DeleteGlobalRef
+    _JNI_NewGlobalRef,    // NewGlobalRef
+    _JNI_DeleteGlobalRef, // DeleteGlobalRef
     NULL, // DeleteLocalRef
     NULL, // IsSameObject
 
@@ -296,8 +354,8 @@ static struct JNINativeInterface _jni_native_interface = {
     NULL, // GetStringChars     
     NULL, // ReleaseStringChars 
 
-    NULL, // NewWeakGlobalRef
-    NULL, // DeleteWeakGlobalRef
+    _JNI_NewWeakGlobalRef,    // NewWeakGlobalRef
+    _JNI_DeleteWeakGlobalRef, // DeleteWeakGlobalRef
 
     NULL, // ExceptionCheck
 

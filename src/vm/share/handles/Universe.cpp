@@ -813,9 +813,6 @@ bool Universe::bootstrap_without_rom(const JvmPathChar* classpath) {
   // Allocate tables used for class loading
   *class_list() = new_obj_array(50 JVM_CHECK_0);
 
-  // Global reference support
-  *global_refs_array() = Universe::new_int_array(5 JVM_CHECK_0);
-
 #if ENABLE_ISOLATES
   *mirror_list() = setup_mirror_list(50 JVM_CHECK_0);
 #endif
@@ -1814,10 +1811,6 @@ ReturnOop Universe::new_task(int id JVM_TRAPS) {
     SymbolTable::Raw table = SymbolTable::initialize(64 JVM_CHECK_0);
     task().set_symbol_table(table);
   }
-  {
-    RefArray::Raw array = RefArray::initialize(JVM_SINGLE_ARG_CHECK_0);
-    task().set_global_references(array);
-  }
 
 #if ENABLE_MULTIPLE_PROFILES_SUPPORT
   // Initialize new task with default profile id.
@@ -2218,7 +2211,6 @@ void Universe::init_task_list(JVM_SINGLE_ARG_TRAPS) {
   *current_task_obj()   = allocate_task(JVM_SINGLE_ARG_CHECK);
   *symbol_table()       = SymbolTable::initialize(64 JVM_CHECK);
   *string_table()       = StringTable::initialize(64 JVM_CHECK);
-  *global_refs_array()  = RefArray::initialize(JVM_SINGLE_ARG_CHECK);
 #endif
 }
 

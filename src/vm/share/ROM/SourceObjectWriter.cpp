@@ -1003,6 +1003,8 @@ void SourceObjectWriter::write_jni_method_adapter(Method *method,
       NULL,                       NULL },
     { "jarray",   "KNI_RETURNTYPE_OBJECT",
       NULL,                       NULL },
+    { "void",     "KNI_RETURNTYPE_VOID",
+      "KNI_ReturnVoid",           NULL },
   };
 
   const bool is_static = method->is_static();
@@ -1115,7 +1117,9 @@ void SourceObjectWriter::write_jni_method_adapter(Method *method,
   case T_OBJECT:
   case T_ARRAY:
     s->print_cr("  KNI_DeclareHandle(ret);");
-    // Fall through
+    s->print_cr("  {");
+    s->print("    jobject obj = ");
+    break;
   case T_BOOLEAN:
   case T_CHAR:
   case T_BYTE:
@@ -1145,6 +1149,8 @@ void SourceObjectWriter::write_jni_method_adapter(Method *method,
   switch (return_type) {
   case T_OBJECT:
   case T_ARRAY:
+    s->print_cr("    *(jobject*)ret = *(jobject*)decode_handle(obj);");
+    s->print_cr("  }");
     s->print_cr("  KNI_EndHandlesAndReturnObject(ret);");
     break;
   case T_BOOLEAN:

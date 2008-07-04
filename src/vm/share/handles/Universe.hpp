@@ -408,7 +408,6 @@ private:
   template(empty_short_array,                    TypeArray)           \
   template(out_of_memory_error_instance,         Oop)                 \
   template(gc_dummies,                           ObjArray)            \
-  template(global_refs_array,                    RefArray)            \
   template(throw_null_pointer_exception_method,  Method)              \
   template(throw_array_index_exception_method,   Method)              \
   template(quick_native_throw_method,            Method)              \
@@ -528,9 +527,16 @@ private:
   template(boundary_list,                        Oop)                 \
   template(task_list,                            TaskList)
 
+#define UNIVERSE_GLOBAL_REF_HANDLES_DO(template)
+
 #else
 #define UNIVERSE_ISOLATES_HANDLES_DO(template)
 #define UNIVERSE_ISOLATES_HANDLES_SKIP_DO(template)
+
+#define UNIVERSE_GLOBAL_REF_HANDLES_DO(template)         \
+  template(strong_references,             ObjArray)      \
+  template(weak_references,               WeakRefArray)
+
 #endif
 
 #define UNIVERSE_HANDLES_DO(template)          \
@@ -540,6 +546,7 @@ private:
    UNIVERSE_GENERIC_HANDLES_DO(template)       \
    ROM_DUPLICATE_CLASS_HANDLES_DO(template)    \
    UNIVERSE_ISOLATES_HANDLES_SKIP_DO(template) \
+   UNIVERSE_GLOBAL_REF_HANDLES_DO(template)    \
    UNIVERSE_GENERIC_HANDLES_SKIP_DO(template)
 
 #define UNIVERSE_HANDLES_DECLARE(name, type) \

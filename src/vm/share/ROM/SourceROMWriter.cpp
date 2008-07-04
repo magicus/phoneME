@@ -265,6 +265,8 @@ void SourceROMWriter::init_streams() {
   _jni_stream.cr();
   _jni_stream.print_cr("extern \"C\" JNIEnv _jni_env;");
   _jni_stream.cr();
+  _jni_stream.print_cr("extern \"C\" void * decode_handle(void*);");
+  _jni_stream.cr();
 #endif
 
   _kvm_stream.print_cr("#include \"jvmconfig.h\"");

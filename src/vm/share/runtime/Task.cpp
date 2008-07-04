@@ -436,7 +436,6 @@ void Task::cleanup_terminated_task(int id JVM_TRAPS) {
           *Universe::current_dictionary() = Universe::system_dictionary();
           StringTable::current()->set_null();
           SymbolTable::current()->set_null();
-          RefArray::current()->set_null();
           Task::current()->set_null();
           _current_task = NULL;
           Universe::update_relative_pointers();

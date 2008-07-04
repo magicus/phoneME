@@ -311,8 +311,11 @@ private:
   static int symbol_table_offset(void) {
     return FIELD_OFFSET(TaskDesc, _symbol_table);
   }
-  static int global_references_offset(void) {
-    return FIELD_OFFSET(TaskDesc, _global_references);
+  static int strong_references_offset(void) {
+    return FIELD_OFFSET(TaskDesc, _strong_references);
+  }
+  static int weak_references_offset(void) {
+    return FIELD_OFFSET(TaskDesc, _weak_references);
   }
 public:
 #define  SUSPEND_STATUS  (unsigned(1)<<31)
@@ -627,14 +630,24 @@ public:
     obj_field_put(symbol_table_offset(), value);
   }
 
-  ReturnOop global_references(void) const {
-    return obj_field(global_references_offset());
+  ReturnOop strong_references(void) const {
+    return obj_field(strong_references_offset());
   }
-  void set_global_references(Oop* value) {
-    obj_field_put(global_references_offset(), value);
+  void set_strong_references(Oop* value) {
+    obj_field_put(strong_references_offset(), value);
   }
-  void set_global_references(OopDesc* value) {
-    obj_field_put(global_references_offset(), value);
+  void set_strong_references(OopDesc* value) {
+    obj_field_put(strong_references_offset(), value);
+  }
+
+  ReturnOop weak_references(void) const {
+    return obj_field(weak_references_offset());
+  }
+  void set_weak_references(Oop* value) {
+    obj_field_put(weak_references_offset(), value);
+  }
+  void set_weak_references(OopDesc* value) {
+    obj_field_put(weak_references_offset(), value);
   }
 
   static int get_num_tasks() {

@@ -1098,7 +1098,6 @@ LargeObject.cpp                  ExecutionStackDesc.hpp
 LargeObject.cpp                  Frame.hpp
 LargeObject.cpp                  JavaClassDesc.hpp
 LargeObject.cpp                  LargeObject.hpp
-LargeObject.cpp                  RefArray.hpp
 LargeObject.cpp                  Scheduler.hpp
 LargeObject.cpp                  OopDesc.inline.hpp
 #if ENABLE_MONET
@@ -1128,7 +1127,6 @@ ObjectHeap.cpp                   Scheduler.hpp
 ObjectHeap.cpp                   Synchronizer.hpp
 ObjectHeap.cpp                   Profiler.hpp
 ObjectHeap.cpp                   Relocation.hpp
-ObjectHeap.cpp                   RefArray.hpp
 ObjectHeap.cpp                   JVM.hpp
 ObjectHeap.cpp                   RemoteTracer.hpp
 ObjectHeap.cpp                   OsMisc.hpp
@@ -1261,6 +1259,9 @@ LiteralPoolElement.cpp           Compiler.hpp
 
 // Natives
 jni.cpp                          jni.h
+jni.cpp                          JniImpl.hpp
+jni.cpp                          ObjectHeap.hpp
+JniImpl.hpp                      GlobalDefinitions.hpp
 
 BuildFlags.hpp                   BuildFlags_<os_family>.hpp
 kni_md.h                         BuildFlags.hpp
@@ -1269,6 +1270,7 @@ kni.h                            kni_md.h
 KniImpl.hpp                      kni.h
 KniImpl.hpp                      Top.hpp
 KniImpl.hpp                      JavaClassObj.hpp
+KniImpl.hpp                      JniImpl.hpp
 
 kni.cpp                          KniImpl.hpp
 kni.cpp                          JavaClassObj.hpp
@@ -1371,7 +1373,6 @@ Task.cpp                         BoundaryDesc.hpp
 Task.cpp                         ObjArrayDesc.hpp
 Task.cpp                         MethodTrap.hpp
 Task.cpp                         Verifier.hpp
-Task.cpp                         RefArray.hpp
 Task.cpp                         StringTable.hpp
 Task.cpp                         SymbolTable.hpp
 Task.cpp                         Synchronizer.hpp
@@ -1391,7 +1392,6 @@ TaskContext.cpp                  Universe.hpp
 #if ENABLE_ISOLATES
 TaskContext.cpp                  StringTable.hpp
 TaskContext.cpp                  SymbolTable.hpp
-TaskContext.cpp                  RefArray.hpp
 
 IsolateNatives.hpp               kni.h
 IsolateNatives.hpp               Allocation.hpp
@@ -1866,12 +1866,6 @@ ObjArrayClass.cpp                TypeSymbol.hpp
 ObjArrayClass.cpp                Throw.hpp
 ObjArrayClass.cpp                Symbols.hpp
 
-RefArray.hpp                     Array.hpp
-RefArray.hpp                     Universe.hpp
-RefArray.cpp                     ObjectHeap_<iarch>.hpp
-RefArray.cpp                     RefArray.hpp
-RefArray.cpp                     Task.hpp
-
 Oop.hpp                          OopDesc.hpp
 Oop.hpp                          FarClassDesc.hpp
 Oop.cpp                          Oop.hpp
@@ -2158,6 +2152,7 @@ Universe.hpp                     Oop.hpp
 Universe.hpp                     OopDesc.hpp
 Universe.hpp                     Thread.hpp
 Universe.hpp                     TaskContext.hpp
+Universe.hpp                     WeakRefArray.hpp
 Universe.cpp                     Bytecodes.hpp
 Universe.cpp                     BytecodeClosure.hpp
 Universe.cpp                     CharacterStream.hpp
@@ -2189,7 +2184,6 @@ Universe.cpp                     OopDesc.inline.hpp
 Universe.cpp                     OopVisitor.hpp
 Universe.cpp                     OS.hpp
 Universe.cpp                     OsFile_<os_family>.hpp
-Universe.cpp                     RefArray.hpp
 Universe.cpp                     RemoteTracer.hpp
 Universe.cpp                     ROMWriter.hpp
 Universe.cpp                     Scheduler.hpp
@@ -3164,3 +3158,9 @@ StackUtils.hpp                  Allocation.hpp
 
 OopCons.hpp                     ObjArray.hpp
 OopCons.hpp                     Universe.hpp
+
+
+WeakRefArray.hpp                Array.hpp
+WeakRefArray.cpp                ObjectHeap.hpp
+WeakRefArray.cpp                Universe.hpp
+WeakRefArray.cpp                WeakRefArray.hpp
