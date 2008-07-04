@@ -60,6 +60,8 @@ void ROMOptimizer::optimize(Stream *log_stream JVM_TRAPS) {
       // Optimize the layout of all classes, constant pools and methods
       if (EnableBaseOptimizations) {
         initialize_classes(JVM_SINGLE_ARG_CHECK);
+      } else {
+        set_next_state();
       }
       //we do not need set_next_state() call here - it is inside initialize_classes
       break;
