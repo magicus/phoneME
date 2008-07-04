@@ -886,6 +886,13 @@
 #define MAX_METHOD_TO_COMPILE 6000
 #endif
 
+// BINARY_STREAM_BUFFER_SIZE          Binary file stream buffer size in bytes 
+//                                    for buffered binary file writing.
+#ifndef BINARY_STREAM_BUFFER_SIZE
+#define BINARY_STREAM_BUFFER_SIZE 1024
+#endif
+
+
 /*
  * Bracing comments that contain parseable source code:
  * (Do not use '#if 0' or similar constructs instead - we will zap that code!)

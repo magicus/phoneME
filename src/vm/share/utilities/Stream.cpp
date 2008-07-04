@@ -246,7 +246,7 @@ int FileStream::current_position() {
 
 #if USE_BINARY_IMAGE_GENERATOR
 
-static char _bfs_buff[BFS_BUFFER_SIZE + 16];
+static char _bfs_buff[BINARY_STREAM_BUFFER_SIZE + 16];
 
 #ifndef PRODUCT
 static int _bfs_open_count = 0;

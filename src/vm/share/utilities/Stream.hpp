@@ -271,8 +271,6 @@ private:
  * Binary output stream for creating files
  * that contain raw binary (non-character) data.
  */
-#define BFS_BUFFER_SIZE 1024
-
 class BufferedFileStreamState {
 public:
   int _indentation;
@@ -302,7 +300,7 @@ public:
     close();
   }
   inline void flush_buffer(bool force) {
-    if (force || _bfs_pos >= BFS_BUFFER_SIZE) {
+    if (force || _bfs_pos >= BINARY_STREAM_BUFFER_SIZE) {
       do_flush();
     }
   }
