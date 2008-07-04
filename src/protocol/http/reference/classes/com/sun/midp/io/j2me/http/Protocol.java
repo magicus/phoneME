@@ -1668,10 +1668,11 @@ public class Protocol extends ConnectionBaseAdapter
          * standard ports to untrusted applications so they cannot get around
          * this field being added to their HTTP(S) requests.
          */
-        if (!ownerTrusted) {
-            String newUserAgentValue;
-            String origUserAgentValue = 
+        String newUserAgentValue;
+        String platformUA = Configuration.getProperty("User-Agent");
+        String origUserAgentValue = 
                     reqProperties.getPropertyIgnoreCase("User-Agent");
+        if (!ownerTrusted) {
             if (origUserAgentValue != null) {
                 /*
                  * HTTP header values can be concatenated, so original value
@@ -1682,10 +1683,18 @@ public class Protocol extends ConnectionBaseAdapter
             } else {
                 newUserAgentValue = "UNTRUSTED/1.0";
             }
-            reqProperties.setPropertyIgnoreCase("User-Agent", 
-                    newUserAgentValue);
+            newUserAgentValue = newUserAgentValue + " " + platformUA;
+        }else {
+            if (origUserAgentValue != null) {
+                newUserAgentValue = origUserAgentValue + " " + platformUA;
+            } else {
+                newUserAgentValue = platformUA;
+            }
         }
 
+        reqProperties.setPropertyIgnoreCase("User-Agent", 
+                newUserAgentValue);
+        
         // HTTP 1.0 requests must contain content length for proxies
         if (getRequestProperty("Content-Length") == null) {
             setRequestField("Content-Length", Integer.toString(bytesToWrite));
