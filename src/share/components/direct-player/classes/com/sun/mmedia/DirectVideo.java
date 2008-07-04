@@ -374,19 +374,22 @@ public class DirectVideo extends DirectPlayer implements
         }
         checkState();
         if (displayMode == USE_DIRECT_VIDEO) {
-            if (fsmode) {
-                synchronized(boundLock) {
+
+            boolean needRepaint = false;
+
+            synchronized(boundLock) {
+                if (fsmode) {
                     tmp_dx = x;
                     tmp_dy = y;
-                }
-            } else {
-                synchronized(boundLock) {
+                } else {
                     dx = x;
                     dy = y;
+                    needRepaint = ( dw != 0 && dh != 0 );
                 }
-                if (dw != 0 && dh !=0) {
-                    repaint();
-                }
+            }
+
+            if( needRepaint ) {
+                repaint();
             }
         }
     }
@@ -403,31 +406,31 @@ public class DirectVideo extends DirectPlayer implements
         boolean sizeChanged = false;
         
         checkState();
+
         if (width < 1 || height < 1) {
-            throw new IllegalArgumentException("invalid size");
+            throw new IllegalArgumentException("invalid size ("+width+","+height+")");
         }
 
-        if (fsmode) {
-            synchronized(boundLock) {
+        synchronized(boundLock) {
+            if (fsmode) {
                 tmp_dw = width;
                 tmp_dh = height;
-            }
-        } else {
-            synchronized(boundLock) {
-                if (dw != width && dh != height) sizeChanged = true;
+            } else {
+                sizeChanged = ( dw != width || dh != height );
                 dw = width;
                 dh = height;
             }
-            if (item != null) {
-                // this will raise sizeChanged event
-                // and sizeChanged shall raise paint event also
-                item.setPreferredSize( width, height );
-            }
-            repaint();
+        }
 
-            if (sizeChanged) {
-                sendEvent(PlayerListener.SIZE_CHANGED, this);
-            }
+        if (item != null) {
+            // this will raise sizeChanged event
+            // and sizeChanged shall raise paint event also
+            item.setPreferredSize( width, height );
+        }
+        repaint();
+
+        if (sizeChanged) {
+            sendEvent(PlayerListener.SIZE_CHANGED, this);
         }
     }
     
@@ -487,20 +490,28 @@ public class DirectVideo extends DirectPlayer implements
     }
     
     public void setDisplayFullScreen(boolean fullScreenMode) throws MediaException {
-        checkState();
-        nSetFullScreenMode(hNative,fullScreenMode);
-        fsmode = fullScreenMode;
 
-        if (fsmode) {
-            synchronized( boundLock ) {
-                tmp_dx = dx;
-                tmp_dy = dy;
-                tmp_dw = dw;
-                tmp_dh = dh;
+        checkState();
+
+        synchronized( boundLock ) {
+            if( fsmode != fullScreenMode ) {
+                nSetFullScreenMode(hNative,fullScreenMode);
+                fsmode = fullScreenMode;
+
+                if( fsmode ) {
+                    tmp_dx = dx;
+                    tmp_dy = dy;
+                    tmp_dw = dw;
+                    tmp_dh = dh;
+                } else {
+                    if( tmp_dx != dx || tmp_dy != dy ) {
+                        setDisplayLocation( tmp_dx, tmp_dy );
+                    }
+                    if( tmp_dw != dw || tmp_dh != dh ) {
+                        setDisplaySize( tmp_dw, tmp_dh );
+                    }
+                }
             }
-        } else {
-            setDisplayLocation( tmp_dx, tmp_dy );
-            setDisplaySize( tmp_dw, tmp_dh );
         }
     }
 
@@ -585,6 +596,7 @@ public class DirectVideo extends DirectPlayer implements
             Logging.report(Logging.INFORMATION, LogChannels.LC_MMAPI, 
                 "paintVideo x=" + x + ",y=" + y + ",w=" + w + ",h=" + h); 
         }
+
         if (canvas != null && !canvas.isShown()) {
             hidden = true;
         }
