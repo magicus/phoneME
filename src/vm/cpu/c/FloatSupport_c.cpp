@@ -30,7 +30,29 @@
 #if ENABLE_FLOAT
 
 #if defined(LINUX) && PROCESSOR_ARCHITECTURE_X86
+#if defined(DARWIN)
+
+#define _FPU_DEFAULT  0x037f
+
+#define _FPU_EXTENDED 0x300	/* libm requires double extended precision.  */
+#define _FPU_DOUBLE   0x200
+#define _FPU_SINGLE   0x0	/* DO NOT USE */
+
+/* Type of the control word.  */
+typedef unsigned int fpu_control_t __attribute__ ((__mode__ (__HI__)));
+
+/* Macros for accessing the hardware control word.
+
+   Note that the use of these macros is no sufficient anymore with
+   recent hardware.  Some floating point operations are executed in
+   the SSE/SSE2 engines which have their own control and status register.  */
+#define _FPU_GETCW(cw) __asm__ __volatile__ ("fnstcw %0" : "=m" (*&cw))
+#define _FPU_SETCW(cw) __asm__ __volatile__ ("fldcw %0" : : "m" (*&cw))
+
+#else
 #include <fpu_control.h>
+#endif /* DARWIN */
+
 #endif
 
 #if ENABLE_INTERPRETER_GENERATOR
@@ -44,6 +66,10 @@ extern "C" {
     /* Set the precision FPU to double precision */
     fpu_control_t cw = (_FPU_DEFAULT & ~_FPU_EXTENDED) | _FPU_DOUBLE;
     _FPU_SETCW(cw);
+
+
+
+
 #endif
 
   } 
