@@ -374,6 +374,9 @@ public class DirectVideo extends DirectPlayer implements
         }
         checkState();
         if (displayMode == USE_DIRECT_VIDEO) {
+
+            boolean needRepaint = false;
+
             synchronized(boundLock) {
                 if (fsmode) {
                     tmp_dx = x;
@@ -381,9 +384,11 @@ public class DirectVideo extends DirectPlayer implements
                 } else {
                     dx = x;
                     dy = y;
+                    needRepaint = ( dw != 0 && dh != 0 );
                 }
             }
-            if (dw != 0 && dh != 0) {
+
+            if( needRepaint ) {
                 repaint();
             }
         }
@@ -411,7 +416,7 @@ public class DirectVideo extends DirectPlayer implements
                 tmp_dw = width;
                 tmp_dh = height;
             } else {
-                if (dw != width && dh != height) sizeChanged = true;
+                sizeChanged = ( dw != width || dh != height );
                 dw = width;
                 dh = height;
             }
@@ -499,8 +504,12 @@ public class DirectVideo extends DirectPlayer implements
                     tmp_dw = dw;
                     tmp_dh = dh;
                 } else {
-                    setDisplayLocation( tmp_dx, tmp_dy );
-                    setDisplaySize( tmp_dw, tmp_dh );
+                    if( tmp_dx != dx || tmp_dy != dy ) {
+                        setDisplayLocation( tmp_dx, tmp_dy );
+                    }
+                    if( tmp_dw != dw || tmp_dh != dh ) {
+                        setDisplaySize( tmp_dw, tmp_dh );
+                    }
                 }
             }
         }
