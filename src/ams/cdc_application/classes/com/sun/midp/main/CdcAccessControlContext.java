@@ -26,11 +26,12 @@
 
 package com.sun.midp.main;
 
-import com.sun.j2me.security.*;
+import com.sun.j2me.security.AccessControlContextAdapter;
+import com.sun.j2me.security.AccessController;
 
 import com.sun.midp.midlet.MIDletSuite;
 
-import com.sun.midp.io.j2me.storage.File;
+import com.sun.midp.security.Permissions;
 
 public class CdcAccessControlContext extends AccessControlContextAdapter {
 
@@ -43,10 +44,6 @@ public class CdcAccessControlContext extends AccessControlContextAdapter {
      * @param suite current MIDlet suite     
      */
     public CdcAccessControlContext(MIDletSuite suite) {
-        // Turn on the security manager
-        System.setProperty("java.security.policy",
-                           File.getConfigRoot(0) + "unidentified.policy");
-        System.setSecurityManager(new SecurityManager());
         midletSuite = suite;
     }
 
@@ -57,8 +54,9 @@ public class CdcAccessControlContext extends AccessControlContextAdapter {
      * If the permission check failed because an InterruptedException was
      * thrown, this method will throw a InterruptedSecurityException.
      *
-     * @param permission name of the permission to check for,
-     *      must be from JSR spec
+     * @param permission ID of the permission to check for,
+     *      the ID must be from
+     *      {@link com.sun.midp.security.Permissions}
      * @param resource string to insert into the question, can be null if
      *        no %2 in the question
      * @param extraValue string to insert into the question,
@@ -74,30 +72,22 @@ public class CdcAccessControlContext extends AccessControlContextAdapter {
      */
     public void checkPermissionImpl(String name, String resource,
             String extraValue) throws SecurityException, InterruptedException {
-
-        java.security.Permission perm = null;
-        SecurityManager manager = System.getSecurityManager();
-
-        if (manager == null) {
-            // No security.
-            System.out.println("*** Running with no security manager ***");
-            return;
-        }
+        int permissionId;
 
         if (AccessController.TRUSTED_APP_PERMISSION_NAME.equals(name)) {
             // This is really just a trusted suite check.
-            perm = new RuntimePermission("com.sun.j2me.trustedApp");
-        } else if ("com.sun.midp.ams".equals(name)) {
-            // "lifecycle_management" is from 3GPP MExE spec.
-            perm = new RuntimePermission("com.sun.lifecycle_management");
-        } else if ("com.sun.midp".equals(name)) {
-            // "device core access" is from 3GPP MExE spec.
-            perm = new RuntimePermission("com.sun.device_core_access");
-        } else {
-            // Default to MIDP permission.
-            perm = new MidpPermission(name, resource, extraValue);
+            if (midletSuite.isTrusted()) {
+                return;
+            }
+
+            throw new SecurityException("suite not trusted");
         }
 
-        manager.checkPermission(perm);
+        if ("com.sun.midp.ams".equals(name) || "com.sun.midp".equals(name)) {
+            // These permission checks cannot block
+            midletSuite.checkIfPermissionAllowed(name);
+        } else {
+            midletSuite.checkForPermission(name, resource, extraValue);
+        }
     }
 }
