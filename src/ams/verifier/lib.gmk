@@ -40,7 +40,7 @@ VERIFIER_NAME = verifier
 SUBSYSTEMS += $(VERIFIER_NAME)
 
 # Local module directory
-VERIFIER_DIR ?= $(SUBSYSTEM_AMS_DIR)/$(VERIFIER_NAME)
+VERIFIER_DIR = $(SUBSYSTEM_AMS_DIR)/$(VERIFIER_NAME)
 
 # Javadoc source path
 MIDP_JAVADOC_SOURCEPATH += $(VERIFIER_DIR)/classes
@@ -49,16 +49,16 @@ SUBSYSTEM_AMS_JAVA_FILES += \
     $(VERIFIER_DIR)/classes/com/sun/midp/installer/Verifier.java
 
 ifeq ($(USE_RESTRICTED_CRYPTO), true)
-    VERIFIER_IMPL = with_crypto
+    VERIFIER_IMPL_DIR ?= $(VERIFIER_DIR)/with_crypto
 else
 
 ifeq ($(USE_BINARY_CRYPTO), true)
-    VERIFIER_IMPL = with_crypto
+    VERIFIER_IMPL_DIR ?= $(VERIFIER_DIR)/with_crypto
 else    
-    VERIFIER_IMPL = without_crypto
+    VERIFIER_IMPL_DIR ?= $(VERIFIER_DIR)/without_crypto
 endif
 
 endif
 
 # Get implementation settings and files
-include $(VERIFIER_DIR)/$(VERIFIER_IMPL)/lib.gmk
+include $(VERIFIER_IMPL_DIR)/lib.gmk

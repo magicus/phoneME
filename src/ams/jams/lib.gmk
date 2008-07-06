@@ -50,19 +50,19 @@ MIDP_JAVADOC_SOURCEPATH += $(JAMS_DIR)/classes
 SUBSYSTEM_AMS_JAVA_FILES += \
     $(JAMS_DIR)/classes/com/sun/midp/appmanager/ApplicationManager.java
 
-#Set Default path
-ifndef JAMS_IMPL_DIR
-JAMS_IMPL_DIR = $(JAMS_DIR)
-endif
+# Set default components, list can be override 
+ifndef JAMS_COMPONENTS
 
-# Include suite_launcher implementation into the build
-include $(JAMS_IMPL_DIR)/suite_launcher/lib.gmk
+JAMS_COMPONENTS = $(JAMS_DIR)/suite_launcher
 
 ifeq ($(USE_MULTIPLE_ISOLATES), true)
-JAMS_VM_IMPL_DIR = $(JAMS_IMPL_DIR)/mvm
+  JAMS_COMPONENTS += $(JAMS_IMPL_DIR)/mvm
 else
-JAMS_VM_IMPL_DIR = $(JAMS_IMPL_DIR)/svm
-endi
+  JAMS_COMPONENTS += $(JAMS_IMPL_DIR)/svm
+endif
 
-#Include implementation settings
-include $(JAMS_VM_IMPL_DIR)/lib.gmk
+endif
+
+# Include all components from the list
+
+$(forech JAMS_COMPONENTS, $(_JAMS_COMP), include $(_JAMS_COMP)/lib.gmk

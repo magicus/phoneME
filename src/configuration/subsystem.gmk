@@ -40,37 +40,39 @@ include $(SUBSYSTEM_DIR)/configuration/configuration_common.gmk
 CONFIG_SUBSYSTEM = configuration
 SUBSYSTEMS += $(CONFIG_SUBSYSTEM)
 
-SUBSYSTEM_CONFIG_DIR ?= $(SUBSYSTEM_DIR)/$(CONFIG_SUBSYSTEM)
-PROJECT_SUBSYSTEM_CONFIG_DIR ?= $(PROJECT_SUBSYSTEM_DIR)/$(CONFIG_SUBSYSTEM)
+SUBSYSTEM_CONFIG_DIR = $(SUBSYSTEM_DIR)/$(CONFIG_SUBSYSTEM)
+PROJECT_SUBSYSTEM_CONFIG_DIR = $(PROJECT_SUBSYSTEM_DIR)/$(CONFIG_SUBSYSTEM)
 
 #####################################################################
+# Bellow is the Description of default components in the subsystem
+#
+# Folder name: configuration_xml
 # Configurator Subsystem
 # Description: Config the whole system
-#####################################################################
-
-include $(SUBSYSTEM_CONFIG_DIR)/configuration_xml/lib.gmk
-
-#####################################################################
+#
+# Folder name: properties
 # Properties Library
 # Description: Java API for system properties access
-#####################################################################
-
-include $(SUBSYSTEM_CONFIG_DIR)/properties/lib.gmk
-
-#####################################################################
+#
+# Folder name: properties_port
 # Properties Port Library
 # Description: Native API for system properties access
+#
 #####################################################################
 
-include $(SUBSYSTEM_CONFIG_DIR)/properties_port/lib.gmk
+SUBSYSTEM_CONFIG_COMPONENTS ?= \ 
+    $(SUBSYSTEM_CONFIG_DIR)/configuration_xml \
+    $(SUBSYSTEM_CONFIG_DIR)/properties \
+    $(SUBSYSTEM_CONFIG_DIR)/properties_port
 
-#####################################################################
 
-#Add Aditional components if supplied
-ifdef CONFIGURATION_ADDITIONAL_COMPONENTS
-$(foreach $(CONFIGURATION_ADDITIONAL_COMPONENTS), \
-	$(_CONF_COMP), \
-	include $(SUBSYSTEM_CONFIG_DIR)/$(_CONF_COMP)/lib.gmk)
+#Add Aditional components if supplied to allow extention of default list
+SUBSYSTEM_CONFIG_COMPONENTS += $(CONFIGURATION_ADDITIONAL_COMPONENTS)
+
+# Include components
+$(foreach $(SUBSYSTEM_CONFIG_COMPONENTS), \
+    $(_CONF_COMP), \
+    include $(_CONF_COMP)/lib.gmk)
 endif
 
 SUBSYSTEM_CONFIGURATION_JAVA_FILES +=  \

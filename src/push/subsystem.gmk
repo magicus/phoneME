@@ -51,60 +51,67 @@ endif
 PUSH_SUBSYSTEM = push
 SUBSYSTEMS += $(PUSH_SUBSYSTEM)
 
-SUBSYSTEM_PUSH_DIR ?= $(SUBSYSTEM_DIR)/$(PUSH_SUBSYSTEM)
+SUBSYSTEM_PUSH_DIR = $(SUBSYSTEM_DIR)/$(PUSH_SUBSYSTEM)
 
   
 #####################################################################
+# Bellow is the Description of default components in the subsystem
+# Folder name: push_api
 # Push API Library
 # Description: Push Registry
-#####################################################################
-
-include $(SUBSYSTEM_PUSH_DIR)/push_api/lib.gmk
-
-#####################################################################
-# JUMP Push Library
-# Description: JUMP variant of stack implementation
-#####################################################################
-
-ifeq ($(USE_NATIVE_PUSH), false)
-    ifeq ($(TARGET_VM), cdc_vm)
-        ifeq ($(USE_PUSH_SHARED_IMPL), true)
-            include $(SUBSYSTEM_PUSH_DIR)/cdc_application/share/lib.gmk
-        endif
-        ifeq ($(USE_JUMP), true)
-            include $(SUBSYSTEM_PUSH_DIR)/cdc_application/jump/lib.gmk
-        endif
-    endif
-endif
-
-#####################################################################
-# Native Push API Port Library
-# Description: Push Registry and Listener
-#####################################################################
-
-ifeq ($(USE_NATIVE_PUSH), true)
-include $(SUBSYSTEM_PUSH_DIR)/nativepush_port/lib.gmk
-endif
-
-#####################################################################
+#
+# Folder name: push_server
 # Push Server Library
 # Description: Push database and resource manipulation logic
-#####################################################################
-
-include $(SUBSYSTEM_PUSH_DIR)/push_server/lib.gmk
-
-#####################################################################
+#
+# Folder name: push_timer
 # Push Timer Library
 # Description: Timer utility for push timer alarms
+#
 #####################################################################
 
-include $(SUBSYSTEM_PUSH_DIR)/push_timer/lib.gmk
+ifndef SUBSYSTEM_PUSH_COMPONENTS 
+    SUBSYSTEM_PUSH_COMPONENTS = /
+        $(SUBSYSTEM_PUSH_DIR)/push_api \
+        $(SUBSYSTEM_PUSH_DIR)/push_server \
+        $(SUBSYSTEM_PUSH_DIR)/push_timer \
+    
+    
+    #####################################################################
+    # Native Push API Port Library
+    # Description: Push Registry and Listener
+    #####################################################################
+    
+    ifeq ($(USE_NATIVE_PUSH), true)
+        SUBSYSTEM_PUSH_COMPONENTS += $(SUBSYSTEM_PUSH_DIR)/nativepush_port
+    endif
+    
+    #####################################################################
+    # JUMP Push Library
+    # Description: JUMP variant of stack implementation
+    #####################################################################
+    
+    ifeq ($(USE_NATIVE_PUSH), false)
+        ifeq ($(TARGET_VM), cdc_vm)
+            ifeq ($(USE_PUSH_SHARED_IMPL), true)
+                SUBSYSTEM_PUSH_COMPONENTS += $(SUBSYSTEM_PUSH_DIR)/cdc_application/share
+            endif
+            ifeq ($(USE_JUMP), true)
+                SUBSYSTEM_PUSH_COMPONENTS += $(SUBSYSTEM_PUSH_DIR)/cdc_application/jump
+            endif
+        endif
+    endif
+
+endif    
+    
 
 #Add Aditional components if supplied
-ifdef PUSH_ADDITIONAL_COMPONENTS
-$(foreach $(PUSH_ADDITIONAL_COMPONENTS), \
+SUBSYSTEM_PUSH_COMPONENTS += $(PUSH_ADDITIONAL_COMPONENTS)
+
+# Include components
+$(foreach $(SUBSYSTEM_PUSH_COMPONENTS), \
 	$(_PUSH_COMP), \
-	include $(SUBSYSTEM_PUSH_DIR)/$(_PUSH_COMP)/lib.gmk)
+	include $(_PUSH_COMP)/lib.gmk )
 endif
 
 ####################################################################

@@ -51,17 +51,21 @@ ifeq ($(USE_I3_TEST), true)
 SUBSYSTEM_SUITESTORE_I3TEST_JAVA_FILES =
 endif
 
-include $(SUBSYSTEM_SUITESTORE_DIR)/internal_api/lib.gmk
-include $(SUBSYSTEM_SUITESTORE_DIR)/common_api/lib.gmk
-include $(SUBSYSTEM_SUITESTORE_DIR)/task_manager_api/lib.gmk
-include $(SUBSYSTEM_SUITESTORE_DIR)/installer_api/lib.gmk
-include $(SUBSYSTEM_SUITESTORE_DIR)/recordstore_api/lib.gmk
-include $(SUBSYSTEM_SUITESTORE_DIR)/secure_api/lib.gmk
+# Default list of all components
+AMS_SUITESTORE_COMPONENTS ?= \
+(SUBSYSTEM_SUITESTORE_DIR)/internal_api \
+(SUBSYSTEM_SUITESTORE_DIR)/common_api \
+(SUBSYSTEM_SUITESTORE_DIR)/task_manager_api \
+(SUBSYSTEM_SUITESTORE_DIR)/installer_api \
+(SUBSYSTEM_SUITESTORE_DIR)/recordstore_api \
+(SUBSYSTEM_SUITESTORE_DIR)/secure_api
 
-# Include more components if supplied
+# AMS_SUITESTORE_ADDITIONAL_COMPONENTS is used to extend default components list
+# not in used when list is provided
 ifdef AMS_SUITESTORE_ADDITIONAL_COMPONENTS
-$(foreach AMS_SUITESTORE_ADDITIONAL_COMPONENTS,$(_AMS_COMP),include $(SUBSYSTEM_SUITESTORE_DIR)/$(_AMS_COMP)/lib.gmk)
+AMS_SUITESTORE_COMPONENTS += AMS_SUITESTORE_ADDITIONAL_COMPONENTS
 endif
+
 
 #SUBSYSTEM_AMS_JAVA_FILES += $(SUBSYSTEM_SUITESTORE_JAVA_FILES)
 #SUBSYSTEM_AMS_EXTRA_INCLUDES += $(SUBSYSTEM_SUITESTORE_EXTRA_INCLUDES)

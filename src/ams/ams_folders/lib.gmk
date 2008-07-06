@@ -41,7 +41,7 @@ AMS_FOLDERS_DIR = $(SUBSYSTEM_AMS_DIR)/$(AMS_FOLDERS_NAME)
 # JavaDoc source path
 MIDP_JAVADOC_SOURCEPATH += $(AMS_FOLDERS_DIR)/classes
 
-#$(AMS_FOLDERS_DIR) can be set to ovveride default implementation folders
+#$(AMS_FOLDERS_DIR) can be set to override default implementation folders
 ifndef AMS_FOLDERS_IMPL_DIR
 #if it is not defined use default folder according to $(USE_AMS_FOLDERS) flag
 ifeq ($(USE_AMS_FOLDERS), true)

@@ -39,125 +39,113 @@ SUBSYSTEM_HIGHUI = highlevelui
 
 SUBSYSTEMS += $(SUBSYSTEM_HIGHUI)
 
-SUBSYSTEM_HIGHUI_DIR ?= $(SUBSYSTEM_DIR)/highlevelui
+SUBSYSTEM_HIGHUI_DIR = $(SUBSYSTEM_DIR)/highlevelui
 
 ifndef SUBSYSTEM_LCDUI_MODULES
     SUBSYSTEM_LCDUI_MODULES = chameleon
 endif
 
 #####################################################################
+# Bellow is the Description of default components in the subsystem
+#
+# Folder name: annunciator
 # Annunciator Subsystem
 # Description: Uninstrusive user notification
-#####################################################################
-
-include $(SUBSYSTEM_HIGHUI_DIR)/annunciator/lib.gmk
-
-#####################################################################
+#
+# Folder name: keymap
 # Key Mapping Subsystem
 # Description: Optional for certain platforms
-#####################################################################
-
-include $(SUBSYSTEM_HIGHUI_DIR)/keymap/lib.gmk
-
-#####################################################################
+#
+# Folder name: lcdui
 # LCDUI API Subsystem
 # Description: LCDUI API
-#####################################################################
-
-include $(SUBSYSTEM_HIGHUI_DIR)/lcdui/lib.gmk
-
-#####################################################################
+#
+# Folder name: lcdlf
 # LCDUI Look and Feel Subsystem
 # Description: LCDUI Look and Feel
+#
 #####################################################################
 
-include $(SUBSYSTEM_HIGHUI_DIR)/lcdlf/lib.gmk
+# Set default list if not defined
+ifndef SUBSYSTEM_HIGHUI_COMPONENTS
+    SUBSYSTEM_HIGHUI_COMPONENTS = \
+        $(SUBSYSTEM_HIGHUI_DIR)/annunciator \
+        $(SUBSYSTEM_HIGHUI_DIR)/keymap \
+        $(SUBSYSTEM_HIGHUI_DIR)/lcdui \
+        $(SUBSYSTEM_HIGHUI_DIR)/lcdlf
 
-#####################################################################
-# LCDUI Platform Look and Feel Port Subsystem
-# Description: Optional for certain platforms
-#####################################################################
+    #####################################################################
+    # LCDUI Platform Look and Feel Port Subsystem
+    # Description: Optional for certain platforms
+    #####################################################################
 
-ifeq ($(SUBSYSTEM_LCDUI_MODULES), platform_widget)
-    include $(SUBSYSTEM_HIGHUI_DIR)/lfpport/lib.gmk
-else
-
-    include $(SUBSYSTEM_HIGHUI_DIR)/lfjport/lib.gmk
-
-    ####################################################
-    # This specifies the option you choose for this build 
-    #
-    # javapti - predictive text input java implementation
-    # nativepush - external native predictive text input implementation
-    #
-
-    ifeq ($(USE_NATIVE_PTI), true)
-        SUBSYSTEM_PTI_MODULES = nativepti
+   ifeq ($(SUBSYSTEM_LCDUI_MODULES), platform_widget)
+        SUBSYSTEM_HIGHUI_COMPONENTS += $(SUBSYSTEM_HIGHUI_DIR)/lfpport
     else
-        SUBSYSTEM_PTI_MODULES = javapti
-    endif
+	# nim -- Native Input Mode support
+        SUBSYSTEM_HIGHUI_COMPONENTS += \
+	    $(SUBSYSTEM_HIGHUI_DIR)/nim_port \
+            $(SUBSYSTEM_HIGHUI_DIR)/lfjport \
+            $(SUBSYSTEM_HIGHUI_DIR)/pti_api
 
-    include $(SUBSYSTEM_HIGHUI_DIR)/pti_api/lib.gmk
-
-    ifeq ($(USE_NATIVE_PTI), true)
-       include $(SUBSYSTEM_HIGHUI_DIR)/nativepti_port/lib.gmk
-
-    endif
-    # nim -- Native Input Mode support
-    include $(SUBSYSTEM_HIGHUI_DIR)/nim_port/lib.gmk
-
-endif
-
-#Add Aditional components if supplied
-ifdef HILEVELUI_ADDITIONAL_COMPONENTS
-$(foreach $(HILEVELUI_ADDITIONAL_COMPONENTS), \
-	$(_HUI_COMP), \
-	include $(SUBSYSTEM_HIGHUI_DIR)/$(_HUI_COMP)/lib.gmk)
-endif
-
-#####################################################################
-# Application specific Subsystem
-# Description: qte_application, fb_application, win32_app or armsd_app
-#####################################################################
-
-ifeq ($(PLATFORM), linux_fb)
-   ifeq ($(USE_DIRECTFB), true)
-	include $(SUBSYSTEM_HIGHUI_DIR)/directfb_application/lib.gmk
-   endif
-   include $(SUBSYSTEM_HIGHUI_DIR)/fb_application/lib.gmk
-   include $(SUBSYSTEM_HIGHUI_DIR)/fb_port/lib.gmk
-else 
-
-    ifeq ($(PLATFORM), armsd)
-        include $(SUBSYSTEM_HIGHUI_DIR)/armsd_application/lib.gmk
-    else
-
-        ifeq ($(PLATFORM), linux_qte)
-             include $(SUBSYSTEM_HIGHUI_DIR)/qte_application/lib.gmk
-        else
-             ifeq ($(PLATFORM), win32)
-                  include $(SUBSYSTEM_HIGHUI_DIR)/win32_application/lib.gmk
-             else
-                  ifeq ($(PLATFORM), wince)
-                      include $(SUBSYSTEM_HIGHUI_DIR)/wince_application/lib.gmk
-                  else
-                       ifeq ($(PLATFORM), javacall)
-                            include $(SUBSYSTEM_HIGHUI_DIR)/javacall_application/lib.gmk
-                       endif                  
-                  endif             
-             endif
+        ifeq ($(USE_NATIVE_PTI), true)
+            SUBSYSTEM_HIGHUI_COMPONENTS += $(SUBSYSTEM_HIGHUI_DIR)/nativepti_port
         endif
     endif
+
+    #####################################################################
+    # Application specific Subsystem
+    # Description: qte_application, fb_application, win32_app or armsd_app
+    #####################################################################    
+    ifeq ($(PLATFORM), linux_fb)
+       ifeq ($(USE_DIRECTFB), true)
+    	SUBSYSTEM_HIGHUI_COMPONENTS += $(SUBSYSTEM_HIGHUI_DIR)/directfb_application
+       endif
+       SUBSYSTEM_HIGHUI_COMPONENTS += 
+           $(SUBSYSTEM_HIGHUI_DIR)/fb_application \
+           $(SUBSYSTEM_HIGHUI_DIR)/fb_port
+    else 
+        ifeq ($(PLATFORM), armsd)
+            SUBSYSTEM_HIGHUI_COMPONENTS += $(SUBSYSTEM_HIGHUI_DIR)/armsd_application
+        else
+            ifeq ($(PLATFORM), linux_qte)
+                 SUBSYSTEM_HIGHUI_COMPONENTS += $(SUBSYSTEM_HIGHUI_DIR)/qte_application
+            else
+                 ifeq ($(PLATFORM), win32)
+                      SUBSYSTEM_HIGHUI_COMPONENTS += $(SUBSYSTEM_HIGHUI_DIR)/win32_application
+                 else
+                      ifeq ($(PLATFORM), wince)
+                          SUBSYSTEM_HIGHUI_COMPONENTS += $(SUBSYSTEM_HIGHUI_DIR)/wince_application
+                      else
+                           ifeq ($(PLATFORM), javacall)
+                                SUBSYSTEM_HIGHUI_COMPONENTS += $(SUBSYSTEM_HIGHUI_DIR)/javacall_application
+                           endif                  
+                      endif             
+                 endif
+            endif
+        endif
+    endif
+    
+    #####################################################################
+    # LCDUI for CDC Subsystem
+    # Description: CDC UI
+    #####################################################################
+    
+    ifeq ($(TARGET_VM), cdc_vm)
+        SUBSYSTEM_HIGHUI_COMPONENTS += $(SUBSYSTEM_HIGHUI_DIR)/cdcui
+    endif
+
 endif
 
-#####################################################################
-# LCDUI for CDC Subsystem
-# Description: CDC UI
-#####################################################################
 
-ifeq ($(TARGET_VM), cdc_vm)
-include $(SUBSYSTEM_HIGHUI_DIR)/cdcui/lib.gmk
-endif
+#Add Aditional components if supplied
+SUBSYSTEM_HIGHUI_COMPONENTS += $(HILEVELUI_ADDITIONAL_COMPONENTS)
+
+# Include all components
+$(foreach $(SUBSYSTEM_HIGHUI_COMPONENTS), \
+	$(_HUI_COMP), \
+	include $(_HUI_COMP)/lib.gmk)
+
 
 ########################################################################
 # Javadoc
@@ -169,6 +157,19 @@ LCDUI_PACKAGES = \
     javax.microedition.lcdui \
     javax.microedition.lcdui.game \
     com.sun.midp.lcdui
+
+####################################################
+# This specifies the option you choose for this build 
+#
+# javapti - predictive text input java implementation
+# nativepti - external native predictive text input implementation
+#
+ifeq ($(USE_NATIVE_PTI), true)
+    SUBSYSTEM_PTI_MODULES = nativepti
+else
+    SUBSYSTEM_PTI_MODULES = javapti
+endif
+#####################################################
 
 ifeq ($(SUBSYSTEM_LCDUI_MODULES), chameleon)
     MIDP_JAVADOC_SOURCEPATH += \

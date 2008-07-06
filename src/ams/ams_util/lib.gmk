@@ -40,13 +40,12 @@ AMS_UTIL_DIR = $(SUBSYSTEM_AMS_DIR)/$(AMS_UTIL_NAME)
 
 
 # IMPL NOTE: Use library configuration file to select switch library
-#
-ifndef AMS_UTIL_IMPL_DIR
+
 ifeq ($(USE_MULTIPLE_ISOLATES), true)
-AMS_UTIL_IMPL_DIR = $(AMS_UTIL_DIR)/mvm
+AMS_UTIL_IMPL_DIR ?= $(AMS_UTIL_DIR)/mvm
 else
-AMS_UTIL_IMPL_DIR = $(AMS_UTIL_DIR)/svm
-endif
+AMS_UTIL_IMPL_DIR ?= $(AMS_UTIL_DIR)/svm
 endif
 
-include $(AMS_UTIL_IMPL_DIR)/lib.gmk
+include $(AMS_UTIL_IMPL_DIR)/lib.gmk 
+
