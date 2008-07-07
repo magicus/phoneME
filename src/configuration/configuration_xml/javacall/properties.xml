@@ -90,5 +90,10 @@
             Value="3072"
             Scope="internal"
             Comment="Global memory limit (in Bytes) for RMS caching"/>
+
+  <property Key="useJavaInstallerForPlaformRequest"
+            Value="1"
+            Scope="internal"
+            Comment="When not zero, Java installer is launched to handle a midlet suite URL."/>
 </properties>
 </configuration>

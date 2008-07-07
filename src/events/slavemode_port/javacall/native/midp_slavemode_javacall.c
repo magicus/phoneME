@@ -80,19 +80,6 @@ extern jlong midp_slavemode_time_slice(void);
 static jlong midpTimeSlice(void);
 
 /**
- * Data struct for linked list with each node encapsulating a single event
- */
-typedef struct _Event {
-    unsigned char data[100];
-    int dataLen;
-} Event;
-
-Event eventsArray[MAX_EVENTS];
-
-static int index = 0;
-static int size = 0;
-
-/**
  * Free the event result. Called when no waiting Java thread was found to
  * receive the result. This may be empty on some systems.
  *
@@ -103,86 +90,6 @@ void midpFreeEventResult(int waitingFor, void* pResult) {
     (void)waitingFor;
     (void)pResult;
 }
-
-
-/**
- * Waits for an incoming event message and copies it to user supplied
- * data buffer
- * @param waitForever indicate if the function should block forever
- * @param timeTowaitInMillisec max number of seconds to wait
- *              if waitForever is false
- * @param binaryBuffer user-supplied buffer to copy event to
- * @param binaryBufferMaxLen maximum buffer size that an event can be
- *              copied to.
- *              If an event exceeds the binaryBufferMaxLen, then the first
- *              binaryBufferMaxLen bytes of the events will be copied
- *              to user-supplied binaryBuffer, and JAVACALL_OUT_OF_MEMORY will
- *              be returned
- * @param outEventLen user-supplied pointer to variable that will hold actual
- *              event size received
- *              Platform is responsible to set this value on success to the
- *              size of the event received, or 0 on failure.
- *              If outEventLen is NULL, the event size is not returned.
- * @return <tt>JAVACALL_OK</tt> if an event successfully received,
- *         <tt>JAVACALL_FAIL</tt> or if failed or no messages are avaialable
- *         <tt>JAVACALL_OUT_OF_MEMORY</tt> If an event's size exceeds the
- *         binaryBufferMaxLen
- */
-
-javacall_result javacall_event_receive(
-                                    long            timeTowaitInMillisec,
-                            /*OUT*/ unsigned char*  binaryBuffer,
-                            /*IN*/  int             binaryBufferMaxLen,
-                            /*OUT*/ int*            outEventLen) {
-
-
-    if (size == 0) {
-        return JAVACALL_FAIL;
-    }
-
-    if (index == 0) {
-        index = MAX_EVENTS - 1;
-    }
-    else {
-        index--;
-    }
-
-    if(eventsArray[index].dataLen > binaryBufferMaxLen) {
-        /*if not enough memory, we keep the event in the list so that client code can re-invoke with bigger buffer*/
-        *outEventLen = 0;
-        return JAVACALL_OUT_OF_MEMORY;
-    }
-
-    *outEventLen = eventsArray[index].dataLen;
-    memcpy(binaryBuffer, eventsArray[index].data, *outEventLen);
-
-	size--;
-
-    return JAVACALL_OK;
-}
-
-/**
- * copies a user supplied event message to a queue of messages
- *
- * @param binaryBuffer a pointer to binary event buffer to send
- *        The platform should make a private copy of this buffer as
- *        access to it is not allowed after the function call.
- * @param binaryBufferLen size of binary event buffer to send
- * @return <tt>JAVACALL_OK</tt> if an event successfully sent,
- *         <tt>JAVACALL_FAIL</tt> or negative value if failed
- */
-javacall_result javacall_event_send(unsigned char* binaryBuffer,
-                                    int binaryBufferLen) {
-    if (size == MAX_EVENTS) {
-        return JAVACALL_FAIL;
-    }
-    eventsArray[index].dataLen = binaryBufferLen;
-    memcpy(eventsArray[index].data, binaryBuffer, binaryBufferLen);
-    index = (index + 1) % MAX_EVENTS;
-    size++;
-    return JAVACALL_OK;
-}
-
 
 /**
  * Unblock a Java thread.
@@ -322,6 +229,9 @@ javacall_result checkForSystemSignal(MidpReentryData* pNewSignal,
          */
         midp_suspend();
         break;
+    case MIDP_JC_EVENT_RESUME:
+        midp_resume();
+        break;
     case MIDP_JC_EVENT_PUSH:
         pNewSignal->waitingFor = PUSH_ALARM_SIGNAL;
         pNewSignal->descriptor = event->data.pushEvent.alarmHandle;
@@ -368,7 +278,7 @@ javacall_result checkForSystemSignal(MidpReentryData* pNewSignal,
 #if ENABLE_JSR_135
         pNewSignal->waitingFor = MEDIA_EVENT_SIGNAL;
         pNewSignal->status     = event->data.multimediaEvent.status;
-        pNewSignal->pResult    = (void *)event->data.multimediaEvent.data;
+        pNewSignal->pResult    = (void *)event->data.multimediaEvent.data.num32;
         
         /* Create Java driven event */
         if (event->data.multimediaEvent.mediaType > 0 &&
@@ -376,7 +286,7 @@ javacall_result checkForSystemSignal(MidpReentryData* pNewSignal,
                         JAVACALL_EVENT_MEDIA_JAVA_EVENTS_MARKER) {
             pNewMidpEvent->type         = MMAPI_EVENT;
             pNewMidpEvent->MM_PLAYER_ID = event->data.multimediaEvent.playerId;
-            pNewMidpEvent->MM_DATA      = event->data.multimediaEvent.data;
+            pNewMidpEvent->MM_DATA      = event->data.multimediaEvent.data.num32;
             pNewMidpEvent->MM_ISOLATE   = event->data.multimediaEvent.appId;
             pNewMidpEvent->MM_EVT_TYPE  = event->data.multimediaEvent.mediaType;
             pNewMidpEvent->MM_EVT_STATUS= event->data.multimediaEvent.status;
@@ -416,7 +326,7 @@ javacall_result checkForSystemSignal(MidpReentryData* pNewSignal,
                 pNewMidpEvent->type,
                 event->data.multimediaEvent.appId,
                 event->data.multimediaEvent.playerId,
-                event->data.multimediaEvent.data);
+                event->data.multimediaEvent.data.num32);
 #endif
         break;
 #ifdef ENABLE_JSR_234
@@ -426,7 +336,6 @@ javacall_result checkForSystemSignal(MidpReentryData* pNewSignal,
 
         pNewMidpEvent->type         = AMMS_EVENT;
         pNewMidpEvent->MM_PLAYER_ID = event->data.multimediaEvent.playerId;
-        pNewMidpEvent->MM_DATA      = event->data.multimediaEvent.data;
         pNewMidpEvent->MM_ISOLATE   = event->data.multimediaEvent.appId;
         pNewMidpEvent->MM_EVT_TYPE  = event->data.multimediaEvent.mediaType;
 
@@ -436,11 +345,14 @@ javacall_result checkForSystemSignal(MidpReentryData* pNewSignal,
         case JAVACALL_EVENT_AMMS_SNAP_STORAGE_ERROR:
             {
                 int len = 0;
-                javacall_utf16_string str = (jchar*)event->data.multimediaEvent.data;
+                javacall_utf16_string str = event->data.multimediaEvent.data.str16;
                 while( str[len] != 0 ) len++;
                 pcsl_string_convert_from_utf16( str, len, &pNewMidpEvent->MM_STRING );
-                pNewMidpEvent->MM_DATA = 0;
+                free( str );
             }
+            break;
+        default:
+            pNewMidpEvent->MM_DATA = event->data.multimediaEvent.data.num32;
             break;
         }
 
@@ -458,8 +370,8 @@ javacall_result checkForSystemSignal(MidpReentryData* pNewSignal,
         pNewSignal->descriptor = (int)event->data.jsr179LocationEvent.provider;
         pNewSignal->status = event->data.jsr179LocationEvent.operation_result;
         REPORT_CALL_TRACE2(LC_NONE, "[jsr179 event] JSR179_LOCATION_SIGNAL %d %d\n", pNewSignal->descriptor, pNewSignal->status);
-        break;
-#endif
+        break; 
+#endif /*ENABLE_JSR_179*/
 #ifdef ENABLE_JSR_177
     case MIDP_JC_EVENT_CARDDEVICE:
         switch (event->data.carddeviceEvent.eventType) {

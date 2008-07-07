@@ -71,7 +71,7 @@
 #endif
 
 #ifdef ENABLE_JSR_179
-#include <javacall_location.h>
+#include <javanotify_location.h>
 #endif
 
 #ifdef ENABLE_JSR_234
@@ -334,7 +334,7 @@ void javanotify_start_tck(char *tckUrl, javacall_lifecycle_tck_domain domain_typ
     memset(urlAddress, 0, BINARY_BUFFER_MAX_LEN);
     memcpy(urlAddress, tckUrl, length);
     if (strcmp(urlAddress, "none") != 0) {
-	    argv[argc++] = urlAddress;
+        argv[argc++] = urlAddress;
     }
 
     if (domain_type == JAVACALL_LIFECYCLE_TCK_DOMAIN_UNTRUSTED) {
@@ -1287,7 +1287,7 @@ void /* OPTIONAL */ javanotify_server_socket_event(javacall_server_socket_callba
         /* If the platform is not able to provide the socket handle in the callback,
            it should pass 0. */
         if (operation_result == JAVACALL_OK) {
-		e.data.socketEvent.status = (javacall_result) ((int)new_socket_handle);
+             e.data.socketEvent.status = (javacall_result)((int)new_socket_handle);
         } else {
             e.data.socketEvent.status = operation_result;
         }
@@ -1367,11 +1367,11 @@ void javanotify_on_media_notification(javacall_media_notification_type type,
     REPORT_INFO4(LC_MMAPI, "javanotify_on_media_notification type=%d appId=%d playerId%d status=%d\n", type, appId, playerId, status);
 
     e.eventType = MIDP_JC_EVENT_MULTIMEDIA;
-    e.data.multimediaEvent.mediaType = type;
-    e.data.multimediaEvent.appId = appId;
-    e.data.multimediaEvent.playerId = playerId;
-    e.data.multimediaEvent.status = (int) status;
-    e.data.multimediaEvent.data = (int) data;
+    e.data.multimediaEvent.mediaType  = type;
+    e.data.multimediaEvent.appId      = appId;
+    e.data.multimediaEvent.playerId   = playerId;
+    e.data.multimediaEvent.status     = (int) status;
+    e.data.multimediaEvent.data.num32 = (int) data;
 
     midp_jc_event_send(&e);
 #endif
@@ -1396,7 +1396,21 @@ void javanotify_on_amms_notification(javacall_amms_notification_type type,
     e.data.multimediaEvent.mediaType = type;
     e.data.multimediaEvent.appId = (int)((processorId >> 32) & 0xFFFF);
     e.data.multimediaEvent.playerId = (int)(processorId & 0xFFFF);
-    e.data.multimediaEvent.data = (int) data;
+
+    switch( type )
+    {
+    case JAVACALL_EVENT_AMMS_SNAP_SHOOTING_STOPPED:
+    case JAVACALL_EVENT_AMMS_SNAP_STORAGE_ERROR:
+        {
+            size_t size = sizeof( javacall_utf16 ) * ( 1 + wcslen( (javacall_utf16_string)data ) );
+            e.data.multimediaEvent.data.str16 = (javacall_utf16_string)malloc( size );
+            wcscpy( e.data.multimediaEvent.data.str16, (javacall_utf16_string)data );
+        }
+        break;
+    default:
+        e.data.multimediaEvent.data.num32 = (int) data;
+        break;
+    }
 
     REPORT_INFO1(LC_NONE,
             "[javanotify_on_amms_notification] type=%d\n", type);

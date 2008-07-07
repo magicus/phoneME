@@ -232,6 +232,8 @@
                 Value="predict"/>
 <localized_string Key="LCDUI_TF_CAPS_ON_LB_PTI"
                 Value="PREDICT"/>
+<localized_string Key="LCDUI_TF_NATIVE_VKBD"
+                Value="Virtual"/>
 <localized_string Key="AMS_SELECT_FOLDER"
                 Value="Select folder"/>
 <localized_string Key="AMS_CHANGE_FOLDER"
@@ -651,10 +653,6 @@
                 Value="Is it OK to open a sensor connection?"/>
 <localized_string Key="PERMISSION_SENSOR_QUE"
                 Value="%1 wants to open a sensor connection.&#010;&#010;Is it OK to open a sensor connection?"/>
-<localized_string Key="PERMISSION_CONTACTLESS_TITLE"
-                Value="Is it OK to open a contactless connection?"/>
-<localized_string Key="PERMISSION_CONTACTLESS_QUE"
-                Value="%1 wants to open a contactless connection.&#010;&#010;Is it OK to open a contactless connection?"/>
 <localized_string Key="AMS_PERMISSION_PAYMENT_DELETION_QUESTION"
                 Value="ATTENTION!&#010;There are pending payment transactions that will be deleted:&#010;"/>
 <localized_string Key="AMS_SELECTOR_SEL_TO_LAUNCH"
