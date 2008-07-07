@@ -407,7 +407,7 @@ public class Protocol extends ConnectionBaseAdapter
      * @param token token with the HTTP permission set to the allowed level
      */
     private void checkIfPermissionAllowed(SecurityToken token) {
-        token.checkIfPermissionAllowed(Permissions.HTTP);
+        token.checkIfPermissionAllowed(HTTP_PERMISSION_NAME);
         ownerTrusted = true;
         permissionChecked = true;
     }
@@ -2451,4 +2451,5 @@ public class Protocol extends ConnectionBaseAdapter
         }
     }
 }
+
 

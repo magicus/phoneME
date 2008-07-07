@@ -648,54 +648,71 @@ midp_get_suite_storage_size(SuiteIdType suiteId) {
     long rms = 0;
     pcsl_string filename[NUM_SUITE_FILES];
     int i;
-    int handle;
     char* pszError;
-    char* pszTemp;
     StorageIdType storageId;
     MIDPError status;
+    MidletSuiteData* pData;
 
-    for (i = 0; i < NUM_SUITE_FILES; i++) {
-        filename[i] = PCSL_STRING_NULL;
-    }
-    /*
-     * This is a public API which can be called without the VM running
-     * so we need automatically init anything needed, to make the
-     * caller's code less complex.
-     *
-     * Initialization is performed in steps so that we do use any
-     * extra resources such as the VM for the operation being performed.
-     */
-    if (midpInit(LIST_LEVEL) != 0) {
-        return OUT_OF_MEM_LEN;
+    pData = get_suite_data(suiteId);
+    if (pData) {
+        used = (jint)pData->suiteSize;
     }
 
-    status = midp_suite_get_suite_storage(suiteId, &storageId);
-    if (status != ALL_OK) {
-        return OUT_OF_MEM_LEN;
-    }
-
-    build_suite_filename(suiteId, &INSTALL_INFO_FILENAME, &filename[0]);
-    build_suite_filename(suiteId, &SETTINGS_FILENAME, &filename[1]);
-    midp_suite_get_class_path(suiteId, storageId, KNI_TRUE, &filename[2]);
-    get_property_file(suiteId, KNI_TRUE, &filename[3]);
-
-    for (i = 0; i < NUM_SUITE_FILES; i++) {
-        if (pcsl_string_is_null(&filename[i])) {
-            continue;
+    if (used <= 0) {
+        /* Suite size is not cached (should not happen!), calculate it. */
+        for (i = 0; i < NUM_SUITE_FILES; i++) {
+            filename[i] = PCSL_STRING_NULL;
         }
 
-        handle = storage_open(&pszError, &filename[i], OPEN_READ);
-        pcsl_string_free(&filename[i]);
-        if (pszError != NULL) {
-            storageFreeError(pszError);
-            continue;
+        /*
+         * This is a public API which can be called without the VM running
+         * so we need automatically init anything needed, to make the
+         * caller's code less complex.
+         *
+         * Initialization is performed in steps so that we do use any
+         * extra resources such as the VM for the operation being performed.
+         */
+        if (midpInit(LIST_LEVEL) != 0) {
+            return OUT_OF_MEM_LEN;
         }
 
-        used += storageSizeOf(&pszError, handle);
-        storageFreeError(pszError);
+        status = midp_suite_get_suite_storage(suiteId, &storageId);
+        if (status != ALL_OK) {
+            return OUT_OF_MEM_LEN;
+        }
 
-        storageClose(&pszTemp, handle);
-        storageFreeError(pszTemp);
+        build_suite_filename(suiteId, &INSTALL_INFO_FILENAME, &filename[0]);
+        build_suite_filename(suiteId, &SETTINGS_FILENAME, &filename[1]);
+        midp_suite_get_class_path(suiteId, storageId, KNI_TRUE, &filename[2]);
+        get_property_file(suiteId, KNI_TRUE, &filename[3]);
+
+        for (i = 0; i < NUM_SUITE_FILES; i++) {
+            long tmp;
+
+            if (pcsl_string_is_null(&filename[i])) {
+                continue;
+            }
+
+            tmp = storage_size_of_file_by_name(&pszError, &filename[i]);
+            pcsl_string_free(&filename[i]);
+
+            if (pszError != NULL) {
+                storageFreeError(pszError);
+                continue;
+            }
+
+            used += tmp;
+        }
+
+        if (pData) {
+            /* cache the calculated size */
+            pData->suiteSize = (jint)used;
+            status = write_suites_data(&pszError);
+            if (status != ALL_OK) {
+                storageFreeError(pszError);
+                return OUT_OF_MEM_LEN;
+            }
+        }
     }
 
     rms = rmsdb_get_rms_storage_size(suiteId);
@@ -827,7 +844,8 @@ change_enabled_state(SuiteIdType suiteId, jboolean enabled) {
     }
 
     status = write_settings(&pszError, suiteId, enabled, pushInterrupt,
-                            pushOptions, pPermissions, numberOfPermissions);
+                            pushOptions, pPermissions, numberOfPermissions,
+                            NULL);
     pcsl_mem_free(pPermissions);
     if (status != ALL_OK) {
         /* nothing was written, so nothing to rollback, just finish */

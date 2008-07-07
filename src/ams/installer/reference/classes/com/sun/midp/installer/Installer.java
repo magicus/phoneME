@@ -175,7 +175,7 @@ public abstract class Installer {
 
     /** Use this to be the security domain for unsigned suites. */
     protected String unsignedSecurityDomain =
-        Permissions.UNIDENTIFIED_DOMAIN_BINDING;
+        Permissions.getUnsignedDomain();
 
     /**
      * Include this permissions into the list of permissions
@@ -1077,7 +1077,7 @@ public abstract class Installer {
              * The unidentified suites do not get checked for requested
              * permissions.
              */
-            if (Permissions.UNIDENTIFIED_DOMAIN_BINDING.equals(info.domain)) {
+            if (!Permissions.isTrusted(info.domain)) {
 
                 settings.setPermissions((Permissions.forDomain(
                     info.domain)) [Permissions.CUR_LEVELS]);
@@ -2470,14 +2470,14 @@ public abstract class Installer {
                 return;
             }
         }
-
-        if (curLevels[Permissions.PUSH] == Permissions.NEVER) {
+		int PUSH_ID = Permissions.getId("javax.microedition.io.PushRegistry");
+        if (curLevels[PUSH_ID] == Permissions.NEVER) {
             settings.setPushInterruptSetting(Permissions.NEVER);
-        } else if (curLevels[Permissions.PUSH] == Permissions.ALLOW) {
+        } else if (curLevels[PUSH_ID] == Permissions.ALLOW) {
             // Start the default at session for usability when denying.
             settings.setPushInterruptSetting(Permissions.SESSION);
         } else {
-            settings.setPushInterruptSetting(curLevels[Permissions.PUSH]);
+            settings.setPushInterruptSetting(curLevels[PUSH_ID]);
         }
     }
 
@@ -2582,9 +2582,9 @@ class AccessControl extends AccessControlContextAdapter {
         if (permissionId == Permissions.AMS ||
                 permissionId == Permissions.MIDP) {
             // These permission checks cannot block
-            suite.checkIfPermissionAllowed(permissionId);
+            suite.checkIfPermissionAllowed(name);
         } else {
-            suite.checkForPermission(permissionId, resource, extraValue);
+            suite.checkForPermission(name, resource, extraValue);
         }
     }
 }
@@ -2843,7 +2843,7 @@ class InstallStateImpl implements InstallState, MIDletSuite {
      *   calling thread while this method is waiting to preempt the
      *   display.
      */
-    public void checkForPermission(int permission, String resource)
+    public void checkForPermission(String permission, String resource)
             throws InterruptedException {
         checkForPermission(permission, resource, null);
     }
@@ -2866,15 +2866,16 @@ class InstallStateImpl implements InstallState, MIDletSuite {
      *   calling thread while this method is waiting to preempt the
      *   display.
      */
-    public void checkForPermission(int permission, String resource,
+    public void checkForPermission(String permissionStr, String resource,
             String extraValue) throws InterruptedException {
 
-        securityHandler.checkForPermission(permission,
+		int permission = Permissions.getId(permissionStr);
+        securityHandler.checkForPermission(permissionStr,
             Permissions.getTitle(permission),
             Permissions.getQuestion(permission),
             Permissions.getOneshotQuestion(permission),
             installInfo.suiteName, resource, extraValue,
-            Permissions.getName(permission));
+            permissionStr);
     }
 
     /**
@@ -3055,7 +3056,7 @@ class InstallStateImpl implements InstallState, MIDletSuite {
      * @exception SecurityException if the suite is not
      *            allowed to perform the specified action
      */
-    public void checkIfPermissionAllowed(int permission) {
+    public void checkIfPermissionAllowed(String permission) {
         throw new RuntimeException("Not Implemented");
     }
 

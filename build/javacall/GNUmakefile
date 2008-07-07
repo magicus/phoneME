@@ -47,11 +47,12 @@ endif
 # Build options should be include before shared gmk
 include Options.gmk
 
+#overwrite  USE_JAVAUTIL_LOG_IMPLEMENTATION=false from Top.gmk
+USE_JAVAUTIL_LOG_IMPLEMENTATION=true
+
 # All rules are defined in shared makefiles
 include $(MIDP_DIR)/build/common/Top.gmk
 
-#overwrite  USE_JAVAUTIL_LOG_IMPLEMENTATION=false from Top.gmk
-USE_JAVAUTIL_LOG_IMPLEMENTATION=true
 
 # Including the part that should appear after Top.gmk
 include Platform_post.gmk

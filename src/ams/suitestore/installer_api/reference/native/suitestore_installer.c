@@ -65,7 +65,8 @@ getImageForIconCache(SuiteIdType suiteId, const pcsl_string* pImageName,
 
 /* Description of these internal functions can be found bellow in the code. */
 static MIDPError store_install_properties(SuiteIdType suiteId,
-    const MidpProperties* pJadProps, const MidpProperties* pJarProps);
+    const MidpProperties* pJadProps, const MidpProperties* pJarProps,
+        jint* pOutDataSize);
 
 static MIDPError store_jar(char** ppszError, SuiteIdType suiteId,
     StorageIdType storageId, const pcsl_string* jarName,
@@ -74,7 +75,8 @@ static MIDPError store_jar(char** ppszError, SuiteIdType suiteId,
 static MIDPError add_to_suite_list_and_save(MidletSuiteData* pMsd);
 
 static MIDPError write_install_info(char** ppszError, SuiteIdType suiteId,
-                                    const MidpInstallInfo* pInstallInfo);
+                                    const MidpInstallInfo* pInstallInfo,
+                                    jint* pOutDataSize);
 
 /* ------------------------------------------------------------ */
 /*                           Public API                         */
@@ -411,6 +413,7 @@ midp_store_suite(const MidpInstallInfo* pInstallInfo,
     char* pszError;
     lockStorageList *node;
     SuiteIdType suiteId;
+    jint tmpSize;
 #if ENABLE_ICON_CACHE
     unsigned char* pIconData = NULL;
     int iconBufLen = -1;
@@ -455,11 +458,13 @@ midp_store_suite(const MidpInstallInfo* pInstallInfo,
 
         memcpy((char*)pMsd, (char*)pSuiteData, sizeof(MidletSuiteData));
 
+        pMsd->suiteSize = 0;
         pMsd->nextEntry = NULL;
 
         status = begin_transaction(TRANSACTION_INSTALL, UNUSED_SUITE_ID,
             &pSuiteData->varSuiteData.pathToJar);
         if (status != ALL_OK) {
+            pcsl_mem_free(pMsd);        
             break;
         }
 
@@ -475,6 +480,15 @@ midp_store_suite(const MidpInstallInfo* pInstallInfo,
                 storageFreeError(pszError);
             }
             break;
+        }
+
+        /* pMsd->jarSize will be < 0 in case of error */
+        pMsd->jarSize = (jint)storage_size_of_file_by_name(&pszError,
+            &pMsd->varSuiteData.pathToJar);
+        if (pszError == NULL) {
+            pMsd->suiteSize += pMsd->jarSize;
+        } else {
+            storageFreeError(pszError);
         }
 
 #if ENABLE_CONTROL_ARGS_FROM_JAD
@@ -523,33 +537,38 @@ midp_store_suite(const MidpInstallInfo* pInstallInfo,
             return status;
         }
 
-        status = write_install_info(&pszError, suiteId, pInstallInfo);
+        status = write_install_info(&pszError, suiteId, pInstallInfo, &tmpSize);
         if (status != ALL_OK) {
             if (pszError != NULL) {
                 storageFreeError(pszError);
             }
             break;
         }
+        pMsd->suiteSize += tmpSize;
 
         status = store_install_properties(suiteId, &pInstallInfo->jadProps,
-                                          &pInstallInfo->jarProps);
+                                          &pInstallInfo->jarProps, &tmpSize);
         if (status != ALL_OK) {
             break;
         }
+        pMsd->suiteSize += tmpSize;
 
         /* Suites start off as enabled. */
         status = write_settings(&pszError, suiteId, KNI_TRUE,
             pSuiteSettings->pushInterruptSetting, pSuiteSettings->pushOptions,
-                pSuiteSettings->pPermissions, pSuiteSettings->permissionsLen);
+                pSuiteSettings->pPermissions, pSuiteSettings->permissionsLen,
+                    &tmpSize);
         if (status != ALL_OK) {
             if (pszError != NULL) {
                 storageFreeError(pszError);
             }
             break;
         }
+        pMsd->suiteSize += tmpSize;
 
 #if ENABLE_IMAGE_CACHE
-        createImageCache(suiteId, pMsd->storageId);
+        createImageCache(suiteId, pMsd->storageId, &tmpSize);
+        pMsd->suiteSize += tmpSize;
 #endif
 
 #if ENABLE_ICON_CACHE
@@ -715,12 +734,15 @@ add_to_suite_list_and_save(MidletSuiteData* pMsd) {
  * @param ppszError pointer to character string pointer to accept an error
  * @param suiteId ID of a suite
  * @param pInstallInfo a pointer to allocated InstallInfo struct
+ * @param pOutDataSize [out] points to a place where the size of the
+ *                           written data is saved; can be NULL
  *
  * @return error code (ALL_OK if successful)
  */
 static MIDPError
 write_install_info(char** ppszError, SuiteIdType suiteId,
-                   const MidpInstallInfo* pInstallInfo) {
+                   const MidpInstallInfo* pInstallInfo,
+                   jint* pOutDataSize) {
     pcsl_string filename;
     char* pszTemp;
     int handle;
@@ -770,7 +792,15 @@ write_install_info(char** ppszError, SuiteIdType suiteId,
         }
     } while (0);
 
-    if (*ppszError != NULL) {
+    if (*ppszError == NULL) {
+        if (pOutDataSize != NULL) {
+            *pOutDataSize = (jint)storageSizeOf(&pszTemp, handle);
+            storageFreeError(pszTemp);
+        }
+    } else {
+        if (pOutDataSize != NULL) {
+            *pOutDataSize = 0;
+        }
         status = IO_ERROR;
     }
 
@@ -794,16 +824,16 @@ write_install_info(char** ppszError, SuiteIdType suiteId,
  *    <property value as jchars>
  * </pre>
  * @param suiteId  ID of the suite
- * @param pJadProps an array of strings, in a pair pattern of key and
- *  value
- * @param pJarProps an array of strings, in a pair pattern of key and
- *  value
+ * @param pJadProps an array of strings, in a pair pattern of key and value
+ * @param pJarProps an array of strings, in a pair pattern of key and value
+ * @param pOutDataSize [out] points to a place where the size of the
+ *                           written data is saved; can be NULL
  *
  * @return error code (ALL_OK for success)
  */
 static MIDPError
 store_install_properties(SuiteIdType suiteId, const MidpProperties* pJadProps,
-                         const MidpProperties* pJarProps) {
+                         const MidpProperties* pJarProps, jint* pOutDataSize) {
     pcsl_string filename;
     char* pszError = NULL;
     int handle;
@@ -856,9 +886,17 @@ store_install_properties(SuiteIdType suiteId, const MidpProperties* pJadProps,
         }
     } while(0);
 
-    if (pszError != NULL) {
+    if (pszError == NULL) {
+        if (pOutDataSize != NULL) {
+            *pOutDataSize = (jint)storageSizeOf(&pszError, handle);
+            storageFreeError(pszError);
+        }
+    } else {
         status = IO_ERROR;
         storageFreeError(pszError);
+        if (pOutDataSize != NULL) {
+            *pOutDataSize = 0;
+        }
     }
 
     storageClose(&pszError, handle);

@@ -642,14 +642,37 @@ storageRelativePosition(char** ppszError, int handle, long offset) {
  *
  * If not successful *ppszError will set to point to an error string,
  * on success it will be set to NULL.
+ *
+ * @return size of file in bytes if successful, -1 otherwise
  */
 long
-storageSizeOf(char** ppszError,  int handle) {
+storageSizeOf(char** ppszError, int handle) {
     long size;
 
     size = pcsl_file_sizeofopenfile((void *)handle);
     if (size < 0) {
         *ppszError = getLastError("storageSizeOf()");
+    } else {
+        *ppszError = NULL;
+    }
+    return size;
+}
+
+/*
+ * Return the size of file with the given name in storage.
+ *
+ * If not successful *ppszError will set to point to an error string,
+ * on success it will be set to NULL.
+ *
+ * @return size of file in bytes if successful, -1 otherwise
+ */
+long
+storage_size_of_file_by_name(char** ppszError, const pcsl_string* pFileName) {
+    long size;
+
+    size = pcsl_file_sizeof(pFileName);
+    if (size < 0) {
+        *ppszError = getLastError("storage_size_of_file_by_name()");
     } else {
         *ppszError = NULL;
     }
@@ -785,7 +808,8 @@ getLastError(char* pszFunction) {
 }
 
 static char*
-storage_get_last_file_error(char* pszFunction, const pcsl_string* filename_str) {
+storage_get_last_file_error(char* pszFunction,
+                            const pcsl_string* filename_str) {
     char* temp;
     int charsLeft;
     int i;
@@ -836,8 +860,7 @@ storage_get_last_file_error(char* pszFunction, const pcsl_string* filename_str) 
  *
  */
 void*
-storage_open_file_iterator(const pcsl_string* string_str)
-{
+storage_open_file_iterator(const pcsl_string* string_str) {
     void * iterator = NULL;
     iterator = pcsl_file_openfilelist(string_str);
     return iterator;
@@ -853,8 +876,8 @@ storage_open_file_iterator(const pcsl_string* string_str)
  * Returns 0 on success, -1 otherwise
  *
  */
-int storage_get_next_file_in_iterator(const pcsl_string* string_str, void* handle, pcsl_string* result_str)
-{
+int storage_get_next_file_in_iterator(const pcsl_string* string_str,
+                                      void* handle, pcsl_string* result_str) {
     return pcsl_file_getnextentry(handle, string_str, result_str);
 }
 
@@ -864,8 +887,7 @@ int storage_get_next_file_in_iterator(const pcsl_string* string_str, void* handl
  *
  */
 void
-storageCloseFileIterator(void* handle)
-{
+storageCloseFileIterator(void* handle) {
     pcsl_file_closefilelist(handle);
 }
 
@@ -874,55 +896,55 @@ storageCloseFileIterator(void* handle)
  * First read a jint with length, then read the text
  * of that length in the utf-16 encoding.
  *
- * @param ppszError  in the case of error, receives address of a string
- *                   describing the problem; receives NULL in the case of success
- * @param handle     handle of the file to read from
- * @param str        string to receive the text
+ * @param ppszError in the case of error, receives address of a string
+ *                  describing the problem; receives NULL in the case of success
+ * @param handle    handle of the file to read from
+ * @param str       string to receive the text
  */
 void
 storage_read_utf16_string(char** ppszError, int handle, pcsl_string* str) {
-  jint bytesRead = 0;
-  jchar *tempStr = NULL;
-  jint tempLen = 0;
-  pcsl_string_status prc;
+    jint bytesRead = 0;
+    jchar *tempStr = NULL;
+    jint tempLen = 0;
+    pcsl_string_status prc;
 
-  storageRead(ppszError, handle, (char*)&tempLen, sizeof (jint));
-  if (*ppszError != NULL) {
-    return;
-  }
-
-  /* special cases: null and empty strings */
-  if (tempLen < 0) {
-    if(0 == tempLen) {
-        *str = PCSL_STRING_NULL;
-    } else if (-1 == tempLen) {
-        *str = PCSL_STRING_EMPTY;
-    } else {
-        *str = PCSL_STRING_NULL;
-        *ppszError = (char *)STRING_CORRUPT_ERROR;
+    storageRead(ppszError, handle, (char*)&tempLen, sizeof (jint));
+    if (*ppszError != NULL) {
+        return;
     }
-    return;
-  }
 
-  tempStr = (jchar*)midpMalloc(tempLen * sizeof (jchar));
-  if (tempStr == NULL) {
-    *ppszError = (char *)OUT_OF_MEM_ERROR;
-    return;
-  }
+    /* special cases: null and empty strings */
+    if (tempLen < 0) {
+      if (0 == tempLen) {
+          *str = PCSL_STRING_NULL;
+      } else if (-1 == tempLen) {
+          *str = PCSL_STRING_EMPTY;
+      } else {
+          *str = PCSL_STRING_NULL;
+          *ppszError = (char *)STRING_CORRUPT_ERROR;
+      }
+      return;
+    }
 
-  bytesRead = storageRead(ppszError, handle,
-        (char*)tempStr, tempLen * sizeof (jchar));
-  if (*ppszError != NULL) {
-    /* do nothing: error code already there */
-  } else if (bytesRead != (signed)(tempLen * sizeof (jchar))) {
-    *ppszError = (char *)STRING_CORRUPT_ERROR;
-  } else if (PCSL_STRING_OK != (prc
+    tempStr = (jchar*)midpMalloc(tempLen * sizeof (jchar));
+    if (tempStr == NULL) {
+        *ppszError = (char *)OUT_OF_MEM_ERROR;
+        return;
+    }
+
+    bytesRead = storageRead(ppszError, handle,
+          (char*)tempStr, tempLen * sizeof (jchar));
+    if (*ppszError != NULL) {
+        /* do nothing: error code already there */
+    } else if (bytesRead != (signed)(tempLen * sizeof (jchar))) {
+        *ppszError = (char *)STRING_CORRUPT_ERROR;
+    } else if (PCSL_STRING_OK != (prc
                 = pcsl_string_convert_from_utf16(tempStr, tempLen, str))) {
-    *ppszError = PCSL_STRING_ENOMEM == prc ? (char *)OUT_OF_MEM_ERROR
-                                           : (char *)STRING_CORRUPT_ERROR;
-  }
-  midpFree(tempStr);
-  return;
+        *ppszError = PCSL_STRING_ENOMEM == prc ? (char *)OUT_OF_MEM_ERROR
+                                               : (char *)STRING_CORRUPT_ERROR;
+    }
+    midpFree(tempStr);
+    return;
 }
 
 /**
@@ -935,25 +957,27 @@ storage_read_utf16_string(char** ppszError, int handle, pcsl_string* str) {
  * @param str        string to be written
  */
 void
-storage_write_utf16_string(char** ppszError, int handle, const pcsl_string* str) {
-  jint length;
-  if(pcsl_string_is_null(str)) {
-    length = -1;
-  } else {
-    length = pcsl_string_length(str);
-  }
-  storageWrite(ppszError, handle, (char*)&length, sizeof (length));
+storage_write_utf16_string(char** ppszError, int handle,
+                           const pcsl_string* str) {
+    jint length;
 
-  /* are there data to write? */
-  if (NULL == *ppszError && length > 0) {
-    const jchar* data = pcsl_string_get_utf16_data(str);
-    if(NULL == data) {
-      *ppszError = (char *)OUT_OF_MEM_ERROR;
+    if (pcsl_string_is_null(str)) {
+        length = -1;
     } else {
-      storageWrite(ppszError, handle, (char*)data, length * sizeof (jchar));
-      pcsl_string_release_utf16_data(data, str);
+        length = pcsl_string_length(str);
     }
-  }
-}
-                        
+  
+    storageWrite(ppszError, handle, (char*)&length, sizeof (length));
 
+    /* are there data to write? */
+    if (NULL == *ppszError && length > 0) {
+        const jchar* data = pcsl_string_get_utf16_data(str);
+        if (NULL == data) {
+            *ppszError = (char *)OUT_OF_MEM_ERROR;
+        } else {
+            storageWrite(ppszError, handle, (char*)data,
+                         length * sizeof (jchar));
+            pcsl_string_release_utf16_data(data, str);
+        }
+    }
+}

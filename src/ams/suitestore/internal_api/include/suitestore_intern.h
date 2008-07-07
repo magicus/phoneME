@@ -243,13 +243,16 @@ read_settings(char** ppszError, SuiteIdType suiteId, jboolean* pEnabled,
  * @param pushOptions user options for push interrupts
  * @param pPermissions pointer a pointer to accept a permissions array
  * @param numberOfPermissions length of pPermissions
+ * @param pOutDataSize [out] points to a place where the size of the
+ *                           written data is saved; can be NULL
  *
  * @return error code (ALL_OK if successful)
  */
 MIDPError
 write_settings(char** ppszError, SuiteIdType suiteId, jboolean enabled,
                jbyte pushInterrupt, jint pushOptions,
-               jbyte* pPermissions, int numberOfPermissions);
+               jbyte* pPermissions, int numberOfPermissions,
+               jint* pOutDataSize);
 
 /**
  * Read a the install information of a suite from persistent storage.

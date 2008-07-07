@@ -88,9 +88,9 @@ class CldcAccessControlContext extends AccessControlContextAdapter {
         if (permissionId == Permissions.AMS ||
                 permissionId == Permissions.MIDP) {
             // These permission checks cannot block
-            midletSuite.checkIfPermissionAllowed(permissionId);
+            midletSuite.checkIfPermissionAllowed(name);
         } else {
-            midletSuite.checkForPermission(permissionId, resource,
+            midletSuite.checkForPermission(name, resource,
                                            extraValue);
         }
     }

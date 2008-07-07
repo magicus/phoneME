@@ -86,6 +86,7 @@ include $(SUBSYSTEM_AMS_DIR)/on_device_debug_stubs/lib.gmk
 endif
 
 ifeq ($(USE_NATIVE_AMS), false)
+    include $(SUBSYSTEM_AMS_DIR)/appmanager_base/lib.gmk
     include $(SUBSYSTEM_AMS_DIR)/appmanager_ui_resources/lib.gmk
     include $(SUBSYSTEM_AMS_DIR)/appmanager_ui/lib.gmk
 else    
