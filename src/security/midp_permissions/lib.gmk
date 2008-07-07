@@ -58,16 +58,17 @@ vpath % $(PERMISSIONS_DIR)/reference/native
 SUBSYSTEM_SECURITY_NATIVE_FILES += LoadPolicy_kni.c
 
 
-# Select implementation, should be reworked according to subsystem decoupling
-SECURITY_POLICY_IMPLEMENTATION = generic_policy_load.c
+# Select implementation
+# Should be reworked according to subsystem decoupling
+SECURITY_POLICY_IMPL_FILES = generic_policy_load.c
 
 ifeq ($(TARGET_OS), javacall)
 ifeq ($(USE_DYNAMIC_PERMISSIONS), true)
-SECURITY_POLICY_IMPLEMENTATION = javacall_policy_load.c
+SECURITY_POLICY_IMPL_FILES = javacall_policy_load.c
 endif
 endif 
 
-SUBSYSTEM_SECURITY_NATIVE_FILES += $(SECURITY_POLICY_IMPLEMENTATION)
+SUBSYSTEM_SECURITY_NATIVE_FILES += $(SECURITY_POLICY_IMPL_FILES)
 
 # Include system properties in Configuration
 SUBSYSTEM_CONFIGURATION_INPUT_FILES += \
