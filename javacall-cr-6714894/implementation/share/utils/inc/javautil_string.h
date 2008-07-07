@@ -1,6 +1,6 @@
 /*
  *
- * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
@@ -51,7 +51,8 @@
  * @return <code>JAVACALL_OK</code> on success,
  *         <code>JAVACALL_FAIL</code> or any other negative value otherwise.
  */
-javacall_result javautil_string_index_of(char* str, char c, /* OUT */ int* index);
+javacall_result javautil_string_index_of(const char* str, 
+                                         char c, /* OUT */ int* index);
 
 /**
  * Looks for the last occurence of <param>c</param> within <param>str</param>
@@ -62,7 +63,7 @@ javacall_result javautil_string_index_of(char* str, char c, /* OUT */ int* index
  * @return <code>JAVACALL_OK</code> on success,
  *         <code>JAVACALL_FAIL</code> or any other negative value otherwise.
  */
-javacall_result javautil_string_last_index_of(char* str, char c,
+javacall_result javautil_string_last_index_of(const char* str, char c,
                                               /* OUT */ int* index);
 
 /**
@@ -74,7 +75,8 @@ javacall_result javautil_string_last_index_of(char* str, char c,
  * @return <code>JAVACALL_TRUE</code> if equal,
  *         <code>JAVACALL_FALSE</code> otherwise.
  */
-javacall_bool javautil_string_equals(char* str1, char* str2);
+javacall_bool javautil_string_equals(const char* str1, 
+                                     const char* str2);
 
 /**
  * Returns a new string that is a substring of this string. The
@@ -89,7 +91,7 @@ javacall_bool javautil_string_equals(char* str1, char* str2);
  * @return <code>JAVACALL_OK</code> on success,
  *         <code>JAVACALL_FAIL</code> or any other negative value otherwise.
  */
-javacall_result javautil_string_substring(char* src, int begin, int end,
+javacall_result javautil_string_substring(const char* src, int begin, int end,
                                           /*OUT*/ char** dest);
 
 /**
@@ -109,8 +111,23 @@ javacall_result javautil_string_trim(char* str);
  * @return <code>JAVACALL_OK</code> on success,
  *         <code>JAVACALL_FAIL</code> or any other negative value otherwise.
  */
-javacall_result javautil_string_parse_int(char* str, int* number);
+javacall_result javautil_string_parse_int(const char* str, int* number);
 
+/**
+ * Copies at most n wide characters from the wide-character string
+ * pointed to by src, including the terminating L'\0' character, to the array
+ * pointed to by dest.  Exactly n wide characters are written at dest.  If the length
+ * wcslen(src) is greater or equal to n, the string pointed to by dest will not
+ * be L'\0' terminated.
+ *
+ * The strings may not overlap.
+ * 
+ * @param dst destination buffer. At least nchars wide-characters long.
+ * @param src copied string
+ * @param nchars max number of copied wide-characters
+ * @return number of copied wide-characters
+ */
+size_t javautil_wcsncpy(javacall_utf16 * dst, javacall_const_utf16_string src, size_t nchars);
 
 /**
  * Compare characters of two strings without regard to case.
@@ -128,7 +145,7 @@ javacall_result javautil_string_parse_int(char* str, int* number);
  */
 int javautil_strnicmp(const char* string1, const char* string2, size_t nchars);
 int javautil_stricmp(const char* string1, const char* string2);
-int javautil_wcsnicmp(const unsigned short* string1, const unsigned short* string2, size_t nchars);
+int javautil_wcsnicmp(javacall_const_utf16_string string1, javacall_const_utf16_string string2, size_t nchars);
 
 /**
  * Returns a new string that is a concatenation of two input strings.
@@ -171,7 +188,7 @@ void javautil_string_strip(char * s);
  * @param s input string
  * @return a newly allocated string with the same content as s
  */
-char* javautil_string_duplicate(char *s);
+char* javautil_string_duplicate(const char *s);
 
 
 #endif

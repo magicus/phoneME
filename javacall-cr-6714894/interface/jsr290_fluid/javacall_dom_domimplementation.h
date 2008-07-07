@@ -65,7 +65,7 @@ extern "C" {
  *   http://www.w3.org/TR/DOM-Level-3-Events/events.html#Conformance), 
  *   supporting any version of the feature causes the 
  *   method to return <code>true</code>.
- * @param retValue <code>true</code> if the feature is implemented in the 
+ * @param ret_value <code>true</code> if the feature is implemented in the 
  *   specified version, <code>false</code> otherwise.
  * 
  * @return JAVACALL_OK if all done successfuly,
@@ -75,7 +75,7 @@ javacall_result
 javacall_dom_domimplementation_has_feature(javacall_handle handle,
                                            javacall_const_utf16_string feature,
                                            javacall_const_utf16_string version,
-                                           /* OUT */ javacall_bool* retValue);
+                                           /* OUT */ javacall_bool* ret_value);
 
 /**
  * Creates an empty <code>DocumentType</code> node. Entity declarations 
@@ -85,59 +85,64 @@ javacall_dom_domimplementation_has_feature(javacall_handle handle,
  * <code>DocumentType</code>.
  * 
  * @param handle Pointer to the object representing this domimplementation.
- * @param qualifiedName The qualified name of the document type to be 
+ * @param qualified_name The qualified name of the document type to be 
  *   created. 
- * @param publicId The external subset public identifier.
- * @param systemId The external subset system identifier.
- * @param retValue Pointer to the object representing 
+ * @param public_id The external subset public identifier.
+ * @param system_id The external subset system identifier.
+ * @param ret_value Pointer to the object representing 
  *   a new <code>DocumentType</code> node with 
  *   <code>Node.ownerDocument</code> set to <code>NULL</code>.
- * @param exceptionCode Code of the error if function fails; 
- *                      see javacall_dom_exceptions 
+ * @param exception_code Code of the error if function fails; the following 
+ *                       codes are acceptable: 
+ *                            JAVACALL_DOM_INVALID_CHARACTER_ERR
+ *                            JAVACALL_DOM_NAMESPACE_ERR
  * 
  * @return JAVACALL_OK if all done successfuly,
- *         JAVACALL_FAIL if error occured; in this case exceptionCode has to be 
+ *         JAVACALL_FAIL if error occured; in this case exception_code has to be 
  *                                filled,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
 javacall_dom_domimplementation_create_document_type(javacall_handle handle,
-                                                    javacall_const_utf16_string qualifiedName,
-                                                    javacall_const_utf16_string publicId,
-                                                    javacall_const_utf16_string systemId,
-                                                    /* OUT */ javacall_handle* retValue,
-                                                    /* OUT */ javacall_dom_exceptions* exceptionCode);
+                                                    javacall_const_utf16_string qualified_name,
+                                                    javacall_const_utf16_string public_id,
+                                                    javacall_const_utf16_string system_id,
+                                                    /* OUT */ javacall_handle* ret_value,
+                                                    /* OUT */ javacall_dom_exceptions* exception_code);
 
 /**
  * Creates an XML <code>Document</code> object of the specified type with 
  * its document element. 
  * 
  * @param handle Pointer to the object representing this domimplementation.
- * @param namespaceURI The namespace URI of the document element to create.
- * @param qualifiedName The qualified name of the document element to be 
+ * @param namespace_uri The namespace URI of the document element to create.
+ * @param qualified_name The qualified name of the document element to be 
  *   created.
  * @param doctype Pointer to the object of
  *   the type of document to be created or <code>NULL</code>.
  *   When <code>doctype</code> is not <code>NULL</code>, its 
  *   <code>Node.ownerDocument</code> attribute is set to the document 
  *   being created.
- * @param retValue Pointer to the object representing 
+ * @param ret_value Pointer to the object representing 
  *   a new <code>Document</code> object.
- * @param exceptionCode Code of the error if function fails; 
- *                      see javacall_dom_exceptions 
+ * @param exception_code Code of the error if function fails; the following 
+ *                       codes are acceptable: 
+ *                            JAVACALL_DOM_INVALID_CHARACTER_ERR
+ *                            JAVACALL_DOM_NAMESPACE_ERR
+ *                            JAVACALL_DOM_WRONG_DOCUMENT_ERR
  * 
  * @return JAVACALL_OK if all done successfuly,
- *         JAVACALL_FAIL if error occured; in this case exceptionCode has to be 
+ *         JAVACALL_FAIL if error occured; in this case exception_code has to be 
  *                                filled,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
 javacall_dom_domimplementation_create_document(javacall_handle handle,
-                                               javacall_const_utf16_string namespaceURI,
-                                               javacall_const_utf16_string qualifiedName,
+                                               javacall_const_utf16_string namespace_uri,
+                                               javacall_const_utf16_string qualified_name,
                                                javacall_handle doctype,
-                                               /* OUT */ javacall_handle* retValue,
-                                               /* OUT */ javacall_dom_exceptions* exceptionCode);
+                                               /* OUT */ javacall_handle* ret_value,
+                                               /* OUT */ javacall_dom_exceptions* exception_code);
 
 /**
  * Returns  This method returns a specialized object which implements the 
@@ -161,7 +166,7 @@ javacall_dom_domimplementation_create_document(javacall_handle handle,
  *   sign "+" prepended to the name of the feature will be ignored since 
  *   it is not significant in the context of this method. 
  * @param version  This is the version number of the feature to test. 
- * @param retValue Pointer to the object representing 
+ * @param ret_value Pointer to the object representing 
  *    Returns an object which implements the specialized APIs of 
  *   the specified feature and version, if any, or <code>NULL</code> if 
  *   there is no object which implements interfaces associated with that 
@@ -179,7 +184,7 @@ javacall_result
 javacall_dom_domimplementation_get_feature(javacall_handle handle,
                                            javacall_const_utf16_string feature,
                                            javacall_const_utf16_string version,
-                                           /* OUT */ javacall_handle* retValue);
+                                           /* OUT */ javacall_handle* ret_value);
 
 /** 
  * Deletes object representing this domimplementation

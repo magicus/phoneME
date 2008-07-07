@@ -994,11 +994,7 @@ static javacall_result audio_qs_get_player_controls(javacall_handle handle,
             *controls |= JAVACALL_MEDIA_CTRL_PITCH;
             break;
         case JC_FMT_MS_PCM:
-            if (h->wav.metaData.iartData ||
-                h->wav.metaData.icopData ||
-                h->wav.metaData.icrdData ||
-                h->wav.metaData.inamData)
-                *controls |= JAVACALL_MEDIA_CTRL_METADATA;
+            *controls |= JAVACALL_MEDIA_CTRL_METADATA;
         case JC_FMT_AMR:
             *controls |= JAVACALL_MEDIA_CTRL_RATE;
             break;
@@ -1763,7 +1759,7 @@ static javacall_result audio_qs_get_duration(javacall_handle handle, long* ms) {
         case JC_FMT_MS_PCM:
         case JC_FMT_AMR: // will need revisit when real streaming will be used
         {
-            if(h->wav.bytesPerMilliSec != 0 && h->hdr.dataEnded)
+            if(h->wav.bytesPerMilliSec != 0 && (h->hdr.dataEnded || h->hdr.dataStopped))
                 *ms = h->wav.playBufferLen / h->wav.bytesPerMilliSec;
         }
         break;

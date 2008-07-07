@@ -50,7 +50,7 @@ extern "C" {
  *
  * 
  * @param handle Pointer to the object representing this elementtraversal.
- * @param retValue the current number of element nodes that are immediate children
+ * @param ret_value the current number of element nodes that are immediate children
  * of this element. <code>0</code> if this element has no child elements.
  * 
  * @return JAVACALL_OK if all done successfuly,
@@ -58,14 +58,14 @@ extern "C" {
  */
 javacall_result
 javacall_dom_elementtraversal_get_child_element_count(javacall_handle handle,
-                                                      /* OUT */ javacall_int32* retValue);
+                                                      /* OUT */ javacall_int32* ret_value);
 
 /**
  * Returns retrieves the first child element.
  * 
  * 
  * @param handle Pointer to the object representing this elementtraversal.
- * @param retValue Pointer to the object representing 
+ * @param ret_value Pointer to the object representing 
  *   the first child element node of this element.
  * <code>NULL</code> if this element has no child elements.
  * 
@@ -74,14 +74,14 @@ javacall_dom_elementtraversal_get_child_element_count(javacall_handle handle,
  */
 javacall_result
 javacall_dom_elementtraversal_get_first_element_child(javacall_handle handle,
-                                                      /* OUT */ javacall_handle* retValue);
+                                                      /* OUT */ javacall_handle* ret_value);
 
 /**
  * Returns retrieves the last child element.
  *
  * 
  * @param handle Pointer to the object representing this elementtraversal.
- * @param retValue Pointer to the object representing 
+ * @param ret_value Pointer to the object representing 
  *   the last child element node of this element.
  * <code>NULL</code> if this element has no child elements.
  * 
@@ -90,14 +90,14 @@ javacall_dom_elementtraversal_get_first_element_child(javacall_handle handle,
  */
 javacall_result
 javacall_dom_elementtraversal_get_last_element_child(javacall_handle handle,
-                                                     /* OUT */ javacall_handle* retValue);
+                                                     /* OUT */ javacall_handle* ret_value);
 
 /**
  * Returns retrieves the next sibling element.
  * 
  * 
  * @param handle Pointer to the object representing this elementtraversal.
- * @param retValue Pointer to the object representing 
+ * @param ret_value Pointer to the object representing 
  *   the next sibling element node of this element.
  * <code>NULL</code> if this element has no element sibling nodes
  * that come after this one in the document tree.
@@ -107,14 +107,14 @@ javacall_dom_elementtraversal_get_last_element_child(javacall_handle handle,
  */
 javacall_result
 javacall_dom_elementtraversal_get_next_element_sibling(javacall_handle handle,
-                                                       /* OUT */ javacall_handle* retValue);
+                                                       /* OUT */ javacall_handle* ret_value);
 
 /**
  * Returns retrieves the previous sibling element.
  * 
  * 
  * @param handle Pointer to the object representing this elementtraversal.
- * @param retValue Pointer to the object representing 
+ * @param ret_value Pointer to the object representing 
  *   the previous sibling element node of this element.
  * <code>NULL</code> if this element has no element sibling nodes
  * that come before this one in the document tree.
@@ -124,7 +124,7 @@ javacall_dom_elementtraversal_get_next_element_sibling(javacall_handle handle,
  */
 javacall_result
 javacall_dom_elementtraversal_get_previous_element_sibling(javacall_handle handle,
-                                                           /* OUT */ javacall_handle* retValue);
+                                                           /* OUT */ javacall_handle* ret_value);
 
 /** 
  * Deletes object representing this elementtraversal
