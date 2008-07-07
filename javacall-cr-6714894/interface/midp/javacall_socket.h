@@ -93,7 +93,7 @@ extern "C" {
  * 
  * @{
  */
-#ifndef MAX_HOST_LENGTH
+#ifndef JAVACALL_MAX_HOST_LENGTH
 #define JAVACALL_MAX_HOST_LENGTH 256
 #endif 
 
