@@ -30,10 +30,11 @@
 typedef const char* string;
 static string domainTBL[] = {
     "manufacturer",
+    "operator",
     "identified_third_party",
     "unidentified_third_party,unsecured",
-    "minimum",
-    "maximum"
+    "minimum,unsecured",
+    "maximum,unsecured"
 };
 static const int domainTBLsize = sizeof(domainTBL) / sizeof(string);
 
@@ -271,7 +272,8 @@ static int permissions_get1_value(values *tbl, char *group_name, int isMax) {
 static int permissions_get_value(char* domain_name, char* group_name, int isMax) {
     int val = NEVER;
     if (strcmp("manufacturer", domain_name) == 0 ||
-        strcmp("maximum", domain_name) == 0 ){
+        strcmp("maximum", domain_name) == 0 ||
+        strcmp("operator", domain_name) == 0){
         return ALLOW;
     } else if (strcmp("mimimum", domain_name) == 0) {
         return NEVER;
