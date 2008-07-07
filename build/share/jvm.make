@@ -254,6 +254,12 @@ PREVERIFY            = $(DIST_BIN_DIR)/preverify$(HOST_EXE_SUFFIX)
 
 CHMOD                = chmod
 
+ifeq ($(target_platform), darwin_javacall)
+CPREP                = g++ -E
+else
+CPREP                = cpp
+endif
+
 ASM_visCPP           = ml.exe
 ASM_evc_arm          = armasm.exe
 ASM_evc_i386         = ml.exe
@@ -1712,7 +1718,7 @@ Interpreter_$(arch)$(OBJ_SUFFIX): Interpreter_$(arch).s
 else
 AsmStubs_$(target_arch)$(OBJ_SUFFIX): $(JVMWorkSpace)/src/vm/cpu/c/AsmStubs_$(target_arch).s
 	$(A)echo "generating CPU stubs $<"
-	$(A)$(CPP) -E -D$(host_os) $< > $(THIS_DIR)/AsmStubs_$(target_arch).s
+	$(A)$(CPREP) -D$(host_os) $< > $(THIS_DIR)/AsmStubs_$(target_arch).s
 	$(A)$(ASM) $(ASM_FLAGS) -o $@ $(THIS_DIR)/AsmStubs_$(target_arch).s
 endif
 
