@@ -251,6 +251,48 @@ class AlertLFImpl extends DisplayableLFImpl implements AlertLF {
         }
     }
 
+
+    /**
+     * Handle a pointer press event
+     *
+     * @param x The x coordinate of the press
+     * @param y The y coordinate of the press
+     */
+    void uCallPointerPressed(int x, int y) {
+        lastx = x;
+        lasty = y;
+    }
+
+    /**
+     * Handle a pointer drag event
+     *
+     * @param x The x coordinate of the drag
+     * @param y The y coordinate of the drag
+     */
+    void uCallPointerDragged(int x, int y) {
+        lastx = x;
+        lasty = y;
+    }
+
+    /**
+     * Handle a pointer release event
+     *
+     * @param x The x coordinate of the release
+     * @param y The y coordinate of the release
+     */
+    void uCallPointerReleased(int x, int y) {
+        lastx = lasty = -1;
+    }
+
+    /**
+     * This method notify displayable to get the scroll quantity
+     *
+     * @param y current y coordinate
+     */
+    public int uCallGetYScrollQuantity(int y) {
+        return y - lasty;
+    }
+
     // *****************************************************
     //  Package private methods
     // *****************************************************

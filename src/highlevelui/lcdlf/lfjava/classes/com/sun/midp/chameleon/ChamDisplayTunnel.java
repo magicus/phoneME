@@ -96,5 +96,10 @@ public interface ChamDisplayTunnel {
      * Updates the scroll indicator.
      */
     public void updateScrollIndicator();
+
+    /**
+     * Get the Y coordinate scroll quantity.
+     */
+    public int getYScrollQuantity(int y);
 }
 

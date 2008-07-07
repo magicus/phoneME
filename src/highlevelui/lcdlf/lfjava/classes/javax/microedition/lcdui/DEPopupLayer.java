@@ -152,7 +152,13 @@ class DEPopupLayer extends ScrollablePopupLayer {
                 consume = false;
             } else if (itemIndexWhenPressed >= 0 &&
                 // press on valid item
-                hilightedIndex != itemIndexWhenPressed + startIndex) { 
+                hilightedIndex != itemIndexWhenPressed + startIndex) {
+
+                /* Finger Movement */
+                lasty = y;
+                if(scrollInd != null){
+                    scrollInd.initDeltaVerticalScroll();
+                }
                 hilightedIndex = itemIndexWhenPressed + startIndex;
                 requestRepaint();
             } 
@@ -170,10 +176,37 @@ class DEPopupLayer extends ScrollablePopupLayer {
 
             if (itemIndexWhenReleased == PRESS_OUT_OF_BOUNDS) {
                 consume = false;
-            }            
+            }
+
+            /* Finger Movement */
+            lasty = -1;
+            if(scrollInd != null){
+                scrollInd.finalizeDeltaVerticalScroll();
+            }
             //remember to reset the variables
             itemIndexWhenPressed = PRESS_OUT_OF_BOUNDS; 
             break;
+        case EventConstants.DRAGGED:
+            /* Finger Movement */
+            int delta = y - lasty;
+            if(delta != 0 && scrollInd != null){
+                scrollInd.setDeltaVerticalScroll(delta);
+            }
+            lasty = y;
+
+            break;
+
+        case EventConstants.FLICKERED_DOWN:
+            if(scrollInd != null){
+                scrollInd.setFlickerScroll(EventConstants.FLICKERED_DOWN);
+            }
+            break;
+
+        case  EventConstants.FLICKERED_UP:
+            if(scrollInd != null){
+                scrollInd.setFlickerScroll(EventConstants.FLICKERED_UP);
+            }
+            break;     
         }
         return consume; 
     }
@@ -613,5 +646,10 @@ class DEPopupLayer extends ScrollablePopupLayer {
 
     /* variable used in pointerInput handling */
     private int itemIndexWhenPressed = PRESS_OUT_OF_BOUNDS;
+
+    /**
+     * Last y position a pen is pressed
+     */
+    private int lasty = -1;
 
 }

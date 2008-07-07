@@ -527,6 +527,25 @@ class DisplayableLFImpl implements DisplayableLF {
     public void uCallScrollContent(int scrollType, int thumbPosition) {
         // by default nothing to do 
     }
+
+    /**
+      * This method notify displayable to get the scroll quantity
+      *
+      * @param y current y coordinate
+      */
+     public int uCallGetYScrollQuantity(int y){
+        System.out.println("DisplayableLFImpl.uCallGetYScrollQuantity");
+        return 0;
+     }
+
+     /**
+      * This method notify displayable to get the scroll quantity for flicking
+      *
+      * @param y current y coordinate
+      */
+     public int uCallGetYFlickeredScrollQuantity(int y){
+         return 0;
+     }
     
 
     /**
@@ -598,7 +617,7 @@ class DisplayableLFImpl implements DisplayableLF {
                     if (sawKeyPress) {
                         eventType = 2;
                     }
-                    break;
+                    break;                
                 default:
                     // wrong key type will be handled below
                     break;
@@ -697,6 +716,16 @@ class DisplayableLFImpl implements DisplayableLF {
                         eventType = 2;
                     }
                     break;
+                case EventConstants.FLICKERED_DOWN:
+                    if (sawPointerPress) {
+                        eventType = 3;
+                    }
+                    break;
+                case EventConstants.FLICKERED_UP:
+                    if (sawPointerPress) {
+                        eventType = 4;
+                    }
+                    break;
                 default:
                     // will be handled below
                     break;
@@ -714,6 +743,12 @@ class DisplayableLFImpl implements DisplayableLF {
             break;
         case 2:
             uCallPointerDragged(x, y);
+            break;
+        case 3:
+            uCallPointerFlickeredDown(x, y);
+            break;
+        case 4:
+            uCallPointerFlickeredUp(x, y);
             break;
         default:
             if (sawPointerPress) {
@@ -746,6 +781,21 @@ class DisplayableLFImpl implements DisplayableLF {
      * @param y The y coordinate of the release
      */
     void uCallPointerReleased(int x, int y) { }
+
+    /**
+     * Handle a pointer flicker event
+     *
+     * @param x The x coordinate of the flickered
+     * @param y The y coordinate of the flickered
+     */
+    void uCallPointerFlickeredDown(int x, int y) { }
+    /**
+     * Handle a pointer flicker event
+     *
+     * @param x The x coordinate of the flickered
+     * @param y The y coordinate of the flickered
+     */
+    void uCallPointerFlickeredUp(int x, int y) { }    
         
 
     /**
@@ -1165,5 +1215,8 @@ class DisplayableLFImpl implements DisplayableLF {
 
     /** frozen state of DisplayableLF */
     final static int FROZEN = 2;
+
+    protected int startx = -1, starty = -1;
+    protected int lastx = -1, lasty = -1;
 
 } // DisplayableLFImpl

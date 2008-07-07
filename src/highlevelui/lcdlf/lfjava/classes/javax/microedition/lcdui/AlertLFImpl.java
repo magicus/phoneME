@@ -473,7 +473,48 @@ class AlertLFImpl extends ScreenLFImpl implements AlertLF {
     void uCallKeyRepeated(int keyCode) {
         uCallKeyPressed(keyCode);
     }
-    
+
+    /**
+     * Handle a pointer press event
+     *
+     * @param x The x coordinate of the press
+     * @param y The y coordinate of the press
+     */
+    void uCallPointerPressed(int x, int y) {
+        lastx = x;
+        lasty = y;
+    }
+
+    /**
+     * Handle a pointer drag event
+     *
+     * @param x The x coordinate of the drag
+     * @param y The y coordinate of the drag
+     */
+    void uCallPointerDragged(int x, int y) {
+        lastx = x;
+        lasty = y;
+    }
+
+    /**
+     * Handle a pointer release event
+     *
+     * @param x The x coordinate of the release
+     * @param y The y coordinate of the release
+     */
+    void uCallPointerReleased(int x, int y) {
+        lastx = lasty = -1;
+    }
+
+    /**
+     * This method notify displayable to get the scroll quantity
+     *
+     * @param y current y coordinate
+     */
+    public int uCallGetYScrollQuantity(int y) {
+        return y - lasty;
+    }
+
     /**
      * Notify this Alert that is being displayed on the
      * given Display and whether it needs to initialize its

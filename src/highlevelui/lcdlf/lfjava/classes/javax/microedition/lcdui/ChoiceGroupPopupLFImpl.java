@@ -935,11 +935,42 @@ class ChoiceGroupPopupLFImpl extends ChoiceGroupLFImpl {
             
             switch (type) {
             case EventConstants.PRESSED:
+                /* Finger Movement */
+                lasty = y;
+                if(scrollInd != null){
+                    scrollInd.initDeltaVerticalScroll();
+                }
                 lf.uCallPointerPressed(transX, transY);
                 break;
             case EventConstants.RELEASED:
+                /* Finger Movement */
+                 lasty = -1;
+                 if(scrollInd != null){
+                     scrollInd.finalizeDeltaVerticalScroll();
+                 }
                 lf.uCallPointerReleased(transX, transY);
                 break;
+            case EventConstants.DRAGGED:
+                /* Finger Movement */
+                int delta = y - lasty;
+                if(delta != 0 && scrollInd != null){
+                   scrollInd.setDeltaVerticalScroll(delta);
+                }
+                lasty = y;
+
+                break;
+
+            case EventConstants.FLICKERED_DOWN:
+                if(scrollInd != null){
+                      scrollInd.setFlickerScroll(EventConstants.FLICKERED_DOWN);
+                }
+                break;
+
+            case  EventConstants.FLICKERED_UP:
+                if(scrollInd != null){
+                    scrollInd.setFlickerScroll(EventConstants.FLICKERED_UP);
+                }
+                break;         
             }
             return consume;
         }
@@ -1022,6 +1053,11 @@ class ChoiceGroupPopupLFImpl extends ChoiceGroupLFImpl {
          * when a page up or down occurs
          */
         static final int PIXELS_LEFT_ON_PAGE = 15;
+
+        /**
+         * Last y position a pen is pressed
+         */
+         private int lasty = -1;
 
     }
 

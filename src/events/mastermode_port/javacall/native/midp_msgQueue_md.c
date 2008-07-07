@@ -91,8 +91,10 @@ void checkForSystemSignal(MidpReentryData* pNewSignal,
         pNewSignal->waitingFor = UI_SIGNAL;
         pNewMidpEvent->type    = MIDP_PEN_EVENT;
         pNewMidpEvent->ACTION  = event->data.penEvent.type;
+
+        printf("midp_check_events event->data.penEvent.type = %d \n", event->data.penEvent.type);
         pNewMidpEvent->X_POS   = event->data.penEvent.x;
-        pNewMidpEvent->Y_POS   = event->data.penEvent.y;
+        pNewMidpEvent->Y_POS   = event->data.penEvent.y;        
 	break;
     case MIDP_JC_EVENT_SOCKET:
         pNewSignal->waitingFor = event->data.socketEvent.waitingFor;

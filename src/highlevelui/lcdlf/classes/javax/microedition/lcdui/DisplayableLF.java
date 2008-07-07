@@ -241,6 +241,13 @@ interface DisplayableLF {
      */
     void uCallScrollContent(int scrollType, int thumbPosition);
 
+    /**
+     * This method notify displayable to get the scroll quantity
+     *
+     * @param y current y coordinate
+     */
+    int uCallGetYScrollQuantity(int y);
+
     boolean uSetRotatedStatus (boolean newStatus);
 
     /**

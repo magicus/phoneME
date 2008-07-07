@@ -78,6 +78,30 @@ public abstract class ScrollIndLayer extends CLayer {
      */
     public abstract void setBounds();
 
+    public void initDeltaVerticalScroll() {
+    }
+
+    /**
+     * Set the current vertical scroll position by delta.
+     *
+     * @param delta vertical scroll delta position.
+     */
+    public void setDeltaVerticalScroll(int delta) {
+    }
+
+    public void finalizeDeltaVerticalScroll() {
+    }
+
+    /**
+     * Handle a pointer flicker event
+     *
+     * @param deltaX The flicker delta of x coordinate
+     * @param deltaY The flicker delta of y coordinate
+     */
+
+    public void setFlickerScroll(int direction) {
+    }
+
     /**
      * Common constructor.
      * @param layer the scrollable controlling the scrolling layer 

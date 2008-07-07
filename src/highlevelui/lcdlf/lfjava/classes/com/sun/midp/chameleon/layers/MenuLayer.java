@@ -78,7 +78,12 @@ public class MenuLayer extends ScrollablePopupLayer {
     private final static int PRESS_ON_TITLE = -2; 
     
     /** variable used in pointerInput handling */
-    private int itemIndexWhenPressed = PRESS_OUT_OF_BOUNDS; 
+    private int itemIndexWhenPressed = PRESS_OUT_OF_BOUNDS;
+
+    /**
+     * Last y position a pen is pressed
+     */
+     private int lasty = -1;
     
     /**
      * Construct a new system menu layer.
@@ -175,39 +180,66 @@ public class MenuLayer extends ScrollablePopupLayer {
      */
     public boolean pointerInput(int type, int x, int y) {
         switch (type) {
-        case EventConstants.PRESSED:
-            itemIndexWhenPressed =  itemIndexAtPointerPosition(x, y);
+            case EventConstants.PRESSED:
+                itemIndexWhenPressed = itemIndexAtPointerPosition(x, y);
 
-            // dismiss the menu layer if the user pressed outside the menu
-            if (itemIndexWhenPressed == PRESS_OUT_OF_BOUNDS) {
-                if (btnLayer != null) {
-                    btnLayer.dismissMenu();
+                // dismiss the menu layer if the user pressed outside the menu
+                if (itemIndexWhenPressed == PRESS_OUT_OF_BOUNDS) {
+                    if (btnLayer != null) {
+                        btnLayer.dismissMenu();
+                    }
+                } else if (itemIndexWhenPressed >= 0) { // press on valid menu item
+                    selI = scrollIndex + itemIndexWhenPressed;
+                    requestRepaint();
+                    // if (btnLayer != null) btnLayer.serviceRepaints();
                 }
-            } else if (itemIndexWhenPressed >= 0) { // press on valid menu item
-                selI = scrollIndex + itemIndexWhenPressed;
-                requestRepaint();
-                // if (btnLayer != null) btnLayer.serviceRepaints();
-            }
-            break;
-        case EventConstants.RELEASED:
-            int itemIndexWhenReleased = itemIndexAtPointerPosition(x, y);
-            
-            if (itemIndexWhenReleased == itemIndexWhenPressed) {
-                if (itemIndexWhenPressed >= 0) {
-                    if (btnLayer != null && !showSubMenu(selI)) {
-                        if (selI >= 0 && selI < menuCmds.length) {
-                            btnLayer.commandSelected(menuCmds[selI]);
+                break;
+            case EventConstants.RELEASED:
+                int itemIndexWhenReleased = itemIndexAtPointerPosition(x, y);
+
+                if (itemIndexWhenReleased == itemIndexWhenPressed) {
+                    if (itemIndexWhenPressed >= 0) {
+                        if (btnLayer != null && !showSubMenu(selI)) {
+                            if (selI >= 0 && selI < menuCmds.length) {
+                                btnLayer.commandSelected(menuCmds[selI]);
+                            }
                         }
                     }
                 }
-            }
+                /* Finger Movement */
+                lasty = -1;
+                if (scrollInd != null) {
+                    scrollInd.finalizeDeltaVerticalScroll();
+                }
+                // remember to reset the variables
+                itemIndexWhenPressed = PRESS_OUT_OF_BOUNDS;
+                break;
 
-            // remember to reset the variables
-            itemIndexWhenPressed = PRESS_OUT_OF_BOUNDS;
-            break;
+            case EventConstants.DRAGGED:
+                /* Finger Movement */
+                int delta = y - lasty;
+                if (delta != 0 && scrollInd != null) {
+                    scrollInd.setDeltaVerticalScroll(delta);
+                }
+                lasty = y;
+
+                break;
+
+            case EventConstants.FLICKERED_DOWN:
+                if (scrollInd != null) {
+                    scrollInd.setFlickerScroll(EventConstants.FLICKERED_DOWN);
+                }
+                break;
+
+            case EventConstants.FLICKERED_UP:
+                if (scrollInd != null) {
+                    scrollInd.setFlickerScroll(EventConstants.FLICKERED_UP);
+                }
+                break;
+
         }
         // return true always as menuLayer will capture all of the pointer inputs
-        return true;  
+        return true;
     }
 
     /**

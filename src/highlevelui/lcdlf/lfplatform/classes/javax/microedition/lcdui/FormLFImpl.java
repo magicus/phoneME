@@ -806,12 +806,16 @@ class FormLFImpl extends DisplayableLFImpl implements FormLF {
 
         ItemLFImpl v = null;
 
+        lastx = x;
+        lasty = y;
+
         synchronized (Display.LCDUILock) {
 
             v = getItemInFocus();
 
 	        // stop here if no current item to handle the key
             if (v == null) {
+                yPress = y;
                 return;
             }
 
@@ -841,6 +845,8 @@ class FormLFImpl extends DisplayableLFImpl implements FormLF {
 
         ItemLFImpl v = null;
 
+        yPress = -1;
+
         synchronized (Display.LCDUILock) {
 
             v = getItemInFocus();
@@ -859,6 +865,9 @@ class FormLFImpl extends DisplayableLFImpl implements FormLF {
         if (v instanceof CustomItemLFImpl) {
             v.uCallPointerReleased(x, y);
         }
+
+        lastx = -1;
+        lasty = -1;
     }
 
     /**
@@ -875,6 +884,9 @@ class FormLFImpl extends DisplayableLFImpl implements FormLF {
         }
 
         ItemLFImpl v = null;
+
+        lastx = x;
+        lasty = y;
 
         synchronized (Display.LCDUILock) {
 
@@ -895,6 +907,16 @@ class FormLFImpl extends DisplayableLFImpl implements FormLF {
             v.uCallPointerDragged(x, y);
         }
     }
+
+    /**
+     * This method notify displayable to get the scroll quantity
+     *
+     * @param y current y coordinate
+     */
+     public int uCallGetYScrollQuantity(int y){
+        return y -lasty;
+     }
+    
 
     /**
      * Gets item currently in focus.
@@ -2414,6 +2436,11 @@ class FormLFImpl extends DisplayableLFImpl implements FormLF {
      * Left to right layout is default.
      * Used by isImplicitLineBreak.
      */
-    final static boolean ltr = true; 
+    final static boolean ltr = true;
+
+    /**
+     * Pressed y coordinate. -1 for not-pressed.
+     */
+     int yPress = -1;
 
 } // class FormLFImpl

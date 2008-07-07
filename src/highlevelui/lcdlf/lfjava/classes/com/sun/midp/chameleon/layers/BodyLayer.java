@@ -31,6 +31,7 @@ import javax.microedition.lcdui.*;
 import com.sun.midp.chameleon.skins.ScrollIndSkin;
 import com.sun.midp.chameleon.skins.ScreenSkin;
 import com.sun.midp.chameleon.skins.resources.ScrollIndResourcesConstants;
+import com.sun.midp.lcdui.EventConstants;
 
 /**
  * Basic layer containing the application area of the display. This layer
@@ -44,6 +45,8 @@ public class BodyLayer extends CLayer
      * in case not all content can fit on the menu.
      */
     protected ScrollIndLayer scrollInd;
+    
+    private static int delta = -1;
 
     /** Tunnel instance to call Display methods */
     ChamDisplayTunnel tunnel;
@@ -76,6 +79,7 @@ public class BodyLayer extends CLayer
         super(bgImage, bgColor);
         this.tunnel = tunnel;
         this.visible = false;
+        setSupportsInput(true);
 
         setScrollInd(ScrollIndLayer.getInstance(ScrollIndSkin.MODE));
     }
@@ -97,6 +101,7 @@ public class BodyLayer extends CLayer
         super(bgImage, bgColor);
         this.tunnel = tunnel;
         this.visible = false;
+        setSupportsInput(true);
         setScrollInd(ScrollIndLayer.getInstance(ScrollIndSkin.MODE));
     }
 
@@ -348,6 +353,78 @@ public class BodyLayer extends CLayer
                 }
             }
         }
+    }
+
+    /**
+     * Handle input from a pen tap.
+     * <p/>
+     * Parameters describe the type of pen event and the x,y location in the
+     * layer at which the event occurred.
+     * <p/>
+     * Important: the x,y location of the pen tap will already be translated
+     * into the coordinate space of the layer.
+     *
+     * @param type the type of pen event
+     * @param x    the x coordinate of the event
+     * @param y    the y coordinate of the event
+     * @return
+     */
+    public boolean pointerInput(int type, int x, int y) {
+        System.out.println("BodyLayer.pointerInput");
+
+        if (tunnel != null) {
+            switch (type) {
+                case EventConstants.PRESSED:
+                    System.out.println("BodyLayer.pointerInput PRESSED");
+                    delta = 0;
+                    if (scrollInd != null) {
+                        scrollInd.initDeltaVerticalScroll();
+                    }
+                    break;
+                case EventConstants.DRAGGED:
+                    System.out.println("BodyLayer.pointerInput DRAGGED");
+                    if (delta > -1) {
+                        delta =+ tunnel.getYScrollQuantity(y);
+                    }
+//                    if (delta != 0 && scrollInd != null) {
+//                        scrollInd.setDeltaVerticalScroll(delta);
+//                    }
+                    break;                
+                case EventConstants.CLICKED:
+                    System.out.println("BodyLayer.pointerInput CLICKERED");
+
+                    break;
+                case EventConstants.FLICKERED:
+                    System.out.println("BodyLayer.pointerInput FLICKERED");
+                    if (delta != 0 && scrollInd != null) {
+                        scrollInd.setDeltaVerticalScroll(delta);
+                    }
+                    break;
+                case EventConstants.FLICKERED_DOWN:
+                    System.out.println("BodyLayer.pointerInput FLICKERED_DOWN");
+                    if (scrollInd != null) {
+                        scrollInd.setFlickerScroll(EventConstants.FLICKERED_DOWN);
+                        return true;
+                    }
+                    break;
+                case EventConstants.FLICKERED_UP:
+                    System.out.println("BodyLayer.pointerInput FLICKERED_UP");
+                    if (scrollInd != null) {
+                        scrollInd.setFlickerScroll(EventConstants.FLICKERED_UP);
+                        return true;
+                    }
+                    break;
+                case EventConstants.RELEASED:
+                    System.out.println("BodyLayer.pointerInput RELEASED");
+                    delta = -1;
+                    if (scrollInd != null) {
+                        scrollInd.finalizeDeltaVerticalScroll();
+                    }
+                    break;
+            }
+        }
+
+        return false;
     }
 }
 

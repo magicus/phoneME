@@ -468,8 +468,8 @@ public class MIDPWindow extends CWindow {
 
 
                 // IMPL_NOTES: interface has to be fixed
-                 alertLayer.setScrollInd(
-                     ScrollIndLayer.getInstance(ScrollIndSkin.MODE));
+/*                 alertLayer.setScrollInd(
+                     ScrollIndLayer.getInstance(ScrollIndSkin.MODE)); /**/
                 
                 // IMPL_NOTES: need to be removed as soon as removeLayer algorithm
                 // takes into account layers interaction
@@ -484,7 +484,7 @@ public class MIDPWindow extends CWindow {
                 removeLayer(washLayer);
 
                 // IMPL_NOTES: interface has to be fixed
-                 bodyLayer.setScrollInd(ScrollIndLayer.getInstance(ScrollIndSkin.MODE));
+//                 bodyLayer.setScrollInd(ScrollIndLayer.getInstance(ScrollIndSkin.MODE));
                                 
                 // IMPL_NOTES: need to be removed as soon as removeLayer algorithm
                 // takes into account layers interaction
@@ -572,7 +572,8 @@ public class MIDPWindow extends CWindow {
      * @return the x anchor coordinate of the body layer
      */
     public int getBodyAnchorX() {
-        return bodyLayer.bounds[X];
+        return alertLayer.isVisible()?alertLayer.bounds[X] : 
+        bodyLayer.bounds[X];
     }
 
     /**
@@ -582,7 +583,8 @@ public class MIDPWindow extends CWindow {
      * @return the y anchor coordinate of the body layer
      */
     public int getBodyAnchorY() {
-        return bodyLayer.bounds[Y];
+        return alertLayer.isVisible()?alertLayer.bounds[Y] :
+        bodyLayer.bounds[Y];
     }
 
     /**
@@ -636,7 +638,7 @@ public class MIDPWindow extends CWindow {
      * @return true if the coordinate lies in the bounds of this layer
      */
     public boolean bodyContainsPoint(int x, int y) {
-        return bodyLayer.containsPoint(x, y);
+        return alertLayer.containsPoint(x, y) |bodyLayer.containsPoint(x, y);
     }
 
     /**

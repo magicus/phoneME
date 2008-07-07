@@ -774,6 +774,10 @@ class FormLFImpl extends ScreenLFImpl implements FormLF {
      */
     void uCallPointerPressed(int x, int y) {
         ItemLFImpl v = null;
+
+        lastx = x;
+        lasty = y;
+        
         synchronized (Display.LCDUILock) {
             if (numOfLFs == 0) {
                 return;
@@ -792,6 +796,8 @@ class FormLFImpl extends ScreenLFImpl implements FormLF {
             v.uCallPointerPressed(x, y);
 
             uScrollToItem(v.item);
+        } else {
+             yPress = y;
         }
     }
 
@@ -803,6 +809,8 @@ class FormLFImpl extends ScreenLFImpl implements FormLF {
      */
     void uCallPointerReleased(int x, int y) {
         ItemLFImpl v = null;
+
+        yPress = -1;
 
         synchronized (Display.LCDUILock) {
             if (numOfLFs == 0 || 
@@ -823,6 +831,9 @@ class FormLFImpl extends ScreenLFImpl implements FormLF {
             y = (y + viewable[Y]) - v.getInnerBounds(Y);
             v.uCallPointerReleased(x, y);
         }
+
+        lastx = -1;
+        lasty = -1;
     }
 
     /**
@@ -833,6 +844,9 @@ class FormLFImpl extends ScreenLFImpl implements FormLF {
      */
     void uCallPointerDragged(int x, int y) {
         ItemLFImpl v = null;
+
+        lastx = x;
+        lasty = y;
 
         synchronized (Display.LCDUILock) {
             if (numOfLFs == 0 || 
@@ -2131,6 +2145,17 @@ class FormLFImpl extends ScreenLFImpl implements FormLF {
         }
     }
 
+
+    /**
+     * This method notify displayable to get the scroll quantity
+     *
+     * @param y current y coordinate
+     */
+     public int uCallGetYScrollQuantity(int y){
+        System.out.println("FormLFImpl.uCallGetYScrollQuantity y -lasty=" + (y -lasty));
+         return y -lasty;
+     }
+
     /**
      * Set status of screen rotation
      * @param newStatus
@@ -2335,5 +2360,10 @@ class FormLFImpl extends ScreenLFImpl implements FormLF {
      * while FormLF was in HIDDEN or FROZEN state.
      */
     Item pendingCurrentItem; // = null
+
+    /**
+     * Pressed y coordinate. -1 for not-pressed.
+     */
+     int yPress = -1;
 
 } // class FormLFImpl

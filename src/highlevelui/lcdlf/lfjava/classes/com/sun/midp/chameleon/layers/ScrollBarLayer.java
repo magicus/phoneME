@@ -84,6 +84,9 @@ public class ScrollBarLayer extends ScrollIndLayer {
     /** timer for the arrow repaint */
     protected Timer aT; // = null
 
+    /** extra pixel to scroll */
+    private int extraDelta = 0;
+
     /**
      * Construct a new ScrollBarLayer, visible, but transparent
      */
@@ -392,6 +395,46 @@ public class ScrollBarLayer extends ScrollIndLayer {
         return true;
     }
 
+    public void initDeltaVerticalScroll() {
+        gap = lasty - thumbY;
+    }
+
+    public void finalizeDeltaVerticalScroll() {
+        gap = 0;
+    }
+
+    public void setDeltaVerticalScroll(int delta) {
+        int y = lasty + delta + extraDelta;
+        if (y < lasty - DRAG_MIN || y > lasty + DRAG_MIN ||
+                /* accumulate drag events till reaching DRAG_MIN
+           or till reaching drag boundaries */
+                y <= (ARROW_HEIGHT + gap) ||
+                y >= (bounds[H] - ARROW_HEIGHT - thumbHeight + gap)) {
+            extraDelta = 0;
+            lasty = y;
+            y = y - gap - ARROW_HEIGHT;
+            int pos = 100 * y / (barHeight - thumbHeight);
+            pos = (pos < 0) ? 0 : pos;
+            pos = (pos > 100) ? 100 : pos;
+            listener.scrollContent(SCROLL_THUMBTRACK, pos);
+        } else {
+            extraDelta += delta;
+        }
+    }
+
+    /**
+     * Handle a pointer flicker event
+     *
+     * @param direction The flicker direction
+     */
+    public void setFlickerScroll(int direction) {
+        if (direction == EventConstants.FLICKERED_DOWN) {
+            listener.scrollContent(SCROLL_PAGEDOWN, 0);
+        } else if (direction == EventConstants.FLICKERED_UP) {
+            listener.scrollContent(SCROLL_PAGEUP, 0);
+        }
+    }
+
     /**
      * Set new scrollable 
      * @param layer new scrollable controlling the scrolling layer
@@ -406,6 +449,7 @@ public class ScrollBarLayer extends ScrollIndLayer {
             lastx = -1;
             lasty = -1;
             gap = 0;
+            extraDelta = 0;
             scrollType = SCROLL_NONE;
         }
         return ret;

@@ -37,6 +37,8 @@
 #include <midp_run_vm.h>
 #include <suspend_resume.h>
 
+#include <event_interpretation.h>
+
 #if (ENABLE_JSR_120 || ENABLE_JSR_205)
 #include <wmaInterface.h>
 #endif
@@ -47,6 +49,7 @@
 
 static MidpReentryData newSignal;
 static MidpEvent newMidpEvent;
+static MidpEvent newCompMidpEvent;
 
 /**
  * Unblock a Java thread.
@@ -125,11 +128,18 @@ void midp_check_events(JVMSPI_BlockedThreadInfo *blocked_threads,
 #endif /* ENABLE_JAVA_DEBUGGER */
 
     case AMS_SIGNAL:
-        midpStoreEventAndSignalAms(newMidpEvent);
+        midpStoreEventAndSignalAms(newMidpEvent);     
         break;
 
     case UI_SIGNAL:
         midpStoreEventAndSignalForeground(newMidpEvent);
+        MIDP_EVENT_INITIALIZE(newCompMidpEvent);
+        printf("midp_check_events \n");
+        if (get_complicated_event(&newCompMidpEvent,
+                                  newMidpEvent.ACTION, newMidpEvent.X_POS, newMidpEvent.Y_POS)) {
+            midpStoreEventAndSignalForeground(newCompMidpEvent);
+        }
+
         break;
 
     case NETWORK_READ_SIGNAL:

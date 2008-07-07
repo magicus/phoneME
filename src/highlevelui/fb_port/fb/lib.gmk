@@ -39,3 +39,4 @@ vpath % $(FB_PORT_DIR)/native
 #
 SUBSYSTEM_APP_NATIVE_FILES += \
     fb_port.c
+

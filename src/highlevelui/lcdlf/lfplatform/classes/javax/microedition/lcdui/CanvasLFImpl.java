@@ -288,6 +288,10 @@ class CanvasLFImpl extends DisplayableLFImpl implements CanvasLF {
      * @param y The y coordinate of the press
      */
     void uCallPointerPressed(int x, int y) {
+
+        lastx = x;
+        lasty = y;
+        
         synchronized (Display.calloutLock) {
             try {
                 canvas.pointerPressed(x, y);
@@ -304,6 +308,10 @@ class CanvasLFImpl extends DisplayableLFImpl implements CanvasLF {
      * @param y The y coordinate of the release
      */
     void uCallPointerReleased(int x, int y) {
+
+        lastx = -1;
+        lasty = -1;
+        
         synchronized (Display.calloutLock) {
             try {
                 canvas.pointerReleased(x, y);
@@ -320,6 +328,10 @@ class CanvasLFImpl extends DisplayableLFImpl implements CanvasLF {
      * @param y The y coordinate of the drag
      */
     void uCallPointerDragged(int x, int y) {
+
+        lastx = x;
+        lasty = y;
+
         synchronized (Display.calloutLock) {
             try {
                 canvas.pointerDragged(x, y);
@@ -328,6 +340,15 @@ class CanvasLFImpl extends DisplayableLFImpl implements CanvasLF {
             }
         }
     }
+
+        /**
+     * This method notify displayable to get the scroll quantity
+     *
+     * @param y current y coordinate
+     */
+     public int uCallGetYScrollQuantity(int y){
+         return y -lasty;
+     }
 
     /**
      * Add embedded video player.

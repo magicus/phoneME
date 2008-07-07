@@ -59,6 +59,19 @@ public final class EventConstants {
      */
     public static final int DRAGGED  = 3;  // pen
 
+    public static final int CLICKED = 4;
+    
+    public static final int FLICKERED = 5;
+    /**
+     * Minor ID indicating a pointer flicker downward.
+     */
+    public static final int FLICKERED_DOWN = 6; //pen
+
+    /**
+     * Minor ID indicating a pointer flicker upward.
+     */
+    public static final int FLICKERED_UP = 7; //pen
+
     /**
      * Minor ID indicating that command event requires posting a menu.
      */

@@ -48,4 +48,8 @@ endif
 
 SUBSYSTEM_APP_NATIVE_FILES += \
     jcapp_export.c
+
+SUBSYSTEM_APP_NATIVE_FILES += \
+    event_interpretation.c
+
 	

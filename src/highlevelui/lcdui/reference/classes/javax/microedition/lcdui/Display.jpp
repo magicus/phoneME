@@ -2554,6 +2554,17 @@ public class Display {
                           currentCopy.getVerticalScrollProportion());
             }
         }
+
+        /**
+         * Get the Y coordinate scroll quantity.
+         */
+        public int getYScrollQuantity(int y){
+            DisplayableLF currentCopy = Display.this.current;
+            if (currentCopy != null) {
+                return currentCopy.uCallGetYScrollQuantity(y);
+            }
+            return 0;
+         }
     }
     // #endif
  
