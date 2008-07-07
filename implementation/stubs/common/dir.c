@@ -38,7 +38,8 @@ extern "C" {
  * 
  * @param path the name of a directory, but it can be a
  *             partial file name
- * @param pathLen length of directory name
+ * @param pathLen length of directory name or
+ *        JAVACALL_UNKNOWN_LENGTH, which may be used for null terminated string 
  * @return pointer to an opaque filelist structure, that can be used in
  *         javacall_dir_get_next() and javacall_dir_close
  *         NULL returned on error, for example if root directory of the
@@ -110,12 +111,6 @@ javacall_result javacall_dir_get_root_path(javacall_utf16* /* OUT */ rootPath,
  * @return <tt>JAVACALL_OK</tt> if operation completed successfully
  *         <tt>JAVACALL_FAIL</tt> if an error occured
  */
-javacall_result javacall_dir_get_configuration_path(javacall_utf16* /* OUT */ configPath,
-                                                    int* /* IN | OUT */ configPathLen) {
-    return JAVACALL_FAIL;
-}  
-
-
 javacall_result javacall_dir_get_config_path(javacall_utf16* /* OUT */ configPath,
                                            int* /*IN | OUT*/ configPathLen) {
     return JAVACALL_FAIL;

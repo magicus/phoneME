@@ -132,7 +132,7 @@ javacall_result javacall_dir_get_root_path(javacall_utf16* /* OUT */ rootPath,
  * @return <tt>JAVACALL_OK</tt> if operation completed successfully
  *         <tt>JAVACALL_FAIL</tt> if an error occured
  */
-javacall_result javacall_dir_get_configuration_path(javacall_utf16* /* OUT */ configPath,
+javacall_result javacall_dir_get_config_path(javacall_utf16* /* OUT */ configPath,
                                                     int* /* IN | OUT */ configPathLen);
 
 

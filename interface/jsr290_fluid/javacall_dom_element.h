@@ -57,47 +57,47 @@ extern "C" {
  * the <code>tagName</code> of an HTML element in the canonical
  * uppercase form, regardless of the case in the source HTML document.
  * 
- * Note: If retValueLen is less then length of the returned string this function 
- *       has to return with JAVACALL_OUT_OF_MEMORY code and fill retValueLen 
+ * Note: If ret_value_len is less then length of the returned string this function 
+ *       has to return with JAVACALL_OUT_OF_MEMORY code and fill ret_value_len 
  *       with actual length of the returned string.
  *
  * @param handle Pointer to the object representing this element.
- * @param retValue a String containing the name of the element
- * @param retValueLen Length of the returned string
+ * @param ret_value a String containing the name of the element
+ * @param ret_value_len Length of the returned string
  * 
  * @return JAVACALL_OK if all done successfuly,
  *         JAVACALL_OUT_OF_MEMORY if length of the returend string is more then 
- *                                specified in retValueLen,
+ *                                specified in ret_value_len,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
 javacall_dom_element_get_tag_name(javacall_handle handle,
-                                  /* OUT */ javacall_utf16_string retValue,
-                                  /* INOUT */ javacall_uint32* retValueLen);
+                                  /* OUT */ javacall_utf16_string ret_value,
+                                  /* INOUT */ javacall_uint32* ret_value_len);
 
 /**
  * Returns retrieves an attribute value by name.
  * 
- * Note: If retValueLen is less then length of the returned string this function 
- *       has to return with JAVACALL_OUT_OF_MEMORY code and fill retValueLen 
+ * Note: If ret_value_len is less then length of the returned string this function 
+ *       has to return with JAVACALL_OUT_OF_MEMORY code and fill ret_value_len 
  *       with actual length of the returned string.
  *
  * @param handle Pointer to the object representing this element.
  * @param name The name of the attribute to retrieve.
- * @param retValue The <code>Attr</code> value as a string, or the empty string 
+ * @param ret_value The <code>Attr</code> value as a string, or the empty string 
  *   if that attribute does not have a specified or default value.
- * @param retValueLen Length of the returned string
+ * @param ret_value_len Length of the returned string
  * 
  * @return JAVACALL_OK if all done successfuly,
  *         JAVACALL_OUT_OF_MEMORY if length of the returend string is more then 
- *                                specified in retValueLen,
+ *                                specified in ret_value_len,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
 javacall_dom_element_get_attribute(javacall_handle handle,
                                    javacall_const_utf16_string name,
-                                   /* OUT */ javacall_utf16_string retValue,
-                                   /* INOUT */ javacall_uint32* retValueLen);
+                                   /* OUT */ javacall_utf16_string ret_value,
+                                   /* INOUT */ javacall_uint32* ret_value_len);
 
 /**
  * Sets adds a new attribute. If an attribute with that name is already present 
@@ -117,11 +117,13 @@ javacall_dom_element_get_attribute(javacall_handle handle,
  * @param handle Pointer to the object representing this element.
  * @param name The name of the attribute to create or alter.
  * @param value Value to set in string form.
- * @param exceptionCode Code of the error if function fails; 
- *                      see javacall_dom_exceptions 
+ * @param exception_code Code of the error if function fails; the following 
+ *                       codes are acceptable: 
+ *                            JAVACALL_DOM_INVALID_CHARACTER_ERR
+ *                            JAVACALL_DOM_NO_MODIFICATION_ALLOWED_ERR
  * 
  * @return JAVACALL_OK if all done successfuly,
- *         JAVACALL_FAIL if error occured; in this case exceptionCode has to be 
+ *         JAVACALL_FAIL if error occured; in this case exception_code has to be 
  *                                filled,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
@@ -129,7 +131,7 @@ javacall_result
 javacall_dom_element_set_attribute(javacall_handle handle,
                                    javacall_const_utf16_string name,
                                    javacall_const_utf16_string value,
-                                   /* OUT */ javacall_dom_exceptions* exceptionCode);
+                                   /* OUT */ javacall_dom_exceptions* exception_code);
 
 /**
  * Removes an attribute by name. If a default value for the removed 
@@ -142,18 +144,14 @@ javacall_dom_element_set_attribute(javacall_handle handle,
  * 
  * @param handle Pointer to the object representing this element.
  * @param name The name of the attribute to remove.
- * @param exceptionCode Code of the error if function fails; 
- *                      see javacall_dom_exceptions 
  * 
  * @return JAVACALL_OK if all done successfuly,
- *         JAVACALL_FAIL if error occured; in this case exceptionCode has to be 
- *                                filled,
+ *         JAVACALL_FAIL if NO_MODIFICATION_ALLOWED_ERR occured,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
 javacall_dom_element_remove_attribute(javacall_handle handle,
-                                      javacall_const_utf16_string name,
-                                      /* OUT */ javacall_dom_exceptions* exceptionCode);
+                                      javacall_const_utf16_string name);
 
 /**
  * Returns retrieves an attribute node by name.
@@ -163,7 +161,7 @@ javacall_dom_element_remove_attribute(javacall_handle handle,
  * @param handle Pointer to the object representing this element.
  * @param name The name (<code>nodeName</code>) of the attribute to 
  *   retrieve.
- * @param retValue Pointer to the object representing 
+ * @param ret_value Pointer to the object representing 
  *   the <code>Attr</code> node with the specified name (
  *   <code>nodeName</code>) or <code>NULL</code> if there is no such 
  *   attribute.
@@ -174,7 +172,7 @@ javacall_dom_element_remove_attribute(javacall_handle handle,
 javacall_result
 javacall_dom_element_get_attribute_node(javacall_handle handle,
                                         javacall_const_utf16_string name,
-                                        /* OUT */ javacall_handle* retValue);
+                                        /* OUT */ javacall_handle* ret_value);
 
 /**
  * Sets adds a new attribute node. If an attribute with that name (
@@ -185,25 +183,28 @@ javacall_dom_element_get_attribute_node(javacall_handle handle,
  * URI, use the <code>setAttributeNodeNS</code> method.
  * 
  * @param handle Pointer to the object representing this element.
- * @param newAttr Pointer to the object of
+ * @param new_attr Pointer to the object of
  *   the <code>Attr</code> node to add to the attribute list.
- * @param retValue Pointer to the object representing 
- *   if the <code>newAttr</code> attribute replaces an existing 
+ * @param ret_value Pointer to the object representing 
+ *   if the <code>new_attr</code> attribute replaces an existing 
  *   attribute, the replaced <code>Attr</code> node is returned, 
  *   otherwise <code>NULL</code> is returned.
- * @param exceptionCode Code of the error if function fails; 
- *                      see javacall_dom_exceptions 
+ * @param exception_code Code of the error if function fails; the following 
+ *                       codes are acceptable: 
+ *                            JAVACALL_DOM_WRONG_DOCUMENT_ERR
+ *                            JAVACALL_DOM_NO_MODIFICATION_ALLOWED_ERR
+ *                            JAVACALL_DOM_INUSE_ATTRIBUTE_ERR
  * 
  * @return JAVACALL_OK if all done successfuly,
- *         JAVACALL_FAIL if error occured; in this case exceptionCode has to be 
+ *         JAVACALL_FAIL if error occured; in this case exception_code has to be 
  *                                filled,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
 javacall_dom_element_set_attribute_node(javacall_handle handle,
-                                        javacall_handle newAttr,
-                                        /* OUT */ javacall_handle* retValue,
-                                        /* OUT */ javacall_dom_exceptions* exceptionCode);
+                                        javacall_handle new_attr,
+                                        /* OUT */ javacall_handle* ret_value,
+                                        /* OUT */ javacall_dom_exceptions* exception_code);
 
 /**
  * Removes the specified attribute node. If a default value for the 
@@ -212,24 +213,26 @@ javacall_dom_element_set_attribute_node(javacall_handle handle,
  * corresponding namespace URI, local name, and prefix when applicable. 
  * 
  * @param handle Pointer to the object representing this element.
- * @param oldAttr Pointer to the object of
+ * @param old_attr Pointer to the object of
  *   the <code>Attr</code> node to remove from the attribute 
  *   list.
- * @param retValue Pointer to the object representing 
+ * @param ret_value Pointer to the object representing 
  *   the <code>Attr</code> node that was removed.
- * @param exceptionCode Code of the error if function fails; 
- *                      see javacall_dom_exceptions 
+ * @param exception_code Code of the error if function fails; the following 
+ *                       codes are acceptable: 
+ *                            JAVACALL_DOM_NO_MODIFICATION_ALLOWED_ERR
+ *                            JAVACALL_DOM_NOT_FOUND_ERR
  * 
  * @return JAVACALL_OK if all done successfuly,
- *         JAVACALL_FAIL if error occured; in this case exceptionCode has to be 
+ *         JAVACALL_FAIL if error occured; in this case exception_code has to be 
  *                                filled,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
 javacall_dom_element_remove_attribute_node(javacall_handle handle,
-                                           javacall_handle oldAttr,
-                                           /* OUT */ javacall_handle* retValue,
-                                           /* OUT */ javacall_dom_exceptions* exceptionCode);
+                                           javacall_handle old_attr,
+                                           /* OUT */ javacall_handle* ret_value,
+                                           /* OUT */ javacall_dom_exceptions* exception_code);
 
 /**
  * Returns returns a <code>NodeList</code> of all descendant <code>Elements</code> 
@@ -238,7 +241,7 @@ javacall_dom_element_remove_attribute_node(javacall_handle handle,
  * @param handle Pointer to the object representing this element.
  * @param name The name of the tag to match on. The special value "*" 
  *   matches all tags.
- * @param retValue Pointer to the object representing 
+ * @param ret_value Pointer to the object representing 
  *   a list of matching <code>Element</code> nodes.
  * 
  * @return JAVACALL_OK if all done successfuly,
@@ -247,47 +250,43 @@ javacall_dom_element_remove_attribute_node(javacall_handle handle,
 javacall_result
 javacall_dom_element_get_elements_by_tag_name(javacall_handle handle,
                                               javacall_const_utf16_string name,
-                                              /* OUT */ javacall_handle* retValue);
+                                              /* OUT */ javacall_handle* ret_value);
 
 /**
  * Returns retrieves an attribute value by local name and namespace URI. 
  * <br>Per [<a href='http://www.w3.org/TR/1999/REC-xml-names-19990114/'>XML Namespaces</a>]
  * , applications must use the value <code>NULL</code> as the 
- * <code>namespaceURI</code> parameter for methods if they wish to have 
+ * <code>namespace_uri</code> parameter for methods if they wish to have 
  * no namespace.
  * 
- * Note: If retValueLen is less then length of the returned string this function 
- *       has to return with JAVACALL_OUT_OF_MEMORY code and fill retValueLen 
+ * Note: If ret_value_len is less then length of the returned string this function 
+ *       has to return with JAVACALL_OUT_OF_MEMORY code and fill ret_value_len 
  *       with actual length of the returned string.
  *
  * @param handle Pointer to the object representing this element.
- * @param namespaceURI The namespace URI of the attribute to retrieve.
- * @param localName The local name of the attribute to retrieve.
- * @param retValue The <code>Attr</code> value as a string, or the empty string 
+ * @param namespace_uri The namespace URI of the attribute to retrieve.
+ * @param local_name The local name of the attribute to retrieve.
+ * @param ret_value The <code>Attr</code> value as a string, or the empty string 
  *   if that attribute does not have a specified or default value.
- * @param retValueLen Length of the returned string
- * @param exceptionCode Code of the error if function fails; 
- *                      see javacall_dom_exceptions 
+ * @param ret_value_len Length of the returned string
  * 
  * @return JAVACALL_OK if all done successfuly,
  *         JAVACALL_OUT_OF_MEMORY if length of the returend string is more then 
- *                                specified in retValueLen,
- *         JAVACALL_FAIL if error occured; in this case exceptionCode has to be 
- *                                filled,
+ *                                specified in ret_value_len,
+ *         JAVACALL_FAIL if NOT_SUPPORTED_ERR occured,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
 javacall_dom_element_get_attribute_ns(javacall_handle handle,
-                                      javacall_const_utf16_string namespaceURI,
-                                      javacall_const_utf16_string localName,
-                                      /* OUT */ javacall_utf16_string retValue,
-                                      /* INOUT */ javacall_uint32* retValueLen,
-                                      /* OUT */ javacall_dom_exceptions* exceptionCode);
+                                      javacall_const_utf16_string namespace_uri,
+                                      javacall_const_utf16_string local_name,
+                                      /* OUT */ javacall_utf16_string ret_value,
+                                      /* INOUT */ javacall_uint32* ret_value_len);
 
 /**
  * Sets adds a new attribute. If an attribute with the same local name and 
  * namespace URI is already present on the element, its prefix is 
- * changed to be the prefix part of the <code>qualifiedName</code>, and 
+ * changed to be the prefix part of the <code>qualified_name</code>, and 
  * its value is changed to be the <code>value</code> parameter. This 
  * value is a simple string; it is not parsed as it is being set. So any 
  * markup (such as syntax to be recognized as an entity reference) is 
@@ -301,29 +300,32 @@ javacall_dom_element_get_attribute_ns(javacall_handle handle,
  * attribute.
  * <br>Per [<a href='http://www.w3.org/TR/1999/REC-xml-names-19990114/'>XML Namespaces</a>]
  * , applications must use the value <code>NULL</code> as the 
- * <code>namespaceURI</code> parameter for methods if they wish to have 
+ * <code>namespace_uri</code> parameter for methods if they wish to have 
  * no namespace.
  * 
  * @param handle Pointer to the object representing this element.
- * @param namespaceURI The namespace URI of the attribute to create or 
+ * @param namespace_uri The namespace URI of the attribute to create or 
  *   alter.
- * @param qualifiedName The qualified name of the attribute to create or 
+ * @param qualified_name The qualified name of the attribute to create or 
  *   alter.
  * @param value The value to set in string form.
- * @param exceptionCode Code of the error if function fails; 
- *                      see javacall_dom_exceptions 
+ * @param exception_code Code of the error if function fails; the following 
+ *                       codes are acceptable: 
+ *                            JAVACALL_DOM_INVALID_CHARACTER_ERR
+ *                            JAVACALL_DOM_NO_MODIFICATION_ALLOWED_ERR
+ *                            JAVACALL_DOM_NAMESPACE_ERR
  * 
  * @return JAVACALL_OK if all done successfuly,
- *         JAVACALL_FAIL if error occured; in this case exceptionCode has to be 
+ *         JAVACALL_FAIL if error occured; in this case exception_code has to be 
  *                                filled,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
 javacall_dom_element_set_attribute_ns(javacall_handle handle,
-                                      javacall_const_utf16_string namespaceURI,
-                                      javacall_const_utf16_string qualifiedName,
+                                      javacall_const_utf16_string namespace_uri,
+                                      javacall_const_utf16_string qualified_name,
                                       javacall_const_utf16_string value,
-                                      /* OUT */ javacall_dom_exceptions* exceptionCode);
+                                      /* OUT */ javacall_dom_exceptions* exception_code);
 
 /**
  * Removes an attribute by local name and namespace URI.If a default 
@@ -334,54 +336,52 @@ javacall_dom_element_set_attribute_ns(javacall_handle handle,
  * this method has no effect.
  * <br>Per [<a href='http://www.w3.org/TR/1999/REC-xml-names-19990114/'>XML Namespaces</a>]
  * , applications must use the value <code>NULL</code> as the 
- * <code>namespaceURI</code> parameter for methods if they wish to have 
+ * <code>namespace_uri</code> parameter for methods if they wish to have 
  * no namespace.
  * 
  * @param handle Pointer to the object representing this element.
- * @param namespaceURI The namespace URI of the attribute to remove.
- * @param localName The local name of the attribute to remove.
- * @param exceptionCode Code of the error if function fails; 
- *                      see javacall_dom_exceptions 
+ * @param namespace_uri The namespace URI of the attribute to remove.
+ * @param local_name The local name of the attribute to remove.
+ * @param exception_code Code of the error if function fails; the following 
+ *                       codes are acceptable: 
+ *                            JAVACALL_DOM_NO_MODIFICATION_ALLOWED_ERR
+ *                            JAVACALL_DOM_NOT_SUPPORTED_ERR
  * 
  * @return JAVACALL_OK if all done successfuly,
- *         JAVACALL_FAIL if error occured; in this case exceptionCode has to be 
+ *         JAVACALL_FAIL if error occured; in this case exception_code has to be 
  *                                filled,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
 javacall_dom_element_remove_attribute_ns(javacall_handle handle,
-                                         javacall_const_utf16_string namespaceURI,
-                                         javacall_const_utf16_string localName,
-                                         /* OUT */ javacall_dom_exceptions* exceptionCode);
+                                         javacall_const_utf16_string namespace_uri,
+                                         javacall_const_utf16_string local_name,
+                                         /* OUT */ javacall_dom_exceptions* exception_code);
 
 /**
  * Returns retrieves an <code>Attr</code> node by local name and namespace URI.
  * <br>Per [<a href='http://www.w3.org/TR/1999/REC-xml-names-19990114/'>XML Namespaces</a>]
  * , applications must use the value <code>NULL</code> as the 
- * <code>namespaceURI</code> parameter for methods if they wish to have 
+ * <code>namespace_uri</code> parameter for methods if they wish to have 
  * no namespace. 
  * 
  * @param handle Pointer to the object representing this element.
- * @param namespaceURI The namespace URI of the attribute to retrieve.
- * @param localName The local name of the attribute to retrieve.
- * @param retValue Pointer to the object representing 
+ * @param namespace_uri The namespace URI of the attribute to retrieve.
+ * @param local_name The local name of the attribute to retrieve.
+ * @param ret_value Pointer to the object representing 
  *   the <code>Attr</code> node with the specified attribute local 
  *   name and namespace URI or <code>NULL</code> if there is no such 
  *   attribute.
- * @param exceptionCode Code of the error if function fails; 
- *                      see javacall_dom_exceptions 
  * 
  * @return JAVACALL_OK if all done successfuly,
- *         JAVACALL_FAIL if error occured; in this case exceptionCode has to be 
- *                                filled,
+ *         JAVACALL_FAIL if NOT_SUPPORTED_ERR occured,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
 javacall_dom_element_get_attribute_node_ns(javacall_handle handle,
-                                           javacall_const_utf16_string namespaceURI,
-                                           javacall_const_utf16_string localName,
-                                           /* OUT */ javacall_handle* retValue,
-                                           /* OUT */ javacall_dom_exceptions* exceptionCode);
+                                           javacall_const_utf16_string namespace_uri,
+                                           javacall_const_utf16_string local_name,
+                                           /* OUT */ javacall_handle* ret_value);
 
 /**
  * Sets adds a new attribute. If an attribute with that local name and that 
@@ -393,26 +393,30 @@ javacall_dom_element_get_attribute_node_ns(javacall_handle handle,
  * no namespace.
  * 
  * @param handle Pointer to the object representing this element.
- * @param newAttr Pointer to the object of
+ * @param new_attr Pointer to the object of
  *   the <code>Attr</code> node to add to the attribute list.
- * @param retValue Pointer to the object representing 
- *   if the <code>newAttr</code> attribute replaces an existing 
+ * @param ret_value Pointer to the object representing 
+ *   if the <code>new_attr</code> attribute replaces an existing 
  *   attribute with the same local name and namespace URI, the replaced 
  *   <code>Attr</code> node is returned, otherwise <code>NULL</code> is 
  *   returned.
- * @param exceptionCode Code of the error if function fails; 
- *                      see javacall_dom_exceptions 
+ * @param exception_code Code of the error if function fails; the following 
+ *                       codes are acceptable: 
+ *                            JAVACALL_DOM_WRONG_DOCUMENT_ERR
+ *                            JAVACALL_DOM_NO_MODIFICATION_ALLOWED_ERR
+ *                            JAVACALL_DOM_INUSE_ATTRIBUTE_ERR
+ *                            JAVACALL_DOM_NOT_SUPPORTED_ERR
  * 
  * @return JAVACALL_OK if all done successfuly,
- *         JAVACALL_FAIL if error occured; in this case exceptionCode has to be 
+ *         JAVACALL_FAIL if error occured; in this case exception_code has to be 
  *                                filled,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
 javacall_dom_element_set_attribute_node_ns(javacall_handle handle,
-                                           javacall_handle newAttr,
-                                           /* OUT */ javacall_handle* retValue,
-                                           /* OUT */ javacall_dom_exceptions* exceptionCode);
+                                           javacall_handle new_attr,
+                                           /* OUT */ javacall_handle* ret_value,
+                                           /* OUT */ javacall_dom_exceptions* exception_code);
 
 /**
  * Returns returns a <code>NodeList</code> of all the descendant 
@@ -420,27 +424,23 @@ javacall_dom_element_set_attribute_node_ns(javacall_handle handle,
  * document order.
  * 
  * @param handle Pointer to the object representing this element.
- * @param namespaceURI The namespace URI of the elements to match on. The 
+ * @param namespace_uri The namespace URI of the elements to match on. The 
  *   special value "*" matches all namespaces.
- * @param localName The local name of the elements to match on. The 
+ * @param local_name The local name of the elements to match on. The 
  *   special value "*" matches all local names.
- * @param retValue Pointer to the object representing 
+ * @param ret_value Pointer to the object representing 
  *   a new <code>NodeList</code> object containing all the matched 
  *   <code>Elements</code>.
- * @param exceptionCode Code of the error if function fails; 
- *                      see javacall_dom_exceptions 
  * 
  * @return JAVACALL_OK if all done successfuly,
- *         JAVACALL_FAIL if error occured; in this case exceptionCode has to be 
- *                                filled,
+ *         JAVACALL_FAIL if NOT_SUPPORTED_ERR occured,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
 javacall_dom_element_get_elements_by_tag_name_ns(javacall_handle handle,
-                                                 javacall_const_utf16_string namespaceURI,
-                                                 javacall_const_utf16_string localName,
-                                                 /* OUT */ javacall_handle* retValue,
-                                                 /* OUT */ javacall_dom_exceptions* exceptionCode);
+                                                 javacall_const_utf16_string namespace_uri,
+                                                 javacall_const_utf16_string local_name,
+                                                 /* OUT */ javacall_handle* ret_value);
 
 /**
  * Returns <code>true</code> when an attribute with a given name is 
@@ -449,7 +449,7 @@ javacall_dom_element_get_elements_by_tag_name_ns(javacall_handle handle,
  * 
  * @param handle Pointer to the object representing this element.
  * @param name The name of the attribute to look for.
- * @param retValue <code>true</code> if an attribute with the given name is 
+ * @param ret_value <code>true</code> if an attribute with the given name is 
  *   specified on this element or has a default value, <code>false</code>
  *    otherwise.
  * 
@@ -459,7 +459,7 @@ javacall_dom_element_get_elements_by_tag_name_ns(javacall_handle handle,
 javacall_result
 javacall_dom_element_has_attribute(javacall_handle handle,
                                    javacall_const_utf16_string name,
-                                   /* OUT */ javacall_bool* retValue);
+                                   /* OUT */ javacall_bool* ret_value);
 
 /**
  * Returns <code>true</code> when an attribute with a given local name and 
@@ -467,112 +467,114 @@ javacall_dom_element_has_attribute(javacall_handle handle,
  * <code>false</code> otherwise.
  * <br>Per [<a href='http://www.w3.org/TR/1999/REC-xml-names-19990114/'>XML Namespaces</a>]
  * , applications must use the value <code>NULL</code> as the 
- * <code>namespaceURI</code> parameter for methods if they wish to have 
+ * <code>namespace_uri</code> parameter for methods if they wish to have 
  * no namespace.
  * 
  * @param handle Pointer to the object representing this element.
- * @param namespaceURI The namespace URI of the attribute to look for.
- * @param localName The local name of the attribute to look for.
- * @param retValue <code>true</code> if an attribute with the given local name 
+ * @param namespace_uri The namespace URI of the attribute to look for.
+ * @param local_name The local name of the attribute to look for.
+ * @param ret_value <code>true</code> if an attribute with the given local name 
  *   and namespace URI is specified or has a default value on this 
  *   element, <code>false</code> otherwise.
- * @param exceptionCode Code of the error if function fails; 
- *                      see javacall_dom_exceptions 
  * 
  * @return JAVACALL_OK if all done successfuly,
- *         JAVACALL_FAIL if error occured; in this case exceptionCode has to be 
- *                                filled,
+ *         JAVACALL_FAIL if NOT_SUPPORTED_ERR occured,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
 javacall_dom_element_has_attribute_ns(javacall_handle handle,
-                                      javacall_const_utf16_string namespaceURI,
-                                      javacall_const_utf16_string localName,
-                                      /* OUT */ javacall_bool* retValue,
-                                      /* OUT */ javacall_dom_exceptions* exceptionCode);
+                                      javacall_const_utf16_string namespace_uri,
+                                      javacall_const_utf16_string local_name,
+                                      /* OUT */ javacall_bool* ret_value);
 
 /**
- * Sets  If the parameter <code>isId</code> is <code>true</code>, this method 
+ * Sets  If the parameter <code>is_id</code> is <code>true</code>, this method 
  * declares the specified attribute to be a user-determined ID attribute
- * . This affects the value of <code>Attr.isId</code> and the behavior 
+ * . This affects the value of <code>Attr.is_id</code> and the behavior 
  * of <code>Document.getElementById</code>.
  * Use the value <code>false</code> for the parameter 
- * <code>isId</code> to undeclare an attribute for being a 
+ * <code>is_id</code> to undeclare an attribute for being a 
  * user-determined ID attribute. 
  * <br> To specify an attribute by local name and namespace URI, use the 
  * <code>setIdAttributeNS</code> method. 
  * 
  * @param handle Pointer to the object representing this element.
  * @param name The name of the attribute.
- * @param isId Whether the attribute is a of type ID.
- * @param exceptionCode Code of the error if function fails; 
- *                      see javacall_dom_exceptions 
+ * @param is_id Whether the attribute is a of type ID.
+ * @param exception_code Code of the error if function fails; the following 
+ *                       codes are acceptable: 
+ *                            JAVACALL_DOM_NO_MODIFICATION_ALLOWED_ERR
+ *                            JAVACALL_DOM_NOT_FOUND_ERR
  * 
  * @return JAVACALL_OK if all done successfuly,
- *         JAVACALL_FAIL if error occured; in this case exceptionCode has to be 
+ *         JAVACALL_FAIL if error occured; in this case exception_code has to be 
  *                                filled,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
 javacall_dom_element_set_id_attribute(javacall_handle handle,
                                       javacall_const_utf16_string name,
-                                      javacall_bool isId,
-                                      /* OUT */ javacall_dom_exceptions* exceptionCode);
+                                      javacall_bool is_id,
+                                      /* OUT */ javacall_dom_exceptions* exception_code);
 
 /**
- * Sets  If the parameter <code>isId</code> is <code>true</code>, this method 
+ * Sets  If the parameter <code>is_id</code> is <code>true</code>, this method 
  * declares the specified attribute to be a user-determined ID attribute
- * . This affects the value of <code>Attr.isId</code> and the behavior 
+ * . This affects the value of <code>Attr.is_id</code> and the behavior 
  * of <code>Document.getElementById</code>.
  * Use the value <code>false</code> for the parameter 
- * <code>isId</code> to undeclare an attribute for being a 
+ * <code>is_id</code> to undeclare an attribute for being a 
  * user-determined ID attribute. 
  * 
  * @param handle Pointer to the object representing this element.
- * @param namespaceURI The namespace URI of the attribute.
- * @param localName The local name of the attribute.
- * @param isId Whether the attribute is a of type ID.
- * @param exceptionCode Code of the error if function fails; 
- *                      see javacall_dom_exceptions 
+ * @param namespace_uri The namespace URI of the attribute.
+ * @param local_name The local name of the attribute.
+ * @param is_id Whether the attribute is a of type ID.
+ * @param exception_code Code of the error if function fails; the following 
+ *                       codes are acceptable: 
+ *                            JAVACALL_DOM_NO_MODIFICATION_ALLOWED_ERR
+ *                            JAVACALL_DOM_NOT_FOUND_ERR
  * 
  * @return JAVACALL_OK if all done successfuly,
- *         JAVACALL_FAIL if error occured; in this case exceptionCode has to be 
+ *         JAVACALL_FAIL if error occured; in this case exception_code has to be 
  *                                filled,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
 javacall_dom_element_set_id_attribute_ns(javacall_handle handle,
-                                         javacall_const_utf16_string namespaceURI,
-                                         javacall_const_utf16_string localName,
-                                         javacall_bool isId,
-                                         /* OUT */ javacall_dom_exceptions* exceptionCode);
+                                         javacall_const_utf16_string namespace_uri,
+                                         javacall_const_utf16_string local_name,
+                                         javacall_bool is_id,
+                                         /* OUT */ javacall_dom_exceptions* exception_code);
 
 /**
- * Sets  If the parameter <code>isId</code> is <code>true</code>, this method 
+ * Sets  If the parameter <code>is_id</code> is <code>true</code>, this method 
  * declares the specified attribute to be a user-determined ID attribute
- * . This affects the value of <code>Attr.isId</code> and the behavior 
+ * . This affects the value of <code>Attr.is_id</code> and the behavior 
  * of <code>Document.getElementById</code>.
  * Use the value <code>false</code> for the parameter 
- * <code>isId</code> to undeclare an attribute for being a 
+ * <code>is_id</code> to undeclare an attribute for being a 
  * user-determined ID attribute. 
  * 
  * @param handle Pointer to the object representing this element.
- * @param idAttr Pointer to the object of
+ * @param id_attr Pointer to the object of
  *   the attribute node.
- * @param isId Whether the attribute is a of type ID.
- * @param exceptionCode Code of the error if function fails; 
- *                      see javacall_dom_exceptions 
+ * @param is_id Whether the attribute is a of type ID.
+ * @param exception_code Code of the error if function fails; the following 
+ *                       codes are acceptable: 
+ *                            JAVACALL_DOM_NO_MODIFICATION_ALLOWED_ERR
+ *                            JAVACALL_DOM_NOT_FOUND_ERR
  * 
  * @return JAVACALL_OK if all done successfuly,
- *         JAVACALL_FAIL if error occured; in this case exceptionCode has to be 
+ *         JAVACALL_FAIL if error occured; in this case exception_code has to be 
  *                                filled,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
 javacall_dom_element_set_id_attribute_node(javacall_handle handle,
-                                           javacall_handle idAttr,
-                                           javacall_bool isId,
-                                           /* OUT */ javacall_dom_exceptions* exceptionCode);
+                                           javacall_handle id_attr,
+                                           javacall_bool is_id,
+                                           /* OUT */ javacall_dom_exceptions* exception_code);
 
 /** 
  * Deletes object representing this element
