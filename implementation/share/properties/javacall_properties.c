@@ -280,29 +280,40 @@ javacall_result set_properties_file_name(const javacall_utf16* unicodeFileName,
 static javacall_utf16* get_properties_file_name(int* fileNameLen) {
     if (property_file_name == NULL) {
 
-        /* evaluate path to default properties file, 
+        /* evaluate path to default properties file,
         set it as property file name and return as result  */
-		
-        #define MAX_PATH_LEN 1024 
+        #define MAX_PATH_LEN 1024
         javacall_utf16 root_path[MAX_PATH_LEN];
         int root_path_len;
-		
-        int default_property_file_name_len = sizeof(default_property_file_name) /
-            sizeof(default_property_file_name[0]);
-		
-	/* get config directory path */
-	if (JAVACALL_OK != javacall_dir_get_config_path(
-	        root_path, &root_path_len)) {
-	    *fileNameLen = -1;
-	    return NULL;
-	}
-		
-	/* evaluate full path of the default properties file */
-	property_file_name_len =  root_path_len + default_property_file_name_len;
-	property_file_name = malloc((property_file_name_len + 1) * sizeof(unsigned short));
-	javautil_unicode_cat(root_path, default_property_file_name, 
-        property_file_name, property_file_name_len);
-    }	
+
+        int default_property_file_name_len =
+            (int)(sizeof(default_property_file_name) /
+                sizeof(default_property_file_name[0]));
+
+        /* get config directory path */
+        if (JAVACALL_OK != javacall_dir_get_config_path(
+                root_path, &root_path_len)) {
+
+            javacall_print("Warning: Unable to get config directory path.\n");
+            *fileNameLen = default_property_file_name_len;
+            return default_property_file_name;
+        }
+
+        /* evaluate full path of the default properties file */
+        property_file_name_len =  root_path_len + default_property_file_name_len;
+        property_file_name = javacall_malloc(
+            (property_file_name_len + 1) * sizeof(javacall_utf16));
+
+        if (NULL == property_file_name || JAVACALL_OK != javautil_unicode_cat(
+                root_path, default_property_file_name,
+                property_file_name, property_file_name_len)) {
+
+            javacall_print("Error: No memory to create properties file path.\n");
+            property_file_name_len = 0;
+            *fileNameLen = default_property_file_name_len;
+            return default_property_file_name;
+        }
+    }
     *fileNameLen = property_file_name_len;
     return property_file_name;    
 } 
