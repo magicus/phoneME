@@ -35,4 +35,4 @@
 # Java files for the sub-system
 #
 SUBSYSTEM_AMS_JAVA_FILES += \
-    $(JAMS_IMPL_DIR)/suite_launcher/classes/com/sun/midp/appmanager/MIDletSuiteLauncher.java
+    $(JAMS_DIR)/suite_launcher/classes/com/sun/midp/appmanager/MIDletSuiteLauncher.java

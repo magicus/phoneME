@@ -35,8 +35,8 @@
 # Java files for the sub-system
 #
 SUBSYSTEM_AMS_JAVA_FILES += \
-    $(VERIFIER_DIR)/$(VERIFIER_IMPL)/classes/com/sun/midp/installer/VerifierImpl.java
+    $(VERIFIER_IMPL_DIR)/classes/com/sun/midp/installer/VerifierImpl.java
 
-MIDP_JAVADOC_SOURCEPATH += $(VERIFIER_DIR)/$(VERIFIER_IMPL)/classes
+MIDP_JAVADOC_SOURCEPATH += $(VERIFIER_IMPL_DIR)/classes
 
 

@@ -41,13 +41,12 @@ AMS_FOLDERS_DIR = $(SUBSYSTEM_AMS_DIR)/$(AMS_FOLDERS_NAME)
 # JavaDoc source path
 MIDP_JAVADOC_SOURCEPATH += $(AMS_FOLDERS_DIR)/classes
 
-#$(AMS_FOLDERS_DIR) can be set to override default implementation folders
-ifndef AMS_FOLDERS_IMPL_DIR
+#$(AMS_FOLDERS_IMPL_DIR) can be set to override default implementation folders
 #if it is not defined use default folder according to $(USE_AMS_FOLDERS) flag
 ifeq ($(USE_AMS_FOLDERS), true)
-AMS_FOLDERS_IMPL_DIR=$(AMS_FOLDERS_DIR)/reference
+AMS_FOLDERS_IMPL_DIR ?= $(AMS_FOLDERS_DIR)/reference
 else
-AMS_FOLDERS_IMPL_DIR=$(AMS_FOLDERS_DIR)/stubs
+AMS_FOLDERS_IMPL_DIR ?= $(AMS_FOLDERS_DIR)/stubs
 endif 
 
 include $(AMS_FOLDERS_IMPL_DIR)/lib.gmk

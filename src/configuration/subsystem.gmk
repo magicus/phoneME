@@ -60,20 +60,16 @@ PROJECT_SUBSYSTEM_CONFIG_DIR = $(PROJECT_SUBSYSTEM_DIR)/$(CONFIG_SUBSYSTEM)
 #
 #####################################################################
 
-SUBSYSTEM_CONFIG_COMPONENTS ?= \ 
-    $(SUBSYSTEM_CONFIG_DIR)/configuration_xml \
-    $(SUBSYSTEM_CONFIG_DIR)/properties \
-    $(SUBSYSTEM_CONFIG_DIR)/properties_port
+SUBSYSTEM_CONFIG_COMPONENTS ?= $(SUBSYSTEM_CONFIG_DIR)/configuration_xml/lib.gmk  \
+    $(SUBSYSTEM_CONFIG_DIR)/properties/lib.gmk \
+    $(SUBSYSTEM_CONFIG_DIR)/properties_port/lib.gmk
 
 
 #Add Aditional components if supplied to allow extention of default list
 SUBSYSTEM_CONFIG_COMPONENTS += $(CONFIGURATION_ADDITIONAL_COMPONENTS)
 
 # Include components
-$(foreach $(SUBSYSTEM_CONFIG_COMPONENTS), \
-    $(_CONF_COMP), \
-    include $(_CONF_COMP)/lib.gmk)
-endif
+include $(SUBSYSTEM_CONFIG_COMPONENTS)
 
 SUBSYSTEM_CONFIGURATION_JAVA_FILES +=  \
     $(SUBSYSTEM_PROPERTIES_JAVA_FILES) \

@@ -60,4 +60,4 @@ SUBSYSTEM_SECURITY_JAVA_FILES += \
     $(GENERATED_DIR)/classes/com/sun/midp/security/SecurityInitializer.java \
     $(INTERNAL_API_PROTECTION_DIR)/reference/classes/com/sun/midp/security/SecurityInitializerImpl.java \
     $(INTERNAL_API_PROTECTION_DIR)/reference/classes/com/sun/midp/security/SecurityToken.java
-
+$(eroro SUBSYSTEM_SECURITY_JAVA_FILES = $(SUBSYSTEM_SECURITY_JAVA_FILES))

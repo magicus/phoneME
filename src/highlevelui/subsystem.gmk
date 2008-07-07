@@ -45,6 +45,22 @@ ifndef SUBSYSTEM_LCDUI_MODULES
     SUBSYSTEM_LCDUI_MODULES = chameleon
 endif
 
+####################################################
+# This specifies the option you choose for this build 
+#
+# javapti - predictive text input java implementation
+# nativepti - external native predictive text input implementation
+#
+# Used here becaused needed when including $(SUBSYSTEM_HIGHUI_DIR)/pti_api/lib.gmk
+#  and when setting file path to chameleon
+#  in ifeq ($(SUBSYSTEM_LCDUI_MODULES), chameleon) 
+ifeq ($(USE_NATIVE_PTI), true)
+    SUBSYSTEM_PTI_MODULES = nativepti
+else
+    SUBSYSTEM_PTI_MODULES = javapti
+endif
+#####################################################
+
 #####################################################################
 # Bellow is the Description of default components in the subsystem
 #
@@ -69,10 +85,10 @@ endif
 # Set default list if not defined
 ifndef SUBSYSTEM_HIGHUI_COMPONENTS
     SUBSYSTEM_HIGHUI_COMPONENTS = \
-        $(SUBSYSTEM_HIGHUI_DIR)/annunciator \
-        $(SUBSYSTEM_HIGHUI_DIR)/keymap \
-        $(SUBSYSTEM_HIGHUI_DIR)/lcdui \
-        $(SUBSYSTEM_HIGHUI_DIR)/lcdlf
+        $(SUBSYSTEM_HIGHUI_DIR)/annunciator/lib.gmk \
+        $(SUBSYSTEM_HIGHUI_DIR)/keymap/lib.gmk \
+        $(SUBSYSTEM_HIGHUI_DIR)/lcdui/lib.gmk \
+        $(SUBSYSTEM_HIGHUI_DIR)/lcdlf/lib.gmk
 
     #####################################################################
     # LCDUI Platform Look and Feel Port Subsystem
@@ -80,16 +96,16 @@ ifndef SUBSYSTEM_HIGHUI_COMPONENTS
     #####################################################################
 
    ifeq ($(SUBSYSTEM_LCDUI_MODULES), platform_widget)
-        SUBSYSTEM_HIGHUI_COMPONENTS += $(SUBSYSTEM_HIGHUI_DIR)/lfpport
+        SUBSYSTEM_HIGHUI_COMPONENTS += $(SUBSYSTEM_HIGHUI_DIR)/lfpport/lib.gmk
     else
 	# nim -- Native Input Mode support
         SUBSYSTEM_HIGHUI_COMPONENTS += \
-	    $(SUBSYSTEM_HIGHUI_DIR)/nim_port \
-            $(SUBSYSTEM_HIGHUI_DIR)/lfjport \
-            $(SUBSYSTEM_HIGHUI_DIR)/pti_api
+	    $(SUBSYSTEM_HIGHUI_DIR)/nim_port/lib.gmk \
+            $(SUBSYSTEM_HIGHUI_DIR)/lfjport/lib.gmk \
+            $(SUBSYSTEM_HIGHUI_DIR)/pti_api/lib.gmk
 
         ifeq ($(USE_NATIVE_PTI), true)
-            SUBSYSTEM_HIGHUI_COMPONENTS += $(SUBSYSTEM_HIGHUI_DIR)/nativepti_port
+            SUBSYSTEM_HIGHUI_COMPONENTS += $(SUBSYSTEM_HIGHUI_DIR)/nativepti_port/lib.gmk
         endif
     endif
 
@@ -99,26 +115,26 @@ ifndef SUBSYSTEM_HIGHUI_COMPONENTS
     #####################################################################    
     ifeq ($(PLATFORM), linux_fb)
        ifeq ($(USE_DIRECTFB), true)
-    	SUBSYSTEM_HIGHUI_COMPONENTS += $(SUBSYSTEM_HIGHUI_DIR)/directfb_application
+    	SUBSYSTEM_HIGHUI_COMPONENTS += $(SUBSYSTEM_HIGHUI_DIR)/directfb_application/lib.gmk
        endif
        SUBSYSTEM_HIGHUI_COMPONENTS += 
-           $(SUBSYSTEM_HIGHUI_DIR)/fb_application \
-           $(SUBSYSTEM_HIGHUI_DIR)/fb_port
+           $(SUBSYSTEM_HIGHUI_DIR)/fb_application/lib.gmk \
+           $(SUBSYSTEM_HIGHUI_DIR)/fb_port/lib.gmk
     else 
         ifeq ($(PLATFORM), armsd)
-            SUBSYSTEM_HIGHUI_COMPONENTS += $(SUBSYSTEM_HIGHUI_DIR)/armsd_application
+            SUBSYSTEM_HIGHUI_COMPONENTS += $(SUBSYSTEM_HIGHUI_DIR)/armsd_application/lib.gmk
         else
             ifeq ($(PLATFORM), linux_qte)
-                 SUBSYSTEM_HIGHUI_COMPONENTS += $(SUBSYSTEM_HIGHUI_DIR)/qte_application
+                 SUBSYSTEM_HIGHUI_COMPONENTS += $(SUBSYSTEM_HIGHUI_DIR)/qte_application/lib.gmk
             else
                  ifeq ($(PLATFORM), win32)
-                      SUBSYSTEM_HIGHUI_COMPONENTS += $(SUBSYSTEM_HIGHUI_DIR)/win32_application
+                      SUBSYSTEM_HIGHUI_COMPONENTS += $(SUBSYSTEM_HIGHUI_DIR)/win32_application/lib.gmk
                  else
                       ifeq ($(PLATFORM), wince)
-                          SUBSYSTEM_HIGHUI_COMPONENTS += $(SUBSYSTEM_HIGHUI_DIR)/wince_application
+                          SUBSYSTEM_HIGHUI_COMPONENTS += $(SUBSYSTEM_HIGHUI_DIR)/wince_application/lib.gmk
                       else
                            ifeq ($(PLATFORM), javacall)
-                                SUBSYSTEM_HIGHUI_COMPONENTS += $(SUBSYSTEM_HIGHUI_DIR)/javacall_application
+                                SUBSYSTEM_HIGHUI_COMPONENTS += $(SUBSYSTEM_HIGHUI_DIR)/javacall_application/lib.gmk
                            endif                  
                       endif             
                  endif
@@ -132,7 +148,7 @@ ifndef SUBSYSTEM_HIGHUI_COMPONENTS
     #####################################################################
     
     ifeq ($(TARGET_VM), cdc_vm)
-        SUBSYSTEM_HIGHUI_COMPONENTS += $(SUBSYSTEM_HIGHUI_DIR)/cdcui
+        SUBSYSTEM_HIGHUI_COMPONENTS += $(SUBSYSTEM_HIGHUI_DIR)/cdcui/lib.gmk
     endif
 
 endif
@@ -142,9 +158,7 @@ endif
 SUBSYSTEM_HIGHUI_COMPONENTS += $(HILEVELUI_ADDITIONAL_COMPONENTS)
 
 # Include all components
-$(foreach $(SUBSYSTEM_HIGHUI_COMPONENTS), \
-	$(_HUI_COMP), \
-	include $(_HUI_COMP)/lib.gmk)
+include $(SUBSYSTEM_HIGHUI_COMPONENTS)
 
 
 ########################################################################
@@ -157,19 +171,6 @@ LCDUI_PACKAGES = \
     javax.microedition.lcdui \
     javax.microedition.lcdui.game \
     com.sun.midp.lcdui
-
-####################################################
-# This specifies the option you choose for this build 
-#
-# javapti - predictive text input java implementation
-# nativepti - external native predictive text input implementation
-#
-ifeq ($(USE_NATIVE_PTI), true)
-    SUBSYSTEM_PTI_MODULES = nativepti
-else
-    SUBSYSTEM_PTI_MODULES = javapti
-endif
-#####################################################
 
 ifeq ($(SUBSYSTEM_LCDUI_MODULES), chameleon)
     MIDP_JAVADOC_SOURCEPATH += \

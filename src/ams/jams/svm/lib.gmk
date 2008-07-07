@@ -35,6 +35,7 @@
 # Java files for the sub-system
 #
 SUBSYSTEM_AMS_JAVA_FILES += \
-    $(JAMS_VM_IMPL_DIR)/classes/com/sun/midp/appmanager/Manager.java
+    $(JAMS_IMPL_DIR)/classes/com/sun/midp/appmanager/Manager.java
 
-MIDP_JAVADOC_SOURCEPATH += $(JAMS_VM_IMPL_DIR)/classes
+MIDP_JAVADOC_SOURCEPATH += $(JAMS_IMPL_DIR)/classes
+

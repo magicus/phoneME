@@ -71,10 +71,9 @@ SUBSYSTEM_PUSH_DIR = $(SUBSYSTEM_DIR)/$(PUSH_SUBSYSTEM)
 #####################################################################
 
 ifndef SUBSYSTEM_PUSH_COMPONENTS 
-    SUBSYSTEM_PUSH_COMPONENTS = /
-        $(SUBSYSTEM_PUSH_DIR)/push_api \
-        $(SUBSYSTEM_PUSH_DIR)/push_server \
-        $(SUBSYSTEM_PUSH_DIR)/push_timer \
+    SUBSYSTEM_PUSH_COMPONENTS = $(SUBSYSTEM_PUSH_DIR)/push_api/lib.gmk \
+        $(SUBSYSTEM_PUSH_DIR)/push_server/lib.gmk \
+        $(SUBSYSTEM_PUSH_DIR)/push_timer/lib.gmk \
     
     
     #####################################################################
@@ -83,7 +82,7 @@ ifndef SUBSYSTEM_PUSH_COMPONENTS
     #####################################################################
     
     ifeq ($(USE_NATIVE_PUSH), true)
-        SUBSYSTEM_PUSH_COMPONENTS += $(SUBSYSTEM_PUSH_DIR)/nativepush_port
+        SUBSYSTEM_PUSH_COMPONENTS += $(SUBSYSTEM_PUSH_DIR)/nativepush_port/lib.gmk
     endif
     
     #####################################################################
@@ -94,10 +93,10 @@ ifndef SUBSYSTEM_PUSH_COMPONENTS
     ifeq ($(USE_NATIVE_PUSH), false)
         ifeq ($(TARGET_VM), cdc_vm)
             ifeq ($(USE_PUSH_SHARED_IMPL), true)
-                SUBSYSTEM_PUSH_COMPONENTS += $(SUBSYSTEM_PUSH_DIR)/cdc_application/share
+                SUBSYSTEM_PUSH_COMPONENTS += $(SUBSYSTEM_PUSH_DIR)/cdc_application/share/lib.gmk
             endif
             ifeq ($(USE_JUMP), true)
-                SUBSYSTEM_PUSH_COMPONENTS += $(SUBSYSTEM_PUSH_DIR)/cdc_application/jump
+                SUBSYSTEM_PUSH_COMPONENTS += $(SUBSYSTEM_PUSH_DIR)/cdc_application/jump/lib.gmk
             endif
         endif
     endif
@@ -109,10 +108,7 @@ endif
 SUBSYSTEM_PUSH_COMPONENTS += $(PUSH_ADDITIONAL_COMPONENTS)
 
 # Include components
-$(foreach $(SUBSYSTEM_PUSH_COMPONENTS), \
-	$(_PUSH_COMP), \
-	include $(_PUSH_COMP)/lib.gmk )
-endif
+include $(SUBSYSTEM_PUSH_COMPONENTS)
 
 ####################################################################
 
