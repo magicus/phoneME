@@ -525,7 +525,7 @@ javacall_handle configdb_load_from_fs(javacall_utf16* unicodeFileName, int fileN
                              JAVACALL_FILE_O_RDWR,
                              &file_handle);
     if (res != JAVACALL_OK) {
-        javacall_print("Error:  Unable to open the dynamic properties file.  "
+        javacall_print("Error: Unable to open the dynamic properties file.  "
                         "Check that jwc_properties.ini exists in your "
                         "application directory.\n");
         return NULL;
