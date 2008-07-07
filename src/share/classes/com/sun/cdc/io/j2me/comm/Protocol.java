@@ -59,6 +59,9 @@ public class Protocol extends BufferedConnectionAdapter
     /* This object's device name */
     private String thisDeviceName = null;
 
+    /* This object's device mode  */
+    private int deviceMode = Connector.READ;
+
     /**
      * Class initializer
      */
@@ -213,7 +216,7 @@ public class Protocol extends BufferedConnectionAdapter
     protected void checkPermission(String name) {
         java.lang.SecurityManager sm = System.getSecurityManager();
         if (sm != null) {
-            if (mode == Connector.READ) {
+            if (deviceMode == Connector.READ) {
                 sm.checkRead(name);
             } else {
                 sm.checkWrite(name);
@@ -299,6 +302,7 @@ public class Protocol extends BufferedConnectionAdapter
         String deviceName = null;
         int start = 0;
         int pos = 0;
+	deviceMode = mode;
 
         if (name.length() == 0) {
              throw new IllegalArgumentException("Missing port ID");
