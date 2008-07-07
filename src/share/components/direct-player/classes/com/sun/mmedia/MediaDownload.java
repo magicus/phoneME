@@ -116,10 +116,10 @@ class MediaDownload {
                 nSetWholeContentSize(hNative, contLength);
             }
         }
-       
+
         int newJavaBufSize = nGetJavaBufferSize(hNative);
         packetSize  = nGetFirstPacketSize(hNative);
-        
+
         if(packetSize > 0 && !eom) {
             
             if (newJavaBufSize < packetSize) {
@@ -196,6 +196,7 @@ class MediaDownload {
                 packetSize = nBuffering(hNative, null, 0, 0);
                 needMoreData = false;
             }
+            buffer = null;
         }
     }
 
