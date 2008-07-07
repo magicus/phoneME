@@ -1568,12 +1568,13 @@ wr.pld(4,"System.out.println(\"It's my class!!\");");
             if (e.hasMoreElements()) {
                 do {
                     String getFieldMethod = (String)e.nextElement();
+                    String typeName = (String)fieldMethods.get(getFieldMethod);
                     wr.pl(1, "static " + 
-                        (String)fieldMethods.get(getFieldMethod) + " __" + getFieldMethod + "Value(String fieldName) {");
+                        typeName + " __" + getFieldMethod + "Value(String fieldName) {");
 wr.pld(4,"System.out.println(\"" + stubClsName + ".__" + getFieldMethod + "Value(String fieldName)" + "\");");
                     wr.pl(2, "__init();");
                     wr.pl(2, "try {");
-                    wr.pl(3, "return __clazz.getField(fieldName)." + getFieldMethod + "(null);");
+                    wr.pl(3, "return ("+typeName+")__clazz.getField(fieldName)." + getFieldMethod + "(null);");
                     wr.pl(2, "} catch (IllegalAccessException iae) {");
                     wr.pld(3, "iae.printStackTrace();");
                     wr.pl(3, "throw new RuntimeException(iae);");
