@@ -1143,7 +1143,7 @@ wr.pld(5,"System.out.println(\"Trying to call __invoke" + i + " " + mems[i].toSt
                 String getFieldMethod = null;
                 try {
                     if (typeName.equals("java.lang.String")) {
-                        getFieldMethod = "(String)get";
+                        getFieldMethod = "get";
                         wr.p("\"" + (String)fields[i].get(null) + "\"");
                         getFieldMethod = null;
                     } else
@@ -1179,18 +1179,15 @@ wr.pld(5,"System.out.println(\"Trying to call __invoke" + i + " " + mems[i].toSt
                     } else {
                         wr.p("/* Invalid value */");
                     }
-                } catch (IllegalAccessException iae) {
-                    //wr.p("/* IllegalAccessException was trown */");
-                } catch (UnsatisfiedLinkError ule) {
-                    //wr.p("/* UnsatisfiedLinkError was trown */");
-                } catch (NoClassDefFoundError ncdfe) {
-                    //wr.p("/* NoClassDefFoundError was trown */");
-                }
+                } catch (Throwable th) {} // ignored
                 if (getFieldMethod != null) {
                     initStaticFlag = true;
                     fieldMethods.put(getFieldMethod, typeName);
                     if (isIface) {
                         wr.p(translateInterfaceImplNamePkg(stubClsName) + ".");
+                    }
+                    if (typeName.equals("java.lang.String")) {
+                        wr.p("(String)");
                     }
                     wr.p("__" + getFieldMethod + "Value(\"" + fieldName + "\")");
                     // wr.p("__clazz.getField(\"" + fieldName + "\")." + getFieldMethod + "(null)");
