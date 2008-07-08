@@ -357,7 +357,7 @@ class AppManagerUIImpl extends Form
 
         setCommandListener(this);
         
-        if (locale.equals("he-IL")) {
+        if (locale != null && locale.equals("he-IL")) {
             RL_DIRECTION = true;
             TEXT_ORIENT = Graphics.RIGHT;
         } else {
