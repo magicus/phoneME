@@ -39,4 +39,4 @@ MIDP_JAVADOC_SOURCEPATH += $(MIDLET_SELECTOR_DIR)/mvm/classes
 # Java files for the sub-system
 #
 SUBSYSTEM_AMS_JAVA_FILES += \
-    $(MIDLET_SELECTOR_IPML_DIR)/classes/com/sun/midp/appmanager/Selector.java
+    $(MIDLET_SELECTOR_DIR)/mvm/classes/com/sun/midp/appmanager/Selector.java
