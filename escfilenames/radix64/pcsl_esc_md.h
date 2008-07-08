@@ -32,31 +32,19 @@
 #endif
 
 /* let Donuts know that all radix values may be tested */
-#define PCSL_ESC_TESTING
+#ifdef PCSL_ESC_TESTING
+#error PCSL_ESC_TESTING must not be defined
+#endif
 
 
-extern int esc_case_sensitive;
-#define PCSL_ESC_CASE_SENSITIVE_MD esc_case_sensitive
+#define PCSL_ESC_CASE_SENSITIVE_MD 1
 
-extern int esc_radix;
-#define PCSL_ESC_RADIX_MD esc_radix
+#define PCSL_ESC_RADIX_MD 64
 
 
-/*
-//for PCSL_ESC_CASE_SENSITIVE_MD==1 :
 #define PCSL_ESC_ONLY_IF_CASE_SENSITIVE_MD( something ) something;;
 #define PCSL_ESC_EXPR_IF_CASE_SENSITIVE_MD( expr_if, expr_else ) (expr_if)
-//for PCSL_ESC_CASE_SENSITIVE_MD==0 :
-#define PCSL_ESC_ONLY_IF_CASE_SENSITIVE_MD( something ) ;;
-#define PCSL_ESC_EXPR_IF_CASE_SENSITIVE_MD( expr_if, expr_else ) (expr_else)
-*/
-/*
-// for PCSL_ESC_CASE_SENSITIVE_MD set to variable:
-*/
-#define PCSL_ESC_ONLY_IF_CASE_SENSITIVE_MD( something ) \
-    if(PCSL_ESC_CASE_SENSITIVE_MD) { something; };;
-#define PCSL_ESC_EXPR_IF_CASE_SENSITIVE_MD( expr_if, expr_else ) \
-    ((PCSL_ESC_CASE_SENSITIVE_MD) ? (expr_if) : (expr_else))
+
 
 /* Two sorts of characters must not be there in this string:
  * - characters that are used as escape symbols;
@@ -76,53 +64,44 @@ extern int esc_radix;
 #define PCSL_ESC_FULL_CODES_MD '='
 
     
-#define PCSL_ESC_BYTES_PER_TUPLE_MD \
+#define PCSL_ESC_BYTES_PER_TUPLE_MD 3
+/*
      ( PCSL_ESC_RADIX == 16 ? 1 \
     :( PCSL_ESC_RADIX == 41 ? 2 \
     :( PCSL_ESC_RADIX == 64 ? 3 \
     :( PCSL_ESC_RADIX == 85 ? 4 \
     :0 \
     ))))
-
+*/
 #define PCSL_ESC_DIGITS_PER_TUPLE_MD (PCSL_ESC_BYTES_PER_TUPLE+1)
 
-#define PCSL_ESC_FULL_TUPLE_MASK_MD \
+#define PCSL_ESC_FULL_TUPLE_MASK_MD 0xffffff
+/*
      ( PCSL_ESC_RADIX == 16 ? 0xff \
     :( PCSL_ESC_RADIX == 41 ? 0xffff \
     :( PCSL_ESC_RADIX == 64 ? 0xffffff \
     :( PCSL_ESC_RADIX == 85 ? 0xffffffff \
     :0 \
     ))))
+*/
+/* true means that we are considering special characters as uppercase of digits */
+#define PCSL_ESC_EXTENDED_SHIFT_MD 1
 
-/* for testing, we make it a variable so that we can chnge this option at run-time */
-extern int esc_extended_shift;
-#define PCSL_ESC_EXTENDED_SHIFT_MD esc_extended_shift 
-
-/* */
 #define PCSL_ESC_EXTRA_LOWERCASE_MD "0123456789"
 #define PCSL_ESC_EXTRA_UPPERCASE_MD " !@#$%.,=+"
 #define PCSL_ESC_EXTRA_NEEDXCASE_MD PCSL_ESC_EXTRA_UPPERCASE_MD
 
+#define PCSL_ESC_EXTRA_UPPER_MD(c) pcsl_esc_mapchar((c),PCSL_ESC_EXTRA_LOWERCASE_MD,PCSL_ESC_EXTRA_UPPERCASE_MD)
 /*
-//for PCSL_ESC_EXTENDED_SHIFT_MD==1
-//#define PCSL_ESC_EXPR_IF_EXTENDED_SHIFT_MD(if_yes,if_no) (if_yes)
-//for PCSL_ESC_EXTENDED_SHIFT_MD==0
-//#define PCSL_ESC_EXPR_IF_EXTENDED_SHIFT_MD(if_yes,if_no) (if_no)
-//for PCSL_ESC_EXTENDED_SHIFT_MD set to variable:
+    (esc_extended_shift ? pcsl_esc_mapchar((c),PCSL_ESC_EXTRA_LOWERCASE_MD,PCSL_ESC_EXTRA_UPPERCASE_MD) : (c))
 */
-#define PCSL_ESC_EXPR_IF_EXTENDED_SHIFT_MD(if_yes,if_no) (PCSL_ESC_EXTENDED_SHIFT_MD?(if_yes):(if_no))
-
-#define PCSL_ESC_EXTRA_UPPER_MD(c) \
-    PCSL_ESC_EXPR_IF_EXTENDED_SHIFT_MD( \
-	pcsl_esc_mapchar((c),PCSL_ESC_EXTRA_LOWERCASE_MD,PCSL_ESC_EXTRA_UPPERCASE_MD), \
-	(c))
-
-#define PCSL_ESC_EXTRA_LOWER_MD(c) \
-    PCSL_ESC_EXPR_IF_EXTENDED_SHIFT_MD( \
-	pcsl_esc_mapchar((c),PCSL_ESC_EXTRA_UPPERCASE_MD,PCSL_ESC_EXTRA_LOWERCASE_MD), \
-	(c))
+#define PCSL_ESC_EXTRA_LOWER_MD(c) pcsl_esc_mapchar((c),PCSL_ESC_EXTRA_UPPERCASE_MD,PCSL_ESC_EXTRA_LOWERCASE_MD)
+/*
+    (esc_extended_shift ? pcsl_esc_mapchar((c),PCSL_ESC_EXTRA_UPPERCASE_MD,PCSL_ESC_EXTRA_LOWERCASE_MD) : (c))
+*/
 
 #define PCSL_ESC_CONVERT_CASE_MD(c) PCSL_ESC_EXTRA_LOWER_MD(c)
+
 
 #define PCSL_ESC_UPPER_MD(c) \
     PCSL_ESC_EXPR_IF_CASE_SENSITIVE_MD( \

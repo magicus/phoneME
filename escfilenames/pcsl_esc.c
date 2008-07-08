@@ -61,7 +61,12 @@
  * the high-order byte for each character. (The things get a bit
  * more complicated with Unicode code points greater than 2^16...
  * Anyway, the encoding supports compact selection of two
- * most significant byte values.)
+ * values of the most significant byte.)
+ *
+ * (The previous statement should be a bit corrected: for CJK,
+ * there are thousands of characters that just cannot happen to share
+ * the same high-order byte; therefore, we also support a mode
+ * requiring both bytes for each character.)
  *
  * The second idea is grouping bytes into "tuples" and encoding
  * them as numbers in some relatively large radix.
@@ -92,19 +97,27 @@
  */
 
 
-//#define PCSL_ESC_MOREDIGITS "-_!@#$%^&*(){}[]`~<>,;'\\|"
-
 #ifndef PCSL_ESC_ONLY_IF_CASE_SENSITIVE
-#error !!!kkk!!!
+#error PCSL_ESC_ONLY_IF_CASE_SENSITIVE is not defined!!
 #endif
+
+int pcsl_esc_mapchar(char x, char* from, char* to) {
+    int i;
+    for(i=0;from[i];i++) {
+	if(x==from[i]) return to[i];
+    }
+    return x;
+}
 
 /**
  * Convert a number in PCSL_ESC_RADIX system into a digit.
- * Two error conditions are possible: the digit is out of range,
+ * For example, 9 gets converted to '9', and 15 gets converted to 'f'.
+ * Two error conditions are possible: the input number is out of
+ * the [0..radix) range,
  * or there is not enough digits (this does not normally happen at
- * run-time; the engineer has to check
- * the macros PCSL_ESC_MOREDIGITS and PCSL_ESC_CASE_SENSITIVE;
- * of course, this is covered by donuts testing).
+ * run-time and is covered by donuts testing; the engineer has to check
+ * the macros PCSL_ESC_MOREDIGITS and PCSL_ESC_CASE_SENSITIVE).
+ *
  * @param n a number specifying a digit in base PCSL_ESC_RADIX system, 0 <= n < PCSL_ESC_RADIX
  * @return the code of character that serves as digit representing n, or -1 in the case of an error.
 */
@@ -119,7 +132,7 @@ int pcsl_esc_num2digit(unsigned int n) {
 	if (n<26) return 'A'+n;
 	n -= 26;
       )
-	if (n<sizeof(PCSL_ESC_MOREDIGITS)) return PCSL_ESC_MOREDIGITS[n];
+	if (n<sizeof(PCSL_ESC_MOREDIGITS)-1) return PCSL_ESC_MOREDIGITS[n];
 	n -= sizeof(PCSL_ESC_MOREDIGITS);
 	// error
     }
@@ -154,15 +167,12 @@ int pcsl_esc_digit2num(unsigned int c) {
     return res;
 }
 
-//85^5=4437053125
-// 85 = 10 + 26 + 26 + 23 -- 23 additional digits required for radix 85
-//~`!@#$%^&*()_-+={}[]:"|;'\< >?,./ -- 33 chars, including space
 /**
  * Convert bytes to text representation, and append that representation to a string.
  * The bytes to be converted are packed in an unsigned number, the
  * first byte is the most significant one.
  * The number of bytes to be converted is specified by the value maxnum
- * containing ones in all bits of provided bytes, for example, 0xffff
+ * containing ones in all bits of bytes provided in num, for example, 0xffff
  * specify two bytes. The maxnum value also determines the number of digits 
  * in the text representation, for example, in hexadecimal, 0 and maxnum=0xff
  * will produce 00 while 0 with the maxnum=0xffff will produce 0000.
@@ -254,13 +264,14 @@ void pcsl_esc_init() {
     FOR_RANGE(c,'a','z') char_sort_tab[c] = goes_as_is; END_FOR
     // the individual characters that go as is:
 //    FOR_EACH(c,"-_") char_sort_tab[c] = goes_as_is; END_FOR
-#if PCSL_ESC_CASE_SENSITIVE
+
     // if file names are case-sensitive, A-Z go as is
-    FOR_RANGE(c,'A','Z') char_sort_tab[c] = goes_as_is; END_FOR
-#else
     // if file names are not case-sensitive, A-Z go shifted
-    FOR_RANGE(c,'A','Z') char_sort_tab[c] = goes_shifted; END_FOR
-#endif
+    FOR_RANGE(c,'A','Z') char_sort_tab[c] = PCSL_ESC_CASE_SENSITIVE?goes_as_is:goes_shifted; END_FOR
+
+    if(PCSL_ESC_EXTENDED_SHIFT) {
+	FOR_EACH(c,PCSL_ESC_EXTRA_NEEDXCASE) char_sort_tab[c] = goes_shifted; END_FOR
+    }
 
 #undef FOR_RANGE
 #undef FOR_EACH
@@ -289,11 +300,9 @@ void pcsl_esc_attach_buf(const jchar* in, jsize len, pcsl_string* out) {
     const jchar* limit = in+len;
     unsigned c;
     if(!in||!len) return; /* nothing to do */
-//printf("attach_buf{ in=0x%x, len=0x%x\n",in,len);
     while(c=*in,in<limit) {
 	int b = BLOCK_OF(c);
 	char_sort s = CHAR_SORT_OF(c) ;
-//printf("c=0x%x b=0x%x s=0x%x shiftMode=0x%x\n",c,b,s,shiftMode);
 	switch(s) {
 	case goes_as_is:
 	case goes_shifted:
@@ -347,12 +356,14 @@ void pcsl_esc_attach_buf(const jchar* in, jsize len, pcsl_string* out) {
 		    c = *++in;
 		    b = BLOCK_OF(c);
                     s = CHAR_SORT_OF(c);
-//printf("~ c=0x%x (%c) b=%x, s=%x\n",c,c,b,s);                    
 		} while(in<limit && currentBlock != b && s == goes_escaped);
 		if(bufMask) {
 		    pcsl_esc_append_encoded_tuple(out,buffer,bufMask);
 		    buffer = bufMask = 0;
 		}
+		if(s != goes_escaped) {
+		    pcsl_string_append_char(out, PCSL_ESC_TOGGLE);
+                }
             } else {
 		if(currentBlock == b) {
 		    pcsl_string_append_char(out, PCSL_ESC_TOGGLE);
@@ -415,7 +426,6 @@ void pcsl_esc_attach_buf(const jchar* in, jsize len, pcsl_string* out) {
 void pcsl_esc_attach_string(const pcsl_string* data, pcsl_string*dst) {
     const jchar* x = pcsl_string_get_utf16_data(data);
     int l = pcsl_string_utf16_length(data);
-//PRINTF_PCSL_STRING("t=[%s]\n",t);
     pcsl_esc_attach_buf(x,l,dst);
     pcsl_string_release_utf16_data(x,data);
 }
@@ -428,12 +438,12 @@ void pcsl_esc_extract_attached(const int offset, const pcsl_string *src, pcsl_st
     const jchar*p = s+offset;
     const jchar*plimit = s+len;
     *dst = PCSL_STRING_NULL;
+    if(len<=0) return;
     while (p<plimit) {
         int c = *p;
-//printf("c=%c(%i) ",c,c);
-//PRINTF_PCSL_STRING("[%s] ",dst);	
         switch(c) {
         default:
+            c = shiftMode ? PCSL_ESC_UPPER(c) : PCSL_ESC_LOWER(c);
             pcsl_string_append_char(dst,c);
             break;
         case PCSL_ESC_SHIFT_TOGGLE:
@@ -459,18 +469,14 @@ void pcsl_esc_extract_attached(const int offset, const pcsl_string *src, pcsl_st
                 if (nbytes == 0) {
                     /* fetch a tuple, advancing p */
                     nbytes = pcsl_esc_extract_encoded_tuple(&tuple,&p);
-//printf(" {{tuple=%x, %i}} ",tuple,nbytes);
                 }
 
-//PRINTF_PCSL_STRING(" [%s] ",dst);	
-//printf("cmd=%c(%i) ",cmd,cmd);
-//printf("p->%c(%i) ",*p,*p);
-//printf("nbytes=%i ",nbytes);
+		if(nbytes < 0) nbytes = 0;
+
                 if (nbytes == 0) {
                     cmd = *p++;
                 } else {
                     byte = 0xff & tuple >> 8*--nbytes;
-//printf("byte=%c(%i) ",byte,byte);
                     switch (cmd) {
                     case PCSL_ESC_NEW_BLOCK:
                         b_prev = b;
