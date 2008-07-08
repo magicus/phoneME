@@ -31,7 +31,6 @@ extern "C" {
 #include "javacall_memory.h"
 #include "javacall_properties.h"
 #include "javacall_config_db.h"
-#include "javacall_dir.h"
 
 typedef enum {
     PROPERTIES_INIT_NOT_STARTED,
@@ -40,7 +39,7 @@ typedef enum {
 } properties_init_state;
 
 static javacall_utf16 default_property_file_name[] = 
-    {'j','w','c','_','p','r','o','p','e','r','t','i','e','s','.','i','n','i', 0};
+    {'j','w','c','_','p','r','o','p','e','r','t','i','e','s','.','i','n','i'};
 
 static javacall_utf16* property_file_name = NULL;
 static int property_file_name_len = 0;
@@ -64,7 +63,7 @@ static javacall_utf16* get_properties_file_name(int* fileNameLen);
 javacall_result javacall_initialize_configurations(void) {
     javacall_utf16* file_name;
     int file_name_len;
-	
+
     if (PROPERTIES_INIT_COMPLETED == init_state) {
         return JAVACALL_OK;
     }
@@ -77,7 +76,8 @@ javacall_result javacall_initialize_configurations(void) {
     init_state = PROPERTIES_INIT_IN_PROGRESS;
     property_was_updated = 0;
 
-	file_name = get_properties_file_name(&file_name_len);
+    file_name = get_properties_file_name(&file_name_len);
+
     handle = javacall_configdb_load(file_name, file_name_len);
     if (handle == NULL) {
         init_state = PROPERTIES_INIT_NOT_STARTED;
@@ -244,8 +244,14 @@ javacall_result set_properties_file_name(const javacall_utf16* unicodeFileName,
     int fileNameSize = (unicodeFileName != NULL) 
                                ? fileNameLen * sizeof(javacall_utf16)
                                : 0;
-    javacall_utf16* fileNameCopy = javacall_realloc(property_file_name, 
-                                                    fileNameSize);
+
+    /* NOTE: realloc(NULL, 0) can return unpredictable results,
+        in particular non-NULL value */
+    javacall_utf16* fileNameCopy = NULL;
+    if (fileNameLen > 0) {
+        fileNameCopy = javacall_realloc(
+            property_file_name, fileNameSize);
+    }
             
     if (fileNameCopy == NULL) {
         if (fileNameSize == 0) {
@@ -279,41 +285,12 @@ javacall_result set_properties_file_name(const javacall_utf16* unicodeFileName,
  */  
 static javacall_utf16* get_properties_file_name(int* fileNameLen) {
     if (property_file_name == NULL) {
-
-        /* evaluate path to default properties file,
-        set it as property file name and return as result  */
-        #define MAX_PATH_LEN 1024
-        javacall_utf16 root_path[MAX_PATH_LEN];
-        int root_path_len;
-
-        int default_property_file_name_len =
-            (int)(sizeof(default_property_file_name) /
-                sizeof(default_property_file_name[0]));
-
-        /* get config directory path */
-        if (JAVACALL_OK != javacall_dir_get_config_path(
-                root_path, &root_path_len)) {
-
-            javacall_print("Warning: Unable to get config directory path.\n");
-            *fileNameLen = default_property_file_name_len;
-            return default_property_file_name;
-        }
-
-        /* evaluate full path of the default properties file */
-        property_file_name_len =  root_path_len + default_property_file_name_len;
-        property_file_name = javacall_malloc(
-            (property_file_name_len + 1) * sizeof(javacall_utf16));
-
-        if (NULL == property_file_name || JAVACALL_OK != javautil_unicode_cat(
-                root_path, default_property_file_name,
-                property_file_name, property_file_name_len)) {
-
-            javacall_print("Error: No memory to create properties file path.\n");
-            property_file_name_len = 0;
-            *fileNameLen = default_property_file_name_len;
-            return default_property_file_name;
-        }
+        /* return the default name */
+        *fileNameLen = sizeof(default_property_file_name) 
+                           / sizeof(default_property_file_name[0]);
+        return default_property_file_name;
     }
+    
     *fileNameLen = property_file_name_len;
     return property_file_name;    
 } 
