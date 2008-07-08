@@ -1,7 +1,7 @@
 /*
  *
  *
- * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
@@ -110,6 +110,10 @@ extern void jcapp_set_softbutton_label_on_native_layer (unsigned short *label,
                                                          int index);
 
 
+/*Disables the refresh of the screen*/
+ void LCDUI_disable_refresh(void);
+/*Enables the refresh of the screen*/
+ void LCDUI_enable_refresh(void);
 
 #ifdef __cplusplus
 }
