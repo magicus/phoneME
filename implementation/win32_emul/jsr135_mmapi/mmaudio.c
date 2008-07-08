@@ -48,6 +48,36 @@
 /* forward declaration */
 javacall_result audio_start(javacall_handle handle);
 
+/******************************************************************************/
+
+void* mmaudio_mutex_create( )
+{
+    LPCRITICAL_SECTION pcs
+        = (LPCRITICAL_SECTION)MALLOC( sizeof( CRITICAL_SECTION ) );
+
+    InitializeCriticalSection( pcs );
+
+    return pcs;
+}
+
+void mmaudio_mutex_destroy( void* m )
+{
+    DeleteCriticalSection( (LPCRITICAL_SECTION)m );
+    FREE( m );
+}
+
+void mmaudio_mutex_lock( void* m )
+{
+    EnterCriticalSection( (LPCRITICAL_SECTION)m );
+}
+
+void mmaudio_mutex_unlock( void* m )
+{
+    LeaveCriticalSection( (LPCRITICAL_SECTION)m );
+}
+
+/******************************************************************************/
+
 /**
  * 
  */
@@ -67,7 +97,7 @@ javacall_result audio_get_time(javacall_handle handle, long* ms){
             return JAVACALL_OK;
     }
 
-    if (pHandle->hWnd) {
+    if (pHandle->hWnd > 0) {
         if (f == NULL) {
             f = NewLimeFunction(LIME_MMAPI_PACKAGE,
                         LIME_MMAPI_CLASS,
@@ -92,7 +122,7 @@ javacall_result audio_set_time(javacall_handle handle, long* ms){
     int res;
     javacall_int64 time = *ms;
     
-    if (pHandle->hWnd) {
+    if (pHandle->hWnd > 0) {
         if (f == NULL) {
             f = NewLimeFunction(LIME_MMAPI_PACKAGE,
                         LIME_MMAPI_CLASS,
@@ -174,6 +204,9 @@ javacall_result audio_get_buffer_address(javacall_handle handle,
     {
         pHandle->buffer = MALLOC(pHandle->wholeContentSize);
     }
+    if (pHandle->buffer == NULL) {
+        return JAVACALL_FAIL;
+    }
     
     *buffer = pHandle->buffer;
     *max_size = pHandle->wholeContentSize;
@@ -190,17 +223,27 @@ jcafmt mediaType, const javacall_utf16* URI, long uriLength);
 /**
  * Timer callback used to check about end of media (except JTS type)
  */
-static void CALLBACK audio_timer_callback(UINT uID, UINT uMsg, 
+static void CALLBACK FAR audio_timer_callback(UINT uID, UINT uMsg, 
                                           DWORD dwUser, 
                                           DWORD dw1, 
                                           DWORD dw2) {
     audio_handle* pHandle = (audio_handle*)dwUser;
 
-    if (pHandle->hWnd) {
+    if (pHandle->mutex)
+        mmaudio_mutex_lock(pHandle->mutex);
+
+    if (pHandle->timerId != uID || pHandle->hWnd <= 0) {
+        // timer already closed
+        timeKillEvent(uID);
+        mmaudio_mutex_unlock(pHandle->mutex);
+        return;
+    }
+    if (pHandle->hWnd > 0) {
         if (-1 == pHandle->duration) {
             audio_get_duration((javacall_handle)dwUser, &(pHandle->duration) );
             JC_MM_DEBUG_PRINT1("[jc_media] audio_timer_callback %d\n", pHandle->duration);
             if (-1 == pHandle->duration) {
+                mmaudio_mutex_unlock(pHandle->mutex);
                 return;
             }
         }
@@ -211,16 +254,15 @@ static void CALLBACK audio_timer_callback(UINT uID, UINT uMsg,
         /* Is end of media reached? */
         if (pHandle->offset >= pHandle->duration) {
             /* Post EOM event to Java and kill player timer */
+            timeKillEvent(pHandle->timerId);
             pHandle->timerId = 0;
             pHandle->offset = 0;
-            timeKillEvent(uID);
 
             if( JC_FMT_CAPTURE_VIDEO == pHandle->mediaType ) {
                 // emulated camera loops ininitely,
                 // but EOM must not be sent
                 audio_set_time( (javacall_handle)dwUser, &(pHandle->offset) );
                 audio_start( (javacall_handle)dwUser );
-                return;
             } else {
                 JC_MM_DEBUG_PRINT1("[jc_media] javanotify_on_media_notification %d\n", pHandle->playerId);
                 javanotify_on_media_notification(JAVACALL_EVENT_MEDIA_END_OF_MEDIA,
@@ -229,6 +271,8 @@ static void CALLBACK audio_timer_callback(UINT uID, UINT uMsg,
             }
         }
     }
+    if(pHandle->mutex)
+        mmaudio_mutex_unlock(pHandle->mutex);
 }
 
 
@@ -247,7 +291,7 @@ static javacall_handle audio_create(int appId, int playerId,
 
     size_t uriLength = ( NULL != URI ) ? wcslen(URI) : 0;
 
-    javacall_int64 res;
+    javacall_int64 res = 0;
     audio_handle* pHandle = MALLOC(sizeof(audio_handle));
     
     int len = MAX_MIMETYPE_LENGTH;
@@ -279,6 +323,9 @@ static javacall_handle audio_create(int appId, int playerId,
     }
     
     f->call(f, &res, mediaTypeWide, mediaTypeWideLen, URI, uriLength);
+    if (res <= 0) {
+	    return NULL;
+    }
 
     pHandle->hWnd             = (long)res;
     pHandle->offset           = 0;
@@ -294,6 +341,7 @@ static javacall_handle audio_create(int appId, int playerId,
     pHandle->isBuffered       = JAVACALL_FALSE;
     pHandle->volume           = -1;
     pHandle->mute             = JAVACALL_FALSE;
+    pHandle->mutex            = mmaudio_mutex_create();
 
     // set the file name to the URI
     if (NULL != URI && uriLength>0) {
@@ -315,6 +363,9 @@ javacall_result audio_close(javacall_handle handle){
     audio_handle* pHandle = (audio_handle*)handle;
     static LimeFunction *f = NULL;
     int res;
+
+    if (pHandle->mutex)
+        mmaudio_mutex_lock(pHandle->mutex);
     
     if (f == NULL) {
         f = NewLimeFunction(LIME_MMAPI_PACKAGE,
@@ -324,14 +375,22 @@ javacall_result audio_close(javacall_handle handle){
     
     f->call(f, &res, pHandle->hWnd);
 
-    if (-1 != pHandle->hWnd) {
+    if (pHandle->hWnd > 0) {
         pHandle->hWnd = -1;
     }
 
     if (pHandle->buffer != NULL) {
         FREE(pHandle->buffer);
     }
-    
+
+    if (pHandle->mutex) {
+        mmaudio_mutex_unlock(pHandle->mutex);
+        mmaudio_mutex_destroy(pHandle->mutex);
+    }
+    pHandle->mutex = NULL;
+    pHandle->timerId = -1;
+
+
     if (handle) {
         FREE(handle);
     }
@@ -364,7 +423,7 @@ javacall_result audio_get_max_rate(javacall_handle handle, long* maxRate){
     audio_handle* pHandle = (audio_handle*)handle;
     static LimeFunction *f = NULL;
     
-    if (pHandle->hWnd) {
+    if (pHandle->hWnd > 0) {
         if (f == NULL) {
             f = NewLimeFunction(LIME_MMAPI_PACKAGE,
                         LIME_MMAPI_CLASS,
@@ -380,7 +439,7 @@ javacall_result audio_get_min_rate(javacall_handle handle, long* minRate){
     audio_handle* pHandle = (audio_handle*)handle;
     static LimeFunction *f = NULL;
     
-    if (pHandle->hWnd) {
+    if (pHandle->hWnd > 0) {
         if (f == NULL) {
             f = NewLimeFunction(LIME_MMAPI_PACKAGE,
                         LIME_MMAPI_CLASS,
@@ -396,7 +455,7 @@ javacall_result audio_set_rate(javacall_handle handle, long rate){
     audio_handle* pHandle = (audio_handle*)handle;
     static LimeFunction *f = NULL;
     int res;
-    if (pHandle->hWnd) {
+    if (pHandle->hWnd > 0) {
         if (f == NULL) {
             f = NewLimeFunction(LIME_MMAPI_PACKAGE,
                         LIME_MMAPI_CLASS,
@@ -411,7 +470,7 @@ javacall_result audio_get_rate(javacall_handle handle, long* rate){
     audio_handle* pHandle = (audio_handle*)handle;
     static LimeFunction *f = NULL;
     
-    if (pHandle->hWnd) {
+    if (pHandle->hWnd > 0) {
         if (f == NULL) {
             f = NewLimeFunction(LIME_MMAPI_PACKAGE,
                         LIME_MMAPI_CLASS,
@@ -503,9 +562,9 @@ javacall_result audio_start(javacall_handle handle){
                             "start");
     }
     f->call(f, &res, pHandle->hWnd);
-    pHandle->timerId = 
-            (UINT)timeSetEvent(TIMER_CALLBACK_DURATION, 100, audio_timer_callback,(DWORD)pHandle, TIME_PERIODIC);
     
+    pHandle->timerId = 
+            (UINT)timeSetEvent(TIMER_CALLBACK_DURATION, 100, audio_timer_callback,(DWORD)pHandle, TIME_PERIODIC | TIME_CALLBACK_FUNCTION);
     return JAVACALL_OK;
 }
 
@@ -518,7 +577,10 @@ javacall_result audio_stop(javacall_handle handle){
     static LimeFunction *f = NULL;
     int res;
 
-    if (pHandle->hWnd) {
+    if (pHandle->mutex)
+        mmaudio_mutex_lock(pHandle->mutex);
+
+    if (pHandle->hWnd > 0) {
         if (f == NULL) {
             f = NewLimeFunction(LIME_MMAPI_PACKAGE,
                         LIME_MMAPI_CLASS,
@@ -532,6 +594,8 @@ javacall_result audio_stop(javacall_handle handle){
         }
         //MCIWndStop(pHandle->hWnd);
     }
+    if (pHandle->mutex)
+        mmaudio_mutex_unlock(pHandle->mutex);
     
     return JAVACALL_OK;
 }
@@ -545,7 +609,10 @@ javacall_result audio_pause(javacall_handle handle) {
     static LimeFunction *f = NULL;
     int res;
     
-    if (pHandle->hWnd) {
+    if (pHandle->mutex)
+        mmaudio_mutex_lock(pHandle->mutex);
+
+    if (pHandle->hWnd > 0) {
         if (f == NULL) {
             f = NewLimeFunction(LIME_MMAPI_PACKAGE,
                     LIME_MMAPI_CLASS,
@@ -560,6 +627,8 @@ javacall_result audio_pause(javacall_handle handle) {
             pHandle->timerId = 0;
         }
     }
+    if (pHandle->mutex)
+        mmaudio_mutex_unlock(pHandle->mutex);
     
     return JAVACALL_OK;
 }
@@ -573,9 +642,9 @@ javacall_result audio_resume(javacall_handle handle) {
     static LimeFunction *f = NULL;
     int res;
     
-    if (pHandle->hWnd) {
+    if (pHandle->hWnd > 0) {
         pHandle->timerId = (UINT) timeSetEvent(TIMER_CALLBACK_DURATION, 100, 
-                audio_timer_callback, (DWORD)pHandle, TIME_PERIODIC);
+                audio_timer_callback, (DWORD)pHandle, TIME_PERIODIC | TIME_CALLBACK_FUNCTION);
         if (f == NULL) {
             f = NewLimeFunction(LIME_MMAPI_PACKAGE,
                     LIME_MMAPI_CLASS,
@@ -619,7 +688,7 @@ static int audio_do_set_volume( audio_handle* pHandle, long level )
     static LimeFunction *f = NULL;
     int res;
     
-    if (pHandle->hWnd) {
+    if (pHandle->hWnd > 0) {
         if (f == NULL) {
             f = NewLimeFunction(LIME_MMAPI_PACKAGE,
                         LIME_MMAPI_CLASS,
