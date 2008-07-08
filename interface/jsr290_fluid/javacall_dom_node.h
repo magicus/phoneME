@@ -359,7 +359,7 @@ javacall_dom_node_remove_child(javacall_handle handle,
  * @param handle Pointer to the object representing this node.
  * @param new_child Pointer to the object of
  *   the node to add.If it is a <code>DocumentFragment</code>
- *    object, the entire contents of the document fragment are moved 
+ *   object, the entire contents of the document fragment are moved 
  *   into the child list of this node
  * @param ret_value Pointer to the object representing 
  *   the node added.

@@ -196,9 +196,7 @@ javacall_dom_mouseevent_get_related_target(javacall_handle handle,
  *   method for a description of this parameter. 
  * @param cancelable_arg  Refer to the <code>UIEvent.initUIEvent()</code> 
  *   method for a description of this parameter. 
- * @param viewArg  Refer to the <code>UIEvent.initUIEvent()</code> method 
- *   for a description of this parameter. 
- * @param detailArg  Refer to the <code>UIEvent.initUIEvent()</code> 
+ * @param detail_arg  Refer to the <code>UIEvent.initUIEvent()</code> 
  *   method for a description of this parameter. 
  * @param screen_x_arg  Specifies <code>MouseEvent.screenX</code>. 
  * @param screen_y_arg  Specifies <code>MouseEvent.screenY</code>. 
@@ -222,6 +220,7 @@ javacall_dom_mouseevent_init_mouse_event(javacall_handle handle,
                                          javacall_const_utf16_string type_arg,
                                          javacall_bool can_bubble_arg,
                                          javacall_bool cancelable_arg,
+                                         javacall_int32 detail_arg,
                                          javacall_int32 screen_x_arg,
                                          javacall_int32 screen_y_arg,
                                          javacall_int32 client_x_arg,
@@ -246,10 +245,8 @@ javacall_dom_mouseevent_init_mouse_event(javacall_handle handle,
  * @param can_bubble_arg  Refer to the <code>UIEvent.initUIEventNS()</code> 
  *   method for a description of this parameter. 
  * @param cancelable_arg  Refer to the <code>UIEvent.initUIEventNS()</code>
- *    method for a description of this parameter. 
- * @param viewArg  Refer to the <code>UIEvent.initUIEventNS()</code> 
  *   method for a description of this parameter. 
- * @param detailArg  Refer to the <code>UIEvent.initUIEventNS()</code> 
+ * @param detail_arg  Refer to the <code>UIEvent.initUIEventNS()</code> 
  *   method for a description of this parameter. 
  * @param screen_x_arg  Refer to the 
  *   <code>MouseEvent.initMouseEvent()</code> method for a description 
@@ -264,7 +261,7 @@ javacall_dom_mouseevent_init_mouse_event(javacall_handle handle,
  *   <code>MouseEvent.initMouseEvent()</code> method for a description 
  *   of this parameter. 
  * @param button_arg  Refer to the <code>MouseEvent.initMouseEvent()</code>
- *    method for a description of this parameter. 
+ *   method for a description of this parameter. 
  * @param related_target_arg Pointer to the object of
  *    Refer to the 
  *   <code>MouseEvent.initMouseEvent()</code> method for a description 
@@ -285,6 +282,7 @@ javacall_dom_mouseevent_init_mouse_event_ns(javacall_handle handle,
                                             javacall_const_utf16_string type_arg,
                                             javacall_bool can_bubble_arg,
                                             javacall_bool cancelable_arg,
+                                            javacall_int32 detail_arg,
                                             javacall_int32 screen_x_arg,
                                             javacall_int32 screen_y_arg,
                                             javacall_int32 client_x_arg,

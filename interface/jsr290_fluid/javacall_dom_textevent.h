@@ -78,8 +78,6 @@ javacall_dom_textevent_get_data(javacall_handle handle,
  *   method for a description of this parameter. 
  * @param cancelable_arg  Refer to the <code>UIEvent.initUIEvent()</code> 
  *   method for a description of this parameter. 
- * @param viewArg  Refer to the <code>UIEvent.initUIEvent()</code> method 
- *   for a description of this parameter. 
  * @param data_arg  Specifies <code>TextEvent.data</code>. 
  * 
  * @return JAVACALL_OK if all done successfuly,
@@ -106,8 +104,6 @@ javacall_dom_textevent_init_text_event(javacall_handle handle,
  * @param can_bubble_arg  Refer to the <code>UIEvent.initUIEventNS()</code> 
  *   method for a description of this parameter. 
  * @param cancelable_arg  Refer to the <code>UIEvent.initUIEventNS()</code>
- *    method for a description of this parameter. 
- * @param viewArg  Refer to the <code>UIEvent.initUIEventNS()</code> 
  *   method for a description of this parameter. 
  * @param data_arg  Refer to the <code>TextEvent.initTextEvent()</code> 
  *   method for a description of this parameter. 
