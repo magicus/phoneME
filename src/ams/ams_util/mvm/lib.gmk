@@ -31,7 +31,7 @@
 
 # Name of the library
 AMS_UTIL_MVM_NAME = ams_util/mvm
-AMS_UTIL_MVM_DIR = $(AMS_UTIL_IMPL_DIR)
+AMS_UTIL_MVM_DIR = $(SUBSYSTEM_AMS_DIR)/$(AMS_UTIL_MVM_NAME)
 
 # Javadoc source path
 MIDP_JAVADOC_SOURCEPATH += $(AMS_UTIL_MVM_DIR)/classes

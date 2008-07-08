@@ -37,13 +37,14 @@ AMS_BASE_CLDC_NAME = ams_base_cldc
 
 
 # Local module directory
-AMS_BASE_CLDC_DIR ?= $(SUBSYSTEM_AMS_DIR)/$(AMS_BASE_CLDC_NAME)/reference
+AMS_BASE_CLDC_DIR = $(SUBSYSTEM_AMS_DIR)/$(AMS_BASE_CLDC_NAME)/reference
+AMS_BASE_CLDC_IMPL_DIR ?= $(AMS_BASE_CLDC_DIR)
 
 # Get implementation settings and files
-include $(AMS_BASE_CLDC_DIR)/lib.gmk
+include $(AMS_BASE_CLDC_IMPL_DIR)/lib.gmk
 
 # Javadoc source path
-MIDP_JAVADOC_SOURCEPATH += $(AMS_BASE_CLDC_DIR)/classes
+MIDP_JAVADOC_SOURCEPATH += $(AMS_BASE_CLDC_IMPL_DIR)/classes
 
 
 

@@ -36,19 +36,19 @@
 # Java files for the sub-system
 #
 SUBSYSTEM_AMS_JAVA_FILES += \
-    $(JAMS_IMPL_DIR)/classes/com/sun/midp/appmanager/MVMManager.java \
-    $(JAMS_IMPL_DIR)/classes/com/sun/midp/appmanager/SMMManager.java \
-    $(JAMS_IMPL_DIR)/classes/com/sun/midp/main/SMMDisplayController.java
+    $(JAMS_DIR)/mvm/classes/com/sun/midp/appmanager/MVMManager.java \
+    $(JAMS_DIR)/mvm/classes/com/sun/midp/appmanager/SMMManager.java \
+    $(JAMS_DIR)/mvm/classes/com/sun/midp/main/SMMDisplayController.java
 
-MIDP_JAVADOC_SOURCEPATH += $(JAMS_IMPL_DIR)/classes
+MIDP_JAVADOC_SOURCEPATH += $(JAMS_DIR)/mvm/classes
 
 # I3test files
 #
 ifeq ($(USE_I3_TEST), true)
 
 SUBSYSTEM_AMS_I3TEST_JAVA_FILES = \
-    $(JAMS_IMPL_DIR)/i3test/com/sun/midp/appmanager/DummyMIDlet1.java \
-    $(JAMS_IMPL_DIR)/i3test/com/sun/midp/appmanager/DummyMIDlet2.java \
-    $(JAMS_IMPL_DIR)/i3test/com/sun/midp/appmanager/TestUserNotification.java
+    $(JAMS_DIR)/mvm/i3test/com/sun/midp/appmanager/DummyMIDlet1.java \
+    $(JAMS_DIR)/mvm/i3test/com/sun/midp/appmanager/DummyMIDlet2.java \
+    $(JAMS_DIR)/mvm/i3test/com/sun/midp/appmanager/TestUserNotification.java
 endif
 

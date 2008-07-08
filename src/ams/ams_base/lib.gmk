@@ -42,11 +42,12 @@ AMS_BASE_NAME = ams_base
 #SUBSYSTEMS += $(NAMS_NAME)
 
 # Local module directory
-AMS_BASE_DIR ?= $(SUBSYSTEM_AMS_DIR)/$(AMS_BASE_NAME)/reference
+AMS_BASE_DIR = $(SUBSYSTEM_AMS_DIR)/$(AMS_BASE_NAME)/reference
+AMS_BASE_IMPL_DIR ?= $(AMS_BASE_DIR)
 
 # Javadoc source path
-MIDP_JAVADOC_SOURCEPATH += $(AMS_BASE_DIR)/classes
+MIDP_JAVADOC_SOURCEPATH += $(AMS_BASE_IMPL_DIR)/classes
 
 # Get implementation settings and files
-include $(AMS_BASE_DIR)/lib.gmk
+include $(AMS_BASE_IMPL_DIR)/lib.gmk
 

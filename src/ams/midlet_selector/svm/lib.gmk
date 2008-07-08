@@ -33,7 +33,7 @@
 ############################################################
 
 # Javadoc source path
-MIDP_JAVADOC_SOURCEPATH += $(MIDLET_SELECTOR_IPML_DIR)/classes
+MIDP_JAVADOC_SOURCEPATH += $(MIDLET_SELECTOR_DIR)/svm/classes
 
 # Java files for the sub-system
 #

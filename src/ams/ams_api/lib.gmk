@@ -37,10 +37,11 @@
 #SUBSYSTEMS += ams_api
 
 # Local module directory
-AMS_API_DIR ?= $(SUBSYSTEM_AMS_DIR)/ams_api/reference
+AMS_API_DIR = $(SUBSYSTEM_AMS_DIR)/ams_api/reference
+AMS_API_IMPL_DIR ?= $(AMS_API_DIR)
 
 # Javadoc source path
-MIDP_JAVADOC_SOURCEPATH += $(AMS_API_DIR)/classes
+MIDP_JAVADOC_SOURCEPATH += $(AMS_API_IMPL_DIR)/classes
 
 # Get implementation settings and files
-include $(AMS_API_DIR)/lib.gmk
+include $(AMS_API_IMPL_DIR)/lib.gmk

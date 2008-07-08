@@ -40,7 +40,8 @@ NAMS_JAVACALL_NAME = nams_javacall
 SUBSYSTEMS += $(NAMS_JAVACALL_NAME)
 
 # Local module directory
-NAMS_JAVACALL_DIR ?= $(SUBSYSTEM_AMS_DIR)/$(NAMS_JAVACALL_NAME)/reference
+NAMS_JAVACALL_DIR = $(SUBSYSTEM_AMS_DIR)/$(NAMS_JAVACALL_NAME)/reference
+NAMS_JAVACALL_IMPL_DIR ?= $(NAMS_JAVACALL_DIR)
 
 # Get implementation settings and files
-include $(NAMS_JAVACALL_DIR)/lib.gmk
+include $(NAMS_JAVACALL_IMPL_DIR)/lib.gmk

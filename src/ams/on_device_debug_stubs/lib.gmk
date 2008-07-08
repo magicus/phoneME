@@ -37,8 +37,9 @@
 SUBSYSTEMS += on_device_debug
 
 # Local module directory
-ON_DEVICE_DEBUG_DIR ?= $(SUBSYSTEM_AMS_DIR)/on_device_debug_stubs/reference
+ON_DEVICE_DEBUG_DIR = $(SUBSYSTEM_AMS_DIR)/on_device_debug_stubs/reference
+ON_DEVICE_DEBUG_IMPL_DIR ?= $(ON_DEVICE_DEBUG_DIR)
 
 # Get implementation settings and files
-include $(ON_DEVICE_DEBUG_DIR)/lib.gmk
+include $(ON_DEVICE_DEBUG_IMPL_DIR)/lib.gmk
 

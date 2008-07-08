@@ -37,7 +37,7 @@
 SUBSYSTEM_NAME = suitestore
 SUBSYSTEMS += $(SUBSYSTEM_NAME)
 
-SUBSYSTEM_SUITESTORE_DIR ?= $(SUBSYSTEM_AMS_DIR)/suitestore
+SUBSYSTEM_SUITESTORE_DIR = $(SUBSYSTEM_AMS_DIR)/suitestore
 
 # Initialize a variable containing a list of Java files for the module
 SUBSYSTEM_SUITESTORE_JAVA_FILES =
