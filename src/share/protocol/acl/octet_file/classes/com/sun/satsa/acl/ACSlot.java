@@ -170,16 +170,20 @@ public class ACSlot{
             return s;
         }
 
+        Connection con = null;
         try {
-            Connection con = new Connection(h);
+            con = new Connection(h);
             ACSlot s = new ACSlot(con);
             s.init(isDIR);
-            con.done();
             return s;
         } catch (Exception e) { /* Something wrong during ACL treatment => */
                                 /* all permissions revoked */
             ACSlot s = new ACSlot(false);
             return s;
+        } finally {
+            if (con != null) {
+                con.done();
+            }
         }
     }
 
