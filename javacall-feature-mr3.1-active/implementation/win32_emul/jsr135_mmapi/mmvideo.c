@@ -84,6 +84,7 @@ extern void extra_camera_controls_init( audio_handle * pHandle );
 extern void extra_camera_controls_cleanup( audio_handle * pHandle );
 #endif //ENABLE_EXTRA_CAMERA_CONTROLS
 
+extern mmaudio_mutex_create( );
 /**
  * 
  */
@@ -92,7 +93,7 @@ static javacall_handle video_create(int appId, int playerId,
                                     const javacall_utf16_string URI)
 {
     static LimeFunction *f = NULL;
-    javacall_int64 res;
+    javacall_int64 res = 0;
     audio_handle* pHandle = MALLOC(sizeof(audio_handle));
     size_t uriLength = ( NULL != URI ) ? wcslen(URI) : 0;
 
@@ -127,6 +128,10 @@ static javacall_handle video_create(int appId, int playerId,
     
     f->call(f, &res, mediaTypeWide, mediaTypeWideLen, URI, uriLength);
 
+    if (res <= 0) {
+	    return NULL;
+    }
+
     pHandle->hWnd             = (long) res;
     pHandle->offset           = 0;
     pHandle->duration         = -1;
@@ -141,6 +146,7 @@ static javacall_handle video_create(int appId, int playerId,
     pHandle->isBuffered       = JAVACALL_FALSE;
     pHandle->volume           = -1;
     pHandle->mute             = JAVACALL_FALSE;
+    pHandle->mutex            = mmaudio_mutex_create();
 
 #ifdef ENABLE_EXTRA_CAMERA_CONTROLS
     pHandle->pExtraCC         = NULL;
