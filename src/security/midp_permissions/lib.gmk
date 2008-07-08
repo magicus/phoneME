@@ -57,11 +57,18 @@ SUBSYSTEM_SECURITY_JAVA_FILES += \
 vpath % $(PERMISSIONS_DIR)/reference/native
 SUBSYSTEM_SECURITY_NATIVE_FILES += LoadPolicy_kni.c
 
+
+# Select security policy implementation
+# Should be reworked according to subsystem decoupling
+SECURITY_POLICY_IMPL_FILES = generic_policy_load.c
+
 ifeq ($(TARGET_OS), javacall)
-SUBSYSTEM_SECURITY_NATIVE_FILES += javacall_policy_load.c
-else
-SUBSYSTEM_SECURITY_NATIVE_FILES += generic_policy_load.c
+ifeq ($(USE_DYNAMIC_PERMISSIONS), true)
+SECURITY_POLICY_IMPL_FILES = javacall_policy_load.c
 endif
+endif 
+
+SUBSYSTEM_SECURITY_NATIVE_FILES += $(SECURITY_POLICY_IMPL_FILES)
 
 # Include system properties in Configuration
 SUBSYSTEM_CONFIGURATION_INPUT_FILES += \
@@ -83,6 +90,7 @@ POLICY_FILES = $(PERMISSIONS_CONFIG_DIR)/_function_groups.txt.JTWI \
 javacall_policy_load.c : policy_files
 
 policy_files :
-	cp  $(POLICY_FILES) $(MIDP_OUTPUT_DIR)/lib
+	@if [ ! -d $(MIDP_OUTPUT_DIR)/lib ]; then mkdir $(MIDP_OUTPUT_DIR)/lib; fi
+	@cp  $(POLICY_FILES) $(MIDP_OUTPUT_DIR)/lib
 endif
 

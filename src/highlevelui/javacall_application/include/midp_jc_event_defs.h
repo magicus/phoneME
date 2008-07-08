@@ -68,6 +68,7 @@ extern "C" {
 #endif /* ENABLE_JSR_177 */
 #ifdef ENABLE_JSR_179
 #include "javacall_location.h"
+#include "javanotify_location.h"
 #endif /* ENABLE_JSR_179 */
 #ifdef ENABLE_JSR_211
 #include "jsr211_platform_invoc.h"
@@ -246,7 +247,10 @@ typedef struct {
     int appId;
     int playerId;
     int status;
-    long data;
+    union {
+        long num32;
+        javacall_utf16_string str16;
+    } data;
 } midp_jc_event_multimedia;
 #endif
 
@@ -294,6 +298,13 @@ typedef struct {
     javacall_bool isOpen;
     int errCode;
 } jsr256_jc_event_sensor_t;
+
+typedef struct {
+    javacall_sensor_type sensor;
+    int channel;
+    int errCode;
+} jsr256_jc_event_sensor_data_ready_t;
+
 #endif /* ENABLE_JSR_256 */
 
 #ifdef ENABLE_JSR_290
@@ -379,8 +390,9 @@ typedef struct {
         midp_event_heap_size               heap_size;
         midp_event_remove_midlet           removeMidletEvent;
 #ifdef ENABLE_JSR_256
-        jsr256_jc_event_sensor_available   jsr256SensorAvailable;
-        jsr256_jc_event_sensor_t           jsr256_jc_event_sensor;
+        jsr256_jc_event_sensor_available    jsr256SensorAvailable;
+        jsr256_jc_event_sensor_t            jsr256_jc_event_sensor;
+	jsr256_jc_event_sensor_data_ready_t jsr256_jc_event_sensor_data_ready;
 #endif /* ENABLE_JSR_256 */
 
 #ifdef ENABLE_API_EXTENSIONS

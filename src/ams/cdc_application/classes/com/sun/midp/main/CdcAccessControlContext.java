@@ -31,6 +31,8 @@ import com.sun.j2me.security.AccessController;
 
 import com.sun.midp.midlet.MIDletSuite;
 
+import com.sun.midp.security.Permissions;
+
 public class CdcAccessControlContext extends AccessControlContextAdapter {
 
     /** Reference to the current MIDlet suite. */
@@ -70,6 +72,7 @@ public class CdcAccessControlContext extends AccessControlContextAdapter {
      */
     public void checkPermissionImpl(String name, String resource,
             String extraValue) throws SecurityException, InterruptedException {
+        int permissionId;
 
         if (AccessController.TRUSTED_APP_PERMISSION_NAME.equals(name)) {
             // This is really just a trusted suite check.

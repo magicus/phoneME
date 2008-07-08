@@ -101,7 +101,7 @@ KNIEXPORT KNI_RETURNTYPE_INT
     int    flags = (int)KNI_GetParameterAsInt(3);
     int    baud = (int)KNI_GetParameterAsInt(2);
     int    nameLen;
-    char   szName[MAX_NAME_LEN];
+    char   szName[MAX_NAME_LEN + 1];
     jchar* temp;
     int    hPort = (int)INVALID_HANDLE;
     int    i;

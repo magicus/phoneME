@@ -310,16 +310,29 @@ endif
 endif
 
 # transformation for generating additional permissions
-PERMISSIONS_XSL_FILE = $(INT_XSL_DIR)/cldc/permissions.xsl
-GENERATE_PERMISSIONS_TABLE = \
+ifndef PERMISSIONS_XSL_FILE
+  PERMISSIONS_XSL_FILE = $(INT_XSL_DIR)/cldc/permissions.xsl
+endif
+
+ifndef PERMISSIONS_GENERATED_JAVA_FILE
+  PERMISSIONS_GENERATED_JAVA_FILE = $(GENERATED_DIR)/classes/com/sun/midp/security/PermissionsStrings.java
+endif
+
+ifndef PERMISSIONS_GENERATED_NATIVE_FILE
+  PERMISSIONS_GENERATED_NATIVE_FILE = $(GENERATED_DIR)/perm_number.h
+endif
+
+GENERATE_PERMISSIONS_JAVA_SOURCE = \
 	-xml $(INT_MERGED_XML_FILE) \
 	-xsl $(PERMISSIONS_XSL_FILE) \
 	-params output java \
-	-out `$(call fixcygpath, $(GENERATED_DIR)/classes/com/sun/midp/security/PermissionsStrings.java)` \
+	-out `$(call fixcygpath, $(PERMISSIONS_GENERATED_JAVA_FILE))`
+
+GENERATE_PERMISSIONS_NATIVE_SOURCE = \
 	-xml $(INT_MERGED_XML_FILE) \
 	-xsl $(PERMISSIONS_XSL_FILE) \
 	-params output native \
-	-out `$(call fixcygpath, $(GENERATED_DIR)/perm_number.h)`
+	-out `$(call fixcygpath, $(PERMISSIONS_GENERATED_NATIVE_FILE))`
 
 # transformation for genrating the i18n tables (both Java and C files).
 GENERATE_L10N_STRINGS = \
@@ -328,6 +341,10 @@ GENERATE_L10N_STRINGS = \
 
 define generate_configuration
 	@echo " ... generating configuration files"
+	@echo "***" \
+		$(GENERATE_PERMISSIONS_JAVA_SOURCE) \
+		$(GENERATE_PERMISSIONS_NATIVE_SOURCE)
+	@echo "***"
 	@$(INT_INVOKE_TRANSFORMER) \
 		$(GENERATE_CONSTANTS_H) \
 		$(GENERATE_CONSTANTS_C) \
@@ -335,7 +352,8 @@ define generate_configuration
 		$(GENERATE_PROPERTIES_DYNAMIC) \
 		$(GENERATE_PROPERTIES_STATIC) \
 		$(GENERATE_PROPERTIES_CALLOUTS) \
-		$(GENERATE_PERMISSIONS_TABLE)
+		$(GENERATE_PERMISSIONS_JAVA_SOURCE) \
+		$(GENERATE_PERMISSIONS_NATIVE_SOURCE)
 	@echo " ... generating localized strings"
 	@$(INT_INVOKE_L10N_GENERATOR) \
 		$(GENERATE_L10N_STRINGS)

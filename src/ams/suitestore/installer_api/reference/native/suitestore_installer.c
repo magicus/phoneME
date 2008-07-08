@@ -464,6 +464,7 @@ midp_store_suite(const MidpInstallInfo* pInstallInfo,
         status = begin_transaction(TRANSACTION_INSTALL, UNUSED_SUITE_ID,
             &pSuiteData->varSuiteData.pathToJar);
         if (status != ALL_OK) {
+            pcsl_mem_free(pMsd);        
             break;
         }
 

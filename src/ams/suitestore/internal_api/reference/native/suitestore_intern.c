@@ -1362,7 +1362,7 @@ MIDPError begin_transaction(MIDPTransactionType transactionType,
     pcsl_string transDataFile;
     char *pszError = NULL;
     MIDPError status = ALL_OK;
-    char pBuffer[MAX_FILENAME_LENGTH + sizeof(int) /* file name length */ + 
+    char pBuffer[MAX_FILENAME_LENGTH * sizeof(jchar) + sizeof(int) /* file name length */ + 
                  sizeof(suiteId) + sizeof(transactionType)];
     char *p = pBuffer;
     int len = sizeof(suiteId) + sizeof(transactionType);
@@ -1377,7 +1377,7 @@ MIDPError begin_transaction(MIDPTransactionType transactionType,
 
         rc = pcsl_string_convert_to_utf16(pFilename,
                         (jchar*)(p + sizeof(int)),
-                        MAX_FILENAME_LENGTH / sizeof(jchar),
+                        MAX_FILENAME_LENGTH,
                         &strLen);
         if (rc != PCSL_STRING_OK) {
             return OUT_OF_MEMORY;
