@@ -26,6 +26,7 @@
 
 #include "multimedia.h"
 #include "mmmididev.h"
+#include "javautil_unicode.h"
 #include <stdio.h>
 
 #define LIME_MMAPI_PACKAGE      "com.sun.mmedia"
@@ -167,16 +168,18 @@ void mmSetStatusLine( const char* fmt, ... ) {
 	va_start(args, fmt);
     vsprintf( str8, fmt, args );
 	va_end(args);
+    if (JAVACALL_OK == 
+        javautil_unicode_utf8_to_utf16(str8, strlen(str8), 
+                                        str16, 256, &str16_len)) {
 
-    str16_len = swprintf( str16, 256, L"%S", str8 );
+        if( NULL == f ) {
+            f = NewLimeFunction( LIME_MMAPI_PACKAGE,
+                                 LIME_MMAPI_CLASS,
+                                 "put_status_string" );
+        }
 
-    if( NULL == f ) {
-        f = NewLimeFunction( LIME_MMAPI_PACKAGE,
-                             LIME_MMAPI_CLASS,
-                             "put_status_string" );
+        f->call( f, &res, str16, str16_len );
     }
-
-    f->call( f, &res, str16, str16_len );
 }
 
 //=============================================================================
