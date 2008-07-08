@@ -1,0 +1,49 @@
+#   
+#
+# Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+# 
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License version
+# 2 only, as published by the Free Software Foundation. 
+# 
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# General Public License version 2 for more details (a copy is
+# included at /legal/license.txt). 
+# 
+# You should have received a copy of the GNU General Public License
+# version 2 along with this work; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+# 02110-1301 USA 
+# 
+# Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+# Clara, CA 95054 or visit www.sun.com if you need additional
+# information or have any questions. 
+#
+
+#Flag USE_JSR_XX means that JSR_XX will be included to the javacall library if the flag
+#is set to 'true' (example: USE_JSR_XX=true). JSR_XX will not be included to the javacall
+#library if the flag USE_JSR_XX is not 'true' (example: USE_JSR_XX=false). 
+#
+#For each used JSR path to its particular implementation shall be specified explicitly as javacall
+#library can be formed from JSRs taken from different locations
+#JSR_XX_JC_IMPL_PATH varibale sets path to implementation 
+#
+#For 'midp' USE_MIDP and MIDP_JC_IMPL_PATH variables are used
+
+JSR_LIST = JSR_177
+
+JSR_177_JC_IMPL_PATH=$(JAVACALL_DIR)/implementation/linux_x86_emul
+
+#For each project location for basic definitions shall be specified
+#(location of the used javacall_platform_defs.h)
+JAVACALL_PLATFORM_DEFS_DIR=$(JAVACALL_DIR)/implementation/linux_x86
+
+SOURCE_OUTPUT_LIST += $(JAVACALL_PLATFORM_DEFS_DIR)/javacall_platform_defs.h javacall/implementation/linux_x86
+SOURCE_OUTPUT_LIST += $(JAVACALL_DIR)/configuration/phoneMEFeature/linux_x86 javacall/configuration/phoneMEFeature
+SOURCE_OUTPUT_LIST += $(foreach jsr,$(JSR_LIST), $(if $(PREFIX_$(USE_$(jsr))), $($(jsr)_JC_IMPL_PATH)/$($(jsr)_JC_DIR) javacall/implementation/linux_x86_emul))
+
+#Compile options that are not common for all configurations can be specified in
+#SPECIFIC_DEFINITIONS variable
