@@ -33,6 +33,7 @@ make \
   JC_DIR=/opt/java_card_kit-2_2_1 \
   USE_MIDP=true \
   USE_JUMP=true \
+  CVM_INCLUDE_COMMCONNECTION=true \
   CVM_OPTIMIZED=true \
   CVM_PRELOAD_LIB=true \
   CVM_JIT=true \
