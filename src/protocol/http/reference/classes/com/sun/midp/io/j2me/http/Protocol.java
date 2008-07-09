@@ -1679,10 +1679,11 @@ public class Protocol extends ConnectionBaseAdapter
                  * this case
                  */
                 newUserAgentValue += " " + origUserAgentValue;
-            }
-            String platformUA = Configuration.getProperty("User-Agent");
-            if (platformUA != null) {
-                newUserAgentValue += " " + platformUA;
+            } else {
+                String platformUA = Configuration.getProperty("User-Agent");
+                if (platformUA != null) {
+                    newUserAgentValue += " " + platformUA;
+                }
             }
             reqProperties.setPropertyIgnoreCase("User-Agent", 
                     newUserAgentValue);
