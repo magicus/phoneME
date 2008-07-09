@@ -786,7 +786,7 @@ public class DirectPlayer extends BasicPlayer
                 long mt  = doGetMediaTime();
                 long dur = doGetDuration();
                 
-                while( mt < stopTime && mt < dur ) {
+                while( mt != -1 && mt < stopTime && ( dur <= 0 || mt < dur ) ) {
                     try	{
                         java.lang.Thread.sleep( 10 );
                     } catch( InterruptedException e ) {
