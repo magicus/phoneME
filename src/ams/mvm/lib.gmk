@@ -40,8 +40,8 @@ MVM_NAME = mvm
 #SUBSYSTEMS += $(MVM_NAME)
 
 # Local module directory
-MVM_DIR = $(SUBSYSTEM_AMS_DIR)/$(MVM_NAME)/reference
-MVM_IMPL_DIR ?= $(MVM_DIR)
+MVM_DIR = $(SUBSYSTEM_AMS_DIR)/$(MVM_NAME)
+MVM_IMPL_DIR ?= $(MVM_DIR)/reference
 
 # Get implementation settings and files
 include $(MVM_IMPL_DIR)/lib.gmk

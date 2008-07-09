@@ -40,9 +40,9 @@ NAMS_NAME = nams
 #SUBSYSTEMS += $(NAMS_NAME)
 
 # Local module directory
-NAMS_DIR = $(SUBSYSTEM_AMS_DIR)/$(NAMS_NAME)/reference
+NAMS_DIR = $(SUBSYSTEM_AMS_DIR)/$(NAMS_NAME)
 
-NAMS_IMPL_DIR ?= $(NAMS_DIR)
+NAMS_IMPL_DIR ?= $(NAMS_DIR)/reference
 
 # Static Include path for the header file
 # To make sure all implementations use it

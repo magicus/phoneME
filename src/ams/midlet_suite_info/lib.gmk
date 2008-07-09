@@ -36,9 +36,10 @@
 
 # Name of the library
 MIDLET_SUITE_INFO_NAME = midlet_suite_info
-MIDLET_SUITE_INFO_DIR = $(SUBSYSTEM_AMS_DIR)/$(MIDLET_SUITE_INFO_NAME)/reference
+MIDLET_SUITE_INFO_DIR = $(SUBSYSTEM_AMS_DIR)/$(MIDLET_SUITE_INFO_NAME)
 
-MIDLET_SUITE_INFO_IMPL_DIR ?= $(MIDLET_SUITE_INFO_DIR)
+#Set a default implementation
+MIDLET_SUITE_INFO_IMPL_DIR ?= $(MIDLET_SUITE_INFO_DIR)/reference
 
 # Get implementation settings and files
 include $(MIDLET_SUITE_INFO_IMPL_DIR)/lib.gmk

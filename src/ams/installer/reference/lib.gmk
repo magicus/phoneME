@@ -36,12 +36,12 @@
 # Java files for the sub-system
 #
 SUBSYSTEM_AMS_JAVA_FILES += \
-    $(INSTALLER_DIR)/classes/com/sun/midp/installer/Installer.java \
-    $(INSTALLER_DIR)/classes/com/sun/midp/installer/HttpInstaller.java \
-    $(INSTALLER_DIR)/classes/com/sun/midp/installer/FileInstaller.java \
-    $(INSTALLER_DIR)/classes/com/sun/midp/installer/InstallListener.java \
-    $(INSTALLER_DIR)/classes/com/sun/midp/installer/InstallState.java \
-    $(INSTALLER_DIR)/classes/com/sun/midp/installer/InvalidJadException.java \
-    $(INSTALLER_DIR)/classes/com/sun/midp/installer/JadProperties.java \
-    $(INSTALLER_DIR)/classes/com/sun/midp/installer/ManifestProperties.java \
-    $(INSTALLER_DIR)/classes/com/sun/midp/installer/SuiteDownloadInfo.java
+    $(INSTALLER_IMPL_DIR)/classes/com/sun/midp/installer/Installer.java \
+    $(INSTALLER_IMPL_DIR)/classes/com/sun/midp/installer/HttpInstaller.java \
+    $(INSTALLER_IMPL_DIR)/classes/com/sun/midp/installer/FileInstaller.java \
+    $(INSTALLER_IMPL_DIR)/classes/com/sun/midp/installer/InstallListener.java \
+    $(INSTALLER_IMPL_DIR)/classes/com/sun/midp/installer/InstallState.java \
+    $(INSTALLER_IMPL_DIR)/classes/com/sun/midp/installer/InvalidJadException.java \
+    $(INSTALLER_IMPL_DIR)/classes/com/sun/midp/installer/JadProperties.java \
+    $(INSTALLER_IMPL_DIR)/classes/com/sun/midp/installer/ManifestProperties.java \
+    $(INSTALLER_IMPL_DIR)/classes/com/sun/midp/installer/SuiteDownloadInfo.java

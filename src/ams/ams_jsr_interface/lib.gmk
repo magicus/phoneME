@@ -37,8 +37,8 @@
 #SUBSYSTEMS += ams_jsr_interface
 
 # Local module directory
-AMS_JSR_INTERFACE_DIR = $(SUBSYSTEM_AMS_DIR)/ams_jsr_interface/reference
-AMS_JSR_INTERFACE_IMPL_DIR = $(AMS_JSR_INTERFACE_DIR)
+AMS_JSR_INTERFACE_DIR = $(SUBSYSTEM_AMS_DIR)/ams_jsr_interface
+AMS_JSR_INTERFACE_IMPL_DIR = $(AMS_JSR_INTERFACE_DIR)/reference
 
 # Get implementation settings and files
 include $(AMS_JSR_INTERFACE_IMPL_DIR)/lib.gmk

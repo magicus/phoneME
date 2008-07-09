@@ -39,9 +39,9 @@
 ############################################################
 
 # JavaDoc source path
-MIDP_JAVADOC_SOURCEPATH += $(MIDLET_SUITE_INFO_DIR)/classes$(PATHSEP)$(SUBSYSTEM_AMS_DIR)/$(MIDLET_SUITE_INFO_NAME)/classes
+MIDP_JAVADOC_SOURCEPATH += $(MIDLET_SUITE_INFO_IMPL_DIR)/classes$(PATHSEP)$(SUBSYSTEM_AMS_DIR)/$(MIDLET_SUITE_INFO_NAME)/classes
 
 # Java files for the library
 #
 SUBSYSTEM_AMS_JAVA_FILES += \
-    $(MIDLET_SUITE_INFO_DIR)/classes/com/sun/midp/midletsuite/MIDletSuiteInfo.java
+    $(MIDLET_SUITE_INFO_IMPL_DIR)/classes/com/sun/midp/midletsuite/MIDletSuiteInfo.java

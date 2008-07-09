@@ -40,8 +40,8 @@
 OTA_NAME = ota
 
 # Local module directory
-OTA_DIR = $(SUBSYSTEM_AMS_DIR)/$(OTA_NAME)/reference
-OTA_IMPL_DIR ?= $(OTA_DIR)
+OTA_DIR = $(SUBSYSTEM_AMS_DIR)/$(OTA_NAME)
+OTA_IMPL_DIR ?= $(OTA_DIR)/reference
 
 # Get implementation settings and files
 include $(OTA_IMPL_DIR)/lib.gmk

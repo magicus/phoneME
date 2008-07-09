@@ -36,8 +36,8 @@
 
 # Name of the library
 APP_IMAGE_GEN_NAME = app_image_gen
-APP_IMAGE_GEN_DIR = $(SUBSYSTEM_AMS_DIR)/$(APP_IMAGE_GEN_NAME)/reference
-APP_IMAGE_GEN_IMPL_DIR ?= $(APP_IMAGE_GEN_DIR)
+APP_IMAGE_GEN_DIR = $(SUBSYSTEM_AMS_DIR)/$(APP_IMAGE_GEN_NAME)
+APP_IMAGE_GEN_IMPL_DIR ?= $(APP_IMAGE_GEN_DIR)/reference
 
 # Get implementation settings and files
 include $(APP_IMAGE_GEN_IMPL_DIR)/lib.gmk

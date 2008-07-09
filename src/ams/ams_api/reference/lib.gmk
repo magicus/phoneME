@@ -37,18 +37,18 @@
 # Java files for the sub-system
 #
 SUBSYSTEM_AMS_JAVA_FILES += \
-    $(AMS_API_DIR)/classes/javax/microedition/midlet/MIDletStateChangeException.java \
-    $(AMS_API_DIR)/classes/javax/microedition/midlet/MIDlet.java \
-    $(AMS_API_DIR)/classes/javax/microedition/midlet/MIDletTunnelImpl.java \
-    $(AMS_API_DIR)/classes/com/sun/midp/midlet/MIDletEventConsumer.java \
-    $(AMS_API_DIR)/classes/com/sun/midp/midlet/MIDletEventListener.java \
-    $(AMS_API_DIR)/classes/com/sun/midp/midlet/MIDletEventProducer.java \
-    $(AMS_API_DIR)/classes/com/sun/midp/midlet/MIDletLoader.java \
-    $(AMS_API_DIR)/classes/com/sun/midp/midlet/MIDletPeer.java \
-    $(AMS_API_DIR)/classes/com/sun/midp/midlet/MIDletStateHandler.java \
-    $(AMS_API_DIR)/classes/com/sun/midp/midlet/MIDletStateListener.java \
-    $(AMS_API_DIR)/classes/com/sun/midp/midlet/MIDletSuite.java \
-    $(AMS_API_DIR)/classes/com/sun/midp/midlet/MIDletSuiteExceptionListener.java \
-    $(AMS_API_DIR)/classes/com/sun/midp/midlet/MIDletTunnel.java \
-    $(AMS_API_DIR)/classes/com/sun/midp/midlet/PlatformRequest.java \
-    $(AMS_API_DIR)/classes/com/sun/midp/midlet/Scheduler.java
+    $(AMS_API_IMPL_DIR)/classes/javax/microedition/midlet/MIDletStateChangeException.java \
+    $(AMS_API_IMPL_DIR)/classes/javax/microedition/midlet/MIDlet.java \
+    $(AMS_API_IMPL_DIR)/classes/javax/microedition/midlet/MIDletTunnelImpl.java \
+    $(AMS_API_IMPL_DIR)/classes/com/sun/midp/midlet/MIDletEventConsumer.java \
+    $(AMS_API_IMPL_DIR)/classes/com/sun/midp/midlet/MIDletEventListener.java \
+    $(AMS_API_IMPL_DIR)/classes/com/sun/midp/midlet/MIDletEventProducer.java \
+    $(AMS_API_IMPL_DIR)/classes/com/sun/midp/midlet/MIDletLoader.java \
+    $(AMS_API_IMPL_DIR)/classes/com/sun/midp/midlet/MIDletPeer.java \
+    $(AMS_API_IMPL_DIR)/classes/com/sun/midp/midlet/MIDletStateHandler.java \
+    $(AMS_API_IMPL_DIR)/classes/com/sun/midp/midlet/MIDletStateListener.java \
+    $(AMS_API_IMPL_DIR)/classes/com/sun/midp/midlet/MIDletSuite.java \
+    $(AMS_API_IMPL_DIR)/classes/com/sun/midp/midlet/MIDletSuiteExceptionListener.java \
+    $(AMS_API_IMPL_DIR)/classes/com/sun/midp/midlet/MIDletTunnel.java \
+    $(AMS_API_IMPL_DIR)/classes/com/sun/midp/midlet/PlatformRequest.java \
+    $(AMS_API_IMPL_DIR)/classes/com/sun/midp/midlet/Scheduler.java

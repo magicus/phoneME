@@ -27,7 +27,7 @@
 # Java files for the library
 #
 SUBSYSTEM_AMS_JAVA_FILES += \
-    $(APP_IMAGE_GEN_DIR)/classes/com/sun/midp/main/MIDletAppImageGenerator.java
+    $(APP_IMAGE_GEN_IMPL_DIR)/classes/com/sun/midp/main/MIDletAppImageGenerator.java
 
 ifeq ($(TARGET_VM), cldc_vm)
 

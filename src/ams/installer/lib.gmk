@@ -37,8 +37,8 @@
 #SUBSYSTEMS += installer
 
 # Local module directory
-INSTALLER_DIR = $(SUBSYSTEM_AMS_DIR)/installer/reference
-INSTALLER_IMPL_DIR ?= $(INSTALLER_DIR)
+INSTALLER_DIR = $(SUBSYSTEM_AMS_DIR)/installer
+INSTALLER_IMPL_DIR ?= $(INSTALLER_DIR)/reference
 
 # Get implementation settings and files
 include $(INSTALLER_IMPL_DIR)/lib.gmk

@@ -36,8 +36,8 @@
 # Java files for the sub-system
 #
 SUBSYSTEM_AMS_JAVA_FILES += \
-    $(AMS_BASE_DIR)/classes/com/sun/midp/main/AbstractMIDletSuiteLoader.java \
-    $(AMS_BASE_DIR)/classes/com/sun/midp/main/TrustedMIDletIcon.java
+    $(AMS_BASE_IMPL_DIR)/classes/com/sun/midp/main/AbstractMIDletSuiteLoader.java \
+    $(AMS_BASE_IMPL_DIR)/classes/com/sun/midp/main/TrustedMIDletIcon.java
 
 # vpath for sub-system
 #

@@ -39,6 +39,6 @@ MIDP_JAVADOC_SOURCEPATH += $(ON_DEVICE_DEBUG_DIR)/classes
 # Java files for the sub-system
 #
 SUBSYSTEM_AMS_JAVA_FILES += \
-    $(ON_DEVICE_DEBUG_DIR)/classes/com/sun/midp/appmanager/ODTControllerEventListener.java \
-    $(ON_DEVICE_DEBUG_DIR)/classes/com/sun/midp/appmanager/ODTControllerEventConsumer.java
+    $(ON_DEVICE_DEBUG_IMPL_DIR)/classes/com/sun/midp/appmanager/ODTControllerEventListener.java \
+    $(ON_DEVICE_DEBUG_IMPL_DIR)/classes/com/sun/midp/appmanager/ODTControllerEventConsumer.java
 

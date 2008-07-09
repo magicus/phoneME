@@ -37,8 +37,8 @@
 #SUBSYSTEMS += ams_api
 
 # Local module directory
-AMS_API_DIR = $(SUBSYSTEM_AMS_DIR)/ams_api/reference
-AMS_API_IMPL_DIR ?= $(AMS_API_DIR)
+AMS_API_DIR = $(SUBSYSTEM_AMS_DIR)/ams_api
+AMS_API_IMPL_DIR ?= $(AMS_API_DIR)/reference
 
 # Javadoc source path
 MIDP_JAVADOC_SOURCEPATH += $(AMS_API_IMPL_DIR)/classes

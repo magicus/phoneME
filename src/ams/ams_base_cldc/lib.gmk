@@ -37,8 +37,8 @@ AMS_BASE_CLDC_NAME = ams_base_cldc
 
 
 # Local module directory
-AMS_BASE_CLDC_DIR = $(SUBSYSTEM_AMS_DIR)/$(AMS_BASE_CLDC_NAME)/reference
-AMS_BASE_CLDC_IMPL_DIR ?= $(AMS_BASE_CLDC_DIR)
+AMS_BASE_CLDC_DIR = $(SUBSYSTEM_AMS_DIR)/$(AMS_BASE_CLDC_NAME)
+AMS_BASE_CLDC_IMPL_DIR ?= $(AMS_BASE_CLDC_DIR)/reference
 
 # Get implementation settings and files
 include $(AMS_BASE_CLDC_IMPL_DIR)/lib.gmk

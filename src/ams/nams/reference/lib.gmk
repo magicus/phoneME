@@ -33,13 +33,13 @@
 ############################################################
 
 # Javadoc source path
-MIDP_JAVADOC_SOURCEPATH += $(NAMS_DIR)/classes
+MIDP_JAVADOC_SOURCEPATH += $(NAMS_IMPL_DIR)/classes
 
 # Java files for the sub-system
 #
 SUBSYSTEM_AMS_JAVA_FILES += \
-    $(NAMS_DIR)/classes/com/sun/midp/main/NativeAppManagerPeer.java \
-    $(NAMS_DIR)/classes/com/sun/midp/main/NativeDisplayControllerPeer.java
+    $(NAMS_IMPL_DIR)/classes/com/sun/midp/main/NativeAppManagerPeer.java \
+    $(NAMS_IMPL_DIR)/classes/com/sun/midp/main/NativeDisplayControllerPeer.java
 
 # vpath for sub-system
 #
