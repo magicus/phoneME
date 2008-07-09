@@ -42,6 +42,8 @@ import com.sun.midp.security.SecurityInitializer;
 import com.sun.midp.suspend.SuspendSystem;
 import com.sun.midp.suspend.SuspendSystemListener;
 
+import com.sun.midp.configurator.Constants;
+
 /**
  * Manages a list of MIDlet proxies, each proxy representing a running MIDlet
  * and tracks which MIDlet has the foreground display, the list only available
