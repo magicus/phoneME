@@ -201,8 +201,8 @@ extern int pcsl_network_init(void);
  * Performs platform-specific initialization of the networking system.
  *
  *
- * @return PCSL_NET_SUCCESS upon success;\n 
- * PCSL_NET_IOERROR if there is a network error;\n 
+ * @return PCSL_NET_SUCCESS upon success;
+ * PCSL_NET_IOERROR if there is a network error;
  * PCSL_NET_WOULDBLOCK 
  */
 extern int pcsl_network_finalize_start(void);
@@ -211,8 +211,8 @@ extern int pcsl_network_finalize_start(void);
  * Finelize platform-specific initialization of the networking system.
  *
  *
- * @return PCSL_NET_SUCCESS upon success;\n 
- * PCSL_NET_IOERROR if there is a network error;\n 
+ * @return PCSL_NET_SUCCESS upon success; 
+ * PCSL_NET_IOERROR if there is a network error;
  * PCSL_NET_WOULDBLOCK 
  */
 extern int pcsl_network_finalize_finish(void);
