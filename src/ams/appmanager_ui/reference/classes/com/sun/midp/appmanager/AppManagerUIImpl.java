@@ -34,7 +34,6 @@ import com.sun.midp.installer.*;
 import com.sun.midp.main.*;
 import com.sun.midp.midletsuite.*;
 import com.sun.midp.midlet.MIDletSuite;
-import com.sun.midp.io.j2me.push.PushRegistryInternal;
 
 import com.sun.midp.i18n.Resource;
 import com.sun.midp.i18n.ResourceConstants;
@@ -44,8 +43,6 @@ import com.sun.midp.log.LogChannels;
 
 import com.sun.midp.payment.PAPICleanUp;
 
-import java.io.*;
-import javax.microedition.rms.*;
 import java.util.*;
 
 /**
@@ -357,7 +354,7 @@ class AppManagerUIImpl extends Form
 
         setCommandListener(this);
         
-        if (locale.equals("he-IL")) {
+        if (locale != null && locale.equals("he-IL")) {
             RL_DIRECTION = true;
             TEXT_ORIENT = Graphics.RIGHT;
         } else {
@@ -466,7 +463,7 @@ class AppManagerUIImpl extends Form
     }
     
     /**
-     * Called when midlet selector needed.
+     * Called when midlet switcher is needed.
      *
      * @param onlyFromLaunchedList true if midlet should
      *        be selected from the list of already launched midlets,
@@ -475,6 +472,30 @@ class AppManagerUIImpl extends Form
     public void showMidletSwitcher(boolean onlyFromLaunchedList) {
         if (onlyFromLaunchedList && midletSwitcher.hasItems()) {
             display.setCurrent(midletSwitcher);
+        } else {
+            display.setCurrent(this);
+        }
+    }
+
+    /**
+     * Called when midlet selector is needed. Should show a list of
+     * midlets present in the given suite and allow to select one.
+     *
+     * @param msiToRun a suite from which a midlet must be selected
+     */
+    public void showMidletSelector(RunningMIDletSuiteInfo msiToRun) {
+        if (msiToRun != null) {
+            try {
+                new MIDletSelector(msiToRun, display, this, manager);
+            } catch (Exception e) {
+                if (Logging.REPORT_LEVEL <= Logging.ERROR) {
+                    Logging.report(Logging.ERROR, LogChannels.LC_AMS,
+                                   "showMidletSelector(): " + e.getMessage());
+                }
+
+                displayError.showErrorAlert(msiToRun.displayName,
+                                            e, null, null);
+            }
         } else {
             display.setCurrent(this);
         }
@@ -529,7 +550,12 @@ class AppManagerUIImpl extends Form
             RunningMIDletSuiteInfo msiToRun = appManager.getLastInstalledMidletItem();
             if (msiToRun != null) {
                 display.setCurrentItem(findItem(msiToRun));
-                appManager.launchMidlet(msiToRun);
+                if (msiToRun.hasSingleMidlet()) {
+                    appManager.launchMidlet(msiToRun);
+                    display.setCurrent(this);
+                } else {
+                    appManager.showMidletSelector(msiToRun);
+                }
                 return;
             }
 
@@ -622,8 +648,12 @@ class AppManagerUIImpl extends Form
 
         } if (c == launchCmd) {
 
-            appManager.launchMidlet(msi);
-            display.setCurrent(this);
+            if (msi.hasSingleMidlet()) {
+                appManager.launchMidlet(msi);
+                display.setCurrent(this);
+            } else {
+                appManager.showMidletSelector(msi);
+            }
 
         } else if (c == infoCmd) {
 
@@ -751,7 +781,7 @@ class AppManagerUIImpl extends Form
 
     /**
      * Called when a running internal midlet exited.
-     * @param midlet
+     * @param midlet proxy of the midlet that has exited
      */
     public void notifyInternalMidletExited(MIDletProxy midlet) {
         // nothing to do

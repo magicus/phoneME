@@ -1,7 +1,7 @@
 /*
  *  
  *
- * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
@@ -44,6 +44,10 @@
 #ifdef ENABLE_JSR_211
 #include <jsr211_platform_invoc.h>
 #endif
+
+#ifdef ENABLE_API_EXTENSIONS
+extern  check_extrnal_api_events(JVMSPI_BlockedThreadInfo *blocked_threads, int blocked_threads_count, jlong timeout);
+#endif /*ENABLE_API_EXTENSIONS*/
 
 static MidpReentryData newSignal;
 static MidpEvent newMidpEvent;
@@ -122,7 +126,7 @@ void midp_check_events(JVMSPI_BlockedThreadInfo *blocked_threads,
         }
 
         break;
-#endif /* ENABLE_JAVA_DEBUGGER */
+#endif /* ENABLE_JAVA_DEBUGGER*/
 
     case AMS_SIGNAL:
         midpStoreEventAndSignalAms(newMidpEvent);
@@ -251,6 +255,9 @@ void midp_check_events(JVMSPI_BlockedThreadInfo *blocked_threads,
         break;
 #endif /* ENABLE_JSR_290 */
     default:
+#ifdef ENABLE_API_EXTENSIONS
+        check_extrnal_api_events(blocked_threads, blocked_threads_count, timeout) ;
+#endif /*ENABLE_API_EXTENSIONS*/
         break;
     } /* switch */
 }
