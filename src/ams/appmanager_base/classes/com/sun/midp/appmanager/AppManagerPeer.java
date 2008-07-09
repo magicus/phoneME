@@ -893,7 +893,7 @@ class AppManagerPeer implements CommandListener {
     }
 
     /**
-     * Called when midlet selector needed.
+     * Called when midlet switcher is needed.
      *
      * @param onlyFromLaunchedList true if midlet should
      *        be selected from the list of already launched midlets,
@@ -901,6 +901,16 @@ class AppManagerPeer implements CommandListener {
      */
     public void showMidletSwitcher(boolean onlyFromLaunchedList) {
         appManagerUI.showMidletSwitcher(onlyFromLaunchedList);
+    }
+
+    /**
+     * Called when midlet selector is needed. Should show a list of
+     * midlets present in the given suite and allow to select one.
+     *
+     * @param msiToRun a suite from which a midlet must be selected
+     */
+    public void showMidletSelector(RunningMIDletSuiteInfo msiToRun) {
+        appManagerUI.showMidletSelector(msiToRun);
     }
 
     /**

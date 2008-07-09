@@ -30,14 +30,10 @@ import javax.microedition.lcdui.*;
 import com.sun.midp.i18n.Resource;
 import com.sun.midp.i18n.ResourceConstants;
 
-import com.sun.midp.main.MIDletSuiteLoader;
-
 import com.sun.midp.midlet.MIDletSuite;
 
 import com.sun.midp.midletsuite.*;
 
-import com.sun.midp.log.Logging;
-import com.sun.midp.log.LogChannels;
 
 /**
  * Selector provides a simple user interface to select MIDlets to run.
@@ -101,10 +97,14 @@ final class MIDletSelector implements CommandListener {
      * @param theDisplay the Display
      * @param theParentDisplayable the parent's displayable
      * @param theManager the parent application manager
+     *
+     * @throws MIDletSuiteCorruptedException if the suite is corrupted
+     * @throws MIDletSuiteLockedException if the suite is locked
      */
     MIDletSelector(RunningMIDletSuiteInfo theSuiteInfo, Display theDisplay,
                    Displayable theParentDisplayable,
-                   ApplicationManager theManager) {
+                   ApplicationManager theManager)
+            throws MIDletSuiteCorruptedException, MIDletSuiteLockedException {
 
         MIDletSuiteStorage mss;
 
@@ -197,26 +197,13 @@ final class MIDletSelector implements CommandListener {
      * Read in and create a MIDletInfo for each MIDlet-&lt;n&gt;
      *
      * @param mss the midlet suite storage
+     *
+     * @throws MIDletSuiteCorruptedException if the suite is corrupted
+     * @throws MIDletSuiteLockedException if the suite is locked 
      */
-    private void readMIDletInfo(MIDletSuiteStorage mss) { //throws Throwable {
-        MIDletSuite midletSuite = null;
-
-        try {
-            midletSuite = mss.getMIDletSuite(suiteInfo.suiteId, false);
-
-        } catch (MIDletSuiteCorruptedException msce) {
-            if (Logging.REPORT_LEVEL <= Logging.ERROR) {
-                Logging.report(Logging.ERROR, LogChannels.LC_AMS,
-                               "readMIDletInfo(): suite corrupted, id = " +
-                                   suiteInfo.suiteId);
-            }
-        }  catch (MIDletSuiteLockedException msle) {
-            if (Logging.REPORT_LEVEL <= Logging.ERROR) {
-                Logging.report(Logging.ERROR, LogChannels.LC_AMS,
-                               "readMIDletInfo(): suite locked, id = " +
-                                   suiteInfo.suiteId);
-            }
-        }
+    private void readMIDletInfo(MIDletSuiteStorage mss)
+            throws MIDletSuiteCorruptedException, MIDletSuiteLockedException {
+        MIDletSuite midletSuite = mss.getMIDletSuite(suiteInfo.suiteId, false);
 
         if (midletSuite == null) {
             return;

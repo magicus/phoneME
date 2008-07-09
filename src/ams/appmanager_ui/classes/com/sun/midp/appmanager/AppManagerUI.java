@@ -74,7 +74,7 @@ interface AppManagerUI {
 
     /**
      * Called when a running internal midlet exited.
-     * @param midlet
+     * @param midlet proxy of the midlet that has exited
      */
     void notifyInternalMidletExited(MIDletProxy midlet);
 
@@ -154,13 +154,21 @@ interface AppManagerUI {
     RunningMIDletSuiteInfo getSelectedMIDletSuiteInfo();
 
     /**
-     * Called when midlet selector needed.
+     * Called when midlet switcher is needed.
      *
      * @param onlyFromLaunchedList true if midlet should
      *        be selected from the list of already launched midlets,
      *        if false then possibility to launch midlet is needed.
      */
     void showMidletSwitcher(boolean onlyFromLaunchedList);
+
+    /**
+     * Called when midlet selector is needed. Should show a list of
+     * midlets present in the given suite and allow to select one.
+     *
+     * @param msiToRun a suite from which a midlet must be selected
+     */
+    void showMidletSelector(RunningMIDletSuiteInfo msiToRun);
 
     /**
      * Called by Manager when destroyApp happens to clean up data.
@@ -174,5 +182,3 @@ interface AppManagerUI {
     Displayable getMainDisplayable();
 
 }
-
-

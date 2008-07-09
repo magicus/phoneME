@@ -113,7 +113,7 @@ class AppManagerUIImpl implements AppManagerUI {
 
     /**
      * Called when a running internal midlet exited.
-     * @param midlet
+     * @param midlet proxy of the midlet that has exited
      */
     public void notifyInternalMidletExited(MIDletProxy midlet) {
 
@@ -215,13 +215,23 @@ class AppManagerUIImpl implements AppManagerUI {
     }
 
     /**
-     * Called when midlet selector needed.
+     * Called when midlet switcher is needed.
      *
      * @param onlyFromLaunchedList true if midlet should
      *        be selected from the list of already launched midlets,
      *        if false then possibility to launch midlet is needed.
      */
     public void showMidletSwitcher(boolean onlyFromLaunchedList) {
+
+    }
+
+    /**
+     * Called when midlet selector is needed. Should show a list of
+     * midlets present in the given suite and allow to select one.
+     *
+     * @param msiToRun a suite from which a midlet must be selected
+     */
+    public void showMidletSelector(RunningMIDletSuiteInfo msiToRun) {
 
     }
 
@@ -240,8 +250,4 @@ class AppManagerUIImpl implements AppManagerUI {
         return null;
     }
     
-
-
 }
-
-
