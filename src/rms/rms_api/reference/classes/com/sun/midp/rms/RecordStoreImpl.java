@@ -95,11 +95,12 @@ public class RecordStoreImpl implements AbstractRecordStoreImpl {
         token.checkIfPermissionAllowed(Permissions.MIDP);
 
         // check if file exists and delete it
-        if (RecordStoreUtil.exists(suiteId, recordStoreName,
+        if (RecordStoreUtil.exists(RmsEnvironment.getSecureFilenameBase(suiteId),
+                                   recordStoreName,
                                    RecordStoreFile.DB_EXTENSION)) {
             boolean success = RecordStoreIndex.deleteIndex(
                 suiteId, recordStoreName);
-            RecordStoreUtil.deleteFile(suiteId,
+            RecordStoreUtil.deleteFile(RmsEnvironment.getSecureFilenameBase(suiteId),
                 recordStoreName, RecordStoreFile.DB_EXTENSION);
 
             if (!success) {
@@ -1046,7 +1047,8 @@ public class RecordStoreImpl implements AbstractRecordStoreImpl {
         this.suiteId = suiteId;
         rsLock = new Object();
 
-        boolean exists = RecordStoreUtil.exists(suiteId, recordStoreName,
+        boolean exists = RecordStoreUtil.exists(RmsEnvironment.getSecureFilenameBase(suiteId),
+                                                recordStoreName,
                                                 RecordStoreFile.DB_EXTENSION);
 
         // Check for errors between app and record store existance.
@@ -1060,7 +1062,8 @@ public class RecordStoreImpl implements AbstractRecordStoreImpl {
          * check to see if the space required is available.
          */
         if (create && !exists) {
-            int space = RecordStoreFile.spaceAvailableNewRecordStore(suiteId);
+            int space = RecordStoreFile.spaceAvailableNewRecordStore(
+                        RmsEnvironment.getSecureFilenameBase(suiteId));
             if (space - DB_HEADER_SIZE < 0) {
                 throw new RecordStoreFullException();
             }
@@ -1117,7 +1120,7 @@ public class RecordStoreImpl implements AbstractRecordStoreImpl {
 
             if (!exists) {
                 // avoid preserving just created damaged files
-                RecordStoreUtil.quietDeleteFile(suiteId,
+                RecordStoreUtil.quietDeleteFile(RmsEnvironment.getSecureFilenameBase(suiteId),
                     recordStoreName, RecordStoreFile.DB_EXTENSION);
                 RecordStoreIndex.deleteIndex(suiteId, recordStoreName);
             }

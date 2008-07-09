@@ -37,6 +37,7 @@ import com.sun.midp.lcdui.*;
 import com.sun.midp.midlet.*;
 import com.sun.midp.midletsuite.*;
 import com.sun.midp.security.*;
+import com.sun.midp.rms.RmsEnvironment;
 
 /**
  * The first class loaded in VM by midp_run_midlet_with_args to initialize
@@ -136,6 +137,11 @@ public class CdcMIDletSuiteLoader extends AbstractMIDletSuiteLoader
             this,
             new CdcMIDletLoader(mss),
             this);
+        
+       MidletSuiteContainer msc = new MidletSuiteContainer(mss);
+       
+       RmsEnvironment rmsEnv = RmsEnvironment.getRmsEnvironment();
+       RmsEnvironment.getRmsEnvironment().init( internalSecurityToken, msc); 
     }
 
     /**

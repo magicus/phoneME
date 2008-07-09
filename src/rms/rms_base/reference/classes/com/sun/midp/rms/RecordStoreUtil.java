@@ -149,7 +149,7 @@ public class RecordStoreUtil {
      *
      * @return true if the file exists, false if it does not.
      */
-    native static boolean exists(int suiteId, String name, int extension);
+    native static boolean exists(String filenameBase, String name, int extension);
 
     /**
      * Removes the storage file for record store <code>filename</code>
@@ -162,7 +162,7 @@ public class RecordStoreUtil {
      * @throws RecordStoreException if deletion encountered an error
      *         internally.
      */
-    native static void deleteFile(int suiteId, String name, int extension)
+    native static void deleteFile(String filenameBase, String name, int extension)
             throws RecordStoreException;
 
     /**
@@ -175,9 +175,9 @@ public class RecordStoreUtil {
      * @return <code>true</code> if file was found and deleted successfully,
      *         <code>false</code> otherwise.
      */
-    static boolean quietDeleteFile(int suiteId, String name, int extension) {
+    static boolean quietDeleteFile(String filenameBase, String name, int extension) {
         try {
-            deleteFile(suiteId, name, extension);
+            deleteFile(filenameBase, name, extension);
         } catch (Throwable t) {
             return false;
         }

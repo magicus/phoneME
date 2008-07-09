@@ -252,8 +252,14 @@ midp_remove_suite(SuiteIdType suiteId) {
     MidpProperties properties;
     pcsl_string* pproperty;
     MidletSuiteData* pData = NULL;
+    pcsl_string *filenameBase;
+    MIDPError errorStatus;
 
     lockStorageList *node = NULL;
+
+    // get the filename base from the suite id
+    errorStatus = build_suite_filename(suiteId, &PCSL_STRING_EMPTY, 
+                                          filenameBase);
     node = find_storage_lock(suiteId);
     if (node != NULL) {
         if (node->update != KNI_TRUE) {
@@ -311,7 +317,7 @@ midp_remove_suite(SuiteIdType suiteId) {
          * Call the native RMS method to remove the RMS data.
          * This function call is needed for portability
          */
-        rc = rmsdb_remove_record_stores_for_suite(suiteId);
+        rc = rmsdb_remove_record_stores_for_suite(*filenameBase);
         if (rc == KNI_FALSE) {
             status = SUITE_LOCKED;
             break;
@@ -652,6 +658,11 @@ midp_get_suite_storage_size(SuiteIdType suiteId) {
     StorageIdType storageId;
     MIDPError status;
     MidletSuiteData* pData;
+    pcsl_string *filenameBase;
+
+    // get the filename base from the suite id
+    status = build_suite_filename(suiteId, &PCSL_STRING_EMPTY, 
+                                            filenameBase);
 
     pData = get_suite_data(suiteId);
     if (pData) {
@@ -715,7 +726,7 @@ midp_get_suite_storage_size(SuiteIdType suiteId) {
         }
     }
 
-    rms = rmsdb_get_rms_storage_size(suiteId);
+    rms = rmsdb_get_rms_storage_size(*filenameBase);
     if (rms == OUT_OF_MEM_LEN) {
         return OUT_OF_MEM_LEN;
     }

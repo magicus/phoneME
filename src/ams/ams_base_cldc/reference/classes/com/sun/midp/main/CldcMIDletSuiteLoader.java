@@ -46,6 +46,7 @@ import com.sun.midp.log.*;
 import com.sun.midp.main.Configuration;
 import com.sun.midp.publickeystore.WebPublicKeyStore;
 import com.sun.midp.util.Properties;
+import com.sun.midp.rms.RmsEnvironment;
 
 
 /**
@@ -125,6 +126,10 @@ abstract class CldcMIDletSuiteLoader extends AbstractMIDletSuiteLoader {
             internalSecurityToken,
             midletStateHandler,
             eventQueue);
+        
+        MidletSuiteContainer msc = 
+                new MidletSuiteContainer(MIDletSuiteStorage.getMIDletSuiteStorage());
+        RmsEnvironment.init(internalSecurityToken, msc);
     }
 
     /**

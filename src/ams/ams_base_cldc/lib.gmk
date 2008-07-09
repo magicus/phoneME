@@ -73,6 +73,7 @@ SUBSYSTEM_AMS_JAVA_FILES += \
     $(AMS_BASE_CLDC_DIR)/classes/com/sun/midp/main/MIDletProxyListListener.java \
     $(AMS_BASE_CLDC_DIR)/classes/com/sun/midp/main/MIDletSuiteLoader.java \
     $(AMS_BASE_CLDC_DIR)/classes/com/sun/midp/main/MIDletSuiteUtils.java
+    $(AMS_BASE_CLDC_DIR)/classes/com/sun/midp/main/MidletSuiteContainer.java
 
 SUBSYSTEM_AMS_NATIVE_FILES += \
     exitInternal.c \
