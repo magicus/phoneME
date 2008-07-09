@@ -104,7 +104,7 @@ final class MIDletSelector implements CommandListener {
      */
     MIDletSelector(RunningMIDletSuiteInfo theSuiteInfo, Display theDisplay,
                    Displayable theParentDisplayable,
-                   ApplicationManager theManager) throws Throwable {
+                   ApplicationManager theManager) {
 
         MIDletSuiteStorage mss;
 
@@ -198,29 +198,41 @@ final class MIDletSelector implements CommandListener {
      *
      * @param mss the midlet suite storage
      */
-    private void readMIDletInfo(MIDletSuiteStorage mss) throws Throwable {
+    private void readMIDletInfo(MIDletSuiteStorage mss) { //throws Throwable {
+        MIDletSuite midletSuite = null;
+
         try {
-            MIDletSuite midletSuite =
-                mss.getMIDletSuite(suiteInfo.suiteId, false);
+            midletSuite = mss.getMIDletSuite(suiteInfo.suiteId, false);
 
-            if (midletSuite == null) {
-                return;
+        } catch (MIDletSuiteCorruptedException msce) {
+            if (Logging.REPORT_LEVEL <= Logging.ERROR) {
+                Logging.report(Logging.ERROR, LogChannels.LC_AMS,
+                               "readMIDletInfo(): suite corrupted, id = " +
+                                   suiteInfo.suiteId);
             }
-
-            try {
-                for (int n = 1; n < 100; n++) {
-                    String nth = "MIDlet-"+ n;
-                    String attr = midletSuite.getProperty(nth);
-                    if (attr == null || attr.length() == 0)
-                        break;
-
-                    addMIDlet(new MIDletInfo(attr));
-                }
-            } finally {
-                midletSuite.close();
+        }  catch (MIDletSuiteLockedException msle) {
+            if (Logging.REPORT_LEVEL <= Logging.ERROR) {
+                Logging.report(Logging.ERROR, LogChannels.LC_AMS,
+                               "readMIDletInfo(): suite locked, id = " +
+                                   suiteInfo.suiteId);
             }
-        } catch (Throwable t) {
-            throw t;
+        }
+
+        if (midletSuite == null) {
+            return;
+        }
+
+        try {
+            for (int n = 1; n < 100; n++) {
+                String nth = "MIDlet-"+ n;
+                String attr = midletSuite.getProperty(nth);
+                if (attr == null || attr.length() == 0)
+                    break;
+
+                addMIDlet(new MIDletInfo(attr));
+            }
+        } finally {
+            midletSuite.close();
         }
     }
 
@@ -238,6 +250,3 @@ final class MIDletSelector implements CommandListener {
         minfo[mcount++] = info;
     }
 }
-
-
-

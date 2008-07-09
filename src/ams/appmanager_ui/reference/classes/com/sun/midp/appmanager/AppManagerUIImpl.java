@@ -529,7 +529,12 @@ class AppManagerUIImpl extends Form
             RunningMIDletSuiteInfo msiToRun = appManager.getLastInstalledMidletItem();
             if (msiToRun != null) {
                 display.setCurrentItem(findItem(msiToRun));
-                appManager.launchMidlet(msiToRun);
+                if (msiToRun.hasSingleMidlet()) {
+                    appManager.launchMidlet(msiToRun);
+                    display.setCurrent(this);
+                } else {
+                    new MIDletSelector(msiToRun, display, this, manager);
+                }
                 return;
             }
 
@@ -622,8 +627,12 @@ class AppManagerUIImpl extends Form
 
         } if (c == launchCmd) {
 
-            appManager.launchMidlet(msi);
-            display.setCurrent(this);
+            if (msi.hasSingleMidlet()) {
+                appManager.launchMidlet(msi);
+                display.setCurrent(this);
+            } else {
+                new MIDletSelector(msi, display, this, manager);
+            }
 
         } else if (c == infoCmd) {
 
