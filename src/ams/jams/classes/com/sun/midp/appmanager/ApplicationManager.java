@@ -81,4 +81,11 @@ interface ApplicationManager {
      * @param suiteInfo information for the midlet to be terminated
      */
     void exitMidlet(RunningMIDletSuiteInfo suiteInfo);
+
+    /**
+     * Handle exit of MIDlet suite (the only MIDlet in sute exited or MIDlet
+     * selector exited).
+     * @param suiteInfo Containing ID of exited suite
+     */
+    void notifySuiteExited(RunningMIDletSuiteInfo suiteInfo);
 }

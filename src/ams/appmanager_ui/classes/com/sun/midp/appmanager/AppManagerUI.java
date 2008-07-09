@@ -100,6 +100,13 @@ interface AppManagerUI {
     void notifySuiteInstalledExt(RunningMIDletSuiteInfo si);
 
     /**
+     * Called when a suite exited (the only MIDlet in suite exited or the
+     * MIDlet selector exited).
+     * @param suiteInfo Suite which just exited
+     */
+    void notifySuiteExited(RunningMIDletSuiteInfo suiteInfo);
+    
+    /**
      * Called when a MIDlet suite has been removed externally.
      * @param si corresponding suite info
      */
@@ -145,6 +152,12 @@ interface AppManagerUI {
      */
     void setCurrentItem(RunningMIDletSuiteInfo item);
 
+    /**
+     * Enters automatically the midlet suite determined by the suite ID.
+     * @param suiteId ID of the suite to launch
+     */
+    void enterSuite(int suiteId);
+   
     /**
      * Called to determine MidletSuiteInfo of the last selected Item.
      * Is used to restore selection in the app manager.

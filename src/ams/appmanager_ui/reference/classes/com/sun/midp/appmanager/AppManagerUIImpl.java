@@ -319,6 +319,14 @@ class AppManagerUIImpl extends Form
     /** custom item for which command to change folder was activated */
     private MidletCustomItem mciToChangeFolder;
 
+    /** running MIDlet selectors */
+    private Vector midletSelectors;
+    
+    /** suite id of midlet exiting from AMS menu */
+    int exitingMidletSuiteId;
+    /** class name of midlet exiting from AMS menu */
+    String exitingMidletClassName;
+    
 
     private void init(ApplicationManager manager, AppManagerPeer appManager,
                  Display display, DisplayError displayError, boolean foldersOn) {
@@ -343,6 +351,10 @@ class AppManagerUIImpl extends Form
         midletSwitcher = new MIDletSwitcher(this, manager, display);
 
         midletSuiteStorage = MIDletSuiteStorage.getMIDletSuiteStorage();
+
+        midletSelectors = new Vector();
+        exitingMidletSuiteId = 0;
+        exitingMidletClassName = null;
 
         setTitle(Resource.getString(ResourceConstants.AMS_MGR_TITLE));
         
@@ -486,7 +498,13 @@ class AppManagerUIImpl extends Form
     public void showMidletSelector(RunningMIDletSuiteInfo msiToRun) {
         if (msiToRun != null) {
             try {
-                new MIDletSelector(msiToRun, display, this, manager);
+                MIDletSelector selector = getMidletSelector(msiToRun.suiteId);
+                if (selector != null) {
+                    selector.show();
+                    return;
+                }
+                
+                midletSelectors.addElement(new MIDletSelector(msiToRun, display, this, manager));
             } catch (Exception e) {
                 if (Logging.REPORT_LEVEL <= Logging.ERROR) {
                     Logging.report(Logging.ERROR, LogChannels.LC_AMS,
@@ -500,7 +518,7 @@ class AppManagerUIImpl extends Form
             display.setCurrent(this);
         }
     }
-
+    
     /**
      * Called to determine MidletSuiteInfo of the last selected Item.
      *
@@ -623,6 +641,30 @@ class AppManagerUIImpl extends Form
     }
 
     /**
+     * Launches a midlet suite.
+     * @param msi Structure identifying the suite to launch
+     */
+    private void enterSuite(RunningMIDletSuiteInfo msi) {
+        if (msi.hasSingleMidlet()) {
+            appManager.launchMidlet(msi);
+            display.setCurrent(this);
+        } else {
+            appManager.showMidletSelector(msi);
+        }        
+    }
+
+    /**
+     * Enters the midlet suite determined by the suite ID.
+     * @param suiteId ID of the suite to launch
+     */
+    public void enterSuite(int suiteId) {
+        MidletCustomItem mci = getMidletItem(suiteId);
+        if (mci != null) {
+            enterSuite(mci.msi);
+        }
+    }
+    
+    /**
      * Respond to a command issued on an Item in AppSelector
      *
      * @param c command activated by the user
@@ -648,13 +690,8 @@ class AppManagerUIImpl extends Form
 
         } if (c == launchCmd) {
 
-            if (msi.hasSingleMidlet()) {
-                appManager.launchMidlet(msi);
-                display.setCurrent(this);
-            } else {
-                appManager.showMidletSelector(msi);
-            }
-
+            enterSuite(msi);
+           
         } else if (c == infoCmd) {
 
             try {
@@ -709,6 +746,8 @@ class AppManagerUIImpl extends Form
             display.setCurrent(this);
 
         } else if (c == endCmd) {
+            exitingMidletSuiteId = msi.proxy.getSuiteId();
+            exitingMidletClassName = msi.proxy.getClassName();
             manager.exitMidlet(msi);
             display.setCurrent(this);
         } else if (c == changeFolderCmd) {
@@ -818,6 +857,25 @@ class AppManagerUIImpl extends Form
                 midletSwitcher.remove(ci.msi);
                 ci.update();
 
+                /* find appropriate MIDlet selector */
+                MIDletSelector selector = getMidletSelector(si.suiteId);
+                if (selector != null) {
+
+                    /* notify the selector that MIDlet was exited */
+                    selector.notifyMidletExited(si.midletToRun);
+
+                    /* if MIDlet exited from AMS menu, stay there. Otherwise
+                     * return back to the selector */
+                    if (exitingMidletSuiteId == si.suiteId &&
+                            exitingMidletClassName.equals(si.midletToRun)) {
+                        exitingMidletSuiteId = 0;
+                        exitingMidletClassName = null;
+                        selector.exitIfNoMidletRuns();
+                    } else {
+                        selector.show();
+                    }
+                }
+                
                 return;
             }
         }
@@ -825,6 +883,18 @@ class AppManagerUIImpl extends Form
         display.setCurrent(this);
     }
 
+    /**
+     * Called when a suite exited (the only MIDlet in suite exited or the
+     * MIDlet selector exited).
+     * Removes appropriate MIDlet selector from list of active selectors.
+     * @param suiteInfo Suite which just exited
+     */
+    public void notifySuiteExited(RunningMIDletSuiteInfo suiteInfo) {
+        MIDletSelector selector = getMidletSelector(suiteInfo.suiteId);
+        if (selector != null) {
+            midletSelectors.removeElement(selector);
+        }
+    }
 
     /**
      * Called when a midlet could not be launched.
@@ -1024,6 +1094,37 @@ class AppManagerUIImpl extends Form
         for (int i = 0; i < mciVector.size(); i++) {
             MidletCustomItem mci = (MidletCustomItem)mciVector.elementAt(i);
             if (mci.msi == si) {
+                return mci;
+            }
+        }
+        return null;
+    }
+    
+    /**
+     * Gets MIDlet selector for the given suite Id
+     * @return MIDlet selector or null if it is not running
+     */
+    private MIDletSelector getMidletSelector(int suiteId) {
+        int size = midletSelectors.size();
+        for (int i = 0; i < size; i++) {
+            MIDletSelector selector = 
+                    (MIDletSelector) midletSelectors.elementAt(i);
+            if (selector.getSuiteInfo().suiteId == suiteId) {
+                return selector;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Gets MIDlet custom item for the given suite Id
+     * @return MIDlet item or null if it is not found
+     */
+    private MidletCustomItem getMidletItem(int suiteId) {
+        int size = mciVector.size();
+        for (int i = 0; i < size; i++) {
+            MidletCustomItem mci = (MidletCustomItem) mciVector.elementAt(i);
+            if (mci.msi.suiteId == suiteId) {
                 return mci;
             }
         }

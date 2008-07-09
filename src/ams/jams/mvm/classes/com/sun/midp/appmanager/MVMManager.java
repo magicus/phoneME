@@ -179,8 +179,7 @@ public class MVMManager extends MIDlet
         }
 
         try {
-            MIDletSuiteUtils.execute(suiteId, className,
-                                     displayName, isDebugMode);
+            appManager.launchSuite(suiteId);
             suiteUnderDebugId = suiteId;
         } catch (Exception ex) {
             displayError.showErrorAlert(displayName, ex, null, null);
@@ -280,14 +279,23 @@ public class MVMManager extends MIDlet
     public void midletUpdated(MIDletProxy midlet, int fieldId) {
         appManager.notifyMidletStateChanged(midlet);
     }
-
+    
     /**
      * Called when a MIDlet is removed from the list.
      *
      * @param midlet The proxy of the removed MIDlet
      */
     public void midletRemoved(MIDletProxy midlet) {
-        if (suiteUnderDebugId == midlet.getSuiteId()) {
+        appManager.notifyMidletExited(midlet);
+    }
+
+    /**
+     * Called when a suite exited (the only MIDlet in suite exited or the
+     * MIDlet selector exited).
+     * @param suiteInfo Suite which just exited
+     */
+    public void notifySuiteExited(RunningMIDletSuiteInfo suiteInfo) {
+        if (suiteUnderDebugId == suiteInfo.suiteId) {
             MIDletProxy odtAgentMidlet = midletProxyList.findMIDletProxy(
                 MIDletSuite.INTERNAL_SUITE_ID, ODT_AGENT);
 
@@ -303,8 +311,7 @@ public class MVMManager extends MIDlet
 
             suiteUnderDebugId = MIDletSuite.UNUSED_SUITE_ID;
         }
-
-        appManager.notifyMidletExited(midlet);
+        appManager.notifySuiteExited(suiteInfo);
     }
 
     /**
