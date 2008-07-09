@@ -39,22 +39,23 @@
  * <br>
  */
 
-#include <kni.h>
+
+#include <jsrop_kni.h>
 #include <sni.h>
 
 #include <pcsl_string.h>
+#include <jsrop_suitestore.h>
 
 #include <midpUtilKni.h>
 #include <midpError.h>
 #include <midp_logging.h>
 #include <midpServices.h>
 #include <midpMalloc.h>
+
 #include <suitestore_common.h>
 #include <jsr211_invoc.h>
 #include <jsr211_platform_invoc.h>
-#include <jsrop_memory.h>
-#include <jsrop_kni.h>
-#include <jsrop_suitestore.h>
+
 #include <javautil_unicode.h>
 #include <javacall_memory.h>
 
@@ -83,17 +84,8 @@
 /* The mode for listen for a new unnotified response. */
 #define MODE_LRESPONSE 4
 
-/* The mode for get to retrieve a new ACTIVE, HOLD, or WAITING request. */
-/* #define MODE_PENDING 5 */
-
 /* The mode for get to retrieve by <code>tid</code>. */
 #define MODE_TID 6
-
-/* The mode to get the Invocation after <code>tid</code>. */
-#define MODE_TID_NEXT 7
-
-/* The mode to get the Invocation before <code>tid</code>. */
-#define MODE_TID_PREV 8
 
 /**
  * A double linked list head used to store invocations.
@@ -129,37 +121,60 @@ static jboolean isThreadCancelled();
  */
 static StoredLink* invocQueue = NULL;
 
+#define UNDEFINED_TID 0
 /*
  * Transaction ID of next transaction. Acts as virtual time.
  * Incremented on every put.
  * Must be non-zero, but doesn't matter where it starts
  */
-static int nextTid = 0;
+static int prevTid = UNDEFINED_TID;
+
+#define ENUM_SIMPLE_INT_FIELDS(actionMacro) \
+    actionMacro(previousTid) \
+    actionMacro(suiteId) \
+    actionMacro(status) \
+    actionMacro(invokingSuiteId) \
+
+#define ENUM_INT_FIELDS(actionMacro) \
+    actionMacro(tid) \
+    ENUM_SIMPLE_INT_FIELDS(actionMacro) \
+    actionMacro(argsLen) \
+    actionMacro(dataLen) \
+
+#define ENUM_STRING_FIELDS(actionMacro) \
+    actionMacro(classname) \
+    actionMacro(invokingAuthority) \
+    actionMacro(invokingAppName) \
+    actionMacro(invokingClassname) \
+    actionMacro(invokingID) \
+    actionMacro(url) \
+    actionMacro(type) \
+    actionMacro(action) \
+    actionMacro(ID) \
+    actionMacro(username) \
+    actionMacro(password) \
+
+#define ENUM_MISC_FIELDS(actionMacro) \
+    actionMacro(arguments, "[Ljava/lang/String;") \
+    actionMacro(data, "[B") \
+    actionMacro(responseRequired, "Z") \
+
+#define FID(field) field##Fid
+#define _toQuote(field) #field
+#define toQuote(field) _toQuote(field)
 
 /*
  * The cached fieldIDs for each field of the InvocationImpl class
  */
-static jfieldID urlFid;
-static jfieldID typeFid;
-static jfieldID actionFid;
-static jfieldID IDFid;
-static jfieldID argumentsFid;
-static jfieldID argsLenFid;
-static jfieldID dataFid;
-static jfieldID dataLenFid;
-static jfieldID responseRequiredFid;
-static jfieldID usernameFid;
-static jfieldID passwordFid;
-static jfieldID tidFid;
-static jfieldID previousTidFid;
-static jfieldID suiteIdFid;
-static jfieldID classnameFid;
-static jfieldID statusFid;
-static jfieldID invokingAuthorityFid;
-static jfieldID invokingAppNameFid;
-static jfieldID invokingSuiteIdFid;
-static jfieldID invokingClassnameFid;
-static jfieldID invokingIDFid;
+#define defineField(field) static jfieldID FID(field);
+#define defineMiscField(field, type) defineField(field)
+
+ENUM_INT_FIELDS(defineField)
+ENUM_STRING_FIELDS(defineField)
+ENUM_MISC_FIELDS(defineMiscField)
+
+#undef defineMiscField
+#undef defineField
 
 /**
  * Cache the fieldIDs for each fields of the InvocationImpl class.
@@ -168,64 +183,47 @@ static jfieldID invokingIDFid;
  * @param classObj the Class object of Invocation
  */
 static void init(jobject invocObj, jclass classObj) {
-    if (urlFid != 0)
+    if (FID(url) != 0)
         return;
 
     KNI_GetObjectClass(invocObj, classObj);
 
-    /* Get these field IDs from InvocationImpl */
-    tidFid = KNI_GetFieldID(classObj, "tid", "I" );
-    previousTidFid = KNI_GetFieldID(classObj, "previousTid", "I" );
-    suiteIdFid = KNI_GetFieldID(classObj, "suiteId", "I");
-    classnameFid = KNI_GetFieldID(classObj, "classname", "Ljava/lang/String;");
-    statusFid = KNI_GetFieldID(classObj, "status", "I");
-    invokingAuthorityFid = KNI_GetFieldID(classObj, "invokingAuthority", "Ljava/lang/String;");
-    invokingAppNameFid = KNI_GetFieldID(classObj, "invokingAppName", "Ljava/lang/String;");
-    invokingSuiteIdFid = KNI_GetFieldID(classObj, "invokingSuiteId", "I");
-    invokingClassnameFid = KNI_GetFieldID(classObj, "invokingClassname", "Ljava/lang/String;");
-    invokingIDFid = KNI_GetFieldID(classObj, "invokingID", "Ljava/lang/String;");
+#define initField(field, type) FID(field) = KNI_GetFieldID(classObj, toQuote(field), type );
+#define initIntField(field) initField(field, "I")
+#define initStringField(field) initField(field, "Ljava/lang/String;")
 
-   /*
-    * Get the rest of the fields from Invocation (the InvocationImpl superclass)
-    *    KNI_GetSuperClass(classObj, classObj);
-    */
-    urlFid = KNI_GetFieldID(classObj, "url", "Ljava/lang/String;");
-    typeFid = KNI_GetFieldID(classObj, "type", "Ljava/lang/String;");
-    actionFid = KNI_GetFieldID(classObj, "action", "Ljava/lang/String;");
-    IDFid = KNI_GetFieldID(classObj, "ID", "Ljava/lang/String;");
-    argumentsFid = KNI_GetFieldID(classObj, "arguments", "[Ljava/lang/String;");
-    argsLenFid = KNI_GetFieldID(classObj, "argsLen", "I");
-    dataFid = KNI_GetFieldID(classObj, "data", "[B");
-    dataLenFid = KNI_GetFieldID(classObj, "dataLen", "I");
-    responseRequiredFid = KNI_GetFieldID(classObj, "responseRequired", "Z");
-    usernameFid = KNI_GetFieldID(classObj, "username", "Ljava/lang/String;");
-    passwordFid = KNI_GetFieldID(classObj, "password", "Ljava/lang/String;");
+ENUM_INT_FIELDS(initIntField)
+ENUM_STRING_FIELDS(initStringField)
+ENUM_MISC_FIELDS(initField)
+
+#undef initStringField
+#undef initIntField
+#undef initField
 
 #if REPORT_LEVEL <= LOG_CRITICAL
-    if (urlFid == 0 ||
-        typeFid == 0 ||
-        actionFid == 0 ||
-        IDFid == 0 ||
-        statusFid == 0 ||
-        responseRequiredFid == 0 ||
-        tidFid == 0 ||
-        previousTidFid == 0 ||
-        suiteIdFid == 0 ||
-        classnameFid == 0 ||
-        invokingAuthorityFid == 0 ||
-        invokingAppNameFid == 0 ||
-        invokingSuiteIdFid == 0 ||
-        invokingClassnameFid == 0 ||
-        invokingIDFid == 0 ||
-        usernameFid == 0 ||
-        passwordFid == 0 ||
-        argumentsFid == 0 ||
-        argsLenFid == 0 ||
-        dataLenFid == 0 ||
-        dataFid == 0) {
+#define fieldEqZero(field) FID(field) == 0 ||
+#define fieldMiscEqZero(field, type) fieldEqZero(field)
+
+    if ( ENUM_INT_FIELDS(fieldEqZero) ENUM_STRING_FIELDS(fieldEqZero) ENUM_MISC_FIELDS(fieldMiscEqZero) 0 ) {
         REPORT_CRIT(LC_NONE, "invocStore.c: fieldID initialization failed");
     }
+#undef fieldEqZero
+#undef fieldMiscEqZero
 #endif
+}
+
+/**
+ * The utility allocates memory for StoredInvoc struct and initializes it with
+ * zeroes.
+ * It replaces standard 'calloc'-family function to double-check that allocated
+ * buffer is zeroed.
+ *
+ * @return pointer on zeroed StoredInvoc buffer or NULL if EOM occurs.
+ */
+static StoredInvoc * newStoredInvoc() {
+    StoredInvoc * buf = JAVAME_MALLOC(sizeof(StoredInvoc));
+    memset( buf, '\0', sizeof(*buf) );
+    return buf;
 }
 
 /**
@@ -236,9 +234,7 @@ static void init(jobject invocObj, jclass classObj) {
  * @return false if the String could not allocate
  */
 static jboolean storeField(const pcsl_string* str,
-               jobject invocObj,
-               jfieldID fid,
-               jobject tmpobj) {
+                    jobject invocObj, jfieldID fid, jobject tmpobj) {
     if (str == NULL || pcsl_string_is_null(str)) {
         KNI_ReleaseHandle(tmpobj);
     } else {
@@ -259,44 +255,45 @@ static jboolean storeField(const pcsl_string* str,
  * @param tmp2 a 2nd temporary object 
  * @return TRUE if all the allocations and modifications worked
  */
-static jboolean setParamsFromObj(StoredInvoc* invoc,
-                     jobject invocObj,
-                     jobject tmp1, jobject tmp2) {
+static jboolean update(StoredInvoc* invoc, jobject invocObj, jobject tmp1, jobject tmp2) {
+    // do not update tid
+    // also there is no need to update argsLen, dataLen
+
     jboolean ret = KNI_ENOMEM;    /* Assume failure */
     do {
         /* On any error break out of this block */
         int len;
         pcsl_string* args;
+
+#define updateString(name) \
+        KNI_GetObjectField(invocObj, FID(name), tmp1); \
+        if (PCSL_STRING_OK != midp_jstring_to_pcsl_string(tmp1, &invoc->name)) \
+            break; \
+
+#define updateInt(name) \
+        invoc->name = KNI_GetIntField(invocObj, FID(name)); \
+
+        ENUM_SIMPLE_INT_FIELDS(updateInt)
+        ENUM_STRING_FIELDS(updateString)
+#undef updateInt
+#undef updateString
     
-        KNI_GetObjectField(invocObj, urlFid, tmp1);
-        if (PCSL_STRING_OK != midp_jstring_to_pcsl_string(tmp1, &invoc->url))
-            break;
-    
-        KNI_GetObjectField(invocObj, typeFid, tmp1);
-        if (PCSL_STRING_OK != midp_jstring_to_pcsl_string(tmp1, &invoc->type ))
-            break;
-    
-        KNI_GetObjectField(invocObj, actionFid, tmp1);
-        if (PCSL_STRING_OK != midp_jstring_to_pcsl_string(tmp1, &invoc->action ))
-            break;
-    
-        KNI_GetObjectField(invocObj, IDFid, tmp1);
-        if (PCSL_STRING_OK != midp_jstring_to_pcsl_string(tmp1, &invoc->ID))
-            break;
-    
+        invoc->responseRequired = KNI_GetBooleanField(invocObj, FID(responseRequired));
+
         /*
          * Copy the arguments if non-empty.
          * Always keep the pointers safe so invocFree()
          * can function correctly.
          */
-        KNI_GetObjectField(invocObj, argumentsFid, tmp2);
-        len = invoc->argsLen;
-        invoc->argsLen = (KNI_IsNullHandle(tmp2)? 0: KNI_GetArrayLength(tmp2));
+        KNI_GetObjectField(invocObj, FID(arguments), tmp2);
+        len = invoc->argsLen; // old length
+        invoc->argsLen = (KNI_IsNullHandle(tmp2)? 0: KNI_GetArrayLength(tmp2)); // new length
 
         if (len != invoc->argsLen) {
+            // free args
             if (invoc->args != NULL) {
                 args = invoc->args;
-                while (len-- > 0) {
+                while (len--) {
                     pcsl_string_free(args++);
                 }
                 JAVAME_FREE(invoc->args);
@@ -313,15 +310,16 @@ static jboolean setParamsFromObj(StoredInvoc* invoc,
         args = invoc->args;
         if (len > 0) {
             args += len;
-            while (len-- > 0) {
+            while (len--) {
+                pcsl_string_free(--args);
                 KNI_GetObjectArrayElement(tmp2, len, tmp1);
-                if (PCSL_STRING_OK != midp_jstring_to_pcsl_string(tmp1, --args))
+                if (PCSL_STRING_OK != midp_jstring_to_pcsl_string(tmp1, args))
                     break;
             }
         }
     
         /* Copy any data from the Invocation to malloc's memory. */
-        KNI_GetObjectField(invocObj, dataFid, tmp2);
+        KNI_GetObjectField(invocObj, FID(data), tmp2);
         len = (KNI_IsNullHandle(tmp2)? 0: KNI_GetArrayLength(tmp2));
 
         if (invoc->dataLen != len) {
@@ -349,6 +347,72 @@ static jboolean setParamsFromObj(StoredInvoc* invoc,
 }
 
 /**
+ * Implementation of native method to queue a new Invocation.
+ * The state of the InvocationImpl is copied to the heap
+ * and inserted in the head of the invocation queue.
+ * An StoredInvoc struct is allocated on the native heap and 
+ * the non-null strings for each field of the InvocationImpl class
+ * are copied to the heap.
+ * A new transaction ID is assigned to this Invocation
+ * and returned in the tid field of the InvocationImpl.
+ * @param invoc the InvocationImpl to store
+ * @throws OutOfMemoryError if the memory allocation fails
+ * @see StoredInvoc
+ * @see #invocQueue
+ */
+KNIEXPORT KNI_RETURNTYPE_VOID
+KNIDECL(com_sun_j2me_content_InvocationStore_put0) {
+    StoredInvoc* invoc = NULL;
+
+    KNI_StartHandles(4);
+    KNI_DeclareHandle(invocObj);
+    KNI_DeclareHandle(classObj);
+    KNI_DeclareHandle(argsObj);
+    KNI_DeclareHandle(str);
+
+    KNI_GetParameterAsObject(1, invocObj);
+    init(invocObj, classObj);
+
+    do {
+        /* On any error break out of this block */
+        /* Allocate a new zero'ed struct to save the values in */
+        invoc = newStoredInvoc();
+        if (invoc == NULL) {
+            KNI_ThrowNew(midpOutOfMemoryError, 
+                                "InvocationStore_put0 no memory for [invoc]");
+            break;
+        }
+
+        /* Assign a new transaction id and set it */
+        invoc->tid = invocNextTid();
+        KNI_SetIntField(invocObj, FID(tid), invoc->tid);
+    
+        /*
+         * Copy all the fields to native
+         */
+        if (KNI_TRUE != update(invoc, invocObj, str, argsObj))
+            break;
+    
+        /* Insert the new Invocation at the end of the queue */
+        if (!invocPut(invoc))
+            break;
+    
+        unblockWaitingThreads(STATUS_OK);
+    
+        /* Clear to skip cleanup and throwing exception */
+        invoc = NULL;
+    } while (0);
+
+    if (invoc != NULL) {
+        /* An allocation error occurred; free any remaining */
+        invocFree(invoc);
+        KNI_ThrowNew(midpOutOfMemoryError, "invocStore.c allocation failed");
+    }
+
+    KNI_EndHandles();
+    KNI_ReturnVoid();
+}
+/**
  * 
  * Gets an InvocationImpl from the store using a MIDlet suiteId
  * and optional classname.
@@ -368,8 +432,9 @@ static jboolean setParamsFromObj(StoredInvoc* invoc,
  *    -1 if the sizes of the arguments or parameter array were wrong
  * @see StoredInvoc
  */
+
 KNIEXPORT KNI_RETURNTYPE_INT
-Java_com_sun_j2me_content_InvocationStore_get0(void) {
+KNIDECL(com_sun_j2me_content_InvocationStore_get0) {
     int ret = 0;          /* return value = nothing matched */
     KNI_StartHandles(4);
     KNI_DeclareHandle(obj);      /* multipurpose handle */
@@ -402,39 +467,17 @@ Java_com_sun_j2me_content_InvocationStore_get0(void) {
         blocking = KNI_GetParameterAsBoolean(getBlockingArg);
     
         if (!isEmpty()) {
-            /* Queue is not empty, get InvocationImpl obj and init. */
-            KNI_GetParameterAsObject(getInvokeObjArg, invocObj);
-            init(invocObj, obj);
-    
             /* Get the desired type of invocation. */
             mode = KNI_GetParameterAsInt(getModeArg);
-            if (mode == MODE_TID || mode == MODE_TID_NEXT || mode == MODE_TID_PREV) {
-                int tid = KNI_GetIntField(invocObj, tidFid);
-                if (tid != 0) {
-                    match = invocFindTid(tid);
-                    if (match != NULL) {
-                        /* Link to the next or previous depending on the mode. */
-                        if (mode == MODE_TID_NEXT) {
-                            match = match->flink;
-                        } else if (mode == MODE_TID_PREV) {
-                            match = match->blink;
-                        }
-                    }
-                } else {
-                    /* start with the root */
-                    match = invocQueue;
-                }
-            } else {
-                desiredSuiteId = KNI_GetParameterAsInt(getSuiteIdArg);
-                KNI_GetParameterAsObject(getClassnameArg, classname);
-                if (PCSL_STRING_OK != 
-                        midp_jstring_to_pcsl_string(classname, &desiredClassname)) {
-                    KNI_ThrowNew(midpOutOfMemoryError, 
-                       "InvocationStore_get0 no memory for [desiredClassname]");
-                    break;
-                }
-                match = invocFind(desiredSuiteId, &desiredClassname, mode);
+            desiredSuiteId = KNI_GetParameterAsInt(getSuiteIdArg);
+            KNI_GetParameterAsObject(getClassnameArg, classname);
+            if (PCSL_STRING_OK != 
+                    midp_jstring_to_pcsl_string(classname, &desiredClassname)) {
+                KNI_ThrowNew(midpOutOfMemoryError, 
+                   "InvocationStore_get0 no memory for [desiredClassname]");
+                break;
             }
+            match = invocFind(desiredSuiteId, &desiredClassname, mode);
         }
     } while (KNI_FALSE);
 
@@ -443,8 +486,11 @@ Java_com_sun_j2me_content_InvocationStore_get0(void) {
 
     if (match != NULL) {
         StoredInvoc *invoc = match->invoc;
-        int st = copyOut(invoc, mode, invocObj, argsObj, obj);
-        switch (st) {
+        /* Queue is not empty, get InvocationImpl obj and init. */
+        KNI_GetParameterAsObject(getInvokeObjArg, invocObj);
+        init(invocObj, obj);
+
+        switch (ret = copyOut(invoc, mode, invocObj, argsObj, obj)) {
         case 1:
             /* If a match was found and successfully copied;
              * do final set of actions on the Invocation selected.
@@ -457,7 +503,7 @@ Java_com_sun_j2me_content_InvocationStore_get0(void) {
                      * Keep this entry in the queue.
                      */
                     invoc->status = STATUS_ACTIVE;
-                    KNI_SetIntField(invocObj, statusFid, invoc->status);
+                    KNI_SetIntField(invocObj, FID(status), invoc->status);
                 }
                 break;
             case MODE_RESPONSE:
@@ -472,25 +518,20 @@ Java_com_sun_j2me_content_InvocationStore_get0(void) {
             case MODE_LREQUEST:
             case MODE_LRESPONSE:
             case MODE_CLEANUP:
-            case MODE_TID:
-            case MODE_TID_NEXT:
-            case MODE_TID_PREV:
             default:
                 /* No additional action */
                 break;
             }
             /* Returning an Invocation */
-            ret = 1;
             break;
         case 0:
             /* Insufficient memory for strings. */
             KNI_ThrowNew(midpOutOfMemoryError, "invocStore returning strings");
             KNI_ReleaseHandle(invocObj);
-            ret = 0;
             break;
-        case -1:
+        default:
             /* Either args array or data array is incorrect size. */
-            ret = -1;
+            ;
         }
     } else {
         /* No match found. */
@@ -502,6 +543,54 @@ Java_com_sun_j2me_content_InvocationStore_get0(void) {
         ret = 0;
     }
     KNI_EndHandles();
+    KNI_ReturnInt(ret);
+}
+
+KNIEXPORT KNI_RETURNTYPE_INT
+KNIDECL(com_sun_j2me_content_InvocationStore_getByTid0) {
+    int ret = 0;          /* return value = nothing matched */
+    if(!isEmpty()){
+        StoredLink * match = invocQueue;
+        int tid, mode;
+        KNI_StartHandles(3);
+        KNI_DeclareHandle(invocObj);  /* Arg1: Invocation object; non-null */
+        KNI_DeclareHandle(tmpObj);      /* multipurpose handle */
+        KNI_DeclareHandle(argsObj);      /* handle for argument array */
+#define invocArgIdx 1
+#define tidArgIdx 2
+#define modeArgIdx 3
+        tid = KNI_GetParameterAsInt(tidArgIdx);
+        if( tid != UNDEFINED_TID )
+            match = invocFindTid(tid);
+        mode = KNI_GetParameterAsInt(modeArgIdx);
+        if( match != NULL && mode != MODE_TID )
+            match = match->flink;
+        if( match != NULL ){
+            StoredInvoc * invoc = match->invoc;
+
+            KNI_GetParameterAsObject(invocArgIdx, invocObj);
+            init(invocObj, tmpObj);
+
+            switch (ret = copyOut(invoc, mode, invocObj, argsObj, tmpObj)) {
+                case 1:
+                    /* If a match was found and successfully copied; */
+                    /* Returning an Invocation */
+                    break;
+                case 0:
+                    /* Insufficient memory for strings. */
+                    KNI_ThrowNew(midpOutOfMemoryError, "invocStore returning strings");
+                    KNI_ReleaseHandle(invocObj);
+                    break;
+                default:
+                    /* Either args array or data array is incorrect size. */
+                    ;
+            }
+        }
+#undef modeArgIdx 
+#undef tidArgIdx 
+#undef invocArgIdx 
+        KNI_EndHandles();
+    }
     KNI_ReturnInt(ret);
 }
 
@@ -522,47 +611,36 @@ static int copyOut(StoredInvoc *invoc, int mode,
     int datalen = 0;
     int arraylen = 0;
 
+#define storeInt(name) KNI_SetIntField(invocObj, FID(name), invoc->name);
+
     /* Set the required lengths for args and data arrays. */
-    KNI_SetIntField(invocObj, argsLenFid, invoc->argsLen);
-    KNI_SetIntField(invocObj, dataLenFid, invoc->dataLen);
+    storeInt(argsLen)
+    storeInt(dataLen);
 
     /* Check if size of argument array and data array are correct. */
-    KNI_GetObjectField(invocObj, dataFid, obj);
+    KNI_GetObjectField(invocObj, FID(data), obj);
     datalen = KNI_GetArrayLength(obj);
     if (datalen != invoc->dataLen) {
         /* Data array allocated by Java is not correct size. */
         return -1;
     }
-    KNI_GetObjectField(invocObj, argumentsFid, obj);
+    KNI_GetObjectField(invocObj, FID(arguments), obj);
     arraylen = KNI_GetArrayLength(obj);
     if (arraylen != invoc->argsLen) {
         /* Args array allocated by Java is not correct size. */
         return -1;
     }
 
+#define store(name) storeField(&invoc->name, invocObj, FID(name), obj) &&
     /* Copy out all the string fields. */
-    if (!(storeField(&invoc->url, invocObj, urlFid, obj) &&
-          storeField(&invoc->type, invocObj, typeFid, obj) &&
-          storeField(&invoc->action, invocObj, actionFid, obj) &&
-          storeField(&invoc->ID, invocObj, IDFid, obj) &&
-          storeField(&invoc->invokingClassname, invocObj, invokingClassnameFid, obj) &&
-          storeField(&invoc->invokingAuthority, invocObj, invokingAuthorityFid, obj) &&
-          storeField(&invoc->invokingAppName, invocObj, invokingAppNameFid, obj) &&
-          storeField(&invoc->invokingID, invocObj, invokingIDFid, obj) &&
-          storeField(&invoc->username, invocObj, usernameFid, obj) &&
-          storeField(&invoc->password, invocObj, passwordFid, obj))) {
+    if (!( ENUM_STRING_FIELDS(store) !0 )) {
         /* Some String allocation failed. */
         return 0;
     }
-    KNI_SetIntField(invocObj, invokingSuiteIdFid, invoc->invokingSuiteId);
-    /* See if the suite and classname are needed. */
-    if (mode == MODE_TID || mode == MODE_TID_PREV || mode == MODE_TID_NEXT) {
-        if (!storeField(&invoc->classname, invocObj, classnameFid, obj)) {
-            /* A string allocation failed. */
-            return 0;
-        }
-        KNI_SetIntField(invocObj, suiteIdFid, invoc->suiteId);
-    }
+#undef store
+
+    ENUM_SIMPLE_INT_FIELDS(storeInt)
+    storeInt(tid)
 
     /* Return the arguments if any; array length already checked. */
     if (invoc->argsLen > 0) {
@@ -573,12 +651,11 @@ static int copyOut(StoredInvoc *invoc, int mode,
          * No stored arg is null.  If a string cannot be created
          * it is due to insufficient heap memory. 
          */
-        KNI_GetObjectField(invocObj, argumentsFid, argsObj);
+        KNI_GetObjectField(invocObj, FID(arguments), argsObj);
         args = invoc->args;
         for (ndx = 0; ndx < invoc->argsLen; ndx++, args++) {
             if (!pcsl_string_is_null(args)) {
-                if (PCSL_STRING_OK != 
-                        midp_jstring_from_pcsl_string(args, obj)) {
+                if (PCSL_STRING_OK != midp_jstring_from_pcsl_string(args, obj)) {
                     /* String create failed; exit now. */
                     return 0;
                 }
@@ -591,15 +668,14 @@ static int copyOut(StoredInvoc *invoc, int mode,
 
     /* Return the data array if any; array length was already checked. */
     if (invoc->dataLen > 0) {
-        KNI_GetObjectField(invocObj, dataFid, obj);
+        KNI_GetObjectField(invocObj, FID(data), obj);
         KNI_SetRawArrayRegion(obj, 0, invoc->dataLen, invoc->data);
     }
 
-    KNI_SetBooleanField(invocObj, responseRequiredFid,
-            invoc->responseRequired);
-    KNI_SetIntField(invocObj, statusFid, invoc->status);
-    KNI_SetIntField(invocObj, tidFid, invoc->tid);
-    KNI_SetIntField(invocObj, previousTidFid, invoc->previousTid);
+    KNI_SetBooleanField(invocObj, FID(responseRequired), invoc->responseRequired);
+
+#undef storeInt
+
     /* Successful copy out. */
     return 1;
 }
@@ -620,7 +696,7 @@ static int copyOut(StoredInvoc *invoc, int mode,
  *  the same MIDlet suiteId and classname; false is returne dotherwise
  */
 KNIEXPORT KNI_RETURNTYPE_BOOLEAN
-Java_com_sun_j2me_content_InvocationStore_listen0(void) {
+KNIDECL(com_sun_j2me_content_InvocationStore_listen0) {
     StoredLink* match = NULL;
     SuiteIdType desiredSuiteId;
     pcsl_string desiredClassname = PCSL_STRING_NULL_INITIALIZER;
@@ -692,7 +768,7 @@ Java_com_sun_j2me_content_InvocationStore_listen0(void) {
  * @param mode one of {@link #MODE_LREQUEST}, {@link #MODE_LRESPONSE}
  */
 KNIEXPORT KNI_RETURNTYPE_VOID
-Java_com_sun_j2me_content_InvocationStore_setListenNotify0(void) {
+KNIDECL(com_sun_j2me_content_InvocationStore_setListenNotify0) {
     StoredLink* link;
     StoredInvoc* invoc;
     SuiteIdType desiredSuiteId;
@@ -762,251 +838,6 @@ Java_com_sun_j2me_content_InvocationStore_setListenNotify0(void) {
     KNI_ReturnVoid();
 }
 
-/**
- * The utility allocates memory for StoredInvoc struct and initializes it with
- * zeroes.
- * It replaces standard 'calloc'-family function to double-check that allocated
- * buffer is zeroed.
- *
- * @return pointer on zeroed StoredInvoc buffer or NULL if EOM occurs.
- */
-static StoredInvoc * newStoredInvoc() {
-    StoredInvoc * buf = JAVAME_MALLOC(sizeof(StoredInvoc));
-    memset( buf, '\0', sizeof(*buf) );
-    return buf;
-}
-
-
-/**
- * Implementation of native method to queue a new Invocation.
- * The state of the InvocationImpl is copied to the heap
- * and inserted in the head of the invocation queue.
- * An StoredInvoc struct is allocated on the native heap and 
- * the non-null strings for each field of the InvocationImpl class
- * are copied to the heap.
- * A new transaction ID is assigned to this Invocation
- * and returned in the tid field of the InvocationImpl.
- * @param invoc the InvocationImpl to store
- * @throws OutOfMemoryError if the memory allocation fails
- * @see StoredInvoc
- * @see #invocQueue
- */
-KNIEXPORT KNI_RETURNTYPE_VOID
-Java_com_sun_j2me_content_InvocationStore_put0(void) {
-    StoredInvoc* invoc = NULL;
-
-    KNI_StartHandles(4);
-    KNI_DeclareHandle(invocObj);
-    KNI_DeclareHandle(classObj);
-    KNI_DeclareHandle(argsObj);
-    KNI_DeclareHandle(str);
-
-    KNI_GetParameterAsObject(1, invocObj);
-    init(invocObj, classObj);
-
-    do {
-        /* On any error break out of this block */
-        /* Allocate a new zero'ed struct to save the values in */
-        invoc = newStoredInvoc();
-        if (invoc == NULL) {
-            KNI_ThrowNew(midpOutOfMemoryError, 
-                                "InvocationStore_put0 no memory for [invoc]");
-            break;
-        }
-
-        /* Assign a new transaction id and set it */
-        invoc->tid = invocNextTid();
-        KNI_SetIntField(invocObj, tidFid, invoc->tid);
-    
-        /*
-         * Copy all the parameters to native
-         * Includes ID, type,url, action, args, data
-         */
-        if (KNI_TRUE != setParamsFromObj(invoc, invocObj, str, argsObj))
-            break;
-    
-        invoc->previousTid = KNI_GetIntField(invocObj, previousTidFid);
-        invoc->status = KNI_GetIntField(invocObj, statusFid);
-        invoc->responseRequired = KNI_GetBooleanField(invocObj, responseRequiredFid);
-        invoc->suiteId = KNI_GetIntField(invocObj, suiteIdFid);
-
-#define GET_STRING(name) \
-        KNI_GetObjectField(invocObj, name##Fid, str); \
-        if (PCSL_STRING_OK != midp_jstring_to_pcsl_string(str, &invoc->name)) \
-            break; \
-    
-        GET_STRING(classname)
-        GET_STRING(invokingAuthority)
-        GET_STRING(invokingAppName)
-
-        invoc->invokingSuiteId = KNI_GetIntField(invocObj, invokingSuiteIdFid);
-    
-        GET_STRING(invokingClassname)
-        GET_STRING(invokingID)
-        GET_STRING(username)
-        GET_STRING(password)
-
-#undef GET_STRING
-    
-        /* Insert the new Invocation at the end of the queue */
-        if (!invocPut(invoc))
-            break;
-    
-        unblockWaitingThreads(STATUS_OK);
-    
-        /* Clear to skip cleanup and throwing exception */
-        invoc = NULL;
-    } while (0);
-
-    if (invoc != NULL) {
-        /* An allocation error occurred; free any remaining */
-        invocFree(invoc);
-        KNI_ThrowNew(midpOutOfMemoryError, "invocStore.c allocation failed");
-    }
-
-    KNI_EndHandles();
-    KNI_ReturnVoid();
-}
-
-/**
- * Implementation of native method to set the status of an Invocation.
- * If the status is set to a response status then the "finish"
- * behavior is performed.  If a response is required, the Invocation
- * is requeued to the invoking application. Otherwise, the Invocation
- * is discarded.
- *
- * @param invoc the InvocationImpl to update the native status
- * @see StoredInvoc
- * @see #invocQueue
- */
-KNIEXPORT KNI_RETURNTYPE_VOID
-Java_com_sun_j2me_content_InvocationStore_setStatus0(void) {
-    StoredLink* link;
-    StoredInvoc* invoc;
-    int tid;
-
-    KNI_StartHandles(3);
-    KNI_DeclareHandle(invocObj);
-    KNI_DeclareHandle(obj1);
-    KNI_DeclareHandle(obj2);
-
-    KNI_GetParameterAsObject(1, invocObj);
-    init(invocObj, obj1);
-
-    /* Find the matching entry in the queue */
-    tid = KNI_GetIntField(invocObj, tidFid);
-    link = invocFindTid(tid);
-    if (link != NULL) {
-        invoc = link->invoc;
-        /* Update the status */
-        invoc->status = KNI_GetIntField(invocObj, statusFid);
-    
-        switch (invoc->status) {
-        case STATUS_OK:
-        case STATUS_CANCELLED:
-        case STATUS_ERROR:
-        case STATUS_INITIATED:
-            /* 
-             * If a response is required, switch the target
-             * application; if not then discard the Invocation.
-             */
-            if (invoc->responseRequired) {
-                /* Swap the source and target suite and classname */
-                SuiteIdType tmpSuiteId = invoc->invokingSuiteId, tmpSuiteId2;
-                pcsl_string tmpClassname = invoc->invokingClassname;
-                invoc->invokingSuiteId = invoc->suiteId;
-                invoc->invokingClassname = invoc->classname;
-                invoc->suiteId = tmpSuiteId;
-                invoc->classname = tmpClassname;
-        
-                /* Unmark the response it is "new" to the target */
-                invoc->cleanup = KNI_FALSE;
-                invoc->notified = KNI_FALSE;
-        
-                /* Swap the references in the Invocation object. */
-                tmpSuiteId = KNI_GetIntField(invocObj, suiteIdFid);
-                tmpSuiteId2 = KNI_GetIntField(invocObj, invokingSuiteIdFid);
-                KNI_SetIntField(invocObj, invokingSuiteIdFid, tmpSuiteId);
-                KNI_SetIntField(invocObj, suiteIdFid, tmpSuiteId2);
-
-                KNI_GetObjectField(invocObj, invokingClassnameFid, obj1);
-                KNI_GetObjectField(invocObj, classnameFid, obj2);
-                KNI_SetObjectField(invocObj, classnameFid, obj1);
-                KNI_SetObjectField(invocObj, invokingClassnameFid, obj2);
-        
-                /* Unblock any waiting threads so they can retrieve this. */
-                unblockWaitingThreads(STATUS_OK);
-                break;
-            }
-            /* If no response; Fall into DISPOSE */
-    
-        case STATUS_DISPOSE:
-            /*
-             * Free the Invocation, clean the Tid in the Invocation
-             */
-            invoc->tid = 0;
-            KNI_SetIntField(invocObj, tidFid, 0);
-            removeEntry(link);
-            invocFree(invoc);
-            break;
-
-        case STATUS_ACTIVE:
-        case STATUS_HOLD:
-        case STATUS_WAITING:
-            /* Unblock any waiting threads so they can retrieve this. */
-            unblockWaitingThreads(STATUS_OK);
-            break;
-        }
-    }
-
-    KNI_EndHandles();
-    KNI_ReturnVoid();
-}
-
-/**
- * Updates the parameters of the invocation in the native store.
- * The ID, URL, Type, arguments, and data are stored again in native.
- * The key into the native store is the TID;
- *
- * @param invoc the InvocationImpl to update the native params
- * @see StoredInvoc
- * @see #invocQueue
- */
-KNIEXPORT KNI_RETURNTYPE_VOID
-Java_com_sun_j2me_content_InvocationStore_setParams0(void) {
-    StoredLink* link;
-    StoredInvoc* invoc;
-    int tid;
-
-    KNI_StartHandles(3);
-    KNI_DeclareHandle(invocObj);
-    KNI_DeclareHandle(obj1);
-    KNI_DeclareHandle(obj2);
-
-    KNI_GetParameterAsObject(1, invocObj);
-    init(invocObj, obj1);
-
-    /* Find the matching entry in the queue */
-    tid = KNI_GetIntField(invocObj, tidFid);
-    link = invocFindTid(tid);
-    if (link != NULL) {
-        invoc = link->invoc;
-        if (!setParamsFromObj(invoc, invocObj, obj1, obj2)) {
-            KNI_ThrowNew(midpOutOfMemoryError,
-                 "invocStore.c: setParam0() allocation failed");
-        }
-    } else {
-#if REPORT_LEVEL <= LOG_CRITICAL
-    REPORT_CRIT(LC_NONE,
-            "invocStore.c: setParam0() no entry for tid");
-#endif
-    }
-
-    KNI_EndHandles();
-    KNI_ReturnVoid();
-
-}
-
 
 /**
  * Mark of the existing Invocations for a content handler
@@ -1019,7 +850,7 @@ Java_com_sun_j2me_content_InvocationStore_setParams0(void) {
  * @see #invocQueue
  */
 KNIEXPORT KNI_RETURNTYPE_VOID
-Java_com_sun_j2me_content_InvocationStore_setCleanup0(void) {
+KNIDECL(com_sun_j2me_content_InvocationStore_setCleanup0) {
     StoredLink* link;
     StoredInvoc* invoc;
     SuiteIdType desiredSuiteId;
@@ -1084,7 +915,7 @@ Java_com_sun_j2me_content_InvocationStore_setCleanup0(void) {
  * need to restart function calls.
  */
 KNIEXPORT KNI_RETURNTYPE_VOID
-Java_com_sun_j2me_content_InvocationStore_cancel0(void) {
+KNIDECL(com_sun_j2me_content_InvocationStore_cancel0) {
     unblockWaitingThreads(STATUS_CANCELLED);
     KNI_ReturnVoid();
 }
@@ -1094,7 +925,7 @@ Java_com_sun_j2me_content_InvocationStore_cancel0(void) {
  * @return the size of the queue.
  */
 KNIEXPORT KNI_RETURNTYPE_INT
-Java_com_sun_j2me_content_InvocationStore_size0(void) {
+KNIDECL(com_sun_j2me_content_InvocationStore_size0) {
     StoredLink* link;
     int size = 0;
 
@@ -1108,117 +939,60 @@ Java_com_sun_j2me_content_InvocationStore_size0(void) {
     KNI_ReturnInt(size);
 }
 
-//---------------------------------------------------------
-
-typedef struct _MidletIdChain {
-    SuiteIdType             suiteId;
-    javacall_utf16_string   className;
-    struct _MidletIdChain * next;
-} MidletIdChain;
-
-static MidletIdChain * runningMidletsChain = NULL;
-
-static MidletIdChain * newMidletIdChain( void ) {
-    MidletIdChain * elem = (MidletIdChain *)JAVAME_MALLOC( sizeof(*elem) );
-    if( elem != NULL ) memset( elem, '\0', sizeof(*elem) );
-    return elem;
-}
-
-static void destroyMidletIdChain( MidletIdChain * elem ){
-    JAVAME_FREE( elem );
-}
-
-static int compareMidletIdChain( const MidletIdChain * elem, 
-                    SuiteIdType suiteId, javacall_utf16_string midletClassName ){
-    javacall_int32 comparison;
-    // assert( elem != NULL );
-    if( elem->suiteId != suiteId )
-        return elem->suiteId - suiteId;
-    javautil_unicode_cmp(elem->className, midletClassName, &comparison);
-    return comparison;
-}
-
-static MidletIdChain ** findMidletIdChain( SuiteIdType suiteId, javacall_utf16_string midletClassName ) {
-    MidletIdChain ** p = &runningMidletsChain;
-    while( *p != NULL && compareMidletIdChain( *p, suiteId, midletClassName ) < 0 )
-        p = &(*p)->next;
-    return p;
-}
-
 KNIEXPORT KNI_RETURNTYPE_VOID
-Java_com_sun_j2me_content_AppProxy_midletIsAdded() {
-    SuiteIdType suiteId;
-    KNI_StartHandles(1);
+KNIDECL(com_sun_j2me_content_InvocationStore_update0) {
+    /* Argument indices must match Java native method declaration */
+    StoredLink * match;
 
-    suiteId = KNI_GetParameterAsInt(1);
-    GET_PARAMETER_AS_UTF16_STRING(2, midletClassName)
+    KNI_StartHandles(4);
+    KNI_DeclareHandle(invocObj);
+    KNI_DeclareHandle(classObj);
+    KNI_DeclareHandle(tmp1);
+    KNI_DeclareHandle(tmp2);
+#define invocArgIdx 1
 
-    MidletIdChain ** elemPlace, * elem;
-#ifdef TRACE_MIDLETREG
-    printf( "AppProxy_midletIsAdded: %d, '%ls'\n", suiteId, midletClassName );
-#endif
-    elemPlace = findMidletIdChain( suiteId, midletClassName );
-    if( *elemPlace == NULL || compareMidletIdChain(*elemPlace, suiteId, midletClassName) != 0 ){
-        if( (elem = newMidletIdChain()) == NULL ){
-            KNI_ThrowNew(jsropOutOfMemoryError, NULL);
-        } else {
-            elem->suiteId = suiteId;
-            elem->className = midletClassName;
-            midletClassName = NULL;
-            elem->next = *elemPlace;
-            *elemPlace = elem;
-        }
-    }
+    KNI_GetParameterAsObject(invocArgIdx, invocObj);
+    init(invocObj, classObj);
 
-    RELEASE_UTF16_STRING_PARAMETER
+    // get invocation tid
+    match = invocFindTid(KNI_GetIntField(invocObj, FID(tid)));
+    if( match != NULL && match->invoc != NULL ){
+        update(match->invoc, invocObj, tmp1, tmp2);
+        unblockWaitingThreads(STATUS_OK);
+    }    
+
+#undef invocArgIdx
     KNI_EndHandles();
     KNI_ReturnVoid();
-}
+};
 
 KNIEXPORT KNI_RETURNTYPE_VOID
-Java_com_sun_j2me_content_AppProxy_midletIsRemoved() {
-    SuiteIdType suiteId;
-    KNI_StartHandles(1);
-
-    suiteId = KNI_GetParameterAsInt(1);
-    GET_PARAMETER_AS_UTF16_STRING(2, midletClassName)
-
-    MidletIdChain ** elemPlace;
-#ifdef TRACE_MIDLETREG
-    printf( "AppProxy_midletIsRemoved: %d, '%ls'\n", suiteId, midletClassName );
-#endif
-    elemPlace = findMidletIdChain( suiteId, midletClassName );
-    if( *elemPlace != NULL && compareMidletIdChain(*elemPlace, suiteId, midletClassName) == 0 ){
-        // remove elem from the chain
-        MidletIdChain * elem = *elemPlace;
-        *elemPlace = (*elemPlace)->next;
-        destroyMidletIdChain( elem );
+KNIDECL(com_sun_j2me_content_InvocationStore_resetFlags0) {
+#define tidArgIdx 1
+    int tid = KNI_GetParameterAsInt(tidArgIdx);
+    StoredLink * match = invocFindTid(tid);
+    if( match != NULL ){
+        StoredInvoc * invoc = match->invoc;
+        invoc->cleanup = KNI_FALSE;
+        invoc->notified = KNI_FALSE;
     }
-
-    RELEASE_UTF16_STRING_PARAMETER
-    KNI_EndHandles();
+#undef tidArgIdx
     KNI_ReturnVoid();
-}
+};
 
-KNIEXPORT KNI_RETURNTYPE_BOOLEAN
-Java_com_sun_j2me_content_AppProxy_isMidletRunning() {
-    int res = 0;
-    SuiteIdType suiteId;
-    KNI_StartHandles(1);
-
-    suiteId = KNI_GetParameterAsInt(1);
-    GET_PARAMETER_AS_UTF16_STRING(2, midletClassName)
-
-    MidletIdChain ** elemPlace = findMidletIdChain( suiteId, midletClassName );
-#ifdef TRACE_MIDLETREG
-    printf( "AppProxy_isMidletRunning: %d, '%ls'\n", suiteId, midletClassName );
-#endif
-    res = (*elemPlace != NULL && compareMidletIdChain(*elemPlace, suiteId, midletClassName) == 0);
-
-    RELEASE_UTF16_STRING_PARAMETER
-    KNI_EndHandles();
-    KNI_ReturnBoolean( res );
-}
+KNIEXPORT KNI_RETURNTYPE_VOID
+KNIDECL(com_sun_j2me_content_InvocationStore_dispose0) {
+#define tidArgIdx 1
+    int tid = KNI_GetParameterAsInt(tidArgIdx);
+    StoredLink * match = invocFindTid(tid);
+    if( match != NULL ){
+        StoredInvoc * invoc = match->invoc;
+        removeEntry( match );
+        invocFree( invoc );
+    }
+#undef tidArgIdx
+    KNI_ReturnVoid();
+};
 
 //---------------------------------------------------------
 
@@ -1407,17 +1181,9 @@ static void invocFree(StoredInvoc* invoc) {
             JAVAME_FREE(invoc->data);
         }
 
-        pcsl_string_free(&invoc->url);
-        pcsl_string_free(&invoc->type);
-        pcsl_string_free(&invoc->action);
-        pcsl_string_free(&invoc->ID);
-        pcsl_string_free(&invoc->classname);
-        pcsl_string_free(&invoc->invokingAuthority);
-        pcsl_string_free(&invoc->invokingAppName);
-        pcsl_string_free(&invoc->invokingClassname);
-        pcsl_string_free(&invoc->invokingID);
-        pcsl_string_free(&invoc->username);
-        pcsl_string_free(&invoc->password);
+#define freeStringField( field ) pcsl_string_free(&invoc->field);
+        ENUM_STRING_FIELDS(freeStringField)
+#undef freeStringField
 
         JAVAME_FREE(invoc);
     }
@@ -1430,9 +1196,9 @@ static void invocFree(StoredInvoc* invoc) {
  * @return the next transaction id.
  */
 static int invocNextTid() {
-    if (--nextTid >= 0)
-        nextTid = -1;
-    return nextTid;
+    if (--prevTid >= UNDEFINED_TID)
+        prevTid = UNDEFINED_TID - 1;
+    return prevTid;
 }
 
 /**

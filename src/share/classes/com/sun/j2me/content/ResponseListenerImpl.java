@@ -32,7 +32,7 @@ import javax.microedition.content.ResponseListener;
  * Thread to monitor pending invocations and notify a listener
  * when a matching one is present.
  */
-class ResponseListenerImpl implements Runnable {
+class ResponseListenerImpl implements Runnable, Counter {
 
     /** ContenHandlerServer for which this is listening. */
     private final RegistryImpl registry;
@@ -42,6 +42,8 @@ class ResponseListenerImpl implements Runnable {
 
     /** The active thread processing the run method. */
     private Thread thread;
+    
+    private int stopFlag = 0;
 
     /**
      * Create a new listener for pending invocations.
@@ -83,6 +85,8 @@ class ResponseListenerImpl implements Runnable {
 		 */
 		InvocationStore.setListenNotify(registry.application.getStorageId(),
 									registry.application.getClassname(), false);
+		// stop listening thread
+		stopFlag++;
 		InvocationStore.cancel();
     }
 
@@ -101,11 +105,16 @@ class ResponseListenerImpl implements Runnable {
 				// Wait for a matching invocation
 				boolean pending =
 				    InvocationStore.listen(registry.application.getStorageId(),
-							   			registry.application.getClassname(), false, true);
+							   			registry.application.getClassname(), false, true,
+							   			this);
 				if (pending) {
 				    l.invocationResponseNotify(registry.getRegistry());
 				}
 		    }
 		}
     }
+
+	public int getCounter() {
+		return stopFlag;
+	}
 }

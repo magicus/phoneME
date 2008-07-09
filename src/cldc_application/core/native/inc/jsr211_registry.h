@@ -32,7 +32,7 @@
 /**
  * @file
  * @defgroup chapi JSR 211 Content Handler API (CHAPI)
- * @ingroup stack
+ * @ingroup msa
  * @brief This is the API definition for content handler registry access.
  * ##include <jsr211_registry.h>
  * @{
