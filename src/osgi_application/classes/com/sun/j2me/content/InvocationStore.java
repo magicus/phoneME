@@ -26,11 +26,6 @@
 
 package com.sun.j2me.content;
 
-import java.util.Iterator;
-import java.util.Vector;
-
-import javax.microedition.content.Invocation;
-
 /**
  * The store for pending Invocations.
  * New Invocations are queued with {@link #put} method and
@@ -45,71 +40,43 @@ import javax.microedition.content.Invocation;
  * requests but blocks, if requested, until it is unblocked.
  */
 public class InvocationStore {
-	
-	private static int freeTid = 1;
-	
-	private static class InvocationData {
-		InvocationImpl invoc;
-		boolean cleanup = false, notified = false;
-		
-		InvocationData(InvocationImpl invoc) {
-			this.invoc = invoc;
-		}
-	}
-	private static final Vector/*<InvocationData>*/ invocations = new Vector();
-	
-    private static interface IDReceiver {
-    	void push( InvocationData invocData );
-    }
-    
-    private static abstract class InvocationsEnumerator {
-    	protected abstract boolean modeCheck( InvocationData invocData, int mode );
-    	
-    	public void enumerate( int suiteId, String classname, int mode, IDReceiver out ){
-    		Iterator it = invocations.iterator();
-    		InvocationData invocData = null;
-    		while( it.hasNext() ){
-    			invocData = (InvocationData)it.next();
-    			if( modeCheck(invocData, mode) && suiteId == invocData.invoc.suiteId && 
-    					classname.equals(invocData.invoc.classname) ){
-					out.push(invocData);
-    			}
-    		}
-    	}
-    }
-    
-	private static final int findIndexFor( int tid, boolean exact ){
-		int head = 0, tail = invocations.size();
-		while( head < tail ){
-			int pos = (head + tail) / 2;
-			if( ((InvocationData)invocations.get(pos)).invoc.tid < tid ) head = pos + 1;
-			else tail = pos;
-		}
-		if( exact && head < invocations.size() &&
-				((InvocationData)invocations.get(head)).invoc.tid != tid ){
-			head = invocations.size();
-		}
-		return head;
-	}
 
-    /** The mode for get to retrieve a new request. */
+/*	
+    /**
+     * The count of cancel requests; access is not synchronized because
+     * it is only incrementes in one place and it does not matter if it is
+     * incremented once or twice.  A new cancel has occurred if
+     * the value has been incremented since an operation was started.
+     * /
+    private static int cancelCount;
+
+    /** The mode for get to retrieve a new request. * /
     private static final int MODE_REQUEST = 0;
 
-    /** The mode for get to retrieve a new response. */
+    /** The mode for get to retrieve a new response. * /
     private static final int MODE_RESPONSE = 1;
 
-    /** The mode for get to retrieve a new cleanup. */
+    /** The mode for get to retrieve a new cleanup. * /
     private static final int MODE_CLEANUP = 2;
 
-    /** The mode for listen for new unmarked request. */
+    /** The mode for listen for new unmarked request. * /
     private static final int MODE_LREQUEST = 3;
 
-    /** The mode for listen for a new unmarked response. */
+    /** The mode for listen for a new unmarked response. * /
     private static final int MODE_LRESPONSE = 4;
 
-    /* The mode for get to retrieve a new ACTIVE, HOLD, or WAITING request. */
+    /** The mode for get to retrieve a new ACTIVE, HOLD, or WAITING request. * /
     // private static final int MODE_PENDING = 5;
 
+    /** The mode for get to retreive byte <code>tid</code>. * /
+    private static final int MODE_TID = 6;
+
+    /** The mode to get the Invocation after <code>tid</code>. * /
+    private static final int MODE_TID_NEXT = 7;
+
+    /** The mode to get the Invocation before <code>tid</code>. * /
+    private static final int MODE_TID_PREV = 8;
+*/
     /**
      * Private constructor to prevent instance creation.
      */
@@ -127,174 +94,18 @@ public class InvocationStore {
      * @see #getResponse
      */
     static void put(InvocationImpl invoc) {
-        invoc.classname.length(); // null pointer check
-        /* put0 */
-        invoc.tid = freeTid++;
-        invocations.add(findIndexFor( invoc.tid, false ), new InvocationData(invoc));
-        unblockWaitingThreads(Invocation.OK);
+    	/*
+        if (invoc.storageId == MIDletSuite.UNUSED_SUITE_ID ||
+                invoc.classname == null) {
+            throw new NullPointerException();
+        }
+        put0(invoc);
+	if (AppProxy.LOG_INFO) {
+	    AppProxy.getCurrent().logInfo("Store put0: " + invoc);
+	}
+	*/
     }
 
-	private static InvocationData find(int suiteId, String classname, final int mode) {
-		
-		class enumerator extends InvocationsEnumerator {
-		    protected boolean modeCheck(InvocationData invocData, int mode) {
-		        switch (mode) {
-			        case MODE_REQUEST:
-			            return (invocData.invoc.status == Invocation.WAITING);
-			
-			        case MODE_RESPONSE:
-			            return (invocData.invoc.status >= Invocation.OK &&
-			                    invocData.invoc.status <= Invocation.INITIATED);
-			
-			        case MODE_LREQUEST:
-			            return (!invocData.notified && invocData.invoc.status == Invocation.WAITING);
-			
-			        case MODE_LRESPONSE:
-			            return (!invocData.notified && 
-			                    invocData.invoc.status >= Invocation.OK &&
-			                    invocData.invoc.status <= Invocation.INITIATED);
-			
-			        case MODE_CLEANUP:
-			            /*
-			             * If the Invocation is an old one then it needs
-			             * to be cleaned up if it is a response or is active.
-			             * That's everything except HOLD.
-			             */
-			            return (invocData.invoc.status == Invocation.ACTIVE ||
-			                   (invocData.cleanup && invocData.invoc.status != Invocation.HOLD));
-			    }
-		        return false;
-		    }
-		};
-		
-		class receiver implements IDReceiver {
-		    class FoundException extends RuntimeException {
-				public InvocationData invocData;
-			    public FoundException(final InvocationData invocData) {
-			    	this.invocData = invocData;
-				}
-		    }
-			public void push(InvocationData invocData) {
-				if( mode == MODE_CLEANUP ){
-	                /* An active or waiting Invocation needs a response */
-	                if ((invocData.invoc.status != Invocation.WAITING && 
-	                		invocData.invoc.status != Invocation.ACTIVE) ||
-	                        !invocData.invoc.responseRequired) {
-	                    /* A regular response, discard and continue */
-						dispose( invocData.invoc.tid );
-						return; // continue searching
-	                }
-				}
-				throw new FoundException(invocData);
-			}
-		}
-		
-		try {
-			new enumerator().enumerate(suiteId, classname, mode, new receiver());
-		} catch( receiver.FoundException x ){
-			return x.invocData;
-		}
-        return null;
-	}
-
-	private static InvocationImpl get(int suiteId, String classname, int mode) {
-		InvocationData invocData = find( suiteId, classname, mode );
-		if( invocData != null ){
-			switch( mode ){
-				case MODE_REQUEST:
-					if( invocData.invoc.status == Invocation.WAITING )
-						invocData.invoc.status = Invocation.ACTIVE;
-					break;
-				case MODE_RESPONSE:
-					if( invocData.invoc.status >= Invocation.OK && 
-							invocData.invoc.status <= Invocation.INITIATED )
-						invocations.remove(invocData); // remove from the store
-					break;
-			}
-	        return invocData.invoc;
-		}
-		return null;
-	}
-
-	static void update(InvocationImpl invoc) {
-		// do nothing
-	}
-
-	static void resetFlags(int tid) {
-		int index = findIndexFor( tid, true );
-		if( index < invocations.size() ){
-			InvocationData data = (InvocationData)invocations.get( index );
-	        data.cleanup = false;
-	        data.notified = false;
-	        /* Unblock any waiting threads so they can retrieve this. */
-	        unblockWaitingThreads(Invocation.OK);
-		}
-	}
-
-	static void dispose(int tid) {
-		int index = findIndexFor( tid, true );
-		if( index < invocations.size() )
-			invocations.remove(index);
-	}
-	
-    /**
-     * Get an Invocation from the store based on its <code>tid</code>.
-     * The normal state transitions and dispositions are NOT performed.
-     * If TID == 0 then the first tid is used as the reference.
-     * If TID == 0 and relative == 0 then null is returned.
-     * This method never waits.
-     *
-     * @param tid the <code>tid</code> to fetch
-     * @param next to get equal, or next
-     * @return an InvocationImpl object if a matching tid was found;
-     *  otherwise <code>null</code>
-     */
-    static InvocationImpl getByTid(int tid, boolean next) {
-    	int index = 0;
-    	if( tid != 0 ){
-	    	index = findIndexFor(tid, true);
-	    	if( next ) index++;
-    	}
-    	if( index < invocations.size() )
-    		return ((InvocationData)invocations.get(index)).invoc;
-    	return null;
-    }
-
-    /**
-     * Get an InvocationImpl from the store using a MIDlet suiteId
-     * and classname.
-     * The mode controls whether getting an Invocation
-     * from the store removes it from the store.
-     *
-     * @param invoc InvocationImpl to fill in with result
-     * @param mode one of {@link #MODE_REQUEST}, {@link #MODE_RESPONSE},
-     *    or {@link #MODE_CLEANUP}.
-     * @param shouldBlock true if the method should block
-     *      waiting for an Invocation
-     *
-     * @return <code>InvocationImpl</code> if any was found with
-     *  the same MIDlet suiteId and classname if one was requested;
-     *  <code>null</code> is returned if there is no matching Invocation
-     */
-    private static InvocationImpl get(int suiteId, String classname,
-				      int mode, boolean shouldBlock, Counter cancelCounter) {
-    	classname.length(); // null pointer check
-
-		InvocationImpl invoc = get(suiteId, classname, mode);
-		if( shouldBlock ){
-	    	int cancels = cancelCounter.getCounter();
-		    while (invoc == null && cancels == cancelCounter.getCounter()){
-		    	try {
-					blockThread();
-				} catch (InterruptedException e) {
-					break;
-				}
-		    	invoc = get(suiteId, classname, mode);
-		    }
-		}
-		return invoc;
-    }
-    
     /**
      * Get a new InvocationImpl request from the store using a MIDlet
      * suiteId and classname.
@@ -310,9 +121,19 @@ public class InvocationStore {
      *  its status is set to ACTIVE;
      *  <code>null</code> is returned if there is no matching Invocation
      */
-    static InvocationImpl getRequest(int suiteId, String classname, 
-    							boolean shouldBlock, Counter cancelCounter) {
-        return get(suiteId, classname, MODE_REQUEST, shouldBlock, cancelCounter);
+    static InvocationImpl getRequest(int suiteId, String classname,
+                                     boolean shouldBlock) {
+    	/*
+        InvocationImpl invoc = new InvocationImpl();
+        if (suiteId == MIDletSuite.UNUSED_SUITE_ID || classname == null) {
+            throw new NullPointerException();
+        }
+        invoc.storageId = suiteId;
+        invoc.classname = classname;
+
+        return get(invoc, MODE_REQUEST, shouldBlock);
+        */
+    	return null;
     }
 
     /**
@@ -330,9 +151,16 @@ public class InvocationStore {
      *  the same MIDlet suiteId and classname if one was requested;
      *  <code>null</code> is returned if there is no matching Invocation
      */
-    static InvocationImpl getResponse(int suiteId, String classname, 
-    							boolean shouldBlock, Counter cancelCounter) {
-		return get(suiteId, classname, MODE_RESPONSE, shouldBlock, cancelCounter);
+    static InvocationImpl getResponse(InvocationImpl invoc,
+                                      int suiteId, String classname,
+                                      boolean shouldBlock) {
+    	/*
+        invoc.storageId = suiteId;
+        invoc.classname = classname;
+
+	return get(invoc, MODE_RESPONSE, shouldBlock);
+	*/
+    	return null;
     }
 
     /**
@@ -348,7 +176,7 @@ public class InvocationStore {
      * <li>INIT Invocations are requeued to the invoking application
      *    with ERROR status. </li>
      * <li>OK, CANCELLED, ERROR, or INITIATED Invocations are
-     *    discarded.</li>
+     *    discrded.</li>
      * <li>HOLD status Invocations are retained pending
      *    completion of previous Invocation.  TBD: Chained HOLDs...</li>
      * </ul>
@@ -361,7 +189,141 @@ public class InvocationStore {
      *  <code>null</code> is returned if there is no matching Invocation
      */
     static InvocationImpl getCleanup(int suiteId, String classname) {
-    	return get(suiteId, classname, MODE_CLEANUP, false, null);
+    	/*
+        InvocationImpl invoc = new InvocationImpl();
+        invoc.storageId = suiteId;
+        invoc.classname = classname;
+
+	return get(invoc, MODE_CLEANUP, false);
+    	 */
+    	return null;
+    }
+
+    /**
+     * Get an Invocation from the store based on its <code>tid</code>.
+     * The normal state transitions and dispositions are NOT performed.
+     * If TID == 0 then the first tid is used as the reference.
+     * If TID == 0 and relative == 0 then null is returned.
+     * This method never waits.
+     *
+     * @param tid the <code>tid</code> to fetch
+     * @param relative -1, 0, +1 to get previous, equal, or next
+     * @return an InvocationImpl object if a matching tid was found;
+     *  otherwise <code>null</code>
+     */
+    static InvocationImpl getByTid(int tid, int relative) {
+    	/*
+        InvocationImpl invoc = new InvocationImpl();
+        int mode = MODE_TID;
+        if (tid != 0) {
+            if (relative < 0) {
+                mode = MODE_TID_PREV;
+            } else if (relative > 0) {
+                mode = MODE_TID_NEXT;
+            }
+        }
+        invoc.storageId = MIDletSuite.UNUSED_SUITE_ID;
+        invoc.classname = null;
+        invoc.tid = tid;
+        return get(invoc, mode, false);
+        */
+    	return null;
+    }
+
+    /**
+     * Get an InvocationImpl from the store using a MIDlet suiteId
+     * and classname.
+     * The mode controls whether getting an Invocation
+     * from the store removes it from the store.
+     *
+     * @param invoc InvocationImpl to fill in with result
+     * @param mode one of {@link #MODE_REQUEST}, {@link #MODE_RESPONSE},
+     *    or {@link #MODE_CLEANUP}, {@link #MODE_LREQUEST},
+     *    or {@link #MODE_LRESPONSE}, {@link #MODE_TID}.
+     * @param shouldBlock true if the method should block
+     *      waiting for an Invocation
+     *
+     * @return <code>InvocationImpl</code> if any was found with
+     *  the same MIDlet suiteId and classname if one was requested;
+     *  <code>null</code> is returned if there is no matching Invocation
+     * /
+    private static InvocationImpl get(InvocationImpl invoc,
+				      int mode, boolean shouldBlock) {
+	String classname = invoc.classname;
+	invoc.setArgs(null);
+	invoc.setData(null);
+
+	int s = 0;
+	int oldCancelCount = cancelCount;
+	while ((s = get0(invoc, invoc.storageId, invoc.classname,
+			 mode, shouldBlock)) != 1) {
+	    if (s == -1) {
+		/*
+		 * Sizes of arguments and data buffers were insufficient
+		 * reallocate and retry.
+		 * /
+		invoc.setArgs(new String[invoc.argsLen]);
+		invoc.setData(new byte[invoc.dataLen]);
+		continue;
+	    }
+	    // Don't wait unless requested
+	    if (!shouldBlock) {
+		break;
+	    }
+	    // No matching request; retry unless cancelled
+	    if (cancelCount > oldCancelCount) {
+		// Was cancelled; s == 0 -> no Invocation
+		break;
+	    }
+	}
+
+	// Update the return if no invocation
+	if (s == 0) {
+	    invoc = null;
+	}
+
+	if (AppProxy.LOG_INFO) {
+	    AppProxy.getCurrent().logInfo("Store get: " +
+					  classname +
+					  ", mode: " + mode +
+					  ", " + invoc);
+	}
+        return invoc;
+    }*/
+
+    /**
+     * Sets the status of an existing Invocation.
+     * If the status is OK, CANCELLED, ERROR, or INITIATED
+     * and a response is required then the invocation is
+     * requeued to the invoking application; if no response
+     * is required the request is discarded and the transaction id (tid)
+     * is set to zero.
+     *
+     * @param invoc an InvocationImpl previously retrieved with get
+     */
+    static void setStatus(InvocationImpl invoc) {
+    	/*
+	setStatus0(invoc);
+	if (AppProxy.LOG_INFO) {
+	    AppProxy.getCurrent().logInfo("Store setStatus0: " + invoc);
+	}
+	*/
+    }
+
+    /**
+     * Updates the parameters of the invocation in the native store.
+     * The ID, URL, type, action, arguments, and data are
+     * stored again in native.
+     *
+     * @param invoc an InvocationImpl previously retrieved with get
+     */
+    static void setParams(InvocationImpl invoc) {
+    	/*
+	setParams0(invoc);
+	if (AppProxy.LOG_INFO) {
+	    AppProxy.getCurrent().logInfo("Store setParams0: " + invoc);
+	}
+	*/
     }
 
     /**
@@ -380,26 +342,33 @@ public class InvocationStore {
      * @return true if a matching invocation is present; false otherwise
      */
     static boolean listen(int suiteId, String classname,
-               			boolean request, boolean shouldBlock, 
-               			Counter cancelCounter) {
-    	classname.length(); // null pointer check 
+                          boolean request, boolean shouldBlock) {
+    	/*
+        if (suiteId == MIDletSuite.UNUSED_SUITE_ID || classname == null) {
+            throw new NullPointerException();
+        }
         int mode = (request ? MODE_LREQUEST : MODE_LRESPONSE);
+        boolean pending = false;
 
-        InvocationData invocData = find(suiteId, classname, mode);
-		if( shouldBlock ){
-	        int oldCancelCount = cancelCounter.getCounter();
-		    while (invocData == null && oldCancelCount == cancelCounter.getCounter()){
-		    	try {
-					blockThread();
-				} catch (InterruptedException e) {
-					break;
-				}
-				invocData = find(suiteId, classname, mode);
-		    }
-		}
-		if( invocData != null )
-			invocData.notified = true;
-        return invocData != null;
+        int oldCancelCount = cancelCount;
+        while ((pending = listen0(suiteId, classname,
+                                  mode, shouldBlock)) == false &&
+                                  shouldBlock) {
+            // No pending request; retry unless cancelled
+            if (cancelCount > oldCancelCount) {
+                // Was cancelled; s == 0 -> no Invocation
+                break;
+            }
+        }
+
+        if (AppProxy.LOG_INFO) {
+            AppProxy.getCurrent().logInfo("Store listen: " + classname +
+                                          ", request: " + request +
+                                          ", pending: " + pending);
+        }
+        return pending;
+        */
+    	return false;
     }
 
     /**
@@ -413,30 +382,22 @@ public class InvocationStore {
      * @param request true to reset request notification flags;
      *   else reset response notification flags
      */
-    static void setListenNotify(int suiteId, String classname, boolean request) {
-    	classname.length();
+    static void setListenNotify(int suiteId, String classname,
+                                boolean request) {
+    	/*
+        if (suiteId == MIDletSuite.UNUSED_SUITE_ID || classname == null) {
+            throw new NullPointerException();
+        }
+
         int mode = (request ? MODE_LREQUEST : MODE_LRESPONSE);
-        
-		class enumerator extends InvocationsEnumerator {
-		    protected boolean modeCheck(InvocationData invocData, int mode) {
-		        switch (mode) {
-			        case MODE_LREQUEST:
-			            return invocData.invoc.status == Invocation.WAITING;
-			
-			        case MODE_LRESPONSE:
-			            return invocData.invoc.status >= Invocation.OK &&
-			                    invocData.invoc.status <= Invocation.INITIATED;
-			    }
-		        return false;
-		    }
-		};
-		
-		new enumerator().enumerate(suiteId, classname, mode, 
-				new IDReceiver(){
-					public void push(InvocationData invocData) {
-						invocData.notified = false;
-					}
-				});
+        setListenNotify0(suiteId, classname, mode);
+
+        if (AppProxy.LOG_INFO) {
+            AppProxy.getCurrent().logInfo("Store setListenNotify: " +
+                                          classname +
+                                          ", request: " + request);
+        }
+        */
     }
 
     /**
@@ -444,7 +405,10 @@ public class InvocationStore {
      * method if it is blocked in the native code.
      */
     static void cancel() {
-    	unblockWaitingThreads(Invocation.CANCELLED);
+    	/*
+	cancelCount++;
+	cancel0();
+	*/
     }
 
     /**
@@ -457,22 +421,14 @@ public class InvocationStore {
      *   cleanup at exit
      */
 
-    public static void setCleanup(int suiteId, String classname, final boolean cleanup) {
-    	classname.length();
-    	
-		class enumerator extends InvocationsEnumerator {
-		    protected boolean modeCheck(InvocationData invocData, int mode) {
-		    	return true;
-		    }
-		};
-		
-		new enumerator().enumerate(suiteId, classname, MODE_CLEANUP, 
-				new IDReceiver(){
-					public void push(InvocationData invocData) {
-						invocData.cleanup = cleanup;
-						invocData.notified = false;
-					}
-				});
+    public static void setCleanup(int suiteId, String classname, boolean cleanup) {
+    	/*
+        if (AppProxy.LOG_INFO) {
+            AppProxy.getCurrent().logInfo("Store setCleanup: " + classname +
+                                          ": " + cleanup);
+        }
+        setCleanup0(suiteId, classname, cleanup);
+        */
     }
 
     /**
@@ -480,16 +436,121 @@ public class InvocationStore {
      * @return the number of invocations in the native queue
      */
     static int size() {
-        return invocations.size();
-    }
-    
-    private static final void blockThread() throws InterruptedException{
-    	synchronized (invocations) {
-			invocations.wait();
-		}
+    	/*
+        return size0();
+        */
+    	return 0;
     }
 
-    private static final void unblockWaitingThreads( int status ){
-    	invocations.notifyAll();
-    }
+    /**
+     * Native method to store a new Invocation.
+     * All of the fields of the InvocationImpl are stored.
+     * @param invoc the InvocationImpl to store
+    * /
+    private static native void put0(InvocationImpl invoc);
+
+    /**
+     * Native method to fill an available InvocationImpl with an
+     * available stored Invocation with the status (if non-zero),
+     * the suiteId, classname in the prototype InvocationImpl.
+     * Any InvocationImpl with a matching status, suite and
+     * class will be returned.
+     * Depending on the mode the stored invocation will be removed
+     * from the store.
+     * @param invoc the Invocation containing the suiteId and
+     *  classname to fill in with an available invocation.
+     * @param suiteId the MIDletSuite ID to match
+     * @param classname the classname to match
+     * @param mode one of {@link #MODE_REQUEST}, {@link #MODE_RESPONSE},
+     *    or {@link #MODE_CLEANUP}
+     * @param shouldBlock True if the method should block until an
+     *    Invocation is available
+     * @return 1 if a matching invocation was found and returned
+     *    in its entirety; zero if there was no matching invocation;
+     *    -1 if the sizes of the arguments or parameter array were wrong
+     * @see #get
+     * /
+    private static native int get0(InvocationImpl invoc,
+                                   int suiteId,
+                                   String classname,
+                                   int mode,
+                                   boolean shouldBlock);
+
+    /**
+     * Sets the status of an existing Invocation
+     * and handles response required behavior.
+     *
+     * @param invoc an InvocationImpl previously retrieved with get.
+     * /
+    private static native void setStatus0(InvocationImpl invoc);
+
+    /**
+     * Updates the parameters of the invocation in the native store.
+     * The ID, URL, type, action, arguments, and data are
+     * stored again in native.
+     *
+     * @param invoc an InvocationImpl previously retrieved with get
+     * /
+    private static native void setParams0(InvocationImpl invoc);
+
+    /**
+     * Native method to listen for pending invocations with
+     * matching suite, classname, and status. Cancel() will
+     * also cause this method to return if blocked.
+     * Each Invocation will only be returned once to prevent
+     * multiple notifications.
+     *
+     * @param suiteId the MIDletSuite ID to match
+     * @param classname the classname to match
+     * @param mode one of {@link #MODE_LREQUEST}, {@link #MODE_LRESPONSE}
+     * @param shouldBlock true if the method should block until an
+     *     Invocation is available
+     * @return true if a matching invocation was found; otherwise false.
+     * @see #get0
+     * /
+    private static native boolean listen0(int suiteId, String classname,
+                                          int mode, boolean shouldBlock);
+
+    /**
+     * Native method to reset the listen notified state for pending
+     * invocations with matching suite, classname and status.
+     * Each Invocation will only be returned once to prevent
+     * multiple notifications.
+     *
+     * @param suiteId the MIDletSuite ID to match
+     * @param classname the classname to match
+     * @param mode one of {@link #MODE_LREQUEST}, {@link #MODE_LRESPONSE}
+     *   <code>false</code> to reset the notified state for responses
+     * @see #listen0
+     * /
+    private static native void setListenNotify0(int suiteId, String classname,
+                                                int mode);
+
+    /**
+     * Native method to unblock any threads that might be
+     * waiting for an invocation by way of having called
+     * {@link #get0}.
+     *
+     * /
+    private static native void cancel0();
+
+    /**
+     * Sets the cleanup flag in matching Invocations.
+     * Any marked invocation will be modified by {@link #getCleanup}.
+     *
+     * @param suiteId the MIDlet suiteId to search for,
+     *  MUST not be <code>null</code>
+     * @param classname to match, must not be null
+     * @param cleanup <code>true</code> to mark the Invocation for
+     *  cleanup at exit
+     * /
+    private static native void setCleanup0(int suiteId, String classname,
+                                           boolean cleanup);
+
+    /**
+     * Return the number of invocations in the native queue.
+     * @return the number of invocations in the native queue
+     * /
+    private static native int size0();
+    */
 }

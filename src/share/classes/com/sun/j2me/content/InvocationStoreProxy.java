@@ -1,3 +1,29 @@
+/*
+ *
+ *
+ * Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+ * 
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License version
+ * 2 only, as published by the Free Software Foundation. 
+ * 
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * General Public License version 2 for more details (a copy is
+ * included at /legal/license.txt). 
+ * 
+ * You should have received a copy of the GNU General Public License
+ * version 2 along with this work; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA 
+ * 
+ * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+ * Clara, CA 95054 or visit www.sun.com if you need additional
+ * information or have any questions. 
+ */
+
 package com.sun.j2me.content;
 
 import javax.microedition.content.ContentHandlerException;
@@ -21,7 +47,7 @@ public final class InvocationStoreProxy {
         	// status is returned without launching of a handler
         	if( invoc.getStatus() == Invocation.WAITING ) {
 	            try {
-	                if( AppProxy.launchNativeHandler(invoc.getID()) )
+	                if( launchNativeHandler(invoc.getID()) )
 	                	invoc.finish(Invocation.INITIATED);
 	                return LIT_NATIVE_STARTED;
 	            } catch (ContentHandlerException che) {
@@ -30,8 +56,8 @@ public final class InvocationStoreProxy {
         	}
         } else if (invoc.classname != null) {
             try {
-                AppProxy appl = 
-                	AppProxy.getCurrent().forApp(invoc.suiteId, invoc.classname);
+            	AppProxy current = AppProxy.getCurrent();
+                AppProxy appl = current.forApp(invoc.suiteId, invoc.classname);
             	// if MIDlet already started report STARTED
                 int rc = appl.launch("Application")? LIT_MIDLET_STARTED 
                 						: LIT_MIDLET_START_FAILED;
@@ -64,7 +90,7 @@ public final class InvocationStoreProxy {
     		AppProxy.LOGGER.println( "InvocationStoreProxy.invokeNext() called. Invocations count = " + InvocationStore.size());
     		int tid = 0;
     		InvocationImpl invoc;
-    		while( (invoc = InvocationStore.getByTid(tid, true)) != null ){
+    		while( (invoc = InvocationStore.getByTid(tid, 1)) != null ){
 	        	AppProxy.LOGGER.println( "invocation[" + tid + "]: " + invoc ); 
                 tid = invoc.tid;
     		}
@@ -77,7 +103,7 @@ public final class InvocationStoreProxy {
 
         // Look for a recently queued Invocation to launch
         tid = 0;
-        while (!done && (invoc = InvocationStore.getByTid(tid, true)) != null) {
+        while (!done && (invoc = InvocationStore.getByTid(tid, 1)) != null) {
             switch (invoc.getStatus()){
 	            case Invocation.WAITING: {
 	                switch( launchInvocationTarget(invoc) ){
@@ -115,4 +141,44 @@ public final class InvocationStoreProxy {
         if(AppProxy.LOGGER!=null) AppProxy.LOGGER.println( InvocationStore.class.getName() + ".invokeNext() finished: started midlets = " + launchedMidletsCount);
         return launchedMidletsCount > 0;
     }
+
+    /**
+     * Starts native content handler.
+     * @param handler Content handler to be executed.
+     * @return true if invoking app should exit.
+     * @exception ContentHandlerException if no such handler ID in the Registry
+     * or native handlers execution is not supported.
+     */
+    static private boolean launchNativeHandler(String handlerID) 
+    										throws ContentHandlerException {
+        int result = launchNativeHandler0(handlerID);
+        if (result < 0) {
+            throw new ContentHandlerException(
+                        "Unable to launch platform handler",
+                        ContentHandlerException.NO_REGISTERED_HANDLER);
+        }
+        return (result > 0);
+    }
+
+    /**
+     * Informs platform about finishing of processing platform's request
+     * @param invoc finished invocation
+     * @return should_exit flag for the invocation handler
+     */
+    static boolean platformFinish(int tid) {
+        return platformFinish0(tid);
+    }
+    /**
+     * Starts native content handler.
+     * @param handlerId ID of the handler to be executed
+     * @return result status:
+     * <ul>
+     * <li> 0 - LAUNCH_OK 
+     * <li> > 0 - LAUNCH_OK_SHOULD_EXIT
+     * <li> &lt; 0 - error
+     * </ul>
+     */
+    private static native int launchNativeHandler0(String handlerId);
+
+    private static native boolean platformFinish0(int tid);
 }

@@ -128,10 +128,6 @@ import com.sun.j2me.content.InvocationImpl;
  * by any implementation specific information.
  */
 public final class Invocation {
-	static {
-		Tunnel.initialize();
-	}
-	
     /** The InvocationImpl to delegate to. */
     private InvocationImpl invocImpl;
 

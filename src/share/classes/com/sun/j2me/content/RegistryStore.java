@@ -70,12 +70,14 @@ class RegistryStore {
     /** This class has a different security domain than the MIDlet suite */
     private static Token classSecurityToken;
     
-	static ContentHandlerImpl.Handle register(int storageId, String classname,
-										ContentHandlerRegData handlerData) {
-        if( !store.register0(storageId, classname, handlerData) )
-        	return null;
-        return new ContentHandlerHandle( handlerData.ID );
-	}
+    /**
+     * Registers given content handler.
+     * @param contentHandler content handler being registered.
+     * @return true if success, false - otherwise.
+     */
+    static boolean register(ContentHandlerImpl contentHandler) {
+        return store.register0(contentHandler);
+    }
 
     /**
      * Unregisters content handler specified by its ID.
@@ -85,13 +87,6 @@ class RegistryStore {
     static boolean unregister(String handlerId) {
         return store.unregister0(handlerId);
     }
-
-	static void enumHandlers(String callerId, int searchBy, String value,
-						ContentHandlerImpl.Handle.Receiver output) {
-		ContentHandlerImpl[] result = findHandler(callerId, searchBy, value);
-		for( int i = 0; i < result.length; i++)
-			output.push(result[i].handle);
-	}
 
     /**
      * Tests ID value for registering handler accordingly with JSR claim:
@@ -106,7 +101,7 @@ class RegistryStore {
     static ContentHandlerImpl[] findConflicted(String testID) {
         ContentHandlerImpl[] result = findHandler(null, FIELD_ID, testID);
         if(AppProxy.LOGGER != null){
-			AppProxy.LOGGER.println( "conflictedHandlers for '" + testID + "' [" + result.length + "]:" );
+			AppProxy.LOGGER.println( "conflictedHandlersfor '" + testID + "' [" + result.length + "]:" );
 			for( int i = 0; i < result.length; i++){
 				AppProxy.LOGGER.println( "class = '" + result[i].storageId + "', ID = '" + result[i].ID + "'" );
 			}
@@ -131,9 +126,8 @@ class RegistryStore {
                                                 String value) {
         /* Check value for null */
         value.length();
-        HandlersCollection collection = new HandlersCollection();
-        deserializeCHArray(store.findHandler0(callerId, searchBy, value), collection);
-        return collection.getArray(); 
+        String res = store.findHandler0(callerId, searchBy, value);
+        return deserializeCHArray(res);
     }
 
     /**
@@ -143,9 +137,11 @@ class RegistryStore {
      * @return found handlers array.
      */
     static ContentHandlerImpl[] forSuite(int suiteId) {
-        HandlersCollection collection = new HandlersCollection();
-        deserializeCHArray(store.forSuite0(suiteId), collection);
-        return collection.getArray(); 
+        if(AppProxy.LOGGER != null) AppProxy.LOGGER.println( "RegistryStore.forSuite " + suiteId );
+        String res = store.forSuite0(suiteId);
+        if(AppProxy.LOGGER != null) 
+        	AppProxy.LOGGER.println( "RegistryStore.forSuite res = '" + res + "'");
+        return deserializeCHArray(res);
     }
 
     /**
@@ -196,18 +192,35 @@ class RegistryStore {
         if (id.length() == 0) {
             return null;
         }
-        return new ContentHandlerHandle( id ).get();
+
+        return deserializeCH(store.getHandler0(callerId, id, searchMode));
     }
 
-    static class HandlerData {
-    	int		suiteId;
-    	String 	classname;
-    	int		registrationMethod;
-		public String ID;
+    /**
+     * The special finder for acquiring handler by its suite and class name.
+     * @param suiteId explored suite Id
+     * @param classname requested class name.
+     *
+     * @return found handler or <code>null</code> if none found.
+     */
+    static ContentHandlerImpl getHandler(int suiteId, String classname) {
+        ContentHandlerImpl[] arr = forSuite(suiteId);
+        ContentHandlerImpl handler = null;
+
+        if (classname.length() == 0)
+            throw new IllegalArgumentException("classname can't be emty");
+
+        if (arr != null) {
+            for (int i = 0; i < arr.length; i++) {
+                if (classname.equals(arr[i].classname)) {
+                    handler = arr[i];
+                    break;
+                }
+            }
+        }
+
+        return handler;
     }
-	static HandlerData getHandler(String handlerID) {
-		return deserializeCH( store.getHandler0( null, handlerID, SEARCH_EXACT ) );
-	}
 
     /**
      * Returns content handler suitable for URL.
@@ -218,7 +231,7 @@ class RegistryStore {
      */
     static ContentHandlerImpl getByURL(String callerId, String url, 
                                        String action) {
-        return new ContentHandlerHandle( deserializeCH( store.getByURL0(callerId, url, action) ) ).get();
+        return deserializeCH(store.getByURL0(callerId, url, action));
     }
 
     /**
@@ -256,7 +269,7 @@ class RegistryStore {
      * @param str ContentHandler main data in serialized form.
      * @return restored ContentHandlerImpl object or null
      */
-    private static HandlerData deserializeCH(String str) {
+    private static ContentHandlerImpl deserializeCH(String str) {
         if(AppProxy.LOGGER != null) 
         	AppProxy.LOGGER.println( "RegistryStore.deserializeCH '" + str + "'");
         Vector components = deserializeString(str);
@@ -274,9 +287,9 @@ class RegistryStore {
         if (components.size() < 4) return null;
         int regMethod = Integer.parseInt((String)components.elementAt(3), 16);
 
-        HandlerData ch = new HandlerData();
+        ContentHandlerImpl ch = new ContentHandlerImpl();
         ch.ID = id;
-        ch.suiteId = Integer.parseInt(storageId, 16);
+        ch.storageId = Integer.parseInt(storageId, 16);
         ch.classname = class_name;
         ch.registrationMethod = regMethod;
         return ch;
@@ -287,13 +300,15 @@ class RegistryStore {
      * @param str ContentHandlerImpl array in serialized form.
      * @return restored ContentHandlerImpl array
      */
-    private static void deserializeCHArray(String str,
-    						ContentHandlerImpl.Handle.Receiver output) {
-    	if( str != null ){
-	        Vector strs = deserializeString(str);
-	        for (int i = 0; i < strs.size(); i++)
-	        	output.push(new ContentHandlerHandle(deserializeCH( (String)strs.elementAt(i) )));
-    	}
+    private static ContentHandlerImpl[] deserializeCHArray(String str) {
+    	if( str == null )
+    		return emptyHandlersArray;
+        Vector strs = deserializeString(str);
+        ContentHandlerImpl[] arr = new ContentHandlerImpl[strs.size()];
+        for (int i = 0; i < arr.length; i++) {
+            arr[i] = deserializeCH( (String)strs.elementAt(i) );
+        }
+        return arr;
     }
 
     /**
@@ -396,8 +411,7 @@ class RegistryStore {
      * @param contentHandler content handler being registered.
      * @return true if success, false - otherwise.
      */
-    private native boolean register0(int storageId, String classname,
-											ContentHandlerRegData handlerData);
+    private native boolean register0(ContentHandlerImpl contentHandler);
 
     /**
      * Unregisters content handler specified by its ID.
@@ -408,39 +422,3 @@ class RegistryStore {
 
 }
 
-class ContentHandlerHandle implements ContentHandlerImpl.Handle {
-	private ContentHandlerImpl 	created = null;
-	
-	private final String	handlerID;
-	
-	ContentHandlerHandle( String handlerID ){
-		this.handlerID = handlerID;
-	}
-	
-	ContentHandlerHandle( RegistryStore.HandlerData data ){
-		this( data.ID );
-		Init( data );
-	}
-	
-	private void Init( final RegistryStore.HandlerData data ){
-		created = new ContentHandlerImpl(this){{
-			this.ID = handlerID; 
-			this.storageId = data.suiteId;
-			this.classname = data.classname;
-			this.registrationMethod = data.registrationMethod;
-		}};
-	}
-	
-	public ContentHandlerImpl get(){
-		if( created == null )
-			Init(RegistryStore.getHandler( handlerID ));
-		return created;
-	}
-	
-	public String getID() { return handlerID; }
-	public int getSuiteId() { return get().storageId; }
-	
-	public String[] getArrayField(int fieldId) {
-		return RegistryStore.getArrayField( getID(), fieldId );
-	}
-}

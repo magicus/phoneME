@@ -29,12 +29,11 @@ package javax.microedition.content;
 import java.io.IOException;
 
 import com.sun.j2me.content.ContentHandlerImpl;
-import com.sun.j2me.content.ContentHandlerServerImpl;
 import com.sun.j2me.content.InvocationImpl;
 import com.sun.j2me.content.RegistryImpl;
+import com.sun.jsr211.security.SecurityInitializer;
 import com.sun.j2me.security.Token;
 import com.sun.j2me.security.TrustedClass;
-import com.sun.jsr211.security.SecurityInitializer;
 
 /**
  * The <tt>Registry</tt> provides method to invoke,
@@ -286,7 +285,8 @@ public class Registry {
      * Inner class to request security token from SecurityInitializer.
      * SecurityInitializer should be able to check this inner class name.
      */
-    static private class SecurityTrusted implements TrustedClass { };
+    static private class SecurityTrusted
+    	implements TrustedClass { };
     
     /** This class has a different security domain than the MIDlet suite */
     private static Token classSecurityToken =
@@ -345,7 +345,8 @@ public class Registry {
     {
         synchronized (mutex) {
             RegistryImpl impl = 
-                RegistryImpl.getRegistryImpl(classname,	classSecurityToken);
+                RegistryImpl.getRegistryImpl(classname, 
+                				classSecurityToken.getSecurityToken());
             // Make sure there is a Registry; 
             if (impl.getRegistry() == null) {
                 impl.setRegistry(new Registry(impl));
@@ -358,8 +359,14 @@ public class Registry {
      * Constructor to create a new Registry with a RegistryImpl
      * and to insert it int the list of known Registry instances.
      * @param impl the RegistryImpl to delegate to
+     *
+     * @exception ContentHandlerException if
+     *  the <code>classname</code> is not registered either
+     *  as a MIDlet or a content handler
      */
-    private Registry(RegistryImpl impl) {
+    private Registry(RegistryImpl impl)
+	throws ContentHandlerException
+    {
         this.impl = impl;
     }
 
@@ -998,12 +1005,14 @@ public class Registry {
      *
      * @return the next pending response Invocation or <code>null</code>
      *  if the <code>wait</code> is false and no Invocation is available or
-     *  if canceled with {@link #cancelGetResponse}
+     *  if cancelled with {@link #cancelGetResponse}
      * @see #invoke
      * @see #cancelGetResponse
      */
     public Invocation getResponse(boolean wait) {
-        return impl.getResponse(wait);
+        Invocation response = new Invocation();
+	response = impl.getResponse(wait, response.getInvocImpl());
+        return response;
     }
 
     /**

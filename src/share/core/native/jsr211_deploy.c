@@ -30,6 +30,7 @@
 
 #include <jsr211_registry.h>
 #include <jsrop_memory.h>
+#include <jsrop_logging.h>
 #include <jsrop_suitestore.h>
 
 /** 
@@ -58,6 +59,8 @@ static const jchar** handlerIds = 0;
 static char** rowHandlers = 0;
 
 #else
+
+#define INTERNAL_SUIT_ID "-1"
 
 static int nHandlers = 1;
 
@@ -166,15 +169,17 @@ static jsr211_result installHandler(int n) {
 
 	// allocate parameters
 	if (!(fillArray(&ptr, &ch.type_num, &ch.types) &&
-		    fillArray(&ptr, &ch.suff_num, &ch.suffixes) &&
-		    fillArray(&ptr, &ch.act_num, &ch.actions) &&
-		    fillArray(&ptr, &ch.locale_num, &ch.locales) &&
-		    fillArray(&ptr, &anm_num, &ch.action_map)&&
-		    anm_num == ch.act_num*ch.locale_num && //check
-		    fillArray(&ptr, &ch.access_num, &ch.accesses))){
-#ifdef _DEBUG
-	    printf("jsr211_deploy.c: handler data parsing failed");
+		fillArray(&ptr, &ch.suff_num, &ch.suffixes) &&
+		fillArray(&ptr, &ch.act_num, &ch.actions) &&
+		fillArray(&ptr, &ch.locale_num, &ch.locales) &&
+		fillArray(&ptr, &anm_num, &ch.action_map)&&
+		anm_num == ch.act_num*ch.locale_num && //check
+		fillArray(&ptr, &ch.access_num, &ch.accesses))){
+
+#if REPORT_LEVEL <= LOG_CRITICAL
+	    REPORT_CRIT(LC_NONE, "jsr211_deploy.c: handler data parsing failed");
 #endif
+
 		status = JSR211_FAILED;
 	} else {
 		// register handler
@@ -210,3 +215,4 @@ jsr211_result jsr211_check_internal_handlers(void) {
     }
     return JSR211_OK;
 }
+

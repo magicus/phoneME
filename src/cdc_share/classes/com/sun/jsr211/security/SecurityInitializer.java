@@ -1,7 +1,7 @@
 /*
  *   
  *
- * Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
@@ -25,14 +25,12 @@
  */
 package com.sun.jsr211.security;
 
-import com.sun.j2me.security.Token;
 import com.sun.j2me.security.TrustedClass;
+import com.sun.j2me.security.Token;
 
 /**
  * A utility class that initializes internal security token for 
- * JSR 211 implementation classes. Modify this class instead of
- * com.sun.midp.security.SecurityInitializer each time another 
- * JSR 211 implementation class requires initializing security token.
+ * JSR 211 implemenation classes. 
  */
 public final class SecurityInitializer {
 
@@ -42,7 +40,8 @@ public final class SecurityInitializer {
      * @param trusted object to check whether token can be given to caller
      * @return if the object is really trusted to requested
      */
-    final public static Token requestToken(TrustedClass trusted) {
+    final public static Token requestToken(
+            TrustedClass trusted) {
         return null;
     }
 }

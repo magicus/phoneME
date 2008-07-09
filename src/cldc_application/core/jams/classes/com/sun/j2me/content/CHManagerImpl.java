@@ -80,10 +80,6 @@ public class CHManagerImpl extends com.sun.midp.content.CHManager
                 SecurityInitializer.requestToken(new SecurityTrusted());
         com.sun.midp.content.CHManager.setCHManager(classSecurityToken, new CHManagerImpl());
         AppProxy.setSecurityToken(classSecurityToken);
-        
-        // load Invocation class
-        Class cl = Invocation.class;
-        cl = cl.getClass();
     }
 
     /** Installed handlers accumulator. */
@@ -149,8 +145,8 @@ public class CHManagerImpl extends com.sun.midp.content.CHManager
 		try {
 		    AppBundleProxy bundle =
 		    	new AppBundleProxy(installer, state, msuite, authority);
-            regInstaller = new RegistryInstaller(bundle);
-            regInstaller.preInstall();
+            regInstaller = new RegistryInstaller();
+            regInstaller.preInstall(bundle);
 		} catch (IllegalArgumentException ill) {
 		    throw new InvalidJadException(
 				  InvalidJadException.INVALID_CONTENT_HANDLER, ill.getMessage());
@@ -308,6 +304,7 @@ public class CHManagerImpl extends com.sun.midp.content.CHManager
     public void midletStartError(int externalAppId, int suiteId, String className,
                           int errorCode, String errorDetails) {
 		// Cleanup unprocessed Invocations
+    	InvocationStore.setCleanup(suiteId, className, true);
 		RegistryImpl.cleanup(suiteId, className);
 		AppProxy.midletIsRemoved( suiteId, className );
 		// Check for and execute a pending MIDlet suite

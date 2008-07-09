@@ -29,14 +29,14 @@
  * @brief javacall registry access implementation
  */
 
-
 #include <string.h>
 
 #include <javacall_defs.h>
+#include "javautil_string.h"
+
 #include <jsrop_memory.h> 
 #include <jsrop_suitestore.h> 
 
-#include "javautil_string.h"
 #include "jsr211_result.h"
 
 #ifdef _DEBUG

@@ -33,8 +33,11 @@
  */
 
 #include <jsrop_kni.h>
+#include <jsrop_memory.h>
+#include <jsrop_exceptions.h>
 #include <jsrop_suitestore.h>
 
+#include <javacall_defs.h>
 #include <javautil_unicode.h>
 
 #include <jsr211_registry.h>
@@ -54,8 +57,8 @@ static jint initialized = -1;
 /** com.sun.j2me.content.ContentHandlerImpl internal fields */
 static jfieldID chImplId = 0;       // ID,
              // also it is an uninitiaized state indicator
-//static jfieldID chImplSuiteId;      // storageId    : int
-//static jfieldID chImplClassname;    // classname    : String
+static jfieldID chImplSuiteId;      // storageId    : int
+static jfieldID chImplClassname;    // classname    : String
 static jfieldID chImplregMethod;    // registrationMethod : int
 static jfieldID chImplTypes;        // types        : String[]
 static jfieldID chImplSuffixes;     // suffixes     : String[]
@@ -72,16 +75,16 @@ static jfieldID anMapActionnames;   // [] actionnames
 #define DECLARE_MSG(n, s) static const char n[] = s;
 #define EXCEPTION_MSG(s) s
 
-DECLARE_MSG(fcFindHandler,   "Could not find ContentHandler for field value")
-DECLARE_MSG(fcFindInvocation,   "Invocation not found")
-DECLARE_MSG(fcFindForSuite,   "Could not find ContentHandler for suite ID")
-DECLARE_MSG(fcFindGetValues, "Could not read ContentHandler values");
-DECLARE_MSG(fcGetHandlerField, "Could not read ContentHandler fields");
-DECLARE_MSG(fcGetHandler, "Could not find ContentHandler");
-DECLARE_MSG(fcHandlerByURL, "Could not find ContentHandler for URL");
-DECLARE_MSG(fcUnexpectedFinilize,   "Unexpected RegistryStore finalization")
-DECLARE_MSG(fcNoClassFields,   "Could not initialize JSR211 class fields")
-DECLARE_MSG(fcRegister,   "Could not register ContentHandler")
+DECLARE_MSG(fcFindHandler,        "Could not find ContentHandler for field value")
+DECLARE_MSG(fcFindInvocation,     "Invocation not found")
+DECLARE_MSG(fcFindForSuite,       "Could not find ContentHandler for suite ID")
+DECLARE_MSG(fcFindGetValues,      "Could not read ContentHandler values")
+DECLARE_MSG(fcGetHandlerField,    "Could not read ContentHandler fields")
+DECLARE_MSG(fcGetHandler,         "Could not find ContentHandler")
+DECLARE_MSG(fcHandlerByURL,       "Could not find ContentHandler for URL")
+DECLARE_MSG(fcUnexpectedFinilize, "Unexpected RegistryStore finalization")
+DECLARE_MSG(fcNoClassFields,      "Could not initialize JSR211 class fields")
+DECLARE_MSG(fcRegister,           "Could not register ContentHandler")
 
 static void result2string(KNIDECLARGS JSR211_RESULT_BUFFER buffer, jstring str){
     const void * data; size_t length;
@@ -94,8 +97,8 @@ static void result2string(KNIDECLARGS JSR211_RESULT_BUFFER buffer, jstring str){
         // check data on '\0' character
         jchar * chars = (jchar *)data;
         if( length & 0x1 ){
-#ifdef _DEBUG
-		    printf( "\nkni_reg_store.c: data transfer internal problem (length is odd)" );
+#if REPORT_LEVEL <= LOG_ERROR
+		    REPORT_ERROR(LC_NONE, "kni_reg_store.c: data transfer internal problem (length is odd)");
 #endif
         }
         length /= 2;
@@ -144,30 +147,31 @@ static void cleanHandlerData(jsr211_content_handler* handler) {
  * <BR> <code>javax.microedition.content.ActionNameMap</code>
  * @return KNI_OK - if successfully get all fields, KNI_ERR - otherwise
  */
-static int initializeFields(KNIDECLARGS int dummy) {
+static int initializeFields(KNIDECLARGS void) {
     static const char* STRING_TYPE = "Ljava/lang/String;";
     static const char* S_ARRAY_TYPE = "[Ljava/lang/String;";
-    static const char* ANM_ARRAY_TYPE = "[Ljavax/microedition/content/ActionNameMap;";
-
-#define ANM_CLASS_NAME "javax/microedition/content/ActionNameMap"
-
+    static const char* ANM_ARRAY_TYPE = 
+                            "[Ljavax/microedition/content/ActionNameMap;";
+    static const char* ANM_CLASS_NAME = 
+                            "javax/microedition/content/ActionNameMap";
     int ret;    // returned result code
     KNI_StartHandles(1);
     KNI_DeclareHandle(clObj);   // clazz object
 
     do {
-        // 1. initialize ContentHandlerRegData fields
-        KNI_FindClass("com/sun/j2me/content/ContentHandlerRegData", clObj);
-	    if (KNI_IsNullHandle(clObj)) {
-#ifdef _DEBUG
-		    printf("\nkni_reg_store.c: can't find class com.sun.j2me.content.ContentHandlerRegData");
+        // 1. initialize ContentHandlerImpl fields
+        KNI_FindClass("com/sun/j2me/content/ContentHandlerImpl", clObj);
+	if (KNI_IsNullHandle(clObj)) {
+#if REPORT_LEVEL <= LOG_CRITICAL
+		REPORT_CRIT(LC_NONE,
+		    	"kni_reg_store.c: can't find class com.sun.j2me.content.ContentHandlerImpl");
 #endif
-       	    ret = KNI_ERR;
-		    break;
-	    }
+            	ret = KNI_ERR;
+		break;
+	}
         chImplId =          KNI_GetFieldID(clObj,  "ID", STRING_TYPE);
-//        chImplSuiteId =     KNI_GetFieldID(clObj,  "storageId", "I");
-//        chImplClassname =   KNI_GetFieldID(clObj,  "classname", STRING_TYPE);
+        chImplSuiteId =     KNI_GetFieldID(clObj,  "storageId", "I");
+        chImplClassname =   KNI_GetFieldID(clObj,  "classname", STRING_TYPE);
         chImplregMethod =   KNI_GetFieldID(clObj,  "registrationMethod", "I");
         chImplTypes =       KNI_GetFieldID(clObj,  "types", S_ARRAY_TYPE);
         chImplSuffixes =    KNI_GetFieldID(clObj,  "suffixes", S_ARRAY_TYPE);
@@ -177,13 +181,16 @@ static int initializeFields(KNIDECLARGS int dummy) {
         chImplAccesses =    KNI_GetFieldID(clObj,  "accessRestricted", 
                                                             S_ARRAY_TYPE);
     
-        if (chImplId == 0 || /*chImplSuiteId == 0 || chImplClassname == 0 ||*/
-                chImplregMethod == 0 || chImplTypes == 0 || 
-                chImplSuffixes == 0 || chImplActions == 0 || 
-                chImplActionnames == 0 || chImplAccesses == 0) {
-#ifdef _DEBUG
-	        printf( "kni_reg_store.c: can't initialize ContentHandlerRegData fields!" );
+        if (chImplId == 0 || chImplSuiteId == 0 || chImplClassname == 0 || 
+            chImplregMethod == 0 || chImplTypes == 0 || 
+            chImplSuffixes == 0 || chImplActions == 0 || 
+            chImplActionnames == 0 || chImplAccesses == 0) {
+    
+#if REPORT_LEVEL <= LOG_CRITICAL
+	REPORT_CRIT(LC_NONE,
+		    "kni_reg_store.c: can't initialize ContentHandlerImpl fields!");
 #endif
+    
             ret = KNI_ERR;
             break;
         }
@@ -191,8 +198,9 @@ static int initializeFields(KNIDECLARGS int dummy) {
         // 2. initialize ActionName fields
         KNI_FindClass(ANM_CLASS_NAME, clObj);  // clObj = ActionNameMap class
         if (KNI_IsNullHandle(clObj)) {
-#ifdef _DEBUG
-	        printf("kni_reg_store.c: can't find " ANM_CLASS_NAME " class!");
+#if REPORT_LEVEL <= LOG_CRITICAL
+	REPORT_CRIT(LC_NONE,
+		    "kni_reg_store.c: can't find ActionNameMap class!");
 #endif
             ret = KNI_ERR;
             break;
@@ -203,8 +211,9 @@ static int initializeFields(KNIDECLARGS int dummy) {
     
         if (anMapLocale == 0 || anMapActionnames == 0) {
     
-#ifdef _DEBUG
-	        printf("kni_reg_store.c: can't initialize " ANM_CLASS_NAME " fields!");
+#if REPORT_LEVEL <= LOG_CRITICAL
+	REPORT_CRIT(LC_NONE,
+		    "kni_reg_store.c: can't initialize ActionNameMap fields!");
 #endif
             ret = KNI_ERR;
             break;
@@ -214,9 +223,6 @@ static int initializeFields(KNIDECLARGS int dummy) {
     } while (0);
 
     KNI_EndHandles();
-
-#undef ANM_CLASS_NAME
-
     return ret;
 }
 
@@ -350,8 +356,7 @@ static int fillActionMap(KNIDECLARGS jobject o, jsr211_content_handler* handler)
  * @return KNI_OK - if successfully get all fields, 
  * KNI_ERR or KNI_ENOMEM - otherwise
  */
-static int fillHandlerData(KNIDECLARGS SuiteIdType suiteId, jobject midletClassName, jobject o, 
-                                jsr211_content_handler* handler) {
+static int fillHandlerData(KNIDECLARGS jobject o, jsr211_content_handler* handler) {
     int ret;    // returned result code
 	int length=0;
     KNI_StartHandles(1);
@@ -361,20 +366,28 @@ static int fillHandlerData(KNIDECLARGS SuiteIdType suiteId, jobject midletClassN
         // ID
         KNI_GetObjectField(o, chImplId, fldObj);
         if (JAVACALL_OK!=jsrop_jstring_to_utf16_string(fldObj, (javacall_utf16_string*)&(handler->id))) {
-            ret = KNI_ENOMEM; break;
+            ret = KNI_ENOMEM;
+            break;
         }
 
         // check mandatory field
 		javautil_unicode_utf16_ulength(handler->id,&length);
-        if (length <= 0) { ret = KNI_ERR; break; }
+        if (length <= 0) {
+            ret = KNI_ERR;
+            break;
+        }
         // suiteID
-        handler->suite_id = JAVAME_MALLOC(
-                (jsrop_suiteid_string_size(suiteId) + 1) * sizeof(jchar));
-	    jsrop_suiteid_to_string(suiteId, handler->suite_id);
-
+	    {
+		    SuiteIdType suite_id = KNI_GetIntField(o, chImplSuiteId);
+                handler->suite_id = JAVAME_MALLOC(
+                    (jsrop_suiteid_string_size(suite_id) + 1) * sizeof(jchar));
+		    jsrop_suiteid_to_string(suite_id, handler->suite_id);
+	    }
         // classname
-        if (JAVACALL_OK!=jsrop_jstring_to_utf16_string(midletClassName, (javacall_utf16_string*)&(handler->class_name))) {
-            ret = KNI_ENOMEM; break;
+        KNI_GetObjectField(o, chImplClassname, fldObj);
+        if (JAVACALL_OK!=jsrop_jstring_to_utf16_string(fldObj, (javacall_utf16_string*)&(handler->class_name))) {
+            ret = KNI_ENOMEM;
+            break;
         }
 
         // flag
@@ -383,29 +396,43 @@ static int fillHandlerData(KNIDECLARGS SuiteIdType suiteId, jobject midletClassN
         // types
         KNI_GetObjectField(o, chImplTypes, fldObj);
         handler->type_num = getStringArray(KNIPASSARGS fldObj, &(handler->types));
-        if (handler->type_num < 0) { ret = KNI_ENOMEM; break; }
+        if (handler->type_num < 0) {
+            ret = KNI_ENOMEM;
+            break;
+        }
 
         // suffixes        
         KNI_GetObjectField(o, chImplSuffixes, fldObj);
         handler->suff_num = getStringArray(KNIPASSARGS fldObj, &(handler->suffixes));
-        if (handler->suff_num < 0) { ret = KNI_ENOMEM; break; }
+        if (handler->suff_num < 0) {
+            ret = KNI_ENOMEM;
+            break;
+        }
 
         // actions
         KNI_GetObjectField(o, chImplActions, fldObj);
         handler->act_num = getStringArray(KNIPASSARGS fldObj, &(handler->actions));
-        if (handler->act_num < 0) { ret = KNI_ENOMEM; break; }
+        if (handler->act_num < 0) {
+            ret = KNI_ENOMEM;
+            break;
+        }
 
         // action names
         if (handler->act_num > 0) {
             KNI_GetObjectField(o, chImplActionnames, fldObj);
             ret = fillActionMap(KNIPASSARGS fldObj, handler);
-            if (KNI_OK != ret) break;
+            if (KNI_OK != ret) {
+                break;
+            }
         }
 
         // accesses
         KNI_GetObjectField(o, chImplAccesses, fldObj);
         handler->access_num = getStringArray(KNIPASSARGS fldObj, &(handler->accesses));
-        if (handler->access_num < 0) { ret = KNI_ENOMEM; break; }
+        if (handler->access_num < 0) {
+            ret = KNI_ENOMEM;
+            break;
+        }
 
         ret = KNI_OK;
     } while (0);
@@ -420,52 +447,47 @@ static int fillHandlerData(KNIDECLARGS SuiteIdType suiteId, jobject midletClassN
  * @param handler pointer on data structure 
  * <code>jsr211_content_handler</code> to be cleared.
  */
-void jsr211_cleanHandlerData(jsr211_content_handler *handler) {
+void jsr211_cleanHandlerData(KNIDECLARGS jsr211_content_handler *handler) {
     // clean up handler structure 
     if (handler->id!=NULL) JAVAME_FREE(handler->id);
 	if (handler->suite_id!=NULL) JAVAME_FREE(handler->suite_id);
 	if (handler->class_name!=NULL) JAVAME_FREE(handler->class_name);
 
     if (handler->type_num > 0 && handler->types != NULL) {
-        cleanStringArray(handler->types, handler->type_num);
+        cleanStringArray(KNIPASSARGS handler->types, handler->type_num);
     }
     if (handler->suff_num > 0 && handler->suffixes != NULL) {
-        cleanStringArray(handler->suffixes, handler->suff_num);
+        cleanStringArray(KNIPASSARGS handler->suffixes, handler->suff_num);
     }
     if (handler->act_num > 0 && handler->actions != NULL) {
-        cleanStringArray(handler->actions, handler->act_num);
+        cleanStringArray(KNIPASSARGS handler->actions, handler->act_num);
     }
     if (handler->locale_num > 0 && handler->locales != NULL) {
-        cleanStringArray(handler->locales, handler->locale_num);
+        cleanStringArray(KNIPASSARGS handler->locales, handler->locale_num);
     }
     if (handler->act_num > 0 && handler->locale_num > 0 && handler->action_map != NULL) {
-        cleanStringArray(handler->action_map, handler->act_num * handler->locale_num);
+        cleanStringArray(KNIPASSARGS handler->action_map, handler->act_num * handler->locale_num);
     }
     if (handler->access_num > 0 && handler->accesses != NULL) {
-        cleanStringArray(handler->accesses, handler->access_num);
+        cleanStringArray(KNIPASSARGS handler->accesses, handler->access_num);
     }
 }
 
 
 /**
  * java call:
- *  private native boolean register0(int storageId, String classname, ContentHandlerRegData handlerData);
+ *  private native boolean register0(ContentHandlerImpl contentHandler);
  */
 KNIEXPORT KNI_RETURNTYPE_BOOLEAN
 KNIDECL(com_sun_j2me_content_RegistryStore_register0) {
     int res = KNI_OK;
-    SuiteIdType suiteId;
     jsr211_content_handler handler = JSR211_CONTENT_HANDLER_INITIALIZER;
-
-    KNI_StartHandles(2);
-    KNI_DeclareHandle(handlerClassName);
-    KNI_DeclareHandle(chObj);   // ContentHandlerRegData instance
-    suiteId = KNI_GetParameterAsInt(1);
-    KNI_GetParameterAsObject(2, handlerClassName);
-    KNI_GetParameterAsObject(3, chObj);
+    KNI_StartHandles(1);
+    KNI_DeclareHandle(chObj);   // content handler instance
+    KNI_GetParameterAsObject(1, chObj);
     do {
         if (chImplId == 0) {
-            res = initializeFields(KNIPASSARGS 0);
+            res = initializeFields(KNIPASSARGS);
             if (res != KNI_OK) {
                 KNI_ThrowNew(jsropRuntimeException, 
                         "Can't initialize JSR211 class fields");
@@ -473,7 +495,7 @@ KNIDECL(com_sun_j2me_content_RegistryStore_register0) {
             }
         }
 
-        res = fillHandlerData(KNIPASSARGS suiteId, handlerClassName, chObj, &handler);
+        res = fillHandlerData(KNIPASSARGS chObj, &handler);
         if (res != KNI_OK) {
 			if (res == KNI_ENOMEM) {
 				KNI_ThrowNew(jsropOutOfMemoryError, 
@@ -494,6 +516,7 @@ KNIDECL(com_sun_j2me_content_RegistryStore_register0) {
         res = (JSR211_OK == jsr211_register_handler(&handler))? KNI_OK: KNI_ERR;
     } while (0);
     
+
     KNI_EndHandles();
     jsr211_cleanHandlerData(&handler);
 
@@ -775,12 +798,14 @@ KNIDECL(com_sun_j2me_content_RegistryStore_finalize) {
     KNI_ReturnVoid();
 }
 
+#include <jsr211_invoc.h>
+
 /**
  * java call:
  * private native int launchNativeHandler0(String handlerId);
  */
 KNIEXPORT KNI_RETURNTYPE_INT
-KNIDECL(com_sun_j2me_content_AppProxy_launchNativeHandler0) {
+KNIDECL(com_sun_j2me_content_InvocationStoreProxy_launchNativeHandler0) {
     jchar* id = NULL;
     jsr211_launch_result result;
 
@@ -806,7 +831,7 @@ KNIDECL(com_sun_j2me_content_AppProxy_launchNativeHandler0) {
  * private native boolean platformFinish0(String handlerId);
  */
 KNIEXPORT KNI_RETURNTYPE_BOOLEAN
-KNIDECL(com_sun_j2me_content_AppProxy_platformFinish0) {
+KNIDECL(com_sun_j2me_content_InvocationStoreProxy_platformFinish0) {
     jint tid;
     jsr211_boolean should_exit;
 

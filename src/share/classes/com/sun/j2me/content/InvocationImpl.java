@@ -44,10 +44,6 @@ import javax.microedition.io.ConnectionNotFoundException;
  * of the class MUST be package private.
  */
 public final class InvocationImpl {
-	
-	public static Tunnel tunnel = null;
-	public static final int UNDEFINED_TID = 0;
-	
     /**
      * The Invocation delegating to this instance.
      * This field is public to Invocation can set it.
@@ -99,7 +95,7 @@ public final class InvocationImpl {
     String password;
 
     /** Transaction Identifier. */
-    int tid = UNDEFINED_TID;
+    int tid;
 
     /** The MIDlet suite that should handle this Invocation. */
     int suiteId;
@@ -485,12 +481,22 @@ public final class InvocationImpl {
         		throw new IllegalArgumentException();
         }
 
+        /*
+         * If a response is required by the invoking application,
+         * the native code requeues it.
+         * The application mutable parameters are saved to the
+         * native invocation.
+         */
+        if (getResponseRequired() && tid != 0) {
+            InvocationStore.setParams(this);
+        }
+
         setStatus(status);
 
         if (getResponseRequired()) {
             if (AppProxy.EXTERNAL_SUITE_ID == suiteId) {
             	// 'native to java' invocation is finished
-                return AppProxy.platformFinish(tid);
+                return InvocationStoreProxy.platformFinish(tid);
             }
             return InvocationStoreProxy.launchInvocationTarget( this ) == 
 						InvocationStoreProxy.LIT_MIDLET_START_FAILED;
@@ -567,36 +573,8 @@ public final class InvocationImpl {
      */
     void setStatus(int status) {
         this.status = status;
-        
-        switch( this.status ){
-        	case Invocation.OK: 
-        	case Invocation.CANCELLED: 
-        	case Invocation.ERROR: 
-        	case Invocation.INITIATED:
-                /* 
-                 * If a response is required, switch the target
-                 * application; if not then discard the Invocation.
-                 */
-                if (!responseRequired){
-                	InvocationStore.dispose(tid);
-                	return;
-                }
-                	
-                /* Swap the source and target suite and classname */
-                int tmpSuiteId = invokingSuiteId;
-                String tmpClassname = invokingClassname;
-                invokingSuiteId = suiteId;
-                invokingClassname = classname;
-                suiteId = tmpSuiteId;
-                classname = tmpClassname;
-
-                InvocationStore.update(this);
-                /* Unmark the response it is "new" to the target */
-                InvocationStore.resetFlags(tid);
-        		break;
-        	default:
-                InvocationStore.update(this);
-        		break;
+        if (tid != 0) {
+            InvocationStore.setStatus(this);
         }
     }
 
@@ -773,8 +751,4 @@ public final class InvocationImpl {
         }
         return super.toString();
     }
-
-	public Invocation wrap() {
-	    return invocation = tunnel.newInvocation(this);
-	}
 }
