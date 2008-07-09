@@ -45,7 +45,6 @@ ifndef DONUTS_FILES
 DONUTS_FILES := $(shell ls \
   $(MEMORY_DIR)/test*.c \
   $(FILE_DIR)/test*.c \
-  $(ESCFILENAMES_DIR)/test*.c \
   $(PRINT_DIR)/test*.c \
   $(NETWORK_SELECT_DIR)/test*.c \
   $(STRING_DIR)/test*.c \
@@ -55,7 +54,6 @@ endif
 ifndef DONUTS_LIBS
 DONUTS_LIBS = $(OUTPUT_LIB_DIR)/libpcsl_print$(LIB_EXT) \
 	      $(OUTPUT_LIB_DIR)/libpcsl_file$(LIB_EXT) \
-	      $(OUTPUT_LIB_DIR)/libpcsl_escfilenames$(LIB_EXT) \
 	      $(OUTPUT_LIB_DIR)/libpcsl_memory$(LIB_EXT) \
 	      $(OUTPUT_LIB_DIR)/libpcsl_string$(LIB_EXT) \
 	      $(OUTPUT_LIB_DIR)/libpcsl_network$(LIB_EXT)
