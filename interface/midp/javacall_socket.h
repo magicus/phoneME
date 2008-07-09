@@ -93,9 +93,6 @@ extern "C" {
  * 
  * @{
  */
-#ifndef JAVACALL_MAX_HOST_LENGTH
-#define JAVACALL_MAX_HOST_LENGTH 256
-#endif 
 
 /**
  * @defgroup MandatoryTcpSocket Mandatory Client Socket API
