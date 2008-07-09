@@ -31,6 +31,8 @@ import com.sun.cldc.isolate.*;
 import com.sun.midp.midlet.MIDletSuite;
 
 import com.sun.midp.midletsuite.MIDletSuiteStorage;
+import com.sun.midp.midletsuite.MIDletSuiteLockedException;
+import com.sun.midp.midletsuite.MIDletSuiteCorruptedException;
 
 import com.sun.midp.configurator.Constants;
 
@@ -285,6 +287,25 @@ public class AmsUtil {
                     limit = isolate.totalMemory();
                 } else {
                     limit = limit * 1024;
+                }
+
+                if (Constants.EXTENDED_JAD_ATTRIBUTES_ENABLED) {
+                    System.out.println("EXTENDED_JAD_ATTRIBUTES_ENABLED is true");
+
+                    String heapSizeProp = MIDletSuiteUtils.getSuiteProperty(id,
+                        MIDletSuite.HEAP_SIZE_PROP);
+
+                    if (heapSizeProp != null) {
+                        try {
+                            int heapSize = Integer.parseInt(heapSizeProp);
+                            System.out.println("EXTENDED_JAD_ATTRIBUTES_ENABLED prop=" + heapSize + ", limit=" + limit);
+                            if ((heapSize > 0) && (heapSize < limit)) {
+                                limit = heapSize;
+                            }
+                        } catch (NumberFormatException e) {
+                        }
+                    }
+                    System.out.println("EXTENDED_JAD_ATTRIBUTES_ENABLED result quota=" + limit);
                 }
             }
 

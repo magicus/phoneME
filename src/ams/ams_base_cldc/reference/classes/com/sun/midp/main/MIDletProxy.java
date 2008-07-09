@@ -114,6 +114,12 @@ public class MIDletProxy implements SuspendDependency {
     private MIDletProxyList parent;
 
     /**
+     * True if the MIDlet was put in paused state while was being moved to
+     * background.
+     */
+    private boolean wasPausedUponBackground;
+
+    /**
      * Initialize the MIDletProxy class. Should only be called by the
      * MIDletProxyList.
      *
@@ -366,6 +372,22 @@ public class MIDletProxy implements SuspendDependency {
     }
 
     /**
+     * Asynchronously change the MIDlet's state to active if the MIDlet was
+     * paused upon putting in the background.
+     *
+     * @see #activateMidlet
+     */
+    public void activateMidletUponForeground() {
+        if (midletState != MIDLET_DESTROYED && midletState != MIDLET_ACTIVE) {
+            if (wasPausedUponBackground) {
+                activateMidlet();
+                System.out.println("EXTENDED_JAD_ATTRIBUTES_ENABLED: midlet is actived upon moving to the foreground");
+            }
+        }
+        wasPausedUponBackground = false;
+    }
+
+    /**
      * Asynchronously change the MIDlet's state to paused.
      *
      * This method does NOT change the state in the proxy, but
@@ -376,6 +398,20 @@ public class MIDletProxy implements SuspendDependency {
     public void pauseMidlet() {
         if (midletState != MIDLET_DESTROYED) {
             midletEventProducer.sendMIDletPauseEvent(isolateId, className);
+        }
+    }
+
+    /**
+     * Asynchronously change the MIDlet's state to paused upon putting in the
+     * background.
+     *
+     * @see #pauseMidlet
+     */
+    public void pauseMidletUponBackrgound() {
+        if (midletState != MIDLET_DESTROYED && midletState != MIDLET_PAUSED) {
+            wasPausedUponBackground = true;
+            pauseMidlet();
+            System.out.println("EXTENDED_JAD_ATTRIBUTES_ENABLED: midlet is paused upon moving to the background");
         }
     }
 

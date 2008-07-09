@@ -28,11 +28,13 @@ package com.sun.midp.main;
 
 import com.sun.j2me.security.AccessController;
 
-import com.sun.midp.lcdui.DisplayEventHandler;
 import com.sun.midp.lcdui.SystemAlert;
 import com.sun.midp.security.SecurityToken;
 import com.sun.midp.security.Permissions;
 import com.sun.midp.midletsuite.MIDletSuiteStorage;
+import com.sun.midp.midletsuite.MIDletSuiteLockedException;
+import com.sun.midp.midletsuite.MIDletSuiteCorruptedException;
+import com.sun.midp.midlet.MIDletSuite;
 
 import javax.microedition.lcdui.AlertType;
 
@@ -647,4 +649,40 @@ public class MIDletSuiteUtils {
                 "Display initialization has failed");
         }
     }
+
+    /**
+     * The method retrieves property with specified name searhing in specified
+     * suite.
+     *
+     * @param suiteId ID of an installed suite
+     * @param propName name of property to get value for
+     *
+     * @return property value or null if there is no such property defined in
+     * the suite
+     * 
+     * @throws SecurityException if caller has no permission to invoke
+     *                           the method
+     */
+    static String getSuiteProperty(int suiteId, String propName)
+            throws SecurityException{
+
+        // Note: getMIDletSuiteStorage performs an AMS permission check
+        MIDletSuiteStorage storage = MIDletSuiteStorage.getMIDletSuiteStorage();
+
+        MIDletSuite suite = null;
+        try {
+            suite = storage.getMIDletSuite(suiteId, false);
+        } catch (MIDletSuiteLockedException e) {
+        } catch (MIDletSuiteCorruptedException e) {
+        }
+
+        String property = null;
+        if (suite != null) {
+            property = suite.getProperty(propName);
+            suite.close();
+        }
+
+        return property;
+    }
+
 }

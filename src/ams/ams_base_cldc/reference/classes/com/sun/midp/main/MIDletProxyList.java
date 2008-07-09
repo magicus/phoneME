@@ -1039,8 +1039,6 @@ public class MIDletProxyList
     /**
      * Sets the foreground MIDlet. If the given midletProxy is paused,
      * then it will be activated before given the foreground.
-     * the internal system property "pause_app_in_background" is true,
-     * then previous foreground MIDlet will be paused.
      * <p>
      * The follow steps are performed when changed:<p>
      * 1. Send an event to notify the old foreground Display it has lost the
@@ -1068,6 +1066,21 @@ public class MIDletProxyList
              */
             MIDletProxyUtils.minPriority(foregroundMidlet);
             foregroundMidlet.notifyMIDletHasForeground(false);
+
+            /*
+             * Pause MIDlet after putting it in the background if extended JAD
+             * attributes support is enabled and MIDlet-Background-Pause
+             * attribute is set to true.
+             */
+            if (Constants.EXTENDED_JAD_ATTRIBUTES_ENABLED) {
+                String pauseProp = MIDletSuiteUtils.getSuiteProperty(
+                    foregroundMidlet.getSuiteId(),
+                    MIDletSuite.BACKGROUND_PAUSE_PROP);
+
+                if ("yes".equalsIgnoreCase(pauseProp)) {
+                    foregroundMidlet.pauseMidletUponBackrgound();
+                }
+            }
         }
 
         foregroundMidlet =
@@ -1089,8 +1102,29 @@ public class MIDletProxyList
             */
             MIDletProxyUtils.normalPriority(foregroundMidlet);
 
+            /*
+             * IMPL_NOTE: there are no listeners for the certain
+             * MIDletProxyListListener.ALERT_WAITING reason in MIDP.
+             * To check whether call to notifyListenersOfProxyUpdate may be safely
+             * removed here.
+             */
             notifyListenersOfProxyUpdate(foregroundMidlet,
                 MIDletProxyListListener.ALERT_WAITING);
+
+            /*
+             * Activate MIDlet after putting it back to the foreground if
+             * extended JAD attributes support is enabled and
+             * MIDlet-Background-Pause attribute is set to true.
+             */
+            if (Constants.EXTENDED_JAD_ATTRIBUTES_ENABLED) {
+                String pauseProp = MIDletSuiteUtils.getSuiteProperty(
+                    foregroundMidlet.getSuiteId(),
+                    MIDletSuite.BACKGROUND_PAUSE_PROP);
+
+                if ("yes".equalsIgnoreCase(pauseProp)) {
+                    foregroundMidlet.activateMidletUponForeground();
+                }
+            }
         } else {
             setForegroundInNativeState(MIDletSuiteUtils.getAmsIsolateId(),
                                        -1);
