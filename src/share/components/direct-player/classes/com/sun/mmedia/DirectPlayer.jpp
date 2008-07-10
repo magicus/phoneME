@@ -283,6 +283,12 @@ public class DirectPlayer extends BasicPlayer implements VideoSource
         // Is straming source?
         isStreaming = isStreamingSource();
         
+        if( isVideoPlayer() )
+        {
+            videoControl = new DirectVideo( this, 
+                    nGetWidth( hNative ), nGetHeight( hNative ) );
+        }
+        
     }
     
     private boolean isRadioPlayer()
@@ -425,6 +431,11 @@ public class DirectPlayer extends BasicPlayer implements VideoSource
                 "DirectPlayer.doStart");
         }
         
+        if( null != videoControl )
+        {
+            videoControl.start();
+        }
+        
         if (isFirstStart || (0 == getMediaTime())) {
             ret = nStart(hNative);
             isFirstStart = false;
@@ -485,6 +496,12 @@ public class DirectPlayer extends BasicPlayer implements VideoSource
      * @exception  MediaException  Description of the Exception
      */
     protected void doStop() throws MediaException {
+
+        if ( null != videoControl )
+        {
+            videoControl.stop();
+        }
+        
         if (false == nPause(hNative)) {
             throw new MediaException("Player cannot be stopped");
         }
@@ -533,6 +550,12 @@ public class DirectPlayer extends BasicPlayer implements VideoSource
     protected void doClose() {
         if (debug) System.out.println("[direct] DirectPlayer.doClose");
 
+        if( null != videoControl )
+        {
+            videoControl.close();
+            videoControl = null;
+        }
+        
         // #ifdef ENABLE_MULTIPLE_ISOLATES [
         // Unregister from media tunnel
         mediaTunnel.unregisterMediaEventConsumer(this);
@@ -686,6 +709,14 @@ public class DirectPlayer extends BasicPlayer implements VideoSource
                     dVolumeControl = new DirectVolume(this, hNative);
                 }
                 return dVolumeControl;
+            }
+        }
+
+        if ( null != videoControl ) {
+            if (shortType.equals(vicName)) {        // VideoControl
+                return videoControl;
+            } else if (shortType.equals(guiName)) {  // GUIControl
+                return videoControl;
             }
         }
 

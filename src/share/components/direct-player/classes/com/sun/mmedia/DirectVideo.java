@@ -185,7 +185,7 @@ class DirectVideo implements VideoControl, MIDPVideoPainter {
             ph = SCREEN_HEIGHT - py;
         }
 
-        source.setLocation(px, py, pw, ph);
+        source.setVideoLocation(px, py, pw, ph);
     }
 
     /**
@@ -198,23 +198,23 @@ class DirectVideo implements VideoControl, MIDPVideoPainter {
         }    
  
         // Turn off alpha channel
-        source.setAlpha( false, ALPHA_COLOR);
+        source.setVideoAlpha( false, ALPHA_COLOR);
         setTranslatedVideoLocation(g, x, y, w, h);
 
-        source.setVisible( !hidden);
+        source.setVideoVisible( !hidden);
     }
 
     /**
      * Prepare clipped preview region by using alpha channel masking
      */
     private void prepareClippedPreview(Graphics g, int x, int y, int w, int h) {
-        if (1 == source.setAlpha( true, ALPHA_COLOR)) {
+        if (1 == source.setVideoAlpha( true, ALPHA_COLOR)) {
             g.setColor(0, 0, 8);    // IMPL NOTE - Consider RGB565 conversion
             g.fillRect(x, y, w, h);
             setTranslatedVideoLocation(g, x, y, w, h);
-            source.setVisible( !hidden);
+            source.setVideoVisible( !hidden);
         } else {
-            source.setVisible( false);
+            source.setVideoVisible( false);
         }
     }
 
@@ -238,33 +238,13 @@ class DirectVideo implements VideoControl, MIDPVideoPainter {
         }
     }
 
-    /**
-     * Override doGetControl
-     * return VideoControl and GUIControl
-     */
-    protected Control doGetControl(String type) {
-        Control c = super.doGetControl(type);
-
-        if (c == null) {
-            String prefix = "javax.microedition.media.control.";
-            if (type.equals(prefix + vicName)) {        // VideoControl
-                return this;
-            } else if (type.equals(prefix + guiName)) {  // GUIControl
-                return this;
-            }
-        }
-        return c;
-    }
-
-    protected boolean doStart() {
+    void start() {
         started = true;
         repaint();
-        return super.doStart();
     }
 
-    protected void doStop() throws MediaException {
+    void stop() {
         started = false;
-        super.doStop();
     }
     
     /**
@@ -326,12 +306,11 @@ class DirectVideo implements VideoControl, MIDPVideoPainter {
      * Override method in BasicPlayer to close
      * the <code>Player</code>.
      */
-    protected void doClose() {
+    void close() {
         if (mmh != null && canvas != null) {
             // unregister this direct video handler with MMH
             mmh.unregisterPlayer(canvas, this);
         }
-        super.doClose();
     }
     
     /**
@@ -455,7 +434,7 @@ class DirectVideo implements VideoControl, MIDPVideoPainter {
         }
 
         if (visible == false) {
-            source.setVisible( false);
+            source.setVideoVisible( false);
         }
     }
     
@@ -465,7 +444,7 @@ class DirectVideo implements VideoControl, MIDPVideoPainter {
 
         synchronized( boundLock ) {
             if( fsmode != fullScreenMode ) {
-                source.setFullScreenMode(fullScreenMode);
+                source.setVideoFullScreen(fullScreenMode);
                 fsmode = fullScreenMode;
 
                 if( fsmode ) {
@@ -532,7 +511,7 @@ class DirectVideo implements VideoControl, MIDPVideoPainter {
 
         byte[] data = null;
         
-        data = source.snapShot(imageType.toLowerCase());
+        data = source.getVideoSnapshot(imageType.toLowerCase());
         
         if (null == data)
         {
@@ -595,9 +574,9 @@ class DirectVideo implements VideoControl, MIDPVideoPainter {
             Logging.report(Logging.INFORMATION, LogChannels.LC_MMAPI, 
                 "hideVideoPreview"); 
         }
-        source.setVisible( false);
+        source.setVideoVisible( false);
         hidden = true;
-        source.setAlpha( true, ALPHA_COLOR);
+        source.setVideoAlpha( true, ALPHA_COLOR);
         repaint();
     }
 
