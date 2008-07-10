@@ -34,29 +34,33 @@ public class PIMPermission extends Permission {
     static String LIST_TYPE_CONTACT = "javax.microedition.pim.ContactList.";
     static String LIST_TYPE_EVENT   = "javax.microedition.pim.EventList.";
     static String LIST_TYPE_TODO    = "javax.microedition.pim.ToDoList.";
+
+    static String PIM_CONTACTS = "PIM contacts.";
+    static String PIM_EVENTS   = "PIM events.";
+    static String PIM_TODO     = "PIM 'to do' items.";
     
     static public PIMPermission CONTACT_READ =
-        new PIMPermission(LIST_TYPE_CONTACT + LIST_ACCESS_READ, null,
+        new PIMPermission(LIST_TYPE_CONTACT + LIST_ACCESS_READ, PIM_CONTACTS,
             Permissions.PIM_CONTACT_READ);
 
     static public PIMPermission CONTACT_WRITE =
-        new PIMPermission(LIST_TYPE_CONTACT + LIST_ACCESS_WRITE, null,
+        new PIMPermission(LIST_TYPE_CONTACT + LIST_ACCESS_WRITE, PIM_CONTACTS,
             Permissions.PIM_CONTACT_WRITE);
 
     static public PIMPermission EVENT_READ =
-        new PIMPermission(LIST_TYPE_EVENT + LIST_ACCESS_READ, null,
+        new PIMPermission(LIST_TYPE_EVENT + LIST_ACCESS_READ, PIM_EVENTS,
             Permissions.PIM_EVENT_READ);
 
     static public PIMPermission EVENT_WRITE =
-        new PIMPermission(LIST_TYPE_EVENT + LIST_ACCESS_WRITE, null,
+        new PIMPermission(LIST_TYPE_EVENT + LIST_ACCESS_WRITE, PIM_EVENTS,
             Permissions.PIM_EVENT_WRITE);
 
     static public PIMPermission TODO_READ =
-        new PIMPermission(LIST_TYPE_TODO + LIST_ACCESS_READ, null,
+        new PIMPermission(LIST_TYPE_TODO + LIST_ACCESS_READ, PIM_TODO,
             Permissions.PIM_TODO_READ);
 
     static public PIMPermission TODO_WRITE =
-        new PIMPermission(LIST_TYPE_TODO + LIST_ACCESS_WRITE, null,
+        new PIMPermission(LIST_TYPE_TODO + LIST_ACCESS_WRITE, PIM_TODO,
             Permissions.PIM_TODO_WRITE);
 
     public PIMPermission(String name, String resource) {
