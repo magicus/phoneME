@@ -1,0 +1,69 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<html>
+<head>
+<!--
+
+    
+
+  Copyright  2007  Sun Microsystems, Inc. All rights reserved.
+
+-->
+</head>
+<body bgcolor="white">
+<p>
+ Provides a <a href="MEKeyTool.html">Java<sup>tm</sup> API</a> and a
+ <a href="doc-files/mekeytool.html">command line interface</a> (ME Key Tool)
+ to manage the public keys in the mobile equipment keystore.</p>
+<p>
+ The key tool imports keys from Java<sup>tm</sup> Standard Edition keystores
+ (J2SE).
+ A J2SE<sup>tm</sup> keystore "jse_test_keystore.bin" is provided, it has the
+ public key of the most popular Internet certificate authority for test
+ purposes. Its password is "password". For example to see what is in the
+ keystore, use the J2SE<sup>tm</sup>
+ <a href="http://java.sun.com/j2se/1.3/docs/tooldocs/win32/keytool.html">
+ keytool</a> as follows:</p>
+<blockquote><p>
+ <code>keytool -list -keystore j2se_test_keystore.bin -storepass password
+ </code></p>
+</blockquote>
+<p>For usage information on the MEKeyTool see:&nbsp;
+<a href="MEKeyTool.html#main(java.lang.String[])">
+<code>MEKeyTool.main()</code></a></p>
+<h2>HTTPS and Certificates</h2>
+<p>If you are using the HTTPS prototype API, you may have to install the public
+ key of a certificate authority (CA) into the mobile equipment public
+ keystore. MIDP includes the public key needed to verify VeriSign E-Commerce
+ certificates. However, to verify other certificates from VeriSign (such as
+ their trial certificates) and certificates from other CA's, their public keys
+ must be manually installed into the public keystore. To do so, follow these
+ steps:</p>
+<ol>
+<li><p>
+ Import the certificate of the CA that issued the certificate you want verify
+ into a Java<sup>tm</sup> 2 Platform, Standard Edition (J2SE) keystore using
+ the J2SE<sup>tm</sup> keytool command. Assign the certificate an appropriate
+ alias. (For testing without a CA, using a self signed server certificate,
+ just use the server's certificate as a CA certificate.) For example:</p>
+<blockquote><p>
+ <code>keytool -import -keystore keystore -storepass password
+ -file ca_cert.txt -alias httpsca</code></p>
+</blockquote></li>
+<li><p>
+ Import the public key of the CA from the J2SE<sup>tm</sup> keystore into the
+ MIDP public keystore by using the MEKeyTool. For example:</p>
+<blockquote><p>
+ <code>java -jar bin/MEKeyTool.jar -import -keystore keystore
+ -alias httpsca -storepass password</code></p>
+<p>
+ For usage information on the MEKeyTool, use the -help option.</p>
+</blockquote></li>
+<li><p>
+ (optional) Check the result by listing the keys in the public
+ keystore. For example:</p>
+<blockquote><p>
+ <code>java -jar bin/MEKeyTool.jar -list</code></p>
+</blockquote></li>
+</ol>
+</body>
+</html>

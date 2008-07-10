@@ -1,0 +1,62 @@
+#
+#   
+#
+# Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+# 
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License version
+# 2 only, as published by the Free Software Foundation.
+# 
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# General Public License version 2 for more details (a copy is
+# included at /legal/license.txt).
+# 
+# You should have received a copy of the GNU General Public License
+# version 2 along with this work; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+# 02110-1301 USA
+# 
+# Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+# Clara, CA 95054 or visit www.sun.com if you need additional
+# information or have any questions.
+#
+#
+######################################################################
+#
+# Library Makefile
+#
+######################################################################
+
+# Name of the library
+WIN_APP = wince_application
+LIB_SET   += $(WIN_APP)
+
+SUBSYSTEM_APP_DIR = $(SUBSYSTEM_HIGHUI_DIR)/$(WIN_APP)
+
+RESOURCE_DIR = $(SUBSYSTEM_APP_DIR)/resources
+
+SUBSYSTEM_APP_EXTRA_INCLUDES += -I$(SUBSYSTEM_APP_DIR)/include
+SUBSYSTEM_APP_EXTRA_INCLUDES += -I$(RESOURCE_DIR)
+
+
+vpath % $(SUBSYSTEM_APP_DIR)/reference/native
+
+SUBSYSTEM_APP_NATIVE_FILES += \
+    winceapp_export.cpp
+
+ifeq ($(USE_MULTIPLE_ISOLATES), true)
+  RC_DEFS += -DENABLE_MULTIPLE_ISOLATES=1
+endif
+
+OBJ_FILES += $(OBJ_DIR)/resources.res
+
+$(OBJ_DIR)/resources.res: $(RESOURCE_DIR)/resources.rc $(RESOURCE_DIR)/resources.h
+	@echo " ... $@" $(LOG)
+	$(A)$(RC) -D_WIN32_WCE=$(CEVersion) /I"${EVC_INCLUDE_PATH}" \
+	  /I"${MIDP_OUTPUT_DIR}/generated" \
+	  /I"$(PCSL_TARGET_DIR)/inc" \
+	  $(RC_DEFS) -DUNDER_CE=$(CEVersion) /d "UNICODE" /d "_UNICODE" \
+	  /fo`$(call fixcygpath,$@ $(RESOURCE_DIR)/resources.rc)`
