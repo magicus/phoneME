@@ -90,6 +90,7 @@ public final class PermissionGroup {
         disableSettingChoice = theDisableSettingChoice;
         runtimeDialogTitle = theRuntimeDialogTitle;
         runtimeQuestion = theRuntimeQuestion;
+        runtimeOneshotQuestion = theRuntimeOneshotQuestion;
         identifiedMaxiumLevel = theIdentifiedMaxiumLevel;
         identifiedDefaultLevel = theIdentifiedDefaultLevel;
         unidentifiedMaxiumLevel = theUnidentifiedMaxiumLevel;
