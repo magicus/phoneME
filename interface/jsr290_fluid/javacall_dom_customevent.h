@@ -46,18 +46,6 @@ extern "C" {
  */
 
 /**
- * Returns  Specifies some detail information about the <code>Event</code>. 
- * 
- * @param handle Pointer to the object representing this customevent.
- * 
- * @return JAVACALL_OK if all done successfuly,
- *         JAVACALL_NOT_IMPLEMENTED when the stub was called
- */
-javacall_result
-javacall_dom_customevent_get_detail(javacall_handle handle,
-                                    /* OUT */ javacall_handle* ret_value);
-
-/**
  *  The <code>initCustomEventNS</code> method is used to initialize the 
  * value of a <code>CustomEvent</code> object and has the same behavior 
  * as <code>Event.initEventNS()</code>. 

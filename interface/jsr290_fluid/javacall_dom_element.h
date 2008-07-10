@@ -451,7 +451,7 @@ javacall_dom_element_get_elements_by_tag_name_ns(javacall_handle handle,
  * @param name The name of the attribute to look for.
  * @param ret_value <code>true</code> if an attribute with the given name is 
  *   specified on this element or has a default value, <code>false</code>
- *    otherwise.
+ *   otherwise.
  * 
  * @return JAVACALL_OK if all done successfuly,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called

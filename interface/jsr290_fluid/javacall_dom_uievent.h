@@ -83,9 +83,7 @@ javacall_dom_uievent_get_detail(javacall_handle handle,
  *   method for a description of this parameter. 
  * @param cancelable_arg  Refer to the <code>Event.initEvent()</code> 
  *   method for a description of this parameter. 
- * @param viewArg  Specifies <code>UIEvent.view</code>. This value may be 
- *   <code>NULL</code>. 
- * @param detailArg  Specifies <code>UIEvent.detail</code>.   
+ * @param detail_arg  Specifies <code>UIEvent.detail</code>.   
  * 
  * @return JAVACALL_OK if all done successfuly,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
@@ -94,7 +92,8 @@ javacall_result
 javacall_dom_uievent_init_ui_event(javacall_handle handle,
                                    javacall_const_utf16_string type_arg,
                                    javacall_bool can_bubble_arg,
-                                   javacall_bool cancelable_arg);
+                                   javacall_bool cancelable_arg,
+                                   javacall_int32 detail_arg);
 
 /**
  *  The <code>initUIEventNS</code> method is used to initialize the value 
@@ -110,9 +109,7 @@ javacall_dom_uievent_init_ui_event(javacall_handle handle,
  *   method for a description of this parameter. 
  * @param cancelable_arg  Refer to the <code>Event.initEventNS()</code> 
  *   method for a description of this parameter. 
- * @param viewArg  Refer to the <code>UIEvent.initUIEvent()</code> method 
- *   for a description of this parameter. 
- * @param detailArg  Refer to the <code>UIEvent.initUIEvent()</code> 
+ * @param detail_arg  Refer to the <code>UIEvent.initUIEvent()</code> 
  *   method for a description of this parameter.
  *
  * 
@@ -124,7 +121,8 @@ javacall_dom_uievent_init_ui_event_ns(javacall_handle handle,
                                       javacall_const_utf16_string namespace_uri,
                                       javacall_const_utf16_string type_arg,
                                       javacall_bool can_bubble_arg,
-                                      javacall_bool cancelable_arg);
+                                      javacall_bool cancelable_arg,
+                                      javacall_int32 detail_arg);
 
 /** 
  * Deletes object representing this uievent
