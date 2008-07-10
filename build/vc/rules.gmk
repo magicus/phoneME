@@ -30,30 +30,6 @@ ifeq ($(JAVACALL_DIR),)
 $(error JAVACALL_DIR is not set.)
 endif
 
-ifeq ($(WINCE_LIB_PATH),)
-$(error WINCE_LIB_PATH for Windows CE SDK is not set.)
-endif
-
-ifeq ($(VC8CE_ATLMFC_INCLUDE_PATH),)
-$(error VC8CE_ATLMFC_INCLUDE_PATH for Visual Studio ATLMFC is not set.)
-endif
-
-ifeq ($(VC8CE_ATLMFC_LIB_PATH),)
-$(error VC8CE_ATLMFC_LIB_PATH for Visual Studio ATLMFC is not set.)
-endif
-
-ifeq ($(WINCE_INCLUDE_PATH),)
-$(error WINCE_INCLUDE_PATH for Windows CE SDK is not set.)
-endif
-
-ifeq ($(WMSDK10_INCLUDE_PATH),)
-$(error WMSDK10_INCLUDE_PATH for Windows Media SDK 10 is not set.)
-endif
-
-ifeq ($(VC8_PATH_ROOT),)
-$(error VC8_PATH_ROOT is not set.)
-endif
-
 include $(JAVACALL_DIR)/build/common.gmk
 TEMP_OBJECTS1=$(patsubst %.c,%.obj,$(PORTING_SOURCE))
 TEMP_OBJECTS=$(patsubst %.cpp,%.obj,$(TEMP_OBJECTS1))
@@ -158,10 +134,10 @@ $(JAVACALL_OUTPUT_LIB_DIR)/javacall$(BUILD_EXT).lib: \
 	$(patsubst %,$(JAVACALL_OUTPUT_OBJ_DIR)/%,$(PROPERTY_OBJECTS)) \
 	$(SPECIFIC_OBJECTS)
 	@echo "...Generating Library: $@"
-	$(AR) -out:`$(call fixcygpath, $@)` $(ARFLAGS) `$(call fixcygpath, $^ $(ADDITIONAL_LIBS))`
-	$(MAKE) JAVACALL_EXTRA_LIBS
+	$(AT)$(AR) -out:`$(call fixcygpath, $@)` $(ARFLAGS) `$(call fixcygpath, $^ $(ADDITIONAL_LIBS))`
+	$(AT)$(MAKE) JAVACALL_EXTRA_LIBS
 
 $(JAVACALL_OUTPUT_LIB_DIR)/notifiers$(BUILD_EXT).lib: \
     $(patsubst %,$(JAVACALL_OUTPUT_OBJ_DIR)/%,$(NOTIFIER_OBJECTS))
 	@echo "...Generating Library: $@"
-	$(AR) -out:`$(call fixcygpath, $@)` $(ARFLAGS) `$(call fixcygpath, $^)`
+	$(AT)$(AR) -out:`$(call fixcygpath, $@)` $(ARFLAGS) `$(call fixcygpath, $^)`
