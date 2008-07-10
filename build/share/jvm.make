@@ -49,8 +49,7 @@ NATIVES_TABLE        = $(GEN_DIR)/NativesTable.cpp
 BUILDTOOLS_DIR       = $(BuildSpace)/$(BUILD_DIR_NAME)/tools
 BUILDTOOL_JAR        = $(BUILDTOOLS_DIR)/buildtool.jar
 ifeq ($(USE_VS2005), true)
-#VC_MANIFEST_EMBED_EXE = mt.exe -manifest $@.manifest "-outputresource:$@"
-VC_MANIFEST_EMBED_EXE = true
+VC_MANIFEST_EMBED_EXE = mt.exe -manifest $@.manifest "-outputresource:$@"
 else
 VC_MANIFEST_EMBED_EXE = true
 endif
@@ -782,7 +781,11 @@ ifeq ($(ENABLE_PCSL)+$(IsGenerator), true+true)
 override ENABLE_PCSL := false
 export ENABLE_PCSL
 else
+
+ifndef PCSL_DIST_DIR
 PCSL_DIST_DIR = $(PCSL_OUTPUT_DIR)/javacall_$(arch)
+endif
+
 endif
 
 ifeq ($(ENABLE_PCSL), true)
