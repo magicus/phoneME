@@ -66,6 +66,10 @@ final public class GIFPlayer extends BasicPlayer implements Runnable {
      */
     private boolean done;
 
+    /* Used to synchronize access to mediatime- and rate- ralated fields
+     */
+    private Object mediaTimeLock = new Object();
+
     /* the start time in milliseconds.
      * startTime is initialized upon start of the play thread.
      */
@@ -195,16 +199,14 @@ final public class GIFPlayer extends BasicPlayer implements Runnable {
      * @return    the media time in microseconds.
      */
     protected long doGetMediaTime() {
-        return getDefaultRateMediaTime() * rateControl.getRate() / 100000;
+        synchronized( mediaTimeLock ) {
+            long mks = ( 0 != startTime ) ? getMicrosecondsFromStart() : 0;
+            return ( mediaTimeOffset + mks ) * rateControl.getRate() / 100000;
+        }
     }
 
-    private long getDefaultRateMediaTime() {
-        long mediaTime = mediaTimeOffset;
-
-        if (state == STARTED)
-            mediaTime += (System.currentTimeMillis() - startTime) * 1000;
-
-        return mediaTime;
+    private long getMicrosecondsFromStart() {
+        return (System.currentTimeMillis() - startTime) * 1000;
     }
 
     /**
@@ -224,7 +226,9 @@ final public class GIFPlayer extends BasicPlayer implements Runnable {
         if (now > duration)
             now = duration;
 
-        mediaTimeOffset = now * 100000 / rateControl.getRate();
+        synchronized( mediaTimeLock ) {
+            mediaTimeOffset = now * 100000 / rateControl.getRate();
+        }
 
         try {
             int count = framePosControl.mapTimeToFrame(now);
@@ -346,7 +350,9 @@ final public class GIFPlayer extends BasicPlayer implements Runnable {
                 }
             }).start();
         } else {
-            startTime = System.currentTimeMillis(); 
+            synchronized( mediaTimeLock ) {
+                startTime = System.currentTimeMillis(); 
+            }
 
             if (stopped) {
                 // wake up existing play thread
@@ -392,9 +398,13 @@ final public class GIFPlayer extends BasicPlayer implements Runnable {
             try {
                 if (playThread != null) {
                     stopped = true;
-                    playLock.notifyAll();               
-                    mediaTimeOffset = getDefaultRateMediaTime();
-                    startTime = 0;
+                    playLock.notifyAll();
+
+                    synchronized( mediaTimeLock ) {
+                        mediaTimeOffset = getMicrosecondsFromStart();
+                        startTime = 0;
+                    }
+
                     playLock.wait();
                 }
             } catch (InterruptedException ie) {
@@ -469,11 +479,12 @@ final public class GIFPlayer extends BasicPlayer implements Runnable {
             // send an end-of-media if the player was not stopped
             // and the run loop terminates because the end of media
             // was reached.
-            mediaTimeOffset = getDefaultRateMediaTime(); 
-            startTime = 0;
-
-            sendEvent(PlayerListener.END_OF_MEDIA,
-                      new Long(mediaTimeOffset * rateControl.getRate() / 100000));
+            synchronized( mediaTimeLock ) {
+                mediaTimeOffset = getMicrosecondsFromStart();
+                startTime = 0;
+                sendEvent(PlayerListener.END_OF_MEDIA,
+                          new Long(mediaTimeOffset * rateControl.getRate() / 100000));
+            }
         }
 
         synchronized (playLock) {
@@ -488,9 +499,11 @@ final public class GIFPlayer extends BasicPlayer implements Runnable {
      */
     private void stopTimeReached() {
         // stop the player
-        mediaTimeOffset = getDefaultRateMediaTime();
+        synchronized( mediaTimeLock ) {
+            mediaTimeOffset = getMicrosecondsFromStart();
+            startTime = 0;
+        }
         stopped = true;
-        startTime = 0;        
         // send STOPPED_AT_TIME event
         satev();
     }
@@ -1470,20 +1483,22 @@ final public class GIFPlayer extends BasicPlayer implements Runnable {
          * @see #getRate
          */
         public int setRate(int millirate) {
-            long oldRate = rate;
-            if (millirate < MIN_PLAYBACK_RATE) {
-                rate = MIN_PLAYBACK_RATE;
-            } else if (millirate > MAX_PLAYBACK_RATE) {
-                rate = MAX_PLAYBACK_RATE;
-            } else {
-                rate = millirate;
+            synchronized( mediaTimeLock ) {
+                long oldRate = rate;
+                if (millirate < MIN_PLAYBACK_RATE) {
+                    rate = MIN_PLAYBACK_RATE;
+                } else if (millirate > MAX_PLAYBACK_RATE) {
+                    rate = MAX_PLAYBACK_RATE;
+                } else {
+                    rate = millirate;
+                }
+                if (0 != startTime) {
+                    mediaTimeOffset = (long)((System.currentTimeMillis() - startTime)
+                        * 1000 * ((double)oldRate / rate - 1) 
+                        + mediaTimeOffset * (double)oldRate / rate);
+                }
+                return rate;
             }
-            if (state == STARTED) {
-                mediaTimeOffset = (long)((System.currentTimeMillis() - startTime)
-                    * 1000 * ((double)oldRate / rate - 1) 
-                    + mediaTimeOffset * (double)oldRate / rate);
-            }
-            return rate;
         }
 
         /**
