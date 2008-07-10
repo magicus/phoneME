@@ -95,23 +95,6 @@ class DirectVideo implements VideoControl, MIDPVideoPainter {
     // Lock
     private Object boundLock = new Object();
 
-    // native functions /////////////////////////////////////////////
-
-    // Get video width
-    protected native int nGetWidth(int handle);
-    // Get video height
-    protected native int nGetHeight(int handle);
-    // Set display location of video
-    protected native boolean nSetLocation(int handle, int x, int y, int w, int h);
-    // Get snapshot
-    protected native byte[] nSnapShot(int handle, String imageType);
-    // Set fullscreen
-    protected native boolean nSetFullScreenMode(int handle, boolean fullscreen);
-    // Set visible
-    protected native boolean nSetVisible(int handle, boolean visible);
-    // Turn on or off alpha channel
-    private native int nSetAlpha(int handle, boolean on, int color);
-    
     // member functions /////////////////////////////////////////////
 
     // this is to suppress the default package-private empty constructor
@@ -123,6 +106,11 @@ class DirectVideo implements VideoControl, MIDPVideoPainter {
         source  = src;
         sw      = width;
         sh      = height;
+        // initialize default rendering width and height
+        if (sw <= 0) dw = DEFAULT_WIDTH;
+        else dw = sw;
+        if (sh <= 0) dh = DEFAULT_HEIGHT;
+        else dh = sh;
     }
     
     /**
@@ -197,9 +185,7 @@ class DirectVideo implements VideoControl, MIDPVideoPainter {
             ph = SCREEN_HEIGHT - py;
         }
 
-        if (hNative != 0) {
-            nSetLocation(hNative, px, py, pw, ph);
-        }
+        source.setLocation(px, py, pw, ph);
     }
 
     /**
@@ -212,29 +198,23 @@ class DirectVideo implements VideoControl, MIDPVideoPainter {
         }    
  
         // Turn off alpha channel
-        nSetAlpha(hNative, false, ALPHA_COLOR);
+        source.setAlpha( false, ALPHA_COLOR);
         setTranslatedVideoLocation(g, x, y, w, h);
 
-        if (hNative != 0) {
-            nSetVisible(hNative, !hidden);
-        }
+        source.setVisible( !hidden);
     }
 
     /**
      * Prepare clipped preview region by using alpha channel masking
      */
     private void prepareClippedPreview(Graphics g, int x, int y, int w, int h) {
-        if (1 == nSetAlpha(hNative, true, ALPHA_COLOR)) {
+        if (1 == source.setAlpha( true, ALPHA_COLOR)) {
             g.setColor(0, 0, 8);    // IMPL NOTE - Consider RGB565 conversion
             g.fillRect(x, y, w, h);
             setTranslatedVideoLocation(g, x, y, w, h);
-            if (hNative != 0) {
-                nSetVisible(hNative, !hidden);
-            }
+            source.setVisible( !hidden);
         } else {
-            if (hNative != 0) {
-                nSetVisible(hNative, false);
-            }
+            source.setVisible( false);
         }
     }
 
@@ -274,21 +254,6 @@ class DirectVideo implements VideoControl, MIDPVideoPainter {
             }
         }
         return c;
-    }
-
-    /**
-     * Override doRealize
-     * Prepare soure video informations
-     */ 
-    protected void doRealize() throws MediaException {
-        super.doRealize();
-        sw = nGetWidth(hNative);
-        sh = nGetHeight(hNative);
-        // initialize default rendering width and height
-        if (sw <= 0) dw = DEFAULT_WIDTH;
-        else dw = sw;
-        if (sh <= 0) dh = DEFAULT_HEIGHT;
-        else dh = sh;
     }
 
     protected boolean doStart() {
@@ -489,8 +454,8 @@ class DirectVideo implements VideoControl, MIDPVideoPainter {
             repaint();
         }
 
-        if (visible == false && hNative != 0) {
-            nSetVisible(hNative, false);
+        if (visible == false) {
+            source.setVisible( false);
         }
     }
     
@@ -500,7 +465,7 @@ class DirectVideo implements VideoControl, MIDPVideoPainter {
 
         synchronized( boundLock ) {
             if( fsmode != fullScreenMode ) {
-                nSetFullScreenMode(hNative,fullScreenMode);
+                source.setFullScreenMode(fullScreenMode);
                 fsmode = fullScreenMode;
 
                 if( fsmode ) {
@@ -566,10 +531,9 @@ class DirectVideo implements VideoControl, MIDPVideoPainter {
 
 
         byte[] data = null;
-        if (hNative != 0)
-        {
-            data = nSnapShot(hNative, imageType.toLowerCase());
-        }
+        
+        data = source.snapShot(imageType.toLowerCase());
+        
         if (null == data)
         {
             throw new MediaException( "Snapshot in '" + imageType + "' format failed." );
@@ -631,11 +595,9 @@ class DirectVideo implements VideoControl, MIDPVideoPainter {
             Logging.report(Logging.INFORMATION, LogChannels.LC_MMAPI, 
                 "hideVideoPreview"); 
         }
-        if (hNative != 0) {
-            nSetVisible(hNative, false);
-        }
+        source.setVisible( false);
         hidden = true;
-        nSetAlpha(hNative, true, ALPHA_COLOR);
+        source.setAlpha( true, ALPHA_COLOR);
         repaint();
     }
 

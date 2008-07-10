@@ -30,7 +30,7 @@
 
 /*  private native int nGetWidth ( int handle ) ; */
 KNIEXPORT KNI_RETURNTYPE_INT
-KNIDECL(com_sun_mmedia_DirectVideo_nGetWidth) {
+KNIDECL(com_sun_mmedia_DirectPlayer_nGetWidth) {
 
     jint handle = KNI_GetParameterAsInt(1);
     jint returnValue = 0;
@@ -50,7 +50,7 @@ KNIDECL(com_sun_mmedia_DirectVideo_nGetWidth) {
 
 /*  private native int nGetHeight ( int handle ) ; */
 KNIEXPORT KNI_RETURNTYPE_INT
-KNIDECL(com_sun_mmedia_DirectVideo_nGetHeight) {
+KNIDECL(com_sun_mmedia_DirectPlayer_nGetHeight) {
 
     jint handle = KNI_GetParameterAsInt(1);
     jint returnValue = 0;
@@ -70,7 +70,7 @@ KNIDECL(com_sun_mmedia_DirectVideo_nGetHeight) {
 
 /*  private native int nSetLocation ( int handle , int x , int y , int w , int h ) ; */
 KNIEXPORT KNI_RETURNTYPE_BOOLEAN
-KNIDECL(com_sun_mmedia_DirectVideo_nSetLocation) {
+KNIDECL(com_sun_mmedia_DirectPlayer_nSetLocation) {
 
     jint handle = KNI_GetParameterAsInt(1);
     jint x = KNI_GetParameterAsInt(2);
@@ -95,7 +95,7 @@ KNIDECL(com_sun_mmedia_DirectVideo_nSetLocation) {
 
 /*  protected native byte [ ] nSnapShot ( String imageType ) ; */
 KNIEXPORT KNI_RETURNTYPE_OBJECT
-KNIDECL(com_sun_mmedia_DirectVideo_nSnapShot) {
+KNIDECL(com_sun_mmedia_DirectPlayer_nSnapShot) {
     
     jint handle = KNI_GetParameterAsInt(1);
     KNIPlayerInfo*  pKniInfo = (KNIPlayerInfo*)handle;
@@ -160,7 +160,7 @@ KNIDECL(com_sun_mmedia_DirectVideo_nSnapShot) {
 
 /*  private native boolean nSetVisible ( int handle, boolean visible ) ; */
 KNIEXPORT KNI_RETURNTYPE_BOOLEAN
-KNIDECL(com_sun_mmedia_DirectVideo_nSetVisible) {
+KNIDECL(com_sun_mmedia_DirectPlayer_nSetVisible) {
 
     jint handle = KNI_GetParameterAsInt(1);
     jboolean visible = KNI_GetParameterAsBoolean(2);
@@ -184,7 +184,7 @@ KNIDECL(com_sun_mmedia_DirectVideo_nSetVisible) {
 
 /*  private native int nSetAlpha (boolean on, int color) ; */
 KNIEXPORT KNI_RETURNTYPE_INT
-KNIDECL(com_sun_mmedia_DirectVideo_nSetAlpha) {
+KNIDECL(com_sun_mmedia_DirectPlayer_nSetAlpha) {
 
     jint handle = KNI_GetParameterAsInt(1);
     jboolean isOn = KNI_GetParameterAsBoolean(2);

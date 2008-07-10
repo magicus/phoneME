@@ -27,5 +27,18 @@ package com.sun.mmedia;
 
 interface VideoSource 
 {
+    // Set display location of video
+    boolean setLocation(int x, int y, int w, int h);
     
+    // Get snapshot
+    byte[] snapShot(String imageType);
+    
+    // Set fullscreen
+    boolean setFullScreenMode( boolean fullscreen);
+    
+    // Set visible
+    boolean setVisible( boolean visible);
+    
+    // Turn on or off alpha channel
+    int setAlpha(boolean on, int color);
 }
