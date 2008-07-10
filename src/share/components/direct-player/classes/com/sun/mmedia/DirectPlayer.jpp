@@ -113,6 +113,8 @@ public class DirectPlayer extends BasicPlayer implements VideoSource
     // this field will be checked in the native finalizer
     private boolean hasTakenRadioAccess = false;
 
+    private DirectVideo videoControl = null;
+
 // Native functions /////////////////////////////////////////////////
     
     // Terminate native library
