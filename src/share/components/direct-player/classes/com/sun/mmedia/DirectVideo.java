@@ -97,15 +97,13 @@ class DirectVideo implements VideoControl, MIDPVideoPainter {
     
     private static boolean debug = true;
     
-    String sourceLocator;
-
     // member functions /////////////////////////////////////////////
 
     // this is to suppress the default package-private empty constructor
     private DirectVideo() {}
     
     // the only possible way to instantiate this class
-    DirectVideo( VideoSource src, int width, int height, String locator )
+    DirectVideo( VideoSource src, int width, int height )
     {
         source  = src;
         sw      = width;
@@ -115,8 +113,6 @@ class DirectVideo implements VideoControl, MIDPVideoPainter {
         else dw = sw;
         if (sh <= 0) dh = DEFAULT_HEIGHT;
         else dh = sh;
-        
-        sourceLocator = locator;
     }
     
     /**
@@ -470,23 +466,8 @@ class DirectVideo implements VideoControl, MIDPVideoPainter {
         }
     }
 
-    /**
-     * Check for the multimedia snapshot permission.
-     *
-     * @exception SecurityException if the permission is not
-     *            allowed by this token
-     */
-    public void checkSnapshotPermission() {
-        try {
-            PermissionAccessor.checkPermissions( sourceLocator, PermissionAccessor.PERMISSION_SNAPSHOT );
-        } catch( InterruptedException e ) {
-            throw new SecurityException( "Interrupted while trying to ask the user permission" );
-        }
-    }
-
     public byte[] getSnapshot( String imageType ) throws MediaException
     {
-        checkSnapshotPermission();
         checkState();
 
         if (null == imageType)
@@ -524,10 +505,6 @@ class DirectVideo implements VideoControl, MIDPVideoPainter {
             throw new MediaException( "Snapshot in '" + imageType + "' format failed." );
         }
         return data;
-    }
-
-    public void setSnapshotQuality( int quality )
-    {
     }
 
     /**
