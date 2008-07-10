@@ -4,22 +4,22 @@
  * Portions Copyright  2000-2007 Sun Microsystems, Inc. All Rights
  * Reserved.  Use is subject to license terms.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
- * 
+ *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
  * 2 only, as published by the Free Software Foundation.
- * 
+ *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
  * included at /legal/license.txt).
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA
- * 
+ *
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
  * information or have any questions.
@@ -31,121 +31,15 @@
 
 #if !ENABLE_THUMB_COMPILER
 
-#define MAKE_IMM(x) (x)
-
 // The Assembler class provides minimal functionality to generate
 // machine code. All functions representing machine instructions
 // generate exactly one instruction (no optimizations!).
 
 class Assembler: public AssemblerCommon {
-
 #if !defined(PRODUCT) || ENABLE_COMPILER || USE_COMPILER_STRUCTURES
-
-friend class Disassembler;
-friend struct OpcodeInfo;
-
-#if ENABLE_CODE_OPTIMIZER
-  friend class CodeOptimizer;
-#endif
-
- protected:
-  // The implementation of emit is assembler specific: the source assembler
-  // will disassemble the instruction and emit the corresponding assembly
-  // source code, the binary assembler will emit the binary instruction.
-  //
-  // In product mode, only one implementation (the one for the binary
-  // assembler) exists, and then the call is statically bound. In all
-  // other modes, this is a virtual call so we can have both the text
-  // and binary output with the same build.
-#if !defined(PRODUCT) || USE_COMPILER_COMMENTS
-  virtual void emit(int instr) JVM_PURE_VIRTUAL_1_PARAM(instr);
-#else
-  inline static void emit(int instr);
-#endif
-
-  // assertion checking
-#ifndef PRODUCT
-  static void check_imm(int imm, int size) {
-    if(!has_room_for_imm(imm, size)) {
-       tty->print_cr("size %d too big for %d bits", imm, size);
-
-    }
-    GUARANTEE(has_room_for_imm(imm, size), "illegal immediate value");
-  }
-#else
-  static void check_imm(int /*imm*/, int /*size*/) {}
-#endif
-
- public:
-  // can the immediate fit in size bits?
-  static bool has_room_for_imm(int imm, int size) {
-    return (imm & -(1 << size)) == 0;
-  }
-  enum {
-    // Max number of method locals (exclusive) that are allowed to use
-    // in-line exception thrower. For example: if a method has 3 local
-    // words:
-    //      cmp r0, #0
-    //      ldreq pc, [r5, #compiler_throw_NullPointerException_3]
-    MAX_INLINE_THROWER_METHOD_LOCALS = 10
-  };
- protected:
-  enum Opcode {
-    // position and order is relevant!
-    _andr, _eor, _sub, _rsb, _add, _adc, _sbc, _rsc,
-    _tst, _teq, _cmp, _cmn, _orr, _mov, _bic, _mvn,
-    number_of_opcodes
-  };
-
-  static Opcode as_opcode(int encoding) {
-    GUARANTEE(0 <= encoding && encoding < number_of_opcodes, "illegal opcode");
-    return (Opcode)encoding;
-  }
-
  public:
   enum Register {
-    // position and order is relevant!
-    r0, r1, r2 , r3 , r4 , r5 , r6 , r7 ,
-    r8, r9, r10, r11, r12, r13, r14, r15,
-
-#if ENABLE_ARM_VFP
-    // Single-precision floating point registers.
-    s0, s1, s2, s3, s4, s5, s6, s7,
-    s8, s9, s10, s11, s12, s13, s14, s15,
-    s16, s17, s18, s19, s20, s21, s22, s23,
-    s24, s25, s26, s27, s28, s29, s30, s31,
-#endif
-
-    number_of_registers,
-
-#if ENABLE_ARM_VFP
-    // Double-precision floating point registers.
-    d0 = s0,
-    d1 = s2,
-    d2 = s4,
-    d3 = s6,
-    d4 = s8,
-    d5 = s10,
-    d6 = s12,
-    d7 = s14,
-    d8 = s16,
-    d9 = s18,
-    d10 = s20,
-    d11 = s22,
-    d12 = s24,
-    d13 = s26,
-    d14 = s28,
-    d15 = s30,
-#endif
-
-    // for platform-independant code
-    return_register = r0,
-    stack_lock_register = r1,
-
-    // for instruction assembly only
-    sbz =  r0,
-    sbo = r15,
-
+#include "../arm/Register_armthumb.hpp"
 #if !ENABLE_THUMB_REGISTER_MAPPING
     // interpreter register conventions for ARM COMPILER
     // (registers valid only during 30interpretation!)
@@ -190,89 +84,27 @@ friend struct OpcodeInfo;
     lr      =  r14,
     pc      =  r15, // FIXED BY HARDWARE
 #endif /*if !ENABLE_THUMB_REGISTER_MAPPING*/
+  };
+#include "../arm/AssemblerCommon_armthumb.hpp"
 
-    method_return_type = r2, // set to stack type on method return
-
-    // for linkage w/ shared code - will probably need to change
-    no_reg                    =  -1,
-    first_register            =  r0,
-#if ENABLE_ARM_VFP
-    last_register             = s31,
-    number_of_float_registers =  32,
+ protected:
+  // The implementation of emit is assembler specific: the source assembler
+  // will disassemble the instruction and emit the corresponding assembly
+  // source code, the binary assembler will emit the binary instruction.
+  //
+  // In product mode, only one implementation (the one for the binary
+  // assembler) exists, and then the call is statically bound. In all
+  // other modes, this is a virtual call so we can have both the text
+  // and binary output with the same build.
+#if !defined(PRODUCT) || USE_COMPILER_COMMENTS
+  virtual void emit(int instr) JVM_PURE_VIRTUAL_1_PARAM(instr);
 #else
-    last_register             = r15,
-    number_of_float_registers =   0,
-#endif
-    number_of_gp_registers    =  16,
-
-    first_allocatable_register = r0,
-
-    // Force Register to be int size. Otherwise ADS would treat
-    // Register as an unsigned byte type, and would emit a large number
-    // of unnecessary opcodes to coerce int values such as Value::_low,
-    // Value::_high, etc to unsigned bytes.
-    _force_32bit_Register     = 0x10000000
-  };
-
-  static Register as_register(int encoding) {
-    GUARANTEE(0 <= encoding && encoding < number_of_registers,
-              "illegal register");
-    return (Register)encoding;
-  };
-
-#if ENABLE_ARM_VFP
-  static bool is_vfp_register(const Register reg) {
-    return (unsigned(reg) - unsigned(s0)) < unsigned(number_of_float_registers);
-  }
-
-  static bool is_arm_register(const Register reg) {
-    return unsigned(reg) < unsigned(s0);
-  }
-  
-  enum VFPSystemRegister {
-    fpsid = 0,
-    fpscr = 1,
-    fpexc = 8
-  };
+  inline static void emit(int instr);
 #endif
 
-  enum Condition {
-    eq, ne, cs, cc, mi, pl, vs, vc,
-    hi, ls, ge, lt, gt, le, al, nv,
-    number_of_conditions,
-    // alternative names
-    hs = cs,
-    lo = cc,
-    always = al                 // used in generic code
-  };
-
-  enum {
-    instruction_alignment = 4
-  };
-
-  static bool is_c_saved_register(Register x) {
+ public:
+  static bool is_c_saved_register(const Register x) {
     return x >= r4 && x != r12 && x != r14;
-  }
-
-  static Condition as_condition(int encoding) {
-    GUARANTEE(0 <= encoding && encoding < number_of_conditions,
-              "illegal condition");
-    return (Condition)encoding;
-  }
-
-  static Condition not_cond(Condition cond) {
-    return (Condition)(cond ^ 1);
-  }
-
-  enum Shift {
-   // position and order is relevant!
-   lsl, lsr, asr, ror,
-   number_of_shifts
-  };
-
-  static Shift as_shift(int encoding) {
-    GUARANTEE(0 <= encoding && encoding < number_of_shifts, "illegal shift");
-    return (Shift)encoding;
   }
 
   // addressing mode 1 - data-processing operand
@@ -862,7 +694,7 @@ friend struct OpcodeInfo;
    F(fcmpzd,  0x5, 0, 11)
    F(fcmpezd, 0x5, 1, 11)
    F(fcvtsd,  0x7, 1, 11)
-   F(fuitod,  0x8, 0, 11) 
+   F(fuitod,  0x8, 0, 11)
    F(fsitod,  0x8, 1, 11)
    F(ftouid,  0xc, 0, 11)
    F(ftouizd, 0xc, 1, 11)
@@ -920,14 +752,14 @@ friend struct OpcodeInfo;
     check_imm(abs(offset_12 >> 2), 12);
     return (Address5_stub)(offset | (up(offset_12) << 23) | rn << 16 | abs(offset_12>>2));
   }
-  
+
   void flds_stub(Register sd, Address5_stub address5, Condition cond = al) {
-    sd = Register(sd - s0); 
-    jint Fd = sd >> 1;   /* top 4 bits */ 
+    sd = Register(sd - s0);
+    jint Fd = sd >> 1;   /* top 4 bits */
     jint D  = sd & 0x01; /* bottom bit */
 
-    emit(cond << 28 | 0x06 << 25 | D << 22 | 
-        1 << 20 | Fd << 12 | 0 << 8 | address5); 
+    emit(cond << 28 | 0x06 << 25 | D << 22 |
+        1 << 20 | Fd << 12 | 0 << 8 | address5);
   }
 
 

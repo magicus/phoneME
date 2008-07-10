@@ -1,53 +1,58 @@
 /*
- *   
+ *
  *
  * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
- * 
+ *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
  * 2 only, as published by the Free Software Foundation.
- * 
+ *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
  * included at /legal/license.txt).
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA
- * 
+ *
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
  * information or have any questions.
  */
-
-#ifdef UNDER_ADS
-#define MAKE_IMM(x) (static_cast<int&>(x))
-#else
-#define MAKE_IMM(x) (x)
-#endif
-
-#define zero       0
-#define one        1
-
 
 // The Assembler class provides minimal functionality to generate
 // machine code. All functions representing machine instructions
 // generate exactly one instruction (no optimizations!).
 
 class Assembler: public AssemblerCommon {
-
 #if !defined(PRODUCT) || ENABLE_COMPILER || USE_COMPILER_STRUCTURES
-
-friend class Disassembler;
-friend struct OpcodeInfo;
-
-#if ENABLE_CODE_OPTIMIZER
-  friend class CodeOptimizer;
-#endif
+ public:
+  enum Register {
+#include "../arm/Register_armthumb.hpp"
+    tos_val =  r0,
+    tos_tag =  r1,
+    tmp0    =  r2,
+    tmp1    =  r3,
+    fp      =  r4,
+    gp      =  r5,
+    jsp     =  r6,
+    bcode   =  r7,
+    tmp5    =  r7,
+    locals  =  r8,
+    cpool   =  r9,
+    tmp2    =  r10,
+    tmp3    =  r11,
+    tmp4    =  r12,
+    sp      =  r13, // FIXED BY ARM CALLING CONVENTION
+    bcp     =  r14,
+    lr      =  r14,
+    pc      =  r15, // FIXED BY HARDWARE
+  };
+#include "../arm/AssemblerCommon_armthumb.hpp"
 
  protected:
   // The implementation of emit is assembler specific: the source assembler
@@ -68,128 +73,9 @@ friend struct OpcodeInfo;
     emit_w(int /*instr*/) NOT_PRODUCT(JVM_PURE_VIRTUAL);
 #endif
 
-  // assertion checking
-  static void check_imm(int imm, int size) {
-    GUARANTEE(has_room_for_imm(imm, size),
-              "illegal immediate value");
-    (void)imm;
-    (void)size;
-  }
-
  public:
-  // can the immediate fit in size bits?
-  static bool has_room_for_imm(int imm, int size) {
-    return (imm & -(1 << size)) == 0;
-  }
-
- protected:
-  enum Opcode {
-    // position and order is relevant!
-    _and, _eor, _lsl, _lsr, _asr, _adc, _sbc, _ror,
-    _tst, _neg, _cmp, _cmn, _orr, _mul, _bic, _mvn,
-    _add, _sub, _mov, _rsb, _rsc,
-    number_of_opcodes
-  };
-
-  static Opcode as_opcode(int encoding) {
-    GUARANTEE(0 <= encoding &&
-              encoding < number_of_opcodes, "illegal opcode");
-    return (Opcode)encoding;
-  }
-
- public:
-  enum Register {
-    // position and order is relevant!
-    r0, r1, r2 , r3 , r4 , r5 , r6 , r7 ,
-    r8, r9, r10, r11, r12, r13, r14, r15,
-    number_of_registers,
-
-    // for platform-independant code
-    return_register = r0,
-    stack_lock_register = r1,
-
-    // for instruction assembly only
-    sbz =  r0,
-    sbo = r15,
-
-    tos_val =  r0,
-    tos_tag =  r1,
-    tmp0    =  r2,
-    tmp1    =  r3,
-    fp      =  r4,
-    gp      =  r5,
-    jsp     =  r6,
-    bcode   =  r7,
-    tmp5    =  r7,
-    locals  =  r8,
-    cpool   =  r9,
-    tmp2    =  r10,
-    tmp3    =  r11,
-    tmp4    =  r12,
-    sp      =  r13, // FIXED BY ARM CALLING CONVENTION
-    bcp     =  r14,
-    lr      =  r14,
-    pc      =  r15, // FIXED BY HARDWARE
-
-  ////////
-
-   // set to stack type on method return
-    method_return_type = r2,
-
-    // for linkage w/ shared code - will probably need to change
-    no_reg                    =  -1,
-    first_register            =  r0,
-    last_register             = r15,
-    number_of_float_registers =   0,
-
-    first_allocatable_register = r0
-  };
-
-  static Register as_register(int encoding) {
-    GUARANTEE(0 <= encoding && encoding < number_of_registers,
-              "illegal register");
-    return (Register)encoding;
-  };
-
-  enum Condition {
-    eq, ne, cs, cc, mi, pl, vs, vc,
-    hi, ls, ge, lt, gt, le, al, nv,
-    number_of_conditions,
-    // alternative names
-    hs = cs,
-    lo = cc,
-    always = al                 // used in generic code
-  };
-
-  enum {
-    instruction_alignment = 2
-  };
-
-  static bool is_c_saved_register(Register x) {
+  static bool is_c_saved_register(const Register x) {
     return x >= r5 && x != r12 && x != r14;
-  }
-
-
-  static Condition as_condition(int encoding) {
-    GUARANTEE(0 <= encoding && encoding < number_of_conditions,
-              "illegal condition");
-    return (Condition)encoding;
-  }
-
-  static Condition not_cond(Condition cond) {
-    return (Condition)(cond ^ 1);
-  }
-
-  enum Shift {
-   // position and order is relevant!
-   lsl_shift, lsr_shift, asr_shift, ror_shift,
-   number_of_shifts
-  };
-
-  static Shift as_shift(int encoding) {
-    GUARANTEE(0 <= encoding && encoding < number_of_shifts,
-              "illegal shift");
-    return (Shift)encoding;
   }
 
   void imm_shift(Register rd, Register rm, Opcode shifter, int imm);
@@ -744,7 +630,7 @@ friend struct OpcodeInfo;
     emit(0xdf << 8 | imm_8);
   }
 
-  void arith(Opcode opcode, Register rd, Register rm) {             
+  void arith(Opcode opcode, Register rd, Register rm) {
     if ((opcode == 0xA) && ((rd > r7) || (rm > r7))) {
       cmp_hi(rd, rm);
       return;
@@ -759,7 +645,7 @@ friend struct OpcodeInfo;
         sub_regs(rd, rd, rm);
         break;
       case _rsb:
-      case _rsc:    
+      case _rsc:
         SHOULD_NOT_REACH_HERE();
         break;
       default:
@@ -774,9 +660,9 @@ friend struct OpcodeInfo;
   }
 
   void breakpoint() {
-    // IMPL_NOTE: we need to make this portable on platforms 
-    // that may use a different method of breakpoints. Make 
-    // sure the fix works with cross compilation -- remember 
+    // IMPL_NOTE: we need to make this portable on platforms
+    // that may use a different method of breakpoints. Make
+    // sure the fix works with cross compilation -- remember
     // the loop generator is compiled with the host compiler!
 
     // THUMB IMPL_NOTE : We need to switch into ARM mode
@@ -831,7 +717,7 @@ class Macros: public Assembler {
  public:
 
   void arith_imm(Opcode opcode, Register rd, int imm32,
-                 LiteralAccessor& la);  
+                 LiteralAccessor& la);
 
   void tst_imm(Register rm, int rn_val) {
     Register rn = alloc_tmp_register(false);

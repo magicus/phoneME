@@ -31,7 +31,7 @@
 // Currently this is unused for X86. Ideally, this structure should match
 // the structure for the ARM port.
 
-#ifndef PRODUCT
+#if USE_DEBUG_PRINTING
 
 const char* Assembler::name_for_byte_register(const Register reg) {
   static const char* names[number_of_registers] = 

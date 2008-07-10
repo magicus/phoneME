@@ -1,37 +1,28 @@
 /*
- *   
+ *
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
- * 
+ *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
- * 2 only, as published by the Free Software Foundation. 
- * 
+ * 2 only, as published by the Free Software Foundation.
+ *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
- * included at /legal/license.txt). 
- * 
+ * included at /legal/license.txt).
+ *
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
- * 02110-1301 USA 
- * 
+ * 02110-1301 USA
+ *
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
- * information or have any questions. 
+ * information or have any questions.
  */
-
-#ifdef UNDER_ADS
-#define MAKE_IMM(x) (static_cast<int&>(x))
-#else
-#define MAKE_IMM(x) (x)
-#endif
-
-#define zero       0
-#define one        1
 
 // The Assembler class provides minimal functionality to generate
 // machine code. All functions representing machine instructions
@@ -50,140 +41,10 @@ public :
 };
 
 class Assembler: public AssemblerCommon {
-
 #if !PRODUCT || ENABLE_COMPILER || USE_COMPILER_STRUCTURES
-
-friend class Disassembler;
-friend struct OpcodeInfo;
-
-#if ENABLE_CODE_OPTIMIZER
-  friend class CodeOptimizer;
-#endif
-
-#if !PRODUCT
-private:
-  int current_it_scope_depth;
-public:
-  Assembler() : current_it_scope_depth(0) {
-  }
-#endif // !PRODUCT
-
-protected:
-  void set_in_it_scope(int new_depth) PRODUCT_RETURN;
-  bool is_in_it_scope() PRODUCT_RETURN0;
-  void decrease_current_it_depth() PRODUCT_RETURN;
-
- protected:
-  // The implementation of emit is assembler specific: the source assembler
-  // will disassemble the instruction and emit the corresponding assembly
-  // source code, the binary assembler will emit the binary instruction.
-  //
-  // In product mode, only one implementation (the one for the binary
-  // assembler) exists, and then the call is statically bound. In all
-  // other modes, this is a virtual call so we can have both the text
-  // and binary output with the same build.
-
-  NOT_PRODUCT(virtual) void
-    emit(short instr) NOT_PRODUCT(JVM_PURE_VIRTUAL);
-  NOT_PRODUCT(virtual) void
-    emit_int(int instr) NOT_PRODUCT(JVM_PURE_VIRTUAL);
-  NOT_PRODUCT(virtual) void
-    emit_w(int instr) NOT_PRODUCT(JVM_PURE_VIRTUAL);
-  NOT_PRODUCT(virtual) void
-    emit_2w(short hw1, short hw2) NOT_PRODUCT(JVM_PURE_VIRTUAL);
-
-  // assertion checking
-  static void check_imm(int imm, int size) {
-    GUARANTEE(has_room_for_imm(imm, size),
-              "illegal immediate value");
-  }
-
  public:
-  // can the immediate fit in size bits?
-  static bool has_room_for_imm(int imm, int size) {
-    return (imm & -(1 << size)) == 0;
-  }
-
-  enum {
-    // Max number of method locals (exclusive) that are allowed to use
-    // in-line exception thrower. For example: if a method has 3 local
-    // words:
-    //      cmp r0, #0
-    //      ldreq pc, [r5, #compiler_throw_NullPointerException_3]
-    MAX_INLINE_THROWER_METHOD_LOCALS = 10,
-  };
-
-  enum {
-    ARM_CODE,
-    THUMB_CODE,
-    THUMB2_CODE    = THUMB_CODE,
-    THUMB2EE_CODE,
-  };
-
- protected:
-  enum Opcode {
-    // position and order is relevant!
-    _and, _eor, _lsl, _lsr, _asr, _adc, _sbc, _ror,
-    _tst, _neg, _cmp, _cmn, _orr, _mul, _bic, _mvn,
-    _add, _sub, _mov, _rsb, _rsc,
-    number_of_opcodes
-  };
-
-  static Opcode as_opcode(int encoding) {
-    GUARANTEE(0 <= encoding &&
-              encoding < number_of_opcodes, "illegal opcode");
-    return (Opcode)encoding;
-  }
-
- public:
-  // The Imm12 type is used to force you to call imm12() or modified_imm12(),
-  // instead of calculating the imm12 bits manually (which is error prone)
-  enum Imm12 {
-    invalid_imm12 = 0xffffffff
-  };
-
   enum Register {
-    // position and order is relevant!
-    r0, r1, r2 , r3 , r4 , r5 , r6 , r7 ,
-    r8, r9, r10, r11, r12, r13, r14, r15,
-
-#if ENABLE_ARM_VFP
-    // Single-precision floating point registers.
-    s0,  s1,  s2,  s3,  s4,  s5,  s6,  s7,
-    s8,  s9,  s10, s11, s12, s13, s14, s15,
-    s16, s17, s18, s19, s20, s21, s22, s23,
-    s24, s25, s26, s27, s28, s29, s30, s31,
-#endif
-    number_of_registers,
-
-#if ENABLE_ARM_VFP
-    // Double-precision floating point registers.
-    d0  = s0,
-    d1  = s2,
-    d2  = s4,
-    d3  = s6,
-    d4  = s8,
-    d5  = s10,
-    d6  = s12,
-    d7  = s14,
-    d8  = s16,
-    d9  = s18,
-    d10 = s20,
-    d11 = s22,
-    d12 = s24,
-    d13 = s26,
-    d14 = s28,
-    d15 = s30,
-#endif
-
-    // for platform-independant code
-    return_register = r0,
-    stack_lock_register = r1,
-
-    // for instruction assembly only
-    sbz =  r0,
-    sbo = r15,
-
+#include "../arm/Register_armthumb.hpp"
 #if ENABLE_ARM_V7
     tos_val =  r0,
     tos_tag =  r1,
@@ -223,23 +84,53 @@ protected:
     lr      =  r14,
     pc      =  r15, // FIXED BY HARDWARE
 #endif
+  };
+#include "../arm/AssemblerCommon_armthumb.hpp"
 
-    // set to stack type on method return
-    method_return_type = r2,
+#if !PRODUCT
+private:
+  int current_it_scope_depth;
+public:
+  Assembler() : current_it_scope_depth(0) {
+  }
+#endif // !PRODUCT
 
-#if ENABLE_ARM_VFP
-    last_register             = s31,
-    number_of_float_registers =  32,
-#else
-    last_register             = r15,
-    number_of_float_registers =   0,
-#endif
-    number_of_gp_registers    =  16,
+protected:
+  void set_in_it_scope(int new_depth) PRODUCT_RETURN;
+  bool is_in_it_scope() PRODUCT_RETURN0;
+  void decrease_current_it_depth() PRODUCT_RETURN;
 
-    // for linkage w/ shared code - will probably need to change
-    no_reg                    =  -1,
-    first_register            =  r0,
-    first_allocatable_register=  r0
+ protected:
+  // The implementation of emit is assembler specific: the source assembler
+  // will disassemble the instruction and emit the corresponding assembly
+  // source code, the binary assembler will emit the binary instruction.
+  //
+  // In product mode, only one implementation (the one for the binary
+  // assembler) exists, and then the call is statically bound. In all
+  // other modes, this is a virtual call so we can have both the text
+  // and binary output with the same build.
+
+  NOT_PRODUCT(virtual) void
+    emit(short instr) NOT_PRODUCT(JVM_PURE_VIRTUAL);
+  NOT_PRODUCT(virtual) void
+    emit_int(int instr) NOT_PRODUCT(JVM_PURE_VIRTUAL);
+  NOT_PRODUCT(virtual) void
+    emit_w(int instr) NOT_PRODUCT(JVM_PURE_VIRTUAL);
+  NOT_PRODUCT(virtual) void
+    emit_2w(short hw1, short hw2) NOT_PRODUCT(JVM_PURE_VIRTUAL);
+
+ public:
+  enum {
+    ARM_CODE,
+    THUMB_CODE,
+    THUMB2_CODE    = THUMB_CODE,
+    THUMB2EE_CODE,
+  };
+
+  // The Imm12 type is used to force you to call imm12() or modified_imm12(),
+  // instead of calculating the imm12 bits manually (which is error prone)
+  enum Imm12 {
+    invalid_imm12 = 0xffffffff
   };
 
   enum RegisterSet {
@@ -251,27 +142,6 @@ protected:
     tmp45 = 1 << tmp4   ,
     forceRegisterSet=0x10000000  // force Address4 to be int size
   };
-
-  static Register as_register(const unsigned encoding) {
-    GUARANTEE( encoding < number_of_registers, "illegal register");
-    return Register(encoding);
-  };
-
-#if ENABLE_ARM_VFP
-  static bool is_vfp_register(const Register reg) {
-    return unsigned(reg - s0) < unsigned(number_of_float_registers);
-  }
-
-  static bool is_arm_register(const Register reg) {
-    return unsigned(reg) < unsigned(s0);
-  }
-
-  enum VFPSystemRegister {
-    fpsid = 0,
-    fpscr = 1,
-    fpexc = 8
-  };
-#endif
 
   // addressing mode 2 - load and store word or unsigned byte
   enum Address2 {
@@ -297,16 +167,6 @@ protected:
     return (Address2)(0xD << 8 | U << 9 | offset);
   }
 
-  enum Condition {
-    eq, ne, cs, cc, mi, pl, vs, vc,
-    hi, ls, ge, lt, gt, le, al, nv,
-    number_of_conditions,
-    // alternative names
-    hs = cs,
-    lo = cc,
-    always = al                 // used in generic code
-  };
-
   // Optional parameter for IT instruction
   // to support IT blocks of more than one instruction
   enum ConditionMask {
@@ -327,21 +187,8 @@ protected:
     ELSE_ELSE_ELSE = 0xf
   };
 
-  enum {
-    instruction_alignment = 2,
-  };
-
   static bool is_c_saved_register(Register x) {
     return x >= r4 && x != r12 && x != r14;
-  }
-
-  static Condition as_condition( const unsigned encoding) {
-    GUARANTEE( encoding < number_of_conditions, "illegal condition");
-    return Condition(encoding);
-  }
-
-  static Condition not_cond(const Condition cond) {
-    return Condition(cond ^ 1);
   }
 
   static Imm12 imm12(int value) {
@@ -354,22 +201,11 @@ protected:
     return modified_imm12(seven_bits, ror_count);
   }
 
-  enum Shift {
-   // position and order is relevant!
-   lsl_shift, lsr_shift, asr_shift, ror_shift,
-   number_of_shifts
-  };
-
   enum {
    lsl_shift_1 = 1,
    lsl_shift_2 = 2,
    lsl_shift_3 = 3
   };
-
-  static Shift as_shift(const unsigned encoding) {
-    GUARANTEE( encoding < number_of_shifts, "illegal shift");
-    return Shift(encoding);
-  }
 
   enum Mode {
     offset       = 1 << 24,
