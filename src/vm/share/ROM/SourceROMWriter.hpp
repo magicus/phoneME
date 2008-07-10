@@ -87,9 +87,7 @@ public:
   FileStream  _main_stream;             // used to generate ROMImage.cpp
   FileStream  _reloc_stream;            // used to generate ROMImage.cpp
   FileStream  _kvm_stream;              // used to generate KvmNatives.cpp
-#if ENABLE_JNI
-  FileStream  _jni_stream;              // used to generate JniNatives.cpp
-#endif
+  FileStream  _jni_stream;              // used to generate JniAdapters.cpp
 
 private:
   virtual FileStream* main_stream() {
@@ -308,13 +306,11 @@ public:
   void count(Oop *object, int adjustment);
   void count(class MemCounter& counter, int bytes) PRODUCT_RETURN;
 
-#if ENABLE_JNI
   bool is_jni_native(const Method * method) {
     ObjArray::Raw table = _writer->_optimizer.jni_native_methods_table();
     return is_method_in_table(method, &table);
   }
   void write_jni_method_adapter(Method *method, char *name);
-#endif
 
   bool is_kvm_native(const Method * method) {
     ObjArray::Raw table = _writer->_optimizer.kvm_native_methods_table();

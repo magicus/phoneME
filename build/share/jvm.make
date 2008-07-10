@@ -1899,7 +1899,10 @@ $(GENERATED_ROM_FILE): $(ROM_SEGMENTS)
 $(ROM_SEGMENTS):
 endif
 
-ifeq ($(IsTarget)+$(ENABLE_JNI), true+true)
+# If JNI is enabled, romgen writes KNI-to-JNI wrappers for all JNI native 
+# methods to JniAdapters.cpp. 
+# Otherwise it writes stubs for all JNI native methods to JniAdapters.cpp.
+ifeq ($(IsTarget), true)
 
 JNI_ADAPTERS = JniAdapters.cpp
 JNI_ADAPTERS_OBJ = JniAdapters$(OBJ_SUFFIX)

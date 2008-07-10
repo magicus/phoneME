@@ -61,15 +61,15 @@ const JvmPathChar FilePath::rom_reloc_file[] = {
   'R','O','M','_','r','e','l','o','c','.','t','m','p', 0 // 0-terminated
 };
 
-#if ENABLE_JNI
+#if USE_SOURCE_IMAGE_GENERATOR
 const JvmPathChar FilePath::rom_jni_adapters_file[] = {
   'J','n','i','A','d','a','p','t','e','r','s','.','c','p','p', 0 // 0-terminated
 };
-#endif
 
 const JvmPathChar FilePath::rom_kvm_natives_file[] = {
   'K','v','m','N','a','t','i','v','e','s','.','c','p','p', 0 // 0-terminated
 };
+#endif
 
 #if ENABLE_SEGMENTED_ROM_TEXT_BLOCK
 JvmPathChar FilePath::rom_image_generated_file[] = {

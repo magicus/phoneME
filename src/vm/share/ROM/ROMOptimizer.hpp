@@ -375,14 +375,12 @@ private:
   void enable_quick_natives(char* pattern JVM_TRAPS);
   void write_quick_natives_log();
 
-#if ENABLE_JNI
   void enable_jni_natives(char* pattern JVM_TRAPS);
   void write_jni_natives_log();
   void update_jni_natives_table(JVM_SINGLE_ARG_TRAPS) {
     *jni_native_methods_table() = build_method_table(_jni_natives_log 
                                                      JVM_NO_CHECK_AT_BOTTOM);
   }
-#endif
 
   void enable_kvm_natives(char* pattern JVM_TRAPS);
   void write_kvm_natives_log();

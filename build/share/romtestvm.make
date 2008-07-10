@@ -123,15 +123,10 @@ OBJS                 = ../../target/$(BUILD)/jvmspi$(OBJ_SUFFIX) \
                        NativesTable$(OBJ_SUFFIX) \
                        InternalNatives$(OBJ_SUFFIX) \
                        JniNatives$(OBJ_SUFFIX)  \
+                       JniAdapters$(OBJ_SUFFIX) \
                        KniNatives$(OBJ_SUFFIX) \
                        SniNatives$(OBJ_SUFFIX) \
                        IsolateTestNatives$(OBJ_SUFFIX)
-
-ifeq ($(ENABLE_JNI), true)
-
-  OBJS += JniAdapters$(OBJ_SUFFIX)
-
-endif
 
 SNI_OBJS             = $(OBJS) \
                        ../../target/$(BUILD)/Main_$(os_family)$(OBJ_SUFFIX) \
@@ -202,8 +197,9 @@ NativesTable$(OBJ_SUFFIX): ../NativesTable.cpp
 	@echo compiling $< ...
 	@$(CPP) $(CPP_FLAGS) $(CPP_OPT_FLAGS) -c $< -o $@
 
-ifeq ($(ENABLE_JNI), true)
-
+# If JNI is enabled, romgen writes KNI-to-JNI wrappers for all JNI native 
+# methods to JniAdapters.cpp. 
+# Otherwise it writes stubs for all JNI native methods to JniAdapters.cpp.
 JniAdapters$(OBJ_SUFFIX): ../JniAdapters.cpp
 	@echo compiling $< ...
 	@$(CPP) $(CPP_FLAGS) $(CPP_OPT_FLAGS) -c $< -o $@
@@ -212,8 +208,6 @@ JniAdapters$(OBJ_SUFFIX): ../JniAdapters.cpp
 JniAdapters$(OBJ_SUFFIX): ../ROMImage.cpp
 ../ROMImage.cpp: ../JniAdapters.cpp
 ../JniAdapters.cpp:
-
-endif
 
 InternalNatives$(OBJ_SUFFIX): $(TEST_SRC_DIR)/natives/InternalNatives.cpp
 	@echo compiling $< ...

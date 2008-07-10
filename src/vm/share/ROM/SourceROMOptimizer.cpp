@@ -203,14 +203,10 @@ void ROMOptimizer::read_config_file(JVM_SINGLE_ARG_TRAPS) {
   write_disable_compilation_log();
   write_quick_natives_log();
   write_kvm_natives_log();
-#if ENABLE_JNI
   write_jni_natives_log();
 #endif
-#endif
 
-#if ENABLE_JNI
   update_jni_natives_table(JVM_SINGLE_ARG_CHECK);
-#endif
 
 #if ENABLE_KVM_COMPAT
   update_kvm_natives_table(JVM_SINGLE_ARG_CHECK);
@@ -476,9 +472,7 @@ void ROMOptimizer::process_config_line(char * s JVM_TRAPS) {
 #endif
     }
     else if (jvm_strcmp(name, "JniNative") == 0) {
-#if ENABLE_JNI
       enable_jni_natives(value JVM_CHECK);
-#endif
     }
 
     else {
@@ -1051,8 +1045,6 @@ ReturnOop ROMOptimizer::build_method_table(const ROMVector * methods
   return table;
 }
 
-#if ENABLE_JNI
-
 class JniNativesMatcher : public JavaClassPatternMatcher {
   ROMVector *_log_vector;
 public:
@@ -1092,8 +1084,6 @@ void ROMOptimizer::write_jni_natives_log() {
   }
 #endif
 }
-
-#endif // ENABLE_JNI
 
 // In MIDP there are a large number of non-public static final int fields.
 // These fields are usually in-lined by javac into bipush bytecodes, so

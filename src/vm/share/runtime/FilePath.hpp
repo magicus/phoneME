@@ -52,10 +52,10 @@ public:
   static const JvmPathChar rom_optimizer_file[];
   static const JvmPathChar rom_summary_file[];
   static const JvmPathChar rom_reloc_file[];
-#if ENABLE_JNI
+#if USE_SOURCE_IMAGE_GENERATOR
   static const JvmPathChar rom_jni_adapters_file[];  
-#endif
   static const JvmPathChar rom_kvm_natives_file[];  
+#endif
 
 #if ENABLE_SEGMENTED_ROM_TEXT_BLOCK
   static JvmPathChar rom_image_generated_file[];
