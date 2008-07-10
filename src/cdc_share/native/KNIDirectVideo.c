@@ -182,18 +182,6 @@ KNIDECL(com_sun_mmedia_DirectVideo_nSetVisible) {
     KNI_ReturnBoolean(returnValue);
 }
 
-/*  private native int nGetScreenHeight ( ) ; */
-KNIEXPORT KNI_RETURNTYPE_INT
-KNIDECL(com_sun_mmedia_DirectVideo_nGetScreenHeight) {
-    KNI_ReturnInt(0/* FIXME: shoud be: lcdlf_get_screen_height()*/);
-}
-
-/*  private native int nGetScreenWidth ( ) ; */
-KNIEXPORT KNI_RETURNTYPE_INT
-KNIDECL(com_sun_mmedia_DirectVideo_nGetScreenWidth) {
-    KNI_ReturnInt(0/* FIXME: shoud be: lcdlf_get_screen_width()*/);
-}
-
 /*  private native int nSetAlpha (boolean on, int color) ; */
 KNIEXPORT KNI_RETURNTYPE_INT
 KNIDECL(com_sun_mmedia_DirectVideo_nSetAlpha) {

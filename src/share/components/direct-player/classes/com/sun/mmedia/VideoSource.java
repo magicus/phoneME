@@ -23,4 +23,9 @@
  * information or have any questions.
  */
  
+package com.sun.mmedia;
 
+interface VideoSource 
+{
+    
+}

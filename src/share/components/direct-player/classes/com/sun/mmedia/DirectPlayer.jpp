@@ -60,9 +60,9 @@ import com.sun.mmedia.DirectRecord;
  * Media direct player base class
  * This class depends on native library to handle media data
  */ 
-public class DirectPlayer extends BasicPlayer 
+public class DirectPlayer extends BasicPlayer implements VideoSource 
 // #ifdef ENABLE_MULTIPLE_ISOLATES [
-    implements MediaEventConsumer
+    , MediaEventConsumer
 // #endif ]
 {
     // #ifdef ENABLE_DEBUG [

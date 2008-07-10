@@ -42,11 +42,12 @@ import com.sun.j2me.log.Logging;
 import com.sun.j2me.log.LogChannels;
 
 /**
- * Video direct player
- * it implements VideoControl
+ * Common MIDP/LCDUI-based Video Control
+ * it implements VideoControl for DirectPlayer.
  */
-public class DirectVideo extends DirectPlayer implements 
-    VideoControl, MIDPVideoPainter {
+class DirectVideo implements VideoControl, MIDPVideoPainter {
+
+    private VideoSource source;
 
 /* Need to revisit: these can swap when device screen orientation changes,
  * so they cannot be final 
@@ -108,16 +109,20 @@ public class DirectVideo extends DirectPlayer implements
     protected native boolean nSetFullScreenMode(int handle, boolean fullscreen);
     // Set visible
     protected native boolean nSetVisible(int handle, boolean visible);
-    // Get screen full width
-    private native int nGetScreenWidth();
-    // Get screen full height
-    private native int nGetScreenHeight();
     // Turn on or off alpha channel
     private native int nSetAlpha(int handle, boolean on, int color);
     
     // member functions /////////////////////////////////////////////
 
-    public DirectVideo() {
+    // this is to suppress the default package-private empty constructor
+    private DirectVideo() {}
+    
+    // the only possible way to instantiate this class
+    DirectVideo( VideoSource src, int width, int height )
+    {
+        source  = src;
+        sw      = width;
+        sh      = height;
     }
     
     /**
