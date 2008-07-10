@@ -85,9 +85,7 @@ javacall_dom_mousewheelevent_get_wheel_delta(javacall_handle handle,
  *   method for a description of this parameter. 
  * @param cancelable_arg  Refer to the <code>Event.initEventNS()</code> 
  *   method for a description of this parameter. 
- * @param viewArg  Refer to the <code>UIEvent.initUIEvent()</code> method 
- *   for a description of this parameter. 
- * @param detailArg  Refer to the <code>UIEvent.initUIEvent()</code> 
+ * @param detail_arg  Refer to the <code>UIEvent.initUIEvent()</code> 
  *   method for a description of this parameter.
  * @param screen_x_arg Refer to the <code>MouseEvent.initMouseEventNS()</code>
  *   method for a description of this parameter.
@@ -118,6 +116,7 @@ javacall_dom_mousewheelevent_init_mouse_wheel_event_ns(javacall_handle handle,
                                                        javacall_const_utf16_string type_arg,
                                                        javacall_bool can_bubble_arg,
                                                        javacall_bool cancelable_arg,
+                                                       javacall_int32 detail_arg,
                                                        javacall_int32 screen_x_arg,
                                                        javacall_int32 screen_y_arg,
                                                        javacall_int32 client_x_arg,

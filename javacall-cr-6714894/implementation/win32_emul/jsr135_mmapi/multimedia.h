@@ -359,6 +359,7 @@ typedef struct {
 #ifdef ENABLE_EXTRA_CAMERA_CONTROLS
     void *              pExtraCC;
 #endif //ENABLE_EXTRA_CAMERA_CONTROLS
+    void *              mutex;
 
 } audio_handle;
 
