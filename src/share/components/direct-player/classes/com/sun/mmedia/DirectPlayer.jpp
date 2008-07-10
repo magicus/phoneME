@@ -822,6 +822,40 @@ public class DirectPlayer extends BasicPlayer implements VideoSource
         return getContentType().startsWith( "video" );
     }
     
+    // -------------------------------------------------
+    // The interface VideoSource method implementations
+    // -------------------------------------------------
+
+    // Set display location of video
+    public boolean setVideoLocation(int x, int y, int w, int h)
+    {
+        return nSetLocation( hNative, x, y, w, h );
+    }
+    
+    // Get snapshot
+    public byte[] getVideoSnapshot(String imageType)
+    {
+        return nSnapShot( hNative, imageType );
+    }
+    
+    // Set fullscreen
+    public boolean setVideoFullScreen( boolean fullscreen)
+    {
+        return nSetFullScreenMode( hNative, fullscreen );
+    }
+    
+    // Set visible
+    public boolean setVideoVisible( boolean visible)
+    {
+        return nSetVisible( hNative, visible );
+    }
+    
+    // Turn on or off alpha channel
+    public int setVideoAlpha(boolean on, int color)
+    {
+        return nSetAlpha( hNative, on, color );
+    }
+
     // #ifndef ABB [
     /**
      * Inner class that support StopTimeControl
