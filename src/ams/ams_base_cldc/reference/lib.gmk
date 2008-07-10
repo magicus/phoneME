@@ -61,7 +61,7 @@ MIDP_JAVADOC_SOURCEPATH += $(AMS_BASE_CLDC_IMPL_DIR)/classes
 # vpath for sub-system
 #
 vpath % \
-    $(AMS_BASE_CLDC_DIR)/native
+    $(AMS_BASE_CLDC_IMPL_DIR)/native
 
 SUBSYSTEM_AMS_NATIVE_FILES += \
     exitInternal.c \
