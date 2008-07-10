@@ -41,4 +41,8 @@ interface VideoSource
     
     // Turn on or off alpha channel
     int setVideoAlpha(boolean on, int color);
+    
+    // Notifies that the Display Size was changed
+    void notifyDisplaySizeChange();
+    
 }

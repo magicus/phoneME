@@ -94,6 +94,10 @@ class DirectVideo implements VideoControl, MIDPVideoPainter {
     private MMHelper mmh = null;
     // Lock
     private Object boundLock = new Object();
+    
+    private static boolean debug = true;
+    
+    String sourceLocator;
 
     // member functions /////////////////////////////////////////////
 
@@ -101,7 +105,7 @@ class DirectVideo implements VideoControl, MIDPVideoPainter {
     private DirectVideo() {}
     
     // the only possible way to instantiate this class
-    DirectVideo( VideoSource src, int width, int height )
+    DirectVideo( VideoSource src, int width, int height, String locator )
     {
         source  = src;
         sw      = width;
@@ -111,6 +115,8 @@ class DirectVideo implements VideoControl, MIDPVideoPainter {
         else dw = sw;
         if (sh <= 0) dh = DEFAULT_HEIGHT;
         else dh = sh;
+        
+        sourceLocator = locator;
     }
     
     /**
@@ -379,7 +385,7 @@ class DirectVideo implements VideoControl, MIDPVideoPainter {
         repaint();
 
         if (sizeChanged) {
-            sendEvent(PlayerListener.SIZE_CHANGED, this);
+            source.notifyDisplaySizeChange();
         }
     }
     
@@ -472,7 +478,7 @@ class DirectVideo implements VideoControl, MIDPVideoPainter {
      */
     public void checkSnapshotPermission() {
         try {
-            PermissionAccessor.checkPermissions( getLocator(), PermissionAccessor.PERMISSION_SNAPSHOT );
+            PermissionAccessor.checkPermissions( sourceLocator, PermissionAccessor.PERMISSION_SNAPSHOT );
         } catch( InterruptedException e ) {
             throw new SecurityException( "Interrupted while trying to ask the user permission" );
         }

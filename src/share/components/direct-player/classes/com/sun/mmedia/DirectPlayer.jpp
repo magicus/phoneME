@@ -285,8 +285,8 @@ public class DirectPlayer extends BasicPlayer implements VideoSource
         
         if( isVideoPlayer() )
         {
-            videoControl = new DirectVideo( this, 
-                    nGetWidth( hNative ), nGetHeight( hNative ) );
+            videoControl = new DirectVideo( this, nGetWidth( hNative ), 
+                                         nGetHeight( hNative ), getLocator() );
         }
         
     }
@@ -856,6 +856,12 @@ public class DirectPlayer extends BasicPlayer implements VideoSource
         return nSetAlpha( hNative, on, color );
     }
 
+    // Notifies that the Display Size was changed
+    public void notifyDisplaySizeChange()
+    {
+        sendEvent(PlayerListener.SIZE_CHANGED, videoControl);
+    }
+    
     // #ifndef ABB [
     /**
      * Inner class that support StopTimeControl
