@@ -60,6 +60,15 @@ typedef unsigned long uint32_t;
 #endif
 #endif /* LINUX */
 
+#ifdef DARWIN
+#ifndef       _UINT64_T
+#define       _UINT64_T
+typedef unsigned long long uint64_t;
+#define _UINT32_T
+typedef unsigned long uint32_t;
+#endif
+#endif /* DARWIN */
+
 #ifdef WIN32
 typedef __int64 int64_t;
 typedef unsigned __int64 uint64_t;
@@ -141,6 +150,11 @@ extern void ll2str(int64_t a, char *s, char *limit);
 
 #ifdef LINUX
 #include <asm/byteorder.h>
+#endif
+
+#ifdef DARWIN
+#include <sys/_endian.h>
+typedef uint32_t uint_t;
 #endif
 
 #ifdef WIN32
