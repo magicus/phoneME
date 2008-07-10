@@ -32,15 +32,6 @@
 # other def. (like VPATH)
 ############################################################
 
-# vpath for sub-system
-#
-vpath % \
-    $(AMS_BASE_CLDC_DIR)/native
-
-# Include path for the sub-system
-#
-SUBSYSTEM_AMS_EXTRA_INCLUDES += \
-    -I$(SUBSYSTEM_AMS_DIR)/ams_base_cldc/include
 
 SUBSYSTEM_AMS_JAVA_FILES += \
     $(AMS_BASE_CLDC_IMPL_DIR)/classes/com/sun/midp/main/CldcAccessControlContext.java \
@@ -63,6 +54,14 @@ SUBSYSTEM_AMS_JAVA_FILES += \
     $(AMS_BASE_CLDC_IMPL_DIR)/classes/com/sun/midp/main/MIDletProxyListListener.java \
     $(AMS_BASE_CLDC_IMPL_DIR)/classes/com/sun/midp/main/MIDletSuiteLoader.java \
     $(AMS_BASE_CLDC_IMPL_DIR)/classes/com/sun/midp/main/MIDletSuiteUtils.java
+
+# Javadoc source path
+MIDP_JAVADOC_SOURCEPATH += $(AMS_BASE_CLDC_IMPL_DIR)/classes
+
+# vpath for sub-system
+#
+vpath % \
+    $(AMS_BASE_CLDC_DIR)/native
 
 SUBSYSTEM_AMS_NATIVE_FILES += \
     exitInternal.c \

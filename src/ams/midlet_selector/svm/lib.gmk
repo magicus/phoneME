@@ -32,12 +32,10 @@
 # other def. (like VPATH)
 ############################################################
 
-# Javadoc source path
-MIDP_JAVADOC_SOURCEPATH += $(MIDLET_SELECTOR_DIR)/svm/classes
-
 # Java files for the sub-system
 #
 SUBSYSTEM_AMS_JAVA_FILES += \
     $(MIDLET_SELECTOR_DIR)/svm/classes/com/sun/midp/appmanager/Selector.java
 
-
+# Javadoc source path
+MIDP_JAVADOC_SOURCEPATH += $(MIDLET_SELECTOR_IMPL_DIR)/svm/classes

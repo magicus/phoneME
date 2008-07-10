@@ -45,6 +45,5 @@ AUTOTESTER_BASE_IMPL_DIR ?= $(AUTOTESTER_BASE_DIR)/reference
 # Get implementation settings and files
 include $(AUTOTESTER_BASE_IMPL_DIR)/lib.gmk
 
-# Javadoc source path
-MIDP_JAVADOC_SOURCEPATH += $(AUTOTESTER_BASE_IMPL_DIR)/classes
+
 

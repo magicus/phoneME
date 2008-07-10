@@ -39,15 +39,13 @@ SUBSYSTEM_AMS_JAVA_FILES += \
     $(AMS_BASE_IMPL_DIR)/classes/com/sun/midp/main/AbstractMIDletSuiteLoader.java \
     $(AMS_BASE_IMPL_DIR)/classes/com/sun/midp/main/TrustedMIDletIcon.java
 
+# Javadoc source path
+MIDP_JAVADOC_SOURCEPATH += $(AMS_BASE_IMPL_DIR)/classes
+
 # vpath for sub-system
 #
 vpath % \
-    $(AMS_BASE_DIR)/native
-
-# Include path for the sub-system
-#
-SUBSYSTEM_AMS_EXTRA_INCLUDES += \
-    -I$(SUBSYSTEM_AMS_DIR)/ams_base/include
+    $(AMS_BASE_IMPL_DIR)/native
 
 # Native files for common module
 #

@@ -29,15 +29,16 @@
 SUBSYSTEM_AMS_JAVA_FILES += \
     $(APP_IMAGE_GEN_IMPL_DIR)/classes/com/sun/midp/main/MIDletAppImageGenerator.java
 
+# JavaDoc source path
+MIDP_JAVADOC_SOURCEPATH += $(APP_IMAGE_GEN_IMPL_DIR)/classes
+
 ifeq ($(TARGET_VM), cldc_vm)
 
-# vpath for sub-system
-#
-vpath % \
-    $(APP_IMAGE_GEN_DIR)/native
+    # vpath for sub-system
+    vpath % \
+        $(APP_IMAGE_GEN_IMPL_DIR)/native
 
-# Native files for the sub-system
-#
-SUBSYSTEM_AMS_NATIVE_FILES += \
-    midpMidletAppImageGenerator.c
+    # Native files for the sub-system
+    SUBSYSTEM_AMS_NATIVE_FILES += \
+        midpMidletAppImageGenerator.c
 endif

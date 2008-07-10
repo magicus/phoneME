@@ -34,10 +34,10 @@
 
 
 # Javadoc source path
-MIDP_JAVADOC_SOURCEPATH += $(MIDLET_SELECTOR_BASE_DIR)/reference/classes
+MIDP_JAVADOC_SOURCEPATH += $(MIDLET_SELECTOR_BASE_IMPL_DIR)/classes
 
 # Java files for the sub-system
 #
 SUBSYSTEM_AMS_JAVA_FILES += \
-    $(MIDLET_SELECTOR_BASE_DIR)/reference/classes/com/sun/midp/appmanager/SelectorBase.java
+    $(MIDLET_SELECTOR_BASE_IMPL_DIR)/classes/com/sun/midp/appmanager/SelectorBase.java
 

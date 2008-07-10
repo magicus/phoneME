@@ -45,3 +45,6 @@ SUBSYSTEM_AMS_JAVA_FILES += \
     $(INSTALLER_IMPL_DIR)/classes/com/sun/midp/installer/JadProperties.java \
     $(INSTALLER_IMPL_DIR)/classes/com/sun/midp/installer/ManifestProperties.java \
     $(INSTALLER_IMPL_DIR)/classes/com/sun/midp/installer/SuiteDownloadInfo.java
+
+# Javadoc source path
+MIDP_JAVADOC_SOURCEPATH += $(INSTALLER_IMPL_DIR)/classes

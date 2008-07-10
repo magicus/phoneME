@@ -36,12 +36,7 @@
 # vpath for sub-system
 #
 vpath % \
-    $(NAMS_JAVACALL_DIR)/native
-
-# Include path for the sub-system
-#
-SUBSYSTEM_AMS_EXTRA_INCLUDES += \
-    -I$(NAMS_JAVACALL_DIR)/../include
+    $(NAMS_JAVACALL_IMPL_DIR)/native
 
 # Native files for common module
 #

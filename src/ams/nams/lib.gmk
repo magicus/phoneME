@@ -47,7 +47,7 @@ NAMS_IMPL_DIR ?= $(NAMS_DIR)/reference
 # Static Include path for the header file
 # To make sure all implementations use it
 SUBSYSTEM_AMS_EXTRA_INCLUDES += \
-    -I$(SUBSYSTEM_AMS_DIR)/$(NAMS_NAME)/include
+    -I$(NAMS_DIR)/include
 
 # Get implementation settings and files
 include $(NAMS_IMPL_DIR)/lib.gmk

@@ -52,3 +52,6 @@ SUBSYSTEM_AMS_JAVA_FILES += \
     $(AMS_API_IMPL_DIR)/classes/com/sun/midp/midlet/MIDletTunnel.java \
     $(AMS_API_IMPL_DIR)/classes/com/sun/midp/midlet/PlatformRequest.java \
     $(AMS_API_IMPL_DIR)/classes/com/sun/midp/midlet/Scheduler.java
+
+# Javadoc source path
+MIDP_JAVADOC_SOURCEPATH += $(AMS_API_IMPL_DIR)/classes

@@ -44,7 +44,7 @@ SUBSYSTEM_AMS_JAVA_FILES += \
 # vpath for sub-system
 #
 vpath % \
-    $(NAMS_DIR)/native
+    $(NAMS_IMPL_DIR)/native
 
 # Native files for common module
 #

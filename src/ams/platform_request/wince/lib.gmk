@@ -33,3 +33,5 @@
 #
 SUBSYSTEM_AMS_NATIVE_FILES += \
         midp_platform_request_md.c
+
+vpath % $(AMS_PLATFORM_REQUEST_IMPL_DIR)/native

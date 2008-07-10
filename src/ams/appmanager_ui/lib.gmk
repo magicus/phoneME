@@ -43,7 +43,6 @@ AMS_APPMANAGER_UI_IMPL_DIR ?= $(AMS_APPMANAGER_UI_DIR)/reference
 # Get implementation settings and files
 include $(AMS_APPMANAGER_UI_IMPL_DIR)/lib.gmk
 
-# Javadoc source path
-MIDP_JAVADOC_SOURCEPATH += $(AMS_APPMANAGER_UI_IMPL_DIR)/classes
+
 
 

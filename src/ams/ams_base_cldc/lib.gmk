@@ -40,11 +40,15 @@ AMS_BASE_CLDC_NAME = ams_base_cldc
 AMS_BASE_CLDC_DIR = $(SUBSYSTEM_AMS_DIR)/$(AMS_BASE_CLDC_NAME)
 AMS_BASE_CLDC_IMPL_DIR ?= $(AMS_BASE_CLDC_DIR)/reference
 
+# Include path for the sub-system
+#
+SUBSYSTEM_AMS_EXTRA_INCLUDES += \
+    -I$(AMS_BASE_CLDC_DIR)/include
+
 # Get implementation settings and files
 include $(AMS_BASE_CLDC_IMPL_DIR)/lib.gmk
 
-# Javadoc source path
-MIDP_JAVADOC_SOURCEPATH += $(AMS_BASE_CLDC_IMPL_DIR)/classes
+
 
 
 

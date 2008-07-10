@@ -43,6 +43,5 @@ INSTALLER_IMPL_DIR ?= $(INSTALLER_DIR)/reference
 # Get implementation settings and files
 include $(INSTALLER_IMPL_DIR)/lib.gmk
 
-# Javadoc source path
-MIDP_JAVADOC_SOURCEPATH += $(INSTALLER_IMPL_DIR)/classes
+
 

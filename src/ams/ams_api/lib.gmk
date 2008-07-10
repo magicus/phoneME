@@ -40,8 +40,5 @@
 AMS_API_DIR = $(SUBSYSTEM_AMS_DIR)/ams_api
 AMS_API_IMPL_DIR ?= $(AMS_API_DIR)/reference
 
-# Javadoc source path
-MIDP_JAVADOC_SOURCEPATH += $(AMS_API_IMPL_DIR)/classes
-
 # Get implementation settings and files
 include $(AMS_API_IMPL_DIR)/lib.gmk

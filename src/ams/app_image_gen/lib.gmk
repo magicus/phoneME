@@ -43,6 +43,5 @@ APP_IMAGE_GEN_IMPL_DIR ?= $(APP_IMAGE_GEN_DIR)/reference
 include $(APP_IMAGE_GEN_IMPL_DIR)/lib.gmk
 
 
-# JavaDoc source path
-MIDP_JAVADOC_SOURCEPATH += $(APP_IMAGE_GEN_IMPL_DIR)/classes
+
 
