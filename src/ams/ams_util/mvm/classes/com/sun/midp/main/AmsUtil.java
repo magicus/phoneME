@@ -36,6 +36,10 @@ import com.sun.midp.configurator.Constants;
 
 import com.sun.midp.log.Logging;
 
+import java.util.Enumeration;
+
+import java.util.Vector;
+
 /**
  * Implements utilities that are different for SVM and MVM modes.
  * Utilities to start a MIDlet in a suite. If not the called from the
@@ -249,7 +253,7 @@ public class AmsUtil {
         String isolateClassPath = System.getProperty("classpathext");
         String[] classpathext = null;
         if (isolateClassPath != null) {
-            classpathext = new String[] {isolateClassPath};
+            classpathext = parseClassPath(isolateClassPath);
         }
 
         try {
@@ -359,5 +363,54 @@ public class AmsUtil {
         if (isolate != null) {
             isolate.exit(0);
         }
+    }
+
+    /**
+     * Delimiter used in class path.
+     */
+    private static final int DELIMITER_WIN = ';';
+    private static final int DELIMITER_UNIX = ':';
+
+    /**
+     * Parse classpath according to DELIMITER to an array.
+     * @param classpathext classpath in raw string
+     * @return array of classpath elements
+     */
+    public static String[] parseClassPath(String classpathext) {
+        Vector v = new Vector();
+        int old = 0;
+        int len = classpathext.length();
+        char c;
+        for(int i = 0; i < len; i++) {
+            c = classpathext.charAt(i);
+            if (c ==  DELIMITER_WIN) {
+                if (old < i) {
+                    v.addElement(classpathext.substring(old, i));
+                }
+                old = i + 1;
+            }
+            if (c == DELIMITER_UNIX) {
+                if (i != len) {
+                    //ignore win dir name for example "c:\"
+                    c = classpathext.charAt(i+1);
+                    if (c != '\\') {
+                        if (old < i) {
+                            v.addElement(classpathext.substring(old, i));
+                        }
+                    old = i + 1;
+                    } 
+                }
+            }
+        }
+        if (old < len) {
+            v.addElement(classpathext.substring(old, len));
+        }
+        String[] classpath = new String[v.size()];
+        int i = 0;
+        for(Enumeration e = v.elements(); e.hasMoreElements() ; i++) {
+            classpath[i] = (String) e.nextElement();
+        }
+        v = null;
+        return classpath;
     }
 }
