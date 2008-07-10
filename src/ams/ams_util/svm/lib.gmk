@@ -54,5 +54,6 @@ SUBSYSTEM_AMS_JAVA_FILES += \
 # Native files for the library
 #
 vpath % $(AMS_UTIL_SVM_DIR)/native
+
 SUBSYSTEM_AMS_NATIVE_FILES += \
     MIDletProxyUtils.c
