@@ -84,38 +84,33 @@ ifndef SUBSYSTEM_AMS_COMPONENTS
         $(SUBSYSTEM_AMS_DIR)/ams_folders/lib.gmk \
         $(SUBSYSTEM_AMS_DIR)/ams_debug/lib.gmk \
 
-    ifeq ($(USE_ON_DEVICE_DEBUG), true)
-        SUBSYSTEM_AMS_COMPONENTS += $(PROJECT_MIDP_DIR)/src/ams/on_device_debug_base/lib.gmk \
-            $(PROJECT_MIDP_DIR)/src/ams/on_device_debug/lib.gmk
-    else
-        SUBSYSTEM_AMS_COMPONENTS += $(SUBSYSTEM_AMS_DIR)/on_device_debug_stubs/lib.gmk
-    endif
+## On device debugging
+        ifeq ($(USE_ON_DEVICE_DEBUG), true)
+            SUBSYSTEM_AMS_COMPONENTS += $(PROJECT_MIDP_DIR)/src/ams/on_device_debug_base/lib.gmk \
+                $(PROJECT_MIDP_DIR)/src/ams/on_device_debug/lib.gmk
+        else
+            SUBSYSTEM_AMS_COMPONENTS += $(SUBSYSTEM_AMS_DIR)/on_device_debug_stubs/lib.gmk
+        endif
 
+# nams/jams    
     ifeq ($(USE_NATIVE_AMS), false)
         SUBSYSTEM_AMS_COMPONENTS += $(SUBSYSTEM_AMS_DIR)/appmanager_ui_resources/lib.gmk \
             $(SUBSYSTEM_AMS_DIR)/appmanager_ui/lib.gmk
-    else    
+    else
         ifeq ($(TARGET_PLATFORM), javacall)
             SUBSYSTEM_AMS_COMPONENTS += $(SUBSYSTEM_AMS_DIR)/nams_javacall/lib.gmk
         endif    
     endif
 
-# Add VM mode specific common files
+     # Add VM mode specific common files
     ifeq ($(USE_MULTIPLE_ISOLATES), true)
         SUBSYSTEM_AMS_COMPONENTS += $(SUBSYSTEM_AMS_DIR)/mvm/lib.gmk
     endif
-# Examples
-    ifneq ($(TARGET_PLATFORM), stubs)
-         SUBSYSTEM_AMS_COMPONENTS += $(SUBSYSTEM_AMS_DIR)/example/subsystem.gmk
-    else
-        ifeq ($(SUBSYSTEM_AMS_MODULES), jams)
-            SUBSYSTEM_AMS_COMPONENTS += $(SUBSYSTEM_AMS_DIR)/example/subsystem.gmk
-        endif
-    endif
-#
+
+# END of ifndef SUBSYSTEM_AMS_COMPONENTS 
 endif
 
-# Add more subsystem/libraries if supplied
+#Add more subsystem/libraries if supplied
 # Used to extend the default components list
 SUBSYSTEM_AMS_COMPONENTS += $(AMS_ADDITIONAL_COMPONENTS)
 
@@ -126,5 +121,12 @@ include $(SUBSYSTEM_AMS_COMPONENTS)
 SUBSYSTEM_AMS_LAZY_MAKEFILES += $(SUBSYSTEM_AMS_DIR)/objlib.gmk
 include $(SUBSYSTEM_AMS_DIR)/$(SUBSYSTEM_AMS_MODULES)/lib.gmk
 
-
+# Examples
+ifneq ($(TARGET_PLATFORM), stubs)
+include $(SUBSYSTEM_AMS_DIR)/example/subsystem.gmk
+else
+ifeq ($(SUBSYSTEM_AMS_MODULES), jams)
+include $(SUBSYSTEM_AMS_DIR)/example/subsystem.gmk
+endif
+endif
 
