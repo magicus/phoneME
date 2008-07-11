@@ -134,12 +134,16 @@ public class DirectCamera extends BasicPlayer implements VideoSource
     }
 
     protected long doSetMediaTime(long now) throws MediaException {
+        throw new MediaException( 
+                "Impossible to set media time for video capture" );
     }
 
     protected long doGetMediaTime() {
+        return TIME_UNKNOWN;
     }
 
     protected long doGetDuration() {
+        return TIME_UNKNOWN;
     }
 
     public boolean setVideoLocation(int x, int y, int w, int h) {
