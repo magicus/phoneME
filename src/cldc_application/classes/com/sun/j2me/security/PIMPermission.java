@@ -35,9 +35,9 @@ public class PIMPermission extends Permission {
     static String LIST_TYPE_EVENT   = "javax.microedition.pim.EventList.";
     static String LIST_TYPE_TODO    = "javax.microedition.pim.ToDoList.";
 
-    static String PIM_CONTACTS = "PIM contacts.";
-    static String PIM_EVENTS   = "PIM events.";
-    static String PIM_TODO     = "PIM 'to do' items.";
+    static String PIM_CONTACTS = "PIM contact list";
+    static String PIM_EVENTS   = "PIM event list";
+    static String PIM_TODO     = "PIM to-do list";
     
     static public PIMPermission CONTACT_READ =
         new PIMPermission(LIST_TYPE_CONTACT + LIST_ACCESS_READ, PIM_CONTACTS,
