@@ -27,7 +27,7 @@ package com.sun.mmedia;
 import javax.microedition.media.Control;
 import javax.microedition.media.MediaException;
 
-public class DirectCamera extends DirectPlayer 
+public class DirectCamera extends DirectVideo 
 {
     private Control _cameraControl;
     private Control _exposureControl;

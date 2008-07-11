@@ -301,7 +301,7 @@ public class PlayerImpl implements Player {
         className = Configuration.getConfiguration().getHandler(type);
         if (className == null) {
             if (DirectPlayer.nIsVideoControlSupported(hNative)) {
-                className = "com.sun.mmedia.DirectPlayer";
+                className = "com.sun.mmedia.DirectVideo";
             } else if (DirectPlayer.nIsToneControlSupported(hNative)) {
                 className = "com.sun.mmedia.DirectTone";
             } else if (DirectPlayer.nIsMIDIControlSupported(hNative)) {

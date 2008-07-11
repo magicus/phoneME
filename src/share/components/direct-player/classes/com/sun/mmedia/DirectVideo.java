@@ -42,12 +42,11 @@ import com.sun.j2me.log.Logging;
 import com.sun.j2me.log.LogChannels;
 
 /**
- * Common MIDP/LCDUI-based Video Control
- * it implements VideoControl for DirectPlayer.
+ * Video direct player
+ * it implements VideoControl
  */
-class DirectVideo implements VideoControl, MIDPVideoPainter {
-
-    private VideoSource source;
+public class DirectVideo extends DirectPlayer implements 
+    VideoControl, MIDPVideoPainter {
 
 /* Need to revisit: these can swap when device screen orientation changes,
  * so they cannot be final 
@@ -94,25 +93,31 @@ class DirectVideo implements VideoControl, MIDPVideoPainter {
     private MMHelper mmh = null;
     // Lock
     private Object boundLock = new Object();
-    
-    private static boolean debug = true;
+
+    // native functions /////////////////////////////////////////////
+
+    // Get video width
+    protected native int nGetWidth(int handle);
+    // Get video height
+    protected native int nGetHeight(int handle);
+    // Set display location of video
+    protected native boolean nSetLocation(int handle, int x, int y, int w, int h);
+    // Get snapshot
+    protected native byte[] nSnapShot(int handle, String imageType);
+    // Set fullscreen
+    protected native boolean nSetFullScreenMode(int handle, boolean fullscreen);
+    // Set visible
+    protected native boolean nSetVisible(int handle, boolean visible);
+    // Get screen full width
+    private native int nGetScreenWidth();
+    // Get screen full height
+    private native int nGetScreenHeight();
+    // Turn on or off alpha channel
+    private native int nSetAlpha(int handle, boolean on, int color);
     
     // member functions /////////////////////////////////////////////
 
-    // this is to suppress the default package-private empty constructor
-    private DirectVideo() {}
-    
-    // the only possible way to instantiate this class
-    DirectVideo( VideoSource src, int width, int height )
-    {
-        source  = src;
-        sw      = width;
-        sh      = height;
-        // initialize default rendering width and height
-        if (sw <= 0) dw = DEFAULT_WIDTH;
-        else dw = sw;
-        if (sh <= 0) dh = DEFAULT_HEIGHT;
-        else dh = sh;
+    public DirectVideo() {
     }
     
     /**
@@ -187,7 +192,9 @@ class DirectVideo implements VideoControl, MIDPVideoPainter {
             ph = SCREEN_HEIGHT - py;
         }
 
-        source.setVideoLocation(px, py, pw, ph);
+        if (hNative != 0) {
+            nSetLocation(hNative, px, py, pw, ph);
+        }
     }
 
     /**
@@ -200,23 +207,29 @@ class DirectVideo implements VideoControl, MIDPVideoPainter {
         }    
  
         // Turn off alpha channel
-        source.setVideoAlpha( false, ALPHA_COLOR);
+        nSetAlpha(hNative, false, ALPHA_COLOR);
         setTranslatedVideoLocation(g, x, y, w, h);
 
-        source.setVideoVisible( !hidden);
+        if (hNative != 0) {
+            nSetVisible(hNative, !hidden);
+        }
     }
 
     /**
      * Prepare clipped preview region by using alpha channel masking
      */
     private void prepareClippedPreview(Graphics g, int x, int y, int w, int h) {
-        if (1 == source.setVideoAlpha( true, ALPHA_COLOR)) {
+        if (1 == nSetAlpha(hNative, true, ALPHA_COLOR)) {
             g.setColor(0, 0, 8);    // IMPL NOTE - Consider RGB565 conversion
             g.fillRect(x, y, w, h);
             setTranslatedVideoLocation(g, x, y, w, h);
-            source.setVideoVisible( !hidden);
+            if (hNative != 0) {
+                nSetVisible(hNative, !hidden);
+            }
         } else {
-            source.setVideoVisible( false);
+            if (hNative != 0) {
+                nSetVisible(hNative, false);
+            }
         }
     }
 
@@ -240,13 +253,48 @@ class DirectVideo implements VideoControl, MIDPVideoPainter {
         }
     }
 
-    void start() {
-        started = true;
-        repaint();
+    /**
+     * Override doGetControl
+     * return VideoControl and GUIControl
+     */
+    protected Control doGetControl(String type) {
+        Control c = super.doGetControl(type);
+
+        if (c == null) {
+            String prefix = "javax.microedition.media.control.";
+            if (type.equals(prefix + vicName)) {        // VideoControl
+                return this;
+            } else if (type.equals(prefix + guiName)) {  // GUIControl
+                return this;
+            }
+        }
+        return c;
     }
 
-    void stop() {
+    /**
+     * Override doRealize
+     * Prepare soure video informations
+     */ 
+    protected void doRealize() throws MediaException {
+        super.doRealize();
+        sw = nGetWidth(hNative);
+        sh = nGetHeight(hNative);
+        // initialize default rendering width and height
+        if (sw <= 0) dw = DEFAULT_WIDTH;
+        else dw = sw;
+        if (sh <= 0) dh = DEFAULT_HEIGHT;
+        else dh = sh;
+    }
+
+    protected boolean doStart() {
+        started = true;
+        repaint();
+        return super.doStart();
+    }
+
+    protected void doStop() throws MediaException {
         started = false;
+        super.doStop();
     }
     
     /**
@@ -308,11 +356,12 @@ class DirectVideo implements VideoControl, MIDPVideoPainter {
      * Override method in BasicPlayer to close
      * the <code>Player</code>.
      */
-    void close() {
+    protected void doClose() {
         if (mmh != null && canvas != null) {
             // unregister this direct video handler with MMH
             mmh.unregisterPlayer(canvas, this);
         }
+        super.doClose();
     }
     
     /**
@@ -381,7 +430,7 @@ class DirectVideo implements VideoControl, MIDPVideoPainter {
         repaint();
 
         if (sizeChanged) {
-            source.notifyDisplaySizeChange();
+            sendEvent(PlayerListener.SIZE_CHANGED, this);
         }
     }
     
@@ -435,8 +484,8 @@ class DirectVideo implements VideoControl, MIDPVideoPainter {
             repaint();
         }
 
-        if (visible == false) {
-            source.setVideoVisible( false);
+        if (visible == false && hNative != 0) {
+            nSetVisible(hNative, false);
         }
     }
     
@@ -446,7 +495,7 @@ class DirectVideo implements VideoControl, MIDPVideoPainter {
 
         synchronized( boundLock ) {
             if( fsmode != fullScreenMode ) {
-                source.setVideoFullScreen(fullScreenMode);
+                nSetFullScreenMode(hNative,fullScreenMode);
                 fsmode = fullScreenMode;
 
                 if( fsmode ) {
@@ -466,8 +515,23 @@ class DirectVideo implements VideoControl, MIDPVideoPainter {
         }
     }
 
+    /**
+     * Check for the multimedia snapshot permission.
+     *
+     * @exception SecurityException if the permission is not
+     *            allowed by this token
+     */
+    public void checkSnapshotPermission() {
+        try {
+            PermissionAccessor.checkPermissions( getLocator(), PermissionAccessor.PERMISSION_SNAPSHOT );
+        } catch( InterruptedException e ) {
+            throw new SecurityException( "Interrupted while trying to ask the user permission" );
+        }
+    }
+
     public byte[] getSnapshot( String imageType ) throws MediaException
     {
+        checkSnapshotPermission();
         checkState();
 
         if (null == imageType)
@@ -497,14 +561,19 @@ class DirectVideo implements VideoControl, MIDPVideoPainter {
 
 
         byte[] data = null;
-        
-        data = source.getVideoSnapshot(imageType.toLowerCase());
-        
+        if (hNative != 0)
+        {
+            data = nSnapShot(hNative, imageType.toLowerCase());
+        }
         if (null == data)
         {
             throw new MediaException( "Snapshot in '" + imageType + "' format failed." );
         }
         return data;
+    }
+
+    public void setSnapshotQuality( int quality )
+    {
     }
 
     /**
@@ -557,9 +626,11 @@ class DirectVideo implements VideoControl, MIDPVideoPainter {
             Logging.report(Logging.INFORMATION, LogChannels.LC_MMAPI, 
                 "hideVideoPreview"); 
         }
-        source.setVideoVisible( false);
+        if (hNative != 0) {
+            nSetVisible(hNative, false);
+        }
         hidden = true;
-        source.setVideoAlpha( true, ALPHA_COLOR);
+        nSetAlpha(hNative, true, ALPHA_COLOR);
         repaint();
     }
 
