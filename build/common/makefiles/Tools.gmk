@@ -39,6 +39,8 @@ define verify_tools_class_directory
 endef
 
 TOOL_DIR = $(SUBSYSTEM_DIR)/tool
+3RDPARTY_KEYSTORE_FILE = \
+    $(TOOL_DIR)/mekeytool/classes/com/sun/midp/mekeytool/3rdparty.ks
 KEYTOOL_KEYSTORE_FILE = \
     $(TOOL_DIR)/mekeytool/classes/com/sun/midp/mekeytool/j2se_test_keystore.bin
 KEYTOOL_README_FILE   = \
@@ -150,6 +152,14 @@ $(CA_KEYSTORE): $(KEYTOOL_JAR_FILE) $(KEYTOOL_KEYSTORE_FILE)
 		$(KEYTOOL_KEYSTORE_FILE) -alias dummyca \
 		-storepass keystorepwd -MEkeystore $(CA_KEYSTORE) \
 		-domain operator) $(LOG)
+	@echo +++ $(JAVA_CMD) -jar $(KEYTOOL_JAR_FILE) -import -keystore \
+		$(3RDPARTY_KEYSTORE_FILE) -alias testthirdparty \
+		-storepass password -MEkeystore $(CA_KEYSTORE) \
+		-domain unidentified $(LOG_ONLY)
+	@($(JAVA_CMD) -jar $(KEYTOOL_JAR_FILE) -import -keystore \
+		$(3RDPARTY_KEYSTORE_FILE) -alias testthirdparty \
+		-storepass password -MEkeystore $(CA_KEYSTORE) \
+		-domain unidentified) $(LOG)
 
 $(BINDIR)/j2se_test_keystore.bin: $(KEYTOOL_KEYSTORE_FILE)
 	@echo " ... $@ " $(LOG)
