@@ -1139,6 +1139,7 @@ ObjectHeap.cpp                   CompiledMethodDesc.hpp
 ObjectHeap.cpp                   EventLogger.hpp
 ObjectHeap.cpp                   JarFileParser.hpp
 ObjectHeap.cpp                   Task.hpp
+ObjectHeap.cpp                   JniFrame.hpp
 
 ConstantTag.hpp                  ArrayDesc.hpp
 ConstantTag.hpp                  GlobalDefinitions.hpp
@@ -1262,7 +1263,14 @@ LiteralPoolElement.cpp           Compiler.hpp
 jni.cpp                          jni.h
 jni.cpp                          JniImpl.hpp
 jni.cpp                          ObjectHeap.hpp
+jni.cpp                          JniFrame.hpp
 JniImpl.hpp                      GlobalDefinitions.hpp
+
+JniFrame.hpp                     JniFrameDesc.hpp
+JniFrame.hpp                     MixedOop.hpp
+JniFrame.hpp                     Universe.hpp
+
+JniFrameDesc.hpp                 MixedOopDesc.hpp
 
 BuildFlags.hpp                   BuildFlags_<os_family>.hpp
 kni_md.h                         BuildFlags.hpp
@@ -1705,6 +1713,7 @@ Thread.cpp                       VMEvent.hpp
 Thread.cpp                       JavaDebugger.hpp
 Thread.cpp                       Compiler.hpp
 Thread.cpp                       WTKProfiler.hpp
+Thread.cpp                       JniFrame.hpp
 
 Debug.hpp                        GlobalDefinitions.hpp
 Debug.cpp                        Debug.hpp

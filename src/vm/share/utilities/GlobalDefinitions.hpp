@@ -227,6 +227,8 @@
 #define JavaNearDesc  JVMJavaNearDesc
 #define JavaOop  JVMJavaOop
 #define JavaVTable  JVMJavaVTable
+#define JniFrame  JVMJniFrame
+#define JniFrameDesc  JVMJniFrameDesc
 #define JvmTimer  JVMJvmTimer
 #define KvmNativesMatcher  JVMKvmNativesMatcher
 #define LargeObject  JVMLargeObject
@@ -473,6 +475,7 @@
 #define WTKProfiler  JVMWTKProfiler
 #define WTKThreadRecord  JVMWTKThreadRecord
 #define WTKThreadRecordDesc  JVMWTKThreadRecordDesc
+#define WeakRefArray  JVMWeakRefArray
 #define WeakReference  JVMWeakReference
 #define ZeroDivisorCheckStub  JVMZeroDivisorCheckStub
 
@@ -517,6 +520,8 @@ class JarFileParser;
 class JavaClass;
 class JavaClassObj;
 class JavaNear;
+class JniFrame;                   // Used by ENABLE_JNI only
+class JniFrameDesc;               // Used by ENABLE_JNI only
 class MetaClass;
 class Method;
 class MethodDesc;
@@ -564,6 +569,7 @@ class TypeArrayClassDesc;
 class TypeArrayDesc;
 class VirtualStackFrame;
 class VirtualStackFrameDesc;
+class WeakRefArray;         // Used by ENABLE_JNI only
 
 //----------------------------------------------------------------------------
 // Constants

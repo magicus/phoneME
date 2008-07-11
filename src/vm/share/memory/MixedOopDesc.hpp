@@ -67,6 +67,7 @@ public:
   template(WTKThreadRecord,         profiler_info)             \
   template(VMEvent,                 vm_event)                  \
   template(VMEventModifier,         vm_event_modifier)         \
+  template(JniFrame,                jni_frame)                 \
   template(ROMProfile,              rom_profile)         
 
 #define MIXED_OOP_ENUM_DECLARE(x, y) \

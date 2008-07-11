@@ -331,6 +331,11 @@ public:
 
   static OopDesc** decode_reference(const int ref_index);
 
+#if ENABLE_JNI
+  static int register_local_reference(Oop* referent);
+  static void unregister_local_reference(const int ref_index);
+#endif
+
   static int register_strong_reference(Oop* referent JVM_TRAPS);
   static int register_weak_reference(Oop* referent JVM_TRAPS);
 

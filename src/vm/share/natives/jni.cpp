@@ -34,6 +34,62 @@ _JNI_GetVersion(JNIEnv * env) {
   return JNI_VERSION_1_4;
 }
 
+static jint JNICALL
+_JNI_PushLocalFrame(JNIEnv *env, jint capacity) {
+  SETUP_ERROR_CHECKER_ARG;
+  jint ret = env->EnsureLocalCapacity(capacity);
+  if (ret != JNI_OK) {
+    return ret;
+  }
+
+  JniFrame::Raw frame = JniFrame::allocate_jni_frame(JVM_SINGLE_ARG_NO_CHECK);
+
+  if (frame.is_null()) {
+    Thread::clear_current_pending_exception();
+    Throw::out_of_memory_error(JVM_SINGLE_ARG_NO_CHECK_AT_BOTTOM);
+    return JNI_ENOMEM;
+  }
+
+  Thread::Raw thread = Thread::current();
+  
+  thread().push_jni_frame(&frame);
+
+  return JNI_OK;
+}
+
+static jobject JNICALL
+_JNI_PopLocalFrame(JNIEnv *env, jobject result) {
+  Oop::Raw resultOop;
+
+  if (result != NULL) {
+    resultOop = *decode_handle(result);
+  }
+
+  Thread::Raw thread = Thread::current();
+  JniFrame::Raw frame = thread().pop_jni_frame();
+
+  if (frame.not_null()) {
+    JniFrame::Raw prev_frame = thread().jni_frame();
+    const jint current_local_index = frame().local_ref_index();
+    jint prev_local_index = 0;
+    if (prev_frame.not_null()) {
+      prev_local_index = prev_frame().local_ref_index();
+    }
+    if (prev_local_index < current_local_index) {
+      ObjArray::Raw locals = thread().local_references();
+      for (int i = prev_local_index; i < current_local_index; i++) {
+        locals().obj_at_clear(i);
+      }
+    }
+  }
+
+  if (resultOop.not_null()) {
+    return (jobject)ObjectHeap::register_local_reference(&resultOop);
+  } else {
+    return NULL;
+  }
+}
+
 static jobject JNICALL
 _JNI_NewGlobalRef(JNIEnv* env, jobject obj) {  
   if (obj == NULL) {
@@ -58,6 +114,94 @@ _JNI_DeleteGlobalRef(JNIEnv* env, jobject obj) {
 
   const int ref_index = (int)obj;
   ObjectHeap::unregister_strong_reference(ref_index);
+}
+
+static void JNICALL
+_JNI_DeleteLocalRef(JNIEnv* env, jobject localRef) {
+  if (localRef == NULL) {
+    return;
+  }
+
+  const int ref_index = (int)localRef;
+  ObjectHeap::unregister_local_reference(ref_index);
+}
+
+static jboolean JNICALL
+_JNI_IsSameObject(JNIEnv* env, jobject ref1, jobject ref2) {
+  Oop::Raw oop1 = *decode_handle(ref1);
+  Oop::Raw oop2 = *decode_handle(ref2);
+  return oop1.equals(&oop2) ? JNI_TRUE : JNI_FALSE;
+}
+
+static jobject JNICALL
+_JNI_NewLocalRef(JNIEnv* env, jobject ref) {
+  if (ref == NULL) {
+    return NULL;
+  }
+
+  UsingFastOops fast_oops;
+  Oop::Fast oop = *decode_handle(ref);
+
+  if (oop.is_null()) {
+    return NULL;
+  }
+
+  jint ret = env->EnsureLocalCapacity(1);
+  if (ret != JNI_OK) {
+    return NULL;
+  }
+
+  return (jobject)ObjectHeap::register_local_reference(&oop);
+}
+
+static jint JNICALL
+_JNI_EnsureLocalCapacity(JNIEnv* env, jint capacity) {
+  if (capacity < 0) {
+    return JNI_ERR;
+  }
+
+  UsingFastOops fast_oops;
+  Thread::Fast thread = Thread::current();
+  ObjArray::Fast locals = thread().local_references();
+
+  int local_count = 0;
+
+  {
+    JniFrame::Raw frame = thread().jni_frame();
+
+    if (frame.not_null()) {
+      local_count = frame().local_ref_index() + 1;
+    }
+  }
+
+  const int requested_length = local_count + capacity;
+
+  if (locals.not_null()) {
+    const int length = locals().length();
+    if (requested_length <= length) {
+      return JNI_OK;
+    }
+  }
+
+  SETUP_ERROR_CHECKER_ARG;
+  ObjArray::Fast new_locals = Universe::new_obj_array(requested_length 
+                                                      JVM_NO_CHECK);
+
+  if (new_locals.is_null()) {
+    // Make sure OutOfMemoryError is thrown
+    Thread::clear_current_pending_exception();
+    Throw::out_of_memory_error(JVM_SINGLE_ARG_NO_CHECK);
+    return JNI_ERR;
+  }
+
+  thread().set_local_references(new_locals.obj());
+
+  if (locals.not_null()) {
+    const int length = locals().length();
+    ObjArray::array_copy(&locals, 0, &new_locals, 0, length JVM_MUST_SUCCEED);
+  }
+
+  return JNI_OK;
 }
 
 static jobject JNICALL
@@ -116,16 +260,16 @@ static struct JNINativeInterface _jni_native_interface = {
     NULL, // ExceptionClear
     NULL, // FatalError
 
-    NULL, // PushLocalFrame
-    NULL, // PopLocalFrame
+    _JNI_PushLocalFrame, // PushLocalFrame
+    _JNI_PopLocalFrame, // PopLocalFrame
 
     _JNI_NewGlobalRef,    // NewGlobalRef
     _JNI_DeleteGlobalRef, // DeleteGlobalRef
-    NULL, // DeleteLocalRef
-    NULL, // IsSameObject
+    _JNI_DeleteLocalRef, // DeleteLocalRef
+    _JNI_IsSameObject, // IsSameObject
 
-    NULL, // NewLocalRef
-    NULL, // EnsureLocalCapacity
+    _JNI_NewLocalRef, // NewLocalRef
+    _JNI_EnsureLocalCapacity, // EnsureLocalCapacity
 
     NULL, // AllocObject
     NULL, // NewObject

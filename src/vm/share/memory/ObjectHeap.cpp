@@ -820,8 +820,8 @@ inline ReturnOop
 ObjectHeap::get_reference_array(unsigned type, unsigned owner) {
 #if ENABLE_JNI
   if (type == LocalRefType) {
-    UNIMPLEMENTED();
-    return NULL;
+    Thread::Raw thread = Thread::current();
+    return thread().local_references();
   } else 
 #endif
   {
@@ -846,7 +846,8 @@ inline void
 ObjectHeap::set_reference_array(unsigned type, unsigned owner, Array* array) {
 #if ENABLE_JNI
   if (type == LocalRefType) {
-    UNIMPLEMENTED();
+    Thread::Raw thread = Thread::current();
+    thread().set_local_references(array->obj());
   } else 
 #endif
   {
@@ -886,6 +887,50 @@ inline OopDesc** ObjectHeap::decode_reference(const int ref_index) {
   const int offset = array().base_offset() + index * sizeof(jobject);
   return array.obj()->obj_field_addr(offset);
 }
+
+#if ENABLE_JNI
+int ObjectHeap::register_local_reference(Oop* referent) {
+  Thread::Raw thread = Thread::current();
+  ObjArray::Raw locals = thread().local_references();
+  JniFrame::Raw frame = thread().jni_frame();
+
+  GUARANTEE(frame.not_null(), "Must have a JNI frame");
+  GUARANTEE(locals.not_null(), "Must have local refs allocated");
+
+  const int local_ref_index = frame().local_ref_index();
+
+  GUARANTEE(local_ref_index < locals().length(), 
+            "Insufficient local capacity");
+
+  locals().obj_at_put(local_ref_index, referent);
+
+  frame().set_local_ref_index(local_ref_index + 1);
+
+  return make_reference(LocalRefType, 0, local_ref_index);
+}
+
+void ObjectHeap::unregister_local_reference(const int ref_index) {
+  GUARANTEE(is_local_reference(ref_index), "Must be a local reference");
+
+  const int index = get_reference_index(ref_index);
+  
+  Thread::Raw thread = Thread::current();
+  ObjArray::Raw locals = thread().local_references();
+
+  GUARANTEE(locals.not_null(), "Must have local refs allocated");
+
+  if (0 <= index && index < locals().length()) {
+    locals().obj_at_clear(index);
+    JniFrame::Raw frame = thread().jni_frame();
+    GUARANTEE(frame.not_null(), "Must have a JNI frame");
+    GUARANTEE(index < frame().local_ref_index(), 
+              "Invalid local reference index");
+    if (index == frame().local_ref_index() - 1) {
+      frame().set_local_ref_index(index);
+    }
+  }
+}
+#endif
 
 int ObjectHeap::register_strong_reference(Oop* referent JVM_TRAPS) {
   const unsigned owner = TaskContext::current_task_id();

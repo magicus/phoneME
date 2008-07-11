@@ -1067,7 +1067,7 @@ void SourceObjectWriter::write_jni_method_adapter(Method *method,
     case T_LONG:
     case T_FLOAT:
     case T_DOUBLE:
-      s->print_cr("  %s ret;", return_type_info->type_name);
+      s->print_cr("  %s ret = 0;", return_type_info->type_name);
   }
 
   s->print_cr("  KNI_StartHandles(%d);", handle_count);
@@ -1118,7 +1118,15 @@ void SourceObjectWriter::write_jni_method_adapter(Method *method,
   case T_OBJECT:
   case T_ARRAY:
     s->print_cr("  KNI_DeclareHandle(ret);");
-    s->print_cr("  {");
+    break;
+  }
+
+  s->print_cr("  JNIEnv * env = &_jni_env;");
+  s->print_cr("  if (env->PushLocalFrame(16) == JNI_OK) {");
+
+  switch (return_type) {
+  case T_OBJECT:
+  case T_ARRAY:
     s->print("    jobject obj = ");
     break;
   case T_BOOLEAN:
@@ -1129,7 +1137,7 @@ void SourceObjectWriter::write_jni_method_adapter(Method *method,
   case T_LONG:
   case T_FLOAT:
   case T_DOUBLE: 
-    s->print("  ret = ");
+    s->print("    ret = ");
     break;
   case T_VOID:
     s->print("  ");
@@ -1150,7 +1158,9 @@ void SourceObjectWriter::write_jni_method_adapter(Method *method,
   switch (return_type) {
   case T_OBJECT:
   case T_ARRAY:
-    s->print_cr("    *(jobject*)ret = *(jobject*)decode_handle(obj);");
+    s->print_cr("    *(jobject*)ret = ");
+    s->print_cr("        obj ? *(jobject*)decode_handle(obj) : 0;");
+    s->print_cr("    env->PopLocalFrame(0);");
     s->print_cr("  }");
     s->print_cr("  KNI_EndHandlesAndReturnObject(ret);");
     break;
@@ -1162,10 +1172,14 @@ void SourceObjectWriter::write_jni_method_adapter(Method *method,
   case T_LONG:
   case T_FLOAT:
   case T_DOUBLE: 
+    s->print_cr("    env->PopLocalFrame(0);");
+    s->print_cr("  }");
     s->print_cr("  KNI_EndHandles();");
     s->print_cr("  %s(ret);", return_type_info->return_func_name);
     break;
   case T_VOID:
+    s->print_cr("    env->PopLocalFrame(0);");
+    s->print_cr("  }");
     s->print_cr("  KNI_EndHandles();");
     s->print_cr("  KNI_ReturnVoid();");
     break;

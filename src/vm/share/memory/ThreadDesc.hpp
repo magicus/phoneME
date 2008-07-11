@@ -46,6 +46,10 @@ protected:
                                        // SNI_BlockThread.
   OopDesc*     _cached_async_info;     // byte[]: cached async info
   OopDesc*     _profiler_info;         // exact profiler's private data
+#if ENABLE_JNI
+  OopDesc*     _jni_frame;             // JNI frame
+  OopDesc*     _local_references;      // array of local references
+#endif
 
   friend class Thread;
   friend class Universe;
