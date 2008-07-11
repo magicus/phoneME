@@ -27,7 +27,7 @@ package com.sun.mmedia;
 import javax.microedition.media.Control;
 import javax.microedition.media.MediaException;
 
-public class DirectCamera extends DirectPlayer 
+public class DirectCamera extends BasicPlayer implements VideoSource 
 {
     private Control _cameraControl;
     private Control _exposureControl;
@@ -113,5 +113,50 @@ public class DirectCamera extends DirectPlayer
             }
         }
         return c;
+    }
+
+    protected void doRealize() throws MediaException {
+    }
+
+    protected void doPrefetch() throws MediaException {
+    }
+
+    protected boolean doStart() {
+    }
+
+    protected void doStop() throws MediaException {
+    }
+
+    protected void doDeallocate() {
+    }
+
+    protected void doClose() {
+    }
+
+    protected long doSetMediaTime(long now) throws MediaException {
+    }
+
+    protected long doGetMediaTime() {
+    }
+
+    protected long doGetDuration() {
+    }
+
+    public boolean setVideoLocation(int x, int y, int w, int h) {
+    }
+
+    public byte[] getVideoSnapshot(String imageType) {
+    }
+
+    public boolean setVideoFullScreen(boolean fullscreen) {
+    }
+
+    public boolean setVideoVisible(boolean visible) {
+    }
+
+    public int setVideoAlpha(boolean on, int color) {
+    }
+
+    public void notifyDisplaySizeChange() {
     }
 }
