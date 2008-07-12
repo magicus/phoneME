@@ -207,12 +207,6 @@ protected:
    lsl_shift_3 = 3
   };
 
-  enum Mode {
-    offset       = 1 << 24,
-    pre_indexed  = 1 << 24 | 1 << 21,
-    post_indexed = 0
-  };
-
  // only used in our macros
   enum StackDirectionMode { ascending, descending };
   enum StackTypeMode { full, empty };

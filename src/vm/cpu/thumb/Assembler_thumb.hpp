@@ -80,12 +80,6 @@ class Assembler: public AssemblerCommon {
 
   void imm_shift(Register rd, Register rm, Opcode shifter, int imm);
 
-  enum Mode {
-    offset       = 1 << 24,
-    pre_indexed  = 1 << 24 | 1 << 21,
-    post_indexed = 0
-  };
-
  // only used in our macros
   enum StackDirectionMode { ascending, descending };
   enum StackTypeMode { full, empty };

@@ -1799,11 +1799,11 @@ void CodeGenerator::instance_of(Value& result, Value& object, Value& klass,
   NearLabel skip_mov1;
   b(skip_mov1, ne);
   // Object is NULL.. Skip loading class etc.
-  ldr_address(result.lo_register(), zero);
+  ldr_address(result.lo_register(), 0);
   b(done_checking);
   bind(skip_mov1);
   // Object is non-null, load its class
-  ldr_address(result.lo_register(), zero);
+  ldr_address(result.lo_register(), 0);
   ldr(tmp2, object.lo_register());
   ldr(tmp2, tmp2);
 
@@ -2499,7 +2499,7 @@ void CodeGenerator::invoke(const Method* method, bool must_do_null_check JVM_TRA
           set_kni_parameter_base(tmp);
         }
       } else {
-        ldr_address(tmp, zero);
+        ldr_address(tmp, 0);
         set_kni_parameter_base(tmp);
       }
       Value result(T_INT);      // this is a lie.  But vcall wants something
@@ -2746,7 +2746,7 @@ void CodeGenerator::invoke_native(BasicType return_kind, address entry JVM_TRAPS
     }
   } else {
     GUARANTEE(method()->is_static(), "Of course");
-    ldr_address(reg_kni_params, zero);
+    ldr_address(reg_kni_params, 0);
   }
   set_kni_parameter_base(reg_kni_params);
   RegisterAllocator::dereference(reg_kni_params);

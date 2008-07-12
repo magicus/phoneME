@@ -30,18 +30,17 @@
 # define MAKE_IMM(x) (x)
 #endif
 
+  friend class Disassembler;
+  friend struct OpcodeInfo;
+#if ENABLE_CODE_OPTIMIZER
+  friend class CodeOptimizer;
+#endif
+
 #if ENABLE_THUMB_COMPILER
   enum {
     zero = 0,
     one  = 1
   };
-#endif
-
-  friend class Disassembler;
-  friend struct OpcodeInfo;
-
-#if ENABLE_CODE_OPTIMIZER
-  friend class CodeOptimizer;
 #endif
 
  public:
@@ -135,6 +134,37 @@
     instruction_alignment = 2
 #endif
   };
+
+  enum Mode {
+    offset       = 1 << 24,
+    pre_indexed  = 1 << 24 | 1 << 21,
+    post_indexed = 0,
+    mode_flags   = 1 << 24| 1 << 21
+  };
+
+  // addressing mode 5 - coprocessor
+  enum Address5 {
+    forceaddress5=0x10000000  // force Address3 to be int size
+  };
+
+  static Address5 imm_index5(Register rn, int offset_8 = 0, Mode mode = offset)
+  {
+    GUARANTEE(rn != r15 || mode == offset, "unpredictable instruction");
+    GUARANTEE(offset_8 % 4 == 0, "Offset must be multiple of 4");
+    check_imm(abs(offset_8 >> 2), 8);
+    if (mode == post_indexed) {
+      // I don't know why these is different for coprocessors
+      mode = (Mode)(1 << 21);
+    }
+    return Address5(mode | (up(offset_8) << 23) | rn << 16 |
+                    abs(offset_8>>2) & 0xff);
+  }
+
+  static Address5 unindexed5(Register /*rn*/, int options) {
+    check_imm(options, 8);
+    // The "sign" bit is required to be set.
+    return Address5((1 << 23) | options);
+  }
 
  protected:
   // assertion checking

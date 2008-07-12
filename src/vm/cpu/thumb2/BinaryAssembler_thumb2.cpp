@@ -187,8 +187,7 @@ void BinaryAssembler::ldr_literal(Register rd, OopDesc* obj, const int imm32,
 
 void BinaryAssembler::ldr_oop(Register rd, Oop* oop, const Condition cond) {
   if (oop->is_null()) {
-    // Java null is 0.
-    ldr_address(rd, zero, cond);
+    ldr_address(rd, 0, cond);
     return;
   }
 #if USE_AOT_COMPILATION
