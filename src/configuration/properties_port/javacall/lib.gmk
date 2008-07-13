@@ -36,31 +36,23 @@ INT_SUBSYSTEM_PROPERTIES_PORT_NAME = properties_port
 SUBSYSTEMS += $(INT_SUBSYSTEM_PROPERTIES_PORT_NAME)
 
 # vpath for native implementation of dynamic properties
-vpath % $(SUBSYSTEM_DIR)/configuration/properties_port/javacall/native
+vpath % $(CONFIG_PROPERTIES_PORT_IMPL_DIR)/native
 
 # Native files 
 #
-JAVACALL_PROPERTIES_PORT_NATIVE_FILES = \
+SUBSYSTEM_CONFIGURATION_NATIVE_FILES += \
     midp_properties_javacall.c \
     properties_static_data.c
 
-# Include files
-# 
-INT_PROPERTIES_PORT_JAVA_FILES = 
+# Include Java files
+# SUBSYSTEM_CONFIGURATION_JAVA_FILES += 
+ 
 
-# Publish the variables to global Makefile
-#
-SUBSYSTEM_PROPERTIES_PORT_JAVA_FILES = \
-	$(INT_PROPERTIES_PORT_JAVA_FILES)
-
-SUBSYSTEM_PROPERTIES_PORT_NATIVE_FILES += \
-	$(JAVACALL_PROPERTIES_PORT_NATIVE_FILES)
-
-SUBSYSTEM_CONFIGURATION_CONFIG_FILES = \
-        $(INT_CONFIGURATION_CONFIG_FILES)
 
 $(OBJ_DIR)/properties_static_data.o: $(GENERATED_DIR)/properties_static_data.c
 	@echo " ... $@" $(LOG)
 	@echo +++ $(CC) $(CFLAGS) -c $(CC_OUTPUT)$@ `$(call fixcygpath, $<)` \
 		$(LOG_ONLY)
 	@$(CC) $(CFLAGS) -c $(CC_OUTPUT)$@ `$(call fixcygpath, $<)` $(LOG)
+
+
