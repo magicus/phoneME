@@ -288,7 +288,7 @@ endif
 
 LINK_visCPP          = link.exe
 LINK_evc             = link.exe
-LINK_vc8ce			 = $(VC8CE_ARCH_PATH)/link.exe
+LINK_vc8ce           = $(VC8CE_ARCH_PATH)/link.exe
 LINK                 = $(LINK_$(compiler))
 
 LIBMGR_visCPP        = lib.exe
@@ -781,11 +781,9 @@ ifeq ($(ENABLE_PCSL)+$(IsGenerator), true+true)
 override ENABLE_PCSL := false
 export ENABLE_PCSL
 else
-
 ifndef PCSL_DIST_DIR
 PCSL_DIST_DIR = $(PCSL_OUTPUT_DIR)/javacall_$(arch)
 endif
-
 endif
 
 ifeq ($(ENABLE_PCSL), true)
@@ -1012,7 +1010,7 @@ $(LOOP_GENERATOR): $(BUILD_PCH) $(Obj_Files) \
 		   InterpreterSkeleton.obj OopMapsSkeleton.obj
 	$(A)$(LINK) $(PCSL_LIBS) $(LINK_FLAGS) /out:$@ $(Obj_Files) \
 		   InterpreterSkeleton.obj OopMapsSkeleton.obj
-
+	$(A)$(VC_MANIFEST_EMBED_EXE)
 	$(A)echo generated `pwd`/$@
 endif
 endif

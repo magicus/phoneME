@@ -36,7 +36,7 @@ set VS2005_ROOT="C:/Program Files/Microsoft Visual Studio 8"
 
 @REM Settings for the host builds (loopgen/romgen)
 
-set PATH=%VS2005_ROOT%/Common7/IDE;%VS2005_ROOT%/vc/bin;%PATH%
+set PATH=%VS2005_ROOT%/Common7/IDE;%VS2005_ROOT%/Common7/Tools/Bin;%VS2005_ROOT%/vc/bin;%PATH%
 set LIB=%VS2005_ROOT%/vc/lib;%VS2005_ROOT%/vc/PlatformSDK/lib
 set INCLUDE=%VS2005_ROOT%/vc/include;%VS2005_ROOT%/vc/PlatformSDK/include
 
