@@ -34,33 +34,8 @@
 #
 INT_SUBSYSTEM_PROPERTIES_NAME = properties
 LIB_SET += $(INT_SUBSYSTEM_PROPERTIES_NAME)
+CONFIG_PROPERTIES_DIR = $(SUBSYSTEM_CONFIG_DIR)/$(INT_SUBSYSTEM_PROPERTIES_NAME)
+CONFIG_PROPERTIES_IMPL_DIR ?= $(CONFIG_PROPERTIES_DIR)/reference
 
-# vpath for library
-#
-vpath % $(SUBSYSTEM_CONFIG_DIR)/properties/reference/native
+include $(CONFIG_PROPERTIES_IMPL_DIR)/lib.gmk
 
-# Native files 
-#
-INT_PROPERTIES_NATIVE_FILES = \
-	properties_kni.c
-
-# Include files
-# 
-INT_PROPERTIES_JAVA_FILES = \
-	$(SUBSYSTEM_CONFIG_DIR)/properties/reference/classes/com/sun/midp/main/Configuration.java
-
-MIDP_JAVADOC_SOURCEPATH += $(SUBSYSTEM_CONFIG_DIR)/properties/reference/classes
-MIDP_JAVADOC_PACKAGES += com.sun.midp.configurator
-
-ifeq ($(TARGET_VM), cdc_vm)
-        MIDP_BOOTCLASSPATH_CLASSES_LIST += \
-                com.sun.midp.main.Configuration
-endif
-
-# Publish the variables to global Makefile
-#
-SUBSYSTEM_PROPERTIES_JAVA_FILES = \
-	$(INT_PROPERTIES_JAVA_FILES)
-
-SUBSYSTEM_PROPERTIES_NATIVE_FILES = \
-	$(INT_PROPERTIES_NATIVE_FILES)

@@ -33,6 +33,9 @@
 PROP_PORT_NAME = properties_port
 LIB_SET += $(PROP_PORT_NAME)
 
+CONFIG_PROPERTIES_PORT_DIR = $(SUBSYSTEM_CONFIG_DIR)/$(PROP_PORT_NAME)
+ 
+
 # Include path for the sub-system
 #
 SUBSYSTEM_PROPERTIES_PORT_EXTRA_INCLUDES += \
@@ -41,12 +44,15 @@ SUBSYSTEM_PROPERTIES_PORT_EXTRA_INCLUDES += \
 
 
 ifeq ($(USE_JAVACALL_PROPERTIES), true)
-    include $(SUBSYSTEM_CONFIG_DIR)/properties_port/javacall/$(LIB_MAKE_FILE)
+    CONFIG_PROPERTIES_PORT_IMPL_DIR ?= $(CONFIG_PROPERTIES_PORT_DIR)/javacall
 else
     ifeq ($(USE_STATIC_PROPERTIES), true)
         #set default configuration mechanism to static
-        include $(SUBSYSTEM_CONFIG_DIR)/properties_port/static/$(LIB_MAKE_FILE)
+        CONFIG_PROPERTIES_PORT_IMPL_DIR ?= $(CONFIG_PROPERTIES_PORT_DIR)/static
     else 	
-        include $(SUBSYSTEM_CONFIG_DIR)/properties_port/dynamic/$(LIB_MAKE_FILE)
+        CONFIG_PROPERTIES_PORT_IMPL_DIR ?= $(CONFIG_PROPERTIES_PORT_DIR)/dynamic
     endif
 endif
+
+
+include $(CONFIG_PROPERTIES_PORT_IMPL_DIR)/lib.gmk
