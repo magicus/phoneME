@@ -468,6 +468,15 @@ class AppManagerPeer implements CommandListener {
         updateContent();
     }
     
+    /**
+     * Called when a suite exited (the only MIDlet in suite exited or the
+     * MIDlet selector exited).
+     * @param suiteInfo Suite which just exited
+     */
+    void notifySuiteExited(RunningMIDletSuiteInfo suiteInfo) {
+        appManagerUI.notifySuiteExited(suiteInfo);
+    }
+    
     // ------------------------------------------------------------------
 
     /**
@@ -820,6 +829,15 @@ class AppManagerPeer implements CommandListener {
                     "Suite contains more that one MIDlet.");
         }
     }
+
+    /**
+     * Launches the midlet suite determined by the suite ID.
+     * @param suiteId ID of the suite to launch
+     */
+    void launchSuite(int suiteId) {
+        appManagerUI.enterSuite(suiteId);
+    }
+    
 
     /**
      * Checks if the installer is currently running.

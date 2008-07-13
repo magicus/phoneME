@@ -35,6 +35,8 @@ import com.sun.midp.midlet.MIDletSuite;
 import com.sun.midp.midletsuite.*;
 
 
+import java.util.Vector;
+
 /**
  * Selector provides a simple user interface to select MIDlets to run.
  * It extracts the list of MIDlets from the attributes in the
@@ -87,6 +89,11 @@ final class MIDletSelector implements CommandListener {
      * Index of the selected MIDlet, starts at -1 for non-selected.
      */
     private int selectedMidlet = -1;
+    
+    /**
+     * List of midlets executed from this selector.
+     */
+    private Vector runningMidlets;
 
     /**
      * Create and initialize a new Selector MIDlet.
@@ -126,8 +133,45 @@ final class MIDletSelector implements CommandListener {
         mlist.setCommandListener(this); // Listen for the selection
 
         display.setCurrent(mlist);
+        
+        runningMidlets = new Vector();
     }
 
+    /**
+     * Gets structure containing information about suite accessible by this
+     * selector
+     */
+    public RunningMIDletSuiteInfo getSuiteInfo() {
+        return suiteInfo;
+    }
+
+    /**
+     * Displays this selector on the screen.
+     */
+    public void show() {
+        selectedMidlet = -1;
+        display.setCurrent(mlist);
+    }
+
+    /**
+     * Called when MIDlet execution exited.
+     * Removes the MIDlet from list of running MIDlets and shows selector on the
+     * screen.
+     * @param midlet ClassName of MIDlet which just exited
+     */
+    public void notifyMidletExited(String midlet) {
+        runningMidlets.removeElement(midlet);
+    }
+
+    /**
+     * If no MIDlet is running, exit the suite.
+     */
+    public void exitIfNoMidletRuns() {
+        if (runningMidlets.isEmpty()) {
+            manager.notifySuiteExited(suiteInfo);
+        }
+    }
+    
     /**
      * Respond to a command issued on any Screen.
      * The commands on list is Select and About.
@@ -148,6 +192,7 @@ final class MIDletSelector implements CommandListener {
                 selectedMidlet = mlist.getSelectedIndex();
             }
 
+            runningMidlets.addElement(minfo[selectedMidlet].classname);
             manager.launchSuite(suiteInfo, minfo[selectedMidlet].classname);
             if (parentDisplayable != null) {
                 display.setCurrent(parentDisplayable);
@@ -164,6 +209,7 @@ final class MIDletSelector implements CommandListener {
             } else {
                 manager.shutDown();
             }
+            exitIfNoMidletRuns();
             return;
         }
     }
