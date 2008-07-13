@@ -35,6 +35,10 @@
 
 include $(SUBSYSTEM_DIR)/ams/ams_common.gmk
 
+# A make rule  for (jams/nams) module
+# Importent 
+SUBSYSTEM_AMS_LAZY_MAKEFILES += $(SUBSYSTEM_AMS_DIR)/objlib.gmk
+
 SUBSYSTEM_AMS_PACKAGES += \
     com.sun.midp.main \
     com.sun.midp.midlet \
@@ -92,7 +96,16 @@ ifndef SUBSYSTEM_AMS_COMPONENTS
             SUBSYSTEM_AMS_COMPONENTS += $(SUBSYSTEM_AMS_DIR)/on_device_debug_stubs/lib.gmk
         endif
 
-# nams/jams    
+
+# Add VM mode specific common files
+    ifeq ($(USE_MULTIPLE_ISOLATES), true)
+        SUBSYSTEM_AMS_COMPONENTS += $(SUBSYSTEM_AMS_DIR)/mvm/lib.gmk
+    endif
+
+# nams/jams
+    SUBSYSTEM_AMS_COMPONENTS += $(SUBSYSTEM_AMS_DIR)/$(SUBSYSTEM_AMS_MODULES)/lib.gmk
+
+# libraries for nams/jams    
     ifeq ($(USE_NATIVE_AMS), false)
         SUBSYSTEM_AMS_COMPONENTS += $(SUBSYSTEM_AMS_DIR)/appmanager_ui_resources/lib.gmk \
             $(SUBSYSTEM_AMS_DIR)/appmanager_ui/lib.gmk
@@ -102,10 +115,15 @@ ifndef SUBSYSTEM_AMS_COMPONENTS
         endif    
     endif
 
-     # Add VM mode specific common files
-    ifeq ($(USE_MULTIPLE_ISOLATES), true)
-        SUBSYSTEM_AMS_COMPONENTS += $(SUBSYSTEM_AMS_DIR)/mvm/lib.gmk
+# Examples
+    ifneq ($(TARGET_PLATFORM), stubs)
+        SUBSYSTEM_AMS_COMPONENTS += $(SUBSYSTEM_AMS_DIR)/example/subsystem.gmk
+    else
+        ifeq ($(SUBSYSTEM_AMS_MODULES), jams)
+            SUBSYSTEM_AMS_COMPONENTS += $(SUBSYSTEM_AMS_DIR)/example/subsystem.gmk
+        endif
     endif
+
 
 # END of ifndef SUBSYSTEM_AMS_COMPONENTS 
 endif
@@ -117,16 +135,6 @@ SUBSYSTEM_AMS_COMPONENTS += $(AMS_ADDITIONAL_COMPONENTS)
 # Include subsystem libraries
 include $(SUBSYSTEM_AMS_COMPONENTS)
 
-# Defines for (jams/nams) module
-SUBSYSTEM_AMS_LAZY_MAKEFILES += $(SUBSYSTEM_AMS_DIR)/objlib.gmk
-include $(SUBSYSTEM_AMS_DIR)/$(SUBSYSTEM_AMS_MODULES)/lib.gmk
 
-# Examples
-ifneq ($(TARGET_PLATFORM), stubs)
-include $(SUBSYSTEM_AMS_DIR)/example/subsystem.gmk
-else
-ifeq ($(SUBSYSTEM_AMS_MODULES), jams)
-include $(SUBSYSTEM_AMS_DIR)/example/subsystem.gmk
-endif
-endif
+
 
