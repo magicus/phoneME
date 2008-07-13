@@ -37,11 +37,11 @@ ANC_JAVACALL_DIR = $(SUBSYSTEM_DIR)/$(ANC_JAVACALL_NAME)
 LIB_SET += $(ANC_JAVACALL_NAME)
 
 # Export include files
-# SUBSYSTEM_ANNUNCIATOR_EXTRA_INCLUDES += -I$(ANC_JAVACALL_DIR)/include
+# SUBSYSTEM_HIGHUI_EXTRA_INCLUDES += -I$(ANC_JAVACALL_DIR)/include
 
 # Native files for the library
 #
-SUBSYSTEM_ANNUNCIATOR_NATIVE_FILES += \
+SUBSYSTEM_HIGHUI_NATIVE_FILES += \
     anc_jc_audio.c \
     anc_jc_indicator.c \
     anc_jc_pauseresume.c \

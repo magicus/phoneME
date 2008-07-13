@@ -37,11 +37,11 @@ ANC_FB_DIR = $(SUBSYSTEM_DIR)/$(ANC_FB_NAME)
 LIB_SET += $(ANC_FB_NAME)
 
 # Export include files
-# SUBSYSTEM_ANNUNCIATOR_EXTRA_INCLUDES += -I$(ANC_FB_DIR)/include
+# SUBSYSTEM_HIGHUI_EXTRA_INCLUDES += -I$(ANC_FB_DIR)/include
 
 # Native files for the library
 #
-SUBSYSTEM_ANNUNCIATOR_NATIVE_FILES += \
+SUBSYSTEM_HIGHUI_NATIVE_FILES += \
     anc_fb_audio.c \
     anc_fb_indicator.c \
     anc_fb_pauseresume.c \
