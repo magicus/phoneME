@@ -72,8 +72,8 @@ print_field(char* pszLabel, const pcsl_string* field) {
  * @param props The properties to search for <tt>key</tt>
  */
 static void
-printProperty(char* pszLabel, const pcsl_string * key, MidpProperties props) {
-    print_field(pszLabel, midp_find_property(&props, key));
+printProperty(char* pszLabel, const pcsl_string * prop) {
+    print_field(pszLabel, prop);
 }
 
 /**
@@ -139,7 +139,7 @@ listMidlets(int argc, char* argv[]) {
 
         for (i = 0; i < numberOfSuites; i++) {
             MidpInstallInfo info;
-            MidpProperties properties;
+            pcsl_string property = PCSL_STRING_NULL;
 
             info = midp_get_suite_install_info(pSuites[i]);
             if (BAD_ID_INFO_STATUS(info)) {
@@ -170,36 +170,22 @@ listMidlets(int argc, char* argv[]) {
                 break;
             }
 
-            properties = midp_get_suite_properties(pSuites[i]);
-            if (OUT_OF_MEM_PROPERTY_STATUS(properties)) {
-                midp_free_install_info(&info);
-                midp_free_properties(&properties);
-                REPORT_ERROR(LC_AMS, "Out Of Memory for properties");
-                fprintf(stderr, "Out Of Memory for properties\n");
-                break;
-            }
-
-            if (CORRUPTED_PROPERTY_STATUS(properties)) {
-                midp_free_install_info(&info);
-                midp_free_properties(&properties);
-                REPORT_ERROR1(LC_AMS, "Error : Suite %d is corrupted", (i+1));
-                fprintf(stderr, "Error : Suite %d is corrupted\n", (i+1));
-                continue;
-            }
-
-            if (READ_ERROR_PROPERTY_STATUS(properties)) {
-                midp_free_install_info(&info);
-                midp_free_properties(&properties);
-                REPORT_ERROR(LC_AMS, "Corrupt properties");
-                fprintf(stderr, "Corrupt properties\n");
-                break;
-            }
-
             printf("[%d]\n", (i + 1));
-            printProperty("  Name: ", &SUITE_NAME_PROP, properties);
-            printProperty("  Vendor: ", &SUITE_VENDOR_PROP, properties);
-            printProperty("  Version: ", &SUITE_VERSION_PROP, properties);
-            printProperty("  Description: ", &SUITE_DESC_PROP, properties);
+            property = midp_get_suite_property(pSuites[i], &SUITE_NAME_PROP);
+            printProperty("  Name: ", &property);
+            pcsl_string_free(&property);
+
+            property = midp_get_suite_property(pSuites[i], &SUITE_VENDOR_PROP);
+            printProperty("  Vendor: ", &property);
+            pcsl_string_free(&property);
+
+            property = midp_get_suite_property(pSuites[i], &SUITE_VERSION_PROP);
+            printProperty("  Version: ", &property);
+            pcsl_string_free(&property);
+
+            property = midp_get_suite_property(pSuites[i], &SUITE_DESC_PROP);
+            printProperty("  Description: ", &property);
+            pcsl_string_free(&property);
 
             if (info.authPathLen > 0) {
                 int j;
@@ -224,7 +210,6 @@ listMidlets(int argc, char* argv[]) {
             }
 
             midp_free_install_info(&info);
-            midp_free_properties(&properties);
         }
 
         midp_free_suite_ids(pSuites, numberOfSuites);

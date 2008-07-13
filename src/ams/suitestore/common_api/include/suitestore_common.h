@@ -380,29 +380,15 @@ midp_get_suite_id(const pcsl_string* vendor, const pcsl_string* name,
     SuiteIdType* suiteId);
 
 /**
- * Gets the properties of a MIDlet suite to persistent storage.
- * <pre>
- * The format of the properties file will be:
- * <number of strings as int (2 strings per property)>
- *    {repeated for each property}
- *    <length of a property key as int>
- *    <property key as jchars>
- *    <length of property value as int>
- *    <property value as jchars>
- * </pre>
+ * Gets the property of a MIDlet suite to persistent storage.
  *
+ * @param suiteId   ID of the suite
+ * @param key       key of property to find    
  *
- * Note that memory for the strings inside the returned MidpProperties
- * structure is allocated by the callee, and the caller is
- * responsible for freeing it using midp_free_properties().
- *
- * @param suiteId ID of the suite
- *
- * @return properties in a pair pattern of key and value,
- * use the status macros to check the result. A SUITE_CORRUPTED_ERROR
- * is returned as a status of MidpProperties when suite is corrupted
+ * @return property that that belongs to given key
  */
-MidpProperties midp_get_suite_properties(SuiteIdType suiteId);
+pcsl_string
+midp_get_suite_property(SuiteIdType suiteId, const pcsl_string* key);
 
 /**
  * Find and return the property the matches the given key.

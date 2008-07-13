@@ -44,7 +44,11 @@ SUBSYSTEM_AMS_I3TEST_JAVA_FILES +=
 endif
 
 # vpath for ( common ) module 
+ifeq ($(TARGET_PLATFORM), javacall)
+vpath % $(COMMON_API_DIR)/javacall/native
+else
 vpath % $(COMMON_API_DIR)/reference/native
+endif
 
 # Native files for the ( common ) module
 SUBSYSTEM_AMS_NATIVE_FILES += \

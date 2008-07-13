@@ -42,6 +42,8 @@
 #include <suitestore_intern.h>
 #include <suitestore_locks.h>
 
+#include "midp_ams_status.h"
+
 #if ENABLE_MONET
 /**
  * Filename to save the application image file of suite.
@@ -524,7 +526,7 @@ midp_free_properties(MidpProperties* pProperties) {
  * use the status macros to check the result. A SUITE_CORRUPTED_ERROR
  * is returned as a status of MidpProperties when suite is corrupted
  */
-MidpProperties
+static MidpProperties
 midp_get_suite_properties(SuiteIdType suiteId) {
     pcsl_string filename;
     MidpProperties result = { 0, ALL_OK, NULL };
@@ -580,6 +582,52 @@ midp_get_suite_properties(SuiteIdType suiteId) {
 
     return result;
 }
+
+/**
+ * Gets the property of a MIDlet suite to persistent storage.
+ *
+ * @param suiteId   ID of the suite
+ * @param key       key of property to find    
+ *
+ * @return property that that belongs to given key
+ */
+pcsl_string 
+midp_get_suite_property(SuiteIdType suiteId, const pcsl_string* key) {
+    MidpProperties properties;
+    pcsl_string* property;
+    pcsl_string result = PCSL_STRING_NULL;
+
+    properties = midp_get_suite_properties(suiteId);
+    if (OUT_OF_MEM_PROPERTY_STATUS(properties)) {
+        return PCSL_STRING_NULL;
+    }
+
+    do {
+        if (CORRUPTED_PROPERTY_STATUS(properties)) {
+            REPORT_ERROR(LC_AMS, "Error : Suite is corrupted");
+            break;
+        }
+
+        if (READ_ERROR_PROPERTY_STATUS(properties)) {
+            REPORT_ERROR(LC_AMS, "Corrupt properties");
+            break;
+        }
+
+        property = midp_find_property(&properties, key);
+        if (pcsl_string_length(property) <= 0) {
+            /* property not found */
+            result = PCSL_STRING_NULL;
+            break;
+        }
+
+        pcsl_string_dup(property, &result);
+    } while (0);
+
+    midp_free_properties(&properties);
+
+    return result;
+}
+
 
 /* ------------------------------------------------------------ */
 /*                          Implementation                      */
