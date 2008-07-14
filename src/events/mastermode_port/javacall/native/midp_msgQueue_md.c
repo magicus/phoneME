@@ -1,7 +1,7 @@
 /*
  *
  *
- * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
@@ -328,7 +328,15 @@ void checkForSystemSignal(MidpReentryData* pNewSignal,
         pNewSignal->descriptor = (int)event->data.jsr256_jc_event_sensor.sensor;
         break;
 #endif /* ENABLE_JSR_256 */
-    default:
+#ifdef ENABLE_API_EXTENSIONS
+case MIDP_JC_EVENT_VOLUME:
+		pNewSignal->waitingFor = VOLUME_SIGNAL;
+		pNewSignal->status     = JAVACALL_OK;
+	
+	break;
+#endif /* ENABLE_API_EXTENSIONS */
+	default:
+
         REPORT_ERROR(LC_CORE,"Unknown event.\n");
         break;
     };

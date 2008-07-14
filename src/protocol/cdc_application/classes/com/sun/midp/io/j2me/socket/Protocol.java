@@ -106,6 +106,21 @@ public class Protocol extends com.sun.cdc.io.j2me.socket.Protocol {
         if (port < 0) {
             throw new IllegalArgumentException("bad port: " + port);
         }
+        try {
+            AccessController.checkPermission(AccessController.TRUSTED_APP_PERMISSION_NAME);
+        } catch (SecurityException exc) {
+            /*
+             * JTWI security check, untrusted MIDlets cannot open port 80 or
+             * 8080 or 443. This is so they cannot perform HTTP and HTTPS
+             * requests on server without using the system code. The
+             * system HTTP code will add a "UNTRUSTED/1.0" to the user agent
+             * field for untrusted MIDlets.
+             */
+            if (port == 80 || port == 8080 || port == 443) {
+                throw new SecurityException(
+                    "Target port denied to untrusted applications");
+            }
+        }
 	if ("".equals(host)) {
 	    AccessController.checkPermission(SERVER_PERMISSION_NAME,
 					     "TCP Server" + port);

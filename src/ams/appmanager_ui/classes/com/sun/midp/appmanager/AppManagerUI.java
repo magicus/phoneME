@@ -74,7 +74,7 @@ interface AppManagerUI {
 
     /**
      * Called when a running internal midlet exited.
-     * @param midlet
+     * @param midlet proxy of the midlet that has exited
      */
     void notifyInternalMidletExited(MIDletProxy midlet);
 
@@ -99,6 +99,13 @@ interface AppManagerUI {
      */
     void notifySuiteInstalledExt(RunningMIDletSuiteInfo si);
 
+    /**
+     * Called when a suite exited (the only MIDlet in suite exited or the
+     * MIDlet selector exited).
+     * @param suiteInfo Suite which just exited
+     */
+    void notifySuiteExited(RunningMIDletSuiteInfo suiteInfo);
+    
     /**
      * Called when a MIDlet suite has been removed externally.
      * @param si corresponding suite info
@@ -146,6 +153,12 @@ interface AppManagerUI {
     void setCurrentItem(RunningMIDletSuiteInfo item);
 
     /**
+     * Enters automatically the midlet suite determined by the suite ID.
+     * @param suiteId ID of the suite to launch
+     */
+    void enterSuite(int suiteId);
+   
+    /**
      * Called to determine MidletSuiteInfo of the last selected Item.
      * Is used to restore selection in the app manager.
      *
@@ -154,13 +167,21 @@ interface AppManagerUI {
     RunningMIDletSuiteInfo getSelectedMIDletSuiteInfo();
 
     /**
-     * Called when midlet selector needed.
+     * Called when midlet switcher is needed.
      *
      * @param onlyFromLaunchedList true if midlet should
      *        be selected from the list of already launched midlets,
      *        if false then possibility to launch midlet is needed.
      */
     void showMidletSwitcher(boolean onlyFromLaunchedList);
+
+    /**
+     * Called when midlet selector is needed. Should show a list of
+     * midlets present in the given suite and allow to select one.
+     *
+     * @param msiToRun a suite from which a midlet must be selected
+     */
+    void showMidletSelector(RunningMIDletSuiteInfo msiToRun);
 
     /**
      * Called by Manager when destroyApp happens to clean up data.
@@ -174,5 +195,3 @@ interface AppManagerUI {
     Displayable getMainDisplayable();
 
 }
-
-
