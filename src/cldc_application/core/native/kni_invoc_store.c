@@ -964,7 +964,7 @@ KNIDECL(com_sun_j2me_content_InvocationStore_update0) {
 #undef invocArgIdx
     KNI_EndHandles();
     KNI_ReturnVoid();
-};
+}
 
 KNIEXPORT KNI_RETURNTYPE_VOID
 KNIDECL(com_sun_j2me_content_InvocationStore_resetFlags0) {
@@ -978,7 +978,7 @@ KNIDECL(com_sun_j2me_content_InvocationStore_resetFlags0) {
     }
 #undef tidArgIdx
     KNI_ReturnVoid();
-};
+}
 
 KNIEXPORT KNI_RETURNTYPE_VOID
 KNIDECL(com_sun_j2me_content_InvocationStore_dispose0) {
@@ -992,7 +992,7 @@ KNIDECL(com_sun_j2me_content_InvocationStore_dispose0) {
     }
 #undef tidArgIdx
     KNI_ReturnVoid();
-};
+}
 
 //---------------------------------------------------------
 
