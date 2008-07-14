@@ -127,6 +127,8 @@ extern "C" {
  */
 /** the system is shutting down */
 #define MIDP_SHUTDOWN_STATUS 1
+/** the system was initialized properly. Used for slave mode */
+#define MIDP_INIT_OK_STATUS 0
 /** single error code for various errors */
 #define MIDP_ERROR_STATUS (-1)
 /** the MIDlet suite was not found */
