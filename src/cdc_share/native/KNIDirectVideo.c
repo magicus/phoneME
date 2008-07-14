@@ -205,3 +205,8 @@ KNIDECL(com_sun_mmedia_DirectPlayer_nSetAlpha) {
     KNI_ReturnInt(JAVACALL_SUCCEEDED(ret) ? 1 : 0);  
 }
 
+KNIEXPORT KNI_RETURNTYPE_BOOLEAN 
+KNIDECL(com_sun_mmedia_DirectPlayer_nSetFullScreenMode) {
+    KNI_ReturnBoolean( KNI_FALSE );
+}
+

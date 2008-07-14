@@ -446,7 +446,11 @@ class DirectVideo implements VideoControl, MIDPVideoPainter {
 
         synchronized( boundLock ) {
             if( fsmode != fullScreenMode ) {
-                source.setVideoFullScreen(fullScreenMode);
+                if( !source.setVideoFullScreen(fullScreenMode) )
+                {
+                    throw new MediaException( 
+                            "Unable to set full-screen mode" );
+                }
                 fsmode = fullScreenMode;
 
                 if( fsmode ) {
