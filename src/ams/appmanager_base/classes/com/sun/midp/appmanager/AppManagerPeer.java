@@ -396,7 +396,11 @@ class AppManagerPeer implements CommandListener {
                 if (si.equals(midlet)) {
                     si.proxy = null;
 
-                    appManagerUI.notifyMidletExited(si);
+                    appManagerUI.notifyMidletExited(si, midletClassName);
+                    
+                    if (si.hasSingleMidlet()) {
+                        manager.notifySuiteExited(si);
+                    }
 
                     if (removeMsi != null && removeMsi.equals(midlet)) {
                         remove(removeMsi);

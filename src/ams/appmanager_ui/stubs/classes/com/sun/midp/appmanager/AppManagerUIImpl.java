@@ -122,8 +122,10 @@ class AppManagerUIImpl implements AppManagerUI {
     /**
      * Called when a running midlet exited.
      * @param si corresponding midlet suite info
+     * @param midletClassName Class name of the exited midlet
      */
-    public void notifyMidletExited(RunningMIDletSuiteInfo si) {
+    public void notifyMidletExited(RunningMIDletSuiteInfo si, 
+            String midletClassname) {
 
     }
 
