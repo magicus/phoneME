@@ -1,7 +1,7 @@
 /*
  *
  *
- * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
@@ -26,7 +26,6 @@
 
 package com.sun.j2me.content;
 
-import java.util.Enumeration;
 import java.util.Vector;
 
 import javax.microedition.content.ActionNameMap;
@@ -37,67 +36,76 @@ import javax.microedition.content.RequestListener;
 /**
  * The internal structure of a registered content handler.
  */
-public class ContentHandlerImpl implements ContentHandler {
+public class ContentHandlerImpl extends ContentHandlerRegData 
+					implements ContentHandler {
+	
+	public static interface Handle {
+		public static interface Receiver {
+			void push( Handle handle );
+		}
+		
+	    /** 
+	     * Content Handler fields indexes.
+	     * <BR>Used with functions: @link findHandler(), @link getValues() and 
+	     * @link getArrayField().
+	     * <BR> They should match according enums in jsr211_registry.h
+	     */
+	    static final int FIELD_ID         = 0;  /** Handler ID */
+	    static final int FIELD_TYPES      = 1;  /** Types supported by a handler */
+	    static final int FIELD_SUFFIXES   = 2;  /** Suffixes supported */
+	                                            /** by a handler */
+	    static final int FIELD_ACTIONS    = 3;  /** Actions supported */
+	                                            /** by a handler */
+	    static final int FIELD_LOCALES    = 4;  /** Locales supported */
+	                                            /** by a handler */
+	    static final int FIELD_ACTION_MAP = 5;  /** Handler action map */
+	    static final int FIELD_ACCESSES   = 6; /** Access list */
+	    static final int FIELD_COUNT      = 7; /** Total number of fields */
+	    
+		String				getID();
+		int 				getSuiteId();
+		
+	    /**
+	     * Returns array field
+	     * @param fieldId index of field. Allowed: 
+	     *        @link FIELD_TYPES, @link FIELD_SUFFIXES, @link FIELD_ACTIONS
+	     *        @link FIELD_LOCALES, @link FIELD_ACTION_MAP, @link FIELD_ACCESSES
+	     *        values.
+	     * @return array of values
+	     */
+	    String[] getArrayField(int fieldId);
+
+		ContentHandlerImpl 	get();
+	}
+	
+	/**
+	 * handle of registered content handler.
+	 */
+	protected Handle handle = null;
+	
+    /**
+     * The MIDlet suite storagename that contains the MIDlet.
+     */
+    protected int storageId;
 
     /**
-     * The content handler ID.
-     * Lengths up to 256 characters MUST be supported.
-     * The ID may be <code>null</code>.
+     * The application class name that implements this content
+     * handler.  Note: Only the application that registered the class
+     * will see the classname; for other applications the value will be
+     * <code>null</code>.
      */
-    String ID;
+    protected String classname;
 
-    /**
-     * The types that are supported by this content handler.
-     * If there are no types registered, the this field MUST either be
-     * <code>null</code> or refer to an empty array .
-     */
-    private String[] types;
-
-    /**
-     * The suffixes of URLs that are supported by this content handler.
-     * If there are no suffixes, then this field MUST be <code>null</code>.
-     * The suffixes MUST include any and all punctuation. For example,
-     * the string <code>".png"</code>.
-     */
-    private String[] suffixes;
-
-    /**
-     * The actions that are supported by this content handler.
-     * If there are no actions, then this field MSUT be <code>null</code>.
-     */
-    private String[] actions;
-
-    /**
-     * The action names that are defined by this content handler.
-     */
-    ActionNameMap[] actionnames;
-
-    /** The sequence number of this instance; monotonic increasing. */
-    final int seqno;
-
-    /** The next sequence number to assign. */
-    private static int nextSeqno;
+    /** Count of requests retrieved via {@link #getRequest}. */
+    protected int requestCalls;
 
     /**
      * The RequestListenerImpl; if a listener is set.
      */
     RequestListenerImpl listenerImpl;
 
-    /** Empty String array to return when needed. */
-    public final static String[] ZERO_STRINGS = {};
-
-    /** Empty ActionNameMap to return when needed. */
-    private final static ActionNameMap[] ZERO_ACTIONNAMES =
-        new ActionNameMap[0];
-
     /** Property name for the current locale. */
     private final static String LOCALE_PROP = "microedition.locale";
-
-    /**
-     * The MIDlet suite storagename that contains the MIDlet.
-     */
-    int storageId;
-
     /**
      * The Name from parsing the Property for the MIDlet
      * with this classname.
@@ -110,239 +118,29 @@ public class ContentHandlerImpl implements ContentHandler {
     String version;
 
     /**
-     * The application class name that implements this content
-     * handler.  Note: Only the application that registered the class
-     * will see the classname; for other applications the value will be
-     * <code>null</code>.
-     */
-    String classname;
-
-    /**
      * The authority that authenticated this ContentHandler.
      */
     String authority;
 
     /**
-     * The accessRestrictions for this ContentHandler.
-     */
-    private String[] accessRestricted;
-
-    /**
-     * Indicates content handler registration method:
-     * dynamic registration from the API, static registration from install
-     * or native content handler.
-     * Must be similar to enum in jsr211_registry.h
-     */
-    int registrationMethod;
-
-    /** Content handler statically/dynamically registered during installation */
-    final static int REGISTERED_STATIC_FLAG = 0x0001; // if set => statically
-
-    /** Count of requests retrieved via {@link #getRequest}. */
-    int requestCalls;
-
-    /**
-     * Instance is a registration or unregistration.
-     * An unregistration needs only storageId and classname.
-     */
-    boolean removed;
-
-    /**
-     * Construct a ContentHandlerImpl.
-     * Verifies that all strings are non-null
-     * @param types an array of types to register; may be
-     *  <code>null</code>
-     * @param suffixes an array of suffixes to register; may be
-     *  <code>null</code>
-     * @param actions an array of actions to register; may be
-     *  <code>null</code>
-     * @param actionnames an array of ActionNameMaps to register; may be
-     *  <code>null</code>
-     * @param ID the content handler ID; may be <code>null</code>
-     * @param accessRestricted the  IDs of applications allowed access
-     * @param auth application authority
-     *
-     * @exception NullPointerException if any types, suffixes,
-     *   actions, actionnames array element is null
-     *
-     * @exception IllegalArgumentException is thrown if any of
-     *   the types, suffix, or action strings have a
-     *   length of zero or
-     *   if the ID has a length of zero or contains any
-     *        control character or space (U+0000-U+00020)
-     */
-    ContentHandlerImpl(String[] types, String[] suffixes,
-                       String[] actions, ActionNameMap[] actionnames,
-                       String ID, String[] accessRestricted, String auth) {
-        this();
-
-        // Verify consistency between actions and ActionNameMaps
-        if (actionnames != null && actionnames.length > 0) {
-            if (actions == null) {
-                throw new IllegalArgumentException("no actions");
-            }
-            int len = actions.length;
-            for (int i = 0; i < actionnames.length; i++) {
-                // Verify the actions are the same
-                ActionNameMap map = actionnames[i];
-                if (len != map.size()) {
-                    throw new IllegalArgumentException("actions not identical");
-                }
-
-                for (int j = 0; j < len; j++) {
-                    if (!actions[j].equals(map.getAction(j))) {
-                        throw new
-                            IllegalArgumentException("actions not identical");
-                    }
-                }
-
-                /*
-                 * Verify the locale of this ActionNameMap is not the same
-                 * as any previous ActionNameMap.
-                 */
-                for (int j = 0; j < i; j++) {
-                    if (map.getLocale().equals(actionnames[j].getLocale())) {
-                        throw new IllegalArgumentException("duplicate locale");
-                    }
-                }
-            }
-        }
-
-        // Check the ID for invalid characters (controls or space)
-        if (ID != null) {
-            int len = ID.length();
-            if (len == 0) {
-                    throw new IllegalArgumentException("invalid ID");
-            }
-            for (int i = 0; i < ID.length(); i++) {
-                if (ID.charAt(i) <= 0x0020) {
-                    throw new IllegalArgumentException("invalid ID");
-                }
-            }
-            this.ID = ID;
-        }
-        this.types = copy(types,false,true);
-        this.suffixes = copy(suffixes,false,true);
-        this.actions = copy(actions,true,false);
-        this.actionnames = copy(actionnames);
-        // access restricted callers allows duplicates
-        this.accessRestricted = copy(accessRestricted,true,false);
-        this.authority = auth;
-    }
-
-    /**
      * Initialize a new instance with the same information.
      * @param handler another ContentHandlerImpl
-     * @see javax.microedition.content.ContentHandlerServerImpl
+     * @see com.sun.j2me.content.ContentHandlerServerImpl
      */
     protected ContentHandlerImpl(ContentHandlerImpl handler) {
-        this();
-        types = handler.types;
-        suffixes = handler.suffixes;
-        ID = handler.ID;
-        accessRestricted = handler.accessRestricted;
-        actions = handler.actions;
-        actionnames = handler.actionnames;
-        listenerImpl = handler.listenerImpl;
+    	super( handler );
+        handle = handler.handle;
         storageId = handler.storageId;
         classname = handler.classname;
+        listenerImpl = handler.listenerImpl;
         version = handler.version;
-        registrationMethod = handler.registrationMethod;
         requestCalls = handler.requestCalls;
         authority = handler.authority;
         appname = handler.appname;
     }
-
-    /**
-     * Constructor used to read handlers.
-     */
-    ContentHandlerImpl() {
-        seqno = nextSeqno++;
-        registrationMethod = REGISTERED_STATIC_FLAG; // non-native, statically registered 
-    }
-
-    /**
-     * Checks that all of the string references are non-null
-     * and not zero length.  If either the argument is null or
-     * is an empty array the default ZERO length string array is used.
-     *
-     * @param strings array to check for null and length == 0
-     * @param caseSens assume case sensitivity when check for duplicates
-     * @param skipDuplicates check for duplicates and skip them 
-     * @return a non-null array of strings; an empty array replaces null
-     * @exception NullPointerException if any string ref is null
-     * @exception IllegalArgumentException if any string
-     * has length == 0
-     */
-    public static String[] copy(String[] strings, boolean caseSens, boolean skipDuplicates) {
-		Vector copy = new Vector();    	
-		if (strings != null && strings.length > 0) {
-			for (int i = 0; i < strings.length; i++) {
-				if (strings[i] == null) {
-					throw new NullPointerException("argument is null");
-				}
-				String s = strings[i];
-				if (s.length() == 0) {
-					throw new IllegalArgumentException("string length is 0");
-				}
-				if (skipDuplicates){
-					Enumeration e = copy.elements();
-					while (e.hasMoreElements()){
-						String sprev = (String)e.nextElement();
-						if (caseSens) {
-							if (s.equals(sprev)) break;
-						} else {
-							if (s.equalsIgnoreCase(sprev)) break;
-						}
-					}
-					if (e.hasMoreElements()) continue;
-				}
-				copy.addElement(s);
-			}
-		}
-		if (copy.size()>0) {
-			String result[]=new String[copy.size()];
-			copy.copyInto(result);
-			return result;
-		} else {
-			return ZERO_STRINGS;
-		}
-	}
-    /**
-	 * Checks that all of the actionname references are non-null.
-	 * 
-	 * @param actionnames array to check for null and length == 0
-	 * @return a non-null array of actionnames; an empty array replaces null
-	 * @exception NullPointerException if any string ref is null
-	 */
-    private static ActionNameMap[] copy(ActionNameMap[] actionnames) {
-        if (actionnames != null && actionnames.length > 0) {
-            ActionNameMap[] copy = new ActionNameMap[actionnames.length];
-            for (int i = 0; i < actionnames.length; i++) {
-                // Check for null
-                if (actionnames[i] == null) {
-                    throw new NullPointerException();
-                }
-                copy[i] = actionnames[i];
-            }
-            return copy;
-        } else {
-            return ZERO_ACTIONNAMES;
-        }
-    }
-
-    /**
-     * Copy an array of ContentHandlers making a new ContentHandler
-     * for each ContentHandler.  Make copies of any multiple object.
-     * @param handlers the array of handlers duplicate
-     * @return the new array of content handlers
-     */
-    public static ContentHandler[] copy(ContentHandler[] handlers) {
-        ContentHandler[] h = new ContentHandler[handlers.length];
-        for (int i = 0; i < handlers.length; i++) {
-            h[i] = handlers[i];
-        }
-        return h;
+    
+    protected ContentHandlerImpl( Handle handle ){
+    	this.handle = handle; 
     }
 
     /**
@@ -372,9 +170,9 @@ public class ContentHandlerImpl implements ContentHandler {
      *
      * @return array of types supported
      */
-    String [] getTypes() {
+    public String[] getTypes() {
         if (types == null) {
-            types = RegistryStore.getArrayField(ID, RegistryStore.FIELD_TYPES);
+            types = handle.getArrayField(Handle.FIELD_TYPES);
         }
         return types;
     }
@@ -431,10 +229,9 @@ public class ContentHandlerImpl implements ContentHandler {
      *
      * @return array of suffixes supported
      */
-    String [] getSuffixes() {
+    public String[] getSuffixes() {
         if (suffixes == null) {
-            suffixes =
-                RegistryStore.getArrayField(ID, RegistryStore.FIELD_SUFFIXES);
+            suffixes = handle.getArrayField(Handle.FIELD_SUFFIXES);
         }
         return suffixes;
     }
@@ -478,10 +275,9 @@ public class ContentHandlerImpl implements ContentHandler {
      *
      * @return array of actions supported
      */
-    String [] getActions() {
+    public String[] getActions() {
         if (actions == null) {
-            actions =
-                RegistryStore.getArrayField(ID, RegistryStore.FIELD_ACTIONS);
+            actions = handle.getArrayField(Handle.FIELD_ACTIONS);
         }
         return actions;
     }
@@ -494,7 +290,7 @@ public class ContentHandlerImpl implements ContentHandler {
      * @exception IndexOutOfBounds if index is less than zero or
      *     greater than or equal length of the array.
      */
-    private String get(int index, String[] strings) {
+    static private String get(int index, String[] strings) {
         if (index < 0 || index >= strings.length) {
             throw new IndexOutOfBoundsException();
         }
@@ -510,7 +306,7 @@ public class ContentHandlerImpl implements ContentHandler {
      * @exception NullPointerException if <code>string</code>
      * is <code>null</code>
      */
-    private boolean has(String string, String[] strings, boolean ignoreCase) {
+    static private boolean has(String string, String[] strings, boolean ignoreCase) {
         int len = string.length(); // Throw NPE if null
         for (int i = 0; i < strings.length; i++) {
             if (strings[i].length() == len &&
@@ -605,14 +401,12 @@ public class ContentHandlerImpl implements ContentHandler {
      */
     private ActionNameMap[] getActionNames() {
         if (actionnames == null) {
-            String [] locales =
-                RegistryStore.getArrayField(ID, RegistryStore.FIELD_LOCALES);
-            String [] names   =
-                RegistryStore.getArrayField(ID, RegistryStore.FIELD_ACTION_MAP);
+            String[] locales = handle.getArrayField(Handle.FIELD_LOCALES);
+            String[] names   = handle.getArrayField(Handle.FIELD_ACTION_MAP);
 
             actionnames = new ActionNameMap[locales.length];
             for (int index = 0; index < locales.length; index++) {
-                String [] temp = new String[getActions().length];
+                String[] temp = new String[getActions().length];
 
                 System.arraycopy(names,
                                  index * getActions().length,
@@ -654,18 +448,6 @@ public class ContentHandlerImpl implements ContentHandler {
     }
 
     /**
-     * Get the content handler ID.  The ID uniquely identifies the
-     * application which contains the content handler.
-     * After registration and for every registered handler,
-     * the ID MUST NOT be <code>null</code>.
-     * @return the ID; MUST NOT be <code>null</code> unless the
-     *  ContentHandler is not registered.
-     */
-    public String getID() {
-        return ID;
-    }
-
-    /**
      * Gets the name of the authority that authorized this application.
      * This value MUST be <code>null</code> unless the device has been
      * able to authenticate this application.
@@ -691,8 +473,7 @@ public class ContentHandlerImpl implements ContentHandler {
     private void loadAppData() {
         if (appname == null) {
             try {
-                AppProxy app = 
-                        AppProxy.getCurrent().forApp(storageId, classname);
+                AppProxy app = AppProxy.getCurrent().forApp(storageId, classname);
                 appname = app.getApplicationName();
                 version = app.getVersion();
                 authority = app.getAuthority();
@@ -767,65 +548,11 @@ public class ContentHandlerImpl implements ContentHandler {
      *
      * @return array of allowed class names
      */
-    private String [] getAccessRestricted() {
+    public String[] getAccessRestricted() {
         if (accessRestricted == null) {
-            accessRestricted =
-                RegistryStore.getArrayField(ID, RegistryStore.FIELD_ACCESSES);
+            accessRestricted = handle.getArrayField(Handle.FIELD_ACCESSES);
         }
         return accessRestricted;
-    }
-
-    /**
-     * Gets the next Invocation request pending for this
-     * ContentHandlerServer.
-     * The method can be unblocked with a call to
-     * {@link #cancelGetRequest cancelGetRequest}.
-     * The application should process the Invocation as
-     * a request to perform the <code>action</code> on the content.
-     *
-     * @param wait <code>true</code> if the method must wait for
-     * for an Invocation if one is not available;
-     * <code>false</code> if the method MUST NOT wait.
-     * @param invocation an Invocation instance that will delegate to
-     * the result; if any
-     * @return the next pending Invocation or <code>null</code>
-     *  if no Invocation is available; <code>null</code>
-     *  if canceled with {@link #cancelGetRequest cancelGetRequest}
-     * @see javax.microedition.content.Registry#invoke
-     * @see javax.microedition.content.ContentHandlerServer#finish
-     */
-    public InvocationImpl getRequest(boolean wait, Invocation invocation) {
-    	if(AppProxy.LOGGER != null){
-    		AppProxy.LOGGER.println( "ContentHandler.getRequest(" + wait + ")" );
-    	}
-        // Application has tried to get a request; reset cleanup flags on all
-        if (requestCalls == 0) {
-            InvocationStore.setCleanup(storageId, classname, false);
-        }
-        requestCalls++;
-
-        InvocationImpl invoc =
-            InvocationStore.getRequest(storageId, classname, wait);
-        if (invoc != null) {
-            // Keep track of number of requests delivered to the application
-            AppProxy.requestForeground(invoc.invokingSuiteId,
-                                       invoc.invokingClassname,
-                                       invoc.suiteId,
-                                       invoc.classname);
-            invoc.invocation = invocation;
-        }
-        return invoc;
-    }
-
-    /**
-     * Cancel a pending <code>getRequest</code>.
-     * This method will force a Thread blocked in a call to the
-     * <code>getRequest</code> method for the same application
-     * context to return early.
-     * If no Thread is blocked; this call has no effect.
-     */
-    public void cancelGetRequest() {
-        InvocationStore.cancel();
     }
 
     /**
@@ -878,8 +605,7 @@ public class ContentHandlerImpl implements ContentHandler {
             if (listener != null || listenerImpl != null) {
                 // Create or update the active listener thread
                 if (listenerImpl == null) {
-                    listenerImpl =
-                        new RequestListenerImpl(this, listener);
+                    listenerImpl = new RequestListenerImpl(this, listener);
                 } else {
                     listenerImpl.setListener(listener);
                 }
@@ -907,9 +633,7 @@ public class ContentHandlerImpl implements ContentHandler {
      * storageID, and seqno.
      */
     boolean equals(ContentHandlerImpl other) {
-        return seqno == other.seqno &&
-            storageId == other.storageId &&
-            classname.equals(other.classname);
+        return storageId == other.storageId && classname.equals(other.classname);
     }
 
     /**
@@ -923,7 +647,6 @@ public class ContentHandlerImpl implements ContentHandler {
             sb.append(" classname: ");
             sb.append(classname);
             sb.append(", removed: ");
-            sb.append(removed);
             sb.append(", flag: ");
             sb.append(registrationMethod);
             sb.append(", types: ");
@@ -965,4 +688,138 @@ public class ContentHandlerImpl implements ContentHandler {
             sb.append(strings[i]);
         }
     }
+}
+
+//-----------------------------------------------------
+
+class HandlerNameFinder implements ContentHandlerImpl.Handle.Receiver {
+
+	static class FoundException extends RuntimeException {
+		public ContentHandlerImpl.Handle handle;
+		
+		FoundException(ContentHandlerImpl.Handle handle) {
+			this.handle = handle;
+		}
+	}
+
+	private String handlerID;
+	private boolean exact;
+
+	HandlerNameFinder(String handlerID, boolean exact) {
+		this.handlerID = handlerID;
+		this.exact = exact;
+	}
+
+	public void push(ContentHandlerImpl.Handle handle) {
+		if( exact ){
+			if( handle.getID().equals(handlerID) )
+				throw new FoundException( handle );
+		} else if( handle.getID().startsWith(handlerID) )
+			throw new FoundException( handle );
+	}
+}
+
+abstract class HandlerFilter implements ContentHandlerImpl.Handle.Receiver {
+	protected ContentHandlerImpl.Handle.Receiver output;
+	protected HandlerFilter( ContentHandlerImpl.Handle.Receiver output ){
+		this.output = output;
+	}
+}
+
+class HandlerNameFilter extends HandlerFilter {
+	private String testID;
+	
+	protected HandlerNameFilter(String testID, ContentHandlerImpl.Handle.Receiver r) {
+		super( r );
+		this.testID = testID;
+	}
+
+	public void push(ContentHandlerImpl.Handle handle) {
+		if( handle.getID().startsWith(testID) || testID.startsWith(handle.getID()) )
+			output.push(handle);
+	} 
+}
+
+class HandlerSuiteIDFilter extends HandlerFilter {
+	private int suiteId;
+
+	HandlerSuiteIDFilter( int suiteId, ContentHandlerImpl.Handle.Receiver r ){
+		super( r );
+		this.suiteId = suiteId;
+	}
+
+	public void push(ContentHandlerImpl.Handle handle) {
+		if( handle.getSuiteId() == suiteId )
+			output.push(handle);
+	}
+}
+
+class HandlerTypeFilter extends HandlerFilter {
+	private String type;
+	
+	protected HandlerTypeFilter(String type, ContentHandlerImpl.Handle.Receiver r) {
+		super( r );
+		this.type = type;
+	}
+
+	public void push(ContentHandlerImpl.Handle handle) {
+		if( handle.get().hasType(type) )
+			output.push(handle);
+	} 
+}
+
+class HandlerActionFilter extends HandlerFilter {
+	private String action;
+	
+	protected HandlerActionFilter(String action, ContentHandlerImpl.Handle.Receiver r) {
+		super( r );
+		this.action = action;
+	}
+
+	public void push(ContentHandlerImpl.Handle handle) {
+		if( handle.get().hasAction(action) )
+			output.push(handle);
+	} 
+}
+
+class HandlerSuffixFilter extends HandlerFilter {
+	private String suffix;
+	
+	protected HandlerSuffixFilter(String suffix, ContentHandlerImpl.Handle.Receiver r) {
+		super( r );
+		this.suffix = suffix;
+	}
+
+	public void push(ContentHandlerImpl.Handle handle) {
+		if( handle.get().hasSuffix(suffix) )
+			output.push(handle);
+	} 
+}
+
+class HandlerAccessFilter extends HandlerFilter {
+	private String callerId;
+	
+	public HandlerAccessFilter(String callerId, ContentHandlerImpl.Handle.Receiver r) {
+		super( r );
+		this.callerId = callerId;
+	}
+
+	public void push(ContentHandlerImpl.Handle handle) {
+		if( handle.get().isAccessAllowed(callerId) )
+			output.push(handle);
+	}
+}
+
+class HandlersCollection implements ContentHandlerImpl.Handle.Receiver {
+	Vector/*<ContentHandlerImpl>*/ vector = new Vector(); 
+	
+	public void push(ContentHandlerImpl.Handle handle) {
+		vector.addElement( handle.get() );
+	}
+
+	public ContentHandlerImpl[] getArray() {
+		ContentHandlerImpl[] result = new ContentHandlerImpl[ vector.size() ];
+		vector.copyInto(result);
+		return result;
+	}
 }

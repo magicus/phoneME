@@ -58,8 +58,8 @@ public final class SecurityInitializer {
      */
     private static SecurityInitializerImpl impl =
         new SecurityInitializerImpl(
-            com.sun.midp.security.SecurityInitializer.requestToken(
-                new SecurityTrusted()),
+            com.sun.midp.security.SecurityInitializer.
+            				requestToken(new SecurityTrusted()),
             trustedClasses);
 
     /**
@@ -68,8 +68,7 @@ public final class SecurityInitializer {
      * @param trusted object to check whether token can be given to caller
      * @return if the object is really trusted to requested
      */
-    final public static Token requestToken(
-            TrustedClass trusted) {
+    final public static Token requestToken(TrustedClass trusted) {
         return new Token(impl.requestToken(trusted));
     }
 }

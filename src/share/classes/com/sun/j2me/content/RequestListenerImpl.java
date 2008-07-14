@@ -32,13 +32,15 @@ import javax.microedition.content.RequestListener;
  * Thread to monitor pending invocations and notify a listener
  * when a matching one is present.
  */
-class RequestListenerImpl implements Runnable {
+class RequestListenerImpl implements Runnable, Counter {
 
     /** ContenHandlerImpl for which this is listening. */
     private final ContentHandlerImpl handler;
 
     /** The active thread processing the run method. */
     private Thread thread;
+    
+    int stopFlag = 0;
 
     /**
      * Create a new listener for pending invocations.
@@ -78,6 +80,8 @@ class RequestListenerImpl implements Runnable {
 		 * Unblock any threads waiting to notify current listeners
 		 */
 		InvocationStore.setListenNotify(handler.storageId, handler.classname, true);
+		// stop thread
+		stopFlag++;
 		InvocationStore.cancel();
     }
 
@@ -92,10 +96,14 @@ class RequestListenerImpl implements Runnable {
 		while (mythread == thread) {
 		    // Wait for a matching invocation
 		    boolean pending = InvocationStore.listen(handler.storageId, 
-		    									handler.classname, true, true);
+		    							handler.classname, true, true, this);
 		    if (pending) {
 		    	handler.requestNotify();
 		    }
 		}
     }
+
+	public int getCounter() {
+		return stopFlag;
+	}
 }
