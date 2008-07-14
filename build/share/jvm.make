@@ -49,7 +49,7 @@ NATIVES_TABLE        = $(GEN_DIR)/NativesTable.cpp
 BUILDTOOLS_DIR       = $(BuildSpace)/$(BUILD_DIR_NAME)/tools
 BUILDTOOL_JAR        = $(BUILDTOOLS_DIR)/buildtool.jar
 ifeq ($(USE_VS2005), true)
-VC_MANIFEST_EMBED_EXE = mt.exe -manifest $@.manifest "-outputresource:$@"
+VC_MANIFEST_EMBED_EXE = mt.exe -nologo -manifest $@.manifest "-outputresource:$@"
 else
 VC_MANIFEST_EMBED_EXE = true
 endif
@@ -884,7 +884,7 @@ endif
 
 CPP_DEF_FLAGS          += -DWIN32 -D_WINDOWS
 CPP_DEF_FLAGS          += $(CPP_DEF_FLAGS_$(BUILD))
-CPP_DEF_FLAGS          += /Zm400 /W3 /nologo  \
+CPP_DEF_FLAGS          += /W3 /nologo  \
                           $(SAVE_TEMPS_CFLAGS) \
                           $(ENABLE_CFLAGS) \
                           $(ROMIZING_CFLAGS) \
@@ -1041,6 +1041,7 @@ $(ROM_GENERATOR): $(CLDC_ZIP) $(Obj_Files) OopMapsSkeleton.obj $(GP_TABLE_OBJ)
 	$(A)$(LINK) $(PCSL_LIBS) $(LINK_FLAGS) /out:$@ $(Obj_Files) \
                 OopMaps.obj \
                 $(GP_TABLE_OBJ)
+	$(A)$(VC_MANIFEST_EMBED_EXE)
 	$(A)echo generated `pwd`/$@
 else
 $(ROM_GENERATOR): $(BUILD_PCH) $(Obj_Files) InterpreterSkeleton.obj \
