@@ -773,7 +773,7 @@ class FormLFImpl extends ScreenLFImpl implements FormLF {
      * @param y The y coordinate of the press
      */
     void uCallPointerPressed(int x, int y) {
-        ItemLFImpl v = null;
+//        ItemLFImpl v = null;
 
         lastx = x;
         lasty = y;
@@ -783,19 +783,19 @@ class FormLFImpl extends ScreenLFImpl implements FormLF {
                 return;
             }
             
-            v = findItemByPointer(x, y);
+            pressedItem = findItemByPointer(x, y);
             pointerPressed = true;
         }
         
         // SYNC NOTE: this call may result in a call to the
         // application, so we make sure we do this outside of the
         // LCDUILock
-        if (v != null) {
-            x = (x + viewable[X]) - v.getInnerBounds(X);
-            y = (y + viewable[Y]) - v.getInnerBounds(Y);
-            v.uCallPointerPressed(x, y);
+        if (pressedItem != null) {
+            x = (x + viewable[X]) - pressedItem.getInnerBounds(X);
+            y = (y + viewable[Y]) - pressedItem.getInnerBounds(Y);
+            pressedItem.uCallPointerPressed(x, y);
 
-            uScrollToItem(v.item);
+//            uScrollToItem(v.item);
         } else {
              yPress = y;
         }
@@ -830,11 +830,17 @@ class FormLFImpl extends ScreenLFImpl implements FormLF {
             x = (x + viewable[X]) - v.getInnerBounds(X);
             y = (y + viewable[Y]) - v.getInnerBounds(Y);
             v.uCallPointerReleased(x, y);
+            
+            if (pressedItem == v) {
+                uScrollToItem(v.item);
+            }
+            pressedItem = null;
         }
 
         lastx = -1;
         lasty = -1;
     }
+        
 
     /**
      * Handle a pointer dragged event
@@ -866,7 +872,7 @@ class FormLFImpl extends ScreenLFImpl implements FormLF {
         // LCDUILock
         v.uCallPointerDragged(x, y);
     }
-
+    
     /**
      * Called to commit any pending user interaction for the current item.
      * Override the no-op in Displayable.
@@ -2365,5 +2371,7 @@ class FormLFImpl extends ScreenLFImpl implements FormLF {
      * Pressed y coordinate. -1 for not-pressed.
      */
      int yPress = -1;
+     
+     ItemLFImpl pressedItem = null;
 
 } // class FormLFImpl

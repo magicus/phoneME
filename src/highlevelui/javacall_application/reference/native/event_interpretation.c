@@ -23,17 +23,17 @@ jboolean get_complicated_event(MidpEvent* pNewComplMidpEvent,
     switch (action) {
         case PENPRESSED:
             backup_time = JVM_JavaMilliSeconds();
-            printf("case PENPRESSED backup_time = % d \n", backup_time);
+//            printf("case PENPRESSED backup_time = % d \n", backup_time);
             evt_key = EVT_DOWN_MASK;
             break;
         case PENRELEASED:
             current_time = JVM_JavaMilliSeconds();
-            printf("case PENRELEASED current_time = % d \n", current_time);
-            printf("case PENRELEASED evt_key = % d \n", evt_key);
-            printf("case PENRELEASED evt_key & EVT_DOWN_MASK & EVT_MOVE_MASK = % d \n", evt_key & EVT_DOWN_MASK & EVT_MOVE_MASK);
-            printf("case PENRELEASED evt_key & EVT_DOWNHOLD_MASK = % d \n", evt_key & EVT_DOWNHOLD_MASK);
+//            printf("case PENRELEASED current_time = % d \n", current_time);
+//            printf("case PENRELEASED evt_key = % d \n", evt_key);
+//            printf("case PENRELEASED evt_key & EVT_DOWN_MASK & EVT_MOVE_MASK = % d \n", evt_key & EVT_DOWN_MASK & EVT_MOVE_MASK);
+//            printf("case PENRELEASED evt_key & EVT_DOWNHOLD_MASK = % d \n", evt_key & EVT_DOWNHOLD_MASK);
             if ((evt_key & EVT_DOWN_MASK) && (evt_key & EVT_MOVE_MASK) && !(evt_key & EVT_DOWNHOLD_MASK)) {
-                printf("get_complicated_event FLICKER \n");
+//                printf("get_complicated_event FLICKER \n");
                 pNewComplMidpEvent->type    = MIDP_PEN_EVENT;
                 pNewComplMidpEvent->ACTION  = FLICK;
                 pNewComplMidpEvent->X_POS   = x;

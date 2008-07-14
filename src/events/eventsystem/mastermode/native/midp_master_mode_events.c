@@ -134,7 +134,7 @@ void midp_check_events(JVMSPI_BlockedThreadInfo *blocked_threads,
     case UI_SIGNAL:
         midpStoreEventAndSignalForeground(newMidpEvent);
         MIDP_EVENT_INITIALIZE(newCompMidpEvent);
-        printf("midp_check_events \n");
+//        printf("midp_check_events \n");
         if (get_complicated_event(&newCompMidpEvent,
                                   newMidpEvent.ACTION, newMidpEvent.X_POS, newMidpEvent.Y_POS)) {
             midpStoreEventAndSignalForeground(newCompMidpEvent);

@@ -716,16 +716,26 @@ class DisplayableLFImpl implements DisplayableLF {
                         eventType = 2;
                     }
                     break;
-                case EventConstants.FLICKERED_DOWN:
+                case EventConstants.CLICKED:
                     if (sawPointerPress) {
                         eventType = 3;
                     }
                     break;
-                case EventConstants.FLICKERED_UP:
+                case EventConstants.FLICKERED:
                     if (sawPointerPress) {
                         eventType = 4;
                     }
                     break;
+//                case EventConstants.FLICKERED_DOWN:
+//                    if (sawPointerPress) {
+//                        eventType = 3;
+//                    }
+//                    break;
+//                case EventConstants.FLICKERED_UP:
+//                    if (sawPointerPress) {
+//                        eventType = 4;
+//                    }
+//                    break;
                 default:
                     // will be handled below
                     break;
@@ -744,12 +754,12 @@ class DisplayableLFImpl implements DisplayableLF {
         case 2:
             uCallPointerDragged(x, y);
             break;
-        case 3:
-            uCallPointerFlickeredDown(x, y);
-            break;
-        case 4:
-            uCallPointerFlickeredUp(x, y);
-            break;
+//        case 3:
+//            uCallPointerClicked(x, y);
+//            break;
+//        case 4:
+//            uCallPointerFlickeredUp(x, y);
+//            break;
         default:
             if (sawPointerPress) {
                 Logging.report(Logging.ERROR, LogChannels.LC_HIGHUI,
@@ -781,6 +791,8 @@ class DisplayableLFImpl implements DisplayableLF {
      * @param y The y coordinate of the release
      */
     void uCallPointerReleased(int x, int y) { }
+    
+//    void uCallPointerClicked(int x, int y) { }
 
     /**
      * Handle a pointer flicker event

@@ -46,7 +46,7 @@ import com.sun.midp.log.LogChannels;
  * name and icon if any. When the user selects a MIDlet an instance
  * of the class indicated by MIDlet-&lt;n&gt; classname is created.
  */
-final class MIDletSelector implements CommandListener {
+public final class MIDletSelector implements CommandListener {
     /**
      * The List of all the MIDlets.
      */
@@ -102,7 +102,7 @@ final class MIDletSelector implements CommandListener {
      * @param theParentDisplayable the parent's displayable
      * @param theManager the parent application manager
      */
-    MIDletSelector(RunningMIDletSuiteInfo theSuiteInfo, Display theDisplay,
+    public MIDletSelector(RunningMIDletSuiteInfo theSuiteInfo, Display theDisplay,
                    Displayable theParentDisplayable,
                    ApplicationManager theManager) throws Throwable {
 

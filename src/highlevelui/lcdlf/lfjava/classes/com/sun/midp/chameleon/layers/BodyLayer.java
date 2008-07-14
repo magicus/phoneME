@@ -383,11 +383,12 @@ public class BodyLayer extends CLayer
                     break;
                 case EventConstants.DRAGGED:
                     System.out.println("BodyLayer.pointerInput DRAGGED");
-                    if (delta > -1) {
-                        delta =+ tunnel.getYScrollQuantity(y);
-                    }
-//                    if (delta != 0 && scrollInd != null) {
-//                        scrollInd.setDeltaVerticalScroll(delta);
+//                    int delta_loc = 0;
+
+                        delta += tunnel.getYScrollQuantity(y);
+//                    System.out.println("BodyLayer.pointerInput DRAGGED delta_loc= " + delta_loc);
+//                    if (delta_loc != 0 && scrollInd != null) {
+//                        scrollInd.setDeltaVerticalScroll(delta_loc);
 //                    }
                     break;                
                 case EventConstants.CLICKED:
@@ -395,7 +396,7 @@ public class BodyLayer extends CLayer
 
                     break;
                 case EventConstants.FLICKERED:
-                    System.out.println("BodyLayer.pointerInput FLICKERED");
+                    System.out.println("BodyLayer.pointerInput FLICKERED delta = " + delta + " scrollInd =" + scrollInd);
                     if (delta != 0 && scrollInd != null) {
                         scrollInd.setDeltaVerticalScroll(delta);
                     }
@@ -416,7 +417,6 @@ public class BodyLayer extends CLayer
                     break;
                 case EventConstants.RELEASED:
                     System.out.println("BodyLayer.pointerInput RELEASED");
-                    delta = -1;
                     if (scrollInd != null) {
                         scrollInd.finalizeDeltaVerticalScroll();
                     }
