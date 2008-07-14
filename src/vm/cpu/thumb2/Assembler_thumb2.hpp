@@ -518,6 +518,14 @@ protected:
   }
 
 #if ENABLE_ARM_VFP
+  #define SINGLE_ARG_VFP_COND   ) { const Condition cond = al;
+  #define VFP_COND              SINGLE_ARG_VFP_COND
+  #define VFP_EMIT              emit_w
+  #include "../arm/Assembler_vfp.hpp"
+#endif
+
+
+#if 0   // ENABLE_ARM_VFP
   // addressing mode 5 - coprocessor
   enum Address5 {
     forceaddress5=0x10000000  // force Address3 to be int size

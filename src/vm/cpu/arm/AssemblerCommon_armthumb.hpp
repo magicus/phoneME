@@ -147,20 +147,26 @@
     forceaddress5=0x10000000  // force Address3 to be int size
   };
 
-  static Address5 imm_index5(Register rn, int offset_8 = 0, Mode mode = offset)
+  static Address5 imm_index5_8x4( const Register rn, const int offset_8 = 0,
+                                                     Mode mode = offset)
   {
     GUARANTEE(rn != r15 || mode == offset, "unpredictable instruction");
-    GUARANTEE(offset_8 % 4 == 0, "Offset must be multiple of 4");
-    check_imm(abs(offset_8 >> 2), 8);
-    if (mode == post_indexed) {
+    check_imm(abs(offset_8), 8);
+    if( mode == post_indexed ) {
       // I don't know why these is different for coprocessors
-      mode = (Mode)(1 << 21);
+      mode = Mode(1 << 21);
     }
-    return Address5(mode | (up(offset_8) << 23) | rn << 16 |
-                    abs(offset_8>>2) & 0xff);
+    return Address5(mode | (up(offset_8) << 23) | rn << 16 | abs(offset_8) & 0xff);
   }
 
-  static Address5 unindexed5(Register /*rn*/, int options) {
+  static Address5 imm_index5(Register rn, const int offset_8 = 0,
+                                          const Mode mode = offset)
+  {
+    GUARANTEE( offset % 4 == 0, "Offset must be multiple of 4");
+    return imm_index5_8x4( rn, offset / 4, mode );
+  }
+
+  static Address5 unindexed5(Register /*rn*/, const int options) {
     check_imm(options, 8);
     // The "sign" bit is required to be set.
     return Address5((1 << 23) | options);

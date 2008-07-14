@@ -577,6 +577,9 @@ class Assembler: public AssemblerCommon {
   }
 
 #if ENABLE_ARM_VFP
+  #define SINGLE_ARG_VFP_COND   const Condition cond = al) {
+  #define VFP_COND              , SINGLE_ARG_VFP_COND
+  #define VFP_EMIT              emit
   #include "../arm/Assembler_vfp.hpp"
 #endif
 
