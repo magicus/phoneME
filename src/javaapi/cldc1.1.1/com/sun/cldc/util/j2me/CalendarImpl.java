@@ -104,7 +104,7 @@ public class CalendarImpl extends Calendar {
         } else if (time < 0 && localMillis > 0 && rawOffset < 0) {
             localMillis = Long.MIN_VALUE;
         }
-
+        
         // Time to fields takes the wall millis (Standard or DST).
         timeToFields(localMillis);
 
@@ -470,6 +470,14 @@ public class CalendarImpl extends Calendar {
         int year = this.fields[YEAR];
         boolean isGregorian = year >= gregorianCutoverYear;
         long julianDay = calculateJulianDay(isGregorian, year);
+
+        //if DAY_OF_WEEK was set more recently than DAY_OF_MONTH and is correct 
+        //then time is computed using current week and day of week
+        if(isSet[DAY_OF_WEEK] && fields[DAY_OF_WEEK] > 0 && fields[DAY_OF_WEEK] < 8) {
+            julianDay += fields[DAY_OF_WEEK] - julianDayToDayOfWeek(julianDay);
+            fields[DATE] += fields[DAY_OF_WEEK] - julianDayToDayOfWeek(julianDay);
+        }
+
         long millis = julianDayToMillis(julianDay);
 
         // The following check handles portions of the cutover year BEFORE the
@@ -542,7 +550,7 @@ public class CalendarImpl extends Calendar {
         // the Julian day number, which has been computed correctly
         // using the disambiguation algorithm above. [LIU]
         int dow = julianDayToDayOfWeek(julianDay);
-
+        
         // It's tempting to try to use DAY_OF_WEEK here, if it
         // is set, but we CAN'T.  Even if it's set, it might have
         // been set wrong by the user.  We should rely only on

@@ -492,6 +492,8 @@ public abstract class Calendar {
             else {
                 isSet[HOUR_OF_DAY] = false;
             }
+        } else if(field == DAY_OF_MONTH) {
+            isSet[DAY_OF_WEEK] = false;
         }
 
         isTimeSet = false;
