@@ -34,10 +34,10 @@ FB_APP = fb_application
 LIB_SET   += $(FB_APP)
 
 SUBSYSTEM_APP_DIR = $(SUBSYSTEM_DIR)/highlevelui/$(FB_APP)
+SUBSYSTEM_APP_IMPL_DIR ?= $(SUBSYSTEM_APP_DIR)/reference
 
-SUBSYSTEM_APP_EXTRA_INCLUDES += -I$(SUBSYSTEM_APP_DIR)/include
+SUBSYSTEM_HIGHUI_EXTRA_INCLUDES += -I$(SUBSYSTEM_APP_DIR)/include
 
-vpath % $(SUBSYSTEM_APP_DIR)/reference/native
+include $(SUBSYSTEM_APP_IMPL_DIR)/lib.gmk
 
-SUBSYSTEM_APP_NATIVE_FILES += \
-    fbapp_export.c
+

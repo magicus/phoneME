@@ -29,13 +29,11 @@
 #
 ######################################################################
 
-FB_PORT_DIR=$(SUBSYSTEM_DIR)/highlevelui/fb_port/fb
-
 # vpath for this platform specific files
 #
-vpath % $(FB_PORT_DIR)/native
+vpath % $(FB_PORT_IMPL_DIR)/native
 
 # Additional native files for the platform
 #
-SUBSYSTEM_APP_NATIVE_FILES += \
+SUBSYSTEM_HIGHUI_NATIVE_FILES += \
     fb_port.c
