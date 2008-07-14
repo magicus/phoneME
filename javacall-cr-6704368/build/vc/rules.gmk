@@ -53,10 +53,14 @@ PROPERTY_OBJECTS=$(addsuffix .obj,$(PROPERTY_FILES))
 
 local_vc: $(NOTIFIERS_LIB) $(JAVACALL_OUTPUT_LIB_DIR)/javacall$(BUILD_EXT).lib
 
+ifeq ($(VC8CE_ARCH_PATH),)
+CC=cl.exe
+CXX=cl.exe
+RC=rc.exe
+else
 CC=$(VC8CE_ARCH_PATH)/cl.exe
 CXX=$(VC8CE_ARCH_PATH)/cl.exe
 RC=$(VC8CE_ARCH_PATH)/../../../bin/rc.exe
-
 CE_CFLAGS = -D_WIN32_WCE=$(CE_VERSION) -DUNDER_CE=$(CE_VERSION) -D_CE_ALLOW_SINGLE_THREADED_OBJECTS_IN_MTA
 CE_CFLAGS += -I"$(WINCE_INCLUDE_PATH)"
 CE_CFLAGS += -I$(WMSDK10_INCLUDE_PATH)
@@ -68,6 +72,7 @@ CE_CFLAGS += /D WM_PPC_ONLY
 else
 ifeq ($(TARGET_WINCE_PLATFORM), WM6_PPC)
 CE_CFLAGS += /D WM_PPC_ONLY
+endif
 endif
 endif
 
@@ -92,9 +97,17 @@ CPPFLAGS+= $(SPECIFIC_DEFINITIONS)
 ADDITIONAL_RC_INCLUDE_DIRS += $(RESOURCE_IMAGES_DIR)
 RCFLAGS += $(foreach dir,$(ADDITIONAL_RC_INCLUDE_DIRS),/i`$(call fixcygpath, $(dir))`)
 
+ifeq ($(VC8CE_ARCH_PATH),)
+AR=lib.exe
+else
 AR=$(VC8CE_ARCH_PATH)/lib.exe
+endif
 ifeq ($(TARGET_CPU),arm)
+ifeq ($(VC8CE_ARCH_PATH),)
+ARFLAGS=-nologo -MACHINE:ARM
+else
 ARFLAGS=/nologo /MACHINE:ARM
+endif
 else
 ARFLAGS=-nologo -MACHINE:X86
 ifeq ($(USE_VS2005), true)
