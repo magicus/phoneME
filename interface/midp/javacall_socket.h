@@ -93,9 +93,6 @@ extern "C" {
  * 
  * @{
  */
-#ifndef MAX_HOST_LENGTH
-#define MAX_HOST_LENGTH 256
-#endif 
 
 /**
  * @defgroup MandatoryTcpSocket Mandatory Client Socket API
