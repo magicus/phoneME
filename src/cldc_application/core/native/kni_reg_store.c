@@ -70,10 +70,10 @@ static jfieldID anMapActionnames;   // [] actionnames
 DECLARE_MSG(fcFindHandler,   "Could not find ContentHandler for field value")
 DECLARE_MSG(fcFindInvocation,   "Invocation not found")
 DECLARE_MSG(fcFindForSuite,   "Could not find ContentHandler for suite ID")
-DECLARE_MSG(fcFindGetValues, "Could not read ContentHandler values");
-DECLARE_MSG(fcGetHandlerField, "Could not read ContentHandler fields");
-DECLARE_MSG(fcGetHandler, "Could not find ContentHandler");
-DECLARE_MSG(fcHandlerByURL, "Could not find ContentHandler for URL");
+DECLARE_MSG(fcFindGetValues, "Could not read ContentHandler values")
+DECLARE_MSG(fcGetHandlerField, "Could not read ContentHandler fields")
+DECLARE_MSG(fcGetHandler, "Could not find ContentHandler")
+DECLARE_MSG(fcHandlerByURL, "Could not find ContentHandler for URL")
 DECLARE_MSG(fcUnexpectedFinilize,   "Unexpected RegistryStore finalization")
 DECLARE_MSG(fcNoClassFields,   "Could not initialize JSR211 class fields")
 DECLARE_MSG(fcRegister,   "Could not register ContentHandler")
