@@ -35,6 +35,7 @@
 #define MAX_ALPHA 256
 #define HALF_ALPHA (MAX_ALPHA >> 1)
 #define ALPHA_SHIFT 8
+#define HALF_1_SHIFT_23 (jint)(1L << 23) 
 
 static INLINE void blendSrcOver888(jint *intData, jint aval,
                             jint cred, jint cgreen, jint cblue);
@@ -163,14 +164,29 @@ fillRectSrcOver(Renderer* rdr,
 
         if (imageType == TYPE_INT_RGB || imageType == TYPE_INT_ARGB || 
             imageType == TYPE_INT_ARGB_PRE) {
-            for (j = 0; j < height; j++) {
-                int iidx = offset;
-                for (i = 0; i < width; i++) {
-                    intData[iidx] = intVal;
-                    iidx += imagePixelStride;
-                }
-                offset += imageScanlineStride;
+          if (width > 8 && height > 1) { 
+			int size = width * sizeof(jint);
+            jint* data = (jint *) malloc(size);
+            for (i = 0; i < width; i++) {
+              data[i] = intVal;
             }
+            for (j = 0; j < height; j++) {
+              memcpy((jint*)(intData+offset), data, size);
+              offset += imageScanlineStride;
+            }
+			if (data) {
+				free(data);
+			}
+          } else {
+            for (j = 0; j < height; j++) {
+              int iidx = offset;
+              for (i = 0; i < width; i++) {
+                intData[iidx] = intVal;
+                iidx += imagePixelStride;
+              }
+              offset += imageScanlineStride;
+            }
+          }
         } else if (imageType == TYPE_USHORT_565_RGB) {
             for (j = 0; j < height; j++) {
                 int iidx = offset;
@@ -2215,14 +2231,29 @@ clearRect8888(Renderer *rdr, jint x, jint y, jint w, jint h) {
     jint scanlineSkip = rdr->_imageScanlineStride - w * pixelStride;
     jint* intData = (jint*)rdr->_data + rdr->_imageOffset +
                     y * rdr->_imageScanlineStride + x * pixelStride;
-
-    for (; h > 0; --h) {
+    if (w > 8 && h > 1) {
+	  jint size = w * sizeof(jint);		
+      jint * data = (jint *) malloc(size);
+      jint i;
+      for (i = 0; i < w; ++i) {
+        data[i] = cval;
+      }
+      for (; h > 0; --h) {
+        memcpy(intData, data, size);
+        intData += rdr->_imageScanlineStride;
+      }
+	  if (data) {
+		free(data);
+	  }
+    } else {
+      for (; h > 0; --h) {
         jint w2;
         for (w2 = w; w2 > 0; --w2) {
-            *intData = cval;
-            intData += pixelStride;
+          *intData = cval;
+          intData += pixelStride;
         }
         intData += scanlineSkip;
+      }
     }
 }
 
@@ -2236,7 +2267,6 @@ clearRect5658(Renderer *rdr, jint x, jint y, jint w, jint h) {
                                  y * rdr->_imageScanlineStride + x * pixelStride;
     jbyte *alphaData = (jbyte *) rdr->_alphaData + rdr->_imageOffset +
                                  y * rdr->_imageScanlineStride + x * pixelStride;                                 
-
     for (; h > 0; --h) {
         jint w2;
         for (w2 = w; w2 > 0; --w2) {
@@ -2340,9 +2370,9 @@ blendSrcOver8888(jint *intData,
         jlong fa = (256 - aval) * dalpha * recip;
         jlong fb = 255 * aval * recip;
         jint oalpha = denom >> 8;
-        jint ored = (jint)((fa * dred + fb * sred) >> 24);
-        jint ogreen = (jint)((fa * dgreen + fb * sgreen) >> 24);
-        jint oblue = (jint)((fa * dblue + fb * sblue) >> 24);
+        jint ored = (jint)((fa * dred + fb * sred + HALF_1_SHIFT_23) >> 24);
+        jint ogreen = (jint)((fa * dgreen + fb * sgreen + HALF_1_SHIFT_23) >> 24);
+        jint oblue = (jint)((fa * dblue + fb * sblue + HALF_1_SHIFT_23) >> 24);
 
         ival = (oalpha << 24) | (ored << 16) | (ogreen << 8) | oblue;
         *intData = ival;
@@ -2398,13 +2428,13 @@ blendSrcOver8888_pre(jint *intData,
     jint dblue = ival & 0xff;
     
     //premultiplied source components (we add 0.5 for presicion)
-    jint psred   = (sred * aval   + 127);
+    jint psred   = (sred * aval + 127);
     jint psgreen = (sgreen * aval + 127);
-    jint psblue  = (sblue * aval  + 127);
+    jint psblue  = (sblue * aval + 127);
     
     jint oneminusaval = (256 - aval);
     
-    jint oalpha = (256 * aval + dalpha * oneminusaval)  >> 8;
+    jint oalpha = (255 * aval + dalpha * oneminusaval)  >> 8;
     jint ored   = (psred   + oneminusaval * dred)     >> 8;
     jint ogreen = (psgreen  + oneminusaval * dgreen)   >> 8;
     jint oblue  = (psblue   + oneminusaval * dblue )   >> 8;
@@ -2568,10 +2598,11 @@ blendLine(void *data, jbyte *alphaBuffer, jint imageType, jint offset, jint stri
             offset += stride;
         }    
     } else if (imageType == TYPE_USHORT_5658) {
-        shortData = (unsigned short *)data;
+        shortData = (jshort *)data;
         alphaData = alphaBuffer;
         for (i = 0; i < length; i++) {
-            blendSrcOver5658(&shortData[offset],&alphaData[offset], alpha, red, 
+            blendSrcOver5658((unsigned short *) &shortData[offset],
+                             &alphaData[offset], alpha, red, 
                              green, blue);
             offset += stride;
         }

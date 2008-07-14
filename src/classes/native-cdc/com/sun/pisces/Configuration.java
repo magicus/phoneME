@@ -25,17 +25,20 @@
 
 package com.sun.pisces;
 
+import java.security.AccessController;
 import java.util.HashMap;
 import java.util.Map;
+import sun.security.action.GetPropertyAction;
 
 final class Configuration {
     private static final Map configuration;
     
     static {
         configuration = new HashMap(2);
-        
-        configuration.put("pisces.stroke.xbias", "32768");
-        configuration.put("pisces.stroke.ybias", "32768");
+        configuration.put("pisces.stroke.xbias", AccessController.doPrivileged(
+                new GetPropertyAction("pisces.stroke.xbias", "32768")));
+        configuration.put("pisces.stroke.ybias", AccessController.doPrivileged(
+                new GetPropertyAction("pisces.stroke.ybias", "32768")));
     }
     
     static String getProperty(String key) {

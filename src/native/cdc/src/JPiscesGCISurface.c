@@ -24,6 +24,8 @@
  */
 
 
+#include "jlong.h"
+
 #include <JAbstractSurface.h>
 
 #include <JNIUtil.h>
@@ -122,10 +124,10 @@ Java_com_sun_pisces_PiscesGCISurface_initialize(JNIEnv* env,
                                             fieldIds[SURFACE_TYPE_OF_ARRAY]);
 
                 if (arrayType == TYPE_OF_ARRAY_NATIVE) {
-                    surface->super.data = (void*)(*env)->GetLongField(
+                    surface->super.data = jlong_to_ptr((*env)->GetLongField(
                             env, 
                             objectHandle,
-                            fieldIds[SURFACE_NATIVE_ARRAY]);
+                            fieldIds[SURFACE_NATIVE_ARRAY]));
                     surface->acquire = surface_acquire_static_native;
                     surface->release = surface_release_static_native;
                 } else {
@@ -272,9 +274,9 @@ surface_acquire_dynamic(AbstractSurface* surface, JNIEnv* env,
 
     if (arrayType == TYPE_OF_ARRAY_NATIVE) {
         surface->super.data = 
-                (void*)(*env)->GetLongField(env, 
+                jlong_to_ptr((*env)->GetLongField(env, 
                                             surfaceHandle,
-                                            fieldIds[SURFACE_NATIVE_ARRAY]);
+                                            fieldIds[SURFACE_NATIVE_ARRAY]));
         if (surface->super.data == NULL) {
             // The name of the flag shouldn't be MemErrorFlag since the problem
             // is not with memory, it relates to not calling acquireSurface()

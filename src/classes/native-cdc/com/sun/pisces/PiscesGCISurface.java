@@ -153,34 +153,6 @@ public final class PiscesGCISurface extends AbstractSurface {
     public void acquireSurface() {
         acquireSurface(true);
     }
-    
-    /** 
-     * Detaches (releases) underlying GCIDrawing surface and resets Pisces
-     * native surface structures. No rendering is possible after 
-     * releaseSurface().     
-     */       
-    public void releaseSurface(){
-        if (gciSurfaceInfo != null) {
-            // allow garbage collection
-            javaArrayByte = null;
-            javaArrayInt = null;
-            javaArrayShort = null;
-
-            nativeArray = 0;
-
-            gciSurfaceInfo.release();
-            gciSurfaceInfo = null;
-            gciSurface.renderingEnd(null);    
-        }
-    }
-    
-    /**
-     * This method initializes (C-native-code) underlying pisces 
-     * surface/renderer structures. 
-     * @see JPiscesGCISurface.c source on details.   
-     */
-    private native void initialize(int imageType, int width, int height,
-                                   boolean isDynamic);
 
     /**
      * Helper method. Acquires surface.
@@ -229,4 +201,32 @@ public final class PiscesGCISurface extends AbstractSurface {
             }
         }
     }
+    
+    /** 
+     * Detaches (releases) underlying GCIDrawing surface and resets Pisces
+     * native surface structures. No rendering is possible after 
+     * releaseSurface().     
+     */       
+    public void releaseSurface(){
+        if (gciSurfaceInfo != null) {
+            // allow garbage collection
+            javaArrayByte = null;
+            javaArrayInt = null;
+            javaArrayShort = null;
+
+            nativeArray = 0;
+
+            gciSurfaceInfo.release();
+            gciSurfaceInfo = null;
+            gciSurface.renderingEnd(null);    
+        }
+    }
+    
+    /**
+     * This method initializes (C-native-code) underlying pisces 
+     * surface/renderer structures. 
+     * @see JPiscesGCISurface.c source on details.    
+     */
+    private native void initialize(int imageType, int width, int height, 
+                                   boolean isDynamic);
 }
