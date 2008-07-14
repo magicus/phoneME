@@ -829,8 +829,9 @@ class AppManagerUIImpl extends Form
     /**
      * Called when a running midlet exited.
      * @param si corresponding midlet suite info
+     * @param midletClassName Class name of the exited midlet
      */
-    public void notifyMidletExited(RunningMIDletSuiteInfo si) {
+    public void notifyMidletExited(RunningMIDletSuiteInfo si, String midletClassName) {
         for (int i = 0; i < mciVector.size(); i++) {
             MidletCustomItem ci = (MidletCustomItem)mciVector.elementAt(i);
 
@@ -862,12 +863,12 @@ class AppManagerUIImpl extends Form
                 if (selector != null) {
 
                     /* notify the selector that MIDlet was exited */
-                    selector.notifyMidletExited(si.midletToRun);
+                    selector.notifyMidletExited(midletClassName);
 
                     /* if MIDlet exited from AMS menu, stay there. Otherwise
                      * return back to the selector */
                     if (exitingMidletSuiteId == si.suiteId &&
-                            exitingMidletClassName.equals(si.midletToRun)) {
+                            exitingMidletClassName.equals(midletClassName)) {
                         exitingMidletSuiteId = 0;
                         exitingMidletClassName = null;
                         selector.exitIfNoMidletRuns();

@@ -81,8 +81,9 @@ interface AppManagerUI {
     /**
      * Called when a running midlet exited.
      * @param si corresponding midlet suite info
+     * @param midletClassName Class name of the exited midlet
      */
-    void notifyMidletExited(RunningMIDletSuiteInfo si);
+    void notifyMidletExited(RunningMIDletSuiteInfo si, String midletClassName);
 
     /**
      * Called by AppManagerPeer after a MIDlet suite
