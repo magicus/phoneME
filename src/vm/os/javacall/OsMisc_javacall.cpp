@@ -54,7 +54,7 @@ void OsMisc_flush_icache(address start, int size) {
   /* Currently the PocketPC API doesn't seem to support selective
      flushing of the icache => ignore start, size for now */
   BOOL ret = FlushInstructionCache(GetCurrentProcess(), 0, 0);
-#elif defined(ARM)
+#else
   (void)start;
   (void)size;
 #endif
