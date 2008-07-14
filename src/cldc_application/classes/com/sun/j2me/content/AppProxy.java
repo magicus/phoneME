@@ -1,7 +1,7 @@
 /*
  *
  *
- * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
@@ -106,7 +106,7 @@ class AppProxy {
     private static AppProxy currentApp;
 
     /** The log flag to enable informational messages. */
-    static final Logger LOGGER = new Logger();
+    static final Logger LOGGER = null; // new Logger();
 
     /** The known AppProxy instances. Key is classname. */
     protected Hashtable appmap;

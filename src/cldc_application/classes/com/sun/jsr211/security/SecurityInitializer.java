@@ -69,7 +69,6 @@ public final class SecurityInitializer {
      * @return if the object is really trusted to requested
      */
     final public static Token requestToken(TrustedClass trusted) {
-System.out.println( "com.sun.jsr211.security.SecurityInitializer.requestToken: " + trusted.getClass().getName() );
         return new Token(impl.requestToken(trusted));
     }
 }

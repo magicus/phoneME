@@ -491,12 +491,10 @@ public class AppProxy {
 
     public static void setRegistry( RegistryGate registry ) {
     	AppProxy.registry = registry;
-        System.out.println("AppProxy.setRegistry(" + registry + ")");
     }
 
     public static void setAMS( AMSGate ams ) {
     	AppProxy.ams = ams;
-        System.out.println("AppProxy.setAMS(" + ams + ")");
     }
 
     /**

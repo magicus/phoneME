@@ -24,11 +24,6 @@
  * information or have any questions. 
  */
 
-/*
- * @(#)jsr211_registry.h	1.18 06/04/05 @(#)
- *
- */
-
 /**
  * @file
  * @defgroup chapi JSR 211 Content Handler API (CHAPI)

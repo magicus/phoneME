@@ -22,11 +22,6 @@
  * information or have any questions. 
  */
 
- /*
- * @(#)kni_reg_store.c	1.13 06/04/05 @(#)
- *
- */
-
 /**
  * @file
  * @brief Content Handler RegistryStore native functions implementation
