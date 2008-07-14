@@ -31,7 +31,7 @@
 #include <stdlib.h>
 //#include <sys/types.h>
 //#include <sys/errno.h>
-#include <unistd.h>
+//#include <unistd.h>
 //#include <stropts.h>
 
 //#include "sun_audio_AudioDevice.h"
