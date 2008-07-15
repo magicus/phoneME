@@ -31,7 +31,7 @@
 
 # Name of the library
 LCDLF_J_NAME = lcdlf/lfjava
-LCDLF_J_DIR = $(SUBSYSTEM_DIR)/highlevelui/$(LCDLF_J_NAME)
+LCDLF_J_DIR = $(SUBSYSTEM_HIGHUI_DIR)/$(LCDLF_J_NAME)
 
 # Add to library set for this build
 LIB_SET += $(LCDLF_J_NAME)

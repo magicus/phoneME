@@ -31,7 +31,7 @@
 
 # Name of the library
 LCDLF_P_NAME = lcdlf/lfplatform
-LCDLF_P_DIR = $(SUBSYSTEM_DIR)/highlevelui/$(LCDLF_P_NAME)
+LCDLF_P_DIR = $(SUBSYSTEM_HIGHUI_DIR)/$(LCDLF_P_NAME)
 
 # Add to library set for this build
 LIB_SET += $(LCDLF_P_NAME)
