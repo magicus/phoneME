@@ -24,7 +24,7 @@
 # information or have any questions.
 #
 
-vpath % $(SUBSYSTEM_APP_IMPL_DIR)/native
+vpath % $(HIGHUI_ARMSD_APP_IMPL_DIR)/native
 
 SUBSYSTEM_HIGHUI_NATIVE_FILES += \
     armsdapp_export.c
