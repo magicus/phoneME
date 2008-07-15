@@ -396,7 +396,11 @@ class AppManagerPeer implements CommandListener {
                 if (si.equals(midlet)) {
                     si.proxy = null;
 
-                    appManagerUI.notifyMidletExited(si);
+                    appManagerUI.notifyMidletExited(si, midletClassName);
+                    
+                    if (si.hasSingleMidlet()) {
+                        manager.notifySuiteExited(si);
+                    }
 
                     if (removeMsi != null && removeMsi.equals(midlet)) {
                         remove(removeMsi);
@@ -466,6 +470,15 @@ class AppManagerPeer implements CommandListener {
             }
         }
         updateContent();
+    }
+    
+    /**
+     * Called when a suite exited (the only MIDlet in suite exited or the
+     * MIDlet selector exited).
+     * @param suiteInfo Suite which just exited
+     */
+    void notifySuiteExited(RunningMIDletSuiteInfo suiteInfo) {
+        appManagerUI.notifySuiteExited(suiteInfo);
     }
     
     // ------------------------------------------------------------------
@@ -822,6 +835,15 @@ class AppManagerPeer implements CommandListener {
     }
 
     /**
+     * Launches the midlet suite determined by the suite ID.
+     * @param suiteId ID of the suite to launch
+     */
+    void launchSuite(int suiteId) {
+        appManagerUI.enterSuite(suiteId);
+    }
+    
+
+    /**
      * Checks if the installer is currently running.
      *
      * @return true if the installer or discovery application is running,
@@ -893,7 +915,7 @@ class AppManagerPeer implements CommandListener {
     }
 
     /**
-     * Called when midlet selector needed.
+     * Called when midlet switcher is needed.
      *
      * @param onlyFromLaunchedList true if midlet should
      *        be selected from the list of already launched midlets,
@@ -901,6 +923,16 @@ class AppManagerPeer implements CommandListener {
      */
     public void showMidletSwitcher(boolean onlyFromLaunchedList) {
         appManagerUI.showMidletSwitcher(onlyFromLaunchedList);
+    }
+
+    /**
+     * Called when midlet selector is needed. Should show a list of
+     * midlets present in the given suite and allow to select one.
+     *
+     * @param msiToRun a suite from which a midlet must be selected
+     */
+    public void showMidletSelector(RunningMIDletSuiteInfo msiToRun) {
+        appManagerUI.showMidletSelector(msiToRun);
     }
 
     /**

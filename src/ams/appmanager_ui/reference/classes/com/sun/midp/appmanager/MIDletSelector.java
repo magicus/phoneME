@@ -30,14 +30,12 @@ import javax.microedition.lcdui.*;
 import com.sun.midp.i18n.Resource;
 import com.sun.midp.i18n.ResourceConstants;
 
-import com.sun.midp.main.MIDletSuiteLoader;
-
 import com.sun.midp.midlet.MIDletSuite;
 
 import com.sun.midp.midletsuite.*;
 
-import com.sun.midp.log.Logging;
-import com.sun.midp.log.LogChannels;
+
+import java.util.Vector;
 
 /**
  * Selector provides a simple user interface to select MIDlets to run.
@@ -91,6 +89,11 @@ public final class MIDletSelector implements CommandListener {
      * Index of the selected MIDlet, starts at -1 for non-selected.
      */
     private int selectedMidlet = -1;
+    
+    /**
+     * List of midlets executed from this selector.
+     */
+    private Vector runningMidlets;
 
     /**
      * Create and initialize a new Selector MIDlet.
@@ -101,10 +104,14 @@ public final class MIDletSelector implements CommandListener {
      * @param theDisplay the Display
      * @param theParentDisplayable the parent's displayable
      * @param theManager the parent application manager
+     *
+     * @throws MIDletSuiteCorruptedException if the suite is corrupted
+     * @throws MIDletSuiteLockedException if the suite is locked
      */
     public MIDletSelector(RunningMIDletSuiteInfo theSuiteInfo, Display theDisplay,
                    Displayable theParentDisplayable,
-                   ApplicationManager theManager) throws Throwable {
+                   ApplicationManager theManager)
+            throws MIDletSuiteCorruptedException, MIDletSuiteLockedException {
 
         MIDletSuiteStorage mss;
 
@@ -126,8 +133,45 @@ public final class MIDletSelector implements CommandListener {
         mlist.setCommandListener(this); // Listen for the selection
 
         display.setCurrent(mlist);
+        
+        runningMidlets = new Vector();
     }
 
+    /**
+     * Gets structure containing information about suite accessible by this
+     * selector
+     */
+    public RunningMIDletSuiteInfo getSuiteInfo() {
+        return suiteInfo;
+    }
+
+    /**
+     * Displays this selector on the screen.
+     */
+    public void show() {
+        selectedMidlet = -1;
+        display.setCurrent(mlist);
+    }
+
+    /**
+     * Called when MIDlet execution exited.
+     * Removes the MIDlet from list of running MIDlets and shows selector on the
+     * screen.
+     * @param midlet ClassName of MIDlet which just exited
+     */
+    public void notifyMidletExited(String midlet) {
+        runningMidlets.removeElement(midlet);
+    }
+
+    /**
+     * If no MIDlet is running, exit the suite.
+     */
+    public void exitIfNoMidletRuns() {
+        if (runningMidlets.isEmpty()) {
+            manager.notifySuiteExited(suiteInfo);
+        }
+    }
+    
     /**
      * Respond to a command issued on any Screen.
      * The commands on list is Select and About.
@@ -148,6 +192,7 @@ public final class MIDletSelector implements CommandListener {
                 selectedMidlet = mlist.getSelectedIndex();
             }
 
+            runningMidlets.addElement(minfo[selectedMidlet].classname);
             manager.launchSuite(suiteInfo, minfo[selectedMidlet].classname);
             if (parentDisplayable != null) {
                 display.setCurrent(parentDisplayable);
@@ -164,6 +209,7 @@ public final class MIDletSelector implements CommandListener {
             } else {
                 manager.shutDown();
             }
+            exitIfNoMidletRuns();
             return;
         }
     }
@@ -197,30 +243,29 @@ public final class MIDletSelector implements CommandListener {
      * Read in and create a MIDletInfo for each MIDlet-&lt;n&gt;
      *
      * @param mss the midlet suite storage
+     *
+     * @throws MIDletSuiteCorruptedException if the suite is corrupted
+     * @throws MIDletSuiteLockedException if the suite is locked 
      */
-    private void readMIDletInfo(MIDletSuiteStorage mss) throws Throwable {
+    private void readMIDletInfo(MIDletSuiteStorage mss)
+            throws MIDletSuiteCorruptedException, MIDletSuiteLockedException {
+        MIDletSuite midletSuite = mss.getMIDletSuite(suiteInfo.suiteId, false);
+
+        if (midletSuite == null) {
+            return;
+        }
+
         try {
-            MIDletSuite midletSuite =
-                mss.getMIDletSuite(suiteInfo.suiteId, false);
+            for (int n = 1; n < 100; n++) {
+                String nth = "MIDlet-"+ n;
+                String attr = midletSuite.getProperty(nth);
+                if (attr == null || attr.length() == 0)
+                    break;
 
-            if (midletSuite == null) {
-                return;
+                addMIDlet(new MIDletInfo(attr));
             }
-
-            try {
-                for (int n = 1; n < 100; n++) {
-                    String nth = "MIDlet-"+ n;
-                    String attr = midletSuite.getProperty(nth);
-                    if (attr == null || attr.length() == 0)
-                        break;
-
-                    addMIDlet(new MIDletInfo(attr));
-                }
-            } finally {
-                midletSuite.close();
-            }
-        } catch (Throwable t) {
-            throw t;
+        } finally {
+            midletSuite.close();
         }
     }
 
@@ -238,6 +283,3 @@ public final class MIDletSelector implements CommandListener {
         minfo[mcount++] = info;
     }
 }
-
-
-

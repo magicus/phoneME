@@ -1,7 +1,7 @@
 /*
  *
  *
- * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
@@ -115,8 +115,10 @@ typedef enum {
     JSR179_LOCATION_JC_EVENT           ,
     JSR179_PROXIMITY_JC_EVENT          ,
 #endif /* ENABLE_JSR_179 */
-    MIDP_JC_EVENT_SPRINT_MASTER_VOLUME ,
-    MIDP_JC_EVENT_SPRINT_STATE_CHANGE  ,
+#ifdef ENABLE_API_EXTENSIONS
+    MIDP_JC_EVENT_VOLUME 			   ,
+#endif /* ENABLE_API_EXTENSIONS */
+    MIDP_JC_EVENT_STATE_CHANGE  	   ,
     MIDP_JC_EVENT_PHONEBOOK            ,
     MIDP_JC_EVENT_INSTALL_CONTENT      ,
     MIDP_JC_EVENT_SWITCH_FOREGROUND    ,
@@ -155,6 +157,14 @@ typedef enum {
 #endif /*ENABLE_JSR_290*/
 } midp_jc_event_type;
 
+
+typedef struct {
+    int stub;
+} midp_event_volume;
+
+typedef struct {
+    int stub;
+} midp_event_launch_push_entry;
 
 typedef enum {
     MIDP_NETWORK_UP         = 1000,
@@ -384,6 +394,12 @@ typedef struct {
         jsr256_jc_event_sensor_t            jsr256_jc_event_sensor;
 	jsr256_jc_event_sensor_data_ready_t jsr256_jc_event_sensor_data_ready;
 #endif /* ENABLE_JSR_256 */
+
+#ifdef ENABLE_API_EXTENSIONS
+        midp_event_volume     VolumeEvent;
+        midp_event_launch_push_entry        launchPushEntryEvent;
+#endif /* ENABLE_API_EXTENSIONS */
+
 #ifdef ENABLE_JSR_290
         jsr290_jc_event_fluid              jsr290FluidEvent;
 #endif /* ENABLE_JSR_290 */

@@ -32,6 +32,7 @@
 
 #include "imgdcd_intern_image_decode.h"
 
+#define UNDF_CHUNK 0x00000000
 #define IHDR_CHUNK 0x49484452
 #define PLTE_CHUNK 0x504C5445
 #define IDAT_CHUNK 0x49444154
@@ -97,8 +98,8 @@ static int
 PNGdecodeImage_getByte(void *p)
 {
     idatInflateData *d = (idatInflateData *)p;
-    imageSrcPtr    src = d->src;
-    unsigned long chunkType;
+    imageSrcPtr src = d->src;
+    unsigned long chunkType = UNDF_CHUNK;
     unsigned int  byte;
 
     /* while, because it's possible to have 0-length chunks! */
@@ -121,8 +122,8 @@ static long
 PNGdecodeImage_getBytes(void *p, unsigned char *buffer, long count)
 {
     idatInflateData *d = (idatInflateData *)p;
-    imageSrcPtr    src = d->src;
-    unsigned long chunkType;
+    imageSrcPtr src = d->src;
+    unsigned long chunkType = UNDF_CHUNK;
 
     /* while, because it's possible to have 0-length chunks! */
     while (d->clen == 0) {
@@ -178,7 +179,7 @@ static void* addrFromHandleFunction(void* state, void* handle) {
 }
 
 bool get_decoded_png_imagesize(imageSrcPtr src, int* width, int* height) {
-    unsigned long chunkType;
+    unsigned long chunkType = UNDF_CHUNK;
     long chunkLength;
     unsigned long CRC;
     pngData data;
@@ -225,7 +226,7 @@ PNGdecodeImage_real(imageSrcPtr src, imageDstPtr dst,
              saw_tRNS = FALSE;
     pngData      data;
 
-    unsigned long chunkType;
+    unsigned long chunkType = UNDF_CHUNK;
     long chunkLength;
     unsigned long CRC;
 
