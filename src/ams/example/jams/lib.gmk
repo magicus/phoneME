@@ -68,8 +68,8 @@ ifeq ($(TARGET_VM), cldc_vm)
   SUBSYSTEM_AMS_LAZY_MAKEFILES += \
     $(SUBSYSTEM_AMS_DIR)/example/jams/runMidlet.gmk
 
-ifeq ($(CREATE_RUNMIDLET_LIB), true)
-SUBSYSTEM_AMS_EXECUTABLES = $(BINDIR)/runMidlet$(g)$(p)$(LIB_SUFFIX)
+ifeq ($(CREATE_JAVA_LIB), true)
+SUBSYSTEM_AMS_EXECUTABLES = $(BINDIR)/java$(g)$(p)$(LIB_SUFFIX)
 else  
 SUBSYSTEM_AMS_EXECUTABLES = \
     $(BINDIR)/runMidlet$(g)$(p)$(EXE) \
