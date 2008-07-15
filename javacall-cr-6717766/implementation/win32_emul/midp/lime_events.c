@@ -56,14 +56,6 @@
 #define LIME_DEBUG_PRINTF
 #endif
 
-/* IMPL_NOTE: CR <6658788>, temporary changes to process wrong
- * repeated key events on Shift+<0..9> passed from emulator.
- * Should be reverted as soon as the emulator is fixed.
- */
-#define USE_KEYTYPED_VM_EVENTS
-/* IMPL_NOTE: End of temporary changes for CR <6658788>
- */
-
 #if ENABLE_JSR_179
 extern char *ExtractEventData(javacall_utf16_string event_name);
 extern void ParseOrientationData(char *data);
@@ -82,11 +74,6 @@ extern javacall_bool isRunningLocal;
 #if ENABLE_ON_DEVICE_DEBUG
 static const char pStartOddKeySequence[] = "#1*2";
 static int posInSequence = 0;
-#endif
-
-#ifdef USE_KEYTYPED_VM_EVENTS
-static int latestKeyTyped = 0;
-static int latestKeyDown = 0;
 #endif
 
 void CheckLimeEvent() {
@@ -187,14 +174,6 @@ void SendEvent (KVMEventType *evt) {
         break;
 
     case keyDownKVMEvent:
-#ifdef USE_KEYTYPED_VM_EVENTS
-        /* Regular key events are sent over keyTypedKVMEvent */
-        if ((evt->chr >= ' ') && (evt->chr <= 127)) {
-            latestKeyTyped = 0;
-            latestKeyDown = evt->chr;
-            break;
-        }
-#endif
         if (evt->chr == KEY_USER2) {
             javanotify_rotation();
         } else if ((evt->chr != KEY_END)) {
@@ -223,24 +202,6 @@ void SendEvent (KVMEventType *evt) {
                 posInSequence = 0;
             }
 #endif
-#ifdef USE_KEYTYPED_VM_EVENTS
-            /* Regular key events are sent over keyTypedKVMEvent */
-            if ((evt->chr >= ' ') && (evt->chr <= 127)) {
-                if (0 == latestKeyTyped) {
-                    if (evt->chr == latestKeyDown) {
-                        /* Support skin presses - when there is no keytyped
-                         * event between key down/up events */
-                        javanotify_key_event(latestKeyDown, JAVACALL_KEYPRESSED);
-                        javanotify_key_event(latestKeyDown, JAVACALL_KEYRELEASED);
-                    }
-                } else if (evt->chr == latestKeyTyped || evt->chr == latestKeyDown) {
-                    javanotify_key_event(latestKeyTyped, JAVACALL_KEYRELEASED);
-                }
-                latestKeyDown = 0;
-                latestKeyTyped = 0;
-                break;
-            }
-#endif
             javanotify_key_event(evt->chr, JAVACALL_KEYRELEASED);
         }
         break;
@@ -249,22 +210,7 @@ void SendEvent (KVMEventType *evt) {
         if (evt->chr == KEY_USER2) {
             // ignore
         } else if (evt->chr != KEY_END) {
-#ifdef USE_KEYTYPED_VM_EVENTS
-            /* For compound key presses, like shift + digit, WTK produces repeated
-             * key events for base key only, e.g. for the digit. It is not good,
-             * since, for example for '!' it will produce '1' repeated key event.
-             * It can be fixed in assumption that repeated key event can happen
-             * to previously pressed and not yet released key only */
-            if ((evt->chr >= ' ') && (evt->chr <= 127)) {
-                if (latestKeyTyped != 0) {
-                    javanotify_key_event(latestKeyTyped, JAVACALL_KEYREPEATED);
-                }
-            } else {
-                javanotify_key_event(evt->chr, JAVACALL_KEYREPEATED);
-            }
-#else
             javanotify_key_event(evt->chr, JAVACALL_KEYREPEATED);
-#endif
         }
         break;
 
@@ -272,33 +218,12 @@ void SendEvent (KVMEventType *evt) {
         if (evt->chr == KEY_USER2) {
             // ignore
         } else if ((evt->chr != KEY_END)) {
-#ifdef USE_KEYTYPED_VM_EVENTS
-            /* Multiple key presses are not supported,
-             * non-regular key press means the previous key is released */
-            if (0 != latestKeyTyped && latestKeyTyped != evt->chr) {
-                javanotify_key_event(latestKeyTyped, JAVACALL_KEYRELEASED);
-                latestKeyTyped = 0;
-            }
-            /* Send regular key events received from the keyboard
-             * using standard MIDP mechanism */
-            if ((evt->chr >= ' ') && (evt->chr <= 127)) {
-                /* Don't produce multiple press events for held keypad keys,
-                 * but do it for other typed chars, since WTK doesn't support
-                 * repeated key presses for them */
-                if (evt->chr != latestKeyTyped || 0 == latestKeyDown) {
-
-                    javanotify_key_event(evt->chr, JAVACALL_KEYPRESSED);
-                    javanotify_key_event(evt->chr, JAVACALL_KEYRELEASED);
-                    latestKeyTyped = evt->chr;
-                }
-            }
-#else /* Temporary solution, will not work on all cases but provides
-       * a solution for text entry */
+           /* Temporary solution, will not work on all cases but provides
+            * a solution for text entry */
             if (evt->chr != 8) {
                 javanotify_key_event(evt->chr, JAVACALL_KEYPRESSED);
                 javanotify_key_event(evt->chr, JAVACALL_KEYRELEASED);
             }
-#endif
         } else if (isRunningLocal == JAVACALL_FALSE) {
             javanotify_switch_to_ams();
         } else {
