@@ -792,7 +792,7 @@ override ENABLE_PCSL := false
 export ENABLE_PCSL
 else
 ifndef PCSL_DIST_DIR
-PCSL_DIST_DIR = $(PCSL_OUTPUT_DIR)/javacall_$(arch)
+PCSL_DIST_DIR = $(PCSL_OUTPUT_DIR)/$(target_os)_$(arch)
 endif
 endif
 
@@ -2209,8 +2209,8 @@ $(GENERATED_ROM_FILE): $(ROM_SEGMENTS)
 $(ROM_SEGMENTS):
 endif
 
-# If JNI is enabled, romgen writes KNI-to-JNI wrappers for all JNI native 
-# methods to JniAdapters.cpp. 
+# If JNI is enabled, romgen writes KNI-to-JNI wrappers for all JNI native
+# methods to JniAdapters.cpp.
 # Otherwise it writes stubs for all JNI native methods to JniAdapters.cpp.
 ifeq ($(IsTarget), true)
 
