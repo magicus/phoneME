@@ -29,12 +29,10 @@
 #
 ######################################################################
 
-# Name of the library
-AMS_UTIL_MVM_NAME = ams_util/mvm
-AMS_UTIL_MVM_DIR = $(SUBSYSTEM_AMS_DIR)/$(AMS_UTIL_MVM_NAME)
+
 
 # Javadoc source path
-MIDP_JAVADOC_SOURCEPATH += $(AMS_UTIL_MVM_DIR)/classes
+MIDP_JAVADOC_SOURCEPATH += $(AMS_UTIL_IMPL_DIR)/classes
 
 #AMS_UTIL_MVM_PACKAGES = \
 #    com.sun.midp.main
@@ -45,13 +43,13 @@ MIDP_JAVADOC_SOURCEPATH += $(AMS_UTIL_MVM_DIR)/classes
 #	 $(shell echo $(AMS_UTIL_MVM_PACKAGES) |tr ' ' $(PATHSEP))
 
 $(GENERATED_DIR)/classes/com/sun/midp/main/IsolateUtil.java: \
-    $(AMS_UTIL_MVM_DIR)/classes/com/sun/midp/main/IsolateUtil.jpp
+    $(AMS_UTIL_IMPL_DIR)/classes/com/sun/midp/main/IsolateUtil.jpp
 	@$(call runjpp,$^,$@)
 	    
 # Java files for the library
 #
 SUBSYSTEM_AMS_JAVA_FILES += \
     $(GENERATED_DIR)/classes/com/sun/midp/main/IsolateUtil.java \
-    $(AMS_UTIL_MVM_DIR)/classes/com/sun/midp/main/AmsUtil.java \
-    $(AMS_UTIL_MVM_DIR)/classes/com/sun/midp/main/MIDletProxyUtils.java \
-    $(AMS_UTIL_MVM_DIR)/classes/com/sun/midp/main/MIDletSuiteVerifier.java
+    $(AMS_UTIL_IMPL_DIR)/classes/com/sun/midp/main/AmsUtil.java \
+    $(AMS_UTIL_IMPL_DIR)/classes/com/sun/midp/main/MIDletProxyUtils.java \
+    $(AMS_UTIL_IMPL_DIR)/classes/com/sun/midp/main/MIDletSuiteVerifier.java

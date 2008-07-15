@@ -29,12 +29,8 @@
 #
 ######################################################################
 
-# Name of the library
-AMS_UTIL_SVM_NAME = ams_util/svm
-AMS_UTIL_SVM_DIR = $(SUBSYSTEM_AMS_DIR)/$(AMS_UTIL_SVM_NAME)
-
 # Javadoc source path
-MIDP_JAVADOC_SOURCEPATH += $(AMS_UTIL_SVM_DIR)/classes
+MIDP_JAVADOC_SOURCEPATH += $(AMS_UTIL_IMPL_DIR)/classes
 
 #AMS_UTIL_SVM_PACKAGES = \
 #    com.sun.midp.main
@@ -47,13 +43,13 @@ MIDP_JAVADOC_SOURCEPATH += $(AMS_UTIL_SVM_DIR)/classes
 # Java files for the library
 #
 SUBSYSTEM_AMS_JAVA_FILES += \
-    $(AMS_UTIL_SVM_DIR)/classes/com/sun/midp/main/AmsUtil.java \
-    $(AMS_UTIL_SVM_DIR)/classes/com/sun/midp/main/MIDletProxyUtils.java \
-    $(AMS_UTIL_SVM_DIR)/classes/com/sun/midp/main/MIDletSuiteVerifier.java
+    $(AMS_UTIL_IMPL_DIR)/classes/com/sun/midp/main/AmsUtil.java \
+    $(AMS_UTIL_IMPL_DIR)/classes/com/sun/midp/main/MIDletProxyUtils.java \
+    $(AMS_UTIL_IMPL_DIR)/classes/com/sun/midp/main/MIDletSuiteVerifier.java
 
 # Native files for the library
 #
-vpath % $(AMS_UTIL_SVM_DIR)/native
+vpath % $(AMS_UTIL_IMPL_DIR)/native
 
 SUBSYSTEM_AMS_NATIVE_FILES += \
     MIDletProxyUtils.c

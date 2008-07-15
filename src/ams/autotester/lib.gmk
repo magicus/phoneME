@@ -48,9 +48,9 @@ SUBSYSTEM_AMS_JAVA_FILES += \
 # IMPL NOTE: Use library configuration file to select switch library
 #
 ifeq ($(USE_MULTIPLE_ISOLATES), true)
-    AUTOTESTER__IMPL_DIR ?= $(AUTOTESTER_DIR)/mvm
+    AUTOTESTER_IMPL_DIR ?= $(AUTOTESTER_DIR)/mvm
 else
-    AUTOTESTER__IMPL_DIR ?= $(AUTOTESTER_DIR)/svm
+    AUTOTESTER_IMPL_DIR ?= $(AUTOTESTER_DIR)/svm
 endif
 
-include $(AUTOTESTER__IMPL_DIR)/lib.gmk
+include $(AUTOTESTER_IMPL_DIR)/lib.gmk
