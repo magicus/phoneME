@@ -29,7 +29,7 @@
 #
 ######################################################################
 
-vpath % $(SUBSYSTEM_DIR)/highlevelui/keymap/stubs/native
+vpath % $(SUBSYSTEM_KEYMAP_IMPL_DIR)/native
 
-SUBSYSTEM_KEYMAP_NATIVE_FILES += \
+SUBSYSTEM_HIGHUI_NATIVE_FILES += \
     keymap_input_md.c

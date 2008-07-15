@@ -43,7 +43,9 @@ SUBSYSTEM_KEYMAP_EXTRA_INCLUDES += \
 # Platform definitions
 #
 ifeq ($(PLATFORM), stubs)
-    include $(SUBSYSTEM_KEYMAP_DIR)/stubs/lib.gmk
+    SUBSYSTEM_KEYMAP_IMPL_DIR ?= $(SUBSYSTEM_KEYMAP_DIR)/stubs
 else
-    include $(SUBSYSTEM_KEYMAP_DIR)/default/lib.gmk
+    SUBSYSTEM_KEYMAP_IMPL_DIR ?=  $(SUBSYSTEM_KEYMAP_DIR)/default
 endif
+
+include $(SUBSYSTEM_KEYMAP_IMPL_DIR)/lib.gmk
