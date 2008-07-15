@@ -39,6 +39,18 @@
  * <br>
  */
 
+#include <memory.h>
+
+#ifdef _DEBUG
+
+#include <stdio.h>
+
+#define DEBUG_211
+#define DEBUG_INVOCLC
+#define TRACE_INVOCFIND
+#define TRACE_MIDLETREG
+#define TRACE_BLOCKING
+#endif
 
 #include <jsrop_kni.h>
 #include <sni.h>
@@ -58,14 +70,6 @@
 
 #include <javautil_unicode.h>
 #include <javacall_memory.h>
-
-#ifdef _DEBUG
-#define DEBUG_211
-#define DEBUG_INVOCLC
-#define TRACE_INVOCFIND
-#define TRACE_MIDLETREG
-#define TRACE_BLOCKING
-#endif
 
 /*
  * The mode for get to retrieve a new request.
@@ -266,6 +270,7 @@ static jboolean update(StoredInvoc* invoc, jobject invocObj, jobject tmp1, jobje
         pcsl_string* args;
 
 #define updateString(name) \
+        pcsl_string_free(&invoc->name); \
         KNI_GetObjectField(invocObj, FID(name), tmp1); \
         if (PCSL_STRING_OK != midp_jstring_to_pcsl_string(tmp1, &invoc->name)) \
             break; \
