@@ -1,22 +1,22 @@
 #
 # Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
-# 
+#
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License version
 # 2 only, as published by the Free Software Foundation.
-# 
+#
 # This program is distributed in the hope that it will be useful, but
 # WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
 # General Public License version 2 for more details (a copy is
 # included at /legal/license.txt).
-# 
+#
 # You should have received a copy of the GNU General Public License
 # version 2 along with this work; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
 # 02110-1301 USA
-# 
+#
 # Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
 # Clara, CA 95054 or visit www.sun.com if you need additional
 # information or have any questions.
@@ -24,7 +24,7 @@
 
 .PHONY: all pre_target local_vc post_target JAVACALL_EXTRA_LIBS
 
-all: pre_target javacall_common local_vc post_target 
+all: pre_target javacall_common local_vc post_target
 
 ifeq ($(JAVACALL_DIR),)
 $(error JAVACALL_DIR is not set.)
@@ -53,9 +53,28 @@ PROPERTY_OBJECTS=$(addsuffix .obj,$(PROPERTY_FILES))
 
 local_vc: $(NOTIFIERS_LIB) $(JAVACALL_OUTPUT_LIB_DIR)/javacall$(BUILD_EXT).lib
 
+ifeq ($(VC8CE_ARCH_PATH),)
 CC=cl.exe
 CXX=cl.exe
 RC=rc.exe
+else
+CC=$(VC8CE_ARCH_PATH)/cl.exe
+CXX=$(VC8CE_ARCH_PATH)/cl.exe
+RC=$(VC8CE_ARCH_PATH)/../../../bin/rc.exe
+CE_CFLAGS = -D_WIN32_WCE=$(CE_VERSION) -DUNDER_CE=$(CE_VERSION) -D_CE_ALLOW_SINGLE_THREADED_OBJECTS_IN_MTA
+CE_CFLAGS += -I"$(WINCE_INCLUDE_PATH)"
+CE_CFLAGS += -I$(WMSDK10_INCLUDE_PATH)
+CE_CFLAGS += -I$(VC8CE_ATLMFC_INCLUDE_PATH)
+CE_CFLAGS += -I$(VC8CE_INCLUDE_PATH)
+CE_CFLAGS += /D $(CE_PLATFORM)
+ifeq ($(TARGET_WINCE_PLATFORM), WM5_PPC)
+CE_CFLAGS += /D WM_PPC_ONLY
+else
+ifeq ($(TARGET_WINCE_PLATFORM), WM6_PPC)
+CE_CFLAGS += /D WM_PPC_ONLY
+endif
+endif
+endif
 
 LOCAL_CFLAGS_debug = -MDd -Gm -EHsc -Zi -Od -D_DEBUG -D_MBCS -D_LIB -FD -W3
 LOCAL_CFLAGS_nodebug = -MD -EHsc -O2 -D_MBCS -D_LIB -W3
@@ -75,12 +94,20 @@ CFLAGS=-nologo $(LOCAL_CFLAGS_$(BUILD))
 CPPFLAGS+= -I`$(call fixcygpath, $(JAVACALL_OUTPUT_INCLUDE_DIR))`
 CPPFLAGS+= $(SPECIFIC_DEFINITIONS)
 
-ADDITIONAL_RC_INCLUDE_DIRS += $(RESOURCE_IMAGES_DIR) 
-RCFLAGS += $(foreach dir,$(ADDITIONAL_RC_INCLUDE_DIRS),/i`$(call fixcygpath, $(dir))`) 
+ADDITIONAL_RC_INCLUDE_DIRS += $(RESOURCE_IMAGES_DIR)
+RCFLAGS += $(foreach dir,$(ADDITIONAL_RC_INCLUDE_DIRS),/i`$(call fixcygpath, $(dir))`)
 
-AR=lib.exe 
+ifeq ($(VC8CE_ARCH_PATH),)
+AR=lib.exe
+else
+AR=$(VC8CE_ARCH_PATH)/lib.exe
+endif
 ifeq ($(TARGET_CPU),arm)
+ifeq ($(VC8CE_ARCH_PATH),)
 ARFLAGS=-nologo -MACHINE:ARM
+else
+ARFLAGS=/nologo /MACHINE:ARM
+endif
 else
 ARFLAGS=-nologo -MACHINE:X86
 ifeq ($(USE_VS2005), true)
@@ -106,11 +133,11 @@ $(JAVACALL_OUTPUT_OBJ_DIR)/%.obj: %.cpp
 
 $(JAVACALL_OUTPUT_OBJ_DIR)/%.obj: %.c
 	@echo -n "...compiling: "
-	@$(COMPILE.c) $(OUTPUT_OPTION) `$(call fixcygpath, $<)`	
+	@$(COMPILE.c) $(OUTPUT_OPTION) `$(call fixcygpath, $<)`
 
 $(JAVACALL_OUTPUT_OBJ_DIR)/javacall_static_properties.obj: $(STATIC_PROPERTIES_C)
 	@echo -n "...compiling: "
-	@$(COMPILE.c) $(OUTPUT_OPTION) `$(call fixcygpath, $<)`	
+	@$(COMPILE.c) $(OUTPUT_OPTION) `$(call fixcygpath, $<)`
 
 JAVACALL_EXTRA_LIBS::
 
@@ -120,10 +147,10 @@ $(JAVACALL_OUTPUT_LIB_DIR)/javacall$(BUILD_EXT).lib: \
 	$(patsubst %,$(JAVACALL_OUTPUT_OBJ_DIR)/%,$(PROPERTY_OBJECTS)) \
 	$(SPECIFIC_OBJECTS)
 	@echo "...Generating Library: $@"
-	@$(AR) -out:`$(call fixcygpath, $@)` $(ARFLAGS) `$(call fixcygpath, $^ $(ADDITIONAL_LIBS))`
-	@$(MAKE) JAVACALL_EXTRA_LIBS
+	$(AT)$(AR) -out:`$(call fixcygpath, $@)` $(ARFLAGS) `$(call fixcygpath, $^ $(ADDITIONAL_LIBS))`
+	$(AT)$(MAKE) JAVACALL_EXTRA_LIBS
 
 $(JAVACALL_OUTPUT_LIB_DIR)/notifiers$(BUILD_EXT).lib: \
     $(patsubst %,$(JAVACALL_OUTPUT_OBJ_DIR)/%,$(NOTIFIER_OBJECTS))
 	@echo "...Generating Library: $@"
-	@$(AR) -out:`$(call fixcygpath, $@)` $(ARFLAGS) `$(call fixcygpath, $^)`
+	$(AT)$(AR) -out:`$(call fixcygpath, $@)` $(ARFLAGS) `$(call fixcygpath, $^)`

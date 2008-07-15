@@ -1,23 +1,23 @@
 /*
  *
- * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
- * 
+ *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
  * 2 only, as published by the Free Software Foundation.
- * 
+ *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
  * included at /legal/license.txt).
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA
- * 
+ *
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
  * information or have any questions.
@@ -41,9 +41,9 @@ extern "C" {
  * @defgroup LCD LCD API
  * @ingroup JTWI
  *
- * The mandatory API functions are the following : 
+ * The mandatory API functions are the following :
  * - LCD initialization and termination functions
- * - Function for getting a pointer to LCD off-screen raster 
+ * - Function for getting a pointer to LCD off-screen raster
  * - Function for flushing LCD off-screen raster to LCD display
  *
  * @{
@@ -193,6 +193,15 @@ javacall_pixel* javacall_lcd_get_screen(javacall_lcd_screen_type screenType,
 javacall_result javacall_lcd_set_full_screen_mode(javacall_bool useFullScreen);
 
 /**
+ * Checks screen mode status.
+ *
+ * This function should return <code>JAVACALL_TRUE</code> if full screen
+ * mode is turned on.  Otherwise it returns <code>JAVACALL_FALSE</code>
+ *
+ */
+javacall_bool javacall_lcd_get_full_screen_mode();
+
+/**
  * The following function is used to flush the image from the Video RAM raster
  * to the LCD display. \n
  * The function call should not be CPU time expensive, and should return
@@ -222,7 +231,7 @@ javacall_result javacall_lcd_flush_partial(int ystart, int yend);
   * Reverse flag of rotation
   */
 javacall_bool javacall_lcd_reverse_orientation(void);
- 
+
 /**
   * Get flag of rotation
   */
@@ -230,7 +239,7 @@ javacall_bool javacall_lcd_get_reverse_orientation(void);
 
 /**
  * checks the implementation supports native softbutton label.
- * 
+ *
  * @retval JAVACALL_TRUE   implementation supports native softbutton layer
  * @retval JAVACALL_FALSE  implementation does not support native softbutton layer
  */
@@ -240,11 +249,11 @@ javacall_bool javacall_lcd_is_native_softbutton_layer_supported(void);
 /**
  * The following function is used to set the softbutton label in the native
  * soft button layer.
- * 
+ *
  * @param label the label for the softbutton
  * @param len the length of the label
  * @param index the corresponding index of the command
- * 
+ *
  * @retval JAVACALL_OK      success
  * @retval JAVACALL_FAIL    fail
  */
@@ -255,7 +264,7 @@ javacall_result javacall_lcd_set_native_softbutton_label(const javacall_utf16* l
   * Return width of screen
   */
 int javacall_lcd_get_screen_width(void);
- 
+
 /**
   * Return height of screen
   */
