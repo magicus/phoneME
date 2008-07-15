@@ -2,22 +2,22 @@
 # Portions Copyright  2000-2008 Sun Microsystems, Inc. All Rights
 # Reserved.  Use is subject to license terms.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
-# 
+#
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License version
 # 2 only, as published by the Free Software Foundation.
-# 
+#
 # This program is distributed in the hope that it will be useful, but
 # WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
 # General Public License version 2 for more details (a copy is
 # included at /legal/license.txt).
-# 
+#
 # You should have received a copy of the GNU General Public License
 # version 2 along with this work; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
 # 02110-1301 USA
-# 
+#
 # Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
 # Clara, CA 95054 or visit www.sun.com if you need additional
 # information or have any questions.
@@ -201,14 +201,14 @@ ifeq ($(ENABLE_SYSTEM_CLASSES_DEBUG), true)
   ROM_GEN_ARG       += +MakeROMDebuggable
   JAVAC_DEBUG       =
 else
-  # For debugging application classes -CompactROMMethodTables   
+  # For debugging application classes -CompactROMMethodTables
   # is the only optimization which is incompatible with the Java debugger.
   # For debugging Monet bundle the +MakeROMDebuggable is reduced
   # to -CompactROMMethodTables (all the other optimizations are
   # disabled for binary image generator)
   ROM_GEN_ARG       += -CompactROMMethodTables
 endif
-endif 
+endif
 
 # While building VM with C interpreter (arch = c)
 # target_arch may be different, e.g. target_arch = mips
@@ -264,6 +264,8 @@ ASM_visCPP           = ml.exe
 ASM_evc_arm          = armasm.exe
 ASM_evc_i386         = ml.exe
 ASM_evc              = $(ASM_evc_$(arch))
+ASM_vc8ce_arm        = $(VC8CE_ARCH_PATH)/armasm.exe
+ASM_vc8ce            = $(ASM_vc8ce_$(arch))
 ASM                  = $(ASM_$(compiler))
 
 # Note: CPP_gcc is set below in the gcc section, but $(CPP) will still
@@ -273,16 +275,21 @@ CPP_visCPP           = cl.exe
 CPP_evc_arm          = clarm.exe
 CPP_evc_i386         = cl.exe
 CPP_evc              = $(CPP_evc_$(arch))
+CPP_vc8ce_arm        = $(VC8CE_ARCH_PATH)/cl.exe
+CPP_vc8ce            = $(CC_vc8ce_$(arch))
 CPP                  = $(CPP_$(compiler))
 
 CC_visCPP            = cl.exe
 CC_evc_arm           = clarm.exe
 CC_evc_i386          = cl.exe
 CC_evc               = $(CC_evc_$(arch))
+CC_vc8ce_arm         = $(VC8CE_ARCH_PATH)/cl.exe
+CC_vc8ce             = $(CC_vc8ce_$(arch))
 CC                   = $(CC_$(compiler))
 
 SAVE_TEMPS_visCPP    = /Fa$(basename $(notdir $<))
 SAVE_TEMPS_evc	     = /Fa$(basename $(notdir $<))
+SAVE_TEMPS_vc8ce     = /Fa$(basename $(notdir $<))
 SAVE_TEMPS_gcc	     = -save-temps
 
 ifeq ($(SAVE_TEMPS), true)
@@ -291,14 +298,17 @@ endif
 
 LINK_visCPP          = link.exe
 LINK_evc             = link.exe
+LINK_vc8ce           = $(VC8CE_ARCH_PATH)/link.exe
 LINK                 = $(LINK_$(compiler))
 
 LIBMGR_visCPP        = lib.exe
 LIBMGR_evc           = lib.exe
+LIBMGR_vc8ce         = $(VC8CE_ARCH_PATH)/lib.exe
 LIBMGR               = $(LIBMGR_$(compiler))
 
 OBJ_SUFFIX_visCPP    = .obj
 OBJ_SUFFIX_evc       = .obj
+OBJ_SUFFIX_vc8ce     = .obj
 OBJ_SUFFIX_gcc       = .o
 ifeq ($(host_os), cygwin)
 OBJ_SUFFIX_gcc       = .obj
@@ -307,6 +317,7 @@ OBJ_SUFFIX           = $(OBJ_SUFFIX_$(compiler))
 
 DLL_SUFFIX_visCPP    = .dll
 DLL_SUFFIX_evc       = .dll
+DLL_SUFFIX_vc8ce     = .dll
 DLL_SUFFIX_gcc       = .so
 ifeq ($(host_os), cygwin)
 DLL_SUFFIX_gcc       = .dll
@@ -315,16 +326,19 @@ DLL_SUFFIX           = $(DLL_SUFFIX_$(compiler))
 
 LIB_PREFIX_visCPP    =
 LIB_PREFIX_evc       =
+LIB_PREFIX_vc8ce     =
 LIB_PREFIX_gcc       = lib
 LIB_PREFIX           = $(LIB_PREFIX_$(compiler))
 
 LIB_SUFFIX_visCPP    = .lib
 LIB_SUFFIX_evc       = .lib
+LIB_SUFFIX_vc8ce     = .lib
 LIB_SUFFIX_gcc       = .a
 LIB_SUFFIX           = $(LIB_SUFFIX_$(compiler))
 
 EXE_SUFFIX_visCPP    = .exe
 EXE_SUFFIX_evc       = .exe
+EXE_SUFFIX_vc8ce     = .exe
 EXE_SUFFIX_gcc       =
 ifeq ($(host_os), cygwin)
 EXE_SUFFIX_gcc       = .exe
@@ -339,6 +353,7 @@ BUILD_EXT            = $(BUILD_EXT_$(BUILD))
 
 EXTRA_CLEAN_visCPP   = *.sbr *.pch *.pdb *.asm *.lst
 EXTRA_CLEAN_evc      = *.sbr *.pch *.pdb *.asm *.lst
+EXTRA_CLEAN_vc8ce    = *.sbr *.pch *.pdb *.asm *.lst
 EXTRA_CLEAN_gcc      = Interpreter_$(arch).s
 EXTRA_CLEAN          = $(EXTRA_CLEAN_$(compiler))
 
@@ -348,6 +363,7 @@ else
 ASM_SUFFIX_visCPP    = .asm
 endif
 ASM_SUFFIX_evc       = .asm
+ASM_SUFFIX_vc8ce     = .asm
 ASM_SUFFIX_gcc       = .s
 ASM_SUFFIX           = $(ASM_SUFFIX_$(compiler))
 
@@ -365,6 +381,7 @@ endif
 
 ROMIZING_CFLAGS_visCPP 	= /D "ROMIZING"
 ROMIZING_CFLAGS_evc    	= /D "ROMIZING"
+ROMIZING_CFLAGS_vc8ce  	= /D "ROMIZING"
 ROMIZING_CFLAGS_gcc    	= -DROMIZING=1
 
 ifeq ($(ROMIZING)+$(IsTarget), true+true)
@@ -454,8 +471,12 @@ export ENABLE_INTERPRETER_GENERATOR__BY
 endif
 
 # Use ENABLE_SEGMENTED_ROM_TEXT_BLOCK by default for Visual C++
-ifndef ENABLE_SEGMENTED_ROM_TEXT_BLOCK  
+ifndef ENABLE_SEGMENTED_ROM_TEXT_BLOCK
 ifeq ($(compiler), visCPP)
+export ENABLE_SEGMENTED_ROM_TEXT_BLOCK     := true
+export ENABLE_SEGMENTED_ROM_TEXT_BLOCK__BY := jvm.make
+endif
+ifeq ($(compiler), vc8ce)
 export ENABLE_SEGMENTED_ROM_TEXT_BLOCK     := true
 export ENABLE_SEGMENTED_ROM_TEXT_BLOCK__BY := jvm.make
 endif
@@ -770,7 +791,9 @@ ifeq ($(ENABLE_PCSL)+$(IsGenerator), true+true)
 override ENABLE_PCSL := false
 export ENABLE_PCSL
 else
-PCSL_DIST_DIR = $(PCSL_OUTPUT_DIR)/$(target_os)_$(arch)
+ifndef PCSL_DIST_DIR
+PCSL_DIST_DIR = $(PCSL_OUTPUT_DIR)/javacall_$(arch)
+endif
 endif
 
 ifeq ($(ENABLE_PCSL), true)
@@ -862,7 +885,7 @@ CPP_OPT_FLAGS_product   = /Ox /Os /Gy /GF
 CPP_OPT_FLAGS          += $(CPP_OPT_FLAGS_$(BUILD))
 
 CPP_DEF_FLAGS_debug     = -D_DEBUG -DAZZERT
-CPP_DEF_FLAGS_release   = 
+CPP_DEF_FLAGS_release   =
 CPP_DEF_FLAGS_product   = -DPRODUCT
 
 ifeq ($(USE_VS2005), true)
@@ -918,7 +941,7 @@ MAKE_EXPORT_EXTRA_LIBS += $(PCSL_LIBS)
 endif
 
 
-LIB_FLAGS_debug         = 
+LIB_FLAGS_debug         =
 LIB_FLAGS_release       =
 LIB_FLAGS_product       =
 LIB_FLAGS               = /nologo $(LIB_FLAGS_$(BUILD))
@@ -1285,19 +1308,19 @@ LIB_FLAGS_product       =
 LIB_FLAGS               = /nologo $(LIB_FLAGS_$(BUILD))
 
 ifeq ($(ENABLE_PCSL), true)
-PCSL_LIBS               = $(PCSL_DIST_DIR)/lib/libpcsl_memory.lib   \
-                          $(PCSL_DIST_DIR)/lib/libpcsl_print.lib    \
-                          $(PCSL_DIST_DIR)/lib/libpcsl_network.lib  \
-                          $(PCSL_DIST_DIR)/lib/libpcsl_string.lib   \
-                          $(PCSL_DIST_DIR)/lib/libpcsl_file.lib
-MAKE_EXPORT_EXTRA_LIBS += $(PCSL_LIBS)
+    PCSL_LIBS               = $(PCSL_DIST_DIR)/lib/libpcsl_memory.lib   \
+                              $(PCSL_DIST_DIR)/lib/libpcsl_print.lib    \
+                              $(PCSL_DIST_DIR)/lib/libpcsl_network.lib  \
+                              $(PCSL_DIST_DIR)/lib/libpcsl_string.lib   \
+                              $(PCSL_DIST_DIR)/lib/libpcsl_file.lib
+    MAKE_EXPORT_EXTRA_LIBS += $(PCSL_LIBS)
 endif
 
 LINK_OPT_FLAGS_debug    = /pdb:$(basename $@).pdb
 LINK_OPT_FLAGS_release  =
 LINK_OPT_FLAGS_product  =
 
-LINK_OPT_FLAGS_EXPORT_debug    = /debug 
+LINK_OPT_FLAGS_EXPORT_debug    = /debug
 LINK_OPT_FLAGS_EXPORT_release  =
 LINK_OPT_FLAGS_EXPORT_product  =
 
@@ -1315,7 +1338,7 @@ LINK_FLAGS_EXPORT       = /incremental:no /nologo /entry:"WinMainCRTStartup" \
                           /nodefaultlib:msvcrtd.lib /nodefaultlib:oldnames.lib
 
 LINK_FLAGS_EXPORT      += $(LINK_OPT_FLAGS_EXPORT_$(BUILD))
-LINK_FLAGS              = $(LINK_FLAGS_EXPORT) 
+LINK_FLAGS              = $(LINK_FLAGS_EXPORT)
 
 CPP_USE_PCH             = /Fp"cldchi.pch" /Yu"incls/_precompiled.incl"
 BUILD_PCH               = _build_pch_visCPP.obj
@@ -1497,6 +1520,293 @@ $(JVM_EXE): $(BIN_DIR) $(BUILD_PCH) $(JVMX_LIB) $(JVMTEST_LIB) \
             $(LIBS) $(PCSL_LIBS)
 
 	$(A)echo generated `pwd`/$@
+
+endif
+
+
+#----------------------------------------------------------------------
+#
+# Compiler Section: Visual C++ 8.0 for Windows CE
+#
+# [NOTE] Use this section as an example if you're defining a new TARGET
+#        compiler.
+#----------------------------------------------------------------------
+
+ifeq ($(compiler), vc8ce)
+
+ifneq ($(findstring CYGWIN, $(shell uname)), CYGWIN)
+    define fixcygpath
+    echo $(1)
+    endef
+else
+    define fixcygpath
+    cygpath -w $(1)
+    endef
+endif
+
+ifeq ($(arch), arm)
+    ifdef ARM_LIB
+        override LIB     := $(ARM_LIB)
+        export   LIB
+    endif
+
+    ifdef ARM_INCLUDE
+        override INCLUDE := $(ARM_INCLUDE)
+        export   INCLUDE
+    endif
+
+    ifdef ARM_PATH
+        override PATH    := $(ARM_PATH);$(PATH)
+        export   PATH
+    endif
+endif
+
+#windowsce,4.00
+CESubsystem             = $(CE_SUBSYSTEM)
+
+#400
+CEVersion               = $(CE_VERSION)
+
+CEPlatform              = $(CE_PLATFORM)
+
+LIBS                    = coredll.lib corelibc.lib aygshell.lib \
+		          Ws2.lib ole32.lib
+
+LIBS                   += $(LIBS_EXTERNAL)
+
+ifeq ($(ENABLE_PCSL), true)
+PCSL_LIBS               = $(PCSL_DIST_DIR)/lib/libpcsl_memory.lib   \
+                          $(PCSL_DIST_DIR)/lib/libpcsl_print.lib    \
+                          $(PCSL_DIST_DIR)/lib/libpcsl_network.lib  \
+                          $(PCSL_DIST_DIR)/lib/libpcsl_string.lib   \
+                          $(PCSL_DIST_DIR)/lib/libpcsl_file.lib
+MAKE_EXPORT_EXTRA_LIBS += $(PCSL_LIBS)
+endif
+
+CPP_INCLUDE_DIRS       += -I"$(WINCE_INCLUDE_PATH)"
+
+CPP_OPT_FLAGS_debug     = /Zi /Od
+CPP_OPT_FLAGS_release   = /Oxs
+CPP_OPT_FLAGS_product   = /Oxs
+CPP_OPT_FLAGS           = /X /wd4996 /wd4819 /GS-
+CPP_OPT_FLAGS          += $(CPP_OPT_FLAGS_$(BUILD))
+
+CPP_ARCH_FLAGS_arm      = -D$(CEPlatform) -DARM -D_ARM -D_ARM_
+CPP_ARCH_FLAGS_i386     = -D_X86_ -D_X86  /D _WIN32_WCE_EMULATION
+CPP_ARCH_FLAGS          = $(CPP_ARCH_FLAGS_$(arch))
+
+CPP_DEF_FLAGS_debug     = /D "_DEBUG" /D "AZZERT" /D "DEBUG"
+CPP_DEF_FLAGS_release   = -DNDEBUG
+CPP_DEF_FLAGS_product   = -DPRODUCT -DNDEBUG
+
+CPP_DEF_FLAGS          += $(CPP_DEF_FLAGS_$(BUILD))
+CPP_DEF_FLAGS		   += -D_CRT_SECURE_NO_WARNINGS
+
+CPP_FLAGS_EXPORT        = $(CPP_DEF_FLAGS) -DREQUIRES_JVMCONFIG_H=1
+CPP_FLAGS_EXPORT       += /W3 -D_WIN32_WCE=$(CEVersion) $(CPP_ARCH_FLAGS) \
+                          -DUNDER_CE=$(CEVersion) \
+                          -DUNICODE -D_UNICODE /nologo $(SAVE_TEMPS_CFLAGS) \
+                          $(ENABLE_CFLAGS) $(ROMIZING_CFLAGS) \
+                          $(BUILD_VERSION_CFLAGS)
+
+CPP_FLAGS               = $(CPP_INCLUDE_DIRS) $(CPP_FLAGS_EXPORT)
+
+LIB_FLAGS_debug         = /DEBUGTYPE:CV
+LIB_FLAGS_release       =
+LIB_FLAGS_product       =
+LIB_FLAGS               = /nologo $(LIB_FLAGS_$(BUILD))
+
+
+LINK_OPT_FLAGS_debug    = /OPT:REF /DEBUG
+LINK_OPT_FLAGS_release  = /OPT:REF
+LINK_OPT_FLAGS_product  = /OPT:REF
+
+#LINK_ARCH_FLAGS_arm     = /MACHINE:ARM /SUBSYSTEM:$(CESubsystem) \
+#                          /base:"0x00010000" /stack:0x10000,0x1000
+
+LINK_ARCH_FLAGS_arm     = /SUBSYSTEM:$(CESubsystem)
+LINK_ARCH_FLAGS_i386    = /subsystem:windows /WINDOWSCE:EMULATION \
+                          /MACHINE:ix86
+LINK_ARCH_FLAGS         = $(LINK_ARCH_FLAGS_$(arch)) /LIBPATH:"\"$(WINCE_LIB_PATH)\"" \
+                          /LIBPATH:"\"$(VC8CE_LIB_PATH)\"" /LIBPATH:"\"$(VC8CE_ATLMFC_LIB_PATH)\""
+
+LINK_FLAGS_EXPORT       = /incremental /entry:"WinMainCRTStartup" \
+                          /MAP $(LINK_ARCH_FLAGS)
+
+LINK_FLAGS_EXPORT      += $(LINK_OPT_FLAGS_$(BUILD))
+LINK_FLAGS             += $(LINK_FLAGS_EXPORT) $(LIBS)
+
+CPP_USE_PCH             = /Fp"cldchi.pch" /Yu"incls/_precompiled.incl"
+BUILD_PCH               = _build_pch_visCPP.obj
+
+$(BUILD_PCH): $(Precompiled_Headers)
+	echo Generating $@ ...
+	echo CPP_INCLUDE_DIRS is $(CPP_INCLUDE_DIRS)
+	echo '#include "incls/_precompiled.incl"' > \
+		$(GEN_DIR)/_build_pch_visCPP.cpp
+	$(CPP) $(CPP_OPT_FLAGS) $(CPP_FLAGS) /Fp"cldchi.pch" \
+		/Yc"incls/_precompiled.incl" /c $(GEN_DIR)/_build_pch_visCPP.cpp
+	echo '    done'
+
+# Special case (fails to compile with precompiled header files)
+
+OS_$(os_family).obj: $(WorkSpace)/src/vm/os/$(os_family)/OS_$(os_family).cpp
+	$(A)$(CPP) $(CPP_OPT_FLAGS) $(CPP_FLAGS) -c `$(call fixcygpath, $<)`
+
+# Can't use precompiled headers
+ifneq ($(CompileROMImageSeparately), true)
+ROMImage.obj: $(GENERATED_ROM_FILE)
+	$(A)$(CPP) $(CPP_OPT_FLAGS) $(CPP_FLAGS) -c `$(call fixcygpath, $<)`
+else
+ROMImage_%.obj: ROMImage_%.cpp
+	$(A)$(CPP) $(CPP_OPT_FLAGS) $(CPP_FLAGS) -c `$(call fixcygpath, $<)`
+endif
+
+# Can't use precompiled headers
+NativesTable.obj: $(NATIVES_TABLE)
+	$(A)$(CPP) $(CPP_OPT_FLAGS) $(CPP_FLAGS) -c `$(call fixcygpath, $<)`
+
+ifeq ($(SAVE_PREPROCESSOR_OUTPUT),true)
+define BUILD_C_TARGET
+	$(A)$(CPP) $(CPP_OPT_FLAGS) $(CPP_FLAGS) $(CPP_USE_PCH) /P \
+		`$(call fixcygpath, $<)`
+	$(A)$(CPP) $(CPP_OPT_FLAGS) $(CPP_FLAGS) $(CPP_USE_PCH) -c \
+		`$(call fixcygpath, $<)`
+endef
+else
+define BUILD_C_TARGET
+	$(A)$(CPP) $(CPP_OPT_FLAGS) $(CPP_FLAGS) $(CPP_USE_PCH) -c \
+		`$(call fixcygpath, $<)`
+endef
+endif
+
+#Note " in following command.  That's so on win32 it forces the
+#command to be issued in a shell script and not directly from make
+#Otherwise PATH is not ARM_PATH set above
+
+Interpreter_arm.obj: Interpreter_arm.asm
+	$(A)$(ASM) -LIST "Interpreter_$(arch).lst" $(THIS_DIR)/$< $@
+
+Interpreter_i386.obj: Interpreter_i386.asm
+	$(A)$(ASM) /Zi /FoInterpreter_i386.obj /coff \
+		/Sc /FlInterpreter_i386.lst /c $(THIS_DIR)/$<
+
+%.obj: %.cpp
+	$(A)$(CPP) $(CPP_OPT_FLAGS) $(CPP_FLAGS) $(CPP_USE_PCH) -c \
+		`$(call fixcygpath, $<)`
+
+MAKE_EXPORT_LINK_OUT_SWITCH1     =
+MAKE_EXPORT_LINK_OUT_SWITCH2     = /out:
+MAKE_EXPORT_EXTRA_LIBS          += $(LIBS)
+MAKE_EXPORT_THREAD_LIBS          =
+
+$(DIST_LIB_DIR)/$(JVM_LOG_NAME)::
+	$(A)rm -f $@
+	$(A)echo 'ARM_PATH $(PATH)' > $@
+	$(A)echo 'ARM_LIB $(LIB)' >> $@
+	$(A)echo 'ARM_INCLUDE $(INCLUDE)' >> $@
+	$(A)echo TBD >> $@
+
+.PHONY: romgenmanifest
+
+romgenmanifest::
+	$(A)cp $(DIST_BIN_DIR)/$(ROMGEN_GEN_MANIFEST) $(DIST_BIN_DIR)/$(ROMGEN_MANIFEST)
+
+# Split the object files into:
+#     - LIB_OBJS:  the ones that are exported publicly in $(JVM_LIB)
+#     - LIBX_OBJS: the ones that are exported privately in $(JVMX_LIB)
+#     - LIBTEST_OBJS: the ones that are exported privately in $(JVMTEST_LIB)
+#     - EXE_OBJS:  the ones that are used only by $(JVM_EXE)
+LIB_OBJS := $(Obj_Files) OopMaps.obj
+LIB_OBJS := $(subst BSDSocket.obj,,$(LIB_OBJS))
+LIBX_OBJS +=        BSDSocket.obj
+LIB_OBJS := $(subst ReflectNatives.obj,,$(LIB_OBJS))
+LIBTEST_OBJS +=     ReflectNatives.obj
+LIB_OBJS := $(subst jvmspi.obj,,$(LIB_OBJS))
+EXE_OBJS +=         jvmspi.obj
+LIB_OBJS := $(subst Main_$(os_family).obj,,$(LIB_OBJS))
+EXE_OBJS +=         Main_$(os_family).obj
+LIB_OBJS := $(subst NativesTable.obj,,$(LIB_OBJS))
+EXE_OBJS +=         NativesTable.obj
+LIB_OBJS := $(subst ROMImage.obj,,$(LIB_OBJS))
+
+ifneq ($(ENABLE_C_INTERPRETER), true)
+LIB_OBJS += Interpreter_$(arch).obj
+endif
+
+EXE_OBJS +=         ROMImage.obj
+
+ifeq ($(SeparateROMImage), true)
+ifeq ($(CompileROMImageSeparately), true)
+ROM_SEGMENTS_OBJS = ROMImage_00.obj \
+		            ROMImage_01.obj \
+		            ROMImage_02.obj \
+		            ROMImage_03.obj \
+		            ROMImage_04.obj \
+		            ROMImage_05.obj \
+		            ROMImage_06.obj \
+		            ROMImage_07.obj \
+		            ROMImage_08.obj \
+		            ROMImage_09.obj \
+		            ROMImage_10.obj \
+		            ROMImage_11.obj \
+		            ROMImage_12.obj
+
+EXE_OBJS := $(subst ROMImage.obj,,$(EXE_OBJS))
+EXE_OBJS += $(ROM_SEGMENTS_OBJS)
+$(ROM_SEGMENTS_OBJS): $(GENERATED_ROM_FILE)
+
+endif
+
+ROM_SEGMENTS = $(GEN_DIR)/ROMImage_00.cpp \
+               $(GEN_DIR)/ROMImage_01.cpp \
+               $(GEN_DIR)/ROMImage_02.cpp \
+               $(GEN_DIR)/ROMImage_03.cpp \
+               $(GEN_DIR)/ROMImage_04.cpp \
+               $(GEN_DIR)/ROMImage_05.cpp \
+               $(GEN_DIR)/ROMImage_06.cpp \
+               $(GEN_DIR)/ROMImage_07.cpp \
+               $(GEN_DIR)/ROMImage_08.cpp \
+               $(GEN_DIR)/ROMImage_09.cpp \
+               $(GEN_DIR)/ROMImage_10.cpp \
+               $(GEN_DIR)/ROMImage_11.cpp \
+               $(GEN_DIR)/ROMImage_12.cpp \
+               $(GEN_DIR)/ROMImageGenerated.hpp
+
+# Use $(GENERATED_ROM_FILE) as a marker to regenerate $(ROM_SEGMENTS).
+# Add $(ROM_SEGMENTS) into the set of prerequisites of $(GENERATED_ROM_FILE),
+# without overriding the command for $(GENERATED_ROM_FILE) target.
+$(GENERATED_ROM_FILE): $(ROM_SEGMENTS)
+$(ROM_SEGMENTS):
+
+endif
+
+$(JVM_LIB): $(BIN_DIR) $(BUILD_PCH) $(LIB_OBJS) romgenmanifest
+	$(LIBMGR) $(LIB_FLAGS) /out:$@ $(LIB_OBJS)
+	$(A)echo generated `pwd`/$@
+
+$(JVMX_LIB): $(BIN_DIR) $(BUILD_PCH) $(LIBX_OBJS)
+	$(LIBMGR) $(LIB_FLAGS) /out:$@ $(LIBX_OBJS)
+	$(A)echo generated `pwd`/$@
+
+$(JVMTEST_LIB): $(BIN_DIR) $(BUILD_PCH) $(LIBTEST_OBJS)
+	$(LIBMGR) $(LIB_FLAGS) /out:$@ $(LIBTEST_OBJS)
+	$(A)echo generated `pwd`/$@
+
+ifeq ($(skip_link_image), true)
+$(JVM_EXE):
+	$(A)touch $@
+else
+$(JVM_EXE): $(BIN_DIR) $(BUILD_PCH) $(JVMX_LIB) $(JVMTEST_LIB) $(JVM_LIB) $(EXE_OBJS)
+	$(LINK) $(LINK_FLAGS) /out:$@ $(EXE_OBJS) $(JVMX_LIB) $(JVMTEST_LIB) $(JVM_LIB) \
+		$(PCSL_LIBS) $(JAVACALL_LIBS)
+	$(A)if test "$(arch)-$(BUILD)" = "arm-product"; then \
+	    echo running pdstrip ...; \
+	    $(WorkSpace)/build/share/bin/wince_arm/pdstrip.exe $@; \
+	    mv stripped.exe $@; \
+	fi
+	$(A)echo generated `pwd`/$@
+endif
 
 endif
 
@@ -1853,7 +2163,7 @@ EXE_OBJS +=         Main_$(os_family)$(OBJ_SUFFIX)
 LIB_OBJS := $(subst NativesTable$(OBJ_SUFFIX),,$(LIB_OBJS))
 EXE_OBJS +=         NativesTable$(OBJ_SUFFIX)
 LIB_OBJS := $(subst ROMImage$(OBJ_SUFFIX),,$(LIB_OBJS))
-EXE_OBJS +=         ROMImage$(OBJ_SUFFIX)	
+EXE_OBJS +=         ROMImage$(OBJ_SUFFIX)
 
 ifeq ($(SeparateROMImage), true)
 ifeq ($(CompileROMImageSeparately), true)
