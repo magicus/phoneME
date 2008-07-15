@@ -30,14 +30,13 @@
 ######################################################################
 
 # Name of the library
-ANC_FB_NAME = highlevelui/annunciator/linux_fb
-ANC_FB_DIR = $(SUBSYSTEM_DIR)/$(ANC_FB_NAME)
+ANC_FB_NAME = linux_fb
 
 # Add to library set for this build
 LIB_SET += $(ANC_FB_NAME)
 
 # Export include files
-# SUBSYSTEM_HIGHUI_EXTRA_INCLUDES += -I$(ANC_FB_DIR)/include
+# SUBSYSTEM_HIGHUI_EXTRA_INCLUDES += -I$(HIGHUI_ANC_IMPL_DIR)/include
 
 # Native files for the library
 #
@@ -49,4 +48,4 @@ SUBSYSTEM_HIGHUI_NATIVE_FILES += \
 
 # Source code path for the library
 #
-vpath % $(ANC_FB_DIR)/native
+vpath % $(HIGHUI_ANC_IMPL_DIR)/native

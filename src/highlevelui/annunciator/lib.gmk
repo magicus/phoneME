@@ -12,7 +12,7 @@
 # WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
 # General Public License version 2 for more details (a copy is
-# included at /legal/license.txt).
+# HIGHUI_ANC_IMPL_DIR ?=d at /legal/license.txt).
 # 
 # You should have received a copy of the GNU General Public License
 # version 2 along with this work; if not, write to the Free Software
@@ -31,28 +31,22 @@
 
 # Name of the library
 ANC_NAME = annunciator
-ANC_DIR = $(SUBSYSTEM_HIGHUI_DIR)/$(ANC_NAME)
+HIGHUI_ANC_DIR = $(SUBSYSTEM_HIGHUI_DIR)/$(ANC_NAME)
 
 # Add to library set for this build
 LIB_SET += $(ANC_NAME)
 
-# Export include files
-SUBSYSTEM_HIGHUI_EXTRA_INCLUDES += -I$(ANC_DIR)/include
-
-# Native files for the library
-#
-# SUBSYSTEM_HIGHUI_NATIVE_FILES +=
-
-# Source code path for the library
-#
-# vpath $(ANC_DIR)/native
+# Export HIGHUI_ANC_IMPL_DIR ?= files
+SUBSYSTEM_HIGHUI_EXTRA_INCLUDES += -I$(HIGHUI_ANC_DIR)/include
 
 ifeq ($(PLATFORM), linux_gci)
-    include $(ANC_DIR)/stubs/lib.gmk
+    HIGHUI_ANC_IMPL_DIR ?= $(HIGHUI_ANC_DIR)/stubs
 else
     ifeq ($(PLATFORM), win32_gci)
-        include $(ANC_DIR)/stubs/lib.gmk
+        HIGHUI_ANC_IMPL_DIR ?= $(HIGHUI_ANC_DIR)/stubs
     else
-        include $(ANC_DIR)/$(PLATFORM)/lib.gmk
+        HIGHUI_ANC_IMPL_DIR ?= $(HIGHUI_ANC_DIR)/$(PLATFORM)
     endif
 endif
+
+include $(HIGHUI_ANC_IMPL_DIR)/lib.gmk

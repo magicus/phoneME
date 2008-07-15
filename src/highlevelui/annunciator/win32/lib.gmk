@@ -31,13 +31,12 @@
 
 # Name of the library
 ANC_WIN32_NAME = highlevelui/annunciator/win32
-ANC_WIN32_DIR = $(SUBSYSTEM_DIR)/$(ANC_WIN32_NAME)
 
 # Add to library set for this build
 LIB_SET += $(ANC_WIN32_NAME)
 
 # Export include files
-# SUBSYSTEM_HIGHUI_EXTRA_INCLUDES += -I$(ANC_WIN32_DIR)/include
+# SUBSYSTEM_HIGHUI_EXTRA_INCLUDES += -I$(HIGHUI_ANC_IMPL_DIR)/include
 
 # Native files for the library
 #
@@ -49,4 +48,4 @@ SUBSYSTEM_HIGHUI_NATIVE_FILES += \
 
 # Source code path for the library
 #
-vpath % $(ANC_WIN32_DIR)/native
+vpath % $(HIGHUI_ANC_IMPL_DIR)/native

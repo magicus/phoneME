@@ -33,13 +33,12 @@
 
 # Name of the library
 ANC_QTE_NAME = highlevelui/annunciator/linux_qte
-ANC_QTE_DIR = $(SUBSYSTEM_DIR)/$(ANC_QTE_NAME)
 
 # Add to library set for this build
 LIB_SET += $(ANC_QTE_NAME)
 
 # Export include files
-SUBSYSTEM_HIGHUI_EXTRA_INCLUDES += -I$(ANC_QTE_DIR)/include
+SUBSYSTEM_HIGHUI_EXTRA_INCLUDES += -I$(HIGHUI_ANC_IMPL_DIR)/include
 
 # Native files for the library
 #
@@ -51,9 +50,9 @@ SUBSYSTEM_HIGHUI_NATIVE_FILES += \
 
 # Source code path for the library
 #
-vpath % $(ANC_QTE_DIR)/native
+vpath % $(HIGHUI_ANC_IMPL_DIR)/native
 
-$(MIDP_OUTPUT_DIR)/moc_%.cpp: $(ANC_QTE_DIR)/native/%.h
+$(MIDP_OUTPUT_DIR)/moc_%.cpp: $(HIGHUI_ANC_IMPL_DIR)/native/%.h
 	@echo Creating ... $@ using MOC $(LOG_ONLY)
 	@echo +++ cd $(MIDP_OUTPUT_DIR)\; \
 	  $(QTOPIA_SDK_DIR)/bin/moc -i $< -o $@ $(LOG_ONLY)

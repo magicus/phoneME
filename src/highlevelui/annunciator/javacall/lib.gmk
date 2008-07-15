@@ -30,14 +30,13 @@
 ######################################################################
 
 # Name of the library
-ANC_JAVACALL_NAME = highlevelui/annunciator/javacall
-ANC_JAVACALL_DIR = $(SUBSYSTEM_DIR)/$(ANC_JAVACALL_NAME)
+ANC_JAVACALL_NAME = javacall
 
 # Add to library set for this build
 LIB_SET += $(ANC_JAVACALL_NAME)
 
 # Export include files
-# SUBSYSTEM_HIGHUI_EXTRA_INCLUDES += -I$(ANC_JAVACALL_DIR)/include
+# SUBSYSTEM_HIGHUI_EXTRA_INCLUDES += -I$(HIGHUI_ANC_IMPL_DIR)/include
 
 # Native files for the library
 #
@@ -49,4 +48,4 @@ SUBSYSTEM_HIGHUI_NATIVE_FILES += \
 
 # Source code path for the library
 #
-vpath % $(ANC_JAVACALL_DIR)/native
+vpath % $(HIGHUI_ANC_IMPL_DIR)/native
