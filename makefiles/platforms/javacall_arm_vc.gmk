@@ -1,0 +1,33 @@
+#
+# Copyright 2008 Sun Microsystems, Inc. All rights reserved.
+# SUN PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+#
+######################################################################
+#
+# To be included for javacall_arm_vc8ce platform
+#
+######################################################################
+
+PCSL_OS=javacall
+PCSL_CPU=arm
+
+FILE_MODULE=javacall
+NETWORK_MODULE=javacall
+MEMORY_PORT_MODULE=javacall
+MEMORY_MODULE=malloc
+PRINT_MODULE=javacall
+
+include $(PCSL_DIR)/makefiles/share/win32.gmk
+
+CFLAGS += /c /EHsc /W3 /FD -D_LIB -DARM -D_WINDOWS
+
+ifeq ($(USE_DEBUG), true)
+CFLAGS += /Zi /GS -DPCSL_DEBUG -DTRACE_DEBUG -DDEBUG -D_DEBUG
+else
+CFLAGS += /GS-
+endif
+
+include $(PCSL_DIR)/makefiles/share/evc.gmk
+# must be included after compiler definition
+include $(PCSL_DIR)/makefiles/share/javacall.gmk
+
