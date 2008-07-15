@@ -75,14 +75,19 @@ KNIDECL(com_sun_mmedia_DirectRecord_nStart) {
     javacall_result ret;
 
     if (pKniInfo && pKniInfo->pNativeHandle) {
-        ret = javacall_media_start_recording(pKniInfo->pNativeHandle);
+        JAVACALL_MM_ASYNC_EXEC(
+            ret,
+            javacall_media_start_recording(pKniInfo->pNativeHandle),
+            pKniInfo->pNativeHandle, pKniInfo->appId, pKniInfo->playerId, JAVACALL_EVENT_MEDIA_RECORD_STARTED,
+            returns_no_data
+        );
         if (JAVACALL_OK == ret) {
             pKniInfo->recordState = RECORD_START;
-        } else {
+            returnValue = 1;
+        } else if (JAVACALL_WOULD_BLOCK != ret) {
             REPORT_ERROR1(LC_MMAPI, "[kni_record] Start recording fail handle=%d\n",
                 pKniInfo->pNativeHandle);
         }
-        returnValue = (JAVACALL_OK == ret ? 1 : 0);
     }
 
     KNI_ReturnInt(returnValue);
@@ -97,14 +102,19 @@ KNIDECL(com_sun_mmedia_DirectRecord_nStop) {
     javacall_result ret;
 
     if (pKniInfo && pKniInfo->pNativeHandle) {
-        ret = javacall_media_stop_recording(pKniInfo->pNativeHandle);
+        JAVACALL_MM_ASYNC_EXEC(
+            ret,
+            javacall_media_stop_recording(pKniInfo->pNativeHandle),
+            pKniInfo->pNativeHandle, pKniInfo->appId, pKniInfo->playerId, JAVACALL_EVENT_MEDIA_RECORD_PAUSED,
+            returns_no_data
+        );
         if (JAVACALL_OK == ret) {
             pKniInfo->recordState = RECORD_STOP;
-        } else {
+            returnValue = 1;
+        } else if (JAVACALL_WOULD_BLOCK != ret) {
             REPORT_ERROR1(LC_MMAPI, "[kni_record] Stop recording fail handle=%d\n",
                 pKniInfo->pNativeHandle);
         }
-        returnValue = (JAVACALL_OK == ret ? 1 : 0);
     }
 
     MMP_DEBUG_STR2("[kni_record] -nStop %d %d\n", pKniInfo->pNativeHandle, returnValue);
@@ -121,14 +131,19 @@ KNIDECL(com_sun_mmedia_DirectRecord_nPause) {
     javacall_result ret;
 
     if (pKniInfo && pKniInfo->pNativeHandle) {
-        ret = javacall_media_pause_recording(pKniInfo->pNativeHandle);
+        JAVACALL_MM_ASYNC_EXEC(
+            ret,
+            javacall_media_pause_recording(pKniInfo->pNativeHandle),
+            pKniInfo->pNativeHandle, pKniInfo->appId, pKniInfo->playerId, JAVACALL_EVENT_MEDIA_RECORD_PAUSED,
+            returns_no_data
+        );
         if (JAVACALL_OK == ret) {
             pKniInfo->recordState = RECORD_PAUSE;
-        } else {
+            returnValue = 1;
+        } else if (JAVACALL_WOULD_BLOCK != ret) {
             REPORT_ERROR1(LC_MMAPI, "[kni_record] Pause recording fail handle=%d\n",
                 pKniInfo->pNativeHandle);
         }
-        returnValue = (JAVACALL_OK == ret ? 1 : 0);
     }
 
     MMP_DEBUG_STR2("[kni_record] -nPause handle=%d ret=%d\n", pKniInfo->pNativeHandle, returnValue);
@@ -145,14 +160,19 @@ KNIDECL(com_sun_mmedia_DirectRecord_nReset) {
     javacall_result ret;
 
     if (pKniInfo && pKniInfo->pNativeHandle) {
-        ret = javacall_media_reset_recording(pKniInfo->pNativeHandle);
+        JAVACALL_MM_ASYNC_EXEC(
+            ret,
+            javacall_media_reset_recording(pKniInfo->pNativeHandle),
+            pKniInfo->pNativeHandle, pKniInfo->appId, pKniInfo->playerId, JAVACALL_EVENT_MEDIA_RECORD_RESET,
+            returns_no_data
+        );
         if (JAVACALL_OK == ret) {
             pKniInfo->recordState = RECORD_RESET;
-        } else {
+            returnValue = 1;
+        } else if (JAVACALL_WOULD_BLOCK != ret) {
             REPORT_ERROR1(LC_MMAPI, "[kni_record] Reset recording fail handle=%d\n",
                 pKniInfo->pNativeHandle);
         }
-        returnValue = (JAVACALL_OK == ret ? 1 : 0);
     }
 
     MMP_DEBUG_STR2("[kni_record] -nReset handle=%d ret=%d\n", pKniInfo->pNativeHandle, returnValue);
@@ -169,10 +189,16 @@ KNIDECL(com_sun_mmedia_DirectRecord_nCommit) {
     javacall_result ret;
 
     if (pKniInfo && pKniInfo->pNativeHandle) {
-        ret = javacall_media_commit_recording(pKniInfo->pNativeHandle);
+        JAVACALL_MM_ASYNC_EXEC(
+            ret,
+            javacall_media_commit_recording(pKniInfo->pNativeHandle),
+            pKniInfo->pNativeHandle, pKniInfo->appId, pKniInfo->playerId, JAVACALL_EVENT_MEDIA_RECORD_COMMITTED,
+            returns_no_data
+        );
         if (JAVACALL_OK == ret) {
             pKniInfo->recordState = RECORD_COMMIT;
-        } else {
+            returnValue = 1;
+        } else if (JAVACALL_WOULD_BLOCK != ret) {
             REPORT_ERROR1(LC_MMAPI, "[kni_record] Commit recording fail handle=%d\n",
                 pKniInfo->pNativeHandle);
         }
