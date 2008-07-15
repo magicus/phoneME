@@ -473,7 +473,7 @@ public class CalendarImpl extends Calendar {
 
         //if DAY_OF_WEEK was set more recently than DAY_OF_MONTH and is correct 
         //then time is computed using current week and day of week
-        if(isSet[DAY_OF_WEEK] && fields[DAY_OF_WEEK] > 0 && fields[DAY_OF_WEEK] < 8) {
+        if(isSet[DAY_OF_WEEK] && fields[DAY_OF_WEEK] >= SUNDAY && fields[DAY_OF_WEEK] <= SATURDAY) {
             julianDay += fields[DAY_OF_WEEK] - julianDayToDayOfWeek(julianDay);
             fields[DATE] += fields[DAY_OF_WEEK] - julianDayToDayOfWeek(julianDay);
         }

@@ -461,12 +461,21 @@ public abstract class Calendar {
      * one of the above.
      */
     public final int get(int field) {
-        if ( field == DAY_OF_WEEK ||
+        //setting DAY_OF_WEEK may change DATE, MONTH and YEAR
+        if ( (isSet[DAY_OF_WEEK] && (field == DATE || field == MONTH || field == YEAR)) ||
+             field == DAY_OF_WEEK ||
              field == HOUR_OF_DAY ||
              field == AM_PM ||
              field == HOUR ) {
             getTimeInMillis();
             computeFields();
+        } else if ( field != YEAR &&
+                    field != MONTH &&
+                    field != DATE &&
+                    field != MINUTE &&
+                    field != SECOND &&
+                    field != MILLISECOND) {
+              throw new ArrayIndexOutOfBoundsException();
         }
         return this.fields[field];
     }
