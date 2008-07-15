@@ -68,7 +68,12 @@ $(BINDIR)/postTestMsg.exe: $(OBJ_DIR)/postTestMsg.o
 endif
 endif
 
-$(BINDIR)/jvm$(g)$(p)$(LIB_SUFFIX): $(MIDP_DEPS) $(OBJLIB)
-	@echo " ... libing $@ " $(LOG)
+$(BINDIR)/midp$(g)$(p)$(LIB_SUFFIX): $(MIDP_DEPS) $(OBJLIB)
+	@echo " ... libing $@ " $(OBJLIB) $(LOG)
+	$(A)$(LD) $(LINKER_OUTPUT)`$(call fixcygpath,$@ \
+		$(LD_START_GROUP) $(OBJLIB))` $(LD_END_GROUP) $(LOG)
+
+$(BINDIR)/jvm$(g)$(p)$(LIB_SUFFIX): $(BINDIR)/midp$(g)$(p)$(LIB_SUFFIX)
+	@echo " ... libing $@ " $(LIBS) $(LOG)
 	$(A)$(LD) $(LINKER_OUTPUT)`$(call fixcygpath,$@ \
 		$(LD_START_GROUP) $(OBJLIB) $(LIBS))` $(LD_END_GROUP) $(LOG)
