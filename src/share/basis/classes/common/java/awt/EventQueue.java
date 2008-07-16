@@ -109,7 +109,7 @@ public class EventQueue {
             queues[i] = new Queue();
         }
         String name = "AWT-EventQueue-" + nextThreadNum();
-        dispatchThread = EventDispatchThread.create(name, 
+        dispatchThread = new EventDispatchThread(name, 
                              this.proxy = new EventQueueProxy(this)); // 6261461
         dispatchThread.setPriority(Thread.NORM_PRIORITY + 1);
         dispatchThread.start();

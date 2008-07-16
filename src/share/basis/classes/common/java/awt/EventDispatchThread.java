@@ -31,7 +31,6 @@ import java.lang.reflect.Method;
 import java.security.AccessController;
 import sun.security.action.GetPropertyAction;
 import java.lang.ref.WeakReference;
-import java.security.PrivilegedAction;
 
 /**
  * EventDispatchThread is a package-private AWT class which takes
@@ -54,31 +53,12 @@ import java.security.PrivilegedAction;
  * @since 1.1
  */
 class EventDispatchThread extends Thread {
-    EventQueueProxy theQueue; // 6261461
-    boolean doDispatch = true;
-    static final int ANY_EVENT = -1;
-    
-    EventDispatchThread() { // 6261461
-    }
-    
-    static EventDispatchThread create(String name, EventQueueProxy queue) {
-        EventDispatchThread edt = (EventDispatchThread)
-                AccessController.doPrivileged(new PrivilegedAction() {
-                    public Object run() {
-                        try {
-                            Class dispatchThreadClass = Class.forName(
-                                    System.getProperty(
-                                    "java.awt.EventDispatchThread.classname",
-                                    "java.awt.EventDispatchThread"));
-                            return dispatchThreadClass.newInstance();
-                        } catch (Exception e) {
-                            return new EventDispatchThread();
-                        }
-                    }
-                });
-        edt.setName(name);
-        edt.theQueue = queue;
-        return edt;
+    private EventQueueProxy theQueue; // 6261461
+    private boolean doDispatch = true;
+    private static final int ANY_EVENT = -1;
+    EventDispatchThread(String name, EventQueueProxy queue) { // 6261461
+        super(name);
+        theQueue = queue;
     }
 
     public void stopDispatching() {
@@ -190,7 +170,7 @@ class EventDispatchThread extends Thread {
      * @returns  <tt>false</tt> if any of the above steps failed, otherwise
      *           <tt>true</tt>.
      */
-    boolean handleException(Throwable thrown) {
+    private boolean handleException(Throwable thrown) {
         try {
             if (handlerClassName == NO_HANDLER) {
                 return false;   /* Already tried, and failed */
