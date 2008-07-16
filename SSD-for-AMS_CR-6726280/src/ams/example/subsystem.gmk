@@ -40,22 +40,27 @@ SUBSYSTEMS += $(SUBSYSTEM_NAME)
 SUBSYSTEM_EXAMPLE_DIR = $(SUBSYSTEM_AMS_DIR)/example
 
 ifeq ($(USE_NATIVE_AMS), true)
-SUBSYSTEM_AMS_MODULES = nams
+    SUBSYSTEM_AMS_MODULES = nams
 else
-SUBSYSTEM_AMS_MODULES = jams
+    SUBSYSTEM_AMS_MODULES = jams
 endif
 
-# Defines for (jams/nams) module
-include $(SUBSYSTEM_EXAMPLE_DIR)/$(SUBSYSTEM_AMS_MODULES)/lib.gmk
-include $(SUBSYSTEM_EXAMPLE_DIR)/$(SUBSYSTEM_AMS_MODULES)_port/lib.gmk
+# Defines default for (jams/nams) module
+ifndef SUBSYSTEM_EXAMPLE_COMPONENTS
+    SUBSYSTEM_EXAMPLE_COMPONENTS = \
+        $(SUBSYSTEM_EXAMPLE_DIR)/$(SUBSYSTEM_AMS_MODULES)/lib.gmk \
+        $(SUBSYSTEM_EXAMPLE_DIR)/$(SUBSYSTEM_AMS_MODULES)_port/lib.gmk
 
-ifeq ($(TARGET_VM), cldc_vm)
+    ifeq ($(TARGET_VM), cldc_vm)
+        SUBSYSTEM_EXAMPLE_COMPONENTS += \
+	    $(SUBSYSTEM_EXAMPLE_DIR)/ams_common/lib.gmk \
+            $(SUBSYSTEM_EXAMPLE_DIR)/ams_common_port/lib.gmk
 
-include $(SUBSYSTEM_EXAMPLE_DIR)/ams_common/lib.gmk
-include $(SUBSYSTEM_EXAMPLE_DIR)/ams_common_port/lib.gmk
+        ifeq ($(TARGET_PLATFORM), javacall)
+            SUBSYSTEM_EXAMPLE_COMPONENTS += $(SUBSYSTEM_EXAMPLE_DIR)/javacall_common/lib.gmk
+        endif
 
-ifeq ($(TARGET_PLATFORM), javacall)
-include $(SUBSYSTEM_EXAMPLE_DIR)/javacall_common/lib.gmk
+    endif
 endif
 
-endif
+include $(SUBSYSTEM_EXAMPLE_COMPONENTS)

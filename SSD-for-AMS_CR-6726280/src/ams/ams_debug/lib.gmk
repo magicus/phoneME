@@ -38,16 +38,19 @@ SUBSYSTEMS += ams_debug
 AMS_DEBUG_NAME = ams_debug
 AMS_DEBUG_DIR = $(SUBSYSTEM_AMS_DIR)/$(AMS_DEBUG_NAME)
 
+
 ifeq ($(USE_WTK_DEBUG), true)
 
-ifeq ($(USE_MULTIPLE_ISOLATES), true)
-include $(AMS_DEBUG_DIR)/mvm/lib.gmk
-else
-include $(AMS_DEBUG_DIR)/stubs/lib.gmk
-endif
+    ifeq ($(USE_MULTIPLE_ISOLATES), true)
+        AMS_DEBUG_IMPL_DIR ?= $(AMS_DEBUG_DIR)/mvm
+    else
+        AMS_DEBUG_IMPL_DIR ?= $(AMS_DEBUG_DIR)/stubs
+    endif
 
 else
 
-include $(AMS_DEBUG_DIR)/stubs/lib.gmk
+    AMS_DEBUG_IMPL_DIR ?= $(AMS_DEBUG_DIR)/stubs
 
 endif
+
+include $(AMS_DEBUG_IMPL_DIR)/lib.gmk

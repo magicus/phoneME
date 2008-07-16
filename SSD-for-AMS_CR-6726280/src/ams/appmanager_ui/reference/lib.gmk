@@ -23,32 +23,22 @@
 # information or have any questions.
 #
 
-############################################################
-# Module's Component Configuration file
-#
-# Remember: It is up to the module itself to impose rules of
-# how to compile the options. All the global Makefile needs
-# is the final def. of Java and native file lists and some
-# other def. (like VPATH)
-############################################################
 
-# Name of the library
-APPMANAGER_UI_REFERENCE_NAME = appmanager_ui/reference
 
-# Local module directory
-APPMANAGER_UI_REFERENCE_DIR = $(SUBSYSTEM_AMS_DIR)/$(APPMANAGER_UI_REFERENCE_NAME)
-
-# Javadoc source path
-MIDP_JAVADOC_SOURCEPATH += $(APPMANAGER_UI_REFERENCE_DIR)/classes
 
 # Java files for the sub-system
 #
 SUBSYSTEM_AMS_JAVA_FILES += \
-    $(APPMANAGER_UI_REFERENCE_DIR)/classes/com/sun/midp/appmanager/AppInfo.java \
-    $(APPMANAGER_UI_REFERENCE_DIR)/classes/com/sun/midp/appmanager/AppManagerUIImpl.java \
-    $(APPMANAGER_UI_REFERENCE_DIR)/classes/com/sun/midp/appmanager/FolderList.java \
-    $(APPMANAGER_UI_REFERENCE_DIR)/classes/com/sun/midp/appmanager/MIDletSelector.java \
-    $(APPMANAGER_UI_REFERENCE_DIR)/classes/com/sun/midp/appmanager/MIDletSwitcher.java \
-    $(APPMANAGER_UI_REFERENCE_DIR)/classes/com/sun/midp/appmanager/SplashScreen.java
+    $(AMS_APPMANAGER_UI_IMPL_DIR)/classes/com/sun/midp/appmanager/AppInfo.java \
+    $(AMS_APPMANAGER_UI_IMPL_DIR)/classes/com/sun/midp/appmanager/AppManagerUI.java \
+    $(AMS_APPMANAGER_UI_IMPL_DIR)/classes/com/sun/midp/appmanager/FolderList.java \
+    $(AMS_APPMANAGER_UI_IMPL_DIR)/classes/com/sun/midp/appmanager/AppSettings.java \
+    $(AMS_APPMANAGER_UI_IMPL_DIR)/classes/com/sun/midp/appmanager/DisplayError.java \
+    $(AMS_APPMANAGER_UI_IMPL_DIR)/classes/com/sun/midp/appmanager/MIDletSelector.java \
+    $(AMS_APPMANAGER_UI_IMPL_DIR)/classes/com/sun/midp/appmanager/MIDletSwitcher.java \
+    $(AMS_APPMANAGER_UI_IMPL_DIR)/classes/com/sun/midp/appmanager/SplashScreen.java \
+    $(AMS_APPMANAGER_UI_IMPL_DIR)/classes/com/sun/midp/appmanager/RunningMIDletSuiteInfo.java \
+    $(AMS_APPMANAGER_UI_IMPL_DIR)/classes/com/sun/midp/appmanager/CaManager.java
 
-
+# Javadoc source path
+MIDP_JAVADOC_SOURCEPATH += $(AMS_APPMANAGER_UI_IMPL_DIR)/classes

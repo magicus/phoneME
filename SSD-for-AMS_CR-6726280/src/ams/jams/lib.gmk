@@ -42,6 +42,7 @@ SUBSYSTEMS += $(JAMS_NAME)
 # Local module directory
 JAMS_DIR = $(SUBSYSTEM_AMS_DIR)/$(JAMS_NAME)
 
+
 # Javadoc source path
 MIDP_JAVADOC_SOURCEPATH += $(JAMS_DIR)/classes
 
@@ -49,44 +50,15 @@ MIDP_JAVADOC_SOURCEPATH += $(JAMS_DIR)/classes
 SUBSYSTEM_AMS_JAVA_FILES += \
     $(JAMS_DIR)/classes/com/sun/midp/appmanager/ApplicationManager.java
 
-ifeq ($(AMS_UI_IMPL), stubs)
-# IMPL_NOTE: we don't include MIDletSuiteLauncher into the build when stubbed
-# app manager UI implementation is used because MIDletSuiteLauncher needs
-# refactoring of UI part into separate library.
-else
-# Include suite_launcher implementation into the build
-SUBSYSTEM_AMS_JAVA_FILES += \
-    $(JAMS_DIR)/suite_launcher/classes/com/sun/midp/appmanager/MIDletSuiteLauncher.java
-endif
+# WTK binding, no need to override 
+include $(JAMS_DIR)/suite_launcher/lib.gmk 
 
+# Set default implementaion, can be override
 ifeq ($(USE_MULTIPLE_ISOLATES), true)
-
-# Java files for the sub-system
-#
-SUBSYSTEM_AMS_JAVA_FILES += \
-    $(JAMS_DIR)/mvm/classes/com/sun/midp/appmanager/MVMManager.java \
-    $(JAMS_DIR)/mvm/classes/com/sun/midp/appmanager/SMMManager.java \
-    $(JAMS_DIR)/mvm/classes/com/sun/midp/main/SMMDisplayController.java
-
-MIDP_JAVADOC_SOURCEPATH += $(JAMS_DIR)/mvm/classes
-
-# I3test files
-#
-ifeq ($(USE_I3_TEST), true)
-
-SUBSYSTEM_AMS_I3TEST_JAVA_FILES = \
-    $(JAMS_DIR)/mvm/i3test/com/sun/midp/appmanager/DummyMIDlet1.java \
-    $(JAMS_DIR)/mvm/i3test/com/sun/midp/appmanager/DummyMIDlet2.java \
-    $(JAMS_DIR)/mvm/i3test/com/sun/midp/appmanager/TestUserNotification.java
-endif
-
+  JAMS_IMPL_DIR ?= $(JAMS_DIR)/mvm
 else
-
-# Java files for the sub-system
-#
-SUBSYSTEM_AMS_JAVA_FILES += \
-    $(JAMS_DIR)/svm/classes/com/sun/midp/appmanager/Manager.java
-
-MIDP_JAVADOC_SOURCEPATH += $(JAMS_DIR)/svm/classes
-
+  JAMS_IMPL_DIR ?= $(JAMS_DIR)/svm
 endif
+
+# Include implementation settings
+include $(JAMS_IMPL_DIR)/lib.gmk

@@ -36,26 +36,13 @@
 #
 #SUBSYSTEMS += appmanager_ui
 
-# Name of the library
-APPMANAGER_UI_NAME = appmanager_ui
+# Default local module directory
+AMS_APPMANAGER_UI_DIR = $(SUBSYSTEM_AMS_DIR)/appmanager_ui
+AMS_APPMANAGER_UI_IMPL_DIR ?= $(AMS_APPMANAGER_UI_DIR)/reference
 
-# Local module directory
-APPMANAGER_UI_DIR = $(SUBSYSTEM_AMS_DIR)/$(APPMANAGER_UI_NAME)
+# Get implementation settings and files
+include $(AMS_APPMANAGER_UI_IMPL_DIR)/lib.gmk
 
-# Javadoc source path
-MIDP_JAVADOC_SOURCEPATH += $(APPMANAGER_UI_DIR)/classes
 
-# Java files for the sub-system
-#
-SUBSYSTEM_AMS_JAVA_FILES += \
-    $(APPMANAGER_UI_DIR)/classes/com/sun/midp/appmanager/AppManagerUI.java
 
-# IMPL NOTE: Use library configuration file to select switch library
-#
-
-ifeq ($(AMS_UI_IMPL)X, X)
-AMS_UI_IMPL = reference
-endif
-
-include $(APPMANAGER_UI_DIR)/$(AMS_UI_IMPL)/lib.gmk
 

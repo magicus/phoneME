@@ -37,13 +37,9 @@
 SUBSYSTEMS += on_device_debug
 
 # Local module directory
-ON_DEVICE_DEBUG_DIR = $(SUBSYSTEM_AMS_DIR)/on_device_debug_stubs/reference
+ON_DEVICE_DEBUG_DIR = $(SUBSYSTEM_AMS_DIR)/on_device_debug_stubs
+ON_DEVICE_DEBUG_IMPL_DIR ?= $(ON_DEVICE_DEBUG_DIR)/reference
 
-# Javadoc source path
-MIDP_JAVADOC_SOURCEPATH += $(ON_DEVICE_DEBUG_DIR)/classes
+# Get implementation settings and files
+include $(ON_DEVICE_DEBUG_IMPL_DIR)/lib.gmk
 
-# Java files for the sub-system
-#
-SUBSYSTEM_AMS_JAVA_FILES += \
-    $(ON_DEVICE_DEBUG_DIR)/classes/com/sun/midp/appmanager/ODTControllerEventListener.java \
-    $(ON_DEVICE_DEBUG_DIR)/classes/com/sun/midp/appmanager/ODTControllerEventConsumer.java
