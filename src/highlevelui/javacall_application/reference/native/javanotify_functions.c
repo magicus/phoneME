@@ -1,6 +1,4 @@
 /*
- *
- *
  * Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  *
@@ -94,6 +92,7 @@ static char selectedNumber[MAX_PHONE_NUMBER_LENGTH];
  */
 static javacall_result
 midp_jc_event_send(midp_jc_event_union *event) {
+    event->id = 118;
     return javacall_event_send((unsigned char *)event,
                                sizeof(midp_jc_event_union));
 }

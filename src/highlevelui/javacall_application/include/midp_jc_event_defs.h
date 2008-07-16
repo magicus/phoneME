@@ -1,6 +1,4 @@
 /*
- *
- *
  * Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  *
@@ -367,6 +365,7 @@ typedef struct {
 }midp_jc_event_menu_selection;
 
 typedef struct {
+    int                                    id;
     midp_jc_event_type                     eventType;
     union {
         midp_jc_event_key                  keyEvent;

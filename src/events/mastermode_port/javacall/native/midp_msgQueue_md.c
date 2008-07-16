@@ -1,6 +1,4 @@
 /*
- *
- *
  * Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
@@ -71,6 +69,7 @@ void checkForSystemSignal(MidpReentryData* pNewSignal,
     javacall_bool res;
     int outEventLen;
     
+    *(int *)binaryBuffer = 118;
     res = javacall_event_receive((long)timeout, binaryBuffer,
                                  BINARY_BUFFER_MAX_LEN, &outEventLen);
 
