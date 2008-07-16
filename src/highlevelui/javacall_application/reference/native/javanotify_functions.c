@@ -141,14 +141,6 @@ void javanotify_pen_event(int x, int y, javacall_penevent_type type) {
     midp_jc_event_send(&e);
 }
 
-void javanotify_alarm_expiration() {
-    midp_jc_event_union e;
-    e.eventType  = MIDP_JC_EVENT_PUSH;
-    e.data.pushEvent.alarmHandle = 0;
-    midp_jc_event_send(&e);
-}
-
-
 
 
 /**
@@ -414,6 +406,10 @@ void javanotify_install_midlet(const char *httpUrl) {
  * has been downloaded by browser. Java should read and install it from
  * file system.
  *
+ * @param browserUrl pass to URL midlet, for example
+ *        http://129.156.62.219:8088/rmsT1.jad
+ * @param localResPath path to where store the jad file, for example:
+ *        file:///C:/WTK21/apps/rmsT1/bin/rmsT1.jad
  */
 void javanotify_install_midlet_from_browser(const char * browserUrl, const char* localResPath) {
        int length1, length2;
