@@ -1,0 +1,57 @@
+#
+#
+# Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+#
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License version
+# 2 only, as published by the Free Software Foundation.
+# 
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# General Public License version 2 for more details (a copy is
+# included at /legal/license.txt).
+# 
+# You should have received a copy of the GNU General Public License
+# version 2 along with this work; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+# 02110-1301 USA
+# 
+# Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+# Clara, CA 95054 or visit www.sun.com if you need additional
+# information or have any questions.
+#
+######################################################################
+#
+# Makefile for building and packaging.
+#
+######################################################################
+
+# Definition of platform to build on
+HOST_PLATFORM		= win32
+HOST_OS			= win32
+HOST_CPU		= i386
+HOST_COMPILER		= ads
+
+# Definition of platform to run on
+TARGET_PLATFORM		= javacall
+TARGET_OS		= javacall
+TARGET_CPU		= arm
+TARGET_COMPILER		= ads
+TARGET_VM		= cldc_vm
+
+# Platform-specific dependencies
+ifeq ($(USE_THUMB), true)
+EXTRA_CFLAGS += -DUSE_THUMB
+endif
+
+# disable C2215W, disable implicit cast recoverable error
+EXTRA_CFLAGS += -Wd -Ec
+
+ADS_LIB_PATH := $(shell cygpath -m '$(ARMLIB)')
+
+LIBS += $(JAVACALL_LIB_DIR)/javacall$(g).lib
+LIBS += $(ADS_LIB_PATH)/armlib/c_t__un.l
+LIBS += $(ADS_LIB_PATH)/armlib/g_t_p.l
+LIBS += $(ADS_LIB_PATH)/armlib/m_t_pu.l

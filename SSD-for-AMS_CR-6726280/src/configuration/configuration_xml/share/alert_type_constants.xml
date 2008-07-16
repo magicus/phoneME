@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE configuration SYSTEM "./configuration.dtd">
+<!--
+
+
+        Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+        DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+        
+        This program is free software; you can redistribute it and/or
+        modify it under the terms of the GNU General Public License version
+        2 only, as published by the Free Software Foundation.
+        
+        This program is distributed in the hope that it will be useful, but
+        WITHOUT ANY WARRANTY; without even the implied warranty of
+        MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+        General Public License version 2 for more details (a copy is
+        included at /legal/license.txt).
+        
+        You should have received a copy of the GNU General Public License
+        version 2 along with this work; if not, write to the Free Software
+        Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+        02110-1301 USA
+        
+        Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+        Clara, CA 95054 or visit www.sun.com if you need additional
+        information or have any questions.
+-->
+
+<configuration>
+<constants>
+
+<constant_class Package="com.sun.midp.configurator" Name="AlertTypeConstants"
+    Scope="public" Comment="/** Constants for alert types */">
+  <constant Type="int"
+            Name="LCDUI_ALERT_TYPE_INFO"
+            Value="1"
+            Comment="Information Alert"/>
+  <constant Type="int"
+            Name="LCDUI_ALERT_TYPE_WARNING"
+            Value="2"
+            Comment="Warning Alert"/>
+  <constant Type="int"
+            Name="LCDUI_ALERT_TYPE_ERROR"
+            Value="3"
+            Comment="Error Alert"/>
+  <constant Type="int"
+            Name="LCDUI_ALERT_TYPE_ALARM"
+            Value="4"
+            Comment="Alarm Alert"/>
+  <constant Type="int"
+            Name="LCDUI_ALERT_TYPE_CONFIRMATION"
+            Value="5"
+            Comment="Confirmation Alert"/>
+</constant_class>
+
+</constants>
+</configuration>
