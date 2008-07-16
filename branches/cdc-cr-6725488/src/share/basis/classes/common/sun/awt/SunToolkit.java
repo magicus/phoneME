@@ -160,13 +160,15 @@ public abstract class SunToolkit extends Toolkit {
     static SoftCache imgCache = new SoftCache();
 
     static synchronized Image getImageFromHash(Toolkit tk, URL url) {
-    if (url.getProtocol().equals("file")) {
-	   	return getImageFromHash(tk, url.getFile());
-	  }
-	SecurityManager sm = System.getSecurityManager();
-	if (sm != null) {
+      
+      // security check is done inside of getImageFromHash(tk, url.getFile());
+      if (url.getProtocol().equals("file")) {
+	   	 return getImageFromHash(tk, url.getFile());
+	   }
+	   SecurityManager sm = System.getSecurityManager();
+	   if (sm != null) {
 	    try {
-		java.security.Permission perm = 
+		    java.security.Permission perm = 
 		    url.openConnection().getPermission();
 		if (perm != null) {
 		    try {
