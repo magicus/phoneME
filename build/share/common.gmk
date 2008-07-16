@@ -31,7 +31,6 @@
 
 SUBSYSTEMS += jsr135
 
-EXTRA_CFLAGS         += -DENABLE_JSR_135=1
 JPP_DEFS             += -DENABLE_JSR_135 -DENABLE_DEBUG
 
 # Specify romizer configuration file for the MMAPI

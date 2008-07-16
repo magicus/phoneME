@@ -1,6 +1,5 @@
 /*
- * 
- * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
@@ -26,7 +25,14 @@
 #ifndef __jsr135_sync_H__
 #define __jsr135_sync_H__
 
+#include "javacall_defs.h"
+
 void LockAudioMutex();
 void UnlockAudioMutex();
+
+javacall_result mmapi_thread_suspend(int desc, javacall_result *pStatus,
+    void **pData);
+javacall_result mmapi_thread_resume(int desc, javacall_result status,
+    void *data);
 
 #endif
