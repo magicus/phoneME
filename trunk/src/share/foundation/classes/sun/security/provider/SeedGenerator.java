@@ -352,6 +352,11 @@ abstract class SeedGenerator {
 		    }
 		}
 	    } catch (Exception e) {
+		if (e instanceof InterruptedException &&
+		    sun.misc.ThreadRegistry.exitRequested())
+		{
+		    return;
+		}
 		throw new InternalError("internal error: " +
 					"SeedGenerator thread generated an exception.");
 	    }
