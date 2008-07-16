@@ -421,13 +421,15 @@ void javanotify_install_midlet(const char *httpUrl) {
  */
 void javanotify_install_midlet_from_browser(const char * browserUrl, const char* localResPath) {
        int length1, length2;
+       static int wapBrowserDownload; /*a flag indicating that jad/jar downloading
+                                        is done by the platform*/
        midp_jc_event_union e;
 
        REPORT_INFO2(LC_CORE,"javanotify_install_midlet_from_browser() %s %s>>\n", browserUrl, localResPath);
 
        e.eventType = MIDP_JC_EVENT_START_INSTALL;
        e.data.lifecycleEvent.silentInstall = 0;
-       javautil_set_wap_browser_download(1);
+       wapBrowserDownload = 1;
 
        length1 = strlen(browserUrl);
        length2 = strlen(localResPath);
@@ -1791,16 +1793,16 @@ void /* OPTIONAL */ javanotify_rotation() {
 #ifdef ENABLE_API_EXTENSIONS
 
 /**
- * 
+ *
  * The implementation calls this callback notify function when master volume dialog
  * is dismissed. The platfrom will invoke the callback in platform context.
  * This function is used only for asynchronous mode of the function
  * javacall_prompt_volume.
- * 
+ *
  */
 void javanotify_prompt_volume_finish(void) {
     midp_jc_event_union e;
-    REPORT_INFO1(LC_PROTOCOL, 
+    REPORT_INFO1(LC_PROTOCOL,
                  "[javanotify_prompt_volume_finish] status=%d",
                  JAVACALL_OK);
     e.eventType = MIDP_JC_EVENT_VOLUME;

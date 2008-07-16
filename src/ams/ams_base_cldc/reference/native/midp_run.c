@@ -1046,14 +1046,3 @@ int midpRunMainClass(JvmPathChar *classPath,
     return vmStatus;
 }
 
-/**
- * a flag inficating that jad/jar downloading is done by the platform
- */
-int wapBrowserDownload;
-
-/**
- * Reset the wap browser download flag
- */
-void javautil_set_wap_browser_download(int value) {
-    wapBrowserDownload = value;
-}
