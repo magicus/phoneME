@@ -657,8 +657,8 @@ public class MIDletSuiteUtils {
      * @param suiteId ID of an installed suite
      * @param propName name of property to get value for
      *
-     * @return property value or null if there is no such property defined in
-     * the suite
+     * @return property value or null if the suite is untrusted or there is no
+     * such property defined in the suite
      * 
      * @throws SecurityException if caller has no permission to invoke
      *                           the method
@@ -678,7 +678,9 @@ public class MIDletSuiteUtils {
 
         String property = null;
         if (suite != null) {
-            property = suite.getProperty(propName);
+            if (suite.isTrusted()) {
+                property = suite.getProperty(propName);
+            }
             suite.close();
         }
 

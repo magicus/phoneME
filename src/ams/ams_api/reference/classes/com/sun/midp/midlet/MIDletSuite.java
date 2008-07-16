@@ -87,7 +87,7 @@ public interface MIDletSuite {
 
     /**
      * MIDlet property defines whether a MIDlet is paused while it's in 
-     * background.
+     * the background.
      * */
     public static final String BACKGROUND_PAUSE_PROP = "MIDlet-Background-Pause";
   
