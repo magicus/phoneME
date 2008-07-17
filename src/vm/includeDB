@@ -1351,7 +1351,7 @@ Natives.cpp                      Task.hpp
 Natives.cpp                      JavaDebugger.hpp
 Natives.cpp                      ObjectReferenceImpl.hpp
 #endif
-#if ENABLE_API_EXTENSIONS
+#if ENABLE_REFLECTION
 Natives.cpp                      ParsedTypeSymbol.hpp
 #endif
 Natives.cpp                      SegmentedSourceROMWriter.hpp
@@ -3022,7 +3022,7 @@ MethodTrap.cpp                  SymbolTable.hpp
 MethodTrap.cpp                  jvmspi.h
 MethodTrap.cpp                  kni.h
 
-#if ENABLE_API_EXTENSIONS
+#if ENABLE_REFLECTION
 ReflectionNatives.cpp           GlobalDefinitions.hpp
 ReflectionNatives.cpp           FieldEnumerator.hpp
 ReflectionNatives.cpp           MethodEnumerator.hpp

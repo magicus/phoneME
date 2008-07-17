@@ -775,7 +775,7 @@ class VC6JavaAPINMakefile extends NMakefile {
 
     void writeClassesZip() {
         String api_ver;
-        if (tool().isOptionEnabled("ENABLE_API_EXTENSIONS")) {
+        if (tool().isOptionEnabled("ENABLE_REFLECTION")) {
             api_ver = "CLDC 1.1 plus";
         } else if (tool().isOptionEnabled("ENABLE_CLDC_11")) {
             api_ver = "CLDC 1.1";
@@ -1178,8 +1178,8 @@ class VC6VMProject extends VC6Project {
         if (tool().isOptionEnabled("ENABLE_ISOLATES")) {
             globalProps.put("ENABLE_ISOLATES", "true");
         }
-        if (tool().isOptionEnabled("ENABLE_API_EXTENSIONS")) {
-            globalProps.put("ENABLE_API_EXTENSIONS", "true");
+        if (tool().isOptionEnabled("ENABLE_REFLECTION")) {
+            globalProps.put("ENABLE_REFLECTION", "true");
         }
         if (this.type == TARGET) {
             if (tool().isOptionEnabled("ENABLE_MONET")) {

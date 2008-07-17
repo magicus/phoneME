@@ -518,7 +518,7 @@ private:
   void use_unique_object_at(Oop *owner, int offset, ROMLookupTable *table
                             JVM_TRAPS);
 
-#if USE_REFLECTION
+#if ENABLE_REFLECTION
   void resolve_constant_pool(JVM_SINGLE_ARG_TRAPS);
 #else
   void resolve_constant_pool(JVM_SINGLE_ARG_TRAPS) {JVM_IGNORE_TRAPS;}

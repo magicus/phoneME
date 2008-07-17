@@ -96,7 +96,7 @@ class Method: public Oop {
     NUMBER_OF_RESULT_STORAGE_TYPES
   };
 
-#if USE_REFLECTION
+#if ENABLE_REFLECTION
   static int thrown_exceptions_offset() {
     return FIELD_OFFSET(MethodDesc, _thrown_exceptions);
   }
@@ -307,7 +307,7 @@ public:
     obj_field_put(exception_table_offset(), value);
   }
 
-#if USE_REFLECTION
+#if ENABLE_REFLECTION
   ReturnOop thrown_exceptions() const {
     return obj_field(thrown_exceptions_offset());
   }

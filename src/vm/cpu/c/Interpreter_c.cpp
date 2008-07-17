@@ -563,7 +563,7 @@ enum {
     ADVANCE_FOR_RETURN();
   }
 
-#if ENABLE_CLDC_111 || ENABLE_API_EXTENSIONS
+#if ENABLE_CLDC_111 || ENABLE_REFLECTION
 
   void native_math_asin_entry() {
     jdouble x = DOUBLE_POP();
@@ -4623,7 +4623,7 @@ extern "C" {
 }
 #endif
 
-#if USE_REFLECTION || ENABLE_JAVA_DEBUGGER
+#if ENABLE_REFLECTION || ENABLE_JAVA_DEBUGGER
   void entry_return_void()   {}
   void entry_return_word()   {}
   void entry_return_long()   {}

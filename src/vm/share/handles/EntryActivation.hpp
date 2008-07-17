@@ -45,7 +45,7 @@ class EntryActivation: public Oop {
   static int next_offset() {
     return FIELD_OFFSET(EntryActivationDesc, _next);
   }
-#if USE_REFLECTION || ENABLE_JAVA_DEBUGGER
+#if ENABLE_REFLECTION || ENABLE_JAVA_DEBUGGER
   static int return_point_offset() {
     return FIELD_OFFSET(EntryActivationDesc, _return_point);
   }

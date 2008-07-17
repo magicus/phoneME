@@ -53,7 +53,7 @@ class Array: public JavaOop {
   int generate_fieldmap(TypeArray* field_map);
 #endif
   
-#if USE_REFLECTION
+#if ENABLE_REFLECTION
   ReturnOop shrink(int new_length);
 #endif
 

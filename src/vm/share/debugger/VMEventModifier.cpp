@@ -655,7 +655,7 @@ jboolean LocationModifier::set_method_opcode(Bytecodes::Code new_opcode,
           Oop::Raw exception_table = m().exception_table();
           dm().set_exception_table(&exception_table);
         }
-#if USE_REFLECTION
+#if ENABLE_REFLECTION
         Oop::Raw thrown_exceptions = m().thrown_exceptions();
         dm().set_thrown_exceptions(&thrown_exceptions);
 #endif

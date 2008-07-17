@@ -241,7 +241,7 @@ abstract public class IDETool {
         Vector v = new Vector();
         String s = File.separator;
         String cldc_ver;
-        if (isOptionEnabled("ENABLE_API_EXTENSIONS")) {
+        if (isOptionEnabled("ENABLE_REFLECTION")) {
             cldc_ver = "cldc1.1plus";
         } else if (isOptionEnabled("ENABLE_CLDC_11")) {
             cldc_ver = "cldc1.1";

@@ -973,7 +973,7 @@ ClassFileParser::parse_method(ClassParserState *state, ConstantPool* cp,
   bool parsed_checked_exceptions_attribute = false;
   ObjArray::Fast stackmaps;
 
-#if USE_REFLECTION
+#if ENABLE_REFLECTION
   TypeArray::Fast thrown_exceptions;
 #endif
 
@@ -1016,14 +1016,14 @@ ClassFileParser::parse_method(ClassParserState *state, ConstantPool* cp,
                   duplicate_exception_table);
       parsed_checked_exceptions_attribute = true;
       jushort checked_exceptions_length = get_u2(JVM_SINGLE_ARG_CHECK_0);
-#if USE_REFLECTION
+#if ENABLE_REFLECTION
       thrown_exceptions =
         Universe::new_short_array_raw(checked_exceptions_length JVM_CHECK_0);
 #endif
       for (int i = 0; i < checked_exceptions_length; i++) {
         jushort exception_index = get_u2(JVM_SINGLE_ARG_CHECK_0);
         cpf_check_0(cp->check_klass_at(exception_index), invalid_constant);
-#if USE_REFLECTION
+#if ENABLE_REFLECTION
         thrown_exceptions().ushort_at_put(i, exception_index);
 #endif
       }
@@ -1098,7 +1098,7 @@ ClassFileParser::parse_method(ClassParserState *state, ConstantPool* cp,
     stackmaps = Universe::empty_obj_array();
   }
 
-#if USE_REFLECTION
+#if ENABLE_REFLECTION
   m().set_thrown_exceptions(&thrown_exceptions);
 #endif
  
@@ -1346,7 +1346,7 @@ inline void ClassFileParser::parse_classfile_inner_classes_attribute(
   juint length = get_u2(JVM_SINGLE_ARG_CHECK);
 
   if (length > 0) {
-#if USE_REFLECTION
+#if ENABLE_REFLECTION
     UsingFastOops fast_oops;
     TypeArray::Fast inner_classes = Universe::new_short_array(length JVM_CHECK);
     Symbol::Fast outer_name;
@@ -1376,7 +1376,7 @@ inline void ClassFileParser::parse_classfile_inner_classes_attribute(
       // Access flags
       /* juint flags = */ get_u2(JVM_SINGLE_ARG_CHECK);
 
-#if USE_REFLECTION
+#if ENABLE_REFLECTION
       if (inner_class_info_index != 0 && outer_class_info_index != 0) {
         outer_name = cp->unchecked_unresolved_klass_at(outer_class_info_index);
         if (outer_name().equals(c->name())) {
@@ -1387,7 +1387,7 @@ inline void ClassFileParser::parse_classfile_inner_classes_attribute(
 #endif
     }
 
-#if USE_REFLECTION
+#if ENABLE_REFLECTION
     if (inner_count > 0) {
       inner_classes().shrink(inner_count);
       c->set_inner_classes(&inner_classes);
@@ -1400,7 +1400,7 @@ inline void ClassFileParser::parse_classfile_inner_classes_attribute(
 inline void
 ClassFileParser::parse_classfile_attributes(ConstantPool* cp, 
                                             InstanceClass* c JVM_TRAPS) {
-#if USE_REFLECTION
+#if ENABLE_REFLECTION
   c->set_inner_classes(Universe::empty_short_array());
 #endif
   bool have_inner_class_attribute = false;

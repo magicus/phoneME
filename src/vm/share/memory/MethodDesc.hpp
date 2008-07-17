@@ -190,7 +190,7 @@ class MethodDesc: public OopDesc {
  OopDesc * _line_var_table;
 #endif
   MethodVariablePart *_variable_part;  
-#if USE_REFLECTION
+#if ENABLE_REFLECTION
   TypeArrayDesc* _thrown_exceptions;
 #endif
 

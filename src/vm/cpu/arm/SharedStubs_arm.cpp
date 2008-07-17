@@ -162,7 +162,7 @@ bind(push_parameter);
   eol_comment("Code to call");
   ldr(tmp0, imm_index(tmp0));
 
-#if USE_REFLECTION || ENABLE_JAVA_DEBUGGER
+#if ENABLE_REFLECTION || ENABLE_JAVA_DEBUGGER
   comment("call the method with variable return point");
   ldr(lr, imm_index(tmp2, EntryActivation::return_point_offset()));
   mov(pc, reg(tmp0));

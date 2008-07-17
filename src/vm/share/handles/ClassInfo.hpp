@@ -59,7 +59,7 @@ class ClassInfo: public Oop {
   static int fields_offset() {
     return FIELD_OFFSET(ClassInfoDesc, instance._fields);
   }
-#if USE_REFLECTION
+#if ENABLE_REFLECTION
   static int inner_classes_offset(){
     return FIELD_OFFSET(ClassInfoDesc, instance._inner_classes);
   }
@@ -189,7 +189,7 @@ class ClassInfo: public Oop {
     obj_field_put(fields_offset(), (Oop*)value);
   }
 
-#if USE_REFLECTION
+#if ENABLE_REFLECTION
   ReturnOop inner_classes() const {
     return obj_field(inner_classes_offset());
   }

@@ -2647,7 +2647,7 @@ void Method::iterate(OopVisitor* visitor) {
     visitor->do_uint(&id, variable_part_offset(), true);
   }
 
-#if USE_REFLECTION
+#if ENABLE_REFLECTION
   {
     NamedField id("thrown_exceptions", true);
     visitor->do_oop(&id, thrown_exceptions_offset(), true);
@@ -2861,7 +2861,7 @@ int Method::generate_fieldmap(TypeArray* field_map) {
 #endif
   //variable info
   field_map->byte_at_put(map_index++, T_SYMBOLIC);
-#if USE_REFLECTION
+#if ENABLE_REFLECTION
   //thrown exceptions
   field_map->byte_at_put(map_index++, T_OBJECT);
 #endif
@@ -2928,7 +2928,7 @@ void Method::iterate_oopmaps(oopmaps_doer do_map, void* param) {
   OOPMAP_ENTRY_4(do_map, param, T_OBJECT, line_var_table);
 #endif
   OOPMAP_ENTRY_4(do_map, param, T_INT,    variable_part);
-#if USE_REFLECTION
+#if ENABLE_REFLECTION
   OOPMAP_ENTRY_4(do_map, param, T_OBJECT, thrown_exceptions);
 #endif
   OOPMAP_ENTRY_4(do_map, param, T_SHORT,  access_flags);

@@ -70,7 +70,7 @@ class EntryActivationDesc: public OopDesc {
   jint                 _length;
   MethodDesc*          _method;
   EntryActivationDesc* _next;
-#if USE_REFLECTION || ENABLE_JAVA_DEBUGGER
+#if ENABLE_REFLECTION || ENABLE_JAVA_DEBUGGER
   address              _return_point;
 #endif
 

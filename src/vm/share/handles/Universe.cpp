@@ -959,7 +959,7 @@ bool Universe::bootstrap_without_rom(const JvmPathChar* classpath) {
   load_root_class(incompatible_class_change_error_class(),
                   Symbols::java_lang_IncompatibleClassChangeError());
 
-#if USE_REFLECTION
+#if ENABLE_REFLECTION
   load_root_class(boolean_class(),   Symbols::java_lang_Boolean());
   load_root_class(character_class(), Symbols::java_lang_Character());
   load_root_class(float_class(),     Symbols::java_lang_Float());
@@ -1323,7 +1323,7 @@ ReturnOop Universe::new_entry_activation(Method* method, jint length JVM_TRAPS)
 
   if (entry.not_null()) {
     entry().set_method(method);
-#if USE_REFLECTION || ENABLE_JAVA_DEBUGGER
+#if ENABLE_REFLECTION || ENABLE_JAVA_DEBUGGER
     entry().set_return_point((address) entry_return_void);
 #endif
   }

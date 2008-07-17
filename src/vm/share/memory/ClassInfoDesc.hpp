@@ -79,7 +79,7 @@ class ClassInfoDesc : public GenericClassInfoDesc {
     TypeArrayDesc*     _local_interfaces;  // Interfaces this class declares
                                            // locally to implement (an array
                                            // of class_id)
-#if USE_REFLECTION
+#if ENABLE_REFLECTION
     TypeArrayDesc*     _inner_classes;     // Array of the inner classes
                                            // declared by this class
 #endif

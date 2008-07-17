@@ -74,7 +74,7 @@ void ROMOptimizer::optimize(Stream *log_stream JVM_TRAPS) {
       break;
 
     case STATE_RESOLVE_CONSTANT_POOL:
-      if (EnableBaseOptimizations && USE_REFLECTION) {
+      if (EnableBaseOptimizations && ENABLE_REFLECTION) {
         resolve_constant_pool(JVM_SINGLE_ARG_CHECK);
       }
       set_next_state();
@@ -2146,7 +2146,7 @@ void ROMOptimizer::replace_empty_arrays() {
       klass().set_methods(empty_obj_array());
     }
 
-#if USE_REFLECTION
+#if ENABLE_REFLECTION
     for (int i = 0; i < length; i++) {
       Method::Raw m = methods().obj_at(i);
       if (m.not_null()) {
@@ -3374,7 +3374,7 @@ void ROMOptimizer::remove_duplicated_short_arrays(Method *method, void *param
   // (1) Make Method::exception_table unique
   use_unique_object_at(method, Method::exception_table_offset(), table JVM_CHECK);
 
-#if USE_REFLECTION
+#if ENABLE_REFLECTION
   // IMPL_NOTE: Shall we do that?? ConstantPoolRewriter may rewrite these arrays
   // use_unique_object_at(method, Method::thrown_exceptions_offset(), table JVM_CHECK);
 #endif
@@ -3495,7 +3495,7 @@ void ROMOptimizer::remove_redundant_stackmaps(Method *method, void* /*dummy*/
   }
 }
 
-#if USE_REFLECTION
+#if ENABLE_REFLECTION
 void ROMOptimizer::resolve_constant_pool(JVM_SINGLE_ARG_TRAPS) {
   UsingFastOops level1;
   InstanceClass::Fast klass;
