@@ -222,16 +222,6 @@ javacall_result javacall_security_permission_dialog_display(javacall_utf16* mess
 void javanotify_security_permission_dialog_finish(
 	                    javacall_security_permission_type userPermission);
 
-/**
- * Is Java permission dialog shown now?
- */
-javacall_bool javacall_security_permission_dialog_isshown();
-
-/**
- * Hide and release resource of permission dialog
- */
-javacall_result javacall_security_permission_dialog_hide();
-
 /** @} */
 
 #ifdef __cplusplus
