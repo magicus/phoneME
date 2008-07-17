@@ -224,7 +224,7 @@
 //                                    pushed, the stack pointer's value
 //                                    increases.
 //
-// ENABLE_REFLECTION             0,0  Add Reflection support
+// ENABLE_API_EXTENSIONS         0,0  Enable Java API extensions
 //
 // ENABLE_RVDS                   0,0  Support for ARM RealView
 //                                    Developer Suite (2.0 or later)
@@ -1185,6 +1185,11 @@
 #define USE_HIGH_RESOLUTION_TIMER (ENABLE_PERFORMANCE_COUNTERS ||\
   ENABLE_PROFILER || ENABLE_WTK_PROFILER || ENABLE_TTY_TRACE ||\
   USE_EVENT_LOGGER)
+
+//
+// USE_REFLECTION                  Enable Reflection support
+//
+#define USE_REFLECTION ENABLE_API_EXTENSIONS
 
 #define ENABLE_VSF_MERGE_TEST  0
 

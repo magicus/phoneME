@@ -42,7 +42,7 @@ class JavaClassObj : public Instance {
     return header_size() + 2* sizeof(jobject);
   }
 
-#if ENABLE_REFLECTION
+#if USE_REFLECTION
   static int type_symbol_offset() {
     return header_size() + 3* sizeof(jobject);
   }

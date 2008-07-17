@@ -795,7 +795,7 @@ JVM_SOFTFP_LINKAGE jdouble jvm_ceil(jdouble x);
 JVM_SOFTFP_LINKAGE jdouble jvm_floor(jdouble x);
 JVM_SOFTFP_LINKAGE jdouble jvm_fabs(jdouble x);
 
-#if ENABLE_CLDC_111 || ENABLE_REFLECTION
+#if ENABLE_CLDC_111 || ENABLE_API_EXTENSIONS
 
 JVM_SOFTFP_LINKAGE jdouble jvm_asin(jdouble x);
 JVM_SOFTFP_LINKAGE jdouble jvm_acos(jdouble x);

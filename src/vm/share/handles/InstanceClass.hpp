@@ -127,7 +127,7 @@ class InstanceClass: public JavaClass {
     return access_flags().is_fake_class();
   }
 
-#if ENABLE_REFLECTION
+#if USE_REFLECTION
   ReturnOop inner_classes() const {
     return (ReturnOop) ((void*)raw_class_info()->instance._inner_classes);
   }

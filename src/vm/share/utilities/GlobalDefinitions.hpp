@@ -2004,7 +2004,7 @@ extern "C" {
   void disable_cpu_variant();
 #endif
 
-#if ENABLE_REFLECTION || ENABLE_JAVA_DEBUGGER
+#if USE_REFLECTION || ENABLE_JAVA_DEBUGGER
   void entry_return_void();
   void entry_return_word();
   void entry_return_long();

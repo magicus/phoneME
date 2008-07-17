@@ -154,7 +154,7 @@
 #define VM_SYMBOLS_DO_ISOLATE(template, sig_template)
 #endif
 
-#if ENABLE_REFLECTION
+#if USE_REFLECTION
 #define VM_SYMBOLS_DO_REFLECTION(template, sig_template) \
   template(java_lang_reflect_Constructor,                                   \
                                    "java/lang/reflect/Constructor")         \

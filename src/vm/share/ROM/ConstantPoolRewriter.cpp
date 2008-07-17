@@ -356,7 +356,7 @@ void ConstantPoolRewriter::rewrite_class_object(InstanceClass *klass JVM_TRAPS) 
 #endif
   }
 
-#if ENABLE_REFLECTION
+#if USE_REFLECTION
   TypeArray::Fast inner_classes = klass->inner_classes();
   int length = inner_classes().length();
   for (i = 0; i < length; i++) {
@@ -565,7 +565,7 @@ void ConstantPoolRewriter::rewrite_method_header(Method *method JVM_TRAPS) {
 
   rewrite_exception_table(method, &orig_cp JVM_CHECK);
 
-#if ENABLE_REFLECTION
+#if USE_REFLECTION
   TypeArray::Fast thrown_exceptions = method->thrown_exceptions();
   if (thrown_exceptions.not_null()) {
     int length = thrown_exceptions().length();
@@ -640,7 +640,7 @@ ReturnOop ConstantPoolRewriter::copy_method(Method *old_method, int new_size
   TypeArray::Fast exception_table = old_method->exception_table();
   ConstantPool::Fast orig_cp = old_method->constants();
   StackmapList::Fast orig_maps = old_method->stackmaps();
-#if ENABLE_REFLECTION
+#if USE_REFLECTION
   TypeArray::Fast thrown_exceptions = old_method->thrown_exceptions();
   if (thrown_exceptions.not_null() && thrown_exceptions().length() > 0) {
     new_method().set_thrown_exceptions(&thrown_exceptions);

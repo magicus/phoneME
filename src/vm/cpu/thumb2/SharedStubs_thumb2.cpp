@@ -150,7 +150,7 @@ bind(push_parameter);
   eol_comment("Code to call");
   ldr(tmp0, imm_index(tmp0, 0));
 
-#if ENABLE_REFLECTION
+#if USE_REFLECTION
   comment("call the method with variable return point");
   ldr(lr, imm_index(tmp2, EntryActivation::return_point_offset()));
   mov(pc, reg(tmp0));
