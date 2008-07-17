@@ -107,9 +107,10 @@ ifndef SUBSYSTEM_AMS_COMPONENTS
 
 # libraries for nams/jams    
     ifeq ($(USE_NATIVE_AMS), false)
-        SUBSYSTEM_AMS_COMPONENTS += $(SUBSYSTEM_AMS_DIR)/appmanager_ui_resources/lib.gmk \
-            $(SUBSYSTEM_AMS_DIR)/appmanager_ui/lib.gmk \
-            $(SUBSYSTEM_AMS_DIR)/appmanager_base/lib.gmk
+        SUBSYSTEM_AMS_COMPONENTS += $(SUBSYSTEM_AMS_DIR)/appmanager_base/lib.gmk \
+            $(SUBSYSTEM_AMS_DIR)/appmanager_ui_resources/lib.gmk \
+	    $(SUBSYSTEM_AMS_DIR)/appmanager_ui/lib.gmk
+            
     else
         ifeq ($(TARGET_PLATFORM), javacall)
             SUBSYSTEM_AMS_COMPONENTS += $(SUBSYSTEM_AMS_DIR)/nams_javacall/lib.gmk
