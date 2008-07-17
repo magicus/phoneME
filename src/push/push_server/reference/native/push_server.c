@@ -36,9 +36,6 @@
  * update the cache and rewrite the persistent data file.
  */
 
-#ifndef _WIN32_WCE
-#include <errno.h>
-#endif
 #include <string.h>
 #include <java_types.h>
 
