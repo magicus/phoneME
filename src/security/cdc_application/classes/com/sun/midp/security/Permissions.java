@@ -324,8 +324,8 @@ public final class Permissions {
         ResourceConstants.AMS_MGR_LANDMARK_SETTINGS,
         ResourceConstants.AMS_MGR_LANDMARK_SETTINGS_QUE,
         ResourceConstants.AMS_MGR_LANDMARK_SETTINGS_QUE_DONT,
-        ResourceConstants.PERMISSION_LANDMARK_TITLE, 0,
-        ResourceConstants.PERMISSION_LANDMARK_QUE,
+        ResourceConstants.PERMISSION_LANDMARK_TITLE,
+        ResourceConstants.PERMISSION_LANDMARK_QUE, 0,
         BLANKET, SESSION, SESSION, ONESHOT);
 
     /** Smart card permission group. */
@@ -333,8 +333,8 @@ public final class Permissions {
         ResourceConstants.AMS_MGR_SMART_CARD_SETTINGS,
         ResourceConstants.AMS_MGR_SMART_CARD_SETTINGS_QUE,
         ResourceConstants.AMS_MGR_SMART_CARD_SETTINGS_QUE_DONT,
-        ResourceConstants.PERMISSION_SMART_CARD_TITLE, 0,
-        ResourceConstants.PERMISSION_SMART_CARD_QUE,
+        ResourceConstants.PERMISSION_SMART_CARD_TITLE,
+        ResourceConstants.PERMISSION_SMART_CARD_QUE, 0,
         BLANKET, SESSION, NEVER, NEVER);
 
     /** Authentication (identification) permission group. */
