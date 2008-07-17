@@ -47,6 +47,8 @@ static javacall_media_caps g_caps[] =
     { NULL,                          NULL,                   0,                              0 }
 };
 
+static int nCaps;
+
 #ifdef ENABLE_MMAPI_LIME
 
 #include <stdlib.h> // for itoa()
@@ -151,6 +153,8 @@ javacall_media_caps *get_capabilities_from_properties() {
 
     free(value);
     
+    nCaps = i;
+    
     return list2array(head, i);
 }
 
@@ -195,6 +199,7 @@ javacall_media_caps* get_capabilities() {
         caps = get_capabilities_from_properties();
     #else
         caps = g_caps;
+        nCaps = sizeof g_caps / sizeof g_caps[0] - 1;
     #endif
     }
 
@@ -343,7 +348,7 @@ javacall_result fmt_str2mime(
         javacall_media_format_type fmt, char *buf, int buf_len) {
     
     int i;
-    for (i = 0; i < sizeof get_capabilities() / sizeof get_capabilities()[0] - 1; i++) {
+    for (i = 0; i < nCaps; i++) {
         if (!strcmp(fmt, get_capabilities()[i].mediaFormat)) {
             const char *s = get_capabilities()[i].contentTypes;
             const char *p = strchr(s, ' ');
