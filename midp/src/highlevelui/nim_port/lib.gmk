@@ -1,0 +1,59 @@
+#
+#   
+#
+# Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+# 
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License version
+# 2 only, as published by the Free Software Foundation.
+# 
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# General Public License version 2 for more details (a copy is
+# included at /legal/license.txt).
+# 
+# You should have received a copy of the GNU General Public License
+# version 2 along with this work; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+# 02110-1301 USA
+# 
+# Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+# Clara, CA 95054 or visit www.sun.com if you need additional
+# information or have any questions.
+#
+######################################################################
+#
+# Native Input Mode (nim) port Library
+#
+# It's not necessary that the platform has any native input methods
+# implemented, but if they are there, nim_port is an interface
+# allowing to use them.
+#
+######################################################################
+
+# Name of the library 
+# Add to library set for this build
+NIM_PORT_NAME = nim_port
+LIB_SET += $(NIM_PORT_NAME)
+
+
+NIM_PORT_DIR = $(SUBSYSTEM_HIGHUI_DIR)/$(NIM_PORT_NAME)
+
+
+# Export include files
+SUBSYSTEM_NIM_EXTRA_INCLUDES += -I$(NIM_PORT_DIR)/include
+
+# ------- uncomment only one of the below --------------
+
+# stubs implementation is used for all platforms 
+include $(NIM_PORT_DIR)/stubs/lib.gmk
+
+# example implementation may be used for all platforms instead of stubs
+# (BUT: the example is not meaningful in the end product)
+#include $(NIM_PORT_DIR)/example/lib.gmk
+
+# ------- uncomment only one of the above --------------
+
+
