@@ -35,7 +35,7 @@ public class AMMSPermission extends Permission {
         Permissions.getName(Permissions.AMMS_CAMERA_SHUTTERFEEDBACK), null);
 
     static public AMMSPermission TUNER_SETPRESET = new AMMSPermission(
-        Permissions.getName(Permissions.AMMS_TUNER_SETPRESET), null);
+        Permissions.getName(Permissions.AMMS_TUNER_SETPRESET), "tuner preset.");
 
     public AMMSPermission(String name, String resource) {
         super(name, resource);
