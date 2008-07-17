@@ -29,9 +29,72 @@
 
 #if ENABLE_JNI
 
+static jobject JNICALL
+new_local_ref_for_oop(JNIEnv* env, Oop * oop) {
+  if (oop->is_null()) {
+    return NULL;
+  }
+
+  jint ret = env->EnsureLocalCapacity(1);
+  if (ret != JNI_OK) {
+    return NULL;
+  }
+
+  return (jobject)ObjectHeap::register_local_reference(oop);
+}
+
 static jint JNICALL 
 _JNI_GetVersion(JNIEnv * env) {
   return JNI_VERSION_1_4;
+}
+
+static jclass JNICALL
+_JNI_FindClass(JNIEnv *env, const char * name) {
+  SETUP_ERROR_CHECKER_ARG;
+
+  UsingFastOops fast_oops;
+
+  Symbol::Fast class_name = SymbolTable::symbol_for(name JVM_CHECK_0);
+  if (FieldType::is_array(&class_name)) {
+    Symbol::Raw parsed_class_name = 
+      TypeSymbol::parse_array_class_name(&class_name JVM_NO_CHECK);
+    // TypeSymbol::parse_array_class_name() throws a plain Error
+    // if class name is invalid, we should throw NoClassDefFoundError
+    if (CURRENT_HAS_PENDING_EXCEPTION) {
+      Thread::clear_current_pending_exception();
+      Throw::class_not_found(&class_name, ErrorOnFailure JVM_THROW_0);
+    }
+    class_name = parsed_class_name;
+  }
+
+  JavaClass::Fast cl = SystemDictionary::resolve(&class_name,
+                                                 ErrorOnFailure
+                                                 JVM_CHECK_0);
+
+  AZZERT_ONLY(Symbol::Fast actual_name = cl().name());
+  GUARANTEE(actual_name().matches(&class_name),
+            "Inconsistent class name lookup result");
+
+  // For hidden classes we throw NoClassDefFoundError if lookup
+  // is directly performed by user's code.
+  if (cl().is_hidden() && Thread::current()->has_user_frames_until(1)) {
+    Throw::class_not_found(&class_name, ErrorOnFailure JVM_THROW_0);
+  }
+
+#if ENABLE_ISOLATES
+  JavaClassObj::Fast result =
+    cl().get_or_allocate_java_mirror(JVM_SINGLE_ARG_CHECK_0);
+#else
+  JavaClassObj::Fast result = cl().java_mirror();
+#endif
+
+  GUARANTEE(!result.is_null(), "mirror must not be null");
+
+  if (cl().is_instance_class()) {
+    ((InstanceClass*)&cl)->initialize(JVM_SINGLE_ARG_CHECK_0);
+  }
+
+  return new_local_ref_for_oop(env, &result);
 }
 
 static jint JNICALL
@@ -128,9 +191,10 @@ _JNI_DeleteLocalRef(JNIEnv* env, jobject localRef) {
 
 static jboolean JNICALL
 _JNI_IsSameObject(JNIEnv* env, jobject ref1, jobject ref2) {
-  Oop::Raw oop1 = *decode_handle(ref1);
-  Oop::Raw oop2 = *decode_handle(ref2);
-  return oop1.equals(&oop2) ? JNI_TRUE : JNI_FALSE;
+  if (ref1 == NULL || ref2 == NULL) {
+    return ref1 == ref2 ? JNI_TRUE : JNI_FALSE;
+  }
+  return KNI_IsSameObject(ref1, ref2);
 }
 
 static jobject JNICALL
@@ -142,16 +206,7 @@ _JNI_NewLocalRef(JNIEnv* env, jobject ref) {
   UsingFastOops fast_oops;
   Oop::Fast oop = *decode_handle(ref);
 
-  if (oop.is_null()) {
-    return NULL;
-  }
-
-  jint ret = env->EnsureLocalCapacity(1);
-  if (ret != JNI_OK) {
-    return NULL;
-  }
-
-  return (jobject)ObjectHeap::register_local_reference(&oop);
+  return new_local_ref_for_oop(env, &oop);
 }
 
 static jint JNICALL
@@ -241,7 +296,7 @@ static struct JNINativeInterface _jni_native_interface = {
     _JNI_GetVersion, // GetVersion
 
     NULL, // DefineClass
-    NULL, // FindClass
+    _JNI_FindClass, // FindClass
 
     NULL, // FromReflectedMethod
     NULL, // FromReflectedField

@@ -1262,8 +1262,9 @@ LiteralPoolElement.cpp           Compiler.hpp
 // Natives
 jni.cpp                          jni.h
 jni.cpp                          JniImpl.hpp
-jni.cpp                          ObjectHeap.hpp
 jni.cpp                          JniFrame.hpp
+jni.cpp                          JavaClassObj.hpp
+jni.cpp                          ObjectHeap.hpp
 JniImpl.hpp                      GlobalDefinitions.hpp
 
 JniFrame.hpp                     JniFrameDesc.hpp
