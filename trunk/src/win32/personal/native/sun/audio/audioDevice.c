@@ -31,7 +31,16 @@
 #include <stdlib.h>
 //#include <sys/types.h>
 //#include <sys/errno.h>
+
+#if _MSC_VER < 1300
+// inclusion of <unistd.h> breaks win32 build with MSVC8;
+// although this header is most probably not needed for all win32 builds, we better
+// use #if _MSC_VER and don't include for MSVC 8 and newer MS compilers, only
+// To be removed for all win32 builds if not needed after testing.
+ 
 #include <unistd.h>
+
+#endif
 //#include <stropts.h>
 
 //#include "sun_audio_AudioDevice.h"
