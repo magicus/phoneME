@@ -76,15 +76,17 @@ $(OBJ_DIR)/gxj_graphics_asm_wince.o: \
 endif
 endif
 
+#Add optimization only for CE targets
 ifeq ($(TARGET_PLATFORM), javacall)
 ifeq ($(TARGET_CPU), arm)
-
+ifeq ($(TARGET_COMPILER), vc8ce)
 
 OBJ_FILES += $(OBJ_DIR)/gxj_graphics_asm_wince.o
 $(OBJ_DIR)/gxj_graphics_asm_wince.o: \
     $(GRAPHICS_MODULE_DIR)/native/gxj_graphics_asm_wince.s
 	$(ASM) -o $@ $<
 
+endif
 endif
 endif
 
