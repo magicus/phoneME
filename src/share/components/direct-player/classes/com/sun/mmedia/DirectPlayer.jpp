@@ -821,7 +821,7 @@ public class DirectPlayer extends BasicPlayer implements VideoSource
     
     private boolean isVideoPlayer()
     {
-        return getContentType().startsWith( "video" );
+        return nIsVideoControlSupported(hNative);
     }
     
     public void setSnapshotQuality( int quality )
