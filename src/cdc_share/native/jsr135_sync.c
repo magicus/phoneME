@@ -25,6 +25,7 @@
 
 #include "jsr135_sync.h"
 #include "javacall_defs.h"
+#include "javacall_memory.h"
 #include "javavm/include/porting/sync.h"
 #include "KNICommon.h"
 
@@ -44,102 +45,159 @@ void UnlockAudioMutex() {
 }
 
 
-#define MAX_THREADS 50
-
-typedef struct {
+/**
+ * @brief Describes a thread waiting for a native event.
+ */
+typedef struct _ThreadInfo {
     int desc;
     CVMCondVar cv;
     javacall_result *pStatus;
     void **pData;
+    struct _ThreadInfo *prev;
+    struct _ThreadInfo *next;
 } ThreadInfo;
 
-static ThreadInfo ti[MAX_THREADS];
+static ThreadInfo *head = NULL;
 static CVMMutex tMutex;
 static init_done = 0;
 
-static void mmapi_threads_init(void) {
-    int i;
-    for (i = 0; i < MAX_THREADS; i++) {
-        /*
-         * This cannot be a valid descriptor because event part is always
-         * non-zero - see MAKE_PLAYER_DESCRIPTOR macro.
-         */
-        ti[i].desc = 0;
-    }
-    CVMmutexInit(&tMutex);
-    init_done = 1;
-}
+/**
+ * Adds a thread to the list, associating it with the given descriptor.
+ *
+ * @param desc player descriptor.
+ * @return pointer to the thread with the same descriptor if it already exists
+ *     in the list, or to a newly created thread.
+ */
+static ThreadInfo * new_thread(int desc) {
+    ThreadInfo *ti = head;
+    ThreadInfo *prev;
 
-static int get_thread(int desc) {
-    int i;
-    for (i = 0; i < MAX_THREADS; i++) {
-        if (ti[i].desc == desc) {
-            return i;
-        }
-        if (ti[i].desc == 0) {
-            ti[i].desc = desc;
-            CVMcondvarInit(&ti[i].cv, &tMutex);
-            ti[i].pStatus = NULL;
-            ti[i].pData = NULL;
-            return i;
+    for (ti = head; NULL != ti; ti = ti->next) {
+        prev = ti;
+        if (ti->desc == desc) {
+            return ti;
         }
     }
-    return -1;
+    ti = (ThreadInfo *)javacall_malloc(sizeof(ThreadInfo));
+    if (NULL == ti) {
+        return NULL;
+    }
+    ti->desc = desc;
+    CVMcondvarInit(&ti->cv, &tMutex);
+    ti->pStatus = NULL;
+    ti->pData = NULL;
+    ti->next = NULL;
+    if (NULL == head) {
+        head = ti;
+        ti->prev = NULL;
+    } else {
+        prev->next = ti;
+        ti->prev = prev;
+    }
+
+    return ti;
 }
 
-static int get_next_thread(int desc, int from) {
-    int i;
-    for (i = from; i < MAX_THREADS; i++) {
-        if (ti[i].desc == desc ||
+/**
+ * Looks for the next thread matching the descriptor (exact match if event part
+ * is non-zero, otherwise the event part is ignored).
+ *
+ * @param desc player descriptor.
+ * @param from pointer to the thread preceding the one to start the search from.
+ *     If NULL, the search will be started from head, otherwise the search is
+ *     started from the next thread in the list.
+ * @return pointer to the thread if found, NULL otherwise.
+ */
+static ThreadInfo * match_next_thread(int desc, ThreadInfo *prev) {
+    ThreadInfo *ti;
+
+    for (ti = (NULL != prev) ? prev->next : head; NULL != ti; ti = ti->next) {
+        if (ti->desc == desc ||
             (desc & PLAYER_DESCRIPTOR_EVENT_MASK) == desc &&
-            (ti[i].desc & PLAYER_DESCRIPTOR_EVENT_MASK) == desc &&
-            0 != ti[i].desc) {
-            return i;
+            (ti->desc & PLAYER_DESCRIPTOR_EVENT_MASK) == desc &&
+            0 != ti->desc) {
+            return ti;
         }
     }
-    return -1;
+    return NULL;
 }
 
+/**
+ * Suspends the current thread and associates it with the given player
+ * descriptor.
+ *
+ * @param desc player descriptor.
+ * @param pStatus pointer to store the operation completion status upon resume
+ *            of the thread.
+ * @param pData pointer to store the event data upon resume of the thread.
+ * @return JAVACALL_OK if the thread was suspended and then resumed,
+ *         JAVACALL_FAIL if a thread for this descriptor is already suspended,
+ *         JAVACALL_OUT_OF_MEMORY if the thread description cannot be allocated
+ */
 javacall_result mmapi_thread_suspend(int desc, javacall_result *pStatus, void **pData) {
-    int tnum;
+    ThreadInfo *ti;
 
     if (!init_done) {
-        mmapi_threads_init();
+        CVMmutexInit(&tMutex);
+        init_done = 1;
     }
 
     CVMmutexLock(&tMutex);
-    tnum = get_thread(desc);
-    if (-1 == tnum || NULL != ti[tnum].pStatus) {
+    ti = new_thread(desc);
+    if (NULL == ti) {
         CVMmutexUnlock(&tMutex);
+        return JAVACALL_OUT_OF_MEMORY;
+    }
+    if (NULL != ti->pStatus) {
         return JAVACALL_FAIL;
     }
 
-    ti[tnum].pStatus = pStatus;
-    ti[tnum].pData = pData;
-    CVMcondvarWait(&ti[tnum].cv, &tMutex, 0);
+    ti->pStatus = pStatus;
+    ti->pData = pData;
+    CVMcondvarWait(&ti->cv, &tMutex, 0);
     CVMmutexUnlock(&tMutex);
     return JAVACALL_OK;
 }
 
+/**
+ * Resumes threads that were previously suspended and match the descriptor.
+ *
+ * @param desc player descriptor to match. If the event part is equal to zero,
+ *            all threads with the current appId and playerId are resumed.
+ * @param status operation completion status that will be passed to each resumed
+ *            thread.
+ * @param data arbitrary event data that will be passed to each resumed thread.
+ * @return JAVACALL_OK if any thread was resumed,
+ *         JAAVCALL_FAIL otherwise
+ */
 javacall_result mmapi_thread_resume(int desc, javacall_result status, void *data) {
-    int tnum = -1;
+    ThreadInfo *ti = NULL;
+    javacall_result res = JAVACALL_FAIL;
 
     if (!init_done) {
-        mmapi_threads_init();
         /* No blocked thread with the given parameters exists yet */
         return JAVACALL_FAIL;
     }
 
     CVMmutexLock(&tMutex);
-    while (-1 != (tnum = get_next_thread(desc, tnum + 1))) {
-        if (NULL != ti[tnum].pStatus) {
-            *ti[tnum].pStatus = status;
-            *ti[tnum].pData = data;
-            ti[tnum].pStatus = NULL;
-            ti[tnum].pData = NULL;
-            CVMcondvarNotify(&ti[tnum].cv);
+    while (NULL != (ti = match_next_thread(desc, ti))) {
+        if (NULL != ti->pStatus) {
+            *ti->pStatus = status;
+            *ti->pData = data;
+            CVMcondvarNotify(&ti->cv);
+            CVMcondvarDestroy(&ti->cv);
+            if (NULL != ti->prev) {
+                ti->prev->next = ti->next;
+            } else {
+                head = ti->next;
+            }
+            if (NULL != ti->next) {
+                ti->next->prev = ti->prev;
+            }
+            javacall_free(ti);
+            res = JAVACALL_OK;
         }
     }
     CVMmutexUnlock(&tMutex);
-    return JAVACALL_OK;
+    return res;
 }
