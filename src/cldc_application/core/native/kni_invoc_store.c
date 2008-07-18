@@ -39,7 +39,7 @@
  * <br>
  */
 
-#include <memory.h>
+#include <string.h>
 
 #ifdef _DEBUG
 
