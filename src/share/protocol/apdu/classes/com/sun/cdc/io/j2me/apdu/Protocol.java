@@ -309,6 +309,22 @@ public class Protocol implements APDUConnection, ConnectionBaseInterface,
     }
 
     /**
+     * Pass the response APDU from the connection creation to the
+     * com.sun.kvem.io.j2me.apdu.Protocol
+     * returns the FCI information received from the card at selectApplication
+     */
+    protected byte[] getConnectionResult() {
+       byte[] result = null;
+        try {
+            checkHandle(h);
+            result = h.getFCI();
+        } catch (IOException e) {
+            result = null;
+        }
+        return result;
+    }
+
+    /**
      * This method always throw <code>IllegalArgumentException</code>.
      * @return An input stream
      * @exception IOException  If an I/O error occurs

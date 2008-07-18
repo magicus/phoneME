@@ -149,6 +149,11 @@ EXTRA_INCLUDES += $(SUBSYSTEM_SATSA_EXTRA_INCLUDES)
 ROMGEN_INCLUDE_PATHS += $(JSR_177_DIR)/src/cldc_application/config
 ROMGEN_CFG_FILES     += satsa_rom.cfg
 
+# Network monitor
+ifeq ($(USE_NETMON), true)
+ROMGEN_CFG_FILES     += satsa_netmon_rom.cfg
+endif
+
 # i3test for jsr 177
 #
 ifeq ($(USE_I3_TEST), true)

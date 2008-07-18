@@ -126,6 +126,9 @@ public class Protocol
      */
     private JCRMIPermissions verifier;
 
+    protected byte[] apduCommand = new byte[APDUBufferSize];
+    protected byte[] apduResponse = new byte[APDUBufferSize];
+
     /**
      * Connector uses this method to initialize the connection object.
      * This method establishes APDU connection with card application,
@@ -521,7 +524,14 @@ public class Protocol
             }
 
             try {
+
+                apduCommand = new byte[offset];
+                System.arraycopy(APDUBuffer, 0, apduCommand, 0, offset);
+
                 response = APDUManager.exchangeAPDU(h, APDUBuffer);
+
+                apduResponse = new byte[response.length];
+                System.arraycopy(response, 0, apduResponse, 0, response.length);                
             } catch (IOException e) {
                 throw new RemoteException("IO error", e);
             }
