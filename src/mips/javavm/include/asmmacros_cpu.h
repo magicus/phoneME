@@ -33,5 +33,10 @@
 #endif
 
 #include "javavm/include/asmmacros_arch.h"
-	
+
+/* some versions of platforms only support fp as a register and not s8 */
+#ifndef s8
+#define s8 fp
+#endif
+
 #endif /* _INCLUDED_ASMMACROS_CPU_H */
