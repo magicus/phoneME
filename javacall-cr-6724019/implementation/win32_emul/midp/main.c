@@ -38,7 +38,9 @@ extern javacall_result finalize_wma_emulator();
 #endif
 extern void javanotify_set_vm_args(int argc, char* argv[]);
 extern void javanotify_set_heap_size(int heapsize);
+#ifdef USE_NETMON
 extern int isNetworkMonitorActive();
+#endif
 extern void javanotify_start_local(char* classname, char* descriptor,
                             char* classpath, javacall_bool debug);
 extern void javanotify_start_suite(char* suiteId);
@@ -465,17 +467,23 @@ main(int argc, char *argv[]) {
      * If yes, set system property javax.microedition.io.Connector.protocolpath
      * to com.sun.kvem.io
      */
+
+#ifdef USE_NETMON
+
     if (isNetworkMonitorActive()) {
         javacall_set_property("javax.microedition.io.Connector.protocolpath",
                               "com.sun.kvem.io",
                               JAVACALL_TRUE,
                               JAVACALL_APPLICATION_PROPERTY);
     } else {
+#endif
         javacall_set_property("javax.microedition.io.Connector.protocolpath",
                               "com.sun.midp.io",
                               JAVACALL_TRUE,
                               JAVACALL_APPLICATION_PROPERTY);
+#ifdef USE_NETMON
     }
+#endif
 
     javacall_set_property("running_local",
                           "false",
