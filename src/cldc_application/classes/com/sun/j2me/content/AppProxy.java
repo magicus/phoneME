@@ -106,7 +106,9 @@ class AppProxy {
     private static AppProxy currentApp;
 
     /** The log flag to enable informational messages. */
-    static final Logger LOGGER = null; // new Logger();
+    static final Logger LOGGER = new Logger();
+    
+    private static final boolean isInSvmMode = isInSvmMode();
 
     /** The known AppProxy instances. Key is classname. */
     protected Hashtable appmap;
@@ -141,6 +143,15 @@ class AppProxy {
     static final String VENDOR_PROP        = "MIDlet-Vendor";
     
     static final int EXTERNAL_SUITE_ID = MIDletSuite.UNUSED_SUITE_ID;
+
+    // native methods
+    static native boolean isInSvmMode();
+    
+    static native void midletIsAdded( int suiteId, String className );
+    static native boolean isMidletRunning( int suiteId, String className );
+    static native void midletIsRemoved( int suiteId, String className );
+    
+    static native boolean isSuiteRunning( int suiteId );
 
     /**
      * Sets the security token used for privileged operations.
@@ -453,10 +464,6 @@ class AppProxy {
         eventQueue.sendNativeEventToIsolate(event, amsIsolateId);
     }
     
-    static native void midletIsAdded( int suiteId, String className );
-    static native boolean isMidletRunning( int suiteId, String className );
-    static native void midletIsRemoved( int suiteId, String className );
-
     /**
      * Launch this application.
      * Don't launch another application unless
@@ -475,18 +482,14 @@ class AppProxy {
     boolean launch(String displayName) {
     	if( isMidletRunning(storageId, classname) )
         	return true;
-    	/* The commented code is another method to check midlet presence in
-    	 * the device memory. Unfortunately it works only in AMS thread.
-    	 * The code isn't deleted because it reminds about a wrong way of 
-    	 * starting a midlet. 
-    	com.sun.midp.main.MIDletProxyList list = 
-    	  		com.sun.midp.main.MIDletProxyList.getMIDletProxyList(classSecurityToken);
-    	if( list != null && list.isMidletInList(storageId, classname) )
-    		return true;*/
-    	if( MIDletSuiteUtils.isAmsIsolate() )
-	        return MIDletSuiteUtils.execute(classSecurityToken,
-	                                 	storageId, classname, displayName);
-    	return false;
+    	if( !MIDletSuiteUtils.isAmsIsolate() ){
+	    	if( isInSvmMode )
+	    		return false;
+	    	if( isSuiteRunning(storageId) )
+	    		return false;
+    	}
+        return MIDletSuiteUtils.execute(classSecurityToken,
+             						storageId, classname, displayName);
     }
 
 
