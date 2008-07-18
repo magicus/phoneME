@@ -58,13 +58,20 @@ PCSL_DEFINE_ASCII_STRING_LITERAL_END(APP_IMAGE_EXTENSION);
 #endif
 
 /* Description of these internal functions can be found bellow in the code. */
-static MIDPError suite_in_list(SuiteIdType suiteId);
+static MIDPError suite_in_list(ComponentType type, SuiteIdType suiteId,
+                               ComponentIdType componentId);
 static MIDPError get_string_list(char** ppszError, const pcsl_string* pFilename,
                                  pcsl_string** paList, int* pStringNum);
-static MIDPError get_class_path_impl(SuiteIdType suiteId,
+static MIDPError get_class_path_impl(ComponentType type,
+                                     SuiteIdType suiteId,
+                                     ComponentIdType componentId,
                                      jint storageId,
                                      pcsl_string* classPath,
                                      const pcsl_string* extension);
+static MIDPError get_suite_or_component_id(ComponentType type,
+                                           const pcsl_string* vendor,
+                                           const pcsl_string* name,
+                                           jint* pId);
 
 /**
  * Initializes the subsystem.
@@ -111,6 +118,22 @@ const pcsl_string* midp_suiteid2pcsl_string(SuiteIdType value) {
     resChars[SUITESTORE_COUNTOF(resChars) - 1] = (jchar)0;
     return &resString;
 }
+
+#if ENABLE_DYNAMIC_COMPONENTS
+/**
+ * Converts the given component ID to pcsl_string.
+ * NOTE: this function returns a pointer to the static buffer!
+ *
+ * The current implementation uses the internal knowledge that
+ * ComponentIdType and SuiteIdType are compatible integer types.
+ *
+ * @param value component id to convert
+ * @return pcsl_string representation of the given component id
+ */
+const pcsl_string* midp_componentid2pcsl_string(ComponentIdType value) {
+    return midp_suiteid2pcsl_string((SuiteIdType)value);
+}
+#endif /* ENABLE_DYNAMIC_COMPONENTS */
 
 /**
  * Converts the given suite ID to array of chars.
@@ -167,7 +190,8 @@ midp_suite_exists(SuiteIdType suiteId) {
         return ALL_OK;
     }
 
-    status = suite_in_list(suiteId);
+    status = suite_in_list(COMPONENT_REGULAR_SUITE, suiteId,
+                           UNUSED_COMPONENT_ID);
 
     if (status == ALL_OK) {
         g_lastSuiteExistsID = suiteId;
@@ -214,7 +238,8 @@ midp_suite_get_class_path(SuiteIdType suiteId,
     }
 
     if (suiteExistsOrNotChecked) {
-        status = get_class_path_impl(suiteId, storageId, classPath,
+        status = get_class_path_impl(COMPONENT_REGULAR_SUITE, suiteId,
+                                     UNUSED_COMPONENT_ID, storageId, classPath,
                                      &JAR_EXTENSION);
     } else {
         *classPath = PCSL_STRING_NULL;
@@ -222,6 +247,95 @@ midp_suite_get_class_path(SuiteIdType suiteId,
 
     return status;
 }
+
+#if ENABLE_DYNAMIC_COMPONENTS
+/**
+ * Tells if a component exists.
+ *
+ * @param componentId ID of a component
+ *
+ * @return ALL_OK if a component exists,
+ *         NOT_FOUND if not,
+ *         OUT_OF_MEMORY if out of memory or IO error,
+ *         IO_ERROR if IO error,
+ *         SUITE_CORRUPTED_ERROR if component is found in the list,
+ *         but it's corrupted
+ */
+MIDPError
+midp_component_exists(ComponentIdType componentId) {
+    MIDPError status;
+
+    if (UNUSED_COMPONENT_ID == componentId) {
+        return NOT_FOUND;
+    }
+
+    if (componentId == g_lastComponentExistsID) {
+        /* suite exists - we have already checked */
+        return ALL_OK;
+    }
+
+    g_lastComponentExistsID = UNUSED_COMPONENT_ID;
+
+    status = suite_in_list(COMPONENT_DYNAMIC, UNUSED_SUITE_ID, componentId);
+
+    if (status == ALL_OK) {
+        g_lastComponentExistsID = componentId;
+    }
+
+    return status;
+}
+
+/**
+ * Gets location of the class path for the component
+ * with the specified componentId.
+ *
+ * Note that memory for the in/out parameter classPath is
+ * allocated by the callee. The caller is responsible for
+ * freeing it using pcsl_mem_free().
+ *
+ * @param componentId The ID of the component
+ * @param suiteId The application suite ID
+ * @param storageId storage ID, INTERNAL_STORAGE_ID for the internal storage
+ * @param checkComponentExists true if the component should be checked for
+                               existence or not
+ * @param pClassPath The in/out parameter that contains returned class path
+ * @return error code that should be one of the following:
+ * <pre>
+ *     ALL_OK, OUT_OF_MEMORY, NOT_FOUND,
+ *     SUITE_CORRUPTED_ERROR, BAD_PARAMS
+ * </pre>
+ */
+MIDPError
+midp_suite_get_component_class_path(ComponentIdType componentId,
+                                    SuiteIdType suiteId,
+                                    StorageIdType storageId,
+                                    jboolean checkComponentExists,
+                                    pcsl_string *pClassPath) {
+    MIDPError status = ALL_OK;
+    int componentExistsOrNotChecked;
+
+    if (checkComponentExists) {
+        status = midp_component_exists(componentId);
+        componentExistsOrNotChecked = (status == ALL_OK ||
+                                       status == SUITE_CORRUPTED_ERROR);
+    } else {
+        /*
+         * Don't need to check is the component exist,
+         * just construct the classpath for the given component ID.
+         */
+        componentExistsOrNotChecked = 1;
+    }
+
+    if (componentExistsOrNotChecked) {
+        status = get_class_path_impl(COMPONENT_DYNAMIC, suiteId, componentId,
+                                     storageId, pClassPath, &JAR_EXTENSION);
+    } else {
+        *pClassPath = PCSL_STRING_NULL;
+    }
+
+    return status;
+}
+#endif /* ENABLE_DYNAMIC_COMPONENTS */
 
 #if ENABLE_MONET
 /**
@@ -249,7 +363,8 @@ MIDPError
 midp_suite_get_bin_app_path(SuiteIdType suiteId,
                             StorageIdType storageId,
                             pcsl_string *classPath) {
-    return get_class_path_impl(suiteId, storageId, classPath,
+    return get_class_path_impl(COMPONENT_REGULAR_SUITE, suiteId,
+                               UNUSED_COMPONENT_ID, storageId, classPath,
                                &APP_IMAGE_EXTENSION);
 }
 #endif
@@ -416,9 +531,9 @@ midp_suite_get_suite_folder(SuiteIdType suiteId, FolderIdType* pFolderId) {
  *          given in a JAD file
  * @param name name of the suite, as given in a JAD file
  * @param pSuiteId [out] receives the platform-specific suite ID of the
- *          application given by vendorName and appName, or string with
- *          a null data if suite does not exist, or
- *          out of memory error occured, or suite is corrupted.
+ *          application given by vendor and name, or UNUSED_SUITE_ID
+ *          if suite does not exist, or out of memory error occured,
+ *          or suite is corrupted.
  *
  * @return  ALL_OK if suite found,
  *          NOT_FOUND if suite does not exist (so a new ID was created),
@@ -427,37 +542,35 @@ midp_suite_get_suite_folder(SuiteIdType suiteId, FolderIdType* pFolderId) {
 MIDPError
 midp_get_suite_id(const pcsl_string* vendor, const pcsl_string* name,
                   SuiteIdType* pSuiteId) {
-    MIDPError status;
-    char *pszError;
-    MidletSuiteData* pData;
-
-    *pSuiteId = UNUSED_SUITE_ID;
-
-    /* load _suites.dat */
-    status = read_suites_data(&pszError);
-    storageFreeError(pszError);
-    if (status != ALL_OK) {
-        return status;
-    }
-
-    pData = g_pSuitesData;
-
-    /* try to find a suite */
-    while (pData != NULL) {
-        if (pcsl_string_equals(&pData->varSuiteData.suiteName, name) &&
-                pcsl_string_equals(&pData->varSuiteData.suiteVendor, vendor)) {
-            *pSuiteId = pData->suiteId;
-            return ALL_OK; /* IMPL_NOTE: consider SUITE_CORRUPTED_ERROR */
-        }
-
-        pData = pData->nextEntry;
-    }
-
-    /* suite was not found - create a new suite ID */
-    status = midp_create_suite_id(pSuiteId);
-
-    return (status == ALL_OK) ? NOT_FOUND : status;
+    return get_suite_or_component_id(COMPONENT_REGULAR_SUITE, vendor, name,
+                                     (jint*)pSuiteId);
 }
+
+#if ENABLE_DYNAMIC_COMPONENTS
+/**
+ * If the dynamic component exists, this function returns an unique identifier
+ * of the component. Note that the component may be corrupted even if it exists.
+ * If the component doesn't exist, a new component ID is created.
+ *
+ * @param vendor name of the vendor that created the component, as
+ *        given in a JAD file
+ * @param name name of the component, as given in a JAD file
+ * @param pComponentId [out] receives the platform-specific component ID of
+ *        the component given by vendor and name, or UNUSED_COMPONENT_ID
+ *        if component does not exist, or out of memory error occured,
+ *        or component is corrupted.
+ *
+ * @return  ALL_OK if suite found,
+ *          NOT_FOUND if component does not exist (so a new ID was created),
+ *          other error code in case of error
+ */
+MIDPError
+midp_get_component_id(const pcsl_string* vendor, const pcsl_string* name,
+                      ComponentIdType* pComponentId) {
+    return get_suite_or_component_id(COMPONENT_DYNAMIC, vendor, name,
+                                     (jint*)pComponentId);
+}
+#endif /* ENABLE_DYNAMIC_COMPONENTS */
 
 /**
  * Find and return the property the matches the given key.
@@ -586,6 +699,89 @@ midp_get_suite_properties(SuiteIdType suiteId) {
 /* ------------------------------------------------------------ */
 
 /**
+ * Checks if a midlet suite or dynamic component with the given name
+ * created by the given vendor exists.
+ * If it does, this function returns a unique identifier of the suite
+ * or component. Note that the suite or component may be corrupted even
+ * if it exists. If it doesn't, a new suite ID or component ID is created.
+ *
+ * @param vendor name of the vendor that created the application or component,
+ *        as given in a JAD file
+ * @param name name of the suite or component, as given in a JAD file
+ * @param pId [out] receives the platform-specific suite ID or component ID
+ *        of the application given by vendor and name, or UNUSED_SUITE_ID /
+ *        UNUSED_COMPONENT_ID if suite does not exist, or out of memory
+ *        error occured, or the suite / component is corrupted.
+ *
+ * @return  ALL_OK if suite or component found,
+ *          NOT_FOUND if suite or component does not exist (so a new ID
+ *          was created), other error code in case of error
+ */
+static MIDPError
+get_suite_or_component_id(ComponentType type, const pcsl_string* vendor,
+                          const pcsl_string* name, jint* pId) {
+    MIDPError status;
+    char *pszError;
+    MidletSuiteData* pData;
+
+#if ENABLE_DYNAMIC_COMPONENTS
+    if (type != COMPONENT_DYNAMIC) {
+        *pId = (jint)UNUSED_SUITE_ID;
+    } else {
+        *pId = (jint)UNUSED_COMPONENT_ID;
+    }
+#else
+    (void)type;
+    *pId = (jint)UNUSED_SUITE_ID;
+#endif /* ENABLE_DYNAMIC_COMPONENTS */
+
+    /* load _suites.dat */
+    status = read_suites_data(&pszError);
+    storageFreeError(pszError);
+    if (status != ALL_OK) {
+        return status;
+    }
+
+    pData = g_pSuitesData;
+
+    /* try to find a suite */
+    while (pData != NULL) {
+        if (pcsl_string_equals(&pData->varSuiteData.suiteName, name) &&
+                pcsl_string_equals(&pData->varSuiteData.suiteVendor, vendor)
+#if ENABLE_DYNAMIC_COMPONENTS
+                    && type == pData->type
+#endif
+        ) {
+#if ENABLE_DYNAMIC_COMPONENTS
+            if (type != COMPONENT_DYNAMIC) {
+                *pId = (jint)pData->suiteId;
+            } else {
+                *pId = (jint)pData->componentId;
+            }
+#else
+            *pId = (jint)pData->suiteId;
+#endif /* ENABLE_DYNAMIC_COMPONENTS */
+            return ALL_OK; /* IMPL_NOTE: consider SUITE_CORRUPTED_ERROR */
+        }
+
+        pData = pData->nextEntry;
+    }
+
+    /* suite or comonent was not found - create a new suite or component ID */
+#if ENABLE_DYNAMIC_COMPONENTS
+    if (type != COMPONENT_DYNAMIC) {
+        status = midp_create_suite_id((SuiteIdType*)pId);
+    } else {
+        status = midp_create_component_id((ComponentIdType*)pId);
+    }
+#else
+    status = midp_create_suite_id((SuiteIdType*)pId);
+#endif /* ENABLE_DYNAMIC_COMPONENTS */
+
+    return (status == ALL_OK) ? NOT_FOUND : status;
+}
+
+/**
  * Tells if a given suite is in a list of the installed suites.
  *
  * @param suiteId unique ID of the midlet suite
@@ -599,10 +795,17 @@ midp_get_suite_properties(SuiteIdType suiteId) {
  *         corrupted.
  */
 static MIDPError
-suite_in_list(SuiteIdType suiteId) {
+suite_in_list(ComponentType type, SuiteIdType suiteId,
+              ComponentIdType componentId) {
     MIDPError status;
     char* pszError;
     MidletSuiteData* pData;
+
+#if !ENABLE_DYNAMIC_COMPONENTS
+    /** to supress compilation warnings */
+    (void)type;
+    (void)componentId;
+#endif
 
     /* load _suites.dat */
     status = read_suites_data(&pszError);
@@ -611,18 +814,29 @@ suite_in_list(SuiteIdType suiteId) {
         return status;
     }
 
-    pData = get_suite_data(suiteId);
-
-    if (pData != NULL) {
-        /*
-         * Make sure that suite is not corrupted. Return
-         * SUITE_CORRUPTED_ERROR if the suite is corrupted.
-         * Remove the suite before returning the status.
-         */
-        status = check_for_corrupted_suite(suiteId);
+#if ENABLE_DYNAMIC_COMPONENTS
+    if (type == COMPONENT_DYNAMIC) {
+        pData = get_component_data(componentId);
+        if (pData == NULL) {
+            status = NOT_FOUND;
+        }
     } else {
-        status = NOT_FOUND;
+#endif /* ENABLE_DYNAMIC_COMPONENTS */
+        pData = get_suite_data(suiteId);
+
+        if (pData != NULL) {
+            /*
+             * Make sure that suite is not corrupted. Return
+             * SUITE_CORRUPTED_ERROR if the suite is corrupted.
+             * Remove the suite before returning the status.
+             */
+            status = check_for_corrupted_suite(suiteId);
+        } else {
+            status = NOT_FOUND;
+        }
+#if ENABLE_DYNAMIC_COMPONENTS
     }
+#endif
 
     return status;
 }
@@ -645,29 +859,55 @@ suite_in_list(SuiteIdType suiteId) {
  * </pre>
  */
 static MIDPError
-get_class_path_impl(SuiteIdType suiteId,
+get_class_path_impl(ComponentType type,
+                    SuiteIdType suiteId,
+                    ComponentIdType componentId,
                     jint storageId,
-                    pcsl_string * classPath,
-                    const pcsl_string * extension) {
+                    pcsl_string * pClassPath,
+                    const pcsl_string * pExtension) {
     const pcsl_string* root = storage_get_root(storageId);
     pcsl_string path = PCSL_STRING_NULL;
     jint suiteIdLen = GET_SUITE_ID_LEN(suiteId);
+    jint componentIdLen = 0;
 
-    *classPath = PCSL_STRING_NULL;
+#if ENABLE_DYNAMIC_COMPONENTS
+    if (type == COMPONENT_DYNAMIC) {
+        componentIdLen = GET_COMPONENT_ID_LEN(componentId);
+    }
+#else
+    (void)type;
+    (void)componentId;
+#endif
+
+    *pClassPath = PCSL_STRING_NULL;
 
     /* performance hint: predict buffer capacity */
     pcsl_string_predict_size(&path, pcsl_string_length(root)
-                                    + suiteIdLen
-                                    + pcsl_string_length(extension));
+                                    + suiteIdLen + componentIdLen +
+                                    + pcsl_string_length(pExtension));
     if (PCSL_STRING_OK != pcsl_string_append(&path, root) ||
             PCSL_STRING_OK != pcsl_string_append(&path,
-                midp_suiteid2pcsl_string(suiteId)) ||
-            PCSL_STRING_OK != pcsl_string_append(&path, extension)) {
+                midp_suiteid2pcsl_string(suiteId))) {
         pcsl_string_free(&path);
         return OUT_OF_MEMORY;
     }
 
-    *classPath = path;
+#if ENABLE_DYNAMIC_COMPONENTS
+    if (type == COMPONENT_DYNAMIC) {
+        if (PCSL_STRING_OK != pcsl_string_append(&path,
+                midp_componentid2pcsl_string(componentId))) {
+            pcsl_string_free(&path);
+            return OUT_OF_MEMORY;
+        }
+    }
+#endif
+
+    if (PCSL_STRING_OK != pcsl_string_append(&path, pExtension)) {
+        pcsl_string_free(&path);
+        return OUT_OF_MEMORY;
+    }
+
+    *pClassPath = path;
 
     return ALL_OK;
 }

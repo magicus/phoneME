@@ -64,6 +64,8 @@ import com.sun.midp.log.LogChannels;
 
 import com.sun.midp.configurator.Constants;
 
+import com.sun.midp.services.ComponentInfo;
+
 /**
  * An Installer manages MIDlet suites and libraries
  * present in a Java application environment.  An MIDlet suite
@@ -365,6 +367,61 @@ public abstract class Installer {
     }
 
     /**
+     * Installs the component pointed by the given URL.
+     *
+     * IMPL_NOTE: probably this method should be refactored into a separate
+     *            library to reduce the footprint when
+     *            USE_DYNAMIC_COMPONENTS=false.
+     *
+     * @param suiteId ID of the suite that owns the component being installed
+     * @param url HTTP URL pointing to the application descriptor
+     *            or to the jar file of the component that must
+     *            be installed
+     * @param name user-friendly name of the component
+     *
+     * @return unique component identifier
+     *
+     * @exception IOException if the installation failed
+     * @exception InvalidJadException if the downloaded JAR is invalid
+     * @exception MIDletSuiteLockedException is thrown, if the MIDletSuite is
+     *            locked
+     * @exception SecurityException if the caller does not have permission
+     *            to install components
+     */
+    public int installComponent(int suiteId, String url, String name)
+            throws IOException, MIDletSuiteLockedException,
+                InvalidJadException, SecurityException {
+        int componentId;
+
+        info.id = suiteId;
+        info.isSuiteComponent = true;
+
+        try {
+            componentId = installJad(url, Constants.INTERNAL_STORAGE_ID,
+                                     true, true, null);
+        } catch (InvalidJadException ije) {
+            int reason = ije.getReason();
+            if (reason != InvalidJadException.INVALID_JAD_TYPE) {
+                throw ije;
+            }
+
+            // media type of JAD was wrong, it could be a JAR
+            String mediaType = ije.getExtraData();
+
+            if (Installer.JAR_MT_1.equals(mediaType) ||
+                Installer.JAR_MT_2.equals(mediaType)) {
+                // re-run as a JAR only install
+                componentId = installJar(url, name,
+                    Constants.INTERNAL_STORAGE_ID, true, true, null);
+            } else {
+                throw ije;
+            }
+        }
+
+        return componentId;
+    }
+
+    /**
      * Enables or disables certificate revocation checking using OCSP.
      *
      * @param enable true to enable OCSP checking, false - to disable it
@@ -573,38 +630,44 @@ public abstract class Installer {
                     state.jadEncoding);
         }
 
-        info.suiteName = state.jadProps.getProperty(
-            MIDletSuite.SUITE_NAME_PROP);
-        if (info.suiteName == null || info.suiteName.length() == 0) {
-            postInstallMsgBackToProvider(OtaNotifier.INVALID_JAD_MSG);
-            throw new
-                InvalidJadException(InvalidJadException.MISSING_SUITE_NAME);
-        }
+        if (!info.isSuiteComponent) {
+            // check MIDlet-* attributes only if this is not a dynamic component
+            info.suiteName = state.jadProps.getProperty(
+                MIDletSuite.SUITE_NAME_PROP);
+            if (info.suiteName == null || info.suiteName.length() == 0) {
+                postInstallMsgBackToProvider(OtaNotifier.INVALID_JAD_MSG);
+                throw new
+                    InvalidJadException(InvalidJadException.MISSING_SUITE_NAME);
+            }
 
-        info.suiteVendor = state.jadProps.getProperty(MIDletSuite.VENDOR_PROP);
-        if (info.suiteVendor == null || info.suiteVendor.length() == 0) {
-            postInstallMsgBackToProvider(OtaNotifier.INVALID_JAD_MSG);
-            throw new
-                InvalidJadException(InvalidJadException.MISSING_VENDOR);
-        }
+            info.suiteVendor = state.jadProps.getProperty(MIDletSuite.VENDOR_PROP);
+            if (info.suiteVendor == null || info.suiteVendor.length() == 0) {
+                postInstallMsgBackToProvider(OtaNotifier.INVALID_JAD_MSG);
+                throw new
+                    InvalidJadException(InvalidJadException.MISSING_VENDOR);
+            }
 
-        info.suiteVersion = state.jadProps.getProperty(
-            MIDletSuite.VERSION_PROP);
-        if (info.suiteVersion == null || info.suiteVersion.length() == 0) {
-            postInstallMsgBackToProvider(OtaNotifier.INVALID_JAD_MSG);
-            throw new
-                InvalidJadException(InvalidJadException.MISSING_VERSION);
-        }
+            info.suiteVersion = state.jadProps.getProperty(
+                MIDletSuite.VERSION_PROP);
+            if (info.suiteVersion == null || info.suiteVersion.length() == 0) {
+                postInstallMsgBackToProvider(OtaNotifier.INVALID_JAD_MSG);
+                throw new
+                    InvalidJadException(InvalidJadException.MISSING_VERSION);
+            }
 
-        try {
-            checkVersionFormat(info.suiteVersion);
-        } catch (NumberFormatException nfe) {
-            postInstallMsgBackToProvider(OtaNotifier.INVALID_JAD_MSG);
-            throw new InvalidJadException(
-                  InvalidJadException.INVALID_VERSION);
-        }
+            try {
+                checkVersionFormat(info.suiteVersion);
+            } catch (NumberFormatException nfe) {
+                postInstallMsgBackToProvider(OtaNotifier.INVALID_JAD_MSG);
+                throw new InvalidJadException(
+                      InvalidJadException.INVALID_VERSION);
+            }
 
-        info.id = state.midletSuiteStorage.createSuiteID();
+            info.id = state.midletSuiteStorage.createSuiteID();
+        } else {
+            info.componentId =
+                    state.midletSuiteStorage.createSuiteComponentID();
+        }
 
         checkPreviousVersion();
         state.nextStep++;
@@ -904,48 +967,62 @@ public abstract class Installer {
                 }
             } else {
                 info.expectedJarSize = bytesDownloaded;
-                info.suiteName = state.jarProps.getProperty(
-                    MIDletSuite.SUITE_NAME_PROP);
-                if (info.suiteName == null || info.suiteName.length() == 0) {
-                    postInstallMsgBackToProvider(
-                        OtaNotifier.INVALID_JAR_MSG);
-                    throw new InvalidJadException(
-                         InvalidJadException.MISSING_SUITE_NAME);
-                }
 
-                info.suiteVendor = state.jarProps.getProperty(
-                    MIDletSuite.VENDOR_PROP);
-                if (info.suiteVendor == null ||
-                        info.suiteVendor.length() == 0) {
-                    postInstallMsgBackToProvider(
-                        OtaNotifier.INVALID_JAR_MSG);
-                    throw new InvalidJadException(
-                         InvalidJadException.MISSING_VENDOR);
-                }
+                if (!info.isSuiteComponent) {
+                    /*
+                     * Check MIDlet-* attributes only if this is
+                     * not a dynamic component.
+                     */
+                    info.suiteName = state.jarProps.getProperty(
+                        MIDletSuite.SUITE_NAME_PROP);
+                    if (info.suiteName == null ||
+                            info.suiteName.length() == 0) {
+                        postInstallMsgBackToProvider(
+                            OtaNotifier.INVALID_JAR_MSG);
+                        throw new InvalidJadException(
+                             InvalidJadException.MISSING_SUITE_NAME);
+                    }
 
-                info.suiteVersion = state.jarProps.getProperty(
-                    MIDletSuite.VERSION_PROP);
-                if (info.suiteVersion == null ||
-                        info.suiteVersion.length() == 0) {
-                    postInstallMsgBackToProvider(
-                        OtaNotifier.INVALID_JAR_MSG);
-                    throw new InvalidJadException(
-                         InvalidJadException.MISSING_VERSION);
-                }
+                    info.suiteVendor = state.jarProps.getProperty(
+                        MIDletSuite.VENDOR_PROP);
+                    if (info.suiteVendor == null ||
+                            info.suiteVendor.length() == 0) {
+                        postInstallMsgBackToProvider(
+                            OtaNotifier.INVALID_JAR_MSG);
+                        throw new InvalidJadException(
+                             InvalidJadException.MISSING_VENDOR);
+                    }
 
-                try {
-                    checkVersionFormat(info.suiteVersion);
-                } catch (NumberFormatException nfe) {
-                    postInstallMsgBackToProvider(
-                        OtaNotifier.INVALID_JAR_MSG);
-                    throw new InvalidJadException(
-                         InvalidJadException.INVALID_VERSION);
+                    info.suiteVersion = state.jarProps.getProperty(
+                        MIDletSuite.VERSION_PROP);
+                    if (info.suiteVersion == null ||
+                            info.suiteVersion.length() == 0) {
+                        postInstallMsgBackToProvider(
+                            OtaNotifier.INVALID_JAR_MSG);
+                        throw new InvalidJadException(
+                             InvalidJadException.MISSING_VERSION);
+                    }
+
+                    try {
+                        checkVersionFormat(info.suiteVersion);
+                    } catch (NumberFormatException nfe) {
+                        postInstallMsgBackToProvider(
+                            OtaNotifier.INVALID_JAR_MSG);
+                        throw new InvalidJadException(
+                             InvalidJadException.INVALID_VERSION);
+                    }
+
+                    info.id = state.midletSuiteStorage.createSuiteID();
+                } else {
+                    /*
+                     * IMPL_NOTE: appropriate attributes must be checked for
+                     *            dynamic components.
+                     */
+                    info.componentId =
+                            state.midletSuiteStorage.createSuiteComponentID();
                 }
 
                 // if already installed, check the domain of the JAR URL
-
-                info.id = state.midletSuiteStorage.createSuiteID();
-
                 checkPreviousVersion();
             }
         } catch (Exception e) {
@@ -955,7 +1032,13 @@ public abstract class Installer {
                 throw (IOException)e;
             }
 
-            throw (RuntimeException)e;
+            if (e instanceof RuntimeException) {
+                throw (RuntimeException)e;
+            }
+
+            /* handle not RuntimeException-derived exceptions */
+            throw new RuntimeException("Exception in installStep5(): " +
+                                        e.getMessage());
         }
     }
 
@@ -1034,8 +1117,11 @@ public abstract class Installer {
      * storing the suite
      * @exception InvalidJadException is thrown, if the there is
      * permission problem
+     * @exception MIDletSuiteLockedException is thrown, if the MIDletSuite is
+     * locked
      */
-    private void installStep7() throws IOException, InvalidJadException {
+    private void installStep7() throws IOException,
+            InvalidJadException, MIDletSuiteLockedException {
 
         try {
             if (info.authPath != null) {
@@ -1218,11 +1304,10 @@ public abstract class Installer {
              */
             MIDletInfo midletInfo = state.getMidletInfo();
             String midletClassNameToRun = null, iconName;
-            MIDletSuiteInfo msi;
 
             iconName = state.getAppProperty("MIDlet-Icon");
             if (iconName != null) {
-                iconName.trim();
+                iconName = iconName.trim();
             }
 
             if (midletInfo != null) {
@@ -1233,24 +1318,36 @@ public abstract class Installer {
                     iconName = midletInfo.icon;
                 }
             }
+            if (!info.isSuiteComponent) {
+                MIDletSuiteInfo msi = new MIDletSuiteInfo(info.id);
 
-            msi = new MIDletSuiteInfo(info.id);
-            msi.displayName = state.getDisplayName();
-            msi.midletToRun = midletClassNameToRun;
-            msi.numberOfMidlets = state.getNumberOfMIDlets();
-            /* default is to enable a newly installed suite */
-            msi.enabled = true;
-            msi.trusted = info.trusted;
-            msi.preinstalled = false;
-            msi.iconName = iconName;
-            msi.storageId = state.storageId;
+                msi.displayName = state.getDisplayName();
+                msi.midletToRun = midletClassNameToRun;
+                msi.numberOfMidlets = state.getNumberOfMIDlets();
+                /* default is to enable a newly installed suite */
+                msi.enabled = true;
+                msi.trusted = info.trusted;
+                msi.preinstalled = false;
+                msi.iconName = iconName;
+                msi.storageId = state.storageId;
 
-            state.midletSuiteStorage.storeSuite(info, settings, msi,
-                                                state.jadProps, state.jarProps);
+                state.midletSuiteStorage.storeSuite(
+                        info, settings, msi, state.jadProps, state.jarProps);
+            } else {
+                // this is a dynamic component
+                state.midletSuiteStorage.storeSuiteComponent(
+                        info, settings, state.getDisplayName(),
+                            state.jadProps, state.jarProps);
+            }
         } catch (Throwable e) {
             state.file.delete(info.jarFilename);
+            
             if (e instanceof IOException) {
                 throw (IOException)e;
+            }
+
+            if (e instanceof MIDletSuiteLockedException) {
+                throw (MIDletSuiteLockedException)e;
             }
 
             if (e instanceof OutOfMemoryError) {
@@ -1268,7 +1365,13 @@ public abstract class Installer {
                     InvalidJadException(InvalidJadException.TOO_MANY_PROPS);
             }
 
-            throw (RuntimeException)e;
+            if (e instanceof RuntimeException) {
+                throw (RuntimeException)e;
+            }
+
+            /* handle not RuntimeException-derived exceptions */
+            throw new RuntimeException("Exception in installStep7(): " +
+                                        e.getMessage());
         }
 
         state.nextStep++;
@@ -1289,6 +1392,9 @@ public abstract class Installer {
      * MONET optimization, VERIFY ONCE optimization, etc.
      * This step is done after obligatory installation part,
      * so the suite is downloaded, checked and stored by this moment.
+     * 
+     * @exception IOException is thrown, if an I/O error occurs during
+     * MONET image creation or classes verification
      */
     private void installStep8() throws IOException {
 
@@ -1437,61 +1543,89 @@ public abstract class Installer {
         int cmpResult;
 
         // Check if app already exists
-        id = MIDletSuiteStorage.getSuiteID(info.suiteVendor, info.suiteName);
-        if (id == MIDletSuite.UNUSED_SUITE_ID) {
-            // there is no previous version
-            return;
-        }
-
-        try {
-            midletSuite =
-              state.midletSuiteStorage.getMIDletSuite(id, true);
-
-            if (midletSuite == null) {
+        if (!info.isSuiteComponent) {
+            id = MIDletSuiteStorage.getSuiteID(info.suiteVendor,
+                                               info.suiteName);
+            if (id == MIDletSuite.UNUSED_SUITE_ID) {
                 // there is no previous version
                 return;
             }
-            checkVersionFormat(info.suiteVersion);
-
-            state.isPreviousVersion = true;
-
-            // This is now an update, use the old ID
-            info.id = id;
-
-            state.previousSuite = midletSuite;
-            state.previousInstallInfo = midletSuite.getInstallInfo();
-
-            if (state.force) {
-                // do not ask questions, force an overwrite
+        } else {
+            id = MIDletSuiteStorage.getSuiteComponentId(info.suiteVendor,
+                                                        info.suiteName);
+            if (id == ComponentInfo.UNUSED_COMPONENT_ID) {
+                // there is no previous version
                 return;
             }
+        }
 
-            // If it does, check version information
-            installedVersion = midletSuite.getProperty(
-                MIDletSuite.VERSION_PROP);
-            cmpResult = vercmp(info.suiteVersion,
-                               installedVersion);
-            if (cmpResult < 0) {
-                // older version, warn user
+        try {
+            if (!info.isSuiteComponent) {
+                midletSuite =
+                  state.midletSuiteStorage.getMIDletSuite(id, true);
+
+                if (midletSuite == null) {
+                    // there is no previous version
+                    return;
+                }
+                checkVersionFormat(info.suiteVersion);
+
+                state.isPreviousVersion = true;
+
+                // This is now an update, use the old ID
+                info.id = id;
+
+                state.previousSuite = midletSuite;
+                state.previousInstallInfo = midletSuite.getInstallInfo();
+
+                if (state.force) {
+                    // do not ask questions, force an overwrite
+                    return;
+                }
+
+                // If it does, check version information
+                installedVersion = midletSuite.getProperty(
+                    MIDletSuite.VERSION_PROP);
+                cmpResult = vercmp(info.suiteVersion,
+                                   installedVersion);
+                if (cmpResult < 0) {
+                    // older version, warn user
+                    state.exception = new InvalidJadException(
+                                      InvalidJadException.OLD_VERSION,
+                                      installedVersion);
+                    return;
+                }
+
+                if (cmpResult == 0) {
+                    // already installed, warn user
+                    state.exception = new InvalidJadException(
+                                      InvalidJadException.ALREADY_INSTALLED,
+                                      installedVersion);
+                    return;
+                }
+
+                // new version, warn user
                 state.exception = new InvalidJadException(
-                                  InvalidJadException.OLD_VERSION,
-                                  installedVersion);
+                                      InvalidJadException.NEW_VERSION,
+                                      installedVersion);
                 return;
-            }
+            } else {
+                // this is a dynamic component
+                info.componentId = id;
 
-            if (cmpResult == 0) {
-                // already installed, warn user
+                if (state.force) {
+                    // do not ask questions, force an overwrite
+                    return;
+                }
+                
+                /*
+                 * Don't check version, just inform the user that the
+                 * component is already installed.
+                 */
                 state.exception = new InvalidJadException(
                                   InvalidJadException.ALREADY_INSTALLED,
-                                  installedVersion);
-                return;
+                                  "n/a");
             }
-
-            // new version, warn user
-            state.exception = new InvalidJadException(
-                                  InvalidJadException.NEW_VERSION,
-                                  installedVersion);
-            return;
         } catch (MIDletSuiteCorruptedException mce) {
             if (state.listener != null) {
                 state.listener.updateStatus(CORRUPTED_SUITE, state);
@@ -1649,7 +1783,7 @@ public abstract class Installer {
      * scheme, host and path.
      *
      * @param url1 the first URL for comparision
-     * @param url1 the second URL for comparision
+     * @param url2 the second URL for comparision
      *
      * @return true if the scheme, host and path of the first given url
      *              is identical to the scheme, host and path of the second
@@ -2453,7 +2587,13 @@ public abstract class Installer {
                 }
 
                 // error in the implementation code
-                throw (RuntimeException)e;
+                if (e instanceof RuntimeException) {
+                    throw (RuntimeException)e;
+                }
+
+                /* handle not RuntimeException-derived exceptions */
+                throw new RuntimeException("Exception in " +
+                        "registerPushConnections(): " + e.getMessage());
             }
         }
 
@@ -2543,20 +2683,19 @@ class AccessControl extends AccessControlContextAdapter {
     AccessControl(MIDletSuite theSuite) {
         suite = theSuite;
     }
+    
     /**
      * Checks for permission and throw an exception if not allowed.
      * May block to ask the user a question.
      *
-     * @param permission ID of the permission to check for,
-     *      the ID must be from
+     * @param name name of the permission to check for,
+     *      the name must be from
      *      {@link com.sun.midp.security.Permissions}
      * @param resource string to insert into the question, can be null if
      *        no %2 in the question
      * @param extraValue string to insert into the question,
      *        can be null if no %3 in the question
      *
-     * @param name name of the requested permission
-     * 
      * @exception SecurityException if the specified permission
      * is not permitted, based on the current security policy
      * @exception InterruptedException if another thread interrupts the
@@ -2852,8 +2991,8 @@ class InstallStateImpl implements InstallState, MIDletSuite {
      * Checks for permission and throw an exception if not allowed.
      * May block to ask the user a question.
      *
-     * @param permission ID of the permission to check for,
-     *      the ID must be from
+     * @param permissionStr name of the permission to check for,
+     *      the name must be from
      *      {@link com.sun.midp.security.Permissions}
      * @param resource string to insert into the question, can be null if
      *        no %2 in the question

@@ -134,6 +134,11 @@
 /** Cache of the last suite the exists function found. */
 SuiteIdType g_lastSuiteExistsID = UNUSED_SUITE_ID;
 
+#if ENABLE_DYNAMIC_COMPONENTS
+/** Cache of the last component that midp_component_exists() function found. */
+ComponentIdType g_lastComponentExistsID = UNUSED_COMPONENT_ID;
+#endif
+
 /** A flag indicating that the _suites.dat was already loaded. */
 int g_isSuitesDataLoaded = 0;
 
@@ -175,6 +180,9 @@ suite_storage_init_impl() {
     g_numberOfSuites     = 0;
     g_isSuitesDataLoaded = 0;
     g_lastSuiteExistsID  = UNUSED_SUITE_ID;
+#if ENABLE_DYNAMIC_COMPONENTS
+    g_lastComponentExistsID = UNUSED_COMPONENT_ID;
+#endif    
 
     return init_listeners_impl();
 }
@@ -234,6 +242,9 @@ suite_storage_cleanup_impl() {
     g_numberOfSuites     = 0;
     g_isSuitesDataLoaded = 0;
     g_lastSuiteExistsID  = UNUSED_SUITE_ID;
+#if ENABLE_DYNAMIC_COMPONENTS
+    g_lastComponentExistsID = UNUSED_COMPONENT_ID;
+#endif
     g_suiteStorageInitDone = 0;
 }
 
@@ -313,7 +324,12 @@ get_suite_data(SuiteIdType suiteId) {
 
     /* walk through the linked list */
     while (pData != NULL) {
-        if (pData->suiteId == suiteId) {
+        if (pData->suiteId == suiteId
+#if ENABLE_DYNAMIC_COMPONENTS
+            && (pData->type == COMPONENT_REGULAR_SUITE ||
+                pData->type == COMPONENT_PREINSTALLED_SUITE)
+#endif 
+        ) {
             return pData;
         }
         pData = pData->nextEntry;
@@ -321,6 +337,34 @@ get_suite_data(SuiteIdType suiteId) {
 
     return NULL;
 }
+
+#if ENABLE_DYNAMIC_COMPONENTS
+/**
+ * Search for a structure describing the component by the component's ID.
+ *
+ * @param componentId unique ID of the dynamic component
+ *
+ * @return pointer to the MidletSuiteData structure containing
+ * the component's attributes or NULL if the component was not found
+ */
+MidletSuiteData*
+get_component_data(ComponentIdType componentId) {
+    MidletSuiteData* pData;
+
+    pData = g_pSuitesData;
+
+    /* walk through the linked list */
+    while (pData != NULL) {
+        if (pData->type == COMPONENT_DYNAMIC &&
+                pData->componentId == componentId) {
+            return pData;
+        }
+        pData = pData->nextEntry;
+    }
+
+    return NULL;
+}
+#endif /* ENABLE_DYNAMIC_COMPONENTS */
 
 /**
  * Reads the given file into the given buffer.
@@ -1181,20 +1225,21 @@ write_settings(char** ppszError, SuiteIdType suiteId, jboolean enabled,
 }
 
 /**
- * Native method boolean removeFromSuiteList(String) for class
- * com.sun.midp.midletsuite.MIDletSuiteStorage.
+ * Removes the given suite and all its components from the list
+ * of installed suites.
  * <p>
- * Removes the suite from the list of installed suites.
- * <p>
- * Used from suitestore_midletsuitestorage_kni.c so is non-static.
+ * Used from suitestore_midletsuitestorage_kni.c and suitestore_task_manager.c
+ * so it is non-static.
  *
  * @param suiteId ID of a suite
  *
- * @return 1 if the suite was in the list, 0 if not
- * -1 if out of memory
+ * @return  1 if the suite was in the list, 0 if not,
+ *         -1 if out of memory
  */
 int
 remove_from_suite_list_and_save(SuiteIdType suiteId) {
+    char* pszError;
+    int status;
     int existed = 0;
     MidletSuiteData *pData, *pPrevData = NULL;
 
@@ -1211,9 +1256,6 @@ remove_from_suite_list_and_save(SuiteIdType suiteId) {
     /* try to find a suite */
     while (pData != NULL) {
         if (pData->suiteId == suiteId) {
-            int status;
-            char* pszError;
-
             /* remove the entry we have found from the list */
             if (pPrevData) {
                 /* this entry is not the first */
@@ -1226,24 +1268,125 @@ remove_from_suite_list_and_save(SuiteIdType suiteId) {
             /* free the memory allocated for the entry */
             free_suite_data_entry(pData);
 
-            /* decrease the number of the installed suites */
+            /* decrease the number of the installed suites and components */
             g_numberOfSuites--;
 
+            /*
+             * Save the database later, after removing all dynamic components
+             * belonging to the suite.
+             */
+#if ENABLE_DYNAMIC_COMPONENTS
+            /* move to the next entry */
+            if (pPrevData) {
+                pData = pPrevData->nextEntry;
+            } else {
+                pData = g_pSuitesData;
+            }
+            continue;
+#else
             /* save the modified list into _suites.dat */
             status = write_suites_data(&pszError);
             existed = (status == ALL_OK) ? 1 : -1;
             storageFreeError(pszError);
             break;
+#endif /* ENABLE_DYNAMIC_COMPONENTS */
         }
 
         pPrevData = pData;
         pData = pData->nextEntry;
     }
 
-    /* Reset the static variable for MVM-safety */
+#if ENABLE_DYNAMIC_COMPONENTS
+    status = write_suites_data(&pszError);
+    existed = (status == ALL_OK) ? 1 : -1;
+    storageFreeError(pszError);
+#endif /* ENABLE_DYNAMIC_COMPONENTS */
+
+    /* Reset the static variables for MVM-safety */
     g_lastSuiteExistsID = UNUSED_SUITE_ID;
+#if ENABLE_DYNAMIC_COMPONENTS
+    g_lastComponentExistsID = UNUSED_COMPONENT_ID;
+#endif
 
     return existed;
+}
+
+/**
+ * Retrieves the class path for a suite or dynamic component.
+ *
+ * NOTE: this method is located here because it is called from both
+ *       MIDletSuiteStorage and DynamicComponentStorage native code.
+ *       If dynamic components are not used, it can be moved to
+ *       suitestore_midletsuitestorage_kni.c.
+ *
+ * @param type             type of component (midlet suite or dynamic
+ *                         component) for which the information is requested
+ * @param suiteOrComponentId unique ID of the suite or coponent
+ *
+ * @param pClassPath [out] pointer to pcsl_string where the class path will
+ *                         be saved on exit; it's a caller's responsibility
+ *                         to call pcsl_string_free() when this object is
+ *                         not needed
+ *
+ * @return ALL_OK if no errors,
+ *         SUITE_CORRUPTED_ERROR if suite is corrupted,
+ *         OUT_OF_MEMORY if out of memory,
+ *         IO_ERROR if I/O error
+ */
+MIDPError
+get_jar_path(ComponentType type, jint suiteOrComponentId,
+             pcsl_string* pClassPath) {
+    SuiteIdType suiteId;
+    StorageIdType storageId;
+    MIDPError status;
+
+#if !ENABLE_DYNAMIC_COMPONENTS
+    (void)type;
+#endif    
+
+    if (pClassPath == NULL) {
+        return BAD_PARAMS;
+    }
+
+    do {
+#if ENABLE_DYNAMIC_COMPONENTS
+        if (type == COMPONENT_DYNAMIC) {
+            /* get ID of the suite owning this component */
+            MidletSuiteData* pData = get_component_data(
+                (ComponentIdType)suiteOrComponentId);
+            if (!pData) {
+                status = NOT_FOUND;
+                break;
+            }
+            suiteId = pData->suiteId;
+        } else {
+#endif /* ENABLE_DYNAMIC_COMPONENTS */
+            suiteId = (SuiteIdType)suiteOrComponentId;
+#if ENABLE_DYNAMIC_COMPONENTS
+        }
+#endif
+
+        status = midp_suite_get_suite_storage(suiteId, &storageId);
+        if (status != ALL_OK) {
+            /* the suite was not found */
+            break;
+        }
+
+#if ENABLE_DYNAMIC_COMPONENTS
+        if (type == COMPONENT_DYNAMIC) {
+            status = midp_suite_get_component_class_path(
+                (ComponentIdType)suiteOrComponentId,
+                    suiteId, storageId, KNI_TRUE, pClassPath);
+        } else {
+#endif /* ENABLE_DYNAMIC_COMPONENTS */
+            status = midp_suite_get_class_path(suiteId, storageId,
+                                               KNI_TRUE, pClassPath);
+#if ENABLE_DYNAMIC_COMPONENTS
+        }
+#endif        
+    } while (0);
+
+    return status;
 }
 
 /**
@@ -1251,7 +1394,7 @@ remove_from_suite_list_and_save(SuiteIdType suiteId) {
  * @param suiteId ID of a suite
  *
  * @return ALL_OK if the suite is not corrupted,
- *         SUITE_CORRUPTED_ERROR is suite is corrupted,
+ *         SUITE_CORRUPTED_ERROR if suite is corrupted,
  *         OUT_OF_MEMORY if out of memory,
  *         IO_ERROR if I/O error
  */

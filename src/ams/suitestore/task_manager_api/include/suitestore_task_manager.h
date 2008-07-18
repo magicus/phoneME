@@ -52,6 +52,22 @@ extern "C" {
 MIDPError
 midp_get_number_of_suites(int* pNumOfSuites);
 
+#if ENABLE_DYNAMIC_COMPONENTS
+/**
+ * Retrieves the number of the installed components belonging
+ * to the given midlet suite.
+ *
+ * @param suiteId          [in]  ID of the MIDlet suite the information about
+ *                               whose components must be retrieved
+ * @param pNumOfComponents [out] pointer to variable to accept the number
+ *                               of components
+ *
+ * @returns error code (ALL_OK if no errors)
+ */
+MIDPError
+midp_get_number_of_components(SuiteIdType suiteId, int* pNumOfComponents);
+#endif /* ENABLE_DYNAMIC_COMPONENTS */
+
 /**
  * Get the list installed of MIDlet suite IDs.
  *
