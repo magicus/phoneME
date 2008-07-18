@@ -52,7 +52,7 @@ do { \
     javacall_handle handle__ = (handle_); \
     int javacall_event__ = (int)(javacall_event_); \
     result__ = (code_); \
-    if (result__ == JAVACALL_WOULD_BLOCK) { \
+    while (result__ == JAVACALL_WOULD_BLOCK) { \
         void *data__;\
         if (JAVACALL_OK != mmapi_thread_suspend(MAKE_PLAYER_DESCRIPTOR(app_id_, player_id_, javacall_event__), &result__, &data__)) { \
             result__ = JAVACALL_FAIL; \
