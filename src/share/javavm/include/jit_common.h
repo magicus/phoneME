@@ -198,7 +198,7 @@ typedef enum {
 
 #define CVMJIT_DEFAULT_UPPER_CCACHE_THR     95
 /* NOTE: the default of -1 for lower code cache threshold is
-   significant. See CVMJITcodeCacheInit */
+   significant. See CVMJITcodeCacheInitOptions */
 #define CVMJIT_DEFAULT_LOWER_CCACHE_THR     -1
 
 /*
