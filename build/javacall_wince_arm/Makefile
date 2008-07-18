@@ -1,5 +1,6 @@
 #
 #
+#
 # Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
 #
@@ -24,4 +25,4 @@
 #
 
 IsSelfHosted = false
-include ../share/root.make
+include $(JVMWorkSpace)/build/share/root.make

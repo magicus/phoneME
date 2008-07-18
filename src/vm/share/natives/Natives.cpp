@@ -728,7 +728,7 @@ OopDesc* Java_java_lang_Class_getName(JVM_SINGLE_ARG_TRAPS) {
   UsingFastOops fast_oops;
   JavaClassObj::Raw receiver = GET_PARAMETER_AS_OOP(0);
 
-#if ENABLE_REFLECTION
+#if USE_REFLECTION
   if (receiver().is_primitive()) {
     const char * name =
       ParsedTypeSymbol::type_name_for(receiver().type_symbol());
@@ -856,7 +856,7 @@ OopDesc* Java_java_lang_Class_newInstance(JVM_SINGLE_ARG_TRAPS) {
   Thread *thread = Thread::current();
   JavaFrame frame(thread);
   JavaClassObj::Fast receiver = GET_PARAMETER_AS_OOP(0);
-#if ENABLE_REFLECTION
+#if USE_REFLECTION
   if (receiver().is_primitive()) {
     Throw::instantiation(ExceptionOnFailure JVM_THROW_0);
   }
@@ -874,7 +874,7 @@ OopDesc* Java_java_lang_Class_newInstance(JVM_SINGLE_ARG_TRAPS) {
 // public native boolean isInstance(Object obj);
 jint Java_java_lang_Class_isInstance() {
   JavaClassObj::Raw receiver = GET_PARAMETER_AS_OOP(0);
-#if ENABLE_REFLECTION
+#if USE_REFLECTION
   if (receiver().is_primitive()) {
     return false;
   }
@@ -898,7 +898,7 @@ jint Java_java_lang_Class_isAssignableFrom(JVM_SINGLE_ARG_TRAPS) {
     Throw::null_pointer_exception(empty_message JVM_THROW_0);
   }
 
-#if ENABLE_REFLECTION
+#if USE_REFLECTION
   if (receiver().is_primitive()) {
     return receiver.equals(&argument);
   }
@@ -988,7 +988,7 @@ ReturnOop Java_java_lang_Class_getSuperclass(JVM_SINGLE_ARG_TRAPS) {
   // of initializing the derived class.
   UsingFastOops fast_oops;
   JavaClassObj::Fast receiver = GET_PARAMETER_AS_OOP(0);
-#if ENABLE_REFLECTION
+#if USE_REFLECTION
   if (receiver().is_primitive()) {
     return NULL;
   }

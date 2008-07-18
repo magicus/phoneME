@@ -27,7 +27,7 @@
 # include "incls/_precompiled.incl"
 # include "incls/_Array.cpp.incl"
 
-#if ENABLE_REFLECTION
+#if USE_REFLECTION
 ReturnOop Array::shrink(int new_length) {
   GUARANTEE(new_length >= 0, "Negative array size prohibited");
   int scale;

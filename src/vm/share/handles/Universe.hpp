@@ -489,7 +489,7 @@ private:
 #define UNIVERSE_DEBUGGER_HANDLES_DO(template)
 #endif
 
-#if ENABLE_REFLECTION
+#if USE_REFLECTION
 #define UNIVERSE_REFLECTION_HANDLES_DO(template)                      \
   /* Order does matter. See get_primitive_type_class() */             \
   template(boolean_class,                        InstanceClass)       \

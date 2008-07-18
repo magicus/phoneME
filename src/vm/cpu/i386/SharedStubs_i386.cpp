@@ -234,9 +234,9 @@ void SharedStubs::generate_shared_entry(Label& shared_entry_return_point) {
   movl(esi, Address(ebx, Constant(Method::variable_part_offset())));
   movl(esi, Address(esi));
 
-#if ENABLE_REFLECTION || ENABLE_JAVA_DEBUGGER
+#if USE_REFLECTION || ENABLE_JAVA_DEBUGGER
   if (TaggedJavaStack) {
-    comment("TaggedJavaStack not supported with ENABLE_REFLECTON");
+    comment("TaggedJavaStack not supported with USE_REFLECTION");
     int3();
   }
 
@@ -295,9 +295,9 @@ void SharedStubs::generate_shared_entry(Label& shared_entry_return_point) {
 
   entry_end(); // shared_entry
 
-#if ENABLE_REFLECTION || ENABLE_JAVA_DEBUGGER
+#if USE_REFLECTION || ENABLE_JAVA_DEBUGGER
   if (TaggedJavaStack) {
-    comment("TaggedJavaStack not supported with ENABLE_REFLECTON");
+    comment("TaggedJavaStack not supported with USE_REFLECTION");
     int3();
   }
 

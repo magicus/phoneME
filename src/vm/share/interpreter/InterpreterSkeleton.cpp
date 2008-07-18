@@ -154,7 +154,7 @@ void native_math_sqrt_entry()                      {}
 void native_math_ceil_entry()                      {}
 void native_math_floor_entry()                     {}
 
-#if ENABLE_CLDC_111 || ENABLE_REFLECTION
+#if ENABLE_CLDC_111 || ENABLE_EXTENDED_API
 
 void native_math_asin_entry()                      {}
 void native_math_acos_entry()                      {}
@@ -200,7 +200,7 @@ jlong interpreter_pair_counters[1];
 void cautious_invoke() {}
 #endif
 
-#if ENABLE_REFLECTION || ENABLE_JAVA_DEBUGGER
+#if USE_REFLECTION || ENABLE_JAVA_DEBUGGER
 void entry_return_void()   {}
 void entry_return_word()   {}
 void entry_return_long()   {}

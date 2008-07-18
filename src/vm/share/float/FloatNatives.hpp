@@ -90,7 +90,7 @@ double jvm_fplib_floor(double x);
 double jvm_fplib_ceil(double x);
 double jvm_fplib_sqrt(double x);
 
-#if ENABLE_CLDC_111 || ENABLE_REFLECTION
+#if ENABLE_CLDC_111 || ENABLE_EXTENDED_API
 
 double jvm_fplib_asin(double x);
 double jvm_fplib_acos(double x);
