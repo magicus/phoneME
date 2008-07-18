@@ -433,6 +433,15 @@ include $(JSR_234_DIR)/build/$(SUBSYSTEM_MAKE_FILE)
 endif
 
 #####################################################################
+# (Extra) network monitor Subsystem
+# Description: Network monitor
+#####################################################################
+
+ifeq ($(USE_NETMON), true)
+include $(NETMON_DIR)/src/config/$(SUBSYSTEM_MAKE_FILE)
+endif
+
+#####################################################################
 # Multimedia Subsystem
 # Description: JSR 135
 #####################################################################
