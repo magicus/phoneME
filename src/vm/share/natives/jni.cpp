@@ -31,16 +31,18 @@
 
 static jobject JNICALL
 new_local_ref_for_oop(JNIEnv* env, Oop * oop) {
-  if (oop->is_null()) {
-    return NULL;
-  }
-
   jint ret = env->EnsureLocalCapacity(1);
   if (ret != JNI_OK) {
     return NULL;
   }
 
   return (jobject)ObjectHeap::register_local_reference(oop);
+}
+
+static jobject JNICALL
+new_local_ref(JNIEnv* env) {
+  Oop dummy;
+  return new_local_ref_for_oop(env, &dummy);
 }
 
 static jint JNICALL 
@@ -50,6 +52,7 @@ _JNI_GetVersion(JNIEnv * env) {
 
 static jclass JNICALL
 _JNI_FindClass(JNIEnv *env, const char * name) {
+  // IMPL_NOTE: must throw typed Errors as required by JNI spec
   SETUP_ERROR_CHECKER_ARG;
 
   UsingFastOops fast_oops;
@@ -59,7 +62,7 @@ _JNI_FindClass(JNIEnv *env, const char * name) {
     Symbol::Raw parsed_class_name = 
       TypeSymbol::parse_array_class_name(&class_name JVM_NO_CHECK);
     // TypeSymbol::parse_array_class_name() throws a plain Error
-    // if class name is invalid, we should throw NoClassDefFoundError
+    // if class name is invalid, JNI spec requires NoClassDefFoundError
     if (CURRENT_HAS_PENDING_EXCEPTION) {
       Thread::clear_current_pending_exception();
       Throw::class_not_found(&class_name, ErrorOnFailure JVM_THROW_0);
@@ -95,6 +98,35 @@ _JNI_FindClass(JNIEnv *env, const char * name) {
   }
 
   return new_local_ref_for_oop(env, &result);
+}
+
+static jclass JNICALL
+_JNI_GetSuperclass(JNIEnv *env, jclass sub) {
+  // Cannot just forward to KNI_GetSuperClass() since KNI and JNI specs 
+  // require different behavior for interfaces.
+  JavaClassObj::Raw sub_mirror = *decode_handle(sub);
+  GUARANTEE(sub_mirror.not_null(), "null argument to GetSuperclass");
+  JavaClass::Raw sub_class = sub_mirror().java_class();
+
+  if (!sub_class().is_interface()) {
+    JavaClass::Raw super_class = sub_class().super();
+
+    if (super_class.not_null()) {
+      JavaClassObj::Raw m = super_class().java_mirror();
+      return new_local_ref_for_oop(env, &m);
+    }
+  }
+
+  return NULL;
+}
+
+static jboolean JNICALL
+_JNI_IsAssignableFrom(JNIEnv *env, jclass sub, jclass sup) {
+  if (sub == NULL || sup == NULL) {
+    return JNI_FALSE;
+  }
+
+  return KNI_IsAssignableFrom(sub, sup);
 }
 
 static jint JNICALL
@@ -259,6 +291,32 @@ _JNI_EnsureLocalCapacity(JNIEnv* env, jint capacity) {
   return JNI_OK;
 }
 
+static jclass JNICALL
+_JNI_GetObjectClass(JNIEnv *env, jobject obj) {
+  if (obj == NULL) {
+    return NULL;
+  }
+
+  jobject clazz = new_local_ref(env);
+
+  KNI_GetObjectClass(obj, clazz);
+
+  if (*decode_handle(clazz) == NULL) {
+    return NULL;
+  }
+
+  return clazz;
+}
+
+static jboolean JNICALL
+_JNI_IsInstanceOf(JNIEnv *env, jobject obj, jclass clazz) {
+  if (obj == NULL || clazz == NULL) {
+    return JNI_FALSE;
+  }
+
+  return KNI_IsInstanceOf(obj, clazz);
+}
+
 static jobject JNICALL
 _JNI_NewWeakGlobalRef(JNIEnv* env, jobject obj) {
   if (obj == NULL) {
@@ -303,8 +361,8 @@ static struct JNINativeInterface _jni_native_interface = {
 
     NULL, // ToReflectedMethod
 
-    NULL, // GetSuperclass
-    NULL, // IsAssignableFrom
+    _JNI_GetSuperclass, // GetSuperclass
+    _JNI_IsAssignableFrom, // IsAssignableFrom
 
     NULL, // ToReflectedField
 
@@ -331,8 +389,8 @@ static struct JNINativeInterface _jni_native_interface = {
     NULL, // NewObjectV
     NULL, // NewObjectA
 
-    NULL, // GetObjectClass
-    NULL, // IsInstanceOf
+    _JNI_GetObjectClass, // GetObjectClass
+    _JNI_IsInstanceOf, // IsInstanceOf
 
     NULL, // GetMethodID
 
