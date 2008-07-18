@@ -113,9 +113,7 @@ static ThreadInfo * match_next_thread(int desc, ThreadInfo *prev) {
 
     for (ti = (NULL != prev) ? prev->next : head; NULL != ti; ti = ti->next) {
         if (ti->desc == desc ||
-            (desc & PLAYER_DESCRIPTOR_EVENT_MASK) == desc &&
-            (ti->desc & PLAYER_DESCRIPTOR_EVENT_MASK) == desc &&
-            0 != ti->desc) {
+            (ti->desc & PLAYER_DESCRIPTOR_EVENT_MASK) == desc) {
             return ti;
         }
     }
