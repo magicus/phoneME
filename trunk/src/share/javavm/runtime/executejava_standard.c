@@ -3618,6 +3618,7 @@ new_transition:
 		     * beyond the invoke opcode and increment the TOS by
 		     * the size of the method result.
 		     */
+                    CVMassert((int)ret <= CNI_DOUBLE);
 		    topOfStack += (int)ret;
 		    pc += (*pc == opc_invokeinterface_quick ? 5 : 3);
 		    CONTINUE;
