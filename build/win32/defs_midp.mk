@@ -66,3 +66,7 @@ else
 endif
 
 WIN_LINKLIBS += $(MIDP_LIBS)
+
+ifeq ($(WIN32_PLATFORM),wince)
+CVM_DEFINES += -DNO_GETENV=1
+endif
