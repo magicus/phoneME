@@ -41,7 +41,6 @@
 #               This has no effect if USE_JSR_211 is false.
 # PCSL_OUTPUT_DIR - Output directory for PCSL libraries / include files
 # JPEG_DIR - Workspace for JPEG source when USE_JPEG is true
-# NETMON_DIR - Workspace for network monitor source when USE_NETMON is true
 #
 # Other variables that must be defined elsewhere:
 #

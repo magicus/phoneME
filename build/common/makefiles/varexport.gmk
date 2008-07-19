@@ -114,7 +114,6 @@ PATHVARLIST = $(sort \
   SWERVE_DIR  \
   JC_DIR      \
   JPEG_DIR    \
-  NETMON_DIR  \
   TOOLS_DIR   \
   )
 
