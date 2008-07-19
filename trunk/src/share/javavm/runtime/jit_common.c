@@ -1467,7 +1467,7 @@ static const CVMSubOptionData knownJitSubOptions[] = {
 
     {"lowerCodeCacheThreshold", "Lower Code Cache Threshold", 
      CVM_PERCENT_OPTION, 
-     {{0, 100, CVMJIT_DEFAULT_LOWER_CCACHE_THR}},
+     {{0, 100, (CVMAddr)CVMJIT_DEFAULT_LOWER_CCACHE_THR}},
      &CVMglobals.jit.lowerCodeCacheThresholdPercent},
 
 #ifdef CVM_AOT
