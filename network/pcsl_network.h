@@ -189,16 +189,31 @@ extern "C" {
  */
 #define MAX_HOST_LENGTH MAX_HOST_LENGTH_MD
 
-/**
- * Performs platform-specific initialization of the networking system.
- * 
- * @return PCSL_NET_SUCCESS upon success;\n 
- *         PCSL_NET_IOERROR for an error
- */
-extern int pcsl_network_init(void);
 
 /**
- * Performs platform-specific initialization of the networking system.
+ * Starts platform-specific initialization of the networking system.
+ *
+ *
+ * @return PCSL_NET_SUCCESS upon success;
+ * PCSL_NET_IOERROR if there is a network error;
+ * PCSL_NET_WOULDBLOCK 
+ */
+extern int pcsl_network_init_start(void);
+
+
+/**
+ * Finalize platform-specific initialization of the networking system.
+ *
+ *
+ * @return PCSL_NET_SUCCESS upon success; 
+ * PCSL_NET_IOERROR if there is a network error;
+ * PCSL_NET_WOULDBLOCK 
+ */
+extern int pcsl_network_init_finish(void);
+
+
+/**
+ * Starts platform-specific finalization of the networking system.
  *
  *
  * @return PCSL_NET_SUCCESS upon success;
@@ -208,7 +223,7 @@ extern int pcsl_network_init(void);
 extern int pcsl_network_finalize_start(void);
 
 /**
- * Finelize platform-specific initialization of the networking system.
+ * Finalize platform-specific finalization of the networking system.
  *
  *
  * @return PCSL_NET_SUCCESS upon success; 

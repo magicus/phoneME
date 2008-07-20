@@ -520,7 +520,7 @@ int pcsl_socket_getremoteport(
 /**
  * See pcsl_network.h for definition.
  */ 
-int pcsl_network_init(void) {
+int pcsl_network_init_start(void) {
     int result;
 
     /* Initially open the linux serial port */
@@ -537,6 +537,29 @@ int pcsl_network_init(void) {
 
     return PCSL_NET_SUCCESS;
 } 
+
+/**
+ * See pcsl_network.h for definition.
+ */
+int pcsl_network_init_finish(void){
+    return PCSL_NET_SUCCESS;
+}
+
+
+/**
+ * See pcsl_network.h for definition.
+ */
+int pcsl_network_finalize_start(void){
+    return PCSL_NET_SUCCESS;
+}
+
+/**
+ * See pcsl_network.h for definition.
+ */
+int pcsl_network_finalize_finish(void){
+    return PCSL_NET_SUCCESS;
+}
+
 
 /**
  * See pcsl_network.h for definition.
