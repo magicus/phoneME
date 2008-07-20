@@ -46,6 +46,9 @@
 #include <midpEvents.h>
 #include <midpAMS.h>  /* for midpFinalize() */
 
+#include <javacall_socket.h>
+#include <pcsl_network.h>
+
 #include <suspend_resume.h>
 
 #include <javacall_lifecycle.h>
@@ -208,6 +211,11 @@ javacall_result checkForSystemSignal(MidpReentryData* pNewSignal,
         pNewSignal->descriptor = (int)event->data.socketEvent.handle;
         pNewSignal->status     = event->data.socketEvent.status;
         pNewSignal->pResult    = (void *) event->data.socketEvent.extraData;
+        break;
+    case MIDP_JC_EVENT_NETWORK:
+        pNewSignal->waitingFor = NETWORK_STATUS_SIGNAL;
+        pNewSignal->descriptor = 0;
+        pNewSignal->status = (int)event->data.networkEvent.netType;
         break;
     case MIDP_JC_EVENT_END:
         pNewSignal->waitingFor = AMS_SIGNAL;
@@ -573,6 +581,37 @@ static int midp_slavemode_handle_events(JVMSPI_BlockedThreadInfo *blocked_thread
             }
             break;
 #endif /* ENABLE_JSR_256 */
+        case NETWORK_STATUS_SIGNAL:
+            if(MIDP_NETWORK_UP == newSignal.status) {
+                midp_thread_signal_list(blocked_threads,
+                                        blocked_threads_count, NETWORK_STATUS_SIGNAL,
+                                        newSignal.descriptor, PCSL_NET_SUCCESS);
+            } else if(MIDP_NETWORK_DOWN == newSignal.status) {
+                midp_thread_signal_list(blocked_threads,
+                                        blocked_threads_count, NETWORK_STATUS_SIGNAL,
+                                        newSignal.descriptor, PCSL_NET_IOERROR);
+                midp_thread_signal_list(blocked_threads,
+                                        blocked_threads_count, NETWORK_READ_SIGNAL, 0,
+                                        PCSL_NET_IOERROR);
+                midp_thread_signal_list(blocked_threads,
+                                        blocked_threads_count, NETWORK_WRITE_SIGNAL, 0,
+                                        PCSL_NET_IOERROR);
+                midp_thread_signal_list(blocked_threads,
+                                        blocked_threads_count, NETWORK_EXCEPTION_SIGNAL, 0,
+                                        PCSL_NET_IOERROR);
+                midp_thread_signal_list(blocked_threads,
+                                        blocked_threads_count, HOST_NAME_LOOKUP_SIGNAL, 0,
+                                        PCSL_NET_IOERROR);
+ 
+                REPORT_INFO(LC_PROTOCOL, "midp_slavemode_handle_events:"
+                            "network down\n");
+            } else {
+                REPORT_ERROR1(LC_PROTOCOL, "midp_slavemode_handle_events:"
+                              "NETWORK_STATUS_SIGNAL Unknown net. status = %d\n",
+                              newSignal.status);
+            }
+            break;
+
         default:
             break;
         } /* switch */
