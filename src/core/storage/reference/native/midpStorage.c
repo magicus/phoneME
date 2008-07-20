@@ -796,7 +796,7 @@ storage_rename_file(char** ppszError, const pcsl_string* oldFilename_str,
 
 static char*
 getLastError(char* pszFunction) {
-    char* temp;
+    char* temp = NULL;
 
 #ifndef UNDER_CE
     temp = strerror(errno);
@@ -1001,7 +1001,7 @@ storage_write_utf16_string(char** ppszError, int handle,
     } else {
         length = pcsl_string_length(str);
     }
-  
+
     storageWrite(ppszError, handle, (char*)&length, sizeof (length));
 
     /* are there data to write? */
