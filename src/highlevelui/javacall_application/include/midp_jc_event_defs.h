@@ -365,7 +365,6 @@ typedef struct {
 }midp_jc_event_menu_selection;
 
 typedef struct {
-    int                                    id;
     midp_jc_event_type                     eventType;
     union {
         midp_jc_event_key                  keyEvent;
