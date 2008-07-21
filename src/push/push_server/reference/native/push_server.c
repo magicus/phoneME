@@ -445,7 +445,7 @@ static int pushOpenInternal(int startListening) {
     if (startListening) {
         /* Make sure the network is properly in initialized. */
 
-        if (pcsl_network_init() != 0) {
+        if (pcsl_network_init_start() != PCSL_NET_SUCCESS) {
             return -1;
         }
     }
