@@ -125,13 +125,7 @@ public class SMMManager extends MIDlet
     public SMMManager() {
         midletSuiteStorage = MIDletSuiteStorage.getMIDletSuiteStorage();
 
-        /*
-         * Listen to the MIDlet proxy list.
-         * this allows us to notify the Application Selector
-         * of any changes whenever switch back to the AMS.
-         */
         midletProxyList = MIDletProxyList.getMIDletProxyList();
-        midletProxyList.addListener(this);
         midletProxyList.setDisplayController(
             new SMMDisplayController(midletProxyList,
                 MIDletSuite.INTERNAL_SUITE_ID, this.getClass().getName()));
@@ -140,17 +134,26 @@ public class SMMManager extends MIDlet
 
         GraphicalInstaller.initSettings();
 
-	first = (getAppProperty("logo-displayed") == null);
+        first = (getAppProperty("logo-displayed") == null);
 
-	Display display = Display.getDisplay(this);
-	displayError = new DisplayError(display);
+        Display display = Display.getDisplay(this);
+        displayError = new DisplayError(display);
 
-	// AppSelector will be set to be current at the end of its constructor
+        // AppSelector will be set to be current at the end of its constructor
         appManager = new AppManagerPeer(this, display, displayError, first, null);
 
         if (first) {
             first = false;
         }
+
+        /*
+         * Listen to the MIDlet proxy list.
+         * This allows us to notify the Application Selector
+         * of any changes whenever switch back to the AMS.
+         * The listener must be set up after finishing all
+         * initialization in the constructor.
+         */
+        midletProxyList.addListener(this);
     }
 
     /**
