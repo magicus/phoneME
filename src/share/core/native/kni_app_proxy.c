@@ -22,14 +22,36 @@
  * information or have any questions.
  */
 
+#include <string.h>
+
+#ifdef _DEBUG
+#include <stdio.h>
+
+#define TRACE_MIDLETREG
+#endif
+
 #include <jsrop_kni.h>
 #include <jsrop_suitestore.h>
 #include <javautil_unicode.h>
 #include <javacall_memory.h>
 
-#ifdef _DEBUG
-#define TRACE_MIDLETREG
+//---------------------------------------------------------
+
+KNIEXPORT KNI_RETURNTYPE_BOOLEAN
+KNIDECL(com_sun_j2me_content_AppProxy_isInSvmMode) {
+    int res;
+#if ENABLE_MULTIPLE_ISOLATES
+    res = JAVACALL_TRUE;
+#else
+    res = JAVACALL_FALSE;
 #endif
+#ifdef _DEBUG
+    printf( "Compiled in '%s' mode\n", res ? "MVM" : "SVM" );
+#endif
+    KNI_ReturnBoolean( res );
+}
+
+//---------------------------------------------------------
 
 typedef struct _MidletIdChain {
     SuiteIdType             suiteId;
@@ -139,5 +161,17 @@ KNIDECL(com_sun_j2me_content_AppProxy_isMidletRunning) {
 
     RELEASE_UTF16_STRING_PARAMETER
     KNI_EndHandles();
+    KNI_ReturnBoolean( res );
+}
+
+KNIEXPORT KNI_RETURNTYPE_BOOLEAN
+KNIDECL(com_sun_j2me_content_AppProxy_isSuiteRunning) {
+    int res = 0;
+    SuiteIdType suiteId = KNI_GetParameterAsInt(1);
+    MidletIdChain * p = runningMidletsChain;
+    while( p != NULL && p->suiteId < suiteId )
+        p = p->next;
+
+    res = (p != NULL && p->suiteId == suiteId);
     KNI_ReturnBoolean( res );
 }
