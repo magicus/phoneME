@@ -45,7 +45,7 @@ CC		= cl
 CPP		= cl
 CC_OUTPUT	= -Fo
 
-ifeq ($(CREATE_RUNMIDLET_LIB), true)
+ifeq ($(CREATE_JAVA_LIB), true)
 LD 		= lib
 else
 LD		= link
