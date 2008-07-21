@@ -92,9 +92,14 @@ static char selectedNumber[MAX_PHONE_NUMBER_LENGTH];
  */
 static javacall_result
 midp_jc_event_send(midp_jc_event_union *event) {
-    event->id = 118;
+#if !ENABLE_CDC
     return javacall_event_send((unsigned char *)event,
                                sizeof(midp_jc_event_union));
+#else
+    /* MIDP (JSR-118) event queue */
+    return javacall_event_send(118, (unsigned char *)event,
+                               sizeof(midp_jc_event_union));
+#endif
 }
 
 /**
@@ -1092,7 +1097,7 @@ void javanotify_carddevice_event(javacall_carddevice_event event,
         /* TODO: report error */
         return;
     }
-    javacall_event_send((unsigned char *) &e, sizeof(midp_jc_event_union));
+    midp_jc_event_send(&e);
     return;
 }
 #endif /* ENABLE_JSR_177 */

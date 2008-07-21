@@ -69,9 +69,14 @@ void checkForSystemSignal(MidpReentryData* pNewSignal,
     javacall_bool res;
     int outEventLen;
     
-    *(int *)binaryBuffer = 118;
+#if !ENABLE_CDC
     res = javacall_event_receive((long)timeout, binaryBuffer,
                                  BINARY_BUFFER_MAX_LEN, &outEventLen);
+#else
+    /* MIDP (JSR-118) event queue */
+    res = javacall_event_receive_cvm(118, binaryBuffer,
+                                 BINARY_BUFFER_MAX_LEN, &outEventLen);
+#endif
 
     if (!JAVACALL_SUCCEEDED(res)) {
         return;
