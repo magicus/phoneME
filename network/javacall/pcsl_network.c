@@ -117,52 +117,16 @@ unsigned short pcsl_network_ntohs(
 }
 
 
-
-
-/**
- * Performs platform-specific initialization of the networking system.
- * 
- * @return PCSL_NET_SUCCESS upon success;\n 
- *         PCSL_NET_IOERROR for an error
- */
-int 
-pcsl_network_init(void) {
-    javacall_result res;
-
-    res = javacall_network_init_start();
-
-    while (res == JAVACALL_WOULD_BLOCK)
-      res = javacall_network_init_finish();
-
-    switch (res) {
-    case JAVACALL_OK:
-      return PCSL_NET_SUCCESS;
-    case JAVACALL_FAIL:
-      return PCSL_NET_IOERROR;
-    }
-    return PCSL_NET_IOERROR;
-}
-
-
-
 /**
  * See pcsl_network.h for definition.
  */
 int
 pcsl_network_finalize_start(void) {
 
-        javacall_result res;
+    javacall_result res;
     res = javacall_network_finalize_start();
+    return javacall_to_pcsl_result(res);
 
-        switch (res) {
-                case JAVACALL_OK:
-                        return PCSL_NET_SUCCESS;
-                case JAVACALL_FAIL:
-                        return PCSL_NET_IOERROR;
-                case JAVACALL_WOULD_BLOCK:
-                        return PCSL_NET_WOULDBLOCK;
-    }
-    return PCSL_NET_IOERROR;
 }
 
 /**
@@ -171,20 +135,23 @@ pcsl_network_finalize_start(void) {
 int
 pcsl_network_finalize_finish(void) {
 
-        javacall_result res;
+    javacall_result res;
     res = javacall_network_finalize_finish();
+    return javacall_to_pcsl_result(res);
 
-        switch (res) {
-                case JAVACALL_OK:
-                        return PCSL_NET_SUCCESS;
-                case JAVACALL_FAIL:
-                        return PCSL_NET_IOERROR;
-                case JAVACALL_WOULD_BLOCK:
-                        return PCSL_NET_WOULDBLOCK;
-    }
-    return PCSL_NET_IOERROR;
 }
 
+/**
+ * See pcsl_network.h for definition.
+ */
+int 
+pcsl_network_init(void) {
+    javacall_result res;
+
+	res = pcsl_network_init_start();
+
+	return res;
+}
 
 
 /**
