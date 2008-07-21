@@ -343,7 +343,7 @@ public abstract class Calendar {
 /* #endif */
             );
         }
-        setTimeInMillis(System.currentTimeMillis());
+        setTimeInMillis(0);
     }
 
     /**
@@ -495,10 +495,7 @@ public abstract class Calendar {
         } else if(field == HOUR) {
             isSet[HOUR_OF_DAY] = false;
         } else if(field == AM_PM) {
-            if(value != AM && value != PM) {
-                return;
-            }
-            else {
+            if(value == AM || value == PM) {
                 isSet[HOUR_OF_DAY] = false;
             }
         } else if(field == DAY_OF_MONTH) {
