@@ -870,8 +870,9 @@ public class DirectPlayer extends BasicPlayer implements VideoSource
                 snapshotLock.wait( 10000 );
                 if( isWaitingForSnapshot )
                 {
+                    isWaitingForSnapshot = false;
                     throw new MediaException( 
-                            "Failed to make a Camera Snapshot" );
+                            "Timed out while making a Camera Snapshot" );
                 }
                 
                 ret = nGetSnapshotData( hNative );
@@ -885,7 +886,7 @@ public class DirectPlayer extends BasicPlayer implements VideoSource
         return ret;
     }
 
-    private void notifySnapshotFinished()
+    void notifySnapshotFinished()
     {
         synchronized( snapshotLock )
         {

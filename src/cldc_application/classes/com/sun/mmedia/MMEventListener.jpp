@@ -139,6 +139,18 @@ System.out.println("jsr135: EOM");
                 p.continueDownload();
             }
             break;
+        case EVENT_MEDIA_SNAPSHOT_FINISHED:
+            p = PlayerImpl.get( nevt.intParam1 );
+            if( null != p )
+            {
+                try{
+                    DirectPlayer dp = ( DirectPlayer )p;
+                    dp.notifySnapshotFinished();
+                }
+                catch( ClassCastException e ){}
+            }
+            break;
+                
         }
     }
 }
