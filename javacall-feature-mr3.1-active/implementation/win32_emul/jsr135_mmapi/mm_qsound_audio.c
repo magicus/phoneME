@@ -2344,15 +2344,19 @@ static javacall_result audio_qs_get_metadata(javacall_handle handle,
         case JC_FMT_MS_PCM:
         {
             int i = 0;
-            const char* value;
+            char **value = &(h->wav.metaData.iartData);
+            buf[0] = 0;
+            r = JAVACALL_FAIL;
             for (; i < WAV_METADATA_KEYS_COUNT; i++) {
                 if (0 == wcscmp(s_wav_metadata_keys[i], key)) {
-                    value = &(h->wav.metaData.iartData)[i];
-                    javautil_unicode_utf8_to_utf16(value, strlen(value), buf, bufLength, &newl);
-                    if (newl < bufLength)
-                        buf[newl] = 0;
-                    else
-                        buf[bufLength - 1] = 0;
+                    if (value[i]) {
+                        r = JAVACALL_OK;
+                        javautil_unicode_utf8_to_utf16(value[i], strlen(value[i]), buf, bufLength, &newl);
+                        if (newl < bufLength)
+                            buf[newl] = 0;
+                        else
+                            buf[bufLength - 1] = 0;
+                    }
                 }
             }
         }
