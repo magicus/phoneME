@@ -412,11 +412,17 @@ int pcsl_network_getremoteport(
     return PCSL_NET_SUCCESS;
 }
 
-
 /**
  * See pcsl_network.h for definition.
  */
 int pcsl_network_init(void) {
+	return pcsl_network_init_start();
+}
+
+/**
+ * See pcsl_network.h for definition.
+ */
+int pcsl_network_init_start(void) {
     static int netinit = 0;
     static WSADATA wsaData;
 
@@ -432,6 +438,28 @@ int pcsl_network_init(void) {
         netinit = 1;
     }
 
+    return PCSL_NET_SUCCESS;
+}
+
+/**
+ * See pcsl_network.h for definition.
+ */
+int pcsl_network_init_finish(void){
+	return PCSL_NET_SUCCESS;
+}
+
+
+/**
+ * See pcsl_network.h for definition.
+ */
+int pcsl_network_finalize_start(void){
+    return PCSL_NET_SUCCESS;
+}
+
+/**
+ * See pcsl_network.h for definition.
+ */
+int pcsl_network_finalize_finish(void){
     return PCSL_NET_SUCCESS;
 }
 

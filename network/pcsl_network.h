@@ -191,6 +191,15 @@ extern "C" {
 
 
 /**
+ * Performs platform-specific initialization of the networking system.
+ * 
+ * @return PCSL_NET_SUCCESS upon success;\n 
+ *         PCSL_NET_IOERROR for an error
+ */
+int pcsl_network_init(void);
+
+
+/**
  * Starts platform-specific initialization of the networking system.
  *
  *
