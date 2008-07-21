@@ -126,9 +126,6 @@ public class Protocol
      */
     private JCRMIPermissions verifier;
 
-    protected byte[] apduCommand = new byte[APDUBufferSize];
-    protected byte[] apduResponse = new byte[APDUBufferSize];
-
     /**
      * Connector uses this method to initialize the connection object.
      * This method establishes APDU connection with card application,
@@ -525,13 +522,9 @@ public class Protocol
 
             try {
 
-                apduCommand = new byte[offset];
-                System.arraycopy(APDUBuffer, 0, apduCommand, 0, offset);
-
+                netmonSaveApdu(APDUBuffer);
                 response = APDUManager.exchangeAPDU(h, APDUBuffer);
-
-                apduResponse = new byte[response.length];
-                System.arraycopy(response, 0, apduResponse, 0, response.length);                
+                netmonSaveResponse(response);
             } catch (IOException e) {
                 throw new RemoteException("IO error", e);
             }
@@ -1064,5 +1057,21 @@ public class Protocol
         } catch (Exception e) {
             throw new RemoteException("" + e);
         }
+    }
+
+    /*
+     * Pass the APDU that will be sent to APDUManager.exchangeAPDU()
+     * to the com.sun.kvem.io.j2me.apdu.Protocol
+     */
+    protected void netmonSaveApdu(byte[] APDUBuffer) {
+        // empty. Overloaded in a derived class
+    }
+
+    /*
+     * Pass the response that received from APDUManager.exchangeAPDU()
+     * to the com.sun.kvem.io.j2me.apdu.Protocol
+     */
+    protected void netmonSaveResponse(byte[] response) {
+        // empty. Overloaded in a derived class
     }
 }
