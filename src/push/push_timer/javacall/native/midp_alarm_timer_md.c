@@ -58,7 +58,7 @@ push_alarm_handler(javacall_handle handle) {
     javacall_event_send((unsigned char*)&e,sizeof(midp_jc_event_union));
 #else
     /* MIDP (JSR-118) event queue */
-    javacall_event_send(118, (unsigned char*)&e, sizeof(midp_jc_event_union));
+    javacall_event_send_cvm(118, (unsigned char*)&e, sizeof(midp_jc_event_union));
 #endif
 }
 

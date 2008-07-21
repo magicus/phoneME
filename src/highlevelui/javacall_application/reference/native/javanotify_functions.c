@@ -97,7 +97,7 @@ midp_jc_event_send(midp_jc_event_union *event) {
                                sizeof(midp_jc_event_union));
 #else
     /* MIDP (JSR-118) event queue */
-    return javacall_event_send(118, (unsigned char *)event,
+    return javacall_event_send_cvm(118, (unsigned char *)event,
                                sizeof(midp_jc_event_union));
 #endif
 }
