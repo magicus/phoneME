@@ -241,7 +241,7 @@ endif
 # not detected by vpath.
 $(OBJ_DIR)/%.o: %.c
 	@echo " ... $@" $(LOG)
-	$(CC) $(CFLAGS) -c $(CC_OUTPUT)$@ `$(call fixcygpath, $<)` $(LOG)
+	$(A)$(CC) $(CFLAGS) -c $(CC_OUTPUT)$@ `$(call fixcygpath, $<)` $(LOG)
 
 $(OBJ_DIR)/ROMImage.o: $(MIDP_OUTPUT_DIR)/ROMImage.cpp
 	@echo " ... $@" $(LOG)
