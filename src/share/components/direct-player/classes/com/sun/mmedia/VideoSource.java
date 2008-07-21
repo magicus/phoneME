@@ -25,13 +25,15 @@
  
 package com.sun.mmedia;
 
+import javax.microedition.media.MediaException;
+
 interface VideoSource 
 {
     // Set display location of video
     boolean setVideoLocation(int x, int y, int w, int h);
     
     // Get snapshot
-    byte[] getVideoSnapshot(String imageType);
+    byte[] getVideoSnapshot(String imageType) throws MediaException;
     
     // Set fullscreen
     boolean setVideoFullScreen( boolean fullscreen);
