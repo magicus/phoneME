@@ -1,6 +1,5 @@
 /*
- *
- * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
@@ -57,7 +56,7 @@ javacall_result javacall_event_receive(
                             /*OUT*/ unsigned char*  binaryBuffer,
                             /*IN*/  int             binaryBufferMaxLen,
                             /*OUT*/ int*            outEventLen){
-    return JAVACALL_FAIL;
+    return JAVACALL_NOT_IMPLEMENTED;
 }
 /**
  * copies a user supplied event message to a queue of messages
@@ -71,45 +70,48 @@ javacall_result javacall_event_receive(
  */
 javacall_result javacall_event_send(unsigned char* binaryBuffer,
                                     int binaryBufferLen){
-    return JAVACALL_FAIL;
+    return JAVACALL_NOT_IMPLEMENTED;
 }    
 
+/**
+ * Waits for an incoming event in the queue with the given ID and copies it to
+ * a user supplied data buffer.
+ *
+ * @param queueId identifier of an event queue, typically a JSR number.
+ * @param binaryBuffer user-supplied buffer to copy event to.
+ * @param binaryBufferMaxLen maximum buffer size that an event can be
+ *              copied to.
+ * @param outEventLen user-supplied pointer to variable that will hold actual 
+ *              event size received, or desired buffer size if
+ *              binaryBufferMaxLen is insufficient.
+ *              If outEventLen is NULL, the event size is not returned.
+ * @return <tt>JAVACALL_OK</tt> if an event successfully received,
+ *         <tt>JAVACALL_OUT_OF_MEMORY</tt> if event size exceeds
+ *         binaryBufferMaxLen,
+ *         <tt>JAVACALL_FAIL</tt> on any other error.
+ */
+javacall_result javacall_event_receive_cvm(int queueId,
+    /*OUT*/ unsigned char *binaryBuffer, int binaryBufferMaxLen,
+    /*OUT*/ int *outEventLen) {
+    return JAVACALL_NOT_IMPLEMENTED;
+}
 
+/**
+ * Copies a user supplied event message to a queue of messages and wakes up the
+ * thread that is waiting for events on the queue with the given id.
+ *
+ * @param queueId identifier of an event queue, typically a JSR number.
+ * @param binaryBuffer a pointer to binary event buffer to send. The first int
+ *        is the event id.
+ * @param binaryBufferLen size of binary event buffer to send.
+ * @return <tt>JAVACALL_OK</tt> if an event has been successfully sent,
+ *         <tt>JAVACALL_FAIL</tt> otherwise.
+ */
+javacall_result javacall_event_send_cvm(int queueId,
+    unsigned char* binaryBuffer, int binaryBufferLen) {
+    return JAVACALL_NOT_IMPLEMENTED;
+}
 
-/*************************** KEYPRESS *************************************/
-
-
-
-/***************************** SMS *************************************/
-/*                   1. INCOMING SMS CALLBACK                          */
-/*                   2. SMS SENDING RESULT CALLBACK                    */
-/***********************************************************************/
-
-
-
-
-/*************************** SOCKET *************************************/
-
-/*************************** NETWORK *************************************/
-
-
-/*************************** PAUSE/RESUME *************************************/
-
-/*************************** TEXTFIELD *************************************/
-
-
-
-
-
-/*************************** MMAPI *************************************/
-/*                   1. END-OF-MEDIA CALLBACK                          */
-/*                   2. DURATION UPDATE CALLBACK                       */
-/***********************************************************************/
-
-/******************** MMAPI (2) : DURATION UPDATE CALLBACK *************/
-
-
-    
 #ifdef __cplusplus
 }
 #endif
