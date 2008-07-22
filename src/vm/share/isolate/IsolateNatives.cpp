@@ -340,7 +340,7 @@ void Java_com_sun_cldc_isolate_Isolate_attachDebugger0(JVM_SINGLE_ARG_TRAPS){
 #endif
 }
 
-jboolean 
+jint 
 Java_com_sun_cldc_isolate_Isolate_isDebuggerConnected(JVM_SINGLE_ARG_TRAPS) {
 #if ENABLE_JAVA_DEBUGGER
   IsolateObj::Raw isolate = GET_PARAMETER_AS_OOP(0);
