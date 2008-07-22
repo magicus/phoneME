@@ -47,6 +47,10 @@ PORTING_SOURCE+=$(foreach jsr,$(JSR_LIST), $(if $(PREFIX_$(USE_$(jsr))), $(notdi
 PORTING_SOURCE+=$(foreach jsr,$(JSR_LIST), $(if $(PREFIX_$(USE_$(jsr))), $(notdir $(wildcard $($(jsr)_JC_IMPL_PATH)/$($(jsr)_JC_DIR)/*.cpp))))
 NOTIFIER_SOURCE+=$(foreach jsr,$(JSR_LIST), $(if $(PREFIX_$(USE_$(jsr))), $(notdir $(wildcard $($(jsr)_NOTIFIER_PATH)/$($(jsr)_JC_DIR)/*.c))))
 
+ifeq ($(USE_NETMON), true)
+PORTING_SOURCE+=$(notdir $(wildcard $(MIDP_JC_IMPL_PATH)/$(MIDP_JC_DIR)/netmon/*.c))
+VPATH+=$(MIDP_JC_IMPL_PATH)/$(MIDP_JC_DIR)/netmon
+endif
 
 #Form list of header files
 JAVACALL_INCLUDE_DIR_SET_LOCAL=$(foreach jsr,$(JSR_LIST), $(if $(PREFIX_$(USE_$(jsr))), $($(jsr)_JC_DIR)))
@@ -119,6 +123,12 @@ ifeq ($(UTILITIES)x, x)
 VPATH+=$(JAVACALL_DIR)/implementation/share/utils
 endif
 endif
+
+# Netmon flag
+ifeq ($(USE_NETMON), true)
+CFLAGS += -DUSE_NETMON
+endif
+
 
 SPECIFIC_DEFINITIONS += $(filter -DENABLE_JSR%, $(foreach jsr,$(JSR_LIST), \
     $(if $(PREFIX_$(USE_$(jsr))), -DENABLE_$(jsr)=1)))
