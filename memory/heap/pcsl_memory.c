@@ -159,6 +159,10 @@ typedef struct _pcslMemStruct {
 #endif
 } _PcslMemHdr, *_PcslMemHdrPtr;
 
+/* 
+#define PCSL_MEMORY_TRACE_ENABLED 
+*/
+
 /*
  * Default size of pool usable for allocations; in bytes
  */
@@ -428,8 +432,10 @@ pcsl_mem_malloc_impl0(unsigned int size) {
 #ifdef PCSL_DEBUG
                         pcslMemoryHdr->guardSize = 0;
 #endif
-                        /* REPORT2("DEBUG: Coalescing blocks 0x%p and 0x%p\n",
-                                pcslMemoryHdr, tempHdr); */
+#ifdef PCSL_MEMORY_TRACE_ENABLED
+                        REPORT2("DEBUG: Coalescing blocks 0x%p and 0x%p\n",
+                                pcslMemoryHdr, tempHdr);
+#endif 
 
                     } else {
                         break;
@@ -482,11 +488,13 @@ pcsl_mem_malloc_impl0(unsigned int size) {
                 if (PcslMemoryAllocated > PcslMemoryHighWaterMark) {
                     PcslMemoryHighWaterMark = PcslMemoryAllocated;
                 }
-
-                /* report("DEBUG: Requested %d provided %d at 0x%p\n",
+#ifdef PCSL_MEMORY_TRACE_ENABLED
+                report("DEBUG: Requested %d provided %d at 0x%p\n",
                        numBytesToAllocate, pcslMemoryHdr->size, loc);
-                print_alloc("allocated", filename, lineno); */
-#endif
+                print_alloc("allocated", filename, lineno);
+#endif /* of PCSL_MEMORY_TRACE_ENABLED */
+
+#endif /* of PCSL_DEBUG */
                 return(loc);
             } /* end of allocating */
         } /* end of else */
@@ -693,10 +701,13 @@ pcsl_mem_free_impl0(void *ptr, char *filename, int lineno) {
                 print_alloc("freed", filename, lineno);
             }
 
-            /* report("DEBUG: free %d bytes: 0x%p\n", pcslMemoryHdr->size, ptr);
+#ifdef PCSL_MEMORY_TRACE_ENABLED
+            report("DEBUG: free %d bytes: 0x%p\n", pcslMemoryHdr->size, ptr);
             print_alloc("allocated", 
                         pcslMemoryHdr->filename, pcslMemoryHdr->lineno);
-            print_alloc("freed", filename, lineno); */
+            print_alloc("freed", filename, lineno);
+#endif 
+
             pcslMemoryHdr->free = 1;
         }
     } /* end of else */
