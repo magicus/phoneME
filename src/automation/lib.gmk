@@ -60,9 +60,11 @@ SUBSYSTEM_AUTOMATION_JAVA_FILES += \
 	$(SUBSYSTEM_DIR)/automation/classes/com/sun/midp/automation/AutoEventQueue.java \
 	$(SUBSYSTEM_DIR)/automation/classes/com/sun/midp/automation/AutoEventQueueState.java \
 	$(SUBSYSTEM_DIR)/automation/classes/com/sun/midp/automation/AutoEventState.java \
+	$(SUBSYSTEM_DIR)/automation/classes/com/sun/midp/automation/AutoJavaME.java \
+	$(SUBSYSTEM_DIR)/automation/classes/com/sun/midp/automation/AutoSuiteStorage.java \
 	\
+	$(SUBSYSTEM_DIR)/automation/reference/classes/com/sun/midp/automation/AutoJavaMEImpl.java \
 	$(SUBSYSTEM_DIR)/automation/reference/classes/com/sun/midp/automation/AutoEventDataFactory.java \
-	$(SUBSYSTEM_DIR)/automation/reference/classes/com/sun/midp/automation/AutoSuiteStorage.java \
 	$(SUBSYSTEM_DIR)/automation/reference/classes/com/sun/midp/automation/AutoSuiteDescriptor.java \
 	$(SUBSYSTEM_DIR)/automation/reference/classes/com/sun/midp/automation/AutoSuiteStorageImpl.java \
 	$(SUBSYSTEM_DIR)/automation/reference/classes/com/sun/midp/automation/AutoSuiteDescriptorImpl.java \

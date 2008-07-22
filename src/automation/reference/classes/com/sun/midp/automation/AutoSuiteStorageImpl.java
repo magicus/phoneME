@@ -35,7 +35,7 @@ import com.sun.midp.configurator.Constants;
 /**
  * AutoSuiteStorage implementation
  */
-final class AutoSuiteStorageImpl extends AutoSuiteStorage {
+final class AutoSuiteStorageImpl implements AutoSuiteStorage {
     /** Suites storage */
     private MIDletSuiteStorage storage;
 

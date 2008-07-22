@@ -24,43 +24,27 @@
  * information or have any questions.
  */
 
+
 package com.sun.midp.automation;
 
-import java.util.*;
-import java.io.*;
-import com.sun.midp.midletsuite.*;
-import com.sun.midp.installer.*;
 
-/** 
- * Represents suites storage.
- */
-public abstract class AutoSuiteStorage {
-    /**
-     * Installs suite from specified location.
-     *
-     * @param location URI pointing to suite jad/jar
-     * @return AutoSuiteDescriptor representing installed suit
-     */
-    public abstract AutoSuiteDescriptor installSuite(String location)
-        throws IOException, MIDletSuiteLockedException, 
-               MIDletSuiteCorruptedException, InvalidJadException,
-               SecurityException;
+final class AutoJavaMEImpl extends AutoJavaME {
+    private static AutoJavaMEImpl instance = null;
 
-    /**
-     * Uninstalls specified suite.
-     *
-     * @param suite suite to uninstall
-     */
-    public abstract void uninstallSuite(AutoSuiteDescriptor suite) 
-        throws MIDletSuiteLockedException;
+    private AutoJavaMEImpl() {
+    }
 
-    /**
-     * Gets a vector of installed suites.
-     *
-     * @return vector with suites descriptors
-     */
-    public abstract Vector getInstalledSuites();
+    final static AutoJavaME getInstanceImpl() 
+        throws IllegalStateException {
 
+        AutomationInitializer.guaranteeAutomationInitialized();
+
+        if (instance == null) {
+            instance = new AutoJavaMEImpl();
+        }
+        
+        return instance;
+    }
 
     /**
      * Gets instance of AutoSuiteStorage class.
@@ -68,11 +52,11 @@ public abstract class AutoSuiteStorage {
      * @return instance of AutoSuiteStorage class
      * @throws IllegalStateException if Automation API hasn't been
      * initialized or is not permitted to use
-     */
-    public final static AutoSuiteStorage getStorage() 
+     */    
+    public AutoSuiteStorage getStorage() 
         throws IllegalStateException {
 
         AutomationInitializer.guaranteeAutomationInitialized();
-        return AutoSuiteStorageImpl.getInstance();
-    }
+        return AutoSuiteStorageImpl.getInstance();        
+    }    
 }
