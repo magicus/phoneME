@@ -49,7 +49,7 @@
 #	CVM_BUILD_SUBDIR_SUFFIX: ""
 #	CVM_BUILD_SUBDIR_NAME:   <build_flavor>$(CVM_BUILD_SUBDIR_SUFFIX)
 #	SOURCE_OUTPUT_DIR:	$(COMPONENTS_DIR)/cdc/install/pmea_mr2
-#	BUNDLE_PORTS		"win32-arm-*"
+#	SUBMAKE_TARGETS:	Targets passed to submake, such as "bin"
 #
 # You can export CVM_BUILD_SUBDIR_SUFFIX from the shell if you always
 # want a suffix. For example, a suffix of "_dir" is useful for easy
@@ -111,12 +111,17 @@ define TRACE_BUILD_END
 	@echo "*********************************************************"
 endef
 
+# Strip command line options from MAKEFLAGS and convert targets specified
+# by SUBMAKE_TARGETS to simple target names.
+SUBMAKE_MAKEFLAGS_NO_TARGETS = $(foreach flag,$(MAKEFLAGS),\
+	$(shell echo $(flag) | grep = | grep -v SUBMAKE_TARGETS))
+SUBMAKE_MAKEFLAGS = $(SUBMAKE_MAKEFLAGS_NO_TARGETS) $(SUBMAKE_TARGETS)
+
 #
 # Make rule for the source bundles
 #
 
 SOURCE_OUTPUT_DIR=$(COMPONENTS_DIR)/cdc/install/pmea_mr2
-BUNDLE_PORTS="win32-arm-*"
 
 .PHONY: source_bundle
 .PHONY: source_bundles
@@ -125,7 +130,8 @@ source_bundles:
 	$(TRACE_BUILD_START)
 	make source_bundles $(DEFAULT_FLAGS) \
 		SOURCE_OUTPUT_DIR=$(SOURCE_OUTPUT_DIR) \
-		BUNDLE_PORTS=$(BUNDLE_PORTS)
+		BUNDLE_PORTS="win32-arm-*" \
+		$(SUBMAKE_MAKEFLAGS_NO_TARGETS)
 	$(TRACE_BUILD_END)
 
 #
@@ -135,5 +141,5 @@ source_bundles:
 .PHONY: opt_preload_jit
 opt_preload_jit:
 	$(TRACE_BUILD_START)
-	$(AT)make $(DEFAULT_FLAGS)
+	$(AT)make $(DEFAULT_FLAGS) $(SUBMAKE_MAKEFLAGS)
 	$(TRACE_BUILD_END)
