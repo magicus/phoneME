@@ -183,7 +183,7 @@ pcsl_file_unlink(const pcsl_string * fileName) {
 
 #ifdef PCSL_DEBUG
   if (MAX_FILE_LEN < pcsl_string_utf16_length (fileName)) {
-    pcsl_print("pcsl_file_open() Error file length is too large");
+    pcsl_print("pcsl_file_unlink() Error file length is too large");
   }
 #endif
 
@@ -251,9 +251,6 @@ long
 pcsl_file_sizeofopenfile(void *handle) {
     long ret = (long)javacall_file_sizeofopenfile(handle);
 
-#ifdef PCSL_DEBUG
-    pcsl_print("pcsl_file_sizeofopenfile returned\n");
-#endif
     return ret;
 }
 
@@ -268,7 +265,7 @@ pcsl_file_sizeof(const pcsl_string * fileName) {
 
 #ifdef PCSL_DEBUG
   if (MAX_FILE_LEN < pcsl_string_utf16_length (fileName)) {
-    pcsl_print("pcsl_file_open() Error file length is too large");
+    pcsl_print("pcsl_file_sizeof() Error file length is too large");
   }
 #endif
 
@@ -296,7 +293,7 @@ pcsl_file_exist(const pcsl_string * fileName) {
 
 #ifdef PCSL_DEBUG
   if (MAX_FILE_LEN < pcsl_string_utf16_length (fileName)) {
-    pcsl_print("pcsl_file_open() Error file length is too large");
+    pcsl_print("pcsl_file_exist() Error file length is too large");
   }
 #endif
 
@@ -336,7 +333,7 @@ pcsl_file_rename(const pcsl_string * oldName, const pcsl_string * newName) {
 #ifdef PCSL_DEBUG
   if ( (MAX_FILE_LEN < pcsl_string_utf16_length (oldName)) || 
        (MAX_FILE_LEN < pcsl_string_utf16_length (oldName)) ) {
-    pcsl_print("pcsl_file_open() Error file length is too large");
+    pcsl_print("pcsl_file_rename() Error file length is too large");
   }
 #endif
 
@@ -383,7 +380,7 @@ pcsl_file_openfilelist(const pcsl_string * string) {
 
 #ifdef PCSL_DEBUG
   if (MAX_FILE_LEN < pcsl_string_utf16_length (string)) {
-    pcsl_print("pcsl_file_open() Error file length is too large");
+    pcsl_print("pcsl_file_openfilelist() Error file length is too large");
   }
 #endif
 

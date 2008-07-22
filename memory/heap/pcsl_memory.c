@@ -140,6 +140,14 @@ static void print_alloc(const char* what, char* filename, int lineno) {
 
 #endif 
 
+#ifdef PCSL_DEBUG
+/**
+ *  If you are interested in very verbose output about every block allocated/coalesced/freed you can enable this define
+ *	Keep it zero otherwise
+ */
+#define PCSL_TRACE_MEMORY  0
+#endif 
+
 /**
  * Structure to hold memory blocks
  */
@@ -427,9 +435,11 @@ pcsl_mem_malloc_impl0(unsigned int size) {
                             + sizeof(_PcslMemHdr);
 #ifdef PCSL_DEBUG
                         pcslMemoryHdr->guardSize = 0;
-#endif
+#if PCSL_TRACE_MEMORY
                         REPORT2("DEBUG: Coalescing blocks 0x%p and 0x%p\n",
                                 pcslMemoryHdr, tempHdr);
+#endif 
+#endif
 
                     } else {
                         break;
@@ -482,11 +492,13 @@ pcsl_mem_malloc_impl0(unsigned int size) {
                 if (PcslMemoryAllocated > PcslMemoryHighWaterMark) {
                     PcslMemoryHighWaterMark = PcslMemoryAllocated;
                 }
-
+#if PCSL_TRACE_MEMORY
                 report("DEBUG: Requested %d provided %d at 0x%p\n",
                        numBytesToAllocate, pcslMemoryHdr->size, loc);
                 print_alloc("allocated", filename, lineno);
-#endif
+#endif /* of PCSL_TRACE_MEMORY */
+
+#endif /* of PCSL_DEBUG */
                 return(loc);
             } /* end of allocating */
         } /* end of else */
@@ -693,10 +705,13 @@ pcsl_mem_free_impl0(void *ptr, char *filename, int lineno) {
                 print_alloc("freed", filename, lineno);
             }
 
+#if PCSL_TRACE_MEMORY
             report("DEBUG: free %d bytes: 0x%p\n", pcslMemoryHdr->size, ptr);
             print_alloc("allocated", 
                         pcslMemoryHdr->filename, pcslMemoryHdr->lineno);
             print_alloc("freed", filename, lineno);
+#endif 
+
             pcslMemoryHdr->free = 1;
         }
     } /* end of else */
