@@ -155,11 +155,11 @@ $(CA_KEYSTORE): $(KEYTOOL_JAR_FILE) $(KEYTOOL_KEYSTORE_FILE)
 	@echo +++ $(JAVA_CMD) -jar $(KEYTOOL_JAR_FILE) -import -keystore \
 		$(3RDPARTY_KEYSTORE_FILE) -alias testthirdparty \
 		-storepass password -MEkeystore $(CA_KEYSTORE) \
-		-domain unidentified $(LOG_ONLY)
+		-domain identified $(LOG_ONLY)
 	@($(JAVA_CMD) -jar $(KEYTOOL_JAR_FILE) -import -keystore \
 		$(3RDPARTY_KEYSTORE_FILE) -alias testthirdparty \
 		-storepass password -MEkeystore $(CA_KEYSTORE) \
-		-domain unidentified) $(LOG)
+		-domain identified) $(LOG)
 
 $(BINDIR)/j2se_test_keystore.bin: $(KEYTOOL_KEYSTORE_FILE)
 	@echo " ... $@ " $(LOG)
