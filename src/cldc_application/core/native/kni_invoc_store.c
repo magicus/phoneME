@@ -269,18 +269,22 @@ static jboolean setParamsFromObj(StoredInvoc* invoc,
         pcsl_string* args;
     
         KNI_GetObjectField(invocObj, urlFid, tmp1);
+        pcsl_string_free(&invoc->url);
         if (PCSL_STRING_OK != midp_jstring_to_pcsl_string(tmp1, &invoc->url))
             break;
     
         KNI_GetObjectField(invocObj, typeFid, tmp1);
+        pcsl_string_free(&invoc->type);
         if (PCSL_STRING_OK != midp_jstring_to_pcsl_string(tmp1, &invoc->type ))
             break;
     
         KNI_GetObjectField(invocObj, actionFid, tmp1);
+        pcsl_string_free(&invoc->action);
         if (PCSL_STRING_OK != midp_jstring_to_pcsl_string(tmp1, &invoc->action ))
             break;
     
         KNI_GetObjectField(invocObj, IDFid, tmp1);
+        pcsl_string_free(&invoc->ID);
         if (PCSL_STRING_OK != midp_jstring_to_pcsl_string(tmp1, &invoc->ID))
             break;
     
@@ -314,8 +318,9 @@ static jboolean setParamsFromObj(StoredInvoc* invoc,
         if (len > 0) {
             args += len;
             while (len-- > 0) {
+                pcsl_string_free(--args);
                 KNI_GetObjectArrayElement(tmp2, len, tmp1);
-                if (PCSL_STRING_OK != midp_jstring_to_pcsl_string(tmp1, --args))
+                if (PCSL_STRING_OK != midp_jstring_to_pcsl_string(tmp1, args))
                     break;
             }
         }
