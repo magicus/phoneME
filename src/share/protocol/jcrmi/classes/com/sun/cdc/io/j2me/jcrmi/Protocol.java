@@ -521,7 +521,10 @@ public class Protocol
             }
 
             try {
+
+                netmonSaveApdu(APDUBuffer);
                 response = APDUManager.exchangeAPDU(h, APDUBuffer);
+                netmonSaveResponse(response);
             } catch (IOException e) {
                 throw new RemoteException("IO error", e);
             }
@@ -1054,5 +1057,21 @@ public class Protocol
         } catch (Exception e) {
             throw new RemoteException("" + e);
         }
+    }
+
+    /*
+     * Pass the APDU that will be sent to APDUManager.exchangeAPDU()
+     * to the com.sun.kvem.io.j2me.apdu.Protocol
+     */
+    protected void netmonSaveApdu(byte[] APDUBuffer) {
+        // empty. Overloaded in a derived class
+    }
+
+    /*
+     * Pass the response that received from APDUManager.exchangeAPDU()
+     * to the com.sun.kvem.io.j2me.apdu.Protocol
+     */
+    protected void netmonSaveResponse(byte[] response) {
+        // empty. Overloaded in a derived class
     }
 }

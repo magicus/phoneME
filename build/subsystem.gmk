@@ -270,6 +270,17 @@ MODULE_SATSA_JCRMI_JAVA_FILES = \
     $(JSR_177_DIR)/src/share/protocol/jcrmi/classes/com/sun/midp/io/j2me/jcrmi/Protocol.java \
     $(JSR_177_DIR)/src/share/protocol/jcrmi/classes/com/sun/cdc/io/j2me/jcrmi/Reference.java
 
+# Network monitor
+ifeq ($(USE_NETMON), true)
+
+MODULE_SATSA_APDU_JAVA_FILES += \
+    $(JSR_177_DIR)/src/share/protocol/apdu/classes/com/sun/kvem/io/j2me/apdu/Protocol.java
+
+MODULE_SATSA_JCRMI_JAVA_FILES += \
+    $(JSR_177_DIR)/src/share/protocol/jcrmi/classes/com/sun/kvem/io/j2me/jcrmi/Protocol.java
+
+endif
+
 MODULE_SATSA_PKI_JAVA_FILES = \
     $(JSR_177_DIR)/src/share/pki/classes/com/sun/satsa/pki/Certificate.java \
     $(JSR_177_DIR)/src/share/pki/classes/com/sun/satsa/pki/PKIManager.java \
