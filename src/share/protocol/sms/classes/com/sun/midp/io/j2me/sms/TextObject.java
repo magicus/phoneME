@@ -83,7 +83,7 @@ public class TextObject extends MessageObject
      * @see #getPayloadText
      * @see #setBytes
      */
-    byte[] getBytes() {
+    public byte[] getBytes() {
 	return buffer;
     }
 
