@@ -140,6 +140,22 @@ static void print_alloc(const char* what, char* filename, int lineno) {
 
 #endif 
 
+#ifdef PCSL_DEBUG
+/**
+ *  If you are interested in very verbose output about every block allocated/coalesced/freed you can enable this define
+ *	Keep it zero otherwise
+ */
+#define PCSL_TRACE_MEMORY  0
+
+#else
+/** 
+ *  Functions enabled by PCSL_TRACE_MEMORY will not work unless PCSL_DEBUG is defined.
+ *  Therefore if PCSL_DEBUG is not defined PCSL_TRACE_MEMORY has to be 0 
+ */
+#define PCSL_TRACE_MEMORY  0
+
+#endif 
+
 /**
  * Structure to hold memory blocks
  */
@@ -158,10 +174,6 @@ typedef struct _pcslMemStruct {
     unsigned int   guard;                                    /* memory guard */
 #endif
 } _PcslMemHdr, *_PcslMemHdrPtr;
-
-/* 
-#define PCSL_MEMORY_TRACE_ENABLED 
-*/
 
 /*
  * Default size of pool usable for allocations; in bytes
@@ -432,7 +444,7 @@ pcsl_mem_malloc_impl0(unsigned int size) {
 #ifdef PCSL_DEBUG
                         pcslMemoryHdr->guardSize = 0;
 #endif
-#ifdef PCSL_MEMORY_TRACE_ENABLED
+#if PCSL_TRACE_MEMORY
                         REPORT2("DEBUG: Coalescing blocks 0x%p and 0x%p\n",
                                 pcslMemoryHdr, tempHdr);
 #endif 
@@ -488,11 +500,11 @@ pcsl_mem_malloc_impl0(unsigned int size) {
                 if (PcslMemoryAllocated > PcslMemoryHighWaterMark) {
                     PcslMemoryHighWaterMark = PcslMemoryAllocated;
                 }
-#ifdef PCSL_MEMORY_TRACE_ENABLED
+#if PCSL_TRACE_MEMORY
                 report("DEBUG: Requested %d provided %d at 0x%p\n",
                        numBytesToAllocate, pcslMemoryHdr->size, loc);
                 print_alloc("allocated", filename, lineno);
-#endif /* of PCSL_MEMORY_TRACE_ENABLED */
+#endif /* of PCSL_TRACE_MEMORY */
 
 #endif /* of PCSL_DEBUG */
                 return(loc);
@@ -701,7 +713,7 @@ pcsl_mem_free_impl0(void *ptr, char *filename, int lineno) {
                 print_alloc("freed", filename, lineno);
             }
 
-#ifdef PCSL_MEMORY_TRACE_ENABLED
+#if PCSL_TRACE_MEMORY
             report("DEBUG: free %d bytes: 0x%p\n", pcslMemoryHdr->size, ptr);
             print_alloc("allocated", 
                         pcslMemoryHdr->filename, pcslMemoryHdr->lineno);
