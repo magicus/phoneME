@@ -919,6 +919,7 @@ KNIDECL(com_sun_mmedia_DirectPlayer_nGetSnapshotData) {
     KNIPlayerInfo*  pKniInfo = (KNIPlayerInfo*)handle;
     javacall_result ret = JAVACALL_FAIL;
     long dataBytes = 0;
+    jbyte *tmpArray = NULL;
     
     KNI_StartHandles(1);
     KNI_DeclareHandle(returnValueHandle);
@@ -941,7 +942,7 @@ KNIDECL(com_sun_mmedia_DirectPlayer_nGetSnapshotData) {
         goto end;
     }
     
-    jbyte *tmpArray = MMP_MALLOC( dataBytes );
+    tmpArray = MMP_MALLOC( dataBytes );
     if( NULL == tmpArray )
     {
         KNI_ReleaseHandle( returnValueHandle );
