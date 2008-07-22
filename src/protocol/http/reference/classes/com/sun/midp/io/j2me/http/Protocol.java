@@ -237,9 +237,9 @@ public class Protocol extends ConnectionBaseAdapter
     /** Low level socket connection used for the HTTP requests. */
     private StreamConnection streamConnection;
     /** Low level socket output stream. */
-    private DataOutputStream streamOutput;
+    protected DataOutputStream streamOutput;
     /** Low level socket input stream. */
-    private DataInputStream streamInput;
+    protected DataInputStream streamInput;
     /** A shared temporary header buffer. */
     private StringBuffer stringbuffer;
     /** HTTP version string set with all incoming HTTP responses. */
@@ -1623,7 +1623,7 @@ public class Protocol extends ConnectionBaseAdapter
      *
      * @exception IOException is thrown if the connection cannot be opened
      */
-    private void streamConnect() throws IOException {
+    protected void streamConnect() throws IOException {
         streamConnection = connect();
 
         /*
