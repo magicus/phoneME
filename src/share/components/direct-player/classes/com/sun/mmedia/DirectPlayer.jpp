@@ -192,7 +192,6 @@ public class DirectPlayer extends BasicPlayer implements VideoSource
     protected native boolean nSetLocation(int handle, int x, int y, int w, int h);
 
     // Get snapshot
-    protected native byte[] nSnapShot(int handle, String imageType);
     protected native void nStartSnapshot( int handle, String imageType );
     protected native byte[] nGetSnapshotData( int handle );
     
