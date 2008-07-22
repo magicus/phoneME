@@ -52,6 +52,15 @@ SUBSYSTEM_AUTOMATION_JAVA_FILES = \
 	$(SUBSYSTEM_DIR)/automation/reference/classes/com/sun/midp/automation/AutomationInitializer.java
     
 ifeq ($(USE_AUTOMATION), true) 
+# Common files
+
+
+ifeq ($(USE_MULTIPLE_ISOLATES), true)
+include $(SUBSYSTEM_DIR)/automation/reference/mvm/lib.gmk
+else
+include $(SUBSYSTEM_DIR)/automation/reference/svm/lib.gmk
+endif
+
 SUBSYSTEM_AUTOMATION_JAVA_FILES += \
 	$(SUBSYSTEM_DIR)/automation/classes/com/sun/midp/automation/AutoMIDlet.java \
 	$(SUBSYSTEM_DIR)/automation/classes/com/sun/midp/automation/AutoMIDletDescriptor.java \
