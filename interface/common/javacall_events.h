@@ -47,7 +47,22 @@ extern "C" {
  *  @{
  */
 
+/*
+ * Mandatory event functions:
+ * - javacall_events_init()
+ * - javacall_events_finalize()
+ *
+ * Functions specific for CLDC-based implementations:
+ * - javacall_event_receive()
+ * - javacall_event_send()
+ *
+ * Functions specific for CDC-based implementations:
+ * - javacall_event_receive_cvm()
+ * - javacall_event_send_cvm()
+ */
+
 /**
+ * CLDC-specific function.
  * Waits for an incoming event message and copies it to user supplied
  * data buffer.
  *
@@ -79,6 +94,7 @@ javacall_result javacall_event_receive(
                             /*OUT*/ int*            outEventLen);
 
 /**
+ * CLDC-specific function.
  * Copies a user-supplied event message to a queue of messages.
  *
  * @param binaryBuffer a pointer to binary event buffer to send.
@@ -92,6 +108,7 @@ javacall_result javacall_event_send(unsigned char* binaryBuffer,
                                     int binaryBufferLen);
 
 /**
+ * CDC-specific function.
  * Waits for an incoming event in the queue with the given ID and copies it to
  * a user supplied data buffer.
  *
@@ -113,6 +130,7 @@ javacall_result javacall_event_receive_cvm(int queueId,
     /*OUT*/ int *outEventLen);
 
 /**
+ * CDC-specific function.
  * Copies a user supplied event message to a queue of messages and wakes up the
  * thread that is waiting for events on the queue with the given id.
  *

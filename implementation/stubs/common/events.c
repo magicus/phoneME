@@ -27,8 +27,23 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+/*
+ * Mandatory event functions:
+ * - javacall_events_init()
+ * - javacall_events_finalize()
+ *
+ * Functions specific for CLDC-based implementations:
+ * - javacall_event_receive()
+ * - javacall_event_send()
+ *
+ * Functions specific for CDC-based implementations:
+ * - javacall_event_receive_cvm()
+ * - javacall_event_send_cvm()
+ */
     
 /**
+ * CLDC-specific function.
  * Waits for an incoming event message and copies it to user supplied
  * data buffer
  * @param waitForever indicate if the function should block forever
@@ -59,6 +74,7 @@ javacall_result javacall_event_receive(
     return JAVACALL_NOT_IMPLEMENTED;
 }
 /**
+ * CLDC-specific function.
  * copies a user supplied event message to a queue of messages
  *
  * @param binaryBuffer a pointer to binary event buffer to send
@@ -74,6 +90,7 @@ javacall_result javacall_event_send(unsigned char* binaryBuffer,
 }    
 
 /**
+ * CDC-specific function.
  * Waits for an incoming event in the queue with the given ID and copies it to
  * a user supplied data buffer.
  *
@@ -97,6 +114,7 @@ javacall_result javacall_event_receive_cvm(int queueId,
 }
 
 /**
+ * CDC-specific function.
  * Copies a user supplied event message to a queue of messages and wakes up the
  * thread that is waiting for events on the queue with the given id.
  *
@@ -109,6 +127,30 @@ javacall_result javacall_event_receive_cvm(int queueId,
  */
 javacall_result javacall_event_send_cvm(int queueId,
     unsigned char* binaryBuffer, int binaryBufferLen) {
+    return JAVACALL_NOT_IMPLEMENTED;
+}
+
+/**
+ * The function is called during Java VM startup, allowing the
+ * platform to perform specific initializations. It is called in the same
+ * process as javacall_event_receive() and javacall_events_finalize().
+ *
+ * @return <tt>JAVACALL_OK</tt> on success,
+ *         <tt>JAVACALL_FAIL</tt> otherwise
+ */
+javacall_result javacall_events_init(void) {
+    return JAVACALL_NOT_IMPLEMENTED;
+}
+
+/**
+ * The function is called during Java VM shutdown, allowing the platform to
+ * perform specific events-related shutdown operations. It is called in the same
+ * process as javacall_events_init() and javacall_event_receive().
+ *
+ * @return <tt>JAVACALL_OK</tt> on success,
+ *         <tt>JAVACALL_FAIL</tt> otherwise
+ */
+javacall_result javacall_events_finalize(void) {
     return JAVACALL_NOT_IMPLEMENTED;
 }
 
