@@ -668,7 +668,9 @@ final public class GIFPlayer extends BasicPlayer implements Runnable {
                             while (!stopped && waitTime > 0) {
                                 if (waitTime > MIN_WAIT) {
                                     playLock.wait(MIN_WAIT);
-                                    waitTime -= MIN_WAIT;
+                                    mediaTime = doGetMediaTime() / 1000;
+                                    waitTime = (displayTime - EARLY_THRESHOLD - 
+                                           mediaTime) * 100000 / rateControl.getRate();
                                 } else {
                                     playLock.wait(waitTime);
                                     waitTime = 0;
