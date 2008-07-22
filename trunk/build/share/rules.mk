@@ -181,7 +181,7 @@ endif
 ifeq ($(CVM_DISABLE_COMPILER_CHECK),true)
 CVM_COMPILER_INCOMPATIBLE ?= false
 else
-CVM_COMPILER_TARGET ?= $(shell $(TARGET_CC) -dumpmachine 2>1)
+CVM_COMPILER_TARGET ?= $(shell $(TARGET_CC) -dumpmachine 2>&1)
 # tranform things like i686 into x86
 CVM_COMPILER_TARGET := \
     $(shell echo $(CVM_COMPILER_TARGET) | sed -e 's/.*86\(-.*-.*\)/x86\1/')
