@@ -52,15 +52,6 @@ SUBSYSTEM_AUTOMATION_JAVA_FILES = \
 	$(SUBSYSTEM_DIR)/automation/reference/classes/com/sun/midp/automation/AutomationInitializer.java
     
 ifeq ($(USE_AUTOMATION), true) 
-# Common files
-
-
-ifeq ($(USE_MULTIPLE_ISOLATES), true)
-include $(SUBSYSTEM_DIR)/automation/reference/mvm/lib.gmk
-else
-include $(SUBSYSTEM_DIR)/automation/reference/svm/lib.gmk
-endif
-
 SUBSYSTEM_AUTOMATION_JAVA_FILES += \
 	$(SUBSYSTEM_DIR)/automation/classes/com/sun/midp/automation/AutoMIDlet.java \
 	$(SUBSYSTEM_DIR)/automation/classes/com/sun/midp/automation/AutoMIDletDescriptor.java \
@@ -69,11 +60,9 @@ SUBSYSTEM_AUTOMATION_JAVA_FILES += \
 	$(SUBSYSTEM_DIR)/automation/classes/com/sun/midp/automation/AutoEventQueue.java \
 	$(SUBSYSTEM_DIR)/automation/classes/com/sun/midp/automation/AutoEventQueueState.java \
 	$(SUBSYSTEM_DIR)/automation/classes/com/sun/midp/automation/AutoEventState.java \
-	$(SUBSYSTEM_DIR)/automation/classes/com/sun/midp/automation/AutoJavaME.java \
-	$(SUBSYSTEM_DIR)/automation/classes/com/sun/midp/automation/AutoSuiteStorage.java \
 	\
-	$(SUBSYSTEM_DIR)/automation/reference/classes/com/sun/midp/automation/AutoJavaMEImpl.java \
 	$(SUBSYSTEM_DIR)/automation/reference/classes/com/sun/midp/automation/AutoEventDataFactory.java \
+	$(SUBSYSTEM_DIR)/automation/reference/classes/com/sun/midp/automation/AutoSuiteStorage.java \
 	$(SUBSYSTEM_DIR)/automation/reference/classes/com/sun/midp/automation/AutoSuiteDescriptor.java \
 	$(SUBSYSTEM_DIR)/automation/reference/classes/com/sun/midp/automation/AutoSuiteStorageImpl.java \
 	$(SUBSYSTEM_DIR)/automation/reference/classes/com/sun/midp/automation/AutoSuiteDescriptorImpl.java \
