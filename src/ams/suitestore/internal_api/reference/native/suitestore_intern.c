@@ -1108,13 +1108,16 @@ read_settings(char** ppszError, SuiteIdType suiteId, jboolean* pEnabled,
  * @param pushOptions user options for push interrupts
  * @param pPermissions pointer a pointer to accept a permissions array
  * @param numberOfPermissions length of pPermissions
+ * @param pOutDataSize [out] points to a place where the size of the
+ *                           written data is saved; can be NULL
  *
  * @return error code (ALL_OK if successful)
  */
 MIDPError
 write_settings(char** ppszError, SuiteIdType suiteId, jboolean enabled,
                jbyte pushInterrupt, jint pushOptions,
-               jbyte* pPermissions, int numberOfPermissions) {
+               jbyte* pPermissions, int numberOfPermissions,
+               jint* pOutDataSize) {
     pcsl_string filename;
     int handle;
     char* pszTemp;
@@ -1159,7 +1162,15 @@ write_settings(char** ppszError, SuiteIdType suiteId, jboolean enabled,
         }
     } while (0);
 
-    if (*ppszError != NULL) {
+    if (*ppszError == NULL) {
+        if (pOutDataSize != NULL) {
+            *pOutDataSize = (jint)storageSizeOf(&pszTemp, handle);
+            storageFreeError(pszTemp);
+        }
+    } else {
+        if (pOutDataSize != NULL) {
+            *pOutDataSize = 0;
+        }
         status = IO_ERROR;
     }
 
@@ -1351,7 +1362,7 @@ MIDPError begin_transaction(MIDPTransactionType transactionType,
     pcsl_string transDataFile;
     char *pszError = NULL;
     MIDPError status = ALL_OK;
-    char pBuffer[MAX_FILENAME_LENGTH + sizeof(int) /* file name length */ + 
+    char pBuffer[MAX_FILENAME_LENGTH * sizeof(jchar) + sizeof(int) /* file name length */ + 
                  sizeof(suiteId) + sizeof(transactionType)];
     char *p = pBuffer;
     int len = sizeof(suiteId) + sizeof(transactionType);
@@ -1366,7 +1377,7 @@ MIDPError begin_transaction(MIDPTransactionType transactionType,
 
         rc = pcsl_string_convert_to_utf16(pFilename,
                         (jchar*)(p + sizeof(int)),
-                        MAX_FILENAME_LENGTH / sizeof(jchar),
+                        MAX_FILENAME_LENGTH,
                         &strLen);
         if (rc != PCSL_STRING_OK) {
             return OUT_OF_MEMORY;

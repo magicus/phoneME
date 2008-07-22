@@ -37,6 +37,7 @@
 #include <kni.h>
 #include <pcsl_memory.h>
 #include <midpInit.h>
+#include <midp_logging.h>
 #include <suitestore_common.h>
 
 #include <suitestore_intern.h>

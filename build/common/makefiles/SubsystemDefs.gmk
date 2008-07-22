@@ -425,7 +425,6 @@ JTWI_NATIVE_FILES	+= $(SUBSYSTEM_JSR_234_NATIVE_FILES)
 endif
 
 
-
 # Media stuff, included if no external mmapi-pp bundle is used,
 # i.e. none of USE_MIDP_ABB,USE_JSR_135,USE_JSR_234 is set.
 #

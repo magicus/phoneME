@@ -37,6 +37,7 @@
 #include <kni.h>
 #include <pcsl_memory.h>
 #include <midpInit.h>
+#include <midp_logging.h>
 #include <suitestore_common.h>
 #include <javacall_òams.h>
 
@@ -136,7 +137,7 @@ midp_suite_get_class_path(SuiteIdType suiteId,
                           StorageIdType storageId,
                           jboolean checkSuiteExists,
                           pcsl_string *classPath) {
-    return _get_class_path(suiteId, storageId, KNT_FALSE, classPath);
+    return _get_class_path(suiteId, storageId, KNI_FALSE, classPath);
 
 }
 
@@ -166,7 +167,7 @@ MIDPError
 midp_suite_get_bin_app_path(SuiteIdType suiteId,
                             StorageIdType storageId,
                             pcsl_string *classPath) {
-    return _get_class_path(suiteId, storageId, KNT_TRUE, classPath);
+    return _get_class_path(suiteId, storageId, KNI_TRUE, classPath);
 }
 #endif
 
@@ -295,8 +296,8 @@ midp_get_suite_id(const pcsl_string* vendor, const pcsl_string* name,
         *pSuiteId = (SuiteIdType)id;
         status = ALL_OK;
     }
-    RELEASE_PCSL_STRING_DATA_AND_LENGTH(name)
-    RELEASE_PCSL_STRING_DATA_AND_LENGTH(vendor)
+    RELEASE_PCSL_STRING_DATA_AND_LENGTH
+    RELEASE_PCSL_STRING_DATA_AND_LENGTH
     return status;
 }
 
@@ -358,7 +359,7 @@ midp_free_properties(MidpProperties* pProperties) {
 pcsl_string 
 midp_get_suite_property(SuiteIdType suiteId, const pcsl_string* key)  {
     pcsl_string result = PCSL_STRNG_NULL;
-    int value_len = 256*sizeof(javacall_utf16);
+    int value_len = JAVACALL_MAX*sizeof(javacall_utf16);
     javacall_utf16_string value_data = midpMalloc(value_len);
 
     if (NULL == value_data) {
@@ -376,9 +377,9 @@ midp_get_suite_property(SuiteIdType suiteId, const pcsl_string* key)  {
         pcsl_string_convert_from_utf16(value_data, value_len, &result);
 
     }
-    RELEASE_PCSL_STRING_DATA_AND_LENGTH(key)
+    RELEASE_PCSL_STRING_DATA_AND_LENGTH
 
-    midpFree((value*)value_data);
+    midpFree((void*)value_data);
 
     return result;
 }

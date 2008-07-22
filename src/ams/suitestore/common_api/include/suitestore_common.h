@@ -190,6 +190,9 @@ typedef struct _midletSuiteData {
     /** Size of the midlet suite's jar file. */
     jint jarSize;
 
+    /** Total size of all files except RMS belonging to the suite. */
+    jint suiteSize;
+
     /** Size of the jar file hash. If it is 0, pJarHash field is empty. */
     jint jarHashLen;
 

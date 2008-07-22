@@ -1,22 +1,22 @@
 #
 # Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
-# 
+#
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License version
 # 2 only, as published by the Free Software Foundation.
-# 
+#
 # This program is distributed in the hope that it will be useful, but
 # WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
 # General Public License version 2 for more details (a copy is
 # included at /legal/license.txt).
-# 
+#
 # You should have received a copy of the GNU General Public License
 # version 2 along with this work; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
 # 02110-1301 USA
-# 
+#
 # Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
 # Clara, CA 95054 or visit www.sun.com if you need additional
 # information or have any questions.
@@ -42,7 +42,7 @@ include $(MIDP_DIR)/build/common/makefiles/CancelImplicits.gmk
 include $(MIDP_DIR)/build/common/makefiles/Tools.gmk
 
 # Build system
-# We make the output directory as one of the vpaths 
+# We make the output directory as one of the vpaths
 # since generated code will go there.
 #
 vpath % $(MIDP_OUTPUT_DIR)
@@ -54,7 +54,7 @@ vpath % $(MIDP_OUTPUT_DIR)
 # other rule for classes.zip so that the message is emitted and the
 # list files are removed first.  Evaulation of subsequent dependencies
 # will have the side effect of populating the list files.
-# 
+#
 $(MIDP_CLASSES_ZIP) ::
 	@echo " ... searching updated .java files" $(LOG)
 	$(remove_filelist)
@@ -201,7 +201,7 @@ parallel_all:: $(VERIFY_BUILD_ENV) $(DISPLAY_BUILD_ENV) rom
 	@$(MAKE) -j $(NUM_JOBS) IN_PARALLEL_BUILD=true
 	@echo "Finished building in parallel mode with $(NUM_JOBS) jobs"
 
-# If use static properties flag is false, we just merely 
+# If use static properties flag is false, we just merely
 # copy the config files with properties for dynamic usage.
 #
 ifeq ($(USE_STATIC_PROPERTIES), false)
@@ -241,7 +241,7 @@ endif
 # not detected by vpath.
 $(OBJ_DIR)/%.o: %.c
 	@echo " ... $@" $(LOG)
-	$(A)$(CC) $(CFLAGS) -c $(CC_OUTPUT)$@ `$(call fixcygpath, $<)` $(LOG)
+	$(CC) $(CFLAGS) -c $(CC_OUTPUT)$@ `$(call fixcygpath, $<)` $(LOG)
 
 $(OBJ_DIR)/ROMImage.o: $(MIDP_OUTPUT_DIR)/ROMImage.cpp
 	@echo " ... $@" $(LOG)

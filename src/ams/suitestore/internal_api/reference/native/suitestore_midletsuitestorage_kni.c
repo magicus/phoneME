@@ -913,7 +913,8 @@ KNIDECL(com_sun_midp_midletsuite_SuiteSettings_save0) {
         }
 
         status = write_settings(&pszError, suiteId, enabled, pushInterrupt,
-                                pushOptions, pPermissions, permissionsLen);
+                                pushOptions, pPermissions, permissionsLen,
+                                NULL);
         if (status != ALL_OK) {
             if (pszError != NULL) {
                 KNI_ThrowNew(midpIOException, pszError);

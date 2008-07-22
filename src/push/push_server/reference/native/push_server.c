@@ -1,24 +1,24 @@
 /*
  *
  *
- * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
- * 
+ *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
  * 2 only, as published by the Free Software Foundation.
- * 
+ *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
  * included at /legal/license.txt).
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA
- * 
+ *
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
  * information or have any questions.
@@ -36,8 +36,10 @@
  * update the cache and rewrite the persistent data file.
  */
 
-#include <string.h>
+#ifndef _WIN32_WCE
 #include <errno.h>
+#endif
+#include <string.h>
 #include <java_types.h>
 
 #include <kni.h>
@@ -323,7 +325,7 @@ static char *pushclassname(char *value, int *pLength) {
             break;
         }
     }
-    
+
     *pLength = length;
     return classname;
 }
@@ -648,8 +650,8 @@ int midpAddPushEntry(SuiteIdType suiteId,
  * On succesful registration, write a new copy of the file to disk.
  *
  * @param str A push entry string.
- * @return <tt>0</tt> if successful, 
- *         <tt>-1</tt> if the entry already exists, 
+ * @return <tt>0</tt> if successful,
+ *         <tt>-1</tt> if the entry already exists,
  *         <tt>-2</tt> if out of memory
  *         <tt>-3</tt> if illegal arguments or unknown connection type
  */
@@ -887,7 +889,7 @@ int pushgetcachedpacket(int fd, int *ip, int *sndport, char *buf, int len) {
 
                 memcpy(buf, &p->pCachedData->buffer[p->pCachedData->offs],
                        length);
-                
+
                 p->pCachedData->offs += length;
             }
 
@@ -988,7 +990,7 @@ int pushcheckout(char* protocol, int port, char * store) {
             if (strcmp(store, p->storagename) != 0) {
                 return -2;
             }
-            
+
             fd = p->fd;
 
             /* The push system should stop monitoring this connection. */
@@ -1459,7 +1461,7 @@ static char* pushAcceptConnection(PushEntry* pushp, int prevState) {
      * Close any accepted socket not accessed, yet.
      */
     pushcheckinentry(pushp);
-    
+
     return NULL;
 }
 #endif
@@ -1497,7 +1499,7 @@ char *pushfindfd(int fd) {
                     return NULL;
                 }
             }
-            
+
             temp_state = pushp->state;
             pushp->state = LAUNCH_PENDING;
 
@@ -1662,7 +1664,7 @@ char *pushfindfd(int fd) {
             }
         }
     }
-    
+
     return NULL;
 }
 
@@ -1964,8 +1966,8 @@ static int getUrlPort(char* buffer) {
  * <li>isSipEntry set to KNI_TRUE for a SIP/SIPS connection,
                   KNI_FALSE otherwise</li>
  *
- * @return <tt>0</tt> if successful, 
- *         <tt>-1</tt> if the entry already exists, 
+ * @return <tt>0</tt> if successful,
+ *         <tt>-1</tt> if the entry already exists,
  *         <tt>-2</tt> if out of memory
  *         <tt>-3</tt> if illegal arguments or unknown connection type
  * </ul>
@@ -2037,7 +2039,7 @@ static int pushProcessPort(char *buffer, PushEntry* pe) {
         p = buffer;
     }
 #endif
-            
+
     if (pushIsDatagramConnection(buffer)) {
         if (pe->port == -1) {
             pe->port = getUrlPort(buffer);
@@ -2087,7 +2089,7 @@ static int pushProcessPort(char *buffer, PushEntry* pe) {
 
             if (status == PCSL_NET_SUCCESS) {
                 pe->fd = (int) handle;
-                
+
                 /* Update the resource count  */
                 if (midpIncResourceCount(RSC_TYPE_TCP_SER, 1) == 0) {
                     REPORT_INFO(LC_PROTOCOL, "(Push)TCP Server: "
@@ -2138,7 +2140,7 @@ static int pushProcessPort(char *buffer, PushEntry* pe) {
         REPORT_WARN1(LC_PROTOCOL, "%s\n", gKNIBuffer);
         return -3;
     }
-    
+
     return -3;
 }
 
@@ -2312,7 +2314,7 @@ int findPushTimerBlockedHandle(int handle) {
     for (alarmp = alarmlist; alarmp != NULL ; alarmp = alarmtmp) {
         alarmtmp = alarmp->next;
         ASSERT((alarmp->state == CHECKED_IN) || (alarmp->state == AVAILABLE));
-        
+
         /* alarmp->state == AVAILABLE iff timer has been canceled or updated */
         if ((handle == alarmp->timerHandle) && (alarmp->state == CHECKED_IN)) {
             alarmp->state = RECEIVED_EVENT;

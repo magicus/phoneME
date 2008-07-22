@@ -49,9 +49,15 @@ MIDP_JAVADOC_SOURCEPATH += $(JAMS_DIR)/classes
 SUBSYSTEM_AMS_JAVA_FILES += \
     $(JAMS_DIR)/classes/com/sun/midp/appmanager/ApplicationManager.java
 
+ifeq ($(AMS_UI_IMPL), stubs)
+# IMPL_NOTE: we don't include MIDletSuiteLauncher into the build when stubbed
+# app manager UI implementation is used because MIDletSuiteLauncher needs
+# refactoring of UI part into separate library.
+else
 # Include suite_launcher implementation into the build
 SUBSYSTEM_AMS_JAVA_FILES += \
     $(JAMS_DIR)/suite_launcher/classes/com/sun/midp/appmanager/MIDletSuiteLauncher.java
+endif
 
 ifeq ($(USE_MULTIPLE_ISOLATES), true)
 

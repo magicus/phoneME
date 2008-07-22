@@ -173,7 +173,7 @@ class MIDletSwitcher extends javax.microedition.lcdui.List
             if (ind != -1) {
                 manager.moveToForeground(minfo[ind]);
             }
-            display.setCurrent(managerUI);
+            display.setCurrent(managerUI.getMainDisplayable());
         }
     }
 

@@ -31,6 +31,7 @@ MIDP_CNI_CLASSES += \
         com.sun.midp.appmanager.MIDletSuiteInfo \
         com.sun.midp.chameleon.input.InputModeFactory \
         com.sun.midp.chameleon.input.NativeInputMode \
+        com.sun.midp.chameleon.input.VirtualInputMode \
         com.sun.midp.chameleon.layers.SoftButtonLayer \
         com.sun.midp.chameleon.skins.resources.LoadedSkinData \
         com.sun.midp.chameleon.skins.resources.LoadedSkinProperties \
@@ -69,7 +70,8 @@ MIDP_CNI_CLASSES += \
         javax.microedition.lcdui.ImageData \
         javax.microedition.lcdui.ImageDataFactory \
         javax.microedition.lcdui.KeyConverter \
-        com.sun.midp.util.ResourceHandler
+        com.sun.midp.util.ResourceHandler \
+        com.sun.midp.security.Permissions
 
 ifeq ($(USE_PISCES), true)
 MIDP_CNI_CLASSES += \

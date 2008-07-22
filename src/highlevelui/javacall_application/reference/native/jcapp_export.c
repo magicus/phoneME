@@ -1,7 +1,7 @@
 /*
  *
  *
- * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
@@ -32,10 +32,17 @@
 #include <midpMalloc.h>
 #include <javacall_lcd.h>
 #include <string.h>
+#include <javacall_time.h>
 #include <kni.h>
+
+#include <javacall_logging.h>
 
 
 gxj_screen_buffer gxj_system_screen_buffer;
+
+static jboolean isLcdDirty = KNI_FALSE;
+static javacall_time_milliseconds lastFlushTimeTicks = 0;
+static jboolean disableRefresh=KNI_FALSE;
 
 /**
  * @file
@@ -111,8 +118,14 @@ void jcapp_finalize() {
  * @param x2 bottom-right x coordinate of the area to refresh
  * @param y2 bottom-right y coordinate of the area to refresh
  */
+#define TRACE_LCD_REFRESH
 void jcapp_refresh(int x1, int y1, int x2, int y2)
 {
+    /*block any refresh calls in case of native master volume*/
+    if(disableRefresh==KNI_TRUE){
+        return;
+    }
+
     javacall_lcd_flush_partial (y1, y2);
 }
 
@@ -136,12 +149,15 @@ jboolean jcapp_reverse_orientation() {
     jboolean res = javacall_lcd_reverse_orientation(); 
     jcapp_get_screen_buffer();
 
-    // Whether current Displayable won't repaint the entire screen on
-    // resize event, the artefacts from the old screen content can appear.
-    // That's why the buffer content is not preserved.
-    jcapp_reset_screen_buffer();
-    return res;
+	/** Whether current Displayable won't repaint the entire screen
+	*  on resize event, the artefacts from the old screen content
+	* can appear. That's why the buffer content is not preserved. 
+    */ 
+
+	jcapp_reset_screen_buffer();
+	return res;
 }
+	 
 
 /**
  * Get screen orientation flag
@@ -164,10 +180,8 @@ int jcapp_get_screen_height() {
     return javacall_lcd_get_screen_height();
 }
 
-/**
- * Checks if soft button layer is supported
- * 
- * @return KNI_TRUE if native softbutton is supported, KNI_FALSE - otherwise
+/*
+ * will be called from event handling loop periodically
  */
 jboolean jcapp_is_native_softbutton_layer_supported() {
     return javacall_lcd_is_native_softbutton_layer_supported();
@@ -185,4 +199,12 @@ jboolean jcapp_is_native_softbutton_layer_supported() {
 	javacall_lcd_set_native_softbutton_label(label, len, index);
 }
 
+/*Disables the refresh of the screen*/
+void LCDUI_disable_refresh(void){
+ disableRefresh=KNI_TRUE;
+}
 
+ /*Enables the refresh of the screen*/
+void LCDUI_enable_refresh(void){
+ disableRefresh=KNI_FALSE;
+}

@@ -1,7 +1,7 @@
 /*
  *
  *
- * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
@@ -183,7 +183,7 @@ void checkForSystemSignal(MidpReentryData* pNewSignal,
 
         pNewMidpEvent->type         = MMAPI_EVENT;
         pNewMidpEvent->MM_PLAYER_ID = event->data.multimediaEvent.playerId;
-        pNewMidpEvent->MM_DATA      = event->data.multimediaEvent.data;
+        pNewMidpEvent->MM_DATA      = event->data.multimediaEvent.data.num32;
         pNewMidpEvent->MM_ISOLATE   = event->data.multimediaEvent.appId;
         pNewMidpEvent->MM_EVT_TYPE  = event->data.multimediaEvent.mediaType;
         pNewMidpEvent->MM_EVT_STATUS= event->data.multimediaEvent.status;
@@ -207,7 +207,6 @@ void checkForSystemSignal(MidpReentryData* pNewSignal,
 
         pNewMidpEvent->type         = AMMS_EVENT;
         pNewMidpEvent->MM_PLAYER_ID = event->data.multimediaEvent.playerId;
-        pNewMidpEvent->MM_DATA      = event->data.multimediaEvent.data;
         pNewMidpEvent->MM_ISOLATE   = event->data.multimediaEvent.appId;
         pNewMidpEvent->MM_EVT_TYPE  = event->data.multimediaEvent.mediaType;
 
@@ -217,11 +216,14 @@ void checkForSystemSignal(MidpReentryData* pNewSignal,
         case JAVACALL_EVENT_AMMS_SNAP_STORAGE_ERROR:
             {
                 int len = 0;
-                javacall_utf16_string str = (jchar*)event->data.multimediaEvent.data;
+                javacall_utf16_string str = event->data.multimediaEvent.data.str16;
                 while( str[len] != 0 ) len++;
                 pcsl_string_convert_from_utf16( str, len, &pNewMidpEvent->MM_STRING );
-                pNewMidpEvent->MM_DATA = 0;
+                free( str );
             }
+            break;
+        default:
+            pNewMidpEvent->MM_DATA = event->data.multimediaEvent.data.num32;
             break;
         }
 
@@ -326,7 +328,15 @@ void checkForSystemSignal(MidpReentryData* pNewSignal,
         pNewSignal->descriptor = (int)event->data.jsr256_jc_event_sensor.sensor;
         break;
 #endif /* ENABLE_JSR_256 */
-    default:
+#ifdef ENABLE_API_EXTENSIONS
+case MIDP_JC_EVENT_VOLUME:
+		pNewSignal->waitingFor = VOLUME_SIGNAL;
+		pNewSignal->status     = JAVACALL_OK;
+	
+	break;
+#endif /* ENABLE_API_EXTENSIONS */
+	default:
+
         REPORT_ERROR(LC_CORE,"Unknown event.\n");
         break;
     };

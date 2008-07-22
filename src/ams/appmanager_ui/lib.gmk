@@ -40,7 +40,7 @@
 APPMANAGER_UI_NAME = appmanager_ui
 
 # Local module directory
-APPMANAGER_UI_DIR = $(SUBSYSTEM_AMS_DIR)/$(APPMANAGER_UI_NAME)/reference
+APPMANAGER_UI_DIR = $(SUBSYSTEM_AMS_DIR)/$(APPMANAGER_UI_NAME)
 
 # Javadoc source path
 MIDP_JAVADOC_SOURCEPATH += $(APPMANAGER_UI_DIR)/classes
@@ -48,15 +48,14 @@ MIDP_JAVADOC_SOURCEPATH += $(APPMANAGER_UI_DIR)/classes
 # Java files for the sub-system
 #
 SUBSYSTEM_AMS_JAVA_FILES += \
-    $(APPMANAGER_UI_DIR)/classes/com/sun/midp/appmanager/AppInfo.java \
-    $(APPMANAGER_UI_DIR)/classes/com/sun/midp/appmanager/AppManagerUI.java \
-    $(APPMANAGER_UI_DIR)/classes/com/sun/midp/appmanager/FolderList.java \
-    $(APPMANAGER_UI_DIR)/classes/com/sun/midp/appmanager/AppSettings.java \
-    $(APPMANAGER_UI_DIR)/classes/com/sun/midp/appmanager/DisplayError.java \
-    $(APPMANAGER_UI_DIR)/classes/com/sun/midp/appmanager/MIDletSelector.java \
-    $(APPMANAGER_UI_DIR)/classes/com/sun/midp/appmanager/MIDletSwitcher.java \
-    $(APPMANAGER_UI_DIR)/classes/com/sun/midp/appmanager/SplashScreen.java \
-    $(APPMANAGER_UI_DIR)/classes/com/sun/midp/appmanager/RunningMIDletSuiteInfo.java \
-    $(APPMANAGER_UI_DIR)/classes/com/sun/midp/appmanager/CaManager.java
+    $(APPMANAGER_UI_DIR)/classes/com/sun/midp/appmanager/AppManagerUI.java
 
+# IMPL NOTE: Use library configuration file to select switch library
+#
+
+ifeq ($(AMS_UI_IMPL)X, X)
+AMS_UI_IMPL = reference
+endif
+
+include $(APPMANAGER_UI_DIR)/$(AMS_UI_IMPL)/lib.gmk
 

@@ -207,7 +207,7 @@ public class InternalMIDletSuiteImpl implements MIDletSuite {
      *
      * @exception SecurityException if the suite is not allowed the permission
      */
-    public void checkIfPermissionAllowed(int permission) {
+    public void checkIfPermissionAllowed(String permission) {
         if (checkPermission(permission) != 1) {
             throw new SecurityException(SecurityToken.STD_EX_MSG);
         }
@@ -229,7 +229,7 @@ public class InternalMIDletSuiteImpl implements MIDletSuite {
      *   calling thread while this method is waiting to preempt the
      *   display.
      */
-    public void checkForPermission(int permission, String resource)
+    public void checkForPermission(String permission, String resource)
             throws InterruptedException {
         checkForPermission(permission, resource, null);
     }
@@ -252,7 +252,7 @@ public class InternalMIDletSuiteImpl implements MIDletSuite {
      *   calling thread while this method is waiting to preempt the
      *   display.
      */
-    public void checkForPermission(int permission, String resource,
+    public void checkForPermission(String permission, String resource,
             String extraValue) throws InterruptedException {
         checkIfPermissionAllowed(permission);
     }
@@ -270,12 +270,10 @@ public class InternalMIDletSuiteImpl implements MIDletSuite {
      *  -1 if the status is unknown
      */
     public int checkPermission(String permission) {
-        for (int i = 0; i < Permissions.NUMBER_OF_PERMISSIONS; i++) {
-            if (Permissions.getName(i).equals(permission)) {
-                return checkPermission(i);
-
-            }
-        }
+        try {
+            int i = Permissions.getId(permission);
+            return checkPermission(i);
+        } catch (Exception e){} // permission not found, do nothing, return 0
 
         return 0;
     }

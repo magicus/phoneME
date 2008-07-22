@@ -1,7 +1,7 @@
 /*
  *
  *
- * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  *
  * This program is free software; you can redistribute it and/or
@@ -29,6 +29,10 @@
  *
  * Implementation of javacall notification functions.
  */
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #include <string.h>
 #include <midpServices.h>
@@ -66,7 +70,7 @@
 #endif
 
 #ifdef ENABLE_JSR_179
-#include <javacall_location.h>
+#include <javanotify_location.h>
 #endif
 
 #ifdef ENABLE_JSR_234
@@ -78,6 +82,7 @@
 #endif /* ENABLE_ON_DEVICE_DEBUG */
 
 static char urlAddress[BINARY_BUFFER_MAX_LEN];
+static char localResAddress[BINARY_BUFFER_MAX_LEN];
 
 #define MAX_PHONE_NUMBER_LENGTH 48
 static char selectedNumber[MAX_PHONE_NUMBER_LENGTH];
@@ -139,6 +144,16 @@ void javanotify_pen_event(int x, int y, javacall_penevent_type type) {
 
     midp_jc_event_send(&e);
 }
+
+void javanotify_alarm_expiration() {
+    midp_jc_event_union e;
+    e.eventType  = MIDP_JC_EVENT_PUSH;
+    e.data.pushEvent.alarmHandle = 0;
+    midp_jc_event_send(&e);
+}
+
+
+
 
 /**
  * The platform should invoke this function in platform context to start
@@ -348,6 +363,9 @@ void javanotify_start_handler(char* handlerID, char* url, char* action) {
     midp_jc_event_send(&e);
 }
 
+/** from midp_run.c file */
+extern void javautil_set_wap_browser_download(int value);
+
 /**
  * A notification function for telling Java to perform installation of
  * a MIDlet
@@ -390,6 +408,41 @@ void javanotify_install_midlet(const char *httpUrl) {
     data->argv[data->argc++] = urlAddress;
 
     midp_jc_event_send(&e);
+}
+
+/**
+ * A notification function for telling Java to perform installation of
+ * a MIDlet.
+ *
+ * The difference to javanotify_install_midlet() is .jad or .jar file
+ * has been downloaded by browser. Java should read and install it from
+ * file system.
+ *
+ */
+void javanotify_install_midlet_from_browser(const char * browserUrl, const char* localResPath) {
+       int length1, length2;
+       static int wapBrowserDownload; /*a flag indicating that jad/jar downloading
+                                        is done by the platform*/
+       midp_jc_event_union e;
+
+       REPORT_INFO2(LC_CORE,"javanotify_install_midlet_from_browser() %s %s>>\n", browserUrl, localResPath);
+
+       e.eventType = MIDP_JC_EVENT_START_INSTALL;
+       e.data.lifecycleEvent.silentInstall = 0;
+       wapBrowserDownload = 1;
+
+       length1 = strlen(browserUrl);
+       length2 = strlen(localResPath);
+
+       if (length1 < BINARY_BUFFER_MAX_LEN && length2 < BINARY_BUFFER_MAX_LEN) {
+           memset(urlAddress, 0, BINARY_BUFFER_MAX_LEN);
+           memcpy(urlAddress, browserUrl, length1);
+           memset(localResAddress, 0, BINARY_BUFFER_MAX_LEN);
+           memcpy(localResAddress, localResPath, length2);
+           e.data.lifecycleEvent.urlAddress = urlAddress;
+           e.data.lifecycleEvent.localResPath = localResAddress;
+           midp_jc_event_send(&e);
+      }
 }
 
 /**
@@ -646,7 +699,7 @@ void javanotify_shutdown(void) {
  * Java.
  */
 void javanotify_pause(void) {
-    midp_jc_event_union e; 
+    midp_jc_event_union e;
 
     REPORT_INFO(LC_CORE, "javanotify_pause() >>\n");
 
@@ -660,7 +713,7 @@ void javanotify_pause(void) {
  * and resume Java.
  */
 void javanotify_resume(void) {
-    midp_jc_event_union e; 
+    midp_jc_event_union e;
 
     REPORT_INFO(LC_CORE, "javanotify_resume() >>\n");
 
@@ -1225,11 +1278,11 @@ void javanotify_on_media_notification(javacall_media_notification_type type,
     REPORT_INFO4(LC_MMAPI, "javanotify_on_media_notification type=%d appId=%d playerId%d status=%d\n", type, appId, playerId, status);
 
     e.eventType = MIDP_JC_EVENT_MULTIMEDIA;
-    e.data.multimediaEvent.mediaType = type;
-    e.data.multimediaEvent.appId = appId;
-    e.data.multimediaEvent.playerId = playerId;
-    e.data.multimediaEvent.status = (int) status;
-    e.data.multimediaEvent.data = (int) data;
+    e.data.multimediaEvent.mediaType  = type;
+    e.data.multimediaEvent.appId      = appId;
+    e.data.multimediaEvent.playerId   = playerId;
+    e.data.multimediaEvent.status     = (int) status;
+    e.data.multimediaEvent.data.num32 = (int) data;
 
     midp_jc_event_send(&e);
 #endif
@@ -1253,7 +1306,21 @@ void javanotify_on_amms_notification(javacall_amms_notification_type type,
     e.data.multimediaEvent.mediaType = type;
     e.data.multimediaEvent.appId = (int)((processorId >> 32) & 0xFFFF);
     e.data.multimediaEvent.playerId = (int)(processorId & 0xFFFF);
-    e.data.multimediaEvent.data = (int) data;
+
+    switch( type )
+    {
+    case JAVACALL_EVENT_AMMS_SNAP_SHOOTING_STOPPED:
+    case JAVACALL_EVENT_AMMS_SNAP_STORAGE_ERROR:
+        {
+            size_t size = sizeof( javacall_utf16 ) * ( 1 + wcslen( (javacall_utf16_string)data ) );
+            e.data.multimediaEvent.data.str16 = (javacall_utf16_string)malloc( size );
+            wcscpy( e.data.multimediaEvent.data.str16, (javacall_utf16_string)data );
+        }
+        break;
+    default:
+        e.data.multimediaEvent.data.num32 = (int) data;
+        break;
+    }
 
     REPORT_INFO1(LC_NONE,
             "[javanotify_on_amms_notification] type=%d\n", type);
@@ -1575,7 +1642,7 @@ void javanotify_security_permission_dialog_finish(
 
 /**
  * A notification function for telling Java to perform installation of
- * a content via http, for SprintAMS.
+ * a content via http, for EXTERNAL API's AMS.
  *
  * This function requires that the descriptor (JADfile, or GCDfile)
  * has already been downloaded and resides somewhere on the file system.
@@ -1723,6 +1790,52 @@ void /* OPTIONAL */ javanotify_rotation() {
     midp_jc_event_send(&e);
 }
 
+#ifdef ENABLE_API_EXTENSIONS
+
+/**
+ *
+ * The implementation calls this callback notify function when master volume dialog
+ * is dismissed. The platfrom will invoke the callback in platform context.
+ * This function is used only for asynchronous mode of the function
+ * javacall_prompt_volume.
+ *
+ */
+void javanotify_prompt_volume_finish(void) {
+    midp_jc_event_union e;
+    REPORT_INFO1(LC_PROTOCOL,
+                 "[javanotify_prompt_volume_finish] status=%d",
+                 JAVACALL_OK);
+    e.eventType = MIDP_JC_EVENT_VOLUME;
+    e.data.VolumeEvent.stub = 0;
+    midp_jc_event_send(&e);
+
+}
+#endif /*ENABLE_API_EXTENSIONS*/
+
+void javanotify_widget_menu_selection(int cmd) {
+    // This command comes from a menu item dynamically
+    // created in the native method
+    // SoftButtonLayer.setNativePopupMenu()
+    midp_jc_event_union e;
+
+    e.eventType = MIDP_JC_EVENT_MENU_SELECTION;
+    e.data.menuSelectionEvent.menuIndex = cmd;
+
+    midp_jc_event_send(&e);
+}
+
+
+/**
+ * Notfy native peer widget state changed, such as key pressed in editor control.
+ * Now only java TextField/TextBox has native peer.
+ */
+void javanotify_peerchanged_event(void) {
+    midp_jc_event_union e;
+
+    e.eventType = MIDP_JC_EVENT_PEER_CHANGED;
+    midp_jc_event_send(&e);
+}
+
 #if ENABLE_ON_DEVICE_DEBUG
 /**
  * The platform calls this function to inform VM that
@@ -1733,5 +1846,9 @@ void javanotify_enable_odd() {
 
      e.eventType = MIDP_JC_ENABLE_ODD_EVENT;
      midp_jc_event_send(&e);
+}
+#endif
+
+#ifdef __cplusplus
 }
 #endif

@@ -24,7 +24,4 @@
 # information or have any questions.
 #
 
-LIB_EXPORT_JAVA_FILES= \
-    com/sun/midp/appmanager/AppManagerUI.java \
-    com/sun/midp/appmanager/DisplayError.java \
-    com/sun/midp/appmanager/SplashScreen.java
+include $(CURDIR)/../../../build/share/genroot.make

@@ -70,7 +70,9 @@ __asm {
     bge     loop2
 
 
-//    stmfd sp, {r4-r11}
+#if (__ARMCC_VERSION < 120848)
+    stmfd sp, {r4-r11}
+#endif
 
     mov r4,  r3
     mov r5,  r3
@@ -85,7 +87,10 @@ loop:
     stmia r0!, {r3-r10}
     cmp r0, r1
     blt loop
-//    ldmfd sp, {r4-r11} 
+
+#if (__ARMCC_VERSION < 120848)
+    ldmfd sp, {r4-r11}
+#endif 
 
  loop2:
     cmp    r0,r2;

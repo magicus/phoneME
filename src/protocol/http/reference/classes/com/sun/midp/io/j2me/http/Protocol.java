@@ -407,7 +407,7 @@ public class Protocol extends ConnectionBaseAdapter
      * @param token token with the HTTP permission set to the allowed level
      */
     private void checkIfPermissionAllowed(SecurityToken token) {
-        token.checkIfPermissionAllowed(Permissions.HTTP);
+        token.checkIfPermissionAllowed(HTTP_PERMISSION_NAME);
         ownerTrusted = true;
         permissionChecked = true;
     }
@@ -1669,7 +1669,7 @@ public class Protocol extends ConnectionBaseAdapter
          * this field being added to their HTTP(S) requests.
          */
         if (!ownerTrusted) {
-            String newUserAgentValue;
+            String newUserAgentValue = "UNTRUSTED/1.0";
             String origUserAgentValue = 
                     reqProperties.getPropertyIgnoreCase("User-Agent");
             if (origUserAgentValue != null) {
@@ -1678,9 +1678,12 @@ public class Protocol extends ConnectionBaseAdapter
                  * of the "User-Agent" header field should not be ignored in 
                  * this case
                  */
-                newUserAgentValue = "UNTRUSTED/1.0 " + origUserAgentValue;
+                newUserAgentValue += " " + origUserAgentValue;
             } else {
-                newUserAgentValue = "UNTRUSTED/1.0";
+                String platformUA = Configuration.getProperty("User-Agent");
+                if (platformUA != null) {
+                    newUserAgentValue += " " + platformUA;
+                }
             }
             reqProperties.setPropertyIgnoreCase("User-Agent", 
                     newUserAgentValue);
@@ -2451,4 +2454,5 @@ public class Protocol extends ConnectionBaseAdapter
         }
     }
 }
+
 
