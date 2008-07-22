@@ -918,13 +918,13 @@ KNIDECL(com_sun_mmedia_DirectPlayer_nGetSnapshotData) {
     jint handle = KNI_GetParameterAsInt(1);
     KNIPlayerInfo*  pKniInfo = (KNIPlayerInfo*)handle;
     javacall_result ret = JAVACALL_FAIL;
+    long dataBytes = 0;
+    
     KNI_StartHandles(1);
     KNI_DeclareHandle(returnValueHandle);
 
     MMP_DEBUG_STR("[kni_video] +nGetSnapshotData\n");
 
-    long dataBytes;
-    
     ret = javacall_media_get_video_snapshot_data_size(pKniInfo->pNativeHandle, &dataBytes);
     if( JAVACALL_OK != ret || 0 >= dataBytes )
     {
