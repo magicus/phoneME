@@ -40,38 +40,16 @@ PCSL_DEFINE_STATIC_ASCII_STRING_LITERAL_END(KEY_PREFIX);
 
 int
 find_midlet_class(SuiteIdType id, int midletNumber, pcsl_string* res) {
-    MidpProperties properties;
     pcsl_string keySuffix = PCSL_STRING_NULL;
     pcsl_string key = PCSL_STRING_NULL;
-    const pcsl_string* property = &PCSL_STRING_NULL;
+    pcsl_string property = PCSL_STRING_NULL;
     pcsl_string temp = PCSL_STRING_NULL;
     pcsl_string_status stat;
     int begin;
     int result = 0;
     *res = PCSL_STRING_NULL;
 
-    properties = midp_get_suite_properties(id);
-    if (OUT_OF_MEM_PROPERTY_STATUS(properties)) {
-        return OUT_OF_MEM_LEN;
-    }
-
     do {
-        if (CORRUPTED_PROPERTY_STATUS(properties)) {
-            midp_free_properties(&properties);
-            REPORT_ERROR(LC_AMS, "Error : Suite is corrupted");
-            fprintf(stderr, "Error : Suite is corrupted\n");
-            result = NULL_LEN;
-            break;
-        }
-
-        if (READ_ERROR_PROPERTY_STATUS(properties)) {
-            midp_free_properties(&properties);
-            REPORT_ERROR(LC_AMS, "Corrupt properties");
-            fprintf(stderr, "Corrupt properties\n");
-            result = NULL_LEN;
-            break;
-        }
-
         stat = pcsl_string_convert_from_jint(midletNumber, &keySuffix);
         if (PCSL_STRING_OK != stat) {
             if(PCSL_STRING_ENOMEM == stat) {
@@ -89,22 +67,22 @@ find_midlet_class(SuiteIdType id, int midletNumber, pcsl_string* res) {
             break;
         }
 
-        property = midp_find_property(&properties, &key);
-        if (pcsl_string_length(property) <= 0) {
+        property = midp_get_suite_property(id, &key);
+        if (pcsl_string_length(&property) <= 0) {
             /* property not found */
             result = NULL_LEN;
             break;
         }
 
         /* The class is the last item in the set. */
-        begin = pcsl_string_last_index_of(property, (jchar)',');
-        if (begin < 0 || begin >= pcsl_string_length(property)) {
+        begin = pcsl_string_last_index_of(&property, (jchar)',');
+        if (begin < 0 || begin >= pcsl_string_length(&property)) {
             result = NULL_LEN;
             break;
         }
 
         begin++;
-        stat = pcsl_string_substring(property, begin, pcsl_string_length(property), &temp);
+        stat = pcsl_string_substring(&property, begin, pcsl_string_length(&property), &temp);
         if (PCSL_STRING_OK != stat) {
             result = OUT_OF_MEM_LEN;
             break;
@@ -122,7 +100,7 @@ find_midlet_class(SuiteIdType id, int midletNumber, pcsl_string* res) {
         }
     } while (0);
 
-    midp_free_properties(&properties);
+    pcsl_string_free(&property);
     return result;
 }
 

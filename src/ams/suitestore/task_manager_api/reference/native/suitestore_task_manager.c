@@ -249,8 +249,7 @@ midp_remove_suite(SuiteIdType suiteId) {
     int status;
     int operationStarted = 0;
     void* fileIteratorHandle = NULL;
-    MidpProperties properties;
-    pcsl_string* pproperty;
+    pcsl_string property;
     MidletSuiteData* pData = NULL;
 
     lockStorageList *node = NULL;
@@ -323,24 +322,21 @@ midp_remove_suite(SuiteIdType suiteId) {
          * If there is a delete notify property, add the value to the delete
          * notify URL list.
          */
-        properties = midp_get_suite_properties(suiteId);
-        if (properties.numberOfProperties > 0) {
-            pproperty = midp_find_property(&properties, &DELETE_NOTIFY_PROP);
-            if (pcsl_string_length(pproperty) > 0) {
-                midpAddDeleteNotification(suiteId, pproperty);
+        property = midp_get_suite_property(suiteId, &DELETE_NOTIFY_PROP);
+        if (pcsl_string_length(&property) > 0) {
+            midpAddDeleteNotification(suiteId, &property);
             }
+        pcsl_string_free(&property);
 
-            pproperty = midp_find_property(&properties, &INSTALL_NOTIFY_PROP);
-            if (pcsl_string_length(pproperty) > 0) {
+        property = midp_get_suite_property(suiteId, &INSTALL_NOTIFY_PROP);
+        if (pcsl_string_length(&property) > 0) {
                 /*
                  * Remove any pending install notifications since they are only
                  * retried when the suite is run.
                  */
                 midpRemoveInstallNotification(suiteId);
             }
-
-            midp_free_properties(&properties);
-        }
+        pcsl_string_free(&property);
 
         if ((status = get_suite_storage_root(suiteId, &suiteRoot)) != ALL_OK) {
             break;
