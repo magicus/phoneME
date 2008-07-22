@@ -918,40 +918,52 @@ KNIDECL(com_sun_mmedia_DirectPlayer_nGetSnapshotData) {
     jint handle = KNI_GetParameterAsInt(1);
     KNIPlayerInfo*  pKniInfo = (KNIPlayerInfo*)handle;
     javacall_result ret = JAVACALL_FAIL;
-    KNI_StartHandles(2);
-    KNI_DeclareHandle(imageTypeHandle);
+    KNI_StartHandles(1);
     KNI_DeclareHandle(returnValueHandle);
 
     MMP_DEBUG_STR("[kni_video] +nGetSnapshotData\n");
 
-    if (pKniInfo && pKniInfo->pNativeHandle) {
-        long dataBytes;
-        
-        ret = javacall_media_get_video_snapshot_data_size(pKniInfo->pNativeHandle, &dataBytes);
-        if( JAVACALL_OK != ret || 0 >= dataBytes )
-        {
-            KNI_ThrowNew( "javax/microedition/media/MediaException",
-                "\nFailed to get Camera Snapshot data size\n");
-        }
-        else {
-            MMP_DEBUG_STR1("[kni_video] nSnapShot get data size %d\n", dataBytes);
+    long dataBytes;
     
-            /* Create new Java byte array object to store snapshot data */
-            SNI_NewArray(SNI_BYTE_ARRAY, dataBytes, returnValueHandle);
-            if (KNI_IsNullHandle(returnValueHandle)) {
-                KNI_ThrowNew(jsropOutOfMemoryError, NULL);
-            } else {
-                ret = javacall_media_get_video_snapshot_data(pKniInfo->pNativeHandle, 
-                                  (char*)JavaByteArray(returnValueHandle), dataBytes);
-                if (JAVACALL_OK != ret) {
-                    KNI_ReleaseHandle(returnValueHandle);
-                    KNI_ThrowNew( "javax/microedition/media/MediaException",
-                        "\nFailed to get Camera Snapshot data\n");
-                }
-            }
-        }
+    ret = javacall_media_get_video_snapshot_data_size(pKniInfo->pNativeHandle, &dataBytes);
+    if( JAVACALL_OK != ret || 0 >= dataBytes )
+    {
+        KNI_ThrowNew( "javax/microedition/media/MediaException",
+            "\nFailed to get Camera Snapshot data size\n");
+        goto end;
     }
+    MMP_DEBUG_STR1("[kni_video] nSnapShot get data size %d\n", dataBytes);
+
+    /* Create new Java byte array object to store snapshot data */
+    SNI_NewArray(SNI_BYTE_ARRAY, dataBytes, returnValueHandle);
+    if (KNI_IsNullHandle(returnValueHandle)) {
+        KNI_ThrowNew(jsropOutOfMemoryError, NULL);
+        goto end;
+    }
+    
+    jbyte *tmpArray = MMP_MALLOC( dataBytes );
+    if( NULL == tmpArray )
+    {
+        KNI_ReleaseHandle( returnValueHandle );
+        KNI_ThrowNew(jsropOutOfMemoryError, NULL);
+        goto end;
+    }
+    
+    ret = javacall_media_get_video_snapshot_data(pKniInfo->pNativeHandle, 
+                      ( char* )tmpArray, dataBytes);
+    if (JAVACALL_OK != ret) {
+        KNI_ReleaseHandle(returnValueHandle);
+        KNI_ThrowNew( "javax/microedition/media/MediaException",
+            "\nFailed to get Camera Snapshot data\n");
+    }
+    else {
+        KNI_SetRawArrayRegion(returnValueHandle, 0, dataBytes, tmpArray);
+    }
+
+    MMP_FREE( tmpArray );
+
     MMP_DEBUG_STR1("[kni_video] -nGetSnapshotData %d\n", returnValueHandle);
 
+end:
     KNI_EndHandlesAndReturnObject(returnValueHandle);
 }
