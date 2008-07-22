@@ -146,14 +146,6 @@ static void print_alloc(const char* what, char* filename, int lineno) {
  *	Keep it zero otherwise
  */
 #define PCSL_TRACE_MEMORY  0
-
-#else
-/** 
- *  Functions enabled by PCSL_TRACE_MEMORY will not work unless PCSL_DEBUG is defined.
- *  Therefore if PCSL_DEBUG is not defined PCSL_TRACE_MEMORY has to be 0 
- */
-#define PCSL_TRACE_MEMORY  0
-
 #endif 
 
 /**
@@ -443,11 +435,11 @@ pcsl_mem_malloc_impl0(unsigned int size) {
                             + sizeof(_PcslMemHdr);
 #ifdef PCSL_DEBUG
                         pcslMemoryHdr->guardSize = 0;
-#endif
 #if PCSL_TRACE_MEMORY
                         REPORT2("DEBUG: Coalescing blocks 0x%p and 0x%p\n",
                                 pcslMemoryHdr, tempHdr);
 #endif 
+#endif
 
                     } else {
                         break;
