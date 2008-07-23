@@ -146,16 +146,16 @@ public class NCISlave extends MIDlet implements CommandListener, Runnable {
     
     /**
      * Destroy must cleanup everything not handled by the garbage collector.
-     * In this case there is nothing to cleanup.
      */
     public void destroyApp(boolean unconditional) {
         try {
             smsconn.close();
             mmsconn.close();
-        } catch(Exception err) {
+        } catch(IOException err) {
+            /* nothing to do */
         }
         address = null;
-	port_address = null;
+        port_address = null;
     }
     
     /*
