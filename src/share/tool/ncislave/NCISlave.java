@@ -150,7 +150,17 @@ public class NCISlave extends MIDlet implements CommandListener, Runnable {
      */
     public void destroyApp(boolean unconditional) {
         address = null;
-	port_address = null;
+        port_address = null;
+        try {
+            smsconn.close();
+        } catch (Exception e) {
+            /* ignore */
+        }
+        try {
+            mmsconn.close();
+        } catch (Exception e) {
+            /* ignore */
+        }
     }
     
     /*
