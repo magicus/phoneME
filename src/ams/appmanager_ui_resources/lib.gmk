@@ -64,17 +64,15 @@ ifeq ($(USE_FILE_SYSTEM), true)
 
 ifeq ($(USE_RAW_AMS_IMAGES), false)
 app_manager_resources: $(STORAGEDIR) $(EXTSTORAGEDIR)
-	$(foreach _IMAGE_FOLDER, \
-	    $(APP_MANAGER_RESOURCES_IMAGE_FOLDERS), \
-            -@(cp -f $(_IMAGE_FOLDER)/*.png \
-	    $(STORAGEDIR)) $(LOG))
+	@echo " ... Copying PNG files"
+	-@(cp -f \
+	  $(foreach _IMAGE_FOLDER,$(APP_MANAGER_RESOURCES_IMAGE_FOLDERS),$(_IMAGE_FOLDER)/*.png) \
+	    $(STORAGEDIR) $(LOG))
 else
 app_manager_resources: $(STORAGEDIR) $(EXTSTORAGEDIR) $(IMAGE2RAW_JAR_FILE) \
 		       $(SUBSYSTEM_CONFIGURATION_MERGED_FILE)
 	@echo " ... converting AMS images to raw format" $(LOG)
-	$(foreach _IMAGE_FOLDER, \
-	    $(APP_MANAGER_RESOURCES_IMAGE_FOLDERS), \
-            @$(call convert_images_to_raw,$(_IMAGE_FOLDER)))
+	$(call convert_images_to_raw,$(APP_MANAGER_RESOURCES_IMAGE_FOLDERS))
 endif
 
 else
