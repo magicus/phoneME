@@ -50,7 +50,7 @@
 #	CVM_BUILD_SUBDIR_SUFFIX: ""
 #	CVM_BUILD_SUBDIR_NAME:   <build_flavor>$(CVM_BUILD_SUBDIR_SUFFIX)
 #	SOURCE_OUTPUT_DIR:	$(COMPONENTS_DIR)/cdc/install/pmea_mr2
-#	BUNDLE_PORTS		"linux-x86-* linux-arm-*"
+#	SUBMAKE_TARGETS:	Targets passed to submake, such as "bin"
 #
 # You can export CVM_BUILD_SUBDIR_SUFFIX from the shell if you always
 # want a suffix. For example, a suffix of "_dir" is useful for easy
@@ -153,12 +153,17 @@ define TRACE_BUILD_END
 	@echo "*********************************************************"
 endef
 
+# Strip command line options from MAKEFLAGS and convert targets specified
+# by SUBMAKE_TARGETS to simple target names.
+SUBMAKE_MAKEFLAGS_NO_TARGETS = $(foreach flag,$(MAKEFLAGS),\
+	$(shell echo $(flag) | grep = | grep -v SUBMAKE_TARGETS))
+SUBMAKE_MAKEFLAGS = $(SUBMAKE_MAKEFLAGS_NO_TARGETS) $(SUBMAKE_TARGETS)
+
 #
 # Make rule for the source bundles
 #
 
 SOURCE_OUTPUT_DIR=$(COMPONENTS_DIR)/cdc/install/pmea_mr2
-BUNDLE_PORTS="linux-x86-* linux-arm-*"
 
 .PHONY: source_bundle
 .PHONY: source_bundles
@@ -167,8 +172,9 @@ source_bundles:
 	$(TRACE_BUILD_START)
 	make source_bundles $(DEFAULT_FLAGS) \
 		SOURCE_OUTPUT_DIR=$(SOURCE_OUTPUT_DIR) \
-		BUNDLE_PORTS=$(BUNDLE_PORTS) \
-		CVM_JIT=true INCLUDE_JCOV=true
+		BUNDLE_PORTS="linux-x86-* linux-arm-*" \
+		CVM_JIT=true INCLUDE_JCOV=true \
+		 $(SUBMAKE_MAKEFLAGS_NO_TARGETS)
 	$(TRACE_BUILD_END)
 
 #
@@ -179,102 +185,104 @@ source_bundles:
 nojump:
 	$(TRACE_BUILD_START)
 	$(AT)make $(DEFAULT_FLAGS) $(QT_FLAGS) \
-		USE_JUMP=false CVM_JIT=true CVM_SYMBOLS=false
+		USE_JUMP=false CVM_JIT=true CVM_SYMBOLS=false \
+		$(SUBMAKE_MAKEFLAGS)
 	$(TRACE_BUILD_END)
 
 .PHONY: opt
 opt:
 	$(TRACE_BUILD_START)
-	$(AT)make $(DEFAULT_FLAGS) $(QT_FLAGS)
+	$(AT)make $(DEFAULT_FLAGS) $(QT_FLAGS) $(SUBMAKE_MAKEFLAGS)
 	$(TRACE_BUILD_END)
 
 .PHONY: opt_jit
 opt_jit:
 	$(TRACE_BUILD_START)
 	$(AT)make $(DEFAULT_FLAGS) $(QT_FLAGS) \
-		CVM_JIT=true
+		CVM_JIT=true $(SUBMAKE_MAKEFLAGS)
 	$(TRACE_BUILD_END)
 
 .PHONY: opt_nosym
 opt_nosym:
 	$(TRACE_BUILD_START)
 	$(AT)make $(DEFAULT_FLAGS) $(QT_FLAGS) \
-		CVM_SYMBOLS=false
+		CVM_SYMBOLS=false $(SUBMAKE_MAKEFLAGS)
 	$(TRACE_BUILD_END)
 
 .PHONY: opt_jit_nosym
 opt_jit_nosym:
 	$(TRACE_BUILD_START)
 	$(AT)make $(DEFAULT_FLAGS) $(QT_FLAGS) \
-		CVM_JIT=true CVM_SYMBOLS=false
+		CVM_JIT=true CVM_SYMBOLS=false $(SUBMAKE_MAKEFLAGS)
 	$(TRACE_BUILD_END)
 
 .PHONY: opt_preload
 opt_preload:
 	$(TRACE_BUILD_START)
 	$(AT)make $(DEFAULT_FLAGS) $(QT_FLAGS) \
-		CVM_PRELOAD_LIB=true
+		CVM_PRELOAD_LIB=true $(SUBMAKE_MAKEFLAGS)
 	$(TRACE_BUILD_END)
 
 .PHONY: opt_preload_jit
 opt_preload_jit:
 	$(TRACE_BUILD_START)
 	$(AT)make $(DEFAULT_FLAGS) $(QT_FLAGS) \
-		CVM_PRELOAD_LIB=true CVM_JIT=true
+		CVM_PRELOAD_LIB=true CVM_JIT=true $(SUBMAKE_MAKEFLAGS)
 	$(TRACE_BUILD_END)
 
 .PHONY: opt_jvmdi
 opt_jvmdi:
 	$(TRACE_BUILD_START)
 	$(AT)make $(DEFAULT_FLAGS) $(QT_FLAGS) \
-		CVM_JVMDI=true
+		CVM_JVMDI=true $(SUBMAKE_MAKEFLAGS)
 	$(TRACE_BUILD_END)
 
 .PHONY: opt_jvmpi
 opt_jvmpi:
 	$(TRACE_BUILD_START)
 	$(AT)make $(DEFAULT_FLAGS) $(QT_FLAGS) \
-		CVM_JVMPI=true
+		CVM_JVMPI=true $(SUBMAKE_MAKEFLAGS)
 	$(TRACE_BUILD_END)
 
 .PHONY: dbg
 dbg:
 	$(TRACE_BUILD_START)
 	$(AT)make $(DEFAULT_FLAGS) $(QT_FLAGS) \
-		CVM_DEBUG=true
+		CVM_DEBUG=true $(SUBMAKE_MAKEFLAGS)
 	$(TRACE_BUILD_END)
 
 .PHONY: dbg_jit
 dbg_jit:
 	$(TRACE_BUILD_START)
 	$(AT)make $(DEFAULT_FLAGS) $(QT_FLAGS) \
-		CVM_DEBUG=true CVM_JIT=true
+		CVM_DEBUG=true CVM_JIT=true $(SUBMAKE_MAKEFLAGS)
 	$(TRACE_BUILD_END)
 
 .PHONY: dbg_jvmti
 dbg_jvmti:
 	$(TRACE_BUILD_START)
 	$(AT)make $(DEFAULT_FLAGS) $(QT_FLAGS) \
-		CVM_DEBUG=true CVM_JVMTI=true
+		CVM_DEBUG=true CVM_JVMTI=true $(SUBMAKE_MAKEFLAGS)
 	$(TRACE_BUILD_END)
 
 .PHONY: dbg_jvmpi
 dbg_jvmpi:
 	$(TRACE_BUILD_START)
 	$(AT)make $(DEFAULT_FLAGS) $(QT_FLAGS) \
-		CVM_DEBUG=true CVM_JVMPI=true
+		CVM_DEBUG=true CVM_JVMPI=true $(SUBMAKE_MAKEFLAGS)
 	$(TRACE_BUILD_END)
 
 .PHONY: dbg_jvmdi
 dbg_jvmdi:
 	$(TRACE_BUILD_START)
 	$(AT)make $(DEFAULT_FLAGS) $(QT_FLAGS) \
-		CVM_DEBUG=true CVM_JVMDI=true
+		CVM_DEBUG=true CVM_JVMDI=true $(SUBMAKE_MAKEFLAGS)
 	$(TRACE_BUILD_END)
 
 .PHONY: dbg_jcov
 dbg_jcov:
 	$(TRACE_BUILD_START)
 	$(AT)make $(DEFAULT_FLAGS) $(QT_FLAGS) \
-		CVM_DEBUG=true CVM_CLASSLIB_JCOV=true CVM_JVMPI=true
+		CVM_DEBUG=true CVM_CLASSLIB_JCOV=true CVM_JVMPI=true \
+		 $(SUBMAKE_MAKEFLAGS)
 	$(TRACE_BUILD_END)
