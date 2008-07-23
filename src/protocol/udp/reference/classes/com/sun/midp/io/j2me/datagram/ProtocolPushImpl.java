@@ -113,7 +113,7 @@ public class ProtocolPushImpl extends ProtocolPush {
         }
 
         try {
-            midletSuite.checkForPermission(Permissions.UDP_SERVER,
+            midletSuite.checkForPermission("javax.microedition.io.Connector.datagramreceiver",
                                             connection);
         } catch (InterruptedException ie) {
             throw new InterruptedIOException(

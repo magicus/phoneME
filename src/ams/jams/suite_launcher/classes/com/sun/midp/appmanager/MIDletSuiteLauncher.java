@@ -112,7 +112,7 @@ public class MIDletSuiteLauncher extends MIDlet implements ApplicationManager {
     /** Launch ODT Agent. */
     public void launchODTAgent() {
     }
-		      
+
     /**
      * Launches a suite.
      *
@@ -161,5 +161,13 @@ public class MIDletSuiteLauncher extends MIDlet implements ApplicationManager {
      * @param suiteInfo information for the midlet to be terminated
      */
     public void exitMidlet(RunningMIDletSuiteInfo suiteInfo) {
+    }
+
+    /**
+     * Handle exit of MIDlet suite (the only MIDlet in sute exited or MIDlet
+     * selector exited).
+     * @param suiteInfo Containing ID of exited suite
+     */
+    public void notifySuiteExited(RunningMIDletSuiteInfo suiteInfo) {
     }
 }

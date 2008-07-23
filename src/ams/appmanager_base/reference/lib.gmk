@@ -1,4 +1,3 @@
-#
 #   
 #
 # Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
@@ -24,7 +23,27 @@
 # information or have any questions.
 #
 
-LIB_EXPORT_JAVA_FILES= \
-    com/sun/midp/appmanager/AppManagerUI.java \
-    com/sun/midp/appmanager/DisplayError.java \
-    com/sun/midp/appmanager/SplashScreen.java
+############################################################
+# Module's Component Configuration file
+#
+# Remember: It is up to the module itself to impose rules of
+# how to compile the options. All the global Makefile needs
+# is the final def. of Java and native file lists and some
+# other def. (like VPATH)
+############################################################
+
+
+
+# Javadoc source path
+MIDP_JAVADOC_SOURCEPATH += $(APPMANAGER_BASE_IMPL_DIR)/classes
+
+# Java files for the sub-system
+#
+SUBSYSTEM_AMS_JAVA_FILES += \
+    $(APPMANAGER_BASE_IMPL_DIR)/classes/com/sun/midp/appmanager/AppManagerPeer.java \
+    $(APPMANAGER_BASE_IMPL_DIR)/classes/com/sun/midp/appmanager/DisplayError.java \
+    $(APPMANAGER_BASE_IMPL_DIR)/classes/com/sun/midp/appmanager/AppSettings.java \
+    $(APPMANAGER_BASE_IMPL_DIR)/classes/com/sun/midp/appmanager/CaManager.java \
+    $(APPMANAGER_BASE_IMPL_DIR)/classes/com/sun/midp/appmanager/RunningMIDletSuiteInfo.java
+
+

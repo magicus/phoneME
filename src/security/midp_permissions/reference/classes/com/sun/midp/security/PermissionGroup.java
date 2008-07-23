@@ -1,5 +1,7 @@
 /*
- * Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
+ *   
+ *
+ * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
@@ -28,35 +30,27 @@ package com.sun.midp.security;
  * The attributes of a permission group.
  */
 public final class PermissionGroup {
-    /** Name string ID. */
-    private int name;
+    /** the Visible Name string. */
+    private String name;
 
-    /** Settings question ID. */
-    private int settingsQuestion;
+    /** the internal Name string (as appears in
+     *  PermissionsStrings.java (auto-generated)). */
+    private String nativeName;
 
-    /** Disable setting choice string ID. */
-    private int disableSettingChoice;
+    /** Settings question. */
+    private String settingsQuestion;
 
-    /** Title string ID for the permission dialog. */
-    private int runtimeDialogTitle;
+    /** Disable setting choice string. */
+    private String disableSettingChoice;
 
-    /** Question string ID for the permission dialog. */
-    private int runtimeQuestion;
+    /** Title string for the permission dialog. */
+    private String runtimeDialogTitle;
 
-    /** Oneshot question string ID for the permission dialog. */
-    private int runtimeOneshotQuestion;
+    /** Question string for the permission dialog. */
+    private String runtimeQuestion;
 
-    /** Identified Third Party domain maxium permission level. */
-    private byte identifiedMaxiumLevel;
-
-    /** Identified Third Party domain default permission level. */
-    private byte identifiedDefaultLevel;
-
-    /** Unidentified Third Party domain maxium permission level. */
-    private byte unidentifiedMaxiumLevel;
-
-    /** Unidentified Third Party domain default permission level. */
-    private byte unidentifiedDefaultLevel;
+    /** Oneshot question string for the permission dialog. */
+    private String runtimeOneshotQuestion;
 
     /**
      * Constructs a third party domain permission group.
@@ -68,40 +62,48 @@ public final class PermissionGroup {
      * @param theRuntimeQuestion Question for the runtime permission dialog
      * @param theRuntimeOneshotQuestion Oneshot question for the runtime
      *                                  permission dialog
-     * @param theIdentifiedMaxiumLevel Identified Third Party domain
-     *                                 maxium permission level
-     * @param theIdentifiedDefaultLevel Identified Third Party domain
-     *                                  default permission level
-     * @param theUnidentifiedMaxiumLevel Unidentified Third Party domain
-     *                                   maxium permission level
-     * @param theUnidentifiedDefaultLevel Unidentified Third Party domain
-     *                                    default permission level
      */
-    PermissionGroup(int theName, int theSettingsQuestion,
-        int theDisableSettingChoice, int theRuntimeDialogTitle,
-        int theRuntimeQuestion, int theRuntimeOneshotQuestion,
-        byte theIdentifiedMaxiumLevel, byte theIdentifiedDefaultLevel,
-        byte theUnidentifiedMaxiumLevel, byte theUnidentifiedDefaultLevel) {
-
-        name = theName;
-        settingsQuestion = theSettingsQuestion;
-        disableSettingChoice = theDisableSettingChoice;
-        runtimeDialogTitle = theRuntimeDialogTitle;
-        runtimeQuestion = theRuntimeQuestion;
-        runtimeOneshotQuestion = theRuntimeOneshotQuestion;
-        identifiedMaxiumLevel = theIdentifiedMaxiumLevel;
-        identifiedDefaultLevel = theIdentifiedDefaultLevel;
-        unidentifiedMaxiumLevel = theUnidentifiedMaxiumLevel;
-        unidentifiedDefaultLevel = theUnidentifiedDefaultLevel;
+    PermissionGroup(String theName, String theSettingsQuestion,
+        String theDisableSettingChoice, String theRuntimeDialogTitle,
+        String theRuntimeQuestion, String theRuntimeOneshotQuestion) {
+        this (theName, theName,
+              theSettingsQuestion, theDisableSettingChoice,
+              theRuntimeDialogTitle, theRuntimeQuestion,
+              theRuntimeOneshotQuestion);
     }
 
+    PermissionGroup(String nativeName, String theName, String theSettingsQuestion,
+        String theDisableSettingChoice, String theRuntimeDialogTitle,
+        String theRuntimeQuestion, String theRuntimeOneshotQuestion) {
+
+        this.nativeName = nativeName;
+        name = theName;
+        settingsQuestion = theSettingsQuestion;
+        if (settingsQuestion == null)
+            settingsQuestion = "n/a";
+        disableSettingChoice = theDisableSettingChoice;
+        if (disableSettingChoice == null)
+            disableSettingChoice = "n/a";
+        runtimeDialogTitle = theRuntimeDialogTitle;
+        if (runtimeDialogTitle == null)
+            runtimeDialogTitle = "n/a";
+        runtimeQuestion = theRuntimeQuestion;
+        if (runtimeQuestion == null)
+            runtimeQuestion = "n/a";
+        if (theRuntimeOneshotQuestion == null)
+            runtimeOneshotQuestion = runtimeQuestion;
+    }
     /**
      * Get the name string ID.
      *
      * @return string ID or zero if there is no name for the settings dialog
      */
-    public int getName() {
+    public String getName() {
         return name;
+    }
+
+    public String getNativeName() {
+        return nativeName;
     }
 
     /**
@@ -109,7 +111,7 @@ public final class PermissionGroup {
      *
      * @return stringID or 0 if there is no question
      */
-    public int getSettingsQuestion() {
+    public String getSettingsQuestion() {
         return settingsQuestion;
     }
 
@@ -118,7 +120,7 @@ public final class PermissionGroup {
      *
      * @return string ID or 0 if there is not disable setting choice
      */
-    public int getDisableSettingChoice() {
+    public String getDisableSettingChoice() {
         return disableSettingChoice;
     }
 
@@ -127,7 +129,7 @@ public final class PermissionGroup {
      *
      * @return string ID
      */
-    public int getRuntimeDialogTitle() {
+    public String getRuntimeDialogTitle() {
         return runtimeDialogTitle;
     }
 
@@ -136,7 +138,7 @@ public final class PermissionGroup {
      *
      * @return string ID
      */
-    public int getRuntimeQuestion() {
+    public String getRuntimeQuestion() {
         return runtimeQuestion;
     }
 
@@ -145,48 +147,10 @@ public final class PermissionGroup {
      *
      * @return string ID
      */
-    public int getRuntimeOneshotQuestion() {
-        if (runtimeOneshotQuestion == 0) {
-            return runtimeQuestion;
-        }
-
+    public String getRuntimeOneshotQuestion() {
         return runtimeOneshotQuestion;
     }
 
-    /**
-     * Get the identified Third Party domain maxium permission level.
-     *
-     * @return permission level
-     */
-    public byte getIdentifiedMaxiumLevel() {
-        return identifiedMaxiumLevel;
-    }
-
-    /**
-     * Get the identified Third Party domain default permission level.
-     *
-     * @return permission level
-     */
-    public byte getIdentifiedDefaultLevel() {
-        return identifiedDefaultLevel;
-    }
-
-    /**
-     * Get the unidentified Third Party domain maxium permission level.
-     *
-     * @return permission level
-     */
-    public byte getUnidentifiedMaxiumLevel() {
-        return unidentifiedMaxiumLevel;
-    }
-
-    /**
-     * Get the unidentified Third Party domain default permission level.
-     *
-     * @return permission level
-     */
-    public byte getUnidentifiedDefaultLevel() {
-        return unidentifiedDefaultLevel;
-    }
 }
+
 

@@ -209,7 +209,7 @@ public final class SecurityInitializer {
         // #endif ENABLE_JSR_75
 
         // #ifdef ENABLE_JSR_82
-        "com.sun.jsr082.obex.tcpobex.Protocol$SecurityTrusted",
+        "com.sun.midp.jsr082.SecurityInitializer$SecurityTrusted",
         // #endif ENABLE_JSR_82
 
         // #ifdef ENABLE_JSR_234

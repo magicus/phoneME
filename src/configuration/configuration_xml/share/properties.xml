@@ -193,7 +193,7 @@
 		Scope="system"
 		Comment="JWTI version number."/>
   <property Key="microedition.msa.version"
-                Value="1.1"
+                Value="1.0"
                 Scope="system"
                 Comment="Specification version number."/>
 

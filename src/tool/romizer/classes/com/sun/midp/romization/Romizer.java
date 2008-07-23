@@ -338,7 +338,7 @@ public class Romizer extends RomUtil {
         pl("    }");
         pl("");
         pl("    return (int)((res & 0x7fffffff) % " + hashTableSizeInC + ");");
-        pl("};");
+        pl("}");
 
         // pl("#include <stdio.h>");
 

@@ -226,16 +226,17 @@ MIDPError midp_midlet_create_start_with_args(SuiteIdType suiteId,
         jint argsNum, jint appId, const MidletRuntimeInfo* pRuntimeInfo) {
     MidpEvent evt;
     pcsl_string temp;
+    int i;
     /*
      * evt.stringParam1 is a midlet class name,
      * evt.stringParam2 is a display name,
      * evt.stringParam3-5 - the arguments
      * evt.stringParam6 - profile name
      */
-    pcsl_string* params[] = {
-        &evt.stringParam3, &evt.stringParam4, &evt.stringParam5
-    };
-    int i;
+    pcsl_string* params[3];
+    params[0] = &evt.stringParam3;
+    params[1] = &evt.stringParam4;
+    params[2] = &evt.stringParam5;
 
     MIDP_EVENT_INITIALIZE(evt);
 

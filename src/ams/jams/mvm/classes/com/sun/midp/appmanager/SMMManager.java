@@ -80,7 +80,7 @@ public class SMMManager extends MIDlet
     private MIDletSuiteStorage midletSuiteStorage;
 
     /** Screen that displays all installed midlets and installer */
-    private AppManagerUI appManagerUI;
+    private AppManagerPeer appManager;
 
     /** MIDlet proxy list reference. */
     private MIDletProxyList midletProxyList;
@@ -125,13 +125,7 @@ public class SMMManager extends MIDlet
     public SMMManager() {
         midletSuiteStorage = MIDletSuiteStorage.getMIDletSuiteStorage();
 
-        /*
-         * Listen to the MIDlet proxy list.
-         * this allows us to notify the Application Selector
-         * of any changes whenever switch back to the AMS.
-         */
         midletProxyList = MIDletProxyList.getMIDletProxyList();
-        midletProxyList.addListener(this);
         midletProxyList.setDisplayController(
             new SMMDisplayController(midletProxyList,
                 MIDletSuite.INTERNAL_SUITE_ID, this.getClass().getName()));
@@ -140,17 +134,26 @@ public class SMMManager extends MIDlet
 
         GraphicalInstaller.initSettings();
 
-	first = (getAppProperty("logo-displayed") == null);
+        first = (getAppProperty("logo-displayed") == null);
 
-	Display display = Display.getDisplay(this);
-	displayError = new DisplayError(display);
+        Display display = Display.getDisplay(this);
+        displayError = new DisplayError(display);
 
-	// AppSelector will be set to be current at the end of its constructor
-        appManagerUI = new AppManagerUI(this, display, displayError, first, null);
+        // AppSelector will be set to be current at the end of its constructor
+        appManager = new AppManagerPeer(this, display, displayError, first, null);
 
         if (first) {
             first = false;
         }
+
+        /*
+         * Listen to the MIDlet proxy list.
+         * This allows us to notify the Application Selector
+         * of any changes whenever switch back to the AMS.
+         * The listener must be set up after finishing all
+         * initialization in the constructor.
+         */
+        midletProxyList.addListener(this);
     }
 
     /**
@@ -175,7 +178,7 @@ public class SMMManager extends MIDlet
         // IMPL_NOTE: remove this:
         GraphicalInstaller.saveSettings(null, MIDletSuite.UNUSED_SUITE_ID);
 
-        appManagerUI.cleanUp();
+        appManager.cleanUp();
 
         // Ending this MIDlet ends all others.
         midletProxyList.shutdown();
@@ -190,7 +193,7 @@ public class SMMManager extends MIDlet
      * @param midlet The proxy of the MIDlet being added
      */
     public void midletAdded(MIDletProxy midlet) {
-        appManagerUI.notifyMidletStarted(midlet);
+        appManager.notifyMidletStarted(midlet);
     }
 
     /**
@@ -200,7 +203,7 @@ public class SMMManager extends MIDlet
      * @param fieldId code for which field of the proxy was updated
      */
     public void midletUpdated(MIDletProxy midlet, int fieldId) {
-        appManagerUI.notifyMidletStateChanged(midlet);
+        appManager.notifyMidletStateChanged(midlet);
     }
 
     /**
@@ -209,7 +212,7 @@ public class SMMManager extends MIDlet
      * @param midlet The proxy of the removed MIDlet
      */
     public void midletRemoved(MIDletProxy midlet) {
-        appManagerUI.notifyMidletExited(midlet);
+        appManager.notifyMidletExited(midlet);
     }
 
     /**
@@ -225,7 +228,7 @@ public class SMMManager extends MIDlet
                                  String className, int errorCode,
                                  String errorDetails) {
         allowMidletLaunch = true;
-        appManagerUI.notifyMidletStartError(suiteId, className,
+        appManager.notifyMidletStartError(suiteId, className,
                 errorCode, errorDetails);
     }
 
@@ -345,6 +348,13 @@ public class SMMManager extends MIDlet
      */
     public void exitMidlet(RunningMIDletSuiteInfo suiteInfo) {}
 
+
+    /**
+     * Handle exit of MIDlet suite (the only MIDlet in sute exited or MIDlet
+     * selector exited).
+     * @param suiteInfo Containing ID of exited suite
+     */
+    public void notifySuiteExited(RunningMIDletSuiteInfo suiteInfo) {}
 
     // ==============================================================
     // ----------------- PRIVATE methods ---------------------------
