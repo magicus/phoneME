@@ -114,8 +114,6 @@ public class DirectPlayer extends BasicPlayer implements VideoSource
     private boolean hasTakenRadioAccess = false;
 
     private DirectVideo videoControl = null;
-    
-    private Object snapshotLock = new Object();
 
 // Native functions /////////////////////////////////////////////////
     
@@ -192,9 +190,8 @@ public class DirectPlayer extends BasicPlayer implements VideoSource
     protected native boolean nSetLocation(int handle, int x, int y, int w, int h);
 
     // Get snapshot
-    protected native void nStartSnapshot( int handle, String imageType );
-    protected native byte[] nGetSnapshotData( int handle );
-    
+    protected native byte[] nSnapShot(int handle, String imageType);
+
     // Set fullscreen
     protected native boolean nSetFullScreenMode(int handle, boolean fullscreen);
 
@@ -854,47 +851,12 @@ public class DirectPlayer extends BasicPlayer implements VideoSource
     {
         return nSetLocation( hNative, x, y, w, h );
     }
-
-    private boolean isWaitingForSnapshot;
+    
     // Get snapshot
-    public synchronized byte[] getVideoSnapshot(String imageType) throws MediaException
+    public byte[] getVideoSnapshot(String imageType)
     {
-        byte [] ret = null;
         checkSnapshotPermission();
-        try {
-            synchronized ( snapshotLock )
-            {
-                nStartSnapshot( hNative, imageType );
-                isWaitingForSnapshot = true;
-                snapshotLock.wait( 10000 );
-                if( isWaitingForSnapshot )
-                {
-                    isWaitingForSnapshot = false;
-                    throw new MediaException( 
-                            "Timed out while making a Camera Snapshot" );
-                }
-                
-                ret = nGetSnapshotData( hNative );
-            }
-        }
-        catch ( InterruptedException ie )
-        {
-            throw new MediaException( 
-               "Camera Snapshot was interrupted by user: " + ie.toString() );
-        }
-        return ret;
-    }
-
-    void notifySnapshotFinished()
-    {
-        synchronized( snapshotLock )
-        {
-            if( isWaitingForSnapshot )
-            {
-                snapshotLock.notify();
-                isWaitingForSnapshot = false;
-            }
-        }
+        return nSnapShot( hNative, imageType );
     }
     
     // Set fullscreen

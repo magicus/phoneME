@@ -93,6 +93,71 @@ KNIDECL(com_sun_mmedia_DirectPlayer_nSetLocation) {
     KNI_ReturnBoolean(returnValue);
 }
 
+/*  protected native byte [ ] nSnapShot ( String imageType ) ; */
+KNIEXPORT KNI_RETURNTYPE_OBJECT
+KNIDECL(com_sun_mmedia_DirectPlayer_nSnapShot) {
+    
+    jint handle = KNI_GetParameterAsInt(1);
+    KNIPlayerInfo*  pKniInfo = (KNIPlayerInfo*)handle;
+    jint            imageTypeLength;
+    jchar*          pImageTypeStr;
+    javacall_result ret = JAVACALL_FAIL;
+    javacall_bool   getSnapshotData = JAVACALL_FALSE;
+
+    KNI_StartHandles(2);
+    KNI_DeclareHandle(imageTypeHandle);
+    KNI_DeclareHandle(returnValueHandle);
+    KNI_GetParameterAsObject(2, imageTypeHandle);
+
+    MMP_DEBUG_STR("[kni_video] +nSnapShot %d %d %d %d\n");
+
+    if (pKniInfo && pKniInfo->pNativeHandle) {
+        imageTypeLength = KNI_GetStringLength(imageTypeHandle);
+        pImageTypeStr = MMP_MALLOC(imageTypeLength * sizeof(jchar));
+        if (pImageTypeStr) {
+            KNI_GetStringRegion(imageTypeHandle, 0, imageTypeLength, pImageTypeStr);
+            ret = javacall_media_start_video_snapshot(pKniInfo->pNativeHandle, pImageTypeStr, imageTypeLength);
+            MMP_FREE(pImageTypeStr);
+        }
+
+        if (JAVACALL_OK == ret) {
+            getSnapshotData = JAVACALL_TRUE;
+        }
+    } else {
+        /* NOTE - Calling from unbloked Java thread */
+        getSnapshotData = JAVACALL_TRUE;
+
+        MMP_DEBUG_STR1("[kni_video] nSnapShot unblocked %d\n", handle);
+    }
+
+    if (JAVACALL_TRUE == getSnapshotData) {
+        long dataBytes;
+        if (JAVACALL_OK == javacall_media_get_video_snapshot_data_size(
+            pKniInfo->pNativeHandle, &dataBytes)) 
+        {
+            MMP_DEBUG_STR1("[kni_video] nSnapShot get data size %d\n", dataBytes);
+
+            if (dataBytes != 0) {
+                jbyte *tmpArray = MMP_MALLOC(dataBytes);
+                if (JAVACALL_OK != javacall_media_get_video_snapshot_data(pKniInfo->pNativeHandle, 
+                    (char*)tmpArray, dataBytes)) {
+                    KNI_ReleaseHandle(returnValueHandle);
+                } else {
+                    SNI_NewArray(SNI_BYTE_ARRAY, dataBytes, returnValueHandle);
+                    KNI_SetRawArrayRegion(returnValueHandle, 0, dataBytes, (jbyte*)tmpArray);
+                    MMP_FREE(tmpArray);
+                }
+            } else {
+                MMP_DEBUG_STR("[kni_video] FATAL - javacall_media_get_video_snapshot_data_size return OK with 0\n");
+            }
+        }
+    }
+
+    MMP_DEBUG_STR1("[kni_video] -nSnapShot %d\n", returnValueHandle);
+
+    KNI_EndHandlesAndReturnObject(returnValueHandle);
+}
+
 /*  private native boolean nSetVisible ( int handle, boolean visible ) ; */
 KNIEXPORT KNI_RETURNTYPE_BOOLEAN
 KNIDECL(com_sun_mmedia_DirectPlayer_nSetVisible) {
