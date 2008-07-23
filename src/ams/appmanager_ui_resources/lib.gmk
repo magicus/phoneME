@@ -72,7 +72,7 @@ else
 app_manager_resources: $(STORAGEDIR) $(EXTSTORAGEDIR) $(IMAGE2RAW_JAR_FILE) \
 		       $(SUBSYSTEM_CONFIGURATION_MERGED_FILE)
 	@echo " ... converting AMS images to raw format" $(LOG)
-	@$(call onvert_images_to_raw,$(foreach _IMAGE_FOLDER,$(APP_MANAGER_RESOURCES_IMAGE_FOLDERS),$(_IMAGE_FOLDER)))
+	@$(call convert_images_to_raw,$(APP_MANAGER_RESOURCES_IMAGE_FOLDERS))
 endif
 
 else
