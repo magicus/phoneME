@@ -122,67 +122,6 @@ KNIDECL(com_sun_mmedia_DirectPlayer_nSetLocation) {
     KNI_ReturnBoolean(returnValue);
 }
 
-/*  protected native byte [ ] nSnapShot ( String imageType ) ; */
-KNIEXPORT KNI_RETURNTYPE_OBJECT
-KNIDECL(com_sun_mmedia_DirectPlayer_nSnapShot) {
-    
-    jint handle = KNI_GetParameterAsInt(1);
-    KNIPlayerInfo*  pKniInfo = (KNIPlayerInfo*)handle;
-    jint            imageTypeLength;
-    jchar*          pImageTypeStr;
-    javacall_result ret = JAVACALL_FAIL;
-
-    KNI_StartHandles(2);
-    KNI_DeclareHandle(imageTypeHandle);
-    KNI_DeclareHandle(returnValueHandle);
-    KNI_GetParameterAsObject(2, imageTypeHandle);
-
-    MMP_DEBUG_STR("[kni_video] +nSnapShot\n");
-
-    if (pKniInfo && pKniInfo->pNativeHandle) {
-        imageTypeLength = KNI_GetStringLength(imageTypeHandle);
-        pImageTypeStr = MMP_MALLOC(imageTypeLength * sizeof(jchar));
-        if (pImageTypeStr) {
-            KNI_GetStringRegion(imageTypeHandle, 0, imageTypeLength, pImageTypeStr);
-            JAVACALL_MM_ASYNC_EXEC(
-                ret,
-                javacall_media_start_video_snapshot(pKniInfo->pNativeHandle, pImageTypeStr, imageTypeLength),
-                pKniInfo->pNativeHandle, pKniInfo->appId, pKniInfo->playerId, JAVACALL_EVENT_MEDIA_SNAPSHOT_FINISHED,
-                returns_no_data
-            );
-            MMP_FREE(pImageTypeStr);
-            if (ret == JAVACALL_OK) {
-                long dataBytes;
-                
-                ret = javacall_media_get_video_snapshot_data_size(pKniInfo->pNativeHandle, &dataBytes);
-                if (JAVACALL_OK == ret) {
-                    MMP_DEBUG_STR1("[kni_video] nSnapShot get data size %d\n", dataBytes);
-        
-                    if (dataBytes > 0) {
-                        /* Create new Java byte array object to store snapshot data */
-                        SNI_NewArray(SNI_BYTE_ARRAY, dataBytes, returnValueHandle);
-                        if (KNI_IsNullHandle(returnValueHandle)) {
-                            KNI_ThrowNew(jsropOutOfMemoryError, NULL);
-                        } else {
-                            ret = javacall_media_get_video_snapshot_data(pKniInfo->pNativeHandle, 
-                                              (char*)JavaByteArray(returnValueHandle), dataBytes);
-                            if (JAVACALL_OK != ret) {
-                                KNI_ReleaseHandle(returnValueHandle);
-                            }
-                        }
-                    } else {
-                        MMP_DEBUG_STR("[kni_video] FATAL - javacall_media_get_video_snapshot_data_size return OK with 0\n");
-                    }
-                }
-            }
-        }
-    }
-
-    MMP_DEBUG_STR1("[kni_video] -nSnapShot %d\n", returnValueHandle);
-
-    KNI_EndHandlesAndReturnObject(returnValueHandle);
-}
-
 KNIEXPORT KNI_RETURNTYPE_BOOLEAN 
 KNIDECL(com_sun_mmedia_DirectPlayer_nSetFullScreenMode) {
     jint     handle  = KNI_GetParameterAsInt(1);
