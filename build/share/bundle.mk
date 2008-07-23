@@ -242,6 +242,7 @@ SRCDIR_PATTERNS += \
 BUNDLE_INCLUDE_LIST += \
 	src/portlibs \
 	build/portlibs/* \
+	build/share/bundle.mk \
 	build/share/jcc.mk \
 	build/share/*_op.mk \
 	src/share/tools/GenerateCurrencyData \
@@ -258,13 +259,6 @@ BUNDLE_INCLUDE_LIST += \
 		src/$(os)/lib/tzmappings) \
 	$(foreach os,$(BUNDLE_OS_PORTS), \
 		src/$(os)/lib/content-types.properties)
-
-# need to include special java.security for zaurus
-
-ifeq ($(findstring linux-arm-zaurus,$(BUNDLE_DEVICE_PORTS)),linux-arm-zaurus)
-BUNDLE_INCLUDE_LIST += \
-	src/linux-arm-zaurus/lib/security/java.security
-endif
 
 # For Windows Build
 ifeq ($(findstring win32,$(BUNDLE_OS_PORTS)),win32)
