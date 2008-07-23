@@ -62,6 +62,7 @@ extern "C" {
  *         JAVACALL_OUT_OF_MEMORY if length of the returend string is more then 
  *                                specified in ret_value_len,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
+ *         JAVACALL_INVALID_ARGUMENT when the handle is NULL
  */
 javacall_result
 javacall_dom_processinginstruction_get_target(javacall_handle handle,
@@ -85,6 +86,7 @@ javacall_dom_processinginstruction_get_target(javacall_handle handle,
  *         JAVACALL_OUT_OF_MEMORY if length of the returend string is more then 
  *                                specified in ret_value_len,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
+ *         JAVACALL_INVALID_ARGUMENT when the handle is NULL
  */
 javacall_result
 javacall_dom_processinginstruction_get_data(javacall_handle handle,
@@ -102,6 +104,7 @@ javacall_dom_processinginstruction_get_data(javacall_handle handle,
  * @return JAVACALL_OK if all done successfuly,
  *         JAVACALL_FAIL if NO_MODIFICATION_ALLOWED_ERR occured,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
+ *         JAVACALL_INVALID_ARGUMENT when the handle is NULL
  */
 javacall_result
 javacall_dom_processinginstruction_set_data(javacall_handle handle,

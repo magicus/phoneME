@@ -69,6 +69,7 @@ extern "C" {
  *         JAVACALL_OUT_OF_MEMORY if length of the returend string is more then 
  *                                specified in ret_value_len,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
+ *         JAVACALL_INVALID_ARGUMENT when the handle is NULL
  */
 javacall_result
 javacall_dom_element_get_tag_name(javacall_handle handle,
@@ -92,6 +93,7 @@ javacall_dom_element_get_tag_name(javacall_handle handle,
  *         JAVACALL_OUT_OF_MEMORY if length of the returend string is more then 
  *                                specified in ret_value_len,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
+ *         JAVACALL_INVALID_ARGUMENT when the handle is NULL
  */
 javacall_result
 javacall_dom_element_get_attribute(javacall_handle handle,
@@ -126,6 +128,7 @@ javacall_dom_element_get_attribute(javacall_handle handle,
  *         JAVACALL_FAIL if error occured; in this case exception_code has to be 
  *                                filled,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
+ *         JAVACALL_INVALID_ARGUMENT when the handle is NULL
  */
 javacall_result
 javacall_dom_element_set_attribute(javacall_handle handle,
@@ -148,6 +151,7 @@ javacall_dom_element_set_attribute(javacall_handle handle,
  * @return JAVACALL_OK if all done successfuly,
  *         JAVACALL_FAIL if NO_MODIFICATION_ALLOWED_ERR occured,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
+ *         JAVACALL_INVALID_ARGUMENT when the handle is NULL
  */
 javacall_result
 javacall_dom_element_remove_attribute(javacall_handle handle,
@@ -168,6 +172,7 @@ javacall_dom_element_remove_attribute(javacall_handle handle,
  * 
  * @return JAVACALL_OK if all done successfuly,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
+ *         JAVACALL_INVALID_ARGUMENT when the handle is NULL
  */
 javacall_result
 javacall_dom_element_get_attribute_node(javacall_handle handle,
@@ -199,6 +204,7 @@ javacall_dom_element_get_attribute_node(javacall_handle handle,
  *         JAVACALL_FAIL if error occured; in this case exception_code has to be 
  *                                filled,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
+ *         JAVACALL_INVALID_ARGUMENT when the handle is NULL
  */
 javacall_result
 javacall_dom_element_set_attribute_node(javacall_handle handle,
@@ -227,6 +233,7 @@ javacall_dom_element_set_attribute_node(javacall_handle handle,
  *         JAVACALL_FAIL if error occured; in this case exception_code has to be 
  *                                filled,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
+ *         JAVACALL_INVALID_ARGUMENT when the handle is NULL
  */
 javacall_result
 javacall_dom_element_remove_attribute_node(javacall_handle handle,
@@ -246,6 +253,7 @@ javacall_dom_element_remove_attribute_node(javacall_handle handle,
  * 
  * @return JAVACALL_OK if all done successfuly,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
+ *         JAVACALL_INVALID_ARGUMENT when the handle is NULL
  */
 javacall_result
 javacall_dom_element_get_elements_by_tag_name(javacall_handle handle,
@@ -275,6 +283,7 @@ javacall_dom_element_get_elements_by_tag_name(javacall_handle handle,
  *                                specified in ret_value_len,
  *         JAVACALL_FAIL if NOT_SUPPORTED_ERR occured,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
+ *         JAVACALL_INVALID_ARGUMENT when the handle is NULL
  */
 javacall_result
 javacall_dom_element_get_attribute_ns(javacall_handle handle,
@@ -319,6 +328,7 @@ javacall_dom_element_get_attribute_ns(javacall_handle handle,
  *         JAVACALL_FAIL if error occured; in this case exception_code has to be 
  *                                filled,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
+ *         JAVACALL_INVALID_ARGUMENT when the handle is NULL
  */
 javacall_result
 javacall_dom_element_set_attribute_ns(javacall_handle handle,
@@ -351,6 +361,7 @@ javacall_dom_element_set_attribute_ns(javacall_handle handle,
  *         JAVACALL_FAIL if error occured; in this case exception_code has to be 
  *                                filled,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
+ *         JAVACALL_INVALID_ARGUMENT when the handle is NULL
  */
 javacall_result
 javacall_dom_element_remove_attribute_ns(javacall_handle handle,
@@ -376,6 +387,7 @@ javacall_dom_element_remove_attribute_ns(javacall_handle handle,
  * @return JAVACALL_OK if all done successfuly,
  *         JAVACALL_FAIL if NOT_SUPPORTED_ERR occured,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
+ *         JAVACALL_INVALID_ARGUMENT when the handle is NULL
  */
 javacall_result
 javacall_dom_element_get_attribute_node_ns(javacall_handle handle,
@@ -411,6 +423,7 @@ javacall_dom_element_get_attribute_node_ns(javacall_handle handle,
  *         JAVACALL_FAIL if error occured; in this case exception_code has to be 
  *                                filled,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
+ *         JAVACALL_INVALID_ARGUMENT when the handle is NULL
  */
 javacall_result
 javacall_dom_element_set_attribute_node_ns(javacall_handle handle,
@@ -435,6 +448,7 @@ javacall_dom_element_set_attribute_node_ns(javacall_handle handle,
  * @return JAVACALL_OK if all done successfuly,
  *         JAVACALL_FAIL if NOT_SUPPORTED_ERR occured,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
+ *         JAVACALL_INVALID_ARGUMENT when the handle is NULL
  */
 javacall_result
 javacall_dom_element_get_elements_by_tag_name_ns(javacall_handle handle,
@@ -455,6 +469,7 @@ javacall_dom_element_get_elements_by_tag_name_ns(javacall_handle handle,
  * 
  * @return JAVACALL_OK if all done successfuly,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
+ *         JAVACALL_INVALID_ARGUMENT when the handle is NULL
  */
 javacall_result
 javacall_dom_element_has_attribute(javacall_handle handle,
@@ -480,6 +495,7 @@ javacall_dom_element_has_attribute(javacall_handle handle,
  * @return JAVACALL_OK if all done successfuly,
  *         JAVACALL_FAIL if NOT_SUPPORTED_ERR occured,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
+ *         JAVACALL_INVALID_ARGUMENT when the handle is NULL
  */
 javacall_result
 javacall_dom_element_has_attribute_ns(javacall_handle handle,
@@ -510,6 +526,7 @@ javacall_dom_element_has_attribute_ns(javacall_handle handle,
  *         JAVACALL_FAIL if error occured; in this case exception_code has to be 
  *                                filled,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
+ *         JAVACALL_INVALID_ARGUMENT when the handle is NULL
  */
 javacall_result
 javacall_dom_element_set_id_attribute(javacall_handle handle,
@@ -539,6 +556,7 @@ javacall_dom_element_set_id_attribute(javacall_handle handle,
  *         JAVACALL_FAIL if error occured; in this case exception_code has to be 
  *                                filled,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
+ *         JAVACALL_INVALID_ARGUMENT when the handle is NULL
  */
 javacall_result
 javacall_dom_element_set_id_attribute_ns(javacall_handle handle,
@@ -569,6 +587,7 @@ javacall_dom_element_set_id_attribute_ns(javacall_handle handle,
  *         JAVACALL_FAIL if error occured; in this case exception_code has to be 
  *                                filled,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
+ *         JAVACALL_INVALID_ARGUMENT when the handle is NULL
  */
 javacall_result
 javacall_dom_element_set_id_attribute_node(javacall_handle handle,

@@ -61,6 +61,7 @@ extern "C" {
  *         JAVACALL_OUT_OF_MEMORY if length of the returend string is more then 
  *                                specified in ret_value_len,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
+ *         JAVACALL_INVALID_ARGUMENT when the handle is NULL
  */
 javacall_result
 javacall_dom_attr_get_name(javacall_handle handle,
@@ -97,6 +98,7 @@ javacall_dom_attr_get_name(javacall_handle handle,
  * 
  * @return JAVACALL_OK if all done successfuly,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
+ *         JAVACALL_INVALID_ARGUMENT when the handle is NULL
  */
 javacall_result
 javacall_dom_attr_get_specified(javacall_handle handle,
@@ -129,6 +131,7 @@ javacall_dom_attr_get_specified(javacall_handle handle,
  *         JAVACALL_OUT_OF_MEMORY if length of the returend string is more then 
  *                                specified in ret_value_len,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
+ *         JAVACALL_INVALID_ARGUMENT when the handle is NULL
  */
 javacall_result
 javacall_dom_attr_get_value(javacall_handle handle,
@@ -152,6 +155,7 @@ javacall_dom_attr_get_value(javacall_handle handle,
  * @return JAVACALL_OK if all done successfuly,
  *         JAVACALL_FAIL if NO_MODIFICATION_ALLOWED_ERR occured,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
+ *         JAVACALL_INVALID_ARGUMENT when the handle is NULL
  */
 javacall_result
 javacall_dom_attr_set_value(javacall_handle handle,
@@ -167,6 +171,7 @@ javacall_dom_attr_set_value(javacall_handle handle,
  * 
  * @return JAVACALL_OK if all done successfuly,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
+ *         JAVACALL_INVALID_ARGUMENT when the handle is NULL
  */
 javacall_result
 javacall_dom_attr_get_owner_element(javacall_handle handle,
@@ -193,6 +198,7 @@ javacall_dom_attr_get_owner_element(javacall_handle handle,
  * 
  * @return JAVACALL_OK if all done successfuly,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
+ *         JAVACALL_INVALID_ARGUMENT when the handle is NULL
  */
 javacall_result
 javacall_dom_attr_is_id(javacall_handle handle,
