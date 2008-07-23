@@ -272,16 +272,6 @@ final class AutoMIDletImpl implements AutoMIDlet {
         }
     }
     
-    
-    /**
-     * Get MIDlet's event queue.
-     *
-     * @return AutoEventQueue representing event queue.
-     */
-    public AutoEventQueue getEventQueue() {
-        return null;
-    }
-
     /**
      * Get MIDlet's descriptor.
      *

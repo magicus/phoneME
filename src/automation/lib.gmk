@@ -32,9 +32,11 @@
 # Add to global SUBSYSTEMS list
 #
 SUBSYSTEMS += automation
+SUBSYSTEM_AUTOMATION_DIR = $(SUBSYSTEM_DIR)/automation
+
 
 # Javadoc source path
-SUBSYSTEM_AUTOMATION_SOURCEPATH += $(SUBSYSTEM_DIR)/automation/reference/classes$(PATHSEP)$(SUBSYSTEM_DIR)/automation/classes
+SUBSYSTEM_AUTOMATION_SOURCEPATH += $(SUBSYSTEM_AUTOMATION_DIR)/classes
 
 SUBSYSTEM_AUTOMATION_PACKAGES = \
 	com.sun.midp.automation
@@ -49,50 +51,19 @@ MIDP_JAVADOC_ALL += \
 
 # Subsystem's Java files
 SUBSYSTEM_AUTOMATION_JAVA_FILES = \
-	$(SUBSYSTEM_DIR)/automation/reference/classes/com/sun/midp/automation/AutomationInitializer.java
+	$(SUBSYSTEM_AUTOMATION_DIR)/reference/classes/com/sun/midp/automation/AutomationInitializer.java
     
 ifeq ($(USE_AUTOMATION), true) 
+
 SUBSYSTEM_AUTOMATION_JAVA_FILES += \
-	$(SUBSYSTEM_DIR)/automation/classes/com/sun/midp/automation/AutoMIDlet.java \
-	$(SUBSYSTEM_DIR)/automation/classes/com/sun/midp/automation/AutoMIDletDescriptor.java \
-	$(SUBSYSTEM_DIR)/automation/classes/com/sun/midp/automation/AutoEvent.java \
-	$(SUBSYSTEM_DIR)/automation/classes/com/sun/midp/automation/AutoEventData.java \
-	$(SUBSYSTEM_DIR)/automation/classes/com/sun/midp/automation/AutoEventQueue.java \
-	$(SUBSYSTEM_DIR)/automation/classes/com/sun/midp/automation/AutoEventQueueState.java \
-	$(SUBSYSTEM_DIR)/automation/classes/com/sun/midp/automation/AutoEventState.java \
+	$(SUBSYSTEM_AUTOMATION_DIR)/classes/com/sun/midp/automation/AutoJavaME.java \
 	\
-	$(SUBSYSTEM_DIR)/automation/reference/classes/com/sun/midp/automation/AutoEventDataFactory.java \
-	$(SUBSYSTEM_DIR)/automation/reference/classes/com/sun/midp/automation/AutoSuiteStorage.java \
-	$(SUBSYSTEM_DIR)/automation/reference/classes/com/sun/midp/automation/AutoSuiteDescriptor.java \
-	$(SUBSYSTEM_DIR)/automation/reference/classes/com/sun/midp/automation/AutoSuiteStorageImpl.java \
-	$(SUBSYSTEM_DIR)/automation/reference/classes/com/sun/midp/automation/AutoSuiteDescriptorImpl.java \
-	$(SUBSYSTEM_DIR)/automation/reference/classes/com/sun/midp/automation/AutoMIDletImpl.java \
-	$(SUBSYSTEM_DIR)/automation/reference/classes/com/sun/midp/automation/AutoMIDletInfo.java \
-	$(SUBSYSTEM_DIR)/automation/reference/classes/com/sun/midp/automation/AutoMIDletInfoList.java \
-	$(SUBSYSTEM_DIR)/automation/reference/classes/com/sun/midp/automation/AutoMIDletDescriptorImpl.java \
-	$(SUBSYSTEM_DIR)/automation/reference/classes/com/sun/midp/automation/AutoMIDletStateController.java \
-	$(SUBSYSTEM_DIR)/automation/reference/classes/com/sun/midp/automation/AutoMIDletLifeCycleState.java \
-	$(SUBSYSTEM_DIR)/automation/reference/classes/com/sun/midp/automation/AutoMIDletForegroundState.java \
-	$(SUBSYSTEM_DIR)/automation/reference/classes/com/sun/midp/automation/AutoForegroundStateController.java \
-	$(SUBSYSTEM_DIR)/automation/reference/classes/com/sun/midp/automation/AutoExternalSuiteDescriptorImpl.java \
-	$(SUBSYSTEM_DIR)/automation/reference/classes/com/sun/midp/automation/AutoInternalSuiteDescriptorImpl.java \
-	$(SUBSYSTEM_DIR)/automation/reference/classes/com/sun/midp/installer/AutoGetInstallerTunnel.java \
-	$(SUBSYSTEM_DIR)/automation/reference/classes/com/sun/midp/automation/AutoStateTracker.java \
-	$(SUBSYSTEM_DIR)/automation/reference/classes/com/sun/midp/main/AutoDisplayController.java \
-	$(SUBSYSTEM_DIR)/automation/reference/classes/com/sun/midp/main/AutoDisplayControllerListener.java 
+	$(SUBSYSTEM_AUTOMATION_DIR)/reference/classes/com/sun/midp/automation/AutoJavaMEImpl.java
 
-# I3test files for the automation subsystem
-#
-# Note that the test case classes must be named to begin with 'Test'.
-# The following i3tests have hardcoded references to the sample midlets.
-# If you want to try it, change these references to the valid locations
-# and uncomment the following block.
-
-ifeq ($(USE_I3_TEST), true)
-SUBSYSTEM_AUTOMATION_I3TEST_JAVA_FILES =
-#SUBSYSTEM_AUTOMATION_I3TEST_JAVA_FILES = \
-#	$(SUBSYSTEM_DIR)/automation/reference/i3test/com/sun/midp/automation/TestAutoSuiteStorage.java \
-#	$(SUBSYSTEM_DIR)/automation/reference/i3test/com/sun/midp/automation/TestSwitchMidlets.java 
+ifeq ($(USE_MULTIPLE_ISOLATES), true)
+include $(SUBSYSTEM_DIR)/automation/mvm/lib.gmk
+else
+include $(SUBSYSTEM_DIR)/automation/svm/lib.gmk
 endif
 
 endif

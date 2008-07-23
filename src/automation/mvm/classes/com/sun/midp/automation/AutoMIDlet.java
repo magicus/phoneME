@@ -99,13 +99,6 @@ public interface AutoMIDlet {
      */
     public AutoMIDletForegroundState getForegroundState();
     
-    
-    /**
-     * Gets MIDlet's event queue.
-     *
-     * @return AutoEventQueue representing event queue.
-     */
-    public AutoEventQueue getEventQueue();
 
     /**
      * Gets MIDlet's descriptor.
