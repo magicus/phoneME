@@ -59,6 +59,7 @@ extern "C" {
  *         JAVACALL_OUT_OF_MEMORY if length of the returend string is more then 
  *                                specified in ret_value_len,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
+ *         JAVACALL_INVALID_ARGUMENT when the handle is NULL
  */
 javacall_result
 javacall_dom_keyboardevent_get_key_identifier(javacall_handle handle,
@@ -75,6 +76,7 @@ javacall_dom_keyboardevent_get_key_identifier(javacall_handle handle,
  * 
  * @return JAVACALL_OK if all done successfuly,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
+ *         JAVACALL_INVALID_ARGUMENT when the handle is NULL
  */
 javacall_result
 javacall_dom_keyboardevent_get_key_location(javacall_handle handle,
@@ -87,6 +89,7 @@ javacall_dom_keyboardevent_get_key_location(javacall_handle handle,
  * 
  * @return JAVACALL_OK if all done successfuly,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
+ *         JAVACALL_INVALID_ARGUMENT when the handle is NULL
  */
 javacall_result
 javacall_dom_keyboardevent_get_ctrl_key(javacall_handle handle,
@@ -99,6 +102,7 @@ javacall_dom_keyboardevent_get_ctrl_key(javacall_handle handle,
  * 
  * @return JAVACALL_OK if all done successfuly,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
+ *         JAVACALL_INVALID_ARGUMENT when the handle is NULL
  */
 javacall_result
 javacall_dom_keyboardevent_get_shift_key(javacall_handle handle,
@@ -113,6 +117,7 @@ javacall_dom_keyboardevent_get_shift_key(javacall_handle handle,
  * 
  * @return JAVACALL_OK if all done successfuly,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
+ *         JAVACALL_INVALID_ARGUMENT when the handle is NULL
  */
 javacall_result
 javacall_dom_keyboardevent_get_alt_key(javacall_handle handle,
@@ -127,6 +132,7 @@ javacall_dom_keyboardevent_get_alt_key(javacall_handle handle,
  * 
  * @return JAVACALL_OK if all done successfuly,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
+ *         JAVACALL_INVALID_ARGUMENT when the handle is NULL
  */
 javacall_result
 javacall_dom_keyboardevent_get_meta_key(javacall_handle handle,
@@ -149,13 +155,14 @@ javacall_dom_keyboardevent_get_meta_key(javacall_handle handle,
  *   <code>KeyboardEvent.keyIdentifier</code>. 
  * @param key_location_arg  Specifies <code>KeyboardEvent.keyLocation</code>
  *   . 
- * @param modifiers_list  A 
+ * @param modifiersList  A 
  *   <a href='http://www.w3.org/TR/2004/REC-xml-20040204/#NT-S'>white space
  *   </a> separated list of modifier key identifiers to be activated on 
  *   this object. 
  * 
  * @return JAVACALL_OK if all done successfuly,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
+ *         JAVACALL_INVALID_ARGUMENT when the handle is NULL
  */
 javacall_result
 javacall_dom_keyboardevent_init_keyboard_event(javacall_handle handle,
@@ -164,7 +171,10 @@ javacall_dom_keyboardevent_init_keyboard_event(javacall_handle handle,
                                                javacall_bool cancelable_arg,
                                                javacall_const_utf16_string key_identifier_arg,
                                                javacall_int32 key_location_arg,
-                                               javacall_const_utf16_string modifiers_list);
+                                               javacall_bool alt_key,
+                                               javacall_bool ctrl_key,
+                                               javacall_bool shift_key,
+                                               javacall_bool meta_key);
 
 /**
  *  The <code>initKeyboardEventNS</code> method is used to initialize the 
@@ -187,7 +197,7 @@ javacall_dom_keyboardevent_init_keyboard_event(javacall_handle handle,
  * @param key_location_arg  Refer to the 
  *   <code>KeyboardEvent.initKeyboardEvent()</code> method for a 
  *   description of this parameter. 
- * @param modifiers_list  A 
+ * @param modifiersList  A 
  *   <a href='http://www.w3.org/TR/2004/REC-xml-20040204/#NT-S'>white space
  *   </a> separated list of modifier key identifiers to be activated on 
  *   this object. As an example, <code>"Control Alt"</code> will activated 
@@ -195,6 +205,7 @@ javacall_dom_keyboardevent_init_keyboard_event(javacall_handle handle,
  * 
  * @return JAVACALL_OK if all done successfuly,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
+ *         JAVACALL_INVALID_ARGUMENT when the handle is NULL
  */
 javacall_result
 javacall_dom_keyboardevent_init_keyboard_event_ns(javacall_handle handle,
@@ -204,7 +215,10 @@ javacall_dom_keyboardevent_init_keyboard_event_ns(javacall_handle handle,
                                                   javacall_bool cancelable_arg,
                                                   javacall_const_utf16_string key_identifier_arg,
                                                   javacall_int32 key_location_arg,
-                                                  javacall_const_utf16_string modifiers_list);
+                                                  javacall_bool alt_key,
+                                                  javacall_bool ctrl_key,
+                                                  javacall_bool shift_key,
+                                                  javacall_bool meta_key);
 
 /** 
  * Deletes object representing this keyboardevent

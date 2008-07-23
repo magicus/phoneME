@@ -54,6 +54,7 @@ extern "C" {
  *         JAVACALL_OUT_OF_MEMORY if length of the returend string is more then 
  *                                specified in ret_value_len,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
+ *         JAVACALL_INVALID_ARGUMENT when the handle is NULL
  */
 javacall_result
 javacall_dom_event_get_type(javacall_handle handle,
@@ -68,6 +69,7 @@ javacall_dom_event_get_type(javacall_handle handle,
  * 
  * @return JAVACALL_OK if all done successfuly,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
+ *         JAVACALL_INVALID_ARGUMENT when the handle is NULL
  */
 javacall_result
 javacall_dom_event_get_target(javacall_handle handle,
@@ -82,6 +84,7 @@ javacall_dom_event_get_target(javacall_handle handle,
  * 
  * @return JAVACALL_OK if all done successfuly,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
+ *         JAVACALL_INVALID_ARGUMENT when the handle is NULL
  */
 javacall_result
 javacall_dom_event_get_current_target(javacall_handle handle,
@@ -99,6 +102,7 @@ javacall_dom_event_get_current_target(javacall_handle handle,
  *         JAVACALL_OUT_OF_MEMORY if length of the returend string is more then 
  *                                specified in ret_value_len,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
+ *         JAVACALL_INVALID_ARGUMENT when the handle is NULL
  */
 javacall_result
 javacall_dom_event_get_namespace_uri(javacall_handle handle,
@@ -113,6 +117,7 @@ javacall_dom_event_get_namespace_uri(javacall_handle handle,
  * 
  * @return JAVACALL_OK if all done successfuly,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
+ *         JAVACALL_INVALID_ARGUMENT when the handle is NULL
  */
 javacall_result
 javacall_dom_event_get_event_phase(javacall_handle handle,
@@ -126,6 +131,7 @@ javacall_dom_event_get_event_phase(javacall_handle handle,
  * 
  * @return JAVACALL_OK if all done successfuly,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
+ *         JAVACALL_INVALID_ARGUMENT when the handle is NULL
  */
 javacall_result
 javacall_dom_event_get_bubbles(javacall_handle handle,
@@ -140,6 +146,7 @@ javacall_dom_event_get_bubbles(javacall_handle handle,
  * 
  * @return JAVACALL_OK if all done successfuly,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
+ *         JAVACALL_INVALID_ARGUMENT when the handle is NULL
  */
 javacall_result
 javacall_dom_event_get_cancelable(javacall_handle handle,
@@ -155,6 +162,7 @@ javacall_dom_event_get_cancelable(javacall_handle handle,
  * 
  * @return JAVACALL_OK if all done successfuly,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
+ *         JAVACALL_INVALID_ARGUMENT when the handle is NULL
  */
 javacall_result
 javacall_dom_event_get_default_prevented(javacall_handle handle,
@@ -172,6 +180,7 @@ javacall_dom_event_get_default_prevented(javacall_handle handle,
  * 
  * @return JAVACALL_OK if all done successfuly,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
+ *         JAVACALL_INVALID_ARGUMENT when the handle is NULL
  */
 javacall_result
 javacall_dom_event_get_time_stamp(javacall_handle handle,
@@ -189,6 +198,7 @@ javacall_dom_event_get_time_stamp(javacall_handle handle,
  * 
  * @return JAVACALL_OK if all done successfuly,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
+ *         JAVACALL_INVALID_ARGUMENT when the handle is NULL
  */
 javacall_result
 javacall_dom_event_stop_propagation(javacall_handle handle);
@@ -209,6 +219,7 @@ javacall_dom_event_stop_propagation(javacall_handle handle);
  * 
  * @return JAVACALL_OK if all done successfuly,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
+ *         JAVACALL_INVALID_ARGUMENT when the handle is NULL
  */
 javacall_result
 javacall_dom_event_prevent_default(javacall_handle handle);
@@ -240,6 +251,7 @@ javacall_dom_event_prevent_default(javacall_handle handle);
  * 
  * @return JAVACALL_OK if all done successfuly,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
+ *         JAVACALL_INVALID_ARGUMENT when the handle is NULL
  */
 javacall_result
 javacall_dom_event_init_event(javacall_handle handle,
@@ -266,6 +278,7 @@ javacall_dom_event_init_event(javacall_handle handle,
  * 
  * @return JAVACALL_OK if all done successfuly,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
+ *         JAVACALL_INVALID_ARGUMENT when the handle is NULL
  */
 javacall_result
 javacall_dom_event_init_event_ns(javacall_handle handle,

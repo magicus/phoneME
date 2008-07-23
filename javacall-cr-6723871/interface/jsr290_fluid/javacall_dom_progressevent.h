@@ -52,6 +52,7 @@ extern "C" {
  * 
  * @return JAVACALL_OK if all done successfuly,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
+ *         JAVACALL_INVALID_ARGUMENT when the handle is NULL
  */
 javacall_result
 javacall_dom_progressevent_get_length_computable(javacall_handle handle,
@@ -69,6 +70,7 @@ javacall_dom_progressevent_get_length_computable(javacall_handle handle,
  * 
  * @return JAVACALL_OK if all done successfuly,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
+ *         JAVACALL_INVALID_ARGUMENT when the handle is NULL
  */
 javacall_result
 javacall_dom_progressevent_get_loaded(javacall_handle handle,
@@ -83,6 +85,7 @@ javacall_dom_progressevent_get_loaded(javacall_handle handle,
  * 
  * @return JAVACALL_OK if all done successfuly,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
+ *         JAVACALL_INVALID_ARGUMENT when the handle is NULL
  */
 javacall_result
 javacall_dom_progressevent_get_total(javacall_handle handle,
@@ -133,6 +136,7 @@ javacall_dom_progressevent_get_total(javacall_handle handle,
  * 
  * @return JAVACALL_OK if all done successfuly,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
+ *         JAVACALL_INVALID_ARGUMENT when the handle is NULL
  */
 javacall_result
 javacall_dom_progressevent_init_progress_event(javacall_handle handle,
@@ -197,6 +201,7 @@ javacall_dom_progressevent_init_progress_event(javacall_handle handle,
  * 
  * @return JAVACALL_OK if all done successfuly,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
+ *         JAVACALL_INVALID_ARGUMENT when the handle is NULL
  */
 javacall_result
 javacall_dom_progressevent_init_progress_event_ns(javacall_handle handle,
