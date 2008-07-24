@@ -33,7 +33,6 @@
 #include <midp_properties_port.h>
 #include <midpInit.h>
 #include <suitestore_common.h>
-#include <pcsl_network.h>
 #if !ENABLE_CDC
 #include <suspend_resume.h>
 #endif
