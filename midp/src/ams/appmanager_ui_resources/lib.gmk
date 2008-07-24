@@ -1,0 +1,112 @@
+#   
+#
+# Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+# 
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License version
+# 2 only, as published by the Free Software Foundation.
+# 
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# General Public License version 2 for more details (a copy is
+# included at /legal/license.txt).
+# 
+# You should have received a copy of the GNU General Public License
+# version 2 along with this work; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+# 02110-1301 USA
+# 
+# Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+# Clara, CA 95054 or visit www.sun.com if you need additional
+# information or have any questions.
+#
+
+############################################################
+# Module's Component Configuration file
+#
+# Remember: It is up to the module itself to impose rules of
+# how to compile the options. All the global Makefile needs
+# is the final def. of Java and native file lists and some
+# other def. (like VPATH)
+############################################################
+
+# Add to global SUBSYSTEMS list
+#
+#SUBSYSTEMS += appmanager_ui_resources
+
+# Name of the library
+APPMANAGER_UI_RESOURCE_NAME = appmanager_ui_resources
+
+# Local module directory
+APPMANAGER_UI_RESOURCE_DIR = $(SUBSYSTEM_AMS_DIR)/$(APPMANAGER_UI_RESOURCE_NAME)
+PROJECT_APPMANAGER_UI_RESOURCE_DIR = $(PROJECT_SUBSYSTEM_AMS_DIR)/$(APPMANAGER_UI_RESOURCE_NAME)
+
+# Extra include files
+SUBSYSTEM_AMS_EXTRA_INCLUDES += -I$(APPMANAGER_UI_RESOURCE_DIR)/include
+
+# Defaul Images list - can be override
+APPMANAGER_UI_RESOURCE_COMPONENTS ?= $(APPMANAGER_UI_RESOURCE_DIR)/share/lib.gmk \
+  $(APPMANAGER_UI_RESOURCE_DIR)/$(PLATFORM)/lib.gmk
+
+# extend the existing
+APPMANAGER_UI_RESOURCE_COMPONENTS += $(APPMANAGER_UI_RESOURCE_ADITIONAL_COMPONENTS)
+
+include $(APPMANAGER_UI_RESOURCE_COMPONENTS)
+
+
+
+ams_resources:: app_manager_resources
+
+
+ifeq ($(USE_FILE_SYSTEM), true)
+
+ifeq ($(USE_RAW_AMS_IMAGES), false)
+app_manager_resources: $(STORAGEDIR) $(EXTSTORAGEDIR)
+	@echo " ... Copying PNG files"
+	-@(cp -f \
+	  $(foreach _IMAGE_FOLDER,$(APP_MANAGER_RESOURCES_IMAGE_FOLDERS),$(_IMAGE_FOLDER)/*.png) \
+	    $(STORAGEDIR) $(LOG))
+else
+app_manager_resources: $(STORAGEDIR) $(EXTSTORAGEDIR) $(IMAGE2RAW_JAR_FILE) \
+		       $(SUBSYSTEM_CONFIGURATION_MERGED_FILE)
+	@echo " ... converting AMS images to raw format" $(LOG)
+	@$(call convert_images_to_raw,$(APP_MANAGER_RESOURCES_IMAGE_FOLDERS))
+endif
+
+else
+# don't use the file system, all resources are romized
+
+# Command for invoking the romization tool
+INT_ROMIZE_AMS_RESOURCES = \
+	$(JAVA_CMD) -Djava.awt.headless=true -classpath $(TOOLS_CLASSPATH) \
+		'com.sun.midp.romization.Romizer'
+		
+SUBSYSTEM_AMS_NATIVE_FILES += \
+	ams_resources_rom.c
+
+
+AMS_RESOURCE_FILES += $(foreach _IMAGE_FOLDER, $(APP_MANAGER_RESOURCES_IMAGE_FOLDERS), $(_IMAGE_FOLDER)/*.png)
+
+ifeq ($(INT_IMAGE_ENDIAN), )
+    INT_IMAGE_ENDIAN = little
+endif
+
+$(GENERATED_DIR)/ams_resources_rom.c: $(AMS_RESOURCE_FILES)
+	@echo " ... romizing AMS resources"
+	@$(INT_ROMIZE_AMS_RESOURCES) \
+		-in `$(call fixcygpath, $(AMS_RESOURCE_FILES))` \
+		-outc `$(call fixcygpath, $(GENERATED_DIR)/ams_resources_rom.c)` \
+		-endian $(INT_IMAGE_ENDIAN)
+    
+app_manager_resources: $(OBJ_DIR)/ams_resources_rom.o
+
+
+$(OBJ_DIR)/ams_resources_rom.o: $(GENERATED_DIR)/ams_resources_rom.c
+	@echo " ... $@" $(LOG)
+	@echo +++ $(CC) $(CFLAGS) -c $(CC_OUTPUT)$@ `$(call fixcygpath, $<)` \
+		$(LOG_ONLY)
+	@$(CC) $(CFLAGS) -c $(CC_OUTPUT)$@ `$(call fixcygpath, $<)` $(LOG)
+					
+endif
