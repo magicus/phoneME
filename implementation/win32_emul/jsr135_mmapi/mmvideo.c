@@ -417,6 +417,9 @@ static javacall_result video_start_video_snapshot(javacall_handle handle,
         dataLength = -1;
     }
 
+    javanotify_on_media_notification( JAVACALL_EVENT_MEDIA_SNAPSHOT_FINISHED,
+        pHandle->isolateId, pHandle->playerId, NULL == data ? JAVACALL_FAIL :
+        JAVACALL_OK, NULL);
     return JAVACALL_OK; 
 }
 
