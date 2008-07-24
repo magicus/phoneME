@@ -264,6 +264,29 @@ void midp_check_events(JVMSPI_BlockedThreadInfo *blocked_threads,
 
 /**
  * Runs the VM in either master or slave mode depending on the
+ * platform. In master mode it does not return until the VM is finished.
+ * In slave mode it will return after setting up the VM with the main class,
+ * but not run the VM, the calling code must contain a system event loop.
+ *
+ * @param classPath string containing the class path
+ * @param mainClass string containing the main class for the VM to run.
+ * @param argc the number of arguments to pass to the main method
+ * @param argv the arguments to pass to the main method
+ *
+ * @return in master mode the exit status of the VM, in slave mode 0
+ */
+int midpRunVm(JvmPathChar* classPath,
+              char* mainClass,
+              int argc,
+              char** argv) {
+    /* Master mode does not need VM time slice requests. */
+    midp_thread_set_timeslice_proc(NULL);
+
+    return JVM_Start(classPath, mainClass, argc, argv);
+}
+
+/**
+ * Runs the VM in either master or slave mode depending on the
  * platform. It does not return until the VM is finished. In slave mode
  * it will contain a system event loop.
  *
@@ -274,12 +297,9 @@ void midp_check_events(JVMSPI_BlockedThreadInfo *blocked_threads,
  *
  * @return exit status of the VM
  */
-int midpRunVm(JvmPathChar* classPath,
-              char* mainClass,
-              int argc,
-              char** argv) {
-    /* Master mode does not need VM time slice requests. */
-    midp_thread_set_timeslice_proc(NULL);
-
-    return JVM_Start(classPath, mainClass, argc, argv);
+int midpRunVmWithEventLoop(JvmPathChar* classPath,
+                           char* mainClass,
+                           int argc,
+                           char** argv) {
+    return midpRunVm(classPath, mainClass, argc, argv);
 }

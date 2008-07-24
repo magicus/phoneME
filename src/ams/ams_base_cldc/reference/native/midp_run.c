@@ -707,7 +707,7 @@ midp_run_midlet_with_args_cp(SuiteIdType suiteId,
          *
          * Arguments to MIDlets are pass in the command state.
          */
-        vmStatus = midpRunVm(classPath, MIDP_MAIN, 0, NULL);
+        vmStatus = midpRunVmWithEventLoop(classPath, MIDP_MAIN, 0, NULL);
 
         measureStack(KNI_FALSE);
 
@@ -1025,7 +1025,7 @@ int midpRunMainClass(JvmPathChar *classPath,
      * But our Java Main returns a specific positive code,
      * so we can tell if the VM aborted.
      */
-    vmStatus = midpRunVm(classPath, mainClass, argc, argv);
+    vmStatus = midpRunVmWithEventLoop(classPath, mainClass, argc, argv);
 
     pushcheckinall();
     midp_resetEvents();

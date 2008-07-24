@@ -48,6 +48,24 @@ extern "C" {
 
 /**
  * Runs the VM in either master or slave mode depending on the
+ * platform. In master mode it does not return until the VM is finished.
+ * In slave mode it will return after setting up the VM with the main class,
+ * but not run the VM, the calling code must contain a system event loop.
+ *
+ * @param classPath string containing the class path
+ * @param mainClass string containing the main class for the VM to run.
+ * @param argc the number of arguments to pass to the main method
+ * @param argv the arguments to pass to the main method
+ *
+ * @return in master mode the exit status of the VM, in slave mode 0
+ */
+extern int midpRunVm(JvmPathChar* classPath,
+                     char* mainClass,
+                     int argc,
+                     char** argv);
+
+/**
+ * Runs the VM in either master or slave mode depending on the
  * platform. It does not return until the VM is finished. In slave mode
  * it will contain a system event loop.
  *
@@ -58,10 +76,10 @@ extern "C" {
  *
  * @return exit status of the VM
  */
-extern int midpRunVm(JvmPathChar* classPath,
-                     char* mainClass,
-                     int argc,
-                     char** argv);
+extern int midpRunVmWithEventLoop(JvmPathChar* classPath,
+                                  char* mainClass,
+                                  int argc,
+                                  char** argv);
 
 #ifdef __cplusplus
 }
