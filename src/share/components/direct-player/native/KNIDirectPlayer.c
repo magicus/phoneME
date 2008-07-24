@@ -28,6 +28,8 @@
 #include "jsrop_exceptions.h"
 #include "jsr135_sync.h"
 #include "javautil_string.h"
+#include "SNI.h"
+
 
 /* Global Variables ************************************************************************/
 
