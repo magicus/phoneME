@@ -57,8 +57,13 @@ ifeq ($(USE_AUTOMATION), true)
 
 SUBSYSTEM_AUTOMATION_JAVA_FILES += \
 	$(SUBSYSTEM_AUTOMATION_DIR)/classes/com/sun/midp/automation/AutoJavaME.java \
+	$(SUBSYSTEM_AUTOMATION_DIR)/classes/com/sun/midp/automation/AutoEvent.java \
+	$(SUBSYSTEM_AUTOMATION_DIR)/classes/com/sun/midp/automation/AutoKeyEvent.java \
+	$(SUBSYSTEM_AUTOMATION_DIR)/classes/com/sun/midp/automation/AutoPenEvent.java \
+	$(SUBSYSTEM_AUTOMATION_DIR)/classes/com/sun/midp/automation/AutoEventFactory.java \
 	\
-	$(SUBSYSTEM_AUTOMATION_DIR)/reference/classes/com/sun/midp/automation/AutoJavaMEImpl.java
+	$(SUBSYSTEM_AUTOMATION_DIR)/reference/classes/com/sun/midp/automation/AutoJavaMEImpl.java \
+	$(SUBSYSTEM_AUTOMATION_DIR)/reference/classes/com/sun/midp/automation/AutoEventFactoryImpl.java
 
 ifeq ($(USE_MULTIPLE_ISOLATES), true)
 include $(SUBSYSTEM_DIR)/automation/mvm/lib.gmk

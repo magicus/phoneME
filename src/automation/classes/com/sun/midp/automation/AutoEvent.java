@@ -24,18 +24,13 @@
  * information or have any questions.
  */
 
+
 package com.sun.midp.automation;
-import java.io.*;
 
-/** 
- * Represents event's data.
- */
-public interface AutoEventData {
-    /**
-     * Writes event data to output stream
-     *
-     * @param stream stream to write to
-     */
-    public void writeTo(DataOutputStream stream);
+public interface AutoEvent {
+    public static final KEYBOARD = 0;
+    public static final POINTER = 1;
+
+    public int getType();
+    public String toString();
 }
-
