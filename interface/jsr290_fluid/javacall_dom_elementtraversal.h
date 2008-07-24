@@ -55,7 +55,6 @@ extern "C" {
  * 
  * @return JAVACALL_OK if all done successfuly,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
- *         JAVACALL_INVALID_ARGUMENT when the handle is NULL
  */
 javacall_result
 javacall_dom_elementtraversal_get_child_element_count(javacall_handle handle,
@@ -72,7 +71,6 @@ javacall_dom_elementtraversal_get_child_element_count(javacall_handle handle,
  * 
  * @return JAVACALL_OK if all done successfuly,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
- *         JAVACALL_INVALID_ARGUMENT when the handle is NULL
  */
 javacall_result
 javacall_dom_elementtraversal_get_first_element_child(javacall_handle handle,
@@ -89,7 +87,6 @@ javacall_dom_elementtraversal_get_first_element_child(javacall_handle handle,
  * 
  * @return JAVACALL_OK if all done successfuly,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
- *         JAVACALL_INVALID_ARGUMENT when the handle is NULL
  */
 javacall_result
 javacall_dom_elementtraversal_get_last_element_child(javacall_handle handle,
@@ -107,7 +104,6 @@ javacall_dom_elementtraversal_get_last_element_child(javacall_handle handle,
  * 
  * @return JAVACALL_OK if all done successfuly,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
- *         JAVACALL_INVALID_ARGUMENT when the handle is NULL
  */
 javacall_result
 javacall_dom_elementtraversal_get_next_element_sibling(javacall_handle handle,
@@ -125,7 +121,6 @@ javacall_dom_elementtraversal_get_next_element_sibling(javacall_handle handle,
  * 
  * @return JAVACALL_OK if all done successfuly,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
- *         JAVACALL_INVALID_ARGUMENT when the handle is NULL
  */
 javacall_result
 javacall_dom_elementtraversal_get_previous_element_sibling(javacall_handle handle,

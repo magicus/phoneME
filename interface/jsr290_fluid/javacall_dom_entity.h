@@ -61,7 +61,6 @@ extern "C" {
  *         JAVACALL_OUT_OF_MEMORY if length of the returend string is more then 
  *                                specified in ret_value_len,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
- *         JAVACALL_INVALID_ARGUMENT when the handle is NULL
  */
 javacall_result
 javacall_dom_entity_get_public_id(javacall_handle handle,
@@ -84,7 +83,6 @@ javacall_dom_entity_get_public_id(javacall_handle handle,
  *         JAVACALL_OUT_OF_MEMORY if length of the returend string is more then 
  *                                specified in ret_value_len,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
- *         JAVACALL_INVALID_ARGUMENT when the handle is NULL
  */
 javacall_result
 javacall_dom_entity_get_system_id(javacall_handle handle,
@@ -107,7 +105,6 @@ javacall_dom_entity_get_system_id(javacall_handle handle,
  *         JAVACALL_OUT_OF_MEMORY if length of the returend string is more then 
  *                                specified in ret_value_len,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
- *         JAVACALL_INVALID_ARGUMENT when the handle is NULL
  */
 javacall_result
 javacall_dom_entity_get_notation_name(javacall_handle handle,

@@ -59,7 +59,6 @@ extern "C" {
  * 
  * @return JAVACALL_OK if all done successfuly,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
- *         JAVACALL_INVALID_ARGUMENT when the handle is NULL
  */
 javacall_result
 javacall_dom_mutationevent_get_related_node(javacall_handle handle,
@@ -76,7 +75,6 @@ javacall_dom_mutationevent_get_related_node(javacall_handle handle,
  *         JAVACALL_OUT_OF_MEMORY if length of the returend string is more then 
  *                                specified in ret_value_len,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
- *         JAVACALL_INVALID_ARGUMENT when the handle is NULL
  */
 javacall_result
 javacall_dom_mutationevent_get_prev_value(javacall_handle handle,
@@ -94,7 +92,6 @@ javacall_dom_mutationevent_get_prev_value(javacall_handle handle,
  *         JAVACALL_OUT_OF_MEMORY if length of the returend string is more then 
  *                                specified in ret_value_len,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
- *         JAVACALL_INVALID_ARGUMENT when the handle is NULL
  */
 javacall_result
 javacall_dom_mutationevent_get_new_value(javacall_handle handle,
@@ -111,7 +108,6 @@ javacall_dom_mutationevent_get_new_value(javacall_handle handle,
  *         JAVACALL_OUT_OF_MEMORY if length of the returend string is more then 
  *                                specified in ret_value_len,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
- *         JAVACALL_INVALID_ARGUMENT when the handle is NULL
  */
 javacall_result
 javacall_dom_mutationevent_get_attr_name(javacall_handle handle,
@@ -127,7 +123,6 @@ javacall_dom_mutationevent_get_attr_name(javacall_handle handle,
  * 
  * @return JAVACALL_OK if all done successfuly,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
- *         JAVACALL_INVALID_ARGUMENT when the handle is NULL
  */
 javacall_result
 javacall_dom_mutationevent_get_attr_change(javacall_handle handle,
@@ -158,7 +153,6 @@ javacall_dom_mutationevent_get_attr_change(javacall_handle handle,
  * 
  * @return JAVACALL_OK if all done successfuly,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
- *         JAVACALL_INVALID_ARGUMENT when the handle is NULL
  */
 javacall_result
 javacall_dom_mutationevent_init_mutation_event(javacall_handle handle,
@@ -204,7 +198,6 @@ javacall_dom_mutationevent_init_mutation_event(javacall_handle handle,
  * 
  * @return JAVACALL_OK if all done successfuly,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
- *         JAVACALL_INVALID_ARGUMENT when the handle is NULL
  */
 javacall_result
 javacall_dom_mutationevent_init_mutation_event_ns(javacall_handle handle,

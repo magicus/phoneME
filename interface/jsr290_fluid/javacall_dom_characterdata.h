@@ -67,7 +67,6 @@ extern "C" {
  *                                specified in ret_value_len,
  *         JAVACALL_FAIL if DOMSTRING_SIZE_ERR occured,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
- *         JAVACALL_INVALID_ARGUMENT when the handle is NULL
  */
 javacall_result
 javacall_dom_characterdata_get_data(javacall_handle handle,
@@ -94,7 +93,6 @@ javacall_dom_characterdata_get_data(javacall_handle handle,
  *         JAVACALL_FAIL if error occured; in this case exception_code has to be 
  *                                filled,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
- *         JAVACALL_INVALID_ARGUMENT when the handle is NULL
  */
 javacall_result
 javacall_dom_characterdata_set_data(javacall_handle handle,
@@ -111,7 +109,6 @@ javacall_dom_characterdata_set_data(javacall_handle handle,
  * 
  * @return JAVACALL_OK if all done successfuly,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
- *         JAVACALL_INVALID_ARGUMENT when the handle is NULL
  */
 javacall_result
 javacall_dom_characterdata_get_length(javacall_handle handle,
@@ -142,7 +139,6 @@ javacall_dom_characterdata_get_length(javacall_handle handle,
  *         JAVACALL_FAIL if error occured; in this case exception_code has to be 
  *                                filled,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
- *         JAVACALL_INVALID_ARGUMENT when the handle is NULL
  */
 javacall_result
 javacall_dom_characterdata_substring_data(javacall_handle handle,
@@ -163,7 +159,6 @@ javacall_dom_characterdata_substring_data(javacall_handle handle,
  * @return JAVACALL_OK if all done successfuly,
  *         JAVACALL_FAIL if NO_MODIFICATION_ALLOWED_ERR occured,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
- *         JAVACALL_INVALID_ARGUMENT when the handle is NULL
  */
 javacall_result
 javacall_dom_characterdata_append_data(javacall_handle handle,
@@ -184,7 +179,6 @@ javacall_dom_characterdata_append_data(javacall_handle handle,
  *         JAVACALL_FAIL if error occured; in this case exception_code has to be 
  *                                filled,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
- *         JAVACALL_INVALID_ARGUMENT when the handle is NULL
  */
 javacall_result
 javacall_dom_characterdata_insert_data(javacall_handle handle,
@@ -211,7 +205,6 @@ javacall_dom_characterdata_insert_data(javacall_handle handle,
  *         JAVACALL_FAIL if error occured; in this case exception_code has to be 
  *                                filled,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
- *         JAVACALL_INVALID_ARGUMENT when the handle is NULL
  */
 javacall_result
 javacall_dom_characterdata_delete_data(javacall_handle handle,
@@ -242,7 +235,6 @@ javacall_dom_characterdata_delete_data(javacall_handle handle,
  *         JAVACALL_FAIL if error occured; in this case exception_code has to be 
  *                                filled,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
- *         JAVACALL_INVALID_ARGUMENT when the handle is NULL
  */
 javacall_result
 javacall_dom_characterdata_replace_data(javacall_handle handle,

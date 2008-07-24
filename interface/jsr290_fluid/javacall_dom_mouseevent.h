@@ -53,7 +53,6 @@ extern "C" {
  * 
  * @return JAVACALL_OK if all done successfuly,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
- *         JAVACALL_INVALID_ARGUMENT when the handle is NULL
  */
 javacall_result
 javacall_dom_mouseevent_get_screen_x(javacall_handle handle,
@@ -67,7 +66,6 @@ javacall_dom_mouseevent_get_screen_x(javacall_handle handle,
  * 
  * @return JAVACALL_OK if all done successfuly,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
- *         JAVACALL_INVALID_ARGUMENT when the handle is NULL
  */
 javacall_result
 javacall_dom_mouseevent_get_screen_y(javacall_handle handle,
@@ -81,7 +79,6 @@ javacall_dom_mouseevent_get_screen_y(javacall_handle handle,
  * 
  * @return JAVACALL_OK if all done successfuly,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
- *         JAVACALL_INVALID_ARGUMENT when the handle is NULL
  */
 javacall_result
 javacall_dom_mouseevent_get_client_x(javacall_handle handle,
@@ -95,7 +92,6 @@ javacall_dom_mouseevent_get_client_x(javacall_handle handle,
  * 
  * @return JAVACALL_OK if all done successfuly,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
- *         JAVACALL_INVALID_ARGUMENT when the handle is NULL
  */
 javacall_result
 javacall_dom_mouseevent_get_client_y(javacall_handle handle,
@@ -108,7 +104,6 @@ javacall_dom_mouseevent_get_client_y(javacall_handle handle,
  * 
  * @return JAVACALL_OK if all done successfuly,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
- *         JAVACALL_INVALID_ARGUMENT when the handle is NULL
  */
 javacall_result
 javacall_dom_mouseevent_get_ctrl_key(javacall_handle handle,
@@ -121,7 +116,6 @@ javacall_dom_mouseevent_get_ctrl_key(javacall_handle handle,
  * 
  * @return JAVACALL_OK if all done successfuly,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
- *         JAVACALL_INVALID_ARGUMENT when the handle is NULL
  */
 javacall_result
 javacall_dom_mouseevent_get_shift_key(javacall_handle handle,
@@ -136,7 +130,6 @@ javacall_dom_mouseevent_get_shift_key(javacall_handle handle,
  * 
  * @return JAVACALL_OK if all done successfuly,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
- *         JAVACALL_INVALID_ARGUMENT when the handle is NULL
  */
 javacall_result
 javacall_dom_mouseevent_get_alt_key(javacall_handle handle,
@@ -151,7 +144,6 @@ javacall_dom_mouseevent_get_alt_key(javacall_handle handle,
  * 
  * @return JAVACALL_OK if all done successfuly,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
- *         JAVACALL_INVALID_ARGUMENT when the handle is NULL
  */
 javacall_result
 javacall_dom_mouseevent_get_meta_key(javacall_handle handle,
@@ -174,7 +166,6 @@ javacall_dom_mouseevent_get_meta_key(javacall_handle handle,
  * 
  * @return JAVACALL_OK if all done successfuly,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
- *         JAVACALL_INVALID_ARGUMENT when the handle is NULL
  */
 javacall_result
 javacall_dom_mouseevent_get_button(javacall_handle handle,
@@ -188,7 +179,6 @@ javacall_dom_mouseevent_get_button(javacall_handle handle,
  * 
  * @return JAVACALL_OK if all done successfuly,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
- *         JAVACALL_INVALID_ARGUMENT when the handle is NULL
  */
 javacall_result
 javacall_dom_mouseevent_get_related_target(javacall_handle handle,
@@ -224,7 +214,6 @@ javacall_dom_mouseevent_get_related_target(javacall_handle handle,
  * 
  * @return JAVACALL_OK if all done successfuly,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
- *         JAVACALL_INVALID_ARGUMENT when the handle is NULL
  */
 javacall_result
 javacall_dom_mouseevent_init_mouse_event(javacall_handle handle,
@@ -286,7 +275,6 @@ javacall_dom_mouseevent_init_mouse_event(javacall_handle handle,
  * 
  * @return JAVACALL_OK if all done successfuly,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
- *         JAVACALL_INVALID_ARGUMENT when the handle is NULL
  */
 javacall_result
 javacall_dom_mouseevent_init_mouse_event_ns(javacall_handle handle,
