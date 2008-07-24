@@ -413,7 +413,7 @@ class AppManagerUIImpl extends Form
      * Requests that the ui element, associated with the specified midlet
      * suite, be visible and active.
      *
-     * @param item corresponding suite info
+     * @param msi corresponding suite info
      */
     public void setCurrentItem(RunningMIDletSuiteInfo msi) {
         for (int i = 0; i < mciVector.size(); i++) {
@@ -754,8 +754,25 @@ class AppManagerUIImpl extends Form
                     ci.removeCommand(launchODTAgentCmd);
                 }
 
-                ci.setDefaultCommand(fgCmd);
-                ci.addCommand(endCmd);
+                if (Constants.EXTENDED_JAD_ATTRIBUTES_ENABLED) {
+                    String bgProp = MIDletSuiteUtils.getSuiteProperty(
+                        si.suiteId,
+                        MIDletSuite.LAUNCH_BG_PROP);
+                    if (!"yes".equalsIgnoreCase(bgProp)) {
+                        ci.setDefaultCommand(fgCmd);
+                    }
+
+                    String noExitProp = MIDletSuiteUtils.getSuiteProperty(
+                        si.suiteId,
+                        MIDletSuite.BACKGROUND_PAUSE_PROP);
+
+                    if (!"yes".equalsIgnoreCase(noExitProp)) {
+                        ci.addCommand(endCmd);
+                    }
+                } else {
+                    ci.setDefaultCommand(fgCmd);
+                    ci.addCommand(endCmd);
+                }
                 // add item to midlet switcher
                 midletSwitcher.append(ci.msi);
                 return;

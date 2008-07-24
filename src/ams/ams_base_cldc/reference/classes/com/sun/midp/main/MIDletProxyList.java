@@ -1060,6 +1060,17 @@ public class MIDletProxyList
             return;
         }
 
+        if (Constants.EXTENDED_JAD_ATTRIBUTES_ENABLED) {
+            if (newForeground.wasNotActive) {
+                String bgProp = MIDletSuiteUtils.getSuiteProperty(
+                    newForeground.getSuiteId(),
+                    MIDletSuite.LAUNCH_BG_PROP);
+                if ("yes".equalsIgnoreCase(bgProp)) {
+                    return;
+                }
+            }
+        }
+
         if (foregroundMidlet != null &&
             (foregroundMidlet.getMidletState() !=
             MIDletProxy.MIDLET_DESTROYED)) {

@@ -663,7 +663,7 @@ public class MIDletSuiteUtils {
      * @throws SecurityException if caller has no permission to invoke
      *                           the method
      */
-    static String getSuiteProperty(int suiteId, String propName)
+    public static String getSuiteProperty(int suiteId, String propName)
             throws SecurityException{
 
         // Note: getMIDletSuiteStorage performs an AMS permission check

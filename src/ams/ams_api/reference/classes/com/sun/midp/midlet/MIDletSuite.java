@@ -82,15 +82,21 @@ public interface MIDletSuite {
     /** MIDlet property for the optional permissions. */
     public static final String PERMISSIONS_OPT_PROP = "MIDlet-Permissions-Opt";
  
-    /** MIDlet property for the maximum heap size allowed for a MIDlet. */
+    /** MIDlet property for the maximum heap size allowed for MIDlet. */
     public static final String HEAP_SIZE_PROP = "MIDlet-Heap-Size";
 
     /**
-     * MIDlet property defines whether a MIDlet is paused while it's in 
+     * MIDlet property defines whether the MIDlet is paused while it's in
      * the background.
-     * */
+     */
     public static final String BACKGROUND_PAUSE_PROP = "MIDlet-Background-Pause";
-  
+
+    /** MIDlet property that deny an user to terminate the MIDlet. */
+    public static final String NO_EXIT_PROP = "MIDlet-No-Exit";
+
+    /** MIDlet property for launching the MIDlet directly in the background. */
+    public static final String LAUNCH_BG_PROP = "MIDlet-Launch-Background";
+
     /**
      * Get a property of the suite. A property is an attribute from
      * either the application descriptor or JAR Manifest.
