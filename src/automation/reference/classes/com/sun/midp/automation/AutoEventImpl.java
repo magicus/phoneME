@@ -26,45 +26,15 @@
 
 package com.sun.midp.automation;
 
-final class AutoEventFactoryImpl extends AutoEventFactory {
-    private final static AutoEventFactoryImpl instance = null;
 
-    static AutoEventFactory getInstanceImpl() {
-        return instance;
+class AutoEventImpl implements AutoEvent {
+    protected AutoEventImpl(int type) {
+        this.type = type;
     }
 
-
-    public AutoEvent createFromString(String str)
-        throws IllegalArgumentException {
-
-        return createFromString(str, 0, null);
+    public int getType() {
+        return type;
     }
 
-    public AutoEvent createFromString(String str, int offset)
-        throws IllegalArgumentException {
-
-        return createFromString(str, offset, null);
-    }
-
-    public AutoEvent createFromString(String str, int offset, 
-            Integer newOffset) 
-        throws IllegalArgumentException {
-
-        return null;
-    }
-
-    public AutoKeyEvent createKeyEvent(int state, int code) {
-        return null;
-    }
-
-    public AutoPenEvent createPenEvent(int state, int x, int y) {
-        return null;
-    }
-    
-
-    /**
-     * Private constructor to prevent user from creating an instance.
-     */
-    private AutoEventFactoryImpl() {
-    }    
+    private int type;
 }

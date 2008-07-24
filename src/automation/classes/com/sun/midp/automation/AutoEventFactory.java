@@ -29,22 +29,15 @@ package com.sun.midp.automation;
 
 public abstract class AutoEventFactory {
     public abstract AutoEvent createFromString(String str)
-        throws IllegalArgumentException {
-
-        return createFromString(str, 0, null);
-    }
+        throws IllegalArgumentException;
 
     public abstract AutoEvent createFromString(String str, int offset)
-        throws IllegalArgumentException {
-
-        return createFromString(str, offset, null);
-    }
+        throws IllegalArgumentException;
 
     public abstract AutoEvent createFromString(String str, int offset, 
             Integer newOffset) 
         throws IllegalArgumentException;
 
-    
 
     public abstract AutoKeyEvent createKeyEvent(int state, int code);
     public abstract AutoPenEvent createPenEvent(int state, int x, int y);

@@ -38,13 +38,11 @@ SUBSYSTEM_AUTOMATION_SOURCEPATH += $(AUTOMATION_DIR_MVM)/classes
 SUBSYSTEM_AUTOMATION_JAVA_FILES += \
 	$(AUTOMATION_MVM_DIR)/classes/com/sun/midp/automation/AutoMIDlet.java \
 	$(AUTOMATION_MVM_DIR)/classes/com/sun/midp/automation/AutoMIDletDescriptor.java \
-	$(AUTOMATION_MVM_DIR)/classes/com/sun/midp/automation/AutoEventData.java \
 	$(AUTOMATION_MVM_DIR)/classes/com/sun/midp/automation/AutoSuiteStorage.java \
 	$(AUTOMATION_MVM_DIR)/classes/com/sun/midp/automation/AutoMIDletForegroundState.java \
 	$(AUTOMATION_MVM_DIR)/classes/com/sun/midp/automation/AutoMIDletLifeCycleState.java \
 	$(AUTOMATION_MVM_DIR)/classes/com/sun/midp/automation/AutoSuiteDescriptor.java \
 	\
-	$(AUTOMATION_MVM_DIR)/reference/classes/com/sun/midp/automation/AutoEventDataFactory.java \
 	$(AUTOMATION_MVM_DIR)/reference/classes/com/sun/midp/automation/AutoSuiteStorageImpl.java \
 	$(AUTOMATION_MVM_DIR)/reference/classes/com/sun/midp/automation/AutoSuiteDescriptorImpl.java \
 	$(AUTOMATION_MVM_DIR)/reference/classes/com/sun/midp/automation/AutoMIDletImpl.java \
