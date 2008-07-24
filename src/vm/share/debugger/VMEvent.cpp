@@ -1192,8 +1192,12 @@ void handle_exception_info(Thread *thread) {
   if (info_event.not_null()) {
     VMEvent::remove_event_request(&info_event);
   }
-  info_event = VMEvent::create_vm_event_request();
-  LocationModifier::Fast loc = LocationModifier::new_location(&throw_frame);
+  LocationModifier::Fast loc;
+  {
+    TaskAllocationContext tmp(SYSTEM_TASK);
+    info_event = VMEvent::create_vm_event_request();
+    loc = LocationModifier::new_location(&throw_frame);
+  }
   if (info_event.is_null() || loc.is_null()) {
     // punt, out of memory or we couldn't find this location
     return;
