@@ -33,6 +33,7 @@
 #include <midp_properties_port.h>
 #include <midpInit.h>
 #include <suitestore_common.h>
+#include <pcsl_network.h>
 #if !ENABLE_CDC
 #include <suspend_resume.h>
 #endif
@@ -308,6 +309,8 @@ void midpFinalize() {
 #if ENABLE_LINKS
     midp_links_shutdown();
 #endif    
+
+    pcsl_network_finalize_start();
 
     midpAppDir = NULL;
     midpFinalizeMemory();
