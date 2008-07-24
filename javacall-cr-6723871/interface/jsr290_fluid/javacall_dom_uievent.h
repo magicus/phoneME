@@ -53,7 +53,6 @@ extern "C" {
  * 
  * @return JAVACALL_OK if all done successfuly,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
- *         JAVACALL_INVALID_ARGUMENT when the handle is NULL
  */
 javacall_result
 javacall_dom_uievent_get_view(javacall_handle handle,
@@ -67,7 +66,6 @@ javacall_dom_uievent_get_view(javacall_handle handle,
  * 
  * @return JAVACALL_OK if all done successfuly,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
- *         JAVACALL_INVALID_ARGUMENT when the handle is NULL
  */
 javacall_result
 javacall_dom_uievent_get_detail(javacall_handle handle,
@@ -89,7 +87,6 @@ javacall_dom_uievent_get_detail(javacall_handle handle,
  * 
  * @return JAVACALL_OK if all done successfuly,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
- *         JAVACALL_INVALID_ARGUMENT when the handle is NULL
  */
 javacall_result
 javacall_dom_uievent_init_ui_event(javacall_handle handle,
@@ -118,7 +115,6 @@ javacall_dom_uievent_init_ui_event(javacall_handle handle,
  * 
  * @return JAVACALL_OK if all done successfuly,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
- *         JAVACALL_INVALID_ARGUMENT when the handle is NULL
  */
 javacall_result
 javacall_dom_uievent_init_ui_event_ns(javacall_handle handle,

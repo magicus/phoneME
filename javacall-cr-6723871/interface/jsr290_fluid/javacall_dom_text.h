@@ -69,7 +69,6 @@ extern "C" {
  *         JAVACALL_FAIL if error occured; in this case exception_code has to be 
  *                                filled,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
- *         JAVACALL_INVALID_ARGUMENT when the handle is NULL
  */
 javacall_result
 javacall_dom_text_split_text(javacall_handle handle,

@@ -57,7 +57,6 @@ extern "C" {
  * 
  * @return JAVACALL_OK if all done successfuly,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
- *         JAVACALL_INVALID_ARGUMENT when the handle is NULL
  */
 javacall_result
 javacall_dom_namednodemap_get_named_item(javacall_handle handle,
@@ -93,7 +92,6 @@ javacall_dom_namednodemap_get_named_item(javacall_handle handle,
  *         JAVACALL_FAIL if error occured; in this case exception_code has to be 
  *                                filled,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
- *         JAVACALL_INVALID_ARGUMENT when the handle is NULL
  */
 javacall_result
 javacall_dom_namednodemap_set_named_item(javacall_handle handle,
@@ -122,7 +120,6 @@ javacall_dom_namednodemap_set_named_item(javacall_handle handle,
  *         JAVACALL_FAIL if error occured; in this case exception_code has to be 
  *                                filled,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
- *         JAVACALL_INVALID_ARGUMENT when the handle is NULL
  */
 javacall_result
 javacall_dom_namednodemap_remove_named_item(javacall_handle handle,
@@ -143,7 +140,6 @@ javacall_dom_namednodemap_remove_named_item(javacall_handle handle,
  * 
  * @return JAVACALL_OK if all done successfuly,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
- *         JAVACALL_INVALID_ARGUMENT when the handle is NULL
  */
 javacall_result
 javacall_dom_namednodemap_item(javacall_handle handle,
@@ -159,7 +155,6 @@ javacall_dom_namednodemap_item(javacall_handle handle,
  * 
  * @return JAVACALL_OK if all done successfuly,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
- *         JAVACALL_INVALID_ARGUMENT when the handle is NULL
  */
 javacall_result
 javacall_dom_namednodemap_get_length(javacall_handle handle,
@@ -178,7 +173,6 @@ javacall_dom_namednodemap_get_length(javacall_handle handle,
  * 
  * @return JAVACALL_OK if all done successfuly,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
- *         JAVACALL_INVALID_ARGUMENT when the handle is NULL
  */
 javacall_result
 javacall_dom_namednodemap_get_named_item_ns(javacall_handle handle,
@@ -212,7 +206,6 @@ javacall_dom_namednodemap_get_named_item_ns(javacall_handle handle,
  *         JAVACALL_FAIL if error occured; in this case exception_code has to be 
  *                                filled,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
- *         JAVACALL_INVALID_ARGUMENT when the handle is NULL
  */
 javacall_result
 javacall_dom_namednodemap_set_named_item_ns(javacall_handle handle,
@@ -243,7 +236,6 @@ javacall_dom_namednodemap_set_named_item_ns(javacall_handle handle,
  *         JAVACALL_FAIL if error occured; in this case exception_code has to be 
  *                                filled,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
- *         JAVACALL_INVALID_ARGUMENT when the handle is NULL
  */
 javacall_result
 javacall_dom_namednodemap_remove_named_item_ns(javacall_handle handle,

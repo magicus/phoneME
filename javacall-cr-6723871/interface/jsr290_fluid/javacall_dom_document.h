@@ -70,7 +70,6 @@ extern "C" {
  * 
  * @return JAVACALL_OK if all done successfuly,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
- *         JAVACALL_INVALID_ARGUMENT when the handle is NULL
  */
 javacall_result
 javacall_dom_document_get_doctype(javacall_handle handle,
@@ -86,7 +85,6 @@ javacall_dom_document_get_doctype(javacall_handle handle,
  * 
  * @return JAVACALL_OK if all done successfuly,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
- *         JAVACALL_INVALID_ARGUMENT when the handle is NULL
  */
 javacall_result
 javacall_dom_document_get_implementation(javacall_handle handle,
@@ -102,7 +100,6 @@ javacall_dom_document_get_implementation(javacall_handle handle,
  * 
  * @return JAVACALL_OK if all done successfuly,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
- *         JAVACALL_INVALID_ARGUMENT when the handle is NULL
  */
 javacall_result
 javacall_dom_document_get_document_element(javacall_handle handle,
@@ -133,7 +130,6 @@ javacall_dom_document_get_document_element(javacall_handle handle,
  * @return JAVACALL_OK if all done successfuly,
  *         JAVACALL_FAIL if INVALID_CHARACTER_ERR occured,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
- *         JAVACALL_INVALID_ARGUMENT when the handle is NULL
  */
 javacall_result
 javacall_dom_document_create_element(javacall_handle handle,
@@ -149,7 +145,6 @@ javacall_dom_document_create_element(javacall_handle handle,
  * 
  * @return JAVACALL_OK if all done successfuly,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
- *         JAVACALL_INVALID_ARGUMENT when the handle is NULL
  */
 javacall_result
 javacall_dom_document_create_document_fragment(javacall_handle handle,
@@ -165,7 +160,6 @@ javacall_dom_document_create_document_fragment(javacall_handle handle,
  * 
  * @return JAVACALL_OK if all done successfuly,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
- *         JAVACALL_INVALID_ARGUMENT when the handle is NULL
  */
 javacall_result
 javacall_dom_document_create_text_node(javacall_handle handle,
@@ -182,7 +176,6 @@ javacall_dom_document_create_text_node(javacall_handle handle,
  * 
  * @return JAVACALL_OK if all done successfuly,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
- *         JAVACALL_INVALID_ARGUMENT when the handle is NULL
  */
 javacall_result
 javacall_dom_document_create_comment(javacall_handle handle,
@@ -201,7 +194,6 @@ javacall_dom_document_create_comment(javacall_handle handle,
  * @return JAVACALL_OK if all done successfuly,
  *         JAVACALL_FAIL if NOT_SUPPORTED_ERR occured,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
- *         JAVACALL_INVALID_ARGUMENT when the handle is NULL
  */
 javacall_result
 javacall_dom_document_create_cdata_section(javacall_handle handle,
@@ -229,7 +221,6 @@ javacall_dom_document_create_cdata_section(javacall_handle handle,
  *         JAVACALL_FAIL if error occured; in this case exception_code has to be 
  *                                filled,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
- *         JAVACALL_INVALID_ARGUMENT when the handle is NULL
  */
 javacall_result
 javacall_dom_document_create_processing_instruction(javacall_handle handle,
@@ -256,7 +247,6 @@ javacall_dom_document_create_processing_instruction(javacall_handle handle,
  * @return JAVACALL_OK if all done successfuly,
  *         JAVACALL_FAIL if INVALID_CHARACTER_ERR occured,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
- *         JAVACALL_INVALID_ARGUMENT when the handle is NULL
  */
 javacall_result
 javacall_dom_document_create_attribute(javacall_handle handle,
@@ -291,7 +281,6 @@ javacall_dom_document_create_attribute(javacall_handle handle,
  *         JAVACALL_FAIL if error occured; in this case exception_code has to be 
  *                                filled,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
- *         JAVACALL_INVALID_ARGUMENT when the handle is NULL
  */
 javacall_result
 javacall_dom_document_create_entity_reference(javacall_handle handle,
@@ -315,7 +304,6 @@ javacall_dom_document_create_entity_reference(javacall_handle handle,
  * 
  * @return JAVACALL_OK if all done successfuly,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
- *         JAVACALL_INVALID_ARGUMENT when the handle is NULL
  */
 javacall_result
 javacall_dom_document_get_elements_by_tag_name(javacall_handle handle,
@@ -431,7 +419,6 @@ javacall_dom_document_get_elements_by_tag_name(javacall_handle handle,
  *         JAVACALL_FAIL if error occured; in this case exception_code has to be 
  *                                filled,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
- *         JAVACALL_INVALID_ARGUMENT when the handle is NULL
  */
 javacall_result
 javacall_dom_document_import_node(javacall_handle handle,
@@ -495,7 +482,6 @@ javacall_dom_document_import_node(javacall_handle handle,
  *         JAVACALL_FAIL if error occured; in this case exception_code has to be 
  *                                filled,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
- *         JAVACALL_INVALID_ARGUMENT when the handle is NULL
  */
 javacall_result
 javacall_dom_document_create_element_ns(javacall_handle handle,
@@ -564,7 +550,6 @@ javacall_dom_document_create_element_ns(javacall_handle handle,
  *         JAVACALL_FAIL if error occured; in this case exception_code has to be 
  *                                filled,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
- *         JAVACALL_INVALID_ARGUMENT when the handle is NULL
  */
 javacall_result
 javacall_dom_document_create_attribute_ns(javacall_handle handle,
@@ -588,7 +573,6 @@ javacall_dom_document_create_attribute_ns(javacall_handle handle,
  * 
  * @return JAVACALL_OK if all done successfuly,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
- *         JAVACALL_INVALID_ARGUMENT when the handle is NULL
  */
 javacall_result
 javacall_dom_document_get_elements_by_tag_name_ns(javacall_handle handle,
@@ -615,7 +599,6 @@ javacall_dom_document_get_elements_by_tag_name_ns(javacall_handle handle,
  * 
  * @return JAVACALL_OK if all done successfuly,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
- *         JAVACALL_INVALID_ARGUMENT when the handle is NULL
  */
 javacall_result
 javacall_dom_document_get_element_by_id(javacall_handle handle,
@@ -694,7 +677,6 @@ javacall_dom_document_get_element_by_id(javacall_handle handle,
  *         JAVACALL_FAIL if error occured; in this case exception_code has to be 
  *                                filled,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
- *         JAVACALL_INVALID_ARGUMENT when the handle is NULL
  */
 javacall_result
 javacall_dom_document_adopt_node(javacall_handle handle,

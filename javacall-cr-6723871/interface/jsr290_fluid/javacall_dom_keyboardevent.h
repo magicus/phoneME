@@ -59,7 +59,6 @@ extern "C" {
  *         JAVACALL_OUT_OF_MEMORY if length of the returend string is more then 
  *                                specified in ret_value_len,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
- *         JAVACALL_INVALID_ARGUMENT when the handle is NULL
  */
 javacall_result
 javacall_dom_keyboardevent_get_key_identifier(javacall_handle handle,
@@ -76,7 +75,6 @@ javacall_dom_keyboardevent_get_key_identifier(javacall_handle handle,
  * 
  * @return JAVACALL_OK if all done successfuly,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
- *         JAVACALL_INVALID_ARGUMENT when the handle is NULL
  */
 javacall_result
 javacall_dom_keyboardevent_get_key_location(javacall_handle handle,
@@ -89,7 +87,6 @@ javacall_dom_keyboardevent_get_key_location(javacall_handle handle,
  * 
  * @return JAVACALL_OK if all done successfuly,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
- *         JAVACALL_INVALID_ARGUMENT when the handle is NULL
  */
 javacall_result
 javacall_dom_keyboardevent_get_ctrl_key(javacall_handle handle,
@@ -102,7 +99,6 @@ javacall_dom_keyboardevent_get_ctrl_key(javacall_handle handle,
  * 
  * @return JAVACALL_OK if all done successfuly,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
- *         JAVACALL_INVALID_ARGUMENT when the handle is NULL
  */
 javacall_result
 javacall_dom_keyboardevent_get_shift_key(javacall_handle handle,
@@ -117,7 +113,6 @@ javacall_dom_keyboardevent_get_shift_key(javacall_handle handle,
  * 
  * @return JAVACALL_OK if all done successfuly,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
- *         JAVACALL_INVALID_ARGUMENT when the handle is NULL
  */
 javacall_result
 javacall_dom_keyboardevent_get_alt_key(javacall_handle handle,
@@ -132,7 +127,6 @@ javacall_dom_keyboardevent_get_alt_key(javacall_handle handle,
  * 
  * @return JAVACALL_OK if all done successfuly,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
- *         JAVACALL_INVALID_ARGUMENT when the handle is NULL
  */
 javacall_result
 javacall_dom_keyboardevent_get_meta_key(javacall_handle handle,
@@ -162,7 +156,6 @@ javacall_dom_keyboardevent_get_meta_key(javacall_handle handle,
  * 
  * @return JAVACALL_OK if all done successfuly,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
- *         JAVACALL_INVALID_ARGUMENT when the handle is NULL
  */
 javacall_result
 javacall_dom_keyboardevent_init_keyboard_event(javacall_handle handle,
@@ -205,7 +198,6 @@ javacall_dom_keyboardevent_init_keyboard_event(javacall_handle handle,
  * 
  * @return JAVACALL_OK if all done successfuly,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
- *         JAVACALL_INVALID_ARGUMENT when the handle is NULL
  */
 javacall_result
 javacall_dom_keyboardevent_init_keyboard_event_ns(javacall_handle handle,

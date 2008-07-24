@@ -70,7 +70,6 @@ extern "C" {
  * 
  * @return JAVACALL_OK if all done successfuly,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
- *         JAVACALL_INVALID_ARGUMENT when the handle is NULL
  */
 javacall_result
 javacall_dom_domimplementation_has_feature(javacall_handle handle,
@@ -102,7 +101,6 @@ javacall_dom_domimplementation_has_feature(javacall_handle handle,
  *         JAVACALL_FAIL if error occured; in this case exception_code has to be 
  *                                filled,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
- *         JAVACALL_INVALID_ARGUMENT when the handle is NULL
  */
 javacall_result
 javacall_dom_domimplementation_create_document_type(javacall_handle handle,
@@ -137,7 +135,6 @@ javacall_dom_domimplementation_create_document_type(javacall_handle handle,
  *         JAVACALL_FAIL if error occured; in this case exception_code has to be 
  *                                filled,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
- *         JAVACALL_INVALID_ARGUMENT when the handle is NULL
  */
 javacall_result
 javacall_dom_domimplementation_create_document(javacall_handle handle,
@@ -182,7 +179,6 @@ javacall_dom_domimplementation_create_document(javacall_handle handle,
  * 
  * @return JAVACALL_OK if all done successfuly,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
- *         JAVACALL_INVALID_ARGUMENT when the handle is NULL
  */
 javacall_result
 javacall_dom_domimplementation_get_feature(javacall_handle handle,
