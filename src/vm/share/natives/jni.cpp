@@ -130,6 +130,58 @@ _JNI_IsAssignableFrom(JNIEnv *env, jclass sub, jclass sup) {
 }
 
 static jint JNICALL
+_JNI_Throw(JNIEnv *env, jthrowable obj) {
+  if (obj == NULL) {
+    return JNI_ERR;
+  }
+
+  Oop::Raw oop = *decode_handle(obj);
+  if (oop.is_null()) {
+    return JNI_ERR;
+  }
+
+  JavaClass::Raw object_class = oop.blueprint();
+  if (!object_class().is_subtype_of(Universe::throwable_class())) {
+    return JNI_ERR;
+  }
+
+  Thread::set_current_pending_exception(&oop);
+  return JNI_OK;
+}
+
+static jthrowable JNICALL
+_JNI_ExceptionOccured(JNIEnv *env) {
+  Oop::Raw exc = Thread::current_pending_exception();
+
+  if (exc.is_null()) {
+    return NULL;
+  }
+
+  return new_local_ref_for_oop(env, &exc);
+}
+
+static void JNICALL
+_JNI_ExceptionDescribe(JNIEnv *env) {
+  Throwable::Raw exc = Thread::current_pending_exception();
+
+  if (exc.is_null()) {
+    return;
+  }
+
+  exc().print_stack_trace();
+}
+
+static void JNICALL
+_JNI_ExceptionClear(JNIEnv *env) {
+  Thread::clear_current_pending_exception();
+}
+
+static void JNICALL
+_JNI_FatalError(JNIEnv *env, const char * msg) {
+  KNI_FatalError(msg);
+}
+
+static jint JNICALL
 _JNI_PushLocalFrame(JNIEnv *env, jint capacity) {
   SETUP_ERROR_CHECKER_ARG;
   jint ret = env->EnsureLocalCapacity(capacity);
@@ -291,6 +343,31 @@ _JNI_EnsureLocalCapacity(JNIEnv* env, jint capacity) {
   return JNI_OK;
 }
 
+static jobject JNICALL
+_JNI_AllocObject(JNIEnv *env, jclass clazz) {
+  SETUP_ERROR_CHECKER_ARG;
+
+  if (clazz == NULL) {
+    return NULL;
+  }
+
+  JavaClassObj::Raw cls_mirror = *decode_handle(clazz);
+  GUARANTEE(cls_mirror.not_null(), "null argument to GetSuperclass");
+  JavaClass::Raw cls = cls_mirror().java_class();
+
+  if (!cls.is_instance_class() || 
+      cls().is_interface() || cls().is_abstract()) {
+    Throw::instantiation(ExceptionOnFailure JVM_THROW_0);
+  }
+
+  UsingFastOops fast_oops;
+  InstanceClass::Fast instance_cls = cls.obj();
+
+  Oop::Raw obj = Universe::new_instance(&instance_cls JVM_CHECK_0);
+
+  return new_local_ref_for_oop(env, &obj);
+}
+
 static jclass JNICALL
 _JNI_GetObjectClass(JNIEnv *env, jobject obj) {
   if (obj == NULL) {
@@ -344,6 +421,12 @@ _JNI_DeleteWeakGlobalRef(JNIEnv* env, jobject obj) {
   ObjectHeap::unregister_weak_reference(ref_index);
 }
 
+static jboolean JNICALL
+_JNI_ExceptionCheck(JNIEnv *env) {
+  return (CURRENT_HAS_PENDING_EXCEPTION) ? JNI_TRUE : JNI_FALSE;
+}
+
+
 static struct JNINativeInterface _jni_native_interface = {
     NULL, // reserved0
     NULL, // reserved1
@@ -366,12 +449,12 @@ static struct JNINativeInterface _jni_native_interface = {
 
     NULL, // ToReflectedField
 
-    NULL, // Throw
+    _JNI_Throw, // Throw
     NULL, // ThrowNew
-    NULL, // ExceptionOccurred
-    NULL, // ExceptionDescribe
-    NULL, // ExceptionClear
-    NULL, // FatalError
+    _JNI_ExceptionOccured, // ExceptionOccurred
+    _JNI_ExceptionDescribe, // ExceptionDescribe
+    _JNI_ExceptionClear, // ExceptionClear
+    _JNI_FatalError, // FatalError
 
     _JNI_PushLocalFrame, // PushLocalFrame
     _JNI_PopLocalFrame, // PopLocalFrame
@@ -384,7 +467,7 @@ static struct JNINativeInterface _jni_native_interface = {
     _JNI_NewLocalRef, // NewLocalRef
     _JNI_EnsureLocalCapacity, // EnsureLocalCapacity
 
-    NULL, // AllocObject
+    _JNI_AllocObject, // AllocObject
     NULL, // NewObject
     NULL, // NewObjectV
     NULL, // NewObjectA
@@ -614,7 +697,7 @@ static struct JNINativeInterface _jni_native_interface = {
     _JNI_NewWeakGlobalRef,    // NewWeakGlobalRef
     _JNI_DeleteWeakGlobalRef, // DeleteWeakGlobalRef
 
-    NULL, // ExceptionCheck
+    _JNI_ExceptionCheck, // ExceptionCheck
 
     /* JNI_VERSION_1_4 additions: */
     NULL, // NewDirectByteBuffer
