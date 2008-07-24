@@ -638,3 +638,9 @@ void midp_slavemode_schedule_vm_timeslice(void){
     javacall_schedule_vm_timeslice();
 }
 
+/**
+ * In Javacall ports, event loop is handled outside of the VM, 
+ * so an empty implementation is provided 
+ */
+void void midp_slavemode_event_loop(void) {
+}
