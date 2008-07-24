@@ -39,7 +39,7 @@ include $(JAVACALL_DIR)/build/list.gmk
 
 javacall_common: create_output_dirs copy_include_files output_properties_files
 
-PREFIX_true=1
+PREFIX_true:=1
 
 #Form list of objects
 VPATH+=$(foreach jsr,$(JSR_LIST), $(if $(PREFIX_$(USE_$(jsr))), $($(jsr)_JC_IMPL_PATH)/$($(jsr)_JC_DIR) $(wildcard $($(jsr)_NOTIFIER_PATH)/$($(jsr)_JC_DIR))))
