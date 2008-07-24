@@ -137,11 +137,11 @@ $(CA_KEYSTORE): $(KEYTOOL_JAR_FILE) $(KEYTOOL_KEYSTORE_FILE)
 	@echo +++ $(JAVA_CMD) -jar $(KEYTOOL_JAR_FILE) -import -keystore \
 		$(KEYTOOL_KEYSTORE_FILE) -alias suntestca \
 		-storepass keystorepwd -MEkeystore $(CA_KEYSTORE) \
-		-domain identified $(LOG_ONLY)
+		-domain identified_third_party $(LOG_ONLY)
 	@($(JAVA_CMD) -jar $(KEYTOOL_JAR_FILE) -import -keystore \
 		$(KEYTOOL_KEYSTORE_FILE) -alias suntestca \
 		-storepass keystorepwd -MEkeystore $(CA_KEYSTORE) \
-		-domain identified) $(LOG)
+		-domain identified_third_party) $(LOG)
 	@echo +++ $(JAVA_CMD) -jar $(KEYTOOL_JAR_FILE) -import -keystore \
 		$(KEYTOOL_KEYSTORE_FILE) -alias dummyca \
 		-storepass keystorepwd -MEkeystore $(CA_KEYSTORE) \

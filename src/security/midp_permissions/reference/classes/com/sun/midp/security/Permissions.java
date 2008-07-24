@@ -52,10 +52,10 @@ public final class Permissions {
     public static final String OPERATOR_DOMAIN_BINDING = "operator";
 
     /** Binding name of the Third party Identified domain. */
-    public static final String IDENTIFIED_DOMAIN_BINDING = "identified";
+    public static final String IDENTIFIED_DOMAIN_BINDING = "identified_third_party";
 
     /** Binding name of the Third party Unidentified domain. */
-    public static final String UNIDENTIFIED_DOMAIN_BINDING = "unidentified";
+    public static final String UNIDENTIFIED_DOMAIN_BINDING = "unidentified_third_party";
 
     /**
      * Binding name of the Minimum domain for testing.
