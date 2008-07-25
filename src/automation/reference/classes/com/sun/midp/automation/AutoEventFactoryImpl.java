@@ -25,11 +25,12 @@
  */
 
 package com.sun.midp.automation;
+import java.util.*;
 
 final class AutoEventFactoryImpl extends AutoEventFactory {
     private final static AutoEventFactoryImpl instance = null;
 
-    static AutoEventFactory getInstanceImpl() {
+    static AutoEventFactoryImpl getInstanceImpl() {
         return instance;
     }
 
@@ -50,7 +51,25 @@ final class AutoEventFactoryImpl extends AutoEventFactory {
             Integer newOffset) 
         throws IllegalArgumentException {
 
-        return null;
+        AutoEvent event = null;
+
+        int size = eventCreators.size();
+        for (int i = 0; i < size; ++i) {
+            Object o = eventCreators.elementAt(i);
+            EventFromStringCreator c = (EventFromStringCreator)o;
+
+            String prefix = c.getPrefix();
+            if (str.startsWith(prefix, offset)) {
+                event = c.createFromString(str, offset, newOffset);
+                break;
+            }
+        }
+
+        if (event == null) {
+            throw new IllegalArgumentException("Illegal AutoEvent string");
+        }
+
+        return event;
     }
 
     public AutoKeyEvent createKeyEvent(int state, int code) {
@@ -61,6 +80,17 @@ final class AutoEventFactoryImpl extends AutoEventFactory {
         return null;
     }
     
+    interface EventFromStringCreator {
+        String getPrefix();
+        AutoEvent createFromString(String str, int offset, 
+            Integer newOffset) throws IllegalArgumentException;
+    }
+
+    private Vector eventCreators = new Vector();
+
+    void registerEventFromStringCreator(EventFromStringCreator creator) {
+        eventCreators.addElement(creator);
+    }
 
     /**
      * Private constructor to prevent user from creating an instance.
