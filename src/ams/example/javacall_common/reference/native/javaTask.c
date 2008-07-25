@@ -63,8 +63,6 @@ void JavaTask(void) {
     int binaryBufferMaxLen = BINARY_BUFFER_MAX_LEN;
     int outEventLen;
 
-    REPORT_CRIT(LC_CORE,"JavaTask() >>\n");
-
     /* Outer Event Loop */
     while (JavaTaskIsGoOn) {
 
@@ -140,7 +138,6 @@ void JavaTask(void) {
 
     }   /* end of while 'JavaTaskIsGoOn' */
 
-    REPORT_CRIT(LC_CORE,"JavaTask() <<\n");
 } /* end of JavaTask */
 
 /**
