@@ -221,7 +221,14 @@ endif
 # NOTE: These options are officially supported and are documented in
 #       docs/guide/build.html:
 
+# CVM_DEBUG must be true or false, or the build will fail.
 CVM_DEBUG		?= false
+ifneq ($(CVM_DEBUG),true)
+ifneq ($(CVM_DEBUG),false)
+$(error CVM_DEBUG must be true or false: CVM_DEBUG=$(CVM_DEBUG))
+endif
+endif
+
 CVM_TRACE		?= $(CVM_DEBUG)
 ifeq ($(CVM_TRACE),true)
 override CVM_DEBUG_DUMPSTACK	= true
