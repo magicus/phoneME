@@ -76,8 +76,7 @@ void JavaTask(void) {
         res = javacall_event_receive(timeTowaitInMillisec,
             (unsigned char *)binaryBuffer, binaryBufferMaxLen, &outEventLen);
 #else
-        /* MIDP (JSR-118) event queue */
-        res = javacall_event_receive_cvm(118,
+        res = javacall_event_receive_cvm(MIDP_EVENT_QUEUE_ID,
             (unsigned char *)binaryBuffer, binaryBufferMaxLen, &outEventLen);
 #endif
 

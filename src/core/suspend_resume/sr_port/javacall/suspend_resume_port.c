@@ -47,8 +47,7 @@ jboolean midp_checkResumeRequest() {
     res = javacall_event_receive(-1, binaryBuffer,
                                  BINARY_BUFFER_MAX_LEN, NULL);
 #else
-    /* MIDP (JSR-118) event queue */
-    res = javacall_event_receive_cvm(118, binaryBuffer,
+    res = javacall_event_receive_cvm(MIDP_EVENT_QUEUE_ID, binaryBuffer,
                                  BINARY_BUFFER_MAX_LEN, NULL);
 #endif
 
