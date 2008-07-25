@@ -343,11 +343,8 @@ public class X509Certificate implements Certificate {
     private int keyUsage = -1;
     /** Collection of extended keyUsage bits. */
     private int extKeyUsage = -1;
-    /** AuthorityInfoAccess extension: access method. */
-    private byte[] authAccessMethod = null;
-    /** AuthorityInfoAccess extension: access location. */
-    private String authAccessLocation = null;
-
+    /** Entries extracted from AuthorityInfoAccess extension. */
+    Vector authInfoAccess = new Vector(2);
 
     /** Private constructor */
     private X509Certificate() {
@@ -837,8 +834,6 @@ public class X509Certificate implements Certificate {
                                          0, ID_AIA.length)) {
                     extId = "AIA";
 
-                    authAccessLocation = "";
-
                     /*
                      * AuthorityInfoAccessSyntax  ::=
                      *     SEQUENCE SIZE (1..MAX) OF AccessDescription
@@ -849,8 +844,12 @@ public class X509Certificate implements Certificate {
                      */
                     getLen(SEQUENCE_TYPE);
                     int oidLen;
+                    String authAccessLocation;
+                    byte[] authAccessMethod;
 
                     while (idx < extValIdx + extValLen) {
+                        authAccessLocation = "";
+
                         getLen(SEQUENCE_TYPE);
                         
                         oidLen = getLen(OID_TYPE);
@@ -876,10 +875,13 @@ public class X509Certificate implements Certificate {
                                     authAccessLocation += (char)enc[idx++];
                                 }
                             }
+
+                            authInfoAccess.addElement(
+                                new AuthorityInfoAccessEntry(
+                                    authAccessMethod, authAccessLocation
+                                ));
                         } else {
                             // acessLocation type is not supported
-                            authAccessMethod = null;
-                            authAccessLocation = null;
                             if (crit) {
                                 badExt = true;
                             }
@@ -1717,23 +1719,47 @@ public class X509Certificate implements Certificate {
     }
 
     /**
-     * Returns access method field of AuthorityInfoAccess extension.
+     * Checks if this certificate has AuthorityInfoAccess extension
      *
-     * @return A byte array containing the access method field of
-     *         AuthorityInfoAccess extension if present, null otherwise.
+     * @return true if this certificate contains AuthorityInfoAccess extension,
+     *         false otherwise 
      */
-    public byte[] getAuthAccessMethod() {
-        return getCopyOfArray(authAccessMethod);
+    public boolean hasAuthorityInfoAccess() {
+        return (authInfoAccess.size() > 0);
     }
 
     /**
-     * Returns access location field of AuthorityInfoAccess extension.
+     * Returns a vector of AuthorityInfoAccess extension entries
+     * having the specified access method.
      *
-     * @return A string containing the access location field of
-     *         AuthorityInfoAccess extension if present, null otherwise.
+     * @param method access method to search for
+     *
+     * @return vector of AuthorityInfoAccessEntry having the given access
+     *         method or null if there are no such entries, or if
+     *         the AuthorityInfoAccess extension is not present
      */
-    public String getAuthAccessLocation() {
-        return authAccessLocation;
+    public Vector getAuthorityInfoAccess(byte[] method) {
+        int numOfEntries = authInfoAccess.size();
+
+        if (numOfEntries == 0 || method == null) {
+            return null;
+        }
+
+        Vector vectorOfEntries = new Vector(numOfEntries);
+
+        for (int i = 0; i < numOfEntries; i++) {
+            AuthorityInfoAccessEntry aiaEntry =
+                    (AuthorityInfoAccessEntry)authInfoAccess.elementAt(i);
+            byte[] accessMethod = aiaEntry.getAccessMethod();
+
+            if (accessMethod != null && accessMethod.length == method.length &&
+                    Utils.byteMatch(accessMethod, 0, method,
+                                    0, accessMethod.length)) {
+                vectorOfEntries.addElement(aiaEntry);
+            }
+        }
+
+        return (vectorOfEntries.size() > 0) ? vectorOfEntries : null;
     }
 
     /**

@@ -33,6 +33,7 @@ import com.sun.midp.pki.ObjectIdentifier;
 import com.sun.midp.pki.X509Certificate;
 import com.sun.midp.pki.DerOutputStream;
 import com.sun.midp.pki.DerValue;
+import com.sun.midp.pki.AuthorityInfoAccessEntry;
 import com.sun.midp.pki.Extension;
 
 import com.sun.midp.publickeystore.WebPublicKeyStore;
@@ -71,8 +72,10 @@ public class OCSPValidatorImpl implements OCSPValidator {
     private InputStream httpInputStream;
 
     /** Supported extensions: nonce. */
-    private static final int OCSP_NONCE_DATA[] =
-        { 1, 3, 6, 1, 5, 5, 7, 48, 1, 2 };
+    private static final int OCSP_NONCE_DATA[] = {
+        1, 3, 6, 1, 5, 5, 7, 48, 1, 2
+    };
+    
     /** nonce extension OID. */
     private static final ObjectIdentifier OCSP_NONCE_OID;
 
@@ -98,9 +101,15 @@ public class OCSPValidatorImpl implements OCSPValidator {
     public int checkCertStatus(Certificate cert, Certificate issuerCert)
             throws OCSPException {
         try {
-            String responderUrl =
-                    ((X509Certificate)cert).getAuthAccessLocation();
-            if (responderUrl == null) {
+            Vector authInfoAccess =
+                    ((X509Certificate)cert).getAuthorityInfoAccess(
+                            AuthorityInfoAccessEntry.ACCESS_METHOD_OCSP);
+            String responderUrl;
+
+            if (authInfoAccess != null && authInfoAccess.size() > 0) {
+                responderUrl = ((AuthorityInfoAccessEntry)
+                        authInfoAccess.elementAt(0)).getAccessLocation();
+            } else {
                 /*
                  * IMPL_NOTE: in our implementation the certificates not
                  *     containing AuthorityInfoAccess extension are not
