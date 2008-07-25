@@ -99,7 +99,7 @@ ENTRY1 ( CVMCCMruntimeNewGlue )
 /* IAI-03 */
 #ifndef IAI_NEW_GLUE_CALLING_CONVENTION_IMPROVEMENT
 	/* Get access flags from class */
-	ldrb	a4, [v2, #OFFSET_CVMClassBlock_accessFlagsX]  /* flags */
+	ldrh	a4, [v2, #OFFSET_CVMClassBlock_accessFlagsX]  /* flags */
 #endif
 	ands	v1, a4, #CONSTANT_CLASS_ACC_FINALIZABLE     /* finalizable? */
 	bne	GOSLOW         /* bail if yes. Otherwise v1 == 0 */

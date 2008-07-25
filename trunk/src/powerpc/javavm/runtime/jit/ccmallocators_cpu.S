@@ -86,7 +86,7 @@ ENTRY ( CVMCCMruntimeNewGlue )
 	CALL_HELPER_AND_PASS_CCEE(CVMCCMruntimeNew)
 #endif
 
-	lbz	r0, OFFSET_CVMClassBlock_accessFlagsX(CB)
+	lhz	r0, OFFSET_CVMClassBlock_accessFlagsX(CB)
 	la	FHL, OFFSET_CVMGlobalState_fastHeapLock(CVMGLOBALS)
 	andi.	r0, r0, CONSTANT_CLASS_ACC_FINALIZABLE  /* finalizable? */
 	li      r0, 1	       /* 1 == locked flag for fastHeapLock */

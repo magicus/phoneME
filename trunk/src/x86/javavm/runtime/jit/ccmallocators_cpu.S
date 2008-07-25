@@ -83,7 +83,7 @@ CVMCCMruntimeNewGlue_L1:
 	# saving callee saved registers (see CVMCPU_NON_VOLATILE_SET)
 	/* nothing to do */
 	
-	testb	$CONSTANT_CLASS_ACC_FINALIZABLE, OFFSET_CVMClassBlock_accessFlagsX(CB)
+	testw	$CONSTANT_CLASS_ACC_FINALIZABLE, OFFSET_CVMClassBlock_accessFlagsX(CB)
 	jne	GOSLOW         /* go slow route if finalizable */
 
 	# lock the heap
