@@ -539,17 +539,7 @@ class DirectVideo implements VideoControl, MIDPVideoPainter {
         if (hidden) {
             prepareClippedPreview(g, x, y, w, h);
         } else if (visible && started) {
-            if (true == isInClippingArea(g, x, y, w, h)) {
-                prepareVideoSurface(g, x, y, w, h);
-            } else {
-                int cx = g.getClipX();
-                int cy = g.getClipY();
-                int cw = g.getClipWidth();
-                int ch = g.getClipHeight();
-                g.setClip(x, y, w, h);
-                prepareClippedPreview(g, x, y, w, h);
-                g.setClip(cx, cy, cw, ch);
-            }
+            prepareVideoSurface(g, x, y, w, h);
         }
     }
 
