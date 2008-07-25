@@ -29,6 +29,16 @@
 
 #if ENABLE_JNI
 
+#define FOR_ALL_PRIMITIVE_TYPES(template) \
+  template(jboolean, Boolean) \
+  template(jbyte,    Byte) \
+  template(jchar,    Char) \
+  template(jshort,   Short) \
+  template(jint,     Int) \
+  template(jlong,    Long) \
+  template(jfloat,   Float) \
+  template(jdouble,  Double)
+
 static jobject JNICALL
 new_local_ref_for_oop(JNIEnv* env, Oop * oop) {
   jint ret = env->EnsureLocalCapacity(1);
@@ -394,6 +404,48 @@ _JNI_IsInstanceOf(JNIEnv *env, jobject obj, jclass clazz) {
   return KNI_IsInstanceOf(obj, clazz);
 }
 
+static jfieldID JNICALL 
+_JNI_GetFieldID(JNIEnv *env, jclass clazz, const char *name, const char *sig) {
+  // IMPL_NOTE: if the class is not initialized yet,
+  // we must initialize it here.
+  // IMPL_NOTE: throw NoSuchFieldError if the field is not found
+  return KNI_GetFieldID(clazz, name, sig);
+}
+
+static jobject JNICALL
+_JNI_GetObjectField(JNIEnv *env, jobject obj, jfieldID fieldID) {
+  jobject toHandle = new_local_ref(env);
+  if (toHandle == NULL) {
+    return NULL;
+  }
+
+  KNI_GetObjectField(obj, fieldID, toHandle);
+
+  return toHandle;
+}
+
+#define DEFINE_GET_INSTANCE_FIELD(jtype, Type) \
+static jtype JNICALL \
+_JNI_Get ## Type ## Field(JNIEnv *env, jobject obj, jfieldID fieldID) { \
+  return KNI_Get ## Type ## Field(obj, fieldID); \
+}
+
+FOR_ALL_PRIMITIVE_TYPES(DEFINE_GET_INSTANCE_FIELD)
+
+static void JNICALL
+_JNI_SetObjectField(JNIEnv *env, jobject obj, jfieldID fieldID, jobject val) {
+  KNI_SetObjectField(obj, fieldID, val);
+}
+
+#define DEFINE_SET_INSTANCE_FIELD(jtype, Type) \
+static void JNICALL \
+_JNI_Set ## Type ## Field(JNIEnv *env, jobject obj, jfieldID fieldID, \
+                          jtype val) { \
+  KNI_Set ## Type ## Field(obj, fieldID, val); \
+}
+
+FOR_ALL_PRIMITIVE_TYPES(DEFINE_SET_INSTANCE_FIELD)
+
 static jobject JNICALL
 _JNI_NewWeakGlobalRef(JNIEnv* env, jobject obj) {
   if (obj == NULL) {
@@ -539,27 +591,27 @@ static struct JNINativeInterface _jni_native_interface = {
     NULL, // CallNonvirtualVoidMethodV
     NULL, // CallNonvirtualVoidMethodA
 
-    NULL, // GetFieldID
+    _JNI_GetFieldID, // GetFieldID
 
-    NULL, // GetObjectField
-    NULL, // GetBooleanField
-    NULL, // GetByteField
-    NULL, // GetCharField
-    NULL, // GetShortField
-    NULL, // GetIntField
-    NULL, // GetLongField
-    NULL, // GetFloatField
-    NULL, // GetDoubleField
+    _JNI_GetObjectField, // GetObjectField
+    _JNI_GetBooleanField, // GetBooleanField
+    _JNI_GetByteField, // GetByteField
+    _JNI_GetCharField, // GetCharField
+    _JNI_GetShortField, // GetShortField
+    _JNI_GetIntField, // GetIntField
+    _JNI_GetLongField, // GetLongField
+    _JNI_GetFloatField, // GetFloatField
+    _JNI_GetDoubleField, // GetDoubleField
 
-    NULL, // SetObjectField
-    NULL, // SetBooleanField
-    NULL, // SetByteField
-    NULL, // SetCharField
-    NULL, // SetShortField
-    NULL, // SetIntField
-    NULL, // SetLongField
-    NULL, // SetFloatField
-    NULL, // SetDoubleField
+    _JNI_SetObjectField, // SetObjectField
+    _JNI_SetBooleanField, // SetBooleanField
+    _JNI_SetByteField, // SetByteField
+    _JNI_SetCharField, // SetCharField
+    _JNI_SetShortField, // SetShortField
+    _JNI_SetIntField, // SetIntField
+    _JNI_SetLongField, // SetLongField
+    _JNI_SetFloatField, // SetFloatField
+    _JNI_SetDoubleField, // SetDoubleField
 
     NULL, // GetStaticMethodID
 
