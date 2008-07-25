@@ -68,5 +68,6 @@ void javanotify_on_media_notification(javacall_media_notification_type type,
         long    data;
     } event = {appID, type, playerId, *((long *)data)};
 
-    javacall_event_send_cvm(135, (unsigned char *)&event, sizeof(event));
+    javacall_event_send_cvm(JSR135_EVENT_QUEUE_ID, (unsigned char *)&event,
+        sizeof(event));
 }
