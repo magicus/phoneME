@@ -639,7 +639,7 @@ class AppManagerUIImpl extends Form
         // for back we just need to display AppSelector
         display.setCurrent(this);
     }
-
+    
     /**
      * Launches a midlet suite.
      * @param msi Structure identifying the suite to launch
@@ -651,17 +651,6 @@ class AppManagerUIImpl extends Form
         } else {
             appManager.showMidletSelector(msi);
         }        
-    }
-
-    /**
-     * Enters the midlet suite determined by the suite ID.
-     * @param suiteId ID of the suite to launch
-     */
-    public void enterSuite(int suiteId) {
-        MidletCustomItem mci = getMidletItem(suiteId);
-        if (mci != null) {
-            enterSuite(mci.msi);
-        }
     }
     
     /**

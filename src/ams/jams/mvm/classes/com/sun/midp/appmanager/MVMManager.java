@@ -182,7 +182,7 @@ public class MVMManager extends MIDlet
         }
 
         try {
-            appManager.launchSuite(suiteId);
+            appManager.launchSuite(suiteId, className);
             suiteUnderDebugId = suiteId;
         } catch (Exception ex) {
             displayError.showErrorAlert(displayName, ex, null, null);

@@ -835,13 +835,53 @@ class AppManagerPeer implements CommandListener {
     }
 
     /**
-     * Launches the midlet suite determined by the suite ID.
-     * @param suiteId ID of the suite to launch
+     * Searches running midlet suite info for given suite id.
+     * @param suiteId Suite ID to search info for
+     * @return the matching info, null if not found.
      */
-    void launchSuite(int suiteId) {
-        appManagerUI.enterSuite(suiteId);
+    private RunningMIDletSuiteInfo getRunningMidletSuiteInfo(int suiteId) {
+        int size = msiVector.size();
+        for (int i = 0; i < size; i++) {
+            RunningMIDletSuiteInfo info = 
+                    (RunningMIDletSuiteInfo) msiVector.elementAt(i);
+            if (info.suiteId == suiteId) {
+                return info;
+            }
+        }
+        return null;
     }
     
+    /**
+     * Launches the midlet suite determined by the suite ID.
+     * @param suiteId ID of the suite to launch
+     * @param midletClassname MIDlet to run, may be null, then will be launched
+     *        the single MIDlet or MIDlet selector
+     */
+    void launchSuite(int suiteId, String midletClassname) {
+
+        RunningMIDletSuiteInfo msi = getRunningMidletSuiteInfo(suiteId);
+        if (msi == null) {
+            if (midletClassname == null) {
+                /* unknown suite, classname not specified: cannot say what to 
+                   launch */
+                throw new IllegalArgumentException(
+                        "Suite id " + suiteId + " not found.");
+            }
+
+            /* The only thing used from the msi for launching is suiteId, so 
+             * we can create the info ourselves. This is needed when suite
+             * is installed without notification (e.g. by autotester) */
+            msi = new RunningMIDletSuiteInfo(suiteId);
+        } else if (msi.hasSingleMidlet()) {
+            midletClassname = msi.midletToRun;
+        }
+        
+        if (midletClassname != null) {
+            manager.launchSuite(msi, midletClassname);
+        } else {
+            showMidletSelector(msi);
+        }
+    }
 
     /**
      * Checks if the installer is currently running.
