@@ -164,31 +164,51 @@ public class AppSettings extends Form
     public void itemStateChanged(Item item) {
         int selected;
 
-        if (item != settingsPopup) {
-            /* ignore the other items besides the popup */
-            return;
-        }
-
-        selected = settingsPopup.getSelectedButton();
-        if (selected == lastPopupChoice) {
-            return;
-        }
-
-        lastPopupChoice = selected;
-
-        delete(displayedSettingID);
-
-        try {
-            if (selected == INTERRUPT_CHOICE_ID) {
-                displayedSettingID = append(interruptChoice);
-            } else {
-                displayedSettingID = append(groupSettings[selected]);
+        if (item == settingsPopup) {
+    
+            selected = settingsPopup.getSelectedButton();
+            if (selected == lastPopupChoice) {
+                return;
             }
-        } catch (IndexOutOfBoundsException e) {
-            // for safety/completeness.
-            displayedSettingID = 0;
-            Logging.report(Logging.ERROR, LogChannels.LC_AMS,
-                "AppSettings: selected=" + selected);
+
+            lastPopupChoice = selected;
+
+            delete(displayedSettingID);
+
+            try {
+                if (selected == INTERRUPT_CHOICE_ID) {
+                    displayedSettingID = append(interruptChoice);
+                } else {
+                    displayedSettingID = append(groupSettings[selected]);
+                }
+            } catch (IndexOutOfBoundsException e) {
+                // for safety/completeness.
+                displayedSettingID = 0;
+                Logging.report(Logging.ERROR, LogChannels.LC_AMS,
+                    "AppSettings: selected=" + selected);
+            }
+        } else {
+            System.err.println("item state changed");
+            selected = settingsPopup.getSelectedButton();
+
+            byte newSetting =
+                (byte)groupSettings[selected].getSelectedButton();
+
+            if (newSetting != Permissions.getPermissionGroupLevel(
+                    curLevels, groups[selected])) {
+                String warning = Permissions.getInsecureCombinationWarning(curLevels,
+                    pushInterruptSetting, groups[selected], newSetting);
+                System.err.println("item state changed, warning == " + warning);
+                if (warning != null) {
+                    Alert alert = new Alert(Resource.getString(ResourceConstants.WARNING),
+                            warning, null, AlertType.CONFIRMATION);
+                    alert.addCommand(noCmd);
+                    alert.addCommand(yesCmd);
+                    alert.setCommandListener(this);
+                    alert.setTimeout(Alert.FOREVER);
+                    display.setCurrent(alert);
+                }
+            }
         }
     }
 
@@ -527,6 +547,9 @@ class RadioButtonSet extends ChoiceGroup {
 
     /** Keeps track of the button IDs. */
     private int[] ids;
+
+    /** The ID of the item selected. */
+    private int lastGroupChoice;
 
     /**
      * Creates a new, empty <code>RadioButtonSet</code>, specifying its

@@ -811,9 +811,6 @@ public final class Permissions {
      *
      * The following combinations of permissions are mutually exclusive:
      * <ul>
-     * <li> Any of Net Access, Messaging or Local Connectivity set to Blanket
-     *      in combination with any of Multimedia recording or Read User Data
-     *      Access set to Blanket</li>
      * <li> Application Auto Invocation set to Blanket and Net Access set to
      *      Blanket</li>
      * </ul>
@@ -852,39 +849,6 @@ public final class Permissions {
                         AUTO_INVOCATION_GROUP));
             }
 
-            level = getPermissionGroupLevel(current, READ_USER_DATA_GROUP);
-            if (level == BLANKET_GRANTED || level == BLANKET) {
-                throw new SecurityException(
-                    createMutuallyExclusiveErrorMessage(NET_ACCESS_GROUP,
-                        READ_USER_DATA_GROUP));
-            }
-
-            level = getPermissionGroupLevel(current, MULTIMEDIA_GROUP);
-            if (level == BLANKET_GRANTED || level == BLANKET) {
-                throw new SecurityException(
-                    createMutuallyExclusiveErrorMessage(NET_ACCESS_GROUP,
-                        MULTIMEDIA_GROUP));
-            }
-
-            return;
-        }
-
-        if (group == LOCAL_CONN_GROUP) {
-            level = getPermissionGroupLevel(current, READ_USER_DATA_GROUP);
-            if (level == BLANKET_GRANTED || level == BLANKET) {
-                throw new SecurityException(
-                    createMutuallyExclusiveErrorMessage(LOCAL_CONN_GROUP,
-                        READ_USER_DATA_GROUP));
-            }
-
-
-            level = getPermissionGroupLevel(current, MULTIMEDIA_GROUP);
-            if (level == BLANKET_GRANTED || level == BLANKET) {
-                throw new SecurityException(
-                    createMutuallyExclusiveErrorMessage(LOCAL_CONN_GROUP,
-                        MULTIMEDIA_GROUP));
-            }
-
             return;
         }
 
@@ -896,36 +860,105 @@ public final class Permissions {
                         NET_ACCESS_GROUP));
             }
         }
+    }
+
+    /**
+     * Check to see if a given level for a group would produce a potentially
+     * dangerous combination for the current security policy. If so,
+     * return a warning message, else - null.
+     * <p>
+     * This is a policy dependent function for permission grouping.</p>
+     *
+     * The following combinations of permissions are potentially dangerous:
+     * <ul>
+     * <li> Any of Net Access, Messaging or Local Connectivity set to Blanket
+     *      in combination with any of Multimedia recording or Read User Data
+     *      Access set to Blanket</li>
+     * </ul>
+     *
+     * @param current current permission levels
+     * @param pushInterruptLevel Push interrupt level
+     * @param group desired permission group
+     * @param newLevel permission level
+     *
+     * @return warning message if the change would produce a potentially
+     *         dangerous combination or null otherwise
+     */
+    public static String getInsecureCombinationWarning(byte[] current,
+            byte pushInterruptLevel, PermissionGroup group, byte newLevel)
+            throws SecurityException {
+
+        byte level;
+
+        if (newLevel != BLANKET_GRANTED) {
+            return;
+        }
+
+        if (group == NET_ACCESS_GROUP) {
+            if (pushInterruptLevel == BLANKET_GRANTED ||
+                   pushInterruptLevel == BLANKET) {
+                return createInsecureCombinationWarningMessage(
+                        NET_ACCESS_GROUP.getName(),
+                        ResourceConstants.AMS_MGR_INTRUPT);
+            }
+
+            level = getPermissionGroupLevel(current, READ_USER_DATA_GROUP);
+            if (level == BLANKET_GRANTED || level == BLANKET) {
+                return createInsecureCombinationWarningMessage(
+                        NET_ACCESS_GROUP, READ_USER_DATA_GROUP);
+            }
+
+            level = getPermissionGroupLevel(current, MULTIMEDIA_GROUP);
+            if (level == BLANKET_GRANTED || level == BLANKET) {
+                return createInsecureCombinationWarningMessage(
+                        NET_ACCESS_GROUP, MULTIMEDIA_GROUP);
+            }
+
+            return;
+        }
+
+        if (group == LOCAL_CONN_GROUP) {
+            level = getPermissionGroupLevel(current, READ_USER_DATA_GROUP);
+            if (level == BLANKET_GRANTED || level == BLANKET) {
+                return createInsecureCombinationWarningMessage(
+                    LOCAL_CONN_GROUP,READ_USER_DATA_GROUP);
+            }
+
+
+            level = getPermissionGroupLevel(current, MULTIMEDIA_GROUP);
+            if (level == BLANKET_GRANTED || level == BLANKET) {
+                return createInsecureCombinationWarningMessage(
+                    LOCAL_CONN_GROUP, MULTIMEDIA_GROUP);
+            }
+
+            return;
+        }
 
         if (group == READ_USER_DATA_GROUP) {
             level = getPermissionGroupLevel(current, NET_ACCESS_GROUP);
             if (level == BLANKET_GRANTED || level == BLANKET) {
-                throw new SecurityException(
-                    createMutuallyExclusiveErrorMessage(READ_USER_DATA_GROUP,
-                        NET_ACCESS_GROUP));
+                return createInsecureCombinationWarningMessage(
+                    READ_USER_DATA_GROUP, NET_ACCESS_GROUP);
             }
 
             level = getPermissionGroupLevel(current, LOCAL_CONN_GROUP);
             if (level == BLANKET_GRANTED || level == BLANKET) {
-                throw new SecurityException(
-                    createMutuallyExclusiveErrorMessage(READ_USER_DATA_GROUP,
-                        LOCAL_CONN_GROUP));
+                return createInsecureCombinationWarningMessage(
+                    READ_USER_DATA_GROUP, LOCAL_CONN_GROUP);
             }
         }
 
         if (group == MULTIMEDIA_GROUP) {
             level = getPermissionGroupLevel(current, NET_ACCESS_GROUP);
             if (level == BLANKET_GRANTED || level == BLANKET) {
-                throw new SecurityException(
-                    createMutuallyExclusiveErrorMessage(MULTIMEDIA_GROUP,
-                        NET_ACCESS_GROUP));
+                createInsecureCombinationWarningMessage(
+                    MULTIMEDIA_GROUP, NET_ACCESS_GROUP);
             }
 
             level = getPermissionGroupLevel(current, LOCAL_CONN_GROUP);
             if (level == BLANKET_GRANTED || level == BLANKET) {
-                throw new SecurityException(
-                    createMutuallyExclusiveErrorMessage(MULTIMEDIA_GROUP,
-                        LOCAL_CONN_GROUP));
+                return createInsecureCombinationWarningMessage(
+                    MULTIMEDIA_GROUP, LOCAL_CONN_GROUP);
             }
         }
     }
@@ -943,6 +976,26 @@ public final class Permissions {
             PermissionGroup groupToSet, PermissionGroup blanketGroup) {
         return createMutuallyExclusiveErrorMessage(groupToSet.getName(),
             blanketGroup.getName());
+    }
+
+    /**
+     * Create a potentially dangerous permission setting warning message.
+     *
+     * @param groupToSet Group that is to be set
+     * @param blanketGroup The a mutually exclusive group that was set to
+     *                     blanket
+     *
+     * @return Translated error message with both group names in it
+     */
+    private static String createInsecureCombinationWarningMessage(
+            PermissionGroup groupToSet, PermissionGroup blanketGroup) {
+        
+        String[] values = {Resource.getString(groupToSet.getName()),
+                           Resource.getString(blanketGroup.getName())};
+
+        return Resource.getString(
+            ResourceConstants.PERMISSION_SECURITY_WARNING_ERROR_MESSAGE,
+                values);
     }
 
     /**
