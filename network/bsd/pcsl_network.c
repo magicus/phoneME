@@ -269,6 +269,15 @@ int pcsl_network_setsockopt(
     return PCSL_NET_SUCCESS;
 }
 
+
+/**
+ * See pcsl_network.h for definition.
+ */
+int pcsl_network_init(void) {
+    return pcsl_network_init_start();
+}
+
+
 /**
  * See pcsl_network.h for definition.
  */
@@ -276,7 +285,6 @@ int pcsl_network_init_start(void) {
     lastError = 0;
     return PCSL_NET_SUCCESS;
 }
-
 
 
 /**
