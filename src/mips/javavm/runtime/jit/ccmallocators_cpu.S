@@ -76,7 +76,7 @@ ENTRY ( CVMCCMruntimeNewGlue )
 /* IAI-03 */
 #ifndef IAI_NEW_GLUE_CALLING_CONVENTION_IMPROVEMENT
 	/* Get access flags from class */
-	lbu	a3, OFFSET_CVMClassBlock_accessFlagsX(CB)  # flags
+	lhu	a3, OFFSET_CVMClassBlock_accessFlagsX(CB)  # flags
 #endif
 	andi	a3, a3, CONSTANT_CLASS_ACC_FINALIZABLE     # finalizable?
 	li	a0, 1	       		# locked	
