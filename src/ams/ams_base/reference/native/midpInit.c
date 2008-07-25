@@ -34,6 +34,7 @@
 #include <midpInit.h>
 #include <suitestore_common.h>
 #if !ENABLE_CDC
+#include <pcsl_network.h>
 #include <suspend_resume.h>
 #endif
 #if MEASURE_STARTUP
