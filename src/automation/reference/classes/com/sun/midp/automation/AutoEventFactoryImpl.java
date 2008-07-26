@@ -58,7 +58,7 @@ final class AutoEventFactoryImpl extends AutoEventFactory {
             Object o = eventCreators.elementAt(i);
             EventFromStringCreator c = (EventFromStringCreator)o;
 
-            String prefix = c.getPrefix();
+            String prefix = c.getEventType().getName();
             if (str.startsWith(prefix, offset)) {
                 event = c.createFromString(str, offset, newOffset);
                 break;
@@ -72,16 +72,28 @@ final class AutoEventFactoryImpl extends AutoEventFactory {
         return event;
     }
 
-    public AutoKeyEvent createKeyEvent(int state, int code) {
+    public AutoKeyEvent createKeyEvent(
+            AutoKeyState keyState, AutoKeyCode keyCode) {
+
         return null;
     }
 
-    public AutoPenEvent createPenEvent(int state, int x, int y) {
+    public AutoKeyEvent createKeyEvent(
+            AutoKeyState keyState, char keyChar) {
+
+        return null;
+    }
+
+    public AutoPenEvent createPenEvent(
+            AutoPenState penState, int x, int y) {
+
         return null;
     }
     
+    
     interface EventFromStringCreator {
-        String getPrefix();
+        AutoEventType getEventType();
+
         AutoEvent createFromString(String str, int offset, 
             Integer newOffset) throws IllegalArgumentException;
     }

@@ -57,14 +57,17 @@ ifeq ($(USE_AUTOMATION), true)
 
 SUBSYSTEM_AUTOMATION_JAVA_FILES += \
 	$(SUBSYSTEM_AUTOMATION_DIR)/classes/com/sun/midp/automation/AutoJavaME.java \
+	$(SUBSYSTEM_AUTOMATION_DIR)/classes/com/sun/midp/automation/AutoEventType.java \
 	$(SUBSYSTEM_AUTOMATION_DIR)/classes/com/sun/midp/automation/AutoEvent.java \
+	$(SUBSYSTEM_AUTOMATION_DIR)/classes/com/sun/midp/automation/AutoKeyCode.java \
+	$(SUBSYSTEM_AUTOMATION_DIR)/classes/com/sun/midp/automation/AutoKeyState.java \
 	$(SUBSYSTEM_AUTOMATION_DIR)/classes/com/sun/midp/automation/AutoKeyEvent.java \
+	$(SUBSYSTEM_AUTOMATION_DIR)/classes/com/sun/midp/automation/AutoPenState.java \
 	$(SUBSYSTEM_AUTOMATION_DIR)/classes/com/sun/midp/automation/AutoPenEvent.java \
 	$(SUBSYSTEM_AUTOMATION_DIR)/classes/com/sun/midp/automation/AutoEventFactory.java \
 	\
 	$(SUBSYSTEM_AUTOMATION_DIR)/reference/classes/com/sun/midp/automation/AutoJavaMEImpl.java \
 	$(SUBSYSTEM_AUTOMATION_DIR)/reference/classes/com/sun/midp/automation/AutoEventFactoryImpl.java \
-	$(SUBSYSTEM_AUTOMATION_DIR)/reference/classes/com/sun/midp/automation/AutoEventImpl.java \
 	$(SUBSYSTEM_AUTOMATION_DIR)/reference/classes/com/sun/midp/automation/AutoKeyEventImpl.java
 
 ifeq ($(USE_MULTIPLE_ISOLATES), true)

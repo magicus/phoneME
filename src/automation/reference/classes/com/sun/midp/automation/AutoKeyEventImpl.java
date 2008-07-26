@@ -28,47 +28,48 @@ package com.sun.midp.automation;
 import java.util.*;
 
 final class AutoKeyEventImpl implements AutoKeyEvent {
-    public final static String KEY_INVALID_NAME      = "INVALID";
-    public final static String KEY_BACKSPACE_NAME    = "BACKSPACE";
-    public final static String KEY_UP_NAME           = "UP";
-    public final static String KEY_DOWN_NAME         = "DOWN";
-    public final static String KEY_LEFT_NAME         = "LEFT";
-    public final static String KEY_RIGHT_NAME        = "RIGHT";
-    public final static String KEY_SELECT_NAME       = "SELECT";
-    public final static String KEY_SOFT1_NAME        = "SOFT1";
-    public final static String KEY_SOFT2_NAME        = "SOFT2";
-    public final static String KEY_CLEAR_NAME        = "CLEAR";
-    public final static String KEY_SEND_NAME         = "SEND";
-    public final static String KEY_END_NAME          = "END";
-    public final static String KEY_POWER_NAME        = "POWER";
-    public final static String KEY_GAMEA_NAME        = "GAMEA";
-    public final static String KEY_GAMEB_NAME        = "GAMEB";
-    public final static String KEY_GAMEC_NAME        = "GAMEC";
-    public final static String KEY_GAMED_NAME        = "GAMED";
-    public final static String KEY_GAME_UP_NAME      = "UP";
-    public final static String KEY_GAME_DOWN_NAME    = "DOWN";
-    public final static String KEY_GAME_LEFT_NAME    = "LEFT";
-    public final static String KEY_GAME_RIGHT_NAME   = "RIGHT";
 
-    public int getType() {
-        return AutoEvent.TYPE_KEYBOARD;
+    public AutoEventType getType() {
+        return AutoEventType.KEYBOARD;
     }
 
-    public int getKeyCode() {
+    public AutoKeyState getKeyState() {
+        return keyState;
+    }  
+
+    public AutoKeyCode getKeyCode() {
         return keyCode;
     }
 
-    public int getKeyState() {
-        return keyState;
-    }    
+    public char getKeyChar() {
+        return keyChar;
+    }
 
-    private final static String PREFIX = "keyboard";
+    public String toString() {
+        String typeStr = getType().getName();
+        String stateStr = getKeyState().getName();
+
+        String keyStr;
+        if (keyCode != null) {
+            keyStr = keyCode.getName();
+        } else {
+            char[] arr = { keyChar };
+            keyStr = new String(arr);
+        }
+
+        String eventStr = typeStr + " " + stateStr + " " + keyStr;
+        return eventStr;
+    }
+
+    static int registerKeyCode(AutoKeyCode keyCode) {
+        return 0;
+    }
 
     private class EventFromStringCreator 
         implements AutoEventFactoryImpl.EventFromStringCreator {
 
-        public String getPrefix() {
-            return PREFIX;
+        public AutoEventType getEventType() {
+            return getType();
         }
 
         public AutoEvent createFromString(String str, int offset, 
@@ -83,29 +84,11 @@ final class AutoKeyEventImpl implements AutoKeyEvent {
         f.registerEventFromStringCreator(new EventFromStringCreator());        
     }
 
-    private int nameToKeyCode(String name) {
-        int keyCode = KEY_INVALID;
-
-        if (namesToKeyCodes == null) {
-            namesToKeyCodes = new Hashtable();
-
-            namesToKeyCodes.put(KEY_INVALID_NAME, new Integer(KEY_INVALID));
-        }
-
-        Integer n = (Integer)namesToKeyCodes.get(name);
-        if (n != null) {
-            keyCode = n.intValue();
-        }
-
-        return keyCode;
-    }
-
     static {
         new AutoKeyEventImpl().registerEventFromStringCreator();
     }
     
-    private static Hashtable namesToKeyCodes = null;
-
-    private int keyState;
-    private int keyCode = KEY_INVALID;
+    private AutoKeyState keyState = null;
+    private AutoKeyCode keyCode = null;
+    private char keyChar;
 }

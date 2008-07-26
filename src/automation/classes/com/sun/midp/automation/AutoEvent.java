@@ -28,9 +28,6 @@
 package com.sun.midp.automation;
 
 public interface AutoEvent {
-    public static final int TYPE_KEYBOARD = 0;
-    public static final int TYPE_POINTER = 1;
-
-    public int getType();
+    public AutoEventType getType();
     public String toString();
 }

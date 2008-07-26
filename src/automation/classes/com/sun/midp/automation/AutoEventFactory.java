@@ -39,8 +39,14 @@ public abstract class AutoEventFactory {
         throws IllegalArgumentException;
 
 
-    public abstract AutoKeyEvent createKeyEvent(int state, int code);
-    public abstract AutoPenEvent createPenEvent(int state, int x, int y);
+    public abstract AutoKeyEvent createKeyEvent(
+            AutoKeyState keyState, AutoKeyCode keyCode);
+
+    public abstract AutoKeyEvent createKeyEvent(
+            AutoKeyState keyState, char keyChar);
+
+    public abstract AutoPenEvent createPenEvent(
+            AutoPenState penState, int x, int y);
 
     public AutoEventFactory getInstance() {
         return AutoEventFactoryImpl.getInstanceImpl();

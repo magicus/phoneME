@@ -27,16 +27,7 @@
 package com.sun.midp.automation;
 
 public interface AutoPenEvent extends AutoEvent {
-    /** Pen event: pen is pressed */
-    public static final int PEN_PRESSED = 0;
-
-    /** Pen event: pen is dragged */
-    public static final int PEN_DRAGGED = 1;
-
-    /** Pen event: pen is released */
-    public static final int PEN_RELEASED = 2;
-
-    public int getPenState();
+    public AutoPenState getPenState();
     public int getX();
     public int getY();
 }

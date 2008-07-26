@@ -28,13 +28,13 @@ package com.sun.midp.automation;
 
 
 class AutoEventImpl implements AutoEvent {
-    protected AutoEventImpl(int type) {
+    protected AutoEventImpl(AutoEventType type) {
         this.type = type;
     }
 
-    public int getType() {
+    public AutoEventType getType() {
         return type;
     }
 
-    private int type;
+    private AutoEventType type;
 }
