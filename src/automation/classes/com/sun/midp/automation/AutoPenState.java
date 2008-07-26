@@ -27,14 +27,26 @@
 package com.sun.midp.automation;
 
 
-class AutoEventImpl implements AutoEvent {
-    protected AutoEventImpl(AutoEventType type) {
-        this.type = type;
+public final class AutoPenState {
+
+    public static AutoPenState PRESSED = 
+        new AutoPenState("PRESSED");
+
+    public static AutoPenState REPEATED = 
+        new AutoPenState("DRAGGED");
+
+    public static AutoPenState RELEASED = 
+        new AutoPenState("RELEASED");
+
+
+    public String getName() {
+        return name;
     }
 
-    public AutoEventType getType() {
-        return type;
+   
+    private AutoPenState(String name) {
+        this.name = name;
     }
 
-    private AutoEventType type;
+    private String name;    
 }
