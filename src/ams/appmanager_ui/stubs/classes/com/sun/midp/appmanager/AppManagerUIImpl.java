@@ -26,12 +26,20 @@
 
 package com.sun.midp.appmanager;
 
-import javax.microedition.lcdui.*;
 import com.sun.midp.main.*;
+import com.sun.lwuit.*;
+import com.sun.lwuit.layouts.*;
+
 
 import javax.microedition.lcdui.Displayable;
+import javax.microedition.lcdui.Display;
 
 class AppManagerUIImpl implements AppManagerUI {
+
+
+    private Form f;
+    private Label label;
+    private javax.microedition.lcdui.Display display;
 
     /**
      * Creates the Application Selector Screen.
@@ -45,6 +53,16 @@ class AppManagerUIImpl implements AppManagerUI {
      */
     AppManagerUIImpl(ApplicationManager manager, AppManagerPeer appManager,
                  Display display, DisplayError displayError, boolean foldersOn) {
+
+	System.out.println("Manager initializing lwuit display");
+	com.sun.lwuit.Display.init(manager);
+
+	f = new Form("Java midlets");
+	f.setLayout(new BoxLayout(BoxLayout.Y_AXIS));
+
+	label = new Label("Hello, World!");
+	f.addComponent(label);
+	f.show();
     }
 
     /**
