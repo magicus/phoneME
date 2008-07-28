@@ -92,14 +92,27 @@ public class DiscoveryApp extends MIDlet implements CommandListener {
     /** Command object for URL screen to save the URL for suites. */
     private Command saveCmd =
         new Command(Resource.getString(ResourceConstants.SAVE),
-                    Command.SCREEN, 2);
+                    Command.SCREEN, 3);
 
     /** Command object for "Back" command in the URL form. */
     private Command endCmd = new Command(Resource.getString
                                          (ResourceConstants.BACK),
                                          Command.BACK, 1);
 
-    /**
+    /**Command object for begin writing path to file in external devices*/
+    private Command fileStorage = new Command(Resource.getString
+            (ResourceConstants.INSTALL_FROM_STORAGE),Command.SCREEN,2);
+    /**Command object for begin writing URL*/
+    private Command httpStorage = new Command(Resource.getString
+            (ResourceConstants.INSTALL_FROM_WEB),Command.SCREEN,2);
+    /**Command object for begin installing file from external devices*/
+    private Command installFromFileStorage = new Command(Resource.getString
+            (ResourceConstants.BEGIN_STORAGE_INSTALL),Command.SCREEN,1);
+    
+    private int type_of_install=0;
+    final static int WEBSITE_INSTALL=0;
+    final static int STORAGE_INSTALL=1;
+    /*
      * Create and initialize a new discovery application MIDlet.
      * The saved URL is retrieved and the list of MIDlets are retrieved.
      */
@@ -113,6 +126,7 @@ public class DiscoveryApp extends MIDlet implements CommandListener {
 
         // get the URL of a list of suites to install
         getUrl();
+        
     }
 
     /**
@@ -157,6 +171,38 @@ public class DiscoveryApp extends MIDlet implements CommandListener {
             // goto back to the manager midlet
             notifyDestroyed();
         }
+        //want to install from external storage
+        else if(c == fileStorage)
+        {
+          defaultInstallListUrl="";
+          urlTextBox.setTitle(Resource.getString
+                  (ResourceConstants.AMS_DISC_APP_STORAGE_INSTALL));
+          urlTextBox.addCommand(httpStorage);
+          urlTextBox.addCommand(installFromFileStorage);
+          urlTextBox.removeCommand(fileStorage);        
+          urlTextBox.removeCommand(discoverCmd);
+          type_of_install=this.STORAGE_INSTALL;
+          restoreSettings();
+          urlTextBox.setString(defaultInstallListUrl);
+        }
+        //want to instal from Web
+        else if (c == httpStorage)
+        {
+         defaultInstallListUrl="http://";
+         urlTextBox.setTitle(Resource.getString
+                  (ResourceConstants.AMS_DISC_APP_WEBSITE_INSTALL));
+         urlTextBox.addCommand(fileStorage);
+         urlTextBox.removeCommand(installFromFileStorage);      
+         urlTextBox.addCommand(discoverCmd);
+         urlTextBox.removeCommand(httpStorage);
+         type_of_install=this.WEBSITE_INSTALL;
+         restoreSettings();
+         urlTextBox.setString(defaultInstallListUrl);
+        }
+        else if(c == installFromFileStorage)
+        {
+         installSuiteFromExternal();
+        }    
     }
 
     /**
@@ -181,12 +227,16 @@ public class DiscoveryApp extends MIDlet implements CommandListener {
         try {
             settings = RecordStore.openRecordStore(
                        GraphicalInstaller.SETTINGS_STORE, false);
-
-            data = settings.getRecord(1);
+            
+            if(type_of_install==DiscoveryApp.WEBSITE_INSTALL) 
+              data = settings.getRecord(1);
+            else
+              data = settings.getRecord(3);
+                          
             if (data != null) {
                 bas = new ByteArrayInputStream(data);
                 dis = new DataInputStream(bas);
-                defaultInstallListUrl = dis.readUTF();
+                defaultInstallListUrl = dis.readUTF();                
             }
 
         } catch (RecordStoreException e) {
@@ -221,7 +271,8 @@ public class DiscoveryApp extends MIDlet implements CommandListener {
         Exception ex;
 
         temp = urlTextBox.getString();
-
+        if(type_of_install==DiscoveryApp.STORAGE_INSTALL)
+            temp="file:///"+temp;
         ex = GraphicalInstaller.saveSettings(temp, MIDletSuite.INTERNAL_SUITE_ID);
         if (ex != null) {
             displayException(Resource.getString
@@ -282,7 +333,7 @@ public class DiscoveryApp extends MIDlet implements CommandListener {
     private Form displayProgressForm(String action, String name,
             String url, int size, String gaugeLabel) {
         Gauge progressGauge;
-        StringItem urlItem;
+        StringItem urlItem=null;
 
         progressForm = new Form(null);
 
@@ -302,9 +353,21 @@ public class DiscoveryApp extends MIDlet implements CommandListener {
         if (url == null) {
             urlItem = new StringItem("", "");
         } else {
+             switch(type_of_install)
+            {
+            case DiscoveryApp.WEBSITE_INSTALL:{    
             urlItem =
                 new StringItem(Resource.getString
                                (ResourceConstants.AMS_WEBSITE) + ": ", url);
+            break;
+            }
+            case DiscoveryApp.STORAGE_INSTALL:{
+            urlItem =
+                new StringItem(Resource.getString
+                               (ResourceConstants.AMS_STORAGEPATH) + ": ", url);
+            break;    
+            }
+            }
         }
 
         progressUrlIndex = progressForm.append(urlItem);
@@ -322,7 +385,7 @@ public class DiscoveryApp extends MIDlet implements CommandListener {
      */
     private void installSuite(int selectedSuite) {
         MIDletStateHandler midletStateHandler =
-            MIDletStateHandler.getMidletStateHandler();
+        MIDletStateHandler.getMidletStateHandler();
         MIDletSuite midletSuite = midletStateHandler.getMIDletSuite();
         SuiteDownloadInfo suite;
         String displayName;
@@ -362,6 +425,66 @@ public class DiscoveryApp extends MIDlet implements CommandListener {
     }
 
     /**
+     *Install suite from external memory 
+     */
+     
+    private void installSuiteFromExternal()
+    {
+                   
+        MIDletStateHandler midletStateHandler =
+        MIDletStateHandler.getMidletStateHandler();
+        MIDletSuite midletSuite = midletStateHandler.getMIDletSuite();
+        SuiteDownloadInfo suite;
+        String displayName;
+        
+        //encode path of file, using RFC specification:
+        //changing ' ' on '%'. And adding schema 'file:///'
+        String filenamepath="file:///"+urlTextBox.getString();  
+        char[] fileChars=new char[filenamepath.length()];
+        filenamepath.getChars(0,filenamepath.length(),fileChars,0);
+        for(int i=0;i<fileChars.length;i++)
+        {
+          if(fileChars[i]==' ')
+              fileChars[i]='%';
+        }
+        
+        suite = new SuiteDownloadInfo(new String(fileChars),urlTextBox.getString());
+
+        midletSuite.setTempProperty(null, "arg-0", "I");
+        midletSuite.setTempProperty(null, "arg-1", suite.url);
+        midletSuite.setTempProperty(null, "arg-2", suite.label);
+
+        displayName =
+            Resource.getString(ResourceConstants.INSTALL_APPLICATION);
+        try {
+                      
+            midletStateHandler.startMIDlet(
+                "com.sun.midp.installer.GraphicalInstaller", displayName);
+            /*
+             * Give the create MIDlet notification 1 second to get to
+             * AMS.
+             */
+            Thread.sleep(1000);
+            notifyDestroyed();
+        } catch (Exception ex) {
+            StringBuffer sb = new StringBuffer();
+
+            sb.append(displayName);
+            sb.append("\n");
+            sb.append(Resource.getString(ResourceConstants.ERROR));
+            sb.append(": ");
+            sb.append(ex.toString());
+
+            Alert a = new Alert(Resource.getString
+                                (ResourceConstants.AMS_CANNOT_START),
+                                sb.toString(), null, AlertType.ERROR);
+            
+            a.setTimeout(Alert.FOREVER);
+            display.setCurrent(a, urlTextBox);
+    }
+      
+    }
+    /**
      * Update URL and gauge of the progress form.
      *
      * @param url new URL, null to remove, "" to not change
@@ -371,7 +494,7 @@ public class DiscoveryApp extends MIDlet implements CommandListener {
     private void updateProgressForm(String url, int size, String gaugeLabel) {
         Gauge oldProgressGauge;
         Gauge progressGauge;
-        StringItem urlItem;
+        StringItem urlItem=null;
 
         // We need to prevent "flashing" on fast development platforms.
         while (System.currentTimeMillis() - lastDisplayChange <
@@ -396,9 +519,21 @@ public class DiscoveryApp extends MIDlet implements CommandListener {
             urlItem = new StringItem("", "");
             progressForm.set(progressUrlIndex, urlItem);
         } else if (url.length() != 0) {
+            switch(type_of_install)
+            {
+            case DiscoveryApp.WEBSITE_INSTALL:{    
             urlItem =
                 new StringItem(Resource.getString
                                (ResourceConstants.AMS_WEBSITE) + ": ", url);
+            break;
+            }
+            case DiscoveryApp.STORAGE_INSTALL:{
+            urlItem =
+                new StringItem(Resource.getString
+                               (ResourceConstants.AMS_STORAGEPATH) + ": ", url);
+            break;    
+            }
+            }
             progressForm.set(progressUrlIndex, urlItem);
         }
 
@@ -419,7 +554,11 @@ public class DiscoveryApp extends MIDlet implements CommandListener {
                 urlTextBox.addCommand(endCmd);
                 urlTextBox.addCommand(saveCmd);
                 urlTextBox.addCommand(discoverCmd);
+                //let install from external device
+                urlTextBox.addCommand(fileStorage);
+                
                 urlTextBox.setCommandListener(this);
+                
             }
 
             display.setCurrent(urlTextBox);
@@ -477,19 +616,45 @@ public class DiscoveryApp extends MIDlet implements CommandListener {
             startTime = System.currentTimeMillis();
 
             try {
-                parent.displayProgressForm(
+                switch(type_of_install)
+                {
+                    case DiscoveryApp.WEBSITE_INSTALL:{ 
+                    parent.displayProgressForm(
                         Resource.getString(
                         ResourceConstants.AMS_DISC_APP_GET_INSTALL_LIST),
                         "", url, 0,
                         Resource.getString(
                         ResourceConstants.AMS_GRA_INTLR_CONN_GAUGE_LABEL));
+                        break;}
+                    case DiscoveryApp.STORAGE_INSTALL:{
+                    parent.displayProgressForm(
+                        Resource.getString(
+                        ResourceConstants.AMS_DISC_APP_PREPARE_INSTALL_STORAGE),
+                        "", url, 0,
+                        Resource.getString(
+                        ResourceConstants.AMS_GRA_INTLR_CONN_STORAGE_GAUGE_LABEL));
+                        break;}
+                }      
+                
                 conn = (StreamConnection)Connector.open(url, Connector.READ);
                 in = new InputStreamReader(conn.openInputStream());
                 try {
-                    parent.updateProgressForm("", 0,
+                    switch(type_of_install)
+                    {
+                        case DiscoveryApp.WEBSITE_INSTALL:{    
+                     parent.updateProgressForm("", 0,
                         Resource.getString(
                         ResourceConstants.AMS_DISC_APP_GAUGE_LABEL_DOWNLOAD));
+                        break;
+                        }
+                        case DiscoveryApp.STORAGE_INSTALL:{
+                     parent.updateProgressForm("", 0,
+                        Resource.getString(
+                        ResourceConstants.AMS_DISC_APP_GAUGE_LABEL_STORAGE));
+                        break;       
+                        }
 
+                    }
                     parent.installList =
                         SuiteDownloadInfo.getDownloadInfoFromPage(in);
 
@@ -560,4 +725,5 @@ public class DiscoveryApp extends MIDlet implements CommandListener {
             parent.display.setCurrent(a, parent.urlTextBox);
         }
     }
+    
 }
