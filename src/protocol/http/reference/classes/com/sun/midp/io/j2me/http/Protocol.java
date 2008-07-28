@@ -1936,6 +1936,10 @@ public class Protocol extends ConnectionBaseAdapter
 
         conn = new com.sun.midp.io.j2me.socket.Protocol();
 
+        if(http_proxy == null) {
+            http_proxy = System.getProperty("system.network.http.proxy");
+        }
+
         if (http_proxy == null || url.host.equals("localhost") ||
             url.host.equals("127.0.0.1")) {
             /* bypass proxy when trying to connect to the same computer
