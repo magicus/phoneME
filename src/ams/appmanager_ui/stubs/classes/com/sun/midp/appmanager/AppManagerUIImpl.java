@@ -26,20 +26,33 @@
 
 package com.sun.midp.appmanager;
 
-import com.sun.midp.main.*;
+import java.util.Vector;
+
+import com.sun.midp.appmanager.Folder;
+
+import javax.microedition.lcdui.Display;
+import javax.microedition.lcdui.Displayable;
+
 import com.sun.lwuit.*;
 import com.sun.lwuit.layouts.*;
+import com.sun.midp.appmanager.Folder;
+import com.sun.midp.appmanager.FolderManager;
+import com.sun.midp.main.*;
 
-
-import javax.microedition.lcdui.Displayable;
-import javax.microedition.lcdui.Display;
 
 class AppManagerUIImpl implements AppManagerUI {
 
 
-    private Form f;
+    private Form mainMenu;
     private Label label;
     private javax.microedition.lcdui.Display display;
+    private Vector folders;
+    private Container mainContainer;
+
+
+    private int elementWidth = 0;
+    private int cols = 0;
+    private int rows = 0;
 
     /**
      * Creates the Application Selector Screen.
@@ -54,15 +67,24 @@ class AppManagerUIImpl implements AppManagerUI {
     AppManagerUIImpl(ApplicationManager manager, AppManagerPeer appManager,
                  Display display, DisplayError displayError, boolean foldersOn) {
 
-	System.out.println("Manager initializing lwuit display");
+	/* init lwuit */
 	com.sun.lwuit.Display.init(manager);
 
-	f = new Form("Java midlets");
-	f.setLayout(new BoxLayout(BoxLayout.Y_AXIS));
+	/* calculate cols and rows */
+	//int width = com.sun.lwuit.Display.getInstance().getDisplayWidth(); //get the display width
 
-	label = new Label("Hello, World!");
-	f.addComponent(label);
-	f.show();
+	mainMenu = new Form("Java midlets");
+
+	mainMenu.setLayout(new BorderLayout());
+	mainContainer = new Container();
+	mainContainer.setLayout(new GridLayout(3, 3));
+	mainContainer.addComponent(new Button("label1"));
+	mainContainer.addComponent(new Button("label2"));
+	mainContainer.addComponent(new Button("label3"));
+	mainMenu.addComponent(BorderLayout.CENTER, mainContainer);
+
+	//mainMenu.addComponent(new Label("hello, world!"));	/*works!*/
+	mainMenu.show();
     }
 
     /**
@@ -88,7 +110,36 @@ class AppManagerUIImpl implements AppManagerUI {
      * @param suiteInfo the midlet suite info
      */
     public void itemAppended(RunningMIDletSuiteInfo suiteInfo) {
+	/* Convert image */
+//         int width = suiteInfo.icon.getWidth();
+//         int height = suiteInfo.icon.getHeight();
+//         int[] tmp = new int[width * height];
+//         suiteInfo.icon.getRGB(tmp, 0, width, 0, 0, width, height);
+//         Image tmpIcon = Image.createImage(tmp, width, height);
+//
+//         /* build button */
+//         Button b = new Button(suiteInfo.displayName, tmpIcon){
+//             public Image getPressedIcon() {
+//                 Image i = getIcon();
+//                 return i.scaled((int) (i.getWidth() * 0.8), (int) (i.getHeight() * 0.8));
+//             }
+//
+//             public Image getRolloverIcon() {
+//                 Image i = getIcon();
+//                 return i.scaled((int) (i.getWidth() * 1.2), (int) (i.getHeight() * 1.2));
+//             }
+//         };
+//         b.getStyle().setBgTransparency(0);
+//         b.setBorderPainted(false);
+//         b.setAlignment(Label.CENTER);
+//         b.setTextPosition(Label.BOTTOM);
+	/* Add button */
+	//mainContainer.addComponent(b);
+	//mainMenu.addComponent(b);
 
+	//elementWidth = Math.max(b.getPreferredW(), elementWidth);
+
+	//TODO:  make dynamic
     }
 
     /**
