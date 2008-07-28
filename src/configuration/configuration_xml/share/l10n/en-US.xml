@@ -596,7 +596,7 @@
 <localized_string Key="PERMISSION_MUTUALLY_EXCLUSIVE_ERROR_MESSAGE"
                 Value="%1 can't be set to not ask because it is not secure when %2 is set to not ask."/>
 <localized_string Key="PERMISSION_SECURITY_WARNING_ERROR_MESSAGE"
-                Value="It is not secure when %1 and %2 are set to not ask. Is it OK to change permissions?"/>
+                Value="It is not secure when %1 and %2 are set simultaneously. Proceed anyway?"/>
 <localized_string Key="PERMISSION_NET_ACCESS_DIALOG_TITLE"
                 Value="Is it OK to Use Airtime?"/>
 <localized_string Key="PERMISSION_NET_ACCESS_QUE"
