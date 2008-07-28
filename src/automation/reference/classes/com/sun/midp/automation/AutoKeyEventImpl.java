@@ -62,8 +62,12 @@ final class AutoKeyEventImpl implements AutoKeyEvent {
     }
 
     static int registerKeyCode(AutoKeyCode keyCode) {
+        validKeyCodes.put(keyCode.getName(), keyCode);
+
         return 0;
     }
+
+    private static native int getMIDPKeyCodeFromName(String keyCodeName);
 
     private class EventFromStringCreator 
         implements AutoEventFactoryImpl.EventFromStringCreator {
@@ -88,6 +92,8 @@ final class AutoKeyEventImpl implements AutoKeyEvent {
         new AutoKeyEventImpl().registerEventFromStringCreator();
     }
     
+    private static Hashtable validKeyCodes;
+
     private AutoKeyState keyState = null;
     private AutoKeyCode keyCode = null;
     private char keyChar;
