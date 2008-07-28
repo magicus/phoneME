@@ -62,6 +62,20 @@ public class AppSettings extends Form
     private Command cancelCmd =
         new Command(Resource.getString(ResourceConstants.CANCEL),
                     Command.CANCEL, 1);
+    /**
+     * Command object for "OK" command for the alert
+     * that is shown during choice selection validation.
+     */
+    private Command okChoiceSelectionCmd =
+        new Command(Resource.getString(ResourceConstants.OK),
+                    Command.OK, 1);
+    /**
+     * Command object for "Cancel" command for  the alert
+     * that is shown during choice selection validation.
+     */
+    private Command cancelChoiceSelectionCmd =
+        new Command(Resource.getString(ResourceConstants.CANCEL),
+                    Command.CANCEL, 1);
 
     /** The ID of the setting displayed in the form. */
     private int displayedSettingID;
@@ -73,6 +87,8 @@ public class AppSettings extends Form
     private RadioButtonSet settingsPopup;
     /** The application interruption setting. */
     private RadioButtonSet interruptChoice;
+    /** The currently active choice group. */
+    private RadioButtonSet curChoice;
     /** The application permission settings. */
     private RadioButtonSet[] groupSettings;
     /** The number of group permission settings. */
@@ -82,8 +98,12 @@ public class AppSettings extends Form
     private byte[] maxLevels;
     /** Holds the updated permissions. */
     private byte[] curLevels;
+    /** Holds the permissions selected by user for validation. */
+    private byte[] tmpLevels;
     /** Holds the updated push interrupt level. */
     private byte pushInterruptSetting;
+    /** Holds the selected push interrupt level for validation. */
+    private byte tmpPushInterruptSetting;
     /** Holds the updated push options. */
     private int pushOptions;
 
@@ -151,6 +171,16 @@ public class AppSettings extends Form
         } else if (c == cancelCmd) {
             display.setCurrent(nextScreen);
             midletSuite.close();
+        } else if (c == cancelChoiceSelectionCmd) {
+            // restore choice selection
+            if (curChoice != null) {
+                curChoice.setSelectedButton(curChoice.lastSelectedId);
+                display.setCurrentItem(curChoice);
+            }
+        } else if (c == okChoiceSelectionCmd) {
+            if (curChoice != null) {
+                display.setCurrentItem(curChoice);
+            }
         }
     }
 
@@ -164,31 +194,79 @@ public class AppSettings extends Form
     public void itemStateChanged(Item item) {
         int selected;
 
-        if (item != settingsPopup) {
-            /* ignore the other items besides the popup */
-            return;
-        }
-
-        selected = settingsPopup.getSelectedButton();
-        if (selected == lastPopupChoice) {
-            return;
-        }
-
-        lastPopupChoice = selected;
-
-        delete(displayedSettingID);
-
-        try {
-            if (selected == INTERRUPT_CHOICE_ID) {
-                displayedSettingID = append(interruptChoice);
-            } else {
-                displayedSettingID = append(groupSettings[selected]);
+        if (item == settingsPopup) {
+    
+            selected = settingsPopup.getSelectedButton();
+            if (selected == lastPopupChoice) {
+                return;
             }
-        } catch (IndexOutOfBoundsException e) {
-            // for safety/completeness.
-            displayedSettingID = 0;
-            Logging.report(Logging.ERROR, LogChannels.LC_AMS,
-                "AppSettings: selected=" + selected);
+
+            lastPopupChoice = selected;
+
+            delete(displayedSettingID);
+
+            try {
+                if (selected == INTERRUPT_CHOICE_ID) {
+                    displayedSettingID = append(interruptChoice);
+                } else {
+                    displayedSettingID = append(groupSettings[selected]);
+                }
+            } catch (IndexOutOfBoundsException e) {
+                // for safety/completeness.
+                displayedSettingID = 0;
+                Logging.report(Logging.ERROR, LogChannels.LC_AMS,
+                    "AppSettings: selected=" + selected);
+            }
+        } else if (item == interruptChoice){
+            if (interruptChoice != null) {
+                byte maxInterruptSetting;
+                int interruptSetting = interruptChoice.getSelectedButton();
+
+                if (maxLevels[Permissions.PUSH] == Permissions.ALLOW) {
+                    maxInterruptSetting = Permissions.BLANKET_GRANTED;
+                } else {
+                    maxInterruptSetting = maxLevels[Permissions.PUSH];
+                }
+
+                if (interruptSetting == PUSH_OPTION_1_ID) {
+                    tmpPushInterruptSetting = maxInterruptSetting;
+                } else {
+                    Permissions.checkPushInterruptLevel(tmpLevels,
+                        (byte)interruptSetting);
+                    tmpPushInterruptSetting = (byte)interruptSetting;
+                }
+            }
+        } else { // choice group selection changed
+            selected = settingsPopup.getSelectedButton();
+
+            byte newSetting =
+                (byte)groupSettings[selected].getSelectedButton();
+
+            if (newSetting != groupSettings[selected].lastSelectedId) {
+                try {
+                    Permissions.setPermissionGroup(tmpLevels,
+                        tmpPushInterruptSetting, groups[selected], newSetting);
+                } catch (SecurityException e) {
+                    // returning to previous selection
+                    groupSettings[selected].setSelectedButton(
+                            groupSettings[selected].lastSelectedId);
+                    // nothing else to do
+                    return;
+                }
+
+                String warning = Permissions.getInsecureCombinationWarning(tmpLevels,
+                    tmpPushInterruptSetting, groups[selected], newSetting);
+                if (warning != null) {
+                    curChoice = groupSettings[selected];
+                    Alert alert = new Alert(Resource.getString(ResourceConstants.WARNING),
+                            warning, null, AlertType.WARNING);
+                    alert.addCommand(okChoiceSelectionCmd);
+                    alert.addCommand(cancelChoiceSelectionCmd);
+                    alert.setCommandListener(this);
+                    alert.setTimeout(Alert.FOREVER);
+                    display.setCurrent(alert);
+                }
+            }
         }
     }
 
@@ -239,7 +317,11 @@ public class AppSettings extends Form
                 (Permissions.forDomain(installInfo.getSecurityDomain()))
                    [Permissions.MAX_LEVELS];
             curLevels = midletSuite.getPermissions();
+            tmpLevels = new byte[curLevels.length];
+            System.arraycopy(curLevels, 0, tmpLevels, 0, curLevels.length);
+            
             pushInterruptSetting = midletSuite.getPushInterruptSetting();
+            tmpPushInterruptSetting = pushInterruptSetting;
             pushOptions = midletSuite.getPushOptions();
 
             values[0] = suiteDisplayName;
@@ -428,7 +510,7 @@ public class AppSettings extends Form
             break;
         }
 
-        choice.setDefaultButton(initValue);
+        choice.setSelectedButton(initValue);
 
         choice.setPreferredSize(getWidth(), -1);
 
@@ -528,6 +610,9 @@ class RadioButtonSet extends ChoiceGroup {
     /** Keeps track of the button IDs. */
     private int[] ids;
 
+    /** The ID of the item selected. */
+    int lastSelectedId;
+
     /**
      * Creates a new, empty <code>RadioButtonSet</code>, specifying its
      * title.
@@ -569,7 +654,8 @@ class RadioButtonSet extends ChoiceGroup {
      *
      * @throws IndexOutOfBoundsException if <code>id</code> is invalid
      */
-    public void setDefaultButton(int id) {
+    public void setSelectedButton(int id) {
+        lastSelectedId = id;
         setSelectedIndex(indexFor(id), true);
     }
 
