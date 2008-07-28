@@ -353,4 +353,15 @@ public final class EventTypes {
      * an installed MIDlet suite.
      */
     public static final int MIDP_ODD_SUITE_REMOVED_EVENT = 55;
+
+    /**
+     * Request to AMS to terminate all running midlets from the given suite.
+     */
+    public static final int MIDP_KILL_MIDLETS_EVENT = 56;
+
+    /**
+     * Notification sent by AMS to inform the listeners that
+     * the midlets from the given suite were killed.
+     */
+    public static final int MIDP_MIDLETS_KILLED_EVENT = 57;
 }

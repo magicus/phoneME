@@ -49,7 +49,9 @@ MIDP_JAVADOC_SOURCEPATH += $(OTA_DIR)/classes
 #
 SUBSYSTEM_AMS_JAVA_FILES += \
     $(OTA_DIR)/classes/com/sun/midp/installer/DiscoveryApp.java \
-    $(OTA_DIR)/classes/com/sun/midp/installer/GraphicalInstaller.java
+    $(OTA_DIR)/classes/com/sun/midp/installer/GraphicalInstaller.java \
+    $(OTA_DIR)/classes/com/sun/midp/appmanager/InstallerEventListener.java \
+    $(SUBSYSTEM_AMS_DIR)/$(OTA_NAME)/classes/com/sun/midp/appmanager/InstallerEventConsumer.java
 
 ifeq ($(TARGET_VM), cldc_vm)
 SUBSYSTEM_AMS_JAVA_FILES += \
