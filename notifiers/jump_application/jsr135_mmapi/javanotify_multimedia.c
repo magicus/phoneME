@@ -62,12 +62,12 @@ void javanotify_on_media_notification(javacall_media_notification_type type,
                                       javacall_result status,
                                       void *data) {
     struct {
-    	int     event_type;
         int     appId;
         int     type;
         int     playerId;
         long    data;
-    } event = {135, appID, type, playerId, *((long *)data)};
+    } event = {appID, type, playerId, *((long *)data)};
 
-    javacall_event_send((unsigned char *)&event, sizeof(event));
+    javacall_event_send_cvm(JSR135_EVENT_QUEUE_ID, (unsigned char *)&event,
+        sizeof(event));
 }
