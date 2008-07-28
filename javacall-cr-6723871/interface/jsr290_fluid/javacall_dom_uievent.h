@@ -46,19 +46,6 @@ extern "C" {
  */
 
 /**
- * Returns  The <code>view</code> attribute identifies the 
- * <code>AbstractView</code> from which the event was generated. 
- * 
- * @param handle Pointer to the object representing this uievent.
- * 
- * @return JAVACALL_OK if all done successfuly,
- *         JAVACALL_NOT_IMPLEMENTED when the stub was called
- */
-javacall_result
-javacall_dom_uievent_get_view(javacall_handle handle,
-                              /* OUT */ javacall_handle* ret_value);
-
-/**
  * Returns  Specifies some detail information about the <code>Event</code>, 
  * depending on the type of event. 
  * 
