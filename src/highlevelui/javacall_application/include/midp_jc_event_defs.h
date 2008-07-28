@@ -1,6 +1,4 @@
 /*
- *
- *
  * Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  *
@@ -83,6 +81,9 @@ extern "C" {
 
 
 #define MIDP_RUNMIDLET_MAXIMUM_ARGS 10
+
+/* Queue ID for JavaCall events in CDC-based stack. */
+#define MIDP_EVENT_QUEUE_ID 118
 
 typedef enum {
     MIDP_JC_EVENT_KEY                  =100,

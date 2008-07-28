@@ -1,7 +1,5 @@
 /*
- *
- *
- * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
@@ -72,8 +70,13 @@ void JavaTask(void) {
         }
         REPORT_INFO(LC_CORE,"JavaTask() >> memory initialized.\n");
 
+#if !ENABLE_CDC
         res = javacall_event_receive(timeTowaitInMillisec,
             (unsigned char *)binaryBuffer, binaryBufferMaxLen, &outEventLen);
+#else
+        res = javacall_event_receive_cvm(MIDP_EVENT_QUEUE_ID,
+            (unsigned char *)binaryBuffer, binaryBufferMaxLen, &outEventLen);
+#endif
 
         if (!JAVACALL_SUCCEEDED(res)) {
             REPORT_ERROR(LC_CORE,"JavaTask() >> Error javacall_event_receive()\n");

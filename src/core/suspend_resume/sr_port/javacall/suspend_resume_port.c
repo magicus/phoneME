@@ -1,7 +1,5 @@
 /*
- *
- *
- * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
@@ -44,9 +42,14 @@ jboolean midp_checkResumeRequest() {
     static unsigned char binaryBuffer[BINARY_BUFFER_MAX_LEN];
     javacall_bool res;
 
+#if !ENABLE_CDC
     /* timeout == -1 means "wait forever" */
     res = javacall_event_receive(-1, binaryBuffer,
                                  BINARY_BUFFER_MAX_LEN, NULL);
+#else
+    res = javacall_event_receive_cvm(MIDP_EVENT_QUEUE_ID, binaryBuffer,
+                                 BINARY_BUFFER_MAX_LEN, NULL);
+#endif
 
     if (!JAVACALL_SUCCEEDED(res)) {
         return KNI_FALSE;
