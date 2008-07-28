@@ -289,7 +289,7 @@ public abstract class Installer {
         state.listener = installListener;
         state.chmanager = CHManager.getManager(null);
         state.storageId = storageId;
-        //System.out.println("Start install JAD="+location);
+        
         return performInstall();
     }
 

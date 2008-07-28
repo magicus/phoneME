@@ -99,19 +99,30 @@ public class DiscoveryApp extends MIDlet implements CommandListener {
                                          (ResourceConstants.BACK),
                                          Command.BACK, 1);
 
-    /**Command object for begin writing path to file in external devices*/
+    /** Command object for begin writing path to file in external devices. */
     private Command fileStorage = new Command(Resource.getString
-            (ResourceConstants.INSTALL_FROM_STORAGE),Command.SCREEN,2);
-    /**Command object for begin writing URL*/
+                                         (ResourceConstants.INSTALL_FROM_STORAGE),
+                                          Command.SCREEN,2);
+
+    /** Command object for begin writing URL. */
     private Command httpStorage = new Command(Resource.getString
-            (ResourceConstants.INSTALL_FROM_WEB),Command.SCREEN,2);
-    /**Command object for begin installing file from external devices*/
+                                           (ResourceConstants.INSTALL_FROM_WEB),
+                                            Command.SCREEN,2);
+
+    /** Command object for begin installing file from external devices. */
     private Command installFromFileStorage = new Command(Resource.getString
-            (ResourceConstants.BEGIN_STORAGE_INSTALL),Command.SCREEN,1);
+                                           (ResourceConstants.BEGIN_STORAGE_INSTALL),
+                                           Command.SCREEN,1);
     
+   /** Type of installation. */
     private int type_of_install=0;
+
+   /** Installation using 'http://' schema. */
     final static int WEBSITE_INSTALL=0;
+
+   /** Installation using 'file' schema. */
     final static int STORAGE_INSTALL=1;
+
     /*
      * Create and initialize a new discovery application MIDlet.
      * The saved URL is retrieved and the list of MIDlets are retrieved.
@@ -171,9 +182,8 @@ public class DiscoveryApp extends MIDlet implements CommandListener {
             // goto back to the manager midlet
             notifyDestroyed();
         }
-        //want to install from external storage
-        else if(c == fileStorage)
-        {
+        // want to install from external storage
+        else if(c == fileStorage) {
           defaultInstallListUrl="";
           urlTextBox.setTitle(Resource.getString
                   (ResourceConstants.AMS_DISC_APP_STORAGE_INSTALL));
@@ -185,9 +195,8 @@ public class DiscoveryApp extends MIDlet implements CommandListener {
           restoreSettings();
           urlTextBox.setString(defaultInstallListUrl);
         }
-        //want to instal from Web
-        else if (c == httpStorage)
-        {
+        // want to instal from Web
+        else if (c == httpStorage) {
          defaultInstallListUrl="http://";
          urlTextBox.setTitle(Resource.getString
                   (ResourceConstants.AMS_DISC_APP_WEBSITE_INSTALL));
@@ -199,8 +208,7 @@ public class DiscoveryApp extends MIDlet implements CommandListener {
          restoreSettings();
          urlTextBox.setString(defaultInstallListUrl);
         }
-        else if(c == installFromFileStorage)
-        {
+        else if(c == installFromFileStorage) {
          installSuiteFromExternal();
         }    
     }
@@ -271,6 +279,7 @@ public class DiscoveryApp extends MIDlet implements CommandListener {
         Exception ex;
 
         temp = urlTextBox.getString();
+
         if(type_of_install==DiscoveryApp.STORAGE_INSTALL)
             temp="file:///"+temp;
         ex = GraphicalInstaller.saveSettings(temp, MIDletSuite.INTERNAL_SUITE_ID);
@@ -353,20 +362,19 @@ public class DiscoveryApp extends MIDlet implements CommandListener {
         if (url == null) {
             urlItem = new StringItem("", "");
         } else {
-             switch(type_of_install)
-            {
-            case DiscoveryApp.WEBSITE_INSTALL:{    
-            urlItem =
-                new StringItem(Resource.getString
+             switch(type_of_install) {
+                 case DiscoveryApp.WEBSITE_INSTALL: {    
+                     urlItem =
+                         new StringItem(Resource.getString
                                (ResourceConstants.AMS_WEBSITE) + ": ", url);
-            break;
-            }
-            case DiscoveryApp.STORAGE_INSTALL:{
-            urlItem =
-                new StringItem(Resource.getString
+                     break;
+                }
+                  case DiscoveryApp.STORAGE_INSTALL: {
+                      urlItem =
+                          new StringItem(Resource.getString
                                (ResourceConstants.AMS_STORAGEPATH) + ": ", url);
-            break;    
-            }
+                    break;    
+                }
             }
         }
 
@@ -442,10 +450,10 @@ public class DiscoveryApp extends MIDlet implements CommandListener {
         String filenamepath="file:///"+urlTextBox.getString();  
         char[] fileChars=new char[filenamepath.length()];
         filenamepath.getChars(0,filenamepath.length(),fileChars,0);
-        for(int i=0;i<fileChars.length;i++)
-        {
-          if(fileChars[i]==' ')
-              fileChars[i]='%';
+
+        for(int i=0;i<fileChars.length;i++) {
+            if(fileChars[i]==' ')
+                fileChars[i]='%';
         }
         
         suite = new SuiteDownloadInfo(new String(fileChars),urlTextBox.getString());
@@ -519,20 +527,19 @@ public class DiscoveryApp extends MIDlet implements CommandListener {
             urlItem = new StringItem("", "");
             progressForm.set(progressUrlIndex, urlItem);
         } else if (url.length() != 0) {
-            switch(type_of_install)
-            {
-            case DiscoveryApp.WEBSITE_INSTALL:{    
-            urlItem =
-                new StringItem(Resource.getString
+            switch(type_of_install) {
+                case DiscoveryApp.WEBSITE_INSTALL: {    
+                    urlItem =
+                        new StringItem(Resource.getString
                                (ResourceConstants.AMS_WEBSITE) + ": ", url);
-            break;
-            }
-            case DiscoveryApp.STORAGE_INSTALL:{
-            urlItem =
-                new StringItem(Resource.getString
+                    break;
+                }
+                case DiscoveryApp.STORAGE_INSTALL: {
+                    urlItem =
+                        new StringItem(Resource.getString
                                (ResourceConstants.AMS_STORAGEPATH) + ": ", url);
-            break;    
-            }
+                    break;    
+                }
             }
             progressForm.set(progressUrlIndex, urlItem);
         }
@@ -616,45 +623,44 @@ public class DiscoveryApp extends MIDlet implements CommandListener {
             startTime = System.currentTimeMillis();
 
             try {
-                switch(type_of_install)
-                {
-                    case DiscoveryApp.WEBSITE_INSTALL:{ 
-                    parent.displayProgressForm(
-                        Resource.getString(
-                        ResourceConstants.AMS_DISC_APP_GET_INSTALL_LIST),
-                        "", url, 0,
-                        Resource.getString(
-                        ResourceConstants.AMS_GRA_INTLR_CONN_GAUGE_LABEL));
-                        break;}
-                    case DiscoveryApp.STORAGE_INSTALL:{
-                    parent.displayProgressForm(
-                        Resource.getString(
-                        ResourceConstants.AMS_DISC_APP_PREPARE_INSTALL_STORAGE),
-                        "", url, 0,
-                        Resource.getString(
-                        ResourceConstants.AMS_GRA_INTLR_CONN_STORAGE_GAUGE_LABEL));
-                        break;}
+                switch(type_of_install) {
+                    case DiscoveryApp.WEBSITE_INSTALL: { 
+                        parent.displayProgressForm(
+                            Resource.getString(
+                            ResourceConstants.AMS_DISC_APP_GET_INSTALL_LIST),
+                            "", url, 0,
+                            Resource.getString(
+                            ResourceConstants.AMS_GRA_INTLR_CONN_GAUGE_LABEL));
+                            break;
+                            }
+                    case DiscoveryApp.STORAGE_INSTALL: {
+                        parent.displayProgressForm(
+                            Resource.getString(
+                            ResourceConstants.AMS_DISC_APP_PREPARE_INSTALL_STORAGE),
+                            "", url, 0,
+                            Resource.getString(
+                            ResourceConstants.AMS_GRA_INTLR_CONN_STORAGE_GAUGE_LABEL));
+                            break;
+                            }
                 }      
                 
                 conn = (StreamConnection)Connector.open(url, Connector.READ);
                 in = new InputStreamReader(conn.openInputStream());
                 try {
-                    switch(type_of_install)
-                    {
-                        case DiscoveryApp.WEBSITE_INSTALL:{    
-                     parent.updateProgressForm("", 0,
-                        Resource.getString(
-                        ResourceConstants.AMS_DISC_APP_GAUGE_LABEL_DOWNLOAD));
-                        break;
-                        }
-                        case DiscoveryApp.STORAGE_INSTALL:{
-                     parent.updateProgressForm("", 0,
-                        Resource.getString(
-                        ResourceConstants.AMS_DISC_APP_GAUGE_LABEL_STORAGE));
-                        break;       
-                        }
-
-                    }
+                    switch(type_of_install) {
+                        case DiscoveryApp.WEBSITE_INSTALL: {    
+                            parent.updateProgressForm("", 0,
+                            Resource.getString(
+                            ResourceConstants.AMS_DISC_APP_GAUGE_LABEL_DOWNLOAD));
+                            break;
+                            }
+                        case DiscoveryApp.STORAGE_INSTALL: {
+                            parent.updateProgressForm("", 0,
+                            Resource.getString(
+                            ResourceConstants.AMS_DISC_APP_GAUGE_LABEL_STORAGE));
+                            break;       
+                            }
+                   }
                     parent.installList =
                         SuiteDownloadInfo.getDownloadInfoFromPage(in);
 

@@ -95,14 +95,13 @@ public class FileInstaller extends Installer {
         //get the path from URI, but first encode it
         String jarFilename = getUrlPath(encodeURIPath(info.jarUrl));
                
-        //if jad attribute Midlet-Jar-Url begins with schema 'file:///'
+        //If jad attribute Midlet-Jar-Url begins with schema 'file:///'
         //then get jar path from it.
         //else searching jar file in same directory as a jad file
         
-        if(!info.jarUrl.startsWith("file:///"))
-        {
-        String jadFilename= getUrlPath(info.jadUrl);
-        jarFilename=jadFilename.substring(0,jadFilename.length()-4)+".jar";
+        if(!info.jarUrl.startsWith("file:///")) {
+            String jadFilename= getUrlPath(info.jadUrl);
+            jarFilename=jadFilename.substring(0,jadFilename.length()-4)+".jar";
         } 
                 
         jarFilename=decodeURIPath(jarFilename);                
@@ -174,36 +173,36 @@ public class FileInstaller extends Installer {
 
         return true;
     }
+
     /**
-     * decode URI path: if it contains symbol '%', than changes it on ' '.
-     * @param filenamepath - path to filename
-     * @return - decoded path
+     * Decode URI path: if it contains symbol '%', than changes it on ' '.
+     * @param filenamepath  path to filename
+     * @return  decoded path
      */
-    private String decodeURIPath(String filenamepath)
-    {
-     char[] fileChars=new char[filenamepath.length()];
+    private String decodeURIPath(String filenamepath) {
+        char[] fileChars=new char[filenamepath.length()];
         filenamepath.getChars(0,filenamepath.length(),fileChars,0);
-        for(int i=0;i<fileChars.length;i++)
-        {
-          if(fileChars[i]=='%')
-              fileChars[i]=' ';
-        }
+            for(int i=0;i<fileChars.length;i++)
+             {
+                if(fileChars[i]=='%')
+                fileChars[i]=' ';
+             }
         return new String(fileChars);
-    }     
+    }
+     
     /**
-     * encode URI path: fill symbols ' ' by '%' 
-     * @param filenamepath - path to filename
-     * @return - encoded path
+     * Encode URI path: fill symbols ' ' by '%'. 
+     * @param filenamepath  path to filename
+     * @return  encoded path
      */
-    private String encodeURIPath(String filenamepath)
-    {
-     char[] fileChars=new char[filenamepath.length()];
-     filenamepath.getChars(0,filenamepath.length(),fileChars,0);
-        for(int i=0;i<fileChars.length;i++)
-        {
-          if(fileChars[i]==' ')
-              fileChars[i]='%';
-        }
-     return new String(fileChars);
+    private String encodeURIPath(String filenamepath) {
+        char[] fileChars=new char[filenamepath.length()];
+        filenamepath.getChars(0,filenamepath.length(),fileChars,0);
+            for(int i=0;i<fileChars.length;i++)
+            {
+              if(fileChars[i]==' ')
+                  fileChars[i]='%';
+            }
+       return new String(fileChars);
     }      
 }

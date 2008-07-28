@@ -488,11 +488,11 @@ public class GraphicalInstaller extends MIDlet implements CommandListener {
                 return;
             }
                       
-            //MYYY--------if url!=null, look what type of installation we need    
+            // if url!=null, look what type of installation we need    
             if(url.startsWith("file:///"))    
-            installer=new FileInstaller();
+                installer=new FileInstaller();
             else 
-            installer=new HttpInstaller();
+                installer=new HttpInstaller();
                   
             label = getAppProperty("arg-2");
             if (label == null || label.length() == 0) {
@@ -687,16 +687,16 @@ public class GraphicalInstaller extends MIDlet implements CommandListener {
             settings = RecordStore.openRecordStore(SETTINGS_STORE, false);
 
             if (url != null) {
-                if(url.startsWith("file:///"))
-                   {url=url.substring(8,url.length());
+                if(url.startsWith("file:///")) {
+                    url=url.substring(8,url.length());
                     dos.writeUTF(url);
                     data = bas.toByteArray();                    
                     settings.setRecord(STORAGE_RECORD_ID, data, 0, data.length);
                    }                
-                else
-                {dos.writeUTF(url);
-                 data = bas.toByteArray();                 
-                 settings.setRecord(URL_RECORD_ID, data, 0, data.length);
+                else {
+                    dos.writeUTF(url);
+                    data = bas.toByteArray();                 
+                    settings.setRecord(URL_RECORD_ID, data, 0, data.length);
                 }
             }
              
@@ -815,9 +815,9 @@ public class GraphicalInstaller extends MIDlet implements CommandListener {
     private void installSuiteCommon(String action, String name, String url, int storageId,
             String successMessage, boolean updateFlag, boolean noConfirmation) {
         try {
-            //MYYY--------   
-            if(url.startsWith("file:///"))
-            {
+             
+            if(url.startsWith("file:///")) {
+
               createProgressForm(action, name, url, 0,
                         Resource.getString(
                             ResourceConstants.AMS_GRA_INTLR_CONN_STORAGE_GAUGE_LABEL));  
@@ -825,8 +825,7 @@ public class GraphicalInstaller extends MIDlet implements CommandListener {
                                       successMessage, updateFlag, noConfirmation);
               new Thread(backgroundInstaller).start();
             }    
-            else
-            {    
+            else {   
             
             createProgressForm(action, name, url, 0,
                         Resource.getString(
@@ -942,29 +941,29 @@ public class GraphicalInstaller extends MIDlet implements CommandListener {
     private void updateStatus(int status, InstallState state) {
         if (status == Installer.DOWNLOADING_JAD) {
             if(url.startsWith("file:///"))
-               updateProgressForm("", 0,
-                 Resource.getString
-                   (ResourceConstants.
-                   AMS_GRA_INTLR_DOWNLOADING_JAD_GAUGE_LABEL_STORAGE)); 
+                updateProgressForm("", 0,
+                Resource.getString
+                (ResourceConstants.
+                AMS_GRA_INTLR_DOWNLOADING_JAD_GAUGE_LABEL_STORAGE)); 
             else    
-               updateProgressForm("", 0,
-                 Resource.getString
-                   (ResourceConstants.
-                   AMS_GRA_INTLR_DOWNLOADING_JAD_GAUGE_LABEL));
+                updateProgressForm("", 0,
+                Resource.getString
+                (ResourceConstants.
+                AMS_GRA_INTLR_DOWNLOADING_JAD_GAUGE_LABEL));
             return;
         }
 
         if (status == Installer.DOWNLOADING_JAR) {
             if(url.startsWith("file:///"))
                 updateProgressForm(state.getJarUrl(), state.getJarSize(),
-                 Resource.getString
-                   (ResourceConstants.
-                   AMS_GRA_INTLR_DOWNLOADING_JAR_GAUGE_LABEL_STORAGE));
+                Resource.getString
+                (ResourceConstants.
+                AMS_GRA_INTLR_DOWNLOADING_JAR_GAUGE_LABEL_STORAGE));
             else    
                 updateProgressForm(state.getJarUrl(), state.getJarSize(),
-                 Resource.getString
-                   (ResourceConstants.
-                   AMS_GRA_INTLR_DOWNLOADING_JAR_GAUGE_LABEL));
+                Resource.getString
+                (ResourceConstants.
+                AMS_GRA_INTLR_DOWNLOADING_JAR_GAUGE_LABEL));
             return;
         }
 
@@ -1488,15 +1487,15 @@ public class GraphicalInstaller extends MIDlet implements CommandListener {
      */
     private void startJarDownload() {
         if(url.startsWith("file:///"))
-        updateProgressForm(backgroundInstaller.url, 0,
-                 Resource.getString
-                   (ResourceConstants.
-                   AMS_GRA_INTLR_CONN_STORAGE_GAUGE_LABEL));
+            updateProgressForm(backgroundInstaller.url, 0,
+            Resource.getString
+            (ResourceConstants.
+            AMS_GRA_INTLR_CONN_STORAGE_GAUGE_LABEL));
         else
             updateProgressForm(backgroundInstaller.url, 0,
-                 Resource.getString
-                   (ResourceConstants.
-                   AMS_GRA_INTLR_CONN_GAUGE_LABEL));
+            Resource.getString
+            (ResourceConstants.
+            AMS_GRA_INTLR_CONN_GAUGE_LABEL));
         // redisplay the progress form
         display.setCurrent(progressForm);
 
@@ -1526,10 +1525,12 @@ public class GraphicalInstaller extends MIDlet implements CommandListener {
                                   values));
             item.setLayout(Item.LAYOUT_NEWLINE_AFTER | Item.LAYOUT_2);
             infoForm.append(item);
+
             if(url.startsWith("file:///")) 
                 label.append(Resource.getString(ResourceConstants.AMS_STORAGEPATH));
             else
                 label.append(Resource.getString(ResourceConstants.AMS_WEBSITE));
+
             label.append(": ");
             item = new StringItem(label.toString(), backgroundInstaller.url);
             item.setLayout(Item.LAYOUT_NEWLINE_AFTER | Item.LAYOUT_2);
@@ -1820,11 +1821,11 @@ public class GraphicalInstaller extends MIDlet implements CommandListener {
                             break;
                         } else {
                             if(url.startsWith("file:///"))
-                            msg = Resource.getString(
-                                ResourceConstants.AMS_GRA_INTLR_FILE_NOT_FOUND)+":"+url;
+                                msg = Resource.getString(
+                                    ResourceConstants.AMS_GRA_INTLR_FILE_NOT_FOUND)+":"+url;
                             else    
-                            msg = Resource.getString(
-                                ResourceConstants.AMS_GRA_INTLR_CONN_DROPPED);
+                                msg = Resource.getString(
+                                    ResourceConstants.AMS_GRA_INTLR_CONN_DROPPED);
                         }
                     } catch (Throwable ex) {
                         if (Logging.TRACE_ENABLED) {
