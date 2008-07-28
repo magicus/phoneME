@@ -46,6 +46,8 @@ import com.sun.midp.events.EventQueue;
 import com.sun.midp.events.NativeEvent;
 import com.sun.midp.events.EventTypes;
 
+import java.util.Enumeration;
+
 /**
  * This is an implementation of the ApplicationManager interface
  * for the MVM mode of the VM capable of running with
@@ -61,7 +63,8 @@ public class MVMManager extends MIDlet
     implements MIDletProxyListListener,
                 DisplayControllerListener, 
                 ApplicationManager,
-                ODTControllerEventConsumer {
+                ODTControllerEventConsumer,
+                InstallerEventConsumer {
 
     /** Constant for the discovery application class name. */
     private static final String DISCOVERY_APP =
@@ -94,6 +97,9 @@ public class MVMManager extends MIDlet
     /** If on device debug is active, ID of the suite under debug. */
     private int suiteUnderDebugId = MIDletSuite.UNUSED_SUITE_ID;
 
+    /** A synchronization object. */
+    private static final Object waitForDestroy = new Object();
+
     /**
      * Create and initialize a new MVMManager MIDlet.
      */
@@ -102,6 +108,7 @@ public class MVMManager extends MIDlet
 
         EventQueue eq = EventQueue.getEventQueue();
         new ODTControllerEventListener(eq, this);
+        new InstallerEventListener(eq, this);
 
         midletSuiteStorage = MIDletSuiteStorage.getMIDletSuiteStorage();
 
@@ -208,7 +215,50 @@ public class MVMManager extends MIDlet
     public void handleODDSuiteRemovedEvent(int suiteId) {
         appManagerUI.notifySuiteRemoved(suiteId);
     }
-    
+
+    /**
+      * Processes MIDP_KILL_MIDLETS_EVENT.
+      *
+      * @param suiteId ID of the midlet suite from which the midlets
+      *                must be killed
+      * @param isolateId ID of the isolate requested this operation
+      */
+     public void handleKillMIDletsEvent(int suiteId, int isolateId) {
+         try {
+             int timeout = 1000 * Configuration.getIntProperty(
+                     "destoryMIDletTimeout", 5);
+             Enumeration proxies = midletProxyList.getMIDlets();
+
+             while (proxies.hasMoreElements()) {
+                 MIDletProxy mp = (MIDletProxy)proxies.nextElement();
+                 if (mp.getSuiteId() != suiteId) {
+                     continue;
+                 }
+
+                 // kill the running midlet and wait until it is destroyed
+                 mp.destroyMidlet();
+                 
+                 try {
+                     synchronized(waitForDestroy) {
+                         waitForDestroy.wait(timeout);
+                     }
+                 } catch (InterruptedException ie) {
+                     // ignore
+                 }
+             }
+         } catch (Exception ex) {
+             displayError.showErrorAlert(null, ex, null, null);
+         } finally {
+             // notify the listeners that the midlets were killed
+             NativeEvent event = new NativeEvent(
+                     EventTypes.MIDP_MIDLETS_KILLED_EVENT);
+             event.intParam1 = suiteId;
+
+             EventQueue eq = EventQueue.getEventQueue();
+             eq.sendNativeEventToIsolate(event, isolateId);
+         }
+     }
+
     // =================================================================
     // ---------- Operations that can be performed on Midlets ----------
 
@@ -302,6 +352,10 @@ public class MVMManager extends MIDlet
             }
 
             suiteUnderDebugId = MIDletSuite.UNUSED_SUITE_ID;
+        }
+
+        synchronized(waitForDestroy) {
+            waitForDestroy.notify();
         }
 
         appManagerUI.notifyMidletExited(midlet);
