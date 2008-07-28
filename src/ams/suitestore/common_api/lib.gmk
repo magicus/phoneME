@@ -44,7 +44,7 @@ SUBSYSTEM_AMS_I3TEST_JAVA_FILES +=
 endif
 
 # vpath for ( common ) module 
-ifeq ($(USE_EXTERNAL_STORAGE),true)
+ifeq ($(USE_PLATFORM_STORAGE),true)
 vpath % $(COMMON_API_DIR)/javacall/native
 else
 vpath % $(COMMON_API_DIR)/reference/native

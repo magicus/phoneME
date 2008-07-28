@@ -52,7 +52,7 @@ midp_midlet_event_reason2javacall(jint midpEventReason);
 
 void midp_listener_ams_operation_completed(const NamsEventData* pEventData);
 void midp_listener_ams_midlet_state_changed(const NamsEventData* pEventData);
-void midp_listener_ams_midlet_ui_state_changed(const NamsEventData* pEventData);
+void midp_listener_ams_ui_state_changed(const NamsEventData* pEventData);
 
 /**
  * Platform invokes this function to start the MIDP system.
@@ -69,7 +69,7 @@ javacall_result javanotify_ams_system_start() {
 
     midp_add_event_listener(midp_listener_ams_operation_completed,
                             SYSTEM_EVENT_LISTENER);
-    midp_add_event_listener(midp_listener_ams_midlet_ui_state_changed,
+    midp_add_event_listener(midp_listener_ams_ui_state_changed,
                             DISPLAY_EVENT_LISTENER);
     midp_add_event_listener(midp_listener_ams_midlet_state_changed,
                             MIDLET_EVENT_LISTENER);

@@ -185,7 +185,7 @@ midp_suite_get_class_path(SuiteIdType suiteId,
                           StorageIdType storageId,
                           jboolean checkSuiteExists,
                           pcsl_string *classPath) {
-    return _get_class_path(suiteId, storageId, FALSE, classPath);
+    return _get_class_path(suiteId, storageId, KNI_FALSE, classPath);
 
 }
 
