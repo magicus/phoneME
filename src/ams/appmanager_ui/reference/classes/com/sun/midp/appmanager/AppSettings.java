@@ -62,13 +62,17 @@ public class AppSettings extends Form
     private Command cancelCmd =
         new Command(Resource.getString(ResourceConstants.CANCEL),
                     Command.CANCEL, 1);
-    /** Command object for "OK" command for the alert
-     * that is shown during choice selection validation. */
+    /**
+     * Command object for "OK" command for the alert
+     * that is shown during choice selection validation.
+     */
     private Command okChoiceSelectionCmd =
         new Command(Resource.getString(ResourceConstants.OK),
                     Command.OK, 1);
-    /** Command object for "Cancel" command for  the alert
-     * that is shown during choice selection validation. */
+    /**
+     * Command object for "Cancel" command for  the alert
+     * that is shown during choice selection validation.
+     */
     private Command cancelChoiceSelectionCmd =
         new Command(Resource.getString(ResourceConstants.CANCEL),
                     Command.CANCEL, 1);
@@ -317,7 +321,7 @@ public class AppSettings extends Form
             System.arraycopy(curLevels, 0, tmpLevels, 0, curLevels.length);
             
             pushInterruptSetting = midletSuite.getPushInterruptSetting();
-            tmpPushInterruptSetting= pushInterruptSetting;
+            tmpPushInterruptSetting = pushInterruptSetting;
             pushOptions = midletSuite.getPushOptions();
 
             values[0] = suiteDisplayName;

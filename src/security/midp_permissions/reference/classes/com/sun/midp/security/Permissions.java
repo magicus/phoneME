@@ -1039,7 +1039,7 @@ public final class Permissions {
                            Resource.getString(otherNameId)};
 
         return Resource.getString(
-            ResourceConstants.PERMISSION_SECURITY_WARNING_ERROR_MESSAGE,
+            ResourceConstants.PERMISSION_SECURITY_WARNING_MESSAGE,
                 values);
     }
 }
