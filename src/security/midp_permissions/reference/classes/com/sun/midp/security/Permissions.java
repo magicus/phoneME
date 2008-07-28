@@ -891,7 +891,7 @@ public final class Permissions {
         byte level;
 
         if (newLevel != BLANKET_GRANTED) {
-            return;
+            return null;
         }
 
         if (group == NET_ACCESS_GROUP) {
@@ -914,7 +914,11 @@ public final class Permissions {
                         NET_ACCESS_GROUP, MULTIMEDIA_GROUP);
             }
 
-            return;
+            level = getPermissionGroupLevel(current, AUTO_INVOCATION_GROUP);
+            if (level == BLANKET_GRANTED || level == BLANKET) {
+                return createMutuallyExclusiveErrorMessage(NET_ACCESS_GROUP,
+                        AUTO_INVOCATION_GROUP);
+            }
         }
 
         if (group == LOCAL_CONN_GROUP) {
@@ -930,8 +934,6 @@ public final class Permissions {
                 return createInsecureCombinationWarningMessage(
                     LOCAL_CONN_GROUP, MULTIMEDIA_GROUP);
             }
-
-            return;
         }
 
         if (group == READ_USER_DATA_GROUP) {
@@ -951,7 +953,7 @@ public final class Permissions {
         if (group == MULTIMEDIA_GROUP) {
             level = getPermissionGroupLevel(current, NET_ACCESS_GROUP);
             if (level == BLANKET_GRANTED || level == BLANKET) {
-                createInsecureCombinationWarningMessage(
+                return createInsecureCombinationWarningMessage(
                     MULTIMEDIA_GROUP, NET_ACCESS_GROUP);
             }
 
@@ -961,6 +963,16 @@ public final class Permissions {
                     MULTIMEDIA_GROUP, LOCAL_CONN_GROUP);
             }
         }
+        
+        if (group == AUTO_INVOCATION_GROUP) {
+            level = getPermissionGroupLevel(current, NET_ACCESS_GROUP);
+            if (level == BLANKET_GRANTED || level == BLANKET) {
+                return createMutuallyExclusiveErrorMessage(AUTO_INVOCATION_GROUP,
+                        NET_ACCESS_GROUP);
+            }
+        }
+
+        return null;
     }
 
     /**
@@ -989,13 +1001,9 @@ public final class Permissions {
      */
     private static String createInsecureCombinationWarningMessage(
             PermissionGroup groupToSet, PermissionGroup blanketGroup) {
-        
-        String[] values = {Resource.getString(groupToSet.getName()),
-                           Resource.getString(blanketGroup.getName())};
 
-        return Resource.getString(
-            ResourceConstants.PERMISSION_SECURITY_WARNING_ERROR_MESSAGE,
-                values);
+        return createInsecureCombinationWarningMessage(groupToSet.getName(),
+            blanketGroup.getName());
     }
 
     /**
@@ -1013,6 +1021,25 @@ public final class Permissions {
 
         return Resource.getString(
             ResourceConstants.PERMISSION_MUTUALLY_EXCLUSIVE_ERROR_MESSAGE,
+                values);
+    }
+
+    /**
+     * Create a potentially dangerous permission setting warning message.
+     *
+     * @param nameId ID of the first group in the message
+     * @param otherNameId ID of the name of other group
+     *
+     * @return Translated error message with both group names in it
+     */
+    private static String createInsecureCombinationWarningMessage(
+            int nameId, int otherNameId) {
+
+        String[] values = {Resource.getString(nameId),
+                           Resource.getString(otherNameId)};
+
+        return Resource.getString(
+            ResourceConstants.PERMISSION_SECURITY_WARNING_ERROR_MESSAGE,
                 values);
     }
 }
