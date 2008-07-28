@@ -260,7 +260,9 @@ public final class Permissions {
 
     /** Read Message permission group. */
     static final PermissionGroup READ_MESSAGE_GROUP = new PermissionGroup(
-        0, 0, 0,
+        ResourceConstants.AMS_MGR_MSG_SETTINGS,
+        ResourceConstants.AMS_MGR_MSG_SETTINGS_QUE,
+        ResourceConstants.AMS_MGR_MSG_SETTINGS_QUE_DONT,
         ResourceConstants.PERMISSION_RECEIVE_MESSAGE_DIALOG_TITLE,
         ResourceConstants.PERMISSION_RECEIVE_MESSAGE_QUE, 0,
         BLANKET, BLANKET, BLANKET, BLANKET);
@@ -275,7 +277,7 @@ public final class Permissions {
         ResourceConstants.AMS_MGR_MSG_SETTINGS_QUE_DONT,
         ResourceConstants.PERMISSION_SEND_MESSAGE_DIALOG_TITLE,
         ResourceConstants.PERMISSION_SEND_MESSAGE_QUE, 0,
-        ONESHOT, ONESHOT, ONESHOT, ONESHOT);
+        BLANKET, ONESHOT, ONESHOT, ONESHOT);
 
     /** Application Auto Invocation permission group. */
     static final PermissionGroup AUTO_INVOCATION_GROUP = new PermissionGroup(
@@ -596,11 +598,17 @@ public final class Permissions {
      *
      * @return array of permission groups
      */
-    public static PermissionGroup[] getSettingGroups() {
+    public static PermissionGroup[] getSettingGroups(byte[] levels) {
         PermissionGroup[] groups = new PermissionGroup[14];
 
         groups[0] = NET_ACCESS_GROUP;
-        groups[1] = SEND_MESSAGE_GROUP;
+
+        if (getPermissionGroupLevel(levels, SEND_MESSAGE_GROUP) != NEVER) {
+            groups[1] = SEND_MESSAGE_GROUP;
+        } else {
+            groups[1] = READ_MESSAGE_GROUP;
+        }
+
         groups[2] = AUTO_INVOCATION_GROUP;
         groups[3] = LOCAL_CONN_GROUP;
         groups[4] = MULTIMEDIA_GROUP;
@@ -686,18 +694,21 @@ public final class Permissions {
          * For some reason specs do not want separate send and
          * receive message groups, but want the questions and interrupt
          * level to be different for send, so internally we have 2 groups
-         * that must be kept in synch. The setting dialog only presents
-         * the send message group, see the getSettingGroups method.
+         * that must be kept in synch.
+         * The setting dialog only presents one message group, see the
+         * getSettingGroups method. In most cases, it's the send group.
+         * The exception from this rule if there are no send permissions
+         * present in MIDlet suite properties. If so, the read message
+         * group is displayed in the dialog.
          */
         if (group == SEND_MESSAGE_GROUP) {
             /*
-             * Since the send group have a max level of oneshot, this method
-             * will only code get used by the settings dialog, when a user
-             * changes the send group from blanket denied to oneshot.
+             * Keep both subgoups in synch when SEND_MESSAGE_GROUP is
+             * changed.
              */
             if (level != BLANKET_DENIED) {
                 /*
-                 * If send is set to to any thing but blanket denied
+                 * If send is set to any thing but blanket denied
                  * then receive is set to blanket.
                  */
                 level = BLANKET_GRANTED;
@@ -712,15 +723,16 @@ public final class Permissions {
             return;
         }
 
-        if (group == READ_MESSAGE_GROUP && level == BLANKET_DENIED) {
+        if (group == READ_MESSAGE_GROUP) {
             /*
-             * This code will only be used when the user says no during
-             * a message read runtime permission prompt.
+             * Keep both subgoups in synch when READ_MESSAGE_GROUP is
+             * changed.
              */
-
-            for (int i = 0; i < permissionSpecs.length; i++) {
-                if (permissionSpecs[i].group == SEND_MESSAGE_GROUP) {
-                    setPermission(current, i, BLANKET_DENIED);
+            if (level != BLANKET_GRANTED) {
+                for (int i = 0; i < permissionSpecs.length; i++) {
+                    if (permissionSpecs[i].group == SEND_MESSAGE_GROUP) {
+                        setPermission(current, i, level);
+                    }
                 }
             }
         }

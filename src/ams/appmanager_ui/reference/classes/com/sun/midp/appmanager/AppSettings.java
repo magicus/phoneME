@@ -308,8 +308,6 @@ public class AppSettings extends Form
         initialSetting = null;
 
         try {
-            groups = Permissions.getSettingGroups();
-
             midletSuite = midletSuiteStorage.getMIDletSuite(suiteId, false);
             initMidletSuiteInfo(midletSuite);
 
@@ -355,6 +353,8 @@ public class AppSettings extends Form
                     interruptSetting, suiteDisplayName,
                     ResourceConstants.AMS_MGR_SETTINGS_PUSH_OPT_ANSWER,
                     PUSH_OPTION_1_ID);
+
+           groups = Permissions.getSettingGroups(curLevels);
 
            groupSettings = new RadioButtonSet[groups.length];
 
