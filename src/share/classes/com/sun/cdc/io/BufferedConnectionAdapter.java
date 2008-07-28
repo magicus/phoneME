@@ -106,7 +106,6 @@ public abstract class BufferedConnectionAdapter extends ConnectionBaseAdapter {
      * @exception  IOException  if an I/O error occurs.
      */
     public int readBytes(byte b[], int off, int len) throws IOException {
-        int bytesRead;
 
         if (count == 0) {
             if (eof) {
