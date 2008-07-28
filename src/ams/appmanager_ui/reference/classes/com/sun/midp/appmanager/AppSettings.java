@@ -171,6 +171,11 @@ public class AppSettings extends Form
             // restore choice selection
             if (curChoice != null) {
                 curChoice.setSelectedButton(curChoice.lastSelectedId);
+                display.setCurrentItem(curChoice);
+            }
+        } else if (c == okChoiceSelectionCmd) {
+            if (curChoice != null) {
+                display.setCurrentItem(curChoice);
             }
         }
     }
@@ -250,7 +255,7 @@ public class AppSettings extends Form
                 if (warning != null) {
                     curChoice = groupSettings[selected];
                     Alert alert = new Alert(Resource.getString(ResourceConstants.WARNING),
-                            warning, null, AlertType.CONFIRMATION);
+                            warning, null, AlertType.WARNING);
                     alert.addCommand(okChoiceSelectionCmd);
                     alert.addCommand(cancelChoiceSelectionCmd);
                     alert.setCommandListener(this);
