@@ -1,6 +1,4 @@
 /*
- * @(#)Protocol.java	1.50 06/10/16
- *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.  
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER  
  *   
@@ -50,12 +48,13 @@ import javax.microedition.io.ConnectionNotFoundException;
 import com.sun.cdc.io.ConnectionBase;
 import com.sun.cdc.io.DateParser;
 
+import java.security.AccessController;
+import java.security.PrivilegedAction;
 /**
  * This class implements the necessary functionality
  * for an HTTP connection. 
  */
 public class Protocol extends ConnectionBase implements HttpConnection {
-    private int index;          // used by URL parsing functions
     protected String url;
     protected String protocol;
     protected String host;
@@ -123,20 +122,21 @@ public class Protocol extends ConnectionBase implements HttpConnection {
         protocol = "http";
 	socket = null;
 
-        // Check for the HTTP proxy only if no security manager exists
-        java.lang.SecurityManager sm = System.getSecurityManager();
-        if (sm == null){
-	    String http_proxy;
-	    String profileTemp = System.getProperty("microedition.profiles");
-	    if (profileTemp != null && profileTemp.indexOf("MIDP") != -1) {
-		// We want to look for a MIDP property specifying proxies.
-		http_proxy = System.getProperty("com.sun.midp.io.http.proxy");
-	    } else {
-		// Default to CDC
-		http_proxy = System.getProperty("com.sun.cdc.io.http.proxy");
-	    }
-	    parseProxy(http_proxy);
-        }
+        AccessController.doPrivileged(new PrivilegedAction() {
+            public Object run() {
+                String http_proxy;
+                String profileTemp = System.getProperty("microedition.profiles");
+                if (profileTemp != null && profileTemp.indexOf("MIDP") != -1) {
+                    // We want to look for a MIDP property specifying proxies.
+                    http_proxy = System.getProperty("com.sun.midp.io.http.proxy");
+                } else {
+                    // Default to CDC
+                    http_proxy = System.getProperty("com.sun.cdc.io.http.proxy");
+                }
+                parseProxy(http_proxy);
+                return null;
+            }
+        });
     }
 
     /*
@@ -829,7 +829,7 @@ public class Protocol extends ConnectionBase implements HttpConnection {
         } else {
             hsc = new HttpStreamConnection(proxyHost, proxyPort);
         }
-        return hsc;
+        return (StreamConnection) hsc;
     }
     
     protected void connectStream() throws IOException {
@@ -846,7 +846,8 @@ public class Protocol extends ConnectionBase implements HttpConnection {
             reqProperties.put("Content-Length",
                                "" + (out == null ? 0 : out.size()));
         }
-
+        
+        /* // DEBUG
         String reqLine ;
 
         if (proxyHost == null) {
@@ -866,6 +867,7 @@ public class Protocol extends ConnectionBase implements HttpConnection {
         // DEBUG:  System.out.print("Request: " + reqLine);
         // we should not write to the streamoutput as we are in set up state and not connected
         //streamOutput.write((reqLine).getBytes());
+        */
 
         requested = true;
 
@@ -1055,145 +1057,42 @@ public class Protocol extends ConnectionBase implements HttpConnection {
             streamConnection.close();
         }    
     }
-    
-    
-    private String parseProtocol() throws IOException {
-        int n = url.indexOf(':');
-        if (n <= 0) throw new IOException("malformed URL");
-        String token = url.substring(0, n);
-        if (!token.equals("http")) {
-            throw new IOException("protocol must be 'http'");
-        }
-        index = n + 1;
-        return token;
-    }
-
-    private String parseHostname() throws IOException {
-        String buf = url.substring(index);
-        if (buf.startsWith("//")) {
-            buf = buf.substring(2);
-            index += 2;
-        }
-        int n = buf.indexOf(':');
-        if (n < 0) n = buf.indexOf('/');
-        if (n < 0) n = buf.length();
-
-        int beginIndex = buf.indexOf("[");
-        int endIndex = buf.indexOf("]");
-        
-        /* IPv6 addresses are enclosed within [] */
-        if (beginIndex > endIndex) {
-            throw new IllegalArgumentException("invalid host name " + buf);
-        }
-        if ((beginIndex ==0) && (endIndex >0)) {
-            return parseIPv6Address(buf, endIndex);
-        } else {
-            /* parse IPv4 Address */
-            String token = buf.substring(0, n);
-            index += n;
-            return token;
-        }
-    }
-
-    private String parseIPv6Address(String address, int closing) {
-        index += closing+1;
-        /* beginning '[' and closing ']' should be included in the hostname*/
-        return address.substring(0, closing+1);
-    }
-
-    private int parsePort(int defaultPort) throws IOException {
-        int p = defaultPort;
-        String buf = url.substring(index);
-        if (!buf.startsWith(":")) return p;
-        buf = buf.substring(1);
-        index++;
-        int n = buf.indexOf('/');
-        if (n < 0) n = buf.indexOf('?');
-        if (n < 0) n = buf.length();
-        try { 
-            p = Integer.parseInt(buf.substring(0, n));
-            if (p <= 0) {
-                throw new NumberFormatException();
-            }
-        }catch (NumberFormatException nfe) {
-            throw new IllegalArgumentException("invalid port");
-        }
-        index += n;
-        return p;
-    }
-
-    private String parseFile() throws IOException {
-        String token = "";
-        String buf = url.substring(index);
-        if (buf.length() == 0) return token;
-        if (!buf.startsWith("/") && !buf.startsWith("?")) {
-            throw new IOException("invalid path");
-        }
-        int n = buf.indexOf('#');
-        int m = buf.indexOf('?');
-        if (n < 0 && m < 0){
-            n = buf.length();    // Url does not contain any query or frag id.
-        } else if (n < 0 || (m > 0 && m < n)){
-            n = m ;              // Use query loc if no frag id is present
-                                 // or if query comes before frag id.
-                                 // otherwise just strip the frag id.
-        }
-        token = buf.substring(0, n);
-        index += n;
-        return token;
-    }
-
-    private String parseRef() throws IOException {
-        String buf = url.substring(index);
-        if (buf.length() == 0 || buf.charAt(0) == '?') return "";
-        if (!buf.startsWith("#")) {
-            throw new IOException("invalid ref");
-        }
-        int n = buf.indexOf('?');
-        if (n < 0) n = buf.length();
-        index += n;
-        return buf.substring(1, n);
-    }
-
-    private String parseQuery() throws IOException {
-        String buf = url.substring(index);
-        if (buf.length() == 0) return "";
-        if (buf.startsWith("?")) {
-            String token = buf.substring(1);
-            int n = buf.indexOf('#');
-            if (n > 0) {
-                token = buf.substring(1, n);
-                index += n;
-            }
-            return token;
-        }
-        return "" ;
-    }
 
     protected synchronized void parseURL() throws IOException {
-        index = 0;
-        host = parseHostname();
-        if (protocol.equals("http")) {
-            port = parsePort(80);
-        } else {
-            port = parsePort(443);
+        try {
+            URL loc = new URL(url.startsWith("//") ? protocol+":"+url : url);
+            host = loc.getHost();
+            if (-1 == (port = loc.getPort())) {
+                port = loc.getProtocol().equals("http") ? 80 : 443;
+            }
+            if (null == (file = loc.getPath())) {
+                file = "";
+            }
+            if (null == (query = loc.getQuery())) {
+                query = "";
+            }
+            if (null == (ref = loc.getRef())) {
+                ref = "";
+            }
+        } catch (MalformedURLException ex) {
+            throw new IllegalArgumentException("Malformed URL: "+url);
         }
-        file = parseFile();
-        query = parseQuery();
-        ref = parseRef();
     }
 
     // The proxy value, if any, is specified as a host:port
     // string. Use the convenience routines to parse it.
     protected synchronized void parseProxy(String proxyVal) {
 	if (proxyVal != null) {
-	    index = 0;
-	    try {
-		proxyHost = parseHostname();
-		proxyPort = parsePort(80);
-	    } catch (IOException ioe) {
-		// We cannot interpret the proxy.
-	    }
+            try {
+                URL proxyURL = new URL(proxyVal.startsWith("http://") ? proxyVal
+                        : "http://" + proxyVal);
+                proxyHost = proxyURL.getHost(); // null is ok.
+                if (-1 == (proxyPort = proxyURL.getPort())) {
+                    proxyPort = 80;
+                }
+            } catch (MalformedURLException ex) {
+                throw new IllegalArgumentException("Malformed URL: "+proxyVal);
+            }
 	}
 	return;
     }
