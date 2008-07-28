@@ -78,9 +78,9 @@ class AppManagerUIImpl implements AppManagerUI {
 	mainMenu.setLayout(new BorderLayout());
 	mainContainer = new Container();
 	mainContainer.setLayout(new GridLayout(3, 3));
-	mainContainer.addComponent(new Button("label1"));
-	mainContainer.addComponent(new Button("label2"));
-	mainContainer.addComponent(new Button("label3"));
+//         mainContainer.addComponent(new Button("label1"));
+//         mainContainer.addComponent(new Button("label2"));
+//         mainContainer.addComponent(new Button("label3"));
 	mainMenu.addComponent(BorderLayout.CENTER, mainContainer);
 
 	//mainMenu.addComponent(new Label("hello, world!"));	/*works!*/
@@ -111,31 +111,32 @@ class AppManagerUIImpl implements AppManagerUI {
      */
     public void itemAppended(RunningMIDletSuiteInfo suiteInfo) {
 	/* Convert image */
-//         int width = suiteInfo.icon.getWidth();
-//         int height = suiteInfo.icon.getHeight();
-//         int[] tmp = new int[width * height];
-//         suiteInfo.icon.getRGB(tmp, 0, width, 0, 0, width, height);
-//         Image tmpIcon = Image.createImage(tmp, width, height);
-//
-//         /* build button */
-//         Button b = new Button(suiteInfo.displayName, tmpIcon){
-//             public Image getPressedIcon() {
-//                 Image i = getIcon();
-//                 return i.scaled((int) (i.getWidth() * 0.8), (int) (i.getHeight() * 0.8));
-//             }
-//
-//             public Image getRolloverIcon() {
-//                 Image i = getIcon();
-//                 return i.scaled((int) (i.getWidth() * 1.2), (int) (i.getHeight() * 1.2));
-//             }
-//         };
-//         b.getStyle().setBgTransparency(0);
-//         b.setBorderPainted(false);
-//         b.setAlignment(Label.CENTER);
-//         b.setTextPosition(Label.BOTTOM);
+	int width = suiteInfo.icon.getWidth();
+	int height = suiteInfo.icon.getHeight();
+	int[] tmp = new int[width * height];
+	suiteInfo.icon.getRGB(tmp, 0, width, 0, 0, width, height);
+	Image tmpIcon = Image.createImage(tmp, width, height);
+
+	/* build button */
+	Button b = new Button(suiteInfo.displayName, tmpIcon){
+	    public Image getPressedIcon() {
+		Image i = getIcon();
+		return i.scaled((int) (i.getWidth() * 0.8), (int) (i.getHeight() * 0.8));
+	    }
+
+	    public Image getRolloverIcon() {
+		Image i = getIcon();
+		return i.scaled((int) (i.getWidth() * 1.2), (int) (i.getHeight() * 1.2));
+	    }
+	};
+	b.getStyle().setBgTransparency(0);
+	b.setBorderPainted(false);
+	b.setAlignment(Label.CENTER);
+	b.setTextPosition(Label.BOTTOM);
+
 	/* Add button */
-	//mainContainer.addComponent(b);
-	//mainMenu.addComponent(b);
+	mainContainer.addComponent(b);
+
 
 	//elementWidth = Math.max(b.getPreferredW(), elementWidth);
 
@@ -307,9 +308,6 @@ class AppManagerUIImpl implements AppManagerUI {
     public Displayable getMainDisplayable() {
         return null;
     }
-
-
-
 }
 
 
