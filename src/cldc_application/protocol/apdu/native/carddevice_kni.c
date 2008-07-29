@@ -33,6 +33,7 @@
 #include <carddevice.h>
 
 #include <javacall_carddevice.h>
+#include <stdlib.h>
 
 /** Configuration exception */
 static char cardDeviceException[] = 
