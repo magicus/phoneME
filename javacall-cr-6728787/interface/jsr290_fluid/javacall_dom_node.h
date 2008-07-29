@@ -1,26 +1,26 @@
 /*
-* Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
-* DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
-* 
-* This program is free software; you can redistribute it and/or
-* modify it under the terms of the GNU General Public License version
-* 2 only, as published by the Free Software Foundation.
-* 
-* This program is distributed in the hope that it will be useful, but
-* WITHOUT ANY WARRANTY; without even the implied warranty of
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
-* General Public License version 2 for more details (a copy is
-* included at /legal/license.txt).
-* 
-* You should have received a copy of the GNU General Public License
-* version 2 along with this work; if not, write to the Free Software
-* Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
-* 02110-1301 USA
-* 
-* Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
-* Clara, CA 95054 or visit www.sun.com if you need additional
-* information or have any questions.
-*/
+ * Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+ * 
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License version
+ * 2 only, as published by the Free Software Foundation.
+ * 
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * General Public License version 2 for more details (a copy is
+ * included at /legal/license.txt).
+ * 
+ * You should have received a copy of the GNU General Public License
+ * version 2 along with this work; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA
+ * 
+ * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+ * Clara, CA 95054 or visit www.sun.com if you need additional
+ * information or have any questions.
+ */
 
 #ifndef __JAVACALL_DOM_NODE_H_
 #define __JAVACALL_DOM_NODE_H_
@@ -83,7 +83,7 @@ javacall_dom_node_get_node_name(javacall_handle handle,
  * @return JAVACALL_OK if all done successfuly,
  *         JAVACALL_OUT_OF_MEMORY if length of the returend string is more then 
  *                                specified in ret_value_len,
- *         JAVACALL_FAIL if DOMSTRING_SIZE_ERR occured,
+ *         JAVACALL_FAIL if [DOMSTRING_SIZE_ERR] occured,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
@@ -101,7 +101,7 @@ javacall_dom_node_get_node_value(javacall_handle handle,
  * @param node_value the value of the node
  * 
  * @return JAVACALL_OK if all done successfuly,
- *         JAVACALL_FAIL if NO_MODIFICATION_ALLOWED_ERR occured,
+ *         JAVACALL_FAIL if [NO_MODIFICATION_ALLOWED_ERR] occured,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
@@ -696,7 +696,7 @@ javacall_dom_node_has_attributes(javacall_handle handle,
  * @return JAVACALL_OK if all done successfuly,
  *         JAVACALL_OUT_OF_MEMORY if length of the returend string is more then 
  *                                specified in ret_value_len,
- *         JAVACALL_FAIL if DOMSTRING_SIZE_ERR occured,
+ *         JAVACALL_FAIL if [DOMSTRING_SIZE_ERR] occured,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
@@ -750,7 +750,7 @@ javacall_dom_node_get_text_content(javacall_handle handle,
  * @param text_content a String containing the new text content for this node
  * 
  * @return JAVACALL_OK if all done successfuly,
- *         JAVACALL_FAIL if NO_MODIFICATION_ALLOWED_ERR occured,
+ *         JAVACALL_FAIL if [NO_MODIFICATION_ALLOWED_ERR] occured,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
@@ -795,6 +795,172 @@ javacall_dom_node_get_feature(javacall_handle handle,
                               javacall_const_utf16_string feature,
                               javacall_const_utf16_string version,
                               /* OUT */ javacall_handle* ret_value);
+
+/**
+ * This method allows the registration of event listeners on the event 
+ * target. If an <code>EventListener</code> is added to an 
+ * <code>EventTarget</code> while it is processing an event, it will not 
+ * be triggered by the current actions but may be triggered during a 
+ * later stage of event flow, such as the bubbling phase. 
+ * <br> If multiple identical <code>EventListener</code>s are registered 
+ * on the same <code>EventTarget</code> with the same parameters the 
+ * duplicate instances are discarded. They do not cause the 
+ * <code>EventListener</code> to be called twice and since they are 
+ * discarded they do not need to be removed with the 
+ * <code>removeEventListener</code> method. 
+ * 
+ * @param handle Pointer to the object representing this eventtarget.
+ * @param type The event type for which the user is registering
+ * @param listener Pointer to the object of
+ *   the <code>listener</code> parameter takes an interface 
+ *   implemented by the user which contains the methods to be called 
+ *   when the event occurs.
+ * @param use_capture If true, <code>use_capture</code> indicates that the 
+ *   user wishes to initiate capture. After initiating capture, all 
+ *   events of the specified type will be dispatched to the registered 
+ *   <code>EventListener</code> before being dispatched to any 
+ *   <code>EventTargets</code> beneath them in the tree. Events which 
+ *   are bubbling upward through the tree will not trigger an 
+ *   <code>EventListener</code> designated to use capture.
+ * 
+ * @return JAVACALL_OK if all done successfuly,
+ *         JAVACALL_NOT_IMPLEMENTED when the stub was called
+ */
+javacall_result
+javacall_dom_eventtarget_add_event_listener(javacall_handle handle,
+                                            javacall_const_utf16_string type,
+                                            javacall_handle listener,
+                                            javacall_bool use_capture);
+
+/**
+ * This method allows the removal of event listeners from the event 
+ * target. If an <code>EventListener</code> is removed from an 
+ * <code>EventTarget</code> while it is processing an event, it will not 
+ * be triggered by the current actions. <code>EventListener</code>s can 
+ * never be invoked after being removed.
+ * <br>Calling <code>removeEventListener</code> with arguments which do 
+ * not identify any currently registered <code>EventListener</code> on 
+ * the <code>EventTarget</code> has no effect.
+ * 
+ * @param handle Pointer to the object representing this eventtarget.
+ * @param type Specifies the event type of the <code>EventListener</code> 
+ *   being removed. 
+ * @param listener Pointer to the object of
+ *   the <code>EventListener</code> parameter indicates the 
+ *   <code>EventListener </code> to be removed. 
+ * @param use_capture Specifies whether the <code>EventListener</code> 
+ *   being removed was registered as a capturing listener or not. If a 
+ *   listener was registered twice, one with capture and one without, 
+ *   each must be removed separately. Removal of a capturing listener 
+ *   does not affect a non-capturing version of the same listener, and 
+ *   vice versa. 
+ * 
+ * @return JAVACALL_OK if all done successfuly,
+ *         JAVACALL_NOT_IMPLEMENTED when the stub was called
+ */
+javacall_result
+javacall_dom_eventtarget_remove_event_listener(javacall_handle handle,
+                                               javacall_const_utf16_string type,
+                                               javacall_handle listener,
+                                               javacall_bool use_capture);
+
+/**
+ *  This method allows the registration of an event listener in a 
+ * specified group or the default group and, depending on the 
+ * <code>use_capture</code> parameter, on the capture phase of the DOM 
+ * event flow or its target and bubbling phases. 
+ * 
+ * @param handle Pointer to the object representing this eventtarget.
+ * @param namespace_uri  Specifies the <code>Event.namespace_uri</code> 
+ *   associated with the event for which the user is registering. 
+ * @param type  Refer to the <code>EventTarget.addEventListener()</code> 
+ *   method for a description of this parameter. 
+ * @param listener Pointer to the object of
+ *    Refer to the 
+ *   <code>EventTarget.addEventListener()</code> method for a 
+ *   description of this parameter. 
+ * @param use_capture  Refer to the 
+ *   <code>EventTarget.addEventListener()</code> method for a 
+ *   description of this parameter. 
+ * 
+ * @return JAVACALL_OK if all done successfuly,
+ *         JAVACALL_NOT_IMPLEMENTED when the stub was called
+ */
+javacall_result
+javacall_dom_eventtarget_add_event_listener_ns(javacall_handle handle,
+                                               javacall_const_utf16_string namespace_uri,
+                                               javacall_const_utf16_string type,
+                                               javacall_handle listener,
+                                               javacall_bool use_capture);
+
+/**
+ *  This method allows the removal of an event listener, independently of 
+ * the associated event group. Calling <code>removeEventListenerNS</code>
+ *  with arguments which do not identify any currently registered 
+ * <code>EventListener</code> on the <code>EventTarget</code> has no 
+ * effect. 
+ * 
+ * @param handle Pointer to the object representing this eventtarget.
+ * @param namespace_uri  Specifies the <code>Event.namespace_uri</code> 
+ *   associated with the event for which the user registered the event 
+ *   listener. 
+ * @param type  Refer to the 
+ *   <code>EventTarget.removeEventListener()</code> method for a 
+ *   description of this parameter. 
+ * @param listener Pointer to the object of
+ *    Refer to the 
+ *   <code>EventTarget.removeEventListener()</code> method for a 
+ *   description of this parameter. 
+ * @param use_capture  Refer to the 
+ *   <code>EventTarget.removeEventListener()</code> method for a 
+ *   description of this parameter.   
+ * 
+ * @return JAVACALL_OK if all done successfuly,
+ *         JAVACALL_NOT_IMPLEMENTED when the stub was called
+ */
+javacall_result
+javacall_dom_eventtarget_remove_event_listener_ns(javacall_handle handle,
+                                                  javacall_const_utf16_string namespace_uri,
+                                                  javacall_const_utf16_string type,
+                                                  javacall_handle listener,
+                                                  javacall_bool use_capture);
+
+/**
+ *  This method allows the dispatch of events into the implementation's 
+ * event model. The event target of the event is the 
+ * <code>EventTarget</code> object on which <code>dispatchEvent</code> 
+ * is called. 
+ * <br><i>Clarification:</i> Independently on whether the event target
+ * supports the given event or not, <code>Event</code> must be dispatched 
+ * to that event target. No checking on the semantic correctness of the 
+ * request to dispatch the event object is performed by the 
+ * implementation.
+ *
+ * 
+ * @param handle Pointer to the object representing this eventtarget.
+ * @param evt Pointer to the object of
+ *    The event to be dispatched. 
+ * @param ret_value  Indicates whether any of the listeners which handled the 
+ *   event called <code>Event.preventDefault()</code>. If 
+ *   <code>Event.preventDefault()</code> was called the returned value 
+ *   is <code>false</code>, else it is <code>true</code>. 
+ * @param exception_code Code of the error if function fails; the following 
+ *                       codes are acceptable: 
+ *                            JAVACALL_DOM_EVENTS_UNSPECIFIED_EVENT_TYPE_ERR
+ *                            JAVACALL_DOM_EVENTS_DISPATCH_REQUEST_ERR
+ *                            JAVACALL_DOM_NOT_SUPPORTED_ERR
+ *                            JAVACALL_DOM_INVALID_CHARACTER_ERR
+ * 
+ * @return JAVACALL_OK if all done successfuly,
+ *         JAVACALL_FAIL if error occured; in this case exception_code has to be 
+ *                                filled,
+ *         JAVACALL_NOT_IMPLEMENTED when the stub was called
+ */
+javacall_result
+javacall_dom_eventtarget_dispatch_event(javacall_handle handle,
+                                        javacall_handle evt,
+                                        /* OUT */ javacall_bool* ret_value,
+                                        /* OUT */ javacall_dom_exceptions* exception_code);
 
 /** 
  * Deletes object representing this node

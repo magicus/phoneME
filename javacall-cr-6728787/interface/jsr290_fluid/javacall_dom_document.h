@@ -1,26 +1,26 @@
 /*
-* Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
-* DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
-* 
-* This program is free software; you can redistribute it and/or
-* modify it under the terms of the GNU General Public License version
-* 2 only, as published by the Free Software Foundation.
-* 
-* This program is distributed in the hope that it will be useful, but
-* WITHOUT ANY WARRANTY; without even the implied warranty of
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
-* General Public License version 2 for more details (a copy is
-* included at /legal/license.txt).
-* 
-* You should have received a copy of the GNU General Public License
-* version 2 along with this work; if not, write to the Free Software
-* Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
-* 02110-1301 USA
-* 
-* Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
-* Clara, CA 95054 or visit www.sun.com if you need additional
-* information or have any questions.
-*/
+ * Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+ * 
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License version
+ * 2 only, as published by the Free Software Foundation.
+ * 
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * General Public License version 2 for more details (a copy is
+ * included at /legal/license.txt).
+ * 
+ * You should have received a copy of the GNU General Public License
+ * version 2 along with this work; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA
+ * 
+ * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+ * Clara, CA 95054 or visit www.sun.com if you need additional
+ * information or have any questions.
+ */
 
 #ifndef __JAVACALL_DOM_DOCUMENT_H_
 #define __JAVACALL_DOM_DOCUMENT_H_
@@ -128,7 +128,7 @@ javacall_dom_document_get_document_element(javacall_handle handle,
  *   <code>namespaceURI</code> set to <code>NULL</code>.
  * 
  * @return JAVACALL_OK if all done successfuly,
- *         JAVACALL_FAIL if INVALID_CHARACTER_ERR occured,
+ *         JAVACALL_FAIL if [INVALID_CHARACTER_ERR] occured,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
@@ -192,7 +192,7 @@ javacall_dom_document_create_comment(javacall_handle handle,
  *   the new <code>CDATASection</code> object.
  * 
  * @return JAVACALL_OK if all done successfuly,
- *         JAVACALL_FAIL if NOT_SUPPORTED_ERR occured,
+ *         JAVACALL_FAIL if [NOT_SUPPORTED_ERR] occured,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
@@ -245,7 +245,7 @@ javacall_dom_document_create_processing_instruction(javacall_handle handle,
  *   <code>NULL</code>. The value of the attribute is the empty string.
  * 
  * @return JAVACALL_OK if all done successfuly,
- *         JAVACALL_FAIL if INVALID_CHARACTER_ERR occured,
+ *         JAVACALL_FAIL if [INVALID_CHARACTER_ERR] occured,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
@@ -683,6 +683,79 @@ javacall_dom_document_adopt_node(javacall_handle handle,
                                  javacall_handle source,
                                  /* OUT */ javacall_handle* ret_value,
                                  /* OUT */ javacall_dom_exceptions* exception_code);
+
+/**
+ * Create an Event.
+ *
+ * 
+ * @param handle Pointer to the object representing this documentevent.
+ * @param event_type  The <code>event_type</code> parameter specifies the 
+ *   name of the DOM Events interface to be supported by the created 
+ *   event object, e.g. <code>"Event"</code>, <code>"MouseEvent"</code>, 
+ *   <code>"MutationEvent"</code> and so on. If the <code>Event</code> 
+ *   is to be dispatched via the <code>EventTarget.dispatchEvent()</code>
+ *   method the appropriate event init method must be called after 
+ *   creation in order to initialize the <code>Event</code>'s values.  
+ *   As an example, a user wishing to synthesize some kind of 
+ *   <code>UIEvent</code> would invoke 
+ *   <code>DocumentEvent.createEvent("UIEvent")</code>. The 
+ *   <code>UIEvent.initUIEventNS()</code> method could then be called on 
+ *   the newly created <code>UIEvent</code> object to set the specific 
+ *   type of user interface event to be dispatched, DOMActivate for 
+ *   example, and set its context information, e.g. 
+ *   <code>UIEvent.detail</code> in this example. 
+ * <p><b>Note:</b>For backward compatibility reason, "UIEvents", 
+ *   "MouseEvents", "MutationEvents", and "HTMLEvents" feature names are 
+ *   valid values for the parameter <code>event_type</code> and represent 
+ *   respectively the interfaces "UIEvent", "MouseEvent", 
+ *   "MutationEvent", and "Event". 
+ * <p><b>Note:</b>  JSR 280 follows the DOM 3 rule for <code>Event.type</code>
+ * and considers it to be case-sensitive. This differs from DOM 2, which
+ * considers it to be case-insensitive.
+ * @param ret_value Pointer to the object representing 
+ *    The newly created event object. 
+ * 
+ * @return JAVACALL_OK if all done successfuly,
+ *         JAVACALL_FAIL if [NOT_SUPPORTED_ERR] occured,
+ *         JAVACALL_NOT_IMPLEMENTED when the stub was called
+ */
+javacall_result
+javacall_dom_documentevent_create_event(javacall_handle handle,
+                                        javacall_const_utf16_string event_type,
+                                        /* OUT */ javacall_handle* ret_value);
+
+/**
+ *  Test if the implementation can generate events of a specified type. 
+ * 
+ * @param handle Pointer to the object representing this documentevent.
+ * @param namespace_uri  Specifies the <code>Event.namespace_uri</code> of 
+ *   the event, may be NULL. 
+ * @param type  Specifies the <code>Event.type</code> of the event. 
+ * @param ret_value  <code>true</code> if the implementation can generate and 
+ *   dispatch this event type, <code>false</code> otherwise. 
+ *
+ * 
+ * @return JAVACALL_OK if all done successfuly,
+ *         JAVACALL_NOT_IMPLEMENTED when the stub was called
+ */
+javacall_result
+javacall_dom_documentevent_can_dispatch(javacall_handle handle,
+                                        javacall_const_utf16_string namespace_uri,
+                                        javacall_const_utf16_string type,
+                                        /* OUT */ javacall_bool* ret_value);
+
+/**
+ * Returns the default <code>AbstractView</code> for this <code>Document</code>, 
+ * or <code>NULL</code> if none available.
+ * 
+ * @param handle Pointer to the object representing this documentview.
+ * 
+ * @return JAVACALL_OK if all done successfuly,
+ *         JAVACALL_NOT_IMPLEMENTED when the stub was called
+ */
+javacall_result
+javacall_dom_documentview_get_default_view(javacall_handle handle,
+                                           /* OUT */ javacall_handle* ret_value);
 
 /** 
  * Deletes object representing this document
