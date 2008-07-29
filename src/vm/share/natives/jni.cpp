@@ -428,8 +428,6 @@ _JNI_GetFieldID(JNIEnv *env, jclass clazz, const char *name, const char *sig) {
   // IMPL_NOTE: if the class is not initialized yet,
   // we must initialize it here.
   // IMPL_NOTE: throw NoSuchFieldError if the field is not found
-  // IMPL_NOTE: KNI does not support lookup of fields in super classes, 
-  // should be reworked for JNI
   return KNI_GetFieldID(clazz, name, sig);
 }
 
@@ -471,19 +469,73 @@ _JNI_GetStaticFieldID(JNIEnv *env, jclass clazz,
   // IMPL_NOTE: if the class is not initialized yet,
   // we must initialize it here.
   // IMPL_NOTE: throw NoSuchFieldError if the field is not found
-  // IMPL_NOTE: KNI does not support lookup of fields in interfaces 
-  // and super classes, should be reworked for JNI
-  return KNI_GetStaticFieldID(clazz, name, sig);
+
+  UsingFastOops fast_oops;
+  JavaClassObj::Fast mirror = *decode_handle(clazz);
+  InstanceClass::Fast ic = mirror().java_class();
+  InstanceClass::Fast holder(ic.obj());
+
+  GUARANTEE(ic.is_instance_class(), "sanity check");
+
+  SETUP_ERROR_CHECKER_ARG;
+  Symbol::Fast n = SymbolTable::check_symbol_for(name JVM_CHECK_0);
+  Symbol::Fast s = TypeSymbol::parse((char*)sig JVM_CHECK_0);
+
+  Field field(&holder, &n, &s);
+
+#ifndef PRODUCT
+  // NOTE: field could be renamed by Romizer.
+  // Make sure you have used the DontRenameNonPublicFields option in the
+  // -romconfig file for this class.
+  if (!field.is_valid()) {
+    Throw::no_such_field_error(JVM_SINGLE_ARG_THROW_0);
+  }
+#endif
+
+  jfieldID fieldID = 0;
+
+  if (field.is_valid() && field.is_static()) {
+    jushort class_index = holder().class_id();
+    jushort offset = field.offset();
+    fieldID = (jfieldID)construct_jint_from_jushorts(class_index, offset);
+  }
+
+  return fieldID;
+}
+
+static inline jobject
+field_holder(JNIEnv* env, jfieldID fieldID) {
+  jushort class_id = extract_high_jushort_from_jint((jint)fieldID);
+  UsingFastOops fast_oops;
+  JavaClass::Fast java_class = Universe::class_from_id(class_id);
+  JavaClassObj::Fast holder = java_class().java_mirror();
+  return new_local_ref_or_null_for_oop(env, &holder);
+}
+
+static inline jint
+field_offset(jfieldID fieldID) {
+  return extract_low_jushort_from_jint((jint)fieldID);
 }
 
 static jobject JNICALL
 _JNI_GetStaticObjectField(JNIEnv *env, jclass clazz, jfieldID fieldID) {
+  jobject holder = field_holder(env, fieldID);
+
+  if (holder == NULL) {
+    return NULL;
+  }
+
+  const jint offset = field_offset(fieldID);
+
   jobject toHandle = new_local_ref(env);
   if (toHandle == NULL) {
     return NULL;
   }
 
-  KNI_GetObjectField(clazz, fieldID, toHandle);
+  // NOTE: assumed that KNI implementation uses offset as field ID.
+  KNI_GetStaticObjectField(holder, (jfieldID)offset, toHandle);
+
+  _JNI_DeleteLocalRef(env, holder);
 
   return toHandle;
 }
@@ -491,7 +543,20 @@ _JNI_GetStaticObjectField(JNIEnv *env, jclass clazz, jfieldID fieldID) {
 #define DEFINE_GET_STATIC_FIELD(jtype, Type, TYPE) \
 static jtype JNICALL \
 _JNI_GetStatic ## Type ## Field(JNIEnv *env, jclass clazz, jfieldID fieldID) {\
-  return KNI_GetStatic ## Type ## Field(clazz, fieldID); \
+  jobject holder = field_holder(env, fieldID);                          \
+                                                                        \
+  if (holder == NULL) {                                                 \
+    return 0;                                                           \
+  }                                                                     \
+                                                                        \
+  const jint offset = field_offset(fieldID);                            \
+                                                                        \
+  /* NOTE: assumed that KNI implementation uses offset as field ID. */  \
+  jtype val = KNI_GetStatic ## Type ## Field(holder, (jfieldID)offset); \
+                                                                        \
+  _JNI_DeleteLocalRef(env, holder);                                     \
+                                                                        \
+  return val;                                                           \
 }
 
 FOR_ALL_PRIMITIVE_TYPES(DEFINE_GET_STATIC_FIELD)
@@ -500,7 +565,18 @@ FOR_ALL_PRIMITIVE_TYPES(DEFINE_GET_STATIC_FIELD)
 static void JNICALL \
 _JNI_SetStatic ## Type ## Field(JNIEnv *env, jclass clazz, jfieldID fieldID, \
                                 jtype val) { \
-  KNI_SetStatic ## Type ## Field(clazz, fieldID, val); \
+  jobject holder = field_holder(env, fieldID);                          \
+                                                                        \
+  if (holder == NULL) {                                                 \
+    return;                                                             \
+  }                                                                     \
+                                                                        \
+  const jint offset = field_offset(fieldID);                            \
+                                                                        \
+  /* NOTE: assumed that KNI implementation uses offset as field ID. */  \
+  KNI_SetStatic ## Type ## Field(holder, (jfieldID)offset, val);        \
+                                                                        \
+  _JNI_DeleteLocalRef(env, holder);                                     \
 }
 
 FOR_ALL_TYPES(DEFINE_SET_STATIC_FIELD)
