@@ -83,7 +83,7 @@ javacall_dom_node_get_node_name(javacall_handle handle,
  * @return JAVACALL_OK if all done successfuly,
  *         JAVACALL_OUT_OF_MEMORY if length of the returend string is more then 
  *                                specified in ret_value_len,
- *         JAVACALL_FAIL if [DOMSTRING_SIZE_ERR] occured,
+ *         JAVACALL_FAIL if DOMSTRING_SIZE_ERR occured,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
@@ -101,7 +101,7 @@ javacall_dom_node_get_node_value(javacall_handle handle,
  * @param node_value the value of the node
  * 
  * @return JAVACALL_OK if all done successfuly,
- *         JAVACALL_FAIL if [NO_MODIFICATION_ALLOWED_ERR] occured,
+ *         JAVACALL_FAIL if NO_MODIFICATION_ALLOWED_ERR occured,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
@@ -696,7 +696,7 @@ javacall_dom_node_has_attributes(javacall_handle handle,
  * @return JAVACALL_OK if all done successfuly,
  *         JAVACALL_OUT_OF_MEMORY if length of the returend string is more then 
  *                                specified in ret_value_len,
- *         JAVACALL_FAIL if [DOMSTRING_SIZE_ERR] occured,
+ *         JAVACALL_FAIL if DOMSTRING_SIZE_ERR occured,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
@@ -750,7 +750,7 @@ javacall_dom_node_get_text_content(javacall_handle handle,
  * @param text_content a String containing the new text content for this node
  * 
  * @return JAVACALL_OK if all done successfuly,
- *         JAVACALL_FAIL if [NO_MODIFICATION_ALLOWED_ERR] occured,
+ *         JAVACALL_FAIL if NO_MODIFICATION_ALLOWED_ERR occured,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result

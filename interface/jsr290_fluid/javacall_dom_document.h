@@ -128,7 +128,7 @@ javacall_dom_document_get_document_element(javacall_handle handle,
  *   <code>namespaceURI</code> set to <code>NULL</code>.
  * 
  * @return JAVACALL_OK if all done successfuly,
- *         JAVACALL_FAIL if [INVALID_CHARACTER_ERR] occured,
+ *         JAVACALL_FAIL if INVALID_CHARACTER_ERR occured,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
@@ -192,7 +192,7 @@ javacall_dom_document_create_comment(javacall_handle handle,
  *   the new <code>CDATASection</code> object.
  * 
  * @return JAVACALL_OK if all done successfuly,
- *         JAVACALL_FAIL if [NOT_SUPPORTED_ERR] occured,
+ *         JAVACALL_FAIL if NOT_SUPPORTED_ERR occured,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
@@ -245,7 +245,7 @@ javacall_dom_document_create_processing_instruction(javacall_handle handle,
  *   <code>NULL</code>. The value of the attribute is the empty string.
  * 
  * @return JAVACALL_OK if all done successfuly,
- *         JAVACALL_FAIL if [INVALID_CHARACTER_ERR] occured,
+ *         JAVACALL_FAIL if INVALID_CHARACTER_ERR occured,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
@@ -716,7 +716,7 @@ javacall_dom_document_adopt_node(javacall_handle handle,
  *    The newly created event object. 
  * 
  * @return JAVACALL_OK if all done successfuly,
- *         JAVACALL_FAIL if [NOT_SUPPORTED_ERR] occured,
+ *         JAVACALL_FAIL if NOT_SUPPORTED_ERR occured,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
