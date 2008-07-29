@@ -30,16 +30,35 @@
 #if ENABLE_JNI
 
 #define FOR_ALL_PRIMITIVE_TYPES(template) \
-  template(jboolean, Boolean) \
-  template(jbyte,    Byte) \
-  template(jchar,    Char) \
-  template(jshort,   Short) \
-  template(jint,     Int) \
-  template(jlong,    Long) \
-  template(jfloat,   Float) \
-  template(jdouble,  Double)
+  template(jboolean, Boolean, BOOLEAN) \
+  template(jbyte,    Byte,    BYTE) \
+  template(jchar,    Char,    CHAR) \
+  template(jshort,   Short,   SHORT) \
+  template(jint,     Int,     INT) \
+  template(jlong,    Long,    LONG) \
+  template(jfloat,   Float,   FLOAT) \
+  template(jdouble,  Double,  DOUBLE)
 
-static jobject JNICALL
+#define FOR_ALL_TYPES(template) \
+  FOR_ALL_PRIMITIVE_TYPES(template) \
+  template(jobject,  Object,  OBJECT)
+
+/*
+ * Helper function. 
+ * For a given local reference, deletes the reference and returns NULL 
+ * if the referent is NULL, otherwise just returns the reference.
+ */
+static inline jobject local_ref_or_null(JNIEnv* env, jobject local_ref) {
+  GUARANTEE(local_ref != NULL, "Non-null handle expected");
+  if (*decode_handle(local_ref) == NULL) {
+    env->DeleteLocalRef(local_ref);
+    return NULL;
+  }
+
+  return local_ref;
+}
+
+static inline jobject
 new_local_ref_for_oop(JNIEnv* env, Oop * oop) {
   jint ret = env->EnsureLocalCapacity(1);
   if (ret != JNI_OK) {
@@ -49,10 +68,15 @@ new_local_ref_for_oop(JNIEnv* env, Oop * oop) {
   return (jobject)ObjectHeap::register_local_reference(oop);
 }
 
-static jobject JNICALL
+static inline jobject
 new_local_ref(JNIEnv* env) {
   Oop dummy;
   return new_local_ref_for_oop(env, &dummy);
+}
+
+static inline jobject
+new_local_ref_or_null_for_oop(JNIEnv* env, Oop * oop) {
+  return oop->not_null() ? new_local_ref_for_oop(env, oop) : NULL;
 }
 
 static jint JNICALL 
@@ -123,7 +147,7 @@ _JNI_GetSuperclass(JNIEnv *env, jclass sub) {
 
     if (super_class.not_null()) {
       JavaClassObj::Raw m = super_class().java_mirror();
-      return new_local_ref_for_oop(env, &m);
+      return new_local_ref_or_null_for_oop(env, &m);
     }
   }
 
@@ -163,11 +187,7 @@ static jthrowable JNICALL
 _JNI_ExceptionOccured(JNIEnv *env) {
   Oop::Raw exc = Thread::current_pending_exception();
 
-  if (exc.is_null()) {
-    return NULL;
-  }
-
-  return new_local_ref_for_oop(env, &exc);
+  return new_local_ref_or_null_for_oop(env, &exc);
 }
 
 static void JNICALL
@@ -388,11 +408,7 @@ _JNI_GetObjectClass(JNIEnv *env, jobject obj) {
 
   KNI_GetObjectClass(obj, clazz);
 
-  if (*decode_handle(clazz) == NULL) {
-    return NULL;
-  }
-
-  return clazz;
+  return local_ref_or_null(env, clazz);
 }
 
 static jboolean JNICALL
@@ -406,9 +422,14 @@ _JNI_IsInstanceOf(JNIEnv *env, jobject obj, jclass clazz) {
 
 static jfieldID JNICALL 
 _JNI_GetFieldID(JNIEnv *env, jclass clazz, const char *name, const char *sig) {
+  if (clazz == NULL) {
+    return NULL;
+  }
   // IMPL_NOTE: if the class is not initialized yet,
   // we must initialize it here.
   // IMPL_NOTE: throw NoSuchFieldError if the field is not found
+  // IMPL_NOTE: KNI does not support lookup of fields in super classes, 
+  // should be reworked for JNI
   return KNI_GetFieldID(clazz, name, sig);
 }
 
@@ -424,7 +445,7 @@ _JNI_GetObjectField(JNIEnv *env, jobject obj, jfieldID fieldID) {
   return toHandle;
 }
 
-#define DEFINE_GET_INSTANCE_FIELD(jtype, Type) \
+#define DEFINE_GET_INSTANCE_FIELD(jtype, Type, TYPE) \
 static jtype JNICALL \
 _JNI_Get ## Type ## Field(JNIEnv *env, jobject obj, jfieldID fieldID) { \
   return KNI_Get ## Type ## Field(obj, fieldID); \
@@ -432,19 +453,194 @@ _JNI_Get ## Type ## Field(JNIEnv *env, jobject obj, jfieldID fieldID) { \
 
 FOR_ALL_PRIMITIVE_TYPES(DEFINE_GET_INSTANCE_FIELD)
 
-static void JNICALL
-_JNI_SetObjectField(JNIEnv *env, jobject obj, jfieldID fieldID, jobject val) {
-  KNI_SetObjectField(obj, fieldID, val);
-}
-
-#define DEFINE_SET_INSTANCE_FIELD(jtype, Type) \
+#define DEFINE_SET_INSTANCE_FIELD(jtype, Type, TYPE) \
 static void JNICALL \
 _JNI_Set ## Type ## Field(JNIEnv *env, jobject obj, jfieldID fieldID, \
                           jtype val) { \
   KNI_Set ## Type ## Field(obj, fieldID, val); \
 }
 
-FOR_ALL_PRIMITIVE_TYPES(DEFINE_SET_INSTANCE_FIELD)
+FOR_ALL_TYPES(DEFINE_SET_INSTANCE_FIELD)
+
+static jfieldID JNICALL 
+_JNI_GetStaticFieldID(JNIEnv *env, jclass clazz, 
+                      const char *name, const char *sig) {
+  if (clazz == NULL) {
+    return NULL;
+  }
+  // IMPL_NOTE: if the class is not initialized yet,
+  // we must initialize it here.
+  // IMPL_NOTE: throw NoSuchFieldError if the field is not found
+  // IMPL_NOTE: KNI does not support lookup of fields in interfaces 
+  // and super classes, should be reworked for JNI
+  return KNI_GetStaticFieldID(clazz, name, sig);
+}
+
+static jobject JNICALL
+_JNI_GetStaticObjectField(JNIEnv *env, jclass clazz, jfieldID fieldID) {
+  jobject toHandle = new_local_ref(env);
+  if (toHandle == NULL) {
+    return NULL;
+  }
+
+  KNI_GetObjectField(clazz, fieldID, toHandle);
+
+  return toHandle;
+}
+
+#define DEFINE_GET_STATIC_FIELD(jtype, Type, TYPE) \
+static jtype JNICALL \
+_JNI_GetStatic ## Type ## Field(JNIEnv *env, jclass clazz, jfieldID fieldID) {\
+  return KNI_GetStatic ## Type ## Field(clazz, fieldID); \
+}
+
+FOR_ALL_PRIMITIVE_TYPES(DEFINE_GET_STATIC_FIELD)
+
+#define DEFINE_SET_STATIC_FIELD(jtype, Type, TYPE) \
+static void JNICALL \
+_JNI_SetStatic ## Type ## Field(JNIEnv *env, jclass clazz, jfieldID fieldID, \
+                                jtype val) { \
+  KNI_SetStatic ## Type ## Field(clazz, fieldID, val); \
+}
+
+FOR_ALL_TYPES(DEFINE_SET_STATIC_FIELD)
+
+static jstring JNICALL
+_JNI_NewString(JNIEnv *env, const jchar *unicode, jsize len) {
+  jobject string = new_local_ref(env);
+
+  if (string == NULL) {
+    return NULL;
+  }
+
+  KNI_NewString(unicode, len, string);
+
+  return string;
+}
+
+static jint JNICALL
+_JNI_GetStringLength(JNIEnv *env, jstring str) {
+  if (str == NULL) {
+    return -1;
+  }
+
+  return KNI_GetStringLength(str);
+}
+
+static const jchar * JNICALL
+_JNI_GetStringChars(JNIEnv *env, jstring str, jboolean *isCopy) {
+  if (isCopy != NULL) {
+    *isCopy = JNI_TRUE;
+  }
+
+  jint len = _JNI_GetStringLength(env, str);
+
+  if (len < 0) {
+    return NULL;
+  }
+
+  if (len == 0) {
+    // See CR 5071855. malloc(0) can return NULL.
+    return (jchar *)jvm_malloc(1);
+  }
+
+  jchar * buf = (jchar *)jvm_malloc(len * sizeof(jchar));
+  if (buf == NULL) {
+    return NULL;
+  }
+
+  KNI_GetStringRegion(str, 0, len, buf);
+
+  return buf;
+}
+
+static void JNICALL
+_JNI_ReleaseStringChars(JNIEnv *env, jstring str, const jchar *chars) {
+  if (chars != NULL) {
+    jvm_free((void*)chars);
+  }
+}
+
+static jstring JNICALL
+_JNI_NewStringUTF(JNIEnv *env, const char *utf) {
+  jobject string = new_local_ref(env);
+
+  if (string == NULL) {
+    return NULL;
+  }
+
+  KNI_NewStringUTF(utf, string);
+
+  return string;
+}
+
+static jint JNICALL
+_JNI_GetStringUTFLength(JNIEnv *env, jstring str) {
+  if (str == NULL) {
+    return -1;
+  }
+
+  String::Raw string = *decode_handle(str);
+  if (string.is_null()) {
+    return -1;
+  }
+
+  TypeArray::Raw value = string().value();
+  const jint offset = string().offset();
+  const jint length = string().length();
+
+  CharStream stream(&value, offset, length);
+  return stream.utf8_length();
+}
+
+static const char * JNICALL
+_JNI_GetStringUTFChars(JNIEnv *env, jstring str, jboolean *isCopy) {
+  if (isCopy != NULL) {
+    *isCopy = JNI_TRUE;
+  }
+
+  if (str == NULL) {
+    return NULL;
+  }
+
+  String::Raw string = *decode_handle(str);
+  if (string.is_null()) {
+    return NULL;
+  }
+
+  TypeArray::Raw value = string().value();
+  const jint offset = string().offset();
+  const jint length = string().length();
+
+  if (length == 0) {
+    // See CR 5071855. malloc(0) can return NULL.
+    return (char *)jvm_malloc(1);
+  }
+
+  const jint utf8len = length * 3;
+  char * buf = (char *)jvm_malloc(utf8len);
+  if (buf == NULL) {
+    return NULL;
+  }
+
+  LiteralStream stream(buf, 0, utf8len);
+
+  int i, index;
+  for (index = 0, i = 0; i < length; i++) {
+    jchar ch = value().char_at(i + offset);
+    index = stream.utf8_write(index, ch);
+  }
+  GUARANTEE(index < utf8len, "UTF8 encoder failed");
+
+  return buf;
+}
+
+static void JNICALL
+_JNI_ReleaseStringUTFChars(JNIEnv *env, jstring str, const char *chars) {
+  if (chars != NULL) {
+    jvm_free((void*)chars);
+  }
+}
 
 static jobject JNICALL
 _JNI_NewWeakGlobalRef(JNIEnv* env, jobject obj) {
@@ -478,6 +674,204 @@ _JNI_ExceptionCheck(JNIEnv *env) {
   return (CURRENT_HAS_PENDING_EXCEPTION) ? JNI_TRUE : JNI_FALSE;
 }
 
+static jsize JNICALL
+_JNI_GetArrayLength(JNIEnv* env, jarray array) {
+  if (array == NULL) {
+    return -1;
+  }
+
+  return KNI_GetArrayLength(array);
+}
+
+static jobjectArray JNICALL
+_JNI_NewObjectArray(JNIEnv *env, jsize len, jclass clazz, jobject init) {
+  if (clazz == NULL) {
+    return NULL;
+  }
+
+  jobject array = new_local_ref(env);
+
+  if (array == NULL) {
+    return NULL;
+  }
+
+  SNI_NewObjectArray(clazz, len, array);
+
+  if (*decode_handle(array) == NULL) {
+    SETUP_ERROR_CHECKER_ARG;
+    Throw::out_of_memory_error(JVM_SINGLE_ARG_THROW_0);
+  }
+
+  if (init != NULL) {
+    for (int i = 0; i < len; i++) {
+      KNI_SetObjectArrayElement(array, i, init);
+    }
+  }
+
+  return array;
+}
+
+static jobject JNICALL
+_JNI_GetObjectArrayElement(JNIEnv* env, jobjectArray array, jsize index) {
+  if (array == NULL) {
+    return NULL;
+  }
+
+  jobject element = new_local_ref(env);
+
+  if (array == NULL) {
+    return NULL;
+  }
+
+  jsize length = KNI_GetArrayLength(array);
+
+  if (index < 0 || index >= length) {
+    SETUP_ERROR_CHECKER_ARG;
+    Throw::array_index_out_of_bounds_exception(empty_message JVM_THROW_0);
+  }
+
+  KNI_GetObjectArrayElement(array, index, element);
+
+  return local_ref_or_null(env, element);
+}
+
+static void JNICALL
+_JNI_SetObjectArrayElement(JNIEnv* env, jobjectArray array, jsize index,
+                           jobject val) {
+  if (array == NULL) {
+    return;
+  }
+
+  jsize length = KNI_GetArrayLength(array);
+
+  if (index < 0 || index >= length) {
+    SETUP_ERROR_CHECKER_ARG;
+    Throw::array_index_out_of_bounds_exception(empty_message JVM_THROW);
+  }
+
+  KNI_SetObjectArrayElement(array, index, val);
+}
+
+#define DEFINE_NEW_ARRAY(jtype, Type, TYPE)                        \
+static jtype ## Array JNICALL                                      \
+_JNI_New ## Type ## Array(JNIEnv *env, jsize len) {                \
+  jobject array = new_local_ref(env);                              \
+  if (array == NULL) {                                             \
+    return NULL;                                                   \
+  }                                                                \
+                                                                   \
+  SNI_NewArray(SNI_ ## TYPE ## _ARRAY, len, array);                \
+                                                                   \
+  if (*decode_handle(array) == NULL) {                             \
+    SETUP_ERROR_CHECKER_ARG;                                       \
+    Throw::out_of_memory_error(JVM_SINGLE_ARG_THROW_0);            \
+  }                                                                \
+                                                                   \
+  return array;                                                    \
+}
+
+FOR_ALL_PRIMITIVE_TYPES(DEFINE_NEW_ARRAY)
+
+#define DEFINE_GET_ARRAY_ELEMENTS(jtype, Type, TYPE)                 \
+static jtype * JNICALL                                               \
+_JNI_Get ## Type ## ArrayElements(JNIEnv *env, jtype ## Array array, \
+                                  jboolean *isCopy) {                \
+  if (isCopy != NULL) {                                              \
+    *isCopy = JNI_TRUE;                                              \
+  }                                                                  \
+                                                                     \
+  const jint length = _JNI_GetArrayLength(env, array);               \
+                                                                     \
+  if (length < 0) {                                                  \
+    return NULL;                                                     \
+  }                                                                  \
+                                                                     \
+  if (length == 0) {                                                 \
+    /* See CR 5071855. malloc(0) can return NULL. */                 \
+    return (jtype *)jvm_malloc(1);                                   \
+  }                                                                  \
+                                                                     \
+  const jsize size = length * sizeof(jtype);                         \
+  jtype * buf = (jtype *)jvm_malloc(size);                           \
+  if (buf == NULL) {                                                 \
+    return NULL;                                                     \
+  }                                                                  \
+                                                                     \
+  KNI_GetRawArrayRegion(array, 0, size, (jbyte*)buf);                \
+                                                                     \
+  return buf;                                                        \
+}                                                                    
+
+FOR_ALL_PRIMITIVE_TYPES(DEFINE_GET_ARRAY_ELEMENTS)
+                                                                     
+#define DEFINE_RELEASE_ARRAY_ELEMENTS(jtype, Type, TYPE)             \
+static void JNICALL                                                  \
+_JNI_Release ## Type ## ArrayElements(JNIEnv *env,                   \
+                                      jtype ## Array array,          \
+                                      jtype * elems, jint mode) {    \
+  switch (mode) {                                                    \
+  case 0:                                                            \
+  case JNI_COMMIT:                                                   \
+    const jint length = _JNI_GetArrayLength(env, array);             \
+    if (length > 0) {                                                \
+      KNI_SetRawArrayRegion(array, 0, length * sizeof(jtype),        \
+                            (const jbyte*)elems);                    \
+    }                                                                \
+  }                                                                  \
+                                                                     \
+  switch (mode) {                                                    \
+  case 0:                                                            \
+  case JNI_ABORT:                                                    \
+    jvm_free((void*)elems);                                          \
+  }                                                                  \
+}
+
+FOR_ALL_PRIMITIVE_TYPES(DEFINE_RELEASE_ARRAY_ELEMENTS)
+
+#define DEFINE_GET_ARRAY_REGION(jtype, Type, TYPE)                       \
+static void JNICALL                                                      \
+_JNI_Get ## Type ## ArrayRegion(JNIEnv *env, jtype ## Array array,       \
+                                jsize start, jsize len, jtype * buf) {   \
+  const jint array_len = _JNI_GetArrayLength(env, array);                \
+  if (array_len < 0) {                                                   \
+    return;                                                              \
+  }                                                                      \
+                                                                         \
+  if (start < 0 || len < 0 ||                                            \
+      (juint)len + (juint)start > (juint)array_len) {                    \
+    SETUP_ERROR_CHECKER_ARG;                                             \
+    Throw::array_index_out_of_bounds_exception(empty_message JVM_THROW); \
+  }                                                                      \
+                                                                         \
+  const jsize offset = start * sizeof(jtype);                            \
+  const jsize size = len * sizeof(jtype);                                \
+  KNI_GetRawArrayRegion(array, offset, size, (jbyte*)buf);               \
+}
+
+FOR_ALL_PRIMITIVE_TYPES(DEFINE_GET_ARRAY_REGION)
+
+#define DEFINE_SET_ARRAY_REGION(jtype, Type, TYPE)                       \
+static void JNICALL                                                      \
+_JNI_Set ## Type ## ArrayRegion(JNIEnv *env, jtype ## Array array,       \
+                                jsize start, jsize len,                  \
+                                const jtype * buf) {                     \
+  const jint array_len = _JNI_GetArrayLength(env, array);                \
+  if (array_len < 0) {                                                   \
+    return;                                                              \
+  }                                                                      \
+                                                                         \
+  if (start < 0 || len < 0 ||                                            \
+      (juint)len + (juint)start > (juint)array_len) {                    \
+    SETUP_ERROR_CHECKER_ARG;                                             \
+    Throw::array_index_out_of_bounds_exception(empty_message JVM_THROW); \
+  }                                                                      \
+                                                                         \
+  const jsize offset = start * sizeof(jtype);                            \
+  const jsize size = len * sizeof(jtype);                                \
+  KNI_SetRawArrayRegion(array, offset, size, (const jbyte*)buf);         \
+}
+
+FOR_ALL_PRIMITIVE_TYPES(DEFINE_SET_ARRAY_REGION)
 
 static struct JNINativeInterface _jni_native_interface = {
     NULL, // reserved0
@@ -646,88 +1040,88 @@ static struct JNINativeInterface _jni_native_interface = {
     NULL, // CallStaticVoidMethodV
     NULL, // CallStaticVoidMethodA
 
-    NULL, // GetStaticFieldID
+    _JNI_GetStaticFieldID, // GetStaticFieldID
 
-    NULL, // GetStaticObjectField
-    NULL, // GetStaticBooleanField
-    NULL, // GetStaticByteField
-    NULL, // GetStaticCharField
-    NULL, // GetStaticShortField
-    NULL, // GetStaticIntField
-    NULL, // GetStaticLongField
-    NULL, // GetStaticFloatField
-    NULL, // GetStaticDoubleField
+    _JNI_GetStaticObjectField, // GetStaticObjectField
+    _JNI_GetStaticBooleanField, // GetStaticBooleanField
+    _JNI_GetStaticByteField, // GetStaticByteField
+    _JNI_GetStaticCharField, // GetStaticCharField
+    _JNI_GetStaticShortField, // GetStaticShortField
+    _JNI_GetStaticIntField, // GetStaticIntField
+    _JNI_GetStaticLongField, // GetStaticLongField
+    _JNI_GetStaticFloatField, // GetStaticFloatField
+    _JNI_GetStaticDoubleField, // GetStaticDoubleField
 
-    NULL, // SetStaticObjectField
-    NULL, // SetStaticBooleanField
-    NULL, // SetStaticByteField
-    NULL, // SetStaticCharField
-    NULL, // SetStaticShortField
-    NULL, // SetStaticIntField
-    NULL, // SetStaticLongField
-    NULL, // SetStaticFloatField
-    NULL, // SetStaticDoubleField
+    _JNI_SetStaticObjectField, // SetStaticObjectField
+    _JNI_SetStaticBooleanField, // SetStaticBooleanField
+    _JNI_SetStaticByteField, // SetStaticByteField
+    _JNI_SetStaticCharField, // SetStaticCharField
+    _JNI_SetStaticShortField, // SetStaticShortField
+    _JNI_SetStaticIntField, // SetStaticIntField
+    _JNI_SetStaticLongField, // SetStaticLongField
+    _JNI_SetStaticFloatField, // SetStaticFloatField
+    _JNI_SetStaticDoubleField, // SetStaticDoubleField
 
-    NULL, // NewString
-    NULL, // GetStringLength
-    NULL, // GetStringChars
-    NULL, // ReleaseStringChars
+    _JNI_NewString, // NewString
+    _JNI_GetStringLength, // GetStringLength
+    _JNI_GetStringChars, // GetStringChars
+    _JNI_ReleaseStringChars, // ReleaseStringChars
 
-    NULL, // NewStringUTF
-    NULL, // GetStringUTFLength
-    NULL, // GetStringUTFChars
-    NULL, // ReleaseStringUTFChars
+    _JNI_NewStringUTF, // NewStringUTF
+    _JNI_GetStringUTFLength, // GetStringUTFLength
+    _JNI_GetStringUTFChars, // GetStringUTFChars
+    _JNI_ReleaseStringUTFChars, // ReleaseStringUTFChars
 
-    NULL, // GetArrayLength
+    _JNI_GetArrayLength, // GetArrayLength
  
-    NULL, // NewObjectArray
-    NULL, // GetObjectArrayElement
-    NULL, // SetObjectArrayElement
+    _JNI_NewObjectArray, // NewObjectArray
+    _JNI_GetObjectArrayElement, // GetObjectArrayElement
+    _JNI_SetObjectArrayElement, // SetObjectArrayElement
 
-    NULL, // NewBooleanArray
-    NULL, // NewByteArray
-    NULL, // NewCharArray
-    NULL, // NewShortArray
-    NULL, // NewIntArray
-    NULL, // NewLongArray
-    NULL, // NewFloatArray
-    NULL, // NewDoubleArray
+    _JNI_NewBooleanArray, // NewBooleanArray
+    _JNI_NewByteArray, // NewByteArray
+    _JNI_NewCharArray, // NewCharArray
+    _JNI_NewShortArray, // NewShortArray
+    _JNI_NewIntArray, // NewIntArray
+    _JNI_NewLongArray, // NewLongArray
+    _JNI_NewFloatArray, // NewFloatArray
+    _JNI_NewDoubleArray, // NewDoubleArray
 
-    NULL, // GetBooleanArrayElements
-    NULL, // GetByteArrayElements
-    NULL, // GetCharArrayElements
-    NULL, // GetShortArrayElements
-    NULL, // GetIntArrayElements
-    NULL, // GetLongArrayElements
-    NULL, // GetFloatArrayElements
-    NULL, // GetDoubleArrayElements
+    _JNI_GetBooleanArrayElements, // GetBooleanArrayElements
+    _JNI_GetByteArrayElements, // GetByteArrayElements
+    _JNI_GetCharArrayElements, // GetCharArrayElements
+    _JNI_GetShortArrayElements, // GetShortArrayElements
+    _JNI_GetIntArrayElements, // GetIntArrayElements
+    _JNI_GetLongArrayElements, // GetLongArrayElements
+    _JNI_GetFloatArrayElements, // GetFloatArrayElements
+    _JNI_GetDoubleArrayElements, // GetDoubleArrayElements
 
-    NULL, // ReleaseBooleanArrayElements
-    NULL, // ReleaseByteArrayElements
-    NULL, // ReleaseCharArrayElements
-    NULL, // ReleaseShortArrayElements
-    NULL, // ReleaseIntArrayElements
-    NULL, // ReleaseLongArrayElements
-    NULL, // ReleaseFloatArrayElements
-    NULL, // ReleaseDoubleArrayElements
+    _JNI_ReleaseBooleanArrayElements, // ReleaseBooleanArrayElements
+    _JNI_ReleaseByteArrayElements, // ReleaseByteArrayElements
+    _JNI_ReleaseCharArrayElements, // ReleaseCharArrayElements
+    _JNI_ReleaseShortArrayElements, // ReleaseShortArrayElements
+    _JNI_ReleaseIntArrayElements, // ReleaseIntArrayElements
+    _JNI_ReleaseLongArrayElements, // ReleaseLongArrayElements
+    _JNI_ReleaseFloatArrayElements, // ReleaseFloatArrayElements
+    _JNI_ReleaseDoubleArrayElements, // ReleaseDoubleArrayElements
 
-    NULL, // GetBooleanArrayRegion
-    NULL, // GetByteArrayRegion
-    NULL, // GetCharArrayRegion
-    NULL, // GetShortArrayRegion
-    NULL, // GetIntArrayRegion
-    NULL, // GetLongArrayRegion
-    NULL, // GetFloatArrayRegion
-    NULL, // GetDoubleArrayRegion
+    _JNI_GetBooleanArrayRegion, // GetBooleanArrayRegion
+    _JNI_GetByteArrayRegion, // GetByteArrayRegion
+    _JNI_GetCharArrayRegion, // GetCharArrayRegion
+    _JNI_GetShortArrayRegion, // GetShortArrayRegion
+    _JNI_GetIntArrayRegion, // GetIntArrayRegion
+    _JNI_GetLongArrayRegion, // GetLongArrayRegion
+    _JNI_GetFloatArrayRegion, // GetFloatArrayRegion
+    _JNI_GetDoubleArrayRegion, // GetDoubleArrayRegion
 
-    NULL, // SetBooleanArrayRegion
-    NULL, // SetByteArrayRegion
-    NULL, // SetCharArrayRegion
-    NULL, // SetShortArrayRegion
-    NULL, // SetIntArrayRegion
-    NULL, // SetLongArrayRegion
-    NULL, // SetFloatArrayRegion
-    NULL, // SetDoubleArrayRegion
+    _JNI_SetBooleanArrayRegion, // SetBooleanArrayRegion
+    _JNI_SetByteArrayRegion, // SetByteArrayRegion
+    _JNI_SetCharArrayRegion, // SetCharArrayRegion
+    _JNI_SetShortArrayRegion, // SetShortArrayRegion
+    _JNI_SetIntArrayRegion, // SetIntArrayRegion
+    _JNI_SetLongArrayRegion, // SetLongArrayRegion
+    _JNI_SetFloatArrayRegion, // SetFloatArrayRegion
+    _JNI_SetDoubleArrayRegion, // SetDoubleArrayRegion
 
     NULL, // RegisterNatives
     NULL, // UnregisterNatives

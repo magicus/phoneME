@@ -1265,6 +1265,9 @@ jni.cpp                          JniImpl.hpp
 jni.cpp                          JniFrame.hpp
 jni.cpp                          JavaClassObj.hpp
 jni.cpp                          ObjectHeap.hpp
+jni.cpp                          Oop.hpp
+jni.cpp                          Throwable.hpp
+jni.cpp                          sni.h
 JniImpl.hpp                      GlobalDefinitions.hpp
 
 JniFrame.hpp                     JniFrameDesc.hpp
@@ -2808,6 +2811,7 @@ sni.cpp                          TypeArrayClass.hpp
 sni.cpp                          JavaClass.hpp
 sni.cpp                          JavaClassObj.hpp
 sni.cpp                          InstanceClass.hpp
+sni.cpp                          JniImpl.hpp
 #if ENABLE_ISOLATES
 sni.cpp                          Task.hpp
 #endif

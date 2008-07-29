@@ -156,7 +156,7 @@ jchar UTF8Stream::raw_read() {
   return value;
 }
 
-#if !defined(PRODUCT) || ENABLE_JAVA_DEBUGGER
+#if !defined(PRODUCT) || ENABLE_JAVA_DEBUGGER || ENABLE_JNI
 
 jint UTF8Stream::utf8_write(jint index, jchar ch) {
   if ((ch != 0) && (ch <=0x7f)) {
@@ -183,7 +183,7 @@ jint UTF8Stream::utf8_write(jint index, jchar ch) {
 }
 #endif
 
-#ifndef PRODUCT
+#if !defined(PRODUCT) || ENABLE_JNI
 
 int UnicodeStream::utf8_size(jchar c) {
   if ((0x0001 <= c) && (c <= 0x007F)) return 1;
@@ -200,6 +200,9 @@ int UnicodeStream::utf8_length() {
   }
   return result;
 }
+#endif
+
+#ifndef PRODUCT
 
 jint ConcatenatedStream::length() {
   return _stream1_length + _stream2_length;

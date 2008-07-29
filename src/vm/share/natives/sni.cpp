@@ -140,7 +140,7 @@ KNIEXPORT void SNI_NewArray(jint type, jint size, jarray arrayHandle) {
     array = Universe::new_obj_array(Universe::string_class(), size JVM_NO_CHECK);
   }
 
-  *((OopDesc**)arrayHandle) = array;
+  *decode_handle(arrayHandle) = array;
   if (array == NULL) {
     // The caller is responsible to check for failure and throw
     // OutOfMemoryError if necessary.
@@ -154,11 +154,11 @@ KNIEXPORT void SNI_NewObjectArray(jclass elementType, jint size,
   UsingFastOops fast_oops;
   OopDesc *array;
 
-  JavaClassObj::Fast mirror = *(OopDesc**)elementType;
+  JavaClassObj::Fast mirror = *decode_handle(elementType);
   JavaClass::Fast klass = mirror().java_class();
 
   array = Universe::new_obj_array(&klass, size JVM_NO_CHECK);
-  *((OopDesc**)arrayHandle) = array;
+  *decode_handle(arrayHandle) = array;
   if (array == NULL) {
     // The caller is responsible to check for failure and throw
     // OutOfMemoryError if necessary.
