@@ -130,12 +130,8 @@ static MIDPError _system_cleanup(int status) {
  *         <tt>GENERAL_ERROR</tt> if an error
  */
 MIDPError midp_system_start(void) {
-    const static  char dir[] = "./";
     int vmStatus;
     MIDPError errCode;
-
-    // dummy dir to pass NULL pointer check at midpInitCallback
-    midpSetAppDir(dir);
 
     vmStatus = midpRunMainClass(NULL, APP_MANAGER_PEER, 0, NULL);
 

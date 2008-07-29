@@ -74,6 +74,7 @@ javacall_result javanotify_ams_system_start() {
     midp_add_event_listener(midp_listener_ams_midlet_state_changed,
                             MIDLET_EVENT_LISTENER);
 
+
     return midp_system_start();
 }
 
