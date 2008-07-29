@@ -1,26 +1,26 @@
 /*
-* Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
-* DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
-* 
-* This program is free software; you can redistribute it and/or
-* modify it under the terms of the GNU General Public License version
-* 2 only, as published by the Free Software Foundation.
-* 
-* This program is distributed in the hope that it will be useful, but
-* WITHOUT ANY WARRANTY; without even the implied warranty of
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
-* General Public License version 2 for more details (a copy is
-* included at /legal/license.txt).
-* 
-* You should have received a copy of the GNU General Public License
-* version 2 along with this work; if not, write to the Free Software
-* Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
-* 02110-1301 USA
-* 
-* Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
-* Clara, CA 95054 or visit www.sun.com if you need additional
-* information or have any questions.
-*/
+ * Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+ * 
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License version
+ * 2 only, as published by the Free Software Foundation.
+ * 
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * General Public License version 2 for more details (a copy is
+ * included at /legal/license.txt).
+ * 
+ * You should have received a copy of the GNU General Public License
+ * version 2 along with this work; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA
+ * 
+ * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+ * Clara, CA 95054 or visit www.sun.com if you need additional
+ * information or have any questions.
+ */
 
 #ifndef __JAVACALL_DOM_ELEMENT_H_
 #define __JAVACALL_DOM_ELEMENT_H_
@@ -146,7 +146,7 @@ javacall_dom_element_set_attribute(javacall_handle handle,
  * @param name The name of the attribute to remove.
  * 
  * @return JAVACALL_OK if all done successfuly,
- *         JAVACALL_FAIL if NO_MODIFICATION_ALLOWED_ERR occured,
+ *         JAVACALL_FAIL if [NO_MODIFICATION_ALLOWED_ERR] occured,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
@@ -273,7 +273,7 @@ javacall_dom_element_get_elements_by_tag_name(javacall_handle handle,
  * @return JAVACALL_OK if all done successfuly,
  *         JAVACALL_OUT_OF_MEMORY if length of the returend string is more then 
  *                                specified in ret_value_len,
- *         JAVACALL_FAIL if NOT_SUPPORTED_ERR occured,
+ *         JAVACALL_FAIL if [NOT_SUPPORTED_ERR] occured,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
@@ -374,7 +374,7 @@ javacall_dom_element_remove_attribute_ns(javacall_handle handle,
  *   attribute.
  * 
  * @return JAVACALL_OK if all done successfuly,
- *         JAVACALL_FAIL if NOT_SUPPORTED_ERR occured,
+ *         JAVACALL_FAIL if [NOT_SUPPORTED_ERR] occured,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
@@ -433,7 +433,7 @@ javacall_dom_element_set_attribute_node_ns(javacall_handle handle,
  *   <code>Elements</code>.
  * 
  * @return JAVACALL_OK if all done successfuly,
- *         JAVACALL_FAIL if NOT_SUPPORTED_ERR occured,
+ *         JAVACALL_FAIL if [NOT_SUPPORTED_ERR] occured,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
@@ -478,7 +478,7 @@ javacall_dom_element_has_attribute(javacall_handle handle,
  *   element, <code>false</code> otherwise.
  * 
  * @return JAVACALL_OK if all done successfuly,
- *         JAVACALL_FAIL if NOT_SUPPORTED_ERR occured,
+ *         JAVACALL_FAIL if [NOT_SUPPORTED_ERR] occured,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
