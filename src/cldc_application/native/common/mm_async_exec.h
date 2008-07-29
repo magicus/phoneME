@@ -52,6 +52,7 @@ do { \
     MidpReentryData* ctx__ = (MidpReentryData *)SNI_GetReentryData(NULL); \
     javacall_result result__ = JAVACALL_FAIL; \
     javacall_handle handle__ = (handle_); \
+    (void)handle__; \
     int javacall_event__ = (int)(javacall_event_); \
     if (ctx__ == NULL) { \
         result__ = (code_); \

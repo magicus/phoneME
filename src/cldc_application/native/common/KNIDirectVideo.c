@@ -134,7 +134,7 @@ KNIDECL(com_sun_mmedia_DirectPlayer_nSetFullScreenMode) {
     MMP_DEBUG_STR1("[kni_video] +nSetFullScreen(%d)\n", fscreen);
 
     if (pKniInfo && pKniInfo->pNativeHandle &&
-        JAVACALL_OK == javacall_media_set_video_fullscreenmode(pKniInfo->pNativeHandle, 
+        JAVACALL_OK == javacall_media_set_video_full_screen_mode(pKniInfo->pNativeHandle, 
                            (KNI_TRUE == fscreen ? JAVACALL_TRUE : JAVACALL_FALSE))) 
     {
         returnValue = KNI_TRUE;

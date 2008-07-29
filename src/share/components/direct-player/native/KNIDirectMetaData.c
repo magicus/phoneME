@@ -62,7 +62,7 @@ KNIDECL(com_sun_mmedia_DirectMetaData_nGetKey) {
     jint index = KNI_GetParameterAsInt(2);
     javacall_result ret = JAVACALL_FAIL;
     javacall_utf16* key = NULL;
-    int keySize = MIN_KEY_LENGTH;
+    javacall_int32 keySize = MIN_KEY_LENGTH;
     KNIPlayerInfo* pKniInfo = (KNIPlayerInfo*)handle;
 
     KNI_StartHandles(1);
@@ -105,7 +105,7 @@ KNIDECL(com_sun_mmedia_DirectMetaData_nGetKeyValue) {
     javacall_utf16* key = NULL;
     int keyLength = 0;
     javacall_utf16* value = NULL;
-    int valueSize = MIN_VALUE_LENGTH;
+    javacall_int32 valueSize = MIN_VALUE_LENGTH;
     KNIPlayerInfo* pKniInfo = (KNIPlayerInfo*)handle;
 
     KNI_StartHandles(2);

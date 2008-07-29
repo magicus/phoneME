@@ -28,12 +28,12 @@
 #include <javacall_defs.h>
 #include <javacall_multimedia.h>
 
-static javacall_media_configuration *configuration;
+static const javacall_media_configuration *configuration;
 static javacall_bool configuration_filled = JAVACALL_FALSE;
 
 void mmapi_string_delete_duplicates(char *p);
 
-javacall_media_configuration *get_configuration() {
+const javacall_media_configuration *get_configuration() {
     if (JAVACALL_FALSE == configuration_filled) {
         if (JAVACALL_OK == javacall_media_get_configuration(&configuration)) {
             configuration_filled = JAVACALL_TRUE;
@@ -48,7 +48,7 @@ javacall_media_configuration *get_configuration() {
 
 const char* get_system_property_supports_mixing()
 {
-    javacall_media_configuration *cfg = get_configuration();
+    const javacall_media_configuration *cfg = get_configuration();
     if (cfg != NULL) {
         if (JAVACALL_TRUE == cfg->supportMixing) {
             return "true";
@@ -61,7 +61,7 @@ const char* get_system_property_supports_mixing()
 
 const char* get_system_property_supports_audio_capture()
 {
-    javacall_media_configuration *cfg = get_configuration();
+    const javacall_media_configuration *cfg = get_configuration();
     if (cfg != NULL) {
         if (NULL != cfg->audioEncoding) {
             return "true";
@@ -74,7 +74,7 @@ const char* get_system_property_supports_audio_capture()
 
 const char* get_system_property_supports_video_capture()
 {
-    javacall_media_configuration *cfg = get_configuration();
+    const javacall_media_configuration *cfg = get_configuration();
     if (cfg != NULL) {
         if (NULL != cfg->videoEncoding) {
             return "true";
@@ -87,7 +87,7 @@ const char* get_system_property_supports_video_capture()
 
 const char* get_system_property_supports_recording()
 {
-    javacall_media_configuration *cfg = get_configuration();
+    const javacall_media_configuration *cfg = get_configuration();
     if (cfg != NULL) {
         if (JAVACALL_TRUE == cfg->supportRecording) {
             return "true";
@@ -100,7 +100,7 @@ const char* get_system_property_supports_recording()
 
 const char* get_system_property_audio_encodings()
 {
-    javacall_media_configuration *cfg = get_configuration();
+    const javacall_media_configuration *cfg = get_configuration();
     if (cfg != NULL) {
         return cfg->audioEncoding;
     }
@@ -109,7 +109,7 @@ const char* get_system_property_audio_encodings()
 
 const char* get_system_property_video_encodings()
 {
-    javacall_media_configuration *cfg = get_configuration();
+    const javacall_media_configuration *cfg = get_configuration();
     if (cfg != NULL) {
         return cfg->videoEncoding;
     }
@@ -118,7 +118,7 @@ const char* get_system_property_video_encodings()
 
 const char* get_system_property_video_snapshot_encodings()
 {
-    javacall_media_configuration *cfg = get_configuration();
+    const javacall_media_configuration *cfg = get_configuration();
     if (cfg != NULL) {
         return cfg->videoSnapshotEncoding;
     }
@@ -131,7 +131,7 @@ static javacall_bool streamable_content_property_filled = JAVACALL_FALSE;
 
 const char* get_system_property_streamable_contents()
 {
-    javacall_media_configuration *cfg = get_configuration();
+    const javacall_media_configuration *cfg = get_configuration();
     javacall_media_caps* mediaCaps = NULL;
     char *p=streamable_content_property;
     int types_len;
