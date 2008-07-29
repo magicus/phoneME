@@ -63,13 +63,13 @@
  */
 char* getApplicationDir(char *cmd) {
 
-    (void)cmd;
-
     static javacall_utf16 path[MAX_PATH_LEN];
     static char midpAppDir[MAX_PATH_LEN];
     javacall_result ret;
     int len = MAX_PATH_LEN - 1;
     pcsl_string str = PCSL_STRING_NULL_INITIALIZER;
+
+    (void)cmd;
 
     ret = javacall_dir_get_root_path (path, &len);
 
