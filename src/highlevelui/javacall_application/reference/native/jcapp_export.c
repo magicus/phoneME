@@ -40,8 +40,6 @@
 
 gxj_screen_buffer gxj_system_screen_buffer;
 
-static jboolean isLcdDirty = KNI_FALSE;
-static javacall_time_milliseconds lastFlushTimeTicks = 0;
 static jboolean disableRefresh=KNI_FALSE;
 
 /**
@@ -69,7 +67,7 @@ int jcapp_get_screen_buffer() {
 /**
  * Reset screen buffer content.
  */
-void static jcapp_reset_screen_buffer() {
+static void jcapp_reset_screen_buffer() {
     memset (gxj_system_screen_buffer.pixelData, 0,
         gxj_system_screen_buffer.width * gxj_system_screen_buffer.height *
             sizeof (gxj_pixel_type));
@@ -83,8 +81,7 @@ void static jcapp_reset_screen_buffer() {
  *         <tt>other value</tt> otherwise
  */
 int jcapp_init() {
-    javacall_lcd_color_encoding_type color_encoding;
- 
+    
     if (!JAVACALL_SUCCEEDED(javacall_lcd_init ()))
         return -1;        
  
@@ -121,6 +118,9 @@ void jcapp_finalize() {
 #define TRACE_LCD_REFRESH
 void jcapp_refresh(int x1, int y1, int x2, int y2)
 {
+    (void)x1;
+    (void)x2;
+
     /*block any refresh calls in case of native master volume*/
     if(disableRefresh==KNI_TRUE){
         return;

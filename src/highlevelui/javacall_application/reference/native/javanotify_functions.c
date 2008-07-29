@@ -221,6 +221,9 @@ void javanotify_start_suite(char* suiteId) {
  */
 void javanotify_start_local(char* classname, char* descriptor,
                             char* classpath, javacall_bool debug) {
+
+    (void)debug;
+
     midp_jc_event_union e;
     midp_jc_event_start_arbitrary_arg *data = &e.data.startMidletArbitraryArgEvent;
 
@@ -469,6 +472,9 @@ void javanotify_install_midlet_from_browser(const char * browserUrl, const char*
  */
 void javanotify_install_midlet_from_filesystem(const javacall_utf16* jadFilePath,
                                                int jadFilePathLen, int userWasAsked) {
+
+    (void)userWasAsked;
+
     midp_jc_event_union e;
     midp_jc_event_start_arbitrary_arg *data = &e.data.startMidletArbitraryArgEvent;
 
@@ -1675,11 +1681,11 @@ void javanotify_security_permission_dialog_finish(
  */
 void javanotify_install_content(const char * httpUrl,
                                 const javacall_utf16* descFilePath,
-                                int descFilePathLen,
+                                unsigned int descFilePathLen,
                                 javacall_bool isJadFile,
                                                                 javacall_bool isSilent) {
-    const static int SchemaLen = 16;
-    const static javacall_utf16 SchemaFile[] = {'f','i','l','e',':','/','/','/'};
+    //static const int SchemaLen = 16;
+    //static const javacall_utf16 SchemaFile[] = {'f','i','l','e',':','/','/','/'};
 
     midp_jc_event_union e;
     int httpUrlLength, dscFileOffset;
