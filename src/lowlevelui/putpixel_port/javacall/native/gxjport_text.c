@@ -66,10 +66,10 @@ int gxjport_draw_chars(int pixel, const jshort *clip, gxj_screen_buffer *dst,
                        int x, int y, int anchor,
                        const jchar *chararray, int n) {
 
+    javacall_result result;
+
     (void)anchor;
     (void)dotted;
-
-    javacall_result result;
 
     result = javacall_font_set_font(face, style, size);
 

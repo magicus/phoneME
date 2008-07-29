@@ -101,16 +101,15 @@ openPortByNameStart(char* pszDeviceName, int baudRate,
 int openPortByNameFinish(char* pszDeviceName, int baudRate,
     int options, int *pHandle, void *context) {
 
-    (void)pszDeviceName;
-    (void)baudRate;
-    (void)options;
-
 	javacall_handle hPort = (javacall_handle)*pHandle;
     javacall_result ret;
 	int returnStatus = PCSL_NET_IOERROR;
 
     /* Javacall implementation never uses contect */
     (void)context;
+    (void)pszDeviceName;
+    (void)baudRate;
+    (void)options;
 
     ret = javacall_serial_open_finish(hPort);
 
