@@ -65,7 +65,7 @@ extern "C" {
  * @return JAVACALL_OK if all done successfuly,
  *         JAVACALL_OUT_OF_MEMORY if length of the returend string is more then 
  *                                specified in ret_value_len,
- *         JAVACALL_FAIL if [DOMSTRING_SIZE_ERR] occured,
+ *         JAVACALL_FAIL if DOMSTRING_SIZE_ERR occured,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
@@ -157,7 +157,7 @@ javacall_dom_characterdata_substring_data(javacall_handle handle,
  * @param arg The <code>DOMString</code> to append.
  * 
  * @return JAVACALL_OK if all done successfuly,
- *         JAVACALL_FAIL if [NO_MODIFICATION_ALLOWED_ERR] occured,
+ *         JAVACALL_FAIL if NO_MODIFICATION_ALLOWED_ERR occured,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result

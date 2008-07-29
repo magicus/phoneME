@@ -150,7 +150,7 @@ javacall_dom_attr_get_value(javacall_handle handle,
  * @param value a String containing the value of this attribute
  * 
  * @return JAVACALL_OK if all done successfuly,
- *         JAVACALL_FAIL if [NO_MODIFICATION_ALLOWED_ERR] occured,
+ *         JAVACALL_FAIL if NO_MODIFICATION_ALLOWED_ERR occured,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result

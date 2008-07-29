@@ -100,7 +100,7 @@ javacall_dom_processinginstruction_get_data(javacall_handle handle,
  * @param data character data to add to the node, may not be NULL
  * 
  * @return JAVACALL_OK if all done successfuly,
- *         JAVACALL_FAIL if [NO_MODIFICATION_ALLOWED_ERR] occured,
+ *         JAVACALL_FAIL if NO_MODIFICATION_ALLOWED_ERR occured,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
