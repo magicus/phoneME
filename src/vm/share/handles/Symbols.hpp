@@ -191,11 +191,20 @@
 #define VM_SYMBOLS_DO_DEBUGGER(template, sig_template)
 #endif
 
+#if ENABLE_JNI
+#define VM_SYMBOLS_DO_JNI(template, sig_template) \
+  template(java_lang_StringIndexOutOfBoundsException, \
+                             "java/lang/StringIndexOutOfBoundsException")
+#else
+#define VM_SYMBOLS_DO_JNI(template, sig_template)
+#endif
+
 #define VM_SYMBOLS_DO(template, sig_template) \
         VM_SYMBOLS_DO_GENERIC(template, sig_template) \
         VM_SYMBOLS_DO_CLDC11(template, sig_template)  \
         VM_SYMBOLS_DO_ISOLATE(template, sig_template) \
         VM_SYMBOLS_DO_REFLECTION(template, sig_template) \
+        VM_SYMBOLS_DO_JNI(template, sig_template) \
         VM_SYMBOLS_DO_DEBUGGER(template, sig_template)
 
 // Mapping function names to values. New entries should be added below.

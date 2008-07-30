@@ -255,6 +255,13 @@ void Throw::array_index_out_of_bounds_exception(ErrorMsgTag err JVM_TRAPS) {
                      JVM_NO_CHECK_AT_BOTTOM);
 }
 
+#if ENABLE_JNI
+void Throw::string_index_out_of_bounds_exception(ErrorMsgTag err JVM_TRAPS) {
+  allocate_and_throw(Symbols::java_lang_StringIndexOutOfBoundsException(), err 
+                     JVM_NO_CHECK_AT_BOTTOM);
+}
+#endif
+
 void Throw::illegal_access(FailureMode fail_mode JVM_TRAPS) {
   if (fail_mode == ErrorOnFailure) {
     error(illegal_access_error JVM_NO_CHECK_AT_BOTTOM);

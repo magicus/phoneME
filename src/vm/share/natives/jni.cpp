@@ -669,6 +669,23 @@ _JNI_GetStringUTFLength(JNIEnv *env, jstring str) {
   return stream.utf8_length();
 }
 
+static void
+unchecked_get_string_utf_region(String * string, jsize start, jsize len,
+                                char * buf) {
+  TypeArray::Raw value = string->value();
+  const jint offset = string->offset();
+  const jint utf8len = len * 3;
+
+  LiteralStream stream(buf, 0, utf8len);
+
+  int i, index;
+  for (index = 0, i = start; i < start + len; i++) {
+    jchar ch = value().char_at(i + offset);
+    index = stream.utf8_write(index, ch);
+  }
+  GUARANTEE(index <= utf8len, "UTF8 encoder failed");
+}
+
 static const char * JNICALL
 _JNI_GetStringUTFChars(JNIEnv *env, jstring str, jboolean *isCopy) {
   if (isCopy != NULL) {
@@ -684,8 +701,6 @@ _JNI_GetStringUTFChars(JNIEnv *env, jstring str, jboolean *isCopy) {
     return NULL;
   }
 
-  TypeArray::Raw value = string().value();
-  const jint offset = string().offset();
   const jint length = string().length();
 
   if (length == 0) {
@@ -699,14 +714,7 @@ _JNI_GetStringUTFChars(JNIEnv *env, jstring str, jboolean *isCopy) {
     return NULL;
   }
 
-  LiteralStream stream(buf, 0, utf8len);
-
-  int i, index;
-  for (index = 0, i = 0; i < length; i++) {
-    jchar ch = value().char_at(i + offset);
-    index = stream.utf8_write(index, ch);
-  }
-  GUARANTEE(index < utf8len, "UTF8 encoder failed");
+  unchecked_get_string_utf_region(&string, 0, length, buf);
 
   return buf;
 }
@@ -716,38 +724,6 @@ _JNI_ReleaseStringUTFChars(JNIEnv *env, jstring str, const char *chars) {
   if (chars != NULL) {
     jvm_free((void*)chars);
   }
-}
-
-static jobject JNICALL
-_JNI_NewWeakGlobalRef(JNIEnv* env, jobject obj) {
-  if (obj == NULL) {
-    return NULL;
-  }
-
-  SETUP_ERROR_CHECKER_ARG;
-  UsingFastOops fast_oops;
-  Oop::Fast oop = *decode_handle(obj);
-
-  const int ref_index = 
-    ObjectHeap::register_weak_reference(&oop JVM_MUST_SUCCEED);
-
-  // IMPL_NOTE: throw OutOfMemoryError in case of failure
-  return (jobject)ref_index;
-}
-
-static void JNICALL
-_JNI_DeleteWeakGlobalRef(JNIEnv* env, jobject obj) {
-  if (obj == NULL) {
-    return;
-  }
-
-  const int ref_index = (int)obj;
-  ObjectHeap::unregister_weak_reference(ref_index);
-}
-
-static jboolean JNICALL
-_JNI_ExceptionCheck(JNIEnv *env) {
-  return (CURRENT_HAS_PENDING_EXCEPTION) ? JNI_TRUE : JNI_FALSE;
 }
 
 static jsize JNICALL
@@ -824,6 +800,30 @@ _JNI_SetObjectArrayElement(JNIEnv* env, jobjectArray array, jsize index,
     SETUP_ERROR_CHECKER_ARG;
     Throw::array_index_out_of_bounds_exception(empty_message JVM_THROW);
   }
+
+  jobject null_ref = NULL;
+  if (val == NULL) {
+    null_ref = new_local_ref(env);
+    if (null_ref == NULL) {
+      return;
+    }
+    val = null_ref;
+  } else {
+    // array type checking
+    Oop::Raw obj = *decode_handle(val);
+    if (obj.not_null()) {
+      Oop::Raw arr = *decode_handle(array);
+      if (arr.not_null() && arr.is_obj_array()) {
+        ObjArrayClass::Raw arr_class = arr.blueprint();
+        JavaClass::Raw element_class = arr_class().element_class();
+        JavaClass::Raw obj_class = obj.blueprint();
+        if (!obj_class().is_subtype_of(&element_class)) {
+          SETUP_ERROR_CHECKER_ARG;
+          Throw::array_store_exception(arraycopy_incompatible_types JVM_THROW);
+        }
+      }
+    }
+  }        
 
   KNI_SetObjectArrayElement(array, index, val);
 }
@@ -948,6 +948,155 @@ _JNI_Set ## Type ## ArrayRegion(JNIEnv *env, jtype ## Array array,       \
 }
 
 FOR_ALL_PRIMITIVE_TYPES(DEFINE_SET_ARRAY_REGION)
+
+static void JNICALL 
+_JNI_GetStringRegion(JNIEnv *env, jstring str, 
+                     jsize start, jsize len, jchar *buf) {
+  const jint str_len = _JNI_GetStringLength(env, str);
+  if (str_len < 0) {
+    return;
+  }
+
+  if (start < 0 || len < 0 ||
+      (juint)len + (juint)start > (juint)str_len) {
+    SETUP_ERROR_CHECKER_ARG;
+    Throw::string_index_out_of_bounds_exception(empty_message JVM_THROW);
+  }
+
+  KNI_GetStringRegion(str, start, len, buf);
+}
+
+static void JNICALL 
+_JNI_GetStringUTFRegion(JNIEnv *env, jstring str, 
+                        jsize start, jsize len, char *buf) {
+  const jint str_len = _JNI_GetStringLength(env, str);
+  if (str_len < 0) {
+    return;
+  }
+
+  String::Raw string = *decode_handle(str);
+  if (string.is_null()) {
+    return;
+  }
+
+  if (start < 0 || len < 0 ||
+      (juint)len + (juint)start > (juint)str_len) {
+    SETUP_ERROR_CHECKER_ARG;
+    Throw::string_index_out_of_bounds_exception(empty_message JVM_THROW);
+  }
+
+  unchecked_get_string_utf_region(&string, start, len, buf);
+}
+
+static void * JNICALL 
+_JNI_GetPrimitiveArrayCritical(JNIEnv *env, jarray array, jboolean *isCopy) {
+  if (array == NULL) {
+    return NULL;
+  }
+
+  TypeArray::Raw type_array = *decode_handle(array);
+  if (type_array.is_null()) {
+    return NULL;
+  }
+
+  TypeArrayClass::Raw array_class = type_array().blueprint();
+  const jint scale = array_class().scale();
+
+  void * elements = NULL;
+  switch (scale) {
+  case 1: 
+    elements = _JNI_GetByteArrayElements(env, array, isCopy); 
+    break;
+  case 2: 
+    elements = _JNI_GetShortArrayElements(env, array, isCopy);
+    break;
+  case 4: 
+    elements = _JNI_GetIntArrayElements(env, array, isCopy);
+    break;
+  case 8: 
+    elements = _JNI_GetLongArrayElements(env, array, isCopy);
+    break;
+  default: 
+    SHOULD_NOT_REACH_HERE();
+  }
+
+  return elements;
+}
+
+static void JNICALL 
+_JNI_ReleasePrimitiveArrayCritical(JNIEnv *env, jarray array, 
+                                   void *carray, jint mode) {
+  if (array == NULL) {
+    return;
+  }
+
+  TypeArray::Raw type_array = *decode_handle(array);
+  if (type_array.is_null()) {
+    return;
+  }
+
+  TypeArrayClass::Raw array_class = type_array().blueprint();
+  const jint scale = array_class().scale();
+
+  switch (scale) {
+  case 1: 
+    _JNI_ReleaseByteArrayElements(env, array, (jbyte*)carray, mode);
+    break;
+  case 2: 
+    _JNI_ReleaseShortArrayElements(env, array, (jshort*)carray, mode);
+    break;
+  case 4: 
+    _JNI_ReleaseIntArrayElements(env, array, (jint*)carray, mode);
+    break;
+  case 8: 
+    _JNI_ReleaseLongArrayElements(env, array, (jlong*)carray, mode);
+    break;
+  default:
+    SHOULD_NOT_REACH_HERE();
+  }
+}
+
+static const jchar * JNICALL 
+_JNI_GetStringCritical(JNIEnv *env, jstring string, jboolean *isCopy) {
+  return _JNI_GetStringChars(env, string, isCopy);
+}
+
+static void JNICALL
+_JNI_ReleaseStringCritical(JNIEnv *env, jstring string, const jchar *cstring) {
+  _JNI_ReleaseStringChars(env, string, cstring);
+}
+
+static jobject JNICALL
+_JNI_NewWeakGlobalRef(JNIEnv* env, jobject obj) {
+  if (obj == NULL) {
+    return NULL;
+  }
+
+  SETUP_ERROR_CHECKER_ARG;
+  UsingFastOops fast_oops;
+  Oop::Fast oop = *decode_handle(obj);
+
+  const int ref_index = 
+    ObjectHeap::register_weak_reference(&oop JVM_MUST_SUCCEED);
+
+  // IMPL_NOTE: throw OutOfMemoryError in case of failure
+  return (jobject)ref_index;
+}
+
+static void JNICALL
+_JNI_DeleteWeakGlobalRef(JNIEnv* env, jobject obj) {
+  if (obj == NULL) {
+    return;
+  }
+
+  const int ref_index = (int)obj;
+  ObjectHeap::unregister_weak_reference(ref_index);
+}
+
+static jboolean JNICALL
+_JNI_ExceptionCheck(JNIEnv *env) {
+  return (CURRENT_HAS_PENDING_EXCEPTION) ? JNI_TRUE : JNI_FALSE;
+}
 
 static struct JNINativeInterface _jni_native_interface = {
     NULL, // reserved0
@@ -1207,14 +1356,14 @@ static struct JNINativeInterface _jni_native_interface = {
 
     NULL, // GetJavaVM
 
-    NULL, // GetStringRegion
-    NULL, // GetStringUTFRegion
+    _JNI_GetStringRegion, // GetStringRegion
+    _JNI_GetStringUTFRegion, // GetStringUTFRegion
 
-    NULL, // GetPrimitiveArrayCritical
-    NULL, // ReleasePrimitiveArrayCritical
+    _JNI_GetPrimitiveArrayCritical, // GetPrimitiveArrayCritical
+    _JNI_ReleasePrimitiveArrayCritical, // ReleasePrimitiveArrayCritical
 
-    NULL, // GetStringChars     
-    NULL, // ReleaseStringChars 
+    _JNI_GetStringCritical, // GetStringCritical     
+    _JNI_ReleaseStringCritical, // ReleaseStringCritical 
 
     _JNI_NewWeakGlobalRef,    // NewWeakGlobalRef
     _JNI_DeleteWeakGlobalRef, // DeleteWeakGlobalRef
