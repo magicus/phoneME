@@ -661,7 +661,7 @@ javacall_result javacall_media_get_video_snapshot_data(javacall_handle handle,
   * @retval JAVACALL_FAIL    Fail
   * @retval JAVACALL_NOT_IMPLEMENTED    Native FullScreen mode not implemented
   */
-javacall_result javacall_media_set_video_fullscreenmode(javacall_handle handle, javacall_bool fullScreenMode) {
+javacall_result javacall_media_set_video_full_screen_mode(javacall_handle handle, javacall_bool fullScreenMode) {
     return JAVACALL_NOT_IMPLEMENTED;
 }
 
