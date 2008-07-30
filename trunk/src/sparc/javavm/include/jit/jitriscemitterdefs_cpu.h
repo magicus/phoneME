@@ -139,7 +139,7 @@ typedef enum CVMCPUCondCode CVMCPUCondCode;
 #define CVMSPARC_DIV_OPCODE   (0x0f << 19) 
 #define CVMSPARC_REM_OPCODE   (0x00000005) 
 #define CVMCPU_CMP_OPCODE   CVMCPU_SUB_OPCODE /* cmp reg32, aluRhs32 => set cc*/
-#define CVMCPU_CMN_OPCODE   CVMCPU_ADD_OPCODE /* cmp reg32, ~aluRhs32 => set cc*/
+#define CVMCPU_CMN_OPCODE   CVMCPU_ADD_OPCODE /* cmp reg32, -aluRhs32 => set cc*/
 
 #ifdef CVMJIT_SIMPLE_SYNC_METHODS
 #if CVM_FASTLOCK_TYPE == CVM_FASTLOCK_MICROLOCK && \

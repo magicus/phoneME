@@ -140,7 +140,7 @@ enum {
     
     /* 32 bit compare opcodes */
     CVMCPU_CMP_OPCODE, /* cmp reg32, aluRhs32 */
-    CVMCPU_CMN_OPCODE, /* cmp reg32, ~aluRhs32 */
+    CVMCPU_CMN_OPCODE, /* cmp reg32, -aluRhs32 */
     
     /* 64 bit unary ALU opcodes */
     CVMCPU_NEG64_OPCODE,

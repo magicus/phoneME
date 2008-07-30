@@ -142,7 +142,7 @@ enum CVMCPUOpCode
    CVMCPU_ANDN_OPCODE  /* reg32 <- reg32 AND ~aluRhs32. */,
    CVMCPU_BIC_OPCODE = CVMCPU_ANDN_OPCODE /* reg32 <- reg32 AND ~aluRhs32*/,
    CVMCPU_ADD_OPCODE   /* reg32 <- reg32 + aluRhs32. */,
-   CVMCPU_CMN_OPCODE = CVMCPU_ADD_OPCODE /* cmp reg32, ~aluRhs32; set cc */, 
+   CVMCPU_CMN_OPCODE = CVMCPU_ADD_OPCODE /* cmp reg32, -aluRhs32; set cc */, 
    CVMCPU_SUB_OPCODE   /* reg32 <- reg32 - aluRhs32. */,
    CVMCPU_CMP_OPCODE = CVMCPU_SUB_OPCODE /* cmp reg32, aluRhs32; set cc */,
    CVMCPU_AND_OPCODE   /* reg32 <- reg32 AND aluRhs32. */,
