@@ -43,7 +43,7 @@ int jsrop_suiteid_string_size(SuiteIdType suite_id){
  * @return non zero in case of success zero in case of error
  */
 int jsrop_suiteid_to_string(SuiteIdType suite_id, /* OUT */ jchar* suite_id_str_out){
-	char* chrs= midp_suiteid2chars(suite_id);
+	const char* chrs= midp_suiteid2chars(suite_id);
 	if (!chrs) return 0;
 	while (*chrs) *suite_id_str_out++ = (jchar)*chrs++;
 	*suite_id_str_out=0;
