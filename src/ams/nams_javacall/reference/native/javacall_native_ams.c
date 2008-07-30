@@ -147,7 +147,7 @@ javanotify_ams_midlet_start_with_args(const javacall_suite_id suiteID,
         return JAVACALL_FAIL;
     }
 
-    jcRes = javautil_unicode_utf16_to_utf8(className, classNameLen,
+    jcRes = javautil_unicode_utf16_to_utf8(className, utf16Len,
         (unsigned char*) pClassName, sizeof(pClassName) / sizeof(jchar) - 1,
             (javacall_int32*) &classNameLen);
     if (jcRes != JAVACALL_OK) {
