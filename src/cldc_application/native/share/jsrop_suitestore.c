@@ -31,6 +31,9 @@
  * @return size in characters of suite_id in string representation
  */
 int jsrop_suiteid_string_size(SuiteIdType suite_id){
+
+    (void)suite_id;
+
 	return GET_SUITE_ID_LEN(suite_id); // maximum length of integer in hexadecimal format
 }
 
