@@ -289,7 +289,7 @@ public abstract class Installer {
         state.listener = installListener;
         state.chmanager = CHManager.getManager(null);
         state.storageId = storageId;
-
+        
         return performInstall();
     }
 
@@ -516,8 +516,7 @@ public abstract class Installer {
      */
     private void installStep1()
         throws IOException, InvalidJadException, MIDletSuiteLockedException {
-
-        if (info.jadUrl == null || info.jadUrl.length() == 0) {
+         if (info.jadUrl == null || info.jadUrl.length() == 0) {
             throw
                 new IllegalArgumentException("Must specify URL of .jad file");
         }
@@ -615,8 +614,7 @@ public abstract class Installer {
      * installed one.
      */
     private void installStep2() {
-        state.nextStep++;
-
+        state.nextStep++;      
         if (state.isPreviousVersion) {
             checkForDifferentDomains(info.jadUrl);
         }
@@ -632,6 +630,7 @@ public abstract class Installer {
      */
     private void installStep3()
             throws IOException, InvalidJadException {
+        
         String sizeString;
         int dataSize;
         int suiteSize;
@@ -704,7 +703,7 @@ public abstract class Installer {
      */
     private void installStep4()
             throws IOException {
-
+        
         synchronized (state) {
             /* One more check to see if user has already canceled */
             if (state.stopInstallation) {
@@ -749,7 +748,7 @@ public abstract class Installer {
         int bytesDownloaded;
         MIDletInfo midletInfo;
         String midlet;
-
+        
         // Send out delete notifications that have been queued, first
         OtaNotifier.postQueuedDeleteMsgsBackToProvider(state.proxyUsername,
             state.proxyPassword);
@@ -965,7 +964,7 @@ public abstract class Installer {
      */
     private void installStep6() {
         state.nextStep++;
-
+       
         if (info.jadUrl == null && state.isPreviousVersion) {
             checkForDifferentDomains(info.jarUrl);
         }
