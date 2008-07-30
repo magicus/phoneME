@@ -53,12 +53,10 @@ static javacall_result midpHandleRemoveMIDlet(midp_event_remove_midlet removeMid
  * An entry point of a thread devoted to run java
  */
 void JavaTask(void) {
-    //static unsigned long binaryBuffer[BINARY_BUFFER_MAX_LEN/sizeof(long)];
     midp_jc_event_union event;
     javacall_bool res = JAVACALL_OK;
     javacall_bool JavaTaskIsGoOn = JAVACALL_TRUE;
     long timeTowaitInMillisec = -1;
-    //int binaryBufferMaxLen = BINARY_BUFFER_MAX_LEN;
     int outEventLen;
 
     /* Outer Event Loop */
@@ -75,15 +73,13 @@ void JavaTask(void) {
             (unsigned char *)&event, sizeof(midp_jc_event_union), &outEventLen);
 #else
         res = javacall_event_receive_cvm(MIDP_EVENT_QUEUE_ID,
-            (unsigned char *)binaryBuffer, binaryBufferMaxLen, &outEventLen);
+            (unsigned char *)&event, sizeof(midp_jc_event_union), &outEventLen);
 #endif
 
         if (!JAVACALL_SUCCEEDED(res)) {
             REPORT_ERROR(LC_CORE,"JavaTask() >> Error javacall_event_receive()\n");
             continue;
         }
-
-        //event = (midp_jc_event_union *) binaryBuffer;
 
         switch (event.eventType) {
         case MIDP_JC_EVENT_START_ARBITRARY_ARG:
