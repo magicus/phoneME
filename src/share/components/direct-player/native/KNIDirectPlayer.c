@@ -1,6 +1,5 @@
 /*
- * 
- * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
@@ -328,63 +327,6 @@ UnlockAudioMutex();
     MMP_DEBUG_STR1("-nGetDuration duration=%d\n", ms);
 
     KNI_ReturnInt((jint)ms);
-}
-
-/*  protected native boolean nPause ( int handle ) ; */
-KNIEXPORT KNI_RETURNTYPE_BOOLEAN
-KNIDECL(com_sun_mmedia_DirectPlayer_nPause) {
-
-    jint handle = KNI_GetParameterAsInt(1);
-    KNIPlayerInfo* pKniInfo = (KNIPlayerInfo*)handle;
-    javacall_result result = JAVACALL_FAIL;
-
-    MMP_DEBUG_STR("+nPause\n");  
-
-    if (NULL == pKniInfo || NULL == pKniInfo->pNativeHandle || 
-            JAVACALL_TRUE != jmmpCheckCondition(pKniInfo, CHECK_ISPLAYING)) {
-        REPORT_ERROR(LC_MMAPI, "nPause fail cause is not in playing\n\n");
-        KNI_ReturnBoolean(KNI_FALSE);
-    } else {
-
-LockAudioMutex();            
-        JAVACALL_MM_ASYNC_EXEC(
-            result,
-            javacall_media_pause(pKniInfo->pNativeHandle),
-            pKniInfo->pNativeHandle, pKniInfo->appId, pKniInfo->playerId, JAVACALL_EVENT_MEDIA_PAUSED,
-            returns_no_data
-        );
-UnlockAudioMutex();
-    }
-
-    KNI_ReturnBoolean(JAVACALL_OK == result? KNI_TRUE: KNI_FALSE);
-}
-
-/*  protected native boolean nResume ( int handle ) ; */
-KNIEXPORT KNI_RETURNTYPE_BOOLEAN
-KNIDECL(com_sun_mmedia_DirectPlayer_nResume) {
-
-    jint handle = KNI_GetParameterAsInt(1);
-    KNIPlayerInfo* pKniInfo = (KNIPlayerInfo*)handle;
-    javacall_result result = JAVACALL_FAIL;
-
-    MMP_DEBUG_STR("+nResume\n");  
-
-    if (!pKniInfo || !pKniInfo->pNativeHandle || JAVACALL_TRUE != jmmpCheckCondition(pKniInfo, CHECK_ISPLAYING)) {
-        REPORT_ERROR(LC_MMAPI, "nResume fail cause is not in playing\n\n");
-        KNI_ReturnBoolean(KNI_FALSE);
-    } else {
-
-LockAudioMutex();            
-        JAVACALL_MM_ASYNC_EXEC(
-            result,
-            javacall_media_resume(pKniInfo->pNativeHandle),
-            pKniInfo->pNativeHandle, pKniInfo->appId, pKniInfo->playerId, JAVACALL_EVENT_MEDIA_RESUMED,
-            returns_no_data
-        );
-UnlockAudioMutex();
-    }
-
-    KNI_ReturnBoolean(JAVACALL_OK == result? KNI_TRUE: KNI_FALSE);
 }
 
 /*  protected native boolean nIsNeedBuffering ( int handle ) ; */

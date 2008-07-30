@@ -106,7 +106,6 @@ public class DirectPlayer extends BasicPlayer implements VideoSource
     // #endif ]
     
     private boolean isStreaming = false;
-    private boolean isFirstStart = true;
 
     protected boolean wholeDataDownloaded = false;
 
@@ -144,10 +143,6 @@ public class DirectPlayer extends BasicPlayer implements VideoSource
     protected native int nSetMediaTime(int handle, long ms);
     // Get total duration of media data
     protected native int nGetDuration(int handle);
-    // Pause
-    protected native boolean nPause(int handle);
-    // Resume
-    protected native boolean nResume(int handle);
     // Need buffering from Java side?
     protected native boolean nIsNeedBuffering(int handle);
     // Switch to foreground
@@ -429,8 +424,6 @@ public class DirectPlayer extends BasicPlayer implements VideoSource
      *         <code>false</code> otherwise.
      */
     protected boolean doStart() {
-        boolean ret = false;
-        
         if (debug) {
             Logging.report(Logging.INFORMATION, LogChannels.LC_MMAPI,
                 "DirectPlayer.doStart");
@@ -441,14 +434,7 @@ public class DirectPlayer extends BasicPlayer implements VideoSource
             videoControl.start();
         }
         
-        if (isFirstStart || (0 == getMediaTime())) {
-            ret = nStart(hNative);
-            isFirstStart = false;
-        } else {
-            ret = nResume(hNative);    
-        }
-        
-        return ret;
+        return nStart(hNative);
     }
 
     protected void continueDownload() {
@@ -507,7 +493,7 @@ public class DirectPlayer extends BasicPlayer implements VideoSource
             videoControl.stop();
         }
         
-        if (false == nPause(hNative)) {
+        if (false == nStop(hNative)) {
             throw new MediaException("Player cannot be stopped");
         }
 
@@ -544,8 +530,6 @@ public class DirectPlayer extends BasicPlayer implements VideoSource
         if (mediaDownload != null) {
             mediaDownload.deallocate();
         }
-
-        isFirstStart = true;
     }
     
     /**
