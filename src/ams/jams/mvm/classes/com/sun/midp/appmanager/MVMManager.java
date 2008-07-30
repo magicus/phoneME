@@ -182,7 +182,7 @@ public class MVMManager extends MIDlet
         }
 
         try {
-            appManager.launchSuite(suiteId, className);
+            appManager.launchSuite(suiteId, className, isDebugMode);
             suiteUnderDebugId = suiteId;
         } catch (Exception ex) {
             displayError.showErrorAlert(displayName, ex, null, null);
@@ -382,12 +382,13 @@ public class MVMManager extends MIDlet
         try {
             // Create an instance of the MIDlet class
             // All other initialization happens in MIDlet constructor
-            MIDletSuiteUtils.execute(suiteInfo.suiteId, midletToRun, null);
+            MIDletSuiteUtils.execute(suiteInfo.suiteId, midletToRun, null, 
+                    suiteInfo.isDebugMode);
         } catch (Exception ex) {
             displayError.showErrorAlert(suiteInfo.displayName, ex, null, null);
         }
     }
-
+ 
     /**
      * Update a suite.
      *
