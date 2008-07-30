@@ -381,7 +381,7 @@ public class MIDletProxy implements SuspendDependency {
         if (midletState != MIDLET_DESTROYED && midletState != MIDLET_ACTIVE) {
             if (wasPausedUponBackground) {
                 activateMidlet();
-                System.out.println("EXTENDED_JAD_ATTRIBUTES_ENABLED: midlet is actived upon moving to the foreground");
+                System.out.println("EXTENDED_MIDLET_ATTRIBUTES_ENABLED: midlet is actived upon moving to the foreground");
             }
         }
         wasPausedUponBackground = false;
@@ -411,7 +411,7 @@ public class MIDletProxy implements SuspendDependency {
         if (midletState != MIDLET_DESTROYED && midletState != MIDLET_PAUSED) {
             wasPausedUponBackground = true;
             pauseMidlet();
-            System.out.println("EXTENDED_JAD_ATTRIBUTES_ENABLED: midlet is paused upon moving to the background");
+            System.out.println("EXTENDED_MIDLET_ATTRIBUTES_ENABLED: midlet is paused upon moving to the background");
         }
     }
 

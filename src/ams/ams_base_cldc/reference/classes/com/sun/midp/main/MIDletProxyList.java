@@ -1060,7 +1060,7 @@ public class MIDletProxyList
             return;
         }
 
-        if (Constants.EXTENDED_JAD_ATTRIBUTES_ENABLED) {
+        if (Constants.EXTENDED_MIDLET_ATTRIBUTES_ENABLED) {
             if (newForeground.wasNotActive) {
                 String bgProp = MIDletSuiteUtils.getSuiteProperty(
                     newForeground.getSuiteId(),
@@ -1081,11 +1081,11 @@ public class MIDletProxyList
             foregroundMidlet.notifyMIDletHasForeground(false);
 
             /*
-             * Pause MIDlet after putting it in the background if extended JAD
-             * attributes support is enabled and MIDlet-Background-Pause
-             * attribute is set to true.
+             * If extended MIDlet attributes support enabled and
+             * MIDlet-Background-Pause attribute is set to true when pause the
+             * MIDlet right after it's put it in the background.
              */
-            if (Constants.EXTENDED_JAD_ATTRIBUTES_ENABLED) {
+            if (Constants.EXTENDED_MIDLET_ATTRIBUTES_ENABLED) {
                 String pauseProp = MIDletSuiteUtils.getSuiteProperty(
                     foregroundMidlet.getSuiteId(),
                     MIDletSuite.BACKGROUND_PAUSE_PROP);
@@ -1125,11 +1125,14 @@ public class MIDletProxyList
                 MIDletProxyListListener.ALERT_WAITING);
 
             /*
-             * Activate MIDlet after putting it back to the foreground if
-             * extended JAD attributes support is enabled and
-             * MIDlet-Background-Pause attribute is set to true.
+             * If extended MIDlet attributes support enabled and
+             * MIDlet-Background-Pause attribute is set to true when activate
+             * the MIDlet back after it's returned back to the foreground.
              */
-            if (Constants.EXTENDED_JAD_ATTRIBUTES_ENABLED) {
+            // TODO: Check whether this action is needed. Most probably a MIDlet
+            // is already activated after it's come to the foreground by 
+            // existing code.
+            if (Constants.EXTENDED_MIDLET_ATTRIBUTES_ENABLED) {
                 String pauseProp = MIDletSuiteUtils.getSuiteProperty(
                     foregroundMidlet.getSuiteId(),
                     MIDletSuite.BACKGROUND_PAUSE_PROP);

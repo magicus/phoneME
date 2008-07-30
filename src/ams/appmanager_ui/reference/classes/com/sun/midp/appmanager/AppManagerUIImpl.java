@@ -754,7 +754,7 @@ class AppManagerUIImpl extends Form
                     ci.removeCommand(launchODTAgentCmd);
                 }
 
-                if (Constants.EXTENDED_JAD_ATTRIBUTES_ENABLED) {
+                if (Constants.EXTENDED_MIDLET_ATTRIBUTES_ENABLED) {
                     String bgProp = MIDletSuiteUtils.getSuiteProperty(
                         si.suiteId,
                         MIDletSuite.LAUNCH_BG_PROP);

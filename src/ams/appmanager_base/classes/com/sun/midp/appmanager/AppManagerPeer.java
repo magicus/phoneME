@@ -608,6 +608,28 @@ class AppManagerPeer implements CommandListener {
                 }
 
                 if (newlyAdded) {
+                    /*
+                     * If extended MIDlet attributes support enabled,
+                     * launch a MIDlet if it has MIDlet-Launch-Power-On
+                     * attribute set to true. In run time, newly installed
+                     * MIDLets with the atrribute are also launched right after
+                     * installation process is completed.
+                     */
+                    if (Constants.EXTENDED_MIDLET_ATTRIBUTES_ENABLED) {
+                        String launchProp = MIDletSuiteUtils.getSuiteProperty(
+                            suiteIds[lowest],
+                            MIDletSuite.LAUNCH_POWER_ON_PROP);
+
+                        if ("yes".equalsIgnoreCase(launchProp)) {
+                            // TODO: switch from suite-oriented extended
+                            // attributes to MIDlet-oriented ones.
+                            if (suiteInfo.hasSingleMidlet()) {
+                                manager.launchSuite(
+                                    suiteInfo, suiteInfo.midletToRun);
+                            }
+                        }
+                    }
+
                     append(suiteInfo);
                 }
 

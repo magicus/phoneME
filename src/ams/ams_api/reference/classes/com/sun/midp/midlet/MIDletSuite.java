@@ -97,6 +97,10 @@ public interface MIDletSuite {
     /** MIDlet property for launching the MIDlet directly in the background. */
     public static final String LAUNCH_BG_PROP = "MIDlet-Launch-Background";
 
+    /** MIDlet property for launching the MIDlet during system start-up. */
+    public static final String LAUNCH_POWER_ON_PROP = "MIDlet-Launch-Power-On";
+
+
     /**
      * Get a property of the suite. A property is an attribute from
      * either the application descriptor or JAR Manifest.
