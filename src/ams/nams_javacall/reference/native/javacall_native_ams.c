@@ -28,6 +28,7 @@
 #include <javacall_native_ams.h>
 #include <midpNativeAppManager.h>
 #include <midpEvents.h>
+#include <midp_logging.h>
 #include <midp_runtime_info.h>
 #include <listeners_intern.h>
 
@@ -50,7 +51,7 @@ midp_midlet_ui_state2javacall(jint midpMidletUiState);
 static javacall_change_reason
 midp_midlet_event_reason2javacall(jint midpEventReason);
 
-void midp_listener_ams_operation_completed(const NamsEventData* pEventData);
+void midp_listener_ams_system_status(const NamsEventData* pEventData);
 void midp_listener_ams_midlet_state_changed(const NamsEventData* pEventData);
 void midp_listener_ams_ui_state_changed(const NamsEventData* pEventData);
 
@@ -67,7 +68,7 @@ javacall_result javanotify_ams_system_start() {
         return JAVACALL_FAIL;
     }
 
-    midp_add_event_listener(midp_listener_ams_operation_completed,
+    midp_add_event_listener(midp_listener_ams_system_status,
                             SYSTEM_EVENT_LISTENER);
     midp_add_event_listener(midp_listener_ams_ui_state_changed,
                             DISPLAY_EVENT_LISTENER);
@@ -387,28 +388,50 @@ javanotify_ams_create_resource_cache(const javacall_suite_id suiteID) {
 }
 
 /**
- * MIDP proxy for the javacall_ams_operation_completed() listener.
+ * MIDP proxy for the javacall_ams_system_state_change() and
+ * javacall_ams_operation_completed() listener.
  *
  * @param pEventData full data about the event and about the application
  *                   caused this event
  */
-void midp_listener_ams_operation_completed(const NamsEventData* pEventData) {
+void midp_listener_ams_system_status(const NamsEventData* pEventData) {
     void* pResult = NULL;
 
     if (pEventData == NULL) {
         return;
     }
 
-    if (pEventData->state == ALL_OK) {
-        if (pEventData->reason == NATIVE_MIDLET_GETINFO_REQUEST) {
-            pResult = pEventData->pRuntimeInfo;
+    if ( MIDP_NAMS_EVENT_STATE_CHANGED == pEventData->event) {
+        javacall_system_state state;
+        switch (pEventData->state) {
+        case MIDP_SYSTEM_STATE_ACTIVE:
+            state = JAVACALL_SYSTEM_STATE_ACTIVE;
+            break;
+        case MIDP_SYSTEM_STATE_SUSPENDED:
+            state = JAVACALL_SYSTEM_STATE_SUSPENDED;
+            break;
+        case MIDP_SYSTEM_STATE_STOPPED:
+            state = JAVACALL_SYSTEM_STATE_STOPPED;
+            break;
+        default:
+            state = JAVACALL_SYSTEM_STATE_ERROR;
+            break;
         }
+        javacall_ams_system_state_changed(state);
+
+    } else if (MIDP_NAMS_EVENT_OPERATION_COMPLETED == pEventData->event) {
+        if (pEventData->state == ALL_OK) {
+            if (pEventData->reason == NATIVE_MIDLET_GETINFO_REQUEST) {
+                pResult = pEventData->pRuntimeInfo;
+            }
+        }
+        javacall_ams_operation_completed(
+            midp_operation2javacall(pEventData->reason),
+            (javacall_app_id)pEventData->appId,
+            pResult);
+    } else {
+        REPORT_ERROR(LC_AMS, "Invalid system status");
     }
-    
-    javacall_ams_operation_completed(
-        midp_operation2javacall(pEventData->reason),
-        (javacall_app_id)pEventData->appId,
-        pResult);
 }
 
 

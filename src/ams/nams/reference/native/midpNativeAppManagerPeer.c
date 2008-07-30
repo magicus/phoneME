@@ -86,6 +86,8 @@ nams_listeners_notify(NamsListenerType listenerType,
  * @return error code: (ALL_OK if successful)
  */
 MIDPError midp_system_initialize(void) {
+    MIDPError error;
+
 	int midp_heap_requirement = getHeapRequirement();
 
     JVM_Initialize();
@@ -96,7 +98,11 @@ MIDPError midp_system_initialize(void) {
      */
     JVM_SetConfig(JVM_CONFIG_HEAP_CAPACITY, midp_heap_requirement);
 
-    return init_listeners_impl();
+    if (ALL_OK != (error = (MIDPError)midpInitialize()) ||
+        ALL_OK != (error = (MIDPError)init_listeners_impl())) {
+    }
+
+    return error;
 }
 
 static MIDPError _system_cleanup(int status) {

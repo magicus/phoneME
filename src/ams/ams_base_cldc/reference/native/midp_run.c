@@ -35,7 +35,6 @@
 #include <pcsl_memory.h>
 
 #include <midpAMS.h>
-#include <commandLineUtil_md.h>
 #include <midpInit.h>
 #include <midpMalloc.h>
 #include <midpCommandState.h>
@@ -1013,24 +1012,6 @@ int midpRunMainClass(JvmPathChar *classPath,
                      int argc,
                      char **argv) {
     int vmStatus = 0;
-    char* appDir;
-
-    /* get midp home directory, set it */
-    appDir = getApplicationDir(NULL);
-    if (appDir == NULL) {
-        return MIDP_ERROR_STATUS;
-    }
-    /* set up appDir before calling initialize */
-    midpSetAppDir(appDir);
-
-    /* get midp config directory, set it */
-    appDir = getConfigurationDir(NULL);
-    if (appDir == NULL) {
-        return MIDP_ERROR_STATUS;
-    }
-    /* set up confDir before calling initialize */
-    midpSetConfigDir(appDir);
-
 
     midpInitialize();
 
