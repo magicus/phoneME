@@ -51,7 +51,7 @@
 #include <javacall_time.h>
 #include <javautil_unicode.h>
 #include <javacall_properties.h>
-#include "runMidlet.h"
+//#include "runMidlet.h"
 
 #ifdef ENABLE_JSR_120
 #include <javacall_sms.h>
