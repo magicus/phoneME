@@ -27,6 +27,17 @@
 #ifndef PRODUCT
 
 class Disassembler: public StackObj {
+#if ENABLE_COMPILER
+ private:
+  static const char* _unresolved_label_name;
+ public:
+  static void set_reference_to_unresolved_label( const char* name = "???" ) {
+    if( PrintCompiledCodeAsYouGo ) {
+      _unresolved_label_name = name;
+    }
+  }
+#endif
+
 #include "../arm/Disassembler_armthumb.hpp"
  private:
   // instruction fields
@@ -58,11 +69,15 @@ class Disassembler: public StackObj {
   void disasm_v6t2_branches_and_misc(short instr, short hw2);
   void disasm_v6t2_coproc(short instr, short hw2);
 
-  int disasm_internal(short* addr, short instr, int instr_offset = NO_OFFSET);
-  void disasm_new16bit(short* addr, short instr, int instr_offset = NO_OFFSET);
-  void disasm_32bit(short* addr, short instr, int instr_offset = NO_OFFSET);
-  void start_thumb2(int num_bits, short* addr, jushort instr);
+  int  disasm_internal  (const short* addr, short instr,
+                                        const int instr_offset = NO_OFFSET);
+  void disasm_new16bit  (const short* addr, short instr,
+                                        const int instr_offset = NO_OFFSET);
+  void disasm_32bit     (const short* addr, const short instr,
+                                        const int instr_offset = NO_OFFSET);
+  void start_thumb2(const int num_bits, const short* addr, const jushort instr);
   void end_thumb2();
+  void comments( const short* addr, int num_half_words );
 };
 
 #endif // PRODUCT

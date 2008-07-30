@@ -3,32 +3,35 @@
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
- * 
+ *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
- * 2 only, as published by the Free Software Foundation. 
- * 
+ * 2 only, as published by the Free Software Foundation.
+ *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
- * included at /legal/license.txt). 
- * 
+ * included at /legal/license.txt).
+ *
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
- * 02110-1301 USA 
- * 
+ * 02110-1301 USA
+ *
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
- * information or have any questions. 
+ * information or have any questions.
  */
 
 # include "incls/_precompiled.incl"
 # include "incls/_Disassembler_thumb2.cpp.incl"
 
 #ifndef PRODUCT
-const char* Disassembler::_eol_comments = NULL;
+const char* Disassembler::_eol_comments;
+#if ENABLE_COMPILER
+const char* Disassembler::_unresolved_label_name;
+#endif
 
 int Disassembler::decode_imm(unsigned int p_value) {
   GUARANTEE(!(p_value & ~0xFFF), "sanity");
@@ -185,15 +188,16 @@ const char *Disassembler::find_gp_name(int uoffset) {
   };
 
   for (const GPTemplate* tmpl = gp_templates; tmpl->name; tmpl++) {
-    if (uoffset < tmpl->size) {
-      if (tmpl->size == 4) {
+    const int size = tmpl->size;
+    if (uoffset < size) {
+      if (size == 4) {
         return tmpl->name;
       } else {
         jvm_sprintf(buff, "%s[%d]", tmpl->name, uoffset);
         return buff;
       }
     }
-    uoffset -= tmpl->size;
+    uoffset -= size;
   }
 
   return NULL;
@@ -210,407 +214,32 @@ void Disassembler::print_gp_name(int imm) {
    }
 }
 
-int Disassembler::disasm(short* addr, short instr, int instr_offset) {
-  int num_half_words = disasm_internal(addr, instr, instr_offset);
-  bool comments = (_eol_comments != NULL || GenerateAssemblyCode);
-
-  if (comments) {
-    while (stream()->position() <= 40) {
+inline void Disassembler::comments( const short* addr, int num_half_words ) {
+  if( GenerateAssemblyCode || _eol_comments ) {
+    while( stream()->position() <= 40 ) {
       stream()->print(" ");
     }
     stream()->print(GenerateGNUCode ? " /" "*" : " ;");
 
     if (GenerateAssemblyCode) {
-      stream()->print(" 0x%04x", (unsigned short)addr[0]);
-      if (num_half_words > 1) {
-        stream()->print(" 0x%04x", (unsigned short)addr[1]);
-      }
+      do {
+        stream()->print(" 0x%04x", (unsigned short)*addr++);
+      } while (--num_half_words);
     }
-  }
 
-  if (_eol_comments) {
-    stream()->print(" %s", _eol_comments);
-    _eol_comments = NULL;
-  }
+    if (_eol_comments) {
+      stream()->print(" %s", _eol_comments);
+      _eol_comments = NULL;
+    }
 
-  if (comments) {
-    if (GenerateGNUCode) {
+    if( GenerateGNUCode ) {
       stream()->print(" */");
     }
   }
-
-  return num_half_words;
 }
 
-int Disassembler::disasm_internal(short* addr, short instr, int instr_offset) {
-  // decode instruction and print on stream
-  int op = (instr >> 13) & 0x7;
-  int num_half_words = 1;
-
-#if ENABLE_ARM_V7
-  if (((instr >> 12) & 0xF) == 0xC) { //new xenon instructions
-    start_thumb2(16, addr, instr);
-
-    if (!bit(instr, 11)) {
-      int hdl_id = instr & 0x1F;
-      if (bit(instr, 10)) { //hblp
-        int imm = (instr >> 5) & 0x1F;
-        stream()->print("hblp.w #%d, #%d", imm, hdl_id);
-      } else if (bit(instr, 9)) { //hb{l}
-        const char* l = bit(instr, 8) ? "l" : "";
-        hdl_id = instr & 0xFF;
-        stream()->print("hb%s.w #%d", l, hdl_id);
-      } else if (!bit(instr, 8)) { //hbp
-        int imm = (instr >> 5) & 0x7;
-        stream()->print("hbp.w #%d, #%d", imm, hdl_id);
-      } else {
-        emit_unknown(instr);
-      }
-    } else {
-      int subcode = (instr >> 9) & 0x3;
-      const char*  rn = register_name( (instr >> 3) & 0x7 );
-      const char*  rd = register_name( instr & 0x7 );
-      if (subcode == 0) { //ldr_neg
-        int imm = ((instr >> 6) & 0x7) << 2;
-        stream()->print("ldr.neg %s, [%s, #-%d]", rd, rn, imm);
-      } else if (subcode == 1) { //
-        if (bit(instr, 8)) { //ldr[r10]
-          int imm5 = ((instr >> 3) & 0x1F) << 2;
-          stream()->print("ldr.r10\t%s, [%s, #%d]",
-                          rd, register_name(Assembler::r10), imm5);
-          if (Assembler::gp == Assembler::r10) {
-            print_gp_name(imm5);
-          }
-        } else { //chka
-          int rn_num = (instr & 0x7) | ((instr >> 4) & 0x8);
-          rd = register_name( rn_num );
-          stream()->print("chka\t%s, %s", rd, rn);
-        }
-      } else {//ldr/str[r9]
-        int imm6 = ((instr >> 3) & 0x3F) << 2;
-        const char* code = bit(instr, 9) ? "str.r9": "ldr.r9";
-        stream()->print("%s\t%s, [%s, #%d]", code, rd,
-                        register_name(Assembler::r9), imm6);
-      }
-    }
-
-    end_thumb2();
-    return 1;
-  }
-
-  jushort hw2 = (jushort)addr[1];
-  if (jushort(instr) == 0xF3BF && (hw2 & ~0x10) == 0x870F) {
-    start_thumb2(32, addr, instr);
-    stream()->print("%s", bit(hw2, 4) ? "enterx" : "leavex");
-    end_thumb2();
-    return 2;
-  }
-#endif
-
-  // New thumb-2 16-bit instr
-  if ((((instr >> 8) & 0xFF) == 0xBF) || ((((instr >> 8) & ~0xA)  ^ 0xB1) == 0)) {
-    disasm_new16bit(addr, instr, instr_offset);
-    return 1;
-  }
-
-  int op32 = (instr >> 11) & 0x1F;
-  if ((op32 & 0x1c) == 0x1c && (op32 & 0x03) != 0) {
-    // Bits [15:11] is 0b111xx, where xx is not 00: this is 32-bit instr
-    disasm_32bit(addr, instr, instr_offset);
-    return 2;
-  }
-
-  // ARM_V5T Thumb 16-bit instructions
-  switch (op) {
-    case 0:
-    {
-      bool is_add_sub = (bit(instr, 12) && bit(instr, 11));
-      const char*  rn = register_name(reg_field(instr, 3));
-      const char*  rd = register_name(reg_field(instr));
-
-      if (!is_add_sub) {
-        // Shift by immediate
-        // lsl | lsr | asr <Rd>, <Rm>, #<immed_5>
-        const Assembler::Opcode opcode =
-            Assembler::as_opcode((instr >> 11 & 0x3) + 2);
-        stream()->print("%s", opcode_name(opcode));
-        stream()->print("\t%s, %s, #%d", rd, rn, ((instr >> 6) & 0x1F));
-      } else {
-        // add/sub register/immediate
-        const char* s_suffix = GenerateGNUCode ? "" : "s";
-        stream()->print("%s%s", ((bit(instr, 9) ? "sub" : "add")), s_suffix);
-        if (!bit(instr, 10)) {
-          // add|sub <Rd>,   <Rm>, <Rn>
-          const char*  rm = register_name(reg_field(instr, 6));
-          stream()->print("\t%s, %s, %s", rd, rn, rm);
-        } else {
-          // add|sub <Rd>, <Rn>, #<3-bit imme.>
-          stream()->print("\t%s, %s, #%d", rd, rn, ((instr >> 6) & 0x7));
-        }
-      }
-    }
-    break;
-
-  case 1:
-    {
-      // add|sub|cmp|mov <Rd/Rn>, #<8-bit imme>
-      const int opcode = (instr >> 11) & 0x3;
-      const char*  rd = register_name(reg_field(instr, 8));
-      const char* s_suffix = GenerateGNUCode ? "" : "s";
-      switch (opcode) {
-      case 0:
-        stream()->print("mov%s\t%s, #%d", s_suffix, rd, (instr & 0xFF));
-        break;
-      case 1:
-        stream()->print("cmp\t%s, #%d", rd, (instr & 0xFF));
-        break;
-      case 2:
-        stream()->print("add%s\t%s, #%d", s_suffix, rd, (instr & 0xFF));
-        break;
-      case 3:
-        stream()->print("sub%s\t%s, #%d", s_suffix, rd, (instr & 0xFF));
-        break;
-      default:
-        SHOULD_NOT_REACH_HERE();
-      }
-    }
-    break;
-
-  case 2:
-      {
-      if (((instr >> 11) & 0x1F) == 0x9) {
-        // ldr Rd, [PC, #<immed_8> * 4]
-        const char* rd = register_name(reg_field(instr, 8));
-        stream()->print("ldr\t%s, [pc, #%d]", rd,
-                        (instr & 0xFF) * 4);
-        int target = (instr_offset & ~3) + 4 + ((instr & 0xFF) * 4);
-        if (GenerateGNUCode) {
-          stream()->print("/* = %d */", target);
-        } else {
-          stream()->print("; = %d ", target);
-        }
-      } else if (bit(instr, 12)) {
-        // ldr|str <Rd>, [<Rn>, <Rm>]
-        const char* rd = register_name(reg_field(instr, 0));
-        const char* rn = register_name(reg_field(instr, 3));
-        const char* rm = register_name(reg_field(instr, 6));
-        const int opcode = (instr >> 9) & 0x7;
-        switch(opcode) {
-          case 0: stream()->print("str"); break;
-          case 1: stream()->print("strh"); break;
-          case 2: stream()->print("strb"); break;
-          case 3: stream()->print("ldrsb"); break;
-          case 4: stream()->print("ldr"); break;
-          case 5: stream()->print("ldrh"); break;
-          case 6: stream()->print("ldrb"); break;
-          case 7: stream()->print("ldrsh"); break;
-        }
-        stream()->print("\t%s, [%s, %s]", rd, rn, rm);
-      } else if (bit(instr, 10)) {
-        int opcode = (instr >> 8) & 0x3;
-        Register reg_rd = as_register((instr       & 0x7) | (instr >> 4) & 0x8);
-        Register reg_rm = as_register((instr >> 3) & 0xF);
-
-        const char* rd = register_name( reg_rd );
-        const char* rm = register_name( reg_rm );
-
-        switch (opcode) {
-        case 0:
-          stream()->print("add\t%s, %s", rd, rm);
-          break;
-        case 1:
-          stream()->print("cmp\t%s, %s", rd, rm);
-          break;
-        case 2:
-          stream()->print("mov\t%s, %s", rd, rm);
-          break;
-        case 3:
-          if (bit(instr, 7)) {
-            stream()->print("blx\t%s", rm);
-          } else {
-            stream()->print("bx\t%s", rm);
-          }
-          break;
-        default:
-          SHOULD_NOT_REACH_HERE();
-        }
-      } else {
-        const Assembler::Opcode opcode = Assembler::as_opcode(instr >> 6 & 0xf);
-        const char* rd = register_name(reg_field(instr, 0));
-        const char* rn = register_name(reg_field(instr, 3));
-        stream()->print("%s\t%s, %s", opcode_name(opcode), rd, rn);
-      }
-      break;
-    }
-
-  case 3:
-    {
-      // ldrb|strb|ldr|str <Rd>, [<Rn>, #<immed_5> * 4]
-      const Register rn_reg = reg_field( instr, 3);
-      const Register rd_reg = reg_field( instr );
-      const char* rn = register_name( rn_reg );
-      const char* rd = register_name( rd_reg );
-      const bool byte_op = bit(instr,12);
-      const int imm_shift = byte_op ? 0 : 2;
-      if (bit(instr, 11)) {
-        stream()->print(byte_op ? "ldrb" : "ldr");
-      } else {
-        stream()->print(byte_op ? "strb" : "str");
-      }
-      stream()->print("\t%s, [%s", rd, rn);
-      const int imm = ((instr >> 6) & 0x1F) << imm_shift;
-      if (imm == 0) {
-        stream()->print("]");
-      }
-      else {
-        stream()->print(", #%d]", imm);
-        if (rn_reg == Assembler::gp) {
-          print_gp_name(imm);
-        }
-      }
-      break;
-    }
-
-  case 4:
-    {
-      const char* rn = register_name(reg_field(instr, 3));
-      const char* rd = register_name(reg_field(instr));
-      int imm = 0;
-      if (!bit(instr, 12)) {
-        // ldrh|strh <Rd>, [<Rn>, #<immed_5> * 4]
-        stream()->print(bit(instr,11) ? "ldrh" : "strh");
-        stream()->print("\t%s, [%s", rd, rn);
-        imm = ((instr >> 6) & 0x1F) * 2;
-      } else {
-        // ldr|str <Rd>, [SP, #<immed_5> * 4]
-        stream()->print(bit(instr,11) ? "ldr" : "str");
-        stream()->print("\t%s, [sp", rd, rn);
-        imm = (instr & 0xFF);
-      }
-      if (imm == 0) {
-        stream()->print("]");
-      } else {
-        stream()->print(", #%d]", imm);
-      }
-      break;
-    }
-
-  case 5:
-    {
-      const char*  rd = register_name(reg_field(instr, 8));
-      if (!bit(instr, 12)) {
-        // add <Rd>, PC|SP, #<immed_8> * 4
-        stream()->print("add\t%s, %s,#%d", rd, (bit(instr,11) ? "sp" : "pc"),
-                          (instr & 0xFF) * 4);
-        int target = (instr_offset & ~3) + 4 + ((instr & 0xFF) * 4);
-        if (GenerateGNUCode) {
-          stream()->print("/* = %d */", target);
-        } else {
-          stream()->print("; = %d ", target);
-        }
-      } else if (((instr >> 9) & 0x7A) == 0x5A) {
-        short range = instr & 0xFF;
-        stream()->print("%s\t", (bit(instr,11) ? "pop" : "push"));
-        emit_register_list(range);
-        if (bit(instr, 8)) {
-          if (range != 0) {
-            stream()->print(", ");
-          }
-          stream()->print("lr");
-        }
-      } else {
-        // Miscellaneous - TO DO
-        emit_unknown(instr);
-      }
-      break;
-    }
-
-  case  6:
-    {
-      int type_bits = (instr >> 8) & 0xF;
-      if (bit(instr, 12) == 0) {
-        // ldmia|stmia <Rd>!, <registers>
-        const Register rn = reg_field(instr, 8);
-        const bool l = bit(instr, 11);
-        stream()->print(l ? "ldmia" : "stmia");
-        stream()->print("\t%s!", register_name(rn));
-        stream()->print(", ");
-        emit_register_list(instr);
-      } else if (type_bits == 0xF) {
-        // swi <immed_8>
-        stream()->print("swi\t0x%06x", (instr & 0xFF));
-      } else if (type_bits == 0xE){
-        // Unknown instruction
-        emit_unknown(instr);
-      } else {
-        // b<cond> <signed_immed_8>
-        Condition cond = as_condition((instr >> 8) & 0xF);
-        int offset =
-             ((instr & 0xFF) | (bit(instr, 7) ? 0xffffff00 : 0)) << 1;
-
-        stream()->print("b%s\t", condition_name(cond));
-        stream()->print("pc + %d\t", offset + 4);
-        if (addr != NULL || instr_offset != NO_OFFSET) {
-          stream()->print(GenerateGNUCode ? "/* " : "; ");
-          if (addr != NULL && VerbosePointers) {
-            stream()->print("=0x%08x ", (int)addr + 4 + offset);
-          }
-          if (offset != NO_OFFSET) {
-            stream()->print("=%d ", instr_offset + 4 + offset);
-          }
-          if (GenerateGNUCode) {
-            stream()->print("*/");
-          }
-        }
-      }
-      break;
-    }
-
-  case 7:
-    {
-      int type_bits = (instr >> 11) & 0x3;
-      if (type_bits == 0 || type_bits == 2) {
-        // b <#signed immed_11>
-        int offset = 0;
-
-        if ( type_bits == 0) {
-          offset = ((instr & 0x7FF) | (bit(instr, 10) ? 0xfffff800 : 0)) << 1;
-          stream()->print("b\tpc + %d\t", offset + 4);
-        } else {
-          offset = (instr & 0x7FF);
-          offset = ((offset << 12) << 9) >> 9;
-          offset += ((*(addr + 1) & 0x7FF)) << 1;
-          stream()->print("bl\tpc + %d\t", offset + 4);
-        }
-
-        if (addr != NULL || instr_offset != NO_OFFSET) {
-          stream()->print(GenerateGNUCode ? "/* " : "; ");
-          if (addr != NULL && VerbosePointers) {
-            stream()->print("=0x%04x ", (int)addr + 4 + offset);
-          }
-          if (offset != NO_OFFSET) {
-            stream()->print("=%d ", instr_offset + 4 + offset);
-          }
-          if (GenerateGNUCode) {
-            stream()->print("*/");
-          }
-        }
-      } else if (type_bits == 3) {
-        stream()->print(GenerateGNUCode ?
-                        "\t/* bl suffix */ " : "\t; bl suffix ");
-      } else {
-        emit_unknown(instr);
-      }
-      break;
-    }
-
-  default: SHOULD_NOT_REACH_HERE();
-  }
-
-  return num_half_words;
-}
-
-void Disassembler::disasm_new16bit(short* addr, short instr, int instr_offset)
+void Disassembler::disasm_new16bit(const short* addr, short instr,
+                                   const int instr_offset)
 {
   static const char* const hint[] = {"nop", "yield", "wfe", "wfi", "sev"};
 
@@ -649,7 +278,8 @@ void Disassembler::disasm_new16bit(short* addr, short instr, int instr_offset)
   end_thumb2();
 }
 
-void Disassembler::disasm_32bit(short* addr, short instr, int instr_offset) {
+void Disassembler::disasm_32bit(const short* addr, const short instr,
+                                const int instr_offset) {
   start_thumb2(32, addr, instr);
 
   jushort hw2 = (jushort)addr[1];
@@ -1027,15 +657,14 @@ void Disassembler::disasm_v6t2_data_load_store_single(short instr, short hw2) {
   bool load = (instr >> 4) & 0x1;
   int S = (instr >> 8) & 0x1;
   int U = (instr >> 7) & 0x1;
-  const char* sign_suff[] = {"", "s"};
-  const char* size_suff[] = {"b", "h", "", "error3"};
+  static const char* sign_suff[] = {"", "s"};
+  static const char* size_suff[] = {"b", "h", "", "error3"};
   int imm8 = hw2 & 0xFF;
   int imm12 = hw2 & 0xFFF;
   if (load) {
     if ((instr & 0xF) == 0xF) { //pc +- imm12
-      const char* sign[] = {"-", "+"};
       stream()->print("ldr%s%s.w\t%s, [PC, #%s%d]",
-        sign_suff[S], size_suff[size], rxf, sign[S], imm12);
+        sign_suff[S], size_suff[size], rxf, "-+"[S], imm12);
       return;
     }
     if (U == 1) {
@@ -1186,11 +815,12 @@ void Disassembler::disasm_v6t2_branches_and_misc(short instr, short hw2) {
     int offset = ((hw2 & 0x7FF) << 1) | ((instr & 0x3FF) << 12) |
       ((I1 == S ? 1 : 0) << 23) | ((I2 == S ? 1 : 0) << 22) | S << 24;
     offset = offset << 7 >> 7;
+
     const char* name = "undefined";
     switch (code1) {
-    case 0x9: name = "b"; break;
-    case 0xD: name = "bl"; break;
-    case 0xC: name = "blx"; break;
+      case 0x9: name = "b";   break;
+      case 0xD: name = "bl";  break;
+      case 0xC: name = "blx"; break;
     }
     stream()->print("%s.w\t%d", name, offset);
   } else if (cond < 0xE) {//conditional branch
@@ -1253,7 +883,9 @@ void Disassembler::disasm_v6t2_branches_and_misc(short instr, short hw2) {
   }
 }
 
-void Disassembler::start_thumb2(int num_bits, short* addr, jushort instr) {
+void Disassembler::start_thumb2(const int num_bits,
+                                const short* addr,
+                                const jushort instr) {
   if (GenerateAssemblyCode) {
     if (GenerateGNUCode) {
       // We don't have an assembler that can handle T2 opcode yet, so let's
@@ -1281,4 +913,419 @@ void Disassembler::end_thumb2() {
   }
 }
 
+inline int Disassembler::disasm_internal(const short* addr, short instr,
+                                         const int instr_offset)
+{ // decode instruction and print on stream
+#if ENABLE_COMPILER
+  if( _unresolved_label_name ) {
+    const char* unresolved_label_name = _unresolved_label_name;
+    _unresolved_label_name = NULL;
+
+    const Instruction instr((address)addr);
+    switch( instr.kind() ) {
+      case Instruction::vfp: {
+#if USE_ARM_VFP_LITERALS
+        const VFPMemAccess m((address)addr);
+        char buffer[4];
+        vfp_reg_name( 's', m.reg(), buffer );
+        stream()->print("flds\t%s, [%s]", buffer, unresolved_label_name );
+#else
+        SHOULD_NOT_REACH_HERE();
+#endif
+        return 2;
+      }
+      case Instruction::ldr: {
+        const MemAccess m( (address)addr );
+        const char* rd = register_name( m.reg() );
+        stream()->print("ldr\t%s, [pc + %s]", rd, unresolved_label_name );
+        return 1;
+      }
+      default: { // branch, branch_link
+        const Branch b( (address)addr );
+        const char* suffix = "";
+        if( b.is_long() ) {
+          suffix = ".w";
+        }
+        const char* cond = "";
+        if( b.is_conditional() ) {
+          cond = condition_name( b.condition() );
+        }
+        stream()->print("b%s%s\t%s", cond, suffix, unresolved_label_name );
+        return b.is_long() ? 2 : 1;
+      }
+    }
+  }
+#endif
+#if ENABLE_ARM_V7
+  if (((instr >> 12) & 0xF) == 0xC) { //new xenon instructions
+    start_thumb2(16, addr, instr);
+
+    if (!bit(instr, 11)) {
+      int hdl_id = instr & 0x1F;
+      if (bit(instr, 10)) { //hblp
+        int imm = (instr >> 5) & 0x1F;
+        stream()->print("hblp.w #%d, #%d", imm, hdl_id);
+      } else if (bit(instr, 9)) { //hb{l}
+        const char* l = bit(instr, 8) ? "l" : "";
+        hdl_id = instr & 0xFF;
+        stream()->print("hb%s.w #%d", l, hdl_id);
+      } else if (!bit(instr, 8)) { //hbp
+        int imm = (instr >> 5) & 0x7;
+        stream()->print("hbp.w #%d, #%d", imm, hdl_id);
+      } else {
+        emit_unknown(instr);
+      }
+    } else {
+      int subcode = (instr >> 9) & 0x3;
+      const char*  rn = register_name( (instr >> 3) & 0x7 );
+      const char*  rd = register_name( instr & 0x7 );
+      if (subcode == 0) { //ldr_neg
+        int imm = ((instr >> 6) & 0x7) << 2;
+        stream()->print("ldr.neg %s, [%s, #-%d]", rd, rn, imm);
+      } else if (subcode == 1) { //
+        if (bit(instr, 8)) { //ldr[r10]
+          int imm5 = ((instr >> 3) & 0x1F) << 2;
+          stream()->print("ldr.r10\t%s, [%s, #%d]",
+                          rd, register_name(Assembler::r10), imm5);
+          if (Assembler::gp == Assembler::r10) {
+            print_gp_name(imm5);
+          }
+        } else { //chka
+          int rn_num = (instr & 0x7) | ((instr >> 4) & 0x8);
+          rd = register_name( rn_num );
+          stream()->print("chka\t%s, %s", rd, rn);
+        }
+      } else {//ldr/str[r9]
+        int imm6 = ((instr >> 3) & 0x3F) << 2;
+        const char* code = bit(instr, 9) ? "str.r9": "ldr.r9";
+        stream()->print("%s\t%s, [%s, #%d]", code, rd,
+                        register_name(Assembler::r9), imm6);
+      }
+    }
+
+    end_thumb2();
+    return 1;
+  }
+
+  jushort hw2 = (jushort)addr[1];
+  if (jushort(instr) == 0xF3BF && (hw2 & ~0x10) == 0x870F) {
+    start_thumb2(32, addr, instr);
+    stream()->print("%s", bit(hw2, 4) ? "enterx" : "leavex");
+    end_thumb2();
+    return 2;
+  }
+#endif
+
+  // New thumb-2 16-bit instr
+  if ((((instr >> 8) & 0xFF) == 0xBF) || ((((instr >> 8) & ~0xA)  ^ 0xB1) == 0)) {
+    disasm_new16bit(addr, instr, instr_offset);
+    return 1;
+  }
+
+  int op32 = (instr >> 11) & 0x1F;
+  if ((op32 & 0x1c) == 0x1c && (op32 & 0x03) != 0) {
+    // Bits [15:11] is 0b111xx, where xx is not 00: this is 32-bit instr
+    disasm_32bit(addr, instr, instr_offset);
+    return 2;
+  }
+
+  // ARM_V5T Thumb 16-bit instructions
+  int op = (instr >> 13) & 0x7;
+  int num_half_words = 1;
+  switch (op) {
+    case 0:
+    {
+      bool is_add_sub = (bit(instr, 12) && bit(instr, 11));
+      const char*  rn = register_name(reg_field(instr, 3));
+      const char*  rd = register_name(reg_field(instr));
+
+      if (!is_add_sub) {
+        // Shift by immediate
+        // lsl | lsr | asr <Rd>, <Rm>, #<immed_5>
+        const Assembler::Opcode opcode =
+            Assembler::as_opcode((instr >> 11 & 0x3) + 2);
+        stream()->print("%s", opcode_name(opcode));
+        stream()->print("\t%s, %s, #%d", rd, rn, ((instr >> 6) & 0x1F));
+      } else {
+        // add/sub register/immediate
+        const char* s_suffix = GenerateGNUCode ? "" : "s";
+        stream()->print("%s%s", ((bit(instr, 9) ? "sub" : "add")), s_suffix);
+        if (!bit(instr, 10)) {
+          // add|sub <Rd>,   <Rm>, <Rn>
+          const char*  rm = register_name(reg_field(instr, 6));
+          stream()->print("\t%s, %s, %s", rd, rn, rm);
+        } else {
+          // add|sub <Rd>, <Rn>, #<3-bit imme.>
+          stream()->print("\t%s, %s, #%d", rd, rn, ((instr >> 6) & 0x7));
+        }
+      }
+    }
+    break;
+
+  case 1:
+    {
+      // add|sub|cmp|mov <Rd/Rn>, #<8-bit imme>
+      const int opcode = (instr >> 11) & 0x3;
+      const char*  rd = register_name(reg_field(instr, 8));
+      const char* s_suffix = GenerateGNUCode ? "" : "s";
+      switch (opcode) {
+      case 0:
+        stream()->print("mov%s\t%s, #%d", s_suffix, rd, (instr & 0xFF));
+        break;
+      case 1:
+        stream()->print("cmp\t%s, #%d", rd, (instr & 0xFF));
+        break;
+      case 2:
+        stream()->print("add%s\t%s, #%d", s_suffix, rd, (instr & 0xFF));
+        break;
+      case 3:
+        stream()->print("sub%s\t%s, #%d", s_suffix, rd, (instr & 0xFF));
+        break;
+      default:
+        SHOULD_NOT_REACH_HERE();
+      }
+    }
+    break;
+
+  case 2:
+      {
+      if (((instr >> 11) & 0x1F) == 0x9) {
+        // ldr Rd, [PC, #<immed_8> * 4]
+        const char* rd = register_name(reg_field(instr, 8));
+        stream()->print("ldr\t%s, [pc, #%d]", rd,
+                        (instr & 0xFF) * 4);
+        int target = (instr_offset & ~3) + 4 + ((instr & 0xFF) * 4);
+        if (GenerateGNUCode) {
+          stream()->print("/* = %d */", target);
+        } else {
+          stream()->print("; = %d ", target);
+        }
+      } else if (bit(instr, 12)) {
+        // ldr|str <Rd>, [<Rn>, <Rm>]
+        const char* rd = register_name(reg_field(instr, 0));
+        const char* rn = register_name(reg_field(instr, 3));
+        const char* rm = register_name(reg_field(instr, 6));
+        const int opcode = (instr >> 9) & 0x7;
+        switch(opcode) {
+          case 0: stream()->print("str"); break;
+          case 1: stream()->print("strh"); break;
+          case 2: stream()->print("strb"); break;
+          case 3: stream()->print("ldrsb"); break;
+          case 4: stream()->print("ldr"); break;
+          case 5: stream()->print("ldrh"); break;
+          case 6: stream()->print("ldrb"); break;
+          case 7: stream()->print("ldrsh"); break;
+        }
+        stream()->print("\t%s, [%s, %s]", rd, rn, rm);
+      } else if (bit(instr, 10)) {
+        int opcode = (instr >> 8) & 0x3;
+        Register reg_rd = as_register((instr       & 0x7) | (instr >> 4) & 0x8);
+        Register reg_rm = as_register((instr >> 3) & 0xF);
+
+        const char* rd = register_name( reg_rd );
+        const char* rm = register_name( reg_rm );
+
+        switch (opcode) {
+        case 0:
+          stream()->print("add\t%s, %s", rd, rm);
+          break;
+        case 1:
+          stream()->print("cmp\t%s, %s", rd, rm);
+          break;
+        case 2:
+          stream()->print("mov\t%s, %s", rd, rm);
+          break;
+        case 3:
+          if (bit(instr, 7)) {
+            stream()->print("blx\t%s", rm);
+          } else {
+            stream()->print("bx\t%s", rm);
+          }
+          break;
+        default:
+          SHOULD_NOT_REACH_HERE();
+        }
+      } else {
+        const Assembler::Opcode opcode = Assembler::as_opcode(instr >> 6 & 0xf);
+        const char* rd = register_name(reg_field(instr, 0));
+        const char* rn = register_name(reg_field(instr, 3));
+        stream()->print("%s\t%s, %s", opcode_name(opcode), rd, rn);
+      }
+      break;
+    }
+
+  case 3:
+    {
+      // ldrb|strb|ldr|str <Rd>, [<Rn>, #<immed_5> * 4]
+      const Register rn_reg = reg_field( instr, 3);
+      const Register rd_reg = reg_field( instr );
+      const char* rn = register_name( rn_reg );
+      const char* rd = register_name( rd_reg );
+      const bool byte_op = bit(instr,12);
+      const int imm_shift = byte_op ? 0 : 2;
+      if (bit(instr, 11)) {
+        stream()->print(byte_op ? "ldrb" : "ldr");
+      } else {
+        stream()->print(byte_op ? "strb" : "str");
+      }
+      stream()->print("\t%s, [%s", rd, rn);
+      const int imm = ((instr >> 6) & 0x1F) << imm_shift;
+      if (imm == 0) {
+        stream()->print("]");
+      }
+      else {
+        stream()->print(", #%d]", imm);
+        if (rn_reg == Assembler::gp) {
+          print_gp_name(imm);
+        }
+      }
+      break;
+    }
+
+  case 4:
+    {
+      const char* rn = register_name(reg_field(instr, 3));
+      const char* rd = register_name(reg_field(instr));
+      int imm = 0;
+      if (!bit(instr, 12)) {
+        // ldrh|strh <Rd>, [<Rn>, #<immed_5> * 4]
+        stream()->print(bit(instr,11) ? "ldrh" : "strh");
+        stream()->print("\t%s, [%s", rd, rn);
+        imm = ((instr >> 6) & 0x1F) * 2;
+      } else {
+        // ldr|str <Rd>, [SP, #<immed_5> * 4]
+        stream()->print(bit(instr,11) ? "ldr" : "str");
+        stream()->print("\t%s, [sp", rd, rn);
+        imm = (instr & 0xFF);
+      }
+      if (imm == 0) {
+        stream()->print("]");
+      } else {
+        stream()->print(", #%d]", imm);
+      }
+      break;
+    }
+
+  case 5:
+    {
+      const char*  rd = register_name(reg_field(instr, 8));
+      if (!bit(instr, 12)) {
+        // add <Rd>, PC|SP, #<immed_8> * 4
+        stream()->print("add\t%s, %s,#%d", rd, (bit(instr,11) ? "sp" : "pc"),
+                          (instr & 0xFF) * 4);
+        int target = (instr_offset & ~3) + 4 + ((instr & 0xFF) * 4);
+        if (GenerateGNUCode) {
+          stream()->print("/* = %d */", target);
+        } else {
+          stream()->print("; = %d ", target);
+        }
+      } else if (((instr >> 9) & 0x7A) == 0x5A) {
+        short range = instr & 0xFF;
+        stream()->print("%s\t", (bit(instr,11) ? "pop" : "push"));
+        emit_register_list(range);
+        if (bit(instr, 8)) {
+          if (range != 0) {
+            stream()->print(", ");
+          }
+          stream()->print("lr");
+        }
+      } else {
+        // Miscellaneous - TO DO
+        emit_unknown(instr);
+      }
+      break;
+    }
+
+  case  6:
+    {
+      int type_bits = (instr >> 8) & 0xF;
+      if (bit(instr, 12) == 0) {
+        // ldmia|stmia <Rd>!, <registers>
+        const Register rn = reg_field(instr, 8);
+        const bool l = bit(instr, 11);
+        stream()->print(l ? "ldmia" : "stmia");
+        stream()->print("\t%s!", register_name(rn));
+        stream()->print(", ");
+        emit_register_list(instr);
+      } else if (type_bits == 0xF) {
+        // swi <immed_8>
+        stream()->print("swi\t0x%06x", (instr & 0xFF));
+      } else if (type_bits == 0xE){
+        // Unknown instruction
+        emit_unknown(instr);
+      } else {
+        // b<cond> <signed_immed_8>
+        const int offset =
+             ((instr & 0xFF) | (bit(instr, 7) ? 0xffffff00 : 0)) << 1;
+
+        stream()->print("b%s\t", condition_name((instr >> 8) & 0xF));
+        stream()->print("pc + %d\t", offset + 4);
+        if (addr != NULL || instr_offset != NO_OFFSET) {
+          stream()->print(GenerateGNUCode ? "/* " : "; ");
+          if (addr != NULL && VerbosePointers) {
+            stream()->print("=0x%08x ", (int)addr + 4 + offset);
+          }
+          if (offset != NO_OFFSET) {
+            stream()->print("=%d ", instr_offset + 4 + offset);
+          }
+          if (GenerateGNUCode) {
+            stream()->print("*/");
+          }
+        }
+      }
+      break;
+    }
+
+  case 7:
+    {
+      int type_bits = (instr >> 11) & 0x3;
+      if (type_bits == 0 || type_bits == 2) {
+        // b <#signed immed_11>
+        int offset = 0;
+
+        if ( type_bits == 0) {
+          offset = ((instr & 0x7FF) | (bit(instr, 10) ? 0xfffff800 : 0)) << 1;
+          stream()->print("b\tpc + %d\t", offset + 4);
+        } else {
+          offset = (instr & 0x7FF);
+          offset = ((offset << 12) << 9) >> 9;
+          offset += ((*(addr + 1) & 0x7FF)) << 1;
+          stream()->print("bl\tpc + %d\t", offset + 4);
+        }
+
+        if (addr != NULL || instr_offset != NO_OFFSET) {
+          stream()->print(GenerateGNUCode ? "/* " : "; ");
+          if (addr != NULL && VerbosePointers) {
+            stream()->print("=0x%04x ", (int)addr + 4 + offset);
+          }
+          if (offset != NO_OFFSET) {
+            stream()->print("=%d ", instr_offset + 4 + offset);
+          }
+          if (GenerateGNUCode) {
+            stream()->print("*/");
+          }
+        }
+      } else if (type_bits == 3) {
+        stream()->print(GenerateGNUCode ?
+                        "\t/* bl suffix */ " : "\t; bl suffix ");
+      } else {
+        emit_unknown(instr);
+      }
+      break;
+    }
+
+  default: SHOULD_NOT_REACH_HERE();
+  }
+
+  return num_half_words;
+}
+
+int Disassembler::disasm(short* addr, short instr, int instr_offset) {
+  const int num_half_words = disasm_internal(addr, instr, instr_offset);
+  comments( addr, num_half_words );
+#if ENABLE_COMPILER
+  _unresolved_label_name = NULL;
+#endif
+  return num_half_words;
+}
 #endif // PRODUCT

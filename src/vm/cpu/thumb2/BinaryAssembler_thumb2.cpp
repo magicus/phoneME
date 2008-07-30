@@ -1,27 +1,27 @@
 /*
- *   
+ *
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
- * 
+ *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
- * 2 only, as published by the Free Software Foundation. 
- * 
+ * 2 only, as published by the Free Software Foundation.
+ *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
- * included at /legal/license.txt). 
- * 
+ * included at /legal/license.txt).
+ *
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
- * 02110-1301 USA 
- * 
+ * 02110-1301 USA
+ *
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
- * information or have any questions. 
+ * information or have any questions.
  */
 
 # include "incls/_precompiled.incl"
@@ -29,8 +29,13 @@
 
 #if ENABLE_COMPILER
 
-void BinaryAssembler::branch_helper(Label& L, bool link, bool is_near,
-                                    Condition cond) {
+void BinaryAssembler::branch_helper(Label& L,
+                                    const bool link,
+                                    const bool is_near,
+                                    const Condition cond)
+{
+  GUARANTEE( !link, "bl is not implemented yet" );
+
   const int pos = _code_offset;
   const int label_pos = L.position();
 
@@ -44,7 +49,11 @@ void BinaryAssembler::branch_helper(Label& L, bool link, bool is_near,
   const bool short_branch = is_near ||
     (L.is_bound() && ((offset >= -256 + 4) ||
                       (cond == al && offset >= -2048 + 4)));
-
+#ifndef PRODUCT
+  if (!L.is_bound()) {
+    Disassembler::set_reference_to_unresolved_label();
+  }
+#endif
   // Emit branch to itself.
   if (short_branch) {
     b_short(offset, cond);
@@ -57,10 +66,9 @@ void BinaryAssembler::branch_helper(Label& L, bool link, bool is_near,
   }
 }
 
-void BinaryAssembler::branch_helper(CompilationQueueElement* cqe,
-                                    bool link, bool is_near, Condition cond) {
+void BinaryAssembler::b(CompilationQueueElement* cqe, const Condition cond){
   Label target = cqe->entry_label();
-  branch_helper(target, link, is_near, cond);
+  branch_helper(target, false, false, cond);
   cqe->set_entry_label(target);
 }
 
@@ -82,31 +90,16 @@ void BinaryAssembler::bind_to(Label& L, jint code_offset) {
 
     do {
       q = p;
+      TTY_TRACE_CR(("**q %p", q));
 
       const Instruction instr(q);
       switch( instr.kind() ) {
-#if USE_ARM_VFP_LITERALS
         case Instruction::vfp: {
+#if USE_ARM_VFP_LITERALS
           const VFPMemAccess m(q);
           p = m.location();
           m.set_location(addr_at(code_offset));
-          break;
-        }
-#endif
-        case Instruction::ldr: {
-          const MemAccess m(q);
-          p = m.location();
-          m.set_location(addr_at(code_offset));
-          break;
-        }
-        case Instruction::branch: {
-          const Branch b(q);
-          p = b.target();
-          b.set_target(addr_at(code_offset));
-          break;
-        }
-        default:
-        {
+#else
 #ifndef PRODUCT
           if (PrintCompiledCodeAsYouGo) {
             int offset = q - addr_at(0);
@@ -119,6 +112,20 @@ void BinaryAssembler::bind_to(Label& L, jint code_offset) {
           }
 #endif
           SHOULD_NOT_REACH_HERE();
+#endif
+          break;
+        }
+        case Instruction::ldr: {
+          const MemAccess m(q);
+          p = m.location();
+          m.set_location(addr_at(code_offset));
+          break;
+        }
+        default: { // branch, branch_link
+          const Branch b(q);
+          p = b.target();
+          b.set_target(addr_at(code_offset));
+          break;
         }
       }
     } while (p != q);
@@ -164,6 +171,9 @@ void BinaryAssembler::access_literal_pool(Register rd,
 #endif
       ldr_pc_imm8x4( rd, offset );
     } else {
+#ifndef PRODUCT
+    Disassembler::set_reference_to_unresolved_label();
+#endif
 #if USE_ARM_VFP_LITERALS
       if( rd > Assembler::r15 ) {
         flds_stub( rd, offset );

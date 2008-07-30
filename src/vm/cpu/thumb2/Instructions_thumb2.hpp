@@ -3,25 +3,25 @@
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
- * 
+ *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
- * 2 only, as published by the Free Software Foundation. 
- * 
+ * 2 only, as published by the Free Software Foundation.
+ *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
- * included at /legal/license.txt). 
- * 
+ * included at /legal/license.txt).
+ *
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
- * 02110-1301 USA 
- * 
+ * 02110-1301 USA
+ *
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
- * information or have any questions. 
+ * information or have any questions.
  */
 
 #if ENABLE_COMPILER
@@ -31,7 +31,7 @@ class Instruction: StackObj {
 
  protected:
   static void check_overflow( void ) {
-    GUARANTEE(!Compiler::code_generator()->has_overflown_compiled_method(),
+    GUARANTEE(!CodeGenerator::current()->has_overflown_compiled_method(),
               "compiled method overflow" );
   }
   void check_alignment(const address addr) const {
@@ -51,8 +51,7 @@ class Instruction: StackObj {
 
   enum Kind {
     vfp = 0,
-    ldr = 1,
-    branch = 3
+    ldr = 1
   };
 
   // accessors
@@ -110,10 +109,12 @@ class MemAccess: Instruction {
     return addr() + (offset * 2);
   }
 
+  int reg ( void ) const { return (encoding() >> 11) & 0x7; }
+
   void set_location( const address loc ) const {
     check_alignment(loc);
 
-    const int rd = (encoding() >> 11) & 0x7;
+    const int rd = reg();
     const short load_ins = (4 << 12 | 1 << 11 | rd << 8);
     set_encoding(load_ins);
 
@@ -136,13 +137,17 @@ class VFPMemAccess: Instruction {
   address location( void ) const {
     return addr() + 4 + 2*offset();
   }
+  int reg ( void ) const {
+    const int freg = encoding_next();
+    GUARANTEE( freg < 32, "wrong freg" );
+    return freg;
+  }
 
   void set_offset( const int offset ) const {
     GUARANTEE( abs(offset) < 0x400, "offset too large" );
 
     // Sets the offset and transforms flds_stub to flds
-    const int freg = encoding_next();
-    GUARANTEE( freg < 32, "wrong freg" );
+    const int freg = reg();
     set_encoding( 0xFD1F | (freg & 1) << 6 | Assembler::up(offset) << 7 );
     set_encoding_next( 0x0A00 | (freg >> 1) | (abs(offset) >> 2) );
   }
@@ -156,7 +161,7 @@ class VFPMemAccess: Instruction {
 class Branch: Instruction {
  public:
   Branch( const address addr ): Instruction( addr ) {
-    check_kind( 3, "must be branch instruction" );
+    GUARANTEE( (kind() & 2) == 2, "must be branch instruction" );
   }
 
   int imm( void ) const {
@@ -192,6 +197,12 @@ class Branch: Instruction {
     }
   }
 
+  int condition ( void ) const {
+    GUARANTEE( is_conditional(), "sanity check" );
+    const int shift = is_long() ? 6 : 8;
+    return (encoding() >> shift) & 0xF;
+  }
+
   void set_imm(const int target) const;
 
   address target( void ) const;
@@ -201,12 +212,12 @@ class Branch: Instruction {
     set_imm((target - addr() - 4) >> 1);
   }
 
- private:
   bool is_long( void ) const {
     const short instr = encoding();
     return is_long_encoding(instr);
   }
 
+ private:
   static bool is_long_encoding(const short instr) {
     return (((instr >> 12) & 0xF) == 0xF);
   }

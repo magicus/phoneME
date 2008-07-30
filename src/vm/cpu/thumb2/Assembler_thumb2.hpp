@@ -563,8 +563,8 @@ protected:
         result = second_8_bits | XYOOXYOO_FORMAT;
         return true;
       } else {
-        unsigned int first_16_bits = p_value & 0xFFFF;
-        if ((first_16_bits >> 8) == (first_16_bits & 0xFF)) {
+        const unsigned first_16_bits = p_value & 0xFFFF;
+        if((first_16_bits >> 8) == (first_16_bits & 0xFF)) {
           result = first_8_bits | XYXYXYXY_FORMAT;
           return true;
         }

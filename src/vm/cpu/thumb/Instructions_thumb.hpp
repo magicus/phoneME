@@ -55,12 +55,12 @@ class Instruction: public StackObj {
 
   // manipulation
   void set_encoding(short instr) const { 
-    if (!Compiler::current()->code_generator()->has_overflown_compiled_method()) 
+    if (!CodeGenerator::current()->has_overflown_compiled_method()) 
       *(short*)_addr = instr; 
   }
 
   void set_encoding_next(short instr) const { 
-    if (!Compiler::current()->code_generator()->has_overflown_compiled_method()) 
+    if (!CodeGenerator::current()->has_overflown_compiled_method()) 
       *(((short*)_addr) + 1) = instr; 
   }
 };
@@ -68,7 +68,7 @@ class Instruction: public StackObj {
 class MemAccess: public Instruction {
  public:
   MemAccess(address addr) : Instruction(addr) {
-    GUARANTEE(!Compiler::current()->code_generator()->has_overflown_compiled_method(),
+    GUARANTEE(!CodeGenerator::current()->has_overflown_compiled_method(),
                  "must be pc-relative load/store")
   }
 
@@ -106,7 +106,7 @@ class MemAccess: public Instruction {
 class Branch: public Instruction {
  public:
   Branch(address addr) : Instruction(addr) {
-    GUARANTEE(Compiler::current()->code_generator()->has_overflown_compiled_method()
+    GUARANTEE(CodeGenerator::current()->has_overflown_compiled_method()
               || kind() == 3, "must be branch instruction");
   }
 

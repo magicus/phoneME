@@ -1,27 +1,27 @@
 /*
- *   
+ *
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
- * 
+ *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
- * 2 only, as published by the Free Software Foundation. 
- * 
+ * 2 only, as published by the Free Software Foundation.
+ *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
- * included at /legal/license.txt). 
- * 
+ * included at /legal/license.txt).
+ *
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
- * 02110-1301 USA 
- * 
+ * 02110-1301 USA
+ *
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
- * information or have any questions. 
+ * information or have any questions.
  */
 
 #if ENABLE_COMPILER
@@ -110,7 +110,6 @@ class BinaryAssembler: public BinaryAssemblerCommon {
   void ldr_address(Register rd, address addr, Condition cond = al);
 
 protected:
-
   class CodeInterleaver {
   public:
     CodeInterleaver(BinaryAssembler* assembler);
@@ -153,11 +152,10 @@ protected:
   // the code can be moved around even during code generation (GC).
   typedef BinaryLabel Label;
   class NearLabel : public Label {};
-
-public:
-  void branch_helper(Label& L, bool link, bool near, Condition cond);
-  void branch_helper(CompilationQueueElement* cqe,
-                     bool link, bool near, Condition cond);
+ private:
+  void branch_helper(Label& L, const bool link, const bool near,
+                     const Condition cond);
+ public:
 
     // alignment is not used on ARM, but is needed to make
     // CompilationContinuation::compile() platform-independent.
@@ -166,22 +164,20 @@ public:
 
   // void back_patch(Label& L, jint code_offset);
 
-  void b  (Label& L, Condition cond = al) {
+  void b  (Label& L, const Condition cond = al) {
     branch_helper(L, false, false, cond);
   }
-  void bl (Label& L, Condition cond = al) {
+  void bl (Label& L, const Condition cond = al) {
     branch_helper(L, true , false, cond);
   }
-  void b(CompilationQueueElement* cqe, Condition cond = al) {
-    branch_helper(cqe, false, false, cond);
-  }
-
-  void b  (NearLabel& L, Condition cond = al)  {
+  void b  (NearLabel& L, const Condition cond = al)  {
     branch_helper(L, false, true, cond);
   }
-  void bl (NearLabel& L, Condition cond = al)  {
+  void bl (NearLabel& L, const Condition cond = al)  {
     branch_helper(L, true , true, cond);
   }
+
+  void b(CompilationQueueElement* cqe, const Condition cond = al);
 
   void jmp( Label& L )                            { b(L);   write_literals(); }
   void jmp( CompilationQueueElement* cqe )        { b(cqe); write_literals(); }

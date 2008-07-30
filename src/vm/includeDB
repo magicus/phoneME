@@ -494,6 +494,7 @@ Disassembler_<iarch>.cpp         Disassembler_<iarch>.hpp
 Disassembler_<carch>.hpp         Assembler_<carch>.hpp
 Disassembler_<carch>.hpp         Stream.hpp
 Disassembler_<carch>.hpp         Oop.hpp
+Disassembler_<carch>.cpp         Instructions_<carch>.hpp
 Disassembler_<carch>.cpp         BinaryAssembler_<carch>.hpp
 
 #if ENABLE_INTERPRETER_GENERATOR
@@ -1250,7 +1251,7 @@ BinaryAssembler_<carch>.cpp      Instructions_<carch>.hpp
 BinaryAssembler_<carch>.cpp      Compiler.hpp
 
 Instructions_<carch>.hpp         Allocation.hpp
-Instructions_<carch>.hpp         Compiler.hpp
+Instructions_<carch>.hpp         CodeGenerator.hpp
 Instructions_<carch>.cpp         Instructions_<carch>.hpp
 
 BinaryLabel.cpp                  Compiler.hpp
