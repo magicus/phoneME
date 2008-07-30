@@ -145,7 +145,7 @@
     CVMCPU_MULL_OPCODE      // reg32 = LO32(reg32 * reg32).
     CVMCPU_MULH_OPCODE      // reg32 = HI32(reg32 * reg32).
     CVMCPU_CMP_OPCODE       // cmp reg32, aluRhs32 => set cc.
-    CVMCPU_CMN_OPCODE       // cmp reg32, ~aluRhs32 => set cc.
+    CVMCPU_CMN_OPCODE       // cmp reg32, -aluRhs32 => set cc.
 
     // 64 bit ALU opcodes:
     CVMCPU_NEG64_OPCODE     // reg64 = -reg64.
