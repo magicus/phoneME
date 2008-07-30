@@ -1684,9 +1684,6 @@ void javanotify_install_content(const char * httpUrl,
                                 unsigned int descFilePathLen,
                                 javacall_bool isJadFile,
                                                                 javacall_bool isSilent) {
-    //static const int SchemaLen = 16;
-    //static const javacall_utf16 SchemaFile[] = {'f','i','l','e',':','/','/','/'};
-
     midp_jc_event_union e;
     int httpUrlLength, dscFileOffset;
 
