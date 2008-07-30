@@ -207,10 +207,18 @@ javacall_dom_keyboardevent_init_keyboard_event_ns(javacall_handle handle,
                                                   javacall_bool cancelable_arg,
                                                   javacall_const_utf16_string key_identifier_arg,
                                                   javacall_int32 key_location_arg,
+<<<<<<< .working
                                                   javacall_bool ctrl_key,
                                                   javacall_bool alt_key,
                                                   javacall_bool shift_key,
                                                   javacall_bool meta_key);
+=======
+                                                  javacall_bool alt_key,
+                                                  javacall_bool ctrl_key,
+                                                  javacall_bool shift_key,
+                                                  javacall_bool alt_graph_key,
+                                                  javacall_bool meta_key);
+>>>>>>> .merge-right.r12360
 
 /** 
  * Deletes object representing this keyboardevent
