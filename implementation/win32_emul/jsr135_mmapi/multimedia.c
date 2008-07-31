@@ -1287,7 +1287,7 @@ javacall_result javacall_media_set_video_location(javacall_handle handle,
     return ret;
 }
 
-javacall_result javacall_media_set_video_fullscreenmode(javacall_handle handle, javacall_bool fullScreenMode)
+javacall_result javacall_media_set_video_full_screen_mode(javacall_handle handle, javacall_bool fullScreenMode)
 {
     javacall_result ret = JAVACALL_FAIL;
     javacall_impl_player* pPlayer = (javacall_impl_player*)handle;
