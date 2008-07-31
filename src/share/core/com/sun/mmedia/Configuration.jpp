@@ -236,35 +236,9 @@ public abstract class Configuration {
         return new String[0];
     }
 
-// #ifdef ENABLE_JSR_234 [
-    public abstract String[] getSupportedMediaProcessorInputTypes();
-
-    public abstract String[] getSupportedSoundSource3DPlayerTypes();
-// #endif ]
-
     public abstract String getProperty(String key);
 
     public abstract void setProperty(String key, String value);
-
-// #ifdef ENABLE_JSR_234 [
-    /**
-     * Gets the audio renderer.
-     *
-     * @return The audio renderer
-     */
-    public abstract BasicAudioOut getAudioRenderer();
-
-    /**
-     * Checks if audio renderer supports StopTimeControl.
-     * This is a temporary function to bypass feature in QSound:
-     * QsoundPCMOut is not able to support StopTimeControl, 
-     * MapPCMOut is able ...
-     *
-     * @return The true if StopTimeCotrol is supported by audio renderer
-     */
-    public abstract boolean isStoppingAudioRenderer();
-
-// #endif ]
 
     /**
      *  Gets Accessor to platform specific Image classes

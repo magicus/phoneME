@@ -284,42 +284,6 @@ public class DefaultConfiguration extends Configuration {
         return imageAccessor;
     }
 
-// #ifdef ENABLE_JSR_234 [
-    public String[] getSupportedMediaProcessorInputTypes() {
-        return new String[] {MIME_IMAGE_PNG, MIME_IMAGE_JPEG, MIME_IMAGE_RAW};
-    }
-
-    public String[] getSupportedSoundSource3DPlayerTypes() {
-        return new String[] {MIME_AUDIO_WAV};
-    }
-
-    /**
-     * Gets the audio renderer.
-     *
-     * @return The audio renderer
-     */
-    public BasicAudioOut getAudioRenderer() {
-        return (BasicAudioOut)createInstanceOf("com.sun.mmedia.BasicAudioOut");
-    }
-
-    /**
-     * Checks if audio renderer supports StopTimeControl.
-     * This is a temporary function to bypass feature in QSound:
-     * QsoundPCMOut is not able to support StopTimeControl, 
-     * MapPCMOut is able ...
-     *
-     * @return The true if StopTimeCotrol is supported by audio renderer
-     */
-    public boolean isStoppingAudioRenderer() {
-        /*
-         * in AMMS QSound renderer is used with no StopTimeControl support
-         * in pure MMAPI Map renderer is used, it has StopTimeControl support
-         */
-        return !needAMMS;
-    }
-
-// #endif ]    
-
     /**
      * Gets the video renderer.
      *
