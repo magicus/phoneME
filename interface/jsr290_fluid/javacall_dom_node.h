@@ -809,7 +809,7 @@ javacall_dom_node_get_feature(javacall_handle handle,
  * discarded they do not need to be removed with the 
  * <code>removeEventListener</code> method. 
  * 
- * @param handle Pointer to the object representing this eventtarget.
+ * @param handle Pointer to the object representing this node.
  * @param type The event type for which the user is registering
  * @param listener The <code>listener</code> parameter takes an interface 
  *   implemented by the user which contains the methods to be called 
@@ -826,10 +826,10 @@ javacall_dom_node_get_feature(javacall_handle handle,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
-javacall_dom_eventtarget_add_event_listener(javacall_handle handle,
-                                            javacall_const_utf16_string type,
-                                            javacall_bool use_capture,
-                                            /* OUT */ javacall_int64* ret_value);
+javacall_dom_node_add_event_listener(javacall_handle handle,
+                                     javacall_const_utf16_string type,
+                                     javacall_bool use_capture,
+                                     /* OUT */ javacall_int64* ret_value);
 
 /**
  * This method allows the removal of event listeners from the event 
@@ -841,7 +841,7 @@ javacall_dom_eventtarget_add_event_listener(javacall_handle handle,
  * not identify any currently registered <code>EventListener</code> on 
  * the <code>EventTarget</code> has no effect.
  * 
- * @param handle Pointer to the object representing this eventtarget.
+ * @param handle Pointer to the object representing this node.
  * @param type Specifies the event type of the <code>EventListener</code> 
  *   being removed. 
  * @param listener The <code>EventListener</code> parameter indicates the 
@@ -857,68 +857,7 @@ javacall_dom_eventtarget_add_event_listener(javacall_handle handle,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
-javacall_dom_eventtarget_remove_event_listener(javacall_handle handle);
-
-/**
- *  This method allows the registration of an event listener in a 
- * specified group or the default group and, depending on the 
- * <code>use_capture</code> parameter, on the capture phase of the DOM 
- * event flow or its target and bubbling phases. 
- * 
- * @param handle Pointer to the object representing this eventtarget.
- * @param namespace_uri  Specifies the <code>Event.namespace_uri</code> 
- *   associated with the event for which the user is registering. 
- * @param type  Refer to the <code>EventTarget.addEventListener()</code> 
- *   method for a description of this parameter. 
- * @param listener Pointer to the object of
- *    Refer to the 
- *   <code>EventTarget.addEventListener()</code> method for a 
- *   description of this parameter. 
- * @param use_capture  Refer to the 
- *   <code>EventTarget.addEventListener()</code> method for a 
- *   description of this parameter. 
- * 
- * @return JAVACALL_OK if all done successfuly,
- *         JAVACALL_NOT_IMPLEMENTED when the stub was called
- */
-javacall_result
-javacall_dom_eventtarget_add_event_listener_ns(javacall_handle handle,
-                                               javacall_const_utf16_string namespace_uri,
-                                               javacall_const_utf16_string type,
-                                               javacall_handle listener,
-                                               javacall_bool use_capture);
-
-/**
- *  This method allows the removal of an event listener, independently of 
- * the associated event group. Calling <code>removeEventListenerNS</code>
- *  with arguments which do not identify any currently registered 
- * <code>EventListener</code> on the <code>EventTarget</code> has no 
- * effect. 
- * 
- * @param handle Pointer to the object representing this eventtarget.
- * @param namespace_uri  Specifies the <code>Event.namespace_uri</code> 
- *   associated with the event for which the user registered the event 
- *   listener. 
- * @param type  Refer to the 
- *   <code>EventTarget.removeEventListener()</code> method for a 
- *   description of this parameter. 
- * @param listener Pointer to the object of
- *    Refer to the 
- *   <code>EventTarget.removeEventListener()</code> method for a 
- *   description of this parameter. 
- * @param use_capture  Refer to the 
- *   <code>EventTarget.removeEventListener()</code> method for a 
- *   description of this parameter.   
- * 
- * @return JAVACALL_OK if all done successfuly,
- *         JAVACALL_NOT_IMPLEMENTED when the stub was called
- */
-javacall_result
-javacall_dom_eventtarget_remove_event_listener_ns(javacall_handle handle,
-                                                  javacall_const_utf16_string namespace_uri,
-                                                  javacall_const_utf16_string type,
-                                                  javacall_handle listener,
-                                                  javacall_bool use_capture);
+javacall_dom_node_remove_event_listener(javacall_handle handle);
 
 /**
  *  This method allows the dispatch of events into the implementation's 
@@ -932,7 +871,7 @@ javacall_dom_eventtarget_remove_event_listener_ns(javacall_handle handle,
  * implementation.
  *
  * 
- * @param handle Pointer to the object representing this eventtarget.
+ * @param handle Pointer to the object representing this node.
  * @param evt Pointer to the object of
  *    The event to be dispatched. 
  * @param ret_value  Indicates whether any of the listeners which handled the 
@@ -952,10 +891,10 @@ javacall_dom_eventtarget_remove_event_listener_ns(javacall_handle handle,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
-javacall_dom_eventtarget_dispatch_event(javacall_handle handle,
-                                        javacall_handle evt,
-                                        /* OUT */ javacall_bool* ret_value,
-                                        /* OUT */ javacall_dom_exceptions* exception_code);
+javacall_dom_node_dispatch_event(javacall_handle handle,
+                                 javacall_handle evt,
+                                 /* OUT */ javacall_bool* ret_value,
+                                 /* OUT */ javacall_dom_exceptions* exception_code);
 
 /** 
  * Deletes object representing this node
