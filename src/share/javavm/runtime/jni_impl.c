@@ -2937,8 +2937,6 @@ CVMjniGetJavaVM(JNIEnv *env, JavaVM **p_jvm)
 }
 
 
-#ifdef JAVASE
-
 /* NOTE: These lookups are done with the NULL (bootstrap) ClassLoader to 
  *  circumvent any security checks that would be done by jni_FindClass.
  */
@@ -2977,6 +2975,12 @@ CVMjniLookupDirectBufferClasses(JNIEnv* env)
 
     cb = CVMclassLookupByNameFromClassLoader(ee, "sun/nio/ch/DirectBuffer",
 					     CVM_TRUE, NULL, NULL, CVM_FALSE);
+    if (cb == NULL) {
+        CVMjniExceptionClear(env);
+        /* Try again with the JSR-239 implementation class */
+        cb = CVMclassLookupByNameFromClassLoader(ee, "java/nio/DirectBuffer",
+                                                 CVM_TRUE, NULL, NULL, CVM_FALSE);
+    }
     if (cb == NULL) {
 	return CVM_FALSE;
     }
@@ -3030,16 +3034,30 @@ CVMjniInitializeDirectBufferSupport(JNIEnv* env)
     }
 
     /*  Get needed field and method IDs */
-    vm->directByteBufferConstructor =
+    vm->directByteBufferLongConstructor =
 	CVMjniGetMethodID(env, vm->directByteBufferClass, "<init>", "(JI)V");
-    vm->directBufferAddressField =
+    if (vm->directByteBufferLongConstructor == NULL) {
+        CVMjniExceptionClear(env);
+        /* JSR-239 code path */
+        vm->directByteBufferIntConstructor =
+            CVMjniGetMethodID(env, vm->directByteBufferClass, "<init>", "(I[BI)V");
+    }
+    vm->directBufferAddressLongField =
 	CVMjniGetFieldID(env, vm->bufferClass, "address", "J");
+    if (vm->directBufferAddressLongField == NULL) {
+        CVMjniExceptionClear(env);
+        /* JSR-239 code path */
+        vm->directBufferAddressIntField =
+            CVMjniGetFieldID(env, vm->bufferClass, "arrayOffset", "I");
+    }
     vm->bufferCapacityField =
 	CVMjniGetFieldID(env, vm->bufferClass, "capacity", "I");
 
-    if ((vm->directByteBufferConstructor == NULL) ||
-	(vm->directBufferAddressField    == NULL) ||
-	(vm->bufferCapacityField         == NULL)) {
+    if (((vm->directByteBufferLongConstructor == NULL) &&
+         (vm->directByteBufferIntConstructor  == NULL))  ||
+	((vm->directBufferAddressLongField  == NULL) &&
+         (vm->directBufferAddressIntField   == NULL))    ||
+	(vm->bufferCapacityField == NULL)) {
 	vm->directBufferSupportInitializeFailed = CVM_TRUE;
 	goto done;
     }
@@ -3048,19 +3066,16 @@ CVMjniInitializeDirectBufferSupport(JNIEnv* env)
 
 done:
     CVMsysMutexUnlock(ee, &CVMglobals.nullClassLoaderLock);
-    return !vm->directBufferSupportInitialized;
+    return !vm->directBufferSupportInitializeFailed;
 }
-#endif /* JAVASE */
-
 
 jobject JNICALL
 CVMjniNewDirectByteBuffer(JNIEnv *env, void* address, jlong capacity)
 {
-#ifdef JAVASE
     CVMJNIJavaVM *vm = &CVMglobals.javaVM;
     jlong addr;
     jint  cap;
-    jobject buffer;
+    jobject buffer = NULL;
 
     /* Initialize the direct buffer support if not inited yet: */
     if (!vm->directBufferSupportInitialized) {
@@ -3076,21 +3091,23 @@ CVMjniNewDirectByteBuffer(JNIEnv *env, void* address, jlong capacity)
      *  takes int capacity.
      */
     cap  = CVMlong2Int(capacity);
-    buffer = CVMjniNewObject(env, vm->directByteBufferClass,
-		 vm->directByteBufferConstructor, addr, cap);
+    if (vm->directByteBufferLongConstructor != NULL) {
+        buffer = CVMjniNewObject(env, vm->directByteBufferClass,
+                                 vm->directByteBufferLongConstructor, addr, cap);
+    } else if (vm->directByteBufferIntConstructor != NULL) {
+        /* JSR-239 variant */
+        buffer = CVMjniNewObject(env, vm->directByteBufferClass,
+                                 vm->directByteBufferIntConstructor, cap, NULL, CVMlong2Int(addr));
+    }
     return buffer;
-#else
-    return NULL;
-#endif
 }
 
 
 void* JNICALL
 CVMjniGetDirectBufferAddress(JNIEnv *env, jobject buf)
 {
-#ifdef JAVASE
     CVMJNIJavaVM *vm = &CVMglobals.javaVM;
-    jlong lresult;
+    jlong lresult = 0;
 
     /* Initialize the direct buffer support if not inited yet: */
     if (!vm->directBufferSupportInitialized) {
@@ -3104,17 +3121,17 @@ CVMjniGetDirectBufferAddress(JNIEnv *env, jobject buf)
 	return NULL;
     }
 
-    lresult = CVMjniGetLongField(env, buf, vm->directBufferAddressField);
+    if (vm->directBufferAddressLongField != NULL) {
+        lresult = CVMjniGetLongField(env, buf, vm->directBufferAddressLongField);
+    } else if (vm->directBufferAddressIntField != NULL) {
+        lresult = CVMint2Long(CVMjniGetIntField(env, buf, vm->directBufferAddressIntField));
+    }
     return CVMlong2VoidPtr(lresult);
-#else
-    return NULL;
-#endif
 }
 
 jlong JNICALL
 CVMjniGetDirectBufferCapacity(JNIEnv *env, jobject buf)
 {
-#ifdef JAVASE
     CVMJNIJavaVM *vm = &CVMglobals.javaVM;
     jint capacity;
     jlong failedResult = CVMint2Long(-1);
@@ -3146,9 +3163,6 @@ CVMjniGetDirectBufferCapacity(JNIEnv *env, jobject buf)
     /*  NOTE that capacity is currently an int in the implementation */
     capacity = CVMjniGetIntField(env, buf, vm->bufferCapacityField);
     return CVMint2Long(capacity);
-#else
-    return CVMint2Long(-1);
-#endif
 }
 
 

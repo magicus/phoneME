@@ -103,7 +103,7 @@ typedef struct {
     const struct JNIInvokeInterface * vector;
 
     /* other private data? */
-#ifdef JAVASE
+
     /*  Initialization state for JNI routines relating to
      *  java.nio.DirectBuffers:
      */
@@ -112,10 +112,12 @@ typedef struct {
     jclass bufferClass;
     jclass directBufferClass;
     jclass directByteBufferClass;
-    jmethodID directByteBufferConstructor;
-    jfieldID  directBufferAddressField;
+    jmethodID directByteBufferLongConstructor;
+    jmethodID directByteBufferIntConstructor;
+    jfieldID  directBufferAddressLongField;
+    jfieldID  directBufferAddressIntField;
     jfieldID  bufferCapacityField;
-#endif
+
 
 } CVMJNIJavaVM;
 
