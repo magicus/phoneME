@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE configuration SYSTEM "../configuration.dtd">
+<!--
+
+
+        Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+        DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+        
+        This program is free software; you can redistribute it and/or
+        modify it under the terms of the GNU General Public License version
+        2 only, as published by the Free Software Foundation.
+        
+        This program is distributed in the hope that it will be useful, but
+        WITHOUT ANY WARRANTY; without even the implied warranty of
+        MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+        General Public License version 2 for more details (a copy is
+        included at /legal/license.txt).
+        
+        You should have received a copy of the GNU General Public License
+        version 2 along with this work; if not, write to the Free Software
+        Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+        02110-1301 USA
+        
+        Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+        Clara, CA 95054 or visit www.sun.com if you need additional
+        information or have any questions.
+-->
+
+<configuration>
+<constants>
+
+<!--
+    Indentifiers for Suite Storage subsystem
+-->
+<constant_class Package="com.sun.midp.configurator" Name="Constants" Scope="public"
+    Comment="/** Indentifiers for the MIDP Storage subsystem */">
+ <constant Type="int"
+            Name="INTERNAL_STORAGE_ID"
+            Value="0"
+            NativeOnly="false"
+            Comment="Storage ID for the internal storage."/>
+ <constant Type="int"
+            Name="UNUSED_STORAGE_ID"
+            Value="(-1)"
+            NativeOnly="false"
+            Comment="Unused storage ID."/>
+<constant Type="int"
+            Name="MAX_STORAGE_NUM"
+            Value="1"
+            NativeOnly="false"
+            Comment="Number of the supported storages: 2 for internal and only one external.
+ This value should be changed if more than one external storage is supported."/>
+ </constant_class>
+
+</constants>
+</configuration>

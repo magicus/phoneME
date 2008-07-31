@@ -1,0 +1,204 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE configuration SYSTEM "../share/configuration.dtd">
+<!--
+          
+
+        Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+        DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+        
+        This program is free software; you can redistribute it and/or
+        modify it under the terms of the GNU General Public License version
+        2 only, as published by the Free Software Foundation.
+        
+        This program is distributed in the hope that it will be useful, but
+        WITHOUT ANY WARRANTY; without even the implied warranty of
+        MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+        General Public License version 2 for more details (a copy is
+        included at /legal/license.txt).
+        
+        You should have received a copy of the GNU General Public License
+        version 2 along with this work; if not, write to the Free Software
+        Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+        02110-1301 USA
+        
+        Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+        Clara, CA 95054 or visit www.sun.com if you need additional
+        information or have any questions.
+-->
+<configuration>
+<constants>
+<constant_class Package="com.sun.midp.configurator" Name="Constants" Scope="public">
+  <constant Type="int"
+            Name="IMAGE_CACHE_THRESHOLD"
+            Value="(100*1024)"
+            Comment="Threshold for image cache storage"/>
+  <constant Type="boolean"
+            Name="PORTING_NO_FILESYSTEM"
+            Value="false"
+            Comment="Whether your platform supports File System. Set to true when File System is not supported; set to false when File System is supported."/>
+<!-- Package javax.microedition.lcdui.game -->
+  <constant Type="int"
+            Name="GAMECANVAS_FULLWIDTH"
+            Value="176"
+            Comment="(Fixed) full display width"/>
+  <constant Type="int"
+            Name="GAMECANVAS_FULLHEIGHT"
+            Value="210"
+            Comment="(Fixed) full display height"/>
+
+<!-- Package javax.microedition.lcdui -->
+  <constant Type="boolean"
+            Name="CHAM_USE_IMAGES"
+            Value="true"
+            Comment="When false, Chameleon will not even attempt to load images for the UI."/>
+  <constant Type="boolean"
+            Name="CHAM_ROMIZED_IMAGES"
+            Value="false"
+            Comment="When false, Chameleon will not even attempt to load romized images for the UI."/>
+  <constant Type="int"
+            Name="CHAM_WIDTH"
+            Value="176"
+            Comment="(Chameleon Only) display width"/>
+  <constant Type="int"
+            Name="CHAM_FULLWIDTH"
+            Value="176"
+            Comment="(Chameleon Only) full display width"/>
+  <constant Type="int"
+            Name="CHAM_HEIGHT"
+            Value="210"
+            Comment="(Chameleon Only) display height"/>
+  <constant Type="int"
+            Name="CHAM_FULLHEIGHT"
+            Value="210"
+            Comment="(Chameleon Only) full display height"/>
+  <constant Type="boolean"
+            Name="TRAVERSAL2D"
+            Value="true"
+            Comment="(Chameleon Only) 2-D Traversal flag"/>            
+  <constant Type="int"
+            Name="MAX_EVENTS"
+            Value="20"
+            Comment="The maximum number of events in the event queue"/>
+  <constant Type="int"
+            Name="FULLWIDTH"
+            Value="176"
+            Comment="(Fixed) full display width"/>
+  <constant Type="int"
+            Name="FULLHEIGHT"
+            Value="210" 
+            Comment="(Fixed) full display height"/>
+  <constant Type="int"
+            Name="NORMALWIDTH"
+            Value="176" 
+            Comment="(Fixed) normal width"/>
+  <constant Type="int"
+            Name="NORMALHEIGHT"
+            Value="210" 
+            Comment="(Fixed) normal height"/>
+  <constant Type="int"
+            Name="VERT_SCROLLBAR_WIDTH"
+            Value="16" 
+            Comment="the width of the vertical scrollbar"/>
+  <constant Type="int"
+            Name="ERASE_COLOR"
+            Value="0x00FFFFFF" 
+            Comment="Color, in hex, to use as the erase color (the color used to clear away any existing pixels from a graphics object before painting the new pixels)."/>
+  <constant Type="boolean"
+            Name="SCROLLS_HORIZONTAL"
+            Value="false"
+            Comment="Whether the viewport is capable of scrolling horizontally"/>
+  <constant Type="boolean"
+            Name="SCROLLS_VERTICAL"
+            Value="true"
+            Comment="Whether the viewport is capable of scrolling vertically"/>
+  <constant Type="int"
+            Name="DISPLAY_DEPTH"
+            Value="16" 
+            Comment="Color depth the platform supports, in bits per pixel (bpp)."/>
+  <constant Type="int"
+            Name="IMAGE_DEPTH"
+            Value="32" 
+            Comment="Depth of the platform image (in bits). @note This is the bit depth of an image and it may not be the same as the bit depth of the entire system."/>
+  <constant Type="boolean"
+            Name="DISPLAY_IS_COLOR"
+            Value="true" 
+            Comment="Whether the platform supports color: set it to true when color is supported; set it to false when color is not supported."/>
+  <constant Type="int"
+            Name="DISPLAY_NUM_COLOR"
+            Value="65536" 
+            Comment="Number of color the platform supports"/>
+  <constant Type="int"
+            Name="ALPHA_LEVELS"
+            Value="256" 
+            Comment="Number of alpha channel levels the platform supports"/>
+  <constant Type="boolean"
+            Name="IS_DOUBLE_BUFFERED"
+            Value="true" 
+            Comment="Whether the platform and MIDP implementation supports double-buffering: set to true when double-buffering is supported; set to false when double-buffering is not supported."/>
+  <constant Type="int"
+            Name="KEYCODE_UP"
+            Value="-1" 
+            Comment="key up code (internal)"/>
+  <constant Type="int"
+            Name="KEYCODE_DOWN"
+            Value="-2" 
+            Comment="key down code (internal)"/>
+  <constant Type="int"
+            Name="KEYCODE_LEFT"
+            Value="-3" 
+            Comment="key left code (internal)"/>
+  <constant Type="int"
+            Name="KEYCODE_RIGHT"
+            Value="-4" 
+            Comment="key right code (internal)"/>
+  <constant Type="int"
+            Name="KEYCODE_SELECT"
+            Value="-5" 
+            Comment="key select code (internal)"/>
+  <constant Type="int"
+            Name="KEYCODE_SOFT1"
+            Value="-6" 
+            Comment="key soft1 code (internal)"/>
+  <constant Type="int"
+            Name="KEYCODE_SOFT2"
+            Value="-7" 
+            Comment="key soft2 code (internal)"/>
+  <constant Type="boolean"
+            Name="MEASURE_STARTUP"
+            Value="false" 
+            Comment="Turn on/off startup time measurement printouts."/>
+  <constant Type="boolean"
+            Name="POINTER_SUPPORTED"
+            Value="true" 
+            Comment="Whether both the platform and MIDP implementation provide support for a pointer (press and release). Set to true when pointer is supported; set to false when pointer is not supported."/>
+  <constant Type="boolean"
+            Name="MOTION_SUPPORTED"
+            Value="true" 
+            Comment="If your platform supports pointer motion and you want MIDP implementation provides support for pointer motions, set it to true; otherwise, set it to false so that MIDP runtime can provide this information to MIDlet."/>
+  <constant Type="boolean"
+            Name="REPEAT_SUPPORTED"
+            Value="false" 
+            Comment="If your platform support key repeat and you want MIDP implementation provides support for key repeat, set this to true, otherwise set it to false."/>
+<!-- Memory limits -->
+  <constant Type="int"
+            Name="JAVA_HEAP_CAPACITY_SVM"
+            Value="1024" 
+            Comment="Java heap capacity in SVM mode"/>
+  <constant Type="int"
+            Name="JAVA_HEAP_CAPACITY_MVM"
+            Value="(4*1024)" 
+            Comment="Java heap capacity in MVM mode"/>
+ </constant_class>
+<!-- Package com.sun.midp.rms -->
+<constant_class Package="com.sun.midp.rms" Name="RMSConfig" Scope="public" Comment="/** Constant values in RMS configuration */">
+  <constant Type="int"
+            Name="STORAGE_SUITE_LIMIT"
+            Value="200000"
+            Comment="Per suite resource limit for storage"/>
+  <constant Type="int"
+            Name="RMS_CACHE_LIMIT"
+            Value="3072"
+            Comment="Global memory limit (in Bytes) for RMS caching"/>
+ </constant_class>
+</constants>
+</configuration>
