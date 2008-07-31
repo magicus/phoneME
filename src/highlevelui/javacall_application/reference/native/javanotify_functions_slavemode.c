@@ -1747,7 +1747,7 @@ void javanotify_security_permission_dialog_finish(
  */
 void javanotify_install_content(const char * httpUrl,
                                 const javacall_utf16* descFilePath,
-                                int descFilePathLen,
+                                unsigned int descFilePathLen,
                                 javacall_bool isJadFile,
                                                                 javacall_bool isSilent) {
     const static int SchemaLen = 16;
