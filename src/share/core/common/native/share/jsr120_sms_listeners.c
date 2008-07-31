@@ -204,7 +204,7 @@ WMA_STATUS jsr120_sms_is_message_expected(jchar port, char* addr) {
     }
 
     if (WMA_OK == jsr120_is_sms_push_listener_registered(port)) {
-        char* filter = pushgetfilter("sms://:", port);
+        char* filter = pushgetfilter("sms://:", (int)port);
         if (filter == NULL || jsr120_check_filter(filter, addr)) {
             return WMA_OK;
         }

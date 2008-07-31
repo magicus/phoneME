@@ -149,7 +149,7 @@ void jsr120_notify_incoming_sms(jchar msgType, char *sourceAddress,
     if (WMA_OK == jsr120_sms_is_message_expected(destPortNum, sourceAddress)) {
 
         SmsMessage* sms = jsr120_sms_new_msg(
-            msgType, sourceAddress, sourcePortNum, destPortNum, timeStamp, msgLen, msgBuffer);
+            msgType, (unsigned char*)sourceAddress, sourcePortNum, destPortNum, timeStamp, msgLen, msgBuffer);
 
         jsr120_sms_pool_add_msg(sms);
 

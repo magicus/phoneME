@@ -110,7 +110,7 @@ jboolean jsr120_check_signal(midpSignalType signalType, int descriptor, int stat
         SmsMessage* sms = (SmsMessage*)descriptor;
 
         jsr120_notify_incoming_sms(
-            sms->encodingType, sms->msgAddr, sms->msgBuffer, sms->msgLen,
+            sms->encodingType, sms->msgAddr, (unsigned char*)sms->msgBuffer, sms->msgLen,
             sms->sourcePortNum, sms->destPortNum, sms->timeStamp);
 
         javacall_free(sms->msgAddr);
@@ -161,12 +161,8 @@ jboolean jsr120_check_signal(midpSignalType signalType, int descriptor, int stat
         jsr205_mms_notify_send_completed((int)descriptor, (WMA_STATUS)status);
     	return KNI_TRUE;
 #endif
+    default: break;
     }
 
     return KNI_FALSE;
 }
-
-
-
-
-
