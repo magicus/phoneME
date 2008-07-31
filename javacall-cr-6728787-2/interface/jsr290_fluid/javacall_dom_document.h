@@ -688,7 +688,7 @@ javacall_dom_document_adopt_node(javacall_handle handle,
  * Create an Event.
  *
  * 
- * @param handle Pointer to the object representing this documentevent.
+ * @param handle Pointer to the object representing this document.
  * @param event_type  The <code>event_type</code> parameter specifies the 
  *   name of the DOM Events interface to be supported by the created 
  *   event object, e.g. <code>"Event"</code>, <code>"MouseEvent"</code>, 
@@ -720,14 +720,14 @@ javacall_dom_document_adopt_node(javacall_handle handle,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
-javacall_dom_documentevent_create_event(javacall_handle handle,
-                                        javacall_const_utf16_string event_type,
-                                        /* OUT */ javacall_handle* ret_value);
+javacall_dom_document_create_event(javacall_handle handle,
+                                   javacall_const_utf16_string event_type,
+                                   /* OUT */ javacall_handle* ret_value);
 
 /**
  *  Test if the implementation can generate events of a specified type. 
  * 
- * @param handle Pointer to the object representing this documentevent.
+ * @param handle Pointer to the object representing this document.
  * @param namespace_uri  Specifies the <code>Event.namespace_uri</code> of 
  *   the event, may be NULL. 
  * @param type  Specifies the <code>Event.type</code> of the event. 
@@ -739,23 +739,23 @@ javacall_dom_documentevent_create_event(javacall_handle handle,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
-javacall_dom_documentevent_can_dispatch(javacall_handle handle,
-                                        javacall_const_utf16_string namespace_uri,
-                                        javacall_const_utf16_string type,
-                                        /* OUT */ javacall_bool* ret_value);
+javacall_dom_document_can_dispatch(javacall_handle handle,
+                                   javacall_const_utf16_string namespace_uri,
+                                   javacall_const_utf16_string type,
+                                   /* OUT */ javacall_bool* ret_value);
 
 /**
  * Returns the default <code>AbstractView</code> for this <code>Document</code>, 
  * or <code>NULL</code> if none available.
  * 
- * @param handle Pointer to the object representing this documentview.
+ * @param handle Pointer to the object representing this document.
  * 
  * @return JAVACALL_OK if all done successfuly,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
-javacall_dom_documentview_get_default_view(javacall_handle handle,
-                                           /* OUT */ javacall_handle* ret_value);
+javacall_dom_document_get_default_view(javacall_handle handle,
+                                       /* OUT */ javacall_handle* ret_value);
 
 /** 
  * Deletes object representing this document
