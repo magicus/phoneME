@@ -616,17 +616,31 @@ class AppManagerPeer implements CommandListener {
                      * installation process is completed.
                      */
                     if (Constants.EXTENDED_MIDLET_ATTRIBUTES_ENABLED) {
-                        String launchProp = MIDletSuiteUtils.getSuiteProperty(
-                            suiteIds[lowest],
-                            MIDletSuite.LAUNCH_POWER_ON_PROP);
+                        MIDletSuite suite = MIDletSuiteUtils.getSuite(
+                            suiteIds[lowest]);
 
-                        if ("yes".equalsIgnoreCase(launchProp)) {
-                            // TODO: switch from suite-oriented extended
-                            // attributes to MIDlet-oriented ones.
-                            if (suiteInfo.hasSingleMidlet()) {
-                                manager.launchSuite(
-                                    suiteInfo, suiteInfo.midletToRun);
+                        if (suite != null) {
+                            for (int m = 1; m <= suiteInfo.numberOfMidlets; m++)
+                            {
+                                String launchProp =
+                                    MIDletSuiteUtils.getSuiteProperty(suite, m,
+                                        MIDletSuite.LAUNCH_POWER_ON_PROP);
+
+                                if ("yes".equalsIgnoreCase(launchProp)) {
+                                    String className =
+                                        MIDletSuiteUtils.getMIDletClassName(
+                                            suite, m);
+                                    manager.launchSuite(suiteInfo, className);
+
+                                    /*
+                                     * TODO: remove this break after multiple
+                                     * running MIDlets from a single suite are
+                                     * supported.
+                                     */
+                                    break; // run only one MIDLet from the suite
+                                }
                             }
+                            suite.close();
                         }
                     }
 

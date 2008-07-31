@@ -290,8 +290,8 @@ public class AmsUtil {
                 if (Constants.EXTENDED_MIDLET_ATTRIBUTES_ENABLED) {
                     System.out.println("EXTENDED_MIDLET_ATTRIBUTES_ENABLED is true");
 
-                    String heapSizeProp = MIDletSuiteUtils.getSuiteProperty(id,
-                        MIDletSuite.HEAP_SIZE_PROP);
+                    String heapSizeProp = MIDletSuiteUtils.getSuiteProperty(
+                        id, midlet, MIDletSuite.HEAP_SIZE_PROP);
 
                     if (heapSizeProp != null) {
                         try {

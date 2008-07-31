@@ -756,15 +756,13 @@ class AppManagerUIImpl extends Form
 
                 if (Constants.EXTENDED_MIDLET_ATTRIBUTES_ENABLED) {
                     String bgProp = MIDletSuiteUtils.getSuiteProperty(
-                        si.suiteId,
-                        MIDletSuite.LAUNCH_BG_PROP);
+                        si.proxy, MIDletSuite.LAUNCH_BG_PROP);
                     if (!"yes".equalsIgnoreCase(bgProp)) {
                         ci.setDefaultCommand(fgCmd);
                     }
 
                     String noExitProp = MIDletSuiteUtils.getSuiteProperty(
-                        si.suiteId,
-                        MIDletSuite.BACKGROUND_PAUSE_PROP);
+                        si.proxy, MIDletSuite.NO_EXIT_PROP);
 
                     if (!"yes".equalsIgnoreCase(noExitProp)) {
                         ci.addCommand(endCmd);

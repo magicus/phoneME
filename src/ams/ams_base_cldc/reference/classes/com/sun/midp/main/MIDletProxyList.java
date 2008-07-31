@@ -1063,8 +1063,7 @@ public class MIDletProxyList
         if (Constants.EXTENDED_MIDLET_ATTRIBUTES_ENABLED) {
             if (newForeground.wasNotActive) {
                 String bgProp = MIDletSuiteUtils.getSuiteProperty(
-                    newForeground.getSuiteId(),
-                    MIDletSuite.LAUNCH_BG_PROP);
+                    newForeground, MIDletSuite.LAUNCH_BG_PROP);
                 if ("yes".equalsIgnoreCase(bgProp)) {
                     return;
                 }
@@ -1087,8 +1086,7 @@ public class MIDletProxyList
              */
             if (Constants.EXTENDED_MIDLET_ATTRIBUTES_ENABLED) {
                 String pauseProp = MIDletSuiteUtils.getSuiteProperty(
-                    foregroundMidlet.getSuiteId(),
-                    MIDletSuite.BACKGROUND_PAUSE_PROP);
+                    foregroundMidlet, MIDletSuite.BACKGROUND_PAUSE_PROP);
 
                 if ("yes".equalsIgnoreCase(pauseProp)) {
                     foregroundMidlet.pauseMidletUponBackrgound();
@@ -1134,8 +1132,7 @@ public class MIDletProxyList
             // existing code.
             if (Constants.EXTENDED_MIDLET_ATTRIBUTES_ENABLED) {
                 String pauseProp = MIDletSuiteUtils.getSuiteProperty(
-                    foregroundMidlet.getSuiteId(),
-                    MIDletSuite.BACKGROUND_PAUSE_PROP);
+                    foregroundMidlet, MIDletSuite.BACKGROUND_PAUSE_PROP);
 
                 if ("yes".equalsIgnoreCase(pauseProp)) {
                     foregroundMidlet.activateMidletUponForeground();
