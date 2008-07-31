@@ -90,7 +90,6 @@ void BinaryAssembler::bind_to(Label& L, jint code_offset) {
 
     do {
       q = p;
-      TTY_TRACE_CR(("**q %p", q));
 
       const Instruction instr(q);
       switch( instr.kind() ) {
@@ -141,7 +140,7 @@ void BinaryAssembler::access_literal_pool(Register rd,
   Label L = literal->label();
   const int pos = _code_offset;
   const int target = L.is_unused() ? pos : L.position();
-  int offset = target - pos - 4;
+  int offset = target - pos;
 
   // Generate instruction that loads from the target
   if (is_store) {
@@ -152,34 +151,34 @@ void BinaryAssembler::access_literal_pool(Register rd,
     // which is needed during literal chaining. We need
     // to fake because thumb doesn't have a load instruction
     // that can take a -ve offset
-    offset /= 2;
-    GUARANTEE( abs(offset) < 0x1000, "Invalid offset");
 #ifndef PRODUCT
     if (GenerateCompilerComments) {
-      char buff[64];
+      static char buff[64];
       jvm_sprintf(buff, "load literal, offset=%d", offset);
       Disassembler::eol_comment(buff);
     }
 #endif
     if( L.is_bound() ) {
-      offset /= 2;
-      GUARANTEE( abs(offset) < 0x100, "Invalid offset");
+      offset = target - ((pos + 4) & 0xFFFFFFFC);
+      GUARANTEE( abs(offset) < 0x1000, "Invalid offset");
 #if USE_ARM_VFP_LITERALS
       if( rd > Assembler::r15 ) {
-        flds( rd, vfp_imm_index8x4(pc, offset) );
+        flds( rd, vfp_imm_index8x4(pc, offset / 4) );
       } else
 #endif
-      ldr_pc_imm8x4( rd, offset );
+        ldr_pc_imm12_w( rd, offset );
     } else {
+      offset /= 2;
+      GUARANTEE( abs(offset) < 0x1000, "Invalid offset");
 #ifndef PRODUCT
-    Disassembler::set_reference_to_unresolved_label();
+      Disassembler::set_reference_to_unresolved_label();
 #endif
 #if USE_ARM_VFP_LITERALS
       if( rd > Assembler::r15 ) {
         flds_stub( rd, offset );
       } else
 #endif
-      ldr_pc_stub( rd, offset );
+        ldr_pc_stub( rd, offset );
     }
   }
   if( !L.is_bound() ) {

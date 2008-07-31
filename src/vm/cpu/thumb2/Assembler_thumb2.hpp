@@ -756,7 +756,7 @@ protected:
   void mnemonic(Register rxf, int offset) {    \
     check_imm(abs(offset), 12); \
     GUARANTEE(rxf != 0xF || (S == 0 && size == 2), "sanity"); \
-    int U = offset >= 0 ? 1 : 0; \
+    const int U = offset >= 0 ? 1 : 0; \
     emit_w(0x7C << 25 | S << 24 | U << 23 | size << 21 | 1 << 20 \
             | 0xF << 16 | rxf << 12 | abs(offset)); \
   }
