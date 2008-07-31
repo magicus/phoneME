@@ -41,13 +41,7 @@ import com.sun.mmedia.protocol.*;
 import com.sun.mmedia.DefaultConfiguration;
 import com.sun.mmedia.DirectPlayer;
 
-// #ifdef USE_RTSP [
-import com.sun.mmedia.RTSPPlayer;
-// #endif ]
-
-// #ifndef ABB [
 import javax.microedition.media.protocol.*;
-// #endif ]
 
 /**
  * <code>Manager</code> is the access point for obtaining
@@ -474,7 +468,6 @@ public final class Manager {
      */
     public final static String TONE_DEVICE_LOCATOR = "device://tone";
 
-    // #ifndef ABB [
     /**
      * The locator to create a MIDI <code>Player</code>
      * which gives access to the MIDI device by making
@@ -502,7 +495,6 @@ public final class Manager {
      * Value "device://midi" is assigned to <code>MIDI_DEVICE_LOCATOR</code>.
      */
     public final static String MIDI_DEVICE_LOCATOR = "device://midi";
-    // #endif ]
     
     private static String DS_ERR = "Cannot create a DataSource for: ";
     private static String PL_ERR = "Cannot create a Player for: ";
@@ -1009,12 +1001,9 @@ public final class Manager {
      * @exception  IOException               Thrown if there was a problem connecting
      * with the source.
      */
-    // #ifndef ABB [
     public static Player createPlayer(DataSource source)
-    // #else ][
-    private static Player createPlayer(DataSource source)
-    // #endif ]
-         throws IOException, MediaException {
+        throws IOException, MediaException
+    {
         if (source == null) {
             throw new IllegalArgumentException();
         }
@@ -1097,7 +1086,6 @@ public final class Manager {
         }
     }
 
-    // #ifndef ABB [
     private static TimeBase sysTimeBase = null;
 
     /**
@@ -1112,10 +1100,7 @@ public final class Manager {
 
         return sysTimeBase;
     }
-    // #endif ]
 }
-
-// #ifndef ABB [
 
 /**
  * SystemTimeBase is the implementation of the default <CODE>TimeBase</CODE>
@@ -1141,6 +1126,3 @@ class SystemTimeBase implements TimeBase {
         return (System.currentTimeMillis() * 1000L) - offset;
     }
 }
-
-// #endif ]
-

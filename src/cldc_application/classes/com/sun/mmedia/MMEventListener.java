@@ -97,7 +97,6 @@ System.out.println("jsr135: EOM");
             PlayerImpl.sendExternalVolumeChanged(PlayerListener.VOLUME_CHANGED, nevt.intParam2);
             break;
 
-// #ifndef ABB [
         case EVENT_MEDIA_RECORD_SIZE_LIMIT:
             p = PlayerImpl.get(nevt.intParam1);
             if(p != null) {
@@ -132,13 +131,14 @@ System.out.println("jsr135: EOM");
                 p.sendEvent(PlayerListener.RECORD_ERROR, new String("Unexpected Media Error"));
             }
             break;
-// #endif ]
+
         case EVENT_MEDIA_NEED_MORE_MEDIA_DATA:
             p = PlayerImpl.get(nevt.intParam1);
             if (p != null) {
                 p.continueDownload();
             }
             break;
+
         case EVENT_MEDIA_SNAPSHOT_FINISHED:
             p = PlayerImpl.get( nevt.intParam1 );
             if( null != p )

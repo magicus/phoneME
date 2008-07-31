@@ -134,10 +134,8 @@ public abstract class Configuration {
     public final static String MIME_VIDEO_AVI = "video/avi";
 
     public final static String TONE_DEVICE_LOCATOR = javax.microedition.media.Manager.TONE_DEVICE_LOCATOR; //"device://tone";
-// #ifndef ABB [
     public final static String MIDI_DEVICE_LOCATOR = javax.microedition.media.Manager.MIDI_DEVICE_LOCATOR; //"device://midi";
-// #endif ]
-    public final static String CAPTURE_LOCATOR = "capture://";
+    public final static String CAPTURE_LOCATOR       = "capture://";
     public final static String RADIO_CAPTURE_LOCATOR = "capture://radio";
     public final static String AUDIO_CAPTURE_LOCATOR = "capture://audio";
     public final static String VIDEO_CAPTURE_LOCATOR = "capture://video";
@@ -268,7 +266,6 @@ public abstract class Configuration {
 
 // #endif ]
 
-// #ifdef ENABLE_INDIRECT_VIDEO [
     /**
      *  Gets Accessor to platform specific Image classes
      *  To be defined in derived classes.
@@ -276,16 +273,13 @@ public abstract class Configuration {
      * @return instance of ImageAccess class
      */
     public abstract ImageAccess getImageAccessor();
-// #endif ]    
 
-// #ifndef ABB [
     /**
      * Gets the video renderer.
      *
      * @return The video renderer
      */
     public abstract VideoRenderer getVideoRenderer(BasicPlayer player);
-// #endif ]    
 
     /**
      *  Gets the tonePlayer attribute of the Configuration object

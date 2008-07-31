@@ -27,7 +27,6 @@
  * 
  * ENABLE_DEBUG : Debug mode ?
  * ENABLE_MULTIPLE_ISOLATES : MVM mode ?
- * ABB : Audio Building Block Only ?
  * RECORD : Support Recording ?
  * MIDI_CONTROL : Support MIDI controls ?
  */
@@ -49,9 +48,7 @@ import javax.microedition.media.Control;
 import com.sun.mmedia.Configuration;
 import com.sun.mmedia.protocol.BasicDS;
 
-// #ifndef ABB [
 import javax.microedition.media.control.StopTimeControl;
-// #endif ]
 // #ifdef RECORD [
 import com.sun.mmedia.DirectRecord;
 // #endif ]
@@ -87,9 +84,7 @@ public class DirectPlayer extends BasicPlayer implements VideoSource
 
     private long remained;      // remained content length
 
-    // #ifndef ABB [
     private Timer stopTimer;    // To support StopTimeControl
-    // #endif ]
     // #ifdef RECORD [
     private DirectRecord recordControl = null;
     // #endif ]
@@ -225,7 +220,6 @@ public class DirectPlayer extends BasicPlayer implements VideoSource
         return hNative;
     }
 
-    // #ifndef ABB [
     /**
      * StopTimeControl implementation of DirectPlayer
      *
@@ -258,7 +252,6 @@ public class DirectPlayer extends BasicPlayer implements VideoSource
             }
         }
     }
-    // #endif ]
 
     /**
      * Read header information from media data and determine media Format
@@ -377,7 +370,6 @@ public class DirectPlayer extends BasicPlayer implements VideoSource
             dVolumeControl.setToPlayerMute();          /* set to this player's mute state */
         }
 
-        // #ifndef ABB [
         if (stopTime != StopTimeControl.RESET) {
             if (debug) {
                 Logging.report(Logging.INFORMATION, LogChannels.LC_MMAPI, 
@@ -394,7 +386,6 @@ public class DirectPlayer extends BasicPlayer implements VideoSource
             stopTimer = new Timer();
             stopTimer.schedule(new StopTimeController(), scheduleTime );
         }
-        // #endif ]
 
         // #ifdef RECORD [
         if (recordControl != null) {
@@ -476,12 +467,10 @@ public class DirectPlayer extends BasicPlayer implements VideoSource
      * Overrides from BasicPlayer (pre works for stop)
      */
     protected void doPreStop() {
-        // #ifndef ABB [
         if (stopTimer != null) {
             stopTimer.cancel();
             stopTimer = null;
         }
-        // #endif
         // #ifdef RECORD [
         if (recordControl != null) {
             recordControl.playerStopped();
@@ -921,7 +910,6 @@ public class DirectPlayer extends BasicPlayer implements VideoSource
         sendEvent(PlayerListener.SIZE_CHANGED, videoControl);
     }
     
-    // #ifndef ABB [
     /**
      * Inner class that support StopTimeControl
      */
@@ -972,7 +960,6 @@ public class DirectPlayer extends BasicPlayer implements VideoSource
             satev();
         }
     }
-    // #endif ]
     
     // #ifdef ENABLE_MULTIPLE_ISOLATES [
 

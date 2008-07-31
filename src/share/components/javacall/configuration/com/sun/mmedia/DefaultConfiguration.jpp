@@ -59,9 +59,7 @@ public class DefaultConfiguration extends Configuration {
     // #endif ]
 
     public final static String maps[][] = {
-// #ifdef ENABLE_INDIRECT_VIDEO [        
         {"GIF", "com.sun.mmedia.GIFPlayer"},
-// #endif ]        
 // #ifdef VIDEO_CAPTURE [
         {BasicPlayer.MEDIA_FORMAT_CAPTURE_VIDEO, "com.sun.mmedia.DirectCamera"},
 // #endif ]
@@ -70,12 +68,10 @@ public class DefaultConfiguration extends Configuration {
 // #endif ]
     };
 
-// #ifdef ENABLE_INDIRECT_VIDEO [
     /**
      *  Handle for the Image Access Environment...
      */
     private static ImageAccess imageAccessor;
-// #endif ]
 
     /**
      *Constructor for the DefaultConfiguration object
@@ -284,11 +280,9 @@ public class DefaultConfiguration extends Configuration {
     }
 
 
-    // #ifdef ENABLE_INDIRECT_VIDEO [
     public ImageAccess getImageAccessor() {
         return imageAccessor;
     }
-    // #endif ]
 
 // #ifdef ENABLE_JSR_234 [
     public String[] getSupportedMediaProcessorInputTypes() {
@@ -326,22 +320,16 @@ public class DefaultConfiguration extends Configuration {
 
 // #endif ]    
 
-// #ifndef ABB [ 
     /**
      * Gets the video renderer.
      *
      * @return The video renderer
      */
     public VideoRenderer getVideoRenderer(BasicPlayer player) {
-    // #ifdef ENABLE_INDIRECT_VIDEO [
         // workaround for demo only
         return ModelVideoRenderer.getVideoRenderer(player);
         //return new MIDPVideoRenderer(player);
-    // #else ][
-        return null;
-    // #endif ]
     }
-// #endif ]
 
     /**
      *  Gets the tonePlayer attribute of the DefaultConfiguration object

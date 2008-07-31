@@ -49,13 +49,6 @@ SUBSYSTEM_CONFIGURATION_INPUT_FILES += \
 
 # Jpp files that need pre-processing
 #
-$(JSR_135_GENERATED_DIR)/classes/javax/microedition/media/Player.java: \
-  $(JSR_135_DIR)/src/share/core/javax/microedition/media/Player.jpp
-	@$(call runjpp,$^,$@)
-
-$(JSR_135_GENERATED_DIR)/classes/javax/microedition/media/PlayerListener.java: \
-  $(JSR_135_DIR)/src/share/core/javax/microedition/media/PlayerListener.jpp
-	@$(call runjpp,$^,$@)
 
 $(JSR_135_GENERATED_DIR)/classes/javax/microedition/media/Manager.java: \
   $(JSR_135_DIR)/src/share/core/javax/microedition/media/Manager.jpp
@@ -71,10 +64,6 @@ $(JSR_135_GENERATED_DIR)/classes/com/sun/mmedia/Configuration.java: \
 
 $(JSR_135_GENERATED_DIR)/classes/com/sun/mmedia/protocol/CommonDS.java: \
   $(JSR_135_DIR)/src/share/core/com/sun/mmedia/protocol/CommonDS.jpp
-	@$(call runjpp,$^,$@)
-
-$(JSR_135_GENERATED_DIR)/classes/com/sun/mmedia/protocol/BasicDS.java: \
-  $(JSR_135_DIR)/src/share/core/com/sun/mmedia/protocol/BasicDS.jpp
 	@$(call runjpp,$^,$@)
 
 $(JSR_135_GENERATED_DIR)/classes/com/sun/mmedia/DefaultConfiguration.java: \
@@ -97,10 +86,6 @@ $(JSR_135_GENERATED_DIR)/classes/com/sun/mmedia/NativeTonePlayer.java: \
   $(JSR_135_DIR)/src/share/components/direct-player/classes/com/sun/mmedia/NativeTonePlayer.jpp
 	@$(call runjpp,$^,$@)
 
-$(JSR_135_GENERATED_DIR)/classes/com/sun/mmedia/MMEventListener.java: \
-  $(JSR_135_PROJECT_SRC_DIR)/classes/com/sun/mmedia/MMEventListener.jpp
-	@$(call runjpp,$^,$@)
-
 $(JSR_135_GENERATED_DIR)/classes/com/sun/mmedia/DirectMIDI.java: \
   $(JSR_135_DIR)/src/share/components/direct-player/classes/com/sun/mmedia/DirectMIDI.jpp
 	@$(call runjpp,$^,$@)
@@ -110,15 +95,15 @@ $(JSR_135_GENERATED_DIR)/classes/com/sun/mmedia/DirectTone.java: \
 	@$(call runjpp,$^,$@)
 
 SUBSYSTEM_JSR_135_JAVA_FILES += \
-    $(JSR_135_GENERATED_DIR)/classes/javax/microedition/media/Player.java \
-    $(JSR_135_GENERATED_DIR)/classes/javax/microedition/media/PlayerListener.java \
+    $(JSR_135_DIR)/classes/javax/microedition/media/Player.java \
+    $(JSR_135_DIR)/classes/javax/microedition/media/PlayerListener.java \
     $(JSR_135_GENERATED_DIR)/classes/javax/microedition/media/Manager.java \
     $(JSR_135_DIR)/src/share/core/com/sun/mmedia/Jsr234Proxy.java \
     $(JSR_135_GENERATED_DIR)/classes/com/sun/mmedia/BasicPlayer.java \
     $(JSR_135_GENERATED_DIR)/classes/com/sun/mmedia/Configuration.java \
     $(JSR_135_GENERATED_DIR)/classes/com/sun/mmedia/DefaultConfiguration.java \
     $(JSR_135_GENERATED_DIR)/classes/com/sun/mmedia/protocol/CommonDS.java \
-    $(JSR_135_GENERATED_DIR)/classes/com/sun/mmedia/protocol/BasicDS.java \
+    $(JSR_135_DIR)/classes/com/sun/mmedia/protocol/BasicDS.java \
     $(JSR_135_DIR)/src/share/core/javax/microedition/media/Control.java \
     $(JSR_135_DIR)/src/share/core/javax/microedition/media/Controllable.java \
     $(JSR_135_DIR)/src/share/core/javax/microedition/media/MediaException.java \
@@ -128,7 +113,7 @@ SUBSYSTEM_JSR_135_JAVA_FILES += \
     $(JSR_135_DIR)/src/share/core/com/sun/mmedia/AudioRenderer.java \
     $(JSR_135_DIR)/src/share/core/com/sun/mmedia/TonePlayer.java \
     $(JSR_135_DIR)/src/share/core/com/sun/mmedia/protocol/LocatorParser.java \
-    $(JSR_135_GENERATED_DIR)/classes/com/sun/mmedia/MMEventListener.java \
+    $(JSR_135_PROJECT_SRC_DIR)/classes/com/sun/mmedia/MMEventListener.java \
     $(JSR_135_PROJECT_SRC_DIR)/classes/com/sun/mmedia/AudioTunnel.java \
     $(JSR_135_GENERATED_DIR)/classes/com/sun/mmedia/NativeTonePlayer.java \
     $(JSR_135_DIR)/src/share/components/direct-player/classes/com/sun/mmedia/PlayerStateSubscriber.java \
@@ -188,10 +173,6 @@ SUBSYSTEM_JSR_135_JAVA_FILES += \
 	$(JSR_135_DIR)/src/share/components/rtsp-player/classes/com/sun/mmedia/protocol/SessionHeader.java
 endif																				
 
-ifneq ($(ABB), true)
-# 
-# Full JSR135 components
-#
 SUBSYSTEM_JSR_135_JAVA_FILES += \
     $(JSR_135_DIR)/src/share/core/javax/microedition/media/TimeBase.java \
     $(JSR_135_DIR)/src/share/core/javax/microedition/media/protocol/DataSource.java \
@@ -208,15 +189,6 @@ SUBSYSTEM_JSR_135_JAVA_FILES += \
     $(JSR_135_DIR)/src/share/core/javax/microedition/media/control/TempoControl.java \
     $(JSR_135_DIR)/src/share/core/javax/microedition/media/control/VideoControl.java \
     $(JSR_135_DIR)/src/share/core/com/sun/mmedia/VideoRenderer.java 
-else 
-# 
-# ABB only components
-#
-SUBSYSTEM_JSR_135_JAVA_FILES += \
-    $(JSR_135_DIR)/src/share/core/com/sun/mmedia/protocol/DataSource.java \
-    $(JSR_135_DIR)/src/share/core/com/sun/mmedia/protocol/SourceStream.java \
-    $(JSR_135_DIR)/src/share/core/com/sun/mmedia/protocol/ContentDescriptor.java
-endif
 
 ifeq ($(DIRECT_PLAYER), true)
 SUBSYSTEM_JSR_135_JAVA_FILES += \
@@ -234,17 +206,12 @@ SUBSYSTEM_JSR_135_JAVA_FILES += \
     $(JSR_135_DIR)/src/share/components/direct-player/classes/com/sun/mmedia/DirectMIDIControl.java
 endif
 
-# 
-# Indirect video player
-#
-ifeq ($(INDIRECT_VIDEO_PLAYER), true)
 SUBSYSTEM_JSR_135_JAVA_FILES += \
     $(JSR_135_DIR)/src/share/components/video-renderer/classes/com/sun/mmedia/BasicAudioOut.java \
     $(JSR_135_DIR)/src/share/components/video-renderer/classes/com/sun/mmedia/FormatConversionUtils.java \
     $(JSR_135_DIR)/src/share/components/video-renderer/classes/com/sun/mmedia/GIFPlayer.java \
     $(JSR_135_DIR)/src/share/components/video-renderer/classes/com/sun/mmedia/GIFImageDecoder.java \
     $(JSR_135_DIR)/src/share/components/video-renderer/classes/com/sun/mmedia/ImageAccess.java
-endif
 
 ifeq ($(DIRECT_CAMERA_PLAYER), true)
 SUBSYSTEM_JSR_135_JAVA_FILES += \

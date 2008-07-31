@@ -28,9 +28,6 @@
 #
 # Define the FEATURE_DEFINES variable
 
-ifeq ($(ABB),true)
-JPP_DEFS += -DABB
-endif
 
 ifeq ($(DIRECT_RECORD),true)
 EXTRA_CFLAGS += -DENABLE_MEDIA_RECORD
@@ -43,10 +40,6 @@ endif
 
 ifeq ($(DIRECT_TEST), true)
 JPP_DEFS += -DTEST
-endif
-
-ifeq ($(INDIRECT_VIDEO_PLAYER),true)
-JPP_DEFS += -DENABLE_INDIRECT_VIDEO
 endif
 
 ifeq ($(WAVE_PLAYER),true)

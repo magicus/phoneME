@@ -24,9 +24,11 @@
  */
 
 package com.sun.mmedia;
+
 import  javax.microedition.media.*;
 import  javax.microedition.media.control.*;
 import  javax.microedition.media.protocol.SourceStream;
+import  javax.microedition.media.protocol.DataSource;
 import  java.util.Enumeration;
 import  java.util.Hashtable;
 import  java.util.Vector;
@@ -34,10 +36,6 @@ import  com.sun.j2me.app.AppPackage;
 import  com.sun.j2me.app.AppIsolate;
 import  com.sun.mmedia.PlayerStateSubscriber;
 
-
-// #ifndef ABB [
-import javax.microedition.media.protocol.DataSource;
-// #endif ]
 import java.io.IOException;
 
 public class PlayerImpl implements Player {
@@ -548,7 +546,6 @@ public class PlayerImpl implements Player {
         isClosed = true;
     }
     
-    // #ifndef ABB [
     /**
      * Sets the <code>TimeBase</code> for this <code>Player</code>.
      * <p>
@@ -575,9 +572,7 @@ public class PlayerImpl implements Player {
             throw new IllegalStateException();
         }
     };
-    // #endif ]
 
-    // #ifndef ABB [
     /**
      * Gets the <code>TimeBase</code> that this <code>Player</code> is using.
      * @return The <code>TimeBase</code> that this <code>Player</code> is using.
@@ -593,7 +588,6 @@ public class PlayerImpl implements Player {
         // Player in the UNREALIZED or CLOSED state
         throw new IllegalStateException();
     };
-    // #endif ]
 
     /**
      * Sets the <code>Player</code>'s&nbsp;<i>media time</i>.
