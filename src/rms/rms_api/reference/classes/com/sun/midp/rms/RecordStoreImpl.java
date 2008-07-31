@@ -95,6 +95,7 @@ public class RecordStoreImpl implements AbstractRecordStoreImpl {
         token.checkIfPermissionAllowed(Permissions.MIDP);
 
         // check if file exists and delete it
+        
         if (RecordStoreUtil.exists(RmsEnvironment.getSecureFilenameBase(suiteId),
                                    recordStoreName,
                                    RecordStoreFile.DB_EXTENSION)) {
@@ -1047,6 +1048,7 @@ public class RecordStoreImpl implements AbstractRecordStoreImpl {
         this.suiteId = suiteId;
         rsLock = new Object();
 
+        String temp = RmsEnvironment.getSecureFilenameBase(suiteId);
         boolean exists = RecordStoreUtil.exists(RmsEnvironment.getSecureFilenameBase(suiteId),
                                                 recordStoreName,
                                                 RecordStoreFile.DB_EXTENSION);
@@ -1062,8 +1064,7 @@ public class RecordStoreImpl implements AbstractRecordStoreImpl {
          * check to see if the space required is available.
          */
         if (create && !exists) {
-            int space = RecordStoreFile.spaceAvailableNewRecordStore(
-                        RmsEnvironment.getSecureFilenameBase(suiteId));
+            int space = RecordStoreFile.spaceAvailableNewRecordStore(suiteId);
             if (space - DB_HEADER_SIZE < 0) {
                 throw new RecordStoreFullException();
             }

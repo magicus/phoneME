@@ -58,4 +58,13 @@ class MidletSuiteContainer implements com.sun.midp.rms.SuiteContainer {
     public String getSecureFilenameBase(int suiteId) {
         return suiteStorage.getSecureFilenameBase(suiteId);
     }
+    
+    /**
+     * Get the storage area ID for a suite.
+     * This is only CLDC RescordStore implementations, any other implementations can just
+     * return 0.
+     */
+    public int getStorageAreaId(int suiteId) {
+        return suiteStorage.getStorageAreaId(suiteId);
+    }
 }

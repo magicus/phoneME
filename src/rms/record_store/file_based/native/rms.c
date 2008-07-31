@@ -327,7 +327,7 @@ rmsdb_get_unique_id_path(pcsl_string filenameBase, StorageIdType storageId,
         return MIDP_ERROR_ILLEGAL_ARGUMENT;
     }
 
-    midpErr = buildSuiteFilename(filenameBase, name, extension == IDX_EXTENSION_INDEX
+    midpErr = buildSuiteFilename(&filenameBase, name, extension == IDX_EXTENSION_INDEX
                                           ? MIDP_RMS_IDX_EXT : MIDP_RMS_DB_EXT,
                                           res_path);
 
@@ -497,19 +497,11 @@ rmsdb_get_number_of_record_stores(pcsl_string filenameBase) {
      * IMPL_NOTE: for security reasons the record store is always
      * located in the internal storage.
      */
-    status = buildSuiteFilename(&filenameBase, &PCSL_STRING_EMPTY,
-                                &PCSL_STRING_EMPTY, &root); 
-    if (status != ALL_OK) {
-      return OUT_OF_MEM_LEN;
-    }
-
-    if (root.data == NULL) {
+    if (filenameBase.data == NULL) {
         return 0;
     }
 
-    numberOfStores = rmsdb_get_number_of_record_stores_int(&root);
-
-    pcsl_string_free(&root);
+    numberOfStores = rmsdb_get_number_of_record_stores_int(&filenameBase);
 
     return numberOfStores;
 }
@@ -544,11 +536,11 @@ rmsdb_get_record_store_list(pcsl_string filenameBase, pcsl_string* *const ppName
      * IMPL_NOTE: for security reasons the record store is always
      * located in the internal storage.
      */
-    //status = midp_suite_get_rms_filename(&filenameBase, INTERNAL_STORAGE_ID, -1,
-    //                                     &PCSL_STRING_EMPTY, &root);
+    status = buildSuiteFilename(&filenameBase, &PCSL_STRING_EMPTY, -1, 
+                                 &root);
 
-    if (status != ALL_OK) {
-        return OUT_OF_MEM_LEN;
+    if (status != MIDP_ERROR_NONE) {
+        return status;
     }
 
     if (pcsl_string_is_null(&root)) {
@@ -716,8 +708,8 @@ rmsdb_suite_has_rms_data(pcsl_string filenameBase) {
  *         record store in bytes.
  */
 long
-rmsdb_get_new_record_store_space_available(pcsl_string filenameBase) {
-    return rmsdb_get_record_store_space_available(-1, filenameBase);
+rmsdb_get_new_record_store_space_available(pcsl_string filenameBase, int storageId) {
+    return rmsdb_get_record_store_space_available(-1, filenameBase, storageId);
 }
 
 
@@ -801,7 +793,8 @@ rmsdb_record_store_open(char** ppszError, pcsl_string filenameBase,
  *         record store in bytes.
  */
 long
-rmsdb_get_record_store_space_available(int handle, pcsl_string filenameBase) {
+rmsdb_get_record_store_space_available(int handle, pcsl_string filenameBase,
+                                       int pStorageId) {
     /* Storage may have more then 2Gb space available so use 64-bit type */
     jlong availSpace;
     long availSpaceUpTo2Gb;
@@ -817,10 +810,7 @@ rmsdb_get_record_store_space_available(int handle, pcsl_string filenameBase) {
      * There is a plan to get rid of such limitation by introducing a
      * function that will return a storage ID by the suite ID and RMS name.
      */
-    status = midp_suite_get_suite_storage(&filenameBase, &storageId);
-    if (status != ALL_OK) {
-        return 0; /* Error: report that no space is available */
-    }
+    storageId = pStorageId;
 
     availSpace = midp_file_cache_available_space(&pszError, handle, storageId);
 
@@ -1069,7 +1059,8 @@ recordStoreCreateLock(pcsl_string filenameBase, const pcsl_string * name_str,
 }
 
 /**
- * Delete a node from the linked list
+ * 
+ a node from the linked list
  *
  * @param handle : handle of the file
  *
@@ -1149,8 +1140,7 @@ findLockById(pcsl_string filenameBase, const pcsl_string * name_str) {
  *
  */
 
-MIDPError   
-buildSuiteFilename(pcsl_string* filenameBase, pcsl_string* name, 
+MIDPError buildSuiteFilename(pcsl_string* filenameBase, pcsl_string* name, 
                    jint extension, pcsl_string* pFileName) {
 
     const pcsl_string* root;
@@ -1165,32 +1155,38 @@ buildSuiteFilename(pcsl_string* filenameBase, pcsl_string* name,
 
     *pFileName = PCSL_STRING_NULL;
 
-    if (MIDP_RMS_IDX_EXT == extension) {
-        ext = &IDX_EXTENSION;
-        extLen = pcsl_string_length(&IDX_EXTENSION);
-    } else if (MIDP_RMS_DB_EXT == extension) {
-        ext = &DB_EXTENSION;
-        extLen = pcsl_string_length(&DB_EXTENSION);
-    } else {
-        return BAD_PARAMS;
-    }
+    if (nameLen > 0) {
+        const pcsl_string* ext;
+        jsize extLen;
+        int fileNameLen;
 
-    /* performance hint: predict buffer capacity */
-    fileNameLen = PCSL_STRING_ESCAPED_BUFFER_SIZE(nameLen + extLen);
-    pcsl_string_predict_size(&rmsFileName, fileNameLen);
+        if (MIDP_RMS_IDX_EXT == extension) {
+            ext = &IDX_EXTENSION;
+            extLen = pcsl_string_length(&IDX_EXTENSION);
+        } else if (MIDP_RMS_DB_EXT == extension) {
+            ext = &DB_EXTENSION;
+            extLen = pcsl_string_length(&DB_EXTENSION);
+        } else {
+            return BAD_PARAMS;
+        }
 
-    if (pcsl_string_append(&rmsFileName, name) !=
-            PCSL_STRING_OK ||
-                pcsl_string_append(&rmsFileName, ext) != PCSL_STRING_OK) {
-        pcsl_string_free(&rmsFileName);
-        return OUT_OF_MEMORY;
+        /* performance hint: predict buffer capacity */
+        fileNameLen = PCSL_STRING_ESCAPED_BUFFER_SIZE(nameLen + extLen);
+        pcsl_string_predict_size(&rmsFileName, fileNameLen);
+
+        if (pcsl_string_append(&rmsFileName, name) !=
+                PCSL_STRING_OK ||
+                    pcsl_string_append(&rmsFileName, ext) != PCSL_STRING_OK) {
+            pcsl_string_free(&rmsFileName);
+            return OUT_OF_MEMORY;
+        }
     }
 
     /* performance hint: predict buffer capacity */
     pcsl_string_predict_size(&returnPath, filenameBaseLen + 
                              pcsl_string_length(&rmsFileName));
 
-    if (PCSL_STRING_OK != pcsl_string_append(&returnPath, &filenameBase) ||
+    if (PCSL_STRING_OK != pcsl_string_append(&returnPath, filenameBase) ||
             PCSL_STRING_OK != pcsl_string_append(&returnPath, &rmsFileName)) {
         pcsl_string_free(&rmsFileName);
         pcsl_string_free(&returnPath);

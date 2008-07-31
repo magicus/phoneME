@@ -81,8 +81,9 @@ interface AppManagerUI {
     /**
      * Called when a running midlet exited.
      * @param si corresponding midlet suite info
+     * @param midletClassName Class name of the exited midlet
      */
-    void notifyMidletExited(RunningMIDletSuiteInfo si);
+    void notifyMidletExited(RunningMIDletSuiteInfo si, String midletClassName);
 
     /**
      * Called by AppManagerPeer after a MIDlet suite
@@ -99,6 +100,13 @@ interface AppManagerUI {
      */
     void notifySuiteInstalledExt(RunningMIDletSuiteInfo si);
 
+    /**
+     * Called when a suite exited (the only MIDlet in suite exited or the
+     * MIDlet selector exited).
+     * @param suiteInfo Suite which just exited
+     */
+    void notifySuiteExited(RunningMIDletSuiteInfo suiteInfo);
+    
     /**
      * Called when a MIDlet suite has been removed externally.
      * @param si corresponding suite info
@@ -144,7 +152,7 @@ interface AppManagerUI {
      * @param item corresponding suite info
      */
     void setCurrentItem(RunningMIDletSuiteInfo item);
-
+   
     /**
      * Called to determine MidletSuiteInfo of the last selected Item.
      * Is used to restore selection in the app manager.

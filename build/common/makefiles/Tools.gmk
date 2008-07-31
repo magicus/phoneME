@@ -254,7 +254,7 @@ $(IMAGE2RAW_MANIFEST_FILE):
 # Macro for converting PNG images into raw format
 # convert_images_to_raw <images_directory>
 define convert_images_to_raw
-        -@(echo $(wildcard $(1)/*.png) | xargs \
+        -@(echo $(foreach convert_images_folder_name,$(1),$(wildcard $(convert_images_folder_name)/*.png)) | xargs \
 	    $(JAVA_CMD) -Djava.awt.headless=true \
 		-classpath $(TOOLS_CLASSPATH) \
 		$(IMAGE2RAW_MAIN_CLASS) \

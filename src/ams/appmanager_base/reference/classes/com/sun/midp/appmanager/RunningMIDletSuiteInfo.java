@@ -43,6 +43,8 @@ public class RunningMIDletSuiteInfo extends MIDletSuiteInfo {
     public MIDletProxy proxy = null;
     /** Icon for this suite. */
     public Image icon = null;
+    /** Whether suite is under debug */
+    public boolean isDebugMode = false;
 
     /**
      * Constructs a RunningMIDletSuiteInfo object for a suite.

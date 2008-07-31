@@ -1823,7 +1823,7 @@ KNIDECL(com_sun_midp_midletsuite_MIDletSuiteStorage_getMIDletSuiteIcon0) {
  */
 KNIEXPORT KNI_RETURNTYPE_OBJECT
 KNIDECL(com_sun_midp_midletsuite_MIDletSuiteStorage_getSecureFilenameBase) {
-    pcsl_string* filenameBase;
+    pcsl_string filenameBase = PCSL_STRING_NULL;
     SuiteIdType suiteId;
     StorageIdType storageId;
     MIDPError errorCode;
@@ -1832,11 +1832,10 @@ KNIDECL(com_sun_midp_midletsuite_MIDletSuiteStorage_getSecureFilenameBase) {
     KNI_DeclareHandle(tempHandle);
 
     suiteId = KNI_GetParameterAsInt(1);
-
     do {
 
         errorCode = build_suite_filename(suiteId, &PCSL_STRING_EMPTY, 
-                                         filenameBase);
+                                         &filenameBase);
 
         if (errorCode == OUT_OF_MEMORY) {
             KNI_ThrowNew(midpOutOfMemoryError, NULL);
@@ -1854,6 +1853,26 @@ KNIDECL(com_sun_midp_midletsuite_MIDletSuiteStorage_getSecureFilenameBase) {
     } while (0);
 
     pcsl_string_free(&filenameBase);
-
     KNI_EndHandlesAndReturnObject(tempHandle);
+}
+
+/**
+ * Get the storage id for a suite.
+ *
+ * @param suiteId unique ID of the suite
+ *
+ * @return storage id for the suite id
+ */
+KNIEXPORT KNI_RETURNTYPE_INT
+KNIDECL(com_sun_midp_midletsuite_MIDletSuiteStorage_getStorageAreaId) {
+    SuiteIdType suiteId;
+    StorageIdType storageId;
+    MIDPError errorCode;
+
+    suiteId = KNI_GetParameterAsInt(1);
+    errorCode = midp_suite_get_suite_storage(suiteId, &storageId);
+    if (errorCode != ALL_OK) {
+        KNI_ReturnInt((jint)0);
+    }
+    KNI_ReturnInt((jint)storageId);
 }

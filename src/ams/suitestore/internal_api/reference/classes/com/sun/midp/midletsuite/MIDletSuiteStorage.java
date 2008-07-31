@@ -338,6 +338,10 @@ public class MIDletSuiteStorage {
      */
     public native static int getSuiteID(String vendor, String name);
 
+    /**
+     * Get the storage area ID for a suite.
+     */
+    public native static int getStorageAreaId(int suiteId);
 
     // -------------- Installer related functionality ---------------
 

@@ -396,7 +396,11 @@ class AppManagerPeer implements CommandListener {
                 if (si.equals(midlet)) {
                     si.proxy = null;
 
-                    appManagerUI.notifyMidletExited(si);
+                    appManagerUI.notifyMidletExited(si, midletClassName);
+                    
+                    if (si.hasSingleMidlet()) {
+                        manager.notifySuiteExited(si);
+                    }
 
                     if (removeMsi != null && removeMsi.equals(midlet)) {
                         remove(removeMsi);
@@ -466,6 +470,15 @@ class AppManagerPeer implements CommandListener {
             }
         }
         updateContent();
+    }
+    
+    /**
+     * Called when a suite exited (the only MIDlet in suite exited or the
+     * MIDlet selector exited).
+     * @param suiteInfo Suite which just exited
+     */
+    void notifySuiteExited(RunningMIDletSuiteInfo suiteInfo) {
+        appManagerUI.notifySuiteExited(suiteInfo);
     }
     
     // ------------------------------------------------------------------
@@ -822,6 +835,56 @@ class AppManagerPeer implements CommandListener {
     }
 
     /**
+     * Searches running midlet suite info for given suite id.
+     * @param suiteId Suite ID to search info for
+     * @return the matching info, null if not found.
+     */
+    private RunningMIDletSuiteInfo getRunningMidletSuiteInfo(int suiteId) {
+        int size = msiVector.size();
+        for (int i = 0; i < size; i++) {
+            RunningMIDletSuiteInfo info = 
+                    (RunningMIDletSuiteInfo) msiVector.elementAt(i);
+            if (info.suiteId == suiteId) {
+                return info;
+            }
+        }
+        return null;
+    }
+    
+    /**
+     * Launches the midlet suite determined by the suite ID.
+     * @param suiteId ID of the suite to launch
+     * @param midletClassname MIDlet to run, may be null, then will be launched
+     *        the single MIDlet or MIDlet selector
+     */
+    void launchSuite(int suiteId, String midletClassname, boolean isDebugMode) {
+
+        RunningMIDletSuiteInfo msi = getRunningMidletSuiteInfo(suiteId);
+        if (msi == null) {
+            if (midletClassname == null) {
+                /* unknown suite, classname not specified: cannot say what to 
+                   launch */
+                throw new IllegalArgumentException(
+                        "Suite id " + suiteId + " not found.");
+            }
+
+            /* The only thing used from the msi for launching is suiteId, so 
+             * we can create the info ourselves. This is needed when suite
+             * is installed without notification (e.g. by autotester) */
+            msi = new RunningMIDletSuiteInfo(suiteId);
+        } else if (msi.hasSingleMidlet()) {
+            midletClassname = msi.midletToRun;
+        }
+        
+        msi.isDebugMode = isDebugMode;
+        if (midletClassname != null) {
+            manager.launchSuite(msi, midletClassname);
+        } else {
+            showMidletSelector(msi);
+        }
+    }
+
+    /**
      * Checks if the installer is currently running.
      *
      * @return true if the installer or discovery application is running,
@@ -893,7 +956,7 @@ class AppManagerPeer implements CommandListener {
     }
 
     /**
-     * Called when midlet selector needed.
+     * Called when midlet switcher is needed.
      *
      * @param onlyFromLaunchedList true if midlet should
      *        be selected from the list of already launched midlets,
@@ -901,6 +964,16 @@ class AppManagerPeer implements CommandListener {
      */
     public void showMidletSwitcher(boolean onlyFromLaunchedList) {
         appManagerUI.showMidletSwitcher(onlyFromLaunchedList);
+    }
+
+    /**
+     * Called when midlet selector is needed. Should show a list of
+     * midlets present in the given suite and allow to select one.
+     *
+     * @param msiToRun a suite from which a midlet must be selected
+     */
+    public void showMidletSelector(RunningMIDletSuiteInfo msiToRun) {
+        appManagerUI.showMidletSelector(msiToRun);
     }
 
     /**

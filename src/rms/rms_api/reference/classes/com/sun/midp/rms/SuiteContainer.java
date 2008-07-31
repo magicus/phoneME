@@ -46,4 +46,11 @@ public interface SuiteContainer {
      * deleted with the suite.
      */
     String getSecureFilenameBase(int suiteId);
+    
+    /**
+     * Get the storage area ID for a suite.
+     * This is only CLDC RescordStore implementations, any other implementations can just
+     * return 0.
+     */
+    int getStorageAreaId(int suiteId);
 }

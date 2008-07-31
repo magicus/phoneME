@@ -152,7 +152,7 @@ KNIDECL(com_sun_midp_rms_RecordStoreFile_getRecordStoreList) {
  * @param suiteId ID of the suite
  */
 KNIEXPORT KNI_RETURNTYPE_VOID
-KNIDECL(com_sun_midp_rms_RecordStoreFile_removeRecordStores) {
+KNIDECL(com_sun_midp_rms_RecordStoreFile_removeRecordStores0) {
     KNI_StartHandles(1);
     GET_PARAMETER_AS_PCSL_STRING(1, filenameBase) {
       if (!rmsdb_remove_record_stores_for_suite(filenameBase)) {
@@ -202,12 +202,15 @@ KNIDECL(com_sun_midp_rms_RecordStoreFactory_suiteHasRmsData) {
  *         record store in bytes.
  */
 KNIEXPORT KNI_RETURNTYPE_INT
-KNIDECL(com_sun_midp_rms_RecordStoreFile_spaceAvailableNewRecordStore) {
+KNIDECL(com_sun_midp_rms_RecordStoreFile_spaceAvailableNewRecordStore0) {
     long available = 0;
 
+
+    int storageId = KNI_GetParameterAsInt(2);
     KNI_StartHandles(1);
     GET_PARAMETER_AS_PCSL_STRING(1, filenameBase) {
-        available = rmsdb_get_new_record_store_space_available(filenameBase);
+        available = rmsdb_get_new_record_store_space_available(filenameBase,
+                                                               storageId);
         if (available == OUT_OF_MEM_LEN) {
          KNI_ThrowNew(midpOutOfMemoryError, NULL);
         }
@@ -269,10 +272,12 @@ KNIEXPORT KNI_RETURNTYPE_INT
 KNIDECL(com_sun_midp_rms_RecordStoreFile_spaceAvailableRecordStore) {
     long available = 0;
     int handle = KNI_GetParameterAsInt(1);
+    int storageId = KNI_GetParameterAsInt(3);
     KNI_StartHandles(1);
     GET_PARAMETER_AS_PCSL_STRING(2, filenameBase) {
         /* the implementation may ignore the suite id */
-        available = rmsdb_get_record_store_space_available(handle, filenameBase);
+        available = rmsdb_get_record_store_space_available(handle, filenameBase,
+                                                           storageId);
         if (available == OUT_OF_MEM_LEN) {
             KNI_ThrowNew(midpOutOfMemoryError, NULL);
         }

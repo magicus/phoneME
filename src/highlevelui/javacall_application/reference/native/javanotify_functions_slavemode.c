@@ -107,7 +107,7 @@ initialize_memory_slavemode(void) {
     /* Get java heap memory size */
     main_memory_chunk_size = getInternalPropertyInt("MAIN_MEMORY_CHUNK_SIZE");
     if (0 == main_memory_chunk_size){
-        REPORT_ERROR(LC_AMS, "javanotify_start(): Missing MAIN_MEMORY_CHUNK_SIZE property."
+        REPORT_ERROR(LC_AMS, "initialize_memory_slavemode(): Missing MAIN_MEMORY_CHUNK_SIZE property."
                       "System will exit!\n");
         main_memory_chunk_size = DEFAULT_MEMORY_CHUNK_SIZE;
         return JAVACALL_FAIL;

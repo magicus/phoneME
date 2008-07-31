@@ -121,7 +121,8 @@ int rmsdb_get_record_store_list(pcsl_string filenameBase,
  * @return the approximate space available to grow the record store,
  *         in bytes
  */
-long rmsdb_get_new_record_store_space_available(pcsl_string filenameBase);
+long rmsdb_get_new_record_store_space_available(pcsl_string filenameBase, 
+                                                int storageId);
 
 /**
  * Opens a native record-store file.
@@ -167,7 +168,8 @@ void recordStoreFreeError(char* pszError);
  * @return approximate space available to grow the record-store file,
  * in bytes
  */
-long rmsdb_get_record_store_space_available(int handle, pcsl_string filenameBase);
+long rmsdb_get_record_store_space_available(int handle, pcsl_string filenameBase,
+                                            int storageId);
 
 /**
  * Changes the read/write position in the given open record-store file

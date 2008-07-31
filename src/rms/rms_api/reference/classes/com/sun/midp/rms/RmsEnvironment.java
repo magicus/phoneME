@@ -45,6 +45,7 @@ public class RmsEnvironment {
             
     /* Called by the class running the suite. */
     public static void init(SecurityToken token, SuiteContainer container) {
+        System.out.println("RmsEnvironment.init");
         token.checkIfPermissionAllowed(Permissions.MIDP);
         suiteContainer = container;
        
@@ -62,7 +63,11 @@ public class RmsEnvironment {
 
     /* Called by com.sun.midp.rms.RecordStoreFile. */
     static String getSecureFilenameBase(int suiteId) {
-        System.out.println("in getSecureFilenameBase!");
         return suiteContainer.getSecureFilenameBase(suiteId);
+    }
+    
+    /* Called by com.sun.midp.rms.RecordStoreFile. */
+    static int getStorageAreaId(int suiteId) {
+        return suiteContainer.getStorageAreaId(suiteId);
     }
 }
