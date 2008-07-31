@@ -23,6 +23,7 @@
  */
 
 #include <kni.h>
+#include <stdlib.h>
 
 #include <midp_logging.h>
 #include <midp_mastermode_port.h>

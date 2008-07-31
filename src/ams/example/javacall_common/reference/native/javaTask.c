@@ -53,12 +53,10 @@ static javacall_result midpHandleRemoveMIDlet(midp_event_remove_midlet removeMid
  * An entry point of a thread devoted to run java
  */
 void JavaTask(void) {
-    static unsigned long binaryBuffer[BINARY_BUFFER_MAX_LEN/sizeof(long)];
-    midp_jc_event_union *event;
+    midp_jc_event_union event;
     javacall_bool res = JAVACALL_OK;
     javacall_bool JavaTaskIsGoOn = JAVACALL_TRUE;
     long timeTowaitInMillisec = -1;
-    int binaryBufferMaxLen = BINARY_BUFFER_MAX_LEN;
     int outEventLen;
 
     /* Outer Event Loop */
@@ -72,10 +70,10 @@ void JavaTask(void) {
 
 #if !ENABLE_CDC
         res = javacall_event_receive(timeTowaitInMillisec,
-            (unsigned char *)binaryBuffer, binaryBufferMaxLen, &outEventLen);
+            (unsigned char *)&event, sizeof(midp_jc_event_union), &outEventLen);
 #else
         res = javacall_event_receive_cvm(MIDP_EVENT_QUEUE_ID,
-            (unsigned char *)binaryBuffer, binaryBufferMaxLen, &outEventLen);
+            (unsigned char *)&event, sizeof(midp_jc_event_union), &outEventLen);
 #endif
 
         if (!JAVACALL_SUCCEEDED(res)) {
@@ -83,28 +81,26 @@ void JavaTask(void) {
             continue;
         }
 
-        event = (midp_jc_event_union *) binaryBuffer;
-
-        switch (event->eventType) {
+        switch (event.eventType) {
         case MIDP_JC_EVENT_START_ARBITRARY_ARG:
             REPORT_INFO(LC_CORE, "JavaTask() MIDP_JC_EVENT_START_ARBITRARY_ARG >>\n");
             javacall_lifecycle_state_changed(JAVACALL_LIFECYCLE_MIDLET_STARTED,
                                              JAVACALL_OK);
-            JavaTaskImpl(event->data.startMidletArbitraryArgEvent.argc,
-                         event->data.startMidletArbitraryArgEvent.argv);
+            JavaTaskImpl(event.data.startMidletArbitraryArgEvent.argc,
+                         event.data.startMidletArbitraryArgEvent.argv);
 
             JavaTaskIsGoOn = JAVACALL_FALSE;
             break;
 
         case MIDP_JC_EVENT_SET_VM_ARGS:
             REPORT_INFO(LC_CORE, "JavaTask() MIDP_JC_EVENT_SET_VM_ARGS >>\n");
-            midpHandleSetVmArgs(event->data.startMidletArbitraryArgEvent.argc,
-                                event->data.startMidletArbitraryArgEvent.argv);
+            midpHandleSetVmArgs(event.data.startMidletArbitraryArgEvent.argc,
+                                event.data.startMidletArbitraryArgEvent.argv);
             break;
 
         case MIDP_JC_EVENT_SET_HEAP_SIZE:
             REPORT_INFO(LC_CORE, "JavaTask() MIDP_JC_EVENT_SET_HEAP_SIZE >>\n");
-            midpHandleSetHeapSize(event->data.heap_size);
+            midpHandleSetHeapSize(event.data.heap_size);
             break;
 
         case MIDP_JC_EVENT_LIST_MIDLETS:
@@ -121,7 +117,7 @@ void JavaTask(void) {
 
         case MIDP_JC_EVENT_REMOVE_MIDLET:
             REPORT_INFO(LC_CORE, "JavaTask() MIDP_JC_EVENT_REMOVE_MIDLET >>\n");
-            midpHandleRemoveMIDlet(event->data.removeMidletEvent);
+            midpHandleRemoveMIDlet(event.data.removeMidletEvent);
             JavaTaskIsGoOn = JAVACALL_FALSE;
             break;
 

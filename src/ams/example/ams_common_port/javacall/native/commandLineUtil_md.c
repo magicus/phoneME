@@ -34,6 +34,7 @@
 #include <midp_logging.h>
 #include <javacall_defs.h>
 #include <javacall_dir.h>
+#include <javacall_platform_defs.h>
 
 #define MAX_PATH_LEN JAVACALL_MAX_ROOT_PATH_LENGTH
 
@@ -69,6 +70,7 @@ char* getApplicationDir(char *cmd) {
     int len = MAX_PATH_LEN - 1;
     pcsl_string str = PCSL_STRING_NULL_INITIALIZER;
 
+    (void)cmd;
 
     ret = javacall_dir_get_root_path (path, &len);
 
@@ -110,6 +112,7 @@ char* getConfigurationDir(char *cmd) {
     int len = MAX_PATH_LEN - 1;
     pcsl_string str = PCSL_STRING_NULL_INITIALIZER;
 
+    (void)cmd;
 
     ret = javacall_dir_get_config_path (path, &len);
 

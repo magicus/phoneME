@@ -72,11 +72,6 @@
 #define LOGGING_BUFFER_SIZE 400
 
 /**
- * Global buffers definitions
- */
-static char gLoggingBuffer[LOGGING_BUFFER_SIZE];
-
-/**
  * Report a message to the Logging service.  On the linux emulator
  * this will end up going to stdout.  On the Zaurus device it will
  * be written to a file.

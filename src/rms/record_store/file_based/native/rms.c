@@ -829,7 +829,7 @@ rmsdb_get_record_store_space_available(int handle, SuiteIdType id) {
      * Public RecordStore API uses Java int type for the available space
      * so here we trim the real space to 2Gb limit.
      */
-    availSpaceUpTo2Gb = (availSpace <= LONG_MAX) ? availSpace : LONG_MAX;
+    availSpaceUpTo2Gb = (availSpace <= LONG_MAX) ? (long)availSpace : LONG_MAX;
 
     return availSpaceUpTo2Gb;
 }

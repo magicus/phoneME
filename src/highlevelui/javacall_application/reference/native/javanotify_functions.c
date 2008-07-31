@@ -33,6 +33,7 @@ extern "C" {
 #endif
 
 #include <string.h>
+#include <wchar.h>
 #include <midpServices.h>
 #include <midp_logging.h>
 #include <localeMethod.h>
@@ -221,8 +222,11 @@ void javanotify_start_suite(char* suiteId) {
  */
 void javanotify_start_local(char* classname, char* descriptor,
                             char* classpath, javacall_bool debug) {
+
     midp_jc_event_union e;
     midp_jc_event_start_arbitrary_arg *data = &e.data.startMidletArbitraryArgEvent;
+
+    (void)debug;
 
     REPORT_INFO2(LC_CORE,"javanotify_start_local() >> classname=%s, descriptor=%d \n",
                  classname, descriptor);
@@ -469,8 +473,11 @@ void javanotify_install_midlet_from_browser(const char * browserUrl, const char*
  */
 void javanotify_install_midlet_from_filesystem(const javacall_utf16* jadFilePath,
                                                int jadFilePathLen, int userWasAsked) {
+
     midp_jc_event_union e;
     midp_jc_event_start_arbitrary_arg *data = &e.data.startMidletArbitraryArgEvent;
+
+    (void)userWasAsked;
 
     REPORT_INFO(LC_CORE, "javanotify_install_midlet_from_filesystem() >>\n");
 
@@ -888,7 +895,7 @@ void javanotify_incoming_sms(javacall_sms_encoding msgType,
     e.eventType = MIDP_JC_EVENT_SMS_INCOMING;
 
     sms = jsr120_sms_new_msg_javacall(
-             msgType, sourceAddress, sourcePortNum, destPortNum, timeStamp, msgBufferLen, msgBuffer);
+             msgType, (unsigned char*)sourceAddress, sourcePortNum, destPortNum, timeStamp, msgBufferLen, msgBuffer);
 
     e.data.smsIncomingEvent.stub = (int)sms;
 
@@ -1315,9 +1322,9 @@ void javanotify_on_amms_notification(javacall_amms_notification_type type,
     case JAVACALL_EVENT_AMMS_SNAP_SHOOTING_STOPPED:
     case JAVACALL_EVENT_AMMS_SNAP_STORAGE_ERROR:
         {
-            size_t size = sizeof( javacall_utf16 ) * ( 1 + wcslen( (javacall_utf16_string)data ) );
+            size_t size = sizeof( javacall_utf16 ) * ( 1 + wcslen( (const wchar_t *)data ) );
             e.data.multimediaEvent.data.str16 = (javacall_utf16_string)malloc( size );
-            wcscpy( e.data.multimediaEvent.data.str16, (javacall_utf16_string)data );
+            wcscpy( (wchar_t *)e.data.multimediaEvent.data.str16, (const wchar_t *)data );
         }
         break;
     default:
@@ -1467,13 +1474,13 @@ void /*OPTIONAL*/javanotify_location_proximity(
  */
 static javacall_utf16_string
 copy_jc_utf16_string(javacall_const_utf16_string src) {
-    int length = 0;
+    javacall_int32 length = 0;
     javacall_utf16_string result;
     if (JAVACALL_OK != javautil_unicode_utf16_ulength (src, &length)) {
         length = 0;
     }
-    result = javacall_calloc(length + 1, sizeof(javacall_utf16));
-    memcpy(result, src, (length + 1) * sizeof(javacall_utf16));
+    result = javacall_calloc((unsigned int)length + 1, sizeof(javacall_utf16));
+    memcpy(result, src, ((unsigned int)length + 1) * sizeof(javacall_utf16));
     return result;
 }
 
@@ -1675,12 +1682,9 @@ void javanotify_security_permission_dialog_finish(
  */
 void javanotify_install_content(const char * httpUrl,
                                 const javacall_utf16* descFilePath,
-                                int descFilePathLen,
+                                unsigned int descFilePathLen,
                                 javacall_bool isJadFile,
                                                                 javacall_bool isSilent) {
-    const static int SchemaLen = 16;
-    const static javacall_utf16 SchemaFile[] = {'f','i','l','e',':','/','/','/'};
-
     midp_jc_event_union e;
     int httpUrlLength, dscFileOffset;
 
