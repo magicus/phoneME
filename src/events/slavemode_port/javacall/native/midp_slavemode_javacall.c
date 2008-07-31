@@ -677,3 +677,11 @@ void midp_slavemode_schedule_vm_timeslice(void){
     javacall_schedule_vm_timeslice();
 }
 
+
+/** Runs the platform-specific event loop. */
+void midp_slavemode_event_loop(void) {
+    REPORT_INFO(LC_CORE, 
+        "midp_slavemode_event_loop() is not "
+        "implemented for JavaCall platform\n");
+    return;
+}
