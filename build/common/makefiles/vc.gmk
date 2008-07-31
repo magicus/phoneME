@@ -79,7 +79,7 @@ ASM_FLAGS	+= /nologo /c /coff /Zi
 ASM_OUTPUT	= -Fo
 
 ifeq ($(TARGET_VM), cdc_vm)
-  ifneq ($(CVM_PRELOAD_LIB), true)
+  ifeq ($(CVM_DLL), true)
     LD_FLAGS += /DLL
   endif
 endif
