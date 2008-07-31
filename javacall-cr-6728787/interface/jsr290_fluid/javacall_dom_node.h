@@ -811,8 +811,7 @@ javacall_dom_node_get_feature(javacall_handle handle,
  * 
  * @param handle Pointer to the object representing this eventtarget.
  * @param type The event type for which the user is registering
- * @param listener Pointer to the object of
- *   the <code>listener</code> parameter takes an interface 
+ * @param listener The <code>listener</code> parameter takes an interface 
  *   implemented by the user which contains the methods to be called 
  *   when the event occurs.
  * @param use_capture If true, <code>use_capture</code> indicates that the 
@@ -829,8 +828,8 @@ javacall_dom_node_get_feature(javacall_handle handle,
 javacall_result
 javacall_dom_eventtarget_add_event_listener(javacall_handle handle,
                                             javacall_const_utf16_string type,
-                                            javacall_handle listener,
-                                            javacall_bool use_capture);
+                                            javacall_bool use_capture,
+                                            /* OUT */ javacall_int64* ret_value);
 
 /**
  * This method allows the removal of event listeners from the event 
@@ -845,10 +844,9 @@ javacall_dom_eventtarget_add_event_listener(javacall_handle handle,
  * @param handle Pointer to the object representing this eventtarget.
  * @param type Specifies the event type of the <code>EventListener</code> 
  *   being removed. 
- * @param listener Pointer to the object of
- *   the <code>EventListener</code> parameter indicates the 
+ * @param listener The <code>EventListener</code> parameter indicates the 
  *   <code>EventListener </code> to be removed. 
- * @param use_capture Specifies whether the <code>EventListener</code> 
+ * @param useCapture Specifies whether the <code>EventListener</code> 
  *   being removed was registered as a capturing listener or not. If a 
  *   listener was registered twice, one with capture and one without, 
  *   each must be removed separately. Removal of a capturing listener 
@@ -859,10 +857,7 @@ javacall_dom_eventtarget_add_event_listener(javacall_handle handle,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
-javacall_dom_eventtarget_remove_event_listener(javacall_handle handle,
-                                               javacall_const_utf16_string type,
-                                               javacall_handle listener,
-                                               javacall_bool use_capture);
+javacall_dom_eventtarget_remove_event_listener(javacall_handle handle);
 
 /**
  *  This method allows the registration of an event listener in a 
