@@ -53,6 +53,7 @@ do { \
     javacall_result result__ = JAVACALL_FAIL; \
     javacall_handle handle__ = (handle_); \
     int javacall_event__ = (int)(javacall_event_); \
+    (void)handle__; \
     if (ctx__ == NULL) { \
         result__ = (code_); \
     } else { \

@@ -848,7 +848,7 @@ KNIDECL(com_sun_mmedia_DirectPlayer_nGetContentType)
     KNIPlayerInfo* pKniInfo = (KNIPlayerInfo*)handle;
     javacall_media_format_type mFormat = JAVACALL_MEDIA_FORMAT_UNKNOWN;
 
-    javacall_media_configuration *cfg;
+    const javacall_media_configuration *cfg;
     javacall_media_caps *caps;
 
     KNI_StartHandles(1);

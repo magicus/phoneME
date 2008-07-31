@@ -238,7 +238,7 @@ KNIDECL(com_sun_mmedia_DirectRecord_nClose) {
 KNIEXPORT KNI_RETURNTYPE_INT
 KNIDECL(com_sun_mmedia_DirectRecord_nSetSizeLimit) {
     jint handle = KNI_GetParameterAsInt(1);
-    jint size = KNI_GetParameterAsInt(2);
+    long size = KNI_GetParameterAsInt(2);
     KNIPlayerInfo* pKniInfo = (KNIPlayerInfo*)handle;
     javacall_result ret;
 

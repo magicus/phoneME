@@ -102,7 +102,7 @@ KNIDECL(com_sun_mmedia_MediaDownload_nNeedMoreDataImmediatelly) {
 }
 
 static javacall_result doBuffering(KNIDECLARGS KNIPlayerInfo* pKniInfo, long offset, long length, javacall_int32 *returnValue) {
-    void *nBuffer;
+    const void *nBuffer;
     long nBufferSize;
     javacall_bool need_more_data;
     long min_data_size;
