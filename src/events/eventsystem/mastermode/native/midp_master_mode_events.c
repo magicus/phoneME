@@ -132,6 +132,11 @@ void midp_check_events(JVMSPI_BlockedThreadInfo *blocked_threads,
         midpStoreEventAndSignalForeground(newMidpEvent);
         break;
 
+    case DISPLAY_DEVICE_SIGNAL:
+        // broadcast event, send it to all isolates to all displays
+        StoreMIDPEventInVmThread(newMidpEvent, -1);
+        break;
+
     case NETWORK_READ_SIGNAL:
         if (eventUnblockJavaThread(blocked_threads,
                                    blocked_threads_count, newSignal.waitingFor,

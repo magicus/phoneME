@@ -59,36 +59,42 @@ extern void jcapp_finalize();
 
 /**
  * Refresh the given area.  For double buffering purposes.
+ * @param hardwareId unique id of hardware display
  */
-extern void jcapp_refresh(int x, int y, int w, int h);
+extern void jcapp_refresh(int hardwareId, int x, int y, int w, int h);
 
 /**
  * set the screen mode either to fullscreen or normal.
  *
+ * @param hardwareId unique id of hardware display
  * @param mode The screen mode
  */
-extern void jcapp_set_fullscreen_mode(jboolean mode);
+extern void jcapp_set_fullscreen_mode(int hardwareId, jboolean mode);
 
 /**
  * Change screen orientation flag
+ * @param hardwareId unique id of hardware display
  */
-extern jboolean jcapp_reverse_orientation();
+extern jboolean jcapp_reverse_orientation(int hardwareId);
 
 /**
  * Get screen orientation flag
+ * @param hardwareId unique id of hardware display
  */
-extern jboolean jcapp_get_reverse_orientation();
+extern jboolean jcapp_get_reverse_orientation(int hardwareId);
 
 
 /**
  * Return screen width
+ * @param hardwareId unique id of hardware display
  */
-extern int jcapp_get_screen_width();
+extern int jcapp_get_screen_width(int hardwareId);
 
 /**
  *  Return screen height
+ * @param hardwareId unique id of hardware display
  */
-extern int jcapp_get_screen_height();
+extern int jcapp_get_screen_height(int hardwareId);
 
 /**
  * Checks if soft button layer is supported

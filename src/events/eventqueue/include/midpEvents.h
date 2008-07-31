@@ -162,6 +162,11 @@ extern "C" {
  */
 #define AUTOTESTER_EVENT                53
 
+/**
+ * This event is sent when the display hardware state is changed.
+ */
+#define DISPLAY_DEVICE_STATE_CHANGED_EVENT  54
+
 /** @} */
 
 /**

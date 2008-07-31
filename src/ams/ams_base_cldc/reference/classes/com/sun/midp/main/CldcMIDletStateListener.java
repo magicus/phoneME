@@ -216,7 +216,7 @@ class CldcMIDletStateListener implements MIDletStateListener {
      * @param className class name of the MIDlet
      */
     public void midletDestroyed(MIDletSuite suite, String className) {
-        displayContainer.removeDisplay(className);
+        displayContainer.removeDisplaysByOwner(className);
         midletControllerEventProducer.sendMIDletDestroyNotifyEvent(
             suite.getID(), className);
     }

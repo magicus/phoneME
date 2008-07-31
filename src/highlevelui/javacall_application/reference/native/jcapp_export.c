@@ -41,13 +41,14 @@ gxj_screen_buffer gxj_system_screen_buffer;
  * @file
  * Additional porting API for Java Widgets based port of abstract
  * command manager.
+ * @param hardwareId unique id of hardware display
  */
 
-int jcapp_get_screen_buffer() {
+int jcapp_get_screen_buffer(int hardwareId) {
      javacall_lcd_color_encoding_type color_encoding;
      gxj_system_screen_buffer.alphaData = NULL;
      gxj_system_screen_buffer.pixelData = 
-         javacall_lcd_get_screen (JAVACALL_LCD_SCREEN_PRIMARY,
+         javacall_lcd_get_screen (hardwareId,
                                   &gxj_system_screen_buffer.width,
                                   &gxj_system_screen_buffer.height,
                                   &color_encoding);                                
@@ -61,8 +62,9 @@ int jcapp_get_screen_buffer() {
 
 /**
  * Reset screen buffer content.
+ * @param hardwareId unique id of hardware display
  */
-void static jcapp_reset_screen_buffer() {
+void static jcapp_reset_screen_buffer(int hardwareId) {
     memset (gxj_system_screen_buffer.pixelData, 0,
         gxj_system_screen_buffer.width * gxj_system_screen_buffer.height *
             sizeof (gxj_pixel_type));
@@ -106,62 +108,68 @@ void jcapp_finalize() {
  * Bridge function to request a repaint
  * of the area specified.
  *
+ * @param hardwareId unique id of hardware display
  * @param x1 top-left x coordinate of the area to refresh
  * @param y1 top-left y coordinate of the area to refresh
  * @param x2 bottom-right x coordinate of the area to refresh
  * @param y2 bottom-right y coordinate of the area to refresh
  */
-void jcapp_refresh(int x1, int y1, int x2, int y2)
+void jcapp_refresh(int hardwareId, int x1, int y1, int x2, int y2)
 {
-    javacall_lcd_flush_partial (y1, y2);
+    javacall_lcd_flush_partial (hardwareId, y1, y2);
 }
 
 /**
  * Turn on or off the full screen mode
  *
+ * @param hardwareId unique id of hardware display
  * @param mode true for full screen mode
  *             false for normal
  */
-void jcapp_set_fullscreen_mode(jboolean mode) {    
+void jcapp_set_fullscreen_mode(int hardwareId, jboolean mode) {    
 
-    javacall_lcd_set_full_screen_mode(mode);
-    jcapp_get_screen_buffer();
-    jcapp_reset_screen_buffer();
+    javacall_lcd_set_full_screen_mode(hardwareId, mode);
+    jcapp_get_screen_buffer(hardwareId);
+    jcapp_reset_screen_buffer(hardwareId);
 }
 
 /**
  * Change screen orientation flag
+ * @param hardwareId unique id of hardware display
  */
-jboolean jcapp_reverse_orientation() {
-    jboolean res = javacall_lcd_reverse_orientation(); 
-    jcapp_get_screen_buffer();
+jboolean jcapp_reverse_orientation(int hardwareId) {
+    jboolean res = javacall_lcd_reverse_orientation(hardwareId); 
+    jcapp_get_screen_buffer(hardwareId);
 
     // Whether current Displayable won't repaint the entire screen on
     // resize event, the artefacts from the old screen content can appear.
     // That's why the buffer content is not preserved.
-    jcapp_reset_screen_buffer();
+    jcapp_reset_screen_buffer(hardwareId);
     return res;
 }
 
 /**
  * Get screen orientation flag
+ * @param hardwareId unique id of hardware display
  */
-jboolean jcapp_get_reverse_orientation() {
-    return javacall_lcd_get_reverse_orientation();
+jboolean jcapp_get_reverse_orientation(int hardwareId) {
+    return javacall_lcd_get_reverse_orientation(hardwareId);
 }
 
 /**
  * Return screen width
+ * @param hardwareId unique id of hardware display
  */
-int jcapp_get_screen_width() {
-    return javacall_lcd_get_screen_width();   
+int jcapp_get_screen_width(int hardwareId) {
+    return javacall_lcd_get_screen_width(hardwareId);   
 }
 
 /**
  *  Return screen height
+ * @param hardwareId unique id of hardware display
  */
-int jcapp_get_screen_height() {
-    return javacall_lcd_get_screen_height();
+int jcapp_get_screen_height(int hardwareId) {
+    return javacall_lcd_get_screen_height(hardwareId);
 }
 
 /**

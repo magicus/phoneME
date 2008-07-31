@@ -79,23 +79,49 @@ public class DisplayContainer {
      * @param nameOfOwner class name of the MIDlet that owns this display
      */
     public void requestForegroundForDisplay(String nameOfOwner) {
-        DisplayAccess da = findDisplayByOwner(nameOfOwner);
+        DisplayAccess[] da = findDisplaysByOwner(nameOfOwner, 0);
 
-        da.requestForeground();
+	/** IMPL_NOTE: correct call ! */
+	if (da != null) {
+	    da[0].requestForeground();
+	}
     }
 
     /**
-     * Removes display object from the container.
+     * Removes display objects by the owner name from the container.
      *
      * @param nameOfOwner class name of the MIDlet that owns this display
      *
      * @return true if display has been succcessfully removed, 
      *         false, if display object has not been found in the container.
      */
-    public synchronized boolean removeDisplay(String nameOfOwner) {
-        DisplayAccess da = findDisplayByOwner(nameOfOwner);
+    public synchronized boolean removeDisplaysByOwner(String nameOfOwner) {
+	int size = displays.size();
 
-        return displays.removeElement(da);
+        for (int i = size; --i <= 0;) {
+            DisplayAccess current = (DisplayAccess)displays.elementAt(i);
+	    
+            if (current.getNameOfOwner().equals(nameOfOwner)) {
+		displays.removeElementAt(i);
+            }
+        }
+	return (displays.size() < size);
+    }
+
+    /**
+     * Removes display object from the container by Id.
+     *
+     * @param displayId ID of the display
+     *
+     * @return true if display has been succcessfully removed, 
+     *         false, if display object has not been found in the container.
+     */
+    public synchronized boolean removeDisplayById(int displayId) {
+        DisplayAccess da = findDisplayById(displayId);
+	if (da != null) {
+	    return displays.removeElement(da);
+	}
+        return false;
     }
     
     /**
@@ -120,26 +146,89 @@ public class DisplayContainer {
     }
 
     /**
-     * Find a display by owner.
+     * Find the displays by owner.
+     *
+     * @param nameOfOwner class name of the MIDlet that owns this display
+     * @param capabilities display device capbilities filter
+     *
+     * @return array of display access objects or null if not found
+     */
+    public synchronized DisplayAccess[] findDisplaysByOwner(String nameOfOwner, int capabilities) {
+        int size = displays.size();
+	Vector v = new Vector(2, 2); 
+	
+
+        for (int i = 0; i < size; i++) {
+            DisplayAccess current = (DisplayAccess)displays.elementAt(i);
+	    
+            if (current.getNameOfOwner().equals(nameOfOwner) && 
+		(current.getDisplayDevice().getCapabilities() & 
+		 capabilities) == capabilities) {
+		v.addElement(current);
+            }
+        }
+	
+	DisplayAccess[] ret = null;
+	if (v.size() > 0) {
+	    ret = new DisplayAccess[v.size()];
+	    v.copyInto(ret);
+	}
+	
+        return ret;
+    }
+
+    /**
+     * Find the displays by hardwareId.
+     *
+     * @param nameOfOwner class name of the MIDlet that owns this display
+     *
+     * @return array of display access objects or null if not found
+     */
+    public synchronized DisplayAccess[] findDisplaysByHardwareId(int hardwareId) {
+        int size = displays.size();
+	Vector v = new Vector(2, 2); 
+	
+
+        for (int i = 0; i < size; i++) {
+            DisplayAccess current = (DisplayAccess)displays.elementAt(i);
+	    
+            if (current.getDisplayDevice().getHardwareId() == hardwareId) {
+		v.addElement(current);
+            }
+        }
+	
+	DisplayAccess[] ret = null;
+	if (v.size() > 0) {
+	    ret = new DisplayAccess[v.size()];
+	    v.copyInto(ret);
+	}
+	
+        return ret;
+    }
+
+    /**
+     * Find a primary display by owner.
      *
      * @param nameOfOwner class name of the MIDlet that owns this display
      *
      * @return a display access object or null if not found
      */
-    public synchronized DisplayAccess findDisplayByOwner(String nameOfOwner) {
+    public synchronized DisplayAccess findPrimaryDisplayByOwner(String nameOfOwner) {
         int size = displays.size();
+	DisplayAccess d = null;
 
         for (int i = 0; i < size; i++) {
             DisplayAccess current = (DisplayAccess)displays.elementAt(i);
-
-            if (current.getNameOfOwner().equals(nameOfOwner)) {
-                return current;
+	    
+            if (current.getNameOfOwner().equals(nameOfOwner) && 
+		current.getDisplayDevice().isPrimaryDisplay()) {
+		d = current;
+		break;
             }
         }
-
-        return null;
+	
+        return d;
     }
-
     /**
      * Find a display event consumer by ID.
      *

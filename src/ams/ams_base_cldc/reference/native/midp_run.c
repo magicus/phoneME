@@ -453,7 +453,7 @@ midpInitializeUI(void) {
         const char* pRotationArg = getSystemProperty(ROTATION_ARG);
         if (pRotationArg) {
             if (atoi(pRotationArg) == 1) {
-                lcdlf_reverse_orientation();
+	      lcdlf_reverse_orientation(0);// IMPL_NOTE!! correct hardware id
             }
         }
 

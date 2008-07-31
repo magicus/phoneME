@@ -341,16 +341,21 @@ public final class EventTypes {
      * This event is used by AutoTester.
      */
     public static final int AUTOTESTER_EVENT = 53;
+
+    /**
+     * This event is sent when the display hardware state is changed.
+     */
+    public static final int DISPLAY_DEVICE_STATE_CHANGED_EVENT = 54;
     
     /**
      * Notification sent by ODT agent indicating that it has installed a new
      * MIDlet suite.
      */
-    public static final int MIDP_ODD_SUITE_INSTALLED_EVENT = 54;
+    public static final int MIDP_ODD_SUITE_INSTALLED_EVENT = 55;
 
     /**
      * Notification sent by ODT agent indicating that it has removed 
      * an installed MIDlet suite.
      */
-    public static final int MIDP_ODD_SUITE_REMOVED_EVENT = 55;
+    public static final int MIDP_ODD_SUITE_REMOVED_EVENT = 56;
 }

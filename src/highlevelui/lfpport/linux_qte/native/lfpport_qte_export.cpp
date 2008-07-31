@@ -66,8 +66,9 @@ void lfpport_ui_finalize() {
  * @param x2 bottom-right x coordinate of the area to refresh
  * @param y2 bottom-right y coordinate of the area to refresh
  */
-void lfpport_refresh(int x1, int y1, int x2, int y2)
+void lfpport_refresh(int hardwareId, int x1, int y1, int x2, int y2)
 {
+  (void) hardwareId;
   qteapp_get_mscreen()->refresh(x1, y1, x2, y2);
 }
 
@@ -83,9 +84,10 @@ void lfpport_refresh(int x1, int y1, int x2, int y2)
  * @param height The height to be flushed
  * @return KNI_TRUE if direct_flush was successful, KNI_FALSE - otherwise
  */
-jboolean lfpport_direct_flush(const java_graphics *g, 
+jboolean lfpport_direct_flush(int hardwareId, const java_graphics *g, 
 		  	      const java_imagedata *offscreen_buffer, int h) 
 {
+  (void)hardwareId;
   (void)g;
   (void)offscreen_buffer;
   (void)h;
@@ -124,8 +126,9 @@ void lfpport_set_fullscreen_mode(jboolean mode) {
   inFullScreenMode = mode;
 }
 
-jboolean lfpport_reverse_orientation()
+jboolean lfpport_reverse_orientation(int hardwareId)
 {
+  (void)hardwareId;
     jboolean res = qteapp_get_mscreen()->reverse_orientation();
     PlatformMIDPMainWindow * mainWindow =
         PlatformMIDPMainWindow::getMainWindow();
@@ -133,12 +136,14 @@ jboolean lfpport_reverse_orientation()
     return res;
 }
 
-jboolean lfpport_get_reverse_orientation()
+jboolean lfpport_get_reverse_orientation(int hardwareId)
 {
+  (void)hardwareId;
     return qteapp_get_mscreen()->get_reverse_orientation();
 }
 
-int lfpport_get_screen_width() {
+int lfpport_get_screen_width(int hardwareId) {
+  (void)hardwareId;
     if (inFullScreenMode) {
         return qteapp_get_mscreen()->getDisplayFullWidth();
     } else {
@@ -146,7 +151,8 @@ int lfpport_get_screen_width() {
     }
 }
 
-int lfpport_get_screen_height() {
+int lfpport_get_screen_height(int hardwareId) {
+  (void)hardwareId;
     if (inFullScreenMode) {
         return qteapp_get_mscreen()->getDisplayFullHeight();
     } else {
@@ -158,14 +164,16 @@ int lfpport_get_screen_height() {
  * Bridge function to ask MainWindow object for the full screen mode
  * status.
  */
-jboolean lfpport_is_fullscreen_mode() {
+jboolean lfpport_is_fullscreen_mode(int hardwareId) {
+  (void)hardwareId;
   return inFullScreenMode;
 }
 
 /**
  * Resets native resources when foreground is gained by a new display.
  */
-void lfpport_gained_foreground() {
+void lfpport_gained_foreground(int hardwareId) {
+  (void)hardwareId;
   qteapp_get_mscreen()->gainedForeground();
 }
 

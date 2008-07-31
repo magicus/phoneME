@@ -59,11 +59,13 @@ static int mouseFd = -1;
 static int keyboardFd = -1;
 
 /** Return file descriptor of keyboard device, or -1 in none */
-int getKeyboardFd() {
+int getKeyboardFd(int hardwareId) {
+  (void)hardwareId;
     return keyboardFd;
 }
 /** Return file descriptor of mouse device, or -1 in none */
-int getMouseFd() {
+int getMouseFd(int hardwareId) {
+  (void)hardwareId;
     return mouseFd;
 }
 
@@ -71,6 +73,7 @@ int getMouseFd() {
 static QVFbHeader *hdr = NULL;
 /** QVFb video buffer for direct drawing */
 static gxj_pixel_type *qvfbPixels = NULL;
+
 
 /** System offscreen buffer */
 gxj_screen_buffer gxj_system_screen_buffer;
@@ -105,57 +108,58 @@ void connectFrameBuffer() {
     char *env;
 
     // System screen buffer geometry
-    int bufWidth = gxj_system_screen_buffer.width;
+    int bufWidth = gxj_system_screen_buffer.width;;
     int bufHeight = gxj_system_screen_buffer.height;
 
+
     if ((env = getenv("QWS_DISPLAY")) != NULL) {
-        displayId = atoi(env + 1); /* skip the leading colon */
+      displayId = atoi(env + 1); /* skip the leading colon */
     }
 
     sprintf(buff, "/tmp/.qtvfb_mouse-%d", displayId);
     if ((mouseFd = open(buff, O_RDONLY | O_NONBLOCK, 0)) < 0) {
-        fprintf(stderr, "open of %s failed\n", buff);
-        exit(1);
+      fprintf(stderr, "open of %s failed\n", buff);
+      exit(1);
     }
-
+    
     if ((key = ftok(buff, 'b')) == -1) {
-        PERROR("ftok() failed");
-        exit(1);
+      PERROR("ftok() failed");
+      exit(1);
     }
-
+    
     if ((shmId = shmget(key, 0, 0)) == -1) {
-        PERROR("shmget() failed");
-        exit(1);
+      PERROR("shmget() failed");
+      exit(1);
     }
-
+    
     shmrgn = (unsigned char *)shmat(shmId, 0, 0);
     if ((int)shmrgn == -1 || shmrgn == 0) {
-        PERROR("shmat() failed");
-        exit(1);
+      PERROR("shmat() failed");
+      exit(1);
     }
-
+      
     hdr = (QVFbHeader *) shmrgn;
     qvfbPixels = (gxj_pixel_type*)(shmrgn + hdr->dataOffset);
-
+    
     fprintf(stderr, "QVFB info: %dx%d, depth=%d\n",
-           hdr->width, hdr->height, hdr->depth);
-
+	    hdr->width, hdr->height, hdr->depth);
+      
     if (hdr->width < bufWidth || hdr->height < bufHeight) {
-        fprintf(stderr, "QVFB screen too small. Need %dx%d\n",
-               bufWidth, bufHeight);
-        exit(1);
+      fprintf(stderr, "QVFB screen too small. Need %dx%d\n",
+	      bufWidth, bufHeight);
+      exit(1);
     }
     if (hdr->depth != 16) {
-        fprintf(stderr, "QVFB depth must be 16. Please run qvfb -depth 16\n");
-        exit(1);
+      fprintf(stderr, "QVFB depth must be 16. Please run qvfb -depth 16\n");
+      exit(1);
     }
-
+    
     sprintf(buff, "/tmp/.qtvfb_keyboard-%d", displayId);
     if ((keyboardFd = open(buff, O_RDONLY, 0)) < 0) {
-        fprintf(stderr, "open of %s failed\n", buff);
-        exit(1);
+      fprintf(stderr, "open of %s failed\n", buff);
+      exit(1);
     }
-
+    
     memset(qvfbPixels, 0, sizeof(gxj_pixel_type) * hdr->width * hdr->height);
 }
 

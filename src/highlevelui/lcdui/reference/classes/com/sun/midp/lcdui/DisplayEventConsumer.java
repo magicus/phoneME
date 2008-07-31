@@ -172,7 +172,13 @@ public interface DisplayEventConsumer {
       * Called by event delivery when size of screen was changed.
       */
      public void handleRotationEvent();
+    
 
+     /*
+      * Called by event delivery when state of display device is changed.
+      */
+ 
+     public void handleDisplayDeviceStateChangedEvent(int state);
      /*
       * Called by event delivery when full screen repaint is requested.
       */

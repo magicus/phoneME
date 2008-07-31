@@ -139,6 +139,7 @@ typedef enum {
     MIDP_JC_ENABLE_ODD_EVENT           ,
 #endif /* ENABLE_ON_DEVICE_DEBUG */
     MIDP_JC_EVENT_ROTATION             ,
+    MIDP_JC_EVENT_DISPLAY_DEVICE_STATE_CHANGED,
     MIDP_JC_EVENT_SET_VM_ARGS          ,
     MIDP_JC_EVENT_SET_HEAP_SIZE        ,
     MIDP_JC_EVENT_LIST_MIDLETS         ,
@@ -151,8 +152,9 @@ typedef enum {
 #endif /*ENABLE_JSR_256*/
 #if ENABLE_JSR_290
     ,JSR290_JC_EVENT_FLUID_LOAD_FINISHED
-    ,JSR290_JC_EVENT_FLUID_INVALIDATE
+    ,JSR290_JC_EVENT_FLUID_INVALIDATE,
 #endif /*ENABLE_JSR_290*/
+
 } midp_jc_event_type;
 
 
@@ -185,6 +187,17 @@ typedef struct {
 typedef struct {
     char* suiteID;
 } midp_event_remove_midlet;
+
+typedef struct {
+    int hardwareId;
+   DisplayStates state;
+} midp_jc_event_display_device;
+
+typedef enum {
+    ENABLED = 0,
+    DISABLED = 1,
+    ABSENT = 2
+} DisplayStates;
 
 typedef struct {
     javacall_handle   handle;
@@ -347,6 +360,7 @@ typedef struct {
         midp_jc_event_network              networkEvent;
         midp_jc_event_timer                timerEvent;
         midp_jc_event_push                 pushEvent;
+        midp_jc_event_display_device       displayDeviceEvent;
 #ifdef ENABLE_JSR_120
         midp_jc_event_sms_sending_result   smsSendingResultEvent;
         midp_jc_event_sms_incoming         smsIncomingEvent;

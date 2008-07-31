@@ -1876,6 +1876,19 @@ void /* OPTIONAL */ javanotify_rotation() {
     midp_jc_event_send(&e);
 }
 
+void javanotify_display_device_state_changed(int hardwareId, DisplayStates state) {
+    midp_jc_event_union e;
+
+    REPORT_ERROR(LC_AMS, "javanotify_display_device_state_changed(): Slave Mode method to be revised\n");
+    REPORT_INFO(LC_CORE, "javanotify_display_device_state_changed() >>\n");
+
+    e.eventType = MIDP_JC_EVENT_DISPLAY_DEVICE_STATE_CHANGED;
+    e.data.midp_jc_event_display_device.hardwareId = hardwareId;
+    e.data.midp_jc_event_display_device.state = state;
+
+    midp_jc_event_send(&e);
+}
+
 #if ENABLE_ON_DEVICE_DEBUG
 /**
  * The platform calls this function to inform VM that

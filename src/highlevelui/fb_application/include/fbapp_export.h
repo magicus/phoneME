@@ -61,22 +61,22 @@ extern void fbapp_finalize();
 /**
  * Refresh the given area.  For double buffering purposes.
  */
-extern void fbapp_refresh(int x, int y, int w, int h);
+extern void fbapp_refresh(int hardwareId, int x, int y, int w, int h);
 
 /**
  * Invert screen orientation flag
  */
-extern jboolean fbapp_reverse_orientation();
+extern jboolean fbapp_reverse_orientation(int hardwareId);
 
 /*
  * Return screen orientation flag
  */
-extern jboolean fbapp_get_reverse_orientation();
+extern jboolean fbapp_get_reverse_orientation(int hardwareId);
 
 /**
  * Set full screen mode on/off
  */
-extern void fbapp_set_fullscreen_mode(int mode);
+extern void fbapp_set_fullscreen_mode(int hardwareId, int mode);
 
 /**
  * Returns the file descriptor for reading the mouse. 
@@ -117,12 +117,12 @@ extern void fbapp_map_keycode_to_event(
 /**
  * Query frame buffer device for screen width
  */ 
-extern int fbapp_get_screen_width();
+extern int fbapp_get_screen_width(int hardwareId);
 
 /**
  * Query frame buffer device for screen height
  */ 
-extern int fbapp_get_screen_height();
+extern int fbapp_get_screen_height(int hardwareId);
 
 /**
  * Query frame buffer device for screen x
@@ -133,6 +133,11 @@ extern int fbapp_get_screen_x();
  * Query frame buffer device for screen y
  */ 
 extern int fbapp_get_screen_y();
+
+typedef enum {
+    DISPLAY_DEVICE_ENABLED = 0,
+    DISPLAY_DEVICE_DISABLED = 1
+} DisplayDeviceStates;
 
 #ifdef __cplusplus
 }

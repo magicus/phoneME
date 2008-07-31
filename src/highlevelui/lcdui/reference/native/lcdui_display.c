@@ -49,6 +49,7 @@
  * </pre>
  * Java parameters:
  * <pre>
+ *   hardwareId The display hardware ID associated with the Display Device
  *   displayId The display ID associated with the Display object
  *   x1  Upper left corner x-coordinate
  *   y1  Upper left corner y-coordinate
@@ -57,12 +58,13 @@
  * </pre>
  */
 KNIEXPORT KNI_RETURNTYPE_VOID
-KNIDECL(javax_microedition_lcdui_Display_refresh0) {
-    int y2 = KNI_GetParameterAsInt(5);
-    int x2 = KNI_GetParameterAsInt(4);
-    int y1 = KNI_GetParameterAsInt(3);
-    int x1 = KNI_GetParameterAsInt(2);
-    jint displayId = KNI_GetParameterAsInt(1);
+KNIDECL(com_sun_midp_lcdui_DisplayDevice_refresh0) {
+    int y2 = KNI_GetParameterAsInt(6);
+    int x2 = KNI_GetParameterAsInt(5);
+    int y1 = KNI_GetParameterAsInt(4);
+    int x1 = KNI_GetParameterAsInt(3);
+    jint displayId = KNI_GetParameterAsInt(2);
+    jint hardwareId = KNI_GetParameterAsInt(1);
 
 #ifdef JVM_HINT_VISUAL_OUTPUT
     {
@@ -78,7 +80,7 @@ KNIDECL(javax_microedition_lcdui_Display_refresh0) {
 
     if (midpHasForeground(displayId)) {
       // Paint only if this is the foreground MIDlet
-      lcdlf_refresh(x1, y1, x2, y2);
+      lcdlf_refresh(hardwareId, x1, y1, x2, y2);
     }
 
     KNI_ReturnVoid();
@@ -95,6 +97,7 @@ KNIDECL(javax_microedition_lcdui_Display_refresh0) {
  * </pre>
  * Java parameters:
  * <pre>
+ *    hardwareId The display hardware ID associated with the Display Device
  *    displayId The display ID associated with the Display object
  *    mode If true we should grab all area available
  *         if false, relinquish area to display 
@@ -102,12 +105,13 @@ KNIDECL(javax_microedition_lcdui_Display_refresh0) {
  * </pre>
  */
 KNIEXPORT KNI_RETURNTYPE_VOID
-KNIDECL(javax_microedition_lcdui_Display_setFullScreen0) {
-    jboolean mode = KNI_GetParameterAsBoolean(2);
-    jint displayId = KNI_GetParameterAsInt(1);
+KNIDECL(com_sun_midp_lcdui_DisplayDevice_setFullScreen0) {
+    jboolean mode = KNI_GetParameterAsBoolean(3);
+    jint displayId = KNI_GetParameterAsInt(2);
+    jint hardwareId = KNI_GetParameterAsInt(1);
 
     if (midpHasForeground(displayId)) {
-      lcdlf_set_fullscreen_mode(mode);
+      lcdlf_set_fullscreen_mode(hardwareId, mode);
     }
     KNI_ReturnVoid();
 }
@@ -123,65 +127,81 @@ KNIDECL(javax_microedition_lcdui_Display_setFullScreen0) {
  * </pre>
  * Java parameters:
  * <pre>
+ *    hardwareId The display hardware ID associated with the Display Device
  *    displayId The display ID associated with the Display object
  * </pre>
  */
 KNIEXPORT KNI_RETURNTYPE_VOID
-KNIDECL(javax_microedition_lcdui_Display_gainedForeground0) {
-    jint displayId = KNI_GetParameterAsInt(1);
+KNIDECL(com_sun_midp_lcdui_DisplayDevice_gainedForeground0) {
+    jint displayId = KNI_GetParameterAsInt(2);
+    jint hardwareId = KNI_GetParameterAsInt(1);
+
 
     if (midpHasForeground(displayId)) {
-      lcdlf_gained_foreground();
+      lcdlf_gained_foreground(hardwareId);
     }
     KNI_ReturnVoid();
 }
 
 /**
  * Calls platform specific function to invert screen orientation flag
- */
+ * Java parameters:
+ * <pre>
+ *    hardwareId The display hardware ID associated with the Display Device
+ * </pre>
+*/
 KNIEXPORT KNI_RETURNTYPE_BOOLEAN
-KNIDECL(javax_microedition_lcdui_Display_reverseOrientation0) {
+KNIDECL(com_sun_midp_lcdui_DisplayDevice_reverseOrientation0) {
+    jint hardwareId = KNI_GetParameterAsInt(1);
     jboolean res = 0;
-    res = lcdlf_reverse_orientation();
+    res = lcdlf_reverse_orientation(hardwareId);
     KNI_ReturnBoolean(res);
 }
 
 /**
  * Calls platform specific function to invert screen orientation flag
+ * Java parameters:
+ * <pre>
+ *    hardwareId The display hardware ID associated with the Display Device
+ * </pre>
  */
 KNIEXPORT KNI_RETURNTYPE_BOOLEAN
-KNIDECL(javax_microedition_lcdui_Display_getReverseOrientation0) {
+KNIDECL(com_sun_midp_lcdui_DisplayDevice_getReverseOrientation0) {
+    jint hardwareId = KNI_GetParameterAsInt(1);
     jboolean res = 0;
-    res = lcdlf_get_reverse_orientation();
+    res = lcdlf_get_reverse_orientation(hardwareId);
     KNI_ReturnBoolean(res);
 }
 
 KNIEXPORT KNI_RETURNTYPE_INT
-KNIDECL(javax_microedition_lcdui_Display_getScreenHeight0) {
-    int height = lcdlf_get_screen_height();
+KNIDECL(com_sun_midp_lcdui_DisplayDevice_getScreenHeight0) {
+    jint hardwareId = KNI_GetParameterAsInt(1);
+    int height = lcdlf_get_screen_height(hardwareId);
     KNI_ReturnInt(height);
 }
 
 KNIEXPORT KNI_RETURNTYPE_INT
-KNIDECL(javax_microedition_lcdui_Display_getScreenWidth0) {
-    int height = lcdlf_get_screen_width();
+KNIDECL(com_sun_midp_lcdui_DisplayDevice_getScreenWidth0) {
+    jint hardwareId = KNI_GetParameterAsInt(1);
+    int height = lcdlf_get_screen_width(hardwareId);
     KNI_ReturnInt(height);
 }
 
 KNIEXPORT KNI_RETURNTYPE_BOOLEAN
-KNIDECL(javax_microedition_lcdui_Display_directFlush) {
+KNIDECL(com_sun_midp_lcdui_DisplayDevice_directFlush0) {
     jboolean success = KNI_FALSE;
-    int height  = KNI_GetParameterAsInt(3);
+    int height  = KNI_GetParameterAsInt(4);
 
     KNI_StartHandles(3);
     KNI_DeclareHandle(img);
     KNI_DeclareHandle(g);
 
-    KNI_GetParameterAsObject(2, img);
-    KNI_GetParameterAsObject(1, g);
+    KNI_GetParameterAsObject(3, img);
+    KNI_GetParameterAsObject(2, g);
+    jint hardwareId = KNI_GetParameterAsInt(1);
 
     if (!KNI_IsNullHandle(img)) {
-      success = lcdlf_direct_flush(GXAPI_GET_GRAPHICS_PTR(g), 
+      success = lcdlf_direct_flush(hardwareId, GXAPI_GET_GRAPHICS_PTR(g), 
 				   IMGAPI_GET_IMAGE_PTR(img)->imageData,
 				   height);
     }

@@ -159,8 +159,8 @@ void handle_pointer_port(MidpReentryData* pNewSignal, MidpEvent* pNewMidpEvent) 
 
     screenX = fbapp_get_screen_x();
     screenY = fbapp_get_screen_y();
-    maxX = fbapp_get_screen_width();
-    maxY = fbapp_get_screen_height();
+    maxX = fbapp_get_screen_width(0);
+    maxY = fbapp_get_screen_height(0);
 
     d1 = (((int)mouseBuf[3]) << 24) +
         (((int)mouseBuf[2]) << 16) +
@@ -172,7 +172,7 @@ void handle_pointer_port(MidpReentryData* pNewSignal, MidpEvent* pNewMidpEvent) 
         (((int)mouseBuf[5]) << 8) +
         (int)mouseBuf[4];
     
-    if (fbapp_get_reverse_orientation()) {
+    if (fbapp_get_reverse_orientation(0)) {
         pNewMidpEvent->X_POS = min(maxX - d2, maxX) + screenX;
         pNewMidpEvent->Y_POS = min(d1 - screenY, maxY);
     } else {

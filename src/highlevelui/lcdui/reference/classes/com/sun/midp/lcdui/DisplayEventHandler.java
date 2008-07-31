@@ -87,7 +87,8 @@ public interface DisplayEventHandler {
         DisplayEventProducer theDisplayEventProducer,
         ForegroundController theForegroundController,
         RepaintEventProducer theRepaintEventProducer,
-        DisplayContainer theDisplayContainer);
+        DisplayContainer theDisplayContainer,
+	DisplayDeviceContainer theDisplayDeviceContainer);
     
     /**
      * Sets the trusted state of the display event handler.

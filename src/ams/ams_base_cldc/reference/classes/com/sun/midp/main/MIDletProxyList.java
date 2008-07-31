@@ -295,7 +295,7 @@ public class MIDletProxyList
                 MIDletProxy current = (MIDletProxy)midletProxies.elementAt(i);
 
                 if (current.getIsolateId() == isolateId &&
-                        current.getDisplayId() == displayId) {
+		    current.containsDisplay(displayId)) {
                     return current;
                 }
             }
@@ -1079,8 +1079,11 @@ public class MIDletProxyList
          */
 
         if (foregroundMidlet != null) {
-            setForegroundInNativeState(foregroundMidlet.getIsolateId(),
-                                       foregroundMidlet.getDisplayId());
+	    int[] displayIds =  foregroundMidlet.getDisplayIds();
+	    for (int i = displayIds.length; --i >= 0;) {
+		setForegroundInNativeState(foregroundMidlet.getIsolateId(),
+					   displayIds[i]);
+	    }
             // This call with a true parameter will set the alertWaiting field.
             foregroundMidlet.notifyMIDletHasForeground(true);
 

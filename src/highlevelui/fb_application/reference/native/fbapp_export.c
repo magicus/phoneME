@@ -104,7 +104,7 @@ void fbapp_init() {
 
     checkDeviceType();
     initScreenBuffer(
-        fbapp_get_screen_width(), fbapp_get_screen_height());
+		     fbapp_get_screen_width(0), fbapp_get_screen_height(0)); //IMPL_NOTE
     connectFrameBuffer();
 }
 
@@ -126,25 +126,28 @@ int fbapp_get_fb_device_type() {
 }
 
 /** Invert screen orientation flag */
-jboolean fbapp_reverse_orientation() {
+jboolean fbapp_reverse_orientation(int hardwareId) {
+    (void) hardwareId;
     reverse_orientation = !reverse_orientation;
     reverseScreenOrientation();
     return reverse_orientation;
 }
 
 /**Set full screen mode on/off */
-void fbapp_set_fullscreen_mode(int mode) {
+void fbapp_set_fullscreen_mode(int hardwareId, int mode) {
+    (void) hardwareId;
     if (isFullScreen != mode) {
         isFullScreen = mode;
         resizeScreenBuffer(
-            fbapp_get_screen_width(),
-            fbapp_get_screen_height());
+            fbapp_get_screen_width(0),
+            fbapp_get_screen_height(0));
         clearScreen();
     }
 }
 
 /** Return screen width */
-int fbapp_get_screen_width() {
+int fbapp_get_screen_width(int hardwareId) {
+    (void) hardwareId;
     if (reverse_orientation) {
         return (isFullScreen == 1) ?
             CHAM_FULLHEIGHT : CHAM_HEIGHT;
@@ -155,7 +158,8 @@ int fbapp_get_screen_width() {
 }
 
 /** Return screen height */
-int fbapp_get_screen_height() {
+int fbapp_get_screen_height(int hardwareId) {
+    (void) hardwareId;
     if (reverse_orientation) {
         return (isFullScreen == 1) ?
             CHAM_FULLWIDTH : CHAM_WIDTH;
@@ -176,14 +180,15 @@ int fbapp_get_screen_y() {
 }
 
 /** Return screen orientation flag */
-jboolean fbapp_get_reverse_orientation() {
+jboolean fbapp_get_reverse_orientation(int hardwareId) {
+    (void) hardwareId;
     return reverse_orientation;
 }
 
 /** Clip rectangle requested for refresh according to screen geometry */
 static void clipRect(int *x1, int *y1, int *x2, int *y2) {
-    int width = fbapp_get_screen_width();
-    int height = fbapp_get_screen_height();
+    int width = fbapp_get_screen_width(0);
+    int height = fbapp_get_screen_height(0);
 
     if (*x1 < 0) { *x1 = 0; }
     if (*y1 < 0) { *y1 = 0; }
@@ -202,7 +207,8 @@ static void clipRect(int *x1, int *y1, int *x2, int *y2) {
  * @param x2 bottom-right x coordinate of the area to refresh
  * @param y2 bottom-right y coordinate of the area to refresh
  */
-void fbapp_refresh(int x1, int y1, int x2, int y2) {
+void fbapp_refresh(int hardwareId, int x1, int y1, int x2, int y2) {
+    (void) hardwareId;
     clipRect(&x1, &y1, &x2, &y2);
     if (!reverse_orientation) {
         refreshScreenNormal(x1, y1, x2, y2);
@@ -256,6 +262,26 @@ void fbapp_map_keycode_to_event(
         if (isPressed) {
             pNewMidpEvent->type = ROTATION_EVENT;
             pNewSignal->waitingFor = UI_SIGNAL;
+        } else {
+            /* ignore it */
+        }
+        break;
+
+    case KEYMAP_MD_DISPLAY_DISABLED:
+        if (isPressed) {
+            pNewMidpEvent->type = DISPLAY_DEVICE_STATE_CHANGED_EVENT;
+            pNewSignal->waitingFor = UI_SIGNAL;
+            pNewMidpEvent->intParam1 = DISPLAY_DEVICE_DISABLED;
+        } else {
+            /* ignore it */
+        }
+        break;
+
+    case KEYMAP_MD_DISPLAY_ENABLED:
+        if (isPressed) {
+            pNewMidpEvent->type = DISPLAY_DEVICE_STATE_CHANGED_EVENT;
+            pNewSignal->waitingFor = UI_SIGNAL;
+            pNewMidpEvent->intParam1 = DISPLAY_DEVICE_ENABLED;
         } else {
             /* ignore it */
         }

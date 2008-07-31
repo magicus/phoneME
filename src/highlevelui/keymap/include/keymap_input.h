@@ -120,6 +120,7 @@ typedef enum {
     KEYMAP_KEY_DEBUG_TRACE1 = -21,
     KEYMAP_KEY_SCREEN_ROT   = -22,
 
+
     /* This is the last enum. Please shift
      * it if you are adding new values.
      * All values lower than KEY_MACHINE_DEP

@@ -232,6 +232,13 @@ javacall_result checkForSystemSignal(MidpReentryData* pNewSignal,
         pNewSignal->waitingFor = UI_SIGNAL;
         pNewMidpEvent->type    = ROTATION_EVENT;
         break;
+    case MIDP_JC_EVENT_DISPLAY_DEVICE_STATE_CHANGED:
+        pNewSignal->waitingFor = DISPLAY_DEVICE_SIGNAL;
+        pNewMidpEvent->type    = DISPLAY_DEVICE_STATE_CHANGED_EVENT;
+        pNewMidpEvent->intParam1 = event->data.midp_jc_event_display_device.hardwareId;
+        pNewMidpEvent->intParam2 = event->data.midp_jc_event_display_device.state;
+        break;
+
 
 #ifdef ENABLE_JSR_75
     case JSR75_FC_JC_EVENT_ROOTCHANGED:
@@ -468,6 +475,11 @@ static int midp_slavemode_handle_events(JVMSPI_BlockedThreadInfo *blocked_thread
         case UI_SIGNAL:
             midpStoreEventAndSignalForeground(newMidpEvent);
             break;
+
+        case DISPLAY_DEVICE_SIGNAL:
+	  // broadcast event, send it to all isolates to all displays
+	    StoreMIDPEventInVmThread(newMidpEvent, -1);
+	    break;
 
         case NETWORK_READ_SIGNAL:
             if (eventUnblockJavaThread(blocked_threads,
