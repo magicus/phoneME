@@ -70,6 +70,7 @@ MIDP_CNI_CLASSES += \
         javax.microedition.lcdui.ImageData \
         javax.microedition.lcdui.ImageDataFactory \
         javax.microedition.lcdui.KeyConverter \
+        javax.microedition.lcdui.SuiteImageCacheImpl \
         com.sun.midp.util.ResourceHandler \
         com.sun.midp.security.Permissions
 
