@@ -1,6 +1,5 @@
 /*
- * 
- * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
@@ -350,7 +349,7 @@ LockAudioMutex();
         JAVACALL_MM_ASYNC_EXEC(
             result,
             javacall_media_pause(pKniInfo->pNativeHandle),
-            pKniInfo->pNativeHandle, pKniInfo->appId, pKniInfo->playerId, JAVACALL_EVENT_MEDIA_PAUSED,
+            pKniInfo->pNativeHandle, pKniInfo->appId, pKniInfo->playerId, JAVACALL_EVENT_MEDIA_STOPPED,
             returns_no_data
         );
 UnlockAudioMutex();
@@ -378,7 +377,7 @@ LockAudioMutex();
         JAVACALL_MM_ASYNC_EXEC(
             result,
             javacall_media_resume(pKniInfo->pNativeHandle),
-            pKniInfo->pNativeHandle, pKniInfo->appId, pKniInfo->playerId, JAVACALL_EVENT_MEDIA_RESUMED,
+            pKniInfo->pNativeHandle, pKniInfo->appId, pKniInfo->playerId, JAVACALL_EVENT_MEDIA_STARTED,
             returns_no_data
         );
 UnlockAudioMutex();

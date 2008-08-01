@@ -175,6 +175,9 @@ public class PlayerImpl implements Player {
             source.connect();
             stream = source.getStreams()[0];
         }
+
+        // Set event listener
+        new MMEventListener();
     }
 
         
