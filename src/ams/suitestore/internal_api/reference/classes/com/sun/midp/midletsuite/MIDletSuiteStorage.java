@@ -44,8 +44,6 @@ import com.sun.midp.configurator.Constants;
 
 import com.sun.midp.rms.RecordStoreImpl;
 
-import com.sun.midp.services.ComponentInfo;
-
 import com.sun.midp.log.Logging;
 import com.sun.midp.log.LogChannels;
 
@@ -611,7 +609,7 @@ public class MIDletSuiteStorage {
      * locked
      */
     native void nativeStoreSuite(InstallInfo installInfo,
-        SuiteSettings suiteSettings, MIDletSuiteInfo msi, ComponentInfo ci,
+        SuiteSettings suiteSettings, MIDletSuiteInfo msi, Object ci,
             String[] jadProps, String[] jarProps)
                 throws IOException, MIDletSuiteLockedException;
 
