@@ -86,6 +86,7 @@ USE_WTK_DEBUG           = false
 USE_AMS_FOLDERS         = false
 USE_AMS_EXECUTABLE      = true
 USE_OCSP                = false
+USE_DYNAMIC_COMPONENTS  = false
 
 # DEBUG
 USE_DEBUG               = false

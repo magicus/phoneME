@@ -194,12 +194,13 @@ public final class EventTypes {
     /**
      * Major ID for a execute MIDlet event.
      * <ul>
-     * <li> stringParam1 = id;
-     * <li> stringParam2 = midlet;
-     * <li> stringParam3 = displayName;
-     * <li> stringParam4 = arg0;
-     * <li> stringParam5 = arg1;
-     * <li> stringParam6 = arg2;
+     * <li> intParam1    = external application ID;
+     * <li> intParam2    = suite ID;
+     * <li> stringParam1 = midlet class name;
+     * <li> stringParam2 = display name;
+     * <li> stringParam3 = arg0;
+     * <li> stringParam4 = arg1;
+     * <li> stringParam5 = arg2;
      * </ul>
      */
     public static final int EXECUTE_MIDLET_EVENT  =  28;
@@ -353,4 +354,9 @@ public final class EventTypes {
      * an installed MIDlet suite.
      */
     public static final int MIDP_ODD_SUITE_REMOVED_EVENT = 55;
+
+    /**
+     * Major ID for a request to restart a MIDlet event.
+     */
+    public static final int RESTART_MIDLET_EVENT = 56;
 }

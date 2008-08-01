@@ -177,7 +177,8 @@ class ExecuteMIDletEventListener implements EventListener, Runnable {
     public void run() {
         try {
             MIDletSuiteUtils.executeWithArgs(classSecurityToken,
-                externalAppId, id, midlet, displayName, arg0, arg1, arg2, false);
+                externalAppId, id, midlet, displayName,
+                    arg0, arg1, arg2, false);
         } catch (Throwable t) {
             if (Logging.TRACE_ENABLED) {
                 Logging.trace(t,

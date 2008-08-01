@@ -330,12 +330,15 @@ javanotify_ams_midlet_get_suite_info(const javacall_app_id appID,
     pSuiteData->storageId = (javacall_int32) midpSuiteData.storageId;
     pSuiteData->isEnabled = (javacall_bool) midpSuiteData.isEnabled;
     pSuiteData->isEnabled = (javacall_bool) midpSuiteData.isTrusted;
-    pSuiteData->numberOfMidlets = (javacall_int32) midpSuiteData.numberOfMidlets;
+    pSuiteData->numberOfMidlets =
+                            (javacall_int32) midpSuiteData.numberOfMidlets;
     pSuiteData->installTime = (long) midpSuiteData.installTime;
     pSuiteData->jadSize = (javacall_int32) midpSuiteData.jadSize;
     pSuiteData->jarSize = (javacall_int32) midpSuiteData.jarSize;
     pSuiteData->jarHashLen = (javacall_int32) midpSuiteData.jarHashLen;
-    pSuiteData->isPreinstalled = (javacall_bool) midpSuiteData.isPreinstalled;
+    /* IMPL_NOTE: structure of javacall_ams_suite_data should be revised */
+    pSuiteData->isPreinstalled = (javacall_bool)
+        (midpSuiteData.type == COMPONENT_PREINSTALLED_SUITE);
 
     pSuiteData->varSuiteData.pJarHash = midpSuiteData.varSuiteData.pJarHash;
 

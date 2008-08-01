@@ -61,7 +61,8 @@ public class MVMManager extends MIDlet
     implements MIDletProxyListListener,
                 DisplayControllerListener, 
                 ApplicationManager,
-                ODTControllerEventConsumer {
+                ODTControllerEventConsumer,
+                AMSServicesEventConsumer {
 
     /** Constant for the discovery application class name. */
     private static final String DISCOVERY_APP =
@@ -79,9 +80,6 @@ public class MVMManager extends MIDlet
     /** True until constructed for the first time. */
     private static boolean first = true;
 
-    /** MIDlet Suite storage object. */
-    private MIDletSuiteStorage midletSuiteStorage;
-
     /** Screen that displays all installed midlets and installer */
     private AppManagerPeer appManager;
 
@@ -94,6 +92,9 @@ public class MVMManager extends MIDlet
     /** If on device debug is active, ID of the suite under debug. */
     private int suiteUnderDebugId = MIDletSuite.UNUSED_SUITE_ID;
 
+    /** A thread waiting until a midlet is terminated. Can be null. */
+    private Thread waitForDestroyThread;
+
     /**
      * Create and initialize a new MVMManager MIDlet.
      */
@@ -102,8 +103,7 @@ public class MVMManager extends MIDlet
 
         EventQueue eq = EventQueue.getEventQueue();
         new ODTControllerEventListener(eq, this);
-
-        midletSuiteStorage = MIDletSuiteStorage.getMIDletSuiteStorage();
+        new AMSServicesEventListener(eq, this);
 
         midletProxyList = MIDletProxyList.getMIDletProxyList();
 
@@ -210,7 +210,59 @@ public class MVMManager extends MIDlet
     public void handleODDSuiteRemovedEvent(int suiteId) {
         appManager.notifySuiteRemoved(suiteId);
     }
-    
+
+    /**
+     * Processes RESTART_MIDLET_EVENT.
+     *
+     * @param externalAppId application ID assigned by externall App Manager;
+     *                      not used if there is no external manager
+     * @param suiteId ID of the midlet suite
+     * @param className class name of the midlet to restart
+     * @param displayName display name of the midlet to restart
+     */
+    public void handleRestartMIDletEvent(int externalAppId, int suiteId,
+                                         String className, String displayName) {
+        try {
+            final MIDletProxy mp = midletProxyList.findMIDletProxy(suiteId,
+                                                                   className);
+            if (mp != null) {
+                final int id = suiteId;
+                final String nameOfClass  = className;
+                final String nameOfMIDlet = displayName;
+
+                // wait until the midlet is destroyed
+                waitForDestroyThread = new Thread() {
+                    public void run() {
+                        try {
+                            int timeout = 1000 *
+                                Configuration.getIntProperty(
+                                    "destoryMIDletTimeout", 5);
+
+                            synchronized(waitForDestroyThread) {
+                                wait(timeout);
+                            }
+                        } catch(InterruptedException ie) {
+                            // ignore
+                        }
+
+                        MIDletSuiteUtils.execute(id, nameOfClass,
+                                                 nameOfMIDlet);
+                    }
+                };
+
+                waitForDestroyThread.start();
+
+                mp.destroyMidlet();
+            } else {
+                // the midlet is not running, just starting it
+                MIDletSuiteUtils.execute(suiteId, className,
+                                         displayName);
+            }
+        } catch (Exception ex) {
+            displayError.showErrorAlert(displayName, ex, null, null);
+        }
+    }
+
     // =================================================================
     // ---------- Operations that can be performed on Midlets ----------
 
@@ -315,6 +367,13 @@ public class MVMManager extends MIDlet
             suiteUnderDebugId = MIDletSuite.UNUSED_SUITE_ID;
         }
         appManager.notifySuiteExited(suiteInfo);
+
+        if (waitForDestroyThread != null) {
+            synchronized(waitForDestroyThread) {
+                waitForDestroyThread.notify();
+                waitForDestroyThread = null;
+            }
+        }
     }
 
     /**

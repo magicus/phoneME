@@ -87,6 +87,7 @@ ifndef SUBSYSTEM_AMS_COMPONENTS
         $(SUBSYSTEM_AMS_DIR)/midlet_selector/lib.gmk \
         $(SUBSYSTEM_AMS_DIR)/ams_folders/lib.gmk \
         $(SUBSYSTEM_AMS_DIR)/ams_debug/lib.gmk \
+        $(SUBSYSTEM_AMS_DIR)/dynamic_components/lib.gmk
 
 ## On device debugging
         ifeq ($(USE_ON_DEVICE_DEBUG), true)
