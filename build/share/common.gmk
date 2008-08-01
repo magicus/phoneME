@@ -50,14 +50,6 @@ SUBSYSTEM_CONFIGURATION_INPUT_FILES += \
 # Jpp files that need pre-processing
 #
 
-$(JSR_135_GENERATED_DIR)/classes/javax/microedition/media/Manager.java: \
-  $(JSR_135_DIR)/src/share/core/javax/microedition/media/Manager.jpp
-	@$(call runjpp,$^,$@)
-
-$(JSR_135_GENERATED_DIR)/classes/com/sun/mmedia/BasicPlayer.java: \
-  $(JSR_135_DIR)/src/share/core/com/sun/mmedia/BasicPlayer.jpp
-	@$(call runjpp,$^,$@)
-
 $(JSR_135_GENERATED_DIR)/classes/com/sun/mmedia/Configuration.java: \
   $(JSR_135_DIR)/src/share/core/com/sun/mmedia/Configuration.jpp
 	@$(call runjpp,$^,$@)
@@ -72,10 +64,6 @@ $(JSR_135_GENERATED_DIR)/classes/com/sun/mmedia/DefaultConfiguration.java: \
 
 $(JSR_135_GENERATED_DIR)/classes/com/sun/mmedia/DirectPlayer.java: \
   $(JSR_135_DIR)/src/share/components/direct-player/classes/com/sun/mmedia/DirectPlayer.jpp
-	@$(call runjpp,$^,$@)
-
-$(JSR_135_GENERATED_DIR)/classes/com/sun/mmedia/PlayerImpl.java: \
-  $(JSR_135_DIR)/src/share/components/direct-player/classes/com/sun/mmedia/PlayerImpl.jpp
 	@$(call runjpp,$^,$@)
 
 $(JSR_135_GENERATED_DIR)/classes/com/sun/mmedia/DirectRecord.java: \
@@ -95,31 +83,47 @@ $(JSR_135_GENERATED_DIR)/classes/com/sun/mmedia/DirectTone.java: \
 	@$(call runjpp,$^,$@)
 
 SUBSYSTEM_JSR_135_JAVA_FILES += \
-    $(JSR_135_DIR)/classes/javax/microedition/media/Player.java \
-    $(JSR_135_DIR)/classes/javax/microedition/media/PlayerListener.java \
-    $(JSR_135_GENERATED_DIR)/classes/javax/microedition/media/Manager.java \
-    $(JSR_135_DIR)/src/share/core/com/sun/mmedia/Jsr234Proxy.java \
-    $(JSR_135_GENERATED_DIR)/classes/com/sun/mmedia/BasicPlayer.java \
     $(JSR_135_GENERATED_DIR)/classes/com/sun/mmedia/Configuration.java \
     $(JSR_135_GENERATED_DIR)/classes/com/sun/mmedia/DefaultConfiguration.java \
     $(JSR_135_GENERATED_DIR)/classes/com/sun/mmedia/protocol/CommonDS.java \
-    $(JSR_135_DIR)/classes/com/sun/mmedia/protocol/BasicDS.java \
+    $(JSR_135_GENERATED_DIR)/classes/com/sun/mmedia/NativeTonePlayer.java \
+    
+SUBSYSTEM_JSR_135_JAVA_FILES += \
+    $(JSR_135_DIR)/src/share/core/javax/microedition/media/Player.java \
+    $(JSR_135_DIR)/src/share/core/javax/microedition/media/PlayerListener.java \
+    $(JSR_135_DIR)/src/share/core/javax/microedition/media/Manager.java \
     $(JSR_135_DIR)/src/share/core/javax/microedition/media/Control.java \
     $(JSR_135_DIR)/src/share/core/javax/microedition/media/Controllable.java \
     $(JSR_135_DIR)/src/share/core/javax/microedition/media/MediaException.java \
-    $(JSR_135_DIR)/src/share/core/com/sun/mmedia/control/DualToneControl.java \
     $(JSR_135_DIR)/src/share/core/javax/microedition/media/control/ToneControl.java \
     $(JSR_135_DIR)/src/share/core/javax/microedition/media/control/VolumeControl.java \
+    $(JSR_135_DIR)/src/share/core/javax/microedition/media/TimeBase.java \
+    $(JSR_135_DIR)/src/share/core/javax/microedition/media/control/FramePositioningControl.java \
+    $(JSR_135_DIR)/src/share/core/javax/microedition/media/control/GUIControl.java \
+    $(JSR_135_DIR)/src/share/core/javax/microedition/media/control/MIDIControl.java \
+    $(JSR_135_DIR)/src/share/core/javax/microedition/media/control/MetaDataControl.java \
+    $(JSR_135_DIR)/src/share/core/javax/microedition/media/control/PitchControl.java \
+    $(JSR_135_DIR)/src/share/core/javax/microedition/media/control/RateControl.java \
+    $(JSR_135_DIR)/src/share/core/javax/microedition/media/control/RecordControl.java \
+    $(JSR_135_DIR)/src/share/core/javax/microedition/media/control/StopTimeControl.java \
+    $(JSR_135_DIR)/src/share/core/javax/microedition/media/control/TempoControl.java \
+    $(JSR_135_DIR)/src/share/core/javax/microedition/media/control/VideoControl.java \
+    $(JSR_135_DIR)/src/share/core/javax/microedition/media/protocol/DataSource.java \
+    $(JSR_135_DIR)/src/share/core/javax/microedition/media/protocol/SourceStream.java \
+    $(JSR_135_DIR)/src/share/core/javax/microedition/media/protocol/ContentDescriptor.java \
+    $(JSR_135_DIR)/src/share/core/com/sun/mmedia/Jsr234Proxy.java \
+    $(JSR_135_DIR)/src/share/core/com/sun/mmedia/BasicPlayer.java \
+    $(JSR_135_DIR)/src/share/core/com/sun/mmedia/protocol/BasicDS.java \
+    $(JSR_135_DIR)/src/share/core/com/sun/mmedia/control/DualToneControl.java \
     $(JSR_135_DIR)/src/share/core/com/sun/mmedia/AudioRenderer.java \
     $(JSR_135_DIR)/src/share/core/com/sun/mmedia/TonePlayer.java \
     $(JSR_135_DIR)/src/share/core/com/sun/mmedia/protocol/LocatorParser.java \
+    $(JSR_135_DIR)/src/share/components/direct-player/classes/com/sun/mmedia/PlayerStateSubscriber.java \
+    $(JSR_135_DIR)/src/share/components/direct-player/classes/com/sun/mmedia/PlayerImpl.java \
+    $(JSR_135_DIR)/src/share/components/direct-player/classes/com/sun/mmedia/MediaDownload.java \
+    $(JSR_135_DIR)/src/share/core/com/sun/mmedia/VideoRenderer.java \
     $(JSR_135_PROJECT_SRC_DIR)/classes/com/sun/mmedia/MMEventListener.java \
     $(JSR_135_PROJECT_SRC_DIR)/classes/com/sun/mmedia/AudioTunnel.java \
-    $(JSR_135_GENERATED_DIR)/classes/com/sun/mmedia/NativeTonePlayer.java \
-    $(JSR_135_DIR)/src/share/components/direct-player/classes/com/sun/mmedia/PlayerStateSubscriber.java \
-    $(JSR_135_GENERATED_DIR)/classes/com/sun/mmedia/PlayerImpl.java \
-    $(JSR_135_DIR)/src/share/components/direct-player/classes/com/sun/mmedia/MediaDownload.java
-
 
 # Permission verifier
 SUBSYSTEM_JSR_135_JAVA_FILES += \
@@ -172,23 +176,6 @@ SUBSYSTEM_JSR_135_JAVA_FILES += \
 	$(JSR_135_DIR)/src/share/components/rtsp-player/classes/com/sun/mmedia/protocol/Parser.java \
 	$(JSR_135_DIR)/src/share/components/rtsp-player/classes/com/sun/mmedia/protocol/SessionHeader.java
 endif																				
-
-SUBSYSTEM_JSR_135_JAVA_FILES += \
-    $(JSR_135_DIR)/src/share/core/javax/microedition/media/TimeBase.java \
-    $(JSR_135_DIR)/src/share/core/javax/microedition/media/protocol/DataSource.java \
-    $(JSR_135_DIR)/src/share/core/javax/microedition/media/protocol/SourceStream.java \
-    $(JSR_135_DIR)/src/share/core/javax/microedition/media/protocol/ContentDescriptor.java \
-    $(JSR_135_DIR)/src/share/core/javax/microedition/media/control/FramePositioningControl.java \
-    $(JSR_135_DIR)/src/share/core/javax/microedition/media/control/GUIControl.java \
-    $(JSR_135_DIR)/src/share/core/javax/microedition/media/control/MIDIControl.java \
-    $(JSR_135_DIR)/src/share/core/javax/microedition/media/control/MetaDataControl.java \
-    $(JSR_135_DIR)/src/share/core/javax/microedition/media/control/PitchControl.java \
-    $(JSR_135_DIR)/src/share/core/javax/microedition/media/control/RateControl.java \
-    $(JSR_135_DIR)/src/share/core/javax/microedition/media/control/RecordControl.java \
-    $(JSR_135_DIR)/src/share/core/javax/microedition/media/control/StopTimeControl.java \
-    $(JSR_135_DIR)/src/share/core/javax/microedition/media/control/TempoControl.java \
-    $(JSR_135_DIR)/src/share/core/javax/microedition/media/control/VideoControl.java \
-    $(JSR_135_DIR)/src/share/core/com/sun/mmedia/VideoRenderer.java 
 
 ifeq ($(DIRECT_PLAYER), true)
 SUBSYSTEM_JSR_135_JAVA_FILES += \

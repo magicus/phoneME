@@ -41,12 +41,6 @@ import com.sun.mmedia.protocol.*;
 public abstract class BasicPlayer
     implements Player, TimeBase, StopTimeControl
 {
-    // #ifdef ENABLE_DEBUG [
-    private final static boolean debug = true;
-    // #else ][
-    private final static boolean debug = false;
-    // #endif ]
-
     /** Unknown media format */
     static final String MEDIA_FORMAT_UNKNOWN = "UNKNOWN";
     /** Unsupported media format */
@@ -692,7 +686,7 @@ public abstract class BasicPlayer
                 // seek to start position
                 stream.seek(0);
             } catch(IOException e) {
-                if (debug) System.out.println("[direct] doDeallocate seek IOException");
+                // System.out.println("[direct] doDeallocate seek IOException");
             }
         }
 
@@ -959,7 +953,7 @@ public abstract class BasicPlayer
                 }
                 start();
             } catch (MediaException ex) {
-                if (debug) System.out.println("[basic] doLoop exception " + ex.getMessage());
+                // System.out.println("[basic] doLoop exception " + ex.getMessage());
                 loopCount = 1;
             }
         } else if (loopCountSet > 1) {

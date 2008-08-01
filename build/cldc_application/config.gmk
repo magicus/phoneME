@@ -47,8 +47,6 @@ DIRECT_MIDI_CONTROL = true
 #
 DIRECT_RECORD = true
 
-endif
-
 #
 # Always ON
 #

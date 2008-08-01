@@ -429,11 +429,6 @@ import javax.microedition.media.protocol.*;
  */
 
 public final class Manager {
-    // #ifdef ENABLE_DEBUG [
-    private final static boolean debug = true;
-    // #else ][
-    private final static boolean debug = false;
-    // #endif ]
 
     private static Configuration config = Configuration.getConfiguration();
     private static TonePlayer tonePlayer;
@@ -585,8 +580,7 @@ public final class Manager {
 
         String locStr = locator.toLowerCase();
 
-        if (debug)
-            System.out.println("[mmapi] createPlayer with " + locator);
+        // System.out.println("[mmapi] createPlayer with " + locator);
 
         /* Verify if Protocol is supported */
         String theProtocol = null;
@@ -944,25 +938,13 @@ public final class Manager {
          throws MediaException {
              
         if (note < 0 || note > 127 || duration <= 0) {
-            if (debug) {
-                Logging.report(Logging.ERROR, LogChannels.LC_MMAPI,
-                    "playTone note(" + note + ") or duration(" +
-                                 duration + ") value is invalid");
-            }        
-            throw new IllegalArgumentException("bad param");
+            throw new IllegalArgumentException( "Invalid note(" + note +
+                                                ") or duration (" + duration + ")" );
         }
 
         if (volume < 0) {
-            if (debug) {
-                Logging.report(Logging.ERROR, LogChannels.LC_MMAPI,
-                    "playTone volume is negative value = " + volume);
-            }
             volume = 0;
         } else if (volume > 100) {
-            if (debug) {
-                Logging.report(Logging.ERROR, LogChannels.LC_MMAPI,
-                    "playTone volume is too big = " + volume);
-            }        
             volume = 100;
         }
 
