@@ -596,6 +596,8 @@ public final class Permissions {
     /**
      * Get a list of all permission groups for the settings dialog.
      *
+     * @param levels current permission levels
+     *
      * @return array of permission groups
      */
     public static PermissionGroup[] getSettingGroups(byte[] levels) {
@@ -632,11 +634,15 @@ public final class Permissions {
      *
      * @param levels array of permission levels
      * @param group desired permission group
+     * @param currentLevels true if the levels is the current permission levels,
+     *                      false if the levels is an array of maximum allowed
+     *                      permission levels.
      *
      * @return permission level
      */
-    public static byte getPermissionGroupLevel(byte[] levels,
-            PermissionGroup group) {
+    private static byte getPermissionGroupLevelImpl(byte[] levels,
+            PermissionGroup group, boolean currentLevels) {
+
         byte maxLevel = NEVER;
 
         for (int i = 0; i < permissionSpecs.length; i++) {
@@ -651,7 +657,47 @@ public final class Permissions {
             }
         }
 
+        /**
+         * For READ_MESSAGE_GROUP function group, consider group level is
+         * ONESHOT if maximum permission level is BLANKET (not BLANKET_GRANTED).
+         */
+        if ((group == READ_MESSAGE_GROUP) && (maxLevel == BLANKET)) {
+            if (currentLevels) {
+                maxLevel = ONESHOT;
+            }
+        }
+
         return maxLevel;
+    }
+
+    /**
+     * Find the max level of all the current permissions in the group.
+     *
+     * This is a policy dependent function for permission grouping.
+     *
+     * @param levels array of permission levels
+     * @param group desired permission group
+     *
+     * @return permission level
+     */
+    public static byte getPermissionGroupLevel(byte[] levels,
+            PermissionGroup group) {
+        return getPermissionGroupLevelImpl(levels, group, true);
+    }
+
+    /**
+     * Find the max level of all the maximum allowed permissions in the group.
+     *
+     * This is a policy dependent function for permission grouping.
+     *
+     * @param levels array of permission levels
+     * @param group desired permission group
+     *
+     * @return permission level
+     */
+    public static byte getMaximumPermissionGroupLevel(byte[] levels,
+            PermissionGroup group) {
+        return getPermissionGroupLevelImpl(levels, group, false);
     }
 
     /**
@@ -724,6 +770,13 @@ public final class Permissions {
         }
 
         if (group == READ_MESSAGE_GROUP) {
+            if (level == ONESHOT) {
+                for (int i = 0; i < permissionSpecs.length; i++) {
+                    if (permissionSpecs[i].group == READ_MESSAGE_GROUP) {
+                        setPermission(current, i, BLANKET);
+                    }
+                }
+            }
             /*
              * Keep both subgoups in synch when READ_MESSAGE_GROUP is
              * changed.

@@ -371,8 +371,9 @@ public class AppSettings extends Form
             }
 
             for (int i = 0; i < groups.length; i++) {
-                byte maxGroupSetting = Permissions.getPermissionGroupLevel(
-                                       maxLevels, groups[i]);
+                byte maxGroupSetting =
+                        Permissions.getMaximumPermissionGroupLevel(
+                                maxLevels, groups[i]);
                 byte currentGroupSetting = Permissions.getPermissionGroupLevel(
                                            curLevels, groups[i]);
 
