@@ -53,6 +53,7 @@ typedef struct _ThreadInfo {
     CVMCondVar cv;
     javacall_result *pStatus;
     void **pData;
+    int waiting;
     struct _ThreadInfo *prev;
     struct _ThreadInfo *next;
 } ThreadInfo;
@@ -152,7 +153,20 @@ javacall_result mmapi_thread_suspend(int desc, javacall_result *pStatus, void **
 
     ti->pStatus = pStatus;
     ti->pData = pData;
-    CVMcondvarWait(&ti->cv, &tMutex, 0);
+    ti->waiting = 1;
+    while (ti->waiting) {
+        CVMcondvarWait(&ti->cv, &tMutex, 0);
+    }
+    CVMcondvarDestroy(&ti->cv);
+    if (NULL != ti->prev) {
+        ti->prev->next = ti->next;
+    } else {
+        head = ti->next;
+    }
+    if (NULL != ti->next) {
+        ti->next->prev = ti->prev;
+    }
+    javacall_free(ti);
     CVMmutexUnlock(&tMutex);
     return JAVACALL_OK;
 }
@@ -182,17 +196,8 @@ javacall_result mmapi_thread_resume(int desc, javacall_result status, void *data
         if (NULL != ti->pStatus) {
             *ti->pStatus = status;
             *ti->pData = data;
+            ti->waiting = 0;
             CVMcondvarNotify(&ti->cv);
-            CVMcondvarDestroy(&ti->cv);
-            if (NULL != ti->prev) {
-                ti->prev->next = ti->next;
-            } else {
-                head = ti->next;
-            }
-            if (NULL != ti->next) {
-                ti->next->prev = ti->prev;
-            }
-            javacall_free(ti);
             res = JAVACALL_OK;
         }
     }
