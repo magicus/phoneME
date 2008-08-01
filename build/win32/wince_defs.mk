@@ -32,6 +32,17 @@ CC_ARCH_FLAGS += -D__STDC__
 #M_DLL_FLAGS =
 #M_EXE_FLAGS =
 
+# Some WinCE devices don't support the embedding of the code cache
+# as a read/write/execute segment in the executable. For these devices
+# we need a way to turn off the static code cache. This also implies
+# turning off trap-based null checks.
+WINCE_DISABLE_STATIC_CODECACHE ?= false
+CVM_FLAGS += WINCE_DISABLE_STATIC_CODECACHE
+WINCE_DISABLE_STATIC_CODECACHE_CLEANUP_ACTION = $(CVM_DEFAULT_CLEANUP_ACTION)
+ifeq ($(WINCE_DISABLE_STATIC_CODECACHE), true)
+	CVM_DEFINES += -DWINCE_DISABLE_STATIC_CODECACHE
+endif
+
 CVM_INCLUDE_DIRS  += \
         $(CVM_TARGETROOT)/javavm/include/ansi \
 

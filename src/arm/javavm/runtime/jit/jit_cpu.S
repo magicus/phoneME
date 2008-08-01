@@ -51,21 +51,21 @@
  * stack.  The interpreter and compiled code act like co-routines.
  */
 
+#ifdef WINCE
+#define CVMJITgoNative CVMgoNative0
 #ifdef CVMJIT_HAVE_STATIC_CODECACHE
 /* Currently this only applies to WinCE, because of the way
    it handles exceptions. */
-
 	SET_SECTION_EXEC_WRITE
-#define CVMJITgoNative CVMgoNative0
 #endif
-
+#endif
 /* 
  * Entry point from interpreted code: 
  * CVMMethodBlock* 
  * CVMJITgoNative(CVMObject* exceptionObject, CVMExecEnv* ee, 
  *	          CVMCompiledFrame *jfp, CVMUint8 *pc); 
  */
-#ifdef WINCE
+#if (defined(WINCE) && defined(CVMJIT_HAVE_STATIC_CODECACHE))
 	NESTED_ENTRY CVMJITgoNative
 #else
 	ENTRY(CVMJITgoNative)

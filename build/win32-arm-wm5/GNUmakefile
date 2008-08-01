@@ -44,6 +44,12 @@ PLATFORM_LIB_DIRS	= Lib/Armv4i
 # assume the JIT is enabled for this device unless told otherwise
 CVM_JIT ?= true
 
+# Some Windows Mobile devices don't allow the code cache to reside in
+# a read/write/execute segment of the executable. Uncomment this
+# definition if you find that the JVM crashes soon after the JIT
+# begins to compile code.
+# WINCE_DISABLE_STATIC_CODECACHE=true
+
 # package boot classes into rt.jar for non-ROMized build
 ifneq ($(CVM_PRELOAD_LIB),true)
 CVM_CREATE_RTJAR 	?= true
