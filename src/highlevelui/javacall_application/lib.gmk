@@ -40,12 +40,16 @@ SUBSYSTEM_APP_EXTRA_INCLUDES += -I$(SUBSYSTEM_APP_DIR)/include
 
 vpath % $(SUBSYSTEM_APP_DIR)/reference/native
 
+ifneq ($(USE_NATIVE_AMS), true)
+# In case of NAMS VM lifecycle is managed by different functions
 ifeq ($(SUBSYSTEM_EVENTS_MODULES), slave_mode)
-    SUBSYSTEM_APP_NATIVE_FILES += javanotify_functions_slavemode.c
+    SUBSYSTEM_APP_NATIVE_FILES += javanotify_lifecycle_slavemode.c
 else
-    SUBSYSTEM_APP_NATIVE_FILES += javanotify_functions.c
+    SUBSYSTEM_APP_NATIVE_FILES += javanotify_lifecycle.c
+endif
 endif
 
 SUBSYSTEM_APP_NATIVE_FILES += \
+		javanotify_midp_jsr.c \
     jcapp_export.c
 	
