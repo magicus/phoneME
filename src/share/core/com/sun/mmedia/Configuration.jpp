@@ -152,11 +152,6 @@ public abstract class Configuration {
     protected Hashtable handlers;
 
     /**
-     * A hash table of media processors.
-     */
-    protected Hashtable processors;
-
-    /**
      * A table of mime types.
      */
     protected Hashtable mimeTypes;
@@ -190,7 +185,6 @@ public abstract class Configuration {
      */
     public Configuration() {
         handlers = new Hashtable();
-        processors = new Hashtable();
         mimeTypes = new Hashtable();
         mFormats = new Hashtable();
         properties = new Hashtable();
@@ -310,16 +304,6 @@ public abstract class Configuration {
      */
     public String getHandler(String type) {
         return (String) handlers.get(type);
-    }
-
-    /**
-     *  Gets the processor attribute of the Configuration object
-     *
-     * @param  type  The content type
-     * @return       The processor value
-     */
-    public String getMediaProcessor(String type) {
-        return (String) processors.get(type);
     }
 
     /**

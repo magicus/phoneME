@@ -37,20 +37,9 @@ VIDEO_CAPTURE = true
 AUDIO_CAPTURE = true
 
 #
-# if you want to support interactive MIDI or MIDIControl, 
-# turn on DIRECT_MIDI_CONTROL option
-#
-DIRECT_MIDI_CONTROL = true
-
-#
 # If you want to support RecordControl, turn on DIRECT_RECORD option
 #
 DIRECT_RECORD = true
-
-#
-# Always ON
-#
-DIRECT_PLAYER = true
 
 #
 # If you want to support file:// protocol, turn on USE_FILE_CONNECTION option

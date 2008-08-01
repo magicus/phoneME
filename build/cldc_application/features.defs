@@ -34,10 +34,6 @@ EXTRA_CFLAGS += -DENABLE_MEDIA_RECORD
 JPP_DEFS += -DRECORD
 endif
 
-ifeq ($(DIRECT_MIDI_CONTROL),true)
-JPP_DEFS += -DMIDI_CONTROL
-endif
-
 ifeq ($(DIRECT_TEST), true)
 JPP_DEFS += -DTEST
 endif
@@ -110,7 +106,6 @@ endif
 
 ifeq ($(VIDEO_CAPTURE),true)
 JPP_DEFS += -DVIDEO_CAPTURE -DCAPTURE
-DIRECT_CAMERA_PLAYER=true
 endif
 
 ifeq ($(RTP_MPA),true)
