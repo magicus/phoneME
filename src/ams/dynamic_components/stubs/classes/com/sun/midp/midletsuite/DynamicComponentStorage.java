@@ -30,19 +30,45 @@ import java.io.IOException;
 
 import com.sun.midp.util.Properties;
 
-import com.sun.midp.midlet.MIDletSuite;
-
 import com.sun.midp.services.ComponentInfo;
 
-import com.sun.midp.log.Logging;
-import com.sun.midp.log.LogChannels;
+import com.sun.midp.security.Permissions;
+import com.sun.j2me.security.AccessController;
 
 /** Dummy implementation of Storage for Dynamically Loaded Components. */
-class DynamicComponentStorage {
+public class DynamicComponentStorage {
+
+    /** Holds an instance of DynamicComponentStorage. */
+    private static DynamicComponentStorage componentStorage = null;
+
+    /** "Not implemented" error message. */
+    private static final String msgNotImplemented = "Not implemented.";
+
     /**
-     * Constructs a Dynamic Component Storage object.
+     * Private constructor to prevent direct instantiations.
      */
-    DynamicComponentStorage() {
+    private DynamicComponentStorage() {
+    }
+
+    /**
+     * Returns a reference to the singleton MIDlet suite storage object.
+     * <p>
+     * Method requires the com.sun.midp.ams permission.
+     *
+     * @return the storage reference
+     *
+     * @exception SecurityException if the caller does not have permission
+     *   to install software
+     */
+    public static DynamicComponentStorage getComponentStorage()
+            throws SecurityException {
+        AccessController.checkPermission(Permissions.AMS_PERMISSION_NAME);
+
+        if (componentStorage == null) {
+            componentStorage = new DynamicComponentStorage();
+        }
+
+        return componentStorage;
     }
 
     /**
@@ -50,8 +76,23 @@ class DynamicComponentStorage {
      *
      * @return platform-specific id of the component
      */
-    public int createSuiteComponentID() {
-        throw new RuntimeException("Not implemented.");
+    public int createComponentId() {
+        throw new RuntimeException(msgNotImplemented);
+    }
+
+    /**
+     * Gets the unique identifier of MIDlet suite's dynamic component.
+     *
+     * @param vendor name of the vendor that created the component, as
+     *        given in a JAD file
+     * @param name name of the component, as given in a JAD file
+     *
+     * @return ID of the midlet suite's component given by vendor and name
+     *         or ComponentInfo.UNUSED_COMPONENT_ID if the component does
+     *         not exist
+     */
+    public int getComponentId(String vendor, String name) {
+        throw new RuntimeException(msgNotImplemented);
     }
 
     /**
@@ -99,12 +140,47 @@ class DynamicComponentStorage {
      * @exception MIDletSuiteLockedException is thrown, if the MIDletSuite is
      * locked
      */
-    public synchronized void storeSuiteComponent(
+    public synchronized void storeComponent(
             MIDletSuiteStorage suiteStorage, InstallInfo installInfo,
                 SuiteSettings suiteSettings, String displayName,
                     Properties jadProps, Properties jarProps)
                         throws IOException, MIDletSuiteLockedException {
-        throw new RuntimeException("Not implemented.");
+        throw new RuntimeException(msgNotImplemented);
+    }
+
+    /**
+     * Removes a dynamic component given its ID.
+     * <p>
+     * If the component is in use it must continue to be available
+     * to the other components that are using it.
+     *
+     * @param id suite ID for the installed package
+     *
+     * @throws IllegalArgumentException if the component cannot be found
+     * @throws MIDletSuiteLockedException is thrown, if the component is
+     *                                    locked
+     */
+    public void removeComponent(int id)
+            throws IllegalArgumentException, MIDletSuiteLockedException {
+        throw new RuntimeException(msgNotImplemented);
+    }
+
+    /**
+     * Removes all dynamic components belonging to the given suite.
+     * <p>
+     * If any component is in use, no components are removed, and
+     * an exception is thrown.
+     *
+     * @param suiteId ID of the suite whose components must be removed
+     *
+     * @throws IllegalArgumentException if there is no suite with
+     *                                  the specified ID
+     * @throws MIDletSuiteLockedException is thrown, if any component is
+     *                                    locked
+     */
+    public void removeAllComponents(int suiteId)
+            throws IllegalArgumentException, MIDletSuiteLockedException {
+        throw new RuntimeException(msgNotImplemented);
     }
 
     /**
@@ -115,7 +191,7 @@ class DynamicComponentStorage {
      *
      * @return class path or null if the component does not exist
      */
-    public synchronized String[] getSuiteComponentClassPath(int componentId) {
+    public synchronized String[] getComponentClassPath(int componentId) {
         return null;
     }
 
@@ -148,9 +224,9 @@ class DynamicComponentStorage {
      * @exception java.io.IOException if an the information cannot be read
      * @exception IllegalArgumentException if suiteId is invalid or ci is null
      */
-    public void getSuiteComponentInfoImpl0(int componentId,
-        ComponentInfo ci) throws IOException, IllegalArgumentException {
-        throw new RuntimeException("Not implemented.");
+    public void getComponentInfo(int componentId, ComponentInfo ci)
+            throws IOException, IllegalArgumentException {
+        throw new RuntimeException(msgNotImplemented);
     }
 
     /**
@@ -160,37 +236,7 @@ class DynamicComponentStorage {
      *
      * @return class path or null if the component does not exist
      */
-    public String getSuiteComponentJarPath(int componentId) {
-        throw new RuntimeException("Not implemented.");
-    }
-
-    /**
-     * Reads information about the installed midlet suite's components
-     * from the storage.
-     *
-     * @param suiteId unique ID of the suite
-     * @param ci array of ComponentInfo objects to fill with the information
-     *           about the installed midlet suite's components
-     *
-     * @exception IOException if an the information cannot be read
-     * @exception IllegalArgumentException if suiteId is invalid or ci is null
-     */
-    private void getSuiteComponentsList(int suiteId,
-        ComponentInfo[] ci) throws IOException, IllegalArgumentException {
-        throw new RuntimeException("Not implemented.");
-    }
-
-    /**
-     * Returns the number of the installed components belonging to the given
-     * MIDlet suite.
-     *
-     * @param suiteId ID of the MIDlet suite the information about whose
-     *                components must be retrieved
-     *
-     * @return the number of components belonging to the given suite
-     *         or -1 in case of error
-     */
-    private int getNumberOfComponents(int suiteId) {
-        return 0;
+    public String getComponentJarPath(int componentId) {
+        throw new RuntimeException(msgNotImplemented);
     }
 }

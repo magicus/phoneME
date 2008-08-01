@@ -31,6 +31,7 @@ import com.sun.cldc.isolate.*;
 import com.sun.midp.midlet.MIDletSuite;
 
 import com.sun.midp.midletsuite.MIDletSuiteStorage;
+import com.sun.midp.midletsuite.DynamicComponentStorage;
 
 import com.sun.midp.configurator.Constants;
 
@@ -257,7 +258,9 @@ public class AmsUtil {
          * Include paths to dynamic components belonging to this suite
          * into class path for the new Isolate.
          */
-        ComponentInfo[] ci = midletSuiteStorage.getListOfSuiteComponents(id);
+        DynamicComponentStorage componentStorage =
+                DynamicComponentStorage.getComponentStorage();
+        ComponentInfo[] ci = componentStorage.getListOfSuiteComponents(id);
 
         if (ci != null && ci.length > 0) {
             /*
@@ -276,7 +279,7 @@ public class AmsUtil {
 
             for (int i = 0; i < ci.length; i++) {
                 String[] componentPath =
-                        midletSuiteStorage.getSuiteComponentClassPath(
+                        componentStorage.getComponentClassPath(
                                 ci[i].getComponentId());
                 if (componentPath != null) {
                     for (int j = 0; j < componentPath.length; j++) {

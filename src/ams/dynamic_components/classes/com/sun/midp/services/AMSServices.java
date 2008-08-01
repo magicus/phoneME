@@ -56,19 +56,26 @@ public interface AMSServices {
      *
      * @throws IllegalArgumentException if the component with the given ID
      *                                  does not exist
+     * @throws IOException if the component is used now and can't be removed, or
+     *                     other I/O error occured when removing the component
      * @throws SecurityException if the component with the given ID doesn't
      *                           belong to the calling midlet suite
      */
     public void removeComponent(int componentId)
-            throws IllegalArgumentException, SecurityException;
+            throws IllegalArgumentException, IOException, SecurityException;
 
     /**
      * Removes all installed components belonging to the calling midlet.
      *
+     *
+     * @throws IllegalArgumentException if there is no suite with
+     *                                  the specified ID
+     * @throws IOException is thrown, if any component is locked
      * @throws SecurityException if the calling midlet suite has no rights
      *                           to access this API
      */
-    public void removeAllComponents() throws SecurityException;
+    public void removeAllComponents()
+        throws IllegalArgumentException, IOException, SecurityException;
 
     /**
      * Returns description of the components belonging to the calling midlet.

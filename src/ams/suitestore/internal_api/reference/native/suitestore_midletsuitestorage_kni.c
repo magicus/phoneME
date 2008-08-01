@@ -402,46 +402,29 @@ KNIDECL(com_sun_midp_midletsuite_MIDletSuiteStorage_getMidletSuiteFolderId) {
 }
 
 /**
- * Native method String getSuiteOrComponentId0(int, String, String) of
+ * Native method String getSuiteID(String, String) of
  * com.sun.midp.midletsuite.MIDletSuiteStorage.
  * <p>
- * Gets the unique identifier of the MIDlet suite or the dynamic component
- * defined by vendor and name.
+ * Gets the unique identifier of the MIDlet suite defined by vendor and name.
  *
- * @param type defined what to return: 0 - suite ID, 1 - component ID
- * @param vendor name of the vendor that created the suite or component,
+ * @param vendor name of the vendor that created the suite,
  *        as given in a JAD file
- * @param name name of the suite or component, as given in a JAD file
+ * @param name name of the suite, as given in a JAD file
  *
- * @return ID of the midlet suite or component given by vendor and name
- *         or MIDletSuite.UNUSED_SUITE_ID if the suite doesn not exist,
- *         or ComponentInfo.UNUSED_COMPONENT_ID if the component does
- *         not exist
+ * @return ID of the midlet suite given by vendor and name or
+ *         MIDletSuite.UNUSED_SUITE_ID if the suite doesn not exist
  */
 KNIEXPORT KNI_RETURNTYPE_INT
-KNIDECL(com_sun_midp_midletsuite_MIDletSuiteStorage_getSuiteOrComponentId0) {
+KNIDECL(com_sun_midp_midletsuite_MIDletSuiteStorage_getSuiteID) {
     MIDPError error;
     SuiteIdType suiteId = UNUSED_SUITE_ID;
-#if ENABLE_DYNAMIC_COMPONENTS
-    ComponentIdType componentId = UNUSED_COMPONENT_ID;
-    ComponentType type = (KNI_GetParameterAsInt(1) == 0) ?
-        COMPONENT_REGULAR_SUITE : COMPONENT_DYNAMIC;
-#endif
 
     KNI_StartHandles(2);
 
-    GET_PARAMETER_AS_PCSL_STRING(2, vendor)
-    GET_PARAMETER_AS_PCSL_STRING(3, name)
+    GET_PARAMETER_AS_PCSL_STRING(1, vendor)
+    GET_PARAMETER_AS_PCSL_STRING(2, name)
 
-#if ENABLE_DYNAMIC_COMPONENTS
-    if (type == COMPONENT_DYNAMIC) {
-        error = midp_get_component_id(&vendor, &name, &componentId);
-    } else {
-#endif
-        error = midp_get_suite_id(&vendor, &name, &suiteId);
-#if ENABLE_DYNAMIC_COMPONENTS
-    }
-#endif
+    error = midp_get_suite_id(&vendor, &name, &suiteId);
 
     switch(error) {
         case OUT_OF_MEMORY:
@@ -460,11 +443,7 @@ KNIDECL(com_sun_midp_midletsuite_MIDletSuiteStorage_getSuiteOrComponentId0) {
 
     KNI_EndHandles();
 
-#if ENABLE_DYNAMIC_COMPONENTS
-    KNI_ReturnInt((type != COMPONENT_DYNAMIC) ? suiteId : componentId);
-#else
     KNI_ReturnInt(suiteId);
-#endif /* ENABLE_DYNAMIC_COMPONENTS */
 }
 
 /**
@@ -1127,7 +1106,7 @@ KNIDECL(com_sun_midp_midletsuite_MIDletSuiteStorage_enable) {
 }
 
 /**
- * Native method int removeFromStorage(int) of
+ * Native method void remove0(int) of
  * com.sun.midp.midletsuite.MIDletSuiteStorage.
  * <p>
  * Removes a software package given its ID.

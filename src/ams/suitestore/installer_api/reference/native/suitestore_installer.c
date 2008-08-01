@@ -410,7 +410,7 @@ midp_store_suite(const MidpInstallInfo* pInstallInfo,
         pMsd->suiteSize = 0;
         pMsd->nextEntry = NULL;
 
-        status = begin_transaction(TRANSACTION_INSTALL, UNUSED_SUITE_ID,
+        status = begin_transaction(TRANSACTION_INSTALL_SUITE, UNUSED_SUITE_ID,
             &pSuiteData->varSuiteData.pathToJar);
         if (status != ALL_OK) {
             break;

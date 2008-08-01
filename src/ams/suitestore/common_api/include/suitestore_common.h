@@ -101,7 +101,9 @@ typedef struct _Properties {
 typedef enum _ComponentType {
     COMPONENT_REGULAR_SUITE,
     COMPONENT_PREINSTALLED_SUITE,
-    COMPONENT_DYNAMIC
+    COMPONENT_DYNAMIC,
+    /** force enum to be 4 bytes */
+    COMPONENT_DUMMY = 0x10000000
 } ComponentType;
 
 /*

@@ -52,7 +52,8 @@ SUBSYSTEM_AMS_JAVA_FILES += \
     $(AMS_DYNAMIC_COMPONENTS_DIR)/reference/classes/com/sun/midp/services/AMSServicesImpl.java \
     $(AMS_DYNAMIC_COMPONENTS_DIR)/reference/classes/com/sun/midp/services/ComponentInfoImpl.java \
     $(AMS_DYNAMIC_COMPONENTS_DIR)/reference/classes/com/sun/midp/appmanager/AMSServicesEventListener.java \
-    $(AMS_DYNAMIC_COMPONENTS_DIR)/reference/classes/com/sun/midp/midletsuite/DynamicComponentsStorage.java
+    $(AMS_DYNAMIC_COMPONENTS_DIR)/reference/classes/com/sun/midp/midletsuite/DynamicComponentStorage.java \
+    $(AMS_DYNAMIC_COMPONENTS_DIR)/reference/classes/com/sun/midp/installer/DynamicComponentInstaller.java
 
 vpath % $(AMS_DYNAMIC_COMPONENTS_DIR)/reference/native
 
@@ -64,5 +65,5 @@ else
 
 SUBSYSTEM_AMS_JAVA_FILES += \
     $(AMS_DYNAMIC_COMPONENTS_DIR)/stubs/classes/com/sun/midp/appmanager/AMSServicesEventListener.java \
-    $(AMS_DYNAMIC_COMPONENTS_DIR)/stubs/classes/com/sun/midp/midletsuite/DynamicComponentsStorage.java
+    $(AMS_DYNAMIC_COMPONENTS_DIR)/stubs/classes/com/sun/midp/midletsuite/DynamicComponentStorage.java
 endif

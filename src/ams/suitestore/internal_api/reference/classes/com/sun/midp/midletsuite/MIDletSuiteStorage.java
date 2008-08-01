@@ -65,13 +65,6 @@ public class MIDletSuiteStorage {
     private static MIDletSuiteStorage masterStorage;
 
     /**
-     * Provides implementation for API dealing with dynamically loaded
-     * components. This functionality is optional, the implementation
-     * is stubbed out until built with USE_DYNAMIC_COMPONENTS=true.
-     */
-    private static DynamicComponentStorage componentStorage;
-
-    /**
      * Initializes the security token for this class, so it can
      * perform actions that a normal MIDlet Suite cannot.
      *
@@ -137,7 +130,6 @@ public class MIDletSuiteStorage {
     private static MIDletSuiteStorage getMasterStorage() {
         if (masterStorage == null) {
             masterStorage    = new MIDletSuiteStorage();
-            componentStorage = new DynamicComponentStorage();
 
             int status = loadSuitesIcons0();
             if (Logging.REPORT_LEVEL <= Logging.ERROR) {
@@ -262,18 +254,6 @@ public class MIDletSuiteStorage {
     }
 
     /**
-     * Get the midlet suite component's class path including a path to the MONET
-     * image of the specified component and a path to the suite's jar file.
-     *
-     * @param componentId unique ID of the dynamic component
-     *
-     * @return class path or null if the component does not exist
-     */
-    public synchronized String[] getSuiteComponentClassPath(int componentId) {
-        return componentStorage.getSuiteComponentClassPath(componentId);
-    }
-
-    /**
      * Loads the cached icons from the permanent storage into memory.
      *
      * @return status code (0 if no errors) 
@@ -312,22 +292,6 @@ public class MIDletSuiteStorage {
      */
     public native void getMIDletSuiteInfoImpl0(int id,
         MIDletSuiteInfo msi) throws IOException, IllegalArgumentException;
-
-    /**
-     * Reads information about the installed midlet suite's components
-     * from the storage.
-     *
-     * @param componentId unique ID of the component
-     * @param ci ComponentInfo object to fill with the information about
-     *           the midlet suite's component having the given ID
-     *
-     * @exception IOException if an the information cannot be read
-     * @exception IllegalArgumentException if suiteId is invalid or ci is null
-     */
-    public void getSuiteComponentInfo(int componentId,
-            ComponentInfo ci) throws IOException, IllegalArgumentException {
-        componentStorage.getSuiteComponentInfoImpl0(componentId, ci);
-    }
 
     /**
      * Get the path for the MONET image of the specified suite.
@@ -375,43 +339,9 @@ public class MIDletSuiteStorage {
      * @return suite ID of the midlet suite given by vendor and name
      *         or MIDletSuite.UNUSED_SUITE_ID if the suite does not exist
      */
-    public static int getSuiteID(String vendor, String name) {
-        return getSuiteOrComponentId0(0, vendor, name);
-    }
-
-    /**
-     * Gets the unique identifier of MIDlet suite's dynamic component.
-     *
-     * @param vendor name of the vendor that created the component, as
-     *        given in a JAD file
-     * @param name name of the component, as given in a JAD file
-     *
-     * @return ID of the midlet suite's component given by vendor and name
-     *         or ComponentInfo.UNUSED_COMPONENT_ID if the component does
-     *         not exist
-     */
-    public static int getSuiteComponentId(String vendor, String name) {
-        return getSuiteOrComponentId0(1, vendor, name);
-    }
+    public static native int getSuiteID(String vendor, String name);
 
     // -------------- Installer related functionality ---------------
-
-    /**
-     * Gets the unique identifier of the MIDlet suite or the dynamic component
-     * defined by vendor and name.
-     *
-     * @param type defined what to return: 0 - suite ID, 1 - component ID
-     * @param vendor name of the vendor that created the suite or component,
-     *        as given in a JAD file
-     * @param name name of the suite or component, as given in a JAD file
-     *
-     * @return ID of the midlet suite or component given by vendor and name
-     *         or MIDletSuite.UNUSED_SUITE_ID if the suite doesn not exist,
-     *         or ComponentInfo.UNUSED_COMPONENT_ID if the component does
-     *         not exist
-     */
-    private native static int getSuiteOrComponentId0(int type, String vendor,
-                                                     String name);
 
     /**
      * Get the installation information of a suite.
@@ -443,23 +373,11 @@ public class MIDletSuiteStorage {
 
     /**
      * Returns a unique identifier of MIDlet suite.
-     * Constructed from the combination
-     * of the values of the <code>MIDlet-Name</code> and
-     * <code>MIDlet-Vendor</code> attributes.
      *
      * @return the platform-specific storage name of the application
      *          given by vendorName and appName
      */
     public native int createSuiteID();
-
-    /**
-     * Returns a unique identifier of a dynamic component.
-     *
-     * @return platform-specific id of the component
-     */
-    public int createSuiteComponentID() {
-        return componentStorage.createSuiteComponentID();
-    }
 
     /**
      * Stores or updates a midlet suite.
@@ -525,57 +443,6 @@ public class MIDletSuiteStorage {
 
         nativeStoreSuite(installInfo, suiteSettings, msi, null,
             strJadProperties, strJarProperties);
-    }
-
-    /**
-     * Stores or updates a midlet suite's dynamic component.
-     *
-     * @param installInfo structure containing the following information:<br>
-     * <pre>
-     *     id - unique ID of the suite;
-     *     jadUrl - where the JAD came from, can be null;
-     *     jarUrl - where the JAR came from;
-     *     jarFilename - name of the downloaded MIDlet suite jar file;
-     *     suiteName - name of the suite;
-     *     suiteVendor - vendor of the suite;
-     *     authPath - authPath if signed, the authorization path starting
-     *                with the most trusted authority;
-     *     domain - security domain of the suite;
-     *     trusted - true if suite is trusted;
-     *     verifyHash - may contain hash value of the suite with
-     *                  preverified classes or may be NULL;
-     * </pre>
-     *
-     * @param suiteSettings structure containing the following information:<br>
-     * <pre>
-     *     permissions - permissions for the suite;
-     *     pushInterruptSetting - defines if this MIDlet suite interrupt
-     *                            other suites;
-     *     pushOptions - user options for push interrupts;
-     *     suiteId - unique ID of the suite, must be equal to the one given
-     *               in installInfo;
-     *     boolean enabled - if true, MIDlet from this suite can be run;
-     * </pre>
-     *
-     * @param displayName name of the component to display to user
-     *
-     * @param jadProps properties the JAD as an array of strings in
-     *        key/value pair order, can be null if jadUrl is null
-     *
-     * @param jarProps properties of the manifest as an array of strings
-     *        in key/value pair order
-     *
-     * @exception IOException is thrown, if an I/O error occurs during
-     * storing the suite
-     * @exception MIDletSuiteLockedException is thrown, if the MIDletSuite is
-     * locked
-     */
-    public synchronized void storeSuiteComponent(InstallInfo installInfo,
-        SuiteSettings suiteSettings, String displayName,
-            Properties jadProps, Properties jarProps)
-                throws IOException, MIDletSuiteLockedException {
-        componentStorage.storeSuiteComponent(this, installInfo, suiteSettings,
-                displayName, jadProps, jarProps);
     }
 
     /**
@@ -842,24 +709,6 @@ public class MIDletSuiteStorage {
         }
 
         return array;
-    }
-
-    /**
-     * Returns a list of all components belonging to the given midlet suite.
-     * 
-     * @param suiteId ID of a MIDlet suite
-     *
-     * @return an array of ComponentInfoImpl structures filled with the
-     *         information about the installed components, or null
-     *         if there are no components belonging to the given suite
-     *
-     * @exception IllegalArgumentException if the given suite id is invalid 
-     * @exception SecurityException if the caller does not have permission
-     *                              to access this API
-     */
-    public synchronized ComponentInfo[] getListOfSuiteComponents(int suiteId)
-            throws IllegalArgumentException, SecurityException {
-        return componentStorage.getListOfSuiteComponents(suiteId);
     }
 
     /**

@@ -64,8 +64,6 @@ import com.sun.midp.log.LogChannels;
 
 import com.sun.midp.configurator.Constants;
 
-import com.sun.midp.services.ComponentInfo;
-
 /**
  * An Installer manages MIDlet suites and libraries
  * present in a Java application environment.  An MIDlet suite
@@ -229,6 +227,7 @@ public abstract class Installer {
 
         return accessControlContext;
     }
+    
     /**
      * Installs a software package from the given URL. The URL is assumed
      * refer to an application descriptor.
@@ -364,61 +363,6 @@ public abstract class Installer {
         state.storageId = storageId;
 
         return performInstall();
-    }
-
-    /**
-     * Installs the component pointed by the given URL.
-     *
-     * IMPL_NOTE: probably this method should be refactored into a separate
-     *            library to reduce the footprint when
-     *            USE_DYNAMIC_COMPONENTS=false.
-     *
-     * @param suiteId ID of the suite that owns the component being installed
-     * @param url HTTP URL pointing to the application descriptor
-     *            or to the jar file of the component that must
-     *            be installed
-     * @param name user-friendly name of the component
-     *
-     * @return unique component identifier
-     *
-     * @exception IOException if the installation failed
-     * @exception InvalidJadException if the downloaded JAR is invalid
-     * @exception MIDletSuiteLockedException is thrown, if the MIDletSuite is
-     *            locked
-     * @exception SecurityException if the caller does not have permission
-     *            to install components
-     */
-    public int installComponent(int suiteId, String url, String name)
-            throws IOException, MIDletSuiteLockedException,
-                InvalidJadException, SecurityException {
-        int componentId;
-
-        info.id = suiteId;
-        info.isSuiteComponent = true;
-
-        try {
-            componentId = installJad(url, Constants.INTERNAL_STORAGE_ID,
-                                     true, true, null);
-        } catch (InvalidJadException ije) {
-            int reason = ije.getReason();
-            if (reason != InvalidJadException.INVALID_JAD_TYPE) {
-                throw ije;
-            }
-
-            // media type of JAD was wrong, it could be a JAR
-            String mediaType = ije.getExtraData();
-
-            if (Installer.JAR_MT_1.equals(mediaType) ||
-                Installer.JAR_MT_2.equals(mediaType)) {
-                // re-run as a JAR only install
-                componentId = installJar(url, name,
-                    Constants.INTERNAL_STORAGE_ID, true, true, null);
-            } else {
-                throw ije;
-            }
-        }
-
-        return componentId;
     }
 
     /**
@@ -630,46 +574,10 @@ public abstract class Installer {
                     state.jadEncoding);
         }
 
-        if (!info.isSuiteComponent) {
-            // check MIDlet-* attributes only if this is not a dynamic component
-            info.suiteName = state.jadProps.getProperty(
-                MIDletSuite.SUITE_NAME_PROP);
-            if (info.suiteName == null || info.suiteName.length() == 0) {
-                postInstallMsgBackToProvider(OtaNotifier.INVALID_JAD_MSG);
-                throw new
-                    InvalidJadException(InvalidJadException.MISSING_SUITE_NAME);
-            }
-
-            info.suiteVendor = state.jadProps.getProperty(MIDletSuite.VENDOR_PROP);
-            if (info.suiteVendor == null || info.suiteVendor.length() == 0) {
-                postInstallMsgBackToProvider(OtaNotifier.INVALID_JAD_MSG);
-                throw new
-                    InvalidJadException(InvalidJadException.MISSING_VENDOR);
-            }
-
-            info.suiteVersion = state.jadProps.getProperty(
-                MIDletSuite.VERSION_PROP);
-            if (info.suiteVersion == null || info.suiteVersion.length() == 0) {
-                postInstallMsgBackToProvider(OtaNotifier.INVALID_JAD_MSG);
-                throw new
-                    InvalidJadException(InvalidJadException.MISSING_VERSION);
-            }
-
-            try {
-                checkVersionFormat(info.suiteVersion);
-            } catch (NumberFormatException nfe) {
-                postInstallMsgBackToProvider(OtaNotifier.INVALID_JAD_MSG);
-                throw new InvalidJadException(
-                      InvalidJadException.INVALID_VERSION);
-            }
-
-            info.id = state.midletSuiteStorage.createSuiteID();
-        } else {
-            info.componentId =
-                    state.midletSuiteStorage.createSuiteComponentID();
-        }
-
+        checkJadAttributes();
+        assignNewId();
         checkPreviousVersion();
+
         state.nextStep++;
     }
 
@@ -968,59 +876,8 @@ public abstract class Installer {
             } else {
                 info.expectedJarSize = bytesDownloaded;
 
-                if (!info.isSuiteComponent) {
-                    /*
-                     * Check MIDlet-* attributes only if this is
-                     * not a dynamic component.
-                     */
-                    info.suiteName = state.jarProps.getProperty(
-                        MIDletSuite.SUITE_NAME_PROP);
-                    if (info.suiteName == null ||
-                            info.suiteName.length() == 0) {
-                        postInstallMsgBackToProvider(
-                            OtaNotifier.INVALID_JAR_MSG);
-                        throw new InvalidJadException(
-                             InvalidJadException.MISSING_SUITE_NAME);
-                    }
-
-                    info.suiteVendor = state.jarProps.getProperty(
-                        MIDletSuite.VENDOR_PROP);
-                    if (info.suiteVendor == null ||
-                            info.suiteVendor.length() == 0) {
-                        postInstallMsgBackToProvider(
-                            OtaNotifier.INVALID_JAR_MSG);
-                        throw new InvalidJadException(
-                             InvalidJadException.MISSING_VENDOR);
-                    }
-
-                    info.suiteVersion = state.jarProps.getProperty(
-                        MIDletSuite.VERSION_PROP);
-                    if (info.suiteVersion == null ||
-                            info.suiteVersion.length() == 0) {
-                        postInstallMsgBackToProvider(
-                            OtaNotifier.INVALID_JAR_MSG);
-                        throw new InvalidJadException(
-                             InvalidJadException.MISSING_VERSION);
-                    }
-
-                    try {
-                        checkVersionFormat(info.suiteVersion);
-                    } catch (NumberFormatException nfe) {
-                        postInstallMsgBackToProvider(
-                            OtaNotifier.INVALID_JAR_MSG);
-                        throw new InvalidJadException(
-                             InvalidJadException.INVALID_VERSION);
-                    }
-
-                    info.id = state.midletSuiteStorage.createSuiteID();
-                } else {
-                    /*
-                     * IMPL_NOTE: appropriate attributes must be checked for
-                     *            dynamic components.
-                     */
-                    info.componentId =
-                            state.midletSuiteStorage.createSuiteComponentID();
-                }
+                checkJarAttributes();
+                assignNewId();
 
                 // if already installed, check the domain of the JAR URL
                 checkPreviousVersion();
@@ -1302,43 +1159,7 @@ public abstract class Installer {
              * Store suite will remove the suite including push connections,
              * if there an error, but may not remove the temp jar file.
              */
-            MIDletInfo midletInfo = state.getMidletInfo();
-            String midletClassNameToRun = null, iconName;
-
-            iconName = state.getAppProperty("MIDlet-Icon");
-            if (iconName != null) {
-                iconName = iconName.trim();
-            }
-
-            if (midletInfo != null) {
-                midletClassNameToRun = midletInfo.classname;
-                if (iconName == null) {
-                    // If an icon for the suite is not specified,
-                    // use the first midlet's icon.
-                    iconName = midletInfo.icon;
-                }
-            }
-            if (!info.isSuiteComponent) {
-                MIDletSuiteInfo msi = new MIDletSuiteInfo(info.id);
-
-                msi.displayName = state.getDisplayName();
-                msi.midletToRun = midletClassNameToRun;
-                msi.numberOfMidlets = state.getNumberOfMIDlets();
-                /* default is to enable a newly installed suite */
-                msi.enabled = true;
-                msi.trusted = info.trusted;
-                msi.preinstalled = false;
-                msi.iconName = iconName;
-                msi.storageId = state.storageId;
-
-                state.midletSuiteStorage.storeSuite(
-                        info, settings, msi, state.jadProps, state.jarProps);
-            } else {
-                // this is a dynamic component
-                state.midletSuiteStorage.storeSuiteComponent(
-                        info, settings, state.getDisplayName(),
-                            state.jadProps, state.jarProps);
-            }
+            storeUnit();
         } catch (Throwable e) {
             state.file.delete(info.jarFilename);
             
@@ -1496,6 +1317,151 @@ public abstract class Installer {
     protected abstract int downloadJAR(String filename) throws IOException;
 
     /**
+     * Checks that all necessary attributes are present in JAD and are valid.
+     *
+     * May be overloaded by subclasses that require presence of
+     * different attributes in JAD during the installation.
+     *
+     * @throws InvalidJadException if any mandatory attribute is missing in
+     *                             the JAD file or its value is invalid
+     */
+    protected void checkJadAttributes() throws InvalidJadException {
+        info.suiteName = state.jadProps.getProperty(
+            MIDletSuite.SUITE_NAME_PROP);
+        if (info.suiteName == null || info.suiteName.length() == 0) {
+            postInstallMsgBackToProvider(OtaNotifier.INVALID_JAD_MSG);
+            throw new
+                InvalidJadException(InvalidJadException.MISSING_SUITE_NAME);
+        }
+
+        info.suiteVendor = state.jadProps.getProperty(MIDletSuite.VENDOR_PROP);
+        if (info.suiteVendor == null || info.suiteVendor.length() == 0) {
+            postInstallMsgBackToProvider(OtaNotifier.INVALID_JAD_MSG);
+            throw new
+                InvalidJadException(InvalidJadException.MISSING_VENDOR);
+        }
+
+        info.suiteVersion = state.jadProps.getProperty(
+            MIDletSuite.VERSION_PROP);
+        if (info.suiteVersion == null || info.suiteVersion.length() == 0) {
+            postInstallMsgBackToProvider(OtaNotifier.INVALID_JAD_MSG);
+            throw new
+                InvalidJadException(InvalidJadException.MISSING_VERSION);
+        }
+
+        try {
+            checkVersionFormat(info.suiteVersion);
+        } catch (NumberFormatException nfe) {
+            postInstallMsgBackToProvider(OtaNotifier.INVALID_JAD_MSG);
+            throw new InvalidJadException(
+                  InvalidJadException.INVALID_VERSION);
+        }
+    }
+
+    /**
+     * Checks that all necessary attributes are present in the manifest
+     * in the JAR file and are valid.
+     *
+     * May be overloaded by subclasses that require presence of
+     * different attributes in manifest during the installation.
+     *
+     * @throws InvalidJadException if any mandatory attribute is missing in
+     *                             the manifest or its value is invalid
+     */
+    protected void checkJarAttributes() throws InvalidJadException {
+        /*
+         * Check MIDlet-* attributes only if this is
+         * not a dynamic component.
+         */
+        info.suiteName = state.jarProps.getProperty(
+            MIDletSuite.SUITE_NAME_PROP);
+        if (info.suiteName == null ||
+                info.suiteName.length() == 0) {
+            postInstallMsgBackToProvider(
+                OtaNotifier.INVALID_JAR_MSG);
+            throw new InvalidJadException(
+                 InvalidJadException.MISSING_SUITE_NAME);
+        }
+
+        info.suiteVendor = state.jarProps.getProperty(
+            MIDletSuite.VENDOR_PROP);
+        if (info.suiteVendor == null ||
+                info.suiteVendor.length() == 0) {
+            postInstallMsgBackToProvider(
+                OtaNotifier.INVALID_JAR_MSG);
+            throw new InvalidJadException(
+                 InvalidJadException.MISSING_VENDOR);
+        }
+
+        info.suiteVersion = state.jarProps.getProperty(
+            MIDletSuite.VERSION_PROP);
+        if (info.suiteVersion == null ||
+                info.suiteVersion.length() == 0) {
+            postInstallMsgBackToProvider(
+                OtaNotifier.INVALID_JAR_MSG);
+            throw new InvalidJadException(
+                 InvalidJadException.MISSING_VERSION);
+        }
+
+        try {
+            checkVersionFormat(info.suiteVersion);
+        } catch (NumberFormatException nfe) {
+            postInstallMsgBackToProvider(
+                OtaNotifier.INVALID_JAR_MSG);
+            throw new InvalidJadException(
+                 InvalidJadException.INVALID_VERSION);
+        }
+    }
+
+    /**
+     * Assigns a new ID to the midlet suite being installed.
+     * May be overloaded by subclasses that use different storages.
+     */
+    protected void assignNewId() {
+        info.id = state.midletSuiteStorage.createSuiteID();
+    }
+
+    /**
+     * Stores the midlet suite being installed in the midlet suite storage.
+     *
+     * @throws IOException if an I/O error occured when storing the suite
+     * @throws MIDletSuiteLockedException if the suite is locked
+     */
+    protected void storeUnit() throws IOException, MIDletSuiteLockedException {
+        MIDletInfo midletInfo = state.getMidletInfo();
+        String midletClassNameToRun = null, iconName;
+
+        iconName = state.getAppProperty("MIDlet-Icon");
+        if (iconName != null) {
+            iconName = iconName.trim();
+        }
+
+        if (midletInfo != null) {
+            midletClassNameToRun = midletInfo.classname;
+            if (iconName == null) {
+                // If an icon for the suite is not specified,
+                // use the first midlet's icon.
+                iconName = midletInfo.icon;
+            }
+        }
+
+        MIDletSuiteInfo msi = new MIDletSuiteInfo(info.id);
+
+        msi.displayName = state.getDisplayName();
+        msi.midletToRun = midletClassNameToRun;
+        msi.numberOfMidlets = state.getNumberOfMIDlets();
+        /* default is to enable a newly installed suite */
+        msi.enabled = true;
+        msi.trusted = info.trusted;
+        msi.preinstalled = false;
+        msi.iconName = iconName;
+        msi.storageId = state.storageId;
+
+        state.midletSuiteStorage.storeSuite(
+                info, settings, msi, state.jadProps, state.jarProps);
+    }
+
+    /**
      * If the JAD belongs to an installed suite, check the URL against the
      * installed one. Set the state.exception if the user needs to be warned.
      *
@@ -1543,89 +1509,61 @@ public abstract class Installer {
         int cmpResult;
 
         // Check if app already exists
-        if (!info.isSuiteComponent) {
-            id = MIDletSuiteStorage.getSuiteID(info.suiteVendor,
-                                               info.suiteName);
-            if (id == MIDletSuite.UNUSED_SUITE_ID) {
-                // there is no previous version
-                return;
-            }
-        } else {
-            id = MIDletSuiteStorage.getSuiteComponentId(info.suiteVendor,
-                                                        info.suiteName);
-            if (id == ComponentInfo.UNUSED_COMPONENT_ID) {
-                // there is no previous version
-                return;
-            }
+        id = MIDletSuiteStorage.getSuiteID(info.suiteVendor,
+                                           info.suiteName);
+        if (id == MIDletSuite.UNUSED_SUITE_ID) {
+            // there is no previous version
+            return;
         }
 
         try {
-            if (!info.isSuiteComponent) {
-                midletSuite =
-                  state.midletSuiteStorage.getMIDletSuite(id, true);
+            midletSuite =
+              state.midletSuiteStorage.getMIDletSuite(id, true);
 
-                if (midletSuite == null) {
-                    // there is no previous version
-                    return;
-                }
-                checkVersionFormat(info.suiteVersion);
-
-                state.isPreviousVersion = true;
-
-                // This is now an update, use the old ID
-                info.id = id;
-
-                state.previousSuite = midletSuite;
-                state.previousInstallInfo = midletSuite.getInstallInfo();
-
-                if (state.force) {
-                    // do not ask questions, force an overwrite
-                    return;
-                }
-
-                // If it does, check version information
-                installedVersion = midletSuite.getProperty(
-                    MIDletSuite.VERSION_PROP);
-                cmpResult = vercmp(info.suiteVersion,
-                                   installedVersion);
-                if (cmpResult < 0) {
-                    // older version, warn user
-                    state.exception = new InvalidJadException(
-                                      InvalidJadException.OLD_VERSION,
-                                      installedVersion);
-                    return;
-                }
-
-                if (cmpResult == 0) {
-                    // already installed, warn user
-                    state.exception = new InvalidJadException(
-                                      InvalidJadException.ALREADY_INSTALLED,
-                                      installedVersion);
-                    return;
-                }
-
-                // new version, warn user
-                state.exception = new InvalidJadException(
-                                      InvalidJadException.NEW_VERSION,
-                                      installedVersion);
+            if (midletSuite == null) {
+                // there is no previous version
                 return;
-            } else {
-                // this is a dynamic component
-                info.componentId = id;
+            }
+            checkVersionFormat(info.suiteVersion);
 
-                if (state.force) {
-                    // do not ask questions, force an overwrite
-                    return;
-                }
-                
-                /*
-                 * Don't check version, just inform the user that the
-                 * component is already installed.
-                 */
+            state.isPreviousVersion = true;
+
+            // This is now an update, use the old ID
+            info.id = id;
+
+            state.previousSuite = midletSuite;
+            state.previousInstallInfo = midletSuite.getInstallInfo();
+
+            if (state.force) {
+                // do not ask questions, force an overwrite
+                return;
+            }
+
+            // If it does, check version information
+            installedVersion = midletSuite.getProperty(
+                MIDletSuite.VERSION_PROP);
+            cmpResult = vercmp(info.suiteVersion,
+                               installedVersion);
+            if (cmpResult < 0) {
+                // older version, warn user
+                state.exception = new InvalidJadException(
+                                  InvalidJadException.OLD_VERSION,
+                                  installedVersion);
+                return;
+            }
+
+            if (cmpResult == 0) {
+                // already installed, warn user
                 state.exception = new InvalidJadException(
                                   InvalidJadException.ALREADY_INSTALLED,
-                                  "n/a");
+                                  installedVersion);
+                return;
             }
+
+            // new version, warn user
+            state.exception = new InvalidJadException(
+                                  InvalidJadException.NEW_VERSION,
+                                  installedVersion);
         } catch (MIDletSuiteCorruptedException mce) {
             if (state.listener != null) {
                 state.listener.updateStatus(CORRUPTED_SUITE, state);

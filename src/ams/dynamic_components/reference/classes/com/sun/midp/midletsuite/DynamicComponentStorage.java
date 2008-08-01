@@ -37,22 +37,66 @@ import com.sun.midp.services.ComponentInfoImpl;
 
 import com.sun.midp.log.Logging;
 import com.sun.midp.log.LogChannels;
+import com.sun.midp.security.Permissions;
+import com.sun.j2me.security.AccessController;
 
-/** Storage for Dynamically Loaded Components. */
-class DynamicComponentStorage {
+/**
+ * Storage for Dynamically Loaded Components.
+ *
+ * This functionality is optional, the stubbed out implementation
+ * is used until built with USE_DYNAMIC_COMPONENTS=true.
+ */
+public class DynamicComponentStorage {
+
+    /** Holds an instance of DynamicComponentStorage. */
+    private static DynamicComponentStorage componentStorage = null;
 
     /**
-     * Constructs a Dynamic Component Storage object.
+     * Private constructor to prevent direct instantiations.
      */
-    DynamicComponentStorage() {
+    private DynamicComponentStorage() {
     }
+
+    /**
+     * Returns a reference to the singleton MIDlet suite storage object.
+     * <p>
+     * Method requires the com.sun.midp.ams permission.
+     *
+     * @return the storage reference
+     *
+     * @exception SecurityException if the caller does not have permission
+     *   to install software
+     */
+    public static DynamicComponentStorage getComponentStorage()
+            throws SecurityException {
+        AccessController.checkPermission(Permissions.AMS_PERMISSION_NAME);
+
+        if (componentStorage == null) {
+            componentStorage = new DynamicComponentStorage();
+        }
+
+        return componentStorage;
+    }
+
+    /**
+     * Gets the unique identifier of MIDlet suite's dynamic component.
+     *
+     * @param vendor name of the vendor that created the component, as
+     *        given in a JAD file
+     * @param name name of the component, as given in a JAD file
+     *
+     * @return ID of the midlet suite's component given by vendor and name
+     *         or ComponentInfo.UNUSED_COMPONENT_ID if the component does
+     *         not exist
+     */
+    public native int getComponentId(String vendor, String name);
 
     /**
      * Returns a unique identifier of a dynamic component.
      *
      * @return platform-specific id of the component
      */
-    public native int createSuiteComponentID();
+    public native int createComponentId();
 
     /**
      * Stores or updates a midlet suite's dynamic component.
@@ -99,7 +143,7 @@ class DynamicComponentStorage {
      * @exception MIDletSuiteLockedException is thrown, if the MIDletSuite is
      * locked
      */
-    public synchronized void storeSuiteComponent(
+    public synchronized void storeComponent(
             MIDletSuiteStorage suiteStorage, InstallInfo installInfo,
                 SuiteSettings suiteSettings, String displayName,
                     Properties jadProps, Properties jarProps)
@@ -124,6 +168,37 @@ class DynamicComponentStorage {
     }
 
     /**
+     * Removes a dynamic component given its ID.
+     * <p>
+     * If the component is in use it must continue to be available
+     * to the other components that are using it.
+     *
+     * @param componentId ID of the component ot remove
+     *
+     * @throws IllegalArgumentException if the component cannot be found
+     * @throws MIDletSuiteLockedException is thrown, if the component is
+     *                                    locked
+     */
+    public native void removeComponent(int componentId)
+            throws IllegalArgumentException, MIDletSuiteLockedException;
+
+    /**
+     * Removes all dynamic components belonging to the given suite.
+     * <p>
+     * If any component is in use, no components are removed, and
+     * an exception is thrown.
+     *
+     * @param suiteId ID of the suite whose components must be removed
+     *
+     * @throws IllegalArgumentException if there is no suite with
+     *                                  the specified ID
+     * @throws MIDletSuiteLockedException is thrown, if any component is
+     *                                    locked
+     */
+    public native void removeAllComponents(int suiteId)
+            throws IllegalArgumentException, MIDletSuiteLockedException;
+
+    /**
      * Get the midlet suite component's class path including a path to the MONET
      * image of the specified component and a path to the suite's jar file.
      *
@@ -131,8 +206,8 @@ class DynamicComponentStorage {
      *
      * @return class path or null if the component does not exist
      */
-    public synchronized String[] getSuiteComponentClassPath(int componentId) {
-        String jarFile = getSuiteComponentJarPath(componentId);
+    public synchronized String[] getComponentClassPath(int componentId) {
+        String jarFile = getComponentJarPath(componentId);
 
         /*
             IMPL_NOTE: currently MONET is not supported for dynamic components
@@ -206,7 +281,7 @@ class DynamicComponentStorage {
      * @exception java.io.IOException if an the information cannot be read
      * @exception IllegalArgumentException if suiteId is invalid or ci is null
      */
-    public native void getSuiteComponentInfoImpl0(int componentId,
+    public native void getComponentInfo(int componentId,
         ComponentInfo ci) throws IOException, IllegalArgumentException;
 
     /**
@@ -216,7 +291,7 @@ class DynamicComponentStorage {
      *
      * @return class path or null if the component does not exist
      */
-    public native String getSuiteComponentJarPath(int componentId);
+    public native String getComponentJarPath(int componentId);
 
     /**
      * Reads information about the installed midlet suite's components

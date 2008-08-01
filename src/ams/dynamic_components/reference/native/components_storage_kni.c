@@ -41,8 +41,7 @@
  * @return class path or null if the component does not exist
  */
 KNIEXPORT KNI_RETURNTYPE_OBJECT
-KNIDECL(com_sun_midp_midletsuite_DynamicComponentStorage_getSuiteComponentJarPath) {
-#if ENABLE_DYNAMIC_COMPONENTS
+KNIDECL(com_sun_midp_midletsuite_DynamicComponentStorage_getComponentJarPath) {
     ComponentIdType componentId;
     MIDPError status;
     pcsl_string classPath = PCSL_STRING_NULL;
@@ -63,12 +62,6 @@ KNIDECL(com_sun_midp_midletsuite_DynamicComponentStorage_getSuiteComponentJarPat
     }
 
     KNI_EndHandlesAndReturnObject(resultHandle);
-#else /*  ENABLE_DYNAMIC_COMPONENTS */
-    KNI_StartHandles(1);
-    KNI_DeclareHandle(resultHandle);
-    KNI_ReleaseHandle(resultHandle);
-    KNI_EndHandlesAndReturnObject(resultHandle);
-#endif /*  ENABLE_DYNAMIC_COMPONENTS */
 }
 
 /**
@@ -77,10 +70,8 @@ KNIDECL(com_sun_midp_midletsuite_DynamicComponentStorage_getSuiteComponentJarPat
  * @return platform-specific id of the component
  */
 KNIEXPORT KNI_RETURNTYPE_INT
-KNIDECL(com_sun_midp_midletsuite_DynamicComponentStorage_createSuiteComponentID) {
+KNIDECL(com_sun_midp_midletsuite_DynamicComponentStorage_createComponentId) {
     ComponentIdType componentId = UNUSED_COMPONENT_ID;
-
-#if ENABLE_DYNAMIC_COMPONENTS
     MIDPError rc;
 
     rc = midp_create_component_id(&componentId);
@@ -92,9 +83,216 @@ KNIDECL(com_sun_midp_midletsuite_DynamicComponentStorage_createSuiteComponentID)
         }
     }
 
-#endif /* ENABLE_DYNAMIC_COMPONENTS */
+    KNI_ReturnInt(componentId);
+}
+
+/**
+ * Native method String getComponentId(String, String) of
+ * com.sun.midp.midletsuite.DynamicComponentStorage.
+ * <p>
+ * Gets the unique identifier of the dynamic component defined by its
+ * vendor and name.
+ *
+ * @param vendor name of the vendor that created the component,
+ *        as given in a JAD file
+ * @param name name of the component, as given in a JAD file
+ *
+ * @return ID of the component given by vendor and name or
+ *         ComponentInfo.UNUSED_COMPONENT_ID if the component
+ *         does not exist
+ */
+KNIEXPORT KNI_RETURNTYPE_INT
+KNIDECL(com_sun_midp_midletsuite_DynamicComponentStorage_getComponentId) {
+    ComponentIdType componentId = UNUSED_COMPONENT_ID;
+    MIDPError error;
+
+    KNI_StartHandles(2);
+
+    GET_PARAMETER_AS_PCSL_STRING(1, vendor)
+    GET_PARAMETER_AS_PCSL_STRING(2, name)
+
+    error = midp_get_component_id(&vendor, &name, &componentId);
+
+    switch(error) {
+        case OUT_OF_MEMORY:
+            KNI_ThrowNew(midpOutOfMemoryError, NULL);
+            break;
+        case SUITE_CORRUPTED_ERROR:
+            KNI_ThrowNew(midpIOException, NULL);
+            break;
+        case NOT_FOUND: /* this is ok, a new component ID was created */
+        default:
+            break;
+    }
+
+    RELEASE_PCSL_STRING_PARAMETER
+    RELEASE_PCSL_STRING_PARAMETER
+
+    KNI_EndHandles();
 
     KNI_ReturnInt(componentId);
+}
+
+/**
+ * Removes the files belonging to the specified component, or to all
+ * components owned by the given suite.
+ *
+ * @param suiteId ID of the suite whose components are being removed
+ * @param componentId ID of the component to remove or UNUSED_COMPONENT_ID
+ *                    if all components of the suite are being removed 
+ *
+ * @return status code, ALL_OK if no errors
+ */
+static MIDPError
+delete_components_files(SuiteIdType suiteId, ComponentIdType componentId) {
+    pcsl_string componentFileName;
+    char* pszError;
+    int suiteFound = 0;
+    MIDPError status = ALL_OK;
+    MidletSuiteData* pData = g_pSuitesData;
+
+    /* handle the list entries having the given suiteId */
+    while (pData != NULL) {
+        if (pData->suiteId == suiteId) {
+            if (pData->type == COMPONENT_DYNAMIC &&
+                    (componentId == UNUSED_COMPONENT_ID ||
+                        pData->componentId == componentId)) {
+                /* remove the file holding the component */
+                status = get_jar_path(COMPONENT_DYNAMIC,
+                    (jint)pData->componentId, &componentFileName);
+                if (status != ALL_OK) {
+                    break;
+                }
+
+                storage_delete_file(&pszError, &componentFileName);
+                pcsl_string_free(&componentFileName);
+
+                if (pszError != NULL) {
+                    storageFreeError(pszError);
+                    status = IO_ERROR;
+                    break;
+                }
+            } else {
+                suiteFound = 1;
+            }
+        }
+
+        pData = pData->nextEntry;
+    }
+
+    if (status == ALL_OK && suiteFound == 0) {
+        /* suite doesn't exist */
+        status = NOT_FOUND;
+    }
+
+    return status;
+}
+
+/**
+ * Native method void removeComponent(int componentId) of
+ * com.sun.midp.midletsuite.DynamicComponentStorage.
+ * <p>
+ * Removes a dynamic component given its ID.
+ * <p>
+ * If the component is in use it must continue to be available
+ * to the other components that are using it.
+ *
+ * @param componentId ID of the component ot remove
+ *
+ * @throws IllegalArgumentException if the component cannot be found
+ * @throws MIDletSuiteLockedException is thrown, if the component is
+ *                                    locked
+ */
+KNIEXPORT KNI_RETURNTYPE_VOID
+KNIDECL(com_sun_midp_midletsuite_DynamicComponentStorage_removeComponent) {
+    MIDPError status;
+    MidletSuiteData* pData;
+    ComponentIdType componentId = KNI_GetParameterAsInt(1);
+
+    do {
+        /* check that the component exists */
+        pData = get_component_data(componentId);
+        if (pData == NULL) {
+            status = NOT_FOUND;
+            break;
+        }
+
+        status = begin_transaction(TRANSACTION_REMOVE_COMPONENT,
+                                   componentId, NULL);
+        if (status != ALL_OK) {
+            break;
+        }
+
+        status = delete_components_files(pData->suiteId, componentId);
+        if (status != ALL_OK) {
+            break;
+        }
+
+        (void)remove_from_component_list_and_save(pData->suiteId, componentId);
+    } while(0);
+
+    (void)finish_transaction();
+
+    if (status == SUITE_LOCKED) {
+        KNI_ThrowNew(midletsuiteLocked, NULL);
+    } else if (status == BAD_PARAMS) {
+        KNI_ThrowNew(midpIllegalArgumentException, "bad component ID");
+    } else if (status != ALL_OK) {
+        KNI_ThrowNew(midpRuntimeException,
+            (status == OUT_OF_MEMORY) ? "Remove failed" : "Out of memory!");
+    }
+
+    KNI_ReturnVoid();
+}
+
+/**
+ * Native method void removeAllComponents(int suiteId) of
+ * com.sun.midp.midletsuite.DynamicComponentStorage.
+ * <p>
+ * Removes all dynamic components belonging to the given suite.
+ * <p>
+ * If any component is in use, no components are removed, and
+ * an exception is thrown.
+ *
+ * @param suiteId ID of the suite whose components must be removed
+ *
+ * @throws IllegalArgumentException if there is no suite with
+ *                                  the specified ID
+ * @throws MIDletSuiteLockedException is thrown, if any component is
+ *                                    locked
+ */
+KNIEXPORT KNI_RETURNTYPE_VOID
+KNIDECL(com_sun_midp_midletsuite_DynamicComponentStorage_removeAllComponents) {
+    MIDPError status;
+    SuiteIdType suiteId = KNI_GetParameterAsInt(1);
+
+    do {
+        status = begin_transaction(TRANSACTION_REMOVE_ALL_COMPONENTS,
+                                   suiteId, NULL);
+        if (status != ALL_OK) {
+            break;
+        }
+
+        status = delete_components_files(suiteId, UNUSED_COMPONENT_ID);
+        if (status != ALL_OK) {
+            break;
+        }
+        
+        (void)remove_from_component_list_and_save(suiteId, UNUSED_COMPONENT_ID);
+    } while(0);
+
+    (void)finish_transaction();
+
+    if (status == SUITE_LOCKED) {
+        KNI_ThrowNew(midletsuiteLocked, NULL);
+    } else if (status == BAD_PARAMS) {
+        KNI_ThrowNew(midpIllegalArgumentException, "bad component ID");
+    } else if (status != ALL_OK) {
+        KNI_ThrowNew(midpRuntimeException,
+            (status == OUT_OF_MEMORY) ? "Remove failed" : "Out of memory!");
+    }
+
+    KNI_ReturnVoid();
 }
 
 /**
@@ -109,7 +307,6 @@ KNIDECL(com_sun_midp_midletsuite_DynamicComponentStorage_createSuiteComponentID)
  */
 KNIEXPORT KNI_RETURNTYPE_INT
 KNIDECL(com_sun_midp_midletsuite_DynamicComponentStorage_getNumberOfComponents) {
-#if ENABLE_DYNAMIC_COMPONENTS
     int numberOfComponents;
     SuiteIdType suiteId = KNI_GetParameterAsInt(1);
     MIDPError status =
@@ -119,9 +316,6 @@ KNIDECL(com_sun_midp_midletsuite_DynamicComponentStorage_getNumberOfComponents) 
     }
 
     KNI_ReturnInt(numberOfComponents);
-#else  /* ENABLE_DYNAMIC_COMPONENTS */
-    KNI_ReturnInt(0);
-#endif /* ENABLE_DYNAMIC_COMPONENTS */
 }
 
 /*
@@ -137,8 +331,7 @@ KNIDECL(com_sun_midp_midletsuite_DynamicComponentStorage_getNumberOfComponents) 
  */
 KNIEXPORT KNI_RETURNTYPE_VOID
 KNIDECL(
-    com_sun_midp_midletsuite_DynamicComponentStorage_getSuiteComponentInfoImpl0) {
-#if ENABLE_DYNAMIC_COMPONENTS
+    com_sun_midp_midletsuite_DynamicComponentStorage_getComponentInfo) {
     ComponentIdType componentId = KNI_GetParameterAsInt(1);
     MIDPError status = ALL_OK;
 
@@ -189,9 +382,6 @@ KNIDECL(
 
     KNI_EndHandles();
     KNI_ReturnVoid();
-#else /* ENABLE_DYNAMIC_COMPONENTS */
-    KNI_ReturnVoid();
-#endif /* ENABLE_DYNAMIC_COMPONENTS */
 }
 
 /**
@@ -207,7 +397,6 @@ KNIDECL(
  */
 KNIEXPORT KNI_RETURNTYPE_VOID
 KNIDECL(com_sun_midp_midletsuite_DynamicComponentStorage_getSuiteComponentsList) {
-#if ENABLE_DYNAMIC_COMPONENTS
     SuiteIdType suiteId;
     int numberOfComponents = 0, arraySize;
     MidletSuiteData *pData = g_pSuitesData;
@@ -263,7 +452,4 @@ KNIDECL(com_sun_midp_midletsuite_DynamicComponentStorage_getSuiteComponentsList)
 
     KNI_EndHandles();
     KNI_ReturnVoid();
-#else /* ENABLE_DYNAMIC_COMPONENTS */
-    KNI_ReturnVoid();
-#endif /* ENABLE_DYNAMIC_COMPONENTS */
 }

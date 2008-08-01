@@ -379,7 +379,7 @@ midp_remove_suite(SuiteIdType suiteId) {
             break;
         }
 
-        status = begin_transaction(TRANSACTION_REMOVE, suiteId, NULL);
+        status = begin_transaction(TRANSACTION_REMOVE_SUITE, suiteId, NULL);
         if (status != ALL_OK) {
             break;
         }

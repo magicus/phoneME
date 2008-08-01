@@ -162,6 +162,11 @@ PCSL_DEFINE_ASCII_STRING_LITERAL_START(TMP_FILE_EXTENSION)
     {'.', 't', 'm', 'p', '\0'}
 PCSL_DEFINE_ASCII_STRING_LITERAL_END(TMP_FILE_EXTENSION);
 
+/* forward declaration */
+static int
+remove_from_list_and_save_impl(SuiteIdType suiteId, ComponentIdType componentId,
+                               int removeSuiteAndComponents);
+
 /**
  * Initializes the subsystem. This wrapper is used to hide
  * global variables from the suitestore_common library.
@@ -1238,10 +1243,59 @@ write_settings(char** ppszError, SuiteIdType suiteId, jboolean enabled,
  */
 int
 remove_from_suite_list_and_save(SuiteIdType suiteId) {
+    /* 1 means to remove both the suite and its components */
+    return remove_from_list_and_save_impl(suiteId, UNUSED_COMPONENT_ID, 1);
+}
+
+#if ENABLE_DYNAMIC_COMPONENTS
+/**
+ * Removes all components belonging to the given suite from the list
+ * of installed components.
+ * <p>
+ *
+ * @param suiteId ID of the suite owning the components
+ * @param componentId ID of the component to remove, or UNUSED_COMPONENT_ID
+ *                    to remove all components of this suite
+ *
+ * @return  1 if the suite was in the list, 0 if not,
+ *         -1 if out of memory
+ */
+int
+remove_from_component_list_and_save(SuiteIdType suiteId,
+                                    ComponentIdType componentId) {
+    /* 0 means to remove just the suite's components but not the suite itself */
+    return remove_from_list_and_save_impl(suiteId, componentId, 0);
+}
+#endif /* ENABLE_DYNAMIC_COMPONENTS */
+
+/**
+ * Removes all dynamic components belonging to the given suite and optionally
+ * the suite itself from the list of installed suites and components.
+ * <p>
+ * Used from suitestore_midletsuitestorage_kni.c and suitestore_task_manager.c
+ * so it is non-static.
+ *
+ * @param suiteId ID of a suite
+ * @param componentId ID of the component to remove, or UNUSED_COMPONENT_ID
+ *                    to remove all components of this suite
+ * @param removeSuiteAndComponents 1 to remove both the midlet suite and its
+ *                                 components, 0 - just the components
+ *
+ * @return  1 if the suite was in the list, 0 if not,
+ *         -1 if out of memory
+ */
+static int
+remove_from_list_and_save_impl(SuiteIdType suiteId, ComponentIdType componentId,
+                               int removeSuiteAndComponents) {
     char* pszError;
     int status;
     int existed = 0;
     MidletSuiteData *pData, *pPrevData = NULL;
+
+#if !ENABLE_DYNAMIC_COMPONENTS
+    (void)componentId;
+    (void)removeSuiteAndComponents;
+#endif
 
     if (suiteId == UNUSED_SUITE_ID || suiteId == INTERNAL_SUITE_ID) {
         return 0; /* suite was not in the list */
@@ -1255,7 +1309,19 @@ remove_from_suite_list_and_save(SuiteIdType suiteId) {
 
     /* try to find a suite */
     while (pData != NULL) {
-        if (pData->suiteId == suiteId) {
+        if (pData->suiteId == suiteId
+#if ENABLE_DYNAMIC_COMPONENTS
+            /* free the entry if: */
+            /* need to remove both suite and its components OR */
+            && (removeSuiteAndComponents == 1 || (removeSuiteAndComponents == 0
+            /* need to remove dynamic components only AND this is a component */
+                    && pData->type == COMPONENT_DYNAMIC
+                    /* AND need to remove all components OR */
+                    /* this entry has the specified componentId */
+                    && (componentId == UNUSED_COMPONENT_ID ||
+                            pData->componentId == componentId)))
+#endif
+        ) {
             /* remove the entry we have found from the list */
             if (pPrevData) {
                 /* this entry is not the first */

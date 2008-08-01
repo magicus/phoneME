@@ -26,13 +26,13 @@
 
 package com.sun.midp.services;
 
-import com.sun.midp.installer.HttpInstaller;
+import com.sun.midp.installer.DynamicComponentInstaller;
 
 import com.sun.midp.midlet.MIDletStateHandler;
 import com.sun.midp.midlet.MIDletSuite;
 
 import com.sun.midp.midletsuite.MIDletSuiteLockedException;
-import com.sun.midp.midletsuite.MIDletSuiteStorage;
+import com.sun.midp.midletsuite.DynamicComponentStorage;
 
 import com.sun.midp.configurator.Constants;
 import com.sun.midp.events.EventTypes;
@@ -90,7 +90,7 @@ final public class AMSServicesImpl implements AMSServices {
     public int installComponent(String url, String name)
             throws IOException, SecurityException {
         int componentId;
-        HttpInstaller installer = new HttpInstaller();
+        DynamicComponentInstaller installer = new DynamicComponentInstaller();
         MIDletStateHandler msh = MIDletStateHandler.getMidletStateHandler();
         MIDletSuite currSuite = msh.getMIDletSuite();
 
@@ -123,22 +123,44 @@ final public class AMSServicesImpl implements AMSServices {
      *
      * @throws IllegalArgumentException if the component with the given ID
      *                                  does not exist
+     * @throws IOException if the component is used now and can't be removed, or
+     *                     other I/O error occured when removing the component
      * @throws SecurityException if the component with the given ID doesn't
      *                           belong to the calling midlet suite
      */
     public void removeComponent(int componentId)
-            throws IllegalArgumentException, SecurityException {
-        // IMPL_NOTE: must be implemented
+            throws IllegalArgumentException, IOException, SecurityException {
+        DynamicComponentStorage dcs =
+                DynamicComponentStorage.getComponentStorage();
+        try {
+            dcs.removeComponent(componentId);
+        } catch (MIDletSuiteLockedException msle) {
+            throw new IOException("Component is in use: " + msle.getMessage());
+        }
     }
 
     /**
      * Removes all installed components belonging to the calling midlet.
      * 
+     * @throws IllegalArgumentException if there is no suite with
+     *                                  the specified ID
+     * @throws IOException is thrown, if any component is locked
      * @throws SecurityException if the calling midlet suite has no rights
      *                           to access this API
      */
-    public void removeAllComponents() {
-        // IMPL_NOTE: must be implemented
+    public void removeAllComponents()
+            throws IllegalArgumentException, IOException, SecurityException {
+        MIDletStateHandler msh = MIDletStateHandler.getMidletStateHandler();
+        MIDletSuite currSuite = msh.getMIDletSuite();
+        DynamicComponentStorage dcs =
+                DynamicComponentStorage.getComponentStorage();
+
+        try {
+            dcs.removeAllComponents(currSuite.getID());
+        } catch (MIDletSuiteLockedException msle) {
+            throw new IOException("One or more components are in use: "
+                    + msle.getMessage());
+        }
     }
 
     /**
@@ -156,12 +178,13 @@ final public class AMSServicesImpl implements AMSServices {
             throws SecurityException, IOException {
         MIDletSuite currSuite =
                 MIDletStateHandler.getMidletStateHandler().getMIDletSuite();
-        MIDletSuiteStorage mss = MIDletSuiteStorage.getMIDletSuiteStorage();
+        DynamicComponentStorage dcs =
+                DynamicComponentStorage.getComponentStorage();
 
         ComponentInfo[] ci;
 
         try {
-            ci = mss.getListOfSuiteComponents(currSuite.getID());
+            ci = dcs.getListOfSuiteComponents(currSuite.getID());
         } catch (IllegalArgumentException iae) {
             iae.printStackTrace();
             ci = null;
@@ -186,11 +209,12 @@ final public class AMSServicesImpl implements AMSServices {
      */
     public ComponentInfo getComponentInfo(int componentId)
             throws IllegalArgumentException, SecurityException, IOException {
-        MIDletSuiteStorage mss = MIDletSuiteStorage.getMIDletSuiteStorage();
+        DynamicComponentStorage dcs =
+                DynamicComponentStorage.getComponentStorage();
 
         ComponentInfo ci = new ComponentInfoImpl(
                 ComponentInfo.UNUSED_COMPONENT_ID, MIDletSuite.UNUSED_SUITE_ID);
-        mss.getSuiteComponentInfo(componentId, ci);
+        dcs.getComponentInfo(componentId, ci);
 
         return ci;
     }

@@ -54,11 +54,16 @@ extern "C" {
  * Transaction types.
  */
 typedef enum {
-    TRANSACTION_INSTALL,
-    TRANSACTION_REMOVE,
+    TRANSACTION_INSTALL_SUITE,
+    TRANSACTION_REMOVE_SUITE,
     TRANSACTION_ENABLE_SUITE,
     TRANSACTION_CHANGE_STORAGE,
-    TRANSACTION_MOVE_TO_FOLDER
+    TRANSACTION_MOVE_TO_FOLDER,
+    TRANSACTION_INSTALL_COMPONENT,
+    TRANSACTION_REMOVE_COMPONENT,
+    TRANSACTION_REMOVE_ALL_COMPONENTS,
+    /** force enum to be 4 bytes */
+    TRANSACTION_DUMMY = 0x10000000
 } MIDPTransactionType;
 
 /*
@@ -325,6 +330,23 @@ build_suite_filename(SuiteIdType suiteId, const pcsl_string* filename,
  *         -1 if out of memory
  */
 int remove_from_suite_list_and_save(SuiteIdType suiteId);
+
+#if ENABLE_DYNAMIC_COMPONENTS
+/**
+ * Removes all components belonging to the given suite from the list
+ * of installed components.
+ * <p>
+ *
+ * @param suiteId ID of the suite owning the components
+ * @param componentId ID of the component to remove, or UNUSED_COMPONENT_ID
+ *                    to remove all components of this suite
+ *
+ * @return  1 if the suite was in the list, 0 if not,
+ *         -1 if out of memory
+ */
+int remove_from_component_list_and_save(SuiteIdType suiteId,
+                                        ComponentIdType componentId);
+#endif /* ENABLE_DYNAMIC_COMPONENTS */
 
 /**
  * Gets filename of the secure suite resource by suiteId and resource name
