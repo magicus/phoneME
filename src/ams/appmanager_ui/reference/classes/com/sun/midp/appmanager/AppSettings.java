@@ -250,6 +250,12 @@ public class AppSettings extends Form
                     // returning to previous selection
                     groupSettings[selected].setSelectedButton(
                             groupSettings[selected].lastSelectedId);
+                    //show alert with error message
+                    Alert a = new Alert(Resource.getString(ResourceConstants.ERROR),
+                                        e.getMessage(), null,
+                                        AlertType.ERROR);
+                    a.setTimeout(Alert.FOREVER);
+                    display.setCurrent(a);
                     // nothing else to do
                     return;
                 }
