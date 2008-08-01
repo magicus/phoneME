@@ -54,12 +54,8 @@ public class DefaultConfiguration extends Configuration {
 
     public final static String maps[][] = {
         {"GIF", "com.sun.mmedia.GIFPlayer"},
-        // #ifdef VIDEO_CAPTURE [
         {BasicPlayer.MEDIA_FORMAT_CAPTURE_VIDEO, "com.sun.mmedia.DirectCamera"},
-        // #endif ]
-        // #ifdef AUDIO_CAPTURE [
         {AUDIO_CAPTURE_LOCATOR, "com.sun.mmedia.DirectPlayer"},
-        // #endif ]
     };
 
     /**

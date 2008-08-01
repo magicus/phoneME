@@ -29,16 +29,6 @@
 DIRECT_VIDEO_PLAYER = false
 
 #
-# If you want to support "capture://video, turn on VIDEO_CAPTURE option
-#
-VIDEO_CAPTURE = false
-
-#
-# If you want to support "capture://audio, turn on AUDIO_CAPTURE option
-#
-AUDIO_CAPTURE = true
-
-#
 # If you want to support RecordControl, turn on DIRECT_RECORD option
 #
 DIRECT_RECORD = true

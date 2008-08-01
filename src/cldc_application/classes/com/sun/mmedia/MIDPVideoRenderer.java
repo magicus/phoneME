@@ -35,11 +35,6 @@ import javax.microedition.media.MediaException;
 import javax.microedition.media.control.VideoControl;
 
 import com.sun.mmedia.PermissionAccessor;
-
-import com.sun.mmedia.protocol.LocatorParser;
-
-//import com.sun.mmedia.ImageEncoder;
-
 import com.sun.mmedia.MMCustomItem;
 
 /**

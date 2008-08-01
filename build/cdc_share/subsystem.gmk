@@ -35,7 +35,6 @@ JSR_135_PROJECT_SRC_DIR=$(JSR_135_DIR)/src/$(JSROP_PLATFORM)
 JSR_135_PROJECT_BUILD_DIR=$(JSR_135_DIR)/build/$(JSROP_PLATFORM)
 
 include $(JSR_135_PROJECT_BUILD_DIR)/config.gmk
-include $(JSR_135_PROJECT_BUILD_DIR)/features.defs
 
 SUBSYSTEM_JSR_135_JAVA_FILES += \
     $(JSR_135_DIR)/src/cdc_share/classes/com/sun/jsr135/DynamicProperties.java
