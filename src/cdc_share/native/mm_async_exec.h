@@ -54,11 +54,13 @@ do { \
     result__ = (code_); \
     while (result__ == JAVACALL_WOULD_BLOCK) { \
         void *data__;\
+        CVMD_gcSafeExec(_ee,{ \
         if (JAVACALL_OK != mmapi_thread_suspend(MAKE_PLAYER_DESCRIPTOR(app_id_, player_id_, javacall_event__), &result__, &data__)) { \
             result__ = JAVACALL_FAIL; \
         } else if (result__ == JAVACALL_OK) { \
             JAVACALL_MM_ASYNC_GET_RESULT_##args_ \
         } \
+        }); \
     } \
     (status_) = result__; \
 } while(0)
