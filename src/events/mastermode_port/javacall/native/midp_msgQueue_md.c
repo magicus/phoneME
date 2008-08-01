@@ -71,8 +71,13 @@ void checkForSystemSignal(MidpReentryData* pNewSignal,
     javacall_bool res;
     int outEventLen;
     
+#if !ENABLE_CDC
     res = javacall_event_receive((long)timeout, binaryBuffer,
                                  BINARY_BUFFER_MAX_LEN, &outEventLen);
+#else
+    res = javacall_event_receive_cvm(MIDP_EVENT_QUEUE_ID, binaryBuffer,
+                                 BINARY_BUFFER_MAX_LEN, &outEventLen);
+#endif
 
     if (!JAVACALL_SUCCEEDED(res)) {
         return;
@@ -354,4 +359,20 @@ case MIDP_JC_EVENT_VOLUME:
 void midpFreeEventResult(int waitingFor, void* pResult) {
     (void)waitingFor;
     (void)pResult;
+}
+
+/**
+ * A helper function to
+ * @param event a pointer to midp_javacall_event_union
+ * @return javacall_event_send() operation result
+ */
+javacall_result
+midp_jc_event_send(midp_jc_event_union *event) {
+#if !ENABLE_CDC
+    return javacall_event_send((unsigned char *)event,
+                               sizeof(midp_jc_event_union));
+#else
+    return javacall_event_send_cvm(MIDP_EVENT_QUEUE_ID, (unsigned char *)event,
+                               sizeof(midp_jc_event_union));
+#endif
 }

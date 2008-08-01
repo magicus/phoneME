@@ -84,8 +84,15 @@ extern "C" {
 
 #define MIDP_RUNMIDLET_MAXIMUM_ARGS 10
 
+/* Queue ID for JavaCall events in CDC-based stack. */
+#define MIDP_EVENT_QUEUE_ID 118
+
 typedef enum {
     MIDP_JC_EVENT_KEY                  =100,
+    MIDP_JC_EVENT_START                ,
+    MIDP_JC_EVENT_START_TCK            ,
+    MIDP_JC_EVENT_START_INSTALL        ,
+    MIDP_JC_EVENT_START_MIDLET         ,
     MIDP_JC_EVENT_START_ARBITRARY_ARG  ,
     MIDP_JC_EVENT_END                  ,
     MIDP_JC_EVENT_KILL                 ,
@@ -141,11 +148,15 @@ typedef enum {
     MIDP_JC_ENABLE_ODD_EVENT           ,
 #endif /* ENABLE_ON_DEVICE_DEBUG */
     MIDP_JC_EVENT_ROTATION             ,
+    MIDP_JC_EVENT_MENU_SELECTION,
     MIDP_JC_EVENT_SET_VM_ARGS          ,
     MIDP_JC_EVENT_SET_HEAP_SIZE        ,
     MIDP_JC_EVENT_LIST_MIDLETS         ,
     MIDP_JC_EVENT_LIST_STORAGE_NAMES   ,
-    MIDP_JC_EVENT_REMOVE_MIDLET
+    MIDP_JC_EVENT_REMOVE_MIDLET        ,
+    MIDP_JC_EVENT_DRM_RO_RECEIVED      ,
+    MIDP_JC_EVENT_PEER_CHANGED
+
 #if ENABLE_JSR_256
     ,JSR256_JC_EVENT_SENSOR_AVAILABLE  ,
     JSR256_JC_EVENT_SENSOR_OPEN_CLOSE  ,
@@ -187,6 +198,12 @@ typedef struct {
     int   argc;
     char* argv[MIDP_RUNMIDLET_MAXIMUM_ARGS];
 } midp_jc_event_start_arbitrary_arg;
+
+typedef struct {
+    char* urlAddress;
+    char* localResPath;
+    int silentInstall;
+} midp_jc_event_lifecycle;  /* start, end, kill, pause, resume, install */
 
 typedef struct {
     int heap_size;
@@ -349,9 +366,14 @@ typedef struct {
 }jsr75_jc_event_root_changed;
 
 typedef struct {
+    int menuIndex;
+}midp_jc_event_menu_selection;
+
+typedef struct {
     midp_jc_event_type                     eventType;
     union {
         midp_jc_event_key                  keyEvent;
+        midp_jc_event_lifecycle            lifecycleEvent;
         midp_jc_event_start_arbitrary_arg  startMidletArbitraryArgEvent;
         midp_jc_event_socket               socketEvent;
         midp_jc_event_network              networkEvent;
@@ -403,12 +425,26 @@ typedef struct {
 #ifdef ENABLE_JSR_290
         jsr290_jc_event_fluid              jsr290FluidEvent;
 #endif /* ENABLE_JSR_290 */
+        midp_jc_event_menu_selection    menuSelectionEvent;
     } data;
 
 } midp_jc_event_union;
 
 #define BINARY_BUFFER_MAX_LEN 4096
 
+/**
+ * Sends midp event throught javacall event subsystem
+ * <p>
+ * @param event is an event to send
+ * 
+ * @return JAVACALL_OK if an event was sent successfully,
+ *         JAVACALL_FAIL otherwise
+ * 
+ * @note the function is implemented at <code>events</code>
+ *       module
+ */
+javacall_result
+midp_jc_event_send(midp_jc_event_union *event);
 
 #ifdef __cplusplus
 }

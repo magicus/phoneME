@@ -46,18 +46,7 @@ extern "C" {
 #include <javautil_unicode.h>
 
 static char urlAddress[BINARY_BUFFER_MAX_LEN];
-
-/**
- * A helper function to
- * @param event a pointer to midp_javacall_event_union
- * @return javacall_event_send() operation result
- */
-static javacall_result
-midp_jc_event_send(midp_jc_event_union *event) {
-    return javacall_event_send((unsigned char *)event,
-                               sizeof(midp_jc_event_union));
-}
-
+static char localResAddress[BINARY_BUFFER_MAX_LEN];
 /**
  * The platform should invoke this function in platform context to start
  * Java.
@@ -266,6 +255,9 @@ void javanotify_start_handler(char* handlerID, char* url, char* action) {
     midp_jc_event_send(&e);
 }
 
+/** from midp_run.c file */
+extern void javautil_set_wap_browser_download(int value);
+
 /**
  * A notification function for telling Java to perform installation of
  * a MIDlet
@@ -308,6 +300,41 @@ void javanotify_install_midlet(const char *httpUrl) {
     data->argv[data->argc++] = urlAddress;
 
     midp_jc_event_send(&e);
+}
+
+/**
+ * A notification function for telling Java to perform installation of
+ * a MIDlet.
+ *
+ * The difference to javanotify_install_midlet() is .jad or .jar file
+ * has been downloaded by browser. Java should read and install it from
+ * file system.
+ *
+ */
+void javanotify_install_midlet_from_browser(const char * browserUrl, const char* localResPath) {
+       int length1, length2;
+       static int wapBrowserDownload; /*a flag indicating that jad/jar downloading
+                                        is done by the platform*/
+       midp_jc_event_union e;
+
+       REPORT_INFO2(LC_CORE,"javanotify_install_midlet_from_browser() %s %s>>\n", browserUrl, localResPath);
+
+       e.eventType = MIDP_JC_EVENT_START_INSTALL;
+       e.data.lifecycleEvent.silentInstall = 0;
+       wapBrowserDownload = 1;
+
+       length1 = strlen(browserUrl);
+       length2 = strlen(localResPath);
+
+       if (length1 < BINARY_BUFFER_MAX_LEN && length2 < BINARY_BUFFER_MAX_LEN) {
+           memset(urlAddress, 0, BINARY_BUFFER_MAX_LEN);
+           memcpy(urlAddress, browserUrl, length1);
+           memset(localResAddress, 0, BINARY_BUFFER_MAX_LEN);
+           memcpy(localResAddress, localResPath, length2);
+           e.data.lifecycleEvent.urlAddress = urlAddress;
+           e.data.lifecycleEvent.localResPath = localResAddress;
+           midp_jc_event_send(&e);
+      }
 }
 
 /**

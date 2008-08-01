@@ -678,3 +678,16 @@ void midp_slavemode_schedule_vm_timeslice(void){
     javacall_schedule_vm_timeslice();
 }
 
+/**
+ * A helper function to
+ * @param event a pointer to midp_javacall_event_union
+ * @return javacall_event_send() operation result
+ */
+javacall_result
+midp_jc_event_send(midp_jc_event_union *event) {
+    javacall_result rc = javacall_event_send((unsigned char *)event,sizeof(midp_jc_event_union));
+    /* call the JVM ! to process the EVENT and schedule a time-slice */
+    javanotify_inform_event();
+    javacall_schedule_vm_timeslice();
+    return rc;
+}
