@@ -297,8 +297,7 @@ protected:
     }
   }
 
-  LiteralPoolElement* find_literal(OopDesc* obj, const int imm32,
-                                   const bool is_signed_offset JVM_TRAPS);
+  LiteralPoolElement* find_literal(OopDesc* obj, const int imm32 JVM_TRAPS);
 
   void append_literal( LiteralPoolElement* literal );
   void write_literal ( LiteralPoolElement* literal );

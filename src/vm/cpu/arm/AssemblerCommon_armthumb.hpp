@@ -159,11 +159,11 @@
     return Address5(mode | (up(offset_8) << 23) | rn << 16 | abs(offset_8) & 0xff);
   }
 
-  static Address5 imm_index5(Register rn, const int offset_8 = 0,
+  static Address5 imm_index5(Register rn, const int offset_10 = 0,
                                           const Mode mode = offset)
   {
     GUARANTEE( offset % 4 == 0, "Offset must be multiple of 4");
-    return imm_index5_8x4( rn, offset / 4, mode );
+    return imm_index5_8x4( rn, offset_10 / 4, mode );
   }
 
   static Address5 unindexed5(Register /*rn*/, const int options) {

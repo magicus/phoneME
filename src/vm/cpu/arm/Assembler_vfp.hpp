@@ -173,16 +173,6 @@
     return (Address5_stub)(offset | (up(offset_12) << 23) | rn << 16 | abs(offset_12>>2));
   }
 
-  void flds_stub(Register sd, Address5_stub address5 VFP_COND
-    sd = Register(sd - s0);
-    jint Fd = sd >> 1;   /* top 4 bits */
-    jint D  = sd & 0x01; /* bottom bit */
-
-    VFP_EMIT(cond << 28 | 0x06 << 25 | D << 22 |
-             1 << 20 | Fd << 12 | 0 << 8 | address5);
-  }
-
-
 #define F(mnemonic, L, cpnum) \
    void mnemonic(Register sd, Address5 address5 VFP_COND \
      sd = Register(sd - s0); \

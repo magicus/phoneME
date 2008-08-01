@@ -135,7 +135,7 @@ class VFPMemAccess: Instruction {
     return encoding() & 0x7FF;
   }
   address location( void ) const {
-    return addr() + 4 + 2*offset();
+    return addr() + 2*offset();
   }
   int reg ( void ) const {
     const int freg = encoding_next();

@@ -522,6 +522,14 @@ protected:
   #define VFP_COND              SINGLE_ARG_VFP_COND
   #define VFP_EMIT              emit_w
   #include "../arm/Assembler_vfp.hpp"
+
+  void flds_stub(const Register sd, const int offset) {
+    check_imm( abs(offset), 10 );
+    emit( short(offset & 0x7FF));
+
+    GUARANTEE( is_vfp_register(sd), "VFP register expected" );
+    emit( short(sd - s0) );
+  }
 #endif
 
   void swi(int imm_8) {

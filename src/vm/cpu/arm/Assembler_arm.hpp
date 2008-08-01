@@ -581,6 +581,15 @@ class Assembler: public AssemblerCommon {
   #define VFP_COND              , SINGLE_ARG_VFP_COND
   #define VFP_EMIT              emit
   #include "../arm/Assembler_vfp.hpp"
+
+  void flds_stub(Register sd, Address5_stub address5, const Condition cond = al) {
+    sd = Register(sd - s0);
+    jint Fd = sd >> 1;   /* top 4 bits */
+    jint D  = sd & 0x01; /* bottom bit */
+
+    emit(cond << 28 | 0x06 << 25 | D << 22 |
+             1 << 20 | Fd << 12 | 0 << 8 | address5);
+  }
 #endif
 
   void swi(int imm_24, Condition cond = al) {

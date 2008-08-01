@@ -163,7 +163,7 @@ void BinaryAssembler::access_literal_pool(Register rd,
       GUARANTEE( abs(offset) < 0x1000, "Invalid offset");
 #if USE_ARM_VFP_LITERALS
       if( rd > Assembler::r15 ) {
-        flds( rd, vfp_imm_index8x4(pc, offset / 4) );
+        flds( rd, imm_index5_8x4(pc, offset / 4) );
       } else
 #endif
         ldr_pc_imm12_w( rd, offset );
@@ -190,7 +190,7 @@ void BinaryAssembler::access_literal_pool(Register rd,
 void BinaryAssembler::ldr_literal(Register rd, OopDesc* obj, const int imm32,
                                   const Condition cond) {
   SETUP_ERROR_CHECKER_ARG;
-  LiteralPoolElement* e = find_literal(obj, imm32, false JVM_ZCHECK(e) );
+  LiteralPoolElement* e = find_literal(obj, imm32 JVM_ZCHECK(e) );
   ldr_from(rd, e, cond);
 }
 
@@ -288,9 +288,8 @@ inline void BinaryAssembler::append_literal( LiteralPoolElement* literal ) {
   }
 }
 
-LiteralPoolElement* BinaryAssembler::find_literal(OopDesc* obj, const int imm32,
-                                        const bool is_signed_offset JVM_TRAPS)
-{
+LiteralPoolElement*
+BinaryAssembler::find_literal(OopDesc* obj, const int imm32 JVM_TRAPS) {
   enum {
     max_ldr_offset = 1 << 10,   // unsigned for Thumb, signed for VFP
     max_code_size_to_branch_around_literals = 8,
@@ -300,15 +299,12 @@ LiteralPoolElement* BinaryAssembler::find_literal(OopDesc* obj, const int imm32,
   LiteralPoolElement* literal = _first_literal;
 
   // Search for a bound literal not too far from current instruction
-  if( is_signed_offset ) {
+  {
     const int min_offset = _code_offset - offset;
     for( ; literal && literal->is_bound(); literal = literal->next() ) {
       if( literal->_bci >= min_offset && literal->matches(obj, imm32)) {
         return literal;
       }
-    }
-  } else {
-    for( ; literal && literal->is_bound(); literal = literal->next() ) {
     }
   }
 
