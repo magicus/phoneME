@@ -27,7 +27,6 @@
 package com.sun.midp.installer;
 
 import java.io.*;
-
 import javax.microedition.io.*;
 
 import javax.microedition.lcdui.*;
@@ -37,8 +36,7 @@ import javax.microedition.midlet.*;
 import javax.microedition.rms.*;
 
 import com.sun.j2me.security.AccessController;
-
-import com.sun.midp.io.j2me.storage.*;
+import com.sun.midp.security.*;
 
 import com.sun.midp.i18n.Resource;
 
@@ -52,8 +50,6 @@ import com.sun.midp.midlet.MIDletSuite;
 
 import com.sun.midp.midletsuite.*;
 
-import com.sun.midp.security.*;
-
 import com.sun.midp.content.CHManager;
 
 import com.sun.midp.log.Logging;
@@ -61,6 +57,7 @@ import com.sun.midp.log.LogChannels;
 import com.sun.midp.io.j2me.storage.File;
 
 import com.sun.midp.util.ResourceHandler;
+
 
 /**
  * The Graphical MIDlet suite installer.
@@ -86,7 +83,7 @@ public class GraphicalInstaller extends MIDlet implements CommandListener {
 
     /** Standard timeout for alerts. */
     public static final int ALERT_TIMEOUT = 1250;
-    /** settings database */
+     /** settings database */
     public static final String SETTINGS_STORE = "settings";
     /** record id of selected midlet */
     public static final int URL_RECORD_ID = 1;
@@ -96,7 +93,7 @@ public class GraphicalInstaller extends MIDlet implements CommandListener {
     public static final int SELECTED_MIDLET_RECORD_ID = 2;
     /** type of last installation: from web or storage source */
     public static final int LAST_INSTALLATION_SOURCE = 4;
-
+   
     /** The installer that is being used to install or update a suite. */
     private Installer installer;
     /** Display for this MIDlet. */
@@ -172,11 +169,7 @@ public class GraphicalInstaller extends MIDlet implements CommandListener {
     /* true if user confirmation should be presented */
     private boolean noConfirmation = false;
 
-    /* true if user choose external device installation */
-    private boolean storageInstallation = false;
-    /* indicates what type of messages (storage or http) user must see */
-    private int     messageType;
-    
+            
     /**
      * Gets an image from the internal storage.
      * <p>
@@ -431,7 +424,7 @@ public class GraphicalInstaller extends MIDlet implements CommandListener {
         String arg0;
            
         display = Display.getDisplay(this);
-        initSettings();
+        GraphicalInstaller.initSettings();
         
         // Establish Content handler installer context
         chmanager = CHManager.getManager(null);
@@ -496,14 +489,7 @@ public class GraphicalInstaller extends MIDlet implements CommandListener {
             }
                       
             // if url!=null, look what type of installation we need    
-            if(url.startsWith("file:///")) {
-                installer=new FileInstaller();
-                storageInstallation=true;                
-            }
-            else {
-                installer=new HttpInstaller();
-                storageInstallation=false;
-            }
+            installer = InstallerResource.getNecessaryInstaller(url);
                   
             label = getAppProperty("arg-2");
             if (label == null || label.length() == 0) {
@@ -635,7 +621,7 @@ public class GraphicalInstaller extends MIDlet implements CommandListener {
         }
     }
 
-    /**
+     /**
      * Initialize the settings database if it doesn't exist. This may create
      * two entries. The first will be for the download url, the second will
      * be for storing the storagename of the currently selected midlet
@@ -775,7 +761,7 @@ public class GraphicalInstaller extends MIDlet implements CommandListener {
 
         return ret;
     }
-    
+           
     /**
      * Update a suite.
      *
@@ -871,13 +857,9 @@ public class GraphicalInstaller extends MIDlet implements CommandListener {
     private void installSuiteCommon(String action, String name, String url, int storageId,
             String successMessage, boolean updateFlag, boolean noConfirmation) {
         try {
-             
-            messageType=storageInstallation?
-                         ResourceConstants.AMS_GRA_INTLR_CONN_STORAGE_GAUGE_LABEL:
-                         ResourceConstants.AMS_GRA_INTLR_CONN_GAUGE_LABEL; 
-                
+                                        
               createProgressForm(action, name, url, 0,
-                        Resource.getString(messageType));  
+                        InstallerResource.getString(installer,InstallerResource.GAUGE_RESOURCE_INIT));  
               backgroundInstaller = new BackgroundInstaller(this, url, name, storageId,
                                       successMessage, updateFlag, noConfirmation);
               new Thread(backgroundInstaller).start();
@@ -950,10 +932,10 @@ public class GraphicalInstaller extends MIDlet implements CommandListener {
         if (url == null) {
             urlItem = new StringItem("", "");
         } else {
-            messageType=storageInstallation?
-                        ResourceConstants.AMS_STORAGEPATH:ResourceConstants.AMS_WEBSITE;
+            
             urlItem =
-               new StringItem(Resource.getString(messageType) + ": ", url);
+               new StringItem(InstallerResource.getString(
+               installer,InstallerResource.TYPE_OF_STORAGE) + ": ", url);
                 
         }
 
@@ -984,23 +966,19 @@ public class GraphicalInstaller extends MIDlet implements CommandListener {
      */
     private void updateStatus(int status, InstallState state) {
         if (status == Installer.DOWNLOADING_JAD) {
-            messageType=storageInstallation?
-                         ResourceConstants.AMS_GRA_INTLR_DOWNLOADING_JAD_GAUGE_LABEL_STORAGE:
-                         ResourceConstants.AMS_GRA_INTLR_DOWNLOADING_JAD_GAUGE_LABEL;
-            
+                        
             updateProgressForm("", 0,
-                Resource.getString(messageType)); 
+                InstallerResource.getString(installer,
+                InstallerResource.GAUGE_LABEL_LOAD_JAD)); 
             
             return;
         }
 
         if (status == Installer.DOWNLOADING_JAR) {
-            messageType=storageInstallation?
-                          ResourceConstants.AMS_GRA_INTLR_DOWNLOADING_JAR_GAUGE_LABEL_STORAGE:
-                          ResourceConstants.AMS_GRA_INTLR_DOWNLOADING_JAR_GAUGE_LABEL;
             
             updateProgressForm(state.getJarUrl(), state.getJarSize(),
-                Resource.getString(messageType));
+                InstallerResource.getString(
+                installer,InstallerResource.GAUGE_LABEL_LOAD_JAR));
             
             return;
         }
@@ -1113,11 +1091,10 @@ public class GraphicalInstaller extends MIDlet implements CommandListener {
             urlItem = new StringItem("", "");
             progressForm.set(progressUrlIndex, urlItem);
         } else if (url.length() != 0) {
-            messageType=storageInstallation?
-                           ResourceConstants.AMS_STORAGEPATH:
-                           ResourceConstants.AMS_WEBSITE;
+            
             urlItem =
-                new StringItem(Resource.getString(messageType) + ": ", url);
+                new StringItem(InstallerResource.getString(
+                installer,InstallerResource.TYPE_OF_STORAGE) + ": ", url);
             
             progressForm.set(progressUrlIndex, urlItem);
         }
@@ -1335,11 +1312,9 @@ public class GraphicalInstaller extends MIDlet implements CommandListener {
                 infoForm.append(item);
             }
 
-            label.setLength(0);
-            messageType=storageInstallation?
-                               ResourceConstants.AMS_STORAGEPATH:
-                               ResourceConstants.AMS_WEBSITE; 
-            label.append(Resource.getString(messageType));
+            label.setLength(0);            
+            label.append(InstallerResource.getString(
+                    installer,InstallerResource.TYPE_OF_STORAGE));
             label.append(": ");
             infoForm.append(new StringItem(label.toString(),
                                            state.getJarUrl()));
@@ -1521,12 +1496,9 @@ public class GraphicalInstaller extends MIDlet implements CommandListener {
      * Resume the install to start the JAR download.
      */
     private void startJarDownload() {
-        messageType=storageInstallation?
-                      ResourceConstants.AMS_GRA_INTLR_CONN_STORAGE_GAUGE_LABEL:
-                      ResourceConstants.AMS_GRA_INTLR_CONN_GAUGE_LABEL;
-        
+                
         updateProgressForm(backgroundInstaller.url, 0,
-            Resource.getString(messageType));
+            InstallerResource.getString(installer,InstallerResource.GAUGE_RESOURCE_INIT));
         // redisplay the progress form
         display.setCurrent(progressForm);
 
@@ -1556,11 +1528,9 @@ public class GraphicalInstaller extends MIDlet implements CommandListener {
                                   values));
             item.setLayout(Item.LAYOUT_NEWLINE_AFTER | Item.LAYOUT_2);
             infoForm.append(item);
-
-            messageType=storageInstallation?
-                               ResourceConstants.AMS_STORAGEPATH:
-                               ResourceConstants.AMS_WEBSITE;
-            label.append(Resource.getString(messageType));
+            
+            label.append(InstallerResource.getString(
+                    installer,InstallerResource.TYPE_OF_STORAGE));
             label.append(": ");
             item = new StringItem(label.toString(), backgroundInstaller.url);
             item.setLayout(Item.LAYOUT_NEWLINE_AFTER | Item.LAYOUT_2);
@@ -1775,17 +1745,14 @@ public class GraphicalInstaller extends MIDlet implements CommandListener {
                 String title;
                 // an error message to display
                 String msg;
-                // begin jar installation, if path to file ends with '.jar'
-                // and we want to install from external storage
-                if(storageInstallation && url.endsWith(".jar"))
-                   jarOnly=true;
+               
                 // repeat while(tryAgain)
                 do {
                     tryAgain = false;
                     msg = null;
 
                     try {
-                        if (jarOnly) {
+                        if (jarOnly) {                            
                             lastInstalledMIDletId =
                                 parent.installer.installJar(url, name,
                                     storageId, update, false, this);
@@ -1810,14 +1777,14 @@ public class GraphicalInstaller extends MIDlet implements CommandListener {
                         parent.exit(true);
                     } catch (InvalidJadException ije) {
                         int reason = ije.getReason();
-                        
+                                                 
                         if (reason == InvalidJadException.INVALID_JAD_TYPE) {
                             // media type of JAD was wrong, it could be a JAR
                             String mediaType = (String)ije.getExtraData();
-
+                                                      
                             if (Installer.JAR_MT_1.equals(mediaType) ||
                                     Installer.JAR_MT_2.equals(mediaType)) {
-                                // re-run as a JAR only install
+                                // re-run as a JAR only install                                
                                 if (noConfirmation || confirmJarOnlyDownload()) {
                                     jarOnly = true;
                                     installState = null;
@@ -1839,6 +1806,7 @@ public class GraphicalInstaller extends MIDlet implements CommandListener {
 
                         msg = translateJadException(ije, name, null, null, url);
                     } catch (MIDletSuiteLockedException msle) {
+                       
                         String[] values = new String[1];
                         values[0] = name;
                         if (!update) {
@@ -1853,11 +1821,10 @@ public class GraphicalInstaller extends MIDlet implements CommandListener {
                                 parent.installer.wasStopped()) {
                             displayListAfterCancelMessage();
                             break;
-                        } else {
-                            messageType=storageInstallation?
-                                           ResourceConstants.AMS_GRA_INTLR_FILE_NOT_FOUND:
-                                           ResourceConstants.AMS_GRA_INTLR_CONN_DROPPED;
-                            msg = Resource.getString(messageType)+":"+url;
+                        } else {                            
+                            msg = InstallerResource.getString(
+                                    installer,InstallerResource.IO_EXCEPTION_ALERT)
+                                    +":"+url;
                              }
                     } catch (Throwable ex) {
                         if (Logging.TRACE_ENABLED) {

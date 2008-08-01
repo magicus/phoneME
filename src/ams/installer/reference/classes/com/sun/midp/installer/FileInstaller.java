@@ -31,6 +31,7 @@ import java.io.IOException;
 import javax.microedition.io.ConnectionNotFoundException;
 import javax.microedition.io.Connector;
 import com.sun.midp.io.j2me.storage.RandomAccessStream;
+import com.sun.midp.io.FileUrl;
 
 /**
  * An Installer allowing to install a midlet suite from a file.
@@ -40,12 +41,14 @@ import com.sun.midp.io.j2me.storage.RandomAccessStream;
 public class FileInstaller extends Installer {
     /** Number of bytes to read at one time when copying a file. */
     private static final int CHUNK_SIZE = 10 * 1024;
-
+    /** Can encode and decode file path according RFC 1738. */
+    private FileUrl translator;
     /**
      * Constructor of the FileInstaller.
      */
     public FileInstaller() {
         super();
+        translator = new FileUrl();        
     }
 
     /**
@@ -56,25 +59,30 @@ public class FileInstaller extends Installer {
      * @exception IOException is thrown if any error prevents the download
      *            of the JAD
      */
-    protected byte[] downloadJAD() throws IOException{
-              
+    protected byte[] downloadJAD() throws IOException {
+       
+        if (info.jadUrl.endsWith(".jar"))            
+            throw new InvalidJadException (
+                    InvalidJadException.INVALID_JAD_TYPE,
+                    Installer.JAR_MT_2);      
+        else {           
         RandomAccessStream jadInputStream;
-        ByteArrayOutputStream bos = new ByteArrayOutputStream(CHUNK_SIZE);
+        ByteArrayOutputStream bos = new ByteArrayOutputStream(CHUNK_SIZE);       
         String jadFilename = getUrlPath(info.jadUrl);
-                
+        
         state.beginTransferDataStatus = DOWNLOADING_JAD;
         state.transferStatus = DOWNLOADED_1K_OF_JAD;
 
         jadInputStream = new RandomAccessStream();
                 
-        jadFilename=decodeURIPath(jadFilename);                
-                
+        jadFilename=translator.decodeFilePath(jadFilename);                
+            
         jadInputStream.connect(jadFilename, Connector.READ);
         transferData(jadInputStream.openInputStream(), bos, CHUNK_SIZE);
-
+          
         jadInputStream.close();
         return bos.toByteArray();
-        
+        }
     }
 
     /**
@@ -93,18 +101,17 @@ public class FileInstaller extends Installer {
         int jarSize;
         RandomAccessStream jarInputStream, jarOutputStream;
         //get the path from URI, but first encode it
-        String jarFilename = getUrlPath(encodeURIPath(info.jarUrl));
+        String jarFilename = getUrlPath(translator.encodeFilePath(info.jarUrl));
                
         //If jad attribute Midlet-Jar-Url begins with schema 'file:///'
         //then get jar path from it.
         //else searching jar file in same directory as a jad file
-        
         if(!info.jarUrl.startsWith("file:///")) {
             String jadFilename= getUrlPath(info.jadUrl);
             jarFilename=jadFilename.substring(0,jadFilename.length()-4)+".jar";
         } 
-                
-        jarFilename=decodeURIPath(jarFilename);                
+             
+        jarFilename=translator.decodeFilePath(jarFilename);                
         // Open source (jar) file
         jarInputStream = new RandomAccessStream();
         jarInputStream.connect(jarFilename, Connector.READ);
@@ -172,37 +179,5 @@ public class FileInstaller extends Installer {
         /* some additional actions can be added here */
 
         return true;
-    }
-
-    /**
-     * Decode URI path: if it contains symbol '%', than changes it on ' '.
-     * @param filenamepath  path to filename
-     * @return  decoded path
-     */
-    private String decodeURIPath(String filenamepath) {
-        char[] fileChars=new char[filenamepath.length()];
-        filenamepath.getChars(0,filenamepath.length(),fileChars,0);
-            for(int i=0;i<fileChars.length;i++)
-             {
-                if(fileChars[i]=='%')
-                fileChars[i]=' ';
-             }
-        return new String(fileChars);
-    }
-     
-    /**
-     * Encode URI path: fill symbols ' ' by '%'. 
-     * @param filenamepath  path to filename
-     * @return  encoded path
-     */
-    private String encodeURIPath(String filenamepath) {
-        char[] fileChars=new char[filenamepath.length()];
-        filenamepath.getChars(0,filenamepath.length(),fileChars,0);
-            for(int i=0;i<fileChars.length;i++)
-            {
-              if(fileChars[i]==' ')
-                  fileChars[i]='%';
-            }
-       return new String(fileChars);
-    }      
+    }    
 }
