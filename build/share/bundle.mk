@@ -262,21 +262,27 @@ BUNDLE_INCLUDE_LIST += \
 
 # For Windows Build
 ifeq ($(findstring win32,$(BUNDLE_OS_PORTS)),win32)
+CVM_INCLUDE_WIN32_HOST_DEFS_MK = true
 BUNDLE_INCLUDE_LIST +=				\
 	build/win32/ppc*_defs.mk \
 	build/win32/wm5*_defs.mk \
 	build/win32/*wince*.mk \
-	build/win32/vc*_defs.mk \
-	build/win32/host_defs.mk 
+	build/win32/vc*_defs.mk
 endif
 
 # For Symbian Build
 ifeq ($(findstring symbian,$(BUNDLE_OS_PORTS)),symbian)
+CVM_INCLUDE_WIN32_HOST_DEFS_MK = true
 BUNDLE_INCLUDE_LIST +=				\
 	build/symbian/fix_project.pl \
 	build/symbian/root.sh \
 	build/symbian/winsim.mk \
 	src/symbian/lib/cvm_exports*
+endif
+
+ifeq ($(CVM_INCLUDE_WIN32_HOST_DEFS_MK),true)
+BUNDLE_INCLUDE_LIST +=				\
+	build/win32/host_defs.mk 
 endif
 
 # dual stack
