@@ -32,6 +32,9 @@
 #include "javavm/include/globals.h"
 #include "javavm/include/porting/jit/jit.h"
 
+
+#ifdef CVMJIT_HAVE_PLATFORM_SPECIFIC_ALLOC_FREE_CODECACHE
+
 extern char CVMcodeCacheStart[];
 extern char CVMcodeCacheEnd[];
 
@@ -51,6 +54,8 @@ void
 CVMJITfreeCodeCache(void *start)
 {
 }
+
+#endif
 
 #include "portlibs/jit/risc/include/porting/ccmrisc.h"
 #include "javavm/include/jit/jitcodebuffer.h"
