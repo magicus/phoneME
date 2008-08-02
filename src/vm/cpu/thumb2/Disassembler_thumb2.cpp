@@ -657,13 +657,13 @@ void Disassembler::disasm_v6t2_data_load_store_single(short instr, short hw2) {
   bool load = (instr >> 4) & 0x1;
   int S = (instr >> 8) & 0x1;
   int U = (instr >> 7) & 0x1;
-  static const char* sign_suff[] = {"", "s"};
-  static const char* size_suff[] = {"b", "h", "", "error3"};
+  static const char* const sign_suff[] = {"", "s"};
+  static const char* const size_suff[] = {"b", "h", "", "error3"};
   int imm8 = hw2 & 0xFF;
   int imm12 = hw2 & 0xFFF;
   if (load) {
     if ((instr & 0xF) == 0xF) { //pc +- imm12
-      stream()->print("ldr%s%s.w\t%s, [PC, #%s%d]",
+      stream()->print("ldr%s%s.w\t%s, [pc, #%c%d]",
         sign_suff[S], size_suff[size], rxf, "-+"[S], imm12);
       return;
     }
@@ -788,8 +788,8 @@ void Disassembler::disasm_v6t2_data_load_store_multiple(short instr, short hw2) 
   int l = (instr >> 4) & 0x1;
   int w = (instr >> 5) & 0x1;
   const char *rn = register_name(reg_field_w(instr));
-  const char* mode[] = {"ia", "db"};
-  const char* wb[] = {"", "!"};
+  static const char* const mode[] = {"ia", "db"};
+  static const char* const wb[] = {"", "!"};
   if (u == v) {
     if (l) { //rfe
       stream()->print("rfe%s.w\t%s%s", mode[u], rn, wb[w]);
