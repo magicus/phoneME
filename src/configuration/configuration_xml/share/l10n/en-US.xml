@@ -770,27 +770,27 @@
 <localized_string Key="SR_SUSPEND_ALERT_MSG"
                 Value="Java VM is suspended by system request. Applications may be either paused or destroyed."/>
 
-<localized_string Key="INSTALL_FROM_STORAGE"
+<localized_string Key="AMS_DISC_APP_INSTALL_FROM_FILE"
                 Value="Storage"/>
-<localized_string Key="INSTALL_FROM_WEB"
+<localized_string Key="AMS_DISC_APP_INSTALL_FROM_HTTP"
                 Value="HTTP"/>
-<localized_string Key="BEGIN_STORAGE_INSTALL"
+<localized_string Key="AMS_DISC_APP_START_FILE_INSTALL"
                 Value="Install"/>
 <localized_string Key="AMS_DISC_APP_STORAGE_INSTALL"
-                Value="Enter a Storage path to Install From:"/>
+                Value="Enter a file path to install from:"/>
 <localized_string Key="AMS_DISC_APP_PREPARE_INSTALL_STORAGE"
                 Value="Prepairing to install from storage"/>
 <localized_string Key="AMS_GRA_INTLR_CONN_STORAGE_GAUGE_LABEL"
                 Value="Searching..."/>
 <localized_string Key="AMS_DISC_APP_GAUGE_LABEL_STORAGE"
                 Value="Searching..."/>
-<localized_string Key="AMS_STORAGEPATH"
-                Value="Storage path"/>
+<localized_string Key="AMS_FILE_PATH"
+                Value="Path to file"/>
 <localized_string Key="AMS_GRA_INTLR_DOWNLOADING_JAD_GAUGE_LABEL_STORAGE"
                 Value="Loading the application description file..."/>
 <localized_string Key="AMS_GRA_INTLR_DOWNLOADING_JAR_GAUGE_LABEL_STORAGE"
                 Value="Loading the application file..."/>
 <localized_string Key="AMS_GRA_INTLR_FILE_NOT_FOUND"
-                Value="File not found in the current path"/>      
+                Value="File not found in the current path"/>       
 </localized_strings>
 </configuration>

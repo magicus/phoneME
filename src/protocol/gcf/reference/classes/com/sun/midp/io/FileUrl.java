@@ -38,10 +38,8 @@ package com.sun.midp.io;
  */
 public class FileUrl {
     
-    /**
-     * Constractor of FileUrl
-     */
-    public FileUrl() {
+    /** Prevents anyone from instantiating this class */
+    private FileUrl() {
         
     }
         
@@ -52,26 +50,24 @@ public class FileUrl {
      * @param filenamepath  path to filename
      * @return  decoded string of file path
      */
-    public String decodeFilePath(String filenamepath) {
-        char[]       fileChars  = new char[filenamepath.length()];
-        StringBuffer buffer     = new StringBuffer();
-        char         temp;
-        char[]       asciiChars = new char[3];
+    public static String decodeFilePath(String filenamepath) {
+        char[] fileChars  = new char[filenamepath.length()];
+        StringBuffer buffer = new StringBuffer();
+        char temp;
+        char[] asciiChars = new char[3];
         
         filenamepath.getChars(0,filenamepath.length(),fileChars,0);
         
-            for(int i=0;i<fileChars.length;i++) {
+            for(int i = 0; i < fileChars.length ; i++) {
                 if(fileChars[i]=='%') {
                     filenamepath.getChars(i,i+3,asciiChars,0);                    
                     temp = decodeASCIISymbol(new String(asciiChars));
                     if (temp != '0') {
                         buffer.append(temp);
                         i=i+2;   
-                    }                        
-                    else
+                    } else
                         buffer.append(fileChars[i]);
-                }
-                else
+                } else
                     buffer.append(fileChars[i]);
              }
         return buffer.toString();
@@ -84,14 +80,14 @@ public class FileUrl {
      * @param filenamepath  path to filename
      * @return  encoded file path
      */
-    public String encodeFilePath(String filenamepath) {
-        char[]       fileChars  = new char[filenamepath.length()];
-        StringBuffer buffer     = new StringBuffer();
-        String       temp;
+    public static String encodeFilePath(String filenamepath) {
+        char[] fileChars = new char[filenamepath.length()];
+        StringBuffer buffer = new StringBuffer();
+        String temp;
         
         filenamepath.getChars(0,filenamepath.length(),fileChars,0);
         
-            for (int i=0;i<fileChars.length;i++)
+            for (int i = 0; i < fileChars.length; i++)
             {
               temp = encodeUnsafeCharacter(fileChars[i]);
               
@@ -111,7 +107,7 @@ public class FileUrl {
      * @return the code of unsafe character
      * or null if character is reserved.
      */
-    private String encodeUnsafeCharacter(char character) {
+    private static String encodeUnsafeCharacter(char character) {
         switch(character) {
             case ' '  : return new String("%20");
             case '<'  : return new String("%3C");
@@ -124,7 +120,8 @@ public class FileUrl {
             case '~'  : return new String("%7E");
             case '['  : return new String("%5B");
             case ']'  : return new String("%5D");
-            case '`'  : return new String("%60");            
+            case '`'  : return new String("%60");
+            case '%'  : return new String("%26");
             default   : return null;
         }
     }
@@ -137,7 +134,7 @@ public class FileUrl {
      * @return specific character or '0', if 
      * we don`t need to decode this string
      */
-    private char decodeASCIISymbol(String asciiCode) {
+    private static char decodeASCIISymbol(String asciiCode) {
         if (asciiCode.equals("%20"))
             return ' ';
         else if (asciiCode.equals("%3C"))
@@ -161,7 +158,9 @@ public class FileUrl {
         else if (asciiCode.equals("%5D"))
             return ']';
         else if (asciiCode.equals("%60"))
-            return '`';        
+            return '`';
+        else if (asciiCode.equals("%26"))
+            return '%';
         else
             return '0';
         

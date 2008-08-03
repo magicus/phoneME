@@ -41,14 +41,12 @@ import com.sun.midp.io.FileUrl;
 public class FileInstaller extends Installer {
     /** Number of bytes to read at one time when copying a file. */
     private static final int CHUNK_SIZE = 10 * 1024;
-    /** Can encode and decode file path according RFC 1738. */
-    private FileUrl translator;
+    
     /**
      * Constructor of the FileInstaller.
      */
     public FileInstaller() {
-        super();
-        translator = new FileUrl();        
+        super();                
     }
 
     /**
@@ -75,7 +73,7 @@ public class FileInstaller extends Installer {
 
         jadInputStream = new RandomAccessStream();
                 
-        jadFilename=translator.decodeFilePath(jadFilename);                
+        jadFilename=FileUrl.decodeFilePath(jadFilename);                
             
         jadInputStream.connect(jadFilename, Connector.READ);
         transferData(jadInputStream.openInputStream(), bos, CHUNK_SIZE);
@@ -101,17 +99,32 @@ public class FileInstaller extends Installer {
         int jarSize;
         RandomAccessStream jarInputStream, jarOutputStream;
         //get the path from URI, but first encode it
-        String jarFilename = getUrlPath(translator.encodeFilePath(info.jarUrl));
+        String jarFilename = getUrlPath(FileUrl.encodeFilePath(info.jarUrl));
                
         //If jad attribute Midlet-Jar-Url begins with schema 'file:///'
         //then get jar path from it.
         //else searching jar file in same directory as a jad file
-        if(!info.jarUrl.startsWith("file:///")) {
+        if (!info.jarUrl.startsWith("file:///")) {
             String jadFilename= getUrlPath(info.jadUrl);
-            jarFilename=jadFilename.substring(0,jadFilename.length()-4)+".jar";
+            
+            if (jadFilename.endsWith(".jad"))
+                jarFilename=jadFilename.substring(0,jadFilename.length()-4)+".jar";
+            else {               
+                char[] characters = jadFilename.toCharArray();
+               
+                for (int i = jadFilename.length()-1; i > 0 ; i--) {
+                    if (characters[i] == '.') {
+                        jarFilename=jadFilename.substring(0,i)+".jar";
+                        break;
+                    }
+                }
+            }
+            info.jarUrl = jarFilename;
+            System.out.println("change="+info.jarUrl);
         } 
-             
-        jarFilename=translator.decodeFilePath(jarFilename);                
+          
+        jarFilename=FileUrl.decodeFilePath(jarFilename);
+        
         // Open source (jar) file
         jarInputStream = new RandomAccessStream();
         jarInputStream.connect(jarFilename, Connector.READ);
@@ -127,7 +140,7 @@ public class FileInstaller extends Installer {
 
         jarSize = transferData(jarInputStream.openInputStream(),
                                jarOutputStream.openOutputStream(), CHUNK_SIZE);
-
+        
         jarInputStream.close();
         jarOutputStream.disconnect();
 
