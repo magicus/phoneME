@@ -40,6 +40,8 @@
 #include <gxapi_graphics.h>
 #include <imgapi_image.h>
 
+
+
 /**
  * Calls platform specific function to redraw a portion of the display.
  * <p>
@@ -210,3 +212,89 @@ KNIDECL(com_sun_midp_lcdui_DisplayDevice_directFlush0) {
 
     KNI_ReturnBoolean(success);
 } 
+
+/**
+ * Calls platform specific function to get the dislay device name 
+ * Java parameters:
+ * <pre>
+ *    hardwareId The display hardware ID associated with the Display Device
+ * </pre>
+ */
+KNIEXPORT KNI_RETURNTYPE_OBJECT
+KNIDECL(com_sun_midp_lcdui_DisplayDevice_getDisplayName0) {
+    jint hardwareId = KNI_GetParameterAsInt(1);
+    char *displayName = lcdlf_get_display_name(hardwareId);
+
+    KNI_StartHandles(1);
+    KNI_DeclareHandle(str);
+
+    if (displayName != NULL) {
+        KNI_NewStringUTF(displayName, str);
+    } else {
+      KNI_ReleaseHandle(str); /* Set 'str' to null String object */
+    }
+    KNI_EndHandlesAndReturnObject(str);
+}
+
+
+/**
+ * Calls platform specific function to get the dislay device name 
+ * Java parameters:
+ * <pre>
+ *    hardwareId The display hardware ID associated with the Display Device
+ * </pre>
+ */
+KNIEXPORT KNI_RETURNTYPE_BOOLEAN
+KNIDECL(com_sun_midp_lcdui_DisplayDevice_isDisplayPrimary0) {
+    jint hardwareId = KNI_GetParameterAsInt(1);
+    jboolean res = lcdlf_is_display_primary(hardwareId);
+    KNI_ReturnBoolean(res);
+}
+
+
+KNIEXPORT KNI_RETURNTYPE_BOOLEAN
+KNIDECL(com_sun_midp_lcdui_DisplayDevice_isbuildInDisplay0) {
+    jint hardwareId = KNI_GetParameterAsInt(1);
+    jboolean res = lcdlf_is_display_buildin(hardwareId);
+    KNI_ReturnBoolean(res);
+}
+
+KNIEXPORT KNI_RETURNTYPE_BOOLEAN
+KNIDECL(com_sun_midp_lcdui_DisplayDevice_isDisplayPtrSupported0) {
+    jint hardwareId =  KNI_GetParameterAsInt(1);
+    jboolean res = lcdlf_is_display_ptr_supported(hardwareId);
+    KNI_ReturnBoolean(res);
+}
+
+KNIEXPORT KNI_RETURNTYPE_BOOLEAN
+KNIDECL(com_sun_midp_lcdui_DisplayDevice_isDisplayPtrMotionSupported0) {
+    jint hardwareId = KNI_GetParameterAsInt(1);
+    jboolean res = lcdlf_is_display_ptr_motion_supported(hardwareId);
+    KNI_ReturnBoolean(res);
+}
+
+KNIEXPORT KNI_RETURNTYPE_INT
+KNIDECL(com_sun_midp_lcdui_DisplayDevice_getDisplayCapabilities0) {
+    jint hardwareId = KNI_GetParameterAsInt(1);
+    int height = lcdlf_get_display_capabilities(hardwareId);
+    KNI_ReturnInt(height);
+}
+
+KNIEXPORT KNI_RETURNTYPE_OBJECT
+KNIDECL(com_sun_midp_lcdui_DisplayDeviceContainer_getDisplayDevicesIds0) {
+    KNI_StartHandles(1);
+    KNI_DeclareHandle(returnArray);
+
+    int i;
+
+    jint n;
+    jint* display_device_ids = lcdlf_get_display_device_ids(&n);
+
+    SNI_NewArray(SNI_INT_ARRAY, n, returnArray);
+
+    for (i = 0; i < n; i++) {
+      KNI_SetIntArrayElement(returnArray, (jint)i, display_device_ids[i]);
+    }
+
+    KNI_EndHandlesAndReturnObject(returnArray);
+}

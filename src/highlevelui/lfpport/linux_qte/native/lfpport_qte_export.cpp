@@ -177,6 +177,69 @@ void lfpport_gained_foreground(int hardwareId) {
   qteapp_get_mscreen()->gainedForeground();
 }
 
+/** IMPL_NOTE: Just one display is supported currently. 
+ *  Need the real implementation for multiple displays support 
+ */
+
+
+/** 
+ * Get display device name by id
+ */
+char * lfpport_get_display_name(int hardwareId) {
+    (void)hardwareId;
+    return 0;
+}
+
+
+/**
+ * Check if the display device is primary
+ */
+jboolean lfpport_is_display_primary(int hardwareId) {
+    (void)hardwareId;
+    return KNI_TRUE;
+}
+/**
+ * Check if the display device is build-in
+ */
+jboolean lfpport_is_display_buildin(int hardwareId) {
+    (void)hardwareId;
+    return KNI_TRUE;
+}
+/**
+ * Check if the display device supports pointer events
+ */
+jboolean lfpport_is_display_ptr_supported(int hardwareId) {
+    (void)hardwareId;
+    return KNI_TRUE;
+}
+/**
+ * Check if the display device supports pointer motion  events
+ */
+jboolean lfpport_is_display_ptr_motion_supported(int hardwareId) {
+    (void)hardwareId;
+    return KNI_TRUE;
+}
+/**
+ * Get display device capabilities
+ */
+int lfpport_get_display_capabilities(int hardwareId) {
+    (void)hardwareId;
+    return 0;
+}
+
+
+static jint display_device_ids[] = {0};
+
+/**
+ * Get the list of display device ids
+ */
+
+jint* lfpport_get_display_device_ids(jint* n) {
+    *n = 1; 
+    return display_device_ids;
+}
+
+
 #ifdef __cplusplus
 }
 #endif

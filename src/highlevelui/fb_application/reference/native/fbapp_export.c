@@ -53,6 +53,8 @@ static const char pStartOddKeySequence[] = "#1*2";
 static int posInSequence = 0;
 #endif
 
+#define numElems(x) sizeof(x)/sizeof(x[0])
+
 /**
   * Indicates screen orientation state,
   * true for rotated screen, false for normal orientation
@@ -338,3 +340,80 @@ void fbapp_finalize() {
     clearScreen();
     finalizeFrameBuffer();
 }
+
+
+/** 
+ * Get display device name by id
+ */
+char * fbapp_get_display_name(int hardwareId) {
+   (void)hardwareId;
+   return 0;
+}
+
+
+/**
+ * Check if the display device is primary
+ */
+jboolean fbapp_is_display_primary(int hardwareId) {
+  if (hardwareId == 0) {
+    return 1; 
+  } else {
+    return 0;
+  }
+}
+
+/**
+ * Check if the display device is build-in
+ */
+jboolean fbapp_is_display_buildin(int hardwareId) {
+  (void)hardwareId;
+  return 1;
+}
+
+/**
+ * Check if the display device supports pointer events
+ */
+jboolean fbapp_is_display_ptr_supported(int hardwareId) {
+  if (hardwareId == 0) {
+    return 1;
+  } else {
+    return 0;
+  }
+  
+}
+
+/**
+ * Check if the display device supports pointer motion  events
+ */
+jboolean fbapp_is_display_ptr_motion_supported(int hardwareId) {
+  if (hardwareId == 0) {
+    return 1;
+  } else {
+    return 0;
+  }
+  
+}
+
+/**
+ * Get display device capabilities
+ */
+int fbapp_get_display_capabilities(int hardwareId) {
+  if (hardwareId == 0) {
+    return 255;
+  } else {
+    return 0;
+  }
+}
+
+static jint display_device_ids[] =
+{
+  0,
+  1
+};
+
+
+jint* fbapp_get_display_device_ids(jint* n) {
+    *n = numElems(display_device_ids);
+    return display_device_ids;
+}
+

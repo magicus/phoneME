@@ -86,35 +86,30 @@ public class DisplayDevice {
      * ************* private member variables
      */
     
-    /** Indicates if the display is primary. The display is primary by default. */
+    private int hardwareId;
+    private String displayName;
     private boolean isPrimary = true; 
-
     private boolean buildInDisp;
+    private int capabilities;
     private boolean isPtrSupported;
     private boolean isPtrMotionSupported;
-    private String displayName;
-    private int hardwareId;
+
+
     private int state;
-    private int capabilities;
+
 
     /*
      * ************* public methods
      */
     
-    public DisplayDevice(int id,
-			 String displayName,
-			 boolean isPrimary, 
-			 boolean buildInDisp, 
-			 int capabilities,
-			 boolean isPtrSupported, 
-			 boolean isPtrMotionSupported
-			 ) {
+    public DisplayDevice(int id) {
 	hardwareId = id;
-	this.displayName = displayName;
-	this.isPrimary = isPrimary;
-	this.buildInDisp = buildInDisp;
-	this.isPtrSupported = isPtrSupported;
-	this.isPtrMotionSupported = isPtrMotionSupported;
+	displayName = getDisplayName0(hardwareId);
+	isPrimary = isDisplayPrimary0(hardwareId); 
+	buildInDisp = isbuildInDisplay0(hardwareId);
+	capabilities = getDisplayCapabilities0(hardwareId);
+	isPtrSupported = isDisplayPtrSupported0(hardwareId);
+	isPtrMotionSupported = isDisplayPtrMotionSupported0(hardwareId);
     }
 
     /**
@@ -312,4 +307,14 @@ public class DisplayDevice {
     private native boolean directFlush0(int hardwareId, Graphics graphics, 
 					Image offscreen_buffer, int height);
     private native void gainedForeground0(int hardwareId, int displayId);
+
+
+    private native String getDisplayName0(int hardwareId);
+    private native boolean isDisplayPrimary0(int hardwareId); 
+    private native boolean isbuildInDisplay0(int hardwareId);
+    private native int getDisplayCapabilities0(int hardwareId);
+    private native boolean isDisplayPtrSupported0(int hardwareId);
+    private native boolean isDisplayPtrMotionSupported0(int hardwareId);
+
 }
+

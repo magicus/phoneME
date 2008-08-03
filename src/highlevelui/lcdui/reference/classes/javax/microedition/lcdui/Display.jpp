@@ -2326,7 +2326,7 @@ public class Display {
         screenGraphics.reset();
 
         // #ifdef ENABLE_CHAMELEON
-        SkinResources.adjustScreen();
+        SkinResources.adjustScreen(accessor);
         // Notify Chameleon that the current displayable should be shown
         // in fullscreen mode.
         // This call will not result in any call into application code
@@ -3350,7 +3350,7 @@ public class Display {
             }
             
             // #ifdef ENABLE_CHAMELEON
-            SkinResources.adjustScreen();
+            SkinResources.adjustScreen(accessor);
 
             MIDPWindow windowCopy;
             DisplayableLF currentCopy;

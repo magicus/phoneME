@@ -114,9 +114,41 @@ extern jboolean jcapp_is_native_softbutton_layer_supported();
 extern void jcapp_set_softbutton_label_on_native_layer (unsigned short *label,
                                                          int len,
                                                          int index);
+/** 
+ * Get display device name by id
+ */
+extern char* jcapp_get_display_name(int hardwareId);
 
 
+/**
+ * Check if the display device is primary
+ */
+extern jboolean jcapp_is_display_primary(int hardwareId);
 
+/**
+ * Check if the display device is build-in
+ */
+extern jboolean jcapp_is_display_buildin(int hardwareId);
+
+/**
+ * Check if the display device supports pointer events
+ */
+extern jboolean jcapp_is_display_ptr_supported(int hardwareId);
+
+/**
+ * Check if the display device supports pointer motion  events
+ */
+extern jboolean jcapp_is_display_ptr_motion_supported(int hardwareId);
+
+/**
+ * Get display device capabilities
+ */
+extern int jcapp_get_display_capabilities(int hardwareId);
+
+export jint* jcapp_get_display_device_ids(jint* n);
+
+
+#ifdef __cp
 #ifdef __cplusplus
 }
 #endif

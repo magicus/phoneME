@@ -131,6 +131,42 @@ void lcdlf_set_softbutton_label_on_native_layer (unsigned short *label,
                                                  int len, 
                                                  int index);
 
+/** 
+ * Get display device name by id
+ */
+char* lcdlf_get_display_name(int hardwareId);
+
+
+/**
+ * Check if the display device is primary
+ */
+jboolean lcdlf_is_display_primary(int hardwareId);
+
+/**
+ * Check if the display device is build-in
+ */
+jboolean lcdlf_is_display_buildin(int hardwareId);
+
+/**
+ * Check if the display device supports pointer events
+ */
+jboolean lcdlf_is_display_ptr_supported(int hardwareId);
+
+/**
+ * Check if the display device supports pointer motion  events
+ */
+jboolean lcdlf_is_display_ptr_motion_supported(int hardwareId);
+
+/**
+ * Get display device capabilities
+ */
+int lcdlf_get_display_capabilities(int hardwareId);
+
+/**
+ * Get the list of display device ids
+ */
+jint* lcdlf_get_display_device_ids(jint* n);
+
 #ifdef __cplusplus
 }
 #endif

@@ -87,10 +87,6 @@ public class SkinResources {
      */
     private static GraphicsAccess graphicsAccess;
 
-    /**
-     * Display access helper class.
-     */
-    private static DisplayAccess displayAccess;
 
     /**
      * True, if skin is being loaded in AMS Isolate in MVM case,
@@ -119,15 +115,6 @@ public class SkinResources {
         }
     }
 
-    /**
-     * This method is called by the Display class to initialize
-     * Display access tunnel class.
-     *
-     * @param access 
-     */
-    public static void initDisplayAccess(DisplayAccess access) {
-        displayAccess = access;
-    }
 
     /**
      * This is method to be called before loadSkin to define the screen 
@@ -556,10 +543,10 @@ public class SkinResources {
     /**
      * Refresh skin after screen size is changed
      */
-    public static void adjustScreen() {
+    public static void adjustScreen(DisplayAccess accessor) {
 
-        setScreenSize(displayAccess.getDisplayWidth(), 
-                      displayAccess.getDisplayHeight());
+        setScreenSize(accessor.getDisplayWidth(), 
+                      accessor.getDisplayHeight());
         SoftButtonResources.load(true);
         AlertResources.load(true);
     }

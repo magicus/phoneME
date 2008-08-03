@@ -190,3 +190,55 @@ void lfjport_set_softbutton_label_on_native_layer (unsigned short *label,
                                                  int index) {
     jcapp_set_softbutton_label_on_native_layer(label,len,index);
 }
+
+
+/** 
+ * Get display device name by id
+ */
+char* lfjport_get_display_name(int hardwareId) {
+    return jcapp_get_display_name(hardwareId);
+}
+
+
+/**
+ * Check if the display device is primary
+ */
+jboolean lfjport_is_display_primary(int hardwareId) {
+    return jcapp_is_display_primary(hardwareId);
+}
+
+/**
+ * Check if the display device is build-in
+ */
+jboolean lfjport_is_display_buildin(int hardwareId) {
+    return jcapp_is_display_buildin(hardwareId);
+}
+
+/**
+ * Check if the display device supports pointer events
+ */
+jboolean lfjport_is_display_ptr_supported(int hardwareId) {
+    return jcapp_is_display_ptr_supported(hardwareId);
+}
+
+/**
+ * Check if the display device supports pointer motion  events
+ */
+jboolean lfjport_is_display_ptr_motion_supported(int hardwareId) {
+    return jcapp_is_display_ptr_motion_supported(hardwareId);
+}
+
+/**
+ * Get display device capabilities
+ */
+int lfjport_get_display_capabilities(int hardwareId) {
+  return jcapp_get_display_capabilities(hardwareId);
+}
+
+
+/**
+ * Get the list of display device ids
+ */
+jint* lfport_get_display_device_ids(jint* n) {
+    return jcapp_get_display_device_ids(n);
+}

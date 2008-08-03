@@ -194,3 +194,49 @@ jboolean jcapp_is_native_softbutton_layer_supported() {
 }
 
 
+/** 
+ * Get display device name by id
+ */
+char* jcapp_get_display_name(int hardwareId) {
+    return javacall_get_display_name(hardwareId);
+}
+
+
+/**
+ * Check if the display device is primary
+ */
+jboolean jcapp_is_display_primary(int hardwareId) {
+    return javacall_is_display_primary(hardwareId);
+}
+
+/**
+ * Check if the display device is build-in
+ */
+jboolean jcapp_is_display_buildin(int hardwareId) {
+    return javacall_is_display_buildin(hardwareId);
+}
+
+/**
+ * Check if the display device supports pointer events
+ */
+jboolean jcapp_is_display_ptr_supported(int hardwareId) {
+    return javacall_is_display_ptr_supported(hardwareId);
+}
+
+/**
+ * Check if the display device supports pointer motion  events
+ */
+jboolean jcapp_is_display_ptr_motion_supported(int hardwareId){
+    return javacall_is_display_ptr_motion_supported(hardwareId);
+}
+
+/**
+ * Get display device capabilities
+ */
+int jcapp_get_display_capabilities(int hardwareId) {
+  return javacall_get_display_capabilities(hardwareId);
+}
+
+jint* jcapp_get_display_device_ids(jint* n) {
+    return javacall_get_display_device_ids(n);
+}

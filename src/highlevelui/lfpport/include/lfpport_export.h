@@ -104,6 +104,43 @@ void lfpport_ui_finalize();
 jboolean lfpport_direct_flush(int hardwareId, const java_graphics *g, 
 		  	      const java_imagedata *offscreen_buffer, int h);
 
+/** 
+ * Get display device name by id
+ */
+char * lfpport_get_display_name(int hardwareId);
+
+
+/**
+ * Check if the display device is primary
+ */
+jboolean lfpport_is_display_primary(int hardwareId);
+
+/**
+ * Check if the display device is build-in
+ */
+jboolean lfpport_is_display_buildin(int hardwareId);
+
+/**
+ * Check if the display device supports pointer events
+ */
+jboolean lfpport_is_display_ptr_supported(int hardwareId);
+
+/**
+ * Check if the display device supports pointer motion  events
+ */
+jboolean lfpport_is_display_ptr_motion_supported(int hardwareId);
+
+/**
+ * Get display device capabilities
+ */
+int lfpport_get_display_capabilities(int hardwareId);
+
+/**
+ * Get the list of display device ids
+ */
+jint* lfpport_get_display_device_ids(jint* n);
+
+
 #ifdef __cplusplus
 }
 #endif

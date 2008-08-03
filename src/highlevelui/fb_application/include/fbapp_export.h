@@ -134,6 +134,40 @@ extern int fbapp_get_screen_x();
  */ 
 extern int fbapp_get_screen_y();
 
+
+/** 
+ * Get display device name by id
+ */
+extern char* fbapp_get_display_name(int hardwareId);
+
+
+/**
+ * Check if the display device is primary
+ */
+extern jboolean fbapp_is_display_primary(int hardwareId);
+
+/**
+ * Check if the display device is build-in
+ */
+extern jboolean fbapp_is_display_buildin(int hardwareId);
+
+/**
+ * Check if the display device supports pointer events
+ */
+extern jboolean fbapp_is_display_ptr_supported(int hardwareId);
+
+/**
+ * Check if the display device supports pointer motion  events
+ */
+extern jboolean fbapp_is_display_ptr_motion_supported(int hardwareId);
+
+/**
+ * Get display device capabilities
+ */
+extern int fbapp_get_display_capabilities(int hardwareId);
+
+extern jint* fbapp_get_display_device_ids(jint* n);
+
 typedef enum {
     DISPLAY_DEVICE_ENABLED = 0,
     DISPLAY_DEVICE_DISABLED = 1

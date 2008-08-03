@@ -36,32 +36,19 @@ public class DisplayDeviceContainer {
     /** vector of display devices */
     private Vector displayList = new Vector(2, 2);;
     
-    public DisplayDeviceContainer() {
-	/* IMPL_NOTE: just for test create 2 displays :
-	   1st display is primary, 2nd display is secondary. 
-	   For next implementation construct the display 
-	   device object from the xml file 
-	*/
 
-	addDisplayDevice(new DisplayDevice(0,
-					   "Primary display",
-					   true, // isPrimary,
-					   true, // buildInDisp, 
-					   0, // capabilities, all capabilities are supported by primary display
-					   true, // isPtrSupported, 
-					   true  // isPtrMotionSupported,
-					   ));
-	
-	addDisplayDevice(new DisplayDevice(1,
-					   "External display",
-					   false, // isPrimary,
-					   true, // buildInDisp, 
-					   0, // capabilities, just Canvas supported 
-					   false, // isPtrSupported, 
-					   false // isPtrMotionSupported,
-					   ));
+    public DisplayDeviceContainer() {
+	int[] ids = getDisplayDevicesIds0();	
+	for (int i = 0; i < ids.length; i++) {
+	    addDisplayDevice(new DisplayDevice(ids[i]));
+	}
     }
     
+
+    public void fillDisplayDecices() {
+	
+    }
+
     /** 
      * Get the array of the display devices
      * @return list of the display devices
@@ -137,4 +124,7 @@ public class DisplayDeviceContainer {
 	 }
 	 return ret;
      }
+
+    private native int[] getDisplayDevicesIds0();
 }
+
