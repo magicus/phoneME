@@ -29,10 +29,14 @@
 #
 ######################################################################
 
-JC_APP_COMMON_DIR=$(SUBSYSTEM_APP_DIR)/javacall_app_common
+JC_APP_COMMON_DIR=$(SUBSYSTEM_JAVACALL_APPLICATION_DIR)/javacall_app_common
 
 vpath % $(JC_APP_COMMON_DIR)/reference/native
 
 SUBSYSTEM_APP_NATIVE_FILES += \
 		javanotify_midp_jsr.c \
     jcapp_export.c
+
+# highlevelui\subsystem.gmk requires to fill following variable
+SUBSYSTEM_APP_EXTRA_INCLUDES += -I$(JC_APP_COMMON_DIR)/include
+
