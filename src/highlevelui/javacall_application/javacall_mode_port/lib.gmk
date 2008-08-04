@@ -25,18 +25,22 @@
 #
 ######################################################################
 #
-# Library Makefile
+# Subsystem's Platform Configuration file
 #
 ######################################################################
 
-# Name of the library
-# Add to library set for this build
-JAVACALL_APP_NAME = javacall_application
-LIB_SET += $(JAVACALL_APP_NAME)
+ifeq ($(SUBSYSTEM_EVENTS_MODULES), slave_mode)
+JC_APP_MODE_DIR=$(SUBSYSTEM_APP_DIR)/javacall_mode_port/slave_mode
+else
+JC_APP_MODE_DIR=$(SUBSYSTEM_APP_DIR)/javacall_mode_port/master_mode
+endif
 
-SUBSYSTEM_APP_DIR = $(SUBSYSTEM_HIGHUI_DIR)/$(JAVACALL_APP_NAME)
+vpath % $(JC_APP_MODE_DIR)/reference/native
 
-SUBSYSTEM_APP_EXTRA_INCLUDES += -I$(SUBSYSTEM_APP_DIR)/include
+ifneq ($(USE_NATIVE_AMS), true)
+SUBSYSTEM_APP_NATIVE_FILES += \
+		javanotify_lifecycle.c
+endif
 
-include $(SUBSYSTEM_APP_DIR)/javacall_app_common/lib.gmk
-include $(SUBSYSTEM_APP_DIR)/javacall_mode_port/lib.gmk
+SUBSYSTEM_APP_NATIVE_FILES += \
+    midp_jc_event.c

@@ -25,18 +25,14 @@
 #
 ######################################################################
 #
-# Library Makefile
+# Subsystem's Platform Configuration file
 #
 ######################################################################
 
-# Name of the library
-# Add to library set for this build
-JAVACALL_APP_NAME = javacall_application
-LIB_SET += $(JAVACALL_APP_NAME)
+JC_APP_COMMON_DIR=$(SUBSYSTEM_APP_DIR)/javacall_app_common
 
-SUBSYSTEM_APP_DIR = $(SUBSYSTEM_HIGHUI_DIR)/$(JAVACALL_APP_NAME)
+vpath % $(JC_APP_COMMON_DIR)/reference/native
 
-SUBSYSTEM_APP_EXTRA_INCLUDES += -I$(SUBSYSTEM_APP_DIR)/include
-
-include $(SUBSYSTEM_APP_DIR)/javacall_app_common/lib.gmk
-include $(SUBSYSTEM_APP_DIR)/javacall_mode_port/lib.gmk
+SUBSYSTEM_APP_NATIVE_FILES += \
+		javanotify_midp_jsr.c \
+    jcapp_export.c

@@ -47,6 +47,7 @@ extern "C" {
 
 static char urlAddress[BINARY_BUFFER_MAX_LEN];
 static char localResAddress[BINARY_BUFFER_MAX_LEN];
+
 /**
  * The platform should invoke this function in platform context to start
  * Java.

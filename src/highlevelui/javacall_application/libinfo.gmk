@@ -1,7 +1,7 @@
 #
+#   
 #
-#
-# Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
+# Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
 # 
 # This program is free software; you can redistribute it and/or
@@ -23,20 +23,7 @@
 # Clara, CA 95054 or visit www.sun.com if you need additional
 # information or have any questions.
 #
-######################################################################
-#
-# Library Makefile
-#
-######################################################################
 
-# Name of the library
-# Add to library set for this build
-JAVACALL_APP_NAME = javacall_application
-LIB_SET += $(JAVACALL_APP_NAME)
-
-SUBSYSTEM_APP_DIR = $(SUBSYSTEM_HIGHUI_DIR)/$(JAVACALL_APP_NAME)
-
-SUBSYSTEM_APP_EXTRA_INCLUDES += -I$(SUBSYSTEM_APP_DIR)/include
-
-include $(SUBSYSTEM_APP_DIR)/javacall_app_common/lib.gmk
-include $(SUBSYSTEM_APP_DIR)/javacall_mode_port/lib.gmk
+LIB_FBPORT_DESCRIPTION=Porting layer for javacall applications
+LIB_FBPORT_VERSION=1.0
+LIB_FBPORT_DEPENDENCY=

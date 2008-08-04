@@ -98,8 +98,8 @@ MIDPError midp_system_initialize(void) {
      */
     JVM_SetConfig(JVM_CONFIG_HEAP_CAPACITY, midp_heap_requirement);
 
-    if (ALL_OK != (error = (MIDPError)midpInitialize()) ||
-        ALL_OK != (error = (MIDPError)init_listeners_impl())) {
+    if (ALL_OK == (error = (MIDPError)midpInitialize())) {
+        error = (MIDPError)init_listeners_impl();
     }
 
     return error;
