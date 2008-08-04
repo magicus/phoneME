@@ -42,3 +42,5 @@ jsr_172_source_bundle:: $(JSR_172_DIR)
 ifneq ($(TARGET_VM), cldc_vm)
 include $(JSR_172_DIR)/build/cdc_share/subsystem_rules.gmk
 endif
+
+include $(XMLPARSER_DIR)/build/rules.gmk
