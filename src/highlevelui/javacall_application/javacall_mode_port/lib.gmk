@@ -35,7 +35,7 @@ else
 JC_APP_MODE_DIR=$(SUBSYSTEM_APP_DIR)/javacall_mode_port/master_mode
 endif
 
-vpath % $(JC_APP_MODE_DIR)
+vpath % $(JC_APP_MODE_DIR)/native
 
 ifneq ($(USE_NATIVE_AMS), true)
 SUBSYSTEM_APP_NATIVE_FILES += \
