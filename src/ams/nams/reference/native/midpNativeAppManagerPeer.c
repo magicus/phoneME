@@ -105,6 +105,13 @@ MIDPError midp_system_initialize(void) {
     return error;
 }
 
+
+/**
+ * Starts the system. Does not return until the system is stopped.
+ *
+ * @return <tt>ALL_OK</tt> if the system is shutting down or
+ *         <tt>GENERAL_ERROR</tt> if an error
+ */
 MIDPError midp_system_start(void) {
     int vmStatus;
     MIDPError errCode;
