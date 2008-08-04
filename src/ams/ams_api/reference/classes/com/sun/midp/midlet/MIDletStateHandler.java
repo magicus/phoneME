@@ -545,7 +545,8 @@ public class MIDletStateHandler {
 
                 case MIDletPeer.DESTROYED:
                     listener.midletDestroyed(getMIDletSuite(),
-                        curr.getMIDlet().getClass().getName());
+                        curr.getMIDlet().getClass().getName(),
+                        curr.getMIDlet());
                     break;
                 }
             } catch (Throwable ex) {
@@ -746,7 +747,8 @@ public class MIDletStateHandler {
                          * The MIDlet was not constructed, send destroy
                          * notification to remove the peer from any lists.
                          */
-                        listener.midletDestroyed(getMIDletSuite(), classname);
+                        listener.midletDestroyed(getMIDletSuite(), classname,
+                                                 null);
                     }
                 }
             } finally {
