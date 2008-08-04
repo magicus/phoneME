@@ -652,18 +652,9 @@ dumpMode5Instruction(CVMJITCompilationContext *con,
 		     CVMUint32 instruction, CVMCPUCondCode condCode)
 {
 #ifdef CVM_JIT_USE_FP_HARDWARE
-    int opcode  = instruction & 0x0FF00F00;
-    int destreg = (instruction >> 12) & 0xF;
-        destreg = ((instruction >> 22) & 0x1) | destreg << 1;
-    int basereg = (instruction >> 16) & 0xF;
-    int P       = (instruction >> 24) & 0x1;
-    int U       = (instruction >> 23) & 0x1;
-    int W       = (instruction >> 21) & 0x1;
-    int L       = (instruction >> 20) & 0x1;
-    int type    = (instruction >> 8) & 0xF;
-    int size    = (instruction & 0xFF) + destreg;
-    int offset  = instruction & 0x000000FF;
-    int puw     = P << 2 | U << 1 | W;
+    int opcode, destreg, basereg;
+    int P, U, W, L;
+    int type, size, offset, puw;
 
     /* VFP load/store addressing modes */
     enum {
@@ -673,6 +664,19 @@ dumpMode5Instruction(CVMJITCompilationContext *con,
         decrement,
         positiveOffset
     };
+
+    opcode  = instruction & 0x0FF00F00;
+    destreg = (instruction >> 12) & 0xF;
+    destreg = ((instruction >> 22) & 0x1) | destreg << 1;
+    basereg = (instruction >> 16) & 0xF;
+    P       = (instruction >> 24) & 0x1;
+    U       = (instruction >> 23) & 0x1;
+    W       = (instruction >> 21) & 0x1;
+    L       = (instruction >> 20) & 0x1;
+    type    = (instruction >> 8) & 0xF;
+    size    = (instruction & 0xFF) + destreg;
+    offset  = instruction & 0x000000FF;
+    puw     = P << 2 | U << 1 | W;
 
     switch (puw) {
         case unindexed:
@@ -1691,6 +1695,10 @@ CVMCPUemitLoadConstantConditionalFP(
     CVMInt32 v,
     CVMCPUCondCode condCode)
 {
+    CVMInt32 targetLiteralOffset;
+    CVMInt32 logicalPC;
+    int baseReg;
+    CVMInt32 relativeOffset;
     CVMRMResource *res =
         CVMRMfindResourceConstant32InRegister(CVMRM_FP_REGS(con), v);
     if (res != NULL) {
@@ -1738,18 +1746,18 @@ CVMCPUemitLoadConstantConditionalFP(
             return;
         }
     }
-    CVMInt32 targetLiteralOffset =
+    targetLiteralOffset =
         CVMARMgetRuntimeConstantReferenceFP(con, v);
 
-    CVMInt32 logicalPC = CVMJITcbufGetLogicalPC(con);
+    logicalPC = CVMJITcbufGetLogicalPC(con);
 
 #ifdef CVMCPU_HAS_CP_REG
-    int baseReg = CVMCPU_CP_REG;
+    baseReg = CVMCPU_CP_REG;
     /* offset of 0 will be patched after the constant pool is dumped */
-    CVMInt32 relativeOffset = 0;
+    relativeOffset = 0;
 #else
-    int baseReg = CVMARM_PC;
-    CVMInt32 relativeOffset =
+    baseReg = CVMARM_PC;
+    relativeOffset =
         (targetLiteralOffset != 0) ? targetLiteralOffset - logicalPC - 8
                                    : 0;
 #endif
