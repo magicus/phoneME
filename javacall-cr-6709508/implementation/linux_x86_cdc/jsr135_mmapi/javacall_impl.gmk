@@ -1,0 +1,42 @@
+#   
+#
+# Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+# 
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License version
+# 2 only, as published by the Free Software Foundation. 
+# 
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# General Public License version 2 for more details (a copy is
+# included at /legal/license.txt). 
+# 
+# You should have received a copy of the GNU General Public License
+# version 2 along with this work; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+# 02110-1301 USA 
+# 
+# Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+# Clara, CA 95054 or visit www.sun.com if you need additional
+# information or have any questions. 
+#
+
+PROJECT_JSR_135_JC_DIR = $(JSR_135_JC_IMPL_PATH)/$(JSR_135_JC_DIR)
+VPATH+=$(PROJECT_JSR_135_JC_DIR)
+
+SO_JSR_135_JC_DIR = javacall/implementation/linux_x86_cdc/$(JSR_135_JC_DIR)
+
+PORTING_SOURCE += $(notdir $(wildcard $(PROJECT_JSR_135_JC_DIR)/*.c))
+SOURCE_OUTPUT_LIST += $(foreach file, \
+	$(notdir $(wildcard $(PROJECT_JSR_135_JC_DIR)/*.*)), \
+	$(PROJECT_JSR_135_JC_DIR)/$(file) $(SO_JSR_135_JC_DIR))
+
+JSR_135_INTERFACE_DIR = $(JAVACALL_DIR)/interface/$(JSR_135_JC_DIR)
+SOURCE_OUTPUT_LIST += $(JSR_135_INTERFACE_DIR) javacall/interface
+JAVACALL_INCLUDE_SOURCE_FILES_SET+=$(wildcard $(JSR_135_INTERFACE_DIR)/*.h)
+JSR_135_NOTIFIER_PATH=$(JAVACALL_DIR)/notifiers/jump_application
+SOURCE_OUTPUT_LIST += $(JSR_135_NOTIFIER_PATH)/$(JSR_135_JC_DIR) javacall/notifiers/jump_application
+NOTIFIER_SOURCE+=$(notdir $(wildcard $(JSR_135_NOTIFIER_PATH)/$(JSR_135_JC_DIR)/*.c))
+VPATH+=$(JSR_135_NOTIFIER_PATH)/$(JSR_135_JC_DIR)
