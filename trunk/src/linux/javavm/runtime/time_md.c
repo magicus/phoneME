@@ -40,6 +40,9 @@
 
 #ifdef CVM_JVMTI
 #include <gnu/libc-version.h>
+#ifndef clockid_t
+typedef int clockid_t;
+#endif
 static int (*_clock_gettime)(clockid_t, struct timespec *);
 static int (*_clock_getres)(clockid_t, struct timespec *);
 static int (*_pthread_getcpuclockid)(pthread_t, clockid_t *);
@@ -51,6 +54,7 @@ static int clockTicsPerSec = 100;
 void CVMtimeClockInit(void) {
     /* we do dlopen's in this particular order due to bug in linux */
     /* dynamical loader (see 6348968) leading to crash on exit */
+#ifdef CLOCK_PROCESS_CPUTIME_ID
     void* handle = dlopen("librt.so.1", RTLD_LAZY);
     if (handle == NULL) {
 	handle = dlopen("librt.so", RTLD_LAZY);
@@ -146,6 +150,7 @@ void CVMtimeClockInit(void) {
 	    isNPTL = CVM_TRUE;
 	}
     }
+#endif
     clockTicsPerSec = sysconf(_SC_CLK_TCK);
 }
 
@@ -301,7 +306,7 @@ CVMtimeThreadCpuTime(CVMThreadID *thread) {
 	clockid_t clockid;
 	int rc;
 	/* Get the thread clockid */
-	rc = pthread_getcpuclockid(tid, &clockid);
+	rc = _pthread_getcpuclockid(tid, &clockid);
 	CVMassert(rc == 0);
 	return fastThreadCpuTime(clockid);
     } else {
@@ -315,9 +320,12 @@ CVMBool CVMtimeIsThreadCpuTimeSupported(void) {
 
 CVMInt64
 CVMtimeCurrentThreadCpuTime(CVMThreadID *thread) {
+#ifdef CLOCK_PROCESS_CPUTIME_ID
     if (supportsFastThreadCpuTime) {
 	return fastThreadCpuTime(CLOCK_THREAD_CPUTIME_ID);
-    } else {
+    } else
+#endif
+    {
 	/* return user + sys since the cost is the same */
 	return threadCpuTimeX(&(CVMgetEE()->threadInfo), CVM_TRUE /* user + sys */);
     }
@@ -327,18 +335,21 @@ CVMtimeCurrentThreadCpuTime(CVMThreadID *thread) {
 CVMInt64
 CVMtimeNanosecs(void)
 {
-  if (_clock_gettime != NULL) {
-    struct timespec tp;
-    int status = _clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &tp);
-    (void)status;
-    CVMassert(status == 0);
-    return (CVMInt64)(((CVMInt64)tp.tv_sec) * SEC_IN_NANOSECS +
-		      (CVMInt64)tp.tv_nsec);
-  } else {
-    struct timeval t;
-    gettimeofday(&t, 0);
-    return (CVMInt64)(((CVMInt64)t.tv_sec) * 1000000 + (CVMInt64)(t.tv_usec));
-  }
+#ifdef CLOCK_PROCESS_CPUTIME_ID
+    if (_clock_gettime != NULL) {
+        struct timespec tp;
+        int status = _clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &tp);
+        (void)status;
+        CVMassert(status == 0);
+        return (CVMInt64)(((CVMInt64)tp.tv_sec) * SEC_IN_NANOSECS +
+                          (CVMInt64)tp.tv_nsec);
+    } else
+#endif
+    {
+        struct timeval t;
+        gettimeofday(&t, 0);
+        return (CVMInt64)(((CVMInt64)t.tv_sec) * 1000000 + (CVMInt64)(t.tv_usec));
+    }
 }
 #endif
 
