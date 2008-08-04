@@ -100,6 +100,8 @@ public class AppSettings extends Form
     private byte[] curLevels;
     /** Holds the permissions selected by user for validation. */
     private byte[] tmpLevels;
+    /** Holds the previous permissions selected by user for validation. */
+    private byte[] prevTmpLevels;
     /** Holds the updated push interrupt level. */
     private byte pushInterruptSetting;
     /** Holds the selected push interrupt level for validation. */
@@ -172,6 +174,8 @@ public class AppSettings extends Form
             display.setCurrent(nextScreen);
             midletSuite.close();
         } else if (c == cancelChoiceSelectionCmd) {
+            // roll back group levels
+            System.arraycopy(prevTmpLevels, 0, tmpLevels, 0, tmpLevels.length);
             // restore choice selection
             if (curChoice != null) {
                 curChoice.setSelectedButton(curChoice.lastSelectedId);
@@ -179,6 +183,7 @@ public class AppSettings extends Form
             }
         } else if (c == okChoiceSelectionCmd) {
             if (curChoice != null) {
+                curChoice.lastSelectedId = curChoice.getSelectedButton();
                 display.setCurrentItem(curChoice);
             }
         }
@@ -243,6 +248,8 @@ public class AppSettings extends Form
                 (byte)groupSettings[selected].getSelectedButton();
 
             if (newSetting != groupSettings[selected].lastSelectedId) {
+                // store previous values if we need to roll back
+                System.arraycopy(tmpLevels, 0, prevTmpLevels, 0, tmpLevels.length);
                 try {
                     Permissions.setPermissionGroup(tmpLevels,
                         tmpPushInterruptSetting, groups[selected], newSetting);
@@ -271,6 +278,8 @@ public class AppSettings extends Form
                     alert.setCommandListener(this);
                     alert.setTimeout(Alert.FOREVER);
                     display.setCurrent(alert);
+                } else {
+                    groupSettings[selected].lastSelectedId = newSetting;
                 }
             }
         }
@@ -322,6 +331,7 @@ public class AppSettings extends Form
                    [Permissions.MAX_LEVELS];
             curLevels = midletSuite.getPermissions();
             tmpLevels = new byte[curLevels.length];
+            prevTmpLevels = new byte[curLevels.length];
             System.arraycopy(curLevels, 0, tmpLevels, 0, curLevels.length);
             
             pushInterruptSetting = midletSuite.getPushInterruptSetting();
@@ -655,9 +665,9 @@ class RadioButtonSet extends ChoiceGroup {
     }
 
     /**
-     * Set the default button.
+     * Set the selected radio button.
      *
-     * @param id ID of default button
+     * @param id ID of button to select
      *
      * @throws IndexOutOfBoundsException if <code>id</code> is invalid
      */
