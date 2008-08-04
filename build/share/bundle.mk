@@ -618,20 +618,26 @@ endif
 
 ifeq ($(USE_CDC_COM),true)
 	$(AT)mkdir -p $(INSTALLDIR)/$(SRC_BUNDLE_DIRNAME)/build/share
-# copy id_cdc-com.mk so it can be added to the zip file
-	$(AT)cp $(CDC_COM_DIR)/build/share/id_cdc-com.mk \
+ifdef CDC_PROJECT
+# copy id_project.mk so it can be added to the zip file
+	$(AT)cp $(CDC_COM_DIR)/projects/$(CDC_PROJECT)/build/share/id_project.mk \
 		$(INSTALLDIR)/$(SRC_BUNDLE_DIRNAME)/build/share
+# Add the id_project.mk to the zip file
+	$(AT)(cd $(INSTALLDIR); \
+	      $(ZIP) -r -q \
+		$(INSTALLDIR)/$(SRC_BUNDLE_NAME).zip \
+		$(SRC_BUNDLE_DIRNAME)/build/share/id_project.mk)
+endif
 # copy cdc-com version of defs_qt.mk so it can be added to the zip file
 ifeq ($(findstring defs_qt.mk,$(BUILDDIR_PATTERNS)),defs_qt.mk)
 	$(AT)cp $(CDC_COM_DIR)/build/share/defs_qt.mk \
 		$(INSTALLDIR)/$(SRC_BUNDLE_DIRNAME)/build/share
-endif
-# Add the commercial files to the zip file
+# Add the commercial defs_qt.mk to the zip file
 	$(AT)(cd $(INSTALLDIR); \
 	      $(ZIP) -r -q \
 		$(INSTALLDIR)/$(SRC_BUNDLE_NAME).zip \
-		$(SRC_BUNDLE_DIRNAME)/build/share/id_cdc-com.mk \
 		$(SRC_BUNDLE_DIRNAME)/build/share/defs_qt.mk)
+endif
 	$(AT)rm -rf $(INSTALLDIR)/$(SRC_BUNDLE_DIRNAME)
 endif
 

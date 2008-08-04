@@ -383,7 +383,7 @@ export CDC_DEVICE_COMPONENT_DIR  ?= $(CDC_DIR)
 # Locate the cdc-com component
 ifeq ($(USE_CDC_COM),true)
 CDC_COM_DIR ?= $(COMPONENTS_DIR)/cdc-com
-ifeq ($(wildcard $(CDC_COM_DIR)/build/share/id_cdc-com.mk),)
+ifeq ($(wildcard $(CDC_COM_DIR)/build/share/top.mk),)
 $(error CDC_COM_DIR must point to a directory containing the cdc-com sources: \
         $(CDC_COM_DIR))
 endif

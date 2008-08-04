@@ -40,6 +40,11 @@ J2ME_BUILD_VERSION	= $(CVM_BUILD_VERSION)
 J2ME_BUILD_ID		= $(CVM_BUILD_ID)
 
 # override with commercial versioning if present
+ifdef CDC_PROJECT
 ifeq ($(USE_CDC_COM),true)
-include $(CDC_COM_DIR)/build/share/id_cdc-com.mk
+-include $(CDC_COM_DIR)/projects/$(CDC_PROJECT)/build/share/id_project.mk
 endif
+endif
+
+# override with any id_project.mk that may haven been placed in this directory
+-include $(CDC_DIR)/projects/build/share/id_project.mk
