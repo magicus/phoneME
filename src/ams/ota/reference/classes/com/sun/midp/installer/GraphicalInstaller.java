@@ -688,17 +688,28 @@ public class GraphicalInstaller extends MIDlet implements CommandListener {
             settings = RecordStore.openRecordStore(SETTINGS_STORE, false);
 
             if (url != null) {
-                if(url.startsWith("file:///")) {
+                if (url.startsWith("file:///")) {
                     url=url.substring(8,url.length());
                     dos.writeUTF(url);
                     data = bas.toByteArray();                    
                     settings.setRecord(FILE_PATH_RECORD_ID, data, 0, data.length);
-                   }                
-                else {
+                    // saves last type of install
+                    bas.reset();
+                    dos.writeInt(DiscoveryApp.FILE_INSTALL);
+                                        
+                   } else {
                     dos.writeUTF(url);
                     data = bas.toByteArray();                 
                     settings.setRecord(URL_RECORD_ID, data, 0, data.length);
+                    // saves last type of install
+                    bas.reset();
+                    dos.writeInt(DiscoveryApp.HTTP_INSTALL);
                 }
+                // write last type of install
+                // to record storage
+                data = bas.toByteArray();                    
+                settings.setRecord(LAST_INSTALLATION_SOURCE_RECORD_ID,
+                        data, 0, data.length);
             }
                         
             // Save the current midlet even if its id is
@@ -720,49 +731,7 @@ public class GraphicalInstaller extends MIDlet implements CommandListener {
 
         return ret;
     }
-
-    /**
-     * Save the settings about last installation type (web or external storage).
-     * <p>
-     * Method requires com.sun.midp.ams permission.
-     *     
-     * @param type type of the current installation
-     * @return the Exception that may have been thrown, or null
-     */
-    public static Exception saveLastInstallType(int type) {
-        Exception ret = null;
-
-        AccessController.checkPermission(Permissions.AMS_PERMISSION_NAME);
-
-        try {
-            String temp;
-            ByteArrayOutputStream bas;
-            DataOutputStream dos;
-            byte[] data;
-            RecordStore settings;
-
-            bas = new ByteArrayOutputStream();
-            dos = new DataOutputStream(bas);
-            settings = RecordStore.openRecordStore(SETTINGS_STORE, false);
-
-            if(type == DiscoveryApp.FILE_INSTALL)
-                dos.writeInt(DiscoveryApp.FILE_INSTALL);
-            else
-                dos.writeInt(DiscoveryApp.HTTP_INSTALL);
-            
-            data = bas.toByteArray();                    
-            settings.setRecord(LAST_INSTALLATION_SOURCE_RECORD_ID, data, 0, data.length);
-                 
-            bas.reset();
-            settings.closeRecordStore();
-            dos.close();            
-        } catch (Exception e) {
-            ret = e;
-        }
-
-        return ret;
-    }
-           
+               
     /**
      * Update a suite.
      *

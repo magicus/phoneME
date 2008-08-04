@@ -174,8 +174,7 @@ public class DiscoveryApp extends MIDlet implements CommandListener {
     public void commandAction(Command c, Displayable s) {
         if (c == discoverCmd) {
             // user wants to discover the suites that can be installed
-            discoverSuitesToInstall(urlTextBox.getString());
-            GraphicalInstaller.saveLastInstallType(DiscoveryApp.HTTP_INSTALL);
+            discoverSuitesToInstall(urlTextBox.getString());            
         } else if (s == installListBox &&
                   (c == List.SELECT_COMMAND || c == installCmd)) {
             installSuite(createSuiteDownloadInfo());            
@@ -204,8 +203,7 @@ public class DiscoveryApp extends MIDlet implements CommandListener {
          urlTextBox.setString(defaultInstallListUrl);
         }
         else if (c == installFromFileStorage) {
-         installSuite(createSuiteDownloadInfo());
-         GraphicalInstaller.saveLastInstallType(DiscoveryApp.FILE_INSTALL);
+         installSuite(createSuiteDownloadInfo());        
         }    
     }
 
