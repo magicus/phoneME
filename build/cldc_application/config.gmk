@@ -38,6 +38,4 @@ ifeq ($(USE_JSR_75),true)
 USE_FILE_CONNECTION = true
 endif
 
-USE_STATIC_LIB = true
-
 USE_LCDUI = true
