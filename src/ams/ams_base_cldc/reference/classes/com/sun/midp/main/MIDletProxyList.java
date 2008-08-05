@@ -421,6 +421,8 @@ public class MIDletProxyList
             return;
         }
 
+        MIDletProxyUtils.setupExtendedAttributes(midletProxy);
+
         midletProxies.addElement(midletProxy);
 
         notifyListenersOfProxyListChange(midletProxy, PROXY_ADDED);
@@ -1062,9 +1064,8 @@ public class MIDletProxyList
 
         if (Constants.EXTENDED_MIDLET_ATTRIBUTES_ENABLED) {
             if (newForeground.wasNotActive) {
-                String bgProp = MIDletSuiteUtils.getSuiteProperty(
-                    newForeground, MIDletSuite.LAUNCH_BG_PROP);
-                if ("yes".equalsIgnoreCase(bgProp)) {
+                if (newForeground.getExtendedAttribute(
+                        MIDletProxy.MIDLET_LAUNCH_BG)) {
                     return;
                 }
             }
@@ -1085,10 +1086,8 @@ public class MIDletProxyList
              * MIDlet right after it's put it in the background.
              */
             if (Constants.EXTENDED_MIDLET_ATTRIBUTES_ENABLED) {
-                String pauseProp = MIDletSuiteUtils.getSuiteProperty(
-                    foregroundMidlet, MIDletSuite.BACKGROUND_PAUSE_PROP);
-
-                if ("yes".equalsIgnoreCase(pauseProp)) {
+                if (foregroundMidlet.getExtendedAttribute(
+                        MIDletProxy.MIDLET_BACKGROUND_PAUSE)) {
                     foregroundMidlet.pauseMidletUponBackrgound();
                 }
             }
@@ -1131,10 +1130,8 @@ public class MIDletProxyList
             // is already activated after it's come to the foreground by 
             // existing code.
             if (Constants.EXTENDED_MIDLET_ATTRIBUTES_ENABLED) {
-                String pauseProp = MIDletSuiteUtils.getSuiteProperty(
-                    foregroundMidlet, MIDletSuite.BACKGROUND_PAUSE_PROP);
-
-                if ("yes".equalsIgnoreCase(pauseProp)) {
+                if (foregroundMidlet.getExtendedAttribute(
+                        MIDletProxy.MIDLET_BACKGROUND_PAUSE)) {
                     foregroundMidlet.activateMidletUponForeground();
                 }
             }

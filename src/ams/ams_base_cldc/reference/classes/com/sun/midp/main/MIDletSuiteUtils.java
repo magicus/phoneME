@@ -720,7 +720,6 @@ public class MIDletSuiteUtils {
         return null;
     }
 
-
     /**
      * The method retrieves property with the specified name searhing in the
      * specified suite.

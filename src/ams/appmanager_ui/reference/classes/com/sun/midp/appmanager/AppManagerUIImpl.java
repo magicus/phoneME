@@ -755,16 +755,13 @@ class AppManagerUIImpl extends Form
                 }
 
                 if (Constants.EXTENDED_MIDLET_ATTRIBUTES_ENABLED) {
-                    String bgProp = MIDletSuiteUtils.getSuiteProperty(
-                        si.proxy, MIDletSuite.LAUNCH_BG_PROP);
-                    if (!"yes".equalsIgnoreCase(bgProp)) {
+                    if (!si.proxy.getExtendedAttribute(
+                            MIDletProxy.MIDLET_LAUNCH_BG)) {
                         ci.setDefaultCommand(fgCmd);
                     }
 
-                    String noExitProp = MIDletSuiteUtils.getSuiteProperty(
-                        si.proxy, MIDletSuite.NO_EXIT_PROP);
-
-                    if (!"yes".equalsIgnoreCase(noExitProp)) {
+                    if (!si.proxy.getExtendedAttribute(
+                            MIDletProxy.MIDLET_NO_EXIT)) {
                         ci.addCommand(endCmd);
                     }
                 } else {

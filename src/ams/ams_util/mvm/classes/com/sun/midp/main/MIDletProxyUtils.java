@@ -26,6 +26,8 @@
 package com.sun.midp.main;
 
 import com.sun.cldc.isolate.Isolate;
+import com.sun.midp.midlet.MIDletSuite;
+import com.sun.midp.configurator.Constants;
 
 /**
  * Utilities for the MIDletProxy.  Does nothing is SVM mode.
@@ -101,6 +103,28 @@ public class MIDletProxyUtils {
             // IMPL_NOTE: waiting for termination completion may be useless.
             isolate.waitForExit();
             mpl.removeIsolateProxies(mp.getIsolateId());
+        }
+    }
+
+    public static void setupExtendedAttributes(MIDletProxy mp) {
+        // Load attributes only if extended attributes support is enabled.
+        if (Constants.EXTENDED_MIDLET_ATTRIBUTES_ENABLED) {
+            String prop;
+            prop = MIDletSuiteUtils.getSuiteProperty(
+                mp, MIDletSuite.LAUNCH_BG_PROP);
+            if ("yes".equalsIgnoreCase(prop)) {
+                mp.setExtendedAttribute(MIDletProxy.MIDLET_LAUNCH_BG);
+            }
+            prop = MIDletSuiteUtils.getSuiteProperty(
+                mp, MIDletSuite.BACKGROUND_PAUSE_PROP);
+            if ("yes".equalsIgnoreCase(prop)) {
+                mp.setExtendedAttribute(MIDletProxy.MIDLET_BACKGROUND_PAUSE);
+            }
+            prop = MIDletSuiteUtils.getSuiteProperty(
+                mp, MIDletSuite.NO_EXIT_PROP);
+            if ("yes".equalsIgnoreCase(prop)) {
+                mp.setExtendedAttribute(MIDletProxy.MIDLET_NO_EXIT);
+            }
         }
     }
 }

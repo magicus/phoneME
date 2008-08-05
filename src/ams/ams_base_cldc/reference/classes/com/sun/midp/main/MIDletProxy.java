@@ -105,9 +105,7 @@ public class MIDletProxy implements SuspendDependency {
      */
     private MIDletProxy preempted;
 
-    /**
-     * Timer for the MIDlet proxy.  Used when a midlet is hanging.
-     */
+    /** Timer for the MIDlet proxy. Used when a midlet is hanging. */
     private Timer proxyTimer;
 
     /** Parent list. */
@@ -118,6 +116,23 @@ public class MIDletProxy implements SuspendDependency {
      * background.
      */
     private boolean wasPausedUponBackground;
+
+
+    /** Constant for pausing the MIDlet when it's in the background. */
+    public static final byte MIDLET_BACKGROUND_PAUSE = 1;
+
+    /** Constant for denying an user to terminate the MIDlet. */
+    public static final byte MIDLET_NO_EXIT = 2;
+
+    /** Constant for launching the MIDlet directly in the background. */
+    public static final byte MIDLET_LAUNCH_BG = 4;
+
+    /**
+     * Cached extended attributes for the MIDlet. The valid values are:
+     * MIDLET_BACKGROUND_PAUSE, MIDLET_NO_EXIT and MIDLET_LAUNCH_BG.  
+     */
+    private byte extendedAttributes;
+
 
     /**
      * Initialize the MIDletProxy class. Should only be called by the
@@ -485,6 +500,14 @@ public class MIDletProxy implements SuspendDependency {
      */
     Timer getTimer() {
         return proxyTimer;
+    }
+
+    void setExtendedAttribute(byte attribute) {
+        extendedAttributes |= attribute;
+    }
+
+    public boolean getExtendedAttribute(byte attribute) {
+        return (extendedAttributes & attribute) != 0;
     }
 
     /**
