@@ -37,6 +37,23 @@ void javacall_ams_operation_completed(javacall_opcode operation,
 }
 
 /**
+ * Inform on change of the VM'slifecycle status.
+ *
+ * Java will invoke this function whenever the lifecycle status of the running
+ * VM is changed
+ * 
+ * @param state new state of the running VM. Can be either,
+ *        <tt>JAVACALL_SYSTEM_STATE_ACTIVE</tt>
+ *        <tt>JAVACALL_SYSTEM_STATE_SUSPENDED</tt>
+ *        <tt>JAVACALL_SYSTEM_STATE_STOPPED</tt>
+ *        <tt>JAVACALL_SYSTEM_STATE_ERROR</tt>
+ *        <tt>JAVACALL_MIDLET_STATE_ERROR</tt>
+ */
+void javacall_ams_system_state_changed(javacall_system_state state) {
+    (void)state;
+}
+
+/**
  * Inform on change of the specific MIDlet's lifecycle status.
  *
  * Java will invoke this function whenever the lifecycle status of the running
