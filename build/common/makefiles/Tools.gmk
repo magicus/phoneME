@@ -134,6 +134,16 @@ $(CA_KEYSTORE): $(KEYTOOL_JAR_FILE) $(KEYTOOL_KEYSTORE_FILE)
 	@($(JAVA_CMD) -jar $(KEYTOOL_JAR_FILE) -import -keystore \
 		$(KEYTOOL_KEYSTORE_FILE) -alias publicca \
 		-storepass keystorepwd -MEkeystore $(CA_KEYSTORE)) $(LOG)
+ifeq ($(TARGET_VM), cdc_vm)
+	@echo +++ $(JAVA_CMD) -jar $(KEYTOOL_JAR_FILE) -import -keystore \
+		$(KEYTOOL_KEYSTORE_FILE) -alias suntestca \
+		-storepass keystorepwd -MEkeystore $(CA_KEYSTORE) \
+		-domain identified $(LOG_ONLY)
+	@($(JAVA_CMD) -jar $(KEYTOOL_JAR_FILE) -import -keystore \
+		$(KEYTOOL_KEYSTORE_FILE) -alias suntestca \
+		-storepass keystorepwd -MEkeystore $(CA_KEYSTORE) \
+		-domain identified) $(LOG)
+else
 	@echo +++ $(JAVA_CMD) -jar $(KEYTOOL_JAR_FILE) -import -keystore \
 		$(KEYTOOL_KEYSTORE_FILE) -alias suntestca \
 		-storepass keystorepwd -MEkeystore $(CA_KEYSTORE) \
@@ -142,6 +152,7 @@ $(CA_KEYSTORE): $(KEYTOOL_JAR_FILE) $(KEYTOOL_KEYSTORE_FILE)
 		$(KEYTOOL_KEYSTORE_FILE) -alias suntestca \
 		-storepass keystorepwd -MEkeystore $(CA_KEYSTORE) \
 		-domain identified_third_party) $(LOG)
+endif
 	@echo +++ $(JAVA_CMD) -jar $(KEYTOOL_JAR_FILE) -import -keystore \
 		$(KEYTOOL_KEYSTORE_FILE) -alias dummyca \
 		-storepass keystorepwd -MEkeystore $(CA_KEYSTORE) \
