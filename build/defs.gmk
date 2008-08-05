@@ -41,8 +41,15 @@ XMLPARSER_JAVA_FILES = \
 	\
 	$(XMLPARSER_GENERATED_JAVA_FILES) \
 
-#    $(XMLPARSER_SRC_DIR)/$(SUN_PATH)/Attrs.java \
-#    $(XMLPARSER_SRC_DIR)/$(SUN_PATH)/SAXParserImp.java \
-#    $(XMLPARSER_SRC_DIR)/$(SUN_PATH)/SAXParserFactoryImp.java \
+ifeq ($(SAX_280), true)
+XMLPARSER_JAVA_FILES += \
+    $(XMLPARSER_SRC_DIR)/$(ORG_PATH)/XMLReader.java \
+    $(XMLPARSER_SRC_DIR)/$(ORG_PATH)/ContentHandler.java \
+    $(XMLPARSER_SRC_DIR)/$(ORG_PATH)/DTDHandler.java \
+    $(XMLPARSER_SRC_DIR)/$(ORG_PATH)/ErrorHandler.java \
+    $(XMLPARSER_SRC_DIR)/$(ORG_PATH)/EntityResolver.java \
+    $(XMLPARSER_SRC_DIR)/$(ORG_PATH)/ext/Attributes2.java \
+
+endif
 
 # end
