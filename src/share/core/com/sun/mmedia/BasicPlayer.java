@@ -266,9 +266,6 @@ public abstract class BasicPlayer
         // Initialize sysOffset to the current time.
         // This is used for TimeBase calculations.
         sysOffset = System.currentTimeMillis() * 1000L;
-
-        // Set event listener
-        new MMEventListener();
     }
 
     /**
