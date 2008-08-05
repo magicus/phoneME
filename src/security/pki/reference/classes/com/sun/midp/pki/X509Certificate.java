@@ -1294,6 +1294,16 @@ public class X509Certificate implements Certificate {
                         cert.verify(caCerts[certIdx].getPublicKey());
                         // if no exceptions, we found the right certificate
                         isChainComplete = true;
+
+                        /*
+                         * If the last certificate in chain is self-signed,
+                         * don't add its subject twice.
+                         */
+                        String certSubj = cert.getSubject();
+                        if (!certSubj.equals(cert.getIssuer())) {
+                            subjectNames.addElement(certSubj);
+                        }
+
                         subjectNames.addElement(caCerts[certIdx].getSubject());
                         break;
                     } catch (CertificateException ce) {
