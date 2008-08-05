@@ -96,5 +96,17 @@ public interface ChamDisplayTunnel {
      * Updates the scroll indicator.
      */
     public void updateScrollIndicator();
+
+    /**
+     * Called to get current display width.
+     * @return Display width.
+     */
+    public int getDisplayWidth();
+	
+    /**
+     * Called to get current display height.
+     * @return Display height.
+     */
+    public int getDisplayHeight();
 }
 

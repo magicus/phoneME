@@ -70,7 +70,9 @@ public class TitleLayer extends CLayer {
     public void setAnchor() {
         bounds[X] = 0;
         bounds[Y] = 0;
-        bounds[W] = ScreenSkin.WIDTH;
+	if (owner != null) {
+	    bounds[W] = owner.bounds[W];
+	}
         bounds[H] = TitleSkin.HEIGHT;
         titlex = 0;
     }
@@ -120,17 +122,17 @@ public class TitleLayer extends CLayer {
         if (titlex == 0) {
             // anchor isn't set yet
             titlew = TitleSkin.FONT.stringWidth(title);
-            if (titlew > (ScreenSkin.WIDTH - (2 * TitleSkin.MARGIN))) {
-                titlew = ScreenSkin.WIDTH - (2 * TitleSkin.MARGIN);
+            if (titlew > (bounds[W] - (2 * TitleSkin.MARGIN))) {
+                titlew = bounds[W] - (2 * TitleSkin.MARGIN);
             }            
             
             switch (TitleSkin.TEXT_ALIGN_X) {
                 case Graphics.HCENTER:
-                    titlex = (ScreenSkin.WIDTH - titlew) / 2;
+                    titlex = (bounds[W] - titlew) / 2;
                     break;
                 case Graphics.RIGHT:
                     titlex = 
-                        (ScreenSkin.WIDTH - TitleSkin.MARGIN - titlew);
+                        (bounds[W] - TitleSkin.MARGIN - titlew);
                     break;
                 case Graphics.LEFT:
                     titlex = TitleSkin.MARGIN;
@@ -138,7 +140,7 @@ public class TitleLayer extends CLayer {
                 default:
                     if (ScreenSkin.RL_DIRECTION) {
                         titlex =
-                        (ScreenSkin.WIDTH - TitleSkin.MARGIN - titlew);
+                        (bounds[W] - TitleSkin.MARGIN - titlew);
                     } else {
                         titlex = TitleSkin.MARGIN;    
                     }
@@ -148,8 +150,8 @@ public class TitleLayer extends CLayer {
             // We center the title vertically in the
             // space provided
             titleh = TitleSkin.FONT.getHeight();
-            if (titleh < TitleSkin.HEIGHT) {
-                titley = (TitleSkin.HEIGHT - titleh) / 2;
+            if (titleh < bounds[H]) {
+                titley = (bounds[H] - titleh) / 2;
             } else {
                 titley = 0;
             }

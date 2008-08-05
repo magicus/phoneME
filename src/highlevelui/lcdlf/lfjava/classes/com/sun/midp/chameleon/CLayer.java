@@ -202,8 +202,8 @@ public class CLayer {
         bounds = new int[4];
         bounds[X] = 0;
         bounds[Y] = 0;
-        bounds[W] = ScreenSkin.WIDTH;
-        bounds[H] = ScreenSkin.HEIGHT;
+        bounds[W] = 0;
+        bounds[H] = 0;
         
         dirtyBounds = new int[4];
         dirtyBoundsCopy = new int[4];

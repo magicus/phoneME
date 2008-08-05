@@ -297,12 +297,16 @@ public class CascadeMenuLayer extends ScrollablePopupLayer {
                 bounds[X] = 0;
                 break;
             case Graphics.HCENTER:
-                bounds[X] = (ScreenSkin.WIDTH - bounds[W]) / 2;
-                break;
+		if (owner != null) {
+		    bounds[X] = (owner.bounds[W] - bounds[W]) / 2;
+		}                
+		break;
             case Graphics.RIGHT:
             default:
-                bounds[X] = ScreenSkin.WIDTH - bounds[W] - MenuSkin.WIDTH + 5;
-                break;
+		if (owner != null) {
+		    bounds[X] = owner.bounds[W] - bounds[W] - MenuSkin.WIDTH + 5;
+		}                
+		break;
         }
         if (bounds[X] < 0) {
             bounds[X] = 0;
@@ -312,13 +316,17 @@ public class CascadeMenuLayer extends ScrollablePopupLayer {
                 bounds[Y] = 0;
                 break;
             case Graphics.VCENTER:
-                bounds[Y] = (ScreenSkin.HEIGHT - SoftButtonSkin.HEIGHT -
-                    bounds[H]) / 2;
+		if (owner != null) {
+		    bounds[Y] = (owner.bounds[H] - SoftButtonSkin.HEIGHT -
+				 bounds[H]) / 2;
+		}
                 break;
             case Graphics.BOTTOM:
             default:
-                bounds[Y] = ScreenSkin.HEIGHT - SoftButtonSkin.HEIGHT -
-                    bounds[H];
+		if (owner != null) {
+		    bounds[Y] = owner.bounds[H] - SoftButtonSkin.HEIGHT -
+			bounds[H];
+		}
                 break;
         }
         if (bounds[Y] < 0) {
@@ -409,5 +417,7 @@ public class CascadeMenuLayer extends ScrollablePopupLayer {
     public void update(CLayer[] layers) {
         alignMenu();
     }
+
+
 }
 

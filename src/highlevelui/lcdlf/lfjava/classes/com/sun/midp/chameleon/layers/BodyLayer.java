@@ -319,8 +319,8 @@ public class BodyLayer extends CLayer
         super.update(layers);
 
         bounds[X] = 0;
-        bounds[W] = ScreenSkin.WIDTH;
-        bounds[H] = ScreenSkin.HEIGHT;
+	bounds[W] = tunnel.getDisplayWidth();
+	bounds[H] = tunnel.getDisplayHeight();
 
         if (layers[MIDPWindow.PTI_LAYER] != null && layers[MIDPWindow.PTI_LAYER].isVisible()) {
             bounds[H] -= layers[MIDPWindow.PTI_LAYER].bounds[H];

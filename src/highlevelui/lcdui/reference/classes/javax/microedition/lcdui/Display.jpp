@@ -694,10 +694,6 @@ public class Display {
         /** create DisplayAccess I/F implementor */
         accessor = new DisplayAccessImpl();
 
-        // #ifdef ENABLE_CHAMELEON
-        SkinResources.initDisplayAccess(accessor);
-        // #endif ENABLE_CHAMELEON
-
         /** create DisplayEventConsumer I/F implementor */
         consumer = new DisplayEventConsumerImpl();
 
@@ -2660,6 +2656,23 @@ public class Display {
                           currentCopy.getVerticalScrollProportion());
             }
         }
+
+	/**
+	 * Called to get current display width.
+	 * @return Display width.
+	 */
+        public int getDisplayWidth() {
+	    return Display.this.width;
+        }
+	
+        /**
+	 * Called to get current display height.
+	 * @return Display height.
+	 */
+        public int getDisplayHeight() {
+	    return Display.this.height;
+        }
+	
     }
     // #endif
  

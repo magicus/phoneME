@@ -136,7 +136,8 @@ public class MIDPWindow extends CWindow {
      *               back into the Display object in another package
      */
     public MIDPWindow(ChamDisplayTunnel tunnel) {
-        super(ScreenSkin.IMAGE_BG, ScreenSkin.COLOR_BG);
+        super(ScreenSkin.IMAGE_BG, ScreenSkin.COLOR_BG, 
+	      tunnel.getDisplayWidth(), tunnel.getDisplayHeight());
 
         this.tunnel = tunnel;
 
@@ -704,7 +705,7 @@ public class MIDPWindow extends CWindow {
      * titles, tickers, fullscreen mode, etc. change state.
      */
     public void resize() {
-        super.resize();
+        super.resize(tunnel.getDisplayWidth(), tunnel.getDisplayHeight());
 
         int oldHeight = bodyLayer.bounds[H];
         int oldWidth = bodyLayer.bounds[W];

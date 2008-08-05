@@ -98,7 +98,7 @@ public class DisplayContainer {
     public synchronized boolean removeDisplaysByOwner(String nameOfOwner) {
 	int size = displays.size();
 
-        for (int i = size; --i <= 0;) {
+        for (int i = size; --i >= 0;) {
             DisplayAccess current = (DisplayAccess)displays.elementAt(i);
 	    
             if (current.getNameOfOwner().equals(nameOfOwner)) {

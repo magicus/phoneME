@@ -32,7 +32,6 @@ import javax.microedition.lcdui.*;
 import java.util.*;
 
 import com.sun.midp.chameleon.skins.TickerSkin;
-import com.sun.midp.chameleon.skins.ScreenSkin;
 import com.sun.midp.chameleon.skins.SoftButtonSkin;
 
 /**
@@ -75,8 +74,10 @@ public class TickerLayer extends CLayer {
 
     public void setAnchor() {
         bounds[X] = 0;
-        bounds[W] = ScreenSkin.WIDTH;
-        bounds[H] = TickerSkin.HEIGHT;
+	if (owner != null) {
+	    bounds[W] = owner.bounds[W];
+	}
+	    bounds[H] = TickerSkin.HEIGHT;
         if (textLoc > bounds[X] + bounds[W]) {
             textLoc = bounds[X] + bounds[W];
         }
@@ -86,8 +87,10 @@ public class TickerLayer extends CLayer {
                 break;
             case(Graphics.BOTTOM):
             default:
-                bounds[Y] = ScreenSkin.HEIGHT - SoftButtonSkin.HEIGHT -
-                        bounds[H];
+		if (owner != null) {
+		    bounds[Y] = owner.bounds[H];
+		}
+                bounds[Y] -= SoftButtonSkin.HEIGHT + bounds[H];
         }
     }
 

@@ -95,6 +95,13 @@ public class AlertLayer extends BodyLayer {
      * Align alert depend on skin
      */
     public void setAnchor() {
+	if (AlertSkin.WIDTH == -1 && tunnel != null) {
+            AlertSkin.WIDTH = (int)(.95 * tunnel.getDisplayWidth());
+        }
+
+        if (AlertSkin.HEIGHT == -1 && tunnel != null) {
+            AlertSkin.HEIGHT = (int)(.75 * tunnel.getDisplayHeight());
+        }
 
         bounds[W] = AlertSkin.WIDTH;
         bounds[H] = AlertSkin.HEIGHT;
@@ -104,11 +111,13 @@ public class AlertLayer extends BodyLayer {
             bounds[X] = 0;
             break;
         case Graphics.RIGHT:
-            bounds[X] = ScreenSkin.WIDTH - bounds[W];
+	    if (tunnel != null)
+		bounds[X] = tunnel.getDisplayWidth() - bounds[W];
             break;
         case Graphics.HCENTER:
         default:
-            bounds[X] = (ScreenSkin.WIDTH - bounds[W]) >> 1;
+	    if (tunnel != null)
+		bounds[X] = (tunnel.getDisplayWidth() - bounds[W]) >> 1;
             break;
         }
         switch (AlertSkin.ALIGN_Y) {
@@ -121,7 +130,8 @@ public class AlertLayer extends BodyLayer {
             } 
             break;
         case Graphics.VCENTER:
-            bounds[Y] = ScreenSkin.HEIGHT - SoftButtonSkin.HEIGHT - bounds[H];
+	    if (tunnel != null)
+		bounds[Y] = tunnel.getDisplayHeight() - SoftButtonSkin.HEIGHT - bounds[H];
             if (alert != null && alert.getTicker() != null) {
                 bounds[Y] -= TickerSkin.HEIGHT;
             }
@@ -129,8 +139,9 @@ public class AlertLayer extends BodyLayer {
             break;
         case Graphics.BOTTOM:
         default:
-            bounds[Y] = ScreenSkin.HEIGHT - SoftButtonSkin.HEIGHT -
-                bounds[H];
+	    if (tunnel != null)
+		bounds[Y] = tunnel.getDisplayHeight() - SoftButtonSkin.HEIGHT -
+		    bounds[H];
             if (alert != null &&
                 alert.getTicker() != null &&
                 TickerSkin.ALIGN != Graphics.TOP) {
