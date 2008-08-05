@@ -114,13 +114,7 @@ javacall_result javacall_lcd_finalize(void){
 /**
  * Get screen raster pointer
  *
- * @param screenType can be any of the following types:
- * <ul>
- *   <li> <code>JAVACALL_LCD_SCREEN_PRIMARY</code> -
- *        return primary screen size information </li>
- *   <li> <code>JAVACALL_LCD_SCREEN_EXTERNAL</code> -
- *        return external screen size information if supported </li>
- * </ul>
+ * @param hardwareId uniue hardware screen id
  * @param screenWidth output paramter to hold width of screen
  * @param screenHeight output paramter to hold height of screen
  * @param colorEncoding output paramenter to hold color encoding,
@@ -134,12 +128,13 @@ javacall_result javacall_lcd_finalize(void){
  *         ( screenWidth * screenHeight )
  *         or <code>NULL</code> in case of failure
  */
-javacall_pixel* javacall_lcd_get_screen(javacall_lcd_screen_type screenType,
+javacall_pixel* javacall_lcd_get_screen(int hardwareId,
                                         int* screenWidth,
                                         int* screenHeight,
                                         javacall_lcd_color_encoding_type* colorEncoding) {
 
     /* as status bar does not rotate client area rotates without distortion */
+  (void)hardwareId;
     if (reverse_orientation) {
         int* temp = screenWidth;
         screenWidth = screenHeight;
@@ -172,15 +167,17 @@ javacall_pixel* javacall_lcd_get_screen(javacall_lcd_screen_type screenType,
  * The function call should not be CPU time expensive, and should return
  * immediately. It should avoid memory bulk memory copying of the entire raster.
  *
+ * @param hardwareId uniue hardware screen id
  * @retval JAVACALL_OK      success
  * @retval JAVACALL_FAIL    fail
  */
-javacall_result javacall_lcd_flush(void) {
+javacall_result javacall_lcd_flush(int hardwareId) {
     static LimeFunction *f = NULL;
     static LimeFunction *f1 = NULL;
     short clip[4] = {0,0,VRAM.width, VRAM.height};
     javacall_pixel *current_hdc;
 	 
+    (void)hardwareId;
     if(inFullScreenMode) {
         clip[3] = VRAM.full_height;
     }
@@ -290,13 +287,15 @@ javacall_result javacall_lcd_bitblit(javacall_pixel* destScreenPtr,
  * runtime of the expensive flush operation: It should be implemented on
  * platforms that support it
  * 
+ * @param hardwareId uniue hardware screen id
  * @param ystart start vertical scan line to start from
  * @param yend last vertical scan line to refresh
  *
  * @retval JAVACALL_OK      success
  * @retval JAVACALL_FAIL    fail 
  */
-javacall_result /*OPTIONAL*/ javacall_lcd_flush_partial(int ystart, int yend){
+javacall_result /*OPTIONAL*/ javacall_lcd_flush_partial(int hardwareId, int ystart, int yend){
+  (void)hardwareId;
 	javacall_lcd_flush();
     return JAVACALL_FAIL;
 }
@@ -354,10 +353,10 @@ javacall_lcd_get_annunciator_height(
  * @retval JAVACALL_OK   success
  * @retval JAVACALL_FAIL failure
  */
-javacall_result javacall_lcd_set_full_screen_mode(javacall_bool useFullScreen) {
+javacall_result javacall_lcd_set_full_screen_mode(int hardwareId,javacall_bool useFullScreen) {
     static LimeFunction *f = NULL;
     inFullScreenMode = useFullScreen;
-	
+    (void)hardwareId;
 	if (f==NULL) {
 		f = NewLimeFunction(LIME_PACKAGE,
 							LIME_GRAPHICS_CLASS,
@@ -375,16 +374,19 @@ javacall_lcd_set_screen_mode(
 	return JAVACALL_FAIL;
 }*/
 
-javacall_bool javacall_lcd_reverse_orientation() {
+javacall_bool javacall_lcd_reverse_orientation(int hardwareId) {
+  (void)hardwareId;
       reverse_orientation = !reverse_orientation;    
       return reverse_orientation;
 }
  
-javacall_bool javacall_lcd_get_reverse_orientation() {
+javacall_bool javacall_lcd_get_reverse_orientation(int hardwareId) {
+  (void)hardwareId;
      return reverse_orientation;
 }
   
-int javacall_lcd_get_screen_height() {
+int javacall_lcd_get_screen_height(int hardwareId) {
+  (void)hardwareId;
     if (reverse_orientation) {
         return VRAM.width;
     } else {
@@ -396,7 +398,8 @@ int javacall_lcd_get_screen_height() {
     }
 }
   
-int javacall_lcd_get_screen_width() {
+int javacall_lcd_get_screen_width(int hardwareId) {
+  (void)hardwareId;
     if (reverse_orientation) {
         if(inFullScreenMode) {
             return VRAM.full_height;
@@ -487,6 +490,74 @@ javacall_bool generateSoftButtonKeys(int x, int y, javacall_penevent_type pentyp
 
 	return JAVACALL_FALSE;
     
+}
+/** 
+ * Get display device name by id
+ * @param hardwareId unique id of hardware screen
+ */
+char* javacall_lcd_get_display_name(int hardwareId) {
+  (void)hardwareId;
+  return NULL;
+}
+
+
+/**
+ * Check if the display device is primary
+ * @param hardwareId unique id of hardware screen
+ */
+jboolean javacall_lcd_is_display_primary(int hardwareId) {
+    (void)hardwareId;
+    return JAVACALL_TRUE;
+}
+
+/**
+ * Check if the display device is build-in
+ * @param hardwareId unique id of hardware screen
+ */
+jboolean javacall_lcd_is_display_buildin(int hardwareId) {
+    (void)hardwareId; 
+    return JAVACALL_TRUE;
+}
+
+/**
+ * Check if the display device supports pointer events
+ * @param hardwareId unique id of hardware screen
+ */
+jboolean javacall_lcd_is_display_ptr_supported(int hardwareId) {
+    (void)hardwareId; 
+    return JAVACALL_TRUE;
+}
+
+/**
+ * Check if the display device supports pointer motion  events
+ * @param hardwareId unique id of hardware screen
+ */
+jboolean javacall_lcd_is_display_ptr_motion_supported(int hardwareId){
+    (void)hardwareId; 
+    return JAVACALL_TRUE;
+}
+
+/**
+ * Get display device capabilities
+ * @param hardwareId unique id of hardware screen
+ */
+int javacall_lcd_get_display_capabilities(int hardwareId) {
+  return 255;
+}
+
+static jint screen_ids[] =
+{
+  0
+};
+
+/**
+ * Get the list of screen ids
+ * @param return number of screens 
+ * @return the lit of ids 
+ */
+jint* javacall_lcd_get_display_device_ids(jint* n) {
+  *n = 1;
+    return screen_ids;
 }
     
 #ifdef __cplusplus

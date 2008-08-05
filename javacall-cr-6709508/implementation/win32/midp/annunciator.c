@@ -199,7 +199,7 @@ void drawTopbarImage(void) {
         util_draw_bitmap(home_data, home_color_format, home_width, home_height, 0, home_x);
     }
 
-    javacall_lcd_flush();
+    javacall_lcd_flush(0);
 }
 
 /**
