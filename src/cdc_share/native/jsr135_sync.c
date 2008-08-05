@@ -192,6 +192,10 @@ javacall_result mmapi_thread_resume(int desc, javacall_result status, void *data
     }
 
     CVMmutexLock(&tMutex);
+    /*
+     * The search of the next matching thread is protected by the mutex, so
+     * ThreadInfo data being checked is still valid.
+     */
     while (NULL != (ti = match_next_thread(desc, ti))) {
         if (NULL != ti->pStatus) {
             *ti->pStatus = status;
