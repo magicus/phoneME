@@ -188,12 +188,13 @@ int midpInitCallback(int level, int (*init)(void), void (*final)(void)) {
         
             /* get midp config directory, set it */
             dir = getConfigurationDir(NULL);
-            if (dir == NULL) {
-            break;
+            if (dir != NULL) {
+                /* set up confDir before calling initialize */
+                midpSetConfigDir(dir);
+            }
+            // configDir = NULL will be handled below
         }
-            /* set up confDir before calling initialize */
-            midpSetConfigDir(dir);
-        }
+
         /* duplicate values if not set */
         if (midpConfig == NULL) {
         	midpConfig = midpAppDir;
