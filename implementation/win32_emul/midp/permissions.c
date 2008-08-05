@@ -49,7 +49,8 @@ extern "C" {
 
 static const char *VdomainPrefix="domain:";
 static const char *VgroupPrefix="alias:";
-static       char *VpolicyFilename = NULL;
+static       char *VpolicyFile = NULL;
+static       char *VmessageFile = NULL;
 
 
 static char* load_file(char *fname) {
@@ -169,7 +170,7 @@ static char *getPolicyFilename() {
     if (javacall_get_property("security.policyfile",
                                       JAVACALL_APPLICATION_PROPERTY,
                                       &tmpstr) != JAVACALL_OK) {
-        javacall_print("(E) property: security.policyfile is not found in ini file");
+        javacall_print("(E) property: security.policyfile is not found in ini file\n");
         return NULL;
     }
 
@@ -181,11 +182,46 @@ static char *getFuncGroupFilename() {
     if (javacall_get_property("security.messagefile",
                                       JAVACALL_APPLICATION_PROPERTY,
                                       &tmpstr) != JAVACALL_OK) {
-        javacall_print("(E) property: security.messagefile is not found in ini file");
+        javacall_print("(E) property: security.messagefile is not found in ini file\n");
         return NULL;
     }
 
     return build_file_name(tmpstr);
+}
+
+static char *load_policy_file() {
+    char *fname;
+    if (VpolicyFile == NULL) {
+        fname = getPolicyFilename();
+        if (fname == NULL)
+            return NULL;
+        VpolicyFile = load_file(fname);
+        if (VpolicyFile == NULL) {
+            javacall_print("(E) security.policyfile: can't open ");
+            javacall_print(fname);
+            javacall_print(" !!!\n");
+        }
+    }
+
+    return VpolicyFile;
+
+}
+
+static char *load_message_file() {
+    char *fname;
+    if (VmessageFile == NULL) {
+        fname = getFuncGroupFilename();
+        if (fname == NULL)
+            return NULL;
+        VmessageFile = load_file(fname);
+        if (VmessageFile == NULL) {
+            javacall_print("(E) security.message file can't open ");
+            javacall_print(fname);
+            javacall_print(" !!!\n");
+        }
+    }
+
+    return VmessageFile;
 }
 
 int javacall_permissions_load_domain_list(javacall_utf8_string* array) {
@@ -194,13 +230,7 @@ int javacall_permissions_load_domain_list(javacall_utf8_string* array) {
     int lines, offset, i1;
     char **str_list;
 
-    if (VpolicyFilename == NULL) {
-        VpolicyFilename = getPolicyFilename();
-        if (VpolicyFilename == NULL)
-            return 0;
-    }
-
-    file_str = load_file(VpolicyFilename);
+    file_str = load_policy_file();
     if (file_str == NULL)
         return 0;
 
@@ -249,7 +279,6 @@ int javacall_permissions_load_domain_list(javacall_utf8_string* array) {
 
     } while (0);
 
-    javacall_free(file_str);
     *array = (void*)str_list;
     return lines;
 }
@@ -260,13 +289,7 @@ int javacall_permissions_load_group_list(javacall_utf8_string* array) {
     int lines, offset, i1;
     char **str_list;
 
-    if (VpolicyFilename == NULL) {
-        VpolicyFilename = getPolicyFilename();
-        if (VpolicyFilename == NULL)
-            return 0;
-    }
-
-    file_str = load_file(VpolicyFilename);
+    file_str = load_policy_file();
     if (file_str == NULL)
         return 0;
 
@@ -276,8 +299,6 @@ int javacall_permissions_load_group_list(javacall_utf8_string* array) {
         if (check_prefix(buff, (char*)VgroupPrefix))
             lines++;
         else if (check_prefix(buff, (char*)VdomainPrefix)) {
-            /*groups at the beginning, rest of the file in no needed */
-            *ptr0 = 0;
             break;
         }
         ptr0 += offset;
@@ -312,8 +333,6 @@ int javacall_permissions_load_group_list(javacall_utf8_string* array) {
         }
 
     } while (0);
-
-    javacall_free(file_str);
     *array = (void*)str_list;
     return lines;
 }
@@ -325,13 +344,7 @@ int javacall_permissions_load_group_permissions(javacall_utf8_string* list,
     int lines, offset, i1;
     char **str_list;
 
-    if (VpolicyFilename == NULL) {
-        VpolicyFilename = getPolicyFilename();
-        if (VpolicyFilename == NULL)
-            return 0;
-    }
-
-    file_str = load_file(VpolicyFilename);
+    file_str = load_policy_file();
     if (file_str == NULL)
         return 0;
 
@@ -384,8 +397,6 @@ int javacall_permissions_load_group_permissions(javacall_utf8_string* list,
             *ptr1++ = 0;
         }
     } while (0);
-
-    javacall_free(file_str);
     *list = (void*)str_list;
     return lines;
 }
@@ -409,13 +420,7 @@ static int get_group_value(javacall_utf8_string domain_name,
     char buff[128];
     int value;
 
-    if (VpolicyFilename == NULL) {
-        VpolicyFilename = getPolicyFilename();
-        if (VpolicyFilename == NULL)
-            return 0;
-    }
-
-    file_str = load_file(VpolicyFilename);
+    file_str = load_policy_file();
     if (file_str == NULL)
         return JAVACALL_NEVER;
     
@@ -447,8 +452,6 @@ static int get_group_value(javacall_utf8_string domain_name,
             break;
         }
     } while (!check_prefix(buff, (char*)VdomainPrefix));
-
-    javacall_free(file_str);
     return value;
 }
 
@@ -470,12 +473,7 @@ int javacall_permissions_load_group_messages(javacall_utf8_string* list,
     int  i1, found;
     char **str_list;
 
-    file_str = getFuncGroupFilename();
-
-    if (file_str == NULL)
-        return 0;
-
-    file_str = load_file(file_str);
+    file_str = load_message_file();
     if (file_str == NULL)
         return 0;
 
@@ -508,7 +506,6 @@ int javacall_permissions_load_group_messages(javacall_utf8_string* list,
         *ptr1++ = 0; /* null terminating */
     }
 
-    javacall_free(file_str);
     if (i1 == 0)
         javacall_free(str_list);
     
@@ -516,6 +513,16 @@ int javacall_permissions_load_group_messages(javacall_utf8_string* list,
     return i1;
 }
 
+void javacall_permissions_loadingDone() {
+    if (VpolicyFile != NULL) {
+        javacall_free(VpolicyFile);
+        VpolicyFile = NULL;
+    }
+    if (VmessageFile != NULL) {
+        javacall_free(VmessageFile);
+        VmessageFile = NULL;
+    }
+}
 
 #ifdef __cplusplus
 }
