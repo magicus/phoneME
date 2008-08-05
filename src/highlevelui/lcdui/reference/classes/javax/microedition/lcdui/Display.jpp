@@ -418,8 +418,8 @@ public class Display {
     /** ID of this Display. */
     int displayId;
 
-    /** Class name of the MIDlet that owns this Display. */
-    String nameOfOwner;
+    /** Owner of the Display, can be any class. */
+    Object owner;
 
     /** If the current display mode is known. 
      * We don't know it before the lSetFullScreen is
@@ -642,8 +642,11 @@ public class Display {
 
         DisplayStaticAccess displayStaticAccess = 
             new DisplayStaticAccess () {
-                public Display getDisplay(String owner) {
+                public Display getDisplay(Object owner) {
                     return Display.getDisplay(owner);
+                }
+                public boolean freeDisplay(Object owner) {
+                    return Display.freeDisplay(owner);
                 }
             };
 
@@ -655,10 +658,10 @@ public class Display {
     /**
      * Initializes the display with an accessor helper class.
      *
-     * @param ownerName class name of the MIDlet that owns this Display
+     * @param theOwner object that owns this Display
      */
-    Display(String ownerName) {
-        nameOfOwner = ownerName;
+    Display(Object theOwner) {
+        owner = theOwner;
 
         /** create DisplayAccess I/F implementor */
         accessor = new DisplayAccessImpl();
@@ -688,7 +691,7 @@ public class Display {
         displayContainer.addDisplay(accessor);
 
         Displayable temp = foregroundController.registerDisplay(displayId,
-                                                                nameOfOwner);
+                           owner.getClass().getName());
         if (temp == null) {
             initialDisplayable = new Form(null).displayableLF;
         } else {
@@ -784,7 +787,7 @@ public class Display {
      * @throws NullPointerException if <code>m</code> is <code>null</code>
      */
     public static Display getDisplay(MIDlet m) {
-        return getDisplay(m.getClass().getName());
+        return getDisplay((Object)m);
     }
 
     /**
@@ -1460,16 +1463,16 @@ public class Display {
  * ************* package private methods
  */
     /**
-     * Gets the <code>Display</code> object by owner name.
+     * Gets the <code>Display</code> object by owner.
      *
-     * @param owner name of the owner of the display, the owner can be
+     * @param owner the owner of the display, the owner can be any class
      * 
      * @return the display object that application can use for its user
      * interface
      *
      * @throws NullPointerException if <code>owner</code> is <code>null</code>
      */
-    static Display getDisplay(String owner) {
+    static Display getDisplay(Object owner) {
         DisplayAccess da = displayContainer.findDisplayByOwner(owner);
 
         if (da != null) {
@@ -1479,6 +1482,27 @@ public class Display {
         Display display = new Display(owner);
 
         return display;
+    }
+
+    /**
+     * Free a <code>Display</code> no longer in use.
+     *
+     * @param owner the owner of the display, the owner can be any class
+     * 
+     * @return true if display has been succcessfully removed, 
+     *         false, if display object has not been found.
+     *
+     * @throws NullPointerException if <code>owner</code> is <code>null</code>
+     */
+    static boolean freeDisplay(Object owner) {
+        DisplayAccess da = displayContainer.findDisplayByOwner(owner);
+
+        if (da != null) {
+            // Give up the foreground
+            da.getDisplay().setCurrent(null);
+        }
+
+        return displayContainer.removeDisplay(da);
     }
 
     // #ifdef ENABLE_CHAMELEON
@@ -2790,13 +2814,13 @@ public class Display {
         }
 
         /**
-         * Get the class name of the MIDlet that owns this display.
+         * Get the object that owns this display.
          * DisplayAccess I/F method.
          *
-         * @return name of the MIDlet that owns this Display
+         * @return object that owns this Display
          */
-        public String getNameOfOwner() {
-            return Display.this.nameOfOwner;
+        public Object getOwner() {
+            return Display.this.owner;
         }
 
         /**
