@@ -42,7 +42,7 @@ void javacall_ams_refresh_lcd()
     javacall_lcd_color_encoding_type colorEncoding = JAVACALL_LCD_COLOR_OTHER;
     int i;
 
-    scrn = javacall_lcd_get_screen(JAVACALL_LCD_SCREEN_PRIMARY,
+    scrn = javacall_lcd_get_screen(0,
                                    &screenx, &screeny, &colorEncoding);
     if (scrn == NULL)
     {
@@ -54,7 +54,7 @@ void javacall_ams_refresh_lcd()
     {
         scrn[i] = RGB2PIXELTYPE(0, 0, 255);
     }
-    javacall_lcd_flush();
+    javacall_lcd_flush(0);
 }
 
 /**
