@@ -186,6 +186,9 @@ javacall_dom_domimplementation_get_feature(javacall_handle handle,
                                            javacall_const_utf16_string version,
                                            /* OUT */ javacall_handle* ret_value);
 
+javacall_result
+javacall_dom_domimplementation_instance(/* OUT */ javacall_handle* ret_value);
+
 /** 
  * Deletes object representing this domimplementation
  * 
