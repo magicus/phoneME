@@ -31,6 +31,8 @@
 #include <midp_logging.h>
 #include <midp_runtime_info.h>
 #include <listeners_intern.h>
+#include <commandLineUtil_md.h>
+#include <midpAMS.h>
 
 #define MAX_CLASS_NAME_LEN   256
 #define MAX_PROFILE_NAME_LEN 64
@@ -63,7 +65,22 @@ void midp_listener_ams_ui_state_changed(const NamsEventData* pEventData);
  *         <tt>JAVACALL_FAIL</tt> otherwise
  */
 javacall_result javanotify_ams_system_start() {
-    MIDPError res = midp_system_initialize();
+    MIDPError res;
+
+    /* get midp home directory, set it */
+    char* dir = getApplicationDir(NULL);
+    if (dir == NULL) {
+        return JAVACALL_FAIL;
+    }
+    /* set up appDir before calling initialize */
+    midpSetAppDir(dir);
+
+    /* get midp config directory, set it */
+    dir = getConfigurationDir(NULL);
+    /* set up confDir before calling initialize */
+    midpSetConfigDir(dir);
+
+    res = midp_system_initialize();
     if (res != ALL_OK) {
         return JAVACALL_FAIL;
     }

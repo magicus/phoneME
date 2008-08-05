@@ -68,7 +68,6 @@ char* getApplicationDir(char *cmd) {
     static char midpAppDir[MAX_PATH_LEN];
     javacall_result ret;
     int len = MAX_PATH_LEN - 1;
-    pcsl_string str = PCSL_STRING_NULL_INITIALIZER;
 
     (void)cmd;
 
@@ -97,7 +96,6 @@ char* getConfigurationDir(char *cmd) {
     static char midpConfigDir[MAX_PATH_LEN];
     javacall_result ret;
     int len = MAX_PATH_LEN - 1;
-    pcsl_string str = PCSL_STRING_NULL_INITIALIZER;
 
     (void)cmd;
 
