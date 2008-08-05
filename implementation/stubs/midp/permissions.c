@@ -201,7 +201,6 @@ javacall_result javacall_security_permission_dialog_display(javacall_utf16* mess
 void javanotify_security_permission_dialog_finish(
                         javacall_security_permission_type userPermission)
 {
-    return JAVACALL_NOT_IMPLEMENTED;
 }
 
 /**
