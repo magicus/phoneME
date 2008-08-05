@@ -147,8 +147,10 @@ int wav_setStreamPlayerData(ah_wav *wav) {
 
     /* finally check if data ends */
     data = wav->hdr.dataBuffer;
-    wav->hdr.dataEnded = wav->hdr.dataPos
-        >= ((struct riffchnk *)data)->chnk_ds + sizeof(struct riffchnk) - sizeof(long)
+    wav->hdr.dataEnded = 
+        ( wav->hdr.dataPos >= ((struct riffchnk *)data)->chnk_ds 
+                              + (int)sizeof(struct riffchnk) 
+                              - (int)sizeof(long) )
         ? JAVACALL_TRUE
         : JAVACALL_FALSE;
     return 1;
