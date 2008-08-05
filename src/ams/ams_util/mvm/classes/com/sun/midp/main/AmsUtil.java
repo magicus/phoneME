@@ -293,10 +293,21 @@ public class AmsUtil {
                     String heapSizeProp = MIDletSuiteUtils.getSuiteProperty(
                         id, midlet, MIDletSuite.HEAP_SIZE_PROP);
 
-                    if (heapSizeProp != null) {
+                    int propLen = heapSizeProp.length();
+                    if ((heapSizeProp != null) && (propLen > 0)) {
                         try {
+                            boolean sizeInKilos = false;
+                            char lastChar = heapSizeProp.charAt(propLen - 1);
+                            if ((lastChar == 'K') || (lastChar == 'k') ) {
+                                heapSizeProp =
+                                    heapSizeProp.substring(0, propLen - 1);
+                                sizeInKilos = true;
+                            }
+
                             int heapSize = Integer.parseInt(heapSizeProp);
+                            heapSize = sizeInKilos ? heapSize * 1024 : heapSize; 
                             System.out.println("EXTENDED_MIDLET_ATTRIBUTES_ENABLED prop=" + heapSize + ", limit=" + limit);
+
                             if ((heapSize > 0) && (heapSize < limit)) {
                                 limit = heapSize;
                             }
