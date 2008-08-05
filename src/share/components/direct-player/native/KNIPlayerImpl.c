@@ -183,6 +183,7 @@ KNIDECL(com_sun_mmedia_PlayerImpl_nRealize) {
     int mimeLength;
     jchar* pszMime = NULL;
     jboolean returnValue = KNI_FALSE;
+    javacall_result status = JAVACALL_FAIL;
 
     KNI_StartHandles(1);
     KNI_DeclareHandle(mime);
@@ -203,7 +204,13 @@ KNIDECL(com_sun_mmedia_PlayerImpl_nRealize) {
             mimeLength = 0;
         }
     }
-    if (JAVACALL_OK == javacall_media_realize(pKniInfo->pNativeHandle, pszMime, mimeLength)) {
+    JAVACALL_MM_ASYNC_EXEC(
+        status,
+        javacall_media_realize(pKniInfo->pNativeHandle, pszMime, mimeLength),
+        pKniInfo->pNativeHandle, pKniInfo->appId, pKniInfo->playerId, JAVACALL_EVENT_MEDIA_REALIZED,
+        returns_no_data
+    );
+    if (status == JAVACALL_OK) {
         returnValue = KNI_TRUE;
     }
 
