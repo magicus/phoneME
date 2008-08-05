@@ -214,3 +214,10 @@ KNIDECL(com_sun_midp_security_Permissions_getGroupMessages) {
     KNI_EndHandlesAndReturnObject(messages);
 }
 
+KNI_RETURNTYPE_VOID
+KNIDECL(com_sun_midp_security_Permissions_loadingDone)
+{
+    permissions_loadingDone();
+    KNI_ReturnVoid();
+}
+

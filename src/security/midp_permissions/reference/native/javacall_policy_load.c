@@ -68,6 +68,11 @@ int permissions_load_group_messages(char** array, char* group_name) {
 void permissions_dealloc(void* array) {
     javacall_free(array);
 }
+
+void permissions_loadingDone() {
+    javacall_permissions_loadingDone();
+}
+
 #ifdef __cplusplus
 }
 #endif
