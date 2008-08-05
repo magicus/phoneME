@@ -32,6 +32,7 @@
 #include <midpResourceLimit.h>
 #include <midp_properties_port.h>
 #include <midpInit.h>
+#include <commandLineUtil_md.h>
 #include <suitestore_common.h>
 #if !ENABLE_CDC
 #include <pcsl_network.h>
@@ -173,11 +174,27 @@ int midpInitCallback(int level, int (*init)(void), void (*final)(void)) {
     do {
         if ((midpAppDir == NULL) && (midpConfig == NULL)) {
             /*
-             * The caller has to set midpAppDir of midpConfig before 
-             * calling midpInitialize().
+             * If the caller didn't set midpAppDir of midpConfig before 
+             * calling midpInitialize()
              */
+
+            /* get midp home directory, set it */
+            char* dir = getApplicationDir(NULL);
+            if (dir == NULL) {
             break;
         }
+            /* set up appDir before calling initialize */
+            midpSetAppDir(dir);
+        
+            /* get midp config directory, set it */
+            dir = getConfigurationDir(NULL);
+            if (dir != NULL) {
+                /* set up confDir before calling initialize */
+                midpSetConfigDir(dir);
+            }
+            /* configDir = NULL will be handled below */
+        }
+
         /* duplicate values if not set */
         if (midpConfig == NULL) {
         	midpConfig = midpAppDir;

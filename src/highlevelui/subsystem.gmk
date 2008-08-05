@@ -135,7 +135,7 @@ else
                       include $(SUBSYSTEM_HIGHUI_DIR)/wince_application/lib.gmk
                   else
                        ifeq ($(PLATFORM), javacall)
-                            include $(SUBSYSTEM_HIGHUI_DIR)/javacall_application/lib.gmk
+                            include $(SUBSYSTEM_HIGHUI_DIR)/javacall_application/subsystem.gmk
                        endif                  
                   endif             
              endif
