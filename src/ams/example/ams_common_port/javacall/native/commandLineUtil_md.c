@@ -79,26 +79,13 @@ char* getApplicationDir(char *cmd) {
         return NULL;
     }
 
-    if (PCSL_STRING_OK != pcsl_string_convert_from_utf16 (path, len, &str)) {
-        REPORT_ERROR(LC_AMS,"getApplicationDir() << pcsl_string conversion operation failed.");
+    ret = javautil_unicode_utf16_to_utf8(path, len, 
+                                         midpAppDir, MAX_PATH_LEN, 
+                                         (int*)&len);
+    if ( ret != JAVACALL_OK ) {
+        REPORT_ERROR(LC_AMS,"getApplicationDir() << Root path query failed.");
         return NULL;
     }
-
-    if (pcsl_string_utf8_length (&str) >= MAX_PATH_LEN) {
-        REPORT_ERROR(LC_AMS,"getApplicationDir() << Root path length is too large.");
-        pcsl_string_free (&str);
-        return NULL;
-    }
-
-    if (PCSL_STRING_OK != pcsl_string_convert_to_utf8 (&str,
-                                                       (jbyte *)midpAppDir,
-                                                       MAX_PATH_LEN-1,
-                                                       &len)) {
-        REPORT_ERROR(LC_AMS,"getApplicationDir() << pcsl_string conversion operation failed.");
-        pcsl_string_free (&str);
-        return NULL;
-    };
-    pcsl_string_free (&str);
 
     midpAppDir[len] = 0;
     return midpAppDir;
@@ -121,26 +108,13 @@ char* getConfigurationDir(char *cmd) {
         return NULL;
     }
 
-    if (PCSL_STRING_OK != pcsl_string_convert_from_utf16 (path, len, &str)) {
-        REPORT_ERROR(LC_AMS,"getConfigurationDir() << pcsl_string conversion operation failed.");
+    ret = javautil_unicode_utf16_to_utf8(path, len, 
+                                         midpConfigDir, MAX_PATH_LEN, 
+                                         (int*)&len);
+    if ( ret != JAVACALL_OK ) {
+        REPORT_ERROR(LC_AMS,"getConfigurationDir() << Root path query failed.");
         return NULL;
     }
-
-    if (pcsl_string_utf8_length (&str) >= MAX_PATH_LEN) {
-        REPORT_ERROR(LC_AMS,"getConfigurationDir() << Root path length is too large.");
-        pcsl_string_free (&str);
-        return NULL;
-    }
-
-    if (PCSL_STRING_OK != pcsl_string_convert_to_utf8 (&str,
-                                                       (jbyte *)midpConfigDir,
-                                                       MAX_PATH_LEN-1,
-                                                       &len)) {
-        REPORT_ERROR(LC_AMS,"getConfigurationDir() << pcsl_string conversion operation failed.");
-        pcsl_string_free (&str);
-        return NULL;
-    };
-    pcsl_string_free (&str);
 
     midpConfigDir[len] = 0;
     return midpConfigDir;

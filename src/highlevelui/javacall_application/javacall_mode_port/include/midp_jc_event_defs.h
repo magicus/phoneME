@@ -430,6 +430,19 @@ typedef struct {
 
 #define BINARY_BUFFER_MAX_LEN 4096
 
+/**
+ * Sends midp event throught javacall event subsystem
+ * <p>
+ * @param event is an event to send
+ * 
+ * @return JAVACALL_OK if an event was sent successfully,
+ *         JAVACALL_FAIL otherwise
+ * 
+ * @note the function is implemented at <code>events</code>
+ *       module
+ */
+javacall_result
+midp_jc_event_send(midp_jc_event_union *event);
 
 #ifdef __cplusplus
 }
