@@ -304,7 +304,7 @@ int javacall_permissions_load_group_messages(javacall_utf8_string* list,
                                  javacall_utf8_string group_name);
 
 /**
- * notify implementstion that loading is finished resources can 
+ * notify implementation that loading is finished resources can 
  * be released
  */
 void javacall_permissions_loadingDone();
