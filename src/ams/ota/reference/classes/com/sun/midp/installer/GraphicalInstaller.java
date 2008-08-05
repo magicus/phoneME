@@ -490,7 +490,7 @@ public class GraphicalInstaller extends MIDlet implements CommandListener {
             }
                       
             // if url!=null, look what type of installation we need    
-            installer = InstallerResource.getNecessaryInstaller(url);
+            installer = InstallerResource.getInstaller(url);
                   
             label = getAppProperty("arg-2");
             if (label == null || label.length() == 0) {
@@ -688,8 +688,12 @@ public class GraphicalInstaller extends MIDlet implements CommandListener {
             settings = RecordStore.openRecordStore(SETTINGS_STORE, false);
 
             if (url != null) {
-                if (url.startsWith("file:///")) {
-                    url=url.substring(8,url.length());
+                
+                if (url.startsWith(DiscoveryApp.DEFAULT_FILE_SCHEMA)) {
+                    
+                    url=url.substring(DiscoveryApp.DEFAULT_FILE_SCHEMA.length(),
+                            url.length());
+                    
                     dos.writeUTF(url);
                     data = bas.toByteArray();                    
                     settings.setRecord(FILE_PATH_RECORD_ID, data, 0, data.length);
@@ -705,7 +709,7 @@ public class GraphicalInstaller extends MIDlet implements CommandListener {
                     bas.reset();
                     dos.writeInt(DiscoveryApp.HTTP_INSTALL);
                 }
-                // write last type of install
+                // write last type of installation
                 // to record storage
                 data = bas.toByteArray();                    
                 settings.setRecord(LAST_INSTALLATION_SOURCE_RECORD_ID,
@@ -1793,8 +1797,9 @@ public class GraphicalInstaller extends MIDlet implements CommandListener {
                             break;
                         } else {
                             String urlToShow = url;
-                            // if installer break installation in step № 5
-                            // than we will show path to jar and not to jad
+                            // if installer break installation in step number 5
+                            // or over, than we will show user correct path to jar 
+                            // and not path to jad
                             if (installer.state.nextStep >= 5)
                                 urlToShow = installer.state.installInfo.jarUrl;
                             

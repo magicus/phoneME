@@ -58,6 +58,40 @@ public class InstallerResource {
     /** Type of message if IOException occur. */
     public static final int IO_EXCEPTION_MESSAGE = 6;
     
+    /** Array of specific messages for different installer.
+     * First index of array corresponds to one of the InstallerResource 
+     * constant. Second index is specific for different installers.
+     */
+    private static int[][] installerMessages = {
+        { 
+            ResourceConstants.AMS_GRA_INTLR_CONN_GAUGE_LABEL,
+            ResourceConstants.AMS_GRA_INTLR_CONN_STORAGE_GAUGE_LABEL        
+        },
+        { 
+            ResourceConstants.AMS_DISC_APP_GET_INSTALL_LIST,
+            ResourceConstants.AMS_DISC_APP_PREPARE_INSTALL_STORAGE  
+        },
+        {
+            ResourceConstants.AMS_DISC_APP_GAUGE_LABEL_DOWNLOAD,
+            ResourceConstants.AMS_DISC_APP_GAUGE_LABEL_STORAGE        
+        },
+        {
+            ResourceConstants.AMS_WEBSITE,
+            ResourceConstants.AMS_FILE_PATH        
+        },
+        {
+            ResourceConstants.AMS_GRA_INTLR_DOWNLOADING_JAD_GAUGE_LABEL,
+            ResourceConstants.AMS_GRA_INTLR_DOWNLOADING_JAD_GAUGE_LABEL_STORAGE        
+        },
+        {
+            ResourceConstants.AMS_GRA_INTLR_DOWNLOADING_JAR_GAUGE_LABEL,
+            ResourceConstants.AMS_GRA_INTLR_DOWNLOADING_JAR_GAUGE_LABEL_STORAGE
+        },
+        {
+            ResourceConstants.AMS_GRA_INTLR_CONN_DROPPED,
+            ResourceConstants.AMS_GRA_INTLR_FILE_NOT_FOUND
+        }
+    };
     
     /**
      * Constructor of InstallerResource
@@ -70,7 +104,7 @@ public class InstallerResource {
      * Return the specific text for UI component.
      * This function is almost called from GraphicalInstaller.
      * 
-     * @param installer type of installer
+     * @param installer instance of installer
      * @param key key code
      * @return specific for each installer installation text
      */   
@@ -92,76 +126,9 @@ public class InstallerResource {
     public static String getString(int typeOfInstall, int key) {
         String result = new String();
         
-        switch(key) {
-            
-            case InstallerResource.CONNECTING_GAUGE_LABEL : {
-                result = typeOfInstall == DiscoveryApp.FILE_INSTALL ? 
-                    Resource.getString(
-                    ResourceConstants.AMS_GRA_INTLR_CONN_STORAGE_GAUGE_LABEL) :
-                    Resource.getString(
-                    ResourceConstants.AMS_GRA_INTLR_CONN_GAUGE_LABEL);
-                return result;
-            }
-            
-            case InstallerResource.PREPARE_INSTALLATION_LIST_LABEL : {
-                result = typeOfInstall == DiscoveryApp.FILE_INSTALL ? 
-                    Resource.getString(
-                    ResourceConstants.AMS_DISC_APP_PREPARE_INSTALL_STORAGE) :
-                    Resource.getString(
-                    ResourceConstants.AMS_DISC_APP_GET_INSTALL_LIST);
-                return result;
-            }
-            
-            case InstallerResource.TRANSFER_DATA_LABEL : {
-                result = typeOfInstall == DiscoveryApp.FILE_INSTALL ? 
-                    Resource.getString(
-                    ResourceConstants.AMS_DISC_APP_GAUGE_LABEL_STORAGE) :
-                    Resource.getString(
-                    ResourceConstants.AMS_DISC_APP_GAUGE_LABEL_DOWNLOAD);
-                return result;
-            }
-            
-            case InstallerResource.TYPE_OF_SOURCE : {
-                result = typeOfInstall == DiscoveryApp.FILE_INSTALL ? 
-                    Resource.getString(
-                    ResourceConstants.AMS_FILE_PATH) :
-                    Resource.getString(
-                    ResourceConstants.AMS_WEBSITE);
-                return result;
-            }
-            
-            case InstallerResource.LOAD_JAD_GAUGE_LABEL : {
-                result = typeOfInstall == DiscoveryApp.FILE_INSTALL ? 
-                    Resource.getString(
-                    ResourceConstants.AMS_GRA_INTLR_DOWNLOADING_JAD_GAUGE_LABEL_STORAGE) :
-                    Resource.getString(
-                    ResourceConstants.AMS_GRA_INTLR_DOWNLOADING_JAD_GAUGE_LABEL);
-                return result;
-            }
-            
-            case InstallerResource.LOAD_JAR_GAUGE_LABEL : {
-                result = typeOfInstall == DiscoveryApp.FILE_INSTALL ? 
-                    Resource.getString(
-                    ResourceConstants.AMS_GRA_INTLR_DOWNLOADING_JAR_GAUGE_LABEL_STORAGE) :
-                    Resource.getString(
-                    ResourceConstants.AMS_GRA_INTLR_DOWNLOADING_JAR_GAUGE_LABEL);
-                return result;
-            }
-            
-            case InstallerResource.IO_EXCEPTION_MESSAGE : {
-                result = typeOfInstall == DiscoveryApp.FILE_INSTALL ? 
-                    Resource.getString(
-                    ResourceConstants.AMS_GRA_INTLR_FILE_NOT_FOUND) :
-                    Resource.getString(
-                    ResourceConstants.AMS_GRA_INTLR_CONN_DROPPED);
-                return result;
-            }
-            
-            default : {
-                return null;
-            }
-        }
-             
+        result = Resource.getString(installerMessages[key][typeOfInstall]);
+        
+        return result;
     }
          
     /**
@@ -170,8 +137,8 @@ public class InstallerResource {
      * @param url path to suite
      * @return necessary installer
      */
-    public static Installer getNecessaryInstaller(String url) {
-        if (url.startsWith("file:///")) 
+    public static Installer getInstaller(String url) {
+        if (url.startsWith(DiscoveryApp.DEFAULT_FILE_SCHEMA)) 
             return new FileInstaller();
         else
             return new HttpInstaller();        

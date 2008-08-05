@@ -59,10 +59,11 @@ public class FileInstaller extends Installer {
      */
     protected byte[] downloadJAD() throws IOException {
        
-        if (info.jadUrl.endsWith(".jar"))            
+        if (info.jadUrl.endsWith(".jar")) {           
             throw new InvalidJadException (
                     InvalidJadException.INVALID_JAD_TYPE,
-                    Installer.JAR_MT_2);      
+                    Installer.JAR_MT_2);
+        }
         else {           
         RandomAccessStream jadInputStream;
         ByteArrayOutputStream bos = new ByteArrayOutputStream(CHUNK_SIZE);       
@@ -98,29 +99,24 @@ public class FileInstaller extends Installer {
     protected int downloadJAR(String filename) throws IOException {
         int jarSize;
         RandomAccessStream jarInputStream, jarOutputStream;
-        //get the path from URI, but first encode it
-        String jarFilename = getUrlPath(FileUrl.encodeFilePath(info.jarUrl));
+        // get the path from URI, but first encode it
+        info.encodedJarUrl = FileUrl.encodeFilePath(info.jarUrl);
+        String jarFilename = getUrlPath(info.encodedJarUrl);
                
-        //If jad attribute Midlet-Jar-Url begins with schema 'file:///'
-        //then get jar path from it.
-        //else searching jar file in same directory as a jad file
-        if (!info.jarUrl.startsWith("file:///")) {
+        // If jad attribute 'Midlet-Jar-Url' begins with schema 'file:///',
+        // than get jar path from this jad attribute,
+        // else searching jar file in same directory as a jad file.
+        if (!info.jarUrl.startsWith(DiscoveryApp.DEFAULT_FILE_SCHEMA)) {
             String jadFilename= getUrlPath(info.jadUrl);
             
-            if (jadFilename.endsWith(".jad"))
+            if (jadFilename.endsWith(".jad")) {
                 jarFilename=jadFilename.substring(0,jadFilename.length()-4)+".jar";
-            else {               
-                char[] characters = jadFilename.toCharArray();
-               
-                for (int i = jadFilename.length()-1; i > 0 ; i--) {
-                    if (characters[i] == '.') {
-                        jarFilename=jadFilename.substring(0,i)+".jar";
-                        break;
-                    }
-                }
             }
-            info.jarUrl = jarFilename;
-            System.out.println("change="+info.jarUrl);
+            else {
+                jarFilename=jadFilename.substring(
+                          0,jadFilename.lastIndexOf('.'))+".jar";
+            }
+            info.jarUrl = jarFilename;            
         } 
           
         jarFilename=FileUrl.decodeFilePath(jarFilename);

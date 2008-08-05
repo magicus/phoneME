@@ -63,18 +63,19 @@ public class FileUrl {
      * @return  decoded string of file path
      */
     public static String decodeFilePath(String filenamepath) {
+        if (filenamepath == null) {
+            return null;
+        } else {
         char[] fileChars  = new char[filenamepath.length()];
-        StringBuffer buffer = new StringBuffer();
+        StringBuffer buffer = new StringBuffer(filenamepath.length());
         char temp;
-        char[] asciiChars = new char[3];
-        
+                
         filenamepath.getChars(0,filenamepath.length(),fileChars,0);
         
-            for(int i = 0; i < fileChars.length ; i++) {
+            for (int i = 0; i < fileChars.length ; i++) {
                 
-                if(fileChars[i]=='%') {
-                    filenamepath.getChars(i,i+3,asciiChars,0);                    
-                    temp = decodeASCIISymbol(new String(asciiChars));
+                if (fileChars[i] == '%' && i < fileChars.length-2) {                    
+                    temp = decodeASCIISymbol(filenamepath.substring(i,i+3));
                     
                     if (temp != '0') {
                         buffer.append(temp);
@@ -82,11 +83,13 @@ public class FileUrl {
                     } else
                         buffer.append(fileChars[i]);
                     
-                } else
+                } else {
                     buffer.append(fileChars[i]);
+                }
              }
         
         return buffer.toString();
+        }
     }
      
     /**
@@ -97,8 +100,11 @@ public class FileUrl {
      * @return  encoded file path
      */
     public static String encodeFilePath(String filenamepath) {
+        if (filenamepath == null) {
+            return null;
+        } else {
         char[] fileChars = new char[filenamepath.length()];
-        StringBuffer buffer = new StringBuffer();
+        StringBuffer buffer = new StringBuffer(filenamepath.length());
         String temp;
         
         filenamepath.getChars(0,filenamepath.length(),fileChars,0);
@@ -114,6 +120,7 @@ public class FileUrl {
             }
        
        return buffer.toString();
+       }
     }
     
     /**

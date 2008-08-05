@@ -779,7 +779,7 @@
 <localized_string Key="AMS_DISC_APP_STORAGE_INSTALL"
                 Value="Enter a file path to install from:"/>
 <localized_string Key="AMS_DISC_APP_PREPARE_INSTALL_STORAGE"
-                Value="Prepairing to install from storage"/>
+                Value="Prepairing to install from storage..."/>
 <localized_string Key="AMS_GRA_INTLR_CONN_STORAGE_GAUGE_LABEL"
                 Value="Searching..."/>
 <localized_string Key="AMS_DISC_APP_GAUGE_LABEL_STORAGE"

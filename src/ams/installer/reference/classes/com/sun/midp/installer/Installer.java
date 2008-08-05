@@ -284,11 +284,9 @@ public abstract class Installer {
             throws IOException, InvalidJadException,
                    MIDletSuiteLockedException, SecurityException {
         
-        // First, we need to encode path to file in this place,
-        // because if its will not be a jad file path,
-        // than it can be encoded twice in future.
-        // And, second, if we encode path here 
-        // user will be see messages with not encoded file path.
+        
+        // Encode jad file path in order to keep of from
+        // IllegalArgumentException
         if (InstallerResource.isFileInstaller(this))
            location = FileUrl.encodeFilePath(location);
         
@@ -976,13 +974,14 @@ public abstract class Installer {
         state.nextStep++;
       
         if (info.jadUrl == null && state.isPreviousVersion) {
-            // encode info.jarUrl because it was decoded in
-            // FileInstaller downloadJAR(String path) method,
-            // or we will get IllegalArgumentException
-            if (InstallerResource.isFileInstaller(this))
-                info.jarUrl = FileUrl.encodeFilePath(info.jarUrl);
-            
-            checkForDifferentDomains(info.jarUrl);           
+            // if FileInstaller instance, than we will use
+            // encodedJarUrl in order to keep of from
+            // IllegalArgumentException
+            if (InstallerResource.isFileInstaller(this)) {
+                checkForDifferentDomains(info.encodedJarUrl);                
+            } else {
+                checkForDifferentDomains(info.jarUrl);                                
+            }                  
         }
     }
 
