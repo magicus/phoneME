@@ -192,7 +192,7 @@ int midpInitCallback(int level, int (*init)(void), void (*final)(void)) {
                 /* set up confDir before calling initialize */
                 midpSetConfigDir(dir);
             }
-            // configDir = NULL will be handled below
+            /* configDir = NULL will be handled below */
         }
 
         /* duplicate values if not set */
