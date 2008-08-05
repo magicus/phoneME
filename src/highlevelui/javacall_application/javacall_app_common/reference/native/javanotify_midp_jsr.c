@@ -245,7 +245,7 @@ void javanotify_incoming_sms(javacall_sms_encoding msgType,
     e.eventType = MIDP_JC_EVENT_SMS_INCOMING;
 
     sms = jsr120_sms_new_msg_javacall(
-             msgType, sourceAddress, sourcePortNum, destPortNum, timeStamp, msgBufferLen, msgBuffer);
+             msgType, (unsigned char*)sourceAddress, sourcePortNum, destPortNum, timeStamp, msgBufferLen, msgBuffer);
 
     e.data.smsIncomingEvent.stub = (int)sms;
 
@@ -313,7 +313,7 @@ void javanotify_incoming_mms_available(
     REPORT_INFO(LC_CORE, "javanotify_incoming_mms_available() >>\n");
     e.eventType = MIDP_JC_EVENT_MMS_INCOMING;
 
-    //bodyLen=-1
+    /*bodyLen=-1*/
     mms = jsr205_mms_new_msg_javacall(fromAddress, appID, replyToAppID, -1, (char*)handle);
 
     e.data.mmsIncomingEvent.stub = (int)mms;
@@ -856,13 +856,13 @@ void /*OPTIONAL*/javanotify_location_proximity(
  */
 static javacall_utf16_string
 copy_jc_utf16_string(javacall_const_utf16_string src) {
-    int length = 0;
+    javacall_int32 length = 0;
     javacall_utf16_string result;
     if (JAVACALL_OK != javautil_unicode_utf16_ulength (src, &length)) {
         length = 0;
     }
-    result = javacall_calloc(length + 1, sizeof(javacall_utf16));
-    memcpy(result, src, (length + 1) * sizeof(javacall_utf16));
+    result = javacall_calloc((unsigned int)length + 1, sizeof(javacall_utf16));
+    memcpy(result, src, ((unsigned int)length + 1) * sizeof(javacall_utf16));
     return result;
 }
 
