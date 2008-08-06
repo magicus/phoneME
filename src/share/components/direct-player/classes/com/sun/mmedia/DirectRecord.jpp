@@ -388,7 +388,7 @@ public final class DirectRecord implements RecordControl, DirectControls {
 
         // If the requested size is less than the already recorded size, commit
         if (recording == true) {
-            int recordedSize = nGetRecordedSize(size);
+            int recordedSize = nGetRecordedSize(player.hNative);
             if (recordedSize > size) {
                 try {
                     commit();
