@@ -1779,8 +1779,8 @@ CVMjitCompileAOTCode(CVMExecEnv* ee)
         }
 
         CVMjniCallStaticVoidMethod(env,
-            CVMcbJavaInstance(CVMsystemClass(sun_mtask_Warmup)),
-            CVMglobals.sun_mtask_Warmup_runit, NULL, jmlist);
+            CVMcbJavaInstance(CVMsystemClass(sun_misc_Warmup)),
+            CVMglobals.sun_misc_Warmup_runit, NULL, jmlist);
     }
 }
 #endif

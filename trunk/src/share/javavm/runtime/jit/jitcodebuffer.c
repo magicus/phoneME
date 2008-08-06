@@ -766,7 +766,7 @@ CVMJITinitializeAOTCode()
     /* Dynamic compilation were disabled until this point. Need to
      * initialize JIT policy to allow dynamic compilation. If
      * CVM_MTASK is enabled, CVMjitPolicyInit() is eventually called
-     * by sun.mtask.warmup.runit(). */
+     * by sun.misc.Warmup.runit(). */
     CVMjitPolicyInit(CVMgetEE(), jgs);
 #endif
     return jgs->codeCacheAOTCodeExist;

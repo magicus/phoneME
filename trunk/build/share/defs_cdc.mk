@@ -423,7 +423,7 @@ endif
 
 ifeq ($(CVM_AOT), true)
 CLASSLIB_CLASSES += \
-   sun.mtask.Warmup
+   sun.misc.Warmup
 endif
 
 CVM_POLICY_SRC  ?= $(CVM_TOP)/src/share/lib/security/java.policy
