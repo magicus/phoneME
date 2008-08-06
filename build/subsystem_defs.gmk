@@ -28,14 +28,13 @@
 #
 ######################################################################
 
-include $(XMLPARSER_DIR)/build/defs.gmk
-
 # Add to global SUBSYSTEMS list
 #
 SUBSYSTEMS += jsr_172
 
 # Abstractions component is used
 USE_ABSTRACTIONS=true
+USE_XMLPARSER=true
 
 ifneq ($(TARGET_VM), cldc_vm)
 include $(JSR_172_DIR)/build/cdc_share/subsystem_defs.gmk
@@ -85,12 +84,7 @@ SUBSYSTEM_CONFIGURATION_INPUT_FILES += \
 
 # ri_jaxp 
 #
-INTERNAL_JSR_172_JAVA_FILES_JAXP_RI_FILES += \
-
-ifneq ($(TARGET_VM)+$(USE_JSR_280), cdc_vm+true)
-INTERNAL_JSR_172_JAVA_FILES_JAXP_RI_FILES += \
-
-endif
+INTERNAL_JSR_172_JAVA_FILES_JAXP_RI_FILES =
 
 # ri_jaxrpc
 #
@@ -116,7 +110,6 @@ INTERNAL_JSR_172_JAVA_FILES_RMI_RI_FILES += \
 
 # All of them together to provide to main makefile
 SUBSYSTEM_JSR_172_JAVA_FILES += \
-    $(XMLPARSER_JAVA_FILES) \
 	$(INTERNAL_JSR_172_JAVA_FILES_JAXP_RI_FILES) \
     $(INTERNAL_JSR_172_JAVA_FILES_JAXRPC_RI_FILES) \
     $(INTERNAL_JSR_172_JAVA_FILES_RMI_RI_FILES)
