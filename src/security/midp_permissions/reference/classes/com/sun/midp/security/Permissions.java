@@ -605,6 +605,13 @@ public final class Permissions {
 
         groups[0] = NET_ACCESS_GROUP;
 
+        /*
+         * The setting dialog only presents one message group since the spec
+         * doesn't separate send and receive message groups. In most cases,
+         * it's the send group. The exception from this rule if there are no
+         * send permissions present in MIDlet suite properties. If so, the read
+         * message group is displayed in the dialog.
+         */
         if (getPermissionGroupLevel(levels, SEND_MESSAGE_GROUP) != NEVER) {
             groups[1] = SEND_MESSAGE_GROUP;
         } else {
@@ -950,8 +957,7 @@ public final class Permissions {
      *         dangerous combination or null otherwise
      */
     public static String getInsecureCombinationWarning(byte[] current,
-            byte pushInterruptLevel, PermissionGroup group, byte newLevel)
-            throws SecurityException {
+            byte pushInterruptLevel, PermissionGroup group, byte newLevel) {
 
         byte level;
 
@@ -986,49 +992,48 @@ public final class Permissions {
             }
         }
 
-        if (group == LOCAL_CONN_GROUP) {
-            level = getPermissionGroupLevel(current, READ_USER_DATA_GROUP);
-            if (level == BLANKET_GRANTED || level == BLANKET) {
-                return createInsecureCombinationWarningMessage(
-                    LOCAL_CONN_GROUP,READ_USER_DATA_GROUP);
-            }
+        /*
+         * IMPL_NOTE: from common sense, READ_MESSAGE_GROUP could be
+         * excluded from the list of groups to be checked but the spec
+         * doesn't separate send and receive message groups thus we have to
+         * check this group too.
+         */
+        if (group == LOCAL_CONN_GROUP || group == CALL_CONTROL_GROUP ||
+                group == SEND_MESSAGE_GROUP || group == READ_MESSAGE_GROUP) {
 
+            PermissionGroup[] pairGroups = {
+                    READ_USER_DATA_GROUP, MULTIMEDIA_GROUP};
 
-            level = getPermissionGroupLevel(current, MULTIMEDIA_GROUP);
-            if (level == BLANKET_GRANTED || level == BLANKET) {
-                return createInsecureCombinationWarningMessage(
-                    LOCAL_CONN_GROUP, MULTIMEDIA_GROUP);
-            }
-        }
-
-        if (group == READ_USER_DATA_GROUP) {
-            level = getPermissionGroupLevel(current, NET_ACCESS_GROUP);
-            if (level == BLANKET_GRANTED || level == BLANKET) {
-                return createInsecureCombinationWarningMessage(
-                    READ_USER_DATA_GROUP, NET_ACCESS_GROUP);
-            }
-
-            level = getPermissionGroupLevel(current, LOCAL_CONN_GROUP);
-            if (level == BLANKET_GRANTED || level == BLANKET) {
-                return createInsecureCombinationWarningMessage(
-                    READ_USER_DATA_GROUP, LOCAL_CONN_GROUP);
+            for (int i = 0; i < pairGroups.length; i++) {
+                level = getPermissionGroupLevel(current, pairGroups[i]);
+                if (level == BLANKET_GRANTED || level == BLANKET) {
+                    return createInsecureCombinationWarningMessage(
+                        group, pairGroups[i]);
+                }
             }
         }
 
-        if (group == MULTIMEDIA_GROUP) {
-            level = getPermissionGroupLevel(current, NET_ACCESS_GROUP);
-            if (level == BLANKET_GRANTED || level == BLANKET) {
-                return createInsecureCombinationWarningMessage(
-                    MULTIMEDIA_GROUP, NET_ACCESS_GROUP);
-            }
+        if (group == READ_USER_DATA_GROUP || group == MULTIMEDIA_GROUP) {
 
-            level = getPermissionGroupLevel(current, LOCAL_CONN_GROUP);
-            if (level == BLANKET_GRANTED || level == BLANKET) {
-                return createInsecureCombinationWarningMessage(
-                    MULTIMEDIA_GROUP, LOCAL_CONN_GROUP);
+            /*
+             * IMPL_NOTE: from common sense, READ_MESSAGE_GROUP could be
+             * excluded from the list of groups to be checked but the spec
+             * doesn't separate send and receive message groups thus we have to
+             * check this group too.
+             */
+            PermissionGroup[] pairGroups = {
+                    NET_ACCESS_GROUP, LOCAL_CONN_GROUP, CALL_CONTROL_GROUP,
+                    SEND_MESSAGE_GROUP, READ_MESSAGE_GROUP};
+
+            for (int i = 0; i < pairGroups.length; i++) {
+                level = getPermissionGroupLevel(current, pairGroups[i]);
+                if (level == BLANKET_GRANTED || level == BLANKET) {
+                    return createInsecureCombinationWarningMessage(
+                        group, pairGroups[i]);
+                }
             }
         }
-        
+
         if (group == AUTO_INVOCATION_GROUP) {
             level = getPermissionGroupLevel(current, NET_ACCESS_GROUP);
             if (level == BLANKET_GRANTED || level == BLANKET) {
