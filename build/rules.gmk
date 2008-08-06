@@ -1,6 +1,4 @@
 #
-#   
-#
 # Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
 # 
@@ -42,3 +40,7 @@ $(XMLPARSER_GENERATED_DIR)/$(JAVAX_PATH)/%.java : $(XMLPARSER_SRC_DIR)/$(JAVAX_P
 $(XMLPARSER_GENERATED_DIR)/$(SUN_PATH)/%.java : $(XMLPARSER_SRC_DIR)/$(SUN_PATH)/%.jpp
 	$(call runjpp,$^,$@)
 
+# Append XML parser source bundle creation to target
+source_bundle::
+	@echo " ... xmlparser source bundle" $(LOG)
+	$(AT)$(call source_bundle_filter,$(XMLPARSER_DIR),$(SOURCE_OUTPUT_DIR)/xmlparser,build src)
