@@ -651,28 +651,29 @@ CVMJITcodeCacheInit(CVMExecEnv* ee, CVMJITGlobalState *jgs)
 
 #ifdef CVM_AOT
     /* Find AOT codecache */
-    CVMfindAOTCodeCache(jgs);
+    if (CVMfindAOTCodeCache(jgs))
 #endif
-
-    /* Allocate the dynamic part */
-    /*
-     *  Allocate the code cache and add it to the free list.
-     */
+    {
+        /* Allocate the dynamic part */
+        /*
+         *  Allocate the code cache and add it to the free list.
+         */
 #ifdef CVMJIT_HAVE_PLATFORM_SPECIFIC_ALLOC_FREE_CODECACHE
-    jgs->codeCacheStart = CVMJITallocCodeCache(&jgs->codeCacheSize);
+         jgs->codeCacheStart = CVMJITallocCodeCache(&jgs->codeCacheSize);
 #elif defined(CVM_USE_MEM_MGR)
-    /* Align the code cache start at page boundary. */
-    jgs->codeCacheStart = CVMmemalignAlloc(CVMgetPagesize(),
+        /* Align the code cache start at page boundary. */
+        jgs->codeCacheStart = CVMmemalignAlloc(CVMgetPagesize(),
                                            jgs->codeCacheSize);
-    if ((int)jgs->codeCacheStart % CVMgetPagesize() != 0) {
-        CVMpanic("CVMmemalignAlloc() returns unaligned storage");
-    }
+        if ((int)jgs->codeCacheStart % CVMgetPagesize() != 0) {
+            CVMpanic("CVMmemalignAlloc() returns unaligned storage");
+        }
 #else
-    jgs->codeCacheStart = malloc(jgs->codeCacheSize);
+        jgs->codeCacheStart = malloc(jgs->codeCacheSize);
 #endif
+    }
 
     if (jgs->codeCacheStart == NULL) {
-	return CVM_FALSE;
+	    return CVM_FALSE;
     }
 
     jgs->codeCacheEnd = &jgs->codeCacheStart[jgs->codeCacheSize];
@@ -754,10 +755,9 @@ CVMJITinitializeAOTCode()
                 if (jgs->codeCacheAOTGeneratedCodeStart == 0) {
 		    jgs->codeCacheAOTGeneratedCodeStart = cbuf;
                 }
-#ifdef CVM_DEBUG
-                CVMconsolePrintf("Found pre-compiled method %C.%M, startPC=0x%x\n", 
-                                 CVMmbClassBlock(mb), mb, CVMmbStartPC(mb));
-#endif
+                CVMtraceJITStatus(
+		    ("JS: Found pre-compiled method %C.%M, startPC=0x%x\n",
+                    CVMmbClassBlock(mb), mb, CVMmbStartPC(mb)));
             }
             cbuf += bufSize;
         }

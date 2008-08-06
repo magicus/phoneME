@@ -351,6 +351,9 @@ CVMJITfreeCodeCache(void *start);
  * #define'd.
  */
 
+/* Don't use fixed address for AOT codecache by default. */
+#undef CVMAOT_USE_FIXED_ADDRESS
+
 /* Purpose: Find AOT code from the persistent storage. Initialize
  *          following AOT related global variables:
  *              jgs->codeCacheAOTStart
