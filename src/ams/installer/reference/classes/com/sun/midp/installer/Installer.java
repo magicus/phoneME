@@ -285,7 +285,7 @@ public abstract class Installer {
                    MIDletSuiteLockedException, SecurityException {
         
         
-        // Encode jad file path in order to keep of from
+        // Encode jad file path in order to keep of 
         // IllegalArgumentException
         if (InstallerResource.isFileInstaller(this))
            location = FileUrl.encodeFilePath(location);
@@ -975,7 +975,7 @@ public abstract class Installer {
       
         if (info.jadUrl == null && state.isPreviousVersion) {
             // if FileInstaller instance, than we will use
-            // encodedJarUrl in order to keep of from
+            // encodedJarUrl in order to keep of 
             // IllegalArgumentException
             if (InstallerResource.isFileInstaller(this)) {
                 checkForDifferentDomains(info.encodedJarUrl);                

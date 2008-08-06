@@ -488,8 +488,7 @@ public class GraphicalInstaller extends MIDlet implements CommandListener {
                 exit(false);
                 return;
             }
-                      
-            // if url!=null, look what type of installation we need    
+                       
             installer = InstallerResource.getInstaller(url);
                   
             label = getAppProperty("arg-2");
@@ -644,10 +643,10 @@ public class GraphicalInstaller extends MIDlet implements CommandListener {
                     // space for current MIDlet Suite name
                     settings.addRecord(null, 0, 0);
                     
-                    //space for storage filepath
+                    // space for storage filepath
                     settings.addRecord(null, 0, 0);
                     
-                    //space for last installation type
+                    // space for last installation type
                     settings.addRecord(null, 0, 0);
                 }
             } finally {
@@ -691,7 +690,7 @@ public class GraphicalInstaller extends MIDlet implements CommandListener {
                 
                 if (url.startsWith(DiscoveryApp.DEFAULT_FILE_SCHEMA)) {
                     
-                    url=url.substring(DiscoveryApp.DEFAULT_FILE_SCHEMA.length(),
+                    url = url.substring(DiscoveryApp.DEFAULT_FILE_SCHEMA.length(),
                             url.length());
                     
                     dos.writeUTF(url);

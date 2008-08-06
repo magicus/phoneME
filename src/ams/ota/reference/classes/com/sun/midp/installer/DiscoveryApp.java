@@ -370,7 +370,7 @@ public class DiscoveryApp extends MIDlet implements CommandListener {
     private Form displayProgressForm(String action, String name,
             String url, int size, String gaugeLabel) {
         Gauge progressGauge;
-        StringItem urlItem=null;
+        StringItem urlItem;
 
         progressForm = new Form(null);
 
