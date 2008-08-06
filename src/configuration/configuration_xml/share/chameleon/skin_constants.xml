@@ -1675,6 +1675,51 @@
                      If isn't specified or cannot be loaded, solid fill color
                      and line border are used instead of background image."/>
 
+  <constant Type="int"
+            Name="KEYBOARD_KEY"
+            Comment="Image for virtual keyboard key"/>
+
+  <constant Type="int"
+            Name="KEYBOARD_BG"
+            Comment="Background for virtual keyboard"/>
+
+  <constant Type="int"
+            Name="KEYBOARD_BTN_UP_SEL"
+            Comment="Image for virtual keyboard key with selected up arrow"/>
+
+  <constant Type="int"
+            Name="KEYBOARD_BTN_UP_UN"
+            Comment="Image for virtual keyboard key with unselected up arrow"/>
+
+  <constant Type="int"
+            Name="KEYBOARD_BTN_LEFT_SEL"
+            Comment="Image for virtual keyboard key with selected left arrow"/>
+
+  <constant Type="int"
+            Name="KEYBOARD_BTN_LEFT_UN"
+            Comment="Image for virtual keyboard key with unselected left arrow"/>
+
+  <constant Type="int"
+            Name="KEYBOARD_BTN_MID_SEL"
+            Comment="Image for virtual keyboard key with selected middle icon"/>
+
+  <constant Type="int"
+            Name="KEYBOARD_BTN_MID_UN"
+            Comment="Image for virtual keyboard key with unselected middle icon"/>
+
+  <constant Type="int"
+            Name="KEYBOARD_BTN_RIGHT_SEL"
+            Comment="Image for virtual keyboard key with selected right arrow"/>
+
+  <constant Type="int"
+            Name="KEYBOARD_BTN_RIGHT_UN"
+            Comment="Image for virtual keyboard key with unselected right arrow"/>
+  <constant Type="int"
+            Name="KEYBOARD_BTN_DOWN_SEL"
+            Comment="Image for virtual keyboard key with selected down arrow"/>
+  <constant Type="int"
+            Name="KEYBOARD_BTN_DOWN_UN"
+            Comment="Image for virtual keyboard key with unselected down arrow"/>
 
 
   <!--

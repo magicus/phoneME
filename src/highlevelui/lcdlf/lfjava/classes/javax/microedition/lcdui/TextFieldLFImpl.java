@@ -40,6 +40,7 @@ import com.sun.midp.chameleon.*;
 import com.sun.midp.chameleon.input.*;
 import com.sun.midp.chameleon.layers.InputModeLayer;
 import com.sun.midp.chameleon.layers.PTILayer;
+import com.sun.midp.chameleon.layers.VirtualKeyboardLayer;
 
 import com.sun.midp.chameleon.skins.ScreenSkin;
 import com.sun.midp.chameleon.skins.TextFieldSkin;
@@ -98,6 +99,9 @@ class TextFieldLFImpl extends ItemLFImpl implements
 
     /** The state of the popup ChoiceGroup (false by default) */
     private boolean pt_popupOpen;
+
+    /** The state of the virtual keyboard popup (false by default) */
+    private boolean vkb_popupOpen;
 
     /** predictive text options */
     String[] pt_matches;
@@ -948,6 +952,7 @@ class TextFieldLFImpl extends ItemLFImpl implements
         
         // IMPL_NOTE: problem with synchronization on layers and LCDUILock
         showPTPopup((int)0, cursor, w, h);
+//        showKeyboardLayer();
         return newXOffset;
     }
 
@@ -1132,6 +1137,7 @@ class TextFieldLFImpl extends ItemLFImpl implements
         addInputCommands();
 
         inputModeIndicator.setDisplayMode(im.getName());
+        showKeyboardLayer();
     }
     
     // End Chameleon's TextInputComponent Interface
@@ -1983,6 +1989,31 @@ class TextFieldLFImpl extends ItemLFImpl implements
             d.showPopup(pt_popup);
             pt_popupOpen = true;
             lRequestInvalidate(true, true);
+        }
+    }
+
+    /**
+     * Show virtual keybord popup
+     */
+    protected void showKeyboardLayer() {
+        Display d = getCurrentDisplay();
+
+        if (d != null) {
+            if (!vkb_popupOpen) {
+                if (d.getInputSession().getCurrentInputMode() instanceof VirtualInputMode) {
+                    VirtualKeyboardLayer keyboardPopup = d.getVirtualKeyboardPopup();
+                    d.showPopup(keyboardPopup);
+                    vkb_popupOpen = true;
+                    lRequestInvalidate(true, true);
+                }
+            } else {
+                if (!(d.getInputSession().getCurrentInputMode() instanceof VirtualInputMode)) {
+                    VirtualKeyboardLayer keyboardPopup = d.getVirtualKeyboardPopup();
+                    d.hidePopup(keyboardPopup);
+                    vkb_popupOpen = false;
+                    lRequestInvalidate(true, true);
+                }
+            }
         }
     }
     

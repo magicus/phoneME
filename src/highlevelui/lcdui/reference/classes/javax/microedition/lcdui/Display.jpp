@@ -51,7 +51,6 @@ import com.sun.midp.lcdui.*;
 import com.sun.midp.log.Logging;
 import com.sun.midp.log.LogChannels;
 import com.sun.midp.configurator.Constants;
-import com.sun.midp.util.ResourceHandler;
 
 // #ifdef ENABLE_CHAMELEON
 import com.sun.midp.chameleon.MIDPWindow;
@@ -61,10 +60,10 @@ import com.sun.midp.chameleon.input.TextInputSession;
 import com.sun.midp.chameleon.input.BasicTextInputSession;
 import com.sun.midp.chameleon.layers.PopupLayer;
 import com.sun.midp.chameleon.layers.PTILayer;
+import com.sun.midp.chameleon.layers.VirtualKeyboardLayer;
 import com.sun.midp.chameleon.skins.ChoiceGroupSkin;
 import com.sun.midp.chameleon.skins.ScreenSkin;
 import com.sun.midp.chameleon.skins.resources.*;
-import com.sun.midp.chameleon.input.KeyboardInputMode;
 import java.io.IOException;
 // #endif ENABLE_CHAMELEON
 
@@ -459,8 +458,11 @@ public class Display {
     /** The TextInputMediator which handles translating key presses */
     TextInputSession inputSession;
 
-    /** The PopupLayer that represents open state of this ChoiceGroup POPUP. */
+    /** The PopupLayer that represents open state of predicitve text input popup. */
     PTILayer pt_popup;
+
+    /** The PopupLayer that represents java virtual keyboard */
+    VirtualKeyboardLayer keyboardLayer;
 
     // #endif ENABLE_CHAMELEON
 
@@ -1567,6 +1569,26 @@ public class Display {
         return pt_popup;
     }
 
+    /**
+     * Create popup layer that represents java virtual keyboard popup
+     *   associated with this Display
+     * @return VirtualKeyboard layer instance connected to the current input session
+     *   associated with this Display
+     **/
+    VirtualKeyboardLayer getVirtualKeyboardPopup() {
+
+        if (keyboardLayer == null) {
+            if (getCurrent() instanceof Canvas) {
+                keyboardLayer = new VirtualKeyboardLayer(
+                    cham_tunnel);
+            } else {
+                keyboardLayer = new VirtualKeyboardLayer(
+                    getInputSession());
+            }
+        }
+        return keyboardLayer;
+    }
+
     // #endif ENABLE_CHAMELEON
 
     /**
@@ -2576,6 +2598,32 @@ public class Display {
                 Display.this.setVerticalScroll(
                           currentCopy.getVerticalScrollPosition(),
                           currentCopy.getVerticalScrollProportion());
+            }
+        }
+
+        /**
+         * This method is used by Chameleon to invoke
+         * CanvasLFImpl.uCallKeyPressed() method.
+         *
+         * @param keyCode key code
+         */
+        public void callKeyPressed(int keyCode) {
+            DisplayableLF currentCopy = Display.this.current;
+            if (currentCopy != null && currentCopy instanceof CanvasLFImpl) {
+                ((CanvasLFImpl)currentCopy).uCallKeyPressed(keyCode);
+            }
+        }
+
+        /**
+         * This method is used by Chameleon to invoke
+         * CanvasLFImpl.uCallKeyReleased() method.
+         *
+         * @param keyCode key code
+         */
+        public void callKeyReleased(int keyCode) {
+            DisplayableLF currentCopy = Display.this.current;
+            if (currentCopy != null && currentCopy instanceof CanvasLFImpl) {
+                ((CanvasLFImpl)currentCopy).uCallKeyReleased(keyCode);
             }
         }
     }

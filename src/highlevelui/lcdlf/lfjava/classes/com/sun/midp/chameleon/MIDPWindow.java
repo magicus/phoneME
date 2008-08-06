@@ -63,11 +63,14 @@ public class MIDPWindow extends CWindow {
     /** Id of layer containing the pti contents */
     public static final int PTI_LAYER = 6;
 
+    /** Id of layer containing the virtual keyboard contents */
+    public static final int KEYBOARD_LAYER = 7;
+
     /** Id of layer containing the current displayable's contents */
-    public static final int BODY_LAYER = 7;
+    public static final int BODY_LAYER = 8;
 
     /** Number of main layers*/                                           
-    public static final int LAST_LAYER = 8;
+    public static final int LAST_LAYER = 9;
 
     /** Used to call back into the Display class from this package */
     ChamDisplayTunnel tunnel;
@@ -80,6 +83,7 @@ public class MIDPWindow extends CWindow {
     private TickerLayer tickerLayer;
     private SoftButtonLayer buttonLayer;
     private PTILayer ptiLayer;
+    private VirtualKeyboardLayer keyboardLayer;
     private BodyLayer bodyLayer;
 
     // layout modes
@@ -321,6 +325,12 @@ public class MIDPWindow extends CWindow {
             resize();
         }
 
+        if (added && layer instanceof VirtualKeyboardLayer) {
+            keyboardLayer = (VirtualKeyboardLayer)layer;
+            mainLayers[KEYBOARD_LAYER] = layer;
+            resize();
+        }
+
         return added;
     }
 
@@ -342,6 +352,11 @@ public class MIDPWindow extends CWindow {
                 if (layer == mainLayers[PTI_LAYER]) {
                     ptiLayer = null;
                     mainLayers[PTI_LAYER] = null;
+                    resize();
+                }
+                if (layer == mainLayers[KEYBOARD_LAYER]) {
+                    keyboardLayer = null;
+                    mainLayers[KEYBOARD_LAYER] = null;
                     resize();
                 }
 

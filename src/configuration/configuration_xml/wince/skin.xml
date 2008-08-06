@@ -1015,6 +1015,66 @@
      Pieces="9"
     Romized="true"/>
 
+    <image
+        Key="KEYBOARD_KEY"
+      Value="keyboard.key"
+    Romized="false"/>
+
+  <image
+        Key="KEYBOARD_BG"
+      Value="keyboard.bg"
+    Romized="false"/>
+
+  <image
+        Key="KEYBOARD_BTN_UP_SEL"
+      Value="keyboard.btn_up_sel"
+    Romized="false"/>
+
+  <image
+        Key="KEYBOARD_BTN_UP_UN"
+      Value="keyboard.btn_up_UN"
+    Romized="false"/>
+
+  <image
+        Key="KEYBOARD_BTN_LEFT_SEL"
+      Value="keyboard.btn_LEFT_sel"
+    Romized="false"/>
+
+  <image
+        Key="KEYBOARD_BTN_LEFT_UN"
+      Value="keyboard.btn_LEFT_UN"
+    Romized="false"/>
+
+  <image
+        Key="KEYBOARD_BTN_MID_SEL"
+      Value="keyboard.btn_mid_sel"
+    Romized="false"/>
+
+  <image
+        Key="KEYBOARD_BTN_MID_UN"
+      Value="keyboard.btn_mid_un"
+    Romized="false"/>
+
+  <image
+        Key="KEYBOARD_BTN_RIGHT_SEL"
+      Value="keyboard.btn_right_sel"
+    Romized="false"/>
+
+  <image
+        Key="KEYBOARD_BTN_RIGHT_UN"
+      Value="keyboard.btn_right_un"
+    Romized="false"/>
+
+  <image
+        Key="KEYBOARD_BTN_DOWN_SEL"
+      Value="keyboard.btn_down_sel"
+    Romized="false"/>
+
+  <image
+        Key="KEYBOARD_BTN_DOWN_UN"
+      Value="keyboard.btn_down_un"
+    Romized="false"/>
+
   <integer
         Key="MENU_WIDTH"
       Value="144"/>

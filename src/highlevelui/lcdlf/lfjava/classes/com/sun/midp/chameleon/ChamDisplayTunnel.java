@@ -96,5 +96,22 @@ public interface ChamDisplayTunnel {
      * Updates the scroll indicator.
      */
     public void updateScrollIndicator();
+
+    /**
+     * This method is used by Chameleon to invoke
+     * CanvasLFImpl.uCallKeyPressed() method.
+     *
+     * @param keyCode key code
+     */
+    public void callKeyPressed(int keyCode);
+
+    /**
+     * This method is used by Chameleon to invoke
+     * CanvasLFImpl.uCallKeyReleased() method.
+     *
+     * @param keyCode key code
+     */
+    public void callKeyReleased(int keyCode);
+
 }
 
