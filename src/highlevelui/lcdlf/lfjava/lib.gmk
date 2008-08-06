@@ -96,6 +96,9 @@ SUBSYSTEM_LCDLF_JAVA_FILES += \
     $(LCDLF_J_DIR)/classes/com/sun/midp/lcdui/Text.java \
     $(LCDLF_J_DIR)/classes/com/sun/midp/lcdui/TextInfo.java \
     $(LCDLF_J_DIR)/classes/com/sun/midp/lcdui/TextCursor.java \
+    $(LCDLF_J_DIR)/classes/com/sun/midp/lcdui/Key.java \
+    $(LCDLF_J_DIR)/classes/com/sun/midp/lcdui/VirtualKeyboard.java \
+    $(LCDLF_J_DIR)/classes/com/sun/midp/lcdui/VirtualKeyboardListener.java \
     $(LCDLF_J_DIR)/classes/com/sun/midp/chameleon/CLayer.java \
     $(LCDLF_J_DIR)/classes/com/sun/midp/chameleon/CLayerElement.java \
     $(LCDLF_J_DIR)/classes/com/sun/midp/chameleon/CLayerList.java \
@@ -141,6 +144,7 @@ SUBSYSTEM_LCDLF_JAVA_FILES += \
     $(LCDLF_J_DIR)/classes/com/sun/midp/chameleon/skins/DateEditorSkin.java \
     $(LCDLF_J_DIR)/classes/com/sun/midp/chameleon/skins/AlertSkin.java \
     $(LCDLF_J_DIR)/classes/com/sun/midp/chameleon/skins/ScreenSkin.java \
+    $(LCDLF_J_DIR)/classes/com/sun/midp/chameleon/skins/VirtualKeyboardSkin.java \
     $(LCDLF_J_DIR)/classes/com/sun/midp/chameleon/skins/resources/DateFieldResources.java \
     $(LCDLF_J_DIR)/classes/com/sun/midp/chameleon/skins/resources/DateEditorResources.java \
     $(LCDLF_J_DIR)/classes/com/sun/midp/chameleon/skins/resources/TextFieldResources.java \
@@ -163,6 +167,7 @@ SUBSYSTEM_LCDLF_JAVA_FILES += \
     $(LCDLF_J_DIR)/classes/com/sun/midp/chameleon/skins/resources/TickerResources.java \
     $(LCDLF_J_DIR)/classes/com/sun/midp/chameleon/skins/resources/PTIResources.java \
     $(LCDLF_J_DIR)/classes/com/sun/midp/chameleon/skins/resources/InputModeResources.java \
+    $(LCDLF_J_DIR)/classes/com/sun/midp/chameleon/skins/resources/VirtualKeyboardResources.java \
     $(GENERATED_DIR)/classes/com/sun/midp/chameleon/skins/resources/SkinResources.java \
     $(LCDLF_J_DIR)/classes/com/sun/midp/chameleon/skins/resources/SkinResourcesConstants.java \
     $(LCDLF_J_DIR)/classes/com/sun/midp/chameleon/layers/AlertLayer.java \
@@ -181,6 +186,7 @@ SUBSYSTEM_LCDLF_JAVA_FILES += \
     $(LCDLF_J_DIR)/classes/com/sun/midp/chameleon/layers/CascadeMenuLayer.java \
     $(LCDLF_J_DIR)/classes/com/sun/midp/chameleon/layers/WashLayer.java \
     $(LCDLF_J_DIR)/classes/com/sun/midp/chameleon/layers/InputModeLayer.java \
+    $(LCDLF_J_DIR)/classes/com/sun/midp/chameleon/layers/VirtualKeyboardLayer.java \
     $(LCDLF_J_DIR)/classes/com/sun/midp/chameleon/layers/PTILayer.java
 
 # generated skin files 

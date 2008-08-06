@@ -1,63 +1,73 @@
 /*
  *
+ *
  * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
- * 
+ *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
  * 2 only, as published by the Free Software Foundation.
- * 
+ *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
  * included at /legal/license.txt).
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA
- * 
+ *
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
  * information or have any questions.
  */
-package com.sun.midp.chameleon.input;
+package com.sun.midp.chameleon.skins;
 
-import com.sun.midp.i18n.Resource;
-import com.sun.midp.i18n.ResourceConstants; 
+import javax.microedition.lcdui.Image;
+import javax.microedition.lcdui.Font;
 
 /**
- * An InputMode instance which allows to use native Windows Mobile
- * input methods.
+ * A skin containing images and parameters related to the PTI bar.
  */
-public class VirtualInputMode extends KeyboardInputMode {
+public class VirtualKeyboardSkin {
 
-// #ifdef WINCE
-    private static native void showNativeKeyboard();
-    private static native void hideNativeKeyboard();
-// #endif
+    /**
+     * This field corresponds to PTI_RIGHT_ARROW skin property.
+     * See its comment for further details.
+     *
+     * A 'null' value for this parameter means there is no image for
+     * right indicator and it should not be used.
+     */
+    public static Image KEY;
 
-    private static String modeName;
-    static {
-        modeName = Resource.getString(ResourceConstants.LCDUI_TF_NATIVE_VKBD);
-    }
+    public static Image BG;
 
-    public void beginInput(InputModeMediator mediator, String inputSubset, int constraints) {
-// #ifdef WINCE
-        showNativeKeyboard();
-// #endif
-        super.beginInput(mediator, inputSubset, constraints);
-    }
+    public static Image BTN_UP_SEL;
 
-    public void endInput() throws IllegalStateException {
-        super.endInput();
-// #ifdef WINCE
-        hideNativeKeyboard();
-// #endif
-    }
+    public static Image BTN_UP_UN;
 
-    public String getName() {
-        return modeName;
+    public static Image BTN_LEFT_SEL;
+
+    public static Image BTN_LEFT_UN;
+
+    public static Image BTN_MID_SEL;
+
+    public static Image BTN_MID_UN;
+
+    public static Image BTN_RIGHT_SEL;
+
+    public static Image BTN_RIGHT_UN;
+
+    public static Image BTN_DOWN_SEL;
+
+    public static Image BTN_DOWN_UN;
+
+
+
+    /** private constructor */
+    private VirtualKeyboardSkin() {
     }
 }
+

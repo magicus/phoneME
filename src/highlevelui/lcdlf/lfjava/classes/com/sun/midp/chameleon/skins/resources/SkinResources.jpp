@@ -530,6 +530,7 @@ public class SkinResources {
             StringItemResources.load();
             TextFieldResources.load();
             UpdateBarResources.load();
+            VirtualKeyboardResources.load();
         }
 
         checkLocale();
