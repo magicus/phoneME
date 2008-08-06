@@ -525,3 +525,9 @@ endif
 ifeq ($(USE_JPEG), true)
 include $(JPEG_DIR)/$(SUBSYSTEM_MAKE_FILE)
 endif
+
+# xmlparser component
+ifeq ($(USE_XMLPARSER),true)
+include $(XMLPARSER_DIR)/build/defs.gmk
+include $(XMLPARSER_DIR)/build/rules.gmk
+endif
