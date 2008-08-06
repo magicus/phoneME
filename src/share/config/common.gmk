@@ -1,0 +1,262 @@
+
+#
+#   
+#
+# Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+# 
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License version
+# 2 only, as published by the Free Software Foundation. 
+# 
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# General Public License version 2 for more details (a copy is
+# included at /legal/license.txt). 
+# 
+# You should have received a copy of the GNU General Public License
+# version 2 along with this work; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+# 02110-1301 USA 
+# 
+# Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+# Clara, CA 95054 or visit www.sun.com if you need additional
+# information or have any questions. 
+#
+######################################################################
+#
+# Module's Component Configuration file
+#
+# Remember: It is up to the module itself to impose rules of
+# how to compile the options. All the global Makefile needs
+# is the final def. of Java and native file lists and some
+# other def. (like VPATH)
+#
+######################################################################
+
+# Adds to global SUBSYSTEMS list
+#
+SUBSYSTEMS += jsr280
+
+# Javadoc source path
+
+SUBSYSTEM_JSR280_SOURCEPATH += $(JSR_280_DIR)/src/share/classes
+
+SUBSYSTEM_JSR280_PACKAGES += \
+    com.sun.ukit.dom \
+    com.sun.ukit.io \
+    com.sun.ukit.xml \
+    javax.xml \
+    javax.xml.parsers \
+    javax.xml.stream \
+    org.xml.sax \
+    org.xml.sax.ext \
+    org.xml.sax.helpers \
+    org.w3c.dom \
+    org.w3c.dom.events \
+    org.w3c.dom.views
+
+
+# Java files for the ( jsr280 ) module
+#
+JSR_280_OI_DIR = $(JSR_280_DIR)/src/share/oi
+JSR_280_SAX_DIR = $(JSR_280_OI_DIR)/org/xml/sax
+
+JSR_280_API_SAX_JAVA_FILES = \
+    $(JSR_280_SAX_DIR)/XMLReader.java \
+    $(JSR_280_SAX_DIR)/XMLFilter.java \
+    $(JSR_280_SAX_DIR)/ContentHandler.java \
+    $(JSR_280_SAX_DIR)/DTDHandler.java \
+    $(JSR_280_SAX_DIR)/ErrorHandler.java \
+    $(JSR_280_SAX_DIR)/EntityResolver.java \
+    $(JSR_280_SAX_DIR)/helpers/DefaultHandler.java \
+    $(JSR_280_SAX_DIR)/ext/Attributes2.java \
+    $(JSR_280_SAX_DIR)/SAXNotRecognizedException.java \
+    $(JSR_280_SAX_DIR)/SAXNotSupportedException.java \
+    $(JSR_280_SAX_DIR)/SAXParseException.java \
+    $(JSR_280_SAX_DIR)/InputSource.java \
+    $(JSR_280_SAX_DIR)/SAXException.java \
+    $(JSR_280_SAX_DIR)/Locator.java \
+    $(JSR_280_SAX_DIR)/Attributes.java
+
+JSR_280_STAX_DIR = $(JSR_280_OI_DIR)/javax/xml/stream
+
+JSR_280_API_STAX_JAVA_FILES = \
+    $(JSR_280_STAX_DIR)/FactoryConfigurationError.java \
+    $(JSR_280_STAX_DIR)/Location.java \
+    $(JSR_280_STAX_DIR)/StreamFilter.java \
+    $(JSR_280_STAX_DIR)/XMLResolver.java \
+    $(JSR_280_STAX_DIR)/XMLInputFactory.java \
+    $(JSR_280_STAX_DIR)/XMLOutputFactory.java \
+    $(JSR_280_STAX_DIR)/XMLStreamConstants.java \
+    $(JSR_280_STAX_DIR)/XMLStreamException.java \
+    $(JSR_280_STAX_DIR)/XMLStreamReader.java \
+    $(JSR_280_STAX_DIR)/XMLStreamWriter.java \
+    $(JSR_280_OI_DIR)/javax/xml/XMLConstants.java \
+    $(JSR_280_STAX_DIR)/DTDStreamReader.java
+
+JSR_280_DOM_DIR = $(JSR_280_OI_DIR)/org/w3c/dom
+
+JSR_280_API_DOM_CORE_JAVA_FILES = \
+    $(JSR_280_DOM_DIR)/Attr.java \
+    $(JSR_280_DOM_DIR)/CDATASection.java \
+    $(JSR_280_DOM_DIR)/CharacterData.java \
+    $(JSR_280_DOM_DIR)/Comment.java \
+    $(JSR_280_DOM_DIR)/Document.java \
+    $(JSR_280_DOM_DIR)/DocumentType.java \
+    $(JSR_280_DOM_DIR)/DocumentFragment.java \
+    $(JSR_280_DOM_DIR)/DOMException.java \
+    $(JSR_280_DOM_DIR)/DOMImplementation.java \
+    $(JSR_280_DOM_DIR)/Element.java \
+    $(JSR_280_DOM_DIR)/Entity.java \
+    $(JSR_280_DOM_DIR)/EntityReference.java \
+    $(JSR_280_DOM_DIR)/NamedNodeMap.java \
+    $(JSR_280_DOM_DIR)/Node.java \
+    $(JSR_280_DOM_DIR)/NodeList.java \
+    $(JSR_280_DOM_DIR)/Notation.java \
+    $(JSR_280_DOM_DIR)/ProcessingInstruction.java \
+    $(JSR_280_DOM_DIR)/Text.java \
+    $(JSR_280_DOM_DIR)/UserDataHandler.java \
+    $(JSR_280_DOM_DIR)/ElementTraversal.java
+
+JSR_280_JAXP_DIR = $(JSR_280_OI_DIR)/javax/xml/parsers
+
+JSR_280_API_JAXP_JAVA_FILES = \
+    $(JSR_280_JAXP_DIR)/DocumentBuilder.java \
+    $(JSR_280_JAXP_DIR)/DocumentBuilderFactory.java \
+    $(JSR_280_JAXP_DIR)/SAXParser.java \
+    $(JSR_280_JAXP_DIR)/SAXParserFactory.java \
+    $(JSR_280_JAXP_DIR)/ParserConfigurationException.java \
+    $(JSR_280_JAXP_DIR)/FactoryConfigurationError.java
+
+JSR_280_API_CORE_JAVA_FILES = \
+    $(JSR_280_API_SAX_JAVA_FILES)  \
+    $(JSR_280_API_STAX_JAVA_FILES) \
+    $(JSR_280_API_DOM_CORE_JAVA_FILES) \
+    $(JSR_280_API_JAXP_JAVA_FILES)
+
+JSR_280_XML_DIR = $(JSR_280_OI_DIR)/com/sun/ukit/xml
+JSR_280_IO_DIR = $(JSR_280_OI_DIR)/com/sun/ukit/io
+
+JSR_280_XML_JAVA_FILES = \
+    $(JSR_280_XML_DIR)/Parser.java \
+    $(JSR_280_XML_DIR)/ParserStAX.java \
+    $(JSR_280_XML_DIR)/XMLInputFactoryImp.java \
+    $(JSR_280_XML_DIR)/DTDStreamReaderImp.java \
+    $(JSR_280_XML_DIR)/Attrs.java \
+    $(JSR_280_XML_DIR)/Pair.java \
+    $(JSR_280_XML_DIR)/Input.java \
+    $(JSR_280_XML_DIR)/WriterStAX.java \
+    $(JSR_280_XML_DIR)/WriterNoRepStAX.java \
+    $(JSR_280_XML_DIR)/WriterRepStAX.java \
+    $(JSR_280_XML_DIR)/XMLOutputFactoryImp.java \
+    $(JSR_280_XML_DIR)/SAXParserFactoryImp.java \
+    $(JSR_280_XML_DIR)/SAXParserImp.java \
+    $(JSR_280_XML_DIR)/ParserSAX.java \
+    $(JSR_280_IO_DIR)/ReaderUTF8.java \
+    $(JSR_280_IO_DIR)/ReaderUTF16.java
+
+JSR_280_XML_JAVA_FILES += \
+    $(JSR_280_API_CORE_JAVA_FILES)
+
+JSR_280_DOM_JAVA_DIR = $(JSR_280_OI_DIR)/com/sun/ukit/dom
+
+JSR_280_DOM_JAVA_FILES = \
+    $(JSR_280_DOM_JAVA_DIR)/DocBuilderFactory.java \
+    $(JSR_280_DOM_JAVA_DIR)/DocBuilder.java \
+    $(JSR_280_DOM_JAVA_DIR)/ParserDOM.java \
+    $(JSR_280_DOM_JAVA_DIR)/DocTypeImp.java \
+    $(JSR_280_DOM_JAVA_DIR)/DocFragImp.java \
+    $(JSR_280_DOM_JAVA_DIR)/ElmImp.java \
+    $(JSR_280_DOM_JAVA_DIR)/AttrMapImp.java \
+    $(JSR_280_DOM_JAVA_DIR)/AttrImp.java \
+    $(JSR_280_DOM_JAVA_DIR)/TextImp.java \
+    $(JSR_280_DOM_JAVA_DIR)/CommImp.java \
+    $(JSR_280_DOM_JAVA_DIR)/ProcInstImp.java \
+    $(JSR_280_DOM_JAVA_DIR)/EntRefImp.java \
+    $(JSR_280_DOM_JAVA_DIR)/EntImp.java \
+    $(JSR_280_DOM_JAVA_DIR)/NotImp.java \
+    $(JSR_280_DOM_JAVA_DIR)/NodeMapImp.java \
+    $(JSR_280_DOM_JAVA_DIR)/ElmFilter.java \
+    $(JSR_280_DOM_JAVA_DIR)/XCharData.java \
+    $(JSR_280_DOM_JAVA_DIR)/XDoc.java \
+    $(JSR_280_DOM_JAVA_DIR)/XElm.java \
+    $(JSR_280_DOM_JAVA_DIR)/XParent.java \
+    $(JSR_280_DOM_JAVA_DIR)/XBase.java \
+    $(JSR_280_DOM_JAVA_DIR)/XList.java
+
+JSR_280_DOM_EVENT_JAVA_DIR = $(JSR_280_DOM_JAVA_DIR)/events
+
+ifneq ($(USE_DOM_EVENT), true)
+JSR_280_DOM_JAVA1_DIR = $(JSR_280_DOM_JAVA_DIR)
+else
+JSR_280_DOM_JAVA1_DIR = $(JSR_280_DOM_EVENT_JAVA_DIR)
+endif
+
+JSR_280_DOM_JAVA_FILES += \
+    $(JSR_280_DOM_JAVA1_DIR)/DOMImpImp.java \
+    $(JSR_280_DOM_JAVA1_DIR)/DocImp.java \
+    $(JSR_280_DOM_JAVA1_DIR)/XNode.java
+
+
+ifeq ($(USE_DOM_EVENT), true)
+
+JSR_280_DOM_JAVA_FILES += \
+    $(JSR_280_DOM_EVENT_JAVA_DIR)/XEvtDoc.java \
+    $(JSR_280_DOM_EVENT_JAVA_DIR)/XEvt.java \
+    $(JSR_280_DOM_EVENT_JAVA_DIR)/EvtImp.java \
+    $(JSR_280_DOM_EVENT_JAVA_DIR)/CustomEvtImp.java \
+    $(JSR_280_DOM_EVENT_JAVA_DIR)/XUIEvt.java \
+    $(JSR_280_DOM_EVENT_JAVA_DIR)/UIEvtImp.java \
+    $(JSR_280_DOM_EVENT_JAVA_DIR)/XMouseEvt.java \
+    $(JSR_280_DOM_EVENT_JAVA_DIR)/MouseEvtImp.java \
+    $(JSR_280_DOM_EVENT_JAVA_DIR)/MouseWheelEvtImp.java \
+    $(JSR_280_DOM_EVENT_JAVA_DIR)/KbdEvtImp.java \
+    $(JSR_280_DOM_EVENT_JAVA_DIR)/TxtEvtImp.java \
+    $(JSR_280_DOM_EVENT_JAVA_DIR)/MutEvtImp.java \
+    $(JSR_280_DOM_EVENT_JAVA_DIR)/ProgressEvtImp.java
+
+JSR_280_DOM_EVENT_DIR = $(JSR_280_DOM_DIR)/events
+JSR_280_DOM_VIEW_DIR = $(JSR_280_DOM_DIR)/views
+
+JSR_280_DOM_JAVA_FILES += \
+    $(JSR_280_DOM_EVENT_DIR)/DocumentEvent.java \
+    $(JSR_280_DOM_EVENT_DIR)/Event.java \
+    $(JSR_280_DOM_EVENT_DIR)/EventException.java \
+    $(JSR_280_DOM_EVENT_DIR)/EventListener.java \
+    $(JSR_280_DOM_EVENT_DIR)/EventTarget.java \
+    $(JSR_280_DOM_EVENT_DIR)/MutationEvent.java \
+    $(JSR_280_DOM_EVENT_DIR)/CustomEvent.java \
+    $(JSR_280_DOM_EVENT_DIR)/UIEvent.java \
+    $(JSR_280_DOM_EVENT_DIR)/MouseEvent.java \
+    $(JSR_280_DOM_EVENT_DIR)/KeyboardEvent.java \
+    $(JSR_280_DOM_EVENT_DIR)/TextEvent.java \
+    $(JSR_280_DOM_EVENT_DIR)/MouseWheelEvent.java \
+    $(JSR_280_DOM_EVENT_DIR)/ProgressEvent.java \
+    $(JSR_280_DOM_VIEW_DIR)/AbstractView.java \
+    $(JSR_280_DOM_VIEW_DIR)/DocumentView.java
+endif
+
+MODULE_JSR_280_JAVA_FILES += \
+    $(JSR_280_XML_JAVA_FILES) \
+    $(JSR_280_DOM_JAVA_FILES)
+
+
+# Include jsr 280 common properties in Configuration
+#
+JSR_280_PROPERTY_FILES += \
+    $(JSR_280_DIR)/src/share/config/properties_jsr280.xml
+
+ifeq ($(USE_DOM_EVENT), true)
+JSR_280_PROPERTY_FILES += \
+    $(JSR_280_DIR)/src/share/config/properties_jsr280_dom_events.xml
+endif
+
+# I3test files for the ( JSR280 ) subsystem
+#
+# Note that the test case classes must be named to begin with 'Test'.
+ifeq ($(USE_I3_TEST), true)
+SUBSYSTEM_JSR_280_I3TEST_JAVA_FILES =
+endif
+JTWI_I3TEST_JAVA_FILES	+= $(SUBSYSTEM_JSR_280_I3TEST_JAVA_FILES)

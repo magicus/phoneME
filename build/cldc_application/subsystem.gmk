@@ -1,0 +1,103 @@
+
+#
+#   
+#
+# Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+# 
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License version
+# 2 only, as published by the Free Software Foundation. 
+# 
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# General Public License version 2 for more details (a copy is
+# included at /legal/license.txt). 
+# 
+# You should have received a copy of the GNU General Public License
+# version 2 along with this work; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+# 02110-1301 USA 
+# 
+# Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+# Clara, CA 95054 or visit www.sun.com if you need additional
+# information or have any questions. 
+#
+######################################################################
+#
+# Module's Component Configuration file
+#
+# Remember: It is up to the module itself to impose rules of
+# how to compile the options. All the global Makefile needs
+# is the final def. of Java and native file lists and some
+# other def. (like VPATH)
+#
+######################################################################
+
+SUBSYSTEM_JSR280_SOURCEPATH =
+SUBSYSTEM_JSR280_PACKAGES =
+MODULE_JSR_280_JAVA_FILES =
+JSR_280_PROPERTY_FILES =
+SUBSYSTEM_JSR_280_I3TEST_JAVA_FILES =
+
+# Platform-independent definitions.
+#
+include $(JSR_280_DIR)/src/share/config/common.gmk
+
+MIDP_JAVADOC_SOURCEPATH += $(SUBSYSTEM_JSR280_SOURCEPATH)
+MIDP_JAVADOC_PACKAGES +=  $(SUBSYSTEM_JSR280_PACKAGES)
+
+MIDP_JAVADOC_ALL += \
+        -group "JSR280 XML" \
+	$(shell echo $(SUBSYSTEM_JSR280_PACKAGES) | tr ' ' $(PATHSEP))
+
+
+# Include jsr 280 common properties in Configuration
+#
+SUBSYSTEM_CONFIGURATION_INPUT_FILES += \
+    $(JSR_280_PROPERTY_FILES)
+
+# Specify romizer configuration file for the jsr
+# and path where the file is located
+#
+ROMGEN_INCLUDE_PATHS += $(JSR_280_DIR)/src/cldc_application/config
+ROMGEN_CFG_FILES     += jsr280_rom.cfg
+
+#
+# Native files for jsr280 subsystem
+
+#
+
+SUBSYSTEM_JSR_280_NATIVE_FILES = \
+
+SUBSYSTEM_JSR_280_EXTRA_INCLUDES = \
+
+
+# Determines what option we have made and set it
+# to some variable that global makefile recognize
+#
+SUBSYSTEM_JSR_280_JAVA_FILES   = \
+    $(MODULE_JSR_280_JAVA_FILES)
+
+JTWI_NATIVE_FILES	+= $(SUBSYSTEM_JSR_280_NATIVE_FILES)
+EXTRA_INCLUDES		+= $(SUBSYSTEM_JSR_280_EXTRA_INCLUDES)
+EXTRA_CFLAGS            += -DENABLE_JSR_280=1
+JPP_DEFS                += -DENABLE_JSR_280
+
+# Native documentation to include in porting interfaces
+DOXYGEN_INPUT_LIST += \
+
+# Append JSR 280 source bundle creation to target
+source_bundle:: jsr_280_source_bundle
+
+# Create JSR 280 source in subdir 'jsr280/'
+JSR_280_SOURCE_OUTPUT_DIR=$(SOURCE_OUTPUT_DIR)/jsr280
+
+# Copy and filter JSR 280 source in JSR_280_SOURCE_OUTPUT_DIR
+jsr_280_source_bundle: JSR_280_DIR SOURCE_OUTPUT_DIR
+	@echo " ... JSR 280 source bundle" $(LOG)
+	@$(call re_src_filter,$(JSR_280_DIR),$(JSR_280_SOURCE_OUTPUT_DIR),src build)
+
+$(MIDP_OUTPUT_DIR)/classes.zip:: $(SUBSYSTEM_JSR_280_JAVA_FILES)
+	$(appendsupersetjavafiles)
