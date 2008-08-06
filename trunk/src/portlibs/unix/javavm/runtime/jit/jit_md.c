@@ -28,6 +28,7 @@
 #include "javavm/include/globals.h"
 #include "javavm/include/assert.h"
 #include "javavm/include/jit/jit.h"
+#include "javavm/include/jit/jitutils.h"
 #include "javavm/include/porting/jit/jit.h"
 
 #ifdef CVMJIT_TRAP_BASED_GC_CHECKS
@@ -83,6 +84,8 @@ CVMInt32 CVMfindAOTCodeCache()
     const CVMProperties *sprops = CVMgetProperties();
     char *aotfile;
     int fd;
+    /* codecache start addr + codecache size */
+    int headersize = 2 * sizeof(CVMInt32);
 
     aotfile = (char*)malloc(strlen(sprops->library_path) +
                             strlen("/cvm.aot") + 1);
@@ -98,8 +101,11 @@ CVMInt32 CVMfindAOTCodeCache()
         char buf[CVM_SHA_OUTPUT_LENGTH+1];
 	void* codeStart;
 	const char* cvmsha1hash = CVMgetSha1Hash();
+        CVMUint32 addr = 0;
 
-        /* The first word is the size of the pre-compiled code. */
+        /* Read the codecache start address */
+        read(fd, &addr, sizeof(CVMInt32));
+        
 	/* Read the code size */
         read(fd, &codeSize, sizeof(CVMInt32));
 
@@ -117,14 +123,15 @@ CVMInt32 CVMfindAOTCodeCache()
          * AOT code.
          */
         if (lseek(fd, codeSize, SEEK_CUR) == -1) {
-            goto failed;
+            goto notFound;
         } else {
             int sumlength = strlen(cvmsha1hash);
             read(fd, buf, sumlength);
             buf[sumlength] = '\0';
             if (strcmp(buf, cvmsha1hash)) {
-                CVMconsolePrintf("AOT code is outdated.\n");
-                goto failed;
+	        CVMtraceJITStatus((
+                    "AOT code is not compatibale. Recompile AOT code.\n"));
+                goto notFound;
             }
         }
 
@@ -133,24 +140,59 @@ CVMInt32 CVMfindAOTCodeCache()
          * the current executable. mmap the codecache.
          */
         lseek(fd, 0, SEEK_SET); /* seek to the beginning, just to be safe */
+#ifdef CVMAOT_USE_FIXED_ADDRESS
+        /*
+         * 'addr' was the codecache start address that was used
+         * when compiling AOT code. 'addr-headersize' was the 
+         * page-aligned address returned by mmap() when the 
+         * codecache was allocated for AOT compilation. We want
+         * to map the current codecache at the same address.
+         * Since mmap requires the address to be aligned at page
+         * boundary when MAP_FIXED is used, so we need to use
+         * 'addr-headersize' instead of 'addr'.
+         * The returned address is the same as 'addr-headersize'
+         * if mmap succeed when MAP_FIXED is used. 
+         */
+	codeStart = mmap((void*)(addr-headersize), codeSize,
+                         PROT_EXEC|PROT_READ,
+                         MAP_PRIVATE|MAP_FIXED, fd, 0);
+#else
         codeStart = mmap(0, codeSize,
-                            PROT_EXEC|PROT_READ,
-                            MAP_PRIVATE, fd, 0);
+                         PROT_EXEC|PROT_READ,
+			 MAP_PRIVATE, fd, 0);
+#endif
+
         if (codeStart != MAP_FAILED) {
-            jgs->codeCacheAOTStart = (CVMUint8*)codeStart + sizeof(CVMInt32);
+	    jgs->codeCacheAOTStart = (CVMUint8*)(codeStart + headersize);
             jgs->codeCacheAOTEnd = jgs->codeCacheAOTStart + codeSize;
 	    jgs->codeCacheAOTCodeExist = CVM_TRUE;
             jgs->codeCacheDecompileStart = jgs->codeCacheAOTEnd;
             jgs->codeCacheNextDecompileScanStart = jgs->codeCacheAOTEnd;
+	    CVMtraceJITStatus((
+                "JS: Found AOT code. Codecache addr:0x%x, size: %dbytes.\n",
+		jgs->codeCacheAOTStart, codeSize));
             return codeSize;
         }
+        CVMtraceJITStatus((
+            "JS: Failed to map AOT code. Recompile AOT code.\n"));
     }
 
-failed:
-    jgs->codeCacheAOTStart = 0;
-    jgs->codeCacheAOTEnd = 0;
-    jgs->codeCacheAOTCodeExist = CVM_FALSE;
-    return 0;
+notFound:
+    {
+        void* alignedAddr;
+        /* Couldn't found saved AOT code. Allocate the codecache
+           for AOT compilation. */
+        alignedAddr = mmap(
+            0, jgs->codeCacheSize+headersize,
+            PROT_EXEC|PROT_READ|PROT_WRITE,
+	    MAP_PRIVATE|MAP_ANONYMOUS, 0, 0);
+
+        jgs->codeCacheStart = alignedAddr + headersize;
+        jgs->codeCacheAOTStart = 0;
+        jgs->codeCacheAOTEnd = 0;
+        jgs->codeCacheAOTCodeExist = CVM_FALSE;
+        return 0;
+    }
 }
 
 /* 
@@ -161,8 +203,8 @@ failed:
  * cache looks like the following:
  *
  *  ------------------------------------------------------
- *  |size|                                               |
- *  |-----                                               |
+ *  |codecache start addr|codecache size|                |
+ *  |-------------------------------------               |
  *  |                                                    |
  *  |                 compiled code                      |
  *  .                                                    .
@@ -195,13 +237,18 @@ CVMJITcodeCachePersist()
     free(aotfile);
 
     if (fd == -1) {
-        CVMconsolePrintf("Could not create AOT file\n");
+        CVMconsolePrintf("Could not create AOT file: %s.\n", aotfile);
     } else {
         CVMUint8* start = jgs->codeCacheStart;
         CVMUint32 end = (CVMUint32)jgs->codeCacheDecompileStart;
         CVMInt32  codeSize = end - (CVMUint32)start;
 	const char* cvmsha1hash = CVMgetSha1Hash();
 
+        CVMtraceJITStatus((
+	    "JS: Writing AOT code. CodeCache addr:0x%x, size:%dbytes.\n",
+	    start, codeSize));
+        /* write codecache start address */
+        write(fd, &start, sizeof(CVMInt32));
         /* write code size */
         write(fd, &codeSize, sizeof(CVMInt32));
         /* write code */
@@ -210,6 +257,7 @@ CVMJITcodeCachePersist()
 	write(fd, cvmsha1hash, strlen(cvmsha1hash));
 
         close(fd);
+        CVMtraceJITStatus(("JS: Finished writing AOT code.\n"));
     }
 }
 #endif

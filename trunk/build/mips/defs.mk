@@ -34,10 +34,6 @@ CVM_SRCDIRS   += \
 CVM_INCLUDE_DIRS  += \
 	$(CVM_TOP)/src/$(TARGET_CPU_FAMILY)
 
-ifeq ($(CVM_AOT), true)
-$(error AOT is not supported for MIPS)
-endif
-
 #
 # JIT related settings
 #

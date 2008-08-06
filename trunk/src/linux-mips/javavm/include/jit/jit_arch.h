@@ -38,6 +38,7 @@
 #define CVMJIT_TRAP_BASED_GC_CHECKS
 #endif
 #define CVMJIT_TRAP_BASED_NULL_CHECKS
+#define  CVMAOT_USE_FIXED_ADDRESS
 
 #include "javavm/include/jit/jit_cpu.h"
 #include "javavm/include/jit/jitasmconstants_cpu.h"

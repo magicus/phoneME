@@ -932,7 +932,7 @@ CNIsun_misc_CVM_markCodeBuffer(CVMExecEnv* ee,
 {
 #ifdef CVM_JIT
     CVMJITmarkCodeBuffer();
-#ifdef CVM_DEBUG
+#if 0
     CVMconsolePrintf("MARKED THIS JITBUFFER SPOT, %d BYTES IN USE\n",
 		     CVMglobals.jit.codeCacheBytesAllocated);
 #endif
