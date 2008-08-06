@@ -93,7 +93,7 @@ endif
 
 ifeq ($(CVM_MTASK), true)
 CLASSLIB_CLASSES += \
-       sun.mtask.Warmup 
+       sun.misc.Warmup 
 CVM_DEFINES   += -DCVM_MTASK
 CVM_SHAREOBJS_SPACE += \
 	mtask.o 

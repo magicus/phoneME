@@ -447,7 +447,7 @@ struct CVMGlobalState {
 #endif /* CVM_CLASSLOADING */
 
 #ifdef CVM_AOT
-    CVMMethodBlock*     sun_mtask_Warmup_runit;
+    CVMMethodBlock*     sun_misc_Warmup_runit;
 #endif
 
     /*

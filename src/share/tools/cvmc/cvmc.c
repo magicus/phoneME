@@ -219,7 +219,7 @@ main(int argc, const char** argv)
     
     if (isWarmup) {
 	jumpMessageAddString(outMessage, "S"); 
-	jumpMessageAddString(outMessage, "sun.mtask.Warmup");
+	jumpMessageAddString(outMessage, "sun.misc.Warmup");
 	numWords += 2;
 	
 	if (classesList != NULL) {

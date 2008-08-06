@@ -485,12 +485,12 @@ static const CVMGlobalMethodBlockEntry globalMethodBlocks[] = {
     },
 
 #ifdef CVM_AOT
-    /* sun.mtask.Warmup.runit() */
+    /* sun.misc.Warmup.runit() */
     {
         CVM_TRUE, /* static */
-        CVMsystemClass(sun_mtask_Warmup),
+        CVMsystemClass(sun_misc_Warmup),
         "runit", "(Ljava/lang/String;Ljava/lang/String;)V",
-        &CVMglobals.sun_mtask_Warmup_runit,
+        &CVMglobals.sun_misc_Warmup_runit,
     },
 #endif
 

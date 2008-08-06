@@ -297,7 +297,7 @@ CVM_CLASSBLOCK_DECL(sun_io_UnknownCharacterException);
 CVM_CLASSBLOCK_DECL(sun_io_MalformedInputException);
 
 #ifdef CVM_AOT
-CVM_CLASSBLOCK_DECL(sun_mtask_Warmup);
+CVM_CLASSBLOCK_DECL(sun_misc_Warmup);
 #endif
 
 /*
