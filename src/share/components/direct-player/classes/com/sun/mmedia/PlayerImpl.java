@@ -24,9 +24,11 @@
  */
 
 package com.sun.mmedia;
+
 import  javax.microedition.media.*;
 import  javax.microedition.media.control.*;
 import  javax.microedition.media.protocol.SourceStream;
+import  javax.microedition.media.protocol.DataSource;
 import  java.util.Enumeration;
 import  java.util.Hashtable;
 import  java.util.Vector;
@@ -34,19 +36,9 @@ import  com.sun.j2me.app.AppPackage;
 import  com.sun.j2me.app.AppIsolate;
 import  com.sun.mmedia.PlayerStateSubscriber;
 
-
-// #ifndef ABB [
-import javax.microedition.media.protocol.DataSource;
-// #endif ]
 import java.io.IOException;
 
 public class PlayerImpl implements Player {
-
-    // #ifdef ENABLE_DEBUG [
-    private final static boolean debug = true;
-    // #else ][
-    private final static boolean debug = false;
-    // #endif ]
 
     public PlayerStateSubscriber state_subscriber = null;
 
@@ -320,16 +312,14 @@ public class PlayerImpl implements Player {
 
         BasicPlayer p = null;
 
-        if (debug)
-            System.out.println("getPlayerFromType " + className);
+        // System.out.println("getPlayerFromType " + className);
 
         try {
             // ... try and instantiate the handler ...
             Class handlerClass = Class.forName(className);
             p = (BasicPlayer) handlerClass.newInstance();
         } catch (Exception e) {
-            if (debug)
-                System.out.println("Class not found " + className);
+            // System.out.println("Class not found " + className);
             throw new MediaException(PL_ERR_SH + e.getMessage());
         }
         return p;
@@ -384,8 +374,7 @@ public class PlayerImpl implements Player {
             playerInst.chkClosed(false);
 
             if (vmPaused) {
-                if (debug)
-                    System.out.println("ERROR: Try to prefetch player during paused state");
+                // System.out.println("ERROR: Try to prefetch player during paused state");
                 return;
             }        
 
@@ -446,8 +435,7 @@ public class PlayerImpl implements Player {
             playerInst.chkClosed(false);
 
             if (vmPaused) {
-                if (debug)
-                    System.out.println("ERROR: Try to start player during paused state");
+                // System.out.println("ERROR: Try to start player during paused state");
                 return;
             }
             playerInst.start();
@@ -551,7 +539,6 @@ public class PlayerImpl implements Player {
         isClosed = true;
     }
     
-    // #ifndef ABB [
     /**
      * Sets the <code>TimeBase</code> for this <code>Player</code>.
      * <p>
@@ -578,9 +565,7 @@ public class PlayerImpl implements Player {
             throw new IllegalStateException();
         }
     };
-    // #endif ]
 
-    // #ifndef ABB [
     /**
      * Gets the <code>TimeBase</code> that this <code>Player</code> is using.
      * @return The <code>TimeBase</code> that this <code>Player</code> is using.
@@ -596,7 +581,6 @@ public class PlayerImpl implements Player {
         // Player in the UNREALIZED or CLOSED state
         throw new IllegalStateException();
     };
-    // #endif ]
 
     /**
      * Sets the <code>Player</code>'s&nbsp;<i>media time</i>.
@@ -875,7 +859,7 @@ public class PlayerImpl implements Player {
             BasicPlayer p = (BasicPlayer) e.nextElement();
             int state = p.getState();
             if (state >= Player.REALIZED) {
-                if (debug) System.out.println("Send [" + evt + "] to Player " + p.toString());
+                // System.out.println("Send [" + evt + "] to Player " + p.toString());
                 VolumeControl vc = (VolumeControl)p.getControl("VolumeControl");
                 if (vc != null) {
                     vc.setLevel(volume);
@@ -917,8 +901,7 @@ public class PlayerImpl implements Player {
                 }
             } catch(MediaException ex) {
             }
-            if (debug) 
-                System.out.println("*** pause MMAPI : " + p + "(" + state + ") ***");
+            //  System.out.println("*** pause MMAPI : " + p + "(" + state + ") ***");
         }
     }
 
@@ -943,8 +926,7 @@ public class PlayerImpl implements Player {
             int state = ((Integer) pstates.get(p)).intValue();
             long time = ((Long) mtimes.get(p)).longValue();
 
-            if (debug)
-                System.out.println("MMAPI resumeAll state: " + state);
+            // System.out.println("MMAPI resumeAll state: " + state);
 
             switch (state) {
                 /*

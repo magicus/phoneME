@@ -41,13 +41,7 @@ import com.sun.mmedia.protocol.*;
 import com.sun.mmedia.DefaultConfiguration;
 import com.sun.mmedia.DirectPlayer;
 
-// #ifdef USE_RTSP [
-import com.sun.mmedia.RTSPPlayer;
-// #endif ]
-
-// #ifndef ABB [
 import javax.microedition.media.protocol.*;
-// #endif ]
 
 /**
  * <code>Manager</code> is the access point for obtaining
@@ -435,11 +429,6 @@ import javax.microedition.media.protocol.*;
  */
 
 public final class Manager {
-    // #ifdef ENABLE_DEBUG [
-    private final static boolean debug = true;
-    // #else ][
-    private final static boolean debug = false;
-    // #endif ]
 
     private static Configuration config = Configuration.getConfiguration();
     private static TonePlayer tonePlayer;
@@ -474,7 +463,6 @@ public final class Manager {
      */
     public final static String TONE_DEVICE_LOCATOR = "device://tone";
 
-    // #ifndef ABB [
     /**
      * The locator to create a MIDI <code>Player</code>
      * which gives access to the MIDI device by making
@@ -502,7 +490,6 @@ public final class Manager {
      * Value "device://midi" is assigned to <code>MIDI_DEVICE_LOCATOR</code>.
      */
     public final static String MIDI_DEVICE_LOCATOR = "device://midi";
-    // #endif ]
     
     private static String DS_ERR = "Cannot create a DataSource for: ";
     private static String PL_ERR = "Cannot create a Player for: ";
@@ -593,8 +580,7 @@ public final class Manager {
 
         String locStr = locator.toLowerCase();
 
-        if (debug)
-            System.out.println("[mmapi] createPlayer with " + locator);
+        // System.out.println("[mmapi] createPlayer with " + locator);
 
         /* Verify if Protocol is supported */
         String theProtocol = null;
@@ -952,25 +938,13 @@ public final class Manager {
          throws MediaException {
              
         if (note < 0 || note > 127 || duration <= 0) {
-            if (debug) {
-                Logging.report(Logging.ERROR, LogChannels.LC_MMAPI,
-                    "playTone note(" + note + ") or duration(" +
-                                 duration + ") value is invalid");
-            }        
-            throw new IllegalArgumentException("bad param");
+            throw new IllegalArgumentException( "Invalid note(" + note +
+                                                ") or duration (" + duration + ")" );
         }
 
         if (volume < 0) {
-            if (debug) {
-                Logging.report(Logging.ERROR, LogChannels.LC_MMAPI,
-                    "playTone volume is negative value = " + volume);
-            }
             volume = 0;
         } else if (volume > 100) {
-            if (debug) {
-                Logging.report(Logging.ERROR, LogChannels.LC_MMAPI,
-                    "playTone volume is too big = " + volume);
-            }        
             volume = 100;
         }
 
@@ -1009,12 +983,9 @@ public final class Manager {
      * @exception  IOException               Thrown if there was a problem connecting
      * with the source.
      */
-    // #ifndef ABB [
     public static Player createPlayer(DataSource source)
-    // #else ][
-    private static Player createPlayer(DataSource source)
-    // #endif ]
-         throws IOException, MediaException {
+        throws IOException, MediaException
+    {
         if (source == null) {
             throw new IllegalArgumentException();
         }
@@ -1097,7 +1068,6 @@ public final class Manager {
         }
     }
 
-    // #ifndef ABB [
     private static TimeBase sysTimeBase = null;
 
     /**
@@ -1112,10 +1082,7 @@ public final class Manager {
 
         return sysTimeBase;
     }
-    // #endif ]
 }
-
-// #ifndef ABB [
 
 /**
  * SystemTimeBase is the implementation of the default <CODE>TimeBase</CODE>
@@ -1141,6 +1108,3 @@ class SystemTimeBase implements TimeBase {
         return (System.currentTimeMillis() * 1000L) - offset;
     }
 }
-
-// #endif ]
-

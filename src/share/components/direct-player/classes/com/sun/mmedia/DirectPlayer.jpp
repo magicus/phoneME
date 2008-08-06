@@ -27,9 +27,7 @@
  * 
  * ENABLE_DEBUG : Debug mode ?
  * ENABLE_MULTIPLE_ISOLATES : MVM mode ?
- * ABB : Audio Building Block Only ?
  * RECORD : Support Recording ?
- * MIDI_CONTROL : Support MIDI controls ?
  */
 
 package com.sun.mmedia;
@@ -49,9 +47,7 @@ import javax.microedition.media.Control;
 import com.sun.mmedia.Configuration;
 import com.sun.mmedia.protocol.BasicDS;
 
-// #ifndef ABB [
 import javax.microedition.media.control.StopTimeControl;
-// #endif ]
 // #ifdef RECORD [
 import com.sun.mmedia.DirectRecord;
 // #endif ]
@@ -65,37 +61,20 @@ public class DirectPlayer extends BasicPlayer implements VideoSource
     , MediaEventConsumer
 // #endif ]
 {
-    // #ifdef ENABLE_DEBUG [
-    protected final static boolean debug = true;
-    // #else ][
-    protected final static boolean debug = false;
-    // #endif ]    
-
     // Temp buffer shared by all of Player from the same isolate
     private static byte[] buffer;    
     
-    // #ifdef MIDI_CONTROL [
-    final static boolean SUPPORT_MIDI_CONTROL = true;
-    final static boolean SUPPORT_PITCH_CONTROL = true;
-    final static boolean SUPPORT_RATE_CONTROL = true;
-    final static boolean SUPPORT_TEMPO_CONTROL = true;
-    // #endif ]
-
     // Package variables
     DirectVolume dVolumeControl;
     DirectMetaData dMetaDataControl;
 
     private long remained;      // remained content length
 
-    // #ifndef ABB [
     private Timer stopTimer;    // To support StopTimeControl
-    // #endif ]
     // #ifdef RECORD [
     private DirectRecord recordControl = null;
     // #endif ]
-    // #ifdef MIDI_CONTROL [
     private DirectMIDIControl midiControl;
-    // #endif ]
     private Control tunerControl;
     private Control rdsControl;
 
@@ -154,12 +133,13 @@ public class DirectPlayer extends BasicPlayer implements VideoSource
     private native boolean nSwitchToForeground(int hNative, int options);
     // Switch to background
     private native boolean nSwitchToBackground(int hNative, int options);
-    // native finalizer 
-// #ifdef ENABLE_CDC [    
+
+    // #ifdef ENABLE_CDC [    
     protected native void finalize();
     // #else ][
     private native void finalize();
-// #endif ]    
+    // #endif ]    
+
     // Ask for PcmAudio support
     private native boolean nPcmAudioPlayback(int hNative);
 
@@ -217,7 +197,6 @@ public class DirectPlayer extends BasicPlayer implements VideoSource
         // Get media tunnerl singleton instance
         mediaTunnel = MediaTunnel.getInstance();
         // #endif ]
-        if (debug) System.out.println("[direct] Create DirectPlayer");
     }
     
     public int getNativeHandle()
@@ -225,7 +204,6 @@ public class DirectPlayer extends BasicPlayer implements VideoSource
         return hNative;
     }
 
-    // #ifndef ABB [
     /**
      * StopTimeControl implementation of DirectPlayer
      *
@@ -250,15 +228,9 @@ public class DirectPlayer extends BasicPlayer implements VideoSource
                     scheduleTime = 1;
                 }
                 stopTimer.schedule(new StopTimeController(), scheduleTime);
-            } else {
-                if (debug) {
-                    Logging.report(Logging.ERROR, LogChannels.LC_MMAPI,
-                        "doSetStopTime error currentTime=" + currentTime + ",time=" + time);
-                }
             }
         }
     }
-    // #endif ]
 
     /**
      * Read header information from media data and determine media Format
@@ -266,9 +238,6 @@ public class DirectPlayer extends BasicPlayer implements VideoSource
      * @exception  MediaException  Description of the Exception
      */
     protected void doRealize() throws MediaException {
-
-        if (debug) 
-            System.out.println("[direct] DirectPlayer.doRealize " + mediaFormat);
 
         // #ifdef ENABLE_MULTIPLE_ISOLATES [
         // Add to media tunnel as event consumer
@@ -293,7 +262,6 @@ public class DirectPlayer extends BasicPlayer implements VideoSource
             videoControl = new DirectVideo( this, nGetWidth( hNative ), 
                                          nGetHeight( hNative ) );
         }
-        
     }
     
     private boolean isRadioPlayer()
@@ -346,7 +314,6 @@ public class DirectPlayer extends BasicPlayer implements VideoSource
      * @exception  MediaException  Description of the Exception
      */
     protected void doPrefetch() throws MediaException {
-        if (debug) System.out.println("[direct] DirectPlayer.doPrefetch for " + hNative + " " + mediaFormat);
 
         prefetchData();
         acquireDevice();
@@ -377,12 +344,7 @@ public class DirectPlayer extends BasicPlayer implements VideoSource
             dVolumeControl.setToPlayerMute();          /* set to this player's mute state */
         }
 
-        // #ifndef ABB [
         if (stopTime != StopTimeControl.RESET) {
-            if (debug) {
-                Logging.report(Logging.INFORMATION, LogChannels.LC_MMAPI, 
-                    "Start stopTimer from start() stopTime=" + stopTime);
-            }
             if (stopTimer != null) {
                 stopTimer.cancel();
             }
@@ -394,7 +356,6 @@ public class DirectPlayer extends BasicPlayer implements VideoSource
             stopTimer = new Timer();
             stopTimer.schedule(new StopTimeController(), scheduleTime );
         }
-        // #endif ]
 
         // #ifdef RECORD [
         if (recordControl != null) {
@@ -402,11 +363,9 @@ public class DirectPlayer extends BasicPlayer implements VideoSource
         }
         // #endif ]
         
-        // #ifdef MIDI_CONTROL [
         if (midiControl != null) {
             midiControl.playerStarted();
         }
-        // #endif ]
         
         if (mediaDownload != null) {
             try {
@@ -418,7 +377,6 @@ public class DirectPlayer extends BasicPlayer implements VideoSource
                 }
             }
         }
-
     }
     
     /**
@@ -430,11 +388,6 @@ public class DirectPlayer extends BasicPlayer implements VideoSource
      */
     protected boolean doStart() {
         boolean ret = false;
-        
-        if (debug) {
-            Logging.report(Logging.INFORMATION, LogChannels.LC_MMAPI,
-                "DirectPlayer.doStart");
-        }
         
         if( null != videoControl )
         {
@@ -476,22 +429,18 @@ public class DirectPlayer extends BasicPlayer implements VideoSource
      * Overrides from BasicPlayer (pre works for stop)
      */
     protected void doPreStop() {
-        // #ifndef ABB [
         if (stopTimer != null) {
             stopTimer.cancel();
             stopTimer = null;
         }
-        // #endif
         // #ifdef RECORD [
         if (recordControl != null) {
             recordControl.playerStopped();
         }
         // #endif ]
-        // #ifdef MIDI_CONTROL [
         if (midiControl != null) {
             midiControl.playerStopped();
         }
-        // #endif ]
     }
     
     /**
@@ -510,11 +459,6 @@ public class DirectPlayer extends BasicPlayer implements VideoSource
         if (false == nPause(hNative)) {
             throw new MediaException("Player cannot be stopped");
         }
-
-        if (debug) {
-            Logging.report(Logging.INFORMATION, LogChannels.LC_MMAPI,
-                "DirectPlayer.doStop");
-        }
     }
 
     private void releaseRadioAccess()
@@ -531,8 +475,6 @@ public class DirectPlayer extends BasicPlayer implements VideoSource
      * the <code>Player</code>.
      */
     protected void doDeallocate() {
-        if (debug) System.out.println("[direct] DirectPlayer.doDeallocate");
-
         // release device
         nReleaseDevice(hNative);
         if (nPcmAudioPlayback(hNative)) {
@@ -553,8 +495,6 @@ public class DirectPlayer extends BasicPlayer implements VideoSource
      * the <code>Player</code>.
      */
     protected void doClose() {
-        if (debug) System.out.println("[direct] DirectPlayer.doClose");
-
         if( null != videoControl )
         {
             videoControl.close();
@@ -572,12 +512,10 @@ public class DirectPlayer extends BasicPlayer implements VideoSource
             recordControl = null;
         }
         // #endif ]
-        // #ifdef MIDI_CONTROL [
         if (midiControl != null) {
             midiControl.playerClosed();
             midiControl = null;
         }
-        // #endif ]
 
         if (dMetaDataControl != null) {
             dMetaDataControl.playerClosed();
@@ -648,9 +586,6 @@ public class DirectPlayer extends BasicPlayer implements VideoSource
      * name.
      */
     protected Control doGetControl(String type) {
-
-        if (debug) System.out.println("[direct] DirectPlayer.doGetControl " + type);
-
         String prefix = "javax.microedition.media.control.";
         String shortType = type;
 
@@ -745,8 +680,6 @@ public class DirectPlayer extends BasicPlayer implements VideoSource
                 return tunerControl;
             }
         }
-
-        if (debug) System.out.println("[direct] DirectPlayer.doGetControl " + type + " return null");
         return null;
     }
 
@@ -921,7 +854,6 @@ public class DirectPlayer extends BasicPlayer implements VideoSource
         sendEvent(PlayerListener.SIZE_CHANGED, videoControl);
     }
     
-    // #ifndef ABB [
     /**
      * Inner class that support StopTimeControl
      */
@@ -965,14 +897,9 @@ public class DirectPlayer extends BasicPlayer implements VideoSource
                 }
             }
 
-            if (debug) {
-                //Logging.report(Logging.INFORMATION, LogChannels.LC_MMAPI,
-                System.out.println("+++ stop by stop time control (STOPPED_AT_TIME) +++");
-            }
             satev();
         }
     }
-    // #endif ]
     
     // #ifdef ENABLE_MULTIPLE_ISOLATES [
 

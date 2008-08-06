@@ -30,6 +30,7 @@ import javax.microedition.media.*;
 import javax.microedition.media.MediaException.*;
 import javax.microedition.media.control.*;
 import javax.microedition.io.*;
+
 // #ifdef USE_FILE_CONNECTION [
 import javax.microedition.io.file.*;
 // #endif ]
@@ -43,12 +44,6 @@ import com.sun.j2me.log.LogChannels;
  * It uses native API layer to support recording
  */
 public final class DirectRecord implements RecordControl, DirectControls {
-    // #ifdef ENABLE_DEBUG [
-    protected final static boolean debug = true;
-    // #else ][
-    protected final static boolean debug = false;
-    // #endif ]    
-
     // KNI native functions
     private native int nSetLocator(int handle, String locator);
     private native int nStart(int handle);
@@ -61,12 +56,12 @@ public final class DirectRecord implements RecordControl, DirectControls {
     private native int nGetRecordedSize(int handle);
     private native int nGetRecordedData(int handle, int offset, int size, byte[] buffer);
     private native String nGetRecordedType(int handle);
-// #ifdef ENABLE_CDC [    
+
+    // #ifdef ENABLE_CDC [    
     protected native void finalize();
     // #else ][
     private native void finalize();
-// #endif ]    
-    ///////////////////////////////////////////////////////////////
+    // #endif ]    
 
     public DirectRecord(DirectPlayer player) {
         this.player = player;
@@ -124,15 +119,16 @@ public final class DirectRecord implements RecordControl, DirectControls {
         if (-1 == ret) {
             throw new MediaException("setRecordLocation: invalid locator " + locator);
         } else if (0 == ret) {
-        // #ifdef USE_FILE_CONNECTION [
+
+            // #ifdef USE_FILE_CONNECTION [
             if (!(locator.startsWith("file:") || locator.startsWith("http:") || locator.startsWith("https:"))) {
                 throw new MediaException("Unsupported protocol");
             }
-        // #else ][
+            // #else ][
             if (!(locator.startsWith("http:") || locator.startsWith("https:"))) {
                 throw new MediaException("Unsupported protocol");
             }
-        // #endif
+            // #endif
         
             if (locator.startsWith("http:")) {
         	    try {
@@ -162,7 +158,7 @@ public final class DirectRecord implements RecordControl, DirectControls {
                     extStream = false;
             }
 
-        // #ifdef USE_FILE_CONNECTION [
+            // #ifdef USE_FILE_CONNECTION [
             if (locator.startsWith("file:")) {
                 String fileName = locator.substring(colonIndex + 1);
     	        if (fileName.length() <= 0) // Note: length can never be less than zero
@@ -186,7 +182,8 @@ public final class DirectRecord implements RecordControl, DirectControls {
         	    stream = fileCon.openOutputStream();
                     extStream = false;
             }
-        // #endif ]
+            // #endif ]
+
             recordingByNative = false;
         } else {
             stream = null;
@@ -205,8 +202,6 @@ public final class DirectRecord implements RecordControl, DirectControls {
 	    }
 
         if (recordRequested == true || player == null) {
-            if (debug)
-                System.out.println("[DirectRecord] recordRequested is already true");
             return;
         }
 
@@ -260,7 +255,6 @@ public final class DirectRecord implements RecordControl, DirectControls {
      */
     public synchronized void commit() throws IOException {
         if (stream == null && locator == null) {
-            if (debug) System.out.println("commit error stream & locator is null");
     	    return;
     	}
 
@@ -273,7 +267,6 @@ public final class DirectRecord implements RecordControl, DirectControls {
 
         if( hasDataToCommit )
         {
-
             if (1 != nCommit(player.hNative)) {
                 cleanUp();
                 throw new IOException("I/O error occurs during commit");
@@ -429,8 +422,6 @@ public final class DirectRecord implements RecordControl, DirectControls {
      * Start recording (from Player object)
      */
     public synchronized void playerStarted() {
-        if (debug) System.out.println("[drecord] playerStarted " + recordRequested + "," + recording);
-
         // Automatically resume recording from Player
         if (suspended) {
             if (1 == nStart(player.hNative)) {
@@ -442,8 +433,6 @@ public final class DirectRecord implements RecordControl, DirectControls {
             
             suspended = false;
             
-            if (debug)
-                System.out.println("[drecord] Recording resumed by player start");
             return;
         }
 
@@ -514,12 +503,14 @@ public final class DirectRecord implements RecordControl, DirectControls {
         } catch(Exception e) {
         }
         // #endif ]
+
         stream = null;
         httpCon = null;
         httpsCon = null;
-    // #ifdef USE_FILE_CONNECTION [    
+
+        // #ifdef USE_FILE_CONNECTION [    
         fileCon = null;
-    // #endif ]
+        // #endif ]
     }
 
     /**
@@ -560,9 +551,10 @@ public final class DirectRecord implements RecordControl, DirectControls {
 
     private boolean hasDataToCommit=false;
 
-// #ifdef USE_FILE_CONNECTION [
+    // #ifdef USE_FILE_CONNECTION [
     private FileConnection fileCon;
-// #endif ]
+    // #endif ]
+
     private HttpConnection httpCon;
     private HttpsConnection httpsCon;
 }

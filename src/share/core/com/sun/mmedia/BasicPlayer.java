@@ -25,14 +25,12 @@ package com.sun.mmedia;
 
 import java.io.*;
 import java.util.Vector;
+import java.util.Enumeration;
 import javax.microedition.media.*;
 import javax.microedition.media.control.*;
-import com.sun.mmedia.control.*;
-import java.util.Enumeration;
-import com.sun.mmedia.protocol.*;
-// #ifndef ABB [
 import javax.microedition.media.protocol.*;
-// #endif ]
+import com.sun.mmedia.control.*;
+import com.sun.mmedia.protocol.*;
 
 /**
  * BasicPlayer provides basic implementation for the Player methods.
@@ -40,18 +38,9 @@ import javax.microedition.media.protocol.*;
  * be overridden by subclasses.
  *
  */
-public abstract class BasicPlayer implements Player
-    // #ifndef ABB [
-    ,TimeBase, StopTimeControl 
-    // #endif ]
-    {
-
-    // #ifdef ENABLE_DEBUG [
-    private final static boolean debug = true;
-    // #else ][
-    private final static boolean debug = false;
-    // #endif ]
-
+public abstract class BasicPlayer
+    implements Player, TimeBase, StopTimeControl
+{
     /** Unknown media format */
     static final String MEDIA_FORMAT_UNKNOWN = "UNKNOWN";
     /** Unsupported media format */
@@ -244,19 +233,15 @@ public abstract class BasicPlayer implements Player
      */
     protected SourceStream stream;
 
-    // #ifndef ABB [
     /**
      * The Player's TimeBase.
      */
     private TimeBase timeBase = this;
-    // #endif ]
 
-    // #ifndef ABB [
     /**
      * For StopTimeControl - initially reset
      */
     protected long stopTime = StopTimeControl.RESET;
-    // #endif ]
 
     /**
      * the default size of the event queue
@@ -542,7 +527,6 @@ public abstract class BasicPlayer implements Player
         // media time before starting.
         updateTimeBase(true);
 
-        // #ifndef ABB [
         // Check for any preset stop time.
         if (stopTime != StopTimeControl.RESET) {
             if (stopTime <= getMediaTime()) {
@@ -551,7 +535,6 @@ public abstract class BasicPlayer implements Player
                 return;
             }
         }
-        // #endif ]
 
         // If it's at the EOM, it will automatically
         // loop back to the beginning.
@@ -700,7 +683,7 @@ public abstract class BasicPlayer implements Player
                 // seek to start position
                 stream.seek(0);
             } catch(IOException e) {
-                if (debug) System.out.println("[direct] doDeallocate seek IOException");
+                // System.out.println("[direct] doDeallocate seek IOException");
             }
         }
 
@@ -967,7 +950,7 @@ public abstract class BasicPlayer implements Player
                 }
                 start();
             } catch (MediaException ex) {
-                if (debug) System.out.println("[basic] doLoop exception " + ex.getMessage());
+                // System.out.println("[basic] doLoop exception " + ex.getMessage());
                 loopCount = 1;
             }
         } else if (loopCountSet > 1) {
@@ -1130,7 +1113,6 @@ public abstract class BasicPlayer implements Player
         return null;
     }
 
-    // #ifndef ABB [
     /**
      * Sets the <code>TimeBase</code> for this <code>Player</code>.
      * <p>
@@ -1171,7 +1153,6 @@ public abstract class BasicPlayer implements Player
         chkClosed(true);
         return timeBase;
     }
-    // #endif ]
 
     /**
      * Get the content type of the media that's
@@ -1194,7 +1175,6 @@ public abstract class BasicPlayer implements Player
         }
     }
 
-    // #ifndef ABB [
     /**
      * StopTimeControl base implementation
      *
@@ -1275,7 +1255,6 @@ public abstract class BasicPlayer implements Player
         stopTime = StopTimeControl.RESET;
         sendEvent(PlayerListener.STOPPED_AT_TIME, new Long(getMediaTime()));
     }
-    // #endif ]
 
     /**
      * TimeBase related functions.
@@ -1329,12 +1308,6 @@ public abstract class BasicPlayer implements Player
             }
         }
     }
-
-    /**
-     * Stream reading support
-     * MMAPI uses DataSource while ABB uses InputStream.
-     */
-
 
     /**
      * The value returned by <code>getSeekType</code> indicating that this

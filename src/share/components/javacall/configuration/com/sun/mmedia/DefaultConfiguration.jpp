@@ -52,30 +52,16 @@ import java.util.Vector;
  */
 public class DefaultConfiguration extends Configuration {
 
-    // #ifdef ENABLE_DEBUG [
-    private boolean debug = true;
-    // #else ][
-    private boolean debug = false;
-    // #endif ]
-
     public final static String maps[][] = {
-// #ifdef ENABLE_INDIRECT_VIDEO [        
         {"GIF", "com.sun.mmedia.GIFPlayer"},
-// #endif ]        
-// #ifdef VIDEO_CAPTURE [
         {BasicPlayer.MEDIA_FORMAT_CAPTURE_VIDEO, "com.sun.mmedia.DirectCamera"},
-// #endif ]
-// #ifdef AUDIO_CAPTURE [
         {AUDIO_CAPTURE_LOCATOR, "com.sun.mmedia.DirectPlayer"},
-// #endif ]
     };
 
-// #ifdef ENABLE_INDIRECT_VIDEO [
     /**
      *  Handle for the Image Access Environment...
      */
     private static ImageAccess imageAccessor;
-// #endif ]
 
     /**
      *Constructor for the DefaultConfiguration object
@@ -86,9 +72,11 @@ public class DefaultConfiguration extends Configuration {
         // Protocol handlers.
         handlers.put("http", "com.sun.mmedia.protocol.CommonDS");
         handlers.put("https", "com.sun.mmedia.protocol.CommonDS");
-    // #ifdef USE_FILE_CONNECTION [
+
+        // #ifdef USE_FILE_CONNECTION [
         handlers.put("file", "com.sun.mmedia.protocol.CommonDS");
-    // #endif
+        // #endif
+
         handlers.put("rtsp", "com.sun.mmedia.protocol.CommonDS");
         handlers.put("rtp", "com.sun.mmedia.protocol.CommonDS");
 
@@ -126,17 +114,7 @@ public class DefaultConfiguration extends Configuration {
         // for converting
         mimeTypes.put("audio/tone", MIME_AUDIO_TONE);
 
-    // #ifdef ENABLE_JSR_234 [
-        // for Image Access we need to init some environment values...
-        //imageAccessor = (ImageAccess)createInstanceOf("com.sun.mmedia.ImageAccess");
         imageAccessor = new MIDPImageAccessor();
-
-        // Media Processors.
-        processors.put(MIME_IMAGE_RAW, "com.sun.amms.imageprocessor.ObjectImageProcessor");
-        processors.put(MIME_IMAGE_JPEG, "com.sun.amms.imageprocessor.StreamImageProcessor");
-        processors.put(MIME_IMAGE_PNG, "com.sun.amms.imageprocessor.StreamImageProcessor"); 
-    // #endif ]
-        
     }
 
     protected native int    nListContentTypesOpen(String protocol);
@@ -154,11 +132,13 @@ public class DefaultConfiguration extends Configuration {
      * @return           The supportedContentTypes value
      */
     public String[] getSupportedContentTypes(String protocol) {
+
         // #ifndef USE_FILE_CONNECTION [
         if (protocol != null && protocol.equals("file")) {
             return new String[0];
         }
         // #endif ]
+
         String arr[] = super.getSupportedContentTypes(protocol);
         Vector v = new Vector(arr.length);
         for (int i=0; i<arr.length; i++) v.addElement(arr[i]);
@@ -206,18 +186,12 @@ public class DefaultConfiguration extends Configuration {
      */
     public static String getContentType(String locator) {
         if (locator != null) {
-            // device://tone
             if (locator.equals(Manager.TONE_DEVICE_LOCATOR)) {
                 return DefaultConfiguration.MIME_AUDIO_TONE;
-// #ifdef MIDI_CONTROL [
-            // device://midi
             } else if (locator.equals(Manager.MIDI_DEVICE_LOCATOR)) {
                 return DefaultConfiguration.MIME_AUDIO_MIDI;
-// #endif ]
-            // capture://audio
             } else if (locator.equals(Configuration.AUDIO_CAPTURE_LOCATOR)) {
                 return DefaultConfiguration.MIME_AUDIO_WAV;
-            // capture://video
             } else if (locator.equals(Configuration.VIDEO_CAPTURE_LOCATOR)) {
                 return DefaultConfiguration.MIME_IMAGE_PNG;
             }
@@ -233,10 +207,6 @@ public class DefaultConfiguration extends Configuration {
      * @return               The supportedProtocols value
      */
     public String[] getSupportedProtocols(String content_type) {
-        if (debug) {
-            Logging.report(Logging.INFORMATION, LogChannels.LC_MMAPI,
-                "getSupportedProtocols : " + content_type);
-        }
 
         String arr[] = super.getSupportedProtocols(content_type);
 
@@ -284,64 +254,20 @@ public class DefaultConfiguration extends Configuration {
     }
 
 
-    // #ifdef ENABLE_INDIRECT_VIDEO [
     public ImageAccess getImageAccessor() {
         return imageAccessor;
     }
-    // #endif ]
 
-// #ifdef ENABLE_JSR_234 [
-    public String[] getSupportedMediaProcessorInputTypes() {
-        return new String[] {MIME_IMAGE_PNG, MIME_IMAGE_JPEG, MIME_IMAGE_RAW};
-    }
-
-    public String[] getSupportedSoundSource3DPlayerTypes() {
-        return new String[] {MIME_AUDIO_WAV};
-    }
-
-    /**
-     * Gets the audio renderer.
-     *
-     * @return The audio renderer
-     */
-    public BasicAudioOut getAudioRenderer() {
-        return (BasicAudioOut)createInstanceOf("com.sun.mmedia.BasicAudioOut");
-    }
-
-    /**
-     * Checks if audio renderer supports StopTimeControl.
-     * This is a temporary function to bypass feature in QSound:
-     * QsoundPCMOut is not able to support StopTimeControl, 
-     * MapPCMOut is able ...
-     *
-     * @return The true if StopTimeCotrol is supported by audio renderer
-     */
-    public boolean isStoppingAudioRenderer() {
-        /*
-         * in AMMS QSound renderer is used with no StopTimeControl support
-         * in pure MMAPI Map renderer is used, it has StopTimeControl support
-         */
-        return !needAMMS;
-    }
-
-// #endif ]    
-
-// #ifndef ABB [ 
     /**
      * Gets the video renderer.
      *
      * @return The video renderer
      */
     public VideoRenderer getVideoRenderer(BasicPlayer player) {
-    // #ifdef ENABLE_INDIRECT_VIDEO [
         // workaround for demo only
         return ModelVideoRenderer.getVideoRenderer(player);
         //return new MIDPVideoRenderer(player);
-    // #else ][
-        return null;
-    // #endif ]
     }
-// #endif ]
 
     /**
      *  Gets the tonePlayer attribute of the DefaultConfiguration object

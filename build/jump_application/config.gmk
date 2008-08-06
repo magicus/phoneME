@@ -22,47 +22,16 @@
 # Clara, CA 95054 or visit www.sun.com if you need additional
 # information or have any questions.
 
-#
-# ABB setting.
-#
-ifeq ($(USE_ABB),true)
-ABB = true
-else
-ABB = false
 
 #
 # If you want to support VideoControl, turn on DIRECT_VIDEO_PLAYER option
 #
 DIRECT_VIDEO_PLAYER = false
-INDIRECT_VIDEO_PLAYER = true
-
-#
-# If you want to support "capture://video, turn on VIDEO_CAPTURE option
-#
-VIDEO_CAPTURE = false
-
-#
-# If you want to support "capture://audio, turn on AUDIO_CAPTURE option
-#
-AUDIO_CAPTURE = true
-
-#
-# if you want to support interactive MIDI or MIDIControl, 
-# turn on DIRECT_MIDI_CONTROL option
-#
-DIRECT_MIDI_CONTROL = true
 
 #
 # If you want to support RecordControl, turn on DIRECT_RECORD option
 #
 DIRECT_RECORD = true
-
-endif
-
-#
-# Always ON
-#
-DIRECT_PLAYER = true
 
 #
 # If you want to support file:// protocol, turn on USE_FILE_CONNECTION option
@@ -70,8 +39,6 @@ DIRECT_PLAYER = true
 ifeq ($(USE_JSR_75),true)
 USE_FILE_CONNECTION = true
 endif
-
-USE_STATIC_LIB = true
 
 ifeq ($(USE_MIDP), true)
 #USE_LCDUI = true

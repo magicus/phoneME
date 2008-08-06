@@ -25,9 +25,7 @@
 
 package javax.microedition.media;
 
-// #ifndef ABB [
 import javax.microedition.media.protocol.DataSource;
-// #endif ]
 import java.io.IOException;
 
 /**
@@ -574,7 +572,6 @@ public interface Player extends Controllable {
      */
     void close();
     
-    // #ifndef ABB [
     /**
      * Sets the <code>TimeBase</code> for this <code>Player</code>.
      * <p>
@@ -593,11 +590,8 @@ public interface Player extends Controllable {
      * <code>Player</code>.
      * @see #getTimeBase
      */
-    void setTimeBase(TimeBase master) 
-	throws MediaException;
-    // #endif ]
+    void setTimeBase(TimeBase master) throws MediaException;
 
-    // #ifndef ABB [
     /**
      * Gets the <code>TimeBase</code> that this <code>Player</code> is using.
      * @return The <code>TimeBase</code> that this <code>Player</code> is using.
@@ -607,7 +601,6 @@ public interface Player extends Controllable {
      * is in the <i>UNREALIZED</i> or <i>CLOSED</i> state.
      */
     TimeBase getTimeBase();
-    // #endif ]
 
     /**
      * Sets the <code>Player</code>'s&nbsp;<i>media time</i>.

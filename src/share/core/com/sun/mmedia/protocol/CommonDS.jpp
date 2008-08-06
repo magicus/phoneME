@@ -28,9 +28,7 @@ import com.sun.mmedia.Configuration;
 import java.io.*;
 import javax.microedition.io.*;
 import javax.microedition.media.*;
-// #ifndef ABB [
 import javax.microedition.media.protocol.*;
-// #endif ]
 // #ifdef USE_FILE_CONNECTION
 import javax.microedition.io.file.*;
 // #endif
@@ -150,22 +148,21 @@ public class CommonDS extends BasicDS implements SourceStream {
                 throw new IOException("file protocol isn't supported");
                 // #endif ]
 		    } else if (locator.startsWith("rtp:")) {
-                if (contentType.equals("unknown")) 
+                if (contentType.equals("unknown")) {
                     contentType = "content.rtp";
+                }
                 inputStream = null;
                 contentLength = -1;
                 goodurl = true;
             } else if (locator.startsWith("rtsp:")) {
-                if (contentType.equals("unknown")) 
+                if (contentType.equals("unknown")) {
                     contentType = "content.rtp";
+                }
                 inputStream = null;
                 contentLength = -1;
                 goodurl = true;
             } else if (locator.equals(Manager.TONE_DEVICE_LOCATOR) 
-                       // #ifndef ABB [
-                       || locator.equals(Manager.MIDI_DEVICE_LOCATOR)
-                       // #endif ]
-                ) {
+                       || locator.equals(Manager.MIDI_DEVICE_LOCATOR)) {
                 inputStream = null;
                 contentLength = -1;
                 goodurl = true;

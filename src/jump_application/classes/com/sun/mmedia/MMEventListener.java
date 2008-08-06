@@ -106,11 +106,9 @@ class MMEventListener implements JUMPMessageHandler {
             case MMNativeEventImpl.EOM_EVENT:
                 p.sendEvent(PlayerListener.END_OF_MEDIA, new Long(nEvent.value));
                 break;
-// #ifndef ABB [
             case MMNativeEventImpl.RSL_EVENT:
                 p.sendEvent(PlayerListener.RECORD_STOPPED, new Long(nEvent.value));
                 break;
-// #endif ]
         }
     }
 
