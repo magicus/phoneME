@@ -167,7 +167,7 @@ javacall_dom_domimplementation_create_document(javacall_handle handle,
  *   it is not significant in the context of this method. 
  * @param version  This is the version number of the feature to test. 
  * @param ret_value Pointer to the object representing 
- *    Returns an object which implements the specialized APIs of 
+ *     an object which implements the specialized APIs of 
  *   the specified feature and version, if any, or <code>NULL</code> if 
  *   there is no object which implements interfaces associated with that 
  *   feature. If the <code>DOMObject</code> returned by this method 
