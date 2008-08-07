@@ -210,7 +210,7 @@ char* javacall_lcd_get_display_name(int hardwareId) {
  * Check if the display device is primary
  * @param hardwareId unique id of hardware screen
  */
-jboolean javacall_lcd_is_display_primary(int hardwareId) {
+javacall_bool javacall_lcd_is_display_primary(int hardwareId) {
     (void)hardwareId;
     return JAVACALL_TRUE;
 }
@@ -219,7 +219,7 @@ jboolean javacall_lcd_is_display_primary(int hardwareId) {
  * Check if the display device is build-in
  * @param hardwareId unique id of hardware screen
  */
-jboolean javacall_lcd_is_display_buildin(int hardwareId) {
+javacall_bool javacall_lcd_is_display_buildin(int hardwareId) {
     (void)hardwareId; 
     return JAVACALL_TRUE;
 }
@@ -228,7 +228,7 @@ jboolean javacall_lcd_is_display_buildin(int hardwareId) {
  * Check if the display device supports pointer events
  * @param hardwareId unique id of hardware screen
  */
-jboolean javacall_lcd_is_display_ptr_supported(int hardwareId) {
+javacall_bool javacall_lcd_is_display_ptr_supported(int hardwareId) {
     (void)hardwareId; 
     return JAVACALL_TRUE;
 }
@@ -237,7 +237,7 @@ jboolean javacall_lcd_is_display_ptr_supported(int hardwareId) {
  * Check if the display device supports pointer motion  events
  * @param hardwareId unique id of hardware screen
  */
-jboolean javacall_lcd_is_display_ptr_motion_supported(int hardwareId){
+javacall_bool javacall_lcd_is_display_ptr_motion_supported(int hardwareId){
     (void)hardwareId; 
     return JAVACALL_TRUE;
 }
@@ -256,7 +256,7 @@ int javacall_lcd_get_display_capabilities(int hardwareId) {
  * @param return number of screens 
  * @return the lit of ids 
  */
-jint* javacall_lcd_get_display_device_ids(jint* n) {
+int* javacall_lcd_get_display_device_ids(int* n) {
     return NULL;
 }
 
