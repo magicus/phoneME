@@ -1099,8 +1099,10 @@ CVMsetPrimitiveField(CVMExecEnv* ee, CVMStackVal32 *arguments,
 		  argType == CVM_T_DOUBLE);
     if (argIs64Bit) {
 	CVMmemCopy64(val64.v, &arguments[2].j.raw);
+        val32.i = 0; /* fix compiler warning */
     } else {
 	val32 = arguments[2].j;
+        val64.l = CVMlongConstZero(); /* fix compiler warning */
     }
     
     toType = CVMcbBasicTypeCode(fieldTypeCb);

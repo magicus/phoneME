@@ -95,7 +95,7 @@ CVMMethodBlock *
 CVMJITgoNative(CVMObject *exceptionObject, CVMExecEnv *ee,
     CVMCompiledFrame *jfp, CVMUint8 *pc)
 {
-    DWORD epc, eaddr;
+    DWORD epc = 0, eaddr = 0;
     __try {
 	return CVMgoNative0(exceptionObject, ee, jfp, pc);
     } __except (check_pc(_exception_info(), _exception_code(), &eaddr, &epc)) {

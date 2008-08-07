@@ -438,7 +438,7 @@ int main(int argc, char* argv[])
         retCode = ansiJavaMain0(argc, parsed_argv, JNI_CreateJavaVMFunc);
 #else
         {
-            DWORD pc, addr;
+            DWORD pc = 0, addr = 0;
             __try {
                 retCode =
                     ansiJavaMain0(argc, parsed_argv, JNI_CreateJavaVMFunc);

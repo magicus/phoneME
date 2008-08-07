@@ -527,12 +527,13 @@ CVMInt32
 CVMioRead(CVMInt32 fd, void *buf, CVMUint32 nBytes)
 {
     DWORD bytes;
-    int b;
+    BOOL b;
     HANDLE h = WIN_GET_HANDLE((HANDLE)fd);
 
 #ifdef WINCE
     if (fd == 0 && h == INVALID_HANDLE_VALUE) { /* stdin, no PocketConsole */ 
-	b = readStandardIO(fd, buf, nBytes);   
+	bytes = readStandardIO(fd, buf, nBytes);
+        b = (bytes != 0);
     } else
 #else
     switch (fd) {
@@ -542,7 +543,7 @@ CVMioRead(CVMInt32 fd, void *buf, CVMUint32 nBytes)
     }
 #endif
     { 
-      b = ReadFile(h, buf, nBytes, &bytes, NULL);
+	b = ReadFile(h, buf, nBytes, &bytes, NULL);
     }
 
     if (b) {
@@ -553,10 +554,11 @@ CVMioRead(CVMInt32 fd, void *buf, CVMUint32 nBytes)
 	 * error streams doesn't encounter an IOException when 
 	 * the child exits. 
 	 */
-      if (GetLastError () == ERROR_BROKEN_PIPE) 
-         return 0;
-      else 
-        return -1;
+	if (GetLastError () == ERROR_BROKEN_PIPE) {
+	    return 0;
+        } else {
+	    return -1;
+	}
     }
 }
 
