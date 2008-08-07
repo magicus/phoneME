@@ -124,11 +124,8 @@ public class InstallerResource {
      * @return specific for each installer installation text
      */
     public static String getString(int typeOfInstall, int key) {
-        String result = new String();
-        
-        result = Resource.getString(installerMessages[key][typeOfInstall]);
-        
-        return result;
+               
+        return Resource.getString(installerMessages[key][typeOfInstall]);
     }
          
     /**

@@ -66,11 +66,11 @@ public class FileUrl {
         if (filenamepath == null) {
             return null;
         } else {
-        char[] fileChars  = new char[filenamepath.length()];
-        StringBuffer buffer = new StringBuffer(filenamepath.length());
-        char temp;
+            char[] fileChars  = new char[filenamepath.length()];
+            StringBuffer buffer = new StringBuffer(filenamepath.length());
+            char temp;
                 
-        filenamepath.getChars(0,filenamepath.length(),fileChars,0);
+            filenamepath.getChars(0,filenamepath.length(),fileChars,0);
         
             for (int i = 0; i < fileChars.length ; i++) {
                 
@@ -88,7 +88,7 @@ public class FileUrl {
                 }
              }
         
-        return buffer.toString();
+             return buffer.toString();
         }
     }
      
@@ -103,11 +103,11 @@ public class FileUrl {
         if (filenamepath == null) {
             return null;
         } else {
-        char[] fileChars = new char[filenamepath.length()];
-        StringBuffer buffer = new StringBuffer(filenamepath.length());
-        String temp;
+            char[] fileChars = new char[filenamepath.length()];
+            StringBuffer buffer = new StringBuffer(filenamepath.length());
+            String temp;
         
-        filenamepath.getChars(0,filenamepath.length(),fileChars,0);
+            filenamepath.getChars(0,filenamepath.length(),fileChars,0);
         
             for (int i = 0; i < fileChars.length; i++)
             {
@@ -118,8 +118,8 @@ public class FileUrl {
               else
                   buffer.append(temp);
             }
-       
-       return buffer.toString();
+            
+            return buffer.toString();
        }
     }
     
