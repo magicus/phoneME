@@ -1402,8 +1402,9 @@ jvmti_StopThread(jvmtiEnv* jvmtienv,
     /* See comment below, until we study this in detail we
      * return JVMTI_ERROR_MUST_POSSESS_CAPABILITY 
      */
+#if 1
     return JVMTI_ERROR_MUST_POSSESS_CAPABILITY;
-
+#else
     CVMextraAssert(CVMD_isgcSafe(ee));
 
     CVMJVMTI_CHECK_PHASE(JVMTI_PHASE_LIVE);
@@ -1420,6 +1421,7 @@ jvmti_StopThread(jvmtiEnv* jvmtienv,
        in some cases.  Need to review the async exception system. */
     CVMsignalError(targetEE, exceptionCb, "");
     return JVMTI_ERROR_NONE;
+#endif
 }
 
 /* mlam :: REVIEW DONE */
@@ -6503,9 +6505,6 @@ CVMBool hasEventCapability(jvmtiEvent eventType,
 	return capabilitiesPtr->can_generate_garbage_collection_events != 0;
     case JVMTI_EVENT_GARBAGE_COLLECTION_FINISH:
 	return capabilitiesPtr->can_generate_garbage_collection_events != 0;
-
-    default:
-	return JNI_TRUE;
     }
     /* if it does not have a capability it is required */
     return JNI_TRUE;

@@ -927,6 +927,7 @@ jvmtiDumpInstanceFields(CVMObject *obj, const CVMClassBlock *cb,
 	    case CVM_TYPEID_CHAR:    DUMP_VALUE(Int,    v.c); break;
 	    case CVM_TYPEID_BYTE:    DUMP_VALUE(Int,    v.b); break;
 	    case CVM_TYPEID_BOOLEAN: DUMP_VALUE(Int, v.z); break;
+	    default : DUMP_VALUE(Int, v.i); break; /* fix compiler warning */
 	    }
 #undef DUMP_VALUE
 	    if (jvmtiPrimitiveRefCallback(JVMTI_HEAP_REFERENCE_FIELD,
@@ -1044,6 +1045,7 @@ jvmtiDumpStaticFields(CVMObject *clazz, const CVMClassBlock *cb,
 		case CVM_TYPEID_CHAR:    DUMP_VALUE(jchar,    v.c); break;
 		case CVM_TYPEID_BYTE:    DUMP_VALUE(jbyte,    v.b); break;
 		case CVM_TYPEID_BOOLEAN: DUMP_VALUE(jboolean, v.z); break;
+                default: DUMP_VALUE(jboolean, v.i); break;
                 }
 #undef DUMP_VALUE
 #undef DUMP_VALUE2
@@ -1236,6 +1238,8 @@ jvmtiDumpArrayPrimitives(CVMObject *arrObj, CVMClassBlock *cb, jint size,
     case CVM_T_CLASS:
     case CVM_T_VOID:
     case CVM_T_ERR:
+    default:
+        elements = NULL; /* avoid compiler warning */
 	CVMassert(CVM_FALSE);
 	break;
     }

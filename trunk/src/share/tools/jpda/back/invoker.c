@@ -674,7 +674,7 @@ invoker_completeInvokeRequest(jthread thread)
     PacketOutputStream out;
     jbyte tag;
     jobject exc;
-    jvalue returnValue;
+    jvalue returnValue = {0};
     jint id;
     InvokeRequest *request;
     jboolean detached;

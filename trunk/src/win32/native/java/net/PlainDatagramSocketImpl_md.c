@@ -618,6 +618,7 @@ Java_java_net_PlainDatagramSocketImpl_send(JNIEnv *env, jobject this,
     packetBufferLen = (*env)->GetIntField(env, packet, dp_lengthID);
 
     if (connected) {
+        address = 0; /* get rid of compiler warning */
 	addrp = 0; /* arg to JVM_Sendto () null in this case */
 	addrlen = 0;
     } else {
@@ -1507,7 +1508,7 @@ Java_java_net_PlainDatagramSocketImpl_socketSetOption(JNIEnv *env,jobject this,
 	default :
 	    JNU_ThrowByName(env, JNU_JAVANETPKG "SocketException", 
 		"Socket option not supported by PlainDatagramSocketImp");
-	    break;
+	    return;
 
     }
 

@@ -58,22 +58,24 @@ getpc(struct _EXCEPTION_POINTERS *ep, DWORD *addr)
 DWORD WINAPI
 start_func( void *a)
 {
-DWORD code, pc, addr;
-__try {
-    void **arglist = (void **)a;
-    void (*func)(void *)= (void *)arglist[0];
-    void *arg = arglist[1];
+    DWORD code = 0, pc = 0, addr = 0;
+    __try {
+        void **arglist = (void **)a;
+        void (*func)(void *)= (void *)arglist[0];
+        void *arg = arglist[1];
 
-    free(arglist);
-    (*func)(arg);
-    return 0;
-} __except ((code = _exception_code()), (pc = getpc(_exception_info(), &addr)), EXCEPTION_EXECUTE_HANDLER) {
-    CVMconsolePrintf("Thread died with exception %x at pc %x addr %x\n",
-	code, pc, addr);
-    CVMabort();
-    DebugBreak();
-    return _exception_code();
-}
+        free(arglist);
+        (*func)(arg);
+        return 0;
+    } __except ((code = _exception_code()),
+                (pc = getpc(_exception_info(), &addr)),
+                EXCEPTION_EXECUTE_HANDLER) {
+        CVMconsolePrintf("Thread died with exception %x at pc %x addr %x\n",
+                         code, pc, addr);
+        CVMabort();
+        DebugBreak();
+        return _exception_code();
+    }
 }
 
 /*

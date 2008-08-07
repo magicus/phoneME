@@ -106,7 +106,7 @@ Java_java_io_Win32FileSystem_getBooleanAttributes(JNIEnv *env, jobject this,
 
   jint rv = 0;
   DWORD a;
-  jint pathlen;
+  jint pathlen = 0;
   WCHAR *pathbuf = NULL;
   jstring file_path = NULL;
 #define PAGEFILE_NAMELEN 12 
@@ -241,7 +241,7 @@ Java_java_io_Win32FileSystem_createFileExclusively(JNIEnv *env, jclass cls,
                                                    jstring path)
 {
     HANDLE h = NULL;
-    WCHAR *pathbuf;
+    WCHAR *pathbuf = NULL;
     // pathToNTPath(env, path, JNI_FALSE);
     WITH_UNICODE_STRING(env, path, ps) {
       int pathlen = wcslen(ps);
@@ -400,7 +400,7 @@ Java_java_io_Win32FileSystem_deleteOnExit(JNIEnv *env, jobject this,
 JNIEXPORT jobjectArray JNICALL 
 Java_java_io_Win32FileSystem_list(JNIEnv *env, jobject this, jobject file)
 {
-    WCHAR *search_path;
+    WCHAR *search_path = NULL;
     HANDLE handle;
     WIN32_FIND_DATAW find_data;
     int len, maxlen;

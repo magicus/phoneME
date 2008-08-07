@@ -1942,7 +1942,7 @@ pop_stack(context_type *context, int inumber, stack_info_type *new_stack_info)
     char *buffer = context->stack_operand_buffer;/* for holding manufactured argument lists */
     fullinfo_type *stack_extra_info_buffer = context->stack_info_buffer; /* save info popped off stack */
     fullinfo_type *stack_extra_info = stack_extra_info_buffer + CVM_VERIFY_TYPE_BUF_SIZE; 
-    fullinfo_type full_info, put_full_info;
+    fullinfo_type full_info, put_full_info = 0;
 
     switch(opcode) {
         default:

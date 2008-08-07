@@ -160,23 +160,19 @@ writeStandardIO(CVMInt32 fd, const void *buf, CVMUint32 nBytes) {
 
 int 
 readStandardIO(CVMInt32 fd, void *buf, CVMUint32 nBytes) {
+    DWORD bytes;
 
-   DWORD bytes;
-   int b = 0;
-
-   if (!initialized) {
+    if (!initialized) {
         initialized = initializeFileHandlers();
-   }
+    }
 
-   if (standardin != INVALID_HANDLE_VALUE) { 
-      b = ReadFile(standardin, buf, nBytes, &bytes, NULL);
-   }
-
-  if (b) {
-     return bytes;
-   } else {
-     return 0;
-   }
+    if (standardin != INVALID_HANDLE_VALUE) { 
+        BOOL b = ReadFile(standardin, buf, nBytes, &bytes, NULL);
+        if (b) {
+            return bytes;
+        }
+    }
+    return 0;
 }
 
 void
