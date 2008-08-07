@@ -287,9 +287,26 @@ public class AmsUtil {
                     limit = limit * 1024;
                 }
 
+                /*
+                 * Check whether MIDlet-Heap-Size attribute is defined for the
+                 * MIDlet.
+                 *
+                 * It specifies maximum heap memory available for the MIDlet.
+                 *
+                 * The value is in bytes and must be a positive integer. The
+                 * only abbreviation in the value definition supported is K that
+                 * stands for kilobytes.
+                 *
+                 * If the amount declared exceeds the maximum heap limit allowed
+                 * for a single MIDlet, the attribute is ignored and the default
+                 * heap limit is used.
+                 *
+                 * Heap size is a total heap memory available for the isolate
+                 * where the MIDlet is launched. The size includes memory
+                 * occupied by the implementation for internal system purposes.
+                 * Thus the real heap size available for the MIDlet may be less.
+                 */
                 if (Constants.EXTENDED_MIDLET_ATTRIBUTES_ENABLED) {
-                    System.out.println("EXTENDED_MIDLET_ATTRIBUTES_ENABLED is true");
-
                     String heapSizeProp = MIDletSuiteUtils.getSuiteProperty(
                         id, midlet, MIDletSuite.HEAP_SIZE_PROP);
 
@@ -298,7 +315,7 @@ public class AmsUtil {
                         try {
                             boolean sizeInKilos = false;
                             char lastChar = heapSizeProp.charAt(propLen - 1);
-                            if ((lastChar == 'K') || (lastChar == 'k') ) {
+                            if ((lastChar == 'K') || (lastChar == 'k')) {
                                 heapSizeProp =
                                     heapSizeProp.substring(0, propLen - 1);
                                 sizeInKilos = true;
@@ -306,15 +323,14 @@ public class AmsUtil {
 
                             int heapSize = Integer.parseInt(heapSizeProp);
                             heapSize = sizeInKilos ? heapSize * 1024 : heapSize; 
-                            System.out.println("EXTENDED_MIDLET_ATTRIBUTES_ENABLED prop=" + heapSize + ", limit=" + limit);
 
                             if ((heapSize > 0) && (heapSize < limit)) {
                                 limit = heapSize;
                             }
                         } catch (NumberFormatException e) {
+                            // ignore the attribute since the value is not valid
                         }
                     }
-                    System.out.println("EXTENDED_MIDLET_ATTRIBUTES_ENABLED result quota=" + limit);
                 }
             }
 

@@ -82,7 +82,7 @@ public interface MIDletSuite {
     /** MIDlet property for the optional permissions. */
     public static final String PERMISSIONS_OPT_PROP = "MIDlet-Permissions-Opt";
  
-    /** MIDlet property for the maximum heap size allowed for MIDlet. */
+    /** MIDlet property for the maximum heap size allowed for the MIDlet. */
     public static final String HEAP_SIZE_PROP = "MIDlet-Heap-Size";
 
     /**

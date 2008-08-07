@@ -106,8 +106,15 @@ public class MIDletProxyUtils {
         }
     }
 
+    /**
+     * Loads extended MIDlet attributes accessed during MIDlet execution
+     * (not the ones that used during MIDlet's start up only) then saves
+     * them to MIDletProxy instance to rich better performance.
+     *
+     * @param mp MIDletProxy for running MIDlet to load and cache
+     *           extended attributes for
+     */
     public static void setupExtendedAttributes(MIDletProxy mp) {
-        // Load attributes only if extended attributes support is enabled.
         if (Constants.EXTENDED_MIDLET_ATTRIBUTES_ENABLED) {
             String prop;
             prop = MIDletSuiteUtils.getSuiteProperty(

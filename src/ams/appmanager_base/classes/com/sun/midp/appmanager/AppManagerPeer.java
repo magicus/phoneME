@@ -610,9 +610,9 @@ class AppManagerPeer implements CommandListener {
                 if (newlyAdded) {
                     /*
                      * If extended MIDlet attributes support enabled,
-                     * launch a MIDlet if it has MIDlet-Launch-Power-On
+                     * launch all MIDLets that have MIDlet-Launch-Power-On
                      * attribute set to true. In run time, newly installed
-                     * MIDLets with the atrribute are also launched right after
+                     * MIDlets with the attribute are also launched right after
                      * installation process is completed.
                      */
                     if (Constants.EXTENDED_MIDLET_ATTRIBUTES_ENABLED) {
@@ -620,27 +620,49 @@ class AppManagerPeer implements CommandListener {
                             suiteIds[lowest]);
 
                         if (suite != null) {
-                            for (int m = 1; m <= suiteInfo.numberOfMidlets; m++)
-                            {
-                                String launchProp =
-                                    MIDletSuiteUtils.getSuiteProperty(suite, m,
-                                        MIDletSuite.LAUNCH_POWER_ON_PROP);
+                            /**
+                             * Calling to MIDletSuiteUtils.getSuite locks the
+                             * suite this makes impossible to lunch a MIDlet
+                             * from it. So we have to iterrate over all MIDLets
+                             * in the suite and remeber which of them must be
+                             * started upon JVM start-up.
+                             */
+                            Vector midletsToStart = new Vector(1);
+                            try {
+                                for (int m = 1; m <= suiteInfo.numberOfMidlets;
+                                        m++) {
+                                    String prop =
+                                        MIDletSuiteUtils.getSuiteProperty(
+                                            suite,
+                                            m,
+                                            MIDletSuite.LAUNCH_POWER_ON_PROP);
 
-                                if ("yes".equalsIgnoreCase(launchProp)) {
-                                    String className =
-                                        MIDletSuiteUtils.getMIDletClassName(
-                                            suite, m);
-                                    manager.launchSuite(suiteInfo, className);
-
-                                    /*
-                                     * TODO: remove this break after multiple
-                                     * running MIDlets from a single suite are
-                                     * supported.
-                                     */
-                                    break; // run only one MIDLet from the suite
+                                    if ("yes".equalsIgnoreCase(prop)) {
+                                        String className =
+                                            MIDletSuiteUtils.getMIDletClassName(
+                                                suite, m);
+                                        midletsToStart.add(className);
+                                    }
                                 }
+                            } finally {
+                                suite.close();
                             }
-                            suite.close();
+
+                            for (Enumeration e = midletsToStart.elements();
+                                    e.hasMoreElements() ;) {
+                                manager.launchSuite(suiteInfo,
+                                    (String)e.nextElement());
+                                /*
+                                 * IMPL_NOTE: current implementation's
+                                 * limitation is it allows to run only one
+                                 * MIDlet from a suite.
+                                 *
+                                 * IMPL_NOTE: remove this break after
+                                 * multiple running MIDlets from a single
+                                 * suite is supported.
+                                 */
+                                break; // run only one MIDLet from the suite
+                            }
                         }
                     }
 

@@ -755,11 +755,26 @@ class AppManagerUIImpl extends Form
                 }
 
                 if (Constants.EXTENDED_MIDLET_ATTRIBUTES_ENABLED) {
+                    /*
+                     * Add "Bring to foreground" command only if the MIDLet has
+                     * no MIDlet-Launch-Background attribute.
+                     */
                     if (!si.proxy.getExtendedAttribute(
                             MIDletProxy.MIDLET_LAUNCH_BG)) {
                         ci.setDefaultCommand(fgCmd);
                     }
 
+                    /*
+                     * Check whether MIDlet-No-Exit attribute is defined for the
+                     * MIDlet.
+                     *
+                     * If definded and the value is "yes" then the application
+                     * is not allowed to be exited other than calling
+                     * destroyApp().
+                     *
+                     * Add "End" command only if an user may termniate the
+                     * MIDlet.
+                     */
                     if (!si.proxy.getExtendedAttribute(
                             MIDletProxy.MIDLET_NO_EXIT)) {
                         ci.addCommand(endCmd);

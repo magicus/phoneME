@@ -111,12 +111,6 @@ public class MIDletProxy implements SuspendDependency {
     /** Parent list. */
     private MIDletProxyList parent;
 
-    /**
-     * True if the MIDlet was put in paused state while was being moved to
-     * background.
-     */
-    private boolean wasPausedUponBackground;
-
 
     /** Constant for pausing the MIDlet when it's in the background. */
     public static final byte MIDLET_BACKGROUND_PAUSE = 1;
@@ -387,22 +381,6 @@ public class MIDletProxy implements SuspendDependency {
     }
 
     /**
-     * Asynchronously change the MIDlet's state to active if the MIDlet was
-     * paused upon putting in the background.
-     *
-     * @see #activateMidlet
-     */
-    public void activateMidletUponForeground() {
-        if (midletState != MIDLET_DESTROYED && midletState != MIDLET_ACTIVE) {
-            if (wasPausedUponBackground) {
-                activateMidlet();
-                System.out.println("EXTENDED_MIDLET_ATTRIBUTES_ENABLED: midlet is actived upon moving to the foreground");
-            }
-        }
-        wasPausedUponBackground = false;
-    }
-
-    /**
      * Asynchronously change the MIDlet's state to paused.
      *
      * This method does NOT change the state in the proxy, but
@@ -413,20 +391,6 @@ public class MIDletProxy implements SuspendDependency {
     public void pauseMidlet() {
         if (midletState != MIDLET_DESTROYED) {
             midletEventProducer.sendMIDletPauseEvent(isolateId, className);
-        }
-    }
-
-    /**
-     * Asynchronously change the MIDlet's state to paused upon putting in the
-     * background.
-     *
-     * @see #pauseMidlet
-     */
-    public void pauseMidletUponBackrgound() {
-        if (midletState != MIDLET_DESTROYED && midletState != MIDLET_PAUSED) {
-            wasPausedUponBackground = true;
-            pauseMidlet();
-            System.out.println("EXTENDED_MIDLET_ATTRIBUTES_ENABLED: midlet is paused upon moving to the background");
         }
     }
 
@@ -502,10 +466,34 @@ public class MIDletProxy implements SuspendDependency {
         return proxyTimer;
     }
 
+    /**
+     * Set the specifed attribute in the attributes' cache to true.
+     *
+     * The method is used to cache run time extended MIDlet attribute for better
+     * performance. Default value for an atrribute is false.
+     *
+     * @param attribute extended MIDlet attribute, the valid values are:
+     *                  MIDLET_BACKGROUND_PAUSE, MIDLET_NO_EXIT and
+     *                  MIDLET_LAUNCH_BG
+     * 
+     * @see #getExtendedAttribute
+     */
     void setExtendedAttribute(byte attribute) {
         extendedAttributes |= attribute;
     }
 
+    /**
+     * Retrives the specifed attribute's value from the attributes' cache.
+     *
+     * @param attribute extended MIDlet attribute, the valid values are:
+     *                  MIDLET_BACKGROUND_PAUSE, MIDLET_NO_EXIT and
+     *                  MIDLET_LAUNCH_BG
+     *
+     * @return If setExtendedAttribute was called for the attribute return true,
+     *         false otherwise.
+     *
+     * @see #setExtendedAttribute
+     */
     public boolean getExtendedAttribute(byte attribute) {
         return (extendedAttributes & attribute) != 0;
     }
