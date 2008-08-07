@@ -315,7 +315,7 @@ initSockFnTable() {
     sysAssert(sockfnptrs[FN_SETSOCKETOPTION] != NULL);
 #ifdef WINCE
     if (sockfnptrs[FN_GETPROTOBYNAME] == NULL) {
-	sockfnptrs[FN_GETPROTOBYNAME] = getprotobyname;
+	sockfnptrs[FN_GETPROTOBYNAME] = (int (PASCAL FAR *)())getprotobyname;
     }
 #else
     sysAssert(sockfnptrs[FN_GETPROTOBYNAME] != NULL);
