@@ -337,8 +337,8 @@ class Value : public StackObj {
   void set_vfp_double_register(Assembler::Register reg);
 #endif
 
-  void assign_register();
-  void materialize();
+  void assign_register( void );
+  void materialize( void );
 
   void copy(Value& result);
   void writable_copy(Value& result);
@@ -348,22 +348,22 @@ class Value : public StackObj {
 #endif
 
   // get registers
-  Assembler::Register lo_register() const {
+  Assembler::Register lo_register( void ) const {
     GUARANTEE(in_register(), "value must be in a register");
     return (Assembler::Register)_low;
   }
 
-  Assembler::Register hi_register() const {
+  Assembler::Register hi_register( void ) const {
     GUARANTEE(use_two_registers(), "must be a two-register value");
     return (Assembler::Register)_high;
   }
 
-  Assembler::Register lsw_register() const {
+  Assembler::Register lsw_register( void ) const {
     GUARANTEE(in_register() && type() == T_LONG,   "check");
     return (Assembler::Register)(TARGET_MSW_FIRST_FOR_LONG ? _high : _low);
   }
 
-  Assembler::Register msw_register() const {
+  Assembler::Register msw_register( void ) const {
     GUARANTEE(in_register() && type() == T_LONG,   "check");
     return (Assembler::Register)(TARGET_MSW_FIRST_FOR_LONG ? _low : _high);
   }

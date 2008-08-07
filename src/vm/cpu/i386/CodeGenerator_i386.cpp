@@ -1,24 +1,24 @@
 /*
- *   
+ *
  *
  * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
- * 
+ *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
  * 2 only, as published by the Free Software Foundation.
- * 
+ *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
  * included at /legal/license.txt).
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA
- * 
+ *
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
  * information or have any questions.
@@ -47,7 +47,7 @@ void CodeGenerator::load_task_mirror(Oop*klass, Value& statics_holder,
     JavaClass::Raw jc = klass;
     statics_holder.assign_register();
     movl(statics_holder.lo_register(), Address((int)&_mirror_list_base));
-    movl(statics_holder.lo_register(), 
+    movl(statics_holder.lo_register(),
          Address(statics_holder.lo_register(),
                  (int)jc().class_id() * sizeof(OopDesc *)));
   }
@@ -90,14 +90,14 @@ void CodeGenerator::check_cib(Oop* klass JVM_TRAPS){
   // IMPL_NOTE: Cannot make the flush conditionally.
   //  see how this can be made conditional!
   frame()->flush(JVM_SINGLE_ARG_CHECK);
-  
+
   { // Scope for task_mirror_value. Use destroy explicitly if you remove this.
     Value task_mirror_value(T_OBJECT);
   {
     JavaClass::Raw jc = klass;
     task_mirror_value.assign_register();
     movl(task_mirror_value.lo_register(), Address((int)&_mirror_list_base));
-    movl(task_mirror_value.lo_register(), 
+    movl(task_mirror_value.lo_register(),
          Address(task_mirror_value.lo_register(),
                  (int)jc().class_id() * sizeof(OopDesc*)));
   }
@@ -124,7 +124,7 @@ bind(need_init);
 #endif //ENABLE_ISOLATES
 
 #if ENABLE_INLINED_ARRAYCOPY
-bool CodeGenerator::arraycopy(JVM_SINGLE_ARG_TRAPS) { 
+bool CodeGenerator::arraycopy(JVM_SINGLE_ARG_TRAPS) {
   return false;
 }
 
@@ -360,7 +360,7 @@ void CodeGenerator::method_entry(Method* method JVM_TRAPS) {
 
 #if NOT_CURRENTLY_USED
   // Consider whether it's really needed.
-  // IMPL_NOTE: Profiler can't work well with this line. 
+  // IMPL_NOTE: Profiler can't work well with this line.
   if (UseProfiler) {
     comment("Store compiled method pointer in new frame");
     // ...and do this before ebp is updated so the profiler won't get confused.
@@ -499,7 +499,7 @@ void CodeGenerator::write_call_info(int parameters_size JVM_TRAPS) {
   // encodes "testl eax, ..."
   const jint code_offset = code_size();
 #if ENABLE_EMBEDDED_CALLINFO
-  GUARANTEE(!Compiler::is_inlining(), 
+  GUARANTEE(!Compiler::is_inlining(),
             "Not tested: need to write root bci in the callinfo");
   const jint callinfo_start = code_offset + 1;
   comment("Embedded call information");
@@ -667,7 +667,7 @@ void CodeGenerator::array_check(Value& array, Value& index JVM_TRAPS) {
 
 void CodeGenerator::null_check( const Value& object JVM_TRAPS) {
   testl( object.lo_register(), object.lo_register() );
-  NullCheckStub* check_stub = 
+  NullCheckStub* check_stub =
     NullCheckStub::allocate_or_share(JVM_SINGLE_ARG_ZCHECK(check_stub));
   jcc(zero, check_stub);
 }
@@ -833,7 +833,7 @@ void CodeGenerator::check_monitors(JVM_SINGLE_ARG_TRAPS) {
   movl(last_stack_lock, Address(ebp, JavaFrame::stack_bottom_pointer_offset()));
 
   NearLabel loop, entry;
-  UnlockExceptionStub* unlock_exception_stub = 
+  UnlockExceptionStub* unlock_exception_stub =
     UnlockExceptionStub::allocate_or_share(JVM_SINGLE_ARG_ZCHECK(unlock_exception_stub));
 
   Label unlock_exception_done;
@@ -872,13 +872,13 @@ void CodeGenerator::cmp_values(Value& op1, Value& op2) {
 }
 
 void CodeGenerator::if_then_else(Value& result,
-                                 BytecodeClosure::cond_op condition, 
-                                 Value& op1, Value& op2, 
-                                 ExtendedValue& result_true, 
+                                 BytecodeClosure::cond_op condition,
+                                 Value& op1, Value& op2,
+                                 ExtendedValue& result_true,
                                  ExtendedValue& result_false JVM_TRAPS) {
   NearLabel false_label, join_label;
 
-  if (result_true.is_value() && result_true.value().is_immediate()) {
+  if (result_true.is_value()) {
     // This can modify the condition codes
     result_true.value().materialize();
   }
@@ -906,11 +906,9 @@ void CodeGenerator::if_then_else(Value& result,
 
 void CodeGenerator::if_iinc(Value& result, BytecodeClosure::cond_op condition,
                             Value& op1, Value& op2,
-                            Value& arg, int increment JVM_TRAPS){ 
-  if (arg.is_immediate()) {
-    // should happen before cmp_values, because it can affect CPU flags
-    arg.materialize();
-  }
+                            Value& arg, int increment JVM_TRAPS){
+  // should happen before cmp_values, because it can affect CPU flags
+  arg.materialize();
 
   cmp_values(op1, op2);
   op1.destroy(); op2.destroy();
@@ -1451,8 +1449,8 @@ void CodeGenerator::d2f(Value& result, Value& value JVM_TRAPS) {
 void CodeGenerator::long_cmp(Value& result, Value& op1, Value& op2 JVM_TRAPS) {
   GUARANTEE(!op1.is_immediate() || !op2.is_immediate(),
             "Immediate case handled by generic code");
-  if (op1.is_immediate()) op1.materialize();
-  if (op2.is_immediate()) op2.materialize();
+  op1.materialize();
+  op2.materialize();
 
   // Long compare for Java (semantics as described in JVM spec.)
   NearLabel L1, L2;
@@ -1487,8 +1485,8 @@ void CodeGenerator::fpu_cmp_helper(Value& result, Value& op1, Value& op2, bool c
     Value b(op2.type());
 
     // Make sure the operands are in a register...
-    if (op1.is_immediate()) op1.materialize();
-    if (op2.is_immediate()) op2.materialize();
+    op1.materialize();
+    op2.materialize();
 
     // ...and that op2 is writable, as we'll destroy it.
     op2.writable_copy(b);
@@ -1600,8 +1598,8 @@ void CodeGenerator::fpu_prepare_binary_arithmetic(Value& op1, Value& op2, bool& 
   Value b(op2.type());
 
   // Make sure the operands are in a register...
-  if (op1.is_immediate()) op1.materialize();
-  if (op2.is_immediate()) op2.materialize();
+  op1.materialize();
+  op2.materialize();
 
   // ...and are writable, as we'll be destroying both.
   op1.writable_copy(a);
@@ -1632,8 +1630,8 @@ void CodeGenerator::fpu_prepare_binary_fprem(Value& op1, Value& op2) {
   const FPURegisterMap& fpu_map = frame()->fpu_register_map();
 
   // Make sure the operands are in a register...
-  if (op2.is_immediate()) op2.materialize();
-  if (op1.is_immediate()) op1.materialize();
+  op2.materialize();
+  op1.materialize();
 
   // ...and are writable as we'll be destroying both.
   { Value a(op1.type());
@@ -1884,7 +1882,7 @@ void CodeGenerator::int_binary_do(Value& result, Value& op1, Value& op2, Bytecod
       {
         NearLabel done;
         op1.writable_copy(result);
-        if (op2.is_immediate()) { op2.materialize(); }
+        op2.materialize();
         cmpl(result.lo_register(), op2.lo_register());
         jcc((op == BytecodeClosure::bin_max ? greater_equal : less_equal),
       done);
@@ -2076,7 +2074,7 @@ void CodeGenerator::long_binary_do(Value& result, Value& op1, Value& op2, Byteco
       {
         NearLabel bigger, smaller;
         op1.writable_copy(result);
-        if (op2.is_immediate()) { op2.materialize(); }
+        op2.materialize();
         cmpl(op1.hi_register(), op2.hi_register());
         jcc(greater, bigger);
         jcc(less,    smaller);
@@ -2287,8 +2285,8 @@ void CodeGenerator::table_switch(Value& index, jint table_index,
 
 void CodeGenerator::lookup_switch(Value& index, jint table_index,
                                   jint default_dest,
-                                  jint num_of_pairs JVM_TRAPS) { 
-  for (int i = 0; i < num_of_pairs; i++) { 
+                                  jint num_of_pairs JVM_TRAPS) {
+  for (int i = 0; i < num_of_pairs; i++) {
     int key = method()->get_java_switch_int(8 * i + table_index + 8);
     int jump_offset = method()->get_java_switch_int(8 * i + table_index + 12);
     if (jump_offset <= 0) {
@@ -2302,7 +2300,7 @@ void CodeGenerator::lookup_switch(Value& index, jint table_index,
 }
 
 
-void CodeGenerator::invoke(const Method* method, 
+void CodeGenerator::invoke(const Method* method,
                            bool must_do_null_check JVM_TRAPS) {
   // If the method we are calling is a vanilla constructor we don't have to
   // do anything.
@@ -2529,7 +2527,7 @@ void CodeGenerator::invoke_native(BasicType return_kind, address entry JVM_TRAPS
 }
 
 bool CodeGenerator::quick_catch_exception(const Value &exception_obj,
-                                          JavaClass* catch_type, 
+                                          JavaClass* catch_type,
                                           int handler_bci JVM_TRAPS) {
   // Fast exception catching not implemented on x86.
   return false;
@@ -2614,7 +2612,7 @@ void CodeGenerator::check_timer_tick(JVM_SINGLE_ARG_TRAPS) {
   jcc(not_equal, timer_tick);
 #endif
   bind(done);
-  
+
   TimerTickStub* stub =
     TimerTickStub::allocate(Compiler::current()->bci(),
       timer_tick, done JVM_ZCHECK(stub));
@@ -2651,7 +2649,7 @@ void CodeGenerator::verify_fpu() {
 }
 
 void CodeGenerator::verify_location_is_constant(jint index,
-                                                const Value& constant) { 
+                                                const Value& constant) {
   LocationAddress address(index, constant.type());
   Label ok1, ok2;
   cmpl(address.lo_address(), constant.lo_bits());
@@ -2668,7 +2666,7 @@ bind(ok2);
 
 #endif
 
-void CodeGenerator::init_static_array(Value& array JVM_TRAPS) {  
+void CodeGenerator::init_static_array(Value& array JVM_TRAPS) {
   // Flush the virtual stack frame.
   frame()->flush(JVM_SINGLE_ARG_CHECK);
 
@@ -2678,8 +2676,8 @@ void CodeGenerator::init_static_array(Value& array JVM_TRAPS) {
   Method::Raw cur_method = compiled_method()->method();
   movl(esi, &cur_method);
   addl(esi, Method::base_offset() + bci());
-  
-  // Type Size Factor @ bci + 1.  
+
+  // Type Size Factor @ bci + 1.
   // Elements count   @ bci + 2.
   addl(esi, 2);
   // Loading elements count.
@@ -2689,8 +2687,8 @@ void CodeGenerator::init_static_array(Value& array JVM_TRAPS) {
   movzxb(ecx, Address(esi, -1));
   // size in bytes = count * element_size = count * (1 << size factor).
   // ebx = ebx * (1 << ecx).
-  shll(ebx, ecx); 
-  
+  shll(ebx, ecx);
+
   // Initialize the counter.
   movl(ecx, 0);
 

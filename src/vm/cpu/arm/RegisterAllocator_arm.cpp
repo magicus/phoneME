@@ -1,24 +1,24 @@
 /*
- *   
+ *
  *
  * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
- * 
+ *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
  * 2 only, as published by the Free Software Foundation.
- * 
+ *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
  * included at /legal/license.txt).
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA
- * 
+ *
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
  * information or have any questions.
@@ -139,21 +139,17 @@ next_register_table_noframe[Assembler::number_of_registers] = {
     /* s27 -> s28   */  Assembler::s28,
     /* s28 -> s29   */  Assembler::s29,
     /* s29 -> s30   */  Assembler::s30,
-    /* s30 -> s31   */  Assembler::s31,    
+    /* s30 -> s31   */  Assembler::s31,
     /* s15 -> s0    */  Assembler::s0,
 #endif
 };
 
 void RegisterAllocator::initialize() {
-  Assembler::Register next;
+  _next_register_table = code_generator()->omit_stack_frame()
+                         ? (Assembler::Register*)next_register_table_noframe
+                         : (Assembler::Register*)next_register_table_frame;
 
-  if (code_generator()->omit_stack_frame()) {
-    _next_register_table = (Assembler::Register*)next_register_table_noframe;
-  } else {
-    _next_register_table = (Assembler::Register*)next_register_table_frame;
-  }
-  next = Assembler::r0; // IMPL_NOTE: this needs fine tuning.
-
+  const Assembler::Register next = Assembler::r0; // IMPL_NOTE: this needs fine tuning
   _next_allocate       = next;
   _next_byte_allocate  = Assembler::no_reg;
 

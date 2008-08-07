@@ -1,24 +1,24 @@
 /*
- *   
+ *
  *
  * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
- * 
+ *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
  * 2 only, as published by the Free Software Foundation.
- * 
+ *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
  * included at /legal/license.txt).
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA
- * 
+ *
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
  * information or have any questions.
@@ -75,7 +75,7 @@ private:
 
 // Load task mirror, perform class initialization before hand if needed.
 // Barrier is not necessary when the class that holds the static variables:
-//  - is a ROMIZED class, 
+//  - is a ROMIZED class,
 //  - has no static initializer
 //  - has a static initializer but it does not invoke any methods (therefore
 //  no compiled method can see the class in the being initialized state)
@@ -83,8 +83,8 @@ private:
 //  may also be tagged so that only tagged methods have to clear a barrier.
 //  This however is harder to achieve.
 //
-// 
-void CodeGenerator::load_task_mirror(Oop*klass, Value& statics_holder, 
+//
+void CodeGenerator::load_task_mirror(Oop*klass, Value& statics_holder,
                                      bool needs_cib JVM_TRAPS){
   write_literals_if_desperate();
 
@@ -99,14 +99,14 @@ void CodeGenerator::load_task_mirror(Oop*klass, Value& statics_holder,
   }
   if (needs_cib){
     Label class_is_initialized, need_init;
-    // Can we make the flush conditional for  get/put static ? 
+    // Can we make the flush conditional for  get/put static ?
     //  see if register usage cross compiled bytecode.
     frame()->flush(JVM_SINGLE_ARG_CHECK);
     // check for no task mirror at all.
     tst(statics_holder.lo_register(), statics_holder.lo_register());
     b(need_init, eq);
     if (GenerateROMImage) {
-      // The marker cannot be treated as a constant value, as it would break 
+      // The marker cannot be treated as a constant value, as it would break
       // cross-compilation. Thus we load it from GP table.
       TempRegister tmp;
       get_task_class_init_marker(tmp);
@@ -122,8 +122,8 @@ bind(need_init);
     // pass klass as extra args, move in correct register beforehand
     // if necessary
     // Passing the klass in parameter.
-    { 
-      // KEEP these brackets: without them the klass_parameter's destructor would 
+    {
+      // KEEP these brackets: without them the klass_parameter's destructor would
       // not be called before call_vm and cause an error.
       Value klass_parameter(T_OBJECT);
       klass_parameter.set_obj(klass);
@@ -164,7 +164,7 @@ void CodeGenerator::check_cib(Oop *klass JVM_TRAPS){
     tst(task_mirror, task_mirror);
     b(need_init, eq);
     if (GenerateROMImage) {
-      // The marker cannot be treated as a constant value, as it would break 
+      // The marker cannot be treated as a constant value, as it would break
       // cross-compilation. Thus we load it from GP table.
       TempRegister tmp;
       get_task_class_init_marker(tmp);
@@ -191,7 +191,7 @@ bind(need_init);
 #endif
 
 #if ENABLE_INLINED_ARRAYCOPY
-bool CodeGenerator::arraycopy(JVM_SINGLE_ARG_TRAPS) { 
+bool CodeGenerator::arraycopy(JVM_SINGLE_ARG_TRAPS) {
   return false;
 }
 
@@ -220,7 +220,7 @@ bool CompilerLiteralAccessor::has_literal(int imm32,
       return true;
     }
   }
- 
+
   return false;
 }
 
@@ -455,7 +455,7 @@ void CodeGenerator::array_check(Value& array, Value& index JVM_TRAPS) {
   } else {
     cmp(length, reg(index.lo_register()));
   }
-  IndexCheckStub* index_check_stub = 
+  IndexCheckStub* index_check_stub =
     IndexCheckStub::allocate_or_share(JVM_SINGLE_ARG_ZCHECK(index_check_stub));
   b(index_check_stub, ls);
 }
@@ -465,7 +465,7 @@ void CodeGenerator::array_check(Value& array, Value& index JVM_TRAPS) {
 // This means that we do not have enough data to reconstruct the virtual
 // stack frame for the  uncommon trap
 void CodeGenerator::null_check(const Value& object JVM_TRAPS) {
-  NullCheckStub* check_stub = 
+  NullCheckStub* check_stub =
     NullCheckStub::allocate_or_share(JVM_SINGLE_ARG_ZCHECK(check_stub));
   if (object.must_be_null()) {
     b(check_stub);
@@ -556,8 +556,8 @@ void CodeGenerator::method_entry(Method* method JVM_TRAPS) {
     // we can safely return here.
     GUARANTEE(!ENABLE_WTK_PROFILER, "Profiler always need call frame");
     return;
-  } 
- 
+  }
+
   NOT_PRODUCT(comment("reserve space for locals & first half of "
                       "frame descriptor"));
 
@@ -575,7 +575,7 @@ void CodeGenerator::method_entry(Method* method JVM_TRAPS) {
   str(fp, jsp, JavaFrame::caller_fp_offset()
                  - JavaFrame::empty_stack_offset());
   mov_hi(tmp5, lr);
-  str(tmp5, jsp, JavaFrame::return_address_offset() 
+  str(tmp5, jsp, JavaFrame::return_address_offset()
                                    - JavaFrame::empty_stack_offset());
   sub(fp, jsp, JavaFrame::empty_stack_offset());
 
@@ -641,7 +641,7 @@ void CodeGenerator::method_entry(Method* method JVM_TRAPS) {
         RegisterAllocator::reference(r0);
         mov_imm(r0, 0xA000000B); // pretty bogus immediate
         str(r0, fp, JavaFrame::stack_bottom_pointer_offset());
-        RegisterAllocator::dereference(r0); 
+        RegisterAllocator::dereference(r0);
       }
 #endif
     }
@@ -680,37 +680,25 @@ void CodeGenerator::int_binary_do(Value& result, Value& op1, Value& op2,
 
   switch (op) {
     case BytecodeClosure::bin_sub  :
-    {
       assign_register(result, op1);
       if (!op2.is_immediate()) {
-        sub_regs(result.lo_register(), 
-                 op1.lo_register(), op2.lo_register());
+        sub_regs(result.lo_register(), op1.lo_register(), op2.lo_register());
       } else {
-        sub(result.lo_register(), op1.lo_register(), 
-            op2.as_int());
+        sub(result.lo_register(), op1.lo_register(), op2.as_int());
       }
       break;
-    }
     case BytecodeClosure::bin_rsb  :
-    {
-      if (op2.is_immediate()) {
-        op2.materialize();
-      }
+      op2.materialize();
       arithmetic (_sub, result, op2, op1);
       break;
-    }
     case BytecodeClosure::bin_add  :
-    { 
       assign_register(result, op1);
       if (!op2.is_immediate()) {
-        add_regs(result.lo_register(), 
-                 op1.lo_register(), op2.lo_register());
+        add_regs(result.lo_register(), op1.lo_register(), op2.lo_register());
       } else {
-        add(result.lo_register(), op1.lo_register(), 
-            op2.as_int());
+        add(result.lo_register(), op1.lo_register(), op2.as_int());
       }
       break;
-    }
     case BytecodeClosure::bin_and  :
       arithmetic (_and, result, op1, op2);
       break;
@@ -736,10 +724,8 @@ void CodeGenerator::int_binary_do(Value& result, Value& op1, Value& op2,
     case BytecodeClosure::bin_max  :
     {
       assign_register(result, op1);
-      if (op2.is_immediate()) {
-        op2.materialize();
-      }
-      
+      op2.materialize();
+
       mov_reg(result.lo_register(), op1.lo_register());
       cmp(op1.lo_register(), reg(op2.lo_register()));
       NearLabel skip_mov;
@@ -807,13 +793,9 @@ void CodeGenerator::long_binary_do(Value& result, Value& op1, Value& op2,
       larithmetic(_sub, _sbc, result, op1, op2 JVM_NO_CHECK_AT_BOTTOM);
       break;
     case BytecodeClosure::bin_rsb:
-    {    
-     if (op2.is_immediate()) {
-        op2.materialize();
-      }
+      op2.materialize();
       larithmetic(_sub, _sbc, result, op2, op1 JVM_NO_CHECK_AT_BOTTOM);
       break;
-    }
     case BytecodeClosure::bin_add:
       larithmetic(_add, _adc, result, op1, op2 JVM_NO_CHECK_AT_BOTTOM);
       break;
@@ -840,19 +822,19 @@ void CodeGenerator::long_binary_do(Value& result, Value& op1, Value& op2,
     case BytecodeClosure::bin_shr :
       lshift(asr_shift, result, op1, op2 JVM_NO_CHECK_AT_BOTTOM);
       break;
- 
+
     case BytecodeClosure::bin_shl :
       lshift(lsl_shift, result, op1, op2 JVM_NO_CHECK_AT_BOTTOM);
       break;
- 
+
     case BytecodeClosure::bin_ushr:
       lshift(lsr_shift, result, op1, op2 JVM_NO_CHECK_AT_BOTTOM);
       break;
- 
+
     case BytecodeClosure::bin_min:
        call_simple_c_runtime(result, (address)::jvm_lmin, op1, op2);
        break;
-    
+
     case BytecodeClosure::bin_max:
       call_simple_c_runtime(result, (address)::jvm_lmax, op1, op2);
       break;
@@ -890,7 +872,7 @@ void CodeGenerator::long_unary_do(Value& result, Value& op1,
       break;
     }
     case BytecodeClosure::una_abs:
-    {    
+    {
       mov_reg(R1, A1);
       add(R2, A2, zero);
       b(done, ge);              // If hi register >= 0, positive
@@ -914,7 +896,7 @@ void CodeGenerator::arithmetic(Opcode opcode,
   if (result.lo_register() != op1.lo_register()) {
     mov_reg(result.lo_register(), op1.lo_register());
   }
-  
+
   if (op2.is_immediate()) {
     CompilerLiteralAccessor cla;
     arith_imm(opcode, result.lo_register(), op2.as_int(), cla);
@@ -959,9 +941,9 @@ void CodeGenerator::idiv_rem(Value& result, Value& op1, Value& op2,
       } else {
         op1.copy(result);
       }
-    } 
+    }
   }
-  
+
   frame()->flush(JVM_SINGLE_ARG_CHECK);
   if (!op2.in_register()) {
     op2.assign_register();
@@ -1111,7 +1093,7 @@ void CodeGenerator::float_unary_do(Value& result, Value& op1,
   if (result.lo_register() != op1.lo_register()) {
     mov_reg(result.lo_register(), op1.lo_register());
   }
-  
+
   arith(opcode, result.lo_register(), tmp);
 }
 
@@ -1188,18 +1170,18 @@ void CodeGenerator::double_unary_do(Value& result, Value& op1,
   mov_imm(tmp, 2);
   ror(tmp, tmp);
 
-  if (MSW_FIRST_FOR_DOUBLE) { 
+  if (MSW_FIRST_FOR_DOUBLE) {
     // The first word contains the sign bit
     if (result.lo_register() != op1.lo_register()) {
       mov_reg(result.lo_register(), op1.lo_register());
     }
     arith(opcode, result.lo_register(), tmp);
     mov_reg(result.hi_register(),  op1.hi_register());
-  } else { 
+  } else {
     // The second word contains the sign bit
     if (result.hi_register() != op1.hi_register()) {
       mov_reg(result.hi_register(), op1.hi_register());
-    }   
+    }
     arith(opcode, result.hi_register(), tmp);
     mov_reg(result.lo_register(),  op1.lo_register());
   }
@@ -1254,16 +1236,16 @@ void CodeGenerator::vcall_simple_c_runtime(Value& result,
   va_end(ap);
 
   bool stole_r7 = false;
-  
-  if (RegisterAllocator::is_referenced(r7) || 
+
+  if (RegisterAllocator::is_referenced(r7) ||
       RegisterAllocator::is_mapping_something(r7)){
     mov_hi(r9, r7);
     stole_r7 = true;
   }
-  
+
   mov_imm(r7, runtime_func);
   mov_hi(r12, r7);
-  
+
   if (JavaStackDirection > 0 && sp == jsp) {
     // IMPL_NOTE:  We don't have to move to the C stack for the functions written
     // in assembly language in Interpreter_arm.s.
@@ -1320,9 +1302,9 @@ void CodeGenerator::i2b(Value& result, Value& value JVM_TRAPS) {
   write_literals_if_desperate();
 
   result.assign_register();
-  lsl_imm(result.lo_register(), value.lo_register(), 
+  lsl_imm(result.lo_register(), value.lo_register(),
       BitsPerWord - BitsPerByte);
-  asr_imm(result.lo_register(), result.lo_register(), 
+  asr_imm(result.lo_register(), result.lo_register(),
       BitsPerWord - BitsPerByte);
 }
 
@@ -1332,9 +1314,9 @@ void CodeGenerator::i2c(Value& result, Value& value JVM_TRAPS) {
   write_literals_if_desperate();
 
   result.assign_register();
-  lsl_imm(result.lo_register(), value.lo_register(), 
+  lsl_imm(result.lo_register(), value.lo_register(),
       BitsPerWord - BitsPerShort);
-  lsr_imm(result.lo_register(), result.lo_register(), 
+  lsr_imm(result.lo_register(), result.lo_register(),
       BitsPerWord - BitsPerShort);
 }
 
@@ -1344,9 +1326,9 @@ void CodeGenerator::i2s(Value& result, Value& value JVM_TRAPS) {
   write_literals_if_desperate();
 
   result.assign_register();
-  lsl_imm(result.lo_register(), value.lo_register(), 
+  lsl_imm(result.lo_register(), value.lo_register(),
       BitsPerWord - BitsPerShort);
-  asr_imm(result.lo_register(), result.lo_register(), 
+  asr_imm(result.lo_register(), result.lo_register(),
       BitsPerWord - BitsPerShort);
 
 }
@@ -1358,7 +1340,7 @@ void CodeGenerator::i2l(Value& result, Value& value JVM_TRAPS) {
   RegisterAllocator::reference(value.lo_register());
   if (MSW_FIRST_FOR_LONG) {
     result.set_registers(RegisterAllocator::allocate(), value.lo_register());
-    asr_imm(result.lo_register(), result.hi_register(), 31);    
+    asr_imm(result.lo_register(), result.hi_register(), 31);
   } else {
     result.set_registers(value.lo_register(), RegisterAllocator::allocate());
     asr_imm(result.hi_register(), result.lo_register(), 31);
@@ -1497,10 +1479,10 @@ void CodeGenerator::larithmetic(Opcode opcode1, Opcode opcode2,
       default:
         SHOULD_NOT_REACH_HERE();
     }
-    
+
     return;
   }
-  
+
   // Remember that "lo" and "hi" refer to the address in memory.
   // For big endian machines, these are counter-intuitive
   Register A1 = op1.lsw_register();
@@ -1522,9 +1504,9 @@ void CodeGenerator::larithmetic(Opcode opcode1, Opcode opcode2,
     TempRegister op2_imm;
     mov_imm(op2_imm.reg(), op2.msw_bits());
     mov_hi(r9, op2_imm.reg());
-    mov_imm(op2_imm.reg(), op2.lsw_bits());    
+    mov_imm(op2_imm.reg(), op2.lsw_bits());
     arith(opcode1, R1, op2_imm.reg());
-    mov_hi(op2_imm.reg(), r9);    
+    mov_hi(op2_imm.reg(), r9);
     arith(opcode2, R2, op2_imm.reg());
   } else {
     arith(opcode1, R1, op2.lsw_register());
@@ -1591,7 +1573,7 @@ void CodeGenerator::lshift(Shift type,  Value& result,
   return;
 }
 
-void CodeGenerator::cmp_values(Value& op1, Value& op2) { 
+void CodeGenerator::cmp_values(Value& op1, Value& op2) {
   GUARANTEE(op1.in_register(), "op1 must be in a register");
   GUARANTEE(op2.is_immediate() || op2.in_register(),
             "op2 must be in a register or an immediate");
@@ -1599,7 +1581,7 @@ void CodeGenerator::cmp_values(Value& op1, Value& op2) {
   if (op2.is_immediate()) {
     CompilerLiteralAccessor cla;
     cmp_imm(op1.lo_register(), op2.as_int());
-  } else { 
+  } else {
     cmp(op1.lo_register(), reg(op2.lo_register()));
   }
 }
@@ -1608,7 +1590,7 @@ void CodeGenerator::long_cmp(Value& result, Value& op1, Value& op2 JVM_TRAPS) {
   write_literals_if_desperate();
   GUARANTEE(!op1.is_immediate() || !op2.is_immediate(),
               "Immediate case handled by generic code");
-  runtime_long_op(result, op1, op2, false, 
+  runtime_long_op(result, op1, op2, false,
                   (address)jvm_lcmp JVM_NO_CHECK_AT_BOTTOM);
 }
 
@@ -1636,7 +1618,7 @@ void CodeGenerator::check_bytecode_counter() {
 void CodeGenerator::check_stack_overflow(Method *m JVM_TRAPS) {
   Label stack_overflow, done;
 
-  // Method should be in r0 from invoke 
+  // Method should be in r0 from invoke
   NOT_PRODUCT(comment("Check for stack overflow"));
   TempRegister limit(r1);
   TempRegister tmp(r2);
@@ -1725,7 +1707,7 @@ void CodeGenerator::instance_of(Value& result, Value& object, Value& klass,
                                 int class_id JVM_TRAPS) {
   (void)class_id;
   write_literals_if_desperate();
-  
+
   Label slow_case, done_checking;
   result.assign_register();
 
@@ -1753,16 +1735,16 @@ void CodeGenerator::instance_of(Value& result, Value& object, Value& klass,
   NOT_PRODUCT(comment("Check the subtype caches"));
   ldr(tmp1, tmp2, JavaClass::subtype_cache_1_offset());
   ldr(tmp2, tmp2, JavaClass::subtype_cache_2_offset());
-  
+
   NearLabel join, join2, check_cache_2;
 
-  // Check if cache_1 was a hit 
+  // Check if cache_1 was a hit
   cmp(tmp1, reg(klass.lo_register()));
   NearLabel skip_cmp;
   b(check_cache_2, ne);
   mov_imm(result.lo_register(), one);
   b(join);
-  
+
   // Check if cache_2 was a hit
   bind(check_cache_2);
   cmp(tmp2, reg(klass.lo_register()));
@@ -1771,10 +1753,10 @@ void CodeGenerator::instance_of(Value& result, Value& object, Value& klass,
 
   bind(join);
   bind(join2);
-  
+
   // Check if we hit the caches. This seemingly
   // redundant step is required on thumb since
-  // mov instructions intrinsically modifies flags. 
+  // mov instructions intrinsically modifies flags.
   cmp_imm(result.lo_register(), one);
 
   if (need_to_force_literals()) {
@@ -1822,13 +1804,13 @@ void CodeGenerator::new_type_array_stub(CompilationQueueElement* cqe JVM_TRAPS) 
 #endif
 
 void CodeGenerator::if_then_else(Value& result,
-                                 BytecodeClosure::cond_op condition, 
+                                 BytecodeClosure::cond_op condition,
                                  Value& op1, Value& op2,
                                  ExtendedValue& result_true,
                                  ExtendedValue& result_false JVM_TRAPS) {
   JVM_IGNORE_TRAPS;
   GUARANTEE(false, "OptimizeForwardBranches : Disabled for thumb");
-  
+
   if (result_true.is_value()) {
     assign_register(result, result_true.value());
   } else {
@@ -1857,10 +1839,9 @@ void CodeGenerator::if_iinc(Value& result, BytecodeClosure::cond_op condition,
   GUARANTEE(false, "OptimizeForwardBranches : Disabled for thumb");
 
   Condition cond = convert_condition(condition);
-  if (arg.is_immediate()) {
-    arg.materialize();
-  }
+  arg.materialize();
   assign_register(result, arg);
+
   // We hope that the following generates no code!
   move(result, arg);
 
@@ -1978,7 +1959,7 @@ void CodeGenerator::new_basic_array(Value& result, BasicType type,
         break;
       }
       default:
-        lsl_imm(reg_actual_length, length.lo_register(), 
+        lsl_imm(reg_actual_length, length.lo_register(),
                 jvm_log2(array_class->scale()));
         add(reg_actual_length, reg_actual_length,
             Array::base_offset());
@@ -2038,9 +2019,9 @@ void CodeGenerator::return_result(Value& result JVM_TRAPS) {
 
   int imm32;
   int tag;
-  if (TaggedJavaStack) { 
+  if (TaggedJavaStack) {
     tag = (int)::basic_type2tag(result.stack_type());
-  } else { 
+  } else {
     tag = ::word_size_for(result.stack_type());
   }
 
@@ -2107,7 +2088,7 @@ void CodeGenerator::return_error(Value& value JVM_TRAPS) {
 
   RegisterAllocator::reference(r0);
   RegisterAllocator::reference(r1);
-  
+
   mov_reg(r1, value.lo_register());
   mov_imm(r0, (address)shared_call_vm_exception);
   restore_last_frame(lr);
@@ -2151,8 +2132,8 @@ void CodeGenerator::restore_last_frame(Register return_address) {
 // throwing runtime exceptions.
 void CodeGenerator::throw_simple_exception(int rte JVM_TRAPS) {
 
-  if (rte == ThrowExceptionStub::rte_null_pointer) { 
-    int num_locals = method()->max_locals(); 
+  if (rte == ThrowExceptionStub::rte_null_pointer) {
+    int num_locals = method()->max_locals();
     if(omit_stack_frame()) {
       int params = method()->size_of_parameters();
       mov_imm(r3, gp_compiler_throw_NullPointerException_10_ptr);
@@ -2166,7 +2147,7 @@ void CodeGenerator::throw_simple_exception(int rte JVM_TRAPS) {
       mov_imm(r3, gp_compiler_throw_NullPointerException_ptr);
     }
     bx(r3);
-  } else if (rte == ThrowExceptionStub::rte_array_index_out_of_bounds) { 
+  } else if (rte == ThrowExceptionStub::rte_array_index_out_of_bounds) {
     if(omit_stack_frame()) {
       int params = method()->size_of_parameters();
       mov_imm(r3, gp_compiler_throw_ArrayIndexOutOfBoundsException_10_ptr);
@@ -2220,7 +2201,7 @@ void CodeGenerator::check_monitors(JVM_SINGLE_ARG_TRAPS) {
           JavaFrame::pre_first_stack_lock_offset() + StackLock::size());
   if (JavaStackDirection < 0) {
     add(lock, lock, StackLock::size());
-  } 
+  }
   // lock points at the object field of the first lock
   // end points to the object field of beyond the final lock
 
@@ -2252,7 +2233,7 @@ bind(unlocking_loop_entry);
 }
 
 void CodeGenerator::table_switch(Value& index, jint table_index,
-                                 jint default_dest, jint low, jint high 
+                                 jint default_dest, jint low, jint high
                                  JVM_TRAPS) {
   GUARANTEE(index.in_register(), "Immediates handled by caller");
   NOT_PRODUCT(comment("tableswitch"));
@@ -2265,7 +2246,7 @@ void CodeGenerator::table_switch(Value& index, jint table_index,
   Register entry = RegisterAllocator::allocate();
   sub(entry, index.lo_register(), low);
 
-  // IMPL_NOTE: 
+  // IMPL_NOTE:
   //CompilerLiteralAccessor cla;
   cmp_imm(entry, high - low);
   {
@@ -2336,12 +2317,12 @@ void CodeGenerator::lookup_switch(Value& index, jint table_index,
 
 void CodeGenerator::lookup_switch(Value& index, jint table_index,
                                   jint default_dest, jint num_of_pairs JVM_TRAPS) {
-  lookup_switch(index.lo_register(), table_index, 0, num_of_pairs - 1, 
+  lookup_switch(index.lo_register(), table_index, 0, num_of_pairs - 1,
                 default_dest JVM_CHECK);
   branch(default_dest JVM_NO_CHECK_AT_BOTTOM);
 }
 
-void CodeGenerator::lookup_switch(Register index, jint table_index, 
+void CodeGenerator::lookup_switch(Register index, jint table_index,
                                   jint start, jint end,
                                   jint default_dest JVM_TRAPS) {
   CompilerLiteralAccessor cla;
@@ -2349,25 +2330,25 @@ void CodeGenerator::lookup_switch(Register index, jint table_index,
   char buffer[200];
   int num_of_pairs  = method()->get_java_switch_int(table_index + 4);
   int low = (start == 0)
-        ? -0x80000000 
+        ? -0x80000000
         : method()->get_java_switch_int(8 * (start - 1) + table_index + 8) + 1;
-  int high = (end + 1 == num_of_pairs) 
+  int high = (end + 1 == num_of_pairs)
         ? 0x7FFFFFFF
         : method()->get_java_switch_int(8 * (end + 1) + table_index + 8) - 1;
-  jvm_sprintf(buffer, "0x%x <= r%d <= 0x%x", low, index, high); 
+  jvm_sprintf(buffer, "0x%x <= r%d <= 0x%x", low, index, high);
   comment(buffer);
   frame()->dump(true);
 #endif
-  if (end - start <= 4) { 
-    for (int i = start; i <= end; i++) { 
+  if (end - start <= 4) {
+    for (int i = start; i <= end; i++) {
       int key = method()->get_java_switch_int(8 * i + table_index + 8);
       int jump_bci =
           bci() + method()->get_java_switch_int(8 * i + table_index + 12);
       cmp_imm(index, key, cla);
       conditional_jump(BytecodeClosure::eq, jump_bci, false JVM_CHECK);
-    } 
+    }
     // Allowed to fall through on default
-  } else { 
+  } else {
     Label larger, smaller_default;
     int i = (start + end) >> 1;
     int key = method()->get_java_switch_int(8 * i + table_index + 8);
@@ -2377,8 +2358,8 @@ void CodeGenerator::lookup_switch(Register index, jint table_index,
     cmp_imm(index, key, cla);
     conditional_jump(BytecodeClosure::eq, jump_bci, false JVM_CHECK);
     b(larger, gt);
-    
-    { 
+
+    {
       PreserveVirtualStackFrameState state(frame() JVM_CHECK);
       // Handle start .. i - 1
       lookup_switch(index, table_index, start, i-1, default_dest JVM_CHECK);
@@ -2387,11 +2368,11 @@ void CodeGenerator::lookup_switch(Register index, jint table_index,
     }
 
   bind(larger);
-    { 
+    {
       PreserveVirtualStackFrameState state(frame() JVM_CHECK);
       // Handle start .. i - 1
       lookup_switch(index, table_index, i+1, end, default_dest JVM_CHECK);
-      // Allowed to fall through 
+      // Allowed to fall through
     }
   }
 }
@@ -2400,13 +2381,13 @@ void CodeGenerator::lookup_switch(Register index, jint table_index,
 
 
 
-void CodeGenerator::invoke(const Method* method, 
+void CodeGenerator::invoke(const Method* method,
                            bool must_do_null_check JVM_TRAPS) {
   bool is_native = false;
   int size_of_parameters = method->size_of_parameters();
 
   Value hold_method(T_OBJECT);
-  Value hold_tmp(T_INT);  
+  Value hold_tmp(T_INT);
 
   // The method must be in r0 when we enter it
   hold_method.set_register(RegisterAllocator::allocate(r0));
@@ -2432,15 +2413,15 @@ void CodeGenerator::invoke(const Method* method,
 
 #if USE_AOT_COMPILATION
   bool try_skip_lookup = true;
-  // IMPL_NOTE: this needs to be fixed so that the AOT-compiled code can 
+  // IMPL_NOTE: this needs to be fixed so that the AOT-compiled code can
   // directly invoke the method without a look up
-  if (method->is_native() && 
+  if (method->is_native() &&
       method->get_native_code() == (address)Java_void_unimplemented) {
     // Used by AOT only: we are calling a MIDP native method, which
     // is not resolved during romization
     try_skip_lookup = false;
-  } else if (method->is_quick_native() && 
-             method->get_quick_native_code() == 
+  } else if (method->is_quick_native() &&
+             method->get_quick_native_code() ==
              (address)Java_void_unimplemented) {
     try_skip_lookup = false;
   }
@@ -2455,21 +2436,21 @@ void CodeGenerator::invoke(const Method* method,
       // We actually only need to flush the end of the stack containing the
       // arguments, but we don't really have any way of doing that..
       frame()->flush(JVM_SINGLE_ARG_CHECK);
-      if (size_of_parameters > 0) { 
+      if (size_of_parameters > 0) {
         add(jsp, jsp,
               size_of_parameters * -JavaStackDirection * BytesPerStackElement);
         int offset = method->is_static()
                      ? JavaFrame::arg_offset_from_sp(0)
                      : JavaFrame::arg_offset_from_sp(-1);
         if (offset == 0) {
-          set_kni_parameter_base(jsp); 
-        } else { 
+          set_kni_parameter_base(jsp);
+        } else {
           add(tmp, jsp, offset);
           set_kni_parameter_base(tmp);
-        } 
-      } else { 
+        }
+      } else {
         mov_imm(tmp, zero);
-        set_kni_parameter_base(tmp); 
+        set_kni_parameter_base(tmp);
       }
       Value result(T_INT);      // this is a lie.  But vcall wants something
       vcall_simple_c_runtime(result, (address)native_code, NULL);
@@ -2627,11 +2608,11 @@ void CodeGenerator::invoke_interface(JavaClass* klass, int itable_index,
 
   mov_imm(tos_tag, klass->class_id());
   // tmp3: klass_index of interface
-  
+
   // Lookup interface method table by linear search
   Label lookup;
 bind(lookup);
-  sub_imm(tmp5, one); 
+  sub_imm(tmp5, one);
   {
     IncompatibleClassChangeStub* icc_error =
       IncompatibleClassChangeStub::allocate_or_share(JVM_SINGLE_ARG_ZCHECK(icc_error));
@@ -2648,7 +2629,7 @@ bind(lookup);
 
   // Found the itable entry - now get the method table offset from there
   ldr(tmp1, tmp1, BytesPerWord);
-  
+
   // Now get the method
   mov_reg(tos_val, tmp0);
   add_imm(tos_val, BytesPerWord * itable_index);
@@ -2732,7 +2713,7 @@ void CodeGenerator::invoke_native(BasicType return_kind, address entry JVM_TRAPS
   if (return_kind == T_LONG || return_kind == T_DOUBLE) {
     mov_hi(r10, r1);
   }
-  
+
   NOT_PRODUCT(comment("Check if native method needs redoing"));
   Register reg_zero = RegisterAllocator::allocate();
   Register reg_thread = RegisterAllocator::allocate();
@@ -2751,7 +2732,7 @@ void CodeGenerator::invoke_native(BasicType return_kind, address entry JVM_TRAPS
   RegisterAllocator::dereference(reg_zero);
   RegisterAllocator::dereference(reg_async_redo);
   RegisterAllocator::dereference(reg_thread);
-  
+
   mov_hi(r0, r9);
   if (return_kind == T_LONG || return_kind == T_DOUBLE) {
     mov_hi(r1, r10);
@@ -2774,7 +2755,7 @@ void CodeGenerator::call_from_compiled_code(Register dst, int offset,
     dst = tmp_reg;
     offset = 0;
   }
-  
+
   if (offset != 0) {
     GUARANTEE(dst != gp, "call_from_compiled_code: bashing gp");
     add_imm(dst, offset);
@@ -2799,14 +2780,14 @@ void CodeGenerator::call_from_compiled_code(Register dst, int offset,
   mov_hi(lr, tmp_reg);
 
   bx(dst);
-  
+
   RegisterAllocator::dereference(tmp_reg);
 
   write_literals();
   if ((code_size() & 0x3) != 0) {
     nop();
   }
-  
+
   write_call_info(parameters_size JVM_CHECK);
   // Patch the "add" instruction to make lr point at following instruction
   if (!has_overflown_compiled_method()) {
@@ -2824,9 +2805,9 @@ void CodeGenerator::call_from_compiled_code(Register dst, int offset,
 void CodeGenerator::call_through_gp(address& target, bool add_lr JVM_TRAPS) {
   Register dst_reg = r2;
   if (_number_of_c_args > 2 ||
-      RegisterAllocator::is_referenced(r2) || 
+      RegisterAllocator::is_referenced(r2) ||
       RegisterAllocator::is_mapping_something(r2)) {
-    // We try to use r2 if possible, to avoid copying r7 to r12 in 
+    // We try to use r2 if possible, to avoid copying r7 to r12 in
     // call_from_compiled code.
     // However, if r2 is already used to pass arguments to the function,
     // we must  use r7.
@@ -2836,7 +2817,7 @@ void CodeGenerator::call_through_gp(address& target, bool add_lr JVM_TRAPS) {
 
   ldr_using_gp(dst_reg, (address)&target);
   call_from_compiled_code(dst_reg, 0, 0, false, add_lr
-                          JVM_NO_CHECK_AT_BOTTOM);  
+                          JVM_NO_CHECK_AT_BOTTOM);
 
   RegisterAllocator::dereference(dst_reg);
 }
@@ -2870,7 +2851,7 @@ void CodeGenerator::write_call_info(int parameters_size JVM_TRAPS) {
 
 
 bool CodeGenerator::quick_catch_exception(const Value& /*exception_obj*/,
-                                          JavaClass* /*catch_type*/, 
+                                          JavaClass* /*catch_type*/,
                                           int /*handler_bci*/ JVM_TRAPS) {
   // Fast exception catching not implemented on thumb.
   JVM_IGNORE_TRAPS;
@@ -2885,7 +2866,7 @@ void CodeGenerator::call_vm_extra_arg(const Register extra_arg) {
   mov_reg(r1, extra_arg);
 }
 
-void CodeGenerator::call_vm(address entry, BasicType return_value_type 
+void CodeGenerator::call_vm(address entry, BasicType return_value_type
                             JVM_TRAPS) {
   // all registers must be flushed (not necessarily unmapped) before calling
   // call_vm
@@ -2910,7 +2891,7 @@ void CodeGenerator::call_vm(address entry, BasicType return_value_type
       call_through_gp(gp_shared_call_vm_exception_ptr JVM_NO_CHECK_AT_BOTTOM);
     } else {
       call_through_gp(gp_shared_call_vm_ptr JVM_NO_CHECK_AT_BOTTOM);
-    }  
+    }
 
     if (return_value_type != T_ILLEGAL) {
       RegisterAllocator::dereference(r3);
@@ -2965,7 +2946,7 @@ void CodeGenerator::type_check(Value& array, Value& index, Value& object JVM_TRA
 
   // Cache hit.
   bind(done_checking);
-  
+
   TypeCheckStub* stub =
       TypeCheckStub::allocate(bci(), slow_case, done_checking JVM_ZCHECK(stub));
   stub->insert();
@@ -2993,7 +2974,7 @@ CodeGenerator::convert_condition(BytecodeClosure::cond_op condition)  {
   return nv;
 }
 
-void CodeGenerator::conditional_jump_do(BytecodeClosure::cond_op condition, 
+void CodeGenerator::conditional_jump_do(BytecodeClosure::cond_op condition,
                                         Label& destination) {
   b(destination, convert_condition(condition));
   write_literals_if_desperate();
@@ -3055,7 +3036,7 @@ void CodeGenerator::vsetup_c_args(va_list ap) {
     targetRegister += value->is_two_word() ? 2 : 1;
   }
 
-  GUARANTEE(targetRegister <= 4 && regCount <= 4 && immCount <= 4, 
+  GUARANTEE(targetRegister <= 4 && regCount <= 4 && immCount <= 4,
             "ARM calling convention allows only the use of r0~r3");
 
   // Copy the info from srcReg to dstReg
@@ -3201,7 +3182,7 @@ CodeGenerator::verify_location_is_constant(jint index, const Value& constant) {
 #if USE_AOT_COMPILATION && !ENABLE_ISOLATES
 
 void CodeGenerator::initialize_class(InstanceClass* klass JVM_TRAPS) {
-  GUARANTEE(klass->not_null() && !klass->is_initialized(), 
+  GUARANTEE(klass->not_null() && !klass->is_initialized(),
             "Should only be called for non-initialized classes");
   // initialize_class(Thread&, raw_class);
   NOT_PRODUCT(comment("Initialize class if needed"));
@@ -3233,12 +3214,12 @@ void CodeGenerator::initialize_class(InstanceClass* klass JVM_TRAPS) {
 #endif
 
 #if !ENABLE_CPU_VARIANT
-void CodeGenerator::init_static_array(Value& result JVM_TRAPS) {  
+void CodeGenerator::init_static_array(Value& result JVM_TRAPS) {
   JVM_IGNORE_TRAPS;
   NOT_PRODUCT(comment("Initialization of static arrays"));
 
   // Flush the virtual stack frame.
-  flush_frame(JVM_SINGLE_ARG_CHECK);  
+  flush_frame(JVM_SINGLE_ARG_CHECK);
 
   const Register src = tos_tag;
   const Register dst = tos_val;
@@ -3248,7 +3229,7 @@ void CodeGenerator::init_static_array(Value& result JVM_TRAPS) {
   RegisterAllocator::reference(dst);
   RegisterAllocator::reference(size);
 
-  Method::Raw cur_method = 
+  Method::Raw cur_method =
     Compiler::current()->current_compiled_method()->method();
   ldr_oop(src, &cur_method);
 
@@ -3257,23 +3238,23 @@ void CodeGenerator::init_static_array(Value& result JVM_TRAPS) {
   NOT_PRODUCT(breakpoint(eq);)
 
   add(src, src, Method::base_offset() + bci());
-    
-  // Loading elements count hi register.  
+
+  // Loading elements count hi register.
   ldrb(size, src, 3);
   RegisterAllocator::reference(tmp1);
   // Loading elements count low register.
-  ldrb(tmp1, src, 2);  
+  ldrb(tmp1, src, 2);
 
   imm_shift(size, size, _lsl, BitsPerByte);
   orr(size, tmp1);
 
   // Load type size shift.
-  ldrb(tmp1, src, 1);   
+  ldrb(tmp1, src, 1);
 
   // Src should point to the array data.
-  add_imm(src, 4);  
+  add_imm(src, 4);
 
-  reg_shift(size, tmp1, _lsl);  
+  reg_shift(size, tmp1, _lsl);
   RegisterAllocator::dereference(tmp1);
 
   Value src_val(T_INT);
@@ -3283,9 +3264,9 @@ void CodeGenerator::init_static_array(Value& result JVM_TRAPS) {
   dst_val.set_register(dst);
 
   Value size_val(T_INT);
-  size_val.set_register(size);  
-   
-  call_simple_c_runtime(dst_val, (address)jvm_memcpy, 
+  size_val.set_register(size);
+
+  call_simple_c_runtime(dst_val, (address)jvm_memcpy,
     dst_val, src_val, size_val);
 }
 #endif //!ENABLE_CPU_VARIANT

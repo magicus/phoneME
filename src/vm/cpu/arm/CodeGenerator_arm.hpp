@@ -4,22 +4,22 @@
  * Portions Copyright  2000-2007 Sun Microsystems, Inc. All Rights
  * Reserved.  Use is subject to license terms.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
- * 
+ *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
  * 2 only, as published by the Free Software Foundation.
- * 
+ *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
  * included at /legal/license.txt).
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA
- * 
+ *
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
  * information or have any questions.
@@ -48,28 +48,28 @@ private:
   }
   void call_through_gp(address* target_ptr, bool speed JVM_TRAPS);
 
-  void call_from_compiled_code(Register dst, int offset, 
+  void call_from_compiled_code(Register dst, int offset,
                                int parameters_size JVM_TRAPS) {
-    call_from_compiled_code(dst, offset, parameters_size, 
+    call_from_compiled_code(dst, offset, parameters_size,
                             /*indirect=*/ false,
                             /*speed=*/ true
                             JVM_NO_CHECK_AT_BOTTOM);
   }
 #if ENABLE_TRAMPOLINE
-  void call_from_compiled_code(const Method* callee, Register dst, int offset, 
+  void call_from_compiled_code(const Method* callee, Register dst, int offset,
                                int parameters_size JVM_TRAPS) {
     GUARANTEE(!GenerateROMImage, "Should not be used for precompiled methods");
-    call_from_compiled_code(callee, dst, offset, parameters_size, 
+    call_from_compiled_code(callee, dst, offset, parameters_size,
                             /*indirect=*/ false,
                             /*speed=*/ true
                             JVM_NO_CHECK_AT_BOTTOM);
   }
 
-void call_from_compiled_code(const Method* callee, Register dst, int offset, 
+void call_from_compiled_code(const Method* callee, Register dst, int offset,
                                int parameters_size, bool indirect,
                                bool speed JVM_TRAPS);
 #endif
-  void call_from_compiled_code(Register dst, int offset, 
+  void call_from_compiled_code(Register dst, int offset,
                                int parameters_size, bool indirect,
                                bool speed JVM_TRAPS);
 
@@ -81,16 +81,16 @@ void call_from_compiled_code(const Method* callee, Register dst, int offset,
   void shift(Shift shifter, Value& result, Value& op1, Value& op2,
                   const CCMode cc = no_CC);
 
-  void call_simple_c_runtime(Value& result, address runtime_func, 
-                          Value& op1, Value& op2) { 
+  void call_simple_c_runtime(Value& result, address runtime_func,
+                          Value& op1, Value& op2) {
     vcall_simple_c_runtime(result, runtime_func, &op1, &op2, NULL);
   }
-  void call_simple_c_runtime(Value& result, address runtime_func, 
+  void call_simple_c_runtime(Value& result, address runtime_func,
                           Value& op1) {
     vcall_simple_c_runtime(result, runtime_func, &op1, NULL);
   }
 
-  void call_simple_c_runtime(Value& result, address runtime_func, 
+  void call_simple_c_runtime(Value& result, address runtime_func,
                           Value& op1, Value& op2, Value& op3) {
     vcall_simple_c_runtime(result, runtime_func, &op1, &op2, &op3, NULL);
   }
@@ -106,7 +106,7 @@ void call_from_compiled_code(const Method* callee, Register dst, int offset,
 
   void adjust_for_invoke(int parameters_size, BasicType return_type,
                          bool native = false);
-   
+
   void setup_c_args(int ignored, ...);
   void vsetup_c_args(va_list ap);
 
@@ -125,7 +125,7 @@ void call_from_compiled_code(const Method* callee, Register dst, int offset,
 
   void restore_last_frame(JVM_SINGLE_ARG_TRAPS);
 
-  void lookup_switch(Register index, jint table_index, 
+  void lookup_switch(Register index, jint table_index,
                      jint start, jint end, jint default_dest JVM_TRAPS);
   bool dense_lookup_switch(Value& index, jint table_index, jint default_dest,
                            jint num_of_pairs JVM_TRAPS);
@@ -154,16 +154,15 @@ void call_from_compiled_code(const Method* callee, Register dst, int offset,
 #endif
 
 #if ENABLE_ARM_VFP
-  void ensure_in_float_register(Value& value);
-  void ensure_not_in_float_register(Value& value, bool need_to_copy=true); 
-  void move_vfp_immediate(const Register dst,const jint src, const Condition cond = al);  
+  void ensure_in_float_register    (Value& value);
+  void ensure_not_in_float_register(Value& value);
+  void move_vfp_immediate(const Register dst,const jint src, const Condition cond = al);
   void move_float_immediate(const Register dst, const jint src, const Condition cond = al);
-  void move_double_immediate(const Register dst, const jint src_lo, const jint src_hi, 
+  void move_double_immediate(const Register dst, const jint src_lo, const jint src_hi,
                              const Condition cond = al);
 #else
-  void ensure_in_float_register(Value& /*value*/) {}
+  void ensure_in_float_register    (Value& /*value*/) {}
   void ensure_not_in_float_register(Value& /*value*/) {}
-  void ensure_not_in_float_register(Value& /*value*/, bool /*need_to_copy*/) {}
 #endif
 
   static bool _interleave_frame_linking;
@@ -186,7 +185,7 @@ public:
     add_imm(jsp, jsp, JavaStackDirection * adjustment * BytesPerStackElement);
   }
 
-  void cmp_values(Value& op1, Value& op2, 
+  void cmp_values(Value& op1, Value& op2,
                   BytecodeClosure::cond_op condition) {
     (void)condition;
     cmp_values(op1, op2);
@@ -212,7 +211,7 @@ public:
     int   _length;
    public:
     RegisterSet() : _set(0), _length(0) {
-      GUARANTEE(Assembler::number_of_gp_registers < BitsPerWord, 
+      GUARANTEE(Assembler::number_of_gp_registers < BitsPerWord,
                 "Cannot have register mask as int");
     }
 
@@ -229,36 +228,36 @@ public:
       return _length;
     }
 
-    /* 
-     * Adds given register to the set. 
+    /*
+     * Adds given register to the set.
      * Does not increase reference count for this register.
      */
     void add(Register reg);
 
-    /* 
+    /*
      * Removes given register from the set.
      * Decrements reference count for this register.
      */
     void remove(Register reg);
 
-    /* 
-     * Returns arbitrary register from the set. 
+    /*
+     * Returns arbitrary register from the set.
      */
     Register get_register() const;
-    
+
     friend class RegisterSetIterator;
   };
 
   /*
    * Iterates over the given register set.
-   * If the underlying set is modified during iteration, 
+   * If the underlying set is modified during iteration,
    * the behavior is undefined.
    */
   class RegisterSetIterator : public StackObj {
     juint _set;
     int   _index;
    public:
-    RegisterSetIterator(const RegisterSet& reg_set) : 
+    RegisterSetIterator(const RegisterSet& reg_set) :
      _set(reg_set._set), _index(0) {}
 
     bool has_next() const {
@@ -277,17 +276,17 @@ private:
                           Value& array, Value& offset, int log_element_size,
                           bool& offset_word_aligned);
 
-  /* 
-   * Helper functions to emit appropriate load/store instructions depending on 
+  /*
+   * Helper functions to emit appropriate load/store instructions depending on
    * element size and direction of copying.
    */
-  void ldrx(Register rd, Register rn, int element_size, Mode mode, 
+  void ldrx(Register rd, Register rn, int element_size, Mode mode,
             bool is_backward, Condition cond = always);
-  void strx(Register rd, Register rn, int element_size, Mode mode, 
+  void strx(Register rd, Register rn, int element_size, Mode mode,
             bool is_backward, Condition cond = always);
-  void ldmxa(Register rn, Address4 reg_set, WritebackMode mode, 
+  void ldmxa(Register rn, Address4 reg_set, WritebackMode mode,
              bool is_backward, Condition cond = always);
-  void stmxa(Register rn, Address4 reg_set, WritebackMode mode, 
+  void stmxa(Register rn, Address4 reg_set, WritebackMode mode,
              bool is_backward, Condition cond = always);
 
 #endif

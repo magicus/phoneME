@@ -1466,9 +1466,7 @@ void CodeGenerator::int_binary_do(Value& result, Value& op1, Value& op2,
     case BytecodeClosure::bin_min  :
     case BytecodeClosure::bin_max  :
       assign_register(result, op1);
-      if (op2.is_immediate()) {
-        op2.materialize();
-      }
+      op2.materialize();
       cmp(op1.lo_register(), reg(op2.lo_register()));
       mov_reg(result.lo_register(), op1.lo_register());
       mov(result.lo_register(), reg(op2.lo_register()),
@@ -1573,11 +1571,10 @@ void CodeGenerator::long_binary_do(Value& result, Value& op1, Value& op2,
     case BytecodeClosure::bin_min:
     case BytecodeClosure::bin_max: {
       assign_register(result, op1);
+      op2.materialize();
+
       // This code isn't called very often, so we don't bother optimizing
       // the case that op2 is an immediate
-      if (op2.is_immediate()) {
-        op2.materialize();
-      }
       Register A1 =  op1.lsw_register();
       Register A2 =  op1.msw_register();
 
@@ -1825,34 +1822,33 @@ void CodeGenerator::float_binary_do(Value& result, Value& op1, Value& op2,
   runtime_func_type runtime_func = funcs[op];
 
   if (op1.is_immediate() && op2.is_immediate()) {
-    float result_imm = runtime_func(op1.as_float(), op2.as_float());
+    const float result_imm = runtime_func(op1.as_float(), op2.as_float());
     result.set_float(result_imm);
-  } else {
-#if ENABLE_ARM_VFP
-    if (int(op) < int(BytecodeClosure::bin_rem)) {
-      if (op1.is_immediate()) {
-        op1.materialize();
-      }
-      if (op2.is_immediate()) {
-        op2.materialize();
-      }
-      ensure_in_float_register(op1);
-      ensure_in_float_register(op2);
+    return;
+  }
 
-      RegisterAllocator::reference(op1.lo_register());
-      RegisterAllocator::reference(op2.lo_register());
+#if ENABLE_ARM_VFP
+  if (int(op) < int(BytecodeClosure::bin_rem)) {
+    op1.materialize();
+    ensure_in_float_register(op1);
+
+    op2.materialize();
+    ensure_in_float_register(op2);
+
+    RegisterAllocator::reference(op1.lo_register());
+    RegisterAllocator::reference(op2.lo_register());
 
 #if ENABLE_SOFT_FLOAT
-      if (RunFastMode) {
-        RegisterAllocator::spill(lr);
-        GUARANTEE(!RegisterAllocator::is_referenced(lr), "lr must be free");
-        RegisterAllocator::reference(lr);
-      }
+    if (RunFastMode) {
+      RegisterAllocator::spill(lr);
+      GUARANTEE(!RegisterAllocator::is_referenced(lr), "lr must be free");
+      RegisterAllocator::reference(lr);
+    }
 #endif
 
-      result.assign_register();
+    result.assign_register();
 
-      switch (op) {
+    switch (op) {
       case BytecodeClosure::bin_add:
         fadds(result.lo_register(), op1.lo_register(), op2.lo_register());
         break;
@@ -1865,42 +1861,44 @@ void CodeGenerator::float_binary_do(Value& result, Value& op1, Value& op2,
       case BytecodeClosure::bin_div:
         fdivs(result.lo_register(), op1.lo_register(), op2.lo_register());
         break;
-      }
+    }
 
-      RegisterAllocator::dereference(op1.lo_register());
-      RegisterAllocator::dereference(op2.lo_register());
+    RegisterAllocator::dereference(op1.lo_register());
+    RegisterAllocator::dereference(op2.lo_register());
 
 #if ENABLE_SOFT_FLOAT
-      if (RunFastMode) {
-        GUARANTEE(result.in_register(), "result must be in a register");
-        GUARANTEE(is_vfp_register(result.lo_register()), "result must be in a vfp register");
-        RegisterAllocator::reference(result.lo_register());
+    if (RunFastMode) {
+      GUARANTEE(result.in_register(), "result must be in a register");
+      GUARANTEE(is_vfp_register(result.lo_register()), "result must be in a vfp register");
+      RegisterAllocator::reference(result.lo_register());
 
-        COMPILER_COMMENT(("Check for VFP exceptions"));
-        fmrx(lr, fpscr);
-        tst(lr, imm(0x8f));
+      COMPILER_COMMENT(("Check for VFP exceptions"));
+      fmrx(lr, fpscr);
+      tst(lr, imm(0x8f));
 
-        bl((address)vfp_redo, ne);
-        RegisterAllocator::dereference(result.lo_register());
-        RegisterAllocator::dereference(lr);
-      }
-#endif // ENABLE_SOFT_FLOAT
-    } else
-#endif  // ENABLE_ARM_VFP
-    {
-      ensure_not_in_float_register(op1);
-      ensure_not_in_float_register(op2);
-
-      if ((op == BytecodeClosure::bin_add || op == BytecodeClosure::bin_mul)
-          && (   (op1.in_register() && op1.lo_register() == r1)
-              || (op2.in_register() && op2.lo_register() == r0))) {
-        // Avoid register shuffling on the commutative operations.
-        call_simple_c_runtime(result, (address)runtime_func, op2, op1);
-      } else {
-        call_simple_c_runtime(result, (address)runtime_func, op1, op2);
-      }
+      bl((address)vfp_redo, ne);
+      RegisterAllocator::dereference(result.lo_register());
+      RegisterAllocator::dereference(lr);
     }
+#endif // ENABLE_SOFT_FLOAT
+  } else {      // bin_rem
+    ensure_not_in_float_register(op1);
+    ensure_not_in_float_register(op2);
+    call_simple_c_runtime(result, (address)runtime_func, op1, op2);
   }
+#else
+  ensure_not_in_float_register(op1);
+  ensure_not_in_float_register(op2);
+
+  if ((op == BytecodeClosure::bin_add || op == BytecodeClosure::bin_mul)
+      && (   (op1.in_register() && op1.lo_register() == r1)
+          || (op2.in_register() && op2.lo_register() == r0))) {
+    // Avoid register shuffling on the commutative operations.
+    call_simple_c_runtime(result, (address)runtime_func, op2, op1);
+  } else {
+    call_simple_c_runtime(result, (address)runtime_func, op1, op2);
+  }
+#endif  // ENABLE_ARM_VFP
 }
 
 void CodeGenerator::float_unary_do(Value& result, Value& op1,
@@ -1952,13 +1950,10 @@ void CodeGenerator::float_cmp(Value& result, BytecodeClosure::cond_op cond,
   } else {
 #if ENABLE_ARM_VFP
     Label done;
-    if (op1.is_immediate()) {
-      op1.materialize();
-    }
-    if (op2.is_immediate()) {
-      op2.materialize();
-    }
+    op1.materialize();
     ensure_in_float_register(op1);
+
+    op2.materialize();
     ensure_in_float_register(op2);
 
 #if ENABLE_SOFT_FLOAT
@@ -2030,12 +2025,9 @@ void CodeGenerator::double_binary_do(Value& result, Value& op1, Value& op2,
   } else {
 #if ENABLE_ARM_VFP
     if (int(op) < int(BytecodeClosure::bin_rem)) {
-      if (op1.is_immediate()) {
-        op1.materialize();
-      }
-      if (op2.is_immediate()) {
-        op2.materialize();
-      }
+      op1.materialize();
+      op2.materialize();
+
       ensure_in_float_register(op1);
       ensure_in_float_register(op2);
 
@@ -2163,12 +2155,9 @@ void CodeGenerator::double_cmp(Value& result, BytecodeClosure::cond_op cond,
   } else {
 #if ENABLE_ARM_VFP
     Label done;
-    if (op1.is_immediate()) {
-      op1.materialize();
-    }
-    if (op2.is_immediate()) {
-      op2.materialize();
-    }
+    op1.materialize();
+    op2.materialize();
+
     ensure_in_float_register(op1);
     ensure_in_float_register(op2);
 
@@ -2731,12 +2720,8 @@ void CodeGenerator::lmul(Value& result, Value& op1, Value& op2 JVM_TRAPS) {
   // by 32bit constants and generate better code for those cases.
   write_literals_if_desperate();
 
-  if (op1.is_immediate()) {
-    op1.materialize();
-  }
-  if (op2.is_immediate()) {
-    op2.materialize();
-  }
+  op1.materialize();
+  op2.materialize();
   result.assign_register();
 
   // Remember that "lo" and "hi" refer to the address in memory.
@@ -2800,10 +2785,7 @@ void CodeGenerator::lshift(Shift type,  Value& result,
 void CodeGenerator::lshift_reg(Shift type,
                                Value& result, Value& op1, Value& op2) {
   result.assign_register();
-
-  if (op1.is_immediate()) {
-    op1.materialize();
-  }
+  op1.materialize();
 
   // Remember that "lo" and "hi" refer to the address in memory.
   // For big endian machines, these are counter-intuitive
@@ -3013,8 +2995,8 @@ void CodeGenerator::long_cmp(Value& result, Value& op1, Value& op2 JVM_TRAPS) {
     break;
 
 #if NOT_CURRENTLY_USED
-    if (op1.is_immediate()) { op1.materialize(); }
-    if (op2.is_immediate()) { op2.materialize(); }
+    op1.materialize();
+    op2.materialize();
 
     const Register xlo = op1.lsw_register();
     const Register xhi = op1.msw_register();
@@ -3259,9 +3241,7 @@ void CodeGenerator::if_iinc(Value& result, BytecodeClosure::cond_op condition,
   op1.destroy(); op2.destroy();
 
   Condition cond = convert_condition(condition);
-  if (arg.is_immediate()) {
-    arg.materialize();
-  }
+  arg.materialize();
   assign_register(result, arg);
   // We hope that the following generates no code!
   move(result, arg);
@@ -3589,15 +3569,12 @@ void CodeGenerator::ensure_in_float_register(Value& value) {
   }
 }
 
-void CodeGenerator::ensure_not_in_float_register(Value& value,
-                                                        bool need_to_copy) {
+void CodeGenerator::ensure_not_in_float_register(Value& value) {
   if (value.type() == T_FLOAT && value.in_register()) {
     Register r = value.lo_register();
     if (r >= s0) {
       value.set_register(RegisterAllocator::allocate());
-      if (need_to_copy) {
-        fmrs(value.lo_register(), r);
-      }
+      fmrs(value.lo_register(), r);
     }
   } else if (value.type() == T_DOUBLE && value.in_register()) {
     Register l = value.lo_register();
@@ -3606,9 +3583,7 @@ void CodeGenerator::ensure_not_in_float_register(Value& value,
       Register lo = RegisterAllocator::allocate();
       Register hi = RegisterAllocator::allocate();
       value.set_registers(lo, hi);
-      if (need_to_copy) {
-        fmrrd(value.lo_register(), value.hi_register(), l);
-      }
+      fmrrd(value.lo_register(), value.hi_register(), l);
     }
   }
 }

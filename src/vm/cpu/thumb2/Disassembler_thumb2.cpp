@@ -204,13 +204,11 @@ const char *Disassembler::find_gp_name(int uoffset) {
 }
 
 void Disassembler::print_gp_name(int imm) {
-   const char *name = find_gp_name(imm);
-   if (name != NULL) {
-     if (GenerateGNUCode && !GenerateROMImage) {
-       stream()->print(" @ = %s", name);
-     } else {
-       stream()->print("; = %s ", name);
-     }
+   const char* name = find_gp_name(imm);
+   if( name != NULL ) {
+     const char* const format =
+       GenerateGNUCode && !GenerateROMImage ? " @ = %s" : "; = %s ";
+     stream()->print(format, name);
    }
 }
 

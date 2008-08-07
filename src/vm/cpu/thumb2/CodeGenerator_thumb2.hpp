@@ -1,27 +1,27 @@
 /*
- *   
+ *
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
- * 
+ *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
- * 2 only, as published by the Free Software Foundation. 
- * 
+ * 2 only, as published by the Free Software Foundation.
+ *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
- * included at /legal/license.txt). 
- * 
+ * included at /legal/license.txt).
+ *
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
- * 02110-1301 USA 
- * 
+ * 02110-1301 USA
+ *
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
- * information or have any questions. 
+ * information or have any questions.
  */
 
 // This file is #include'd by src/vm/share/compiler/CodeGenerator.hpp inside
@@ -34,7 +34,7 @@ private:
   }
   void call_through_gp(address& target, bool add_lr JVM_TRAPS);
 
-  void call_from_compiled_code(Register dst, int offset, 
+  void call_from_compiled_code(Register dst, int offset,
                                int parameters_size JVM_TRAPS) {
     call_from_compiled_code(dst, offset, parameters_size,
                             /*indirect=*/ false,
@@ -42,7 +42,7 @@ private:
                             JVM_NO_CHECK_AT_BOTTOM);
   }
 
-  void call_from_compiled_code(Register dst, int offset, 
+  void call_from_compiled_code(Register dst, int offset,
                                int parameters_size, bool indirect,
                                bool add_lr JVM_TRAPS);
 
@@ -52,16 +52,16 @@ private:
                    Value& op2 JVM_TRAPS);
   void shift(Shift shifter, Value& result, Value& op1, Value& op2);
 
-  void call_simple_c_runtime(Value& result, address runtime_func, 
-                          Value& op1, Value& op2) { 
+  void call_simple_c_runtime(Value& result, address runtime_func,
+                          Value& op1, Value& op2) {
     vcall_simple_c_runtime(result, runtime_func, &op1, &op2, NULL);
   }
-  void call_simple_c_runtime(Value& result, address runtime_func, 
+  void call_simple_c_runtime(Value& result, address runtime_func,
                           Value& op1) {
     vcall_simple_c_runtime(result, runtime_func, &op1, NULL);
   }
 
-  void call_simple_c_runtime(Value& result, address runtime_func, 
+  void call_simple_c_runtime(Value& result, address runtime_func,
                           Value& op1, Value& op2, Value& op3) {
     vcall_simple_c_runtime(result, runtime_func, &op1, &op2, &op3, NULL);
   }
@@ -75,7 +75,7 @@ private:
 
   void adjust_for_invoke(int parameters_size, BasicType return_type,
                          bool native = false);
-   
+
   void setup_c_args(int ignored, ...);
   void vsetup_c_args(va_list ap);
 
@@ -86,11 +86,23 @@ private:
 
   void restore_last_frame(Register return_address);
 
-  void lookup_switch(Register index, jint table_index, 
+  void lookup_switch(Register index, jint table_index,
                      jint start, jint end, jint default_dest JVM_TRAPS);
 
-public:
+#if ENABLE_ARM_VFP
+  void ensure_in_float_register    (Value& value);
+  void ensure_not_in_float_register(Value& value);
 
+  void move_vfp_immediate(const Register dst,const jint src, const Condition cond = al);
+  void move_float_immediate(const Register dst, const jint src, const Condition cond = al);
+  void move_double_immediate(const Register dst, const jint src_lo, const jint src_hi,
+                             const Condition cond = al);
+#else
+  void ensure_in_float_register    (Value& /*value*/) {}
+  void ensure_not_in_float_register(Value& /*value*/) {}
+#endif
+
+public:
   void switch_to_arm_mode() {
     NOT_PRODUCT(comment("Switch from Thumb to ARM mode"));
     if ((code_size() & 0x3) != 0) {
@@ -105,7 +117,7 @@ public:
     NOT_PRODUCT(comment("Switch from ARM to Thumb mode"));
     // add r12, pc, 1 in ARM
     emit_int(0xE29 << 20 | pc << 16 |
-         r12 << 12 | 0x1);    
+         r12 << 12 | 0x1);
     // bx r12 in ARM
     emit_int(0xE << 28 | 0x012fff10 | r12);
     NOT_PRODUCT(comment("END : Switch from ARM to Thumb mode"));
@@ -120,7 +132,7 @@ public:
     }
 
     int op2 = ((1 << 24) | sign << 23 | rn << 16 | offset);
-    emit_int(0xE << 28 | 1 << 26 | rs << 12 | op2); 
+    emit_int(0xE << 28 | 1 << 26 | rs << 12 | op2);
     return ;
   }
 
@@ -163,7 +175,7 @@ public:
     invoke_interface_handler,
     do_not_use_it_2,
     method_prolog_handler_rom,
-    do_not_use_it_5, 
+    do_not_use_it_5,
     do_not_use_it_6,
     method_prolog_handler_heap_ex_sens_update,
     do_not_use_it_7,
@@ -181,7 +193,7 @@ public:
     write_barrier_handler_r7,    // it doesn't require a parameter!
     compiler_new_object_handler, // it doesn't require a parameter!
     do_not_use_it_11,
-    do_not_use_it_12,                            
+    do_not_use_it_12,
     comp_new_type_array_handler, // it doesn't require a parameter!
     do_not_use_it_13,
     do_not_use_it_14,
@@ -191,7 +203,7 @@ public:
   };
 #endif
 
-  void cmp_values(Value& op1, Value& op2, 
+  void cmp_values(Value& op1, Value& op2,
                   BytecodeClosure::cond_op condition) {
     (void)condition;
     cmp_values(op1, op2);

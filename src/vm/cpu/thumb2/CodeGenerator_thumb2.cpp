@@ -1,27 +1,27 @@
 /*
- *   
+ *
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
- * 
+ *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
- * 2 only, as published by the Free Software Foundation. 
- * 
+ * 2 only, as published by the Free Software Foundation.
+ *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
- * included at /legal/license.txt). 
- * 
+ * included at /legal/license.txt).
+ *
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
- * 02110-1301 USA 
- * 
+ * 02110-1301 USA
+ *
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
- * information or have any questions. 
+ * information or have any questions.
  */
 
 # include "incls/_precompiled.incl"
@@ -746,15 +746,10 @@ void CodeGenerator::int_binary_do(Value& result, Value& op1, Value& op2,
       break;
     }
     case BytecodeClosure::bin_rsb  :
-    {
-      if (op2.is_immediate()) {
-        op2.materialize();
-      }
+      op2.materialize();
       arithmetic (_sub, result, op2, op1);
       break;
-    }
     case BytecodeClosure::bin_add  :
-    {
       assign_register(result, op1);
       if (!op2.is_immediate()) {
         add(result.lo_register(),
@@ -764,7 +759,6 @@ void CodeGenerator::int_binary_do(Value& result, Value& op1, Value& op2,
             op2.as_int());
       }
       break;
-    }
     case BytecodeClosure::bin_and  :
       arithmetic (_and, result, op1, op2);
       break;
@@ -790,10 +784,7 @@ void CodeGenerator::int_binary_do(Value& result, Value& op1, Value& op2,
     case BytecodeClosure::bin_max  :
     {
       assign_register(result, op1);
-      if (op2.is_immediate()) {
-        op2.materialize();
-      }
-
+      op2.materialize();
       mov(result.lo_register(), op1.lo_register());
       cmp(op1.lo_register(), reg(op2.lo_register()));
       NearLabel skip_mov;
@@ -851,13 +842,9 @@ void CodeGenerator::long_binary_do(Value& result, Value& op1, Value& op2,
       larithmetic(_sub, _sbc, result, op1, op2 JVM_NO_CHECK_AT_BOTTOM);
       break;
     case BytecodeClosure::bin_rsb:
-    {
-     if (op2.is_immediate()) {
-        op2.materialize();
-      }
+      op2.materialize();
       larithmetic(_sub, _sbc, result, op2, op1 JVM_NO_CHECK_AT_BOTTOM);
       break;
-    }
     case BytecodeClosure::bin_add:
       larithmetic(_add, _adc, result, op1, op2 JVM_NO_CHECK_AT_BOTTOM);
       break;
@@ -1110,46 +1097,85 @@ void CodeGenerator::shift(Shift shifter, Value& result, Value& op1, Value& op2){
 
 #if ENABLE_FLOAT
 extern "C" {
-  float jvm_fadd(float x, float y);
-  float jvm_fsub(float x, float y);
-  float jvm_fmul(float x, float y);
-  float jvm_fdiv(float x, float y);
-  float jvm_frem(float x, float y);
+  float jvm_fadd (float x, float y);
+  float jvm_fsub (float x, float y);
+  float jvm_fmul (float x, float y);
+  float jvm_fdiv (float x, float y);
+  float jvm_frem (float x, float y);
   int   jvm_fcmpl(float x, float y);
   int   jvm_fcmpg(float x, float y);
 }
 
 void CodeGenerator::float_binary_do(Value& result, Value& op1, Value& op2,
                                     BytecodeClosure::binary_op op JVM_TRAPS) {
-  float (*runtime_func)(float, float);
-  switch (op) {
-    case BytecodeClosure::bin_sub:
-      runtime_func = jvm_fsub; break;
-    case BytecodeClosure::bin_add:
-      runtime_func = jvm_fadd; break;
-    case BytecodeClosure::bin_mul:
-      runtime_func = jvm_fmul; break;
-    case BytecodeClosure::bin_div:
-      runtime_func = jvm_fdiv; break;
-    case BytecodeClosure::bin_rem:
-      runtime_func = jvm_frem; break;
-    default:
-      SHOULD_NOT_REACH_HERE();
-      runtime_func = 0;  break;
-  }
+  JVM_IGNORE_TRAPS;
+  typedef float (*runtime_func_type)(float, float);
+  static const runtime_func_type funcs [] = {
+    jvm_fadd,   // bin_add = 0
+    jvm_fsub,   // bin_sub = 1
+    jvm_fmul,   // bin_mul = 2
+    jvm_fdiv,   // bin_div = 3
+    jvm_frem    // bin_rem = 4
+  };
+
+  GUARANTEE(int(op) >= int(BytecodeClosure::bin_add) &&
+            int(op) <= int(BytecodeClosure::bin_rem), "sanity");
+  runtime_func_type const runtime_func = funcs[op];
+
   if (op1.is_immediate() && op2.is_immediate()) {
-    float result_imm = runtime_func(op1.as_float(), op2.as_float());
+    const float result_imm = runtime_func(op1.as_float(), op2.as_float());
     result.set_float(result_imm);
-  } else {
-    if ((op == BytecodeClosure::bin_add || op == BytecodeClosure::bin_mul)
-        && (   (op1.in_register() && op1.lo_register() == r1)
-            || (op2.in_register() && op2.lo_register() == r0))) {
-      // Avoid register shuffling on the commutative operations.
-      call_simple_c_runtime(result, (address)runtime_func, op2, op1);
-    } else {
-      call_simple_c_runtime(result, (address)runtime_func, op1, op2);
-    }
+    return;
   }
+
+#if ENABLE_ARM_VFP
+  if (int(op) < int(BytecodeClosure::bin_rem)) {
+    op1.materialize();
+    op2.materialize();
+
+    ensure_in_float_register(op1);
+    ensure_in_float_register(op2);
+
+    RegisterAllocator::reference(op1.lo_register());
+    RegisterAllocator::reference(op2.lo_register());
+    result.assign_register();
+
+    switch (op) {
+      case BytecodeClosure::bin_add:
+        fadds(result.lo_register(), op1.lo_register(), op2.lo_register());
+        break;
+      case BytecodeClosure::bin_sub:
+        fsubs(result.lo_register(), op1.lo_register(), op2.lo_register());
+        break;
+      case BytecodeClosure::bin_mul:
+        fmuls(result.lo_register(), op1.lo_register(), op2.lo_register());
+        break;
+      case BytecodeClosure::bin_div:
+        fdivs(result.lo_register(), op1.lo_register(), op2.lo_register());
+        break;
+    }
+
+    RegisterAllocator::dereference(op1.lo_register());
+    RegisterAllocator::dereference(op2.lo_register());
+
+  } else {      // bin_rem
+    ensure_not_in_float_register(op1);
+    ensure_not_in_float_register(op2);
+    call_simple_c_runtime(result, (address)runtime_func, op1, op2);
+  }
+#else
+  ensure_not_in_float_register(op1);
+  ensure_not_in_float_register(op2);
+
+  if ((op == BytecodeClosure::bin_add || op == BytecodeClosure::bin_mul)
+      && (   (op1.in_register() && op1.lo_register() == r1)
+          || (op2.in_register() && op2.lo_register() == r0))) {
+    // Avoid register shuffling on the commutative operations.
+    call_simple_c_runtime(result, (address)runtime_func, op2, op1);
+  } else {
+    call_simple_c_runtime(result, (address)runtime_func, op1, op2);
+  }
+#endif  // ENABLE_ARM_VFP
 }
 
 void CodeGenerator::float_unary_do(Value& result, Value& op1,
@@ -1888,9 +1914,7 @@ void CodeGenerator::if_iinc(Value& result, BytecodeClosure::cond_op condition,
   GUARANTEE(false, "OptimizeForwardBranches : Disabled for thumb");
 
   Condition cond = convert_condition(condition);
-  if (arg.is_immediate()) {
-    arg.materialize();
-  }
+  arg.materialize();
   assign_register(result, arg);
   // We hope that the following generates no code!
   move(result, arg);
@@ -2161,6 +2185,43 @@ void CodeGenerator::return_error(Value& value JVM_TRAPS) {
   write_literals();
 }
 
+#if ENABLE_ARM_VFP
+void CodeGenerator::ensure_in_float_register(Value& value) {
+  if (value.type() == T_FLOAT && value.in_register()) {
+    Register r = value.lo_register();
+    if (is_arm_register(r)) {
+      value.set_register(RegisterAllocator::allocate_float_register());
+      fmsr(value.lo_register(), r);
+    }
+  } else if (value.type() == T_DOUBLE && value.in_register()) {
+    Register lo = value.lo_register();
+    Register hi = value.hi_register();
+    if (is_arm_register(lo) && is_arm_register(hi)) {
+      value.set_vfp_double_register(RegisterAllocator::allocate_double_register());
+      fmdrr(value.lo_register(), lo, hi);
+    }
+  }
+}
+
+void CodeGenerator::ensure_not_in_float_register(Value& value) {
+  if (value.type() == T_FLOAT && value.in_register()) {
+    Register r = value.lo_register();
+    if (r >= s0) {
+      value.set_register(RegisterAllocator::allocate());
+      fmrs(value.lo_register(), r);
+    }
+  } else if (value.type() == T_DOUBLE && value.in_register()) {
+    Register l = value.lo_register();
+    Register h = value.hi_register();
+    if (l >= s0 && h >= s0) {
+      Register lo = RegisterAllocator::allocate();
+      Register hi = RegisterAllocator::allocate();
+      value.set_registers(lo, hi);
+      fmrrd(value.lo_register(), value.hi_register(), l);
+    }
+  }
+}
+#endif  // ENABLE_ARM_VFP
 
 void CodeGenerator::restore_last_frame(Register return_address) {
   jint locals = method()->max_locals();

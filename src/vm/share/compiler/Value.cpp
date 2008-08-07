@@ -277,7 +277,7 @@ void Value::assign_register() {
   }
 }
 
-void Value::force_to_byte_register() {
+void Value::force_to_byte_register( void ) {
   GUARANTEE(in_register(), "must be in register");
   if (!Assembler::is_valid_byte_register(lo_register())) {
     Assembler::Register byte_register = RegisterAllocator::allocate_byte_register();
@@ -288,17 +288,18 @@ void Value::force_to_byte_register() {
 
 #endif
 
-void Value::materialize() {
-  GUARANTEE(is_immediate(), "value must be immediate");
-  GUARANTEE(type() != T_OBJECT || must_be_null(), "object immediate is already materialized");
+void Value::materialize( void ) {
+  if( is_immediate() ) {
+    GUARANTEE(type() != T_OBJECT || must_be_null(), "object immediate is already materialized");
 
-  Value result(type());
-  result.assign_register();
-  Compiler::code_generator()->move(result, *this);
-  result.copy(*this);
+    Value result(type());
+    result.assign_register();
+    Compiler::code_generator()->move(result, *this);
+    result.copy(*this);
+  }
 }
 
-void Value::destroy() {
+void Value::destroy( void ) {
   if (in_register()) {
     RegisterAllocator::dereference(lo_register());
     if (use_two_registers()) {
