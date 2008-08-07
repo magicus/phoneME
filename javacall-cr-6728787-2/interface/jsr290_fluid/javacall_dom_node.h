@@ -778,7 +778,7 @@ javacall_dom_node_set_text_content(javacall_handle handle,
  *   it is not significant in the context of this method. 
  * @param version  This is the version number of the feature to test. 
  * @param ret_value Pointer to the object representing 
- *    Returns an object which implements the specialized APIs of 
+ *     an object which implements the specialized APIs of 
  *   the specified feature and version, if any, or <code>NULL</code> if 
  *   there is no object which implements interfaces associated with that 
  *   feature. If the <code>DOMObject</code> returned by this method 
@@ -808,12 +808,9 @@ javacall_dom_node_get_feature(javacall_handle handle,
  * <code>EventListener</code> to be called twice and since they are 
  * discarded they do not need to be removed with the 
  * <code>removeEventListener</code> method. 
- * 
+
  * @param handle Pointer to the object representing this node.
  * @param type The event type for which the user is registering
- * @param listener The <code>listener</code> parameter takes an interface 
- *   implemented by the user which contains the methods to be called 
- *   when the event occurs.
  * @param use_capture If true, <code>use_capture</code> indicates that the 
  *   user wishes to initiate capture. After initiating capture, all 
  *   events of the specified type will be dispatched to the registered 
@@ -821,7 +818,9 @@ javacall_dom_node_get_feature(javacall_handle handle,
  *   <code>EventTargets</code> beneath them in the tree. Events which 
  *   are bubbling upward through the tree will not trigger an 
  *   <code>EventListener</code> designated to use capture.
- * 
+ * @param ret_value Pointer to the object representing  
+ *   native event listener
+
  * @return JAVACALL_OK if all done successfuly,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
@@ -840,19 +839,9 @@ javacall_dom_node_add_event_listener(javacall_handle handle,
  * <br>Calling <code>removeEventListener</code> with arguments which do 
  * not identify any currently registered <code>EventListener</code> on 
  * the <code>EventTarget</code> has no effect.
- * 
- * @param handle Pointer to the object representing this node.
- * @param type Specifies the event type of the <code>EventListener</code> 
- *   being removed. 
- * @param listener The <code>EventListener</code> parameter indicates the 
- *   <code>EventListener </code> to be removed. 
- * @param useCapture Specifies whether the <code>EventListener</code> 
- *   being removed was registered as a capturing listener or not. If a 
- *   listener was registered twice, one with capture and one without, 
- *   each must be removed separately. Removal of a capturing listener 
- *   does not affect a non-capturing version of the same listener, and 
- *   vice versa. 
- * 
+
+ * @param handle Pointer to the native event listener.
+
  * @return JAVACALL_OK if all done successfuly,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */

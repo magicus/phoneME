@@ -128,18 +128,18 @@ typedef enum {
      * If the type of an object is incompatible with the expected type of the 
      * parameter associated to the object. 
      */
-    JAVACALL_DOM_TYPE_MISMATCH_ERR           = 0x10
+    JAVACALL_DOM_TYPE_MISMATCH_ERR           = 0x10,
     /**
      *  If the <code>Event</code>'s type was not specified by initializing the 
      * event before the method was called. Specification of the Event's type 
      * as <code>null</code> or an empty string will also trigger this 
      * exception. 
      */
-    JAVACALL_DOM_EVENTS_UNSPECIFIED_EVENT_TYPE_ERR = EVENT_EXCEPTION_OFFSET;
+    JAVACALL_DOM_EVENTS_UNSPECIFIED_EVENT_TYPE_ERR = EVENT_EXCEPTION_OFFSET,
     /**
      * If the <code>Event</code> object is already dispatched in the tree.
      */
-    JAVACALL_DOM_EVENTS_DISPATCH_REQUEST_ERR       = EVENT_EXCEPTION_OFFSET + 1;
+    JAVACALL_DOM_EVENTS_DISPATCH_REQUEST_ERR       = EVENT_EXCEPTION_OFFSET + 1
 } javacall_dom_exceptions;
 
 /**
