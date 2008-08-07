@@ -720,6 +720,12 @@ public class MIDletSuiteUtils {
      * @see #getSuiteProperty(com.sun.midp.midlet.MIDletSuite, int, String)
      */
     public static MIDletSuite getSuite(int suiteId) throws SecurityException {
+        // Don't open internal or dummy suites
+        if (suiteId == MIDletSuite.INTERNAL_SUITE_ID ||
+                suiteId == MIDletSuite.UNUSED_SUITE_ID) {
+            return null;
+        }
+
         // Note: getMIDletSuiteStorage performs an AMS permission check
         MIDletSuiteStorage storage = MIDletSuiteStorage.getMIDletSuiteStorage();
 
