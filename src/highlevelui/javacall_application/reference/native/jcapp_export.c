@@ -35,7 +35,20 @@
 #include <kni.h>
 
 
-gxj_screen_buffer gxj_system_screen_buffer;
+gxj_screen_buffer* gxj_system_screen_buffers;
+jint* ids;
+int num_of_screens;
+
+gxj_screen_buffer* get_screen_by_id(int hardwareId) {
+  int i;
+  if ((ids == NULL) || gxj_system_screen_buffers == NULL) return NULL;
+  for(i = 0; i < num_of_screens; i++) {
+    if (ids[i] == hardwareId) {
+      return &gxj_system_screen_buffers[i];
+    }
+  } 
+
+}
 
 /**
  * @file
@@ -46,11 +59,12 @@ gxj_screen_buffer gxj_system_screen_buffer;
 
 int jcapp_get_screen_buffer(int hardwareId) {
      javacall_lcd_color_encoding_type color_encoding;
-     gxj_system_screen_buffer.alphaData = NULL;
-     gxj_system_screen_buffer.pixelData = 
+     gxj_screen_buffer* buff = get_screen_by_id(hardwareId);
+     buff->alphaData = NULL;
+     buff->pixelData = 
          javacall_lcd_get_screen (hardwareId,
-                                  &gxj_system_screen_buffer.width,
-                                  &gxj_system_screen_buffer.height,
+                                  &buff->width,
+                                  &buff->height,
                                   &color_encoding);                                
      if (JAVACALL_LCD_COLOR_RGB565 != color_encoding) {        
 	    return -2;
@@ -65,9 +79,9 @@ int jcapp_get_screen_buffer(int hardwareId) {
  * @param hardwareId unique id of hardware display
  */
 void static jcapp_reset_screen_buffer(int hardwareId) {
-    memset (gxj_system_screen_buffer.pixelData, 0,
-        gxj_system_screen_buffer.width * gxj_system_screen_buffer.height *
-            sizeof (gxj_pixel_type));
+  gxj_screen_buffer* buff = get_screen_by_id(hardwareId);
+  memset (buff->pixelData, 0,
+	  buff->width * buff->height * sizeof (gxj_pixel_type));
 }
 
 
@@ -78,22 +92,36 @@ void static jcapp_reset_screen_buffer(int hardwareId) {
  *         <tt>other value</tt> otherwise
  */
 int jcapp_init() {
+    int i;
+    int size;
     javacall_lcd_color_encoding_type color_encoding;
  
     if (!JAVACALL_SUCCEEDED(javacall_lcd_init ()))
         return -1;        
  
-    /**
-     *   NOTE: Only JAVACALL_LCD_COLOR_RGB565 encoding is supported by phoneME 
-     *     implementation. Other values are reserved for future  use. Returning
-     *     the buffer in other encoding will result in application termination.
-     */
-    if (jcapp_get_screen_buffer() == -2) {
+    
+    ids = jcapp_get_display_device_ids(&num_of_screens);
+
+    size = sizeof(gxj_screen_buffer) * num_of_screens;
+    system_screens = (gxj_screen_buffer*)midpMalloc(size);
+    if (system_screens != NULL) {
+        memset(system_screens, 0, size);
+    } 
+
+    for (i = 0; i < num_of_screens; i++) {
+      
+      /**
+       *   NOTE: Only JAVACALL_LCD_COLOR_RGB565 encoding is supported by phoneME 
+       *     implementation. Other values are reserved for future  use. Returning
+       *     the buffer in other encoding will result in application termination.
+       */
+      if (jcapp_get_screen_buffer(ids[i]) == -2) {
         REPORT_ERROR(LC_LOWUI, "Screen pixel format is the one different from RGB565!");
         return -2;
-    }    
-
-    jcapp_reset_screen_buffer();
+      }    
+      
+      jcapp_reset_screen_buffer(ids[i]);
+    }
     return 0;
 }
 
@@ -198,7 +226,7 @@ jboolean jcapp_is_native_softbutton_layer_supported() {
  * Get display device name by id
  */
 char* jcapp_get_display_name(int hardwareId) {
-    return javacall_get_display_name(hardwareId);
+    return javacall_lcd_get_display_name(hardwareId);
 }
 
 
@@ -206,37 +234,37 @@ char* jcapp_get_display_name(int hardwareId) {
  * Check if the display device is primary
  */
 jboolean jcapp_is_display_primary(int hardwareId) {
-    return javacall_is_display_primary(hardwareId);
+    return javacall_lcd_is_display_primary(hardwareId);
 }
 
 /**
  * Check if the display device is build-in
  */
 jboolean jcapp_is_display_buildin(int hardwareId) {
-    return javacall_is_display_buildin(hardwareId);
+    return javacall_lcd_is_display_buildin(hardwareId);
 }
 
 /**
  * Check if the display device supports pointer events
  */
 jboolean jcapp_is_display_ptr_supported(int hardwareId) {
-    return javacall_is_display_ptr_supported(hardwareId);
+    return javacall_lcd_is_display_ptr_supported(hardwareId);
 }
 
 /**
  * Check if the display device supports pointer motion  events
  */
 jboolean jcapp_is_display_ptr_motion_supported(int hardwareId){
-    return javacall_is_display_ptr_motion_supported(hardwareId);
+    return javacall_lcd_is_display_ptr_motion_supported(hardwareId);
 }
 
 /**
  * Get display device capabilities
  */
 int jcapp_get_display_capabilities(int hardwareId) {
-  return javacall_get_display_capabilities(hardwareId);
+  return javacall_lcd_get_display_capabilities(hardwareId);
 }
 
 jint* jcapp_get_display_device_ids(jint* n) {
-    return javacall_get_display_device_ids(n);
+    return javacall_lcd_get_display_device_ids(n);
 }
