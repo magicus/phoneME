@@ -424,14 +424,14 @@ javacall_ams_get_suite_id(const javacall_utf16_string vendorName,
 
     if (nams_string_to_utf16(key1, strlen(key1), &uKey1, strlen(key1)) !=
             JAVACALL_OK) {
-        javacall_print("[NAMS] javacall_ams_getSuiteID "
+        javacall_print("[NAMS] javacall_ams_get_suite_id "
                        "nams_string_to_utf16 error\n");
         return JAVACALL_FAIL;
     }
 
     if (nams_string_to_utf16(key2, strlen(key2), &uKey2, strlen(key2)) !=
             JAVACALL_OK) {
-        javacall_print("[NAMS] javacall_ams_getSuiteID "
+        javacall_print("[NAMS] javacall_ams_get_suite_id "
                        "nams_string_to_utf16 error\n");
         return JAVACALL_FAIL;
     }

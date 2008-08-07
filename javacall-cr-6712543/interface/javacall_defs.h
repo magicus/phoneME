@@ -152,10 +152,47 @@ typedef void* javacall_handle;
 typedef javacall_int32 javacall_suite_id;
 
 /**
- * @define INVALID_SUITE_ID
+ * @brief unique storage ID
+ */
+typedef javacall_int32 javacall_storage_id;
+
+/**
+ * @brief unique AMS folder ID
+ */
+typedef javacall_int32 javacall_folder_id;
+
+/**
+ * @brief unique running midlet ID
+ */
+typedef javacall_int32 javacall_app_id;
+
+/**
+ * @brief unique RMS ID
+ */
+typedef javacall_int32 javacall_rms_id;
+
+/**
+ * @brief unique RMS record ID
+ */
+typedef javacall_int32 javacall_record_id;
+
+/**
+ * @define JAVACALL_INVALID_SUITE_ID
  * @brief The suite_id that doesn't correspond to any midlet suite
  */
-#define INVALID_SUITE_ID (-1)
+#define JAVACALL_INVALID_SUITE_ID (-1)
+
+/**
+ * @define JAVACALL_INVALID_STORAGE_ID
+ * @brief The storage id that doesn't correspond to any storage
+ */
+#define JAVACALL_INVALID_STORAGE_ID (-1)
+
+/**
+ * @define JAVACALL_INVALID_APP_ID
+ * @brief The application id that doesn't correspond to any running application
+ */
+#define JAVACALL_INVALID_APP_ID (-1)
 
 /**
  * @typedef javacall_utf16_string

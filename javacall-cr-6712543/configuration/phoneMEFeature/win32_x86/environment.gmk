@@ -31,7 +31,13 @@
 #JSR_XX_JC_IMPL_PATH varibale sets path to implementation 
 #
 #For 'midp' USE_MIDP and MIDP_JC_IMPL_PATH variables are used
+#
 #For 'nams' USE_NATIVE_AMS_JC and NATIVE_AMS_JC_IMPL_PATH variables are used
+#
+#To use just a native UI with all other AMS parts (like installer) implemented
+#in MIDP, set both USE_NATIVE_AMS_JC and USE_NATIVE_UI_JC to true and specify
+#NATIVE_AMS_JC_IMPL_PATH
+#
 #To enable on device debug, specify USE_ON_DEVICE_DEBUG
 
 JSR_LIST = COMMON MIDP JSR_120 JSR_135 JSR_177 JSR_211
@@ -62,6 +68,7 @@ endif
 
 ifeq ($(USE_NATIVE_AMS),)
 USE_NATIVE_AMS=false
+USE_NATIVE_AMS_UI=false
 endif
 
 ifneq ($(USE_STATIC_PROPERTIES),true)
@@ -76,9 +83,17 @@ JSR_LIST += NATIVE_AMS
 NATIVE_AMS_JC_IMPL_PATH = $(JAVACALL_DIR)/implementation/win32
 SPECIFIC_DEFINITIONS += -DENABLE_NATIVE_AMS=1
 
+ifeq ($(USE_NATIVE_AMS_UI), true)
+JSR_LIST += NATIVE_AMS_UI
+NATIVE_AMS_UI_JC_IMPL_PATH = $(JAVACALL_DIR)/implementation/win32
+SPECIFIC_DEFINITIONS += -DENABLE_NATIVE_AMS_UI=1
+else
+SPECIFIC_DEFINITIONS += -DENABLE_NATIVE_AMS_UI=0
+endif
+
 else
 
-SPECIFIC_DEFINITIONS += -DENABLE_NATIVE_AMS=0
+SPECIFIC_DEFINITIONS += -DENABLE_NATIVE_AMS=0 -DENABLE_NATIVE_AMS_UI=0
 
 endif
 
