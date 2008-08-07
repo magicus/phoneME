@@ -77,6 +77,22 @@ public class AppSettings extends Form
         new Command(Resource.getString(ResourceConstants.CANCEL),
                     Command.CANCEL, 1);
 
+    /**
+     * Command object for "OK" command for the alert
+     * that is shown during exclusive group conflict.
+     */
+    private Command okExclusiveChoiceSelectionCmd =
+        new Command(Resource.getString(ResourceConstants.YES),
+                    Command.OK, 1);
+
+    /**
+     * Command object for "NO" command for the alert
+     * that is shown during exclusive group conflict.
+     */
+    private Command noExclusiveChoiceSelectionCmd =
+        new Command(Resource.getString(ResourceConstants.NO),
+                    Command.CANCEL, 1);
+
     /** The ID of the setting displayed in the form. */
     private int displayedSettingID;
     /** The ID of the popup button selected. */
@@ -111,6 +127,9 @@ public class AppSettings extends Form
 
     /** Permission group information. */
     private PermissionGroup[] groups;
+
+    /** Mutually exclusive permission groups currently selected by user */
+    private PermissionGroup[] groupsInConflict;
 
     /** MIDlet Suite storage object. */
     MIDletSuiteStorage midletSuiteStorage;
@@ -186,6 +205,162 @@ public class AppSettings extends Form
                 curChoice.lastSelectedId = curChoice.getSelectedButton();
                 display.setCurrentItem(curChoice);
             }
+        } else if (c == okExclusiveChoiceSelectionCmd) {
+            // set [0] to blanket, [1] to session
+            RadioButtonSet  bs1 = findChoice(groupsInConflict[1]);
+            bs1.setSelectedButton(Permissions.SESSION);
+            RadioButtonSet  bs2 = findChoice(groupsInConflict[0]);
+            bs2.setSelectedButton(Permissions.BLANKET_GRANTED);
+            display.setCurrent(this);
+            onChoiceGroupSelectionChanged(bs1);
+            onChoiceGroupSelectionChanged(bs2);
+        } else if (c == noExclusiveChoiceSelectionCmd) {
+             // set [1] to blanket, [0] to session
+            RadioButtonSet  bs1 = findChoice(groupsInConflict[0]);
+            bs1.setSelectedButton(Permissions.SESSION);
+            RadioButtonSet  bs2 = findChoice(groupsInConflict[1]);
+            bs2.setSelectedButton(Permissions.BLANKET_GRANTED);
+            display.setCurrent(this);
+            onChoiceGroupSelectionChanged(bs1);
+            onChoiceGroupSelectionChanged(bs2);
+        }
+    }
+
+    /**
+     * Returns choice dialog for specified permission group.
+     *
+     * @param pg permission group
+     * @return radio button set
+     */
+    private RadioButtonSet findChoice(PermissionGroup pg) {
+        
+        if (pg == Permissions.getPushInterruptGroup()) {
+            return interruptChoice;
+        }
+
+        for (int i = 0; i < groupSettings.length; i++) {
+            if ((groupSettings[i] != null) && (groupSettings[i].permissionGroup == pg)) {
+                return groupSettings[i];
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Shows Alert when mutually exclusive group permissions combination was selected
+     * that allows to select one of the possible combinations
+     */
+    private void showGroupsInConflictAlert() {
+        
+        String[] values = {Resource.getString(groupsInConflict[0].getName()),
+                Resource.getString(groupsInConflict[1].getName())};
+
+        String txt = Resource.getString(
+                ResourceConstants.PERMISSION_MUTUALLY_EXCLUSIVE_SELECT_MESSAGE, values);
+
+        Alert alert = new Alert(Resource.getString(ResourceConstants.WARNING),
+                txt, null, AlertType.WARNING);
+        alert.addCommand(noExclusiveChoiceSelectionCmd);
+        alert.addCommand(okExclusiveChoiceSelectionCmd);
+        alert.setCommandListener(this);
+        alert.setTimeout(Alert.FOREVER);
+        display.setCurrent(alert);
+    }
+
+    /**
+     * Called when choice group selection changed
+     * @param rbs radio button set
+     */
+    private void onChoiceGroupSelectionChanged(RadioButtonSet rbs) {
+        if (rbs == interruptChoice) {
+            onInterruptChoiceChanged();
+        } else {
+            for (int i = 0; i < groupSettings.length; i++) {
+                if (groupSettings[i] == rbs) {
+                    onChoiceGroupSelectionChanged(i);
+                    return;
+                }
+            }
+        }
+    }
+
+    /**
+     * Called when interrupt choice group selection changed
+     */
+    private void onInterruptChoiceChanged() {
+
+        byte maxInterruptSetting;
+        int interruptSetting = interruptChoice.getSelectedButton();
+
+        if (maxLevels[Permissions.PUSH] == Permissions.ALLOW) {
+            maxInterruptSetting = Permissions.BLANKET_GRANTED;
+        } else {
+            maxInterruptSetting = maxLevels[Permissions.PUSH];
+        }
+
+        int newInterruptSettings;
+        if (interruptSetting == PUSH_OPTION_1_ID) {
+            newInterruptSettings = maxInterruptSetting;
+        } else {
+            newInterruptSettings = (byte)interruptSetting;
+        }
+
+        groupsInConflict = Permissions.checkForMutuallyExclusiveCombination(
+                tmpLevels, (byte)newInterruptSettings);
+        if (groupsInConflict != null) {
+            showGroupsInConflictAlert();
+        } else {
+            tmpPushInterruptSetting = (byte)newInterruptSettings;
+        }
+    }
+
+    /**
+     * Called when choice group selection changed
+     * @param selected id of group changed
+     */
+    private void onChoiceGroupSelectionChanged(int selected) {
+
+        byte newSetting = (byte)groupSettings[selected].getSelectedButton();
+        // store previous values if we need to roll back
+        System.arraycopy(tmpLevels, 0, prevTmpLevels, 0, tmpLevels.length);
+
+        groupsInConflict = Permissions.checkForMutuallyExclusiveCombination(tmpLevels,
+                tmpPushInterruptSetting, groups[selected], newSetting);
+        if (groupsInConflict != null) {
+            showGroupsInConflictAlert();
+            return;
+        }
+
+        try {
+            Permissions.setPermissionGroup(tmpLevels,
+                tmpPushInterruptSetting, groups[selected], newSetting);
+        } catch (SecurityException e) {
+            // returning to previous selection
+            groupSettings[selected].setSelectedButton(
+                    groupSettings[selected].lastSelectedId);
+            //show alert with error message
+            Alert a = new Alert(Resource.getString(ResourceConstants.ERROR),
+                                e.getMessage(), null,
+                                AlertType.ERROR);
+            a.setTimeout(Alert.FOREVER);
+            display.setCurrent(a);
+            // nothing else to do
+            return;
+        }
+
+        String warning = Permissions.getInsecureCombinationWarning(tmpLevels,
+            tmpPushInterruptSetting, groups[selected], newSetting);
+        if (warning != null) {
+            curChoice = groupSettings[selected];
+            Alert alert = new Alert(Resource.getString(ResourceConstants.WARNING),
+                    warning, null, AlertType.WARNING);
+            alert.addCommand(okChoiceSelectionCmd);
+            alert.addCommand(cancelChoiceSelectionCmd);
+            alert.setCommandListener(this);
+            alert.setTimeout(Alert.FOREVER);
+            display.setCurrent(alert);
+        } else {
+            groupSettings[selected].lastSelectedId = newSetting;
         }
     }
 
@@ -224,63 +399,14 @@ public class AppSettings extends Form
             }
         } else if (item == interruptChoice){
             if (interruptChoice != null) {
-                byte maxInterruptSetting;
-                int interruptSetting = interruptChoice.getSelectedButton();
-
-                if (maxLevels[Permissions.PUSH] == Permissions.ALLOW) {
-                    maxInterruptSetting = Permissions.BLANKET_GRANTED;
-                } else {
-                    maxInterruptSetting = maxLevels[Permissions.PUSH];
-                }
-
-                if (interruptSetting == PUSH_OPTION_1_ID) {
-                    tmpPushInterruptSetting = maxInterruptSetting;
-                } else {
-                    Permissions.checkPushInterruptLevel(tmpLevels,
-                        (byte)interruptSetting);
-                    tmpPushInterruptSetting = (byte)interruptSetting;
-                }
+                onInterruptChoiceChanged();
             }
         } else { // choice group selection changed
             selected = settingsPopup.getSelectedButton();
-
             byte newSetting =
                 (byte)groupSettings[selected].getSelectedButton();
-
             if (newSetting != groupSettings[selected].lastSelectedId) {
-                // store previous values if we need to roll back
-                System.arraycopy(tmpLevels, 0, prevTmpLevels, 0, tmpLevels.length);
-                try {
-                    Permissions.setPermissionGroup(tmpLevels,
-                        tmpPushInterruptSetting, groups[selected], newSetting);
-                } catch (SecurityException e) {
-                    // returning to previous selection
-                    groupSettings[selected].setSelectedButton(
-                            groupSettings[selected].lastSelectedId);
-                    //show alert with error message
-                    Alert a = new Alert(Resource.getString(ResourceConstants.ERROR),
-                                        e.getMessage(), null,
-                                        AlertType.ERROR);
-                    a.setTimeout(Alert.FOREVER);
-                    display.setCurrent(a);
-                    // nothing else to do
-                    return;
-                }
-
-                String warning = Permissions.getInsecureCombinationWarning(tmpLevels,
-                    tmpPushInterruptSetting, groups[selected], newSetting);
-                if (warning != null) {
-                    curChoice = groupSettings[selected];
-                    Alert alert = new Alert(Resource.getString(ResourceConstants.WARNING),
-                            warning, null, AlertType.WARNING);
-                    alert.addCommand(okChoiceSelectionCmd);
-                    alert.addCommand(cancelChoiceSelectionCmd);
-                    alert.setCommandListener(this);
-                    alert.setTimeout(Alert.FOREVER);
-                    display.setCurrent(alert);
-                } else {
-                    groupSettings[selected].lastSelectedId = newSetting;
-                }
+                onChoiceGroupSelectionChanged(selected);
             }
         }
     }
@@ -342,9 +468,8 @@ public class AppSettings extends Form
 
             setTitle(Resource.getString(
                                         ResourceConstants.AMS_MGR_SETTINGS));
-            settingsPopup = new RadioButtonSet(
-                Resource.getString(ResourceConstants.AMS_MGR_PREFERENCES),
-                    true);
+            settingsPopup = new RadioButtonSet( null,
+                Resource.getString(ResourceConstants.AMS_MGR_PREFERENCES), true);
 
             if (maxLevels[Permissions.PUSH] == Permissions.ALLOW) {
                 maxLevel = Permissions.BLANKET;
@@ -359,12 +484,10 @@ public class AppSettings extends Form
                 interruptSetting = pushInterruptSetting;
             }
 
+
             interruptChoice =
-                newSettingChoice(settingsPopup,
-                    ResourceConstants.AMS_MGR_INTRUPT,
+                newSettingChoice(settingsPopup, Permissions.getPushInterruptGroup(),
                     INTERRUPT_CHOICE_ID,
-                    ResourceConstants.AMS_MGR_INTRUPT_QUE,
-                    ResourceConstants.AMS_MGR_INTRUPT_QUE_DONT,
                     maxLevel,
                     interruptSetting, suiteDisplayName,
                     ResourceConstants.AMS_MGR_SETTINGS_PUSH_OPT_ANSWER,
@@ -389,10 +512,8 @@ public class AppSettings extends Form
 
                 groupSettings[i] = newSettingChoice(
                     settingsPopup,
-                    groups[i].getName(),
+                    groups[i],    
                     i,
-                    groups[i].getSettingsQuestion(),
-                    groups[i].getDisableSettingChoice(),
                     maxGroupSetting,
                     currentGroupSetting,
                     suiteDisplayName,
@@ -450,24 +571,24 @@ public class AppSettings extends Form
      *           or null if setting cannot be modified
      */
     private RadioButtonSet newSettingChoice(RadioButtonSet popup,
-            int groupName, int groupID, int question, int denyAnswer,
+            PermissionGroup permissionGroup, int groupID,
             int maxLevel, int level, String name, int extraAnswer,
             int extraAnswerId) {
         String[] values = {name};
         int initValue;
         RadioButtonSet choice;
 
-        if (question <= 0 ||
+        if (permissionGroup.getSettingsQuestion() <= 0 ||
             maxLevel == Permissions.ALLOW || maxLevel == Permissions.NEVER ||
             level == Permissions.ALLOW || level == Permissions.NEVER) {
 
             return null;
         }
 
-        choice = new RadioButtonSet(Resource.getString(question, values),
-                                    false);
+        choice = new RadioButtonSet(permissionGroup, Resource.getString(
+                permissionGroup.getSettingsQuestion(), values), false);
 
-        settingsPopup.append(Resource.getString(groupName), groupID);
+        settingsPopup.append(Resource.getString(permissionGroup.getName()), groupID);
 
         switch (maxLevel) {
         case Permissions.BLANKET:
@@ -493,14 +614,14 @@ public class AppSettings extends Form
                 choice.append(Resource.getString(extraAnswer), extraAnswerId);
             }
 
-            choice.append(Resource.getString(denyAnswer),
+            choice.append(Resource.getString(permissionGroup.getDisableSettingChoice()),
                           Permissions.BLANKET_DENIED);
             break;
         }
 
         if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
             Logging.report(Logging.INFORMATION, LogChannels.LC_AMS,
-                "AppSettings: " + Resource.getString(groupName) +
+                "AppSettings: " + Resource.getString(permissionGroup.getName()) +
                 " level = " + level);
         }
 
@@ -557,9 +678,33 @@ public class AppSettings extends Form
                     pushInterruptSetting = maxInterruptSetting;
                 } else {
                     pushOptions = 0;
-                    Permissions.checkPushInterruptLevel(curLevels,
+                    Permissions.checkPushInterruptLevel(tmpLevels,
                         (byte)interruptSetting);
                     pushInterruptSetting = (byte)interruptSetting;
+                }
+            }
+
+            /**
+             * IMPL_NOTE: setting permissions one by one with checking
+             * for mutually exclusive combinations is redundant here.
+             * Functionality for appling levels for all groups should
+             * be added to Permissions class and used here. 
+             */
+            for (int i = 0; i < groups.length; i++) {
+                if (groupSettings[i] != null) {
+                    byte newSetting =
+                        (byte)groupSettings[i].getSelectedButton();
+                    if (newSetting != Permissions.getPermissionGroupLevel(
+                            curLevels, groups[i])) {
+                        if (newSetting != Permissions.BLANKET_GRANTED) {
+                            /*
+                             * first apply only weak permissions to avoid mutual
+                             * exlusive combination
+                             */
+                            Permissions.setPermissionGroup(curLevels,
+                                pushInterruptSetting, groups[i], newSetting);
+                        }
+                    }
                 }
             }
 
@@ -567,15 +712,15 @@ public class AppSettings extends Form
                 if (groupSettings[i] != null) {
                     byte newSetting =
                         (byte)groupSettings[i].getSelectedButton();
-
                     if (newSetting != Permissions.getPermissionGroupLevel(
                             curLevels, groups[i])) {
-                        Permissions.setPermissionGroup(curLevels,
-                            pushInterruptSetting, groups[i], newSetting);
+                        if (newSetting == Permissions.BLANKET_GRANTED) {
+                            Permissions.setPermissionGroup(curLevels,
+                                pushInterruptSetting, groups[i], newSetting);
+                        }
                     }
                 }
             }
-
 
             if (numberOfSettings > 0) {
                 midletSuiteStorage.saveSuiteSettings(midletSuite.getID(),
@@ -630,16 +775,21 @@ class RadioButtonSet extends ChoiceGroup {
     /** The ID of the item selected. */
     int lastSelectedId;
 
+    /** Corresponding permission group. */
+    PermissionGroup permissionGroup;
+
     /**
      * Creates a new, empty <code>RadioButtonSet</code>, specifying its
      * title.
      *
+     * @param permissionGroup item's permission group
      * @param label the item's label (see {@link Item Item})
      * @param popup true if the radio buttons should be popup
      */
-    RadioButtonSet(String label, boolean popup) {
+    RadioButtonSet(PermissionGroup permissionGroup, String label, boolean popup) {
         super(label, popup ? Choice.POPUP : Choice.EXCLUSIVE);
         ids = new int[SIZE_INCREMENT];
+        this.permissionGroup = permissionGroup;
     }
 
     /**

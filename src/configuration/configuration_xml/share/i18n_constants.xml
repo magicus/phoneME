@@ -882,10 +882,13 @@
             Comment="AMS: com.sun.midp.installer.AutoTester"/>
   <constant Type="int"
             Name="PERMISSION_MUTUALLY_EXCLUSIVE_ERROR_MESSAGE"
-            Comment="Security: Mutually exclusive permission error message"/>
+            Comment="Security: Mutually exclusive permissions error message"/>
+  <constant Type="int"
+            Name="PERMISSION_MUTUALLY_EXCLUSIVE_SELECT_MESSAGE"
+            Comment="Security: Mutually exclusive permissions select message"/>
   <constant Type="int"
               Name="PERMISSION_SECURITY_WARNING_MESSAGE"
-              Comment="Security: Potentially dangerous permission error message"/>
+              Comment="Security: Potentially dangerous permissions error message"/>
   <constant Type="int"
             Name="PERMISSION_NET_ACCESS_DIALOG_TITLE"
             Comment="Security: Titles used for the user permission form"/>

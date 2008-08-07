@@ -249,6 +249,15 @@ public final class Permissions {
     static final PermissionGroup ID_ALLOWED_GROUP =
         new PermissionGroup(0, 0, 0, 0, 0, 0, ALLOW, ALLOW, NEVER, NEVER);
 
+    /** Push interrupt permission group. */
+    static final PermissionGroup PUSH_INTERRUPT_GROUP = new PermissionGroup(
+        ResourceConstants.AMS_MGR_INTRUPT,
+        ResourceConstants.AMS_MGR_INTRUPT_QUE,
+        ResourceConstants.AMS_MGR_INTRUPT_QUE_DONT,
+        ResourceConstants.AMS_MIDLETSUITEIMPL_PUSH_INTERRUPT_DIALOG_TITLE,
+        ResourceConstants.AMS_MIDLETSUITEIMPL_INTRPT_QUE, 0,
+        BLANKET, ONESHOT, SESSION, ONESHOT);
+
     /** Net Access permission group. */
     static final PermissionGroup NET_ACCESS_GROUP = new PermissionGroup(
         ResourceConstants.AMS_MGR_NET_SETTINGS,
@@ -396,6 +405,14 @@ public final class Permissions {
     /** Number of permissions. */
     public static final int NUMBER_OF_PERMISSIONS =
         PermissionsTable.NUMBER_OF_PERMISSIONS;
+
+    /**
+     * Retuns artificially constructed group for Push Interrupt Group
+     * @return Push Interrupt Group
+     */
+    public static PermissionGroup getPushInterruptGroup() {
+        return PUSH_INTERRUPT_GROUP;
+    }
 
     /**
      * Get the name of a permission.
@@ -734,8 +751,11 @@ public final class Permissions {
             byte pushInterruptLevel, PermissionGroup group, byte level)
             throws SecurityException {
 
-        checkForMutuallyExclusiveCombination(current, pushInterruptLevel,
+        PermissionGroup[] pg = checkForMutuallyExclusiveCombination(current, pushInterruptLevel,
                                              group, level);
+        if (pg != null) {
+            throw new SecurityException(createMutuallyExclusiveErrorMessage(pg[0], pg[1]));
+        }
 
         for (int i = 0; i < permissionSpecs.length; i++) {
             if (permissionSpecs[i].group == group) {
@@ -860,6 +880,40 @@ public final class Permissions {
     }
 
     /**
+     * Check to see if a given push interrupt level would produce a mutually
+     * exclusive combination for the current security policy. If so, throw
+     * an exception.
+     * <p>
+     * This is a policy dependent function for permission grouping.</p>
+     *
+     * The mutually combination is the push interrupt level set to Blanket and
+     * Net Access set to Blanket.
+     *
+     * @param current current permission levels
+     * @param pushInterruptLevel Push interrupt level
+     * @return mutually exclusive groups
+     */
+    public static PermissionGroup[] checkForMutuallyExclusiveCombination(byte[] current,
+            byte pushInterruptLevel) {
+
+        byte level;
+
+        if (pushInterruptLevel != BLANKET_GRANTED) {
+            return null;
+        }
+
+        level = getPermissionGroupLevel(current, NET_ACCESS_GROUP);
+        if (level == BLANKET_GRANTED || level == BLANKET) {
+            PermissionGroup[] ret = new PermissionGroup[2];
+            ret[0] = PUSH_INTERRUPT_GROUP;
+            ret[1] = NET_ACCESS_GROUP;
+            return ret;
+        }
+
+        return null;
+    }
+
+    /**
      * Set the level the permission if the permission is not set to NEVER
      * or ALLOW.
      *
@@ -876,8 +930,8 @@ public final class Permissions {
 
     /**
      * Check to see if a given level for a group would produce a mutually
-     * exclusive combination for the current security policy. If so, throw
-     * an exception.
+     * exclusive combination for the current security policy. If so,
+     * return mutually exclusive groups.
      * <p>
      * This is a policy dependent function for permission grouping.</p>
      *
@@ -891,47 +945,47 @@ public final class Permissions {
      * @param pushInterruptLevel Push interrupt level
      * @param group desired permission group
      * @param newLevel permission level
-     *
-     * @exception SecurityException if the change would produce a mutually
-     *                              exclusive combination
+     * @return mutually exclusive groups
      */
-    private static void checkForMutuallyExclusiveCombination(byte[] current,
-            byte pushInterruptLevel, PermissionGroup group, byte newLevel)
-            throws SecurityException {
+    public static PermissionGroup[] checkForMutuallyExclusiveCombination(byte[] current,
+            byte pushInterruptLevel, PermissionGroup group, byte newLevel) {
 
         byte level;
 
         if (newLevel != BLANKET_GRANTED) {
-            return;
+            return null;
         }
 
+        PermissionGroup[] ret = new PermissionGroup[2];
+        
         if (group == NET_ACCESS_GROUP) {
             if (pushInterruptLevel == BLANKET_GRANTED ||
                    pushInterruptLevel == BLANKET) {
-                throw new SecurityException(
-                    createMutuallyExclusiveErrorMessage(
-                        NET_ACCESS_GROUP.getName(),
-                        ResourceConstants.AMS_MGR_INTRUPT));
+                ret[0] = NET_ACCESS_GROUP;
+                ret[1] = PUSH_INTERRUPT_GROUP;
+                return ret;
             }
 
             level = getPermissionGroupLevel(current, AUTO_INVOCATION_GROUP);
             if (level == BLANKET_GRANTED || level == BLANKET) {
-                throw new SecurityException(
-                    createMutuallyExclusiveErrorMessage(NET_ACCESS_GROUP,
-                        AUTO_INVOCATION_GROUP));
+                ret[0] = NET_ACCESS_GROUP;
+                ret[1] = AUTO_INVOCATION_GROUP;
+                return ret;
             }
 
-            return;
+            return null;
         }
 
         if (group == AUTO_INVOCATION_GROUP) {
             level = getPermissionGroupLevel(current, NET_ACCESS_GROUP);
             if (level == BLANKET_GRANTED || level == BLANKET) {
-                throw new SecurityException(
-                    createMutuallyExclusiveErrorMessage(AUTO_INVOCATION_GROUP,
-                        NET_ACCESS_GROUP));
+                ret[0] = AUTO_INVOCATION_GROUP;
+                ret[1] = NET_ACCESS_GROUP;
+                return ret;
             }
         }
+
+        return null;
     }
 
     /**
