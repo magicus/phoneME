@@ -1,0 +1,66 @@
+net_access:
+ Airtime,
+ How often should %1 ask for permission to use airtime? Using airtime may result in charges.,
+ Don't use airtime and don't ask,
+ Is it OK to Use Airtime?,
+ %1 wants to send and receive data using the network. This will use airtime and may result in charges.\n\nIs it OK to use airtime?
+
+messaging:
+ Messaging,
+ How often should %1 ask for permission before sending or receiving text messages?,
+ Don't send or receive messages and don't ask,
+ Is it OK to Send Messages?,
+ %1 wants to send text message(s). This could result in charges.%3 message(s) will be sent to %2.\n\nIs it OK to send messages?
+
+application_auto_invocation:
+ Auto-Start Registration,
+ How often should %1 ask for permission to register itself to automatically start?,
+ Don't register and don't ask,
+ Is it OK to automatically start the application?,
+ %1 wants to register itself to be automatically started.\n\nIs it OK to register to be automatically started?
+
+local_connectivity:
+ Computer Connection,
+ How often should %1 ask for permission to connect to a computer? This may require a data cable that came with your phone.,
+ Don't connect and don't ask,
+ Is it OK to Connect?,
+ %1 wants to connect to a computer. This may require a data cable.\n\nIs it OK to make a connection?
+
+authentication:
+ Personal Indentification,
+ How often should %1 ask for permission to use your smart card to identify you?,
+ Don't sign and don't ask,
+ Is it OK to obtain your personal signature?,
+ %1 wants to obtain your personal digital signature.\n\nIs it OK to obtain your personal signature?\nContent to be signed:\n\n%3
+
+multimedia_recording:
+ Recording,
+ How often should %1 ask for permission to record audio and images? This will use space on your phone.,
+ Don't record and don't ask,
+ Is it OK to Record?,
+ %1 wants to record an image or audio clip.\n\nIs it OK to record?
+
+read_user_data_access:
+ Read Personal Data,
+ How often should %1 ask for permission to read your personal data (contacts, appointments, etc)?,
+ Don't read my data and don't ask,
+ Is it OK to read your personal data?,
+ %1 wants to read your personal data (contacts, appointments, etc)\n\nIs it OK to read your personal data?
+
+write_user_data_access:
+ Update Personal Data,
+ How often should %1 ask for permission to update your personal data (contacts, appointments, etc)?,
+ Don't update my data and don't ask,
+ Is it OK to update your personal data?,
+ %1 wants to update your personal data (contacts, appointments, etc)\n\nIs it OK to update your personal data?,
+ %1 wants to update %2\n\nIs it OK to update this data?
+
+location:
+ Obtain Current Location,
+ How often should %1 ask for permission to obtain your location?,
+ Don't give my location and don't ask,
+ Is it OK to obtain your location?,
+ Application %1 wants to obtain your the location.\n\nIs it OK to obtain your location?
+
+group: satsa
+
