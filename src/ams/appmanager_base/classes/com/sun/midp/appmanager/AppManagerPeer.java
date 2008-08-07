@@ -39,7 +39,6 @@ import com.sun.midp.io.j2me.push.PushRegistryInternal;
 import com.sun.midp.i18n.Resource;
 import com.sun.midp.i18n.ResourceConstants;
 
-import com.sun.midp.log.Logging;
 import com.sun.midp.log.LogChannels;
 
 import com.sun.midp.payment.PAPICleanUp;
@@ -641,7 +640,7 @@ class AppManagerPeer implements CommandListener {
                                         String className =
                                             MIDletSuiteUtils.getMIDletClassName(
                                                 suite, m);
-                                        midletsToStart.add(className);
+                                        midletsToStart.addElement(className);
                                     }
                                 }
                             } finally {
