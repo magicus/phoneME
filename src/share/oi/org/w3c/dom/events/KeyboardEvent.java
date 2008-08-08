@@ -171,7 +171,7 @@ public interface KeyboardEvent extends UIEvent {
      * @param canBubbleArg  Refer to the <code>UIEvent.initUIEventNS()</code> 
      *   method for a description of this parameter. 
      * @param cancelableArg  Refer to the <code>UIEvent.initUIEventNS()</code>
-     *   method for a description of this parameter. 
+     *    method for a description of this parameter. 
      * @param viewArg  Refer to the <code>UIEvent.initUIEventNS()</code> 
      *   method for a description of this parameter. 
      * @param keyIdentifierArg  Refer to the 

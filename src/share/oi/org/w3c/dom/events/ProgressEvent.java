@@ -200,11 +200,11 @@ public interface ProgressEvent extends Event {
      *   and the value of <code>total</code> to zero. 
      */
     public void initProgressEvent(String typeArg,
-                                  boolean canBubbleArg,
-                                  boolean cancelableArg,
-                                  boolean lengthComputableArg,
-                                  int loadedArg, 
-                                  int totalArg);
+				  boolean canBubbleArg, 
+				  boolean cancelableArg,
+				  boolean lengthComputableArg,
+				  int loadedArg, 
+				  int totalArg);
 
 
     /**

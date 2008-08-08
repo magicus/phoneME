@@ -266,6 +266,7 @@ public interface Element extends Node {
      *   through the Document does not support XML Namespaces (such as [<a href='http://www.w3.org/TR/1999/REC-html401-19991224/'>HTML 4.01</a>]).
      * @since DOM Level 2
      */
+
     public void removeAttributeNS(String namespaceURI, 
                                   String localName)
                                   throws DOMException;
@@ -347,7 +348,7 @@ public interface Element extends Node {
      * @param name The name of the attribute to look for.
      * @return <code>true</code> if an attribute with the given name is 
      *   specified on this element or has a default value, <code>false</code>
-     *   otherwise.
+     *    otherwise.
      * @since DOM Level 2
      */
     public boolean hasAttribute(String name);

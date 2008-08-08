@@ -164,8 +164,8 @@ public interface CharacterData extends Node {
      *   <code>offset</code> and <code>count</code> exceeds 
      *   <code>length</code>, then all 16-bit units to the end of the data 
      *   are replaced; (i.e., the effect is the same as a <code>remove</code>
-     *   method call with the same range, followed by an <code>append</code>
-     *   method invocation).
+     *    method call with the same range, followed by an <code>append</code>
+     *    method invocation).
      * @param arg The <code>DOMString</code> with which the range must be 
      *   replaced.
      * @exception DOMException

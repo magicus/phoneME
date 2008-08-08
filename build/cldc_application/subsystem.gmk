@@ -1,8 +1,5 @@
-
 #
-#   
-#
-# Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+# Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
 # 
 # This program is free software; you can redistribute it and/or
@@ -99,5 +96,8 @@ jsr_280_source_bundle: JSR_280_DIR SOURCE_OUTPUT_DIR
 	@echo " ... JSR 280 source bundle" $(LOG)
 	@$(call re_src_filter,$(JSR_280_DIR),$(JSR_280_SOURCE_OUTPUT_DIR),src build)
 
-$(MIDP_OUTPUT_DIR)/classes.zip:: $(SUBSYSTEM_JSR_280_JAVA_FILES)
+$(MIDP_OUTPUT_DIR)/classes.zip:: APPEND_JSR_280_JAVA_FILES
+
+
+APPEND_JSR_280_JAVA_FILES: $(SUBSYSTEM_JSR_280_JAVA_FILES)
 	$(appendsupersetjavafiles)

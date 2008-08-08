@@ -96,7 +96,7 @@ public interface TextEvent extends UIEvent {
      * @param canBubbleArg  Refer to the <code>UIEvent.initUIEventNS()</code> 
      *   method for a description of this parameter. 
      * @param cancelableArg  Refer to the <code>UIEvent.initUIEventNS()</code>
-     *   method for a description of this parameter. 
+     *    method for a description of this parameter. 
      * @param viewArg  Refer to the <code>UIEvent.initUIEventNS()</code> 
      *   method for a description of this parameter. 
      * @param dataArg  Refer to the <code>TextEvent.initTextEvent()</code> 

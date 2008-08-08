@@ -34,5 +34,14 @@
       Scope="system"
       Comment="The version of the Core Optional Package."/>
 
+<!-- Property  javax.microedition.xmlapi.events.version MUST be undefine
+     when DOM Events optional package is not supported -->
+<!-- 
+  <property Key="javax.microedition.xmlapi.events.version"
+      Value="1.0"
+      Scope="system"
+      Comment="The version of the Events Optional Package."/>
+-->
+	  
 </properties>
 </configuration>

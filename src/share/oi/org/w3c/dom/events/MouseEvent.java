@@ -184,7 +184,7 @@ public interface MouseEvent extends UIEvent {
      * @param canBubbleArg  Refer to the <code>UIEvent.initUIEventNS()</code> 
      *   method for a description of this parameter. 
      * @param cancelableArg  Refer to the <code>UIEvent.initUIEventNS()</code>
-     *   method for a description of this parameter. 
+     *    method for a description of this parameter. 
      * @param viewArg  Refer to the <code>UIEvent.initUIEventNS()</code> 
      *   method for a description of this parameter. 
      * @param detailArg  Refer to the <code>UIEvent.initUIEventNS()</code> 
@@ -202,7 +202,7 @@ public interface MouseEvent extends UIEvent {
      *   <code>MouseEvent.initMouseEvent()</code> method for a description 
      *   of this parameter. 
      * @param buttonArg  Refer to the <code>MouseEvent.initMouseEvent()</code>
-     *   method for a description of this parameter. 
+     *    method for a description of this parameter. 
      * @param relatedTargetArg  Refer to the 
      *   <code>MouseEvent.initMouseEvent()</code> method for a description 
      *   of this parameter. 

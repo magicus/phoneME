@@ -406,7 +406,7 @@ public interface Node {
      * of this node. If the <code>newChild</code> is already in the tree, it 
      * is first removed.
      * @param newChild The node to add.If it is a <code>DocumentFragment</code>
-     *   object, the entire contents of the document fragment are moved 
+     *    object, the entire contents of the document fragment are moved 
      *   into the child list of this node
      * @return The node added.
      * @exception DOMException

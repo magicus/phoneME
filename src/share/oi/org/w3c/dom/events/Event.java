@@ -199,6 +199,7 @@ public interface Event {
      *
      * @since DOM Level 3
      */
+
     public void initEventNS(String namespaceURIArg, 
                             String eventTypeArg, 
                             boolean canBubbleArg, 
