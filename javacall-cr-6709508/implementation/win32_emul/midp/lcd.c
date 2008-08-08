@@ -295,8 +295,7 @@ javacall_result javacall_lcd_bitblit(javacall_pixel* destScreenPtr,
  * @retval JAVACALL_FAIL    fail 
  */
 javacall_result /*OPTIONAL*/ javacall_lcd_flush_partial(int hardwareId, int ystart, int yend){
-  (void)hardwareId;
-	javacall_lcd_flush();
+	javacall_lcd_flush(hardwareId);
     return JAVACALL_FAIL;
 }
     
@@ -545,7 +544,7 @@ int javacall_lcd_get_display_capabilities(int hardwareId) {
   return 255;
 }
 
-static jint screen_ids[] =
+static int screen_ids[] =
 {
   0
 };
