@@ -250,6 +250,7 @@ BUNDLE_INCLUDE_LIST += \
 	src/share/tools/xml \
 	src/share/tools/sha1 \
 	src/share/lib/security \
+	src/share/lib/profiles \
 	$(foreach os,$(BUNDLE_OS_PORTS), \
 		src/$(os)/bin) \
 	$(foreach os,$(BUNDLE_OS_PORTS) share, \
