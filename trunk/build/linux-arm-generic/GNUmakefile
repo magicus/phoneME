@@ -93,6 +93,10 @@ USE_AAPCS ?= false
 # Enable the JIT by default. You can always override this on the command line.
 CVM_JIT ?= true
 
+# Assume no hardware floating point support by default. If you have hardware
+# VFP support, then set CVM_JIT_USE_FP_HARDWARE=true.
+CVM_JIT_USE_FP_HARDWARE ?= false
+
 # CVM_TARGET_TOOLS_PREFIX: Used to specify where your target tools are
 # located. You can set it on the command line or here. Basically it is
 # the entire path leading up to the "gcc" portion of the tool.
