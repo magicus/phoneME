@@ -26,7 +26,6 @@
 
 package com.sun.midp.installer;
 
-import com.sun.midp.installer.InstallerResource;
 import java.util.Vector;
 
 import java.io.IOException;
@@ -50,7 +49,6 @@ import com.sun.midp.midletsuite.*;
 import com.sun.midp.jarutil.JarReader;
 
 import com.sun.midp.io.HttpUrl;
-import com.sun.midp.io.FileUrl;
 import com.sun.midp.io.Util;
 
 import com.sun.midp.io.j2me.push.PushRegistryInternal;
@@ -284,13 +282,7 @@ public abstract class Installer {
         boolean removeRMS, InstallListener installListener)
             throws IOException, InvalidJadException,
                    MIDletSuiteLockedException, SecurityException {
-        
-        
-        // Encode jad file path in order to keep of 
-        // IllegalArgumentException
-        if (InstallerResource.isFileInstaller(this))
-           location = FileUrl.encodeFilePath(location);
-        
+
         info.jadUrl = location;
         state.force = force;
         state.removeRMS = removeRMS;
@@ -298,7 +290,7 @@ public abstract class Installer {
         state.listener = installListener;
         state.chmanager = CHManager.getManager(null);
         state.storageId = storageId;
-        
+
         return performInstall();
     }
 
@@ -358,7 +350,7 @@ public abstract class Installer {
             throw
                 new IllegalArgumentException("Must specify URL of .jar file");
         }
-      
+
         info.jadUrl = null;
         info.jarUrl = location;
         info.suiteName = name;
@@ -524,19 +516,20 @@ public abstract class Installer {
      * descriptor file is not specified
      */
     private void installStep1()
-        throws IOException, InvalidJadException, MIDletSuiteLockedException {        
-         if (info.jadUrl == null || info.jadUrl.length() == 0) {
+        throws IOException, InvalidJadException, MIDletSuiteLockedException {
+
+        if (info.jadUrl == null || info.jadUrl.length() == 0) {
             throw
                 new IllegalArgumentException("Must specify URL of .jad file");
         }
-         
-        try {          
-            state.jad = downloadJAD();             
+
+        try {
+            state.jad = downloadJAD();
         } catch (OutOfMemoryError e) {
             try {
                 postInstallMsgBackToProvider(
                     OtaNotifier.INSUFFICIENT_MEM_MSG);
-            } catch (Throwable t) {                
+            } catch (Throwable t) {
                 if (Logging.REPORT_LEVEL <= Logging.WARNING) {
                     Logging.report(Logging.WARNING, LogChannels.LC_AMS,
                     "Throwable during posting install message");
@@ -570,7 +563,7 @@ public abstract class Installer {
             throw new
                 InvalidJadException(InvalidJadException.TOO_MANY_PROPS);
         } catch (InvalidJadException ije) {
-            state.jad = null;           
+            state.jad = null;
             postInstallMsgBackToProvider(OtaNotifier.INVALID_JAD_MSG);
             throw ije;
         } catch(java.io.UnsupportedEncodingException uee) {
@@ -580,10 +573,11 @@ public abstract class Installer {
                 InvalidJadException.UNSUPPORTED_CHAR_ENCODING,
                     state.jadEncoding);
         }
-        
+
         checkJadAttributes();
         assignNewId();
         checkPreviousVersion();
+
         state.nextStep++;
     }
 
@@ -591,8 +585,9 @@ public abstract class Installer {
      * If the JAD belongs to an installed suite, check the URL against the
      * installed one.
      */
-    private void installStep2() {          
-        state.nextStep++;      
+    private void installStep2() {
+        state.nextStep++;
+
         if (state.isPreviousVersion) {
             checkForDifferentDomains(info.jadUrl);
         }
@@ -607,7 +602,7 @@ public abstract class Installer {
      * properly formatted or does not contain the required
      */
     private void installStep3()
-            throws IOException, InvalidJadException {       
+            throws IOException, InvalidJadException {
         String sizeString;
         int dataSize;
         int suiteSize;
@@ -664,7 +659,6 @@ public abstract class Installer {
         }
 
         info.jarUrl = state.jadProps.getProperty(MIDletSuite.JAR_URL_PROP);
-        
         if (info.jarUrl == null || info.jarUrl.length() == 0) {
             postInstallMsgBackToProvider(OtaNotifier.INVALID_JAD_MSG);
             throw new
@@ -681,7 +675,7 @@ public abstract class Installer {
      */
     private void installStep4()
             throws IOException {
-        
+
         synchronized (state) {
             /* One more check to see if user has already canceled */
             if (state.stopInstallation) {
@@ -726,7 +720,7 @@ public abstract class Installer {
         int bytesDownloaded;
         MIDletInfo midletInfo;
         String midlet;
-        
+
         // Send out delete notifications that have been queued, first
         OtaNotifier.postQueuedDeleteMsgsBackToProvider(state.proxyUsername,
             state.proxyPassword);
@@ -911,16 +905,9 @@ public abstract class Installer {
      */
     private void installStep6() {
         state.nextStep++;
-      
+
         if (info.jadUrl == null && state.isPreviousVersion) {
-            // if FileInstaller instance, than we will use
-            // encodedJarUrl in order to keep of 
-            // IllegalArgumentException
-            if (InstallerResource.isFileInstaller(this)) {
-                checkForDifferentDomains(info.encodedJarUrl);                
-            } else {
-                checkForDifferentDomains(info.jarUrl);                                
-            }                  
+            checkForDifferentDomains(info.jarUrl);
         }
     }
 
@@ -1594,7 +1581,7 @@ public abstract class Installer {
      *
      * @param message status message to post
      */
-    protected void postInstallMsgBackToProvider(String message) {       
+    protected void postInstallMsgBackToProvider(String message) {
         OtaNotifier.postInstallMsgBackToProvider(message, state,
             state.proxyUsername, state.proxyPassword);
     }

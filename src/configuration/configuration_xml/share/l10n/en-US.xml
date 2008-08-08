@@ -468,11 +468,11 @@
 <localized_string Key="AMS_GRA_INTLR_PASSWORD_FORM_FIREWALL_TITLE"
                 Value="Firewall Authentication"/>
 <localized_string Key="AMS_GRA_INTLR_INVALIDJADEXCEPTION_OLD_VERSION"
-                Value="An OLDER version of %1 has been found. Continuing will replace the version installed on your phone.&#010;&#010;Currently installed: %5&#010;Version found: %3&#010;Vendor: %2&#010;URI: %4&#010;&#010;Would you like to continue?"/>
+                Value="An OLDER version of %1 has been found. Continuing will replace the version installed on your phone.&#010;&#010;Currently installed: %5&#010;Version found: %3&#010;Vendor: %2&#010;Website: %4&#010;&#010;Would you like to continue?"/>
 <localized_string Key="AMS_GRA_INTLR_INVALIDJADEXCEPTION_ALREADY_INSTALLED"
-                Value="This version of %1 is already installed on your phone. Continuing will replace the version installed on your phone.&#010;&#010;Currently installed: %5&#010;Version found: %3&#010;Vendor: %2&#010;URI: %4&#010;&#010;Would you like to continue?"/>
+                Value="This version of %1 is already installed on your phone. Continuing will replace the version installed on your phone.&#010;&#010;Currently installed: %5&#010;Version found: %3&#010;Vendor: %2&#010;Website: %4&#010;&#010;Would you like to continue?"/>
 <localized_string Key="AMS_GRA_INTLR_INVALIDJADEXCEPTION_NEW_VERSION"
-                Value="A NEWER version of %1 has been found. Continuing will replace the version installed on your phone.&#010;&#010;Currently installed: %5&#010;Latest available: %3&#010;Vendor: %2&#010;URI: %4&#010;&#010;Would you like to continue?"/>
+                Value="A NEWER version of %1 has been found. Continuing will replace the version installed on your phone.&#010;&#010;Currently installed: %5&#010;Latest available: %3&#010;Vendor: %2&#010;Website: %4&#010;&#010;Would you like to continue?"/>
 <localized_string Key="AMS_GRA_INTLR_INVALIDJADEXCEPTION_INVALID_JAD_URL"
                 Value="%1 cannot be found at this URL. Contact the application provider for more information."/>
 <localized_string Key="AMS_GRA_INTLR_INVALIDJADEXCEPTION_INVALID_JAD_TYPE"
@@ -769,28 +769,5 @@
                 Value="Suspending java..."/>
 <localized_string Key="SR_SUSPEND_ALERT_MSG"
                 Value="Java VM is suspended by system request. Applications may be either paused or destroyed."/>
-
-<localized_string Key="AMS_DISC_APP_INSTALL_FROM_FILE"
-                Value="Storage"/>
-<localized_string Key="AMS_DISC_APP_INSTALL_FROM_HTTP"
-                Value="HTTP"/>
-<localized_string Key="AMS_DISC_APP_START_FILE_INSTALL"
-                Value="Install"/>
-<localized_string Key="AMS_DISC_APP_STORAGE_INSTALL"
-                Value="Enter a file path to install from:"/>
-<localized_string Key="AMS_DISC_APP_PREPARE_INSTALL_STORAGE"
-                Value="Prepairing to install from storage..."/>
-<localized_string Key="AMS_GRA_INTLR_CONN_STORAGE_GAUGE_LABEL"
-                Value="Searching..."/>
-<localized_string Key="AMS_DISC_APP_GAUGE_LABEL_STORAGE"
-                Value="Searching..."/>
-<localized_string Key="AMS_FILE_PATH"
-                Value="Path to file"/>
-<localized_string Key="AMS_GRA_INTLR_DOWNLOADING_JAD_GAUGE_LABEL_STORAGE"
-                Value="Loading the application description file..."/>
-<localized_string Key="AMS_GRA_INTLR_DOWNLOADING_JAR_GAUGE_LABEL_STORAGE"
-                Value="Loading the application file..."/>
-<localized_string Key="AMS_GRA_INTLR_FILE_NOT_FOUND"
-                Value="File not found in the current path"/>       
 </localized_strings>
 </configuration>
