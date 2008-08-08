@@ -310,25 +310,28 @@ public class AmsUtil {
                     String heapSizeProp = MIDletSuiteUtils.getSuiteProperty(
                         id, midlet, MIDletSuite.HEAP_SIZE_PROP);
 
-                    int propLen = heapSizeProp.length();
-                    if ((heapSizeProp != null) && (propLen > 0)) {
-                        try {
-                            boolean sizeInKilos = false;
+                    if (heapSizeProp != null) {
+                        boolean sizeInKilos = false;
+
+                        int propLen = heapSizeProp.length();
+                        if (propLen > 0) {
                             char lastChar = heapSizeProp.charAt(propLen - 1);
                             if ((lastChar == 'K') || (lastChar == 'k')) {
                                 heapSizeProp =
                                     heapSizeProp.substring(0, propLen - 1);
                                 sizeInKilos = true;
                             }
+                        }
 
+                        try {
                             int heapSize = Integer.parseInt(heapSizeProp);
-                            heapSize = sizeInKilos ? heapSize * 1024 : heapSize; 
+                            heapSize = sizeInKilos ? heapSize * 1024 : heapSize;
 
                             if ((heapSize > 0) && (heapSize < limit)) {
                                 limit = heapSize;
                             }
                         } catch (NumberFormatException e) {
-                            // ignore the attribute since the value is not valid
+                            // ignore the attribute if the value is not valid
                         }
                     }
                 }
