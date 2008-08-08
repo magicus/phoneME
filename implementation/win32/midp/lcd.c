@@ -1555,7 +1555,7 @@ int javacall_lcd_get_display_capabilities(int hardwareId) {
   return 255;
 }
 
-static jint screen_ids[] =
+static int screen_ids[] =
 {
   0
 };
