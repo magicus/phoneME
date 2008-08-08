@@ -102,6 +102,18 @@ typedef enum {
     JAVACALL_LCD_SCREEN_EXTERNAL = 1601
 } javacall_lcd_screen_type;
 
+
+/**
+ * @enum javacall_lcd_screen_type
+ * @brief LCD screen type
+ */
+typedef enum {
+    /** Primary(usually internal) LCD type */
+    JAVACALL_LCD_DISPLAY_ENABLED = 2000,
+    JAVACALL_LCD_DISPLAY_DISABLED = 2001,
+    JAVACALL_LCD_DISPLAY_ABSENT = 2002
+} javacall_lcd_display_device_state;
+
 /**
  * The function javacall_lcd_init is called during Java VM startup, allowing the
  * platform to perform device specific initializations.
@@ -324,7 +336,7 @@ void javanotify_rotation(void);
  * The platform should invoke this function in platform context
  * to notify display device state change 
  */
-void javanotify_display_device_state_changed(int hardwareId, DisplayStates state);
+void javanotify_display_device_state_changed(int hardwareId, javacall_lcd_display_device_state state);
 
 /** @} */
 
