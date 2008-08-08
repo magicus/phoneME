@@ -1029,7 +1029,7 @@ int midpRunMainClass(JvmPathChar *classPath,
 
 
     if (0 == vmStatus) {
-        vmStatus = MIDP_INIT_OK_STATUS;
+        vmStatus = MIDP_RUNNING_STATUS;
     } else {
     pushcheckinall();
     midp_resetEvents();

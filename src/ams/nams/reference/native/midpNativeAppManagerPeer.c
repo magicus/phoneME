@@ -142,7 +142,7 @@ MIDPError midp_system_start(void) {
 
     vmStatus = midpRunMainClass(NULL, APP_MANAGER_PEER, 0, NULL);
 
-    if (MIDP_INIT_OK_STATUS != vmStatus) {
+    if (MIDP_RUNNING_STATUS != vmStatus) {
         errCode = _system_cleanup(vmStatus);
     } else {
         errCode = ALL_OK;
