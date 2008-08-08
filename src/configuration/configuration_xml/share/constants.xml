@@ -279,11 +279,6 @@
             Value="80"
             Comment="The period in milliseconds of processing the last delayed
                      call to GameCanvas.flush()."/>
-  <constant Type="boolean"
-            Name="EXTENDED_MIDLET_ATTRIBUTES_ENABLED"
-            Value="true"
-            Comment="Flag to indicate whether extended MIDlet attributes support
-                     is enabled."/>
 </constant_class>
 </constants>
 </configuration>

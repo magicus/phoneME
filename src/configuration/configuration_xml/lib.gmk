@@ -122,6 +122,13 @@ else
 INT_XML_FILES += $(INT_COMMON_XML_DIR)/verify_once_disabled.xml
 endif
 
+# Extended MIDlet attributes files
+ifeq ($(USE_EXTENDED_ATTRIBUTES), true)
+INT_XML_FILES += $(INT_COMMON_XML_DIR)/extended_attrs_enabled.xml
+else
+INT_XML_FILES += $(INT_COMMON_XML_DIR)/extended_attrs_disabled.xml
+endif
+
 # Resource policy input file
 ifeq ($(USE_FIXED), true)
 INT_XML_FILES += $(INT_XML_DIR)/constants_fixed.xml

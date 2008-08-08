@@ -467,7 +467,7 @@ public class MIDletProxy implements SuspendDependency {
     }
 
     /**
-     * Set the specifed attribute in the attributes' cache to true.
+     * Set the boolean attribute in the attributes' cache to true.
      *
      * The method is used to cache run time extended MIDlet attribute for better
      * performance. Default value for an atrribute is false.
@@ -483,7 +483,7 @@ public class MIDletProxy implements SuspendDependency {
     }
 
     /**
-     * Retrives the specifed attribute's value from the attributes' cache.
+     * Retrives the boolean attribute from the attributes' cache.
      *
      * @param attribute extended MIDlet attribute, the valid values are:
      *                  MIDLET_BACKGROUND_PAUSE, MIDLET_NO_EXIT and

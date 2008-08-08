@@ -105,13 +105,7 @@ public class MVMManager extends MIDlet
 
         midletSuiteStorage = MIDletSuiteStorage.getMIDletSuiteStorage();
 
-        /*
-         * Listen to the MIDlet proxy list.
-         * this allows us to notify the Application Selector
-         * of any changes whenever switch back to the AMS.
-         */
         midletProxyList = MIDletProxyList.getMIDletProxyList();
-        midletProxyList.addListener(this);
 
         // The proxy for this MIDlet may not have been create yet.
         for (; ; ) {
@@ -147,6 +141,15 @@ public class MVMManager extends MIDlet
         appManager = new AppManagerPeer(this, display, displayError, first,
                                         null);
 
+        /*
+         * Listen to the MIDlet proxy list.
+         * This allows us to notify the Application Selector
+         * of any changes whenever switch back to the AMS.
+         * The listener must be set up after finishing all
+         * initialization in the constructor.
+		 */
+	    midletProxyList.addListener(this);
+																	  
         processArguments();
 
         if (first) {
