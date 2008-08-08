@@ -47,4 +47,13 @@ public abstract class AutoJavaME {
      */    
     public abstract AutoSuiteStorage getStorage() 
         throws IllegalStateException;
+
+    public abstract void injectEvent(AutoEvent event);
+    public abstract void injectKeyEvent(AutoKeyState keyState, 
+            AutoKeyCode keyCode);
+    public abstract void injectKeyEvent(AutoKeyState keyState, char keyChar);
+
+    public abstract void replayEvents(AutoEventsSequence events, 
+            int speedDivisor);
+    public abstract void replayEvents(AutoEventsSequence events);
 }

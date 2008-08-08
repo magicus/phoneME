@@ -26,11 +26,33 @@
 
 package com.sun.midp.automation;
 import java.util.*;
+import com.sun.midp.events.*;
+import com.sun.midp.lcdui.EventConstants;
 
-final class AutoKeyEventImpl implements AutoKeyEvent {
+final class AutoKeyEventImpl 
+    extends AutoEventImplBase implements AutoKeyEvent {
 
-    public AutoEventType getType() {
-        return AutoEventType.KEYBOARD;
+    AutoKeyEventImpl(AutoKeyState keyState, AutoKeyCode keyCode) {
+        super(AutoEventType.KEYBOARD, 
+                createNativeEvent(keyState, keyCode, ' '));
+
+        this.keyState = keyState;
+        this.keyCode = keyCode;
+    }
+
+    AutoKeyEventImpl(AutoKeyState keyState, char keyChar) {
+        super(AutoEventType.KEYBOARD, 
+                createNativeEvent(keyState, null, keyChar));
+
+        this.keyState = keyState;
+        this.keyChar = keyChar;
+    }    
+
+    private AutoKeyEventImpl() {
+        super();
+
+        this.keyState = null;
+        this.keyCode = null;
     }
 
     public AutoKeyState getKeyState() {
@@ -62,9 +84,13 @@ final class AutoKeyEventImpl implements AutoKeyEvent {
     }
 
     static int registerKeyCode(AutoKeyCode keyCode) {
+        if (validKeyCodes == null) {
+            validKeyCodes = new Hashtable();
+        }
         validKeyCodes.put(keyCode.getName(), keyCode);
 
-        return 0;
+        int midpKeyCode = getMIDPKeyCodeFromName(keyCode.getName());
+        return midpKeyCode;
     }
 
     private static native int getMIDPKeyCodeFromName(String keyCodeName);
@@ -88,11 +114,25 @@ final class AutoKeyEventImpl implements AutoKeyEvent {
         f.registerEventFromStringCreator(new EventFromStringCreator());        
     }
 
+    private static NativeEvent createNativeEvent(AutoKeyState keyState, 
+            AutoKeyCode keyCode, char  keyChar) {
+        NativeEvent nativeEvent = new NativeEvent(EventTypes.KEY_EVENT);
+
+        nativeEvent.intParam1 = keyState.getMIDPKeyState();
+        if (keyCode != null) {
+            nativeEvent.intParam2 = keyCode.getMIDPKeyCode();
+        } else {
+            nativeEvent.intParam2 = (int)keyChar;
+        }
+
+        return nativeEvent;
+    }
+
     static {
         new AutoKeyEventImpl().registerEventFromStringCreator();
     }
     
-    private static Hashtable validKeyCodes;
+    private static Hashtable validKeyCodes = null;
 
     private AutoKeyState keyState = null;
     private AutoKeyCode keyCode = null;

@@ -35,6 +35,7 @@
 #include <midpUtilKni.h>
 #include <keymap_input.h>
 #include <pcsl_string.h>
+#include <midp_logging.h>
 
 #include <string.h>
 
@@ -64,7 +65,7 @@ KNIEXPORT KNI_RETURNTYPE_INT
 KNIDECL(com_sun_midp_automation_AutoKeyEventImpl_getMIDPKeyCodeFromName) {
     int i;
     int sz;
-    int midpKeyCode = 0;
+    int midpKeyCode = KEYMAP_KEY_INVALID;
     const char* keyCodeName;
 
     KNI_StartHandles(1);
@@ -81,6 +82,12 @@ KNIDECL(com_sun_midp_automation_AutoKeyEventImpl_getMIDPKeyCodeFromName) {
             midpKeyCode = keyCodeNameToMIDPKeyCode[i].midpKeyCode;
             break;
         }
+    }
+
+    if (midpKeyCode == KEYMAP_KEY_INVALID) {
+         REPORT_ERROR1(LC_CORE, 
+            "AutoKeyEventImpl_getMIDPKeyCodeFromName: unknown key code %s", 
+            keyCodeName);
     }
 
     RELEASE_PCSL_STRING_PARAMETER

@@ -28,9 +28,19 @@ package com.sun.midp.automation;
 import java.util.*;
 
 final class AutoEventFactoryImpl extends AutoEventFactory {
-    private final static AutoEventFactoryImpl instance = null;
+    private static AutoEventFactoryImpl instance = null;
+    private final static Object sync = new Object();
+    
 
     static AutoEventFactoryImpl getInstanceImpl() {
+        synchronized (sync) {
+            AutomationInitializer.guaranteeAutomationInitialized();
+
+            if (instance == null) {
+                instance = new AutoEventFactoryImpl();
+            }            
+        }
+
         return instance;
     }
 
@@ -72,20 +82,19 @@ final class AutoEventFactoryImpl extends AutoEventFactory {
         return event;
     }
 
-    public AutoKeyEvent createKeyEvent(
-            AutoKeyState keyState, AutoKeyCode keyCode) {
+    public AutoKeyEvent createKeyEvent(AutoKeyState keyState, 
+            AutoKeyCode keyCode) {
 
-        return null;
+        return new AutoKeyEventImpl(keyState, keyCode);
     }
 
-    public AutoKeyEvent createKeyEvent(
-            AutoKeyState keyState, char keyChar) {
+    public AutoKeyEvent createKeyEvent(AutoKeyState keyState, 
+            char keyChar) {
 
-        return null;
+        return new AutoKeyEventImpl(keyState, keyChar);
     }
 
-    public AutoPenEvent createPenEvent(
-            AutoPenState penState, int x, int y) {
+    public AutoPenEvent createPenEvent(AutoPenState penState, int x, int y) {
 
         return null;
     }

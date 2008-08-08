@@ -24,32 +24,34 @@
  * information or have any questions.
  */
 
+
 package com.sun.midp.automation;
-import com.sun.midp.lcdui.EventConstants;
+import com.sun.midp.events.*;
 
-public final class AutoKeyState {
-    public static AutoKeyState PRESSED = 
-        new AutoKeyState("PRESSED", EventConstants.PRESSED);
-
-    public static AutoKeyState REPEATED = 
-        new AutoKeyState("REPEATED", EventConstants.REPEATED);
-
-    public static AutoKeyState RELEASED = 
-        new AutoKeyState("RELEASED", EventConstants.RELEASED);
-
-
-    public String getName() {
-        return name;
+abstract class AutoEventImplBase implements AutoEvent {
+    AutoEventImplBase() {
+        this.type  = null;
+        this.nativeEvent = null;
     }
 
-    int getMIDPKeyState() {
-        return midpKeyState;
+    AutoEventImplBase(AutoEventType type) {
+        this.type  = type;
+        this.nativeEvent = null;
     }
 
-    private AutoKeyState(String name, int midpKeyState) {
-        this.name = name;
+    AutoEventImplBase(AutoEventType type, NativeEvent nativeEvent) {
+        this.type = type;        
+        this.nativeEvent = nativeEvent;
     }
 
-    private String name;
-    private int midpKeyState;
+    public AutoEventType getType() {
+        return type;
+    }
+
+    NativeEvent toNativeEvent() {
+        return nativeEvent;
+    }
+
+    private NativeEvent nativeEvent;
+    private AutoEventType type;
 }
