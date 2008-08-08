@@ -1027,10 +1027,14 @@ int midpRunMainClass(JvmPathChar *classPath,
      */
     vmStatus = midpRunVm(classPath, mainClass, argc, argv);
 
+
+    if (0 == vmStatus) {
+        vmStatus = MIDP_INIT_OK_STATUS;
+    } else {
     pushcheckinall();
     midp_resetEvents();
     midpMIDletProxyListReset();
-
+        midpFinalize();
     if (vmStatus != MAIN_EXIT) {
         /*
          * The VM aborted, most likely a bad class file in an installed
@@ -1040,8 +1044,8 @@ int midpRunMainClass(JvmPathChar *classPath,
     } else {
         vmStatus = MIDP_SHUTDOWN_STATUS;
     }
+    }
 
-    midpFinalize();
 
     return vmStatus;
 }
