@@ -97,6 +97,8 @@ typedef enum {
     JAVACALL_EVENT_MEDIA_STARTED,
     /** Posted when the blocked stop finished */
     JAVACALL_EVENT_MEDIA_STOPPED,    
+    /** Posted when the blocked realize finished */
+    JAVACALL_EVENT_MEDIA_REALIZED,        
     /** Posted when the blocked set media time  finished */
     JAVACALL_EVENT_MEDIA_TIME_SET,
     /** Posted when the blocked get duration finished */
