@@ -41,22 +41,41 @@ class Disassembler: public StackObj {
 #include "../arm/Disassembler_armthumb.hpp"
  private:
   // instruction fields
-  static short bit(const short instr, const int i) {
+  static jushort bit(const jushort instr, const int i) {
     return (instr >> i) & 1;
   }
 
-  static Register reg_field( const short instr, const int shift = 0 ) {
+  static Register reg_field( const jushort instr, const int shift = 0 ) {
     return as_register((instr >> shift) & 0x7);
   }
 
-  static Register reg_field_w( const int instr, const int shift = 0 ) {
+  static Register reg_field_w( const juint instr, const int shift = 0 ) {
     return as_register((instr >> shift) & 0x0f);
   }
 
   // disassembler
-  void emit_unknown(short instr, const char* comment = NULL);
+  void emit_unknown(const jushort instr);
+  void emit_unknown(const jushort hw1, const jushort hw2 );
   void emit_register_list(short instr);
   bool emit_GUARANTEE(bool check, const char* comment);
+  void emit_target_offset(const int offset, const int instr_offset);
+
+#if ENABLE_ARM_VFP
+  static char precision         (const jushort hw1, const jushort hw2);
+
+  static jushort rm_field       (const jushort hw1, const jushort hw2);
+  static jushort rn_field       (const jushort hw1, const jushort hw2);
+  static jushort rd_field       (const jushort hw1, const jushort hw2);
+  static jushort m_bit          (const jushort hw1, const jushort hw2);
+  static jushort n_bit          (const jushort hw1, const jushort hw2);
+  static jushort d_bit          (const jushort hw1, const jushort hw2);
+  static jushort l_bit          (const jushort hw1, const jushort hw2);
+  static jushort fm_field       (const jushort hw1, const jushort hw2);
+  static jushort fn_field       (const jushort hw1, const jushort hw2);
+  static jushort fd_field       (const jushort hw1, const jushort hw2);
+#endif
+  void disasm_v6t2_coproc       (const jushort hw1, const jushort hw2,
+                                 const int instr_offset = NO_OFFSET);
 
   void print_gp_name(int imm);
   const char *find_gp_name(int imm);
@@ -67,7 +86,6 @@ class Disassembler: public StackObj {
   void disasm_v6t2_data_load_store_double_and_exclusive(short instr, short hw2);
   void disasm_v6t2_data_load_store_multiple(short instr, short hw2);
   void disasm_v6t2_branches_and_misc(short instr, short hw2);
-  void disasm_v6t2_coproc(short instr, short hw2);
 
   int  disasm_internal  (const short* addr, short instr,
                                         const int instr_offset = NO_OFFSET);

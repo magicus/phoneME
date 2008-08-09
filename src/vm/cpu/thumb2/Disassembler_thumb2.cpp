@@ -53,18 +53,11 @@ int Disassembler::decode_imm(unsigned int p_value) {
   return ((unsigned int)(first_8_bits) >> shift_num) | (first_8_bits<<(32 - shift_num));
 }
 
-void Disassembler::emit_unknown(short instr, const char* comment) {
-  if (GenerateGNUCode) {
-    stream()->print(".word\t0x%04x", (unsigned short)instr);
-    if (comment != NULL) {
-      stream()->print("\t/* %s */", comment);
-    }
-  } else {
-    stream()->print("DCD\t0x%04x", (unsigned short)instr);
-    if (comment != NULL) {
-      stream()->print("\t; %s", comment);
-    }
-  }
+void Disassembler::emit_unknown(const unsigned short instr) {
+  stream()->print("%s\t0x%04x", GenerateGNUCode ? ".word" : "DCD", instr );
+}
+void Disassembler::emit_unknown(const unsigned short hw1, const unsigned short hw2 ) {
+  stream()->print("%s\t0x%04x, 0x%04x", GenerateGNUCode ? ".word" : "DCD", hw1, hw2 );
 }
 
 bool Disassembler::emit_GUARANTEE(bool check, const char* comment) {
@@ -111,6 +104,11 @@ void Disassembler::emit_register_list(short instr) {
   stream()->put('}');
 }
 
+void Disassembler::emit_target_offset(const int offset, const int instr_offset){
+  const int target = (instr_offset & ~3) + 4 + offset;
+  stream()->print( GenerateGNUCode ? "/* = %d */" : "; = %d ", target);
+}
+
 const char* Disassembler::condition_name(const Assembler::Condition cond) {
   static const char* cond_names[Assembler::number_of_conditions] = {
     "eq", "ne", "cs", "cc", "mi", "pl", "vs", "vc",
@@ -137,6 +135,40 @@ const char* Disassembler::register_name(const Assembler::Register reg) {
 }
 
 #if ENABLE_ARM_VFP
+inline char Disassembler::precision(const jushort /*hw1*/, const jushort hw2 ){
+  return (hw2 & (1 << 8)) ? 'd' : 's';
+}
+inline jushort Disassembler::rm_field(const jushort /*hw1*/, const jushort hw2){
+  return hw2 & 0xf;
+}
+inline jushort Disassembler::rn_field(const jushort hw1, const jushort/*hw2*/){
+  return hw1 & 0x0f;
+}
+inline jushort Disassembler::rd_field(const jushort /*hw1*/, const jushort hw2){
+  return (hw2 >> 12) & 0x0f;
+}
+inline jushort Disassembler::m_bit   (const jushort /*hw1*/, const jushort hw2){
+  return bit(hw2, 5);
+}
+inline jushort Disassembler::n_bit(const jushort /*hw1*/, const jushort hw2) {
+  return bit(hw2, 7);
+}
+inline jushort Disassembler::d_bit(const jushort hw1, const jushort /*hw2*/) {
+  return bit(hw1, 6);
+}
+inline jushort Disassembler::l_bit(const jushort hw1, const jushort /*hw2*/) {
+  return bit(hw1, 4);
+}
+inline jushort Disassembler::fm_field(const jushort hw1, const jushort hw2) {
+  return rm_field(hw1, hw2) << 1 | m_bit(hw1, hw2);
+}
+inline jushort Disassembler::fn_field(const jushort hw1, const jushort hw2) {
+  return rn_field(hw1, hw2) << 1 | n_bit(hw1, hw2);
+}
+inline jushort Disassembler::fd_field(const jushort hw1, const jushort hw2) {
+  return rd_field(hw1, hw2) << 1 | d_bit(hw1, hw2);
+}
+
 void Disassembler::vfp_reg_name(const char type, unsigned reg, char buffer[]) {
   GUARANTEE(reg < 32, "Invalid vfp register");
   if( type == 'd' ) {
@@ -147,6 +179,186 @@ void Disassembler::vfp_reg_name(const char type, unsigned reg, char buffer[]) {
   jvm_sprintf(buffer, "%c%u", type, reg);
 }
 #endif
+
+inline void Disassembler::disasm_v6t2_coproc( const jushort hw1,
+                                              const jushort hw2,
+                                              const int instr_offset )
+{
+#if ENABLE_ARM_VFP
+  const jushort fn = fn_field( hw1, hw2 );
+  const jushort fm = fm_field( hw1, hw2 );
+  const jushort fd = fd_field( hw1, hw2 );
+  const char type  = precision( hw1, hw2 );
+
+  char fn_name[4];
+  char fm_name[4];
+  char fd_name[4];
+
+  vfp_reg_name( type, fn, fn_name );
+  vfp_reg_name( type, fm, fm_name );
+  vfp_reg_name( type, fd, fd_name );
+
+  const jushort L = l_bit(hw1, hw2);
+
+  if( ((hw1 >> 8) & 0x0f) == 0x0e ) {
+    if( bit(hw2, 4) == 0 ) {            // Data processing
+      const jushort p = bit(hw1, 7);
+      const jushort q = bit(hw1, 5);
+      const jushort r = bit(hw1, 4);
+      const jushort s = bit(hw2, 6);
+      const jushort pqrs = p << 3 | q << 2 | r << 1 | s;
+
+      if( pqrs != 0x0f ) {
+        const char* op;
+        switch( pqrs ) {
+          case 0x00: op = "fmac";  break;
+          case 0x01: op = "fnmac"; break;
+          case 0x02: op = "fmsc";  break;
+          case 0x03: op = "fnmsc"; break;
+          case 0x04: op = "fmul";  break;
+          case 0x05: op = "fnmul"; break;
+          case 0x06: op = "fadd";  break;
+          case 0x07: op = "fsub";  break;
+          case 0x08: op = "fdiv";  break;
+          default:   op = "VFP_UNDEF";
+        }
+        stream()->print("%s%c\t%s, %s, %s", op, type, fd_name, fn_name, fm_name);
+      } else if( fn == 15 ) {
+        const char fd_type = type == 'd' ? 's' : 'd';
+        vfp_reg_name(fd_type, fd, fd_name);
+        stream()->print("fcvt%c%c\t%s, %s", fd_type, type, fd_name, fm_name);
+      } else {
+        const char* op;
+        switch( fn ) {
+          case 0x00: op = "fcpy";   break;
+          case 0x01: op = "fabs";   break;
+          case 0x02: op = "fneg";   break;
+          case 0x03: op = "fsqrt";  break;
+          case 0x08: op = "fcmp";   break;
+          case 0x09: op = "fcmpe";  break;
+          case 0x0a: op = "fcmpz";  break;
+          case 0x0b: op = "fcmpez"; break;
+          case 0x10: op = "fuito";  break;
+          case 0x11: op = "fsito";  break;
+          case 0x18: op = "ftoui";  break;
+          case 0x19: op = "ftouiz"; break;
+          case 0x1a: op = "ftosi";  break;
+          case 0x1b: op = "ftosiz"; break;
+          default:   op = "VFP_UNDEF";
+        }
+        stream()->print("%s%c\t%s, %s", op, type, fd_name, fm_name);
+      }
+      return;
+    }
+    if( type == 's' && ((hw2 >> 4) & 0x07) == 1 ) {     // Single register transfer
+      const jushort rd     = rd_field(hw1, hw2);
+      const char* rd_name  = register_name( rd );
+      const jushort opcode = (hw1 >> 5) & 0x07;
+
+      if( opcode == 0 ) {
+        if( L == 0 ) {
+          stream()->print("fmsr\t%s, %s", fn_name, rd_name);
+        } else {
+          stream()->print("fmrs\t%s, %s", rd_name, fn_name);
+        }
+        return;
+      }
+      if( opcode == 7 && n_bit(hw1, hw2) == 0 ) {
+        const char* vfp_sysreg = fn == 2 ? "fpscr" : "UNDEF_VFP_SYSREG";
+        if( L == 0 ) {
+          stream()->print("fmxr\t%s, %s", vfp_sysreg, rd_name);
+        } else if( fn == 2 && rd == 0x0f ) {
+          stream()->print("fmstat");
+        } else {
+          stream()->print("fmrx\t%s, %s", rd_name, vfp_sysreg);
+        }
+        return;
+      }
+    }
+  }
+  if( ((hw1 >> 9) & 0x07) == 0x6 ) {
+    if( ((hw1 >> 5) & 0x0f) == 0x2 && ((hw2 >> 4) & 0xff) == 0xb1 ) {
+      const char* rd_name = register_name( rd_field(hw1, hw2) );
+      const char* rn_name = register_name( rn_field(hw1, hw2) );
+      if( L == 0 ) {
+        stream()->print("fmdrr\t%s, %s, %s", fm_name, rd_name, rn_name);
+      } else {
+        stream()->print("fmrrd\t%s, %s, %s", rd_name, rn_name, fm_name);
+      }
+      return;
+    }
+
+    const jushort rn = rn_field(hw1, hw2);
+    const char* rn_name = register_name(rn);
+
+    const jushort P = bit(hw1, 8);
+    const jushort U = bit(hw1, 7);
+    const jushort W = bit(hw1, 5);
+    const jushort puw = P << 2 | U << 1 | W;
+
+    switch( puw ) {
+      case 2: case 3: case 5: {
+        char suffix1, suffix2;
+        if( rn == Assembler::sp || rn == Assembler::jsp ) {
+          // use stack addressing mnemonics
+          suffix1 = L == P ? 'e' : 'f';
+          suffix2 = L == U ? 'd' : 'a';
+        } else {
+          // use non-stack addressing mnemonics
+          suffix1 = U ? 'i' : 'd';
+          suffix2 = P ? 'b' : 'a';
+        }
+        stream()->print("f%sm%c%c%c\t%s", (L ? "ld" : "st"), suffix1, suffix2,
+                        type, rn_name);
+        if( W ) {
+          stream()->put('!');
+        }
+
+        stream()->print(", {");
+        for( int freg = fd, end = (hw2 & 0xFF) + fd;; stream()->put(',') ) {
+          char buffer [4];
+          vfp_reg_name(type, freg, buffer);
+          stream()->print(buffer);
+          if( ++freg >= end ) break;
+        }
+        stream()->put('}');
+        return;
+      }
+      case 4: case 6: {
+        stream()->print("f%s%c\t%s, [%s", (L ? "ld" : "st"), type,
+                        fd_name, rn_name);
+        int offset = (hw2 & 0xff) << 2;
+        if( !U ) {
+          offset = -offset;
+        }
+        if( offset ) {
+          stream()->print(", #%d", offset);
+        }
+        stream()->put(']');
+
+        if( instr_offset != NO_OFFSET && rn == Assembler::pc ) {
+          emit_target_offset( instr_offset, offset );
+        }
+        return;
+      }
+    }
+  }
+  emit_unknown( hw1, hw2 );
+  UNIMPLEMENTED(); // other instructions
+#else
+  if (hw2 & 0x10) {
+    // mcr.w, mrc.w
+    stream()->print("%s.w\tp%d, %d, %s, c%d, c%d, %d",
+                    (hw1 & 0x10) ? "mrc" : "mcr", (hw2 >> 8) & 15,
+                    (hw1 >> 5) & 7,
+                    register_name( hw2 >> 12 ),
+                    hw1 & 15, hw2 & 15, (hw2 >> 5) & 7);
+  } else {
+    emit_unknown( hw1, hw2 );
+    UNIMPLEMENTED(); // other instructions
+  }
+#endif
+}
 
 const char* Disassembler::shift_name(const Assembler::Shift shift) {
   static const char* shift_names[Assembler::number_of_shifts] = {
@@ -276,6 +488,7 @@ void Disassembler::disasm_new16bit(const short* addr, short instr,
   end_thumb2();
 }
 
+
 void Disassembler::disasm_32bit(const short* addr, const short instr,
                                 const int instr_offset) {
   start_thumb2(32, addr, instr);
@@ -325,31 +538,18 @@ void Disassembler::disasm_32bit(const short* addr, const short instr,
       disasm_v6t2_data_load_store_multiple(instr, hw2);
     }
   } else if ((instr & 0xef00) == 0xee00) {
-    disasm_v6t2_coproc(instr, hw2);
+    disasm_v6t2_coproc(instr, hw2, instr_offset);
   }
 
   end_thumb2();
 }
 
-void Disassembler::disasm_v6t2_coproc(short instr, short hw2) {
-  if (hw2 & 0x10) {
-    // mcr.w, mrc.w
-    stream()->print("%s.w\tp%d, %d, %s, c%d, c%d, %d",
-                    (instr & 0x10) ? "mrc" : "mcr", (hw2 >> 8) & 15,
-                    (instr >> 5) & 7,
-                    register_name( hw2 >> 12 ),
-                    instr & 15, hw2 & 15, (hw2 >> 5) & 7);
-  } else {
-    UNIMPLEMENTED(); // other instructions
-  }
-}
-
 void Disassembler::disasm_v6t2_data_processing(short instr, short hw2) {
-  static const char* opcode_w_names[] = {
+  static const char* const opcode_w_names[] = {
     "and", "bic", "orr", "orn", "eor", "error:0101", "error:0110","error:0111",
     "add", "error:1001", "adc", "sbc", "error:1100", "sub", "rsb","error:1111"
   };
-  static const char *s_suffix[] = {"", "s", "<error>"};
+  static const char* const s_suffix[] = {"", "s", "<error>"};
   const char *rn = register_name(reg_field_w(instr));
   const char *rd = register_name(reg_field_w(hw2, 8));
   const char* op_code_name = "";
@@ -1031,8 +1231,7 @@ inline int Disassembler::disasm_internal(const short* addr, short instr,
   int op = (instr >> 13) & 0x7;
   int num_half_words = 1;
   switch (op) {
-    case 0:
-    {
+    case 0: {
       bool is_add_sub = (bit(instr, 12) && bit(instr, 11));
       const char*  rn = register_name(reg_field(instr, 3));
       const char*  rd = register_name(reg_field(instr));
@@ -1057,64 +1256,37 @@ inline int Disassembler::disasm_internal(const short* addr, short instr,
           stream()->print("\t%s, %s, #%d", rd, rn, ((instr >> 6) & 0x7));
         }
       }
+      break;
     }
-    break;
-
-  case 1:
-    {
+    case 1: {
       // add|sub|cmp|mov <Rd/Rn>, #<8-bit imme>
-      const int opcode = (instr >> 11) & 0x3;
-      const char*  rd = register_name(reg_field(instr, 8));
+      static const char* const ops [] = {
+        "mov", "cmp", "add", "sub"
+      };
+      const char* op = ops[ (instr >> 11) & 0x3 ];
+      const char* rd = register_name(reg_field(instr, 8));
       const char* s_suffix = GenerateGNUCode ? "" : "s";
-      switch (opcode) {
-      case 0:
-        stream()->print("mov%s\t%s, #%d", s_suffix, rd, (instr & 0xFF));
-        break;
-      case 1:
-        stream()->print("cmp\t%s, #%d", rd, (instr & 0xFF));
-        break;
-      case 2:
-        stream()->print("add%s\t%s, #%d", s_suffix, rd, (instr & 0xFF));
-        break;
-      case 3:
-        stream()->print("sub%s\t%s, #%d", s_suffix, rd, (instr & 0xFF));
-        break;
-      default:
-        SHOULD_NOT_REACH_HERE();
-      }
+      stream()->print("%s%s\t%s, #%d", op, s_suffix, rd, (instr & 0xFF));
+      break;
     }
-    break;
-
-  case 2:
-      {
+    case 2: {
       if (((instr >> 11) & 0x1F) == 0x9) {
         // ldr Rd, [PC, #<immed_8> * 4]
         const char* rd = register_name(reg_field(instr, 8));
-        stream()->print("ldr\t%s, [pc, #%d]", rd,
-                        (instr & 0xFF) * 4);
-        int target = (instr_offset & ~3) + 4 + ((instr & 0xFF) * 4);
-        if (GenerateGNUCode) {
-          stream()->print("/* = %d */", target);
-        } else {
-          stream()->print("; = %d ", target);
-        }
+        const unsigned offset = (instr & 0xFF) * 4;
+        stream()->print("ldr\t%s, [pc, #%u]", rd, offset);
+        emit_target_offset(instr_offset, offset);
       } else if (bit(instr, 12)) {
         // ldr|str <Rd>, [<Rn>, <Rm>]
+        static const char* const ops[] = {
+          "str", "strh", "strb", "ldrsb",
+          "ldr", "ldrh", "ldrb", "ldrsh"
+        };
+        const char* op = ops[ (instr >> 9) & 0x7 ];
         const char* rd = register_name(reg_field(instr, 0));
         const char* rn = register_name(reg_field(instr, 3));
         const char* rm = register_name(reg_field(instr, 6));
-        const int opcode = (instr >> 9) & 0x7;
-        switch(opcode) {
-          case 0: stream()->print("str"); break;
-          case 1: stream()->print("strh"); break;
-          case 2: stream()->print("strb"); break;
-          case 3: stream()->print("ldrsb"); break;
-          case 4: stream()->print("ldr"); break;
-          case 5: stream()->print("ldrh"); break;
-          case 6: stream()->print("ldrb"); break;
-          case 7: stream()->print("ldrsh"); break;
-        }
-        stream()->print("\t%s, [%s, %s]", rd, rn, rm);
+        stream()->print("%s\t%s, [%s, %s]", op, rd, rn, rm);
       } else if (bit(instr, 10)) {
         int opcode = (instr >> 8) & 0x3;
         Register reg_rd = as_register((instr       & 0x7) | (instr >> 4) & 0x8);
@@ -1151,35 +1323,31 @@ inline int Disassembler::disasm_internal(const short* addr, short instr,
       }
       break;
     }
-
-  case 3:
-    {
+    case 3: {
       // ldrb|strb|ldr|str <Rd>, [<Rn>, #<immed_5> * 4]
       const Register rn_reg = reg_field( instr, 3);
       const Register rd_reg = reg_field( instr );
       const char* rn = register_name( rn_reg );
       const char* rd = register_name( rd_reg );
-      const bool byte_op = bit(instr,12);
-      const int imm_shift = byte_op ? 0 : 2;
-      if (bit(instr, 11)) {
-        stream()->print(byte_op ? "ldrb" : "ldr");
-      } else {
-        stream()->print(byte_op ? "strb" : "str");
-      }
-      stream()->print("\t%s, [%s", rd, rn);
-      const int imm = ((instr >> 6) & 0x1F) << imm_shift;
+      const short opcode = (instr >> 11) & 3;
+      static const char* const ops [] = {
+        "str", "ldr", "strb", "ldrb"
+      };
+      stream()->print("%s\t%s, [%s", ops[opcode], rd, rn);
+      int imm = ((instr >> 6) & 0x1F);
       if (imm == 0) {
         stream()->print("]");
-      }
-      else {
+      } else {
+        if( opcode & 2 ) {
+          imm <<= 1;
+        }
         stream()->print(", #%d]", imm);
-        if (rn_reg == Assembler::gp) {
+        if( rn_reg == Assembler::gp ) {
           print_gp_name(imm);
         }
       }
       break;
     }
-
   case 4:
     {
       const char* rn = register_name(reg_field(instr, 3));

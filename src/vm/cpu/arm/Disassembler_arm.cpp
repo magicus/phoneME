@@ -736,15 +736,15 @@ void Disassembler::emit_vfp_instruction(int instr, int instr_offset) {
     const char * op = "UNDEF";
     int pqrs = p << 3 | q << 2 | r << 1 | s;
     switch (pqrs) {
-    case 0x00: op = "fmac";  break;
-    case 0x01: op = "fnmac"; break;
-    case 0x02: op = "fmsc";  break;
-    case 0x03: op = "fnmsc"; break;
-    case 0x04: op = "fmul";  break;
-    case 0x05: op = "fnmul"; break;
-    case 0x06: op = "fadd";  break;
-    case 0x07: op = "fsub";  break;
-    case 0x08: op = "fdiv";  break;
+      case 0x00: op = "fmac";  break;
+      case 0x01: op = "fnmac"; break;
+      case 0x02: op = "fmsc";  break;
+      case 0x03: op = "fnmsc"; break;
+      case 0x04: op = "fmul";  break;
+      case 0x05: op = "fnmul"; break;
+      case 0x06: op = "fadd";  break;
+      case 0x07: op = "fsub";  break;
+      case 0x08: op = "fdiv";  break;
     }
 
     if (pqrs != 0x0f) {
@@ -788,15 +788,15 @@ void Disassembler::emit_vfp_instruction(int instr, int instr_offset) {
       }
       // Handle special case different instruction for float and double
       if (n == 15) {
-  if (type == 'd') {
-    vfp_reg_name('s', (Fd << 1 | D), fd);
-    vfp_reg_name('d', (Fm << 1 | M), fm);
-    stream()->print("fcvtsd%s\t%s, %s", condition_name(cond), fd, fm);
-  } else {
-    vfp_reg_name('d', (Fd << 1 | D), fd);
-    vfp_reg_name('s', (Fm << 1 | M), fm);
-    stream()->print("fcvtds%s\t%s, %s", condition_name(cond), fd, fm);
-  }
+        if (type == 'd') {
+          vfp_reg_name('s', (Fd << 1 | D), fd);
+          vfp_reg_name('d', (Fm << 1 | M), fm);
+          stream()->print("fcvtsd%s\t%s, %s", condition_name(cond), fd, fm);
+        } else {
+          vfp_reg_name('d', (Fd << 1 | D), fd);
+          vfp_reg_name('s', (Fm << 1 | M), fm);
+          stream()->print("fcvtds%s\t%s, %s", condition_name(cond), fd, fm);
+        }
       } else {
         stream()->print("%s%c%s\t%s, %s", op, type, condition_name(cond),
                         fd, fm);
@@ -840,7 +840,7 @@ void Disassembler::emit_vfp_instruction(int instr, int instr_offset) {
     } else {
       unknown_vfp_instr(instr);
     }
-  } else if (((instr >> 21) & 0x62) == 0x62 &&
+  } else if (((instr >> 21) & 0x3f) == 0x62 &&
              ((instr >> 8) & 0x0b) == 0x0b &&
              ((instr >> 4) & 0x07) == 0x1) {
     int L        = bit(instr, 20);
