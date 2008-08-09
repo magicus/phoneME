@@ -47,6 +47,20 @@ extern "C" {
  */
 
 /**
+ * @enum javacall_system_state
+ */
+typedef enum {
+     /** VM active */
+    JAVACALL_SYSTEM_STATE_ACTIVE,
+    /** VM paused */
+    JAVACALL_SYSTEM_STATE_SUSPENDED,
+    /** VM destroyed */
+    JAVACALL_SYSTEM_STATE_STOPPED,
+    /** VM error */
+    JAVACALL_SYSTEM_STATE_ERROR  
+} javacall_system_state;
+
+/**
  * @enum javacall_midlet_state
  *
  * IMPL_NOTE: currently a number of MIDP structures and constants
@@ -451,6 +465,21 @@ typedef int javacall_app_id;
  *         <tt>JAVACALL_FAIL</tt> otherwise
  */
 javacall_result javanotify_ams_system_start();
+
+/**
+ * Inform on change of the VM'slifecycle status.
+ *
+ * Java will invoke this function whenever the lifecycle status of the running
+ * VM is changed
+ * 
+ * @param state new state of the running VM. Can be either,
+ *        <tt>JAVACALL_SYSTEM_STATE_ACTIVE</tt>
+ *        <tt>JAVACALL_SYSTEM_STATE_SUSPENDED</tt>
+ *        <tt>JAVACALL_SYSTEM_STATE_STOPPED</tt>
+ *        <tt>JAVACALL_SYSTEM_STATE_ERROR</tt>
+ *        <tt>JAVACALL_MIDLET_STATE_ERROR</tt>
+ */
+void javacall_ams_system_state_changed(javacall_system_state state);
 
 /**
  * Platform invokes this function to inform VM to start a specific MIDlet
