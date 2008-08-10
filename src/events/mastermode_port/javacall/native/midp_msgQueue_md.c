@@ -130,8 +130,8 @@ void checkForSystemSignal(MidpReentryData* pNewSignal,
     case MIDP_JC_EVENT_DISPLAY_DEVICE_STATE_CHANGED:
         pNewSignal->waitingFor = DISPLAY_DEVICE_SIGNAL;
         pNewMidpEvent->type    = DISPLAY_DEVICE_STATE_CHANGED_EVENT;
-        pNewMidpEvent->intParam1 = event->data.midp_jc_event_display_device.hardwareId;
-        pNewMidpEvent->intParam2 = event->data.midp_jc_event_display_device.state;
+        pNewMidpEvent->intParam1 = event->data.displayDeviceEvent.hardwareId;
+        pNewMidpEvent->intParam2 = event->data.displayDeviceEvent.state;
         break;
 
 #if ENABLE_ON_DEVICE_DEBUG

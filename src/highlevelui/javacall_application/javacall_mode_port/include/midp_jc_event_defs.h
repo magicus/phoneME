@@ -123,7 +123,7 @@ typedef enum {
 #ifdef ENABLE_API_EXTENSIONS
     MIDP_JC_EVENT_VOLUME 			   ,
 #endif /* ENABLE_API_EXTENSIONS */
-    MIDP_JC_EVENT_STATE_CHANGE  	   ,
+    MIDP_JC_EVENT_STATE_CHANGE         ,
     MIDP_JC_EVENT_PHONEBOOK            ,
     MIDP_JC_EVENT_INSTALL_CONTENT      ,
     MIDP_JC_EVENT_SWITCH_FOREGROUND    ,
@@ -229,6 +229,11 @@ typedef struct {
 typedef struct {
     int            alarmHandle;
 } midp_jc_event_push;
+
+typedef struct {
+    int            hardwareId;
+    int            state;
+} midp_jc_event_display_device;
 
 #ifdef ENABLE_JSR_120
 typedef struct {
@@ -377,6 +382,7 @@ typedef struct {
         midp_jc_event_network              networkEvent;
         midp_jc_event_timer                timerEvent;
         midp_jc_event_push                 pushEvent;
+        midp_jc_event_display_device       displayDeviceEvent;
 #ifdef ENABLE_JSR_120
         midp_jc_event_sms_sending_result   smsSendingResultEvent;
         midp_jc_event_sms_incoming         smsIncomingEvent;
