@@ -193,6 +193,7 @@ KNIEXPORT KNI_RETURNTYPE_BOOLEAN
 KNIDECL(com_sun_midp_lcdui_DisplayDevice_directFlush0) {
     jboolean success = KNI_FALSE;
     int height  = KNI_GetParameterAsInt(4);
+    jint hardwareId;
 
     KNI_StartHandles(3);
     KNI_DeclareHandle(img);
@@ -200,7 +201,7 @@ KNIDECL(com_sun_midp_lcdui_DisplayDevice_directFlush0) {
 
     KNI_GetParameterAsObject(3, img);
     KNI_GetParameterAsObject(2, g);
-    jint hardwareId = KNI_GetParameterAsInt(1);
+    hardwareId = KNI_GetParameterAsInt(1);
 
     if (!KNI_IsNullHandle(img)) {
       success = lcdlf_direct_flush(hardwareId, GXAPI_GET_GRAPHICS_PTR(g), 
@@ -282,13 +283,13 @@ KNIDECL(com_sun_midp_lcdui_DisplayDevice_getDisplayCapabilities0) {
 
 KNIEXPORT KNI_RETURNTYPE_OBJECT
 KNIDECL(com_sun_midp_lcdui_DisplayDeviceContainer_getDisplayDevicesIds0) {
-    KNI_StartHandles(1);
-    KNI_DeclareHandle(returnArray);
-
     int i;
 
     jint n;
     jint* display_device_ids = lcdlf_get_display_device_ids(&n);
+
+    KNI_StartHandles(1);
+    KNI_DeclareHandle(returnArray);
 
     SNI_NewArray(SNI_INT_ARRAY, n, returnArray);
 
