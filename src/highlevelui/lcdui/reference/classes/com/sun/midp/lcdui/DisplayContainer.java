@@ -76,10 +76,11 @@ public class DisplayContainer {
     /**
      * Get a display to request the foreground on behalf of the MIDlet.
      *
-     * @param nameOfOwner class name of the MIDlet that owns this display
+     * @param owner the object that owns this display
      */
-    public void requestForegroundForDisplay(String nameOfOwner) {
-        DisplayAccess[] da = findDisplaysByOwner(nameOfOwner, 0);
+
+    public void requestForegroundForDisplay(Object owner) {
+        DisplayAccess[] da = findDisplaysByOwner(owner, 0);
 
 	/** IMPL_NOTE: correct call ! */
 	if (da != null) {
@@ -90,18 +91,18 @@ public class DisplayContainer {
     /**
      * Removes display objects by the owner name from the container.
      *
-     * @param nameOfOwner class name of the MIDlet that owns this display
+     * @param owner the MIDlet that owns this display
      *
      * @return true if display has been succcessfully removed, 
      *         false, if display object has not been found in the container.
      */
-    public synchronized boolean removeDisplaysByOwner(String nameOfOwner) {
+    public synchronized boolean removeDisplaysByOwner(Object owner) {
 	int size = displays.size();
 
         for (int i = size; --i >= 0;) {
             DisplayAccess current = (DisplayAccess)displays.elementAt(i);
 	    
-            if (current.getNameOfOwner().equals(nameOfOwner)) {
+	    if (current.getOwner() == owner) {
 		displays.removeElementAt(i);
             }
         }
@@ -122,6 +123,18 @@ public class DisplayContainer {
 	    return displays.removeElement(da);
 	}
         return false;
+    }
+    
+    /**
+     * Removes display object from the container.
+     *
+     * @param da display access of the display
+     *
+     * @return true if display has been succcessfully removed, 
+     *         false, if display object has not been found in the container.
+     */
+    public synchronized boolean removeDisplay(DisplayAccess da) {
+        return displays.removeElement(da);
     }
     
     /**
@@ -148,12 +161,13 @@ public class DisplayContainer {
     /**
      * Find the displays by owner.
      *
-     * @param nameOfOwner class name of the MIDlet that owns this display
+     * @param owner the object that owns the display
      * @param capabilities display device capbilities filter
      *
      * @return array of display access objects or null if not found
      */
-    public synchronized DisplayAccess[] findDisplaysByOwner(String nameOfOwner, int capabilities) {
+
+    public synchronized DisplayAccess[] findDisplaysByOwner(Object owner, int capabilities) {
         int size = displays.size();
 	Vector v = new Vector(2, 2); 
 	
@@ -161,7 +175,7 @@ public class DisplayContainer {
         for (int i = 0; i < size; i++) {
             DisplayAccess current = (DisplayAccess)displays.elementAt(i);
 	    
-            if (current.getNameOfOwner().equals(nameOfOwner) && 
+            if ((current.getOwner() == owner) && 
 		(current.getDisplayDevice().getCapabilities() & 
 		 capabilities) == capabilities) {
 		v.addElement(current);
@@ -179,8 +193,6 @@ public class DisplayContainer {
 
     /**
      * Find the displays by hardwareId.
-     *
-     * @param nameOfOwner class name of the MIDlet that owns this display
      *
      * @return array of display access objects or null if not found
      */
@@ -209,18 +221,18 @@ public class DisplayContainer {
     /**
      * Find a primary display by owner.
      *
-     * @param nameOfOwner class name of the MIDlet that owns this display
+     * @param owner class of the MIDlet that owns this display
      *
      * @return a display access object or null if not found
      */
-    public synchronized DisplayAccess findPrimaryDisplayByOwner(String nameOfOwner) {
+    public synchronized DisplayAccess findPrimaryDisplayByOwner(Object owner) {
         int size = displays.size();
 	DisplayAccess d = null;
 
         for (int i = 0; i < size; i++) {
             DisplayAccess current = (DisplayAccess)displays.elementAt(i);
 	    
-            if (current.getNameOfOwner().equals(nameOfOwner) && 
+            if ((current.getOwner() == owner) && 
 		current.getDisplayDevice().isPrimaryDisplay()) {
 		d = current;
 		break;

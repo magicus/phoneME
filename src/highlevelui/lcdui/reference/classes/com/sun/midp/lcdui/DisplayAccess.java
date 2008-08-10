@@ -101,12 +101,12 @@ public interface DisplayAccess {
     // void resumePainting();
 
     /**
-     * Get the class name of the MIDlet that owns this display.
+     * Get the object that owns this display.
      * DisplayAccess I/F method.
      *
-     * @return name of the MIDlet that owns this Display
+     * @return object that owns this Display
      */
-    public String getNameOfOwner();
+    public Object getOwner();
 
     /**
      * Get the ID of this display.

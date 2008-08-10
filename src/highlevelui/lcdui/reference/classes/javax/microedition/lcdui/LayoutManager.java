@@ -43,7 +43,7 @@ class LayoutManager {
      */
     LayoutManager() {
     	sizingBox = new int[3]; // x,y,width
-        if (locale.equals("he-IL")) {
+        if (locale != null && locale.equals("he-IL")) {
             layoutDirection = Graphics.RIGHT;
         } else {
             layoutDirection = Graphics.LEFT;

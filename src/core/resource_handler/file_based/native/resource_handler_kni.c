@@ -101,7 +101,7 @@ KNIDECL(com_sun_midp_util_ResourceHandler_loadRomizedResource0) {
         }
     } while(0);
 
-    pcsl_string_release_utf8_data(pResourceName, &strResourceName);
+    pcsl_string_release_utf8_data((jbyte *)pResourceName, &strResourceName);
 
     RELEASE_PCSL_STRING_PARAMETER
 

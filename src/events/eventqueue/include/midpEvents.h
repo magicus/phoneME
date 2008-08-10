@@ -167,6 +167,23 @@ extern "C" {
  */
 #define DISPLAY_DEVICE_STATE_CHANGED_EVENT  54
 
+/**
+ * Notification sent by ODT agent indicating that it has installed a new
+ * MIDlet suite.
+ */
+#define MIDP_ODD_SUITE_INSTALLED_EVENT  55
+
+/**
+ * Notification sent by ODT agent indicating that it has removed
+ * an installed MIDlet suite.
+ */
+#define MIDP_ODD_SUITE_REMOVED_EVENT    56
+
+/**
+ * Major ID for a request to restart a MIDlet event.
+ */
+#define RESTART_MIDLET_EVENT            57
+
 /** @} */
 
 /**

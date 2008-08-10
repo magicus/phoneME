@@ -155,7 +155,7 @@ class CldcMIDletStateListener implements MIDletStateListener {
             previouslyActive = true;
 
             if (Display.getDisplay(midlet).getCurrent() == null) {
-                displayContainer.requestForegroundForDisplay(className);
+                displayContainer.requestForegroundForDisplay(midlet);
             }
         }
 
@@ -214,9 +214,15 @@ class CldcMIDletStateListener implements MIDletStateListener {
      *
      * @param suite reference to the loaded suite
      * @param className class name of the MIDlet
+     * @param midlet reference to the MIDlet, null if the MIDlet's constructor
+     *               was not successful
      */
-    public void midletDestroyed(MIDletSuite suite, String className) {
-        displayContainer.removeDisplaysByOwner(className);
+    public void midletDestroyed(MIDletSuite suite, String className,
+                                MIDlet midlet) {
+        if (midlet != null) {
+            displayContainer.removeDisplaysByOwner(midlet);
+        }
+
         midletControllerEventProducer.sendMIDletDestroyNotifyEvent(
             suite.getID(), className);
     }

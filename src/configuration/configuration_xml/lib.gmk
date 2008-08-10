@@ -341,10 +341,6 @@ GENERATE_L10N_STRINGS = \
 
 define generate_configuration
 	@echo " ... generating configuration files"
-	@echo "***" \
-		$(GENERATE_PERMISSIONS_JAVA_SOURCE) \
-		$(GENERATE_PERMISSIONS_NATIVE_SOURCE)
-	@echo "***"
 	@$(INT_INVOKE_TRANSFORMER) \
 		$(GENERATE_CONSTANTS_H) \
 		$(GENERATE_CONSTANTS_C) \

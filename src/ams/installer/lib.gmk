@@ -37,20 +37,11 @@
 #SUBSYSTEMS += installer
 
 # Local module directory
-INSTALLER_DIR = $(SUBSYSTEM_AMS_DIR)/installer/reference
+INSTALLER_DIR = $(SUBSYSTEM_AMS_DIR)/installer
+INSTALLER_IMPL_DIR ?= $(INSTALLER_DIR)/reference
 
-# Javadoc source path
-MIDP_JAVADOC_SOURCEPATH += $(INSTALLER_DIR)/classes
+# Get implementation settings and files
+include $(INSTALLER_IMPL_DIR)/lib.gmk
 
-# Java files for the sub-system
-#
-SUBSYSTEM_AMS_JAVA_FILES += \
-    $(INSTALLER_DIR)/classes/com/sun/midp/installer/Installer.java \
-    $(INSTALLER_DIR)/classes/com/sun/midp/installer/HttpInstaller.java \
-    $(INSTALLER_DIR)/classes/com/sun/midp/installer/FileInstaller.java \
-    $(INSTALLER_DIR)/classes/com/sun/midp/installer/InstallListener.java \
-    $(INSTALLER_DIR)/classes/com/sun/midp/installer/InstallState.java \
-    $(INSTALLER_DIR)/classes/com/sun/midp/installer/InvalidJadException.java \
-    $(INSTALLER_DIR)/classes/com/sun/midp/installer/JadProperties.java \
-    $(INSTALLER_DIR)/classes/com/sun/midp/installer/ManifestProperties.java \
-    $(INSTALLER_DIR)/classes/com/sun/midp/installer/SuiteDownloadInfo.java
+
+

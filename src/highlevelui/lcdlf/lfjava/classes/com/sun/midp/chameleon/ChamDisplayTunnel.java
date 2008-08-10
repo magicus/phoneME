@@ -108,5 +108,21 @@ public interface ChamDisplayTunnel {
      * @return Display height.
      */
     public int getDisplayHeight();
+
+    /**
+     * This method is used by Chameleon to invoke
+     * CanvasLFImpl.uCallKeyPressed() method.
+     *
+     * @param keyCode key code
+     */
+    public void callKeyPressed(int keyCode);
+
+    /**
+     * This method is used by Chameleon to invoke
+     * CanvasLFImpl.uCallKeyReleased() method.
+     *
+     * @param keyCode key code
+     */
+    public void callKeyReleased(int keyCode);
 }
 

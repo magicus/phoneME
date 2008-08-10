@@ -232,6 +232,10 @@
                 Value="predict"/>
 <localized_string Key="LCDUI_TF_CAPS_ON_LB_PTI"
                 Value="PREDICT"/>
+<localized_string Key="PUSH_TITLE"
+                Value="Push Dialog Title"/>
+<localized_string Key="PUSH_CONTENT"
+                Value="Push Dialog content"/>
 <localized_string Key="LCDUI_TF_NATIVE_VKBD"
                 Value="Virtual"/>
 <localized_string Key="AMS_SELECT_FOLDER"

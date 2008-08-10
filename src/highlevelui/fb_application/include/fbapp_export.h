@@ -173,6 +173,7 @@ typedef enum {
     DISPLAY_DEVICE_DISABLED = 1
 } DisplayDeviceStates;
 
+
 #ifdef __cplusplus
 }
 #endif

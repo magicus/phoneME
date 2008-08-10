@@ -43,7 +43,6 @@
 #include <stdio.h>
 
 #include <gxj_putpixel.h>
-#include <gxj_screen_buffer.h>
 #include <midp_logging.h>
 #include <midpMalloc.h>
 #include <midp_constants_data.h>
@@ -74,32 +73,157 @@ static QVFbHeader *hdr = NULL;
 /** QVFb video buffer for direct drawing */
 static gxj_pixel_type *qvfbPixels = NULL;
 
-
 /** System offscreen buffer */
 gxj_screen_buffer gxj_system_screen_buffer;
 
-/** Allocate system screen buffer */
-void initScreenBuffer(int width, int height) {
-    if (gxj_init_screen_buffer(width, height) != ALL_OK) {
-        fprintf(stderr, "Failed to allocate screen buffer\n");
-        exit(1);
+
+/** System screens */
+typedef struct _SystemScreen {
+    int hardwareId;
+    int isFullScreen;
+    jboolean reverse_orientation;
+    gxj_screen_buffer buffer;
+} SystemScreen;
+
+
+
+SystemScreen* system_screens; 
+int num_of_screens;
+
+void initScreenList(int num) {
+  int size = sizeof(SystemScreen) * num;
+  system_screens = (SystemScreen*)midpMalloc(size);
+  if (system_screens != NULL) {
+    memset(system_screens, 0, size);
+  } 
+}
+
+SystemScreen* getScreenById(int hardwareId) {
+  int i;
+  for (i = 0; i < num_of_screens; i++) {
+    if (system_screens[i].hardwareId == hardwareId)
+      return &system_screens[i];
+  }
+  return NULL;
+}
+
+void initBuffer(int width, int height, gxj_screen_buffer* buffer) {
+  int size = sizeof(gxj_pixel_type) * width * height;
+  buffer->width = width;
+  buffer->height = height;
+  buffer->alphaData = NULL;
+  buffer->pixelData =
+    (gxj_pixel_type *)midpMalloc(size);
+  if (buffer->pixelData != NULL) {
+    memset(buffer->pixelData, 0, size);
+  } 
+}
+                      
+
+/** Allocate and init system screen */
+void initSystemScreen(int id, int isFullScreen, int reverse_orientation, int width, int height) {
+  SystemScreen *screen = getScreenById(id);
+  screen->hardwareId = id;
+  screen->isFullScreen = isFullScreen;
+  screen->reverse_orientation = reverse_orientation;
+      
+  initBuffer(width, height, &(screen->buffer)); 
+
+  printf("system screen: harwareId= %d isFullScreen = %d reverse_orientation = %d width = %d height = %d", screen->hardwareId,screen->isFullScreen,screen->reverse_orientation,width,height);
+  if (id ==0) {
+    gxj_system_screen_buffer = screen->buffer;
+  }
+}              
+void clearScreenList() {
+  int i;
+  for (i = 0; i < num_of_screens; i++ ) {
+      gxj_screen_buffer buff = system_screens[i].buffer;
+      if (buff.pixelData != NULL) {
+        midpFree(buff.pixelData);
+        buff.pixelData = NULL;
+      }
+      if (buff.alphaData != NULL) {
+        midpFree(buff.alphaData);
+        buff.alphaData = NULL;
+      }
     }
-}                        
+}          
+
+
+jboolean setFullScreenMode(int id, int mode, int width, int height) {
+    SystemScreen *screen = getScreenById(id);
+    int updated = 0;
+    if (screen->isFullScreen != mode) {
+      gxj_screen_buffer buff = screen->buffer;
+      screen->isFullScreen = mode;
+      
+      if (buff.pixelData != NULL) {
+        if (buff.width == width &&
+	    buff.height == height) {
+        } else {
+
+	  if (buff.pixelData != NULL) {
+	    midpFree(buff.pixelData);
+	    buff.pixelData = NULL;
+	  }
+	  if (buff.alphaData != NULL) {
+	    midpFree(buff.alphaData);
+	    buff.alphaData = NULL;
+	  }
+
+	  initBuffer(width, height, &(screen->buffer));
+        }
+      }
+      updated = 1;
+    }
+    return updated;
+}
+
+int getReverseOrientation(int id) {
+    SystemScreen *screen = getScreenById(id);
+    int ret = 0;
+    if (screen != NULL) {
+      ret = screen->reverse_orientation;
+    }
+    return ret;
+}
+
+jboolean isFullScreenMode(int id) {
+    SystemScreen *screen = getScreenById(id);
+    jboolean ret = 0;
+    if (screen != NULL) {
+      ret = screen->isFullScreen;
+    }
+    return ret;
+}
 
 /**
  * Change screen orientation to landscape or portrait,
  * depending on the current screen mode
  */
-void reverseScreenOrientation() {
+jboolean reverseScreenOrientation(int id) {
+    int height;
+    SystemScreen *screen = getScreenById(id);
+    screen->reverse_orientation = !screen->reverse_orientation;
 
-    // Whether current Displayable won't repaint the entire screen on
-    // resize event, the artefacts from the old screen content can appear.
-    // That's why the buffer content is not preserved.
-    gxj_rotate_screen_buffer(KNI_FALSE);
+    
+    if (screen->buffer.pixelData != NULL) {
+      int size = sizeof(gxj_pixel_type) *
+	screen->buffer.width *
+	screen->buffer.height;
+      
+        memset(screen->buffer.pixelData, 0, size);
+    }
+
+    height = screen->buffer.height;
+    screen->buffer.height = screen->buffer.width;
+    screen->buffer.width = height;
+
+    return screen->reverse_orientation;
 }
 
 /** On i386, connect to the QVFB virtual frame buffer */
-void connectFrameBuffer() {
+void connectFrameBuffer(int width, int height) {
     int displayId = 0;
     char buff[30];
     key_t key;
@@ -108,8 +232,8 @@ void connectFrameBuffer() {
     char *env;
 
     // System screen buffer geometry
-    int bufWidth = gxj_system_screen_buffer.width;;
-    int bufHeight = gxj_system_screen_buffer.height;
+    int bufWidth = width;;
+    int bufHeight = height;
 
 
     if ((env = getenv("QWS_DISPLAY")) != NULL) {
@@ -170,16 +294,6 @@ void clearScreen() {
 	    hdr->width * hdr->height);
 }
 
-/**
- * Resizes system screen buffer to fit the screen dimensions.
- * Call after frame buffer is initialized.
- */
-void resizeScreenBuffer(int width, int height) {
-    if (gxj_resize_screen_buffer(width, height) != ALL_OK) {
-        fprintf(stderr, "Failed to reallocate screen buffer\n");
-	    exit(1);
-    }
-}
 
 /** Check if screen buffer is not bigger than frame buffer device */
 static void checkScreenBufferSize(int width, int height) {
@@ -192,9 +306,9 @@ static void checkScreenBufferSize(int width, int height) {
 }
 
 /** Get x-coordinate of screen origin */
-int getScreenX(int screenRotated) {
+int getScreenX(int screenRotated, int width) {
     // System screen buffer geometry
-    int bufWidth = gxj_system_screen_buffer.width;
+    int bufWidth = width;
     int x = 0;
     int LCDwidth = screenRotated ? hdr->height : hdr->width;
     if (LCDwidth > bufWidth) {
@@ -204,8 +318,8 @@ int getScreenX(int screenRotated) {
 }
 
 /** Get y-coordinate of screen origin */
-int getScreenY(int screenRotated) {
-    int bufHeight = gxj_system_screen_buffer.height;
+int getScreenY(int screenRotated, int height) {
+  int bufHeight = height;
     int y = 0;
     int LCDheight = screenRotated ? hdr->width : hdr->height;
     if (LCDheight > bufHeight) {
@@ -214,20 +328,22 @@ int getScreenY(int screenRotated) {
     return y;
 }
 
+
+
 /** Refresh screen with offscreen bufer content */
-void refreshScreenNormal(int x1, int y1, int x2, int y2) {
+void refreshScreenNormal(gxj_screen_buffer *screen_buffer, int x1, int y1, int x2, int y2) {
     // QVFB feature: a number of bytes per line can be different from
     // screenWidth * pixelSize, so lineStep should be used instead.
     int lineStep = hdr->lineStep / sizeof(gxj_pixel_type);
     int dstWidth =  hdr->lineStep / sizeof(gxj_pixel_type);
     gxj_pixel_type *dst  = (gxj_pixel_type *)qvfbPixels;
-    gxj_pixel_type *src  = gxj_system_screen_buffer.pixelData;
+    gxj_pixel_type *src  = screen_buffer->pixelData;
 
     int srcWidth = x2 - x1;
 
     // System screen buffer geometry
-    int bufWidth = gxj_system_screen_buffer.width;
-    int bufHeight = gxj_system_screen_buffer.height;
+    int bufWidth = screen_buffer->width;
+    int bufHeight = screen_buffer->height;
 
     REPORT_CALL_TRACE4(LC_HIGHUI, "LF:fbapp_refresh(%3d, %3d, %3d, %3d )\n",
                        x1, y1, x2, y2);
@@ -260,16 +376,16 @@ void refreshScreenNormal(int x1, int y1, int x2, int y2) {
 }
 
 /** Refresh rotated screen with offscreen bufer content */
-void refreshScreenRotated(int x1, int y1, int x2, int y2) {
+void refreshScreenRotated(gxj_screen_buffer *screen_buffer, int x1, int y1, int x2, int y2) {
 
-    gxj_pixel_type *src = gxj_system_screen_buffer.pixelData;
+    gxj_pixel_type *src = screen_buffer->pixelData;
     gxj_pixel_type *dst = (gxj_pixel_type *)qvfbPixels;
     int srcWidth, srcHeight;
     int lineStep =  hdr->lineStep / sizeof(gxj_pixel_type);
 
     // System screen buffer geometry
-    int bufWidth = gxj_system_screen_buffer.width;
-    int bufHeight = gxj_system_screen_buffer.height;
+    int bufWidth = screen_buffer->width;
+    int bufHeight = screen_buffer->height;
 
     int x;
     int srcInc;
@@ -311,7 +427,14 @@ void refreshScreenRotated(int x1, int y1, int x2, int y2) {
     hdr->is_dirty = 1;
 }
 
-/** Frees native reources allocated for frame buffer */
-void finalizeFrameBuffer() {
-    gxj_free_screen_buffer();
+void refreshScreen(int id, int x1, int y1, int x2, int y2) {
+  SystemScreen *screen = getScreenById(id);
+  if (screen != NULL) {
+    if (!screen->reverse_orientation) {
+      refreshScreenNormal(&screen->buffer, x1, y1, x2, y2);
+    } else {
+      refreshScreenRotated(&screen->buffer, x1, y1, x2, y2);
+    }
+  }
 }
+

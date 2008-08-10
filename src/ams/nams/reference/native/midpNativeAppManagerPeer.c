@@ -1,7 +1,7 @@
 /*
  *
  *
- * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
@@ -86,6 +86,8 @@ nams_listeners_notify(NamsListenerType listenerType,
  * @return error code: (ALL_OK if successful)
  */
 MIDPError midp_system_initialize(void) {
+    MIDPError error;
+
 	int midp_heap_requirement = getHeapRequirement();
 
     JVM_Initialize();
@@ -96,8 +98,13 @@ MIDPError midp_system_initialize(void) {
      */
     JVM_SetConfig(JVM_CONFIG_HEAP_CAPACITY, midp_heap_requirement);
 
-    return init_listeners_impl();
+    if (ALL_OK == (error = (MIDPError)midpInitialize())) {
+        error = (MIDPError)init_listeners_impl();
 }
+
+    return error;
+}
+
 
 /**
  * Starts the system. Does not return until the system is stopped.
@@ -226,16 +233,17 @@ MIDPError midp_midlet_create_start_with_args(SuiteIdType suiteId,
         jint argsNum, jint appId, const MidletRuntimeInfo* pRuntimeInfo) {
     MidpEvent evt;
     pcsl_string temp;
+    int i;
     /*
      * evt.stringParam1 is a midlet class name,
      * evt.stringParam2 is a display name,
      * evt.stringParam3-5 - the arguments
      * evt.stringParam6 - profile name
      */
-    pcsl_string* params[] = {
-        &evt.stringParam3, &evt.stringParam4, &evt.stringParam5
-    };
-    int i;
+    pcsl_string* params[3];
+    params[0] = &evt.stringParam3;
+    params[1] = &evt.stringParam4;
+    params[2] = &evt.stringParam5;
 
     MIDP_EVENT_INITIALIZE(evt);
 

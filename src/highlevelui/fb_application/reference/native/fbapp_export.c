@@ -1,5 +1,5 @@
 /*
- *  
+ *
  *
  * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -38,15 +38,18 @@
 #include <midp_foreground_id.h>
 #include <midp_input_port.h>
 
+
 #include <fbapp_export.h>
 #include <fbport_export.h>
 
+#include <gxj_putpixel.h>
 
 /**
  * @file
  * Additional porting API for Java Widgets based port of abstract
  * command manager.
  */
+
 
 #if ENABLE_ON_DEVICE_DEBUG
 static const char pStartOddKeySequence[] = "#1*2";
@@ -55,14 +58,8 @@ static int posInSequence = 0;
 
 #define numElems(x) sizeof(x)/sizeof(x[0])
 
-/**
-  * Indicates screen orientation state,
-  * true for rotated screen, false for normal orientation
-  */
-static jboolean reverse_orientation;
+int num_of_screens;
 
-/** True if we are in full-screen mode; false otherwise */
-static int isFullScreen;
 
 /** Dynamically evaluated type of the frame buffer device */
 static LinuxFbDeviceType linuxFbDeviceType;
@@ -96,28 +93,36 @@ static void checkDeviceType() {
     }
 }
 
+
 /**
  * Initializes the fbapp_ native resources.
  */
 void fbapp_init() {
-    isFullScreen = 0;
-    reverse_orientation = 0;
+    jint* ids;
+    int i;
     linuxFbDeviceType = LINUX_FB_VERSATILE_INTEGRATOR;
 
     checkDeviceType();
-    initScreenBuffer(
-		     fbapp_get_screen_width(0), fbapp_get_screen_height(0)); //IMPL_NOTE
-    connectFrameBuffer();
+    ids = fbapp_get_display_device_ids(&num_of_screens);
+    
+    initScreenList(num_of_screens);
+    
+    for (i = 0; i < num_of_screens; i++) {
+      initSystemScreen(ids[i], 0, 0, fbapp_get_screen_width(ids[i]),
+		       fbapp_get_screen_height(ids[i]));
+    }
+    connectFrameBuffer(fbapp_get_screen_width(0), fbapp_get_screen_height(0));
 }
+
 
 /** Returns the file descriptor for reading the mouse. */
 int fbapp_get_mouse_fd() {
-    return getMouseFd();
+    return getMouseFd(0);
 }
 
 /** Returns the file descriptor for reading the keyboard. */
 int fbapp_get_keyboard_fd() {
-    return getKeyboardFd();
+    return getKeyboardFd(0);
 }
 
 /**
@@ -127,29 +132,28 @@ int fbapp_get_fb_device_type() {
   return linuxFbDeviceType;
 }
 
+
 /** Invert screen orientation flag */
 jboolean fbapp_reverse_orientation(int hardwareId) {
-    (void) hardwareId;
-    reverse_orientation = !reverse_orientation;
-    reverseScreenOrientation();
-    return reverse_orientation;
+  return reverseScreenOrientation(hardwareId);
+
 }
 
 /**Set full screen mode on/off */
 void fbapp_set_fullscreen_mode(int hardwareId, int mode) {
-    (void) hardwareId;
-    if (isFullScreen != mode) {
-        isFullScreen = mode;
-        resizeScreenBuffer(
-            fbapp_get_screen_width(0),
-            fbapp_get_screen_height(0));
-        clearScreen();
-    }
+  jboolean updated = setFullScreenMode(hardwareId, mode, 
+				       fbapp_get_screen_width(hardwareId), 
+				       fbapp_get_screen_height(hardwareId));
+  if (updated) {
+    clearScreen();
+  }
 }
 
 /** Return screen width */
 int fbapp_get_screen_width(int hardwareId) {
-    (void) hardwareId;
+    int reverse_orientation = getReverseOrientation(hardwareId);
+    int isFullScreen = isFullScreenMode(hardwareId);
+
     if (reverse_orientation) {
         return (isFullScreen == 1) ?
             CHAM_FULLHEIGHT : CHAM_HEIGHT;
@@ -161,7 +165,9 @@ int fbapp_get_screen_width(int hardwareId) {
 
 /** Return screen height */
 int fbapp_get_screen_height(int hardwareId) {
-    (void) hardwareId;
+    int reverse_orientation = getReverseOrientation(hardwareId);
+    int isFullScreen = isFullScreenMode(hardwareId);
+
     if (reverse_orientation) {
         return (isFullScreen == 1) ?
             CHAM_FULLWIDTH : CHAM_WIDTH;
@@ -173,24 +179,23 @@ int fbapp_get_screen_height(int hardwareId) {
 
 /** Return screen x */
 int fbapp_get_screen_x() {
-    return getScreenX(reverse_orientation);
+  return getScreenX(getReverseOrientation(0), fbapp_get_screen_width(0));
 }
 
 /** Return screen x */
 int fbapp_get_screen_y() {
-    return getScreenY(reverse_orientation);
+  return getScreenY(getReverseOrientation(0), fbapp_get_screen_height(0));
 }
 
 /** Return screen orientation flag */
 jboolean fbapp_get_reverse_orientation(int hardwareId) {
-    (void) hardwareId;
-    return reverse_orientation;
+  return getReverseOrientation(hardwareId);
 }
 
 /** Clip rectangle requested for refresh according to screen geometry */
-static void clipRect(int *x1, int *y1, int *x2, int *y2) {
-    int width = fbapp_get_screen_width(0);
-    int height = fbapp_get_screen_height(0);
+static void clipRect(int hardwareId, int *x1, int *y1, int *x2, int *y2) {
+    int width = fbapp_get_screen_width(hardwareId);
+    int height = fbapp_get_screen_height(hardwareId);
 
     if (*x1 < 0) { *x1 = 0; }
     if (*y1 < 0) { *y1 = 0; }
@@ -210,13 +215,8 @@ static void clipRect(int *x1, int *y1, int *x2, int *y2) {
  * @param y2 bottom-right y coordinate of the area to refresh
  */
 void fbapp_refresh(int hardwareId, int x1, int y1, int x2, int y2) {
-    (void) hardwareId;
-    clipRect(&x1, &y1, &x2, &y2);
-    if (!reverse_orientation) {
-        refreshScreenNormal(x1, y1, x2, y2);
-    } else {
-        refreshScreenRotated(x1, y1, x2, y2);
-    }
+  clipRect(hardwareId, &x1, &y1, &x2, &y2);
+  refreshScreen(hardwareId, x1, y1, x2, y2);
 }
 
 /**
@@ -337,8 +337,8 @@ void fbapp_map_keycode_to_event(
  * Finalize the fb application native resources.
  */
 void fbapp_finalize() {
-    clearScreen();
-    finalizeFrameBuffer();
+  clearScreenList();
+  clearScreen();
 }
 
 

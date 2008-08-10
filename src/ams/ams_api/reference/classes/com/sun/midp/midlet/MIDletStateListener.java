@@ -39,7 +39,8 @@ public interface MIDletStateListener {
     void midletPreStart(MIDletSuite suite, String className);
 
     /**
-     * Called after a MIDlet is successfully created.
+     * Called after the MIDlet's peer is successfully created and before
+     * the MIDlet is constructed.
      *
      * @param suite reference to the loaded suite
      * @param className Class name of the MIDlet
@@ -94,6 +95,8 @@ public interface MIDletStateListener {
      *
      * @param suite reference to the loaded suite
      * @param className class name of the MIDlet
+     * @param midlet reference to the MIDlet, null if the MIDlet's constructor
+     *               was not successful
      */
-    void midletDestroyed(MIDletSuite suite, String className);
+    void midletDestroyed(MIDletSuite suite, String className, MIDlet midlet);
 }

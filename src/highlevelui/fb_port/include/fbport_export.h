@@ -38,11 +38,19 @@
 extern "C" {
 #endif
 
+#include <gxj_screen_buffer.h>
+
 /** Initialize frame buffer video device */
 extern void connectFrameBuffer();
 
 /** Allocate system screen buffer according to the screen geometry */
 extern void initScreenBuffer(int width, int height);
+
+extern void initScreenList(int num);
+
+extern  void initSystemScreen(int id, int isFullScreen, int reverse_orientation, int width, int height);
+
+extern void clearScreenList();
 
 /** Free allocated resources and restore system state */
 extern void finalizeFrameBuffer();
@@ -51,7 +59,13 @@ extern void finalizeFrameBuffer();
  * Change screen orientation to landscape or portrait,
  * depending on the current screen mode
  */
-extern void reverseScreenOrientation();
+extern jboolean reverseScreenOrientation(int id);
+
+extern jboolean setFullScreenMode(int id, int mode, int width, int height);
+
+extern int getReverseOrientation(int id);
+
+extern jboolean isFullScreenMode(int id);
 
 /**
  * Resizes system screen buffer to fit the screen dimensions.
@@ -59,26 +73,28 @@ extern void reverseScreenOrientation();
  */
 extern void resizeScreenBuffer(int width, int height);
 
+extern void refreshScreen(int id, int x1, int y1, int x2, int y2);
+
 /** Refresh screen with offscreen bufer content */
-extern void refreshScreenNormal(int x1, int y1, int x2, int y2);
+extern void refreshScreenNormal(gxj_screen_buffer *buff, int x1, int y1, int x2, int y2);
 
 /** Refresh rotated screen with offscreen bufer content */
-extern void refreshScreenRotated(int x1, int y1, int x2, int y2);
+extern void refreshScreenRotated(gxj_screen_buffer *buff, int x1, int y1, int x2, int y2);
 
 /** Return file descriptor of keyboard device, or -1 in none */
-extern int getKeyboardFd();
+extern int getKeyboardFd(int hardwareId);
 
 /** Return file descriptor of mouse device, or -1 in none */
-extern int getMouseFd();
+extern int getMouseFd(int hardwareId);
 
 /** Clear screen device */
 extern void clearScreen();
 
 /** Get x-coordinate of screen origin */
-extern int getScreenX(int screenRotated);
+extern int getScreenX(int screenRotated, int width);
 
 /** Get y-coordinate of screen origin */
-extern int getScreenY(int screenRotated);
+extern int getScreenY(int screenRotated, int height);
 
 
 #ifdef __cplusplus

@@ -1,7 +1,7 @@
 #
 #  
 #
-# Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+# Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
 # 
 # This program is free software; you can redistribute it and/or
@@ -135,7 +135,7 @@ else
                       include $(SUBSYSTEM_HIGHUI_DIR)/wince_application/lib.gmk
                   else
                        ifeq ($(PLATFORM), javacall)
-                            include $(SUBSYSTEM_HIGHUI_DIR)/javacall_application/lib.gmk
+                            include $(SUBSYSTEM_HIGHUI_DIR)/javacall_application/subsystem.gmk
                        endif                  
                   endif             
              endif

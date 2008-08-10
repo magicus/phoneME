@@ -1876,7 +1876,7 @@ void /* OPTIONAL */ javanotify_rotation() {
     midp_jc_event_send(&e);
 }
 
-void javanotify_display_device_state_changed(int hardwareId, DisplayStates state) {
+void javanotify_display_device_state_changed(int hardwareId, javacall_lcd_display_device_state state) {
     midp_jc_event_union e;
 
     REPORT_ERROR(LC_AMS, "javanotify_display_device_state_changed(): Slave Mode method to be revised\n");

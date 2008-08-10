@@ -188,16 +188,16 @@ typedef struct {
     char* suiteID;
 } midp_event_remove_midlet;
 
+typedef enum {
+    ENABLED = 2000,
+    DISABLED = 2001,
+    ABSENT = 2002
+} DisplayStates;
+
 typedef struct {
     int hardwareId;
    DisplayStates state;
 } midp_jc_event_display_device;
-
-typedef enum {
-    ENABLED = 0,
-    DISABLED = 1,
-    ABSENT = 2
-} DisplayStates;
 
 typedef struct {
     javacall_handle   handle;

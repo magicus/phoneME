@@ -325,6 +325,9 @@ public class BodyLayer extends CLayer
         if (layers[MIDPWindow.PTI_LAYER] != null && layers[MIDPWindow.PTI_LAYER].isVisible()) {
             bounds[H] -= layers[MIDPWindow.PTI_LAYER].bounds[H];
         }
+        if (layers[MIDPWindow.KEYBOARD_LAYER] != null && layers[MIDPWindow.KEYBOARD_LAYER].isVisible()) {
+            bounds[H] -= layers[MIDPWindow.KEYBOARD_LAYER].bounds[H];
+        }
         bounds[Y] = layers[MIDPWindow.TITLE_LAYER].bounds[Y];
         if (layers[MIDPWindow.TITLE_LAYER].isVisible()) {
             bounds[Y] += layers[MIDPWindow.TITLE_LAYER].bounds[H];

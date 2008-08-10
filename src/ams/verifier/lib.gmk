@@ -49,20 +49,16 @@ SUBSYSTEM_AMS_JAVA_FILES += \
     $(VERIFIER_DIR)/classes/com/sun/midp/installer/Verifier.java
 
 ifeq ($(USE_RESTRICTED_CRYPTO), true)
-    VERIFIER_IMPL = with_crypto
+    VERIFIER_IMPL_DIR ?= $(VERIFIER_DIR)/with_crypto
 else
 
 ifeq ($(USE_BINARY_CRYPTO), true)
-    VERIFIER_IMPL = with_crypto
+    VERIFIER_IMPL_DIR ?= $(VERIFIER_DIR)/with_crypto
 else    
-    VERIFIER_IMPL = without_crypto
+    VERIFIER_IMPL_DIR ?= $(VERIFIER_DIR)/without_crypto
 endif
 
 endif
 
-# Java files for the sub-system
-#
-SUBSYSTEM_AMS_JAVA_FILES += \
-    $(VERIFIER_DIR)/$(VERIFIER_IMPL)/classes/com/sun/midp/installer/VerifierImpl.java
-
-MIDP_JAVADOC_SOURCEPATH += $(VERIFIER_DIR)/$(VERIFIER_IMPL)/classes
+# Get implementation settings and files
+include $(VERIFIER_IMPL_DIR)/lib.gmk
