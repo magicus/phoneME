@@ -294,7 +294,7 @@ int javacall_permissions_load_group_messages(javacall_utf8_string* list,
  */
 void javacall_permissions_loadingDone()
 {
-    return JAVACALL_NOT_IMPLEMENTED;
+    return;
 }
 
 #ifdef __cplusplus
