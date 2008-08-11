@@ -102,7 +102,7 @@ void lfjport_set_fullscreen_mode(int hardwareId, jboolean mode) {
                        mode);
 
     /* Suppress unused parameter warnings */
-    jcapp_set_fullscreen_mode(hardwarId, mode);
+    jcapp_set_fullscreen_mode(hardwareId, mode);
     return;
 }
 
@@ -111,7 +111,7 @@ void lfjport_set_fullscreen_mode(int hardwareId, jboolean mode) {
  * @param hardwareId unique id of hardware display
  */
 void lfjport_gained_foreground(int hardwareId) {
-  (void)harwareId;  
+  (void)hardwareId;  
     REPORT_CALL_TRACE(LC_HIGHUI, "LF:STUB:gainedForeground()\n");
 }
 
@@ -137,7 +137,7 @@ jboolean lfjport_get_reverse_orientation(int hardwareId)
  * @param hardwareId unique id of hardware display
  */
 int lfjport_get_screen_width(int hardwareId) {
-    return jcapp_get_screen_width(hardareId);
+    return jcapp_get_screen_width(hardwareId);
 }
 
 /**

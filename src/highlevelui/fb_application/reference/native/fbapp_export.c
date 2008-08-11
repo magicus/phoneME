@@ -100,16 +100,20 @@ static void checkDeviceType() {
 void fbapp_init() {
     jint* ids;
     int i;
+
     linuxFbDeviceType = LINUX_FB_VERSATILE_INTEGRATOR;
 
     checkDeviceType();
     ids = fbapp_get_display_device_ids(&num_of_screens);
     
+    printf("fb_init num = %d ids[0] = %d ids[1] = %d\n", num_of_screens, ids[0], ids[1]);
     initScreenList(num_of_screens);
     
+    printf("initScreenList\n");
     for (i = 0; i < num_of_screens; i++) {
+      printf("next screen: %d", i);
       initSystemScreen(ids[i], 0, 0, fbapp_get_screen_width(ids[i]),
-		       fbapp_get_screen_height(ids[i]));
+      fbapp_get_screen_height(ids[i]));
     }
     connectFrameBuffer(fbapp_get_screen_width(0), fbapp_get_screen_height(0));
 }
