@@ -231,7 +231,7 @@ jsr211_result jsr211_find_handler(javacall_const_utf16_string caller_id,
 
 		if (res) break;
 
-		if (!jsr211_isUniqueHandler(buffer,len - 1, result)) continue;
+		if (!jsr211_isUniqueHandler(buffer, len - 1, result)) continue;
 
 		if (caller_id && *caller_id) {
 			if (!javacall_chapi_is_access_allowed(buffer,caller_id)) continue;

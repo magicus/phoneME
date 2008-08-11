@@ -50,6 +50,7 @@
 #define TRACE_INVOCFIND
 #define TRACE_MIDLETREG
 #define TRACE_BLOCKING
+#define TRACE_EXTINVOKE
 #endif
 
 #include <jsrop_kni.h>
@@ -1626,6 +1627,10 @@ static void handle_javanotify_chapi_java_invoke(
     javacall_result res;
     int i;
 
+#ifdef TRACE_EXTINVOKE
+    printf( "handle_javanotify_chapi_java_invoke( %ls )\n", handler_id );
+#endif
+
     if (invoc_id <= 0) {
         jsr211_abort_platform_invocation(invoc_id);
         return;
@@ -1644,16 +1649,22 @@ static void handle_javanotify_chapi_java_invoke(
             break;
         }
 
-        res = javacall_chapi_get_handler_info(
-            handler_id, /*OUT*/
-            suite_id_out, &suite_id_len,
-            classname, &classname_len, &flag);
+        res = javacall_chapi_get_handler_info( handler_id, 
+                /*OUT*/ suite_id_out, &suite_id_len, classname, &classname_len, &flag);
+
+#ifdef TRACE_EXTINVOKE
+        printf( "get_handler_info rc = %d\n", res );
+#endif
 
         if (JAVACALL_CHAPI_ERROR_BUFFER_TOO_SMALL == res) {
             JAVAME_FREE(classname); classname = NULL;
             JAVAME_FREE(suite_id_out); suite_id_out = NULL;
+#ifdef TRACE_EXTINVOKE
+            printf( "classname_len = %d, suite_id_len = %d\n", classname_len, suite_id_len );
+#endif
             continue;
         }
+        break;
     }
 
     if (res != JAVACALL_OK) {
@@ -1663,6 +1674,9 @@ static void handle_javanotify_chapi_java_invoke(
         return;
     }
 
+#ifdef TRACE_EXTINVOKE
+    printf( "classname = '%ls', suite_id = '%ls'\n", classname, suite_id_out );
+#endif
     if (0 == jsrop_string_to_suiteid (suite_id_out, &suite_id)) {
         suite_id = INVALID_SUITE_ID;
     }
