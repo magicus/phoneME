@@ -30,6 +30,7 @@
 /*
  * The following header is located inside the javacall library.
  */
-#include <javacall_nams.h>
+#include <javacall_ams_app_manager.h>
+#include <javacall_ams_platform.h>
 
 #endif /* _JAVACALL_NATIVE_AMS_H_ */
