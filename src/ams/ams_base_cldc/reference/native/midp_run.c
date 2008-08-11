@@ -1031,19 +1031,19 @@ int midpRunMainClass(JvmPathChar *classPath,
     if (0 == vmStatus) {
         vmStatus = MIDP_RUNNING_STATUS;
     } else {
-    pushcheckinall();
-    midp_resetEvents();
-    midpMIDletProxyListReset();
+        pushcheckinall();
+        midp_resetEvents();
+        midpMIDletProxyListReset();
         midpFinalize();
-    if (vmStatus != MAIN_EXIT) {
-        /*
-         * The VM aborted, most likely a bad class file in an installed
-         * MIDlet.
-         */
-        vmStatus = MIDP_ERROR_STATUS;
-    } else {
-        vmStatus = MIDP_SHUTDOWN_STATUS;
-    }
+        if (vmStatus != MAIN_EXIT) {
+            /*
+             * The VM aborted, most likely a bad class file in an installed
+             * MIDlet.
+             */
+            vmStatus = MIDP_ERROR_STATUS;
+        } else {
+            vmStatus = MIDP_SHUTDOWN_STATUS;
+        }
     }
 
 

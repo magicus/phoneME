@@ -106,7 +106,7 @@ MIDPError midp_system_initialize(void) {
 }
 
 
-static MIDPError _system_cleanup(int status) {
+static MIDPError system_cleanup(int status) {
     NamsEventData eventData;
     MIDPError errCode;
     memset((char*)&eventData, 0, sizeof(NamsEventData));
@@ -143,7 +143,7 @@ MIDPError midp_system_start(void) {
     vmStatus = midpRunMainClass(NULL, APP_MANAGER_PEER, 0, NULL);
 
     if (MIDP_RUNNING_STATUS != vmStatus) {
-        errCode = _system_cleanup(vmStatus);
+        errCode = system_cleanup(vmStatus);
     } else {
         errCode = ALL_OK;
     }
