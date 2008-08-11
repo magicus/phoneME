@@ -184,12 +184,6 @@ CVM_RTJARS_LIST += $(MIDP_PRIV_CLASSES_ZIP)
 endif
 endif
 
-# MIDP package checker 
-MIDP_PKG_CHECKER = MIDPPkgChecker.java
-
-CLASSLIB_CLASSES += \
-	sun.misc.MIDPPkgChecker
-
 # Setup the property containing where midp implementation is located.
 # This will be a list all the jar and zip files loaded by the
 # MIDPImplemantionClassLoader. We strip out everything but the base name,
