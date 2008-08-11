@@ -29,6 +29,7 @@ extern "C" {
 #endif
 
 #include "javacall_defs.h"
+#include "javacall_lifecycle.h"
 
 /**
  * @defgroup PlatformAPI API that must be implemented by the Platform

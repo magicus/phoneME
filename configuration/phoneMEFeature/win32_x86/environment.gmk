@@ -35,7 +35,7 @@
 #For 'nams' USE_NATIVE_AMS_JC and NATIVE_AMS_JC_IMPL_PATH variables are used
 #
 #To use just a native UI with all other AMS parts (like installer) implemented
-#in MIDP, set both USE_NATIVE_AMS_JC and USE_NATIVE_UI_JC to true and specify
+#in MIDP, set both USE_NATIVE_AMS_JC and USE_NATIVE_AMS_UI_JC to true and specify
 #NATIVE_AMS_JC_IMPL_PATH
 #
 #To enable on device debug, specify USE_ON_DEVICE_DEBUG
@@ -87,6 +87,7 @@ ifeq ($(USE_NATIVE_AMS_UI), true)
 JSR_LIST += NATIVE_AMS_UI
 NATIVE_AMS_UI_JC_IMPL_PATH = $(JAVACALL_DIR)/implementation/win32
 SPECIFIC_DEFINITIONS += -DENABLE_NATIVE_AMS_UI=1
+FILTER_OBJECTS += main.c lcd.c
 else
 SPECIFIC_DEFINITIONS += -DENABLE_NATIVE_AMS_UI=0
 endif

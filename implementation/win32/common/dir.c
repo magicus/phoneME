@@ -366,7 +366,7 @@ javacall_result javacall_dir_get_root_path(javacall_utf16* /* OUT */ rootPath,
 {
     wchar_t chSep = javacall_get_file_separator();
     wchar_t filesep[2] = {chSep, (wchar_t)0};
-    int len;
+    int len = *rootPathLen;
 
     javacall_result res = helper_dir_get_home_path(rootPath,&len);
 
@@ -400,7 +400,7 @@ javacall_result javacall_dir_get_config_path(javacall_utf16* /* OUT */ configPat
 {
     wchar_t chSep = javacall_get_file_separator();
     wchar_t filesep[2] = {chSep, (wchar_t)0};
-    int len;
+    int len = *configPathLen;
     javacall_result res = helper_dir_get_home_path(configPath,&len);
 
 

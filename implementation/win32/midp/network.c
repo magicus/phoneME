@@ -40,16 +40,19 @@
 
 #include "javacall_network.h"
 #include "javacall_socket.h"
-#include "lcd.h"
+//#include "lcd.h"
 #include "local_defs.h"
+
+#define midpGetWindowHandle() NULL
 
 /* #include <midp_msgQueue_md.h>, will a pcsl_event header file later. */
 //extern HANDLE midpGetWindowHandle();
 /*
 #define WM_DEBUGGER      (WM_USER)
+*/
 #define WM_HOST_RESOLVED (WM_USER + 1)
 #define WM_NETWORK       (WM_USER + 2)
-*/
+
 
 #define MAX_HOST_LENGTH 256
 //#define ENABLE_NETWORK_TRACING

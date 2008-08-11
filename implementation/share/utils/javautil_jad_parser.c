@@ -54,16 +54,9 @@ typedef struct _javacall_jad_properties {
 } javacall_jad_properties;
 
 /* auxiliary functions definitions */
-long javautil_read_jad_file(const javacall_utf16* jadPath, int jadPathLen,
-                            char** destBuf);
 javacall_result javautil_parse_jad(char** jadBuffer,
                                    javacall_jad_properties* jadProps);
-javacall_result javautil_get_number_of_properties(char* jadBuffer,
-                                                  /* OUT */ int* numOfProps);
 javacall_bool javautil_is_new_line(char* c);
-javacall_result javautil_read_jad_line(char** jadBuffer,
-                                       /* OUT */ char** jadLine,
-                                       /* OUT */ int* jadLineSize);
 javacall_result javautil_store_property(javacall_jad_properties* jadProps,
                                         char* propName, char* propValue);
 javacall_result javautil_check_must_properties(javacall_jad_properties jadProps,

@@ -25,7 +25,7 @@
 #include <Windows.h>
 #include <string.h>
 #include "nams.h" 
-#include "javacall_nams.h"
+#include "javacall_ams_app_manager.h"
 #include "javacall_memory.h"
 #include "javacall_logging.h"
  
@@ -76,10 +76,10 @@ void nams_set_midlet_static_info(int appID, MidletNode* pInfo)
 
     nams_string_to_utf16(key, strlen(key), &uKey, strlen(key));
 
-    if (javacall_ams_get_suite_property(appID, uKey, uValue,
+    if (java_ams_suite_get_property(appID, uKey, uValue,
             MAX_VALUE_NAME_LEN) == JAVACALL_OK)
     {
-        pendingMidletInfo.domain = JAVACALL_AMS_DOMAIN_TRUSTED;
+        pendingMidletInfo.domain = JAVACALL_AMS_DOMAIN_THIRDPARTY;
     }
     else
     {
@@ -145,7 +145,7 @@ int nams_get_current_midlet_count()
     return current_midlet_count;
 }
 
-javacall_result nams_find_midlet_by_state(javacall_midlet_state state, int* index)
+javacall_result nams_find_midlet_by_state(javacall_lifecycle_state state, int* index)
 {
     int i;
     for (i = 1; i < MAX_MIDLET_NUM; i ++)
@@ -163,7 +163,7 @@ javacall_result nams_find_midlet_by_state(javacall_midlet_state state, int* inde
     return JAVACALL_OK;
 }
 
-javacall_result nams_get_midlet_state(int index, javacall_midlet_state *state)
+javacall_result nams_get_midlet_state(int index, javacall_lifecycle_state *state)
 {
     if (index >= MAX_MIDLET_NUM || index < 1)
     {
@@ -177,7 +177,7 @@ javacall_result nams_get_midlet_state(int index, javacall_midlet_state *state)
     return JAVACALL_OK;
 }
 
-javacall_result nams_set_midlet_state(javacall_midlet_state state, int index, javacall_change_reason reason)
+javacall_result nams_set_midlet_state(javacall_lifecycle_state state, int index, javacall_change_reason reason)
 {
     if (index >= MAX_MIDLET_NUM || index < 1)
     {
@@ -293,15 +293,15 @@ javacall_result nams_get_midlet_classname(int index, contentList* className)
     return JAVACALL_OK;
 }
 
-char* nams_trans_state(javacall_midlet_state state)
+char* nams_trans_state(javacall_lifecycle_state state)
 {
     switch (state)
     {
-    case JAVACALL_MIDLET_STATE_PAUSED:
+    case JAVACALL_LIFECYCLE_MIDLET_PAUSED:
         return "paused";
-    case JAVACALL_MIDLET_STATE_DESTROYED:
+    case JAVACALL_LIFECYCLE_MIDLET_SHUTDOWN:
         return "destoryed";
-    case JAVACALL_MIDLET_STATE_ERROR:
+    case JAVACALL_LIFECYCLE_MIDLET_ERROR:
         return "error";
     default:
         return "error";

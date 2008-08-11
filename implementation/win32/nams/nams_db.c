@@ -33,7 +33,8 @@
 #include "javautil_jad_parser.h"
 #include "javautil_string.h"
 #include "javacall_memory.h"
-#include "javacall_nams.h"
+#include "javacall_ams_app_manager.h"
+#include "javacall_ams_installer.h"
 
 static char NAMS_DB_FILE[]=".\\nams.db";
 static char NAMS_DB_HOME[]=".\\";
@@ -513,7 +514,7 @@ javacall_result nams_db_install_app(char* textLine, javacall_utf16_string jarNam
         javacall_print("[NAMS] Make DB home error!\n");
     }
 
-    javanotify_ams_create_resource_cache(suiteID);
+    java_ams_create_resource_cache(suiteID);
 
     installed_suite_count++;
 

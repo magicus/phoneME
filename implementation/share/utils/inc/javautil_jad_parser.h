@@ -63,6 +63,45 @@ javacall_result javautil_get_jar_url_from_jad(const javacall_utf16* jadPath,
                                               /* OUT */ char** jarUrl,
                                               /* OUT */ javacall_parse_result* status);
 
+/**
+ * Opens the jad file and fills the content of the file in DestBuf.
+ * This function allocates memory for the buffer.
+ *
+ * @param jadPath full path to the jad file.
+ * @param Destbuf pointer to the buffer that will be filled by the
+ *        contents of the file.
+ * @return buffer file size in bytes
+ */
+long javautil_read_jad_file(const javacall_utf16* jadPath,
+                            int jadPathLen, char** destBuf);
+
+/**
+ * Count the number of properties in the jad file.
+ * Skip commented out lines and blank lines.
+ *
+ * @param jadBuffer buffer that contains the jad file contents.
+ * @param numOfProps variable to hold the number of properties
+ * @return <code>JAVACALL_OK</code> on success,
+ *         <code>JAVACALL_FAIL</code> or any other negative value otherwise.
+ */
+javacall_result javautil_get_number_of_properties(char* jadBuffer,
+                                                  /* OUT */ int* numOfProps);
+
+/**
+ * Read a line from the jad file.
+ * This function allocates memory for the line.
+ *
+ * @param jadBuffer pointer to the buffer that contains the jad file contents.
+ * @param jadLine pointer to jad line read
+ * @param jadLineSize size of the jad line read
+ *
+ * @return <code>JAVACALL_OK</code> on success,
+ *         <code>JAVACALL_FAIL</code> or any other negative value otherwise.
+ */
+javacall_result javautil_read_jad_line(char** jadBuffer,
+                                       /* OUT */ char** jadLine,
+                                       /* OUT */ int* jadLineSize);
+
 #ifdef __cplusplus
 }
 #endif

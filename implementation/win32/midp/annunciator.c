@@ -47,7 +47,13 @@ static javacall_bool trustedOn = JAVACALL_FALSE;
 static javacall_bool networkOn = JAVACALL_FALSE;
 static javacall_bool homeOn = JAVACALL_FALSE;
 
+#if 0
 extern javacall_pixel* getTopbarBuffer(int* screenWidth, int* screenHeight);
+#else
+javacall_pixel* getTopbarBuffer(int* screenWidth, int* screenHeight) {
+    return NULL;
+}
+#endif
 
 /**
  * Premultiply color components by it's corresponding alpha component.

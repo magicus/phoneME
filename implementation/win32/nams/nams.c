@@ -31,7 +31,7 @@
 #include "javacall_memory.h"
 #include "javacall_dir.h"
 #include "javacall_lcd.h"
-#include "javacall_nams.h"
+#include "javacall_ams_app_manager.h"
 
 /**
  * Inform on completion of the previously requested operation.
@@ -40,9 +40,9 @@
  * @param pResult Pointer to a static buffer containing
  *                operation-dependent result
  */
-void javacall_ams_operation_completed(javacall_opcode operation,
-                                      const javacall_app_id appID,
-                                      void* pResult) {
+void java_ams_operation_completed(javacall_opcode operation,
+                                  const javacall_app_id appID,
+                                  void* pResult) {
     (void)operation;
     (void)appID;
     (void)pResult;
@@ -65,13 +65,13 @@ void javacall_ams_operation_completed(javacall_opcode operation,
  * @param appID The ID of the state-changed suite
  * @param reason The reason why the state change has happened
  */
-void javacall_ams_midlet_state_changed(javacall_midlet_state state,
-                                       const javacall_app_id appID,
-                                       javacall_change_reason reason) {
+void java_ams_midlet_state_changed(javacall_lifecycle_state state,
+                                   javacall_app_id appID,
+                                   javacall_change_reason reason) {
     int appIndex = 0;
 
     switch (state) {
-        case JAVACALL_MIDLET_STATE_PAUSED:
+        case JAVACALL_LIFECYCLE_MIDLET_PAUSED:
             if (nams_if_midlet_exist(appID) != JAVACALL_OK) {
                 /* New started midlet */
                 if (nams_add_midlet(appID) != JAVACALL_OK) {
@@ -81,12 +81,12 @@ void javacall_ams_midlet_state_changed(javacall_midlet_state state,
                 javacall_print("[NAMS] Midlet state change to paused\n");
             }
             break;
-        case JAVACALL_MIDLET_STATE_DESTROYED:
+        case JAVACALL_LIFECYCLE_MIDLET_SHUTDOWN:
             if (nams_remove_midlet(appID) != JAVACALL_OK) {
                 javacall_print("[NAMS] Midlet can't be removed!\n");
             }
             return;
-        case JAVACALL_MIDLET_STATE_ERROR:
+        case JAVACALL_LIFECYCLE_MIDLET_ERROR:
             javacall_print("[NAMS] Midlet state error!\n");
             break;
         default:
@@ -118,9 +118,9 @@ void javacall_ams_midlet_state_changed(javacall_midlet_state state,
  * @param appID The ID of the state-changed suite
  * @param reason The reason why the state change has happened
  */
-void javacall_ams_ui_state_changed(javacall_midlet_ui_state state,
-                                   const javacall_app_id appID,
-                                   javacall_change_reason reason) {
+void java_ams_ui_state_changed(javacall_midlet_ui_state state,
+                               javacall_app_id appID,
+                               javacall_change_reason reason) {
     int appIndex = 0;
 
     switch (state) {
@@ -161,9 +161,9 @@ void javacall_ams_ui_state_changed(javacall_midlet_ui_state state,
  * @return <tt>JAVACALL_OK</tt> on success, 
  *         <tt>JAVACALL_FAIL</tt>
  */
-javacall_result javacall_ams_get_rms_path(javacall_suite_id suiteID, 
-                                          javacall_utf16_string szPath, 
-                                          int maxPath) {
+javacall_result java_ams_get_rms_path(javacall_suite_id suiteID, 
+                                      javacall_utf16_string* pRmsPath) {
+#if 0
     javacall_utf16 path[JAVACALL_MAX_FILE_NAME_LENGTH*2];
     int len;
 
@@ -178,6 +178,9 @@ javacall_result javacall_ams_get_rms_path(javacall_suite_id suiteID,
     memcpy(szPath, path, len);
 
     return JAVACALL_OK;
+#else
+    return JAVACALL_FAIL;
+#endif
 }
 
 /**
@@ -189,8 +192,8 @@ javacall_result javacall_ams_get_rms_path(javacall_suite_id suiteID,
  * @return <tt>JAVACALL_OK</tt> on success, 
  *         <tt>JAVACALL_FAIL</tt>
  */
-javacall_result javacall_ams_get_domain(javacall_suite_id suiteID,
-                                        javacall_ams_domain* pDomain) {
+javacall_result java_ams_get_domain(javacall_suite_id suiteID,
+                                    javacall_ams_domain* pDomain) {
     if (nams_get_midlet_domain(suiteID, pDomain) != JAVACALL_OK) {
         return JAVACALL_FAIL;
     }
@@ -206,8 +209,8 @@ javacall_result javacall_ams_get_domain(javacall_suite_id suiteID,
  *         <tt>JAVACALL_FAIL</tt>
  */
 javacall_result
-javacall_ams_get_permissions(javacall_suite_id suiteID,
-                             javacall_ams_permission_set* pPermissions) {
+java_ams_get_permissions(javacall_suite_id suiteID,
+                         javacall_ams_permission_set* pPermissions) {
     if (nams_get_midlet_permissions(suiteID, pPermissions) != JAVACALL_OK) {
         return JAVACALL_FAIL;
     }
@@ -223,9 +226,9 @@ javacall_ams_get_permissions(javacall_suite_id suiteID,
  *         <tt>JAVACALL_FAIL</tt>
  */
 javacall_result
-javacall_ams_set_permission(javacall_suite_id suiteID,
-                            javacall_ams_permission permission,
-                            javacall_ams_permission_val value) {
+java_ams_set_permission(javacall_suite_id suiteID,
+                        javacall_ams_permission permission,
+                        javacall_ams_permission_val value) {
     if (nams_set_midlet_permission(suiteID, permission, value) != JAVACALL_OK) {
         return JAVACALL_FAIL;
     }
@@ -241,8 +244,8 @@ javacall_ams_set_permission(javacall_suite_id suiteID,
  *         <tt>JAVACALL_FAIL</tt>
  */
 javacall_result
-javacall_ams_set_permissions(javacall_suite_id suiteID,
-                             javacall_ams_permission_set* pPermissions) {
+java_ams_set_permissions(javacall_suite_id suiteID,
+                         javacall_ams_permission_set* pPermissions) {
     int i;
     for (i = JAVACALL_AMS_PERMISSION_HTTP;
             i < JAVACALL_AMS_PERMISSION_LAST; i ++) {
@@ -264,10 +267,10 @@ javacall_ams_set_permissions(javacall_suite_id suiteID,
  *         <tt>JAVACALL_FAIL</tt>
  */
 javacall_result
-javacall_ams_get_suite_property(const javacall_suite_id suiteID,
-                                const javacall_utf16_string key,
-                                javacall_utf16_string value,
-                                int maxValue) {
+java_ams_get_suite_property(const javacall_suite_id suiteID,
+                            const javacall_utf16_string key,
+                            javacall_utf16_string value,
+                            int maxValue) {
     int   propsNum=0;
     int   i;
     int   jadLineSize;
@@ -291,7 +294,7 @@ javacall_ams_get_suite_property(const javacall_suite_id suiteID,
 
     if (nams_string_to_utf16(jad, strlen(jad), &uJad, strlen(jad)) !=
             JAVACALL_OK) {
-        javacall_print("[NAMS] javacall_ams_get_suite_property "
+        javacall_print("[NAMS] java_ams_get_suite_property "
                        "nams_string_to_utf16 error\n");
         return JAVACALL_FAIL;
     }
@@ -409,9 +412,9 @@ javacall_ams_get_suite_property(const javacall_suite_id suiteID,
  *         <tt>JAVACALL_FAIL</tt>
  */
 javacall_result
-javacall_ams_get_suite_id(const javacall_utf16_string vendorName,
-                          const javacall_utf16_string suiteName,
-                          javacall_suite_id *pSuiteID) {
+java_ams_get_suite_id(const javacall_utf16_string vendorName,
+                      const javacall_utf16_string suiteName,
+                      javacall_suite_id *pSuiteID) {
     int index;
     char key1[] = "MIDlet-Vendor";
     char key2[] = "MIDlet-Name";
@@ -424,14 +427,14 @@ javacall_ams_get_suite_id(const javacall_utf16_string vendorName,
 
     if (nams_string_to_utf16(key1, strlen(key1), &uKey1, strlen(key1)) !=
             JAVACALL_OK) {
-        javacall_print("[NAMS] javacall_ams_get_suite_id "
+        javacall_print("[NAMS] java_ams_get_suite_id "
                        "nams_string_to_utf16 error\n");
         return JAVACALL_FAIL;
     }
 
     if (nams_string_to_utf16(key2, strlen(key2), &uKey2, strlen(key2)) !=
             JAVACALL_OK) {
-        javacall_print("[NAMS] javacall_ams_get_suite_id "
+        javacall_print("[NAMS] java_ams_get_suite_id "
                        "nams_string_to_utf16 error\n");
         return JAVACALL_FAIL;
     }
@@ -443,7 +446,7 @@ javacall_ams_get_suite_id(const javacall_utf16_string vendorName,
                         cSuiteName, MAX_VALUE_NAME_LEN, NULL, NULL);
 
     for (index = 1; index < MAX_MIDLET_NUM; index ++) {
-        if (javacall_ams_get_suite_property(index, uKey1, value,
+        if (java_ams_get_suite_property(index, uKey1, value,
                 MAX_VALUE_NAME_LEN) != JAVACALL_OK) {
             continue;
         }
@@ -455,7 +458,7 @@ javacall_ams_get_suite_id(const javacall_utf16_string vendorName,
             continue;
         }
 
-        if (javacall_ams_get_suite_property(index, uKey2, value,
+        if (java_ams_get_suite_property(index, uKey2, value,
                 MAX_VALUE_NAME_LEN) != JAVACALL_OK) {
             WideCharToMultiByte(CP_ACP, WC_COMPOSITECHECK, value, -1,
                                 cValue, MAX_VALUE_NAME_LEN, NULL, NULL);
@@ -481,25 +484,35 @@ javacall_ams_get_suite_id(const javacall_utf16_string vendorName,
 }
 
 /**
- * VM invokes this function to get the image cache path.
- * @param suiteID   unique ID of the MIDlet suite
- * @param cachePath buffer for Platform store the image cache path
- * @param cachePathLen the length of cachePath
+ * Java invokes this function to get the image cache path.
  *
- * @return <tt>JAVACALL_OK</tt> on success, 
+ * The Platform must always provide an implementation of this function.
+ *
+ * Note that memory for the parameter pCachePath is allocated
+ * by the callee. The caller is responsible for freeing it
+ * using javacall_free().
+ *
+ * @param suiteId    [in]  unique ID of the MIDlet suite
+ * @param pCachePath [out] a place to hold a pointer to the buffer where
+ *                         the Platform will store the image cache path
+ *
+ * @return <tt>JAVACALL_OK</tt> on success,
  *         <tt>JAVACALL_FAIL</tt>
  */
 javacall_result
-javacall_ams_get_resource_cache_path(const javacall_suite_id suiteID,
-                                     javacall_utf16_string cachePath,
-                                     int cachePathLen) {
+java_ams_get_resource_cache_path(javacall_suite_id suiteId,
+                                 javacall_utf16_string* pCachePath) {
+#if 0
     javacall_result res;
     int pathLen;
 
-    res = nams_db_get_suite_home(suiteID, cachePath, &pathLen);
+    res = nams_db_get_suite_home(suiteId, cachePath, &pathLen);
     if (res != JAVACALL_OK || pathLen > cachePathLen) {
         res = JAVACALL_FAIL;
     }
 
     return JAVACALL_OK;
+#else
+    return JAVACALL_FAIL;
+#endif
 }

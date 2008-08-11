@@ -32,8 +32,11 @@
 #define MAX_VALUE_NAME_LEN          128
 #define MAX_SUITE                   128
 
-#include "javacall_nams.h"
 #include "javacall_defs.h"
+#include "javacall_ams_platform.h"
+#include "javacall_ams_app_manager.h"
+#include "javacall_ams_installer.h"
+#include "javacall_ams_suitestore.h"
 
 /*************************************************************************************************
 *  NAMS util related 
@@ -66,7 +69,7 @@ typedef struct midletNode {
     javacall_suite_id           suiteID;
     char                        jadPath[MAX_MIDLET_NAME_LENGTH];
     char                        className[MAX_MIDLET_NAME_LENGTH];
-    javacall_midlet_state       state;
+    javacall_lifecycle_state    state;
     javacall_change_reason      lastChangeReason;
     javacall_ams_permission_set permissions;
     javacall_ams_domain         domain;
@@ -78,17 +81,17 @@ void nams_clean_midlet_list();
 javacall_result nams_add_midlet(javacall_suite_id appID);
 javacall_result nams_allocate_appid(javacall_suite_id* pAppID);
 javacall_result nams_remove_midlet(javacall_suite_id appID);
-javacall_result nams_find_midlet_by_state(javacall_midlet_state state, int* index);
-javacall_result nams_get_midlet_state(int index, javacall_midlet_state *state);
-javacall_result nams_set_midlet_state(javacall_midlet_state state, int index, javacall_change_reason reason);
+javacall_result nams_find_midlet_by_state(javacall_lifecycle_state state, int* index);
+javacall_result nams_get_midlet_state(int index, javacall_lifecycle_state *state);
+javacall_result nams_set_midlet_state(javacall_lifecycle_state state, int index, javacall_change_reason reason);
 javacall_result nams_get_midlet_jadpath(int index, char** outPath);
 javacall_result nams_get_midlet_permissions(int index, javacall_ams_permission_set* pSet);
 javacall_result nams_set_midlet_permission(int index, javacall_ams_permission permission, javacall_ams_permission_val value);
 javacall_result nams_get_midlet_domain(int index, javacall_ams_domain* domain);
 int nams_get_current_midlet_count();
 javacall_result nams_get_midlet_classname(int index, contentList* className);
-char* nams_trans_state(javacall_midlet_state state);
-char* nams_trans_ui_state(javacall_midlet_state state);
+char* nams_trans_state(javacall_lifecycle_state state);
+char* nams_trans_ui_state(javacall_lifecycle_state state);
 void nams_set_midlet_request_foreground(int index);
 javacall_result nams_if_midlet_exist(int index);
 void nams_set_midlet_static_info(int appID, MidletNode* pInfo);
