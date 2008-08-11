@@ -41,7 +41,7 @@
  */
 static javacall_opcode midp_operation2javacall(jint midpOpcode);
 
-static javacall_midlet_state
+static javacall_lifecycle_state
 midp_midlet_state2javacall(jint midpMidletState);
 
 static javacall_midlet_ui_state
@@ -96,7 +96,7 @@ javanotify_ams_midlet_start(const javacall_suite_id suiteID,
                             const javacall_app_id appID,
                             const javacall_utf16_string className,
                             const javacall_midlet_runtime_info* pRuntimeInfo) {
-    return javanotify_ams_midlet_start_with_args(suiteID, appID,
+    return java_ams_midlet_start_with_args(suiteID, appID,
         className, NULL, 0, pRuntimeInfo);
 }
 
@@ -321,8 +321,8 @@ javacall_result javanotify_ams_midlet_resume(const javacall_app_id appID) {
  *                     <tt>JAVACALL_FAIL</tt> otherwise
  */
 javacall_result
-javanotify_ams_midlet_get_suite_info(const javacall_app_id appID,
-                                     javacall_ams_suite_data* pSuiteData) {
+java_ams_midlet_get_suite_info(const javacall_app_id appID,
+                               javacall_ams_suite_data* pSuiteData) {
     MidletSuiteData midpSuiteData;
     MIDPError res;
 
@@ -338,28 +338,29 @@ javanotify_ams_midlet_get_suite_info(const javacall_app_id appID,
     /* copy data from the midp structure to the javacall one */
     pSuiteData->suiteId   = (javacall_suite_id) midpSuiteData.suiteId;
     pSuiteData->storageId = (javacall_int32) midpSuiteData.storageId;
+    pSuiteData->folderId = (javacall_int32) midpSuiteData.folderId;
     pSuiteData->isEnabled = (javacall_bool) midpSuiteData.isEnabled;
-    pSuiteData->isEnabled = (javacall_bool) midpSuiteData.isTrusted;
+    pSuiteData->isTrusted = (javacall_bool) midpSuiteData.isTrusted;
     pSuiteData->numberOfMidlets = (javacall_int32) midpSuiteData.numberOfMidlets;
     pSuiteData->installTime = (long) midpSuiteData.installTime;
     pSuiteData->jadSize = (javacall_int32) midpSuiteData.jadSize;
     pSuiteData->jarSize = (javacall_int32) midpSuiteData.jarSize;
-    pSuiteData->jarHashLen = (javacall_int32) midpSuiteData.jarHashLen;
+//    pSuiteData->jarHashLen = (javacall_int32) midpSuiteData.jarHashLen;
     pSuiteData->isPreinstalled = (javacall_bool) midpSuiteData.isPreinstalled;
 
-    pSuiteData->varSuiteData.pJarHash = midpSuiteData.varSuiteData.pJarHash;
+//    pSuiteData->varSuiteData.pJarHash = midpSuiteData.varSuiteData.pJarHash;
 
     /*
      * IMPL_NOTE: the strings from midpSuiteData should be converted from
      *            pcsl_string and copied into the bellowing strings.
      */
-    pSuiteData->varSuiteData.midletClassName = NULL;
-    pSuiteData->varSuiteData.displayName = NULL;
-    pSuiteData->varSuiteData.iconName = NULL;
-    pSuiteData->varSuiteData.suiteVendor = NULL;
-    pSuiteData->varSuiteData.suiteName = NULL;
-    pSuiteData->varSuiteData.pathToJar = NULL;
-    pSuiteData->varSuiteData.pathToSettings = NULL;
+    pSuiteData->midletClassName = NULL;
+    pSuiteData->displayName = NULL;
+    pSuiteData->iconPath = NULL;
+    pSuiteData->suiteVendor = NULL;
+    pSuiteData->suiteName = NULL;
+//    pSuiteData->pathToJar = NULL;
+//    pSuiteData->pathToSettings = NULL;
 
     return JAVACALL_OK;
 }
@@ -377,7 +378,7 @@ javanotify_ams_midlet_get_suite_info(const javacall_app_id appID,
  *                     <tt>JAVACALL_FAIL</tt> otherwise
  */
 javacall_result
-javanotify_ams_midlet_request_runtime_info(const javacall_app_id appID) {
+java_ams_midlet_request_runtime_info(javacall_app_id appID) {
     MIDPError res = midp_midlet_request_runtime_info((jint)appID);
     return (res == ALL_OK) ? JAVACALL_OK : JAVACALL_FAIL;
 }
@@ -390,7 +391,7 @@ javanotify_ams_midlet_request_runtime_info(const javacall_app_id appID) {
  *         <tt>JAVACALL_FAIL</tt>
  */
 javacall_result
-javanotify_ams_create_resource_cache(const javacall_suite_id suiteID) {
+java_ams_create_resource_cache(javacall_suite_id suiteID) {
     (void) suiteID;
     return JAVACALL_FAIL;
 }
@@ -414,7 +415,7 @@ void midp_listener_ams_operation_completed(const NamsEventData* pEventData) {
         }
     }
     
-    javacall_ams_operation_completed(
+    java_ams_operation_completed(
         midp_operation2javacall(pEventData->reason),
         (javacall_app_id)pEventData->appId,
         pResult);
@@ -432,7 +433,7 @@ void midp_listener_ams_midlet_state_changed(const NamsEventData* pEventData) {
         return;
     }
 
-    javacall_ams_midlet_state_changed(
+    java_ams_midlet_state_changed(
         midp_midlet_state2javacall(pEventData->state),
         (javacall_app_id)pEventData->appId,
         midp_midlet_event_reason2javacall(pEventData->reason));
@@ -450,7 +451,7 @@ void midp_listener_ams_midlet_ui_state_changed(
         return;
     }
 
-    javacall_ams_midlet_state_changed(
+    java_ams_ui_state_changed(
         midp_midlet_ui_state2javacall(pEventData->state),
         (javacall_app_id)pEventData->appId,
         midp_midlet_event_reason2javacall(pEventData->reason));
@@ -496,7 +497,7 @@ midp_midlet_event_reason2javacall(jint midpEventReason) {
             break;
         }
         case MIDLET_CLASS_NOT_FOUND: {
-            jcEventReason = JAVACALL_MIDLET_STATE_DESTROYED;
+            jcEventReason = JAVACALL_MIDLET_CLASS_NOT_FOUND;
             break;
         }
         case MIDLET_INSTANTIATION_EXCEPTION: {
@@ -512,7 +513,7 @@ midp_midlet_event_reason2javacall(jint midpEventReason) {
             break;
         }
         case MIDLET_RESOURCE_LIMIT: {
-            jcEventReason = JAVACALL_MIDLET_STATE_ERROR;
+            jcEventReason = JAVACALL_MIDLET_RESOURCE_LIMIT;
             break;
         }
         case MIDLET_ISOLATE_RESOURCE_LIMIT: {
@@ -566,8 +567,9 @@ static javacall_opcode midp_operation2javacall(jint midpOpcode) {
  *
  * @return Javacall midlet state constant corresponding to the given MIDP one
  */
-static javacall_midlet_state midp_midlet_state2javacall(jint midpMidletState) {
-    javacall_midlet_state jcMidletState;
+static javacall_lifecycle_state
+midp_midlet_state2javacall(jint midpMidletState) {
+    javacall_lifecycle_state jcMidletState;
 
     /*
      * We can't assume that the MIDP and Javacall constants are identical,
@@ -575,23 +577,23 @@ static javacall_midlet_state midp_midlet_state2javacall(jint midpMidletState) {
      */
     switch (midpMidletState) {
         case MIDP_MIDLET_STATE_ACTIVE: {
-            jcMidletState = JAVACALL_MIDLET_STATE_ACTIVE;
+            jcMidletState = JAVACALL_LIFECYCLE_MIDLET_STARTED;
             break;
         }
         case MIDP_MIDLET_STATE_PAUSED: {
-            jcMidletState = JAVACALL_MIDLET_STATE_PAUSED;
+            jcMidletState = JAVACALL_LIFECYCLE_MIDLET_PAUSED;
             break;
         }
         case MIDP_MIDLET_STATE_DESTROYED: {
-            jcMidletState = JAVACALL_MIDLET_STATE_DESTROYED;
+            jcMidletState = JAVACALL_LIFECYCLE_MIDLET_SHUTDOWN;
             break;
         }
         case MIDP_MIDLET_STATE_ERROR: {
-            jcMidletState = JAVACALL_MIDLET_STATE_ERROR;
+            jcMidletState = JAVACALL_LIFECYCLE_MIDLET_ERROR;
             break;
         }
         default: {
-            jcMidletState = JAVACALL_MIDLET_STATE_ERROR;
+            jcMidletState = JAVACALL_LIFECYCLE_MIDLET_ERROR;
         }
     }
 
