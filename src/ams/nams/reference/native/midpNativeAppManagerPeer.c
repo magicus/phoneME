@@ -106,26 +106,15 @@ MIDPError midp_system_initialize(void) {
 }
 
 
-/**
- * Starts the system. Does not return until the system is stopped.
- *
- * @return <tt>ALL_OK</tt> if the system is shutting down or
- *         <tt>GENERAL_ERROR</tt> if an error
- */
-MIDPError midp_system_start(void) {
-    int vmStatus;
-    MIDPError errCode;
+static MIDPError system_cleanup(int status) {
     NamsEventData eventData;
-
+    MIDPError errCode;
     memset((char*)&eventData, 0, sizeof(NamsEventData));
-
-    vmStatus = midpRunMainClass(NULL, APP_MANAGER_PEER, 0, NULL);
-
     eventData.event  = MIDP_NAMS_EVENT_STATE_CHANGED;
     eventData.state = MIDP_SYSTEM_STATE_STOPPED;
     nams_listeners_notify(SYSTEM_EVENT_LISTENER, &eventData);
 
-    switch (vmStatus) {
+    switch (status) {
         case MIDP_SHUTDOWN_STATUS: {
             errCode = ALL_OK;
             break;
@@ -135,6 +124,28 @@ MIDPError midp_system_start(void) {
             errCode = GENERAL_ERROR;
             break;
         }
+    }
+
+    return errCode;
+}
+
+
+/**
+ * Starts the system. Does not return until the system is stopped.
+ *
+ * @return <tt>ALL_OK</tt> if the system is shutting down or
+ *         <tt>GENERAL_ERROR</tt> if an error
+ */
+MIDPError midp_system_start(void) {
+    int vmStatus;
+    MIDPError errCode;
+
+    vmStatus = midpRunMainClass(NULL, APP_MANAGER_PEER, 0, NULL);
+
+    if (MIDP_RUNNING_STATUS != vmStatus) {
+        errCode = system_cleanup(vmStatus);
+    } else {
+        errCode = ALL_OK;
     }
 
     return errCode;
