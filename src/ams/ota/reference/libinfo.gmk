@@ -31,7 +31,6 @@ LIB_JAVA_FILES= \
     com/sun/midp/installer/DiscoveryApp.java \
     com/sun/midp/installer/SuiteVerifier.java \
     com/sun/midp/installer/GraphicalInstaller.java \
-    com/sun/midp/installer/InstallerResource.java \
     com/sun/midp/installer/OtaNotifier.java
 
 #

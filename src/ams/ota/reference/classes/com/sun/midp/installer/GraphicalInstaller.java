@@ -688,9 +688,9 @@ public class GraphicalInstaller extends MIDlet implements CommandListener {
 
             if (url != null) {
                 
-                if (url.startsWith(DiscoveryApp.DEFAULT_FILE_SCHEMA)) {
+                if (url.startsWith(InstallerResource.DEFAULT_FILE_SCHEMA)) {
                     
-                    url = url.substring(DiscoveryApp.DEFAULT_FILE_SCHEMA.length(),
+                    url = url.substring(InstallerResource.DEFAULT_FILE_SCHEMA.length(),
                             url.length());
                     
                     dos.writeUTF(url);

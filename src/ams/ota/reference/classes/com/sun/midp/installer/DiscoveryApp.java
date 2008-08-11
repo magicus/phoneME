@@ -118,9 +118,7 @@ public class DiscoveryApp extends MIDlet implements CommandListener {
     /** Installation from web source. */
     final static int HTTP_INSTALL = 0;
     /** Installation from external storage source. */
-    final static int FILE_INSTALL = 1;
-    /** Schema with which file URI must begin. */
-    final static String DEFAULT_FILE_SCHEMA = "file:///";
+    final static int FILE_INSTALL = 1;   
     /** Type of last installation. */
     private int lastTypeOfInstall;
     /** Current type of installation. */
@@ -307,7 +305,7 @@ public class DiscoveryApp extends MIDlet implements CommandListener {
 
         temp = urlTextBox.getString();
         if (typeOfInstall == DiscoveryApp.FILE_INSTALL) {
-            temp = DiscoveryApp.DEFAULT_FILE_SCHEMA+temp;
+            temp = InstallerResource.DEFAULT_FILE_SCHEMA+temp;
         }
         ex = GraphicalInstaller.saveSettings(temp,
                 MIDletSuite.INTERNAL_SUITE_ID);
@@ -417,9 +415,9 @@ public class DiscoveryApp extends MIDlet implements CommandListener {
             suite = (SuiteDownloadInfo)installList.elementAt(selectedSuite);         
         } else {
             String filenamepath = urlTextBox.getString().startsWith(
-                    DiscoveryApp.DEFAULT_FILE_SCHEMA) ?
+                    InstallerResource.DEFAULT_FILE_SCHEMA) ?
                     urlTextBox.getString() :
-                    DiscoveryApp.DEFAULT_FILE_SCHEMA+
+                    InstallerResource.DEFAULT_FILE_SCHEMA+
                     urlTextBox.getString();                
             suite = new SuiteDownloadInfo(filenamepath,urlTextBox.getString());            
         }

@@ -106,7 +106,7 @@ public class FileInstaller extends Installer {
         // If jad attribute 'Midlet-Jar-Url' begins with schema 'file:///',
         // than get jar path from this jad attribute,
         // else searching jar file in same directory as a jad file.
-        if (!info.jarUrl.startsWith(DiscoveryApp.DEFAULT_FILE_SCHEMA)) {
+        if (!info.jarUrl.startsWith(InstallerResource.DEFAULT_FILE_SCHEMA)) {
             String jadFilename= getUrlPath(info.jadUrl);
             
             if (jadFilename.endsWith(".jad")) {
