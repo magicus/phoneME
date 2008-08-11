@@ -698,7 +698,7 @@ public class GraphicalInstaller extends MIDlet implements CommandListener {
                     settings.setRecord(FILE_PATH_RECORD_ID, data, 0, data.length);
                     // saves last type of install
                     bas.reset();
-                    dos.writeInt(DiscoveryApp.FILE_INSTALL);
+                    dos.writeInt(InstallerResource.FILE_INSTALL);
                                         
                    } else {
                     dos.writeUTF(url);
@@ -706,7 +706,7 @@ public class GraphicalInstaller extends MIDlet implements CommandListener {
                     settings.setRecord(URL_RECORD_ID, data, 0, data.length);
                     // saves last type of install
                     bas.reset();
-                    dos.writeInt(DiscoveryApp.HTTP_INSTALL);
+                    dos.writeInt(InstallerResource.HTTP_INSTALL);
                 }
                 // write last type of installation
                 // to record storage

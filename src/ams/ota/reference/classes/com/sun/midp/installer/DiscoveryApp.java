@@ -114,11 +114,7 @@ public class DiscoveryApp extends MIDlet implements CommandListener {
     private Command installFromFileStorage = new Command(Resource.getString
             (ResourceConstants.AMS_DISC_APP_START_FILE_INSTALL),Command.SCREEN,1);
     
-       
-    /** Installation from web source. */
-    final static int HTTP_INSTALL = 0;
-    /** Installation from external storage source. */
-    final static int FILE_INSTALL = 1;   
+         
     /** Type of last installation. */
     private int lastTypeOfInstall;
     /** Current type of installation. */
@@ -133,8 +129,8 @@ public class DiscoveryApp extends MIDlet implements CommandListener {
 
         display = Display.getDisplay(this);
         
-        typeOfInstall = DiscoveryApp.HTTP_INSTALL;
-        lastTypeOfInstall = DiscoveryApp.HTTP_INSTALL;
+        typeOfInstall = InstallerResource.HTTP_INSTALL;
+        lastTypeOfInstall = InstallerResource.HTTP_INSTALL;
         
         GraphicalInstaller.initSettings();
         restoreSettings();         
@@ -190,7 +186,7 @@ public class DiscoveryApp extends MIDlet implements CommandListener {
         else if (c == fileStorage) {          
           urlTextBox.setTitle(Resource.getString
                   (ResourceConstants.AMS_DISC_APP_STORAGE_INSTALL));
-          setupCommands(DiscoveryApp.FILE_INSTALL);
+          setupCommands(InstallerResource.FILE_INSTALL);
           restoreSettings();
           urlTextBox.setString(defaultInstallListUrl);
         }
@@ -198,7 +194,7 @@ public class DiscoveryApp extends MIDlet implements CommandListener {
         else if (c == httpStorage) {         
          urlTextBox.setTitle(Resource.getString
                   (ResourceConstants.AMS_DISC_APP_WEBSITE_INSTALL));
-         setupCommands(DiscoveryApp.HTTP_INSTALL);
+         setupCommands(InstallerResource.HTTP_INSTALL);
          restoreSettings();        
          urlTextBox.setString(defaultInstallListUrl);
         }
@@ -245,22 +241,22 @@ public class DiscoveryApp extends MIDlet implements CommandListener {
             // if user switch to web source installation or
             // if switch to storage install and than switch
             // back without installation
-            if ((lastTypeOfInstall == DiscoveryApp.HTTP_INSTALL && urlTextBox==null) ||
-               (lastTypeOfInstall == DiscoveryApp.FILE_INSTALL &&
-                                           typeOfInstall == DiscoveryApp.HTTP_INSTALL) ||
-               (lastTypeOfInstall == DiscoveryApp.HTTP_INSTALL &&
-                                           typeOfInstall == DiscoveryApp.HTTP_INSTALL)) { 
+            if ((lastTypeOfInstall == InstallerResource.HTTP_INSTALL && urlTextBox==null) ||
+               (lastTypeOfInstall == InstallerResource.FILE_INSTALL &&
+                                           typeOfInstall == InstallerResource.HTTP_INSTALL) ||
+               (lastTypeOfInstall == InstallerResource.HTTP_INSTALL &&
+                                           typeOfInstall == InstallerResource.HTTP_INSTALL)) { 
                 data = settings.getRecord(GraphicalInstaller.URL_RECORD_ID);                
                 defaultInstallListUrl="http://";
             }
             // if this method invoked from constructor or
             // if user switch to storage source installation or
             // if switch to web source install and than switch back without installation
-            else if ((lastTypeOfInstall == DiscoveryApp.FILE_INSTALL && urlTextBox==null) ||
-                    (lastTypeOfInstall == DiscoveryApp.HTTP_INSTALL &&
-                                             typeOfInstall==DiscoveryApp.FILE_INSTALL)      ||
-                    (lastTypeOfInstall == DiscoveryApp.FILE_INSTALL &&
-                                             typeOfInstall==DiscoveryApp.FILE_INSTALL)) {
+            else if ((lastTypeOfInstall == InstallerResource.FILE_INSTALL && urlTextBox==null) ||
+                    (lastTypeOfInstall == InstallerResource.HTTP_INSTALL &&
+                                             typeOfInstall==InstallerResource.FILE_INSTALL)      ||
+                    (lastTypeOfInstall == InstallerResource.FILE_INSTALL &&
+                                             typeOfInstall==InstallerResource.FILE_INSTALL)) {
                      data = settings.getRecord(
                              GraphicalInstaller.FILE_PATH_RECORD_ID);              
                      defaultInstallListUrl="";
@@ -304,7 +300,7 @@ public class DiscoveryApp extends MIDlet implements CommandListener {
         Exception ex;
 
         temp = urlTextBox.getString();
-        if (typeOfInstall == DiscoveryApp.FILE_INSTALL) {
+        if (typeOfInstall == InstallerResource.FILE_INSTALL) {
             temp = InstallerResource.DEFAULT_FILE_SCHEMA+temp;
         }
         ex = GraphicalInstaller.saveSettings(temp,
@@ -410,7 +406,7 @@ public class DiscoveryApp extends MIDlet implements CommandListener {
     private SuiteDownloadInfo createSuiteDownloadInfo() {
         SuiteDownloadInfo suite;
         
-        if (typeOfInstall == DiscoveryApp.HTTP_INSTALL) {
+        if (typeOfInstall == InstallerResource.HTTP_INSTALL) {
             int selectedSuite = installListBox.getSelectedIndex();
             suite = (SuiteDownloadInfo)installList.elementAt(selectedSuite);         
         } else {
@@ -527,11 +523,11 @@ public class DiscoveryApp extends MIDlet implements CommandListener {
                 urlTextBox.addCommand(endCmd);
                 urlTextBox.addCommand(saveCmd);
                 
-                if (lastTypeOfInstall == DiscoveryApp.HTTP_INSTALL) {
-                   setupCommands(DiscoveryApp.HTTP_INSTALL);
+                if (lastTypeOfInstall == InstallerResource.HTTP_INSTALL) {
+                   setupCommands(InstallerResource.HTTP_INSTALL);
                 }
                 else {
-                    setupCommands(DiscoveryApp.FILE_INSTALL);
+                    setupCommands(InstallerResource.FILE_INSTALL);
                     urlTextBox.setTitle(Resource.getString(
                             ResourceConstants.AMS_DISC_APP_STORAGE_INSTALL));
                 }
@@ -686,18 +682,18 @@ public class DiscoveryApp extends MIDlet implements CommandListener {
      * @param type what type of installation
      */
     private void setupCommands(int type) {
-        if (type == DiscoveryApp.HTTP_INSTALL) {
+        if (type == InstallerResource.HTTP_INSTALL) {
             urlTextBox.removeCommand(httpStorage);
             urlTextBox.removeCommand(installFromFileStorage);
             urlTextBox.addCommand(fileStorage);
             urlTextBox.addCommand(discoverCmd);            
-            typeOfInstall=DiscoveryApp.HTTP_INSTALL;
+            typeOfInstall = InstallerResource.HTTP_INSTALL;
         } else {
             urlTextBox.removeCommand(fileStorage);        
             urlTextBox.removeCommand(discoverCmd);
             urlTextBox.addCommand(httpStorage);
             urlTextBox.addCommand(installFromFileStorage);            
-            typeOfInstall=DiscoveryApp.FILE_INSTALL;
+            typeOfInstall = InstallerResource.FILE_INSTALL;
         }       
     }      
 }
