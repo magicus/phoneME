@@ -121,7 +121,7 @@ typedef struct _action_info{
 
 #define MAILCAP_INDEX 0
 #define ACTIONMAP_INDEX 1
-#define  ACCESSLIST_INDEX 2
+#define ACCESSLIST_INDEX 2
 
 unsigned long mailcap_lastread = 0;
 unsigned long actionmap_lastread = 0;
@@ -1571,9 +1571,12 @@ javacall_result javacall_chapi_enum_handlers(int* pos_id, /*OUT*/ javacall_utf16
 	return result;
 }
 
-javacall_result javacall_chapi_enum_handlers_by_suffix(javacall_const_utf16_string suffix, int* pos_id, /*OUT*/ javacall_utf16*  buffer, int* length){
-	int result;
-	int index1=((*(unsigned int*)pos_id) >> 16) & 0xFFFFL, index2 = *pos_id & 0xFFFFL;
+javacall_result javacall_chapi_enum_handlers_by_suffix(javacall_const_utf16_string suffix, int* pos_id, 
+                                                            /*OUT*/ javacall_utf16*  buffer, int* length){
+	int result = 0;
+	int index1, index2;
+
+	if (!pos_id) return JAVACALL_CHAPI_ERROR_BAD_PARAMS;
 
 #ifdef DEBUG_OUTPUT
 	wprintf(L"JAVACALL::javacall_chapi_enum_handlers_by_suffix(%s,%d)\n",suffix,*pos_id);
@@ -1584,22 +1587,22 @@ javacall_result javacall_chapi_enum_handlers_by_suffix(javacall_const_utf16_stri
 		if (result) return result;
 	}
 
-	if (!pos_id) return JAVACALL_CHAPI_ERROR_BAD_PARAMS;
 	if (!g_handler_infos || !g_content_type_infos) return result;
+	index1 = ((*(unsigned int*)pos_id) >> 16) & 0xFFFFL; 
+    index2 = *pos_id & 0xFFFFL;
 	while (index1 < g_content_type_infos_used){
 		if (suffix_fits(suffix,g_content_type_infos[index1])){
 			while (index2 < g_action_infos_used){
 				if (g_action_infos[index2]->content_type == g_content_type_infos[index1]) {
-					result=get_id(g_action_infos[index2]->handler,buffer,length);
-					if (!result){
-						*pos_id = (unsigned int)((index1+1) << 16) + (index2+1);
-					}
+					result = get_id(g_action_infos[index2]->handler,buffer,length);
+					*pos_id = (unsigned int)(index1 << 16) + (index2+1);
 					return result;
 				}
 				index2++;
 			}
 		}
 		index1++;
+        index2 = 0;
 	}
 
 	return JAVACALL_CHAPI_ERROR_NO_MORE_ELEMENTS;
@@ -2055,13 +2058,16 @@ javacall_result javacall_chapi_get_handler_info(javacall_const_utf16_string cont
     int res;
 
 #ifdef DEBUG_OUTPUT
-    wprintf(L"JAVACALL::javacall_chapi_get_handler_info(%s)\n",content_handler_id);
+    wprintf(L"JAVACALL::javacall_chapi_get_handler_info(%s)\n", content_handler_id);
 #endif
 
-    res = update_registry();
-    if (res) return res;
+    if( NULL == content_handler_id )
+        return JAVACALL_CHAPI_ERROR_NOT_FOUND;
 
-	for (i=0;i<g_handler_infos_used;++i){
+    if( res = update_registry() )
+        return res;
+
+	for (i=0; i < g_handler_infos_used; ++i){
 		if (!javautil_str_wcscmp(g_handler_infos[i]->handler_id,content_handler_id)){
 			info = g_handler_infos[i];
 			if (info->flag & TYPE_INFO_JAVA_HANDLER){
