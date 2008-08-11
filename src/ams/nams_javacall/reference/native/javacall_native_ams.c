@@ -92,7 +92,7 @@ javacall_result javanotify_ams_system_start() {
  *       by <link>javacall_ams_midlet_stateChanged</link>
  */
 javacall_result
-javanotify_ams_midlet_start(const javacall_suite_id suiteID,
+java_ams_midlet_start(const javacall_suite_id suiteID,
                             const javacall_app_id appID,
                             const javacall_utf16_string className,
                             const javacall_midlet_runtime_info* pRuntimeInfo) {
@@ -119,13 +119,13 @@ javanotify_ams_midlet_start(const javacall_suite_id suiteID,
  */
 #include <stdio.h>
 javacall_result
-javanotify_ams_midlet_start_with_args(const javacall_suite_id suiteID,
-                                      const javacall_app_id appID,
-                                      const javacall_utf16_string className,
-                                      const javacall_utf16_string *args,
-                                      int argsNum,
-                                      const javacall_midlet_runtime_info*
-                                          pRuntimeInfo) {
+java_ams_midlet_start_with_args(const javacall_suite_id suiteID,
+                                const javacall_app_id appID,
+                                const javacall_utf16_string className,
+                                const javacall_utf16_string *args,
+                                int argsNum,
+                                const javacall_midlet_runtime_info*
+                                    pRuntimeInfo) {
     MIDPError res;                                          
     MidletRuntimeInfo mri, *pMri = NULL;
     javacall_result jcRes;
@@ -243,8 +243,8 @@ printf(">>> pClassName = '%s'\n", (char*)pClassName);
  *       <link>javacall_ams_midlet_stateChanged</link>
  */
 javacall_result
-javanotify_ams_midlet_shutdown(const javacall_app_id appID,
-                               int timeoutMillSeconds) {
+java_ams_midlet_shutdown(const javacall_app_id appID,
+                         int timeoutMillSeconds) {
     MIDPError res = midp_midlet_destroy((jint)appID, (jint)timeoutMillSeconds);
     return (res == ALL_OK) ? JAVACALL_OK : JAVACALL_FAIL;                                   
 }
@@ -261,7 +261,7 @@ javanotify_ams_midlet_shutdown(const javacall_app_id appID,
  *       <link>javacall_ams_midlet_stateChanged</link>
  */
 javacall_result
-javanotify_ams_midlet_switch_foreground(const javacall_app_id appID) {
+java_ams_midlet_switch_foreground(const javacall_app_id appID) {
     MIDPError res = midp_midlet_set_foreground((jint)appID);
     return (res == ALL_OK) ? JAVACALL_OK : JAVACALL_FAIL;
 }
@@ -275,7 +275,7 @@ javanotify_ams_midlet_switch_foreground(const javacall_app_id appID) {
  * @note the real status of operation will be notified by
  *       <link>javacall_ams_midlet_stateChanged</link>
  */
-javacall_result javanotify_ams_midlet_switch_background() {
+javacall_result java_ams_midlet_switch_background() {
     MIDPError res = midp_midlet_set_foreground(MIDLET_APPID_NO_FOREGROUND);
     return (res == ALL_OK) ? JAVACALL_OK : JAVACALL_FAIL;
 }
@@ -289,7 +289,7 @@ javacall_result javanotify_ams_midlet_switch_background() {
  * @note the real status of operation will be notified by
  *       <link>javacall_ams_midlet_stateChanged</link>
  */
-javacall_result javanotify_ams_midlet_pause(const javacall_app_id appID) {
+javacall_result java_ams_midlet_pause(const javacall_app_id appID) {
     MIDPError res = midp_midlet_pause((jint)appID);
     return (res == ALL_OK) ? JAVACALL_OK : JAVACALL_FAIL;
 }
@@ -303,7 +303,7 @@ javacall_result javanotify_ams_midlet_pause(const javacall_app_id appID) {
  * @note the real status of operation will be notified by
  *       <link>javacall_ams_midlet_stateChanged</link>
  */
-javacall_result javanotify_ams_midlet_resume(const javacall_app_id appID) {
+javacall_result java_ams_midlet_resume(const javacall_app_id appID) {
     MIDPError res = midp_midlet_resume((jint)appID);
     return (res == ALL_OK) ? JAVACALL_OK : JAVACALL_FAIL;
 }
