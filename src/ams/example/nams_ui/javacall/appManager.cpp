@@ -55,9 +55,9 @@ static void DrawBuffer(HDC hdc);
 
 extern "C" {
 
-javacall_result javanotify_ams_system_start();
+javacall_result java_ams_system_start();
 javacall_result
-javanotify_ams_midlet_start(javacall_suite_id suiteId,
+java_ams_midlet_start(javacall_suite_id suiteId,
                       javacall_app_id appId,
                       javacall_const_utf16_string className,
                       const javacall_midlet_runtime_info* pRuntimeInfo);
@@ -76,7 +76,7 @@ extern "C" javacall_result JavaTaskImpl(int argc, char* argv[]) {
 //    javacall_events_init();
 //    javacall_initialize_configurations();
 
-    javacall_result res = javanotify_ams_system_start();
+    javacall_result res = java_ams_system_start();
 //    java_ams_appmgr_start();
 
     TCHAR szMsg[128];
@@ -220,7 +220,7 @@ WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
         x = (short)LOWORD(lParam);
         y = (short)HIWORD(lParam);
 
-        javacall_result res = javanotify_ams_midlet_start(-1, 1,
+        javacall_result res = java_ams_midlet_start(-1, 1,
             L"com.sun.midp.installer.DiscoveryApp", NULL);
 
         TCHAR szMsg[128];
