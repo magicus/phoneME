@@ -76,7 +76,7 @@ public class NativeAppManagerPeer
      * @param args not used
      */
     public static void main(String args[]) {
-
+System.out.println(">>> PEER Started!");
         // Since this is public method, guard against multiple calls
 
         if (alreadyCalled) {
@@ -304,6 +304,7 @@ public class NativeAppManagerPeer
      * @param event event to process
      */
     public void process(Event event) {
+System.out.println(">>> event = " + event);
         String errorMsg = null;
 
         NativeEvent nativeEvent = (NativeEvent)event;
@@ -313,6 +314,7 @@ public class NativeAppManagerPeer
         switch (nativeEvent.getType()) {
 
         case EventTypes.NATIVE_MIDLET_EXECUTE_REQUEST:
+System.out.println(">>> NATIVE_MIDLET_EXECUTE_REQUEST");
             if (midlet == null) {
                 if (nativeEvent.intParam2 == MIDletSuite.UNUSED_SUITE_ID) {
                     notifyMidletStartError(nativeEvent.intParam1,

@@ -117,6 +117,7 @@ javanotify_ams_midlet_start(const javacall_suite_id suiteID,
  *        the real status of MIDlet startup will be notified by
  *        <link>javacall_ams_midlet_stateChanged</link>
  */
+#include <stdio.h>
 javacall_result
 javanotify_ams_midlet_start_with_args(const javacall_suite_id suiteID,
                                       const javacall_app_id appID,
@@ -145,15 +146,24 @@ javanotify_ams_midlet_start_with_args(const javacall_suite_id suiteID,
     if (jcRes != JAVACALL_OK) {
         return JAVACALL_FAIL;
     }
+    utf16Len <<= 1;
 
+/*
     jcRes = javautil_unicode_utf16_to_utf8(className, classNameLen,
         (unsigned char*) pClassName, sizeof(pClassName) / sizeof(jchar) - 1,
             (javacall_int32*) &classNameLen);
     if (jcRes != JAVACALL_OK) {
         return JAVACALL_FAIL;
     }
+*/
+    if (utf16Len >= MAX_CLASS_NAME_LEN) {
+        return JAVACALL_FAIL;
+    }
+    memcpy((unsigned char*)pClassName, (unsigned char*)className, utf16Len);
+    classNameLen = utf16Len;
 
     pClassName[classNameLen] = 0;
+printf(">>> pClassName = '%s'\n", (char*)pClassName);
 
     /* converting the midlet's arguments */
     for (i = 0; i < argsNum; i++) {
@@ -161,7 +171,7 @@ javanotify_ams_midlet_start_with_args(const javacall_suite_id suiteID,
             return JAVACALL_FAIL;
         }
 
-        jcRes = javautil_unicode_utf16_utf8length(args[i], &utf16Len);
+        jcRes = javautil_unicode_utf16_ulength(args[i], &utf16Len);
         if (jcRes != JAVACALL_OK) {
             return JAVACALL_FAIL;
         }
@@ -434,7 +444,8 @@ void midp_listener_ams_midlet_state_changed(const NamsEventData* pEventData) {
  * @param pEventData full data about the event and about the application
  *                   caused this event
  */
-void midp_listener_ams_ui_state_changed(const NamsEventData* pEventData) {
+void midp_listener_ams_midlet_ui_state_changed(
+        const NamsEventData* pEventData) {
     if (pEventData == NULL) {
         return;
     }

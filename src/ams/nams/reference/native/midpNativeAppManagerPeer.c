@@ -46,6 +46,8 @@
 #include <midp_runtime_info.h>
 #include <heap.h>
 
+#include <commandLineUtil_md.h>
+
 /** The name of the native application manager peer internal class. */
 #define APP_MANAGER_PEER "com.sun.midp.main.NativeAppManagerPeer"
 
@@ -86,6 +88,7 @@ nams_listeners_notify(NamsListenerType listenerType,
  * @return error code: (ALL_OK if successful)
  */
 MIDPError midp_system_initialize(void) {
+    char *pAppDir, *pConfDir;
 	int midp_heap_requirement = getHeapRequirement();
 
     JVM_Initialize();
@@ -95,6 +98,23 @@ MIDPError midp_system_initialize(void) {
      * line.
      */
     JVM_SetConfig(JVM_CONFIG_HEAP_CAPACITY, midp_heap_requirement);
+
+    /* set up appDir before calling midp_system_start */
+    pAppDir = getApplicationDir(NULL);
+    if (pAppDir == NULL) {
+        return GENERAL_ERROR;
+    }
+
+    midpSetAppDir(pAppDir);
+
+    /* get midp configuration directory, set it */
+    pConfDir = getConfigurationDir(NULL);
+    if (pConfDir == NULL) {
+        return GENERAL_ERROR;
+    }
+
+    midpSetConfigDir(pConfDir);
+
 
     return init_listeners_impl();
 }
@@ -245,6 +265,7 @@ MIDPError midp_midlet_create_start_with_args(SuiteIdType suiteId,
             evt.stringParam1 = temp;
         } else {
             pcsl_string_free(&temp);
+            return BAD_PARAMS;
         }
     }
 
