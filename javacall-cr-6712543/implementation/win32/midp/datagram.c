@@ -45,7 +45,12 @@
 
 
 /* #include <midp_msgQueue_md.h>, will a pcsl_event header file later. */
+#if 0
 extern HANDLE midpGetWindowHandle();
+#else
+#define midpGetWindowHandle() NULL
+#endif
+
 #define WM_DEBUGGER      (WM_USER)
 #define WM_HOST_RESOLVED (WM_USER + 1)
 #define WM_NETWORK       (WM_USER + 2)

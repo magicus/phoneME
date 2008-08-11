@@ -579,9 +579,10 @@ java_ams_suite_create_id(javacall_suite_id* pSuiteId);
  * Installer invokes this function to get the install information
  * of a MIDlet suite.
  *
- * Note that memory for the strings inside the returned javacall_install_info
- * structure is allocated by the callee, and the caller is
- * responsible for freeing it using javacall_free_install_info().
+ * Note that memory for the strings inside the returned
+ * javacall_ams_suite_install_info structure is allocated by the callee,
+ * and the caller is responsible for freeing it using
+ * javacall_free_install_info().
  *
  * @param suiteId      [in]     unique ID of the suite
  * @param pInstallInfo [in/out] pointer to a place where the installation
@@ -590,17 +591,19 @@ java_ams_suite_create_id(javacall_suite_id* pSuiteId);
  * @return <tt>JAVACALL_OK</tt> on success, else an error code
  */
 javacall_result
-java_ams_suite_get_install_info(javacall_suite_is suiteId,
+java_ams_suite_get_install_info(javacall_suite_id suiteId,
                                 javacall_ams_suite_install_info*
                                     pInstallInfo);
 /**
- * Installer invokes this function to frees an javacall_install_info struct.
+ * Installer invokes this function to frees an
+ * javacall_ams_suite_install_info struct.
  * Does nothing if passed NULL.
  *
  * @param pInstallInfo installation information returned from
  *                     java_ams_suite_get_install_info
  */
-void java_ams_suite_free_install_info(javacall_install_info* pInstallInfo);
+void java_ams_suite_free_install_info(
+        javacall_ams_suite_install_info* pInstallInfo);
 
 /**
  * Installer calls this function to store or update a midlet suite.
@@ -885,21 +888,6 @@ java_ams_suite_change_storage(javacall_suite_id suiteId,
  * @param suiteId unique ID of the MIDlet suite
  *
  * @return <tt>JAVACALL_TRUE</tt> if the suite is trusted,
- *         <tt>JAVACALL_FALSE</tt> otherwise
- */
-javacall_bool
-java_ams_suite_is_preinstalled(javacall_suite_id suiteId);
-
-/**
- * App Manager invokes this function to check if the suite with the given ID
- * is a preinstalled suite.
- *
- * This is just a helper method, java_ams_suite_get_info()
- * also can be used for this purpose.
- *
- * @param suiteId unique ID of the MIDlet suite
- *
- * @return <tt>JAVACALL_TRUE</tt> if the suite is preinstalled,
  *         <tt>JAVACALL_FALSE</tt> otherwise
  */
 javacall_bool
