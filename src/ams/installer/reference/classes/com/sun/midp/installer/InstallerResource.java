@@ -58,6 +58,9 @@ public class InstallerResource {
     /** Type of message if IOException occur. */
     public static final int IO_EXCEPTION_MESSAGE = 6;
     
+    /** Schema with which file URI must begin. */
+    final static String DEFAULT_FILE_SCHEMA = "file:///";
+    
     /** Array of specific messages for different installer.
      * First index of array corresponds to one of the InstallerResource 
      * constant. Second index is specific for different installers.
@@ -135,7 +138,7 @@ public class InstallerResource {
      * @return necessary installer
      */
     public static Installer getInstaller(String url) {
-        if (url.startsWith(DiscoveryApp.DEFAULT_FILE_SCHEMA)) 
+        if (url.startsWith(InstallerResource.DEFAULT_FILE_SCHEMA)) 
             return new FileInstaller();
         else
             return new HttpInstaller();        
