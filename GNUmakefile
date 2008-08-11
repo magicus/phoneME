@@ -54,6 +54,7 @@ $(FILE_DIR) $(NETWORK_DIR) $(STRING_DIR)
 	cd ${FILE_DIR}; $(MAKE) $@
 	cd ${NETWORK_DIR}; $(MAKE) $@
 	cd ${STRING_DIR}; $(MAKE) $@
+	cd ${ESCFILENAMES_DIR}; $(MAKE) $@
 
 include makefiles/verify.gmk
 

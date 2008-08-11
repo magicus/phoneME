@@ -29,9 +29,7 @@
 ######################################################################
 
 # Workspace directory
-PCSL_DIR		= $(CURDIR)/..
-
-STRING_UTIL_DIR         = $(CURDIR)/util
+PCSL_DIR		= $(CURDIR)/../
 
 ifdef PCSL_PLATFORM
 include $(PCSL_DIR)/makefiles/top.gmk
@@ -40,47 +38,26 @@ endif
 # What to build
 #
 
-all : verify types $(STRING_UTIL_DIR) $(STRING_SELECT_DIR) \
-     $(OUTPUT_INC_DIR) $(OUTPUT_INC_DIR)/pcsl_string_status.h $(OUTPUT_INC_DIR)/pcsl_string.h
-	@echo "building string util..."
-	@cd $(STRING_UTIL_DIR); $(MAKE) $@
-	@echo "building string module..."
-	@cd $(STRING_SELECT_DIR); $(MAKE) $@
+all doc donuts : verify string $(ESCFILENAMES_SELECT_DIR)
+	@echo "building ESCFILENAMES module..."
+	@cd $(ESCFILENAMES_SELECT_DIR); $(MAKE) $@
 
-$(OUTPUT_INC_DIR)/pcsl_string_status.h:
-	@cp -f pcsl_string_status.h $(OUTPUT_INC_DIR)
-
-$(OUTPUT_INC_DIR)/pcsl_string.h:
-	@cp -f pcsl_string.h $(OUTPUT_INC_DIR)
-
-clean : verify_for_clean types $(STRING_UTIL_DIR) $(STRING_SELECT_DIR)
-	@cd $(STRING_UTIL_DIR); $(MAKE) $@
-	@cd $(STRING_SELECT_DIR); $(MAKE) $@
-	rm -rf $(OUTPUT_INC_DIR)/pcsl_string_status.h
-	rm -rf $(OUTPUT_INC_DIR)/pcsl_string.h
-	rm -rf $(OUTPUT_OBJ_DIR)/testString.o
-	rm -rf $(OUTPUT_BIN_DIR)/donuts$(EXE)
-	rm -rf $(OUTPUT_GEN_DIR)/donuts_generated.c
-	rm -rf $(DOC_DIR)
-
-doc : verify types $(STRING_UTIL_DIR) $(STRING_SELECT_DIR)
-	@echo "building string util..."
-	@cd $(STRING_UTIL_DIR); $(MAKE) $@
-	@echo "building string module..."
-	@cd $(STRING_SELECT_DIR); $(MAKE) $@
+clean: verify_for_clean $(ESCFILENAMES_SELECT_DIR)
+	@echo "cleaning ESCFILENAMES module..."
+	@cd $(ESCFILENAMES_SELECT_DIR); $(MAKE) $@
 
 # define 'donuts' and all dependencies
 #
 
-DONUTS_FILES += $(STRING_DIR)/testString.c
-DONUTS_OBJS += $(OUTPUT_OBJ_DIR)/testString.o
-DONUTS_LIBS += $(OUTPUT_LIB_DIR)/libpcsl_string$(LIB_EXT)
+DONUTS_FILES += $(ESCFILENAMES_DIR)/testEsc.c
+DONUTS_OBJS += $(OUTPUT_OBJ_DIR)/testEsc.o
+DONUTS_LIBS += $(OUTPUT_LIB_DIR)/libpcsl_escfilenames$(LIB_EXT)
 
 donuts: all $(OUTPUT_OBJ_DIR) $(OUTPUT_LIB_DIR) $(DONUTS_LIBS) $(DONUTS_OBJS)
 	@cd $(DONUTS_DIR);$(MAKE) DONUTS_FILES="$(DONUTS_FILES)" DONUTS_OBJS="$(DONUTS_OBJS)" \
                             DONUTS_LIBS="$(DONUTS_LIBS)" all
 
-$(OUTPUT_OBJ_DIR)/testString.o: $(STRING_DIR)/testString.c
+$(OUTPUT_OBJ_DIR)/testEsc.o: $(ESCFILENAMES_DIR)/testEsc.c
 	@$(CC) -I$(DONUTS_DIR) $(OUTPUT_INC_DIR) \
 	$(CFLAGS) $(CC_OUTPUT)$@ `$(call fixcygpath, $<)`
 
