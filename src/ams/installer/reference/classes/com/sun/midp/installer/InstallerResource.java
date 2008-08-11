@@ -60,6 +60,10 @@ public class InstallerResource {
     
     /** Schema with which file URI must begin. */
     final static String DEFAULT_FILE_SCHEMA = "file:///";
+    /** Installation from web source. */
+    final static int HTTP_INSTALL = 0;
+    /** Installation from external storage source. */
+    final static int FILE_INSTALL = 1;  
     
     /** Array of specific messages for different installer.
      * First index of array corresponds to one of the InstallerResource 
@@ -113,7 +117,7 @@ public class InstallerResource {
      */   
     public static String getString(Installer installer, int key) {
         int typeOfInstall = installer instanceof FileInstaller ? 
-            DiscoveryApp.FILE_INSTALL : DiscoveryApp.HTTP_INSTALL;
+            InstallerResource.FILE_INSTALL : InstallerResource.HTTP_INSTALL;
         
         return getString(typeOfInstall,key);
     }
