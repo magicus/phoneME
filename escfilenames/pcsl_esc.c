@@ -461,6 +461,7 @@ void pcsl_esc_extract_attached(const int offset, const pcsl_string *src, pcsl_st
         case PCSL_ESC_NEW_BLOCK:
         case PCSL_ESC_TOGGLE:
         case PCSL_ESC_FULL_CODES:
+	  {
             int tuple, nbytes = 0, utf16, utf16_incomplete = 0;
             int cmd = c;
             ++p;
@@ -510,6 +511,7 @@ void pcsl_esc_extract_attached(const int offset, const pcsl_string *src, pcsl_st
                     }
                 }
             } while (nbytes != 0 || p < plimit && *p != PCSL_ESC_TOGGLE);
+	  }
         }
         p++;
     }
