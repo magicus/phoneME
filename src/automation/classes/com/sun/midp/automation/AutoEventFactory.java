@@ -39,11 +39,13 @@ public abstract class AutoEventFactory {
         throws IllegalArgumentException;
 
 
-    public abstract AutoKeyEvent createKeyEvent(
-            AutoKeyState keyState, AutoKeyCode keyCode);
+    public abstract AutoKeyEvent createKeyEvent(AutoKeyState keyState, 
+            AutoKeyCode keyCode) 
+        throws IllegalArgumentException;
 
-    public abstract AutoKeyEvent createKeyEvent(
-            AutoKeyState keyState, char keyChar);
+    public abstract AutoKeyEvent createKeyEvent(AutoKeyState keyState, 
+            char keyChar) 
+        throws IllegalArgumentException;
 
     public abstract AutoPenEvent createPenEvent(
             AutoPenState penState, int x, int y);

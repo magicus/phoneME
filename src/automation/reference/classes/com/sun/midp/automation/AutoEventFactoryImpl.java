@@ -61,6 +61,10 @@ final class AutoEventFactoryImpl extends AutoEventFactory {
             Integer newOffset) 
         throws IllegalArgumentException {
 
+        if (str == null) {
+            throw new IllegalArgumentException("Event string is null");
+        }
+
         AutoEvent event = null;
 
         int size = eventCreators.size();
@@ -83,19 +87,19 @@ final class AutoEventFactoryImpl extends AutoEventFactory {
     }
 
     public AutoKeyEvent createKeyEvent(AutoKeyState keyState, 
-            AutoKeyCode keyCode) {
+            AutoKeyCode keyCode) 
+        throws IllegalArgumentException {
 
         return new AutoKeyEventImpl(keyState, keyCode);
     }
 
     public AutoKeyEvent createKeyEvent(AutoKeyState keyState, 
-            char keyChar) {
+            char keyChar) throws IllegalArgumentException {
 
         return new AutoKeyEventImpl(keyState, keyChar);
     }
 
     public AutoPenEvent createPenEvent(AutoPenState penState, int x, int y) {
-
         return null;
     }
     
@@ -107,9 +111,20 @@ final class AutoEventFactoryImpl extends AutoEventFactory {
             Integer newOffset) throws IllegalArgumentException;
     }
 
-    private Vector eventCreators = new Vector();
+    private Vector eventCreators = null; 
 
-    void registerEventFromStringCreator(EventFromStringCreator creator) {
+    void registerEventFromStringCreator(EventFromStringCreator creator) 
+        throws IllegalArgumentException {
+    
+        if (creator == null) {
+            throw new IllegalArgumentException(
+                    "EventFromStringCreator is null");
+        }
+
+        if (eventCreators == null) {
+            eventCreators = new Vector();
+        }
+
         eventCreators.addElement(creator);
     }
 

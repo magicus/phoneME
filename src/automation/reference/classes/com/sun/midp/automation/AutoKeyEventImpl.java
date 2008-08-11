@@ -36,6 +36,11 @@ final class AutoKeyEventImpl
         super(AutoEventType.KEYBOARD, 
                 createNativeEvent(keyState, keyCode, ' '));
 
+        if (keyState == null || keyCode == null) {
+            throw new IllegalArgumentException(
+                    "Key code or key state is null");
+        }
+
         this.keyState = keyState;
         this.keyCode = keyCode;
     }
@@ -43,6 +48,11 @@ final class AutoKeyEventImpl
     AutoKeyEventImpl(AutoKeyState keyState, char keyChar) {
         super(AutoEventType.KEYBOARD, 
                 createNativeEvent(keyState, null, keyChar));
+
+        if (keyState == null) {
+            throw new IllegalArgumentException(
+                    "Key state is null");
+        }
 
         this.keyState = keyState;
         this.keyChar = keyChar;

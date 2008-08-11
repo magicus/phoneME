@@ -36,6 +36,7 @@
 #include <keymap_input.h>
 #include <pcsl_string.h>
 #include <midp_logging.h>
+#include <midp_foreground_id.h>
 
 #include <string.h>
 
@@ -64,7 +65,9 @@ static struct KeyCodeNameToMIDPKeyCode {
 KNIEXPORT KNI_RETURNTYPE_INT
 KNIDECL(com_sun_midp_automation_AutoKeyEventImpl_getMIDPKeyCodeFromName) {
     int i;
-    int sz;
+    int sz = sizeof(keyCodeNameToMIDPKeyCode)/
+        sizeof(struct KeyCodeNameToMIDPKeyCode);
+
     int midpKeyCode = KEYMAP_KEY_INVALID;
     const char* keyCodeName;
 
@@ -72,13 +75,10 @@ KNIDECL(com_sun_midp_automation_AutoKeyEventImpl_getMIDPKeyCodeFromName) {
     GET_PARAMETER_AS_PCSL_STRING(1, keyCodeNamePCSL)
 
     keyCodeName = pcsl_string_get_utf8_data(&keyCodeNamePCSL);
-
-    sz = sizeof(keyCodeNameToMIDPKeyCode)/
-        sizeof(struct KeyCodeNameToMIDPKeyCode);
-
+ 
     for (i = 0; i < sz; ++i) {
-        const char* n = keyCodeNameToMIDPKeyCode[i].name;
-        if (strcmp(keyCodeName, n) == 0) {
+        const char* name = keyCodeNameToMIDPKeyCode[i].name;
+        if (strcmp(keyCodeName, name) == 0) {
             midpKeyCode = keyCodeNameToMIDPKeyCode[i].midpKeyCode;
             break;
         }
@@ -96,3 +96,20 @@ KNIDECL(com_sun_midp_automation_AutoKeyEventImpl_getMIDPKeyCodeFromName) {
     KNI_ReturnInt(midpKeyCode);
 }
 
+
+KNIEXPORT KNI_RETURNTYPE_VOID
+KNIDECL(com_sun_midp_automation_AutoJavaMEImpl_getForegroundIsolateAndDisplay) {
+
+    KNI_StartHandles(1);
+    KNI_DeclareHandle(foregroundIsolateAndDisplay);
+    KNI_GetParameterAsObject(1, foregroundIsolateAndDisplay);
+
+    KNI_SetIntArrayElement(foregroundIsolateAndDisplay, 
+            0, gForegroundIsolateId);
+
+    KNI_SetIntArrayElement(foregroundIsolateAndDisplay, 
+            1, gForegroundDisplayId);
+    
+    KNI_EndHandles();
+    KNI_ReturnVoid();    
+}

@@ -30,24 +30,27 @@ import com.sun.midp.events.*;
 
 final class AutoJavaMEImpl extends AutoJavaME {
     private static AutoJavaMEImpl instance = null;
-    private final static Object sync = new Object();
+    private final static Object lock = new Object();
 
+    private EventQueue eventQueue;
     private AutoEventFactoryImpl eventFactory;
     private int[] foregroundIsolateAndDisplay;
     
-    private AutoJavaMEImpl() {
-        eventFactory = AutoEventFactoryImpl.getInstanceImpl();
-        foregroundIsolateAndDisplay = new int[2];
+    private AutoJavaMEImpl(EventQueue eventQueue) {
+        this.eventQueue = eventQueue;
+        this.eventFactory = AutoEventFactoryImpl.getInstanceImpl();
+        this.foregroundIsolateAndDisplay = new int[2];
     }
 
     final static AutoJavaME getInstanceImpl() 
         throws IllegalStateException {
 
-        synchronized (sync) {
+        synchronized (lock) {
             AutomationInitializer.guaranteeAutomationInitialized();
 
             if (instance == null) {
-                instance = new AutoJavaMEImpl();
+                instance = new AutoJavaMEImpl(
+                        AutomationInitializer.getEventQueue());
             }
         }
         
@@ -71,6 +74,10 @@ final class AutoJavaMEImpl extends AutoJavaME {
     public void injectEvent(AutoEvent event) 
         throws IllegalArgumentException {
 
+        if (event == null) {
+            throw new IllegalArgumentException("Event is null");
+        }
+
         AutoEventImplBase eventBase = (AutoEventImplBase)event;
         NativeEvent nativeEvent = eventBase.toNativeEvent();
         if (nativeEvent == null) {
@@ -78,6 +85,13 @@ final class AutoJavaMEImpl extends AutoJavaME {
                     "Can't inject this type of event: " + 
                     eventBase.getType().getName());
         }
+
+        getForegroundIsolateAndDisplay(foregroundIsolateAndDisplay);
+        int forgeroundIsolateId = foregroundIsolateAndDisplay[0];
+        int forgeroundDisplayId = foregroundIsolateAndDisplay[1];
+
+        nativeEvent.intParam4 = forgeroundDisplayId;
+        eventQueue.sendNativeEventToIsolate(nativeEvent,forgeroundIsolateId);
     }
     
     public void injectKeyEvent(AutoKeyState keyState, AutoKeyCode keyCode) {
@@ -97,4 +111,6 @@ final class AutoJavaMEImpl extends AutoJavaME {
         replayEvents(events, 1);
     }
 
+    private static native void getForegroundIsolateAndDisplay(
+            int[] foregroundIsolateAndDisplay);
 }
