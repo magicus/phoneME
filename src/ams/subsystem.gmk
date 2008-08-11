@@ -50,7 +50,7 @@ MIDP_JAVADOC_ALL += \
     -group "AMS Libraries" \
     $(shell echo $(SUBSYSTEM_AMS_PACKAGES) | tr ' ' $(PATHSEP))
 
-ifeq ($(USE_NATIVE_AMS), true)
+ifeq ($(USE_NATIVE_APP_MANAGER), true)
 SUBSYSTEM_AMS_MODULES = nams
 else
 SUBSYSTEM_AMS_MODULES = jams
@@ -85,11 +85,13 @@ else
 include $(SUBSYSTEM_AMS_DIR)/on_device_debug_stubs/lib.gmk
 endif
 
-ifeq ($(USE_NATIVE_AMS), false)
+ifeq ($(USE_NATIVE_APP_MANAGER), false)
     include $(SUBSYSTEM_AMS_DIR)/appmanager_ui_resources/lib.gmk
     include $(SUBSYSTEM_AMS_DIR)/appmanager_ui/lib.gmk
 else    
 ifeq ($(TARGET_PLATFORM), javacall)
+    # IMPL_NOTE: now nams_javacall implements all javanotify_ams_* methods
+    #            despite USE_NATIVE_[INSTALLER|SUITE_STORAGE|RMS] settings
     include $(SUBSYSTEM_AMS_DIR)/nams_javacall/lib.gmk
 endif    
 endif

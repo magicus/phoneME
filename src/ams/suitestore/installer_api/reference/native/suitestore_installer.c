@@ -82,15 +82,9 @@ static MIDPError write_install_info(char** ppszError, SuiteIdType suiteId,
 
 /**
  * Returns a unique identifier of MIDlet suite.
- * Constructed from the combination
- * of the values of the <code>MIDlet-Name</code> and
- * <code>MIDlet-Vendor</code> attributes.
  *
- * @param vendor name of the vendor that created the application, as
- *          given in a JAD file
- * @param name name of the suite, as given in a JAD file
  * @param pSuiteId [out] receives the platform-specific storage name of the
- *          application given by vendorName and appName
+ *                       application given by vendorName and appName
  *
  * @return ALL_OK if success, else an error code
  */

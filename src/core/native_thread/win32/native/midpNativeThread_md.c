@@ -44,7 +44,7 @@
 #include <midp_constants_data.h>
 #include <midpNativeThread.h>
 
-#if ENABLE_NATIVE_AMS && ENABLE_I3_TEST
+#if ENABLE_NATIVE_APP_MANAGER && ENABLE_I3_TEST
 
 /**
  * starts another native thread.
