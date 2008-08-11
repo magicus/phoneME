@@ -1136,6 +1136,18 @@ else
 # filter data.
 CVM_JCC_APILISTER_OPTIONS	+= -listapi:minput=$(CVM_MIDPFILTERCONFIGINPUT)
 endif
+
+# MIDP package checker class
+MIDP_PKG_CHECKER = MIDPPkgChecker.java
+
+CLASSLIB_CLASSES += \
+	sun.misc.MIDPPkgChecker
+
+# The rom.config file used to generate the MIDPPkgChecker class
+ROMGEN_INCLUDE_PATHS += \
+	$(CDC_DIR)/build/share
+ROMGEN_CFG_FILES += rom.config \
+	cdc_rom.cfg
 endif
 
 #

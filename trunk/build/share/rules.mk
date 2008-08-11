@@ -1018,6 +1018,18 @@ ifeq ($(CVM_MIDPFILTERINPUT),)
 else
 	@echo "generating dual-stack member filter ..."
 endif
+
+###########################################################
+# Generate MIDP_PKG_CHECKER using the RomConfProcessor tool
+###########################################################
+$(CVM_DERIVEDROOT)/classes/sun/misc/$(MIDP_PKG_CHECKER):
+	@echo "... $@"
+	$(AT)$(JAVAC_CMD) -d $(CVM_MISC_TOOLS_CLASSPATH) \
+		$(CVM_MISC_TOOLS_SRCDIR)/RomConfProcessor/RomConfProcessor.java
+	$(AT)$(CVM_JAVA) -classpath $(CVM_MISC_TOOLS_CLASSPATH) \
+		RomConfProcessor -dirs $(ROMGEN_INCLUDE_PATHS) \
+		-romfiles $(ROMGEN_CFG_FILES)
+	$(AT)mv $(MIDP_PKG_CHECKER) $(CVM_DERIVEDROOT)/classes/sun/misc/
 endif
 
 ifeq ($(CVM_CREATE_RTJAR), true)
