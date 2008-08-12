@@ -159,7 +159,7 @@ int pcsl_esc_digit2num(unsigned int c) {
         { int i;
           for(i=0;PCSL_ESC_MOREDIGITS[i];i++)
           {
-            if (PCSL_ESC_MOREDIGITS[i]==c) { res = at+i; break /*for*/; }
+            if ((unsigned)PCSL_ESC_MOREDIGITS[i]==c) { res = at+i; break /*for*/; }
           }
         }
     } while(0);
@@ -462,7 +462,8 @@ void pcsl_esc_extract_attached(const int offset, const pcsl_string *src, pcsl_st
         case PCSL_ESC_TOGGLE:
         case PCSL_ESC_FULL_CODES:
 	  {
-            int tuple, nbytes = 0, utf16, utf16_incomplete = 0;
+            unsigned int tuple;
+            int nbytes = 0, utf16, utf16_incomplete = 0;
             int cmd = c;
             ++p;
             do {
