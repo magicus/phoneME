@@ -807,8 +807,8 @@ public abstract class Parser
 					bkch();
 					setch(']');
 					//		Set the DTD internal subset
-					Input inp  = new Input(
-						(psid.chars != null)? psid.chars: new char[0]);
+					char[] chars = (psid.chars != null)? psid.chars: new char[0];
+					Input  inp   = new Input(chars);
 					inp.pubid  = mInp.pubid;
 					inp.sysid  = mInp.sysid;
 					inp.xmlenc = mInp.xmlenc;
@@ -1047,26 +1047,271 @@ public abstract class Parser
 	private void dtdelm()
 		throws Exception
 	{
-		//		This is stub implementation which skips an element 
-		//		declaration.
-		wsskip();
-		name(mIsNSAware);
+		for (short st = 0; st >= 0;) {
+			switch (st) {
+			case 0:  // read element name
+				if (wsskip() != '%') {
+					mBuffIdx = -1;
+					bname(mIsNSAware);  // element name
+					st = 1;  // read element content definition
+				} else {
+					getch();
+					pent(' ');
+				}
+				break;
 
-		char ch;
-		while (true) {
-			ch = getch();
-			switch (ch) {
-			case '>':
-				bkch();
-				return;
+			case 1:  // read element content definition
+				switch (wsskip()) {
+				case 'E': 
+				case 'A':
+					mBuffIdx = -1;
+					bntok();  // EMPTY or ANY
+					switch (bkeyword()) {
+					case 'E':  // EMPTY
+					case 'Y':  // ANY
+						st = 2;  // read optional white space followed by '>'
+						break;
 
-			case EOS:
-				panic(FAULT);
+					default:
+						panic(FAULT);
+					}
+					break;
+
+				case '(':
+					dtdelm_cont(true);
+					st = 2;  // read optional white space followed by '>'
+					break;
+
+				case '%':
+					getch();
+					pent(' ');
+					break;
+
+				default:
+					panic(FAULT);
+				}
+				break;
+
+			case 2:  // read optional white space followed by '>'
+				switch(wsskip()) {
+				case '>':
+					st = -1;  // exit
+					break;
+
+				case '%':
+					getch();
+					pent(' ');
+					break;
+
+				default:
+					panic(FAULT);
+				}
+				break;
 
 			default:
-				break;
+				panic(FAULT);
 			}
 		}
+	}
+
+	/**
+	 * Parses an element content particle.
+	 *
+	 * @exception Exception is parser specific exception form panic method.
+	 * @exception IOException 
+	 */
+	private void dtdelm_cont(boolean mix)
+		throws Exception
+	{
+		char type = 0;
+		char ch;
+		for (short st = 0; st >= 0;) {
+			if ((ch = getch()) == '%') {
+				pent(' ');
+				wsskip();
+				continue;
+			}
+			switch (st) {
+			case 0:  // an element name or a choice/sequence/mixed
+				switch (ch) {
+				case '(':
+					wsskip();
+					st = 1;  // the first element of content particle
+					break;
+
+				default:
+					if (mix == true)
+						panic(FAULT);
+					bkch();
+					mBuffIdx = -1;
+					bname(mIsNSAware);  // element name
+					st = -1;  // exit
+					break;
+				}
+				break;
+
+			case 1:  // the first element of content particle
+				switch (ch) {
+				case '#':
+					if (mix == false)
+						panic(FAULT);
+					bkch();
+					dtdelm_mix();  // mixed content declaration
+					return;
+
+				default:
+					bkch();
+					dtdelm_cont(false);
+					st = 2;  // type of content particle
+					break;
+				}
+				break;
+
+			case 2:  // type of content particle
+				switch (ch) {
+				case '|':  // it is a choice
+					type = '|';
+					bkch();
+					st = 3;  // read a choice or a sequence
+					break;
+
+				case ',':  // it is a sequence
+					type = ',';
+					bkch();
+					st = 3;  // read a choice or a sequence
+					break;
+
+				case ')':  // it is one element sequence
+					st = -1;  // exit
+					break;
+
+				default:
+					panic(FAULT);
+				}
+				break;
+
+			case 3:  // read a choice or a sequence
+				switch (ch) {
+				case '|':  // it is a choice
+					if (type != '|')
+						panic(FAULT);
+					wsskip();
+					dtdelm_cont(false);
+					break;
+
+				case ',':  // it is a sequence
+					if (type != ',')
+						panic(FAULT);
+					wsskip();
+					dtdelm_cont(false);
+					break;
+
+				case ')':  // it is the end of a sequence or a choice
+					st = -1;  // exit
+					break;
+
+				default:
+					panic(FAULT);
+				}
+				break;
+
+			default:
+				panic(FAULT);
+			}
+		}
+		switch (getch()) {
+		case '?':
+		case '+':
+		case '*':
+			break;
+
+		default:
+			bkch();
+		}
+		wsskip();
+	}
+
+	/**
+	 * Parses an element mixed content declaration.
+	 *
+	 * @exception Exception is parser specific exception form panic method.
+	 * @exception IOException 
+	 */
+	private void dtdelm_mix()
+		throws Exception
+	{
+		//		String '(' S? had been read by dtdelm_cont
+		if ((getch() != '#') || ("PCDATA".equals(name(false)) != true))
+			panic(FAULT);
+
+		for (short st = 0; st >= 0;) {
+			switch (st) {
+			case 0:  // read pcdata element content
+				switch (wsskip()) {
+				case '|':
+					st = 1;  // read mixed element content
+					break;
+
+				case ')':
+					getch();
+					if (getch() != '*')
+						bkch();
+					st = -1;  // exit
+					break;
+
+				case '%':
+					getch();
+					pent(' ');
+					break;
+
+				default:
+					panic(FAULT);
+				}
+				break;
+
+			case 1:  // read mixed element content
+				//		String (S? '|' S? name)* S? ')*'
+				switch (getch()) {
+				case '|':
+					wsskip();
+					st = 2;  // read name in the mixed element content
+					break;
+	
+				case ')':
+					if (getch() != '*')
+						panic(FAULT);
+					st = -1;  // exit
+					break;
+
+				case '%':
+					pent(' ');
+					break;
+	
+				default:
+					panic(FAULT);
+				}
+				break;
+
+			case 2:  // read name in the mixed element content
+				switch (getch()) {
+				case '%':
+					pent(' ');
+					break;
+	
+				default:
+					mBuffIdx = -1;
+					bname(mIsNSAware);  // element name
+					wsskip();
+					st = 1;  // read mixed element content
+					break;
+				}
+				break;
+
+			default:
+					panic(FAULT);
+			}
+		}
+		wsskip();
 	}
 
 	/**
@@ -1215,7 +1460,6 @@ public abstract class Parser
 
 				default:
 					panic(FAULT);
-					break;
 				}
 				break;
 
@@ -1239,7 +1483,7 @@ public abstract class Parser
 					att.id = bkeyword();
 					switch (att.id) {
 					case 'o':   // NOTATION
-						if (wsskip() != '(')
+						if (chtyp(getch()) != ' ' && wsskip() != '(')
 							panic(FAULT);
 						ch = getch();
 						st = 2;  // read the first element of the list
@@ -1259,7 +1503,6 @@ public abstract class Parser
 
 					default:
 						panic(FAULT);
-						break;
 					}
 					break;
 				}
@@ -1349,19 +1592,8 @@ public abstract class Parser
 					bntok();
 					switch (bkeyword()) {
 					case 'F':  // FIXED
-						switch (wsskip()) {
-						case '\"':
-						case '\'':
-							st = 5;  // read the default value
-							break;
-
-						case EOS:
-							panic(FAULT);
-
-						default:
-							st = -1;
-							break;
-						}
+						wsskip();
+						st = 5;  // read the default value
 						break;
 
 					case 'Q':  // REQUIRED
@@ -1392,9 +1624,7 @@ public abstract class Parser
 					break;
 
 				default:
-					bkch();
-					st = -1;
-					break;
+					panic(FAULT);
 				}
 				break;
 
@@ -1631,7 +1861,8 @@ public abstract class Parser
 			//		Add current attribute to the list
 			attr.next = list;
 			list      = attr;
-			anum++;  // number of attributes
+			if (withns == false || attr.list == null)
+				anum++;  // number of attributes
 		}
 		mElm.list = list;  // mElm.list is complete list of element's attributes
 		mElm.num  = anum;  // actual number of attributes
@@ -2290,7 +2521,6 @@ public abstract class Parser
 	private void pent(char flag)
 		throws Exception
 	{
-		char   ch;
 		int    idx = mBuffIdx + 1;
 		Input  inp = null;
 		String str = null;
@@ -2615,6 +2845,8 @@ public abstract class Parser
 
 			default:
 				bkch();
+				if (mBuffIdx == 0) // zero length nmtoken
+					panic(FAULT);
 				return;
 			}
 		}
@@ -2639,6 +2871,8 @@ public abstract class Parser
 	 *  REQUIRED - Q
 	 *  IMPLIED  - I
 	 *  FIXED    - F
+	 *  EMPTY    - E
+	 *  ANY      - Y
 	 *
 	 * @return an id of a keyword or '?'.
 	 * @exception Exception is parser specific exception form panic method.
@@ -2652,7 +2886,10 @@ public abstract class Parser
 		case 2:  // ID
 			return ("ID".equals(str) == true)? 'i': '?';
 
-		case 5:  // IDREF, CDATA, FIXED
+		case 3:  // ANY
+			return ("ANY".equals(str) == true)? 'Y': '?';
+
+		case 5:  // IDREF, CDATA, FIXED, EMPTY
 			switch (mBuff[1]) {
 			case 'I':
 				return ("IDREF".equals(str) == true)? 'r': '?';
@@ -2660,6 +2897,8 @@ public abstract class Parser
 				return ("CDATA".equals(str) == true)? 'c': '?';
 			case 'F':
 				return ("FIXED".equals(str) == true)? 'F': '?';
+			case 'E':
+				return ("EMPTY".equals(str) == true)? 'E': '?';
 			default:
 				break;
 			}
