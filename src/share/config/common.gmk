@@ -39,14 +39,17 @@
 #
 SUBSYSTEMS += jsr280
 
+# Defines where implementation of org.w3c.dom, org.w3c.dom.events, 
+# org.w3c.dom.views packages and javax.xml.parsers.DocumentBuilder.java,
+# javax.xml.parsers.DocumentBuilderFactory.java classes is located
+# DOM_IMPL_SOURCE={jsr280|jsr290}
+DOM_IMPL_SOURCE ?= jsr280
+
 # Javadoc source path
 
 SUBSYSTEM_JSR280_SOURCEPATH += $(JSR_280_DIR)/src/share/classes
 
 SUBSYSTEM_JSR280_PACKAGES += \
-    com.sun.ukit.dom \
-    com.sun.ukit.io \
-    com.sun.ukit.xml \
     javax.xml \
     javax.xml.parsers \
     javax.xml.stream \
@@ -57,6 +60,12 @@ SUBSYSTEM_JSR280_PACKAGES += \
     org.w3c.dom.events \
     org.w3c.dom.views
 
+ifeq ($(DOM_IMPL_SOURCE), jsr280)
+SUBSYSTEM_JSR280_PACKAGES += \
+    com.sun.ukit.dom \
+    com.sun.ukit.io \
+    com.sun.ukit.xml
+endif
 
 # Java files for the ( jsr280 ) module
 #
@@ -123,12 +132,16 @@ JSR_280_API_DOM_CORE_JAVA_FILES = \
 JSR_280_JAXP_DIR = $(JSR_280_OI_DIR)/javax/xml/parsers
 
 JSR_280_API_JAXP_JAVA_FILES = \
-    $(JSR_280_JAXP_DIR)/DocumentBuilder.java \
-    $(JSR_280_JAXP_DIR)/DocumentBuilderFactory.java \
     $(JSR_280_JAXP_DIR)/SAXParser.java \
     $(JSR_280_JAXP_DIR)/SAXParserFactory.java \
     $(JSR_280_JAXP_DIR)/ParserConfigurationException.java \
     $(JSR_280_JAXP_DIR)/FactoryConfigurationError.java
+
+ifeq ($(DOM_IMPL_SOURCE), jsr280)
+JSR_280_API_JAXP_JAVA_FILES += \
+    $(JSR_280_JAXP_DIR)/DocumentBuilder.java \
+    $(JSR_280_JAXP_DIR)/DocumentBuilderFactory.java
+endif
 
 JSR_280_API_CORE_JAVA_FILES = \
     $(JSR_280_API_SAX_JAVA_FILES)  \
@@ -160,6 +173,7 @@ JSR_280_XML_JAVA_FILES = \
 JSR_280_XML_JAVA_FILES += \
     $(JSR_280_API_CORE_JAVA_FILES)
 
+ifeq ($(DOM_IMPL_SOURCE), jsr280)
 JSR_280_DOM_JAVA_DIR = $(JSR_280_OI_DIR)/com/sun/ukit/dom
 
 JSR_280_DOM_JAVA_FILES = \
@@ -216,7 +230,10 @@ JSR_280_DOM_JAVA_FILES += \
     $(JSR_280_DOM_EVENT_JAVA_DIR)/TxtEvtImp.java \
     $(JSR_280_DOM_EVENT_JAVA_DIR)/MutEvtImp.java \
     $(JSR_280_DOM_EVENT_JAVA_DIR)/ProgressEvtImp.java
+endif
+endif
 
+ifeq ($(USE_DOM_EVENT), true)
 JSR_280_DOM_EVENT_DIR = $(JSR_280_DOM_DIR)/events
 JSR_280_DOM_VIEW_DIR = $(JSR_280_DOM_DIR)/views
 
