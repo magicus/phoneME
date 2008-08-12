@@ -98,9 +98,8 @@ class ContentReader {
      */
     String findType() throws IOException, SecurityException {
         String type = null;
-        ContentConnection conn = (ContentConnection)openPrim(true);
-
-        if (conn != null) {
+        Connection conn = openPrim(true);
+        if (conn instanceof ContentConnection) {
         	if( conn instanceof HttpConnection ){
         		HttpConnection hc = (HttpConnection)conn;
 	            hc.setRequestMethod(HttpConnection.HEAD);
@@ -110,7 +109,7 @@ class ContentReader {
 	            	return null;
         	}
         	
-            type = conn.getType();
+            type = ((ContentConnection)conn).getType();
             conn.close();
 
             if (type != null) {

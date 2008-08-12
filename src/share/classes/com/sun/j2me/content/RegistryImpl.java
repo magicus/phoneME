@@ -1036,12 +1036,13 @@ public final class RegistryImpl implements Counter {
                 			ContentHandlerImpl.Handle.FIELD_TYPES, invoc.getType(), 
                 			output );
                 } else if (invoc.getURL() != null) {
-                	String suffix = 
-                			invoc.getURL().substring(
-                				invoc.getURL().lastIndexOf('.') + 1); /* WRONG CODE */
-                	RegistryStore.enumHandlers( getID(), 
-                			ContentHandlerImpl.Handle.FIELD_SUFFIXES, suffix, 
-                			output );
+                	int lpIdx = invoc.getURL().lastIndexOf('.');
+                	if( lpIdx != -1 ){
+	                	String suffix = invoc.getURL().substring(lpIdx);
+	                	RegistryStore.enumHandlers( getID(), 
+	                			ContentHandlerImpl.Handle.FIELD_SUFFIXES, suffix, 
+	                			output );
+                	}
                 } else if (invoc.getAction() != null) {
                 	RegistryStore.enumHandlers( getID(), 
                 			ContentHandlerImpl.Handle.FIELD_ACTIONS, invoc.getAction(), 
