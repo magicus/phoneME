@@ -243,6 +243,6 @@ int lfjport_get_display_capabilities(int hardwareId) {
 /**
  * Get the list of display device ids
  */
-jint* lfport_get_display_device_ids(jint* n) {
+jint* lfjport_get_display_device_ids(jint* n) {
     return jcapp_get_display_device_ids(n);
 }
