@@ -26,7 +26,6 @@
 
 package com.sun.midp.installer;
 
-import com.sun.midp.installer.InstallerResource;
 import java.io.*;
 import javax.microedition.io.*;
 
@@ -53,6 +52,7 @@ import com.sun.midp.midletsuite.*;
 
 import com.sun.midp.content.CHManager;
 
+import com.sun.midp.io.FileUrl;
 import com.sun.midp.log.Logging;
 import com.sun.midp.log.LogChannels;
 import com.sun.midp.io.j2me.storage.File;
