@@ -462,7 +462,8 @@ void pcsl_esc_extract_attached(const int offset, const pcsl_string *src, pcsl_st
         case PCSL_ESC_TOGGLE:
         case PCSL_ESC_FULL_CODES:
 	  {
-            int tuple, nbytes = 0, utf16, utf16_incomplete = 0;
+  			unsigned int tuple;
+            int nbytes = 0, utf16, utf16_incomplete = 0;
             int cmd = c;
             ++p;
             do {
