@@ -99,7 +99,7 @@ static CALLOUTPTR calloutFunction[] = {
 <xsl:template name="outputCalloutFunctions">
 <!-- template parameter: properties with Callout attribute -->
 <xsl:param name="nodes"/>
-<xsl:for-each select="$nodes">
+<xsl:for-each select="$nodes[@Key]">
 <xsl:sort select="@Key"/>
 <xsl:text>    </xsl:text>
 <xsl:value-of select="@Callout"/>
@@ -111,7 +111,7 @@ static CALLOUTPTR calloutFunction[] = {
 <!-- output properties keys, one key per line, separated by comma -->
 <xsl:template name="outputKeys">
 <xsl:param name="nodes"/>
-<xsl:for-each select="$nodes">
+<xsl:for-each select="$nodes[@Key]">
 <xsl:sort select="@Key"/>
 <xsl:text>    </xsl:text>
 <xsl:text>"</xsl:text><xsl:value-of select="@Key"/><xsl:text>"</xsl:text>

@@ -160,7 +160,7 @@ char** </xsl:text>
 <!-- output properties keys, one key per line, separated by comma -->
 <xsl:template name="outputKeys">
 <xsl:param name="nodes"/>
-<xsl:for-each select="$nodes">
+<xsl:for-each select="$nodes[@Key]">
 <xsl:sort select="@Key"/>
 <xsl:text>    </xsl:text>
 <xsl:text>"</xsl:text><xsl:value-of select="@Key"/><xsl:text>"</xsl:text>
@@ -172,7 +172,7 @@ char** </xsl:text>
 <!-- output properties values, one value per line, separated by comma -->
 <xsl:template name="outputValues">
 <xsl:param name="nodes"/>
-<xsl:for-each select="$nodes">
+<xsl:for-each select="$nodes[@Key]">
 <xsl:sort select="@Key"/>
 <xsl:text>    </xsl:text>
 <xsl:choose>
