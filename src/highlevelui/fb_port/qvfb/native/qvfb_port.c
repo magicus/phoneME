@@ -96,6 +96,9 @@ void initScreenList(int num) {
   if (system_screens != NULL) {
     memset(system_screens, 0, size);
   } 
+
+  printf("init system screen system_screens[0].hardwareId = %d fs=%d ro = %d\n", system_screens[0].hardwareId,  system_screens[0].isFullScreen, system_screens[0].reverse_orientation );
+  printf("init system screen system_screens[1].hardwareId = %d fs=%d ro = %d\n", system_screens[1].hardwareId,  system_screens[1].isFullScreen, system_screens[1].reverse_orientation );
 }
 
 SystemScreen* getScreenById(int hardwareId) {
@@ -109,27 +112,40 @@ SystemScreen* getScreenById(int hardwareId) {
 
 void initBuffer(int width, int height, gxj_screen_buffer* buffer) {
   int size = sizeof(gxj_pixel_type) * width * height;
+  printf("initBuffer\n");
   buffer->width = width;
   buffer->height = height;
   buffer->alphaData = NULL;
   buffer->pixelData =
     (gxj_pixel_type *)midpMalloc(size);
+  printf("initBuffer malloc\n");
   if (buffer->pixelData != NULL) {
     memset(buffer->pixelData, 0, size);
   } 
+  printf("initBuffer memset\n");
 }
                       
 
 /** Allocate and init system screen */
 void initSystemScreen(int id, int isFullScreen, int reverse_orientation, int width, int height) {
   SystemScreen *screen = getScreenById(id);
+  if (screen == NULL) {
+    return;
+  }
+  printf("init system screen id = %d fs=%d ro = %d width = %d height=%d\n", screen->hardwareId,  screen->isFullScreen, screen->reverse_orientation, width, height );
+
   screen->hardwareId = id;
   screen->isFullScreen = isFullScreen;
   screen->reverse_orientation = reverse_orientation;
       
   initBuffer(width, height, &(screen->buffer)); 
-
-  printf("system screen: harwareId= %d isFullScreen = %d reverse_orientation = %d width = %d height = %d", screen->hardwareId,screen->isFullScreen,screen->reverse_orientation,width,height);
+  
+  printf("after initBuffer /n");
+  printf("system screen: harwareId= %d", screen->hardwareId);
+  
+  printf("isFullScreen = %d", screen->isFullScreen);
+  printf("reverse_orientation = %d ", screen->reverse_orientation);
+  printf("width = %d height = %d", width,height);
   if (id ==0) {
     gxj_system_screen_buffer = screen->buffer;
   }
@@ -153,6 +169,9 @@ void clearScreenList() {
 jboolean setFullScreenMode(int id, int mode, int width, int height) {
     SystemScreen *screen = getScreenById(id);
     int updated = 0;
+    if (screen = NULL) {
+      return FALSE;
+    }
     if (screen->isFullScreen != mode) {
       gxj_screen_buffer buff = screen->buffer;
       screen->isFullScreen = mode;
@@ -204,6 +223,10 @@ jboolean isFullScreenMode(int id) {
 jboolean reverseScreenOrientation(int id) {
     int height;
     SystemScreen *screen = getScreenById(id);
+    if (screen != NULL) {
+      return FALSE;
+    }
+
     screen->reverse_orientation = !screen->reverse_orientation;
 
     
@@ -231,6 +254,7 @@ void connectFrameBuffer(int width, int height) {
     unsigned char *shmrgn;
     char *env;
 
+    
     // System screen buffer geometry
     int bufWidth = width;;
     int bufHeight = height;

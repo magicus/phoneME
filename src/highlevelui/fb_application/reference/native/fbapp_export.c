@@ -113,7 +113,9 @@ void fbapp_init() {
     for (i = 0; i < num_of_screens; i++) {
       printf("next screen: %d", i);
       initSystemScreen(ids[i], 0, 0, fbapp_get_screen_width(ids[i]),
-      fbapp_get_screen_height(ids[i]));
+		       fbapp_get_screen_height(ids[i]));
+      printf("next screen after init: %d", i);
+
     }
     connectFrameBuffer(fbapp_get_screen_width(0), fbapp_get_screen_height(0));
 }
