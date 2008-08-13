@@ -93,6 +93,11 @@ ifeq ($(TARGET_PLATFORM), javacall)
     # IMPL_NOTE: now nams_javacall implements all javanotify_ams_* methods
     #            despite USE_NATIVE_[INSTALLER|SUITE_STORAGE|RMS] settings
     include $(SUBSYSTEM_AMS_DIR)/nams_javacall/lib.gmk
+    
+ifeq ($(USE_NATIVE_SUITE_STORAGE), false)
+    include $(SUBSYSTEM_AMS_DIR)/suitestore_javacall/lib.gmk
+endif
+    
 endif    
 endif
 
