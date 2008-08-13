@@ -33,6 +33,8 @@
 #include <suitestore_task_manager.h>
 
 #include <javautil_unicode.h>
+#include <javacall_memory.h>
+
 #include <suitestore_javacall.h>
 
 static javacall_result midp_error2javacall(MIDPError midpErr);
@@ -60,7 +62,8 @@ java_ams_suite_storage_init() {
  */
 javacall_result
 java_ams_suite_storage_cleanup() {
-    return midp_error2javacall(midp_suite_storage_cleanup());
+    midp_suite_storage_cleanup();
+    return JAVACALL_OK;
 }
 
 /**
@@ -207,7 +210,7 @@ java_ams_suite_get_bin_app_path(javacall_suite_id suiteId,
 javacall_result
 java_ams_suite_get_storage(javacall_suite_id suiteId,
                            javacall_storage_id* pStorageId) {
-    StorageIdType* midpStorageId;
+    StorageIdType midpStorageId;
     MIDPError status = midp_suite_get_suite_storage((SuiteIdType)suiteId,
                                                     &midpStorageId);
     if (status != ALL_OK) {
@@ -237,7 +240,7 @@ java_ams_storage_get_root(javacall_storage_id storageId,
                           javacall_utf16_string* pStorageRootPath) {
     MIDPError status;                          
     const pcsl_string* pRoot = storage_get_root(storageId);
-    if (pRoot == NULL || *pRoot == PCSL_STRING_EMPTY) {
+    if (pRoot == NULL || pRoot == &PCSL_STRING_EMPTY) {
         return JAVACALL_FAIL;
     }
 
@@ -392,7 +395,7 @@ java_ams_suite_get_install_info(javacall_suite_id suiteId,
 //            midpInstallInfo.jarProps.numberOfProperties;
     } while (0);
 
-    midp_free_install_info(&installInfo);
+    midp_free_install_info(&midpInstallInfo);
 
     return midp_error2javacall(status);
 }
@@ -477,8 +480,8 @@ java_ams_suite_store_suite(const javacall_ams_suite_install_info* pInstallInfo,
  *         <tt>JAVACALL_FAIL</tt> otherwise
  */
 javacall_result
-java_ams_suite_get_suites_number(int* pNumbefOfSuites) {
-    return midp_pcsl_str2javacall_str(midp_get_number_of_suites(pNumOfSuites));
+java_ams_suite_get_suites_number(int* pNumberOfSuites) {
+    return midp_error2javacall(midp_get_number_of_suites(pNumberOfSuites));
 }
 
 /**
@@ -815,7 +818,7 @@ java_ams_suite_check_suites_integrity(javacall_bool fullCheck,
  * App Manager invokes this function to get an information about
  * the AMS folders currently defined.
  *
- * @param ppFoldersInfo     [out] on exit will hold an address of the array
+ * @param ppFoldersInfo    [out]  on exit will hold an address of the array
  *                                containing the folders info
  * @param pNumberOfEntries [out] number of entries in the returned array
  *
@@ -847,9 +850,7 @@ java_ams_suite_free_all_folders_info(javacall_ams_folder_info* pFoldersInfo,
     if (pFoldersInfo != NULL) {
         int i;
         for (i = 0; i < numberOfEntries; i++) {
-            if (pFoldersInfo[i] != NULL) {
-                java_ams_suite_free_folder_info(pFoldersInfo[i]);
-            }
+            java_ams_suite_free_folder_info(&pFoldersInfo[i]);
         }
     }
 }
@@ -871,7 +872,7 @@ java_ams_suite_free_all_folders_info(javacall_ams_folder_info* pFoldersInfo,
  */
 javacall_result
 java_ams_suite_get_folder_info(javacall_folder_id folderId,
-                               javacall_folder_info* pFolderInfo) {
+                               javacall_ams_folder_info* pFolderInfo) {
     return JAVACALL_OK;
 }
 
@@ -885,7 +886,7 @@ java_ams_suite_get_folder_info(javacall_folder_id folderId,
  *         <tt>JAVACALL_FAIL</tt> otherwise
  */
 void
-java_ams_suite_free_folder_info(javacall_folder_info* pFolderInfo) {
+java_ams_suite_free_folder_info(javacall_ams_folder_info* pFolderInfo) {
     if (pFolderInfo != NULL) {
         if (pFolderInfo->folderName != NULL) {
             javacall_free(pFolderInfo->folderName);
@@ -1062,7 +1063,7 @@ static javacall_result midp_error2javacall(MIDPError midpErr) {
 MIDPError midp_pcsl_str2javacall_str(const pcsl_string* pSrcStr,
                                      javacall_utf16_string* pDstStr) {
     jsize len = pcsl_string_utf16_length(pSrcStr);
-    const jchar* pBuf = pcsl_string_get_utf16_data(pStr);
+    const jchar* pBuf = pcsl_string_get_utf16_data(pSrcStr);
 
     if (len > 0) {
         len = (len + 1) << 1; /* length in bytes, + 1 for terminating \0\0 */
