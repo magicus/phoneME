@@ -30,7 +30,7 @@
 #include <pcsl_esc_md.h>
 #include <pcsl_string.h>
 
-int pcsl_esc_mapchar(char x, char* from, char* to);
+char pcsl_esc_mapchar(char x, char* from, char* to);
 int pcsl_esc_num2digit(unsigned int n);
 int pcsl_esc_digit2num(unsigned int c);
 pcsl_string_status pcsl_esc_append_encoded_tuple(pcsl_string* str, unsigned int num, unsigned int maxnum);

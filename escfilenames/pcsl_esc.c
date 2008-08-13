@@ -101,7 +101,7 @@
 #error PCSL_ESC_ONLY_IF_CASE_SENSITIVE is not defined!!
 #endif
 
-int pcsl_esc_mapchar(char x, char* from, char* to) {
+char pcsl_esc_mapchar(char x, char* from, char* to) {
     int i;
     for(i=0;from[i];i++) {
 	if(x==from[i]) return to[i];
@@ -308,7 +308,7 @@ void pcsl_esc_attach_buf(const jchar* in, jsize len, pcsl_string* out) {
 	case goes_shifted:
 	    {
 		if(s==shiftMode) {
-		    pcsl_string_append_char(out, PCSL_ESC_CONVERT_CASE((char)c));
+		    pcsl_string_append_char(out, (unsigned char)PCSL_ESC_CONVERT_CASE((char)c));
 		    ++in;
 		} else {
 		    int cc = *++in;
@@ -318,7 +318,7 @@ void pcsl_esc_attach_buf(const jchar* in, jsize len, pcsl_string* out) {
 		    } else {
 			pcsl_string_append_char(out, PCSL_ESC_SHIFT1);
 		    }
-		    pcsl_string_append_char(out, PCSL_ESC_CONVERT_CASE(c));
+		    pcsl_string_append_char(out, (unsigned char)PCSL_ESC_CONVERT_CASE(c));
 		}
 	    }   break;
 	case goes_escaped:
