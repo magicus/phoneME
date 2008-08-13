@@ -214,7 +214,7 @@ typedef struct _javacall_ams_permission_set {
 
 /**
  * A structure containing all information about the installed
- * midlet suites that may require at the strartup time.
+ * midlet suites that may require at the startup time.
  */
 typedef struct _javacall_ams_suite_info {
     /**
@@ -705,7 +705,7 @@ java_ams_suite_get_suites_number(int* pNumbefOfSuites);
  *         <tt>JAVACALL_IO_ERROR</tt> if an IO error
  */
 javacall_result
-java_ams_suite_get_suite_ids(javacall_suite_id** ppSuitesIds,
+java_ams_suite_get_suite_ids(javacall_suite_id** ppSuiteIds,
                              int* pNumberOfSuites);
 
 /**
