@@ -449,12 +449,12 @@ void pcsl_esc_extract_attached(const int offset, const pcsl_string *src, pcsl_st
         case PCSL_ESC_SHIFT_TOGGLE:
             shiftMode ^= 1;
             c=*++p;
-            c = shiftMode ? (unsigned char)PCSL_ESC_UPPER(c) : (unsigned char)PCSL_ESC_LOWER(c);
-            pcsl_string_append_char(dst,c);
+            c = shiftMode ? (unsigned char)PCSL_ESC_UPPER((char)c) : (unsigned char)PCSL_ESC_LOWER((char)c);
+            pcsl_string_append_char(dst,(unsigned char)c);
             break;
         case PCSL_ESC_SHIFT1:
             c=*++p;
-            c = shiftMode ? (unsigned char)PCSL_ESC_LOWER(c) : (unsigned char)PCSL_ESC_UPPER(c);
+            c = shiftMode ? (unsigned char)PCSL_ESC_LOWER((char)c) : (unsigned char)PCSL_ESC_UPPER((char)c);
             pcsl_string_append_char(dst,(unsigned char)c);
             break;
         case PCSL_ESC_PREV_BLOCK:
@@ -508,7 +508,7 @@ void pcsl_esc_extract_attached(const int offset, const pcsl_string *src, pcsl_st
                         cmd = -1;
                     }
                     if (!utf16_incomplete) {
-                        pcsl_string_append_char(dst, utf16);
+                        pcsl_string_append_char(dst, (jchar)utf16);
                     }
                 }
             } while (nbytes != 0 || p < plimit && *p != PCSL_ESC_TOGGLE);
