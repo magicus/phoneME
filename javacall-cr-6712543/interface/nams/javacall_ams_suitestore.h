@@ -689,14 +689,15 @@ javacall_result
 java_ams_suite_get_suites_number(int* pNumbefOfSuites);
 
 /**
- * AppManager invokes this function get the list installed of MIDlet suite IDs.
+ * AppManager invokes this function to get the list of IDs
+ * of the installed MIDlet suites.
  *
  * Note that memory for the suite IDs is allocated by the callee,
  * and the caller is responsible for freeing it using
- * java_ams_free_suite_ids().
+ * java_ams_suite_free_ids().
  *
  * @param ppSuiteIds      [out] on exit will hold an address of the array
-                                containing suite IDs
+ *                              containing suite IDs
  * @param pNumberOfSuites [out] pointer to variable to accept the number
  *                              of suites in the returned array
  *
@@ -952,19 +953,6 @@ java_ams_suite_check_suites_integrity(javacall_bool fullCheck,
 /*------------- Getting Information About AMS Folders ---------------*/
 
 /**
- * App Manager invokes this function to get a number of AMS folders
- * currently defined.
- *
- * @param pNumberOfFolders [out] pointer to a place where the number
- *                               of AMS folders will be stored
- *
- * @return <tt>JAVACALL_OK</tt> on success,
- *         <tt>JAVACALL_FAIL</tt> otherwise
- */
-javacall_result
-java_ams_suite_get_folders_number(int* pNumberOfFolders);
-
-/**
  * App Manager invokes this function to get an information about
  * the AMS folders currently defined.
  *
@@ -976,8 +964,8 @@ java_ams_suite_get_folders_number(int* pNumberOfFolders);
  *         <tt>JAVACALL_FAIL</tt> otherwise
  */
 javacall_result
-java_ams_suite_get_folders_info(javacall_ams_folder_info** ppFoldersInfo,
-                                int* pNumberOfEntries);
+java_ams_suite_get_all_folders_info(javacall_ams_folder_info** ppFoldersInfo,
+                                    int* pNumberOfEntries);
 
 /**
  * App Manager invokes this function to free an array of structures describing
@@ -987,27 +975,60 @@ java_ams_suite_get_folders_info(javacall_ams_folder_info** ppFoldersInfo,
  * @param numberOfEntries number of elements in pFoldersInfo
  */
 void
-java_ams_suite_free_folders_info(javacall_ams_folder_info* pFoldersInfo,
-                                 int numberOfEntries);
+java_ams_suite_free_all_folders_info(javacall_ams_folder_info* pFoldersInfo,
+                                     int numberOfEntries);
 
 /**
- * App Manager invokes this function to get a name of AMS folder
- * with the given ID.
+ * App Manager invokes this function to get an information about
+ * the given AMS folder.
  *
- * Note that memory for the in/out parameter folderName is
- * allocated by the callee. The caller is responsible for
- * freeing it using javacall_free().
+ * Note that memory for the out parameter pFolderInfo and its fields is
+ * allocated by the callee. The caller is responsible for freeing it using
+ * java_ams_suite_free_folder_info().
  *
- * @param suiteId     [in]     unique ID of the MIDlet suite
- * @param pFolderName [in/out] pointer to a place where the name of the folder
- *                             where the suite resides will be saved
+ * @param folderId    [in]  unique ID of the MIDlet suite
+ * @param pFolderInfo [out] on exit will hold a pointer to a structure
+ *                          describing the given folder
  *
  * @return <tt>JAVACALL_OK</tt> on success,
  *         <tt>JAVACALL_FAIL</tt> otherwise
  */
 javacall_result
-java_ams_suite_get_folder_name(javacall_folder_id folderId,
-                               javacall_utf16_string* pFolderName);
+java_ams_suite_get_folder_info(javacall_folder_id folderId,
+                               javacall_folder_info* pFolderInfo);
+
+/**
+ * App Manager invokes this function to free the given structure holding
+ * an information about an AMS folder.
+ *
+ * @param pFolderInfo [in] a pointer to the structure that must be freed
+ *
+ * @return <tt>JAVACALL_OK</tt> on success,
+ *         <tt>JAVACALL_FAIL</tt> otherwise
+ */
+void
+java_ams_suite_free_folder_info(javacall_folder_info* pFolderInfo);
+
+/**
+ * AppManager invokes this function to get the list of IDs
+ * of the installed MIDlet suites.
+ *
+ * Note that memory for the suite IDs is allocated by the callee,
+ * and the caller is responsible for freeing it using
+ * java_ams_suite_free_ids().
+ *
+ * @param ppSuiteIds      [out] on exit will hold an address of the array
+ *                              containing suite IDs
+ * @param pNumberOfSuites [out] pointer to variable to accept the number
+ *                              of suites in the returned array
+ *
+ * @return <tt>JAVACALL_OK</tt> on success,
+ *         <tt>JAVACALL_OUT_OF_MEMORY</tt> if out of memory,
+ *         <tt>JAVACALL_IO_ERROR</tt> if an IO error
+ */
+javacall_result
+java_ams_suite_get_suites_in_folder(javacall_suite_id** ppSuiteIds,
+                                    int* pNumberOfSuites);
 
 /**
  * App Manager invokes this function to get an ID of the AMS folder where
