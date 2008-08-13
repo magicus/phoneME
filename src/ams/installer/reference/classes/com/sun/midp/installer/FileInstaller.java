@@ -58,7 +58,7 @@ public class FileInstaller extends Installer {
      *            of the JAD
      */
     protected byte[] downloadJAD() throws IOException {
-       
+        
         if (info.jadUrl.endsWith(".jar")) {           
             throw new InvalidJadException (
                     InvalidJadException.INVALID_JAD_TYPE,
@@ -66,7 +66,10 @@ public class FileInstaller extends Installer {
         }
         else {           
         RandomAccessStream jadInputStream;
-        ByteArrayOutputStream bos = new ByteArrayOutputStream(CHUNK_SIZE);       
+        ByteArrayOutputStream bos = new ByteArrayOutputStream(CHUNK_SIZE);
+        // Encode jad file path in order to keep of 
+        // IllegalArgumentException
+        info.jadUrl = FileUrl.encodeFilePath(info.jadUrl);
         String jadFilename = getUrlPath(info.jadUrl);
         
         state.beginTransferDataStatus = DOWNLOADING_JAD;
@@ -100,13 +103,13 @@ public class FileInstaller extends Installer {
         int jarSize;
         RandomAccessStream jarInputStream, jarOutputStream;
         // get the path from URI, but first encode it
-        info.encodedJarUrl = FileUrl.encodeFilePath(info.jarUrl);
-        String jarFilename = getUrlPath(info.encodedJarUrl);
+        info.jarUrl = FileUrl.encodeFilePath(info.jarUrl);
+        String jarFilename = getUrlPath(info.jarUrl);
                
         // If jad attribute 'Midlet-Jar-Url' begins with schema 'file:///',
         // than get jar path from this jad attribute,
         // else searching jar file in same directory as a jad file.
-        if (!info.jarUrl.startsWith(InstallerResource.DEFAULT_FILE_SCHEMA)) {
+        if (!info.jarUrl.startsWith("file:///")) {
             String jadFilename= getUrlPath(info.jadUrl);
             
             if (jadFilename.endsWith(".jad")) {

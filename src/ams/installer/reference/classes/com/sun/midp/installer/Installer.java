@@ -26,7 +26,6 @@
 
 package com.sun.midp.installer;
 
-import com.sun.midp.installer.InstallerResource;
 import java.util.Vector;
 
 import java.io.IOException;
@@ -50,7 +49,7 @@ import com.sun.midp.midletsuite.*;
 import com.sun.midp.jarutil.JarReader;
 
 import com.sun.midp.io.HttpUrl;
-import com.sun.midp.io.FileUrl;
+
 import com.sun.midp.io.Util;
 
 import com.sun.midp.io.j2me.push.PushRegistryInternal;
@@ -284,13 +283,7 @@ public abstract class Installer {
         boolean removeRMS, InstallListener installListener)
             throws IOException, InvalidJadException,
                    MIDletSuiteLockedException, SecurityException {
-        
-        
-        // Encode jad file path in order to keep of 
-        // IllegalArgumentException
-        if (InstallerResource.isFileInstaller(this))
-           location = FileUrl.encodeFilePath(location);
-        
+            
         info.jadUrl = location;
         state.force = force;
         state.removeRMS = removeRMS;
@@ -525,7 +518,8 @@ public abstract class Installer {
      */
     private void installStep1()
         throws IOException, InvalidJadException, MIDletSuiteLockedException {        
-         if (info.jadUrl == null || info.jadUrl.length() == 0) {
+        
+        if (info.jadUrl == null || info.jadUrl.length() == 0) {
             throw
                 new IllegalArgumentException("Must specify URL of .jad file");
         }
@@ -592,6 +586,7 @@ public abstract class Installer {
      * installed one.
      */
     private void installStep2() {          
+        
         state.nextStep++;      
         if (state.isPreviousVersion) {
             checkForDifferentDomains(info.jadUrl);
@@ -913,14 +908,7 @@ public abstract class Installer {
         state.nextStep++;
       
         if (info.jadUrl == null && state.isPreviousVersion) {
-            // if FileInstaller instance, than we will use
-            // encodedJarUrl in order to keep of 
-            // IllegalArgumentException
-            if (InstallerResource.isFileInstaller(this)) {
-                checkForDifferentDomains(info.encodedJarUrl);                
-            } else {
-                checkForDifferentDomains(info.jarUrl);                                
-            }                  
+            checkForDifferentDomains(info.jarUrl);                     
         }
     }
 

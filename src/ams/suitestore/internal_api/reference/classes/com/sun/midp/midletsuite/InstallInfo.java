@@ -48,10 +48,7 @@ public class InstallInfo {
 
     /** URL of the JAR. */
     public String jarUrl;
-    
-    /** Encoded URL of the JAR according to RFC 1738. */
-    public String encodedJarUrl;
-
+        
     /** Name of the downloaded MIDlet suite jar file. */
     public String jarFilename;
 

@@ -26,7 +26,6 @@
 
 package com.sun.midp.installer;
 
-import com.sun.midp.installer.InstallerResource;
 import java.io.*;
 
 import java.util.*;
