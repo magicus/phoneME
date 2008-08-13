@@ -318,7 +318,7 @@ void pcsl_esc_attach_buf(const jchar* in, jsize len, pcsl_string* out) {
 		    } else {
 			pcsl_string_append_char(out, PCSL_ESC_SHIFT1);
 		    }
-		    pcsl_string_append_char(out, (unsigned char)PCSL_ESC_CONVERT_CASE(c));
+		    pcsl_string_append_char(out, (unsigned char)PCSL_ESC_CONVERT_CASE((char)c));
 		}
 	    }   break;
 	case goes_escaped:
@@ -443,19 +443,19 @@ void pcsl_esc_extract_attached(const int offset, const pcsl_string *src, pcsl_st
         int c = *p;
         switch(c) {
         default:
-            c = shiftMode ? PCSL_ESC_UPPER(c) : PCSL_ESC_LOWER(c);
-            pcsl_string_append_char(dst,c);
+            c = shiftMode ? (unsigned char)PCSL_ESC_UPPER((char)c) : (unsigned char)PCSL_ESC_LOWER((char)c);
+            pcsl_string_append_char(dst,(unsigned char)c);
             break;
         case PCSL_ESC_SHIFT_TOGGLE:
             shiftMode ^= 1;
             c=*++p;
-            c = shiftMode ? PCSL_ESC_UPPER(c) : PCSL_ESC_LOWER(c);
+            c = shiftMode ? (unsigned char)PCSL_ESC_UPPER(c) : (unsigned char)PCSL_ESC_LOWER(c);
             pcsl_string_append_char(dst,c);
             break;
         case PCSL_ESC_SHIFT1:
             c=*++p;
-            c = shiftMode ? PCSL_ESC_LOWER(c) : PCSL_ESC_UPPER(c);
-            pcsl_string_append_char(dst,c);
+            c = shiftMode ? (unsigned char)PCSL_ESC_LOWER(c) : (unsigned char)PCSL_ESC_UPPER(c);
+            pcsl_string_append_char(dst,(unsigned char)c);
             break;
         case PCSL_ESC_PREV_BLOCK:
         case PCSL_ESC_NEW_BLOCK:
