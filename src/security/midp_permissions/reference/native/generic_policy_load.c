@@ -299,7 +299,7 @@ void permissions_dealloc(void* array) {
     return; //all arrays are static
 }
 
-void permissions_loadingDone() {
+void permissions_loading_finished() {
 }
 
 #define DEF_NUM_OF_LINES 6

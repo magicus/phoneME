@@ -69,8 +69,8 @@ void permissions_dealloc(void* array) {
     javacall_free(array);
 }
 
-void permissions_loadingDone() {
-    javacall_permissions_loadingDone();
+void permissions_loading_finished() {
+    javacall_permissions_loading_finished();
 }
 
 #ifdef __cplusplus

@@ -215,9 +215,9 @@ KNIDECL(com_sun_midp_security_Permissions_getGroupMessages) {
 }
 
 KNI_RETURNTYPE_VOID
-KNIDECL(com_sun_midp_security_Permissions_loadingDone)
+KNIDECL(com_sun_midp_security_Permissions_loadingFinished)
 {
-    permissions_loadingDone();
+    permissions_loading_finished();
     KNI_ReturnVoid();
 }
 
