@@ -408,7 +408,7 @@ java_ams_suite_get_running_app_info(javacall_app_id appId,
  * contained in the given suite.
  *
  * @param suiteId          [in]  unique ID of the MIDlet suite
- * @param ppMidletInfo     [out] on exit will hold an address of the array
+ * @param ppMidletsInfo    [out] on exit will hold an address of the array
  *                               containing the midlets info
  * @param pNumberOfEntries [out] number of entries in the returned array
  *
@@ -417,7 +417,7 @@ java_ams_suite_get_running_app_info(javacall_app_id appId,
  */
 javacall_result
 java_ams_suite_get_midlets_info(javacall_suite_id suiteId,
-                                javacall_ams_midlet_info** ppMidletInfo,
+                                javacall_ams_midlet_info** ppMidletsInfo,
                                 int* pNumberOfEntries) {
     return JAVACALL_OK;
 }
@@ -426,11 +426,11 @@ java_ams_suite_get_midlets_info(javacall_suite_id suiteId,
  * App Manager invokes this function to free an array of structures describing
  * midlets from the given suite.
  *
- * @param pMidletInfo points to an array with midlets info
- * @param numberOfEntries number of elements in pMidletInfo
+ * @param pMidletsInfo points to an array with midlets info
+ * @param numberOfEntries number of elements in pMidletsInfo
  */
 void
-java_ams_suite_free_midlets_info(javacall_ams_midlet_info* pMidletInfo,
+java_ams_suite_free_midlets_info(javacall_ams_midlet_info* pMidletsInfo,
                                  int numberOfEntries) {
 }
 
@@ -659,7 +659,48 @@ java_ams_suite_check_suites_integrity(javacall_bool fullCheck,
  */
 javacall_result
 java_ams_suite_get_folders_number(int* pNumberOfFolders) {
+    if (pNumberOfFolders == NULL) {
+        return JAVACALL_FAIL;
+    }
+
+    *pNumberOfFolders = 0;
+
     return JAVACALL_OK;
+}
+
+/**
+ * App Manager invokes this function to get an information about
+ * the AMS folders currently defined.
+ *
+ * @param ppFoldersInfo     [out] on exit will hold an address of the array
+ *                                containing the folders info
+ * @param pNumberOfEntries [out] number of entries in the returned array
+ *
+ * @return <tt>JAVACALL_OK</tt> on success,
+ *         <tt>JAVACALL_FAIL</tt> otherwise
+ */
+javacall_result
+java_ams_suite_get_folders_info(javacall_ams_folder_info** ppFoldersInfo,
+                                int* pNumberOfEntries) {
+    if (ppFoldersInfo == NULL || pNumberOfEntries == NULL) {
+        return JAVACALL_FAIL;
+    }
+    
+    *pNumberOfEntries = 0;
+
+    return JAVACALL_OK;
+}
+
+/**
+ * App Manager invokes this function to free an array of structures describing
+ * the AMS folders.
+ *
+ * @param pFoldersInfo points to an array with midlets info
+ * @param numberOfEntries number of elements in pFoldersInfo
+ */
+void
+java_ams_suite_free_folders_info(javacall_ams_folder_info* pFoldersInfo,
+                                 int numberOfEntries) {
 }
 
 /**
