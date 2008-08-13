@@ -994,7 +994,7 @@ java_ams_suite_free_all_folders_info(javacall_ams_folder_info* pFoldersInfo,
  *         <tt>JAVACALL_FAIL</tt> otherwise
  */
 javacall_result
-java_ams_suite_get_folder_info(javacall_ams_folder_id folderId,
+java_ams_suite_get_folder_info(javacall_folder_id folderId,
                                javacall_ams_folder_info* pFolderInfo);
 
 /**
@@ -1028,7 +1028,7 @@ java_ams_suite_free_folder_info(javacall_ams_folder_info* pFolderInfo);
  *         <tt>JAVACALL_IO_ERROR</tt> if an IO error
  */
 javacall_result
-java_ams_suite_get_suites_in_folder(javacall_ams_folder_id folderId,
+java_ams_suite_get_suites_in_folder(javacall_folder_id folderId,
                                     javacall_suite_id** ppSuiteIds,
                                     int* pNumberOfSuites);
 
