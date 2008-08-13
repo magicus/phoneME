@@ -320,6 +320,21 @@ typedef struct _javacall_ams_midlet_info {
     javacall_utf16_string iconPath;
 } javacall_ams_midlet_info;
 
+/**
+ * A structure with information about an AMS folder.
+ */
+typedef struct _javacall_ams_folder_info {
+    /**
+     * ID of the folder.
+     */
+    javacall_folder_id folderId;
+
+    /**
+     * Name of the folder.
+     */
+    javacall_utf16_string folderName;
+} javacall_ams_folder_info;
+
 /** A list of properties that can be searched by a key. */
 typedef struct _javacall_ams_properties {
     /**
@@ -719,12 +734,13 @@ java_ams_suite_free_suite_ids(javacall_suite_id* pSuiteIds,
 javacall_result
 java_ams_suite_get_running_app_info(javacall_app_id appId,
                                     javacall_ams_suite_info* pSuiteInfo);
+
 /**
- * App Manager invokes this function to get a information about the midlets
+ * App Manager invokes this function to get an information about the midlets
  * contained in the given suite.
  *
  * @param suiteId          [in]  unique ID of the MIDlet suite
- * @param ppMidleInfo      [out] on exit will hold an address of the array
+ * @param ppMidletsInfo    [out] on exit will hold an address of the array
  *                               containing the midlets info
  * @param pNumberOfEntries [out] number of entries in the returned array
  *
@@ -733,18 +749,18 @@ java_ams_suite_get_running_app_info(javacall_app_id appId,
  */
 javacall_result
 java_ams_suite_get_midlets_info(javacall_suite_id suiteId,
-                                javacall_ams_midlet_info** ppMidletInfo,
+                                javacall_ams_midlet_info** ppMidletsInfo,
                                 int* pNumberOfEntries);
 
 /**
  * App Manager invokes this function to free an array of structures describing
  * midlets from the given suite.
  *
- * @param pMidletInfo points to an array with midlets info
- * @param numberOfEntries number of elements in pMidletInfo
+ * @param pMidletsInfo points to an array with midlets info
+ * @param numberOfEntries number of elements in pMidletsInfo
  */
 void
-java_ams_suite_free_midlets_info(javacall_ams_midlet_info* pMidletInfo,
+java_ams_suite_free_midlets_info(javacall_ams_midlet_info* pMidletsInfo,
                                  int numberOfEntries);
 
 /**
@@ -947,6 +963,32 @@ java_ams_suite_check_suites_integrity(javacall_bool fullCheck,
  */
 javacall_result
 java_ams_suite_get_folders_number(int* pNumberOfFolders);
+
+/**
+ * App Manager invokes this function to get an information about
+ * the AMS folders currently defined.
+ *
+ * @param ppFoldersInfo     [out] on exit will hold an address of the array
+ *                                containing the folders info
+ * @param pNumberOfEntries [out] number of entries in the returned array
+ *
+ * @return <tt>JAVACALL_OK</tt> on success,
+ *         <tt>JAVACALL_FAIL</tt> otherwise
+ */
+javacall_result
+java_ams_suite_get_folders_info(javacall_ams_folder_info** ppFoldersInfo,
+                                int* pNumberOfEntries);
+
+/**
+ * App Manager invokes this function to free an array of structures describing
+ * the AMS folders.
+ *
+ * @param pFoldersInfo points to an array with midlets info
+ * @param numberOfEntries number of elements in pFoldersInfo
+ */
+void
+java_ams_suite_free_folders_info(javacall_ams_folder_info* pFoldersInfo,
+                                 int numberOfEntries);
 
 /**
  * App Manager invokes this function to get a name of AMS folder
