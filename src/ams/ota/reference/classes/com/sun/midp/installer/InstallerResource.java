@@ -148,17 +148,4 @@ public class InstallerResource {
             return new HttpInstaller();        
     }
     
-    /**
-     * Checks if current installer is FileInstaller.
-     * 
-     * @param installer installer instance
-     * @return true if current installer is FileInstaller
-     * or false
-     */
-    public static boolean isFileInstaller(Installer installer) {
-        if (installer instanceof FileInstaller)
-            return true;
-        else
-            return false;
-    }
-}
+ }
