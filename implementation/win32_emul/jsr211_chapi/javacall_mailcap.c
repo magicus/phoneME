@@ -1338,7 +1338,7 @@ javacall_result javacall_chapi_register_handler(
         javacall_const_utf16_string* action_names, int nActionNames,
         javacall_const_utf16_string* access_allowed_ids,  int nAccesses){
 
-    static javacall_utf16 invalidSuiteId[] = L"FFFFFFFF"; // INVALID_SUITE_ID string representation
+    static javacall_utf16 unusedSuiteId[] = L"00000000"; // UNUSED_SUITE_ID string representation
 	int result;
 	javautil_storage file=0;
 	int len;
@@ -1347,7 +1347,7 @@ javacall_result javacall_chapi_register_handler(
 	int idQuoted;
 
     if( suite_id == NULL ){ // native handler registration
-        suite_id = invalidSuiteId;
+        suite_id = unusedSuiteId;
     }
 
 #ifdef DEBUG_OUTPUT

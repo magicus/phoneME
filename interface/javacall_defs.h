@@ -156,7 +156,7 @@ typedef javacall_int32 javacall_suite_id;
  * @define INVALID_SUITE_ID
  * @brief The suite_id that doesn't correspond to any midlet suite
  */
-#define INVALID_SUITE_ID (-1)
+#define INVALID_SUITE_ID (0)
 
 /**
  * @typedef javacall_utf16_string
