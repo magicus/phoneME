@@ -699,7 +699,7 @@ java_ams_suite_free_all_folders_info(javacall_ams_folder_info* pFoldersInfo,
  *         <tt>JAVACALL_FAIL</tt> otherwise
  */
 javacall_result
-java_ams_suite_get_folder_info(javacall_ams_folder_id folderId,
+java_ams_suite_get_folder_info(javacall_folder_id folderId,
                                javacall_ams_folder_info* pFolderInfo) {
     return JAVACALL_OK;
 }
@@ -733,7 +733,7 @@ java_ams_suite_free_folder_info(javacall_ams_folder_info* pFolderInfo) {
  *         <tt>JAVACALL_FAIL</tt> otherwise
  */
 javacall_result
-java_ams_suite_get_folder_info(javacall_ams_folder_id folderId,
+java_ams_suite_get_folder_info(javacall_folder_id folderId,
                                javacall_ams_folder_info* pFolderInfo) {
     return JAVACALL_OK;
 }
@@ -751,7 +751,7 @@ java_ams_suite_get_folder_info(javacall_ams_folder_id folderId,
  */
 javacall_result
 java_ams_suite_get_folder(javacall_suite_id suiteId,
-                          javacall_ams_folder_id* pSuiteFolderId) {
+                          javacall_folder_id* pSuiteFolderId) {
     return JAVACALL_OK;
 }
 
