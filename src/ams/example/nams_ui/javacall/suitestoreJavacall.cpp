@@ -691,7 +691,7 @@ java_ams_suite_free_all_folders_info(javacall_ams_folder_info* pFoldersInfo,
  * allocated by the callee. The caller is responsible for freeing it using
  * java_ams_suite_free_folder_info().
  *
- * @param folderId    [in]  unique ID of the MIDlet suite
+ * @param folderId    [in]  unique ID of the folder
  * @param pFolderInfo [out] on exit will hold a pointer to a structure
  *                          describing the given folder
  *
@@ -699,7 +699,7 @@ java_ams_suite_free_all_folders_info(javacall_ams_folder_info* pFoldersInfo,
  *         <tt>JAVACALL_FAIL</tt> otherwise
  */
 javacall_result
-java_ams_suite_get_folder_info(javacall_folder_id folderId,
+java_ams_suite_get_folder_info(javacall_ams_folder_id folderId,
                                javacall_ams_folder_info* pFolderInfo) {
     return JAVACALL_OK;
 }
@@ -718,25 +718,23 @@ java_ams_suite_free_folder_info(javacall_ams_folder_info* pFolderInfo) {
 }
 
 /**
- * AppManager invokes this function to get the list of IDs
- * of the installed MIDlet suites.
+ * App Manager invokes this function to get an information about
+ * the given AMS folder.
  *
- * Note that memory for the suite IDs is allocated by the callee,
- * and the caller is responsible for freeing it using
- * java_ams_suite_free_ids().
+ * Note that memory for the out parameter pFolderInfo and its fields is
+ * allocated by the callee. The caller is responsible for freeing it using
+ * java_ams_suite_free_folder_info().
  *
- * @param ppSuiteIds      [out] on exit will hold an address of the array
- *                              containing suite IDs
- * @param pNumberOfSuites [out] pointer to variable to accept the number
- *                              of suites in the returned array
+ * @param folderId    [in]  unique ID of the folder
+ * @param pFolderInfo [out] on exit will hold a pointer to a structure
+ *                          describing the given folder
  *
  * @return <tt>JAVACALL_OK</tt> on success,
- *         <tt>JAVACALL_OUT_OF_MEMORY</tt> if out of memory,
- *         <tt>JAVACALL_IO_ERROR</tt> if an IO error
+ *         <tt>JAVACALL_FAIL</tt> otherwise
  */
 javacall_result
-java_ams_suite_get_suites_in_folder(javacall_suite_id** ppSuiteIds,
-                                    int* pNumberOfSuites) {
+java_ams_suite_get_folder_info(javacall_ams_folder_id folderId,
+                               javacall_ams_folder_info* pFolderInfo) {
     return JAVACALL_OK;
 }
 
@@ -753,7 +751,7 @@ java_ams_suite_get_suites_in_folder(javacall_suite_id** ppSuiteIds,
  */
 javacall_result
 java_ams_suite_get_folder(javacall_suite_id suiteId,
-                          javacall_folder_id* pSuiteFolderId) {
+                          javacall_ams_folder_id* pSuiteFolderId) {
     return JAVACALL_OK;
 }
 
