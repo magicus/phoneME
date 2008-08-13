@@ -159,7 +159,7 @@ int pcsl_esc_digit2num(unsigned int c) {
         { int i;
           for(i=0;PCSL_ESC_MOREDIGITS[i];i++)
           {
-            if ((unsigned)PCSL_ESC_MOREDIGITS[i]==c) { res = at+i; break /*for*/; }
+            if (((unsigned char*)PCSL_ESC_MOREDIGITS)[i]==c) { res = at+i; break /*for*/; }
           }
         }
     } while(0);
@@ -308,7 +308,7 @@ void pcsl_esc_attach_buf(const jchar* in, jsize len, pcsl_string* out) {
 	case goes_shifted:
 	    {
 		if(s==shiftMode) {
-		    pcsl_string_append_char(out, PCSL_ESC_CONVERT_CASE(c));
+		    pcsl_string_append_char(out, PCSL_ESC_CONVERT_CASE((char)c));
 		    ++in;
 		} else {
 		    int cc = *++in;
