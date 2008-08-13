@@ -22,4 +22,4 @@
  * information or have any questions.
  */
 
-#include "../../../lowlevelui/graphics/putpixel/native/gxj_intern_font_bitmap.h"
+#include "../../../lowlevelui/graphics/gx_putpixel/native/gxj_intern_font_bitmap.h"
