@@ -313,7 +313,7 @@ void java_ams_suite_free_install_info(
  *     boolean enabled - if true, MIDlet from this suite can be run;
  * </pre>
  *
- * @param pSuiteData structure containing the following information:<br>
+ * @param pSuiteInfo structure containing the following information:<br>
  * <pre>
  *     suiteId - unique ID of the suite, must be equal to the value given
  *               in installInfo and suiteSettings parameters;
@@ -330,7 +330,7 @@ void java_ams_suite_free_install_info(
 javacall_result
 java_ams_suite_store_suite(const javacall_ams_suite_install_info* pInstallInfo,
                            const javacall_ams_suite_settings* pSuiteSettings,
-                           const javacall_ams_suite_data* pSuiteData) {
+                           const javacall_ams_suite_info* pSuiteInfo) {
     return JAVACALL_OK;
 }
 
@@ -391,7 +391,7 @@ java_ams_suite_free_suite_ids(javacall_suite_id* pSuiteIds,
  *
  * @param appId the ID used to identify the application
  *
- * @param pSuiteData [out] pointer to a structure where static information
+ * @param pSuiteInfo [out] pointer to a structure where static information
  *                         about the midlet will be stored
  *
  * @return error code: <tt>JAVACALL_OK</tt> if successful,
@@ -399,7 +399,7 @@ java_ams_suite_free_suite_ids(javacall_suite_id* pSuiteIds,
  */
 javacall_result
 java_ams_suite_get_running_app_info(javacall_app_id appId,
-                                    javacall_ams_suite_data* pSuiteData) {
+                                    javacall_ams_suite_info* pSuiteInfo) {
     return JAVACALL_OK;
 }
 
@@ -408,16 +408,16 @@ java_ams_suite_get_running_app_info(javacall_app_id appId,
  * contained in the given suite.
  *
  * @param suiteId          [in]  unique ID of the MIDlet suite
- * @param ppMidletData     [out] on exit will hold an address of the array
- *                               containing the midlets data
+ * @param ppMidletInfo     [out] on exit will hold an address of the array
+ *                               containing the midlets info
  * @param pNumberOfEntries [out] number of entries in the returned array
  *
  * @return <tt>JAVACALL_OK</tt> on success,
  *         <tt>JAVACALL_FAIL</tt> otherwise
  */
 javacall_result
-java_ams_suite_get_midlets_data(javacall_suite_id suiteId,
-                                javacall_ams_midlet_data** ppMidletData,
+java_ams_suite_get_midlets_info(javacall_suite_id suiteId,
+                                javacall_ams_midlet_info** ppMidletInfo,
                                 int* pNumberOfEntries) {
     return JAVACALL_OK;
 }
@@ -426,11 +426,11 @@ java_ams_suite_get_midlets_data(javacall_suite_id suiteId,
  * App Manager invokes this function to free an array of structures describing
  * midlets from the given suite.
  *
- * @param pMidletData points to an array with midlets data
- * @param numberOfSuites number of elements in pMidletData
+ * @param pMidletInfo points to an array with midlets info
+ * @param numberOfEntries number of elements in pMidletInfo
  */
 void
-java_ams_suite_free_midlets_data(javacall_ams_midlet_data* pMidletData,
+java_ams_suite_free_midlets_info(javacall_ams_midlet_info* pMidletInfo,
                                  int numberOfEntries) {
 }
 
@@ -440,16 +440,29 @@ java_ams_suite_free_midlets_data(javacall_ams_midlet_data* pMidletData,
  *
  * @param suiteId unique ID of the MIDlet suite
  *
- * @param pSuiteData [out] pointer to a structure where the information
- *                         about the midlet will be stored
+ * @param ppSuiteInfo [out] on exit will hold a pointer to a structure where the
+ *                          information about the given midlet suite is stored;
+ *                          the caller is responsible for freeing this structure
+ *                          using java_ams_suite_free_info() when it is not
+ *                          needed anymore
  *
  * @return error code: <tt>JAVACALL_OK</tt> if successful,
  *                     <tt>JAVACALL_FAIL</tt> otherwise
  */
 javacall_result
 java_ams_suite_get_info(javacall_suite_id suiteId,
-                        javacall_ams_suite_data* pSuiteData) {
+                        javacall_ams_suite_info** ppSuiteInfo) {
     return JAVACALL_OK;
+}
+
+/**
+ * App Manager invokes this function to free a structure describing
+ * a midlet suite and all fields of this structure.
+ *
+ * @param pSuiteInfo points to a structure holding midlet suite info
+ */
+void
+java_ams_suite_free_info(javacall_ams_suite_info* pSuiteInfo) {
 }
 
 /**
