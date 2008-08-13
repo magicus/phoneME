@@ -49,7 +49,17 @@ extern void CVMdestroyVMTargetGlobalState();
 /*
  * Initialize any private platform-specific per-address-space static state.
  */
-extern CVMBool CVMinitStaticState();
+typedef struct CVMpathInfo CVMpathInfo;
+
+struct CVMpathInfo {
+    char *basePath;
+    char *libPath;
+    char *dllPath;
+    char *preBootclasspath;
+    char *postBootclasspath;
+};
+
+extern CVMBool CVMinitStaticState(CVMpathInfo *);
 extern void CVMdestroyStaticState();
 
 /*

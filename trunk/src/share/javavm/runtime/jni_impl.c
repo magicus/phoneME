@@ -3990,6 +3990,8 @@ JNI_CreateJavaVM(JavaVM **p_jvm, void **p_env, void *args)
 #endif
     CVMBool userHomePropSpecified = CVM_FALSE; /* -Duser.home specified */
     CVMBool userNamePropSpecified = CVM_FALSE; /* -Duser.name specified */
+    CVMpathInfo pathInfo;
+    const char *sunlibrarypathStr;
 
     /*
      * If the current system time is set to be before January 1, 1970,
@@ -4010,6 +4012,7 @@ JNI_CreateJavaVM(JavaVM **p_jvm, void **p_env, void *args)
     }
 
     memset(&options, 0, sizeof options);
+    memset(&pathInfo, 0, sizeof pathInfo);
 
 #ifndef CDC_10
     /* assertions are off by default */
@@ -4019,7 +4022,7 @@ JNI_CreateJavaVM(JavaVM **p_jvm, void **p_env, void *args)
 
     /* %comment: rt021 */
     if (numJVMs == 0) {
-	if (!CVMinitStaticState()) {
+	if (!CVMinitStaticState(&pathInfo)) {
 	    errorStr = "CVMinitStaticState failed";
 	    errorNo = JNI_ENOMEM;
 	    goto done;
@@ -4033,14 +4036,9 @@ JNI_CreateJavaVM(JavaVM **p_jvm, void **p_env, void *args)
     sprops = CVMgetProperties();
 
 #ifdef CVM_CLASSLOADING
-    /*
-     * The default value of bootclasspath
-     */
-    options.bootclasspathStr = sprops->sysclasspath;
-
 #ifndef NO_JDK_COMPATABILITY
     /*
-     * ... and java.class.path
+     * The default value of java.class.path
      * If NO_JDK_COMPATABILITY is not set, the default value of
      * our class path is ., unless one is explicitly indicated.
      *
@@ -4128,43 +4126,59 @@ JNI_CreateJavaVM(JavaVM **p_jvm, void **p_env, void *args)
         else if (!strncmp(str, "-Xbootclasspath=", 16) ||
                  !strncmp(str, "-Xbootclasspath:", 16)) {
             options.bootclasspathStr = str + 16;
+            /* user has set bootclasspath, it overrides any
+             * -Xbootclasspath/a or /p
+             */
+            if (pathInfo.preBootclasspath != NULL) {
+              free(pathInfo.preBootclasspath);
+              pathInfo.preBootclasspath = NULL;
+            }
+            if (pathInfo.postBootclasspath != NULL) {
+              free(pathInfo.postBootclasspath);
+              pathInfo.postBootclasspath = NULL;
+            }
         }
         else if (!strncmp(str, "-Xbootclasspath/a=", 18) ||
                  !strncmp(str, "-Xbootclasspath/a:", 18)) {
             const char* p = str + 18;
-            char* tmp = xbootclasspath;
-            xbootclasspath = (char *)
-		malloc(strlen(p) + strlen(options.bootclasspathStr) 
-		       + strlen(CVM_PATH_CLASSPATH_SEPARATOR) + 1);
-            if (xbootclasspath == NULL) {
+            char* tmp = pathInfo.postBootclasspath;
+            pathInfo.postBootclasspath = (char *)
+              malloc(strlen(p) +
+                     (tmp == NULL ? 0 : strlen(tmp)) +
+                     strlen(CVM_PATH_CLASSPATH_SEPARATOR) + 1);
+            if (pathInfo.postBootclasspath == NULL) {
                 errorStr = "out of memory while parsing -Xbootclasspath";
 		errorNo = JNI_ENOMEM;
 		goto done;
             }
-            sprintf(xbootclasspath, "%s%s%s", 
-                    options.bootclasspathStr, CVM_PATH_CLASSPATH_SEPARATOR, p);
-            options.bootclasspathStr = xbootclasspath;
             if (tmp != NULL) {
-                free(tmp);
+              sprintf(pathInfo.postBootclasspath, "%s%s%s", 
+                      tmp, CVM_PATH_CLASSPATH_SEPARATOR, p);
+              free(tmp);
+            } else {
+              pathInfo.postBootclasspath = strdup(p);
             }
         }
         else if (!strncmp(str, "-Xbootclasspath/p=", 18) ||
                  !strncmp(str, "-Xbootclasspath/p:", 18)) {
             const char* p = str + 18;
-            char* tmp = xbootclasspath;
-            xbootclasspath = (char *)
-		malloc(strlen(p) + strlen(options.bootclasspathStr) 
-		       + strlen(CVM_PATH_CLASSPATH_SEPARATOR) + 1);
-            if (xbootclasspath == NULL) {
-                errorStr = "out of memory while parsing -Xbootclasspath";
-		errorNo = JNI_ENOMEM;
-		goto done;
+            char* tmp = pathInfo.preBootclasspath;
+            pathInfo.preBootclasspath = (char *)
+              malloc(strlen(p) +
+                     (tmp == NULL ?
+                      0 : strlen(tmp)) +
+                     strlen(CVM_PATH_CLASSPATH_SEPARATOR) + 1);
+            if (pathInfo.preBootclasspath == NULL) {
+              errorStr = "out of memory while parsing -Xbootclasspath";
+              errorNo = JNI_ENOMEM;
+              goto done;
             }
-            sprintf(xbootclasspath, "%s%s%s", 
-                    p, CVM_PATH_CLASSPATH_SEPARATOR, options.bootclasspathStr);
-            options.bootclasspathStr = xbootclasspath;
             if (tmp != NULL) {
-                free(tmp);
+              sprintf(pathInfo.preBootclasspath, "%s%s%s", 
+                    p, CVM_PATH_CLASSPATH_SEPARATOR, tmp);
+              free(tmp);
+            } else {
+              pathInfo.preBootclasspath = strdup(p);
             }
         }
 #ifdef NO_JDK_COMPATABILITY
@@ -4322,6 +4336,10 @@ JNI_CreateJavaVM(JavaVM **p_jvm, void **p_env, void *args)
                of this on the next pass */
 	    continue;
 #endif
+	} else if (!strncmp(str, "-Dsun.boot.library.path=", 24)) {
+            sunlibrarypathStr = str + 24;
+            ++numUnrecognizedOptions;
+            continue;
 	} else {
 	    /* Unrecognized option, pass to Java */
 	    ++numUnrecognizedOptions;
@@ -4355,6 +4373,22 @@ JNI_CreateJavaVM(JavaVM **p_jvm, void **p_env, void *args)
     }
 #endif
 
+    if (sunlibrarypathStr != NULL) {
+      if (pathInfo.dllPath != NULL) {
+        free(pathInfo.dllPath);
+      }
+      pathInfo.dllPath = strdup(sunlibrarypathStr);
+    }
+
+    {
+      if (!CVMinitPathValues((void *)CVMgetProperties(), &pathInfo,
+                             (char **)&options.bootclasspathStr)) {
+        errorStr = "CVMinitPathValues failed";
+	errorNo = JNI_ERR;
+	goto done;
+      }
+    }
+
     if (!CVMinitVMGlobalState(&CVMglobals, &options)) {
 	/* <tbd> - CVMinitVMGlobalState() should return the proper
 	 * JNI error code and have always already printed the error message.
@@ -4379,8 +4413,8 @@ JNI_CreateJavaVM(JavaVM **p_jvm, void **p_env, void *args)
 #endif
 
 #ifdef CVM_JVMTI
-      CVMjvmtiEnterOnloadPhase();
-      CVMtimeThreadCpuClockInit(&ee->threadInfo);
+    CVMjvmtiEnterOnloadPhase();
+    CVMtimeThreadCpuClockInit(&ee->threadInfo);
 #endif
     /* Run agents */
     /* Agents run before VM is fully initialized */
@@ -4429,9 +4463,9 @@ JNI_CreateJavaVM(JavaVM **p_jvm, void **p_env, void *args)
       CVMjvmtiEnterPrimordialPhase();
 #endif
 #else
-	errorStr = "-agentlib, -agentpath not supported - dynamic linking not built into VM";
-	errorNo = JNI_EINVAL;
-	goto done;
+      errorStr = "-agentlib, -agentpath not supported - dynamic linking not built into VM";
+      errorNo = JNI_EINVAL;
+      goto done;
 #endif
     }
 #endif
@@ -4627,6 +4661,8 @@ JNI_CreateJavaVM(JavaVM **p_jvm, void **p_env, void *args)
 	free(xrunArguments);
     }
 #endif
+
+    CVMdestroyPathInfo(&pathInfo);
 
     if (errorStr != NULL) {
         CVMconsolePrintf("Cannot start VM (%s)\n", errorStr);

@@ -27,6 +27,7 @@
 
 extern "C" {
 #include "javavm/include/porting/globals.h"
+#include "javavm/include/path_md.h"
 #include <javavm/include/utils.h>	/* BAD */
 }
 
@@ -39,8 +40,9 @@ extern "C" {
 
 static CVMProperties props;
 
-CVMBool CVMinitStaticState()
+CVMBool CVMinitStaticState(CVMpathInfo *pathInfo)
 {
+    char *p;
     char *home = getenv("CVM_HOME");
     if (home == NULL) {
 #if defined(__WINS__)
@@ -56,7 +58,25 @@ CVMBool CVMinitStaticState()
     }
     SYMBIANjavaEpoc = epoc.Int64();
     
-    return CVMinitPathValues(&props, home, "lib", "lib");
+    pathInfo->basePath = strdup(home);
+    if (pathInfo->basePath == NULL) {
+        return CVM_FALSE;
+    }
+    p = (char *)malloc(strlen(home) + 1 + strlen("lib") + 1);
+    if (p == NULL) {
+        return CVM_FALSE;
+    }
+    strcpy(p, home);
+    pEnd = p + strlen(p);
+    *pEnd++ = CVM_PATH_LOCAL_DIR_SEPARATOR;
+    strcpy(pEnd, "lib");
+    pathInfo->libPath = p;
+    /* lib and dll are the same so this shortcut */
+    pathInfo->dllPath = strdup(p);
+    if (pathInfo->dllPath == NULL) {
+        return CVM_FALSE;
+    }
+    return CVM_TRUE;
 }
 
 void

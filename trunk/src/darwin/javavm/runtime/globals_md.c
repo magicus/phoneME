@@ -32,6 +32,7 @@
 #include "javavm/include/porting/threads.h"
 #include "portlibs/posix/threads.h"
 #include "generated/javavm/include/build_defs.h"
+#include "javavm/include/path_md.h"
 #include <signal.h>
 #include <stdlib.h>
 #include <string.h>
@@ -104,7 +105,7 @@ void CVMdestroyVMTargetGlobalState()
 
 static CVMProperties props;
 
-CVMBool CVMinitStaticState()
+CVMBool CVMinitStaticState(CVMpathInfo *pathInfo)
 {
     /*
      * Initialize the static state for this address space
@@ -171,7 +172,25 @@ CVMBool CVMinitStaticState()
 	} else {
 	    goto badpath;
 	}
-        return( CVMinitPathValues( &props, p0, "lib", "lib" ) );
+        pathInfo->basePath = strdup(p0);
+        if (pathInfo->basePath == NULL) {
+          return CVM_FALSE;
+        }
+        p = (char *)malloc(strlen(p0) + 1 + strlen("lib") + 1);
+        if (p == NULL) {
+          return CVM_FALSE;
+        }
+        strcpy(p, p0);
+        pEnd = p + strlen(p);
+        *pEnd++ = CVM_PATH_LOCAL_DIR_SEPARATOR;
+        strcpy(pEnd, "lib");
+        pathInfo->libPath = p;
+        /* lib and dll are the same so this shortcut */
+        pathInfo->dllPath = strdup(p);
+        if (pathInfo->dllPath == NULL) {
+          return CVM_FALSE;
+        }
+        return CVM_TRUE;
     badpath:
 	fprintf(stderr, "Invalid path %s\n", p0);
 	fprintf(stderr, "Executable must be in a directory named \"bin\".\n");
