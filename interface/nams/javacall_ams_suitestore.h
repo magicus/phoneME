@@ -986,7 +986,7 @@ java_ams_suite_free_all_folders_info(javacall_ams_folder_info* pFoldersInfo,
  * allocated by the callee. The caller is responsible for freeing it using
  * java_ams_suite_free_folder_info().
  *
- * @param folderId    [in]  unique ID of the MIDlet suite
+ * @param folderId    [in]  unique ID of the folder
  * @param pFolderInfo [out] on exit will hold a pointer to a structure
  *                          describing the given folder
  *
@@ -994,7 +994,7 @@ java_ams_suite_free_all_folders_info(javacall_ams_folder_info* pFoldersInfo,
  *         <tt>JAVACALL_FAIL</tt> otherwise
  */
 javacall_result
-java_ams_suite_get_folder_info(javacall_folder_id folderId,
+java_ams_suite_get_folder_info(javacall_ams_folder_id folderId,
                                javacall_ams_folder_info* pFolderInfo);
 
 /**
@@ -1017,6 +1017,7 @@ java_ams_suite_free_folder_info(javacall_ams_folder_info* pFolderInfo);
  * and the caller is responsible for freeing it using
  * java_ams_suite_free_ids().
  *
+ * @param folderId        [in]  unique ID of the folder
  * @param ppSuiteIds      [out] on exit will hold an address of the array
  *                              containing suite IDs
  * @param pNumberOfSuites [out] pointer to variable to accept the number
@@ -1027,7 +1028,8 @@ java_ams_suite_free_folder_info(javacall_ams_folder_info* pFolderInfo);
  *         <tt>JAVACALL_IO_ERROR</tt> if an IO error
  */
 javacall_result
-java_ams_suite_get_suites_in_folder(javacall_suite_id** ppSuiteIds,
+java_ams_suite_get_suites_in_folder(javacall_ams_folder_id folderId,
+                                    javacall_suite_id** ppSuiteIds,
                                     int* pNumberOfSuites);
 
 /**
