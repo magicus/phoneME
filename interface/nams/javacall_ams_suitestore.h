@@ -995,7 +995,7 @@ java_ams_suite_free_all_folders_info(javacall_ams_folder_info* pFoldersInfo,
  */
 javacall_result
 java_ams_suite_get_folder_info(javacall_folder_id folderId,
-                               javacall_folder_info* pFolderInfo);
+                               javacall_ams_folder_info* pFolderInfo);
 
 /**
  * App Manager invokes this function to free the given structure holding
@@ -1007,7 +1007,7 @@ java_ams_suite_get_folder_info(javacall_folder_id folderId,
  *         <tt>JAVACALL_FAIL</tt> otherwise
  */
 void
-java_ams_suite_free_folder_info(javacall_folder_info* pFolderInfo);
+java_ams_suite_free_folder_info(javacall_ams_folder_info* pFolderInfo);
 
 /**
  * AppManager invokes this function to get the list of IDs
