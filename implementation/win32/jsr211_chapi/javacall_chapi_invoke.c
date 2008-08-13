@@ -29,6 +29,7 @@
  */
 
 
+#include <windows.h>
 #include "javacall_chapi_invoke.h"
 
 
@@ -75,6 +76,16 @@ javacall_result javacall_chapi_platform_invoke(int invoc_id,
         /* OUT */ javacall_bool* without_finish_notification, 
         /* OUT */ javacall_bool* should_exit)
 {
+    if( wcscmp( handler_id, "who_cares?" ) == 0 ){
+        SHELLEXECUTEINFO sei;
+        memset( &sei, '\0', sizeof(sei) );
+        sei.cbSize = sizeof(sei);
+        sei.fMask = SEE_MASK_FLAG_NO_UI;
+        sei.lpFile = invocation->url;
+        sei.nShow = SW_SHOW;
+        ShellExecute( &sei );
+        return JAVACALL_OK;
+    }
     (void)invoc_id;
     (void)handler_id;
     (void)invocation;
