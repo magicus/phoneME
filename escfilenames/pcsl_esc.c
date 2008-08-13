@@ -101,7 +101,7 @@
 #error PCSL_ESC_ONLY_IF_CASE_SENSITIVE is not defined!!
 #endif
 
-int pcsl_esc_mapchar(char x, char* from, char* to) {
+char pcsl_esc_mapchar(char x, char* from, char* to) {
     int i;
     for(i=0;from[i];i++) {
 	if(x==from[i]) return to[i];
@@ -159,7 +159,7 @@ int pcsl_esc_digit2num(unsigned int c) {
         { int i;
           for(i=0;PCSL_ESC_MOREDIGITS[i];i++)
           {
-            if ((unsigned)PCSL_ESC_MOREDIGITS[i]==c) { res = at+i; break /*for*/; }
+            if (((unsigned char*)PCSL_ESC_MOREDIGITS)[i]==c) { res = at+i; break /*for*/; }
           }
         }
     } while(0);
@@ -308,7 +308,7 @@ void pcsl_esc_attach_buf(const jchar* in, jsize len, pcsl_string* out) {
 	case goes_shifted:
 	    {
 		if(s==shiftMode) {
-		    pcsl_string_append_char(out, PCSL_ESC_CONVERT_CASE(c));
+		    pcsl_string_append_char(out, (unsigned char)PCSL_ESC_CONVERT_CASE((char)c));
 		    ++in;
 		} else {
 		    int cc = *++in;
@@ -318,7 +318,7 @@ void pcsl_esc_attach_buf(const jchar* in, jsize len, pcsl_string* out) {
 		    } else {
 			pcsl_string_append_char(out, PCSL_ESC_SHIFT1);
 		    }
-		    pcsl_string_append_char(out, PCSL_ESC_CONVERT_CASE(c));
+		    pcsl_string_append_char(out, (unsigned char)PCSL_ESC_CONVERT_CASE((char)c));
 		}
 	    }   break;
 	case goes_escaped:
@@ -443,19 +443,19 @@ void pcsl_esc_extract_attached(const int offset, const pcsl_string *src, pcsl_st
         int c = *p;
         switch(c) {
         default:
-            c = shiftMode ? PCSL_ESC_UPPER(c) : PCSL_ESC_LOWER(c);
-            pcsl_string_append_char(dst,c);
+            c = shiftMode ? (unsigned char)PCSL_ESC_UPPER((char)c) : (unsigned char)PCSL_ESC_LOWER((char)c);
+            pcsl_string_append_char(dst,(unsigned char)c);
             break;
         case PCSL_ESC_SHIFT_TOGGLE:
             shiftMode ^= 1;
             c=*++p;
-            c = shiftMode ? PCSL_ESC_UPPER(c) : PCSL_ESC_LOWER(c);
-            pcsl_string_append_char(dst,c);
+            c = shiftMode ? (unsigned char)PCSL_ESC_UPPER((char)c) : (unsigned char)PCSL_ESC_LOWER((char)c);
+            pcsl_string_append_char(dst,(unsigned char)c);
             break;
         case PCSL_ESC_SHIFT1:
             c=*++p;
-            c = shiftMode ? PCSL_ESC_LOWER(c) : PCSL_ESC_UPPER(c);
-            pcsl_string_append_char(dst,c);
+            c = shiftMode ? (unsigned char)PCSL_ESC_LOWER((char)c) : (unsigned char)PCSL_ESC_UPPER((char)c);
+            pcsl_string_append_char(dst,(unsigned char)c);
             break;
         case PCSL_ESC_PREV_BLOCK:
         case PCSL_ESC_NEW_BLOCK:
@@ -508,7 +508,7 @@ void pcsl_esc_extract_attached(const int offset, const pcsl_string *src, pcsl_st
                         cmd = -1;
                     }
                     if (!utf16_incomplete) {
-                        pcsl_string_append_char(dst, utf16);
+                        pcsl_string_append_char(dst, (jchar)utf16);
                     }
                 }
             } while (nbytes != 0 || p < plimit && *p != PCSL_ESC_TOGGLE);
