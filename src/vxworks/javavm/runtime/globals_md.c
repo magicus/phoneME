@@ -29,6 +29,7 @@
 #include "javavm/include/porting/globals.h"
 #include "javavm/include/threads_md.h"
 #include "javavm/include/io_md.h"
+#include "javavm/include/path_md.h"
 #include "generated/javavm/include/build_defs.h"
 
 CVMBool CVMinitVMTargetGlobalState()
@@ -49,15 +50,33 @@ void CVMdestroyVMTargetGlobalState()
 
 static CVMProperties props;
 
-CVMBool CVMinitStaticState()
+CVMBool CVMinitStaticState(CVMpathInfo *pathInfo)
 {
+    char *p;
     /*
      * Initialize the static state for this address space
      */
     threadInitStaticState();
     ioInitStaticState();
-
-    return(CVMinitPathValues( &props, "..", "lib", "lib" ));
+    pathInfo->basePath = strdup("..");
+    if (pathInfo->basePath == NULL) {
+        return CVM_FALSE;
+    }
+    p = (char *)malloc(strlen("..") + 1 + strlen("lib") + 1);
+    if (p == NULL) {
+        return CVM_FALSE;
+    }
+    strcpy(p, "..");
+    pEnd = p + strlen(p);
+    *pEnd++ = CVM_PATH_LOCAL_DIR_SEPARATOR;
+    strcpy(pEnd, "lib");
+    pathInfo->libPath = p;
+    /* lib and dll are the same so this shortcut */
+    pathInfo->dllPath = strdup(p);
+    if (pathInfo->dllPath == NULL) {
+        return CVM_FALSE;
+    }
+    return CVM_TRUE;
 }
 
 void CVMdestroyStaticState()

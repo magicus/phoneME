@@ -34,6 +34,7 @@
 #include "javavm/include/threads_md.h"
 #include "generated/javavm/include/build_defs.h"
 #include "javavm/include/io_sockets.h"
+#include "javavm/include/path_md.h"
 
 #include <windows.h>
 #include <tchar.h>
@@ -116,7 +117,7 @@ void CVMdestroyVMTargetGlobalState()
 
 static CVMProperties props;
 
-CVMBool CVMinitStaticState()
+CVMBool CVMinitStaticState(CVMpathInfo *pathInfo)
 {
 #if !defined(CVM_MP_SAFE) && !defined(WINCE)
     /* If we don't have MP-safe support built in, then make sure
@@ -172,7 +173,7 @@ CVMBool CVMinitStaticState()
 	TCHAR path[MAX_PATH + 1];
 	char buf[2 * MAX_PATH + 1];
 	TCHAR *p0, *p1;
-	char *p2, *p;
+	char *p2, *p, *pEnd;
 
 	GetModuleFileName(0, path, sizeof path);
 
@@ -189,7 +190,30 @@ CVMBool CVMinitStaticState()
 	p1[0] = _T('\0');
 
 	wcstombs(buf, path, MAX_PATH);
-        return(CVMinitPathValues( &props, buf, "lib", "bin" ));
+        p2 = buf;
+        pathInfo->basePath = strdup(p2);
+        if (pathInfo->basePath == NULL) {
+          return CVM_FALSE;
+        }
+        p = (char *)malloc(strlen(p2) + 1 + strlen("lib") + 1);
+        if (p == NULL) {
+          return CVM_FALSE;
+        }
+        strcpy(p, p2);
+        pEnd = p + strlen(p);
+        *pEnd++ = CVM_PATH_LOCAL_DIR_SEPARATOR;
+        strcpy(pEnd, "lib");
+        pathInfo->libPath = p;
+        p = (char *)malloc(strlen(p2) + 1 + strlen("bin") + 1);
+        if (p == NULL) {
+          return CVM_FALSE;
+        }
+        strcpy(p, p2);
+        pEnd = p + strlen(p);
+        *pEnd++ = CVM_PATH_LOCAL_DIR_SEPARATOR;
+        strcpy(pEnd, "bin");
+        pathInfo->dllPath = p;
+        return CVM_TRUE;
     }
 }
 
@@ -207,3 +231,4 @@ const CVMProperties *CVMgetProperties()
 {
     return &props;
 }
+

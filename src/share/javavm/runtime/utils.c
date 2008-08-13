@@ -28,6 +28,7 @@
 #include "javavm/include/porting/doubleword.h"
 #include "javavm/include/porting/int.h"
 #include "javavm/include/porting/time.h"
+#include "javavm/include/porting/path.h"
 #include "javavm/include/objects.h"
 #include "javavm/include/classes.h"
 #include "javavm/include/clib.h"
@@ -2041,19 +2042,29 @@ CVMprintSubOptionsUsageString(const CVMSubOptionData* knownSubOptions)
  * java_home values.
  */
 CVMBool
-CVMinitPathValues(void *propsPtr, const char *basePath,
-                  const char *libPath, const char *dllPath)
+CVMinitPathValues(void *propsPtr, CVMpathInfo *pathInfo,
+                  char **userBootclasspath)
 {
     char *p, *p0, *pEnd;
     int i;
     size_t size, len, libPathLen;
     CVMProperties *props = (CVMProperties *)propsPtr;
     static const char *const jarNames[] = { CVM_JARFILES NULL };
-    char *localBasePath;
+    char *basePath;
+    char *libPath;
+    char *dllPath;
+    char *preBootclasspath;
+    char *postBootclasspath;
 
     /* Sanity check */
-    CVMassert(propsPtr != NULL && basePath != NULL &&
-              libPath != NULL && dllPath != NULL);
+    CVMassert(propsPtr != NULL && pathInfo->basePath != NULL &&
+              pathInfo->libPath != NULL && pathInfo->dllPath != NULL);
+
+    basePath = pathInfo->basePath;
+    libPath = pathInfo->libPath;
+    dllPath = pathInfo->dllPath;
+    preBootclasspath = pathInfo->preBootclasspath;
+    postBootclasspath = pathInfo->postBootclasspath;
 
     /* Determine how much space to allocate to hold the different
      * paths we want to record. We will store the values for
@@ -2064,29 +2075,28 @@ CVMinitPathValues(void *propsPtr, const char *basePath,
     len = strlen(basePath);
     /* Enough space for java_home, including a string terminator */
     size = len + 1;
-    /* Space for dll_dir, including a path delimiter & string terminator */
+    /* Space for dll_dir, including a string terminator */
     size += strlen(dllPath) + 1;
-    /* Check if dllPath is absolute or relative to the basePath: */
-    if ( dllPath[0] !=  CVM_PATH_LOCAL_DIR_SEPARATOR ) {
-	/* dllPath is a relative path and will need to be prefixed with the
-	   basePath: add space for the basePath and a path delimiter: */
-        size += len + sizeof(char);
-    }
     /* Now add space for the entries in the sysclasspath */
-    libPathLen = strlen(libPath);
-    for (i = 0; jarNames[ i ] != NULL; i++) {
+    if (preBootclasspath != NULL) {
+      size += strlen(preBootclasspath) + 1;
+    }
+    if (postBootclasspath != NULL) {
+      size += strlen(postBootclasspath) + 1;
+    }
+    if (*userBootclasspath != NULL) {
+      /* user has set bootclasspath use it instead of sysclasspath */
+      size += strlen(*userBootclasspath);
+    } else {
+      libPathLen = strlen(libPath);
+      for (i = 0; jarNames[ i ] != NULL; i++) {
         /* If in the midst of the path, add a path delimiter */
         if (i > 0 ) {
-            size += strlen(CVM_PATH_CLASSPATH_SEPARATOR);
+          size += strlen(CVM_PATH_CLASSPATH_SEPARATOR);
         }
         /* Space for the next entry, including two path delimiters */
 	size += libPathLen + sizeof(char) + strlen(jarNames[i]);
-	/* Check if libPath is absolute or relative to the basePath: */
-        if ( libPath[0] !=  CVM_PATH_LOCAL_DIR_SEPARATOR ) {
-	    /* libPath is a relative path and will need to be prefixed with the
-	       basePath: add space for the basePath and a path delimiter: */
-            size += len + sizeof(char);
-	}
+      }
     }
     /* Now the final terminator for the sysclasspath. */
     size++;
@@ -2097,14 +2107,12 @@ CVMinitPathValues(void *propsPtr, const char *basePath,
      * file onto the ext_dirs path. This is another path entry
      * (including two path separators) and terminator.
      */
-    size += len + sizeof(char) +
-            strlen(libPath) + sizeof(char) +
-            strlen("ext") + 1;
+    size += strlen(libPath) + sizeof(char) + strlen("ext") + 1;
 #endif /* CVM_HAS_JCE */
     
     p0 = p = (char *)malloc(size);
     if (p == NULL) {
-        return CVM_FALSE;
+      return CVM_FALSE;
     }
     memset(p, 0, size);
     memset(props, 0, sizeof (CVMProperties));
@@ -2113,60 +2121,54 @@ CVMinitPathValues(void *propsPtr, const char *basePath,
     props->java_home = p;
     p += strlen(p) + 1;
 
-    /* Make a local copy of basePath without any trailing separator,
-       so it's easy to create paths like basePath + separator + dir. */
-
-    localBasePath = strdup(basePath);
-    if (localBasePath == NULL) {
-	free(p0);
-	return CVM_FALSE;
-    }
-
-    if (strlen(localBasePath) >= 1 &&
-	*(localBasePath + strlen(localBasePath) - 1) ==
-	CVM_PATH_LOCAL_DIR_SEPARATOR) {
-	*(localBasePath + strlen(basePath) - 1) = '\0';
-    }
-
     /* Record path to native libraries */
-    /* Check if dllPath is absolute or relative to the basePath: */
-    if (dllPath[0] == CVM_PATH_LOCAL_DIR_SEPARATOR) {
-	/* dllPath is absolute: just copy it: */
-        strcpy(p, dllPath);
-    } else {
-	/* dllPath is relative: prefix basePath and path delimiter: */
-        strcpy(p, localBasePath);
-	pEnd = p + strlen(p);
-	*pEnd++ = CVM_PATH_LOCAL_DIR_SEPARATOR;
-	strcpy(pEnd, dllPath);
-    }
-
+    strcpy(p, dllPath);
     props->dll_dir = p;
     props->library_path = p;
 
     p += strlen(p) + 1;
     /* Record boot class path */
     *p = '\0';
-    for (i = 0; jarNames[i] != NULL; i++) {
-        if (i > 0) {
-            strcat(p, CVM_PATH_CLASSPATH_SEPARATOR);
+    if (*userBootclasspath == NULL) {
+      if (preBootclasspath != NULL) {
+        strcat(p, preBootclasspath);
+        if (jarNames[0] != NULL) {
+          /* at least one jar so add separator */
+          strcat(p, CVM_PATH_CLASSPATH_SEPARATOR);
         }
-	/* Check if libPath is absolute or relative to the basePath: */
-        if (libPath[0] == CVM_PATH_LOCAL_DIR_SEPARATOR) {
-	    /* libPath is absolute: just copy it: */
-	    strcat(p, libPath);
-	} else {
-	    /* libPath is relative: prefix basePath and delimiter: */
-	    strcat(p, localBasePath);
-	    pEnd = p+strlen(p);
-	    *pEnd++ = CVM_PATH_LOCAL_DIR_SEPARATOR;
-	    strcpy(pEnd, libPath);
-	}
+      }
+      for (i = 0; jarNames[i] != NULL; i++) {
+        if (i > 0) {
+          strcat(p, CVM_PATH_CLASSPATH_SEPARATOR);
+        }
+        strcat(p, libPath);
 	pEnd = p+strlen(p);
         *pEnd++ = CVM_PATH_LOCAL_DIR_SEPARATOR;
         strcpy(pEnd, jarNames[i]);
+      }
+      if (postBootclasspath != NULL) {
+        if (i > 0 || preBootclasspath != NULL) {
+          /* had at least one path so add separator */
+          strcat(p, CVM_PATH_CLASSPATH_SEPARATOR);
+        }
+        strcat(p, postBootclasspath);
+      }
+    } else {
+      /* user has provided a bootclasspath so use it */
+      if (preBootclasspath != NULL) {
+        strcat(p, preBootclasspath);
+        strcat(p, CVM_PATH_CLASSPATH_SEPARATOR);
+        pEnd = p+strlen(p);
+      }
+      strcat(p, *userBootclasspath);
+      if (postBootclasspath != NULL) {
+        strcat(p, CVM_PATH_CLASSPATH_SEPARATOR);
+        strcat(p, postBootclasspath);
+      }
     }
     props->sysclasspath = p;
+    /* return a copy back to caller */
+    *userBootclasspath = strdup(p);
     p += strlen(p) + 1;
 #ifdef CVM_HAS_JCE
     /*
@@ -2174,16 +2176,7 @@ CVMinitPathValues(void *propsPtr, const char *basePath,
      * value to "lib/ext" so that we can see the sunjce_provider.jar
      * jarfile.
      */
-    /* Check if libPath is absolute or relative to the basePath: */
-    if (libPath[0] == CVM_PATH_LOCAL_DIR_SEPARATOR) {
-	/* libPath is absolute: just copy it: */
-	strcpy(p, libPath);
-    } else {
-	strcpy(p, localBasePath);
-	pEnd = p+strlen(p);
-	*pEnd++ = CVM_PATH_LOCAL_DIR_SEPARATOR;
-	strcpy(pEnd, libPath);
-    }
+    strcpy(p, libPath);
     pEnd = p+strlen(p);
     *pEnd++ = CVM_PATH_LOCAL_DIR_SEPARATOR;
     strcpy(pEnd, "ext");
@@ -2194,7 +2187,6 @@ CVMinitPathValues(void *propsPtr, const char *basePath,
     props->ext_dirs = "";
 #endif /* CVM_HAS_JCE */
     CVMassert(p - p0 <= size);
-    free(localBasePath);
     return CVM_TRUE;
 }
 
@@ -2207,6 +2199,26 @@ CVMdestroyPathValues(void *propsPtr)
     }
     return;
 } 
+
+void CVMdestroyPathInfo(CVMpathInfo *pathInfo)
+{
+    if (pathInfo->basePath != NULL) {
+      free(pathInfo->basePath);
+    }
+    if (pathInfo->dllPath != NULL) {
+      free(pathInfo->dllPath);
+    }
+    if (pathInfo->libPath != NULL) {
+      free(pathInfo->libPath);
+    }
+    if (pathInfo->preBootclasspath != NULL) {
+      free(pathInfo->preBootclasspath);
+    }
+    if (pathInfo->postBootclasspath != NULL) {
+      free(pathInfo->postBootclasspath);
+    }
+}
+
 
 /*
  * GC-unsafe conversion of a Java string into a C string

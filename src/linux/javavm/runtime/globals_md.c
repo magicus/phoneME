@@ -43,6 +43,7 @@
 #include <malloc.h>
 #include <sched.h>
 #include <javavm/include/utils.h>
+#include "javavm/include/path_md.h"
 #ifdef CVM_JIT
 #include "javavm/include/porting/jit/jit.h"
 #include "javavm/include/globals.h"
@@ -105,7 +106,7 @@ void CVMdestroyVMTargetGlobalState()
 
 static CVMProperties props;
 
-CVMBool CVMinitStaticState()
+CVMBool CVMinitStaticState(CVMpathInfo *pathInfo)
 {
 #if 0
 #if !defined(CVM_MP_SAFE) && defined(__cpu_set_t_defined)
@@ -191,7 +192,7 @@ CVMBool CVMinitStaticState()
 #endif
 
     {
-	char buf[MAXPATHLEN + 1], *p0, *p;
+	char buf[MAXPATHLEN + 1], *p0, *p, *pEnd;
 
 	{
 	    Dl_info dlinfo;
@@ -304,11 +305,31 @@ CVMBool CVMinitStaticState()
 		strcat(archlib, ARCH);
 		dllpath = archlib;
 	    }
-
-	    return (CVMinitPathValues(&props, javahomepath, libpath, dllpath));
+            pathInfo->basePath = strdup(javahomepath);
+            pathInfo->libPath = strdup(libPath);
+            pathInfo->dllPath = strdup(dllpath);
+	    return CVM_TRUE;
         }
 #else
-        return( CVMinitPathValues( &props, p0, "lib", "lib" ) );
+        pathInfo->basePath = strdup(p0);
+        if (pathInfo->basePath == NULL) {
+          return CVM_FALSE;
+        }
+        p = (char *)malloc(strlen(p0) + 1 + strlen("lib") + 1);
+        if (p == NULL) {
+          return CVM_FALSE;
+        }
+        strcpy(p, p0);
+        pEnd = p + strlen(p);
+        *pEnd++ = CVM_PATH_LOCAL_DIR_SEPARATOR;
+        strcpy(pEnd, "lib");
+        pathInfo->libPath = p;
+        /* lib and dll are the same so this shortcut */
+        pathInfo->dllPath = strdup(p);
+        if (pathInfo->dllPath == NULL) {
+          return CVM_FALSE;
+        }
+        return CVM_TRUE;
 #endif
     badpath:
 	fprintf(stderr, "Invalid path %s\n", p0);

@@ -1884,6 +1884,8 @@ map2jvmtiError(jdwpError error)
             return AGENT_ERROR_INVALID_COUNT;
         case JDWP_ERROR(INTERNAL):
             return AGENT_ERROR_JDWP_INTERNAL;
+    default:
+        return AGENT_ERROR_INTERNAL;
     }
     return AGENT_ERROR_INTERNAL;
 }
@@ -2205,6 +2207,8 @@ map2jdwpError(jvmtiError error)
         case AGENT_ERROR_INTERNAL:
         case AGENT_ERROR_JVMTI_INTERNAL:
         case AGENT_ERROR_JDWP_INTERNAL:
+            return JDWP_ERROR(INTERNAL);
+    default:
             return JDWP_ERROR(INTERNAL);
     }
     return JDWP_ERROR(INTERNAL);
