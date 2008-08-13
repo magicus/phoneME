@@ -513,7 +513,7 @@ int javacall_permissions_load_group_messages(javacall_utf8_string* list,
     return i1;
 }
 
-void javacall_permissions_loadingDone() {
+void javacall_permissions_loading_finished() {
     if (VpolicyFile != NULL) {
         javacall_free(VpolicyFile);
         VpolicyFile = NULL;
