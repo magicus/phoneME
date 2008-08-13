@@ -1420,6 +1420,10 @@ jsr211_launch_result jsr211_execute_handler(javacall_const_utf16_string handler_
 
     invoc = jsr211_get_invocation(handler_id);
 
+#ifdef TRACE_EXTINVOKE
+    printf( "jsr211_execute_handler: %ls, invoc = %p\n", handler_id, invoc );
+#endif
+
     if (NULL == invoc)
         return JSR211_LAUNCH_ERR_NO_INVOCATION;
 
@@ -1437,14 +1441,14 @@ jsr211_launch_result jsr211_execute_handler(javacall_const_utf16_string handler_
     jc_invoc.data              = invoc->data;
     jc_invoc.responseRequired  = invoc->responseRequired ? 1 : 0;
     if ( !(
-         (NULL == handler_id) ||
+         (NULL == handler_id) /*||
          (NULL == jc_invoc.url) ||
          (NULL == jc_invoc.type) ||
          (NULL == jc_invoc.action) || 
          (NULL == jc_invoc.invokingAppName) ||
          (NULL == jc_invoc.invokingAuthority) ||
          (NULL == jc_invoc.username) ||
-         (NULL == jc_invoc.password) 
+         (NULL == jc_invoc.password) */
     ) ) {
         jc_invoc.args = JAVAME_CALLOC(
             invoc->argsLen, sizeof(javacall_utf16_string));
