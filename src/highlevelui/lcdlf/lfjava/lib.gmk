@@ -275,7 +275,7 @@ $(OBJ_DIR)/lfj_image_rom.o: $(GENERATED_DIR)/lfj_image_rom.c
 	@echo " ... $@" $(LOG)
 	@echo +++ $(CC) $(CFLAGS) -c $(CC_OUTPUT)$@ `$(call fixcygpath, $<)` \
 		$(LOG_ONLY)
-	@$(CC) $(CFLAGS) -c $(CC_OUTPUT)$@ `$(call fixcygpath, $<)` $(LOG) /Zm1000
+	@$(CC) $(CFLAGS) -c $(CC_OUTPUT)$@ `$(call fixcygpath, $<)` $(LOG)
 
 # Define Jpp
 JPP_DEFS += -DENABLE_CHAMELEON
