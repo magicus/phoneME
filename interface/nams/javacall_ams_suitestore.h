@@ -370,7 +370,7 @@ typedef struct _javacall_ams_suite_install_info {
     int verifyHashLen;
     /**
      * suite properties given in the JAD as an array of strings in
-     * key/value pair order, can be empty if jadUrl_s is null or empty
+     * key/value pair order, can be empty if jadUrl is null or empty
      */
     javacall_ams_properties jadProps;
     /**
