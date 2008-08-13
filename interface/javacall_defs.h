@@ -183,6 +183,18 @@ typedef javacall_int32 javacall_record_id;
 #define JAVACALL_INVALID_SUITE_ID (-1)
 
 /**
+ * @define JAVACALL_INVALID_FOLDER_ID
+ * @brief The folder id that doesn't correspond to any folder
+ */
+#define JAVACALL_INVALID_FOLDER_ID (-1)
+
+/**
+ * @define JAVACALL_ROOT_FOLDER_ID
+ * @brief ID of the root folder
+ */
+#define JAVACALL_ROOT_FOLDER_ID (-2)
+
+/**
  * @define JAVACALL_INVALID_STORAGE_ID
  * @brief The storage id that doesn't correspond to any storage
  */
