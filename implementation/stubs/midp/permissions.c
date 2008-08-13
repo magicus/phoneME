@@ -289,10 +289,10 @@ int javacall_permissions_load_group_messages(javacall_utf8_string* list,
 }
 
 /**
- * notify implementation that loading is finished resources can 
- * be released
+ * notify implementation that loading is finished - resources 
+ * can be released 
  */
-void javacall_permissions_loadingDone()
+void javacall_permissions_loading_finished()
 {
     return;
 }
