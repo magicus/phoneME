@@ -38,7 +38,7 @@ public class TestAutoSuiteStorage extends TestCase {
 
     /** URL of suite to install */
     private static final String SUITE_URL = 
-        "http://localhost/hello.jad";
+        "http://localhost/~leonid/Hello.jad";
     
     /**
      * Test failures 
@@ -46,8 +46,12 @@ public class TestAutoSuiteStorage extends TestCase {
     void testFailures() {
         boolean exceptionThrown;
         
+        declare("Obtain Automation instance");
+        Automation a = Automation.getInstance();
+        assertNotNull("Failed to obtain Automation instance", a);
+
         declare("Obtain AutoSuiteStorage instance");
-        AutoSuiteStorage storage = AutoSuiteStorage.getStorage();
+        AutoSuiteStorage storage = a.getStorage();
         assertNotNull("Failed to obtain AutoSuiteStorage instance", storage);
 
         declare("Install nonexistent suite");
@@ -65,6 +69,7 @@ public class TestAutoSuiteStorage extends TestCase {
         try {
             suite = storage.installSuite(SUITE_URL);
         } catch (Exception e) {
+            e.printStackTrace();
         }
         assertNotNull("Failed to install suite", suite);
 
@@ -74,6 +79,7 @@ public class TestAutoSuiteStorage extends TestCase {
         try {
             storage.uninstallSuite(suite);
         } catch (Exception e) {
+            e.printStackTrace();
             exceptionThrown = true;
         }
         assertFalse("Failed to uninstall suite", exceptionThrown);
@@ -92,8 +98,12 @@ public class TestAutoSuiteStorage extends TestCase {
      * Tests operations with storage
      */
     void testStorage() {
+        declare("Obtain Automation instance");
+        Automation a = Automation.getInstance();
+        assertNotNull("Failed to obtain Automation instance", a);
+
         declare("Obtain AutoSuiteStorage instance");
-        AutoSuiteStorage storage = AutoSuiteStorage.getStorage();
+        AutoSuiteStorage storage = a.getStorage();
         assertNotNull("Failed to obtain AutoSuiteStorage instance", storage);
 
         Vector suites = storage.getInstalledSuites();

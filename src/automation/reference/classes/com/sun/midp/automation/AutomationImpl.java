@@ -28,28 +28,28 @@
 package com.sun.midp.automation;
 import com.sun.midp.events.*;
 
-final class AutoJavaMEImpl extends AutoJavaME {
-    private static AutoJavaMEImpl instance = null;
+final class AutomationImpl extends Automation {
+    private static AutomationImpl instance = null;
     private final static Object lock = new Object();
 
     private EventQueue eventQueue;
     private AutoEventFactoryImpl eventFactory;
     private int[] foregroundIsolateAndDisplay;
     
-    private AutoJavaMEImpl(EventQueue eventQueue) {
+    private AutomationImpl(EventQueue eventQueue) {
         this.eventQueue = eventQueue;
-        this.eventFactory = AutoEventFactoryImpl.getInstanceImpl();
+        this.eventFactory = AutoEventFactoryImpl.getInstance();
         this.foregroundIsolateAndDisplay = new int[2];
     }
 
-    final static AutoJavaME getInstanceImpl() 
+    final static Automation getInstanceImpl() 
         throws IllegalStateException {
 
         synchronized (lock) {
             AutomationInitializer.guaranteeAutomationInitialized();
 
             if (instance == null) {
-                instance = new AutoJavaMEImpl(
+                instance = new AutomationImpl(
                         AutomationInitializer.getEventQueue());
             }
         }
@@ -67,9 +67,14 @@ final class AutoJavaMEImpl extends AutoJavaME {
     public AutoSuiteStorage getStorage() 
         throws IllegalStateException {
 
-        AutomationInitializer.guaranteeAutomationInitialized();
-        return AutoSuiteStorageImpl.getInstance();        
-    }    
+            return AutoSuiteStorageImpl.getInstance();
+    }
+
+    public AutoEventFactory getEventFactory() 
+        throws IllegalStateException {
+
+        return AutoEventFactoryImpl.getInstance();
+    }
 
     public void injectEvent(AutoEvent event) 
         throws IllegalArgumentException {
@@ -86,23 +91,48 @@ final class AutoJavaMEImpl extends AutoJavaME {
                     eventBase.getType().getName());
         }
 
-        getForegroundIsolateAndDisplay(foregroundIsolateAndDisplay);
-        int forgeroundIsolateId = foregroundIsolateAndDisplay[0];
-        int forgeroundDisplayId = foregroundIsolateAndDisplay[1];
+        int forgeroundIsolateId;
+        int forgeroundDisplayId;
+        synchronized (foregroundIsolateAndDisplay) {
+            getForegroundIsolateAndDisplay(foregroundIsolateAndDisplay);
+            forgeroundIsolateId = foregroundIsolateAndDisplay[0];
+            forgeroundDisplayId = foregroundIsolateAndDisplay[1];
+        }
 
         nativeEvent.intParam4 = forgeroundDisplayId;
         eventQueue.sendNativeEventToIsolate(nativeEvent,forgeroundIsolateId);
     }
     
-    public void injectKeyEvent(AutoKeyState keyState, AutoKeyCode keyCode) {
-        AutoEvent e = eventFactory.createKeyEvent(keyState, keyCode);
+    public void injectKeyEvent(AutoKeyCode keyCode, AutoKeyState keyState) {
+        AutoEvent e = eventFactory.createKeyEvent(keyCode, keyState);
         injectEvent(e);
     }
     
-    public void injectKeyEvent(AutoKeyState keyState, char keyChar) {
-        AutoEvent e = eventFactory.createKeyEvent(keyState, keyChar);
+    public void injectKeyEvent(char keyChar, AutoKeyState keyState) {
+        AutoEvent e = eventFactory.createKeyEvent(keyChar, keyState);
         injectEvent(e);
     }
+
+    public void injectKeyClick(AutoKeyCode keyCode) {
+        AutoEvent e;
+
+        e = eventFactory.createKeyEvent(keyCode, AutoKeyState.PRESSED);
+        injectEvent(e);
+
+        e = eventFactory.createKeyEvent(keyCode, AutoKeyState.RELEASED);
+        injectEvent(e);
+    }
+    
+    public void injectKeyClick(char keyChar) {
+        AutoEvent e;
+
+        e = eventFactory.createKeyEvent(keyChar, AutoKeyState.PRESSED);
+        injectEvent(e);
+
+        e = eventFactory.createKeyEvent(keyChar, AutoKeyState.RELEASED);
+        injectEvent(e);        
+    }
+    
 
     public void replayEvents(AutoEventsSequence events, int speedDivisor) {
     }

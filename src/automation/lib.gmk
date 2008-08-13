@@ -56,7 +56,7 @@ SUBSYSTEM_AUTOMATION_JAVA_FILES = \
 ifeq ($(USE_AUTOMATION), true) 
 
 SUBSYSTEM_AUTOMATION_JAVA_FILES += \
-	$(SUBSYSTEM_AUTOMATION_DIR)/classes/com/sun/midp/automation/AutoJavaME.java \
+	$(SUBSYSTEM_AUTOMATION_DIR)/classes/com/sun/midp/automation/Automation.java \
 	$(SUBSYSTEM_AUTOMATION_DIR)/classes/com/sun/midp/automation/AutoEventType.java \
 	$(SUBSYSTEM_AUTOMATION_DIR)/classes/com/sun/midp/automation/AutoEvent.java \
 	$(SUBSYSTEM_AUTOMATION_DIR)/classes/com/sun/midp/automation/AutoKeyCode.java \
@@ -67,7 +67,7 @@ SUBSYSTEM_AUTOMATION_JAVA_FILES += \
 	$(SUBSYSTEM_AUTOMATION_DIR)/classes/com/sun/midp/automation/AutoEventFactory.java \
 	$(SUBSYSTEM_AUTOMATION_DIR)/classes/com/sun/midp/automation/AutoEventsSequence.java \
 	\
-	$(SUBSYSTEM_AUTOMATION_DIR)/reference/classes/com/sun/midp/automation/AutoJavaMEImpl.java \
+	$(SUBSYSTEM_AUTOMATION_DIR)/reference/classes/com/sun/midp/automation/AutomationImpl.java \
 	$(SUBSYSTEM_AUTOMATION_DIR)/reference/classes/com/sun/midp/automation/AutoEventFactoryImpl.java \
 	$(SUBSYSTEM_AUTOMATION_DIR)/reference/classes/com/sun/midp/automation/AutoEventImplBase.java \
 	$(SUBSYSTEM_AUTOMATION_DIR)/reference/classes/com/sun/midp/automation/AutoKeyEventImpl.java
@@ -88,4 +88,4 @@ $(MIDP_CLASSES_ZIP) :: $(SUBSYSTEM_AUTOMATION_JAVA_FILES)
 	$(appendjavafiles)
 
 JTWI_NATIVE_FILES	+= $(SUBSYSTEM_AUTOMATION_NATIVE_FILES)
-JTWI_I3TEST_JAVA_FILES	+= $(SUBSYSTEM_AUTOMATION_I3TEST_JAVA_FILES)   
+JTWI_I3TEST_JAVA_FILES	+= $(SUBSYSTEM_AUTOMATION_I3TEST_JAVA_FILES) 

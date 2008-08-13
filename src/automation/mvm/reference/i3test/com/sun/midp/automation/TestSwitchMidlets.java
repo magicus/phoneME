@@ -35,11 +35,11 @@ import java.util.*;
 public class TestSwitchMidlets extends TestCase {
     /** URL of the first suite to install */
     private static final String SUITE1_URL =
-        "http://localhost/midlets/HelloMIDlet.jad";
+        "http://localhost/~leonid/Hello.jad";
 
     /** URL of the second suite to install */
     private static final String SUITE2_URL =
-        "http://localhost/midlets/GrinderBench.jad";
+        "http://localhost/~leonid/TextInput.jad";
 
     /** Midlet suite storage */
     private AutoSuiteStorage storage = null;
@@ -60,8 +60,10 @@ public class TestSwitchMidlets extends TestCase {
      * Installs the test suites.
      */
     void installTestSuites() {
+        Automation a = Automation.getInstance();
+
         declare("Install suites");
-        storage = AutoSuiteStorage.getStorage();
+        storage = a.getStorage();
 
         try {
             suite1 = storage.installSuite(SUITE1_URL);
@@ -73,7 +75,7 @@ public class TestSwitchMidlets extends TestCase {
         assertNotNull("Failed to install suite 2", suite2);
 
         System.out.println("Suite 1 name: " + suite1.getSuiteName());
-        System.out.println("Suite 2 name: " + suite1.getSuiteName());
+        System.out.println("Suite 2 name: " + suite2.getSuiteName());
 
         Vector midlets1 = suite1.getSuiteMIDlets();
         Vector midlets2 = suite2.getSuiteMIDlets();
@@ -98,7 +100,7 @@ public class TestSwitchMidlets extends TestCase {
     }
 
     /**
-     * Tests operations with storage
+     * Tests midlets switching
      */
     void testSwitchMidlets() {
         installTestSuites();

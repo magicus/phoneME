@@ -27,19 +27,13 @@
 package com.sun.midp.automation;
 import java.util.*;
 
-final class AutoEventFactoryImpl extends AutoEventFactory {
+final class AutoEventFactoryImpl implements AutoEventFactory {
     private static AutoEventFactoryImpl instance = null;
-    private final static Object sync = new Object();
     
-
-    static AutoEventFactoryImpl getInstanceImpl() {
-        synchronized (sync) {
-            AutomationInitializer.guaranteeAutomationInitialized();
-
-            if (instance == null) {
-                instance = new AutoEventFactoryImpl();
-            }            
-        }
+    synchronized static AutoEventFactoryImpl getInstance() {
+        if (instance == null) {
+            instance = new AutoEventFactoryImpl();
+        }            
 
         return instance;
     }
@@ -86,17 +80,17 @@ final class AutoEventFactoryImpl extends AutoEventFactory {
         return event;
     }
 
-    public AutoKeyEvent createKeyEvent(AutoKeyState keyState, 
-            AutoKeyCode keyCode) 
+    public AutoKeyEvent createKeyEvent(AutoKeyCode keyCode, 
+            AutoKeyState keyState) 
         throws IllegalArgumentException {
 
-        return new AutoKeyEventImpl(keyState, keyCode);
+        return new AutoKeyEventImpl(keyCode, keyState);
     }
 
-    public AutoKeyEvent createKeyEvent(AutoKeyState keyState, 
-            char keyChar) throws IllegalArgumentException {
+    public AutoKeyEvent createKeyEvent(char keyChar, AutoKeyState keyState) 
+        throws IllegalArgumentException {
 
-        return new AutoKeyEventImpl(keyState, keyChar);
+        return new AutoKeyEventImpl(keyChar, keyState);
     }
 
     public AutoPenEvent createPenEvent(AutoPenState penState, int x, int y) {

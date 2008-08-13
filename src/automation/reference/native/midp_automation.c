@@ -98,18 +98,19 @@ KNIDECL(com_sun_midp_automation_AutoKeyEventImpl_getMIDPKeyCodeFromName) {
 
 
 KNIEXPORT KNI_RETURNTYPE_VOID
-KNIDECL(com_sun_midp_automation_AutoJavaMEImpl_getForegroundIsolateAndDisplay) {
+KNIDECL(com_sun_midp_automation_AutomationImpl_getForegroundIsolateAndDisplay) {
 
     KNI_StartHandles(1);
     KNI_DeclareHandle(foregroundIsolateAndDisplay);
     KNI_GetParameterAsObject(1, foregroundIsolateAndDisplay);
 
     KNI_SetIntArrayElement(foregroundIsolateAndDisplay, 
-            0, gForegroundIsolateId);
+            0, (jint)gForegroundIsolateId);
 
     KNI_SetIntArrayElement(foregroundIsolateAndDisplay, 
-            1, gForegroundDisplayId);
+            1, (jint)gForegroundDisplayId);
     
     KNI_EndHandles();
     KNI_ReturnVoid();    
 }
+

@@ -48,6 +48,7 @@ public final class AutoKeyState {
 
     private AutoKeyState(String name, int midpKeyState) {
         this.name = name;
+	this.midpKeyState = midpKeyState;
     }
 
     private String name;

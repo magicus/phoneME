@@ -1070,6 +1070,7 @@ public class MIDletProxyList
             foregroundMidlet.notifyMIDletHasForeground(false);
         }
 
+        MIDletProxy oldForeground = foregroundMidlet;
         foregroundMidlet =
             displayController.foregroundMidletChanging(newForeground);
 
@@ -1091,10 +1092,18 @@ public class MIDletProxyList
 
             notifyListenersOfProxyUpdate(foregroundMidlet,
                 MIDletProxyListListener.ALERT_WAITING);
+
         } else {
             setForegroundInNativeState(MIDletSuiteUtils.getAmsIsolateId(),
                                        -1);
         }
+
+        /*
+         * Notify display controller that foreground change has completed
+         */
+        displayController.foregroundMidletChanged(oldForeground, 
+                newForeground);
+        
     }
 
     /**

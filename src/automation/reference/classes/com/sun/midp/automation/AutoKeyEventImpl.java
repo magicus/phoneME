@@ -32,7 +32,7 @@ import com.sun.midp.lcdui.EventConstants;
 final class AutoKeyEventImpl 
     extends AutoEventImplBase implements AutoKeyEvent {
 
-    AutoKeyEventImpl(AutoKeyState keyState, AutoKeyCode keyCode) {
+    AutoKeyEventImpl(AutoKeyCode keyCode, AutoKeyState keyState) {
         super(AutoEventType.KEYBOARD, 
                 createNativeEvent(keyState, keyCode, ' '));
 
@@ -41,11 +41,11 @@ final class AutoKeyEventImpl
                     "Key code or key state is null");
         }
 
-        this.keyState = keyState;
         this.keyCode = keyCode;
+        this.keyState = keyState;        
     }
 
-    AutoKeyEventImpl(AutoKeyState keyState, char keyChar) {
+    AutoKeyEventImpl(char keyChar, AutoKeyState keyState) {
         super(AutoEventType.KEYBOARD, 
                 createNativeEvent(keyState, null, keyChar));
 
@@ -54,8 +54,8 @@ final class AutoKeyEventImpl
                     "Key state is null");
         }
 
-        this.keyState = keyState;
         this.keyChar = keyChar;
+        this.keyState = keyState;        
     }    
 
     private AutoKeyEventImpl() {
@@ -120,7 +120,7 @@ final class AutoKeyEventImpl
     }
 
     private void registerEventFromStringCreator() {
-        AutoEventFactoryImpl f = AutoEventFactoryImpl.getInstanceImpl();
+        AutoEventFactoryImpl f = AutoEventFactoryImpl.getInstance();
         f.registerEventFromStringCreator(new EventFromStringCreator());        
     }
 
@@ -144,7 +144,7 @@ final class AutoKeyEventImpl
     
     private static Hashtable validKeyCodes = null;
 
-    private AutoKeyState keyState = null;
     private AutoKeyCode keyCode = null;
     private char keyChar;
+    private AutoKeyState keyState = null;    
 }

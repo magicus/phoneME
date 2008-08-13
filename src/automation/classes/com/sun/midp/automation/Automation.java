@@ -30,12 +30,12 @@ package com.sun.midp.automation;
 /**
  *  Represents our Java ME system.
  */
-public abstract class AutoJavaME {
+public abstract class Automation {
 
-    public final static AutoJavaME getInstance() 
+    public final static Automation getInstance() 
         throws IllegalStateException {
 
-        return AutoJavaMEImpl.getInstanceImpl();
+        return AutomationImpl.getInstanceImpl();
     }
 
     /**
@@ -48,10 +48,17 @@ public abstract class AutoJavaME {
     public abstract AutoSuiteStorage getStorage() 
         throws IllegalStateException;
 
+    public abstract AutoEventFactory getEventFactory()
+        throws IllegalStateException;
+
     public abstract void injectEvent(AutoEvent event);
-    public abstract void injectKeyEvent(AutoKeyState keyState, 
-            AutoKeyCode keyCode);
-    public abstract void injectKeyEvent(AutoKeyState keyState, char keyChar);
+
+    public abstract void injectKeyEvent(AutoKeyCode keyCode, 
+            AutoKeyState keyState);
+    public abstract void injectKeyEvent(char keyChar, AutoKeyState keyState);
+    public abstract void injectKeyClick(AutoKeyCode keyCode);
+    public abstract void injectKeyClick(char keyChar);
+
 
     public abstract void replayEvents(AutoEventsSequence events, 
             int speedDivisor);

@@ -46,24 +46,17 @@ public class AutoDisplayController extends DisplayController {
     }
 
     /**
-     * Call to notify that foreground MIDlet is changing and give the
-     * display controller a chance to preempt the change.
-     * Also the last MIDlet created state will be reset.
-     * <p>
-     * If the MIDlet to get the foreground is paused, then activate it.
+     * Call to notify display controller that foreground MIDlet 
+     * has changed. 
      *
-     * @param midlet proxy of the MIDlet to be put in the foreground
+     * @param oldForeground proxy of the old foreground MIDlet 
+     * @param newForeground proxy of the new foreground MIDlet 
      *
-     * @return Proxy of the next foreground MIDlet, may be the foreground
-     *         MIDlet if the foreground should not change
-     */
-    MIDletProxy foregroundMidletChanging(MIDletProxy midlet) {
-        MIDletProxy oldForeground = midletProxyList.getForegroundMIDlet();
-        MIDletProxy newForeground = super.foregroundMidletChanging(midlet);
+     */    
+    void foregroundMidletChanged(MIDletProxy oldForeground, 
+            MIDletProxy newForeground) {
         
         notifyListenersOfForegroundChange(oldForeground, newForeground);
-        
-        return newForeground;
     }
 
 

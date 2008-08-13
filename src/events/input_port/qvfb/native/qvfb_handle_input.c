@@ -34,6 +34,8 @@
 #include <sys/time.h>
 #include <sys/types.h>
 #include <unistd.h>
+#include <stdio.h>
+#include <stdlib.h>
 
 #include <midpServices.h>
 #include <midpEvents.h>
@@ -93,8 +95,8 @@ void handle_key_port(MidpReentryData* pNewSignal, MidpEvent* pNewMidpEvent) {
     struct QVFbKeyEvent {
         unsigned int unicode;
         unsigned int modifiers;
-        int press;
-        int repeat;
+        char press;
+        char repeat;
     } qvfbKeyEvent;
 
     /* IMPL_NOTE: We don't handle repeats, but this seems OK. When you hold */
@@ -103,6 +105,10 @@ void handle_key_port(MidpReentryData* pNewSignal, MidpEvent* pNewMidpEvent) {
     read(fbapp_get_keyboard_fd(), &qvfbKeyEvent, sizeof(qvfbKeyEvent));
     midpKeyCode = map_raw_keycode(qvfbKeyEvent.unicode);
     isPressed = qvfbKeyEvent.press ? KNI_TRUE : KNI_FALSE;
+    if (midpKeyCode == KEYMAP_KEY_SELECT){
+        fprintf(stderr, "SELECT: %d\n", isPressed);
+    }
+    
     repeatSupport = KNI_FALSE;
 
     fbapp_map_keycode_to_event(

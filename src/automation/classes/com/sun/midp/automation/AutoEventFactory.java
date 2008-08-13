@@ -27,30 +27,26 @@
 
 package com.sun.midp.automation;
 
-public abstract class AutoEventFactory {
-    public abstract AutoEvent createFromString(String str)
+public interface AutoEventFactory {
+    public AutoEvent createFromString(String str)
         throws IllegalArgumentException;
 
-    public abstract AutoEvent createFromString(String str, int offset)
+    public AutoEvent createFromString(String str, int offset)
         throws IllegalArgumentException;
 
-    public abstract AutoEvent createFromString(String str, int offset, 
+    public AutoEvent createFromString(String str, int offset, 
             Integer newOffset) 
         throws IllegalArgumentException;
 
 
-    public abstract AutoKeyEvent createKeyEvent(AutoKeyState keyState, 
-            AutoKeyCode keyCode) 
+    public AutoKeyEvent createKeyEvent(AutoKeyCode keyCode, 
+            AutoKeyState keyState)
         throws IllegalArgumentException;
 
-    public abstract AutoKeyEvent createKeyEvent(AutoKeyState keyState, 
-            char keyChar) 
+    public AutoKeyEvent createKeyEvent(char keyChar, AutoKeyState keyState)
         throws IllegalArgumentException;
 
-    public abstract AutoPenEvent createPenEvent(
+    public AutoPenEvent createPenEvent(
             AutoPenState penState, int x, int y);
 
-    public AutoEventFactory getInstance() {
-        return AutoEventFactoryImpl.getInstanceImpl();
-    }
 }
