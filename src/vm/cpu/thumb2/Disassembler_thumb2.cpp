@@ -488,194 +488,170 @@ void Disassembler::disasm_new16bit(const short* addr, short instr,
   end_thumb2();
 }
 
-
-void Disassembler::disasm_32bit(const short* addr, const short instr,
-                                const int instr_offset) {
-  start_thumb2(32, addr, instr);
-
-  jushort hw2 = (jushort)addr[1];
-
-  if (((instr >> 11) & 0x3) == 2) {
-    if ((hw2 & (1 << 15))) {
-      disasm_v6t2_branches_and_misc(instr, hw2);
-    } else {
-      disasm_v6t2_data_processing(instr, hw2);
-    }
-  } else if (((instr >> 9) & 0x7) == 0x5) {//data processing no imm
-    disasm_v6t2_data_processing_no_imm(instr, hw2);
-  } else if (((instr >> 9) & 0xF) == 0xC) { //load and store single data items
-    disasm_v6t2_data_load_store_single(instr, hw2);
-/*  } else if (((instr >> 9) & 0x7F) == 0x7C) {
-    int size = (instr >> 5) & 0x03;
-    Assembler::Register rn  = reg(instr & 0x0f);
-    Assembler::Register rxf = reg((hw2 >> 12) & 0x0f);
-    int imm;
-    const char *name = bit(instr, 4) ? "ldr" : "str";
-
-    // load and store single data items
-    if (rn == Assembler::pc) {
-      // PC+-imm12
-      if (bit(instr, 7)) { // +imm12
-        imm = 0;
-      } else { // -imm12
-        imm = (0xffffffff >> 12) << 12;
+inline void Disassembler::disasm_v6t2_data_load_store_double_and_exclusive(
+                                short instr, short hw2)
+{
+  const char* rn   = register_name(reg_field_w(instr));
+  const char* rxf  = register_name(reg_field_w(hw2, 12));
+  const char* rxf2 = register_name(reg_field_w(hw2, 8));
+  int imm8 = (hw2 & 0xFF) << 2;
+  const char* singess[] = {"-", ""};
+  const char* sizes[] = {"b", "h", "error", "d"};
+  if ((instr >> 8) & 0x1) { //ldrd/strd pre_idx
+    const char* wb[] = {"", "!"};
+    const char* code[] = {"strd", "ldrd"};
+    stream()->print("%s.w\t%s, %s, [%s, #%s%d]%s", code[(instr >> 4) & 0x1],
+        rxf, rxf2, rn, singess[(instr >> 7) & 0x1], imm8, wb[(instr >> 5) & 0x1]);
+  } else if ((instr >> 5) & 0x1) { //ldrd/strd post_idx
+    const char* code[] = {"strd", "ldrd"};
+    stream()->print("%s.w\t%s, %s, [%s], #%s%d", code[(instr >> 4) & 0x1],
+        rxf, rxf2, rn, singess[(instr >> 7) & 0x1], imm8);
+  } else if ((instr >> 7) & 0x1) { //load/store exclusive byte and etc
+    const char *rm = register_name(reg_field_w(hw2));
+    int op = (hw2 >> 4) & 0xF;
+    if (op & 0x4) { //ldrex*
+      const char* code[] = {"str", "ldr"};
+      if (!(op & 0x3)) {
+        rxf2 = "";
       }
-      imm |= (hw2 & 0xfff);
-    } else if (bit(instr, 7)) {
-      // Rn +imm12
-      imm = hw2 & 0xfff;
-    } else {
-      imm = 999999; // IMPL_NOTE: consider whether it should be fixed.
+      stream()->print("%sex%s.w\t%s, %s, [%s]", code[(instr >> 4) & 0x1],
+        sizes[op & 0x3], rxf, rxf2, rn);
+    } else {//tbb, tbh
+      const char* lsl[] = {"", ", lsl #1"};
+      stream()->print("tb%s.w\t[%s, %s%s]",
+        sizes[op & 0x1], rn, rm, lsl[op & 0x1]);
     }
-
-    static const char *suffix[] = {"b", "h", "", "<error>"};
-    stream()->print("%s%s.w\t%s, [%s, #%d]", name, suffix[size],
-                    register_name(rxf), register_name(rn), imm);*/
-  } else if (((instr >> 9) & 0xF) == 0x4) {
-    if (bit(instr, 6)) {
-      disasm_v6t2_data_load_store_double_and_exclusive(instr, hw2);
-    } else {
-      disasm_v6t2_data_load_store_multiple(instr, hw2);
-    }
-  } else if ((instr & 0xef00) == 0xee00) {
-    disasm_v6t2_coproc(instr, hw2, instr_offset);
+  } else {//ldrex/strex
+    const char* code[] = {"strex", "ldrex"};
+    stream()->print("%s.w\t%s, %s, [%s, #%d]", code[(instr >> 4) & 0x1],
+        rxf2, rxf, rn, imm8);
   }
-
-  end_thumb2();
 }
 
-void Disassembler::disasm_v6t2_data_processing(short instr, short hw2) {
-  static const char* const opcode_w_names[] = {
-    "and", "bic", "orr", "orn", "eor", "error:0101", "error:0110","error:0111",
-    "add", "error:1001", "adc", "sbc", "error:1100", "sub", "rsb","error:1111"
-  };
-  static const char* const s_suffix[] = {"", "s", "<error>"};
+inline void Disassembler::disasm_v6t2_data_load_store_multiple(
+                                short instr, short hw2)
+{
+  int u = (instr >> 8) & 0x1;
+  int v = (instr >> 7) & 0x1;
+  int l = (instr >> 4) & 0x1;
+  int w = (instr >> 5) & 0x1;
   const char *rn = register_name(reg_field_w(instr));
-  const char *rd = register_name(reg_field_w(hw2, 8));
-  const char* op_code_name = "";
+  static const char* const mode[] = {"ia", "db"};
+  static const char* const wb[] = {"", "!"};
+  if (u == v) {
+    if (l) { //rfe
+      stream()->print("rfe%s.w\t%s%s", mode[u], rn, wb[w]);
+    } else { //srs
+      int mode13 = hw2 & 0xF;
+      stream()->print("srs%s.w\t#%d%s", mode[u], mode13, wb[w]);
+    }
+  } else { //stm/ldm
+    const char* code[] = {"stm", "ldm"};
+    stream()->print("%s%s.w\t%s%s, ", code[l], mode[u], rn, wb[w]);
+    emit_register_list(hw2);
+  }
+}
 
-  if (((instr >> 9) & 0x1) == 0) { // encoded 12 bit imm
-    int opcode_value = (instr >> 5) & 0xF;
-    const char *code = opcode_w_names[opcode_value];
-    int S = (instr >> 4) & 0x1;
-    int imm12 = hw2 & 0xFF | ((hw2 >> 4) & (0x7 << 8)) | ((instr << 1) & (0x1 << 11));
-    imm12 = decode_imm(imm12);
-    if ((((hw2 >> 8) & 0xF) ^ 0xF) == 0) {//clash in cmn, cmp, teq, tst
-      if (S) {
-        if (opcode_value == 0x0) {
-          code = "tst";
-          S = 0;
-          rd = NULL;
-        } else if (opcode_value == 0x4) {
-          code = "teq";
-          S = 0;
-          rd = NULL;
-        } else if (opcode_value == 0x8) {
-          code = "cmn";
-          S = 0;
-          rd = NULL;
-        } else if (opcode_value == 0xD) {
-          code = "cmp";
-          S = 0;
-          rd = NULL;
-        }
-      }
-    } else if (((instr & 0xF) ^ 0xF) == 0) {//clash in cmn, cmp, teq, tst
-      if (opcode_value == 0x2) {
-        code = "mov";
-        rn = NULL;
-      } else if (opcode_value == 0x3) {
-        code = "mvn";
-        rn = NULL;
-      }
+inline void Disassembler::disasm_v6t2_data_load_store_single(
+                                short instr, short hw2)
+{
+  Assembler::Register rn_reg = reg_field_w(instr);
+  Assembler::Register rxf_reg = reg_field_w(reg_field_w(hw2, 12));
+  const char* rn = register_name(rn_reg);
+  const char* rxf = register_name(rxf_reg);
+  int size = (instr >> 5) & 0x3;
+  bool load = (instr >> 4) & 0x1;
+  int S = (instr >> 8) & 0x1;
+  int U = (instr >> 7) & 0x1;
+  static const char* const sign_suff[] = {"", "s"};
+  static const char* const size_suff[] = {"b", "h", "", "error3"};
+  int imm8 = hw2 & 0xFF;
+  int imm12 = hw2 & 0xFFF;
+  if (load) {
+    if ((instr & 0xF) == 0xF) { //pc +- imm12
+      stream()->print("ldr%s%s.w\t%s, [pc, #%c%d]",
+        sign_suff[S], size_suff[size], rxf, "-+"[S], imm12);
+      return;
     }
-    stream()->print("%s%s.w\t", code, s_suffix[S]);
-    if (rd) {
-      stream()->print("%s, ", rd);
-    }
-    if (rn) {
-      stream()->print("%s, ", rn);
-    }
-    stream()->print("#%d", imm12);
-  } else {
-    if (((instr >> 8) & 0x1) == 0) {
-      int code = ((instr >> 4) & 0xB);
-      int imm12 = hw2 & 0xFF | ((hw2 >> 4) & (0x7 << 8)) | ((instr << 1) & (0x1 << 11));
-      if (((instr >> 6) & 0x1) == 0) {// 12 bit plain imm
-        if (code == 0) {
-          op_code_name = "addw";
-        } else if (code == 0xA) {
-          op_code_name = "subw";
-        } else {
-          op_code_name = "error";
-          stream()->print("error: encoded values are: %d %d\n", instr, hw2);
-          SHOULD_NOT_REACH_HERE();
-        }
-        stream()->print("%s.w\t%s, %s, #%d", op_code_name, rd, rn, imm12);
-      } else {// 16 bit plain imm
-        int imm16 = imm12 | ((instr & 0xF) << 12);
-        if (code == 0) {
-          op_code_name = "movw";
-        } else if (code == 0x8) {
-          op_code_name = "movt";
-        } else {
-          op_code_name = "error";
-          stream()->print("error: encoded values are: %d %d\n", instr, hw2);
-          SHOULD_NOT_REACH_HERE();
-        }
-        stream()->print("%s.w\t%s, #%d", op_code_name, rd, imm16);
+    if (U == 1) {
+      stream()->print("ldr%s%s.w\t%s, [%s, #%d]",
+        sign_suff[S], size_suff[size], rxf, rn, imm12);
+      if (rn_reg == Assembler::gp) {
+         print_gp_name(imm12);
       }
-    } else {
-      if (((instr >> 4) & 0x1) == 0) {
-        int op = (instr >> 5) & 0x7;
-        int val1 = ((hw2 >> 6) & 0x3) | ((hw2 >> 10) & 0x7);
-        int val2 = (hw2  & 0x1F);
-        const char* sixteen = "";
-        const char* shift;
-        if (op == 3) { //bfc/bfi
-          if (((instr & 0xF) ^ 0xF) == 0) {
-            op_code_name = "bfc";
-            rn = "";
-          } else {
-            op_code_name = "bfi";
-          }
-          stream()->print("%s.w\t%s, %s, #%d, #%d",
-                               op_code_name, rd, rn, val1, val2 - val1 + 1);
-        } else if (op < 7) {
-          const char* signess = (op > 3) ? "u" : "s";
-          if ((op & 0x3) == 2) { //bfx
-            op_code_name = "bfx";
-            stream()->print("%s%s.w\t%s, %s, #%d, #%d",
-                        signess, op_code_name, rd, rn, val1, val2 - val1 + 1);
-            return;
-          } else if ((op & 0x3) == 0) { //ssat lsl only
-            op_code_name = "ssat";
-            shift = "lsl";
-          } else { //ssat asr or ssat16
-            op_code_name = "ssat";
-            if (val2 == 0) {
-              sixteen = "16";
-              shift = "";
-            } else {
-              shift = "asr";
-            }
-          }
-          stream()->print("%s%s%s.w\t%s, #%d, %s, %s #%d",
-                     signess, op_code_name, sixteen, rd, val2 + 1, rn, shift,
-                     val1);
-
-        } else {
-          SHOULD_NOT_REACH_HERE();
-        }
+      return;
+    }
+    int subcode = (hw2 >> 8) & 0xF;
+    if (subcode == 0xC) {//rn - imm8
+      stream()->print("ldr%s%s.w\t%s, [%s, #-%d]",
+        sign_suff[S], size_suff[size], rxf, rn, imm8);
+    } else if (subcode == 0x9) {//post_idx_neg
+      stream()->print("ldr%s%s.w\t%s, [%s], #-%d",
+        sign_suff[S], size_suff[size], rxf, rn, imm8);
+    } else if (subcode == 0xB) {//post_idx_pos
+      stream()->print("ldr%s%s.w\t%s, [%s], #%d",
+        sign_suff[S], size_suff[size], rxf, rn, imm8);
+    } else if (subcode == 0xD) {//pre_idx_neg
+      stream()->print("ldr%s%s.w\t%s, [%s, #-%d]!",
+        sign_suff[S], size_suff[size], rxf, rn, imm8);
+    } else if (subcode == 0xF) {//pre_idx_pos
+      stream()->print("ldr%s%s.w\t%s, [%s, #%d]!",
+        sign_suff[S], size_suff[size], rxf, rn, imm8);
+    } else if (subcode == 0x0) {//shifted register
+      int shift = (hw2 >> 4) & 0x3;
+      const char *rm = register_name(reg_field_w(hw2));
+      if (shift) {
+        stream()->print("ldr%s%s.w\t%s, [%s, %s, lsl #%d]",
+          sign_suff[S], size_suff[size], rxf, rn, rm, shift);
       } else {
-        stream()->print("reserved code space!\n");
-        SHOULD_NOT_REACH_HERE();
+        stream()->print("ldr%s%s.w\t%s, [%s, %s]",
+          sign_suff[S], size_suff[size], rxf, rn, rm);
       }
+    } else if (subcode == 0xE) {//user privillege
+      stream()->print("ldr%s%st.w\t%s, [%s, #%d]",
+        sign_suff[S], size_suff[size], rxf, rn, imm8);
+    }
+  } else {
+    if (U == 1) {
+      stream()->print("str%s.w\t%s, [%s, #%d]",
+        size_suff[size], rxf, rn, imm12);
+      return;
+    }
+    int subcode = (hw2 >> 8) & 0xF;
+    if (subcode == 0xC) {//rn - imm8
+      stream()->print("str%s.w\t%s, [%s, #-%d]",
+        size_suff[size], rxf, rn, imm8);
+    } else if (subcode == 0x9) {//post_idx_neg
+      stream()->print("str%s.w\t%s, [%s], #-%d",
+        size_suff[size], rxf, rn, imm8);
+    } else if (subcode == 0xB) {//post_idx_pos
+      stream()->print("str%s.w\t%s, [%s], #%d",
+        size_suff[size], rxf, rn, imm8);
+    } else if (subcode == 0xD) {//pre_idx_neg
+      stream()->print("str%s.w\t%s, [%s, #-%d]!",
+        size_suff[size], rxf, rn, imm8);
+    } else if (subcode == 0xF) {//pre_idx_pos
+      stream()->print("str%s.w\t%s, [%s, #%d]!",
+        size_suff[size], rxf, rn, imm8);
+    } else if (subcode == 0x0) {//shifted register
+      int shift = (hw2 >> 4) & 0x3;
+      const char *rm = register_name(reg_field_w(hw2));
+      if (shift) {
+        stream()->print("str%s.w\t%s, [%s, %s, lsl #%d]",
+          size_suff[size], rxf, rn, rm, shift);
+      } else {
+        stream()->print("str%s.w\t%s, [%s, %s]",
+          size_suff[size], rxf, rn, rm);
+      }
+    } else if (subcode == 0xE) {//user privillege
+      stream()->print("str%st.w\t%s, [%s, #%d]",
+        size_suff[size], rxf, rn, imm8);
     }
   }
 }
 
-void Disassembler::disasm_v6t2_data_processing_no_imm(short instr, short hw2) {
+inline void Disassembler::disasm_v6t2_data_processing_no_imm(short instr,
+                                                             short hw2) {
   const char *rn = register_name(reg_field_w(instr));
   const char *rd = register_name(reg_field_w(hw2, 8));
   const char *rd_low = register_name(reg_field_w(hw2, 12));
@@ -846,159 +822,190 @@ void Disassembler::disasm_v6t2_data_processing_no_imm(short instr, short hw2) {
   return;
 }
 
-void Disassembler::disasm_v6t2_data_load_store_single(short instr, short hw2) {
-  Assembler::Register rn_reg = reg_field_w(instr);
-  Assembler::Register rxf_reg = reg_field_w(reg_field_w(hw2, 12));
-  const char* rn = register_name(rn_reg);
-  const char* rxf = register_name(rxf_reg);
-  int size = (instr >> 5) & 0x3;
-  bool load = (instr >> 4) & 0x1;
-  int S = (instr >> 8) & 0x1;
-  int U = (instr >> 7) & 0x1;
-  static const char* const sign_suff[] = {"", "s"};
-  static const char* const size_suff[] = {"b", "h", "", "error3"};
-  int imm8 = hw2 & 0xFF;
-  int imm12 = hw2 & 0xFFF;
-  if (load) {
-    if ((instr & 0xF) == 0xF) { //pc +- imm12
-      stream()->print("ldr%s%s.w\t%s, [pc, #%c%d]",
-        sign_suff[S], size_suff[size], rxf, "-+"[S], imm12);
-      return;
+
+inline void Disassembler::disasm_32bit(const short* addr, const short instr,
+                                       const int instr_offset) {
+  start_thumb2(32, addr, instr);
+
+  jushort hw2 = (jushort)addr[1];
+
+  if (((instr >> 11) & 0x3) == 2) {
+    if ((hw2 & (1 << 15))) {
+      disasm_v6t2_branches_and_misc(instr, hw2);
+    } else {
+      disasm_v6t2_data_processing(instr, hw2);
     }
-    if (U == 1) {
-      stream()->print("ldr%s%s.w\t%s, [%s, #%d]",
-        sign_suff[S], size_suff[size], rxf, rn, imm12);
-      if (rn_reg == Assembler::gp) {
-         print_gp_name(imm12);
+  } else if (((instr >> 9) & 0x7) == 0x5) {//data processing no imm
+    disasm_v6t2_data_processing_no_imm(instr, hw2);
+  } else if (((instr >> 9) & 0xF) == 0xC) { //load and store single data items
+    disasm_v6t2_data_load_store_single(instr, hw2);
+/*  } else if (((instr >> 9) & 0x7F) == 0x7C) {
+    int size = (instr >> 5) & 0x03;
+    Assembler::Register rn  = reg(instr & 0x0f);
+    Assembler::Register rxf = reg((hw2 >> 12) & 0x0f);
+    int imm;
+    const char *name = bit(instr, 4) ? "ldr" : "str";
+
+    // load and store single data items
+    if (rn == Assembler::pc) {
+      // PC+-imm12
+      if (bit(instr, 7)) { // +imm12
+        imm = 0;
+      } else { // -imm12
+        imm = (0xffffffff >> 12) << 12;
       }
-      return;
+      imm |= (hw2 & 0xfff);
+    } else if (bit(instr, 7)) {
+      // Rn +imm12
+      imm = hw2 & 0xfff;
+    } else {
+      imm = 999999; // IMPL_NOTE: consider whether it should be fixed.
     }
-    int subcode = (hw2 >> 8) & 0xF;
-    if (subcode == 0xC) {//rn - imm8
-      stream()->print("ldr%s%s.w\t%s, [%s, #-%d]",
-        sign_suff[S], size_suff[size], rxf, rn, imm8);
-    } else if (subcode == 0x9) {//post_idx_neg
-      stream()->print("ldr%s%s.w\t%s, [%s], #-%d",
-        sign_suff[S], size_suff[size], rxf, rn, imm8);
-    } else if (subcode == 0xB) {//post_idx_pos
-      stream()->print("ldr%s%s.w\t%s, [%s], #%d",
-        sign_suff[S], size_suff[size], rxf, rn, imm8);
-    } else if (subcode == 0xD) {//pre_idx_neg
-      stream()->print("ldr%s%s.w\t%s, [%s, #-%d]!",
-        sign_suff[S], size_suff[size], rxf, rn, imm8);
-    } else if (subcode == 0xF) {//pre_idx_pos
-      stream()->print("ldr%s%s.w\t%s, [%s, #%d]!",
-        sign_suff[S], size_suff[size], rxf, rn, imm8);
-    } else if (subcode == 0x0) {//shifted register
-      int shift = (hw2 >> 4) & 0x3;
-      const char *rm = register_name(reg_field_w(hw2));
-      if (shift) {
-        stream()->print("ldr%s%s.w\t%s, [%s, %s, lsl #%d]",
-          sign_suff[S], size_suff[size], rxf, rn, rm, shift);
-      } else {
-        stream()->print("ldr%s%s.w\t%s, [%s, %s]",
-          sign_suff[S], size_suff[size], rxf, rn, rm);
-      }
-    } else if (subcode == 0xE) {//user privillege
-      stream()->print("ldr%s%st.w\t%s, [%s, #%d]",
-        sign_suff[S], size_suff[size], rxf, rn, imm8);
+
+    static const char *suffix[] = {"b", "h", "", "<error>"};
+    stream()->print("%s%s.w\t%s, [%s, #%d]", name, suffix[size],
+                    register_name(rxf), register_name(rn), imm);*/
+  } else if (((instr >> 9) & 0xF) == 0x4) {
+    if (bit(instr, 6)) {
+      disasm_v6t2_data_load_store_double_and_exclusive(instr, hw2);
+    } else {
+      disasm_v6t2_data_load_store_multiple(instr, hw2);
     }
-  } else {
-    if (U == 1) {
-      stream()->print("str%s.w\t%s, [%s, #%d]",
-        size_suff[size], rxf, rn, imm12);
-      return;
-    }
-    int subcode = (hw2 >> 8) & 0xF;
-    if (subcode == 0xC) {//rn - imm8
-      stream()->print("str%s.w\t%s, [%s, #-%d]",
-        size_suff[size], rxf, rn, imm8);
-    } else if (subcode == 0x9) {//post_idx_neg
-      stream()->print("str%s.w\t%s, [%s], #-%d",
-        size_suff[size], rxf, rn, imm8);
-    } else if (subcode == 0xB) {//post_idx_pos
-      stream()->print("str%s.w\t%s, [%s], #%d",
-        size_suff[size], rxf, rn, imm8);
-    } else if (subcode == 0xD) {//pre_idx_neg
-      stream()->print("str%s.w\t%s, [%s, #-%d]!",
-        size_suff[size], rxf, rn, imm8);
-    } else if (subcode == 0xF) {//pre_idx_pos
-      stream()->print("str%s.w\t%s, [%s, #%d]!",
-        size_suff[size], rxf, rn, imm8);
-    } else if (subcode == 0x0) {//shifted register
-      int shift = (hw2 >> 4) & 0x3;
-      const char *rm = register_name(reg_field_w(hw2));
-      if (shift) {
-        stream()->print("str%s.w\t%s, [%s, %s, lsl #%d]",
-          size_suff[size], rxf, rn, rm, shift);
-      } else {
-        stream()->print("str%s.w\t%s, [%s, %s]",
-          size_suff[size], rxf, rn, rm);
-      }
-    } else if (subcode == 0xE) {//user privillege
-      stream()->print("str%st.w\t%s, [%s, #%d]",
-        size_suff[size], rxf, rn, imm8);
-    }
+  } else if ((instr & 0xec00) == 0xec00) {
+    disasm_v6t2_coproc(instr, hw2, instr_offset);
   }
+
+  end_thumb2();
 }
 
-void Disassembler::disasm_v6t2_data_load_store_double_and_exclusive(short instr, short hw2) {
-  const char* rn   = register_name(reg_field_w(instr));
-  const char* rxf  = register_name(reg_field_w(hw2, 12));
-  const char* rxf2 = register_name(reg_field_w(hw2, 8));
-  int imm8 = (hw2 & 0xFF) << 2;
-  const char* singess[] = {"-", ""};
-  const char* sizes[] = {"b", "h", "error", "d"};
-  if ((instr >> 8) & 0x1) { //ldrd/strd pre_idx
-    const char* wb[] = {"", "!"};
-    const char* code[] = {"strd", "ldrd"};
-    stream()->print("%s.w\t%s, %s, [%s, #%s%d]%s", code[(instr >> 4) & 0x1],
-        rxf, rxf2, rn, singess[(instr >> 7) & 0x1], imm8, wb[(instr >> 5) & 0x1]);
-  } else if ((instr >> 5) & 0x1) { //ldrd/strd post_idx
-    const char* code[] = {"strd", "ldrd"};
-    stream()->print("%s.w\t%s, %s, [%s], #%s%d", code[(instr >> 4) & 0x1],
-        rxf, rxf2, rn, singess[(instr >> 7) & 0x1], imm8);
-  } else if ((instr >> 7) & 0x1) { //load/store exclusive byte and etc
-    const char *rm = register_name(reg_field_w(hw2));
-    int op = (hw2 >> 4) & 0xF;
-    if (op & 0x4) { //ldrex*
-      const char* code[] = {"str", "ldr"};
-      if (!(op & 0x3)) {
-        rxf2 = "";
-      }
-      stream()->print("%sex%s.w\t%s, %s, [%s]", code[(instr >> 4) & 0x1],
-        sizes[op & 0x3], rxf, rxf2, rn);
-    } else {//tbb, tbh
-      const char* lsl[] = {"", ", lsl #1"};
-      stream()->print("tb%s.w\t[%s, %s%s]",
-        sizes[op & 0x1], rn, rm, lsl[op & 0x1]);
-    }
-  } else {//ldrex/strex
-    const char* code[] = {"strex", "ldrex"};
-    stream()->print("%s.w\t%s, %s, [%s, #%d]", code[(instr >> 4) & 0x1],
-        rxf2, rxf, rn, imm8);
-  }
-}
-
-void Disassembler::disasm_v6t2_data_load_store_multiple(short instr, short hw2) {
-  int u = (instr >> 8) & 0x1;
-  int v = (instr >> 7) & 0x1;
-  int l = (instr >> 4) & 0x1;
-  int w = (instr >> 5) & 0x1;
+void Disassembler::disasm_v6t2_data_processing(short instr, short hw2) {
+  static const char* const opcode_w_names[] = {
+    "and", "bic", "orr", "orn", "eor", "error:0101", "error:0110","error:0111",
+    "add", "error:1001", "adc", "sbc", "error:1100", "sub", "rsb","error:1111"
+  };
+  static const char* const s_suffix[] = {"", "s", "<error>"};
   const char *rn = register_name(reg_field_w(instr));
-  static const char* const mode[] = {"ia", "db"};
-  static const char* const wb[] = {"", "!"};
-  if (u == v) {
-    if (l) { //rfe
-      stream()->print("rfe%s.w\t%s%s", mode[u], rn, wb[w]);
-    } else { //srs
-      int mode13 = hw2 & 0xF;
-      stream()->print("srs%s.w\t#%d%s", mode[u], mode13, wb[w]);
+  const char *rd = register_name(reg_field_w(hw2, 8));
+  const char* op_code_name = "";
+
+  if (((instr >> 9) & 0x1) == 0) { // encoded 12 bit imm
+    int opcode_value = (instr >> 5) & 0xF;
+    const char *code = opcode_w_names[opcode_value];
+    int S = (instr >> 4) & 0x1;
+    int imm12 = hw2 & 0xFF | ((hw2 >> 4) & (0x7 << 8)) | ((instr << 1) & (0x1 << 11));
+    imm12 = decode_imm(imm12);
+    if ((((hw2 >> 8) & 0xF) ^ 0xF) == 0) {//clash in cmn, cmp, teq, tst
+      if (S) {
+        if (opcode_value == 0x0) {
+          code = "tst";
+          S = 0;
+          rd = NULL;
+        } else if (opcode_value == 0x4) {
+          code = "teq";
+          S = 0;
+          rd = NULL;
+        } else if (opcode_value == 0x8) {
+          code = "cmn";
+          S = 0;
+          rd = NULL;
+        } else if (opcode_value == 0xD) {
+          code = "cmp";
+          S = 0;
+          rd = NULL;
+        }
+      }
+    } else if (((instr & 0xF) ^ 0xF) == 0) {//clash in cmn, cmp, teq, tst
+      if (opcode_value == 0x2) {
+        code = "mov";
+        rn = NULL;
+      } else if (opcode_value == 0x3) {
+        code = "mvn";
+        rn = NULL;
+      }
     }
-  } else { //stm/ldm
-    const char* code[] = {"stm", "ldm"};
-    stream()->print("%s%s.w\t%s%s, ", code[l], mode[u], rn, wb[w]);
-    emit_register_list(hw2);
+    stream()->print("%s%s.w\t", code, s_suffix[S]);
+    if (rd) {
+      stream()->print("%s, ", rd);
+    }
+    if (rn) {
+      stream()->print("%s, ", rn);
+    }
+    stream()->print("#%d", imm12);
+  } else {
+    if (((instr >> 8) & 0x1) == 0) {
+      int code = ((instr >> 4) & 0xB);
+      int imm12 = hw2 & 0xFF | ((hw2 >> 4) & (0x7 << 8)) | ((instr << 1) & (0x1 << 11));
+      if (((instr >> 6) & 0x1) == 0) {// 12 bit plain imm
+        if (code == 0) {
+          op_code_name = "addw";
+        } else if (code == 0xA) {
+          op_code_name = "subw";
+        } else {
+          op_code_name = "error";
+          stream()->print("error: encoded values are: %d %d\n", instr, hw2);
+          SHOULD_NOT_REACH_HERE();
+        }
+        stream()->print("%s.w\t%s, %s, #%d", op_code_name, rd, rn, imm12);
+      } else {// 16 bit plain imm
+        int imm16 = imm12 | ((instr & 0xF) << 12);
+        if (code == 0) {
+          op_code_name = "movw";
+        } else if (code == 0x8) {
+          op_code_name = "movt";
+        } else {
+          op_code_name = "error";
+          stream()->print("error: encoded values are: %d %d\n", instr, hw2);
+          SHOULD_NOT_REACH_HERE();
+        }
+        stream()->print("%s.w\t%s, #%d", op_code_name, rd, imm16);
+      }
+    } else {
+      if (((instr >> 4) & 0x1) == 0) {
+        int op = (instr >> 5) & 0x7;
+        int val1 = ((hw2 >> 6) & 0x3) | ((hw2 >> 10) & 0x7);
+        int val2 = (hw2  & 0x1F);
+        const char* sixteen = "";
+        const char* shift;
+        if (op == 3) { //bfc/bfi
+          if (((instr & 0xF) ^ 0xF) == 0) {
+            op_code_name = "bfc";
+            rn = "";
+          } else {
+            op_code_name = "bfi";
+          }
+          stream()->print("%s.w\t%s, %s, #%d, #%d",
+                               op_code_name, rd, rn, val1, val2 - val1 + 1);
+        } else if (op < 7) {
+          const char* signess = (op > 3) ? "u" : "s";
+          if ((op & 0x3) == 2) { //bfx
+            op_code_name = "bfx";
+            stream()->print("%s%s.w\t%s, %s, #%d, #%d",
+                        signess, op_code_name, rd, rn, val1, val2 - val1 + 1);
+            return;
+          } else if ((op & 0x3) == 0) { //ssat lsl only
+            op_code_name = "ssat";
+            shift = "lsl";
+          } else { //ssat asr or ssat16
+            op_code_name = "ssat";
+            if (val2 == 0) {
+              sixteen = "16";
+              shift = "";
+            } else {
+              shift = "asr";
+            }
+          }
+          stream()->print("%s%s%s.w\t%s, #%d, %s, %s #%d",
+                     signess, op_code_name, sixteen, rd, val2 + 1, rn, shift,
+                     val1);
+
+        } else {
+          SHOULD_NOT_REACH_HERE();
+        }
+      } else {
+        stream()->print("reserved code space!\n");
+        SHOULD_NOT_REACH_HERE();
+      }
+    }
   }
 }
 

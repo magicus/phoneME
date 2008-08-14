@@ -1,27 +1,27 @@
 /*
- *   
+ *
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
- * 
+ *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
- * 2 only, as published by the Free Software Foundation. 
- * 
+ * 2 only, as published by the Free Software Foundation.
+ *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
- * included at /legal/license.txt). 
- * 
+ * included at /legal/license.txt).
+ *
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
- * 02110-1301 USA 
- * 
+ * 02110-1301 USA
+ *
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
- * information or have any questions. 
+ * information or have any questions.
  */
 
 # include "incls/_precompiled.incl"
@@ -40,7 +40,7 @@ void MemoryAddress::prepare_preindexed_address(jint address_offset,
                                                Assembler::Register& reg,
                                                jint& offset){
   offset = 0;
-  
+
   if (!has_address_register()) {
     // Try to do direct access
     jint fixed_offset;
@@ -58,15 +58,14 @@ void MemoryAddress::prepare_preindexed_address(jint address_offset,
 
   int xbase_offset =            // base_offset or 0
     address_register_includes_base_offset() ? 0 : base_offset();
-  if (address_offset == 0 && xbase_offset != 0) { 
+  if (address_offset == 0 && xbase_offset != 0) {
     // Update the address_register so that it includes the base_offset
     set_address_register_includes_base_offset();
     code_generator()->add(address_register(), address_register(), xbase_offset);
     offset = 0;
-  } else { 
+  } else {
     offset = (address_offset + xbase_offset);
   }
-  return;
 }
 
 void MemoryAddress::prepare_indexed_address(jint address_offset,
@@ -85,14 +84,35 @@ void MemoryAddress::prepare_indexed_address(jint address_offset,
   GUARANTEE(has_address_register(), "We must have address register by now");
 
   offset = address_offset;
-  
+
   if (!address_register_includes_base_offset()) {
     offset += base_offset();
-  } 
+  }
 
   reg = address_register();
   return;
 }
+
+#if ENABLE_ARM_VFP
+Assembler::Address5 MemoryAddress::address_5_for(jint address_offset) {
+  if (!has_address_register()) {
+    // Try to do direct access
+    jint fixed_offset;
+    if (has_fixed_offset(fixed_offset)) {
+      const jint offset = fixed_offset + base_offset() + address_offset;
+      if (-(1 << 10) < offset && offset < (1 << 10)) {
+        return Assembler::imm_index5(fixed_register(), offset);
+      }
+    }
+    create_and_initialize_address_register();
+  }
+  GUARANTEE(has_address_register(), "We must have address register by now");
+  const int xbase_offset =            // base_offset or 0
+    address_register_includes_base_offset() ? 0 : base_offset();
+  return Assembler::imm_index5(address_register(),
+                               address_offset + xbase_offset);
+}
+#endif
 
 void MemoryAddress::create_and_initialize_address_register() {
   // We have to allocate an address register and fill it in
@@ -103,22 +123,22 @@ void MemoryAddress::create_and_initialize_address_register() {
   destroy_nonaddress_registers();
 }
 
-void MemoryAddress::fill_in_address_register() { 
+void MemoryAddress::fill_in_address_register() {
   // In all cases exception for variable arrays indices, we are looking at
   // at fixed offset into the object.
   jint fixed_offset;
   if (has_fixed_offset(fixed_offset)) {
-    code_generator()->mov(address_register(), fixed_offset + base_offset());     
+    code_generator()->mov(address_register(), fixed_offset + base_offset());
     code_generator()->add(address_register(), fixed_register(),
                           address_register());
     set_address_register_includes_base_offset();
-  } else { 
+  } else {
     // This is a virtual method, and in this case, we better be calling
     // an overriding definition.
     SHOULD_NOT_REACH_HERE();
   }
 }
-  
+
 
 void HeapAddress::write_barrier_prolog() {
   // We must have an address register
@@ -131,7 +151,7 @@ void HeapAddress::write_barrier_epilog() {
   GUARANTEE(has_address_register(),
             "write barrier must have an address register");
 
-  GUARANTEE(base_offset() == 0 || address_register_includes_base_offset() , 
+  GUARANTEE(base_offset() == 0 || address_register_includes_base_offset() ,
             "write_barrier_epilog() must follow address_2_for(0)");
 
   // This is almost always the last thing we do with an address, so it
@@ -149,7 +169,7 @@ void HeapAddress::write_barrier_epilog() {
     } else {
       code_generator()->hbl(CodeGenerator::write_barrier_handler_r0 + (int)dst);
     }
-  } else 
+  } else
 #endif
   {
     Assembler::Register tmp1 = RegisterAllocator::allocate();
@@ -163,11 +183,11 @@ void HeapAddress::write_barrier_epilog() {
 }
 
 bool FieldAddress::has_fixed_offset(jint& fixed_offset) {
-  fixed_offset = offset(); 
+  fixed_offset = offset();
   return true;
 }
 
-Assembler::Register FieldAddress::fixed_register() { 
+Assembler::Register FieldAddress::fixed_register() {
   return object()->lo_register();
 }
 
@@ -180,26 +200,26 @@ bool IndexedAddress::has_fixed_offset(jint& fixed_offset) {
   if (index()->is_immediate()) {
     fixed_offset = (index()->as_int() << index_shift());
     return true;
-  } else { 
+  } else {
     return false;
   }
 }
 
-Assembler::Register IndexedAddress::fixed_register() { 
+Assembler::Register IndexedAddress::fixed_register() {
   return array()->lo_register();
 }
 
 void IndexedAddress::fill_in_address_register() {
-  if (index()->is_immediate()) { 
+  if (index()->is_immediate()) {
     MemoryAddress::fill_in_address_register();
-  } else { 
+  } else {
     if (index_shift() != 0) {
-      code_generator()->lsl_imm5(address_register(), index()->lo_register(), 
+      code_generator()->lsl_imm5(address_register(), index()->lo_register(),
                                  index_shift());
       code_generator()->add(address_register(), fixed_register(),
                                  address_register());
     } else {
-      code_generator()->add(address_register(), fixed_register(), 
+      code_generator()->add(address_register(), fixed_register(),
                                  index()->lo_register());
     }
   }
@@ -223,7 +243,7 @@ bool LocationAddress::has_fixed_offset(jint& fixed_offset) {
     //
     // Note: in the example above, frame()->stack_pointer() == 5.
     //
-    int offset_from_jsp = 
+    int offset_from_jsp =
         (frame()->stack_pointer() - index()) * BytesPerStackElement +
         JavaFrame::frame_desc_size();
     if (!ENABLE_INCREASING_JAVA_STACK && ENABLE_FULL_STACK &&
@@ -242,7 +262,7 @@ bool LocationAddress::has_fixed_offset(jint& fixed_offset) {
 
   if (is_local()) {
     // The offset from the fp that would have it point at the end of the
-    // locals block 
+    // locals block
     base_offset = JavaFrame::end_of_locals_offset();
     actual_index = method()->max_locals() - 1 - index();
     _fixed_register = Assembler::fp;
@@ -258,7 +278,7 @@ bool LocationAddress::has_fixed_offset(jint& fixed_offset) {
   fixed_offset = base_offset + JavaFrame::arg_offset_from_sp(actual_index);
   return true;
 }
-    
+
 Assembler::Register LocationAddress::fixed_register() {
   GUARANTEE(_fixed_register != Assembler::no_reg, "must be initialized");
   return _fixed_register;
@@ -266,9 +286,9 @@ Assembler::Register LocationAddress::fixed_register() {
 
 jint LocationAddress::get_fixed_offset() {
   jint fixed_offset;
-  if (has_fixed_offset(fixed_offset)) { 
+  if (has_fixed_offset(fixed_offset)) {
     return fixed_offset;
-  } else { 
+  } else {
     SHOULD_NOT_REACH_HERE();
     return 0;
   }

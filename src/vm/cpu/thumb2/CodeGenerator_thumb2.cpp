@@ -241,53 +241,61 @@ void CodeGenerator::load_from_address(Value& result, BasicType type,
   GUARANTEE(stack_type_for(type) == result.stack_type(),
             "types must match (taking stack types into account)");
 
+  result.try_to_assign_register();
+  const Register lo = result.lo_register();
+
+#if ENABLE_ARM_VFP
+  if (lo >= s0) {
+    switch( type ) {
+      case T_FLOAT:
+        flds(lo, address.lo_address_5());
+        return;
+      case T_DOUBLE:
+        fldd(lo, address.lo_address_5());
+        return;
+      default:
+        SHOULD_NOT_REACH_HERE();
+    }
+  }
+#endif
+
   Assembler::Register address_reg;
   int address_offset = 0;
+  address.get_indexed_address(true, address_reg, address_offset);
 
-  result.assign_register();
   switch(type) {
     case T_BOOLEAN : // fall through
     case T_BYTE    :
-        address.get_indexed_address(true, address_reg, address_offset);
-        ldrsb_imm12_w(result.lo_register(), address_reg, address_offset);
-        break;
-
+      ldrsb_imm12_w(lo, address_reg, address_offset);
+      break;
     case T_CHAR    :
-        address.get_indexed_address(true, address_reg, address_offset);
-        ldrh(result.lo_register(), address_reg, address_offset);
-        break;
-
+      ldrh(lo, address_reg, address_offset);
+      break;
     case T_SHORT   :
-        address.get_indexed_address(true, address_reg, address_offset);
-        ldrsh_imm12_w(result.lo_register(), address_reg, address_offset);
-        break;
-
+      ldrsh_imm12_w(lo, address_reg, address_offset);
+      break;
     case T_INT     : // fall through
+#if !ENABLE_ARM_VFP
     case T_FLOAT   : // fall through
+#endif
     case T_ARRAY   : // fall through
     case T_OBJECT  :
-    {
-      // prepare and load data at lo address
-      address.get_indexed_address(true, address_reg, address_offset);
-      ldr(result.lo_register(), address_reg, address_offset);
-    }
-    break;
-
-  case T_LONG    : // fall through
-  case T_DOUBLE  :
-    {
-      // prepare and load data at lo address
-      address.get_indexed_address(true, address_reg, address_offset);
-      ldr(result.lo_register(), address_reg, address_offset);
+      // load data at lo address
+      ldr(lo, address_reg, address_offset);
+      break;
+    case T_LONG    : // fall through
+#if !ENABLE_ARM_VFP
+    case T_DOUBLE  :
+#endif
+      // load data at lo address
+      ldr(lo, address_reg, address_offset);
       // prepare and load data at hi address
       address.get_indexed_address(false, address_reg, address_offset);
       ldr(result.hi_register(), address_reg, address_offset);
-    }
-    break;
-
+      break;
     default        :
-        SHOULD_NOT_REACH_HERE();
-        break;
+      SHOULD_NOT_REACH_HERE();
+      break;
   }
 }
 
@@ -1105,6 +1113,44 @@ extern "C" {
   int   jvm_fcmpl(float x, float y);
   int   jvm_fcmpg(float x, float y);
 }
+
+#if ENABLE_ARM_VFP
+void CodeGenerator::ensure_in_float_register(Value& value) {
+  if (value.type() == T_FLOAT && value.in_register()) {
+    Register r = value.lo_register();
+    if (is_arm_register(r)) {
+      value.set_register(RegisterAllocator::allocate_float_register());
+      fmsr(value.lo_register(), r);
+    }
+  } else if (value.type() == T_DOUBLE && value.in_register()) {
+    Register lo = value.lo_register();
+    Register hi = value.hi_register();
+    if (is_arm_register(lo) && is_arm_register(hi)) {
+      value.set_vfp_double_register(RegisterAllocator::allocate_double_register());
+      fmdrr(value.lo_register(), lo, hi);
+    }
+  }
+}
+
+void CodeGenerator::ensure_not_in_float_register(Value& value) {
+  if (value.type() == T_FLOAT && value.in_register()) {
+    Register r = value.lo_register();
+    if (r >= s0) {
+      value.set_register(RegisterAllocator::allocate());
+      fmrs(value.lo_register(), r);
+    }
+  } else if (value.type() == T_DOUBLE && value.in_register()) {
+    Register l = value.lo_register();
+    Register h = value.hi_register();
+    if (l >= s0 && h >= s0) {
+      Register lo = RegisterAllocator::allocate();
+      Register hi = RegisterAllocator::allocate();
+      value.set_registers(lo, hi);
+      fmrrd(value.lo_register(), value.hi_register(), l);
+    }
+  }
+}
+#endif  // ENABLE_ARM_VFP
 
 void CodeGenerator::float_binary_do(Value& result, Value& op1, Value& op2,
                                     BytecodeClosure::binary_op op JVM_TRAPS) {
@@ -2184,44 +2230,6 @@ void CodeGenerator::return_error(Value& value JVM_TRAPS) {
 
   write_literals();
 }
-
-#if ENABLE_ARM_VFP
-void CodeGenerator::ensure_in_float_register(Value& value) {
-  if (value.type() == T_FLOAT && value.in_register()) {
-    Register r = value.lo_register();
-    if (is_arm_register(r)) {
-      value.set_register(RegisterAllocator::allocate_float_register());
-      fmsr(value.lo_register(), r);
-    }
-  } else if (value.type() == T_DOUBLE && value.in_register()) {
-    Register lo = value.lo_register();
-    Register hi = value.hi_register();
-    if (is_arm_register(lo) && is_arm_register(hi)) {
-      value.set_vfp_double_register(RegisterAllocator::allocate_double_register());
-      fmdrr(value.lo_register(), lo, hi);
-    }
-  }
-}
-
-void CodeGenerator::ensure_not_in_float_register(Value& value) {
-  if (value.type() == T_FLOAT && value.in_register()) {
-    Register r = value.lo_register();
-    if (r >= s0) {
-      value.set_register(RegisterAllocator::allocate());
-      fmrs(value.lo_register(), r);
-    }
-  } else if (value.type() == T_DOUBLE && value.in_register()) {
-    Register l = value.lo_register();
-    Register h = value.hi_register();
-    if (l >= s0 && h >= s0) {
-      Register lo = RegisterAllocator::allocate();
-      Register hi = RegisterAllocator::allocate();
-      value.set_registers(lo, hi);
-      fmrrd(value.lo_register(), value.hi_register(), l);
-    }
-  }
-}
-#endif  // ENABLE_ARM_VFP
 
 void CodeGenerator::restore_last_frame(Register return_address) {
   jint locals = method()->max_locals();
