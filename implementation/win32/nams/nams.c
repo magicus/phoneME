@@ -33,6 +33,8 @@
 #include "javacall_lcd.h"
 #include "javacall_ams_app_manager.h"
 
+/* In case of NAMS UI this function is defined in the sample App Manager. */
+#if !ENABLE_NATIVE_AMS_UI
 /**
  * Inform on completion of the previously requested operation.
  *
@@ -49,6 +51,8 @@ void java_ams_operation_completed(javacall_opcode operation,
 
     javacall_print("[NAMS] Operation completed.\n");
 }
+
+#endif
 
 /**
  * Inform on change of the specific MIDlet's lifecycle status.
@@ -153,17 +157,27 @@ void java_ams_ui_state_changed(javacall_midlet_ui_state state,
 }
 
 /**
- * Get path name of the directory which holds suite's RMS files.
- * @param suiteID Unique ID of the MIDlet suite
- * @param szPath  A buffer allocated to contain the returned path name string.
- *                The returned string must be double-'\0' terminated.
- * @param maxPath Buffer length of szPath
- * @return <tt>JAVACALL_OK</tt> on success, 
+ * Java invokes this function to get path name of the directory which
+ * holds the suite's RMS files.
+ *
+ * The Platform must provide an implementation of this function if the
+ * RMS is on the MIDP side.
+ *
+ * Note that memory for the parameter pRmsPath is allocated
+ * by the callee. The caller is responsible for freeing it
+ * using javacall_free().
+ *
+ * @param suiteId  [in]  unique ID of the MIDlet suite
+ * @param pRmsPath [out] a place to hold a pointer to the buffer containing
+ *                       the returned RMS path string.
+ *                       The returned string must be double-'\0' terminated.
+ *
+ * @return <tt>JAVACALL_OK</tt> on success,
  *         <tt>JAVACALL_FAIL</tt>
  */
 javacall_result java_ams_get_rms_path(javacall_suite_id suiteID, 
                                       javacall_utf16_string* pRmsPath) {
-#if 0
+#if 1
     javacall_utf16 path[JAVACALL_MAX_FILE_NAME_LENGTH*2];
     int len;
 
@@ -171,11 +185,12 @@ javacall_result java_ams_get_rms_path(javacall_suite_id suiteID,
         return JAVACALL_FAIL;
     }
 
-    if (len > maxPath) {
+    pRmsPath = javacall_malloc(len);
+    if (pRmsPath == NULL) {
         return JAVACALL_FAIL;
     }
 
-    memcpy(szPath, path, len);
+    memcpy(pRmsPath, path, len);
 
     return JAVACALL_OK;
 #else
