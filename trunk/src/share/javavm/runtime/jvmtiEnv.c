@@ -1392,11 +1392,6 @@ jvmti_StopThread(jvmtiEnv* jvmtienv,
 		 jthread thread,
 		 jobject exception)
 {
-    CVMExecEnv* ee = CVMgetEE();
-    CVMExecEnv* targetEE;
-    CVMClassBlock* exceptionCb;
-    jvmtiError err;
-    CHECK_JVMTI_ENV;
 
     /*    CHECK_CAP(can_signal_thread); */
     /* See comment below, until we study this in detail we
@@ -1405,6 +1400,12 @@ jvmti_StopThread(jvmtiEnv* jvmtienv,
 #if 1
     return JVMTI_ERROR_MUST_POSSESS_CAPABILITY;
 #else
+    CVMExecEnv* ee = CVMgetEE();
+    CVMExecEnv* targetEE;
+    CVMClassBlock* exceptionCb;
+    jvmtiError err;
+    CHECK_JVMTI_ENV;
+
     CVMextraAssert(CVMD_isgcSafe(ee));
 
     CVMJVMTI_CHECK_PHASE(JVMTI_PHASE_LIVE);
@@ -6505,6 +6506,8 @@ CVMBool hasEventCapability(jvmtiEvent eventType,
 	return capabilitiesPtr->can_generate_garbage_collection_events != 0;
     case JVMTI_EVENT_GARBAGE_COLLECTION_FINISH:
 	return capabilitiesPtr->can_generate_garbage_collection_events != 0;
+    default:
+        return JNI_TRUE;
     }
     /* if it does not have a capability it is required */
     return JNI_TRUE;
