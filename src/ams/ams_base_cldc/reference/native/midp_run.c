@@ -421,12 +421,8 @@ midpInitializeUI(void) {
         }
 #undef OPT_NUM
 
-        /*
-         * Use the default port: 2800.
-         * To redefine it, "-port <n>" option can be used.
-         */
      }
-#else
+#endif /* ENABLE_ON_DEVICE_DEBUG || ENABLE_WTK_DEBUG */
 
 #if ENABLE_JAVA_DEBUGGER
     {
@@ -441,7 +437,6 @@ midpInitializeUI(void) {
     }
 #endif
 
-#endif /* ENABLE_ON_DEVICE_DEBUG || ENABLE_WTK_DEBUG */
 
     if (pushopen() != 0) {
         return -1;
