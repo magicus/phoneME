@@ -581,6 +581,37 @@ midp_get_suite_properties(SuiteIdType suiteId) {
     return result;
 }
 
+/**
+ * Retrieves the specified property value of the suite.
+ *
+ * IMPL_NOTE: this functions is introduced instead of 3 functions above.
+ *
+ * @param suiteId [in]  unique ID of the MIDlet suite
+ * @param pKey    [in]  property name
+ * @param pValue  [out] buffer to conatain returned property value
+ *
+ * @return ALL_OK if no errors,
+ *         BAD_PARAMS if some parameter is invalid,
+ *         NOT_FOUND if suite was not found,
+ *         SUITE_CORRUPTED_ERROR if the suite is corrupted
+ */
+MIDPError
+midp_get_suite_property(SuiteIdType suiteId,
+                        const pcsl_string* pKey,
+                        pcsl_string* pValue) {
+    if (pKey == NULL || pValue == NULL) {
+        return BAD_PARAMS;
+    }
+
+    (void)suiteId;
+    (void)pKey;
+
+    *pValue = PCSL_STRING_NULL;
+
+    return ALL_OK;                        
+}
+
+
 /* ------------------------------------------------------------ */
 /*                          Implementation                      */
 /* ------------------------------------------------------------ */

@@ -435,6 +435,7 @@ void midp_free_properties(MidpProperties* pProperties);
  * @param pValue  [out] buffer to conatain returned property value
  *
  * @return ALL_OK if no errors,
+ *         BAD_PARAMS if some parameter is invalid,
  *         NOT_FOUND if suite was not found,
  *         SUITE_CORRUPTED_ERROR if the suite is corrupted
  */

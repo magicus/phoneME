@@ -329,7 +329,7 @@ java_ams_midlet_get_app_suite_id(javacall_app_id appId,
         return JAVACALL_FAIL;
     }
 
-    status = midp_midlet_get_suite_info((jint)appId, &midpSuiteId);
+    status = midp_midlet_get_suite_id((jint)appId, &midpSuiteId);
     if (status != ALL_OK) {
         return JAVACALL_FAIL;
     }
