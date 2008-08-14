@@ -244,6 +244,21 @@ javacall_result java_ams_midlet_resume(javacall_app_id appId);
 javacall_result
 java_ams_midlet_request_runtime_info(javacall_app_id appId);
 
+/**
+ * App Manager invokes this function to get information about the suite
+ * containing the specified running MIDlet. This call is synchronous.
+ *
+ * @param appId    [in]  the ID used to identify the application
+ * @param pSuiteId [out] on exit will hold an ID of the suite the midlet
+ *                       belongs to
+ *
+ * @return error code: <tt>JAVACALL_OK</tt> if successful,
+ *                     <tt>JAVACALL_FAIL</tt> otherwise
+ */
+javacall_result
+java_ams_midlet_get_app_suite_id(javacall_app_id appId,
+                                 javacall_suite_id* pSuiteId);
+
 /** @} */
 
 #ifdef __cplusplus
