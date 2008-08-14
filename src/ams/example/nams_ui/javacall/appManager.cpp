@@ -28,13 +28,20 @@
 #include <stdlib.h>
 #include <string.h>
 #include <tchar.h>
+#include <commctrl.h> // common controls for tree view
+#include <windowsx.h> // GET_*_LPARAM macros
 
+#include "res/namsui_resource.h"
+
+#include <javacall_memory.h>
 #include <javautil_unicode.h>
 #include <javacall_lcd.h>
 #include <javacall_ams_suitestore.h>
 #include <javacall_ams_app_manager.h>
 
-extern "C" char* _phonenum = "1234567";
+
+extern "C" char* _phonenum = "1234567"; // global for javacall MMS subsystem
+
 
 // The main window class name.
 static TCHAR g_szWindowClass[] = _T("win32app");
@@ -42,16 +49,38 @@ static TCHAR g_szWindowClass[] = _T("win32app");
 // The string that appears in the application's title bar.
 static TCHAR g_szTitle[] = _T("NAMS Example");
 
-int g_iWidth = 240, g_iHeight = 320;
+// The size of main window calibrated to get 240x320 child area to draw SJWC output to
+int g_iWidth = 246, g_iHeight = 345;
+
+static HMENU IDC_TREEVIEW_MIDLETS = (HMENU) 1;
+
+// The type of a tree item
+static WORD TVI_TYPE_SUITE  = 1;
+static WORD TVI_TYPE_MIDLET = 2;
+static WORD TVI_TYPE_FOLDER = 3;
 
 HINSTANCE g_hInst = NULL;
 HWND g_hMainWindow = NULL;
 
+HMENU g_hMidletPopupMenu = NULL;
+
 // Forward declarations of functions included in this code module:
-LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
+
+LRESULT CALLBACK MainWndProc(HWND, UINT, WPARAM, LPARAM);
 
 static void RefreshScreen(int x1, int y1, int x2, int y2);
 static void DrawBuffer(HDC hdc);
+
+HWND CreateMainView();
+HWND CreateTreeView(HWND hwndParent);
+BOOL InitTreeViewItems(HWND hwndTV);
+HTREEITEM AddItemToTree(HWND hwndTV, LPTSTR lpszItem, int nLevel, LPARAM lParam);
+
+void InitJavacallAMS();
+void CleanupJavacallAMS();
+
+LPTSTR JavacallUTF16ToTSTR(javacall_utf16_string str);
+
 
 extern "C" {
 
@@ -81,7 +110,7 @@ extern "C" javacall_result JavaTaskImpl(int argc, char* argv[]) {
 
     TCHAR szMsg[128];
     wsprintf(szMsg, _T("SJWC exited, code: %d."), (int)res); 
-    MessageBox(NULL, szMsg, _T("SJWC"), MB_OK);
+    MessageBox(NULL, szMsg, g_szTitle, MB_OK);
 
 //    javacall_lifecycle_state_changed(JAVACALL_LIFECYCLE_MIDLET_SHUTDOWN,
 //        (res == 1) ? JAVACALL_OK : JAVACALL_FAIL);
@@ -109,67 +138,16 @@ int main(int argc, char* argv[]) {
     HINSTANCE hInstance = NULL;
     int nCmdShow = SW_SHOWNORMAL;
 #endif
-    WNDCLASSEX wcex;
 
-    wcex.cbSize = sizeof(WNDCLASSEX);
-    wcex.style          = CS_HREDRAW | CS_VREDRAW;
-    wcex.lpfnWndProc    = WndProc;
-    wcex.cbClsExtra     = 0;
-    wcex.cbWndExtra     = 0;
-    wcex.hInstance      = hInstance;
-    wcex.hIcon          = LoadIcon(hInstance, MAKEINTRESOURCE(IDI_APPLICATION));
-    wcex.hCursor        = LoadCursor(NULL, IDC_ARROW);
-    wcex.hbrBackground  = (HBRUSH)(COLOR_WINDOW+1);
-    wcex.lpszMenuName   = NULL;
-    wcex.lpszClassName  = g_szWindowClass;
-    wcex.hIconSm        = LoadIcon(wcex.hInstance, MAKEINTRESOURCE(IDI_APPLICATION));
+    // Store instance handle in our global variable
+    g_hInst = hInstance;
 
-    if (!RegisterClassEx(&wcex)) {
-        MessageBox(NULL,
-            _T("Call to RegisterClassEx failed!"),
-            _T("NAMS Example"),
-            NULL);
-
-        return 1;
-    }
-
-    g_hInst = hInstance; // Store instance handle in our global variable
-
-    // g_szWindowClass: the name of the application
-    // g_szTitle: the text that appears in the title bar
-    // WS_OVERLAPPEDWINDOW: the type of window to create
-    // CW_USEDEFAULT, CW_USEDEFAULT: initial position (x, y)
-    // 500, 100: initial size (width, length)
-    // NULL: the parent of this window
-    // NULL: this application dows not have a menu bar
-    // hInstance: the first parameter from WinMain
-    // NULL: not used in this application
-    HWND hWnd = CreateWindow(
-        g_szWindowClass,
-        g_szTitle,
-        WS_OVERLAPPEDWINDOW,
-        CW_USEDEFAULT, CW_USEDEFAULT,
-        g_iWidth, g_iHeight,
-        NULL,
-        NULL,
-        hInstance,
-        NULL
-    );
-
-    if (!hWnd) {
-        MessageBox(NULL,
-            _T("Call to CreateWindow failed!"),
-            g_szTitle,
-            NULL);
-
-        return 1;
-    }
-
+    HWND hWnd = CreateMainView();
     g_hMainWindow = hWnd;
 
+    // Start JVM in a separate thread
     DWORD dwThreadId; 
     HANDLE hThread; 
-
     hThread = CreateThread( 
         NULL,                    // default security attributes 
         0,                       // use default stack size  
@@ -187,17 +165,289 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
+    // Initialize Java AMS
+    InitJavacallAMS();
+
+    // Create and init Java MIDlets tree view
+    HWND hwndTV = CreateTreeView(hWnd);
+    InitTreeViewItems(hwndTV);
+
+    // Load context menu shown for a MIDlet item in the tree view
+    g_hMidletPopupMenu = LoadMenu(g_hInst, MAKEINTRESOURCE(ID_MENU_POPUP_MIDLET));
+    if (g_hMidletPopupMenu == NULL) {
+        MessageBox(hWnd,
+            _T("Can't load MIDlet popup menu!"),
+            g_szTitle,
+            NULL);
+    }
+
+    // Show the main window 
     ShowWindow(hWnd, nCmdShow);
     UpdateWindow(hWnd);
 
-    // main message loop
+    // Main message loop
     MSG msg;
     while (GetMessage(&msg, NULL, 0, 0)) {
         TranslateMessage(&msg);
         DispatchMessage(&msg);
     }
 
+    // Clean up resources allocated for MIDlet popup menu 
+    DestroyMenu(g_hMidletPopupMenu);
+
+    // Finalize Java AMS
+    CleanupJavacallAMS();
+
     return (int) msg.wParam;
+}
+
+HWND CreateMainView() {
+    HWND hWnd;
+    WNDCLASSEX wcex;
+
+    // Customize main view class to assign own WndProc
+    wcex.cbSize = sizeof(WNDCLASSEX);
+    wcex.style          = CS_HREDRAW | CS_VREDRAW;
+    wcex.lpfnWndProc    = MainWndProc;
+    wcex.cbClsExtra     = 0;
+    wcex.cbWndExtra     = 0;
+    wcex.hInstance      = g_hInst;
+    wcex.hIcon          = LoadIcon(g_hInst, MAKEINTRESOURCE(IDI_APPLICATION));
+    wcex.hCursor        = LoadCursor(NULL, IDC_ARROW);
+    wcex.hbrBackground  = (HBRUSH)(COLOR_WINDOW+1);
+    wcex.lpszMenuName   = NULL;
+    wcex.lpszClassName  = g_szWindowClass;
+    wcex.hIconSm        = LoadIcon(g_hInst, MAKEINTRESOURCE(IDI_APPLICATION));
+
+    if (!RegisterClassEx(&wcex)) {
+        MessageBox(NULL,
+            _T("Call to RegisterClassEx failed!"),
+            g_szTitle,
+            NULL);
+
+        return NULL;
+    }
+
+    hWnd = CreateWindow(
+        g_szWindowClass,
+        g_szTitle,
+        WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU,
+        CW_USEDEFAULT, CW_USEDEFAULT,
+        g_iWidth, g_iHeight,
+        NULL,
+        NULL,
+        g_hInst,
+        NULL
+    );
+
+    if (!hWnd) {
+        MessageBox(NULL,
+            _T("Create of main view failed!"),
+            g_szTitle,
+            NULL);
+
+        return NULL;
+    }
+    
+    return hWnd;
+}
+
+void InitJavacallAMS() {
+    javacall_result res = java_ams_suite_storage_init();
+    if (res == JAVACALL_FAIL) {
+        wprintf(_T("Init of suite storage fail!\n"));
+    }
+}
+
+void CleanupJavacallAMS() {
+    javacall_result res = java_ams_suite_storage_cleanup();
+    if (res == JAVACALL_FAIL) {
+        wprintf(_T("Cleanup of suite storage fail!\n"));
+    }
+}
+
+HWND CreateTreeView(HWND hwndParent) {
+    RECT rcClient;  // dimensions of client area 
+    HWND hwndTV;    // handle to tree-view control 
+
+    // Ensure that the common control DLL is loaded. 
+    InitCommonControls(); 
+
+    // Get the dimensions of the parent window's client area, and create 
+    // the tree-view control. 
+    GetClientRect(hwndParent, &rcClient); 
+    wprintf(_T("main window area w=%d, h=%d\n"), rcClient.right, rcClient.bottom);
+    hwndTV = CreateWindowEx(0,
+                            WC_TREEVIEW,
+                            TEXT("Java Midlets"),
+                            WS_VISIBLE | WS_CHILD | WS_BORDER | TVS_HASLINES |
+                                TVS_HASBUTTONS | TVS_SHOWSELALWAYS 
+                                /* | WS_CAPTION*/,
+                            0, 
+                            0, 
+                            rcClient.right,
+                            rcClient.bottom,
+                            hwndParent, 
+                            IDC_TREEVIEW_MIDLETS,
+                            g_hInst, 
+                            NULL); 
+
+
+    if (!hwndTV) {
+        MessageBox(NULL, _T("Create tree view failed!"), g_szTitle, NULL);
+        return NULL;
+    }
+}
+
+BOOL InitTreeViewItems(HWND hwndTV)  {
+    javacall_suite_id* pSuiteIds;
+    int suiteNum;
+    javacall_result res = JAVACALL_FAIL;
+    javacall_ams_suite_info* pSuiteInfo;
+
+
+    // Add all folders to the tree view
+   
+
+    // Iterrate over all suites and add them to the tree view
+    
+    res = java_ams_suite_get_suite_ids(&pSuiteIds, &suiteNum);
+
+    if (res != JAVACALL_OK) {
+        return FALSE;
+    }
+
+    wprintf(_T("suites found: %d\n"), suiteNum);
+
+    for (int i = 0; i < suiteNum; i++) {
+        res = java_ams_suite_get_info(pSuiteIds[i], &pSuiteInfo);
+        if (res == JAVACALL_OK) {
+          if (pSuiteInfo != NULL) {
+              LPARAM lInfo;
+
+              // TODO: add support for disabled suites
+              // javacall_bool enabled = suiteInfo[i].isEnabled;
+
+              // TODO: take into account folder ID
+              // javacall_int32 fid = suiteInfo[i].folderId;
+
+	      LPTSTR pszSuiteName = JavacallUTF16ToTSTR(pSuiteInfo[i].displayName);
+
+              lInfo = MAKELPARAM(TVI_TYPE_SUITE, (WORD) pSuiteIds[i]);
+              AddItemToTree(hwndTV, pszSuiteName, 1, lInfo);
+
+              javacall_ams_midlet_info* pMidletsInfo;
+              javacall_int32 midletNum;
+              res = java_ams_suite_get_midlets_info(pSuiteIds[i], &pMidletsInfo,
+                  &midletNum);
+              if (res == JAVACALL_OK) {
+//                  if (midletNum > 1) {
+                      for (int j = 0; j < midletNum; j++) {
+       	                  LPTSTR pszMIDletName = JavacallUTF16ToTSTR(
+                              pMidletsInfo[j].displayName);
+                          lInfo = MAKELPARAM(TVI_TYPE_MIDLET, (WORD) j);
+                          AddItemToTree(hwndTV, pszMIDletName, 2, lInfo);
+                      }
+//                  }
+                  java_ams_suite_free_midlets_info(pMidletsInfo, midletNum);
+              }
+          }
+          java_ams_suite_free_info(pSuiteInfo);
+        }
+    }
+
+    java_ams_suite_free_suite_ids(pSuiteIds, suiteNum);
+
+/*
+    // Items for testing
+    AddItemToTree(hwndTV, _T("MIDlet 1"), 1, 0);
+    AddItemToTree(hwndTV, _T("MIDlet 2"), 1, 0);
+*/
+
+    return TRUE;
+}
+
+LPTSTR JavacallUTF16ToTSTR(javacall_utf16_string str) {
+    LPTSTR result = NULL;
+#ifdef UNICODE 
+    javacall_int32 len;
+    javacall_result res = javautil_unicode_utf16_ulength(str, &len);
+    if (res == JAVACALL_OK) {
+        const buf_len = (len + 1) * sizeof(WCHAR);
+        result = (LPTSTR)javacall_malloc(buf_len);
+        memcpy(result, str, buf_len);
+    }
+#else
+# error "Only Unicode platforms are not supported for now"
+#endif
+   return result;
+}
+
+
+HTREEITEM AddItemToTree(HWND hwndTV, LPTSTR lpszItem, int nLevel, LPARAM lParam) {
+    TVITEM tvi; 
+    TVINSERTSTRUCT tvins; 
+    static HTREEITEM hPrev = (HTREEITEM)TVI_FIRST; 
+    static HTREEITEM hPrevRootItem = NULL; 
+    static HTREEITEM hPrevLev2Item = NULL; 
+    HTREEITEM hti; 
+
+    if (lpszItem == NULL) {
+        return NULL;
+    }
+
+    tvi.mask = TVIF_TEXT /*| TVIF_IMAGE | TVIF_SELECTEDIMAGE*/ | TVIF_PARAM; 
+
+    // Set the text of the item. 
+    tvi.pszText = lpszItem; 
+    tvi.cchTextMax = sizeof(tvi.pszText)/sizeof(tvi.pszText[0]); 
+
+    // Assume the item is not a parent item, so give it a 
+    // document image. 
+/*
+    tvi.iImage = g_nDocument; 
+    tvi.iSelectedImage = g_nDocument; 
+*/
+
+    tvi.lParam = lParam; 
+    tvins.item = tvi; 
+    tvins.hInsertAfter = hPrev; 
+
+    // Set the parent item based on the specified level. 
+    if (nLevel == 1) 
+        tvins.hParent = TVI_ROOT; 
+    else if (nLevel == 2) 
+        tvins.hParent = hPrevRootItem; 
+    else 
+        tvins.hParent = hPrevLev2Item; 
+
+    // Add the item to the tree-view control. 
+    hPrev = (HTREEITEM)SendMessage(hwndTV, 
+                                   TVM_INSERTITEM, 
+                                   0,
+                                   (LPARAM)(LPTVINSERTSTRUCT)&tvins); 
+
+    // Save the handle to the item. 
+    if (nLevel == 1) 
+        hPrevRootItem = hPrev; 
+    else if (nLevel == 2) 
+        hPrevLev2Item = hPrev; 
+
+    // The new item is a child item. Give the parent item a
+    // closed folder bitmap to indicate it now has child items. 
+/*
+    if (nLevel > 1)
+    { 
+        hti = TreeView_GetParent(hwndTV, hPrev); 
+        tvi.mask = TVIF_IMAGE | TVIF_SELECTEDIMAGE; 
+        tvi.hItem = hti; 
+        tvi.iImage = g_nClosed; 
+        tvi.iSelectedImage = g_nClosed; 
+        TreeView_SetItem(hwndTV, &tvi); 
+    } 
+*/
+
+    return hPrev; 
 }
 
 /**
@@ -205,30 +455,72 @@ int main(int argc, char* argv[]) {
  *
  */
 LRESULT CALLBACK
-WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
+MainWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
     PAINTSTRUCT ps;
     HDC hdc;
-    short x, y;
-    TCHAR greeting[] = _T("Cool Application Manager");
+    int x, y;
+    TCHAR greeting[] = _T("Native Application Manager");
 
     switch (message) {
-    //case WM_MOUSEMOVE:
     case WM_LBUTTONDOWN:
-    //case WM_LBUTTONUP:
     {
-        /* Cast lParam to "short" to preserve sign */
-        x = (short)LOWORD(lParam);
-        y = (short)HIWORD(lParam);
+        x = GET_X_LPARAM(lParam);
+        y = GET_Y_LPARAM(lParam);
 
         javacall_result res = java_ams_midlet_start(-1, 1,
             L"com.sun.midp.installer.DiscoveryApp", NULL);
 
         TCHAR szMsg[128];
         wsprintf(szMsg, _T("res = %d."), (int)res); 
-        MessageBox(NULL, szMsg, _T("SJWC"), MB_OK);
+        MessageBox(NULL, szMsg, g_szTitle, MB_OK);
 
         break;
     }
+
+    case WM_RBUTTONDOWN:
+//    case WM_CONTEXTMENU:
+        x = GET_X_LPARAM(lParam);
+        y = GET_Y_LPARAM(lParam);
+//        ClientToScreen(hWnd, (LPPOINT) &pnt);
+
+        // Get the first shortcut menu in the menu template. This is the 
+        // menu that TrackPopupMenu displays
+//        HMENU hMenu = GetSubMenu(g_hMidletPopupMenu, 0);
+        if (g_hMidletPopupMenu) {
+            TrackPopupMenu (g_hMidletPopupMenu, TPM_LEFTALIGN | TPM_LEFTBUTTON,
+                x, y, 0, hWnd, NULL);
+        } else {
+            MessageBox(NULL, _T("Can't show context menu!"), g_szTitle, MB_OK);
+        }
+
+        break;
+
+    case WM_COMMAND:
+        // Test for the identifier of a command item.
+        switch(LOWORD(wParam))
+        {
+            case IDM_MIDLET_LAUNCH:
+                wprintf(_T("Launch MIDlet...\n"));
+                break;
+
+            case IDM_MIDLET_INFO:
+                wprintf(_T("Show MIDlet info...\n"));
+                break;
+
+            case IDM_MIDLET_REMOVE:
+                break; 
+
+            case IDM_MIDLET_UPDATE:
+                break; 
+
+            case IDM_MIDLET_SETTINGS:
+                break;
+  
+            default:
+                break;
+        }
+        break;
+
 
     case WM_PAINT:
         hdc = BeginPaint(hWnd, &ps);
@@ -236,9 +528,11 @@ WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
         DrawBuffer(hdc);
         //DrawBitmap(hdc, hPhoneBitmap, 0, 0, SRCCOPY);
 
+/*
         TextOut(hdc,
             5, 5,
             greeting, _tcslen(greeting));
+*/
 
         EndPaint(hWnd, &ps);
         break;
@@ -355,11 +649,11 @@ javacall_pixel* javacall_lcd_get_screen(javacall_lcd_screen_type screenType,
             *colorEncoding = JAVACALL_LCD_COLOR_RGB565;
         }
 
-wprintf(_T("VRAM.hdc ok\n"));
+        wprintf(_T("VRAM.hdc ok\n"));
         return VRAM.hdc;
     }
 
-wprintf(_T("NULL !!!\n"));
+    wprintf(_T("NULL !!!\n"));
     return NULL;
 }
 
@@ -508,7 +802,7 @@ static void DrawBuffer(HDC hdc) {
     int x2 = screenWidth;
     int y2 = screenHeight;
 
-wprintf(_T("x2 = %d, y2 = %d\n"), x2, y2);
+    wprintf(_T("x2 = %d, y2 = %d\n"), x2, y2);
 
     x = x1;
     y = y1;
@@ -533,7 +827,7 @@ wprintf(_T("x2 = %d, y2 = %d\n"), x2, y2);
 
 
     if (destBits != NULL) {
-wprintf(_T("OK!!!\n"));
+        wprintf(_T("OK!!!\n"));
         oobj = SelectObject(hdcMem, destHBmp);
         SelectObject(hdcMem, oobj);
 
