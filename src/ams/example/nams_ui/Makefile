@@ -90,7 +90,7 @@ all: appManager
 
 appManager: $(MIDP_OBJ_DIR)/appManager$(OBJ) $(MIDP_OBJ_DIR)/javacallImpl$(OBJ) $(MIDP_OBJ_DIR)/namsui_resource.res
 	$(A)$(LD) $(LD_FLAGS) $(DRIVE)$(MIDP_OBJ_DIR)/appManager$(OBJ) $(DRIVE)$(MIDP_OBJ_DIR)/javacallImpl$(OBJ) $(DRIVE)$(MIDP_OBJ_DIR)/namsui_resource.res $(LIBS) $(LD_OUTPUT)$(DRIVE)$(MIDP_OUTPUT_DIR)/bin/i386/appManager$(EXE)
-        cp  $(VC_PDB) )$(DRIVE)$(MIDP_OUTPUT_DIR)/bin/i386
+	$(A)cp $(VC_PDB) $(DRIVE)$(MIDP_OUTPUT_DIR)/bin/i386
 #	cp $(MIDP_OUTPUT_DIR)/bin/i386/jwc_properties.ini .
 
 $(MIDP_OBJ_DIR)/appManager$(OBJ): $(SRC_DIR)/appManager.cpp
