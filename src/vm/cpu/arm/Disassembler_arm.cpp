@@ -840,7 +840,7 @@ void Disassembler::emit_vfp_instruction(int instr, int instr_offset) {
     } else {
       unknown_vfp_instr(instr);
     }
-  } else if (((instr >> 21) & 0x3f) == 0x62 &&
+  } else if (((instr >> 21) & 0x7f) == 0x62 &&
              ((instr >> 8) & 0x0b) == 0x0b &&
              ((instr >> 4) & 0x07) == 0x1) {
     int L        = bit(instr, 20);

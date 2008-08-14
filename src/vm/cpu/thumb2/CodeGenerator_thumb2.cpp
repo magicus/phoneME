@@ -56,8 +56,11 @@ public:
   virtual Assembler::Register get_literal(int imm32) {
     return frame()->get_literal(imm32, *this);
   }
+#if ENABLE_ARM_VFP
+  Assembler::Register has_vfp_literal( const int imm32 ) const;
+#endif
 private:
-  VirtualStackFrame* frame() {
+  VirtualStackFrame* frame( void ) const {
     return Compiler::current()->code_generator()->frame();
   }
 };
@@ -215,16 +218,32 @@ extern "C" {
 
 bool CompilerLiteralAccessor::has_literal(int imm32,
                                           Assembler::Register& result) {
-  LiteralElementStream les(frame());
-  for ( ; !les.eos() ; les.next()) {
-    if (les.value() == imm32) {
-      result = Assembler::reg(les.reg());
+  for( LiteralElementStream les( frame() ); !les.eos(); les.next() ) {
+    if( les.value() == imm32) {
+      const Assembler::Register reg( les.reg() );
+#if ENABLE_ARM_VFP
+      if( reg > Assembler::r15 ) {
+        continue;
+      }
+#endif
+      result = reg;
       return true;
     }
   }
-
   return false;
 }
+
+#if ENABLE_ARM_VFP
+Assembler::Register
+CompilerLiteralAccessor::has_vfp_literal( const int imm32 ) const {
+  for( LiteralElementStream les(frame()); !les.eos() ; les.next() ) {
+    if( les.value() == imm32 ) {
+      return les.reg();
+    }
+  }
+  return Assembler::no_reg;
+}
+#endif
 
 void CodeGenerator::load_from_address(Value& result, BasicType type,
                                       MemoryAddress& address, Condition cond) {
@@ -246,12 +265,13 @@ void CodeGenerator::load_from_address(Value& result, BasicType type,
 
 #if ENABLE_ARM_VFP
   if (lo >= s0) {
+    const Assembler::Address5 field_addr = address.lo_address_5();
     switch( type ) {
       case T_FLOAT:
-        flds(lo, address.lo_address_5());
+        flds(lo, field_addr);
         return;
       case T_DOUBLE:
-        fldd(lo, address.lo_address_5());
+        fldd(lo, field_addr);
         return;
       default:
         SHOULD_NOT_REACH_HERE();
@@ -364,37 +384,61 @@ void CodeGenerator::store_to_address(Value& value, BasicType type,
 
         address.write_barrier_epilog();
         break;
-      }
-      // Fall through
+      } // Fall through
 
     case T_FLOAT   :
+#if ENABLE_ARM_VFP
+      if(reg >= s0) {
+        fsts(reg, address.lo_address_5());
+        break;
+      } // Fall through
+#endif
     case T_INT     :
       // prepare and load data at lo address
       address.get_indexed_address(true, address_reg, address_offset);
       str(reg, address_reg, address_offset);
       break;
 
-    case T_DOUBLE  : // fall through
+    case T_DOUBLE  :
+#if ENABLE_ARM_VFP
+      if (!value.is_immediate() && reg >= s0) {
+        fstd(reg, address.lo_address_5());
+        break;
+      } // Fall through
+#endif
     case T_LONG    :
+#if ENABLE_ARM_VFP
+      if(reg >= s0) {
+        fsts(reg, address.lo_address_5());
+      } else
+#endif
+      {
         // prepare and load data at lo address
         address.get_indexed_address(true, address_reg, address_offset);
         str(reg, address_reg, address_offset);
-        if (value.is_immediate()) {
-          // Unreference the old literal.  Get the new literal and reference it
-          RegisterAllocator::dereference(reg);
-          reg = cla.get_literal(value.hi_bits());
-          RegisterAllocator::reference(reg);
-        } else {
-          reg = value.hi_register();
-        }
+      }
+      if (value.is_immediate()) {
+        // Unreference the old literal.  Get the new literal and reference it
+        RegisterAllocator::dereference(reg);
+        reg = cla.get_literal(value.hi_bits());
+        RegisterAllocator::reference(reg);
+      } else {
+        reg = value.hi_register();
+      }
+#if ENABLE_ARM_VFP
+      if(reg >= s0) {
+        fsts(reg, address.hi_address_5());
+      } else
+#endif
+      {
         // prepare and load data at *hi* address
         address.get_indexed_address(false, address_reg, address_offset);
         str(reg, address_reg, address_offset);
-        break;
-
+      }
+      break;
     default        :
-        SHOULD_NOT_REACH_HERE();
-        break;
+      SHOULD_NOT_REACH_HERE();
+      break;
   }
   if (reg != no_reg && value.is_immediate()) {
     RegisterAllocator::dereference(reg);
