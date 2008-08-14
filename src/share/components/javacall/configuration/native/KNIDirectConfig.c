@@ -308,7 +308,7 @@ KNIDECL(com_sun_mmedia_DefaultConfiguration_nListProtocolsOpen) {
     ListIterator *iterator = NULL;
     javacall_int32 proto_mask = 0;
     javacall_bool supportDeviceProtocol = JAVACALL_FALSE;
-    char *p;
+    char *p = NULL;
     
     /* stack buffers. Trying to avoid malloc if a string is not big */
     jchar stack_string16_buffer[MAX_PROTOCOLNAME_LEN], *string16 = NULL;
