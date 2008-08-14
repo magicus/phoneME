@@ -362,6 +362,7 @@ endif
 #####################################################################
 ifeq ($(USE_JSR_177), true)
 JPP_DEFS += -DENABLE_JSR_177
+EXTRA_CFLAGS += -DENABLE_JSR_177=1
 include $(JSR_177_DIR)/build/$(SUBSYSTEM_MAKE_FILE)
 endif
 
@@ -379,6 +380,7 @@ endif
 # Description: JSR 180
 #####################################################################
 ifeq ($(USE_JSR_180), true)
+EXTRA_CFLAGS += -DENABLE_JSR_180=1
 include $(JSR_180_DIR)/build/$(SUBSYSTEM_MAKE_FILE)
 endif
 
