@@ -165,6 +165,8 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
+    Sleep(1000);
+
     // Initialize Java AMS
     InitJavacallAMS();
 
@@ -314,6 +316,7 @@ BOOL InitTreeViewItems(HWND hwndTV)  {
     res = java_ams_suite_get_suite_ids(&pSuiteIds, &suiteNum);
 
     if (res != JAVACALL_OK) {
+        wprintf(_T("ERROR: java_ams_suite_get_suite_ids() returned %d\n"), res);
         return FALSE;
     }
 

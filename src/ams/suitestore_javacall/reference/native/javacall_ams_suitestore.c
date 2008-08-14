@@ -585,6 +585,10 @@ java_ams_suite_get_suite_ids(javacall_suite_id** ppSuiteIds,
     MIDPError status;
     int i;
 
+    if (pNumberOfSuites == NULL) {
+        return JAVACALL_FAIL;
+    }
+
     status = midp_get_suite_ids(&pSuites, &numberOfSuites);
     if (status != ALL_OK) {
         return midp_error2javacall(status);
@@ -644,6 +648,38 @@ javacall_result
 java_ams_suite_get_midlets_info(javacall_suite_id suiteId,
                                 javacall_ams_midlet_info** ppMidletsInfo,
                                 int* pNumberOfEntries) {
+    javacall_ams_midlet_info* pTmpMidletInfo;
+
+    if (ppMidletsInfo == NULL || pNumberOfEntries == NULL) {
+        return JAVACALL_FAIL;
+    }
+
+    // TODO !!!
+    *pNumberOfEntries = 1;
+    *ppMidletsInfo = javacall_malloc((*pNumberOfEntries) *
+                                         sizeof(javacall_ams_midlet_info));
+    if (*ppMidletsInfo == NULL) {
+        return JAVACALL_FAIL;
+    }
+
+    pTmpMidletInfo = &(*ppMidletsInfo)[0];
+    pTmpMidletInfo->suiteId = 2;
+    pTmpMidletInfo->className = javacall_malloc(64);
+
+    pTmpMidletInfo->className[0] = 'T';
+    pTmpMidletInfo->className[1] = 0;
+    pTmpMidletInfo->className[2] = 'e';
+    pTmpMidletInfo->className[3] = 0;
+    pTmpMidletInfo->className[4] = 's';
+    pTmpMidletInfo->className[5] = 0;
+    pTmpMidletInfo->className[6] = 't';
+    pTmpMidletInfo->className[7] = 0;
+    pTmpMidletInfo->className[8] = 0;
+    pTmpMidletInfo->className[9] = 0;
+
+    pTmpMidletInfo->displayName = NULL;
+    pTmpMidletInfo->iconPath = NULL;
+
     return JAVACALL_OK;
 }
 
