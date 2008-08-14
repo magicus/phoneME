@@ -1,9 +1,3 @@
-#
-#
-#
-
-AK=false
-
 USE_DEBUG=true
 
 ifeq ($(USE_DEBUG), true)
@@ -14,6 +8,12 @@ endif
 
 SRC_DIR=javacall
 DRIVE=d:
+
+VC_PDB = vc70.pdb
+
+###############################################################################
+
+AK=true
 
 ifeq ($(AK), true)
 
@@ -79,22 +79,25 @@ endif # USE_DEBUG
 
 EXTRA_CFLAGS += -I$(DRIVE)$(JAVACALL_OUTPUT_DIR)/inc
 
-LIBS		+= user32.lib gdi32.lib kernel32.lib winmm.lib wsock32.lib vfw32.lib shell32.lib comdlg32.lib comctl32.lib
+LIBS	    += user32.lib gdi32.lib kernel32.lib winmm.lib wsock32.lib vfw32.lib shell32.lib comdlg32.lib comctl32.lib
 LIBS        += $(JAVACALL_LIB) $(PCSL_LIB) $(CLDC_LIB) $(MIDP_LIB)
+
+###############################################################################
+
+A = @
 
 all: appManager
 
-
 appManager: $(MIDP_OBJ_DIR)/appManager$(OBJ) $(MIDP_OBJ_DIR)/javacallImpl$(OBJ) $(MIDP_OBJ_DIR)/namsui_resource.res
-	$(LD) $(LD_FLAGS) $(DRIVE)$(MIDP_OBJ_DIR)/appManager$(OBJ) $(DRIVE)$(MIDP_OBJ_DIR)/javacallImpl$(OBJ) $(DRIVE)$(MIDP_OBJ_DIR)/namsui_resource.res $(LIBS) $(LD_OUTPUT)$(DRIVE)$(MIDP_OUTPUT_DIR)/bin/i386/appManager$(EXE)
+	$(A)$(LD) $(LD_FLAGS) $(DRIVE)$(MIDP_OBJ_DIR)/appManager$(OBJ) $(DRIVE)$(MIDP_OBJ_DIR)/javacallImpl$(OBJ) $(DRIVE)$(MIDP_OBJ_DIR)/namsui_resource.res $(LIBS) $(LD_OUTPUT)$(DRIVE)$(MIDP_OUTPUT_DIR)/bin/i386/appManager$(EXE)
+        cp  $(VC_PDB) )$(DRIVE)$(MIDP_OUTPUT_DIR)/bin/i386
 #	cp $(MIDP_OUTPUT_DIR)/bin/i386/jwc_properties.ini .
 
 $(MIDP_OBJ_DIR)/appManager$(OBJ): $(SRC_DIR)/appManager.cpp
-	$(CPP) $(CFLAGS) $(DEBUG_CFLAGS) $(EXTRA_CFLAGS) $(SRC_DIR)/appManager.cpp $(CC_OUTPUT)$@
+	$(A)$(CPP) $(CFLAGS) $(DEBUG_CFLAGS) $(EXTRA_CFLAGS) $(SRC_DIR)/appManager.cpp $(CC_OUTPUT)$@
 
 $(MIDP_OBJ_DIR)/javacallImpl$(OBJ): $(SRC_DIR)/javacallImpl.cpp
-	$(CPP) $(CFLAGS) $(DEBUG_CFLAGS) $(EXTRA_CFLAGS) $(SRC_DIR)/javacallImpl.cpp $(CC_OUTPUT)$@
+	$(A)$(CPP) $(CFLAGS) $(DEBUG_CFLAGS) $(EXTRA_CFLAGS) $(SRC_DIR)/javacallImpl.cpp $(CC_OUTPUT)$@
 
 $(MIDP_OBJ_DIR)/%.res: $(SRC_DIR)/res/%.rc
-	@echo "...compiling resources ... "
-	$(RC) $(RCFLAGS)  /d "NDEBUG" /fo $@ $<
+	$(A)$(RC) $(RCFLAGS)  /d "NDEBUG" /fo $@ $<

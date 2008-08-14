@@ -29,7 +29,6 @@
 #include <string.h>
 #include <tchar.h>
 #include <commctrl.h> // common controls for tree view
-#include <windowsx.h> // GET_*_LPARAM macros
 
 #include "res/namsui_resource.h"
 
@@ -118,13 +117,7 @@ extern "C" javacall_result JavaTaskImpl(int argc, char* argv[]) {
 }
 
 DWORD WINAPI javaThread(LPVOID lpParam) {
-    //MessageBox(NULL,
-    //    _T("SJWC Thread started!\n"),
-    //    g_szTitle,
-    //    NULL);
-
     JavaTaskImpl(0, NULL);
-
     return 0; 
 } 
 
@@ -165,8 +158,10 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
+    // Let native peer to start
+    // TODO: wait for notification from the peer instead of sleep
     Sleep(1000);
-
+    
     // Initialize Java AMS
     InitJavacallAMS();
 
@@ -299,6 +294,8 @@ HWND CreateTreeView(HWND hwndParent) {
         MessageBox(NULL, _T("Create tree view failed!"), g_szTitle, NULL);
         return NULL;
     }
+
+   return hwndTV;
 }
 
 BOOL InitTreeViewItems(HWND hwndTV)  {
@@ -316,11 +313,11 @@ BOOL InitTreeViewItems(HWND hwndTV)  {
     res = java_ams_suite_get_suite_ids(&pSuiteIds, &suiteNum);
 
     if (res != JAVACALL_OK) {
-        wprintf(_T("ERROR: java_ams_suite_get_suite_ids() returned %d\n"), res);
+        wprintf(_T("ERROR: java_ams_suite_get_suite_ids() returned: %d\n"), res);
         return FALSE;
     }
 
-    wprintf(_T("suites found: %d\n"), suiteNum);
+    wprintf(_T("Total suites found: %d\n"), suiteNum);
 
     for (int i = 0; i < suiteNum; i++) {
         res = java_ams_suite_get_info(pSuiteIds[i], &pSuiteInfo);
@@ -381,7 +378,7 @@ LPTSTR JavacallUTF16ToTSTR(javacall_utf16_string str) {
         memcpy(result, str, buf_len);
     }
 #else
-# error "Only Unicode platforms are not supported for now"
+# error "Only Unicode platforms are supported for now"
 #endif
    return result;
 }
@@ -461,42 +458,38 @@ LRESULT CALLBACK
 MainWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
     PAINTSTRUCT ps;
     HDC hdc;
-    int x, y;
+    POINT pnt;
     TCHAR greeting[] = _T("Native Application Manager");
 
     switch (message) {
-    case WM_LBUTTONDOWN:
-    {
-        x = GET_X_LPARAM(lParam);
-        y = GET_Y_LPARAM(lParam);
+    case WM_LBUTTONDOWN: {
+	pnt.x = LOWORD(lParam);
+	pnt.y = HIWORD(lParam);
 
         javacall_result res = java_ams_midlet_start(-1, 1,
             L"com.sun.midp.installer.DiscoveryApp", NULL);
 
-        TCHAR szMsg[128];
-        wsprintf(szMsg, _T("res = %d."), (int)res); 
-        MessageBox(NULL, szMsg, g_szTitle, MB_OK);
+        wprintf(_T("java_ams_midlet_start res: %d\n"), res);
 
         break;
     }
 
-    case WM_RBUTTONDOWN:
-//    case WM_CONTEXTMENU:
-        x = GET_X_LPARAM(lParam);
-        y = GET_Y_LPARAM(lParam);
-//        ClientToScreen(hWnd, (LPPOINT) &pnt);
+    case WM_RBUTTONDOWN: {
+	pnt.x = LOWORD(lParam);
+	pnt.y = HIWORD(lParam);
+        ClientToScreen(hWnd, (LPPOINT) &pnt);
 
-        // Get the first shortcut menu in the menu template. This is the 
-        // menu that TrackPopupMenu displays
-//        HMENU hMenu = GetSubMenu(g_hMidletPopupMenu, 0);
-        if (g_hMidletPopupMenu) {
-            TrackPopupMenu (g_hMidletPopupMenu, TPM_LEFTALIGN | TPM_LEFTBUTTON,
-                x, y, 0, hWnd, NULL);
+        // Get the first shortcut menu in the menu template.
+        // This is the menu that TrackPopupMenu displays
+        HMENU hMenu = GetSubMenu(g_hMidletPopupMenu, 0);
+        if (hMenu) {
+            TrackPopupMenu(hMenu, 0, pnt.x, pnt.y, 0, hWnd, NULL);
         } else {
             MessageBox(NULL, _T("Can't show context menu!"), g_szTitle, MB_OK);
         }
 
         break;
+    }
 
     case WM_COMMAND:
         // Test for the identifier of a command item.
@@ -511,12 +504,15 @@ MainWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
                 break;
 
             case IDM_MIDLET_REMOVE:
+                wprintf(_T("Removing MIDlet...\n"));
                 break; 
 
             case IDM_MIDLET_UPDATE:
+                wprintf(_T("Updating MIDlet...\n"));
                 break; 
 
             case IDM_MIDLET_SETTINGS:
+                wprintf(_T("Show setting for the MIDlet...\n"));
                 break;
   
             default:
@@ -550,6 +546,7 @@ MainWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
 
     return 0;
 }
+
 
 // LCD UI stuff
 
