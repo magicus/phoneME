@@ -40,7 +40,7 @@
 
 static javacall_result midp_error2javacall(MIDPError midpErr);
 static MIDPError midp_javacall_str2pcsl_str(
-    javacall_const_utf16_string* pSrcStr, pcsl_string* pDstStr);
+    javacall_const_utf16_string pSrcStr, pcsl_string* pDstStr);
 static MIDPError midp_pcsl_str2javacall_str(const pcsl_string* pSrcStr,
                                             javacall_utf16_string* pDstStr);
 
@@ -481,7 +481,7 @@ void java_ams_suite_free_install_info(
         }
 
         for (i = 0; i < pInstallInfo->authPathLen; i++) {
-            pcsl_string_free(&pInstallInfo->authPath[i]);
+            javacall_free(&pInstallInfo->authPath[i]);
         }
 
         javacall_free(pInstallInfo);
@@ -677,54 +677,48 @@ java_ams_suite_free_midlets_info(javacall_ams_midlet_info* pMidletsInfo,
 javacall_result
 java_ams_suite_get_info(javacall_suite_id suiteId,
                         javacall_ams_suite_info** ppSuiteInfo) {
-    MidletSuiteData pMidpSuiteData;
-    MIDPError status;
+    MidletSuiteData* pMidpSuiteData;
+    javacall_ams_suite_info* pTmpSuiteInfo;
 
-    if (pSuiteInfo == NULL) {
+    pTmpSuiteInfo = javacall_malloc(sizeof(javacall_ams_suite_info));
+    if (pTmpSuiteInfo == NULL) {
         return JAVACALL_FAIL;
     }
 
     /* IMPL_NOTE: it should be moved from suitestore_intern and renamed */
     pMidpSuiteData = get_suite_data((SuiteIdType)suiteId);
     if (pMidpSuiteData == NULL) {
+        javacall_free(pTmpSuiteInfo);
         return JAVACALL_FAIL;
     }
 
     /* copy data from the midp structure to the javacall one */
-    pSuiteInfo->suiteId   = (javacall_suite_id) pMidpSuiteData->suiteId;
-    pSuiteInfo->storageId = (javacall_int32) pMidpSuiteData->storageId;
-    pSuiteInfo->folderId = (javacall_int32) pMidpSuiteData->folderId;
-    pSuiteInfo->isEnabled = (javacall_bool) pMidpSuiteData->isEnabled;
-    pSuiteInfo->isTrusted = (javacall_bool) pMidpSuiteData->isTrusted;
-    pSuiteInfo->numberOfMidlets =
+    pTmpSuiteInfo->suiteId   = (javacall_suite_id) pMidpSuiteData->suiteId;
+    pTmpSuiteInfo->storageId = (javacall_int32) pMidpSuiteData->storageId;
+    pTmpSuiteInfo->folderId = (javacall_int32) pMidpSuiteData->folderId;
+    pTmpSuiteInfo->isEnabled = (javacall_bool) pMidpSuiteData->isEnabled;
+    pTmpSuiteInfo->isTrusted = (javacall_bool) pMidpSuiteData->isTrusted;
+    pTmpSuiteInfo->numberOfMidlets =
         (javacall_int32) pMidpSuiteData->numberOfMidlets;
-    pSuiteInfo->installTime = (long) pMidpSuiteData->installTime;
-    pSuiteInfo->jadSize = (javacall_int32) pMidpSuiteData->jadSize;
-    pSuiteInfo->jarSize = (javacall_int32) pMidpSuiteData->jarSize;
-    pSuiteInfo->isPreinstalled = (javacall_bool) pMidpSuiteData->isPreinstalled;
-
-    pSuiteInfo->jarHashLen = (javacall_int32) pMidpSuiteData->jarHashLen;
-    if (pMidpSuiteData->jarHashLen > 0) {
-        pSuiteInfo->pJarHash = javacall_malloc(pMidpSuiteData->jarHashLen);
-        if (pSuiteInfo->pJarHash == NULL) {
-            return JAVACALL_OUT_OF_MEMORY;
-        }
-        memcpy(pSuiteInfo->pJarHash, pMidpSuiteData->varSuiteData.pJarHash,
-            pMidpSuiteData->jarHashLen);
-    } else {
-        pSuiteInfo->pJarHash = NULL;
-    }
+    pTmpSuiteInfo->installTime = (long) pMidpSuiteData->installTime;
+    pTmpSuiteInfo->jadSize = (javacall_int32) pMidpSuiteData->jadSize;
+    pTmpSuiteInfo->jarSize = (javacall_int32) pMidpSuiteData->jarSize;
+    pTmpSuiteInfo->isPreinstalled =
+        (javacall_bool) pMidpSuiteData->isPreinstalled;
 
     /*
      * IMPL_NOTE: the strings from pMidpSuiteData should be converted from
      *            pcsl_string and copied into the bellowing strings.
      */
-    pSuiteInfo->midletClassName = NULL;
-    pSuiteInfo->displayName = NULL;
-    pSuiteInfo->iconPath = NULL;
-    pSuiteInfo->suiteVendor = NULL;
-    pSuiteInfo->suiteName = NULL;
-//    pSuiteInfo->pathToJar = NULL;
+    pTmpSuiteInfo->midletClassName = NULL;
+    pTmpSuiteInfo->displayName = NULL;
+    pTmpSuiteInfo->iconPath = NULL;
+    pTmpSuiteInfo->suiteVendor = NULL;
+    pTmpSuiteInfo->suiteName = NULL;
+    pTmpSuiteInfo->suiteVersion = NULL;
+//    pTmpSuiteInfo->pathToJar = NULL;
+
+    *ppSuiteInfo = pTmpSuiteInfo;
 
     return JAVACALL_OK;
 }
@@ -1167,7 +1161,7 @@ static javacall_result midp_error2javacall(MIDPError midpErr) {
     return jcRes;
 }
 
-MIDPError midp_javacall_str2pcsl_str(javacall_const_utf16_string* pSrcStr,
+MIDPError midp_javacall_str2pcsl_str(javacall_const_utf16_string pSrcStr,
                                      pcsl_string* pDstStr) {
     return ALL_OK;
 }
