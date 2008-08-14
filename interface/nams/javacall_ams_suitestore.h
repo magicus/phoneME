@@ -361,7 +361,7 @@ typedef struct _javacall_ams_suite_install_info {
      * if signed, the Certificate Authorization path, begining with the
      * most trusted entity, that authorized it
      */
-    javacall_utf16_string* pAuthPath;
+    javacall_utf16_string authPath;
     /** length of the authorization path */
     javacall_int32 authPathLen;
     /** suite hash for the suites with preverified classes */
@@ -719,22 +719,6 @@ java_ams_suite_get_suite_ids(javacall_suite_id** ppSuiteIds,
 void
 java_ams_suite_free_suite_ids(javacall_suite_id* pSuiteIds,
                               int numberOfSuites);
-
-/**
- * App Manager invokes this function to get information about the suite
- * containing the specified running MIDlet. This call is synchronous.
- *
- * @param appId the ID used to identify the application
- *
- * @param pSuiteInfo [out] pointer to a structure where static information
- *                         about the midlet will be stored
- *
- * @return error code: <tt>JAVACALL_OK</tt> if successful,
- *                     <tt>JAVACALL_FAIL</tt> otherwise
- */
-javacall_result
-java_ams_suite_get_running_app_info(javacall_app_id appId,
-                                    javacall_ams_suite_info* pSuiteInfo);
 
 /**
  * App Manager invokes this function to get an information about the midlets
