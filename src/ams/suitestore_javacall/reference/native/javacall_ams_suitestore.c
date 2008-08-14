@@ -31,6 +31,7 @@
 #include <suitestore_common.h>
 #include <suitestore_installer.h>
 #include <suitestore_task_manager.h>
+#include <suitestore_intern.h>
 
 #include <javautil_unicode.h>
 #include <javacall_memory.h>
@@ -38,6 +39,8 @@
 #include <suitestore_javacall.h>
 
 static javacall_result midp_error2javacall(MIDPError midpErr);
+static MIDPError midp_javacall_str2pcsl_str(
+    javacall_const_utf16_string* pSrcStr, pcsl_string* pDstStr);
 static MIDPError midp_pcsl_str2javacall_str(const pcsl_string* pSrcStr,
                                             javacall_utf16_string* pDstStr);
 
@@ -265,6 +268,17 @@ java_ams_suite_get_property(javacall_suite_id suiteId,
                             javacall_const_utf16_string key,
                             javacall_utf16_string value,
                             int maxValueLen) {
+    pcsl_string pcslStrKey, pcslStrValue;
+    MIDPError status;
+
+    status = midp_javacall_str2pcsl_str(key, &pcslStrKey);
+    if (status != ALL_OK) {
+        return midp_error2javacall(status);
+    }
+
+    status = midp_get_suite_property((SuiteIdType)suiteId,
+                        &pcslStrKey, &pcslStrValue);
+
     return JAVACALL_OK;
 }
 
@@ -287,6 +301,32 @@ javacall_result
 java_ams_suite_get_id(javacall_const_utf16_string vendor,
                       javacall_const_utf16_string name,
                       javacall_suite_id* pSuiteId) {
+    SuiteIdType midpSuiteId;
+    MIDPError status;
+    pcsl_string pcslStrVendor, pcslStrName;
+
+    status = midp_javacall_str2pcsl_str(vendor, &pcslStrVendor);
+    if (status != ALL_OK) {
+        return midp_error2javacall(status);
+    }
+
+    status = midp_javacall_str2pcsl_str(name, &pcslStrName);
+    if (status != ALL_OK) {
+        pcsl_string_free(&pcslStrVendor);
+        return midp_error2javacall(status);
+    }
+
+    status = midp_get_suite_id(&pcslStrVendor, &pcslStrName, &midpSuiteId);
+
+    pcsl_string_free(&pcslStrVendor);
+    pcsl_string_free(&pcslStrName);
+
+    if (status != ALL_OK && status != NOT_FOUND) {
+        return midp_error2javacall(status);
+    }
+
+    *pSuiteId = (javacall_suite_id)midpSuiteId;
+
     return JAVACALL_OK;
 }
 
@@ -299,6 +339,16 @@ java_ams_suite_get_id(javacall_const_utf16_string vendor,
  */
 javacall_result
 java_ams_suite_create_id(javacall_suite_id* pSuiteId) {
+    SuiteIdType midpSuiteId;
+    MIDPError status;
+
+    status = midp_create_suite_id(&midpSuiteId);
+    if (status != ALL_OK) {
+        return midp_error2javacall(status);
+    }
+
+    *pSuiteId = (javacall_suite_id)midpSuiteId; 
+
     return JAVACALL_OK;
 }
 
@@ -364,7 +414,7 @@ java_ams_suite_get_install_info(javacall_suite_id suiteId,
         if (midpInstallInfo.authPathLen > 0) {
             // TODO !!!
         } else {
-            pInstallInfo->pAuthPath = NULL;
+            pInstallInfo->authPath = NULL;
         }
 
         pInstallInfo->verifyHashLen = midpInstallInfo.verifyHashLen;
@@ -410,6 +460,32 @@ java_ams_suite_get_install_info(javacall_suite_id suiteId,
  */
 void java_ams_suite_free_install_info(
         javacall_ams_suite_install_info* pInstallInfo) {
+    if (pInstallInfo != NULL) {
+        int i;
+
+        if (pInstallInfo->jadUrl != NULL) {
+            javacall_free(pInstallInfo->jadUrl);
+        }
+
+        if (pInstallInfo->jarUrl != NULL) {
+            javacall_free(pInstallInfo->jarUrl);
+        }
+
+        if (pInstallInfo->domain != NULL) {
+            javacall_free(pInstallInfo->domain);
+        }
+
+        if (pInstallInfo->verifyHashLen > 0 &&
+                pInstallInfo->pVerifyHash != NULL) {
+            javacall_free(pInstallInfo->pVerifyHash);
+        }
+
+        for (i = 0; i < pInstallInfo->authPathLen; i++) {
+            pcsl_string_free(&pInstallInfo->authPath[i]);
+        }
+
+        javacall_free(pInstallInfo);
+    }
 }
 
 /**
@@ -553,24 +629,6 @@ java_ams_suite_free_suite_ids(javacall_suite_id* pSuiteIds,
 }
 
 /**
- * App Manager invokes this function to get information about the suite
- * containing the specified running MIDlet. This call is synchronous.
- *
- * @param appId the ID used to identify the application
- *
- * @param pSuiteInfo [out] pointer to a structure where static information
- *                         about the midlet will be stored
- *
- * @return error code: <tt>JAVACALL_OK</tt> if successful,
- *                     <tt>JAVACALL_FAIL</tt> otherwise
- */
-javacall_result
-java_ams_suite_get_running_app_info(javacall_app_id appId,
-                                    javacall_ams_suite_info* pSuiteInfo) {
-    return JAVACALL_OK;
-}
-
-/**
  * App Manager invokes this function to get a information about the midlets
  * contained in the given suite.
  *
@@ -619,6 +677,55 @@ java_ams_suite_free_midlets_info(javacall_ams_midlet_info* pMidletsInfo,
 javacall_result
 java_ams_suite_get_info(javacall_suite_id suiteId,
                         javacall_ams_suite_info** ppSuiteInfo) {
+    MidletSuiteData pMidpSuiteData;
+    MIDPError status;
+
+    if (pSuiteInfo == NULL) {
+        return JAVACALL_FAIL;
+    }
+
+    /* IMPL_NOTE: it should be moved from suitestore_intern and renamed */
+    pMidpSuiteData = get_suite_data((SuiteIdType)suiteId);
+    if (pMidpSuiteData == NULL) {
+        return JAVACALL_FAIL;
+    }
+
+    /* copy data from the midp structure to the javacall one */
+    pSuiteInfo->suiteId   = (javacall_suite_id) pMidpSuiteData->suiteId;
+    pSuiteInfo->storageId = (javacall_int32) pMidpSuiteData->storageId;
+    pSuiteInfo->folderId = (javacall_int32) pMidpSuiteData->folderId;
+    pSuiteInfo->isEnabled = (javacall_bool) pMidpSuiteData->isEnabled;
+    pSuiteInfo->isTrusted = (javacall_bool) pMidpSuiteData->isTrusted;
+    pSuiteInfo->numberOfMidlets =
+        (javacall_int32) pMidpSuiteData->numberOfMidlets;
+    pSuiteInfo->installTime = (long) pMidpSuiteData->installTime;
+    pSuiteInfo->jadSize = (javacall_int32) pMidpSuiteData->jadSize;
+    pSuiteInfo->jarSize = (javacall_int32) pMidpSuiteData->jarSize;
+    pSuiteInfo->isPreinstalled = (javacall_bool) pMidpSuiteData->isPreinstalled;
+
+    pSuiteInfo->jarHashLen = (javacall_int32) pMidpSuiteData->jarHashLen;
+    if (pMidpSuiteData->jarHashLen > 0) {
+        pSuiteInfo->pJarHash = javacall_malloc(pMidpSuiteData->jarHashLen);
+        if (pSuiteInfo->pJarHash == NULL) {
+            return JAVACALL_OUT_OF_MEMORY;
+        }
+        memcpy(pSuiteInfo->pJarHash, pMidpSuiteData->varSuiteData.pJarHash,
+            pMidpSuiteData->jarHashLen);
+    } else {
+        pSuiteInfo->pJarHash = NULL;
+    }
+
+    /*
+     * IMPL_NOTE: the strings from pMidpSuiteData should be converted from
+     *            pcsl_string and copied into the bellowing strings.
+     */
+    pSuiteInfo->midletClassName = NULL;
+    pSuiteInfo->displayName = NULL;
+    pSuiteInfo->iconPath = NULL;
+    pSuiteInfo->suiteVendor = NULL;
+    pSuiteInfo->suiteName = NULL;
+//    pSuiteInfo->pathToJar = NULL;
+
     return JAVACALL_OK;
 }
 
@@ -1058,6 +1165,11 @@ static javacall_result midp_error2javacall(MIDPError midpErr) {
     }
 
     return jcRes;
+}
+
+MIDPError midp_javacall_str2pcsl_str(javacall_const_utf16_string* pSrcStr,
+                                     pcsl_string* pDstStr) {
+    return ALL_OK;
 }
 
 MIDPError midp_pcsl_str2javacall_str(const pcsl_string* pSrcStr,

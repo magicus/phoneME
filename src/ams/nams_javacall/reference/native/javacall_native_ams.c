@@ -81,8 +81,8 @@ javacall_result java_ams_system_start() {
  * Platform invokes this function to inform VM to start a specific MIDlet
  * suite.
  *
- * @param suiteID      ID of the suite to start
- * @param appID        ID of runtime midlet, ID must not be Zero
+ * @param suiteId      ID of the suite to start
+ * @param appId        ID of runtime midlet, ID must not be Zero
  * @param className    Fully qualified name of the MIDlet class
  * @param pRuntimeInfo Quotas and profile to set for the new application
  * @return <tt>JAVACALL_OK</tt> if all parameter are valid,
@@ -92,11 +92,11 @@ javacall_result java_ams_system_start() {
  *       by <link>javacall_ams_midlet_stateChanged</link>
  */
 javacall_result
-java_ams_midlet_start(javacall_suite_id suiteID,
-                      javacall_app_id appID,
+java_ams_midlet_start(javacall_suite_id suiteId,
+                      javacall_app_id appId,
                       javacall_const_utf16_string className,
                       const javacall_midlet_runtime_info* pRuntimeInfo) {
-    return java_ams_midlet_start_with_args(suiteID, appID,
+    return java_ams_midlet_start_with_args(suiteId, appId,
         className, NULL, 0, pRuntimeInfo);
 }
 
@@ -104,8 +104,8 @@ java_ams_midlet_start(javacall_suite_id suiteID,
  * Platform invokes this function to inform VM to start a specific MIDlet
  * suite with arguments.
  *
- * @param suiteID      ID of the suite to start with
- * @param appID        ID of runtime midlet
+ * @param suiteId      ID of the suite to start with
+ * @param appId        ID of runtime midlet
  * @param className    Fully qualified name of the MIDlet class
  * @param args         An array containning up to 3 arguments for
  *                     the MIDlet to be run
@@ -119,8 +119,8 @@ java_ams_midlet_start(javacall_suite_id suiteID,
  */
 #include <stdio.h>
 javacall_result
-java_ams_midlet_start_with_args(javacall_suite_id suiteID,
-                                javacall_app_id appID,
+java_ams_midlet_start_with_args(javacall_suite_id suiteId,
+                                javacall_app_id appId,
                                 javacall_const_utf16_string className,
                                 javacall_const_utf16_string *args,
                                 int argsNum,
@@ -224,9 +224,9 @@ printf(">>> pClassName = '%s'\n", (char*)pClassName);
         pMri = &mri;
     }
     
-    res = midp_midlet_create_start_with_args((SuiteIdType)suiteID,
+    res = midp_midlet_create_start_with_args((SuiteIdType)suiteId,
         (const jchar*)pClassName, classNameLen, (const jchar**)args, argsLen,
-            (jint)argsNum, (jint)appID, pMri);
+            (jint)argsNum, (jint)appId, pMri);
     return (res == ALL_OK) ? JAVACALL_OK : JAVACALL_FAIL;
 }
 
@@ -235,17 +235,17 @@ printf(">>> pClassName = '%s'\n", (char*)pClassName);
  * running MIDlet. If it doesn't exit in the specified amount of milliseconds,
  * it will be forcefully terminated.
  *
- * @param appID appID of the suite to shutdown
+ * @param appId appId of the suite to shutdown
  * @param timeoutMillSecond shutdown the suite in timeout millseconds
- * @return <tt>JAVACALL_OK</tt> if <code>suiteID</code> has a proper value
+ * @return <tt>JAVACALL_OK</tt> if <code>suiteId</code> has a proper value
  *         <tt>JAVACALL_FAIL</tt> otherwise
  * @note the real status of operation will be notified by
- *       <link>javacall_ams_midlet_stateChanged</link>
+ *       <link>javacall_ams_midlet_state_changed</link>
  */
 javacall_result
-java_ams_midlet_shutdown(javacall_app_id appID,
+java_ams_midlet_shutdown(javacall_app_id appId,
                          int timeoutMillSeconds) {
-    MIDPError res = midp_midlet_destroy((jint)appID, (jint)timeoutMillSeconds);
+    MIDPError res = midp_midlet_destroy((jint)appId, (jint)timeoutMillSeconds);
     return (res == ALL_OK) ? JAVACALL_OK : JAVACALL_FAIL;                                   
 }
 
@@ -253,16 +253,16 @@ java_ams_midlet_shutdown(javacall_app_id appID,
  * Platform invokes this function to inform VM to switch a specific MIDlet
  * suite to foreground.
  *
- * @param appID appID of the suite to switch
+ * @param appId appId of the suite to switch
  *
- * @return <tt>JAVACALL_OK</tt> if <code>suiteID</code> has a proper value
+ * @return <tt>JAVACALL_OK</tt> if <code>suiteId</code> has a proper value
  *         <tt>JAVACALL_FAIL</tt> otherwise
  * @note the real status of operation will be notified by
  *       <link>javacall_ams_midlet_stateChanged</link>
  */
 javacall_result
-java_ams_midlet_switch_foreground(javacall_app_id appID) {
-    MIDPError res = midp_midlet_set_foreground((jint)appID);
+java_ams_midlet_switch_foreground(javacall_app_id appId) {
+    MIDPError res = midp_midlet_set_foreground((jint)appId);
     return (res == ALL_OK) ? JAVACALL_OK : JAVACALL_FAIL;
 }
 
@@ -270,7 +270,7 @@ java_ams_midlet_switch_foreground(javacall_app_id appID) {
  * Platform invokes this function to inform VM to switch current MIDlet
  * suite to background, and no MIDlet will switch to foregound.
  *
- * @return <tt>JAVACALL_OK</tt> if <code>suiteID</code> has a proper value
+ * @return <tt>JAVACALL_OK</tt> if <code>suiteId</code> has a proper value
  *         <tt>JAVACALL_FAIL</tt> otherwise
  * @note the real status of operation will be notified by
  *       <link>javacall_ams_midlet_stateChanged</link>
@@ -283,84 +283,58 @@ javacall_result java_ams_midlet_switch_background() {
 /**
  * Platform invokes this function to inform VM to pause a specific MIDlet
  *
- * @param appID appID of the suite to pause
- * @return <tt>JAVACALL_OK</tt> if <code>suiteID</code> has a proper value
+ * @param appId appId of the suite to pause
+ * @return <tt>JAVACALL_OK</tt> if <code>suiteId</code> has a proper value
  *         <tt>JAVACALL_FAIL</tt> otherwise
  * @note the real status of operation will be notified by
  *       <link>javacall_ams_midlet_stateChanged</link>
  */
-javacall_result java_ams_midlet_pause(javacall_app_id appID) {
-    MIDPError res = midp_midlet_pause((jint)appID);
+javacall_result java_ams_midlet_pause(javacall_app_id appId) {
+    MIDPError res = midp_midlet_pause((jint)appId);
     return (res == ALL_OK) ? JAVACALL_OK : JAVACALL_FAIL;
 }
 
 /**
  * Platform invokes this function to inform VM to resume a specific MIDlet
  *
- * @param appID appID of the suite to resume
- * @return <tt>JAVACALL_OK</tt> if <code>suiteID</code> has a proper value
+ * @param appId appId of the suite to resume
+ * @return <tt>JAVACALL_OK</tt> if <code>suiteId</code> has a proper value
  *         <tt>JAVACALL_FAIL</tt> otherwise
  * @note the real status of operation will be notified by
  *       <link>javacall_ams_midlet_stateChanged</link>
  */
-javacall_result java_ams_midlet_resume(javacall_app_id appID) {
-    MIDPError res = midp_midlet_resume((jint)appID);
+javacall_result java_ams_midlet_resume(javacall_app_id appId) {
+    MIDPError res = midp_midlet_resume((jint)appId);
     return (res == ALL_OK) ? JAVACALL_OK : JAVACALL_FAIL;
 }
 
 /**
- * Platform invokes this function to get information about the suite containing
- * the specified running MIDlet. This call is synchronous.
+ * App Manager invokes this function to get information about the suite
+ * containing the specified running MIDlet. This call is synchronous.
  *
- * @param appId The ID used to identify the application
- *
- * @param pSuiteData [out] pointer to a structure where static information
- *                         about the midlet will be stored
+ * @param appId    [in]  the ID used to identify the application
+ * @param pSuiteId [out] on exit will hold an ID of the suite the midlet
+ *                       belongs to
  *
  * @return error code: <tt>JAVACALL_OK</tt> if successful,
  *                     <tt>JAVACALL_FAIL</tt> otherwise
  */
 javacall_result
-java_ams_midlet_get_suite_info(javacall_app_id appID,
-                               javacall_ams_suite_data* pSuiteData) {
-    MidletSuiteData midpSuiteData;
-    MIDPError res;
+java_ams_midlet_get_app_suite_id(javacall_app_id appId,
+                                 javacall_suite_id* pSuiteId) {
+    MIDPError status;
+    SuiteIdType midpSuiteId;
 
-    if (pSuiteData == NULL) {
+    if (pSuiteId == NULL) {
         return JAVACALL_FAIL;
     }
 
-    res = midp_midlet_get_suite_info((jint)appID, &midpSuiteData);
-    if (res != JAVACALL_OK) {
+    status = midp_midlet_get_suite_info((jint)appId, &midpSuiteId);
+    if (status != ALL_OK) {
         return JAVACALL_FAIL;
     }
 
-    /* copy data from the midp structure to the javacall one */
-    pSuiteData->suiteId   = (javacall_suite_id) midpSuiteData.suiteId;
-    pSuiteData->storageId = (javacall_int32) midpSuiteData.storageId;
-    pSuiteData->folderId = (javacall_int32) midpSuiteData.folderId;
-    pSuiteData->isEnabled = (javacall_bool) midpSuiteData.isEnabled;
-    pSuiteData->isTrusted = (javacall_bool) midpSuiteData.isTrusted;
-    pSuiteData->numberOfMidlets = (javacall_int32) midpSuiteData.numberOfMidlets;
-    pSuiteData->installTime = (long) midpSuiteData.installTime;
-    pSuiteData->jadSize = (javacall_int32) midpSuiteData.jadSize;
-    pSuiteData->jarSize = (javacall_int32) midpSuiteData.jarSize;
-//    pSuiteData->jarHashLen = (javacall_int32) midpSuiteData.jarHashLen;
-    pSuiteData->isPreinstalled = (javacall_bool) midpSuiteData.isPreinstalled;
-
-//    pSuiteData->varSuiteData.pJarHash = midpSuiteData.varSuiteData.pJarHash;
-
-    /*
-     * IMPL_NOTE: the strings from midpSuiteData should be converted from
-     *            pcsl_string and copied into the bellowing strings.
-     */
-    pSuiteData->midletClassName = NULL;
-    pSuiteData->displayName = NULL;
-    pSuiteData->iconPath = NULL;
-    pSuiteData->suiteVendor = NULL;
-    pSuiteData->suiteName = NULL;
-//    pSuiteData->pathToJar = NULL;
-//    pSuiteData->pathToSettings = NULL;
+    *pSuiteId = (javacall_suite_id)midpSuiteId;
 
     return JAVACALL_OK;
 }
@@ -372,27 +346,27 @@ java_ams_midlet_get_suite_info(javacall_app_id appID,
  * This call is asynchronous, the result will be reported later through
  * passing a MIDLET_INFO_READY_EVENT event to SYSTEM_EVENT_LISTENER.
  *
- * @param appID The ID used to identify the application
+ * @param appId The ID used to identify the application
  *
  * @return error code: <tt>JAVACALL_OK<tt> if successful (operation started),
  *                     <tt>JAVACALL_FAIL</tt> otherwise
  */
 javacall_result
-java_ams_midlet_request_runtime_info(javacall_app_id appID) {
-    MIDPError res = midp_midlet_request_runtime_info((jint)appID);
+java_ams_midlet_request_runtime_info(javacall_app_id appId) {
+    MIDPError res = midp_midlet_request_runtime_info((jint)appId);
     return (res == ALL_OK) ? JAVACALL_OK : JAVACALL_FAIL;
 }
 
 /**
  * Platform inform the VM to create the images cache.
- * @param suiteID  unique ID of the MIDlet suite
+ * @param suiteId  unique ID of the MIDlet suite
  *
  * @return <tt>JAVACALL_OK</tt> on success,
  *         <tt>JAVACALL_FAIL</tt>
  */
 javacall_result
-java_ams_create_resource_cache(javacall_suite_id suiteID) {
-    (void) suiteID;
+java_ams_create_resource_cache(javacall_suite_id suiteId) {
+    (void) suiteId;
     return JAVACALL_FAIL;
 }
 
