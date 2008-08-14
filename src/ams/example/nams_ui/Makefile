@@ -1,6 +1,9 @@
 #
 #
 #
+
+AK=false
+
 USE_DEBUG=true
 
 ifeq ($(USE_DEBUG), true)
@@ -10,23 +13,36 @@ DEBUG_SUFFIX=
 endif
 
 SRC_DIR=javacall
-
-COMPONENTS_DIR=/home/ak154633/bengal/src
 DRIVE=d:
 
-JAVACALL_OUTPUT_DIR=$(COMPONENTS_DIR)/phoneme-output/javacall
-JAVACALL_LIB=$(DRIVE)$(JAVACALL_OUTPUT_DIR)/lib/javacall$(DEBUG_SUFFIX).lib
+ifeq ($(AK), true)
 
+COMPONENTS_DIR=/home/ak154633/bengal/src
+JAVACALL_OUTPUT_DIR=$(COMPONENTS_DIR)/phoneme-output/javacall
 PCSL_LIB_DIR=$(COMPONENTS_DIR)/svn_phoneme/pcsl/output/javacall_i386/lib
+CLDC_LIB=$(DRIVE)$(COMPONENTS_DIR)/svn_phoneme/cldc/bin/javacall_i386_vc/dist/lib/cldc_vm$(DEBUG_SUFFIX).lib
+MIDP_OUTPUT_DIR=$(COMPONENTS_DIR)/svn_phoneme_branches/midp-cr-6712543-namsui/build/javacall/output
+
+else
+
+COMPONENTS_DIR=/home/az154780/irbis
+JAVACALL_OUTPUT_DIR=$(COMPONENTS_DIR)/javacall/output_nams
+PCSL_LIB_DIR=$(COMPONENTS_DIR)/pcsl/trunk/output/javacall_i386/lib
+CLDC_LIB=$(DRIVE)$(COMPONENTS_DIR)/cldc/trunk/bin/javacall_i386_vc/dist/lib/cldc_vm$(DEBUG_SUFFIX).lib
+MIDP_OUTPUT_DIR=$(COMPONENTS_DIR)/midp/branches/midp-cr-6712543/build/javacall/output
+
+endif
+
+###############################################################################
+
 PCSL_LIB=$(DRIVE)$(PCSL_LIB_DIR)/libpcsl_file.lib \
          $(DRIVE)$(PCSL_LIB_DIR)/libpcsl_memory.lib \
          $(DRIVE)$(PCSL_LIB_DIR)/libpcsl_network.lib \
          $(DRIVE)$(PCSL_LIB_DIR)/libpcsl_print.lib \
          $(DRIVE)$(PCSL_LIB_DIR)/libpcsl_string.lib 
 
-CLDC_LIB=$(DRIVE)$(COMPONENTS_DIR)/svn_phoneme/cldc/bin/javacall_i386_vc/dist/lib/cldc_vm$(DEBUG_SUFFIX).lib
+JAVACALL_LIB=$(DRIVE)$(JAVACALL_OUTPUT_DIR)/lib/javacall$(DEBUG_SUFFIX).lib
 
-MIDP_OUTPUT_DIR=$(COMPONENTS_DIR)/svn_phoneme_branches/midp-cr-6712543-namsui/build/javacall/output
 MIDP_OBJ_DIR=$(MIDP_OUTPUT_DIR)/obj$(DEBUG_SUFFIX)/i386
 MIDP_LIB=$(DRIVE)$(MIDP_OBJ_DIR)/libobj.lib
 
@@ -69,17 +85,15 @@ LIBS        += $(JAVACALL_LIB) $(PCSL_LIB) $(CLDC_LIB) $(MIDP_LIB)
 all: appManager
 
 
-appManager: $(MIDP_OBJ_DIR)/namsui_resource.res $(MIDP_OBJ_DIR)/appManager$(OBJ)
-	$(LD) $(LD_FLAGS) $(DRIVE)$(MIDP_OBJ_DIR)/appManager$(OBJ) $(DRIVE)$(MIDP_OBJ_DIR)/namsui_resource.res $(LIBS) $(LD_OUTPUT)$(DRIVE)$(MIDP_OUTPUT_DIR)/bin/i386/appManager$(EXE)
-#appManager: $(MIDP_OBJ_DIR)/namsui_resource.res $(MIDP_OBJ_DIR)/appManager$(OBJ) $(MIDP_OBJ_DIR)/suitestoreJavacall$(OBJ)
-#	$(LD) $(LD_FLAGS) $(DRIVE)$(MIDP_OBJ_DIR)/appManager$(OBJ) $(DRIVE)$(MIDP_OBJ_DIR)/suitestoreJavacall$(OBJ) $(LIBS) $(LD_OUTPUT)$(DRIVE)$(MIDP_OUTPUT_DIR)/bin/i386/appManager$(EXE)
+appManager: $(MIDP_OBJ_DIR)/appManager$(OBJ) $(MIDP_OBJ_DIR)/javacallImpl$(OBJ) $(MIDP_OBJ_DIR)/namsui_resource.res
+	$(LD) $(LD_FLAGS) $(DRIVE)$(MIDP_OBJ_DIR)/appManager$(OBJ) $(DRIVE)$(MIDP_OBJ_DIR)/javacallImpl$(OBJ) $(DRIVE)$(MIDP_OBJ_DIR)/namsui_resource.res $(LIBS) $(LD_OUTPUT)$(DRIVE)$(MIDP_OUTPUT_DIR)/bin/i386/appManager$(EXE)
 #	cp $(MIDP_OUTPUT_DIR)/bin/i386/jwc_properties.ini .
 
 $(MIDP_OBJ_DIR)/appManager$(OBJ): $(SRC_DIR)/appManager.cpp
 	$(CPP) $(CFLAGS) $(DEBUG_CFLAGS) $(EXTRA_CFLAGS) $(SRC_DIR)/appManager.cpp $(CC_OUTPUT)$@
 
-$(MIDP_OBJ_DIR)/suitestoreJavacall$(OBJ): $(SRC_DIR)/suitestoreJavacall.cpp
-	$(CPP) $(CFLAGS) $(DEBUG_CFLAGS) $(EXTRA_CFLAGS) $(SRC_DIR)/suitestoreJavacall.cpp $(CC_OUTPUT)$@
+$(MIDP_OBJ_DIR)/javacallImpl$(OBJ): $(SRC_DIR)/javacallImpl.cpp
+	$(CPP) $(CFLAGS) $(DEBUG_CFLAGS) $(EXTRA_CFLAGS) $(SRC_DIR)/javacallImpl.cpp $(CC_OUTPUT)$@
 
 $(MIDP_OBJ_DIR)/%.res: $(SRC_DIR)/res/%.rc
 	@echo "...compiling resources ... "
