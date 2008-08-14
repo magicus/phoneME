@@ -3991,7 +3991,7 @@ JNI_CreateJavaVM(JavaVM **p_jvm, void **p_env, void *args)
     CVMBool userHomePropSpecified = CVM_FALSE; /* -Duser.home specified */
     CVMBool userNamePropSpecified = CVM_FALSE; /* -Duser.name specified */
     CVMpathInfo pathInfo;
-    const char *sunlibrarypathStr;
+    const char *sunlibrarypathStr = NULL;
 
     /*
      * If the current system time is set to be before January 1, 1970,
