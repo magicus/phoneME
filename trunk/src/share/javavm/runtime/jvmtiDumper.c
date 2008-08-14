@@ -1087,7 +1087,7 @@ jvmtiDumpClass(CVMObject *clazz, CVMJvmtiDumpContext *dc)
     {
         CVMClassBlock *superCB = CVMcbSuperclass(cb);
         CVMObject *superObj;
-	if (superCB != NULL && !CVMsystemClass(java_lang_Object)) {
+	if (superCB != NULL && superCB != CVMsystemClass(java_lang_Object)) {
 	    superObj = CVMjvmtiGetICellDirect(ee, CVMcbJavaInstance(superCB));
 	    result = jvmtiObjectRefCallback(JVMTI_HEAP_REFERENCE_SUPERCLASS,
 					    clazz, cb, superObj, dc,
