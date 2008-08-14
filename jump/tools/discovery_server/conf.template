@@ -1,0 +1,49 @@
+#
+# Copyright 2007 Sun Microsystems, Inc. All rights reserved.
+#
+
+# Provisioning server configuration file
+
+# Please correct server's installation directories according to your installation.
+
+Alias %%SERVER_ROOT%% "%%PWD%%"
+
+AddType application/java-archive                jar war ear
+AddType text/vnd.sun.j2me.app-descriptor        jad
+AddType application/vnd.oma.dd+xml              dd
+
+# This is the main web location of provisioning server.
+<Location %%SERVER_ROOT%%>
+        Options +ExecCGI
+        DirectoryIndex %%SERVER_ROOT%%/bin/showbundles.py
+        Order allow,deny
+        Allow from all
+        AddHandler cgi-script .py
+</Location>
+
+# This location should be password-protected to omit unauthorized repository changes.
+<Location %%SERVER_ROOT%%/bin/admin>
+        DirectoryIndex %%SERVER_ROOT%%/bin/admin/admin_console.py
+        Order allow,deny
+        Allow from all
+        AddHandler cgi-script .py
+        AuthName "ServerContent"
+        AuthType Basic
+        AuthBasicProvider file
+        AuthUserFile %%PWD%%/passwords
+        Require user admin
+        Options +ExecCGI -Includes +MultiViews
+</Location>
+
+<Location %%SERVER_ROOT%%/bin>
+        Options +ExecCGI -Includes +MultiViews
+        Order allow,deny
+        Allow from all
+        AddHandler cgi-script .py
+</Location>
+
+<Location %%SERVER_ROOT%%/styles>
+        Options -ExecCGI
+        Order allow,deny
+        Allow from all
+</Location>
