@@ -331,7 +331,13 @@ BOOL InitTreeViewItems(HWND hwndTV)  {
               // TODO: take into account folder ID
               // javacall_int32 fid = suiteInfo[i].folderId;
 
-	      LPTSTR pszSuiteName = JavacallUTF16ToTSTR(pSuiteInfo[i].displayName);
+	      LPTSTR pszSuiteName = JavacallUTF16ToTSTR(pSuiteInfo->displayName);
+
+              wprintf(_T("Suite label=%s\n"), pszSuiteName);
+              if (pszSuiteName == NULL) {
+                  wprintf(_T("ERROR: suite label is null\n"));
+                  pszSuiteName = _T("SUITE");
+              }
 
               lInfo = MAKELPARAM(TVI_TYPE_SUITE, (WORD) pSuiteIds[i]);
               AddItemToTree(hwndTV, pszSuiteName, 1, lInfo);
@@ -342,17 +348,31 @@ BOOL InitTreeViewItems(HWND hwndTV)  {
                   &midletNum);
               if (res == JAVACALL_OK) {
 //                  if (midletNum > 1) {
+                     wprintf(_T("Total MIDlets in the suite %d\n"), midletNum);
                       for (int j = 0; j < midletNum; j++) {
        	                  LPTSTR pszMIDletName = JavacallUTF16ToTSTR(
                               pMidletsInfo[j].displayName);
+
+                          wprintf(_T("MIDlet label=%s\n"), pszMIDletName);
+                          if (pszMIDletName == NULL) {
+                              wprintf(_T("ERROR: midlet label is null\n"));
+                              pszMIDletName = _T("MIDLET");
+                          }
+
                           lInfo = MAKELPARAM(TVI_TYPE_MIDLET, (WORD) j);
                           AddItemToTree(hwndTV, pszMIDletName, 2, lInfo);
                       }
 //                  }
                   java_ams_suite_free_midlets_info(pMidletsInfo, midletNum);
+              } else {
+                  wprintf(_T("ERROR: java_ams_suite_get_midlets_info() returned: %d\n"), res);
               }
+          } else {
+              wprintf(_T("ERROR: suite info is null\n"));
           }
           java_ams_suite_free_info(pSuiteInfo);
+        } else {
+            wprintf(_T("ERROR: java_ams_suite_get_info() returned: %d\n"), res);
         }
     }
 
