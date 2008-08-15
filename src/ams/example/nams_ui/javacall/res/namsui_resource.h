@@ -31,3 +31,4 @@
 #define  IDM_MIDLET_UPDATE    103
 #define  IDM_MIDLET_SETTINGS  104
 #define  IDS_EMPTY            1001
+#define  IDB_MIDLET_TREE_BG   10001

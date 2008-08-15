@@ -61,7 +61,8 @@ static WORD TVI_TYPE_FOLDER = 3;
 HINSTANCE g_hInst = NULL;
 HWND g_hMainWindow = NULL;
 HMENU g_hMidletPopupMenu = NULL;
-WNDPROC g_DefTreeWndProc;
+WNDPROC g_DefTreeWndProc = NULL;
+HBITMAP g_hMidletTreeBgBmp = NULL;
 
 // Forward declarations of functions included in this code module:
 
@@ -169,15 +170,6 @@ int main(int argc, char* argv[]) {
     // Create and init Java MIDlets tree view
     HWND hwndTV = CreateTreeView(hWnd);
     InitTreeViewItems(hwndTV);
-
-    // Load context menu shown for a MIDlet item in the tree view
-    g_hMidletPopupMenu = LoadMenu(g_hInst, MAKEINTRESOURCE(ID_MENU_POPUP_MIDLET));
-    if (g_hMidletPopupMenu == NULL) {
-        MessageBox(hWnd,
-            _T("Can't load MIDlet popup menu!"),
-            g_szTitle,
-            NULL);
-    }
 
     // Show the main window 
     ShowWindow(hWnd, nCmdShow);
@@ -299,6 +291,24 @@ HWND CreateTreeView(HWND hwndParent) {
     if (!hwndTV) {
         MessageBox(NULL, _T("Create tree view failed!"), g_szTitle, NULL);
         return NULL;
+    }
+
+
+   // Load backround image, just ignore if loading fails
+//   g_hMidletTreeBgBmp = LoadBitmap(g_hInst, MAKEINTRESOURCE(IDB_MIDLET_TREE_BG));
+   g_hMidletTreeBgBmp = (HBITMAP)LoadImage(g_hInst, _T("bgd-yellow.bmp"), IMAGE_BITMAP, 240, 320, 0);
+   if (!g_hMidletTreeBgBmp) {
+        DWORD res = GetLastError();
+        wprintf(_T("ERROR: LoadBitmap(IDB_MIDLET_TREE_BG) res: %d\n"), res);
+   }
+
+    // Load context menu shown for a MIDlet item in the tree view
+    g_hMidletPopupMenu = LoadMenu(g_hInst, MAKEINTRESOURCE(ID_MENU_POPUP_MIDLET));
+    if (!g_hMidletPopupMenu) {
+        MessageBox(NULL,
+            _T("Can't load MIDlet popup menu!"),
+            g_szTitle,
+            NULL);
     }
 
    return hwndTV;
@@ -490,7 +500,6 @@ MainWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
         hdc = BeginPaint(hWnd, &ps);
 
         DrawBuffer(hdc);
-        //DrawBitmap(hdc, hPhoneBitmap, 0, 0, SRCCOPY);
 /*
         TextOut(hdc,
             5, 5,
@@ -519,11 +528,14 @@ MainWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
  */
 LRESULT CALLBACK
 MidletTreeWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
-//    POINT pnt;
+    PAINTSTRUCT ps;
+    HDC hdc;
+    POINT pnt;
 
     switch (message) {
 
-    case WM_RBUTTONDOWN: {
+    case WM_RBUTTONDOWN:
+    {
         TV_HITTESTINFO tvH;
 
         tvH.pt.x = LOWORD(lParam);
@@ -594,6 +606,30 @@ MidletTreeWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
                 break;
         }
         break;
+
+    case WM_PAINT:
+    {
+        CallWindowProc(g_DefTreeWndProc, hWnd, message, wParam, lParam);
+
+        hdc = BeginPaint(hWnd, &ps);
+
+        HDC hdcMem = CreateCompatibleDC(hdc);  
+        HBITMAP hbmOld = (HBITMAP)SelectObject(hdcMem, g_hMidletTreeBgBmp);  
+
+        BITMAP bm;   
+        GetObject(g_hMidletTreeBgBmp, sizeof(bm), &bm);  
+ 
+        BitBlt(hdc, 0, 0, bm.bmWidth, bm.bmHeight, hdcMem, 0, 0, SRCCOPY);  
+ 
+        SelectObject(hdcMem, hbmOld);  
+        DeleteDC(hdcMem); 
+
+
+        EndPaint(hWnd, &ps);
+
+        break;
+    }
+
 
     default:
         return CallWindowProc(g_DefTreeWndProc, hWnd, message, wParam, lParam);
