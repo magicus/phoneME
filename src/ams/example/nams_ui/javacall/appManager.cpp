@@ -82,6 +82,8 @@ void CleanupJavacallAMS();
 LPTSTR JavacallUTF16ToTSTR(javacall_utf16_string str);
 
 
+WNDPROC g_DefTreeWndProc;
+
 extern "C" {
 
 javacall_result java_ams_system_start();
@@ -280,6 +282,7 @@ HWND CreateTreeView(HWND hwndParent) {
     WNDCLASSEX wcex;
 
     // Customize main view class to assign own WndProc
+    /*
     wcex.cbSize = sizeof(WNDCLASSEX);
     wcex.style          = CS_HREDRAW | CS_VREDRAW;
     wcex.lpfnWndProc    = MidletTreeWndProc;
@@ -301,8 +304,8 @@ HWND CreateTreeView(HWND hwndParent) {
 
         return NULL;
     }
-
-
+    */
+    
     hwndTV = CreateWindowEx(0,
                             WC_TREEVIEW,
                             TEXT("Java Midlets"),
@@ -318,6 +321,9 @@ HWND CreateTreeView(HWND hwndParent) {
                             g_hInst, 
                             NULL); 
 
+    g_DefTreeWndProc = (WNDPROC)GetWindowLongPtr(hwndTV, GWLP_WNDPROC);
+
+    SetWindowLongPtr(hwndTV, GWLP_WNDPROC, (LONG)MidletTreeWndProc);
 
     if (!hwndTV) {
         MessageBox(NULL, _T("Create tree view failed!"), g_szTitle, NULL);
@@ -363,7 +369,7 @@ BOOL InitTreeViewItems(HWND hwndTV)  {
 
               label = (pSuiteInfo->displayName != NULL) ?
                   pSuiteInfo->displayName : pSuiteInfo->suiteName;
-	      LPTSTR pszSuiteName = JavacallUTF16ToTSTR(label);
+	          LPTSTR pszSuiteName = JavacallUTF16ToTSTR(label);
               pszSuiteName = pszSuiteName ? pszSuiteName : _T("Midlet Suite");
               wprintf(_T("Suite label=%s\n"), pszSuiteName);
 
@@ -400,15 +406,17 @@ BOOL InitTreeViewItems(HWND hwndTV)  {
         } else {
             wprintf(_T("ERROR: java_ams_suite_get_info() returned: %d\n"), res);
         }
+    } // end for
+
+    if (suiteNum > 0) {
+        java_ams_suite_free_suite_ids(pSuiteIds, suiteNum);
     }
 
-    java_ams_suite_free_suite_ids(pSuiteIds, suiteNum);
-
-/*
+///*
     // Items for testing
     AddItemToTree(hwndTV, _T("MIDlet 1"), 1, 0);
     AddItemToTree(hwndTV, _T("MIDlet 2"), 1, 0);
-*/
+//*/
 
     return TRUE;
 }
@@ -545,8 +553,8 @@ MidletTreeWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
     switch (message) {
 
     case WM_RBUTTONDOWN: {
-	pnt.x = LOWORD(lParam);
-	pnt.y = HIWORD(lParam);
+        pnt.x = LOWORD(lParam);
+        pnt.y = HIWORD(lParam);
         ClientToScreen(hWnd, (LPPOINT) &pnt);
 
         // Get the first shortcut menu in the menu template.
@@ -606,7 +614,7 @@ MidletTreeWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
         break;
 
     default:
-        return DefWindowProc(hWnd, message, wParam, lParam);
+        return g_DefTreeWndProc(hWnd, message, wParam, lParam);
     }
 
     return 0;
