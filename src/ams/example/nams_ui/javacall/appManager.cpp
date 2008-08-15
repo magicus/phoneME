@@ -376,7 +376,9 @@ BOOL InitTreeViewItems(HWND hwndTV)  {
                           AddItemToTree(hwndTV, pszMIDletName, 2, lInfo);
                       }
 //                  }
-                  java_ams_suite_free_midlets_info(pMidletsInfo, midletNum);
+                      if (midletNum > 0) {
+                          java_ams_suite_free_midlets_info(pMidletsInfo, midletNum);
+                      }
               } else {
                   wprintf(_T("ERROR: java_ams_suite_get_midlets_info() returned: %d\n"), res);
               }
@@ -393,11 +395,11 @@ BOOL InitTreeViewItems(HWND hwndTV)  {
         java_ams_suite_free_suite_ids(pSuiteIds, suiteNum);
     }
 
-///*
+/*
     // Items for testing
     AddItemToTree(hwndTV, _T("MIDlet 1"), 1, 0);
     AddItemToTree(hwndTV, _T("MIDlet 2"), 1, 0);
-//*/
+*/
 
     return TRUE;
 }
