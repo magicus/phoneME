@@ -66,6 +66,7 @@ HMENU g_hMidletPopupMenu = NULL;
 // Forward declarations of functions included in this code module:
 
 LRESULT CALLBACK MainWndProc(HWND, UINT, WPARAM, LPARAM);
+LRESULT CALLBACK MidletTreeWndProc(HWND, UINT, WPARAM, LPARAM);
 
 static void RefreshScreen(int x1, int y1, int x2, int y2);
 static void DrawBuffer(HDC hdc);
@@ -218,7 +219,7 @@ HWND CreateMainView() {
 
     if (!RegisterClassEx(&wcex)) {
         MessageBox(NULL,
-            _T("Call to RegisterClassEx failed!"),
+            _T("Can't register main view class!"),
             g_szTitle,
             NULL);
 
@@ -274,6 +275,34 @@ HWND CreateTreeView(HWND hwndParent) {
     // the tree-view control. 
     GetClientRect(hwndParent, &rcClient); 
     wprintf(_T("main window area w=%d, h=%d\n"), rcClient.right, rcClient.bottom);
+
+
+    WNDCLASSEX wcex;
+
+    // Customize main view class to assign own WndProc
+    wcex.cbSize = sizeof(WNDCLASSEX);
+    wcex.style          = CS_HREDRAW | CS_VREDRAW;
+    wcex.lpfnWndProc    = MidletTreeWndProc;
+    wcex.cbClsExtra     = 0;
+    wcex.cbWndExtra     = 0;
+    wcex.hInstance      = g_hInst;
+    wcex.hIcon          = NULL;
+    wcex.hCursor        = LoadCursor(NULL, IDC_ARROW);
+    wcex.hbrBackground  = (HBRUSH)(COLOR_WINDOW);
+    wcex.lpszMenuName   = NULL;
+    wcex.lpszClassName  = WC_TREEVIEW;
+    wcex.hIconSm        = NULL;
+
+    if (!RegisterClassEx(&wcex)) {
+        MessageBox(NULL,
+            _T("Can't register tree view class!"),
+            g_szTitle,
+            NULL);
+
+        return NULL;
+    }
+
+
     hwndTV = CreateWindowEx(0,
                             WC_TREEVIEW,
                             TEXT("Java Midlets"),
@@ -324,6 +353,7 @@ BOOL InitTreeViewItems(HWND hwndTV)  {
         if (res == JAVACALL_OK) {
           if (pSuiteInfo != NULL) {
               LPARAM lInfo;
+              javacall_utf16_string label;
 
               // TODO: add support for disabled suites
               // javacall_bool enabled = suiteInfo[i].isEnabled;
@@ -331,13 +361,11 @@ BOOL InitTreeViewItems(HWND hwndTV)  {
               // TODO: take into account folder ID
               // javacall_int32 fid = suiteInfo[i].folderId;
 
-	      LPTSTR pszSuiteName = JavacallUTF16ToTSTR(pSuiteInfo->displayName);
-
+              label = (pSuiteInfo->displayName != NULL) ?
+                  pSuiteInfo->displayName : pSuiteInfo->suiteName;
+	      LPTSTR pszSuiteName = JavacallUTF16ToTSTR(label);
+              pszSuiteName = pszSuiteName ? pszSuiteName : _T("Midlet Suite");
               wprintf(_T("Suite label=%s\n"), pszSuiteName);
-              if (pszSuiteName == NULL) {
-                  wprintf(_T("ERROR: suite label is null\n"));
-                  pszSuiteName = _T("SUITE");
-              }
 
               lInfo = MAKELPARAM(TVI_TYPE_SUITE, (WORD) pSuiteIds[i]);
               AddItemToTree(hwndTV, pszSuiteName, 1, lInfo);
@@ -348,16 +376,14 @@ BOOL InitTreeViewItems(HWND hwndTV)  {
                   &midletNum);
               if (res == JAVACALL_OK) {
 //                  if (midletNum > 1) {
-                     wprintf(_T("Total MIDlets in the suite %d\n"), midletNum);
-                      for (int j = 0; j < midletNum; j++) {
-       	                  LPTSTR pszMIDletName = JavacallUTF16ToTSTR(
-                              pMidletsInfo[j].displayName);
+                      wprintf(_T("Total MIDlets in the suite %d\n"), midletNum);
 
+                      for (int j = 0; j < midletNum; j++) {
+                          label = (pMidletsInfo[j].displayName != NULL) ?
+                              pMidletsInfo[j].displayName :
+                              pMidletsInfo[j].className;
+       	                  LPTSTR pszMIDletName = JavacallUTF16ToTSTR(label);
                           wprintf(_T("MIDlet label=%s\n"), pszMIDletName);
-                          if (pszMIDletName == NULL) {
-                              wprintf(_T("ERROR: midlet label is null\n"));
-                              pszMIDletName = _T("MIDLET");
-                          }
 
                           lInfo = MAKELPARAM(TVI_TYPE_MIDLET, (WORD) j);
                           AddItemToTree(hwndTV, pszMIDletName, 2, lInfo);
@@ -478,21 +504,45 @@ LRESULT CALLBACK
 MainWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
     PAINTSTRUCT ps;
     HDC hdc;
-    POINT pnt;
-    TCHAR greeting[] = _T("Native Application Manager");
+//    TCHAR greeting[] = _T("Native Application Manager");
 
     switch (message) {
-    case WM_LBUTTONDOWN: {
-	pnt.x = LOWORD(lParam);
-	pnt.y = HIWORD(lParam);
+    case WM_PAINT:
+        hdc = BeginPaint(hWnd, &ps);
 
-        javacall_result res = java_ams_midlet_start(-1, 1,
-            L"com.sun.midp.installer.DiscoveryApp", NULL);
+        DrawBuffer(hdc);
 
-        wprintf(_T("java_ams_midlet_start res: %d\n"), res);
+/*
+        TextOut(hdc,
+            5, 5,
+            greeting, _tcslen(greeting));
+*/
 
+        EndPaint(hWnd, &ps);
         break;
+
+    case WM_DESTROY:
+        PostQuitMessage(0);
+        break;
+
+    default:
+        return DefWindowProc(hWnd, message, wParam, lParam);
     }
+
+    return 0;
+}
+
+
+
+/**
+ *  Processes messages for the MIDlet tree window.
+ *
+ */
+LRESULT CALLBACK
+MidletTreeWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
+    POINT pnt;
+
+    switch (message) {
 
     case WM_RBUTTONDOWN: {
 	pnt.x = LOWORD(lParam);
@@ -516,8 +566,23 @@ MainWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
         switch(LOWORD(wParam))
         {
             case IDM_MIDLET_LAUNCH:
-                wprintf(_T("Launch MIDlet...\n"));
+            {
+                wprintf(_T("Launching MIDlet...\n"));
+
+                javacall_result res = java_ams_midlet_start(-1, 1,
+                    L"com.sun.midp.installer.DiscoveryApp", NULL);
+
+                wprintf(_T("java_ams_midlet_start res: %d\n"), res);
+
+                if (res == JAVACALL_OK) {
+                    // Hide MIDlet tree view window to show the MIDlet's
+                    // output in the main window 
+                    ShowWindow(hWnd, SW_HIDE);
+                    UpdateWindow(hWnd);
+                }
+
                 break;
+            }
 
             case IDM_MIDLET_INFO:
                 wprintf(_T("Show MIDlet info...\n"));
@@ -538,26 +603,6 @@ MainWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
             default:
                 break;
         }
-        break;
-
-
-    case WM_PAINT:
-        hdc = BeginPaint(hWnd, &ps);
-
-        DrawBuffer(hdc);
-        //DrawBitmap(hdc, hPhoneBitmap, 0, 0, SRCCOPY);
-
-/*
-        TextOut(hdc,
-            5, 5,
-            greeting, _tcslen(greeting));
-*/
-
-        EndPaint(hWnd, &ps);
-        break;
-
-    case WM_DESTROY:
-        PostQuitMessage(0);
         break;
 
     default:
