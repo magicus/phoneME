@@ -60,8 +60,8 @@ static WORD TVI_TYPE_FOLDER = 3;
 
 HINSTANCE g_hInst = NULL;
 HWND g_hMainWindow = NULL;
-
 HMENU g_hMidletPopupMenu = NULL;
+WNDPROC g_DefTreeWndProc;
 
 // Forward declarations of functions included in this code module:
 
@@ -81,8 +81,6 @@ void CleanupJavacallAMS();
 
 LPTSTR JavacallUTF16ToTSTR(javacall_utf16_string str);
 
-
-WNDPROC g_DefTreeWndProc;
 
 extern "C" {
 
@@ -214,7 +212,7 @@ HWND CreateMainView() {
     wcex.hInstance      = g_hInst;
     wcex.hIcon          = LoadIcon(g_hInst, MAKEINTRESOURCE(IDI_APPLICATION));
     wcex.hCursor        = LoadCursor(NULL, IDC_ARROW);
-    wcex.hbrBackground  = (HBRUSH)(COLOR_WINDOW+1);
+    wcex.hbrBackground  = (HBRUSH)(COLOR_WINDOW + 1);
     wcex.lpszMenuName   = NULL;
     wcex.lpszClassName  = g_szWindowClass;
     wcex.hIconSm        = LoadIcon(g_hInst, MAKEINTRESOURCE(IDI_APPLICATION));
@@ -278,34 +276,6 @@ HWND CreateTreeView(HWND hwndParent) {
     GetClientRect(hwndParent, &rcClient); 
     wprintf(_T("main window area w=%d, h=%d\n"), rcClient.right, rcClient.bottom);
 
-
-    WNDCLASSEX wcex;
-
-    // Customize main view class to assign own WndProc
-    /*
-    wcex.cbSize = sizeof(WNDCLASSEX);
-    wcex.style          = CS_HREDRAW | CS_VREDRAW;
-    wcex.lpfnWndProc    = MidletTreeWndProc;
-    wcex.cbClsExtra     = 0;
-    wcex.cbWndExtra     = 0;
-    wcex.hInstance      = g_hInst;
-    wcex.hIcon          = NULL;
-    wcex.hCursor        = LoadCursor(NULL, IDC_ARROW);
-    wcex.hbrBackground  = (HBRUSH)(COLOR_WINDOW);
-    wcex.lpszMenuName   = NULL;
-    wcex.lpszClassName  = WC_TREEVIEW;
-    wcex.hIconSm        = NULL;
-
-    if (!RegisterClassEx(&wcex)) {
-        MessageBox(NULL,
-            _T("Can't register tree view class!"),
-            g_szTitle,
-            NULL);
-
-        return NULL;
-    }
-    */
-    
     hwndTV = CreateWindowEx(0,
                             WC_TREEVIEW,
                             TEXT("Java Midlets"),
@@ -321,9 +291,10 @@ HWND CreateTreeView(HWND hwndParent) {
                             g_hInst, 
                             NULL); 
 
-    g_DefTreeWndProc = (WNDPROC)GetWindowLongPtr(hwndTV, GWLP_WNDPROC);
-
-    SetWindowLongPtr(hwndTV, GWLP_WNDPROC, (LONG)MidletTreeWndProc);
+    // Store default Tree View WndProc in global variable
+    // and set custom WndProc.
+    g_DefTreeWndProc = (WNDPROC)SetWindowLongPtr(hwndTV, GWLP_WNDPROC,
+        (LONG)MidletTreeWndProc);
 
     if (!hwndTV) {
         MessageBox(NULL, _T("Create tree view failed!"), g_szTitle, NULL);
@@ -519,7 +490,7 @@ MainWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
         hdc = BeginPaint(hWnd, &ps);
 
         DrawBuffer(hdc);
-
+        //DrawBitmap(hdc, hPhoneBitmap, 0, 0, SRCCOPY);
 /*
         TextOut(hdc,
             5, 5,
@@ -548,22 +519,33 @@ MainWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
  */
 LRESULT CALLBACK
 MidletTreeWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
-    POINT pnt;
+//    POINT pnt;
 
     switch (message) {
 
     case WM_RBUTTONDOWN: {
-        pnt.x = LOWORD(lParam);
-        pnt.y = HIWORD(lParam);
-        ClientToScreen(hWnd, (LPPOINT) &pnt);
+        TV_HITTESTINFO tvH;
 
-        // Get the first shortcut menu in the menu template.
-        // This is the menu that TrackPopupMenu displays
-        HMENU hMenu = GetSubMenu(g_hMidletPopupMenu, 0);
-        if (hMenu) {
-            TrackPopupMenu(hMenu, 0, pnt.x, pnt.y, 0, hWnd, NULL);
-        } else {
-            MessageBox(NULL, _T("Can't show context menu!"), g_szTitle, MB_OK);
+        tvH.pt.x = LOWORD(lParam);
+        tvH.pt.y = HIWORD(lParam);
+
+        wprintf (_T("Click position (%d, %d)\n"), tvH.pt.x, tvH.pt.y);
+
+        HTREEITEM item = TreeView_HitTest(hWnd, &tvH);
+        if ((item != NULL) && ((tvH.flags & TVHT_ONITEM) != 0))
+        {
+            wprintf (_T("Hit flags hex=%x\n"), tvH.flags);
+
+            ClientToScreen(hWnd, (LPPOINT) &tvH.pt);
+            // Get the first shortcut menu in the menu template.
+            // This is the menu that TrackPopupMenu displays
+            HMENU hMenu = GetSubMenu(g_hMidletPopupMenu, 0);
+            if (hMenu) {
+                TrackPopupMenu(hMenu, 0, tvH.pt.x, tvH.pt.y, 0, hWnd, NULL);
+            } else {
+                MessageBox(NULL, _T("Can't show context menu!"), g_szTitle,
+                    MB_OK);
+            }
         }
 
         break;
@@ -614,7 +596,7 @@ MidletTreeWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
         break;
 
     default:
-        return g_DefTreeWndProc(hWnd, message, wParam, lParam);
+        return CallWindowProc(g_DefTreeWndProc, hWnd, message, wParam, lParam);
     }
 
     return 0;
