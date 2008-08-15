@@ -276,7 +276,7 @@ HWND CreateTreeView(HWND hwndParent) {
                             WC_TREEVIEW,
                             TEXT("Java Midlets"),
                             WS_VISIBLE | WS_CHILD | WS_BORDER | TVS_HASLINES |
-                                TVS_HASBUTTONS
+                                TVS_HASBUTTONS | TVS_LINESATROOT
                                 /* | WS_CAPTION*/,
                             0, 
                             0, 
