@@ -688,21 +688,21 @@ java_ams_suite_get_midlets_info(javacall_suite_id suiteId,
 
         err = pcsl_string_dup(&midletStr, &midletNAttrName);
 	    if (err != PCSL_STRING_OK) {
-	        javacall_free(*ppMidletsInfo);
+            java_ams_suite_free_midlets_info(*ppMidletsInfo, n);
             return JAVACALL_FAIL;
         }
 
-        err = pcsl_string_convert_from_jint(n, &midletNum);
+        err = pcsl_string_convert_from_jint(n + 1, &midletNum);
 	    if (err != PCSL_STRING_OK) {
 	        pcsl_string_free(&midletNAttrName);
-	        javacall_free(*ppMidletsInfo);
+            java_ams_suite_free_midlets_info(*ppMidletsInfo, n);
             return JAVACALL_FAIL;
         }
 
         err = pcsl_string_append(&midletNAttrName, &midletNum);
 	    if (err != PCSL_STRING_OK) {
 	        pcsl_string_free(&midletNum);
-	        javacall_free(*ppMidletsInfo);
+            java_ams_suite_free_midlets_info(*ppMidletsInfo, n);
             return JAVACALL_FAIL;
         }
 
@@ -713,6 +713,12 @@ java_ams_suite_get_midlets_info(javacall_suite_id suiteId,
         pcsl_string_free(&midletNum);
 
         if (status != ALL_OK) {
+            /* NOT_FOUND means OK: the last MIDlet-<n> attribute was handled */
+            if (status != NOT_FOUND) {
+                pcsl_string_free(&midletNAttrValue);
+                java_ams_suite_free_midlets_info(*ppMidletsInfo, n);
+                return midp_error2javacall(status);
+            }
             break;
         }
 
@@ -734,6 +740,7 @@ java_ams_suite_get_midlets_info(javacall_suite_id suiteId,
         pcsl_string_free(&midletNAttrValue);
 
         if (status != ALL_OK) {
+            /* ignore the error, just exit from the cycle */
             break;
         }
 
@@ -753,6 +760,17 @@ java_ams_suite_get_midlets_info(javacall_suite_id suiteId,
 void
 java_ams_suite_free_midlets_info(javacall_ams_midlet_info* pMidletsInfo,
                                  int numberOfEntries) {
+    if (pMidletsInfo != NULL) {
+        int i;
+        for (i = 0; i < numberOfEntries; i++) {
+            javacall_ams_midlet_info* pNextEntry = &pMidletsInfo[i];
+            if (pNextEntry != NULL) {
+                FREE_JC_STRING(pNextEntry->displayName);
+                FREE_JC_STRING(pNextEntry->iconPath);
+                FREE_JC_STRING(pNextEntry->className);
+            }
+        }
+    }
 }
 
 /**
@@ -1381,9 +1399,9 @@ MIDPError parse_midlet_attr(const pcsl_string* pMIDletAttrValue,
     MIDPError status; 
     pcsl_string_status err;
     pcsl_string fieldValue;
-    jchar comma = (jchar)',';
+    jchar comma = 0x002c; /* ',' */
     jint commaIdx, startIdx = 0;
-    javacall_utf16_string* pDstStr;
+    jint attrValueLen = pcsl_string_length(pMIDletAttrValue);
     int i;
 
     *pDisplayName = NULL;
@@ -1393,8 +1411,9 @@ MIDPError parse_midlet_attr(const pcsl_string* pMIDletAttrValue,
     for (i = 0; i < 3; i++) {
         commaIdx = pcsl_string_index_of_from(pMIDletAttrValue, comma, startIdx);
         if (commaIdx < 0) {
-            break;
+            commaIdx = attrValueLen;
         }
+
         err = pcsl_string_substring(pMIDletAttrValue, startIdx, commaIdx,
                                     &fieldValue);
         if (err != PCSL_STRING_OK) {
@@ -1407,6 +1426,10 @@ MIDPError parse_midlet_attr(const pcsl_string* pMIDletAttrValue,
         pcsl_string_free(&fieldValue);
         if (status != ALL_OK) {
             /* ignore error: can't do anything meaningful */
+            break;
+        }
+
+        if (commaIdx == attrValueLen) {
             break;
         }
 

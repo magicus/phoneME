@@ -369,7 +369,7 @@ BOOL InitTreeViewItems(HWND hwndTV)  {
                       for (int j = 0; j < midletNum; j++) {
                           label = (pMidletsInfo[j].displayName != NULL) ?
                               pMidletsInfo[j].displayName :
-                              pMidletsInfo[j].className;
+                                  pMidletsInfo[j].className;
        	                  LPTSTR pszMIDletName = JavacallUTF16ToTSTR(label);
                           wprintf(_T("MIDlet label=%s\n"), pszMIDletName);
 

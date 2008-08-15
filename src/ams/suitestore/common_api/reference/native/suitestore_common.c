@@ -599,6 +599,9 @@ MIDPError
 midp_get_suite_property(SuiteIdType suiteId,
                         const pcsl_string* pKey,
                         pcsl_string* pValue) {
+    MidpProperties prop;
+    pcsl_string* pPropFound;
+
     if (pKey == NULL || pValue == NULL) {
         return BAD_PARAMS;
     }
@@ -607,6 +610,22 @@ midp_get_suite_property(SuiteIdType suiteId,
     (void)pKey;
 
     *pValue = PCSL_STRING_NULL;
+
+    /* IMPL_NOTE: the following implementation should be optimized! */
+    prop = midp_get_suite_properties(suiteId);
+    if (prop.status != ALL_OK) {
+        return prop.status;
+    }
+
+    pPropFound = midp_find_property(&prop, pKey);
+// TODO !!!
+//    midp_free_properties(&prop);
+
+    if (pPropFound == NULL) {
+        return NOT_FOUND;
+    }
+
+    *pValue = *pPropFound;
 
     return ALL_OK;                        
 }
