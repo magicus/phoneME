@@ -858,7 +858,7 @@ java_ams_suite_get_info(javacall_suite_id suiteId,
         if (!pcsl_string_is_null(&pMidpSuiteData->varSuiteData.suiteName)) {
             status = midp_pcsl_str2javacall_str(
                 &pMidpSuiteData->varSuiteData.suiteName,
-                &pTmpSuiteInfo->suiteVendor);
+                &pTmpSuiteInfo->suiteName);
             if (status != ALL_OK) {
                 break;
             }

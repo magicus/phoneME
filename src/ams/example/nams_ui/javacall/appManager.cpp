@@ -128,6 +128,7 @@ int WINAPI WinMain(HINSTANCE hInstance,
                    HINSTANCE hPrevInstance,
                    LPSTR lpCmdLine,
                    int nCmdShow) {
+    (void)lpCmdLine;
 #else
 int main(int argc, char* argv[]) {
     HINSTANCE hInstance = NULL;
@@ -295,8 +296,8 @@ HWND CreateTreeView(HWND hwndParent) {
 
 
    // Load backround image, just ignore if loading fails
-//   g_hMidletTreeBgBmp = LoadBitmap(g_hInst, MAKEINTRESOURCE(IDB_MIDLET_TREE_BG));
-   g_hMidletTreeBgBmp = (HBITMAP)LoadImage(g_hInst, _T("bgd-yellow.bmp"), IMAGE_BITMAP, 240, 320, 0);
+   g_hMidletTreeBgBmp = LoadBitmap(g_hInst, MAKEINTRESOURCE(IDB_MIDLET_TREE_BG));
+//   g_hMidletTreeBgBmp = (HBITMAP)LoadImage(g_hInst, _T("bgd-yellow.bmp"), IMAGE_BITMAP, 240, 320, 0);
    if (!g_hMidletTreeBgBmp) {
         DWORD res = GetLastError();
         wprintf(_T("ERROR: LoadBitmap(IDB_MIDLET_TREE_BG) res: %d\n"), res);
