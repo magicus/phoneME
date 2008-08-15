@@ -54,6 +54,7 @@ int g_iWidth = 246, g_iHeight = 345;
 static HMENU IDC_TREEVIEW_MIDLETS = (HMENU) 1;
 
 // The type of a tree item
+static WORD TVI_TYPE_NONE   = 0;
 static WORD TVI_TYPE_SUITE  = 1;
 static WORD TVI_TYPE_MIDLET = 2;
 static WORD TVI_TYPE_FOLDER = 3;
@@ -63,6 +64,8 @@ HWND g_hMainWindow = NULL;
 HMENU g_hMidletPopupMenu = NULL;
 WNDPROC g_DefTreeWndProc = NULL;
 HBITMAP g_hMidletTreeBgBmp = NULL;
+
+javacall_app_id g_jAppId = 1;
 
 // Forward declarations of functions included in this code module:
 
@@ -77,10 +80,10 @@ HWND CreateTreeView(HWND hwndParent);
 BOOL InitTreeViewItems(HWND hwndTV);
 HTREEITEM AddItemToTree(HWND hwndTV, LPTSTR lpszItem, int nLevel, LPARAM lParam);
 
-void InitJavacallAMS();
-void CleanupJavacallAMS();
+void InitJavacallAms();
+void CleanupJavacallAms();
 
-LPTSTR JavacallUTF16ToTSTR(javacall_utf16_string str);
+LPTSTR JavacallUtf16ToTstr(javacall_utf16_string str);
 
 
 extern "C" {
@@ -166,7 +169,7 @@ int main(int argc, char* argv[]) {
     Sleep(1000);
     
     // Initialize Java AMS
-    InitJavacallAMS();
+    InitJavacallAms();
 
     // Create and init Java MIDlets tree view
     HWND hwndTV = CreateTreeView(hWnd);
@@ -187,7 +190,7 @@ int main(int argc, char* argv[]) {
     DestroyMenu(g_hMidletPopupMenu);
 
     // Finalize Java AMS
-    CleanupJavacallAMS();
+    CleanupJavacallAms();
 
     return (int) msg.wParam;
 }
@@ -243,14 +246,14 @@ HWND CreateMainView() {
     return hWnd;
 }
 
-void InitJavacallAMS() {
+void InitJavacallAms() {
     javacall_result res = java_ams_suite_storage_init();
     if (res == JAVACALL_FAIL) {
         wprintf(_T("Init of suite storage fail!\n"));
     }
 }
 
-void CleanupJavacallAMS() {
+void CleanupJavacallAms() {
     javacall_result res = java_ams_suite_storage_cleanup();
     if (res == JAVACALL_FAIL) {
         wprintf(_T("Cleanup of suite storage fail!\n"));
@@ -273,7 +276,7 @@ HWND CreateTreeView(HWND hwndParent) {
                             WC_TREEVIEW,
                             TEXT("Java Midlets"),
                             WS_VISIBLE | WS_CHILD | WS_BORDER | TVS_HASLINES |
-                                TVS_HASBUTTONS | TVS_SHOWSELALWAYS 
+                                TVS_HASBUTTONS
                                 /* | WS_CAPTION*/,
                             0, 
                             0, 
@@ -336,12 +339,14 @@ BOOL InitTreeViewItems(HWND hwndTV)  {
 
     wprintf(_T("Total suites found: %d\n"), suiteNum);
 
+#if 1
+
     for (int i = 0; i < suiteNum; i++) {
         res = java_ams_suite_get_info(pSuiteIds[i], &pSuiteInfo);
         if (res == JAVACALL_OK) {
           if (pSuiteInfo != NULL) {
               LPARAM lInfo;
-              javacall_utf16_string label;
+              javacall_utf16_string jsLabel;
 
               // TODO: add support for disabled suites
               // javacall_bool enabled = suiteInfo[i].isEnabled;
@@ -349,9 +354,10 @@ BOOL InitTreeViewItems(HWND hwndTV)  {
               // TODO: take into account folder ID
               // javacall_int32 fid = suiteInfo[i].folderId;
 
-              label = (pSuiteInfo->displayName != NULL) ?
+              jsLabel = (pSuiteInfo->displayName != NULL) ?
                   pSuiteInfo->displayName : pSuiteInfo->suiteName;
-	          LPTSTR pszSuiteName = JavacallUTF16ToTSTR(label);
+
+	      LPTSTR pszSuiteName = JavacallUtf16ToTstr(jsLabel);
               pszSuiteName = pszSuiteName ? pszSuiteName : _T("Midlet Suite");
               wprintf(_T("Suite label=%s\n"), pszSuiteName);
 
@@ -367,10 +373,15 @@ BOOL InitTreeViewItems(HWND hwndTV)  {
                       wprintf(_T("Total MIDlets in the suite %d\n"), midletNum);
 
                       for (int j = 0; j < midletNum; j++) {
-                          label = (pMidletsInfo[j].displayName != NULL) ?
+                          jsLabel = (pMidletsInfo[j].displayName != NULL) ?
                               pMidletsInfo[j].displayName :
                                   pMidletsInfo[j].className;
-       	                  LPTSTR pszMIDletName = JavacallUTF16ToTSTR(label);
+
+                          if (jsLabel == NULL) {
+                              continue;
+                          }
+
+       	                  LPTSTR pszMIDletName = JavacallUtf16ToTstr(jsLabel);
                           wprintf(_T("MIDlet label=%s\n"), pszMIDletName);
 
                           lInfo = MAKELPARAM(TVI_TYPE_MIDLET, (WORD) j);
@@ -396,16 +407,16 @@ BOOL InitTreeViewItems(HWND hwndTV)  {
         java_ams_suite_free_suite_ids(pSuiteIds, suiteNum);
     }
 
-/*
+#else
     // Items for testing
     AddItemToTree(hwndTV, _T("MIDlet 1"), 1, 0);
     AddItemToTree(hwndTV, _T("MIDlet 2"), 1, 0);
-*/
+#endif
 
     return TRUE;
 }
 
-LPTSTR JavacallUTF16ToTSTR(javacall_utf16_string str) {
+LPTSTR JavacallUtf16ToTstr(javacall_utf16_string str) {
     LPTSTR result = NULL;
 #ifdef UNICODE 
     javacall_int32 len;
@@ -544,12 +555,12 @@ MidletTreeWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
         tvH.pt.x = LOWORD(lParam);
         tvH.pt.y = HIWORD(lParam);
 
-        wprintf (_T("Click position (%d, %d)\n"), tvH.pt.x, tvH.pt.y);
+//        wprintf (_T("Click position (%d, %d)\n"), tvH.pt.x, tvH.pt.y);
 
         HTREEITEM item = TreeView_HitTest(hWnd, &tvH);
         if ((item != NULL) && ((tvH.flags & TVHT_ONITEM) != 0))
         {
-            wprintf (_T("Hit flags hex=%x\n"), tvH.flags);
+//            wprintf (_T("Hit flags hex=%x\n"), tvH.flags);
 
             ClientToScreen(hWnd, (LPPOINT) &tvH.pt);
             // Get the first shortcut menu in the menu template.
@@ -572,20 +583,63 @@ MidletTreeWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
         {
             case IDM_MIDLET_LAUNCH:
             {
-                wprintf(_T("Launching MIDlet...\n"));
+                HTREEITEM hItem   = TreeView_GetSelection(hWnd);
+                HTREEITEM hParent = TreeView_GetParent(hWnd, hItem);
 
-                javacall_result res = java_ams_midlet_start(-1, 1,
-                    L"com.sun.midp.installer.DiscoveryApp", NULL);
+                if (hItem != NULL && hParent != NULL) {
+                   TVITEM tvi;
+                   TVITEM tvp;
 
-                wprintf(_T("java_ams_midlet_start res: %d\n"), res);
+                   if (TreeView_GetItem(hWnd, &tvi) &&
+                           TreeView_GetItem(hWnd, &tvp)) {
 
-                if (res == JAVACALL_OK) {
-                    // Hide MIDlet tree view window to show the MIDlet's
-                    // output in the main window 
-                    ShowWindow(hWnd, SW_HIDE);
-                    UpdateWindow(hWnd);
+                       WORD wItemType   = LOWORD(tvi.lParam);
+                       WORD wParentType = LOWORD(tvp.lParam);
+
+                       if (wItemType == TVI_TYPE_MIDLET &&
+                               wParentType == TVI_TYPE_SUITE) {
+
+                           wprintf(_T("Launching MIDlet...\n"));
+
+                           WORD wMidletId = HIWORD(tvi.lParam);
+                           WORD wSuiteId  = HIWORD(tvp.lParam);
+
+                           javacall_result res;
+                           javacall_ams_midlet_info* pMidletsInfo;
+                           javacall_int32 midletNum;
+
+                           res = java_ams_suite_get_midlets_info(wSuiteId,
+                               &pMidletsInfo, &midletNum);
+                           if (res == JAVACALL_OK && midletNum > 0) {
+                               if (wMidletId >= 0 && wMidletId < midletNum) {
+
+/*
+                                   res = java_ams_midlet_start(-1, 1,
+                                       L"com.sun.midp.installer.DiscoveryApp",
+                                       NULL);
+*/
+                                   res = java_ams_midlet_start(wSuiteId,
+                                       g_jAppId++,
+                                       pMidletsInfo[wMidletId].className,
+                                       NULL);
+
+                                   wprintf(
+                                       _T("java_ams_midlet_start res: %d\n"),
+                                       res);
+
+                                   if (res == JAVACALL_OK) {
+                                       // Hide MIDlet tree view window to show
+                                       // the MIDlet's output in the main window
+                                       ShowWindow(hWnd, SW_HIDE);
+                                       UpdateWindow(hWnd);
+                                   }
+                               }
+                               java_ams_suite_free_midlets_info(pMidletsInfo,
+                                   midletNum);
+                           }
+                       }
+                   }
                 }
-
                 break;
             }
 
