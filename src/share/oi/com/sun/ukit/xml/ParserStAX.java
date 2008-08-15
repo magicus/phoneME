@@ -39,6 +39,7 @@ import javax.xml.stream.Location;
 import javax.xml.stream.XMLStreamException;
 
 import org.xml.sax.InputSource;
+import org.xml.sax.ext.Attributes2;
 
 /**
  * XML non-validating pull parser.
@@ -835,7 +836,7 @@ import org.xml.sax.InputSource;
 		case XMLStreamReader.ATTRIBUTE:
 			if (index < 0 || index >= mAttrs.getLength())
 				throw new IndexOutOfBoundsException();
-			return !mAttrs.isSpecified(index);
+			return !((Attributes2)mAttrs).isSpecified(index);
 
 		default:
 			throw new IllegalStateException(FAULT);

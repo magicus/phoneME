@@ -24,15 +24,14 @@
 
 package com.sun.ukit.xml;
 
-import java.io.Writer;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
-import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.io.Writer;
 
-import javax.xml.stream.XMLStreamWriter;
 import javax.xml.stream.XMLOutputFactory;
 import javax.xml.stream.XMLStreamException;
+import javax.xml.stream.XMLStreamWriter;
 
 /**
  * XMLOutputFactory implementation.

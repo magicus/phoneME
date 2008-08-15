@@ -24,12 +24,12 @@
 
 package com.sun.ukit.xml;
 
-import java.io.Writer;
-import java.io.OutputStreamWriter;
 import java.io.IOException;
+import java.io.Writer;
 
-import javax.xml.stream.XMLStreamWriter;
+import javax.xml.stream.XMLOutputFactory;
 import javax.xml.stream.XMLStreamException;
+import javax.xml.stream.XMLStreamWriter;
 
 /**
  * The XMLStreamWriter interface specifies how to write XML. The XMLStreamWriter 

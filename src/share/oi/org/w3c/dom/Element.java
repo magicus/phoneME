@@ -195,8 +195,7 @@ public interface Element extends Node {
      * @since DOM Level 2
      */
     public String getAttributeNS(String namespaceURI, 
-                                 String localName)
-                                 throws DOMException;
+                                 String localName);
 
     /**
      * Adds a new attribute. If an attribute with the same local name and 
