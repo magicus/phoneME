@@ -38,11 +38,20 @@
 
 #include <suitestore_javacall.h>
 
+#define FREE_JC_STRING(str) if (str != NULL) { \
+                                javacall_free(str); \
+                            }
+
+
 static javacall_result midp_error2javacall(MIDPError midpErr);
 static MIDPError midp_javacall_str2pcsl_str(
     javacall_const_utf16_string pSrcStr, pcsl_string* pDstStr);
 static MIDPError midp_pcsl_str2javacall_str(const pcsl_string* pSrcStr,
                                             javacall_utf16_string* pDstStr);
+static MIDPError parse_midlet_attr(const pcsl_string* pMIDletAttrValue,
+                                   javacall_utf16_string* pDisplayName,
+                                   javacall_utf16_string* pIconName,
+                                   javacall_utf16_string* pClassName);
 
 /*----------------------- Suite Storage: Common API -------------------------*/
 
@@ -649,36 +658,85 @@ java_ams_suite_get_midlets_info(javacall_suite_id suiteId,
                                 javacall_ams_midlet_info** ppMidletsInfo,
                                 int* pNumberOfEntries) {
     javacall_ams_midlet_info* pTmpMidletInfo;
+    MidletSuiteData* pMidpSuiteData;
+    MIDPError status;
+    const pcsl_string midletStr = "MIDlet-";
+    jint n;
 
     if (ppMidletsInfo == NULL || pNumberOfEntries == NULL) {
         return JAVACALL_FAIL;
     }
 
-    // TODO !!!
-    *pNumberOfEntries = 1;
+    pMidpSuiteData = get_suite_data((SuiteIdType)suiteId);
+    if (pMidpSuiteData == NULL || pMidpSuiteData->numberOfMidlets == 0) {
+        return JAVACALL_FAIL;
+    }
+
+    *pNumberOfEntries = pMidpSuiteData->numberOfMidlets;
     *ppMidletsInfo = javacall_malloc((*pNumberOfEntries) *
                                          sizeof(javacall_ams_midlet_info));
     if (*ppMidletsInfo == NULL) {
         return JAVACALL_FAIL;
     }
 
-    pTmpMidletInfo = &(*ppMidletsInfo)[0];
-    pTmpMidletInfo->suiteId = 2;
-    pTmpMidletInfo->className = javacall_malloc(64);
+    n = 0;
+    while (1) {
+        pcsl_string midletNAttrName, midletNAttrValue, midletNum;
+        pcsl_string_status err;
 
-    pTmpMidletInfo->className[0] = 'T';
-    pTmpMidletInfo->className[1] = 0;
-    pTmpMidletInfo->className[2] = 'e';
-    pTmpMidletInfo->className[3] = 0;
-    pTmpMidletInfo->className[4] = 's';
-    pTmpMidletInfo->className[5] = 0;
-    pTmpMidletInfo->className[6] = 't';
-    pTmpMidletInfo->className[7] = 0;
-    pTmpMidletInfo->className[8] = 0;
-    pTmpMidletInfo->className[9] = 0;
+        err = pcsl_string_dup(&midletStr, &midletNAttrName);
+	    if (err != PCSL_STRING_OK) {
+	        javacall_free(*ppMidletsInfo);
+            return JAVACALL_FAIL;
+        }
 
-    pTmpMidletInfo->displayName = NULL;
-    pTmpMidletInfo->iconPath = NULL;
+        err = pcsl_string_convert_from_jint(n, &midletNum);
+	    if (err != PCSL_STRING_OK) {
+	        pcsl_string_free(&midletNAttrName);
+	        javacall_free(*ppMidletsInfo);
+            return JAVACALL_FAIL;
+        }
+
+        err = pcsl_string_append(&midletNAttrName, &midletNum);
+	    if (err != PCSL_STRING_OK) {
+	        pcsl_string_free(&midletNum);
+	        javacall_free(*ppMidletsInfo);
+            return JAVACALL_FAIL;
+        }
+
+        status = midp_get_suite_property(
+            pMidpSuiteData->suiteId, &midletNAttrName, &midletNAttrValue);
+
+        pcsl_string_free(&midletNAttrName);
+        pcsl_string_free(&midletNum);
+
+        if (staus != ALL_OK) {
+            break;
+        }
+
+        if (n == pMidpSuiteData->numberOfMidlets) {
+            /* IMPL_NOTE: an error message should be logged */
+            pcsl_string_free(&midletNAttrValue);
+            break;
+        }
+
+        /* filling the structure with the information we've got */
+        pTmpMidletInfo = &(*ppMidletsInfo)[n];
+        pTmpMidletInfo->suiteId = pMidpSuiteData->suiteId;
+
+        status = parse_midlet_attr(&midletNAttrValue,
+                                   &pTmpMidletInfo->displayName,
+                                   &pTmpMidletInfo->iconPath,
+                                   &pTmpMidletInfo->className);
+
+        pcsl_string_free(&midletNAttrValue);
+
+        if (status != ALL_OK) {
+            break;
+        }
+
+        n++;
+    }
 
     return JAVACALL_OK;
 }
@@ -713,6 +771,7 @@ java_ams_suite_free_midlets_info(javacall_ams_midlet_info* pMidletsInfo,
 javacall_result
 java_ams_suite_get_info(javacall_suite_id suiteId,
                         javacall_ams_suite_info** ppSuiteInfo) {
+    MIDPError status;
     MidletSuiteData* pMidpSuiteData;
     javacall_ams_suite_info* pTmpSuiteInfo;
 
@@ -743,16 +802,89 @@ java_ams_suite_get_info(javacall_suite_id suiteId,
         (javacall_bool) pMidpSuiteData->isPreinstalled;
 
     /*
-     * IMPL_NOTE: the strings from pMidpSuiteData should be converted from
-     *            pcsl_string and copied into the bellowing strings.
+     * Convert strings from pMidpSuiteData from pcsl_string to
+     * javacall_utf16_string and copy them into pTmpSuiteInfo.
      */
-    pTmpSuiteInfo->midletClassName = NULL;
-    pTmpSuiteInfo->displayName = NULL;
-    pTmpSuiteInfo->iconPath = NULL;
-    pTmpSuiteInfo->suiteVendor = NULL;
-    pTmpSuiteInfo->suiteName = NULL;
-    pTmpSuiteInfo->suiteVersion = NULL;
-//    pTmpSuiteInfo->pathToJar = NULL;
+    status = ALL_OK;
+
+    do {
+        if (pMidpSuiteData->varSuiteData.midletClassName != NULL) {
+            status = midp_pcsl_str2javacall_str(
+                &pMidpSuiteData->varSuiteData.midletClassName,
+                &pTmpSuiteInfo->midletClassName);
+            if (status != ALL_OK) {
+                break;
+            }
+        } else {
+            pTmpSuiteInfo->midletClassName = NULL;
+        }
+
+        if (pMidpSuiteData->varSuiteData.displayName != NULL) {
+            status = midp_pcsl_str2javacall_str(
+                &pMidpSuiteData->varSuiteData.displayName,
+                &pTmpSuiteInfo->displayName);
+            if (status != ALL_OK) {
+                break;
+            }
+        } else {
+            pTmpSuiteInfo->displayName = NULL;
+        }
+
+        if (pMidpSuiteData->varSuiteData.iconName != NULL) {
+            status = midp_pcsl_str2javacall_str(
+                &pMidpSuiteData->varSuiteData.iconName,
+                &pTmpSuiteInfo->iconPath);
+            if (status != ALL_OK) {
+                break;
+            }
+        } else {
+            pTmpSuiteInfo->iconPath = NULL;
+        }
+
+        if (pMidpSuiteData->varSuiteData.suiteVendor != NULL) {
+            status = midp_pcsl_str2javacall_str(
+                &pMidpSuiteData->varSuiteData.suiteVendor,
+                &pTmpSuiteInfo->suiteVendor);
+            if (status != ALL_OK) {
+                break;
+            }
+        } else {
+            pTmpSuiteInfo->suiteVendor = NULL;
+        }
+
+        if (pMidpSuiteData->varSuiteData.suiteName != NULL) {
+            status = midp_pcsl_str2javacall_str(
+                &pMidpSuiteData->varSuiteData.suiteName,
+                &pTmpSuiteInfo->suiteVendor);
+            if (status != ALL_OK) {
+                break;
+            }
+        } else {
+            pTmpSuiteInfo->suiteName = NULL;
+        }
+
+        if (pMidpSuiteData->varSuiteData.suiteVersion != NULL) {
+            status = midp_pcsl_str2javacall_str(
+                &pMidpSuiteData->varSuiteData.suiteVersion,
+                &pTmpSuiteInfo->suiteVersion);
+            if (status != ALL_OK) {
+                break;
+            }
+        } else {
+            pTmpSuiteInfo->suiteVersion = NULL;
+        }
+    } while (0);
+
+    if (status != ALL_OK) {
+        FREE_JC_STRING(pTmpSuiteInfo->midletClassName)
+        FREE_JC_STRING(pTmpSuiteInfo->displayName)
+        FREE_JC_STRING(pTmpSuiteInfo->iconPath)
+        FREE_JC_STRING(pTmpSuiteInfo->suiteVendor)
+        FREE_JC_STRING(pTmpSuiteInfo->suiteName)
+        FREE_JC_STRING(pTmpSuiteInfo->suiteVersion)
+        javacall_free(pTmpSuiteInfo);
+        return midp_error2javacall(status);
+    }
 
     *ppSuiteInfo = pTmpSuiteInfo;
 
@@ -767,6 +899,15 @@ java_ams_suite_get_info(javacall_suite_id suiteId,
  */
 void
 java_ams_suite_free_info(javacall_ams_suite_info* pSuiteInfo) {
+    if (pSuiteInfo != NULL) {
+        FREE_JC_STRING(pSuiteInfo->midletClassName)
+        FREE_JC_STRING(pSuiteInfo->displayName)
+        FREE_JC_STRING(pSuiteInfo->iconPath)
+        FREE_JC_STRING(pSuiteInfo->suiteVendor)
+        FREE_JC_STRING(pSuiteInfo->suiteName)
+        FREE_JC_STRING(pSuiteInfo->suiteVersion)
+        javacall_free(pSuiteInfo);
+    }
 }
 
 /**
@@ -1225,3 +1366,47 @@ MIDPError midp_pcsl_str2javacall_str(const pcsl_string* pSrcStr,
 
     return ALL_OK;
 }
+
+MIDPError parse_midlet_attr(const pcsl_string* pMIDletAttrValue,
+                            javacall_utf16_string* pDisplayName,
+                            javacall_utf16_string* pIconName,
+                            javacall_utf16_string* pClassName) {
+    MIDPError status; 
+    pcsl_string_status err;
+    pcsl_string fieldValue;
+    jchar comma = (jchar)',';
+    jint commaIdx, startIdx = 0;
+    javacall_utf16_string* pDstStr;
+    int i;
+
+    *pDisplayName = NULL;
+    *pIconName = NULL;
+    *pClassName = NULL;
+
+    for (i = 0; i < 3; i++) {
+        commaIdx = pcsl_string_index_of_from(pMIDletAttrValue, comma, startIdx);
+        if (commaIdx < 0) {
+            break;
+        }
+        err = pcsl_string_substring(pMIDletAttrValue, startIdx, commaIdx,
+                                    &fieldValue);
+        if (err != PCSL_STRING_OK) {
+            /* ignore error: can't do anything meaningful */
+            break;                                    
+        }
+
+        status = midp_pcsl_str2javacall_str(&fieldValue,
+            ((i == 0) ? pDisplayName : ((i == 1) ? pIconName : pClassName)));
+        pcsl_string_free(fieldValue);
+        if (status != ALL_OK) {
+            /* ignore error: can't do anything meaningful */
+            break;
+        }
+
+        startIdx = commaIdx;
+    }
+
+    return ALL_OK;
+}
+
+#undef FREE_JC_STRING
