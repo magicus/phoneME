@@ -30,6 +30,8 @@ import java.util.*;
 final class AutoEventFactoryImpl implements AutoEventFactory {
     private static AutoEventFactoryImpl instance = null;
     
+    private Vector eventFromStringFactories;     
+
     synchronized static AutoEventFactoryImpl getInstance() {
         if (instance == null) {
             instance = new AutoEventFactoryImpl();
@@ -55,26 +57,17 @@ final class AutoEventFactoryImpl implements AutoEventFactory {
             Integer newOffset) 
         throws IllegalArgumentException {
 
-        if (str == null) {
-            throw new IllegalArgumentException("Event string is null");
-        }
-
         AutoEvent event = null;
+        AutoEventFromStringFactory f = findEventFromStringFactory(String str, 
+            int offset);
 
-        int size = eventCreators.size();
-        for (int i = 0; i < size; ++i) {
-            Object o = eventCreators.elementAt(i);
-            EventFromStringCreator c = (EventFromStringCreator)o;
-
-            String prefix = c.getEventType().getName();
-            if (str.startsWith(prefix, offset)) {
-                event = c.createFromString(str, offset, newOffset);
-                break;
-            }
+        if (f != null) {
+            event = f.createFromString(str, offset, newOffset);
         }
 
         if (event == null) {
-            throw new IllegalArgumentException("Illegal AutoEvent string");
+            throw new IllegalArgumentException(
+                    "Can't create event from string");
         }
 
         return event;
@@ -97,34 +90,47 @@ final class AutoEventFactoryImpl implements AutoEventFactory {
         return null;
     }
     
-    
-    interface EventFromStringCreator {
-        AutoEventType getEventType();
-
-        AutoEvent createFromString(String str, int offset, 
-            Integer newOffset) throws IllegalArgumentException;
-    }
-
-    private Vector eventCreators = null; 
-
-    void registerEventFromStringCreator(EventFromStringCreator creator) 
+    void registerEventFromStringFactory(AutoEventFromStringFactory factory) 
         throws IllegalArgumentException {
     
-        if (creator == null) {
+        if (factory == null) {
             throw new IllegalArgumentException(
-                    "EventFromStringCreator is null");
+                    "AutoEventFromStringFactory is null");
         }
 
-        if (eventCreators == null) {
-            eventCreators = new Vector();
+        eventFromStringFactories.addElement(factory);
+    }
+
+    private AutoEventFromStringFactory findEventFromStringFactory(String str, 
+            int offset) 
+        throws IllegalArgumentException {
+
+        if (str == null) {
+            throw new IllegalArgumentException("String is null");
         }
 
-        eventCreators.addElement(creator);
+        if (offset < 0) {
+            throw new IllegalArgumentException("String offset is negative");
+        }
+
+        int size = eventFromStringFactories.size();
+        for (int i = 0; i < size; ++i) {
+            Object o = eventFromStringFactories.elementAt(i);
+            AutoEventFromStringFactory f = (AutoEventFromStringFactory)o;
+
+            String prefix = f.getPrefix();
+            if (str.startsWith(prefix, offset)) {
+                return f;
+            }
+        }
+
+        return null;
     }
 
     /**
      * Private constructor to prevent user from creating an instance.
      */
     private AutoEventFactoryImpl() {
+        eventFromStringFactories = new Vector(16);
     }    
 }
