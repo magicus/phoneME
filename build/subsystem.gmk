@@ -558,7 +558,7 @@ endef
 # actions    - compiles 'appTarget'
 define applets
 	@echo " ... compiling $(1)"
-	$(AT)$(JSR177_JAVAC) -source 1.2 -g -d $(JAVACARD_CLASSES) -classpath $(JAVACARD_CLASSES)$(PATHSEP)$(JC_API) $(filter %.java,$(2))
+	$(AT)$(JSR177_JAVAC) -source 1.2 -target 1.2 -g -d $(JAVACARD_CLASSES) -classpath $(JAVACARD_CLASSES)$(PATHSEP)$(JC_API) $(filter %.java,$(2))
 	$(AT)cp -f $(JSR_177_DIR)/src/share/tool/javacard/$(call appletName,$@).opt $(JAVACARD_CLASSES)/
 	@echo " ... preparing $(1)"
 	$(call simtoolkit,$@,$(AT)cp -r -f $(JC_DIR)/api_export_files $(JAVACARD_CLASSES))
@@ -582,7 +582,7 @@ $(TOOLKIT_EXP):
 	$(call applets,(JAVACARD_CLASSES)/$(SIM_TOOLKIT_PATH)/javacard/toolkit.cap,$(SIM_TOOLKIT_SOURCES))
 	
 $(TOOLKIT_CLASSES):
-	$(AT)$(JSR177_JAVAC) -g -d $(JAVACARD_CLASSES) -classpath $(JAVACARD_CLASSES)$(PATHSEP)$(JC_API) $(SIM_TOOLKIT_SOURCES)
+	$(AT)$(JSR177_JAVAC) -source 1.2 -target 1.2 -g -d $(JAVACARD_CLASSES) -classpath $(JAVACARD_CLASSES)$(PATHSEP)$(JC_API) $(SIM_TOOLKIT_SOURCES)
 
 $(JAVACARD_CLASSES)/%.scr:
 	$(AT)$(JSR177_JAVA) -classpath $(JC_SCRIPTGEN) com.sun.javacard.scriptgen.Main -o $@ -nobanner $^
