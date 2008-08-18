@@ -28,6 +28,7 @@
 #include "javacall_defs.h"
 #include "javacall_datagram.h"
 #include "javacall_network.h"
+#include "javacall_time.h"
 
 extern char* encodeSmsBuffer(
     javacall_sms_encoding encodingType, int destPortNum, int srcPortNum, javacall_int64 timeStamp,

@@ -84,7 +84,7 @@ extern void extra_camera_controls_init( audio_handle * pHandle );
 extern void extra_camera_controls_cleanup( audio_handle * pHandle );
 #endif //ENABLE_EXTRA_CAMERA_CONTROLS
 
-extern mmaudio_mutex_create( );
+extern void * mmaudio_mutex_create();
 /**
  * 
  */
