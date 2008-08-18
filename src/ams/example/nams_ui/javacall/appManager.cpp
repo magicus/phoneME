@@ -55,6 +55,7 @@ int g_iChildAreaWidth = 240, g_iChildAreaHeight = 320;
 HINSTANCE g_hInst = NULL;
 HWND g_hMainWindow = NULL;
 HMENU g_hMidletPopupMenu = NULL;
+HMENU g_hSuitePopupMenu = NULL;
 WNDPROC g_DefTreeWndProc = NULL;
 HBITMAP g_hMidletTreeBgBmp = NULL;
 
@@ -341,6 +342,10 @@ static void CleanupWindows() {
     // Clean up resources allocated for MIDlet popup menu 
     DestroyMenu(g_hMidletPopupMenu);
 
+    // Clean up resources allocated for suite popup menu 
+    DestroyMenu(g_hSuitePopupMenu);
+
+
     // Unregister main window class
     UnregisterClass(g_szWindowClass, g_hInst);
 }
@@ -409,6 +414,15 @@ static HWND CreateTreeView(HWND hWndParent) {
     if (!g_hMidletPopupMenu) {
         MessageBox(NULL,
             _T("Can't load MIDlet popup menu!"),
+            g_szTitle,
+            NULL);
+    }
+
+    // Load context menu shown for a suite item in the tree view
+    g_hSuitePopupMenu = LoadMenu(g_hInst, MAKEINTRESOURCE(ID_MENU_POPUP_SUITE));
+    if (!g_hSuitePopupMenu) {
+        MessageBox(NULL,
+            _T("Can't load suite popup menu!"),
             g_szTitle,
             NULL);
     }
@@ -746,17 +760,18 @@ MidletTreeWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
             tvi.hItem = hItem;
             tvi.mask = TVIF_HANDLE | TVIF_PARAM;
             if (TreeView_GetItem(hWnd, &tvi)) {
-                if (((TVI_INFO*)tvi.lParam)->type == TVI_TYPE_SUITE) {
+                int iType = ((TVI_INFO*)tvi.lParam)->type;
+                HMENU hMenu = NULL;
+                if (iType == TVI_TYPE_SUITE) {
                     // Get the first shortcut menu in the menu template.
                     // This is the menu that TrackPopupMenu displays
-                    HMENU hMenu = GetSubMenu(g_hMidletPopupMenu, 0);
-                    if (hMenu) {
-                        TrackPopupMenu(hMenu, 0, tvH.pt.x, tvH.pt.y, 0, hWnd,
-                            NULL);
-                    } else {
-                        MessageBox(NULL, _T("Can't show context menu!"),
-                            g_szTitle, MB_OK);
-                    }
+                    hMenu = GetSubMenu(g_hSuitePopupMenu, 0);
+                } else if (iType == TVI_TYPE_MIDLET) {
+                    hMenu = GetSubMenu(g_hMidletPopupMenu, 0);
+                }
+                if (hMenu) {
+                    TrackPopupMenu(hMenu, 0, tvH.pt.x, tvH.pt.y, 0, hWnd,
+                        NULL);
                 }
             }
         }
@@ -804,22 +819,11 @@ MidletTreeWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
         switch(LOWORD(wParam))
         {
             case IDM_MIDLET_START_STOP:
+                wprintf(_T("Starting/stopping MIDlet...\n"));
                 break;
 
             case IDM_MIDLET_INFO:
                 wprintf(_T("Show MIDlet info...\n"));
-                break;
-
-            case IDM_MIDLET_REMOVE:
-                wprintf(_T("Removing MIDlet...\n"));
-                break; 
-
-            case IDM_MIDLET_UPDATE:
-                wprintf(_T("Updating MIDlet...\n"));
-                break; 
-
-            case IDM_MIDLET_SETTINGS:
-                wprintf(_T("Show setting for the MIDlet...\n"));
                 break;
   
             default:
