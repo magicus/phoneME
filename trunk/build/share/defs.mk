@@ -2164,8 +2164,8 @@ CCFLAGS     	= -c -fno-common -Wall \
 			-fno-strict-aliasing $(CC_ARCH_FLAGS)
 CCCFLAGS 	= -fno-rtti
 ifeq ($(CVM_OPTIMIZED), true)
-CCFLAGS_SPEED	= $(CCFLAGS) -O4
-CCFLAGS_SPACE	= $(CCFLAGS) -O2
+CCFLAGS_SPEED	= -O4 $(CCFLAGS)
+CCFLAGS_SPACE	= -O2 $(CCFLAGS)
 else
 CCFLAGS_SPEED	= $(CCFLAGS)
 CCFLAGS_SPACE	= $(CCFLAGS)
