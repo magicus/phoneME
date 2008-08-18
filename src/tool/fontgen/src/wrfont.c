@@ -1,7 +1,7 @@
 /*
  *
  *
- * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
@@ -30,7 +30,7 @@
 #include "gxj_intern_font_bitmap.h"
 
 #define BUFSIZE 256
-#define FONTBITMAPCOUNT 1024
+#define MAXFONTBITMAPCOUNT 1024
 #define ECHO 0
 
 unsigned char BitMask[8] = {0x80,0x40,0x20,0x10,0x8,0x4,0x2,0x1};
@@ -40,10 +40,10 @@ int lineno = 0;
 int lastchar = -1;
 
 unsigned char fontbitmap_common_header[FONT_DATA];
-unsigned char *fontbitmaps[FONTBITMAPCOUNT];
+unsigned char *fontbitmaps[MAXFONTBITMAPCOUNT];
 unsigned char *fontbitmap_current = NULL;
 int rangeIndex=-1;
-int mapLen[FONTBITMAPCOUNT];
+int mapLen[MAXFONTBITMAPCOUNT];
 
 int fontWidth, fontHeight, ascent, descent, leading;
 int range_hi, first_lo, last_lo;
@@ -65,8 +65,20 @@ int define_range()
     if (rangeIndex >= 0)
         check_size(rangeIndex);
     sscanf(buf+1, "%x%x%x", &range_hi, &first_lo, &last_lo);
+    if (range_hi > 0xff || first_lo > 0xff || last_lo > 0xff) {
+        fprintf(stderr, "Incorrect character range. Note that surrogate characters are not supported");
+        return -1;
+    }
+    if (range_hi >= 0xd8 && range_hi <= 0xdf) {
+        fprintf(stderr, "Unexpected surrogate code point specification encountered. Note that surrogate characters are not supported");
+        return -1;
+    }
     fontbitmap_current = (unsigned char*)malloc(
         (last_lo-first_lo+1) * ((fontWidth * fontHeight + 7) / 8) + FONT_DATA);
+    if (fontbitmap_current == NULL) {
+        fprintf(stderr, "Memory exhausted");
+        return -1;
+    }
     memset(fontbitmap_current,0,(last_lo-first_lo+1) * ((fontWidth * fontHeight + 7) / 8) + FONT_DATA);
     memcpy(fontbitmap_current, fontbitmap_common_header, FONT_DATA);
     fontbitmap_current[FONT_CODE_RANGE_HIGH] = range_hi;
@@ -74,8 +86,13 @@ int define_range()
     fontbitmap_current[FONT_CODE_LAST_LOW] = last_lo;
     lastchar = range_hi*0x100 + first_lo -1;
     rangeIndex++;
+    if (rangeIndex == MAXFONTBITMAPCOUNT) {
+        fprintf(stderr, "Maximum supported number of ranges (%i) exceeded", MAXFONTBITMAPCOUNT);
+        return -1;
+    }
     fontbitmaps[rangeIndex] = fontbitmap_current;
     mapLen[rangeIndex] = 0;
+    return 0;
 }
 
 
@@ -166,7 +183,10 @@ void process_file()
 	case 0:
 	    break;
 	case '%':
-	    define_range();
+	    if (define_range() < 0) {
+            fprintf(stderr, "cannot continue");
+            return;
+        }
 	    break;
 	default:
 	    fprintf(stderr,"error at line %i: bad first char in [%s]\n",lineno,buf);
@@ -184,7 +204,7 @@ void print_bitmap()
         "/*\n"
         " *\n"
         " *\n"
-        " * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.\n"
+        " * Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.\n"
         " * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER\n"
         " * \n"
         " * This program is free software; you can redistribute it and/or\n"

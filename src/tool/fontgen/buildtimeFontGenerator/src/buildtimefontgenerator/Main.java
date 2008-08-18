@@ -1,7 +1,7 @@
 /*
  *   
  *
- * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
@@ -37,7 +37,7 @@ import java.util.Vector;
 public class Main {
     
     private static final String COPYRIGHT = 
-"# Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.\n" +
+"# Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.\n" +
 "# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER\n" +
 "# \n" +
 "# This program is free software; you can redistribute it and/or\n" +
@@ -124,6 +124,10 @@ public class Main {
                         end = Integer.decode(args[++i]);
                         if ((start & 0xff00) != (end & 0xff00))
                             fail("Chameleon does not support ranges rolling over code page boundary");
+                        if (start > 0xffff || start < 0)
+                            fail("Invalid range specified. Note that surrogates are not supported");
+                        if ((start & 0xf800) == 0xd800)
+                            fail("Invalid range specified. Note that surrogates are not supported");
                         ranges.add(start);
                         ranges.add(end);
                     }
