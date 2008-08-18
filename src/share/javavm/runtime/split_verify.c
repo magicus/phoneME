@@ -2557,6 +2557,7 @@ printStackMap(VfyContext* cntxt, unsigned short ip)
         CVMconsolePrintf("\n");
 	nlocals = 0;
 	nstack = 0;
+        mep = NULL;
     }
 
     mep = printStackInfo(MAX(lTop, nlocals), 'L', 
@@ -3522,7 +3523,7 @@ Vfy_getOpcode(VfyContext* cntxt, IPINDEX ip) {
     if (opcode == opc_breakpoint) {
 	CVMExecEnv* ee = cntxt->ee;
 	CVMD_gcSafeExec(ee, {
-	    opcode = CVMjvmtiGetBreakpointOpcode(ee, ip, CVM_TRUE);
+            opcode = CVMjvmtiGetBreakpointOpcode(ee, (CVMUint8*)ip, CVM_TRUE);
 	});
     }
 #else
