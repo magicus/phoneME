@@ -24,11 +24,25 @@
  * information or have any questions.
  */
 
+#define  ID_MENU_MAIN         5
 #define  ID_MENU_POPUP_MIDLET 10
-#define  IDM_MIDLET_LAUNCH    100
-#define  IDM_MIDLET_INFO      101
+
 #define  IDM_MIDLET_REMOVE    102
 #define  IDM_MIDLET_UPDATE    103
 #define  IDM_MIDLET_SETTINGS  104
+
+#define  IDM_MIDLET_START_STOP     110
+#define  IDM_MIDLET_TO_FOREGROUND  120
+#define  IDM_MIDLET_INFO           130
+#define  IDM_MIDLET_SHOW_RUNNING   140
+
+#define  IDM_SUITE_INFO            300
+#define  IDM_SUITE_SETTINGS        310
+#define  IDM_SUITE_REMOVE          320
+#define  IDM_SUITE_UPDATE          330
+#define  IDM_SUITE_EXIT            340
+
+#define  IDM_HELP_ABOUT            350
+
 #define  IDS_EMPTY            1001
 #define  IDB_MIDLET_TREE_BG   10001

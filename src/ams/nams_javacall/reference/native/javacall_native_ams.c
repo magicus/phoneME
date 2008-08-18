@@ -74,7 +74,18 @@ javacall_result java_ams_system_start() {
     midp_add_event_listener(midp_listener_ams_midlet_state_changed,
                             MIDLET_EVENT_LISTENER);
 
-    return midp_system_start();
+    return (midp_system_start() == ALL_OK) ? JAVACALL_OK : JAVACALL_FAIL;
+}
+
+/**
+ * Platform invokes this function to stop the MIDP system.
+ *
+ * @return <tt>JAVACALL_OK</tt> if successful,
+ *         <tt>JAVACALL_FAIL</tt> otherwise
+ */
+javacall_result java_ams_system_stop() {
+    MIDPError res = midp_system_stop();
+    return (res == ALL_OK) ? JAVACALL_OK : JAVACALL_FAIL;
 }
 
 /**

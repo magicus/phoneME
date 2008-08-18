@@ -50,6 +50,7 @@ static TCHAR g_szTitle[] = _T("NAMS Example");
 
 // The size of main window calibrated to get 240x320 child area to draw SJWC output to
 int g_iWidth = 246, g_iHeight = 345;
+int g_iChildAreaWidth = 240, g_iChildAreaHeight = 320;
 
 static HMENU IDC_TREEVIEW_MIDLETS = (HMENU) 1;
 
@@ -89,6 +90,7 @@ LPTSTR JavacallUtf16ToTstr(javacall_utf16_string str);
 extern "C" {
 
 javacall_result java_ams_system_start();
+javacall_result java_ams_system_stop();
 javacall_result
 java_ams_midlet_start(javacall_suite_id suiteId,
                       javacall_app_id appId,
@@ -140,6 +142,9 @@ int main(int argc, char* argv[]) {
 
     // Store instance handle in our global variable
     g_hInst = hInstance;
+
+    // needed for TreeView control
+    InitCommonControls();
 
     HWND hWnd = CreateMainView();
     g_hMainWindow = hWnd;
@@ -209,7 +214,7 @@ HWND CreateMainView() {
     wcex.hIcon          = LoadIcon(g_hInst, MAKEINTRESOURCE(IDI_APPLICATION));
     wcex.hCursor        = LoadCursor(NULL, IDC_ARROW);
     wcex.hbrBackground  = (HBRUSH)(COLOR_WINDOW + 1);
-    wcex.lpszMenuName   = NULL;
+    wcex.lpszMenuName   = MAKEINTRESOURCE(ID_MENU_MAIN);
     wcex.lpszClassName  = g_szWindowClass;
     wcex.hIconSm        = LoadIcon(g_hInst, MAKEINTRESOURCE(IDI_APPLICATION));
 
@@ -283,7 +288,7 @@ HWND CreateTreeView(HWND hwndParent) {
                             rcClient.right,
                             rcClient.bottom,
                             hwndParent, 
-                            IDC_TREEVIEW_MIDLETS,
+                            IDC_TREEVIEW_MIDLETS + 1,
                             g_hInst, 
                             NULL); 
 
@@ -298,13 +303,21 @@ HWND CreateTreeView(HWND hwndParent) {
     }
 
 
-   // Load backround image, just ignore if loading fails
-   g_hMidletTreeBgBmp = LoadBitmap(g_hInst, MAKEINTRESOURCE(IDB_MIDLET_TREE_BG));
-//   g_hMidletTreeBgBmp = (HBITMAP)LoadImage(g_hInst, _T("bgd-yellow.bmp"), IMAGE_BITMAP, 240, 320, 0);
-   if (!g_hMidletTreeBgBmp) {
+    // Load backround image, just ignore if loading fails
+    /*HRSRC hRes = FindResource(NULL, MAKEINTRESOURCE(IDB_MIDLET_TREE_BG), RT_BITMAP);
+    if (!hRes) {
+        DWORD res = GetLastError();
+        wprintf(_T("ERROR: LoadResource() res: %d\n"), res);
+    }
+    g_hMidletTreeBgBmp = (HBITMAP)LoadResource(NULL, hRes);*/
+
+//   g_hMidletTreeBgBmp = LoadBitmap(g_hInst, MAKEINTRESOURCE(IDB_MIDLET_TREE_BG));
+    g_hMidletTreeBgBmp = (HBITMAP)LoadImage(g_hInst, _T("bgd-yellow.bmp"),
+        IMAGE_BITMAP, g_iChildAreaWidth, g_iChildAreaHeight, LR_LOADFROMFILE);
+    if (!g_hMidletTreeBgBmp) {
         DWORD res = GetLastError();
         wprintf(_T("ERROR: LoadBitmap(IDB_MIDLET_TREE_BG) res: %d\n"), res);
-   }
+    }
 
     // Load context menu shown for a MIDlet item in the tree view
     g_hMidletPopupMenu = LoadMenu(g_hInst, MAKEINTRESOURCE(ID_MENU_POPUP_MIDLET));
@@ -315,7 +328,7 @@ HWND CreateTreeView(HWND hwndParent) {
             NULL);
     }
 
-   return hwndTV;
+    return hwndTV;
 }
 
 BOOL InitTreeViewItems(HWND hwndTV)  {
@@ -357,7 +370,7 @@ BOOL InitTreeViewItems(HWND hwndTV)  {
               jsLabel = (pSuiteInfo->displayName != NULL) ?
                   pSuiteInfo->displayName : pSuiteInfo->suiteName;
 
-	      LPTSTR pszSuiteName = JavacallUtf16ToTstr(jsLabel);
+              LPTSTR pszSuiteName = JavacallUtf16ToTstr(jsLabel);
               pszSuiteName = pszSuiteName ? pszSuiteName : _T("Midlet Suite");
               wprintf(_T("Suite label=%s\n"), pszSuiteName);
 
@@ -507,18 +520,33 @@ LRESULT CALLBACK
 MainWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
     PAINTSTRUCT ps;
     HDC hdc;
-//    TCHAR greeting[] = _T("Native Application Manager");
 
     switch (message) {
+    case WM_COMMAND: {
+        switch(LOWORD(wParam)) {
+            case IDM_MIDLET_START_STOP: {
+                break;
+            }
+            case IDM_SUITE_EXIT: {
+                (void)java_ams_system_stop();
+                // TODO: wait for notification from the SJWC thread instead of sleep
+                Sleep(1000);
+                PostQuitMessage(0);
+                break;
+            }
+            case IDM_HELP_ABOUT: {
+                MessageBox(hWnd, _T("Cool Application Manager"),
+                           _T("About"), MB_OK | MB_ICONINFORMATION);
+                break;
+            }
+        }
+        break;
+    }
+
     case WM_PAINT:
         hdc = BeginPaint(hWnd, &ps);
 
         DrawBuffer(hdc);
-/*
-        TextOut(hdc,
-            5, 5,
-            greeting, _tcslen(greeting));
-*/
 
         EndPaint(hWnd, &ps);
         break;
@@ -534,7 +562,29 @@ MainWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
     return 0;
 }
 
+void DrawBackground(HDC hdc, DWORD dwRop) {
+    if (g_hMidletTreeBgBmp != NULL) {
+        HDC hdcMem = CreateCompatibleDC(hdc);
+        HBITMAP hbmOld = (HBITMAP)SelectObject(hdcMem, g_hMidletTreeBgBmp);
 
+        BITMAP bm;
+        GetObject(g_hMidletTreeBgBmp, sizeof(bm), &bm);
+ 
+wprintf(_T(">>> bm.bmWidth = %d, bm.bmHeight = %d\n"), bm.bmWidth, bm.bmHeight);
+        BitBlt(hdc, 0, 0, bm.bmWidth, bm.bmHeight, hdcMem, 0, 0, dwRop);
+ 
+        SelectObject(hdcMem, hbmOld);  
+        DeleteDC(hdcMem); 
+    }
+}
+
+/*
+void DrawItem() {
+    RECT rc;
+    *(HTREEITEM*)&rc = hTreeItem;
+    SendMessage(hwndTreeView, TVM_GETITEMRECT, FALSE, (LPARAM)&rc);
+}
+*/
 
 /**
  *  Processes messages for the MIDlet tree window.
@@ -581,7 +631,7 @@ MidletTreeWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
         // Test for the identifier of a command item.
         switch(LOWORD(wParam))
         {
-            case IDM_MIDLET_LAUNCH:
+            case IDM_MIDLET_START_STOP:
             {
                 HTREEITEM hItem   = TreeView_GetSelection(hWnd);
                 HTREEITEM hParent = TreeView_GetParent(hWnd, hItem);
@@ -664,23 +714,25 @@ MidletTreeWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
         }
         break;
 
+    case WM_ERASEBKGND: {
+        DrawBackground((HDC)wParam, SRCCOPY);
+        return 1;
+    }
+
     case WM_PAINT:
     {
+        //HBRUSH hBrush = (HBRUSH)GetStockObject(HOLLOW_BRUSH);
+        //SelectObject((HDC)wParam, (HGDIOBJ)hBrush);
+
         CallWindowProc(g_DefTreeWndProc, hWnd, message, wParam, lParam);
+        //DrawItem(hItemWnd);
 
         hdc = BeginPaint(hWnd, &ps);
 
-        HDC hdcMem = CreateCompatibleDC(hdc);  
-        HBITMAP hbmOld = (HBITMAP)SelectObject(hdcMem, g_hMidletTreeBgBmp);  
+        //wprintf(_T(">>> left = %ld, top = %ld, right = %ld, bottom = %ld\n"),
+        //        ps.rcPaint.left, ps.rcPaint.top, ps.rcPaint.right, ps.rcPaint.bottom);
 
-        BITMAP bm;   
-        GetObject(g_hMidletTreeBgBmp, sizeof(bm), &bm);  
- 
-        BitBlt(hdc, 0, 0, bm.bmWidth, bm.bmHeight, hdcMem, 0, 0, SRCCOPY);  
- 
-        SelectObject(hdcMem, hbmOld);  
-        DeleteDC(hdcMem); 
-
+        DrawBackground(hdc, SRCAND);
 
         EndPaint(hWnd, &ps);
 
@@ -950,7 +1002,7 @@ static void DrawBuffer(HDC hdc) {
     int x2 = screenWidth;
     int y2 = screenHeight;
 
-    wprintf(_T("x2 = %d, y2 = %d\n"), x2, y2);
+    // wprintf(_T("x2 = %d, y2 = %d\n"), x2, y2);
 
     x = x1;
     y = y1;
@@ -971,11 +1023,11 @@ static void DrawBuffer(HDC hdc) {
 
     hdcMem = CreateCompatibleDC(hdc);
 
-    destHBmp = CreateDIBSection(hdcMem, &bi, DIB_RGB_COLORS, (void**)&destBits, NULL, 0);
+    destHBmp = CreateDIBSection(hdcMem, &bi, DIB_RGB_COLORS,
+                                (void**)&destBits, NULL, 0);
 
 
     if (destBits != NULL) {
-        wprintf(_T("OK!!!\n"));
         oobj = SelectObject(hdcMem, destHBmp);
         SelectObject(hdcMem, oobj);
 
