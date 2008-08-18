@@ -31,6 +31,7 @@
 #include <suitestore_common.h>
 #include <suitestore_installer.h>
 #include <suitestore_task_manager.h>
+#include <suitestore_secure.h>
 #include <suitestore_intern.h>
 
 #include <javautil_unicode.h>
@@ -1063,7 +1064,8 @@ java_ams_suite_remove(javacall_suite_id suiteId) {
 javacall_result
 java_ams_suite_change_storage(javacall_suite_id suiteId,
                               javacall_storage_id newStorageId) {
-    return JAVACALL_OK;
+    return midp_error2javacall(midp_change_suite_storage( 
+        (SuiteIdType)suiteId, (StorageIdType)newStorageId));
 }
 
 /**
@@ -1080,7 +1082,12 @@ java_ams_suite_change_storage(javacall_suite_id suiteId,
  */
 javacall_bool
 java_ams_suite_is_preinstalled(javacall_suite_id suiteId) {
-    return JAVACALL_FALSE;
+    MidletSuiteData* pMidpSuiteData = get_suite_data((SuiteIdType)suiteId);
+    if (pMidpSuiteData == NULL) {
+        return JAVACALL_FALSE;
+    }
+    return (pMidpSuiteData->isPreinstalled == KNI_TRUE) ?
+                JAVACALL_TRUE : JAVACALL_FALSE;
 }
 
 /**
@@ -1094,7 +1101,7 @@ java_ams_suite_is_preinstalled(javacall_suite_id suiteId) {
  *         0 if out of memory
  */
 long java_ams_suite_get_storage_size(javacall_suite_id suiteId) {
-    return 0;
+    return midp_get_suite_storage_size((SuiteIdType)suiteId);
 }
 
 /**
@@ -1112,7 +1119,8 @@ long java_ams_suite_get_storage_size(javacall_suite_id suiteId) {
 javacall_result
 java_ams_suite_check_suites_integrity(javacall_bool fullCheck,
                                       javacall_bool delCorruptedSuites) {
-    return JAVACALL_OK;
+    return midp_error2javacall(midp_check_suites_integrity(
+        (fullCheck == JAVACALL_TRUE), (delCorruptedSuites == JAVACALL_TRUE)));
 }
 
 /*------------- Getting Information About AMS Folders ---------------*/
@@ -1131,11 +1139,56 @@ java_ams_suite_check_suites_integrity(javacall_bool fullCheck,
 javacall_result
 java_ams_suite_get_all_folders_info(javacall_ams_folder_info** ppFoldersInfo,
                                     int* pNumberOfEntries) {
+#if ENABLE_AMS_FOLDERS
+    javacall_ams_folder_info* pTmpFoldersInfo;
+    int i;
+
+    /* IMPL_NOTE: temporary hardcoded, should be moved to an xml */
+    int foldersNum = 2;
+
+    PCSL_DEFINE_ASCII_STRING_LITERAL_START(folderName1)
+        {'P','r','e','i','n','s','t','a','l','l','e','d',' ',
+         'a','p','p','s','\0'}
+    PCSL_DEFINE_ASCII_STRING_LITERAL_END(folderName1);
+
+    PCSL_DEFINE_ASCII_STRING_LITERAL_START(folderName2)
+        {'O','t','h','e','r',' ', 'a','p','p','s','\0'}
+    PCSL_DEFINE_ASCII_STRING_LITERAL_END(folderName2);
+#endif /* ENABLE_AMS_FOLDERS */
+
     if (ppFoldersInfo == NULL || pNumberOfEntries == NULL) {
         return JAVACALL_FAIL;
     }
 
     *pNumberOfEntries = 0;
+
+#if ENABLE_AMS_FOLDERS
+    /* IMPL_NOTE: temporary hardcoded, should be moved to an xml */
+
+    pTmpFoldersInfo = (javacall_ams_folder_info*)javacall_malloc(
+        foldersNum * sizeof((javacall_ams_folder_info)));
+    if (pTmpFoldersInfo == NULL) {
+        return JAVACALL_FAIL;
+    }
+
+    for (i = 0; i < foldersNum; i++) {
+        pTmpFoldersInfo[i].folderId = (javacall_folder_id)i;
+        status = midp_pcsl_str2javacall_str((i == 0) ? &pcslStrFolderName1 :
+                                                       &pcslStrFolderName2,
+                                            &pTmpFoldersInfo[i].folderName);
+        if (status != ALL_OK) {
+            for (j = 0; j < i; j++) {
+                if (pTmpFoldersInfo[i].folderName != NULL) {
+                    javacall_free(pTmpFoldersInfo[i].folderName);
+                }
+            }
+            return midp_error2javacall(status);
+        }
+    }
+
+    *pNumberOfEntries = foldersNum;
+    *ppFoldersInfo = pTmpFoldersInfo;
+#endif /* ENABLE_AMS_FOLDERS */
 
     return JAVACALL_OK;
 }
@@ -1153,8 +1206,11 @@ java_ams_suite_free_all_folders_info(javacall_ams_folder_info* pFoldersInfo,
     if (pFoldersInfo != NULL) {
         int i;
         for (i = 0; i < numberOfEntries; i++) {
-            java_ams_suite_free_folder_info(&pFoldersInfo[i]);
+            if (pFoldersInfo[i].folderName != NULL) {
+                javacall_free(pFoldersInfo[i].folderName);
+            }
         }
+        javacall_free(pFoldersInfo);
     }
 }
 
@@ -1166,17 +1222,47 @@ java_ams_suite_free_all_folders_info(javacall_ams_folder_info* pFoldersInfo,
  * allocated by the callee. The caller is responsible for freeing it using
  * java_ams_suite_free_folder_info().
  *
- * @param folderId    [in]  unique ID of the MIDlet suite
- * @param pFolderInfo [out] on exit will hold a pointer to a structure
- *                          describing the given folder
+ * @param folderId     [in]  unique ID of the folder
+ * @param ppFolderInfo [out] on exit will hold a pointer to a structure
+ *                           describing the given folder
  *
  * @return <tt>JAVACALL_OK</tt> on success,
  *         <tt>JAVACALL_FAIL</tt> otherwise
  */
 javacall_result
 java_ams_suite_get_folder_info(javacall_folder_id folderId,
-                               javacall_ams_folder_info* pFolderInfo) {
-    return JAVACALL_OK;
+                               javacall_ams_folder_info** ppFolderInfo) {
+    /* IMPL_NOTE: the implementation should be optimized */
+    javacall_result res;
+    javacall_ams_folder_info* pAllFoldersInfo;
+    int foldersNum, i;
+
+    res = java_ams_suite_get_all_folders_info(&pAllFoldersInfo, &foldersNum);
+    if (res != JAVACALL_OK) {
+        return res;
+    }
+
+    res = JAVACALL_FAIL;
+
+    for (i = 0; i < foldersNum; i++) {
+        if (pAllFoldersInfo[i].folderId == folderId) {
+            *ppFolderInfo = (javacall_ams_folder_info*)javacall_malloc(
+                sizeof(javacall_ams_folder_info));
+            if (*ppFolderInfo == NULL) {
+                break;
+            }
+
+            memcpy(*ppFolderInfo, &pAllFoldersInfo[i],
+                (size_t)sizeof(javacall_ams_folder_info));
+
+            res = JAVACALL_OK;
+            break;
+        }
+    }
+
+    java_ams_suite_free_all_folders_info(pAllFoldersInfo);
+
+    return res;
 }
 
 /**
@@ -1220,11 +1306,72 @@ javacall_result
 java_ams_suite_get_suites_in_folder(javacall_folder_id folderId,
                                     javacall_suite_id** ppSuiteIds,
                                     int* pNumberOfSuites) {
+    if (ppSuiteIds == NULL || pNumberOfSuites == NULL) {
+        return NULL; 
+    }
+
     if (folderId == JAVACALL_ROOT_FOLDER_ID) {
         return java_ams_suite_get_suite_ids(ppSuiteIds,
                                             pNumberOfSuites);
     } else {
+        MidlesSuiteData *pMidpSuiteData, *pSaveSuiteData;
+        int i, n;
+
+#if ENABLE_AMS_FOLDERS
+        pMidpSuiteData = get_suite_data((SuiteIdType)suiteId);
+        if (pMidpSuiteData == NULL) {
+            *pNumberOfSuites = 0;
+            *ppSuiteIds = NULL;
+            return JAVACALL_OK;
+        }
+
+        /**
+         * There are two iterations. During the first one we count the number
+         * of suites residing in the given folder, then we allocate memory
+         * to hold the suite IDs. During the second iteration the suite IDs
+         * are saved into this memory.
+         */
+        pSaveSuiteData = pMidpSuiteData;
+
+        for (int i = 0; i < 2; i++) {
+            n = 0;
+
+            /* walk through the list of suites */
+            while (pMidpSuiteData != NULL) {
+                if (pMidpSuiteData->folderId == folderId) {
+                    if (i == 1) {
+                        (*ppSuiteIds)[n].suiteId =
+                            (javacall_suite_id)pMidpSuiteData->suiteId; 
+                    }
+                    n++;
+                }
+                pMidpSuiteData = pMidpSuiteData->nextEntry;
+            }
+
+            if (i == 0) {
+                /* the first iteration is finished */
+                if (n == 0) {
+                    *ppSuiteIds = NULL;
+                    break;
+                }
+
+                /* allocate memory to hold the suite IDs */
+                *ppSuiteIds = (javacall_suite_id*)javacall_malloc(
+                    n * sizeof(javacall_suite_id));
+                if (*ppSuiteIds == NULL) {
+                    return JAVACALL_OUT_OF_MEMORY;
+                }
+
+                pMidpSuiteData = pSaveSuiteData;
+            }
+        }
+
+        *pNumberOfSuites = n;
+#else
+        (void)i;
+        (void)n;
         *pNumberOfSuites = 0;
+#endif /* ENABLE_AMS_FOLDERS */
     }
 
     return JAVACALL_OK;
@@ -1244,7 +1391,23 @@ java_ams_suite_get_suites_in_folder(javacall_folder_id folderId,
 javacall_result
 java_ams_suite_get_folder(javacall_suite_id suiteId,
                           javacall_folder_id* pSuiteFolderId) {
-    *pSuiteFolderId = JAVACALL_ROOT_FOLDER_ID;                          
+    MidletSuiteData* pMidpSuiteData;
+
+    if (pSuiteFolderId == NULL) {
+        return JAVACALL_FAIL;
+    }
+
+#if ENABLE_AMS_FOLDERS
+    pMidpSuiteData = get_suite_data((SuiteIdType)suiteId);
+    if (pMidpSuiteData == NULL) {
+        return JAVACALL_FAIL;
+    }
+    *pSuiteFolderId = (javacall_folder_id)pMidpSuiteData->folderId;
+#else
+    (void)pMidpSuiteData;
+    *pSuiteFolderId = JAVACALL_ROOT_FOLDER_ID;
+#endif /* ENABLE_AMS_FOLDERS */
+
     return JAVACALL_OK;
 }
 
@@ -1261,7 +1424,9 @@ java_ams_suite_get_folder(javacall_suite_id suiteId,
 javacall_result
 java_ams_suite_move_to_folder(javacall_suite_id suiteId,
                               javacall_folder_id newFolderId) {
-    return JAVACALL_OK;
+    return midp_error2javacall(midp_move_suite_to_folder(
+        (SuiteIdType)suiteId, (FolderIdType)newFolderId));
+
 }
 
 /*-------------------- API to read/write secure resources -------------------*/
@@ -1292,6 +1457,26 @@ java_ams_suite_read_secure_resource(javacall_suite_id suiteId,
                                     javacall_const_utf16_string resourceName,
                                     javacall_uint8** ppReturnValue,
                                     javacall_int32* pValueSize) {
+    MIDPError status;
+    pcsl_string pcslStrResName;
+    jint jintValueSize;
+
+    status = midp_javacall_str2pcsl_str(resourceName, &pcslStrResName);
+    if (status != ALL_OK) {
+        return midp_error2javacall(status);
+    }
+
+    status = midp_suite_read_secure_resource((SuiteIdType)suiteId,
+                                             &pcslStrResName,
+                                             (jbyte**)ppReturnValue,
+                                             &jintValueSize);
+    pcsl_string_free(&pcslStrResName);                                             
+    if (status != ALL_OK) {
+        return midp_error2javacall(status);
+    }
+
+    *pValueSize = (javacall_int32)jintValueSize;
+
     return JAVACALL_OK;
 }
 
@@ -1315,7 +1500,22 @@ java_ams_suite_write_secure_resource(javacall_suite_id suiteId,
                            javacall_const_utf16_string resourceName,
                            javacall_uint8* pValue,
                            javacall_int32 valueSize) {
-    return JAVACALL_OK;
+    MIDPError status;
+    pcsl_string pcslStrResName;
+    jint jintValueSize;
+
+    status = midp_javacall_str2pcsl_str(resourceName, &pcslStrResName);
+    if (status != ALL_OK) {
+        return midp_error2javacall(status);
+    }
+
+    status = midp_suite_write_secure_resource((SuiteIdType)suiteId,
+                                              &pcslStrResName,
+                                              (jbyte*)pValue,
+                                              (javacall_int32)valueSize);
+    pcsl_string_free(&pcslStrResName);
+
+    return midp_error2javacall(status);
 }
 
 /******************************************************************************/
@@ -1363,11 +1563,34 @@ static javacall_result midp_error2javacall(MIDPError midpErr) {
     return jcRes;
 }
 
+/**
+ * Converts the given Javacall string to pcsl string.
+ *
+ * The caller is responsible for freeing the converted string
+ * when it is not needed.
+ *
+ * @param pSrcStr [in]  a Javacall string to convert
+ * @param pDstStr [out] on exit will hold the converted string
+ *
+ * @return an error code, ALL_OK if no errors
+ */
 MIDPError midp_javacall_str2pcsl_str(javacall_const_utf16_string pSrcStr,
                                      pcsl_string* pDstStr) {
+    *pDstStr = NULL;
     return ALL_OK;
 }
 
+/**
+ * Converts the given pcsl string to Javacall string.
+ *
+ * The caller is responsible for freeing the converted string
+ * when it is not needed.
+ *
+ * @param pSrcStr [in]  a pcsl string to convert
+ * @param pDstStr [out] on exit will hold the converted string
+ *
+ * @return an error code, ALL_OK if no errors
+ */
 MIDPError midp_pcsl_str2javacall_str(const pcsl_string* pSrcStr,
                                      javacall_utf16_string* pDstStr) {
     jsize len = pcsl_string_utf16_length(pSrcStr);
@@ -1392,6 +1615,20 @@ MIDPError midp_pcsl_str2javacall_str(const pcsl_string* pSrcStr,
     return ALL_OK;
 }
 
+/**
+ * Parses a "MIDlet-<n>: <midlet_name>, <icon_name>, <class_name>"
+ * jad attribute and returns its separate components.
+ *
+ * The caller is responsible for freeing the returned strings
+ * when they are not needed.
+ *
+ * @param pMIDletAttrValue [in]  a pcsl string holding the attribute to parse
+ * @param pDisplayName     [out] on exit will hold a midlet_name component
+ * @param pIconName        [out] on exit will hold an icon_name component
+ * @param pClassName       [out] on exit will hold a class_name component
+ *
+ * @return an error code, ALL_OK if no errors
+ */
 MIDPError parse_midlet_attr(const pcsl_string* pMIDletAttrValue,
                             javacall_utf16_string* pDisplayName,
                             javacall_utf16_string* pIconName,
