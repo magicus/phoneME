@@ -159,7 +159,7 @@ typedef enum {
     /** Posted when the blocked set volume finished */
     JAVACALL_EVENT_MEDIA_VOLUME_SET,
     /** Posted when the blocked set mute finished */
-    JAVACALL_EVENT_MEDIA_MUTE_SET,
+    JAVACALL_EVENT_MEDIA_MUTE_SET
     
 } javacall_media_notification_type;
 
