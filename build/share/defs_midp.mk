@@ -167,7 +167,7 @@ MIDP_LIBS 		?= \
 LINKLIBS 		+= $(MIDP_LIBS)
 endif
 
--include $(MIDP_DEFS_CDC_MK)
+include $(MIDP_DEFS_CDC_MK)
 
 ifeq ($(CVM_PRELOAD_LIB), true)
 # Add MIDP classes to JCC input list so they can be romized.
