@@ -2208,7 +2208,7 @@ map2jdwpError(jvmtiError error)
         case AGENT_ERROR_JVMTI_INTERNAL:
         case AGENT_ERROR_JDWP_INTERNAL:
             return JDWP_ERROR(INTERNAL);
-    default:
+        default:
             return JDWP_ERROR(INTERNAL);
     }
     return JDWP_ERROR(INTERNAL);
