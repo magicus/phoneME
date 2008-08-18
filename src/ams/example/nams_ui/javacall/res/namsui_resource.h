@@ -44,5 +44,9 @@
 
 #define  IDM_HELP_ABOUT            350
 
+#define  IDC_TREEVIEW_MIDLETS      900
+#define  IDC_MAIN_TOOLBAR          910
+#define  IDB_MAIN_TOOLBAR_BUTTONS  920
+
 #define  IDS_EMPTY            1001
 #define  IDB_MIDLET_TREE_BG   10001

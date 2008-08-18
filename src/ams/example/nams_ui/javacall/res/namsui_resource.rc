@@ -84,4 +84,6 @@ BEGIN
 END
 */
 
+IDB_MAIN_TOOLBAR_BUTTONS BITMAP "toolbar.bmp"
+
 IDB_MIDLET_TREE_BG BITMAP "bgd-yellow.bmp"

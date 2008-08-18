@@ -38,9 +38,9 @@
 #include <javacall_ams_suitestore.h>
 #include <javacall_ams_app_manager.h>
 
+#define TB_BUTTON_WIDTH 32
 
 extern "C" char* _phonenum = "1234567"; // global for javacall MMS subsystem
-
 
 // The main window class name.
 static TCHAR g_szWindowClass[] = _T("win32app");
@@ -51,8 +51,6 @@ static TCHAR g_szTitle[] = _T("NAMS Example");
 // The size of main window calibrated to get 240x320 child area to draw SJWC output to
 int g_iWidth = 246, g_iHeight = 345;
 int g_iChildAreaWidth = 240, g_iChildAreaHeight = 320;
-
-static HMENU IDC_TREEVIEW_MIDLETS = (HMENU) 1;
 
 // The type of a tree item
 static WORD TVI_TYPE_NONE   = 0;
@@ -77,7 +75,8 @@ static void RefreshScreen(int x1, int y1, int x2, int y2);
 static void DrawBuffer(HDC hdc);
 
 HWND CreateMainView();
-HWND CreateTreeView(HWND hwndParent);
+HWND CreateTreeView(HWND hWndParent);
+HWND CreateToolbar(HWND hWndParent);
 BOOL InitTreeViewItems(HWND hwndTV);
 HTREEITEM AddItemToTree(HWND hwndTV, LPTSTR lpszItem, int nLevel, LPARAM lParam);
 
@@ -140,10 +139,10 @@ int main(int argc, char* argv[]) {
     int nCmdShow = SW_SHOWNORMAL;
 #endif
 
-    // Store instance handle in our global variable
+    // Store instance handle in our global variable.
     g_hInst = hInstance;
 
-    // needed for TreeView control
+    // Ensure that the common control DLL is loaded.
     InitCommonControls();
 
     HWND hWnd = CreateMainView();
@@ -178,7 +177,15 @@ int main(int argc, char* argv[]) {
 
     // Create and init Java MIDlets tree view
     HWND hwndTV = CreateTreeView(hWnd);
+    if (hwndTV == NULL) {
+        return -1;
+    }
     InitTreeViewItems(hwndTV);
+
+    HWND hWndToolbar = CreateToolbar(hWnd);
+    if (hWndToolbar == NULL) {
+        return -1;
+    }
 
     // Show the main window 
     ShowWindow(hWnd, nCmdShow);
@@ -200,7 +207,56 @@ int main(int argc, char* argv[]) {
     return (int) msg.wParam;
 }
 
-HWND CreateMainView() {
+static HWND CreateToolbar(HWND hWndParent) {
+    RECT rcClient;  // dimensions of client area 
+
+    // Get the dimensions of the parent window's client area, and create 
+    // the tree-view control. 
+    GetClientRect(hWndParent, &rcClient); 
+
+    HWND hWndToolbar = CreateWindowEx(0,
+                            TOOLBARCLASSNAME,
+                            NULL,
+                            WS_VISIBLE | WS_CHILD,
+                            0, 0, rcClient.right, TB_BUTTON_WIDTH,
+                            hWndParent, 
+                            (HMENU)IDC_MAIN_TOOLBAR,
+                            g_hInst, 
+                            NULL); 
+
+    // Store default Tree View WndProc in global variable
+    // and set custom WndProc.
+    //g_DefTreeWndProc = (WNDPROC)SetWindowLongPtr(hWndToolbar, GWLP_WNDPROC,
+    //    (LONG)MidletTreeWndProc);
+
+    if (!hWndToolbar) {
+        MessageBox(NULL, _T("Can't create a toolbar!"), g_szTitle, NULL);
+        return NULL;
+    }
+
+    TBADDBITMAP toolbarImg;
+
+    toolbarImg.hInst = g_hInst;
+    toolbarImg.nID = IDB_MAIN_TOOLBAR_BUTTONS;
+
+    SendMessage(hWndToolbar, TB_ADDBITMAP, 1,
+                (LPARAM)(LPTBADDBITMAP)&toolbarImg);
+
+    TBBUTTON pButtons[2];
+
+    pButtons[0].iBitmap = 0;
+    pButtons[0].idCommand = IDM_HELP_ABOUT;
+    pButtons[0].fsState = TBSTATE_ENABLED;
+    pButtons[0].fsStyle = TBSTYLE_BUTTON | TBSTYLE_AUTOSIZE;
+    pButtons[0].dwData = 0;
+    pButtons[0].iString = 0;
+
+    SendMessage(hWndToolbar, TB_ADDBUTTONS, 1, (LPARAM)(LPTBBUTTON)pButtons);
+
+    return hWndToolbar;
+}
+
+static HWND CreateMainView() {
     HWND hWnd;
     WNDCLASSEX wcex;
 
@@ -251,44 +307,40 @@ HWND CreateMainView() {
     return hWnd;
 }
 
-void InitJavacallAms() {
+static void InitJavacallAms() {
     javacall_result res = java_ams_suite_storage_init();
     if (res == JAVACALL_FAIL) {
         wprintf(_T("Init of suite storage fail!\n"));
     }
 }
 
-void CleanupJavacallAms() {
+static void CleanupJavacallAms() {
     javacall_result res = java_ams_suite_storage_cleanup();
     if (res == JAVACALL_FAIL) {
         wprintf(_T("Cleanup of suite storage fail!\n"));
     }
 }
 
-HWND CreateTreeView(HWND hwndParent) {
+static HWND CreateTreeView(HWND hWndParent) {
     RECT rcClient;  // dimensions of client area 
     HWND hwndTV;    // handle to tree-view control 
 
-    // Ensure that the common control DLL is loaded. 
-    InitCommonControls(); 
-
     // Get the dimensions of the parent window's client area, and create 
     // the tree-view control. 
-    GetClientRect(hwndParent, &rcClient); 
+    GetClientRect(hWndParent, &rcClient); 
     wprintf(_T("main window area w=%d, h=%d\n"), rcClient.right, rcClient.bottom);
 
     hwndTV = CreateWindowEx(0,
                             WC_TREEVIEW,
                             TEXT("Java Midlets"),
                             WS_VISIBLE | WS_CHILD | WS_BORDER | TVS_HASLINES |
-                                TVS_HASBUTTONS | TVS_LINESATROOT
-                                /* | WS_CAPTION*/,
+                                TVS_HASBUTTONS | TVS_LINESATROOT,
                             0, 
-                            0, 
+                            TB_BUTTON_WIDTH - 4,
                             rcClient.right,
                             rcClient.bottom,
-                            hwndParent, 
-                            IDC_TREEVIEW_MIDLETS + 1,
+                            hWndParent,
+                            (HMENU)IDC_TREEVIEW_MIDLETS,
                             g_hInst, 
                             NULL); 
 
@@ -570,7 +622,7 @@ void DrawBackground(HDC hdc, DWORD dwRop) {
         BITMAP bm;
         GetObject(g_hMidletTreeBgBmp, sizeof(bm), &bm);
  
-wprintf(_T(">>> bm.bmWidth = %d, bm.bmHeight = %d\n"), bm.bmWidth, bm.bmHeight);
+        //wprintf(_T(">>> bm.bmWidth = %d, bm.bmHeight = %d\n"), bm.bmWidth, bm.bmHeight);
         BitBlt(hdc, 0, 0, bm.bmWidth, bm.bmHeight, hdcMem, 0, 0, dwRop);
  
         SelectObject(hdcMem, hbmOld);  
