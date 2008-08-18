@@ -70,7 +70,7 @@ WMA_STATUS jsr120_send_sms(jchar msgType,
                               /* OUT */void **pContext)
 {
     javacall_result rtn = javacall_sms_send( 
-            (javacall_sms_encoding)msgType, //?
+            (javacall_sms_encoding)msgType,
             address,
             msgBuffer,
             (int)msgLen,
@@ -80,7 +80,13 @@ WMA_STATUS jsr120_send_sms(jchar msgType,
 
     (void)pContext;
 
-    return (rtn == JAVACALL_OK) ? WMA_OK : WMA_ERR ;
+    if (rtn == JAVACALL_OK) { 
+        return WMA_OK; 
+    } else if (rtn == JAVACALL_WOULD_BLOCK) {
+        return WMA_NET_WOULDBLOCK;
+    } else {
+        return WMA_ERR;
+    }
 }
 
 
