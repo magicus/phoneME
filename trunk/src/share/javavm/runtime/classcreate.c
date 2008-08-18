@@ -2891,7 +2891,9 @@ static const fullinfo_type tagMap[] = {
     (fullinfo_type)(-1), /* OBJECT is not translated by this table */
     (fullinfo_type)(-1)  /* UNINIT_OBJECT is not translated by this table */
 };
-#ifdef CVM_DEBUG
+
+/* These are no longer used, but may be useful for debugging */
+#if 0
 static const char* tagNames[] = {
     "ITEM_Bogus",
     "ITEM_Integer",
