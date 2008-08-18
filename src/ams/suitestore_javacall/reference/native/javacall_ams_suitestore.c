@@ -1260,7 +1260,7 @@ java_ams_suite_get_folder_info(javacall_folder_id folderId,
         }
     }
 
-    java_ams_suite_free_all_folders_info(pAllFoldersInfo);
+    java_ams_suite_free_all_folders_info(pAllFoldersInfo, foldersNum);
 
     return res;
 }
@@ -1300,21 +1300,22 @@ java_ams_suite_free_folder_info(javacall_ams_folder_info* pFolderInfo) {
  *
  * @return <tt>JAVACALL_OK</tt> on success,
  *         <tt>JAVACALL_OUT_OF_MEMORY</tt> if out of memory,
- *         <tt>JAVACALL_IO_ERROR</tt> if an IO error
+ *         <tt>JAVACALL_IO_ERROR</tt> if an IO error,
+ *         <tt>JAVACALL_FAIL</tt> if other error
  */
 javacall_result
 java_ams_suite_get_suites_in_folder(javacall_folder_id folderId,
                                     javacall_suite_id** ppSuiteIds,
                                     int* pNumberOfSuites) {
     if (ppSuiteIds == NULL || pNumberOfSuites == NULL) {
-        return NULL; 
+        return JAVACALL_FAIL; 
     }
 
     if (folderId == JAVACALL_ROOT_FOLDER_ID) {
         return java_ams_suite_get_suite_ids(ppSuiteIds,
                                             pNumberOfSuites);
     } else {
-        MidlesSuiteData *pMidpSuiteData, *pSaveSuiteData;
+        MidletSuiteData *pMidpSuiteData, *pSaveSuiteData;
         int i, n;
 
 #if ENABLE_AMS_FOLDERS
@@ -1576,7 +1577,6 @@ static javacall_result midp_error2javacall(MIDPError midpErr) {
  */
 MIDPError midp_javacall_str2pcsl_str(javacall_const_utf16_string pSrcStr,
                                      pcsl_string* pDstStr) {
-    *pDstStr = NULL;
     return ALL_OK;
 }
 
