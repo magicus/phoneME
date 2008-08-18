@@ -64,7 +64,7 @@ typedef enum {
     JAVACALL_AMS_DOMAIN_UNTRUSTED = 0,
     /** Manufacturer domain, the suite is a trusted suite */
     JAVACALL_AMS_DOMAIN_MANUFACTURER = 1,
-    /** Manufacturer domain, the suite is a trusted suite */
+    /** Operator domain, the suite is a trusted suite */
     JAVACALL_AMS_DOMAIN_OPERATOR = 2,
     /** Third party domain, the suite is a trusted suite */
     JAVACALL_AMS_DOMAIN_THIRDPARTY = 3
@@ -970,16 +970,16 @@ java_ams_suite_free_all_folders_info(javacall_ams_folder_info* pFoldersInfo,
  * allocated by the callee. The caller is responsible for freeing it using
  * java_ams_suite_free_folder_info().
  *
- * @param folderId    [in]  unique ID of the folder
- * @param pFolderInfo [out] on exit will hold a pointer to a structure
- *                          describing the given folder
+ * @param folderId     [in]  unique ID of the folder
+ * @param ppFolderInfo [out] on exit will hold a pointer to a structure
+ *                           describing the given folder
  *
  * @return <tt>JAVACALL_OK</tt> on success,
  *         <tt>JAVACALL_FAIL</tt> otherwise
  */
 javacall_result
 java_ams_suite_get_folder_info(javacall_folder_id folderId,
-                               javacall_ams_folder_info* pFolderInfo);
+                               javacall_ams_folder_info** ppFolderInfo);
 
 /**
  * App Manager invokes this function to free the given structure holding
