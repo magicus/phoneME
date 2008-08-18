@@ -52,12 +52,6 @@ static TCHAR g_szTitle[] = _T("NAMS Example");
 int g_iWidth = 246, g_iHeight = 345;
 int g_iChildAreaWidth = 240, g_iChildAreaHeight = 320;
 
-// The type of a tree item
-static WORD TVI_TYPE_NONE   = 0;
-static WORD TVI_TYPE_SUITE  = 1;
-static WORD TVI_TYPE_MIDLET = 2;
-static WORD TVI_TYPE_FOLDER = 3;
-
 HINSTANCE g_hInst = NULL;
 HWND g_hMainWindow = NULL;
 HMENU g_hMidletPopupMenu = NULL;
@@ -65,6 +59,25 @@ WNDPROC g_DefTreeWndProc = NULL;
 HBITMAP g_hMidletTreeBgBmp = NULL;
 
 javacall_app_id g_jAppId = 1;
+
+
+// The type of a tree item
+static int TVI_TYPE_UNKNOWN = 0;
+static int TVI_TYPE_SUITE   = 1;
+static int TVI_TYPE_MIDLET  = 2;
+static int TVI_TYPE_FOLDER  = 3;
+
+typedef struct _TVI_INFO { 
+    int type; // type of the node, valid values are TVI_TYPE_SUITE, 
+              // TVI_TYPE_MIDLET, TVI_TYPE_FOLDER
+    javacall_const_utf16_string className; // MIDlet class name if item type is
+                                           // TVI_TYPE_MIDLET
+    javacall_suite_id suiteId; // id of the suite, makes sense if item type is
+                               // TVI_TYPE_MIDLET and TVI_TYPE_SUITE
+    javacall_app_id appId; // external application id if item type is
+                           // TVI_TYPE_MIDLET and the MIDlet is running
+} TVI_INFO;
+
 
 // Forward declarations of functions included in this code module:
 
@@ -75,15 +88,18 @@ static void RefreshScreen(int x1, int y1, int x2, int y2);
 static void DrawBuffer(HDC hdc);
 
 HWND CreateMainView();
-HWND CreateTreeView(HWND hWndParent);
+static HWND CreateTreeView(HWND hWndParent);
 HWND CreateToolbar(HWND hWndParent);
 BOOL InitTreeViewItems(HWND hwndTV);
-HTREEITEM AddItemToTree(HWND hwndTV, LPTSTR lpszItem, int nLevel, LPARAM lParam);
+HTREEITEM AddItemToTree(HWND hwndTV, LPTSTR lpszItem, int nLevel, TVI_INFO* pInfo);
 
-void InitJavacallAms();
-void CleanupJavacallAms();
+static void InitAms();
+static void CleanupAms();
+static void CleanupWindows();
+static void CleanupTreeView(HWND hwndTV);
 
-LPTSTR JavacallUtf16ToTstr(javacall_utf16_string str);
+LPTSTR JavacallUtf16ToTstr(javacall_const_utf16_string str);
+javacall_utf16_string CloneJavacallUtf16(javacall_const_utf16_string str);
 
 
 extern "C" {
@@ -145,13 +161,11 @@ int main(int argc, char* argv[]) {
     // Ensure that the common control DLL is loaded.
     InitCommonControls();
 
-    HWND hWnd = CreateMainView();
-    g_hMainWindow = hWnd;
+    g_hMainWindow = CreateMainView();
 
     // Start JVM in a separate thread
     DWORD dwThreadId; 
-    HANDLE hThread; 
-    hThread = CreateThread( 
+    HANDLE hThread = CreateThread( 
         NULL,                    // default security attributes 
         0,                       // use default stack size  
         javaThread,              // thread function 
@@ -160,7 +174,7 @@ int main(int argc, char* argv[]) {
         &dwThreadId);            // returns the thread identifier
 
     if (!hThread) {
-        MessageBox(hWnd,
+        MessageBox(g_hMainWindow,
             _T("Can't start Java Thread!"),
             g_szTitle,
             NULL);
@@ -173,23 +187,23 @@ int main(int argc, char* argv[]) {
     Sleep(1000);
     
     // Initialize Java AMS
-    InitJavacallAms();
+    InitAms();
 
     // Create and init Java MIDlets tree view
-    HWND hwndTV = CreateTreeView(hWnd);
+    HWND hwndTV = CreateTreeView(g_hMainWindow);
     if (hwndTV == NULL) {
         return -1;
     }
     InitTreeViewItems(hwndTV);
 
-    HWND hWndToolbar = CreateToolbar(hWnd);
+    HWND hWndToolbar = CreateToolbar(g_hMainWindow);
     if (hWndToolbar == NULL) {
         return -1;
     }
 
     // Show the main window 
-    ShowWindow(hWnd, nCmdShow);
-    UpdateWindow(hWnd);
+    ShowWindow(g_hMainWindow, nCmdShow);
+    UpdateWindow(g_hMainWindow);
 
     // Main message loop
     MSG msg;
@@ -198,11 +212,13 @@ int main(int argc, char* argv[]) {
         DispatchMessage(&msg);
     }
 
-    // Clean up resources allocated for MIDlet popup menu 
-    DestroyMenu(g_hMidletPopupMenu);
+
+    CleanupTreeView(hwndTV);
 
     // Finalize Java AMS
-    CleanupJavacallAms();
+    CleanupAms();
+
+    CleanupWindows();
 
     return (int) msg.wParam;
 }
@@ -307,18 +323,35 @@ static HWND CreateMainView() {
     return hWnd;
 }
 
-static void InitJavacallAms() {
+static void InitAms() {
     javacall_result res = java_ams_suite_storage_init();
     if (res == JAVACALL_FAIL) {
         wprintf(_T("Init of suite storage fail!\n"));
     }
 }
 
-static void CleanupJavacallAms() {
+static void CleanupAms() {
     javacall_result res = java_ams_suite_storage_cleanup();
     if (res == JAVACALL_FAIL) {
         wprintf(_T("Cleanup of suite storage fail!\n"));
     }
+}
+
+static void CleanupWindows() {
+    // Clean up resources allocated for MIDlet popup menu 
+    DestroyMenu(g_hMidletPopupMenu);
+
+    // Unregister main window class
+    UnregisterClass(g_szWindowClass, g_hInst);
+}
+
+static void CleanupTreeView(HWND hwndTV) {
+    // IMPL_NOTE: memory allocated by the application is freed in MainWndProc
+    // by handling WM_NOTIFY message
+    TreeView_DeleteAllItems(hwndTV);
+
+    // Return back window procedure for tree view
+    SetWindowLongPtr(hwndTV, GWLP_WNDPROC, (LONG)g_DefTreeWndProc);
 }
 
 static HWND CreateTreeView(HWND hWndParent) {
@@ -339,7 +372,7 @@ static HWND CreateTreeView(HWND hWndParent) {
                             TB_BUTTON_WIDTH - 4,
                             rcClient.right,
                             rcClient.bottom,
-                            hWndParent,
+                            hWndParent, 
                             (HMENU)IDC_TREEVIEW_MIDLETS,
                             g_hInst, 
                             NULL); 
@@ -388,12 +421,13 @@ BOOL InitTreeViewItems(HWND hwndTV)  {
     int suiteNum;
     javacall_result res = JAVACALL_FAIL;
     javacall_ams_suite_info* pSuiteInfo;
+    const size_t ciTviInfoSize = sizeof(TVI_INFO);
 
 
-    // Add all folders to the tree view
+    // TODO: Add all folders to the tree view
    
 
-    // Iterrate over all suites and add them to the tree view
+    /* Iterrate over all suites and add them to the tree view */
     
     res = java_ams_suite_get_suite_ids(&pSuiteIds, &suiteNum);
 
@@ -405,12 +439,11 @@ BOOL InitTreeViewItems(HWND hwndTV)  {
     wprintf(_T("Total suites found: %d\n"), suiteNum);
 
 #if 1
-
     for (int i = 0; i < suiteNum; i++) {
         res = java_ams_suite_get_info(pSuiteIds[i], &pSuiteInfo);
         if (res == JAVACALL_OK) {
           if (pSuiteInfo != NULL) {
-              LPARAM lInfo;
+              TVI_INFO* pInfo;
               javacall_utf16_string jsLabel;
 
               // TODO: add support for disabled suites
@@ -426,8 +459,11 @@ BOOL InitTreeViewItems(HWND hwndTV)  {
               pszSuiteName = pszSuiteName ? pszSuiteName : _T("Midlet Suite");
               wprintf(_T("Suite label=%s\n"), pszSuiteName);
 
-              lInfo = MAKELPARAM(TVI_TYPE_SUITE, (WORD) pSuiteIds[i]);
-              AddItemToTree(hwndTV, pszSuiteName, 1, lInfo);
+              pInfo = (TVI_INFO*)javacall_malloc(ciTviInfoSize);
+              memset(pInfo, 0, ciTviInfoSize);
+              pInfo->type = TVI_TYPE_SUITE;
+              pInfo->suiteId = pSuiteIds[i];
+              AddItemToTree(hwndTV, pszSuiteName, 1, pInfo);
 
               javacall_ams_midlet_info* pMidletsInfo;
               javacall_int32 midletNum;
@@ -447,10 +483,14 @@ BOOL InitTreeViewItems(HWND hwndTV)  {
                           }
 
        	                  LPTSTR pszMIDletName = JavacallUtf16ToTstr(jsLabel);
-                          wprintf(_T("MIDlet label=%s\n"), pszMIDletName);
+                          wprintf(_T("MIDlet label=%s, className=\n"), pszMIDletName, pMidletsInfo[j].className);
 
-                          lInfo = MAKELPARAM(TVI_TYPE_MIDLET, (WORD) j);
-                          AddItemToTree(hwndTV, pszMIDletName, 2, lInfo);
+                          pInfo = (TVI_INFO*)javacall_malloc(ciTviInfoSize);
+                          memset(pInfo, 0, ciTviInfoSize);
+                          pInfo->type = TVI_TYPE_MIDLET;
+                          pInfo->suiteId = pSuiteIds[i];
+                          pInfo->className = CloneJavacallUtf16(pMidletsInfo[j].className);
+                          AddItemToTree(hwndTV, pszMIDletName, 2, pInfo);
                       }
 //                  }
                       if (midletNum > 0) {
@@ -471,7 +511,6 @@ BOOL InitTreeViewItems(HWND hwndTV)  {
     if (suiteNum > 0) {
         java_ams_suite_free_suite_ids(pSuiteIds, suiteNum);
     }
-
 #else
     // Items for testing
     AddItemToTree(hwndTV, _T("MIDlet 1"), 1, 0);
@@ -481,30 +520,43 @@ BOOL InitTreeViewItems(HWND hwndTV)  {
     return TRUE;
 }
 
-LPTSTR JavacallUtf16ToTstr(javacall_utf16_string str) {
+LPTSTR JavacallUtf16ToTstr(javacall_const_utf16_string str) {
     LPTSTR result = NULL;
 #ifdef UNICODE 
     javacall_int32 len;
     javacall_result res = javautil_unicode_utf16_ulength(str, &len);
     if (res == JAVACALL_OK) {
-        const buf_len = (len + 1) * sizeof(WCHAR);
-        result = (LPTSTR)javacall_malloc(buf_len);
-        memcpy(result, str, buf_len);
+        const size_t bufLen = (len + 1) * sizeof(WCHAR);
+        result = (LPTSTR)javacall_malloc(bufLen);
+        memcpy(result, str, bufLen);
     }
 #else
 # error "Only Unicode platforms are supported for now"
 #endif
-   return result;
+    return result;
+}
+
+javacall_utf16_string CloneJavacallUtf16(javacall_const_utf16_string str) {
+    javacall_utf16_string result = NULL;
+    javacall_int32 len;
+    javacall_result res = javautil_unicode_utf16_ulength(str, &len);
+    if (res == JAVACALL_OK) {
+        const size_t bufLen = (len + 1) * sizeof(javacall_utf16);
+        result = (javacall_utf16_string)javacall_malloc(bufLen);
+        memcpy(result, str, bufLen);
+    }
+    return result;
 }
 
 
-HTREEITEM AddItemToTree(HWND hwndTV, LPTSTR lpszItem, int nLevel, LPARAM lParam) {
+
+HTREEITEM AddItemToTree(HWND hwndTV, LPTSTR lpszItem, int nLevel, TVI_INFO* pInfo) {
     TVITEM tvi; 
     TVINSERTSTRUCT tvins; 
     static HTREEITEM hPrev = (HTREEITEM)TVI_FIRST; 
     static HTREEITEM hPrevRootItem = NULL; 
     static HTREEITEM hPrevLev2Item = NULL; 
-    HTREEITEM hti; 
+    HTREEITEM hti;
 
     if (lpszItem == NULL) {
         return NULL;
@@ -523,7 +575,7 @@ HTREEITEM AddItemToTree(HWND hwndTV, LPTSTR lpszItem, int nLevel, LPARAM lParam)
     tvi.iSelectedImage = g_nDocument; 
 */
 
-    tvi.lParam = lParam; 
+    tvi.lParam = (LPARAM)pInfo;
     tvins.item = tvi; 
     tvins.hInsertAfter = hPrev; 
 
@@ -535,11 +587,15 @@ HTREEITEM AddItemToTree(HWND hwndTV, LPTSTR lpszItem, int nLevel, LPARAM lParam)
     else 
         tvins.hParent = hPrevLev2Item; 
 
-    // Add the item to the tree-view control. 
+    // Add the item to the tree-view control.
+/*
     hPrev = (HTREEITEM)SendMessage(hwndTV, 
-                                   TVM_INSERTITEM, 
+                                   TVM_INSERTITEM,
                                    0,
-                                   (LPARAM)(LPTVINSERTSTRUCT)&tvins); 
+                                   (LPARAM)(LPTVINSERTSTRUCT)&tvins);
+*/
+    hPrev = TreeView_InsertItem(hwndTV, &tvins);
+
 
     // Save the handle to the item. 
     if (nLevel == 1) 
@@ -603,6 +659,22 @@ MainWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
         EndPaint(hWnd, &ps);
         break;
 
+    case WM_NOTIFY:
+    {
+        LPNMHDR pHdr = (LPNMHDR)lParam;
+        switch (pHdr->code)
+        {
+            case TVN_DELETEITEM:
+                if(pHdr->idFrom == IDC_TREEVIEW_MIDLETS) {
+                    TVITEM tvi = ((LPNMTREEVIEW)lParam)->itemOld;
+                    javacall_free(tvi.pszText);
+                    javacall_free((void*)tvi.lParam);
+                }
+            break;
+        }
+        break;
+    }
+
     case WM_DESTROY:
         PostQuitMessage(0);
         break;
@@ -646,7 +718,7 @@ LRESULT CALLBACK
 MidletTreeWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
     PAINTSTRUCT ps;
     HDC hdc;
-    POINT pnt;
+    javacall_result res;
 
     switch (message) {
 
@@ -659,20 +731,68 @@ MidletTreeWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
 
 //        wprintf (_T("Click position (%d, %d)\n"), tvH.pt.x, tvH.pt.y);
 
-        HTREEITEM item = TreeView_HitTest(hWnd, &tvH);
-        if ((item != NULL) && ((tvH.flags & TVHT_ONITEM) != 0))
+        HTREEITEM hItem = TreeView_HitTest(hWnd, &tvH);
+        if (hItem && (tvH.flags & TVHT_ONITEM))
         {
 //            wprintf (_T("Hit flags hex=%x\n"), tvH.flags);
 
+            // Mark the item as selected
+            TreeView_SelectItem(hWnd, hItem);
+
+            // Convert the coordinates to global ones
             ClientToScreen(hWnd, (LPPOINT) &tvH.pt);
-            // Get the first shortcut menu in the menu template.
-            // This is the menu that TrackPopupMenu displays
-            HMENU hMenu = GetSubMenu(g_hMidletPopupMenu, 0);
-            if (hMenu) {
-                TrackPopupMenu(hMenu, 0, tvH.pt.x, tvH.pt.y, 0, hWnd, NULL);
-            } else {
-                MessageBox(NULL, _T("Can't show context menu!"), g_szTitle,
-                    MB_OK);
+
+            TVITEM tvi;
+            tvi.hItem = hItem;
+            tvi.mask = TVIF_HANDLE | TVIF_PARAM;
+            if (TreeView_GetItem(hWnd, &tvi)) {
+                if (((TVI_INFO*)tvi.lParam)->type == TVI_TYPE_SUITE) {
+                    // Get the first shortcut menu in the menu template.
+                    // This is the menu that TrackPopupMenu displays
+                    HMENU hMenu = GetSubMenu(g_hMidletPopupMenu, 0);
+                    if (hMenu) {
+                        TrackPopupMenu(hMenu, 0, tvH.pt.x, tvH.pt.y, 0, hWnd,
+                            NULL);
+                    } else {
+                        MessageBox(NULL, _T("Can't show context menu!"),
+                            g_szTitle, MB_OK);
+                    }
+                }
+            }
+        }
+
+        break;
+    }
+
+    case WM_LBUTTONDBLCLK: 
+    {
+        HTREEITEM hItem = TreeView_GetSelection(hWnd);
+        if (hItem) {
+            TVITEM tvi;
+            tvi.hItem = hItem;
+            tvi.mask = TVIF_HANDLE | TVIF_PARAM;
+            if (TreeView_GetItem(hWnd, &tvi)) {
+                TVI_INFO* pInfo = (TVI_INFO*)tvi.lParam;
+                if (pInfo->type == TVI_TYPE_MIDLET) {
+                    wprintf(_T("Launching MIDlet (suiteId=%d, class=%S, appId=%d)...\n"),
+                        pInfo->suiteId, pInfo->className, g_jAppId);
+
+                    res = java_ams_midlet_start(pInfo->suiteId, g_jAppId,
+                        pInfo->className, NULL);
+
+                    wprintf(_T("java_ams_midlet_start res: %d\n"), res);
+
+                    if (res == JAVACALL_OK) {
+                        // Update application ID
+                        pInfo->appId = g_jAppId;
+                        g_jAppId++;
+
+                        // Hide MIDlet tree view window to show
+                        // the MIDlet's output in the main window
+                        ShowWindow(hWnd, SW_HIDE);
+                        UpdateWindow(hWnd);
+                     }
+                }
             }
         }
 
@@ -684,66 +804,7 @@ MidletTreeWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
         switch(LOWORD(wParam))
         {
             case IDM_MIDLET_START_STOP:
-            {
-                HTREEITEM hItem   = TreeView_GetSelection(hWnd);
-                HTREEITEM hParent = TreeView_GetParent(hWnd, hItem);
-
-                if (hItem != NULL && hParent != NULL) {
-                   TVITEM tvi;
-                   TVITEM tvp;
-
-                   if (TreeView_GetItem(hWnd, &tvi) &&
-                           TreeView_GetItem(hWnd, &tvp)) {
-
-                       WORD wItemType   = LOWORD(tvi.lParam);
-                       WORD wParentType = LOWORD(tvp.lParam);
-
-                       if (wItemType == TVI_TYPE_MIDLET &&
-                               wParentType == TVI_TYPE_SUITE) {
-
-                           wprintf(_T("Launching MIDlet...\n"));
-
-                           WORD wMidletId = HIWORD(tvi.lParam);
-                           WORD wSuiteId  = HIWORD(tvp.lParam);
-
-                           javacall_result res;
-                           javacall_ams_midlet_info* pMidletsInfo;
-                           javacall_int32 midletNum;
-
-                           res = java_ams_suite_get_midlets_info(wSuiteId,
-                               &pMidletsInfo, &midletNum);
-                           if (res == JAVACALL_OK && midletNum > 0) {
-                               if (wMidletId >= 0 && wMidletId < midletNum) {
-
-/*
-                                   res = java_ams_midlet_start(-1, 1,
-                                       L"com.sun.midp.installer.DiscoveryApp",
-                                       NULL);
-*/
-                                   res = java_ams_midlet_start(wSuiteId,
-                                       g_jAppId++,
-                                       pMidletsInfo[wMidletId].className,
-                                       NULL);
-
-                                   wprintf(
-                                       _T("java_ams_midlet_start res: %d\n"),
-                                       res);
-
-                                   if (res == JAVACALL_OK) {
-                                       // Hide MIDlet tree view window to show
-                                       // the MIDlet's output in the main window
-                                       ShowWindow(hWnd, SW_HIDE);
-                                       UpdateWindow(hWnd);
-                                   }
-                               }
-                               java_ams_suite_free_midlets_info(pMidletsInfo,
-                                   midletNum);
-                           }
-                       }
-                   }
-                }
                 break;
-            }
 
             case IDM_MIDLET_INFO:
                 wprintf(_T("Show MIDlet info...\n"));
