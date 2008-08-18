@@ -231,7 +231,7 @@ static HWND CreateToolbar(HWND hWndParent) {
     // the tree-view control. 
     GetClientRect(hWndParent, &rcClient); 
 
-    HWND hWndToolbar = CreateWindowEx(0,
+    /*HWND hWndToolbar = CreateWindowEx(0,
                             TOOLBARCLASSNAME,
                             NULL,
                             WS_VISIBLE | WS_CHILD,
@@ -239,25 +239,47 @@ static HWND CreateToolbar(HWND hWndParent) {
                             hWndParent, 
                             (HMENU)IDC_MAIN_TOOLBAR,
                             g_hInst, 
-                            NULL); 
+                            NULL);*/
 
-    // Store default Tree View WndProc in global variable
-    // and set custom WndProc.
-    //g_DefTreeWndProc = (WNDPROC)SetWindowLongPtr(hWndToolbar, GWLP_WNDPROC,
-    //    (LONG)MidletTreeWndProc);
+    TBBUTTON tbButtons [ ] = {
+        STD_FILENEW, IDM_HELP_ABOUT, TBSTATE_ENABLED, BTNS_BUTTON, 
+#if defined(_WIN32) | defined(_WIN64)
+            {0},
+#endif
+        0L, 0
+    };
+
+
+    HWND hWndToolbar = CreateToolbarEx(hWndParent,
+        WS_CHILD | WS_BORDER | WS_VISIBLE | TBSTYLE_TOOLTIPS, 
+        IDC_MAIN_TOOLBAR, 0, HINST_COMMCTRL, IDB_STD_SMALL_COLOR,
+        //g_hInst, IDB_MAIN_TOOLBAR_BUTTONS,
+        tbButtons, 1, 0, 0, 100, 30,
+        sizeof (TBBUTTON));
 
     if (!hWndToolbar) {
         MessageBox(NULL, _T("Can't create a toolbar!"), g_szTitle, NULL);
         return NULL;
     }
 
+    // Send the TB_BUTTONSTRUCTSIZE message, which is required for 
+    // backward compatibility. 
+    SendMessage(hWndToolbar, TB_BUTTONSTRUCTSIZE, (WPARAM) sizeof(TBBUTTON), 0);
+
+    //SendMessage(hWndToolbar, TB_SETBITMAPSIZE, 0,
+    //            (LPARAM)MAKELONG(TB_BUTTON_WIDTH, TB_BUTTON_WIDTH));
+
+/*
     TBADDBITMAP toolbarImg;
 
     toolbarImg.hInst = g_hInst;
     toolbarImg.nID = IDB_MAIN_TOOLBAR_BUTTONS;
 
-    SendMessage(hWndToolbar, TB_ADDBITMAP, 1,
-                (LPARAM)(LPTBADDBITMAP)&toolbarImg);
+    BOOL ok = SendMessage(hWndToolbar, TB_ADDBITMAP, 1,
+                          (LPARAM)(LPTBADDBITMAP)&toolbarImg);
+    if (!ok) {
+        wprintf(_T("Can't add a bitmap! Error = %d\n"), GetLastError());
+    }
 
     TBBUTTON pButtons[2];
 
@@ -266,9 +288,12 @@ static HWND CreateToolbar(HWND hWndParent) {
     pButtons[0].fsState = TBSTATE_ENABLED;
     pButtons[0].fsStyle = TBSTYLE_BUTTON | TBSTYLE_AUTOSIZE;
     pButtons[0].dwData = 0;
-    pButtons[0].iString = 0;
+    pButtons[0].iString = -1;
 
-    SendMessage(hWndToolbar, TB_ADDBUTTONS, 1, (LPARAM)(LPTBBUTTON)pButtons);
+//    ok = SendMessage(hWndToolbar, TB_ADDBUTTONS, 1, (LPARAM)(LPTBBUTTON)pButtons);
+    if (!ok) {
+        wprintf(_T("Can't add buttons! Error = %d\n"), GetLastError());
+    }*/
 
     return hWndToolbar;
 }
@@ -497,7 +522,9 @@ BOOL InitTreeViewItems(HWND hwndTV)  {
                           }
 
        	                  LPTSTR pszMIDletName = JavacallUtf16ToTstr(jsLabel);
-                          wprintf(_T("MIDlet label=%s, className=\n"), pszMIDletName, pMidletsInfo[j].className);
+                          wprintf(_T("MIDlet label='%s', className='%s'\n"),
+                              pszMIDletName,
+                              JavacallUtf16ToTstr(pMidletsInfo[j].className));
 
                           pInfo = (TVI_INFO*)javacall_malloc(ciTviInfoSize);
                           memset(pInfo, 0, ciTviInfoSize);

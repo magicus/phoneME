@@ -1635,7 +1635,7 @@ MIDPError parse_midlet_attr(const pcsl_string* pMIDletAttrValue,
                             javacall_utf16_string* pClassName) {
     MIDPError status; 
     pcsl_string_status err;
-    pcsl_string fieldValue;
+    pcsl_string fieldValue, tmpFieldValue;
     jchar comma = 0x002c; /* ',' */
     jint commaIdx, startIdx = 0;
     jint attrValueLen = pcsl_string_length(pMIDletAttrValue);
@@ -1652,7 +1652,14 @@ MIDPError parse_midlet_attr(const pcsl_string* pMIDletAttrValue,
         }
 
         err = pcsl_string_substring(pMIDletAttrValue, startIdx, commaIdx,
-                                    &fieldValue);
+                                    &tmpFieldValue);
+        if (err != PCSL_STRING_OK) {
+            /* ignore error: can't do anything meaningful */
+            break;                                    
+        }
+
+        err = pcsl_string_trim(&tmpFieldValue, &fieldValue);
+        pcsl_string_free(&tmpFieldValue);
         if (err != PCSL_STRING_OK) {
             /* ignore error: can't do anything meaningful */
             break;                                    
@@ -1670,7 +1677,7 @@ MIDPError parse_midlet_attr(const pcsl_string* pMIDletAttrValue,
             break;
         }
 
-        startIdx = commaIdx;
+        startIdx = commaIdx + 1;
     }
 
     return ALL_OK;
