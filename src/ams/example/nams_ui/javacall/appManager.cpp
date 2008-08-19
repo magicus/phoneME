@@ -54,6 +54,7 @@ int g_iChildAreaWidth = 240, g_iChildAreaHeight = 320;
 
 HINSTANCE g_hInst = NULL;
 HWND g_hMainWindow = NULL;
+HWND g_hMidletTreeView = NULL;
 HMENU g_hMidletPopupMenu = NULL;
 HMENU g_hSuitePopupMenu = NULL;
 WNDPROC g_DefTreeWndProc = NULL;
@@ -189,11 +190,11 @@ int main(int argc, char* argv[]) {
     InitAms();
 
     // Create and init Java MIDlets tree view
-    HWND hwndTV = CreateTreeView(g_hMainWindow);
-    if (hwndTV == NULL) {
+    g_hMidletTreeView = CreateTreeView(g_hMainWindow);
+    if (g_hMidletTreeView == NULL) {
         return -1;
     }
-    InitTreeViewItems(hwndTV);
+    InitTreeViewItems(g_hMidletTreeView);
 
     HWND hWndToolbar = CreateToolbar(g_hMainWindow);
     if (hWndToolbar == NULL) {
@@ -211,7 +212,7 @@ int main(int argc, char* argv[]) {
         DispatchMessage(&msg);
     }
 
-    CleanupTreeView(hwndTV);
+    CleanupTreeView(g_hMidletTreeView);
 
     // Finalize Java AMS
     CleanupAms();
@@ -673,6 +674,8 @@ MainWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
     case WM_COMMAND: {
         switch(LOWORD(wParam)) {
             case IDM_MIDLET_START_STOP: {
+                // Deligate message processing to MIDlet tree view
+                PostMessage(g_hMidletTreeView, message, wParam, lParam);
                 break;
             }
             case IDM_SUITE_EXIT: {
@@ -763,6 +766,46 @@ void DrawItem() {
 */
 
 /**
+ * Helper function.
+ */
+BOOL StartMidlet(HWND hTreeWnd) {
+    javacall_result res;
+
+    HTREEITEM hItem = TreeView_GetSelection(hTreeWnd);
+    if (hItem) {
+        TVITEM tvi;
+        tvi.hItem = hItem;
+        tvi.mask = TVIF_HANDLE | TVIF_PARAM;
+        if (TreeView_GetItem(hTreeWnd, &tvi)) {
+            TVI_INFO* pInfo = (TVI_INFO*)tvi.lParam;
+            if (pInfo->type == TVI_TYPE_MIDLET) {
+                wprintf(_T("Launching MIDlet (suiteId=%d, class=%S, appId=%d)...\n"),
+                    pInfo->suiteId, pInfo->className, g_jAppId);
+
+                res = java_ams_midlet_start(pInfo->suiteId, g_jAppId,
+                    pInfo->className, NULL);
+
+                wprintf(_T("java_ams_midlet_start res: %d\n"), res);
+
+                if (res == JAVACALL_OK) {
+                    // Update application ID
+                    pInfo->appId = g_jAppId;
+                    g_jAppId++;
+
+                    // Hide MIDlet tree view window to show
+                    // the MIDlet's output in the main window
+                    ShowWindow(hTreeWnd, SW_HIDE);
+
+                    return TRUE;
+                    }
+            }
+        }
+    }
+
+    return FALSE;
+}
+
+/**
  *  Processes messages for the MIDlet tree window.
  *
  */
@@ -819,34 +862,7 @@ MidletTreeWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
 
     case WM_LBUTTONDBLCLK: 
     {
-        HTREEITEM hItem = TreeView_GetSelection(hWnd);
-        if (hItem) {
-            TVITEM tvi;
-            tvi.hItem = hItem;
-            tvi.mask = TVIF_HANDLE | TVIF_PARAM;
-            if (TreeView_GetItem(hWnd, &tvi)) {
-                TVI_INFO* pInfo = (TVI_INFO*)tvi.lParam;
-                if (pInfo->type == TVI_TYPE_MIDLET) {
-                    wprintf(_T("Launching MIDlet (suiteId=%d, class=%S, appId=%d)...\n"),
-                        pInfo->suiteId, pInfo->className, g_jAppId);
-
-                    res = java_ams_midlet_start(pInfo->suiteId, g_jAppId,
-                        pInfo->className, NULL);
-
-                    wprintf(_T("java_ams_midlet_start res: %d\n"), res);
-
-                    if (res == JAVACALL_OK) {
-                        // Update application ID
-                        pInfo->appId = g_jAppId;
-                        g_jAppId++;
-
-                        // Hide MIDlet tree view window to show
-                        // the MIDlet's output in the main window
-                        ShowWindow(hWnd, SW_HIDE);
-                     }
-                }
-            }
-        }
+        StartMidlet(hWnd);
 
         break;
     }
@@ -856,7 +872,7 @@ MidletTreeWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
         switch(LOWORD(wParam))
         {
             case IDM_MIDLET_START_STOP:
-                wprintf(_T("Starting/stopping MIDlet...\n"));
+                StartMidlet(hWnd);
                 break;
 
             case IDM_MIDLET_INFO:
