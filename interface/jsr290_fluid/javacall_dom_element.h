@@ -576,6 +576,87 @@ javacall_dom_element_set_id_attribute_node(javacall_handle handle,
                                            javacall_bool is_id,
                                            /* OUT */ javacall_dom_exceptions* exception_code);
 
+/**
+ * Returns retrieves the number of child elements.
+ *
+ * 
+ * @param handle Pointer to the object representing this element.
+ * @param ret_value the current number of element nodes that are immediate children
+ * of this element. <code>0</code> if this element has no child elements.
+ * 
+ * @return JAVACALL_OK if all done successfuly,
+ *         JAVACALL_NOT_IMPLEMENTED when the stub was called
+ */
+javacall_result
+javacall_dom_element_get_child_element_count(javacall_handle handle,
+                                             /* OUT */ javacall_int32* ret_value);
+
+/**
+ * Returns retrieves the first child element.
+ * 
+ * 
+ * @param handle Pointer to the object representing this element.
+ * @param ret_value Pointer to the object representing 
+ *   the first child element node of this element.
+ * <code>NULL</code> if this element has no child elements.
+ * 
+ * @return JAVACALL_OK if all done successfuly,
+ *         JAVACALL_NOT_IMPLEMENTED when the stub was called
+ */
+javacall_result
+javacall_dom_element_get_first_element_child(javacall_handle handle,
+                                             /* OUT */ javacall_handle* ret_value);
+
+/**
+ * Returns retrieves the last child element.
+ *
+ * 
+ * @param handle Pointer to the object representing this element.
+ * @param ret_value Pointer to the object representing 
+ *   the last child element node of this element.
+ * <code>NULL</code> if this element has no child elements.
+ * 
+ * @return JAVACALL_OK if all done successfuly,
+ *         JAVACALL_NOT_IMPLEMENTED when the stub was called
+ */
+javacall_result
+javacall_dom_element_get_last_element_child(javacall_handle handle,
+                                            /* OUT */ javacall_handle* ret_value);
+
+/**
+ * Returns retrieves the next sibling element.
+ * 
+ * 
+ * @param handle Pointer to the object representing this element.
+ * @param ret_value Pointer to the object representing 
+ *   the next sibling element node of this element.
+ * <code>NULL</code> if this element has no element sibling nodes
+ * that come after this one in the document tree.
+ * 
+ * @return JAVACALL_OK if all done successfuly,
+ *         JAVACALL_NOT_IMPLEMENTED when the stub was called
+ */
+javacall_result
+javacall_dom_element_get_next_element_sibling(javacall_handle handle,
+                                              /* OUT */ javacall_handle* ret_value);
+
+/**
+ * Returns retrieves the previous sibling element.
+ * 
+ * 
+ * @param handle Pointer to the object representing this element.
+ * @param ret_value Pointer to the object representing 
+ *   the previous sibling element node of this element.
+ * <code>NULL</code> if this element has no element sibling nodes
+ * that come before this one in the document tree.
+ * 
+ * @return JAVACALL_OK if all done successfuly,
+ *         JAVACALL_NOT_IMPLEMENTED when the stub was called
+ */
+javacall_result
+javacall_dom_element_get_previous_element_sibling(javacall_handle handle,
+                                                  /* OUT */ javacall_handle* ret_value);
+
 /** 
  * Deletes object representing this element
  * 
