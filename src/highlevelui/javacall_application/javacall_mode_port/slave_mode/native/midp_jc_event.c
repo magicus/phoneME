@@ -27,7 +27,7 @@
 #include <midp_jc_event_defs.h>
 
 /**
- * A helper function to
+ * Sends midp event throught javacall event subsystem
  * @param event a pointer to midp_javacall_event_union
  * @return operation result
  */

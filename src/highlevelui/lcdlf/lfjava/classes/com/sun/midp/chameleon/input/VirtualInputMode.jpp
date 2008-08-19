@@ -46,8 +46,8 @@ public class VirtualInputMode extends KeyboardInputMode {
     public void beginInput(InputModeMediator mediator, String inputSubset, int constraints) {
 // #ifdef WINCE
         showNativeKeyboard();
-        super.beginInput(mediator, inputSubset, constraints);
 // #endif
+        super.beginInput(mediator, inputSubset, constraints);
     }
 
     public void endInput() throws IllegalStateException {

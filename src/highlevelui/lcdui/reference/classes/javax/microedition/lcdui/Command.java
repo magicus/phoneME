@@ -324,6 +324,8 @@ public class Command {
      */
     public static final int ITEM = 8;
 
+    public static final int VIRTUAL = 9;
+
     // protected members //
 
     /**
@@ -520,7 +522,7 @@ public class Command {
      */
     private final void initialize(int commandType, int inp_priority) {
 
-        if ((commandType < SCREEN) || (commandType > ITEM)) {
+        if ((commandType < SCREEN) || (commandType > VIRTUAL)) {
             throw new IllegalArgumentException();
         }
 

@@ -236,7 +236,9 @@ public abstract class Displayable {
 
         synchronized (Display.LCDUILock) {
             addCommandImpl(cmd);
-            displayableLF.lAddCommand(cmd, numCommands-1);
+            if (displayableLF!=null) {
+                displayableLF.lAddCommand(cmd, numCommands-1);
+            }
         }
     }
 

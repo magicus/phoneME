@@ -333,11 +333,9 @@ void javanotify_install_midlet(const char *httpUrl) {
  */
 void javanotify_install_content(const char * httpUrl,
                                 const javacall_utf16* descFilePath,
-                                int descFilePathLen,
+                                unsigned int descFilePathLen,
                                 javacall_bool isJadFile,
-                                                                javacall_bool isSilent) {
-    const static int SchemaLen = 16;
-    const static javacall_utf16 SchemaFile[] = {'f','i','l','e',':','/','/','/'};
+                                javacall_bool isSilent) {
 
     midp_jc_event_union e;
     int httpUrlLength, dscFileOffset;
