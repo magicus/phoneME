@@ -33,21 +33,37 @@
 
 class TempRegister {
 private:
-    Assembler::Register _reg;
+  const Assembler::Register _reg;
 public:
-    TempRegister() {
-      _reg = RegisterAllocator::allocate();
-    }
-    TempRegister(Assembler::Register reg)  : _reg(reg) {
-      RegisterAllocator::allocate(reg);
-    }
-    ~TempRegister() { RegisterAllocator::dereference(_reg); }
+  TempRegister( void ):
+    _reg( RegisterAllocator::allocate() ) {
+  }
+  TempRegister(const Assembler::Register reg): _reg(reg) {
+    RegisterAllocator::allocate(reg);
+  }
+ ~TempRegister( void ) {
+    RegisterAllocator::dereference(_reg);
+  }
 
-    operator Assembler::Register() { return _reg; }
-
-    // Simple accessor as a workaround for above UDC
-    Assembler::Register reg() { return _reg; }
+  operator Assembler::Register( void ) const { return _reg; }
+  Assembler::Register reg     ( void ) const { return _reg; }
 };
+
+#if ENABLE_ARM_VFP
+class TempVFPRegister {
+private:
+  const Assembler::Register _reg;
+public:
+  TempVFPRegister( void ):
+    _reg( RegisterAllocator::allocate_float_register() ) {
+  }
+ ~TempVFPRegister( void ) {
+    RegisterAllocator::dereference(_reg);
+  }
+  operator Assembler::Register( void ) const { return _reg; }
+  Assembler::Register reg     ( void ) const { return _reg; }
+};
+#endif
 
 class CompilerLiteralAccessor : public LiteralAccessor {
 public:
@@ -102,7 +118,7 @@ void CodeGenerator::load_task_mirror(Oop*klass, Value& statics_holder,
     if (GenerateROMImage) {
       // The marker cannot be treated as a constant value, as it would break
       // cross-compilation. Thus we load it from GP table.
-      TempRegister tmp;
+      const TempRegister tmp;
       get_task_class_init_marker(tmp);
       cmp(statics_holder.lo_register(), reg(tmp));
     } else {
@@ -142,7 +158,7 @@ void CodeGenerator::check_cib(Oop *klass JVM_TRAPS){
 
   // add to the klass oop to get the address of the appropriate
   // task mirror table entry
-  TempRegister task_mirror;
+  const TempRegister task_mirror;
   Value klass_value(T_OBJECT);
   klass_value.set_obj(klass);
   {
@@ -158,7 +174,7 @@ void CodeGenerator::check_cib(Oop *klass JVM_TRAPS){
     if (GenerateROMImage) {
       // The marker cannot be treated as a constant value, as it would break
       // cross-compilation. Thus we load it from GP table.
-      TempRegister tmp;
+      const TempRegister tmp;
       get_task_class_init_marker(tmp);
       cmp(task_mirror, reg(tmp));
     } else {
@@ -501,7 +517,7 @@ void CodeGenerator::array_check(Value& array, Value& index JVM_TRAPS) {
     ENABLE_ARM_V7 && UseHandlers &&
     is_inline_exception_allowed(ThrowExceptionStub::rte_array_index_out_of_bounds JVM_CHECK);
 
-  TempRegister length;
+  const TempRegister length;
   if (null_check) {
     if( !use_null_pointer_handler ) {
       cmp(array.lo_register(), zero);
@@ -518,7 +534,7 @@ void CodeGenerator::array_check(Value& array, Value& index JVM_TRAPS) {
 #if ENABLE_ARM_V7
   if (use_array_index_out_of_bounds_handler) {
     if (index.is_immediate()) {
-      TempRegister index_reg;
+      const TempRegister index_reg;
       mov(index_reg, index.as_int());
       chka(length, index_reg);
     } else {
@@ -561,7 +577,7 @@ void CodeGenerator::null_check(const Value& object JVM_TRAPS) {
       mov(r0, imm12(method()->max_locals()));
       ldr_using_gp(pc, "compiler_throw_NullPointerException");
     } else {
-      TempRegister temp_reg;
+      const TempRegister temp_reg;
       ldr(temp_reg, object.lo_register(), 0);
     }
   }
@@ -692,7 +708,7 @@ void CodeGenerator::method_entry(Method* method JVM_TRAPS) {
       UsingFastOops fast_oops;
       // Get the class mirror object.
 #if ENABLE_ISOLATES
-      TempRegister task_mirror(tmp0);
+      const TempRegister task_mirror(tmp0);
       InstanceClass::Fast klass = method->holder();
       Value klass_value(T_OBJECT);
       klass_value.set_obj(&klass);
@@ -962,9 +978,8 @@ void CodeGenerator::long_unary_do(Value& result, Value& op1,
   Register R2 =  result.msw_register();
 
   switch (op) {
-    case BytecodeClosure::una_neg:
-    {
-      TempRegister zero_reg;
+    case BytecodeClosure::una_neg: {
+      const TempRegister zero_reg;
       ldr_address(zero_reg, 0);
       // IMPL_NOTE: should set_CC
       sub(R1, zero_reg, A1);  // rsb
@@ -972,12 +987,11 @@ void CodeGenerator::long_unary_do(Value& result, Value& op1,
       mov(R2, zero_reg);
       break;
     }
-    case BytecodeClosure::una_abs:
-    {
+    case BytecodeClosure::una_abs: {
       mov(R1, A1);
       add(R2, A2, zero);
       b(done, ge);              // If hi register >= 0, positive
-      TempRegister zero_reg;
+      const TempRegister zero_reg;
       ldr_address(zero_reg, 0);
       sub(R1, zero_reg, A1);  // rsb
       sbc(zero_reg, A2);           // rsc
@@ -1011,7 +1025,7 @@ void CodeGenerator::imul(Value& result, Value& op1, Value& op2 JVM_TRAPS) {
   result.assign_register();
 
   if (op2.is_immediate()) {
-    TempRegister tmp;
+    const TempRegister tmp;
     mul_imm(result.lo_register(), op1.lo_register(), op2.as_int(), tmp);
   } else {
     mov(result.lo_register(), op2.lo_register());
@@ -1098,26 +1112,23 @@ void CodeGenerator::shift(Shift shifter, Value& result, Value& op1, Value& op2){
           asr_imm5(result.lo_register(), op1.lo_register(), shift);
           break;
 
-        case ror_shift:
-        {
+        case ror_shift: {
           mov(result.lo_register(), op1.lo_register());
-          TempRegister tmp;
+          const TempRegister tmp;
           mov(tmp, shift);
           ror(result.lo_register(), tmp);
           break;
         }
         default:
-        {
           SHOULD_NOT_REACH_HERE();
           break;
-        }
       }
     }
   } else {
     if (result.lo_register() != op1.lo_register()) {
       mov(result.lo_register(), op1.lo_register());
     }
-    TempRegister shift_reg;
+    const TempRegister shift_reg;
     mov(shift_reg, 0x1f);
     andr(shift_reg, op2.lo_register());
 
@@ -1270,6 +1281,7 @@ void CodeGenerator::float_binary_do(Value& result, Value& op1, Value& op2,
 
 void CodeGenerator::float_unary_do(Value& result, Value& op1,
                                    BytecodeClosure::unary_op op JVM_TRAPS) {
+  JVM_IGNORE_TRAPS;
   write_literals_if_desperate();
 
   GUARANTEE(op == BytecodeClosure::una_neg || op == BytecodeClosure::una_abs,
@@ -1278,9 +1290,22 @@ void CodeGenerator::float_unary_do(Value& result, Value& op1,
   GUARANTEE(!result.is_present(), "result must not be present");
   GUARANTEE(op1.in_register(), "op1 must be in a register");
 
+#if ENABLE_ARM_VFP
+  ensure_in_float_register(op1);
+#else
+  ensure_not_in_float_register(op1);
+#endif
+
   assign_register(result, op1);
-  Opcode opcode = (  op == BytecodeClosure::una_neg ? _eor : _bic);
-  TempRegister tmp;
+#if ENABLE_ARM_VFP
+  if( op == BytecodeClosure::una_neg ) {
+    fnegs(result.lo_register(), op1.lo_register());
+  } else {
+    fabss(result.lo_register(), op1.lo_register());
+  }
+#else
+  const Opcode opcode = (op == BytecodeClosure::una_neg ? _eor : _bic);
+  const TempRegister tmp;
   mov(tmp, 2);
   ror(tmp, tmp);
   if (result.lo_register() != op1.lo_register()) {
@@ -1288,6 +1313,7 @@ void CodeGenerator::float_unary_do(Value& result, Value& op1,
   }
 
   arith(opcode, result.lo_register(), tmp);
+#endif
 }
 
 void CodeGenerator::float_cmp (Value& result, BytecodeClosure::cond_op cond,
@@ -1356,7 +1382,7 @@ void CodeGenerator::double_unary_do(Value& result, Value& op1,
 
   assign_register(result, op1);
   Opcode opcode =  (op == BytecodeClosure::una_neg) ? _eor  : _bic;
-  TempRegister tmp;
+  const TempRegister tmp;
   mov(tmp, 2);
   ror(tmp, tmp);
 
@@ -1689,7 +1715,7 @@ void CodeGenerator::larithmetic(Opcode opcode1, Opcode opcode2,
 
   if (op2.is_immediate()) {
     // // IMPL_NOTE: Optimize moves
-    TempRegister op2_imm;
+    const TempRegister op2_imm;
     mov(op2_imm.reg(), op2.msw_bits());
     mov_hi(r8, op2_imm.reg());
     mov(op2_imm.reg(), op2.lsw_bits());
@@ -1717,7 +1743,7 @@ void CodeGenerator::runtime_long_op(Value& result, Value& op1, Value& op2,
       if (op2.is_immediate()) {
         jmp(zero_error);
       } else {
-        TempRegister tmp;
+        const TempRegister tmp;
         mov(tmp, op2.lo_register());
         orr(tmp, reg(op2.hi_register()));
         b(zero_error, eq);
@@ -1742,7 +1768,7 @@ void CodeGenerator::lshift(Shift type,  Value& result,
   if (op2.is_immediate()) {
     op2.set_int(op2.as_int() & 0x3F);
   } else {
-    TempRegister tmp_reg;
+    const TempRegister tmp_reg;
     mov(tmp_reg, 0x3F);
     andr(op2.lo_register(), tmp_reg);
   }
@@ -1809,8 +1835,8 @@ void CodeGenerator::check_stack_overflow(Method *m JVM_TRAPS) {
 
   // Method should be in r0 from invoke
   NOT_PRODUCT(comment("Check for stack overflow"));
-  TempRegister limit(r1);
-  TempRegister tmp(r2);
+  const TempRegister limit(r1);
+  const TempRegister tmp(r2);
   get_current_stack_limit(tmp);
   add(r1, jsp, JavaStackDirection * (JavaFrame::frame_desc_size() +
                (m->max_execution_stack_count() *
@@ -1832,7 +1858,7 @@ void CodeGenerator::check_timer_tick(JVM_SINGLE_ARG_TRAPS) {
   Label timer_tick, done;
 
   NOT_PRODUCT(comment("check for timer tick"));
-  TempRegister tmp;
+  const TempRegister tmp;
   get_rt_timer_ticks(tmp);
   cmp(tmp, 0x0);
   b(timer_tick, gt);
@@ -1859,8 +1885,8 @@ void CodeGenerator::check_cast(Value& object, Value& klass, int class_id
 
   // Since register allocation might cause spilling we have to allocate *all*
   // registers before checking for null object.
-  TempRegister tmp1;
-  TempRegister tmp2;
+  const TempRegister tmp1;
+  const TempRegister tmp2;
 
   NOT_PRODUCT(comment("Check for NULL object, get its class if not null"));
   cmp(object.lo_register(), zero);
@@ -1907,8 +1933,8 @@ void CodeGenerator::instance_of(Value& result, Value& object, Value& klass,
 
   // Since register allocation might cause spilling we have to allocate *all*
   // registers before checking for null object.
-  TempRegister tmp1;
-  TempRegister tmp2;
+  const TempRegister tmp1;
+  const TempRegister tmp2;
 
   NOT_PRODUCT(comment("Check for NULL object; Get the class for the object"));
   cmp(object.lo_register(), zero);
@@ -2117,9 +2143,8 @@ void CodeGenerator::new_basic_array(Value& result, BasicType type,
     RegisterAllocator::reference(reg_actual_length);
 
     switch(array_class->scale()) {
-      case 1:
-      {
-        TempRegister tmp;
+      case 1: {
+        const TempRegister tmp;
         GUARANTEE(tmp.reg() != reg_actual_length, "new_basic_array: Invalid register assignment");
         mov(tmp, Array::base_offset() + BytesPerWord - 1);
         add(reg_actual_length, length.lo_register(), tmp);
@@ -2127,9 +2152,8 @@ void CodeGenerator::new_basic_array(Value& result, BasicType type,
         bic(reg_actual_length, tmp);
         break;
       }
-      case 2:
-      {
-        TempRegister tmp;
+      case 2: {
+        const TempRegister tmp;
         GUARANTEE(tmp.reg() != reg_actual_length, "new_basic_array: Invalid register assignment");
         lsl_imm5(reg_actual_length, length.lo_register(), 1);
         mov(tmp, Array::base_offset() + BytesPerWord - 1);
@@ -2282,7 +2306,7 @@ void CodeGenerator::restore_last_frame(Register return_address) {
   // We can avoid loading a memory location by dead reckoning the new value
   // of jsp off of fp, then by pulling it out of the frame.
   if (return_address == lr) {
-    TempRegister tmp_reg;
+    const TempRegister tmp_reg;
     ldr(tmp_reg, fp, JavaFrame::return_address_offset());
     mov(lr, tmp_reg);
   } else {
@@ -2361,9 +2385,9 @@ void CodeGenerator::check_monitors(JVM_SINGLE_ARG_TRAPS) {
   // Add the stub for the unlock exception.
   Label unlocking_loop, unlocking_loop_entry;
 
-  TempRegister lock;
-  TempRegister object;
-  TempRegister end;
+  const TempRegister lock;
+  const TempRegister object;
+  const TempRegister end;
 
   write_literals_if_desperate();
 
@@ -3072,8 +3096,8 @@ void CodeGenerator::type_check(Value& array, Value& index, Value& object JVM_TRA
   // Since register allocation might cause spilling we have to allocate *all*
   // registers before checking for for null object.
 
-  TempRegister tmp1;
-  TempRegister tmp2;
+  const TempRegister tmp1;
+  const TempRegister tmp2;
 
   ldr(tmp2, array.lo_register());
   // Check for null object.
@@ -3530,7 +3554,7 @@ CodeGenerator::verify_location_is_constant(jint index, const Value& constant) {
   // IMPL_NOTE: need revisit
   // CompilerLiteralAccessor cla;
   LocationAddress address(index, constant.type());
-  TempRegister tmp;
+  const TempRegister tmp;
   Assembler::Register address_reg;
   int address_offset = 0;
   address.get_preindexed_address(true, address_reg, address_offset);
@@ -3562,16 +3586,13 @@ void CodeGenerator::initialize_class(InstanceClass* klass JVM_TRAPS) {
 
   NOT_PRODUCT(comment("Load class"));
   {
-    TempRegister klass_reg(r1);
+    const TempRegister klass_reg(r1);
     ldr_oop(klass_reg, klass);
 
     NOT_PRODUCT(comment("Quick check if the class is initialized"));
     {
-      TempRegister tmp;
-      ldr(tmp, klass_reg, JavaClass::java_mirror_offset());
-      ldr(tmp, tmp, JavaClassObj::status_offset());
-      tst(tmp, JavaClassObj::INITIALIZED);
-      b(class_initialized, ne);
+      const TempRegister tmp; ldr(tmp, klass_reg, JavaClass::java_mirror_offset()); ldr(tmp, tmp,
+      JavaClassObj::status_offset()); tst(tmp, JavaClassObj::INITIALIZED); b(class_initialized, ne);
     }
   }
 
