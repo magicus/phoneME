@@ -412,4 +412,10 @@ abstract class PPCComponentPeer extends PPCObjectPeer implements ComponentPeer,
     public Dimension preferredSize() {
 	return getPreferredSize();
     }
+
+    public void clearBackground(Graphics g) {
+        g.setColor(((Component)target).getBackground());
+        g.fillRect(0, 0, ((Component)target).getWidth(), ((Component)target).getHeight());
+        g.setColor(((Component)target).getForeground());
+    }
 }

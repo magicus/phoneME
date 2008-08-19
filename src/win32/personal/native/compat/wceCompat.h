@@ -45,6 +45,7 @@
 #endif
 
 WCECOMPAT_API HMENU __cdecl wceCreateMenuBarMenu();
+WCECOMPAT_API HMENU __cdecl wceGetMenuBarMenu(HWND frame);
 
 WCECOMPAT_API HWND __cdecl
     wceSetMenuBar(HWND frame, HWND cmdBarWnd, HMENU menu);
