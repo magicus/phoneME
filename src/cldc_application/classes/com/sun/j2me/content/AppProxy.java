@@ -483,11 +483,14 @@ class AppProxy {
     	if( isMidletRunning(storageId, classname) )
         	return true;
     	if( !MIDletSuiteUtils.isAmsIsolate() ){
+    	    if( LOGGER != null ) LOGGER.println("AppProxy.launch(): not isAmsIsolate()");
 	    	if( isInSvmMode )
 	    		return false;
 	    	if( isSuiteRunning(storageId) )
 	    		return false;
     	}
+    	if( LOGGER != null )
+        	LOGGER.println("AppProxy.launch(): send 'launch' request {" + storageId + ", '" + classname + "'}");
         return MIDletSuiteUtils.execute(classSecurityToken,
              						storageId, classname, displayName);
     }

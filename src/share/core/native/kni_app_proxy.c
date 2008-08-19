@@ -41,12 +41,12 @@ KNIEXPORT KNI_RETURNTYPE_BOOLEAN
 KNIDECL(com_sun_j2me_content_AppProxy_isInSvmMode) {
     int res;
 #if ENABLE_MULTIPLE_ISOLATES
-    res = JAVACALL_TRUE;
-#else
     res = JAVACALL_FALSE;
+#else
+    res = JAVACALL_TRUE;
 #endif
 #ifdef _DEBUG
-    printf( "Compiled in '%s' mode\n", res ? "MVM" : "SVM" );
+    printf( "Compiled in '%s' mode\n", res ? "SVM" : "MVM" );
 #endif
     KNI_ReturnBoolean( res );
 }
@@ -154,10 +154,10 @@ KNIDECL(com_sun_j2me_content_AppProxy_isMidletRunning) {
     GET_PARAMETER_AS_UTF16_STRING(2, midletClassName)
 
     MidletIdChain ** elemPlace = findMidletIdChain( suiteId, midletClassName );
-#ifdef TRACE_MIDLETREG
-    printf( "AppProxy_isMidletRunning: %d, '%ls'\n", suiteId, midletClassName );
-#endif
     res = (*elemPlace != NULL && compareMidletIdChain(*elemPlace, suiteId, midletClassName) == 0);
+#ifdef TRACE_MIDLETREG
+    printf( "AppProxy_isMidletRunning: %d, '%ls', %s\n", suiteId, midletClassName, res ? "true" : "false" );
+#endif
 
     RELEASE_UTF16_STRING_PARAMETER
     KNI_EndHandles();
@@ -173,5 +173,8 @@ KNIDECL(com_sun_j2me_content_AppProxy_isSuiteRunning) {
         p = p->next;
 
     res = (p != NULL && p->suiteId == suiteId);
+#ifdef TRACE_MIDLETREG
+    printf( "AppProxy_isSuiteRunning: %d, %s\n", suiteId, res ? "true" : "false" );
+#endif
     KNI_ReturnBoolean( res );
 }
