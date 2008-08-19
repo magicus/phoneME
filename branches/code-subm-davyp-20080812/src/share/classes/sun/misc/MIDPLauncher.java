@@ -33,7 +33,14 @@ package sun.misc;
 import java.lang.reflect.Method;
 import java.lang.reflect.InvocationTargetException;
 import java.io.File;
+import java.io.FileInputStream;
 import java.util.StringTokenizer;
+import java.util.jar.Manifest;
+import java.util.jar.JarFile;
+import java.util.jar.Attributes;
+import java.util.Map;
+import java.util.HashMap;
+import java.util.Iterator;
 
 public final class MIDPLauncher {
     static private String suitePath[] = new String[0];
@@ -42,14 +49,32 @@ public final class MIDPLauncher {
         return suitePath;
     }
 
+    /* Process the properties of a Manifest or JAD file. */
+    private static void processSuiteProperties(Manifest manifest, HashMap midletProperties) {
+        try {
+            Attributes attributes = manifest.getMainAttributes();
+            Iterator keys = attributes.keySet().iterator();
+            while (keys.hasNext()) {
+                Attributes.Name key = (Attributes.Name)keys.next();
+                midletProperties.put(key.toString(), attributes.get(key).toString());
+            }
+        }
+        catch (Exception e) {
+            System.err.println("Can't read manifest file");
+            e.printStackTrace();
+        }
+    }
+
     public static void main(String args[]) {
         int i, j, num;
         File midppath[] = new File[0];
         String midppathString = null;
         String suitepathString = null; 
+        String jadpathString = null; 
         StringTokenizer components;
         String mainArgs[];
         int numMainArgs = args.length;
+        HashMap midletProperties = null;
 
         /* Process arguments */
         for (i = 0; i < args.length; i++) {
@@ -73,10 +98,32 @@ public final class MIDPLauncher {
                 suitePath = new String[num];
                 for (j = 0; j < num; j++) {
                     suitePath[j] = components.nextToken();
-	        }
+                }
+                args[i-1] = args[i] = null;
+                numMainArgs -= 2;
+            } else if (arg.equals("-jadpath")) {
+                jadpathString = args[++i];
                 args[i-1] = args[i] = null;
                 numMainArgs -= 2;
             }
+        }
+
+        midletProperties = new HashMap();
+        try {
+            if (suitepathString != null) {
+                JarFile jarFile = new JarFile(suitepathString);
+                processSuiteProperties(jarFile.getManifest(), midletProperties);
+            }
+
+            if (jadpathString != null) {
+                FileInputStream fis = new FileInputStream(jadpathString);
+                processSuiteProperties(new Manifest(fis), midletProperties);
+                fis.close();
+            }
+        }
+        catch (Exception e) {
+            System.err.println("Can't read manifest file");
+            e.printStackTrace();
         }
 
         /* Prepare args for the MIDletSuiteLoader.main() */
@@ -85,8 +132,8 @@ public final class MIDPLauncher {
         for (j = 0; j < args.length; j++) {
             if (args[j] != null) {
                 mainArgs[k++] = args[j];
-	    }
-	}
+            }
+        }
 
         /* Create MIDPImplementationClassLoader */
         MIDPImplementationClassLoader midpImplCL = 
@@ -94,16 +141,16 @@ public final class MIDPLauncher {
 
         /* Load MIDletSuiteLoader using MIDPImplementationClassLoader
          * and invoke it's main() method. */
-	String loaderName = null;
+        String loaderName = null;
         try {
             loaderName = System.getProperty(
                 "com.sun.midp.mainClass.name",
                 "com.sun.midp.main.CdcMIDletSuiteLoader");
             Class suiteloader = midpImplCL.loadClass(loaderName);
-            Class loaderArgs[] = {mainArgs.getClass()};
-            Method mainMethod = suiteloader.getMethod("main", loaderArgs);
-            Object args2[] = {mainArgs};
-            mainMethod.invoke(null, args2);
+            Class loaderArgs[] = {mainArgs.getClass(), midletProperties.getClass()};
+            Method launchMethod = suiteloader.getMethod("launchUninstalledSuite", loaderArgs);
+            Object args2[] = {mainArgs, midletProperties};
+            launchMethod.invoke(null, args2);
         } catch (ClassNotFoundException ce) {
             System.err.println("Can't find " + loaderName);
         } catch (NoSuchMethodException ne) {

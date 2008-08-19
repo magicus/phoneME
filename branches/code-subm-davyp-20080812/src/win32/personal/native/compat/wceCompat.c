@@ -46,6 +46,7 @@
 
 
 static HINSTANCE theInstance; /* instance of this library */
+static OSVERSIONINFO version;
 
 #ifdef POCKETPC_MENUS
 static HWND theCmdBarWnd;
@@ -62,6 +63,7 @@ static HWND theFrameWnd;
 BOOL WINAPI DllMain(HANDLE hInstDll, DWORD reason, LPVOID resevered)
 {
 
+    GetVersionEx(&version);
     switch (reason) {
         case DLL_PROCESS_ATTACH:
 	    theInstance = (HINSTANCE)hInstDll;
@@ -84,6 +86,10 @@ BOOL WINAPI DllMain(HANDLE hInstDll, DWORD reason, LPVOID resevered)
     (void)SendMessage((hWndMB), SHCMBM_SETSUBMENU, (WPARAM)MenuId, (LPARAM)hMenu)
 #endif
 
+#define TBIF_LPARAM             0x00000010
+#define TBIF_COMMAND            0x00000020
+#define TBIF_SIZE               0x00000040
+#define TBIF_BYINDEX            0x80000000
 
 WCECOMPAT_API HMENU __cdecl wceCreateMenuBarMenu()
 {
@@ -98,14 +104,76 @@ WCECOMPAT_API int __cdecl
 wceIsCmdBarWnd(HWND hwnd)
 {
 #ifdef POCKETPC_MENUS
+    TCHAR text[32];
+
+    GetClassName(hwnd, &text, 30);
     if (hwnd == theCmdBarWnd) {
 	return 1;
+    } else if (wcscmp(text, TEXT("MS_SOFTKEY_CE_1.0")) == 0) {
+	return 1; 
     } else {
 	return 0;
     }
 #else
     return 0;
 #endif
+}
+
+WCECOMPAT_API HMENU __cdecl wceGetMenuBarMenu(HWND frame) {
+    SHMENUBARINFO mb;
+    TBBUTTONINFO tbbi;
+    HWND cmdBarWnd;
+    HMENU cmdBarMenu;
+
+    if (version.dwMajorVersion < 5) 
+	return wceCreateMenuBarMenu();
+
+    theCmdBarWnd = NULL;
+
+    if (!frame) {
+        return wceCreateMenuBarMenu();
+    }
+
+    if (!theInstance) {
+        return wceCreateMenuBarMenu();
+    }
+ 
+    cmdBarMenu = LoadMenu(theInstance, MAKEINTRESOURCE(IDR_MENUBAR1));
+    if (!cmdBarMenu) {
+        return wceCreateMenuBarMenu();
+    }
+
+    memset(&mb, 0, sizeof(SHMENUBARINFO));
+    mb.cbSize = sizeof(SHMENUBARINFO);
+    mb.hwndParent = frame;
+    mb.dwFlags = 0;
+    mb.nToolBarId = IDR_MENUBAR1;
+    mb.nBmpId = 0;
+    mb.hInstRes =  theInstance;
+    mb.cBmpImages =  0;
+
+    /* If this fails,  we're toast */
+    if (!SHCreateMenuBar(&mb)) {
+        return wceCreateMenuBarMenu();
+    }
+    cmdBarWnd = mb.hwndMB;
+    if (!cmdBarWnd) {
+        return wceCreateMenuBarMenu();
+    }
+
+    cmdBarMenu = SHGetMenu(cmdBarWnd);
+    if (!cmdBarMenu) {
+        tbbi.cbSize = sizeof(tbbi);
+        tbbi.dwMask = TBIF_LPARAM | TBIF_BYINDEX;
+        SendMessage(cmdBarWnd, TB_GETBUTTONINFO, 0, (LPARAM)&tbbi);
+
+        theCmdBarWnd = cmdBarWnd;
+        cmdBarMenu = (HMENU)tbbi.lParam;
+        DeleteMenu(cmdBarMenu, 0, MF_BYPOSITION);
+        return cmdBarMenu;
+    } else {
+        return wceCreateMenuBarMenu();
+    }
 }
 
 /* Set a "Menu Bar" on the given frame.
@@ -119,6 +187,12 @@ wceSetMenuBar(HWND frame, HWND cmdBarWnd, HMENU menu)
     static HMENU javaMenu = NULL;
     HMENU hMenuBar, subMenu;
     SHMENUBARINFO mb;
+    TBBUTTONINFO tbbi;
+    // int i, countAddMenuItems = 0;
+    // TCHAR menuName[256];
+
+    if (version.dwMajorVersion >= 5)
+	return theCmdBarWnd;
 
     /* What we have to do here is pretty bad */
     if (!theInstance) {
@@ -155,6 +229,41 @@ wceSetMenuBar(HWND frame, HWND cmdBarWnd, HMENU menu)
 
     theCmdBarWnd = cmdBarWnd;
     javaMenu = SHGetMenu(cmdBarWnd);
+
+    if (!javaMenu) {
+        tbbi.cbSize = sizeof(tbbi);
+        tbbi.dwMask = TBIF_LPARAM | TBIF_BYINDEX;
+        SendMessage(theCmdBarWnd, TB_GETBUTTONINFO, 0, (LPARAM)&tbbi);
+        javaMenu = (HMENU)tbbi.lParam;
+
+        // This does not work!
+        // SHSetSubMenu(cmdBarWnd, wce_GetMenuItemID(javaMenu, 0), menu);
+
+        // This also does not work!
+        // wce_SetSubMenu(javaMenu, menu);
+
+        // This does not work either!
+        // tbbi.lParam = menu;
+        // SendMessage(theCmdBarWnd, TB_SETBUTTONINFO, 0, (LPARAM)&tbbi);
+
+        // http://www.codeproject.com/KB/menus/mergemenu.asp
+        // This only works partially. Menu captions are screwed up.
+        // countAddMenuItems = wce_GetMenuItemCount(menu);
+        // for (i = 0; i < countAddMenuItems; i++) {
+        //     wce_GetMenuString(menu, i, menuName, 255);
+        //     subMenu = GetSubMenu(menu, i);
+        //     if (subMenu) {
+        //         InsertMenu(javaMenu, 0, MF_BYPOSITION | MF_POPUP, subMenu, menuName);
+        //     }
+        // }
+        // printMenu(menu);
+
+        DeleteMenu(javaMenu, 0, MF_BYPOSITION);
+        InsertMenu(javaMenu, 0, MF_BYPOSITION | MF_POPUP, menu, TEXT("Application"));
+
+        return cmdBarWnd;
+    }
+
     subMenu = GetSubMenu(javaMenu, 0);
     if (!subMenu) {
 	return NULL;

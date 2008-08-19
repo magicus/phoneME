@@ -643,6 +643,9 @@ Java_sun_awt_pocketpc_PPCFramePeer_create( JNIEnv *env, jobject self,
 {
     AwtToolkit::CreateComponent( self, hParent,
                            (AwtToolkit::ComponentFactory)AwtFrame::Create );
+
+    // For a statically compiled pMEA/PP CHECK_PEER_CREATION throws an exception 
+    // because (env->GetIntField(self, WCachedIDs.PPCObjectPeer_pDataFID) == 0)
     CHECK_PEER_CREATION( self );
     return;
 }
@@ -677,6 +680,25 @@ Java_sun_awt_pocketpc_PPCFramePeer_reshape( JNIEnv *env,
 	env->SetIntField(target,
 			 WCachedIDs.java_awt_Component_heightFID, h);
     }
+
+    HWND hWin = ::FindWindow(TEXT("HHTaskBar"), NULL);
+    if (hWin > 0) {
+        RECT rect;
+        GetWindowRect(hWin, &rect);
+        int nTaskBarHeight = rect.bottom - rect.top;
+
+        // Some extra sanity checks for the size and location of the window
+        // with both a menu and task bar
+        int maxHeight = GetSystemMetrics(SM_CYSCREEN) - 2*nTaskBarHeight;
+        if (h < maxHeight && y < nTaskBarHeight) {
+            y = nTaskBarHeight;
+            // env->SetIntField(target, WCachedIDs.java_awt_Component_xFID, x);
+            env->SetIntField(target, WCachedIDs.java_awt_Component_yFID, y);
+            // env->SetIntField(target, WCachedIDs.java_awt_Component_widthFID, w);
+            // env->SetIntField(target, WCachedIDs.java_awt_Component_heightFID, h);
+        }
+    }
+
     // end of fix proper
     ::SetRect( r, x, y, x + w, y + h );
     ::PostMessage( p->GetHWnd(), WM_AWT_RESHAPE_COMPONENT, 0, (LPARAM)r );

@@ -110,16 +110,17 @@ AwtMenuBar* AwtMenuBar::Create(jobject self,
 
   menuBar->LinkObjects(self);
 
-  HMENU hMenu = wceCreateMenuBarMenu(); 
-
-  ASSERT(hMenu);
-  menuBar->SetHMenu(hMenu);
-
+  HWND frameWnd = NULL;
   if (hFramePeer != NULL) {
     CHECK_OBJ(hFramePeer);
 	menuBar->m_frame = PDATA(AwtFrame, hFramePeer);
+    frameWnd = menuBar->GetOwnerHWnd();
   }
+
+  HMENU hMenu = wceGetMenuBarMenu(frameWnd);
   
+  ASSERT(hMenu);
+  menuBar->SetHMenu(hMenu);
   return menuBar;
 }
 

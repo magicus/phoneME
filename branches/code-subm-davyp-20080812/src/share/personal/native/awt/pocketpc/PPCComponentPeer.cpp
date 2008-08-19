@@ -1243,7 +1243,7 @@ static BOOL composeSwitch = FALSE;
 	  break;
       case WM_ACTIVATE:   
           mr = WmActivate(LOWORD(wParam), (BOOL)HIWORD(wParam)); 
-          SHFullScreen(AwtComponent::GetTopLevelParentForWindow(GetHWnd()), SHFS_HIDESTARTICON | SHFS_HIDETASKBAR | SHFS_SHOWSIPBUTTON);
+          SHFullScreen(AwtComponent::GetTopLevelParentForWindow(GetHWnd()), SHFS_SHOWSTARTICON | SHFS_HIDETASKBAR | SHFS_SHOWSIPBUTTON);
           break;
 
 #if defined(WIN32)
