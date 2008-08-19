@@ -478,7 +478,6 @@ javacall_dom_element_has_attribute(javacall_handle handle,
  *   element, <code>false</code> otherwise.
  * 
  * @return JAVACALL_OK if all done successfuly,
- *         JAVACALL_FAIL if NOT_SUPPORTED_ERR occured,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
