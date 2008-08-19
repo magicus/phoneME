@@ -130,9 +130,7 @@ extern "C" javacall_result JavaTaskImpl(int argc, char* argv[]) {
     javacall_result res = java_ams_system_start();
 //    java_ams_appmgr_start();
 
-    TCHAR szMsg[128];
-    wsprintf(szMsg, _T("SJWC exited, code: %d."), (int)res); 
-    MessageBox(NULL, szMsg, g_szTitle, MB_OK);
+    wprintf(_T("SJWC exited, code: %d."), (int)res); 
 
 //    javacall_lifecycle_state_changed(JAVACALL_LIFECYCLE_MIDLET_SHUTDOWN,
 //        (res == 1) ? JAVACALL_OK : JAVACALL_FAIL);
@@ -212,7 +210,6 @@ int main(int argc, char* argv[]) {
         TranslateMessage(&msg);
         DispatchMessage(&msg);
     }
-
 
     CleanupTreeView(hwndTV);
 
@@ -503,6 +500,7 @@ BOOL InitTreeViewItems(HWND hwndTV)  {
               pInfo->type = TVI_TYPE_SUITE;
               pInfo->suiteId = pSuiteIds[i];
               AddItemToTree(hwndTV, pszSuiteName, 1, pInfo);
+              javacall_free(pszSuiteName);
 
               javacall_ams_midlet_info* pMidletsInfo;
               javacall_int32 midletNum;
@@ -532,6 +530,7 @@ BOOL InitTreeViewItems(HWND hwndTV)  {
                           pInfo->suiteId = pSuiteIds[i];
                           pInfo->className = CloneJavacallUtf16(pMidletsInfo[j].className);
                           AddItemToTree(hwndTV, pszMIDletName, 2, pInfo);
+                          javacall_free(pszMIDletName);
                       }
 //                  }
                       if (midletNum > 0) {
@@ -678,8 +677,14 @@ MainWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
             }
             case IDM_SUITE_EXIT: {
                 (void)java_ams_system_stop();
+
                 // TODO: wait for notification from the SJWC thread instead of sleep
                 Sleep(1000);
+
+                // Hide the main window 
+                ShowWindow(hWnd, SW_HIDE);
+//                UpdateWindow(hWnd);
+
                 PostQuitMessage(0);
                 break;
             }
@@ -708,8 +713,14 @@ MainWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
             case TVN_DELETEITEM:
                 if(pHdr->idFrom == IDC_TREEVIEW_MIDLETS) {
                     TVITEM tvi = ((LPNMTREEVIEW)lParam)->itemOld;
-                    javacall_free(tvi.pszText);
-                    javacall_free((void*)tvi.lParam);
+
+//                    wprintf(_T("Cleaning tree items up (struct=%p)...\n"),
+//                        tvi.lParam);
+
+                    if (tvi.lParam) {
+                        javacall_free((void*)tvi.lParam);
+                        tvi.lParam = (LPARAM)NULL;
+                    }
                 }
             break;
         }
@@ -832,7 +843,6 @@ MidletTreeWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
                         // Hide MIDlet tree view window to show
                         // the MIDlet's output in the main window
                         ShowWindow(hWnd, SW_HIDE);
-                        UpdateWindow(hWnd);
                      }
                 }
             }
