@@ -1309,29 +1309,24 @@ CVMmemBssWriteNotify(int pid, void *addr, void *pc, CVMMemHandle *h)
 
     if (mamap == NULL) {
         romStringStart = (CVMUint32)CVM_ROMStrings;
-        romStringEnd = (CVMUint32)&CVM_ROMStrings[CVM_nROMStrings] +
-                           sizeof(struct java_lang_String);
+        romStringEnd = (CVMUint32)&CVM_ROMStrings[CVM_nROMStrings];
         staticDataStart = (CVMUint32)CVMpreloaderGetRefStatics();
-        staticDataEnd = (CVMUint32)CVMcbMethods(
-                            CVMsystemClass(java_lang_Class));
+        staticDataEnd =
+            (CVMUint32)CVMcbMethods(CVMsystemClass(java_lang_Class));
         romClassStart = (CVMUint32)CVM_ROMClasses;
-        romClassEnd = (CVMUint32)&CVM_ROMClasses[CVM_nROMClasses] +
-                          sizeof(struct java_lang_Class);
+        romClassEnd = (CVMUint32)&CVM_ROMClasses[CVM_nROMClasses];
         romCBStart = (CVMUint32)CVM_ROMClassBlocks;
-        romCBEnd = (CVMUint32)&CVM_ROMClassBlocks[CVM_nROMClasses] +
-                       sizeof(struct java_lang_String);
+        romCBEnd = (CVMUint32)&CVM_ROMClassBlocks[CVM_nROMClasses];
         romPkgStart = (CVMUint32)CVM_ROMpackages;
-        romPkgEnd = (CVMUint32)(CVM_ROMpackages + CVM_nROMpackages + 1);
+        romPkgEnd = (CVMUint32)(CVM_ROMpackages + CVM_nROMpackages);
         romPkgHashStart = (CVMUint32)CVM_pkgHashtable;
-        romPkgHashEnd = (CVMUint32)(CVM_pkgHashtable + NPACKAGEHASH + 1);
+        romPkgHashEnd = (CVMUint32)(CVM_pkgHashtable + NPACKAGEHASH);
         methodTypeHashStart = (CVMUint32)CVMMethodTypeHash;
-        methodTypeHashEnd = (CVMUint32)(CVMMethodTypeHash +
-                                        NMETHODTYPEHASH + 1);
+        methodTypeHashEnd = (CVMUint32)(CVMMethodTypeHash + NMETHODTYPEHASH);
         memberNameHashStart = (CVMUint32)CVMMemberNameHash;
-        memberNameHashEnd = (CVMUint32)(CVMMemberNameHash +
-                                        NMEMBERNAMEHASH + 1);
-        methodsStart = (CVMUint32)CVMcbMethods(
-                           CVMsystemClass(java_lang_Class));
+        memberNameHashEnd = (CVMUint32)(CVMMemberNameHash + NMEMBERNAMEHASH);
+        methodsStart =
+            (CVMUint32)CVMcbMethods(CVMsystemClass(java_lang_Class));
         mamap = (CVMUint8*)calloc(sizeof(CVMUint8),
                                   (ALIGNEDNEXT(romCBStart) -
                                    ALIGNED(methodsStart)) / 4096);
@@ -1364,21 +1359,21 @@ CVMmemBssWriteNotify(int pid, void *addr, void *pc, CVMMemHandle *h)
     if (waddr < romStringStart ||
         waddr > romStringStart + CVMROMGlobalsSize) {
         CVMassert(CVM_FALSE);
-    } else if (waddr >= romStringStart && waddr <= romStringEnd) {
+    } else if (waddr >= romStringStart && waddr < romStringEnd) {
         sectionName = "Rom String";
         p = (waddr - ALIGNED(romStringStart)) / 4096 - 1;
         if (strmap[p] == 0) {
             strmap[p] = 0x1;
             strdp ++;
         }
-    } else if (waddr >= romClassStart && waddr <= romClassEnd) {
+    } else if (waddr >= romClassStart && waddr < romClassEnd) {
         sectionName = "Rom Class";
         p  = (waddr - ALIGNED(romClassStart)) / 4096 -1;
         if (clmap[p] == 0) {
             clmap[p] = 0x1;
             cldp ++;
         }
-    } else if (waddr >= romCBStart && waddr <= romCBEnd) {
+    } else if (waddr >= romCBStart && waddr < romCBEnd) {
         sectionName = "Rom CB";
         p = (waddr -  ALIGNED(romCBStart)) / 4096 - 1;
         if (cbmap[p] == 0) {
@@ -1399,28 +1394,28 @@ CVMmemBssWriteNotify(int pid, void *addr, void *pc, CVMMemHandle *h)
             mamap[p] = 0x1;
             mdp ++;
         }
-    } else if (waddr >= romPkgStart && waddr <= romPkgEnd) {
+    } else if (waddr >= romPkgStart && waddr < romPkgEnd) {
         sectionName = "Rom Package"; 
         p = (waddr - ALIGNED(romPkgStart)) / 4096 -1;
         if (pkgmap[p] == 0) {
             pkgmap[p] = 0x1;
             pkgdp ++;
         }
-    } else if (waddr >= romPkgHashStart && waddr <= romPkgHashEnd) {
+    } else if (waddr >= romPkgHashStart && waddr < romPkgHashEnd) {
         sectionName = "Package Hash";
         p = (waddr - ALIGNED(romPkgHashStart)) / 4096 - 1;
         if (pkghmap[p] == 0) {
             pkghmap[p] = 0x1;
             pkghdp ++;
         }
-    } else if (waddr >= methodTypeHashStart && waddr <= methodTypeHashEnd) {
+    } else if (waddr >= methodTypeHashStart && waddr < methodTypeHashEnd) {
         sectionName = "Method Type Hash";
         p = (waddr - ALIGNED(methodTypeHashStart)) / 4096 -1;
         if (mthmap[p] == 0) {
             mthmap[p] = 0x1;
             mthdp++;
         }
-    } else if (waddr >= memberNameHashStart && waddr <= memberNameHashEnd) {
+    } else if (waddr >= memberNameHashStart && waddr < memberNameHashEnd) {
         sectionName = "Member Name Hash";
         p = (waddr - ALIGNED(memberNameHashStart)) / 4096 -1;
         if (mnhmap[p] == 0) {
