@@ -23,12 +23,16 @@
 # information or have any questions.
 #
 
-echo ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-echo Generating fonts....
-echo ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-cat ../fontdef/midp21font0000.midpfontdef ../fontdef/midp21font0080.midpfontdef\
- ../fontdef/midp21font2026.midpfontdef ../fontdef/midp21font20xx.midpfontdef | ../src/wrfont\
-  > ../../../lowlevelui/graphics/gx_putpixel/native/gxj_font_bitmap.c
-echo ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-echo NOTE: PLEASE READ THE WARNINGS/ERRORS ABOVE!!!
-echo ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+if [[ "$1" == "" ]]; then
+    echo "You need to specify font definition in single parameter like (replace space with + in font name)"
+    echo "do-all-from-host font-name: 'Lucida+Sans+Typewriter' font-style: bold font-size: 12 range: 0 0x7f range: 0xa1 0xbf range: 0x2026 0x2026 range: 0x20ac 0x20ac"
+    exit 1
+fi
+
+mkdir -p buildtimeFontGenerator/build/classes
+javac -d buildtimeFontGenerator/build/classes buildtimeFontGenerator/src/buildtimefontgenerator/Main.java
+cd src
+./comp-all
+cd ../wrk
+./gen-from-host $@
+cd ..

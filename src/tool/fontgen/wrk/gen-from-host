@@ -26,9 +26,8 @@
 echo ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 echo Generating fonts....
 echo ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-cat ../fontdef/midp21font0000.midpfontdef ../fontdef/midp21font0080.midpfontdef\
- ../fontdef/midp21font2026.midpfontdef ../fontdef/midp21font20xx.midpfontdef | ../src/wrfont\
-  > ../../../lowlevelui/graphics/gx_putpixel/native/gxj_font_bitmap.c
+java -classpath ../buildtimeFontGenerator/build/classes buildtimefontgenerator.Main $@ > ../fontdef/midp21font.midpfontdef
+cat ../fontdef/midp21font.midpfontdef | ../src/wrfont > ../../../lowlevelui/graphics/gx_putpixel/native/gxj_font_bitmap.c
 echo ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-echo NOTE: PLEASE READ THE WARNINGS/ERRORS ABOVE!!!
+echo Done
 echo ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
