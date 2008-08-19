@@ -164,7 +164,7 @@ main(int argc, char *argv[]) {
     int propFileNameLen = 0;
 
     /* uncomment this like to force the debugger to start */
-    _asm int 3;
+    /* _asm int 3; */
 
     /* get the configuration file name */
     propFileName = get_properties_file_name(&propFileNameLen, 
