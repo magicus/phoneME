@@ -87,6 +87,12 @@ ROMIZER_MAIN_CLASS    = com.sun.midp.romization.Romizer
 ROMIZER_MANIFEST_FILE = $(TOOLS_CLASS_DIR)/Romizer.manifest
 ROMIZER_JAR_FILE = $(BINDIR)/Romizer.jar
 
+ifeq ($(TARGET_VM), cdc_vm)
+  IDENTIFIED_DOMAIN_NAME = identified
+else
+  IDENTIFIED_DOMAIN_NAME = identified_third_party
+endif
+
 # Macro to pre-process Jpp file into Java file
 # runjpp(<input_jpp_file>, <output_java_file>)
 define runjpp
@@ -137,11 +143,11 @@ $(CA_KEYSTORE): $(KEYTOOL_JAR_FILE) $(KEYTOOL_KEYSTORE_FILE)
 	@echo +++ $(JAVA_CMD) -jar $(KEYTOOL_JAR_FILE) -import -keystore \
 		$(KEYTOOL_KEYSTORE_FILE) -alias suntestca \
 		-storepass keystorepwd -MEkeystore $(CA_KEYSTORE) \
-		-domain identified $(LOG_ONLY)
+		-domain $(IDENTIFIED_DOMAIN_NAME) $(LOG_ONLY)
 	@($(JAVA_CMD) -jar $(KEYTOOL_JAR_FILE) -import -keystore \
 		$(KEYTOOL_KEYSTORE_FILE) -alias suntestca \
 		-storepass keystorepwd -MEkeystore $(CA_KEYSTORE) \
-		-domain identified) $(LOG)
+		-domain $(IDENTIFIED_DOMAIN_NAME)) $(LOG)
 	@echo +++ $(JAVA_CMD) -jar $(KEYTOOL_JAR_FILE) -import -keystore \
 		$(KEYTOOL_KEYSTORE_FILE) -alias dummyca \
 		-storepass keystorepwd -MEkeystore $(CA_KEYSTORE) \
