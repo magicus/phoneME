@@ -112,9 +112,12 @@ static HWND CreateMainView();
 static void CenterWindow(HWND hDlg);
 static HWND CreateTreeView(HWND hWndParent);
 static HWND CreateMainToolbar(HWND hWndParent);
+
 static BOOL InitTreeViewItems(HWND hwndTV);
+static void AddSuiteToTree(HWND hwndTV, javacall_suite_id suiteId, int nLevel);
 static HTREEITEM AddItemToTree(HWND hwndTV, LPTSTR lpszItem,
                                int nLevel, TVI_INFO* pInfo);
+
 static void InitAms();
 static void CleanupAms();
 static void CleanupWindows();
@@ -530,64 +533,19 @@ static void FreeTviInfo(TVI_INFO* pInfo) {
     }
 }
 
-static BOOL InitTreeViewItems(HWND hwndTV)  {
-    javacall_suite_id* pSuiteIds;
-    int suiteNum, folderNum;
-    javacall_result res;
-    javacall_ams_suite_info* pSuiteInfo;
-    javacall_ams_folder_info* pFoldersInfo;
-    TVI_INFO* pInfo;
-    javacall_utf16_string jsLabel;
+static void AddSuiteToTree(HWND hwndTV, javacall_suite_id suiteId, int nLevel) {
+        javacall_result res;
+        javacall_utf16_string jsLabel;
+        TVI_INFO* pInfo;
+        javacall_ams_suite_info* pSuiteInfo;
+        javacall_ams_midlet_info* pMidletsInfo;
+        javacall_int32 midletNum;
 
 
-    res = java_ams_suite_get_all_folders_info(&pFoldersInfo, &folderNum);
-    if (res == JAVACALL_OK) {
-        for (int k = 0; k < folderNum; k++) {
-            LPTSTR pszFolderName = (pFoldersInfo[k].folderName) ?
-                JavacallUtf16ToTstr(pFoldersInfo[k].folderName) :
-                g_szDefaultFolderName;
-            wprintf(_T("Folder label=%s\n"), pszFolderName);
-
-            pInfo = CreateTviInfo();
-            if (pInfo) {
-                pInfo->type = TVI_TYPE_FOLDER;
-                pInfo->folderId = pFoldersInfo[k].folderId;
-                if (pFoldersInfo[k].folderName) {
-                    pInfo->displayName = CloneJavacallUtf16(pFoldersInfo[k].folderName);
-                }
-            } 
-            AddItemToTree(hwndTV, pszFolderName, 1, pInfo);
-
-            if (pszFolderName && (pszFolderName != g_szDefaultFolderName)){
-                javacall_free(pszFolderName);
-            }
-
-       }
-       if (folderNum > 0) {
-           java_ams_suite_free_all_folders_info(pFoldersInfo, folderNum);
-       }
-    }
-   
-
-    /* Iterrate over all suites and add them to the tree view */
-    
-    res = java_ams_suite_get_suite_ids(&pSuiteIds, &suiteNum);
-
-    if (res != JAVACALL_OK) {
-        wprintf(_T("ERROR: java_ams_suite_get_suite_ids() returned: %d\n"), res);
-        return FALSE;
-    }
-
-    wprintf(_T("Total suites found: %d\n"), suiteNum);
-
-    for (int i = 0; i < suiteNum; i++) {
-        res = java_ams_suite_get_info(pSuiteIds[i], &pSuiteInfo);
+        res = java_ams_suite_get_info(suiteId, &pSuiteInfo);
         if (res == JAVACALL_OK) {
               // TODO: add support for disabled suites
-              // javacall_bool enabled = suiteInfo[i].isEnabled;
-
-              // TODO: take into account folder ID
-              // javacall_int32 fid = suiteInfo[i].folderId;
+              // javacall_bool enabled = suiteInfo[s].isEnabled;
 
               jsLabel = (pSuiteInfo->displayName != NULL) ?
                   pSuiteInfo->displayName : pSuiteInfo->suiteName;
@@ -600,48 +558,46 @@ static BOOL InitTreeViewItems(HWND hwndTV)  {
               pInfo = CreateTviInfo();
               if (pInfo) {
                   pInfo->type = TVI_TYPE_SUITE;
-                  pInfo->suiteId = pSuiteIds[i];
+                  pInfo->suiteId = suiteId;
                   if (jsLabel) {
                     pInfo->displayName = CloneJavacallUtf16(jsLabel);
                   }
               }
-              AddItemToTree(hwndTV, pszSuiteName, 1, pInfo);
+              AddItemToTree(hwndTV, pszSuiteName, nLevel, pInfo);
 
               if (pszSuiteName && (pszSuiteName != g_szDefaultSuiteName)) {
                   javacall_free(pszSuiteName);
               }
 
-              javacall_ams_midlet_info* pMidletsInfo;
-              javacall_int32 midletNum;
-              res = java_ams_suite_get_midlets_info(pSuiteIds[i], &pMidletsInfo,
+              res = java_ams_suite_get_midlets_info(suiteId, &pMidletsInfo,
                   &midletNum);
               if (res == JAVACALL_OK) {
                       wprintf(_T("Total MIDlets in the suite %d\n"), midletNum);
 
-                      for (int j = 0; j < midletNum; j++) {
+                      for (int m = 0; m < midletNum; m++) {
                           // we have nothing to do if class name is not defined
-                          if (pMidletsInfo[j].className == NULL) {
+                          if (pMidletsInfo[m].className == NULL) {
                               continue;
                           }
 
-                          jsLabel = (pMidletsInfo[j].displayName != NULL) ?
-                              pMidletsInfo[j].displayName :
-                              pMidletsInfo[j].className;
+                          jsLabel = (pMidletsInfo[m].displayName != NULL) ?
+                              pMidletsInfo[m].displayName :
+                              pMidletsInfo[m].className;
 
        	                  LPTSTR pszMIDletName = JavacallUtf16ToTstr(jsLabel);
                           wprintf(_T("MIDlet label='%s', className='%s'\n"),
                               pszMIDletName,
-                              (LPWSTR)pMidletsInfo[j].className);
+                              (LPWSTR)pMidletsInfo[m].className);
 
                           pInfo = CreateTviInfo();
                           if (pInfo) {
                               pInfo->type = TVI_TYPE_MIDLET;
-                              pInfo->suiteId = pSuiteIds[i];
+                              pInfo->suiteId = suiteId;
                               pInfo->className = CloneJavacallUtf16(
-                                  pMidletsInfo[j].className);
+                                  pMidletsInfo[m].className);
                               pInfo->displayName = CloneJavacallUtf16(jsLabel);
                           }
-                          AddItemToTree(hwndTV, pszMIDletName, 2, pInfo);
+                          AddItemToTree(hwndTV, pszMIDletName, nLevel + 1, pInfo);
 
                           if (pszMIDletName) {
                               javacall_free(pszMIDletName);
@@ -658,6 +614,82 @@ static BOOL InitTreeViewItems(HWND hwndTV)  {
         } else {
             wprintf(_T("ERROR: java_ams_suite_get_info() returned: %d\n"), res);
         }
+}
+
+static BOOL InitTreeViewItems(HWND hwndTV)  {
+    javacall_suite_id* pSuiteIds;
+    javacall_suite_id* pFolderSuiteIds;
+    int suiteNum, folderNum, folderSuiteNum;
+    javacall_result res;
+    javacall_ams_folder_info* pFoldersInfo;
+    TVI_INFO* pInfo;
+
+
+    res = java_ams_suite_get_suite_ids(&pSuiteIds, &suiteNum);
+    if (res != JAVACALL_OK) {
+        wprintf(_T("ERROR: java_ams_suite_get_suite_ids() returned: %d\n"), res);
+        return FALSE;
+    }
+    wprintf(_T("Total suites found: %d\n"), suiteNum);
+
+
+    /* Add folder and all their content */
+
+    res = java_ams_suite_get_all_folders_info(&pFoldersInfo, &folderNum);
+    if (res == JAVACALL_OK) {
+        for (int f = 0; f < folderNum; f++) {
+            LPTSTR pszFolderName = (pFoldersInfo[f].folderName) ?
+                JavacallUtf16ToTstr(pFoldersInfo[f].folderName) :
+                g_szDefaultFolderName;
+            wprintf(_T("Folder label=%s\n"), pszFolderName);
+
+            pInfo = CreateTviInfo();
+            if (pInfo) {
+                pInfo->type = TVI_TYPE_FOLDER;
+                pInfo->folderId = pFoldersInfo[f].folderId;
+                if (pFoldersInfo[f].folderName) {
+                    pInfo->displayName = CloneJavacallUtf16(pFoldersInfo[f].folderName);
+                }
+            } 
+            AddItemToTree(hwndTV, pszFolderName, 1, pInfo);
+
+            if (pszFolderName && (pszFolderName != g_szDefaultFolderName)){
+                javacall_free(pszFolderName);
+            }
+
+           res = java_ams_suite_get_suites_in_folder(pFoldersInfo[f].folderId,
+               &pFolderSuiteIds, &folderSuiteNum);
+           if (res == JAVACALL_OK) {
+               for (int fs = 0; fs < folderSuiteNum; fs++) {
+                 AddSuiteToTree(hwndTV, pFolderSuiteIds[fs], 2);
+
+                  // Mark the suite as already added to the tree
+                  for (int i = 0; i < suiteNum;  i++) {
+                     if (pSuiteIds[i] == pFolderSuiteIds[fs]) {
+                         pSuiteIds[i] = JAVACALL_INVALID_SUITE_ID;
+                         break;
+                     }
+                  }
+               
+               }
+               if (folderSuiteNum > 0) {
+                   java_ams_suite_free_suite_ids(pFolderSuiteIds, folderSuiteNum);
+               }
+           }
+       }
+       if (folderNum > 0) {
+           java_ams_suite_free_all_folders_info(pFoldersInfo, folderNum);
+       }
+    }
+
+    /* Add suites that are not in any folder */
+   
+    for (int s = 0; s < suiteNum; s++) {
+        // Skip the suite if it's already in the tree
+        if (pSuiteIds[s] == JAVACALL_INVALID_SUITE_ID) {
+            continue;
+        }
+        AddSuiteToTree(hwndTV, pSuiteIds[s], 1);
     } // end for
 
     if (suiteNum > 0) {
