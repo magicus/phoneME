@@ -55,28 +55,28 @@ public class PTIResources {
             return;
         }
         
-        PTISkin.HEIGHT = SkinResources.getInt(
+        PTISkin.HEIGHT = SkinLoader.getInt(
                 SkinPropertiesIDs.PTI_HEIGHT);
 
-        PTISkin.MARGIN = SkinResources.getInt(
+        PTISkin.MARGIN = SkinLoader.getInt(
                 SkinPropertiesIDs.PTI_MARGIN);
-        PTISkin.COLOR_BG = SkinResources.getInt(
+        PTISkin.COLOR_BG = SkinLoader.getInt(
                 SkinPropertiesIDs.PTI_COLOR_BG);
-        PTISkin.COLOR_FG = SkinResources.getInt(
+        PTISkin.COLOR_FG = SkinLoader.getInt(
                 SkinPropertiesIDs.PTI_COLOR_FG);
-        PTISkin.COLOR_FG_HL = SkinResources.getInt(
+        PTISkin.COLOR_FG_HL = SkinLoader.getInt(
                 SkinPropertiesIDs.PTI_COLOR_FG_HL);
-        PTISkin.COLOR_BG_HL = SkinResources.getInt(
+        PTISkin.COLOR_BG_HL = SkinLoader.getInt(
                 SkinPropertiesIDs.PTI_COLOR_BG_HL);
-        PTISkin.COLOR_BDR = SkinResources.getInt(
+        PTISkin.COLOR_BDR = SkinLoader.getInt(
                 SkinPropertiesIDs.PTI_COLOR_BDR);
-        PTISkin.FONT = SkinResources.getFont(
+        PTISkin.FONT = SkinLoader.getFont(
                 SkinPropertiesIDs.PTI_FONT);
-        PTISkin.IMAGE_BG = SkinResources.getCompositeImage(
+        PTISkin.IMAGE_BG = SkinLoader.getCompositeImage(
                 SkinPropertiesIDs.PTI_IMAGE_BG, 3);
-        PTISkin.LEFT_ARROW = SkinResources.getImage(
+        PTISkin.LEFT_ARROW = SkinLoader.getImage(
                 SkinPropertiesIDs.PTI_LEFT_ARROW);
-        PTISkin.RIGHT_ARROW = SkinResources.getImage(
+        PTISkin.RIGHT_ARROW = SkinLoader.getImage(
                 SkinPropertiesIDs.PTI_RIGHT_ARROW);
 
         init = true;

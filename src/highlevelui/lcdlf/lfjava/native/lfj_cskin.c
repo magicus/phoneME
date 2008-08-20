@@ -83,7 +83,7 @@ static unsigned char* gsSkinFileDataPos = NULL;
     }
 
 KNIEXPORT KNI_RETURNTYPE_VOID
-KNIDECL(com_sun_midp_chameleon_skins_resources_SkinResources_shareResourcePool) {
+KNIDECL(com_sun_midp_chameleon_skins_resources_SkinResourcesImpl_shareResourcePool) {
 
 #if ENABLE_MULTIPLE_ISOLATES    
     KNI_StartHandles(1);
@@ -105,7 +105,7 @@ KNIDECL(com_sun_midp_chameleon_skins_resources_SkinResources_shareResourcePool) 
 }
 
 KNIEXPORT KNI_RETURNTYPE_VOID
-KNIDECL(com_sun_midp_chameleon_skins_resources_SkinResources_shareSkinData) {
+KNIDECL(com_sun_midp_chameleon_skins_resources_SkinResourcesImpl_shareSkinData) {
 
 #if ENABLE_MULTIPLE_ISOLATES    
     KNI_StartHandles(1);
@@ -127,7 +127,7 @@ KNIDECL(com_sun_midp_chameleon_skins_resources_SkinResources_shareSkinData) {
 }
 
 KNIEXPORT KNI_RETURNTYPE_OBJECT
-KNIDECL(com_sun_midp_chameleon_skins_resources_SkinResources_getSharedResourcePool) {
+KNIDECL(com_sun_midp_chameleon_skins_resources_SkinResourcesImpl_getSharedResourcePool) {
     
 #if ENABLE_MULTIPLE_ISOLATES
     KNI_StartHandles(1);
@@ -145,7 +145,7 @@ KNIDECL(com_sun_midp_chameleon_skins_resources_SkinResources_getSharedResourcePo
 }
 
 KNIEXPORT KNI_RETURNTYPE_OBJECT
-KNIDECL(com_sun_midp_chameleon_skins_resources_SkinResources_getSharedSkinData) {
+KNIDECL(com_sun_midp_chameleon_skins_resources_SkinResourcesImpl_getSharedSkinData) {
     
 #if ENABLE_MULTIPLE_ISOLATES
     KNI_StartHandles(1);
@@ -163,7 +163,7 @@ KNIDECL(com_sun_midp_chameleon_skins_resources_SkinResources_getSharedSkinData) 
 }
                                                                                                         
 KNIEXPORT KNI_RETURNTYPE_BOOLEAN
-KNIDECL(com_sun_midp_chameleon_skins_resources_SkinResources_ifLoadAllResources) {
+KNIDECL(com_sun_midp_chameleon_skins_resources_SkinResourcesImpl_ifLoadAllResources0) {
     
 #if ENABLE_MULTIPLE_ISOLATES
     /* 
@@ -206,7 +206,7 @@ KNIDECL(com_sun_midp_chameleon_skins_resources_LoadedSkinData_finalize) {
 }
 
 KNIEXPORT KNI_RETURNTYPE_INT
-KNIDECL(com_sun_midp_chameleon_skins_resources_SkinResources_getRomizedImageDataArrayPtr) {
+KNIDECL(com_sun_midp_chameleon_skins_resources_SkinResourcesImpl_getRomizedImageDataArrayPtr) {
     jint imageId = KNI_GetParameterAsInt(1);
     
     unsigned char* imageData;
@@ -216,7 +216,7 @@ KNIDECL(com_sun_midp_chameleon_skins_resources_SkinResources_getRomizedImageData
 }
 
 KNIEXPORT KNI_RETURNTYPE_INT
-KNIDECL(com_sun_midp_chameleon_skins_resources_SkinResources_getRomizedImageDataArrayLength) {
+KNIDECL(com_sun_midp_chameleon_skins_resources_SkinResourcesImpl_getRomizedImageDataArrayLength) {
     jint imageId = KNI_GetParameterAsInt(1);
     
     unsigned char* imageData;

@@ -54,40 +54,40 @@ public class VirtualKeyboardResources {
             return;
         }
 
-        VirtualKeyboardSkin.KEY = SkinResources.getImage(
+        VirtualKeyboardSkin.KEY = SkinLoader.getImage(
                 SkinPropertiesIDs.KEYBOARD_KEY);
 
-        VirtualKeyboardSkin.BG = SkinResources.getImage(
+        VirtualKeyboardSkin.BG = SkinLoader.getImage(
                 SkinPropertiesIDs.KEYBOARD_BG);
 
-        VirtualKeyboardSkin.BTN_UP_SEL = SkinResources.getImage(
+        VirtualKeyboardSkin.BTN_UP_SEL = SkinLoader.getImage(
                 SkinPropertiesIDs.KEYBOARD_BTN_UP_SEL);
 
-        VirtualKeyboardSkin.BTN_UP_UN = SkinResources.getImage(
+        VirtualKeyboardSkin.BTN_UP_UN = SkinLoader.getImage(
                 SkinPropertiesIDs.KEYBOARD_BTN_UP_UN);
 
-        VirtualKeyboardSkin.BTN_LEFT_SEL = SkinResources.getImage(
+        VirtualKeyboardSkin.BTN_LEFT_SEL = SkinLoader.getImage(
                 SkinPropertiesIDs.KEYBOARD_BTN_LEFT_SEL);
 
-        VirtualKeyboardSkin.BTN_LEFT_UN = SkinResources.getImage(
+        VirtualKeyboardSkin.BTN_LEFT_UN = SkinLoader.getImage(
                 SkinPropertiesIDs.KEYBOARD_BTN_LEFT_UN);
 
-        VirtualKeyboardSkin.BTN_MID_SEL = SkinResources.getImage(
+        VirtualKeyboardSkin.BTN_MID_SEL = SkinLoader.getImage(
                 SkinPropertiesIDs.KEYBOARD_BTN_MID_SEL);
 
-        VirtualKeyboardSkin.BTN_MID_UN = SkinResources.getImage(
+        VirtualKeyboardSkin.BTN_MID_UN = SkinLoader.getImage(
                 SkinPropertiesIDs.KEYBOARD_BTN_MID_UN);
 
-        VirtualKeyboardSkin.BTN_RIGHT_SEL = SkinResources.getImage(
+        VirtualKeyboardSkin.BTN_RIGHT_SEL = SkinLoader.getImage(
                 SkinPropertiesIDs.KEYBOARD_BTN_RIGHT_SEL);
 
-        VirtualKeyboardSkin.BTN_RIGHT_UN = SkinResources.getImage(
+        VirtualKeyboardSkin.BTN_RIGHT_UN = SkinLoader.getImage(
                 SkinPropertiesIDs.KEYBOARD_BTN_RIGHT_UN);
 
-        VirtualKeyboardSkin.BTN_DOWN_SEL = SkinResources.getImage(
+        VirtualKeyboardSkin.BTN_DOWN_SEL = SkinLoader.getImage(
                 SkinPropertiesIDs.KEYBOARD_BTN_DOWN_SEL);
 
-        VirtualKeyboardSkin.BTN_DOWN_UN = SkinResources.getImage(
+        VirtualKeyboardSkin.BTN_DOWN_UN = SkinLoader.getImage(
                 SkinPropertiesIDs.KEYBOARD_BTN_DOWN_UN);
         
         init = true;

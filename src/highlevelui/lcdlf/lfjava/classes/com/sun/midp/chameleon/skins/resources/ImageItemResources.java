@@ -48,31 +48,31 @@ public class ImageItemResources {
             return;
         }
         
-        ImageItemSkin.COLOR_BG_LINK_FOCUS = SkinResources.getInt(
+        ImageItemSkin.COLOR_BG_LINK_FOCUS = SkinLoader.getInt(
                 SkinPropertiesIDs.IMAGEITEM_COLOR_BG_LNK_FOC);
-        ImageItemSkin.COLOR_BG_BUTTON = SkinResources.getInt(
+        ImageItemSkin.COLOR_BG_BUTTON = SkinLoader.getInt(
                 SkinPropertiesIDs.IMAGEITEM_COLOR_BG_BTN);
-        ImageItemSkin.COLOR_BORDER_LT = SkinResources.getInt(
+        ImageItemSkin.COLOR_BORDER_LT = SkinLoader.getInt(
                 SkinPropertiesIDs.IMAGEITEM_COLOR_BORDER_LT);
-        ImageItemSkin.COLOR_BORDER_DK = SkinResources.getInt(
+        ImageItemSkin.COLOR_BORDER_DK = SkinLoader.getInt(
                 SkinPropertiesIDs.IMAGEITEM_COLOR_BORDER_DK);
-        ImageItemSkin.PAD_LINK_H = SkinResources.getInt(
+        ImageItemSkin.PAD_LINK_H = SkinLoader.getInt(
                 SkinPropertiesIDs.IMAGEITEM_PAD_LNK_H);
-        ImageItemSkin.PAD_LINK_V = SkinResources.getInt(
+        ImageItemSkin.PAD_LINK_V = SkinLoader.getInt(
                 SkinPropertiesIDs.IMAGEITEM_PAD_LNK_V);
-        ImageItemSkin.PAD_BUTTON_H = SkinResources.getInt(
+        ImageItemSkin.PAD_BUTTON_H = SkinLoader.getInt(
                 SkinPropertiesIDs.IMAGEITEM_PAD_BTN_H);
-        ImageItemSkin.PAD_BUTTON_V = SkinResources.getInt(
+        ImageItemSkin.PAD_BUTTON_V = SkinLoader.getInt(
                 SkinPropertiesIDs.IMAGEITEM_PAD_BTN_V);
-        ImageItemSkin.BUTTON_BORDER_W = SkinResources.getInt(
+        ImageItemSkin.BUTTON_BORDER_W = SkinLoader.getInt(
                 SkinPropertiesIDs.IMAGEITEM_BTN_BORDER_W);
-        ImageItemSkin.IMAGE_LINK_H = SkinResources.getImage(
+        ImageItemSkin.IMAGE_LINK_H = SkinLoader.getImage(
                 SkinPropertiesIDs.IMAGEITEM_IMAGE_LNK_H);
-        ImageItemSkin.IMAGE_LINK_V = SkinResources.getImage(
+        ImageItemSkin.IMAGE_LINK_V = SkinLoader.getImage(
                 SkinPropertiesIDs.IMAGEITEM_IMAGE_LNK_V);
         /*
         Uncomment if background image for button is used
-        ImageItemSkin.IMAGE_BUTTON = SkinResources.getCompositeImage(
+        ImageItemSkin.IMAGE_BUTTON = SkinLoader.getCompositeImage(
                 SkinPropertiesIDs.IMAGEITEM_IMAGE_BUTTON, 9);
         */
 

@@ -49,41 +49,41 @@ public class GaugeResources {
             return;
         }
         
-        GaugeSkin.ORIENTATION = SkinResources.getInt(
+        GaugeSkin.ORIENTATION = SkinLoader.getInt(
                 SkinPropertiesIDs.GAUGE_ORIENT);
-        GaugeSkin.WIDTH = SkinResources.getInt(
+        GaugeSkin.WIDTH = SkinLoader.getInt(
                 SkinPropertiesIDs.GAUGE_WIDTH);
-        GaugeSkin.HEIGHT = SkinResources.getInt(
+        GaugeSkin.HEIGHT = SkinLoader.getInt(
                 SkinPropertiesIDs.GAUGE_HEIGHT);
-        GaugeSkin.METER_X = SkinResources.getInt(
+        GaugeSkin.METER_X = SkinLoader.getInt(
                 SkinPropertiesIDs.GAUGE_METER_X);
-        GaugeSkin.METER_Y = SkinResources.getInt(
+        GaugeSkin.METER_Y = SkinLoader.getInt(
                 SkinPropertiesIDs.GAUGE_METER_Y);
-        GaugeSkin.INC_BTN_X = SkinResources.getInt(
+        GaugeSkin.INC_BTN_X = SkinLoader.getInt(
                 SkinPropertiesIDs.GAUGE_INC_BTN_X);
-        GaugeSkin.INC_BTN_Y = SkinResources.getInt(
+        GaugeSkin.INC_BTN_Y = SkinLoader.getInt(
                 SkinPropertiesIDs.GAUGE_INC_BTN_Y);
-        GaugeSkin.DEC_BTN_X = SkinResources.getInt(
+        GaugeSkin.DEC_BTN_X = SkinLoader.getInt(
                 SkinPropertiesIDs.GAUGE_DEC_BTN_X);
-        GaugeSkin.DEC_BTN_Y = SkinResources.getInt(
+        GaugeSkin.DEC_BTN_Y = SkinLoader.getInt(
                 SkinPropertiesIDs.GAUGE_DEC_BTN_Y);
-        GaugeSkin.VALUE_X = SkinResources.getInt(
+        GaugeSkin.VALUE_X = SkinLoader.getInt(
                 SkinPropertiesIDs.GAUGE_VALUE_X);
-        GaugeSkin.VALUE_Y = SkinResources.getInt(
+        GaugeSkin.VALUE_Y = SkinLoader.getInt(
                 SkinPropertiesIDs.GAUGE_VALUE_Y);
-        GaugeSkin.VALUE_WIDTH = SkinResources.getInt(
+        GaugeSkin.VALUE_WIDTH = SkinLoader.getInt(
                 SkinPropertiesIDs.GAUGE_VALUE_WIDTH);
-        GaugeSkin.IMAGE_BG = SkinResources.getImage(
+        GaugeSkin.IMAGE_BG = SkinLoader.getImage(
                 SkinPropertiesIDs.GAUGE_IMAGE_BG);
-        GaugeSkin.IMAGE_METER_EMPTY = SkinResources.getImage(
+        GaugeSkin.IMAGE_METER_EMPTY = SkinLoader.getImage(
                 SkinPropertiesIDs.GAUGE_IMAGE_MTR_EMPTY);
-        GaugeSkin.IMAGE_METER_FULL = SkinResources.getImage(
+        GaugeSkin.IMAGE_METER_FULL = SkinLoader.getImage(
                 SkinPropertiesIDs.GAUGE_IMAGE_MTR_FULL);
-        GaugeSkin.IMAGE_INC_BTN = SkinResources.getImage(
+        GaugeSkin.IMAGE_INC_BTN = SkinLoader.getImage(
                 SkinPropertiesIDs.GAUGE_IMAGE_INC_BTN);
-        GaugeSkin.IMAGE_DEC_BTN = SkinResources.getImage(
+        GaugeSkin.IMAGE_DEC_BTN = SkinLoader.getImage(
                 SkinPropertiesIDs.GAUGE_IMAGE_DEC_BTN);
-        GaugeSkin.IMAGE_VALUES = SkinResources.getImage(
+        GaugeSkin.IMAGE_VALUES = SkinLoader.getImage(
                 SkinPropertiesIDs.GAUGE_IMAGE_VALUES);
         
         init = true;

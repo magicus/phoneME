@@ -50,7 +50,7 @@ import javax.microedition.lcdui.Graphics;
 import java.io.*;
 
 /** Utility class for skin resources. */
-public class SkinResources {
+public class SkinResourcesImpl extends SkinResources {
 
     /** Constant to distinguish image resources with no index */
     private static final int NO_INDEX = -1;
@@ -82,17 +82,6 @@ public class SkinResources {
         SecurityInitializer.requestToken(new SecurityTrusted());
     
     /**
-     * A special internal reference to a tunnel which will provide
-     * package access to Image inside of javax.microedition.lcdui.
-     */
-    private static GraphicsAccess graphicsAccess;
-
-    /**
-     * Display access helper class.
-     */
-    private static DisplayAccess displayAccess;
-
-    /**
      * True, if skin is being loaded in AMS Isolate in MVM case,
      * false otherwise. Always true in SVM case.
      */
@@ -103,42 +92,7 @@ public class SkinResources {
      * so the SecurityIntializer can do a newInstance() on it and call
      * the initSecurityToken() method.
      */
-    private SkinResources() {
-    }
-
-    /**
-     * This method is called by the Display class to hand out GraphicsAccess
-     * tunnel instance created in the public javax.microedition.lcdui
-     * package and needed for romized images loading. 
-     *
-     * @param access used to get images from the public LCDUI package
-     */
-    public static void initGraphicsAccess(GraphicsAccess access) {
-        if (graphicsAccess == null) {
-            graphicsAccess = access;
-        }
-    }
-
-    /**
-     * This method is called by the Display class to initialize
-     * Display access tunnel class.
-     *
-     * @param access 
-     */
-    public static void initDisplayAccess(DisplayAccess access) {
-        displayAccess = access;
-    }
-
-    /**
-     * This is method to be called before loadSkin to define the screen 
-     * size while static initialization because no Display was created yet
-     * and there is no DisplayAccessor at that stage.
-     * @param width screen width
-     * @param height screen height
-     */
-    public static void setScreenSize(int width, int height) {
-        ScreenSkin.WIDTH = width;
-        ScreenSkin.HEIGHT = height;
+    public SkinResourcesImpl() {
     }
 
     /**
@@ -151,7 +105,7 @@ public class SkinResources {
      * @throws IOException if there was error reading skin data file
      * @throws IllegalStateException if skin data file is invalid
      */
-    public static void loadSkin(boolean reload) 
+    public void loadSkin(boolean reload) 
         throws IllegalStateException, IOException {
 
         resources = null;
@@ -190,13 +144,6 @@ public class SkinResources {
             shareSkinData(skinData);
         }
         
-        
-        // After reading in the properties from storage (either ROM
-        // image or filesystem, we establish all the individual values
-        // in the various properties classes
-        boolean loadAll = ifLoadAllResources();
-        loadResources(loadAll);
-        
         // NOTE: The remaining properties classes need to be set and
         // possibly re-loaded lazily. 
         
@@ -211,7 +158,7 @@ public class SkinResources {
      * @param identifier a unique identifier for the image property
      * @return the Image if one is available, null otherwise
      */
-    public static Image getImage(int identifier) {
+    public Image getImage(int identifier) {
         return getImage(identifier, NO_INDEX);
     }
     
@@ -224,7 +171,7 @@ public class SkinResources {
      *
      * @return the Image if one is available, null otherwise
      */
-    public static Image getImage(int identifier, int index) {
+    public Image getImage(int identifier, int index) {
         int imageIdx = 0;
         String imageIdentifier = null;
         Image image = null;
@@ -330,7 +277,7 @@ public class SkinResources {
      * @return the Image[] with loaded image pieces,
      * or null if some of the pieces is not available
      */
-    public static Image[] getCompositeImage(
+    public Image[] getCompositeImage(
             int identifier, int piecesNumber) {
         Image[] result = new Image[piecesNumber];
         for (int i = 0; i < piecesNumber; i++) {
@@ -350,7 +297,7 @@ public class SkinResources {
      * @param identifier a unique identifier for the Font property
      * @return the Font object or null in case of error
      */     
-    public static Font getFont(int identifier) {
+    public Font getFont(int identifier) {
         int fontIdx = 0;
         int fontIdentifier = 0;
         Font font = null;
@@ -401,7 +348,7 @@ public class SkinResources {
      * @param identifier a unique identifier for the String property
      * @return the String object or null in case of error
      */     
-    public static String getString(int identifier) {
+    public String getString(int identifier) {
         try {
             int stringIdx = skinData.properties[identifier];
             return skinData.stringValues[stringIdx];
@@ -422,7 +369,7 @@ public class SkinResources {
      * @param identifier a unique identifier for the integer property
      * @return an integer or -1 in case of error
      */     
-    public static int getInt(int identifier) {
+    public int getInt(int identifier) {
         try {
             return skinData.properties[identifier];
         } catch (Exception e) {
@@ -442,7 +389,7 @@ public class SkinResources {
      * @param identifier a unique identifier for the property
      * @return the int[] representing the sequence or null in case of error
      */
-    public static int[] getNumbersSequence(int identifier) {
+    public int[] getNumbersSequence(int identifier) {
         try {
             int seqIdx = skinData.properties[identifier];
             int totalNumbers = skinData.intSeqValues[seqIdx];
@@ -460,110 +407,6 @@ public class SkinResources {
         }
         return null;
     }    
-
-    /**
-     * Translates constants composition from SkinResourcesConstants class
-     * into corresponding constants composition from Graphics class.
-     *
-     * @param num constants composition
-     * @return translated composition
-     */
-    static int resourceConstantsToGraphics(int num) {
-        if (num == SkinResourcesConstants.SOLID) {
-            return Graphics.SOLID;
-        } else if (num == SkinResourcesConstants.DOTTED) {
-            return Graphics.DOTTED;
-        }
-
-        int rv = 0;
-        if ((num & SkinResourcesConstants.TOP) != 0) {
-            rv |= Graphics.TOP;
-        }
-        if ((num & SkinResourcesConstants.LEFT) != 0) {
-            rv |= Graphics.LEFT;
-        }
-        if ((num & SkinResourcesConstants.BOTTOM) != 0) {
-            rv |= Graphics.BOTTOM;
-        }
-        if ((num & SkinResourcesConstants.RIGHT) != 0) {
-            rv |= Graphics.RIGHT;
-        }
-        if ((num & SkinResourcesConstants.VCENTER) != 0) {
-            rv |= Graphics.VCENTER;
-        }
-        if ((num & SkinResourcesConstants.HCENTER) != 0) {
-            rv |= Graphics.HCENTER;
-        }
-
-        return rv;
-    }
-
-    /**
-     * Load resources data.
-     * 
-     * @param loadAll if true, load all resources. Otherwise, 
-     * load only selected resources. The rest will be loaded 
-     * lazily.
-     */
-    private static void loadResources(boolean loadAll) {
-        // load selected resources
-        ScreenResources.load();
-        ScrollIndResources.load();
-        SoftButtonResources.load();
-        TickerResources.load();
-        TitleResources.load();
-        AlertResources.load();
-
-
-        // load the rest of resources
-        if (loadAll) {
-            PTIResources.load();
-            InputModeResources.load();
-            BusyCursorResources.load();
-            ChoiceGroupResources.load();
-            DateEditorResources.load();
-            DateFieldResources.load();
-            GaugeResources.load();
-            ImageItemResources.load();
-            MenuResources.load();
-            ProgressBarResources.load();
-            StringItemResources.load();
-            TextFieldResources.load();
-            UpdateBarResources.load();
-            VirtualKeyboardResources.load();
-        }
-
-        checkLocale();
-    }
-
-    public static void checkLocale() {
-        String locale = System.getProperty("microedition.locale");
-
-
-        if (locale != null && locale.equals("he-IL")) {
-            ScreenSkin.TEXT_ORIENT = Graphics.RIGHT;
-            TickerSkin.DIRECTION = Graphics.RIGHT;
-            TitleSkin.TEXT_ALIGN_X = Graphics.RIGHT;
-            ScreenSkin.RL_DIRECTION = true;
-        } else {
-            ScreenSkin.TEXT_ORIENT = Graphics.LEFT;
-            TickerSkin.DIRECTION = Graphics.LEFT;
-            TitleSkin.TEXT_ALIGN_X = Graphics.LEFT;
-            ScreenSkin.RL_DIRECTION = false;
-        }
-
-    }
-
-    /**
-     * Refresh skin after screen size is changed
-     */
-    public static void adjustScreen() {
-
-        setScreenSize(displayAccess.getDisplayWidth(), 
-                      displayAccess.getDisplayHeight());
-        SoftButtonResources.load(true);
-        AlertResources.load(true);
-    }
 
     /**
      * Native method to store a strong cross-isolate reference
@@ -598,11 +441,20 @@ public class SkinResources {
     private native static Object getSharedSkinData();
     
     /**
+     * Determine how skin resources should be loaded: at once,
+     * during skin loading, or lazily, on first use.
+     * @return true if all resources should be loaded at once.
+     */
+    public boolean ifLoadAllResources() {
+        return ifLoadAllResources0();
+    }
+
+    /**
      * Determine how skin resources should be loaded: at once, 
      * during skin loading, or lazily, on first use.
      * @return true if all resources should be loaded at once.
      */
-    private native static boolean ifLoadAllResources();
+    public native static boolean ifLoadAllResources0();
 
     /**
      * Returns native pointer to romized image data array as Java int
