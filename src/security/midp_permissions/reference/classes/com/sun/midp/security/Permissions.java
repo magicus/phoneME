@@ -734,6 +734,7 @@ public final class Permissions {
                 if (name.startsWith("untrusted") || name.startsWith("unidentified"))
                     unsignedDomain = name;
             }
+            loadingFinished();
             domainsAll = new DomainPolicy[domainsCounter];
             System.arraycopy(domains, 0, domainsAll, 0, domainsCounter);
             
@@ -772,6 +773,7 @@ public final class Permissions {
     static native String [] getGroupMessages(String group);
     static native byte      getMaxValue(String domain, String group);
     static native byte      getDefaultValue(String domain, String group);
+    static native void      loadingFinished();
 }
 
 /** Specifies a permission name and its group. */

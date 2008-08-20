@@ -299,6 +299,9 @@ void permissions_dealloc(void* array) {
     return; //all arrays are static
 }
 
+void permissions_loading_finished() {
+}
+
 #define DEF_NUM_OF_LINES 6
 static struct _messages {
     string list[DEF_NUM_OF_LINES];
