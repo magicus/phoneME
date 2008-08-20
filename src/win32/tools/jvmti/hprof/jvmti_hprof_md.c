@@ -30,8 +30,43 @@
 #include "jvmti_hprof.h"
 
 #ifdef WINCE
-#define GETFILE(x) _getstdfilex(x)
+#define FILETAB_SIZE 32
+static FILE* filetab[FILETAB_SIZE];
+static BOOL filetab_initted = FALSE;
+
+static void init_filetab()
+{
+    int i;
+    for (i = 0; i < FILETAB_SIZE; i++) {
+        filetab[i] = NULL;
+    }
+}
+
+static FILE* GETFILE(int fd)
+{
+    if (fd < 0 || fd >= FILETAB_SIZE)
+        return NULL;
+    return filetab[fd];
+}
+
+static int file_to_fd(FILE *fp)
+{
+    int i;
+    if (!filetab_initted) {
+        init_filetab();
+        filetab_initted = TRUE;
+    }
+    for (i = 0; i < FILETAB_SIZE; i++) {
+        if (filetab[i] == NULL) {
+            filetab[i] = fp;
+            return i;
+        }
+    }
+    return -1;
+}
+
 #define GETPID()        GetCurrentProcessId()
+
 
 void
 abort(void)
@@ -114,7 +149,7 @@ md_open(const char *filename)
 #ifdef WINCE
     FILE *fp = fopen(filename, "rb");
     if (fp != NULL) {
-	return (int)_fileno(fp);
+	return file_to_fd(fp);
     } else {
 	return -1;
     }
@@ -135,7 +170,7 @@ md_creat(const char *filename)
 #ifdef WINCE
     FILE *fp = fopen(filename, "wb");
     if (fp != NULL) {
-	return (int)_fileno(fp);
+	return file_to_fd(fp);
     } else {
 	return -1;
     }
@@ -178,6 +213,7 @@ md_close(int filedes)
 {
 #ifdef WINCE
     fclose(GETFILE(filedes));
+    filetab[filedes] = NULL;
 #else
     (void)close(filedes);
 #endif
