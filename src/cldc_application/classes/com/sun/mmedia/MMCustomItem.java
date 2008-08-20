@@ -103,7 +103,7 @@ public abstract class MMCustomItem extends CustomItem {
 
         protected void paint(Graphics g) {
             g.fillRect(0, 0, getWidth(), getHeight());
-            videoPainter.paintVideo(g);
+            videoPainter.paintVideo(g, false);
         }
 
         // Any key returns to normal mode

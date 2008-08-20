@@ -57,7 +57,7 @@ class DirectVideo implements VideoControl, MIDPVideoPainter {
     private final int SCREEN_HEIGHT = 240;//nGetScreenHeight();
     private final int DEFAULT_WIDTH = 80;
     private final int DEFAULT_HEIGHT = 80;
-    private final int ALPHA_COLOR = 1;
+    private final int ALPHA_COLOR = 0x010101;
 
     // NOTE: You have to calibrate this value carefully
     //       If you increase this value, fake preview quality goes down but, system overhead decrease
@@ -211,7 +211,7 @@ class DirectVideo implements VideoControl, MIDPVideoPainter {
      */
     private void prepareClippedPreview(Graphics g, int x, int y, int w, int h) {
         if (1 == source.setVideoAlpha( true, ALPHA_COLOR)) {
-            g.setColor(0, 0, 8);    // IMPL NOTE - Consider RGB565 conversion
+            g.setColor(ALPHA_COLOR);    // IMPL NOTE - Consider RGB565 conversion
             g.fillRect(x, y, w, h);
             setTranslatedVideoLocation(g, x, y, w, h);
             source.setVideoVisible( !hidden);
@@ -521,8 +521,9 @@ class DirectVideo implements VideoControl, MIDPVideoPainter {
      * Notice: This have to be done before device painting action
      * Zoran ESDK use mask color to draw direct video
      */
-    public void paintVideo(Graphics g) {
+    public void paintVideo(Graphics g, boolean isOverlapping) {
         int x, y, w, h;
+System.out.println("---> jsr135 DirectVideo: sysMenuUp = " + isOverlapping);
         
         synchronized(boundLock) {
             x = dx;
@@ -540,7 +541,7 @@ class DirectVideo implements VideoControl, MIDPVideoPainter {
             hidden = true;
         }
 
-        if (hidden) {
+        if (hidden || isOverlapping) {
             prepareClippedPreview(g, x, y, w, h);
         } else if (visible && started) {
             prepareVideoSurface(g, x, y, w, h);
