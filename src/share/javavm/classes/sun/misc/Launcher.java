@@ -54,6 +54,7 @@ import java.security.Permission;
 import java.security.ProtectionDomain;
 import java.security.CodeSource;
 import sun.security.action.GetPropertyAction;
+import sun.net.www.ParseUtil;
 
 /**
  * This class is used by the system to launch the main application.
@@ -736,6 +737,7 @@ public class Launcher {
 	} catch (IOException e) {
 	}
 	String path = file.getAbsolutePath();
+        path = ParseUtil.encodePath(path);
 	if (File.separatorChar != '/') {
 	    path = path.replace(File.separatorChar, '/');
 	}
