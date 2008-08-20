@@ -490,6 +490,10 @@ class DirectVideo implements VideoControl, MIDPVideoPainter {
         else
         {
             String supported = System.getProperty( "video.snapshot.encodings" );
+            if (null == supported)
+            {
+                throw new MediaException( "No supported snapshot formats found" );
+            }
             int idx = supported.indexOf( imageType );
             if( -1 == idx )
             {
