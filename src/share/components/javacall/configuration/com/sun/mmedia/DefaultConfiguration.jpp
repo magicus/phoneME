@@ -152,7 +152,7 @@ public class DefaultConfiguration extends Configuration {
                 }
             }
             if(protocol.equals("rtsp")) {
-                ll_protocol = new String[] {"rtp"};
+                ll_protocol = new String[] {"rtp", "rtsp"};
             }
         }
 
