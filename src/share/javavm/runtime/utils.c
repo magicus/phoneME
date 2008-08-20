@@ -2079,24 +2079,24 @@ CVMinitPathValues(void *propsPtr, CVMpathInfo *pathInfo,
     size += strlen(dllPath) + 1;
     /* Now add space for the entries in the sysclasspath */
     if (preBootclasspath != NULL) {
-      size += strlen(preBootclasspath) + 1;
+        size += strlen(preBootclasspath) + 1;
     }
     if (postBootclasspath != NULL) {
-      size += strlen(postBootclasspath) + 1;
+        size += strlen(postBootclasspath) + 1;
     }
     if (*userBootclasspath != NULL) {
-      /* user has set bootclasspath use it instead of sysclasspath */
-      size += strlen(*userBootclasspath);
+        /* user has set bootclasspath use it instead of sysclasspath */
+        size += strlen(*userBootclasspath);
     } else {
-      libPathLen = strlen(libPath);
-      for (i = 0; jarNames[ i ] != NULL; i++) {
-        /* If in the midst of the path, add a path delimiter */
-        if (i > 0 ) {
-          size += strlen(CVM_PATH_CLASSPATH_SEPARATOR);
+        libPathLen = strlen(libPath);
+        for (i = 0; jarNames[ i ] != NULL; i++) {
+            /* If in the midst of the path, add a path delimiter */
+            if (i > 0 ) {
+                size += strlen(CVM_PATH_CLASSPATH_SEPARATOR);
+            }
+            /* Space for the next entry, including two path delimiters */
+            size += libPathLen + sizeof(char) + strlen(jarNames[i]);
         }
-        /* Space for the next entry, including two path delimiters */
-	size += libPathLen + sizeof(char) + strlen(jarNames[i]);
-      }
     }
     /* Now the final terminator for the sysclasspath. */
     size++;
@@ -2112,7 +2112,7 @@ CVMinitPathValues(void *propsPtr, CVMpathInfo *pathInfo,
     
     p0 = p = (char *)malloc(size);
     if (p == NULL) {
-      return CVM_FALSE;
+        return CVM_FALSE;
     }
     memset(p, 0, size);
     memset(props, 0, sizeof (CVMProperties));
@@ -2130,41 +2130,41 @@ CVMinitPathValues(void *propsPtr, CVMpathInfo *pathInfo,
     /* Record boot class path */
     *p = '\0';
     if (*userBootclasspath == NULL) {
-      if (preBootclasspath != NULL) {
-        strcat(p, preBootclasspath);
-        if (jarNames[0] != NULL) {
-          /* at least one jar so add separator */
-          strcat(p, CVM_PATH_CLASSPATH_SEPARATOR);
+        if (preBootclasspath != NULL) {
+            strcat(p, preBootclasspath);
+            if (jarNames[0] != NULL) {
+                /* at least one jar so add separator */
+                strcat(p, CVM_PATH_CLASSPATH_SEPARATOR);
+            }
         }
-      }
-      for (i = 0; jarNames[i] != NULL; i++) {
-        if (i > 0) {
-          strcat(p, CVM_PATH_CLASSPATH_SEPARATOR);
+        for (i = 0; jarNames[i] != NULL; i++) {
+            if (i > 0) {
+                strcat(p, CVM_PATH_CLASSPATH_SEPARATOR);
+            }
+            strcat(p, libPath);
+            pEnd = p+strlen(p);
+            *pEnd++ = CVM_PATH_LOCAL_DIR_SEPARATOR;
+            strcpy(pEnd, jarNames[i]);
         }
-        strcat(p, libPath);
-	pEnd = p+strlen(p);
-        *pEnd++ = CVM_PATH_LOCAL_DIR_SEPARATOR;
-        strcpy(pEnd, jarNames[i]);
-      }
-      if (postBootclasspath != NULL) {
-        if (i > 0 || preBootclasspath != NULL) {
-          /* had at least one path so add separator */
-          strcat(p, CVM_PATH_CLASSPATH_SEPARATOR);
+        if (postBootclasspath != NULL) {
+            if (i > 0 || preBootclasspath != NULL) {
+                /* had at least one path so add separator */
+                strcat(p, CVM_PATH_CLASSPATH_SEPARATOR);
+            }
+            strcat(p, postBootclasspath);
         }
-        strcat(p, postBootclasspath);
-      }
     } else {
-      /* user has provided a bootclasspath so use it */
-      if (preBootclasspath != NULL) {
-        strcat(p, preBootclasspath);
-        strcat(p, CVM_PATH_CLASSPATH_SEPARATOR);
-        pEnd = p+strlen(p);
-      }
-      strcat(p, *userBootclasspath);
-      if (postBootclasspath != NULL) {
-        strcat(p, CVM_PATH_CLASSPATH_SEPARATOR);
-        strcat(p, postBootclasspath);
-      }
+        /* user has provided a bootclasspath so use it */
+        if (preBootclasspath != NULL) {
+            strcat(p, preBootclasspath);
+            strcat(p, CVM_PATH_CLASSPATH_SEPARATOR);
+            pEnd = p+strlen(p);
+        }
+        strcat(p, *userBootclasspath);
+        if (postBootclasspath != NULL) {
+            strcat(p, CVM_PATH_CLASSPATH_SEPARATOR);
+            strcat(p, postBootclasspath);
+        }
     }
     props->sysclasspath = p;
     /* return a copy back to caller */
@@ -2203,19 +2203,19 @@ CVMdestroyPathValues(void *propsPtr)
 void CVMdestroyPathInfo(CVMpathInfo *pathInfo)
 {
     if (pathInfo->basePath != NULL) {
-      free(pathInfo->basePath);
+        free(pathInfo->basePath);
     }
     if (pathInfo->dllPath != NULL) {
-      free(pathInfo->dllPath);
+        free(pathInfo->dllPath);
     }
     if (pathInfo->libPath != NULL) {
-      free(pathInfo->libPath);
+        free(pathInfo->libPath);
     }
     if (pathInfo->preBootclasspath != NULL) {
-      free(pathInfo->preBootclasspath);
+        free(pathInfo->preBootclasspath);
     }
     if (pathInfo->postBootclasspath != NULL) {
-      free(pathInfo->postBootclasspath);
+        free(pathInfo->postBootclasspath);
     }
 }
 

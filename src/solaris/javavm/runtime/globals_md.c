@@ -191,11 +191,11 @@ CVMBool CVMinitStaticState(CVMpathInfo *pathInfo)
 	}
         pathInfo->basePath = strdup(p0);
         if (pathInfo->basePath == NULL) {
-          return CVM_FALSE;
+            return CVM_FALSE;
         }
         p = (char *)malloc(strlen(p0) + 1 + strlen("lib") + 1);
         if (p == NULL) {
-          return CVM_FALSE;
+            return CVM_FALSE;
         }
         strcpy(p, p0);
         pEnd = p + strlen(p);
@@ -205,7 +205,7 @@ CVMBool CVMinitStaticState(CVMpathInfo *pathInfo)
         /* lib and dll are the same so this shortcut */
         pathInfo->dllPath = strdup(p);
         if (pathInfo->dllPath == NULL) {
-          return CVM_FALSE;
+            return CVM_FALSE;
         }
         return CVM_TRUE;
     badpath:
