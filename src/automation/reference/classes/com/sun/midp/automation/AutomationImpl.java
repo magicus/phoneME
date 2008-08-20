@@ -76,7 +76,7 @@ final class AutomationImpl extends Automation {
         return AutoEventFactoryImpl.getInstance();
     }
 
-    public void injectEvent(AutoEvent event) 
+    public void simulateEvents(AutoEvent event) 
         throws IllegalArgumentException {
 
         if (event == null) {
@@ -87,7 +87,7 @@ final class AutomationImpl extends Automation {
         NativeEvent nativeEvent = eventBase.toNativeEvent();
         if (nativeEvent == null) {
             throw new IllegalArgumentException(
-                    "Can't inject this type of event: " + 
+                    "Can't simulate this type of event: " + 
                     eventBase.getType().getName());
         }
 
@@ -102,45 +102,45 @@ final class AutomationImpl extends Automation {
         nativeEvent.intParam4 = forgeroundDisplayId;
         eventQueue.sendNativeEventToIsolate(nativeEvent,forgeroundIsolateId);
     }
-    
-    public void injectKeyEvent(AutoKeyCode keyCode, AutoKeyState keyState) {
-        AutoEvent e = eventFactory.createKeyEvent(keyCode, keyState);
-        injectEvent(e);
-    }
-    
-    public void injectKeyEvent(char keyChar, AutoKeyState keyState) {
-        AutoEvent e = eventFactory.createKeyEvent(keyChar, keyState);
-        injectEvent(e);
+
+    public void simulateEvents(AutoEventSequence events, int speedDivisor) {
     }
 
-    public void injectKeyClick(AutoKeyCode keyCode) {
+    public void simulateEvents(AutoEventSequence events) {
+        simulateEvents(events, 1);
+    }
+    
+    
+    public void simulateKeyEvent(AutoKeyCode keyCode, AutoKeyState keyState) {
+        AutoEvent e = eventFactory.createKeyEvent(keyCode, keyState);
+        simulateEvents(e);
+    }
+    
+    public void simulateKeyEvent(char keyChar, AutoKeyState keyState) {
+        AutoEvent e = eventFactory.createKeyEvent(keyChar, keyState);
+        simulateEvents(e);
+    }
+
+    public void simulateKeyClick(AutoKeyCode keyCode) {
         AutoEvent e;
 
         e = eventFactory.createKeyEvent(keyCode, AutoKeyState.PRESSED);
-        injectEvent(e);
+        simulateEvents(e);
 
         e = eventFactory.createKeyEvent(keyCode, AutoKeyState.RELEASED);
-        injectEvent(e);
+        simulateEvents(e);
     }
     
-    public void injectKeyClick(char keyChar) {
+    public void simulateKeyClick(char keyChar) {
         AutoEvent e;
 
         e = eventFactory.createKeyEvent(keyChar, AutoKeyState.PRESSED);
-        injectEvent(e);
+        simulateEvents(e);
 
         e = eventFactory.createKeyEvent(keyChar, AutoKeyState.RELEASED);
-        injectEvent(e);        
+        simulateEvents(e);        
     }
     
-
-    public void replayEvents(AutoEventSequence events, int speedDivisor) {
-    }
-
-    public void replayEvents(AutoEventSequence events) {
-        replayEvents(events, 1);
-    }
-
     private static native void getForegroundIsolateAndDisplay(
             int[] foregroundIsolateAndDisplay);
 }

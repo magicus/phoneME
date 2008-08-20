@@ -30,7 +30,7 @@ import com.sun.midp.i3test.*;
 import java.util.*;
 
 /**
- * i3test for keyboard events injection
+ * i3test for keyboard events simulateion
  */
 public class TestKeyboardEventsInjection extends TestCase {
     /** URL of suite to install */
@@ -89,13 +89,13 @@ public class TestKeyboardEventsInjection extends TestCase {
         midlet.switchTo(AutoMIDletForegroundState.FOREGROUND, true);
 
 
-        // inject 'A'
+        // simulate 'A'
         AutoKeyEvent eventP, eventR;
         eventP = eventFactory.createKeyEvent('A', AutoKeyState.PRESSED);
         eventR = eventFactory.createKeyEvent('A', AutoKeyState.RELEASED);
 
-        a.injectEvent(eventP);
-        a.injectEvent(eventR);
+        a.simulateEvents(eventP);
+        a.simulateEvents(eventR);
 
         try {
             Thread.sleep(500);
@@ -103,9 +103,9 @@ public class TestKeyboardEventsInjection extends TestCase {
         }
 
 
-        // inject 'B'
-        a.injectKeyEvent('B', AutoKeyState.PRESSED);
-        a.injectKeyEvent('B', AutoKeyState.RELEASED);
+        // simulate 'B'
+        a.simulateKeyEvent('B', AutoKeyState.PRESSED);
+        a.simulateKeyEvent('B', AutoKeyState.RELEASED);
         
         try {
             Thread.sleep(500);
@@ -113,8 +113,8 @@ public class TestKeyboardEventsInjection extends TestCase {
         }
         
 
-        // inject 'C'
-        a.injectKeyClick('C');
+        // simulate 'C'
+        a.simulateKeyClick('C');
 
         try {
             Thread.sleep(500);
@@ -122,25 +122,25 @@ public class TestKeyboardEventsInjection extends TestCase {
         }
 
 
-        // inject right soft key click
-        a.injectKeyClick(AutoKeyCode.SOFT2);
-
-        try {
-            Thread.sleep(500);
-        } catch (InterruptedException ie) {
-        }
-        
-
-        // inject down key click
-        a.injectKeyClick(AutoKeyCode.DOWN);
+        // simulate right soft key click
+        a.simulateKeyClick(AutoKeyCode.SOFT2);
 
         try {
             Thread.sleep(500);
         } catch (InterruptedException ie) {
         }
         
-        // inject select key click
-        a.injectKeyClick(AutoKeyCode.SELECT); 
+
+        // simulate down key click
+        a.simulateKeyClick(AutoKeyCode.DOWN);
+
+        try {
+            Thread.sleep(500);
+        } catch (InterruptedException ie) {
+        }
+        
+        // simulate select key click
+        a.simulateKeyClick(AutoKeyCode.SELECT); 
 
         try {
             Thread.sleep(2500);

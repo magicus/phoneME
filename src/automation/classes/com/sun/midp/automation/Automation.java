@@ -51,16 +51,14 @@ public abstract class Automation {
     public abstract AutoEventFactory getEventFactory()
         throws IllegalStateException;
 
-    public abstract void injectEvent(AutoEvent event);
-
-    public abstract void injectKeyEvent(AutoKeyCode keyCode, 
-            AutoKeyState keyState);
-    public abstract void injectKeyEvent(char keyChar, AutoKeyState keyState);
-    public abstract void injectKeyClick(AutoKeyCode keyCode);
-    public abstract void injectKeyClick(char keyChar);
-
-
-    public abstract void replayEvents(AutoEventSequence events, 
+    public abstract void simulateEvents(AutoEvent event);
+    public abstract void simulateEvents(AutoEventSequence events, 
             int speedDivisor);
-    public abstract void replayEvents(AutoEventSequence events);
+    public abstract void simulateEvents(AutoEventSequence events);
+
+    public abstract void simulateKeyEvent(AutoKeyCode keyCode, 
+            AutoKeyState keyState);
+    public abstract void simulateKeyEvent(char keyChar, AutoKeyState keyState);
+    public abstract void simulateKeyClick(AutoKeyCode keyCode);
+    public abstract void simulateKeyClick(char keyChar);
 }
