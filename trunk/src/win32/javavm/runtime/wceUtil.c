@@ -127,15 +127,59 @@ char *getenv(const char* name) {
     return valTable[numVal++];
 }
 
+/* time from 01/01/1601 to 01/01/1970 in 100 ns. ticks*/
+
+#define EPOCH CONST64(0x19db1ded53e8000)
 
 JAVAI_API time_t time(time_t *tloc) {
-    CVMsystemPanic("time: not supported");
-    return 0;
+
+    SYSTEMTIME sysTimeStruct;
+    FILETIME fTime;
+    CVMInt64 int64time;
+    time_t tmpTT = 0;
+    
+    if ( tloc == NULL ) {
+        tloc = &tmpTT;
+    }
+    GetSystemTime( &sysTimeStruct );
+    if ( SystemTimeToFileTime( &sysTimeStruct, &fTime ) ) {
+        int64time = fTime.dwLowDateTime +
+          ((CVMInt64)fTime.dwHighDateTime << 32);
+        /* Subtract the value for 1970-01-01 00:00 (UTC) */
+        int64time -= EPOCH;
+        /* Convert to seconds. */
+        int64time /= CONST64(10000000);
+        *tloc = int64time;
+    }
+ 
+    return *tloc;
 }
 
+static char ctime_buf[32];
+
+static char *day_of_wk[7] = {"Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"};
+
+static char *month[12] = {"Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul",
+                          "Aug", "Sep", "Oct", "Nov", "Dec"};
+
 JAVAI_API char *ctime(const time_t *clock) {
-    CVMsystemPanic("ctime: not supported");
-    return NULL;
+
+    FILETIME ft, lft;
+    SYSTEMTIME st;
+    CVMInt64 myTime = (CVMInt64)*clock;
+
+    myTime *= CONST64(10000000);
+    myTime += EPOCH;
+    ft.dwLowDateTime = myTime & (CONST64(0xffffffff));
+    ft.dwHighDateTime = ((myTime & (CONST64(0xffffffff00000000))) >> 32) &
+      CONST64(0xffffffff);
+    FileTimeToLocalFileTime(&ft, &lft);
+    FileTimeToSystemTime(&lft, &st);
+    _snprintf(ctime_buf, 127, "%s %s %d %d:%d:%d %d\n",
+             day_of_wk[st.wDayOfWeek],
+             month[st.wMonth-1], st.wDay, st.wHour, st.wMinute, st.wSecond,
+             st.wYear);
+    return ctime_buf;
 }
 
 JAVAI_API time_t mktime(struct tm *timeptr) {
