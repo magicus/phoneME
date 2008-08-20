@@ -1,6 +1,5 @@
 /*
- *
- *  Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+ *  Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
  *  DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  *  
  *  This program is free software; you can redistribute it and/or
@@ -26,14 +25,12 @@ package com.sun.mmedia;
 
 import java.io.*;
 import java.util.Vector;
+import java.util.Enumeration;
 import javax.microedition.media.*;
 import javax.microedition.media.control.*;
-import com.sun.mmedia.control.*;
-import java.util.Enumeration;
-import com.sun.mmedia.protocol.*;
-// #ifndef ABB [
 import javax.microedition.media.protocol.*;
-// #endif ]
+import com.sun.mmedia.control.*;
+import com.sun.mmedia.protocol.*;
 
 /**
  * BasicPlayer provides basic implementation for the Player methods.
@@ -41,18 +38,9 @@ import javax.microedition.media.protocol.*;
  * be overridden by subclasses.
  *
  */
-public abstract class BasicPlayer implements Player
-    // #ifndef ABB [
-    ,TimeBase, StopTimeControl 
-    // #endif ]
-    {
-
-    // #ifdef ENABLE_DEBUG [
-    private final static boolean debug = true;
-    // #else ][
-    private final static boolean debug = false;
-    // #endif ]
-
+public abstract class BasicPlayer
+    implements Player, TimeBase, StopTimeControl
+{
     /** Unknown media format */
     static final String MEDIA_FORMAT_UNKNOWN = "UNKNOWN";
     /** Unsupported media format */
@@ -78,6 +66,8 @@ public abstract class BasicPlayer implements Player
 
     protected Player notificationSource = null; // if not null, will substitute 'this'
                                                 // in playerUpdate calls
+                                                
+    protected MediaDownload mediaDownload = null;                                                   
     
     /**
      * the state of this player
@@ -130,18 +120,18 @@ public abstract class BasicPlayer implements Player
      *  <li>Add new control name here. If it is not in the package
      *     javax.microedition.media.control, then the full package
      *     name of the control must be used.
-     *  <li>Add the control's name field to the allCtrls array (see below)
+     *  <li>Add the control's name field to the allJsr135Ctrls array (see below)
      * </ol>
      * <p>
-     * Size note: it would be space saving to declare the array allCtrls
+     * Size note: it would be space saving to declare the array allJsr135Ctrls
      * with the strings directly and not define the strings constants here.
      * However, it is more convenient for descendants to use
      * these constants, instead of e.g.
-     * <code>&nbsp;&nbsp;&nbsp;allCtrls[4]; // RateControl</code>
+     * <code>&nbsp;&nbsp;&nbsp;allJsr135Ctrls[4]; // RateControl</code>
      *
      * @see    #getControls()
      * @see    #doGetControl(String)
-     * @see    #allCtrls
+     * @see    #allJsr135Ctrls
      */
 
     protected final static String fpcName = "FramePositioningControl";
@@ -200,10 +190,10 @@ public abstract class BasicPlayer implements Player
     protected final static String vocName = "VolumeControl";
 
     /**
-     * An array containing all available controls in Players
+     * An array containing all available JSR-135 controls in Players
      * extending BasicPlayer.
      */
-    private final static String[] allCtrls = {
+    private final static String[] allJsr135Ctrls = {
         fpcName,
         mdcName,
         micName,
@@ -221,6 +211,14 @@ public abstract class BasicPlayer implements Player
         };
 
     /**
+     * An array containing all available controls
+     * in Players extending BasicPlayer, including JSR-234 controls
+     * if available. 
+     * DO NOT USE DIRECTLY! Use getPossibleControlNames() instead.
+     */
+    private static String[] allCtrls;
+    
+    /**
      * Locator string
      */
     protected String locator;
@@ -235,19 +233,15 @@ public abstract class BasicPlayer implements Player
      */
     protected SourceStream stream;
 
-    // #ifndef ABB [
     /**
      * The Player's TimeBase.
      */
     private TimeBase timeBase = this;
-    // #endif ]
 
-    // #ifndef ABB [
     /**
      * For StopTimeControl - initially reset
      */
     protected long stopTime = StopTimeControl.RESET;
-    // #endif ]
 
     /**
      * the default size of the event queue
@@ -272,9 +266,6 @@ public abstract class BasicPlayer implements Player
         // Initialize sysOffset to the current time.
         // This is used for TimeBase calculations.
         sysOffset = System.currentTimeMillis() * 1000L;
-
-        // Set event listener
-        new MMEventListener();
     }
 
     /**
@@ -470,6 +461,11 @@ public abstract class BasicPlayer implements Player
 
         doPrefetch();
 
+        VolumeControl vc = (VolumeControl)doGetControl(pkgName + vocName);
+        if (vc != null && (vc.getLevel() == -1)) {
+               vc.setLevel(100);
+        }
+
         state = PREFETCHED;
     }
 
@@ -531,7 +527,6 @@ public abstract class BasicPlayer implements Player
         // media time before starting.
         updateTimeBase(true);
 
-        // #ifndef ABB [
         // Check for any preset stop time.
         if (stopTime != StopTimeControl.RESET) {
             if (stopTime <= getMediaTime()) {
@@ -540,7 +535,6 @@ public abstract class BasicPlayer implements Player
                 return;
             }
         }
-        // #endif ]
 
         // If it's at the EOM, it will automatically
         // loop back to the beginning.
@@ -588,6 +582,9 @@ public abstract class BasicPlayer implements Player
     }
 
 
+    protected void continueDownload() {
+    }
+    
     /**
      * Stops the <code>Player</code>.  It will pause the playback at
      * the current media time.
@@ -678,6 +675,18 @@ public abstract class BasicPlayer implements Player
         }
 
         doDeallocate();
+
+        if (stream != null) {
+            // if stream is not seekable, just return
+            if (NOT_SEEKABLE == stream.getSeekType()) return;
+            try {
+                // seek to start position
+                stream.seek(0);
+            } catch(IOException e) {
+                // System.out.println("[direct] doDeallocate seek IOException");
+            }
+        }
+
         state = REALIZED;
     }
 
@@ -705,7 +714,15 @@ public abstract class BasicPlayer implements Player
             return;
         }
 
-        deallocate();
+        if (state == STARTED) {
+            try {
+                stop();
+            } catch (MediaException e) {
+                // Not much we can do here.
+            }
+        }
+
+        doDeallocate();
         doClose();
 
         state = CLOSED;
@@ -888,8 +905,9 @@ public abstract class BasicPlayer implements Player
     public void sendEvent(String evt, Object evtData) {
         //  There's always one listener for EOM -- itself.
         //  "Deliver" the CLOSED event so that the evtQ thread may terminate
-        if (listeners.size() == 0 && evt != PlayerListener.END_OF_MEDIA &&
-            evt != PlayerListener.CLOSED && evt != PlayerListener.ERROR) {
+        if (listeners.size() == 0 && !evt.equals( PlayerListener.END_OF_MEDIA )
+                                  && !evt.equals( PlayerListener.CLOSED )
+                                  && !evt.equals(PlayerListener.ERROR)) {
             return;
         }
 
@@ -932,7 +950,7 @@ public abstract class BasicPlayer implements Player
                 }
                 start();
             } catch (MediaException ex) {
-                if (debug) System.out.println("[basic] doLoop exception " + ex.getMessage());
+                // System.out.println("[basic] doLoop exception " + ex.getMessage());
                 loopCount = 1;
             }
         } else if (loopCountSet > 1) {
@@ -955,8 +973,10 @@ public abstract class BasicPlayer implements Player
 
         Vector v = new Vector(3);
         // average maximum number of controls
-        for (int i = 0; i < allCtrls.length; i++) {
-            Object c = getControl(allCtrls[i]);
+        
+        String [] ctrlNames = getPossibleControlNames();
+        for (int i = 0; i < ctrlNames.length; i++) {
+            Object c = getControl(ctrlNames[i]);
             if ((c != null) && !v.contains(c)) {
                 v.addElement(c);
             }
@@ -989,16 +1009,16 @@ public abstract class BasicPlayer implements Player
         // have the package prefix.
         if (type.indexOf('.') < 0) {
             // for non-fully qualified control names,
-            // look up the package in the allCtrls array
-            for (int i = 0; i < allCtrls.length; i++) {
-                if (allCtrls[i].equals(type)) {
+            // look up the package in the allJsr135Ctrls array
+            for (int i = 0; i < allJsr135Ctrls.length; i++) {
+                if (allJsr135Ctrls[i].equals(type)) {
                     // standard controls are specified
-                    // without package name in allCtrls
+                    // without package name in allJsr135Ctrls
                     return doGetControl(pkgName + type);
-                } else if (allCtrls[i].endsWith(type)) {
+                } else if (allJsr135Ctrls[i].endsWith(type)) {
                     // non-standard controls are with
-                    // full package name in allCtrls
-                    return doGetControl(allCtrls[i]);
+                    // full package name in allJsr135Ctrls
+                    return doGetControl(allJsr135Ctrls[i]);
                 }
             }
         }
@@ -1006,6 +1026,32 @@ public abstract class BasicPlayer implements Player
     }
 
 
+    /**
+     * Returns the array containing all available JSR-135 and JSR-234 controls
+     * in Players extending BasicPlayer. 
+     */
+    private static String [] getPossibleControlNames()
+    {
+        if( null == allCtrls )
+        {
+            String [] ammsCtrlNames = 
+                    Jsr234Proxy.getInstance().getJsr234PlayerControlNames();
+            allCtrls = new 
+                    String [ allJsr135Ctrls.length + ammsCtrlNames.length ];
+            int i = 0;
+            for( i = 0; i < allJsr135Ctrls.length; i++ )
+            {
+                allCtrls[ i ] = allJsr135Ctrls[ i ];
+            }
+            for( int j = 0; i < allCtrls.length; i++, j++ )
+            {
+                allCtrls[ i ] = ammsCtrlNames[ j ];
+            }
+        }
+        return allCtrls;
+        
+    }
+    
     /**
      * The worker method to actually obtain the control.
      *
@@ -1067,7 +1113,6 @@ public abstract class BasicPlayer implements Player
         return null;
     }
 
-    // #ifndef ABB [
     /**
      * Sets the <code>TimeBase</code> for this <code>Player</code>.
      * <p>
@@ -1108,7 +1153,6 @@ public abstract class BasicPlayer implements Player
         chkClosed(true);
         return timeBase;
     }
-    // #endif ]
 
     /**
      * Get the content type of the media that's
@@ -1131,7 +1175,6 @@ public abstract class BasicPlayer implements Player
         }
     }
 
-    // #ifndef ABB [
     /**
      * StopTimeControl base implementation
      *
@@ -1212,7 +1255,6 @@ public abstract class BasicPlayer implements Player
         stopTime = StopTimeControl.RESET;
         sendEvent(PlayerListener.STOPPED_AT_TIME, new Long(getMediaTime()));
     }
-    // #endif ]
 
     /**
      * TimeBase related functions.
@@ -1266,12 +1308,6 @@ public abstract class BasicPlayer implements Player
             }
         }
     }
-
-    /**
-     * Stream reading support
-     * MMAPI uses DataSource while ABB uses InputStream.
-     */
-
 
     /**
      * The value returned by <code>getSeekType</code> indicating that this

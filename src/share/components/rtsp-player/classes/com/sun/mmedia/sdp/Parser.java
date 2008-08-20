@@ -28,7 +28,7 @@ import java.util.*;
 
 
 public class Parser {
-    private static Vector buffer;
+    private Vector buffer;
 
     public void init() {
         buffer = new Vector();

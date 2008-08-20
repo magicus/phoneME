@@ -41,13 +41,7 @@ import com.sun.mmedia.protocol.*;
 import com.sun.mmedia.DefaultConfiguration;
 import com.sun.mmedia.DirectPlayer;
 
-// #ifdef USE_RTSP [
-import com.sun.mmedia.RTSPPlayer;
-// #endif ]
-
-// #ifndef ABB [
 import javax.microedition.media.protocol.*;
-// #endif ]
 
 /**
  * <code>Manager</code> is the access point for obtaining
@@ -435,11 +429,6 @@ import javax.microedition.media.protocol.*;
  */
 
 public final class Manager {
-    // #ifdef ENABLE_DEBUG [
-    private final static boolean debug = true;
-    // #else ][
-    private final static boolean debug = false;
-    // #endif ]
 
     private static Configuration config = Configuration.getConfiguration();
     private static TonePlayer tonePlayer;
@@ -474,7 +463,6 @@ public final class Manager {
      */
     public final static String TONE_DEVICE_LOCATOR = "device://tone";
 
-    // #ifndef ABB [
     /**
      * The locator to create a MIDI <code>Player</code>
      * which gives access to the MIDI device by making
@@ -502,7 +490,6 @@ public final class Manager {
      * Value "device://midi" is assigned to <code>MIDI_DEVICE_LOCATOR</code>.
      */
     public final static String MIDI_DEVICE_LOCATOR = "device://midi";
-    // #endif ]
     
     private static String DS_ERR = "Cannot create a DataSource for: ";
     private static String PL_ERR = "Cannot create a Player for: ";
@@ -592,14 +579,12 @@ public final class Manager {
         }
 
         String locStr = locator.toLowerCase();
-        BasicPlayer p;
-        boolean found = false;
 
-        if (debug)
-            System.out.println("[mmapi] createPlayer with " + locator);
+        // System.out.println("[mmapi] createPlayer with " + locator);
 
         /* Verify if Protocol is supported */
         String theProtocol = null;
+        boolean found = false;
         int idx = locStr.indexOf(':');
 
         if (idx != -1) {
@@ -607,26 +592,23 @@ public final class Manager {
         } else {
             throw new MediaException("Malformed locator");
         }
-        String supportedProtocols[] = getSupportedProtocols(null);
-        for (int i = 0; i < supportedProtocols.length && !found; i++) {
-            if (theProtocol.equals(supportedProtocols[i])) {
-                found = true;
+
+        if (locStr.startsWith(DefaultConfiguration.RADIO_CAPTURE_LOCATOR))
+        {
+            if (!config.isRadioSupported())
+            {
+                throw new MediaException( "Radio Capture is not supported" );
             }
+            parseRadioLocatorStr(locator);
         }
-
-        if (!found) {
-            throw new MediaException("Player cannot be created for " + locator + 
-                                    " Unsupported protocol " + theProtocol);
-        }
-
-        if (locStr.startsWith(DefaultConfiguration.CAPTURE_LOCATOR))
+        else if (locStr.startsWith(DefaultConfiguration.AUDIO_CAPTURE_LOCATOR) ||
+            locStr.startsWith(DefaultConfiguration.VIDEO_CAPTURE_LOCATOR))
         {
             // separate device & encodings
             int encInd = locator.indexOf('?');
             String encStr = null;
             if (encInd > 0) {
                 locStr = locStr.substring(0, encInd);
-
                 idx = locator.indexOf("encoding=");
                 if (idx != -1) {
                     encStr = locator.substring(idx+9);
@@ -640,6 +622,7 @@ public final class Manager {
                 }
 
             }
+            found = true;
             String encodings = null;
             if (locStr.equals(DefaultConfiguration.AUDIO_CAPTURE_LOCATOR)) {
                 String supported = System.getProperty("supports.audio.capture");
@@ -657,10 +640,21 @@ public final class Manager {
             if (encStr != null && encodings != null && encodings.indexOf(encStr) == -1) {
                 found = false;
             }
-        }
+            if (!found) {
+                throw new MediaException("Player cannot be created for " + locator);
+            }
+        } else {
+            String supportedProtocols[] = getSupportedProtocols(null);
+            for (int i = 0; i < supportedProtocols.length && !found; i++) {
+                if (theProtocol.equals(supportedProtocols[i])) {
+                    found = true;
+                }
+            }
 
-        if (!found) {
-            throw new MediaException("Player cannot be created for " + locator);
+            if (!found) {
+                throw new MediaException("Player cannot be created for " + locator + 
+                                        " Unsupported protocol " + theProtocol);
+            }
         }
 
         DataSource ds = createDataSource(locator);
@@ -668,27 +662,6 @@ public final class Manager {
 
         try {
             pp = createPlayer(ds);
-            SourceStream s = ds.getStreams()[0];
-            if (s != null && s.getContentDescriptor() != null) {
-                /* verify content type determined by http protocol */
-                String type = s.getContentDescriptor().getContentType();
-                if (type != null) {
-                    String supportedContentTypes[] = getSupportedContentTypes(theProtocol);
-                    found = false;
-                    if (supportedContentTypes != null) {
-                        for(int i=0; i<supportedContentTypes.length && !found; i++) {
-                            if (type.equals(supportedContentTypes[i])) {
-                                found = true;
-                            }
-                        }
-                    }
-                }
-                if (!found) {
-                    pp.close();
-                    throw new MediaException("Player cannot be created for " + locator);
-                }
-            }
-
         } catch (MediaException ex) {
             ds.disconnect();
             throw ex;
@@ -699,6 +672,191 @@ public final class Manager {
         return pp;
     }
 
+    private static void parseRadioLocatorStr( String locator ) throws MediaException
+    {
+        final int prefixLen = 
+                DefaultConfiguration.RADIO_CAPTURE_LOCATOR.length();
+        
+        if( null == locator )
+        {
+            throw new MediaException( "radio locator is null" );
+        }
+        if( !locator.startsWith( DefaultConfiguration.RADIO_CAPTURE_LOCATOR ) )
+        {
+            throw new MediaException( "bad radio locator" );
+        }
+        
+        if ( locator.length() == prefixLen )
+        {
+            return;
+        }
+        
+        if( locator.charAt( prefixLen ) != '?' )
+        {
+            throw new MediaException( "bad radio locator" );
+        }
+        String params = locator.substring( prefixLen + 1 );
+        parseRadioParamsString( params );
+    }
+
+    private static void parseRadioParamsString( String params ) throws MediaException
+    {
+        boolean foundFreq       = false;
+        boolean foundMod        = false;
+        boolean foundStereoMode = false;
+        boolean foundId         = false; 
+        boolean foundPreset     = false;
+        
+        int i = 0, j = -1; 
+        do {
+            j = params.indexOf( '&', i );
+            String param = j < 0 ? params.substring( i ) : params.substring( i,
+                    j );
+            if( param.startsWith( "f=" ) )
+            {
+                if( foundFreq )
+                {
+                    throw new MediaException( "frequency is set more than" +
+                            " once in the radio locator string" );
+                }
+                parseRadioFreqParam( param );
+                foundFreq = true;
+            }
+            else if ( param.startsWith( "mod=" ) )
+            {
+                if( foundMod )
+                {
+                    throw new MediaException( "modulation is set more than" +
+                            " once in the radio locator string" );
+                }
+                parseRadioModParam( param );
+                foundMod = true;
+            }
+            else if ( param.startsWith( "st=" ) )
+            {
+                if( foundStereoMode )
+                {
+                    throw new MediaException( "stereo mode is set more than" +
+                            " once in the radio locator string" );
+                }
+                parseRadioStereoParam( param );
+                foundStereoMode = true;
+            }
+            else if ( param.startsWith( "id=" ) )
+            {
+                if( foundId )
+                {
+                    throw new MediaException( "Program ID is set more than" +
+                            " once in the radio locator string" );
+                }
+                parseRadioIdParam( param );
+                foundId = true;
+            }
+            else if ( param.startsWith( "preset=" ) )
+            {
+                if( foundPreset )
+                {
+                    throw new MediaException( "Preset is set more than" +
+                            " once in the radio locator string" );
+                }
+                parseRadioPresetParam( param );
+                foundPreset = true;
+            }
+            else
+            {
+                throw new MediaException( "Unknown parameter in the" +
+                        " radio locator string" );
+            }
+
+            i = j + 1;
+        } while( j >= 0 );
+        
+    }
+    
+    private static void parseRadioFreqParam( String s )
+        throws MediaException
+    {
+        String param = s;
+        if( 'M' == param.charAt( param.length() - 1 ) || 
+            'k' == param.charAt( param.length() - 1 ) )
+        {
+            param = param.substring( 0, param.length() - 1 );
+        }
+        try {
+            if( 0 >= Float.parseFloat( param.substring( 2 ) ) )
+            {
+                throw new MediaException( "Frequency is not positive" +
+                        " in the radio locator string" );
+            }
+        } catch (NumberFormatException e)
+        {
+            throw new MediaException( "Frequency is not numeric or too big" +
+                    " in the radio locator string" );
+        }
+    }
+    
+    private static void parseRadioModParam( String param )
+        throws MediaException
+    {
+        String mod = param.substring( "mod=".length() );
+        if( !mod.equals( "am" ) && !mod.equals( "fm" ) )
+        {
+            throw new MediaException( "Unknown modulation in the" +
+                    " radio locator string parameters" );
+        }
+    }
+    
+    private static void parseRadioStereoParam( String param )
+        throws MediaException
+    {
+        String mode = param.substring( "st=".length() );
+        if( !mode.equals( "mono" ) && 
+            !mode.equals( "stereo" ) && 
+            !mode.equals( "auto" ))
+        {
+            throw new MediaException( "Unknown stereo mode in the" +
+                    " radio locator string parameters" );
+        }
+    }
+
+    private static void parseRadioIdParam( String param )
+        throws MediaException
+    {
+        String id = param.toLowerCase().substring( "id=".length() );
+        if( 0 == id.length() )
+        {
+            throw new MediaException( "Empty Program ID name in" +
+                    " the radio locator string parameters" );
+        }
+        
+        for( int i = 0; i < id.length(); i++ )
+        {
+            char ch = id.charAt( i );
+            if( !Character.isLowerCase( ch ) &&
+                !Character.isDigit( ch ) )
+            {
+                throw new MediaException( "Not an alphanumeric Program" +
+                        " ID in the radio locator string parameters" );
+            }
+        }
+    }
+
+    private static void parseRadioPresetParam( String param )
+        throws MediaException
+    {
+        String preset = param.substring( "preset=".length() );
+        try {
+            if( 0 >= Byte.parseByte( preset ) )
+            {
+                throw new MediaException( "Preset number is not positive" +
+                        " in the radio locator string" );
+            }
+        } catch (NumberFormatException e)
+        {
+            throw new MediaException( "Preset number is not numeric" +
+                    " or too big in the radio locator string" );
+        }
+    }
 
     /**
      * Create a <code>Player</code> to play back media from an
@@ -780,25 +938,13 @@ public final class Manager {
          throws MediaException {
              
         if (note < 0 || note > 127 || duration <= 0) {
-            if (debug) {
-                Logging.report(Logging.ERROR, LogChannels.LC_MMAPI,
-                    "playTone note(" + note + ") or duration(" +
-                                 duration + ") value is invalid");
-            }        
-            throw new IllegalArgumentException("bad param");
+            throw new IllegalArgumentException( "Invalid note(" + note +
+                                                ") or duration (" + duration + ")" );
         }
 
         if (volume < 0) {
-            if (debug) {
-                Logging.report(Logging.ERROR, LogChannels.LC_MMAPI,
-                    "playTone volume is negative value = " + volume);
-            }
             volume = 0;
         } else if (volume > 100) {
-            if (debug) {
-                Logging.report(Logging.ERROR, LogChannels.LC_MMAPI,
-                    "playTone volume is too big = " + volume);
-            }        
             volume = 100;
         }
 
@@ -837,12 +983,9 @@ public final class Manager {
      * @exception  IOException               Thrown if there was a problem connecting
      * with the source.
      */
-    // #ifndef ABB [
     public static Player createPlayer(DataSource source)
-    // #else ][
-    private static Player createPlayer(DataSource source)
-    // #endif ]
-         throws IOException, MediaException {
+        throws IOException, MediaException
+    {
         if (source == null) {
             throw new IllegalArgumentException();
         }
@@ -925,7 +1068,6 @@ public final class Manager {
         }
     }
 
-    // #ifndef ABB [
     private static TimeBase sysTimeBase = null;
 
     /**
@@ -940,10 +1082,7 @@ public final class Manager {
 
         return sysTimeBase;
     }
-    // #endif ]
 }
-
-// #ifndef ABB [
 
 /**
  * SystemTimeBase is the implementation of the default <CODE>TimeBase</CODE>
@@ -969,6 +1108,3 @@ class SystemTimeBase implements TimeBase {
         return (System.currentTimeMillis() * 1000L) - offset;
     }
 }
-
-// #endif ]
-

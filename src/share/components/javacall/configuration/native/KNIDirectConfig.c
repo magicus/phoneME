@@ -36,33 +36,68 @@
 
 typedef struct {
     char *current;
-    char list[0];
+    char list[1];
 } ListIterator;
 
 static struct _protocolNames {
     int proto_mask;
     char *proto_name;
 } protocolNames[] = {
-    JAVACALL_MEDIA_MEMORY_PROTOCOL,     "memory",
-    JAVACALL_MEDIA_FILE_LOCAL_PROTOCOL, "file",
-    JAVACALL_MEDIA_FILE_REMOTE_PROTOCOL,"file",
-    JAVACALL_MEDIA_HTTP_PROTOCOL,       "http",
-    JAVACALL_MEDIA_HTTPS_PROTOCOL,      "https",
-    JAVACALL_MEDIA_RTP_PROTOCOL,        "rtp",
-    JAVACALL_MEDIA_RTSP_PROTOCOL,       "rtsp",
-    JAVACALL_MEDIA_CAPTURE_PROTOCOL,    "capture"
+    {JAVACALL_MEDIA_MEMORY_PROTOCOL,     "memory"},
+    {JAVACALL_MEDIA_FILE_LOCAL_PROTOCOL, "file"},
+    {JAVACALL_MEDIA_FILE_REMOTE_PROTOCOL,"file"},
+    {JAVACALL_MEDIA_HTTP_PROTOCOL,       "http"},
+    {JAVACALL_MEDIA_HTTPS_PROTOCOL,      "https"},
+    {JAVACALL_MEDIA_RTP_PROTOCOL,        "rtp"},
+    {JAVACALL_MEDIA_RTSP_PROTOCOL,       "rtsp"},
+    {JAVACALL_MEDIA_CAPTURE_PROTOCOL,    "capture"}
 };
 
 void mmapi_string_delete_duplicates(char *p);
 static javacall_result simple_jcharString_to_asciiString(jchar *jcharString, jsize jcharStringLen, char *asciiStringBuffer, jsize bufferSize);
 
+const int caps_sanity_size_limit = 256;
+
+KNIEXPORT KNI_RETURNTYPE_BOOLEAN
+KNIDECL(com_sun_mmedia_DefaultConfiguration_nIsRadioSupported) {
+    const javacall_media_configuration *cfg;
+    jboolean res = KNI_FALSE;
+    if (javacall_media_get_configuration(&cfg) != JAVACALL_OK) {
+        KNI_ThrowNew(jsropRuntimeException, "Couldn't get MMAPI configuration");
+    }
+    else if( JAVACALL_TRUE == cfg->supportCaptureRadio )
+    {
+        int i = 0;
+        if( NULL != cfg->mediaCaps )
+        {
+            for( i = 0; NULL != cfg->mediaCaps[i].mediaFormat && 
+                    i < caps_sanity_size_limit; i++ )
+            {
+                if( 0 == strcmp( JAVACALL_MEDIA_FORMAT_CAPTURE_RADIO, 
+                    cfg->mediaCaps[i].mediaFormat ) )
+                {
+                    res = KNI_TRUE;
+                    break;
+                }
+            }
+            if( i >= caps_sanity_size_limit )
+            {
+                KNI_ThrowNew(jsropRuntimeException, 
+                    "MMAPI configuration caps list is not null-terminated");
+            }
+        }
+    }
+    
+    KNI_ReturnBoolean( res );
+}
+
 KNIEXPORT KNI_RETURNTYPE_INT
 KNIDECL(com_sun_mmedia_DefaultConfiguration_nListContentTypesOpen) {
     javacall_int32 proto_mask = 0;
     javacall_bool deviceProtocol = JAVACALL_FALSE;
-    javacall_media_configuration *cfg;
-    javacall_media_caps *caps;
-    int len;
+    const javacall_media_configuration *cfg;
+    const javacall_media_caps *caps;
+    unsigned int len;
     ListIterator *iterator = NULL;
     char *p;
     
@@ -105,7 +140,7 @@ KNIDECL(com_sun_mmedia_DefaultConfiguration_nListContentTypesOpen) {
             }
         }
         if (proto != NULL) {
-            int i;
+            unsigned int i;
             
             /* trying to find protocol by name */
             for (i = 0; i < sizeof protocolNames / sizeof protocolNames[0]; i++) {
@@ -199,13 +234,13 @@ KNIDECL(com_sun_mmedia_DefaultConfiguration_nListContentTypesOpen) {
     }
     KNI_EndHandles();
     KNI_ReturnInt((jint)iterator); 
-};
+}
 
 KNIEXPORT KNI_RETURNTYPE_OBJECT
 KNIDECL(com_sun_mmedia_DefaultConfiguration_nListContentTypesNext) {
     ListIterator *iterator;
     char *p;
-    int len;
+    unsigned int len;
     char stack_string_buffer[MAX_MIMETYPENAME_LEN], *mime = NULL;
     
     KNI_StartHandles(1);
@@ -268,12 +303,12 @@ KNIDECL(com_sun_mmedia_DefaultConfiguration_nListContentTypesClose) {
 
 KNIEXPORT KNI_RETURNTYPE_INT
 KNIDECL(com_sun_mmedia_DefaultConfiguration_nListProtocolsOpen) {
-    javacall_media_configuration *cfg;
+    const javacall_media_configuration *cfg;
     javacall_media_caps *caps;
     ListIterator *iterator = NULL;
     javacall_int32 proto_mask = 0;
     javacall_bool supportDeviceProtocol = JAVACALL_FALSE;
-    char *p;
+    char *p = NULL;
     
     /* stack buffers. Trying to avoid malloc if a string is not big */
     jchar stack_string16_buffer[MAX_PROTOCOLNAME_LEN], *string16 = NULL;
@@ -287,7 +322,7 @@ KNIDECL(com_sun_mmedia_DefaultConfiguration_nListProtocolsOpen) {
         if (KNI_IsNullHandle(stringObj)) {
             mime = NULL;
         } else {
-            int len = KNI_GetStringLength(stringObj);
+            unsigned int len = KNI_GetStringLength(stringObj);
             /* if the string is longer than the stack buffer try to malloc it */
             if (len >= sizeof stack_string16_buffer / sizeof stack_string16_buffer[0]) {
                 string16 = MMP_MALLOC((len + 1) * sizeof *string16);
@@ -359,8 +394,8 @@ KNIDECL(com_sun_mmedia_DefaultConfiguration_nListProtocolsOpen) {
         
         if (proto_mask != 0 || supportDeviceProtocol) {
             /* some protocols were found */
-            int i;
-            int len = 0;
+            unsigned int i;
+            unsigned int len = 0;
             
             /* trying to resolve protocol names: calculating needed memory */
             for (i = 0; i < sizeof protocolNames / sizeof protocolNames[0]; i++) {
@@ -420,13 +455,13 @@ KNIDECL(com_sun_mmedia_DefaultConfiguration_nListProtocolsOpen) {
     }
     KNI_EndHandles();
     KNI_ReturnInt((jint)iterator); 
-};
+}
 
 KNIEXPORT KNI_RETURNTYPE_OBJECT
 KNIDECL(com_sun_mmedia_DefaultConfiguration_nListProtocolsNext) {
     ListIterator *iterator;
     char *p;
-    int len;
+    unsigned int len;
     char stack_string_buffer[MAX_PROTOCOLNAME_LEN], *proto = NULL;
     
     KNI_StartHandles(1);

@@ -1,5 +1,5 @@
 #
-# Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+# Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
 # 
 # This program is free software; you can redistribute it and/or
@@ -31,6 +31,8 @@
 
 JSROP_PLATFORM = cldc_application
 
+EXTRA_CFLAGS += -DENABLE_JSR_135=1
+
 ifeq ($(PROJECT_JSR_135_DIR),)
 JSR_135_PROJECT_SRC_DIR=$(JSR_135_DIR)/src/$(JSROP_PLATFORM)
 JSR_135_PROJECT_BUILD_DIR=$(JSR_135_DIR)/build/$(JSROP_PLATFORM)
@@ -40,7 +42,6 @@ JSR_135_PROJECT_BUILD_DIR=$(PROJECT_JSR_135_DIR)/build/$(JSROP_PLATFORM)
 endif
 	
 include $(JSR_135_PROJECT_BUILD_DIR)/config.gmk
-include $(JSR_135_PROJECT_BUILD_DIR)/features.defs
 
 #
 # Direct video player
@@ -56,13 +57,11 @@ endif
 SUBSYSTEM_JSR_135_JAVA_FILES += $(JSR_135_PROJECT_SRC_DIR)/classes/com/sun/mmedia/MediaEventConsumer.java
 SUBSYSTEM_JSR_135_JAVA_FILES += $(JSR_135_PROJECT_SRC_DIR)/classes/com/sun/mmedia/MediaTunnel.java
 
-ifeq ($(INDIRECT_VIDEO_PLAYER), true)
 SUBSYSTEM_JSR_135_JAVA_FILES += \
     $(JSR_135_PROJECT_SRC_DIR)/classes/com/sun/mmedia/MIDPImageAccessor.java \
     $(JSR_135_PROJECT_SRC_DIR)/classes/com/sun/mmedia/MMCustomItem.java \
     $(JSR_135_PROJECT_SRC_DIR)/classes/com/sun/mmedia/MIDPVideoRenderer.java \
     $(JSR_135_PROJECT_SRC_DIR)/classes/com/sun/mmedia/ModelVideoRenderer.java
-endif
 
 SUBSYSTEM_JSR_135_EXTRA_INCLUDES += \
 	-I$(JSR_135_PROJECT_SRC_DIR)/native/common \

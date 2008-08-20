@@ -1,6 +1,5 @@
 /*
- * 
- * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
@@ -28,8 +27,12 @@
 #include "jsrop_exceptions.h"
 #include "jsr135_sync.h"
 #include "javautil_string.h"
+#include "sni.h"
+
 
 /* Global Variables ************************************************************************/
+
+static jboolean g_isRadioTunerTakenByJava = KNI_FALSE;
 
 /* Externs **********************************************************************************/
 
@@ -112,14 +115,24 @@ KNIDECL(com_sun_mmedia_DirectPlayer_nAcquireDevice) {
     jint handle = KNI_GetParameterAsInt(1);
     KNIPlayerInfo* pKniInfo = (KNIPlayerInfo*)handle;
     jboolean returnValue = KNI_FALSE;
+    javacall_result result = JAVACALL_FAIL;
 
     MMP_DEBUG_STR("+nAcquireDevice\n");
 
 LockAudioMutex();
-    if (pKniInfo && JAVACALL_OK == javacall_media_acquire_device(pKniInfo->pNativeHandle)) {
-        pKniInfo->isAcquire = JAVACALL_TRUE;
-        returnValue = KNI_TRUE;
+    if (pKniInfo && pKniInfo->pNativeHandle) {
+        JAVACALL_MM_ASYNC_EXEC(
+            result,
+            javacall_media_acquire_device(pKniInfo->pNativeHandle),
+            pKniInfo->pNativeHandle, pKniInfo->appId, pKniInfo->playerId, JAVACALL_EVENT_MEDIA_DEVICE_ACQUIRED,
+            returns_no_data
+        );
+        if (result == JAVACALL_OK) {
+            pKniInfo->isAcquire = JAVACALL_TRUE;
+            returnValue = KNI_TRUE;
+        }
     }
+    
 UnlockAudioMutex();
     KNI_ReturnBoolean(returnValue);
 }
@@ -174,17 +187,28 @@ KNIDECL(com_sun_mmedia_DirectPlayer_nStart) {
 
     jint handle = KNI_GetParameterAsInt(1);
     KNIPlayerInfo* pKniInfo = (KNIPlayerInfo*)handle;
-    jboolean returnValue = KNI_FALSE;
+    javacall_result result;
     
     MMP_DEBUG_STR("+nStart\n");
-    
-LockAudioMutex();            
-    if (pKniInfo && pKniInfo->pNativeHandle && JAVACALL_OK == javacall_media_start(pKniInfo->pNativeHandle)) {
-        returnValue = KNI_TRUE;
+
+    if (NULL == pKniInfo || NULL == pKniInfo->pNativeHandle) {
+        KNI_ReturnBoolean(KNI_FALSE);
     }
+
+LockAudioMutex();            
+    JAVACALL_MM_ASYNC_EXEC(
+        result,
+        javacall_media_start(pKniInfo->pNativeHandle),
+        pKniInfo->pNativeHandle, pKniInfo->appId, pKniInfo->playerId, JAVACALL_EVENT_MEDIA_STARTED,
+        returns_no_data
+    );
 UnlockAudioMutex();            
 
-    KNI_ReturnBoolean(returnValue);
+    if (JAVACALL_OK != result) {
+        KNI_ReturnBoolean(KNI_FALSE);
+    }
+    
+    KNI_ReturnBoolean(KNI_TRUE);
 }
 
 /*  protected native boolean nStop ( int handle ) ; */
@@ -193,21 +217,30 @@ KNIDECL(com_sun_mmedia_DirectPlayer_nStop) {
 
     jint handle = KNI_GetParameterAsInt(1);
     KNIPlayerInfo* pKniInfo = (KNIPlayerInfo*)handle;
-    jboolean returnValue = KNI_FALSE;
-
+    javacall_result result;
+    
     MMP_DEBUG_STR("+nStop\n");
 
-LockAudioMutex();            
-    if (pKniInfo && JAVACALL_TRUE == jmmpCheckCondition(pKniInfo, CHECK_ISPLAYING)) {
-        if (JAVACALL_OK == javacall_media_stop(pKniInfo->pNativeHandle)) {
-            returnValue = KNI_TRUE;
-        }
-    } else {
+    if (NULL == pKniInfo || NULL == pKniInfo->pNativeHandle || 
+            JAVACALL_TRUE != jmmpCheckCondition(pKniInfo, CHECK_ISPLAYING)) {
         REPORT_ERROR(LC_MMAPI, "nStop fail cause we are not in playing\n");
+        KNI_ReturnBoolean(KNI_FALSE);
     }
+
+LockAudioMutex();            
+    JAVACALL_MM_ASYNC_EXEC(
+        result,
+        javacall_media_stop(pKniInfo->pNativeHandle),
+        pKniInfo->pNativeHandle, pKniInfo->appId, pKniInfo->playerId, JAVACALL_EVENT_MEDIA_STOPPED,
+        returns_no_data
+    );
 UnlockAudioMutex();            
+
+    if (JAVACALL_OK != result) {
+        KNI_ReturnBoolean(KNI_FALSE);
+    }
     
-    KNI_ReturnBoolean(returnValue);
+    KNI_ReturnBoolean(KNI_TRUE);
 }
 
 /*  protected native int nGetMediaTime ( int handle ) ; */
@@ -218,14 +251,14 @@ KNIDECL(com_sun_mmedia_DirectPlayer_nGetMediaTime) {
     KNIPlayerInfo* pKniInfo = (KNIPlayerInfo*)handle;
     javacall_result ret;
     long ms = -1;
-LockAudioMutex();            
+LockAudioMutex();
     if (pKniInfo && pKniInfo->pNativeHandle) {
         ret = javacall_media_get_time(pKniInfo->pNativeHandle, &ms);
         if (ret != JAVACALL_OK) {
             ms = -1;
         }
     }
-UnlockAudioMutex();            
+UnlockAudioMutex();
 
     MMP_DEBUG_STR1("-nGetMediaTime time=%d\n", ms);
 
@@ -243,13 +276,21 @@ KNIDECL(com_sun_mmedia_DirectPlayer_nSetMediaTime) {
 
     MMP_DEBUG_STR("+nSetMediaTime\n");
 
-LockAudioMutex();            
-    if (pKniInfo) {
-        ret = javacall_media_set_time(pKniInfo->pNativeHandle, &ms);
+    if (pKniInfo && pKniInfo->pNativeHandle) {
+LockAudioMutex();
+
+        JAVACALL_MM_ASYNC_EXEC(
+            ret,
+            javacall_media_set_time(pKniInfo->pNativeHandle, &ms),
+            pKniInfo->pNativeHandle, pKniInfo->appId, pKniInfo->playerId, JAVACALL_EVENT_MEDIA_TIME_SET,
+            returns_data(1, (&ms))
+        );
+
+UnlockAudioMutex();            
     } else {
+        ms = -1;
         REPORT_ERROR(LC_MMAPI, "nSetMediaTime fail\n");
     }
-UnlockAudioMutex();            
     if (ret != JAVACALL_OK) {
         ms = -1;
     }
@@ -266,11 +307,19 @@ KNIDECL(com_sun_mmedia_DirectPlayer_nGetDuration) {
     long ms;
     javacall_result ret = JAVACALL_FAIL;
 
-LockAudioMutex();            
     if (pKniInfo && pKniInfo->pNativeHandle) {
-        ret = javacall_media_get_duration(pKniInfo->pNativeHandle, &ms);
-    }
+LockAudioMutex();
+
+        JAVACALL_MM_ASYNC_EXEC(
+            ret,
+            javacall_media_get_duration(pKniInfo->pNativeHandle, &ms),
+            pKniInfo->pNativeHandle, pKniInfo->appId, pKniInfo->playerId, JAVACALL_EVENT_MEDIA_DURATION_GOTTEN,
+            returns_data(1, (&ms))
+        );
+        
 UnlockAudioMutex();            
+    }
+    
     if (ret != JAVACALL_OK) {
         ms = -1;
     }
@@ -286,21 +335,27 @@ KNIDECL(com_sun_mmedia_DirectPlayer_nPause) {
 
     jint handle = KNI_GetParameterAsInt(1);
     KNIPlayerInfo* pKniInfo = (KNIPlayerInfo*)handle;
-    jboolean returnValue = KNI_FALSE;
+    javacall_result result = JAVACALL_FAIL;
 
     MMP_DEBUG_STR("+nPause\n");  
 
-LockAudioMutex();            
-    if (pKniInfo && JAVACALL_TRUE == jmmpCheckCondition(pKniInfo, CHECK_ISPLAYING)) {
-        if (JAVACALL_OK == javacall_media_pause(pKniInfo->pNativeHandle)) {
-            returnValue = KNI_TRUE;
-        }
+    if (NULL == pKniInfo || NULL == pKniInfo->pNativeHandle || 
+            JAVACALL_TRUE != jmmpCheckCondition(pKniInfo, CHECK_ISPLAYING)) {
+        REPORT_ERROR(LC_MMAPI, "nPause fail cause is not in playing\n\n");
+        KNI_ReturnBoolean(KNI_FALSE);
     } else {
-        REPORT_ERROR(LC_MMAPI, "nPause fail cause is not in playing\n");    
-    }
-UnlockAudioMutex();            
 
-    KNI_ReturnBoolean(returnValue);
+LockAudioMutex();            
+        JAVACALL_MM_ASYNC_EXEC(
+            result,
+            javacall_media_pause(pKniInfo->pNativeHandle),
+            pKniInfo->pNativeHandle, pKniInfo->appId, pKniInfo->playerId, JAVACALL_EVENT_MEDIA_STOPPED,
+            returns_no_data
+        );
+UnlockAudioMutex();
+    }
+
+    KNI_ReturnBoolean(JAVACALL_OK == result? KNI_TRUE: KNI_FALSE);
 }
 
 /*  protected native boolean nResume ( int handle ) ; */
@@ -309,21 +364,26 @@ KNIDECL(com_sun_mmedia_DirectPlayer_nResume) {
 
     jint handle = KNI_GetParameterAsInt(1);
     KNIPlayerInfo* pKniInfo = (KNIPlayerInfo*)handle;
-    jboolean returnValue = KNI_FALSE;
+    javacall_result result = JAVACALL_FAIL;
 
     MMP_DEBUG_STR("+nResume\n");  
 
-LockAudioMutex();            
-    if (pKniInfo && JAVACALL_TRUE == jmmpCheckCondition(pKniInfo, CHECK_ISPLAYING)) {
-        if (JAVACALL_OK == javacall_media_resume(pKniInfo->pNativeHandle)) {
-            returnValue = KNI_TRUE;
-        }    
+    if (!pKniInfo || !pKniInfo->pNativeHandle || JAVACALL_TRUE != jmmpCheckCondition(pKniInfo, CHECK_ISPLAYING)) {
+        REPORT_ERROR(LC_MMAPI, "nResume fail cause is not in playing\n\n");
+        KNI_ReturnBoolean(KNI_FALSE);
     } else {
-        REPORT_ERROR(LC_MMAPI, "nResume fail cause is not in playing\n");    
-    }
-UnlockAudioMutex();            
 
-    KNI_ReturnBoolean(returnValue);
+LockAudioMutex();            
+        JAVACALL_MM_ASYNC_EXEC(
+            result,
+            javacall_media_resume(pKniInfo->pNativeHandle),
+            pKniInfo->pNativeHandle, pKniInfo->appId, pKniInfo->playerId, JAVACALL_EVENT_MEDIA_STARTED,
+            returns_no_data
+        );
+UnlockAudioMutex();
+    }
+
+    KNI_ReturnBoolean(JAVACALL_OK == result? KNI_TRUE: KNI_FALSE);
 }
 
 /*  protected native boolean nIsNeedBuffering ( int handle ) ; */
@@ -404,12 +464,12 @@ UnlockAudioMutex();
 
 /*************************************************************************/
 
-/* Native finalizer */
-KNIEXPORT KNI_RETURNTYPE_VOID
-KNIDECL(com_sun_mmedia_DirectPlayer_finalize) {
+static void do_finalize(KNIDECLARGS int dummy) {
     jint handle;
     jint state;
     KNIPlayerInfo* pKniInfo;
+    (void)dummy;
+
 #ifdef ENABLE_MEDIA_RECORD
     KNI_StartHandles(3);
     KNI_DeclareHandle(instance);
@@ -468,6 +528,13 @@ LockAudioMutex();
             javacall_media_clear_buffer(pKniInfo->pNativeHandle);
         }
         javacall_media_release_device(pKniInfo->pNativeHandle);
+        
+        if( KNI_TRUE == KNI_GetBooleanField( instance, 
+            KNI_GetFieldID( clazz, "hasTakenRadioAccess", "Z" ) ) )
+        {
+            g_isRadioTunerTakenByJava = KNI_FALSE;
+        }
+        
         javacall_media_close(pKniInfo->pNativeHandle);
 UnlockAudioMutex();            
         javacall_media_destroy(pKniInfo->pNativeHandle);
@@ -480,8 +547,27 @@ UnlockAudioMutex();
     }
 
     KNI_EndHandles();
+}
+
+/* Native finalizer */
+KNIEXPORT KNI_RETURNTYPE_VOID
+KNIDECL(com_sun_mmedia_DirectPlayer_finalize) {
+    do_finalize(KNIPASSARGS 0);
     KNI_ReturnVoid();
 }
+
+KNIEXPORT KNI_RETURNTYPE_VOID
+KNIDECL(com_sun_mmedia_DirectMIDI_finalize) {
+    do_finalize(KNIPASSARGS 0);
+    KNI_ReturnVoid();
+}
+
+KNIEXPORT KNI_RETURNTYPE_VOID
+KNIDECL(com_sun_mmedia_DirectTone_finalize) {
+    do_finalize(KNIPASSARGS 0);
+    KNI_ReturnVoid();
+}
+
 
 /*  protected native boolean nPcmAudioPlayback ( int handle ) ; */
 KNIEXPORT KNI_RETURNTYPE_BOOLEAN
@@ -727,6 +813,32 @@ KNIDECL(com_sun_mmedia_DirectPlayer_nIsVolumeControlSupported) {
     KNI_ReturnBoolean(returnValue);
 }
 
+KNIEXPORT KNI_RETURNTYPE_BOOLEAN
+KNIDECL(com_sun_mmedia_DirectPlayer_nAcquireRadioAccess)
+{
+    jboolean returnValue = KNI_FALSE;
+    
+    LockAudioMutex();
+    if( KNI_FALSE == g_isRadioTunerTakenByJava )
+    {
+        g_isRadioTunerTakenByJava = KNI_TRUE;
+        returnValue = KNI_TRUE;
+    }
+    UnlockAudioMutex();
+    
+    KNI_ReturnBoolean( returnValue );
+}
+
+KNIEXPORT KNI_RETURNTYPE_VOID
+KNIDECL(com_sun_mmedia_DirectPlayer_nReleaseRadioAccess)
+{
+    LockAudioMutex();
+    g_isRadioTunerTakenByJava = KNI_FALSE;
+    UnlockAudioMutex();
+    
+    KNI_ReturnVoid();
+}
+
 /*  protected native String nGetContentType(int handle); */
 KNIEXPORT KNI_RETURNTYPE_OBJECT
 KNIDECL(com_sun_mmedia_DirectPlayer_nGetContentType)
@@ -735,7 +847,7 @@ KNIDECL(com_sun_mmedia_DirectPlayer_nGetContentType)
     KNIPlayerInfo* pKniInfo = (KNIPlayerInfo*)handle;
     javacall_media_format_type mFormat = JAVACALL_MEDIA_FORMAT_UNKNOWN;
 
-    javacall_media_configuration *cfg;
+    const javacall_media_configuration *cfg;
     javacall_media_caps *caps;
 
     KNI_StartHandles(1);
@@ -765,3 +877,95 @@ KNIDECL(com_sun_mmedia_DirectPlayer_nGetContentType)
     KNI_EndHandlesAndReturnObject(stringObj);
 }
 
+/*  protected native void nStartSnapshot( int handle, String imageType ); */
+KNIEXPORT KNI_RETURNTYPE_VOID
+KNIDECL(com_sun_mmedia_DirectPlayer_nStartSnapshot) {
+    jint handle = KNI_GetParameterAsInt(1);
+    KNIPlayerInfo*  pKniInfo = (KNIPlayerInfo*)handle;
+    jint            imageTypeLength;
+    jchar*          pImageTypeStr;
+    javacall_result ret = JAVACALL_FAIL;
+    KNI_StartHandles(1);
+    KNI_DeclareHandle(imageTypeHandle);
+    KNI_GetParameterAsObject(2, imageTypeHandle);
+    
+    MMP_DEBUG_STR("[kni_video] +nStartSnapshot\n");
+    
+    if (pKniInfo && pKniInfo->pNativeHandle) {
+        imageTypeLength = KNI_GetStringLength(imageTypeHandle);
+        pImageTypeStr = MMP_MALLOC(imageTypeLength * sizeof(jchar));
+        if (pImageTypeStr) {
+            KNI_GetStringRegion(imageTypeHandle, 0, imageTypeLength, pImageTypeStr);
+            ret = javacall_media_start_video_snapshot( pKniInfo->pNativeHandle,
+                        pImageTypeStr, imageTypeLength );
+            MMP_FREE(pImageTypeStr);
+            if (ret != JAVACALL_OK) {
+                KNI_ThrowNew( "javax/microedition/media/MediaException",
+                    "\nFailed to start Camera Snapshot\n");
+            }
+        }
+    }
+    
+    KNI_EndHandles();
+    
+    MMP_DEBUG_STR("[kni_video] -nStartSnapshot\n");
+    KNI_ReturnVoid();
+}
+
+
+/*  protected native byte[] nGetSnapshotData( int handle ); */
+KNIEXPORT KNI_RETURNTYPE_OBJECT
+KNIDECL(com_sun_mmedia_DirectPlayer_nGetSnapshotData) {
+    jint handle = KNI_GetParameterAsInt(1);
+    KNIPlayerInfo*  pKniInfo = (KNIPlayerInfo*)handle;
+    javacall_result ret = JAVACALL_FAIL;
+    long dataBytes = 0;
+    jbyte *tmpArray = NULL;
+    
+    KNI_StartHandles(1);
+    KNI_DeclareHandle(returnValueHandle);
+
+    MMP_DEBUG_STR("[kni_video] +nGetSnapshotData\n");
+
+    ret = javacall_media_get_video_snapshot_data_size(pKniInfo->pNativeHandle, &dataBytes);
+    if( JAVACALL_OK != ret || 0 >= dataBytes )
+    {
+        KNI_ThrowNew( "javax/microedition/media/MediaException",
+            "\nFailed to get Camera Snapshot data size\n");
+        goto end;
+    }
+    MMP_DEBUG_STR1("[kni_video] nSnapShot get data size %d\n", dataBytes);
+
+    /* Create new Java byte array object to store snapshot data */
+    SNI_NewArray(SNI_BYTE_ARRAY, dataBytes, returnValueHandle);
+    if (KNI_IsNullHandle(returnValueHandle)) {
+        KNI_ThrowNew(jsropOutOfMemoryError, NULL);
+        goto end;
+    }
+    
+    tmpArray = MMP_MALLOC( dataBytes );
+    if( NULL == tmpArray )
+    {
+        KNI_ReleaseHandle( returnValueHandle );
+        KNI_ThrowNew(jsropOutOfMemoryError, NULL);
+        goto end;
+    }
+    
+    ret = javacall_media_get_video_snapshot_data(pKniInfo->pNativeHandle, 
+                      ( char* )tmpArray, dataBytes);
+    if (JAVACALL_OK != ret) {
+        KNI_ReleaseHandle(returnValueHandle);
+        KNI_ThrowNew( "javax/microedition/media/MediaException",
+            "\nFailed to get Camera Snapshot data\n");
+    }
+    else {
+        KNI_SetRawArrayRegion(returnValueHandle, 0, dataBytes, tmpArray);
+    }
+
+    MMP_FREE( tmpArray );
+
+    MMP_DEBUG_STR1("[kni_video] -nGetSnapshotData %d\n", returnValueHandle);
+
+end:
+    KNI_EndHandlesAndReturnObject(returnValueHandle);
+}

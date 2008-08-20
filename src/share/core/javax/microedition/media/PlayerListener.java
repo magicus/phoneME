@@ -87,7 +87,6 @@ public interface PlayerListener {
      */
     String STOPPED = "stopped";
 
-    // #ifndef ABB [
     /**
      * Posted when a <code>Player</code> is stopped as responding to
      * the <code>setStopTime</code> call using the 
@@ -100,7 +99,6 @@ public interface PlayerListener {
      * <code>STOPPED_AT_TIME</code>.
      */
     String STOPPED_AT_TIME = "stoppedAtTime";
-    // #endif ]
 
     /**
      * Posted when a <code>Player</code> has reached the
@@ -188,7 +186,6 @@ public interface PlayerListener {
      */
     String VOLUME_CHANGED = "volumeChanged";
 
-    // #ifndef ABB [
     /**
      * Posted when the size of the video is changed either because
      * the source video size or the display size is changed.  
@@ -202,7 +199,6 @@ public interface PlayerListener {
      * <code>SIZE_CHANGED</code>.
      */
     String SIZE_CHANGED = "sizeChanged";
-    // #endif ]
 
     
     /**
@@ -223,7 +219,6 @@ public interface PlayerListener {
      */
     String CLOSED = "closed";
 
-    // #ifndef ABB [
     /**
      * Posted when recording is started.
      * <p>
@@ -286,7 +281,6 @@ public interface PlayerListener {
      * <code>BUFFERING_STOPPED</code>.
      */
     String BUFFERING_STOPPED = "bufferingStopped";
-    // #endif ]
 
     /**
      * This method is called to deliver an event to a registered

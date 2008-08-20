@@ -43,11 +43,12 @@ class MMEventListener implements EventListener {
     private static final int EVENT_MEDIA_RECORD_ERROR		=  4;
     private static final int EVENT_MEDIA_DEVICE_AVAILABLE	=  5;
     private static final int EVENT_MEDIA_DEVICE_UNAVAILABLE	=  6;
-    private static final int EVENT_MEDIA_BUFFERING_STARTED	=  7;
-    private static final int EVENT_MEDIA_BUFFERING_STOPPED	=  8;
-    private static final int EVENT_MEDIA_VOLUME_CHANGED		=  9;
-    private static final int EVENT_MEDIA_SNAPSHOT_FINISHED	= 10;
-    private static final int EVENT_MEDIA_ERROR				= 11;
+    private static final int EVENT_MEDIA_NEED_MORE_MEDIA_DATA =  7;
+    private static final int EVENT_MEDIA_BUFFERING_STARTED	=  8;
+    private static final int EVENT_MEDIA_BUFFERING_STOPPED	=  9;
+    private static final int EVENT_MEDIA_VOLUME_CHANGED		= 10;
+    private static final int EVENT_MEDIA_SNAPSHOT_FINISHED	= 11;
+    private static final int EVENT_MEDIA_ERROR				= 12;
 
     MMEventListener() {
         MMEventHandler.setListener(this);
@@ -72,6 +73,7 @@ class MMEventListener implements EventListener {
         switch ( nevt.intParam4 ) {
         case EVENT_MEDIA_END_OF_MEDIA:
             p = PlayerImpl.get(nevt.intParam1);
+System.out.println("jsr135: EOM");
             if (p != null) {
                 p.sendEvent(PlayerListener.END_OF_MEDIA, new Long(nevt.intParam2 * 1000));
             }
@@ -95,7 +97,6 @@ class MMEventListener implements EventListener {
             PlayerImpl.sendExternalVolumeChanged(PlayerListener.VOLUME_CHANGED, nevt.intParam2);
             break;
 
-// #ifndef ABB [
         case EVENT_MEDIA_RECORD_SIZE_LIMIT:
             p = PlayerImpl.get(nevt.intParam1);
             if(p != null) {
@@ -130,7 +131,26 @@ class MMEventListener implements EventListener {
                 p.sendEvent(PlayerListener.RECORD_ERROR, new String("Unexpected Media Error"));
             }
             break;
-// #endif ]
+
+        case EVENT_MEDIA_NEED_MORE_MEDIA_DATA:
+            p = PlayerImpl.get(nevt.intParam1);
+            if (p != null) {
+                p.continueDownload();
+            }
+            break;
+
+        case EVENT_MEDIA_SNAPSHOT_FINISHED:
+            p = PlayerImpl.get( nevt.intParam1 );
+            if( null != p )
+            {
+                try{
+                    DirectPlayer dp = ( DirectPlayer )p;
+                    dp.notifySnapshotFinished();
+                }
+                catch( ClassCastException e ){}
+            }
+            break;
+                
         }
     }
 }

@@ -24,28 +24,21 @@
  */
 
 package com.sun.mmedia;
+
 import  javax.microedition.media.*;
 import  javax.microedition.media.control.*;
 import  javax.microedition.media.protocol.SourceStream;
+import  javax.microedition.media.protocol.DataSource;
 import  java.util.Enumeration;
 import  java.util.Hashtable;
 import  java.util.Vector;
 import  com.sun.j2me.app.AppPackage;
+import  com.sun.j2me.app.AppIsolate;
 import  com.sun.mmedia.PlayerStateSubscriber;
 
-
-// #ifndef ABB [
-import javax.microedition.media.protocol.DataSource;
-// #endif ]
 import java.io.IOException;
 
 public class PlayerImpl implements Player {
-
-    // #ifdef ENABLE_DEBUG [
-    private final static boolean debug = true;
-    // #else ][
-    private final static boolean debug = false;
-    // #endif ]
 
     public PlayerStateSubscriber state_subscriber = null;
 
@@ -95,8 +88,7 @@ public class PlayerImpl implements Player {
      * lock object
      */
     private static Object idLock = new Object();
-
-
+    
     // Init native library
     protected native int nInit(int appId, int pID, String URI);
     // Terminate native library
@@ -108,16 +100,6 @@ public class PlayerImpl implements Player {
 
     // Realize native player
     protected native boolean nRealize(int handle, String mime);
-    // get java buffer size to determine media format
-    protected static native int nGetJavaBufferSize(int handle);
-    // get first packet size to determine media format
-    protected static native int nGetFirstPacketSize(int handle);
-    // buffering media data
-    protected static native int nBuffering(int handle, byte[] buffer, int size);
-    // ask Native Player if it needs more data immediatelly
-    protected static native boolean nNeedMoreDataImmediatelly(int hNative);    
-    // Provide whole media content size, if known
-    protected static native void nSetWholeContentSize(int hNative, long contentSize);
 
     private static String PL_ERR_SH = "Cannot create a Player: ";
     
@@ -128,7 +110,7 @@ public class PlayerImpl implements Player {
 
     public PlayerImpl(DataSource source) throws MediaException, IOException {
         // Get current application ID to support MVM
-        int appId = AppPackage.getInstance().getId();
+        int appId = AppIsolate.getIsolateId();
 
         synchronized (idLock) {
             pcount = (pcount + 1) % 32767;
@@ -185,6 +167,9 @@ public class PlayerImpl implements Player {
             source.connect();
             stream = source.getStreams()[0];
         }
+
+        // Set event listener
+        new MMEventListener();
     }
 
         
@@ -226,6 +211,8 @@ public class PlayerImpl implements Player {
             throw new MediaException("Can not realize");
         }
 
+        MediaDownload mediaDownload = null;
+
         if (!handledByDevice && !handledByJava) {
             mediaFormat = nGetMediaFormat(hNative);
             if (mediaFormat.equals(BasicPlayer.MEDIA_FORMAT_UNSUPPORTED)) {
@@ -244,7 +231,14 @@ public class PlayerImpl implements Player {
             /* predownload media data to recognize media format and/or 
                specific media parameters (e.g. duration) */
             if (!mediaFormat.equals(BasicPlayer.MEDIA_FORMAT_TONE)) {
-                doBuffering(hNative, stream);
+                mediaDownload = new MediaDownload(hNative, stream);
+                try {
+                    mediaDownload.fgDownload();
+                } catch(IOException ex1) {
+                    throw new MediaException("Can not start download Thread: " + ex1.getMessage());
+                }catch(Exception ex) {
+                    throw new MediaException("Can not start download Thread: " + ex.getMessage());
+                }
             }
         }
 
@@ -268,6 +262,7 @@ public class PlayerImpl implements Player {
         playerInst.mediaFormat        = mediaFormat;
         playerInst.handledByDevice    = handledByDevice;
         playerInst.pID                = pID;
+        playerInst.mediaDownload      = mediaDownload;
 
         playerInst.setSource(source);
 
@@ -288,71 +283,6 @@ public class PlayerImpl implements Player {
     };
 
     /**
-     *  Buffering portion of media data
-     *
-     * @param  hNative             Descriptor of native player
-     * @param  stream              Source stream
-     *
-     * @exception  MediaException     read from Source Stream error
-     */
-    static void doBuffering(int hNative, SourceStream stream) 
-        throws MediaException {
-
-        long contLength = stream.getContentLength();
-        boolean need_more = true;
-
-        if (contLength > 0) {
-            nSetWholeContentSize(hNative, contLength);
-        }
-        /* first loop - allocate java buffer*/
-        int javaBufSize = nGetJavaBufferSize(hNative);
-        int packetSize  = nGetFirstPacketSize(hNative);
-        if (packetSize > 0) {
-            if (javaBufSize <= 0) {
-                javaBufSize = 1024;
-            }
-
-            byte[] buffer;
-            try {
-                buffer = new byte[(int)javaBufSize];
-            } catch(OutOfMemoryError ome) {
-                throw new MediaException("Not enough memory");
-            }
-
-            do {
-                int num_read = 0;
-                int ret;
-                if (packetSize > javaBufSize) {
-                    packetSize = javaBufSize;
-                }
-                do {
-                    try {
-                        // read from source stream
-                        ret = stream.read(buffer, num_read, packetSize - num_read);
-                    } catch(IOException e) {
-                        throw new MediaException("Read from source error");
-                    }
-                    if (ret > 0) {
-                        num_read += ret;
-                    }
-                    if (ret == -1) {
-                        need_more = false;
-                        break;
-                    }
-                } while(num_read < packetSize);
-                if (num_read > 0) {
-                    packetSize = nBuffering(hNative, buffer, num_read);
-                    if (packetSize >=0) {
-                        need_more = nNeedMoreDataImmediatelly(hNative);
-                    } else {
-                        throw new MediaException("Buffering media data error");
-                    }
-                }
-            } while (need_more);
-        }
-    };
-
-    /**
      *  Gets the playerFromType attribute of the Manager class
      *
      * @param  type                Description of the Parameter
@@ -366,7 +296,7 @@ public class PlayerImpl implements Player {
         className = Configuration.getConfiguration().getHandler(type);
         if (className == null) {
             if (DirectPlayer.nIsVideoControlSupported(hNative)) {
-                className = "com.sun.mmedia.DirectVideo";
+                className = "com.sun.mmedia.DirectPlayer";
             } else if (DirectPlayer.nIsToneControlSupported(hNative)) {
                 className = "com.sun.mmedia.DirectTone";
             } else if (DirectPlayer.nIsMIDIControlSupported(hNative)) {
@@ -382,16 +312,14 @@ public class PlayerImpl implements Player {
 
         BasicPlayer p = null;
 
-        if (debug)
-            System.out.println("getPlayerFromType " + className);
+        // System.out.println("getPlayerFromType " + className);
 
         try {
             // ... try and instantiate the handler ...
             Class handlerClass = Class.forName(className);
             p = (BasicPlayer) handlerClass.newInstance();
         } catch (Exception e) {
-            if (debug)
-                System.out.println("Class not found " + className);
+            // System.out.println("Class not found " + className);
             throw new MediaException(PL_ERR_SH + e.getMessage());
         }
         return p;
@@ -446,8 +374,7 @@ public class PlayerImpl implements Player {
             playerInst.chkClosed(false);
 
             if (vmPaused) {
-                if (debug)
-                    System.out.println("ERROR: Try to prefetch player during paused state");
+                // System.out.println("ERROR: Try to prefetch player during paused state");
                 return;
             }        
 
@@ -508,8 +435,7 @@ public class PlayerImpl implements Player {
             playerInst.chkClosed(false);
 
             if (vmPaused) {
-                if (debug)
-                    System.out.println("ERROR: Try to start player during paused state");
+                // System.out.println("ERROR: Try to start player during paused state");
                 return;
             }
             playerInst.start();
@@ -613,7 +539,6 @@ public class PlayerImpl implements Player {
         isClosed = true;
     }
     
-    // #ifndef ABB [
     /**
      * Sets the <code>TimeBase</code> for this <code>Player</code>.
      * <p>
@@ -640,9 +565,7 @@ public class PlayerImpl implements Player {
             throw new IllegalStateException();
         }
     };
-    // #endif ]
 
-    // #ifndef ABB [
     /**
      * Gets the <code>TimeBase</code> that this <code>Player</code> is using.
      * @return The <code>TimeBase</code> that this <code>Player</code> is using.
@@ -658,7 +581,6 @@ public class PlayerImpl implements Player {
         // Player in the UNREALIZED or CLOSED state
         throw new IllegalStateException();
     };
-    // #endif ]
 
     /**
      * Sets the <code>Player</code>'s&nbsp;<i>media time</i>.
@@ -937,7 +859,7 @@ public class PlayerImpl implements Player {
             BasicPlayer p = (BasicPlayer) e.nextElement();
             int state = p.getState();
             if (state >= Player.REALIZED) {
-                if (debug) System.out.println("Send [" + evt + "] to Player " + p.toString());
+                // System.out.println("Send [" + evt + "] to Player " + p.toString());
                 VolumeControl vc = (VolumeControl)p.getControl("VolumeControl");
                 if (vc != null) {
                     vc.setLevel(volume);
@@ -979,8 +901,7 @@ public class PlayerImpl implements Player {
                 }
             } catch(MediaException ex) {
             }
-            if (debug) 
-                System.out.println("*** pause MMAPI : " + p + "(" + state + ") ***");
+            //  System.out.println("*** pause MMAPI : " + p + "(" + state + ") ***");
         }
     }
 
@@ -1005,8 +926,7 @@ public class PlayerImpl implements Player {
             int state = ((Integer) pstates.get(p)).intValue();
             long time = ((Long) mtimes.get(p)).longValue();
 
-            if (debug)
-                System.out.println("MMAPI resumeAll state: " + state);
+            // System.out.println("MMAPI resumeAll state: " + state);
 
             switch (state) {
                 /*
@@ -1038,3 +958,4 @@ public class PlayerImpl implements Player {
     }
 
 }
+

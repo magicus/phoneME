@@ -27,9 +27,7 @@ package com.sun.mmedia.protocol;
 
 import java.io.*;
 import javax.microedition.media.*;
-// #ifndef ABB [
 import javax.microedition.media.protocol.*;
-// #endif ]
 import java.util.Hashtable;
 
 /**
