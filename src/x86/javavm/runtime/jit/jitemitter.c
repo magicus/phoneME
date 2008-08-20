@@ -73,10 +73,7 @@ CVMCPUemitMethodProloguePatch(CVMJITCompilationContext *con,
     CVMCPUemitALUConstant16Scaled_fixed(con, CVMCPU_ADD_OPCODE, CVMCPU_ARG2_REG,
 					CVMCPU_JSP_REG, boundsOffset, 2);    
     /* Make sure we are not exceeding the reserved space for TOS adjust */
-    if (CVMJITcbufGetLogicalPC(con) > rec->capacityEndPC) {
-        CVMJITerror(con, CANNOT_COMPILE,
-            "reserved space is not enough for adjustment of TOS by capacity");
-    }
+    CVMassert(CVMJITcbufGetLogicalPC(con) <= rec->capacityEndPC);
     CVMJITcbufPop(con);
 
     /* 2. Spill adjustment. */
@@ -93,10 +90,7 @@ CVMCPUemitMethodProloguePatch(CVMJITCompilationContext *con,
 					CVMCPU_JSP_REG, CVMCPU_JFP_REG,
 					spillAdjust, 0);
     /* Make sure we are not exceeding the reserved space for spill adjust */
-    if (CVMJITcbufGetLogicalPC(con) > rec->spillEndPC) {
-        CVMJITerror(con, CANNOT_COMPILE,
-            "reserved space is not enough for spill adjust");
-    }
+    CVMassert(CVMJITcbufGetLogicalPC(con) <= rec->spillEndPC);
 
 #ifdef CVMCPU_HAS_CP_REG
     {
