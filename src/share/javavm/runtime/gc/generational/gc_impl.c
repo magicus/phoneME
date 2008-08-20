@@ -61,9 +61,10 @@ void *CVMgenMap(size_t requestedSize, size_t *mappedSize)
     void *mem;
     void *alignedMem;
     mem = calloc(1, requestedSize + CVMmemPageSize());
-    if (mem != NULL) {
-	*mappedSize = requestedSize;
+    if (mem == NULL) {
+        return NULL;
     }
+    *mappedSize = requestedSize;
 
     /* We want to reserve at least the size of a pointer to store the actual
        address of the start of the allocated area.  After that, we will
