@@ -30,4 +30,6 @@ public interface AutoEventSequence {
     public String toString();
     public AutoEvent[] getEvents();
     public boolean isEmpty();
+    public void addEvents(AutoEvent event);
+    public void addEvents(AutoEvent[] events);
 }

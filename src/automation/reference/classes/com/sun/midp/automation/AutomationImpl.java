@@ -134,10 +134,10 @@ final class AutomationImpl extends Automation {
     }
     
 
-    public void replayEvents(AutoEventsSequence events, int speedDivisor) {
+    public void replayEvents(AutoEventSequence events, int speedDivisor) {
     }
 
-    public void replayEvents(AutoEventsSequence events) {
+    public void replayEvents(AutoEventSequence events) {
         replayEvents(events, 1);
     }
 

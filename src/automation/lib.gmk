@@ -65,10 +65,11 @@ SUBSYSTEM_AUTOMATION_JAVA_FILES += \
 	$(SUBSYSTEM_AUTOMATION_DIR)/classes/com/sun/midp/automation/AutoPenState.java \
 	$(SUBSYSTEM_AUTOMATION_DIR)/classes/com/sun/midp/automation/AutoPenEvent.java \
 	$(SUBSYSTEM_AUTOMATION_DIR)/classes/com/sun/midp/automation/AutoEventFactory.java \
-	$(SUBSYSTEM_AUTOMATION_DIR)/classes/com/sun/midp/automation/AutoEventsSequence.java \
+	$(SUBSYSTEM_AUTOMATION_DIR)/classes/com/sun/midp/automation/AutoEventSequence.java \
 	\
 	$(SUBSYSTEM_AUTOMATION_DIR)/reference/classes/com/sun/midp/automation/AutomationImpl.java \
 	$(SUBSYSTEM_AUTOMATION_DIR)/reference/classes/com/sun/midp/automation/AutoEventFactoryImpl.java \
+	$(SUBSYSTEM_AUTOMATION_DIR)/reference/classes/com/sun/midp/automation/AutoEventSequenceImpl.java \
 	$(SUBSYSTEM_AUTOMATION_DIR)/reference/classes/com/sun/midp/automation/AutoEventFromStringFactory.java \
 	$(SUBSYSTEM_AUTOMATION_DIR)/reference/classes/com/sun/midp/automation/AutoEventImplBase.java \
 	$(SUBSYSTEM_AUTOMATION_DIR)/reference/classes/com/sun/midp/automation/AutoKeyEventImpl.java

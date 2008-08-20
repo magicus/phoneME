@@ -60,7 +60,7 @@ public abstract class Automation {
     public abstract void injectKeyClick(char keyChar);
 
 
-    public abstract void replayEvents(AutoEventsSequence events, 
+    public abstract void replayEvents(AutoEventSequence events, 
             int speedDivisor);
-    public abstract void replayEvents(AutoEventsSequence events);
+    public abstract void replayEvents(AutoEventSequence events);
 }

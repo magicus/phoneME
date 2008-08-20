@@ -65,8 +65,8 @@ final class AutoEventFactoryImpl implements AutoEventFactory {
             throw new IllegalArgumentException("Offset is negative");
         }
 
-        int curOffect = offset;
-        AutoEventSequence seq = new AutoEventSequence();
+        int curOffset = offset;
+        AutoEventSequence seq = new AutoEventSequenceImpl();
         AutoEvent[] events = null;
 
         do {

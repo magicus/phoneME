@@ -29,7 +29,7 @@ package com.sun.midp.automation;
 interface AutoEventFromStringFactory {
     String getPrefix();
 
-    AutoEvent createFromString(String str, int offset, Integer newOffset) 
+    AutoEvent[] createFromString(String str, int offset, Integer newOffset) 
         throws IllegalArgumentException;
 }
 
