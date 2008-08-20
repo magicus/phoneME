@@ -3431,7 +3431,6 @@ JVM_NewMultiArray(JNIEnv *env, jclass eltClass, jintArray dim)
      */
     CVMStackVal32* dimensionsTmp;
     CVMInt32 effectiveNDimensions;
-    CVMInt32 elementDepth; /* For elements which are themselves arrays */
     
     if ((classObj == NULL) || (CVMID_icellIsNull(classObj))) {
 	CVMthrowNullPointerException(ee, "null class object");
@@ -3493,17 +3492,23 @@ JVM_NewMultiArray(JNIEnv *env, jclass eltClass, jintArray dim)
        itself be an array class.  We need to make sure that the deepest
        dimension of the new multi array does not exceed the 255 limit.
     */
-    if (CVMisArrayClass(cb)) {
-	/* Check total number of dimensions against 255
-           limit.  See also JVM_NewArray above. */
-	elementDepth = CVMarrayDepth(cb);
-	if ((elementDepth + nDimensions) > 255) {
- 	    CVMassert(elementDepth <= 255); /* this should never happen because
-				       * arrays always have 255 or fewer
-				       * dimensions */
-	    CVMthrowIllegalArgumentException(ee, "too many dimensions");
-	    return NULL;
-	}
+    {
+        CVMInt32 elementDepth;
+        if (CVMisArrayClass(cb)) {
+            /* Check total number of dimensions against 255
+               limit.  See also JVM_NewArray above. */
+            elementDepth = CVMarrayDepth(cb);
+        } else {
+            elementDepth = 0;
+        }
+        
+        if ((elementDepth + nDimensions) > 255) {
+            CVMassert(elementDepth <= 255); /* this should never happen because
+                                             * arrays always have 255 or fewer
+                                             * dimensions */
+            CVMthrowIllegalArgumentException(ee, "too many dimensions");
+            return NULL;
+        }
     }
 
     /* %comment: c021 */
