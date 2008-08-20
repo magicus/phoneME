@@ -57,8 +57,8 @@ static TCHAR g_szDefaultFolderName[] = _T("Folder");
 static TCHAR g_szDefaultSuiteName[] = _T("Midlet Suite");
 
 // The size of main window calibrated to get 240x320 child area to draw SJWC output to
-int g_iWidth = 246, g_iHeight = 345;
-int g_iChildAreaWidth = 240, g_iChildAreaHeight = 320;
+const int g_iWidth = 246, g_iHeight = 345;
+const int g_iChildAreaWidth = 240, g_iChildAreaHeight = 300;
 
 HINSTANCE g_hInst = NULL;
 
@@ -293,8 +293,9 @@ static HWND CreateMainToolbar(HWND hWndParent) {
                                      MAKEINTRESOURCE(IDB_MAIN_TOOLBAR_BUTTONS));
 
     if (hToolbarBmp == NULL) {
-        MessageBox(NULL, _T("Can't load bitmap for the toolbar!"),
-                   g_szTitle, NULL);
+        wprintf(_T("Can't load bitmap for the toolbar!"));
+        //MessageBox(NULL, _T("Can't load bitmap for the toolbar!"),
+        //           g_szTitle, NULL);
         return NULL;
     }
 
@@ -307,8 +308,7 @@ static HWND CreateMainToolbar(HWND hWndParent) {
         sizeof (TBBUTTON));
 
     if (!hWndToolbar) {
-        wprintf(_T("Can't create a toolbar!"));
-        // MessageBox(NULL, _T("Can't create a toolbar!"), g_szTitle, NULL);
+        MessageBox(NULL, _T("Can't create a toolbar!"), g_szTitle, NULL);
         return NULL;
     }
 
@@ -1233,14 +1233,14 @@ extern "C" {
  */
 javacall_result javacall_lcd_init(void) {
     if (VRAM.hdc == NULL) {
-        VRAM.hdc = (javacall_pixel*)
-            malloc(g_iWidth * g_iHeight * sizeof(javacall_pixel));
+        VRAM.hdc = (javacall_pixel*) malloc(g_iChildAreaWidth *
+            g_iChildAreaHeight * sizeof(javacall_pixel));
         if (VRAM.hdc == NULL) {
             wprintf(_T("javacall_lcd_init(): VRAM allocation failed!\n"));
         }
 
-        VRAM.width  = g_iWidth;
-        VRAM.height = g_iHeight;
+        VRAM.width  = g_iChildAreaWidth;
+        VRAM.height = g_iChildAreaHeight;
     }
 
     return JAVACALL_OK;
@@ -1349,7 +1349,7 @@ javacall_result javacall_lcd_set_full_screen_mode(javacall_bool useFullScreen) {
  * @return <tt>1</tt> on success, <tt>0</tt> on failure or invalid screen
  */
 javacall_result javacall_lcd_flush() {
-    RefreshScreen(0, 0, g_iWidth, g_iHeight); 
+    RefreshScreen(0, 0, g_iChildAreaWidth, g_iChildAreaHeight); 
     return JAVACALL_OK;
 }
 /**
@@ -1367,7 +1367,7 @@ javacall_result javacall_lcd_flush() {
  * @retval JAVACALL_FAIL    fail
  */
 javacall_result /*OPTIONAL*/ javacall_lcd_flush_partial(int ystart, int yend) {
-    RefreshScreen(0, 0, g_iWidth, g_iHeight); 
+    RefreshScreen(0, 0, g_iChildAreaWidth, g_iChildAreaHeight); 
     return JAVACALL_OK;
 }
 
@@ -1418,14 +1418,14 @@ javacall_lcd_set_native_softbutton_label(const javacall_utf16* label,
  * Returns available display width
  */
 int javacall_lcd_get_screen_width() {
-    return g_iWidth;
+    return g_iChildAreaWidth;
 }
 
 /**
  * Returns available display height
  */
 int javacall_lcd_get_screen_height() {
-    return g_iHeight;
+    return g_iChildAreaHeight;
 }
 
 }; // extern "C"
