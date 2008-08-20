@@ -41,36 +41,51 @@ final class AutoEventFactoryImpl implements AutoEventFactory {
     }
 
 
-    public AutoEvent createFromString(String str)
+    public AutoEventSequence createFromString(String str)
         throws IllegalArgumentException {
 
         return createFromString(str, 0, null);
     }
 
-    public AutoEvent createFromString(String str, int offset)
+    public AutoEventSequence createFromString(String str, int offset)
         throws IllegalArgumentException {
 
         return createFromString(str, offset, null);
     }
 
-    public AutoEvent createFromString(String str, int offset, 
+    public AutoEventSequence createFromString(String str, int offset, 
             Integer newOffset) 
         throws IllegalArgumentException {
 
-        AutoEvent event = null;
-        AutoEventFromStringFactory f = findEventFromStringFactory(String str, 
-            int offset);
-
-        if (f != null) {
-            event = f.createFromString(str, offset, newOffset);
+        if (str == null) {
+            throw new IllegalArgumentException("String is null");
         }
 
-        if (event == null) {
-            throw new IllegalArgumentException(
-                    "Can't create event from string");
+        if (offset < 0) {
+            throw new IllegalArgumentException("Offset is negative");
         }
 
-        return event;
+        int curOffect = offset;
+        AutoEventSequence seq = new AutoEventSequence();
+        AutoEvent[] events = null;
+
+        do {
+            AutoEventFromStringFactory f = findEventFromStringFactory(
+                    str, curOffset);
+
+            if (f != null) {
+                events = f.createFromString(str, curOffset, newOffset);
+                curOffset = newOffset.intValue();
+            }
+            
+            if (events != null) {
+                seq.addEvents(events);
+            }
+
+        } while (events != null);
+
+
+        return seq;
     }
 
     public AutoKeyEvent createKeyEvent(AutoKeyCode keyCode, 

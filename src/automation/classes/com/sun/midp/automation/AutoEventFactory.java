@@ -28,13 +28,13 @@
 package com.sun.midp.automation;
 
 public interface AutoEventFactory {
-    public AutoEvent createFromString(String str)
+    public AutoEventSequence createFromString(String str)
         throws IllegalArgumentException;
 
-    public AutoEvent createFromString(String str, int offset)
+    public AutoEventSequence createFromString(String str, int offset)
         throws IllegalArgumentException;
 
-    public AutoEvent createFromString(String str, int offset, 
+    public AutoEventSequence createFromString(String str, int offset, 
             Integer newOffset) 
         throws IllegalArgumentException;
 

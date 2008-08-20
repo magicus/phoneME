@@ -37,8 +37,10 @@ class AutoKeyEventFromStringFactory
         return AutoEventType.KEYBOARD.getName();
     }
 
-    AutoEvent createFromString(String str, int offset, Integer newOffset) 
+    AutoEvent[] createFromString(String str, int offset, Integer newOffset) 
         throws IllegalArgumentException {
+
+        return null;
     }   
 
     private static void registerFactory() {

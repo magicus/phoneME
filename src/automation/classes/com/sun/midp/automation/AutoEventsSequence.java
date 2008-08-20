@@ -26,7 +26,8 @@
 
 package com.sun.midp.automation;
 
-public interface AutoEventsSequence {
+public interface AutoEventSequence {
     public String toString();
     public AutoEvent[] getEvents();
+    public boolean isEmpty();
 }
