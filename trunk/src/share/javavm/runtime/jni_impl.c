@@ -4130,12 +4130,12 @@ JNI_CreateJavaVM(JavaVM **p_jvm, void **p_env, void *args)
              * -Xbootclasspath/a or /p
              */
             if (pathInfo.preBootclasspath != NULL) {
-              free(pathInfo.preBootclasspath);
-              pathInfo.preBootclasspath = NULL;
+                free(pathInfo.preBootclasspath);
+                pathInfo.preBootclasspath = NULL;
             }
             if (pathInfo.postBootclasspath != NULL) {
-              free(pathInfo.postBootclasspath);
-              pathInfo.postBootclasspath = NULL;
+                free(pathInfo.postBootclasspath);
+                pathInfo.postBootclasspath = NULL;
             }
         }
         else if (!strncmp(str, "-Xbootclasspath/a=", 18) ||
@@ -4143,20 +4143,20 @@ JNI_CreateJavaVM(JavaVM **p_jvm, void **p_env, void *args)
             const char* p = str + 18;
             char* tmp = pathInfo.postBootclasspath;
             pathInfo.postBootclasspath = (char *)
-              malloc(strlen(p) +
-                     (tmp == NULL ? 0 : strlen(tmp)) +
-                     strlen(CVM_PATH_CLASSPATH_SEPARATOR) + 1);
+                malloc(strlen(p) +
+                       (tmp == NULL ? 0 : strlen(tmp)) +
+                       strlen(CVM_PATH_CLASSPATH_SEPARATOR) + 1);
             if (pathInfo.postBootclasspath == NULL) {
                 errorStr = "out of memory while parsing -Xbootclasspath";
 		errorNo = JNI_ENOMEM;
 		goto done;
             }
             if (tmp != NULL) {
-              sprintf(pathInfo.postBootclasspath, "%s%s%s", 
-                      tmp, CVM_PATH_CLASSPATH_SEPARATOR, p);
-              free(tmp);
+                sprintf(pathInfo.postBootclasspath, "%s%s%s", 
+                        tmp, CVM_PATH_CLASSPATH_SEPARATOR, p);
+                free(tmp);
             } else {
-              pathInfo.postBootclasspath = strdup(p);
+                pathInfo.postBootclasspath = strdup(p);
             }
         }
         else if (!strncmp(str, "-Xbootclasspath/p=", 18) ||
@@ -4164,21 +4164,21 @@ JNI_CreateJavaVM(JavaVM **p_jvm, void **p_env, void *args)
             const char* p = str + 18;
             char* tmp = pathInfo.preBootclasspath;
             pathInfo.preBootclasspath = (char *)
-              malloc(strlen(p) +
-                     (tmp == NULL ?
-                      0 : strlen(tmp)) +
-                     strlen(CVM_PATH_CLASSPATH_SEPARATOR) + 1);
+                malloc(strlen(p) +
+                       (tmp == NULL ?
+                        0 : strlen(tmp)) +
+                       strlen(CVM_PATH_CLASSPATH_SEPARATOR) + 1);
             if (pathInfo.preBootclasspath == NULL) {
-              errorStr = "out of memory while parsing -Xbootclasspath";
-              errorNo = JNI_ENOMEM;
-              goto done;
+                errorStr = "out of memory while parsing -Xbootclasspath";
+                errorNo = JNI_ENOMEM;
+                goto done;
             }
             if (tmp != NULL) {
-              sprintf(pathInfo.preBootclasspath, "%s%s%s", 
-                    p, CVM_PATH_CLASSPATH_SEPARATOR, tmp);
-              free(tmp);
+                sprintf(pathInfo.preBootclasspath, "%s%s%s", 
+                        p, CVM_PATH_CLASSPATH_SEPARATOR, tmp);
+                free(tmp);
             } else {
-              pathInfo.preBootclasspath = strdup(p);
+                pathInfo.preBootclasspath = strdup(p);
             }
         }
 #ifdef NO_JDK_COMPATABILITY
@@ -4374,19 +4374,19 @@ JNI_CreateJavaVM(JavaVM **p_jvm, void **p_env, void *args)
 #endif
 
     if (sunlibrarypathStr != NULL) {
-      if (pathInfo.dllPath != NULL) {
-        free(pathInfo.dllPath);
-      }
-      pathInfo.dllPath = strdup(sunlibrarypathStr);
+        if (pathInfo.dllPath != NULL) {
+            free(pathInfo.dllPath);
+        }
+        pathInfo.dllPath = strdup(sunlibrarypathStr);
     }
 
     {
-      if (!CVMinitPathValues((void *)CVMgetProperties(), &pathInfo,
-                             (char **)&options.bootclasspathStr)) {
-        errorStr = "CVMinitPathValues failed";
-	errorNo = JNI_ERR;
-	goto done;
-      }
+        if (!CVMinitPathValues((void *)CVMgetProperties(), &pathInfo,
+                               (char **)&options.bootclasspathStr)) {
+            errorStr = "CVMinitPathValues failed";
+            errorNo = JNI_ERR;
+            goto done;
+        }
     }
 
     if (!CVMinitVMGlobalState(&CVMglobals, &options)) {

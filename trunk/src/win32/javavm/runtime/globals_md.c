@@ -193,11 +193,11 @@ CVMBool CVMinitStaticState(CVMpathInfo *pathInfo)
         p2 = buf;
         pathInfo->basePath = strdup(p2);
         if (pathInfo->basePath == NULL) {
-          return CVM_FALSE;
+            return CVM_FALSE;
         }
         p = (char *)malloc(strlen(p2) + 1 + strlen("lib") + 1);
         if (p == NULL) {
-          return CVM_FALSE;
+            return CVM_FALSE;
         }
         strcpy(p, p2);
         pEnd = p + strlen(p);
@@ -206,7 +206,7 @@ CVMBool CVMinitStaticState(CVMpathInfo *pathInfo)
         pathInfo->libPath = p;
         p = (char *)malloc(strlen(p2) + 1 + strlen("bin") + 1);
         if (p == NULL) {
-          return CVM_FALSE;
+            return CVM_FALSE;
         }
         strcpy(p, p2);
         pEnd = p + strlen(p);
