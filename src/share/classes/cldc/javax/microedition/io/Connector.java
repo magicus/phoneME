@@ -178,6 +178,10 @@ public class Connector {
             throw new IllegalArgumentException("Null URL");
         }
 
+        if (name.equals("")) {
+            throw new IllegalArgumentException("empty URL");
+        }
+
         try {
             /*
              * This search is on every open so this class can used in VM's
