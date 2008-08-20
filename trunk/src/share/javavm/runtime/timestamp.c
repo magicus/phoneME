@@ -330,6 +330,27 @@ timeStampFinishup(CVMExecEnv* ee, long wallClockTime)
 	    return CVM_FALSE;
 	}
     }
+
+    /* Free up location records before feeing up list */
+    {
+        ListIterator* fowardIterator;
+        timeStampRecords* value;
+        CVMsysMutexLock(ee, &CVMglobals.timestampListLock);
+        fowardIterator = listGetIterator(ee, timeStampList);
+        if (fowardIterator != NULL) {
+            while ((value = (timeStampRecords*)listNext(fowardIterator))
+                   != NULL)
+            {
+                if (value->loc != NULL) {
+                    free(value->loc);
+                    value->loc = NULL;
+                }
+            }
+            free(fowardIterator);
+        }
+        CVMsysMutexUnlock(ee, &CVMglobals.timestampListLock);
+    }
+
     listAndNodesDestroy(timeStampList);
     free(timeStampList);
     timeStampList = NULL;
