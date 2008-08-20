@@ -156,7 +156,7 @@ java_ams_midlet_start_with_args(javacall_suite_id suiteId,
     if (jcRes != JAVACALL_OK) {
         return JAVACALL_FAIL;
     }
-    utf16Len <<= 1;
+    //utf16Len <<= 1;
 
 /*
     jcRes = javautil_unicode_utf16_to_utf8(className, classNameLen,
@@ -166,13 +166,15 @@ java_ams_midlet_start_with_args(javacall_suite_id suiteId,
         return JAVACALL_FAIL;
     }
 */
-    if (utf16Len >= MAX_CLASS_NAME_LEN) {
+    if ((utf16Len << 1) + 2 >= MAX_CLASS_NAME_LEN) {
         return JAVACALL_FAIL;
     }
-    memcpy((unsigned char*)pClassName, (unsigned char*)className, utf16Len);
+    memcpy((unsigned char*)pClassName, (unsigned char*)className,
+           utf16Len << 1);
     classNameLen = utf16Len;
 
-    pClassName[classNameLen] = 0;
+    pClassName[utf16Len]   = 0;
+    pClassName[utf16Len + 1] = 0;
 
     /* converting the midlet's arguments */
     for (i = 0; i < argsNum; i++) {

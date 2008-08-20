@@ -96,8 +96,8 @@ typedef struct _TVI_INFO {
     javacall_folder_id folderId; // folder ID, applicable for all TVI types
 } TVI_INFO;
 
-TVI_INFO* CreateTviInfo();
-void FreeTviInfo(TVI_INFO* pInfo);
+static TVI_INFO* CreateTviInfo();
+static void FreeTviInfo(TVI_INFO* pInfo);
 
 
 // Forward declarations of functions included in this code module:
@@ -120,8 +120,10 @@ static void CleanupAms();
 static void CleanupWindows();
 static void CleanupTreeView(HWND hwndTV);
 
-static void AddWindowMenuItem(javacall_const_utf16_string jsStr);
+static void AddWindowMenuItem(javacall_const_utf16_string jsStr, void* pItemData);
 static void CheckWindowMenuItem(int index, BOOL fChecked);
+static void SetCheckedWindowMenuItem(void* pItemData);
+static void* GetWindowMenuItemData(UINT commandId);
 
 static LPTSTR JavacallUtf16ToTstr(javacall_const_utf16_string str);
 static javacall_utf16_string CloneJavacallUtf16(javacall_const_utf16_string str);
@@ -503,7 +505,7 @@ static HWND CreateTreeView(HWND hWndParent) {
     return hwndTV;
 }
 
-TVI_INFO* CreateTviInfo() {
+static TVI_INFO* CreateTviInfo() {
     TVI_INFO* pInfo = (TVI_INFO*)javacall_malloc(sizeof(TVI_INFO));
     if (pInfo != NULL) {
         pInfo->type = TVI_TYPE_UNKNOWN;
@@ -516,7 +518,7 @@ TVI_INFO* CreateTviInfo() {
     return pInfo;
 }
 
-void FreeTviInfo(TVI_INFO* pInfo) {
+static void FreeTviInfo(TVI_INFO* pInfo) {
     if (pInfo) {
         if (pInfo->className) {
             javacall_free(pInfo->className);
@@ -777,7 +779,9 @@ MainWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
 
     switch (message) {
     case WM_COMMAND: {
-        switch(LOWORD(wParam)) {
+        WORD wCmd = LOWORD(wParam);
+
+        switch(wCmd) {
             case IDM_WINDOW_APP_MANAGER: {
                 java_ams_midlet_switch_background();
 
@@ -818,25 +822,44 @@ MainWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
                 PostQuitMessage(0);
                 break;
             }
+
             case IDM_HELP_ABOUT: {
                 MessageBox(hWnd, _T("Cool Application Manager"),
                            _T("About"), MB_OK | MB_ICONINFORMATION);
+                break;
+            }
+
+            default: {
+                if (wCmd >= IDM_WINDOW_FIRST_ITEM &&
+                        wCmd < IDM_WINDOW_LAST_ITEM) {
+                    // This is a command from "Window" menu, so
+                    // we are switching to the selected window.
+                    TVI_INFO* pInfo = (TVI_INFO*)GetWindowMenuItemData(wCmd);
+                    if (pInfo != NULL) {
+                        javacall_result res = java_ams_midlet_switch_foreground(
+                            pInfo->appId);
+                        if (res == JAVACALL_OK) {
+                            ShowWindow(g_hMidletTreeView, SW_HIDE);
+                            SetCheckedWindowMenuItem(pInfo);
+                        }
+                    }
+                }
                 break;
             }
         }
         break;
     }
 
-    case WM_PAINT:
+    case WM_PAINT: {
         hdc = BeginPaint(hWnd, &ps);
 
         DrawBuffer(hdc);
 
         EndPaint(hWnd, &ps);
         break;
+    }
 
-    case WM_NOTIFY:
-    {
+    case WM_NOTIFY: {
         LPNMHDR pHdr = (LPNMHDR)lParam;
         switch (pHdr->code)
         {
@@ -911,7 +934,56 @@ static void CheckWindowMenuItem(int index, BOOL fChecked) {
 /**
  *
  */
-static void AddWindowMenuItem(javacall_const_utf16_string jsStr) {
+static void SetCheckedWindowMenuItem(void* pItemData) {
+    HMENU hWindowSubmenu = GetSubMenu(GetMenu(g_hMainWindow),
+                                      WINDOW_SUBMENU_INDEX);
+    int numberOfItems = GetMenuItemCount(hWindowSubmenu);
+
+    MENUITEMINFO mii;
+
+    mii.cbSize = sizeof(MENUITEMINFO);
+    mii.fMask = MIIM_DATA;
+
+    for (int i = 0; i < numberOfItems; i++) {
+        BOOL fRes = GetMenuItemInfo(hWindowSubmenu, i, TRUE, &mii);
+        if (fRes && mii.dwItemData == (DWORD)pItemData) {
+            CheckWindowMenuItem(i, TRUE);
+        } else {
+            CheckWindowMenuItem(i, FALSE);
+        }
+    }
+
+    DrawMenuBar(g_hMainWindow);
+}
+
+/**
+ *
+ */
+static void* GetWindowMenuItemData(UINT commandId) {
+    HMENU hWindowSubmenu = GetSubMenu(GetMenu(g_hMainWindow),
+                                      WINDOW_SUBMENU_INDEX);
+    int numberOfItems = GetMenuItemCount(hWindowSubmenu);
+
+    MENUITEMINFO mii;
+
+    mii.cbSize = sizeof(MENUITEMINFO);
+    mii.fMask = MIIM_ID | MIIM_DATA;
+
+    for (int i = 0; i < numberOfItems; i++) {
+        BOOL fRes = GetMenuItemInfo(hWindowSubmenu, i, TRUE, &mii);
+        if (fRes && mii.wID == commandId) {
+            return (void*)mii.dwItemData;
+        }
+    }
+
+    return NULL;
+}
+
+/**
+ *
+ */
+static void AddWindowMenuItem(javacall_const_utf16_string jsStr,
+                              void* pItemData) {
     LPTSTR pszMIDletName = JavacallUtf16ToTstr(jsStr);
                     
     HMENU hWindowSubmenu = GetSubMenu(GetMenu(g_hMainWindow),
@@ -921,14 +993,14 @@ static void AddWindowMenuItem(javacall_const_utf16_string jsStr) {
     MENUITEMINFO mii;
 
     mii.cbSize = sizeof(MENUITEMINFO);
-    mii.fMask = MIIM_FTYPE | MIIM_STRING | MIIM_ID | MIIM_STATE;
+    mii.fMask = MIIM_FTYPE | MIIM_STRING | MIIM_ID | MIIM_STATE | MIIM_DATA;
     mii.fType = MFT_STRING;
     mii.fState = MFS_ENABLED | MFS_CHECKED;
     mii.wID = IDM_WINDOW_FIRST_ITEM + index;
     mii.hSubMenu = NULL;
     mii.hbmpChecked = NULL; 
     mii.hbmpUnchecked = NULL;
-    mii.dwItemData = 0;
+    mii.dwItemData = (DWORD)pItemData;
     mii.dwTypeData = pszMIDletName;
     mii.cch = lstrlen(mii.dwTypeData);
     mii.hbmpItem = NULL;
@@ -959,7 +1031,7 @@ static BOOL StartMidlet(HWND hTreeWnd) {
         if (TreeView_GetItem(hTreeWnd, &tvi)) {
             TVI_INFO* pInfo = (TVI_INFO*)tvi.lParam;
             if (pInfo->type == TVI_TYPE_MIDLET) {
-                wprintf(_T("Launching MIDlet (suiteId=%d, class=%S, appId=%d)...\n"),
+                wprintf(_T("Launching MIDlet (suiteId=%d, class=%s, appId=%d)...\n"),
                     pInfo->suiteId, pInfo->className, g_jAppId);
 
                 res = java_ams_midlet_start(pInfo->suiteId, g_jAppId,
@@ -984,7 +1056,7 @@ static BOOL StartMidlet(HWND hTreeWnd) {
                     javacall_const_utf16_string jsLabel =
                         (pInfo->displayName != NULL) ?
                             pInfo->displayName : pInfo->className;
-                    AddWindowMenuItem(jsLabel);
+                    AddWindowMenuItem(jsLabel, pInfo);
 
                     return TRUE;
                 }
@@ -1007,8 +1079,7 @@ MidletTreeWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
 
     switch (message) {
 
-    case WM_RBUTTONDOWN:
-    {
+    case WM_RBUTTONDOWN: {
         TV_HITTESTINFO tvH;
 
         tvH.pt.x = LOWORD(lParam);
@@ -1050,8 +1121,7 @@ MidletTreeWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
         break;
     }
 
-    case WM_LBUTTONDBLCLK: 
-    {
+    case WM_LBUTTONDBLCLK: {
         StartMidlet(hWnd);
 
         break;
@@ -1079,8 +1149,7 @@ MidletTreeWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
         return 1;
     }
 
-    case WM_PAINT:
-    {
+    case WM_PAINT: {
         //HBRUSH hBrush = (HBRUSH)GetStockObject(HOLLOW_BRUSH);
         //SelectObject((HDC)wParam, (HGDIOBJ)hBrush);
 
