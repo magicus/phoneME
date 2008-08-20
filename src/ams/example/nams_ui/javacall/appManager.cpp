@@ -79,7 +79,8 @@ typedef struct _TVI_INFO {
     int type; // type of the node, valid values are TVI_TYPE_SUITE, 
               // TVI_TYPE_MIDLET, TVI_TYPE_FOLDER
     javacall_utf16_string className; // MIDlet class name if item type is
-                                           // TVI_TYPE_MIDLET
+                                     // TVI_TYPE_MIDLET
+    javacall_utf16_string displayName; // Name to display, works for all types
     javacall_suite_id suiteId; // id of the suite, makes sense if item type is
                                // TVI_TYPE_MIDLET and TVI_TYPE_SUITE
     javacall_app_id appId; // external application id if item type is
@@ -506,6 +507,7 @@ TVI_INFO* CreateTviInfo() {
     if (pInfo != NULL) {
         pInfo->type = TVI_TYPE_UNKNOWN;
         pInfo->className = NULL;
+        pInfo->displayName = NULL;
         pInfo->suiteId = JAVACALL_INVALID_SUITE_ID;
         pInfo->appId = JAVACALL_INVALID_FOLDER_ID;
         pInfo->folderId = JAVACALL_INVALID_APP_ID;
@@ -517,6 +519,9 @@ void FreeTviInfo(TVI_INFO* pInfo) {
     if (pInfo) {
         if (pInfo->className) {
             javacall_free(pInfo->className);
+        }
+        if (pInfo->displayName) {
+            javacall_free(pInfo->displayName);
         }
         javacall_free(pInfo);
     }
@@ -535,16 +540,18 @@ BOOL InitTreeViewItems(HWND hwndTV)  {
     res = java_ams_suite_get_all_folders_info(&pFoldersInfo, &folderNum);
     if (res == JAVACALL_OK) {
         for (int k = 0; k < folderNum; k++) {
-            LPTSTR pszFolderName = JavacallUtf16ToTstr(pFoldersInfo[k].folderName);
-            if (!pszFolderName) {
-              pszFolderName = g_szDefaultFolderName;
-            }
+            LPTSTR pszFolderName = (pFoldersInfo[k].folderName) ?
+                JavacallUtf16ToTstr(pFoldersInfo[k].folderName) :
+                g_szDefaultFolderName;
             wprintf(_T("Folder label=%s\n"), pszFolderName);
 
             pInfo = CreateTviInfo();
             if (pInfo) {
                 pInfo->type = TVI_TYPE_FOLDER;
                 pInfo->folderId = pFoldersInfo[k].folderId;
+                if (pFoldersInfo[k].folderName) {
+                    pInfo->displayName = CloneJavacallUtf16(pFoldersInfo[k].folderName);
+                }
             } 
             AddItemToTree(hwndTV, pszFolderName, 1, pInfo);
 
@@ -582,16 +589,18 @@ BOOL InitTreeViewItems(HWND hwndTV)  {
               jsLabel = (pSuiteInfo->displayName != NULL) ?
                   pSuiteInfo->displayName : pSuiteInfo->suiteName;
 
-              LPTSTR pszSuiteName = JavacallUtf16ToTstr(jsLabel);
-              if (!pszSuiteName) {
-                  pszSuiteName = g_szDefaultSuiteName;
-              }
+              LPTSTR pszSuiteName = (jsLabel != NULL) ?
+                  JavacallUtf16ToTstr(jsLabel) :
+                  g_szDefaultSuiteName;
               wprintf(_T("Suite label=%s\n"), pszSuiteName);
 
               pInfo = CreateTviInfo();
               if (pInfo) {
                   pInfo->type = TVI_TYPE_SUITE;
                   pInfo->suiteId = pSuiteIds[i];
+                  if (jsLabel) {
+                    pInfo->displayName = CloneJavacallUtf16(jsLabel);
+                  }
               }
               AddItemToTree(hwndTV, pszSuiteName, 1, pInfo);
 
@@ -627,6 +636,7 @@ BOOL InitTreeViewItems(HWND hwndTV)  {
                               pInfo->suiteId = pSuiteIds[i];
                               pInfo->className = CloneJavacallUtf16(
                                   pMidletsInfo[j].className);
+                              pInfo->displayName = CloneJavacallUtf16(jsLabel);
                           }
                           AddItemToTree(hwndTV, pszMIDletName, 2, pInfo);
 
