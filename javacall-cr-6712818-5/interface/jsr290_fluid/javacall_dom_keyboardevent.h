@@ -149,7 +149,7 @@ javacall_dom_keyboardevent_get_meta_key(javacall_handle handle,
  *   <code>KeyboardEvent.keyIdentifier</code>. 
  * @param key_location_arg  Specifies <code>KeyboardEvent.keyLocation</code>
  *   . 
- * @param modifiersList  A 
+ * @param modifiers_list  A 
  *   <a href='http://www.w3.org/TR/2004/REC-xml-20040204/#NT-S'>white space
  *   </a> separated list of modifier key identifiers to be activated on 
  *   this object. 
@@ -190,7 +190,7 @@ javacall_dom_keyboardevent_init_keyboard_event(javacall_handle handle,
  * @param key_location_arg  Refer to the 
  *   <code>KeyboardEvent.initKeyboardEvent()</code> method for a 
  *   description of this parameter. 
- * @param modifiersList  A 
+ * @param modifiers_list  A 
  *   <a href='http://www.w3.org/TR/2004/REC-xml-20040204/#NT-S'>white space
  *   </a> separated list of modifier key identifiers to be activated on 
  *   this object. As an example, <code>"Control Alt"</code> will activated 
