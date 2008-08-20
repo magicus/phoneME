@@ -35,24 +35,30 @@ END
 
 ID_MENU_MAIN MENU
 BEGIN
-    POPUP "Suite..."
+    POPUP "Suite"
     BEGIN
         MENUITEM "Info...", IDM_SUITE_INFO
         MENUITEM "Settings...", IDM_SUITE_SETTINGS
         MENUITEM SEPARATOR
-        MENUITEM "Remove", IDM_SUITE_REMOVE
-        MENUITEM "Update", IDM_SUITE_UPDATE
+        MENUITEM "Install...", IDM_SUITE_INSTALL
+        MENUITEM "Remove...", IDM_SUITE_REMOVE
+        MENUITEM "Update...", IDM_SUITE_UPDATE
         MENUITEM SEPARATOR
         MENUITEM "Exit", IDM_SUITE_EXIT
     END
 
-    POPUP "MIDlet..."
+    POPUP "MIDlet"
     BEGIN
         MENUITEM "Launch", IDM_MIDLET_START_STOP
         MENUITEM "To Foreground", IDM_MIDLET_TO_FOREGROUND
         MENUITEM "Info...", IDM_MIDLET_INFO
         MENUITEM SEPARATOR
         MENUITEM "Show Running...", IDM_MIDLET_SHOW_RUNNING
+    END
+
+    POPUP "Window"
+    BEGIN
+        MENUITEM "App Manager", IDM_WINDOW_APP_MANAGER, CHECKED
     END
 
     POPUP "Help"

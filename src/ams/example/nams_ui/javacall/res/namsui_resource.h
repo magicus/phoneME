@@ -35,11 +35,17 @@
 
 #define  IDM_SUITE_INFO            300
 #define  IDM_SUITE_SETTINGS        310
-#define  IDM_SUITE_REMOVE          320
-#define  IDM_SUITE_UPDATE          330
-#define  IDM_SUITE_EXIT            340
+#define  IDM_SUITE_INSTALL         320
+#define  IDM_SUITE_REMOVE          330
+#define  IDM_SUITE_UPDATE          340
+#define  IDM_SUITE_EXIT            350
 
-#define  IDM_HELP_ABOUT            350
+#define  IDM_WINDOW_APP_MANAGER    400
+
+#define  IDM_WINDOW_FIRST_ITEM     410
+#define  IDM_WINDOW_LAST_ITEM      450
+
+#define  IDM_HELP_ABOUT            500
 
 #define  IDC_TREEVIEW_MIDLETS      900
 #define  IDC_MAIN_TOOLBAR          910

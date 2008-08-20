@@ -24,7 +24,7 @@
  * information or have any questions.
  */
 
-#define _WIN32_WINNT 0x0500
+//#define _WIN32_WINNT 0x0500
 
 #include <windows.h>
 #include <stdlib.h>
@@ -39,6 +39,8 @@
 #include <javacall_lcd.h>
 #include <javacall_ams_suitestore.h>
 #include <javacall_ams_app_manager.h>
+
+#define WINDOW_SUBMENU_INDEX 2
 
 #define TB_BUTTON_WIDTH  16
 #define TB_BUTTON_HEIGHT 16
@@ -59,11 +61,16 @@ int g_iWidth = 246, g_iHeight = 345;
 int g_iChildAreaWidth = 240, g_iChildAreaHeight = 320;
 
 HINSTANCE g_hInst = NULL;
+
 HWND g_hMainWindow = NULL;
 HWND g_hMidletTreeView = NULL;
+HWND g_hWndToolbar = NULL;
+
 HMENU g_hMidletPopupMenu = NULL;
 HMENU g_hSuitePopupMenu = NULL;
+
 WNDPROC g_DefTreeWndProc = NULL;
+
 HBITMAP g_hMidletTreeBgBmp = NULL;
 
 javacall_app_id g_jAppId = 1;
@@ -104,17 +111,20 @@ static void DrawBuffer(HDC hdc);
 static HWND CreateMainView();
 static void CenterWindow(HWND hDlg);
 static HWND CreateTreeView(HWND hWndParent);
-HWND CreateMainToolbar(HWND hWndParent);
-BOOL InitTreeViewItems(HWND hwndTV);
-HTREEITEM AddItemToTree(HWND hwndTV, LPTSTR lpszItem, int nLevel, TVI_INFO* pInfo);
-
+static HWND CreateMainToolbar(HWND hWndParent);
+static BOOL InitTreeViewItems(HWND hwndTV);
+static HTREEITEM AddItemToTree(HWND hwndTV, LPTSTR lpszItem,
+                               int nLevel, TVI_INFO* pInfo);
 static void InitAms();
 static void CleanupAms();
 static void CleanupWindows();
 static void CleanupTreeView(HWND hwndTV);
 
-LPTSTR JavacallUtf16ToTstr(javacall_const_utf16_string str);
-javacall_utf16_string CloneJavacallUtf16(javacall_const_utf16_string str);
+static void AddWindowMenuItem(javacall_const_utf16_string jsStr);
+static void CheckWindowMenuItem(int index, BOOL fChecked);
+
+static LPTSTR JavacallUtf16ToTstr(javacall_const_utf16_string str);
+static javacall_utf16_string CloneJavacallUtf16(javacall_const_utf16_string str);
 
 
 extern "C" {
@@ -156,7 +166,7 @@ DWORD WINAPI javaThread(LPVOID lpParam) {
     return 0; 
 } 
 
-#if 1
+#if 0
 int WINAPI WinMain(HINSTANCE hInstance,
                    HINSTANCE hPrevInstance,
                    LPSTR lpCmdLine,
@@ -211,10 +221,7 @@ int main(int argc, char* argv[]) {
     }
     InitTreeViewItems(g_hMidletTreeView);
 
-    HWND hWndToolbar = CreateMainToolbar(g_hMainWindow);
-    if (hWndToolbar == NULL) {
-        return -1;
-    }
+    g_hWndToolbar = CreateMainToolbar(g_hMainWindow);
 
     // Show the main window 
     ShowWindow(g_hMainWindow, nCmdShow);
@@ -237,22 +244,15 @@ int main(int argc, char* argv[]) {
     return (int) msg.wParam;
 }
 
+/**
+ *
+ */
 static HWND CreateMainToolbar(HWND hWndParent) {
     RECT rcClient;  // dimensions of client area 
 
     // Get the dimensions of the parent window's client area, and create 
     // the tree-view control. 
     GetClientRect(hWndParent, &rcClient); 
-
-    /*HWND hWndToolbar = CreateWindowEx(0,
-                            TOOLBARCLASSNAME,
-                            NULL,
-                            WS_VISIBLE | WS_CHILD,
-                            0, 0, rcClient.right, TB_BUTTON_WIDTH,
-                            hWndParent, 
-                            (HMENU)IDC_MAIN_TOOLBAR,
-                            g_hInst, 
-                            NULL);*/
 
     TBBUTTON tbButtons[] = {
         0, IDM_HELP_ABOUT, TBSTATE_ENABLED, BTNS_BUTTON, 
@@ -305,7 +305,8 @@ static HWND CreateMainToolbar(HWND hWndParent) {
         sizeof (TBBUTTON));
 
     if (!hWndToolbar) {
-        MessageBox(NULL, _T("Can't create a toolbar!"), g_szTitle, NULL);
+        wprintf(_T("Can't create a toolbar!"));
+        // MessageBox(NULL, _T("Can't create a toolbar!"), g_szTitle, NULL);
         return NULL;
     }
 
@@ -392,7 +393,7 @@ static HWND CreateMainView() {
 
         return NULL;
     }
-    
+
     return hWnd;
 }
 
@@ -527,7 +528,7 @@ void FreeTviInfo(TVI_INFO* pInfo) {
     }
 }
 
-BOOL InitTreeViewItems(HWND hwndTV)  {
+static BOOL InitTreeViewItems(HWND hwndTV)  {
     javacall_suite_id* pSuiteIds;
     int suiteNum, folderNum;
     javacall_result res;
@@ -664,7 +665,7 @@ BOOL InitTreeViewItems(HWND hwndTV)  {
     return TRUE;
 }
 
-LPTSTR JavacallUtf16ToTstr(javacall_const_utf16_string str) {
+static LPTSTR JavacallUtf16ToTstr(javacall_const_utf16_string str) {
     LPTSTR result = NULL;
 #ifdef UNICODE 
     javacall_int32 len;
@@ -680,7 +681,7 @@ LPTSTR JavacallUtf16ToTstr(javacall_const_utf16_string str) {
     return result;
 }
 
-javacall_utf16_string CloneJavacallUtf16(javacall_const_utf16_string str) {
+static javacall_utf16_string CloneJavacallUtf16(javacall_const_utf16_string str) {
     javacall_utf16_string result = NULL;
     javacall_int32 len;
     javacall_result res = javautil_unicode_utf16_ulength(str, &len);
@@ -694,7 +695,8 @@ javacall_utf16_string CloneJavacallUtf16(javacall_const_utf16_string str) {
 
 
 
-HTREEITEM AddItemToTree(HWND hwndTV, LPTSTR lpszItem, int nLevel, TVI_INFO* pInfo) {
+static HTREEITEM AddItemToTree(HWND hwndTV, LPTSTR lpszItem,
+                               int nLevel, TVI_INFO* pInfo) {
     TVITEM tvi; 
     TVINSERTSTRUCT tvins; 
     static HTREEITEM hPrev = (HTREEITEM)TVI_FIRST; 
@@ -776,11 +778,34 @@ MainWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
     switch (message) {
     case WM_COMMAND: {
         switch(LOWORD(wParam)) {
+            case IDM_WINDOW_APP_MANAGER: {
+                java_ams_midlet_switch_background();
+
+                ShowWindow(g_hMidletTreeView, SW_SHOWNORMAL);
+
+                if (g_hWndToolbar != NULL) {
+                    ShowWindow(g_hWndToolbar, SW_SHOWNORMAL);
+                }
+
+                // change selected window in the menu
+                HMENU hWindowSubmenu = GetSubMenu(GetMenu(g_hMainWindow),
+                    WINDOW_SUBMENU_INDEX);
+                for (int i = 1; i < GetMenuItemCount(hWindowSubmenu); i++) {
+                    CheckWindowMenuItem(i, FALSE);
+                }
+
+                CheckWindowMenuItem(0, TRUE);
+                DrawMenuBar(g_hMainWindow);
+
+                break;
+            }
+
             case IDM_MIDLET_START_STOP: {
-                // Deligate message processing to MIDlet tree view
+                // Delegate message processing to MIDlet tree view
                 PostMessage(g_hMidletTreeView, message, wParam, lParam);
                 break;
             }
+
             case IDM_SUITE_EXIT: {
                 (void)java_ams_system_stop();
 
@@ -789,7 +814,6 @@ MainWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
 
                 // Hide the main window 
                 ShowWindow(hWnd, SW_HIDE);
-//                UpdateWindow(hWnd);
 
                 PostQuitMessage(0);
                 break;
@@ -866,16 +890,72 @@ void DrawItem() {
 */
 
 /**
+ *
+ */
+static void CheckWindowMenuItem(int index, BOOL fChecked) {
+    HMENU hWindowSubmenu = GetSubMenu(GetMenu(g_hMainWindow),
+                                      WINDOW_SUBMENU_INDEX);
+    MENUITEMINFO mii;
+
+    mii.cbSize = sizeof(MENUITEMINFO);
+    mii.fMask = MIIM_STATE;
+    mii.fState = MFS_ENABLED;
+
+    if (fChecked) {
+        mii.fState |= MFS_CHECKED;
+    }
+
+    (void)SetMenuItemInfo(hWindowSubmenu, index, TRUE, &mii);
+}
+
+/**
+ *
+ */
+static void AddWindowMenuItem(javacall_const_utf16_string jsStr) {
+    LPTSTR pszMIDletName = JavacallUtf16ToTstr(jsStr);
+                    
+    HMENU hWindowSubmenu = GetSubMenu(GetMenu(g_hMainWindow),
+                                      WINDOW_SUBMENU_INDEX);
+    int index = GetMenuItemCount(hWindowSubmenu);
+
+    MENUITEMINFO mii;
+
+    mii.cbSize = sizeof(MENUITEMINFO);
+    mii.fMask = MIIM_FTYPE | MIIM_STRING | MIIM_ID | MIIM_STATE;
+    mii.fType = MFT_STRING;
+    mii.fState = MFS_ENABLED | MFS_CHECKED;
+    mii.wID = IDM_WINDOW_FIRST_ITEM + index;
+    mii.hSubMenu = NULL;
+    mii.hbmpChecked = NULL; 
+    mii.hbmpUnchecked = NULL;
+    mii.dwItemData = 0;
+    mii.dwTypeData = pszMIDletName;
+    mii.cch = lstrlen(mii.dwTypeData);
+    mii.hbmpItem = NULL;
+
+    (void)InsertMenuItem(hWindowSubmenu, index, TRUE, &mii);
+
+    for (int i = 0; i < index; i++) {
+        CheckWindowMenuItem(i, FALSE);
+    }
+
+    DrawMenuBar(g_hMainWindow);
+
+    javacall_free(pszMIDletName);
+}
+
+/**
  * Helper function.
  */
-BOOL StartMidlet(HWND hTreeWnd) {
+static BOOL StartMidlet(HWND hTreeWnd) {
     javacall_result res;
-
     HTREEITEM hItem = TreeView_GetSelection(hTreeWnd);
+
     if (hItem) {
         TVITEM tvi;
         tvi.hItem = hItem;
         tvi.mask = TVIF_HANDLE | TVIF_PARAM;
+
         if (TreeView_GetItem(hTreeWnd, &tvi)) {
             TVI_INFO* pInfo = (TVI_INFO*)tvi.lParam;
             if (pInfo->type == TVI_TYPE_MIDLET) {
@@ -896,8 +976,18 @@ BOOL StartMidlet(HWND hTreeWnd) {
                     // the MIDlet's output in the main window
                     ShowWindow(hTreeWnd, SW_HIDE);
 
-                    return TRUE;
+                    if (g_hWndToolbar != NULL) {
+                        ShowWindow(g_hWndToolbar, SW_HIDE);
                     }
+
+                    // Adding a new item to "Windows" menu
+                    javacall_const_utf16_string jsLabel =
+                        (pInfo->displayName != NULL) ?
+                            pInfo->displayName : pInfo->className;
+                    AddWindowMenuItem(jsLabel);
+
+                    return TRUE;
+                }
             }
         }
     }

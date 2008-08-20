@@ -128,7 +128,6 @@ java_ams_midlet_start(javacall_suite_id suiteId,
  *        the real status of MIDlet startup will be notified by
  *        <link>javacall_ams_midlet_stateChanged</link>
  */
-#include <stdio.h>
 javacall_result
 java_ams_midlet_start_with_args(javacall_suite_id suiteId,
                                 javacall_app_id appId,
@@ -174,7 +173,6 @@ java_ams_midlet_start_with_args(javacall_suite_id suiteId,
     classNameLen = utf16Len;
 
     pClassName[classNameLen] = 0;
-printf(">>> pClassName = '%s'\n", (char*)pClassName);
 
     /* converting the midlet's arguments */
     for (i = 0; i < argsNum; i++) {
