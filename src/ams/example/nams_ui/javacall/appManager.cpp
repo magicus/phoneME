@@ -24,6 +24,8 @@
  * information or have any questions.
  */
 
+#define _WIN32_WINNT 0x0500
+
 #include <windows.h>
 #include <stdlib.h>
 #include <string.h>
@@ -38,7 +40,8 @@
 #include <javacall_ams_suitestore.h>
 #include <javacall_ams_app_manager.h>
 
-#define TB_BUTTON_WIDTH 32
+#define TB_BUTTON_WIDTH  16
+#define TB_BUTTON_HEIGHT 16
 
 extern "C" char* _phonenum = "1234567"; // global for javacall MMS subsystem
 
@@ -89,9 +92,10 @@ LRESULT CALLBACK MidletTreeWndProc(HWND, UINT, WPARAM, LPARAM);
 static void RefreshScreen(int x1, int y1, int x2, int y2);
 static void DrawBuffer(HDC hdc);
 
-HWND CreateMainView();
+static HWND CreateMainView();
+static void CenterWindow(HWND hDlg);
 static HWND CreateTreeView(HWND hWndParent);
-HWND CreateToolbar(HWND hWndParent);
+HWND CreateMainToolbar(HWND hWndParent);
 BOOL InitTreeViewItems(HWND hwndTV);
 HTREEITEM AddItemToTree(HWND hwndTV, LPTSTR lpszItem, int nLevel, TVI_INFO* pInfo);
 
@@ -143,12 +147,14 @@ DWORD WINAPI javaThread(LPVOID lpParam) {
     return 0; 
 } 
 
-#if 0
+#if 1
 int WINAPI WinMain(HINSTANCE hInstance,
                    HINSTANCE hPrevInstance,
                    LPSTR lpCmdLine,
                    int nCmdShow) {
     (void)lpCmdLine;
+    //AllocConsole();
+    //AttachConsole(GetCurrentProcessId());
 #else
 int main(int argc, char* argv[]) {
     HINSTANCE hInstance = NULL;
@@ -196,7 +202,7 @@ int main(int argc, char* argv[]) {
     }
     InitTreeViewItems(g_hMidletTreeView);
 
-    HWND hWndToolbar = CreateToolbar(g_hMainWindow);
+    HWND hWndToolbar = CreateMainToolbar(g_hMainWindow);
     if (hWndToolbar == NULL) {
         return -1;
     }
@@ -222,7 +228,7 @@ int main(int argc, char* argv[]) {
     return (int) msg.wParam;
 }
 
-static HWND CreateToolbar(HWND hWndParent) {
+static HWND CreateMainToolbar(HWND hWndParent) {
     RECT rcClient;  // dimensions of client area 
 
     // Get the dimensions of the parent window's client area, and create 
@@ -239,20 +245,54 @@ static HWND CreateToolbar(HWND hWndParent) {
                             g_hInst, 
                             NULL);*/
 
-    TBBUTTON tbButtons [ ] = {
-        STD_FILENEW, IDM_HELP_ABOUT, TBSTATE_ENABLED, BTNS_BUTTON, 
+    TBBUTTON tbButtons[] = {
+        0, IDM_HELP_ABOUT, TBSTATE_ENABLED, BTNS_BUTTON, 
 #if defined(_WIN32) | defined(_WIN64)
             {0},
 #endif
-        0L, 0
+        0L, 0,
+
+        1, IDM_MIDLET_START_STOP, TBSTATE_ENABLED, BTNS_BUTTON,
+#if defined(_WIN32) | defined(_WIN64)
+            {0},
+#endif
+        0L, 0,
+
+        2, IDM_MIDLET_START_STOP, TBSTATE_ENABLED, BTNS_BUTTON,
+#if defined(_WIN32) | defined(_WIN64)
+            {0},
+#endif
+        0L, 0,
+
+        3, IDM_MIDLET_START_STOP, TBSTATE_ENABLED, BTNS_BUTTON,
+#if defined(_WIN32) | defined(_WIN64)
+            {0},
+#endif
+        0L, 0,
+
+        4, IDM_MIDLET_START_STOP, TBSTATE_ENABLED, BTNS_BUTTON,
+#if defined(_WIN32) | defined(_WIN64)
+            {0},
+#endif
+        0L, 0,
+
     };
 
+    HBITMAP hToolbarBmp = LoadBitmap(g_hInst,
+                                     MAKEINTRESOURCE(IDB_MAIN_TOOLBAR_BUTTONS));
+
+    if (hToolbarBmp == NULL) {
+        MessageBox(NULL, _T("Can't load bitmap for the toolbar!"),
+                   g_szTitle, NULL);
+        return NULL;
+    }
 
     HWND hWndToolbar = CreateToolbarEx(hWndParent,
         WS_CHILD | WS_BORDER | WS_VISIBLE | TBSTYLE_TOOLTIPS, 
-        IDC_MAIN_TOOLBAR, 0, HINST_COMMCTRL, IDB_STD_SMALL_COLOR,
-        //g_hInst, IDB_MAIN_TOOLBAR_BUTTONS,
-        tbButtons, 1, 0, 0, 100, 30,
+        IDC_MAIN_TOOLBAR, 0, // g_hInst, IDB_MAIN_TOOLBAR_BUTTONS,
+        NULL, (UINT)hToolbarBmp,
+        tbButtons, 4, TB_BUTTON_WIDTH, TB_BUTTON_HEIGHT,
+        TB_BUTTON_WIDTH, TB_BUTTON_HEIGHT,
         sizeof (TBBUTTON));
 
     if (!hWndToolbar) {
@@ -262,7 +302,7 @@ static HWND CreateToolbar(HWND hWndParent) {
 
     // Send the TB_BUTTONSTRUCTSIZE message, which is required for 
     // backward compatibility. 
-    SendMessage(hWndToolbar, TB_BUTTONSTRUCTSIZE, (WPARAM) sizeof(TBBUTTON), 0);
+    //SendMessage(hWndToolbar, TB_BUTTONSTRUCTSIZE, (WPARAM) sizeof(TBBUTTON), 0);
 
     //SendMessage(hWndToolbar, TB_SETBITMAPSIZE, 0,
     //            (LPARAM)MAKELONG(TB_BUTTON_WIDTH, TB_BUTTON_WIDTH));
@@ -397,7 +437,7 @@ static HWND CreateTreeView(HWND hWndParent) {
                             WS_VISIBLE | WS_CHILD | WS_BORDER | TVS_HASLINES |
                                 TVS_HASBUTTONS | TVS_LINESATROOT,
                             0, 
-                            TB_BUTTON_WIDTH - 4,
+                            TB_BUTTON_HEIGHT + 12,
                             rcClient.right,
                             rcClient.bottom,
                             hWndParent, 
@@ -915,6 +955,41 @@ MidletTreeWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
     }
 
     return 0;
+}
+
+/**
+ *
+ */
+static void CenterWindow(HWND hDlg) {
+    HWND hwndOwner;
+    RECT rc, rcDlg, rcOwner;
+
+    // Get the owner window and dialog box rectangles.
+    if ((hwndOwner = GetParent(hDlg)) == NULL)  {
+        hwndOwner = GetDesktopWindow();
+    }
+
+    GetWindowRect(hwndOwner, &rcOwner);
+    GetWindowRect(hDlg, &rcDlg);
+    CopyRect(&rc, &rcOwner);
+
+    // Offset the owner and dialog box rectangles so that
+    // right and bottom values represent the width and
+    // height, and then offset the owner again to discard
+    // space taken up by the dialog box.
+    OffsetRect(&rcDlg, -rcDlg.left, -rcDlg.top);
+    OffsetRect(&rc, -rc.left, -rc.top);
+    OffsetRect(&rc, -rcDlg.right, -rcDlg.bottom);
+
+    // The new position is the sum of half the remaining
+    // space and the owner's original position.
+    SetWindowPos(hDlg,
+                 HWND_TOP,
+                 rcOwner.left + (rc.right / 2),
+                 rcOwner.top + (rc.bottom / 2),
+                 0, 0,          // ignores size arguments
+                 SWP_NOSIZE);
+    ShowWindow(hDlg, SW_SHOWNORMAL);
 }
 
 

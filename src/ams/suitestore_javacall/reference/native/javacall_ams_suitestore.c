@@ -1140,20 +1140,21 @@ javacall_result
 java_ams_suite_get_all_folders_info(javacall_ams_folder_info** ppFoldersInfo,
                                     int* pNumberOfEntries) {
 #if ENABLE_AMS_FOLDERS
+    MIDPError status;
     javacall_ams_folder_info* pTmpFoldersInfo;
     int i;
 
     /* IMPL_NOTE: temporary hardcoded, should be moved to an xml */
     int foldersNum = 2;
 
-    PCSL_DEFINE_ASCII_STRING_LITERAL_START(folderName1)
+    PCSL_DEFINE_ASCII_STRING_LITERAL_START(pcslStrFolderName1)
         {'P','r','e','i','n','s','t','a','l','l','e','d',' ',
          'a','p','p','s','\0'}
-    PCSL_DEFINE_ASCII_STRING_LITERAL_END(folderName1);
+    PCSL_DEFINE_ASCII_STRING_LITERAL_END(pcslStrFolderName1);
 
-    PCSL_DEFINE_ASCII_STRING_LITERAL_START(folderName2)
+    PCSL_DEFINE_ASCII_STRING_LITERAL_START(pcslStrFolderName2)
         {'O','t','h','e','r',' ', 'a','p','p','s','\0'}
-    PCSL_DEFINE_ASCII_STRING_LITERAL_END(folderName2);
+    PCSL_DEFINE_ASCII_STRING_LITERAL_END(pcslStrFolderName2);
 #endif /* ENABLE_AMS_FOLDERS */
 
     if (ppFoldersInfo == NULL || pNumberOfEntries == NULL) {
@@ -1166,7 +1167,7 @@ java_ams_suite_get_all_folders_info(javacall_ams_folder_info** ppFoldersInfo,
     /* IMPL_NOTE: temporary hardcoded, should be moved to an xml */
 
     pTmpFoldersInfo = (javacall_ams_folder_info*)javacall_malloc(
-        foldersNum * sizeof((javacall_ams_folder_info)));
+        foldersNum * sizeof(javacall_ams_folder_info));
     if (pTmpFoldersInfo == NULL) {
         return JAVACALL_FAIL;
     }
@@ -1177,6 +1178,7 @@ java_ams_suite_get_all_folders_info(javacall_ams_folder_info** ppFoldersInfo,
                                                        &pcslStrFolderName2,
                                             &pTmpFoldersInfo[i].folderName);
         if (status != ALL_OK) {
+            int j;
             for (j = 0; j < i; j++) {
                 if (pTmpFoldersInfo[i].folderName != NULL) {
                     javacall_free(pTmpFoldersInfo[i].folderName);
@@ -1319,8 +1321,8 @@ java_ams_suite_get_suites_in_folder(javacall_folder_id folderId,
         int i, n;
 
 #if ENABLE_AMS_FOLDERS
-        pMidpSuiteData = get_suite_data((SuiteIdType)suiteId);
-        if (pMidpSuiteData == NULL) {
+        pMidpSuiteData = g_pSuitesData;
+        if (pMidpSuiteData == NULL || g_numberOfSuites == 0) {
             *pNumberOfSuites = 0;
             *ppSuiteIds = NULL;
             return JAVACALL_OK;
@@ -1334,14 +1336,14 @@ java_ams_suite_get_suites_in_folder(javacall_folder_id folderId,
          */
         pSaveSuiteData = pMidpSuiteData;
 
-        for (int i = 0; i < 2; i++) {
+        for (i = 0; i < 2; i++) {
             n = 0;
 
             /* walk through the list of suites */
             while (pMidpSuiteData != NULL) {
                 if (pMidpSuiteData->folderId == folderId) {
                     if (i == 1) {
-                        (*ppSuiteIds)[n].suiteId =
+                        (*ppSuiteIds)[n] =
                             (javacall_suite_id)pMidpSuiteData->suiteId; 
                     }
                     n++;
@@ -1503,7 +1505,6 @@ java_ams_suite_write_secure_resource(javacall_suite_id suiteId,
                            javacall_int32 valueSize) {
     MIDPError status;
     pcsl_string pcslStrResName;
-    jint jintValueSize;
 
     status = midp_javacall_str2pcsl_str(resourceName, &pcslStrResName);
     if (status != ALL_OK) {

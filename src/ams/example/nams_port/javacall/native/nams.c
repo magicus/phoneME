@@ -63,7 +63,7 @@ void java_ams_operation_completed(javacall_opcode operation,
  * @param reason The reason why the state change has happened
  */
 void java_ams_midlet_state_changed(javacall_lifecycle_state state,
-                                   const javacall_app_id appID,
+                                   javacall_app_id appID,
                                    javacall_change_reason reason) {
 }
                                       
