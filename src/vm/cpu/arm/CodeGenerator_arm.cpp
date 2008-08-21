@@ -671,7 +671,7 @@ CodeGenerator::move_float_immediate(const Register dst,
           TempRegister tmp;
           mov_imm(tmp, 0, cond);
           fmsr(dst, tmp, cond);
-          frame()->set_has_literal_value(tmp, 0);
+          set_has_literal_value(tmp, 0);
         } else {
           fmsr(dst, reg, cond);
           fsubs(dst, dst, dst, cond);
@@ -713,7 +713,7 @@ CodeGenerator::move_double_immediate(const Register dst,
     if (non_nan_reg != Assembler::no_reg) {
       if (is_vfp_register(non_nan_reg)) {
         fsubs(dst_lo, non_nan_reg, non_nan_reg, cond);
-        fcpys(dst_hi, dst_lo);
+        fcpys(dst_hi, dst_lo, cond);
       } else {
         fmdrr(dst_lo, non_nan_reg, non_nan_reg, cond);
         fsubd(dst_lo, dst_lo, dst_lo, cond);
@@ -723,7 +723,7 @@ CodeGenerator::move_double_immediate(const Register dst,
     TempRegister tmp;
     mov_imm(tmp, 0, cond);
     fmdrr(dst_lo, tmp, tmp, cond);
-    frame()->set_has_literal_value(tmp, 0);
+    set_has_literal_value(tmp, 0);
     return;
   }
   {
@@ -822,11 +822,11 @@ CodeGenerator::move(const Value& dst, const Value& src, const Condition cond) {
       }
     }
     if (cond == al) {
-      frame()->set_has_literal_value(dst.lo_register(), src.lo_bits());
+      set_has_literal_value(dst.lo_register(), src.lo_bits());
     }
     if (dst.is_two_word()) {
       if (cond == al) {
-        frame()->set_has_literal_value(dst.hi_register(), src.hi_bits());
+        set_has_literal_value(dst.hi_register(), src.hi_bits());
       }
     }
   } else {
@@ -1882,13 +1882,9 @@ void CodeGenerator::float_binary_do(Value& result, Value& op1, Value& op2,
     }
 #endif // ENABLE_SOFT_FLOAT
   } else {      // bin_rem
-    ensure_not_in_float_register(op1);
-    ensure_not_in_float_register(op2);
     call_simple_c_runtime(result, (address)runtime_func, op1, op2);
   }
 #else
-  ensure_not_in_float_register(op1);
-  ensure_not_in_float_register(op2);
 
   if ((op == BytecodeClosure::bin_add || op == BytecodeClosure::bin_mul)
       && (   (op1.in_register() && op1.lo_register() == r1)
@@ -1995,8 +1991,6 @@ void CodeGenerator::float_cmp(Value& result, BytecodeClosure::cond_op cond,
 #endif
 
 #else  // !ENABLE_ARM_VFP
-    ensure_not_in_float_register(op1);
-    ensure_not_in_float_register(op2);
     call_simple_c_runtime(result, (address)runtime_func, op1, op2);
 #endif  // ENABLE_ARM_VFP
   }
@@ -2092,8 +2086,6 @@ void CodeGenerator::double_binary_do(Value& result, Value& op1, Value& op2,
     } else
 #endif  // ENABLE_ARM_VFP
     {
-      ensure_not_in_float_register(op1);
-      ensure_not_in_float_register(op2);
       call_simple_c_runtime(result, (address)runtime_func, op1, op2);
     }
   }
@@ -2200,8 +2192,6 @@ void CodeGenerator::double_cmp(Value& result, BytecodeClosure::cond_op cond,
 #endif
 
 #else  // !ENABLE_ARM_VFP
-    ensure_not_in_float_register(op1);
-    ensure_not_in_float_register(op2);
     call_simple_c_runtime(result, (address)runtime_func, op1, op2);
 #endif  // ENABLE_ARM_VFP
   }
@@ -2288,10 +2278,11 @@ void CodeGenerator::vcall_simple_c_runtime(Value& result,
 #if ENABLE_ARM_VFP
   if (result.type() == T_FLOAT || result.type() == T_DOUBLE) {
     result.assign_register();
+    const Register lo = result.lo_register();
     if (result.type() == T_FLOAT) {
-      fmsr(result.lo_register(), r0);
+      fmsr(lo, r0);
     } else {
-      fmdrr(result.lo_register(), r0, r1);
+      fmdrr(lo, r0, r1);
     }
     return;
   }
@@ -2519,7 +2510,6 @@ void CodeGenerator::f2i(Value& result, Value& value JVM_TRAPS) {
       fmrs(result.lo_register(), fresult);
 
 #else  // !ENABLE_ARM_VFP
-    ensure_not_in_float_register(value);
     call_simple_c_runtime(result, (address)::jvm_f2i, value);
 #endif // ENABLE_ARM_VFP
   }
@@ -2531,7 +2521,6 @@ void CodeGenerator::f2l(Value& result, Value& value JVM_TRAPS) {
   if (value.is_immediate()) {
     result.set_long(::jvm_f2l(value.as_float()));
   } else {
-    ensure_not_in_float_register(value);
     call_simple_c_runtime(result, (address)::jvm_f2l, value);
   }
 }
@@ -4364,7 +4353,7 @@ void CodeGenerator::adjust_for_invoke(int parameters_size,
         cmp(method_return_type, imm(MAKE_IMM(tag)));
         breakpoint(ne);
       }
-      frame()->set_has_literal_value(method_return_type, tag);
+      set_has_literal_value(method_return_type, tag);
     }
   }
 
@@ -4772,28 +4761,48 @@ void CodeGenerator::setup_c_args(int ignore, ...) {
 }
 
 void CodeGenerator::vsetup_c_args(va_list ap) {
-  int i, targetRegister, regCount, immCount;
-  Register srcReg[6], dstReg[6];
+  Register srcReg[6];
+  Register dstReg[6];
+  int regCount = 0;
+
+#if ENABLE_ARM_VFP
+  jbyte floatMap[32];
+  juint floatMask = 0;
+#endif
+
   Register dstImm[6];
   jint     srcImm[6];
+  int immCount = 0;
 
-  regCount = immCount = 0;
-  targetRegister = 0;
-  for(;;) {
+  for(int targetRegister = 0;;) {
     Value* value = va_arg(ap, Value*);
     if (value == NULL) break;
     if (value->type() == T_ILLEGAL) {
       // just a place holder.  We'll fill in the register late
     } else if (value->in_register()) {
-      // Make a list of the values that need to be copied from
-      // one register into another
-      dstReg[regCount] = as_register(targetRegister);
-      srcReg[regCount] = value->lo_register();
-      regCount++;
-      if (value->is_two_word()) {
-        dstReg[regCount] = as_register(targetRegister + 1);
-        srcReg[regCount] = value->hi_register();
+#if ENABLE_ARM_VFP
+      if( Assembler::is_vfp_register( value->lo_register() ) ) {
+        int lo = value->lo_register() - s0;
+        floatMap[lo] = jbyte(targetRegister);
+        floatMask |= 1 << lo;
+        if( value->is_two_word() ) {
+          ++lo;
+          floatMap[lo] = jbyte(targetRegister+1);
+          floatMask |= 1 << lo;
+        }
+      } else
+#endif
+      {
+        // Make a list of the values that need to be copied from
+        // one register into another
+        dstReg[regCount] = as_register(targetRegister);
+        srcReg[regCount] = value->lo_register();
         regCount++;
+        if (value->is_two_word()) {
+          dstReg[regCount] = as_register(targetRegister + 1);
+          srcReg[regCount] = value->hi_register();
+          regCount++;
+        }
       }
     } else {
       GUARANTEE(value->is_immediate(), "Sanity");
@@ -4821,10 +4830,29 @@ void CodeGenerator::vsetup_c_args(va_list ap) {
   }
 
   // Write the immediate values.
-  CompilerLiteralAccessor cla;
-  for (i = 0; i < immCount; i++) {
-    mov_imm(dstImm[i], srcImm[i], &cla);
+  {
+    CompilerLiteralAccessor cla;
+    for( int i = 0; i < immCount; i++ ) {
+      mov_imm(dstImm[i], srcImm[i], &cla);
+    }
   }
+
+#if ENABLE_ARM_VFP
+  {
+    for( int i = 0; floatMask; i++, floatMask >>= 1 ) {
+      if( floatMask & 1 ) {
+        const Register dst = as_register( floatMap[i] );
+        if( floatMask & 2 ) {
+          fmrrd( dst, Register(floatMap[i+1]), Register(s0 + i) );
+          floatMask >>= 1;
+          i++;
+        } else {
+          fmrs( dst, Register(s0 + i) );
+        }
+      }
+    }
+  }
+#endif
 }
 
 void CodeGenerator::shuffle_registers(Register* dstReg, Register* srcReg,

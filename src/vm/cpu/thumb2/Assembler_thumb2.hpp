@@ -524,11 +524,9 @@ protected:
   #include "../arm/Assembler_vfp.hpp"
 
   void flds_stub(const Register sd, const int offset) {
-    check_imm( abs(offset), 10 );
-    emit( short(offset & 0x7FF));
-
     GUARANTEE( is_vfp_register(sd), "VFP register expected" );
-    emit( short(sd - s0) );
+    check_imm( abs(offset), 10 );
+    emit_w( (int(offset & 0x7FF) << 16) | int(sd - s0) );
   }
 #endif
 

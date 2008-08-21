@@ -503,7 +503,6 @@ void VirtualStackFrame::mark_as_flushed() {
 
   //remember array length: clear cached value
   clear_bound();
-
 }
 
 void VirtualStackFrame::conform_to_stack_map(int bci) {

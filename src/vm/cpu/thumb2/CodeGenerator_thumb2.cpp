@@ -461,6 +461,176 @@ void CodeGenerator::store_to_address(Value& value, BasicType type,
   }
 }
 
+#if ENABLE_ARM_VFP
+void CodeGenerator::move_vfp_immediate(const Register dst, const jint src) {
+  CompilerLiteralAccessor cla;
+  {
+    const Assembler::Register reg = cla.has_vfp_literal(src);
+    if( reg != Assembler::no_reg ) {
+      if (reg > Assembler::r15) {
+        fcpys(dst, reg);
+      } else {
+        fmsr(dst, reg);
+      }
+      return;
+    }
+  }
+
+  if( src >= 0 && has_room_for_imm( abs(src), 8) ) {
+    const TempRegister tmp;
+    if( tmp < r8 ) {
+      mov_imm8(tmp, src);
+    } else {
+      mov_imm12_w(tmp, Imm12(src));
+    }
+    fmsr(dst, tmp);
+    set_has_literal_value(tmp, src);
+    return;
+  }
+
+  {
+    const Imm12 modified_imm12 = try_modified_imm12(src);
+    if( modified_imm12 != invalid_imm12 ) {
+      const TempRegister tmp;
+      mov_imm12_w(tmp, modified_imm12);
+      fmsr(dst, tmp);
+      set_has_literal_value(tmp, src);
+      return;
+    }
+  }
+
+  {
+    const Imm12 modified_imm12 = try_modified_imm12(~src);
+    if( modified_imm12 != invalid_imm12 ) {
+      const TempRegister tmp;
+      mvn_imm12_w(tmp, modified_imm12);
+      fmsr(dst, tmp);
+      set_has_literal_value(tmp, src);
+      return;
+    }
+  }
+  ldr_literal(dst, NULL, src);
+}
+
+inline void
+CodeGenerator::move_float_immediate(const Register dst, const jint src) {
+  if( src == 0 ) {
+    Register reg = frame()->find_zero();
+    if( reg == Assembler::no_reg ) {
+      reg = frame()->find_non_NaN();
+      if (is_vfp_register(reg)) {
+        fsubs(dst, reg, reg);
+      } else {
+        if (reg == Assembler::no_reg) {
+          const TempRegister tmp;
+          mov(tmp, 0);
+          fmsr(dst, tmp);
+          set_has_literal_value(tmp, 0);
+        } else {
+          fmsr(dst, reg);
+          fsubs(dst, dst, dst);
+        }
+      }
+    } else if( is_vfp_register(reg) ) {
+      fcpys(dst, reg);
+    } else {
+      fmsr(dst, reg);
+    }
+  } else {
+    move_vfp_immediate(dst, src);
+  }
+}
+
+inline void
+CodeGenerator::move_double_immediate(const Register dst,
+                                     const jint src_lo, const jint src_hi) {
+  const Register dst_lo = dst;
+  const Register dst_hi = Register(dst + 1);
+
+  if (src_lo == 0 && src_hi == 0) {
+    Register zero_reg = frame()->find_zero();
+    if (zero_reg != Assembler::no_reg) {
+      if (is_vfp_register(zero_reg)) {
+        fcvtds(dst_lo, zero_reg);
+      } else {
+        fmdrr(dst_lo, zero_reg, zero_reg);
+      }
+      return;
+    }
+    Register double_reg = frame()->find_double_non_NaN();
+    if (double_reg != Assembler::no_reg) {
+      fsubd(dst_lo, double_reg, double_reg);
+      return;
+    }
+    Register non_nan_reg = frame()->find_non_NaN();
+    if (non_nan_reg != Assembler::no_reg) {
+      if (is_vfp_register(non_nan_reg)) {
+        fsubs(dst_lo, non_nan_reg, non_nan_reg);
+        fcpys(dst_hi, dst_lo);
+      } else {
+        fmdrr(dst_lo, non_nan_reg, non_nan_reg);
+        fsubd(dst_lo, dst_lo, dst_lo);
+      }
+      return;
+    }
+    const TempRegister tmp;
+    mov(tmp, 0);
+    fmdrr(dst_lo, tmp, tmp);
+    set_has_literal_value(tmp, 0);
+    return;
+  }
+  {
+    const Register reg = frame()->find_double_vfp_literal(src_lo, src_hi);
+    if (reg != Assembler::no_reg) {
+      fcpyd(dst_lo, reg);
+      return;
+    }
+  }
+  {
+    CompilerLiteralAccessor cla;
+    const Register reg_lo = cla.has_vfp_literal(src_lo);
+    const Register reg_hi = cla.has_vfp_literal(src_hi);
+    if (is_arm_register(reg_lo) && is_arm_register(reg_hi)) {
+      fmdrr(dst_lo, reg_lo, reg_hi);
+      return;
+    }
+    if (is_vfp_register(reg_hi)) {
+      fcpys(dst_hi, reg_hi);
+      if (src_lo == 0 && VirtualStackFrame::is_non_NaN(src_hi)) {
+        fsubs(dst_lo, dst_hi, dst_hi);
+        return;
+      }
+      if (is_arm_register(reg_lo)) {
+        fmsr(dst_lo, reg_lo);
+        return;
+      }
+      move_vfp_immediate(dst_lo, src_lo);
+      return;
+    }
+
+    if (is_vfp_register(reg_lo)) {
+      fcpys(dst_lo, reg_lo);
+      if (src_hi == 0 && VirtualStackFrame::is_non_NaN(src_lo)) {
+        fsubs(dst_hi, dst_lo, dst_lo);
+        return;
+      }
+      if (is_arm_register(reg_hi)) {
+        fmsr(dst_hi, reg_hi);
+        return;
+      }
+      move_vfp_immediate(dst_hi, src_hi);
+      return;
+    }
+    move_vfp_immediate(dst_lo, src_lo);
+    if (src_lo == src_hi) {
+      fcpys(dst_hi, dst_lo);
+    } else {
+      move_vfp_immediate(dst_hi, src_hi);
+    }
+  }
+}
+#endif // ENABLE_ARM_VFP
+
 void
 CodeGenerator::move(const Value& dst, const Value& src, const Condition cond) {
   // On thumb, condition is expected to be "always"
@@ -474,24 +644,98 @@ CodeGenerator::move(const Value& dst, const Value& src, const Condition cond) {
   GUARANTEE(dst.type() == src.type(), "type check");
   GUARANTEE(dst.in_register(), "destination must be in register");
 
+  const Register dst_lo_reg = dst.lo_register();
+  if (src.is_immediate()) {
+    const int src_lo_bits = src.lo_bits();
+#if ENABLE_ARM_VFP
+    const BasicType type = dst.type();
+    if( type == T_FLOAT ) {
+      move_float_immediate( dst_lo_reg, src_lo_bits );
+    } else if( type == T_DOUBLE ) {
+      move_double_immediate( dst_lo_reg, src_lo_bits, src.hi_bits() );
+    } else
+#endif
+    {
+      mov( dst_lo_reg, src_lo_bits );
+      if (dst.is_two_word()) {
+        mov( dst.hi_register(), src.hi_bits());
+      }
+    }
+    set_has_literal_value( dst.lo_register(), src.lo_bits() );
+    if(dst.is_two_word()) {
+      set_has_literal_value( dst.hi_register(), src.hi_bits() );
+    }
+  } else {
+    GUARANTEE(src.in_register(), "source must be in register");
+    mov(dst_lo_reg, src.lo_register());
+    if( dst.is_two_word() ) {
+      mov( dst.hi_register(), src.hi_register() );
+    }
+  }
+}
+
+#if 0
+void
+CodeGenerator::move(const Value& dst, const Value& src, const Condition cond) {
+  // if the source isn't present there's nothing left to do
+  if (!src.is_present()) {
+    return;
+  }
+
+  GUARANTEE(dst.type() == src.type(), "type check");
+  GUARANTEE(dst.in_register(), "destination must be in register");
   if (src.is_immediate()) {
     /* move always 1 word */
-    mov(dst.lo_register(), src.lo_bits());
-    frame()->set_has_literal_value(dst.lo_register(), src.lo_bits());
-
+    Register lo = dst.lo_register();
+#if ENABLE_ARM_VFP
+    if (dst.type() == T_FLOAT) {
+      move_float_immediate(lo, src.lo_bits(), cond);
+    } else if (dst.type() == T_DOUBLE) {
+      move_double_immediate(lo, src.lo_bits(), src.hi_bits(), cond);
+    }
+    else
+#endif  // ENABLE_ARM_VFP
+    {
+      CompilerLiteralAccessor cla;
+#if ENABLE_ARM_VFP
+      const Assembler::Register reg = cla.has_vfp_literal(src.lo_bits());
+      if( reg != Assembler::no_reg && reg > Assembler::r15 ) {
+        fmrs(lo, reg, cond);
+      } else
+#endif
+      {
+        mov_imm(lo, src.lo_bits(), &cla, cond);
+      }
+      if (dst.is_two_word()) {
+#if ENABLE_ARM_VFP
+        const Assembler::Register reg = cla.has_vfp_literal(src.hi_bits());
+        if( reg != Assembler::no_reg && reg > Assembler::r15 ) {
+          fmrs(dst.hi_register(), reg, cond);
+        } else
+#endif
+        {
+          mov_imm(dst.hi_register(), src.hi_bits(), &cla, cond);
+        }
+      }
+    }
+    if (cond == al) {
+      set_has_literal_value(dst.lo_register(), src.lo_bits());
+    }
     if (dst.is_two_word()) {
-      mov(dst.hi_register(), src.hi_bits());
-      frame()->set_has_literal_value(dst.hi_register(), src.hi_bits());
+      if (cond == al) {
+        set_has_literal_value(dst.hi_register(), src.hi_bits());
+      }
     }
   } else {
     GUARANTEE(src.in_register(), "source must be in register");
     /* move always 1 word */
-    mov(dst.lo_register(), src.lo_register());
+    move(dst.lo_register(), src.lo_register(), cond);
     if (dst.is_two_word()) {
-      mov(dst.hi_register(), src.hi_register());
+      move(dst.hi_register(), src.hi_register(), cond);
     }
   }
 }
+#endif
 
 void CodeGenerator::move(Value& dst, Oop* obj, Condition cond) {
   GUARANTEE(dst.type() == T_OBJECT || dst.type() == T_ARRAY, "type check");
@@ -949,8 +1193,8 @@ void CodeGenerator::long_binary_do(Value& result, Value& op1, Value& op2,
       break;
 
     case BytecodeClosure::bin_min:
-       call_simple_c_runtime(result, (address)::jvm_lmin, op1, op2);
-       break;
+      call_simple_c_runtime(result, (address)::jvm_lmin, op1, op2);
+      break;
 
     case BytecodeClosure::bin_max:
       call_simple_c_runtime(result, (address)::jvm_lmax, op1, op2);
@@ -1260,14 +1504,9 @@ void CodeGenerator::float_binary_do(Value& result, Value& op1, Value& op2,
     RegisterAllocator::dereference(op2.lo_register());
 
   } else {      // bin_rem
-    ensure_not_in_float_register(op1);
-    ensure_not_in_float_register(op2);
     call_simple_c_runtime(result, (address)runtime_func, op1, op2);
   }
 #else
-  ensure_not_in_float_register(op1);
-  ensure_not_in_float_register(op2);
-
   if ((op == BytecodeClosure::bin_add || op == BytecodeClosure::bin_mul)
       && (   (op1.in_register() && op1.lo_register() == r1)
           || (op2.in_register() && op2.lo_register() == r0))) {
@@ -1320,12 +1559,9 @@ void CodeGenerator::float_cmp (Value& result, BytecodeClosure::cond_op cond,
                                Value& op1, Value& op2 JVM_TRAPS) {
   int (*runtime_func)(float, float);
   switch (cond) {
-    case BytecodeClosure::lt:
-        runtime_func = jvm_fcmpl; break;
-    case BytecodeClosure::gt:
-        runtime_func = jvm_fcmpg; break;
-    default                 :
-        runtime_func = 0; SHOULD_NOT_REACH_HERE(); break;
+    case BytecodeClosure::lt: runtime_func = jvm_fcmpl; break;
+    case BytecodeClosure::gt: runtime_func = jvm_fcmpg; break;
+    default                 : runtime_func = 0; SHOULD_NOT_REACH_HERE();
   }
   if (op1.is_immediate() && op2.is_immediate()) {
     result.set_int(runtime_func(op1.as_float(), op2.as_float()));
@@ -1348,18 +1584,12 @@ void CodeGenerator::double_binary_do(Value& result, Value& op1, Value& op2,
                                      BytecodeClosure::binary_op op JVM_TRAPS) {
   double (*runtime_func)(double, double);
   switch (op) {
-    case BytecodeClosure::bin_sub:
-      runtime_func = jvm_dsub; break;
-    case BytecodeClosure::bin_add:
-      runtime_func = jvm_dadd; break;
-    case BytecodeClosure::bin_mul:
-      runtime_func = jvm_dmul; break;
-    case BytecodeClosure::bin_div:
-      runtime_func = jvm_ddiv; break;
-    case BytecodeClosure::bin_rem:
-      runtime_func = jvm_drem; break;
-    default :
-      runtime_func = 0; SHOULD_NOT_REACH_HERE(); break;
+    case BytecodeClosure::bin_sub: runtime_func = jvm_dsub; break;
+    case BytecodeClosure::bin_add: runtime_func = jvm_dadd; break;
+    case BytecodeClosure::bin_mul: runtime_func = jvm_dmul; break;
+    case BytecodeClosure::bin_div: runtime_func = jvm_ddiv; break;
+    case BytecodeClosure::bin_rem: runtime_func = jvm_drem; break;
+    default:                       runtime_func = 0; SHOULD_NOT_REACH_HERE();
   }
   if (op1.is_immediate() && op2.is_immediate()) {
     jdouble result_imm = runtime_func(op1.as_double(), op2.as_double());
@@ -1430,6 +1660,12 @@ void CodeGenerator::vcall_simple_c_runtime(Value& result,
                                           address runtime_func, ...) {
   GUARANTEE(runtime_func != 0, "sanity check");
 
+#if ENABLE_ARM_VFP
+  // Some C runtime routine such as d2i may touch the FP registers. Let's
+  // make sure all FP registers are flushed to the stack.
+  frame()->flush_fpu();
+#endif
+
   int i;
   static const Register ctemps[] = { r0, r1, r2, r3, lr };
 
@@ -1498,6 +1734,20 @@ void CodeGenerator::vcall_simple_c_runtime(Value& result,
   if (JavaStackDirection > 0 && sp == jsp) {
     ldr(jsp, sp);
   }
+
+#if ENABLE_ARM_VFP
+  if (result.type() == T_FLOAT || result.type() == T_DOUBLE) {
+    result.assign_register();
+    const Register lo = result.lo_register();
+    if (result.type() == T_FLOAT) {
+      fmsr(lo, r0);
+    } else {
+      fmdrr(lo, r0, r1);
+    }
+    return;
+  }
+#endif  // ENABLE_ARM_VFP
+
   // We use "reference" rather than "allocate" since the register allocator
   // might think these are still in use from arguments.
   RegisterAllocator::reference(r0);
@@ -1558,19 +1808,19 @@ void CodeGenerator::i2l(Value& result, Value& value JVM_TRAPS) {
 
 #if ENABLE_FLOAT
 extern "C" {
-    float   jvm_i2f(int);
-    double  jvm_i2d(int);
+  float   jvm_i2f(int);
+  double  jvm_i2d(int);
 
-    float   jvm_l2f(jlong);
-    double  jvm_l2d(jlong);
+  float   jvm_l2f(jlong);
+  double  jvm_l2d(jlong);
 
-    int     jvm_f2i(float);
-    jlong   jvm_f2l(float);
-    double  jvm_f2d(float);
+  int     jvm_f2i(float);
+  jlong   jvm_f2l(float);
+  double  jvm_f2d(float);
 
-    int     jvm_d2i(double);
-    jlong   jvm_d2l(double);
-    float   jvm_d2f(double);
+  int     jvm_d2i(double);
+  jlong   jvm_d2l(double);
+  float   jvm_d2f(double);
 };
 
 void CodeGenerator::i2f(Value& result, Value& value JVM_TRAPS) {
@@ -1667,30 +1917,20 @@ void CodeGenerator::d2f(Value& result, Value& value JVM_TRAPS) {
 void CodeGenerator::larithmetic(Opcode opcode1, Opcode opcode2,
                                 Value& result, Value& op1, Value& op2 JVM_TRAPS) {
   write_literals_if_desperate();
+  jlong (*runtime_func)(jlong, jlong);
 
   // Check and see if assign_register was successful
   // if not we need to execute using a C method
   if (!RegisterAllocator::has_free(2, true)) {
     switch(opcode1) {
-      case _add:
-        call_simple_c_runtime(result, (address)::jvm_ladd, op1, op2);
-        break;
-      case _sub:
-        call_simple_c_runtime(result, (address)::jvm_lsub, op1, op2);
-        break;
-      case _and:
-        call_simple_c_runtime(result, (address)::jvm_land, op1, op2);
-        break;
-      case _eor:
-        call_simple_c_runtime(result, (address)::jvm_lxor, op1, op2);
-        break;
-      case _orr:
-        call_simple_c_runtime(result, (address)::jvm_lor, op1, op2);
-        break;
-      default:
-        SHOULD_NOT_REACH_HERE();
+      case _add: runtime_func = ::jvm_ladd; break;
+      case _sub: runtime_func = ::jvm_lsub; break;
+      case _and: runtime_func = ::jvm_land; break;
+      case _eor: runtime_func = ::jvm_lxor; break;
+      case _orr: runtime_func = ::jvm_lor;  break;
+      default  : runtime_func = NULL; SHOULD_NOT_REACH_HERE();
     }
-
+    call_simple_c_runtime(result, (address)runtime_func, op1, op2);
     return;
   }
 
@@ -3181,30 +3421,51 @@ void CodeGenerator::setup_c_args(int ignore, ...) {
 }
 
 void CodeGenerator::vsetup_c_args(va_list ap) {
-  int i, targetRegister, regCount, immCount;
-  Register srcReg[6], dstReg[6];
+  Register srcReg[6];
+  Register dstReg[6];
+  int regCount = 0;
+
+#if ENABLE_ARM_VFP
+  jbyte floatMap[32];
+  juint floatMask = 0;
+#endif
+
   Register dstImm[6];
   jint     srcImm[6];
+  int immCount = 0;
 
-  regCount = immCount = 0;
-  targetRegister = 0;
-  for(;;) {
+  for(int targetRegister = 0;;) {
     Value* value = va_arg(ap, Value*);
     if (value == NULL) break;
     if (value->type() == T_ILLEGAL) {
       // just a place holder.  We'll fill in the register late
     } else if (value->in_register()) {
-      // Make a list of the values that need to be copied from
-      // one register into another
-      dstReg[regCount] = as_register(targetRegister);
-      srcReg[regCount] = value->lo_register();
-      regCount++;
-      if (value->is_two_word()) {
-        dstReg[regCount] = as_register(targetRegister + 1);
-        srcReg[regCount] = value->hi_register();
+#if ENABLE_ARM_VFP
+      if( Assembler::is_vfp_register( value->lo_register() ) ) {
+        int lo = value->lo_register() - s0;
+        floatMap[lo] = jbyte(targetRegister);
+        floatMask |= 1 << lo;
+        if( value->is_two_word() ) {
+          ++lo;
+          floatMap[lo] = jbyte(targetRegister+1);
+          floatMask |= 1 << lo;
+        }
+      } else
+#endif
+      {
+        // Make a list of the values that need to be copied from
+        // one register into another
+        dstReg[regCount] = as_register(targetRegister);
+        srcReg[regCount] = value->lo_register();
         regCount++;
+        if (value->is_two_word()) {
+          dstReg[regCount] = as_register(targetRegister + 1);
+          srcReg[regCount] = value->hi_register();
+          regCount++;
+        }
       }
     } else {
+      GUARANTEE(value->is_immediate(), "Sanity");
       dstImm[immCount] = as_register(targetRegister);
       srcImm[immCount] = value->lo_bits();
       immCount++;
@@ -3222,18 +3483,35 @@ void CodeGenerator::vsetup_c_args(va_list ap) {
     if (regCount == 1) {
       // This happens often enough to optimize and avoid all the work of
       // shuffling the registers
-      if (dstReg[0] != srcReg[0])
-        mov(dstReg[0], srcReg[0]);
+      mov(dstReg[0], srcReg[0]);
     } else {
       shuffle_registers(dstReg, srcReg, regCount);
     }
   }
 
   // Write the immediate values.
-  //CompilerLiteralAccessor cla;
-  for (i = 0; i < immCount; i++) {
-    mov(dstImm[i], srcImm[i]);
+  {
+    for( int i = 0; i < immCount; i++ ) {
+      mov(dstImm[i], srcImm[i]);
+    }
   }
+
+#if ENABLE_ARM_VFP
+  {
+    for( int i = 0; floatMask; i++, floatMask >>= 1 ) {
+      if( floatMask & 1 ) {
+        const Register dst = as_register( floatMap[i] );
+        if( floatMask & 2 ) {
+          fmrrd( dst, Register(floatMap[i+1]), Register(s0 + i) );
+          floatMask >>= 1;
+          i++;
+        } else {
+          fmrs( dst, Register(s0 + i) );
+        }
+      }
+    }
+  }
+#endif
 }
 
 void CodeGenerator::shuffle_registers(Register* dstReg, Register* srcReg,

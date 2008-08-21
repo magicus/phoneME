@@ -136,7 +136,6 @@ void BinaryAssembler::access_literal_pool(Register rd,
                                           LiteralPoolElement* literal,
                                           const Condition cond,
                                           const bool is_store) {
-  GUARANTEE(rd < r8, "High registers are not supported still");
   Label L = literal->label();
   const int pos = _code_offset;
   const int target = L.is_unused() ? pos : L.position();

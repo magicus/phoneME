@@ -93,10 +93,9 @@ private:
   void ensure_in_float_register    (Value& value);
   void ensure_not_in_float_register(Value& value);
 
-  void move_vfp_immediate(const Register dst,const jint src, const Condition cond = al);
-  void move_float_immediate(const Register dst, const jint src, const Condition cond = al);
-  void move_double_immediate(const Register dst, const jint src_lo, const jint src_hi,
-                             const Condition cond = al);
+  void move_vfp_immediate(const Register dst,const jint src);
+  void move_float_immediate(const Register dst, const jint src);
+  void move_double_immediate(const Register dst, const jint src_lo, const jint src_hi);
 #else
   void ensure_in_float_register    (Value& /*value*/) {}
   void ensure_not_in_float_register(Value& /*value*/) {}

@@ -149,7 +149,7 @@ class VFPMemAccess: Instruction {
     // Sets the offset and transforms flds_stub to flds
     const int freg = reg();
     set_encoding( 0xFD1F | (freg & 1) << 6 | Assembler::up(offset) << 7 );
-    set_encoding_next( 0x0A00 | (freg >> 1) | (abs(offset) >> 2) );
+    set_encoding_next( 0x0A00 | (freg >> 1) << 12 | (abs(offset) >> 2) );
   }
   void set_location( const address loc ) const {
     check_alignment( loc );
