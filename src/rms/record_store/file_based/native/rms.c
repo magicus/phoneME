@@ -33,6 +33,8 @@
 #include <midpUtilKni.h>
 #include <suitestore_rms.h>
 #include <limits.h> /* for LONG_MAX */
+#include <pcsl_esc.h>
+#include <pcsl_string.h>
 
 /**
  * @file
@@ -212,83 +214,6 @@ static int recordStoreCreateLock(SuiteIdType suiteId,
                                  const pcsl_string * name_str, int handle);
 static void recordStoreDeleteLock(int handle);
 static lockFileList * findLockById(SuiteIdType suiteId, const pcsl_string * name);
-
-
-/**
- * A utility method that convert a hex character 0-9a-f to the
- * numerical value represented by this hex char.
- *
- * @param c the character to convert
- * @return the number represented by the character. E.g., '0' represents
- * the number 0x0, 'a' represents the number 0x0a, etc.
- */
-static jchar
-hexValue(jchar c) {
-    if (c >= '0' && c <= '9') {
-        return ((jchar)c) - '0';
-    }
-
-    return ((jchar)c) - 'a' + 10;
-}
-
-/**
- * Perform the reverse conversion of unicodeToEscapedAscii().
- *
- * @param str a string previously returned by escape()
- * @return the original string before the conversion by escape().
- */
-static pcsl_string_status
-escaped_ascii_to_unicode(const pcsl_string* str, pcsl_string* result) {
-    int result_len=0;
-    jchar* result_data = NULL;
-    pcsl_string_status status = PCSL_STRING_OK;
-    GET_PCSL_STRING_DATA_AND_LENGTH(str) do {
-        int i;
-
-        result_data = (jchar*)midpMalloc(str_len * sizeof (jchar));
-
-        if (result_data == NULL) {
-            status = PCSL_STRING_ENOMEM;
-            break;
-        }
-
-        for (i = 0, result_len = 0; i < str_len; i++) {
-            jchar c = str_data[i];
-
-            if (c == '%') {
-                jchar v = 0;
-
-                v += hexValue(str_data[i+1]);
-                v <<= 4;
-                v += hexValue(str_data[i+2]);
-                v <<= 4;
-                v += hexValue(str_data[i+3]);
-                v <<= 4;
-                v += hexValue(str_data[i+4]);
-
-                i += 4;
-
-                result_data[result_len] = v;
-                result_len++;
-            } else if (c == '#') {
-                /* drop c */
-            } else {
-                result_data[result_len] = c;
-                result_len++;
-            }
-        }
-
-    } while(0); RELEASE_PCSL_STRING_DATA_AND_LENGTH
-
-    if (PCSL_STRING_OK == status) {
-        if (PCSL_STRING_OK !=
-                pcsl_string_convert_from_utf16(result_data, result_len, result)) {
-            status = PCSL_STRING_ENOMEM;
-        }
-    }
-    midpFree(result_data);
-    return status;
-}
 
 /**
  * Returns a storage system unique string for this record store file
@@ -593,7 +518,7 @@ rmsdb_get_record_store_list(SuiteIdType suiteId, pcsl_string* *const ppNames) {
                 break;
             }
 
-            s_errc = escaped_ascii_to_unicode(&ascii_name, &pStores[i]);
+            s_errc = pcsl_esc_extract_attached(0, &ascii_name, &pStores[i]);
             pcsl_string_free(&ascii_name);
             if (PCSL_STRING_OK != s_errc ) {
                 break;
