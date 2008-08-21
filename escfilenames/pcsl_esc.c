@@ -26,6 +26,7 @@
 
 #include <pcsl_esc.h>
 #include <pcsl_string.h>
+#include <stddef.h>
 
 #if 0
 /* for debugging only */
@@ -104,7 +105,7 @@
 char pcsl_esc_mapchar(char x, char* from, char* to) {
     int i;
     for(i=0;from[i];i++) {
-	if(x==from[i]) return to[i];
+	if (x==from[i]) return to[i];
     }
     return x;
 }
@@ -134,7 +135,7 @@ int pcsl_esc_num2digit(unsigned int n) {
       )
 	if (n<sizeof(PCSL_ESC_MOREDIGITS)-1) return PCSL_ESC_MOREDIGITS[n];
 	n -= sizeof(PCSL_ESC_MOREDIGITS);
-	// error
+	/* error */
     }
     return -1;
 }
@@ -162,8 +163,8 @@ int pcsl_esc_digit2num(unsigned int c) {
             if (((unsigned char*)PCSL_ESC_MOREDIGITS)[i]==c) { res = at+i; break /*for*/; }
           }
         }
-    } while(0);
-    if(res>=PCSL_ESC_RADIX) { res = -1; }
+    } while (0);
+    if (res>=PCSL_ESC_RADIX) { res = -1; }
     return res;
 }
 
@@ -197,16 +198,12 @@ pcsl_string_status pcsl_esc_append_encoded_tuple(pcsl_string* str, unsigned int 
 #define TMPSIZE (2*sizeof(int))
     jchar tmp[TMPSIZE];
     jchar* p=tmp+TMPSIZE;
-    //*p=0;
-//printf("tuple=0x%x, mask=0x%x ",num,maxnum);
-    while(maxnum!=0) {
+    while (maxnum!=0) {
 	unsigned int r = num % PCSL_ESC_RADIX;
 	num /= PCSL_ESC_RADIX;
 	maxnum /= PCSL_ESC_RADIX;
-//printf(" digit(%x) ",r);
 	*--p = pcsl_esc_num2digit(r);
     }
-//printf("\n");
     return pcsl_string_append_buf(str, p, tmp+TMPSIZE-p);
 #undef TMPSIZE 
 }
@@ -223,12 +220,12 @@ int pcsl_esc_extract_encoded_tuple(unsigned int *pnum, const jchar**pptext) {
     int d;
     int ndigits = 0;
     *pnum = 0;
-    while(-1 != (d = pcsl_esc_digit2num(**pptext)) && ndigits < PCSL_ESC_DIGITS_PER_TUPLE) {
+    while (-1 != (d = pcsl_esc_digit2num(**pptext)) && ndigits < PCSL_ESC_DIGITS_PER_TUPLE) {
 	*pnum = PCSL_ESC_RADIX * *pnum + d;
 	++ndigits;
 	++*pptext;
     }
-    if(ndigits <= 1) { /* 0 (nothing to convert) or 1 (less than one byte) */
+    if (ndigits <= 1) { /* 0 (nothing to convert) or 1 (less than one byte) */
 	return - ndigits; /* 0 (nothing to convert) or -1 (incomplete byte)*/
     } else {
 	return ndigits - 1;
@@ -257,19 +254,20 @@ void pcsl_esc_init() {
 #define FOR_EACH(var,string) { char* __##var=string; unsigned var; for(var = *__##var; var; var = *++__##var) {
 #define END_FOR } }
 
-    // by default, all characters need escaping
+    /* by default, all characters need escaping */
     FOR_RANGE(c,0,LAST_TAB_CHAR) char_sort_tab[c] = goes_escaped; END_FOR
-    // 0-9 a-z go as is
+    /* 0-9 a-z go as is */
     FOR_RANGE(c,'0','9') char_sort_tab[c] = goes_as_is; END_FOR
     FOR_RANGE(c,'a','z') char_sort_tab[c] = goes_as_is; END_FOR
-    // the individual characters that go as is:
-//    FOR_EACH(c,"-_") char_sort_tab[c] = goes_as_is; END_FOR
-
-    // if file names are case-sensitive, A-Z go as is
-    // if file names are not case-sensitive, A-Z go shifted
+    /* the individual characters that go as is: */
+/*
+    FOR_EACH(c,"-_") char_sort_tab[c] = goes_as_is; END_FOR
+*/
+    /* if file names are case-sensitive, A-Z go as is
+     * if file names are not case-sensitive, A-Z go shifted */
     FOR_RANGE(c,'A','Z') char_sort_tab[c] = PCSL_ESC_CASE_SENSITIVE?goes_as_is:goes_shifted; END_FOR
 
-    if(PCSL_ESC_EXTENDED_SHIFT) {
+    if (PCSL_ESC_EXTENDED_SHIFT) {
 	FOR_EACH(c,PCSL_ESC_EXTRA_NEEDXCASE) char_sort_tab[c] = goes_shifted; END_FOR
     }
 
@@ -290,35 +288,41 @@ void pcsl_esc_init() {
  * @param in points to the utf-16 text to be attached
  * @param len length of the text to be attached
  * @param out the string to which the attachment is appended
+ * @return error code
  */
-void pcsl_esc_attach_buf(const jchar* in, jsize len, pcsl_string* out) {
+pcsl_string_status pcsl_esc_attach_buf(const jchar* in, jsize len, pcsl_string* out) {
     /* typically we save a few bytes in the output string
      * by setting these initially to block 0 */
+    pcsl_string_status rc;
     int currentBlock = 0, previousBlock = 0;
     int shiftMode = goes_as_is;
     unsigned buffer = 0, bufMask = 0;
     const jchar* limit = in+len;
     unsigned c;
-    if(!in||!len) return; /* nothing to do */
-    while(c=*in,in<limit) {
+    if (!in||!len) return PCSL_STRING_OK; /* nothing to do */
+    while (c=*in,in<limit) {
 	int b = BLOCK_OF(c);
 	char_sort s = CHAR_SORT_OF(c) ;
-	switch(s) {
+	switch (s) {
 	case goes_as_is:
 	case goes_shifted:
 	    {
-		if(s==shiftMode) {
-		    pcsl_string_append_char(out, (unsigned char)PCSL_ESC_CONVERT_CASE((char)c));
+		if (s==shiftMode) {
+		    rc = pcsl_string_append_char(out, (unsigned char)PCSL_ESC_CONVERT_CASE((char)c));
+                    if (rc != PCSL_STRING_OK) return rc;
 		    ++in;
 		} else {
 		    int cc = *++in;
-		    if(s==CHAR_SORT_OF(cc)) { /* multiple shifted */
-			pcsl_string_append_char(out, PCSL_ESC_SHIFT_TOGGLE);
+                    if (s==CHAR_SORT_OF(cc)) { /* multiple shifted */
+			rc = pcsl_string_append_char(out, PCSL_ESC_SHIFT_TOGGLE);
+                        if (rc != PCSL_STRING_OK) return rc;
 			shiftMode = s;
 		    } else {
-			pcsl_string_append_char(out, PCSL_ESC_SHIFT1);
+			rc = pcsl_string_append_char(out, PCSL_ESC_SHIFT1);
+                        if (rc != PCSL_STRING_OK) return rc;
 		    }
-		    pcsl_string_append_char(out, (unsigned char)PCSL_ESC_CONVERT_CASE((char)c));
+		    rc = pcsl_string_append_char(out, (unsigned char)PCSL_ESC_CONVERT_CASE((char)c));
+                    if (rc != PCSL_STRING_OK) return rc;
 		}
 	    }   break;
 	case goes_escaped:
@@ -327,7 +331,8 @@ void pcsl_esc_attach_buf(const jchar* in, jsize len, pcsl_string* out) {
              && b != BLOCK_OF(in[1])
              && goes_escaped == CHAR_SORT_OF(in[1])
                ) {
-	        pcsl_string_append_char(out, PCSL_ESC_FULL_CODES);
+	        rc = pcsl_string_append_char(out, PCSL_ESC_FULL_CODES);
+                if (rc != PCSL_STRING_OK) return rc;
 		buffer = bufMask = 0;
 		do {
 	            previousBlock = currentBlock;
@@ -338,8 +343,9 @@ void pcsl_esc_attach_buf(const jchar* in, jsize len, pcsl_string* out) {
 		    bufMask <<= 8;
 		    bufMask |= 0xff;
 
-		    if(bufMask == PCSL_ESC_FULL_TUPLE_MASK) {
-			pcsl_esc_append_encoded_tuple(out,buffer,bufMask);
+		    if (bufMask == PCSL_ESC_FULL_TUPLE_MASK) {
+			rc = pcsl_esc_append_encoded_tuple(out,buffer,bufMask);
+                        if (rc != PCSL_STRING_OK) return rc;
 			buffer = bufMask = 0;
 		    }
 
@@ -348,47 +354,49 @@ void pcsl_esc_attach_buf(const jchar* in, jsize len, pcsl_string* out) {
 		    bufMask <<= 8;
 		    bufMask |= 0xff;
 
-		    if(bufMask == PCSL_ESC_FULL_TUPLE_MASK) {
-			pcsl_esc_append_encoded_tuple(out,buffer,bufMask);
+		    if (bufMask == PCSL_ESC_FULL_TUPLE_MASK) {
+			rc = pcsl_esc_append_encoded_tuple(out,buffer,bufMask);
+                        if (rc != PCSL_STRING_OK) return rc;
 			buffer = bufMask = 0;
 		    }
 
 		    c = *++in;
 		    b = BLOCK_OF(c);
                     s = CHAR_SORT_OF(c);
-		} while(in<limit && currentBlock != b && s == goes_escaped);
-		if(bufMask) {
-		    pcsl_esc_append_encoded_tuple(out,buffer,bufMask);
+		} while (in<limit && currentBlock != b && s == goes_escaped);
+		if (bufMask) {
+		    rc = pcsl_esc_append_encoded_tuple(out,buffer,bufMask);
+                    if (rc != PCSL_STRING_OK) return rc;
 		    buffer = bufMask = 0;
 		}
-		if(s != goes_escaped) {
-		    pcsl_string_append_char(out, PCSL_ESC_TOGGLE);
+		if (s != goes_escaped) {
+		    rc = pcsl_string_append_char(out, PCSL_ESC_TOGGLE);
+                    if (rc != PCSL_STRING_OK) return rc;
                 }
             } else {
-		if(currentBlock == b) {
-		    pcsl_string_append_char(out, PCSL_ESC_TOGGLE);
+		if (currentBlock == b) {
+		    rc = pcsl_string_append_char(out, PCSL_ESC_TOGGLE);
+                    if (rc != PCSL_STRING_OK) return rc;
 		    buffer = bufMask = 0;
-		} else if(previousBlock == b) {
-		    pcsl_string_append_char(out, PCSL_ESC_PREV_BLOCK);
+		} else if (previousBlock == b) {
+		    rc = pcsl_string_append_char(out, PCSL_ESC_PREV_BLOCK);
+                    if (rc != PCSL_STRING_OK) return rc;
 		    previousBlock = currentBlock;
 		    currentBlock = b;
 		    buffer = bufMask = 0;
 		} else {
-		    pcsl_string_append_char(out, PCSL_ESC_NEW_BLOCK);
+		    rc = pcsl_string_append_char(out, PCSL_ESC_NEW_BLOCK);
+                    if (rc != PCSL_STRING_OK) return rc;
 		    previousBlock = currentBlock;
 		    currentBlock = b;
 		    buffer = b;
 		    bufMask = 0xff;
 		}
 
-//		if(bufMask == PCSL_ESC_FULL_TUPLE_MASK) {
-//		    pcsl_esc_append_encoded_tuple(out,buffer,bufMask);
-//		    buffer = bufMask = 0;
-//		}
-
 		do {
-		    if(bufMask == PCSL_ESC_FULL_TUPLE_MASK) {
-			pcsl_esc_append_encoded_tuple(out,buffer,bufMask);
+		    if (bufMask == PCSL_ESC_FULL_TUPLE_MASK) {
+			rc = pcsl_esc_append_encoded_tuple(out,buffer,bufMask);
+                        if (rc != PCSL_STRING_OK) return rc;
 			buffer = bufMask = 0;
 		    }
 		    buffer <<= 8;
@@ -398,18 +406,20 @@ void pcsl_esc_attach_buf(const jchar* in, jsize len, pcsl_string* out) {
 		    c = *++in;
 		    b = BLOCK_OF(c);
                     s = CHAR_SORT_OF(c);
-		} while(in<limit && currentBlock == b && s == goes_escaped);
-		if(bufMask) {
-		    pcsl_esc_append_encoded_tuple(out,buffer,bufMask);
+		} while (in<limit && currentBlock == b && s == goes_escaped);
+		if (bufMask) {
+		    rc = pcsl_esc_append_encoded_tuple(out,buffer,bufMask);
+                    if (rc != PCSL_STRING_OK) return rc;
 		    buffer = bufMask = 0;
 		}
-		if(s != goes_escaped) {
-		    pcsl_string_append_char(out, PCSL_ESC_TOGGLE);
+		if (s != goes_escaped) {
+		    rc = pcsl_string_append_char(out, PCSL_ESC_TOGGLE);
+                    if (rc != PCSL_STRING_OK) return rc;
                 }
 	    } 	break;
 	} /* switch */
     } /* while */
-//    printf("}attach_buf\n");
+    return PCSL_STRING_OK;
 }
 
 /**
@@ -422,15 +432,19 @@ void pcsl_esc_attach_buf(const jchar* in, jsize len, pcsl_string* out) {
  *
  * @param data the text to be escaped and attached
  * @param out the string to which the attachment is appended
+ * @return error code
  */
-void pcsl_esc_attach_string(const pcsl_string* data, pcsl_string*dst) {
+pcsl_string_status pcsl_esc_attach_string(const pcsl_string* data, pcsl_string*dst) {
+    pcsl_string_status rc = PCSL_STRING_OK;
     const jchar* x = pcsl_string_get_utf16_data(data);
     int l = pcsl_string_utf16_length(data);
-    pcsl_esc_attach_buf(x,l,dst);
+    if (x==NULL && l>0) return PCSL_STRING_ENOMEM;
+    rc = pcsl_esc_attach_buf(x,l,dst);
     pcsl_string_release_utf16_data(x,data);
+    return rc;
 }
 
-void pcsl_esc_extract_attached(const int offset, const pcsl_string *src, pcsl_string* dst) {
+pcsl_string_status pcsl_esc_extract_attached(const int offset, const pcsl_string *src, pcsl_string* dst) {
     int shiftMode = 0;
     int b = 0, b_prev = 0;
     const jchar*s = pcsl_string_get_utf16_data(src);
@@ -438,24 +452,29 @@ void pcsl_esc_extract_attached(const int offset, const pcsl_string *src, pcsl_st
     const jchar*p = s+offset;
     const jchar*plimit = s+len;
     *dst = PCSL_STRING_NULL;
-    if(len<=0) return;
+    if (len<=0) return PCSL_STRING_OK;
+    if (s==NULL) return PCSL_STRING_ENOMEM;
     while (p<plimit) {
         int c = *p;
-        switch(c) {
+	pcsl_string_status rc = PCSL_STRING_OK;
+        switch (c) {
         default:
             c = shiftMode ? (unsigned char)PCSL_ESC_UPPER((char)c) : (unsigned char)PCSL_ESC_LOWER((char)c);
-            pcsl_string_append_char(dst,(unsigned char)c);
+            rc = pcsl_string_append_char(dst,(unsigned char)c);
+            if (rc != PCSL_STRING_OK) return rc;
             break;
         case PCSL_ESC_SHIFT_TOGGLE:
             shiftMode ^= 1;
             c=*++p;
             c = shiftMode ? (unsigned char)PCSL_ESC_UPPER((char)c) : (unsigned char)PCSL_ESC_LOWER((char)c);
-            pcsl_string_append_char(dst,(unsigned char)c);
+            rc = pcsl_string_append_char(dst,(unsigned char)c);
+            if (rc != PCSL_STRING_OK) return rc;
             break;
         case PCSL_ESC_SHIFT1:
             c=*++p;
             c = shiftMode ? (unsigned char)PCSL_ESC_LOWER((char)c) : (unsigned char)PCSL_ESC_UPPER((char)c);
-            pcsl_string_append_char(dst,(unsigned char)c);
+            rc = pcsl_string_append_char(dst,(unsigned char)c);
+            if (rc != PCSL_STRING_OK) return rc;
             break;
         case PCSL_ESC_PREV_BLOCK:
         case PCSL_ESC_NEW_BLOCK:
@@ -473,7 +492,7 @@ void pcsl_esc_extract_attached(const int offset, const pcsl_string *src, pcsl_st
                     nbytes = pcsl_esc_extract_encoded_tuple(&tuple,&p);
                 }
 
-		if(nbytes < 0) nbytes = 0;
+		if (nbytes < 0) nbytes = 0;
 
                 if (nbytes == 0) {
                     cmd = *p++;
@@ -487,7 +506,7 @@ void pcsl_esc_extract_attached(const int offset, const pcsl_string *src, pcsl_st
                         cmd = -1;
                         break;
                     case PCSL_ESC_FULL_CODES:
-                        if(utf16_incomplete) {
+                        if (utf16_incomplete) {
                             utf16 = b << 8 | byte;
                         } else {
                             b = byte;
@@ -508,7 +527,8 @@ void pcsl_esc_extract_attached(const int offset, const pcsl_string *src, pcsl_st
                         cmd = -1;
                     }
                     if (!utf16_incomplete) {
-                        pcsl_string_append_char(dst, (jchar)utf16);
+                        rc = pcsl_string_append_char(dst, (jchar)utf16);
+                        if (rc != PCSL_STRING_OK) return rc;
                     }
                 }
             } while (nbytes != 0 || p < plimit && *p != PCSL_ESC_TOGGLE);
@@ -517,6 +537,7 @@ void pcsl_esc_extract_attached(const int offset, const pcsl_string *src, pcsl_st
         p++;
     }
     pcsl_string_release_utf16_data(s,src);
+    return PCSL_STRING_OK;
 }
 
 
