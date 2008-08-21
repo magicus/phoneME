@@ -42,6 +42,7 @@
 #include <javacall_lcd.h>
 #include <javacall_ams_suitestore.h>
 #include <javacall_ams_app_manager.h>
+#include <javacall_keypress.h>
 
 #ifdef USE_CONSOLE
 #include <io.h>
@@ -108,7 +109,6 @@ typedef struct _TVI_INFO {
 static TVI_INFO* CreateTviInfo();
 static void FreeTviInfo(TVI_INFO* pInfo);
 
-
 // Forward declarations of functions included in this code module:
 
 LRESULT CALLBACK MainWndProc(HWND, UINT, WPARAM, LPARAM);
@@ -136,6 +136,8 @@ static void AddWindowMenuItem(javacall_const_utf16_string jsStr, void* pItemData
 static void CheckWindowMenuItem(int index, BOOL fChecked);
 static void SetCheckedWindowMenuItem(void* pItemData);
 static void* GetWindowMenuItemData(UINT commandId);
+
+static int mapKey(WPARAM wParam, LPARAM lParam);
 
 static LPTSTR JavacallUtf16ToTstr(javacall_const_utf16_string str);
 static javacall_utf16_string CloneJavacallUtf16(javacall_const_utf16_string str);
@@ -913,6 +915,23 @@ MainWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
         break;
     }
 
+    case WM_KEYDOWN:
+    case WM_KEYUP: {
+        int key = mapKey(wParam, lParam);
+
+        if (message == WM_KEYUP) {
+            javanotify_key_event((javacall_key)key, JAVACALL_KEYRELEASED);
+        } else {
+            if (lParam & 0xf0000000) {
+                javanotify_key_event((javacall_key)key, JAVACALL_KEYREPEATED);
+            } else {
+                javanotify_key_event((javacall_key)key, JAVACALL_KEYPRESSED);
+            }
+        }
+
+        break;
+    }
+
     case WM_NOTIFY: {
         LPNMHDR pHdr = (LPNMHDR)lParam;
         switch (pHdr->code)
@@ -1228,7 +1247,6 @@ MidletTreeWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
         break;
     }
 
-
     default:
         return CallWindowProc(g_DefTreeWndProc, hWnd, message, wParam, lParam);
     }
@@ -1269,6 +1287,72 @@ static void CenterWindow(HWND hDlg) {
                  0, 0,          // ignores size arguments
                  SWP_NOSIZE);
     ShowWindow(hDlg, SW_SHOWNORMAL);
+}
+
+/**
+ *
+ */
+static int mapKey(WPARAM wParam, LPARAM lParam) {
+    BYTE keyStates[256];
+    WORD temp[2];
+
+    switch(wParam) {
+    case VK_F1:
+        return JAVACALL_KEY_SOFT1;
+
+    case VK_F2:
+        return JAVACALL_KEY_SOFT2;
+
+    case VK_F9:
+        return JAVACALL_KEY_GAMEA;
+
+    case VK_F10:
+        return JAVACALL_KEY_GAMEB;
+
+    case VK_F11:
+        return JAVACALL_KEY_GAMEC;
+
+    case VK_F12:
+        return JAVACALL_KEY_GAMED;
+        break;
+
+    case VK_UP:
+        return JAVACALL_KEY_UP;
+
+    case VK_DOWN:
+        return JAVACALL_KEY_DOWN;
+
+    case VK_LEFT:
+        return JAVACALL_KEY_LEFT;
+
+    case VK_RIGHT:
+        return JAVACALL_KEY_RIGHT;
+
+    case VK_RETURN:
+        return JAVACALL_KEY_SELECT;
+
+    case VK_BACK:
+        return JAVACALL_KEY_BACKSPACE;
+
+    case VK_HOME:
+    case VK_F7:
+//        return MD_KEY_HOME;
+
+    default:
+        break;
+    }
+
+    GetKeyboardState(keyStates);
+    temp[0] = 0;
+    temp[1] = 0;
+    ToAscii((UINT)wParam, (UINT)lParam, keyStates, temp, (UINT)0);
+
+    /* At this point only return printable characters. */
+    if (temp[0] >= ' ' && temp[0] < 127) {
+        return temp[0];
+    }
+
+    return 0;
 }
 
 
