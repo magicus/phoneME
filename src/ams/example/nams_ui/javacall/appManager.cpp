@@ -1105,7 +1105,10 @@ static BOOL StartMidlet(HWND hTreeWnd) {
 
         if (TreeView_GetItem(hTreeWnd, &tvi)) {
             TVI_INFO* pInfo = (TVI_INFO*)tvi.lParam;
-            if (pInfo->type == TVI_TYPE_MIDLET) {
+            if (pInfo->type == TVI_TYPE_MIDLET && 
+                    // check whether the MIDlet is already running
+                    pInfo->appId == JAVACALL_INVALID_APP_ID) { 
+
                 wprintf(_T("Launching MIDlet (suiteId=%d, class=%s, appId=%d)...\n"),
                     pInfo->suiteId, pInfo->className, g_jAppId);
 
