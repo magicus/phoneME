@@ -1698,10 +1698,6 @@ public abstract class Installer {
      * @exception IOException if the install is stopped
      */
     protected void processPreviousRMS() throws IOException {
-        if (!RecordStoreFactory.suiteHasRmsData(info.id)) {
-            return;
-        }
-
         if (state.previousInstallInfo.authPath != null &&
             info.authPath != null &&
             info.authPath[0].equals(
