@@ -114,7 +114,7 @@ public class AccessControlManager {
         if (ACLInfo == null || ACLInfo[slot] == null) {
             APDUPermissions perm;
             perm = new APDUPermissions(null);
-            perm.setType(ACLPermissions.DISALLOW);
+            perm.setType(ACLPermissions.ALLOW);
             return perm;
         }
 
@@ -134,7 +134,7 @@ public class AccessControlManager {
                                                        String root) {
         if (ACLInfo == null || ACLInfo[slot] == null) {
             JCRMIPermissions perm = new JCRMIPermissions(null);
-            perm.setType(ACLPermissions.DISALLOW);
+            perm.setType(ACLPermissions.ALLOW);
             return perm;
         }
 
