@@ -320,3 +320,52 @@ jsize utf16_string_length(jchar * str, jsize str_length) {
 
   return char_count;
 }
+
+/**
+ * Convert a Unicode string into a form that can be safely stored on
+ * an ANSI-compatible file system. All characters that are not
+ * [A-Za-z0-9] are converted into %uuuu, where uuuu is the hex
+ * representation of the character's unicode value. Note even
+ * though "_" is allowed it is converted because we use it for
+ * for internal purposes. Potential file separators are converted
+ * so the storage layer does not have deal with sub-directory hierarchies.
+ *
+ * @param str_data buffer with a string that may contain any unicode character
+ * @param str_len length of the string pointed to by str_data
+ * @param pBuffer a buffer that is at least 5 times the size of str after
+ *        the offset, must not be the memory as str
+ * @param offset where to start putting the characters
+ *
+ * @return number of characters put in pBuffer
+ */
+int pcsl_utf16_to_escaped_ascii(const jchar* str_data, const int str_len,
+                             jchar* pBuffer, int offset) {
+    static jchar NUMS[] = {
+        '0', '1', '2', '3', '4', '5', '6', '7',
+        '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'
+    };
+
+    int i;
+    int j;
+
+    for (i = 0, j = offset; i < str_len; i++) {
+        jchar c = str_data[i];
+
+        if ((c >= 'a' && c <= 'z') ||
+            (c >= '0' && c <= '9')) {
+            pBuffer[j++] = c;
+        } else if (c >= 'A' && c <= 'Z') {
+            /* Some file systems do not treat capital letters differently. */
+            pBuffer[j++] = '#';
+            pBuffer[j++] = c;
+        } else {
+            pBuffer[j++] = '%';
+            pBuffer[j++] = NUMS[(c >> 12) & 0x000f];
+            pBuffer[j++] = NUMS[(c >>  8) & 0x000f];
+            pBuffer[j++] = NUMS[(c >>  4) & 0x000f];
+            pBuffer[j++] = NUMS[c & 0x000f];
+        }
+    }
+
+    return j - offset;
+}
