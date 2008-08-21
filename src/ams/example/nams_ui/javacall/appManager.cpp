@@ -555,86 +555,86 @@ static void FreeTviInfo(TVI_INFO* pInfo) {
 }
 
 static void AddSuiteToTree(HWND hwndTV, javacall_suite_id suiteId, int nLevel) {
-        javacall_result res;
-        javacall_utf16_string jsLabel;
-        TVI_INFO* pInfo;
-        javacall_ams_suite_info* pSuiteInfo;
-        javacall_ams_midlet_info* pMidletsInfo;
-        javacall_int32 midletNum;
+    javacall_result res;
+    javacall_utf16_string jsLabel;
+    TVI_INFO* pInfo;
+    javacall_ams_suite_info* pSuiteInfo;
+    javacall_ams_midlet_info* pMidletsInfo;
+    javacall_int32 midletNum;
 
 
-        res = java_ams_suite_get_info(suiteId, &pSuiteInfo);
-        if (res == JAVACALL_OK) {
-              // TODO: add support for disabled suites
-              // javacall_bool enabled = suiteInfo[s].isEnabled;
+    res = java_ams_suite_get_info(suiteId, &pSuiteInfo);
+    if (res == JAVACALL_OK) {
+            // TODO: add support for disabled suites
+            // javacall_bool enabled = suiteInfo[s].isEnabled;
 
-              jsLabel = (pSuiteInfo->displayName != NULL) ?
-                  pSuiteInfo->displayName : pSuiteInfo->suiteName;
+            jsLabel = (pSuiteInfo->displayName != NULL) ?
+                pSuiteInfo->displayName : pSuiteInfo->suiteName;
 
-              LPTSTR pszSuiteName = (jsLabel != NULL) ?
-                  JavacallUtf16ToTstr(jsLabel) :
-                  g_szDefaultSuiteName;
-              wprintf(_T("Suite label=%s\n"), pszSuiteName);
+            LPTSTR pszSuiteName = (jsLabel != NULL) ?
+                JavacallUtf16ToTstr(jsLabel) :
+                g_szDefaultSuiteName;
+            wprintf(_T("Suite label=%s\n"), pszSuiteName);
 
-              pInfo = CreateTviInfo();
-              if (pInfo) {
-                  pInfo->type = TVI_TYPE_SUITE;
-                  pInfo->suiteId = suiteId;
-                  if (jsLabel) {
-                    pInfo->displayName = CloneJavacallUtf16(jsLabel);
-                  }
-              }
-              AddItemToTree(hwndTV, pszSuiteName, nLevel, pInfo);
+            pInfo = CreateTviInfo();
+            if (pInfo) {
+                pInfo->type = TVI_TYPE_SUITE;
+                pInfo->suiteId = suiteId;
+                if (jsLabel) {
+                pInfo->displayName = CloneJavacallUtf16(jsLabel);
+                }
+            }
+            AddItemToTree(hwndTV, pszSuiteName, nLevel, pInfo);
 
-              if (pszSuiteName && (pszSuiteName != g_szDefaultSuiteName)) {
-                  javacall_free(pszSuiteName);
-              }
+            if (pszSuiteName && (pszSuiteName != g_szDefaultSuiteName)) {
+                javacall_free(pszSuiteName);
+            }
 
-              res = java_ams_suite_get_midlets_info(suiteId, &pMidletsInfo,
-                  &midletNum);
-              if (res == JAVACALL_OK) {
-                      wprintf(_T("Total MIDlets in the suite %d\n"), midletNum);
+            res = java_ams_suite_get_midlets_info(suiteId, &pMidletsInfo,
+                &midletNum);
+            if (res == JAVACALL_OK) {
+                    wprintf(_T("Total MIDlets in the suite %d\n"), midletNum);
 
-                      for (int m = 0; m < midletNum; m++) {
-                          // we have nothing to do if class name is not defined
-                          if (pMidletsInfo[m].className == NULL) {
-                              continue;
-                          }
+                    for (int m = 0; m < midletNum; m++) {
+                        // we have nothing to do if class name is not defined
+                        if (pMidletsInfo[m].className == NULL) {
+                            continue;
+                        }
 
-                          jsLabel = (pMidletsInfo[m].displayName != NULL) ?
-                              pMidletsInfo[m].displayName :
-                              pMidletsInfo[m].className;
+                        jsLabel = (pMidletsInfo[m].displayName != NULL) ?
+                            pMidletsInfo[m].displayName :
+                            pMidletsInfo[m].className;
 
-       	                  LPTSTR pszMIDletName = JavacallUtf16ToTstr(jsLabel);
-                          wprintf(_T("MIDlet label='%s', className='%s'\n"),
-                              pszMIDletName,
-                              (LPWSTR)pMidletsInfo[m].className);
+       	                LPTSTR pszMIDletName = JavacallUtf16ToTstr(jsLabel);
+                        wprintf(_T("MIDlet label='%s', className='%s'\n"),
+                            pszMIDletName,
+                            (LPWSTR)pMidletsInfo[m].className);
 
-                          pInfo = CreateTviInfo();
-                          if (pInfo) {
-                              pInfo->type = TVI_TYPE_MIDLET;
-                              pInfo->suiteId = suiteId;
-                              pInfo->className = CloneJavacallUtf16(
-                                  pMidletsInfo[m].className);
-                              pInfo->displayName = CloneJavacallUtf16(jsLabel);
-                          }
-                          AddItemToTree(hwndTV, pszMIDletName, nLevel + 1, pInfo);
+                        pInfo = CreateTviInfo();
+                        if (pInfo) {
+                            pInfo->type = TVI_TYPE_MIDLET;
+                            pInfo->suiteId = suiteId;
+                            pInfo->className = CloneJavacallUtf16(
+                                pMidletsInfo[m].className);
+                            pInfo->displayName = CloneJavacallUtf16(jsLabel);
+                        }
+                        AddItemToTree(hwndTV, pszMIDletName, nLevel + 1, pInfo);
 
-                          if (pszMIDletName) {
-                              javacall_free(pszMIDletName);
-                          }
-                      }
-                      if (midletNum > 0) {
-                          java_ams_suite_free_midlets_info(pMidletsInfo, midletNum);
-                      }
-              } else {
-                  wprintf(_T("ERROR: java_ams_suite_get_midlets_info() returned: %d\n"), res);
-              }
+                        if (pszMIDletName) {
+                            javacall_free(pszMIDletName);
+                        }
+                    }
+                    if (midletNum > 0) {
+                        java_ams_suite_free_midlets_info(pMidletsInfo, midletNum);
+                    }
+            } else {
+                wprintf(_T("ERROR: java_ams_suite_get_midlets_info() returned: %d\n"), res);
+            }
 
-              java_ams_suite_free_info(pSuiteInfo);
-        } else {
-            wprintf(_T("ERROR: java_ams_suite_get_info() returned: %d\n"), res);
-        }
+            java_ams_suite_free_info(pSuiteInfo);
+    } else {
+        wprintf(_T("ERROR: java_ams_suite_get_info() returned: %d\n"), res);
+    }
 }
 
 static BOOL InitTreeViewItems(HWND hwndTV)  {
@@ -950,8 +950,9 @@ MainWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
         break;
     }
 
+    case WM_CLOSE:
     case WM_DESTROY:
-        PostQuitMessage(0);
+          PostMessage(hWnd, WM_COMMAND, (WPARAM)MAKELONG(IDM_SUITE_EXIT, 0), 0);
         break;
 
     default:
