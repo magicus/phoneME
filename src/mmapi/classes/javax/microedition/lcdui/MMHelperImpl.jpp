@@ -69,17 +69,7 @@ final class MMHelperImpl extends MMHelper {
      */
     synchronized void paintVideo(Object video, Graphics g) {
         MIDPVideoPainter vp = (MIDPVideoPainter)video;
-        boolean isOverlapping = false;
-// #ifdef ENABLE_CHAMELEON
-        Object creator = g.getCreator();
-        if (creator != null) {
-            if (creator instanceof Display) {
-                MIDPWindow window = ((Display)creator).getWindow();
-                isOverlapping = window.systemMenuUp();
-            }
-        }
-// #endif
-        vp.paintVideo(g, isOverlapping);
+        vp.paintVideo(g);
     }
     
     /**
@@ -132,5 +122,22 @@ final class MMHelperImpl extends MMHelper {
 
         return item.owner.getLF().lGetCurrentDisplay();
     }    
+
+    /**
+     * Is current Display is Overlapping by system layers
+     */
+    public boolean isOverlapping(Graphics g) {
+        boolean isOverlapping = false;
+// #ifdef ENABLE_CHAMELEON
+        Object creator = g.getCreator();
+        if (creator != null) {
+            if (creator instanceof Display) {
+                MIDPWindow window = ((Display)creator).getWindow();
+                isOverlapping = window.systemMenuUp();
+            }
+        }
+// #endif
+        return isOverlapping;
+    }
 
 }

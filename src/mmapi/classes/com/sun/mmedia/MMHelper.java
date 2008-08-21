@@ -71,4 +71,9 @@ public abstract class MMHelper {
      */
     public abstract Display getItemDisplay(Item item);
 
+    /**
+     * Is current Display is Overlapping by system layers
+     */
+    public abstract boolean isOverlapping(Graphics g);
+
 };

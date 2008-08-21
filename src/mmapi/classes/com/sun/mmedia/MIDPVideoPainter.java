@@ -26,7 +26,7 @@ package com.sun.mmedia;
 import javax.microedition.lcdui.Graphics;
 
 public interface MIDPVideoPainter {
-    void paintVideo(Graphics g, boolean isOverlapping);
+    void paintVideo(Graphics g);
     void showVideo();
     void hideVideo();
 }
