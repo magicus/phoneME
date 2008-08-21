@@ -156,9 +156,11 @@ typedef pcsl_string_md pcsl_string;
 
 /**
  * This macro us used to determine size of the result buffer for passing it to
- * unicode_to_escaped_ascii function. Namely it multiplies given length by 5.
+ * unicode_to_escaped_ascii function.
+ * Namely it multiplies given length by 5 and adds one (the worst-case is:
+ * one escape character plus 4 radix16 digits per digit, plus one more escape character).
  */
-#define PCSL_STRING_ESCAPED_BUFFER_SIZE(length) ((length) * 5)
+#define PCSL_STRING_ESCAPED_BUFFER_SIZE(length) ((length) * 5 + 1)
 
 /**
  * Returns whether the string system is active.
@@ -721,23 +723,6 @@ void pcsl_string_release_utf16_data(const jchar * buf, const pcsl_string * str);
  * PCSL_FALSE otherwise
  */
 jboolean pcsl_string_is_null(const pcsl_string * str);
-
-/**
- * Convert a Unicode string into a form that can be safely stored on
- * an ANSI-compatible file system and append it to the string specified
- * as the first parameter. All characters that are not
- * [A-Za-z0-9] are converted into %uuuu, where uuuu is the hex
- * representation of the character's unicode value. Note even
- * though "_" is allowed it is converted because we use it for
- * for internal purposes. Potential file separators are converted
- * so the storage layer does not have deal with sub-directory hierarchies.
- *
- * @param dst the string to which the converted text is appendsd
- * @param suffix text to be converted into escaped-ascii
- * @return error code
- */
-pcsl_string_status
-pcsl_string_append_escaped_ascii(pcsl_string* dst, const pcsl_string* suffix);
 
 /** Zero-terminated empty string constant. */
 extern const pcsl_string PCSL_STRING_EMPTY;
