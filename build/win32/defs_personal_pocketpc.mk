@@ -29,7 +29,7 @@
 ##### wceCompat library
 
 CVM_INCLUDE_DIRS  += $(WCECOMPAT_LIB_SRC_DIR) \
-	$(CVM_TOP)/src/win32/javavm/runtime
+	$(CVM_TOP)/src/win32/javavm/runtime $(CVM_TOP)/src/win32/personal/native
 
 # by default we don't want PocketPC menu style
 POCKETPC_MENUS = true
@@ -74,12 +74,12 @@ ifeq ($(CVM_STATICLINK_LIBS), true)
 WCECOMPAT_LIB_CC_FLAGS     += -DCVM_STATICLINK_LIBS
 endif
 
-WCECOMPAT_LIB_CC_RULE_SPACE = $(AT)$(TARGET_CC) $(CFLAGS_SPACE) $(WCECOMPAT_LIB_CC_FLAGS) /Fo$@ $<
+WCECOMPAT_LIB_CC_RULE_SPACE = $(AT)$(TARGET_CC) $(CFLAGS_SPACE) $(WCECOMPAT_LIB_CC_FLAGS) /Fo$@ $(call abs2rel, $<)
 WCECOMPAT_LIB_CC_RULE       = $(WCECOMPAT_LIB_CC_RULE_SPACE)
 
 # wceCompat RC rules for resource files
 WCECOMPAT_LIB_RC_FLAGS = 
-WCECOMPAT_LIB_RC_RULE  = $(AT)$(RC) $(WCECOMPAT_LIB_RC_FLAGS) /Fo$@ $<
+WCECOMPAT_LIB_RC_RULE  = $(AT)$(RC) $(WCECOMPAT_LIB_RC_FLAGS) /Fo$@ $(call abs2rel, $<)
 
 # wceCompat LINK rules
 ifeq ($(POCKETPC_MENUS), true)
@@ -104,8 +104,8 @@ WCECOMPAT_LIB_LINK_RULE = $(AT)$(TARGET_LD) $(WCECOMPAT_LIB_LINKFLAGS) /out:$@ $
 
 # link in the library file to the pocketpc awt library
 ifneq ($(CVM_STATICLINK_LIBS), true)
-AWT_LIB_LIBS += $(WCECOMPAT_LINK_PATHNAME)
-JPEG_LIB_LIBS += $(WCECOMPAT_LINK_PATHNAME)
+AWT_LIB_LIBS += $(call abs2rel, $(WCECOMPAT_LINK_PATHNAME))
+JPEG_LIB_LIBS += $(call abs2rel, $(WCECOMPAT_LINK_PATHNAME))
 endif
 
 #
