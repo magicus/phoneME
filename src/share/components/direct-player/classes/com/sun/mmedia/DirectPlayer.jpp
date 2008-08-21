@@ -182,7 +182,7 @@ public class DirectPlayer extends BasicPlayer implements VideoSource
     protected native boolean nSetVisible(int handle, boolean visible);
 
     // Turn on or off alpha channel
-    private native int nSetAlpha(int handle, boolean on, int color);
+    private native boolean nSetAlpha(int handle, boolean on, int color);
     
     // Member functions /////////////////////////////////////////////////
 
@@ -842,10 +842,15 @@ public class DirectPlayer extends BasicPlayer implements VideoSource
         return nSetVisible( hNative, visible );
     }
     
+    private boolean alphaIsOn = false;
     // Turn on or off alpha channel
-    public int setVideoAlpha(boolean on, int color)
+    public boolean setVideoAlpha(boolean on, int color)
     {
-        return nSetAlpha( hNative, on, color );
+        if (alphaIsOn != on) {
+            alphaIsOn = on;
+            return nSetAlpha( hNative, on, color );
+        }
+        return true;
     }
 
     // Notifies that the Display Size was changed

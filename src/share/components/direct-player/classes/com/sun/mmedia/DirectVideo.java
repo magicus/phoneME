@@ -210,7 +210,7 @@ class DirectVideo implements VideoControl, MIDPVideoPainter {
      * Prepare clipped preview region by using alpha channel masking
      */
     private void prepareClippedPreview(Graphics g, int x, int y, int w, int h) {
-        if (1 == source.setVideoAlpha( true, ALPHA_COLOR)) {
+        if (source.setVideoAlpha( true, ALPHA_COLOR)) {
             g.setColor(ALPHA_COLOR);    // IMPL NOTE - Consider RGB565 conversion
             g.fillRect(x, y, w, h);
             setTranslatedVideoLocation(g, x, y, w, h);
@@ -521,10 +521,10 @@ class DirectVideo implements VideoControl, MIDPVideoPainter {
      * Notice: This have to be done before device painting action
      * Zoran ESDK use mask color to draw direct video
      */
-    public void paintVideo(Graphics g, boolean isOverlapping) {
+    public void paintVideo(Graphics g) {
         int x, y, w, h;
-System.out.println("---> jsr135 DirectVideo: sysMenuUp = " + isOverlapping);
-        
+        boolean isOverlapping = false;
+
         synchronized(boundLock) {
             x = dx;
             y = dy;
@@ -541,6 +541,9 @@ System.out.println("---> jsr135 DirectVideo: sysMenuUp = " + isOverlapping);
             hidden = true;
         }
 
+        if (mmh != null) {
+            isOverlapping = mmh.isOverlapping(g);
+        }
         if (hidden || isOverlapping) {
             prepareClippedPreview(g, x, y, w, h);
         } else if (visible && started) {
@@ -582,8 +585,11 @@ System.out.println("---> jsr135 DirectVideo: sysMenuUp = " + isOverlapping);
      */
     class DVItem extends CustomItem {
 
+       private MMHelper mmh = null;
+
         DVItem(String label) {
             super(label);
+            mmh = MMHelper.getMMHelper();
         }
         
         void forcePaint() {
@@ -591,23 +597,20 @@ System.out.println("---> jsr135 DirectVideo: sysMenuUp = " + isOverlapping);
         }
         
         protected void paint(Graphics g, int w, int h) {
+            boolean isOverlapping = false;
             if (debug) {
                 Logging.report(Logging.INFORMATION, LogChannels.LC_MMAPI, 
                     "DVItem.paint visible=" + visible); 
             }
 
+            if (mmh != null) {
+                isOverlapping = mmh.isOverlapping(g);
+            }
             // Is in hidden state, then just draw fake preview
-            if (hidden) {
+            if (hidden || isOverlapping) {
                 prepareClippedPreview(g, 0, 0, w, h);
-            // Is out of hidden state, then check about clipping regions and
-            // determind what to show
             } else if (visible) {
-                if (true == isInClippingArea(g, 0, 0, w, h)) {
-                    // Prepare video preview
-                    prepareVideoSurface(g, 0, 0, w, h);
-                } else {
-                    prepareClippedPreview(g, 0, 0, w, h);
-                }
+                prepareVideoSurface(g, 0, 0, w, h);
             }
         }
         

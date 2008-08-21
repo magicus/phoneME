@@ -540,7 +540,7 @@ public final class MIDPVideoRenderer extends VideoRenderer
     /**
      * Paint video into canvas - in USE_DIRECT_VIDEO mode
      */
-    public void paintVideo(Graphics g, boolean isOverlapping) {
+    public void paintVideo(Graphics g) {
         // Don't paint if Canvas visible flag is false
         if (!pvis || !cvis || painting)
             return;

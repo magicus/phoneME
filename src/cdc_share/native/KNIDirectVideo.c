@@ -117,8 +117,8 @@ KNIDECL(com_sun_mmedia_DirectPlayer_nSetVisible) {
     KNI_ReturnBoolean(returnValue);
 }
 
-/*  private native int nSetAlpha (boolean on, int color) ; */
-KNIEXPORT KNI_RETURNTYPE_INT
+/*  private native boolean nSetAlpha (boolean on, int color) ; */
+KNIEXPORT KNI_RETURNTYPE_BOOLEAN
 KNIDECL(com_sun_mmedia_DirectPlayer_nSetAlpha) {
 
     jint handle = KNI_GetParameterAsInt(1);
@@ -137,7 +137,7 @@ KNIDECL(com_sun_mmedia_DirectPlayer_nSetAlpha) {
 
     MMP_DEBUG_STR1("[kni_video] -nSetAlpha ret %d\n", ret);
 
-    KNI_ReturnInt(JAVACALL_SUCCEEDED(ret) ? 1 : 0);  
+    KNI_ReturnBoolean(JAVACALL_SUCCEEDED(ret) ? KNI_TRUE : KNI_FALSE);  
 }
 
 KNIEXPORT KNI_RETURNTYPE_BOOLEAN 
