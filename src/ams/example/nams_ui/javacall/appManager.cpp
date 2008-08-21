@@ -257,7 +257,7 @@ static HWND CreateMainToolbar(HWND hWndParent) {
 
     // Get the dimensions of the parent window's client area, and create 
     // the tree-view control. 
-    GetClientRect(hWndParent, &rcClient); 
+    GetClientRect(hWndParent, &rcClient);
 
     TBBUTTON tbButtons[] = {
         0, IDM_HELP_ABOUT, TBSTATE_ENABLED, BTNS_BUTTON, 
@@ -923,6 +923,7 @@ MainWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
 void DrawBackground(HDC hdc, DWORD dwRop) {
     if (g_hMidletTreeBgBmp != NULL) {
         HDC hdcMem = CreateCompatibleDC(hdc);
+
         HBITMAP hbmOld = (HBITMAP)SelectObject(hdcMem, g_hMidletTreeBgBmp);
 
         BITMAP bm;
@@ -931,7 +932,7 @@ void DrawBackground(HDC hdc, DWORD dwRop) {
         //wprintf(_T(">>> bm.bmWidth = %d, bm.bmHeight = %d\n"), bm.bmWidth, bm.bmHeight);
         BitBlt(hdc, 0, 0, bm.bmWidth, bm.bmHeight, hdcMem, 0, 0, dwRop);
  
-        SelectObject(hdcMem, hbmOld);  
+        SelectObject(hdcMem, hbmOld);
         DeleteDC(hdcMem); 
     }
 }
@@ -1177,25 +1178,30 @@ MidletTreeWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
         break;
 
     case WM_ERASEBKGND: {
-        DrawBackground((HDC)wParam, SRCCOPY);
+        hdc = (HDC)wParam;
+        DrawBackground(hdc, SRCCOPY);
         return 1;
     }
 
     case WM_PAINT: {
-        //HBRUSH hBrush = (HBRUSH)GetStockObject(HOLLOW_BRUSH);
-        //SelectObject((HDC)wParam, (HGDIOBJ)hBrush);
+        RECT r; // = {0, 0, 240, 300};
+        GetClientRect(hWnd, &r); 
+
+        InvalidateRect(hWnd, &r, FALSE);
 
         CallWindowProc(g_DefTreeWndProc, hWnd, message, wParam, lParam);
-        //DrawItem(hItemWnd);
 
-        hdc = BeginPaint(hWnd, &ps);
+        //HDC hdc1 = (HDC)wParam;
+        //HBRUSH hBrush = (HBRUSH)GetStockObject(WHITE_BRUSH);
+        //SelectObject(hdc1, (HGDIOBJ)hBrush);
+        //FillRect(hdc1, &r, hBrush);
 
-        //wprintf(_T(">>> left = %ld, top = %ld, right = %ld, bottom = %ld\n"),
-        //        ps.rcPaint.left, ps.rcPaint.top, ps.rcPaint.right, ps.rcPaint.bottom);
 
+        //hdc = BeginPaint(hWnd, &ps);
+        hdc = GetDC(hWnd);
         DrawBackground(hdc, SRCAND);
-
-        EndPaint(hWnd, &ps);
+        ReleaseDC(hWnd, hdc);
+        //EndPaint(hWnd, &ps);
 
         break;
     }
