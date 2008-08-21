@@ -89,8 +89,8 @@ else
     endef
 endif
 
-CXXFLAGS=-nologo $(LOCAL_CFLAGS_$(BUILD))
-CFLAGS=-nologo $(LOCAL_CFLAGS_$(BUILD))
+CXXFLAGS+= -nologo $(LOCAL_CFLAGS_$(BUILD))
+CFLAGS+= -nologo $(LOCAL_CFLAGS_$(BUILD))
 CPPFLAGS+= -I`$(call fixcygpath, $(JAVACALL_OUTPUT_INCLUDE_DIR))`
 CPPFLAGS+= $(SPECIFIC_DEFINITIONS)
 
