@@ -24,6 +24,9 @@
  * information or have any questions.
  */
 
+// MUST be disabled for WinCE
+#define USE_CONSOLE
+
 //#define _WIN32_WINNT 0x0500
 
 #include <windows.h>
@@ -39,6 +42,12 @@
 #include <javacall_lcd.h>
 #include <javacall_ams_suitestore.h>
 #include <javacall_ams_app_manager.h>
+
+#ifdef USE_CONSOLE
+#include <io.h>
+#include <stdio.h>
+#include <fcntl.h>
+#endif
 
 #define WINDOW_SUBMENU_INDEX 2
 
@@ -171,14 +180,24 @@ DWORD WINAPI javaThread(LPVOID lpParam) {
     return 0; 
 } 
 
-#if 0
+#if 1
 int WINAPI WinMain(HINSTANCE hInstance,
                    HINSTANCE hPrevInstance,
                    LPSTR lpCmdLine,
                    int nCmdShow) {
     (void)lpCmdLine;
-    //AllocConsole();
-    //AttachConsole(GetCurrentProcessId());
+
+#ifdef USE_CONSOLE
+    AllocConsole();
+    HANDLE h = GetStdHandle(STD_OUTPUT_HANDLE);
+    intptr_t hConHandle = _open_osfhandle((intptr_t)h, _O_TEXT);
+    *stdout = *_fdopen(hConHandle, "w");
+
+    h = GetStdHandle(STD_ERROR_HANDLE);
+    hConHandle = _open_osfhandle((intptr_t)h, _O_TEXT);
+    *stderr = *_fdopen(hConHandle, "w");
+#endif
+
 #else
 int main(int argc, char* argv[]) {
     HINSTANCE hInstance = NULL;
@@ -872,6 +891,9 @@ MainWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
                             pInfo->appId);
                         if (res == JAVACALL_OK) {
                             ShowWindow(g_hMidletTreeView, SW_HIDE);
+                            if (g_hWndToolbar != NULL) {
+                                ShowWindow(g_hWndToolbar, SW_HIDE);
+                            }
                             SetCheckedWindowMenuItem(pInfo);
                         }
                     }
