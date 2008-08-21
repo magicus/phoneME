@@ -36,8 +36,6 @@
 #include <string.h>
 #include <kni.h>
 #include <pcsl_memory.h>
-#include <pcsl_esc.h>
-#include <pcsl_string.h>
 #include <midpInit.h>
 #include <suitestore_common.h>
 
@@ -410,8 +408,8 @@ midp_suite_get_cached_resource_filename(SuiteIdType suiteId,
         pcsl_string_predict_size(&resourceFileName, fileNameLen);
 
         if ( /* Convert any slashes */
-            pcsl_esc_attach_string(pResourceName,
-                &resourceFileName) != PCSL_STRING_OK ||
+            pcsl_string_append_escaped_ascii(&resourceFileName,
+                pResourceName) != PCSL_STRING_OK ||
             /* Add the extension */
             pcsl_string_append(&resourceFileName, &TMP_EXT) !=
                 PCSL_STRING_OK) {
