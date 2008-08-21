@@ -49,4 +49,6 @@ public interface AutoEventFactory {
     public AutoPenEvent createPenEvent(
             AutoPenState penState, int x, int y);
 
+    public AutoDelayEvent createDelayEvent(int msec)
+        throws IllegalArgumentException;
 }

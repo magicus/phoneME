@@ -57,8 +57,17 @@ public abstract class Automation {
     public abstract void simulateEvents(AutoEventSequence events);
 
     public abstract void simulateKeyEvent(AutoKeyCode keyCode, 
-            AutoKeyState keyState);
-    public abstract void simulateKeyEvent(char keyChar, AutoKeyState keyState);
-    public abstract void simulateKeyClick(AutoKeyCode keyCode);
+            AutoKeyState keyState) 
+        throws IllegalArgumentException;
+
+    public abstract void simulateKeyEvent(char keyChar, AutoKeyState keyState) 
+        throws IllegalArgumentException;;
+
+    public abstract void simulateKeyClick(AutoKeyCode keyCode) 
+        throws IllegalArgumentException;
+
     public abstract void simulateKeyClick(char keyChar);
+
+    public abstract void simulateDelayEvent(int msec) 
+        throws IllegalArgumentException;
 }

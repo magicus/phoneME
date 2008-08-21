@@ -25,32 +25,7 @@
  */
 
 package com.sun.midp.automation;
-import com.sun.midp.lcdui.EventConstants;
 
-public final class AutoKeyState {
-    public final static AutoKeyState PRESSED = 
-        new AutoKeyState("PRESSED", EventConstants.PRESSED);
-
-    public final static AutoKeyState REPEATED = 
-        new AutoKeyState("REPEATED", EventConstants.REPEATED);
-
-    public final static AutoKeyState RELEASED = 
-        new AutoKeyState("RELEASED", EventConstants.RELEASED);
-
-
-    public String getName() {
-        return name;
-    }
-
-    int getMIDPKeyState() {
-        return midpKeyState;
-    }
-
-    private AutoKeyState(String name, int midpKeyState) {
-        this.name = name;
-	    this.midpKeyState = midpKeyState;
-    }
-
-    private String name;
-    private int midpKeyState;
+public interface AutoDelayEvent extends AutoEvent {
+    public int getMsec();
 }

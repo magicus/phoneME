@@ -104,6 +104,13 @@ final class AutoEventFactoryImpl implements AutoEventFactory {
     public AutoPenEvent createPenEvent(AutoPenState penState, int x, int y) {
         return null;
     }
+
+    public AutoDelayEvent createDelayEvent(int msec) 
+        throws IllegalArgumentException {
+
+        return new AutoDelayEventImpl(msec);
+    }
+
     
     void registerEventFromStringFactory(AutoEventFromStringFactory factory) 
         throws IllegalArgumentException {

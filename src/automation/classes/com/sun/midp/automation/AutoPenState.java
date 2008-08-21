@@ -29,13 +29,13 @@ package com.sun.midp.automation;
 
 public final class AutoPenState {
 
-    public static AutoPenState PRESSED = 
+    public final static AutoPenState PRESSED = 
         new AutoPenState("PRESSED");
 
-    public static AutoPenState REPEATED = 
+    public final static AutoPenState REPEATED = 
         new AutoPenState("DRAGGED");
 
-    public static AutoPenState RELEASED = 
+    public final static AutoPenState RELEASED = 
         new AutoPenState("RELEASED");
 
 

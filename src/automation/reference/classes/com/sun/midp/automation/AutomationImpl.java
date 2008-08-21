@@ -83,6 +83,17 @@ final class AutomationImpl extends Automation {
             throw new IllegalArgumentException("Event is null");
         }
 
+        // Delay event is a special case
+        if (event.getType() == AutoEventType.DELAY) {
+            AutoDelayEvent delayEvent = (AutoDelayEvent)event;
+            try {
+                Thread.sleep(delayEvent.getMsec());
+            } catch (InterruptedException e) {
+            }
+
+            return;
+        }
+
         AutoEventImplBase eventBase = (AutoEventImplBase)event;
         NativeEvent nativeEvent = eventBase.toNativeEvent();
         if (nativeEvent == null) {
@@ -138,6 +149,11 @@ final class AutomationImpl extends Automation {
         simulateEvents(e);
 
         e = eventFactory.createKeyEvent(keyChar, AutoKeyState.RELEASED);
+        simulateEvents(e);        
+    }
+
+    public void simulateDelayEvent(int msec) {
+        AutoEvent e =  eventFactory.createDelayEvent(msec);
         simulateEvents(e);        
     }
     

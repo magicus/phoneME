@@ -27,52 +27,52 @@
 package com.sun.midp.automation;
 
 public final class AutoKeyCode {
-    public static AutoKeyCode BACKSPACE = 
+    public final static AutoKeyCode BACKSPACE = 
         new AutoKeyCode("BACKSPACE");
 
-    public static AutoKeyCode UP = 
+    public final static AutoKeyCode UP = 
         new AutoKeyCode("UP");
 
-    public static AutoKeyCode DOWN = 
+    public final static AutoKeyCode DOWN = 
         new AutoKeyCode("DOWN");
 
-    public static AutoKeyCode LEFT = 
+    public final static AutoKeyCode LEFT = 
         new AutoKeyCode("LEFT");
 
-    public static AutoKeyCode RIGHT = 
+    public final static AutoKeyCode RIGHT = 
         new AutoKeyCode("RIGHT");
 
-    public static AutoKeyCode SELECT = 
+    public final static AutoKeyCode SELECT = 
         new AutoKeyCode("SELECT");
 
-    public static AutoKeyCode SOFT1 = 
+    public final static AutoKeyCode SOFT1 = 
         new AutoKeyCode("SOFT1");
 
-    public static AutoKeyCode SOFT2 = 
+    public final static AutoKeyCode SOFT2 = 
         new AutoKeyCode("SOFT2");
 
-    public static AutoKeyCode CLEAR = 
+    public final static AutoKeyCode CLEAR = 
         new AutoKeyCode("CLEAR");
 
-    public static AutoKeyCode SEND = 
+    public final static AutoKeyCode SEND = 
         new AutoKeyCode("SEND");
 
-    public static AutoKeyCode END = 
+    public final static AutoKeyCode END = 
         new AutoKeyCode("END");
  
-    public static AutoKeyCode POWER = 
+    public final static AutoKeyCode POWER = 
         new AutoKeyCode("POWER");
 
-    public static AutoKeyCode GAMEA = 
+    public final static AutoKeyCode GAMEA = 
         new AutoKeyCode("GAMEA");
 
-    public static AutoKeyCode GAMEB = 
+    public final static AutoKeyCode GAMEB = 
         new AutoKeyCode("GAMEB");
 
-    public static AutoKeyCode GAMEC = 
+    public final static AutoKeyCode GAMEC = 
         new AutoKeyCode("GAMEC");
 
-    public static AutoKeyCode GAMED = 
+    public final static AutoKeyCode GAMED = 
         new AutoKeyCode("GAMED");
 
 

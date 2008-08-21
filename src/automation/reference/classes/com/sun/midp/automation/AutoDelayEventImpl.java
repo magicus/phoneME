@@ -25,32 +25,23 @@
  */
 
 package com.sun.midp.automation;
-import com.sun.midp.lcdui.EventConstants;
 
-public final class AutoKeyState {
-    public final static AutoKeyState PRESSED = 
-        new AutoKeyState("PRESSED", EventConstants.PRESSED);
+final class AutoDelayEventImpl 
+    extends AutoEventImplBase implements AutoDelayEvent {
 
-    public final static AutoKeyState REPEATED = 
-        new AutoKeyState("REPEATED", EventConstants.REPEATED);
+    private int msec;
 
-    public final static AutoKeyState RELEASED = 
-        new AutoKeyState("RELEASED", EventConstants.RELEASED);
+    AutoDelayEventImpl(int msec) {
+        super(AutoEventType.DELAY, null);
 
+        if (msec < 0) {
+            throw new IllegalArgumentException("Delay value is negative"); 
+        }
 
-    public String getName() {
-        return name;
+        this.msec = msec;
     }
 
-    int getMIDPKeyState() {
-        return midpKeyState;
+    public int getMsec() {
+        return msec;
     }
-
-    private AutoKeyState(String name, int midpKeyState) {
-        this.name = name;
-	    this.midpKeyState = midpKeyState;
-    }
-
-    private String name;
-    private int midpKeyState;
 }

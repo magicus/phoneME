@@ -27,12 +27,14 @@
 package com.sun.midp.automation;
 
 public final class AutoEventType {
-    public static AutoEventType KEYBOARD = 
-        new AutoEventType("keyboard");
+    public final static AutoEventType KEYBOARD = 
+        new AutoEventType("key");
 
-    public static AutoEventType PEN = 
+    public final static AutoEventType PEN = 
         new AutoEventType("pen");   
 
+    public final static AutoEventType DELAY = 
+        new AutoEventType("delay");
 
 
     public String getName() {

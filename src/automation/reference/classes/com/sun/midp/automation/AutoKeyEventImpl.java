@@ -40,36 +40,31 @@ final class AutoKeyEventImpl
 
     AutoKeyEventImpl(AutoKeyCode keyCode, AutoKeyState keyState) {
         super(AutoEventType.KEYBOARD, 
-                createNativeEvent(keyState, keyCode, ' '));
+              createNativeEvent(keyState, keyCode, ' '));
 
-        if (keyState == null || keyCode == null) {
-            throw new IllegalArgumentException(
-                    "Key code or key state is null");
+        if (keyCode == null) {
+            throw new IllegalArgumentException("Key code is null");
         }
-
+        
+        if (keyState == null) {
+            throw new IllegalArgumentException("Key state is null");
+        }
+        
         this.keyCode = keyCode;
         this.keyState = keyState;        
     }
 
     AutoKeyEventImpl(char keyChar, AutoKeyState keyState) {
         super(AutoEventType.KEYBOARD, 
-                createNativeEvent(keyState, null, keyChar));
+              createNativeEvent(keyState, null, keyChar));
 
         if (keyState == null) {
-            throw new IllegalArgumentException(
-                    "Key state is null");
+            throw new IllegalArgumentException("Key state is null");
         }
 
         this.keyChar = keyChar;
         this.keyState = keyState;        
     }    
-
-    private AutoKeyEventImpl() {
-        super();
-
-        this.keyState = null;
-        this.keyCode = null;
-    }
 
     public AutoKeyState getKeyState() {
         return keyState;
@@ -95,7 +90,9 @@ final class AutoKeyEventImpl
             keyStr = new String(arr);
         }
 
-        String eventStr = typeStr + " " + stateStr + " " + keyStr;
+        String eventStr = typeStr + " code: " + keyStr + 
+            ", state: " + stateStr;
+
         return eventStr;
     }
 
