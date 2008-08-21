@@ -154,6 +154,6 @@ Component.setCursor.isRestricted := true
 
 ##### Resource files to be linked into the executable
 RC_FLAGS = 
-RC_RULE  = $(AT)$(RC) $(RC_FLAGS) /Fo$@ $<
+RC_RULE  = $(AT)$(RC) $(RC_FLAGS) /Fo$@ $(call abs2rel, $<)
 AWT_LIB_OBJECTS += $(CVM_OBJDIR)/awt.RES
 
