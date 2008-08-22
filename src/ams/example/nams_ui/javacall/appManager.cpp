@@ -939,6 +939,7 @@ MainWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
                 break;
             }
 
+            case IDM_SUITE_REMOVE:
             case IDM_MIDLET_START_STOP: {
                 // Delegate message processing to MIDlet tree view
                 PostMessage(g_hMidletTreeView, message, wParam, lParam);
@@ -959,8 +960,10 @@ MainWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
             }
 
             case IDM_HELP_ABOUT: {
-                MessageBox(hWnd, _T("Cool Application Manager"),
-                           _T("About"), MB_OK | MB_ICONINFORMATION);
+                TCHAR szBuf[127];
+                wsprintf(szBuf, _T("About %s"), g_szTitle);
+                MessageBox(hWnd, _T("Cool Application Manager"), szBuf,
+                           MB_OK | MB_ICONINFORMATION);
                 break;
             }
 
@@ -1379,10 +1382,10 @@ MidletTreeWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
                 TVI_INFO* pInfo = GetTviInfo(hWnd, hItem);
 
                 if (pInfo && (pInfo->type == TVI_TYPE_SUITE)) {
-                    TCHAR buf[127];                 
-                    wsprintf(buf, _T("Remove %s ?"), pInfo->displayName);
+                    TCHAR szBuf[127];                 
+                    wsprintf(szBuf, _T("Remove %s ?"), pInfo->displayName);
 
-                    int iMBRes = MessageBox(hWnd, buf, g_szTitle,
+                    int iMBRes = MessageBox(hWnd, szBuf, g_szTitle,
                         MB_ICONQUESTION | MB_OKCANCEL);
 
                     if (iMBRes == IDOK) {
