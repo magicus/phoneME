@@ -44,10 +44,10 @@ public class CLDCmain{
  * some places we want a URL.
  */
     static String[]
-    filenamesToURL(String[] filenames){
-	String URLs[] = new String[filenames.length];
-	for(int i=0; i<filenames.length; i++){
-	    java.io.File f = new File(filenames[i]);
+    filenamesToURL(File[] files){
+	String URLs[] = new String[files.length];
+	for(int i=0; i<files.length; i++){
+	    java.io.File f = files[i];
 	    String longname;
 	    try {
 		longname = f.getCanonicalPath();
@@ -69,11 +69,11 @@ public class CLDCmain{
 	System.out.println();
     }
 
-    static String[]
+    static File[]
     split(String path){
 	int nComponents = 1;
 	char separator = System.getProperty("path.separator", ":").charAt(0);
-	String components[];
+	File components[];
 	int length = path.length();
 	int start;
 	int componentIndex;
@@ -81,19 +81,19 @@ public class CLDCmain{
 	    if (path.charAt(i) == separator)
 		nComponents += 1;
 	}
-	components = new String[nComponents];
+	components = new File[nComponents];
 	start = 0;
 	componentIndex = 0;
 	/* could optimize here for the common case of nComponents == 1 */
 	for (int i=0; i<length; i++){
 	    if (path.charAt(i) == separator){
-		components[componentIndex] = path.substring(start, i);
+		components[componentIndex] = new File(path.substring(start, i));
 		componentIndex += 1;
 		start = i+1;
 	    }
 	}
 	/* and the last components is delimited by end of String */
-	components[componentIndex] = path.substring(start, length);
+	components[componentIndex] = new File(path.substring(start, length));
 
 	return components;
 
@@ -123,7 +123,7 @@ public class CLDCmain{
     main( String args[] ){
 	String midImplString = null;
 	String suiteString = null;
-	String midImplPath[];
+	File   midImplPath[];
 	String suitePath[] = null;
 	String testClassName = null;
 	int    argCount = 0;
@@ -157,7 +157,7 @@ public class CLDCmain{
 	if (hadError){
 	    System.exit(1);
 	}
-	midImplPath = filenamesToURL(split(midImplString));
+	midImplPath = split(midImplString);
 	suitePath = filenamesToURL(split(suiteString));
 	
 	MIDPImplementationClassLoader midpImpl = 
