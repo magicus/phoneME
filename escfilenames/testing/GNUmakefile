@@ -59,7 +59,8 @@ $(OUTPUT_INC_DIR)/pcsl_esc.h: ../pcsl_esc.h
 
 $(LIBNAME): $(OBJS)
 	@$(AR) $(AR_OUTPUT)$(LIBNAME) `$(call fixcygpath, $^)`
-	@ranlib $(LIBNAME)
+#	ranlib breaks the Leto WinMobile/ARM build
+#	@ranlib $(LIBNAME)
 
 $(OUTPUT_OBJ_DIR)/pcsl_esc_md.o: pcsl_esc_md.c $(HS)
 	@echo "compiling pcsl_esc_md.o "
