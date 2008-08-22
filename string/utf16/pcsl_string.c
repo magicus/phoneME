@@ -1418,47 +1418,6 @@ jboolean pcsl_string_is_null(const pcsl_string * str) {
   return (str != NULL && str->data == NULL) ? PCSL_TRUE : PCSL_FALSE;
 }
 
-/**
- * Convert a Unicode string into a form that can be safely stored on
- * an ANSI-compatible file system and append it to the string specified
- * as the first parameter. All characters that are not
- * [A-Za-z0-9] are converted into %uuuu, where uuuu is the hex
- * representation of the character's unicode value. Note even
- * though "_" is allowed it is converted because we use it for
- * for internal purposes. Potential file separators are converted
- * so the storage layer does not have deal with sub-directory hierarchies.
- *
- * @param dst the string to which the converted text is appendsd
- * @param suffix text to be converted into escaped-ascii
- * @return error code
- */
-pcsl_string_status
-pcsl_string_append_escaped_ascii(pcsl_string* dst, const pcsl_string* suffix) {
-    pcsl_string_status rc = PCSL_STRING_ENOMEM;
-    jchar* id_data = NULL;
-    int len = -1;
-
-    if (pcsl_string_length(suffix) <= 0) { /* nothing to do */
-        return PCSL_STRING_OK;
-    }
-
-    if (NULL != suffix->data) {
-        int id_len = PCSL_STRING_ESCAPED_BUFFER_SIZE(suffix->length);
-        id_data = (jchar*)pcsl_mem_malloc(id_len * sizeof (jchar));
-        if (NULL != id_data) {
-            len = pcsl_utf16_to_escaped_ascii(suffix->data, suffix->length,
-                                           id_data, 0);
-        }
-    }
-
-    if (NULL != id_data) {
-        rc = pcsl_string_append_buf(dst, id_data, len);
-        pcsl_mem_free(id_data);
-    }
-
-    return rc;
-}
-
 static jchar empty_string_data = 0;
 
 /* Empty zero-terminated string */

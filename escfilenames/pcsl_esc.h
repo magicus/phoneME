@@ -30,6 +30,10 @@
 #include <pcsl_esc_md.h>
 #include <pcsl_string.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 char pcsl_esc_mapchar(char x, char* from, char* to);
 int pcsl_esc_num2digit(unsigned int n);
 int pcsl_esc_digit2num(unsigned int c);
@@ -37,9 +41,9 @@ pcsl_string_status pcsl_esc_append_encoded_tuple(pcsl_string* str, unsigned int 
 int pcsl_esc_extract_encoded_tuple(unsigned int *pnum, const jchar**pptext);
 
 void pcsl_esc_init();
-void pcsl_esc_attach_buf(const jchar* in, jsize len, pcsl_string* out);
-void pcsl_esc_attach_string(const pcsl_string* data, pcsl_string*dst);
-void pcsl_esc_extract_attached(const int offset, const pcsl_string *src, pcsl_string* dst);
+pcsl_string_status pcsl_esc_attach_buf(const jchar* in, jsize len, pcsl_string* out);
+pcsl_string_status pcsl_esc_attach_string(const pcsl_string* data, pcsl_string*dst);
+pcsl_string_status pcsl_esc_extract_attached(const int offset, const pcsl_string *src, pcsl_string* dst);
 
 /**
  * True if the file system is case-sensitive
@@ -213,6 +217,10 @@ void pcsl_esc_extract_attached(const int offset, const pcsl_string *src, pcsl_st
  * and are encoded as "shifted" versions of allowed characters.
  */
 #define PCSL_ESC_EXTRA_NEEDXCASE PCSL_ESC_EXTRA_NEEDXCASE_MD
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif
 
