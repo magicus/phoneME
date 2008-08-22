@@ -27,18 +27,25 @@
 #define  ID_MENU_MAIN         5
 #define  ID_MENU_POPUP_MIDLET 10
 #define  ID_MENU_POPUP_SUITE  15
+#define  ID_MENU_POPUP_FOLDER 20
 
 #define  IDM_MIDLET_START_STOP     110
 #define  IDM_MIDLET_TO_FOREGROUND  120
 #define  IDM_MIDLET_INFO           130
 #define  IDM_MIDLET_SHOW_RUNNING   140
 
-#define  IDM_SUITE_INFO            300
-#define  IDM_SUITE_SETTINGS        310
-#define  IDM_SUITE_INSTALL         320
-#define  IDM_SUITE_REMOVE          330
-#define  IDM_SUITE_UPDATE          340
-#define  IDM_SUITE_EXIT            350
+#define  IDM_SUITE_INFO            200
+#define  IDM_SUITE_SETTINGS        210
+#define  IDM_SUITE_INSTALL         220
+#define  IDM_SUITE_REMOVE          230
+#define  IDM_SUITE_UPDATE          240
+#define  IDM_SUITE_EXIT            250
+#define  IDM_SUITE_COPY            260
+
+#define  IDM_FOLDER_INFO           300
+#define  IDM_FOLDER_INSTALL_IN     310
+#define  IDM_FOLDER_REMOVE_ALL     320
+#define  IDM_FOLDER_PASTE          330
 
 #define  IDM_WINDOW_APP_MANAGER    400
 

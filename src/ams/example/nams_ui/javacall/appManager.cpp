@@ -78,19 +78,29 @@ HWND g_hWndToolbar = NULL;
 
 HMENU g_hMidletPopupMenu = NULL;
 HMENU g_hSuitePopupMenu = NULL;
+HMENU g_hFolderPopupMenu = NULL;
 
 WNDPROC g_DefTreeWndProc = NULL;
 
 HBITMAP g_hMidletTreeBgBmp = NULL;
 
+// Copied suite, to be pasted into a new folder 
+HTREEITEM g_htiCopiedSuite = NULL;
+
 javacall_app_id g_jAppId = 1;
+
+// TODO: place all hPrev* fields in a structure and pass it as
+//  a parameter of AddSuiteToTree
+static HTREEITEM hPrev = (HTREEITEM)TVI_FIRST; 
+static HTREEITEM hPrevLev1Item = NULL; 
+static HTREEITEM hPrevLev2Item = NULL; 
 
 
 // The type of a tree item
-static int TVI_TYPE_UNKNOWN = 0;
-static int TVI_TYPE_SUITE   = 1;
-static int TVI_TYPE_MIDLET  = 2;
-static int TVI_TYPE_FOLDER  = 3;
+const static int TVI_TYPE_UNKNOWN = 0;
+const static int TVI_TYPE_SUITE   = 1;
+const static int TVI_TYPE_MIDLET  = 2;
+const static int TVI_TYPE_FOLDER  = 3;
 
 typedef struct _TVI_INFO { 
     int type; // type of the node, valid values are TVI_TYPE_SUITE, 
@@ -108,6 +118,8 @@ typedef struct _TVI_INFO {
 
 static TVI_INFO* CreateTviInfo();
 static void FreeTviInfo(TVI_INFO* pInfo);
+static TVI_INFO* GetTviInfo(HWND hWnd, HTREEITEM hItem);
+
 
 // Forward declarations of functions included in this code module:
 
@@ -126,16 +138,20 @@ static BOOL InitTreeViewItems(HWND hwndTV);
 static void AddSuiteToTree(HWND hwndTV, javacall_suite_id suiteId, int nLevel);
 static HTREEITEM AddItemToTree(HWND hwndTV, LPTSTR lpszItem,
                                int nLevel, TVI_INFO* pInfo);
+static void CleanupTreeView(HWND hwndTV);
 
 static void InitAms();
 static void CleanupAms();
+
+static void InitWindows();
 static void CleanupWindows();
-static void CleanupTreeView(HWND hwndTV);
 
 static void AddWindowMenuItem(javacall_const_utf16_string jsStr, void* pItemData);
 static void CheckWindowMenuItem(int index, BOOL fChecked);
 static void SetCheckedWindowMenuItem(void* pItemData);
 static void* GetWindowMenuItemData(UINT commandId);
+
+static void EnablePopupMenuItem(HMENU hSubMenu, UINT uIDM, BOOL fEnabled);
 
 static int mapKey(WPARAM wParam, LPARAM lParam);
 
@@ -212,6 +228,8 @@ int main(int argc, char* argv[]) {
     // Ensure that the common control DLL is loaded.
     InitCommonControls();
 
+    InitWindows();
+
     g_hMainWindow = CreateMainView();
 
     // Start JVM in a separate thread
@@ -232,7 +250,6 @@ int main(int argc, char* argv[]) {
 
         return 1;
     }
-
     // Let native peer to start
     // TODO: wait for notification from the peer instead of sleep
     Sleep(1000);
@@ -437,6 +454,51 @@ static void CleanupAms() {
     }
 }
 
+static void InitWindows() {
+    // Load backround image, just ignore if loading fails
+    /*HRSRC hRes = FindResource(NULL, MAKEINTRESOURCE(IDB_MIDLET_TREE_BG), RT_BITMAP);
+    if (!hRes) {
+        DWORD res = GetLastError();
+        wprintf(_T("ERROR: LoadResource() res: %d\n"), res);
+    }
+    g_hMidletTreeBgBmp = (HBITMAP)LoadResource(NULL, hRes);*/
+
+//   g_hMidletTreeBgBmp = LoadBitmap(g_hInst, MAKEINTRESOURCE(IDB_MIDLET_TREE_BG));
+    g_hMidletTreeBgBmp = (HBITMAP)LoadImage(g_hInst, _T("bgd-yellow.bmp"),
+        IMAGE_BITMAP, g_iChildAreaWidth, g_iChildAreaHeight, LR_LOADFROMFILE);
+    if (!g_hMidletTreeBgBmp) {
+        DWORD res = GetLastError();
+        wprintf(_T("ERROR: LoadBitmap(IDB_MIDLET_TREE_BG) res: %d\n"), res);
+    }
+
+    // Load context menu shown for a MIDlet item in the tree view
+    g_hMidletPopupMenu = LoadMenu(g_hInst, MAKEINTRESOURCE(ID_MENU_POPUP_MIDLET));
+    if (!g_hMidletPopupMenu) {
+        MessageBox(NULL,
+            _T("Can't load MIDlet popup menu!"),
+            g_szTitle,
+            NULL);
+    }
+
+    // Load context menu shown for a suite item in the tree view
+    g_hSuitePopupMenu = LoadMenu(g_hInst, MAKEINTRESOURCE(ID_MENU_POPUP_SUITE));
+    if (!g_hSuitePopupMenu) {
+        MessageBox(NULL,
+            _T("Can't load suite popup menu!"),
+            g_szTitle,
+            NULL);
+    }
+
+    // Load context menu shown for a folder item in the tree view
+    g_hFolderPopupMenu = LoadMenu(g_hInst, MAKEINTRESOURCE(ID_MENU_POPUP_FOLDER));
+    if (!g_hFolderPopupMenu) {
+        MessageBox(NULL,
+            _T("Can't load folder popup menu!"),
+            g_szTitle,
+            NULL);
+    }
+}
+
 static void CleanupWindows() {
     // Clean up resources allocated for MIDlet popup menu 
     DestroyMenu(g_hMidletPopupMenu);
@@ -444,6 +506,8 @@ static void CleanupWindows() {
     // Clean up resources allocated for suite popup menu 
     DestroyMenu(g_hSuitePopupMenu);
 
+    // Clean up resources allocated for folder popup menu 
+    DestroyMenu(g_hFolderPopupMenu);
 
     // Unregister main window class
     UnregisterClass(g_szWindowClass, g_hInst);
@@ -489,41 +553,6 @@ static HWND CreateTreeView(HWND hWndParent) {
     if (!hwndTV) {
         MessageBox(NULL, _T("Create tree view failed!"), g_szTitle, NULL);
         return NULL;
-    }
-
-
-    // Load backround image, just ignore if loading fails
-    /*HRSRC hRes = FindResource(NULL, MAKEINTRESOURCE(IDB_MIDLET_TREE_BG), RT_BITMAP);
-    if (!hRes) {
-        DWORD res = GetLastError();
-        wprintf(_T("ERROR: LoadResource() res: %d\n"), res);
-    }
-    g_hMidletTreeBgBmp = (HBITMAP)LoadResource(NULL, hRes);*/
-
-//   g_hMidletTreeBgBmp = LoadBitmap(g_hInst, MAKEINTRESOURCE(IDB_MIDLET_TREE_BG));
-    g_hMidletTreeBgBmp = (HBITMAP)LoadImage(g_hInst, _T("bgd-yellow.bmp"),
-        IMAGE_BITMAP, g_iChildAreaWidth, g_iChildAreaHeight, LR_LOADFROMFILE);
-    if (!g_hMidletTreeBgBmp) {
-        DWORD res = GetLastError();
-        wprintf(_T("ERROR: LoadBitmap(IDB_MIDLET_TREE_BG) res: %d\n"), res);
-    }
-
-    // Load context menu shown for a MIDlet item in the tree view
-    g_hMidletPopupMenu = LoadMenu(g_hInst, MAKEINTRESOURCE(ID_MENU_POPUP_MIDLET));
-    if (!g_hMidletPopupMenu) {
-        MessageBox(NULL,
-            _T("Can't load MIDlet popup menu!"),
-            g_szTitle,
-            NULL);
-    }
-
-    // Load context menu shown for a suite item in the tree view
-    g_hSuitePopupMenu = LoadMenu(g_hInst, MAKEINTRESOURCE(ID_MENU_POPUP_SUITE));
-    if (!g_hSuitePopupMenu) {
-        MessageBox(NULL,
-            _T("Can't load suite popup menu!"),
-            g_szTitle,
-            NULL);
     }
 
     return hwndTV;
@@ -633,7 +662,7 @@ static void AddSuiteToTree(HWND hwndTV, javacall_suite_id suiteId, int nLevel) {
 
             java_ams_suite_free_info(pSuiteInfo);
     } else {
-        wprintf(_T("ERROR: java_ams_suite_get_info() returned: %d\n"), res);
+        wprintf(_T("ERROR: java_ams_suite_get_info(suiteId=%d) returned: %d\n"), (int)suiteId, res);
     }
 }
 
@@ -658,6 +687,8 @@ static BOOL InitTreeViewItems(HWND hwndTV)  {
 
     res = java_ams_suite_get_all_folders_info(&pFoldersInfo, &folderNum);
     if (res == JAVACALL_OK) {
+        wprintf(_T("Total folders found: %d\n"), folderNum);
+
         for (int f = 0; f < folderNum; f++) {
             LPTSTR pszFolderName = (pFoldersInfo[f].folderName) ?
                 JavacallUtf16ToTstr(pFoldersInfo[f].folderName) :
@@ -678,24 +709,25 @@ static BOOL InitTreeViewItems(HWND hwndTV)  {
                 javacall_free(pszFolderName);
             }
 
-           res = java_ams_suite_get_suites_in_folder(pFoldersInfo[f].folderId,
+            res = java_ams_suite_get_suites_in_folder(pFoldersInfo[f].folderId,
                &pFolderSuiteIds, &folderSuiteNum);
-           if (res == JAVACALL_OK) {
-               for (int fs = 0; fs < folderSuiteNum; fs++) {
-                 AddSuiteToTree(hwndTV, pFolderSuiteIds[fs], 2);
+            if (res == JAVACALL_OK) {
+                wprintf(_T("Adding suites to the folder...\n"));
+                for (int fs = 0; fs < folderSuiteNum; fs++) {
+                    AddSuiteToTree(hwndTV, pFolderSuiteIds[fs], 2);
 
-                  // Mark the suite as already added to the tree
-                  for (int i = 0; i < suiteNum;  i++) {
-                     if (pSuiteIds[i] == pFolderSuiteIds[fs]) {
-                         pSuiteIds[i] = JAVACALL_INVALID_SUITE_ID;
-                         break;
-                     }
-                  }
+                    // Mark the suite as already added to the tree
+                    for (int i = 0; i < suiteNum;  i++) {
+                        if (pSuiteIds[i] == pFolderSuiteIds[fs]) {
+                            pSuiteIds[i] = JAVACALL_INVALID_SUITE_ID;
+                            break;
+                        }
+                    }
                
-               }
-               if (folderSuiteNum > 0) {
-                   java_ams_suite_free_suite_ids(pFolderSuiteIds, folderSuiteNum);
-               }
+                }
+                if (folderSuiteNum > 0) {
+                    java_ams_suite_free_suite_ids(pFolderSuiteIds, folderSuiteNum);
+                }
            }
        }
        if (folderNum > 0) {
@@ -704,7 +736,8 @@ static BOOL InitTreeViewItems(HWND hwndTV)  {
     }
 
     /* Add suites that are not in any folder */
-   
+
+    wprintf(_T("Adding unclassifed suites to the root...\n"));   
     for (int s = 0; s < suiteNum; s++) {
         // Skip the suite if it's already in the tree
         if (pSuiteIds[s] == JAVACALL_INVALID_SUITE_ID) {
@@ -752,11 +785,8 @@ static javacall_utf16_string CloneJavacallUtf16(javacall_const_utf16_string str)
 
 static HTREEITEM AddItemToTree(HWND hwndTV, LPTSTR lpszItem,
                                int nLevel, TVI_INFO* pInfo) {
-    TVITEM tvi; 
-    TVINSERTSTRUCT tvins; 
-    static HTREEITEM hPrev = (HTREEITEM)TVI_FIRST; 
-    static HTREEITEM hPrevRootItem = NULL; 
-    static HTREEITEM hPrevLev2Item = NULL; 
+    TVITEM tvi;
+    TVINSERTSTRUCT tvins;
     HTREEITEM hti;
 
     if (lpszItem == NULL) {
@@ -781,12 +811,13 @@ static HTREEITEM AddItemToTree(HWND hwndTV, LPTSTR lpszItem,
     tvins.hInsertAfter = hPrev; 
 
     // Set the parent item based on the specified level. 
-    if (nLevel == 1) 
-        tvins.hParent = TVI_ROOT; 
-    else if (nLevel == 2) 
-        tvins.hParent = hPrevRootItem; 
-    else 
-        tvins.hParent = hPrevLev2Item; 
+    if (nLevel == 1) {
+        tvins.hParent = TVI_ROOT;
+    } else if (nLevel == 2) {
+        tvins.hParent = hPrevLev1Item;
+    } else {
+        tvins.hParent = hPrevLev2Item;
+    }
 
     // Add the item to the tree-view control.
 /*
@@ -799,10 +830,11 @@ static HTREEITEM AddItemToTree(HWND hwndTV, LPTSTR lpszItem,
 
 
     // Save the handle to the item. 
-    if (nLevel == 1) 
-        hPrevRootItem = hPrev; 
-    else if (nLevel == 2) 
+    if (nLevel == 1) {
+        hPrevLev1Item = hPrev; 
+    } else if (nLevel == 2) {
         hPrevLev2Item = hPrev; 
+    }
 
     // The new item is a child item. Give the parent item a
     // closed folder bitmap to indicate it now has child items. 
@@ -940,8 +972,8 @@ MainWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
                 if(pHdr->idFrom == IDC_TREEVIEW_MIDLETS) {
                     TVITEM tvi = ((LPNMTREEVIEW)lParam)->itemOld;
 
-//                    wprintf(_T("Cleaning tree items up (struct=%p)...\n"),
-//                        tvi.lParam);
+                    wprintf(_T("Cleaning tree items up (struct=%p)...\n"),
+                        tvi.lParam);
 
                     FreeTviInfo((TVI_INFO*)tvi.lParam);
                 }
@@ -986,6 +1018,17 @@ void DrawItem() {
     SendMessage(hwndTreeView, TVM_GETITEMRECT, FALSE, (LPARAM)&rc);
 }
 */
+
+
+static void EnablePopupMenuItem(HMENU hSubMenu, UINT uIDM, BOOL fEnabled) {
+    MENUITEMINFO mii;
+
+    mii.cbSize = sizeof(MENUITEMINFO);
+    mii.fMask = MIIM_STATE;
+    mii.fState = (fEnabled) ? MFS_ENABLED : MFS_DISABLED;
+
+    (void)SetMenuItemInfo(hSubMenu, uIDM, FALSE, &mii);
+}
 
 /**
  *
@@ -1091,29 +1134,35 @@ static void AddWindowMenuItem(javacall_const_utf16_string jsStr,
     javacall_free(pszMIDletName);
 }
 
+static TVI_INFO* GetTviInfo(HWND hWnd, HTREEITEM hItem) {
+    TVITEM tvi;
+    tvi.hItem = hItem;
+    tvi.mask = TVIF_HANDLE | TVIF_PARAM;
+
+    if (TreeView_GetItem(hWnd, &tvi)) {
+        return (TVI_INFO*)tvi.lParam;
+    }
+    return NULL;
+}
+
 /**
  * Helper function.
  */
 static BOOL StartMidlet(HWND hTreeWnd) {
     javacall_result res;
     HTREEITEM hItem = TreeView_GetSelection(hTreeWnd);
+    TVI_INFO* pInfo = GetTviInfo(hTreeWnd, hItem);
 
-    if (hItem) {
-        TVITEM tvi;
-        tvi.hItem = hItem;
-        tvi.mask = TVIF_HANDLE | TVIF_PARAM;
-
-        if (TreeView_GetItem(hTreeWnd, &tvi)) {
-            TVI_INFO* pInfo = (TVI_INFO*)tvi.lParam;
+    if (pInfo) {
             if (pInfo->type == TVI_TYPE_MIDLET && 
-                    // check whether the MIDlet is already running
-                    pInfo->appId == JAVACALL_INVALID_APP_ID) { 
+                // check whether the MIDlet is already running
+                pInfo->appId == JAVACALL_INVALID_APP_ID) { 
 
                 wprintf(_T("Launching MIDlet (suiteId=%d, class=%s, appId=%d)...\n"),
-                    pInfo->suiteId, pInfo->className, g_jAppId);
+                pInfo->suiteId, pInfo->className, g_jAppId);
 
                 res = java_ams_midlet_start(pInfo->suiteId, g_jAppId,
-                    pInfo->className, NULL);
+                pInfo->className, NULL);
 
                 wprintf(_T("java_ams_midlet_start res: %d\n"), res);
 
@@ -1139,7 +1188,6 @@ static BOOL StartMidlet(HWND hTreeWnd) {
                     return TRUE;
                 }
             }
-        }
     }
 
     return FALSE;
@@ -1176,21 +1224,43 @@ MidletTreeWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
             // Convert the coordinates to global ones
             ClientToScreen(hWnd, (LPPOINT) &tvH.pt);
 
-            TVITEM tvi;
-            tvi.hItem = hItem;
-            tvi.mask = TVIF_HANDLE | TVIF_PARAM;
-            if (TreeView_GetItem(hWnd, &tvi)) {
-                int iType = ((TVI_INFO*)tvi.lParam)->type;
-                HMENU hMenu = NULL;
-                if (iType == TVI_TYPE_SUITE) {
-                    // Get the first shortcut menu in the menu template.
-                    // This is the menu that TrackPopupMenu displays
-                    hMenu = GetSubMenu(g_hSuitePopupMenu, 0);
-                } else if (iType == TVI_TYPE_MIDLET) {
-                    hMenu = GetSubMenu(g_hMidletPopupMenu, 0);
+            TVI_INFO* pInfo = GetTviInfo(hWnd, hItem);
+            if (pInfo) {
+                HMENU hSubMenu;
+                switch(pInfo->type)
+                {
+                    case TVI_TYPE_SUITE:
+                        hSubMenu = GetSubMenu(g_hSuitePopupMenu, 0);
+                        break;
+
+                    case TVI_TYPE_MIDLET:
+                        hSubMenu = GetSubMenu(g_hMidletPopupMenu, 0);
+                        break;
+
+                    case TVI_TYPE_FOLDER: {
+                        hSubMenu = GetSubMenu(g_hFolderPopupMenu, 0);
+
+                        // Enable or disable "Paste" popup menu item
+                        BOOL fPaste = (g_htiCopiedSuite != NULL) ?
+                            TRUE : FALSE;
+                        EnablePopupMenuItem(hSubMenu, IDM_FOLDER_PASTE,
+                            fPaste);
+
+                        // Enable or disable "Remove All" popup menu item
+                        BOOL fClear = (TreeView_GetChild(hWnd, hItem)) ?
+                            TRUE : FALSE;
+                        EnablePopupMenuItem(hSubMenu, IDM_FOLDER_REMOVE_ALL,
+                            fClear);
+
+                        break;
+                    }
+
+                    default:
+                        hSubMenu = NULL;
+                        break;
                 }
-                if (hMenu) {
-                    TrackPopupMenu(hMenu, 0, tvH.pt.x, tvH.pt.y, 0, hWnd,
+                if (hSubMenu) {
+                    TrackPopupMenu(hSubMenu, 0, tvH.pt.x, tvH.pt.y, 0, hWnd,
                         NULL);
                 }
             }
@@ -1213,8 +1283,42 @@ MidletTreeWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
                 StartMidlet(hWnd);
                 break;
 
-            case IDM_MIDLET_INFO:
-                wprintf(_T("Show MIDlet info...\n"));
+            case IDM_SUITE_COPY:
+                g_htiCopiedSuite = TreeView_GetSelection(hWnd);
+                break;
+
+            case IDM_FOLDER_PASTE:
+                if (g_htiCopiedSuite) {
+                    TVI_INFO* pInfoSuite = GetTviInfo(hWnd, g_htiCopiedSuite);
+
+                    HTREEITEM htiPasted = TreeView_GetSelection(hWnd);
+                    TVI_INFO* pInfoFolder = GetTviInfo(hWnd, htiPasted);
+
+                    if (pInfoSuite && 
+                            (pInfoSuite->type == TVI_TYPE_SUITE) &&
+                            pInfoFolder &&
+                            (pInfoFolder->type == TVI_TYPE_FOLDER)) {
+
+                        javacall_suite_id suiteId = pInfoSuite->suiteId;
+
+                        res = java_ams_suite_move_to_folder(
+                            suiteId, pInfoFolder->folderId);
+
+                        if (res == JAVACALL_OK) {
+                            TreeView_DeleteItem(hWnd, g_htiCopiedSuite);
+
+                            // Set right place to insert the suite and all
+                            // it's content (MIDlets belonging to it)
+                            hPrev = TVI_LAST; 
+                            hPrevLev1Item = htiPasted;
+                            hPrevLev2Item = NULL;
+
+                            AddSuiteToTree(hWnd, suiteId, 2);
+                       }
+                    }
+
+                    g_htiCopiedSuite = NULL;
+                }
                 break;
   
             default:

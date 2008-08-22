@@ -86,7 +86,7 @@ LIBS        += $(JAVACALL_LIB) $(PCSL_LIB) $(CLDC_LIB) $(MIDP_LIB)
 
 A = @
 
-all: appManager
+all: appManager background
 
 appManager: $(MIDP_OBJ_DIR)/appManager$(OBJ) $(MIDP_OBJ_DIR)/javacallImpl$(OBJ) $(MIDP_OBJ_DIR)/namsui_resource.res
 	$(A)$(LD) $(LD_FLAGS) $(DRIVE)$(MIDP_OBJ_DIR)/appManager$(OBJ) $(DRIVE)$(MIDP_OBJ_DIR)/javacallImpl$(OBJ) $(DRIVE)$(MIDP_OBJ_DIR)/namsui_resource.res $(LIBS) $(LD_OUTPUT)$(DRIVE)$(MIDP_OUTPUT_DIR)/bin/i386/appManager$(EXE)
@@ -101,3 +101,6 @@ $(MIDP_OBJ_DIR)/javacallImpl$(OBJ): $(SRC_DIR)/javacallImpl.cpp
 
 $(MIDP_OBJ_DIR)/%.res: $(SRC_DIR)/res/%.rc
 	$(A)$(RC) $(RCFLAGS)  /d "NDEBUG" /fo $@ $<
+
+background: $(SRC_DIR)/res/bgd-yellow.bmp
+	$(A)cp $(SRC_DIR)/res/bgd-yellow.bmp $(DRIVE)$(MIDP_OUTPUT_DIR)/bin/i386
