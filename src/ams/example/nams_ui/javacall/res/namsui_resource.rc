@@ -84,7 +84,7 @@ BEGIN
         MENUITEM "Remove", IDM_SUITE_REMOVE
         MENUITEM "Update", IDM_SUITE_UPDATE
         MENUITEM "Settings...", IDM_SUITE_SETTINGS
-        MENUITEM "Copy", IDM_SUITE_COPY
+        MENUITEM "Cut", IDM_SUITE_CUT
     END
 END
 
@@ -100,7 +100,7 @@ BEGIN
     BEGIN
         MENUITEM "Info...", IDM_FOLDER_INFO
         MENUITEM "Remove All", IDM_FOLDER_REMOVE_ALL, GRAYED
-        MENUITEM "Install In...", IDM_FOLDER_INSTALL_IN
+        MENUITEM "Install Into...", IDM_FOLDER_INSTALL_IN
         MENUITEM "Paste", IDM_FOLDER_PASTE, GRAYED
     END
 END
@@ -116,6 +116,13 @@ BEGIN
 END
 */
 
-IDB_MAIN_TOOLBAR_BUTTONS BITMAP "toolbar.bmp"
+IDB_DEF_MIDLET_ICON ICON "midlet.ico"
+//IDB_DEF_MIDLET_ICON BITMAP "def_midlet_icon.bmp"
 
+IDB_DEF_SUITE_ICON ICON "suite.ico"
+//IDB_DEF_SUITE_ICON  BITMAP "def_suite_icon.bmp"
+
+IDB_FOLDER_ICON ICON "folder.ico"
+
+IDB_MAIN_TOOLBAR_BUTTONS BITMAP "toolbar.bmp"
 IDB_MIDLET_TREE_BG BITMAP "bgd-yellow.bmp"

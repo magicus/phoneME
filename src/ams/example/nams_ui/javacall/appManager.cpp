@@ -55,6 +55,12 @@
 #define TB_BUTTON_WIDTH  16
 #define TB_BUTTON_HEIGHT 16
 
+#define TREE_VIEW_ICON_WIDTH  16
+#define TREE_VIEW_ICON_HEIGHT 16
+
+//#define DEF_BACKGROUND_FILE _T("bgd_blue.bmp")
+#define DEF_BACKGROUND_FILE _T("bgd-yellow.bmp")
+
 extern "C" char* _phonenum = "1234567"; // global for javacall MMS subsystem
 
 // The main window class name.
@@ -102,7 +108,7 @@ const static int TVI_TYPE_SUITE   = 1;
 const static int TVI_TYPE_MIDLET  = 2;
 const static int TVI_TYPE_FOLDER  = 3;
 
-typedef struct _TVI_INFO { 
+typedef struct _TVI_INFO {
     int type; // type of the node, valid values are TVI_TYPE_SUITE, 
               // TVI_TYPE_MIDLET, TVI_TYPE_FOLDER
     javacall_utf16_string className; // MIDlet class name if item type is
@@ -464,7 +470,7 @@ static void InitWindows() {
     g_hMidletTreeBgBmp = (HBITMAP)LoadResource(NULL, hRes);*/
 
 //   g_hMidletTreeBgBmp = LoadBitmap(g_hInst, MAKEINTRESOURCE(IDB_MIDLET_TREE_BG));
-    g_hMidletTreeBgBmp = (HBITMAP)LoadImage(g_hInst, _T("bgd-yellow.bmp"),
+    g_hMidletTreeBgBmp = (HBITMAP)LoadImage(g_hInst, DEF_BACKGROUND_FILE,
         IMAGE_BITMAP, g_iChildAreaWidth, g_iChildAreaHeight, LR_LOADFROMFILE);
     if (!g_hMidletTreeBgBmp) {
         DWORD res = GetLastError();
@@ -539,21 +545,62 @@ static HWND CreateTreeView(HWND hWndParent) {
                             0, 
                             TB_BUTTON_HEIGHT + 12,
                             rcClient.right,
-                            rcClient.bottom,
+                            rcClient.bottom - 12,
                             hWndParent, 
                             (HMENU)IDC_TREEVIEW_MIDLETS,
                             g_hInst, 
                             NULL); 
+
+    if (!hwndTV) {
+        MessageBox(NULL, _T("Create tree view failed!"), g_szTitle, NULL);
+        return NULL;
+    }
 
     // Store default Tree View WndProc in global variable
     // and set custom WndProc.
     g_DefTreeWndProc = (WNDPROC)SetWindowLongPtr(hwndTV, GWLP_WNDPROC,
         (LONG)MidletTreeWndProc);
 
-    if (!hwndTV) {
-        MessageBox(NULL, _T("Create tree view failed!"), g_szTitle, NULL);
-        return NULL;
+    // Create an image list for the Tree View control.
+    UINT uResourceIds[] = {
+        IDB_DEF_MIDLET_ICON, IDB_DEF_SUITE_ICON, IDB_FOLDER_ICON
+    };
+
+#define TV_ICONS_NUM ((int) (sizeof(uResourceIds) / sizeof(uResourceIds[0])))
+    
+    HIMAGELIST hTreeImageList = ImageList_Create(
+        TREE_VIEW_ICON_WIDTH, TREE_VIEW_ICON_HEIGHT, ILC_COLOR,
+            TV_ICONS_NUM, TV_ICONS_NUM * 3);
+
+    if (hTreeImageList == NULL) {
+        wprintf(_T("Can't create an image list for TreeView!"));
+        // not fatal, continue
+    } else {
+        // adding icons into the image list
+        for (int i = 0; i < TV_ICONS_NUM; i++) {
+            //HBITMAP hImg = LoadBitmap(g_hInst,
+            //                          MAKEINTRESOURCE(uResourceIds[i]));
+            HICON hImg = LoadIcon(g_hInst,
+                                  MAKEINTRESOURCE(uResourceIds[i]));
+
+            if (hImg == NULL) {
+                wprintf(_T("Can't load an image # %d!\n"), i);
+                // not fatal, continue
+            } else {
+                //int res = ImageList_Add(hTreeImageList, hImg, NULL);
+                int res = ImageList_AddIcon(hTreeImageList, hImg);
+                if (res < 0) {
+                    wprintf(_T("Failed to add an image # %d ")
+                            _T("to the tree view list!\n"), i);
+                }
+                DeleteObject(hImg);
+            }
+        }
+
+        TreeView_SetImageList(hwndTV, hTreeImageList, TVSIL_NORMAL);
     }
+
+#undef TV_ICONS_NUM
 
     return hwndTV;
 }
@@ -781,8 +828,9 @@ static javacall_utf16_string CloneJavacallUtf16(javacall_const_utf16_string str)
     return result;
 }
 
-
-
+/**
+ *
+ */
 static HTREEITEM AddItemToTree(HWND hwndTV, LPTSTR lpszItem,
                                int nLevel, TVI_INFO* pInfo) {
     TVITEM tvi;
@@ -793,18 +841,27 @@ static HTREEITEM AddItemToTree(HWND hwndTV, LPTSTR lpszItem,
         return NULL;
     }
 
-    tvi.mask = TVIF_TEXT /*| TVIF_IMAGE | TVIF_SELECTEDIMAGE*/ | TVIF_PARAM; 
+    tvi.mask = TVIF_TEXT | TVIF_STATE | TVIF_PARAM |
+               TVIF_IMAGE | TVIF_SELECTEDIMAGE;
 
     // Set the text of the item. 
-    tvi.pszText = lpszItem; 
-    tvi.cchTextMax = sizeof(tvi.pszText)/sizeof(tvi.pszText[0]); 
+    tvi.pszText = lpszItem;
+    tvi.cchTextMax = sizeof(tvi.pszText) / sizeof(tvi.pszText[0]);
+
+    tvi.state = 0;
+    tvi.stateMask = 0;
 
     // Assume the item is not a parent item, so give it a 
-    // document image. 
-/*
-    tvi.iImage = g_nDocument; 
-    tvi.iSelectedImage = g_nDocument; 
-*/
+    // document image.
+    tvi.iImage = tvi.iSelectedImage = 0; // a midlet's icon by default
+
+    if (pInfo != NULL) {
+        if (pInfo->type == TVI_TYPE_SUITE) {
+            tvi.iImage = tvi.iSelectedImage = 1;
+        } else if (pInfo->type == TVI_TYPE_FOLDER){
+            tvi.iImage = tvi.iSelectedImage = 2;
+        }
+    }
 
     tvi.lParam = (LPARAM)pInfo;
     tvins.item = tvi; 
@@ -820,14 +877,7 @@ static HTREEITEM AddItemToTree(HWND hwndTV, LPTSTR lpszItem,
     }
 
     // Add the item to the tree-view control.
-/*
-    hPrev = (HTREEITEM)SendMessage(hwndTV, 
-                                   TVM_INSERTITEM,
-                                   0,
-                                   (LPARAM)(LPTVINSERTSTRUCT)&tvins);
-*/
     hPrev = TreeView_InsertItem(hwndTV, &tvins);
-
 
     // Save the handle to the item. 
     if (nLevel == 1) {
@@ -994,7 +1044,10 @@ MainWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
     return 0;
 }
 
-void DrawBackground(HDC hdc, DWORD dwRop) {
+/**
+ *
+ */
+static void DrawBackground(HDC hdc, DWORD dwRop) {
     if (g_hMidletTreeBgBmp != NULL) {
         HDC hdcMem = CreateCompatibleDC(hdc);
 
@@ -1283,7 +1336,7 @@ MidletTreeWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
                 StartMidlet(hWnd);
                 break;
 
-            case IDM_SUITE_COPY:
+            case IDM_SUITE_CUT:
                 g_htiCopiedSuite = TreeView_GetSelection(hWnd);
                 break;
 
@@ -1344,7 +1397,6 @@ MidletTreeWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
         //HBRUSH hBrush = (HBRUSH)GetStockObject(WHITE_BRUSH);
         //SelectObject(hdc1, (HGDIOBJ)hBrush);
         //FillRect(hdc1, &r, hBrush);
-
 
         //hdc = BeginPaint(hWnd, &ps);
         hdc = GetDC(hWnd);

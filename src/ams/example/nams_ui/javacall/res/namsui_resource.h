@@ -40,7 +40,7 @@
 #define  IDM_SUITE_REMOVE          230
 #define  IDM_SUITE_UPDATE          240
 #define  IDM_SUITE_EXIT            250
-#define  IDM_SUITE_COPY            260
+#define  IDM_SUITE_CUT             260
 
 #define  IDM_FOLDER_INFO           300
 #define  IDM_FOLDER_INSTALL_IN     310
@@ -57,6 +57,10 @@
 #define  IDC_TREEVIEW_MIDLETS      900
 #define  IDC_MAIN_TOOLBAR          910
 #define  IDB_MAIN_TOOLBAR_BUTTONS  920
+
+#define  IDB_DEF_SUITE_ICON        950
+#define  IDB_DEF_MIDLET_ICON       960
+#define  IDB_FOLDER_ICON           970
 
 #define  IDS_EMPTY            1001
 #define  IDB_MIDLET_TREE_BG   10001
