@@ -1383,7 +1383,7 @@ MidletTreeWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
 
                 if (pInfo && (pInfo->type == TVI_TYPE_SUITE)) {
                     TCHAR szBuf[127];                 
-                    wsprintf(szBuf, _T("Remove %s ?"), pInfo->displayName);
+                    wsprintf(szBuf, _T("Remove '%s' suite?"), pInfo->displayName);
 
                     int iMBRes = MessageBox(hWnd, szBuf, g_szTitle,
                         MB_ICONQUESTION | MB_OKCANCEL);
@@ -1398,8 +1398,46 @@ MidletTreeWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
                 break;
             }
 
-            case IDM_FOLDER_REMOVE_ALL:
+            case IDM_FOLDER_REMOVE_ALL: {
+                HTREEITEM hItem = TreeView_GetSelection(hWnd);
+                TVI_INFO* pInfo = GetTviInfo(hWnd, hItem);
+
+                if (pInfo && (pInfo->type == TVI_TYPE_FOLDER)) {
+                    TCHAR szBuf[127];                 
+                    wsprintf(szBuf, _T("Remove all MIDlets from '%s' folder?"),
+                        pInfo->displayName);
+
+                    int iMBRes = MessageBox(hWnd, szBuf, g_szTitle,
+                        MB_ICONQUESTION | MB_OKCANCEL);
+
+                    if (iMBRes == IDOK) {
+                        int suiteNum;
+                        javacall_suite_id* pSuiteIds;
+
+                        // Delete suites from the DB
+                        res = java_ams_suite_get_suites_in_folder(
+                            pInfo->folderId, &pSuiteIds, &suiteNum);
+                        if (res == JAVACALL_OK) {
+                            if (suiteNum > 0) {
+                                for (int s = 0; s < suiteNum; s++) {
+                                    java_ams_suite_remove(pSuiteIds[s]);
+                                }
+                                java_ams_suite_free_suite_ids(pSuiteIds,
+                                    suiteNum);
+                            }
+                        }
+
+                        // Delete suites from the tree
+                        HTREEITEM hChild = TreeView_GetChild(hWnd, hItem);
+                        while (hChild) {
+                            TreeView_DeleteItem(hWnd, hChild);                                
+                            hChild = TreeView_GetNextSibling(hWnd, hChild);
+                        }
+                    }
+                }
+
                 break;
+            }
   
             default:
                 break;
