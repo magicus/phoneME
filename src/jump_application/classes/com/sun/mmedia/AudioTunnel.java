@@ -50,8 +50,8 @@ public class AudioTunnel {
                 pcmdev_acquired = true;
             }
     }
-    
-    synchronized static AudioTunnel getInstance() {
+
+    static synchronized AudioTunnel getInstance() {
         if (tunnel == null) {
             tunnel = new AudioTunnel();
         } else if(!tunnel.pcmdev_acquired) {

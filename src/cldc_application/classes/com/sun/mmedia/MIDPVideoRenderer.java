@@ -34,9 +34,6 @@ import javax.microedition.media.PlayerListener;
 import javax.microedition.media.MediaException;
 import javax.microedition.media.control.VideoControl;
 
-import com.sun.mmedia.PermissionAccessor;
-import com.sun.mmedia.MMCustomItem;
-
 /**
  * VideoControl implementation for MIDP
  */
@@ -76,9 +73,6 @@ public final class MIDPVideoRenderer extends VideoRenderer
     /** Source height */
     private int videoHeight;
 
-    /** Storage for the snapshot */
-    private byte [] tempSnapData;
-
     /** To check the frame rate */
     private static final boolean TRACE_FRAMERATE = false;
     /** To check the frame rate */
@@ -86,8 +80,6 @@ public final class MIDPVideoRenderer extends VideoRenderer
     /** To check the frame rate */
     private long frameStartTime = 0;
 
-    private static final String UNSUP_PARAMS = "Unsupported parameters";
-    
     public static final String SNAPSHOT_RGB888 = "rgb888";
     public static final String SNAPSHOT_BGR888 = "bgr888";
     public static final String SNAPSHOT_RGB565 = "rgb565";

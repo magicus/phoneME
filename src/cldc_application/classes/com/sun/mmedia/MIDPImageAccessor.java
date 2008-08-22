@@ -23,8 +23,6 @@
  */
 package com.sun.mmedia;
 
-import com.sun.mmedia.FormatConversionUtils;
-
 import javax.microedition.lcdui.Image;
 
 /**

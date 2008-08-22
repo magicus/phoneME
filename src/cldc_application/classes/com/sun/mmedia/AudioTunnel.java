@@ -31,7 +31,7 @@ package com.sun.mmedia;
 public class AudioTunnel {
     private static AudioTunnel tunnel = null;
     private AudioTunnel() {};
-    synchronized static AudioTunnel getInstance() {
+    static synchronized AudioTunnel getInstance() {
         if (tunnel == null) {
             tunnel = new AudioTunnel();
         }
