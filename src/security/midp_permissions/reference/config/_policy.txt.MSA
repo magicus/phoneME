@@ -2,8 +2,9 @@ alias: net_access
   javax.microedition.io.Connector.http,
   javax.microedition.io.Connector.https,
   javax.microedition.io.Connector.obex.client.tcp,
-  javax.microedition.io.Connector.obex.server.tcp
-
+  javax.microedition.io.Connector.obex.server.tcp,
+  javax.microedition.io.Connector.ims
+  
 alias: low_level_net_access
   javax.microedition.io.Connector.datagram, 
   javax.microedition.io.Connector.datagramreceiver,
