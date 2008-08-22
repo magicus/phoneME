@@ -39,54 +39,54 @@ public interface ImageAccess {
      * returns how many alpha levels supported by the system. 
      * Min value is 2: totally opaque & totally transparent.
      */
-    public int alphaLevelsNumber();
+    int alphaLevelsNumber();
     
     /* 
      * Checks if the object is Image or not.
      */
-    public boolean isImage(Object image);
+    boolean isImage(Object image);
     
     /* 
      * Checks if the object is mutable or immutable Image.
      * Shall be called only after isImage() check passed. 
      */
-    public boolean isMutableImage(Object image);
+    boolean isMutableImage(Object image);
     
     /* 
      * Returns Image width, or -1 if Object is not Image.
      */
-    public int getImageWidth(Object image);
+    int getImageWidth(Object image);
     
     /* 
      * Returns Image height, or -1 if Object is not Image.
      */
-    public int getImageHeight(Object image);
+    int getImageHeight(Object image);
     
     /* 
      * Returns RGB image data (4 bytes in ARGB format per pixel) 
        or null if Object is not Image.
      */
-    public byte[] getRGBByteImageData(Object image);
+    byte[] getRGBByteImageData(Object image);
     
     /* 
      * Returns RGB image data (32-bit int per pixel) 
        or null if Object is not Image.
      */
-    public int[] getRGBIntImageData(Object image);
+    int[] getRGBIntImageData(Object image);
     
     /* 
      * Returns an immutable copy of a given Image or null if Object is not Image.
      */
-    public Object imageCreateFromImage(Object image);
+    Object imageCreateFromImage(Object image);
     
     /* 
      * Returns an image created from the stream or null in case of failure.
      */
-    public Object imageCreateFromStream(java.io.InputStream stream);
+    Object imageCreateFromStream(java.io.InputStream stream);
     
     /* 
      * Returns an image created from the byte array or null in case of filure.
      */
-    public Object imageCreateFromByteArray(byte[] data, int offset, int length);
+    Object imageCreateFromByteArray(byte[] data, int offset, int length);
 }
 

@@ -27,8 +27,6 @@ package com.sun.mmedia;
 
 import com.sun.j2me.log.Logging;
 import com.sun.j2me.log.LogChannels;
-import com.sun.mmedia.*;
-import java.lang.*;
 import javax.microedition.media.*;
 import javax.microedition.media.control.*;
 

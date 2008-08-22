@@ -23,8 +23,6 @@
  */
 package com.sun.mmedia;
 
-import com.sun.mmedia.PermissionAccessorAbstractions;
-
 /**
  * A manager class for platform/product specific permission management.
  */

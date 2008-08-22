@@ -23,8 +23,6 @@
  */
 package com.sun.mmedia;
 
-import com.sun.mmedia.PermissionAccessor;
-
 import com.sun.j2me.app.AppPackage;
 import com.sun.j2me.security.Permission;
 import com.sun.j2me.security.MMAPIPermission;

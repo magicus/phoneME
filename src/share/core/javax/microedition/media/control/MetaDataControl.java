@@ -25,8 +25,6 @@
 
 package javax.microedition.media.control;
 
-import javax.microedition.media.MediaException;
-
 /**
  * <code>MetaDataControl</code> is used to retrieve metadata information
  * included within the media streams.  A <code>MetaDataControl</code>

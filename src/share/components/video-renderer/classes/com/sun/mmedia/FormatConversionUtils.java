@@ -29,6 +29,11 @@ package com.sun.mmedia;
  */
 public final class FormatConversionUtils {
 
+    /** 
+     * Private constructor to prevent instantiation
+     */
+    private FormatConversionUtils(){}
+
     /**
      * Converts image int[] array (32-bit per pixel) 
      * to byte[] xRGB array (4 bytes per pixel) 
@@ -40,18 +45,19 @@ public final class FormatConversionUtils {
     public static byte[] intArrayToByteArray(int[] ints) {
         if (ints == null) return null;
         
-	byte[] bytes = new byte[ints.length * 4];
+        byte[] bytes = new byte[ints.length * 4];
 
-	int intcount, bytecount;
-	for (intcount = 0, bytecount = 0; intcount < ints.length; ) {
+        int intcount, bytecount;
+        for (intcount = 0, bytecount = 0; intcount < ints.length; ) {
             bytes[bytecount++] = (byte)((ints[intcount] & 0xFF000000) >> 24);
             bytes[bytecount++] = (byte)((ints[intcount] & 0x00FF0000) >> 16);
             bytes[bytecount++] = (byte)((ints[intcount] & 0x0000FF00) >>  8);
             bytes[bytecount++] = (byte)((ints[intcount] & 0x000000FF)      );
-	    intcount++;
-	}
-	return bytes;
+            intcount++;
+        }
+        return bytes;
     }
+
     /**
      * Converts image byte[] xRGB array (4 bytes per pixel)
      * to int[] array (32-bit per pixel), 
@@ -63,21 +69,20 @@ public final class FormatConversionUtils {
     public static int[] byteArrayToIntArray(byte[] bytes) {
         if (bytes == null) return null;
         
-	int[] ints = new int[bytes.length / 4];
+        int[] ints = new int[bytes.length / 4];
 
-	int intcount, bytecount;
-	for (intcount = 0, bytecount = 0; bytecount < bytes.length; ) {
-	    ints[intcount] = 
-		(( ((int)(bytes[bytecount + 0])) << 24) & 0xFF000000) |  //A
-		(( ((int)(bytes[bytecount + 1])) << 16) & 0x00FF0000) |  //R
-		(( ((int)(bytes[bytecount + 2])) <<  8) & 0x0000FF00) |  //G
-		(( ((int)(bytes[bytecount + 3]))      ) & 0x000000FF);   //B
+        int intcount, bytecount;
+        for (intcount = 0, bytecount = 0; bytecount < bytes.length; ) {
+            ints[intcount] = 
+                (( ((int)(bytes[bytecount + 0])) << 24) & 0xFF000000) |  //A
+                (( ((int)(bytes[bytecount + 1])) << 16) & 0x00FF0000) |  //R
+                (( ((int)(bytes[bytecount + 2])) <<  8) & 0x0000FF00) |  //G
+                (( ((int)(bytes[bytecount + 3]))      ) & 0x000000FF);   //B
 
-	    intcount++;
-	    bytecount+=4;
-
-	}
-	return ints;
+            intcount++;
+            bytecount+=4;
+        }
+        return ints;
     }
     
     /**

@@ -27,8 +27,8 @@ package com.sun.mmedia;
 import javax.microedition.media.Control;
 
 public class Jsr234Proxy {
-    static private Jsr234Proxy _instance;
-    static private String [] _emptyNamesList = {};
+    private static Jsr234Proxy _instance;
+    private static String[] _emptyNamesList = { };
     
     protected Jsr234Proxy() {}
     

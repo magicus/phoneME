@@ -25,7 +25,6 @@
 package com.sun.mmedia;
 
 import javax.microedition.media.Control;
-import javax.microedition.media.MediaException;
 
 public class DirectCamera extends DirectPlayer 
 {
@@ -36,8 +35,8 @@ public class DirectCamera extends DirectPlayer
     private Control _snapshotControl;
     private Control _zoomControl;
     private Control _imgFmtControl;
-    
-    protected final static String JSR234_CAMERA_PACKAGE_NAME =
+
+    protected static final String JSR234_CAMERA_PACKAGE_NAME =
         "javax.microedition.amms.control.camera.";
 
     /**

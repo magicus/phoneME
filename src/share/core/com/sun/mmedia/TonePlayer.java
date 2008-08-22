@@ -38,12 +38,12 @@ public interface TonePlayer {
      * @param  duration  The duration of the tone in milli-seconds.
      * @param  volume    Audio volume range from 0 to 100.
      */
-    public void playTone(int note, int duration, int volume)
+    void playTone(int note, int duration, int volume)
         throws MediaException;
 
     /**
      * Stop current tone playing
      */
-    public void stopTone();
+    void stopTone();
 }
 
