@@ -1373,6 +1373,21 @@ MidletTreeWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
                     g_htiCopiedSuite = NULL;
                 }
                 break;
+
+            case IDM_SUITE_REMOVE: {
+                HTREEITEM hItem = TreeView_GetSelection(hWnd);
+                TVI_INFO* pInfo = GetTviInfo(hWnd, hItem);
+                if (pInfo && (pInfo->type == TVI_TYPE_SUITE)) {
+                   res = java_ams_suite_remove(pInfo->suiteId);
+                   if (res == JAVACALL_OK) {
+                       TreeView_DeleteItem(hWnd, hItem);
+                   }
+                }
+                break;
+            }
+
+            case IDM_FOLDER_REMOVE_ALL:
+                break;
   
             default:
                 break;
