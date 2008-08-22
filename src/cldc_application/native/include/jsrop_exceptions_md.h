@@ -24,11 +24,11 @@
 #ifndef __JSROP_EXCEPTIONS_MD_H
 #define __JSROP_EXCEPTIONS_MD_H
 
-#include <midpError.h>
-
 #if defined __cplusplus 
 extern "C" { 
 #endif /* __cplusplus */
+
+#include <midpError.h>
 
 /** 'C' string for java.lang.OutOfMemoryError */
 #define jsropOutOfMemoryError midpOutOfMemoryError

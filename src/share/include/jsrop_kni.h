@@ -191,7 +191,7 @@ jsrop_jstring_from_utf16_string_n(KNIDECLARGS const javacall_utf16_string utf16_
  *
  */
 #define RELEASE_UTF16_STRING_PARAMETER \
-            } JAVAME_FREE(*latest_utf16_string_arg); \
+            } if (*latest_utf16_string_arg) JAVAME_FREE(*latest_utf16_string_arg); \
         } \
     }
 
