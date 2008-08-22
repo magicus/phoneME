@@ -54,6 +54,7 @@
 #include <midpResourceLimit.h>
 #include <pcsl_file.h>
 #include <pcsl_string.h>
+#include <pcsl_esc.h>
 #include <pcsl_string_status.h>
 #include <pcsl_memory.h>
 
@@ -152,6 +153,8 @@ storageInitialize(char *config_home, char *app_dir) {
         REPORT_ERROR(LC_CORE, "Error: cannot initialize string library.\n");
         return -1;
     }
+
+    pcsl_esc_init();
 
     if(pcsl_file_init() < 0)  {
         REPORT_ERROR(LC_CORE, "Error: out of memory.\n");
@@ -796,7 +799,7 @@ storage_rename_file(char** ppszError, const pcsl_string* oldFilename_str,
 
 static char*
 getLastError(char* pszFunction) {
-    char* temp;
+    char* temp = NULL;
 
 #ifndef UNDER_CE
     temp = strerror(errno);
@@ -1001,7 +1004,7 @@ storage_write_utf16_string(char** ppszError, int handle,
     } else {
         length = pcsl_string_length(str);
     }
-  
+
     storageWrite(ppszError, handle, (char*)&length, sizeof (length));
 
     /* are there data to write? */

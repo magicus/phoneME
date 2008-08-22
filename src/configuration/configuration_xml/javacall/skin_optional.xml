@@ -1013,6 +1013,11 @@
      Pieces="9"
     Romized="false"/>
 
+  <image
+        Key="KEYBOARD_KEY"
+      Value="keyboard.key"
+    Romized="false"/>
+
   <integer
         Key="MENU_WIDTH"
       Value="144"/>

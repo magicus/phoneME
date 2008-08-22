@@ -127,7 +127,7 @@ public class MIDletSuiteStorage {
      */
     private static MIDletSuiteStorage getMasterStorage() {
         if (masterStorage == null) {
-            masterStorage = new MIDletSuiteStorage();
+            masterStorage    = new MIDletSuiteStorage();
 
             int status = loadSuitesIcons0();
             if (Logging.REPORT_LEVEL <= Logging.ERROR) {
@@ -197,12 +197,12 @@ public class MIDletSuiteStorage {
     }
 
     /**
-     *
+     * Retrieves an icon for the given midlet suite.
      *
      * @param suiteId unique identifier of the suite
      * @param iconName the name of the icon to retrieve
      *
-     * @return
+     * @return image of the icon as a byte array
      */
     public synchronized byte[] getMIDletSuiteIcon(int suiteId,
                                                   String iconName) {
@@ -245,9 +245,10 @@ public class MIDletSuiteStorage {
 
         if (Constants.MONET_ENABLED && id != MIDletSuite.INTERNAL_SUITE_ID) {
             String bunFile = getMidletSuiteAppImagePath(id);
-            return new String[]{bunFile, jarFile};
+            return new String[] {bunFile, jarFile};
         }
-        return new String[]{jarFile};
+
+        return new String[] {jarFile};
     }
 
     /**
@@ -320,7 +321,7 @@ public class MIDletSuiteStorage {
     /**
      * Get the folder id for a suite.
      *
-     * @param suiteId unique ID of the suite
+     * @param id unique ID of the suite
      *
      * @return folder id or -1 if the suite does not exist
      */
@@ -330,14 +331,13 @@ public class MIDletSuiteStorage {
      * Gets the unique identifier of MIDlet suite.
      *
      * @param vendor name of the vendor that created the application, as
-     *          given in a JAD file
+     *        given in a JAD file
      * @param name name of the suite, as given in a JAD file
      *
      * @return suite ID of the midlet suite given by vendor and name
      *         or MIDletSuite.UNUSED_SUITE_ID if the suite does not exist
      */
-    public native static int getSuiteID(String vendor, String name);
-
+    public static native int getSuiteID(String vendor, String name);
 
     // -------------- Installer related functionality ---------------
 
@@ -371,9 +371,6 @@ public class MIDletSuiteStorage {
 
     /**
      * Returns a unique identifier of MIDlet suite.
-     * Constructed from the combination
-     * of the values of the <code>MIDlet-Name</code> and
-     * <code>MIDlet-Vendor</code> attributes.
      *
      * @return the platform-specific storage name of the application
      *          given by vendorName and appName
@@ -442,7 +439,7 @@ public class MIDletSuiteStorage {
         String[] strJadProperties = getPropertiesStrings(jadProps);
         String[] strJarProperties = getPropertiesStrings(jarProps);
 
-        nativeStoreSuite(installInfo, suiteSettings, msi,
+        nativeStoreSuite(installInfo, suiteSettings, msi, null,
             strJadProperties, strJarProperties);
     }
 
@@ -545,7 +542,8 @@ public class MIDletSuiteStorage {
                    IOException, OutOfMemoryError;
 
     /**
-     * Stores or updates a midlet suite.
+     * Implementation for storeSuite() and storeSuiteComponent().
+     * Stores or updates a midlet suite or a dynamic component.
      *
      * @param installInfo structure containing the following information:<br>
      * <pre>
@@ -585,6 +583,19 @@ public class MIDletSuiteStorage {
      *                            only one midlet, ignored otherwise;
      *     iconName - name of the icon for this suite.
      * </pre>
+     * msi is null if a dynamic component rather than a suite is being saved
+     *
+     * @param ci structure containing the following information:<br>
+     * <pre>
+     *     componentId - unique ID of the component being saved
+     *     suiteId - unique ID of the suite that the component belongs to,
+     *               must be equal to the value given in installInfo and
+     *               suiteSettings parameters;
+     *     trusted - true if component is trusted, must be equal to the
+     *               value given in installInfo;
+     *     displayName - the suite's name to display to the user.
+     * </pre>
+     * ci is null if a suite rather than a dynamic component is being saved
      *
      * @param jadProps properties the JAD as an array of strings in
      *        key/value pair order, can be null if jadUrl is null
@@ -597,8 +608,8 @@ public class MIDletSuiteStorage {
      * @exception MIDletSuiteLockedException is thrown, if the MIDletSuite is
      * locked
      */
-    private native void nativeStoreSuite(InstallInfo installInfo,
-        SuiteSettings suiteSettings, MIDletSuiteInfo msi,
+    native void nativeStoreSuite(InstallInfo installInfo,
+        SuiteSettings suiteSettings, MIDletSuiteInfo msi, Object ci,
             String[] jadProps, String[] jarProps)
                 throws IOException, MIDletSuiteLockedException;
 

@@ -1,7 +1,5 @@
 #
-#   
-#
-# Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+# Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
 # 
 # This program is free software; you can redistribute it and/or
@@ -45,28 +43,14 @@ SOURCE_OUTPUT_DIR:
 # Copy files from specified sub directories that are under svn controlled.
 # Usage: re_src_filter(src_dir, output_dir, sub_dir_list)
 define re_src_filter
-	if [ -d "$(1)/.svn" ]; then \
-		(for i in $(3); do mkdir -p $(2)/$$i; svn export --force -q $(1)/$$i $(2)/$$i; done); \
-	else \
-		mkdir -p $(2); \
-		(for i in $(3); do cp -rp $(1)/$$i $(2)/$$i; done); \
-	fi
-endef
-
-# Usage: re_src_filter2(src_dir, src_dir_override, output_dir, sub_dir_list)
-define re_src_filter2
-	if [ -d "$(1)/.svn" ]; then \
-		(for i in $(4); do mkdir -p $(3)/$$i; svn export --force -q $(1)/$$i $(3)/$$i; done); \
-                if [ "$(1)" != "$(2)" ]; then \
-			(for i in $(4); do mkdir -p $(3)/$$i; svn export --force -q $(2)/$$i $(3)/$$i; done); \
-                fi; \
-	else \
-		mkdir -p $(3); \
-		(for i in $(4); do cp -rp $(1)/$$i $(3)/$$i; done); \
-                if [ "$(1)" != "$(2)" ]; then \
-			(for i in $(4); do cp -rp $(2)/$$i $(3)/$$i; done); \
-                fi; \
-	fi
+	for i in $(3); do \
+	    mkdir -p $(2)/$$i; \
+	        if [ -d "$(1)/.svn" ]; then \
+		    svn export --force -q $(1)/$$i $(2)/$$i; \
+                else \
+		    cp -rp $(1)/$$i/* $(2)/$$i; \
+                fi \
+        done
 endef
 
 # Create MIDP source in subdir 'midp/'
@@ -75,9 +59,12 @@ MIDP_SOURCE_OUTPUT_DIR=$(SOURCE_OUTPUT_DIR)/midp
 # Copy and filter MIDP source into MIDP_SOURCE_OUTPUT_DIR
 midp_source_bundle: MIDP_DIR SOURCE_OUTPUT_DIR
 	@echo " ... MIDP source bundle" $(LOG)
-	@$(call re_src_filter2,$(MIDP_DIR),$(PROJECT_MIDP_DIR),$(MIDP_SOURCE_OUTPUT_DIR),src build)
-	@cp $(MIDP_DIR)/QT_README.txt $(MIDP_SOURCE_OUTPUT_DIR)
-	@rm -rf $(MIDP_SOURCE_OUTPUT_DIR)/src/protocol/comm
+	$(A)$(call re_src_filter,$(MIDP_DIR),$(MIDP_SOURCE_OUTPUT_DIR),src build)
+ifneq ($(MIDP_DIR),$(PROJECT_MIDP_DIR))
+	$(A)$(call re_src_filter,$(PROJECT_MIDP_DIR),$(MIDP_SOURCE_OUTPUT_DIR),src build)
+endif
+	$(A)cp $(MIDP_DIR)/QT_README.txt $(MIDP_SOURCE_OUTPUT_DIR)
+	$(A)rm -rf $(MIDP_SOURCE_OUTPUT_DIR)/src/protocol/comm
 
 # Phonies to avoid accidents.
 #

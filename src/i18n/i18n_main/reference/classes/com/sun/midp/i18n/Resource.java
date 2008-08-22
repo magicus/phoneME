@@ -71,16 +71,18 @@ abstract public class Resource {
              * convert to '_' for Class.forName() to work.
              */
             int hyphen;
-	    if ((hyphen = loc.indexOf('-')) != -1) {
+        if ((hyphen = loc.indexOf('-')) != -1) {
                 StringBuffer tmploc = new StringBuffer(loc);
                 tmploc.setCharAt(hyphen, '_');
                 loc = tmploc.toString();
-	    }
+        }
 	    
             while (true) {
                 try {
                     Class c = Class.forName(cls + "_" + loc);
-                    res = (ResourceBundle) c.newInstance();
+                    if (c != null) {
+                        res = (ResourceBundle) c.newInstance();
+                    }
                 } catch (Throwable t) {}
                 if (res == null) {
                     int pos = loc.lastIndexOf('_');
@@ -101,6 +103,8 @@ abstract public class Resource {
 			       "Just can't proceed! Resource is NULL!!");
 	    }
 
+        // the default case
+	    res = (ResourceBundle) new LocalizedStrings();
             // Porting suggestion:
             // System should quit MIDP runtime since resource is 
             // not available. 

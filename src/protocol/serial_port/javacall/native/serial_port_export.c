@@ -72,6 +72,7 @@ openPortByNameStart(char* pszDeviceName, int baudRate,
 		case JAVACALL_WOULD_BLOCK:
 			returnStatus = PCSL_NET_WOULDBLOCK;
 			break;
+        default: break;
 	}
 
 	return returnStatus;
@@ -106,6 +107,9 @@ int openPortByNameFinish(char* pszDeviceName, int baudRate,
 
     /* Javacall implementation never uses contect */
     (void)context;
+    (void)pszDeviceName;
+    (void)baudRate;
+    (void)options;
 
     ret = javacall_serial_open_finish(hPort);
 
@@ -116,6 +120,7 @@ int openPortByNameFinish(char* pszDeviceName, int baudRate,
 		case JAVACALL_WOULD_BLOCK:
 			returnStatus = PCSL_NET_WOULDBLOCK;
 			break;
+        default: break;
 	}
 
 	return returnStatus;
@@ -208,9 +213,10 @@ int writeToPortStart(int hPort, char* pBuffer,
 			case JAVACALL_WOULD_BLOCK:
 				status = PCSL_NET_WOULDBLOCK;
 				break;
+            default: break;
 		}
-		return status;
 	}
+    return status;
 }
 
 /**
@@ -249,9 +255,10 @@ int writeToPortFinish(int hPort, char* pBuffer,
 			case JAVACALL_WOULD_BLOCK:
 				status = PCSL_NET_WOULDBLOCK;
 				break;
+            default: break;
 		}
-		return status;
 	}
+    return status;
 }
 
 /**
@@ -294,9 +301,10 @@ int readFromPortStart(int hPort, char* pBuffer,
 			case JAVACALL_WOULD_BLOCK:
 				status = PCSL_NET_WOULDBLOCK;
 				break;
+            default: break;
 		}
-		return status;
 	}
+    return status;
 }
 
 /**
@@ -337,7 +345,8 @@ int readFromPortFinish(int hPort, char* pBuffer,
 			case JAVACALL_WOULD_BLOCK:
 				status = PCSL_NET_WOULDBLOCK;
 				break;
+            default: break;
 		}
-		return status;
 	}
+    return status;
 }

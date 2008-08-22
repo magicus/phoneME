@@ -198,7 +198,7 @@ static int inflateStored(InflaterState *state) {
 
             if (len > 0) {
                 /* need more, refill the buffer */
-                outBuffer[outOffset++] = NEXTBYTE;
+                outBuffer[outOffset++] = (unsigned char)(NEXTBYTE);
                 len--;
                 inRemaining--;
             }
@@ -415,7 +415,7 @@ static int decodeDynamicHuffmanTables(InflaterState *state,
             return INFLATE_CODE_TABLE_LENGTH_ERROR;
         }
 
-        codelen[(int)ccode_idx[i]] = NEXTBITS(3);
+        codelen[(int)ccode_idx[i]] = (unsigned char)(NEXTBITS(3));
         DUMPBITS(3);
     }
 

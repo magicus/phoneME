@@ -1,7 +1,7 @@
 /*
  *
  *
- * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
@@ -726,13 +726,6 @@ int runNams(int argc, char* argv[]) {
     savedArgc = argc;
     savedArgv = argv;
 
-    /* initialize the system */
-    status = midp_system_initialize();
-    if (status != ALL_OK) {
-        fprintf(stderr, "midp_system_initialize() failed (%d)\n", status);
-        return status;
-    }
-
     /* For development platforms MIDP_HOME is dynamic. */
     appDir = getApplicationDir(argv[0]);
     if (appDir == NULL) {
@@ -750,6 +743,13 @@ int runNams(int argc, char* argv[]) {
     }
 
     midpSetConfigDir(confDir);
+
+    /* initialize the system */
+    status = midp_system_initialize();
+    if (status != ALL_OK) {
+        fprintf(stderr, "midp_system_initialize() failed (%d)\n", status);
+        return status;
+    }
 
     do {
         argc = savedArgc;

@@ -90,7 +90,7 @@ static void *handle;
  * createImageCache() call and used in png_cache_action() to avoid passing
  * an additional parameter to it.
  */
-static long remainingSpace;
+static jlong remainingSpace;
 
 /**
  * Holds the amount of cached data placed into the storage. It is initialized

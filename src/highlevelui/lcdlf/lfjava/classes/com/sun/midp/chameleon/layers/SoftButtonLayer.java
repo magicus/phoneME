@@ -39,6 +39,8 @@ import com.sun.midp.chameleon.skins.resources.MenuResources;
 // EventConstants defines some constant values, such as
 // key press, release, soft button codes, etc.
 import com.sun.midp.lcdui.EventConstants;
+import com.sun.midp.i18n.Resource;
+import com.sun.midp.i18n.ResourceConstants;
 
 /**
  * Soft button layer.
@@ -95,6 +97,8 @@ public class SoftButtonLayer extends CLayer implements CommandListener {
     private CLayer cachedScrollable;
     private ScrollListener cachedListener;
 
+    private VirtualKeyboardLayer keyboardPopup;
+
     /**
      * A set of weights assigned to each of the types of Commands.
      * The array is set up to return the weight of the Command type
@@ -114,6 +118,7 @@ public class SoftButtonLayer extends CLayer implements CommandListener {
             7, // Stop
             5, // Exit
             1, // Item
+            9, // Virtual
     };
 
     /**
@@ -260,6 +265,7 @@ public class SoftButtonLayer extends CLayer implements CommandListener {
                                  CommandListener scrListener) {
         // Cache the values for later
         this.itmCmds = new Command[numI];
+
         if (numI > 0) {
             System.arraycopy(itemCmds, 0, this.itmCmds, 0, numI);
         }
@@ -710,6 +716,8 @@ public class SoftButtonLayer extends CLayer implements CommandListener {
         if (subMenu != null) {
             subMenu.notifyListener(cmd);
             subMenu = null;
+        } else if (isKeyboardCommand(cmd)) {
+            handleKeyboardCommand();
         } else if (isItemCommand(cmd)) {
             tunnel.callItemListener(cmd, itemListener);
         } else {
@@ -754,11 +762,12 @@ public class SoftButtonLayer extends CLayer implements CommandListener {
      * @param num  the number of commands to check
      */
     protected void sortCommands(Command[] cmds, int num) {
+
         // The number of commands is small, so we use a simple
         // Insertion sort that requires little heap        
         for (int i = 1; i < num; i++) {
             for (int j = i; j > 0; j--) {
-                if (compare(cmds[j], cmds[j - 1]) < 0) {
+               if (compare(cmds[j], cmds[j - 1]) < 0) {
                     swap = cmds[j];
                     cmds[j] = cmds[j - 1];
                     cmds[j - 1] = swap;
@@ -811,8 +820,41 @@ public class SoftButtonLayer extends CLayer implements CommandListener {
     }
 
     /**
-     * Initializes the soft button layer.
+     * Check keyboard command
+     *
+     * @param cmd
+     * @return
      */
+    protected boolean isKeyboardCommand(Command cmd) {
+        if (cmd != null && cmd.getCommandType() == Command.VIRTUAL) {
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * Show or hide Virtual keyboard layer
+     */
+    protected void handleKeyboardCommand ()
+
+    {
+        if (keyboardPopup == null) {
+            keyboardPopup = new VirtualKeyboardLayer(tunnel);
+        }
+
+        if (!keyboardPopup.isVisible()) {
+            owner.addLayer(keyboardPopup);
+        } else {
+            owner.removeLayer(keyboardPopup);
+        }
+        requestRepaint();
+
+    }
+
+
+/**
+* Initializes the soft button layer.
+*/
     protected void initialize() {
         super.initialize();
         setAnchor();

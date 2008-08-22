@@ -64,6 +64,11 @@ SUBSYSTEM_SERIAL_JAVA_FILES += \
     $(SUBSYSTEM_DIR)/protocol/serial/classes/javax/microedition/io/CommConnection.java \
     $(SUBSYSTEM_DIR)/protocol/serial/reference/classes/com/sun/midp/io/j2me/comm/Protocol.java
 
+ifeq ($(USE_NETMON), true)
+SUBSYSTEM_SERIAL_JAVA_FILES += \
+    $(SUBSYSTEM_DIR)/protocol/serial/reference/classes/com/sun/kvem/io/j2me/comm/Protocol.java
+endif
+
 # Native files for the ( serial ) module
 #
 

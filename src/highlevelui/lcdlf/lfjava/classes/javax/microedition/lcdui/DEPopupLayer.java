@@ -242,33 +242,38 @@ class DEPopupLayer extends ScrollablePopupLayer {
     public void paintBody(Graphics g) {
         boolean hilighted = false;
         int translatedY = 0;
+        int textOffset = 2;
         
+
         int transY = elementHeight;
-        g.translate(2, 0);
-        
+
         endIndex = startIndex + (elementsToFit - 1);
-        
+
         if (hilightedIndex > endIndex) {
             endIndex = hilightedIndex;
             startIndex = endIndex - (elementsToFit - 1);
         }
-        
+
+        if (ScreenSkin.RL_DIRECTION) {
+            textOffset = elementWidth - textOffset;
+        }
+
         g.setFont(DateEditorSkin.FONT_POPUPS);
         for (int i = startIndex; i <= endIndex; i++) {
             hilighted = (i == hilightedIndex);
-        
+
             if (hilighted) {
                 g.setColor(DateEditorSkin.COLOR_TRAVERSE_IND);
-                g.fillRect(0, 0, elementWidth - 7, elementHeight);
+                g.fillRect(0, 0, elementWidth, elementHeight);
             }
-        
+
             g.setColor(0);
-            g.drawString(elements[i], 2, 0, ScreenSkin.TEXT_ORIENT | Graphics.TOP);
+            g.drawString(elements[i], textOffset, 0, ScreenSkin.TEXT_ORIENT | Graphics.TOP);
             g.translate(0, transY);
             translatedY += transY;
         }
-        
-        g.translate(-2, -translatedY); 
+
+        g.translate(0, -translatedY);
     }
 
 

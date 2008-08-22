@@ -445,7 +445,7 @@ static int pushOpenInternal(int startListening) {
     if (startListening) {
         /* Make sure the network is properly in initialized. */
 
-        if (pcsl_network_init() != 0) {
+        if (pcsl_network_init_start() != PCSL_NET_SUCCESS) {
             return -1;
         }
     }
@@ -1347,7 +1347,7 @@ static char* pushAcceptConnection(PushEntry* pushp, int prevState) {
     if (prevState == RECEIVED_EVENT && pushp->pCachedData != NULL) {
         pushp->fdAccepted = pushp->fdsock;
         status = pcsl_socket_read_finish(
-            (void *)pushp->fdsock, pushp->pCachedData->buffer,
+            (void *)pushp->fdsock, (unsigned char *)pushp->pCachedData->buffer,
             MAX_CACHED_DATA_SIZE, &(pushp->pCachedData->length),
             &context);
 
@@ -1418,12 +1418,12 @@ static char* pushAcceptConnection(PushEntry* pushp, int prevState) {
         strcpy(ipAddress, pcsl_inet_ntoa(&ipBytes));
 
         status = pcsl_socket_read_start(
-            (void *)pushp->fdsock, pushp->pCachedData->buffer,
+            (void *)pushp->fdsock, (unsigned char *)pushp->pCachedData->buffer,
             MAX_CACHED_DATA_SIZE, &(pushp->pCachedData->length), &context);
 
         if (status == PCSL_NET_SUCCESS) {
             status = pcsl_socket_read_finish(
-                (void *)pushp->fdsock, pushp->pCachedData->buffer,
+                (void *)pushp->fdsock, (unsigned char *)pushp->pCachedData->buffer,
                 MAX_CACHED_DATA_SIZE, &(pushp->pCachedData->length),
                 &context);
 

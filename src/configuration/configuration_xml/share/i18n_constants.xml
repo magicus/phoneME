@@ -1147,6 +1147,40 @@
   <constant Type="int"
             Name="SR_SUSPEND_ALERT_MSG"
             Comment="Suspend/resume: com.sun.midp.suspend.SuspendResumeUI"/>
+
+  <constant Type="int"
+            Name="AMS_DISC_APP_INSTALL_FROM_FILE"
+            Comment="Abstract Commands and other general strings"/>
+  <constant Type="int"
+            Name="AMS_DISC_APP_INSTALL_FROM_HTTP"
+            Comment="Abstract Commands and other general strings"/>
+  <constant Type="int"
+            Name="AMS_DISC_APP_START_FILE_INSTALL"
+            Comment="Abstract Commands and other general strings"/>
+  <constant Type="int"
+            Name="AMS_DISC_APP_STORAGE_INSTALL"
+            Comment="AMS: com.sun.midp.installer.DiscoveryApp"/>
+  <constant Type="int"
+            Name="AMS_DISC_APP_PREPARE_INSTALL_STORAGE"
+            Comment="AMS: com.sun.midp.installer.DiscoveryApp"/>
+  <constant Type="int"
+            Name="AMS_GRA_INTLR_CONN_STORAGE_GAUGE_LABEL"
+            Comment="AMS: com.sun.midp.installer.GraphicalInstaller"/>
+  <constant Type="int"
+            Name="AMS_DISC_APP_GAUGE_LABEL_STORAGE"
+            Comment="AMS: com.sun.midp.installer.DiscoveryApp"/>
+  <constant Type="int"
+            Name="AMS_FILE_PATH"
+            Comment="AMS: general"/>
+  <constant Type="int"
+            Name="AMS_GRA_INTLR_DOWNLOADING_JAD_GAUGE_LABEL_STORAGE"
+            Comment="AMS: com.sun.midp.installer.GraphicalInstaller"/>
+  <constant Type="int"
+            Name="AMS_GRA_INTLR_DOWNLOADING_JAR_GAUGE_LABEL_STORAGE"
+            Comment="AMS: com.sun.midp.installer.GraphicalInstaller"/>
+  <constant Type="int"
+            Name="AMS_GRA_INTLR_FILE_NOT_FOUND"
+            Comment="AMS: com.sun.midp.installer.GraphicalInstaller"/> 
 </constant_class>
 </constants>
 </configuration>

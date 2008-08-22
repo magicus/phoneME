@@ -31,10 +31,12 @@ import com.sun.cldc.isolate.*;
 import com.sun.midp.midlet.MIDletSuite;
 
 import com.sun.midp.midletsuite.MIDletSuiteStorage;
+import com.sun.midp.midletsuite.DynamicComponentStorage;
 
 import com.sun.midp.configurator.Constants;
 
 import com.sun.midp.log.Logging;
+import com.sun.midp.services.ComponentInfo;
 
 /**
  * Implements utilities that are different for SVM and MVM modes.
@@ -250,6 +252,41 @@ public class AmsUtil {
         String[] classpathext = null;
         if (isolateClassPath != null) {
             classpathext = new String[] {isolateClassPath};
+        }
+
+        /*
+         * Include paths to dynamic components belonging to this suite
+         * into class path for the new Isolate.
+         */
+        DynamicComponentStorage componentStorage =
+                DynamicComponentStorage.getComponentStorage();
+        ComponentInfo[] ci = componentStorage.getListOfSuiteComponents(id);
+
+        if (ci != null && ci.length > 0) {
+            /*
+             * IMPL_NOTE: currently is assumed that each component may have
+             *            not more than 1 entry in class path.
+             *            Later it will be possible to have 2: 1 for MONET.
+             *            + 1 is for System.getProperty("classpathext").
+             */
+            int n = 0;
+            if (isolateClassPath != null) {
+                classpathext = new String[ci.length + 1];
+                classpathext[n++] = isolateClassPath;
+            } else {
+                classpathext = new String[ci.length];
+            }
+
+            for (int i = 0; i < ci.length; i++) {
+                String[] componentPath =
+                        componentStorage.getComponentClassPath(
+                                ci[i].getComponentId());
+                if (componentPath != null) {
+                    for (int j = 0; j < componentPath.length; j++) {
+                        classpathext[n++] = componentPath[j];
+                    }
+                }
+            }
         }
 
         try {

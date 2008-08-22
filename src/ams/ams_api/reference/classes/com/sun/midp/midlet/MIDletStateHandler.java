@@ -545,7 +545,8 @@ public class MIDletStateHandler {
 
                 case MIDletPeer.DESTROYED:
                     listener.midletDestroyed(getMIDletSuite(),
-                        curr.getMIDlet().getClass().getName());
+                        curr.getMIDlet().getClass().getName(),
+                        curr.getMIDlet());
                     break;
                 }
             } catch (Throwable ex) {
@@ -723,7 +724,7 @@ public class MIDletStateHandler {
              * Make sure there is not a new MIDlet state already created.
              */
             if (newMidletPeer != null) {
-                throw new SecurityException("Recusive MIDlet creation");
+                throw new SecurityException("Recursive MIDlet creation");
             }
 
             newMidletPeer = new MIDletPeer();
@@ -746,7 +747,8 @@ public class MIDletStateHandler {
                          * The MIDlet was not constructed, send destroy
                          * notification to remove the peer from any lists.
                          */
-                        listener.midletDestroyed(getMIDletSuite(), classname);
+                        listener.midletDestroyed(getMIDletSuite(), classname,
+                                                 null);
                     }
                 }
             } finally {

@@ -152,12 +152,6 @@ interface AppManagerUI {
      * @param item corresponding suite info
      */
     void setCurrentItem(RunningMIDletSuiteInfo item);
-
-    /**
-     * Enters automatically the midlet suite determined by the suite ID.
-     * @param suiteId ID of the suite to launch
-     */
-    void enterSuite(int suiteId);
    
     /**
      * Called to determine MidletSuiteInfo of the last selected Item.

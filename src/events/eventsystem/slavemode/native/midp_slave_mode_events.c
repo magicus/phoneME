@@ -77,6 +77,7 @@ int midpRunVm(JvmPathChar* classPath,
 
     JVM_SetConfig(JVM_CONFIG_SLAVE_MODE, KNI_TRUE);
     JVM_Start(classPath, mainClass, argc, argv);
+    midp_slavemode_event_loop();
 
     return 0;
 }

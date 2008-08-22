@@ -421,12 +421,8 @@ midpInitializeUI(void) {
         }
 #undef OPT_NUM
 
-        /*
-         * Use the default port: 2800.
-         * To redefine it, "-port <n>" option can be used.
-         */
      }
-#else
+#endif /* ENABLE_ON_DEVICE_DEBUG || ENABLE_WTK_DEBUG */
 
 #if ENABLE_JAVA_DEBUGGER
     {
@@ -441,7 +437,6 @@ midpInitializeUI(void) {
     }
 #endif
 
-#endif /* ENABLE_ON_DEVICE_DEBUG || ENABLE_WTK_DEBUG */
 
     if (pushopen() != 0) {
         return -1;
@@ -1027,21 +1022,25 @@ int midpRunMainClass(JvmPathChar *classPath,
      */
     vmStatus = midpRunVm(classPath, mainClass, argc, argv);
 
-    pushcheckinall();
-    midp_resetEvents();
-    midpMIDletProxyListReset();
 
-    if (vmStatus != MAIN_EXIT) {
-        /*
-         * The VM aborted, most likely a bad class file in an installed
-         * MIDlet.
-         */
-        vmStatus = MIDP_ERROR_STATUS;
+    if (0 == vmStatus) {
+        vmStatus = MIDP_RUNNING_STATUS;
     } else {
-        vmStatus = MIDP_SHUTDOWN_STATUS;
+        pushcheckinall();
+        midp_resetEvents();
+        midpMIDletProxyListReset();
+        midpFinalize();
+        if (vmStatus != MAIN_EXIT) {
+            /*
+             * The VM aborted, most likely a bad class file in an installed
+             * MIDlet.
+             */
+            vmStatus = MIDP_ERROR_STATUS;
+        } else {
+            vmStatus = MIDP_SHUTDOWN_STATUS;
+        }
     }
 
-    midpFinalize();
 
     return vmStatus;
 }

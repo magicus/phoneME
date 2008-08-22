@@ -1,7 +1,7 @@
 /*
  *
  *
- * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
@@ -34,6 +34,7 @@
 #include <midpInit.h>
 #include <suitestore_common.h>
 #if !ENABLE_CDC
+#include <pcsl_network.h>
 #include <suspend_resume.h>
 #endif
 #if MEASURE_STARTUP
@@ -172,11 +173,12 @@ int midpInitCallback(int level, int (*init)(void), void (*final)(void)) {
     do {
         if ((midpAppDir == NULL) && (midpConfig == NULL)) {
             /*
-             * The caller has to set midpAppDir of midpConfig before 
+             * The caller has to set midpAppDir of midpConfig before
              * calling midpInitialize().
              */
             break;
         }
+
         /* duplicate values if not set */
         if (midpConfig == NULL) {
         	midpConfig = midpAppDir;
@@ -308,6 +310,8 @@ void midpFinalize() {
 #if ENABLE_LINKS
     midp_links_shutdown();
 #endif    
+
+    pcsl_network_finalize_start();
 
     midpAppDir = NULL;
     midpFinalizeMemory();
