@@ -81,7 +81,7 @@ BEGIN
     POPUP "SuitePopupMenu"
     BEGIN
         MENUITEM "Info...", IDM_SUITE_INFO
-        MENUITEM "Remove", IDM_SUITE_REMOVE
+        MENUITEM "Remove...", IDM_SUITE_REMOVE
         MENUITEM "Update", IDM_SUITE_UPDATE
         MENUITEM "Settings...", IDM_SUITE_SETTINGS
         MENUITEM "Cut", IDM_SUITE_CUT
@@ -99,7 +99,7 @@ BEGIN
     POPUP "FolderPopupMenu"
     BEGIN
         MENUITEM "Info...", IDM_FOLDER_INFO
-        MENUITEM "Remove All", IDM_FOLDER_REMOVE_ALL, GRAYED
+        MENUITEM "Remove All...", IDM_FOLDER_REMOVE_ALL, GRAYED
         MENUITEM "Install Into...", IDM_FOLDER_INSTALL_IN
         MENUITEM "Paste", IDM_FOLDER_PASTE, GRAYED
     END

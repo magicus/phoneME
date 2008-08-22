@@ -1377,11 +1377,20 @@ MidletTreeWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
             case IDM_SUITE_REMOVE: {
                 HTREEITEM hItem = TreeView_GetSelection(hWnd);
                 TVI_INFO* pInfo = GetTviInfo(hWnd, hItem);
+
                 if (pInfo && (pInfo->type == TVI_TYPE_SUITE)) {
-                   res = java_ams_suite_remove(pInfo->suiteId);
-                   if (res == JAVACALL_OK) {
-                       TreeView_DeleteItem(hWnd, hItem);
-                   }
+                    TCHAR buf[127];                 
+                    wsprintf(buf, _T("Remove %s ?"), pInfo->displayName);
+
+                    int iMBRes = MessageBox(hWnd, buf, g_szTitle,
+                        MB_ICONQUESTION | MB_OKCANCEL);
+
+                    if (iMBRes == IDOK) {
+                        res = java_ams_suite_remove(pInfo->suiteId);
+                        if (res == JAVACALL_OK) {
+                            TreeView_DeleteItem(hWnd, hItem);
+                        }
+                    }
                 }
                 break;
             }
