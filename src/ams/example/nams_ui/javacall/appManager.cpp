@@ -70,7 +70,7 @@ static TCHAR g_szWindowClass[] = _T("win32app");
 static TCHAR g_szTitle[] = _T("NAMS Example");
 
 static TCHAR g_szDefaultFolderName[] = _T("Folder");
-static TCHAR g_szDefaultSuiteName[] = _T("Midlet Suite");
+static TCHAR g_szDefaultSuiteName[]  = _T("Midlet Suite");
 
 // The size of main window calibrated to get 240x320 child area to draw SJWC output to
 const int g_iWidth = 246, g_iHeight = 345;
@@ -1385,10 +1385,10 @@ MidletTreeWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
                     TCHAR szBuf[127];                 
                     wsprintf(szBuf, _T("Remove '%s' suite?"), pInfo->displayName);
 
-                    int iMBRes = MessageBox(hWnd, szBuf, g_szTitle,
+                    int nMBRes = MessageBox(hWnd, szBuf, g_szTitle,
                         MB_ICONQUESTION | MB_OKCANCEL);
 
-                    if (iMBRes == IDOK) {
+                    if (nMBRes == IDOK) {
                         res = java_ams_suite_remove(pInfo->suiteId);
                         if (res == JAVACALL_OK) {
                             TreeView_DeleteItem(hWnd, hItem);
@@ -1407,31 +1407,58 @@ MidletTreeWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
                     wsprintf(szBuf, _T("Remove all MIDlets from '%s' folder?"),
                         pInfo->displayName);
 
-                    int iMBRes = MessageBox(hWnd, szBuf, g_szTitle,
+                    int nMBRes = MessageBox(hWnd, szBuf, g_szTitle,
                         MB_ICONQUESTION | MB_OKCANCEL);
 
-                    if (iMBRes == IDOK) {
+                    if (nMBRes == IDOK) {
                         int suiteNum;
                         javacall_suite_id* pSuiteIds;
 
-                        // Delete suites from the DB
                         res = java_ams_suite_get_suites_in_folder(
                             pInfo->folderId, &pSuiteIds, &suiteNum);
                         if (res == JAVACALL_OK) {
                             if (suiteNum > 0) {
+                                javacall_suite_id* pDelIds = 
+                                    (javacall_suite_id*)javacall_malloc(
+                                        sizeof(javacall_suite_id) * suiteNum);
+                                int nDelNum = 0;
+
+                                // Delete suites from the DB
                                 for (int s = 0; s < suiteNum; s++) {
-                                    java_ams_suite_remove(pSuiteIds[s]);
+                                    res = java_ams_suite_remove(pSuiteIds[s]);
+                                    if (res == JAVACALL_OK) {
+                                        pDelIds[nDelNum++] = pSuiteIds[s];
+                                    }
                                 }
                                 java_ams_suite_free_suite_ids(pSuiteIds,
                                     suiteNum);
-                            }
-                        }
 
-                        // Delete suites from the tree
-                        HTREEITEM hChild = TreeView_GetChild(hWnd, hItem);
-                        while (hChild) {
-                            TreeView_DeleteItem(hWnd, hChild);                                
-                            hChild = TreeView_GetNextSibling(hWnd, hChild);
+                                // Delete the suites from the tree
+                                HTREEITEM hChild = TreeView_GetChild(
+                                    hWnd, hItem);
+                                while (hChild) {
+                                    TVI_INFO* pChildInfo = GetTviInfo(
+                                        hWnd, hChild);
+
+                                    // Have to go to next sibling right now
+                                    // because once an item is deleted, its 
+                                    // handle is invalid and cannot be used
+                                    HTREEITEM hNextChild = TreeView_GetNextSibling(
+                                        hWnd, hChild);
+                                                      
+                                    for (int r = 0; r < nDelNum; r++) {
+                                        if (pChildInfo && 
+                                                (pChildInfo->suiteId == 
+                                                    pDelIds[r])) {
+                                            TreeView_DeleteItem(hWnd, hChild);
+                                        }
+                                    }
+
+                                    hChild = hNextChild;
+                                }
+
+                                javacall_free(pDelIds);
+                            }
                         }
                     }
                 }
