@@ -523,7 +523,6 @@ class DirectVideo implements VideoControl, MIDPVideoPainter {
      */
     public void paintVideo(Graphics g) {
         int x, y, w, h;
-        boolean isOverlapping = false;
 
         synchronized(boundLock) {
             x = dx;
@@ -540,14 +539,16 @@ class DirectVideo implements VideoControl, MIDPVideoPainter {
         if (canvas != null && !canvas.isShown()) {
             hidden = true;
         }
-
-        if (mmh != null) {
-            isOverlapping = mmh.isOverlapping(g);
-        }
-        if (hidden || isOverlapping) {
-            prepareClippedPreview(g, x, y, w, h);
-        } else if (visible && started) {
-            prepareVideoSurface(g, x, y, w, h);
+        if (!hidden) {
+            boolean isOverlapping = false;
+            if (mmh != null) {
+                isOverlapping = mmh.isOverlapping(g);
+            }
+            if (isOverlapping) {
+                prepareClippedPreview(g, x, y, w, h);
+            } else if (visible && started) {
+                prepareVideoSurface(g, x, y, w, h);
+            }
         }
     }
 
@@ -561,7 +562,6 @@ class DirectVideo implements VideoControl, MIDPVideoPainter {
         }
         source.setVideoVisible( false);
         hidden = true;
-        source.setVideoAlpha( true, ALPHA_COLOR);
         repaint();
     }
 
@@ -597,20 +597,20 @@ class DirectVideo implements VideoControl, MIDPVideoPainter {
         }
         
         protected void paint(Graphics g, int w, int h) {
-            boolean isOverlapping = false;
             if (debug) {
                 Logging.report(Logging.INFORMATION, LogChannels.LC_MMAPI, 
                     "DVItem.paint visible=" + visible); 
             }
-
-            if (mmh != null) {
-                isOverlapping = mmh.isOverlapping(g);
-            }
-            // Is in hidden state, then just draw fake preview
-            if (hidden || isOverlapping) {
-                prepareClippedPreview(g, 0, 0, w, h);
-            } else if (visible) {
-                prepareVideoSurface(g, 0, 0, w, h);
+            if (!hidden) {
+                boolean isOverlapping = false;
+                if (mmh != null) {
+                    isOverlapping = mmh.isOverlapping(g);
+                }
+                if (isOverlapping) {
+                    prepareClippedPreview(g, 0, 0, w, h);
+                } else if (visible) {
+                    prepareVideoSurface(g, 0, 0, w, h);
+                }
             }
         }
         
@@ -654,6 +654,7 @@ class DirectVideo implements VideoControl, MIDPVideoPainter {
             if (debug) {
                 Logging.report(Logging.INFORMATION, LogChannels.LC_MMAPI, "hideNotify"); 
             }        
+            source.setVideoVisible( false);
             hidden = true;
             repaint();
         }
