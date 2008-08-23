@@ -1933,12 +1933,9 @@ void CodeGenerator::float_cmp(Value& result, BytecodeClosure::cond_op cond,
   JVM_SOFTFP_LINKAGE int (*runtime_func)(float, float);
 
   switch (cond) {
-    case BytecodeClosure::lt:
-        runtime_func = jvm_fcmpl; break;
-    case BytecodeClosure::gt:
-        runtime_func = jvm_fcmpg; break;
-    default                 :
-        runtime_func = 0; SHOULD_NOT_REACH_HERE(); break;
+    case BytecodeClosure::lt: runtime_func = jvm_fcmpl; break;
+    case BytecodeClosure::gt: runtime_func = jvm_fcmpg; break;
+    default                 : runtime_func = NULL; SHOULD_NOT_REACH_HERE();
   }
 
   if (op1.is_immediate() && op2.is_immediate()) {

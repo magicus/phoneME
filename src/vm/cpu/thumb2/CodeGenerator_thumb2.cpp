@@ -674,69 +674,6 @@ CodeGenerator::move(const Value& dst, const Value& src, const Condition cond) {
   }
 }
 
-#if 0
-void
-CodeGenerator::move(const Value& dst, const Value& src, const Condition cond) {
-  // if the source isn't present there's nothing left to do
-  if (!src.is_present()) {
-    return;
-  }
-
-  GUARANTEE(dst.type() == src.type(), "type check");
-  GUARANTEE(dst.in_register(), "destination must be in register");
-  if (src.is_immediate()) {
-    /* move always 1 word */
-    Register lo = dst.lo_register();
-#if ENABLE_ARM_VFP
-    if (dst.type() == T_FLOAT) {
-      move_float_immediate(lo, src.lo_bits(), cond);
-    } else if (dst.type() == T_DOUBLE) {
-      move_double_immediate(lo, src.lo_bits(), src.hi_bits(), cond);
-    }
-    else
-#endif  // ENABLE_ARM_VFP
-    {
-      CompilerLiteralAccessor cla;
-#if ENABLE_ARM_VFP
-      const Assembler::Register reg = cla.has_vfp_literal(src.lo_bits());
-      if( reg != Assembler::no_reg && reg > Assembler::r15 ) {
-        fmrs(lo, reg, cond);
-      } else
-#endif
-      {
-        mov_imm(lo, src.lo_bits(), &cla, cond);
-      }
-      if (dst.is_two_word()) {
-#if ENABLE_ARM_VFP
-        const Assembler::Register reg = cla.has_vfp_literal(src.hi_bits());
-        if( reg != Assembler::no_reg && reg > Assembler::r15 ) {
-          fmrs(dst.hi_register(), reg, cond);
-        } else
-#endif
-        {
-          mov_imm(dst.hi_register(), src.hi_bits(), &cla, cond);
-        }
-      }
-    }
-    if (cond == al) {
-      set_has_literal_value(dst.lo_register(), src.lo_bits());
-    }
-    if (dst.is_two_word()) {
-      if (cond == al) {
-        set_has_literal_value(dst.hi_register(), src.hi_bits());
-      }
-    }
-  } else {
-    GUARANTEE(src.in_register(), "source must be in register");
-    /* move always 1 word */
-    move(dst.lo_register(), src.lo_register(), cond);
-    if (dst.is_two_word()) {
-      move(dst.hi_register(), src.hi_register(), cond);
-    }
-  }
-}
-#endif
-
 void CodeGenerator::move(Value& dst, Oop* obj, Condition cond) {
   GUARANTEE(dst.type() == T_OBJECT || dst.type() == T_ARRAY, "type check");
   ldr_oop(dst.lo_register(), obj, cond);
@@ -745,6 +682,18 @@ void CodeGenerator::move(Value& dst, Oop* obj, Condition cond) {
 void CodeGenerator::move(Assembler::Register dst, Assembler::Register src,
                          Condition cond) {
   it(cond);
+#if ENABLE_ARM_VFP
+  // Does not support Doubles reg moves
+  if (dst >= s0) {
+    if (src >= s0) {
+      fcpys(dst, src);
+    } else {
+      fmsr(dst, src);
+    }
+  } else if (src >= s0) {
+    fmrs(dst, src);
+  } else
+#endif
   mov(dst, src);
 }
 
@@ -1125,19 +1074,11 @@ void CodeGenerator::int_unary_do(Value& result, Value& op1,
   GUARANTEE(op1.in_register(), "op1 must be in a register");
 
   assign_register(result, op1);
-  switch (op) {
-    case BytecodeClosure::una_neg  :
-      rsb_imm12_w(result.lo_register(), op1.lo_register(), imm12(zero), set_CC);
-      break;
-    case BytecodeClosure::una_abs  :
-      add(result.lo_register(), op1.lo_register(), zero);
-      it(lt);
-      rsb_imm12_w(result.lo_register(), op1.lo_register(), imm12(zero), set_CC);
-      break;
-    default:
-      SHOULD_NOT_REACH_HERE();
-      break;
+  if( op == BytecodeClosure::una_abs ) {
+    add(result.lo_register(), op1.lo_register(), zero);
+    it(lt);
   }
+  rsb_imm12_w(result.lo_register(), op1.lo_register(), imm12(zero), set_CC);
 }
 
 void CodeGenerator::long_binary_do(Value& result, Value& op1, Value& op2,
@@ -1557,6 +1498,7 @@ void CodeGenerator::float_unary_do(Value& result, Value& op1,
 
 void CodeGenerator::float_cmp (Value& result, BytecodeClosure::cond_op cond,
                                Value& op1, Value& op2 JVM_TRAPS) {
+
   int (*runtime_func)(float, float);
   switch (cond) {
     case BytecodeClosure::lt: runtime_func = jvm_fcmpl; break;
@@ -1566,7 +1508,38 @@ void CodeGenerator::float_cmp (Value& result, BytecodeClosure::cond_op cond,
   if (op1.is_immediate() && op2.is_immediate()) {
     result.set_int(runtime_func(op1.as_float(), op2.as_float()));
   } else {
+#if ENABLE_ARM_VFP
+    NearLabel done;
+    op1.materialize();
+    ensure_in_float_register(op1);
+
+    op2.materialize();
+    ensure_in_float_register(op2);
+
+    result.assign_register();
+
+    fcmpes(op1.lo_register(), op2.lo_register());
+    fmstat();
+    mov(result.lo_register(), 1);
+    if (cond == BytecodeClosure::lt) {
+      b(done, gt);
+      fcmps(op1.lo_register(), op2.lo_register());
+      fmstat();
+      it(eq, ELSE_THEN);
+      neg(result.lo_register(), result.lo_register());
+      mov(result.lo_register(), 0);
+    } else if (cond == BytecodeClosure::gt) {
+      it(mi);
+      neg(result.lo_register(), result.lo_register());
+      b(done, gt);
+      fcmps(op1.lo_register(), op2.lo_register());
+      fmstat();
+      mov(result.lo_register(), 0, eq);
+    }
+    bind(done);
+#else   // !ENABLE_ARM_VFP
     call_simple_c_runtime(result, (address)runtime_func, op1, op2);
+#endif  // !ENABLE_ARM_VFP
   }
 }
 

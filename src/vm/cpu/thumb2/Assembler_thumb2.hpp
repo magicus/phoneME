@@ -1323,7 +1323,7 @@ protected:
 
   // IT cond, mask
   void it(const Condition condition, const ConditionMask mask = SINGLE) {
-    if( condition == always ) {
+    if( condition != always ) {
       check_imm(mask, 8);
       int it_scope_size = 1;
       if ((condition & 1) == 1) {
