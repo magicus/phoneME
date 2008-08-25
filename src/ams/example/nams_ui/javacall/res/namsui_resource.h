@@ -55,12 +55,12 @@
 #define  IDM_HELP_ABOUT            500
 
 #define  IDC_TREEVIEW_MIDLETS      900
-#define  IDC_MAIN_TOOLBAR          910
-#define  IDB_MAIN_TOOLBAR_BUTTONS  920
+#define  IDC_TREEVIEW_MIDLET_INFO  910
+#define  IDC_MAIN_TOOLBAR          920
+#define  IDB_MAIN_TOOLBAR_BUTTONS  930
 
 #define  IDB_DEF_SUITE_ICON        950
 #define  IDB_DEF_MIDLET_ICON       960
 #define  IDB_FOLDER_ICON           970
 
-#define  IDS_EMPTY            1001
 #define  IDB_MIDLET_TREE_BG   10001

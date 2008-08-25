@@ -28,10 +28,6 @@
 #include "windows.h"                 /* Windows stuff */
 #include "namsui_resource.h"         /* Program-specific stuff */
 
-STRINGTABLE DISCARDABLE
-BEGIN
-    IDS_EMPTY, ""
-END
 
 ID_MENU_MAIN MENU
 BEGIN
@@ -105,16 +101,6 @@ BEGIN
     END
 END
 
-/*
-ID_MENU_POPUP RCDATA
-BEGIN
-    ID_MENU_POPUP, 2,
-    I_IMAGENONE, IDM_SOFTBTN_0, TBSTATE_ENABLED,
-                 TBSTYLE_BUTTON | TBSTYLE_AUTOSIZE, IDS_EMPTY, 0, 1,
-    I_IMAGENONE, IDM_SOFTBTN_1, TBSTATE_ENABLED,
-                 TBSTYLE_DROPDOWN | TBSTYLE_AUTOSIZE, IDS_EMPTY, 0, 1,
-END
-*/
 
 IDB_DEF_MIDLET_ICON ICON "midlet.ico"
 //IDB_DEF_MIDLET_ICON BITMAP "def_midlet_icon.bmp"
