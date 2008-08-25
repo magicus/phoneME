@@ -33,6 +33,12 @@ extern "C" {
 #include "javacall_defs.h"
 
 /*
+ * IMPL_NOTE: the following must be removed after refactoring of
+ * javacall_lifecycle_state type into two types: SJWC state and MIDlet state.
+ */
+#include "javacall_lifecycle.h"
+
+/*
  * Functions declared in this file are exported by the MIDP runtime.
  * They should be used in case if the Application Manager is
  * implemented on the customer's side.
@@ -89,26 +95,21 @@ typedef struct _javacall_midlet_runtime_info {
 } javacall_midlet_runtime_info;
 
 /**
- * Platform invokes this function to start the Application Manager.
+ * Platform invokes this function to start the MIDP system.
+ * It does not return until the system is stopped.
  *
- * This function should be used if the Application Manager is
- * implemented on the MIDP side.
- *
- * @return error code: <tt>JAVACALL_OK</tt> if the succeeded,
- *                     <tt>JAVACALL_FAIL</tt> otherwise
+ * @return <tt>JAVACALL_OK</tt> if successful,
+ *         <tt>JAVACALL_FAIL</tt> otherwise
  */
-javacall_result java_ams_appmgr_start();
+javacall_result java_ams_system_start();
 
 /**
- * Platform invokes this function to stop the Application Manager.
+ * Platform invokes this function to stop the MIDP system.
  *
- * This function should be used if the Application Manager is
- * implemented on the MIDP side.
- *
- * @return error code: <tt>JAVACALL_OK</tt> if the succeeded,
- *                     <tt>JAVACALL_FAIL</tt> otherwise
+ * @return <tt>JAVACALL_OK</tt> if successful,
+ *         <tt>JAVACALL_FAIL</tt> otherwise
  */
-javacall_result java_ams_appmgr_stop();
+javacall_result java_ams_system_stop();
 
 /**
  * App Manager invokes this function to inform Java to start a specific MIDlet
@@ -258,6 +259,30 @@ java_ams_midlet_request_runtime_info(javacall_app_id appId);
 javacall_result
 java_ams_midlet_get_app_suite_id(javacall_app_id appId,
                                  javacall_suite_id* pSuiteId);
+
+/**
+ * Java invokes this function to inform the platform on change of the specific
+ * MIDlet's lifecycle status.
+ *
+ * IMPL_NOTE: the functionality is the same as provided by
+ *            javacall_lifecycle_state_changed(). One of this functions
+ *            should be removed. Now it is kept for backward compatibility.
+ *
+ * VM will invoke this function whenever the lifecycle status of the running
+ * MIDlet is changed, for example when the running MIDlet has been paused,
+ * resumed, the MIDlet has shut down etc.
+ *
+ * @param state new state of the running MIDlet. Can be either,
+ *        <tt>JAVACALL_LIFECYCLE_MIDLET_STARTED</tt>
+ *        <tt>JAVACALL_LIFECYCLE_MIDLET_PAUSED</tt>
+ *        <tt>JAVACALL_LIFECYCLE_MIDLET_SHUTDOWN</tt>
+ *        <tt>JAVACALL_LIFECYCLE_MIDLET_ERROR</tt>
+ * @param appId the ID of the state-changed application
+ * @param reason rhe reason why the state change has happened
+ */
+void java_ams_midlet_state_changed(javacall_lifecycle_state state,
+                                   javacall_app_id appId,
+                                   javacall_change_reason reason);
 
 /** @} */
 

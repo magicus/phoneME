@@ -52,8 +52,6 @@ void java_ams_operation_completed(javacall_opcode operation,
     javacall_print("[NAMS] Operation completed.\n");
 }
 
-#endif
-
 /**
  * Inform on change of the specific MIDlet's lifecycle status.
  *
@@ -107,6 +105,8 @@ void java_ams_midlet_state_changed(javacall_lifecycle_state state,
         /* javacall_ams_refresh_lcd(); */
     }
 }
+
+#endif /* ENABLE_NATIVE_AMS_UI */
                                       
 /**
  * Inform on change of the specific MIDlet's lifecycle status.
