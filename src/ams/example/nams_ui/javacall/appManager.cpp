@@ -706,19 +706,28 @@ static void AddSuiteToTree(HWND hwndTV, javacall_suite_id suiteId, int nLevel) {
                 g_szDefaultSuiteName;
             wprintf(_T("Suite label=%s\n"), pszSuiteName);
 
+            TCHAR szSuiteLabel[127];
+            if (pSuiteInfo->numberOfMidlets > 1) {
+                wsprintf(szSuiteLabel, _T("%s (%d)"),
+                         pszSuiteName,
+                         pSuiteInfo->numberOfMidlets);
+            } else {
+                wsprintf(szSuiteLabel, _T("%s"), pszSuiteName);
+            }
+
+            if (pszSuiteName && (pszSuiteName != g_szDefaultSuiteName)) {
+                javacall_free(pszSuiteName);
+            }
+
             pInfo = CreateTviInfo();
             if (pInfo) {
                 pInfo->type = TVI_TYPE_SUITE;
                 pInfo->suiteId = suiteId;
                 if (jsLabel) {
-                pInfo->displayName = CloneJavacallUtf16(jsLabel);
+                    pInfo->displayName = CloneJavacallUtf16(jsLabel);
                 }
             }
-            AddTreeItem(hwndTV, pszSuiteName, nLevel, pInfo);
-
-            if (pszSuiteName && (pszSuiteName != g_szDefaultSuiteName)) {
-                javacall_free(pszSuiteName);
-            }
+            AddTreeItem(hwndTV, szSuiteLabel, nLevel, pInfo);
 
             res = java_ams_suite_get_midlets_info(suiteId, &pMidletsInfo,
                 &midletNum);
@@ -1598,6 +1607,7 @@ MidletInfoWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
         ShowWindow(hWnd, SW_HIDE);
         TreeView_DeleteAllItems(hWnd);
 
+        // Show back MIDlet tree view
         ShowWindow(g_hMidletTreeView, SW_SHOWNORMAL);
 
         break;
@@ -1675,10 +1685,9 @@ MidletInfoWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
 
                     java_ams_suite_free_info(pSuiteInfo);
 
-                    ShowWindow(hWnd, SW_SHOW);
+                    ShowWindow(hWnd, SW_SHOWNORMAL);
                 }
-            } else {
-            }
+            } 
         }
         break;
     }
