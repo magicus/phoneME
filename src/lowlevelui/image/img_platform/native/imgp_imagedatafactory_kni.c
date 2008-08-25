@@ -42,16 +42,11 @@
 #include <midpUtilKni.h>
 
 #include <imgapi_image.h>
+#include <img_imagedata_load.h>
 #include <gxpport_immutableimage.h>
 
 #include <jvm.h>
 #include <sni.h>
-
-#include <suitestore_common.h>
-
-#if ENABLE_IMAGE_CACHE
-#include <imageCache.h>
-#endif
 
 
 /**
@@ -114,6 +109,56 @@ MIDP_ERROR img_decode_data2cache(unsigned char* srcBuffer,
     default:
 	return MIDP_ERROR_UNSUPPORTED;
     }
+}
+
+/**
+ * Load Java ImageData instance with image data in RAW format.
+ * Image data is provided in native buffer.
+ *
+ * @param imageData Java ImageData object to be loaded with image data
+ * @param buffer pointer to native buffer with raw image data
+ * @param length length of the raw image data in the buffer
+ *
+ * @return KNI_TRUE in the case ImageData is successfully loaded with
+ *    raw image data, otherwise KNI_FALSE.
+ */
+int img_load_imagedata_from_raw_buffer(KNIDECLARGS jobject imageData,
+    unsigned char *buffer, int length) {
+
+    int status = KNI_FALSE;
+    int imgWidth;
+    int imgHeight;
+
+    img_native_error_codes creationError = IMG_NATIVE_IMAGE_NO_ERROR;
+
+    /* pointer to native image structure */
+    gxpport_image_native_handle newImagePtr;
+
+    /*
+     * Do the decoding of the png in the buffer and initialize
+     * class variables.
+     */
+    gxpport_loadimmutable_from_platformbuffer(buffer, length, KNI_FALSE,
+						                      &imgWidth, &imgHeight,
+						                      &newImagePtr,
+						                      &creationError);
+
+    if (IMG_NATIVE_IMAGE_NO_ERROR == creationError) {
+        java_imagedata *dstImageDataPtr = IMGAPI_GET_IMAGEDATA_PTR(imageData);
+
+        dstImageDataPtr->width   = (jint)imgWidth;
+        dstImageDataPtr->height  = (jint)imgHeight;
+        dstImageDataPtr->nativeImageData  = (jint)newImagePtr;
+        status = KNI_TRUE;        
+	} else if (IMG_NATIVE_IMAGE_OUT_OF_MEMORY_ERROR == creationError) {
+        KNI_ThrowNew(midpOutOfMemoryError, NULL);        
+    } else if (IMG_NATIVE_IMAGE_RESOURCE_LIMIT == creationError) {
+        KNI_ThrowNew(midpOutOfMemoryError,
+                    "Resource limit exceeded for immutable image");
+    } else {
+        REPORT_WARN(LC_LOWUI,"Warning: could not load cached image;\n");        
+    }
+    return status;
 }
 
 /**
@@ -374,94 +419,6 @@ Java_javax_microedition_lcdui_ImageDataFactory_loadRomizedImage() {
 
     KNI_EndHandles();
     KNI_ReturnBoolean(status);
-}
-
-/**
- * Loads a native image data from image cache and creates
- * a native image.
- * <p>
- * Java declaration:
- * <pre>
- *   boolean loadAndCreateImmutableImageFromCache0(ImageData imgData,
- *                                                 int suiteId, String resName);
- * </pre>
- *
- * @param imageData  The ImageData object
- * @param suitId     The suite Id
- * @param name       The name of the image resource
- * @return           true if a cached image was loaded, false otherwise
- */
-KNIEXPORT KNI_RETURNTYPE_BOOLEAN
-Java_javax_microedition_lcdui_ImageDataFactory_loadAndCreateImmutableImageDataFromCache0() {
-#if ENABLE_IMAGE_CACHE
-    int            len;
-    unsigned char* buffer = NULL;
-    int            status = KNI_FALSE;
-    int imgWidth;
-    int imgHeight;
-    SuiteIdType suiteId;
-    img_native_error_codes creationError = IMG_NATIVE_IMAGE_NO_ERROR;
-
-    /* pointer to native image structure */
-    gxpport_image_native_handle newImagePtr;
-
-    KNI_StartHandles(2);
-
-    GET_PARAMETER_AS_PCSL_STRING(3, resName)
-
-    KNI_DeclareHandle(imageData);
-    KNI_GetParameterAsObject(1, imageData);
-
-    suiteId = KNI_GetParameterAsInt(2);
-
-    do {
-        len = loadImageFromCache(suiteId, &resName, &buffer);
-
-        if ((len == -1) || (buffer == NULL)) {
-            REPORT_WARN(LC_LOWUI,"Warning: could not load cached image;\n");
-            break;
-        }
-
-        /*
-         * Do the decoding of the png in the buffer and initialize
-         * the class variables.
-         */
-        gxpport_loadimmutable_from_platformbuffer(buffer, len, KNI_FALSE,
-						  &imgWidth, &imgHeight,
-						  &newImagePtr,
-						  &creationError);
-
-        if (IMG_NATIVE_IMAGE_NO_ERROR == creationError) {
-	    java_imagedata * dstImageDataPtr = IMGAPI_GET_IMAGEDATA_PTR(imageData);
-
-            dstImageDataPtr->width   = (jint)imgWidth;
-            dstImageDataPtr->height  = (jint)imgHeight;
-            dstImageDataPtr->nativeImageData  = (jint)newImagePtr;
-            status = KNI_TRUE;
-            break;
-	} else if (IMG_NATIVE_IMAGE_OUT_OF_MEMORY_ERROR == creationError) {
-            KNI_ThrowNew(midpOutOfMemoryError, NULL);
-            break;
-        } else if (IMG_NATIVE_IMAGE_RESOURCE_LIMIT == creationError) {
-            KNI_ThrowNew(midpOutOfMemoryError,
-                         "Resource limit exceeded for immutable image");
-            break;
-        } else {
-            REPORT_WARN(LC_LOWUI,"Warning: could not load cached image;\n");
-            break;
-        }
-
-    } while (0);
-
-    midpFree(buffer);
-
-    RELEASE_PCSL_STRING_PARAMETER
-
-    KNI_EndHandles();
-    KNI_ReturnBoolean(status);
-#else
-    KNI_ReturnBoolean(KNI_FALSE);
-#endif
 }
 
 /**
