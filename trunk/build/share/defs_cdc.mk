@@ -518,9 +518,16 @@ ifeq ($(CVM_DUAL_STACK), true)
 	sun.misc.MIDPImplementationClassLoader \
 	sun.misc.MIDPConfig \
 	sun.misc.MIDletClassLoader \
-	sun.misc.MIDPInternalConnectorImpl \
 	sun.misc.MIDPLauncher \
 	sun.misc.CDCAppClassLoader
+
+#
+# Classes needed for MIDP support
+#
+ifeq ($(USE_MIDP), true)
+    CLASSLIB_CLASSES += \
+	sun.misc.MIDPInternalConnectorImpl
+endif
 endif
 
 #
