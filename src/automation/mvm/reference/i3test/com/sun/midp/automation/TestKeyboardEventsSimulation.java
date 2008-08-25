@@ -104,8 +104,8 @@ public class TestKeyboardEventsSimulation extends TestCase {
 
 
         // simulate 'B'
-        a.simulateKeyEvent('B', AutoKeyState.PRESSED);
-        a.simulateKeyEvent('B', AutoKeyState.RELEASED);
+        a.simulateKeyEvent('b', AutoKeyState.PRESSED);
+        a.simulateKeyEvent('b', AutoKeyState.RELEASED);
         
         try {
             Thread.sleep(500);
@@ -114,38 +114,16 @@ public class TestKeyboardEventsSimulation extends TestCase {
         
 
         // simulate 'C'
-        a.simulateKeyClick('C');
-
-        try {
-            Thread.sleep(500);
-        } catch (InterruptedException ie) {
-        }
-
+        a.simulateKeyClick('c', 500);
 
         // simulate right soft key click
-        a.simulateKeyClick(AutoKeyCode.SOFT2);
-
-        try {
-            Thread.sleep(500);
-        } catch (InterruptedException ie) {
-        }
-        
+        a.simulateKeyClick(AutoKeyCode.SOFT2, 500);
 
         // simulate down key click
-        a.simulateKeyClick(AutoKeyCode.DOWN);
+        a.simulateKeyClick(AutoKeyCode.DOWN, 500);
 
-        try {
-            Thread.sleep(500);
-        } catch (InterruptedException ie) {
-        }
-        
         // simulate select key click
-        a.simulateKeyClick(AutoKeyCode.SELECT); 
-
-        try {
-            Thread.sleep(2500);
-        } catch (InterruptedException ie) {
-        }        
+        a.simulateKeyClick(AutoKeyCode.SELECT, 2500); 
 
         midlet.switchTo(AutoMIDletLifeCycleState.DESTROYED, true);
 

@@ -39,7 +39,7 @@ final class AutoKeyEventImpl
     private AutoKeyState keyState = null;   
 
     AutoKeyEventImpl(AutoKeyCode keyCode, AutoKeyState keyState) {
-        super(AutoEventType.KEYBOARD, 
+        super(AutoEventType.KEY, 
               createNativeEvent(keyState, keyCode, ' '));
 
         if (keyCode == null) {
@@ -55,7 +55,7 @@ final class AutoKeyEventImpl
     }
 
     AutoKeyEventImpl(char keyChar, AutoKeyState keyState) {
-        super(AutoEventType.KEYBOARD, 
+        super(AutoEventType.KEY, 
               createNativeEvent(keyState, null, keyChar));
 
         if (keyState == null) {

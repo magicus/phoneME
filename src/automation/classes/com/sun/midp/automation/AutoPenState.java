@@ -25,28 +25,33 @@
  */
 
 package com.sun.midp.automation;
-
+import com.sun.midp.lcdui.EventConstants;
 
 public final class AutoPenState {
-
     public final static AutoPenState PRESSED = 
-        new AutoPenState("PRESSED");
+        new AutoPenState("PRESSED", EventConstants.PRESSED);
 
     public final static AutoPenState REPEATED = 
-        new AutoPenState("DRAGGED");
+        new AutoPenState("DRAGGED", EventConstants.DRAGGED);
 
     public final static AutoPenState RELEASED = 
-        new AutoPenState("RELEASED");
+        new AutoPenState("RELEASED", EventConstants.RELEASED);
 
+
+    private String name;    
+    private int midpPenState;
+    
 
     public String getName() {
         return name;
     }
 
-   
-    private AutoPenState(String name) {
-        this.name = name;
+    int getMIDPPenState() {
+        return midpPenState;
     }
 
-    private String name;    
+    private AutoPenState(String name, int midpPenState) {
+        this.name = name;
+        this.midpPenState = midpPenState;
+    }
 }

@@ -101,8 +101,10 @@ final class AutoEventFactoryImpl implements AutoEventFactory {
         return new AutoKeyEventImpl(keyChar, keyState);
     }
 
-    public AutoPenEvent createPenEvent(AutoPenState penState, int x, int y) {
-        return null;
+    public AutoPenEvent createPenEvent(int x, int y, AutoPenState penState) 
+        throws IllegalArgumentException {
+
+        return new AutoPenEventImpl(x, y, penState);
     }
 
     public AutoDelayEvent createDelayEvent(int msec) 

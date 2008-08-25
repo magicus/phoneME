@@ -38,6 +38,10 @@ public final class AutoKeyState {
         new AutoKeyState("RELEASED", EventConstants.RELEASED);
 
 
+    private String name;
+    private int midpKeyState;    
+
+
     public String getName() {
         return name;
     }
@@ -48,9 +52,6 @@ public final class AutoKeyState {
 
     private AutoKeyState(String name, int midpKeyState) {
         this.name = name;
-	    this.midpKeyState = midpKeyState;
+        this.midpKeyState = midpKeyState;
     }
-
-    private String name;
-    private int midpKeyState;
 }

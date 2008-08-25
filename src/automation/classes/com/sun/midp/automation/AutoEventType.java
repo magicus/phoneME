@@ -27,7 +27,7 @@
 package com.sun.midp.automation;
 
 public final class AutoEventType {
-    public final static AutoEventType KEYBOARD = 
+    public final static AutoEventType KEY = 
         new AutoEventType("key");
 
     public final static AutoEventType PEN = 

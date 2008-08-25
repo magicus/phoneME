@@ -51,22 +51,40 @@ public abstract class Automation {
     public abstract AutoEventFactory getEventFactory()
         throws IllegalStateException;
 
+
     public abstract void simulateEvents(AutoEvent event);
+
     public abstract void simulateEvents(AutoEventSequence events, 
-            int speedDivisor);
+            int speedAdjustment);
+
     public abstract void simulateEvents(AutoEventSequence events);
+
 
     public abstract void simulateKeyEvent(AutoKeyCode keyCode, 
             AutoKeyState keyState) 
         throws IllegalArgumentException;
 
     public abstract void simulateKeyEvent(char keyChar, AutoKeyState keyState) 
-        throws IllegalArgumentException;;
+        throws IllegalArgumentException;
 
+    public abstract void simulateKeyClick(AutoKeyCode keyCode, int delayMsec) 
+        throws IllegalArgumentException;
+    
     public abstract void simulateKeyClick(AutoKeyCode keyCode) 
         throws IllegalArgumentException;
 
-    public abstract void simulateKeyClick(char keyChar);
+    public abstract void simulateKeyClick(char keyChar, int delayMsec) 
+        throws IllegalArgumentException;
+
+    public abstract void simulateKeyClick(char keyChar);    
+
+
+    public abstract void simulatePenEvent(int x, int y, AutoPenState penState) 
+        throws IllegalStateException;
+
+    public abstract void simulatePenClick(int x, int y, int delayMsec);
+
+    public abstract void simulatePenClick(int x, int y);
 
     public abstract void simulateDelayEvent(int msec) 
         throws IllegalArgumentException;

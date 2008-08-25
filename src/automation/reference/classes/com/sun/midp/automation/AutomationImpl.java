@@ -133,6 +133,13 @@ final class AutomationImpl extends Automation {
     }
 
     public void simulateKeyClick(AutoKeyCode keyCode) {
+        simulateKeyClick(keyCode, 0);
+    }
+    
+
+    public void simulateKeyClick(AutoKeyCode keyCode, int delayMsec) 
+        throws IllegalArgumentException {
+
         AutoEvent e;
 
         e = eventFactory.createKeyEvent(keyCode, AutoKeyState.PRESSED);
@@ -140,17 +147,57 @@ final class AutomationImpl extends Automation {
 
         e = eventFactory.createKeyEvent(keyCode, AutoKeyState.RELEASED);
         simulateEvents(e);
+
+        if (delayMsec != 0) {
+            simulateDelayEvent(delayMsec);
+        }
     }
     
     public void simulateKeyClick(char keyChar) {
+        simulateKeyClick(keyChar, 0);
+    }    
+
+    public void simulateKeyClick(char keyChar, int delayMsec) 
+        throws IllegalArgumentException {
+
         AutoEvent e;
 
         e = eventFactory.createKeyEvent(keyChar, AutoKeyState.PRESSED);
         simulateEvents(e);
 
         e = eventFactory.createKeyEvent(keyChar, AutoKeyState.RELEASED);
-        simulateEvents(e);        
+        simulateEvents(e);
+
+        if (delayMsec != 0) {
+            simulateDelayEvent(delayMsec);
+        }
     }
+
+    public void simulatePenEvent(int x, int y, AutoPenState penState) 
+        throws IllegalStateException {
+
+        AutoEvent e = eventFactory.createPenEvent(x, y, penState);
+        simulateEvents(e);
+    }
+
+    public void simulatePenClick(int x, int y, int delayMsec) {
+        AutoEvent e;
+
+        e = eventFactory.createPenEvent(x, y, AutoPenState.PRESSED);
+        simulateEvents(e);
+
+        e = eventFactory.createPenEvent(x, y, AutoPenState.RELEASED);
+        simulateEvents(e);
+
+        if (delayMsec != 0) {
+            simulateDelayEvent(delayMsec);
+        }
+    }
+
+    public void simulatePenClick(int x, int y) {
+        simulatePenClick(x, y, 0);
+    }
+
 
     public void simulateDelayEvent(int msec) {
         AutoEvent e =  eventFactory.createDelayEvent(msec);

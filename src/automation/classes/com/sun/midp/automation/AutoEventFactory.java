@@ -46,8 +46,8 @@ public interface AutoEventFactory {
     public AutoKeyEvent createKeyEvent(char keyChar, AutoKeyState keyState)
         throws IllegalArgumentException;
 
-    public AutoPenEvent createPenEvent(
-            AutoPenState penState, int x, int y);
+    public AutoPenEvent createPenEvent(int x, int y, AutoPenState penState) 
+        throws IllegalArgumentException;
 
     public AutoDelayEvent createDelayEvent(int msec)
         throws IllegalArgumentException;
