@@ -29,9 +29,9 @@ package com.sun.mmedia;
  */
 class GIFImageDecoder {
 
-    final static int UNDRAW_LEAVE = 1;
-    final static int UNDRAW_RESTORE_BACKGROUND = 2;
-    final static int UNDRAW_RESTORE_PREVIOUS = 3;
+    private static final int UNDRAW_LEAVE = 1;
+    private static final int UNDRAW_RESTORE_BACKGROUND = 2;
+    private static final int UNDRAW_RESTORE_PREVIOUS = 3;
 
     private int width, height, colorDepth, globalColorDepth, curColorDepth;
     private byte[] globalPalette;
@@ -157,26 +157,29 @@ class GIFImageDecoder {
         // LZW decode
         boolean result = lzwImage(lzwCodeSize, dataSize, data);
 
+        int pixel, i, j;
+
         // Undraw
         switch (undrawFlag) {
         case UNDRAW_LEAVE:
-        {
-            int pixel = framePosX + framePosY * width;
-            for (int i = 0; i < frameHeight; ++i, pixel += width)
+            pixel = framePosX + framePosY * width;
+            for (i = 0; i < frameHeight; ++i, pixel += width) {
                 System.arraycopy(curArgb, pixel, argb, pixel, frameWidth);
+            }
             break;
-        }
         case UNDRAW_RESTORE_BACKGROUND:
-        if (globalPalette != null && backgroundIndex >= 0) {
-            int pixel = framePosX + framePosY * width;
-            int wdif = width - frameWidth;
-            int bkg = getColor(backgroundIndex, globalPalette);
+            if (globalPalette != null && backgroundIndex >= 0) {
+                pixel = framePosX + framePosY * width;
+                int wdif = width - frameWidth;
+                int bkg = getColor(backgroundIndex, globalPalette);
 
-            for (int i = 0; i < frameHeight; ++i, pixel += wdif)
-                for (int j = 0; j < frameWidth; ++j, ++pixel)
-                    argb[pixel] = bkg;
+                for (i = 0; i < frameHeight; ++i, pixel += wdif) {
+                    for (j = 0; j < frameWidth; ++j, ++pixel) {
+                        argb[pixel] = bkg;
+                    }
+                }
+            }
             break;
-        }
         case UNDRAW_RESTORE_PREVIOUS:
             // Do nothing
             break;
@@ -210,9 +213,9 @@ class GIFImageDecoder {
     // This is converted from the native version. The java version is 
     // much faster when we have JIT.
 
-    private short prefix[]  = new short[4096];
-    private byte  suffix[]  = new byte[4096];
-    private byte  outCode[] = new byte[4097];
+    private short[] prefix = new short[ 4096 ];
+    private byte[] suffix = new byte[ 4096 ];
+    private byte[] outCode = new byte[ 4097 ];
 
     /**
      * Parses image, using current palette and graphics control.
@@ -256,7 +259,7 @@ class GIFImageDecoder {
         bitMask = (1 << curColorDepth) - 1;
 
         /* Read codes until the eofCode is encountered */
-        for (;;) {
+        while( true ) {
             if (accumbits < codeSize) {
                 while (remain < 2) {
                     /* Sometimes we have one last byte to process... */

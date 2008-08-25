@@ -35,12 +35,11 @@ public interface MediaEventConsumer {
      * Called by event delivery when MIDlet controller (in AMS Isolate)
      * notifies MIDlet and its display that there is a change in its foreground status
      */    
-    public void handleMediaForegroundNotify();
+    void handleMediaForegroundNotify();
 
     /**
      * Called by event delivery when MIDlet controller (in AMS Isolate)
      * notifies MIDlet and its display that there is a change in its foreground status
      */        
-    public void handleMediaBackgroundNotify();    
-
+    void handleMediaBackgroundNotify();    
 }

@@ -105,8 +105,8 @@ class MediaDownload {
         needMoreData = true;
         notifyAll();
     }
-    
-    synchronized private void download(boolean inBackground) throws MediaException, IOException {
+
+    private synchronized void download( boolean inBackground ) throws MediaException, IOException {
         int roffset = 0;
         int woffset = 0;
 
@@ -127,7 +127,7 @@ class MediaDownload {
             }
             
             if (buffer == null || newJavaBufSize > buffer.length) {
-                buffer = new byte[(int)newJavaBufSize];
+                buffer = new byte[ newJavaBufSize ];
                 javaBufSize = newJavaBufSize;
             }
 
@@ -166,10 +166,10 @@ class MediaDownload {
                 } else if (packetSize > javaBufSize){
                     if ((woffset - roffset)==0) {
                         javaBufSize = packetSize;
-                        buffer = new byte[(int)javaBufSize];
+                        buffer = new byte[ javaBufSize ];
                     } else {
                         javaBufSize = packetSize;
-                        byte b[] = new byte[(int)javaBufSize];
+                        byte[] b = new byte[ javaBufSize ];
                         for (int i=0, j=roffset; j<woffset; i++, j++) {
                             b[i] = buffer[j];
                         }
@@ -223,9 +223,10 @@ class MediaDownload {
             } else {
                 try {
                     wait(500);
-                } catch (Exception e) {}
+                } catch (InterruptedException e) {
+                }
             }
-        };
+        }
         return offset;
     }
 }

@@ -24,7 +24,6 @@
 package com.sun.mmedia;
 
 import java.io.IOException;
-import java.io.ByteArrayOutputStream;
 import java.util.Vector;
 
 import javax.microedition.media.Control;
@@ -37,13 +36,10 @@ import javax.microedition.media.control.StopTimeControl;
 import com.sun.mmedia.protocol.BasicDS;
 import javax.microedition.media.protocol.DataSource;
 
-import com.sun.mmedia.Configuration;
-import com.sun.mmedia.VideoRenderer;
-
 /**
  * A player for the GIF89a.
  */
-final public class GIFPlayer extends BasicPlayer implements Runnable {
+public final class GIFPlayer extends BasicPlayer implements Runnable {
     /* Single image decoder */
     private GIFImageDecoder imageDecoder;
     
@@ -79,10 +75,10 @@ final public class GIFPlayer extends BasicPlayer implements Runnable {
     private long EARLY_THRESHOLD = 100;
 
     /* minimum wait time */
-    private final long MIN_WAIT = 50;
+    private static final long MIN_WAIT = 50;
 
     /* For zero duration GIFs (e.g. non-animated) wait time between STARTED and END_OF_MEDIA */
-    private final long ZERO_DURATION_WAIT = 50;
+    private static final long ZERO_DURATION_WAIT = 50;
 
     /* a table of frame durations (default rate) */    
     private Vector frameTimes;
@@ -1035,7 +1031,7 @@ final public class GIFPlayer extends BasicPlayer implements Runnable {
                 
                 if (imageData.length < idx + size) {
                     // increase image data buffer
-                    byte data[] = new byte[idx + size];
+                    byte[] data = new byte[ idx + size ];
                     System.arraycopy(imageData, 0, data, 0, idx);
                     imageData = data;
                 }
@@ -1401,7 +1397,7 @@ final public class GIFPlayer extends BasicPlayer implements Runnable {
             if (frameNumber < 0 || frameNumber >= frameTimes.size()) {
                 return -1;
             }
-            return (long) (frameToTime(frameNumber));
+            return frameToTime(frameNumber);
         }
 
         /**
@@ -1425,7 +1421,7 @@ final public class GIFPlayer extends BasicPlayer implements Runnable {
                 return -1;
             }
 
-            return (int) timeToFrame(mediaTime);
+            return timeToFrame(mediaTime);
         }
 
         public boolean isActive() {
@@ -1444,10 +1440,10 @@ final public class GIFPlayer extends BasicPlayer implements Runnable {
         private int rate;
 
         /* the minimum playback rate */
-        private final int MIN_PLAYBACK_RATE = 10000; // 10%
+        private static final int MIN_PLAYBACK_RATE = 10000; // 10%
 
         /* the maximum playback rate */
-        private final int MAX_PLAYBACK_RATE = 200000; // 200%
+        private static final int MAX_PLAYBACK_RATE = 200000; // 200%
 
 
         /**
@@ -1531,6 +1527,5 @@ final public class GIFPlayer extends BasicPlayer implements Runnable {
             return MIN_PLAYBACK_RATE;
         }
     }
-    
 }
 

@@ -23,7 +23,6 @@
  */
 package com.sun.mmedia;
 
-import javax.microedition.media.MediaException;
 import javax.microedition.media.Control;
 
 /**

@@ -24,7 +24,6 @@
  */
 
 package com.sun.mmedia.control;
-import javax.microedition.media.MediaException;
 
 /**
  * <code>DualToneControl</code> is the interface to enable playback of a 

@@ -25,8 +25,6 @@
 
 package com.sun.mmedia;
 
-import com.sun.mmedia.DirectPlayer;
-
 import javax.microedition.media.*;
 import javax.microedition.media.control.*;
 

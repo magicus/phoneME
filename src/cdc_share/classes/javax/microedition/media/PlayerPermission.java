@@ -110,7 +110,6 @@ public final class PlayerPermission extends Permission {
      */
     private void init(int mask)
     {
-
         if ((mask & ALL) != mask)
             throw new IllegalArgumentException("invalid actions mask");
 
@@ -206,7 +205,7 @@ public final class PlayerPermission extends Permission {
 
         PlayerPermission that = (PlayerPermission) obj;
         
-        if (getName() != that.getName())
+        if (!getName().equals(that.getName()))
             return false;
 
         return (this.mask == that.mask);
@@ -289,8 +288,9 @@ public final class PlayerPermission extends Permission {
                 switch(a[i-matchlen]) {
                 case ',':
                     seencomma = true;
-                    /*FALLTHROUGH*/
-                case ' ': case '\r': case '\n':
+                    break;
+                case ' ': 
+                case '\r': case '\n':
                 case '\f': case '\t':
                     break;
                 default:
@@ -340,16 +340,6 @@ public final class PlayerPermission extends Permission {
             actions = getActions(this.mask);
 
         return actions;
-    }
-
-    /**
-     * Return the current action mask.
-     *
-     * @return the actions mask.
-     */
-
-    private int getMask() {
-        return mask;
     }
 
     /**

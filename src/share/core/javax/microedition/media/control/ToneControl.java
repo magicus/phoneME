@@ -24,7 +24,6 @@
  */
 
 package javax.microedition.media.control;
-import javax.microedition.media.MediaException;
 
 /**
  * <code>ToneControl</code> is the interface to enable playback of a 
