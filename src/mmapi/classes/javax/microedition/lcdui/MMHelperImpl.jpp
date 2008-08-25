@@ -126,18 +126,18 @@ final class MMHelperImpl extends MMHelper {
     /**
      * Is current Display is Overlapping by system layers
      */
-    public boolean isOverlapping(Graphics g) {
-        boolean isOverlapping = false;
+    public boolean isDisplayOverlapped(Graphics g) {
+        boolean isOverlapped = false;
 // #ifdef ENABLE_CHAMELEON
         Object creator = g.getCreator();
         if (creator != null) {
             if (creator instanceof Display) {
                 MIDPWindow window = ((Display)creator).getWindow();
-                isOverlapping = window.systemMenuUp();
+                isOverlapped = window.systemMenuUp();
             }
         }
 // #endif
-        return isOverlapping;
+        return isOverlapped;
     }
 
 }
