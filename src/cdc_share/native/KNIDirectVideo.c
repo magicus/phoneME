@@ -117,9 +117,9 @@ KNIDECL(com_sun_mmedia_DirectPlayer_nSetVisible) {
     KNI_ReturnBoolean(returnValue);
 }
 
-/*  private native boolean nSetAlpha (boolean on, int color) ; */
+/*  private native boolean nSetColorKey (boolean on, int colorKey) ; */
 KNIEXPORT KNI_RETURNTYPE_BOOLEAN
-KNIDECL(com_sun_mmedia_DirectPlayer_nSetAlpha) {
+KNIDECL(com_sun_mmedia_DirectPlayer_nSetColorKey) {
 
     jint handle = KNI_GetParameterAsInt(1);
     jboolean isOn = KNI_GetParameterAsBoolean(2);
@@ -127,7 +127,7 @@ KNIDECL(com_sun_mmedia_DirectPlayer_nSetAlpha) {
     javacall_result ret = JAVACALL_FAIL;
     KNIPlayerInfo* pKniInfo = (KNIPlayerInfo*)handle;
 
-    MMP_DEBUG_STR2("[kni_video] +nSetAlpha on=%d alpha=%d\n", isOn, color);
+    MMP_DEBUG_STR2("[kni_video] +nSetColorKey on=%d colorKey=%d\n", isOn, color);
 
     if (pKniInfo && pKniInfo->pNativeHandle ) {
         ret = javacall_media_set_video_color_key(pKniInfo->pNativeHandle, 
@@ -135,7 +135,7 @@ KNIDECL(com_sun_mmedia_DirectPlayer_nSetAlpha) {
                                          (javacall_pixel)color);
     }
 
-    MMP_DEBUG_STR1("[kni_video] -nSetAlpha ret %d\n", ret);
+    MMP_DEBUG_STR1("[kni_video] -nSetColorKey ret %d\n", ret);
 
     KNI_ReturnBoolean(JAVACALL_SUCCEEDED(ret) ? KNI_TRUE : KNI_FALSE);  
 }

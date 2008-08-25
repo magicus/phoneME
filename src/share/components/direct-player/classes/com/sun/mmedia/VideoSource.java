@@ -41,8 +41,8 @@ interface VideoSource
     // Set visible
     boolean setVideoVisible( boolean visible);
     
-    // Turn on or off alpha channel
-    boolean setVideoAlpha(boolean on, int color);
+    // Turn on or off color key
+    boolean setColorKey(boolean on, int colorKey);
     
     // Notifies that the Display Size was changed
     void notifyDisplaySizeChange();

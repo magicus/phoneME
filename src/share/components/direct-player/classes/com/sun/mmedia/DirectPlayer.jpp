@@ -181,8 +181,8 @@ public class DirectPlayer extends BasicPlayer implements VideoSource
     // Set visible
     protected native boolean nSetVisible(int handle, boolean visible);
 
-    // Turn on or off alpha channel
-    private native boolean nSetAlpha(int handle, boolean on, int color);
+    // Turn on or off color key
+    private native boolean nSetColorKey(int handle, boolean on, int colorKey);
     
     // Member functions /////////////////////////////////////////////////
 
@@ -842,13 +842,13 @@ public class DirectPlayer extends BasicPlayer implements VideoSource
         return nSetVisible( hNative, visible );
     }
     
-    private boolean alphaIsOn = false;
-    // Turn on or off alpha channel
-    public boolean setVideoAlpha(boolean on, int color)
+    private boolean colorKeyOn = false;
+    // Turn on or off color key
+    public boolean setColorKey(boolean on, int colorKey)
     {
-        if (alphaIsOn != on) {
-            alphaIsOn = on;
-            return nSetAlpha( hNative, on, color );
+        if (colorKeyOn != on) {
+            colorKeyOn = on;
+            return nSetColorKey( hNative, on, colorKey );
         }
         return true;
     }

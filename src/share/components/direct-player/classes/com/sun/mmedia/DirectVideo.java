@@ -57,7 +57,7 @@ class DirectVideo implements VideoControl, MIDPVideoPainter {
     private final int SCREEN_HEIGHT = 240;//nGetScreenHeight();
     private final int DEFAULT_WIDTH = 80;
     private final int DEFAULT_HEIGHT = 80;
-    private final int ALPHA_COLOR = 0x010101;
+    private final int COLOR_KEY = 0x010101;
 
     // NOTE: You have to calibrate this value carefully
     //       If you increase this value, fake preview quality goes down but, system overhead decrease
@@ -199,19 +199,19 @@ class DirectVideo implements VideoControl, MIDPVideoPainter {
                 "prepareVideoSurface " + x + "," + y + "," + w + "," + h); 
         }    
  
-        // Turn off alpha channel
-        source.setVideoAlpha( false, ALPHA_COLOR);
+        // Turn off color key
+        source.setColorKey( false, COLOR_KEY);
         setTranslatedVideoLocation(g, x, y, w, h);
 
         source.setVideoVisible( !hidden);
     }
 
     /**
-     * Prepare clipped preview region by using alpha channel masking
+     * Prepare clipped preview region by using color key masking
      */
     private void prepareClippedPreview(Graphics g, int x, int y, int w, int h) {
-        if (source.setVideoAlpha( true, ALPHA_COLOR)) {
-            g.setColor(ALPHA_COLOR);    // IMPL NOTE - Consider RGB565 conversion
+        if (source.setColorKey( true, COLOR_KEY)) {
+            g.setColor(COLOR_KEY);    // IMPL NOTE - Consider RGB565 conversion
             g.fillRect(x, y, w, h);
             setTranslatedVideoLocation(g, x, y, w, h);
             source.setVideoVisible( !hidden);
@@ -540,11 +540,11 @@ class DirectVideo implements VideoControl, MIDPVideoPainter {
             hidden = true;
         }
         if (!hidden) {
-            boolean isOverlapping = false;
+            boolean isOverlapped = false;
             if (mmh != null) {
-                isOverlapping = mmh.isOverlapping(g);
+                isOverlapped = mmh.isDisplayOverlapped(g);
             }
-            if (isOverlapping) {
+            if (isOverlapped) {
                 prepareClippedPreview(g, x, y, w, h);
             } else if (visible && started) {
                 prepareVideoSurface(g, x, y, w, h);
@@ -602,11 +602,11 @@ class DirectVideo implements VideoControl, MIDPVideoPainter {
                     "DVItem.paint visible=" + visible); 
             }
             if (!hidden) {
-                boolean isOverlapping = false;
+                boolean isOverlapped = false;
                 if (mmh != null) {
-                    isOverlapping = mmh.isOverlapping(g);
+                    isOverlapped = mmh.isDisplayOverlapped(g);
                 }
-                if (isOverlapping) {
+                if (isOverlapped) {
                     prepareClippedPreview(g, 0, 0, w, h);
                 } else if (visible) {
                     prepareVideoSurface(g, 0, 0, w, h);
