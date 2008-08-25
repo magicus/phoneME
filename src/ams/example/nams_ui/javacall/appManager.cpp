@@ -751,7 +751,7 @@ static void AddSuiteToTree(HWND hwndTV, javacall_suite_id suiteId, int nLevel) {
         wprintf(_T("ERROR: java_ams_suite_get_info(suiteId=%d) returned: %d\n"), (int)suiteId, res);
     }
 }
-
+                                                       
 static BOOL InitMidletTreeViewItems(HWND hwndTV)  {
     javacall_suite_id* pSuiteIds;
     javacall_suite_id* pFolderSuiteIds;
@@ -887,8 +887,15 @@ static HTREEITEM AddTreeItem(HWND hwndTV, LPTSTR lpszItem,
     tvi.pszText = lpszItem;
     tvi.cchTextMax = sizeof(tvi.pszText) / sizeof(tvi.pszText[0]);
 
+
     tvi.state = 0;
     tvi.stateMask = 0;
+
+    // Make folders marked out by bold font style
+    if (pInfo && pInfo->type == TVI_TYPE_FOLDER) {
+        tvi.state |= TVIS_BOLD;
+        tvi.stateMask |= TVIS_BOLD;
+    }
 
     // Assume the item is not a parent item, so give it a 
     // document image.
@@ -1622,7 +1629,8 @@ MidletInfoWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
     case IDM_MIDLET_INFO: {
         TVI_INFO* pInfo = (TVI_INFO*)wParam;
         if (pInfo) {
-            if (pInfo->type == TVI_TYPE_SUITE) {
+            switch (pInfo->type) {
+            case TVI_TYPE_SUITE: {
                 javacall_ams_suite_info* pSuiteInfo;
                 res = java_ams_suite_get_info(pInfo->suiteId, &pSuiteInfo);
 
@@ -1689,11 +1697,21 @@ MidletInfoWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
 //                    long installTime;
 
                     java_ams_suite_free_info(pSuiteInfo);
-
-                    ShowWindow(hWnd, SW_SHOWNORMAL);
                 }
-            } 
-        }
+
+                break;
+            }
+
+            default: {
+                AddTreeItem(hWnd, _T("Not implemented yet!"), 1, NULL);
+
+                break;
+            }
+
+            }  // end case
+
+            ShowWindow(hWnd, SW_SHOWNORMAL);
+        } // end if (pInfo)
         break;
     }
 
