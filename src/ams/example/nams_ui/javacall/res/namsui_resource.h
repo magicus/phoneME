@@ -61,6 +61,9 @@
 
 #define  IDB_DEF_SUITE_ICON        950
 #define  IDB_DEF_MIDLET_ICON       960
+#define  IDB_DEF_MIDLET_ICON_1     961
+#define  IDB_DEF_MIDLET_ICON_2     962
+#define  IDB_DEF_MIDLET_ICON_3     963
 #define  IDB_FOLDER_ICON           970
 
-#define  IDB_MIDLET_TREE_BG   10001
+//#define  IDB_MIDLET_TREE_BG   10001

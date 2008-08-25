@@ -35,6 +35,8 @@
 #include <tchar.h>
 #include <commctrl.h> // common controls for tree view
 
+#include <time.h>
+
 #include "res/namsui_resource.h"
 
 #include <javacall_memory.h>
@@ -58,13 +60,12 @@
 #define TREE_VIEW_ICON_WIDTH  16
 #define TREE_VIEW_ICON_HEIGHT 16
 
-//#define DEF_BACKGROUND_FILE _T("bgd_blue.bmp")
-#define DEF_BACKGROUND_FILE _T("bgd-yellow.bmp")
+#define DEF_BACKGROUND_FILE _T("background.bmp")
 
 extern "C" char* _phonenum = "1234567"; // global for javacall MMS subsystem
 
 // The main window class name.
-static TCHAR g_szWindowClass[] = _T("win32app");
+static TCHAR g_szWindowClass[] = _T("NAMS");
 
 // The string that appears in the application's title bar.
 static TCHAR g_szTitle[] = _T("NAMS Example");
@@ -172,19 +173,6 @@ static int mapKey(WPARAM wParam, LPARAM lParam);
 static LPTSTR JavacallUtf16ToTstr(javacall_const_utf16_string str);
 static javacall_utf16_string CloneJavacallUtf16(javacall_const_utf16_string str);
 
-
-extern "C" {
-
-javacall_result java_ams_system_start();
-javacall_result java_ams_system_stop();
-javacall_result
-java_ams_midlet_start(javacall_suite_id suiteId,
-                      javacall_app_id appId,
-                      javacall_const_utf16_string className,
-                      const javacall_midlet_runtime_info* pRuntimeInfo);
-
-};
-
 /**
  * Entry point of the Javacall executable.
  *
@@ -194,16 +182,10 @@ java_ams_midlet_start(javacall_suite_id suiteId,
  * @return the exit value (1 if OK)
  */
 extern "C" javacall_result JavaTaskImpl(int argc, char* argv[]) {
-//    javacall_events_init();
-//    javacall_initialize_configurations();
-
     javacall_result res = java_ams_system_start();
-//    java_ams_appmgr_start();
 
     wprintf(_T("SJWC exited, code: %d."), (int)res); 
 
-//    javacall_lifecycle_state_changed(JAVACALL_LIFECYCLE_MIDLET_SHUTDOWN,
-//        (res == 1) ? JAVACALL_OK : JAVACALL_FAIL);
     return res;
 }
 
@@ -235,6 +217,8 @@ int main(int argc, char* argv[]) {
     HINSTANCE hInstance = NULL;
     int nCmdShow = SW_SHOWNORMAL;
 #endif
+   
+    srand((unsigned)time(NULL));
 
     // Store instance handle in our global variable.
     g_hInst = hInstance;
@@ -319,36 +303,29 @@ static HWND CreateMainToolbar(HWND hWndParent) {
     GetClientRect(hWndParent, &rcClient);
 
     TBBUTTON tbButtons[] = {
-        0, IDM_HELP_ABOUT, TBSTATE_ENABLED, BTNS_BUTTON, 
+        0, IDM_MIDLET_START_STOP, TBSTATE_ENABLED, BTNS_BUTTON, 
 #if defined(_WIN32) | defined(_WIN64)
             {0},
 #endif
         0L, 0,
 
-        1, IDM_MIDLET_START_STOP, TBSTATE_ENABLED, BTNS_BUTTON,
+        1, IDM_SUITE_INFO, TBSTATE_ENABLED, BTNS_BUTTON,
 #if defined(_WIN32) | defined(_WIN64)
             {0},
 #endif
         0L, 0,
 
-        2, IDM_MIDLET_START_STOP, TBSTATE_ENABLED, BTNS_BUTTON,
+        2, IDM_SUITE_INSTALL, TBSTATE_ENABLED, BTNS_BUTTON,
 #if defined(_WIN32) | defined(_WIN64)
             {0},
 #endif
         0L, 0,
 
-        3, IDM_MIDLET_START_STOP, TBSTATE_ENABLED, BTNS_BUTTON,
+        3, IDM_SUITE_REMOVE, TBSTATE_ENABLED, BTNS_BUTTON,
 #if defined(_WIN32) | defined(_WIN64)
             {0},
 #endif
-        0L, 0,
-
-        4, IDM_MIDLET_START_STOP, TBSTATE_ENABLED, BTNS_BUTTON,
-#if defined(_WIN32) | defined(_WIN64)
-            {0},
-#endif
-        0L, 0,
-
+        0L, 0
     };
 
     HBITMAP hToolbarBmp = LoadBitmap(g_hInst,
@@ -356,21 +333,19 @@ static HWND CreateMainToolbar(HWND hWndParent) {
 
     if (hToolbarBmp == NULL) {
         wprintf(_T("Can't load bitmap for the toolbar!"));
-        //MessageBox(NULL, _T("Can't load bitmap for the toolbar!"),
-        //           g_szTitle, NULL);
         return NULL;
     }
 
     HWND hWndToolbar = CreateToolbarEx(hWndParent,
         WS_CHILD | WS_BORDER | WS_VISIBLE | TBSTYLE_TOOLTIPS, 
-        IDC_MAIN_TOOLBAR, 0, // g_hInst, IDB_MAIN_TOOLBAR_BUTTONS,
+        IDC_MAIN_TOOLBAR, 4, // g_hInst, IDB_MAIN_TOOLBAR_BUTTONS,
         NULL, (UINT)hToolbarBmp,
         tbButtons, 4, TB_BUTTON_WIDTH, TB_BUTTON_HEIGHT,
         TB_BUTTON_WIDTH, TB_BUTTON_HEIGHT,
         sizeof (TBBUTTON));
 
     if (!hWndToolbar) {
-        MessageBox(NULL, _T("Can't create a toolbar!"), g_szTitle, NULL);
+        wprintf(_T("Can't create a toolbar!"));
         return NULL;
     }
 
@@ -581,7 +556,8 @@ static HWND CreateMidletTreeView(HWND hWndParent) {
 
     // Create an image list for the Tree View control.
     UINT uResourceIds[] = {
-        IDB_DEF_MIDLET_ICON, IDB_DEF_SUITE_ICON, IDB_FOLDER_ICON
+        IDB_DEF_MIDLET_ICON, IDB_DEF_MIDLET_ICON_1, IDB_DEF_MIDLET_ICON_2,
+        IDB_DEF_MIDLET_ICON_3, IDB_DEF_SUITE_ICON, IDB_FOLDER_ICON
     };
 
 #define TV_ICONS_NUM ((int) (sizeof(uResourceIds) / sizeof(uResourceIds[0])))
@@ -916,13 +892,14 @@ static HTREEITEM AddTreeItem(HWND hwndTV, LPTSTR lpszItem,
 
     // Assume the item is not a parent item, so give it a 
     // document image.
-    tvi.iImage = tvi.iSelectedImage = 0; // a midlet's icon by default
+    tvi.iImage = tvi.iSelectedImage =
+        (int) ((rand() / (double)RAND_MAX) * 4); // a midlet's icon by default
 
     if (pInfo != NULL) {
         if (pInfo->type == TVI_TYPE_SUITE) {
-            tvi.iImage = tvi.iSelectedImage = 1;
+            tvi.iImage = tvi.iSelectedImage = 4;
         } else if (pInfo->type == TVI_TYPE_FOLDER){
-            tvi.iImage = tvi.iSelectedImage = 2;
+            tvi.iImage = tvi.iSelectedImage = 5;
         }
     }
 
@@ -1002,8 +979,9 @@ MainWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
                 break;
             }
 
-            case IDM_SUITE_INFO:
+            case IDM_SUITE_INSTALL:
             case IDM_SUITE_REMOVE:
+            case IDM_SUITE_INFO:
             case IDM_MIDLET_INFO:
             case IDM_MIDLET_START_STOP: {
                 // Delegate message processing to MIDlet tree view
@@ -1276,41 +1254,41 @@ static BOOL StartMidlet(HWND hTreeWnd) {
     HTREEITEM hItem = TreeView_GetSelection(hTreeWnd);
     TVI_INFO* pInfo = GetTviInfo(hTreeWnd, hItem);
 
-    if (pInfo) {
-            if (pInfo->type == TVI_TYPE_MIDLET && 
-                // check whether the MIDlet is already running
-                pInfo->appId == JAVACALL_INVALID_APP_ID) { 
+    if (pInfo != NULL) {
+        if (pInfo->type == TVI_TYPE_MIDLET && 
+            // check whether the MIDlet is already running
+            pInfo->appId == JAVACALL_INVALID_APP_ID) { 
 
-                wprintf(_T("Launching MIDlet (suiteId=%d, class=%s, appId=%d)...\n"),
-                pInfo->suiteId, pInfo->className, g_jAppId);
+            wprintf(_T("Launching MIDlet (suiteId=%d, class=%s, appId=%d)...\n"),
+                    pInfo->suiteId, pInfo->className, g_jAppId);
 
-                res = java_ams_midlet_start(pInfo->suiteId, g_jAppId,
-                pInfo->className, NULL);
+            res = java_ams_midlet_start(pInfo->suiteId, g_jAppId,
+                                        pInfo->className, NULL);
 
-                wprintf(_T("java_ams_midlet_start res: %d\n"), res);
+            wprintf(_T("java_ams_midlet_start res: %d\n"), res);
 
-                if (res == JAVACALL_OK) {
-                    // Update application ID
-                    pInfo->appId = g_jAppId;
-                    g_jAppId++;
+            if (res == JAVACALL_OK) {
+                // Update application ID
+                pInfo->appId = g_jAppId;
+                g_jAppId++;
 
-                    // Hide MIDlet tree view window to show
-                    // the MIDlet's output in the main window
-                    ShowWindow(hTreeWnd, SW_HIDE);
+                // Hide MIDlet tree view window to show
+                // the MIDlet's output in the main window
+                ShowWindow(hTreeWnd, SW_HIDE);
 
-                    if (g_hWndToolbar != NULL) {
-                        ShowWindow(g_hWndToolbar, SW_HIDE);
-                    }
-
-                    // Adding a new item to "Windows" menu
-                    javacall_const_utf16_string jsLabel =
-                        (pInfo->displayName != NULL) ?
-                            pInfo->displayName : pInfo->className;
-                    AddWindowMenuItem(jsLabel, pInfo);
-
-                    return TRUE;
+                if (g_hWndToolbar != NULL) {
+                    ShowWindow(g_hWndToolbar, SW_HIDE);
                 }
+
+                // Adding a new item to "Windows" menu
+                javacall_const_utf16_string jsLabel =
+                    (pInfo->displayName != NULL) ?
+                        pInfo->displayName : pInfo->className;
+                AddWindowMenuItem(jsLabel, pInfo);
+
+                return TRUE;
             }
+        }
     }
 
     return FALSE;
@@ -1424,7 +1402,7 @@ MidletTreeWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
                 g_htiCopiedSuite = TreeView_GetSelection(hWnd);
                 break;
 
-            case IDM_FOLDER_PASTE:
+            case IDM_FOLDER_PASTE: {
                 if (g_htiCopiedSuite) {
                     TVI_INFO* pInfoSuite = GetTviInfo(hWnd, g_htiCopiedSuite);
 
@@ -1457,6 +1435,33 @@ MidletTreeWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
                     g_htiCopiedSuite = NULL;
                 }
                 break;
+            }
+
+            case IDM_SUITE_INSTALL: {
+                javacall_result res = java_ams_midlet_start(-1,
+                    g_jAppId,
+                    L"com.sun.midp.installer.DiscoveryApp",
+                    NULL);
+
+                if (res == JAVACALL_OK) {
+                    // IMPL_NOTE: the following code must be refactored
+
+                    // Update application ID
+                    g_jAppId++;
+
+                    // Hide MIDlet tree view window to show
+                    // the MIDlet's output in the main window
+                    ShowWindow(g_hMidletTreeView, SW_HIDE);
+
+                    if (g_hWndToolbar != NULL) {
+                        ShowWindow(g_hWndToolbar, SW_HIDE);
+                    }
+
+                    // Adding a new item to "Windows" menu
+                    AddWindowMenuItem(L"Installer", NULL);
+                }
+                break;
+            }
 
             case IDM_SUITE_REMOVE: {
                 HTREEITEM hItem = TreeView_GetSelection(hWnd);

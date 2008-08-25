@@ -101,14 +101,12 @@ BEGIN
     END
 END
 
-
-IDB_DEF_MIDLET_ICON ICON "midlet.ico"
-//IDB_DEF_MIDLET_ICON BITMAP "def_midlet_icon.bmp"
+IDB_DEF_MIDLET_ICON    ICON "midlet1.ico"
+IDB_DEF_MIDLET_ICON_1  ICON "midlet2.ico"
+IDB_DEF_MIDLET_ICON_2  ICON "midlet3.ico"
+IDB_DEF_MIDLET_ICON_3  ICON "midlet4.ico"
 
 IDB_DEF_SUITE_ICON ICON "suite.ico"
-//IDB_DEF_SUITE_ICON  BITMAP "def_suite_icon.bmp"
-
 IDB_FOLDER_ICON ICON "folder.ico"
 
 IDB_MAIN_TOOLBAR_BUTTONS BITMAP "toolbar.bmp"
-IDB_MIDLET_TREE_BG BITMAP "bgd-yellow.bmp"

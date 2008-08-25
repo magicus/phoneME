@@ -102,5 +102,5 @@ $(MIDP_OBJ_DIR)/javacallImpl$(OBJ): $(SRC_DIR)/javacallImpl.cpp
 $(MIDP_OBJ_DIR)/%.res: $(SRC_DIR)/res/%.rc
 	$(A)$(RC) $(RCFLAGS)  /d "NDEBUG" /fo $@ $<
 
-background: $(SRC_DIR)/res/bgd-yellow.bmp
-	$(A)cp $(SRC_DIR)/res/bgd-yellow.bmp $(DRIVE)$(MIDP_OUTPUT_DIR)/bin/i386
+background: $(SRC_DIR)/res/background.bmp
+	$(A)cp $(SRC_DIR)/res/background.bmp $(DRIVE)$(MIDP_OUTPUT_DIR)/bin/i386

@@ -32,6 +32,8 @@
 #include <javautil_unicode.h>
 #include <javacall_ams_platform.h>
 
+extern "C" {
+
 /**
  * Java invokes this function to inform the App Manager on completion
  * of the previously requested operation.
@@ -87,3 +89,35 @@ java_ams_installation_percentage(int installPercent) {
     wprintf(_T(">>> java_ams_installation_percentage(): %d%%\n"),
             installPercent);
 }
+
+/**
+ * Java invokes this function to inform the platform on change of the specific
+ * MIDlet's lifecycle status.
+ *
+ * IMPL_NOTE: the functionality is the same as provided by
+ *            javacall_lifecycle_state_changed(). One of this functions
+ *            should be removed. Now it is kept for backward compatibility.
+ *
+ * VM will invoke this function whenever the lifecycle status of the running
+ * MIDlet is changed, for example when the running MIDlet has been paused,
+ * resumed, the MIDlet has shut down etc.
+ *
+ * @param state new state of the running MIDlet. Can be either,
+ *        <tt>JAVACALL_LIFECYCLE_MIDLET_STARTED</tt>
+ *        <tt>JAVACALL_LIFECYCLE_MIDLET_PAUSED</tt>
+ *        <tt>JAVACALL_LIFECYCLE_MIDLET_SHUTDOWN</tt>
+ *        <tt>JAVACALL_LIFECYCLE_MIDLET_ERROR</tt>
+ * @param appId the ID of the state-changed application
+ * @param reason rhe reason why the state change has happened
+ */
+void java_ams_midlet_state_changed(javacall_lifecycle_state state,
+                                   javacall_app_id appId,
+                                   javacall_change_reason reason) {
+    wprintf(_T(">>> State changed: ID  = %d, state = %d\n"), appId, state);
+
+    if (state == JAVACALL_LIFECYCLE_MIDLET_SHUTDOWN) {
+        wprintf(_T(">>> MIDlet with ID %d has exited\n"), appId);
+    }
+}
+
+};
