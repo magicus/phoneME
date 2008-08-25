@@ -32,7 +32,7 @@ import java.util.*;
 /**
  * i3test for keyboard events simulateion
  */
-public class TestKeyboardEventsSimulation extends TestCase {
+public class TestKeyEventsSimulation extends TestCase {
     /** URL of suite to install */
     private static final String SUITE_URL = 
         "http://localhost/~leonid/TextInput.jad";
@@ -69,7 +69,7 @@ public class TestKeyboardEventsSimulation extends TestCase {
     /**
      * Tests midlets switching
      */
-    void testKeyboardEventsSimulation() {
+    void testKeyEventsSimulation() {
         installTestSuites();
 
         Automation a = Automation.getInstance();
@@ -148,6 +148,6 @@ public class TestKeyboardEventsSimulation extends TestCase {
      * Run tests
      */
     public void runTests() {
-        testKeyboardEventsSimulation();
+        testKeyEventsSimulation();
     }
 }
