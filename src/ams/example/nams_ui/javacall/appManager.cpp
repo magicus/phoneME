@@ -86,7 +86,7 @@ HMENU g_hMidletPopupMenu = NULL;
 HMENU g_hSuitePopupMenu = NULL;
 HMENU g_hFolderPopupMenu = NULL;
 
-WNDPROC g_DefTreeWndProc = NULL;
+WNDPROC g_DefMidletTreeWndProc = NULL;
 
 HBITMAP g_hMidletTreeBgBmp = NULL;
 
@@ -137,14 +137,15 @@ static void DrawBuffer(HDC hdc);
 
 static HWND CreateMainView();
 static void CenterWindow(HWND hDlg);
-static HWND CreateTreeView(HWND hWndParent);
+static HWND CreateMidletTreeView(HWND hWndParent);
 static HWND CreateMainToolbar(HWND hWndParent);
 
-static BOOL InitTreeViewItems(HWND hwndTV);
+static BOOL InitMidletTreeViewItems(HWND hwndTV);
 static void AddSuiteToTree(HWND hwndTV, javacall_suite_id suiteId, int nLevel);
-static HTREEITEM AddItemToTree(HWND hwndTV, LPTSTR lpszItem,
+
+static HTREEITEM AddTreeItem(HWND hwndTV, LPTSTR lpszItem,
                                int nLevel, TVI_INFO* pInfo);
-static void CleanupTreeView(HWND hwndTV);
+static void CleanupTreeView(HWND hwndTV, WNDPROC DefWndProc);
 
 static void InitAms();
 static void CleanupAms();
@@ -264,11 +265,11 @@ int main(int argc, char* argv[]) {
     InitAms();
 
     // Create and init Java MIDlets tree view
-    g_hMidletTreeView = CreateTreeView(g_hMainWindow);
+    g_hMidletTreeView = CreateMidletTreeView(g_hMainWindow);
     if (g_hMidletTreeView == NULL) {
         return -1;
     }
-    InitTreeViewItems(g_hMidletTreeView);
+    InitMidletTreeViewItems(g_hMidletTreeView);
 
     g_hWndToolbar = CreateMainToolbar(g_hMainWindow);
 
@@ -283,7 +284,7 @@ int main(int argc, char* argv[]) {
         DispatchMessage(&msg);
     }
 
-    CleanupTreeView(g_hMidletTreeView);
+    CleanupTreeView(g_hMidletTreeView, g_DefMidletTreeWndProc);
 
     // Finalize Java AMS
     CleanupAms();
@@ -519,16 +520,18 @@ static void CleanupWindows() {
     UnregisterClass(g_szWindowClass, g_hInst);
 }
 
-static void CleanupTreeView(HWND hwndTV) {
+static void CleanupTreeView(HWND hwndTV, WNDPROC DefWndProc) {
     // IMPL_NOTE: memory allocated by the application is freed in MainWndProc
     // by handling WM_NOTIFY message
     TreeView_DeleteAllItems(hwndTV);
 
     // Return back window procedure for tree view
-    SetWindowLongPtr(hwndTV, GWLP_WNDPROC, (LONG)g_DefTreeWndProc);
+    if (DefWndProc) {
+        SetWindowLongPtr(hwndTV, GWLP_WNDPROC, (LONG)DefWndProc);
+    }
 }
 
-static HWND CreateTreeView(HWND hWndParent) {
+static HWND CreateMidletTreeView(HWND hWndParent) {
     RECT rcClient;  // dimensions of client area 
     HWND hwndTV;    // handle to tree-view control 
 
@@ -558,7 +561,7 @@ static HWND CreateTreeView(HWND hWndParent) {
 
     // Store default Tree View WndProc in global variable
     // and set custom WndProc.
-    g_DefTreeWndProc = (WNDPROC)SetWindowLongPtr(hwndTV, GWLP_WNDPROC,
+    g_DefMidletTreeWndProc = (WNDPROC)SetWindowLongPtr(hwndTV, GWLP_WNDPROC,
         (LONG)MidletTreeWndProc);
 
     // Create an image list for the Tree View control.
@@ -660,7 +663,7 @@ static void AddSuiteToTree(HWND hwndTV, javacall_suite_id suiteId, int nLevel) {
                 pInfo->displayName = CloneJavacallUtf16(jsLabel);
                 }
             }
-            AddItemToTree(hwndTV, pszSuiteName, nLevel, pInfo);
+            AddTreeItem(hwndTV, pszSuiteName, nLevel, pInfo);
 
             if (pszSuiteName && (pszSuiteName != g_szDefaultSuiteName)) {
                 javacall_free(pszSuiteName);
@@ -694,7 +697,7 @@ static void AddSuiteToTree(HWND hwndTV, javacall_suite_id suiteId, int nLevel) {
                                 pMidletsInfo[m].className);
                             pInfo->displayName = CloneJavacallUtf16(jsLabel);
                         }
-                        AddItemToTree(hwndTV, pszMIDletName, nLevel + 1, pInfo);
+                        AddTreeItem(hwndTV, pszMIDletName, nLevel + 1, pInfo);
 
                         if (pszMIDletName) {
                             javacall_free(pszMIDletName);
@@ -713,7 +716,7 @@ static void AddSuiteToTree(HWND hwndTV, javacall_suite_id suiteId, int nLevel) {
     }
 }
 
-static BOOL InitTreeViewItems(HWND hwndTV)  {
+static BOOL InitMidletTreeViewItems(HWND hwndTV)  {
     javacall_suite_id* pSuiteIds;
     javacall_suite_id* pFolderSuiteIds;
     int suiteNum, folderNum, folderSuiteNum;
@@ -750,7 +753,7 @@ static BOOL InitTreeViewItems(HWND hwndTV)  {
                     pInfo->displayName = CloneJavacallUtf16(pFoldersInfo[f].folderName);
                 }
             } 
-            AddItemToTree(hwndTV, pszFolderName, 1, pInfo);
+            AddTreeItem(hwndTV, pszFolderName, 1, pInfo);
 
             if (pszFolderName && (pszFolderName != g_szDefaultFolderName)){
                 javacall_free(pszFolderName);
@@ -831,7 +834,7 @@ static javacall_utf16_string CloneJavacallUtf16(javacall_const_utf16_string str)
 /**
  *
  */
-static HTREEITEM AddItemToTree(HWND hwndTV, LPTSTR lpszItem,
+static HTREEITEM AddTreeItem(HWND hwndTV, LPTSTR lpszItem,
                                int nLevel, TVI_INFO* pInfo) {
     TVITEM tvi;
     TVINSERTSTRUCT tvins;
@@ -1483,7 +1486,7 @@ MidletTreeWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
 
         InvalidateRect(hWnd, &r, FALSE);
 
-        CallWindowProc(g_DefTreeWndProc, hWnd, message, wParam, lParam);
+        CallWindowProc(g_DefMidletTreeWndProc, hWnd, message, wParam, lParam);
 
         //HDC hdc1 = (HDC)wParam;
         //HBRUSH hBrush = (HBRUSH)GetStockObject(WHITE_BRUSH);
@@ -1500,7 +1503,8 @@ MidletTreeWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
     }
 
     default:
-        return CallWindowProc(g_DefTreeWndProc, hWnd, message, wParam, lParam);
+        return CallWindowProc(g_DefMidletTreeWndProc, hWnd, message, wParam,
+            lParam);
     }
 
     return 0;
