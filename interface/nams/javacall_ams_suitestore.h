@@ -236,7 +236,7 @@ typedef struct _javacall_ams_suite_info {
     /**
      * ID of the folder (see <midp>/src/ams/ams_folders library for more info).
      */
-    javacall_int32 folderId;
+    javacall_folder_id folderId;
 
     /** True if the suite enabled, false otherwise. */
     javacall_bool isEnabled;
