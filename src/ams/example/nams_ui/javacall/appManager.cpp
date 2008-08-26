@@ -1672,7 +1672,7 @@ InfoWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
                                  pFolderInfo->folderName);
                         AddTreeItem(hWnd, szBuf, 1, NULL);
 
-//                       java_ams_suite_free_folder_info(pFolderInfo);
+                        java_ams_suite_free_folder_info(pFolderInfo);
                     }
 
                     LPTSTR pszPreinstalled =
@@ -1735,7 +1735,7 @@ InfoWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
                                      pFolderInfo->folderName);
                             AddTreeItem(hWnd, szBuf, 1, NULL);
 
-//                            java_ams_suite_free_folder_info(pFolderInfo);
+                            java_ams_suite_free_folder_info(pFolderInfo);
                         }
 
 

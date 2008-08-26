@@ -1256,6 +1256,9 @@ java_ams_suite_get_folder_info(javacall_folder_id folderId,
             memcpy(*ppFolderInfo, &pAllFoldersInfo[i],
                 (size_t)sizeof(javacall_ams_folder_info));
 
+            *ppFolderInfo->folderName = pAllFoldersInfo[i].folderName;
+            pAllFoldersInfo[i].folderName = NULL;
+
             res = JAVACALL_OK;
             break;
         }
