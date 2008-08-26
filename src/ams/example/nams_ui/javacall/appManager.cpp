@@ -71,7 +71,7 @@ static TCHAR g_szWindowClass[] = _T("NAMS");
 static TCHAR g_szTitle[] = _T("NAMS Example");
 
 static TCHAR g_szMidletTreeTitle[] = _T("Java MIDlets");
-static TCHAR g_szMidletInfoTitle[] = _T("MIDlet Info");
+static TCHAR g_szInfoTitle[] = _T("Info");
 
 static TCHAR g_szDefaultFolderName[] = _T("Folder");
 static TCHAR g_szDefaultSuiteName[]  = _T("Midlet Suite");
@@ -84,7 +84,7 @@ HINSTANCE g_hInst = NULL;
 
 HWND g_hMainWindow = NULL;
 HWND g_hMidletTreeView = NULL;
-HWND g_hMidletInfoView = NULL;
+HWND g_hInfoView = NULL;
 HWND g_hWndToolbar = NULL;
 
 HMENU g_hMidletPopupMenu = NULL;
@@ -92,7 +92,7 @@ HMENU g_hSuitePopupMenu = NULL;
 HMENU g_hFolderPopupMenu = NULL;
 
 WNDPROC g_DefMidletTreeWndProc = NULL;
-WNDPROC g_DefMidletInfoWndProc = NULL;
+WNDPROC g_DefInfoWndProc = NULL;
 
 HBITMAP g_hMidletTreeBgBmp = NULL;
 
@@ -137,7 +137,7 @@ static TVI_INFO* GetTviInfo(HWND hWnd, HTREEITEM hItem);
 
 LRESULT CALLBACK MainWndProc(HWND, UINT, WPARAM, LPARAM);
 LRESULT CALLBACK MidletTreeWndProc(HWND, UINT, WPARAM, LPARAM);
-LRESULT CALLBACK MidletInfoWndProc(HWND, UINT, WPARAM, LPARAM);
+LRESULT CALLBACK InfoWndProc(HWND, UINT, WPARAM, LPARAM);
 
 static void RefreshScreen(int x1, int y1, int x2, int y2);
 static void DrawBuffer(HDC hdc);
@@ -145,7 +145,7 @@ static void DrawBuffer(HDC hdc);
 static HWND CreateMainView();
 static void CenterWindow(HWND hDlg);
 static HWND CreateMidletTreeView(HWND hWndParent);
-static HWND CreateMidletInfoView(HWND hWndParent);
+static HWND CreateInfoView(HWND hWndParent);
 static HWND CreateMainToolbar(HWND hWndParent);
 
 static BOOL InitMidletTreeViewItems(HWND hwndTV);
@@ -220,12 +220,13 @@ int main(int argc, char* argv[]) {
    
     srand((unsigned)time(NULL));
 
-    // Store instance handle in our global variable.
+    // Store instance handle in our global variable
     g_hInst = hInstance;
 
-    // Ensure that the common control DLL is loaded.
+    // Ensure that the common control DLL is loaded
     InitCommonControls();
 
+    // Load window resources (menus, background images, etc)
     InitWindows();
 
     g_hMainWindow = CreateMainView();
@@ -263,7 +264,7 @@ int main(int argc, char* argv[]) {
     InitMidletTreeViewItems(g_hMidletTreeView);
 
     // Create MIDlet information view
-    g_hMidletInfoView = CreateMidletInfoView(g_hMainWindow);
+    g_hInfoView = CreateInfoView(g_hMainWindow);
 
     g_hWndToolbar = CreateMainToolbar(g_hMainWindow);
 
@@ -282,11 +283,12 @@ int main(int argc, char* argv[]) {
     CleanupTreeView(g_hMidletTreeView, g_DefMidletTreeWndProc);
 
     // Finalize MIDet information view
-    CleanupTreeView(g_hMidletInfoView, g_DefMidletInfoWndProc);
+    CleanupTreeView(g_hInfoView, g_DefInfoWndProc);
 
     // Finalize Java AMS
     CleanupAms();
 
+    // Free window resources (menus, background images, etc)
     CleanupWindows();
 
     return (int) msg.wParam;
@@ -599,7 +601,7 @@ static HWND CreateMidletTreeView(HWND hWndParent) {
     return hwndTV;
 }
 
-static HWND CreateMidletInfoView(HWND hWndParent) {
+static HWND CreateInfoView(HWND hWndParent) {
     RECT rcClient;  // dimensions of client area 
     HWND hwndTV;    // handle to tree-view control 
 
@@ -610,7 +612,7 @@ static HWND CreateMidletInfoView(HWND hWndParent) {
 
     hwndTV = CreateWindowEx(0,
                             WC_TREEVIEW,
-                            g_szMidletInfoTitle,
+                            g_szInfoTitle,
                             WS_CHILD | WS_BORDER,
                             0, 
                             TB_BUTTON_HEIGHT + 12,
@@ -629,8 +631,8 @@ static HWND CreateMidletInfoView(HWND hWndParent) {
 
     // Store default Tree View WndProc in global variable and set custom
     // WndProc.
-    g_DefMidletInfoWndProc = (WNDPROC)SetWindowLongPtr(hwndTV, GWLP_WNDPROC,
-        (LONG)MidletInfoWndProc);
+    g_DefInfoWndProc = (WNDPROC)SetWindowLongPtr(hwndTV, GWLP_WNDPROC,
+        (LONG)InfoWndProc);
 
     return hwndTV;
 }
@@ -814,7 +816,7 @@ static BOOL InitMidletTreeViewItems(HWND hwndTV)  {
                 if (folderSuiteNum > 0) {
                     java_ams_suite_free_suite_ids(pFolderSuiteIds, folderSuiteNum);
                 }
-           }
+            }
        }
        if (folderNum > 0) {
            java_ams_suite_free_all_folders_info(pFoldersInfo, folderNum);
@@ -988,6 +990,7 @@ MainWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
 
             case IDM_SUITE_INSTALL:
             case IDM_SUITE_REMOVE:
+            case IDM_FOLDER_INFO:
             case IDM_SUITE_INFO:
             case IDM_MIDLET_INFO:
             case IDM_MIDLET_START_STOP: {
@@ -1387,15 +1390,17 @@ MidletTreeWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
         // Test for the identifier of a command item.
         switch(LOWORD(wParam))
         {
+            case IDM_FOLDER_INFO:
             case IDM_SUITE_INFO:
             case IDM_MIDLET_INFO:
-                if (g_hMidletInfoView) {
+                if (g_hInfoView) {
                     HTREEITEM hItem = TreeView_GetSelection(hWnd);
                     TVI_INFO* pInfo = GetTviInfo(hWnd, hItem);
                     if (pInfo) {
                         ShowWindow(hWnd, SW_HIDE);
+
                         // Delegate message processing to MIDlet info view
-                        PostMessage(g_hMidletInfoView, (UINT)LOWORD(wParam),
+                        PostMessage(g_hInfoView, (UINT)LOWORD(wParam),
                                     (WPARAM)pInfo, 0);
                     }
                 }
@@ -1605,8 +1610,7 @@ MidletTreeWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
  *
  */
 LRESULT CALLBACK
-MidletInfoWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
-//    PAINTSTRUCT ps;
+InfoWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
     HDC hdc;
     javacall_result res;
 
@@ -1625,27 +1629,26 @@ MidletInfoWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
         break;
     }
 
+    case IDM_FOLDER_INFO:
     case IDM_SUITE_INFO:
     case IDM_MIDLET_INFO: {
+        TCHAR szBuf[256];
+        javacall_ams_suite_info* pSuiteInfo;
+        javacall_ams_folder_info* pFolderInfo;
         TVI_INFO* pInfo = (TVI_INFO*)wParam;
+
+        // Set position info to default
+        hPrev = (HTREEITEM)TVI_FIRST; 
+        hPrevLev1Item = NULL; 
+        hPrevLev2Item = NULL;
+
         if (pInfo) {
             switch (pInfo->type) {
+
             case TVI_TYPE_SUITE: {
-                javacall_ams_suite_info* pSuiteInfo;
                 res = java_ams_suite_get_info(pInfo->suiteId, &pSuiteInfo);
 
-                wprintf(
-                    _T("java_ams_suite_get_info(suiteId=%d) returned: %d\n"),
-                    (int)pInfo->suiteId, (int)res);
-
-                if (res == JAVACALL_OK) {
-                    TCHAR szBuf[256];
-
-                    // Set position info to default
-                    hPrev = (HTREEITEM)TVI_FIRST; 
-                    hPrevLev1Item = NULL; 
-                    hPrevLev2Item = NULL; 
-
+				if (res == JAVACALL_OK) {
                     wsprintf(szBuf, _T("Suite: %s"), pInfo->displayName);
                     AddTreeItem(hWnd, szBuf, 1, NULL);
 
@@ -1661,7 +1664,16 @@ MidletInfoWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
                         AddTreeItem(hWnd, szBuf, 1, NULL);
                     }
 
-//                    javacall_int32 folderId;
+                    res = java_ams_suite_get_folder_info(pSuiteInfo->folderId,
+                               &pFolderInfo);
+
+                    if (res == JAVACALL_OK) {
+                        wsprintf(szBuf, _T("Folder: %s"),
+                                 pFolderInfo->folderName);
+                        AddTreeItem(hWnd, szBuf, 1, NULL);
+
+//                       java_ams_suite_free_folder_info(pFolderInfo);
+                    }
 
                     LPTSTR pszPreinstalled =
                         (pSuiteInfo->isPreinstalled == JAVACALL_TRUE) ?
@@ -1702,6 +1714,64 @@ MidletInfoWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
                 break;
             }
 
+            case TVI_TYPE_MIDLET: {
+                    wsprintf(szBuf, _T("MIDlet: %s"), pInfo->displayName);
+                    AddTreeItem(hWnd, szBuf, 1, NULL);
+
+                    res = java_ams_suite_get_info(pInfo->suiteId, &pSuiteInfo);        
+                    if (res == JAVACALL_OK) {
+                        wsprintf(szBuf, _T("Suite: %s"),
+                                 pSuiteInfo->displayName);
+                        AddTreeItem(hWnd, szBuf, 1, NULL);
+
+                        res = java_ams_suite_get_folder_info(
+                            pSuiteInfo->folderId, &pFolderInfo);
+
+                        if (res == JAVACALL_OK) {
+                            wsprintf(szBuf, _T("Folder: %s"),
+                                     pFolderInfo->folderName);
+                            AddTreeItem(hWnd, szBuf, 1, NULL);
+
+//                            java_ams_suite_free_folder_info(pFolderInfo);
+                        }
+
+
+                        java_ams_suite_free_info(pSuiteInfo);
+                    }
+
+                    LPTSTR pszRunning =
+                        (pInfo->appId != JAVACALL_INVALID_APP_ID) ?
+                        _T("Yes") : _T("No");
+                    wsprintf(szBuf, _T("Running: %s"), pszRunning);
+                    AddTreeItem(hWnd, szBuf, 1, NULL);
+
+                break;
+            }
+
+            case TVI_TYPE_FOLDER: {
+                    int nSuiteCount;
+                    javacall_suite_id* pSuiteIds;
+
+                    wsprintf(szBuf, _T("Folder: %s"), pInfo->displayName);
+                    AddTreeItem(hWnd, szBuf, 1, NULL);
+
+                    res = java_ams_suite_get_suites_in_folder(pInfo->folderId,
+                                                              &pSuiteIds,
+                                                              &nSuiteCount);
+                    if (res == JAVACALL_OK) {
+                        wsprintf(szBuf, _T("Number of suites: %d"), nSuiteCount);
+                        AddTreeItem(hWnd, szBuf, 1, NULL);
+
+                        if (nSuiteCount > 0) {
+                            java_ams_suite_free_suite_ids(pSuiteIds,
+                                                          nSuiteCount);
+                        }
+                    }
+               
+
+                    break;
+            }
+
             default: {
                 AddTreeItem(hWnd, _T("Not implemented yet!"), 1, NULL);
 
@@ -1712,6 +1782,7 @@ MidletInfoWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
 
             ShowWindow(hWnd, SW_SHOWNORMAL);
         } // end if (pInfo)
+
         break;
     }
 
@@ -1727,7 +1798,7 @@ MidletInfoWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
 
         InvalidateRect(hWnd, &r, FALSE);
 
-        CallWindowProc(g_DefMidletInfoWndProc, hWnd, message, wParam, lParam);
+        CallWindowProc(g_DefInfoWndProc, hWnd, message, wParam, lParam);
 
         hdc = GetDC(hWnd);
         DrawBackground(hdc, SRCAND);
@@ -1737,7 +1808,7 @@ MidletInfoWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
     }
 
     default:
-        return CallWindowProc(g_DefMidletInfoWndProc, hWnd, message, wParam,
+        return CallWindowProc(g_DefInfoWndProc, hWnd, message, wParam,
             lParam);
     }
 
