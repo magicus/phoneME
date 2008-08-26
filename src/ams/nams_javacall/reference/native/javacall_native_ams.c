@@ -406,7 +406,7 @@ void midp_listener_ams_operation_completed(const NamsEventData* pEventData) {
         pResult);
 }
 
-
+#include <stdio.h>
 /**
  * MIDP proxy for the javacall_ams_midlet_state_changed() listener.
  *
@@ -414,6 +414,7 @@ void midp_listener_ams_operation_completed(const NamsEventData* pEventData) {
  *                   caused this event
  */
 void midp_listener_ams_midlet_state_changed(const NamsEventData* pEventData) {
+printf(">>> state changed!!! pEventData = 0x%08x\n", (long)pEventData);
     if (pEventData == NULL) {
         return;
     }

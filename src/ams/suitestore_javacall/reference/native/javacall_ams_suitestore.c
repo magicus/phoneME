@@ -636,8 +636,7 @@ java_ams_suite_get_suite_ids(javacall_suite_id** ppSuiteIds,
 void
 java_ams_suite_free_suite_ids(javacall_suite_id* pSuiteIds,
                               int numberOfSuites) {
-    (void) numberOfSuites;
-    if (pSuiteIds != NULL) {
+    if (pSuiteIds != NULL && numberOfSuites > 0) {
         javacall_free(pSuiteIds);                              
     }
 }
@@ -761,7 +760,7 @@ java_ams_suite_get_midlets_info(javacall_suite_id suiteId,
 void
 java_ams_suite_free_midlets_info(javacall_ams_midlet_info* pMidletsInfo,
                                  int numberOfEntries) {
-    if (pMidletsInfo != NULL) {
+    if (pMidletsInfo != NULL && numberOfEntries > 0) {
         int i;
         for (i = 0; i < numberOfEntries; i++) {
             javacall_ams_midlet_info* pNextEntry = &pMidletsInfo[i];
@@ -1205,7 +1204,7 @@ java_ams_suite_get_all_folders_info(javacall_ams_folder_info** ppFoldersInfo,
 void
 java_ams_suite_free_all_folders_info(javacall_ams_folder_info* pFoldersInfo,
                                      int numberOfEntries) {
-    if (pFoldersInfo != NULL) {
+    if (pFoldersInfo != NULL && numberOfEntries > 0) {
         int i;
         for (i = 0; i < numberOfEntries; i++) {
             if (pFoldersInfo[i].folderName != NULL) {
