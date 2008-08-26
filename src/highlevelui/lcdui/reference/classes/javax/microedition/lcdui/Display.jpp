@@ -1,7 +1,7 @@
 /*
  *
  *
- * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
@@ -1290,6 +1290,7 @@ public class Display {
         }
     }
 
+
     /**
      * Requests a flashing effect for the device's backlight.  The flashing
      * effect is intended to be used to attract the user's attention or as a
@@ -1575,19 +1576,16 @@ public class Display {
      * @return VirtualKeyboard layer instance connected to the current input session
      *   associated with this Display
      **/
-    VirtualKeyboardLayer getVirtualKeyboardPopup() {
-
-        if (keyboardLayer == null) {
-            if (getCurrent() instanceof Canvas) {
-                keyboardLayer = new VirtualKeyboardLayer(
-                    cham_tunnel);
-            } else {
-                keyboardLayer = new VirtualKeyboardLayer(
-                    getInputSession());
-            }
-        }
+    public VirtualKeyboardLayer getVirtualKeyboardPopup() {
+         keyboardLayer = VirtualKeyboardLayer.getVirtualKeyboardLayer();
+         if (getCurrent() instanceof Canvas) {
+             keyboardLayer.setKeyboardMode(cham_tunnel);
+         } else {
+             keyboardLayer.setKeyboardMode(getInputSession());
+         }
         return keyboardLayer;
     }
+
 
     // #endif ENABLE_CHAMELEON
 
@@ -3061,6 +3059,7 @@ public class Display {
                                               x - window.getBodyAnchorX(),
                                               y - window.getBodyAnchorY());
             }
+
             // #else
             if (currentCopy != null) {
                 currentCopy.uCallPointerEvent(pointerType, x, y);

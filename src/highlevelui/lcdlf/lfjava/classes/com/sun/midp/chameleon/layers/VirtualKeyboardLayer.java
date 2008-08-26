@@ -15,6 +15,7 @@ import com.sun.midp.chameleon.skins.ScreenSkin;
 import com.sun.midp.chameleon.skins.AlertSkin;
 import com.sun.midp.chameleon.skins.PTISkin;
 import com.sun.midp.chameleon.skins.resources.VirtualKeyboardResources;
+import com.sun.midp.chameleon.skins.resources.AlertResources;
 import com.sun.midp.chameleon.CLayer;
 import com.sun.midp.chameleon.MIDPWindow;
 import com.sun.midp.chameleon.ChamDisplayTunnel;
@@ -24,57 +25,68 @@ import javax.microedition.lcdui.*;
 import java.util.Vector;
 
 /**
- * This is a popup layer that handles a sub-popup within the text tfContext
+ * This is a popup layer 
  */
 public class VirtualKeyboardLayer extends PopupLayer implements VirtualKeyboardListener {
 
     /** Instance of current input mode */
     private TextInputSession iSession;
 
-    /** Instance of Displayable */
+    /** Instance of ChamDisplayTunnel that implement bridge with Display */
     private ChamDisplayTunnel tunnel = null;
 
     /** the instance of the virtual keyboard */
     private static VirtualKeyboard vk = null;
 
+    /** Standalone instance of VirtualKeyboardLayer class*/
+    private static VirtualKeyboardLayer keyboardLayer = null;
 
     /**
      * Create an instance of KeyboardLayer
-     * @param inputSession current input session
      */
-    public VirtualKeyboardLayer(TextInputSession inputSession) {
-        super(VirtualKeyboardSkin.BG, AlertSkin.COLOR_BG);
+    public VirtualKeyboardLayer() {
+        super(VirtualKeyboardSkin.BG, VirtualKeyboardSkin.COLOR_BG);
+        vk = VirtualKeyboard.getVirtualKeyboard(this);
+        setAnchor();
+    }
+
+    /**
+     * Return standalone instance of VirtualKeyboardLayer
+     * @return
+     */
+    public static VirtualKeyboardLayer getVirtualKeyboardLayer() {
+
+         if (keyboardLayer == null) {
+            VirtualKeyboardResources.load();
+            keyboardLayer = new VirtualKeyboardLayer();
+         }
+        return keyboardLayer;
+    }
+
+    /**
+     * Set initial keyboard mode
+     * @param inputSession - current input mode
+     */
+    public void setKeyboardMode(TextInputSession inputSession) {
         iSession = inputSession;
-        Maps = VirtualKeyboard.prepareKeyMapTextField();
-        vk = new VirtualKeyboard(Maps, this, true);
-        setAnchor();
+        vk.changeKeyboad(VirtualKeyboard.LOWER_ALPHABETIC_KEYBOARD);
+        repaintVirtualKeyboard();
     }
 
     /**
-     * Create an instance of KeyboardLayer
-     * @param tunnel BodyLayer needs a "tunnel" class to cross the package
-     *        protection boundary and access methods inside the
-     *        javax.microedition.lcdui package
+     * Set initial keyboard mode
+     * @param tunnel - bridge with Display
      */
-    public VirtualKeyboardLayer(ChamDisplayTunnel tunnel) {
-        super(AlertSkin.IMAGE_BG, PTISkin.COLOR_BG);
+    public void setKeyboardMode(ChamDisplayTunnel tunnel) {
         this.tunnel = tunnel;
-        Maps = VirtualKeyboard.prepareKeyMapCanvas();
-        vk = new VirtualKeyboard(Maps, this, true);
-        setAnchor();
+
+        vk.changeKeyboad(VirtualKeyboard.GAME_KEYBOARD);
+        repaintVirtualKeyboard();
     }
 
     /**
-     * Finish initialization of this CLayer. This can
-     * be extended by subclasses. The dimensions of the
-     * CLayer are stored in its bounds[]. The 'x' and 'y'
-     * coordinates are in the coordinate space of the
-     * window which contains this layer. By default, a layer is
-     * located at the origin and is as large as the screen size.
-     *
-     * The X and Y coordinates represent the upper left position
-     * of this CLayer in the containing CWindow's coordinate space.
-     *
+     * Finish initialization of this layer
+     * Load resources for Virtual keyboard instance
      */
     protected void initialize() {
         super.initialize();
@@ -97,8 +109,8 @@ public class VirtualKeyboardLayer extends PopupLayer implements VirtualKeyboardL
      * Sets the anchor constants for rendering operation.
      */
     private void setAnchor() {
-        bounds[W] = vk.kbWidth;
-        bounds[H] = vk.kbHeight;
+        bounds[W] = VirtualKeyboardSkin.WIDTH;
+        bounds[H] = VirtualKeyboardSkin.HEIGHT;
         bounds[X] = bounds[X] = (ScreenSkin.WIDTH - bounds[W]) >> 1;
         bounds[Y] = ScreenSkin.HEIGHT - bounds[H];
 
@@ -184,11 +196,6 @@ public class VirtualKeyboardLayer extends PopupLayer implements VirtualKeyboardL
 
     /** Indicates if this popup layer is shown (true) or hidden (false). */
     boolean open = false;
-
-    /** the list of available keys */
-    //char[][] keys = null;
-    Vector Maps = null;
-
 
     /**
      * key press callback

@@ -23,7 +23,7 @@
         Clara, CA 95054 or visit www.sun.com if you need additional
         information or have any questions.
 -->
-<!ELEMENT configuration (properties | constants | localized_strings | skin | rawimage | permissions)*>
+<!ELEMENT configuration (properties | constants | localized_strings | skin | rawimage | permissions | keyboards)*>
 <!ELEMENT properties (property)+>
 <!ELEMENT property EMPTY>
 <!-- If callout is specified, it must be a defined native function -->
@@ -190,3 +190,33 @@
         ID          CDATA                   #REQUIRED
         Name        CDATA                   #REQUIRED
 >
+
+<!--
+    Top level node for skin description
+-->
+<!ELEMENT keyboards (keyboard)+>
+<!ATTLIST keyboards
+    Package  CDATA                          #REQUIRED
+    Name     CDATA                          #REQUIRED
+    Scope    (protected | public)           "public"
+>
+
+<!ELEMENT keyboard (line)+>
+<!ATTLIST keyboard
+    Name            CDATA                   #REQUIRED
+>
+
+<!ELEMENT line (button)+>
+<!ATTLIST line
+    Num             CDATA                   #REQUIRED
+>
+
+<!ELEMENT button EMPTY>
+<!ATTLIST button
+    KeyValue        CDATA                   #REQUIRED
+    Key             CDATA                   #REQUIRED
+    X               CDATA                   #REQUIRED
+    Y               CDATA                   #REQUIRED
+    KeyImageType    CDATA                   #REQUIRED
+>
+

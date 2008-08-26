@@ -1634,7 +1634,7 @@ class TextFieldLFImpl extends ItemLFImpl implements
      */
     void uCallTraverseOut() {
         super.uCallTraverseOut();
-        
+
         // Dismiss input mode indicator layer outside LCDUILock
         // to avoid deadlocking with Chameleon internal lock 'layers'.
         disableLayers();
@@ -1646,16 +1646,20 @@ class TextFieldLFImpl extends ItemLFImpl implements
      */
     private void disableLayers() {
         Display currentDisplay;
+
         
         synchronized (Display.LCDUILock) {
             currentDisplay = getCurrentDisplay();
         }
 
+        System.out.println("TextFieldLFImpl.disableLayers currentDisplay=" + currentDisplay);
+
         // Dismiss input mode indicator layer outside LCDUILock
         // to avoid deadlocking with Chameleon internal lock 'layers'.
         if (currentDisplay != null) {
             hidePTILayer();
-	    currentDisplay.hidePopup(inputModeIndicator);
+            hideKeyboardLayer();
+        currentDisplay.hidePopup(inputModeIndicator);
         }
      }
 
@@ -2000,14 +2004,14 @@ class TextFieldLFImpl extends ItemLFImpl implements
 
         if (d != null) {
             if (!vkb_popupOpen) {
-                if (d.getInputSession().getCurrentInputMode() instanceof VirtualInputMode) {
+               if (d.getInputSession().getCurrentInputMode() instanceof VirtualKeyboardInputMode) {
                     VirtualKeyboardLayer keyboardPopup = d.getVirtualKeyboardPopup();
                     d.showPopup(keyboardPopup);
                     vkb_popupOpen = true;
                     lRequestInvalidate(true, true);
                 }
             } else {
-                if (!(d.getInputSession().getCurrentInputMode() instanceof VirtualInputMode)) {
+                if (!(d.getInputSession().getCurrentInputMode() instanceof VirtualKeyboardInputMode)) {
                     VirtualKeyboardLayer keyboardPopup = d.getVirtualKeyboardPopup();
                     d.hidePopup(keyboardPopup);
                     vkb_popupOpen = false;
@@ -2030,6 +2034,19 @@ class TextFieldLFImpl extends ItemLFImpl implements
             PTILayer pt_popup = d.getPTIPopup();
             d.hidePopup(pt_popup);
             pt_popupOpen = false;
+            lRequestInvalidate(true, true);
+        }
+    }
+
+    /**
+     * Hide virtual keyboard popap
+     */
+    protected void hideKeyboardLayer() {
+        Display d = getCurrentDisplay();
+        if (vkb_popupOpen && d != null) {
+            VirtualKeyboardLayer keyboardPopup = d.getVirtualKeyboardPopup();
+            d.hidePopup(keyboardPopup);
+            vkb_popupOpen = false;
             lRequestInvalidate(true, true);
         }
     }

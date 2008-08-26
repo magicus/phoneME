@@ -27,11 +27,8 @@
 
 package com.sun.midp.lcdui;
 
-import javax.microedition.lcdui.Graphics;
-
 /**
  * This interface should be implemented by a client that needs a popup keyboard.
- * @author Amir Uval
  */
 
 
@@ -50,11 +47,10 @@ public interface VirtualKeyboardListener {
     public void virtualKeyReleased(int keycode);
 
     /**
-     * should trigger a requestRepaint() call to schedule a 
+     * should trigger a requestRepaint() call to schedule a
      * paint() of the VirtualKeyboard
      */
     public void repaintVirtualKeyboard();
-     
+
 
 }
-

@@ -836,11 +836,9 @@ public class SoftButtonLayer extends CLayer implements CommandListener {
      * Show or hide Virtual keyboard layer
      */
     protected void handleKeyboardCommand ()
-
     {
-        if (keyboardPopup == null) {
-            keyboardPopup = new VirtualKeyboardLayer(tunnel);
-        }
+        keyboardPopup = VirtualKeyboardLayer.getVirtualKeyboardLayer();
+        keyboardPopup.setKeyboardMode(tunnel);
 
         if (!keyboardPopup.isVisible()) {
             owner.addLayer(keyboardPopup);
