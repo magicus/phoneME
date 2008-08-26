@@ -1389,11 +1389,32 @@ MidletTreeWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
                     HTREEITEM hItem = TreeView_GetSelection(hWnd);
                     TVI_INFO* pInfo = GetTviInfo(hWnd, hItem);
                     if (pInfo) {
-                        ShowWindow(hWnd, SW_HIDE);
+                        int nType;
+                        switch(LOWORD(wParam)) {
+                            case IDM_MIDLET_INFO:
+                                nType = TVI_TYPE_MIDLET;
+                                break;
 
-                        // Delegate message processing to MIDlet info view
-                        PostMessage(g_hInfoView, (UINT)LOWORD(wParam),
-                                    (WPARAM)pInfo, 0);
+                            case IDM_SUITE_INFO:
+                                nType = TVI_TYPE_SUITE;
+                                break;
+
+                            case IDM_FOLDER_INFO:
+                                nType = TVI_TYPE_FOLDER;
+                                break;
+
+                            default:
+                                nType = TVI_TYPE_UNKNOWN;
+                                break;
+                        }
+
+                        if (pInfo->type == nType) {
+                            ShowWindow(hWnd, SW_HIDE);
+
+                            // Delegate message processing to MIDlet info view
+                            PostMessage(g_hInfoView, (UINT)LOWORD(wParam),
+                                        (WPARAM)pInfo, 0);
+                        }
                     }
                 }
                 break;
