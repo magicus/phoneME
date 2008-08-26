@@ -741,9 +741,7 @@ static void AddSuiteToTree(HWND hwndTV, javacall_suite_id suiteId, int nLevel) {
                             javacall_free(pszMIDletName);
                         }
                     }
-                    if (midletNum > 0) {
-                        java_ams_suite_free_midlets_info(pMidletsInfo, midletNum);
-                    }
+                    java_ams_suite_free_midlets_info(pMidletsInfo, midletNum);
             } else {
                 wprintf(_T("ERROR: java_ams_suite_get_midlets_info() returned: %d\n"), res);
             }
@@ -813,14 +811,10 @@ static BOOL InitMidletTreeViewItems(HWND hwndTV)  {
                     }
                
                 }
-                if (folderSuiteNum > 0) {
-                    java_ams_suite_free_suite_ids(pFolderSuiteIds, folderSuiteNum);
-                }
+                java_ams_suite_free_suite_ids(pFolderSuiteIds, folderSuiteNum);
             }
        }
-       if (folderNum > 0) {
-           java_ams_suite_free_all_folders_info(pFoldersInfo, folderNum);
-       }
+       java_ams_suite_free_all_folders_info(pFoldersInfo, folderNum);
     }
 
     /* Add suites that are not in any folder */
@@ -834,9 +828,7 @@ static BOOL InitMidletTreeViewItems(HWND hwndTV)  {
         AddSuiteToTree(hwndTV, pSuiteIds[s], 1);
     } // end for
 
-    if (suiteNum > 0) {
-        java_ams_suite_free_suite_ids(pSuiteIds, suiteNum);
-    }
+    java_ams_suite_free_suite_ids(pSuiteIds, suiteNum);
 
     return TRUE;
 }
@@ -1765,10 +1757,7 @@ InfoWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
                         wsprintf(szBuf, _T("Number of suites: %d"), nSuiteCount);
                         AddTreeItem(hWnd, szBuf, 1, NULL);
 
-                        if (nSuiteCount > 0) {
-                            java_ams_suite_free_suite_ids(pSuiteIds,
-                                                          nSuiteCount);
-                        }
+                        java_ams_suite_free_suite_ids(pSuiteIds, nSuiteCount);
                     }
                
 
