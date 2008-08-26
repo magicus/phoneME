@@ -1697,7 +1697,6 @@ InfoWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
                         (int)pSuiteInfo->numberOfMidlets);
                     AddTreeItem(hWnd, szBuf, 1, NULL);
 
-
                     wsprintf(szBuf, _T("JAD size: %d"),
                         (int)pSuiteInfo->jadSize);
                     AddTreeItem(hWnd, szBuf, 1, NULL);
@@ -1706,7 +1705,11 @@ InfoWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
                         (int)pSuiteInfo->jarSize);
                     AddTreeItem(hWnd, szBuf, 1, NULL);
 
-//                    long installTime;
+                    if (pSuiteInfo->installTime) {
+                        time_t time = (time_t)pSuiteInfo->installTime;
+                        wsprintf(szBuf, _T("Installed on: %S"), ctime(&time));
+                        AddTreeItem(hWnd, szBuf, 1, NULL);
+                    }
 
                     java_ams_suite_free_info(pSuiteInfo);
                 }
