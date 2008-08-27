@@ -23,6 +23,7 @@
  */
 
 #include "javacall_defs.h"
+#include "javacall_ams_installer.h"
 
 /**
  * Application manager invokes this function to start a suite installation.

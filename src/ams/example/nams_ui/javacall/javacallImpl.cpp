@@ -31,6 +31,7 @@
 
 #include <javautil_unicode.h>
 #include <javacall_ams_platform.h>
+#include <javacall_ams_installer.h>
 
 extern "C" {
 
