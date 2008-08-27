@@ -555,7 +555,7 @@ java_ams_install_report_progress(javacall_ams_install_state* pInstallState,
  *
  * @param requestCode   identifies the requested action
  *                      in pair with pInstallState->operationId uniquely
-                        identifies this request
+ *                      identifies this request
  * @param pInstallState pointer to a structure containing all information
  *                      about the current installation state
  * @param pRequestData  pointer to request-specific data (may be NULL)
