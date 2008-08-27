@@ -38,6 +38,7 @@
 /**
  * Inform on completion of the previously requested operation.
  *
+ * @param operation code of the completed operation
  * @param appID The ID used to identify the application
  * @param pResult Pointer to a static buffer containing
  *                operation-dependent result
@@ -122,9 +123,9 @@ void java_ams_midlet_state_changed(javacall_lifecycle_state state,
  * @param appID The ID of the state-changed suite
  * @param reason The reason why the state change has happened
  */
-void java_ams_ui_state_changed(javacall_midlet_ui_state state,
-                               javacall_app_id appID,
-                               javacall_change_reason reason) {
+void java_ams_midlet_ui_state_changed(javacall_midlet_ui_state state,
+                                      javacall_app_id appID,
+                                      javacall_change_reason reason) {
     int appIndex = 0;
 
     switch (state) {

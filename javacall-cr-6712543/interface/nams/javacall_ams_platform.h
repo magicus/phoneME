@@ -29,7 +29,13 @@ extern "C" {
 #endif
 
 #include "javacall_defs.h"
+
+/*
+ * IMPL_NOTE: the following must be removed after refactoring of
+ * javacall_lifecycle_state type into two types: SJWC state and MIDlet state.
+ */
 #include "javacall_lifecycle.h"
+
 
 /**
  * @defgroup PlatformAPI API that must be implemented by the Platform
@@ -78,6 +84,7 @@ typedef enum {
  * The Platform must provide an implementation of this function if the
  * App Manager is on the Platform's side.
  *
+ * @param operation code of the completed operation
  * @param appId the ID used to identify the application
  * @param pResult pointer to a static buffer containing
  *                operation-dependent result
@@ -130,6 +137,30 @@ java_ams_get_resource_cache_path(javacall_suite_id suiteId,
                                  javacall_utf16_string* pCachePath);
 
 /**
+ * Java invokes this function to inform the platform on change of the specific
+ * MIDlet's lifecycle status.
+ *
+ * IMPL_NOTE: the functionality is the same as provided by
+ *            javacall_lifecycle_state_changed(). One of this functions
+ *            should be removed. Now it is kept for backward compatibility.
+ *
+ * VM will invoke this function whenever the lifecycle status of the running
+ * MIDlet is changed, for example when the running MIDlet has been paused,
+ * resumed, the MIDlet has shut down etc.
+ *
+ * @param state new state of the running MIDlet. Can be either,
+ *        <tt>JAVACALL_LIFECYCLE_MIDLET_STARTED</tt>
+ *        <tt>JAVACALL_LIFECYCLE_MIDLET_PAUSED</tt>
+ *        <tt>JAVACALL_LIFECYCLE_MIDLET_SHUTDOWN</tt>
+ *        <tt>JAVACALL_LIFECYCLE_MIDLET_ERROR</tt>
+ * @param appId the ID of the state-changed application
+ * @param reason rhe reason why the state change has happened
+ */
+void java_ams_midlet_state_changed(javacall_lifecycle_state state,
+                                   javacall_app_id appId,
+                                   javacall_change_reason reason);
+
+/**
  * Java invokes this function to inform the App Manager on change of the
  * specific MIDlet's UI state.
  *
@@ -147,9 +178,9 @@ java_ams_get_resource_cache_path(javacall_suite_id suiteId,
  * @param appId the ID of the state-changed application
  * @param reason the reason why the state change has happened
  */
-void java_ams_ui_state_changed(javacall_midlet_ui_state state,
-                               javacall_app_id appId,
-                               javacall_change_reason reason);
+void java_ams_midlet_ui_state_changed(javacall_midlet_ui_state state,
+                                      javacall_app_id appId,
+                                      javacall_change_reason reason);
 
 /**
  * Java invokes this function to check if the given domain is trusted.
