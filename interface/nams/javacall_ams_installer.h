@@ -460,9 +460,23 @@ typedef struct _javacall_ams_install_state {
 } javacall_ams_install_state;
 
 /**
- * App Manager invokes this function to start a suite installation.
+ * Source from where the installation is requested:
+ * an URL pointing to a JAD file, to a JAR file or to any of them.
+ */
+typedef enum {
+    JAVACALL_INSTALL_SRC_ANY,
+    JAVACALL_INSTALL_SRC_JAD,
+    JAVACALL_INSTALL_SRC_JAR
+} javacall_ams_install_source_type;
+
+/**
+ * Application manager invokes this function to start a suite installation.
  *
- * @param pUrl null-terminated http url string of MIDlet's jad file.
+ * @param srcType
+ *             type of data pointed by installUrl: a JAD file, a JAR file
+ *             or any of them
+ * @param installUrl
+ *             null-terminated http url string of MIDlet's jad or jar file.
  *             The url is of the following form:
  *             http://www.website.com/a/b/c/d.jad
  *             or
@@ -473,8 +487,9 @@ typedef struct _javacall_ams_install_state {
  *                  <tt>JAVACALL_FALSE</tt> otherwise
  * @param pOperationId [out] if the installation was successfully started,
  *                           on exit contains an ID uniquely identifying
- *                           this operation.
- *                           IMPL_NOTE: currently it is always 0.
+ *                           this operation; this parameter can be NULL on
+ *                           entrance if the operation ID is not required.
+ *                           IMPL_NOTE: currently always 0 is returned.
  *
  * @return status code: <tt>JAVACALL_OK</tt> if the installation was
  *                                           successfully started,
@@ -486,8 +501,30 @@ typedef struct _javacall_ams_install_state {
  * java_ams_operation_completed().
  */
 javacall_result
-java_ams_install_suite(const char *pUrl, javacall_bool invokeGUI,
+java_ams_install_suite(javacall_ams_install_source_type srcType,
+                       javacall_const_utf16_string installUrl,
+                       javacall_bool invokeGUI,
                        javacall_int32* pOperationId);
+
+/**
+ * Application manager invokes this function to enable or disable
+ * certificate revocation check using OCSP.
+ *
+ * @param enable JAVACALL_TRUE to enable OCSP check,
+ *               JAVACALL_FALSE - to disable it
+ */
+void
+java_ams_install_enable_ocsp(javacall_bool enable);
+
+/**
+ * Application manager invokes this function to find out if OCSP
+ * certificate revocation check is enabled.
+ *
+ * @return JAVACALL_TRUE if OCSP check is enabled,
+ *         JAVACALL_FALSE - if disabled
+ */
+javacall_bool
+java_ams_install_is_ocsp_enabled();
 
 /**
  * Installer invokes this function to inform the application manager about
