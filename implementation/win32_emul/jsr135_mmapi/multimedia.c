@@ -27,6 +27,7 @@
 #include "multimedia.h"
 #include "mmmididev.h"
 #include "javautil_unicode.h"
+#include "javacall_memory.h"
 #include <stdio.h>
 
 #define LIME_MMAPI_PACKAGE      "com.sun.mmedia"
@@ -325,7 +326,7 @@ javacall_media_format_type fmt_mime2str( const char* mime )
     unsigned int mimelen = strlen( mime );
     const char*  ct;
 
-    for( idx = 0; idx < sizeof( get_capabilities() ) / sizeof( get_capabilities()[ 0 ] ) - 1; idx++ )
+    for( idx = 0; idx < nCaps; idx++ )
     {
         ct = get_capabilities()[ idx ].contentTypes;
 
