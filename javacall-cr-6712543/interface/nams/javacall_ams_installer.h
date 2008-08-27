@@ -579,15 +579,15 @@ java_ams_install_listener(javacall_ams_install_request_code requestCode,
  * After processing the request, java_ams_install_callback() must
  * be called to report the result to the installer.
  *
- * @param request       in pair with pInstallState->operationId uniquely
-                        identifies the request for which the results
-                        are reported by this call
+ * @param requestCode   in pair with pInstallState->operationId uniquely
+ *                      identifies the request for which the results
+ *                      are reported by this call
  * @param pInstallState pointer to a structure containing all information
  *                      about the current installation state
  * @param pResultData   pointer to request-specific results (may NOT be NULL)
  */
 void
-java_ams_install_callback(javacall_ams_install_request_code request,
+java_ams_install_callback(javacall_ams_install_request_code requestCode,
                           const javacall_ams_install_state* pInstallState,
                           void* pResultData);
 
