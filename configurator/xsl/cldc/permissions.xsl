@@ -79,7 +79,7 @@ public final class PermissionsStrings {</xsl:text>
     </xsl:for-each>
 </xsl:variable>
 
-<xsl:variable name="perm_number" select="55"/>
+<xsl:variable name="perm_number" select="56"/>
 
 <xsl:if test="$output='native'">
 <xsl:text>/** Total number of permissions. */
@@ -155,6 +155,7 @@ public final class PermissionsStrings {</xsl:text>
         "javax.microedition.io.Connector.rf",
         "javax.microedition.io.Connector.sc",
         "javax.microedition.io.Connector.vtag",
+        "javax.microedition.io.Connector.ims",
 </xsl:text>
         <xsl:for-each select="/configuration/permissions/group">
             <xsl:for-each select="permission">
