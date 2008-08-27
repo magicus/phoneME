@@ -24,19 +24,15 @@
 
 package com.sun.ukit.xml;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.Reader;
-import java.io.InputStreamReader;
-import java.io.IOException;
-import java.io.UnsupportedEncodingException;
 import java.util.NoSuchElementException;
-import java.lang.IllegalArgumentException;
-import java.lang.IllegalStateException;
 
-import javax.xml.stream.XMLStreamReader;
-import javax.xml.stream.XMLResolver;
 import javax.xml.stream.Location;
+import javax.xml.stream.XMLResolver;
 import javax.xml.stream.XMLStreamException;
+import javax.xml.stream.XMLStreamReader;
 
 import org.xml.sax.InputSource;
 import org.xml.sax.ext.Attributes2;

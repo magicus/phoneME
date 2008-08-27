@@ -27,14 +27,13 @@ package com.sun.ukit.dom;
 import java.lang.ref.Reference;
 import java.lang.ref.WeakReference;
 
-import org.w3c.dom.Node;
 import org.w3c.dom.Attr;
-import org.w3c.dom.Element;
-import org.w3c.dom.Document;
-import org.w3c.dom.NodeList;
-import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.DOMException;
+import org.w3c.dom.Element;
 import org.w3c.dom.ElementTraversal;
+import org.w3c.dom.NamedNodeMap;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
 
 import com.sun.ukit.xml.Pair;
 import com.sun.ukit.xml.Parser;
@@ -1013,7 +1012,7 @@ public abstract class XElm
 			throw new DOMException(DOMException.NO_MODIFICATION_ALLOWED_ERR, "");
 		if (idx < 0)
 			throw new DOMException(DOMException.NOT_FOUND_ERR, "");
-		String value = attlst[(idx << 2) + 3];
+		// String value = attlst[(idx << 2) + 3];
 		if (isId == true) {
 			if (attid >= 0 && "xml:id".equals(attlst[attid << 2]))
 				return;  // cannot remove id from 'xml:id' attribute
