@@ -59,7 +59,6 @@ public abstract class Parser
 	protected boolean mIsSAlone;     // xml decl standalone flag
 	protected boolean mIsSAloneSet;  // standalone is explicitly set
 	protected boolean mIsNSAware;    // if true - namespace aware mode
-	protected boolean mIsDOM;        // if true - DOM style parsing
 
 	protected int mPh;  // current phase of document processing
 	protected final static int PH_BEFORE_DOC  = -1;  // before parsing
@@ -1736,7 +1735,7 @@ public abstract class Parser
 	protected void attrs()
 		throws Exception
 	{
-		boolean withns = mIsNSAware;
+		final boolean withns = mIsNSAware;
 
 		Pair head = null;         // head of NS declarations list
 		Pair tail = null;         // tail of NS declarations list
@@ -1867,8 +1866,8 @@ public abstract class Parser
 			//		Add current attribute to the list
 			attr.next = list;
 			list      = attr;
-			if (withns == false || attr.list == null)
-				anum++;  // number of attributes
+			// take into account namespace declaration also
+			anum++;  // number of attributes
 		}
 		mElm.list = list;  // mElm.list is complete list of element's attributes
 		mElm.num  = anum;  // actual number of attributes

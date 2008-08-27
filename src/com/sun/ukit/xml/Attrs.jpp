@@ -24,11 +24,11 @@
 
 package com.sun.ukit.xml;
 
-public class Attrs implements Parser.Attrs,
+public class Attrs implements Parser.Attrs
 // #ifdef SAX_280
-	org.xml.sax.ext.Attributes2
+	, org.xml.sax.ext.Attributes2
 // #else
-	org.xml.sax.Attributes
+	, org.xml.sax.Attributes
 // #endif
 {
 	/**
@@ -84,11 +84,19 @@ public class Attrs implements Parser.Attrs,
 			mItems = new String[mElm.num << 3];
 		}
 
-		boolean withns = ((mElm.id & Parser.FLAG_NSAWARE) == 0)? false: true;
+		final boolean withns = (mElm.id & Parser.FLAG_NSAWARE) != 0;
+		/* The list will ... not
+		 * contain attributes used as Namespace declarations (xmlns*) unless
+		 * the <code>http://xml.org/sax/features/namespace-prefixes</code> 
+		 * feature is set to <code>true</code> (it is <code>false</code> by 
+		 * default).
+		 */
 		int idx = 0;
 		for (Pair attr = mElm.list; attr != null; attr = attr.next) {
-			if (attr.list != null && withns)  // NS declaration
+			// check if attribute is NS declaration
+			if (withns && attr.list != null)  // NS declaration
 				continue;  // do not add NS declarations
+			
 			int base = idx << 3;
 			idx++;  // next attribute index
 			mItems[base]     = (attr.ns != null)? attr.ns: ""; // namespace
