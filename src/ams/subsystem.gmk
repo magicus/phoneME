@@ -97,6 +97,10 @@ ifeq ($(TARGET_PLATFORM), javacall)
 ifeq ($(USE_NATIVE_SUITE_STORAGE), false)
     include $(SUBSYSTEM_AMS_DIR)/suitestore_javacall/lib.gmk
 endif
+
+ifeq ($(USE_NATIVE_INSTALLER), false)
+    include $(SUBSYSTEM_AMS_DIR)/installer_javacall/lib.gmk
+endif
     
 endif    
 endif
