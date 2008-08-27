@@ -146,20 +146,6 @@ typedef void* javacall_handle;
 #include <javacall_platform_defs.h>
 
 /**
- * A list of properties that can be searched by a key.
- *
- * IMPL_NOTE: should be moved to nams/javacall_ams_common.h
- */
-typedef struct _javacall_ams_properties {
-    /**
-     * Number of properties, there are 2 Strings (key/value)
-     * for each property.
-     */
-    int numberOfProperties;
-    javacall_utf16_string* pStringArr;
-} javacall_ams_properties;
-
-/**
  * @typedef javacall_suite_id
  * @brief suite unique ID
  */
@@ -265,6 +251,20 @@ typedef const char* javacall_const_ascii_string;
  * @brief Pixel type for LCD graphics
  */
 typedef unsigned short javacall_pixel;
+
+/**
+ * A list of properties that can be searched by a key.
+ *
+ * IMPL_NOTE: should be moved to nams/javacall_ams_common.h
+ */
+typedef struct _javacall_ams_properties {
+    /**
+     * Number of properties, there are 2 Strings (key/value)
+     * for each property.
+     */
+    int numberOfProperties;
+    javacall_utf16_string* pStringArr;
+} javacall_ams_properties;
 
 /**
  * @define JAVACALL_UNKNOWN_LENGTH
