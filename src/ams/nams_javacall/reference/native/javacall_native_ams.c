@@ -437,7 +437,7 @@ void midp_listener_ams_midlet_ui_state_changed(
         return;
     }
 
-    java_ams_ui_state_changed(
+    java_ams_midlet_ui_state_changed(
         midp_midlet_ui_state2javacall(pEventData->state),
         (javacall_app_id)pEventData->appId,
         midp_midlet_event_reason2javacall(pEventData->reason));

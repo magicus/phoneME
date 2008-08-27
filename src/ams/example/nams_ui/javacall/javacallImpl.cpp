@@ -41,6 +41,7 @@ extern "C" {
  * The Platform must provide an implementation of this function if the
  * App Manager is on the Platform's side.
  *
+ * @param operation code of the completed operation
  * @param appId the ID used to identify the application
  * @param pResult pointer to a static buffer containing
  *                operation-dependent result
