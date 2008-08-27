@@ -694,7 +694,9 @@ void CodeGenerator::move(Assembler::Register dst, Assembler::Register src,
     fmrs(dst, src);
   } else
 #endif
-  mov(dst, src);
+  {
+    mov(dst, src);
+  }
 }
 
 void CodeGenerator::array_check(Value& array, Value& index JVM_TRAPS) {
@@ -1528,7 +1530,7 @@ void CodeGenerator::float_cmp (Value& result, BytecodeClosure::cond_op cond,
       it(eq, ELSE_THEN);
       neg(result.lo_register(), result.lo_register());
       mov(result.lo_register(), 0);
-    } else if (cond == BytecodeClosure::gt) {
+    } else {
       it(mi);
       neg(result.lo_register(), result.lo_register());
       b(done, gt);
@@ -1544,13 +1546,13 @@ void CodeGenerator::float_cmp (Value& result, BytecodeClosure::cond_op cond,
 }
 
 extern "C" {
-  double jvm_dadd(double x, double y);
-  double jvm_dsub(double x, double y);
-  double jvm_dmul(double x, double y);
-  double jvm_ddiv(double x, double y);
-  double jvm_drem(double x, double y);
-  int    jvm_dcmpl(double x, double y);
-  int    jvm_dcmpg(double x, double y);
+  double jvm_dadd       (double x, double y);
+  double jvm_dsub       (double x, double y);
+  double jvm_dmul       (double x, double y);
+  double jvm_ddiv       (double x, double y);
+  double jvm_drem       (double x, double y);
+  int    jvm_dcmpl      (double x, double y);
+  int    jvm_dcmpg      (double x, double y);
 }
 
 void CodeGenerator::double_binary_do(Value& result, Value& op1, Value& op2,
@@ -1565,16 +1567,53 @@ void CodeGenerator::double_binary_do(Value& result, Value& op1, Value& op2,
     default:                       runtime_func = 0; SHOULD_NOT_REACH_HERE();
   }
   if (op1.is_immediate() && op2.is_immediate()) {
-    jdouble result_imm = runtime_func(op1.as_double(), op2.as_double());
+    const jdouble result_imm = runtime_func(op1.as_double(), op2.as_double());
     result.set_double(result_imm);
-  } else {
-    write_literals_if_desperate();
-    call_simple_c_runtime(result, (address)runtime_func, op1, op2);
+    return;
   }
+#if ENABLE_ARM_VFP
+  if( int(op) < int(BytecodeClosure::bin_rem) ) {
+    op1.materialize();
+    op2.materialize();
+
+    ensure_in_float_register(op1);
+    ensure_in_float_register(op2);
+
+    RegisterAllocator::reference(op1.lo_register());
+    RegisterAllocator::reference(op1.hi_register());
+    RegisterAllocator::reference(op2.lo_register());
+    RegisterAllocator::reference(op2.hi_register());
+
+    result.assign_register();
+
+    switch (op) {
+      case BytecodeClosure::bin_add:
+        faddd(result.lo_register(), op1.lo_register(), op2.lo_register());
+        break;
+      case BytecodeClosure::bin_sub:
+        fsubd(result.lo_register(), op1.lo_register(), op2.lo_register());
+        break;
+      case BytecodeClosure::bin_mul:
+        fmuld(result.lo_register(), op1.lo_register(), op2.lo_register());
+        break;
+      case BytecodeClosure::bin_div:
+        fdivd(result.lo_register(), op1.lo_register(), op2.lo_register());
+        break;
+    }
+
+    RegisterAllocator::dereference(op1.lo_register());
+    RegisterAllocator::dereference(op1.hi_register());
+    RegisterAllocator::dereference(op2.lo_register());
+    RegisterAllocator::dereference(op2.hi_register());
+    return;
+  }
+#endif  // ENABLE_ARM_VFP
+  call_simple_c_runtime(result, (address)runtime_func, op1, op2);
 }
 
 void CodeGenerator::double_unary_do(Value& result, Value& op1,
                                     BytecodeClosure::unary_op op JVM_TRAPS) {
+  JVM_IGNORE_TRAPS;
   write_literals_if_desperate();
 
   GUARANTEE(!result.is_present(), "result must not be present");
@@ -1583,8 +1622,17 @@ void CodeGenerator::double_unary_do(Value& result, Value& op1,
   GUARANTEE(op == BytecodeClosure::una_neg || op == BytecodeClosure::una_abs,
             "Sanity")
 
+  ensure_in_float_register(op1);
   assign_register(result, op1);
-  Opcode opcode =  (op == BytecodeClosure::una_neg) ? _eor  : _bic;
+
+#if ENABLE_ARM_VFP
+  if (op == BytecodeClosure::una_neg) {
+    fnegd(result.lo_register(), op1.lo_register());
+  } else {
+    fabsd(result.lo_register(), op1.lo_register());
+  }
+#else
+  const Opcode opcode =  (op == BytecodeClosure::una_neg) ? _eor  : _bic;
   const TempRegister tmp;
   mov(tmp, 2);
   ror(tmp, tmp);
@@ -1595,32 +1643,62 @@ void CodeGenerator::double_unary_do(Value& result, Value& op1,
       mov(result.lo_register(), op1.lo_register());
     }
     arith(opcode, result.lo_register(), tmp);
-    mov(result.hi_register(),  op1.hi_register());
+    mov(result.hi_register(), op1.hi_register());
   } else {
     // The second word contains the sign bit
     if (result.hi_register() != op1.hi_register()) {
       mov(result.hi_register(), op1.hi_register());
     }
     arith(opcode, result.hi_register(), tmp);
-    mov(result.lo_register(),  op1.lo_register());
+    mov(result.lo_register(), op1.lo_register());
   }
+#endif
 }
 
 void CodeGenerator::double_cmp(Value& result, BytecodeClosure::cond_op cond,
                                Value& op1, Value& op2 JVM_TRAPS) {
   int (*runtime_func)(double, double);
   switch (cond) {
-    case BytecodeClosure::lt:
-      runtime_func = jvm_dcmpl; break;
-    case BytecodeClosure::gt:
-      runtime_func = jvm_dcmpg; break;
-    default                 :
-      runtime_func = 0; SHOULD_NOT_REACH_HERE(); break;
+    case BytecodeClosure::lt: runtime_func = jvm_dcmpl; break;
+    case BytecodeClosure::gt: runtime_func = jvm_dcmpg; break;
+    default                 : runtime_func = 0; SHOULD_NOT_REACH_HERE();
   }
   if (op1.is_immediate() && op2.is_immediate()) {
     result.set_int(runtime_func(op1.as_double(), op2.as_double()));
   } else {
+#if ENABLE_ARM_VFP
+    NearLabel done;
+    op1.materialize();
+    op2.materialize();
+
+    ensure_in_float_register(op1);
+    ensure_in_float_register(op2);
+
+    result.assign_register();
+
+    fcmped(op1.lo_register(), op2.lo_register());
+    fmstat();
+    mov(result.lo_register(), 1);
+
+    if (cond == BytecodeClosure::lt) {
+      b(done, gt);
+      fcmpd(op1.lo_register(), op2.lo_register());
+      fmstat();
+      it(eq, ELSE_THEN);
+      neg(result.lo_register(), result.lo_register());
+      mov(result.lo_register(), 0);
+    } else {
+      it(mi);
+      neg(result.lo_register(), result.lo_register());
+      b(done, gt);
+      fcmps(op1.lo_register(), op2.lo_register());
+      fmstat();
+      mov(result.lo_register(), 0, eq);
+    }
+    bind(done);
+#else  // !ENABLE_ARM_VFP
     call_simple_c_runtime(result, (address)runtime_func, op1, op2);
+#endif  // !ENABLE_ARM_VFP
   }
 }
 #endif
@@ -1797,24 +1875,41 @@ extern "C" {
 };
 
 void CodeGenerator::i2f(Value& result, Value& value JVM_TRAPS) {
+  JVM_IGNORE_TRAPS;
   write_literals_if_desperate();
   if (value.is_immediate()) {
     result.set_float(::jvm_i2f(value.as_int()));
   } else {
+#if ENABLE_ARM_VFP
+    ensure_not_in_float_register(value);
+    result.assign_register();
+    fmsr(result.lo_register(), value.lo_register());
+    fsitos(result.lo_register(), result.lo_register());
+#else  // !ENABLE_ARM_VFP
     call_simple_c_runtime(result, (address)::jvm_i2f, value);
+#endif // !ENABLE_ARM_VFP
   }
 }
 
 void CodeGenerator::i2d(Value& result, Value& value JVM_TRAPS) {
+  JVM_IGNORE_TRAPS;
   write_literals_if_desperate();
   if (value.is_immediate()) {
     result.set_double(::jvm_i2d(value.as_int()));
   } else {
+#if ENABLE_ARM_VFP
+    ensure_not_in_float_register(value);
+    result.assign_register();
+    fmsr(result.lo_register(), value.lo_register());
+    fsitod(result.lo_register(), result.lo_register());
+#else  // !ENABLE_ARM_VFP
     call_simple_c_runtime(result, (address)::jvm_i2d, value);
+#endif  // !ENABLE_ARM_VFP
   }
 }
 
 void CodeGenerator::l2f(Value& result, Value& value JVM_TRAPS) {
+  JVM_IGNORE_TRAPS;
   write_literals_if_desperate();
   if (value.is_immediate()) {
     result.set_float(::jvm_l2f(value.as_long()));
@@ -1824,6 +1919,7 @@ void CodeGenerator::l2f(Value& result, Value& value JVM_TRAPS) {
 }
 
 void CodeGenerator::l2d(Value& result, Value& value JVM_TRAPS) {
+  JVM_IGNORE_TRAPS;
   write_literals_if_desperate();
   if (value.is_immediate()) {
     result.set_double(::jvm_l2d(value.as_long()));
@@ -1833,15 +1929,31 @@ void CodeGenerator::l2d(Value& result, Value& value JVM_TRAPS) {
 }
 
 void CodeGenerator::f2i(Value& result, Value& value JVM_TRAPS) {
+  JVM_IGNORE_TRAPS;
   write_literals_if_desperate();
   if (value.is_immediate()) {
     result.set_int(::jvm_f2i(value.as_float()));
   } else {
+#if ENABLE_ARM_VFP
+    TempVFPRegister fresult;
+
+    ensure_in_float_register(value);
+    RegisterAllocator::reference(value.lo_register());
+
+    ftosizs(fresult, value.lo_register());
+
+    RegisterAllocator::dereference(value.lo_register());
+
+    result.assign_register();
+    fmrs(result.lo_register(), fresult);
+#else  // !ENABLE_ARM_VFP
     call_simple_c_runtime(result, (address)::jvm_f2i, value);
+#endif // !ENABLE_ARM_VFP
   }
 }
 
 void CodeGenerator::f2l(Value& result, Value& value JVM_TRAPS) {
+  JVM_IGNORE_TRAPS;
   write_literals_if_desperate();
   if (value.is_immediate()) {
     result.set_long(::jvm_f2l(value.as_float()));
@@ -1851,24 +1963,53 @@ void CodeGenerator::f2l(Value& result, Value& value JVM_TRAPS) {
 }
 
 void CodeGenerator::f2d(Value& result, Value& value JVM_TRAPS) {
+  JVM_IGNORE_TRAPS;
   write_literals_if_desperate();
   if (value.is_immediate()) {
     result.set_double(::jvm_f2d(value.as_float()));
   } else {
+#if ENABLE_ARM_VFP
+    ensure_in_float_register(value);
+    RegisterAllocator::reference(value.lo_register());
+
+    result.assign_register();
+    fcvtds(result.lo_register(), value.lo_register());
+
+    RegisterAllocator::dereference(value.lo_register());
+#else  // !ENABLE_ARM_VFP
     call_simple_c_runtime(result, (address)::jvm_f2d, value);
+#endif  // !ENABLE_FLOAT
   }
 }
 
 void CodeGenerator::d2i(Value& result, Value& value JVM_TRAPS) {
+  JVM_IGNORE_TRAPS;
   write_literals_if_desperate();
   if (value.is_immediate()) {
     result.set_int(::jvm_d2i(value.as_double()));
   } else {
+#if ENABLE_ARM_VFP
+    ensure_in_float_register(value);
+
+    RegisterAllocator::reference(value.lo_register());
+    RegisterAllocator::reference(value.hi_register());
+
+    TempVFPRegister freg;
+    ftosizd(freg, value.lo_register());
+
+    RegisterAllocator::dereference(value.lo_register());
+    RegisterAllocator::dereference(value.hi_register());
+
+    result.assign_register();
+    fmrs(result.lo_register(), freg);
+#else  // !ENABLE_ARM_VFP
     call_simple_c_runtime(result, (address)::jvm_d2i, value);
+#endif // !ENABLE_ARM_VFP
   }
 }
 
 void CodeGenerator::d2l(Value& result, Value& value JVM_TRAPS) {
+  JVM_IGNORE_TRAPS;
   write_literals_if_desperate();
   if (value.is_immediate()) {
     result.set_long(::jvm_d2l(value.as_double()));
@@ -1878,14 +2019,28 @@ void CodeGenerator::d2l(Value& result, Value& value JVM_TRAPS) {
 }
 
 void CodeGenerator::d2f(Value& result, Value& value JVM_TRAPS) {
+  JVM_IGNORE_TRAPS;
   write_literals_if_desperate();
   if (value.is_immediate()) {
     result.set_float(::jvm_d2f(value.as_double()));
   } else {
+#if ENABLE_ARM_VFP
+    ensure_in_float_register(value);
+
+    RegisterAllocator::reference(value.lo_register());
+    RegisterAllocator::reference(value.hi_register());
+
+    result.assign_register();
+    fcvtsd(result.lo_register(), value.lo_register());
+
+    RegisterAllocator::dereference(value.lo_register());
+    RegisterAllocator::dereference(value.hi_register());
+#else   // !ENABLE_ARM_VFP
     call_simple_c_runtime(result, (address)::jvm_d2f, value);
+#endif  // ENABLE_ARM_VFP
   }
 }
-#endif
+#endif  // ENABLE_FLOAT
 
 void CodeGenerator::larithmetic(Opcode opcode1, Opcode opcode2,
                                 Value& result, Value& op1, Value& op2 JVM_TRAPS) {
