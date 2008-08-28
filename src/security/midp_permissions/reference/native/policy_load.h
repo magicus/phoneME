@@ -30,4 +30,5 @@ extern int permissions_get_default_value(char* domain_name, char* group_name);
 extern int permissions_get_max_value(char* domain_name, char* group_name);
 extern int permissions_load_group_messages(void** array, char* group_name);
 extern int permissions_dealloc(void* array);
+extern void permissions_loading_finished();
 

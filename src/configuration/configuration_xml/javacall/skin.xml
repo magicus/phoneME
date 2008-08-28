@@ -1032,17 +1032,17 @@
 
   <image
         Key="KEYBOARD_BTN_UP_UN"
-      Value="keyboard.btn_up_UN"
+      Value="keyboard.btn_up_un"
     Romized="false"/>
 
   <image
         Key="KEYBOARD_BTN_LEFT_SEL"
-      Value="keyboard.btn_LEFT_sel"
+      Value="keyboard.btn_left_sel"
     Romized="false"/>
 
   <image
         Key="KEYBOARD_BTN_LEFT_UN"
-      Value="keyboard.btn_LEFT_UN"
+      Value="keyboard.btn_left_un"
     Romized="false"/>
 
   <image

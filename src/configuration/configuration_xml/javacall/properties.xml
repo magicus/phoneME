@@ -95,5 +95,9 @@
             Value="1"
             Scope="internal"
             Comment="When not zero, Java installer is launched to handle a midlet suite URL."/>
+  <property Key="security.domain"
+            Value="minimum"
+            Scope="internal"
+            Comment="Default security domain. The property is intended for emulators"/>
 </properties>
 </configuration>

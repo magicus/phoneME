@@ -30,7 +30,6 @@ package javax.microedition.lcdui;
 import com.sun.midp.chameleon.SubMenuCommand;
 
 import com.sun.midp.i18n.ResourceConstants;
-import com.sun.midp.i18n.Resource;
 
 import java.util.Vector;
 import java.util.Enumeration;
@@ -51,7 +50,6 @@ class CanvasLFImpl extends DisplayableLFImpl implements CanvasLF {
         if (currentDisplay != null) {
             isDisplayRotated = currentDisplay.wantRotation;
         }
-        addInputCommands();
     }
 
     // ************************************************************
@@ -432,16 +430,6 @@ class CanvasLFImpl extends DisplayableLFImpl implements CanvasLF {
                 return true;
         }
     }
-
-    /**
-     * Add input modes specific commands
-     */
-    private void addInputCommands() {
-
-        canvas.addCommand(new Command(Resource.getString(ResourceConstants.LCDUI_TF_NATIVE_VKBD),
-                                      Command.VIRTUAL, 100));
-    }
-
 
     /**
      * Canvas being stored in this object.

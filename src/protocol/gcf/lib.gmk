@@ -68,6 +68,7 @@ $(GENERATED_DIR)/classes/com/sun/midp/io/ConnectionBaseAdapter.java: $(SUBSYSTEM
 #
 SUBSYSTEM_GCF_JAVA_FILES += \
     $(SUBSYSTEM_DIR)/protocol/gcf/reference/classes/com/sun/midp/io/HttpUrl.java \
+     $(SUBSYSTEM_DIR)/protocol/gcf/reference/classes/com/sun/midp/io/FileUrl.java \
     $(GENERATED_DIR)/classes/com/sun/midp/io/ConnectionBaseAdapter.java \
     $(SUBSYSTEM_DIR)/protocol/gcf/reference/classes/com/sun/midp/io/Util.java \
     $(SUBSYSTEM_DIR)/protocol/gcf/reference/classes/com/sun/midp/io/Base64.java \

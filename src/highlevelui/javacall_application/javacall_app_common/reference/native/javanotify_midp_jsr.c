@@ -858,6 +858,7 @@ static javacall_utf16_string
 copy_jc_utf16_string(javacall_const_utf16_string src) {
     javacall_int32 length = 0;
     javacall_utf16_string result;
+    if( src == NULL ) return NULL;
     if (JAVACALL_OK != javautil_unicode_utf16_ulength (src, &length)) {
         length = 0;
     }
