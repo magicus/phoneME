@@ -99,10 +99,11 @@ public class TestSystemServiceRequest extends TestCase {
         IsolateSystemServiceRequestHandler isolateRequestHandler = 
             requestHandler.newIsolateRequestHandler(clientIsolate);
 
-        Link namedPortalLink = Link.newLink(serviceIsolate, clientIsolate);
-        Link[] clientLinks = { namedPortalLink };
-        LinkPortal.setLinks(clientIsolate, clientLinks);
-        SystemServiceLinkPortal.sendLinks(namedPortalLink);
+        SystemServiceConnectionLinks links = isolateRequestHandler.getSendReceiveLinks();
+        Link[] linkArray = new Link[2];
+        linkArray[0] = links.getSendLink();
+        linkArray[1] = links.getReceiveLink();
+        LinkPortal.setLinks(clientIsolate, linkArray);
 
         requestHandler.handleIsolateRequests(isolateRequestHandler);
 

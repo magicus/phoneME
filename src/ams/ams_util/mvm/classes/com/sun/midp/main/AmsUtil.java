@@ -347,14 +347,14 @@ public class AmsUtil {
 
             isolate.setDebug(isDebugMode);
             
+            isolate.setAPIAccess(true);
+            isolate.start();
+
             // Ability to launch midlet implies right to use Service API for negotiations
             // with isolate being run
             Link[] isolateLinks = 
                     SystemServiceLinkPortal.establishLinksFor(isolate, getTrustedToken());
             LinkPortal.setLinks(isolate, isolateLinks);
-
-            isolate.setAPIAccess(true);
-            isolate.start();
         } catch (Throwable t) {
             int errorCode;
             String msg;

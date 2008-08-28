@@ -42,7 +42,7 @@ public class SystemServiceRequestIsolate  {
                IOException {
 
         Link[] isolateLinks = LinkPortal.getLinks();
-        SystemServiceLinkPortal.receiveLinks(isolateLinks[0]);
+        SystemServiceLinkPortal.linksObtained(isolateLinks);
 
         SystemServiceRequestor serviceRequestor = 
             SystemServiceRequestor.getInstance(token);

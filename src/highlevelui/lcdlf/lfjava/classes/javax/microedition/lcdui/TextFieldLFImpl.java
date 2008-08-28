@@ -2019,31 +2019,6 @@ class TextFieldLFImpl extends ItemLFImpl implements
     }
 
     /**
-     * Show virtual keybord popup
-     */
-    protected void showKeyboardLayer() {
-        Display d = getCurrentDisplay();
-
-        if (d != null) {
-            if (!vkb_popupOpen) {
-                if (d.getInputSession().getCurrentInputMode() instanceof VirtualInputMode) {
-                    VirtualKeyboardLayer keyboardPopup = d.getVirtualKeyboardPopup();
-                    d.showPopup(keyboardPopup);
-                    vkb_popupOpen = true;
-                    lRequestInvalidate(true, true);
-                }
-            } else {
-                if (!(d.getInputSession().getCurrentInputMode() instanceof VirtualInputMode)) {
-                    VirtualKeyboardLayer keyboardPopup = d.getVirtualKeyboardPopup();
-                    d.hidePopup(keyboardPopup);
-                    vkb_popupOpen = false;
-                    lRequestInvalidate(true, true);
-                }
-            }
-        }
-    }
-    
-    /**
      * Hide predictive text popup dialog 
      */
     protected void hidePTILayer() {

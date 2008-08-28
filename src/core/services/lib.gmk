@@ -78,7 +78,6 @@ SUBSYSTEM_SERVICES_JAVA_FILES += \
 ifeq ($(USE_I3_TEST), true)
 
 SUBSYSTEM_SERVICES_I3TEST_JAVA_FILES = \
-#    $(SERVICES_DIR)/i3test/com/sun/midp/links/TestNamedLinkPortal.java \
     $(SERVICES_DIR)/i3test/com/sun/midp/services/TestServiceRequestProtocol.java \
     $(SERVICES_DIR)/i3test/com/sun/midp/services/TestSystemServiceRequest.java \
     $(SERVICES_DIR)/i3test/com/sun/midp/services/SystemServiceRequestIsolate.java \
@@ -86,6 +85,8 @@ SUBSYSTEM_SERVICES_I3TEST_JAVA_FILES = \
     $(SERVICES_DIR)/i3test/com/sun/midp/services/TestSystemService.java \
     $(SERVICES_DIR)/i3test/com/sun/midp/services/SystemServiceIsolate.java \
     $(SERVICES_DIR)/i3test/com/sun/midp/services/SecurityTokenProvider.java
+#    $(SERVICES_DIR)/i3test/com/sun/midp/links/TestNamedLinkPortal.java \
+
 else
 
 SUBSYSTEM_SERVICES_I3TEST_JAVA_FILES =
