@@ -57,6 +57,7 @@
 #define  IDM_HELP_ABOUT            500
 
 #define  IDD_INFO_DIALOG           600
+#define  IDD_PERMISSIONS_DIALOG    610
 
 #define  IDC_TREEVIEW_MIDLETS      900
 #define  IDC_TREEVIEW              910
