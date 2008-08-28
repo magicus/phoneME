@@ -28,7 +28,6 @@ import java.io.IOException;
 import java.io.InputStream;
 
 import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.parsers.SAXParserFactory;
 
 import org.xml.sax.InputSource;
 import org.xml.sax.Locator;
@@ -71,7 +70,7 @@ public final class SAX
 	 * @see org.xml.sax.XMLReader
 	 */
 
-	final static class Parser extends com.sun.ukit.xml.Parser
+	final static private class Parser extends com.sun.ukit.xml.Parser
 		implements
 // #ifdef SAX_280 		
 			org.xml.sax.XMLReader,
@@ -175,12 +174,12 @@ public final class SAX
 		public boolean getFeature(String name)
 			throws SAXNotRecognizedException, SAXNotSupportedException
 		{
-			if (name.equals(SAX.FEATURE_NS) == true) {
+			if (name.equals(SAX.FEATURE_NS)) {
 				return mFNamespaces;
-			} else if (SAX.FEATURE_PREF.equals(name) == true) {
+			} else if (SAX.FEATURE_PREF.equals(name)) {
 				return mFPrefixes;
 // #ifdef SAX_280 		
-			} else if (SAX.FEATURE_ATTR2.equals(name) == true) {
+			} else if (SAX.FEATURE_ATTR2.equals(name)) {
 				return true;
 // #endif				
 			} else {
@@ -218,18 +217,18 @@ public final class SAX
 		public void setFeature(String name, boolean value) 
 			throws SAXNotRecognizedException, SAXNotSupportedException
 		{
-			if (name.equals(SAX.FEATURE_NS) == true) {
+			if (name.equals(SAX.FEATURE_NS)) {
 				//		Cannot be changed during parsing
 				if (mPh >= PH_DOC_START)
 					throw new SAXNotSupportedException(name);
 				mFNamespaces = value;
-			} else if (SAX.FEATURE_PREF.equals(name) == true) {
+			} else if (SAX.FEATURE_PREF.equals(name)) {
 				//		Cannot be changed during parsing
 				if (mPh >= PH_DOC_START)
 					throw new SAXNotSupportedException(name);
 				mFPrefixes   = value;
 // #ifdef SAX_280 		
-			} else if (SAX.FEATURE_ATTR2.equals(name) == true) {
+			} else if (SAX.FEATURE_ATTR2.equals(name)) {
 				if (value == false)
 					throw new SAXNotSupportedException(name);
 // #endif				
@@ -915,11 +914,11 @@ public final class SAX
 		}
 	}
 	
-	static final class SAXParserImp extends javax.xml.parsers.SAXParser
+	static final private class ParserImp extends javax.xml.parsers.SAXParser
 	{
-		Parser parser;
+		private final Parser parser;
 	
-		SAXParserImp()
+		ParserImp()
 		{
 			super();
 			parser = new Parser();
@@ -1027,7 +1026,7 @@ public final class SAX
 		}
 	}
 	
-	public final static class SAXParserFactoryImp 
+	public final static class ParserFactoryImp 
 		extends javax.xml.parsers.SAXParserFactory
 	{
 		private boolean namespaces = false;
@@ -1046,11 +1045,11 @@ public final class SAX
 			throws ParserConfigurationException, SAXException
 		{
 			// NOTE: the RI's factory does not currently support a validating parser
-			if (isValidating() == true) {
+			if (isValidating()) {
 				throw new ParserConfigurationException("");
 			}
 			
-			SAXParserImp parser = new SAXParserImp();
+			ParserImp parser = new ParserImp();
 			if ((namespaces == true) && (prefixes == false)) {
 				parser.parser.setFeature(SAX.FEATURE_NS, true);
 				parser.parser.setFeature(SAX.FEATURE_PREF, false);
@@ -1074,7 +1073,7 @@ public final class SAX
 		public void setNamespaceAware(boolean awareness)
 		{
 			super.setNamespaceAware(awareness);
-			if (awareness == true) {
+			if (awareness) {
 				namespaces = true;
 				prefixes   = false;
 			} else {
@@ -1102,9 +1101,9 @@ public final class SAX
 		public void setFeature(String name, boolean value)
 			throws ParserConfigurationException, SAXNotRecognizedException, SAXNotSupportedException 
 		{
-			if (SAX.FEATURE_NS.equals(name) == true) {
+			if (SAX.FEATURE_NS.equals(name)) {
 				namespaces = value;
-			} else if (SAX.FEATURE_PREF.equals(name) == true) {
+			} else if (SAX.FEATURE_PREF.equals(name)) {
 				prefixes   = value;
 			} else {
 				throw new SAXNotRecognizedException(name);
@@ -1128,9 +1127,9 @@ public final class SAX
 		public boolean getFeature(String name)
 			throws ParserConfigurationException, SAXNotRecognizedException, SAXNotSupportedException 
 		{
-			if (SAX.FEATURE_NS.equals(name) == true) {
+			if (SAX.FEATURE_NS.equals(name)) {
 				return namespaces;
-			} else if (SAX.FEATURE_PREF.equals(name) == true) {
+			} else if (SAX.FEATURE_PREF.equals(name)) {
 				return prefixes;
 			} else {
 				throw new SAXNotRecognizedException(name);

@@ -50,7 +50,7 @@ import org.xml.sax.SAXNotRecognizedException;
 public abstract class SAXParserFactory
 {
 	private static final String defaultFactoryClassName = 
-				com.sun.ukit.xml.SAX.SAXParserFactoryImp.class.getName(); 
+				com.sun.ukit.xml.SAX.ParserFactoryImp.class.getName(); 
 	
     private boolean namespaceAware = false;
     private boolean validating = false;
