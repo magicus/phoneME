@@ -1,0 +1,86 @@
+#
+# Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+# 
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License version
+# 2 only, as published by the Free Software Foundation. 
+# 
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# General Public License version 2 for more details (a copy is
+# included at /legal/license.txt). 
+# 
+# You should have received a copy of the GNU General Public License
+# version 2 along with this work; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+# 02110-1301 USA 
+# 
+# Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+# Clara, CA 95054 or visit www.sun.com if you need additional
+# information or have any questions. 
+#
+######################################################################
+#
+# Module's Component Configuration file
+#
+# Remember: It is up to the module itself to impose rules of
+# how to compile the options. All the global Makefile needs
+# is the final def. of Java and native file lists and some
+# other def. (like VPATH)
+#
+######################################################################
+
+#####################################################
+ifeq ($(wildcard $(JAVACALL_DIR)/build/vc/rules.gmk),)
+$(error JAVACALL_DIR must point to a directory containing javacall implementation sources)
+endif
+JAVACALL_LIB_NAME     = javacall
+JAVACALL_BUILD_DIR    = $(CURDIR)/$(CVM_BUILD_SUBDIR_NAME)/$(JAVACALL_LIB_NAME)
+JAVACALL_INCLUDE_DIRS = $(JAVACALL_BUILD_DIR)/inc
+ifeq ($(CVM_STATICLINK_LIBS),true)
+LIB_EXT = lib
+JAVACALL_SHARED_LIB   = false
+ifeq ($(USE_JSR_120), true)
+WIN_LINKLIBS += sms.lib
+endif #USE_JSR_120 
+ifeq ($(USE_JSR_135), true)
+WIN_LINKLIBS += strmiids.lib strmbase.lib ole32.lib oleaut32.lib uuid.lib dmoguids.lib
+WIN_LINKLIBS += atls$(VC_DEBUG_POSTFIX).lib msvcrt$(VC_DEBUG_POSTFIX).lib libcmt$(VC_DEBUG_POSTFIX).lib libcpmt$(VC_DEBUG_POSTFIX).lib
+endif #USE_JSR_135
+else
+LIB_EXT = dll
+JAVACALL_SHARED_LIB   = true
+endif
+
+JAVACALL_LIB_FILE     = $(JAVACALL_LIB_NAME)$(DEBUG_POSTFIX).$(LIB_EXT)
+JAVACALL_LIBRARY      = $(JSROP_LIB_DIR)/$(JAVACALL_LIB_FILE)
+JAVACALL_LINKLIBS     = $(JAVACALL_LIBRARY)
+
+JSROP_NATIVE_LIBS    += $(JAVACALL_LIBRARY)
+JSROP_LINKLIBS       += $(JAVACALL_LINKLIBS)
+JSROP_INCLUDE_DIRS   += $(JAVACALL_INCLUDE_DIRS)
+
+ifeq ($(USE_JAVACALL_EVENTS),true)
+JAVACALL_LINKLIBS += $(JSROP_LIB_DIR)/notifiers$(DEBUG_POSTFIX).$(LIB_EXT)
+endif
+
+source_bundle::
+	$(AT)make -C $(JAVACALL_DIR)/configuration/phoneMEAdvanced/$(JAVACALL_TARGET) \
+	JAVACALL_DIR=$(JAVACALL_DIR) \
+	SOURCE_OUTPUT_DIR=$(SOURCE_OUTPUT_DIR) \
+	VC_PATH="$(VC_PATH)" \
+	$(JAVACALL_FLAGS) \
+	source_bundle
+
+$(JAVACALL_LIBRARY):
+	$(AT)make -C $(JAVACALL_DIR)/configuration/phoneMEAdvanced/$(JAVACALL_TARGET) \
+	JAVACALL_DIR=$(JAVACALL_DIR) \
+	JAVACALL_OUTPUT_DIR=$(JAVACALL_BUILD_DIR) \
+	$(JAVACALL_FLAGS) \
+	USE_DEBUG=$(CVM_DEBUG) \
+	JAVACALL_SHARED_LIB=$(JAVACALL_SHARED_LIB) \
+	VC_PATH='$(VC_PATH)'
+	$(AT)mkdir -p $(JSROP_LIB_DIR)
+	$(AT)cp $(JAVACALL_BUILD_DIR)/lib/* $(JSROP_LIB_DIR)
