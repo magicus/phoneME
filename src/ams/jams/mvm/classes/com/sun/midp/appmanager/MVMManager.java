@@ -177,13 +177,17 @@ public class MVMManager extends MIDlet
                                           String displayName,
                                           boolean isDebugMode) {
         if (suiteUnderDebugId != MIDletSuite.UNUSED_SUITE_ID) {
-            // suite is already under debug
-            return;
+            /* IMPL NOTE: this forces only one running MIDlet in debug mode - 
+             * the VM currently does not support more MIDlets in debug mode 
+             * at the same time. */
+            isDebugMode = false;
         }
 
         try {
             appManager.launchSuite(suiteId, className, isDebugMode);
-            suiteUnderDebugId = suiteId;
+            if (isDebugMode) {
+                suiteUnderDebugId = suiteId;
+            }
         } catch (Exception ex) {
             displayError.showErrorAlert(displayName, ex, null, null);
         }
@@ -350,22 +354,26 @@ public class MVMManager extends MIDlet
      * @param suiteInfo Suite which just exited
      */
     public void notifySuiteExited(RunningMIDletSuiteInfo suiteInfo) {
-        if (suiteUnderDebugId == suiteInfo.suiteId) {
-            MIDletProxy odtAgentMidlet = midletProxyList.findMIDletProxy(
-                MIDletSuite.INTERNAL_SUITE_ID, ODT_AGENT);
+        MIDletProxy odtAgentMidlet = midletProxyList.findMIDletProxy(
+            MIDletSuite.INTERNAL_SUITE_ID, ODT_AGENT);
 
-            if (odtAgentMidlet != null) {
-                EventQueue eq = EventQueue.getEventQueue();
-                NativeEvent event = new NativeEvent(
-                        EventTypes.MIDP_ODD_MIDLET_EXITED_EVENT);
-                event.intParam1    = suiteUnderDebugId;
-                event.stringParam1 = odtAgentMidlet.getClassName();
-                eq.sendNativeEventToIsolate(event,
-                        odtAgentMidlet.getIsolateId());
-            }
-
-            suiteUnderDebugId = MIDletSuite.UNUSED_SUITE_ID;
+        if (odtAgentMidlet != null) {
+            EventQueue eq = EventQueue.getEventQueue();
+            NativeEvent event = new NativeEvent(
+                    EventTypes.MIDP_ODD_MIDLET_EXITED_EVENT);
+            event.intParam1    = suiteInfo.suiteId;
+            event.stringParam1 = odtAgentMidlet.getClassName();
+            eq.sendNativeEventToIsolate(event,
+                    odtAgentMidlet.getIsolateId());
         }
+
+        /* IMPL NOTE: Disabling this code forces only one MIDlet in debug 
+         * mode per whole life of the agent. This avoids problems 
+         * with starting MIDlets in debug mode (CR 6736719) */
+//        if (suiteUnderDebugId == suiteInfo.suiteId) {
+//            suiteUnderDebugId = MIDletSuite.UNUSED_SUITE_ID;
+//        }
+        
         appManager.notifySuiteExited(suiteInfo);
 
         if (waitForDestroyThread != null) {

@@ -1340,7 +1340,7 @@ Java_com_sun_midp_security_SecurityToken_warnPotentialBlocking0(void) {
  *        unused code.
  *
  ************************************************************************/
-#ifndef EXCLUDE_JSR082
+#if ENABLE_JSR_82
 
 /**
  * void sendArray(int md, byte b[], int offset, int len)
@@ -1422,7 +1422,7 @@ static void netmon_obex_connect(LimeFunction *f) {
  * int connect0(String url, long groupid)
  */
 KNIEXPORT KNI_RETURNTYPE_INT
-Java_com_sun_kvem_jsr082_impl_NetmonCommon_connect0() {
+Java_com_sun_jsr082_bluetooth_kvem_impl_NetmonCommon_connect0() {
     static LimeFunction *f = NULL;
 
     if (f == NULL) {
@@ -1435,7 +1435,7 @@ Java_com_sun_kvem_jsr082_impl_NetmonCommon_connect0() {
  * void disconnect0(int md)
  */
 KNIEXPORT KNI_RETURNTYPE_VOID
-Java_com_sun_kvem_jsr082_impl_NetmonCommon_disconnect0() {
+Java_com_sun_jsr082_bluetooth_kvem_impl_NetmonCommon_disconnect0() {
     static LimeFunction *f = NULL;
     int md = KNI_GetParameterAsInt(1);
 
@@ -1453,7 +1453,7 @@ Java_com_sun_kvem_jsr082_impl_NetmonCommon_disconnect0() {
  * Sending only specified data length.
  */
 KNIEXPORT KNI_RETURNTYPE_VOID
-Java_com_sun_kvem_jsr082_impl_NetmonCommon_read0() {
+Java_com_sun_jsr082_bluetooth_kvem_impl_NetmonCommon_read0() {
     static LimeFunction *f = NULL;
 
     if (f == NULL) {
@@ -1467,7 +1467,7 @@ Java_com_sun_kvem_jsr082_impl_NetmonCommon_read0() {
  * Sending only specified data length.
  */
 KNIEXPORT KNI_RETURNTYPE_VOID
-Java_com_sun_kvem_jsr082_impl_NetmonCommon_write0() {
+Java_com_sun_jsr082_bluetooth_kvem_impl_NetmonCommon_write0() {
     static LimeFunction *f = NULL;
 
     if (f == NULL) {
@@ -1478,10 +1478,8 @@ Java_com_sun_kvem_jsr082_impl_NetmonCommon_write0() {
 
 /* BT SPP netmon functions */
 
-// Added by Nadav Benedek
-
 KNIEXPORT KNI_RETURNTYPE_INT
-Java_com_sun_kvem_io_j2me_btspp_BTSPPNetmonNotifier_notifierConnect0() {
+Java_com_sun_jsr082_bluetooth_kvem_btspp_BTSPPNetmonNotifier_notifierConnect0() {
     int md;
     jlong groupid;
     jchar* urlData;
@@ -1516,11 +1514,10 @@ Java_com_sun_kvem_io_j2me_btspp_BTSPPNetmonNotifier_notifierConnect0() {
     KNI_ReturnInt(md);
 }
 
-// Added by Nadav Benedek
 
 
 KNIEXPORT KNI_RETURNTYPE_VOID
-Java_com_sun_kvem_io_j2me_btspp_BTSPPNetmonNotifier_updateServiceRecord() {
+Java_com_sun_jsr082_bluetooth_kvem_btspp_BTSPPNetmonNotifier_updateServiceRecord() {
     static LimeFunction *f = NULL;
     DEBUG_PRINT("in impl_bluetooth_NetmonBluetooth_updateServiceRecord\n");
 
@@ -1539,7 +1536,7 @@ Java_com_sun_kvem_io_j2me_btspp_BTSPPNetmonNotifier_updateServiceRecord() {
  * int connect0(String url, long groupid)
  */
 KNIEXPORT KNI_RETURNTYPE_INT
-Java_com_sun_kvem_io_j2me_btspp_BTSPPNetmonConnection_connect0() {
+Java_com_sun_jsr082_bluetooth_kvem_btspp_BTSPPNetmonConnection_connect0() {
     static LimeFunction *f = NULL;
     DEBUG_PRINT("in btspp_BTSPPNetmonConnection_connect0\n");
 
@@ -1551,7 +1548,7 @@ Java_com_sun_kvem_io_j2me_btspp_BTSPPNetmonConnection_connect0() {
 }
 
 KNIEXPORT KNI_RETURNTYPE_VOID
-Java_com_sun_kvem_io_j2me_btspp_BTSPPNetmonConnection_disconnect0() {
+Java_com_sun_jsr082_bluetooth_kvem_btspp_BTSPPNetmonConnection_disconnect0() {
     static LimeFunction *f = NULL;
     int md = KNI_GetParameterAsInt(1);
     DEBUG_PRINT("in btspp_BTSPPNetmonConnection_disconnect0\n");
@@ -1565,12 +1562,12 @@ Java_com_sun_kvem_io_j2me_btspp_BTSPPNetmonConnection_disconnect0() {
 }
 
 KNIEXPORT KNI_RETURNTYPE_VOID
-Java_com_sun_kvem_io_j2me_btspp_BTSPPNetmonNotifier_disconnect0() {
-    Java_com_sun_kvem_io_j2me_btspp_BTSPPNetmonConnection_disconnect0();
+Java_com_sun_jsr082_bluetooth_kvem_btspp_BTSPPNetmonNotifier_disconnect0() {
+    Java_com_sun_jsr082_bluetooth_kvem_btspp_BTSPPNetmonConnection_disconnect0();
 }
 
 KNIEXPORT KNI_RETURNTYPE_VOID
-Java_com_sun_kvem_io_j2me_btspp_BTSPPNetmonConnection_read0() {
+Java_com_sun_jsr082_bluetooth_kvem_btspp_BTSPPNetmonConnection_read0() {
     static LimeFunction *f = NULL;
     DEBUG_PRINT("in btspp_BTSPPNetmonConnection_read0\n");
 
@@ -1582,7 +1579,7 @@ Java_com_sun_kvem_io_j2me_btspp_BTSPPNetmonConnection_read0() {
 }
 
 KNIEXPORT KNI_RETURNTYPE_VOID
-Java_com_sun_kvem_io_j2me_btspp_BTSPPNetmonConnection_write0() {
+Java_com_sun_jsr082_bluetooth_kvem_btspp_BTSPPNetmonConnection_write0() {
     static LimeFunction *f = NULL;
     DEBUG_PRINT("in btspp_BTSPPNetmonConnection_write0\n");
 
@@ -1597,9 +1594,9 @@ Java_com_sun_kvem_io_j2me_btspp_BTSPPNetmonConnection_write0() {
  * int connect0(String url, long groupid)
  */
 KNIEXPORT KNI_RETURNTYPE_INT
-Java_com_sun_kvem_io_j2me_btl2cap_BTL2CAPNetmonConnection_connect0() {
+Java_com_sun_jsr082_bluetooth_kvem_btl2cap_L2CAPNetmonConnection_connect0() {
     static LimeFunction *f = NULL;
-    DEBUG_PRINT("in btl2cap_BTL2CAPNetmonConnection_connect0\n");
+    DEBUG_PRINT("in btl2cap_L2CAPNetmonConnection_connect0\n");
 
     if (f == NULL) {
         f = NewLimeFunction(NETMON_BLUETOOTH_PACKAGE,
@@ -1609,10 +1606,10 @@ Java_com_sun_kvem_io_j2me_btl2cap_BTL2CAPNetmonConnection_connect0() {
 }
 
 KNIEXPORT KNI_RETURNTYPE_VOID
-Java_com_sun_kvem_io_j2me_btl2cap_BTL2CAPNetmonConnection_disconnect0() {
+Java_com_sun_jsr082_bluetooth_kvem_btl2cap_L2CAPNetmonConnection_disconnect0() {
     static LimeFunction *f = NULL;
     int md = KNI_GetParameterAsInt(1);
-    DEBUG_PRINT("in btl2cap_BTL2CAPNetmonConnection_disconnect0\n");
+    DEBUG_PRINT("in btl2cap_L2CAPNetmonConnection_disconnect0\n");
 
     if (f == NULL) {
         f = NewLimeFunction(NETMON_BLUETOOTH_PACKAGE,
@@ -1623,9 +1620,9 @@ Java_com_sun_kvem_io_j2me_btl2cap_BTL2CAPNetmonConnection_disconnect0() {
 }
 
 KNIEXPORT KNI_RETURNTYPE_VOID
-Java_com_sun_kvem_io_j2me_btl2cap_BTL2CAPNetmonConnection_read0() {
+Java_com_sun_jsr082_bluetooth_kvem_btl2cap_L2CAPNetmonConnection_read0() {
     static LimeFunction *f = NULL;
-    DEBUG_PRINT("in btl2cap_BTL2CAPNetmonConnection_read0\n");
+    DEBUG_PRINT("in btl2cap_L2CAPNetmonConnection_read0\n");
 
     if (f == NULL) {
         f = NewLimeFunction(NETMON_BLUETOOTH_PACKAGE,
@@ -1635,9 +1632,9 @@ Java_com_sun_kvem_io_j2me_btl2cap_BTL2CAPNetmonConnection_read0() {
 }
 
 KNIEXPORT KNI_RETURNTYPE_VOID
-Java_com_sun_kvem_io_j2me_btl2cap_BTL2CAPNetmonConnection_write0() {
+Java_com_sun_jsr082_bluetooth_kvem_btl2cap_L2CAPNetmonConnection_write0() {
     static LimeFunction *f = NULL;
-    DEBUG_PRINT("in btl2cap_BTL2CAPNetmonConnection_read0\n");
+    DEBUG_PRINT("in btl2cap_L2CAPNetmonConnection_read0\n");
 
     if (f == NULL) {
         f = NewLimeFunction(NETMON_BLUETOOTH_PACKAGE,
@@ -1650,7 +1647,7 @@ Java_com_sun_kvem_io_j2me_btl2cap_BTL2CAPNetmonConnection_write0() {
  * int connect0(String url, long groupid)
  */
 KNIEXPORT KNI_RETURNTYPE_INT
-Java_com_sun_kvem_jsr082_impl_NetmonCommon_notifierConnect0() {
+Java_com_sun_jsr082_bluetooth_kvem_impl_NetmonCommon_notifierConnect0() {
     int md;
     jlong groupid;
     jchar* urlData;
@@ -1686,7 +1683,7 @@ Java_com_sun_kvem_jsr082_impl_NetmonCommon_notifierConnect0() {
 }
 
 KNIEXPORT KNI_RETURNTYPE_VOID
-Java_com_sun_kvem_jsr082_impl_bluetooth_NetmonBluetooth_updateServiceRecord() {
+Java_com_sun_jsr082_bluetooth_kvem_impl_NetmonBluetooth_updateServiceRecord() {
     static LimeFunction *f = NULL;
     DEBUG_PRINT("in impl_bluetooth_NetmonBluetooth_updateServiceRecord\n");
 
@@ -1698,7 +1695,7 @@ Java_com_sun_kvem_jsr082_impl_bluetooth_NetmonBluetooth_updateServiceRecord() {
 }
 
 KNIEXPORT KNI_RETURNTYPE_VOID
-Java_com_sun_kvem_jsr082_impl_NetmonCommon_notifierDisconnect0() {
+Java_com_sun_jsr082_bluetooth_kvem_impl_NetmonCommon_notifierDisconnect0() {
     static LimeFunction *f = NULL;
     int md = KNI_GetParameterAsInt(1);
     DEBUG_PRINT("in impl_NetmonCommon_notifierDisconnect0\n");
@@ -1726,7 +1723,7 @@ Java_com_sun_kvem_environment_NetMon_isNetworkMonitorActive0() {
  * This block contains the native methods that are used by JSR177 Netmon.
  *
  ************************************************************************/
-#ifndef EXCLUDE_JSR177
+#if ENABLE_JSR_177
 
 
 /**
@@ -1942,7 +1939,7 @@ Java_com_sun_kvem_io_j2me_jcrmi_Protocol_response0() {
  * This block contains native methods that are used by JSR180 Netmon.
  *
  ************************************************************************/
-#ifndef EXCLUDE_JSR180
+#if ENABLE_JSR_180
 
 
 /**
