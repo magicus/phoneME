@@ -57,10 +57,8 @@ public abstract class SystemServiceRequestor {
 
         if (instance == null) {
             if (!MIDletSuiteUtils.isAmsIsolate()) {
-                Link receiveLink = NamedLinkPortal.getLink(
-                    SystemServiceRequestHandler.SERVICE_TO_CLIENT_LINK_NAME);
-                Link sendLink = NamedLinkPortal.getLink(
-                    SystemServiceRequestHandler.CLIENT_TO_SERVICE_LINK_NAME);
+                Link receiveLink = SystemServiceLinkPortal.getToClientLink();
+                Link sendLink = SystemServiceLinkPortal.getToServiceLink();
                 SystemServiceConnectionLinks requestLinks = null;
                 requestLinks = new SystemServiceConnectionLinks(
                         sendLink, receiveLink);

@@ -115,7 +115,7 @@ public class TestSystemServiceConnectionListener extends TestCase {
         Link namedPortalLink = Link.newLink(serviceIsolate, clientIsolate);
         Link[] clientLinks = { namedPortalLink };
         LinkPortal.setLinks(clientIsolate, clientLinks);
-        NamedLinkPortal.sendLinks(namedPortalLink);
+        SystemServiceLinkPortal.sendLinks(namedPortalLink);
 
         requestHandler.handleIsolateRequests(isolateRequestHandler);
 

@@ -26,67 +26,69 @@
 
 package com.sun.midp.io.j2me.pipe;
 
-import com.sun.midp.io.*;
+import com.sun.cldc.io.ConnectionBaseInterface;
 import java.io.IOException;
 import javax.microedition.io.Connection;
 
-public class Protocol extends BufferedConnectionAdapter {
-
-    /**
-     * Returns the number of bytes that can be read (or skipped over) from
-     * this input stream without blocking by the next caller of a method for
-     * this input stream.  The next caller might be the same thread or
-     * another thread.
-     *
-     * @return     the number of bytes that can be read from this input stream
-     *             without blocking.
-     * @exception  IOException  if an I/O error occurs.
-     */
-    public int available() throws IOException {
-    }
-
-    /**
-     * Writes <code>len</code> bytes from the specified byte array
-     * starting at offset <code>off</code> to this output stream.
-     * <p>
-     * Polling the will be done by our super class.
-     *
-     * @param      b     the data.
-     * @param      off   the start offset in the data.
-     * @param      len   the number of bytes to write.
-     * @return     number of bytes written
-     * @exception  IOException  if an I/O error occurs. In particular,
-     *             an <code>IOException</code> is thrown if the output
-     *             stream is closed.
-     */
-    public int writeBytes(byte b[], int off, int len) {
-    }
-
-    /**
-     * Reads up to <code>len</code> bytes of data from the input stream into
-     * an array of bytes, blocks until at least one byte is available.
-     * Sets the <code>eof</code> field of the connection when there is
-     * no more data in the stream to read.
-     *
-     * @param      b     the buffer into which the data is read.
-     * @param      off   the start offset in array <code>b</code>
-     *                   at which the data is written.
-     * @param      len   the maximum number of bytes to read.
-     * @return     the total number of bytes read into the buffer, or
-     *             <code>-1</code> if there is no more data because the end of
-     *             the stream has been reached.
-     * @exception  IOException  if an I/O error occurs.
-     */
-    protected int nonBufferedRead(byte b[], int off, int len)
-        throws IOException {
-        
-    }
+public class Protocol implements ConnectionBaseInterface {
 
     public Connection openPrim(String name, int mode, boolean timeouts) throws IOException {
-        throw new UnsupportedOperationException("Not supported yet.");
+        if (name.charAt(0) != '/' || name.charAt(1) != '/')
+            throw new IllegalArgumentException(
+                      "Protocol must start with \"//\"");
+
+        // server. format is: "pipe://:server-name:server-version;"
+        // client. format is: "pipe://[suite-id|*]:server-name:server-version;"
+        // suite-id is midlet suite's "vendor:name:version" triplet
+        int colon2 = name.lastIndexOf(':');
+        int colon1 = name.lastIndexOf(':', colon2-1);
+        int semicolon = name.lastIndexOf(';');
+        if (colon1 < 0 || semicolon < name.length() - 1)
+            throw new IllegalArgumentException("Malformed server protocol name");
+        String serverName = name.substring(colon1, colon2);
+        String version = name.substring(colon2 + 1, semicolon);
+
+        // check if we deal with server or client connection
+        if (colon1 == 2) {
+            // check if this is AMS isolate and opens connection for push purposes
+            //       or this is user isolate and it needs to checkout connection from AMS
+            // TODO
+
+            return new PipeServerConnectionImpl(serverName, version);
+        } else {
+            Object suiteId = null;
+            if (name.charAt(2) == '*') {
+                if (colon1 != 3)
+                    throw new IllegalArgumentException("Malformed protocol name");
+            }
+            
+            PipeClientConnectionImpl connection = 
+                    new PipeClientConnectionImpl(suiteId, serverName, version);
+            connection.connect(mode);
+            
+            return connection;
+        }
     }
 
-    protected void disconnect() throws IOException {
-        throw new UnsupportedOperationException("Not supported yet.");
+    /*
+    private static int parseVersion(String str) {
+        int dot1 = str.indexOf('.');
+        int dot2 = str.indexOf('.', dot1 + 1);
+        if (dot1 < 1 || dot2 == dot1+1)
+            throw new IllegalArgumentException("Malformed protocol version");
+        int version = 0;
+        try {
+            if (dot2 < 0)
+                dot2 = str.length();
+            version = Integer.parseInt(str.substring(0, dot1)) * 10000 +
+                    Integer.parseInt(str.substring(dot1+1, dot2)) * 100;
+            if (dot2 < str.length())
+                version += Integer.parseInt(str.substring(dot2));
+        }
+        catch (NumberFormatException ex) {
+            throw new IllegalArgumentException("Malformed protocol version");
+        }
+        return version;
     }
+     */
 }

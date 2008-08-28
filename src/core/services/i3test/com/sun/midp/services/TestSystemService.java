@@ -97,23 +97,12 @@ public class TestSystemService extends TestCase {
         SimpleSystemService service = new SimpleSystemService();
         manager.registerService(service);
 
-        SystemServiceRequestHandler requestHandler = 
-            new SystemServiceRequestHandler(manager);
-
-        Isolate serviceIsolate = Isolate.currentIsolate();
         Isolate clientIsolate = new Isolate(
                 "com.sun.midp.services.SystemServiceIsolate", null);
         clientIsolate.start();
 
-        IsolateSystemServiceRequestHandler isolateRequestHandler = 
-            requestHandler.newIsolateRequestHandler(clientIsolate);
-
-        Link namedPortalLink = Link.newLink(serviceIsolate, clientIsolate);
-        Link[] clientLinks = { namedPortalLink };
+        Link[] clientLinks = SystemServiceLinkPortal.establishLinksFor(clientIsolate, token);
         LinkPortal.setLinks(clientIsolate, clientLinks);
-        NamedLinkPortal.sendLinks(namedPortalLink);
-
-        requestHandler.handleIsolateRequests(isolateRequestHandler);
 
         clientIsolate.waitForExit();
         

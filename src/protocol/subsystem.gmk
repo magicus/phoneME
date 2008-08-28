@@ -105,10 +105,10 @@ include $(SUBSYSTEM_PROTOCOL_DIR)/ssl/$(LIB_MAKE_FILE)
 include $(SUBSYSTEM_PROTOCOL_DIR)/udp/$(LIB_MAKE_FILE)
 
 #####################################################################
-# Inter-MIDlet communication
+# Inter-application communication
 # Description: PIPE protocol
 #####################################################################
-#include $(SUBSYSTEM_PROTOCOL_DIR)/imc/$(LIB_MAKE_FILE)
+include $(SUBSYSTEM_PROTOCOL_DIR)/pipe/$(LIB_MAKE_FILE)
 
 SUBSYSTEM_PROTOCOL_JAVA_FILES = $(SUBSYSTEM_GCF_JAVA_FILES) \
 	$(SUBSYSTEM_FILE_JAVA_FILES) \
