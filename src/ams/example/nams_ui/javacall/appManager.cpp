@@ -605,7 +605,8 @@ static HWND CreateMidletTreeView(HWND hWndParent) {
 static HWND CreateInfoDialog(HWND hWndParent) {
     HWND hDlg;      // handle to dialog
     RECT rcClient;  // dimensions of client area
-    int nBtnTextSize, nBtnWidth, nBtnHeight;
+    HWND hBtnYes, hBtnNo;
+    int nBtnYesWidth, nBtnNoWidth, nBtnHeight;
     HDC hdc;
     TEXTMETRIC tm;
     TCHAR szBuf[127];
@@ -631,32 +632,55 @@ static HWND CreateInfoDialog(HWND hWndParent) {
                  SWP_NOZORDER | SWP_NOOWNERZORDER |
                      SWP_NOACTIVATE);
 
-    HWND hBtn = GetDlgItem(hDlg, IDOK);
-    if (!hBtn) {
-        MessageBox(NULL, _T("Can't get window handle to button!"),
-                   g_szTitle, NULL);
+    // Get handle to OK button
+    hBtnYes = GetDlgItem(hDlg, IDOK);
+    if (!hBtnYes) {
+        wprintf(_T("Can't get window handle to OK button!\n"));
+
     }
 
-    if (hBtn) {
-        // Calculate button size
-        nBtnTextSize = GetWindowText(hBtn, szBuf, sizeof(szBuf));
+    // Try to get handle to Cancel button
+    hBtnNo = GetDlgItem(hDlg, IDCANCEL);
 
-        hdc = GetDC(hBtn);
+    // Calculate buttons' sizes
+    if (hBtnYes) {
+        int nBtnYesTextSize, nBtnNoTextSize;
+
+        hdc = GetDC(hBtnYes);
         GetTextMetrics(hdc, &tm);
 
-        nBtnWidth = (tm.tmAveCharWidth * nBtnTextSize) + 
+        nBtnYesTextSize = GetWindowText(hBtnYes, szBuf, sizeof(szBuf));
+        if (hBtnNo) {        
+            nBtnNoTextSize = GetWindowText(hBtnNo, szBuf, sizeof(szBuf));
+        }
+
+        nBtnYesWidth = (tm.tmAveCharWidth * nBtnYesTextSize) + 
             (2 * DLG_BUTTON_MARGIN);
+
+        nBtnNoWidth = (tm.tmAveCharWidth * nBtnNoTextSize) + 
+            (2 * DLG_BUTTON_MARGIN);
+
         nBtnHeight = (tm.tmHeight + tm.tmExternalLeading) + DLG_BUTTON_MARGIN;
 
-        ReleaseDC(hBtn, hdc);
+        ReleaseDC(hBtnYes, hdc);
     }
 
-    if (hBtn) {
-        SetWindowPos(hBtn,
+    if (hBtnYes) {
+        SetWindowPos(hBtnYes,
                      0, // ignored by means of SWP_NOZORDER
-                     rcClient.right - nBtnWidth, // x
+                     rcClient.right - nBtnYesWidth, // x
                      rcClient.bottom - nBtnHeight, // y
-                     nBtnWidth, nBtnHeight, // w, h
+                     nBtnYesWidth, nBtnHeight, // w, h
+                     SWP_NOZORDER | SWP_NOOWNERZORDER |
+                         SWP_NOACTIVATE);
+    }
+
+    if (hBtnNo) {
+        SetWindowPos(hBtnNo,
+                     0, // ignored by means of SWP_NOZORDER
+                     0, // x
+                     rcClient.bottom - nBtnHeight, // y
+                     nBtnNoWidth, nBtnHeight, // w, h
                      SWP_NOZORDER | SWP_NOOWNERZORDER |
                          SWP_NOACTIVATE);
     }
@@ -668,7 +692,7 @@ static HWND CreateInfoDialog(HWND hWndParent) {
     }
 
     if (g_hInfoView) {
-        int nInfoHeight = (hBtn) ?
+        int nInfoHeight = (hBtnYes) ?
             rcClient.bottom - nBtnHeight - (DLG_BUTTON_MARGIN / 2) :
             rcClient.bottom;
 
