@@ -312,16 +312,12 @@ void Scheduler::adjust_priority_list(Thread *thread, bool is_add) {
 }
 
 void Scheduler::add_to_active(Thread* thread) {
-  if (_debugger_active) {
-    thread->set_active();
-  }
+  thread->set_active();
   adjust_priority_list(thread, true);
 }
 
 void Scheduler::remove_from_active(Thread* thread) {
-  if (_debugger_active) {
-    thread->set_suspended();
-  }
+  thread->set_suspended();
   adjust_priority_list(thread, false);
 }
 
