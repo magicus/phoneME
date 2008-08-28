@@ -668,16 +668,16 @@ static HWND CreateInfoDialog(HWND hWndParent) {
     }
 
     if (g_hInfoView) {
-        if (hBtn) {
-            SetWindowPos(g_hInfoView,
-                         0, // ignored by means of SWP_NOZORDER
-                         0, 0, // x, y
-                         rcClient.right, // w
-                         rcClient.bottom - nBtnHeight - 
-                             (DLG_BUTTON_MARGIN / 2), // h
-                         SWP_NOZORDER | SWP_NOOWNERZORDER |
-                             SWP_NOACTIVATE | SWP_NOCOPYBITS);
-        }
+        int nInfoHeight = (hBtn) ?
+            rcClient.bottom - nBtnHeight - (DLG_BUTTON_MARGIN / 2) :
+            rcClient.bottom;
+
+        SetWindowPos(g_hInfoView,
+                     0, // ignored by means of SWP_NOZORDER
+                     0, 0, // x, y
+                     rcClient.right, nInfoHeight, // w, h
+                     SWP_NOZORDER | SWP_NOOWNERZORDER |
+                         SWP_NOACTIVATE | SWP_NOCOPYBITS);
 
         // Store default Tree View WndProc in global variable and set custom
         // WndProc.
@@ -698,6 +698,14 @@ InfoDlgProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam) {
     case IDM_FOLDER_INFO:
     case IDM_SUITE_INFO:
     case IDM_MIDLET_INFO: {
+        // Hide MIDlet tree view
+        ShowWindow(g_hMidletTreeView, SW_HIDE);
+
+        // Hide tool bar
+        if (g_hWndToolbar != NULL) {
+            ShowWindow(g_hWndToolbar, SW_HIDE);
+        }
+
         // Show the dialog 
         ShowWindow(hwndDlg, SW_SHOW);
 
@@ -721,6 +729,7 @@ InfoDlgProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam) {
             // Show back MIDlet tree view 
             ShowWindow(g_hMidletTreeView, SW_SHOWNORMAL);
 
+            // Show tool bar
             if (g_hWndToolbar != NULL) {
                 ShowWindow(g_hWndToolbar, SW_SHOWNORMAL);
             }
@@ -1487,7 +1496,7 @@ MidletTreeWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
             case IDM_FOLDER_INFO:
             case IDM_SUITE_INFO:
             case IDM_MIDLET_INFO:
-                if (g_hInfoView) {
+                if (g_hInfoDlg) {
                     HTREEITEM hItem = TreeView_GetSelection(hWnd);
                     TVI_INFO* pInfo = GetTviInfo(hWnd, hItem);
                     if (pInfo) {
@@ -1510,15 +1519,8 @@ MidletTreeWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
                                 break;
                         }
 
-                        if ((pInfo->type == TVI_TYPE_UNKNOWN) ||
+                        if ((nType == TVI_TYPE_UNKNOWN) ||
                                 (pInfo->type == nType)) {
-                            // Hide MIDlet tree view
-                            ShowWindow(hWnd, SW_HIDE);
-
-                            if (g_hWndToolbar != NULL) {
-                                ShowWindow(g_hWndToolbar, SW_HIDE);
-                            }
-
                             // Delegate message processing to MIDlet info view
                             PostMessage(g_hInfoDlg, (UINT)LOWORD(wParam),
                                         (WPARAM)pInfo, 0);
