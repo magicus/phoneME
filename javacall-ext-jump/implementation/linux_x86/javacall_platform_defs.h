@@ -55,6 +55,12 @@ typedef unsigned short javacall_utf16;
 typedef unsigned char javacall_uint8;
 
 /**
+ * @typedef javacall_int8
+ * @brief 8 bit signed interger type
+ */
+typedef char javacall_int8;
+
+/**
  * @typedef javacall_uint16
  * @brief 16 bit unsigned interger type
  */
