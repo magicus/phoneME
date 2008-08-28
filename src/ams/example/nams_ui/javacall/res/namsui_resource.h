@@ -29,6 +29,8 @@
 #define  ID_MENU_POPUP_SUITE  15
 #define  ID_MENU_POPUP_FOLDER 20
 
+#define  IDM_INFO                  100
+
 #define  IDM_MIDLET_START_STOP     110
 #define  IDM_MIDLET_TO_FOREGROUND  120
 #define  IDM_MIDLET_INFO           130
@@ -54,8 +56,10 @@
 
 #define  IDM_HELP_ABOUT            500
 
+#define  IDD_INFO_DIALOG           600
+
 #define  IDC_TREEVIEW_MIDLETS      900
-#define  IDC_TREEVIEW_MIDLET_INFO  910
+#define  IDC_TREEVIEW_INFO         910
 #define  IDC_MAIN_TOOLBAR          920
 #define  IDB_MAIN_TOOLBAR_BUTTONS  930
 

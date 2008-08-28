@@ -62,6 +62,8 @@
 
 #define DEF_BACKGROUND_FILE _T("background.bmp")
 
+#define DLG_BUTTON_MARGIN 5
+
 extern "C" char* _phonenum = "1234567"; // global for javacall MMS subsystem
 
 // The main window class name.
@@ -85,6 +87,7 @@ HINSTANCE g_hInst = NULL;
 HWND g_hMainWindow = NULL;
 HWND g_hMidletTreeView = NULL;
 HWND g_hInfoView = NULL;
+HWND g_hInfoDlg = NULL;
 HWND g_hWndToolbar = NULL;
 
 HMENU g_hMidletPopupMenu = NULL;
@@ -138,6 +141,7 @@ static TVI_INFO* GetTviInfo(HWND hWnd, HTREEITEM hItem);
 LRESULT CALLBACK MainWndProc(HWND, UINT, WPARAM, LPARAM);
 LRESULT CALLBACK MidletTreeWndProc(HWND, UINT, WPARAM, LPARAM);
 LRESULT CALLBACK InfoWndProc(HWND, UINT, WPARAM, LPARAM);
+INT_PTR CALLBACK InfoDlgProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
 static void RefreshScreen(int x1, int y1, int x2, int y2);
 static void DrawBuffer(HDC hdc);
@@ -145,8 +149,8 @@ static void DrawBuffer(HDC hdc);
 static HWND CreateMainView();
 static void CenterWindow(HWND hDlg);
 static HWND CreateMidletTreeView(HWND hWndParent);
-static HWND CreateInfoView(HWND hWndParent);
 static HWND CreateMainToolbar(HWND hWndParent);
+static HWND CreateInfoDialog(HWND hWndParent);
 
 static BOOL InitMidletTreeViewItems(HWND hwndTV);
 static void AddSuiteToTree(HWND hwndTV, javacall_suite_id suiteId, int nLevel);
@@ -256,6 +260,8 @@ int main(int argc, char* argv[]) {
     // Initialize Java AMS
     InitAms();
 
+    g_hWndToolbar = CreateMainToolbar(g_hMainWindow);
+
     // Create and init Java MIDlets tree view
     g_hMidletTreeView = CreateMidletTreeView(g_hMainWindow);
     if (g_hMidletTreeView == NULL) {
@@ -264,9 +270,7 @@ int main(int argc, char* argv[]) {
     InitMidletTreeViewItems(g_hMidletTreeView);
 
     // Create MIDlet information view
-    g_hInfoView = CreateInfoView(g_hMainWindow);
-
-    g_hWndToolbar = CreateMainToolbar(g_hMainWindow);
+    g_hInfoDlg = CreateInfoDialog(g_hMainWindow);
 
     // Show the main window 
     ShowWindow(g_hMainWindow, nCmdShow);
@@ -311,7 +315,7 @@ static HWND CreateMainToolbar(HWND hWndParent) {
 #endif
         0L, 0,
 
-        1, IDM_SUITE_INFO, TBSTATE_ENABLED, BTNS_BUTTON,
+        1, IDM_INFO, TBSTATE_ENABLED, BTNS_BUTTON,
 #if defined(_WIN32) | defined(_WIN64)
             {0},
 #endif
@@ -414,7 +418,8 @@ static HWND CreateMainView() {
         return NULL;
     }
 
-    hWnd = CreateWindow(
+    hWnd = CreateWindowEx(
+        0,
         g_szWindowClass,
         g_szTitle,
         WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU,
@@ -427,11 +432,7 @@ static HWND CreateMainView() {
     );
 
     if (!hWnd) {
-        MessageBox(NULL,
-            _T("Create of main view failed!"),
-            g_szTitle,
-            NULL);
-
+        MessageBox(NULL, _T("Create of main view failed!"), g_szTitle, NULL);
         return NULL;
     }
 
@@ -529,7 +530,7 @@ static HWND CreateMidletTreeView(HWND hWndParent) {
     // Get the dimensions of the parent window's client area, and create 
     // the tree-view control. 
     GetClientRect(hWndParent, &rcClient); 
-    wprintf(_T("main window area w=%d, h=%d\n"), rcClient.right, rcClient.bottom);
+    wprintf(_T("Parent window area w=%d, h=%d\n"), rcClient.right, rcClient.bottom);
 
     hwndTV = CreateWindowEx(0,
                             WC_TREEVIEW,
@@ -601,40 +602,137 @@ static HWND CreateMidletTreeView(HWND hWndParent) {
     return hwndTV;
 }
 
-static HWND CreateInfoView(HWND hWndParent) {
-    RECT rcClient;  // dimensions of client area 
-    HWND hwndTV;    // handle to tree-view control 
+static HWND CreateInfoDialog(HWND hWndParent) {
+    HWND hDlg;      // handle to dialog
+    RECT rcClient;  // dimensions of client area
+    int nBtnTextSize, nBtnWidth, nBtnHeight;
+    HDC hdc;
+    TEXTMETRIC tm;
+    TCHAR szBuf[127];
 
-    // Get the dimensions of the parent window's client area, and create 
-    // the tree-view control. 
-    GetClientRect(hWndParent, &rcClient); 
-    wprintf(_T("main window area w=%d, h=%d\n"), rcClient.right, rcClient.bottom);
+    hDlg = CreateDialog(g_hInst, MAKEINTRESOURCE(IDD_INFO_DIALOG),
+                        hWndParent, InfoDlgProc); 
 
-    hwndTV = CreateWindowEx(0,
-                            WC_TREEVIEW,
-                            g_szInfoTitle,
-                            WS_CHILD | WS_BORDER,
-                            0, 
-                            TB_BUTTON_HEIGHT + 12,
-                            rcClient.right,
-                            rcClient.bottom - 12,
-                            hWndParent, 
-                            (HMENU)IDC_TREEVIEW_MIDLET_INFO,
-                            g_hInst, 
-                            NULL); 
-
-    if (!hwndTV) {
-        MessageBox(NULL, _T("Create MIDlet info view failed!"), g_szTitle,
-            NULL);
+    if (!hDlg) {
+        MessageBox(NULL, _T("Create info dialog failed!"), g_szTitle, NULL);
         return NULL;
     }
 
-    // Store default Tree View WndProc in global variable and set custom
-    // WndProc.
-    g_DefInfoWndProc = (WNDPROC)SetWindowLongPtr(hwndTV, GWLP_WNDPROC,
-        (LONG)InfoWndProc);
+    // Get the dimensions of the parent window's client area
+    GetClientRect(hWndParent, &rcClient); 
+    wprintf(_T("Parent window area w=%d, h=%d\n"),
+            rcClient.right, rcClient.bottom);
 
-    return hwndTV;
+    // Set actual dialog size
+    SetWindowPos(hDlg,
+                 0, // ignored by means of SWP_NOZORDER
+                 0, 0, // x, y
+                 rcClient.right, rcClient.bottom, // w, h
+                 SWP_NOZORDER | SWP_NOOWNERZORDER |
+                     SWP_NOACTIVATE);
+
+    HWND hBtn = GetDlgItem(hDlg, IDOK);
+    if (!hBtn) {
+        MessageBox(NULL, _T("Can't get window handle to button!"),
+                   g_szTitle, NULL);
+    }
+
+    if (hBtn) {
+        // Calculate button size
+        nBtnTextSize = GetWindowText(hBtn, szBuf, sizeof(szBuf));
+
+        hdc = GetDC(hBtn);
+        GetTextMetrics(hdc, &tm);
+
+        nBtnWidth = (tm.tmAveCharWidth * nBtnTextSize) + 
+            (2 * DLG_BUTTON_MARGIN);
+        nBtnHeight = (tm.tmHeight + tm.tmExternalLeading) + DLG_BUTTON_MARGIN;
+
+        ReleaseDC(hBtn, hdc);
+    }
+
+    if (hBtn) {
+        SetWindowPos(hBtn,
+                     0, // ignored by means of SWP_NOZORDER
+                     rcClient.right - nBtnWidth, // x
+                     rcClient.bottom - nBtnHeight, // y
+                     nBtnWidth, nBtnHeight, // w, h
+                     SWP_NOZORDER | SWP_NOOWNERZORDER |
+                         SWP_NOACTIVATE);
+    }
+
+    g_hInfoView = GetDlgItem(hDlg, IDC_TREEVIEW_INFO);
+    if (!g_hInfoView) {
+        MessageBox(NULL, _T("Can't get window handle to tree view!"),
+                   g_szTitle, NULL);
+    }
+
+    if (g_hInfoView) {
+        if (hBtn) {
+            SetWindowPos(g_hInfoView,
+                         0, // ignored by means of SWP_NOZORDER
+                         0, 0, // x, y
+                         rcClient.right, // w
+                         rcClient.bottom - nBtnHeight - 
+                             (DLG_BUTTON_MARGIN / 2), // h
+                         SWP_NOZORDER | SWP_NOOWNERZORDER |
+                             SWP_NOACTIVATE | SWP_NOCOPYBITS);
+        }
+
+        // Store default Tree View WndProc in global variable and set custom
+        // WndProc.
+        g_DefInfoWndProc = (WNDPROC)SetWindowLongPtr(g_hInfoView, GWLP_WNDPROC,
+            (LONG)InfoWndProc);
+    }
+
+    return hDlg;
+
+}
+
+INT_PTR CALLBACK
+InfoDlgProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam) {
+
+    switch (uMsg) {
+
+    case IDM_INFO:
+    case IDM_FOLDER_INFO:
+    case IDM_SUITE_INFO:
+    case IDM_MIDLET_INFO: {
+        // Show the dialog 
+        ShowWindow(hwndDlg, SW_SHOW);
+
+        // Delegate message processing to info tree view
+        if (g_hInfoView) {
+            PostMessage(g_hInfoView, uMsg, wParam, lParam);
+
+            return TRUE;
+        }
+
+        break;
+    }
+
+    case WM_COMMAND: {
+        WORD wCmd = LOWORD(wParam);
+
+        if (wCmd == IDOK) {
+            // Hide the dialog 
+            ShowWindow(hwndDlg, SW_HIDE);
+
+            // Show back MIDlet tree view 
+            ShowWindow(g_hMidletTreeView, SW_SHOWNORMAL);
+
+            if (g_hWndToolbar != NULL) {
+                ShowWindow(g_hWndToolbar, SW_SHOWNORMAL);
+            }
+
+            return TRUE;
+        }
+
+        break;
+    }
+    }
+
+    return FALSE;
 }
 
 static TVI_INFO* CreateTviInfo() {
@@ -982,6 +1080,7 @@ MainWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
 
             case IDM_SUITE_INSTALL:
             case IDM_SUITE_REMOVE:
+            case IDM_INFO:
             case IDM_FOLDER_INFO:
             case IDM_SUITE_INFO:
             case IDM_MIDLET_INFO:
@@ -1025,9 +1124,11 @@ MainWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
                             pInfo->appId);
                         if (res == JAVACALL_OK) {
                             ShowWindow(g_hMidletTreeView, SW_HIDE);
+
                             if (g_hWndToolbar != NULL) {
                                 ShowWindow(g_hWndToolbar, SW_HIDE);
                             }
+
                             SetCheckedWindowMenuItem(pInfo);
                         }
                     }
@@ -1382,6 +1483,7 @@ MidletTreeWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
         // Test for the identifier of a command item.
         switch(LOWORD(wParam))
         {
+            case IDM_INFO:
             case IDM_FOLDER_INFO:
             case IDM_SUITE_INFO:
             case IDM_MIDLET_INFO:
@@ -1408,11 +1510,17 @@ MidletTreeWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
                                 break;
                         }
 
-                        if (pInfo->type == nType) {
+                        if ((pInfo->type == TVI_TYPE_UNKNOWN) ||
+                                (pInfo->type == nType)) {
+                            // Hide MIDlet tree view
                             ShowWindow(hWnd, SW_HIDE);
 
+                            if (g_hWndToolbar != NULL) {
+                                ShowWindow(g_hWndToolbar, SW_HIDE);
+                            }
+
                             // Delegate message processing to MIDlet info view
-                            PostMessage(g_hInfoView, (UINT)LOWORD(wParam),
+                            PostMessage(g_hInfoDlg, (UINT)LOWORD(wParam),
                                         (WPARAM)pInfo, 0);
                         }
                     }
@@ -1629,19 +1737,7 @@ InfoWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
 
     switch (message) {
 
-    case WM_LBUTTONDBLCLK:
-    case WM_RBUTTONDOWN: {
-        wprintf(_T("Hiding info window...\n"));
-
-        ShowWindow(hWnd, SW_HIDE);
-        TreeView_DeleteAllItems(hWnd);
-
-        // Show back MIDlet tree view
-        ShowWindow(g_hMidletTreeView, SW_SHOWNORMAL);
-
-        break;
-    }
-
+    case IDM_INFO:
     case IDM_FOLDER_INFO:
     case IDM_SUITE_INFO:
     case IDM_MIDLET_INFO: {
@@ -1650,7 +1746,10 @@ InfoWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
         javacall_ams_folder_info* pFolderInfo;
         TVI_INFO* pInfo = (TVI_INFO*)wParam;
 
-        // Set position info to default
+        // Clear old content
+        TreeView_DeleteAllItems(hWnd);
+
+        // Set the position info to default
         hPrev = (HTREEITEM)TVI_FIRST; 
         hPrevLev1Item = NULL; 
         hPrevLev2Item = NULL;
@@ -1661,7 +1760,7 @@ InfoWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
             case TVI_TYPE_SUITE: {
                 res = java_ams_suite_get_info(pInfo->suiteId, &pSuiteInfo);
 
-				if (res == JAVACALL_OK) {
+    	        if (res == JAVACALL_OK) {
                     wsprintf(szBuf, _T("Suite: %s"), pInfo->displayName);
                     AddTreeItem(hWnd, szBuf, 1, NULL);
 
@@ -1720,6 +1819,9 @@ InfoWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
 
                     if (pSuiteInfo->installTime) {
                         time_t time = (time_t)pSuiteInfo->installTime;
+                        // IMPL_NOTE: if wsprintf doesn't convert char* to
+                        // WCHAR* coorect then try to use MultiByteToWideChar
+                        // function for this purpose. 
                         wsprintf(szBuf, _T("Installed on: %S"), ctime(&time));
                         AddTreeItem(hWnd, szBuf, 1, NULL);
                     }
@@ -1793,7 +1895,6 @@ InfoWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
 
             }  // end case
 
-            ShowWindow(hWnd, SW_SHOWNORMAL);
         } // end if (pInfo)
 
         break;
@@ -1806,7 +1907,7 @@ InfoWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
     }
 
     case WM_PAINT: {
-        RECT r; // = {0, 0, 240, 300};
+        RECT r;
         GetClientRect(hWnd, &r); 
 
         InvalidateRect(hWnd, &r, FALSE);
