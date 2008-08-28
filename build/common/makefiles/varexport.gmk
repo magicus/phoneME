@@ -202,6 +202,7 @@ OPTIONVARLIST = $(sort \
   USE_VERBOSE_MAKE \
   USE_VERIFY_ONCE \
   USE_VM_PROFILES \
+  USE_MULTIPLE_DISPLAYS \
   )
 
 ######################################################################

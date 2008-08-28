@@ -824,6 +824,39 @@ public class Display {
         return getDisplay((Object)m);
     }
 
+
+    // #ifdef ENABLE_MULTIPLE_DISPLAYS
+    /**
+     * Gets the <code>Display</code> objects unique to this
+     * <code>MIDlet</code>.
+     * @param m <code>MIDlet</code> of the application
+     * @param capabilities capabilities of the displays
+     * @return the display objects that application can use for its user
+     * interface
+     *
+     * @throws NullPointerException if <code>m</code> is <code>null</code>
+     * @throws IllegalArgumentException if <code>capabilities</code> is not valid
+     */
+    public static Display[] getDisplays(MIDlet m, int capabilities) {
+	int full_capabilities = DisplayDevice.DISPLAY_DEVICE_SUPPORTS_INPUT_EVENTS |
+	    DisplayDevice.DISPLAY_DEVICE_SUPPORTS_COMMANDS |
+	    DisplayDevice.DISPLAY_DEVICE_SUPPORTS_FORMS |
+	    DisplayDevice.DISPLAY_DEVICE_SUPPORTS_TICKER |
+	    DisplayDevice.DISPLAY_DEVICE_SUPPORTS_TITLE |
+	    DisplayDevice.DISPLAY_DEVICE_SUPPORTS_ALERTS |
+	    DisplayDevice.DISPLAY_DEVICE_SUPPORTS_LISTS |
+	    DisplayDevice.DISPLAY_DEVICE_SUPPORTS_TEXTBOXES |
+	    DisplayDevice.DISPLAY_DEVICE_SUPPORTS_TABBEDPANES |
+	    DisplayDevice.DISPLAY_DEVICE_SUPPORTS_FILESELECTORS;
+	
+	if ((full_capabilities | capabilities) != full_capabilities) {
+	    throw new IllegalArgumentException("Display capabilities is not valid = " + capabilities);
+	}
+	
+	return getDisplays(m.getClass().getName(), capabilities);
+    }
+    // #endif ENABLE_MULTIPLE_DISPLAYS
+
     /**
      * Returns one of the colors from the high level user interface
      * color scheme, in the form <code>0x00RRGGBB</code> based on the
@@ -1548,17 +1581,28 @@ public class Display {
      * @throws NullPointerException if <code>owner</code> is <code>null</code>
      */
     static Display getDisplay(Object owner) {
-        DisplayAccess da = displayContainer.findPrimaryDisplayByOwner(owner);
+	DisplayAccess[] das = displayContainer.findDisplaysByOwner(owner, 0);
 
-        if (da == null) {
+	//DisplayAccess da = displayContainer.findPrimaryDisplayByOwner(owner);
+
+	//        if (da == null) {
+	//  addDisplays(owner);
+	//   da = displayContainer.findPrimaryDisplayByOwner(owner);
+	//}
+        
+        if (das == null) {
 	    addDisplays(owner);
-	    da = displayContainer.findPrimaryDisplayByOwner(owner);
+	    das = displayContainer.findDisplaysByOwner(owner, 0);
 	}
+	
+	System.out.println("das = " + das);
+	DisplayAccess da = das[das.length - 1];
+
 
         return da.getDisplay();
     }
 
-
+    // #ifdef ENABLE_MULTIPLE_DISPLAYS
     /**
      * Gets the <code>Display</code> objects by owner name.
      *
@@ -1587,7 +1631,7 @@ public class Display {
 	}
         return ds;
     }
-
+    // #endif ENABLE_MULTIPLE_DISPLAYS
 
     /**
      * Create and registaer the <code>Display</code> objects for the given owner.
@@ -1601,7 +1645,7 @@ public class Display {
      */
     static void addDisplays(Object owner) {
 	DisplayDevice[] dds = displayDeviceContainer.getDisplayDevices();
-	
+	System.out.println("dds.length = " + dds.length);
 	for (int i = 0; i < dds.length; i++) {
 	    if (dds[i].getState() == DisplayDevice.DISPLAY_DEVICE_ENABLED || 
 		dds[i].getState() == DisplayDevice.DISPLAY_DEVICE_DISABLED) {
@@ -1610,37 +1654,6 @@ public class Display {
 	}
     }
 
-    /**
-     * Gets the <code>Display</code> objects unique to this
-     * <code>MIDlet</code>.
-     * @param m <code>MIDlet</code> of the application
-     * @param capabilities capabilities of the displays
-     * @return the display objects that application can use for its user
-     * interface
-     *
-     * @throws NullPointerException if <code>m</code> is <code>null</code>
-     * @throws IllegalArgumentException if <code>capabilities</code> is not valid
-     */
-    static Display[] getDisplays(MIDlet m, int capabilities) {
-	int full_capabilities = DisplayDevice.DISPLAY_DEVICE_SUPPORTS_INPUT_EVENTS |
-	    DisplayDevice.DISPLAY_DEVICE_SUPPORTS_COMMANDS |
-	    DisplayDevice.DISPLAY_DEVICE_SUPPORTS_FORMS |
-	    DisplayDevice.DISPLAY_DEVICE_SUPPORTS_TICKER |
-	    DisplayDevice.DISPLAY_DEVICE_SUPPORTS_TITLE |
-	    DisplayDevice.DISPLAY_DEVICE_SUPPORTS_ALERTS |
-	    DisplayDevice.DISPLAY_DEVICE_SUPPORTS_LISTS |
-	    DisplayDevice.DISPLAY_DEVICE_SUPPORTS_TEXTBOXES |
-	    DisplayDevice.DISPLAY_DEVICE_SUPPORTS_TABBEDPANES |
-	    DisplayDevice.DISPLAY_DEVICE_SUPPORTS_FILESELECTORS;
-	
-	if ((full_capabilities | capabilities) != full_capabilities) {
-	    throw new IllegalArgumentException("Display capabilities is not valid = " + capabilities);
-	}
-	
-	return getDisplays(m.getClass().getName(), capabilities);
-    }
-    
-    
     /**
      * Free a <code>Display</code> no longer in use.
      *

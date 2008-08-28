@@ -59,7 +59,7 @@ static int posInSequence = 0;
 #define numElems(x) sizeof(x)/sizeof(x[0])
 
 int num_of_screens;
-
+jint* display_device_ids;
 
 /** Dynamically evaluated type of the frame buffer device */
 static LinuxFbDeviceType linuxFbDeviceType;
@@ -98,32 +98,32 @@ static void checkDeviceType() {
  * Initializes the fbapp_ native resources.
  */
 void fbapp_init() {
-    jint* ids;
     int i;
 
     linuxFbDeviceType = LINUX_FB_VERSATILE_INTEGRATOR;
 
     checkDeviceType();
-    ids = fbapp_get_display_device_ids(&num_of_screens);
-    
-    initScreenList(num_of_screens);
+    display_device_ids = fbapp_get_display_device_ids(&num_of_screens);
+    printf("num_of_screens  = %d\n", num_of_screens);
+    initScreenList();
     
     for (i = 0; i < num_of_screens; i++) {
-      initSystemScreen(ids[i], 0, 0, fbapp_get_screen_width(ids[i]),
-		       fbapp_get_screen_height(ids[i]));
+      initSystemScreen(display_device_ids[i], 0, 0, fbapp_get_screen_width(display_device_ids[i]),
+      		       fbapp_get_screen_height(display_device_ids[i]));
+      connectFrameBuffer(display_device_ids[i]);    
     }
-    connectFrameBuffer(fbapp_get_screen_width(0), fbapp_get_screen_height(0));
+    
 }
 
 
 /** Returns the file descriptor for reading the mouse. */
 int fbapp_get_mouse_fd() {
-    return getMouseFd(0);
+    return getMouseFd(display_device_ids[0]);
 }
 
 /** Returns the file descriptor for reading the keyboard. */
 int fbapp_get_keyboard_fd() {
-    return getKeyboardFd(0);
+    return getKeyboardFd(display_device_ids[0]);
 }
 
 /**
@@ -142,12 +142,9 @@ jboolean fbapp_reverse_orientation(int hardwareId) {
 
 /**Set full screen mode on/off */
 void fbapp_set_fullscreen_mode(int hardwareId, int mode) {
-  jboolean updated = setFullScreenMode(hardwareId, mode, 
-				       fbapp_get_screen_width(hardwareId), 
-				       fbapp_get_screen_height(hardwareId));
-  if (updated) {
-    clearScreen();
-  }
+  setFullScreenMode(hardwareId, mode, 
+		    fbapp_get_screen_width(hardwareId), 
+		    fbapp_get_screen_height(hardwareId));
 }
 
 /** Return screen width */
@@ -180,12 +177,12 @@ int fbapp_get_screen_height(int hardwareId) {
 
 /** Return screen x */
 int fbapp_get_screen_x() {
-  return getScreenX(getReverseOrientation(0), fbapp_get_screen_width(0));
+  return getScreenX(display_device_ids[0], fbapp_get_screen_width(display_device_ids[0]));
 }
 
 /** Return screen x */
 int fbapp_get_screen_y() {
-  return getScreenY(getReverseOrientation(0), fbapp_get_screen_height(0));
+  return getScreenY(display_device_ids[0], fbapp_get_screen_height(display_device_ids[0]));
 }
 
 /** Return screen orientation flag */
@@ -338,8 +335,7 @@ void fbapp_map_keycode_to_event(
  * Finalize the fb application native resources.
  */
 void fbapp_finalize() {
-  clearScreenList();
-  clearScreen();
+  clearScreens();
 }
 
 
@@ -356,7 +352,7 @@ char * fbapp_get_display_name(int hardwareId) {
  * Check if the display device is primary
  */
 jboolean fbapp_is_display_primary(int hardwareId) {
-  if (hardwareId == 0) {
+  if (hardwareId == display_device_ids[0]) {
     return 1; 
   } else {
     return 0;
@@ -375,7 +371,7 @@ jboolean fbapp_is_display_buildin(int hardwareId) {
  * Check if the display device supports pointer events
  */
 jboolean fbapp_is_display_ptr_supported(int hardwareId) {
-  if (hardwareId == 0) {
+  if (hardwareId == display_device_ids[0]) {
     return 1;
   } else {
     return 0;
@@ -387,7 +383,7 @@ jboolean fbapp_is_display_ptr_supported(int hardwareId) {
  * Check if the display device supports pointer motion  events
  */
 jboolean fbapp_is_display_ptr_motion_supported(int hardwareId) {
-  if (hardwareId == 0) {
+  if (hardwareId == display_device_ids[0]) {
     return 1;
   } else {
     return 0;
@@ -399,22 +395,17 @@ jboolean fbapp_is_display_ptr_motion_supported(int hardwareId) {
  * Get display device capabilities
  */
 int fbapp_get_display_capabilities(int hardwareId) {
-  if (hardwareId == 0) {
+  if (hardwareId == display_device_ids[0]) {
     return 255;
   } else {
-    return 0;
+    return 255;
   }
 }
 
-static jint display_device_ids[] =
-{
-  0,
-  1
-};
 
-
-jint* fbapp_get_display_device_ids(jint* n) {
-    *n = numElems(display_device_ids);
-    return display_device_ids;
+jint* fbapp_get_display_device_ids(jint* n) {    
+    jint *ids = getDisplayIds(n);
+    //    *n = numElems(ids);
+    return ids;
 }
 

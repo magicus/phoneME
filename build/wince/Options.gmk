@@ -80,6 +80,7 @@ USE_AMS_FOLDERS         = false
 USE_AMS_EXECUTABLE      = true
 USE_OCSP                = false
 USE_DYNAMIC_COMPONENTS  = false
+USE_MULTIPLE_DISPLAYS   = false
 
 # DEBUG
 USE_DEBUG               = false

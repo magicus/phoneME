@@ -191,7 +191,7 @@ public class DisplayContainer {
         return ret;
     }
 
-    /**
+    /**     
      * Find the displays by hardwareId.
      *
      * @return array of display access objects or null if not found
@@ -199,7 +199,7 @@ public class DisplayContainer {
     public synchronized DisplayAccess[] findDisplaysByHardwareId(int hardwareId) {
         int size = displays.size();
 	Vector v = new Vector(2, 2); 
-	
+	System.out.println("size = " + size);
 
         for (int i = 0; i < size; i++) {
             DisplayAccess current = (DisplayAccess)displays.elementAt(i);

@@ -41,16 +41,16 @@ extern "C" {
 #include <gxj_screen_buffer.h>
 
 /** Initialize frame buffer video device */
-extern void connectFrameBuffer();
+extern void connectFrameBuffer(int hardwareId);
 
 /** Allocate system screen buffer according to the screen geometry */
 extern void initScreenBuffer(int width, int height);
 
-extern void initScreenList(int num);
+extern void initScreenList();
 
 extern  void initSystemScreen(int id, int isFullScreen, int reverse_orientation, int width, int height);
 
-extern void clearScreenList();
+extern void clearScreens();
 
 /** Free allocated resources and restore system state */
 extern void finalizeFrameBuffer();
@@ -75,12 +75,6 @@ extern void resizeScreenBuffer(int width, int height);
 
 extern void refreshScreen(int id, int x1, int y1, int x2, int y2);
 
-/** Refresh screen with offscreen bufer content */
-extern void refreshScreenNormal(gxj_screen_buffer *buff, int x1, int y1, int x2, int y2);
-
-/** Refresh rotated screen with offscreen bufer content */
-extern void refreshScreenRotated(gxj_screen_buffer *buff, int x1, int y1, int x2, int y2);
-
 /** Return file descriptor of keyboard device, or -1 in none */
 extern int getKeyboardFd(int hardwareId);
 
@@ -88,14 +82,16 @@ extern int getKeyboardFd(int hardwareId);
 extern int getMouseFd(int hardwareId);
 
 /** Clear screen device */
-extern void clearScreen();
+extern void clearScreen(int hardwareId);
 
 /** Get x-coordinate of screen origin */
-extern int getScreenX(int screenRotated, int width);
+extern int getScreenX(int hardwareId, int width);
 
 /** Get y-coordinate of screen origin */
-extern int getScreenY(int screenRotated, int height);
+extern int getScreenY(int hardwareId, int height);
 
+  /** Get the list of display ids */
+extern jint* getDisplayIds(jint* n );
 
 #ifdef __cplusplus
 }

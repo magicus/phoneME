@@ -55,10 +55,8 @@ typedef struct _QVFbHeader {
 } QVFbHeader;
 
 typedef struct _QVFbDisplay {
-  int displayId;
   QVFbHeader *hdr;
   gxj_pixel_type *qvfbPixels;
-  gxj_screen_buffer gxj_system_screen_buffer;
   int mouseFd;
   int keyboardFd;
 } QVFbDisplay; 
