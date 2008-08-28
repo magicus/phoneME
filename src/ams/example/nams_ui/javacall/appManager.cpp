@@ -86,7 +86,6 @@ HINSTANCE g_hInst = NULL;
 
 HWND g_hMainWindow = NULL;
 HWND g_hMidletTreeView = NULL;
-HWND g_hInfoView = NULL;
 HWND g_hInfoDlg = NULL;
 HWND g_hWndToolbar = NULL;
 
@@ -95,7 +94,7 @@ HMENU g_hSuitePopupMenu = NULL;
 HMENU g_hFolderPopupMenu = NULL;
 
 WNDPROC g_DefMidletTreeWndProc = NULL;
-WNDPROC g_DefInfoWndProc = NULL;
+WNDPROC g_DefTreeWndProc = NULL;
 
 HBITMAP g_hMidletTreeBgBmp = NULL;
 
@@ -150,7 +149,7 @@ static HWND CreateMainView();
 static void CenterWindow(HWND hDlg);
 static HWND CreateMidletTreeView(HWND hWndParent);
 static HWND CreateMainToolbar(HWND hWndParent);
-static HWND CreateInfoDialog(HWND hWndParent);
+static HWND CreateTreeDialog(HWND hWndParent, WORD wDlgResID, WNDPROC ViewWndProc);
 
 static BOOL InitMidletTreeViewItems(HWND hwndTV);
 static void AddSuiteToTree(HWND hwndTV, javacall_suite_id suiteId, int nLevel);
@@ -269,8 +268,8 @@ int main(int argc, char* argv[]) {
     }
     InitMidletTreeViewItems(g_hMidletTreeView);
 
-    // Create MIDlet information view
-    g_hInfoDlg = CreateInfoDialog(g_hMainWindow);
+    // Create information view
+    g_hInfoDlg = CreateTreeDialog(g_hMainWindow, IDD_INFO_DIALOG, InfoWndProc);
 
     // Show the main window 
     ShowWindow(g_hMainWindow, nCmdShow);
@@ -283,11 +282,12 @@ int main(int argc, char* argv[]) {
         DispatchMessage(&msg);
     }
 
-    // Finalize MIDet tree view
+    // Finalize MIDlet tree view
     CleanupTreeView(g_hMidletTreeView, g_DefMidletTreeWndProc);
 
-    // Finalize MIDet information view
-    CleanupTreeView(g_hInfoView, g_DefInfoWndProc);
+    // Finalize information view
+    HWND hInfoView = GetDlgItem(g_hInfoDlg, IDC_TREEVIEW);
+    CleanupTreeView(hInfoView, g_DefTreeWndProc);
 
     // Finalize Java AMS
     CleanupAms();
@@ -510,6 +510,9 @@ static void CleanupWindows() {
 
     // Unregister main window class
     UnregisterClass(g_szWindowClass, g_hInst);
+
+    // Destroy all windows (the main window and child windows)
+    DestroyWindow(g_hMainWindow);
 }
 
 static void CleanupTreeView(HWND hwndTV, WNDPROC DefWndProc) {
@@ -602,7 +605,7 @@ static HWND CreateMidletTreeView(HWND hWndParent) {
     return hwndTV;
 }
 
-static HWND CreateInfoDialog(HWND hWndParent) {
+static HWND CreateTreeDialog(HWND hWndParent, WORD wDlgResID, WNDPROC ViewWndProc) {
     HWND hDlg;      // handle to dialog
     RECT rcClient;  // dimensions of client area
     HWND hBtnYes, hBtnNo;
@@ -611,7 +614,7 @@ static HWND CreateInfoDialog(HWND hWndParent) {
     TEXTMETRIC tm;
     TCHAR szBuf[127];
 
-    hDlg = CreateDialog(g_hInst, MAKEINTRESOURCE(IDD_INFO_DIALOG),
+    hDlg = CreateDialog(g_hInst, MAKEINTRESOURCE(wDlgResID),
                         hWndParent, InfoDlgProc); 
 
     if (!hDlg) {
@@ -685,28 +688,33 @@ static HWND CreateInfoDialog(HWND hWndParent) {
                          SWP_NOACTIVATE);
     }
 
-    g_hInfoView = GetDlgItem(hDlg, IDC_TREEVIEW_INFO);
-    if (!g_hInfoView) {
-        MessageBox(NULL, _T("Can't get window handle to tree view!"),
+    HWND hView = GetDlgItem(hDlg, IDC_TREEVIEW);
+    if (!hView) {
+        MessageBox(NULL, _T("Can't get window handle to dialog view!"),
                    g_szTitle, NULL);
     }
 
-    if (g_hInfoView) {
+    if (hView) {
         int nInfoHeight = (hBtnYes) ?
             rcClient.bottom - nBtnHeight - (DLG_BUTTON_MARGIN / 2) :
             rcClient.bottom;
 
-        SetWindowPos(g_hInfoView,
+        SetWindowPos(hView,
                      0, // ignored by means of SWP_NOZORDER
                      0, 0, // x, y
                      rcClient.right, nInfoHeight, // w, h
                      SWP_NOZORDER | SWP_NOOWNERZORDER |
                          SWP_NOACTIVATE | SWP_NOCOPYBITS);
 
-        // Store default Tree View WndProc in global variable and set custom
+        // Store default Tree View WndProc in global variable (if it's not
+        // already done by previous calls of the function) and set custom
         // WndProc.
-        g_DefInfoWndProc = (WNDPROC)SetWindowLongPtr(g_hInfoView, GWLP_WNDPROC,
-            (LONG)InfoWndProc);
+        WNDPROC DefTreeWndProc = (WNDPROC)SetWindowLongPtr(hView, GWLP_WNDPROC,
+            (LONG)ViewWndProc);
+
+        if (!g_DefTreeWndProc) {
+            g_DefTreeWndProc = DefTreeWndProc;
+        }
     }
 
     return hDlg;
@@ -734,8 +742,9 @@ InfoDlgProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam) {
         ShowWindow(hwndDlg, SW_SHOW);
 
         // Delegate message processing to info tree view
-        if (g_hInfoView) {
-            PostMessage(g_hInfoView, uMsg, wParam, lParam);
+        HWND hInfoView = GetDlgItem(hwndDlg, IDC_TREEVIEW);
+        if (hInfoView) {
+            PostMessage(hInfoView, uMsg, wParam, lParam);
 
             return TRUE;
         }
@@ -1938,7 +1947,7 @@ InfoWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
 
         InvalidateRect(hWnd, &r, FALSE);
 
-        CallWindowProc(g_DefInfoWndProc, hWnd, message, wParam, lParam);
+        CallWindowProc(g_DefTreeWndProc, hWnd, message, wParam, lParam);
 
         hdc = GetDC(hWnd);
         DrawBackground(hdc, SRCAND);
@@ -1948,7 +1957,7 @@ InfoWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
     }
 
     default:
-        return CallWindowProc(g_DefInfoWndProc, hWnd, message, wParam,
+        return CallWindowProc(g_DefTreeWndProc, hWnd, message, wParam,
             lParam);
     }
 

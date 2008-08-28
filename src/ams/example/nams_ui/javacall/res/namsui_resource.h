@@ -59,7 +59,7 @@
 #define  IDD_INFO_DIALOG           600
 
 #define  IDC_TREEVIEW_MIDLETS      900
-#define  IDC_TREEVIEW_INFO         910
+#define  IDC_TREEVIEW              910
 #define  IDC_MAIN_TOOLBAR          920
 #define  IDB_MAIN_TOOLBAR_BUTTONS  930
 
