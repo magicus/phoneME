@@ -217,16 +217,19 @@ javacall_result java_ams_get_domain(javacall_suite_id suiteID,
 }
 
 /**
- * Get permission set of the suite.
- * @param suiteID       Unique ID of the MIDlet suite
- * @param pPermissions  Pointer to a javacall_ext_ams_permission_set structure
- *                      to contain returned permission setttings
- * @return <tt>JAVACALL_OK</tt> on success, 
- *         <tt>JAVACALL_FAIL</tt>
+ * App Manager invokes this function to get permissions of the suite.
+ *
+ * Note: memory for pPermissions array is allocated and freed by the caller.
+ *
+ * @param suiteId       [in]     unique ID of the MIDlet suite
+ * @param pPermissions  [in/out] array of JAVACALL_AMS_NUMBER_OF_PERMISSIONS
+ *                               elements that will be filled with the
+ *                               current permissions' values on exit
+ * @return <tt>JAVACALL_OK</tt> on success, an error code otherwise
  */
 javacall_result
-java_ams_get_permissions(javacall_suite_id suiteID,
-                         javacall_ams_permission_set* pPermissions) {
+java_ams_suite_get_permissions(javacall_suite_id suiteID,
+                               javacall_ams_permission_val* pPermissions) {
     if (nams_get_midlet_permissions(suiteID, pPermissions) != JAVACALL_OK) {
         return JAVACALL_FAIL;
     }
@@ -252,21 +255,23 @@ java_ams_set_permission(javacall_suite_id suiteID,
 }
 
 /**
- * Set permission set of the suite.
- * @param suiteID       Unique ID of the MIDlet suite
- * @param pPermissions  Pointer to a javacall_ext_ams_permission_set structure
- *                      to contain returned permission setttings
- * @return <tt>JAVACALL_OK</tt> on success, 
- *         <tt>JAVACALL_FAIL</tt>
+ * App Manager invokes this function to set permissions of the suite.
+ *
+ * @param suiteId       [in]  unique ID of the MIDlet suite
+ * @param pPermissions  [in]  array of JAVACALL_AMS_NUMBER_OF_PERMISSIONS
+ *                            elements containing the permissions' values
+ *                            to be set
+ *
+ * @return <tt>JAVACALL_OK</tt> on success, an error code otherwise
  */
 javacall_result
-java_ams_set_permissions(javacall_suite_id suiteID,
-                         javacall_ams_permission_set* pPermissions) {
+java_ams_suite_set_permissions(javacall_suite_id suiteID,
+                               javacall_ams_permission_val* pPermissions) {
     int i;
     for (i = JAVACALL_AMS_PERMISSION_HTTP;
             i < JAVACALL_AMS_PERMISSION_LAST; i ++) {
         if (nams_set_midlet_permission(suiteID, (javacall_ams_permission)i,
-            pPermissions->permission[i]) != JAVACALL_OK) {
+                                       pPermissions[i]) != JAVACALL_OK) {
             return JAVACALL_FAIL;
         }
     }

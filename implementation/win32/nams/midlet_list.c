@@ -70,7 +70,7 @@ void nams_set_midlet_static_info(int appID, MidletNode* pInfo)
     pendingMidletInfo.requestForeground = FALSE;
     for (i = 0; i < JAVACALL_AMS_PERMISSION_LAST; i++)
     {
-        pendingMidletInfo.permissions.permission[i] 
+        pendingMidletInfo.permissions[i] 
                           = JAVACALL_AMS_PERMISSION_VAL_BLANKET;
     }
 
@@ -214,11 +214,16 @@ javacall_result nams_get_midlet_jadpath(int index, char** outPath)
     return JAVACALL_OK;
 }
 
-javacall_result nams_get_midlet_permissions(int index, javacall_ams_permission_set* pSet)
+javacall_result nams_get_midlet_permissions(int index, javacall_ams_permission_val* pSet)
 {
+    int i;
+
     if (pending)
     {
-        *pSet = pendingMidletInfo.permissions;
+        for (i = 0; i < JAVACALL_AMS_NUMBER_OF_PERMISSIONS; i++)
+        {
+            pSet[i] = pendingMidletInfo.permissions[i];
+        }
     }
     else
     {
@@ -230,7 +235,11 @@ javacall_result nams_get_midlet_permissions(int index, javacall_ams_permission_s
         {
             return JAVACALL_FAIL;
         }
-        *pSet = MidletList[index]->permissions;
+
+        for (i = 0; i < JAVACALL_AMS_NUMBER_OF_PERMISSIONS; i++)
+        {
+            pSet[i] = MidletList[index]->permissions[i];
+        }
     }
 
     return JAVACALL_OK;
@@ -251,7 +260,7 @@ javacall_result nams_set_midlet_permission(int index, javacall_ams_permission pe
         return JAVACALL_FAIL;
     }
 
-    MidletList[index]->permissions.permission[permission] = value;
+    MidletList[index]->permissions[permission] = value;
 
     return JAVACALL_OK;
 }
