@@ -71,7 +71,7 @@ typedef struct midletNode {
     char                        className[MAX_MIDLET_NAME_LENGTH];
     javacall_lifecycle_state    state;
     javacall_change_reason      lastChangeReason;
-    javacall_ams_permission_set permissions;
+    javacall_ams_permission_val permissions[JAVACALL_AMS_NUMBER_OF_PERMISSIONS];
     javacall_ams_domain         domain;
     javacall_bool               requestForeground;
 } MidletNode;
@@ -85,7 +85,7 @@ javacall_result nams_find_midlet_by_state(javacall_lifecycle_state state, int* i
 javacall_result nams_get_midlet_state(int index, javacall_lifecycle_state *state);
 javacall_result nams_set_midlet_state(javacall_lifecycle_state state, int index, javacall_change_reason reason);
 javacall_result nams_get_midlet_jadpath(int index, char** outPath);
-javacall_result nams_get_midlet_permissions(int index, javacall_ams_permission_set* pSet);
+javacall_result nams_get_midlet_permissions(int index, javacall_ams_permission_val* pSet);
 javacall_result nams_set_midlet_permission(int index, javacall_ams_permission permission, javacall_ams_permission_val value);
 javacall_result nams_get_midlet_domain(int index, javacall_ams_domain* domain);
 int nams_get_current_midlet_count();
