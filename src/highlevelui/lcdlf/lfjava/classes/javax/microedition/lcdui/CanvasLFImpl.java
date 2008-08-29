@@ -27,10 +27,9 @@
 package javax.microedition.lcdui;
 
 /* import  javax.microedition.lcdui.KeyConverter; */
-import com.sun.midp.chameleon.SubMenuCommand;
+import com.sun.midp.chameleon.layers.VirtualKeyListener;
 
 import com.sun.midp.i18n.ResourceConstants;
-import com.sun.midp.i18n.Resource;
 
 import java.util.Vector;
 import java.util.Enumeration;
@@ -38,7 +37,7 @@ import java.util.Enumeration;
 /**
 * This is the look amps; feel implementation for Canvas.
 */
-class CanvasLFImpl extends DisplayableLFImpl implements CanvasLF {
+class CanvasLFImpl extends DisplayableLFImpl implements CanvasLF, VirtualKeyListener {
 
 
     /**
@@ -51,7 +50,6 @@ class CanvasLFImpl extends DisplayableLFImpl implements CanvasLF {
         if (currentDisplay != null) {
             isDisplayRotated = currentDisplay.wantRotation;
         }
-        addInputCommands();
     }
 
     // ************************************************************
@@ -434,16 +432,6 @@ class CanvasLFImpl extends DisplayableLFImpl implements CanvasLF {
     }
 
     /**
-     * Add input modes specific commands
-     */
-    private void addInputCommands() {
-
-        canvas.addCommand(new Command(Resource.getString(ResourceConstants.LCDUI_TF_NATIVE_VKBD),
-                                      Command.VIRTUAL, 100));
-    }
-
-
-    /**
      * Canvas being stored in this object.
      */
     Canvas canvas;
@@ -468,4 +456,11 @@ class CanvasLFImpl extends DisplayableLFImpl implements CanvasLF {
      */
     private static MMHelperImpl mmHelper = MMHelperImpl.getInstance();
 
+    public void processKeyPressed(int keyCode) {
+        uCallKeyPressed(keyCode);
+    }
+
+    public void processKeyReleased(int keyCode) {
+        uCallKeyReleased(keyCode);
+    }
 }

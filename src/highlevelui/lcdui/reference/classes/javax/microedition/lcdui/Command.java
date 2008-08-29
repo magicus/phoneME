@@ -324,9 +324,12 @@ public class Command {
      */
     public static final int ITEM = 8;
 
-    public static final int VIRTUAL = 9;
-
     // protected members //
+
+    /**
+     * A command used for executing Virtual Keyboard
+     */
+    static final int VIRTUAL = 9;
 
     /**
      * The label rendered on the screen for this Command.

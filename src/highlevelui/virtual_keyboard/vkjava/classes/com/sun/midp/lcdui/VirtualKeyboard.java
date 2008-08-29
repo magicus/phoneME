@@ -82,19 +82,12 @@ public class VirtualKeyboard {
      * @param listener for handling virtual keyboard events
      */
     VirtualKeyboard(VirtualKeyboardListener listener) {
-
-
-        try {
-            keyboardsMap = loadKeyboardMaps();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        keyboardsMap = loadKeyboardMaps();
 
         vkl = listener;
 
         currentKeyboardType = LOWER_ALPHABETIC_KEYBOARD;
         currentKeyboard = (Key[][]) keyboardsMap.get(currentKeyboardType);
-        currentKey = currentKeyboard[0][0];
         line = 0;
         column = 0;
 
@@ -239,10 +232,7 @@ public class VirtualKeyboard {
 
             for (int j = 0; j < currentKeyboard[i].length; j++) {
                 Key key = currentKeyboard[i][j];
-                key.paint(g);
-                if (key == currentKey) {
-                    key.paintSelection(g);
-                }
+                key.paint(g, (key == currentKey));
             }
         }
     }
@@ -317,5 +307,13 @@ public class VirtualKeyboard {
             line = 0;
             column = 0;
         }
+    }
+
+    /**
+     * Method return true if current virtual keybpard implementation supports java virtual keyboard
+     * @return status of 
+     */
+    public static boolean isSupportJavaKeyboard() {
+        return true;
     }
 }

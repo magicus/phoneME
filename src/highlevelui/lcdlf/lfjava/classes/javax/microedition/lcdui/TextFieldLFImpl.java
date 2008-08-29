@@ -952,7 +952,7 @@ class TextFieldLFImpl extends ItemLFImpl implements
         
         // IMPL_NOTE: problem with synchronization on layers and LCDUILock
         showPTPopup((int)0, cursor, w, h);
-//        showKeyboardLayer();
+        showKeyboardLayer();
         return newXOffset;
     }
 
@@ -1137,7 +1137,6 @@ class TextFieldLFImpl extends ItemLFImpl implements
         addInputCommands();
 
         inputModeIndicator.setDisplayMode(im.getName());
-        showKeyboardLayer();
     }
     
     // End Chameleon's TextInputComponent Interface
@@ -1652,8 +1651,6 @@ class TextFieldLFImpl extends ItemLFImpl implements
             currentDisplay = getCurrentDisplay();
         }
 
-        System.out.println("TextFieldLFImpl.disableLayers currentDisplay=" + currentDisplay);
-
         // Dismiss input mode indicator layer outside LCDUILock
         // to avoid deadlocking with Chameleon internal lock 'layers'.
         if (currentDisplay != null) {
@@ -1977,24 +1974,28 @@ class TextFieldLFImpl extends ItemLFImpl implements
     }
 
 
-    /**
-     * Show predictive text popup dialog 
-     */
-    protected void showPTILayer() {
-        Display d = getCurrentDisplay();
-        if (!pt_popupOpen && d != null) {
-            if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
-                Logging.report(Logging.INFORMATION, LogChannels.LC_HIGHUI,
-                    "[showPTPopup] showing");
-            }
+     /**
+      * Show predictive text popup dialog
+      */
+     protected void showPTILayer() {
+         Display d = getCurrentDisplay();
+         if (d != null) {
+             PTILayer pt_popup = d.getPTIPopup();
+             pt_popup.setList(pt_matches);
+             if (!pt_popupOpen) {
+                 if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
+                     Logging.report(Logging.INFORMATION, LogChannels.LC_HIGHUI,
+                                    "[showPTPopup] showing");
+                 }
 
-            PTILayer pt_popup = d.getPTIPopup();
-            pt_popup.setList(pt_matches);
-            d.showPopup(pt_popup);
-            pt_popupOpen = true;
-            lRequestInvalidate(true, true);
-        }
-    }
+
+
+                 d.showPopup(pt_popup);
+                 pt_popupOpen = true;
+                 lRequestInvalidate(true, true);
+             } 
+         }
+     }
 
     /**
      * Show virtual keybord popup

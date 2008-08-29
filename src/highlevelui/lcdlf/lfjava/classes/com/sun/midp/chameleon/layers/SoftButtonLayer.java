@@ -716,8 +716,6 @@ public class SoftButtonLayer extends CLayer implements CommandListener {
         if (subMenu != null) {
             subMenu.notifyListener(cmd);
             subMenu = null;
-        } else if (isKeyboardCommand(cmd)) {
-            handleKeyboardCommand();
         } else if (isItemCommand(cmd)) {
             tunnel.callItemListener(cmd, itemListener);
         } else {
@@ -818,37 +816,6 @@ public class SoftButtonLayer extends CLayer implements CommandListener {
         }
         return false;
     }
-
-    /**
-     * Check keyboard command
-     *
-     * @param cmd
-     * @return
-     */
-    protected boolean isKeyboardCommand(Command cmd) {
-        if (cmd != null && cmd.getCommandType() == Command.VIRTUAL) {
-            return true;
-        }
-        return false;
-    }
-
-    /**
-     * Show or hide Virtual keyboard layer
-     */
-    protected void handleKeyboardCommand ()
-    {
-        keyboardPopup = VirtualKeyboardLayer.getVirtualKeyboardLayer();
-        keyboardPopup.setKeyboardMode(tunnel);
-
-        if (!keyboardPopup.isVisible()) {
-            owner.addLayer(keyboardPopup);
-        } else {
-            owner.removeLayer(keyboardPopup);
-        }
-        requestRepaint();
-
-    }
-
 
 /**
 * Initializes the soft button layer.

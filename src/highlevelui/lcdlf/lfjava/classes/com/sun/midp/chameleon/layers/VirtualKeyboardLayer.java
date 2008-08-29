@@ -1,8 +1,27 @@
 /*
- * $LastChangedDate: 2006-03-06 01:36:46 +0900 (월, 06 3 2006) $  
  *
- * Copyright  1990-2006 Sun Microsystems, Inc. All rights reserved.
- * SUN PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ * Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License version
+ * 2 only, as published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * General Public License version 2 for more details (a copy is
+ * included at /legal/license.txt).
+ *
+ * You should have received a copy of the GNU General Public License
+ * version 2 along with this work; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA
+ *
+ * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+ * Clara, CA 95054 or visit www.sun.com if you need additional
+ * information or have any questions.
  */
 
 package com.sun.midp.chameleon.layers;
@@ -12,17 +31,11 @@ import com.sun.midp.configurator.Constants;
 import com.sun.midp.chameleon.input.*;
 import com.sun.midp.chameleon.skins.VirtualKeyboardSkin;
 import com.sun.midp.chameleon.skins.ScreenSkin;
-import com.sun.midp.chameleon.skins.AlertSkin;
-import com.sun.midp.chameleon.skins.PTISkin;
-import com.sun.midp.chameleon.skins.resources.VirtualKeyboardResources;
-import com.sun.midp.chameleon.skins.resources.AlertResources;
 import com.sun.midp.chameleon.CLayer;
 import com.sun.midp.chameleon.MIDPWindow;
 import com.sun.midp.chameleon.ChamDisplayTunnel;
-import com.sun.midp.i18n.Resource;
 
 import javax.microedition.lcdui.*;
-import java.util.Vector;
 
 /**
  * This is a popup layer 
@@ -32,65 +45,53 @@ public class VirtualKeyboardLayer extends PopupLayer implements VirtualKeyboardL
     /** Instance of current input mode */
     private TextInputSession iSession;
 
+    /** Instance of current displayable */
+    private VirtualKeyListener listener;
+
     /** Instance of ChamDisplayTunnel that implement bridge with Display */
     private ChamDisplayTunnel tunnel = null;
 
     /** the instance of the virtual keyboard */
     private static VirtualKeyboard vk = null;
 
-    /** Standalone instance of VirtualKeyboardLayer class*/
-    private static VirtualKeyboardLayer keyboardLayer = null;
-
     /**
      * Create an instance of KeyboardLayer
      */
     public VirtualKeyboardLayer() {
         super(VirtualKeyboardSkin.BG, VirtualKeyboardSkin.COLOR_BG);
-        vk = VirtualKeyboard.getVirtualKeyboard(this);
-        setAnchor();
     }
 
     /**
      * Return standalone instance of VirtualKeyboardLayer
      * @return
      */
-    public static VirtualKeyboardLayer getVirtualKeyboardLayer() {
+    public void initVirtualKeyboardLayer() {
 
-         if (keyboardLayer == null) {
-            VirtualKeyboardResources.load();
-            keyboardLayer = new VirtualKeyboardLayer();
+        if (VirtualKeyboard.isSupportJavaKeyboard() && vk == null) {
+            vk = VirtualKeyboard.getVirtualKeyboard(this);
+            setAnchor();
          }
-        return keyboardLayer;
     }
 
     /**
-     * Set initial keyboard mode
+     * Set initial keyboard mode depend on current listener
      * @param inputSession - current input mode
      */
-    public void setKeyboardMode(TextInputSession inputSession) {
+    public void setInputSession(TextInputSession inputSession) {
         iSession = inputSession;
+        listener = null;
         vk.changeKeyboad(VirtualKeyboard.LOWER_ALPHABETIC_KEYBOARD);
         repaintVirtualKeyboard();
     }
 
     /**
-     * Set initial keyboard mode
-     * @param tunnel - bridge with Display
+     * Set initial keyboard mode depend on current listener
+     * @param listener - current layer 
      */
-    public void setKeyboardMode(ChamDisplayTunnel tunnel) {
-        this.tunnel = tunnel;
-
+    public void setVirtualKeyboardLayerListener(VirtualKeyListener listener) {
+        this.listener = listener;
+        iSession = null;
         vk.changeKeyboad(VirtualKeyboard.GAME_KEYBOARD);
-        repaintVirtualKeyboard();
-    }
-
-    /**
-     * Finish initialization of this layer
-     * Load resources for Virtual keyboard instance
-     */
-    protected void initialize() {
-        super.initialize();
-        VirtualKeyboardResources.load();
     }
 
     /**
@@ -102,14 +103,18 @@ public class VirtualKeyboardLayer extends PopupLayer implements VirtualKeyboardL
      *                supports input.
      */
     public void setVisible(boolean visible) {
-        this.visible = visible;
+        if (vk != null && vk.isSupportJavaKeyboard()) {
+            this.visible = visible;
+        } else {
+            this.setVisible(false);
+        }
     }
 
     /**
      * Sets the anchor constants for rendering operation.
      */
     private void setAnchor() {
-        bounds[W] = VirtualKeyboardSkin.WIDTH;
+        bounds[W] = (int)(.95 * ScreenSkin.WIDTH);
         bounds[H] = VirtualKeyboardSkin.HEIGHT;
         bounds[X] = bounds[X] = (ScreenSkin.WIDTH - bounds[W]) >> 1;
         bounds[Y] = ScreenSkin.HEIGHT - bounds[H];
@@ -207,8 +212,8 @@ public class VirtualKeyboardLayer extends PopupLayer implements VirtualKeyboardL
      */
     public void virtualKeyPressed(int keyCode) {
 
-        if (tunnel != null) {
-            tunnel.callKeyPressed(keyCode);
+        if (listener != null) {
+            listener.processKeyPressed(keyCode);
         } else {
             iSession.processKey(keyCode, false);
         }

@@ -40,7 +40,6 @@ import javax.microedition.media.Manager;
 import javax.microedition.media.MediaException;
 import javax.microedition.media.control.ToneControl;
 
-import com.sun.midp.i18n.Resource;
 import com.sun.midp.i18n.ResourceConstants;
 // #else
 import java.lang.*;
@@ -61,6 +60,7 @@ import com.sun.midp.chameleon.input.BasicTextInputSession;
 import com.sun.midp.chameleon.layers.PopupLayer;
 import com.sun.midp.chameleon.layers.PTILayer;
 import com.sun.midp.chameleon.layers.VirtualKeyboardLayer;
+import com.sun.midp.chameleon.layers.VirtualKeyListener;
 import com.sun.midp.chameleon.skins.ChoiceGroupSkin;
 import com.sun.midp.chameleon.skins.ScreenSkin;
 import com.sun.midp.chameleon.skins.resources.*;
@@ -72,7 +72,6 @@ import com.sun.midp.util.LiveTracer;
 // #endif ENABLE_I3_TEST
 
 // #ifdef ENABLE_GCI
-import java.security.*;
 
 import com.sun.me.gci.windowsystem.GCIGraphicsEnvironment;
 import com.sun.me.gci.windowsystem.GCIDisplay;
@@ -1577,12 +1576,16 @@ public class Display {
      *   associated with this Display
      **/
     public VirtualKeyboardLayer getVirtualKeyboardPopup() {
-         keyboardLayer = VirtualKeyboardLayer.getVirtualKeyboardLayer();
-         if (getCurrent() instanceof Canvas) {
-             keyboardLayer.setKeyboardMode(cham_tunnel);
-         } else {
-             keyboardLayer.setKeyboardMode(getInputSession());
-         }
+        if (keyboardLayer == null) {
+          VirtualKeyboardResources.load();
+          keyboardLayer = new VirtualKeyboardLayer();
+          keyboardLayer.initVirtualKeyboardLayer();
+        }
+        if (Display.this.current instanceof VirtualKeyListener) {
+             keyboardLayer.setVirtualKeyboardLayerListener((VirtualKeyListener)Display.this.current);
+        } else {
+             keyboardLayer.setInputSession(getInputSession());
+        }
         return keyboardLayer;
     }
 
@@ -3326,6 +3329,14 @@ public class Display {
             // the callSerially() event.
             // repaintEventProducer.serviceRepaints();
             getCallSerially();
+        }
+
+        /*
+         * Called by event delivery when need to show or hide virtual keyboard
+         */
+        public void handleVirtualKeyboardEvent() {
+            Display.this.getVirtualKeyboardPopup();
+
         }
     } // END DisplayEventConsumerImpl Class
 

@@ -69,6 +69,8 @@ public class Key {
     private int key;
     /*Image for key background*/
     private Image keyImage;
+    /*Image for selected key background*/
+    private Image keyImageSelected;
     /* Key type */
     private int keyType;
     /* x coordinate of key */
@@ -111,15 +113,19 @@ public class Key {
                 break;
             case LEFT_ARROW_KEY:
                 keyImage = VirtualKeyboardSkin.BTN_LEFT_UN;
+                keyImageSelected = VirtualKeyboardSkin.BTN_LEFT_SEL;
                 break;
             case RIGHT_ARROW_KEY:
                 keyImage = VirtualKeyboardSkin.BTN_RIGHT_UN;
+                keyImageSelected = VirtualKeyboardSkin.BTN_RIGHT_SEL;
                 break;
             case UP_ARROW_KEY:
                 keyImage = VirtualKeyboardSkin.BTN_UP_UN;
+                keyImageSelected = VirtualKeyboardSkin.BTN_UP_SEL;
                 break;
             case DOWN_ARROW_KEY:
                 keyImage = VirtualKeyboardSkin.BTN_DOWN_UN;
+                keyImageSelected = VirtualKeyboardSkin.BTN_DOWN_SEL;
                 break;
             case ENTER_KEY:
                 keyImage = VirtualKeyboardSkin.BTN_ENTER;
@@ -136,28 +142,30 @@ public class Key {
      * Paint key
      * @param g graphics
      */
-    void paint(Graphics g) {
+    void paint(Graphics g, boolean selected) {
 
         g.setFont(VirtualKeyboardSkin.FONT);
 
+        if (selected) {
 
-        if (keyImage != null) {
-            g.drawImage(keyImage, x, y, Graphics.TOP | Graphics.LEFT);
+          if (keyImageSelected != null) {
+                g.drawImage(keyImageSelected, x, y, Graphics.TOP | Graphics.LEFT);
+          } else {
+              if (keyImage != null) {
+                 g.drawImage(keyImage, x, y, Graphics.TOP | Graphics.LEFT);
+              }
+              g.drawRect(x,y,width,height);
+          }
+        } else {
+            if (keyImage != null) {
+                g.drawImage(keyImage, x, y, Graphics.TOP | Graphics.LEFT);
+            }
         }
 
         if (key > 0) {
             // Draw text version
             g.drawChar((char) key, x + 4, y + 4, Graphics.TOP | Graphics.LEFT);
         }
-
-    }
-
-    /**
-     * Paint selected key
-     * @param g
-     */
-    void paintSelection(Graphics g) {
-//          drawButton(g,x,y,width,height);
 
     }
 
