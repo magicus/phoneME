@@ -72,7 +72,7 @@ void Disassembler::emit_register_list(short instr) {
   bool comma = false;
   // clear upper bits so we can run past last register (see below)!
   instr &= 0xff;
-  for (int i = 0; i <= Assembler::number_of_registers; i++) {
+  for (int i = 0; i <= Assembler::number_of_gp_registers; i++) {
     // run past last register (by 1)!
     // b <  0 => no open range
     // b >= 0 => open range [b, i-1]
@@ -343,10 +343,8 @@ inline void Disassembler::disasm_v6t2_coproc( const jushort hw1,
       }
     }
   }
-  emit_unknown( hw1, hw2 );
-  UNIMPLEMENTED(); // other instructions
-#else
-  if (hw2 & 0x10) {
+#endif
+  if( hw2 & 0x10 ) {
     // mcr.w, mrc.w
     stream()->print("%s.w\tp%d, %d, %s, c%d, c%d, %d",
                     (hw1 & 0x10) ? "mrc" : "mcr", (hw2 >> 8) & 15,
@@ -357,7 +355,6 @@ inline void Disassembler::disasm_v6t2_coproc( const jushort hw1,
     emit_unknown( hw1, hw2 );
     UNIMPLEMENTED(); // other instructions
   }
-#endif
 }
 
 const char* Disassembler::shift_name(const Assembler::Shift shift) {
@@ -1345,8 +1342,8 @@ inline int Disassembler::disasm_internal(const short* addr, short instr,
       if (imm == 0) {
         stream()->print("]");
       } else {
-        if( opcode & 2 ) {
-          imm <<= 1;
+        if( !(opcode & 2) ) {
+          imm <<= 2;
         }
         stream()->print(", #%d]", imm);
         if( rn_reg == Assembler::gp ) {
