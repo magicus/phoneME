@@ -28,6 +28,7 @@
 /**
  * Application manager invokes this function to start a suite installation.
  *
+ * @param appId ID that will be used to uniquely identify this operation
  * @param srcType
  *             type of data pointed by installUrl: a JAD file, a JAR file
  *             or any of them
@@ -57,16 +58,38 @@
  * java_ams_operation_completed().
  */
 javacall_result
-java_ams_install_suite(javacall_ams_install_source_type srcType,
+java_ams_install_suite(javacall_app_id appId,
+                       javacall_ams_install_source_type srcType,
                        javacall_const_utf16_string installUrl,
-                       javacall_bool invokeGUI,
-                       javacall_int32* pOperationId) {
-    (void)srcType;
-    (void)installUrl;
-    (void)invokeGUI;
-    (void)pOperationId;
+                       javacall_bool invokeGUI) {
+    /* com.sun.midp.installer.GraphicalInstaller */
+    const javacall_utf16 guiInstallerClass[] = {
+        'c', 'o', 'm', '.', 's', 'u', 'n', '.', 'm', 'i', 'd', 'p', '.',
+        'i', 'n', 's', 't', 'a', 'l', 'l', 'e', 'r', '.',
+        'D', 'i', 's', 'c', 'o', 'v', 'e', 'r', 'y', 'A', 'p', 'p',
+        0
+    };
+    const javacall_utf16 argInstallStr[] = { 'I', 0 };
+    javacall_result res = JAVACALL_FAIL;
+    javacall_const_utf16_string pArgs[2];
 
-    return JAVACALL_FAIL;
+    (void)srcType;
+
+    pArgs[0] = argInstallStr;
+    pArgs[1] = installUrl;
+
+    if (invokeGUI == JAVACALL_TRUE) {
+        res = java_ams_midlet_start_with_args(-1,
+            appId,
+            guiInstallerClass,
+            pArgs,
+            2,
+            NULL);
+    } else {
+
+    }
+
+    return res;
 }
 
 /**
@@ -103,7 +126,7 @@ java_ams_install_is_ocsp_enabled() {
  * After processing the request, java_ams_install_callback() must
  * be called to report the result to the installer.
  *
- * @param requestCode   in pair with pInstallState->operationId uniquely
+ * @param requestCode   in pair with pInstallState->appId uniquely
  *                      identifies the request for which the results
  *                      are reported by this call
  * @param pInstallState pointer to a structure containing all information

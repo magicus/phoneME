@@ -76,7 +76,6 @@ public class NativeAppManagerPeer
      * @param args not used
      */
     public static void main(String args[]) {
-System.out.println(">>> PEER Started!");
         // Since this is public method, guard against multiple calls
 
         if (alreadyCalled) {
