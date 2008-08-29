@@ -413,10 +413,8 @@ typedef enum {
 typedef struct _javacall_ams_install_state {
     /**
      * ID uniquely identifying this operation of installation.
-     *
-     * IMPL_NOTE: currently it is always zero.
      */
-    javacall_int32 operationId;
+    javacall_app_id appId;
 
     /**
      * Code of the last recoverable exception that stopped the install,
@@ -472,6 +470,7 @@ typedef enum {
 /**
  * Application manager invokes this function to start a suite installation.
  *
+ * @param appId ID that will be used to uniquely identify this operation
  * @param srcType
  *             type of data pointed by installUrl: a JAD file, a JAR file
  *             or any of them
@@ -485,11 +484,6 @@ typedef enum {
  *             c:\a\b\c\d.jad
  * @param invokeGUI <tt>JAVACALL_TRUE</tt> to invoke Graphical Installer,
  *                  <tt>JAVACALL_FALSE</tt> otherwise
- * @param pOperationId [out] if the installation was successfully started,
- *                           on exit contains an ID uniquely identifying
- *                           this operation; this parameter can be NULL on
- *                           entrance if the operation ID is not required.
- *                           IMPL_NOTE: currently always 0 is returned.
  *
  * @return status code: <tt>JAVACALL_OK</tt> if the installation was
  *                                           successfully started,
@@ -501,10 +495,10 @@ typedef enum {
  * java_ams_operation_completed().
  */
 javacall_result
-java_ams_install_suite(javacall_ams_install_source_type srcType,
+java_ams_install_suite(javacall_app_id appId,
+                       javacall_ams_install_source_type srcType,
                        javacall_const_utf16_string installUrl,
-                       javacall_bool invokeGUI,
-                       javacall_int32* pOperationId);
+                       javacall_bool invokeGUI);
 
 /**
  * Application manager invokes this function to enable or disable
@@ -554,7 +548,7 @@ java_ams_install_report_progress(javacall_ams_install_state* pInstallState,
  * be called to report the result to the installer.
  *
  * @param requestCode   identifies the requested action
- *                      in pair with pInstallState->operationId uniquely
+ *                      in pair with pInstallState->appId uniquely
  *                      identifies this request
  * @param pInstallState pointer to a structure containing all information
  *                      about the current installation state
@@ -579,7 +573,7 @@ java_ams_install_listener(javacall_ams_install_request_code requestCode,
  * After processing the request, java_ams_install_callback() must
  * be called to report the result to the installer.
  *
- * @param requestCode   in pair with pInstallState->operationId uniquely
+ * @param requestCode   in pair with pInstallState->appId uniquely
  *                      identifies the request for which the results
  *                      are reported by this call
  * @param pInstallState pointer to a structure containing all information
