@@ -189,28 +189,39 @@ typedef enum {
 } javacall_ams_permission;
 
 /**
- * @enum javacall_ams_permission_val
+ * @def JAVACALL_AMS_NUMBER_OF_PERMISSIONS JAVACALL_AMS_PERMISSION_LAST
+ * Number of permissions known to Java.
  */
-typedef enum {
-    JAVACALL_AMS_PERMISSION_VAL_INVALID = -1,
-    JAVACALL_AMS_PERMISSION_VAL_NEVER = 0,
-    JAVACALL_AMS_PERMISSION_VAL_ALLOW = 1,
-    JAVACALL_AMS_PERMISSION_VAL_BLANKET_GRANTED = 2,
-    JAVACALL_AMS_PERMISSION_VAL_BLANKET = 4,
-    JAVACALL_AMS_PERMISSION_VAL_SESSION = 8,
-    JAVACALL_AMS_PERMISSION_VAL_ONE_SHOT = 16,
-    JAVACALL_AMS_PERMISSION_VAL_BLANKET_DENIED = 32,
-    /* forcing enum to be 4 bytes */
-    JAVACALL_AMS_PERMISSION_DUMMY = 0x00000001
-} javacall_ams_permission_val;
+#define JAVACALL_AMS_NUMBER_OF_PERMISSIONS JAVACALL_AMS_PERMISSION_LAST
 
 /**
+ * Type of a permission's value.
+ */
+typedef javacall_uint8 javacall_ams_permission_val;
+
+/**
+ * Possible values of a permission
+ */
+#define JAVACALL_AMS_PERMISSION_VAL_INVALID   ((javacall_ams_permission_val) -1)
+#define JAVACALL_AMS_PERMISSION_VAL_NEVER     ((javacall_ams_permission_val) 0)
+#define JAVACALL_AMS_PERMISSION_VAL_ALLOW     ((javacall_ams_permission_val) 1)
+#define JAVACALL_AMS_PERMISSION_VAL_BLANKET_GRANTED ((javacall_ams_permission_val) 2)
+#define JAVACALL_AMS_PERMISSION_VAL_BLANKET   ((javacall_ams_permission_val) 4)
+#define JAVACALL_AMS_PERMISSION_VAL_SESSION   ((javacall_ams_permission_val) 8)
+#define JAVACALL_AMS_PERMISSION_VAL_ONE_SHOT  ((javacall_ams_permission_val) 16)
+#define JAVACALL_AMS_PERMISSION_VAL_BLANKET_DENIED ((javacall_ams_permission_val) 32)
+
+#if 0
+/*
  * @brief Holds all permssion set
+ *
+ * IMPL_NOTE: currently unused, may be removed later.
  */
 typedef struct _javacall_ams_permission_set {
-    /** Array of javacall_ams_permission_val */
+    /** Array holding the current value for each permission */
     javacall_ams_permission_val permission[JAVACALL_AMS_PERMISSION_LAST];
 } javacall_ams_permission_set;
+#endif
 
 /**
  * A structure containing all information about the installed
@@ -375,7 +386,7 @@ typedef struct _javacall_ams_suite_install_info {
  */
 typedef struct _javacall_ams_suite_settings {
     /** Permissions for this suite. */
-    javacall_uint8* pPermissions;
+    javacall_ams_permission_val* pPermissions;
     /** Number of permissions in pPermissions array. */
     int permissionsLen;
     /** Can this MIDlet suite interrupt other suites. */
@@ -510,7 +521,7 @@ java_ams_suite_get_bin_app_path(javacall_suite_id suiteId,
  * @param pStorageId [out] receives an ID of the storage where
  *                         the suite is stored
  *
- * @return <tt>JAVACALL_OK</tt> on success, error code otherwise
+ * @return <tt>JAVACALL_OK</tt> on success, an error code otherwise
  */
 javacall_result
 java_ams_suite_get_storage(javacall_suite_id suiteId,
@@ -527,7 +538,7 @@ java_ams_suite_get_storage(javacall_suite_id suiteId,
  *                               the midlet suite resides
  * @param pStorageRootPath [out] receives a path to the given storage's root
  *
- * @return <tt>JAVACALL_OK</tt> on success, error code otherwise
+ * @return <tt>JAVACALL_OK</tt> on success, an error code otherwise
  */
 javacall_result
 java_ams_storage_get_root(javacall_storage_id storageId,
@@ -541,8 +552,7 @@ java_ams_storage_get_root(javacall_storage_id storageId,
  * @param value       [out] buffer to conatain returned property value
  * @param maxValueLen [in]  buffer length of value
  *
- * @return <tt>JAVACALL_OK</tt> on success,
- *         <tt>JAVACALL_FAIL</tt>
+ * @return <tt>JAVACALL_OK</tt> on success, an error code otherwise
  */
 javacall_result
 java_ams_suite_get_property(javacall_suite_id suiteId,
@@ -562,8 +572,7 @@ java_ams_suite_get_property(javacall_suite_id suiteId,
  * @param vendor   [in]  vendor of suite
  * @param pSuiteId [out] suite ID of the existing suite or a new suite ID
  *
- * @return <tt>JAVACALL_OK</tt> on success,
- *         <tt>JAVACALL_FAIL</tt> otherwise
+ * @return <tt>JAVACALL_OK</tt> on success, an error code otherwise
  */
 javacall_result
 java_ams_suite_get_id(javacall_const_utf16_string vendor,
@@ -575,7 +584,7 @@ java_ams_suite_get_id(javacall_const_utf16_string vendor,
  *
  * @param pSuiteId [out] receives a new unique MIDlet suite identifier
  *
- * @return <tt>JAVACALL_OK</tt> on success, else an error code
+ * @return <tt>JAVACALL_OK</tt> on success, an error code otherwise
  */
 javacall_result
 java_ams_suite_create_id(javacall_suite_id* pSuiteId);
@@ -593,7 +602,7 @@ java_ams_suite_create_id(javacall_suite_id* pSuiteId);
  * @param pInstallInfo [in/out] pointer to a place where the installation
  *                              information will be saved.
  *
- * @return <tt>JAVACALL_OK</tt> on success, else an error code
+ * @return <tt>JAVACALL_OK</tt> on success, an error code otherwise
  */
 javacall_result
 java_ams_suite_get_install_info(javacall_suite_id suiteId,
@@ -656,7 +665,7 @@ void java_ams_suite_free_install_info(
  *     iconName - name of the icon for this suite.
  * </pre>
  *
- * @return <tt>JAVACALL_OK</tt> on success, else an error code
+ * @return <tt>JAVACALL_OK</tt> on success, an error code otherwise
  */
 javacall_result
 java_ams_suite_store_suite(const javacall_ams_suite_install_info* pInstallInfo,
@@ -672,8 +681,7 @@ java_ams_suite_store_suite(const javacall_ams_suite_install_info* pInstallInfo,
  * @param pNumbefOfSuites [out] pointer to location where the number
  *                              of the installed suites will be saved
  *
- * @return <tt>JAVACALL_OK</tt> on success,
- *         <tt>JAVACALL_FAIL</tt> otherwise
+ * @return <tt>JAVACALL_OK</tt> on success, an error code otherwise
  */
 javacall_result
 java_ams_suite_get_suites_number(int* pNumbefOfSuites);
@@ -719,8 +727,7 @@ java_ams_suite_free_suite_ids(javacall_suite_id* pSuiteIds,
  *                               containing the midlets info
  * @param pNumberOfEntries [out] number of entries in the returned array
  *
- * @return <tt>JAVACALL_OK</tt> on success,
- *         <tt>JAVACALL_FAIL</tt> otherwise
+ * @return <tt>JAVACALL_OK</tt> on success, an error code otherwise
  */
 javacall_result
 java_ams_suite_get_midlets_info(javacall_suite_id suiteId,
@@ -750,8 +757,7 @@ java_ams_suite_free_midlets_info(javacall_ams_midlet_info* pMidletsInfo,
  *                          using java_ams_suite_free_info() when it is not
  *                          needed anymore
  *
- * @return error code: <tt>JAVACALL_OK</tt> if successful,
- *                     <tt>JAVACALL_FAIL</tt> otherwise
+ * @return <tt>JAVACALL_OK</tt> on success, an error code otherwise
  */
 javacall_result
 java_ams_suite_get_info(javacall_suite_id suiteId,
@@ -773,8 +779,7 @@ java_ams_suite_free_info(javacall_ams_suite_info* pSuiteInfo);
  * @param pDomainId [out] pointer to the location where the retrieved domain
  *                        information will be saved
  *
- * @return <tt>JAVACALL_OK</tt> on success,
- *         <tt>JAVACALL_FAIL</tt> otherwise
+ * @return <tt>JAVACALL_OK</tt> on success, an error code otherwise
  */
 javacall_result
 java_ams_suite_get_domain(javacall_suite_id suiteId,
@@ -815,27 +820,29 @@ javacall_result
 java_ams_suite_enable(javacall_suite_id suiteId);
 
 /**
- * Java invokes this function to get permissions of the suite.
+ * App Manager invokes this function to get permissions of the suite.
  *
- * @param suiteId       [in]  unique ID of the MIDlet suite
- * @param pPermissions  [out] pointer to a javacall_ams_permission_set structure
- *                            to contain returned permission setttings
- * @return <tt>JAVACALL_OK</tt> on success,
- *         <tt>JAVACALL_FAIL</tt>
+ * Note: memory for pPermissions array is allocated and freed by the caller.
+ *
+ * @param suiteId       [in]     unique ID of the MIDlet suite
+ * @param pPermissions  [in/out] array of JAVACALL_AMS_NUMBER_OF_PERMISSIONS
+ *                               elements that will be filled with the
+ *                               current permissions' values on exit
+ * @return <tt>JAVACALL_OK</tt> on success, an error code otherwise
  */
 javacall_result
 java_ams_suite_get_permissions(javacall_suite_id suiteId,
-                               javacall_ams_permission_set* pPermissions);
+                               javacall_ams_permission_val* pPermissions);
 
 /**
  * App Manager invokes this function to set a single permission of the suite
- * when user changes it.
+ * when the user changes it.
  *
  * @param suiteId     unique ID of the MIDlet suite
  * @param permission  permission be set
  * @param value       new value of permssion
- * @return <tt>JAVACALL_OK</tt> on success,
- *         <tt>JAVACALL_FAIL</tt>
+ *
+ * @return <tt>JAVACALL_OK</tt> on success, an error code otherwise
  */
 javacall_result
 java_ams_suite_set_permission(javacall_suite_id suiteId,
@@ -845,15 +852,16 @@ java_ams_suite_set_permission(javacall_suite_id suiteId,
 /**
  * App Manager invokes this function to set permissions of the suite.
  *
- * @param suiteId       [in]  Unique ID of the MIDlet suite
- * @param pPermissions  [out] Pointer to a javacall_ams_permission_set structure
- *                            to contain returned permission setttings
- * @return <tt>JAVACALL_OK</tt> on success,
- *         <tt>JAVACALL_FAIL</tt>
+ * @param suiteId       [in]  unique ID of the MIDlet suite
+ * @param pPermissions  [in]  array of JAVACALL_AMS_NUMBER_OF_PERMISSIONS
+ *                            elements containing the permissions' values
+ *                            to be set
+ *
+ * @return <tt>JAVACALL_OK</tt> on success, an error code otherwise
  */
 javacall_result
 java_ams_suite_set_permissions(javacall_suite_id suiteId,
-                               javacall_ams_permission_set* pPermissions);
+                               javacall_ams_permission_val* pPermissions);
 
 /**
  * App Manager invokes this function to remove a suite with the given ID.
@@ -861,8 +869,7 @@ java_ams_suite_set_permissions(javacall_suite_id suiteId,
  *
  * @param suiteId ID of the suite to remove
  *
- * @return error code: <tt>JAVACALL_OK</tt> if successfull,
- *                     <tt>JAVACALL_FAIL</tt> otherwise
+ * @return <tt>JAVACALL_OK</tt> on success, an error code otherwise
  */
 javacall_result
 java_ams_suite_remove(javacall_suite_id suiteId);
@@ -874,8 +881,7 @@ java_ams_suite_remove(javacall_suite_id suiteId);
  * @param suiteId suite ID for the installed package
  * @param newStorageId new storage ID
  *
- * @return <tt>JAVACALL_OK</tt> on success,
- *         <tt>JAVACALL_FAIL</tt> otherwise
+ * @return <tt>JAVACALL_OK</tt> on success, an error code otherwise
  */
 javacall_result
 java_ams_suite_change_storage(javacall_suite_id suiteId,
@@ -917,8 +923,7 @@ long java_ams_suite_get_storage_size(javacall_suite_id suiteId);
  * @param delCorruptedSuites != 0 to delete the corrupted suites,
  *                           0 - to keep them (for re-installation).
  *
- * @return <tt>JAVACALL_OK</tt> on success,
- *         <tt>JAVACALL_FAIL</tt> otherwise
+ * @return <tt>JAVACALL_OK</tt> on success, an error code otherwise
  */
 javacall_result
 java_ams_suite_check_suites_integrity(javacall_bool fullCheck,
@@ -934,8 +939,7 @@ java_ams_suite_check_suites_integrity(javacall_bool fullCheck,
  *                                containing the folders info
  * @param pNumberOfEntries [out] number of entries in the returned array
  *
- * @return <tt>JAVACALL_OK</tt> on success,
- *         <tt>JAVACALL_FAIL</tt> otherwise
+ * @return <tt>JAVACALL_OK</tt> on success, an error code otherwise
  */
 javacall_result
 java_ams_suite_get_all_folders_info(javacall_ams_folder_info** ppFoldersInfo,
@@ -964,8 +968,7 @@ java_ams_suite_free_all_folders_info(javacall_ams_folder_info* pFoldersInfo,
  * @param ppFolderInfo [out] on exit will hold a pointer to a structure
  *                           describing the given folder
  *
- * @return <tt>JAVACALL_OK</tt> on success,
- *         <tt>JAVACALL_FAIL</tt> otherwise
+ * @return <tt>JAVACALL_OK</tt> on success, an error code otherwise
  */
 javacall_result
 java_ams_suite_get_folder_info(javacall_folder_id folderId,
@@ -976,9 +979,6 @@ java_ams_suite_get_folder_info(javacall_folder_id folderId,
  * an information about an AMS folder.
  *
  * @param pFolderInfo [in] a pointer to the structure that must be freed
- *
- * @return <tt>JAVACALL_OK</tt> on success,
- *         <tt>JAVACALL_FAIL</tt> otherwise
  */
 void
 java_ams_suite_free_folder_info(javacall_ams_folder_info* pFolderInfo);
@@ -1015,8 +1015,7 @@ java_ams_suite_get_suites_in_folder(javacall_folder_id folderId,
  * @param pSuiteFolderId  [out] pointer to a place where the folder ID
  *                              will be stored
  *
- * @return <tt>JAVACALL_OK</tt> on success,
- *         <tt>JAVACALL_FAIL</tt> otherwise
+ * @return <tt>JAVACALL_OK</tt> on success, an error code otherwise
  */
 javacall_result
 java_ams_suite_get_folder(javacall_suite_id suiteId,
@@ -1029,8 +1028,7 @@ java_ams_suite_get_folder(javacall_suite_id suiteId,
  * @param suiteId ID of the suite
  * @param newFolderId ID of the folder where the suite must be moved
  *
- * @return <tt>JAVACALL_OK</tt> on success,
- *         <tt>JAVACALL_FAIL</tt> otherwise
+ * @return <tt>JAVACALL_OK</tt> on success, an error code otherwise
  */
 javacall_result
 java_ams_suite_move_to_folder(javacall_suite_id suiteId,
