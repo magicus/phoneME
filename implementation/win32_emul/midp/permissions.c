@@ -132,14 +132,16 @@ static int check_prefix(char* buff, char *prefix) {
     return 1;
 }
 
-char *build_file_name(char* fname) {
+int build_file_name(char* fname, char *fullname, int fullnamelen) {
     javacall_utf16 configPath[256];
     unsigned char storage_path[256];
-    char *full_name;
     int   config_len, flen;
     javacall_int32 storage_len;
 
-    config_len = sizeof(configPath)/2;
+	if (fullname == NULL) {
+		return -1;
+	}
+	config_len = sizeof(configPath)/2;
     storage_len = sizeof(storage_path);
     storage_path[0] = 0;
     if (javacall_dir_get_config_path(configPath, &config_len) ==
@@ -152,53 +154,34 @@ char *build_file_name(char* fname) {
                                        storage_path, storage_len,
                                        &storage_len);
     }
-
-    storage_path[storage_len] = 0;
-    flen = strlen(fname);
-    full_name = javacall_malloc(storage_len + flen + 1);
-    if (full_name != NULL) {
-        strcpy(full_name, storage_path);
-        strcpy(&full_name[storage_len], fname);
-    } else
-        full_name = fname;
-
-    return full_name;
-}
-
-static char *getPolicyFilename() {
-    char*tmpstr;
-    if (javacall_get_property("security.policyfile",
-                                      JAVACALL_APPLICATION_PROPERTY,
-                                      &tmpstr) != JAVACALL_OK) {
-        javacall_print("(E) property: security.policyfile is not found in ini file\n");
-        return NULL;
-    }
-
-    return build_file_name(tmpstr);
-}
-
-static char *getFuncGroupFilename() {
-    char*tmpstr;
-    if (javacall_get_property("security.messagefile",
-                                      JAVACALL_APPLICATION_PROPERTY,
-                                      &tmpstr) != JAVACALL_OK) {
-        javacall_print("(E) property: security.messagefile is not found in ini file\n");
-        return NULL;
-    }
-
-    return build_file_name(tmpstr);
+	storage_path[storage_len] = 0;
+	flen = strlen(fname);
+	if ((storage_len + flen + 1) > fullnamelen) {
+		return -1;
+	}
+    strcpy(fullname, storage_path);
+    strcpy(&fullname[storage_len], fname);
+	fullname[storage_len + flen] = 0;
+    return 0;
 }
 
 static char *load_policy_file() {
-    char *fname;
+    char fullname[JAVACALL_MAX_FILE_NAME_LENGTH];
     if (VpolicyFile == NULL) {
-        fname = getPolicyFilename();
-        if (fname == NULL)
+		char*fname;
+		if (javacall_get_property("security.policyfile",
+										  JAVACALL_APPLICATION_PROPERTY,
+										  &fname) != JAVACALL_OK) {
+			javacall_print("(E) property: security.policyfile is not found in ini file\n");
+			return NULL;
+		}		
+        if (build_file_name(fname, fullname, JAVACALL_MAX_FILE_NAME_LENGTH))
             return NULL;
-        VpolicyFile = load_file(fname);
+
+        VpolicyFile = load_file(fullname);
         if (VpolicyFile == NULL) {
             javacall_print("(E) security.policyfile: can't open ");
-            javacall_print(fname);
+            javacall_print(fullname);
             javacall_print(" !!!\n");
         }
     }
@@ -208,15 +191,21 @@ static char *load_policy_file() {
 }
 
 static char *load_message_file() {
-    char *fname;
+	char fullname[JAVACALL_MAX_FILE_NAME_LENGTH];
     if (VmessageFile == NULL) {
-        fname = getFuncGroupFilename();
-        if (fname == NULL)
+		char*fname;
+		if (javacall_get_property("security.messagefile",
+										  JAVACALL_APPLICATION_PROPERTY,
+										  &fname) != JAVACALL_OK) {
+			javacall_print("(E) property: security.messagefile is not found in ini file\n");
+			return NULL;
+		}
+        if (build_file_name(fname, fullname, JAVACALL_MAX_FILE_NAME_LENGTH))
             return NULL;
-        VmessageFile = load_file(fname);
+        VmessageFile = load_file(fullname);
         if (VmessageFile == NULL) {
             javacall_print("(E) security.message file can't open ");
-            javacall_print(fname);
+            javacall_print(fullname);
             javacall_print(" !!!\n");
         }
     }
