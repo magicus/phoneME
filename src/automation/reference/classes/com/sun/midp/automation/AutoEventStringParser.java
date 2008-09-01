@@ -27,16 +27,21 @@
 package com.sun.midp.automation;
 import java.util.*;
 
-final class AutoEventStringParser {
+final class Parser {
+    private final static int EOL = -1;
+    private final static String TOKEN_COMMA = ",";
+    private final static String TOKEN_COLON = ":";
+    private final static String TOKEN_NEWLINE = "\n";
+
     private String eventString;
-    private Vector offsets;
-    private Hashtable params;
+    private int eventStringLength;   
+    private Hashtable eventArgs;
+    private String eventPrefix;
     private int curOffset;
-    private int eventStringLength;
     private boolean isEOL;
 
-    AutoEventStringParser() {
-        eventString = null;
+    Parser() {
+        reset();
     }
 
     void parse(String s, int offset) {
@@ -52,70 +57,157 @@ final class AutoEventStringParser {
 
         eventString = s;
         eventStringLength = eventString.length();
+        if (offset >= eventStringLength) {
+            isEOL = true;
+        }
+
+        curOffset = offset;
+
+        doParse();
     }
 
-    String getPrefix();
-    Hashtable getParams();
-    int getOffset();
+    String getEventPrefix() {
+        return eventPrefix;
+    }
 
     private void reset() {
-        params = new Hashtable();
+        eventArgs = new Hashtable();
+        eventPrefix = null;
         isEOL = false;
     }
 
     private void doParse() {
-        skipWSNL();
-        if (isEOL) {
-            return;
-        }
-
         parsePrefix();
-        if (isEOL) {
-            return;
-        }
-
-        skipWS();
-        if (isEOL) {
-            return;
-        }
-
-        parseParams();
+        parseArgs();
     }
 
-    private parsePrefix() {
+    private void parsePrefix() {
+        String t = nextToken();
+        if (t != null) {
+            eventPrefix = t;
+        }
+    }
+
+    private void parseArgs() {
+        boolean ok = parseArg();
+        while (ok) {
+            String t = nextToken();
+            if (t != TOKEN_COMMA) {
+                break;
+            }
+
+            ok = parseArg();
+        }
+    }
+
+    private boolean parseArg() {
+        String argName = nextToken();
+
+        String t = nextToken();
+        if (t != TOKEN_COLON) {
+            return false;
+        }
+
+        String argValue = nextToken();
+
+        if (argName == null || argValue == null) {
+            return false;
+        }
+
+        System.err.println("aname: " + argName + ", avalue: " + argValue);
+        eventArgs.put(argName, argValue);
+
+        return true;
     }
     
-    private void skipWS() {
-        char ch = curChar();
-        while (ch == ' ' || ch == '\t') {
-            ch = nextChar();
-            if (isEOL) {
-                break;
-            }
+
+    private static String charToToken(int ch) {
+        switch (ch) {
+            case (int)':':
+                return TOKEN_COLON;
+            
+            case (int)',':
+                return TOKEN_COMMA;
+
+            case (int)'\n':
+                return TOKEN_NEWLINE;
+
+            default:
+                return null;
         }
     }
 
-    private void skipWSNL() {
-        char ch = curChar();
-        while (ch == ' ' || ch == '\t' || ch == '\n') {
-            ch = nextChar();
-            if (isEOL) {
-                break;
-            }
+    private static boolean isWordTokenChar(int ch) {
+        if (ch == EOL || ch == (int)' ' || ch == (int)' ') {
+            return false;
         }
-    }    
 
-    private char nextChar() {
+        String t = charToToken(ch);
+        if (t != null) {
+            return false;
+        }
+
+        return true;
+    }
+
+    private String nextToken() {
+        skipWS();
+        if (isEOL) {
+            return null;
+        }
+
+        int ch = curChar();
+
+        String t = charToToken(ch);
+        if (t != null) {
+            nextChar();
+            return t;
+        }
+
+        return wordToken();
+    }
+
+    private String wordToken() {
+        int startOffset = curOffset;
+
+        int ch = curChar();
+        while (isWordTokenChar(ch)) {
+            ch = nextChar();
+        }
+
+        return eventString.substring(startOffset, curOffset);
+    }
+
+    private void skipWS() {
+        int ch = curChar();
+        while (ch == (int)' ' || ch == (int)'\t') {
+            ch = nextChar();
+        }        
+    }
+
+    private int nextChar() {
         curOffset++;
         if (curOffset < eventStringLength) {
-            return eventString.charAt(curOffset++);
+            return (int)eventString.charAt(curOffset);
         } else {
+            curOffset = eventStringLength;
             isEOL = true;
-            return '\n';
+            return EOL;
         }
     }
 
-    private char curChar() {
-        return eventString.charAt(curOffset);
+    private int curChar() {
+        if (isEOL) {
+            return EOL;
+        }
+           
+        return (int)eventString.charAt(curOffset);
+    }
+
+    public static void main(String[] args) {
+        Parser parser = new Parser();
+        parser.parse(args[0], 0);
+
+        System.err.println("Prefix: " + parser.getEventPrefix());
     }
 }
