@@ -216,6 +216,8 @@ javacall_result java_ams_get_domain(javacall_suite_id suiteID,
     return JAVACALL_OK;
 }
 
+#if !ENABLE_NATIVE_AMS_UI
+
 /**
  * App Manager invokes this function to get permissions of the suite.
  *
@@ -277,6 +279,8 @@ java_ams_suite_set_permissions(javacall_suite_id suiteID,
     }
     return JAVACALL_OK;
 }
+
+#endif /* ENABLE_NATIVE_AMS_UI */
 
 /**
  * Get specified property value of the suite.
