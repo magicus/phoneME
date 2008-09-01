@@ -68,7 +68,7 @@ typedef enum {
  */
 typedef enum {
     /** MIDlet being in foreground */
-    JAVACALL_MIDLET_UI_STATE_FOREGROUND,
+    JAVACALL_MIDLET_UI_STATE_FOREGROUND = 1,
     /** MIDlet being in background */
     JAVACALL_MIDLET_UI_STATE_BACKGROUND,
     /** MIDlet is requesting foreground */

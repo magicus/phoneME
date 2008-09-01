@@ -385,10 +385,10 @@ typedef struct _javacall_ams_suite_install_info {
  * Native representation of the SuiteSettings class.
  */
 typedef struct _javacall_ams_suite_settings {
-    /** Permissions for this suite. */
-    javacall_ams_permission_val* pPermissions;
-    /** Number of permissions in pPermissions array. */
-    int permissionsLen;
+    /**
+     * Permissions for this suite.
+     */
+    javacall_ams_permission_val permissions[JAVACALL_AMS_NUMBER_OF_PERMISSIONS];
     /** Can this MIDlet suite interrupt other suites. */
     javacall_uint8 pushInterruptSetting;
     /** Push options. */
