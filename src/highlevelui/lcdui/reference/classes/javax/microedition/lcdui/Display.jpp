@@ -1576,15 +1576,13 @@ public class Display {
      *   associated with this Display
      **/
     public VirtualKeyboardLayer getVirtualKeyboardPopup() {
+        if (!VirtualKeyboardLayer.isSupportJavaKeyboard()) {
+            return null;
+        }
         if (keyboardLayer == null) {
           VirtualKeyboardResources.load();
           keyboardLayer = new VirtualKeyboardLayer();
-          keyboardLayer.initVirtualKeyboardLayer();
-        }
-        if (Display.this.current instanceof VirtualKeyListener) {
-             keyboardLayer.setVirtualKeyboardLayerListener((VirtualKeyListener)Display.this.current);
-        } else {
-             keyboardLayer.setInputSession(getInputSession());
+          keyboardLayer.init();
         }
         return keyboardLayer;
     }
@@ -3336,7 +3334,10 @@ public class Display {
          */
         public void handleVirtualKeyboardEvent() {
             Display.this.getVirtualKeyboardPopup();
-
+            if (keyboardLayer != null) {
+                keyboardLayer.setVirtualKeyboardLayerListener((VirtualKeyListener)Display.this.current);
+                keyboardLayer.setKeyboardType(VirtualKeyboard.GAME_KEYBOARD);
+            }
         }
     } // END DisplayEventConsumerImpl Class
 

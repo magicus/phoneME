@@ -42,14 +42,8 @@ import javax.microedition.lcdui.*;
  */
 public class VirtualKeyboardLayer extends PopupLayer implements VirtualKeyboardListener {
 
-    /** Instance of current input mode */
-    private TextInputSession iSession;
-
     /** Instance of current displayable */
     private VirtualKeyListener listener;
-
-    /** Instance of ChamDisplayTunnel that implement bridge with Display */
-    private ChamDisplayTunnel tunnel = null;
 
     /** the instance of the virtual keyboard */
     private static VirtualKeyboard vk = null;
@@ -62,10 +56,18 @@ public class VirtualKeyboardLayer extends PopupLayer implements VirtualKeyboardL
     }
 
     /**
+     * Method return true if current virtual keybpard implementation supports java virtual keyboard
+     * @return status of java virtual keyboard support
+     */
+    public static boolean isSupportJavaKeyboard() {
+        return VirtualKeyboard.isSupportJavaKeyboard();
+    }
+
+    /**
      * Return standalone instance of VirtualKeyboardLayer
      * @return
      */
-    public void initVirtualKeyboardLayer() {
+    public void init() {
 
         if (VirtualKeyboard.isSupportJavaKeyboard() && vk == null) {
             vk = VirtualKeyboard.getVirtualKeyboard(this);
@@ -75,23 +77,18 @@ public class VirtualKeyboardLayer extends PopupLayer implements VirtualKeyboardL
 
     /**
      * Set initial keyboard mode depend on current listener
-     * @param inputSession - current input mode
-     */
-    public void setInputSession(TextInputSession inputSession) {
-        iSession = inputSession;
-        listener = null;
-        vk.changeKeyboad(VirtualKeyboard.LOWER_ALPHABETIC_KEYBOARD);
-        repaintVirtualKeyboard();
-    }
-
-    /**
-     * Set initial keyboard mode depend on current listener
      * @param listener - current layer 
      */
     public void setVirtualKeyboardLayerListener(VirtualKeyListener listener) {
         this.listener = listener;
-        iSession = null;
-        vk.changeKeyboad(VirtualKeyboard.GAME_KEYBOARD);
+    }
+
+    /**
+     * Set new keyboard type
+     * @param keyboard
+     */
+    public void setKeyboardType(String keyboard) {
+        vk.changeKeyboad(keyboard);
     }
 
     /**
@@ -214,8 +211,6 @@ public class VirtualKeyboardLayer extends PopupLayer implements VirtualKeyboardL
 
         if (listener != null) {
             listener.processKeyPressed(keyCode);
-        } else {
-            iSession.processKey(keyCode, false);
         }
     }
 
@@ -228,8 +223,8 @@ public class VirtualKeyboardLayer extends PopupLayer implements VirtualKeyboardL
      *
      */
     public void virtualKeyReleased(int keyCode) {
-        if (tunnel != null) {
-            tunnel.callKeyReleased(keyCode);
+        if (listener != null) {
+            listener.processKeyReleased(keyCode);
         }
     }
 

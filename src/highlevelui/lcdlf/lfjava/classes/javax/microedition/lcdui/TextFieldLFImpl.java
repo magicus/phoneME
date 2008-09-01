@@ -26,13 +26,7 @@
 
 package javax.microedition.lcdui;
 
-import com.sun.midp.lcdui.EventConstants;
-import com.sun.midp.lcdui.PhoneDial;
-
-import com.sun.midp.lcdui.DynamicCharacterArray;
-import com.sun.midp.lcdui.Text;
-import com.sun.midp.lcdui.TextCursor;
-import com.sun.midp.lcdui.TextPolicy;
+import com.sun.midp.lcdui.*;
 import com.sun.midp.log.Logging;
 import com.sun.midp.log.LogChannels;
 
@@ -41,6 +35,7 @@ import com.sun.midp.chameleon.input.*;
 import com.sun.midp.chameleon.layers.InputModeLayer;
 import com.sun.midp.chameleon.layers.PTILayer;
 import com.sun.midp.chameleon.layers.VirtualKeyboardLayer;
+import com.sun.midp.chameleon.layers.VirtualKeyListener;
 
 import com.sun.midp.chameleon.skins.ScreenSkin;
 import com.sun.midp.chameleon.skins.TextFieldSkin;
@@ -56,7 +51,7 @@ import java.util.*;
  * This is the look &amps; feel implementation for TextField.
  */
 class TextFieldLFImpl extends ItemLFImpl implements 
-    TextFieldLF, TextInputComponent, CommandListener 
+    TextFieldLF, TextInputComponent, CommandListener, VirtualKeyListener
 {
     /** TextField instance associated with this view */
     protected TextField tf;
@@ -1345,6 +1340,13 @@ class TextFieldLFImpl extends ItemLFImpl implements
         uCallKeyPressed(keyCode);
     }
 
+    public void processKeyPressed(int keyCode) {
+        cachedInputSession.processKey(keyCode, false);
+    }
+
+    public void processKeyReleased(int keyCode) {
+    }
+
 
     /** Timer to indicate long key press */
     class TimerKey extends TimerTask {
@@ -1997,22 +1999,30 @@ class TextFieldLFImpl extends ItemLFImpl implements
      * Show virtual keybord popup
      */
     protected void showKeyboardLayer() {
+
         Display d = getCurrentDisplay();
 
         if (d != null) {
             if (!vkb_popupOpen) {
                if (d.getInputSession().getCurrentInputMode() instanceof VirtualKeyboardInputMode) {
                     VirtualKeyboardLayer keyboardPopup = d.getVirtualKeyboardPopup();
-                    d.showPopup(keyboardPopup);
-                    vkb_popupOpen = true;
-                    lRequestInvalidate(true, true);
+                    if (keyboardPopup != null ) {
+                        keyboardPopup.setVirtualKeyboardLayerListener(this);
+                        keyboardPopup.setKeyboardType(VirtualKeyboard.LOWER_ALPHABETIC_KEYBOARD);
+                        d.showPopup(keyboardPopup);
+                        vkb_popupOpen = true;
+                        lRequestInvalidate(true, true);
+                    }
                 }
             } else {
                 if (!(d.getInputSession().getCurrentInputMode() instanceof VirtualKeyboardInputMode)) {
                     VirtualKeyboardLayer keyboardPopup = d.getVirtualKeyboardPopup();
-                    d.hidePopup(keyboardPopup);
-                    vkb_popupOpen = false;
-                    lRequestInvalidate(true, true);
+                    if (keyboardPopup != null ) {
+                        keyboardPopup.setVirtualKeyboardLayerListener(null);
+                        d.hidePopup(keyboardPopup);
+                        vkb_popupOpen = false;
+                        lRequestInvalidate(true, true);
+                    }
                 }
             }
         }
@@ -2039,12 +2049,16 @@ class TextFieldLFImpl extends ItemLFImpl implements
      * Hide virtual keyboard popap
      */
     protected void hideKeyboardLayer() {
+        
         Display d = getCurrentDisplay();
         if (vkb_popupOpen && d != null) {
             VirtualKeyboardLayer keyboardPopup = d.getVirtualKeyboardPopup();
-            d.hidePopup(keyboardPopup);
-            vkb_popupOpen = false;
-            lRequestInvalidate(true, true);
+            if (keyboardPopup != null ) {
+                keyboardPopup.setVirtualKeyboardLayerListener(null);
+                d.hidePopup(keyboardPopup);
+                vkb_popupOpen = false;
+                lRequestInvalidate(true, true);
+            }
         }
     }
     

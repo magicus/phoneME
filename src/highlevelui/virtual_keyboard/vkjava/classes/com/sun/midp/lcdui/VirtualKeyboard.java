@@ -311,7 +311,7 @@ public class VirtualKeyboard {
 
     /**
      * Method return true if current virtual keybpard implementation supports java virtual keyboard
-     * @return status of 
+     * @return status of java virtual keyboard support
      */
     public static boolean isSupportJavaKeyboard() {
         return true;
