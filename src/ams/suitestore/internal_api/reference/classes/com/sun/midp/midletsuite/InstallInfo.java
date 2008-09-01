@@ -48,7 +48,7 @@ public class InstallInfo {
 
     /** URL of the JAR. */
     public String jarUrl;
-
+        
     /** Name of the downloaded MIDlet suite jar file. */
     public String jarFilename;
 

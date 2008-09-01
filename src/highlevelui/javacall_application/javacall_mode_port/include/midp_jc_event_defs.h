@@ -304,18 +304,18 @@ typedef struct {
 
 #ifdef ENABLE_JSR_256
 typedef struct {
-    javacall_sensor_type sensor_type;
+    int sensor_type;
     javacall_bool is_available;
 } jsr256_jc_event_sensor_available;
 
 typedef struct {
-    javacall_sensor_type sensor;
+    int sensor;
     javacall_bool isOpen;
     int errCode;
 } jsr256_jc_event_sensor_t;
 
 typedef struct {
-    javacall_sensor_type sensor;
+    int sensor;
     int channel;
     int errCode;
 } jsr256_jc_event_sensor_data_ready_t;

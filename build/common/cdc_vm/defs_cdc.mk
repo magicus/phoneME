@@ -70,6 +70,7 @@ MIDP_CNI_CLASSES += \
         javax.microedition.lcdui.ImageData \
         javax.microedition.lcdui.ImageDataFactory \
         javax.microedition.lcdui.KeyConverter \
+        javax.microedition.lcdui.SuiteImageCacheImpl \
         com.sun.midp.util.ResourceHandler \
         com.sun.midp.security.Permissions
 
@@ -95,10 +96,7 @@ MIDP_CNI_CLASSES += \
 endif
 
 # The MIDP rom.config file
-ROMGEN_INCLUDE_PATHS += $(MIDP_DIR)/build/common/config \
-	$(MIDP_DIR)/build/common/cdc_vm
-ROMGEN_CFG_FILES += rom.config \
-	cdc_rom.cfg
+ROMGEN_INCLUDE_PATHS += $(MIDP_DIR)/build/common/config
 
 # Patterns to be included in the binary bundle.
 MIDP_BINARY_BUNDLE_PATTERNS += \

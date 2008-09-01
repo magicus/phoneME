@@ -1973,29 +1973,25 @@ class TextFieldLFImpl extends ItemLFImpl implements
         }
     }
 
-
-     /**
-      * Show predictive text popup dialog
-      */
-     protected void showPTILayer() {
-         Display d = getCurrentDisplay();
-         if (d != null) {
-             PTILayer pt_popup = d.getPTIPopup();
-             pt_popup.setList(pt_matches);
-             if (!pt_popupOpen) {
-                 if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
-                     Logging.report(Logging.INFORMATION, LogChannels.LC_HIGHUI,
-                                    "[showPTPopup] showing");
-                 }
-
-
-
-                 d.showPopup(pt_popup);
-                 pt_popupOpen = true;
-                 lRequestInvalidate(true, true);
-             } 
-         }
-     }
+    /**
+     * Show predictive text popup dialog 
+     */
+    protected void showPTILayer() {
+        Display d = getCurrentDisplay();
+	if (d != null) {
+	    PTILayer pt_popup = d.getPTIPopup();
+	    pt_popup.setList(pt_matches);
+	    if (!pt_popupOpen) {
+		if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
+		    Logging.report(Logging.INFORMATION, LogChannels.LC_HIGHUI,
+				   "[showPTPopup] showing");
+		}
+		d.showPopup(pt_popup);
+		pt_popupOpen = true;
+		lRequestInvalidate(true, true);
+	    } 
+	}
+    }
 
     /**
      * Show virtual keybord popup

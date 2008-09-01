@@ -525,7 +525,7 @@ public class Command {
      */
     private final void initialize(int commandType, int inp_priority) {
 
-        if ((commandType < SCREEN) || (commandType > VIRTUAL)) {
+        if ((commandType < SCREEN) || (commandType > ITEM)) {
             throw new IllegalArgumentException();
         }
 
