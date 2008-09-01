@@ -68,7 +68,7 @@ typedef enum {
  */
 typedef enum {
     /** Status code to signal connection to the JAD server was successful. */
-    JAVACALL_INSTALL_STATUS_DOWNLOADING_JAD,
+    JAVACALL_INSTALL_STATUS_DOWNLOADING_JAD = 1,
 
     /** Status code to signal that another 1K of the JAD has been download. */
     JAVACALL_INSTALL_STATUS_DOWNLOADED_1K_OF_JAD,
