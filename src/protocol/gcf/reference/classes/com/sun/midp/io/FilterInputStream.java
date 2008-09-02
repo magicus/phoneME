@@ -61,7 +61,7 @@ class FilterInputStream extends InputStream {
      *          this instance is to be created without an underlying stream.
      */
     protected FilterInputStream(InputStream in) {
-	this.in = in;
+        this.in = in;
     }
 
     /**
@@ -82,7 +82,7 @@ class FilterInputStream extends InputStream {
      * @see        java.io.FilterInputStream#in
      */
     public int read() throws IOException {
-	return in.read();
+        return in.read();
     }
 
     /**
@@ -106,7 +106,7 @@ class FilterInputStream extends InputStream {
      * @see        java.io.FilterInputStream#read(byte[], int, int)
      */
     public int read(byte b[]) throws IOException {
-	return read(b, 0, b.length);
+        return read(b, 0, b.length);
     }
 
     /**
@@ -127,7 +127,7 @@ class FilterInputStream extends InputStream {
      * @see        java.io.FilterInputStream#in
      */
     public int read(byte b[], int off, int len) throws IOException {
-	return in.read(b, off, len);
+        return in.read(b, off, len);
     }
 
     /**
@@ -145,7 +145,7 @@ class FilterInputStream extends InputStream {
      * @exception  IOException  if an I/O error occurs.
      */
     public long skip(long n) throws IOException {
-	return in.skip(n);
+        return in.skip(n);
     }
 
     /**
@@ -162,7 +162,7 @@ class FilterInputStream extends InputStream {
      * @see        java.io.FilterInputStream#in
      */
     public int available() throws IOException {
-	return in.available();
+        return in.available();
     }
 
     /**
@@ -175,7 +175,7 @@ class FilterInputStream extends InputStream {
      * @see        java.io.FilterInputStream#in
      */
     public void close() throws IOException {
-	in.close();
+        in.close();
     }
 
     /**
@@ -195,7 +195,7 @@ class FilterInputStream extends InputStream {
      * @see     java.io.FilterInputStream#reset()
      */
     public synchronized void mark(int readlimit) {
-	in.mark(readlimit);
+        in.mark(readlimit);
     }
 
     /**
@@ -220,7 +220,7 @@ class FilterInputStream extends InputStream {
      * @see        java.io.FilterInputStream#mark(int)
      */
     public synchronized void reset() throws IOException {
-	in.reset();
+        in.reset();
     }
 
     /**
@@ -237,6 +237,6 @@ class FilterInputStream extends InputStream {
      * @see     java.io.InputStream#reset()
      */
     public boolean markSupported() {
-	return in.markSupported();
+        return in.markSupported();
     }
 }
