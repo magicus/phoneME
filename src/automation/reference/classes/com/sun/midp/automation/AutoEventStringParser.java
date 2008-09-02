@@ -27,10 +27,10 @@
 package com.sun.midp.automation;
 import java.util.*;
 
-final class Parser {
+final class AutoEventStringParser {
     private final static int EOL = -1;
-    private final static String TOKEN_COMMA = ",";
     private final static String TOKEN_COLON = ":";
+    private final static String TOKEN_COMMA = ",";
     private final static String TOKEN_NEWLINE = "\n";
 
     private String eventString;
@@ -40,7 +40,7 @@ final class Parser {
     private int curOffset;
     private boolean isEOL;
 
-    Parser() {
+    AutoEventStringParser() {
         reset();
     }
 
@@ -70,13 +70,23 @@ final class Parser {
         return eventPrefix;
     }
 
+    Hashtable getEventArgs() {
+        return eventArgs;
+    }
+
+    int getOffset() {
+        return curOffset;
+    }
+
     private void reset() {
         eventArgs = new Hashtable();
         eventPrefix = null;
         isEOL = false;
+        curOffset = 0;        
     }
 
     private void doParse() {
+        skipWSNL();
         parsePrefix();
         parseArgs();
     }
@@ -114,7 +124,6 @@ final class Parser {
             return false;
         }
 
-        System.err.println("aname: " + argName + ", avalue: " + argValue);
         eventArgs.put(argName, argValue);
 
         return true;
@@ -138,7 +147,7 @@ final class Parser {
     }
 
     private static boolean isWordTokenChar(int ch) {
-        if (ch == EOL || ch == (int)' ' || ch == (int)' ') {
+        if (ch == EOL || ch == (int)' ' || ch == (int)'\t') {
             return false;
         }
 
@@ -185,6 +194,13 @@ final class Parser {
         }        
     }
 
+    private void skipWSNL() {
+        int ch = curChar();
+        while (ch == (int)' ' || ch == (int)'\t' || ch == (int)'\n') {
+            ch = nextChar();
+        }        
+    }    
+
     private int nextChar() {
         curOffset++;
         if (curOffset < eventStringLength) {
@@ -202,12 +218,5 @@ final class Parser {
         }
            
         return (int)eventString.charAt(curOffset);
-    }
-
-    public static void main(String[] args) {
-        Parser parser = new Parser();
-        parser.parse(args[0], 0);
-
-        System.err.println("Prefix: " + parser.getEventPrefix());
     }
 }

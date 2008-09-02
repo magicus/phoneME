@@ -29,8 +29,9 @@ import java.util.*;
 
 final class AutoEventFactoryImpl implements AutoEventFactory {
     private static AutoEventFactoryImpl instance = null;
-    
-    private Vector eventFromStringFactories;     
+
+    private Hashtable eventFromStringFactories;
+    private AutoEventStringParser eventStringParser;
 
     synchronized static AutoEventFactoryImpl getInstance() {
         if (instance == null) {
@@ -53,30 +54,31 @@ final class AutoEventFactoryImpl implements AutoEventFactory {
         return createFromString(str, offset, null);
     }
 
-    public AutoEventSequence createFromString(String str, int offset, 
+    public AutoEventSequence createFromString(String eventString, int offset,
             Integer newOffset) 
         throws IllegalArgumentException {
-
-        if (str == null) {
-            throw new IllegalArgumentException("String is null");
-        }
-
-        if (offset < 0) {
-            throw new IllegalArgumentException("Offset is negative");
-        }
 
         int curOffset = offset;
         AutoEventSequence seq = new AutoEventSequenceImpl();
         AutoEvent[] events = null;
 
         do {
-            AutoEventFromStringFactory f = findEventFromStringFactory(
-                    str, curOffset);
-
-            if (f != null) {
-                events = f.createFromString(str, curOffset, newOffset);
-                curOffset = newOffset.intValue();
+            eventStringParser.parse(eventString, offset);
+            String eventPrefix = eventStringParser.getEventPrefix();
+            if (eventPrefix == null) {
+                break;
             }
+
+            Object o = eventFromStringFactories.get(eventPrefix);
+            AutoEventFromStringFactory f = (AutoEventFromStringFactory)o;
+            if (f == null) {
+                throws IllegalArgumentException(
+                        "Illegal event prefix: " + eventPrefix);
+            }
+
+            Hashtable eventArgs = eventStringParser.getEventArgs();
+            events = f.create(eventArgs);
+            curOffset = eventStringParser.getOffset();
             
             if (events != null) {
                 seq.addEvents(events);
@@ -122,39 +124,15 @@ final class AutoEventFactoryImpl implements AutoEventFactory {
                     "AutoEventFromStringFactory is null");
         }
 
-        eventFromStringFactories.addElement(factory);
+        eventFromStringFactories.put(factory,getPrefix(), factory);
     }
 
-    private AutoEventFromStringFactory findEventFromStringFactory(String str, 
-            int offset) 
-        throws IllegalArgumentException {
-
-        if (str == null) {
-            throw new IllegalArgumentException("String is null");
-        }
-
-        if (offset < 0) {
-            throw new IllegalArgumentException("String offset is negative");
-        }
-
-        int size = eventFromStringFactories.size();
-        for (int i = 0; i < size; ++i) {
-            Object o = eventFromStringFactories.elementAt(i);
-            AutoEventFromStringFactory f = (AutoEventFromStringFactory)o;
-
-            String prefix = f.getPrefix();
-            if (str.startsWith(prefix, offset)) {
-                return f;
-            }
-        }
-
-        return null;
-    }
 
     /**
      * Private constructor to prevent user from creating an instance.
      */
     private AutoEventFactoryImpl() {
-        eventFromStringFactories = new Vector(16);
-    }    
+        eventFromStringFactories = new Hashtable();
+        eventStringParser = new AutoEventStringParser();
+    }
 }

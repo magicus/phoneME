@@ -25,11 +25,12 @@
  */
 
 package com.sun.midp.automation;
+import java.util.*;
 
 interface AutoEventFromStringFactory {
     String getPrefix();
 
-    AutoEvent[] createFromString(String str, int offset, Integer newOffset) 
+    AutoEvent[] create(Hashtable args) 
         throws IllegalArgumentException;
 }
 
