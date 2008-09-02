@@ -29,13 +29,16 @@ package com.sun.midp.automation;
 final class AutoDelayEventImpl 
     extends AutoEventImplBase implements AutoDelayEvent {
 
+    final static String MSEC_ARG_NAME = "msec";
+
     private int msec;
 
     AutoDelayEventImpl(int msec) {
         super(AutoEventType.DELAY, null);
 
         if (msec < 0) {
-            throw new IllegalArgumentException("Delay value is negative"); 
+            throw new IllegalArgumentException(
+                    "Negative delay value: " + msec);
         }
 
         this.msec = msec;
@@ -43,5 +46,12 @@ final class AutoDelayEventImpl
 
     public int getMsec() {
         return msec;
+    }
+
+    public String toString() {
+        String typeStr = getType().getName();
+        String eventStr = typeStr + " " + MSEC_ARG_NAME + ": " + msec;
+
+        return eventStr;
     }
 }

@@ -63,7 +63,7 @@ static struct KeyCodeNameToMIDPKeyCode {
 };
 
 KNIEXPORT KNI_RETURNTYPE_INT
-KNIDECL(com_sun_midp_automation_AutoKeyEventImpl_getMIDPKeyCodeFromName) {
+KNIDECL(com_sun_midp_automation_AutoKeyCode_getMIDPKeyCodeFromName) {
     int i;
     int sz = sizeof(keyCodeNameToMIDPKeyCode)/
         sizeof(struct KeyCodeNameToMIDPKeyCode);

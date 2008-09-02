@@ -26,17 +26,20 @@
 
 package com.sun.midp.automation;
 import com.sun.midp.lcdui.EventConstants;
+import java.util.*;
 
 public final class AutoKeyState {
     public final static AutoKeyState PRESSED = 
-        new AutoKeyState("PRESSED", EventConstants.PRESSED);
+        new AutoKeyState("pressed", EventConstants.PRESSED);
 
     public final static AutoKeyState REPEATED = 
-        new AutoKeyState("REPEATED", EventConstants.REPEATED);
+        new AutoKeyState("repeated", EventConstants.REPEATED);
 
     public final static AutoKeyState RELEASED = 
-        new AutoKeyState("RELEASED", EventConstants.RELEASED);
+        new AutoKeyState("released", EventConstants.RELEASED);
 
+
+    private final static Hashtable keyStates = new Hashtable();    
 
     private String name;
     private int midpKeyState;    
@@ -50,8 +53,14 @@ public final class AutoKeyState {
         return midpKeyState;
     }
 
+    static AutoKeyState getByName(String name) {
+        return (AutoKeyState)keyStates.get(name);
+    }
+
     private AutoKeyState(String name, int midpKeyState) {
         this.name = name;
         this.midpKeyState = midpKeyState;
+
+        keyStates.put(name, this);
     }
 }

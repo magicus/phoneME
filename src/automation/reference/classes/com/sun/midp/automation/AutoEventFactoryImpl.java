@@ -42,51 +42,38 @@ final class AutoEventFactoryImpl implements AutoEventFactory {
     }
 
 
-    public AutoEventSequence createFromString(String str)
+    public AutoEventSequence createFromString(String eventString)
         throws IllegalArgumentException {
 
-        return createFromString(str, 0, null);
+        return createFromString(eventString);
     }
 
-    public AutoEventSequence createFromString(String str, int offset)
-        throws IllegalArgumentException {
-
-        return createFromString(str, offset, null);
-    }
-
-    public AutoEventSequence createFromString(String eventString, int offset,
-            Integer newOffset) 
+    public AutoEventSequence createFromString(String eventString, int offset) 
         throws IllegalArgumentException {
 
         int curOffset = offset;
         AutoEventSequence seq = new AutoEventSequenceImpl();
         AutoEvent[] events = null;
 
-        do {
-            eventStringParser.parse(eventString, offset);
-            String eventPrefix = eventStringParser.getEventPrefix();
-            if (eventPrefix == null) {
-                break;
-            }
-
+        eventStringParser.parse(eventString, curOffset);
+        String eventPrefix = eventStringParser.getEventPrefix();
+        while (eventPrefix != null) {
             Object o = eventFromStringFactories.get(eventPrefix);
             AutoEventFromStringFactory f = (AutoEventFromStringFactory)o;
             if (f == null) {
-                throws IllegalArgumentException(
+                throw new IllegalArgumentException(
                         "Illegal event prefix: " + eventPrefix);
             }
 
             Hashtable eventArgs = eventStringParser.getEventArgs();
             events = f.create(eventArgs);
-            curOffset = eventStringParser.getOffset();
-            
-            if (events != null) {
-                seq.addEvents(events);
-            }
+            seq.addEvents(events);            
 
-        } while (events != null);
-
-
+            curOffset = eventStringParser.getOffset(); 
+            eventStringParser.parse(eventString, curOffset);
+            eventPrefix = eventStringParser.getEventPrefix();
+        }
+        
         return seq;
     }
 
@@ -124,7 +111,7 @@ final class AutoEventFactoryImpl implements AutoEventFactory {
                     "AutoEventFromStringFactory is null");
         }
 
-        eventFromStringFactories.put(factory,getPrefix(), factory);
+        eventFromStringFactories.put(factory.getPrefix(), factory);
     }
 
 

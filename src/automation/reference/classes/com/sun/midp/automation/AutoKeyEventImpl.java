@@ -31,8 +31,9 @@ import com.sun.midp.lcdui.EventConstants;
 
 final class AutoKeyEventImpl 
     extends AutoEventImplBase implements AutoKeyEvent {
-
-    private static Hashtable validKeyCodes = null;
+    
+    final static String CODE_ARG_NAME = "code";
+    final static String STATE_ARG_NAME = "state";
 
     private AutoKeyCode keyCode = null;
     private char keyChar;
@@ -90,23 +91,11 @@ final class AutoKeyEventImpl
             keyStr = new String(arr);
         }
 
-        String eventStr = typeStr + " code: " + keyStr + 
-            ", state: " + stateStr;
+        String eventStr = typeStr + " " + CODE_ARG_NAME + ": " + keyStr + 
+            "," + STATE_ARG_NAME + ": " + stateStr;
 
         return eventStr;
     }
-
-    static int registerKeyCode(AutoKeyCode keyCode) {
-        if (validKeyCodes == null) {
-            validKeyCodes = new Hashtable();
-        }
-        validKeyCodes.put(keyCode.getName(), keyCode);
-
-        int midpKeyCode = getMIDPKeyCodeFromName(keyCode.getName());
-        return midpKeyCode;
-    }
-
-    private static native int getMIDPKeyCodeFromName(String keyCodeName);
 
     private static NativeEvent createNativeEvent(AutoKeyState keyState, 
             AutoKeyCode keyCode, char  keyChar) {

@@ -25,71 +25,82 @@
  */
 
 package com.sun.midp.automation;
+import java.util.*;
 
 public final class AutoKeyCode {
     public final static AutoKeyCode BACKSPACE = 
-        new AutoKeyCode("BACKSPACE");
+        new AutoKeyCode("backspace");
 
     public final static AutoKeyCode UP = 
-        new AutoKeyCode("UP");
+        new AutoKeyCode("up");
 
     public final static AutoKeyCode DOWN = 
-        new AutoKeyCode("DOWN");
+        new AutoKeyCode("down");
 
     public final static AutoKeyCode LEFT = 
-        new AutoKeyCode("LEFT");
+        new AutoKeyCode("left");
 
     public final static AutoKeyCode RIGHT = 
-        new AutoKeyCode("RIGHT");
+        new AutoKeyCode("right");
 
     public final static AutoKeyCode SELECT = 
-        new AutoKeyCode("SELECT");
+        new AutoKeyCode("select");
 
     public final static AutoKeyCode SOFT1 = 
-        new AutoKeyCode("SOFT1");
+        new AutoKeyCode("soft1");
 
     public final static AutoKeyCode SOFT2 = 
-        new AutoKeyCode("SOFT2");
+        new AutoKeyCode("soft2");
 
     public final static AutoKeyCode CLEAR = 
-        new AutoKeyCode("CLEAR");
+        new AutoKeyCode("clear");
 
     public final static AutoKeyCode SEND = 
-        new AutoKeyCode("SEND");
+        new AutoKeyCode("send");
 
     public final static AutoKeyCode END = 
-        new AutoKeyCode("END");
+        new AutoKeyCode("end");
  
     public final static AutoKeyCode POWER = 
-        new AutoKeyCode("POWER");
+        new AutoKeyCode("power");
 
     public final static AutoKeyCode GAMEA = 
-        new AutoKeyCode("GAMEA");
+        new AutoKeyCode("gamea");
 
     public final static AutoKeyCode GAMEB = 
-        new AutoKeyCode("GAMEB");
+        new AutoKeyCode("gameb");
 
     public final static AutoKeyCode GAMEC = 
-        new AutoKeyCode("GAMEC");
+        new AutoKeyCode("gamec");
 
     public final static AutoKeyCode GAMED = 
-        new AutoKeyCode("GAMED");
+        new AutoKeyCode("gamed");
 
+
+    private final static Hashtable keyCodes = new Hashtable();
+
+    private String name;
+    private int midpKeyCode;    
 
     public String getName() {
         return name;
+    }
+
+
+    static AutoKeyCode getByName(String name) {
+        return (AutoKeyCode)keyCodes.get(name);
     }
 
     int getMIDPKeyCode() {
         return midpKeyCode;
     }
 
+    private static native int getMIDPKeyCodeFromName(String keyCodeName);    
 
     private AutoKeyCode(String name) {
         this.name = name;
-        this.midpKeyCode = AutoKeyEventImpl.registerKeyCode(this);
-    }
+        this.midpKeyCode = getMIDPKeyCodeFromName(name);
 
-    private String name;   
-    private int midpKeyCode;    
+        keyCodes.put(name, this);
+    }
 }

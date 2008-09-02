@@ -25,22 +25,109 @@
  */
 
 package com.sun.midp.automation;
+import java.util.*;
 
 class AutoKeyEventFromStringFactory 
-    implements AutoKeyEventFromStringFactory {
+    implements AutoEventFromStringFactory {
+
+    private static Hashtable validKeyCodes = null;    
 
     static {
         registerFactory();
     }
 
-    String getPrefix() {
-        return AutoEventType.KEYBOARD.getName();
+    public String getPrefix() {
+        return AutoEventType.KEY.getName();
     }
 
-    AutoEvent[] createFromString(String str, int offset, Integer newOffset) 
+    public AutoEvent[] create(Hashtable args)
         throws IllegalArgumentException {
 
-        return null;
+        AutoDelayEvent delayEvent = null;
+        AutoKeyEvent keyEvent1 = null;
+        AutoKeyEvent keyEvent2 = null;
+        int totalEvents = 0;
+
+        String delayS = (String)args.get("delay");
+        if (delayS != null) {
+            int msec = 0;
+            try {
+                msec = Integer.parseInt(delayS);
+            } catch (NumberFormatException e) {
+                throw new IllegalArgumentException(
+                        "Invalid delay value: " + delayS);
+            }
+
+            delayEvent = new AutoDelayEventImpl(msec);
+            totalEvents++;
+        }
+
+        String codeS = (String)args.get(AutoKeyEventImpl.CODE_ARG_NAME);
+        if (codeS == null) {
+            throw new IllegalArgumentException("No key code specified");
+        }
+
+        char keyChar = ' ';
+        AutoKeyCode keyCode = null;
+        if (codeS.length() == 1) {
+            keyChar = codeS.charAt(0);
+        } else {
+            keyCode = AutoKeyCode.getByName(codeS);
+            if (keyCode == null) {
+                throw new IllegalArgumentException(
+                        "Invalid key code: " + codeS);
+            }
+        }
+
+        String stateS = (String)args.get(AutoKeyEventImpl.CODE_ARG_NAME);
+        if (stateS == null) {
+            throw new IllegalArgumentException("No key code specified");
+        }
+
+        if (stateS.equals("clicked")) {
+            if (keyCode != null) {
+                keyEvent1 = new AutoKeyEventImpl(keyCode, 
+                        AutoKeyState.PRESSED);
+                keyEvent2 = new AutoKeyEventImpl(keyCode, 
+                        AutoKeyState.RELEASED);
+            } else {
+                keyEvent1 = new AutoKeyEventImpl(keyChar, 
+                        AutoKeyState.PRESSED);
+                keyEvent2 = new AutoKeyEventImpl(keyChar, 
+                        AutoKeyState.RELEASED);
+            }
+
+            totalEvents += 2;
+        } else {
+            AutoKeyState keyState = AutoKeyState.getByName(stateS);
+            if (keyState == null) {
+                throw new IllegalArgumentException(
+                        "Invalid key state: " + stateS);
+            }
+
+            if (keyCode != null) {
+                keyEvent1 = new AutoKeyEventImpl(keyCode, keyState);
+            } else {
+                keyEvent1 = new AutoKeyEventImpl(keyChar, keyState);
+            }
+
+            totalEvents += 1;
+        }
+
+        AutoEvent[] events = new AutoEvent[totalEvents];
+        totalEvents = 0;
+
+        if (delayEvent != null) {
+            events[totalEvents++] = delayEvent;
+        }
+
+        events[totalEvents++] = keyEvent1;
+
+        if (keyEvent2 != null) {
+            events[totalEvents++] = keyEvent1; 
+        }
+
+        return events;
     }   
 
     private static void registerFactory() {
