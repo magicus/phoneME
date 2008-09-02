@@ -83,7 +83,8 @@
 --> 
 <xsl:key name="keysUsersNodes"
     match="/configuration/localized_strings/child::* | 
-           /configuration/skin/skin_properties/child::*"
+           /configuration/skin/skin_properties/child::* |
+           /configuration/keyboards/keyboard/child::*"
     use="concat(../@Package,'.',../@Name,':',../@KeysClass,'.',@Key)"/>
 
 <xsl:template match="node()[@KeysClass != '']" mode="assignKeysValues">
