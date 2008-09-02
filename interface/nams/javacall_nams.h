@@ -732,6 +732,51 @@ javacall_ams_set_permissions(javacall_suite_id suiteID,
                              javacall_ams_permission_set* pPermissions);
 
 /**
+ * Checks for security permission.
+ * @param suite_id      the MIDlet Suite the permission should be checked with
+ * @param permission    permission type
+ * @param enable_block  enable user interaction. If it is
+ *                      JAVACALL_FALSE the call should never be blocked.
+ * @param result        address of variable to receive the
+ *                      security status (1 - granted, 0 -
+ *                      denied), or the handle of check session
+ *                      that blocks this call. Actual result
+ *                      will be notified through
+ *                      <code>javanotify_security_set_permission</code>.
+ * 
+ * @return JAVACALL_OK if check was performed correctly and
+ *         result is stored at <code>result</code>,
+ *         JAVACALL_FALSE if the function fails to perform
+ *         checking, JAVACALL_WOULD_BLOCK if user intercation
+ *         dialog is created and actual result will be delivered
+ *         later.
+ * @note the function MUST NOT resturn JAVACALL_WOULD_BLOCK if
+ *       <code>enable_block</code> equals to JAVACALL_FALSE
+ * @note it is possible to have several security session in
+ *       parallel.
+ */
+javacall_result
+javacall_ams_check_permission(const javacall_suite_id suite_id,
+                              const javacall_ams_permission permission,
+                              const javacall_bool enable_block,
+                              unsigned int* const result);
+/**
+ * Notifies the result of permission check.
+ * 
+ * @param suite_id      the MIDlet Suite the permission was
+ *                      checked with
+ * @param permission    permission type
+ * @param session       the handle of security session the java
+ *                      thread waiting for
+ * @param result        the result of permission check (1 -
+ *                      granted, 0 - denied)
+ */
+void javanotify_ams_permission_check_result(const javacall_suite_id suite_id, 
+                                            const javacall_ams_permission permission,
+                                            const unsigned int session,
+                                            const unsigned int result);
+
+/**
  * Get specified property value of the suite.
  * @param suiteID   Unique ID of the MIDlet suite
  * @param key       Property name
