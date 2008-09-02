@@ -27,7 +27,7 @@
 package com.sun.midp.automation;
 import java.util.*;
 
-class AutoKeyEventFromStringFactory 
+class AutoPenEventFromStringFactory 
     implements AutoEventFromStringFactory {
 
     private AutoDelayEventFromStringFactory delayEventFactory;
@@ -36,20 +36,20 @@ class AutoKeyEventFromStringFactory
         registerFactory();
     }
 
-    AutoKeyEventFromStringFactory() {
+    AutoPenEventFromStringFactory() {
         delayEventFactory = new  AutoDelayEventFromStringFactory();
     }
 
     public String getPrefix() {
-        return AutoEventType.KEY.getName();
+        return AutoEventType.PEN.getName();
     }
 
     public AutoEvent[] create(Hashtable args)
         throws IllegalArgumentException {
 
         AutoDelayEvent delayEvent = null;
-        AutoKeyEvent keyEvent1 = null;
-        AutoKeyEvent keyEvent2 = null;
+        AutoPenEvent penEvent1 = null;
+        AutoPenEvent penEvent2 = null;
         int totalEvents = 0;
 
         String delayS = (String)args.get(AutoDelayEventImpl.MSEC_ARG_NAME);
@@ -59,54 +59,50 @@ class AutoKeyEventFromStringFactory
             totalEvents++;
         }
 
-        String codeS = (String)args.get(AutoKeyEventImpl.CODE_ARG_NAME);
-        if (codeS == null) {
-            throw new IllegalArgumentException("No key code specified");
+        int x = 0;
+        String xS = (String)args.get(AutoPenEventImpl.X_ARG_NAME);
+        if (xS == null) {
+            throw new IllegalArgumentException("No x coord specified");
         }
 
-        char keyChar = ' ';
-        AutoKeyCode keyCode = null;
-        if (codeS.length() == 1) {
-            keyChar = codeS.charAt(0);
-        } else {
-            keyCode = AutoKeyCode.getByName(codeS);
-            if (keyCode == null) {
-                throw new IllegalArgumentException(
-                        "Invalid key code: " + codeS);
-            }
+        try {
+            x = Integer.parseInt(xS);
+        } catch (NumberFormatException e) {
+            throw new IllegalArgumentException(
+                    "Invalid x coord value: " + xS);
         }
 
-        String stateS = (String)args.get(AutoKeyEventImpl.STATE_ARG_NAME);
+        int y = 0;
+        String yS = (String)args.get(AutoPenEventImpl.Y_ARG_NAME);
+        if (yS == null) {
+            throw new IllegalArgumentException("No y coord specified");
+        }
+
+        try {
+            y = Integer.parseInt(yS);
+        } catch (NumberFormatException e) {
+            throw new IllegalArgumentException(
+                    "Invalid y coord value: " + yS);
+        }
+
+        String stateS = (String)args.get(AutoPenEventImpl.STATE_ARG_NAME);
         if (stateS == null) {
-            throw new IllegalArgumentException("No key state specified");
+            throw new IllegalArgumentException("No state code specified");
         }
 
         if (stateS.equals("clicked")) {
-            if (keyCode != null) {
-                keyEvent1 = new AutoKeyEventImpl(keyCode, 
-                        AutoKeyState.PRESSED);
-                keyEvent2 = new AutoKeyEventImpl(keyCode, 
-                        AutoKeyState.RELEASED);
-            } else {
-                keyEvent1 = new AutoKeyEventImpl(keyChar, 
-                        AutoKeyState.PRESSED);
-                keyEvent2 = new AutoKeyEventImpl(keyChar, 
-                        AutoKeyState.RELEASED);
-            }
+            penEvent1 = new AutoPenEventImpl(x, y, AutoPenState.PRESSED);
+            penEvent2 = new AutoPenEventImpl(x, y, AutoPenState.RELEASED);
 
             totalEvents += 2;
         } else {
-            AutoKeyState keyState = AutoKeyState.getByName(stateS);
-            if (keyState == null) {
+            AutoPenState penState = AutoPenState.getByName(stateS);
+            if (penState == null) {
                 throw new IllegalArgumentException(
-                        "Invalid key state: " + stateS);
+                        "Invalid pen state: " + stateS);
             }
 
-            if (keyCode != null) {
-                keyEvent1 = new AutoKeyEventImpl(keyCode, keyState);
-            } else {
-                keyEvent1 = new AutoKeyEventImpl(keyChar, keyState);
-            }
+            penEvent1 = new AutoPenEventImpl(x, y, penState);
 
             totalEvents += 1;
         }
@@ -118,18 +114,17 @@ class AutoKeyEventFromStringFactory
             events[totalEvents++] = delayEvent;
         }
 
-        events[totalEvents++] = keyEvent1;
+        events[totalEvents++] = penEvent1;
 
-        if (keyEvent2 != null) {
-            events[totalEvents++] = keyEvent1; 
+        if (penEvent2 != null) {
+            events[totalEvents++] = penEvent1;
         }
 
         return events;
-    }   
+    }
 
     private static void registerFactory() {
         AutoEventFactoryImpl f = AutoEventFactoryImpl.getInstance();
-        f.registerEventFromStringFactory(new AutoKeyEventFromStringFactory()); 
-    }
+        f.registerEventFromStringFactory(new AutoPenEventFromStringFactory()); 
+    }    
 }
-

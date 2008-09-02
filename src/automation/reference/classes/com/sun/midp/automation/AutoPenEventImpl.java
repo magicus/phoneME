@@ -31,6 +31,10 @@ import com.sun.midp.lcdui.EventConstants;
 final class AutoPenEventImpl 
     extends AutoEventImplBase implements AutoPenEvent {
 
+    final static String X_ARG_NAME = "x";
+    final static String Y_ARG_NAME = "y";
+    final static String STATE_ARG_NAME = AutoKeyEventImpl.STATE_ARG_NAME;
+
     private int x;
     private int y;
     private AutoPenState penState;
