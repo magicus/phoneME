@@ -451,7 +451,12 @@ _JNI_GetMethodID(JNIEnv *env, jclass clazz,
   Symbol::Fast n = SymbolTable::symbol_for(name JVM_CHECK_0);
   Symbol::Fast s = TypeSymbol::parse((char*)sig JVM_CHECK_0);
 
-  Method::Fast m = ic().lookup_method(&n, &s, /*non-static only*/ true);
+  Method::Fast m;
+  if (Symbols::object_initializer_name()->equals(&n)) {
+    m = ic().find_local_method(&n, &s, /*non-static only*/ true);
+  } else {
+    m = ic().lookup_method(&n, &s, /*non-static only*/ true);
+  }
 
   if (m.is_null()) {
     Throw::no_such_method_error(JVM_SINGLE_ARG_THROW_0);
@@ -553,7 +558,12 @@ _JNI_GetStaticMethodID(JNIEnv *env, jclass clazz,
   Symbol::Fast n = SymbolTable::symbol_for(name JVM_CHECK_0);
   Symbol::Fast s = TypeSymbol::parse((char*)sig JVM_CHECK_0);
 
-  Method::Fast m = ic().lookup_method(&n, &s, /*non-static only*/ false);
+  Method::Fast m;
+  if (Symbols::class_initializer_name()->equals(&n)) {
+    m = ic().find_local_method(&n, &s, /*non-static only*/ false);
+  } else {
+    m = ic().lookup_method(&n, &s, /*non-static only*/ false);
+  }
 
   if (m.is_null()) {
     Throw::no_such_method_error(JVM_SINGLE_ARG_THROW_0);
