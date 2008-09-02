@@ -225,7 +225,8 @@ jsr_239_source_bundle:: SOURCE_OUTPUT_DIR
 # $(MIDP_DIR)/build/common/makefiles/SubsystemDefs.gmk
 #
      
-$(MIDP_CLASSES_ZIP):: $(SUBSYSTEM_JSR_239_JAVA_FILES)
+$(MIDP_OUTPUT_DIR)/classes.zip:: $(SUBSYSTEM_JSR_239_JAVA_FILES)
+	@echo "  [ ] appending SUBSYSTEM_JSR_239_JAVA_FILES"
 	$(appendjavafiles)
 
 JTWI_I3TEST_JAVA_FILES += $(SUBSYSTEM_JSR_239_I3TEST_JAVA_FILES)
