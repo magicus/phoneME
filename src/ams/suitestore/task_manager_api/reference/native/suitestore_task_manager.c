@@ -88,7 +88,22 @@ midp_get_number_of_suites(int* pNumOfSuites) {
         /* load _suites.dat */
         status = read_suites_data(&pszError);
         if (status == ALL_OK) {
+#if ENABLE_DYNAMIC_COMPONENTS
+            MidletSuiteData* pData = g_pSuitesData;
+            int num = 0;
+
+            /* walk through the linked list */
+            while (pData != NULL) {
+                if (pData->type == COMPONENT_REGULAR_SUITE) {
+                    num++;
+                }
+                pData = pData->nextEntry;
+            }
+
+            *pNumOfSuites = num;
+#else
             *pNumOfSuites = g_numberOfSuites;
+#endif /* ENABLE_DYNAMIC_COMPONENTS */
         } else {
             storageFreeError(pszError);
         }
@@ -96,6 +111,55 @@ midp_get_number_of_suites(int* pNumOfSuites) {
 
     return status;
 }
+
+#if ENABLE_DYNAMIC_COMPONENTS
+/**
+ * Retrieves the number of the installed components belonging
+ * to the given midlet suite.
+ *
+ * @param suiteId          [in]  ID of the MIDlet suite the information about
+ *                               whose components must be retrieved
+ * @param pNumOfComponents [out] pointer to variable to accept the number
+ *                               of components
+ *
+ * @returns error code (ALL_OK if no errors)
+ */
+MIDPError
+midp_get_number_of_components(SuiteIdType suiteId, int* pNumOfComponents) {
+    MIDPError status;
+    char* pszError;
+    MidletSuiteData* pData;
+    int n = 0;
+
+    do {
+        if (midpInit(LIST_LEVEL) != 0) {
+            status = OUT_OF_MEMORY;
+            break;
+        }
+
+        /* load _suites.dat */
+        status = read_suites_data(&pszError);
+        if (status != ALL_OK) {
+            storageFreeError(pszError);
+            break;
+        }
+
+        pData = g_pSuitesData;
+
+        /* walk through the linked list */
+        while (pData != NULL) {
+            if (pData->suiteId == suiteId && pData->type == COMPONENT_DYNAMIC) {
+                n++;
+            }
+            pData = pData->nextEntry;
+        }
+
+        *pNumOfComponents = n;
+    } while(0);
+
+    return status;
+}
+#endif /* ENABLE_DYNAMIC_COMPONENTS */
 
 /**
  * Disables a suite given its suite ID.
@@ -156,6 +220,9 @@ midp_get_suite_ids(SuiteIdType** ppSuites, int* pNumOfSuites) {
     SuiteIdType* pSuiteIds;
     MidletSuiteData* pData;
     int numberOfSuites = 0;
+#if ENABLE_DYNAMIC_COMPONENTS
+    int numberOfEntries = 0;
+#endif
 
     *ppSuites = NULL;
     *pNumOfSuites = 0;
@@ -195,12 +262,23 @@ midp_get_suite_ids(SuiteIdType** ppSuites, int* pNumOfSuites) {
 
     /* walk through the linked list collecting suite IDs */
     while (pData != NULL) {
-        pSuiteIds[numberOfSuites] = pData->suiteId;
+#if ENABLE_DYNAMIC_COMPONENTS
+        if (pData->type == COMPONENT_REGULAR_SUITE) {
+#endif
+            pSuiteIds[numberOfSuites] = pData->suiteId;
+            numberOfSuites++;
+#if ENABLE_DYNAMIC_COMPONENTS
+        }
+        numberOfEntries++;
+#endif
         pData = pData->nextEntry;
-        numberOfSuites++;
     }
 
+#if ENABLE_DYNAMIC_COMPONENTS
+    if (numberOfEntries != g_numberOfSuites) {
+#else
     if (numberOfSuites != g_numberOfSuites) {
+#endif
         /*
          * This should not happen: it means that something is wrong with
          * the list of structures containing the midlet suites information.
@@ -296,12 +374,12 @@ midp_remove_suite(SuiteIdType suiteId) {
         suite_listeners_notify(SUITESTORE_LISTENER_TYPE_REMOVE,
             SUITESTORE_OPERATION_START, ALL_OK, pData);
 
-        if (pData->isPreinstalled) {
+        if (pData->type == COMPONENT_PREINSTALLED_SUITE) {
             status = BAD_PARAMS;
             break;
         }
 
-        status = begin_transaction(TRANSACTION_REMOVE, suiteId, NULL);
+        status = begin_transaction(TRANSACTION_REMOVE_SUITE, suiteId, NULL);
         if (status != ALL_OK) {
             break;
         }
@@ -415,7 +493,7 @@ midp_change_suite_storage(SuiteIdType suiteId, StorageIdType newStorageId) {
     (void)suiteId;
     (void)newStorageId;
     return GENERAL_ERROR;
-#endif
+#else
 
    /*
     * if VERIFY_ONCE is enabled then MONET is disabled
@@ -475,7 +553,7 @@ midp_change_suite_storage(SuiteIdType suiteId, StorageIdType newStorageId) {
             return BAD_PARAMS;
         }
 
-        if (pData->isPreinstalled) {
+        if (pData->type == COMPONENT_PREINSTALLED_SUITE) {
             remove_storage_lock(suiteId);
             return BAD_PARAMS;
         }
@@ -558,7 +636,9 @@ midp_change_suite_storage(SuiteIdType suiteId, StorageIdType newStorageId) {
 
         return status;
     }
- }
+
+#endif /* VERIFY_ONCE */
+}
 
 /**
  * Moves the given midlet suite to another folder.
@@ -648,54 +728,71 @@ midp_get_suite_storage_size(SuiteIdType suiteId) {
     long rms = 0;
     pcsl_string filename[NUM_SUITE_FILES];
     int i;
-    int handle;
     char* pszError;
-    char* pszTemp;
     StorageIdType storageId;
     MIDPError status;
+    MidletSuiteData* pData;
 
-    for (i = 0; i < NUM_SUITE_FILES; i++) {
-        filename[i] = PCSL_STRING_NULL;
-    }
-    /*
-     * This is a public API which can be called without the VM running
-     * so we need automatically init anything needed, to make the
-     * caller's code less complex.
-     *
-     * Initialization is performed in steps so that we do use any
-     * extra resources such as the VM for the operation being performed.
-     */
-    if (midpInit(LIST_LEVEL) != 0) {
-        return OUT_OF_MEM_LEN;
+    pData = get_suite_data(suiteId);
+    if (pData) {
+        used = (jint)pData->suiteSize;
     }
 
-    status = midp_suite_get_suite_storage(suiteId, &storageId);
-    if (status != ALL_OK) {
-        return OUT_OF_MEM_LEN;
-    }
-
-    build_suite_filename(suiteId, &INSTALL_INFO_FILENAME, &filename[0]);
-    build_suite_filename(suiteId, &SETTINGS_FILENAME, &filename[1]);
-    midp_suite_get_class_path(suiteId, storageId, KNI_TRUE, &filename[2]);
-    get_property_file(suiteId, KNI_TRUE, &filename[3]);
-
-    for (i = 0; i < NUM_SUITE_FILES; i++) {
-        if (pcsl_string_is_null(&filename[i])) {
-            continue;
+    if (used <= 0) {
+        /* Suite size is not cached (should not happen!), calculate it. */
+        for (i = 0; i < NUM_SUITE_FILES; i++) {
+            filename[i] = PCSL_STRING_NULL;
         }
 
-        handle = storage_open(&pszError, &filename[i], OPEN_READ);
-        pcsl_string_free(&filename[i]);
-        if (pszError != NULL) {
-            storageFreeError(pszError);
-            continue;
+        /*
+         * This is a public API which can be called without the VM running
+         * so we need automatically init anything needed, to make the
+         * caller's code less complex.
+         *
+         * Initialization is performed in steps so that we do use any
+         * extra resources such as the VM for the operation being performed.
+         */
+        if (midpInit(LIST_LEVEL) != 0) {
+            return OUT_OF_MEM_LEN;
         }
 
-        used += storageSizeOf(&pszError, handle);
-        storageFreeError(pszError);
+        status = midp_suite_get_suite_storage(suiteId, &storageId);
+        if (status != ALL_OK) {
+            return OUT_OF_MEM_LEN;
+        }
 
-        storageClose(&pszTemp, handle);
-        storageFreeError(pszTemp);
+        build_suite_filename(suiteId, &INSTALL_INFO_FILENAME, &filename[0]);
+        build_suite_filename(suiteId, &SETTINGS_FILENAME, &filename[1]);
+        midp_suite_get_class_path(suiteId, storageId, KNI_TRUE, &filename[2]);
+        get_property_file(suiteId, KNI_TRUE, &filename[3]);
+
+        for (i = 0; i < NUM_SUITE_FILES; i++) {
+            long tmp;
+
+            if (pcsl_string_is_null(&filename[i])) {
+                continue;
+            }
+
+            tmp = storage_size_of_file_by_name(&pszError, &filename[i]);
+            pcsl_string_free(&filename[i]);
+
+            if (pszError != NULL) {
+                storageFreeError(pszError);
+                continue;
+            }
+
+            used += tmp;
+        }
+
+        if (pData) {
+            /* cache the calculated size */
+            pData->suiteSize = (jint)used;
+            status = write_suites_data(&pszError);
+            if (status != ALL_OK) {
+                storageFreeError(pszError);
+                return OUT_OF_MEM_LEN;
+            }
+        }
     }
 
     rms = rmsdb_get_rms_storage_size(suiteId);
@@ -827,7 +924,8 @@ change_enabled_state(SuiteIdType suiteId, jboolean enabled) {
     }
 
     status = write_settings(&pszError, suiteId, enabled, pushInterrupt,
-                            pushOptions, pPermissions, numberOfPermissions);
+                            pushOptions, pPermissions, numberOfPermissions,
+                            NULL);
     pcsl_mem_free(pPermissions);
     if (status != ALL_OK) {
         /* nothing was written, so nothing to rollback, just finish */

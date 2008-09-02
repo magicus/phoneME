@@ -71,16 +71,18 @@ abstract public class Resource {
              * convert to '_' for Class.forName() to work.
              */
             int hyphen;
-	    if ((hyphen = loc.indexOf('-')) != -1) {
+        if ((hyphen = loc.indexOf('-')) != -1) {
                 StringBuffer tmploc = new StringBuffer(loc);
                 tmploc.setCharAt(hyphen, '_');
                 loc = tmploc.toString();
-	    }
+        }
 	    
             while (true) {
                 try {
                     Class c = Class.forName(cls + "_" + loc);
-                    res = (ResourceBundle) c.newInstance();
+                    if (c != null) {
+                        res = (ResourceBundle) c.newInstance();
+                    }
                 } catch (Throwable t) {}
                 if (res == null) {
                     int pos = loc.lastIndexOf('_');
@@ -101,6 +103,8 @@ abstract public class Resource {
 			       "Just can't proceed! Resource is NULL!!");
 	    }
 
+        // the default case
+	    res = (ResourceBundle) new LocalizedStrings();
             // Porting suggestion:
             // System should quit MIDP runtime since resource is 
             // not available. 
@@ -139,11 +143,40 @@ abstract public class Resource {
      *            to substitute
      */
     public static String getString(int key, String[] values) {
+        String str = getString(key);
+		if (str == null) {
+                    return null;
+		}
+		return getString(str, values);
+	}
+
+    /**
+     * Returns a localized string for the argument string after substituting
+     * values for the "%d" tokens in the localized string, where "d" is 1-9
+     * and representing a values 0-8 in an array. The tokens can be in any
+     * order in the string. If the localized String is not found
+     * the key is used as the localized string. If a "%" is not followed by
+     * 1-9 then the "%" is dropped but the next char is put directly into the
+     * output string, so "%%" will be "%" in the output and not count as part
+     * of a token. Another example would be that "%a" would be just be "a".
+     * <p>
+     * For example, given "%2 had a little %1." and {"lamb", "Mary"} and there
+     * is no localized string for the key, the result would be:
+     * <p>
+     * <blockquote>"Mary had a little lamb."</blockquote>
+     *
+     * @param key an original string in the source code with optional
+     *            substitution tokens
+     * @param values values to substitute for the tokens in the resource
+     * @return value of named resource with the tokens substituted
+     * @exception ArrayIndexOutOfBoundsException if there are not enough values
+     *            to substitute
+     */
+    public static String getString(String str, String[] values) {
         boolean tokenMarkerFound = false;
         StringBuffer output;
         char currentChar;
         int length;
-        String str = getString(key);
 	
         if (str == null) {
             return null;

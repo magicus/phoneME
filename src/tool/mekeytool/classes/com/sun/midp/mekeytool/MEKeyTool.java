@@ -50,6 +50,14 @@ import com.sun.midp.publickeystore.*;
 public class MEKeyTool {
     /** default MIDP application directory, see Utility.c getStorageRoot() */
     private final static String defaultAppDir = "appdb";
+    
+    /** default ME Keystore can be set via this property */
+    private static final String DEFAULT_KEYSTORE_PROPERTY = 
+                                                        "default.keystore";
+    
+    /** default keystore can be set via this property */
+    private static final String DEFAULT_MEKEYSTORE_PROPERTY = 
+                                                        "default.mekeystore";
 
     /** default ME keystore filename, see com.sun.midp.Main.java */
     private final static String defaultKeystoreFilename = "_main.ks";
@@ -120,8 +128,9 @@ public class MEKeyTool {
      *
      *Defaults:
      *
-     *  -MEkeystore appdir/main.ks
-     *  -keystore   &lt;user's home dir&gt;/.keystore
+     *  -MEkeystore appdir/main.ks or set via -Ddefault.mekeystore=
+     *  -keystore   &lt;user's home dir&gt;/.keystore or set via 
+     * -Ddefault.keystore=
      *  -domain     untrusted
      * </pre>
      * @param args command line arguments
@@ -143,7 +152,13 @@ public class MEKeyTool {
 
 
         // start with the default keystore file
-        meKeystoreFile = new File(defaultAppDir, defaultKeystoreFilename);
+        String defaultMeKeystore = 
+                System.getProperty(DEFAULT_MEKEYSTORE_PROPERTY);
+        if (defaultMeKeystore != null) {
+            meKeystoreFile = new File(defaultMeKeystore);
+        } else {
+            meKeystoreFile = new File(defaultAppDir, defaultKeystoreFilename);
+        }
 
         try {
             if (args[0].equals("-import")) {
@@ -187,8 +202,12 @@ public class MEKeyTool {
             "    -delete [-MEkeystore <filename>]\n" +
             "            (-owner <owner name> | -number <key number>)\n" +
             "\n" +
-            "  The default for -MEkeystore is \"appdb/_main.ks\".\n" +
-            "  The default for -keystore is \"$HOME/.keystore\".\n");
+            "  The default for -MEkeystore is \"" + 
+            System.getProperty(DEFAULT_MEKEYSTORE_PROPERTY, "appdb/_main.ks") +
+            "\".\n" +
+            "  The default for -keystore is \"" + 
+            System.getProperty(DEFAULT_KEYSTORE_PROPERTY, "$HOME/.keystore") + 
+            "\".\n");
     }
 
     /**
@@ -235,8 +254,10 @@ public class MEKeyTool {
         }
 
         if (jcaKeystoreFilename == null) {
-            jcaKeystoreFilename = System.getProperty("user.home") +
-                                  File.separator + ".keystore";
+            jcaKeystoreFilename = System.getProperty(
+                    DEFAULT_KEYSTORE_PROPERTY, 
+                    System.getProperty("user.home") + 
+                    File.separator + ".keystore");
         }
         
         if (alias == null) {

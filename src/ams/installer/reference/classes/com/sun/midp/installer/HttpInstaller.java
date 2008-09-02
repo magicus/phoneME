@@ -377,6 +377,16 @@ public class HttpInstaller extends Installer {
                     } catch (Exception e) {
                         // ignore
                     }
+
+                    // confirm redirection with the user
+                    if (state.listener != null &&
+                            !state.listener.confirmRedirect(state, url)) {
+                        state.stopInstallation = true;
+                        postInstallMsgBackToProvider(
+                            OtaNotifier.USER_CANCELLED_MSG);
+                        throw new IOException("stopped");
+                    }
+
                     continue;
                 }
 

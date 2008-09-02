@@ -105,20 +105,26 @@ typedef struct _MidpSuiteSettings {
 
 /**
  * Returns a unique identifier of MIDlet suite.
- * Constructed from the combination
- * of the values of the <code>MIDlet-Name</code> and
- * <code>MIDlet-Vendor</code> attributes.
  *
- * @param vendor name of the vendor that created the application, as
- *          given in a JAD file
- * @param name name of the suite, as given in a JAD file
- * @param suiteId [out] receives the platform-specific storage name of the
- *          application given by vendorName and appName
+ * @param pSuiteId [out] receives the platform-specific storage name of the
+ *                       application given by vendorName and appName
  *
  * @return ALL_OK if success, else an error code
  */
 MIDPError
-midp_create_suite_id(SuiteIdType* suiteId);
+midp_create_suite_id(SuiteIdType* pSuiteId);
+
+#if ENABLE_DYNAMIC_COMPONENTS
+/**
+ * Returns a unique identifier of a MIDlet suite's dynamic component.
+ *
+ * @param pComponentId [out] receives a platform-specific id of the component
+ *
+ * @return ALL_OK if success, else an error code
+ */
+MIDPError
+midp_create_component_id(SuiteIdType* pComponentId);
+#endif /* ENABLE_DYNAMIC_COMPONENTS */
 
 /**
  * Gets the install information of a MIDlet suite.

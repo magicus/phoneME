@@ -149,13 +149,12 @@ static int max_isolates = 0;
 
 /**
  * Initialize the Resource limit structures.
- * @return true on success
  */
-static void initResourceLimit() {
+static void initResourceLimit(void) {
     int i, j;
 
 #if ENABLE_CDC
-    // CDC does not have isolates.
+    /* CDC does not have isolates. */
     max_isolates = 1;
 #else
 
@@ -200,6 +199,19 @@ static void initResourceLimit() {
     gIsolateResourceUsage[0].inUse = 1;
 
     isInitialized = KNI_TRUE;
+}
+
+/**
+ * Finalize the Resource limit structures.
+ */
+void midpFinalizeResourceLimit(void) {
+    if (isInitialized) {
+        if (gIsolateResourceUsage) {
+            midpFree(gIsolateResourceUsage);
+            gIsolateResourceUsage = NULL;
+        }
+        isInitialized = KNI_FALSE;
+    }
 }
 
 /**

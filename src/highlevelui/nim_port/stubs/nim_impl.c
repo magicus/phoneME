@@ -149,6 +149,7 @@ static jint input_mode_ids[] =
     ALPHANUMERIC_INPUT_MODE,
     PREDICTIVE_TEXT_INPUT_MODE,
     SYMBOL_INPUT_MODE,
+    VIRTUAL_INPUT_MODE
     /* native input modes, if any */
 /*
     110,111,120

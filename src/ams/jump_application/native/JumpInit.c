@@ -77,7 +77,7 @@ KNIDECL(com_sun_midp_jump_JumpInit_initMidpStorage) {
 
         midpSetConfigDir(configDir);
 
-        err = storageInitialize(appDir, configDir);
+        err = storageInitialize(configDir, appDir);
 
         if (err == 0) {
             status = midp_suite_storage_init();

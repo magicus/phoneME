@@ -60,6 +60,7 @@ USE_JSR_239             = false
 USE_JSR_280             = false
 USE_JSR_256             = false
 USE_JSR_257             = false
+USE_JSR_281             = false
 USE_JSR_290             = false
 USE_ABSTRACTIONS        = false
 
@@ -83,6 +84,7 @@ USE_WTK_DEBUG           = false
 USE_AMS_FOLDERS         = false
 USE_AMS_EXECUTABLE      = true
 USE_OCSP                = false
+USE_DYNAMIC_COMPONENTS  = false
 
 # DIRECTFB 
 USE_DIRECTFB            = false

@@ -232,6 +232,12 @@
                 Value="predict"/>
 <localized_string Key="LCDUI_TF_CAPS_ON_LB_PTI"
                 Value="PREDICT"/>
+<localized_string Key="PUSH_TITLE"
+                Value="Push Dialog Title"/>
+<localized_string Key="PUSH_CONTENT"
+                Value="Push Dialog content"/>
+<localized_string Key="LCDUI_TF_NATIVE_VKBD"
+                Value="Virtual"/>
 <localized_string Key="AMS_SELECT_FOLDER"
                 Value="Select folder"/>
 <localized_string Key="AMS_CHANGE_FOLDER"
@@ -462,11 +468,11 @@
 <localized_string Key="AMS_GRA_INTLR_PASSWORD_FORM_FIREWALL_TITLE"
                 Value="Firewall Authentication"/>
 <localized_string Key="AMS_GRA_INTLR_INVALIDJADEXCEPTION_OLD_VERSION"
-                Value="An OLDER version of %1 has been found. Continuing will replace the version installed on your phone.&#010;&#010;Currently installed: %5&#010;Version found: %3&#010;Vendor: %2&#010;Website: %4&#010;&#010;Would you like to continue?"/>
+                Value="An OLDER version of %1 has been found. Continuing will replace the version installed on your phone.&#010;&#010;Currently installed: %5&#010;Version found: %3&#010;Vendor: %2&#010;URI: %4&#010;&#010;Would you like to continue?"/>
 <localized_string Key="AMS_GRA_INTLR_INVALIDJADEXCEPTION_ALREADY_INSTALLED"
-                Value="This version of %1 is already installed on your phone. Continuing will replace the version installed on your phone.&#010;&#010;Currently installed: %5&#010;Version found: %3&#010;Vendor: %2&#010;Website: %4&#010;&#010;Would you like to continue?"/>
+                Value="This version of %1 is already installed on your phone. Continuing will replace the version installed on your phone.&#010;&#010;Currently installed: %5&#010;Version found: %3&#010;Vendor: %2&#010;URI: %4&#010;&#010;Would you like to continue?"/>
 <localized_string Key="AMS_GRA_INTLR_INVALIDJADEXCEPTION_NEW_VERSION"
-                Value="A NEWER version of %1 has been found. Continuing will replace the version installed on your phone.&#010;&#010;Currently installed: %5&#010;Latest available: %3&#010;Vendor: %2&#010;Website: %4&#010;&#010;Would you like to continue?"/>
+                Value="A NEWER version of %1 has been found. Continuing will replace the version installed on your phone.&#010;&#010;Currently installed: %5&#010;Latest available: %3&#010;Vendor: %2&#010;URI: %4&#010;&#010;Would you like to continue?"/>
 <localized_string Key="AMS_GRA_INTLR_INVALIDJADEXCEPTION_INVALID_JAD_URL"
                 Value="%1 cannot be found at this URL. Contact the application provider for more information."/>
 <localized_string Key="AMS_GRA_INTLR_INVALIDJADEXCEPTION_INVALID_JAD_TYPE"
@@ -531,6 +537,8 @@
                 Value="The password has not been entered."/>
 <localized_string Key="AMS_GRA_INTLR_WANT_INSTALL"
                 Value="Are you sure you want to install &quot;%1&quot;?"/>
+<localized_string Key="AMS_GRA_INTLR_CONFIRM_REDIRECT"
+                Value="Installation request was redirected to the following URL: &quot;%1&quot;. Are you sure you want to install from this location?"/>
 <localized_string Key="AMS_GRA_INTLR_NEW_OLD_VERSION"
                 Value="Do you want the new version of %1 to be able to use the information stored by the old version of %1?"/>
 <localized_string Key="AMS_GRA_INTLR_NO_INFO"
@@ -649,10 +657,6 @@
                 Value="Is it OK to open a sensor connection?"/>
 <localized_string Key="PERMISSION_SENSOR_QUE"
                 Value="%1 wants to open a sensor connection.&#010;&#010;Is it OK to open a sensor connection?"/>
-<localized_string Key="PERMISSION_CONTACTLESS_TITLE"
-                Value="Is it OK to open a contactless connection?"/>
-<localized_string Key="PERMISSION_CONTACTLESS_QUE"
-                Value="%1 wants to open a contactless connection.&#010;&#010;Is it OK to open a contactless connection?"/>
 <localized_string Key="AMS_PERMISSION_PAYMENT_DELETION_QUESTION"
                 Value="ATTENTION!&#010;There are pending payment transactions that will be deleted:&#010;"/>
 <localized_string Key="AMS_SELECTOR_SEL_TO_LAUNCH"
@@ -765,5 +769,28 @@
                 Value="Suspending java..."/>
 <localized_string Key="SR_SUSPEND_ALERT_MSG"
                 Value="Java VM is suspended by system request. Applications may be either paused or destroyed."/>
+
+<localized_string Key="AMS_DISC_APP_INSTALL_FROM_FILE"
+                Value="Storage"/>
+<localized_string Key="AMS_DISC_APP_INSTALL_FROM_HTTP"
+                Value="HTTP"/>
+<localized_string Key="AMS_DISC_APP_START_FILE_INSTALL"
+                Value="Install"/>
+<localized_string Key="AMS_DISC_APP_STORAGE_INSTALL"
+                Value="Enter a file path to install from:"/>
+<localized_string Key="AMS_DISC_APP_PREPARE_INSTALL_STORAGE"
+                Value="Prepairing to install from storage..."/>
+<localized_string Key="AMS_GRA_INTLR_CONN_STORAGE_GAUGE_LABEL"
+                Value="Searching..."/>
+<localized_string Key="AMS_DISC_APP_GAUGE_LABEL_STORAGE"
+                Value="Searching..."/>
+<localized_string Key="AMS_FILE_PATH"
+                Value="Path to file"/>
+<localized_string Key="AMS_GRA_INTLR_DOWNLOADING_JAD_GAUGE_LABEL_STORAGE"
+                Value="Loading the application description file..."/>
+<localized_string Key="AMS_GRA_INTLR_DOWNLOADING_JAR_GAUGE_LABEL_STORAGE"
+                Value="Loading the application file..."/>
+<localized_string Key="AMS_GRA_INTLR_FILE_NOT_FOUND"
+                Value="File not found in the current path"/>       
 </localized_strings>
 </configuration>

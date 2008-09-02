@@ -83,15 +83,11 @@ public class CdcAccessControlContext extends AccessControlContextAdapter {
             throw new SecurityException("suite not trusted");
         }
 
-        permissionId = Permissions.getId(name);
-
-        if (permissionId == Permissions.AMS ||
-                permissionId == Permissions.MIDP) {
+        if ("com.sun.midp.ams".equals(name) || "com.sun.midp".equals(name)) {
             // These permission checks cannot block
-            midletSuite.checkIfPermissionAllowed(permissionId);
+            midletSuite.checkIfPermissionAllowed(name);
         } else {
-            midletSuite.checkForPermission(permissionId, resource,
-                                           extraValue);
+            midletSuite.checkForPermission(name, resource, extraValue);
         }
     }
 }

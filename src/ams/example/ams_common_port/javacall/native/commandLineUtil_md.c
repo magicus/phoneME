@@ -1,7 +1,7 @@
 /*
  *
  *
- * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
@@ -34,6 +34,7 @@
 #include <midp_logging.h>
 #include <javacall_defs.h>
 #include <javacall_dir.h>
+#include <javacall_platform_defs.h>
 
 #define MAX_PATH_LEN JAVACALL_MAX_ROOT_PATH_LENGTH
 
@@ -67,8 +68,8 @@ char* getApplicationDir(char *cmd) {
     static char midpAppDir[MAX_PATH_LEN];
     javacall_result ret;
     int len = MAX_PATH_LEN - 1;
-    pcsl_string str = PCSL_STRING_NULL_INITIALIZER;
 
+    (void)cmd;
 
     ret = javacall_dir_get_root_path (path, &len);
 
@@ -77,26 +78,13 @@ char* getApplicationDir(char *cmd) {
         return NULL;
     }
 
-    if (PCSL_STRING_OK != pcsl_string_convert_from_utf16 (path, len, &str)) {
-        REPORT_ERROR(LC_AMS,"getApplicationDir() << pcsl_string conversion operation failed.");
+    ret = javautil_unicode_utf16_to_utf8(path, len, 
+                                         midpAppDir, MAX_PATH_LEN, 
+                                         (int*)&len);
+    if ( ret != JAVACALL_OK ) {
+        REPORT_ERROR(LC_AMS,"getApplicationDir() << Root path query failed.");
         return NULL;
     }
-
-    if (pcsl_string_utf8_length (&str) >= MAX_PATH_LEN) {
-        REPORT_ERROR(LC_AMS,"getApplicationDir() << Root path length is too large.");
-        pcsl_string_free (&str);
-        return NULL;
-    }
-
-    if (PCSL_STRING_OK != pcsl_string_convert_to_utf8 (&str,
-                                                       (jbyte *)midpAppDir,
-                                                       MAX_PATH_LEN-1,
-                                                       &len)) {
-        REPORT_ERROR(LC_AMS,"getApplicationDir() << pcsl_string conversion operation failed.");
-        pcsl_string_free (&str);
-        return NULL;
-    };
-    pcsl_string_free (&str);
 
     midpAppDir[len] = 0;
     return midpAppDir;
@@ -108,8 +96,8 @@ char* getConfigurationDir(char *cmd) {
     static char midpConfigDir[MAX_PATH_LEN];
     javacall_result ret;
     int len = MAX_PATH_LEN - 1;
-    pcsl_string str = PCSL_STRING_NULL_INITIALIZER;
 
+    (void)cmd;
 
     ret = javacall_dir_get_config_path (path, &len);
 
@@ -118,26 +106,13 @@ char* getConfigurationDir(char *cmd) {
         return NULL;
     }
 
-    if (PCSL_STRING_OK != pcsl_string_convert_from_utf16 (path, len, &str)) {
-        REPORT_ERROR(LC_AMS,"getConfigurationDir() << pcsl_string conversion operation failed.");
+    ret = javautil_unicode_utf16_to_utf8(path, len, 
+                                         midpConfigDir, MAX_PATH_LEN, 
+                                         (int*)&len);
+    if ( ret != JAVACALL_OK ) {
+        REPORT_ERROR(LC_AMS,"getConfigurationDir() << Root path query failed.");
         return NULL;
     }
-
-    if (pcsl_string_utf8_length (&str) >= MAX_PATH_LEN) {
-        REPORT_ERROR(LC_AMS,"getConfigurationDir() << Root path length is too large.");
-        pcsl_string_free (&str);
-        return NULL;
-    }
-
-    if (PCSL_STRING_OK != pcsl_string_convert_to_utf8 (&str,
-                                                       (jbyte *)midpConfigDir,
-                                                       MAX_PATH_LEN-1,
-                                                       &len)) {
-        REPORT_ERROR(LC_AMS,"getConfigurationDir() << pcsl_string conversion operation failed.");
-        pcsl_string_free (&str);
-        return NULL;
-    };
-    pcsl_string_free (&str);
 
     midpConfigDir[len] = 0;
     return midpConfigDir;

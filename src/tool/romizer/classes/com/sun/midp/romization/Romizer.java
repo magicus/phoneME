@@ -338,7 +338,7 @@ public class Romizer extends RomUtil {
         pl("    }");
         pl("");
         pl("    return (int)((res & 0x7fffffff) % " + hashTableSizeInC + ");");
-        pl("};");
+        pl("}");
 
         // pl("#include <stdio.h>");
 
@@ -354,14 +354,14 @@ public class Romizer extends RomUtil {
         pl(" */");
         pl("int ams_get_resource(const unsigned char* pName, " +
            "const unsigned char **ppBufPtr) {");
-        pl("    int hash = getHash(pName);");
+        pl("    int hash = getHash((const char*)pName);");
         pl("    const RESOURCES_LIST* pResource = resourceHashTable[hash];");
 
         // pl("    printf(\"hash(%s) = %d\\n\", pName, hash);");
         
         pl("");
         pl("    while (pResource) {");
-        pl("        if (!strcmp(pResource->pResourceName, pName)) {");
+        pl("        if (!strcmp(pResource->pResourceName, (const char*)pName)) {");
         pl("            *ppBufPtr = pResource->pData;");
         pl("            return pResource->dataSize;");
         pl("        }");

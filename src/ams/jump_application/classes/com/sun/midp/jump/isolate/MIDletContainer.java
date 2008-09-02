@@ -377,8 +377,11 @@ public class MIDletContainer extends JUMPAppContainer implements
      *
      * @param suite reference to the loaded suite
      * @param className class name of the MIDlet
+     * @param midlet reference to the MIDlet, null if the MIDlet's constructor
+     *               was not successful
      */
-    public void midletDestroyed(MIDletSuite suite, String className) {
+    public void midletDestroyed(MIDletSuite suite, String className,
+                                MIDlet midlet) {
         appContext.notifyDestroyed(APP_ID);
         appContext.terminateIsolate();
     }

@@ -63,9 +63,10 @@ endif
 PCSL_TARGET_DIR ?= $(PCSL_OUTPUT_DIR)/$(TARGET_OS)_$(TARGET_CPU)
 EXTRA_INCLUDES	+= -I$(PCSL_TARGET_DIR)/inc
 LIBS		+= -L$(PCSL_TARGET_DIR)/lib \
-		   -lpcsl_file -lpcsl_memory -lpcsl_network -lpcsl_print \
+		   -l pcsl_escfilenames -lpcsl_file -lpcsl_memory -lpcsl_network -lpcsl_print \
                    -lpcsl_string
 
+MIDP_DEPS       += $(PCSL_TARGET_DIR)/lib/libpcsl_escfilenames.a
 MIDP_DEPS       += $(PCSL_TARGET_DIR)/lib/libpcsl_file.a
 MIDP_DEPS       += $(PCSL_TARGET_DIR)/lib/libpcsl_memory.a
 MIDP_DEPS       += $(PCSL_TARGET_DIR)/lib/libpcsl_network.a

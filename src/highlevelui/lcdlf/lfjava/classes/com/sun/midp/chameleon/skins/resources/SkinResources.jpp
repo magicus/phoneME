@@ -530,6 +530,7 @@ public class SkinResources {
             StringItemResources.load();
             TextFieldResources.load();
             UpdateBarResources.load();
+            VirtualKeyboardResources.load();
         }
 
         checkLocale();
@@ -539,7 +540,7 @@ public class SkinResources {
         String locale = System.getProperty("microedition.locale");
 
 
-        if (locale.equals("he-IL")) {
+        if (locale != null && locale.equals("he-IL")) {
             ScreenSkin.TEXT_ORIENT = Graphics.RIGHT;
             TickerSkin.DIRECTION = Graphics.RIGHT;
             TitleSkin.TEXT_ALIGN_X = Graphics.RIGHT;

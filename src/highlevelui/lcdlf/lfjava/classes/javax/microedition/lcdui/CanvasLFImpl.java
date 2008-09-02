@@ -27,6 +27,10 @@
 package javax.microedition.lcdui;
 
 /* import  javax.microedition.lcdui.KeyConverter; */
+import com.sun.midp.chameleon.SubMenuCommand;
+
+import com.sun.midp.i18n.ResourceConstants;
+
 import java.util.Vector;
 import java.util.Enumeration;
 
@@ -34,6 +38,7 @@ import java.util.Enumeration;
 * This is the look amps; feel implementation for Canvas.
 */
 class CanvasLFImpl extends DisplayableLFImpl implements CanvasLF {
+
 
     /**
      * Constructor.
@@ -386,6 +391,7 @@ class CanvasLFImpl extends DisplayableLFImpl implements CanvasLF {
      void removeEmbeddedVideo(Object video) {
          embeddedVideos.removeElement(video);
      }
+
 
     // ************************************************************
     //  private methods

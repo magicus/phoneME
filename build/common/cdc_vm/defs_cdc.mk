@@ -31,6 +31,7 @@ MIDP_CNI_CLASSES += \
         com.sun.midp.appmanager.MIDletSuiteInfo \
         com.sun.midp.chameleon.input.InputModeFactory \
         com.sun.midp.chameleon.input.NativeInputMode \
+        com.sun.midp.chameleon.input.VirtualInputMode \
         com.sun.midp.chameleon.layers.SoftButtonLayer \
         com.sun.midp.chameleon.skins.resources.LoadedSkinData \
         com.sun.midp.chameleon.skins.resources.LoadedSkinProperties \
@@ -69,7 +70,9 @@ MIDP_CNI_CLASSES += \
         javax.microedition.lcdui.ImageData \
         javax.microedition.lcdui.ImageDataFactory \
         javax.microedition.lcdui.KeyConverter \
-        com.sun.midp.util.ResourceHandler
+        javax.microedition.lcdui.SuiteImageCacheImpl \
+        com.sun.midp.util.ResourceHandler \
+        com.sun.midp.security.Permissions
 
 ifeq ($(USE_PISCES), true)
 MIDP_CNI_CLASSES += \
@@ -93,10 +96,7 @@ MIDP_CNI_CLASSES += \
 endif
 
 # The MIDP rom.config file
-ROMGEN_INCLUDE_PATHS += $(MIDP_DIR)/build/common/config \
-	$(MIDP_DIR)/build/common/cdc_vm
-ROMGEN_CFG_FILES += rom.config \
-	cdc_rom.cfg
+ROMGEN_INCLUDE_PATHS += $(MIDP_DIR)/build/common/config
 
 # Patterns to be included in the binary bundle.
 MIDP_BINARY_BUNDLE_PATTERNS += \

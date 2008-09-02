@@ -162,6 +162,23 @@ extern "C" {
  */
 #define AUTOTESTER_EVENT                53
 
+/**
+ * Notification sent by ODT agent indicating that it has installed a new
+ * MIDlet suite.
+ */
+#define MIDP_ODD_SUITE_INSTALLED_EVENT  54
+
+/**
+ * Notification sent by ODT agent indicating that it has removed
+ * an installed MIDlet suite.
+ */
+#define MIDP_ODD_SUITE_REMOVED_EVENT    55
+
+/**
+ * Major ID for a request to restart a MIDlet event.
+ */
+#define RESTART_MIDLET_EVENT            56
+
 /** @} */
 
 /**
@@ -184,6 +201,7 @@ extern "C" {
 #define MM_ISOLATE      intParam3
 #define MM_EVT_TYPE     intParam4
 #define MM_EVT_STATUS   intParam5
+#define MM_STRING       stringParam1
 /** @} */
 
 /**
