@@ -31,6 +31,29 @@
 #if ENABLE_PCSL
 extern "C" {
 #include <pcsl_memory.h>
+
+	static void *javaHeapPtr;
+	static void *bitVPtr;
+	static int  NumChunckAlloc;
+	
+	void JavaHeapRelease(void){
+		if (javaHeapPtr != NULL) {
+			pcsl_mem_free_chunk((void *)javaHeapPtr);
+			javaHeapPtr = (void *)NULL;
+		}
+		if (bitVPtr != NULL) {
+			pcsl_mem_free_chunk((void *)bitVPtr);
+			bitVPtr = (void *)NULL;
+		}
+		NumChunckAlloc = 0;
+	}
+
+	void JavaHeapReset(void){
+		javaHeapPtr = (void *)NULL;
+		bitVPtr = (void *)NULL;
+		NumChunckAlloc = 0;
+	}
+
 }
 
 void *OsMemory_allocate(size_t size) {
@@ -43,9 +66,38 @@ void OsMemory_free(void *p) {
 
 address OsMemory_allocate_chunk(size_t initial_size,
                                 size_t max_size, size_t alignment) {
-  return (address)pcsl_mem_allocate_chunk((unsigned int)initial_size,
-                                          (unsigned int)max_size,
-                                          (unsigned int)alignment);
+	void *ptr;
+
+	if (++NumChunckAlloc > 2) {
+
+		if (NumChunckAlloc % 2) {
+			ptr = javaHeapPtr;
+		} else {
+			ptr = bitVPtr;
+		}     
+	} else {
+
+		ptr = pcsl_mem_allocate_chunk((unsigned int)initial_size, (unsigned int)max_size, 
+									  (unsigned int)alignment);
+
+		if (ptr == NULL) {
+			return NULL;
+		}
+
+		if (javaHeapPtr == NULL) {
+			javaHeapPtr = ptr;
+		} else if (bitVPtr == NULL) {
+			bitVPtr = ptr;
+		} else {
+			/* too many allocations */
+			GUARANTEE(0, "pcsl_mem_allocate_chunk() too many allocations \n");
+			return NULL;
+		}
+
+	}
+
+	return(address) ptr;
+
 }
 
 size_t OsMemory_adjust_chunk(address chunk_ptr, size_t new_size) {
@@ -54,7 +106,7 @@ size_t OsMemory_adjust_chunk(address chunk_ptr, size_t new_size) {
 }
 
 void OsMemory_free_chunk(address chunk_ptr) {
-  pcsl_mem_free_chunk((void *)chunk_ptr);
+  //pcsl_mem_free_chunk((void *)chunk_ptr);
 }
 #endif // ENABLE_PCSL
 
