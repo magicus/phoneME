@@ -227,8 +227,14 @@ pcsl_end_memory(int* count, int* size) {
     _PcslMemHdrPtr pcslMemoryHdr;
     char*          pcslMemoryPtr;
 
+    extern void JavaHeapRelease(void);
+    extern void JavaHeapReset(void);
+
     *count = 0;
     *size  = 0;
+
+    JavaHeapRelease();
+    JavaHeapReset();
 
     for (pcslMemoryPtr = PcslMemoryStart; 
          pcslMemoryPtr < PcslMemoryEnd;
@@ -293,6 +299,7 @@ pcsl_end_memory(int* count, int* size) {
 int
 pcsl_mem_initialize_impl0(void *startAddr, int size) {
     _PcslMemHdrPtr pcslMemoryHdr;
+    extern void JavaHeapReset(void);
 
     if (PcslMemoryStart != NULL) {
         /* avoid a double init */
@@ -303,6 +310,8 @@ pcsl_mem_initialize_impl0(void *startAddr, int size) {
         /* size not specified, use the default */
         size = DEFAULT_POOL_SIZE;
     }
+
+    JavaHeapReset();
 
     if (startAddr != NULL) {
         PcslMemory = (char *)startAddr;
