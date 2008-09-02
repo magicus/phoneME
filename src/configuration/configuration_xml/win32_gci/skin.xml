@@ -1017,13 +1017,18 @@
      Pieces="9"
     Romized="false"/>
 
-  <integer
+    <integer
         Key="KEYBOARD_WIDTH"
       Value="-1"/>
 
   <integer
         Key="KEYBOARD_HEIGHT"
       Value="125"/>
+
+  <image
+        Key="KEYBOARD_KEY"
+      Value="keyboard.key"
+    Romized="false"/>
 
   <image
         Key="KEYBOARD_BTN_BACKSPACE"
@@ -1064,11 +1069,6 @@
   <integer
         Key="KEYBOARD_COLOR_BG"
       Value="0xFFCC33"/>
-
-  <image
-        Key="KEYBOARD_BG"
-      Value="keyboard.bg"
-    Romized="false"/>
 
   <image
         Key="KEYBOARD_BTN_UP_SEL"
@@ -1123,7 +1123,7 @@
   <font
         Key="KEYBOARD_FONT"
       Value="FontResources.SYS_B_M"/>
-
+    
   <integer
         Key="MENU_WIDTH"
       Value="144"/>

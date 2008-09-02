@@ -1026,7 +1026,12 @@
 
   <integer
         Key="KEYBOARD_HEIGHT"
-      Value="125"/>    
+      Value="125"/>  
+
+  <image
+        Key="KEYBOARD_KEY"
+      Value="keyboard.key"
+    Romized="false"/>
 
   <image
         Key="KEYBOARD_BTN_BACKSPACE"
@@ -1067,10 +1072,6 @@
   <integer
         Key="KEYBOARD_COLOR_BG"
       Value="0xFFCC33"/>
-  <image
-        Key="KEYBOARD_BG"
-      Value="keyboard.bg"
-    Romized="false"/>
 
   <image
         Key="KEYBOARD_BTN_UP_SEL"

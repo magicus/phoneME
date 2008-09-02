@@ -45,9 +45,13 @@ MIDP_JAVADOC_SOURCEPATH += $(VIRTUAL_KEYBOARD_P_DIR)/classes
 # Java files for the library
 #
 SUBSYSTEM_VIRTUAL_KEYBOARD_JAVA_FILES += \
-    $(VIRTUAL_KEYBOARD_P_DIR)/classes/com/sun/midp/lcdui/VirtualKeyboard.java \
-    $(VIRTUAL_KEYBOARD_P_DIR)/classes/com/sun/midp/lcdui/VirtualKeyboardListener.java \
-    $(VIRTUAL_KEYBOARD_P_DIR)/classes/com/sun/midp/chameleon/input/VirtualKeyboardInputMode.java
+    $(VIRTUAL_KEYBOARD_D_DIR)/classes/com/sun/midp/lcdui/VirtualKeyboard.java \
+    $(VIRTUAL_KEYBOARD_D_DIR)/classes/com/sun/midp/lcdui/VirtualKeyboardListener.java
+    
+ifeq ($(SUBSYSTEM_LCDUI_MODULES), chameleon)
+SUBSYSTEM_VIRTUAL_KEYBOARD_JAVA_FILES += \
+    $(VIRTUAL_KEYBOARD_D_DIR)/classes/com/sun/midp/chameleon/input/VirtualKeyboardInputMode.java
+endif
 
 # I3test files for the library
 #
