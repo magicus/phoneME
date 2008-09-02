@@ -601,7 +601,13 @@ _JNI_GetFieldID(JNIEnv *env, jclass clazz, const char *name, const char *sig) {
   // IMPL_NOTE: if the class is not initialized yet,
   // we must initialize it here.
   // IMPL_NOTE: throw NoSuchFieldError if the field is not found
-  return KNI_GetFieldID(clazz, name, sig);
+  jfieldID fieldID = KNI_GetFieldID(clazz, name, sig);
+  if (fieldID == NULL) {
+    SETUP_ERROR_CHECKER_ARG;
+    Throw::no_such_field_error(JVM_SINGLE_ARG_THROW_0);
+  }
+
+  return fieldID;
 }
 
 static jobject JNICALL
