@@ -1015,15 +1015,58 @@
      Pieces="9"
     Romized="false"/>
 
+  <integer
+        Key="KEYBOARD_WIDTH"
+      Value="-1"/>
+
+  <integer
+        Key="KEYBOARD_HEIGHT"
+      Value="125"/>
+
   <image
         Key="KEYBOARD_KEY"
       Value="keyboard.key"
     Romized="false"/>
 
   <image
-        Key="KEYBOARD_BG"
-      Value="keyboard.bg"
+        Key="KEYBOARD_BTN_BACKSPACE"
+      Value="keyboard.btn_backspace"
     Romized="false"/>
+
+  <image
+        Key="KEYBOARD_BTN_CAPS"
+      Value="keyboard.btn_caps"
+    Romized="false"/>
+
+  <image
+        Key="KEYBOARD_BTN_ENTER"
+      Value="keyboard.btn_enter"
+    Romized="false"/>
+
+  <image
+        Key="KEYBOARD_BTN_ALPHA_MODE"
+      Value="keyboard.btn_alpha"
+    Romized="false"/>
+
+  <image
+        Key="KEYBOARD_BTN_SYMBOL_MODE"
+      Value="keyboard.btn_symbol"
+    Romized="false"/>
+
+  <image
+        Key="KEYBOARD_BTN_NUMERIC_MODE"
+      Value="keyboard.btn_numeric"
+    Romized="false"/>
+
+  <composite_image
+        Key="KEYBOARD_BG"
+      Value="alert.image_bg"
+     Pieces="9"
+    Romized="false"/>
+
+  <integer
+        Key="KEYBOARD_COLOR_BG"
+      Value="0xFFCC33"/>
 
   <image
         Key="KEYBOARD_BTN_UP_SEL"
@@ -1074,6 +1117,10 @@
         Key="KEYBOARD_BTN_DOWN_UN"
       Value="keyboard.btn_down_un"
     Romized="false"/>
+
+  <font
+        Key="KEYBOARD_FONT"
+      Value="FontResources.SYS_B_M"/>
 
   <integer
         Key="MENU_WIDTH"

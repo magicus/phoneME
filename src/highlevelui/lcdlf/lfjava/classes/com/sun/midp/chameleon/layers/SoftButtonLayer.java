@@ -817,7 +817,6 @@ public class SoftButtonLayer extends CLayer implements CommandListener {
         return false;
     }
 
-
 /**
 * Initializes the soft button layer.
 */

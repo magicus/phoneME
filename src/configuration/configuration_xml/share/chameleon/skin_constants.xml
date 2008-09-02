@@ -1676,12 +1676,47 @@
                      and line border are used instead of background image."/>
 
   <constant Type="int"
+            Name="KEYBOARD_WIDTH"
+            Comment="Width of virtual keyboard"/>
+
+  <constant Type="int"
+            Name="KEYBOARD_HEIGHT"
+            Comment="Height of virtual keyboard"/>
+
+  <constant Type="int"
             Name="KEYBOARD_KEY"
+            Comment="Image for virtual keyboard key"/>
+
+  <constant Type="int"
+            Name="KEYBOARD_BTN_BACKSPACE"
+            Comment="Image for virtual keyboard key"/>
+
+  <constant Type="int"
+            Name="KEYBOARD_BTN_CAPS"
+            Comment="Image for virtual keyboard key"/>
+  <constant Type="int"
+            Name="KEYBOARD_BTN_ENTER"
+            Comment="Image for virtual keyboard key"/>
+
+  <constant Type="int"
+            Name="KEYBOARD_BTN_ALPHA_MODE"
+            Comment="Image for virtual keyboard key"/>
+
+  <constant Type="int"
+            Name="KEYBOARD_BTN_SYMBOL_MODE"
+            Comment="Image for virtual keyboard key"/>
+
+  <constant Type="int"
+            Name="KEYBOARD_BTN_NUMERIC_MODE"
             Comment="Image for virtual keyboard key"/>
 
   <constant Type="int"
             Name="KEYBOARD_BG"
             Comment="Background for virtual keyboard"/>
+
+  <constant Type="int"
+            Name="KEYBOARD_COLOR_BG"
+            Comment="Background color for virtual keyboard"/>
 
   <constant Type="int"
             Name="KEYBOARD_BTN_UP_SEL"
@@ -1720,6 +1755,9 @@
   <constant Type="int"
             Name="KEYBOARD_BTN_DOWN_UN"
             Comment="Image for virtual keyboard key with unselected down arrow"/>
+  <constant Type="int"
+            Name="KEYBOARD_FONT"
+            Comment="Virtual keyboard font"/>  
 
 
   <!--

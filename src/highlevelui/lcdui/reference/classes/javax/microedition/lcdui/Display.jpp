@@ -1,7 +1,7 @@
 /*
  *
  *
- * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
@@ -40,7 +40,6 @@ import javax.microedition.media.Manager;
 import javax.microedition.media.MediaException;
 import javax.microedition.media.control.ToneControl;
 
-import com.sun.midp.i18n.Resource;
 import com.sun.midp.i18n.ResourceConstants;
 // #else
 import java.lang.*;
@@ -61,6 +60,7 @@ import com.sun.midp.chameleon.input.BasicTextInputSession;
 import com.sun.midp.chameleon.layers.PopupLayer;
 import com.sun.midp.chameleon.layers.PTILayer;
 import com.sun.midp.chameleon.layers.VirtualKeyboardLayer;
+import com.sun.midp.chameleon.layers.VirtualKeyListener;
 import com.sun.midp.chameleon.skins.ChoiceGroupSkin;
 import com.sun.midp.chameleon.skins.ScreenSkin;
 import com.sun.midp.chameleon.skins.resources.*;
@@ -72,7 +72,6 @@ import com.sun.midp.util.LiveTracer;
 // #endif ENABLE_I3_TEST
 
 // #ifdef ENABLE_GCI
-import java.security.*;
 
 import com.sun.me.gci.windowsystem.GCIGraphicsEnvironment;
 import com.sun.me.gci.windowsystem.GCIDisplay;
@@ -1290,6 +1289,7 @@ public class Display {
         }
     }
 
+
     /**
      * Requests a flashing effect for the device's backlight.  The flashing
      * effect is intended to be used to attract the user's attention or as a
@@ -1575,19 +1575,18 @@ public class Display {
      * @return VirtualKeyboard layer instance connected to the current input session
      *   associated with this Display
      **/
-    VirtualKeyboardLayer getVirtualKeyboardPopup() {
-
+    public VirtualKeyboardLayer getVirtualKeyboardPopup() {
+        if (!VirtualKeyboardLayer.isSupportJavaKeyboard()) {
+            return null;
+        }
         if (keyboardLayer == null) {
-            if (getCurrent() instanceof Canvas) {
-                keyboardLayer = new VirtualKeyboardLayer(
-                    cham_tunnel);
-            } else {
-                keyboardLayer = new VirtualKeyboardLayer(
-                    getInputSession());
-            }
+          VirtualKeyboardResources.load();
+          keyboardLayer = new VirtualKeyboardLayer();
+          keyboardLayer.init();
         }
         return keyboardLayer;
     }
+
 
     // #endif ENABLE_CHAMELEON
 
@@ -3061,6 +3060,7 @@ public class Display {
                                               x - window.getBodyAnchorX(),
                                               y - window.getBodyAnchorY());
             }
+
             // #else
             if (currentCopy != null) {
                 currentCopy.uCallPointerEvent(pointerType, x, y);
@@ -3327,6 +3327,17 @@ public class Display {
             // the callSerially() event.
             // repaintEventProducer.serviceRepaints();
             getCallSerially();
+        }
+
+        /*
+         * Called by event delivery when need to show or hide virtual keyboard
+         */
+        public void handleVirtualKeyboardEvent() {
+            Display.this.getVirtualKeyboardPopup();
+            if (keyboardLayer != null) {
+                keyboardLayer.setVirtualKeyboardLayerListener((VirtualKeyListener)Display.this.current);
+                keyboardLayer.setKeyboardType(VirtualKeyboard.GAME_KEYBOARD);
+            }
         }
     } // END DisplayEventConsumerImpl Class
 

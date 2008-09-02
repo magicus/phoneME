@@ -28,6 +28,8 @@ package com.sun.midp.chameleon.skins.resources;
 
 import com.sun.midp.chameleon.skins.SkinPropertiesIDs;
 import com.sun.midp.chameleon.skins.VirtualKeyboardSkin;
+import com.sun.midp.chameleon.skins.AlertSkin;
+import com.sun.midp.chameleon.skins.ScreenSkin;
 
 /** Resources for virtual keyboard layer */
 public class VirtualKeyboardResources {
@@ -54,11 +56,41 @@ public class VirtualKeyboardResources {
             return;
         }
 
+        VirtualKeyboardSkin.WIDTH = SkinResources.getInt(
+                SkinPropertiesIDs.KEYBOARD_WIDTH);
+        if (VirtualKeyboardSkin.WIDTH == -1) {
+            VirtualKeyboardSkin.WIDTH = (int)(.95 * ScreenSkin.WIDTH);
+        }
+
+        VirtualKeyboardSkin.HEIGHT = SkinResources.getInt(
+                SkinPropertiesIDs.KEYBOARD_HEIGHT);
+
         VirtualKeyboardSkin.KEY = SkinResources.getImage(
                 SkinPropertiesIDs.KEYBOARD_KEY);
 
-        VirtualKeyboardSkin.BG = SkinResources.getImage(
-                SkinPropertiesIDs.KEYBOARD_BG);
+        VirtualKeyboardSkin.BTN_BACKSPACE = SkinResources.getImage(
+                SkinPropertiesIDs.KEYBOARD_BTN_BACKSPACE);
+
+        VirtualKeyboardSkin.BTN_CAPS = SkinResources.getImage(
+                SkinPropertiesIDs.KEYBOARD_BTN_CAPS);
+
+        VirtualKeyboardSkin.BTN_ENTER = SkinResources.getImage(
+                SkinPropertiesIDs.KEYBOARD_BTN_ENTER);
+
+        VirtualKeyboardSkin.BTN_ALPHA_MODE = SkinResources.getImage(
+                SkinPropertiesIDs.KEYBOARD_BTN_ALPHA_MODE);
+
+        VirtualKeyboardSkin.BTN_SYMBOL_MODE = SkinResources.getImage(
+                SkinPropertiesIDs.KEYBOARD_BTN_SYMBOL_MODE);
+
+        VirtualKeyboardSkin.BTN_NUMERIC_MODE = SkinResources.getImage(
+                SkinPropertiesIDs.KEYBOARD_BTN_NUMERIC_MODE);
+
+        VirtualKeyboardSkin.BG = SkinResources.getCompositeImage(
+                SkinPropertiesIDs.KEYBOARD_BG,9);
+
+        VirtualKeyboardSkin.COLOR_BG = SkinResources.getInt(
+                        SkinPropertiesIDs.KEYBOARD_COLOR_BG);
 
         VirtualKeyboardSkin.BTN_UP_SEL = SkinResources.getImage(
                 SkinPropertiesIDs.KEYBOARD_BTN_UP_SEL);
@@ -89,6 +121,9 @@ public class VirtualKeyboardResources {
 
         VirtualKeyboardSkin.BTN_DOWN_UN = SkinResources.getImage(
                 SkinPropertiesIDs.KEYBOARD_BTN_DOWN_UN);
+
+        VirtualKeyboardSkin.FONT = SkinResources.getFont(
+                SkinPropertiesIDs.KEYBOARD_FONT);
         
         init = true;
     }

@@ -290,7 +290,7 @@ class TextBoxLFImpl extends TextFieldLFImpl implements TextFieldLF {
         // has to be moved to correct place. It's incorrect to change 
         // the layer's dirty bounds in paint context 
         showPTPopup((int)0, cursor, w, h);
-//        showKeyboardLayer();
+        showKeyboardLayer();
     } 
 
     /**
