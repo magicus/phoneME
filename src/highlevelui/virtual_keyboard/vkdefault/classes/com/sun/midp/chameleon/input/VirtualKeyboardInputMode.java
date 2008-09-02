@@ -28,4 +28,5 @@ package com.sun.midp.chameleon.input;
  * An InputMode instance which allows to use java virtual keyboard.
  */
 public class VirtualKeyboardInputMode extends KeyboardInputMode{
+
 }
