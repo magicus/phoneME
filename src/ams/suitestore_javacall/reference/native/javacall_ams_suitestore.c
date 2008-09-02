@@ -27,6 +27,7 @@
 #include <kni.h>
 #include <midpEvents.h>
 #include <pcsl_string.h>
+#include <pcsl_memory.h>
 
 #include <suitestore_common.h>
 #include <suitestore_installer.h>
@@ -1002,7 +1003,6 @@ javacall_result
 java_ams_suite_get_permissions(javacall_suite_id suiteId,
                                javacall_ams_permission_val* pPermissions) {
     MIDPError status;
-    MidpSuiteSettings midpSettings;
     char* pszError = NULL;
     jbyte* pMidpPermissions;
     int iNumberOfPermissions;
