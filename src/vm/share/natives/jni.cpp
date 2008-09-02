@@ -190,6 +190,52 @@ _JNI_Throw(JNIEnv *env, jthrowable obj) {
   return JNI_OK;
 }
 
+static jint JNICALL 
+_JNI_ThrowNew(JNIEnv *env, jclass clazz, const char *msg) {
+  UsingFastOops fast_oops;
+  SETUP_ERROR_CHECKER_ARG;
+
+  if (clazz == NULL) {
+    return JNI_ERR;
+  }
+
+  JavaClassObj::Fast class_mirror = *decode_handle(clazz);
+  if (class_mirror.is_null()) {
+    return JNI_ERR;
+  }
+
+  InstanceClass::Fast ic = class_mirror().java_class();
+  if (ic.is_null()) {
+    return JNI_ERR;
+  }
+
+  //make sure consecutive ThrowNew calls don't destroy one another
+  Thread::clear_current_pending_exception();
+
+  Symbol::Fast class_name = ic().name();
+
+  if (Symbols::java_lang_OutOfMemoryError()->equals(&class_name)) {
+    // Avoid allocating the exception object when we're running out of memory.
+    Throw::out_of_memory_error(JVM_SINGLE_ARG_NO_CHECK);
+    return JNI_OK;
+  }
+    
+  String::Fast str;
+  if(msg != NULL) {
+    str = Universe::new_string(msg, jvm_strlen(msg) JVM_CHECK_(JNI_ERR));
+  } 
+
+  {
+    Throwable::Raw exception 
+      = Throw::new_exception(&class_name, &str JVM_NO_CHECK);
+    if (exception.not_null()) {
+      Thread::set_current_pending_exception(&exception);
+    }
+  }
+
+  return JNI_OK;
+}
+
 static jthrowable JNICALL
 _JNI_ExceptionOccured(JNIEnv *env) {
   Oop::Raw exc = Thread::current_pending_exception();
@@ -428,7 +474,7 @@ _JNI_NewObject(JNIEnv *env, jclass clazz, jmethodID methodID, ...) {
   env->CallNonvirtualVoidMethodV(obj, clazz, methodID, args);
   va_end(args);
 
-  return obj;
+  return env->ExceptionOccurred() ? NULL : obj;
 }
 
 static jobject JNICALL 
@@ -441,7 +487,7 @@ _JNI_NewObjectV(JNIEnv *env, jclass clazz, jmethodID methodID, va_list args) {
   
   env->CallNonvirtualVoidMethodV(obj, clazz, methodID, args);
 
-  return obj;
+  return env->ExceptionOccurred() ? NULL : obj;
 }
 
 static jobject JNICALL 
@@ -455,7 +501,7 @@ _JNI_NewObjectA(JNIEnv *env, jclass clazz, jmethodID methodID,
   
   env->CallNonvirtualVoidMethodA(obj, clazz, methodID, args);
 
-  return obj;
+  return env->ExceptionOccurred() ? NULL : obj;
 }
 
 static jclass JNICALL
@@ -1727,7 +1773,7 @@ static struct JNINativeInterface _jni_native_interface = {
     NULL, // ToReflectedField
 
     _JNI_Throw, // Throw
-    NULL, // ThrowNew
+    _JNI_ThrowNew, // ThrowNew
     _JNI_ExceptionOccured, // ExceptionOccurred
     _JNI_ExceptionDescribe, // ExceptionDescribe
     _JNI_ExceptionClear, // ExceptionClear
