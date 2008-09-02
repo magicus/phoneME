@@ -56,6 +56,10 @@ void SharedStubs::generate() {
   generate_invoke_pending_entries();
   generate_call_on_primordial_stack();
 
+#if ENABLE_JNI
+  generate_invoke_entry();
+#endif
+
 #if ENABLE_METHOD_TRAPS
   generate_cautious_invoke();
 #endif
@@ -162,11 +166,13 @@ bind(push_parameter);
   eol_comment("Code to call");
   ldr(tmp0, imm_index(tmp0));
 
-#if USE_REFLECTION || ENABLE_JAVA_DEBUGGER
+#if USE_REFLECTION || ENABLE_JAVA_DEBUGGER || ENABLE_JNI
   comment("call the method with variable return point");
   ldr(lr, imm_index(tmp2, EntryActivation::return_point_offset()));
   mov(pc, reg(tmp0));
+#endif
 
+#if USE_REFLECTION || ENABLE_JAVA_DEBUGGER
 bind_global("entry_return_object");
   define_call_info();
   str(r0, imm_index(fp, EntryFrame::stored_obj_value_offset()));
@@ -1267,6 +1273,118 @@ void SharedStubs::generate_fast_memclear() {
   ldmfd(sp, join(range(r4, r7), set(pc)), writeback);
 #endif
 }
+
+#if ENABLE_JNI
+void SharedStubs::generate_invoke_entry() {
+  Segment seg(this, code_segment, "Invoke entry");
+  if (TaggedJavaStack) {
+    comment("TaggedJavaStack not supported with ENABLE_JNI");
+    breakpoint();
+  }
+
+  comment_section("Invoke one entry on Java stack");
+bind_global("invoke_entry_word");
+bind_global("invoke_entry_long");
+bind_global("invoke_entry_float");
+bind_global("invoke_entry_double");
+bind_global("invoke_entry_void");
+
+  comment("Push callee-saved registers");
+  stmdb(sp, join(range(r4, r11), set(lr)), writeback);
+
+  comment("Switch to Java stack");
+  ldr_gp_base(gp);
+
+  if (GenerateDebugAssembly) {
+    comment("Push primordial sp");
+    get_primordial_sp(r0);
+    str(r0, imm_index(sp, -BytesPerWord, pre_indexed));
+    set_primordial_sp(sp);
+  }
+
+  get_current_thread(r0);
+  mov(r2, imm(uninitialized_tag));
+  ldr(fp, imm_index(r0, Thread::last_java_fp_offset()));
+  ldr(jsp, imm_index(r0, Thread::stack_pointer_offset()));
+
+  Label return_address;
+  ldr_nearby_label(lr, return_address);
+  b("shared_entry");
+
+bind(return_address);
+  Label return_point_global("invoke_entry_return_point");
+  bind_global(return_point_global);
+  define_call_info();
+
+  comment("Switch to primordial stack");
+  get_current_thread(r3);
+  str(jsp, imm_index(r3, Thread::stack_pointer_offset()));
+
+  if (GenerateDebugAssembly) {
+    comment("Restore primordial sp");
+    ldr(r3, imm_index(sp, +BytesPerWord, post_indexed));
+    set_primordial_sp(r3);
+  }
+
+  comment("Restore callee-saved registers and return");
+  ldmia(sp, join(range(r4, r11), set(pc)), writeback);
+
+  bind_global("default_return_point");
+  define_call_info();
+  b("shared_entry_return_point");
+
+  bind_global("invoke_entry_double_return");
+  bind_global("invoke_entry_float_return");
+  bind_global("invoke_entry_long_return");
+  bind_global("invoke_entry_word_return");
+  bind_global("invoke_entry_void_return");
+  bind_global("invoke_entry_return");
+  
+  if (GenerateDebugAssembly) {
+    comment("Assertion code: now stack must be empty");
+    add_imm(tmp0, fp, EntryFrame::empty_stack_offset());
+    cmp(tmp0, reg(jsp));
+    breakpoint(ne);
+  }
+
+  if (ENABLE_WTK_PROFILER) {
+    interpreter_call_vm("jprof_record_method_transition", T_VOID, false);
+  }
+
+  if (GenerateDebugAssembly) {
+    comment("Assertion code: no more activations");
+    ldr(tmp2, imm_index(fp, EntryFrame::pending_activation_offset()));
+    cmp(tmp2, zero);
+    breakpoint(ne);
+  }
+
+  comment("restore pending exception");
+  ldr(tmp1, imm_index(fp, EntryFrame::pending_exception_offset()));
+
+  set_current_pending_exception(tmp1);
+
+  comment("Remove information from the entry frame");
+  get_thread(tmp1);
+  eol_comment("stored_last_fp");
+  ldr(tmp3, imm_index(fp, EntryFrame::stored_last_sp_offset()));
+  eol_comment("stored_last_sp");
+  ldr(tmp2, imm_index(fp, EntryFrame::stored_last_fp_offset()));
+  eol_comment("real_return_address");
+  ldr(lr,   imm_index(fp, EntryFrame::real_return_address_offset()));
+
+  eol_comment("pop entry frame");
+  add_imm(jsp, fp, EntryFrame::empty_stack_offset() -
+        JavaStackDirection * (EntryFrame::frame_desc_size()));
+
+  eol_comment("restore fp");
+  mov(fp, reg(tmp2));
+  eol_comment("restore Thread::last_java_sp");
+  str(tmp3, imm_index(tmp1, Thread::last_java_sp_offset()));
+  eol_comment("restore Thread::last_java_fp");
+  str(tmp2, imm_index(tmp1, Thread::last_java_fp_offset()));
+  jmpx(lr);
+}
+#endif
 
 #endif // PRODUCT
 

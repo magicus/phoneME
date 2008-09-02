@@ -1262,13 +1262,22 @@ LiteralPoolElement.cpp           Compiler.hpp
 
 // Natives
 jni.cpp                          jni.h
+jni.cpp                          EntryActivation.hpp
+jni.cpp                          FieldType.hpp
 jni.cpp                          JniImpl.hpp
 jni.cpp                          JniFrame.hpp
 jni.cpp                          JavaClassObj.hpp
+jni.cpp                          Method.hpp
+jni.cpp                          ObjArrayClass.hpp
 jni.cpp                          ObjectHeap.hpp
 jni.cpp                          Oop.hpp
+jni.cpp                          Signature.hpp
+jni.cpp                          Throw.hpp
 jni.cpp                          Throwable.hpp
+jni.cpp                          TypeArrayClass.hpp
+jni.cpp                          TypeSymbol.hpp
 jni.cpp                          sni.h
+jni.cpp                          Universe.hpp
 JniImpl.hpp                      GlobalDefinitions.hpp
 
 JniFrame.hpp                     JniFrameDesc.hpp

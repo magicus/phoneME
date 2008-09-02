@@ -305,10 +305,15 @@ _JNI_DeleteLocalRef(JNIEnv* env, jobject localRef) {
 
 static jboolean JNICALL
 _JNI_IsSameObject(JNIEnv* env, jobject ref1, jobject ref2) {
-  if (ref1 == NULL || ref2 == NULL) {
-    return ref1 == ref2 ? JNI_TRUE : JNI_FALSE;
+  OopDesc* object1 = NULL;
+  OopDesc* object2 = NULL;
+  if (ref1 != NULL) {
+    object1 = *decode_handle(ref1);
   }
-  return KNI_IsSameObject(ref1, ref2);
+  if (ref2 != NULL) {
+    object2 = *decode_handle(ref2);
+  }
+  return object1 == object2 ? JNI_TRUE : JNI_FALSE;
 }
 
 static jobject JNICALL
@@ -320,7 +325,7 @@ _JNI_NewLocalRef(JNIEnv* env, jobject ref) {
   UsingFastOops fast_oops;
   Oop::Fast oop = *decode_handle(ref);
 
-  return new_local_ref_for_oop(env, &oop);
+  return new_local_ref_or_null_for_oop(env, &oop);
 }
 
 static jint JNICALL
@@ -344,6 +349,11 @@ _JNI_EnsureLocalCapacity(JNIEnv* env, jint capacity) {
   }
 
   const int requested_length = local_count + capacity;
+
+  if (requested_length < 0) {
+    // Overflow
+    return JNI_ERR;
+  }
 
   if (locals.not_null()) {
     const int length = locals().length();
@@ -420,6 +430,68 @@ _JNI_IsInstanceOf(JNIEnv *env, jobject obj, jclass clazz) {
   return KNI_IsInstanceOf(obj, clazz);
 }
 
+static jmethodID JNICALL 
+_JNI_GetMethodID(JNIEnv *env, jclass clazz, 
+                 const char *name, const char *sig) {
+  if (clazz == NULL) {
+    env->FatalError("null class arg for GetMethodID");
+    return NULL;
+  }
+
+  UsingFastOops fast_oops;
+  JavaClassObj::Fast class_mirror = *decode_handle(clazz);
+  if (class_mirror.is_null()) {
+    env->FatalError("null class arg for GetMethodID");
+    return NULL;
+  }
+
+  InstanceClass::Fast ic = class_mirror().java_class();
+
+  SETUP_ERROR_CHECKER_ARG;
+  Symbol::Fast n = SymbolTable::symbol_for(name JVM_CHECK_0);
+  Symbol::Fast s = TypeSymbol::parse((char*)sig JVM_CHECK_0);
+
+  Method::Fast m = ic().lookup_method(&n, &s, /*non-static only*/ true);
+
+  if (m.is_null()) {
+    Throw::no_such_method_error(JVM_SINGLE_ARG_THROW_0);
+  }
+
+  InstanceClass::Fast holder = m().holder();
+  const jushort class_id = holder().class_id();
+
+  int mtable_index = m().method_table_index();
+
+  jushort method_id = 0;
+
+  if (mtable_index >= 0) {
+    if (mtable_index > JniMethodIndexMask) {
+      // Cannot encode
+      env->FatalError("too many methods in class");
+      return NULL;
+    }
+
+    method_id = mtable_index | JniMtableMethod;
+  } else {
+    int vtable_index = m().vtable_index();
+
+    if (vtable_index > JniMethodIndexMask) {
+      // Cannot encode
+      env->FatalError("too many methods in class");
+      return NULL;
+    }
+
+    if (vtable_index < 0) {
+      env->FatalError("method lookup failed");
+      return NULL;
+    }
+
+    method_id = vtable_index | JniVtableMethod;
+  }
+
+  return (jmethodID)construct_jint_from_jushorts(class_id, method_id);
+}
+
 static jfieldID JNICALL 
 _JNI_GetFieldID(JNIEnv *env, jclass clazz, const char *name, const char *sig) {
   if (clazz == NULL) {
@@ -460,6 +532,482 @@ _JNI_Set ## Type ## Field(JNIEnv *env, jobject obj, jfieldID fieldID, \
 
 FOR_ALL_TYPES(DEFINE_SET_INSTANCE_FIELD)
 
+static jmethodID
+_JNI_GetStaticMethodID(JNIEnv *env, jclass clazz, 
+                       const char *name, const char *sig) {
+  if (clazz == NULL) {
+    env->FatalError("null class arg for GetMethodID");
+    return NULL;
+  }
+
+  UsingFastOops fast_oops;
+  JavaClassObj::Fast class_mirror = *decode_handle(clazz);
+  if (class_mirror.is_null()) {
+    env->FatalError("null class arg for GetMethodID");
+    return NULL;
+  }
+
+  InstanceClass::Fast ic = class_mirror().java_class();
+
+  SETUP_ERROR_CHECKER_ARG;
+  Symbol::Fast n = SymbolTable::symbol_for(name JVM_CHECK_0);
+  Symbol::Fast s = TypeSymbol::parse((char*)sig JVM_CHECK_0);
+
+  Method::Fast m = ic().lookup_method(&n, &s, /*non-static only*/ false);
+
+  if (m.is_null()) {
+    Throw::no_such_method_error(JVM_SINGLE_ARG_THROW_0);
+  }
+
+  InstanceClass::Fast holder = m().holder();
+  const jushort class_id = holder().class_id();
+
+  const int mtable_index = m().method_table_index();
+
+  if (mtable_index > JniMethodIndexMask) {
+    // Cannot encode
+    env->FatalError("too many methods in class");
+    return NULL;
+  }
+
+  if (mtable_index < 0) {
+    env->FatalError("static method lookup failed");
+    return NULL;
+  }
+
+  const jushort method_id = mtable_index | JniMtableMethod;
+  return (jmethodID)construct_jint_from_jushorts(class_id, method_id);
+}
+
+static ReturnOop 
+new_entry_activation(JNIEnv *env, jobject obj, jclass cls, jmethodID methodID,
+                     Signature *sig, 
+                     bool is_virtual_call, bool is_static_call) {
+  GUARANTEE(!is_static_call || !is_virtual_call, "Static virtual call");
+
+  if (env->ExceptionCheck()) {
+    env->FatalError("pending exception");
+    return NULL;
+  }
+
+  if (methodID == NULL) {
+    env->FatalError("null method id");
+    return NULL;
+  }
+
+  const jushort method_id = extract_low_jushort_from_jint((jint)methodID);
+  const jushort method_index = method_id & JniMethodIndexMask;
+  const juint class_id = extract_high_jushort_from_jint((jint)methodID);
+
+  const bool is_virtual_method = 
+    (method_id & JniVtableMethod) == JniVtableMethod;
+
+  if (is_static_call && is_virtual_method) {
+    env->FatalError("Invalid method ID: static call of virtual method");
+    return NULL;
+  }
+
+  InstanceClass::Raw method_holder = Universe::class_from_id(class_id);
+
+  if (method_holder.is_null()) {
+    env->FatalError("Invalid method ID: no holder");
+    return NULL;
+  }
+
+  const bool is_interface_method = method_holder().is_interface();
+
+  InstanceClass::Raw receiver_class;
+
+  if (!is_static_call) {
+    Instance::Raw receiver;
+    if (obj != NULL) {
+      receiver = *decode_handle(obj);
+    }
+
+    if (receiver.is_null()) {
+      jclass exc_clazz = env->FindClass("java/lang/NullPointerException");
+      if (exc_clazz != NULL) {
+        env->ThrowNew(exc_clazz, "null object");
+      } else {
+        env->FatalError("Cannot find java/lang/NullPointerException class");
+      }
+      return NULL;
+    }
+
+    receiver_class = receiver().blueprint();
+
+    GUARANTEE(receiver_class.not_null(), "Null receiver class");
+
+    if (!receiver_class().is_subtype_of(&method_holder)) {
+      env->FatalError(
+        "Invalid method ID: receiver not assignable to method holder class");
+      return NULL;
+    }
+  }
+
+  if (is_virtual_call) {
+    if (is_virtual_method || is_interface_method) {
+      method_holder = receiver_class;
+    }
+  } else {
+    // NOTE: just a verification of arguments. Disable for non-debug version?
+    if (cls == NULL) {
+      env->FatalError("null class");
+      return NULL;
+    }
+    
+    JavaClassObj::Raw class_mirror = *decode_handle(cls);
+    if (class_mirror.is_null()) {
+      env->FatalError("null class");
+      return NULL;
+    }
+
+    JavaClass::Raw java_class = class_mirror().java_class();
+
+    if (java_class().class_id() != class_id) {
+      env->FatalError(
+        "Invalid method ID: method class does not match passed class");
+      return NULL;
+    }
+  }
+
+  GUARANTEE(method_holder.not_null(), "Null holder class");
+
+  SETUP_ERROR_CHECKER_ARG;
+  UsingFastOops fast_oops;
+  Method::Fast method;
+  ClassInfo::Fast ci = method_holder().class_info();
+
+  if (is_virtual_method) {
+    if (method_index >= ci().vtable_length()) {
+      env->FatalError("Invalid method ID");
+      return NULL;
+    }
+    
+    method = ci().vtable_method_at(method_index);
+  } else {
+    if (is_interface_method) {
+      const jushort itable_length = ci().itable_length();
+
+      for (int index = 0; index < itable_length; index++) {
+        if (ci().itable_interface_class_id_at(index) == class_id) {
+          int offset = ci().itable_offset_at(index);
+
+          method = ci().obj_field(offset + method_index * sizeof(jobject));
+        }
+      }
+    } else {
+      ObjArray::Raw methods = method_holder().methods();
+
+      if (method_index >= methods().length()) {
+        env->FatalError("Invalid method ID");
+        return NULL;
+      }
+
+      method = methods().obj_at(method_index);
+    }
+  }
+
+  GUARANTEE(method.not_null(), "Cannot find method");
+  GUARANTEE(is_static_call == method().is_static(), "Cannot find method");
+
+  sig->set_obj(method().signature());
+
+  const jint param_size = sig->parameter_word_size(is_static_call);
+
+  return Universe::new_entry_activation(&method, param_size 
+                                        JVM_NO_CHECK_AT_BOTTOM);
+}
+
+static ReturnOop 
+new_entry_activation_V(JNIEnv *env, jobject obj, jclass cls, 
+                       jmethodID methodID, va_list args,
+                       bool is_virtual, bool is_static) {
+  UsingFastOops fast_oops;
+  Signature::Fast sig;
+  EntryActivation::Fast entry = 
+    new_entry_activation(env, obj, cls, methodID, &sig,
+                         is_virtual, is_static);
+
+  if (entry.is_null()) {
+    return NULL;
+  }
+
+  GUARANTEE(!env->ExceptionCheck(), "Unexpected exception");
+  GUARANTEE(sig.not_null(), "Null signature");
+
+  SignatureStream ss(&sig, is_static, true/*fast*/);
+
+  if (!is_static) {
+    GUARANTEE(!ss.eos() && ss.type() == T_OBJECT, 
+              "Invalid type for receiver arg");
+
+    Oop::Raw oop;
+      
+    if (obj != NULL) {
+      oop = *decode_handle(obj);
+    }
+
+    entry().obj_at_put(0, &oop);
+
+    ss.next();
+  }
+
+  for ( ; !ss.eos(); ss.next()) {
+    switch (ss.type()) {
+    case T_BOOLEAN:
+    case T_CHAR:
+    case T_BYTE:
+    case T_SHORT:
+    case T_INT:
+      entry().int_at_put(ss.index(), va_arg(args, jint));
+      break;
+    case T_FLOAT:
+      // `float' is promoted to `double' when passed through `...'
+      entry().float_at_put(ss.index(), (jfloat)va_arg(args, jdouble));
+      break;
+    case T_LONG:
+      entry().long_at_put(ss.index(), va_arg(args, jlong));
+      break;
+    case T_DOUBLE:
+      entry().double_at_put(ss.index(), va_arg(args, jdouble));
+      break;
+    case T_OBJECT: {
+      jobject object_arg = va_arg(args, jobject);
+      Oop::Raw oop;
+      
+      if (object_arg != NULL) {
+        oop = *decode_handle(object_arg);
+      }
+
+      entry().obj_at_put(ss.index(), &oop);
+      break;
+    }
+    default:
+      SHOULD_NOT_REACH_HERE();
+    }
+  }
+
+  return entry.obj();
+}
+
+static ReturnOop 
+new_entry_activation_A(JNIEnv *env, jobject obj, jclass cls, 
+                       jmethodID methodID, const jvalue * args,
+                       bool is_virtual, bool is_static) {
+  UsingFastOops fast_oops;
+  Signature::Fast sig;
+  EntryActivation::Fast entry = 
+    new_entry_activation(env, obj, cls, methodID, &sig, 
+                         is_virtual, is_static);
+
+  if (entry.is_null()) {
+    return NULL;
+  }
+
+  GUARANTEE(!env->ExceptionCheck(), "Unexpected exception");
+  GUARANTEE(sig.not_null(), "Null signature");
+
+  SignatureStream ss(&sig, is_static, true/*fast*/);
+
+  if (!is_static) {
+    GUARANTEE(!ss.eos() && ss.type() == T_OBJECT, 
+              "Invalid type for receiver arg");
+
+    Oop::Raw oop;
+      
+    if (obj != NULL) {
+      oop = *decode_handle(obj);
+    }
+
+    entry().obj_at_put(0, &oop);
+
+    ss.next();
+  }
+
+  for ( ; !ss.eos(); ss.next(), args++) {
+    switch (ss.type()) {
+    case T_BOOLEAN:
+      entry().int_at_put(ss.index(), args->z);
+      break;
+    case T_CHAR:
+      entry().int_at_put(ss.index(), args->c);
+      break;
+    case T_BYTE:
+      entry().int_at_put(ss.index(), args->b);
+      break;
+    case T_SHORT:
+      entry().int_at_put(ss.index(), args->s);
+      break;
+    case T_INT:
+      entry().int_at_put(ss.index(), args->i);
+      break;
+    case T_FLOAT:
+      entry().float_at_put(ss.index(), args->f);
+      break;
+    case T_LONG:
+      entry().long_at_put(ss.index(), args->j);
+      break;
+    case T_DOUBLE:
+      entry().double_at_put(ss.index(), args->d);
+      break;
+    case T_OBJECT: {
+      jobject obj = args->l;
+      Oop::Raw oop;
+      
+      if (obj != NULL) {
+        oop = *decode_handle(obj);
+      }
+
+      entry().obj_at_put(ss.index(), &oop);
+      break;
+    }
+    default:
+      SHOULD_NOT_REACH_HERE();
+    }
+  }
+
+  return entry.obj();
+}
+
+#define VIRTUAL_NAME
+#define NON_VIRTUAL_NAME   Nonvirtual
+#define STATIC_NAME        Static
+#define RECEIVER_DECL_VIRTUAL      jobject obj,
+#define RECEIVER_DECL_NON_VIRTUAL  jobject obj,
+#define RECEIVER_DECL_STATIC
+#define CLASS_DECL_VIRTUAL     
+#define CLASS_DECL_NON_VIRTUAL     jclass cls,
+#define CLASS_DECL_STATIC          jclass cls,
+#define DUMMY_RECEIVER_VIRTUAL 
+#define DUMMY_RECEIVER_NON_VIRTUAL 
+#define DUMMY_RECEIVER_STATIC      jobject obj = NULL;
+#define DUMMY_CLASS_VIRTUAL        jclass cls = NULL; 
+#define DUMMY_CLASS_NON_VIRTUAL
+#define DUMMY_CLASS_STATIC
+#define IS_VIRTUAL_VIRTUAL     true
+#define IS_VIRTUAL_NON_VIRTUAL false
+#define IS_VIRTUAL_STATIC      false
+#define IS_STATIC_VIRTUAL      false
+#define IS_STATIC_NON_VIRTUAL  false
+#define IS_STATIC_STATIC       true
+
+#define DOTDOTDOT_NAME     
+#define V_NAME             V
+#define A_NAME             A
+#define ARG_DECL_DOTDOTDOT ...
+#define ARG_DECL_V         va_list args
+#define ARG_DECL_A         const jvalue * args
+#define VA_START_DOTDOTDOT va_list args; va_start(args, methodID)
+#define VA_START_V         
+#define VA_START_A
+#define VA_END_DOTDOTDOT   va_end(args);
+#define VA_END_V           
+#define VA_END_A
+#define new_entry_activation_DOTDOTDOT new_entry_activation_V
+
+#define ENTRY_RETURN_BOOLEAN invoke_entry_word_return
+#define ENTRY_RETURN_BYTE    invoke_entry_word_return
+#define ENTRY_RETURN_CHAR    invoke_entry_word_return
+#define ENTRY_RETURN_SHORT   invoke_entry_word_return
+#define ENTRY_RETURN_INT     invoke_entry_word_return
+#define ENTRY_RETURN_LONG    invoke_entry_long_return
+#define ENTRY_RETURN_FLOAT   invoke_entry_float_return
+#define ENTRY_RETURN_DOUBLE  invoke_entry_double_return
+#define ENTRY_RETURN_VOID    invoke_entry_void_return  
+#define ENTRY_RETURN_OBJECT  invoke_entry_word_return  
+
+#define RETURN_INVOKE_ENTRY_BOOLEAN return invoke_entry_word()
+#define RETURN_INVOKE_ENTRY_BYTE    return invoke_entry_word()
+#define RETURN_INVOKE_ENTRY_CHAR    return invoke_entry_word()
+#define RETURN_INVOKE_ENTRY_SHORT   return invoke_entry_word()
+#define RETURN_INVOKE_ENTRY_INT     return invoke_entry_word()
+#define RETURN_INVOKE_ENTRY_LONG    return invoke_entry_long()
+#define RETURN_INVOKE_ENTRY_FLOAT   return invoke_entry_float()
+#define RETURN_INVOKE_ENTRY_DOUBLE  return invoke_entry_double()
+#define RETURN_INVOKE_ENTRY_VOID    invoke_entry_void()
+#define RETURN_INVOKE_ENTRY_OBJECT                     \
+  do {                                                 \
+    UsingFastOops fast_oops;                           \
+    Oop::Fast oop = (OopDesc*)invoke_entry_word(); \
+    return new_local_ref_or_null_for_oop(env, &oop);   \
+  } while (0)
+
+#define BOOLEAN_ZERO 0
+#define BYTE_ZERO    0   
+#define CHAR_ZERO    0   
+#define SHORT_ZERO   0  
+#define INT_ZERO     0    
+#define LONG_ZERO    0   
+#define FLOAT_ZERO   0  
+#define DOUBLE_ZERO  0 
+#define VOID_ZERO     
+#define OBJECT_ZERO  0 
+
+
+#define FOR_ALL_CALL_TYPES(template) \
+  FOR_ALL_ARG_TYPES(template, VIRTUAL)     \
+  FOR_ALL_ARG_TYPES(template, NON_VIRTUAL) \
+  FOR_ALL_ARG_TYPES(template, STATIC)      \
+
+#define FOR_ALL_ARG_TYPES(template, arg)         \
+  FOR_ALL_RETURN_TYPES(template, DOTDOTDOT, arg) \
+  FOR_ALL_RETURN_TYPES(template, V, arg)         \
+  FOR_ALL_RETURN_TYPES(template, A, arg)
+
+#define FOR_ALL_RETURN_TYPES(template, arg1, arg2) \
+  template(jboolean, Boolean, BOOLEAN, arg1, arg2) \
+  template(jbyte,    Byte,    BYTE,    arg1, arg2) \
+  template(jchar,    Char,    CHAR,    arg1, arg2) \
+  template(jshort,   Short,   SHORT,   arg1, arg2) \
+  template(jint,     Int,     INT,     arg1, arg2) \
+  template(jlong,    Long,    LONG,    arg1, arg2) \
+  template(jfloat,   Float,   FLOAT,   arg1, arg2) \
+  template(jdouble,  Double,  DOUBLE,  arg1, arg2) \
+  template(void,     Void,    VOID,    arg1, arg2) \
+  template(jobject,  Object,  OBJECT,  arg1, arg2)
+
+#define CONCAT5(a,b,c,d,e) a ## b ## c ## d ## e
+
+#define CALL_METHOD_NAME(RETURN_TYPE, ARG_TYPE_NAME, CALL_TYPE_NAME) \
+  CONCAT5(_JNI_Call, CALL_TYPE_NAME, RETURN_TYPE, Method, ARG_TYPE_NAME)
+
+#define DEFINE_CALL_METHOD(jtype, Type, TYPE, ARG_TYPE, CALL_TYPE)          \
+static jtype JNICALL                                                        \
+CALL_METHOD_NAME(Type, ARG_TYPE ## _NAME, CALL_TYPE ## _NAME)               \
+                                            (JNIEnv *env,                   \
+                                             RECEIVER_DECL_ ## CALL_TYPE    \
+                                             CLASS_DECL_ ## CALL_TYPE       \
+                                             jmethodID methodID,            \
+                                             ARG_DECL_ ## ARG_TYPE) {       \
+  DUMMY_RECEIVER_ ## CALL_TYPE                                              \
+  DUMMY_CLASS_ ## CALL_TYPE                                                 \
+                                                                            \
+  VA_START_ ## ARG_TYPE;                                                    \
+                                                                            \
+  EntryActivation::Raw entry =                                              \
+    new_entry_activation_ ## ARG_TYPE(env, obj, cls, methodID, args,        \
+                                      IS_VIRTUAL_ ## CALL_TYPE,             \
+                                      IS_STATIC_ ## CALL_TYPE);             \
+                                                                            \
+  VA_END_ ## ARG_TYPE;                                                      \
+                                                                            \
+  if (entry.is_null()) {                                                    \
+    return TYPE ## _ZERO;                                                   \
+  }                                                                         \
+                                                                            \
+  entry().set_return_point((address)ENTRY_RETURN_ ## TYPE);                 \
+                                                                            \
+  GUARANTEE(!Thread::current()->has_pending_entries(),                      \
+            "Must be no pending entries at this point");                    \
+                                                                            \
+  Thread::current()->append_pending_entry(&entry);                          \
+                                                                            \
+  RETURN_INVOKE_ENTRY_ ## TYPE;                                             \
+}
+
+FOR_ALL_CALL_TYPES(DEFINE_CALL_METHOD)
+
 static jfieldID JNICALL 
 _JNI_GetStaticFieldID(JNIEnv *env, jclass clazz, 
                       const char *name, const char *sig) {
@@ -483,14 +1031,12 @@ _JNI_GetStaticFieldID(JNIEnv *env, jclass clazz,
 
   Field field(&holder, &n, &s);
 
-#ifndef PRODUCT
   // NOTE: field could be renamed by Romizer.
   // Make sure you have used the DontRenameNonPublicFields option in the
   // -romconfig file for this class.
   if (!field.is_valid()) {
     Throw::no_such_field_error(JVM_SINGLE_ARG_THROW_0);
   }
-#endif
 
   jfieldID fieldID = 0;
 
@@ -1146,69 +1692,69 @@ static struct JNINativeInterface _jni_native_interface = {
     _JNI_GetObjectClass, // GetObjectClass
     _JNI_IsInstanceOf, // IsInstanceOf
 
-    NULL, // GetMethodID
+    _JNI_GetMethodID, // GetMethodID
 
-    NULL, // CallObjectMethod
-    NULL, // CallObjectMethodV
-    NULL, // CallObjectMethodA
-    NULL, // CallBooleanMethod
-    NULL, // CallBooleanMethodV
-    NULL, // CallBooleanMethodA
-    NULL, // CallByteMethod
-    NULL, // CallByteMethodV
-    NULL, // CallByteMethodA
-    NULL, // CallCharMethod
-    NULL, // CallCharMethodV
-    NULL, // CallCharMethodA
-    NULL, // CallShortMethod
-    NULL, // CallShortMethodV
-    NULL, // CallShortMethodA
-    NULL, // CallIntMethod
-    NULL, // CallIntMethodV
-    NULL, // CallIntMethodA
-    NULL, // CallLongMethod
-    NULL, // CallLongMethodV
-    NULL, // CallLongMethodA
-    NULL, // CallFloatMethod
-    NULL, // CallFloatMethodV
-    NULL, // CallFloatMethodA
-    NULL, // CallDoubleMethod
-    NULL, // CallDoubleMethodV
-    NULL, // CallDoubleMethodA
-    NULL, // CallVoidMethod
-    NULL, // CallVoidMethodV
-    NULL, // CallVoidMethodA
+    _JNI_CallObjectMethod, // CallObjectMethod
+    _JNI_CallObjectMethodV, // CallObjectMethodV
+    _JNI_CallObjectMethodA, // CallObjectMethodA
+    _JNI_CallBooleanMethod, // CallBooleanMethod
+    _JNI_CallBooleanMethodV, // CallBooleanMethodV
+    _JNI_CallBooleanMethodA, // CallBooleanMethodA
+    _JNI_CallByteMethod, // CallByteMethod
+    _JNI_CallByteMethodV, // CallByteMethodV
+    _JNI_CallByteMethodA, // CallByteMethodA
+    _JNI_CallCharMethod, // CallCharMethod
+    _JNI_CallCharMethodV, // CallCharMethodV
+    _JNI_CallCharMethodA, // CallCharMethodA
+    _JNI_CallShortMethod, // CallShortMethod
+    _JNI_CallShortMethodV, // CallShortMethodV
+    _JNI_CallShortMethodA, // CallShortMethodA
+    _JNI_CallIntMethod, // CallIntMethod
+    _JNI_CallIntMethodV, // CallIntMethodV
+    _JNI_CallIntMethodA, // CallIntMethodA
+    _JNI_CallLongMethod, // CallLongMethod
+    _JNI_CallLongMethodV, // CallLongMethodV
+    _JNI_CallLongMethodA, // CallLongMethodA
+    _JNI_CallFloatMethod, // CallFloatMethod
+    _JNI_CallFloatMethodV, // CallFloatMethodV
+    _JNI_CallFloatMethodA, // CallFloatMethodA
+    _JNI_CallDoubleMethod, // CallDoubleMethod
+    _JNI_CallDoubleMethodV, // CallDoubleMethodV
+    _JNI_CallDoubleMethodA, // CallDoubleMethodA
+    _JNI_CallVoidMethod, // CallVoidMethod
+    _JNI_CallVoidMethodV, // CallVoidMethodV
+    _JNI_CallVoidMethodA, // CallVoidMethodA
 
-    NULL, // CallNonvirtualObjectMethod
-    NULL, // CallNonvirtualObjectMethodV
-    NULL, // CallNonvirtualObjectMethodA
-    NULL, // CallNonvirtualBooleanMethod
-    NULL, // CallNonvirtualBooleanMethodV
-    NULL, // CallNonvirtualBooleanMethodA
-    NULL, // CallNonvirtualByteMethod
-    NULL, // CallNonvirtualByteMethodV
-    NULL, // CallNonvirtualByteMethodA
-    NULL, // CallNonvirtualCharMethod
-    NULL, // CallNonvirtualCharMethodV
-    NULL, // CallNonvirtualCharMethodA
-    NULL, // CallNonvirtualShortMethod
-    NULL, // CallNonvirtualShortMethodV
-    NULL, // CallNonvirtualShortMethodA
-    NULL, // CallNonvirtualIntMethod
-    NULL, // CallNonvirtualIntMethodV
-    NULL, // CallNonvirtualIntMethodA
-    NULL, // CallNonvirtualLongMethod
-    NULL, // CallNonvirtualLongMethodV
-    NULL, // CallNonvirtualLongMethodA
-    NULL, // CallNonvirtualFloatMethod
-    NULL, // CallNonvirtualFloatMethodV
-    NULL, // CallNonvirtualFloatMethodA
-    NULL, // CallNonvirtualDoubleMethod
-    NULL, // CallNonvirtualDoubleMethodV
-    NULL, // CallNonvirtualDoubleMethodA
-    NULL, // CallNonvirtualVoidMethod
-    NULL, // CallNonvirtualVoidMethodV
-    NULL, // CallNonvirtualVoidMethodA
+    _JNI_CallNonvirtualObjectMethod, // CallNonvirtualObjectMethod
+    _JNI_CallNonvirtualObjectMethodV, // CallNonvirtualObjectMethodV
+    _JNI_CallNonvirtualObjectMethodA, // CallNonvirtualObjectMethodA
+    _JNI_CallNonvirtualBooleanMethod, // CallNonvirtualBooleanMethod
+    _JNI_CallNonvirtualBooleanMethodV, // CallNonvirtualBooleanMethodV
+    _JNI_CallNonvirtualBooleanMethodA, // CallNonvirtualBooleanMethodA
+    _JNI_CallNonvirtualByteMethod, // CallNonvirtualByteMethod
+    _JNI_CallNonvirtualByteMethodV, // CallNonvirtualByteMethodV
+    _JNI_CallNonvirtualByteMethodA, // CallNonvirtualByteMethodA
+    _JNI_CallNonvirtualCharMethod, // CallNonvirtualCharMethod
+    _JNI_CallNonvirtualCharMethodV, // CallNonvirtualCharMethodV
+    _JNI_CallNonvirtualCharMethodA, // CallNonvirtualCharMethodA
+    _JNI_CallNonvirtualShortMethod, // CallNonvirtualShortMethod
+    _JNI_CallNonvirtualShortMethodV, // CallNonvirtualShortMethodV
+    _JNI_CallNonvirtualShortMethodA, // CallNonvirtualShortMethodA
+    _JNI_CallNonvirtualIntMethod, // CallNonvirtualIntMethod
+    _JNI_CallNonvirtualIntMethodV, // CallNonvirtualIntMethodV
+    _JNI_CallNonvirtualIntMethodA, // CallNonvirtualIntMethodA
+    _JNI_CallNonvirtualLongMethod, // CallNonvirtualLongMethod
+    _JNI_CallNonvirtualLongMethodV, // CallNonvirtualLongMethodV
+    _JNI_CallNonvirtualLongMethodA, // CallNonvirtualLongMethodA
+    _JNI_CallNonvirtualFloatMethod, // CallNonvirtualFloatMethod
+    _JNI_CallNonvirtualFloatMethodV, // CallNonvirtualFloatMethodV
+    _JNI_CallNonvirtualFloatMethodA, // CallNonvirtualFloatMethodA
+    _JNI_CallNonvirtualDoubleMethod, // CallNonvirtualDoubleMethod
+    _JNI_CallNonvirtualDoubleMethodV, // CallNonvirtualDoubleMethodV
+    _JNI_CallNonvirtualDoubleMethodA, // CallNonvirtualDoubleMethodA
+    _JNI_CallNonvirtualVoidMethod, // CallNonvirtualVoidMethod
+    _JNI_CallNonvirtualVoidMethodV, // CallNonvirtualVoidMethodV
+    _JNI_CallNonvirtualVoidMethodA, // CallNonvirtualVoidMethodA
 
     _JNI_GetFieldID, // GetFieldID
 
@@ -1232,38 +1778,38 @@ static struct JNINativeInterface _jni_native_interface = {
     _JNI_SetFloatField, // SetFloatField
     _JNI_SetDoubleField, // SetDoubleField
 
-    NULL, // GetStaticMethodID
+    _JNI_GetStaticMethodID, // GetStaticMethodID
 
-    NULL, // CallStaticObjectMethod
-    NULL, // CallStaticObjectMethodV
-    NULL, // CallStaticObjectMethodA
-    NULL, // CallStaticBooleanMethod
-    NULL, // CallStaticBooleanMethodV
-    NULL, // CallStaticBooleanMethodA
-    NULL, // CallStaticByteMethod
-    NULL, // CallStaticByteMethodV
-    NULL, // CallStaticByteMethodA
-    NULL, // CallStaticCharMethod
-    NULL, // CallStaticCharMethodV
-    NULL, // CallStaticCharMethodA
-    NULL, // CallStaticShortMethod
-    NULL, // CallStaticShortMethodV
-    NULL, // CallStaticShortMethodA
-    NULL, // CallStaticIntMethod
-    NULL, // CallStaticIntMethodV
-    NULL, // CallStaticIntMethodA
-    NULL, // CallStaticLongMethod
-    NULL, // CallStaticLongMethodV
-    NULL, // CallStaticLongMethodA
-    NULL, // CallStaticFloatMethod
-    NULL, // CallStaticFloatMethodV
-    NULL, // CallStaticFloatMethodA
-    NULL, // CallStaticDoubleMethod
-    NULL, // CallStaticDoubleMethodV
-    NULL, // CallStaticDoubleMethodA
-    NULL, // CallStaticVoidMethod
-    NULL, // CallStaticVoidMethodV
-    NULL, // CallStaticVoidMethodA
+    _JNI_CallStaticObjectMethod, // CallStaticObjectMethod
+    _JNI_CallStaticObjectMethodV, // CallStaticObjectMethodV
+    _JNI_CallStaticObjectMethodA, // CallStaticObjectMethodA
+    _JNI_CallStaticBooleanMethod, // CallStaticBooleanMethod
+    _JNI_CallStaticBooleanMethodV, // CallStaticBooleanMethodV
+    _JNI_CallStaticBooleanMethodA, // CallStaticBooleanMethodA
+    _JNI_CallStaticByteMethod, // CallStaticByteMethod
+    _JNI_CallStaticByteMethodV, // CallStaticByteMethodV
+    _JNI_CallStaticByteMethodA, // CallStaticByteMethodA
+    _JNI_CallStaticCharMethod, // CallStaticCharMethod
+    _JNI_CallStaticCharMethodV, // CallStaticCharMethodV
+    _JNI_CallStaticCharMethodA, // CallStaticCharMethodA
+    _JNI_CallStaticShortMethod, // CallStaticShortMethod
+    _JNI_CallStaticShortMethodV, // CallStaticShortMethodV
+    _JNI_CallStaticShortMethodA, // CallStaticShortMethodA
+    _JNI_CallStaticIntMethod, // CallStaticIntMethod
+    _JNI_CallStaticIntMethodV, // CallStaticIntMethodV
+    _JNI_CallStaticIntMethodA, // CallStaticIntMethodA
+    _JNI_CallStaticLongMethod, // CallStaticLongMethod
+    _JNI_CallStaticLongMethodV, // CallStaticLongMethodV
+    _JNI_CallStaticLongMethodA, // CallStaticLongMethodA
+    _JNI_CallStaticFloatMethod, // CallStaticFloatMethod
+    _JNI_CallStaticFloatMethodV, // CallStaticFloatMethodV
+    _JNI_CallStaticFloatMethodA, // CallStaticFloatMethodA
+    _JNI_CallStaticDoubleMethod, // CallStaticDoubleMethod
+    _JNI_CallStaticDoubleMethodV, // CallStaticDoubleMethodV
+    _JNI_CallStaticDoubleMethodA, // CallStaticDoubleMethodA
+    _JNI_CallStaticVoidMethod, // CallStaticVoidMethod
+    _JNI_CallStaticVoidMethodV, // CallStaticVoidMethodV
+    _JNI_CallStaticVoidMethodA, // CallStaticVoidMethodA
 
     _JNI_GetStaticFieldID, // GetStaticFieldID
 

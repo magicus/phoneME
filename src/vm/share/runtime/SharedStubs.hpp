@@ -64,6 +64,10 @@ class SharedStubs: public SourceMacros {
 #if ENABLE_METHOD_TRAPS
   void generate_cautious_invoke();
 #endif
+
+#if ENABLE_JNI
+  void generate_invoke_entry();
+#endif
 };
 
 #endif /*#if ENABLE_INTERPRETER_GENERATOR*/

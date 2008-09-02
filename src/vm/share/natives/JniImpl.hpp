@@ -28,6 +28,11 @@
 
 extern "C" OopDesc** decode_handle(jobject handle);
 
+const int JniMethodTypeOffset = 15;
+const int JniMethodIndexMask = (1 << JniMethodTypeOffset) - 1;
+const int JniVtableMethod = (0x1 << JniMethodTypeOffset);
+const int JniMtableMethod = 0;
+
 #else
 
 extern "C" inline OopDesc** decode_handle(jobject handle) {

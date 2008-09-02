@@ -881,6 +881,13 @@ JavaFrame::find_exception_frame(Thread* thread,
         bci = -1; 
         break;
       } else {
+#if ENABLE_JNI
+        if (frame.as_EntryFrame().is_jni_frame()) {
+          // We should not go before the JNI frame
+          bci = -1; 
+          break;
+        }
+#endif
         // These never have exception handlers.  Just ignore them
         frame.as_EntryFrame().caller_is(frame);
       }

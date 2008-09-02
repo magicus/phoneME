@@ -2017,6 +2017,23 @@ extern "C" {
   void shared_call_vm_oop_return();
 #endif
 
+#if ENABLE_JNI
+  void    invoke_entry_void();
+  jint    invoke_entry_word();
+  jlong   invoke_entry_long();
+  jfloat  invoke_entry_float();
+  jdouble invoke_entry_double();
+  void    invoke_entry_return_point();
+
+  void invoke_entry_void_return();
+  void invoke_entry_word_return();
+  void invoke_entry_long_return();
+  void invoke_entry_float_return();
+  void invoke_entry_double_return();
+
+  void default_return_point();
+#endif
+
   // InterpreterRuntime.cpp
 
   OopDesc * multianewarray(JVM_SINGLE_ARG_TRAPS);

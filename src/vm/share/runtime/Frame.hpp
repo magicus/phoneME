@@ -610,6 +610,13 @@ class EntryFrame : public Frame {
     return caller_fp == NULL;
   }
 
+#if ENABLE_JNI
+  bool is_jni_frame() const {
+    const address ret_addr = *(address*) (fp() + real_return_address_offset());
+    return ret_addr == (address)invoke_entry_return_point;
+  }
+#endif
+
   // GC support
   void oops_do(void do_oop(OopDesc**));
   void relocate_internal_pointers(int delta);

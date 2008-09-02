@@ -248,6 +248,10 @@ class Method: public Oop {
   // vtable index
   int vtable_index() const;
 
+#if ENABLE_JNI
+  int method_table_index() const;
+#endif
+
   // access flag
   AccessFlags access_flags() const {
     AccessFlags af;

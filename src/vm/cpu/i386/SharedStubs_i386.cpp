@@ -49,6 +49,10 @@ void SharedStubs::generate() {
   generate_shared_call_vm(shared_entry_return_point, T_ILLEGAL);
 
   generate_invoke_pending_entries();
+
+#if ENABLE_JNI
+  generate_invoke_entry();
+#endif
   
   generate_shared_entry(shared_entry_return_point);
   
@@ -234,7 +238,7 @@ void SharedStubs::generate_shared_entry(Label& shared_entry_return_point) {
   movl(esi, Address(ebx, Constant(Method::variable_part_offset())));
   movl(esi, Address(esi));
 
-#if USE_REFLECTION || ENABLE_JAVA_DEBUGGER
+#if USE_REFLECTION || ENABLE_JAVA_DEBUGGER || ENABLE_JNI
   if (TaggedJavaStack) {
     comment("TaggedJavaStack not supported with USE_REFLECTION");
     int3();
@@ -711,8 +715,9 @@ void SharedStubs::generate_shared_call_vm(Label& shared_entry_return_point,
     testl(eax, eax);
     jcc(not_equal, Constant(done));
     movl(eax, Address(ebp, Constant(EntryFrame::pending_exception_offset())));
-    leal(esp, Address(ebp, Constant(EntryFrame::real_return_address_offset())));
+    leal(esp, Address(ebp, Constant(EntryFrame::stored_last_fp_offset())));
     movl(Address(Constant("_current_pending_exception")), eax);
+    popl(ebp);
     ret(Constant(BytesPerWord));
     bind(done);
   }
@@ -1043,5 +1048,157 @@ void SharedStubs::generate_shared_monitor_exit() {
 
   entry_end(); // _shared_do_unlock
 }
+
+#if ENABLE_JNI
+void SharedStubs::generate_invoke_entry() {
+  if (TaggedJavaStack) {
+    comment("TaggedJavaStack not supported with ENABLE_JNI");
+    int3();
+  }
+
+  comment_section("Invoke one entry on Java stack");
+  entry("invoke_entry_word");
+  jmp(Constant("invoke_entry_void"));
+  entry_end();
+
+  entry("invoke_entry_long");
+  jmp(Constant("invoke_entry_void"));
+  entry_end();
+
+  entry("invoke_entry_float");
+  jmp(Constant("invoke_entry_void"));
+  entry_end();
+
+  entry("invoke_entry_double");
+  jmp(Constant("invoke_entry_void"));
+  entry_end();
+
+  entry("invoke_entry_void");
+
+  comment("Push previous primordial stack pointer");
+  pushl(Address(Constant("_primordial_sp")));
+
+  comment("Push callee-saved registers");
+  pushl(ebx);
+  pushl(esi);
+  pushl(edi);
+  pushl(ebp);
+
+  comment("Switch to Java stack");
+  movl(Address(Constant("_primordial_sp")), esp);
+  get_thread(ecx);
+  movl(esp, Address(ecx, Constant(Thread::stack_pointer_offset())));
+  popl(ebp);
+
+  pushl(Constant("invoke_entry_return_point", 
+                 /*is_proc*/true, /*offset*/0));
+  jmp(Constant("shared_entry"));
+  entry_end();
+
+  entry("invoke_entry_return_point");
+  define_call_info();
+
+  comment("Switch to primordial stack");
+  pushl(ebp);
+  get_thread(ecx);
+  movl(Address(ecx, Constant(Thread::stack_pointer_offset())), esp);
+  movl(esp, Address(Constant("_primordial_sp")));
+
+  comment("Restore callee-saved registers");
+  popl(ebp);
+  popl(edi);
+  popl(esi);
+  popl(ebx);
+
+  comment("Restore previous primordial stack pointer");
+  popl(Address(Constant("_primordial_sp")));
+  ret();
+
+  entry_end(); // invoke_entry_return_point
+
+  entry("default_return_point");
+  define_call_info();
+  jmp(Constant("shared_entry_return_point"));
+  entry_end();
+
+  entry("invoke_entry_double_return");
+  define_call_info();
+  fld_d(Address(esp));
+  addl(esp, Constant(2 * BytesPerWord));
+  jmp(Constant("invoke_entry_return"));
+  entry_end();
+
+  entry("invoke_entry_float_return");
+  define_call_info();
+  fld_f(Address(esp));
+  popl(eax);
+  jmp(Constant("invoke_entry_return"));
+  entry_end();
+
+  entry("invoke_entry_long_return");
+  define_call_info();
+  popl(eax);
+  popl(edx);
+  jmp(Constant("invoke_entry_return"));
+  entry_end();
+
+  entry("invoke_entry_word_return");
+  define_call_info();
+  popl(eax);
+  jmp(Constant("invoke_entry_return"));
+  entry_end();
+
+  entry("invoke_entry_void_return");
+  define_call_info();
+  jmp(Constant("invoke_entry_return"));
+  entry_end();
+
+  entry("invoke_entry_return");
+  
+  if (GenerateDebugAssembly) {
+    comment("Assertion code: now stack must be empty");
+    Label stack_is_empty;
+    leal(ecx, Address(ebp, Constant(EntryFrame::empty_stack_offset())));
+    cmpl(esp, ecx);
+    jcc(zero, Constant(stack_is_empty));
+    int3();
+    bind(stack_is_empty);
+  }
+  
+  if (ENABLE_WTK_PROFILER) {
+    comment("Setup the pointer to the vm routine");
+    movl(eax, Constant("jprof_record_method_transition"));
+    call_shared_call_vm(T_VOID);
+  }
+
+  comment("Pop the next pending activation");
+  popl(edi);
+
+  if (GenerateDebugAssembly) {
+    comment("Assertion code: no more activations");
+    Label no_activations;
+    testl(edi, edi);
+    jcc(zero, Constant(no_activations));
+    int3();
+    bind(no_activations);
+  }
+
+  comment("Get the current thread");
+  get_thread(ebx);
+
+  comment("Pop stored values: exception, ecx, eax, edx");
+  addl(esp, Constant(4 * BytesPerWord));
+
+  comment("Restore the original frame pointer and the last java sp/fp");
+  popl(Address(ebx, Constant(Thread::last_java_sp_offset())));
+  popl(ebp);
+  movl(Address(ebx, Constant(Thread::last_java_fp_offset())), ebp);
+
+  comment("Remove fake frame pointer and return");
+  ret(Constant(BytesPerWord));
+
+  entry_end();
+}
+#endif
 
 #endif // ENABLE_INTERPRETER_GENERATOR

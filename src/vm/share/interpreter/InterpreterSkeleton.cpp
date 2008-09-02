@@ -209,6 +209,23 @@ void entry_return_double() {}
 void entry_return_object() {}
 #endif
 
+#if ENABLE_JNI
+void    invoke_entry_void()   {}
+jint    invoke_entry_word()   { return 0; }
+jlong   invoke_entry_long()   { return 0; }
+jfloat  invoke_entry_float()  { return 0; }
+jdouble invoke_entry_double() { return 0; }
+void    invoke_entry_return_point() {}
+
+void invoke_entry_void_return()   {}
+void invoke_entry_word_return()   {}
+void invoke_entry_long_return()   {}
+void invoke_entry_float_return()  {}
+void invoke_entry_double_return() {}
+
+void default_return_point() {}
+#endif
+
 jint assembler_loop_type;
 jint _bytecode_counter = 0;
 

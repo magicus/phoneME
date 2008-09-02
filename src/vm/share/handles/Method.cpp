@@ -53,6 +53,29 @@ int Method::vtable_index() const {
   return -1;
 }
 
+#if ENABLE_JNI
+
+int Method::method_table_index() const {
+  // Retrieve the vtbale index from the vtable by searching
+  InstanceClass::Raw klass = holder();
+  ObjArray::Raw methods = klass().methods();
+
+  OopDesc *this_obj = obj();
+  OopDesc **base = (OopDesc **)methods().base_address();
+  const int len = methods().length();
+  for (int index = 0; index < len; index++) {
+    if (this_obj != *base) {
+      base ++;
+    } else {
+      return index;
+    }
+  }
+
+  return -1;
+}
+
+#endif
+
 #if ENABLE_COMPILER
 
 inline bool Method::resume_compilation(JVM_SINGLE_ARG_TRAPS) {

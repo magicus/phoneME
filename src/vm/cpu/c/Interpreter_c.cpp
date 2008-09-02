@@ -4635,6 +4635,23 @@ extern "C" {
   void shared_call_vm_oop_return() {}
 #endif
 
+#if ENABLE_JNI
+void    invoke_entry_void()   {}
+jint    invoke_entry_word()   { return 0; }
+jlong   invoke_entry_long()   { return 0; }
+jfloat  invoke_entry_float()  { return 0; }
+jdouble invoke_entry_double() { return 0; }
+void    invoke_entry_return_point() {}
+
+void invoke_entry_void_return()   {}
+void invoke_entry_word_return()   {}
+void invoke_entry_long_return()   {}
+void invoke_entry_float_return()  {}
+void invoke_entry_double_return() {}
+
+void default_return_point() {}
+#endif
+
 extern "C" {
   void wmmx_set_timer_tick() { }
   void wmmx_clear_timer_tick() { }

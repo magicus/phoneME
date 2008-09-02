@@ -1325,6 +1325,8 @@ ReturnOop Universe::new_entry_activation(Method* method, jint length JVM_TRAPS)
     entry().set_method(method);
 #if USE_REFLECTION || ENABLE_JAVA_DEBUGGER
     entry().set_return_point((address) entry_return_void);
+#elif ENABLE_JNI
+    entry().set_return_point((address) default_return_point);
 #endif
   }
   return entry;
