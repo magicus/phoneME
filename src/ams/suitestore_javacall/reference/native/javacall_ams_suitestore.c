@@ -53,6 +53,9 @@ static MIDPError parse_midlet_attr(const pcsl_string* pMIDletAttrValue,
                                    javacall_utf16_string* pDisplayName,
                                    javacall_utf16_string* pIconName,
                                    javacall_utf16_string* pClassName);
+static javacall_ams_permission midp_permission2javacall(int midpPermissionId);
+static javacall_ams_permission_val
+midp_permission_val2javacall(jbyte midpPermissionVal);
 
 /*----------------------- Suite Storage: Common API -------------------------*/
 
@@ -998,10 +1001,46 @@ java_ams_suite_enable(javacall_suite_id suiteId) {
 javacall_result
 java_ams_suite_get_permissions(javacall_suite_id suiteId,
                                javacall_ams_permission_val* pPermissions) {
+    MIDPError status;
+    MidpSuiteSettings midpSettings;
+    char* pszError = NULL;
+    jbyte* pMidpPermissions;
+    int iNumberOfPermissions;
+    jbyte pushInterruptSetting;
+    jint pushOptions;
+    jboolean enabled;
+    int i;
+
     if (pPermissions == NULL) {
         return JAVACALL_FAIL;
     }
-    
+
+    status = read_settings(&pszError, (SuiteIdType)suiteId,
+                           &enabled,
+                           &pushInterruptSetting,
+                           &pushOptions,
+                           &pMidpPermissions,
+                           &iNumberOfPermissions);
+    if (status != ALL_OK) {
+        return midp_error2javacall(status);
+    }
+
+    for (i = 0; i < JAVACALL_AMS_NUMBER_OF_PERMISSIONS; i++) {
+        pPermissions[i] = JAVACALL_AMS_PERMISSION_VAL_NEVER;
+    }
+
+    for (i = 0; i < iNumberOfPermissions; i++) {
+        javacall_ams_permission jcPermission = midp_permission2javacall(i);
+        if (jcPermission != JAVACALL_AMS_PERMISSION_VAL_INVALID) {
+            pPermissions[(int)jcPermission] =
+                midp_permission_val2javacall(pMidpPermissions[i]);
+        }
+    }
+
+    if (iNumberOfPermissions > 0 && pMidpPermissions != NULL) {
+        pcsl_mem_free(pMidpPermissions);
+    }
+
     return JAVACALL_OK;
 }
 
@@ -1035,6 +1074,12 @@ java_ams_suite_set_permission(javacall_suite_id suiteId,
 javacall_result
 java_ams_suite_set_permissions(javacall_suite_id suiteId,
                                javacall_ams_permission_val* pPermissions) {
+    /*MIDPError status;*/
+
+    if (pPermissions == NULL) {
+        return JAVACALL_FAIL;
+    }
+
     return JAVACALL_OK;
 }
 
@@ -1676,6 +1721,62 @@ MIDPError parse_midlet_attr(const pcsl_string* pMIDletAttrValue,
     }
 
     return ALL_OK;
+}
+
+static javacall_ams_permission
+midp_permission2javacall(int midpPermissionId) {
+    javacall_ams_permission jcPermissionId;
+    /*
+     * IMPL_NOTE: here it is assumed that the numeric values of the same
+     *            MIDP and Javacall permissions are equal. This may not
+     *            be true.
+     */
+    if (midpPermissionId > 0 &&
+            midpPermissionId < (int)JAVACALL_AMS_PERMISSION_LAST) {
+        jcPermissionId = (javacall_ams_permission) midpPermissionId;
+    } else {
+        jcPermissionId = JAVACALL_AMS_PERMISSION_INVALID;
+    }
+
+    return jcPermissionId;
+}
+
+static javacall_ams_permission_val
+midp_permission_val2javacall(jbyte midpPermissionVal) {
+    javacall_ams_permission_val jcPermissionVal;
+
+    /*
+     * IMPL_NOTE: values in "case <N>" must be equal to the corresponding
+     *            Permissions.<Value> constants in Java.
+     */
+    switch (midpPermissionVal) {
+        case 0: /* Permissions.NEVER */
+            jcPermissionVal = JAVACALL_AMS_PERMISSION_VAL_NEVER;
+            break;
+        case 1:  /* Permissions.ALLOW */
+            jcPermissionVal = JAVACALL_AMS_PERMISSION_VAL_ALLOW;
+            break;
+        case 2:  /* Permissions.BLANKET_GRANTED */
+            jcPermissionVal = JAVACALL_AMS_PERMISSION_VAL_BLANKET_GRANTED;
+            break;
+        case 4: /* Permissions.BLANKET */
+            jcPermissionVal = JAVACALL_AMS_PERMISSION_VAL_BLANKET;
+            break;
+        case 8:  /* Permissions.SESSION */
+            jcPermissionVal = JAVACALL_AMS_PERMISSION_VAL_SESSION;
+            break;
+        case 16: /* Permissions.ONESHOT */
+            jcPermissionVal = JAVACALL_AMS_PERMISSION_VAL_ONE_SHOT;
+            break;
+        case -128: /* Permissions.BLANKET_DENIED */
+            jcPermissionVal = JAVACALL_AMS_PERMISSION_VAL_BLANKET_DENIED;
+            break;
+
+        default: /* Unknown */
+            jcPermissionVal = JAVACALL_AMS_PERMISSION_VAL_INVALID;
+    }
+
+    return jcPermissionVal;
 }
 
 #undef FREE_JC_STRING
