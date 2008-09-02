@@ -186,7 +186,7 @@
 		Value="ISO8859_1" 
 		Scope="system"/ -->
   <property Key="microedition.commports" 
-	    Value="COM1" 
+	    Value="com1" 
 		Scope="system"/>
   <property Key="microedition.jtwi.version" 
 		Value="1.0" 

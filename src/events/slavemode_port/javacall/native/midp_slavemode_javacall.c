@@ -424,6 +424,14 @@ javacall_result checkForSystemSignal(MidpReentryData* pNewSignal,
         pNewSignal->descriptor = (int)event->data.jsr256_jc_event_sensor.sensor;
 		break;
 #endif /* ENABLE_JSR_256 */
+
+    case MIDP_JC_EVENT_COMM:
+        pNewSignal->waitingFor = event->data.socketEvent.waitingFor;
+        pNewSignal->descriptor = (int)event->data.socketEvent.handle;
+        pNewSignal->status     = event->data.socketEvent.status;
+        pNewSignal->pResult    = (void *) event->data.socketEvent.extraData;
+        break;
+
     default:
         REPORT_ERROR1(LC_CORE,"checkForSystemSignal(): Unknown event %d.\n", event->eventType);
         break;
