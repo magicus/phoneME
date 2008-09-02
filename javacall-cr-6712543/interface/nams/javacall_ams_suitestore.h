@@ -73,8 +73,9 @@ typedef enum {
 /**
  * @enum javacall_ams_permission
  */
-/* one to one mapping with Permissions.java */
 typedef enum {
+  /** an invalid permission */
+  JAVACALL_AMS_PERMISSION_INVALID = 0,
   /** javax.microedition.io.Connector.http permission ID. */
   JAVACALL_AMS_PERMISSION_HTTP = 2,
   /** javax.microedition.io.Connector.socket permission ID. */
