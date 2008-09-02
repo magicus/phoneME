@@ -1056,25 +1056,40 @@ void SourceObjectWriter::write_jni_method_adapter(Method *method,
     }
   }
 
-  const char * const zero_param_name = is_static ? "clazz" : "thisObj";
-
   switch (return_type) {
-    case T_BOOLEAN:
-    case T_CHAR:
-    case T_BYTE:
-    case T_SHORT:
-    case T_INT:
-    case T_LONG:
-    case T_FLOAT:
-    case T_DOUBLE:
-      s->print_cr("  %s ret = 0;", return_type_info->type_name);
+  case T_BOOLEAN:
+  case T_CHAR:
+  case T_BYTE:
+  case T_SHORT:
+  case T_INT:
+  case T_LONG:
+  case T_FLOAT:
+  case T_DOUBLE:
+    s->print_cr("  %s ret = 0;", return_type_info->type_name);
   }
 
   s->print_cr("  KNI_StartHandles(%d);", handle_count);
-  s->print_cr("  KNI_DeclareHandle(%s);", zero_param_name);
-  s->print_cr("  %s(%s);", 
+
+  switch (return_type) {
+  case T_OBJECT:
+  case T_ARRAY:
+    s->print_cr("  KNI_DeclareHandle(ret);");
+  }
+
+  s->print_cr("  JNIEnv * env = &_jni_env;");
+  // JNI spec requires that at least 16 references can be created in a native
+  // method
+  s->print_cr("  if (env->PushLocalFrame(%d) == JNI_OK) {", handle_count + 16);
+
+  const char * const zero_param_name = is_static ? "clazz" : "thisObj";
+
+  s->print_cr("    KNI_DeclareHandle(kni_%s);", zero_param_name);
+  s->print_cr("    %s(kni_%s);", 
               is_static ? "KNI_GetClassPointer" : "KNI_GetThisPointer",
               zero_param_name);
+  s->print_cr("    jobject %s = env->NewLocalRef(kni_%s);", 
+              zero_param_name, zero_param_name);
+  s->print_cr("    KNI_ReleaseHandle(kni_%s);", zero_param_name);
 
   // KNI: the leftmost parameter has index 1
   int arg_count = 1;
@@ -1093,15 +1108,18 @@ void SourceObjectWriter::write_jni_method_adapter(Method *method,
     case T_LONG:
     case T_FLOAT:
     case T_DOUBLE:
-      s->print_cr("  const %s param%d = %s(%d);", 
+      s->print_cr("    const %s param%d = %s(%d);", 
                   arg_info->type_name, arg_count, 
                   arg_info->get_param_name, arg_position);
       break;
     case T_OBJECT:
     case T_ARRAY:
-      s->print_cr("  KNI_DeclareHandle(param%d);", arg_count);
-      s->print_cr("  KNI_GetParameterAsObject(%d, param%d);", 
+      s->print_cr("    KNI_DeclareHandle(kni_param%d);", arg_count);
+      s->print_cr("    KNI_GetParameterAsObject(%d, kni_param%d);", 
                   arg_position, arg_count);
+      s->print_cr("    jobject param%d = env->NewLocalRef(kni_param%d);", 
+                  arg_count, arg_count);
+      s->print_cr("    KNI_ReleaseHandle(kni_param%d);", arg_count);
       break;
     case T_VOID:
     case T_SYMBOLIC:
@@ -1113,16 +1131,6 @@ void SourceObjectWriter::write_jni_method_adapter(Method *method,
     arg_position += ss.word_size();
     arg_count++;
   }
-
-  switch (return_type) {
-  case T_OBJECT:
-  case T_ARRAY:
-    s->print_cr("  KNI_DeclareHandle(ret);");
-    break;
-  }
-
-  s->print_cr("  JNIEnv * env = &_jni_env;");
-  s->print_cr("  if (env->PushLocalFrame(16) == JNI_OK) {");
 
   switch (return_type) {
   case T_OBJECT:
@@ -1140,7 +1148,7 @@ void SourceObjectWriter::write_jni_method_adapter(Method *method,
     s->print("    ret = ");
     break;
   case T_VOID:
-    s->print("  ");
+    s->print("    ");
     break;
   case T_SYMBOLIC:
   case T_ILLEGAL:
@@ -1183,8 +1191,6 @@ void SourceObjectWriter::write_jni_method_adapter(Method *method,
     s->print_cr("  KNI_EndHandles();");
     s->print_cr("  KNI_ReturnVoid();");
     break;
-  case T_SYMBOLIC:
-  case T_ILLEGAL:
   default:
     SHOULD_NOT_REACH_HERE();
   }
