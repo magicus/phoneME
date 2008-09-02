@@ -839,6 +839,10 @@ public final class RegistryImpl implements Counter {
             						application.getClassname(), wait, this);
         if (invoc != null) {
             // Keep track of how many responses have been received;
+        	final int fromSuiteId = invoc.invokingSuiteId; 
+        	final String fromClass = invoc.invokingClassname;
+        	int toSuiteId = invoc.suiteId; 
+        	String toClass = invoc.classname;  
 
             /*
              * If there was a previous Request/Tid
@@ -872,16 +876,13 @@ public final class RegistryImpl implements Counter {
             if (invoc.previous != null && invoc.previous.getStatus() == Invocation.HOLD) {
                 // Restore ACTIVE status to a previously HELD Invocation
                 invoc.previous.setStatus(Invocation.ACTIVE);
+            	toSuiteId = invoc.previous.suiteId; 
+            	toClass = invoc.previous.classname;  
             }
 
             // Make an attempt to gain the foreground
-            if (invoc.invokingSuiteId != AppProxy.EXTERNAL_SUITE_ID &&
-                    invoc.invokingClassname != null) {
-
-                // Strong FG transition requested
-            	AppProxy.requestForeground(invoc.invokingSuiteId,
-                                              invoc.invokingClassname);
-            }
+        	AppProxy.requestForeground(fromSuiteId, fromClass, 
+        						toSuiteId, toClass);
 
             return invoc.wrap();
         }
