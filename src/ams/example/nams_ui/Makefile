@@ -99,7 +99,7 @@ $(MIDP_OBJ_DIR)/appManager$(OBJ): $(SRC_DIR)/appManager.cpp
 $(MIDP_OBJ_DIR)/javacallImpl$(OBJ): $(SRC_DIR)/javacallImpl.cpp
 	$(A)$(CPP) $(CFLAGS) $(DEBUG_CFLAGS) $(EXTRA_CFLAGS) $(SRC_DIR)/javacallImpl.cpp $(CC_OUTPUT)$@
 
-$(MIDP_OBJ_DIR)/%.res: $(SRC_DIR)/res/%.rc
+$(MIDP_OBJ_DIR)/%.res: $(SRC_DIR)/res/%.rc $(SRC_DIR)/res/toolbar.bmp $(SRC_DIR)/res/*.ico
 	$(A)$(RC) $(RCFLAGS)  /d "NDEBUG" /fo $@ $<
 
 background: $(SRC_DIR)/res/background.bmp

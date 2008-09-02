@@ -127,3 +127,8 @@ IDB_DEF_SUITE_ICON ICON "suite.ico"
 IDB_FOLDER_ICON    ICON "folder.ico"
 
 IDB_MAIN_TOOLBAR_BUTTONS BITMAP "toolbar.bmp"
+
+IDI_PERMISSON_DENY     ICON "permission_deny.ico"
+IDI_PERMISSON_ONESHOT  ICON "permission_oneshot.ico"
+IDI_PERMISSON_SESSION  ICON "permission_session.ico"
+IDI_PERMISSON_ALLOW    ICON "permission_allow.ico"

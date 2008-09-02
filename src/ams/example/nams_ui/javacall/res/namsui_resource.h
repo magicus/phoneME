@@ -71,4 +71,9 @@
 #define  IDB_DEF_MIDLET_ICON_3     963
 #define  IDB_FOLDER_ICON           970
 
+#define  IDI_PERMISSON_DENY       1000
+#define  IDI_PERMISSON_ONESHOT    1001
+#define  IDI_PERMISSON_SESSION    1002
+#define  IDI_PERMISSON_ALLOW      1003
+
 //#define  IDB_MIDLET_TREE_BG   10001
