@@ -128,7 +128,14 @@ _JNI_FindClass(JNIEnv *env, const char * name) {
   GUARANTEE(!result.is_null(), "mirror must not be null");
 
   if (cl().is_instance_class()) {
+    GUARANTEE(!Thread::current()->has_pending_entries(),
+              "Must be no pending entries at this point");
+
     ((InstanceClass*)&cl)->initialize(JVM_SINGLE_ARG_CHECK_0);
+
+    if (Thread::current()->has_pending_entries()) {
+      invoke_entry_void();
+    }
   }
 
   return new_local_ref_for_oop(env, &result);
@@ -406,6 +413,49 @@ _JNI_AllocObject(JNIEnv *env, jclass clazz) {
   Oop::Raw obj = Universe::new_instance(&instance_cls JVM_CHECK_0);
 
   return new_local_ref_for_oop(env, &obj);
+}
+
+static jobject JNICALL 
+_JNI_NewObject(JNIEnv *env, jclass clazz, jmethodID methodID, ...) {
+  jobject obj = env->AllocObject(clazz);
+  
+  if (obj == NULL) {
+    return NULL;
+  }
+  
+  va_list args;
+  va_start(args, methodID);
+  env->CallNonvirtualVoidMethodV(obj, clazz, methodID, args);
+  va_end(args);
+
+  return obj;
+}
+
+static jobject JNICALL 
+_JNI_NewObjectV(JNIEnv *env, jclass clazz, jmethodID methodID, va_list args) {
+  jobject obj = env->AllocObject(clazz);
+  
+  if (obj == NULL) {
+    return NULL;
+  }
+  
+  env->CallNonvirtualVoidMethodV(obj, clazz, methodID, args);
+
+  return obj;
+}
+
+static jobject JNICALL 
+_JNI_NewObjectA(JNIEnv *env, jclass clazz, jmethodID methodID, 
+                const jvalue *args) {
+  jobject obj = env->AllocObject(clazz);
+  
+  if (obj == NULL) {
+    return NULL;
+  }
+  
+  env->CallNonvirtualVoidMethodA(obj, clazz, methodID, args);
+
+  return obj;
 }
 
 static jclass JNICALL
@@ -1695,9 +1745,9 @@ static struct JNINativeInterface _jni_native_interface = {
     _JNI_EnsureLocalCapacity, // EnsureLocalCapacity
 
     _JNI_AllocObject, // AllocObject
-    NULL, // NewObject
-    NULL, // NewObjectV
-    NULL, // NewObjectA
+    _JNI_NewObject, // NewObject
+    _JNI_NewObjectV, // NewObjectV
+    _JNI_NewObjectA, // NewObjectA
 
     _JNI_GetObjectClass, // GetObjectClass
     _JNI_IsInstanceOf, // IsInstanceOf
