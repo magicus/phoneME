@@ -33,7 +33,7 @@
 ############################################################
 
 # Name of the library
-APPMANAGER_UI_IMPL_NAME = appmanager_ui/lwuit
+APPMANAGER_UI_IMPL_NAME = appmanager_ui/lwuitimpl
 
 # Local module directory
 APPMANAGER_UI_IMPL_DIR = $(SUBSYSTEM_AMS_DIR)/$(APPMANAGER_UI_IMPL_NAME)
