@@ -58,6 +58,10 @@ static javacall_ams_permission midp_permission2javacall(int midpPermissionId);
 static javacall_ams_permission_val
 midp_permission_val2javacall(jbyte midpPermissionVal);
 
+static int javacall_permission2midp(javacall_ams_permission jcPermission);
+static jbyte
+javacall_permission_val2midp(javacall_ams_permission_val jcPermissionVal);
+
 /*----------------------- Suite Storage: Common API -------------------------*/
 
 /**
@@ -1022,6 +1026,7 @@ java_ams_suite_get_permissions(javacall_suite_id suiteId,
                            &pMidpPermissions,
                            &iNumberOfPermissions);
     if (status != ALL_OK) {
+        storageFreeError(pszError);
         return midp_error2javacall(status);
     }
 
@@ -1045,6 +1050,100 @@ java_ams_suite_get_permissions(javacall_suite_id suiteId,
 }
 
 /**
+ * Implementation for java_ams_suite_set_permission and
+ * java_ams_suite_set_permissions.
+ *
+ * @param suiteId       [in]  unique ID of the MIDlet suite
+ * @param pPermissions  [in]  array of JAVACALL_AMS_NUMBER_OF_PERMISSIONS
+ *                            elements containing the permissions' values
+ *                            to be set; may be NULL
+ * @param permissionToSet [in] permission that must be set or
+ *                             JAVACALL_AMS_PERMISSION_INVALID if it is required
+ *                             to set values for all permissions
+ * @param valueToSet      [in] value to which permissionToSet must be set or
+ *                             JAVACALL_AMS_PERMISSION_VAL_INVALID if it is
+ *                             required to set values for all permissions
+ *
+ * @return <tt>JAVACALL_OK</tt> on success, an error code otherwise
+ */
+static javacall_result
+set_permissions_impl(javacall_suite_id suiteId,
+                     javacall_ams_permission_val* pPermissions,
+                     javacall_ams_permission permissionToSet,
+                     javacall_ams_permission_val valueToSet) {
+    MIDPError status;
+    char* pszError = NULL;
+    jbyte permissionsBuf[JAVACALL_AMS_NUMBER_OF_PERMISSIONS];
+    jbyte* pTmpPermissions;
+    jbyte* pNewMidpPermissions;
+    int iNumberOfPermissions;
+    jbyte pushInterruptSetting;
+    jint pushOptions;
+    jboolean enabled;
+    int i;
+
+    /* read other settings to preserve them when updating permissions */
+    status = read_settings(&pszError, (SuiteIdType)suiteId,
+                           &enabled,
+                           &pushInterruptSetting,
+                           &pushOptions,
+                           &pTmpPermissions,
+                           &iNumberOfPermissions);
+    if (status != ALL_OK) {
+        storageFreeError(pszError);
+        return midp_error2javacall(status);
+    }
+
+    /* convert Javacall permission values to the midp values */
+    if (pPermissions != NULL) {
+        /* set values for all permissions */
+        iNumberOfPermissions = JAVACALL_AMS_NUMBER_OF_PERMISSIONS;
+        pNewMidpPermissions = permissionsBuf;
+        
+        for (i = 0; i < iNumberOfPermissions; i++) {
+            int midpPermission =
+                javacall_permission2midp((javacall_ams_permission)i);
+            if (midpPermission >= 0 &&
+                    midpPermission < JAVACALL_AMS_NUMBER_OF_PERMISSIONS) {
+                pNewMidpPermissions[midpPermission] =
+                    javacall_permission_val2midp(pPermissions[i]);
+            }
+        }
+    } else {
+        /* set value for one permission */
+        int midpPermission;
+
+        pNewMidpPermissions = pTmpPermissions;
+
+        midpPermission = javacall_permission2midp(permissionToSet);
+        if (midpPermission >= 0 &&
+                midpPermission < JAVACALL_AMS_NUMBER_OF_PERMISSIONS) {
+            pNewMidpPermissions[midpPermission] =
+                    javacall_permission_val2midp(valueToSet);
+        }
+    }
+
+    /* write the updated settings */
+    status = write_settings(&pszError, (SuiteIdType)suiteId,
+                            enabled,
+                            pushInterruptSetting,
+                            pushOptions,
+                            pNewMidpPermissions,
+                            iNumberOfPermissions);
+
+    if (iNumberOfPermissions > 0 && pTmpPermissions != NULL) {
+        pcsl_mem_free(pTmpPermissions);
+    }
+
+    if (status != ALL_OK) {
+        storageFreeError(pszError);
+        return midp_error2javacall(status);
+    }
+
+    return JAVACALL_OK;
+}
+
+/**
  * App Manager invokes this function to set a single permission of the suite
  * when the user changes it.
  *
@@ -1058,7 +1157,7 @@ javacall_result
 java_ams_suite_set_permission(javacall_suite_id suiteId,
                               javacall_ams_permission permission,
                               javacall_ams_permission_val value) {
-    return JAVACALL_OK;
+    return set_permissions_impl(suiteId, NULL, permission, value);
 }
 
 /**
@@ -1074,13 +1173,12 @@ java_ams_suite_set_permission(javacall_suite_id suiteId,
 javacall_result
 java_ams_suite_set_permissions(javacall_suite_id suiteId,
                                javacall_ams_permission_val* pPermissions) {
-    /*MIDPError status;*/
-
     if (pPermissions == NULL) {
         return JAVACALL_FAIL;
     }
 
-    return JAVACALL_OK;
+    return set_permissions_impl(suiteId, pPermissions,
+        JAVACALL_AMS_PERMISSION_INVALID, JAVACALL_AMS_PERMISSION_VAL_INVALID);
 }
 
 /**
@@ -1777,6 +1875,54 @@ midp_permission_val2javacall(jbyte midpPermissionVal) {
     }
 
     return jcPermissionVal;
+}
+
+static int
+javacall_permission2midp(javacall_ams_permission jcPermission) {
+    /*
+     * IMPL_NOTE: here it is assumed that the numeric values of the same
+     *            MIDP and Javacall permissions are equal. This may not
+     *            be true.
+     */
+    return (int)jcPermission;
+}
+
+static jbyte
+javacall_permission_val2midp(javacall_ams_permission_val jcPermissionVal) {
+    jbyte midpPermissionVal;
+
+    /*
+     * IMPL_NOTE: values in "case <N>" must be equal to the corresponding
+     *            Permissions.<Value> constants in Java.
+     */
+    switch (jcPermissionVal) {
+        case JAVACALL_AMS_PERMISSION_VAL_NEVER:
+            midpPermissionVal = 0;  /* Permissions.NEVER */
+            break;
+        case JAVACALL_AMS_PERMISSION_VAL_ALLOW:
+            midpPermissionVal = 1;  /* Permissions.ALLOW */
+            break;
+        case JAVACALL_AMS_PERMISSION_VAL_BLANKET_GRANTED:
+            midpPermissionVal = 2;  /* Permissions.BLANKET_GRANTED */
+            break;
+        case JAVACALL_AMS_PERMISSION_VAL_BLANKET:
+            midpPermissionVal = 4;  /* Permissions.BLANKET */
+            break;
+        case JAVACALL_AMS_PERMISSION_VAL_SESSION:
+            midpPermissionVal = 8;  /* Permissions.SESSION */
+            break;
+        case JAVACALL_AMS_PERMISSION_VAL_ONE_SHOT:
+            midpPermissionVal = 16; /* Permissions.ONESHOT */
+            break;
+        case JAVACALL_AMS_PERMISSION_VAL_BLANKET_DENIED:
+            midpPermissionVal = -128; /* Permissions.BLANKET_DENIED */
+            break;
+
+        default: /* Unknown */
+            midpPermissionVal = Permissions.NEVER;
+    }
+
+    return midpPermissionVal;
 }
 
 #undef FREE_JC_STRING
