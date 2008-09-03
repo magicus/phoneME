@@ -83,6 +83,7 @@ USE_WTK_DEBUG           = false
 USE_AMS_FOLDERS         = false
 USE_AMS_EXECUTABLE      = true
 USE_OCSP                = false
+USE_LWUIT_AMS		= true
 
 # DEBUG
 USE_DEBUG               = false
@@ -115,4 +116,3 @@ USE_LINKS               = true
 # ABB
 USE_MIDP_ABB            = false
 
-AMS_UI_IMPL		= stubs

@@ -298,6 +298,9 @@ JTWI_NATIVE_FILES	+= $(SUBSYSTEM_MMAPI_NATIVE_FILES)
 LD_FLAGS		+= $(SUBSYSTEM_MMAPI_LD_FLAGS)
 LIBS			+= $(SUBSYSTEM_MMAPI_LIBS)
 
+$(MIDP_CLASSES_ZIP):: $(SUBSYSTEM_LWUIT_JAVA_FILES)
+	$(appendjavafiles)
+
 #######################################################################
 # JSRs
 #######################################################################

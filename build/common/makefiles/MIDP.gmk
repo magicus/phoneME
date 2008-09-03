@@ -55,7 +55,7 @@ vpath % $(MIDP_OUTPUT_DIR)
 # list files are removed first.  Evaulation of subsequent dependencies
 # will have the side effect of populating the list files.
 # 
-$(MIDP_CLASSES_ZIP) ::
+$(MIDP_CLASSES_ZIP) ::       
 	@echo " ... searching updated .java files" $(LOG)
 	$(remove_filelist)
 	$(remove_genfilelist)
@@ -134,6 +134,27 @@ ifneq ($(strip $(JTWI_JUNIT_JAVA_FILES)),)
 endif
 endif
 
+
+# Add lwuit classes
+UNCOMPRESSED_LWUIT_CLASSES =
+
+ifeq ($(AMS_UI_IMPL), lwuit)
+LWUIT_JAR = $(LWUIT_LIB_DIR)/LWUIT.jar
+LWUIT_COMPONENT_CLASS = $(CLASSBINDIR)/com/sun/lwuit/Component.class
+
+UNCOMPRESSED_LWUIT_CLASSES += $(LWUIT_COMPONENT_CLASS)
+
+$(LWUIT_JAR):
+	touch $(LWUIT_JAR)
+
+$(LWUIT_COMPONENT_CLASS): $(LWUIT_JAR)
+	@if [ '!' -d $(CLASSBINDIR) ]; then \
+	mkdir -p $(CLASSBINDIR); \
+	fi
+	@echo " ... uncompressing LWUIT classes" $(LOG)
+	@(cd $(CLASSBINDIR); $(JAR_CMD) xf $(LWUIT_JAR)) $(LOG) 
+endif
+
 # ================================================================
 # Post-Java-Dependency-Search for classes.zip
 # Creates classes.zip
@@ -142,6 +163,7 @@ $(MIDP_CLASSES_ZIP)::$(GENERATED_JAVA_FILES) \
 				$(PREVERIFY_CMD) \
                                 $(CONFIGURATOR_JAR_FILE) \
                                 $(UNCOMPRESSED_VM_CLASSES) \
+				$(UNCOMPRESSED_LWUIT_CLASSES) \
                                 FORCE
 	@if [ '!' -d $(CLASSBINDIR) ]; then \
 		mkdir -p $(CLASSBINDIR); \
