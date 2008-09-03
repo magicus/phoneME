@@ -179,8 +179,10 @@ typedef javacall_int32 javacall_record_id;
 /**
  * @define JAVACALL_INVALID_SUITE_ID
  * @brief The suite_id that doesn't correspond to any midlet suite
+ *
+ * IMPL_NOTE: value -1 is reserved for internal (rommized) MIDlet suites
  */
-#define JAVACALL_INVALID_SUITE_ID (-1)
+#define JAVACALL_INVALID_SUITE_ID (-2)
 
 /**
  * @define JAVACALL_INVALID_FOLDER_ID
