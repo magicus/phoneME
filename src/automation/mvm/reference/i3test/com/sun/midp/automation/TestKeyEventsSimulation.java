@@ -30,7 +30,7 @@ import com.sun.midp.i3test.*;
 import java.util.*;
 
 /**
- * i3test for keyboard events simulateion
+ * i3test for keyboard events simulation
  */
 public class TestKeyEventsSimulation extends TestCase {
     /** URL of suite to install */
