@@ -207,6 +207,8 @@ static javacall_utf16_string CloneJavacallUtf16(javacall_const_utf16_string str)
 
 static int PermissionValueToIndex(javacall_ams_permission_val jpPermission);
 
+static HTREEITEM HitTest(HWND hWnd, LPARAM lParam);
+
 
 /**
  * Entry point of the Javacall executable.
@@ -1565,6 +1567,25 @@ static BOOL StartMidlet(HWND hTreeWnd) {
     return FALSE;
 }
 
+static HTREEITEM HitTest(HWND hWnd, LPARAM lParam) {
+    TV_HITTESTINFO tvH;
+    HTREEITEM hItem;
+
+    tvH.pt.x = LOWORD(lParam);
+    tvH.pt.y = HIWORD(lParam);
+
+//    wprintf (_T("Click position (%d, %d)\n"), tvH.pt.x, tvH.pt.y);
+
+    hItem = TreeView_HitTest(hWnd, &tvH);
+    if (hItem && (tvH.flags & TVHT_ONITEM))
+    {
+//        wprintf (_T("Hit flags hex=%x\n"), tvH.flags);
+        return hItem;
+    }
+
+    return NULL;
+}
+
 /**
  *  Processes messages for the MIDlet tree window.
  *
@@ -1574,27 +1595,24 @@ MidletTreeWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
     PAINTSTRUCT ps;
     HDC hdc;
     javacall_result res;
+    HTREEITEM hItem;
 
     switch (message) {
 
     case WM_RBUTTONDOWN: {
-        TV_HITTESTINFO tvH;
+        POINT pt;
 
-        tvH.pt.x = LOWORD(lParam);
-        tvH.pt.y = HIWORD(lParam);
-
-//        wprintf (_T("Click position (%d, %d)\n"), tvH.pt.x, tvH.pt.y);
-
-        HTREEITEM hItem = TreeView_HitTest(hWnd, &tvH);
-        if (hItem && (tvH.flags & TVHT_ONITEM))
+        hItem = HitTest(hWnd, lParam);
+        if (hItem)
         {
-//            wprintf (_T("Hit flags hex=%x\n"), tvH.flags);
-
             // Mark the item as selected
             TreeView_SelectItem(hWnd, hItem);
 
+            pt.x = LOWORD(lParam);
+            pt.y = HIWORD(lParam);
+
             // Convert the coordinates to global ones
-            ClientToScreen(hWnd, (LPPOINT) &tvH.pt);
+            ClientToScreen(hWnd, (LPPOINT) &pt);
 
             TVI_INFO* pInfo = GetTviInfo(hWnd, hItem);
             if (pInfo) {
@@ -1632,7 +1650,7 @@ MidletTreeWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
                         break;
                 }
                 if (hSubMenu) {
-                    TrackPopupMenu(hSubMenu, 0, tvH.pt.x, tvH.pt.y, 0, hWnd,
+                    TrackPopupMenu(hSubMenu, 0, pt.x, pt.y, 0, hWnd,
                         NULL);
                 }
             }
@@ -1643,7 +1661,6 @@ MidletTreeWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
 
     case WM_LBUTTONDBLCLK: {
         StartMidlet(hWnd);
-
         break;
     }
 
@@ -2088,20 +2105,16 @@ LRESULT CALLBACK
 PermissionWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
     HDC hdc;
     javacall_result res;
+    HTREEITEM hItem, hParent;
 
     switch (message) {
 
     case WM_LBUTTONDBLCLK: {
-        HTREEITEM hItem, hParent;
-        TV_HITTESTINFO tvH;
-
-        tvH.pt.x = LOWORD(lParam);
-        tvH.pt.y = HIWORD(lParam);
-
-        hItem = TreeView_HitTest(hWnd, &tvH);
-        if (hItem && (tvH.flags & TVHT_ONITEM))
+        hItem = HitTest(hWnd, lParam);
+        if (hItem)
         {
             hParent = TreeView_GetParent(hWnd, hItem);
+
             if (hParent) {
                 // collapse child items upon double click on any of them
                 TreeView_Expand(hWnd, hParent, TVE_COLLAPSE);
@@ -2117,20 +2130,13 @@ PermissionWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
 
     case WM_LBUTTONDOWN:
     case WM_RBUTTONDOWN: {
-        TV_HITTESTINFO tvH;
-
-        tvH.pt.x = LOWORD(lParam);
-        tvH.pt.y = HIWORD(lParam);
-
-        HTREEITEM hItem = TreeView_HitTest(hWnd, &tvH);
-        if (hItem && (tvH.flags & TVHT_ONITEM))
+        hItem = HitTest(hWnd, lParam);
+        if (hItem)
         {
-            // Mark the item as selected
-            TreeView_SelectItem(hWnd, hItem);
+            hParent = TreeView_GetParent(hWnd, hItem);
 
-            HTREEITEM hParent = TreeView_GetParent(hWnd, hItem);
-
-            // If the selected item represents permission value
+            // If the hitted item represents permission value then
+            // change value of the permission itslef
             if (hParent) {
                 TVI_INFO* pParentInfo = GetTviInfo(hWnd, hParent);
                 TVI_INFO* pInfo = GetTviInfo(hWnd, hItem);
