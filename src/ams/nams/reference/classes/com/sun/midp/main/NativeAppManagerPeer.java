@@ -44,8 +44,10 @@ import com.sun.midp.suspend.SuspendSystem;
 import com.sun.midp.installer.Installer;
 import com.sun.midp.installer.HttpInstaller;
 import com.sun.midp.installer.FileInstaller;
+import com.sun.midp.installer.InternalMIDletSuiteImpl;
 
 import com.sun.cldc.isolate.Isolate;
+import com.sun.j2me.security.AccessController;
 
 /**
  * This is an implementation of the native application manager peer
@@ -449,7 +451,14 @@ public class NativeAppManagerPeer
                 final Installer installer = (nativeEvent.intParam2 == 2) ?
                     ((Installer)new FileInstaller()) :
                     ((Installer)new HttpInstaller());
-                
+
+                /* Set up permission checking for this suite. */
+                MIDletSuite midletSuite =
+                        InternalMIDletSuiteImpl.create("Installer",
+                                MIDletSuite.INTERNAL_SUITE_ID);
+                AccessController.setAccessControlContext(
+                    new CldcAccessControlContext(midletSuite));
+
                 new Thread() {
                     public void run() {
                         // force an overwrite and remove the RMS data

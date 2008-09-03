@@ -2547,7 +2547,7 @@ class AccessControl extends AccessControlContextAdapter {
      * Checks for permission and throw an exception if not allowed.
      * May block to ask the user a question.
      *
-     * @param permission ID of the permission to check for,
+     * @param name ID of the permission to check for,
      *      the ID must be from
      *      {@link com.sun.midp.security.Permissions}
      * @param resource string to insert into the question, can be null if
