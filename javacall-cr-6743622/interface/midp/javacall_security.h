@@ -1,6 +1,6 @@
 /*
  *
- * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
@@ -220,7 +220,8 @@ typedef enum {
  *         dialog will be displayed by the platform.
  * @retval JAVACALL_FAIL in case prompting the permission dialog failed.
  * @retval JAVACALL_NOT_IMPLEMENTED in case the native permission dialog
- *         is not implemented by the platform. 
+ *         is not implemented by the platform.
+ * @deprecated  not used by MIDP or JAVACALL
  */
 javacall_result javacall_security_permission_dialog_display(javacall_utf16* message,
                                                             int messageLength,
@@ -234,6 +235,65 @@ javacall_result javacall_security_permission_dialog_display(javacall_utf16* mess
  */
 void javanotify_security_permission_dialog_finish(
                         javacall_security_permission_type userPermission);
+
+/**
+ * The result of permission check.
+ */
+typedef enum {
+    JAVACALL_SECURITY_UNKNOWN = -1,
+    JAVACALL_SECURITY_DENY = 0,
+    JAVACALL_SECURITY_GRANT = 1
+}javacall_security_permission_result;
+
+/**
+ * Checks for security permission.
+ * @param suite_id      the MIDlet Suite the permission should be checked with
+ * @param permission    permission type
+ * @param enable_block  enable user interaction. If it is
+ *                      JAVACALL_FALSE the call should never be blocked.
+ * @param result        address of variable to receive the
+ *                      security status (JAVACALL_SECURITY_GRANT
+ *                      - granted,  JAVACALL_SECURITY_DENY -
+ *                      denied), or the handle of check session
+ *                      that blocks this call. Actual result
+ *                      will be notified through
+ *                      <code>javanotify_security_set_permission</code>.
+ * 
+ * @return JAVACALL_OK if check was performed correctly and
+ *         result is stored at <code>result</code>,
+ *         JAVACALL_FALSE if the function fails to perform
+ *         checking, JAVACALL_WOULD_BLOCK if user intercation
+ *         dialog is created and actual result will be delivered
+ *         later.
+ * @note the function MUST NOT return JAVACALL_WOULD_BLOCK if
+ *       <code>enable_block</code> equals to JAVACALL_FALSE
+ * @note it is possible to have several security session in
+ *       parallel.
+ * @note this function is alternate to
+ *       <code><javacall_security_permission_dialog_display/code>
+ *       that is deprecated
+ */
+javacall_result
+javacall_security_check_permission(const javacall_suite_id suite_id,
+                                   const javacall_ams_permission permission,
+                                   const javacall_bool enable_block,
+                                   unsigned int* const result);
+/**
+ * Notifies the result of permission check.
+ * 
+ * @param suite_id      the MIDlet Suite the permission was
+ *                      checked with
+ * @param permission    permission type
+ * @param session       the handle of security session the java
+ *                      thread waiting for
+ * @param result        the result of permission check
+ *                      (JAVACALL_SECURITY_GRANT - granted,
+ *                      JAVACALL_SECURITY_DENY - denied)
+ */
+void javanotify_security_permission_check_result(const javacall_suite_id suite_id, 
+                                                 const javacall_ams_permission permission,
+                                                 const unsigned int session,
+                                                 const unsigned int result);
 
 
 
