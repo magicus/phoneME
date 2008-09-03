@@ -447,16 +447,24 @@ public class NativeAppManagerPeer
                 final String url = nativeEvent.stringParam1;
 
                 final Installer installer = (nativeEvent.intParam2 == 2) ?
-                        new FileInstaller() : new HttpInstaller();
+                    ((Installer)new FileInstaller()) :
+                    ((Installer)new HttpInstaller());
                 
                 new Thread() {
                     public void run() {
                         // force an overwrite and remove the RMS data
-                        int suiteId = installer.installJad(url,
-                            Constants.INTERNAL_STORAGE_ID, true, true, null);
+                        int suiteId;
 
-                        notifyOperationCompleted(
-                            EventTypes.NATIVE_INSTALL_REQUEST, appId, suiteId);
+                         try {
+                             suiteId = installer.installJad(url,
+                                 Constants.INTERNAL_STORAGE_ID,
+                                     true, true, null);
+                         } catch (Exception e) {
+                             suiteId = MIDletSuite.UNUSED_SUITE_ID;
+                         }
+
+                         notifyOperationCompleted(
+                             EventTypes.NATIVE_INSTALL_REQUEST, appId, suiteId);
                     }
                 }.start();
                 break;

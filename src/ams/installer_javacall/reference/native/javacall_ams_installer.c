@@ -24,10 +24,17 @@
 
 #include <kni.h>
 #include <midpEvents.h>
+#include <midpEventUtil.h>
 #include <pcsl_string.h>
+#include <midpNativeAppManager.h>
 
 #include <javacall_defs.h>
 #include <javacall_ams_installer.h>
+
+#include <javautil_unicode.h>
+
+/* IMPL_NOTE: must be removed! */
+#include <javacall_ams_app_manager.h>
 
 /**
  * Application manager invokes this function to start a suite installation.
@@ -94,6 +101,7 @@ java_ams_install_suite(javacall_app_id appId,
     } else {
         MidpEvent evt;
         javacall_int32 urlLength;
+        pcsl_string temp;
 
         MIDP_EVENT_INITIALIZE(evt);
 

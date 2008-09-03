@@ -44,6 +44,7 @@
 #include <javacall_lcd.h>
 #include <javacall_ams_suitestore.h>
 #include <javacall_ams_app_manager.h>
+#include <javacall_ams_installer.h>
 #include <javacall_keypress.h>
 
 #ifdef USE_CONSOLE
@@ -1785,10 +1786,14 @@ MidletTreeWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
             }
 
             case IDM_SUITE_INSTALL: {
-                javacall_result res = java_ams_midlet_start(-1,
-                    g_jAppId,
-                    L"com.sun.midp.installer.DiscoveryApp",
-                    NULL);
+//                javacall_result res = java_ams_midlet_start(-1,
+//                    g_jAppId,
+//                    L"com.sun.midp.installer.DiscoveryApp",
+//                    NULL);
+                javacall_result res = java_ams_install_suite(g_jAppId,
+                    JAVACALL_INSTALL_SRC_ANY,
+                    L"http://daisy/midlets/HelloMIDlet.jad",
+                    JAVACALL_FALSE);
 
                 if (res == JAVACALL_OK) {
                     // IMPL_NOTE: the following code must be refactored
