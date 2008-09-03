@@ -135,6 +135,10 @@ _JNI_FindClass(JNIEnv *env, const char * name) {
 
     if (Thread::current()->has_pending_entries()) {
       invoke_entry_void();
+
+      if (env->ExceptionCheck()) {
+        return NULL;
+      }
     }
   }
 
