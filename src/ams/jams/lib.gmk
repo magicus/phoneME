@@ -54,9 +54,13 @@ ifeq ($(AMS_UI_IMPL), stubs)
 # app manager UI implementation is used because MIDletSuiteLauncher needs
 # refactoring of UI part into separate library.
 else
+ifeq ($(AMS_UI_IMPL), lwuit)
+# IMPL_NOTE: see IMPL_NOTE above
+else
 # Include suite_launcher implementation into the build
 SUBSYSTEM_AMS_JAVA_FILES += \
     $(JAMS_DIR)/suite_launcher/classes/com/sun/midp/appmanager/MIDletSuiteLauncher.java
+endif
 endif
 
 ifeq ($(USE_MULTIPLE_ISOLATES), true)

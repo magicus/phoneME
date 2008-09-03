@@ -52,6 +52,12 @@ ams_resources:: app_manager_resources
 INT_INPUT_AMS_SHARE_IMAGES_DIR = \
   $(APPMANAGER_UI_RESOURCE_DIR)/share
 
+# Lwuit ams definition
+ifeq ($(USE_LWUIT_AMS), true)
+LWUIT_LIB_DIR = $(APPMANAGER_UI_RESOURCE_DIR)/lwuit
+endif
+
+
 # define path to platform specific resources
 include $(APPMANAGER_UI_RESOURCE_DIR)/$(PLATFORM)/lib.gmk
 
