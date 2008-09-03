@@ -439,24 +439,24 @@ _JNI_EnsureLocalCapacity(JNIEnv* env, jint capacity) {
 static jobject JNICALL
 _JNI_AllocObject(JNIEnv *env, jclass clazz) {
   SETUP_ERROR_CHECKER_ARG;
+  UsingFastOops fast_oops;
 
   if (clazz == NULL) {
     return NULL;
   }
 
-  JavaClassObj::Raw cls_mirror = *decode_handle(clazz);
+  JavaClassObj::Fast cls_mirror = *decode_handle(clazz);
   GUARANTEE(cls_mirror.not_null(), "null argument to GetSuperclass");
-  JavaClass::Raw cls = cls_mirror().java_class();
+  JavaClass::Fast cls = cls_mirror().java_class();
 
   if (!cls.is_instance_class() || 
       cls().is_interface() || cls().is_abstract()) {
     Throw::instantiation(ExceptionOnFailure JVM_THROW_0);
   }
 
-  UsingFastOops fast_oops;
   InstanceClass::Fast instance_cls = cls.obj();
 
-  Oop::Raw obj = Universe::new_instance(&instance_cls JVM_CHECK_0);
+  Oop::Fast obj = Universe::new_instance(&instance_cls JVM_CHECK_0);
 
   return new_local_ref_for_oop(env, &obj);
 }
