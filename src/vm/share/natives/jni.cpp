@@ -237,7 +237,7 @@ _JNI_ThrowNew(JNIEnv *env, jclass clazz, const char *msg) {
 }
 
 static jthrowable JNICALL
-_JNI_ExceptionOccured(JNIEnv *env) {
+_JNI_ExceptionOccurred(JNIEnv *env) {
   Oop::Raw exc = Thread::current_pending_exception();
 
   return new_local_ref_or_null_for_oop(env, &exc);
@@ -474,7 +474,7 @@ _JNI_NewObject(JNIEnv *env, jclass clazz, jmethodID methodID, ...) {
   env->CallNonvirtualVoidMethodV(obj, clazz, methodID, args);
   va_end(args);
 
-  return env->ExceptionOccurred() ? NULL : obj;
+  return env->ExceptionCheck() ? NULL : obj;
 }
 
 static jobject JNICALL 
@@ -487,7 +487,7 @@ _JNI_NewObjectV(JNIEnv *env, jclass clazz, jmethodID methodID, va_list args) {
   
   env->CallNonvirtualVoidMethodV(obj, clazz, methodID, args);
 
-  return env->ExceptionOccurred() ? NULL : obj;
+  return env->ExceptionCheck() ? NULL : obj;
 }
 
 static jobject JNICALL 
@@ -501,7 +501,7 @@ _JNI_NewObjectA(JNIEnv *env, jclass clazz, jmethodID methodID,
   
   env->CallNonvirtualVoidMethodA(obj, clazz, methodID, args);
 
-  return env->ExceptionOccurred() ? NULL : obj;
+  return env->ExceptionCheck() ? NULL : obj;
 }
 
 static jclass JNICALL
@@ -1785,7 +1785,7 @@ static struct JNINativeInterface _jni_native_interface = {
 
     _JNI_Throw, // Throw
     _JNI_ThrowNew, // ThrowNew
-    _JNI_ExceptionOccured, // ExceptionOccurred
+    _JNI_ExceptionOccurred, // ExceptionOccurred
     _JNI_ExceptionDescribe, // ExceptionDescribe
     _JNI_ExceptionClear, // ExceptionClear
     _JNI_FatalError, // FatalError
