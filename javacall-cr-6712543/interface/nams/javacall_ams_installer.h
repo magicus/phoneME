@@ -460,11 +460,14 @@ typedef struct _javacall_ams_install_state {
 /**
  * Source from where the installation is requested:
  * an URL pointing to a JAD file, to a JAR file or to any of them.
+ *
+ * IMPL_NOTE: when changing the following values, make sure that the values
+ *            in NativeAppManagerPeer are also updated.
  */
 typedef enum {
-    JAVACALL_INSTALL_SRC_ANY,
-    JAVACALL_INSTALL_SRC_JAD,
-    JAVACALL_INSTALL_SRC_JAR
+    JAVACALL_INSTALL_SRC_ANY = 0,
+    JAVACALL_INSTALL_SRC_JAD = 1,
+    JAVACALL_INSTALL_SRC_JAR = 2
 } javacall_ams_install_source_type;
 
 /**
