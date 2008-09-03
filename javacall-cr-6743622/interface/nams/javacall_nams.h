@@ -750,7 +750,7 @@ javacall_ams_set_permissions(javacall_suite_id suiteID,
  *         checking, JAVACALL_WOULD_BLOCK if user intercation
  *         dialog is created and actual result will be delivered
  *         later.
- * @note the function MUST NOT resturn JAVACALL_WOULD_BLOCK if
+ * @note the function MUST NOT return JAVACALL_WOULD_BLOCK if
  *       <code>enable_block</code> equals to JAVACALL_FALSE
  * @note it is possible to have several security session in
  *       parallel.
