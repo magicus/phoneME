@@ -237,6 +237,124 @@ void javanotify_security_permission_dialog_finish(
                         javacall_security_permission_type userPermission);
 
 /**
+ * @enum javacall_security_permission
+ */
+/* one to one mapping with Permissions.java */
+typedef enum {
+  /** javax.microedition.io.Connector.http permission ID. */
+  JAVACALL_SECURITY_PERMISSION_HTTP = 2,
+  /** javax.microedition.io.Connector.socket permission ID. */
+  JAVACALL_SECURITY_PERMISSION_SOCKET,
+  /** javax.microedition.io.Connector.https permission ID. */
+  JAVACALL_SECURITY_PERMISSION_HTTPS,
+  /** javax.microedition.io.Connector.ssl permission ID. */
+  JAVACALL_SECURITY_PERMISSION_SSL,
+  /** javax.microedition.io.Connector.serversocket permission ID. */
+  JAVACALL_SECURITY_PERMISSION_SERVERSOCKET,
+  /** javax.microedition.io.Connector.datagram permission ID. */
+  JAVACALL_SECURITY_PERMISSION_DATAGRAM,
+  /** javax.microedition.io.Connector.datagramreceiver permission ID. */
+  JAVACALL_SECURITY_PERMISSION_DATAGRAMRECEIVER,
+  /** javax.microedition.io.Connector.comm permission ID. */
+  JAVACALL_SECURITY_PERMISSION_COMM,
+  /** javax.microedition.io.PushRegistry permission ID. */
+  JAVACALL_SECURITY_PERMISSION_PUSH,
+  /** javax.microedition.io.Connector.sms permission ID. */
+  JAVACALL_SECURITY_PERMISSION_SMS,
+  /** javax.microedition.io.Connector.cbs permission ID. */
+  JAVACALL_SECURITY_PERMISSION_CBS,
+  /** javax.wireless.messaging.sms.send permission ID. */
+  JAVACALL_SECURITY_PERMISSION_SMS_SEND,
+  /** javax.wireless.messaging.sms.receive permission ID. */
+  JAVACALL_SECURITY_PERMISSION_SMS_RECEIVE,
+  /** javax.wireless.messaging.cbs.receive permission ID. */
+  JAVACALL_SECURITY_PERMISSION_CBS_RECEIVE,
+  /** javax.microedition.media.RecordControl permission ID. */
+  JAVACALL_SECURITY_PERMISSION_MM_RECORD,
+  /** javax.microedition.media.VideoControl.getSnapshot permission ID. */
+  JAVACALL_SECURITY_PERMISSION_MM_CAPTURE,
+  /** javax.microedition.io.Connector.mms permission ID. */
+  JAVACALL_SECURITY_PERMISSION_MMS,
+  /** javax.wireless.messaging.mms.send permission ID. */ 
+  JAVACALL_SECURITY_PERMISSION_MMS_SEND,
+  /** javax.wireless.messaging.mms.receive permission ID. */
+  JAVACALL_SECURITY_PERMISSION_MMS_RECEIVE,
+  /** javax.microedition.apdu.aid permission ID. */
+  JAVACALL_SECURITY_PERMISSION_APDU_CONNECTION,
+  /** javax.microedition.jcrmi permission ID. */
+  JAVACALL_SECURITY_PERMISSION_JCRMI_CONNECTION,
+   /**
+    * javax.microedition.securityservice.CMSSignatureService
+    * permission ID.
+    */
+  JAVACALL_SECURITY_PERMISSION_SIGN_SERVICE,
+  /** javax.microedition.apdu.sat permission ID. */
+  JAVACALL_SECURITY_PERMISSION_ADPU_CHANNEL0,
+  /** javax.microedition.content.ContentHandler permission ID. */
+  JAVACALL_SECURITY_PERMISSION_CHAPI,
+  /** javax.microedition.pim.ContactList.read ID. */
+  JAVACALL_SECURITY_PERMISSION_PIM_CONTACT_READ,
+  /** javax.microedition.pim.ContactList.write ID. */
+  JAVACALL_SECURITY_PERMISSION_PIM_CONTACT_WRITE,
+  /** javax.microedition.pim.EventList.read ID. */
+  JAVACALL_SECURITY_PERMISSION_PIM_EVENT_READ,
+  /** javax.microedition.pim.EventList.write ID. */
+  JAVACALL_SECURITY_PERMISSION_PIM_EVENT_WRITE,
+  /** javax.microedition.pim.ToDoList.read ID. */
+  JAVACALL_SECURITY_PERMISSION_PIM_TODO_READ,
+  /** javax.microedition.pim.ToDoList.write ID. */
+  JAVACALL_SECURITY_PERMISSION_PIM_TODO_WRITE,
+  /** javax.microedition.io.Connector.file.read ID. */
+  JAVACALL_SECURITY_PERMISSION_FILE_READ,
+  /** javax.microedition.io.Connector.file.write ID. */
+  JAVACALL_SECURITY_PERMISSION_FILE_WRITE,
+  /** javax.microedition.io.Connector.obex.client ID. */
+  JAVACALL_SECURITY_PERMISSION_OBEX_CLIENT,
+  /** javax.microedition.io.Connector.obex.server ID. */
+  JAVACALL_SECURITY_PERMISSION_OBEX_SERVER,
+  /** javax.microedition.io.Connector.obex.client.tcp ID. */
+  JAVACALL_SECURITY_PERMISSION_TCP_OBEX_CLIENT,
+  /** javax.microedition.io.Connector.obex.server.tcp ID. */
+  JAVACALL_SECURITY_PERMISSION_TCP_OBEX_SERVER,
+  /** javax.microedition.io.Connector.bluetooth.client ID. */
+  JAVACALL_SECURITY_PERMISSION_BT_CLIENT,
+  /** javax.microedition.io.Connector.bluetooth.server ID. */
+  JAVACALL_SECURITY_PERMISSION_BT_SERVER,
+  /** javax.bluetooth.RemoteDevice.authorize ID. */
+  JAVACALL_SECURITY_PERMISSION_BT_AUTHORIZE,
+  /** javax.microedition.location.Location ID. */
+  JAVACALL_SECURITY_PERMISSION_LOC_LOCATION,
+  /** javax.microedition.location.Orientation ID. */
+  JAVACALL_SECURITY_PERMISSION_LOC_ORIENTATION,
+  /** javax.microedition.location.ProximityListener ID. */
+  JAVACALL_SECURITY_PERMISSION_LOC_PROXIMITY,
+  /** javax.microedition.location.LandmarkStore.read ID. */
+  JAVACALL_SECURITY_PERMISSION_LOC_LANDMARK_READ,
+  /** javax.microedition.location.LandmarkStore.write ID. */
+  JAVACALL_SECURITY_PERMISSION_LOC_LANDMARK_WRITE,
+  /** javax.microedition.location.LandmarkStore.category ID. */
+  JAVACALL_SECURITY_PERMISSION_LOC_LANDMARK_CATEGORY,
+  /** javax.microedition.location.LandmarkStore.management ID. */
+  JAVACALL_SECURITY_PERMISSION_LOC_LANDMARK_MANAGE,
+  /** javax.microedition.io.Connector.sip permission ID. */
+  JAVACALL_SECURITY_PERMISSION_SIP,
+  /** javax.microedition.io.Connector.sips permission ID. */
+  JAVACALL_SECURITY_PERMISSION_SIPS,
+  /** javax.microedition.payment.process permission ID. */
+  JAVACALL_SECURITY_PERMISSION_PAYMENT,
+  /** com.qualcomm.qjae.gps.Gps permission ID. */  
+  JAVACALL_SECURITY_PERMISSION_GPS,
+  /** javax.microedition.media.protocol.Datasource permission ID. */
+  JAVACALL_SECURITY_PERMISSION_MM_DATASOURCE,
+  /** javax.microedition.media.Player permission ID. */
+  JAVACALL_SECURITY_PERMISSION_MM_PLAYER,
+  /** javax.microedition.media.Manager permission ID. */
+  JAVACALL_SECURITY_PERMISSION_MM_MANAGER,
+  
+  JAVACALL_SECURITY_PERMISSION_LAST
+} javacall_security_permission;
+
+/**
  * The result of permission check.
  */
 typedef enum {
@@ -257,7 +375,7 @@ typedef enum {
  *                      denied), or the handle of check session
  *                      that blocks this call. Actual result
  *                      will be notified through
- *                      <code>javanotify_security_set_permission</code>.
+ *                      <code>javanotify_security_permission_check_result</code>.
  * 
  * @return JAVACALL_OK if check was performed correctly and
  *         result is stored at <code>result</code>,
@@ -270,12 +388,12 @@ typedef enum {
  * @note it is possible to have several security session in
  *       parallel.
  * @note this function is alternate to
- *       <code><javacall_security_permission_dialog_display/code>
+ *       <code>javacall_security_permission_dialog_display/code>
  *       that is deprecated
  */
 javacall_result
 javacall_security_check_permission(const javacall_suite_id suite_id,
-                                   const javacall_ams_permission permission,
+                                   const javacall_security_permission permission,
                                    const javacall_bool enable_block,
                                    unsigned int* const result);
 /**
@@ -288,12 +406,13 @@ javacall_security_check_permission(const javacall_suite_id suite_id,
  *                      thread waiting for
  * @param result        the result of permission check
  *                      (JAVACALL_SECURITY_GRANT - granted,
- *                      JAVACALL_SECURITY_DENY - denied)
+ *                       JAVACALL_SECURITY_DENY - denied)
  */
-void javanotify_security_permission_check_result(const javacall_suite_id suite_id, 
-                                                 const javacall_ams_permission permission,
-                                                 const unsigned int session,
-                                                 const unsigned int result);
+void 
+javanotify_security_permission_check_result(const javacall_suite_id suite_id, 
+                                            const javacall_security_permission permission,
+                                            const unsigned int session,
+                                            const unsigned int result);
 
 
 
