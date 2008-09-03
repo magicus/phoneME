@@ -134,16 +134,23 @@ typedef enum {
 
 typedef struct _TVI_INFO {
     tvi_type type; // type of the node, valid values are TVI_TYPE_SUITE,
-                   // TVI_TYPE_MIDLET, TVI_TYPE_FOLDER
+                   // TVI_TYPE_MIDLET, TVI_TYPE_FOLDER and TVI_TYPE_PERMISSION
+
     javacall_utf16_string className; // MIDlet class name if item type is
                                      // TVI_TYPE_MIDLET
+
     javacall_utf16_string displayName; // Name to display, works for all types
+                                       // but TVI_TYPE_PERMISSION
+
     javacall_suite_id suiteId; // id of the suite, makes sense if item type is
-                               // TVI_TYPE_MIDLET and TVI_TYPE_SUITE
+                               // TVI_TYPE_MIDLET, TVI_TYPE_SUITE and
+                               // TVI_TYPE_PERMISSION
+
     javacall_app_id appId; // external application id if item type is
                            // TVI_TYPE_MIDLET and the MIDlet is running
 
-    javacall_folder_id folderId; // folder ID, applicable for all TVI types
+    javacall_folder_id folderId; // folder ID, applicable for all TVI types but
+                                 // TVI_TYPE_PERMISSION
 
     javacall_ams_permission permId; // permission ID, used if the type is
                                     // TVI_TYPE_PERMISSION
@@ -151,7 +158,8 @@ typedef struct _TVI_INFO {
     javacall_ams_permission_val permValue; // permission value, used if the
                                            // type is TVI_TYPE_PERMISSION
 
-    BOOL modified;
+    BOOL modified;  // indicates whether the item was modified,
+                    // i.e. the suite storage should be updated accordingly
 
 } TVI_INFO;
 
@@ -2198,6 +2206,7 @@ PermissionWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
         TVI_INFO* pInfo = (TVI_INFO*)wParam;
         javacall_ams_permission_val
             jpvPermissions[JAVACALL_AMS_NUMBER_OF_PERMISSIONS];
+        javacall_suite_id suiteId;
 
         // Clear old content
         TreeView_DeleteAllItems(hWnd);
@@ -2208,12 +2217,15 @@ PermissionWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
         hPrevLev2Item = NULL;
 
         if (pInfo) {
-            res = java_ams_suite_get_permissions(pInfo->suiteId, jpvPermissions);
+            suiteId = pInfo->suiteId;
+
+            wprintf(_T("Displaying settings for suite id=%d...\n"), (int)suiteId);
+
+            res = java_ams_suite_get_permissions(suiteId, jpvPermissions);
             if (res == JAVACALL_OK) {
                 javacall_ams_permission_val jpvVal;
                 TCHAR szBuf[127];
                 int nIndex;
-                TVI_INFO* pInfo;
 
                 for (int p = 0; p < JAVACALL_AMS_NUMBER_OF_PERMISSIONS; p++) {
                     jpvVal = jpvPermissions[p];
@@ -2233,6 +2245,7 @@ PermissionWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
 
                     pInfo = CreateTviInfo();
                     pInfo->type = TVI_TYPE_PERMISSION;
+                    pInfo->suiteId = suiteId;
                     pInfo->permId = (javacall_ams_permission)p;
                     pInfo->permValue = jpvVal;
 
@@ -2241,6 +2254,7 @@ PermissionWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
                     for (int n = PERMISSION_VAL_NUM; n > 0; n--) {
                         pInfo = CreateTviInfo();
                         pInfo->type = TVI_TYPE_PERMISSION;
+                        pInfo->suiteId = suiteId;
                         pInfo->permId = (javacall_ams_permission)p;
                         pInfo->permValue = g_jpvPermissionValues[n - 1];
 
