@@ -162,7 +162,7 @@ static TVI_INFO* GetTviInfo(HWND hWnd, HTREEITEM hItem);
 LRESULT CALLBACK MainWndProc(HWND, UINT, WPARAM, LPARAM);
 LRESULT CALLBACK MidletTreeWndProc(HWND, UINT, WPARAM, LPARAM);
 LRESULT CALLBACK InfoWndProc(HWND, UINT, WPARAM, LPARAM);
-LRESULT CALLBACK PermissionsWndProc(HWND, UINT, WPARAM, LPARAM);
+LRESULT CALLBACK PermissionWndProc(HWND, UINT, WPARAM, LPARAM);
 INT_PTR CALLBACK TreeDlgProc(HWND hwndDlg, UINT uMsg, WPARAM wParam,
                              LPARAM lParam);
 
@@ -184,6 +184,7 @@ static void SetImageList(HWND hwndTV, UINT* uResourceIds, UINT uResourceNum);
 
 static HTREEITEM AddTreeItem(HWND hwndTV, LPTSTR lpszItem,
                                int nLevel, TVI_INFO* pInfo);
+static BOOL UpdateTreeItem(HWND hwndTV, HTREEITEM hItem);
 static void CleanupTreeView(HWND hwndTV, WNDPROC DefWndProc);
 
 static void InitAms();
@@ -204,7 +205,7 @@ static int mapKey(WPARAM wParam, LPARAM lParam);
 static LPTSTR JavacallUtf16ToTstr(javacall_const_utf16_string str);
 static javacall_utf16_string CloneJavacallUtf16(javacall_const_utf16_string str);
 
-int PermissionValueToIndex(javacall_ams_permission_val jpPermission);
+static int PermissionValueToIndex(javacall_ams_permission_val jpPermission);
 
 
 /**
@@ -304,7 +305,7 @@ int main(int argc, char* argv[]) {
                                   IDC_TREEVIEW, InfoWndProc);
     // Create permissions dialog
     g_hPermissionsDlg = CreateTreeDialog(g_hMainWindow, IDD_PERMISSIONS_DIALOG,
-                                         IDC_TREEVIEW, PermissionsWndProc);
+                                         IDC_TREEVIEW, PermissionWndProc);
 
     // Set image list for the permission tree view
     HWND hPermView = (HWND)GetWindowLongPtr(g_hPermissionsDlg, DWLP_USER);
@@ -857,7 +858,7 @@ static TVI_INFO* CreateTviInfo() {
         pInfo->suiteId = JAVACALL_INVALID_SUITE_ID;
         pInfo->appId = JAVACALL_INVALID_FOLDER_ID;
         pInfo->folderId = JAVACALL_INVALID_APP_ID;
-        pInfo->permId = (javacall_ams_permission)(-1);
+        pInfo->permId = JAVACALL_AMS_PERMISSION_INVALID;
         pInfo->permValue = JAVACALL_AMS_PERMISSION_VAL_INVALID;
     }
     return pInfo;
@@ -1120,10 +1121,13 @@ static HTREEITEM AddTreeItem(HWND hwndTV, LPTSTR lpszItem,
             tvi.iImage = tvi.iSelectedImage = 5;
             break;
 
-        case TVI_TYPE_PERMISSION:
-            tvi.iImage = tvi.iSelectedImage = 
-                PermissionValueToIndex(pInfo->permValue);
+        case TVI_TYPE_PERMISSION: {
+            int idx = PermissionValueToIndex(pInfo->permValue);
+            if ((idx >= 0) && (idx < PERMISSION_VAL_NUM)) {
+                tvi.iImage = tvi.iSelectedImage = idx;
+            }
             break;
+        }
 
         default:
             tvi.mask &= ~TVIF_IMAGE;
@@ -1155,21 +1159,30 @@ static HTREEITEM AddTreeItem(HWND hwndTV, LPTSTR lpszItem,
         hPrevLev2Item = hPrev; 
     }
 
-    // The new item is a child item. Give the parent item a
-    // closed folder bitmap to indicate it now has child items. 
-/*
-    if (nLevel > 1)
-    { 
-        hti = TreeView_GetParent(hwndTV, hPrev); 
-        tvi.mask = TVIF_IMAGE | TVIF_SELECTEDIMAGE; 
-        tvi.hItem = hti; 
-        tvi.iImage = g_nClosed; 
-        tvi.iSelectedImage = g_nClosed; 
-        TreeView_SetItem(hwndTV, &tvi); 
-    } 
-*/
-
     return hPrev; 
+}
+
+static BOOL UpdateTreeItem(HWND hwndTV, HTREEITEM hItem) {
+    TVITEM tvi;
+    TVI_INFO* pInfo;
+    int idx;
+
+    pInfo = GetTviInfo(hwndTV, hItem);
+
+    if (pInfo) {
+        if (pInfo->type == TVI_TYPE_PERMISSION) {
+            idx = PermissionValueToIndex(pInfo->permValue);
+            if ((idx >= 0) && (idx < PERMISSION_VAL_NUM)) {
+                tvi.iImage = tvi.iSelectedImage = idx;
+                tvi.hItem = hItem;
+                tvi.mask = TVIF_IMAGE | TVIF_SELECTEDIMAGE;
+
+                return TreeView_SetItem(hwndTV, &tvi);
+            }
+        }
+    }
+
+    return FALSE;
 }
 
 /**
@@ -2072,11 +2085,65 @@ InfoWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
  *
  */
 LRESULT CALLBACK
-PermissionsWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
+PermissionWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
     HDC hdc;
     javacall_result res;
 
     switch (message) {
+
+    case WM_LBUTTONDBLCLK: {
+        HTREEITEM hItem, hParent;
+        TV_HITTESTINFO tvH;
+
+        tvH.pt.x = LOWORD(lParam);
+        tvH.pt.y = HIWORD(lParam);
+
+        hItem = TreeView_HitTest(hWnd, &tvH);
+        if (hItem && (tvH.flags & TVHT_ONITEM))
+        {
+            hParent = TreeView_GetParent(hWnd, hItem);
+            if (hParent) {
+                // collapse child items upon double click on any of them
+                TreeView_Expand(hWnd, hParent, TVE_COLLAPSE);
+            } else {
+                // imitate default tree view behavior if the click is
+                // on a root item
+                TreeView_Expand(hWnd, hItem, TVE_TOGGLE);
+            }
+        }
+
+        break;
+    }
+
+    case WM_LBUTTONDOWN:
+    case WM_RBUTTONDOWN: {
+        TV_HITTESTINFO tvH;
+
+        tvH.pt.x = LOWORD(lParam);
+        tvH.pt.y = HIWORD(lParam);
+
+        HTREEITEM hItem = TreeView_HitTest(hWnd, &tvH);
+        if (hItem && (tvH.flags & TVHT_ONITEM))
+        {
+            // Mark the item as selected
+            TreeView_SelectItem(hWnd, hItem);
+
+            HTREEITEM hParent = TreeView_GetParent(hWnd, hItem);
+
+            // If the selected item represents permission value
+            if (hParent) {
+                TVI_INFO* pParentInfo = GetTviInfo(hWnd, hParent);
+                TVI_INFO* pInfo = GetTviInfo(hWnd, hItem);
+
+                pParentInfo->permValue = pInfo->permValue;
+
+                UpdateTreeItem(hWnd, hParent);
+            }
+        }
+
+        break;
+    }
+
 
     case IDM_SUITE_SETTINGS: {
         TVI_INFO* pInfo = (TVI_INFO*)wParam;
@@ -2133,6 +2200,7 @@ PermissionsWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
                 }
             }
         }
+        break;
     }
 
     case WM_ERASEBKGND: {
@@ -2154,34 +2222,13 @@ PermissionsWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
     return 0;
 }
 
-int PermissionValueToIndex(javacall_ams_permission_val jpPermission) {
+static int PermissionValueToIndex(javacall_ams_permission_val jpPermission) {
     for (int i = 0; i < PERMISSION_VAL_NUM; i++) {
         if (g_jpvPermissionValues[i] == jpPermission) {
             return i;
         }
     }
     return -1;
-
-/*
-    switch(jpPermission) {
-
-    case JAVACALL_AMS_PERMISSION_VAL_BLANKET_DENIED:
-        return 0;
-
-    case JAVACALL_AMS_PERMISSION_VAL_ONE_SHOT:
-        return 1;
-
-    case JAVACALL_AMS_PERMISSION_VAL_SESSION:
-        return 2;
-
-    case JAVACALL_AMS_PERMISSION_VAL_BLANKET_GRANTED:
-//    case JAVACALL_AMS_PERMISSION_VAL_BLANKET:
-        return 3;
-
-    default:
-        return -1;
-    }
-*/
 }
 
 /**
