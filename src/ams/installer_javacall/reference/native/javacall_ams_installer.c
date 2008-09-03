@@ -22,8 +22,12 @@
  * information or have any questions.
  */
 
-#include "javacall_defs.h"
-#include "javacall_ams_installer.h"
+#include <kni.h>
+#include <midpEvents.h>
+#include <pcsl_string.h>
+
+#include <javacall_defs.h>
+#include <javacall_ams_installer.h>
 
 /**
  * Application manager invokes this function to start a suite installation.
@@ -73,12 +77,14 @@ java_ams_install_suite(javacall_app_id appId,
     javacall_result res = JAVACALL_FAIL;
     javacall_const_utf16_string pArgs[2];
 
-    (void)srcType;
-
-    pArgs[0] = argInstallStr;
-    pArgs[1] = installUrl;
+    if (installUrl == NULL) {
+        return JAVACALL_FAIL;
+    }
 
     if (invokeGUI == JAVACALL_TRUE) {
+        pArgs[0] = argInstallStr;
+        pArgs[1] = installUrl;
+
         res = java_ams_midlet_start_with_args(-1,
             appId,
             guiInstallerClass,
@@ -86,7 +92,33 @@ java_ams_install_suite(javacall_app_id appId,
             2,
             NULL);
     } else {
+        MidpEvent evt;
+        javacall_int32 urlLength;
 
+        MIDP_EVENT_INITIALIZE(evt);
+
+        evt.type = NATIVE_INSTALL_REQUEST;
+        evt.intParam1 = appId;
+        evt.intParam2 = (int)srcType;
+
+        res  = javautil_unicode_utf16_ulength(installUrl, &urlLength);
+        if (res != JAVACALL_OK) {
+            return res;
+        }
+
+        if (PCSL_STRING_OK == pcsl_string_convert_from_utf16(
+                                  installUrl, urlLength, &temp)) {
+            if (pcsl_string_utf16_length(&temp) > 0) {
+                evt.stringParam1 = temp;
+                midpStoreEventAndSignalAms(evt);
+                res = JAVACALL_OK;
+            } else {
+                pcsl_string_free(&temp);
+                res = JAVACALL_FAIL;
+            }
+        } else {
+            res = JAVACALL_FAIL;
+        }
     }
 
     return res;

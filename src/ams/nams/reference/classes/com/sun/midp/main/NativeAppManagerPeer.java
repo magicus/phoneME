@@ -40,6 +40,11 @@ import com.sun.midp.configurator.Constants;
 import com.sun.midp.suspend.SuspendSystemListener;
 import com.sun.midp.suspend.SuspendSystem;
 
+// IMPL_NOTE: decouple from com.sun.midp.installer
+import com.sun.midp.installer.Installer;
+import com.sun.midp.installer.HttpInstaller;
+import com.sun.midp.installer.FileInstaller;
+
 import com.sun.cldc.isolate.Isolate;
 
 /**
@@ -180,6 +185,10 @@ public class NativeAppManagerPeer
         eventQueue.registerEventListener(
             EventTypes.NATIVE_SET_FOREGROUND_REQUEST, this);
 
+        /* Installer events */
+        eventQueue.registerEventListener(
+            EventTypes.NATIVE_INSTALL_REQUEST, this);
+
         IndicatorManager.init(midletProxyList);
     }
 
@@ -303,7 +312,6 @@ public class NativeAppManagerPeer
      * @param event event to process
      */
     public void process(Event event) {
-System.out.println(">>> event = " + event);
         String errorMsg = null;
 
         NativeEvent nativeEvent = (NativeEvent)event;
@@ -311,115 +319,153 @@ System.out.println(">>> event = " + event);
                                  nativeEvent.intParam1);
 
         switch (nativeEvent.getType()) {
-
-        case EventTypes.NATIVE_MIDLET_EXECUTE_REQUEST:
-System.out.println(">>> NATIVE_MIDLET_EXECUTE_REQUEST");
-            if (midlet == null) {
-                if (nativeEvent.intParam2 == MIDletSuite.UNUSED_SUITE_ID) {
-                    notifyMidletStartError(nativeEvent.intParam1,
-                                           MIDletSuite.UNUSED_SUITE_ID,
-                                           nativeEvent.stringParam1,
-                                           Constants.MIDLET_ID_NOT_GIVEN);
-                } else if (nativeEvent.stringParam1 == null) {
-                    notifyMidletStartError(nativeEvent.intParam1,
-                                           nativeEvent.intParam2,
-                                           null,
-                                           Constants.MIDLET_CLASS_NOT_GIVEN);
+            case EventTypes.NATIVE_MIDLET_EXECUTE_REQUEST: {
+                if (midlet == null) {
+                    if (nativeEvent.intParam2 == MIDletSuite.UNUSED_SUITE_ID) {
+                        notifyMidletStartError(nativeEvent.intParam1,
+                                               MIDletSuite.UNUSED_SUITE_ID,
+                                               nativeEvent.stringParam1,
+                                               Constants.MIDLET_ID_NOT_GIVEN);
+                    } else if (nativeEvent.stringParam1 == null) {
+                        notifyMidletStartError(nativeEvent.intParam1,
+                                               nativeEvent.intParam2,
+                                               null,
+                                               Constants.MIDLET_CLASS_NOT_GIVEN);
+                    } else {
+                        MIDletSuiteUtils.executeWithArgs(internalSecurityToken,
+                            nativeEvent.intParam1, nativeEvent.intParam2,
+                            nativeEvent.stringParam1, nativeEvent.stringParam2,
+                            nativeEvent.stringParam3, nativeEvent.stringParam4,
+                            nativeEvent.stringParam5, nativeEvent.intParam3,
+                            nativeEvent.intParam4, nativeEvent.intParam5,
+                            nativeEvent.stringParam6, false);
+                    }
                 } else {
-                    MIDletSuiteUtils.executeWithArgs(internalSecurityToken,
-                        nativeEvent.intParam1, nativeEvent.intParam2,
-                        nativeEvent.stringParam1, nativeEvent.stringParam2,
-                        nativeEvent.stringParam3, nativeEvent.stringParam4,
-                        nativeEvent.stringParam5, nativeEvent.intParam3,
-                        nativeEvent.intParam4, nativeEvent.intParam5,
-                        nativeEvent.stringParam6, false);
+                    errorMsg = "Only one instance of a MIDlet can be launched";
                 }
-            } else {
-                errorMsg = "Only one instance of a MIDlet can be launched";
-            }
-            break;
-
-        case EventTypes.NATIVE_MIDLET_RESUME_REQUEST:
-            if (midlet != null) {
-                midlet.activateMidlet();
-            } else {
-                errorMsg = "Invalid App Id";
-            }
-            break;
-
-        case EventTypes.NATIVE_MIDLET_PAUSE_REQUEST:
-            if (midlet != null) {
-                midlet.pauseMidlet();
-            } else {
-                errorMsg = "Invalid App Id";
-            }
-            break;
-
-        case EventTypes.NATIVE_MIDLET_DESTROY_REQUEST:
-            /*
-             * IMPL_NOTE: nativeEvent.intParam2 is a timeout value which
-             *            should be passed to MIDletProxy.destroyMidlet().
-             *
-             */
-            if (midlet != null) {
-                midlet.destroyMidlet();
-            } else {
-                errorMsg = "Invalid App Id";
-            }
-            break;
-
-        case EventTypes.NATIVE_MIDLET_GETINFO_REQUEST:
-            int isolateId = midlet.getIsolateId();
-            Isolate task = null;
-            Isolate[] allTasks = Isolate.getIsolates();
-
-            for (int i = 0; i < allTasks.length; i++) {
-                if (allTasks[i].id() == isolateId) {
-                    task = allTasks[i];
-                    break;
-                }
+                break;
             }
 
-            if (task != null) {
-                /* Structure to hold run time information about a midlet. */
-                RuntimeInfo runtimeInfo = new RuntimeInfo();
-
-                runtimeInfo.memoryTotal    = task.totalMemory();
-                runtimeInfo.memoryReserved = task.reservedMemory();
-                runtimeInfo.usedMemory     = task.usedMemory();
-                runtimeInfo.priority       = task.getPriority();
-                // there is no Isolate API now
-                runtimeInfo.profileName    = null;
-
-                saveRuntimeInfoInNative(runtimeInfo);
-            }
-
-            notifyOperationCompleted(EventTypes.NATIVE_MIDLET_GETINFO_REQUEST,
-                nativeEvent.intParam1, (task == null) ? 1 : 0);
-            break;
-
-        case EventTypes.NATIVE_SET_FOREGROUND_REQUEST:
-            // Allow Nams to explicitly set nothing to be in the foreground
-            // with special AppId 0
-            if (midlet != null ||
-                nativeEvent.intParam1 == Constants.MIDLET_APPID_NO_FOREGROUND) {
-                if (midletProxyList.getForegroundMIDlet() == midlet &&
-                        midlet != null) {
-                    // send the notification even if the midlet already has
-                    // the foreground
-                    NativeDisplayControllerPeer.notifyMidletHasForeground(
-                        midlet.getExternalAppId());
+            case EventTypes.NATIVE_MIDLET_RESUME_REQUEST: {
+                if (midlet != null) {
+                    midlet.activateMidlet();
                 } else {
-                    midletProxyList.setForegroundMIDlet(midlet);
+                    errorMsg = "Invalid App Id";
                 }
-            } else {
-                errorMsg = "Invalid App Id";
+                break;
             }
-            break;
 
-        default:
-            errorMsg = "Unknown event type "+event.getType();
-            break;
+            case EventTypes.NATIVE_MIDLET_PAUSE_REQUEST: {
+                if (midlet != null) {
+                    midlet.pauseMidlet();
+                } else {
+                    errorMsg = "Invalid App Id";
+                }
+                break;
+            }
+
+            case EventTypes.NATIVE_MIDLET_DESTROY_REQUEST: {
+                /*
+                 * IMPL_NOTE: nativeEvent.intParam2 is a timeout value which
+                 *            should be passed to MIDletProxy.destroyMidlet().
+                 *
+                 */
+                if (midlet != null) {
+                    midlet.destroyMidlet();
+                } else {
+                    errorMsg = "Invalid App Id";
+                }
+                break;
+            }
+
+            case EventTypes.NATIVE_MIDLET_GETINFO_REQUEST: {
+                int isolateId = midlet.getIsolateId();
+                Isolate task = null;
+                Isolate[] allTasks = Isolate.getIsolates();
+
+                for (int i = 0; i < allTasks.length; i++) {
+                    if (allTasks[i].id() == isolateId) {
+                        task = allTasks[i];
+                        break;
+                    }
+                }
+
+                if (task != null) {
+                    /* Structure to hold run time information about a midlet. */
+                    RuntimeInfo runtimeInfo = new RuntimeInfo();
+
+                    runtimeInfo.memoryTotal    = task.totalMemory();
+                    runtimeInfo.memoryReserved = task.reservedMemory();
+                    runtimeInfo.usedMemory     = task.usedMemory();
+                    runtimeInfo.priority       = task.getPriority();
+                    // there is no Isolate API now
+                    runtimeInfo.profileName    = null;
+
+                    saveRuntimeInfoInNative(runtimeInfo);
+                }
+
+                notifyOperationCompleted(
+                    EventTypes.NATIVE_MIDLET_GETINFO_REQUEST,
+                        nativeEvent.intParam1, (task == null) ? 1 : 0);
+                break;
+            }
+
+            case EventTypes.NATIVE_SET_FOREGROUND_REQUEST: {
+                // Allow Nams to explicitly set nothing to be in the foreground
+                // with special AppId 0
+                if (midlet != null ||
+                        nativeEvent.intParam1 ==
+                            Constants.MIDLET_APPID_NO_FOREGROUND) {
+                    if (midletProxyList.getForegroundMIDlet() == midlet &&
+                            midlet != null) {
+                        // send the notification even if the midlet already has
+                        // the foreground
+                        NativeDisplayControllerPeer.notifyMidletHasForeground(
+                            midlet.getExternalAppId());
+                    } else {
+                        midletProxyList.setForegroundMIDlet(midlet);
+                    }
+                } else {
+                    errorMsg = "Invalid App Id";
+                }
+                break;
+            }
+
+            case EventTypes.NATIVE_INSTALL_REQUEST: {
+                /*
+                 * intParam1 - appId, intParam2 - URL type
+                 * (0 - any [try JAD, then JAR], 1 - JAD, 2 - JAR]):
+                 *
+                 * IMPL_NOTE: possible values of intParam2 are taken from
+                 *            javacall_ams_install_source_type enum.
+                 *
+                 * intParam3 - storageId, intParam4 - folderId
+                 *
+                 * stringParam1 - URL to install from
+                 */
+                final int appId = nativeEvent.intParam1;
+                final String url = nativeEvent.stringParam1;
+
+                final Installer installer = (nativeEvent.intParam2 == 2) ?
+                        new FileInstaller() : new HttpInstaller();
+                
+                new Thread() {
+                    public void run() {
+                        // force an overwrite and remove the RMS data
+                        int suiteId = installer.installJad(url,
+                            Constants.INTERNAL_STORAGE_ID, true, true, null);
+
+                        notifyOperationCompleted(
+                            EventTypes.NATIVE_INSTALL_REQUEST, appId, suiteId);
+                    }
+                }.start();
+                break;
+            }
+
+            default: {
+                errorMsg = "Unknown event type " + event.getType();
+                break;
+            }
         }
 
         if (Logging.REPORT_LEVEL <= Logging.ERROR && errorMsg != null) {

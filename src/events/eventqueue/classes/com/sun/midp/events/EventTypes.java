@@ -353,4 +353,9 @@ public final class EventTypes {
      * an installed MIDlet suite.
      */
     public static final int MIDP_ODD_SUITE_REMOVED_EVENT = 55;
+
+    /**
+     * Installation request coming from a native code.
+     */
+    public static final int NATIVE_INSTALL_REQUEST = 56;
 }
