@@ -519,8 +519,13 @@ _JNI_GetObjectClass(JNIEnv *env, jobject obj) {
 
 static jboolean JNICALL
 _JNI_IsInstanceOf(JNIEnv *env, jobject obj, jclass clazz) {
-  if (obj == NULL || clazz == NULL) {
+  if (clazz == NULL || *decode_handle(clazz) == NULL) {
+    env->FatalError("null class arg for IsInstanceOf");
     return JNI_FALSE;
+  }
+
+  if (obj == NULL) {
+    return JNI_TRUE;
   }
 
   return KNI_IsInstanceOf(obj, clazz);
