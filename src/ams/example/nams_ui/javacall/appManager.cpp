@@ -150,6 +150,9 @@ typedef struct _TVI_INFO {
 
     javacall_ams_permission_val permValue; // permission value, used if the
                                            // type is TVI_TYPE_PERMISSION
+
+    BOOL modified;
+
 } TVI_INFO;
 
 static TVI_INFO* CreateTviInfo();
@@ -221,7 +224,7 @@ static HTREEITEM HitTest(HWND hWnd, LPARAM lParam);
 extern "C" javacall_result JavaTaskImpl(int argc, char* argv[]) {
     javacall_result res = java_ams_system_start();
 
-    wprintf(_T("SJWC exited, code: %d."), (int)res); 
+    wprintf(_T("SJWC exited, code: %d\n"), (int)res);
 
     return res;
 }
@@ -399,7 +402,7 @@ static HWND CreateMainToolbar(HWND hWndParent) {
                                      MAKEINTRESOURCE(IDB_MAIN_TOOLBAR_BUTTONS));
 
     if (hToolbarBmp == NULL) {
-        wprintf(_T("Can't load bitmap for the toolbar!"));
+        wprintf(_T("ERROR: Can't load bitmap for the toolbar!"));
         return NULL;
     }
 
@@ -412,7 +415,7 @@ static HWND CreateMainToolbar(HWND hWndParent) {
         sizeof (TBBUTTON));
 
     if (!hWndToolbar) {
-        wprintf(_T("Can't create a toolbar!"));
+        wprintf(_T("ERROR: Can't create a toolbar!"));
         return NULL;
     }
 
@@ -432,7 +435,7 @@ static HWND CreateMainToolbar(HWND hWndParent) {
     BOOL ok = SendMessage(hWndToolbar, TB_ADDBITMAP, 1,
                           (LPARAM)(LPTBADDBITMAP)&toolbarImg);
     if (!ok) {
-        wprintf(_T("Can't add a bitmap! Error = %d\n"), GetLastError());
+        wprintf(_T("ERROR: Can't add a bitmap! Error = %d\n"), GetLastError());
     }
 
     TBBUTTON pButtons[2];
@@ -446,7 +449,7 @@ static HWND CreateMainToolbar(HWND hWndParent) {
 
 //    ok = SendMessage(hWndToolbar, TB_ADDBUTTONS, 1, (LPARAM)(LPTBBUTTON)pButtons);
     if (!ok) {
-        wprintf(_T("Can't add buttons! Error = %d\n"), GetLastError());
+        wprintf(_T("ERROR: Can't add buttons! Error = %d\n"), GetLastError());
     }*/
 
     return hWndToolbar;
@@ -503,14 +506,14 @@ static HWND CreateMainView() {
 static void InitAms() {
     javacall_result res = java_ams_suite_storage_init();
     if (res == JAVACALL_FAIL) {
-        wprintf(_T("Init of suite storage fail!\n"));
+        wprintf(_T("ERROR: Init of suite storage fail!\n"));
     }
 }
 
 static void CleanupAms() {
     javacall_result res = java_ams_suite_storage_cleanup();
     if (res == JAVACALL_FAIL) {
-        wprintf(_T("Cleanup of suite storage fail!\n"));
+        wprintf(_T("ERROR: Cleanup of suite storage fail!\n"));
     }
 }
 
@@ -644,7 +647,7 @@ static void SetImageList(HWND hwndTV, UINT* uResourceIds, UINT uResourceNum) {
             uResourceNum, uResourceNum * 3);
 
     if (hTreeImageList == NULL) {
-        wprintf(_T("Can't create an image list for TreeView!"));
+        wprintf(_T("ERROR: Can't create an image list for TreeView!"));
     } else {
         // adding icons into the image list
         for (int i = 0; i < uResourceNum; i++) {
@@ -654,13 +657,13 @@ static void SetImageList(HWND hwndTV, UINT* uResourceIds, UINT uResourceNum) {
                                   MAKEINTRESOURCE(uResourceIds[i]));
 
             if (hImg == NULL) {
-                wprintf(_T("Can't load an image # %d!\n"), i);
+                wprintf(_T("ERROR: Can't load an image # %d!\n"), i);
                 // not fatal, continue
             } else {
                 //int res = ImageList_Add(hTreeImageList, hImg, NULL);
                 int res = ImageList_AddIcon(hTreeImageList, hImg);
                 if (res < 0) {
-                    wprintf(_T("Failed to add an image # %d ")
+                    wprintf(_T("ERROR: Failed to add an image # %d ")
                             _T("to the tree view list!\n"), i);
                 }
                 DeleteObject(hImg);
@@ -706,7 +709,7 @@ static HWND CreateTreeDialog(HWND hWndParent, WORD wDialogIDD, WORD wViewIDC,
     // Get handle to OK button
     hBtnYes = GetDlgItem(hDlg, IDOK);
     if (!hBtnYes) {
-        wprintf(_T("Can't get window handle to OK button!\n"));
+        wprintf(_T("ERROR: Can't get window handle to OK button!\n"));
 
     }
 
@@ -795,6 +798,8 @@ static HWND CreateTreeDialog(HWND hWndParent, WORD wDialogIDD, WORD wViewIDC,
 INT_PTR CALLBACK
 TreeDlgProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 
+    HWND hView = (HWND)GetWindowLongPtr(hwndDlg, DWLP_USER);
+
     switch (uMsg) {
 
     case IDM_SUITE_SETTINGS:
@@ -814,14 +819,11 @@ TreeDlgProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam) {
         ShowWindow(hwndDlg, SW_SHOW);
 
         // Delegate message processing to the tree view
-        HWND hView = (HWND)GetWindowLongPtr(hwndDlg, DWLP_USER);
         if (hView) {
             PostMessage(hView, uMsg, wParam, lParam);
-
-            return TRUE;
         }
 
-        break;
+        return TRUE;
     }
 
  
@@ -841,6 +843,11 @@ TreeDlgProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam) {
                 ShowWindow(g_hWndToolbar, SW_SHOWNORMAL);
             }
 
+            // Delegate command processing to the tree view
+            if (hView && (wCmd == IDOK)) {
+                PostMessage(hView, uMsg, wParam, lParam);
+            }
+
             return TRUE;
         }
 
@@ -853,6 +860,7 @@ TreeDlgProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 
 static TVI_INFO* CreateTviInfo() {
     TVI_INFO* pInfo = (TVI_INFO*)javacall_malloc(sizeof(TVI_INFO));
+
     if (pInfo != NULL) {
         pInfo->type = TVI_TYPE_UNKNOWN;
         pInfo->className = NULL;
@@ -862,7 +870,9 @@ static TVI_INFO* CreateTviInfo() {
         pInfo->folderId = JAVACALL_INVALID_APP_ID;
         pInfo->permId = JAVACALL_AMS_PERMISSION_INVALID;
         pInfo->permValue = JAVACALL_AMS_PERMISSION_VAL_INVALID;
+        pInfo->modified = FALSE;
     }
+
     return pInfo;
 }
 
@@ -871,9 +881,11 @@ static void FreeTviInfo(TVI_INFO* pInfo) {
         if (pInfo->className) {
             javacall_free(pInfo->className);
         }
+
         if (pInfo->displayName) {
             javacall_free(pInfo->displayName);
         }
+
         javacall_free(pInfo);
     }
 }
@@ -2109,6 +2121,36 @@ PermissionWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
 
     switch (message) {
 
+    case WM_COMMAND: {
+        TVI_INFO* pInfo;
+
+        WORD wCmd = LOWORD(wParam);
+
+        if (wCmd == IDOK) {
+            hItem = TreeView_GetRoot(hWnd);
+            while (hItem) {
+                pInfo = GetTviInfo(hWnd, hItem);
+                if (pInfo && (pInfo->type == TVI_TYPE_PERMISSION)) {
+                    if (pInfo->modified) {
+                        res = java_ams_suite_set_permission(pInfo->suiteId,
+                                                           pInfo->permId,
+                                                            pInfo->permValue);
+
+                        wprintf(_T("java_ams_suite_set_permission(%d, %d, %d)")
+                                _T(" returned %d\n"),
+                                (int)pInfo->suiteId, (int)pInfo->permId,
+                                (int)pInfo->permValue, (int)res); 
+                    }
+                }
+                                                      
+                hItem = TreeView_GetNextSibling(hWnd, hItem);
+            }
+
+        }
+
+        break;
+    }
+
     case WM_LBUTTONDBLCLK: {
         hItem = HitTest(hWnd, lParam);
         if (hItem)
@@ -2142,6 +2184,7 @@ PermissionWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
                 TVI_INFO* pInfo = GetTviInfo(hWnd, hItem);
 
                 pParentInfo->permValue = pInfo->permValue;
+                pParentInfo->modified = TRUE;
 
                 UpdateTreeItem(hWnd, hParent);
             }
@@ -2363,7 +2406,7 @@ javacall_result javacall_lcd_init(void) {
         VRAM.hdc = (javacall_pixel*) malloc(g_iChildAreaWidth *
             g_iChildAreaHeight * sizeof(javacall_pixel));
         if (VRAM.hdc == NULL) {
-            wprintf(_T("javacall_lcd_init(): VRAM allocation failed!\n"));
+            wprintf(_T("ERROR: javacall_lcd_init(): VRAM allocation failed!\n"));
         }
 
         VRAM.width  = g_iChildAreaWidth;
