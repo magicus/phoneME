@@ -364,6 +364,9 @@
             Name="AMS_CONFIRMATION"
             Comment="AMS: general"/>
   <constant Type="int"
+            Name="AMS_INFORMATION"
+            Comment="AMS: general"/>
+  <constant Type="int"
             Name="AMS_AUTHORIZATION_INFO"
             Comment="AMS: general"/>
   <constant Type="int"
@@ -416,6 +419,9 @@
             Comment="AMS: general"/>
   <constant Type="int"
             Name="AMS_EXTRENAL_STORAGE_NAME"
+            Comment="AMS: general"/>
+  <constant Type="int"
+            Name="AMS_TOGGLE_ICONS_VIEW"
             Comment="AMS: general"/>
   <constant Type="int"
             Name="AMS_MGR_TITLE"
@@ -665,6 +671,12 @@
             Comment="AMS: com.sun.midp.installer.GraphicalInstaller"/>
   <constant Type="int"
             Name="AMS_GRA_INTLR_UPD_CAN"
+            Comment="AMS: com.sun.midp.installer.GraphicalInstaller"/>
+  <constant Type="int"
+            Name="AMS_GRA_INTLR_REM_CAN"
+            Comment="AMS: com.sun.midp.installer.GraphicalInstaller"/>
+  <constant Type="int"
+            Name="AMS_GRA_INTLR_REM_COMPL"
             Comment="AMS: com.sun.midp.installer.GraphicalInstaller"/>
   <constant Type="int"
             Name="AMS_GRA_INTLR_FIN_UPD"

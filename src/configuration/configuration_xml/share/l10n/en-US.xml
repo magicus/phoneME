@@ -248,6 +248,8 @@
                 Value="Cannot start: "/>
 <localized_string Key="AMS_CONFIRMATION"
                 Value="Confirmation"/>
+<localized_string Key="AMS_INFORMATION"
+                Value="Information"/>
 <localized_string Key="AMS_AUTHORIZATION_INFO"
                 Value="Authorization Information"/>
 <localized_string Key="AMS_SIZE"
@@ -284,6 +286,8 @@
                 Value="Move to phone"/>
 <localized_string Key="AMS_EXTRENAL_STORAGE_NAME"
                 Value="Memory card "/>
+<localized_string Key="AMS_TOGGLE_ICONS_VIEW"
+                Value="Toggle icons view "/>
 <localized_string Key="AMS_MGR_TITLE"
                  Value="Java MIDlets"/>
 <localized_string Key="AMS_MGR_SETTINGS"
@@ -451,6 +455,10 @@
                 Value="Select storage"/>
 <localized_string Key="AMS_GRA_INTLR_UPD_CAN"
                 Value="Update cancelled."/>
+<localized_string Key="AMS_GRA_INTLR_REM_CAN"
+                Value="Removal cancelled."/>
+<localized_string Key="AMS_GRA_INTLR_REM_COMPL"
+                Value="Removal complete."/>
 <localized_string Key="AMS_GRA_INTLR_FIN_UPD"
                 Value="Finishing update."/>
 <localized_string Key="AMS_GRA_INTLR_INST_CAN"
