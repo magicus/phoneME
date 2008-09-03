@@ -54,7 +54,7 @@ ifeq ($(AMS_UI_IMPL), stubs)
 # app manager UI implementation is used because MIDletSuiteLauncher needs
 # refactoring of UI part into separate library.
 else
-ifeq ($(AMS_UI_IMPL), lwuit)
+ifeq ($(AMS_UI_IMPL), lwuitimpl)
 # IMPL_NOTE: see IMPL_NOTE above
 else
 # Include suite_launcher implementation into the build
