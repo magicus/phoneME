@@ -68,10 +68,10 @@ jint midpport_security_check_permission(jint suiteId, jint permission,
 
     unsigned int result;
     switch (javacall_security_check_permission((javacall_suite_id)suiteId,
-                                               (javacall_ams_permission)permission,
+                                               (javacall_security_permission)permission,
                                                JAVACALL_TRUE,
                                                &result)) {
-    case JAVACALL_OK:
+    case JAVACALL_OK: 
         break;
     case JAVACALL_WOULD_BLOCK:
         *pHandle = result;
@@ -104,7 +104,7 @@ jint midpport_security_check_permission(jint suiteId, jint permission,
 jint midpport_security_check_permission_status(jint suiteId, jint permission) {
     unsigned int result;
     switch (javacall_security_check_permission((javacall_suite_id)suiteId,
-                                               (javacall_ams_permission)permission,
+                                               (javacall_security_permission)permission,
                                                JAVACALL_FALSE,
                                                &result)) {
     case JAVACALL_OK:
@@ -125,7 +125,7 @@ jint midpport_security_check_permission_status(jint suiteId, jint permission) {
 }
 
 void javanotify_security_permission_check_result(const javacall_suite_id suite_id, 
-                                                 const javacall_ams_permission permission,
+                                                 const javacall_security_permission permission,
                                                  const unsigned int session,
                                                  const unsigned int result) {
     (void)suite_id;
