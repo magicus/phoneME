@@ -124,7 +124,7 @@ final class AutoEventStringParser {
             return false;
         }
 
-        eventArgs.put(argName.toLowerCase(), argValue.toLowerCase());
+        eventArgs.put(argName.toLowerCase(), argValue);
 
         return true;
     }
