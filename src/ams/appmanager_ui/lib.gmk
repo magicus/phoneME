@@ -57,5 +57,9 @@ ifeq ($(AMS_UI_IMPL)X, X)
 AMS_UI_IMPL = reference
 endif
 
+ifeq ($(USE_LWUIT_AMS), true)
+AMS_UI_IMPL = lwuitimpl
+endif
+
 include $(APPMANAGER_UI_DIR)/$(AMS_UI_IMPL)/lib.gmk
 
