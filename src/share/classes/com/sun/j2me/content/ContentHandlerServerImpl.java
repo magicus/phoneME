@@ -82,10 +82,9 @@ final public class ContentHandlerServerImpl extends ContentHandlerImpl
             InvocationStore.getRequest(storageId, classname, wait, this);
         if (invoc != null) {
             // Keep track of number of requests delivered to the application
-            AppProxy.requestForeground(invoc.invokingSuiteId,
-                                       invoc.invokingClassname,
-                                       invoc.suiteId,
-                                       invoc.classname);
+            AppProxy.requestForeground(
+            			invoc.invokingSuiteId, invoc.invokingClassname,
+                        invoc.suiteId, invoc.classname);
             
 		    // Wrap it in an Invocation instance
             return invoc.wrap();

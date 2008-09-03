@@ -433,6 +433,10 @@ class AppProxy {
                                   int targetSuiteId,
                                   String targetClassname)
     {
+    	if( LOGGER != null ) LOGGER.println(
+    			"requestForeground: (" + invokingSuiteId + ", " + invokingClassname + ") -> (" + 
+    										targetSuiteId + ", " + targetClassname + ")");
+    	
         NativeEvent event =
             new NativeEvent(EventTypes.FOREGROUND_TRANSFER_EVENT);
         event.intParam1 = invokingSuiteId;
@@ -445,12 +449,12 @@ class AppProxy {
         eventQueue.sendNativeEventToIsolate(event, amsIsolateId);
     }
 
-    /**
+    /* *
      * The stronger variant for request the transition of
      * the foreground to this application.
      * @param targetSuiteId the target suiteId
      * @param targetClassname the target classname
-     */
+     * /
     static void requestForeground(int targetSuiteId,
                                   String targetClassname)
     {
@@ -463,6 +467,7 @@ class AppProxy {
         EventQueue eventQueue = EventQueue.getEventQueue(classSecurityToken);
         eventQueue.sendNativeEventToIsolate(event, amsIsolateId);
     }
+    /**/
     
     /**
      * Launch this application.
@@ -491,6 +496,7 @@ class AppProxy {
     	}
     	if( LOGGER != null )
         	LOGGER.println("AppProxy.launch(): send 'launch' request {" + storageId + ", '" + classname + "'}");
+    	// always launch an application in background mode
         return MIDletSuiteUtils.execute(classSecurityToken,
              						storageId, classname, displayName);
     }
