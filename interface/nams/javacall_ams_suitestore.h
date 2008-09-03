@@ -75,7 +75,11 @@ typedef enum {
  */
 typedef enum {
   /** an invalid permission */
-  JAVACALL_AMS_PERMISSION_INVALID = 0,
+  JAVACALL_AMS_PERMISSION_INVALID = -1,
+  /** reserved for internal needs (AMS) */
+  JAVACALL_AMS_PERMISSION_RESERVED1 = 0,
+  /** reserved for internal needs (MIDP) */
+  JAVACALL_AMS_PERMISSION_RESERVED2 = 1,
   /** javax.microedition.io.Connector.http permission ID. */
   JAVACALL_AMS_PERMISSION_HTTP = 2,
   /** javax.microedition.io.Connector.socket permission ID. */
