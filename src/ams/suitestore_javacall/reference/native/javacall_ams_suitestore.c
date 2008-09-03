@@ -1919,7 +1919,7 @@ javacall_permission_val2midp(javacall_ams_permission_val jcPermissionVal) {
             break;
 
         default: /* Unknown */
-            midpPermissionVal = Permissions.NEVER;
+            midpPermissionVal = 0; /* Permissions.NEVER */
     }
 
     return midpPermissionVal;
