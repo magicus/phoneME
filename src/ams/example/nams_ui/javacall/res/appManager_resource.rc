@@ -26,7 +26,7 @@
 
 /*======================================================================*/
 #include "windows.h"                 /* Windows stuff */
-#include "namsui_resource.h"         /* Program-specific stuff */
+#include "appManager_resource.h"         /* Program-specific stuff */
 
 
 ID_MENU_MAIN MENU

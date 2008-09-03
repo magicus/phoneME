@@ -37,7 +37,7 @@
 
 #include <time.h>
 
-#include "res/namsui_resource.h"
+#include "res/appManager_resource.h"
 
 #include <javacall_memory.h>
 #include <javautil_unicode.h>
