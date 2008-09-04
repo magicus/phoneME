@@ -27,66 +27,21 @@ package com.sun.mmedia.rtsp;
 import com.sun.mmedia.rtsp.protocol.*;
 
 import java.io.*;
-
-// #ifndef MIDP [
 import java.net.*;
-// #endif ]
 
 /**
- * The Connection object encapsulates a TCP/IP connection to an RTSP Server.
+ * The RtspConnection object encapsulates a TCP/IP connection to an RTSP Server.
  *
  * @author     Marc Owerfeldt
  * @created    September 11, 2002
  */
-public class Connection extends Thread implements Runnable {
+public class RtspConnection extends Thread implements Runnable {
 
     private final boolean RTSP_DEBUG;
     
     private final int MAX_RTSP_MESSAGE_SIZE = 1024;
 
-    // #ifdef MIDP [
-    /**
-     * The receive buffer used by the native connector.
-     */
-    private byte rxBuffer[];
-
-
-    /**
-     * Opens the RTSP connector.
-     *
-     * @param  host  The hostname, i.e. 129.145.166.64
-     * @param  port  The port (default port = 554)
-     * @return       Returns a pointer to the native peer.
-     */
-    private native int nRTSPConnectorOpen(String host, int port);
-
-
-    /**
-     * Sends a message to the RTSP server.
-     *
-     * @param  peer     A pointer to the native peer.
-     * @param  message  The message which is sent to the server.
-     */
-    private native void nRTSPSendMessage(int peer, byte[] message);
-
-
-    /**
-     * Sends a message to the RTSP server.
-     *
-     * @param  peer     A pointer to the native peer.
-     * @param  message  The message which is sent to the server.
-     * @return          Description of the Return Value
-     */
-    private native int nRTSPReceiveMessage(int peer, byte[] message);
-
-    /**
-     * A pointer to the native connector.
-     */
-    private int peer;
-
-    // #else
-        private Socket socket;
-    // #endif ]
+    private Socket socket;
 
     /**
      * A handle to the RTSP Manager object.
@@ -119,9 +74,9 @@ public class Connection extends Thread implements Runnable {
      * @exception  IOException  Throws and IOException if a connection
      *                          to the RTSP server cannot be established.
      */
-    public Connection(RtspManager rtspManager,
-                      String host, int port,
-                      boolean rtsp_debug) throws IOException {
+    public RtspConnection(RtspManager rtspManager,
+                          String host, int port,
+                          boolean rtsp_debug) throws IOException {
         this.rtspManager = rtspManager;
         this.host = host;
         this.port = port;
@@ -130,18 +85,6 @@ public class Connection extends Thread implements Runnable {
 
         connectionIsAlive = true;
 
-        // #ifdef MIDP [
-        
-        rxBuffer = new byte[MAX_RTSP_MESSAGE_SIZE];
-
-        peer = nRTSPConnectorOpen(host, port);
-
-        if( peer == -1) {
-            throw new IOException("ConnectException");
-        }
-        
-        // #else
-        
         try {
             socket = new Socket(host, port);
         } catch (IOException e) {
@@ -149,8 +92,6 @@ public class Connection extends Thread implements Runnable {
             throw new IOException("ConnectException");
         }
         
-        // #endif ]
-
         if(RTSP_DEBUG) System.out.println( "Local address="+socket.getLocalAddress() );
 
         start();
@@ -167,17 +108,6 @@ public class Connection extends Thread implements Runnable {
     public boolean sendData(byte message[]) {
         boolean success = false;
 
-        // #ifdef MIDP [
-        
-	    nRTSPSendMessage(peer, message);
-
-        // todo: need to check for return value
-        // and report potential error.
-
-        success = true;
-        
-        // #else
-        
         try {
             OutputStream out = socket.getOutputStream();
             out.write(message);
@@ -187,8 +117,6 @@ public class Connection extends Thread implements Runnable {
             System.out.println("Error sending RTSP.");
         }
         
-        // #endif ]
-
         return success;
     }
 
@@ -198,46 +126,6 @@ public class Connection extends Thread implements Runnable {
      */
     public void run() {
         while (connectionIsAlive) {
-        
-            // #ifdef MIDP [
-            
-            int size = nRTSPReceiveMessage(peer, rxBuffer);
-
-            try {
-                if (size > 0) {
-                    ByteArrayInputStream bais = new ByteArrayInputStream(rxBuffer);
-                    DataInputStream din = new DataInputStream(bais);
-                
-                    byte ch = din.readByte();
-                
-                    ByteArrayOutputStream baos = new ByteArrayOutputStream();
-                
-                    // read message header:
-                    baos.write(ch);
-                
-                    while (!eomReached(baos.toByteArray())) {
-                        baos.write(din.readByte());
-                    }
-                
-                    // read message body:
-                    int length = getContentLength(new String(baos.toByteArray()));
-                
-                    for (int i = 0; i < length; i++) {
-                        baos.write(din.readByte());
-                    }
-                
-                    // if(RTSP_DEBUG) System.out.println(baos);
-                
-                    Message msg = new Message(baos.toByteArray());
-                
-                    rtspManager.rtspMessageIndication(msg);
-                }
-            } catch (Exception e) {
-                connectionIsAlive = false;
-            }
-            
-            // #else
-            
             try {
                 InputStream in = socket.getInputStream();
                 DataInputStream din = new DataInputStream(in);
@@ -270,8 +158,6 @@ public class Connection extends Thread implements Runnable {
                 //if(RTSP_DEBUG) e.printStackTrace();
                 connectionIsAlive = false;
             }
-
-            // #endif ]
         }
     }
 
@@ -355,20 +241,15 @@ public class Connection extends Thread implements Runnable {
     public void close() {
         connectionIsAlive = false;
 
-        // #ifndef MIDP [
-        
         try {
             if (socket != null) {
                 socket.close();
                 socket = null;
             }
         } catch (IOException e) {
-            // if(RTSP_DEBUG) System.out.println("Exception in RTSP Connection.close.");
+            // if(RTSP_DEBUG) System.out.println("Exception in RtspConnection.close.");
             // if(RTSP_DEBUG) e.printStackTrace();
         }
-        
-        // #endif ]
-        
     }
 
 

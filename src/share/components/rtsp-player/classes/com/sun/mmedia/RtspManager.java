@@ -61,7 +61,7 @@ public class RtspManager {
     private long duration;
     private String vol;
     private Vector listeners;
-    private Connection connection;
+    private RtspConnection connection;
     private int videoWidth;
     private int videoHeight;
 
@@ -175,8 +175,8 @@ public class RtspManager {
             + rtspUrl.getHost() + "," + rtspUrl.getPort() + ")");
 
         try {
-            connection = new Connection(this,
-                    rtspUrl.getHost(), 
+            connection = new RtspConnection(this,
+                    rtspUrl.getHost(),
                     rtspUrl.getPort(),RTSP_DEBUG);
         } catch (IOException e) {
             return false;

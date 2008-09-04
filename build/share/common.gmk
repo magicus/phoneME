@@ -154,12 +154,8 @@ SUBSYSTEM_JSR_135_JAVA_FILES += \
 
 ifeq ($(USE_RTSP), true)
 
-$(JSR_135_GENERATED_DIR)/classes/com/sun/mmedia/Connection.java: \
-  $(JSR_135_DIR)/src/share/components/rtsp-player/classes/com/sun/mmedia/Connection.jpp
-	@$(call runjpp,$^,$@)
-
 SUBSYSTEM_JSR_135_JAVA_FILES += \
-    $(JSR_135_GENERATED_DIR)/classes/com/sun/mmedia/Connection.java \
+    $(JSR_135_PROJECT_SRC_DIR)/classes/com/sun/mmedia/RtspConnection.java \
     $(JSR_135_DIR)/src/share/components/rtsp-player/classes/com/sun/mmedia/RTSPPlayer.java \
     $(JSR_135_DIR)/src/share/components/rtsp-player/classes/com/sun/mmedia/RTPPlayer.java \
     $(JSR_135_DIR)/src/share/components/rtsp-player/classes/com/sun/mmedia/RtspUrl.java \
@@ -196,7 +192,7 @@ SUBSYSTEM_JSR_135_JAVA_FILES += \
 	$(JSR_135_DIR)/src/share/components/rtsp-player/classes/com/sun/mmedia/protocol/ResponseMessage.java \
 	$(JSR_135_DIR)/src/share/components/rtsp-player/classes/com/sun/mmedia/protocol/Parser.java \
 	$(JSR_135_DIR)/src/share/components/rtsp-player/classes/com/sun/mmedia/protocol/SessionHeader.java
-endif																				
+endif # USE_RTSP
 
 SUBSYSTEM_JSR_135_JAVA_FILES += \
     $(JSR_135_DIR)/src/share/components/video-renderer/classes/com/sun/mmedia/FormatConversionUtils.java \
