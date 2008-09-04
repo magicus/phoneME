@@ -27,8 +27,8 @@
 package com.sun.midp.installer;
 
 import javax.microedition.midlet.MIDlet;
-import com.sun.midp.installer.*;
 import com.sun.midp.configurator.Constants;
+import com.sun.midp.midlet.MIDletSuite;
 
 /**
  * A MIDlet passing the installer's requests and responses between
@@ -38,13 +38,46 @@ import com.sun.midp.configurator.Constants;
  * <p>
  * The MIDlet uses certain application properties as arguments: </p>
  * <ol>
- *   <li>arg-0: currently must be "I" == install
- *   (for consistency with GraphicalInstaller)</li>
+ *   <li>arg-0: an ID of this application
  *   <li>arg-1: URL of the midlet suite to install
  *   <li>arg-2: a storage ID where to save the suite's jar file
  */
 public class InstallerPeerMIDlet extends MIDlet implements InstallListener,
         Runnable {
+    /**
+     * Code of the "Warn User" request to the native callback.
+     */
+    private static final int RQ_WARN_USER            = 1;
+
+    /**
+     * Code of the "Confirm Jar Download" request to the native callback. 
+     */
+    private static final int RQ_CONFIRM_JAR_DOWNLOAD = 2;
+
+    /**
+     * Code of the "Update Installation Status" request to the native callback. 
+     */
+    private static final int RQ_UPDATE_STATUS        = 3;
+
+    /**
+     * Code of the "Ask If The Suite Data Should Be Retained"
+     * request to the native callback.
+     */
+    private static final int RQ_ASK_KEEP_RMS         = 4;
+
+    /**
+     * Code of the "Confirm Authorization Path" request to the native callback.
+     */
+    private static final int RQ_CONFIRM_AUTH_PATH    = 5;
+
+    /**
+     * Code of the "Confirm Redirection" request to the native callback.
+     */
+    private static final int RQ_CONFIRM_REDIRECT     = 6;
+
+    /** ID assigned to this application by the application manager */
+    private int appId; 
+
     /**
      * Create and initialize the MIDlet.
      */
@@ -85,14 +118,29 @@ public class InstallerPeerMIDlet extends MIDlet implements InstallListener,
 
         // parse the arguments
         String arg0 = getAppProperty("arg-0");
-        if (arg0 == null || !"I".equals(arg0)) {
-            showUsage();
+        boolean err = false;
+
+        if (arg0 != null) {
+            try {
+                appId = Integer.parseInt(arg0);
+            } catch (NumberFormatException nfe) {
+                err = true;
+            }
+        } else {
+            err = true;
+        }
+
+        if (err) {
+            reportFinished0(-1, MIDletSuite.UNUSED_SUITE_ID,
+                            "Application ID is not given or invalid.");
             notifyDestroyed();
             return;
         }
 
         String url = getAppProperty("arg-1");
         if (url == null) {
+            reportFinished0(appId, MIDletSuite.UNUSED_SUITE_ID,
+                            "URL to install from is not given.");
             notifyDestroyed();
             return;
         }
@@ -129,33 +177,34 @@ public class InstallerPeerMIDlet extends MIDlet implements InstallListener,
         }
 
         if (installer == null) {
-            //final String errMsg = "'" + scheme + "' URL type is not supported.";
+            final String errMsg = "'" + scheme + "' URL type is not supported.";
+            reportFinished0(appId, MIDletSuite.UNUSED_SUITE_ID, errMsg);
             notifyDestroyed();
             return;
         }
 
         // install the suite
-        int lastInstalledMIDletId;
+        int lastInstalledSuiteId;
         int len = url.length();
         boolean jarOnly = (len >= 4 &&
             ".jar".equalsIgnoreCase(url.substring(len - 4, len)));
+        String errMsg = null;
 
         try {
             if (jarOnly) {
-                lastInstalledMIDletId = installer.installJar(url, null,
+                lastInstalledSuiteId = installer.installJar(url, null,
                     storageId, false, false, this);
             } else {
-                lastInstalledMIDletId =
+                lastInstalledSuiteId =
                     installer.installJad(url, storageId, false, false, this);
             }
-
-            System.out.println("The suite was succesfully installed, ID: " +
-                               lastInstalledMIDletId);
         } catch (Throwable t) {
-            //final String errMsg = "Error installing the suite: " + t.getMessage();
+            errMsg = "Error installing the suite: " + t.getMessage();
+            lastInstalledSuiteId = MIDletSuite.UNUSED_SUITE_ID;
         }
 
         notifyDestroyed();
+        reportFinished0(appId, lastInstalledSuiteId, errMsg);
     }
 
     /*
@@ -177,7 +226,13 @@ public class InstallerPeerMIDlet extends MIDlet implements InstallListener,
      * @return true if the user wants to continue, false to stop the install
      */
     public boolean warnUser(InstallState state) {
-        return true;
+        sendNativeRequest0(RQ_WARN_USER, convertInstallState(state),
+                           -1, null);
+        /*
+         * This Java thread is blocked here until the answer arrives
+         * in native, then it is woken up also from the native code.
+         */
+        return getAnswer0();
     }
 
     /**
@@ -191,7 +246,13 @@ public class InstallerPeerMIDlet extends MIDlet implements InstallListener,
      * @return true if the user wants to continue, false to stop the install
      */
     public boolean confirmJarDownload(InstallState state) {
-        return true;
+        sendNativeRequest0(RQ_CONFIRM_JAR_DOWNLOAD, convertInstallState(state),
+                           -1, null);
+        /*
+         * This Java thread is blocked here until the answer arrives
+         * in native, then it is woken up also from the native code.
+         */
+        return getAnswer0();
     }
 
     /**
@@ -202,6 +263,8 @@ public class InstallerPeerMIDlet extends MIDlet implements InstallListener,
      * @param state current state of the install.
      */
     public void updateStatus(int status, InstallState state) {
+        sendNativeRequest0(RQ_UPDATE_STATUS, convertInstallState(state),
+                           status, null);
     }
 
     /**
@@ -216,7 +279,13 @@ public class InstallerPeerMIDlet extends MIDlet implements InstallListener,
      * @return true if the user wants to keep the RMS data for the next suite
      */
     public boolean keepRMS(InstallState state) {
-        return true;
+        sendNativeRequest0(RQ_ASK_KEEP_RMS, convertInstallState(state),
+                           -1, null);
+        /*
+         * This Java thread is blocked here until the answer arrives
+         * in native, then it is woken up also from the native code.
+         */
+        return getAnswer0();
     }
 
     /**
@@ -230,7 +299,13 @@ public class InstallerPeerMIDlet extends MIDlet implements InstallListener,
      * @return true if the user wants to continue, false to stop the install
      */
     public boolean confirmAuthPath(InstallState state) {
-        return true;
+        sendNativeRequest0(RQ_CONFIRM_AUTH_PATH, convertInstallState(state),
+                           -1, null);
+        /*
+         * This Java thread is blocked here until the answer arrives
+         * in native, then it is woken up also from the native code.
+         */
+        return getAnswer0();
     }
 
     /**
@@ -247,6 +322,100 @@ public class InstallerPeerMIDlet extends MIDlet implements InstallListener,
      * @return true if the user wants to continue, false to stop the install
      */
     public boolean confirmRedirect(InstallState state, String newLocation) {
-        return true;
+        sendNativeRequest0(RQ_CONFIRM_REDIRECT, convertInstallState(state),
+                           -1, newLocation);
+        /*
+         * This Java thread is blocked here until the answer arrives
+         * in native, then it is woken up also from the native code.
+         */
+        return getAnswer0();
     }
+
+    /**
+     * Converts the given InstallState object into NativeInstallState
+     * to facilitate access to it from the native code. 
+     *
+     * @param state the state object to convert
+     *
+     * @return NativeInstallState object corresponding to the given
+     *         InstallState object
+     */
+    private NativeInstallState convertInstallState(InstallState state) {
+        NativeInstallState nis = new NativeInstallState();
+
+        nis.appId = appId;
+        nis.suiteId = state.getID();
+        nis.jarUrl = state.getJarUrl();
+        nis.suiteName = state.getSuiteName();
+        nis.jarSize = state.getJarSize();
+
+        nis.authPath = state.getAuthPath();
+
+        InvalidJadException ije = state.getLastException();
+        if (ije == null) {
+            nis.exceptionCode = NativeInstallState.NO_EXCEPTIONS;
+        } else {
+            nis.exceptionCode = ije.getReason();
+        }
+
+        // IMPL_NOTE: not implemented yet
+        nis.suiteProperties = null;
+
+        return nis;
+    }
+
+    // Native methods.
+
+    /**
+     * Sends a request of type defined by the given request code to
+     * the party that uses this installer via the native callback.
+     *
+     * Note: only some of parameters are used, depending on the request code
+     *
+     * @param requestCode code of the request to the native callback
+     * @param state       current installation state
+     * @param status      current status of the installation, -1 if not used
+     * @param newLocation new url of the resource to install; null if not used
+     */
+    private native void sendNativeRequest0(int requestCode,
+                                           NativeInstallState state,
+                                           int status, String newLocation);
+
+    /**
+     * Returns yes/no answer from the native callback.
+     *
+     * @return yes/no answer from the native callback
+     */
+    private native boolean getAnswer0();
+
+    /**
+     * Reports to the party using this installer that
+     * the operation has been completed.
+     *
+     * @param appId this application ID
+     * @param suiteId ID of the newly installed midlet suite, or
+     *                MIDletSuite.UNUSED_SUITE_ID if the installation
+     *                failed
+     * @param errMsg error message if the installation failed, null otherwise
+     */
+    private native void reportFinished0(int appId, int suiteId, String errMsg);
+}
+
+/**
+ * Storage for InstallState fields that should be passed to native.
+ */
+class NativeInstallState {
+    /**
+     * exceptionCode value indicating that there are no exceptions.
+     */
+    public static final int NO_EXCEPTIONS = -1;
+
+    public int appId;
+    public int exceptionCode;
+    public int suiteId;
+    public String[] suiteProperties;
+    public String jarUrl;
+    public String suiteName;
+    public int    jarSize;
+    public String[] authPath;
 }

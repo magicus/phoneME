@@ -152,10 +152,12 @@ void java_ams_midlet_state_changed(javacall_lifecycle_state state,
 javacall_result
 java_ams_install_ask(javacall_ams_install_request_code requestCode,
                      const javacall_ams_install_state* pInstallState,
-                     void* pRequestData) {
+                     const javacall_ams_install_data* pRequestData) {
     wprintf(_T(">>> java_ams_install_ask(), requestCode = %d\n"), requestCode);
 
-    javacall_bool resultData = JAVACALL_TRUE;
+    javacall_ams_install_data resultData;
+    resultData.fAnswer = JAVACALL_TRUE;
+
     javacall_result res = java_ams_install_answer(requestCode, pInstallState,
                                                   &resultData);
     if (res != JAVACALL_OK) {

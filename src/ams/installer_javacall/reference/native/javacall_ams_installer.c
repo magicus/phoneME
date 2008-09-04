@@ -25,6 +25,10 @@
 #include <kni.h>
 #include <midpEvents.h>
 #include <midpEventUtil.h>
+#include <midp_thread.h>
+#include <midpUtilKni.h>
+#include <midpServices.h>
+
 #include <pcsl_string.h>
 #include <midpNativeAppManager.h>
 
@@ -93,15 +97,39 @@ java_ams_install_suite(javacall_app_id appId,
                        javacall_const_utf16_string installUrl,
                        javacall_storage_id storageId,
                        javacall_folder_id folderId) {
+/*
     MidpEvent evt;
     javacall_int32 urlLength;
     pcsl_string temp;
+    javacall_result res = JAVACALL_FAIL;
+*/
+
+    const javacall_utf16 installerClass[] = {
+       'c', 'o', 'm', '.', 's', 'u', 'n', '.', 'm', 'i', 'd', 'p', '.',
+       'i', 'n', 's', 't', 'a', 'l', 'l', 'e', 'r', '.',
+       'I', 'n', 's', 't', 'a', 'l', 'l', 'e', 'r', 'P', 'e', 'e', 'r',
+       'M', 'I', 'D', 'l', 'e', 't',
+       0
+    };
+    const javacall_utf16 argAppIdStr[] = { '1', 0 };
+    javacall_const_utf16_string pArgs[2];
     javacall_result res = JAVACALL_FAIL;
 
     if (installUrl == NULL) {
         return JAVACALL_FAIL;
     }
 
+    (void)srcType;
+    (void)storageId;
+    (void)folderId;
+
+    pArgs[0] = argAppIdStr;
+    pArgs[1] = installUrl;
+
+    res = java_ams_midlet_start_with_args(-1, appId, installerClass,
+                                          pArgs, 2, NULL);
+
+/*
     MIDP_EVENT_INITIALIZE(evt);
 
     evt.type = NATIVE_INSTALL_REQUEST;
@@ -128,6 +156,7 @@ java_ams_install_suite(javacall_app_id appId,
     } else {
         res = JAVACALL_FAIL;
     }
+*/
 
     return res;
 }
@@ -185,10 +214,23 @@ java_ams_install_is_ocsp_enabled() {
 javacall_result
 java_ams_install_answer(javacall_ams_install_request_code requestCode,
                         const javacall_ams_install_state* pInstallState,
-                        void* pResultData) {
+                        const javacall_ams_install_data* pResultData) {
+    JVMSPI_ThreadID thread;
+    int isolateId;
+
     (void)requestCode;
-    (void)pInstallState;
     (void)pResultData;
 
-    return JAVACALL_OK;
+    if (pInstallState == NULL) {
+        return JAVACALL_FAIL;
+    }
+
+    isolateId = getCurrentIsolateId();
+    thread = SNI_GetSpecialThread(isolateId);
+    if (thread != NULL) {
+        midp_thread_unblock(thread);
+        return JAVACALL_OK;
+    }
+
+    return JAVACALL_FAIL;
 }

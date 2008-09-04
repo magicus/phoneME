@@ -63,4 +63,5 @@ SUBSYSTEM_AMS_EXTRA_INCLUDES += \
 # Native files for common module
 #
 SUBSYSTEM_AMS_NATIVE_FILES += \
-    javacall_ams_installer.c
+    javacall_ams_installer.c \
+    install_peer_midlet_kni.c
