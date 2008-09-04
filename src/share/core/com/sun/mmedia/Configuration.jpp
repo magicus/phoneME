@@ -145,6 +145,7 @@ public abstract class Configuration {
                                                                         // #ifdef USE_FILE_CONNECTION [
                                                                         "file",
                                                                         // #endif ]
+                                                                        "rtsp"
                                                                    };
     /**
      * A hash table of the protocol and content handlers.
