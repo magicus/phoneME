@@ -51,12 +51,12 @@ class DirectVideo implements VideoControl, MIDPVideoPainter {
 
     private VideoSource source;
 
-/* FIXME: these can swap when device screen orientation changes,
+/* Revisit: these can swap when device screen orientation changes,
  * so they cannot be final 
  */
-/* FIXME: native methods return 0 */
-    private int SCREEN_WIDTH  = ScreenSkin.WIDTH;   // nGetScreenWidth();
-    private int SCREEN_HEIGHT = ScreenSkin.HEIGHT;  // nGetScreenHeight();
+/* Revisit: call native method to obtain screen dimensions */
+    private final int SCREEN_WIDTH  = ScreenSkin.WIDTH;   // nGetScreenWidth();
+    private final int SCREEN_HEIGHT = ScreenSkin.HEIGHT;  // nGetScreenHeight();
 
     private final int DEFAULT_WIDTH  = 80;
     private final int DEFAULT_HEIGHT = 80;
@@ -384,8 +384,6 @@ class DirectVideo implements VideoControl, MIDPVideoPainter {
      * @param fullScreenMode true for full screen, false for normal display mode
      */
     public void setDisplayFullScreen(boolean fullScreenMode) throws MediaException {
-
-        System.out.println("w " + SCREEN_WIDTH + " h" + SCREEN_HEIGHT);
 
         checkState();
 
