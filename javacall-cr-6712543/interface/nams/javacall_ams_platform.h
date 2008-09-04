@@ -55,7 +55,11 @@ typedef enum {
     /** Request of run-time information on an application */
     JAVACALL_OPCODE_REQUEST_RUNTIME_INFO,
     /** Suite installation request */
-    JAVACALL_OPCODE_INSTALL_SUITE
+    JAVACALL_OPCODE_INSTALL_SUITE,
+    /** Request to enable/disable OCSP check */
+    JAVACALL_OPCODE_ENABLE_OCSP,
+    /** Request to get the current state of OCSP check */
+    JAVACALL_OPCODE_IS_OCSP_ENABLED
 } javacall_opcode;
 
 /**
