@@ -37,9 +37,11 @@ import javax.microedition.media.Control;
 import javax.microedition.media.MediaException;
 import javax.microedition.media.control.VideoControl;
 import javax.microedition.media.PlayerListener;
+import com.sun.midp.chameleon.skins.ScreenSkin;
 
 import com.sun.j2me.log.Logging;
 import com.sun.j2me.log.LogChannels;
+
 
 /**
  * Common MIDP/LCDUI-based Video Control
@@ -49,14 +51,16 @@ class DirectVideo implements VideoControl, MIDPVideoPainter {
 
     private VideoSource source;
 
-/* Need to revisit: these can swap when device screen orientation changes,
+/* Revisit: these can swap when device screen orientation changes,
  * so they cannot be final 
  */
-/* Need to revisit: native methods return 0 */
-    private final int SCREEN_WIDTH = 240;//nGetScreenWidth();
-    private final int SCREEN_HEIGHT = 240;//nGetScreenHeight();
-    private final int DEFAULT_WIDTH = 80;
+/* Revisit: call native method to obtain screen dimensions */
+    private final int SCREEN_WIDTH  = ScreenSkin.WIDTH;   // nGetScreenWidth();
+    private final int SCREEN_HEIGHT = ScreenSkin.HEIGHT;  // nGetScreenHeight();
+
+    private final int DEFAULT_WIDTH  = 80;
     private final int DEFAULT_HEIGHT = 80;
+
     private final int COLOR_KEY = 0x010101;
 
     // NOTE: You have to calibrate this value carefully
@@ -79,9 +83,6 @@ class DirectVideo implements VideoControl, MIDPVideoPainter {
     private int dw, tmp_dw;
     private int dh, tmp_dh;
 
-    // Fullscreen mode flag
-    private boolean fsmode = false;
-
     // visible?
     private boolean visible = false;
     private boolean hidden = false;
@@ -96,7 +97,14 @@ class DirectVideo implements VideoControl, MIDPVideoPainter {
     private Object boundLock = new Object();
     
     private static boolean debug = true;
-    
+
+    /** 
+     * Refers to current display mode: normal or full screen, provides location 
+     * services such as size and position settings. Separates different mode
+     * implementations in a clean way, based on the State Pattern. 
+     */
+    private VideoLocationControl locationControl;
+  
     // member functions /////////////////////////////////////////////
 
     // this is to suppress the default package-private empty constructor
@@ -108,6 +116,8 @@ class DirectVideo implements VideoControl, MIDPVideoPainter {
         source  = src;
         sw      = width;
         sh      = height;
+        locationControl = normalScreenLocationControl;
+
         // initialize default rendering width and height
         if (sw <= 0) dw = DEFAULT_WIDTH;
         else dw = sw;
@@ -144,51 +154,6 @@ class DirectVideo implements VideoControl, MIDPVideoPainter {
         return true;
     }
 
-    /**
-     *
-     */
-    private void setTranslatedVideoLocation(Graphics g, int x, int y, int w, int h) {
-        int diffx = g.getTranslateX();
-        int diffy = g.getTranslateY();
-        int px, py, pw, ph;
- 
-        // Calculate positions
-        // And, do a physical clipping
-        // Currently, Zoran chipset does not support negative position and exceed position
-        px = x + diffx;
-        py = y + diffy;
-        pw = w;
-        ph = h;
-
-        if (px + pw <= 0) {
-            return;
-        }
-        if (py + ph <= 0) {
-            return;
-        }
-        if (px >= SCREEN_WIDTH) {
-            return;
-        }
-        if (py >= SCREEN_HEIGHT) {
-            return;
-        }
-        if (px < 0) {
-            pw += px;
-            px = 0;
-        }
-        if (py < 0) {
-            ph += py;
-            py = 0;
-        }
-        if (px + pw > SCREEN_WIDTH) {
-            pw = SCREEN_WIDTH - px;
-        }
-        if (py + ph > SCREEN_HEIGHT) {
-            ph = SCREEN_HEIGHT - py;
-        }
-
-        source.setVideoLocation(px, py, pw, ph);
-    }
 
     /**
      * Prepare direct video rendering surface
@@ -201,7 +166,7 @@ class DirectVideo implements VideoControl, MIDPVideoPainter {
  
         // Turn off color key
         source.setColorKey( false, COLOR_KEY);
-        setTranslatedVideoLocation(g, x, y, w, h);
+        locationControl.setTranslatedVideoLocation(g, x, y, w, h);
 
         source.setVideoVisible( !hidden);
     }
@@ -213,7 +178,7 @@ class DirectVideo implements VideoControl, MIDPVideoPainter {
         if (source.setColorKey( true, COLOR_KEY)) {
             g.setColor(COLOR_KEY);    // IMPL NOTE - Consider RGB565 conversion
             g.fillRect(x, y, w, h);
-            setTranslatedVideoLocation(g, x, y, w, h);
+            locationControl.setTranslatedVideoLocation(g, x, y, w, h);
             source.setVideoVisible( !hidden);
         } else {
             source.setVideoVisible( false);
@@ -321,27 +286,13 @@ class DirectVideo implements VideoControl, MIDPVideoPainter {
     public void setDisplayLocation(int x, int y) {
         if (debug) {
             Logging.report(Logging.INFORMATION, LogChannels.LC_MMAPI, 
-                "setDisplayLocation x=" + x + ",y=" + y); 
+                           "setDisplayLocation x=" + x + ",y=" + y); 
         }
+
         checkState();
+
         if (displayMode == USE_DIRECT_VIDEO) {
-
-            boolean needRepaint = false;
-
-            synchronized(boundLock) {
-                if (fsmode) {
-                    tmp_dx = x;
-                    tmp_dy = y;
-                } else {
-                    dx = x;
-                    dy = y;
-                    needRepaint = ( dw != 0 && dh != 0 );
-                }
-            }
-
-            if( needRepaint ) {
-                repaint();
-            }
+            locationControl.setDisplayLocation(x, y);
         }
     }
     
@@ -349,39 +300,24 @@ class DirectVideo implements VideoControl, MIDPVideoPainter {
      * Set display size
      */
     public void setDisplaySize(int width, int height) throws MediaException {
+
         if (debug) {
             Logging.report(Logging.INFORMATION, LogChannels.LC_MMAPI, 
                 "setDisplaySize w=" + width + ",h=" + height); 
         }
 
-        boolean sizeChanged = false;
-        
         checkState();
 
         if (width < 1 || height < 1) {
             throw new IllegalArgumentException("invalid size ("+width+","+height+")");
         }
 
-        synchronized(boundLock) {
-            if (fsmode) {
-                tmp_dw = width;
-                tmp_dh = height;
-            } else {
-                sizeChanged = ( dw != width || dh != height );
-                dw = width;
-                dh = height;
-            }
-        }
+        locationControl.setDisplaySize(width, height);
 
         if (item != null) {
             // this will raise sizeChanged event
             // and sizeChanged shall raise paint event also
             item.setPreferredSize( width, height );
-        }
-        repaint();
-
-        if (sizeChanged) {
-            source.notifyDisplaySizeChange();
         }
     }
     
@@ -439,33 +375,33 @@ class DirectVideo implements VideoControl, MIDPVideoPainter {
             source.setVideoVisible( false);
         }
     }
-    
+
+    /** 
+     * Sets video display mode to full screen or normal. 
+     * Note: the video container doesn't need to be notified since video source 
+     * supports full screen directly. 
+     * 
+     * @param fullScreenMode true for full screen, false for normal display mode
+     */
     public void setDisplayFullScreen(boolean fullScreenMode) throws MediaException {
 
         checkState();
 
         synchronized( boundLock ) {
-            if( fsmode != fullScreenMode ) {
+            if( locationControl.isFullScreen() != fullScreenMode ) {
                 if( !source.setVideoFullScreen(fullScreenMode) )
                 {
                     throw new MediaException( 
                             "Unable to set full-screen mode" );
                 }
-                fsmode = fullScreenMode;
 
-                if( fsmode ) {
-                    tmp_dx = dx;
-                    tmp_dy = dy;
-                    tmp_dw = dw;
-                    tmp_dh = dh;
+                if( fullScreenMode ) {
+                    locationControl = fullScreenLocationControl;   
                 } else {
-                    if( tmp_dx != dx || tmp_dy != dy ) {
-                        setDisplayLocation( tmp_dx, tmp_dy );
-                    }
-                    if( tmp_dw != dw || tmp_dh != dh ) {
-                        setDisplaySize( tmp_dw, tmp_dh );
-                    }
+                    locationControl = normalScreenLocationControl;
                 }
+
+                locationControl.activate();
             }
         }
     }
@@ -658,5 +594,160 @@ class DirectVideo implements VideoControl, MIDPVideoPainter {
             hidden = true;
             repaint();
         }
-    }
+    };
+
+    /** 
+     * Provides display location services for video
+     */
+    private interface VideoLocationControl {
+        public void setDisplayLocation(int x, int y);
+        public void setDisplaySize(int width, int height);
+        public void setTranslatedVideoLocation(Graphics g, int x, int y, int w, int h);
+        public boolean isFullScreen();
+        /** 
+         * Service routine for switching between full screen and normal modes
+         */
+        public void activate();
+    };
+
+    /** 
+     * Provides full screen location services for video. 
+     * All location change requests are saved to temporary variables and 
+     * take effect only after switching the full screen mode off.
+     */
+    private final VideoLocationControl fullScreenLocationControl = new VideoLocationControl() {
+
+        public void setDisplayLocation(int x, int y) {
+            tmp_dx = x;
+            tmp_dy = y;
+        }
+
+        public void setDisplaySize(int width, int height) {
+            tmp_dw = width;
+            tmp_dh = height;
+        }
+
+        public void setTranslatedVideoLocation(Graphics g, int x, int y, int w, int h) {
+            // No translation in full screen mode, position and dimensions ignored
+            source.setVideoLocation(dx, dy, dw, dh);
+        }
+
+        public boolean isFullScreen() {
+            return true;
+        }
+
+        public void activate() {
+            if (debug) {
+                Logging.report(Logging.INFORMATION, LogChannels.LC_MMAPI, "fullScreenLocationControl.activate"); 
+            }        
+
+            // Save normal mode settings
+            tmp_dx = dx;
+            tmp_dy = dy;
+            tmp_dw = dw;
+            tmp_dh = dh;
+
+            // Apply full screen dimensions and position settings
+            dx = 0;
+            dy = 0;
+            dw = SCREEN_WIDTH;
+            dh = SCREEN_HEIGHT;
+        }
+    };
+
+    /** 
+     * Provides normal (not full screen) location services for video.
+     * Changing size or location take place immediately.
+     */
+    private final VideoLocationControl normalScreenLocationControl = new VideoLocationControl() {
+
+        public void setDisplayLocation(int x, int y) {
+            synchronized(boundLock) {
+                dx = x;
+                dy = y;
+
+                boolean needRepaint = ( dw != 0 && dh != 0 );
+
+                if( needRepaint ) {
+                    repaint();
+                }
+
+            }
+        }
+
+        public void setDisplaySize(int width, int height) {
+            synchronized(boundLock) {
+                dw = width;
+                dh = height;
+
+                boolean sizeChanged = ( dw != width || dh != height );
+
+                if (sizeChanged) {
+                    source.notifyDisplaySizeChange();
+                }
+            }
+        }
+
+        public void setTranslatedVideoLocation(Graphics g, int x, int y, int w, int h) {
+            int diffx = g.getTranslateX();
+            int diffy = g.getTranslateY();
+            int px, py, pw, ph;
+
+            // Calculate positions
+            // And, do a physical clipping
+            // Currently, Zoran chipset does not support negative position and exceed position
+            px = x + diffx;
+            py = y + diffy;
+            pw = w;
+            ph = h;
+
+            if (px + pw <= 0) {
+                return;
+            }
+            if (py + ph <= 0) {
+                return;
+            }
+            if (px >= SCREEN_WIDTH) {
+                return;
+            }
+            if (py >= SCREEN_HEIGHT) {
+                return;
+            }
+            if (px < 0) {
+                pw += px;
+                px = 0;
+            }
+            if (py < 0) {
+                ph += py;
+                py = 0;
+            }
+            if (px + pw > SCREEN_WIDTH) {
+                pw = SCREEN_WIDTH - px;
+            }
+            if (py + ph > SCREEN_HEIGHT) {
+                ph = SCREEN_HEIGHT - py;
+            }
+
+            source.setVideoLocation(px, py, pw, ph);
+        }
+
+        public boolean isFullScreen() {
+            return false;
+        }
+
+        public void activate() {
+            if (debug) {
+                Logging.report(Logging.INFORMATION, LogChannels.LC_MMAPI, "normalScreenLocationControl.activate"); 
+            }        
+
+            // Apply previously saved normal mode position and dimensions
+            if( tmp_dx != dx || tmp_dy != dy ) {
+                setDisplayLocation( tmp_dx, tmp_dy );
+            }
+            if( tmp_dw != dw || tmp_dh != dh ) {
+                setDisplaySize( tmp_dw, tmp_dh );
+            }
+        }
+    };
+
 }
