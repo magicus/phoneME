@@ -434,6 +434,7 @@ public class NativeAppManagerPeer
             }
 
             case EventTypes.NATIVE_INSTALL_REQUEST: {
+System.out.println(">>> NATIVE_INSTALL_REQUEST");
                 /*
                  * intParam1 - appId, intParam2 - URL type
                  * (0 - any [try JAD, then JAR], 1 - JAD, 2 - JAR]):
@@ -448,6 +449,7 @@ public class NativeAppManagerPeer
                 final int appId = nativeEvent.intParam1;
                 final String url = nativeEvent.stringParam1;
 
+System.out.println(">>> appId = " + appId + ", url = " + url);
                 final Installer installer = (nativeEvent.intParam2 == 2) ?
                     ((Installer)new FileInstaller()) :
                     ((Installer)new HttpInstaller());
@@ -464,11 +466,14 @@ public class NativeAppManagerPeer
                         // force an overwrite and remove the RMS data
                         int suiteId;
 
-                         try {
+                        try {
+System.out.println(">>> starting...");
                              suiteId = installer.installJad(url,
                                  Constants.INTERNAL_STORAGE_ID,
                                      true, true, null);
+System.out.println(">>> suiteId = " + suiteId);
                          } catch (Exception e) {
+e.printStackTrace();
                              suiteId = MIDletSuite.UNUSED_SUITE_ID;
                          }
 

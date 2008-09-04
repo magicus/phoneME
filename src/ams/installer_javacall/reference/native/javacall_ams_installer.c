@@ -136,6 +136,11 @@ java_ams_install_suite(javacall_app_id appId,
  * Application manager invokes this function to enable or disable
  * certificate revocation check using OCSP.
  *
+ * This call is asynchronous, the new OCSP chack state (JAVACALL_TRUE if
+ * OCSP is enabled, JAVACALL_FALSE - if disabled) will be reported later
+ * via java_ams_operation_completed() with the argument
+ * operation == JAVACALL_OPCODE_ENABLE_OCSP.
+ *
  * @param enable JAVACALL_TRUE to enable OCSP check,
  *               JAVACALL_FALSE - to disable it
  */
@@ -148,12 +153,13 @@ java_ams_install_enable_ocsp(javacall_bool enable) {
  * Application manager invokes this function to find out if OCSP
  * certificate revocation check is enabled.
  *
- * @return JAVACALL_TRUE if OCSP check is enabled,
- *         JAVACALL_FALSE - if disabled
+ * This call is asynchronous, the current OCSP check state (JAVACALL_TRUE if
+ * OCSP is enabled, JAVACALL_FALSE - if disabled) will be reported later
+ * via java_ams_operation_completed() with the argument
+ * operation == JAVACALL_OPCODE_IS_OCSP_ENABLED.
  */
-javacall_bool
+void
 java_ams_install_is_ocsp_enabled() {
-    return JAVACALL_FALSE;
 }
 
 /**
