@@ -93,7 +93,7 @@ java_ams_is_domain_trusted(javacall_suite_id suiteId,
 void
 java_ams_install_report_progress(javacall_ams_install_state* pInstallState,
                                  javacall_ams_install_status installStatus,
-                                 int currStepPercentDone, int totalPercentDone);
+                                 int currStepPercentDone, int totalPercentDone) {
     wprintf(_T(">>> java_ams_install_report_progress(): %d%%, total: %d%%\n"),
             currStepPercentDone, totalPercentDone);
 }

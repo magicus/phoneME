@@ -164,12 +164,12 @@ java_ams_install_is_ocsp_enabled() {
 
 /**
  * This function is called by the application manager to report the results
- * of handling of the request previously sent by java_ams_install_listener().
+ * of handling of the request previously sent by java_ams_install_ask().
  *
  * It must be implemented at that side (SJWC or Platform) where the installer
  * is located.
  *
- * After processing the request, java_ams_install_callback() must
+ * After processing the request, java_ams_install_answer() must
  * be called to report the result to the installer.
  *
  * @param requestCode   in pair with pInstallState->appId uniquely
@@ -178,12 +178,17 @@ java_ams_install_is_ocsp_enabled() {
  * @param pInstallState pointer to a structure containing all information
  *                      about the current installation state
  * @param pResultData   pointer to request-specific results (may NOT be NULL)
+ *
+ * @return <tt>JAVACALL_OK</tt> if the answer was understood,
+ *         <tt>JAVACALL_FAIL</tt> otherwise
  */
-void
-java_ams_install_callback(javacall_ams_install_request_code requestCode,
-                          const javacall_ams_install_state* pInstallState,
-                          void* pResultData) {
+javacall_result
+java_ams_install_answer(javacall_ams_install_request_code requestCode,
+                        const javacall_ams_install_state* pInstallState,
+                        void* pResultData) {
     (void)requestCode;
     (void)pInstallState;
-    (void)pResultData;                                  
+    (void)pResultData;
+
+    return JAVACALL_OK;
 }
