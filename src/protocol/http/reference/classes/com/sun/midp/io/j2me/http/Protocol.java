@@ -128,7 +128,7 @@ public class Protocol extends ConnectionBaseAdapter
     private static int outputDataSize;
     /** The "host:port" value to use for HTTP proxied requests. */
     private static String http_proxy;
-    /** The using of absolute URL in "GET" request flag. */
+    /** The flag indicates absolute URL should be used in "GET" requests. */
     private static boolean isUseAbsUrl;
     /** Maximum number of persistent connections. */
     private static int maxNumberOfPersistentConnections = 4;
@@ -2002,7 +2002,7 @@ public class Protocol extends ConnectionBaseAdapter
      *  else false
      * @exception IOException is thrown if an error occurs in the SSL handshake
      */ 
-    protected void doTunnelHandshake(OutputStream os, InputStream is) throws
+    protected boolean doTunnelHandshake(OutputStream os, InputStream is) throws
             IOException {
         String required;
         String optional;
