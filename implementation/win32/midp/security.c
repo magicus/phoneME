@@ -535,5 +535,5 @@ javacall_security_check_permission(const javacall_suite_id suite_id,
     (void)permission;
     (void)enable_block;
     *result = JAVACALL_SECURITY_DENY;
-    return JAVACALL_OK;
+    return JAVACALL_NOT_IMPLEMENTED;
 }
