@@ -1,0 +1,71 @@
+#
+# Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
+# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+# 
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License version
+# 2 only, as published by the Free Software Foundation.
+# 
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# General Public License version 2 for more details (a copy is
+# included at /legal/license.txt).
+# 
+# You should have received a copy of the GNU General Public License
+# version 2 along with this work; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+# 02110-1301 USA
+# 
+# Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+# Clara, CA 95054 or visit www.sun.com if you need additional
+# information or have any questions.
+#
+######################################################################
+#
+# Makefile for creating release source bundle. To be included
+# into the top level makefile.
+#
+######################################################################
+
+# Default target includes MIDP source
+source_bundle:: midp_source_bundle
+
+# Verify source output directory is set
+SOURCE_OUTPUT_DIR:
+	@if [ -z "$($@)" ]; then \
+	    echo "ERROR: $@ must be set"; \
+	    exit -1; \
+	fi; \
+	mkdir -p "$($@)"
+
+# Default filter rule for source release :
+# Copy files from specified sub directories that are under svn controlled.
+# Usage: re_src_filter(src_dir, output_dir, sub_dir_list)
+define re_src_filter
+	for i in $(3); do \
+	    mkdir -p $(2)/$$i; \
+	        if [ -d "$(1)/.svn" ]; then \
+		    svn export --force -q $(1)/$$i $(2)/$$i; \
+                else \
+		    cp -rp $(1)/$$i/* $(2)/$$i; \
+                fi \
+        done
+endef
+
+# Create MIDP source in subdir 'midp/'
+MIDP_SOURCE_OUTPUT_DIR=$(SOURCE_OUTPUT_DIR)/midp
+
+# Copy and filter MIDP source into MIDP_SOURCE_OUTPUT_DIR
+midp_source_bundle: MIDP_DIR SOURCE_OUTPUT_DIR
+	@echo " ... MIDP source bundle" $(LOG)
+	$(A)$(call re_src_filter,$(MIDP_DIR),$(MIDP_SOURCE_OUTPUT_DIR),src build)
+ifneq ($(MIDP_DIR),$(PROJECT_MIDP_DIR))
+	$(A)$(call re_src_filter,$(PROJECT_MIDP_DIR),$(MIDP_SOURCE_OUTPUT_DIR),src build)
+endif
+	$(A)cp $(MIDP_DIR)/QT_README.txt $(MIDP_SOURCE_OUTPUT_DIR)
+	$(A)rm -rf $(MIDP_SOURCE_OUTPUT_DIR)/src/protocol/comm
+
+# Phonies to avoid accidents.
+#
+.PHONY: source_bundle midp_source_bundle SOURCE_OUTPUT_DIR
