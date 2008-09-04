@@ -1575,7 +1575,7 @@ public class Display {
      * @return VirtualKeyboard layer instance connected to the current input session
      *   associated with this Display
      **/
-    public VirtualKeyboardLayer getVirtualKeyboardPopup() {
+    VirtualKeyboardLayer getVirtualKeyboardPopup() {
         if (!VirtualKeyboardLayer.isSupportJavaKeyboard()) {
             return null;
         }
