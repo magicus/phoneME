@@ -128,8 +128,8 @@ public class Protocol extends ConnectionBaseAdapter
     private static int outputDataSize;
     /** The "host:port" value to use for HTTP proxied requests. */
     private static String http_proxy;
-    /** The flag of using absolute URL in "GET" request. */
-    private static boolean isAbsUrl;
+    /** The using of absolute URL in "GET" request flag. */
+    private static boolean isUseAbsUrl;
     /** Maximum number of persistent connections. */
     private static int maxNumberOfPersistentConnections = 4;
     /** Connection linger time in the pool, default 60 seconds. */
@@ -1730,7 +1730,7 @@ public class Protocol extends ConnectionBaseAdapter
          * e-banking.abbeynational.co.uk.
          *
          */
-         if (isAbsUrl) {
+         if (isUseAbsUrl) {
              reqLine.append(protocol);
              reqLine.append("://");
              reqLine.append(url.authority);
@@ -1938,7 +1938,9 @@ public class Protocol extends ConnectionBaseAdapter
 
         conn = new com.sun.midp.io.j2me.socket.Protocol();
 
-        isAbsUrl = false;
+        // When no proxy server is set or proxy server supports CONNECT requests
+        // the absolute URL is not used in GET requests
+        isUseAbsUrl = false;
         if (http_proxy == null || url.host.equals("localhost") ||
             url.host.equals("127.0.0.1")) {
             /* bypass proxy when trying to connect to the same computer
@@ -1949,7 +1951,8 @@ public class Protocol extends ConnectionBaseAdapter
             conn.setSocketOption(SocketConnection.DELAY, 0);
             return conn;
         }
-      
+
+        // connection through proxy server      
         conn.openPrim(classSecurityToken, "//" + http_proxy);
 
         // Do not delay request since this delays the response.
@@ -1960,7 +1963,7 @@ public class Protocol extends ConnectionBaseAdapter
         streamInput = conn.openDataInputStream();
 
         try {
-            isAbsUrl = !doTunnelHandshake(streamOutput, streamInput);
+            isUseAbsUrl = !doTunnelHandshake(streamOutput, streamInput);
         } catch (IOException ioe) {
             String response = ioe.getMessage();
 
@@ -1989,7 +1992,8 @@ public class Protocol extends ConnectionBaseAdapter
      *  February 1999".
      * @param os output stream for secure handshake
      * @param is input stream for secure handshake
-     * @true when CONNECT method is supported else false
+     * @return true when CONNECT method is supported by proxy server 
+     *  else false
      * @exception IOException is thrown if an error occurs in the SSL handshake
      */ 
     protected boolean doTunnelHandshake(OutputStream os, InputStream is) throws
@@ -2067,14 +2071,14 @@ public class Protocol extends ConnectionBaseAdapter
         response = temp.toString();
 
         if (response.indexOf(" 400 ") != -1) { // bad request
-            return false;
+            return false; // CONNECT method is not supported by server
         }
         if (response.indexOf(" 200 ") == -1) {
             throw new
                 IOException("Error initializing HTTP tunnel connection: \n"
                             + response);
         }
-        return true;
+        return true; // CONNECT method is supported by server
     }
     
     /** 
