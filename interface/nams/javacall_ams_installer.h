@@ -473,6 +473,28 @@ typedef enum {
 /**
  * Application manager invokes this function to start a suite installation.
  *
+ * NOTE: if it is desired to invoke Graphical Installer to use Java GUI,
+ *       the corresponding MIDlet should be launched instead of calling
+ *       this function:
+ *
+ * <pre>
+ *   const javacall_utf16 guiInstallerClass[] = {
+ *       'c', 'o', 'm', '.', 's', 'u', 'n', '.', 'm', 'i', 'd', 'p', '.',
+ *       'i', 'n', 's', 't', 'a', 'l', 'l', 'e', 'r', '.',
+ *       'G', 'r', 'a', 'p', 'h', 'i', 'c', 'a', 'l',
+ *       'I', 'n', 's', 't', 'a', 'l', 'l', 'e', 'r',
+ *       0
+ *   };
+ *   const javacall_utf16 argInstallStr[] = { 'I', 0 };
+ *   javacall_const_utf16_string pArgs[2];
+ *
+ *   pArgs[0] = argInstallStr;
+ *   pArgs[1] = urlToInstallFrom;
+ *
+ *   res = java_ams_midlet_start_with_args(-1, appId, guiInstallerClass,
+ *                                         pArgs, 2, NULL);
+ * </pre>
+ *
  * @param appId ID that will be used to uniquely identify this operation
  * @param srcType
  *             type of data pointed by installUrl: a JAD file, a JAR file
@@ -485,8 +507,10 @@ typedef enum {
  *             file:////a/b/c/d.jad
  *             or
  *             c:\a\b\c\d.jad
- * @param invokeGUI <tt>JAVACALL_TRUE</tt> to invoke Graphical Installer,
- *                  <tt>JAVACALL_FALSE</tt> otherwise
+ * @param storageId ID of the storage where to install the suite or
+ *                  JAVACALL_INVALID_STORAGE_ID to use the default storage
+ * @param folderId ID of the folder into which to install the suite or
+ *                  JAVACALL_INVALID_FOLDER_ID to use the default folder
  *
  * @return status code: <tt>JAVACALL_OK</tt> if the installation was
  *                                           successfully started,
@@ -501,11 +525,17 @@ javacall_result
 java_ams_install_suite(javacall_app_id appId,
                        javacall_ams_install_source_type srcType,
                        javacall_const_utf16_string installUrl,
-                       javacall_bool invokeGUI);
+                       javacall_storage_id storageId,
+                       javacall_folder_id folderId);
 
 /**
  * Application manager invokes this function to enable or disable
  * certificate revocation check using OCSP.
+ *
+ * This call is asynchronous, the new OCSP chack state (JAVACALL_TRUE if
+ * OCSP is enabled, JAVACALL_FALSE - if disabled) will be reported later
+ * via java_ams_operation_completed() with the argument
+ * operation == JAVACALL_OPCODE_ENABLE_OCSP.
  *
  * @param enable JAVACALL_TRUE to enable OCSP check,
  *               JAVACALL_FALSE - to disable it
@@ -517,10 +547,12 @@ java_ams_install_enable_ocsp(javacall_bool enable);
  * Application manager invokes this function to find out if OCSP
  * certificate revocation check is enabled.
  *
- * @return JAVACALL_TRUE if OCSP check is enabled,
- *         JAVACALL_FALSE - if disabled
+ * This call is asynchronous, the current OCSP check state (JAVACALL_TRUE if
+ * OCSP is enabled, JAVACALL_FALSE - if disabled) will be reported later
+ * via java_ams_operation_completed() with the argument
+ * operation == JAVACALL_OPCODE_IS_OCSP_ENABLED.
  */
-javacall_bool
+void
 java_ams_install_is_ocsp_enabled();
 
 /**
@@ -533,12 +565,14 @@ java_ams_install_is_ocsp_enabled();
  * @param pInstallState pointer to a structure containing all information
  *                      about the current installation state
  * @param installStatus defines current installation step
- * @param installPercent percents completed (0 - 100)
+ * @param currStepPercentDone percents completed (0 - 100), -1 if unknown
+ * @param totalPercentDone percents completed (0 - 100), -1 if unknown
  */
 void
 java_ams_install_report_progress(javacall_ams_install_state* pInstallState,
                                  javacall_ams_install_status installStatus,
-                                 int installPercent);
+                                 int currStepPercentDone,
+                                 int totalPercentDone);
 
 /**
  * This function is called by the installer when some action is required
@@ -547,7 +581,7 @@ java_ams_install_report_progress(javacall_ams_install_state* pInstallState,
  * It must be implemented at that side (SJWC or Platform) where the
  * application manager is located.
  *
- * After processing the request, java_ams_install_callback() must
+ * After processing the request, java_ams_install_answer() must
  * be called to report the result to the installer.
  *
  * @param requestCode   identifies the requested action
@@ -562,18 +596,18 @@ java_ams_install_report_progress(javacall_ams_install_state* pInstallState,
  *         <tt>JAVACALL_FAIL</tt> otherwise
  */
 javacall_result
-java_ams_install_listener(javacall_ams_install_request_code requestCode,
-                          const javacall_ams_install_state* pInstallState,
-                          void* pRequestData);
+java_ams_install_ask(javacall_ams_install_request_code requestCode,
+                     const javacall_ams_install_state* pInstallState,
+                     void* pRequestData);
 
 /**
  * This function is called by the application manager to report the results
- * of handling of the request previously sent by java_ams_install_listener().
+ * of handling of the request previously sent by java_ams_install_ask().
  *
  * It must be implemented at that side (SJWC or Platform) where the installer
  * is located.
  *
- * After processing the request, java_ams_install_callback() must
+ * After processing the request, java_ams_install_answer() must
  * be called to report the result to the installer.
  *
  * @param requestCode   in pair with pInstallState->appId uniquely
@@ -582,11 +616,14 @@ java_ams_install_listener(javacall_ams_install_request_code requestCode,
  * @param pInstallState pointer to a structure containing all information
  *                      about the current installation state
  * @param pResultData   pointer to request-specific results (may NOT be NULL)
+ *
+ * @return <tt>JAVACALL_OK</tt> if the answer was understood,
+ *         <tt>JAVACALL_FAIL</tt> otherwise
  */
-void
-java_ams_install_callback(javacall_ams_install_request_code requestCode,
-                          const javacall_ams_install_state* pInstallState,
-                          void* pResultData);
+javacall_result
+java_ams_install_answer(javacall_ams_install_request_code requestCode,
+                        const javacall_ams_install_state* pInstallState,
+                        void* pResultData);
 
 /**
  * @defgroup ImageCache	Image Cache
