@@ -139,7 +139,7 @@ public class MVMDisplayController extends DisplayController {
                 continue;
             }
 
-            preempting.setPreemptedMidlet(current);
+            preempting.setPreemptedMidlet(midletProxyList.getForegroundMIDlet());
             current.setPreemptingDisplay(preempting);
             midletProxyList.notifyListenersOfProxyUpdate(current, 
                 MIDletProxyListListener.PREEMPTING_DISPLAY);
