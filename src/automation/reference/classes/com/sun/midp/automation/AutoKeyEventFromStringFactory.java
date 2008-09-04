@@ -32,10 +32,6 @@ class AutoKeyEventFromStringFactory
 
     private AutoDelayEventFromStringFactory delayEventFactory;
 
-    static {
-        registerFactory();
-    }
-
     AutoKeyEventFromStringFactory() {
         delayEventFactory = new  AutoDelayEventFromStringFactory();
     }
@@ -51,6 +47,10 @@ class AutoKeyEventFromStringFactory
         AutoKeyEvent keyEvent1 = null;
         AutoKeyEvent keyEvent2 = null;
         int totalEvents = 0;
+
+        if (args == null) {
+            throw new IllegalArgumentException("No arguments specified");
+        }        
 
         String delayS = (String)args.get(AutoDelayEventImpl.MSEC_ARG_NAME);
         if (delayS != null) {
@@ -121,15 +121,10 @@ class AutoKeyEventFromStringFactory
         events[totalEvents++] = keyEvent1;
 
         if (keyEvent2 != null) {
-            events[totalEvents++] = keyEvent1; 
+            events[totalEvents++] = keyEvent2; 
         }
 
         return events;
     }   
-
-    private static void registerFactory() {
-        AutoEventFactoryImpl f = AutoEventFactoryImpl.getInstance();
-        f.registerEventFromStringFactory(new AutoKeyEventFromStringFactory()); 
-    }
 }
 

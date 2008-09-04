@@ -91,6 +91,12 @@ else
 include $(SUBSYSTEM_DIR)/automation/svm/lib.gmk
 endif
 
+ifeq ($(USE_I3_TEST), true)
+#SUBSYSTEM_AUTOMATION_I3TEST_JAVA_FILES =
+SUBSYSTEM_AUTOMATION_I3TEST_JAVA_FILES += \
+	$(SUBSYSTEM_AUTOMATION_DIR)/reference/i3test/com/sun/midp/automation/TestEventFromStringCreation.java
+endif
+
 endif
 
 $(MIDP_CLASSES_ZIP) :: $(SUBSYSTEM_AUTOMATION_JAVA_FILES)

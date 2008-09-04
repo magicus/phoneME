@@ -30,9 +30,9 @@ import com.sun.midp.i3test.*;
 import java.util.*;
 
 /**
- * i3test for keyboard events simulation
+ * i3test for keyboard events simulateion
  */
-public class TestKeyEventsSimulation extends TestCase {
+public class TestPenEventSimulation extends TestCase {
     /** URL of suite to install */
     private static final String SUITE_URL = 
         "http://localhost/~leonid/TextInput.jad";
@@ -69,7 +69,7 @@ public class TestKeyEventsSimulation extends TestCase {
     /**
      * Tests midlets switching
      */
-    void testKeyEventsSimulation() {
+    void testPenEventSimulation() {
         installTestSuites();
 
         Automation a = Automation.getInstance();
@@ -88,42 +88,14 @@ public class TestKeyEventsSimulation extends TestCase {
 
         midlet.switchTo(AutoMIDletForegroundState.FOREGROUND, true);
 
+        // simulate clicking on right soft key
+        a.simulatePenClick(145, 200, 1000);
 
-        // simulate 'A'
-        AutoKeyEvent eventP, eventR;
-        eventP = eventFactory.createKeyEvent('A', AutoKeyState.PRESSED);
-        eventR = eventFactory.createKeyEvent('A', AutoKeyState.RELEASED);
+        // simulate clicking on "Submit" menu item
+        a.simulatePenClick(70, 180, 1000);
 
-        a.simulateEvents(eventP);
-        a.simulateEvents(eventR);
-
-        try {
-            Thread.sleep(500);
-        } catch (InterruptedException ie) {
-        }
-
-
-        // simulate 'B'
-        a.simulateKeyEvent('b', AutoKeyState.PRESSED);
-        a.simulateKeyEvent('b', AutoKeyState.RELEASED);
-        
-        try {
-            Thread.sleep(500);
-        } catch (InterruptedException ie) {
-        }
-        
-
-        // simulate 'C'
-        a.simulateKeyClick('c', 500);
-
-        // simulate right soft key click
-        a.simulateKeyClick(AutoKeyCode.SOFT2, 500);
-
-        // simulate down key click
-        a.simulateKeyClick(AutoKeyCode.DOWN, 500);
-
-        // simulate select key click
-        a.simulateKeyClick(AutoKeyCode.SELECT, 2500); 
+        // simulate clicking on "Exit" menu item
+        a.simulatePenClick(25, 200, 2000);       
 
         midlet.switchTo(AutoMIDletLifeCycleState.DESTROYED, true);
 
@@ -148,6 +120,6 @@ public class TestKeyEventsSimulation extends TestCase {
      * Run tests
      */
     public void runTests() {
-        testKeyEventsSimulation();
+        testPenEventSimulation();
     }
 }

@@ -30,10 +30,6 @@ import java.util.*;
 class AutoDelayEventFromStringFactory 
     implements AutoEventFromStringFactory {
 
-    static {
-        registerFactory();
-    }
-
     public String getPrefix() {
         return AutoEventType.DELAY.getName();
     }
@@ -42,6 +38,11 @@ class AutoDelayEventFromStringFactory
         throws IllegalArgumentException {
 
         AutoDelayEvent delayEvent = null;
+
+        if (args == null) {
+            throw new IllegalArgumentException("No arguments specified"); 
+        }
+        
         String delayS = (String)args.get(AutoDelayEventImpl.MSEC_ARG_NAME);
         if (delayS == null) {
             throw new IllegalArgumentException("No delay value specified");
@@ -61,9 +62,4 @@ class AutoDelayEventFromStringFactory
 
         return events;
     }
-
-    private static void registerFactory() {
-        AutoEventFactoryImpl f = AutoEventFactoryImpl.getInstance();
-        f.registerEventFromStringFactory(new AutoDelayEventFromStringFactory());
-    }    
 }

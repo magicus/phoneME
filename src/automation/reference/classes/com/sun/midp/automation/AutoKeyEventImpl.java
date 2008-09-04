@@ -92,7 +92,7 @@ final class AutoKeyEventImpl
         }
 
         String eventStr = typeStr + " " + CODE_ARG_NAME + ": " + keyStr + 
-            "," + STATE_ARG_NAME + ": " + stateStr;
+            ", " + STATE_ARG_NAME + ": " + stateStr;
 
         return eventStr;
     }

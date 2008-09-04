@@ -77,7 +77,7 @@ public final class AutoKeyCode {
         new AutoKeyCode("gamed");
 
 
-    private final static Hashtable keyCodes = new Hashtable();
+    private static Hashtable keyCodes;
 
     private String name;
     private int midpKeyCode;    
@@ -101,6 +101,9 @@ public final class AutoKeyCode {
         this.name = name;
         this.midpKeyCode = getMIDPKeyCodeFromName(name);
 
+        if (keyCodes == null) {
+            keyCodes = new Hashtable();
+        }
         keyCodes.put(name, this);
     }
 }

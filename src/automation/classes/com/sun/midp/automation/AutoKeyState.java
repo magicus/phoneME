@@ -39,7 +39,7 @@ public final class AutoKeyState {
         new AutoKeyState("released", EventConstants.RELEASED);
 
 
-    private final static Hashtable keyStates = new Hashtable();    
+    private static Hashtable keyStates; 
 
     private String name;
     private int midpKeyState;    
@@ -61,6 +61,9 @@ public final class AutoKeyState {
         this.name = name;
         this.midpKeyState = midpKeyState;
 
+        if (keyStates == null) {
+            keyStates = new Hashtable();
+        }
         keyStates.put(name, this);
     }
 }

@@ -44,22 +44,22 @@ static struct KeyCodeNameToMIDPKeyCode {
     const char* name;
     int midpKeyCode;
 } keyCodeNameToMIDPKeyCode[] = {
-    { "BACKSPACE", KEYMAP_KEY_BACKSPACE },
-    { "UP",        KEYMAP_KEY_UP        },
-    { "DOWN",      KEYMAP_KEY_DOWN      },
-    { "LEFT",      KEYMAP_KEY_LEFT      },
-    { "RIGHT",     KEYMAP_KEY_RIGHT     },
-    { "SELECT",    KEYMAP_KEY_SELECT    },
-    { "SOFT1",     KEYMAP_KEY_SOFT1     },
-    { "SOFT2",     KEYMAP_KEY_SOFT2     },
-    { "CLEAR",     KEYMAP_KEY_CLEAR     },
-    { "SEND",      KEYMAP_KEY_SEND      },
-    { "END",       KEYMAP_KEY_END       },
-    { "POWER",     KEYMAP_KEY_POWER     },
-    { "GAMEA",     KEYMAP_KEY_GAMEA     },
-    { "GAMEB",     KEYMAP_KEY_GAMEB     },
-    { "GAMEC",     KEYMAP_KEY_GAMEB     },
-    { "GAMED",     KEYMAP_KEY_GAMEB     },
+    { "backspace", KEYMAP_KEY_BACKSPACE },
+    { "up",        KEYMAP_KEY_UP        },
+    { "down",      KEYMAP_KEY_DOWN      },
+    { "left",      KEYMAP_KEY_LEFT      },
+    { "right",     KEYMAP_KEY_RIGHT     },
+    { "select",    KEYMAP_KEY_SELECT    },
+    { "soft1",     KEYMAP_KEY_SOFT1     },
+    { "soft2",     KEYMAP_KEY_SOFT2     },
+    { "clear",     KEYMAP_KEY_CLEAR     },
+    { "send",      KEYMAP_KEY_SEND      },
+    { "end",       KEYMAP_KEY_END       },
+    { "power",     KEYMAP_KEY_POWER     },
+    { "gamea",     KEYMAP_KEY_GAMEA     },
+    { "gameb",     KEYMAP_KEY_GAMEB     },
+    { "gamec",     KEYMAP_KEY_GAMEB     },
+    { "gamed",     KEYMAP_KEY_GAMEB     },
 };
 
 KNIEXPORT KNI_RETURNTYPE_INT

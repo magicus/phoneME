@@ -32,10 +32,6 @@ class AutoPenEventFromStringFactory
 
     private AutoDelayEventFromStringFactory delayEventFactory;
 
-    static {
-        registerFactory();
-    }
-
     AutoPenEventFromStringFactory() {
         delayEventFactory = new  AutoDelayEventFromStringFactory();
     }
@@ -51,6 +47,10 @@ class AutoPenEventFromStringFactory
         AutoPenEvent penEvent1 = null;
         AutoPenEvent penEvent2 = null;
         int totalEvents = 0;
+
+        if (args == null) {
+            throw new IllegalArgumentException("No arguments specified");
+        }        
 
         String delayS = (String)args.get(AutoDelayEventImpl.MSEC_ARG_NAME);
         if (delayS != null) {
@@ -122,9 +122,4 @@ class AutoPenEventFromStringFactory
 
         return events;
     }
-
-    private static void registerFactory() {
-        AutoEventFactoryImpl f = AutoEventFactoryImpl.getInstance();
-        f.registerEventFromStringFactory(new AutoPenEventFromStringFactory()); 
-    }    
 }

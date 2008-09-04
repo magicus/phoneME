@@ -42,7 +42,7 @@ public final class AutoPenState {
     private String name;    
     private int midpPenState;
     
-    private final static Hashtable penStates = new Hashtable();
+    private static Hashtable penStates;
 
     public String getName() {
         return name;
@@ -60,6 +60,9 @@ public final class AutoPenState {
         this.name = name;
         this.midpPenState = midpPenState;
 
+        if (penStates == null) {
+            penStates = new Hashtable();
+        }
         penStates.put(name, this);
     }
 }

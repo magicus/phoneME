@@ -70,7 +70,7 @@ ifeq ($(USE_I3_TEST), true)
 SUBSYSTEM_AUTOMATION_I3TEST_JAVA_FILES += \
 	$(AUTOMATION_MVM_DIR)/reference/i3test/com/sun/midp/automation/TestAutoSuiteStorage.java \
 	$(AUTOMATION_MVM_DIR)/reference/i3test/com/sun/midp/automation/TestSwitchMidlets.java \
-	$(AUTOMATION_MVM_DIR)/reference/i3test/com/sun/midp/automation/TestPenEventsSimulation.java \
-	$(AUTOMATION_MVM_DIR)/reference/i3test/com/sun/midp/automation/TestKeyEventsSimulation.java
+	$(AUTOMATION_MVM_DIR)/reference/i3test/com/sun/midp/automation/TestPenEventSimulation.java \
+	$(AUTOMATION_MVM_DIR)/reference/i3test/com/sun/midp/automation/TestKeyEventSimulation.java
 endif
 

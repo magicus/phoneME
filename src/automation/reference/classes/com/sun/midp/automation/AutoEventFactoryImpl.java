@@ -45,7 +45,7 @@ final class AutoEventFactoryImpl implements AutoEventFactory {
     public AutoEventSequence createFromString(String eventString)
         throws IllegalArgumentException {
 
-        return createFromString(eventString);
+        return createFromString(eventString, 0);
     }
 
     public AutoEventSequence createFromString(String eventString, int offset) 
@@ -103,15 +103,17 @@ final class AutoEventFactoryImpl implements AutoEventFactory {
     }
 
     
-    void registerEventFromStringFactory(AutoEventFromStringFactory factory) 
-        throws IllegalArgumentException {
+    private void registerEventFromStringFactories() {
+        AutoEventFromStringFactory f;
     
-        if (factory == null) {
-            throw new IllegalArgumentException(
-                    "AutoEventFromStringFactory is null");
-        }
+        f = new AutoKeyEventFromStringFactory();
+        eventFromStringFactories.put(f.getPrefix(), f);
 
-        eventFromStringFactories.put(factory.getPrefix(), factory);
+        f = new AutoPenEventFromStringFactory();
+        eventFromStringFactories.put(f.getPrefix(), f);
+
+        f = new AutoDelayEventFromStringFactory();
+        eventFromStringFactories.put(f.getPrefix(), f);
     }
 
 
@@ -121,5 +123,7 @@ final class AutoEventFactoryImpl implements AutoEventFactory {
     private AutoEventFactoryImpl() {
         eventFromStringFactories = new Hashtable();
         eventStringParser = new AutoEventStringParser();
+
+        registerEventFromStringFactories();
     }
 }
