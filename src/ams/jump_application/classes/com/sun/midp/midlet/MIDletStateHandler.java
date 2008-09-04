@@ -319,7 +319,7 @@ public class MIDletStateHandler {
             midletDestroyedDuringStart = true;
         } else {
             listener.midletDestroyed(getMIDletSuite(),
-                                     midlet.getClass().getName());
+                midlet.getMIDlet().getClass().getName(), midlet.getMIDlet());
         }
     }
 
@@ -340,7 +340,7 @@ public class MIDletStateHandler {
     void midletPaused() {
         if (!midletStarting) {
             listener.midletPausedItself(getMIDletSuite(),
-                                        midlet.getClass().getName());
+                midlet.getMIDlet().getClass().getName());
         }
     }
 
@@ -359,7 +359,7 @@ public class MIDletStateHandler {
      */
     void resumeRequest() {
         listener.resumeRequest(getMIDletSuite(),
-                               midlet.getClass().getName());
+                               midlet.getMIDlet().getClass().getName());
     }
 
     /**
@@ -387,7 +387,7 @@ public class MIDletStateHandler {
          * Make sure there is not a new MIDlet state already created.
          */
         if (newMidletPeer != null) {
-            throw new SecurityException("Recusive MIDlet creation");
+            throw new SecurityException("Recursive MIDlet creation");
         }
 
         newMidletPeer = new MIDletPeer();

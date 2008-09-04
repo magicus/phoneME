@@ -43,11 +43,15 @@
 extern "C" {
 #endif
 
-
 /**
  * Type of the midlet suite ID.
  */
 typedef jint SuiteIdType;
+
+/**
+ * Type of the midlet suite's component ID.
+ */
+typedef jint ComponentIdType;
 
 /**
  * Type of the AMS folder ID.
@@ -61,11 +65,20 @@ typedef jint FolderIdType;
 #define INTERNAL_SUITE_ID  -1
 #define MAX_SUITE_ID        2147483647
 
+/** ID that is never used for a dynamic component of a midlet suite */
+#define UNUSED_COMPONENT_ID 0
+#define MAX_COMPONENT_ID    2147483647
+
 /**
  * Length of string representation of the suite ID.
  * For example, "0000000F" for suiteId = 15.
  */
 #define GET_SUITE_ID_LEN(suiteId) 8
+
+/**
+ * Length of string representation of the suite ID.
+ */
+#define GET_COMPONENT_ID_LEN(componentId) 8
 
 /** A list of properties that can be searched by a key. */
 typedef struct _Properties {
@@ -83,6 +96,15 @@ typedef struct _Properties {
     int status;
     pcsl_string* pStringArr;
 } MidpProperties;
+
+/** Possible types of an installed component. */
+typedef enum _ComponentType {
+    COMPONENT_REGULAR_SUITE,
+    COMPONENT_PREINSTALLED_SUITE,
+    COMPONENT_DYNAMIC,
+    /** force enum to be 4 bytes */
+    COMPONENT_DUMMY = 0x10000000
+} ComponentType;
 
 /*
  * Maximal lenght of the hash. Currently MD5 is used so this value is set to 16.
@@ -162,6 +184,12 @@ typedef struct _midletSuiteData {
     SuiteIdType suiteId;
 
     /**
+     * ID of the dynamic component (has meaning only if
+     * the value of "type" field is COMPONENT_DYNAMIC).
+     */
+    ComponentIdType componentId;
+
+    /**
      * ID of the storage (INTERNAL_STORAGE_ID for the internal storage
      * or another value for external storages).
      */
@@ -197,10 +225,11 @@ typedef struct _midletSuiteData {
     jint jarHashLen;
 
     /**
-     * True if this midlet suite is preinstalled (and thus should be
-     * prevented from being removed.
+     * Type of the component described by this structure.
+     * If it is COMPONENT_PREINSTALLED_SUITE, this is a preinstalled
+     * midlet suite and thus it should be prevented from being removed.
      */
-    jboolean isPreinstalled;
+    ComponentType type;
 
     /** A structure with string-represented information about the suite. */
     VariableLenSuiteData varSuiteData;
@@ -249,6 +278,17 @@ const pcsl_string* midp_suiteid2pcsl_string(SuiteIdType value);
  */
 const char* midp_suiteid2chars(SuiteIdType value);
 
+#if ENABLE_DYNAMIC_COMPONENTS
+/**
+ * Converts the given component ID to pcsl_string.
+ * NOTE: this function returns a pointer to the static buffer!
+ *
+ * @param value component id to convert
+ * @return pcsl_string representation of the given component id
+ */
+const pcsl_string* midp_componentid2pcsl_string(ComponentIdType value);
+#endif
+
 /**
  * Tells if a suite exists.
  *
@@ -258,7 +298,7 @@ const char* midp_suiteid2chars(SuiteIdType value);
  *         NOT_FOUND if not,
  *         OUT_OF_MEMORY if out of memory or IO error,
  *         IO_ERROR if IO error,
- *         SUITE_CORRUPTED_ERROR is suite is found in the list,
+ *         SUITE_CORRUPTED_ERROR if suite is found in the list,
  *         but it's corrupted
  */
 MIDPError midp_suite_exists(SuiteIdType suiteId);
@@ -284,6 +324,49 @@ MIDPError midp_suite_get_class_path(SuiteIdType suiteId,
                                     StorageIdType storageId,
                                     jboolean checkSuiteExists,
                                     pcsl_string *classPath);
+
+#if ENABLE_DYNAMIC_COMPONENTS
+/**
+ * Tells if a component exists.
+ *
+ * @param componentId ID of a component
+ *
+ * @return ALL_OK if a component exists,
+ *         NOT_FOUND if not,
+ *         OUT_OF_MEMORY if out of memory or IO error,
+ *         IO_ERROR if IO error,
+ *         SUITE_CORRUPTED_ERROR if component is found in the list,
+ *         but it's corrupted
+ */
+MIDPError midp_component_exists(ComponentIdType componentId);
+
+/**
+ * Gets location of the class path for the component
+ * with the specified componentId.
+ *
+ * Note that memory for the in/out parameter classPath is
+ * allocated by the callee. The caller is responsible for
+ * freeing it using pcsl_mem_free().
+ *
+ * @param componentId The ID of the component
+ * @param suiteId The application suite ID
+ * @param storageId storage ID, INTERNAL_STORAGE_ID for the internal storage
+ * @param checkComponentExists true if the component should be checked for
+                               existence or not
+ * @param pClassPath The in/out parameter that contains returned class path
+ * @return error code that should be one of the following:
+ * <pre>
+ *     ALL_OK, OUT_OF_MEMORY, NOT_FOUND,
+ *     SUITE_CORRUPTED_ERROR, BAD_PARAMS
+ * </pre>
+ */
+MIDPError
+midp_suite_get_component_class_path(ComponentIdType componentId,
+                                    SuiteIdType suiteId,
+                                    StorageIdType storageId,
+                                    jboolean checkComponentExists,
+                                    pcsl_string *pClassPath);
+#endif /* ENABLE_DYNAMIC_COMPONENTS */
 
 #if ENABLE_MONET
 /**
@@ -370,9 +453,9 @@ midp_suite_get_suite_folder(SuiteIdType suiteId, FolderIdType* pFolderId);
  *          given in a JAD file
  * @param name name of the suite, as given in a JAD file
  * @param pSuiteId [out] receives the platform-specific suite ID of the
- *          application given by vendorName and appName, or string with
- *          a null data if suite does not exist, or
- *          out of memory error occured, or suite is corrupted.
+ *          application given by vendor and name, or UNUSED_SUITE_ID
+ *          if suite does not exist, or out of memory error occured,
+ *          or suite is corrupted.
  *
  * @return  ALL_OK if suite found,
  *          NOT_FOUND if suite does not exist (so a new ID was created),
@@ -380,7 +463,30 @@ midp_suite_get_suite_folder(SuiteIdType suiteId, FolderIdType* pFolderId);
  */
 MIDPError
 midp_get_suite_id(const pcsl_string* vendor, const pcsl_string* name,
-    SuiteIdType* suiteId);
+                  SuiteIdType* pSuiteId);
+
+#if ENABLE_DYNAMIC_COMPONENTS
+/**
+ * If the dynamic component exists, this function returns a unique identifier
+ * of the component. Note that the component may be corrupted even if it exists.
+ * If the component doesn't exist, a new component ID is created.
+ *
+ * @param vendor name of the vendor that created the component, as
+ *        given in a JAD file
+ * @param name name of the component, as given in a JAD file
+ * @param pComponentId [out] receives the platform-specific component ID of
+ *        the component given by vendor and name, or UNUSED_COMPONENT_ID
+ *        if component does not exist, or out of memory error occured,
+ *        or component is corrupted.
+ *
+ * @return  ALL_OK if suite found,
+ *          NOT_FOUND if component does not exist (so a new ID was created),
+ *          other error code in case of error
+ */
+MIDPError
+midp_get_component_id(const pcsl_string* vendor, const pcsl_string* name,
+                      ComponentIdType* pComponentId);
+#endif /* ENABLE_DYNAMIC_COMPONENTS */
 
 /**
  * Gets the properties of a MIDlet suite to persistent storage.

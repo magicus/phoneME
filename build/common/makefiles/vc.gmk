@@ -86,16 +86,20 @@ endif
 
 ifeq ($(USE_DEBUG), true)
 
+ifneq ($(TARGET_VM), cdc_vm)
 DEBUG_CFLAGS 	+= -Zi -Od -MDd
+endif
 LD_FLAGS 	+= -debug 
 # Force use of debug libraries
 LD_FLAGS	+= -nodefaultlib:msvcrt.lib msvcrtd.lib
 
 else
 
+ifneq ($(TARGET_VM), cdc_vm)
 # flags inherited from the VM : -Ox -Os -Gy -GF
 EXTRA_CFLAGS    += -nologo -DWIN32 -D_WINDOWS 
 EXTRA_CFLAGS 	+= -MD
+endif
 LD_FLAGS 	+= -merge:CODESEGMENT=.text -merge:DATASEGMENT=.data \
 		   -opt:REF -opt:ICF,8
 # Force use of non-debug libraries

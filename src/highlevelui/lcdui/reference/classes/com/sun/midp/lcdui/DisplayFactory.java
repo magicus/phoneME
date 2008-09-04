@@ -51,36 +51,51 @@ public class DisplayFactory {
     }
 
     /**
-     * Gets the <code>Display</code> object by owner name.
+     * Gets the <code>Display</code> object by owner, create one if needed.
      *
      * @param token security token for authorizing the caller for the
      *    com.sun.midp permission.
-     * @param owner name of the owner of the display, the owner can be
+     * @param owner the owner of the display, the owner can be any class
      *
      * @return the display object that application can use for its user
      * interface
      *
      * @throws NullPointerException if <code>owner</code> is <code>null</code>
      */
-    public static Display getDisplay(SecurityToken token, String owner) {
+    public static Display getDisplay(SecurityToken token, Object owner) {
         token.checkIfPermissionAllowed(Permissions.MIDP);
         return displayTunnel.getDisplay(owner);
     }
 
     /**
-     * Gets the <code>Display</code> object by owner name.
+     * Gets the <code>Display</code> object by owner, create one if needed.
      * The caller must be granted the com.sun.midp permission.
      *
-     * @param owner name of the owner of the display, the owner can be
+     * @param owner the owner of the display, the owner can be any class
      *
      * @return the display object that application can use for its user
      * interface
      *
      * @throws NullPointerException if <code>owner</code> is <code>null</code>
      */
-    public static Display getDisplay(String owner) {
+    public static Display getDisplay(Object owner) {
         AccessController.checkPermission(Permissions.MIDP_PERMISSION_NAME);
 
         return displayTunnel.getDisplay(owner);
+    }
+
+    /**
+     * Free a <code>Display</code> no longer in use.
+     *
+     * @param owner the owner of the display, the owner can be any class
+     *
+     * @return true if display has been succcessfully removed, 
+     *         false, if display object has not been found.
+     *
+     * @throws NullPointerException if <code>owner</code> is <code>null</code>
+     */
+    public static boolean freeDisplay(Object owner) {
+        AccessController.checkPermission(Permissions.MIDP_PERMISSION_NAME);
+        return displayTunnel.freeDisplay(owner);
     }
 } 

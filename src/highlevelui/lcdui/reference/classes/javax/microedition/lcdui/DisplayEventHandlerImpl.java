@@ -230,7 +230,7 @@ class DisplayEventHandlerImpl implements DisplayEventHandler,
                 preemptingDisplay.getDisplayId() == displayId) {
 
                 displayContainer.removeDisplay(
-                    preemptingDisplay.getNameOfOwner());
+                    preemptingDisplay.getOwner());
     
                 preemptingDisplay = null;
 

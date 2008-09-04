@@ -29,13 +29,18 @@ package javax.microedition.lcdui;
 import java.io.InputStream;
 import java.io.IOException;
 
-import com.sun.midp.midlet.MIDletSuite;
-import com.sun.midp.midlet.MIDletStateHandler;
-
 /**
  * Creates ImageData based on platform decoder and storage.
  */
 class ImageDataFactory implements AbstractImageDataFactory {
+
+    /** Reference to a image cache. */
+    private SuiteImageCache imageCache;
+
+    /** Initialize the image cache factory. */
+    private ImageDataFactory() {
+        imageCache = SuiteImageCacheFactory.getCache();
+    }
 
     /**
      * Singleton <code>ImageDataFactory</code> instance.
@@ -157,7 +162,7 @@ class ImageDataFactory implements AbstractImageDataFactory {
         if (loadAndCreateImmutableImageDataFromCache(data, name)) {
             return data;
         }
-
+        
         /*
          * allocate an array and read in the bits using
          * Class.getResourceAsStream(name);
@@ -494,41 +499,33 @@ class ImageDataFactory implements AbstractImageDataFactory {
 
         return data;
     }
-
-
-    /**
-     * Load and create image data from cache. The real work is done in
-     * the native function.
-     *
-     * @param   data The ImageData object
-     * @param   resName  Image resource name
-     * @return  true if image was loaded and created, false otherwise
-     */
-    private boolean loadAndCreateImmutableImageDataFromCache(ImageData data,
-                                                             String resName) {
-        MIDletSuite midletSuite =
-            MIDletStateHandler.getMidletStateHandler().getMIDletSuite();
-        int suiteId = midletSuite.getID();
-
-        try {
-            return loadAndCreateImmutableImageDataFromCache0(data,
-                                                             suiteId, resName);
-        } catch(OutOfMemoryError e) {
-            garbageCollectImages(false);
-
-            try {
-                return loadAndCreateImmutableImageDataFromCache0(data,
-                                                                 suiteId,
+    
+    /** 
+     * Load and create image data from cache. The real work is done in 
+     * the native function. 
+     * 
+     * @param   data The ImageData object 
+     * @param   resName  Image resource name 
+     * @return  true if image was loaded and created, false otherwise 
+     */ 
+    private boolean loadAndCreateImmutableImageDataFromCache(ImageData data, 
+                                                             String resName) { 
+        try { 
+            return imageCache.loadAndCreateImmutableImageData(data, resName);
+        } catch(OutOfMemoryError e) { 
+            garbageCollectImages(false); 
+ 
+            try { 
+                return imageCache.loadAndCreateImmutableImageData(data,
                                                                  resName);
-            } catch(OutOfMemoryError e2) {
-                garbageCollectImages(true);
-
-                return loadAndCreateImmutableImageDataFromCache0(data,
-                                                                 suiteId,
+            } catch(OutOfMemoryError e2) { 
+                garbageCollectImages(true); 
+ 
+                return imageCache.loadAndCreateImmutableImageData(data,
                                                                  resName);
-            }
-        }
-    }
+            } 
+        } 
+    } 
 
     /**
      * helper function called by the create functions above.
@@ -631,18 +628,6 @@ class ImageDataFactory implements AbstractImageDataFactory {
                                                         byte[] inputData,
                                                         int offset,
                                                         int length);
-
-    /**
-     * Native function to load native image data from cache and create
-     * an immutable image.
-     *
-     * @param data      The ImageData object
-     * @param suiteId   The suite id
-     * @param resName   The image resource name
-     * @return          true if image was loaded and created, false otherwise
-     */
-    private native boolean loadAndCreateImmutableImageDataFromCache0(
-                           ImageData data, int suiteId, String resName);
 
     /**
      * Native function to load an ImageData directly out of the rom image.

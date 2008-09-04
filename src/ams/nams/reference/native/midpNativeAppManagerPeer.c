@@ -1,7 +1,7 @@
 /*
  *
  *
- * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
@@ -86,6 +86,8 @@ nams_listeners_notify(NamsListenerType listenerType,
  * @return error code: (ALL_OK if successful)
  */
 MIDPError midp_system_initialize(void) {
+    MIDPError error;
+
 	int midp_heap_requirement = getHeapRequirement();
 
     JVM_Initialize();
@@ -96,8 +98,37 @@ MIDPError midp_system_initialize(void) {
      */
     JVM_SetConfig(JVM_CONFIG_HEAP_CAPACITY, midp_heap_requirement);
 
-    return init_listeners_impl();
+    if (ALL_OK == (error = (MIDPError)midpInitialize())) {
+        error = (MIDPError)init_listeners_impl();
 }
+
+    return error;
+}
+
+
+static MIDPError system_cleanup(int status) {
+    NamsEventData eventData;
+    MIDPError errCode;
+    memset((char*)&eventData, 0, sizeof(NamsEventData));
+    eventData.event  = MIDP_NAMS_EVENT_STATE_CHANGED;
+    eventData.state = MIDP_SYSTEM_STATE_STOPPED;
+    nams_listeners_notify(SYSTEM_EVENT_LISTENER, &eventData);
+
+    switch (status) {
+        case MIDP_SHUTDOWN_STATUS: {
+            errCode = ALL_OK;
+            break;
+        }
+
+        default: {
+            errCode = GENERAL_ERROR;
+            break;
+        }
+    }
+
+    return errCode;
+}
+
 
 /**
  * Starts the system. Does not return until the system is stopped.
@@ -108,26 +139,13 @@ MIDPError midp_system_initialize(void) {
 MIDPError midp_system_start(void) {
     int vmStatus;
     MIDPError errCode;
-    NamsEventData eventData;
-
-    memset((char*)&eventData, 0, sizeof(NamsEventData));
 
     vmStatus = midpRunMainClass(NULL, APP_MANAGER_PEER, 0, NULL);
 
-    eventData.event  = MIDP_NAMS_EVENT_STATE_CHANGED;
-    eventData.state = MIDP_SYSTEM_STATE_STOPPED;
-    nams_listeners_notify(SYSTEM_EVENT_LISTENER, &eventData);
-
-    switch (vmStatus) {
-        case MIDP_SHUTDOWN_STATUS: {
-            errCode = ALL_OK;
-            break;
-        }
-
-        default: {
-            errCode = GENERAL_ERROR;
-            break;
-        }
+    if (MIDP_RUNNING_STATUS != vmStatus) {
+        errCode = system_cleanup(vmStatus);
+    } else {
+        errCode = ALL_OK;
     }
 
     return errCode;

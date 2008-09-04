@@ -54,6 +54,7 @@
 #include <midpResourceLimit.h>
 #include <pcsl_file.h>
 #include <pcsl_string.h>
+#include <pcsl_esc.h>
 #include <pcsl_string_status.h>
 #include <pcsl_memory.h>
 
@@ -152,6 +153,8 @@ storageInitialize(char *config_home, char *app_dir) {
         REPORT_ERROR(LC_CORE, "Error: cannot initialize string library.\n");
         return -1;
     }
+
+    pcsl_esc_init();
 
     if(pcsl_file_init() < 0)  {
         REPORT_ERROR(LC_CORE, "Error: out of memory.\n");
