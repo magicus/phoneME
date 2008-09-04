@@ -39,6 +39,28 @@
 /**
  * Application manager invokes this function to start a suite installation.
  *
+ * NOTE: if it is desired to invoke Graphical Installer to use Java GUI,
+ *       the corresponding MIDlet should be launched instead of calling
+ *       this function:
+ *
+ * <pre>
+ *   const javacall_utf16 guiInstallerClass[] = {
+ *       'c', 'o', 'm', '.', 's', 'u', 'n', '.', 'm', 'i', 'd', 'p', '.',
+ *       'i', 'n', 's', 't', 'a', 'l', 'l', 'e', 'r', '.',
+ *       'G', 'r', 'a', 'p', 'h', 'i', 'c', 'a', 'l',
+ *       'I', 'n', 's', 't', 'a', 'l', 'l', 'e', 'r',
+ *       0
+ *   };
+ *   const javacall_utf16 argInstallStr[] = { 'I', 0 };
+ *   javacall_const_utf16_string pArgs[2];
+ *
+ *   pArgs[0] = argInstallStr;
+ *   pArgs[1] = urlToInstallFrom;
+ *
+ *   res = java_ams_midlet_start_with_args(-1, appId, guiInstallerClass,
+ *                                         pArgs, 2, NULL);
+ * </pre>
+ *
  * @param appId ID that will be used to uniquely identify this operation
  * @param srcType
  *             type of data pointed by installUrl: a JAD file, a JAR file
@@ -51,13 +73,10 @@
  *             file:////a/b/c/d.jad
  *             or
  *             c:\a\b\c\d.jad
- * @param invokeGUI <tt>JAVACALL_TRUE</tt> to invoke Graphical Installer,
- *                  <tt>JAVACALL_FALSE</tt> otherwise
- * @param pOperationId [out] if the installation was successfully started,
- *                           on exit contains an ID uniquely identifying
- *                           this operation; this parameter can be NULL on
- *                           entrance if the operation ID is not required.
- *                           IMPL_NOTE: currently always 0 is returned.
+ * @param storageId ID of the storage where to install the suite or
+ *                  JAVACALL_INVALID_STORAGE_ID to use the default storage
+ * @param folderId ID of the folder into which to install the suite or
+ *                  JAVACALL_INVALID_FOLDER_ID to use the default folder
  *
  * @return status code: <tt>JAVACALL_OK</tt> if the installation was
  *                                           successfully started,
@@ -72,61 +91,42 @@ javacall_result
 java_ams_install_suite(javacall_app_id appId,
                        javacall_ams_install_source_type srcType,
                        javacall_const_utf16_string installUrl,
-                       javacall_bool invokeGUI) {
-    /* com.sun.midp.installer.GraphicalInstaller */
-    const javacall_utf16 guiInstallerClass[] = {
-        'c', 'o', 'm', '.', 's', 'u', 'n', '.', 'm', 'i', 'd', 'p', '.',
-        'i', 'n', 's', 't', 'a', 'l', 'l', 'e', 'r', '.',
-        'D', 'i', 's', 'c', 'o', 'v', 'e', 'r', 'y', 'A', 'p', 'p',
-        0
-    };
-    const javacall_utf16 argInstallStr[] = { 'I', 0 };
+                       javacall_storage_id storageId,
+                       javacall_folder_id folderId) {
+    MidpEvent evt;
+    javacall_int32 urlLength;
+    pcsl_string temp;
     javacall_result res = JAVACALL_FAIL;
-    javacall_const_utf16_string pArgs[2];
 
     if (installUrl == NULL) {
         return JAVACALL_FAIL;
     }
 
-    if (invokeGUI == JAVACALL_TRUE) {
-        pArgs[0] = argInstallStr;
-        pArgs[1] = installUrl;
+    MIDP_EVENT_INITIALIZE(evt);
 
-        res = java_ams_midlet_start_with_args(-1,
-            appId,
-            guiInstallerClass,
-            pArgs,
-            2,
-            NULL);
-    } else {
-        MidpEvent evt;
-        javacall_int32 urlLength;
-        pcsl_string temp;
+    evt.type = NATIVE_INSTALL_REQUEST;
+    evt.intParam1 = appId;
+    evt.intParam2 = (int)srcType;
+    evt.intParam3 = (int)storageId;
+    evt.intParam4 = (int)folderId;
 
-        MIDP_EVENT_INITIALIZE(evt);
+    res  = javautil_unicode_utf16_ulength(installUrl, &urlLength);
+    if (res != JAVACALL_OK) {
+        return res;
+    }
 
-        evt.type = NATIVE_INSTALL_REQUEST;
-        evt.intParam1 = appId;
-        evt.intParam2 = (int)srcType;
-
-        res  = javautil_unicode_utf16_ulength(installUrl, &urlLength);
-        if (res != JAVACALL_OK) {
-            return res;
-        }
-
-        if (PCSL_STRING_OK == pcsl_string_convert_from_utf16(
-                                  installUrl, urlLength, &temp)) {
-            if (pcsl_string_utf16_length(&temp) > 0) {
-                evt.stringParam1 = temp;
-                midpStoreEventAndSignalAms(evt);
-                res = JAVACALL_OK;
-            } else {
-                pcsl_string_free(&temp);
-                res = JAVACALL_FAIL;
-            }
+    if (PCSL_STRING_OK == pcsl_string_convert_from_utf16(
+                              installUrl, urlLength, &temp)) {
+        if (pcsl_string_utf16_length(&temp) > 0) {
+            evt.stringParam1 = temp;
+            midpStoreEventAndSignalAms(evt);
+            res = JAVACALL_OK;
         } else {
+            pcsl_string_free(&temp);
             res = JAVACALL_FAIL;
         }
+    } else {
+        res = JAVACALL_FAIL;
     }
 
     return res;

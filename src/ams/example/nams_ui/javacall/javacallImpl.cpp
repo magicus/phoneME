@@ -78,18 +78,24 @@ java_ams_is_domain_trusted(javacall_suite_id suiteId,
 }
 
 /**
- * Installer invokes this function to inform the task manager about
+ * Installer invokes this function to inform the application manager about
  * the current installation progress.
  *
  * Note: when installation is completed, javacall_ams_operation_completed()
  *       will be called to report installation status.
  *
- * @param installPercent percents completed (0 - 100)
+ * @param pInstallState pointer to a structure containing all information
+ *                      about the current installation state
+ * @param installStatus defines current installation step
+ * @param currStepPercentDone percents completed (0 - 100), -1 if unknown
+ * @param totalPercentDone percents completed (0 - 100), -1 if unknown
  */
 void
-java_ams_installation_percentage(int installPercent) {
-    wprintf(_T(">>> java_ams_installation_percentage(): %d%%\n"),
-            installPercent);
+java_ams_install_report_progress(javacall_ams_install_state* pInstallState,
+                                 javacall_ams_install_status installStatus,
+                                 int currStepPercentDone, int totalPercentDone);
+    wprintf(_T(">>> java_ams_install_report_progress(): %d%%, total: %d%%\n"),
+            currStepPercentDone, totalPercentDone);
 }
 
 /**
@@ -120,6 +126,44 @@ void java_ams_midlet_state_changed(javacall_lifecycle_state state,
     if (state == JAVACALL_LIFECYCLE_MIDLET_SHUTDOWN) {
         wprintf(_T(">>> MIDlet with ID %d has exited\n"), appId);
     }
+}
+
+/**
+ * This function is called by the installer when some action is required
+ * from the user.
+ *
+ * It must be implemented at that side (SJWC or Platform) where the
+ * application manager is located.
+ *
+ * After processing the request, java_ams_install_answer() must
+ * be called to report the result to the installer.
+ *
+ * @param requestCode   identifies the requested action
+ *                      in pair with pInstallState->appId uniquely
+ *                      identifies this request
+ * @param pInstallState pointer to a structure containing all information
+ *                      about the current installation state
+ * @param pRequestData  pointer to request-specific data (may be NULL)
+ *
+ * @return <tt>JAVACALL_OK</tt> if handling of the request was started
+ *                              successfully,
+ *         <tt>JAVACALL_FAIL</tt> otherwise
+ */
+javacall_result
+java_ams_install_ask(javacall_ams_install_request_code requestCode,
+                     const javacall_ams_install_state* pInstallState,
+                     void* pRequestData) {
+    wprintf(_T(">>> java_ams_install_ask(), requestCode = %d\n"), requestCode);
+
+    javacall_bool resultData = JAVACALL_TRUE;
+    javacall_result res = java_ams_install_answer(requestCode, pInstallState,
+                                                  &resultData);
+    if (res != JAVACALL_OK) {
+        wprintf(_T(">>> Answer was not understood: java_ams_install_answer() ")
+                _T("returned %d\n"), (int)res);
+    }
+
+    return JAVACALL_OK;
 }
 
 };

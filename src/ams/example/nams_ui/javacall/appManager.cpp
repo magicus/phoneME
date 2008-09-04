@@ -1793,7 +1793,7 @@ MidletTreeWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
                 javacall_result res = java_ams_install_suite(g_jAppId,
                     JAVACALL_INSTALL_SRC_ANY,
                     L"http://daisy/midlets/HelloMIDlet.jad",
-                    JAVACALL_FALSE);
+                    JAVACALL_INVALID_STORAGE_ID, JAVACALL_INVALID_FOLDER_ID);
 
                 if (res == JAVACALL_OK) {
                     // IMPL_NOTE: the following code must be refactored
