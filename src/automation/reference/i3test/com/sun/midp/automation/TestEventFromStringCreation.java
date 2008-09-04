@@ -50,7 +50,10 @@ public class TestEventFromStringCreation extends TestCase {
     private static final String eventString2 = 
         "key    code  : a , state :clicked\n" + 
         "key code :   soft1  ,state : pressed   , msec : 500\n" +
-        "key code: A, state: clicked, msec: 200";
+        "key code: A, state: clicked, msec: 200\n" + 
+        "pen x: -1, y: 1, state: clicked\n" +
+        "pen x: 1, y: 1, state: pressed, msec: 500\n" +
+        "pen x: -1, y: -1, state: clicked, msec: 200";
 
     private static final String seqString2Expected = 
         "key code: a, state: pressed\n" + 
@@ -59,7 +62,15 @@ public class TestEventFromStringCreation extends TestCase {
         "key code: soft1, state: pressed\n" + 
         "delay msec: 200\n" +
         "key code: A, state: pressed\n" +
-        "key code: A, state: released";
+        "key code: A, state: released\n" + 
+        "pen x: -1, y: 1, state: pressed\n" +
+        "pen x: -1, y: 1, state: released\n" +
+        "delay msec: 500\n" +
+        "pen x: 1, y: 1, state: pressed\n" +
+        "delay msec: 200\n" +
+        "pen x: -1, y: -1, state: pressed\n" +
+        "pen x: -1, y: -1, state: released";
+
 
     void testEventFromStringCreation() {
         Automation a = Automation.getInstance();
@@ -69,13 +80,11 @@ public class TestEventFromStringCreation extends TestCase {
 
         AutoEventSequence seq = eventFactory.createFromString(eventString1);
         String seqString = seq.toString();
-        System.err.println("Sequence string:\n" + seqString);
         assertTrue("Event string and event sequence string doesn't match",
                 seqString.equals(seqString1Expected));
 
         seq = eventFactory.createFromString(eventString2);
         seqString = seq.toString();
-        System.err.println("Sequence string:\n" + seqString);
         assertTrue("Event string and event sequence string doesn't match",
                 seqString.equals(seqString2Expected));
     }

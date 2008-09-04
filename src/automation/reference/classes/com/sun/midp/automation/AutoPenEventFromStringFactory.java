@@ -117,7 +117,7 @@ class AutoPenEventFromStringFactory
         events[totalEvents++] = penEvent1;
 
         if (penEvent2 != null) {
-            events[totalEvents++] = penEvent1;
+            events[totalEvents++] = penEvent2;
         }
 
         return events;
