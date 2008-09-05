@@ -41,6 +41,8 @@
 /* IMPL_NOTE: must be removed! */
 #include <javacall_ams_app_manager.h>
 
+extern int g_installerIsolateId;
+
 /**
  * Application manager invokes this function to start a suite installation.
  *
@@ -227,9 +229,9 @@ java_ams_install_answer(javacall_ams_install_request_code requestCode,
     }
 
     isolateId = getCurrentIsolateId();
-    thread = SNI_GetSpecialThread(isolateId);
+    thread = SNI_GetSpecialThread(g_installerIsolateId);
     if (thread != NULL) {
-        midp_thread_unblock(thread);
+        SNI_UnblockThread(thread);
         return JAVACALL_OK;
     }
 

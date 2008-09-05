@@ -39,6 +39,8 @@
 #include <javacall_ams_installer.h>
 #include <javacall_ams_platform.h>
 
+int g_installerIsolateId = -1;
+
 /**
  * This field is set up by the javacall_ams_install_answer() callback.
  */
@@ -112,14 +114,18 @@ KNIDECL(com_sun_midp_installer_InstallerPeerMIDlet_sendNativeRequest0) {
         javacall_int32 jarSize;
         javacall_const_utf16_string authPath[];
 */
+        /* block the thread only if the request was sent successfully */
+        g_installerIsolateId = getCurrentIsolateId();
+        SNI_SetSpecialThread(g_installerIsolateId);
+        SNI_BlockThread();
+
         /* sending the request */
         jcRes = java_ams_install_ask(requestCode, &jcInstallState,
                                      &jcRequestData);
-    }
 
-    if (jcRes == JAVACALL_OK) {
-        /* block the thread only if the request was sent successfully */
-        SNI_BlockThread();
+        if (jcRes != JAVACALL_OK) {
+            SNI_UnlockThread(SNI_GetSpecialThread(g_installerIsolateId));
+        }
     }
 
     KNI_EndHandles();
@@ -134,7 +140,7 @@ KNIDECL(com_sun_midp_installer_InstallerPeerMIDlet_sendNativeRequest0) {
  */
 KNIEXPORT KNI_RETURNTYPE_BOOLEAN
 KNIDECL(com_sun_midp_installer_InstallerPeerMIDlet_getAnswer0) {
-    jboolean fAnswer = KNI_FALSE;
+    jboolean fAnswer = KNI_TRUE;
 
     KNI_ReturnBoolean(fAnswer);
 }
@@ -166,7 +172,7 @@ KNIDECL(com_sun_midp_installer_InstallerPeerMIDlet_reportFinished0) {
         GET_PARAMETER_AS_PCSL_STRING(3, errMsgParam)
 
         if (!pcsl_string_is_null(&errMsgParam)) {
-//            (void) pcsl_string_dup(&errMsgParam, &errMsg);
+            /* IMPL_NOTE: pass the error message to the listener */
         }
 
         RELEASE_PCSL_STRING_PARAMETER
