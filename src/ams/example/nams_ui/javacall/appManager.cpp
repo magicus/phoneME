@@ -1387,9 +1387,6 @@ MainWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
     }
 
     case WM_HOST_RESOLVED: {
-#if 1
-        fprintf(stderr, "Got Windows event WM_HOST_RESOLVED \n");
-#endif
         javanotify_socket_event(
             JAVACALL_EVENT_NETWORK_GETHOSTBYNAME_COMPLETED,
             (javacall_handle)wParam,
