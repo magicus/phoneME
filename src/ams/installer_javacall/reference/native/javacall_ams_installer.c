@@ -44,6 +44,7 @@
 #include <stdio.h>
 
 extern int g_installerIsolateId;
+extern jboolean g_fAnswer, g_fAnswerReady;
 
 /**
  * Application manager invokes this function to start a suite installation.
@@ -221,23 +222,31 @@ java_ams_install_answer(javacall_ams_install_request_code requestCode,
                         const javacall_ams_install_state* pInstallState,
                         const javacall_ams_install_data* pResultData) {
     JVMSPI_ThreadID thread;
-    int isolateId;
+    javacall_result res;
 
-    (void)requestCode;
-    (void)pResultData;
+    g_fAnswerReady = JAVACALL_TRUE;
 
-printf(">>> java_ams_install_answer(), request: %d\n", (int)requestCode);
+    if (pResultData != NULL) {
+        g_fAnswer = pResultData->fAnswer;
+        res = JAVACALL_OK;
+    } else {
+        g_fAnswer = JAVACALL_FALSE;
+        res = JAVACALL_FAIL;
+    }
 
     if (pInstallState == NULL) {
-        return JAVACALL_FAIL;
+        res = JAVACALL_FAIL;
     }
 
-    isolateId = getCurrentIsolateId();
-    thread = SNI_GetSpecialThread(g_installerIsolateId);
-    if (thread != NULL) {
-        SNI_UnblockThread(thread);
-        return JAVACALL_OK;
+    if (g_installerIsolateId != -1 &&
+            requestCode != JAVACALL_INSTALL_REQUEST_UPDATE_STATUS) {
+        thread = SNI_GetSpecialThread(g_installerIsolateId);
+        if (thread != NULL) {
+            SNI_UnblockThread(thread);
+        } else {
+            res = JAVACALL_FAIL;
+        }
     }
 
-    return JAVACALL_FAIL;
+    return res;
 }

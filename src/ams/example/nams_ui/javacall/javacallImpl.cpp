@@ -158,11 +158,15 @@ java_ams_install_ask(javacall_ams_install_request_code requestCode,
     javacall_ams_install_data resultData;
     resultData.fAnswer = JAVACALL_TRUE;
 
-    javacall_result res = java_ams_install_answer(requestCode, pInstallState,
-                                                  &resultData);
-    if (res != JAVACALL_OK) {
-        wprintf(_T(">>> Answer was not understood: java_ams_install_answer() ")
-                _T("returned %d\n"), (int)res);
+    if (requestCode != JAVACALL_INSTALL_REQUEST_UPDATE_STATUS) {
+        javacall_result res =
+            java_ams_install_answer(requestCode, pInstallState, &resultData);
+
+        if (res != JAVACALL_OK) {
+            wprintf(_T(">>> Answer was not understood: java_ams_install_answer() ")
+                    _T("returned %d\n"), (int)res);
+            return res;
+        }
     }
 
     return JAVACALL_OK;

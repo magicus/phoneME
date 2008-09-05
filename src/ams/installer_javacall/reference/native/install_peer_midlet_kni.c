@@ -46,7 +46,7 @@ int g_installerIsolateId = -1;
 /**
  * This field is set up by the javacall_ams_install_answer() callback.
  */
-/*jboolean answer;*/
+jboolean g_fAnswer = JAVACALL_FALSE, g_fAnswerReady = JAVACALL_FALSE;
 
 /**
  * Sends a request of type defined by the given request code to
@@ -71,7 +71,12 @@ KNIDECL(com_sun_midp_installer_InstallerPeerMIDlet_sendNativeRequest0) {
     KNI_DeclareHandle(installState);
 
     KNI_GetParameterAsObject(2, installState);
-printf(">>> sendNativeRequest: %d\n", (int)requestCode);
+
+    if (g_fAnswerReady == JAVACALL_TRUE) {
+        g_fAnswerReady = JAVACALL_FALSE;
+        return;
+    }
+
     /* get request type-dependent parameters */
     if (requestCode == JAVACALL_INSTALL_REQUEST_CONFIRM_REDIRECTION) {
         pcsl_string_status pcslRes;
@@ -117,19 +122,17 @@ printf(">>> sendNativeRequest: %d\n", (int)requestCode);
         javacall_const_utf16_string authPath[];
 */
         /* block the thread only if the request was sent successfully */
-        g_installerIsolateId = getCurrentIsolateId();
-        if (requestCode != JAVACALL_INSTALL_REQUEST_UPDATE_STATUS) {
-            SNI_SetSpecialThread(g_installerIsolateId);
-            SNI_BlockThread();
-        }
+        //g_installerIsolateId = getCurrentIsolateId();
 
         /* sending the request */
+        g_installerIsolateId = -1;
         jcRes = java_ams_install_ask(requestCode, &jcInstallState,
                                      &jcRequestData);
 
-        if (jcRes != JAVACALL_OK &&
-                requestCode != JAVACALL_INSTALL_REQUEST_UPDATE_STATUS) {
-            SNI_UnblockThread(SNI_GetSpecialThread(g_installerIsolateId));
+        if (jcRes != JAVACALL_OK) {
+            /* If something is wrong, apply "No" answer */
+            g_fAnswer = JAVACALL_FALSE;
+            g_fAnswerReady = JAVACALL_TRUE;
         }
     }
 
@@ -145,10 +148,18 @@ printf(">>> sendNativeRequest: %d\n", (int)requestCode);
  */
 KNIEXPORT KNI_RETURNTYPE_BOOLEAN
 KNIDECL(com_sun_midp_installer_InstallerPeerMIDlet_getAnswer0) {
-    jboolean fAnswer = KNI_TRUE;
-printf(">>> getAnswer(): %d\n", (int)fAnswer);
+    if (g_fAnswerReady) {
+        g_fAnswerReady = JAVACALL_FALSE;
+        g_installerIsolateId = -1;
+        return g_fAnswer;
+    } else {
+        /* block the thread only if the request was sent successfully */
+        g_installerIsolateId = getCurrentIsolateId();
+        SNI_SetSpecialThread(g_installerIsolateId);
+        SNI_BlockThread();
+    }
 
-    KNI_ReturnBoolean(fAnswer);
+    KNI_ReturnBoolean(g_fAnswer);
 }
 
 /**
@@ -170,8 +181,6 @@ KNIDECL(com_sun_midp_installer_InstallerPeerMIDlet_reportFinished0) {
 
     KNI_StartHandles(2);
     KNI_DeclareHandle(errMsg);
-
-printf(">>> reportFinished(): %d\n", (int)suiteId);
 
     /* get request type-dependent parameters */
     if (suiteId == UNUSED_SUITE_ID) {

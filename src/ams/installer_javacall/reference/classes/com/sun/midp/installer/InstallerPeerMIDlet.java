@@ -234,6 +234,7 @@ System.out.println(">>> exiting...");
      * @return true if the user wants to continue, false to stop the install
      */
     public boolean warnUser(InstallState state) {
+System.out.println(">>> warnUser()");
         sendNativeRequest0(RQ_WARN_USER, convertInstallState(state),
                            -1, null);
         /*
@@ -254,6 +255,7 @@ System.out.println(">>> exiting...");
      * @return true if the user wants to continue, false to stop the install
      */
     public boolean confirmJarDownload(InstallState state) {
+System.out.println(">>> confirmJarDownload()");
         sendNativeRequest0(RQ_CONFIRM_JAR_DOWNLOAD, convertInstallState(state),
                            -1, null);
         /*
@@ -271,6 +273,7 @@ System.out.println(">>> exiting...");
      * @param state current state of the install.
      */
     public void updateStatus(int status, InstallState state) {
+System.out.println(">>> updateStatus()");
         sendNativeRequest0(RQ_UPDATE_STATUS, convertInstallState(state),
                            status, null);
     }
@@ -287,6 +290,7 @@ System.out.println(">>> exiting...");
      * @return true if the user wants to keep the RMS data for the next suite
      */
     public boolean keepRMS(InstallState state) {
+System.out.println(">>> keepRMS()");
         sendNativeRequest0(RQ_ASK_KEEP_RMS, convertInstallState(state),
                            -1, null);
         /*
@@ -307,6 +311,7 @@ System.out.println(">>> exiting...");
      * @return true if the user wants to continue, false to stop the install
      */
     public boolean confirmAuthPath(InstallState state) {
+System.out.println(">>> confirmAuthPath()");
         sendNativeRequest0(RQ_CONFIRM_AUTH_PATH, convertInstallState(state),
                            -1, null);
         /*
@@ -349,8 +354,6 @@ System.out.println(">>> exiting...");
      *         InstallState object
      */
     private NativeInstallState convertInstallState(InstallState state) {
-System.out.println(">>> Converting installation state...");
-
         NativeInstallState nis = new NativeInstallState();
 
         nis.appId = appId;

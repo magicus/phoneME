@@ -1554,9 +1554,9 @@ MainWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
         }
 
         if (opttarget == SOCK_STREAM) { // TCP socket
-            return handleNetworkStreamEvents(wParam,lParam);
+            return handleNetworkStreamEvents(wParam, lParam);
         } else {
-            return handleNetworkDatagramEvents(wParam,lParam);
+            return handleNetworkDatagramEvents(wParam, lParam);
         };
 
         break;
@@ -2936,7 +2936,6 @@ static int handleNetworkStreamEvents(WPARAM wParam, LPARAM lParam) {
                 (WSAGETSELECTERROR(lParam) == 0) ? JAVACALL_OK : JAVACALL_FAIL);
             return 0;
         }
-
         case FD_READ: {
             javanotify_socket_event(
                 JAVACALL_EVENT_SOCKET_RECEIVE,
@@ -2978,7 +2977,7 @@ static int handleNetworkDatagramEvents(WPARAM wParam, LPARAM lParam) {
 
         case FD_READ: {
 #if 1 // ENABLE_JSR_120
-            if (JAVACALL_FALSE !=
+            if (JAVACALL_FAIL !=
                     try_process_wma_emulator((javacall_handle)wParam)) {
                 return 0;
             }
