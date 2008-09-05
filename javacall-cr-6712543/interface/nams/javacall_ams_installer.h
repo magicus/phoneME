@@ -64,16 +64,6 @@ typedef enum {
 } javacall_ams_install_request_code;
 
 /**
- * Installation request/response data.
- */
-typedef struct _javacall_ams_install_data {
-    javacall_ams_install_status installStatus;
-    javacall_utf16_string newLocation;
-    jboolean fAnswer;
-    javacall_suite_id suiteId;
-} javacall_ams_install_data;
-
-/**
  * Codes reflecting the current installation status.
  */
 typedef enum {
@@ -118,6 +108,16 @@ typedef enum {
     /** Status code to indicate that the installation is completed */
     JAVACALL_INSTALL_STATUS_COMPLETED
 } javacall_ams_install_status;
+
+/**
+ * Installation request/response data.
+ */
+typedef struct _javacall_ams_install_data {
+    javacall_ams_install_status installStatus;
+    javacall_utf16_string newLocation;
+    javacall_bool fAnswer;
+    javacall_suite_id suiteId;
+} javacall_ams_install_data;
 
 /**
  * Installer exception codes.
