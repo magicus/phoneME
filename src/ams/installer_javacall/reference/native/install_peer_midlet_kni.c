@@ -30,9 +30,12 @@
 #include <midpUtilKni.h>
 #include <midpServices.h>
 
+#include <suitestore_common.h>
+
 #include <pcsl_memory.h> /* to have definition of NULL */
 
 #include <javacall_defs.h>
+#include <javacall_memory.h>
 #include <javacall_ams_installer.h>
 #include <javacall_ams_platform.h>
 
@@ -75,7 +78,7 @@ KNIDECL(com_sun_midp_installer_InstallerPeerMIDlet_sendNativeRequest0) {
         strSize = pcsl_string_utf16_length(&newLocation);
         jcRequestData.newLocation = javacall_malloc((strSize + 1) << 1);
 
-        pcsl_res = pcsl_string_convert_to_utf16(&newLocation,
+        pcslRes = pcsl_string_convert_to_utf16(&newLocation,
             (jchar*) jcRequestData.newLocation, strSize, &convertedLength);
 
         RELEASE_PCSL_STRING_PARAMETER
@@ -150,6 +153,7 @@ KNIEXPORT KNI_RETURNTYPE_VOID
 KNIDECL(com_sun_midp_installer_InstallerPeerMIDlet_reportFinished0) {
     pcsl_string errMsgParam = PCSL_STRING_NULL_INITIALIZER;
     jint appId = KNI_GetParameterAsInt(1);
+    SuiteIdType suiteId = (SuiteIdType) KNI_GetParameterAsInt(2);
     javacall_ams_install_data jcInstallData;
 
     KNI_StartHandles(2);
@@ -161,17 +165,18 @@ KNIDECL(com_sun_midp_installer_InstallerPeerMIDlet_reportFinished0) {
 
         GET_PARAMETER_AS_PCSL_STRING(3, errMsgParam)
 
-        if (!KNI_IsNullHandle()) {
-            (void) pcsl_string_dup(&errMsgParam, &errMsg);
+        if (!pcsl_string_is_null(&errMsgParam)) {
+//            (void) pcsl_string_dup(&errMsgParam, &errMsg);
         }
 
         RELEASE_PCSL_STRING_PARAMETER
     }
 
-    jcInstallState.installStatus = JAVACALL_INSTALL_STATUS_COMPLETED;
-    jcInstallState.suiteId = (javacall_suite_d) KNI_GetParameterAsInt(2);
+    jcInstallData.installStatus = JAVACALL_INSTALL_STATUS_COMPLETED;
+    jcInstallData.suiteId = (javacall_suite_id)suiteId;
 
-    java_ams_operation_completed(JAVACALL_OPCODE_INSTALL_SUITE, appId,
+    java_ams_operation_completed(JAVACALL_OPCODE_INSTALL_SUITE,
+                                 (javacall_app_id)appId,
                                  &jcInstallData);
 
     KNI_EndHandles();

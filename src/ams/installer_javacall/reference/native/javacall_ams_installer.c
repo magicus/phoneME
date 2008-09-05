@@ -23,6 +23,7 @@
  */
 
 #include <kni.h>
+#include <sni.h>
 #include <midpEvents.h>
 #include <midpEventUtil.h>
 #include <midp_thread.h>
