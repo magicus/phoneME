@@ -148,16 +148,17 @@ public class CommonDS extends BasicDS implements SourceStream {
                 throw new IOException("file protocol isn't supported");
                 // #endif ]
 		    } else if (locator.startsWith("rtp:")) {
-                if (contentType.equals("unknown")) {
+                if( "unknown".equals( contentType ) ) {
                     contentType = "content.rtp";
                 }
                 inputStream = null;
                 contentLength = -1;
                 goodurl = true;
             } else if (locator.startsWith("rtsp:")) {
-                if (contentType.equals("unknown")) {
-                    contentType = "content.rtp";
-                }
+                System.out.println( "*** CommonDS::getConnection() -- RTSP!!!" );
+                //if( "unknown".equals( contentType ) ) {
+                    contentType = "application/sdp";
+                //}
                 inputStream = null;
                 contentLength = -1;
                 goodurl = true;

@@ -21,7 +21,7 @@
  * Clara, CA 95054 or visit www.sun.com if you need additional
  * information or have any questions. 
  */
-package com.sun.mmedia;
+package com.sun.mmedia.rtsp;
 
 import javax.microedition.media.*;
 import javax.microedition.media.control.*;

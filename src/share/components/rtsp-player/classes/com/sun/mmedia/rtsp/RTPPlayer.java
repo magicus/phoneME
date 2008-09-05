@@ -22,7 +22,7 @@
 * information or have any questions. 
 */
 
-package com.sun.mmedia;
+package com.sun.mmedia.rtsp;
 
 import com.sun.mmedia.RTSPPlayer;
 import com.sun.mmedia.DirectPlayer;
