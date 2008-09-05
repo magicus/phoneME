@@ -39,6 +39,8 @@
 #include <javacall_ams_installer.h>
 #include <javacall_ams_platform.h>
 
+#include <stdio.h>
+
 int g_installerIsolateId = -1;
 
 /**
@@ -69,7 +71,7 @@ KNIDECL(com_sun_midp_installer_InstallerPeerMIDlet_sendNativeRequest0) {
     KNI_DeclareHandle(installState);
 
     KNI_GetParameterAsObject(2, installState);
-
+printf(">>> sendNativeRequest: %d\n", (int)requestCode);
     /* get request type-dependent parameters */
     if (requestCode == JAVACALL_INSTALL_REQUEST_CONFIRM_REDIRECTION) {
         pcsl_string_status pcslRes;
@@ -116,15 +118,18 @@ KNIDECL(com_sun_midp_installer_InstallerPeerMIDlet_sendNativeRequest0) {
 */
         /* block the thread only if the request was sent successfully */
         g_installerIsolateId = getCurrentIsolateId();
-        SNI_SetSpecialThread(g_installerIsolateId);
-        SNI_BlockThread();
+        if (requestCode != JAVACALL_INSTALL_REQUEST_UPDATE_STATUS) {
+            SNI_SetSpecialThread(g_installerIsolateId);
+            SNI_BlockThread();
+        }
 
         /* sending the request */
         jcRes = java_ams_install_ask(requestCode, &jcInstallState,
                                      &jcRequestData);
 
-        if (jcRes != JAVACALL_OK) {
-            SNI_UnlockThread(SNI_GetSpecialThread(g_installerIsolateId));
+        if (jcRes != JAVACALL_OK &&
+                requestCode != JAVACALL_INSTALL_REQUEST_UPDATE_STATUS) {
+            SNI_UnblockThread(SNI_GetSpecialThread(g_installerIsolateId));
         }
     }
 
@@ -141,6 +146,7 @@ KNIDECL(com_sun_midp_installer_InstallerPeerMIDlet_sendNativeRequest0) {
 KNIEXPORT KNI_RETURNTYPE_BOOLEAN
 KNIDECL(com_sun_midp_installer_InstallerPeerMIDlet_getAnswer0) {
     jboolean fAnswer = KNI_TRUE;
+printf(">>> getAnswer(): %d\n", (int)fAnswer);
 
     KNI_ReturnBoolean(fAnswer);
 }
@@ -164,6 +170,8 @@ KNIDECL(com_sun_midp_installer_InstallerPeerMIDlet_reportFinished0) {
 
     KNI_StartHandles(2);
     KNI_DeclareHandle(errMsg);
+
+printf(">>> reportFinished(): %d\n", (int)suiteId);
 
     /* get request type-dependent parameters */
     if (suiteId == UNUSED_SUITE_ID) {

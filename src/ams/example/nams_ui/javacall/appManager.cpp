@@ -46,6 +46,8 @@
 #include <javacall_ams_app_manager.h>
 #include <javacall_ams_installer.h>
 #include <javacall_keypress.h>
+#include <javacall_socket.h>
+#include <javacall_datagram.h>
 
 #ifdef USE_CONSOLE
 #include <io.h>
@@ -221,6 +223,19 @@ static int PermissionValueToIndex(javacall_ams_permission_val jpPermission);
 
 static HTREEITEM HitTest(HWND hWnd, LPARAM lParam);
 
+static int handleNetworkStreamEvents(WPARAM wParam, LPARAM lParam);
+static int handleNetworkDatagramEvents(WPARAM wParam, LPARAM lParam);
+
+
+// was in javacall/lcd.h
+
+#define WM_DEBUGGER      (WM_USER)
+#define WM_HOST_RESOLVED (WM_USER + 1)
+#define WM_NETWORK       (WM_USER + 2)
+
+extern "C" HWND midpGetWindowHandle() {
+    return g_hMainWindow;
+}
 
 /**
  * Entry point of the Javacall executable.
@@ -1348,6 +1363,38 @@ MainWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
             break;
         }
         break;
+    }
+
+    case WM_NETWORK: {
+        int opttarget;
+        int optname;
+        int optsize = sizeof(optname);
+
+        optname = SO_TYPE;
+        if (0 != getsockopt((SOCKET)wParam, SOL_SOCKET,
+                            optname, (char*)&opttarget, &optsize)) {
+            // getsocketopt error
+            break;
+        }
+
+        if (opttarget == SOCK_STREAM) { // TCP socket
+            return handleNetworkStreamEvents(wParam,lParam);
+        } else {
+            return handleNetworkDatagramEvents(wParam,lParam);
+        };
+
+        break;
+    }
+
+    case WM_HOST_RESOLVED: {
+#if 1
+        fprintf(stderr, "Got Windows event WM_HOST_RESOLVED \n");
+#endif
+        javanotify_socket_event(
+            JAVACALL_EVENT_NETWORK_GETHOSTBYNAME_COMPLETED,
+            (javacall_handle)wParam,
+            (WSAGETSELECTERROR(lParam) == 0) ? JAVACALL_OK : JAVACALL_FAIL);
+        return 0;
     }
 
     case WM_CLOSE:
@@ -2711,4 +2758,102 @@ static void DrawBuffer(HDC hdc) {
 static void RefreshScreen(int x1, int y1, int x2, int y2) {
     InvalidateRect(g_hMainWindow, NULL, FALSE);
     UpdateWindow(g_hMainWindow);
+}
+
+
+/**
+ *
+ */
+static int handleNetworkStreamEvents(WPARAM wParam, LPARAM lParam) {
+    switch (WSAGETSELECTEVENT(lParam)) {
+        case FD_CONNECT: {
+            /* Change this to a write. */
+            javanotify_socket_event(
+                JAVACALL_EVENT_SOCKET_OPEN_COMPLETED,
+                (javacall_handle)wParam,
+                (WSAGETSELECTERROR(lParam) == 0) ? JAVACALL_OK : JAVACALL_FAIL);
+            return 0;
+        }
+
+        case FD_WRITE: {
+            javanotify_socket_event(
+                JAVACALL_EVENT_SOCKET_SEND,
+                (javacall_handle)wParam,
+                (WSAGETSELECTERROR(lParam) == 0) ? JAVACALL_OK : JAVACALL_FAIL);
+            return 0;
+        }
+
+        case FD_ACCEPT: {
+            SOCKET clientfd = 0;
+            javanotify_server_socket_event(
+                JAVACALL_EVENT_SERVER_SOCKET_ACCEPT_COMPLETED,
+                (javacall_handle)wParam,
+                (javacall_handle)clientfd,
+                (WSAGETSELECTERROR(lParam) == 0) ? JAVACALL_OK : JAVACALL_FAIL);
+            return 0;
+        }
+
+        case FD_READ: {
+            javanotify_socket_event(
+                JAVACALL_EVENT_SOCKET_RECEIVE,
+                (javacall_handle)wParam,
+                (WSAGETSELECTERROR(lParam) == 0) ? JAVACALL_OK : JAVACALL_FAIL);
+            return 0;
+        }
+
+        case FD_CLOSE: {
+            javanotify_socket_event(
+                JAVACALL_EVENT_SOCKET_CLOSE_COMPLETED,
+                (javacall_handle)wParam,
+                (WSAGETSELECTERROR(lParam) == 0) ? JAVACALL_OK : JAVACALL_FAIL);
+            return 0;
+        }
+
+        default: {
+            break;
+        }
+    }
+
+    return 0;
+}
+
+extern "C" javacall_result try_process_wma_emulator(javacall_handle handle);
+
+/**
+ *
+ */
+static int handleNetworkDatagramEvents(WPARAM wParam, LPARAM lParam) {
+    switch (WSAGETSELECTEVENT(lParam)) {
+        case FD_WRITE: {
+            javanotify_datagram_event(
+                JAVACALL_EVENT_DATAGRAM_SENDTO_COMPLETED,
+                (javacall_handle)wParam,
+                (WSAGETSELECTERROR(lParam) == 0) ? JAVACALL_OK : JAVACALL_FAIL);
+            return 0;
+        }
+
+        case FD_READ: {
+#if 1 // ENABLE_JSR_120
+            if (JAVACALL_FALSE !=
+                    try_process_wma_emulator((javacall_handle)wParam)) {
+                return 0;
+            }
+#endif
+            javanotify_datagram_event(
+                JAVACALL_EVENT_DATAGRAM_RECVFROM_COMPLETED,
+                (javacall_handle)wParam,
+                (WSAGETSELECTERROR(lParam) == 0) ? JAVACALL_OK : JAVACALL_FAIL);
+            return 0;
+        }
+
+        case FD_CLOSE: {
+            return 0;
+        }
+
+        default: {
+            break;
+        }
+    } // end switch
+
+    return 0;
 }

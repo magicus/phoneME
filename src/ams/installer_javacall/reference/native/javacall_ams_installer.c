@@ -41,6 +41,8 @@
 /* IMPL_NOTE: must be removed! */
 #include <javacall_ams_app_manager.h>
 
+#include <stdio.h>
+
 extern int g_installerIsolateId;
 
 /**
@@ -223,6 +225,8 @@ java_ams_install_answer(javacall_ams_install_request_code requestCode,
 
     (void)requestCode;
     (void)pResultData;
+
+printf(">>> java_ams_install_answer(), request: %d\n", (int)requestCode);
 
     if (pInstallState == NULL) {
         return JAVACALL_FAIL;

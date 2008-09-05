@@ -119,7 +119,7 @@ public class InstallerPeerMIDlet extends MIDlet implements InstallListener,
         // parse the arguments
         String arg0 = getAppProperty("arg-0");
         boolean err = false;
-
+System.out.println(">>> arg0 = '" + arg0 + "'");
         if (arg0 != null) {
             try {
                 appId = Integer.parseInt(arg0);
@@ -131,6 +131,7 @@ public class InstallerPeerMIDlet extends MIDlet implements InstallListener,
         }
 
         if (err) {
+System.out.println(">>> (1) ERROR!");
             reportFinished0(-1, MIDletSuite.UNUSED_SUITE_ID,
                             "Application ID is not given or invalid.");
             notifyDestroyed();
@@ -138,6 +139,7 @@ public class InstallerPeerMIDlet extends MIDlet implements InstallListener,
         }
 
         String url = getAppProperty("arg-1");
+System.out.println(">>> url = '" + url + "'");
         if (url == null) {
             reportFinished0(appId, MIDletSuite.UNUSED_SUITE_ID,
                             "URL to install from is not given.");
@@ -178,6 +180,7 @@ public class InstallerPeerMIDlet extends MIDlet implements InstallListener,
 
         if (installer == null) {
             final String errMsg = "'" + scheme + "' URL type is not supported.";
+System.out.println(errMsg);
             reportFinished0(appId, MIDletSuite.UNUSED_SUITE_ID, errMsg);
             notifyDestroyed();
             return;
@@ -195,14 +198,19 @@ public class InstallerPeerMIDlet extends MIDlet implements InstallListener,
                 lastInstalledSuiteId = installer.installJar(url, null,
                     storageId, false, false, this);
             } else {
+System.out.println(">>> Installing JAD...");
                 lastInstalledSuiteId =
                     installer.installJad(url, storageId, false, false, this);
+System.out.println(">>> lastInstalledSuiteId = " + lastInstalledSuiteId);
             }
         } catch (Throwable t) {
+t.printStackTrace();
             errMsg = "Error installing the suite: " + t.getMessage();
             lastInstalledSuiteId = MIDletSuite.UNUSED_SUITE_ID;
+System.out.println(">>> errMsg");
         }
 
+System.out.println(">>> exiting...");
         notifyDestroyed();
         reportFinished0(appId, lastInstalledSuiteId, errMsg);
     }
@@ -341,6 +349,8 @@ public class InstallerPeerMIDlet extends MIDlet implements InstallListener,
      *         InstallState object
      */
     private NativeInstallState convertInstallState(InstallState state) {
+System.out.println(">>> Converting installation state...");
+
         NativeInstallState nis = new NativeInstallState();
 
         nis.appId = appId;
