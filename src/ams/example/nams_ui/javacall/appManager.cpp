@@ -105,6 +105,7 @@ HWND g_hMidletTreeView = NULL;
 HWND g_hInfoDlg = NULL;
 HWND g_hPermissionsDlg = NULL;
 HWND g_hInstallDlg = NULL;
+HWND g_InstallProgressDlg = NULL;
 HWND g_hWndToolbar = NULL;
 
 HMENU g_hMidletPopupMenu = NULL;
@@ -228,6 +229,7 @@ static int PermissionValueToIndex(javacall_ams_permission_val jpPermission);
 static HTREEITEM HitTest(HWND hWnd, LPARAM lParam);
 static SIZE GetButtonSize(HWND hBtn);
 static void ShowMidletTreeView(HWND hWnd, BOOL fShow);
+BOOL AddComboboxItem(HWND hcbWnd, LPCTSTR pcszLabel);
 
 static int handleNetworkStreamEvents(WPARAM wParam, LPARAM lParam);
 static int handleNetworkDatagramEvents(WPARAM wParam, LPARAM lParam);
@@ -945,11 +947,14 @@ TreeDlgProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 }
 
 static HWND CreateInstallDialog(HWND hWndParent) {
-    HWND hDlg;
-
+    HWND hDlg, hCombobox;
     RECT rcClient;
     HWND hBtnYes, hBtnNo, hBtnFile, hBtnFolder;
     SIZE sizeButtonY, sizeButtonN; 
+    int folderNum;
+    javacall_result res;
+    javacall_ams_folder_info* pFoldersInfo;
+    LPTSTR pszFolderName;    
 
     hDlg = CreateDialog(g_hInst, MAKEINTRESOURCE(IDD_INSTALL_PATH),
                         hWndParent, InstallDlgProc);
@@ -1011,7 +1016,43 @@ static HWND CreateInstallDialog(HWND hWndParent) {
         PrintWindowSize(hBtnNo, _T("Cancel button"));
     }
 
+    // Fill the folders combobox with existing folders
+    hCombobox = GetDlgItem(hDlg, IDC_COMBO_FOLDER);
+    if (hCombobox) {
+        // Add default folder
+        AddComboboxItem(hCombobox, _T("<Default>"));
+
+        // Add all real folders
+        res = java_ams_suite_get_all_folders_info(&pFoldersInfo,
+                                                    &folderNum);
+        if (res == JAVACALL_OK) {
+            for (int f = 0; f < folderNum; f++) {
+                if (pFoldersInfo[f].folderName) {
+                    pszFolderName = JavacallUtf16ToTstr(
+                        pFoldersInfo[f].folderName);
+
+                    AddComboboxItem(hCombobox, pszFolderName);
+
+                    if (pszFolderName) {
+                        javacall_free(pszFolderName);
+                    }
+                }
+            }
+            java_ams_suite_free_all_folders_info(pFoldersInfo, folderNum);
+        }
+        
+        // Select default folder
+        SendMessage(hCombobox, CB_SETCURSEL,
+                    0, // item id
+                    0  // not used
+        );
+    }
+
     return hDlg;
+}
+
+BOOL AddComboboxItem(HWND hcbWnd, LPCTSTR pcszLabel) {
+    return SendMessage(hcbWnd, CB_ADDSTRING, 0, (LPARAM)(pcszLabel)) >= 0;
 }
 
 INT_PTR CALLBACK
@@ -1025,7 +1066,8 @@ InstallDlgProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam) {
         if (wCmd == IDCANCEL) {
             ShowMidletTreeView(hwndDlg, TRUE);
 
-            return TRUE;
+            // TODO: remove the time from "Windows" menu
+
         } else if (wCmd == IDOK) {
 //            javacall_result res = java_ams_midlet_start(-1,
 //               g_jAppId,
@@ -1042,22 +1084,30 @@ InstallDlgProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam) {
                 // Update application ID
                 g_jAppId++;
 
-                // Hide MIDlet tree view window to show
-                // the MIDlet's output in the main window
-                ShowMidletTreeView(NULL, FALSE);
-
-                // Adding a new item to "Windows" menu
-                 AddWindowMenuItem(L"Installer", NULL);
+                // Hide the install path dialog then
+                // show install progress dialog
+                ShowWindow(hwndDlg , SW_HIDE);
+                ShowWindow(g_InstallProgressDlg, SW_SHOW);
             } else {
-                ShowMidletTreeView(hwndDlg, TRUE);
+                TCHAR szBuf[127];
+                wsprintf(szBuf, _T("Can't start installation!\nError code %d."),
+                         (int)res);
+                MessageBox(NULL, szBuf, g_szTitle, NULL);
             }
 
-            return TRUE;
+        } else if ((wCmd == IDM_SUITE_INSTALL) ||
+                   (wCmd == IDM_FOLDER_INSTALL_INTO)) {
+
+            ShowMidletTreeView(hwndDlg, FALSE);
+
+            // Adding a new item to "Windows" menu
+            AddWindowMenuItem(L"Installer", NULL);
         }
 
-        break;
+        return TRUE;
     }
-    }
+
+    } // end of switch
 
     return FALSE;
 }
@@ -1224,7 +1274,7 @@ static BOOL InitMidletTreeViewItems(HWND hwndTV)  {
             } 
             AddTreeItem(hwndTV, pszFolderName, 1, pInfo);
 
-            if (pszFolderName && (pszFolderName != g_szDefaultFolderName)){
+            if (pszFolderName && (pszFolderName != g_szDefaultFolderName)) {
                 javacall_free(pszFolderName);
             }
 
@@ -1451,7 +1501,10 @@ MainWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
             }
 
             case IDM_SUITE_INSTALL: {
-                ShowMidletTreeView(g_hInstallDlg, FALSE);
+                // Delegate message processing to installation dialog
+                if (g_hInstallDlg) {
+                    PostMessage(g_hInstallDlg, message, wParam, lParam);
+                }
                 break;
             }
 
@@ -2002,7 +2055,10 @@ MidletTreeWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
             }
 
             case IDM_FOLDER_INSTALL_INTO: {
-                ShowMidletTreeView(g_hInstallDlg, FALSE);
+                // Delegate message processing to installation dialog
+                if (g_hInstallDlg) {
+                    PostMessage(g_hInstallDlg, message, wParam, lParam);
+                }
                 break;
             }
 
