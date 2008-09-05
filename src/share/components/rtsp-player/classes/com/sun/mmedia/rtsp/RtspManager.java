@@ -29,7 +29,7 @@ import java.util.Vector;
 import javax.microedition.media.MediaException;
 
 import com.sun.mmedia.rtsp.protocol.*;
-import com.sun.mmedia.rtsp.sdp.*;
+import com.sun.mmedia.sdp.*;
 
 /**
  * Manager for RTSP connections.

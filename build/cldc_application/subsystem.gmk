@@ -53,6 +53,12 @@ SUBSYSTEM_JSR_135_NATIVE_FILES += \
     KNIDirectVideo.c
 endif
 
+ifeq ($(USE_RTSP), true)
+SUBSYSTEM_JSR_135_JAVA_FILES += \
+	$(JSR_135_PROJECT_SRC_DIR)/classes/com/sun/mmedia/rtsp/RtspConnection.java
+endif
+
+
 # Tunnel to MIDP
 SUBSYSTEM_JSR_135_JAVA_FILES += $(JSR_135_PROJECT_SRC_DIR)/classes/com/sun/mmedia/MediaEventConsumer.java
 SUBSYSTEM_JSR_135_JAVA_FILES += $(JSR_135_PROJECT_SRC_DIR)/classes/com/sun/mmedia/MediaTunnel.java

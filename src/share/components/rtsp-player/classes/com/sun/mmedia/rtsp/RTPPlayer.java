@@ -24,7 +24,6 @@
 
 package com.sun.mmedia.rtsp;
 
-import com.sun.mmedia.RTSPPlayer;
 import com.sun.mmedia.DirectPlayer;
 
 import javax.microedition.media.PlayerListener;

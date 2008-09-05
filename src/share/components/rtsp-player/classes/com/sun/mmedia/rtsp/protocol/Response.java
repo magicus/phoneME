@@ -26,7 +26,7 @@ package com.sun.mmedia.rtsp.protocol;
 import java.io.*;
 import java.util.*;
 
-import com.sun.mmedia.rtsp.sdp.*;
+import com.sun.mmedia.sdp.*;
 
 public class Response extends Parser {
     public StatusLine statusLine;

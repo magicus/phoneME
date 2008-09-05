@@ -25,7 +25,8 @@ package com.sun.mmedia.rtsp;
 
 import javax.microedition.media.*;
 import javax.microedition.media.control.*;
-import com.sun.mmedia.RTPPlayer;
+import com.sun.mmedia.BasicPlayer;
+import com.sun.mmedia.DirectPlayer;
 import com.sun.mmedia.protocol.CommonDS;
 import com.sun.mmedia.rtsp.*;
 import java.util.*;
