@@ -155,12 +155,6 @@ SUBSYSTEM_JSR_135_JAVA_FILES += \
 ifeq ($(USE_RTSP), true)
 
 SUBSYSTEM_JSR_135_JAVA_FILES += \
-	$(JSR_135_DIR)/src/share/components/rtsp-player/classes/com/sun/mmedia/rtsp/RTSPPlayer.java \
-	$(JSR_135_DIR)/src/share/components/rtsp-player/classes/com/sun/mmedia/rtsp/RTPPlayer.java \
-	$(JSR_135_DIR)/src/share/components/rtsp-player/classes/com/sun/mmedia/rtsp/RtspUrl.java \
-	$(JSR_135_DIR)/src/share/components/rtsp-player/classes/com/sun/mmedia/rtsp/RtspListener.java \
-	$(JSR_135_DIR)/src/share/components/rtsp-player/classes/com/sun/mmedia/rtsp/RtspCtrl.java \
-	$(JSR_135_DIR)/src/share/components/rtsp-player/classes/com/sun/mmedia/rtsp/RtspManager.java \
 	$(JSR_135_DIR)/src/share/components/rtsp-player/classes/com/sun/mmedia/rtsp/protocol/CSeqHeader.java \
 	$(JSR_135_DIR)/src/share/components/rtsp-player/classes/com/sun/mmedia/rtsp/protocol/PauseMessage.java \
 	$(JSR_135_DIR)/src/share/components/rtsp-player/classes/com/sun/mmedia/rtsp/protocol/SetParameterMessage.java \
