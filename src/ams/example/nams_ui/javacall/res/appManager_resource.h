@@ -45,7 +45,7 @@
 #define  IDM_SUITE_CUT             260
 
 #define  IDM_FOLDER_INFO           300
-#define  IDM_FOLDER_INSTALL_IN     310
+#define  IDM_FOLDER_INSTALL_INTO   310
 #define  IDM_FOLDER_REMOVE_ALL     320
 #define  IDM_FOLDER_PASTE          330
 
@@ -56,14 +56,23 @@
 
 #define  IDM_HELP_ABOUT            500
 
-#define  IDD_INFO_DIALOG           600
-#define  IDD_PERMISSIONS_DIALOG    610
+#define  IDD_INFO                  600
+#define  IDD_PERMISSIONS           610
+#define  IDD_INSTALL_PATH          620
+#define  IDD_INSTALL_PROGRESS      630
 
-#define  IDC_TREEVIEW_MIDLETS      900
-#define  IDC_TREEVIEW              910
-#define  IDC_MAIN_TOOLBAR          920
-#define  IDB_MAIN_TOOLBAR_BUTTONS  930
+#define  IDC_TREEVIEW_MIDLETS      901
+#define  IDC_TREEVIEW              902
+#define  IDC_EDIT_URL              903
+#define  IDC_STATIC_URL            904
+#define  IDC_STATIC_BROWSE         905
+#define  IDC_STATIC_FOLDER         906
+#define  IDC_COMBO_FOLDER          908
+#define  IDC_BUTTON_FILE           909
 
+#define  IDC_MAIN_TOOLBAR          910
+
+#define  IDB_MAIN_TOOLBAR_BUTTONS  940
 #define  IDB_DEF_SUITE_ICON        950
 #define  IDB_DEF_MIDLET_ICON       960
 #define  IDB_DEF_MIDLET_ICON_1     961

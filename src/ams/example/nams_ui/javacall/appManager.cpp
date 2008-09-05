@@ -104,6 +104,7 @@ HWND g_hMainWindow = NULL;
 HWND g_hMidletTreeView = NULL;
 HWND g_hInfoDlg = NULL;
 HWND g_hPermissionsDlg = NULL;
+HWND g_hInstallDlg = NULL;
 HWND g_hWndToolbar = NULL;
 
 HMENU g_hMidletPopupMenu = NULL;
@@ -179,6 +180,8 @@ LRESULT CALLBACK InfoWndProc(HWND, UINT, WPARAM, LPARAM);
 LRESULT CALLBACK PermissionWndProc(HWND, UINT, WPARAM, LPARAM);
 INT_PTR CALLBACK TreeDlgProc(HWND hwndDlg, UINT uMsg, WPARAM wParam,
                              LPARAM lParam);
+INT_PTR CALLBACK InstallDlgProc(HWND hwndDlg, UINT uMsg, WPARAM wParam,
+                                LPARAM lParam) ;
 
 static void RefreshScreen(int x1, int y1, int x2, int y2);
 static void DrawBuffer(HDC hdc);
@@ -191,6 +194,8 @@ static HWND CreateMidletTreeView(HWND hWndParent);
 static HWND CreateMainToolbar(HWND hWndParent);
 static HWND CreateTreeDialog(HWND hWndParent, WORD wDialogIDD, WORD wViewIDC,
                              WNDPROC ViewWndProc);
+
+static HWND CreateInstallDialog(HWND hWndParent);
 
 static BOOL InitMidletTreeViewItems(HWND hwndTV);
 static void AddSuiteToTree(HWND hwndTV, javacall_suite_id suiteId, int nLevel);
@@ -220,12 +225,16 @@ static LPTSTR JavacallUtf16ToTstr(javacall_const_utf16_string str);
 static javacall_utf16_string CloneJavacallUtf16(javacall_const_utf16_string str);
 
 static int PermissionValueToIndex(javacall_ams_permission_val jpPermission);
-
 static HTREEITEM HitTest(HWND hWnd, LPARAM lParam);
+static SIZE GetButtonSize(HWND hBtn);
+static void ShowMidletTreeView(HWND hWnd, BOOL fShow);
 
 static int handleNetworkStreamEvents(WPARAM wParam, LPARAM lParam);
 static int handleNetworkDatagramEvents(WPARAM wParam, LPARAM lParam);
 
+// Functions for debugging
+
+static void PrintWindowSize(HWND hWnd, LPTSTR pszName);
 
 // was in javacall/lcd.h
 
@@ -236,6 +245,8 @@ static int handleNetworkDatagramEvents(WPARAM wParam, LPARAM lParam);
 extern "C" HWND midpGetWindowHandle() {
     return g_hMainWindow;
 }
+
+//------------------------------------------------------------------------------
 
 /**
  * Entry point of the Javacall executable.
@@ -330,10 +341,10 @@ int main(int argc, char* argv[]) {
     InitMidletTreeViewItems(g_hMidletTreeView);
 
     // Create information dialog
-    g_hInfoDlg = CreateTreeDialog(g_hMainWindow, IDD_INFO_DIALOG,
+    g_hInfoDlg = CreateTreeDialog(g_hMainWindow, IDD_INFO,
                                   IDC_TREEVIEW, InfoWndProc);
     // Create permissions dialog
-    g_hPermissionsDlg = CreateTreeDialog(g_hMainWindow, IDD_PERMISSIONS_DIALOG,
+    g_hPermissionsDlg = CreateTreeDialog(g_hMainWindow, IDD_PERMISSIONS,
                                          IDC_TREEVIEW, PermissionWndProc);
 
     // Set image list for the permission tree view
@@ -348,6 +359,8 @@ int main(int argc, char* argv[]) {
 
         SetImageList(hPermView, uResourceIds, uResourceNum);
     }
+
+    g_hInstallDlg = CreateInstallDialog(g_hMainWindow);
 
     // Show the main window 
     ShowWindow(g_hMainWindow, nCmdShow);
@@ -698,16 +711,97 @@ static void SetImageList(HWND hwndTV, UINT* uResourceIds, UINT uResourceNum) {
     }
 }
 
-static HWND CreateTreeDialog(HWND hWndParent, WORD wDialogIDD, WORD wViewIDC,
-        WNDPROC ViewWndProc) {
+static void ShowMidletTreeView(HWND hWnd, BOOL fShow) {
+    if (fShow) {
+        // Hide the window
+        if (hWnd) {
+            ShowWindow(hWnd, SW_HIDE);
+        }
 
-    HWND hDlg;      // handle to dialog
-    RECT rcClient;  // dimensions of client area
-    HWND hBtnYes, hBtnNo;
-    int nBtnYesWidth, nBtnNoWidth, nBtnHeight;
+        // Show MIDlet tree view 
+        if (g_hMidletTreeView) {
+            ShowWindow(g_hMidletTreeView, SW_SHOWNORMAL);
+        }
+
+        // Show tool bar
+        if (g_hWndToolbar) {
+            ShowWindow(g_hWndToolbar, SW_SHOWNORMAL);
+        }
+    } else {
+        // Hide MIDlet tree view
+        if (g_hMidletTreeView) {
+            ShowWindow(g_hMidletTreeView, SW_HIDE);
+        }
+
+        // Hide tool bar
+        if (g_hWndToolbar) {
+            ShowWindow(g_hWndToolbar, SW_HIDE);
+        }
+
+        // Show the window
+        if (hWnd) {
+            ShowWindow(hWnd, SW_SHOW);
+        }
+    }
+}
+
+static SIZE GetButtonSize(HWND hBtn) {
+    int nBtnTextLen, nBtnHeight, nBtnWidth;
     HDC hdc;
     TEXTMETRIC tm;
     TCHAR szBuf[127];
+    SIZE res;
+
+    res.cx = 0;
+    res.cx = 0;
+
+    if (hBtn) {
+        hdc = GetDC(hBtn);
+
+        if (GetTextMetrics(hdc, &tm)) {
+
+            nBtnTextLen = GetWindowText(hBtn, szBuf, sizeof(szBuf));
+
+            nBtnWidth = (tm.tmAveCharWidth * nBtnTextLen) +
+                (2 * DLG_BUTTON_MARGIN);
+
+            nBtnHeight = (tm.tmHeight + tm.tmExternalLeading) +
+                DLG_BUTTON_MARGIN;
+
+            ReleaseDC(hBtn, hdc);
+
+            res.cx = nBtnWidth;
+            res.cy = nBtnHeight;
+        }
+    }
+
+    return res;
+}
+
+static void PrintWindowSize(HWND hWnd, LPTSTR pszName) {
+    RECT rcWnd, rcOwner;
+    HWND hOwner;
+
+    if ((hOwner = GetParent(hWnd)) == NULL) {
+        hOwner = GetDesktopWindow();
+    }
+
+    GetWindowRect(hOwner, &rcOwner);
+    GetWindowRect(hWnd, &rcWnd);
+
+    wprintf(_T("%s size: x=%d, y=%d, w=%d, h=%d\n"), pszName,
+            rcWnd.left - rcOwner.left,
+            rcWnd.top - rcOwner.top,
+            rcWnd.right - rcWnd.left,
+            rcWnd.bottom - rcWnd.top);
+}
+
+static HWND CreateTreeDialog(HWND hWndParent, WORD wDialogIDD, WORD wViewIDC,
+        WNDPROC ViewWndProc) {
+
+    HWND hDlg, hView, hBtnYes, hBtnNo;
+    RECT rcClient;
+    SIZE sizeButtonY, sizeButtonN;
 
     hDlg = CreateDialog(g_hInst, MAKEINTRESOURCE(wDialogIDD),
                         hWndParent, TreeDlgProc); 
@@ -719,8 +813,6 @@ static HWND CreateTreeDialog(HWND hWndParent, WORD wDialogIDD, WORD wViewIDC,
 
     // Get the dimensions of the parent window's client area
     GetClientRect(hWndParent, &rcClient); 
-    wprintf(_T("Parent window area w=%d, h=%d\n"),
-            rcClient.right, rcClient.bottom);
 
     // Set actual dialog size
     SetWindowPos(hDlg,
@@ -730,60 +822,47 @@ static HWND CreateTreeDialog(HWND hWndParent, WORD wDialogIDD, WORD wViewIDC,
                  SWP_NOZORDER | SWP_NOOWNERZORDER |
                      SWP_NOACTIVATE);
 
+    PrintWindowSize(hDlg, _T("Dialog"));
+
     // Get handle to OK button
     hBtnYes = GetDlgItem(hDlg, IDOK);
     if (!hBtnYes) {
         wprintf(_T("ERROR: Can't get window handle to OK button!\n"));
-
-    }
-
-    // Try to get handle to Cancel button
-    hBtnNo = GetDlgItem(hDlg, IDCANCEL);
-
-    // Calculate buttons' sizes
-    if (hBtnYes) {
-        int nBtnYesTextSize, nBtnNoTextSize;
-
-        hdc = GetDC(hBtnYes);
-        GetTextMetrics(hdc, &tm);
-
-        nBtnYesTextSize = GetWindowText(hBtnYes, szBuf, sizeof(szBuf));
-        if (hBtnNo) {        
-            nBtnNoTextSize = GetWindowText(hBtnNo, szBuf, sizeof(szBuf));
-        }
-
-        nBtnYesWidth = (tm.tmAveCharWidth * nBtnYesTextSize) + 
-            (2 * DLG_BUTTON_MARGIN);
-
-        nBtnNoWidth = (tm.tmAveCharWidth * nBtnNoTextSize) + 
-            (2 * DLG_BUTTON_MARGIN);
-
-        nBtnHeight = (tm.tmHeight + tm.tmExternalLeading) + DLG_BUTTON_MARGIN;
-
-        ReleaseDC(hBtnYes, hdc);
     }
 
     if (hBtnYes) {
+        sizeButtonY = GetButtonSize(hBtnYes);
+
         SetWindowPos(hBtnYes,
                      0, // ignored by means of SWP_NOZORDER
-                     rcClient.right - nBtnYesWidth, // x
-                     rcClient.bottom - nBtnHeight, // y
-                     nBtnYesWidth, nBtnHeight, // w, h
+                     rcClient.right - sizeButtonY.cx,  // x
+                     rcClient.bottom - sizeButtonY.cy, // y
+                     sizeButtonY.cx, sizeButtonY.cy,   // w, h
                      SWP_NOZORDER | SWP_NOOWNERZORDER |
                          SWP_NOACTIVATE);
+
+        PrintWindowSize(hBtnYes, _T("OK button"));
     }
+
+    // Try to get handle to Cancel button (the Cancel button may be absent
+    // on the dialog)
+    hBtnNo = GetDlgItem(hDlg, IDCANCEL);
 
     if (hBtnNo) {
+        sizeButtonN = GetButtonSize(hBtnNo);
+
         SetWindowPos(hBtnNo,
                      0, // ignored by means of SWP_NOZORDER
-                     0, // x
-                     rcClient.bottom - nBtnHeight, // y
-                     nBtnNoWidth, nBtnHeight, // w, h
+                     0,                               // x
+                     rcClient.bottom - sizeButtonN.cy, // y
+                     sizeButtonN.cx, sizeButtonN.cy,    // w, h
                      SWP_NOZORDER | SWP_NOOWNERZORDER |
                          SWP_NOACTIVATE);
+
+        PrintWindowSize(hBtnNo, _T("Cancel button"));
     }
 
-    HWND hView = GetDlgItem(hDlg, wViewIDC);
+    hView = GetDlgItem(hDlg, wViewIDC);
     if (!hView) {
         MessageBox(NULL, _T("Can't get window handle to dialog view!"),
                    g_szTitle, NULL);
@@ -791,7 +870,7 @@ static HWND CreateTreeDialog(HWND hWndParent, WORD wDialogIDD, WORD wViewIDC,
 
     if (hView) {
         int nInfoHeight = (hBtnYes) ?
-            rcClient.bottom - nBtnHeight - (DLG_BUTTON_MARGIN / 2) :
+            rcClient.bottom - sizeButtonY.cy - (DLG_BUTTON_MARGIN / 2) :
             rcClient.bottom;
 
         SetWindowPos(hView,
@@ -800,6 +879,8 @@ static HWND CreateTreeDialog(HWND hWndParent, WORD wDialogIDD, WORD wViewIDC,
                      rcClient.right, nInfoHeight, // w, h
                      SWP_NOZORDER | SWP_NOOWNERZORDER |
                          SWP_NOACTIVATE | SWP_NOCOPYBITS);
+
+        PrintWindowSize(hView, _T("View"));
 
         // Store default Tree View WndProc in global variable (if it's not
         // already done by previous calls of the function) and set custom
@@ -816,7 +897,6 @@ static HWND CreateTreeDialog(HWND hWndParent, WORD wDialogIDD, WORD wViewIDC,
     }
 
     return hDlg;
-
 }
 
 INT_PTR CALLBACK
@@ -831,16 +911,8 @@ TreeDlgProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam) {
     case IDM_FOLDER_INFO:
     case IDM_SUITE_INFO:
     case IDM_MIDLET_INFO: {
-        // Hide MIDlet tree view
-        ShowWindow(g_hMidletTreeView, SW_HIDE);
 
-        // Hide tool bar
-        if (g_hWndToolbar != NULL) {
-            ShowWindow(g_hWndToolbar, SW_HIDE);
-        }
-
-        // Show the dialog 
-        ShowWindow(hwndDlg, SW_SHOW);
+        ShowMidletTreeView(hwndDlg, FALSE);
 
         // Delegate message processing to the tree view
         if (hView) {
@@ -848,24 +920,14 @@ TreeDlgProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam) {
         }
 
         return TRUE;
-    }
-
- 
+    } 
 
     case WM_COMMAND: {
         WORD wCmd = LOWORD(wParam);
 
         if ((wCmd == IDOK) || (wCmd == IDCANCEL)) {
-            // Hide the dialog 
-            ShowWindow(hwndDlg, SW_HIDE);
 
-            // Show back MIDlet tree view 
-            ShowWindow(g_hMidletTreeView, SW_SHOWNORMAL);
-
-            // Show tool bar
-            if (g_hWndToolbar != NULL) {
-                ShowWindow(g_hWndToolbar, SW_SHOWNORMAL);
-            }
+            ShowMidletTreeView(hwndDlg, TRUE);
 
             // Delegate command processing to the tree view
             if (hView && (wCmd == IDOK)) {
@@ -881,6 +943,125 @@ TreeDlgProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 
     return FALSE;
 }
+
+static HWND CreateInstallDialog(HWND hWndParent) {
+    HWND hDlg;
+
+    RECT rcClient;
+    HWND hBtnYes, hBtnNo, hBtnFile, hBtnFolder;
+    SIZE sizeButtonY, sizeButtonN; 
+
+    hDlg = CreateDialog(g_hInst, MAKEINTRESOURCE(IDD_INSTALL_PATH),
+                        hWndParent, InstallDlgProc);
+
+    if (!hDlg) {
+        MessageBox(NULL, _T("Create install path dialog failed!"),
+                   g_szTitle, NULL);
+        return NULL;
+    }
+
+    // Get the dimensions of the parent window's client area
+    GetClientRect(hWndParent, &rcClient); 
+
+    // Set actual dialog size
+    SetWindowPos(hDlg,
+                 0, // ignored by means of SWP_NOZORDER
+                 0, 0, // x, y
+                 rcClient.right, rcClient.bottom, // w, h
+                 SWP_NOZORDER | SWP_NOOWNERZORDER |
+                     SWP_NOACTIVATE);
+
+    PrintWindowSize(hDlg, _T("Install dialog"));
+
+    // Get handle to OK button
+    hBtnYes = GetDlgItem(hDlg, IDOK);
+    if (!hBtnYes) {
+        wprintf(_T("ERROR: Can't get window handle to OK button!\n"));
+    }
+
+    if (hBtnYes) {
+        sizeButtonY = GetButtonSize(hBtnYes);
+
+        SetWindowPos(hBtnYes,
+                     0, // ignored by means of SWP_NOZORDER
+                     rcClient.right - sizeButtonY.cx,  // x
+                     rcClient.bottom - sizeButtonY.cy, // y
+                     sizeButtonY.cx, sizeButtonY.cy,   // w, h
+                     SWP_NOZORDER | SWP_NOOWNERZORDER |
+                         SWP_NOACTIVATE);
+
+        PrintWindowSize(hBtnYes, _T("OK button"));
+    }
+
+    // Try to get handle to Cancel button (the Cancel button may be absent
+    // on the dialog)
+    hBtnNo = GetDlgItem(hDlg, IDCANCEL);
+
+    if (hBtnNo) {
+        sizeButtonN = GetButtonSize(hBtnNo);
+
+        SetWindowPos(hBtnNo,
+                     0, // ignored by means of SWP_NOZORDER
+                     0,                               // x
+                     rcClient.bottom - sizeButtonN.cy, // y
+                     sizeButtonN.cx, sizeButtonN.cy,    // w, h
+                     SWP_NOZORDER | SWP_NOOWNERZORDER |
+                         SWP_NOACTIVATE);
+
+        PrintWindowSize(hBtnNo, _T("Cancel button"));
+    }
+
+    return hDlg;
+}
+
+INT_PTR CALLBACK
+InstallDlgProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam) {
+
+    switch (uMsg) {
+
+    case WM_COMMAND: {
+        WORD wCmd = LOWORD(wParam);
+
+        if (wCmd == IDCANCEL) {
+            ShowMidletTreeView(hwndDlg, TRUE);
+
+            return TRUE;
+        } else if (wCmd == IDOK) {
+//            javacall_result res = java_ams_midlet_start(-1,
+//               g_jAppId,
+//               L"com.sun.midp.installer.DiscoveryApp",
+//               NULL);
+            javacall_result res = java_ams_install_suite(g_jAppId,
+               JAVACALL_INSTALL_SRC_ANY,
+               L"http://daisy/midlets/HelloMIDlet.jad",
+               JAVACALL_INVALID_STORAGE_ID, JAVACALL_INVALID_FOLDER_ID);
+
+            if (res == JAVACALL_OK) {
+                // IMPL_NOTE: the following code must be refactored
+
+                // Update application ID
+                g_jAppId++;
+
+                // Hide MIDlet tree view window to show
+                // the MIDlet's output in the main window
+                ShowMidletTreeView(NULL, FALSE);
+
+                // Adding a new item to "Windows" menu
+                 AddWindowMenuItem(L"Installer", NULL);
+            } else {
+                ShowMidletTreeView(hwndDlg, TRUE);
+            }
+
+            return TRUE;
+        }
+
+        break;
+    }
+    }
+
+    return FALSE;
+}
+
 
 static TVI_INFO* CreateTviInfo() {
     TVI_INFO* pInfo = (TVI_INFO*)javacall_malloc(sizeof(TVI_INFO));
@@ -1240,11 +1421,7 @@ MainWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
             case IDM_WINDOW_APP_MANAGER: {
                 java_ams_midlet_switch_background();
 
-                ShowWindow(g_hMidletTreeView, SW_SHOWNORMAL);
-
-                if (g_hWndToolbar != NULL) {
-                    ShowWindow(g_hWndToolbar, SW_SHOWNORMAL);
-                }
+                ShowMidletTreeView(NULL, TRUE);
 
                 // change selected window in the menu
                 HMENU hWindowSubmenu = GetSubMenu(GetMenu(g_hMainWindow),
@@ -1260,7 +1437,6 @@ MainWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
             }
 
             case IDM_SUITE_SETTINGS:
-            case IDM_SUITE_INSTALL:
             case IDM_SUITE_REMOVE:
             case IDM_INFO:
             case IDM_FOLDER_INFO:
@@ -1274,14 +1450,18 @@ MainWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
                 break;
             }
 
+            case IDM_SUITE_INSTALL: {
+                ShowMidletTreeView(g_hInstallDlg, FALSE);
+                break;
+            }
+
             case IDM_SUITE_EXIT: {
                 (void)java_ams_system_stop();
 
                 // TODO: wait for notification from the SJWC thread instead of sleep
                 Sleep(1000);
 
-                // Hide the main window 
-                ShowWindow(hWnd, SW_HIDE);
+                ShowMidletTreeView(NULL, FALSE);
 
                 PostQuitMessage(0);
                 break;
@@ -1305,11 +1485,7 @@ MainWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
                         javacall_result res = java_ams_midlet_switch_foreground(
                             pInfo->appId);
                         if (res == JAVACALL_OK) {
-                            ShowWindow(g_hMidletTreeView, SW_HIDE);
-
-                            if (g_hWndToolbar != NULL) {
-                                ShowWindow(g_hWndToolbar, SW_HIDE);
-                            }
+                            ShowMidletTreeView(NULL, FALSE);
 
                             SetCheckedWindowMenuItem(pInfo);
                         }
@@ -1612,11 +1788,7 @@ static BOOL StartMidlet(HWND hTreeWnd) {
 
                 // Hide MIDlet tree view window to show
                 // the MIDlet's output in the main window
-                ShowWindow(hTreeWnd, SW_HIDE);
-
-                if (g_hWndToolbar != NULL) {
-                    ShowWindow(g_hWndToolbar, SW_HIDE);
-                }
+                ShowMidletTreeView(NULL, FALSE);
 
                 // Adding a new item to "Windows" menu
                 javacall_const_utf16_string jsLabel =
@@ -1829,33 +2001,8 @@ MidletTreeWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
                 break;
             }
 
-            case IDM_SUITE_INSTALL: {
-//                javacall_result res = java_ams_midlet_start(-1,
-//                    g_jAppId,
-//                    L"com.sun.midp.installer.DiscoveryApp",
-//                    NULL);
-                javacall_result res = java_ams_install_suite(g_jAppId,
-                    JAVACALL_INSTALL_SRC_ANY,
-                    L"http://daisy/midlets/HelloMIDlet.jad",
-                    JAVACALL_INVALID_STORAGE_ID, JAVACALL_INVALID_FOLDER_ID);
-
-                if (res == JAVACALL_OK) {
-                    // IMPL_NOTE: the following code must be refactored
-
-                    // Update application ID
-                    g_jAppId++;
-
-                    // Hide MIDlet tree view window to show
-                    // the MIDlet's output in the main window
-                    ShowWindow(g_hMidletTreeView, SW_HIDE);
-
-                    if (g_hWndToolbar != NULL) {
-                        ShowWindow(g_hWndToolbar, SW_HIDE);
-                    }
-
-                    // Adding a new item to "Windows" menu
-                    AddWindowMenuItem(L"Installer", NULL);
-                }
+            case IDM_FOLDER_INSTALL_INTO: {
+                ShowMidletTreeView(g_hInstallDlg, FALSE);
                 break;
             }
 
