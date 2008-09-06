@@ -3,22 +3,22 @@
  * Portions Copyright  2000-2007 Sun Microsystems, Inc. All Rights
  * Reserved.  Use is subject to license terms.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
- * 
+ *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
  * 2 only, as published by the Free Software Foundation.
- * 
+ *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
  * included at /legal/license.txt).
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA
- * 
+ *
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
  * information or have any questions.
@@ -397,7 +397,7 @@ private:
 #endif
 
 
-#if ENABLE_WTK_PROFILER                     
+#if ENABLE_WTK_PROFILER
 #define WTK_PROFILER_RUNTIME_FLAGS(develop, product)                        \
   product(bool, UseExactProfiler, false,                                    \
          "Use exact profiler")                                   \
@@ -408,9 +408,9 @@ private:
 #define WTK_PROFILER_RUNTIME_FLAGS(develop, product)
 #endif
 
-// If enable ENABLE_JVMPI_PROFILE, support +UseJvmpiProfiler parameter 
+// If enable ENABLE_JVMPI_PROFILE, support +UseJvmpiProfiler parameter
 // to enable the JVMPI events sending.
-#if ENABLE_JVMPI_PROFILE 
+#if ENABLE_JVMPI_PROFILE
 #define JVMPI_PROFILE_RUNTIME_FLAGS(develop, product)                       \
   product(bool, UseJvmpiProfiler, false,                                    \
          "Support JVMPI profile")
@@ -665,8 +665,8 @@ private:
        op(bool, VerboseNullPointExceptionThrowing,  false,                                   \
           "Print verbose null point exception information")                                      \
        op(bool, VerboseByteCodeEliminate,  false,                                   \
-          "Print byte code eliminate information ")   
-          
+          "Print byte code eliminate information ")
+
 
 /*
  * The "optional()" flags would be "product()" in product builds w/o Monet
@@ -899,7 +899,7 @@ private:
                                                                             \
   develop(bool, OptimizeCompiledCodeVerboseInternal, false,                 \
           "Print out instructions changed by the code optimizer")
-        
+
 
 #else
 #define CODE_OPTIMIZER_RUNTIME_FLAGS(develop, product)                      \
@@ -947,8 +947,8 @@ private:
 #define CPU_VARIANT_RUNTIME_FLAGS(develop, product)
 #endif
 
-#if ENABLE_ARM_VFP
-#define VFP_RUNTIME_FLAGS(develop, product)                          \
+#if USE_ARM_VFP_RUN_FAST_MODE
+#define VFP_RUNTIME_FLAGS(develop, product)                              \
   product(bool, RunFastMode, false,                                      \
           "Configure the ARM VFP coprocessor to run in RunFast mode "    \
           "and execute extra instructions to ensure TCK compilance")

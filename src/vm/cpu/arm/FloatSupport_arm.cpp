@@ -161,9 +161,7 @@ void FloatSupport::generate() {
   GENERATE(USE_SUN_JVM_D2L,  jvm_d2l);
   GENERATE(USE_SUN_JVM_D2F,  jvm_d2f);
 
-#if ENABLE_ARM_VFP
   generate_set_vfp_fast_mode();
-#endif
 }
 
 #define FLOAT1  r0
@@ -280,7 +278,7 @@ void FloatSupport::generate() {
   VFP_COMMENT("restore parameters in int registers, and retry in software"); \
   VFP_EMIT_RAW("fmrs   r0, s15");
 
-#if ENABLE_ARM_VFP
+#if USE_ARM_VFP_RUN_FAST_MODE
 void FloatSupport::generate_set_vfp_fast_mode() {
   bind_global("jvm_set_vfp_fast_mode");
     mov(r0, imm(0x03 << 24));

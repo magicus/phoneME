@@ -914,7 +914,7 @@ static void ignoreit() {}
 
 extern "C" void jvm_set_vfp_fast_mode();
 void Os::initialize() {
-#if ENABLE_ARM_VFP && !CROSS_GENERATOR
+#if USE_ARM_VFP_RUN_FAST_MODE
   if (RunFastMode) {
     // Linux by default does not use RunFast mode. This option makes
     // it easy to test the VM's compatibility with RunFast mode.
