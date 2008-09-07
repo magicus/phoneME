@@ -117,8 +117,8 @@ static int next_line(char *buffer0, char *dst, int dst_len) {
             break;
         }
 
-		if (len >= (dst_len-1)) //keep off dst overflow
-			break;
+        if (len >= (dst_len-1)) //keep off dst overflow
+            break;
         dst[len++] = one_char;
     }
 
