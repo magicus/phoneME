@@ -37,6 +37,7 @@ import javax.microedition.media.Control;
 import javax.microedition.media.MediaException;
 import javax.microedition.media.control.VideoControl;
 import javax.microedition.media.PlayerListener;
+import com.sun.midp.chameleon.skins.ScreenSkin;
 
 import com.sun.j2me.log.Logging;
 import com.sun.j2me.log.LogChannels;
@@ -54,8 +55,8 @@ class DirectVideo implements VideoControl, MIDPVideoPainter {
  * so they cannot be final 
  */
 /* Revisit: call native method to obtain screen dimensions */
-    private final int SCREEN_WIDTH  = 320;   // nGetScreenWidth();
-    private final int SCREEN_HEIGHT = 240;   // nGetScreenHeight();
+    private final int SCREEN_WIDTH  = ScreenSkin.WIDTH;   // nGetScreenWidth();
+    private final int SCREEN_HEIGHT = ScreenSkin.HEIGHT;  // nGetScreenHeight();
 
     private final int DEFAULT_WIDTH  = 80;
     private final int DEFAULT_HEIGHT = 80;
