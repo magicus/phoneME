@@ -51,7 +51,8 @@ static const char *VdomainPrefix="domain:";
 static const char *VgroupPrefix="alias:";
 static       char *VpolicyFile = NULL;
 static       char *VmessageFile = NULL;
-
+#define      POLICY_FILE_LINE_LENGTH  128
+#define      MSG_FILE_LINE_LENGTH  256
 
 static char* load_file(char *fname) {
     javacall_result  ret = 0;
@@ -99,8 +100,8 @@ static long count_lines(char* buffer) {
     return lines;
 }
 
-/* fill dst with the next line from buffer0, returns bytes skipped */
-static int next_line(char *buffer0, char *dst) {
+/* fill dst buffer with the next line from buffer0, returns bytes skipped */
+static int next_line(char *buffer0, char *dst, int dst_len) {
     char *buffer_ptr = buffer0;
     char one_char;
     int len = 0;
@@ -115,6 +116,9 @@ static int next_line(char *buffer0, char *dst) {
                 buffer_ptr++;
             break;
         }
+
+        if (len >= (dst_len-1)) //keep off dst overflow
+            break;
         dst[len++] = one_char;
     }
 
@@ -132,13 +136,24 @@ static int check_prefix(char* buff, char *prefix) {
     return 1;
 }
 
-char *build_file_name(char* fname) {
+/* Build filename including full path. The policy configuration files should 
+   be in the config directory.
+   @param fname - the base file name [in]
+   @param fullname  - pointer to buffer to fill in the full file name [out]
+   @param fullnamelen - the size of the <code>fullnamw<code> buffer [in].
+
+   @return 0 means success - the <code>fullname<code> buffer contains the 
+   correct file name. -1 means failure.
+*/
+static int build_file_name(char* fname, char *fullname, int fullnamelen) {
     javacall_utf16 configPath[256];
     unsigned char storage_path[256];
-    char *full_name;
     int   config_len, flen;
     javacall_int32 storage_len;
 
+    if (fullname == NULL) {
+        return -1;
+    }
     config_len = sizeof(configPath)/2;
     storage_len = sizeof(storage_path);
     storage_path[0] = 0;
@@ -152,53 +167,33 @@ char *build_file_name(char* fname) {
                                        storage_path, storage_len,
                                        &storage_len);
     }
-
     storage_path[storage_len] = 0;
     flen = strlen(fname);
-    full_name = javacall_malloc(storage_len + flen + 1);
-    if (full_name != NULL) {
-        strcpy(full_name, storage_path);
-        strcpy(&full_name[storage_len], fname);
-    } else
-        full_name = fname;
-
-    return full_name;
-}
-
-static char *getPolicyFilename() {
-    char*tmpstr;
-    if (javacall_get_property("security.policyfile",
-                                      JAVACALL_APPLICATION_PROPERTY,
-                                      &tmpstr) != JAVACALL_OK) {
-        javacall_print("(E) property: security.policyfile is not found in ini file\n");
-        return NULL;
+    if ((storage_len + flen + 1) > fullnamelen) {
+        return -1;
     }
-
-    return build_file_name(tmpstr);
-}
-
-static char *getFuncGroupFilename() {
-    char*tmpstr;
-    if (javacall_get_property("security.messagefile",
-                                      JAVACALL_APPLICATION_PROPERTY,
-                                      &tmpstr) != JAVACALL_OK) {
-        javacall_print("(E) property: security.messagefile is not found in ini file\n");
-        return NULL;
-    }
-
-    return build_file_name(tmpstr);
+    strcpy(fullname, storage_path);
+    strcat(&fullname[storage_len], fname);
+    return 0;
 }
 
 static char *load_policy_file() {
-    char *fname;
+    char fullname[JAVACALL_MAX_FILE_NAME_LENGTH];
     if (VpolicyFile == NULL) {
-        fname = getPolicyFilename();
-        if (fname == NULL)
+        char *fname;
+        if (javacall_get_property("security.policyfile",
+                                          JAVACALL_APPLICATION_PROPERTY,
+                                          &fname) != JAVACALL_OK) {
+            javacall_print("(E) property: security.policyfile is not found in ini file\n");
             return NULL;
-        VpolicyFile = load_file(fname);
+        }       
+        if (build_file_name(fname, fullname, JAVACALL_MAX_FILE_NAME_LENGTH))
+            return NULL;
+
+        VpolicyFile = load_file(fullname);
         if (VpolicyFile == NULL) {
             javacall_print("(E) security.policyfile: can't open ");
-            javacall_print(fname);
+            javacall_print(fullname);
             javacall_print(" !!!\n");
         }
     }
@@ -208,15 +203,21 @@ static char *load_policy_file() {
 }
 
 static char *load_message_file() {
-    char *fname;
+    char fullname[JAVACALL_MAX_FILE_NAME_LENGTH];
     if (VmessageFile == NULL) {
-        fname = getFuncGroupFilename();
-        if (fname == NULL)
+        char*fname;
+        if (javacall_get_property("security.messagefile",
+                                          JAVACALL_APPLICATION_PROPERTY,
+                                          &fname) != JAVACALL_OK) {
+            javacall_print("(E) property: security.messagefile is not found in ini file\n");
             return NULL;
-        VmessageFile = load_file(fname);
+        }
+        if (build_file_name(fname, fullname, JAVACALL_MAX_FILE_NAME_LENGTH))
+            return NULL;
+        VmessageFile = load_file(fullname);
         if (VmessageFile == NULL) {
             javacall_print("(E) security.message file can't open ");
-            javacall_print(fname);
+            javacall_print(fullname);
             javacall_print(" !!!\n");
         }
     }
@@ -226,7 +227,7 @@ static char *load_message_file() {
 
 int javacall_permissions_load_domain_list(javacall_utf8_string* array) {
     char *file_str, *ptr0, *ptr1, *ptr2;
-    char buff[128];
+    char buff[POLICY_FILE_LINE_LENGTH];
     int lines, offset, i1;
     char **str_list;
 
@@ -237,7 +238,7 @@ int javacall_permissions_load_domain_list(javacall_utf8_string* array) {
     lines = 0;
     ptr0 = file_str;
     ptr1 = NULL;
-    while ((offset = next_line(ptr0, buff))) {
+    while ((offset = next_line(ptr0, buff, sizeof(buff)))) {
         if (check_prefix(buff, (char*)VdomainPrefix)) {
             lines++;
             if (ptr1 == NULL)
@@ -263,7 +264,7 @@ int javacall_permissions_load_domain_list(javacall_utf8_string* array) {
         ptr1 = ((char*)str_list) + lines*sizeof(char*);
         for (i1 = 0; i1 < lines; i1++) {
             str_list[i1] = ptr1;
-            while ((offset = next_line(ptr0, buff))) {
+            while ((offset = next_line(ptr0, buff, sizeof(buff)))) {
                 ptr0 += offset;
                 if (check_prefix(buff, (char*)VdomainPrefix))
                     break;
@@ -285,7 +286,7 @@ int javacall_permissions_load_domain_list(javacall_utf8_string* array) {
 
 int javacall_permissions_load_group_list(javacall_utf8_string* array) {
     char *file_str, *ptr0, *ptr1;
-    char buff[128];
+    char buff[POLICY_FILE_LINE_LENGTH];
     int lines, offset, i1;
     char **str_list;
 
@@ -295,7 +296,7 @@ int javacall_permissions_load_group_list(javacall_utf8_string* array) {
 
     lines = 0;
     ptr0 = file_str;
-    while ((offset = next_line(ptr0, buff))) {
+    while ((offset = next_line(ptr0, buff, sizeof(buff)))) {
         if (check_prefix(buff, (char*)VgroupPrefix))
             lines++;
         else if (check_prefix(buff, (char*)VdomainPrefix)) {
@@ -321,7 +322,7 @@ int javacall_permissions_load_group_list(javacall_utf8_string* array) {
             char *ptr2;
             str_list[i1] = ptr1;
             do {
-                ptr0 += next_line(ptr0, buff);
+                ptr0 += next_line(ptr0, buff, sizeof(buff));
                 if (check_prefix(buff, (char*)VgroupPrefix))
                     break;
             } while (1);
@@ -340,7 +341,7 @@ int javacall_permissions_load_group_list(javacall_utf8_string* array) {
 int javacall_permissions_load_group_permissions(javacall_utf8_string* list,
                                     javacall_utf8_string group_name) {
     char *file_str, *ptr0, *ptr1;
-    char buff[128];
+    char buff[POLICY_FILE_LINE_LENGTH];
     int lines, offset, i1;
     char **str_list;
 
@@ -350,7 +351,7 @@ int javacall_permissions_load_group_permissions(javacall_utf8_string* list,
 
     lines = 0;
     ptr0 = file_str;
-    while ((offset = next_line(ptr0, buff))) {
+    while ((offset = next_line(ptr0, buff, sizeof(buff)))) {
         ptr0 += offset;
         if (check_prefix(buff, (char*)VgroupPrefix)) {
             ptr1 = buff + strlen(VgroupPrefix);
@@ -359,7 +360,7 @@ int javacall_permissions_load_group_permissions(javacall_utf8_string* list,
                 /* found, count the next permission lines */
                 ptr1 = ptr0;
                 do {
-                    ptr1 += next_line(ptr1, buff);
+                    ptr1 += next_line(ptr1, buff, sizeof(buff));
                     /* if reach next group or first domain */
                     if (check_prefix(buff, (char*)VgroupPrefix) ||
                         check_prefix(buff, (char*)VdomainPrefix))
@@ -387,7 +388,7 @@ int javacall_permissions_load_group_permissions(javacall_utf8_string* list,
         for (i1 = 0; i1 < lines; i1++) {
             char *ptr2;
             str_list[i1] = ptr1;
-            ptr0 += next_line(ptr0, buff);
+            ptr0 += next_line(ptr0, buff, sizeof(buff));
             ptr2 = buff;
             while (*ptr2) {
                 if (*ptr2 != ' ' && *ptr2 != ',')
@@ -417,7 +418,7 @@ static int get_group_value(javacall_utf8_string domain_name,
                            javacall_utf8_string group_name,
                            int getMaxValue) {
     char *file_str, *ptr0;
-    char buff[128];
+    char buff[POLICY_FILE_LINE_LENGTH];
     int value;
 
     file_str = load_policy_file();
@@ -427,7 +428,7 @@ static int get_group_value(javacall_utf8_string domain_name,
     ptr0 = file_str;
     value = JAVACALL_NEVER;
     do {
-        ptr0 += next_line(ptr0, buff);
+        ptr0 += next_line(ptr0, buff, sizeof(buff));
         if (check_prefix(buff, (char*)VdomainPrefix) && 
                             (strstr(buff, domain_name) != NULL))
             break;
@@ -436,7 +437,7 @@ static int get_group_value(javacall_utf8_string domain_name,
     do {
         if (!*ptr0)
             break;
-        ptr0 += next_line(ptr0, buff);
+        ptr0 += next_line(ptr0, buff, sizeof(buff));
         if (strstr(buff, group_name)) {
             char *ptr1;
             if (getMaxValue)
@@ -469,7 +470,7 @@ int javacall_permissions_get_max_value(javacall_utf8_string domain_name,
 int javacall_permissions_load_group_messages(javacall_utf8_string* list,
                                  javacall_utf8_string group_name) {
     char *file_str, *ptr0, *ptr1;
-    char buff[256];
+    char buff[MSG_FILE_LINE_LENGTH];
     int  i1, found;
     char **str_list;
 
@@ -480,7 +481,7 @@ int javacall_permissions_load_group_messages(javacall_utf8_string* list,
     ptr0 = file_str;
     found = 0;
     do {
-        ptr0 += next_line(ptr0, buff);
+        ptr0 += next_line(ptr0, buff, sizeof(buff));
         if (check_prefix(buff, group_name)) {
             found = 1;
             break;
@@ -498,7 +499,7 @@ int javacall_permissions_load_group_messages(javacall_utf8_string* list,
     ptr1 = ((char*)str_list) + DEF_NUM_OF_LINES*sizeof(char*);
     for (i1 = 0; i1 < DEF_NUM_OF_LINES; i1++) {
         str_list[i1] = ptr1;
-        ptr0 += next_line(ptr0, buff);
+        ptr0 += next_line(ptr0, buff, sizeof(buff));
         if (buff[0] != ' ') /* reaching next group */
             break;
         strcpy(ptr1, &buff[1]);
