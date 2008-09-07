@@ -117,7 +117,7 @@ static int next_line(char *buffer0, char *dst, int dst_len) {
             break;
         }
 
-		if (len == (dst_len-1)) //keep off dst overflow
+		if (len >= (dst_len-1)) //keep off dst overflow
 			break;
         dst[len++] = one_char;
     }
@@ -136,6 +136,15 @@ static int check_prefix(char* buff, char *prefix) {
     return 1;
 }
 
+/* Build filename including full path. The policy configuration files should 
+   be in the config directory.
+   @param fname - the base file name [in]
+   @param fullname  - pointer to buffer to fill in the full file name [out]
+   @param fullnamelen - the size of the <code>fullnamw<code> buffer [in].
+
+   @return 0 means success - the <code>fullname<code> buffer contains the 
+   correct file name. -1 means failure.
+*/
 static int build_file_name(char* fname, char *fullname, int fullnamelen) {
     javacall_utf16 configPath[256];
     unsigned char storage_path[256];
@@ -171,7 +180,7 @@ static int build_file_name(char* fname, char *fullname, int fullnamelen) {
 static char *load_policy_file() {
     char fullname[JAVACALL_MAX_FILE_NAME_LENGTH];
     if (VpolicyFile == NULL) {
-        char*fname;
+        char *fname;
         if (javacall_get_property("security.policyfile",
                                           JAVACALL_APPLICATION_PROPERTY,
                                           &fname) != JAVACALL_OK) {
