@@ -1021,6 +1021,9 @@ static HWND CreateInstallDialog(HWND hWndParent) {
         PrintWindowSize(hBtnNo, _T("Cancel button"));
     }
 
+    // TODO: implement dynamic positioning and resize for the rest controls of
+    // the dialog.
+
     // Fill the folders combobox with existing folders
     hCombobox = GetDlgItem(hDlg, IDC_COMBO_FOLDER);
     if (hCombobox) {
@@ -1091,12 +1094,16 @@ InstallDlgProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam) {
     case WM_COMMAND: {
         WORD wCmd = LOWORD(wParam);
 
-        if (wCmd == IDCANCEL) {
+        switch (wCmd) {
+        case IDCANCEL: {
             ShowMidletTreeView(hwndDlg, TRUE);
 
             // TODO: remove the time from "Windows" menu
 
-        } else if (wCmd == IDOK) {
+            break;
+        }
+
+        case IDOK: {
 //            javacall_result res = java_ams_midlet_start(-1,
 //               g_jAppId,
 //               L"com.sun.midp.installer.DiscoveryApp",
@@ -1123,8 +1130,11 @@ InstallDlgProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam) {
                 MessageBox(NULL, szBuf, g_szTitle, NULL);
             }
 
-        } else if ((wCmd == IDM_SUITE_INSTALL) ||
-                   (wCmd == IDM_FOLDER_INSTALL_INTO)) {
+            break;
+        }
+
+        case IDM_SUITE_INSTALL:
+        case IDM_FOLDER_INSTALL_INTO: {
 
             if (hCombobox) {
                 WPARAM wCurSel = 0;
@@ -1154,12 +1164,56 @@ InstallDlgProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 
             // Adding a new item to "Windows" menu
             AddWindowMenuItem(L"Installer", NULL);
+
+            break;
+        }
+
+        case IDC_EDIT_URL: {
+            if(HIWORD(wParam) == EN_CHANGE) {
+                int nLineCount, nCharNum;
+                BOOL fEnable = FALSE;
+
+                nLineCount = SendDlgItemMessage(hwndDlg, 
+                                                IDC_EDIT_URL,
+                                                EM_GETLINECOUNT,
+                                                0, // not used
+                                                0  // not used
+                );
+
+                for (int i = 1; i <= nLineCount; i++) {
+                    nCharNum = SendDlgItemMessage(hwndDlg, 
+                                                  IDC_EDIT_URL,
+                                                  EM_LINELENGTH,
+                                                  i, // line
+                                                  0  // not used
+                    );
+
+                    if (nCharNum > 0) {
+                        fEnable = TRUE;
+                        break;
+                    }
+                }
+
+
+                // Enable OK button if there is a text in the edit control
+                HWND hBtnOK = GetDlgItem(hwndDlg, IDOK);
+                if (hBtnOK) {
+                    EnableWindow(hBtnOK, fEnable);
+                }
+            }
+
+            break;
+        }
+
+        default: {
+            return FALSE;
         }
 
         return TRUE;
-    }
+        }
+    } // end of case WM_COMMAND
 
-    } // end of switch
+    } // end of switch(uMsg)
 
     return FALSE;
 }
