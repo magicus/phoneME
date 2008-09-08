@@ -215,7 +215,7 @@ public class MkStubs {
                 empty = false;
             }
         }
-
+        
         final String[] fClassPath = classPath;
         ClassLoader classLoader = new ClassLoader() {
             String[] classPath;
@@ -310,113 +310,121 @@ public class MkStubs {
         
         
         if (clsNameList.size() == 0) {
-            System.exit(0);
+            System.out.println("At least one class name must be provided in the command line");
+            System.exit(1);
         }
-        for (int i = 0; i < clsNameList.size(); i++) {
-            String clsName = (String)clsNameList.elementAt(i);
-            try {
-                Class c = Class.forName(clsName, false, classLoader);
-                clsList.addElement(c);
-            } catch (ClassNotFoundException cnfe) {
-                //cnfe.printStackTrace();
-                pl("Class '" + clsName + "' not found. Skipped.");
+        
+        try {
+            for (int i = 0; i < clsNameList.size(); i++) {
+                String clsName = (String)clsNameList.elementAt(i);
+                try {
+                    Class c = Class.forName(clsName, false, classLoader);
+                    clsList.addElement(c);
+                } catch (ClassNotFoundException cnfe) {
+                    //cnfe.printStackTrace();
+                    pl("Class '" + clsName + "' not found. Skipped.");
+                }
             }
-        }
-
-        classes = new String[clsList.size()];
-        for (int i = 0; i < classes.length; i++) {
-            classes[i] = ((Class)clsList.elementAt(i)).getName();
-        }
-        Hashtable agentPackages = new Hashtable();
-        Hashtable proxyPackages = new Hashtable();
-        for (int clsIndex = 0; clsIndex < clsList.size(); clsIndex++) {
-            Class clazz = (Class)clsList.elementAt(clsIndex);
-            String className = clazz.getName();
-            String pkg = (String)pkgNames.get(className);
-            boolean isIface = clazz.isInterface();
-            if (emptyList.containsKey(className)) {
-                JavaFile wr = new JavaFile(tmpDir, translateClassName(className), doTrace);
+    
+            classes = new String[clsList.size()];
+            for (int i = 0; i < classes.length; i++) {
+                classes[i] = ((Class)clsList.elementAt(i)).getName();
+            }
+            Hashtable agentPackages = new Hashtable();
+            Hashtable proxyPackages = new Hashtable();
+            for (int clsIndex = 0; clsIndex < clsList.size(); clsIndex++) {
+                Class clazz = (Class)clsList.elementAt(clsIndex);
+                String className = clazz.getName();
+                String pkg = (String)pkgNames.get(className);
+                boolean isIface = clazz.isInterface();
+                if (emptyList.containsKey(className)) {
+                    JavaFile wr = new JavaFile(tmpDir, translateClassName(className), doTrace);
+                    printHeader(wr, pkg);
+                    wr.pl("public " + (isIface ? "interface" : "class") + " " + translateClassName(className)+ " {");
+                    wr.pl("}");
+                    wr.close();
+                    continue;
+                }
+                if (inheritList.containsKey(className)) {
+                    if (printAgentClass(clazz, pkg, doTrace, isIface)) {
+                        if (isIface) {
+                            printProxyClass(clazz, translateInterfaceImplName(className), false, doTrace, true);
+                        }
+                        printProxyClass(clazz, translateClassName(className), isIface, doTrace, true);
+                        agentPackages.put(pkg, "");
+                    }
+                } else {
+                    if (isIface) {
+                        printProxyClass(clazz, translateInterfaceImplName(className), false, doTrace, false);
+                    }
+                    printProxyClass(clazz, translateClassName(className), isIface, doTrace, false);
+                }
+                proxyPackages.put(pkg, "");
+            }
+            JavaFile wr;
+            for (Enumeration e = agentPackages.keys(); e.hasMoreElements();) {
+                String pkg = (String)e.nextElement();
+                String prefix = pkg.replaceAll("\\.", "_");
+                wr = new JavaFile(agentDir, prefix + "__AgentManager", doTrace);
                 printHeader(wr, pkg);
-                wr.pl("public " + (isIface ? "interface" : "class") + " " + translateClassName(className)+ " {");
+                wr.pl("public class " + prefix + "__AgentManager {");
+                wr.pl(1, "private static java.util.Hashtable classList = new java.util.Hashtable();");
+                wr.pl(1, "public static void registerClass(Object homeClass, String className) {");
+                wr.pl(2, "classList.put(className, homeClass);");
+                wr.pl(1, "}");
+                wr.pl(1, "public static Object getHomeClass(String className) {");
+                wr.pl(2, "Object homeClass = classList.get(className);");
+                wr.pl(2, "if (homeClass == null) {");
+                wr.pl(3, "try{");
+                wr.pl(4, "Class.forName(className + \"__AgentClass\");"); 
+                wr.pl(3, "} catch (ClassNotFoundException cnfe) {");
+                wr.pl(4, "throw new RuntimeException(cnfe);");
+                wr.pl(3, "}");
+                wr.pl(2, "}");
+                wr.pl(2, "homeClass = classList.get(className);");
+                wr.pl(2, "if (homeClass == null) {");
+        wr.pld(4,"System.out.println(\"home class not found\");");
+                wr.pl(3, "throw new RuntimeException(\"Cannot load agent class \" + className);");
+                wr.pl(2, "}");
+                wr.pl(2, "return homeClass;");
+                wr.pl(1, "}");
                 wr.pl("}");
                 wr.close();
-                continue;
+                wr = new JavaFile(agentDir, prefix + "__AgentInterface", doTrace);
+                printHeader(wr, pkg);
+                wr.pl("public interface " + prefix + "__AgentInterface {");
+                wr.pl(1, "public Object __invoke(int num, Object obj, Object[] a) throws InvocationTargetException;");
+                wr.pl(1, "public void __setClassLoader(java.lang.ClassLoader cl);");
+                wr.pl("}");
+                wr.close();
             }
-            if (inheritList.containsKey(className)) {
-                if (printAgentClass(clazz, pkg, doTrace, isIface)) {
-                    if (isIface) {
-                        printProxyClass(clazz, translateInterfaceImplName(className), false, doTrace, true);
-                    }
-                    printProxyClass(clazz, translateClassName(className), isIface, doTrace, true);
-                    agentPackages.put(pkg, "");
-                }
-            } else {
-                if (isIface) {
-                    printProxyClass(clazz, translateInterfaceImplName(className), false, doTrace, false);
-                }
-                printProxyClass(clazz, translateClassName(className), isIface, doTrace, false);
+            for (Enumeration e = proxyPackages.keys(); e.hasMoreElements();) {
+                String pkg = (String)e.nextElement();
+                String className = pkg.replaceAll("\\.", "_") + "__ProxyBase";
+                wr = new JavaFile(tmpDir, className, doTrace);
+                printHeader(wr, pkg);
+                wr.pl("public class " + className + " {");
+                wr.pl(1, "// Internal instance variable");
+                wr.pl(1, "private Object __internal = null;");
+                wr.pl(1, "// Get internal instance");
+                wr.pl(1, "public Object __getInternal() {");
+        wr.pld(2,"System.out.println(this.getClass().getName() + \".__getInternal() = \" + (__internal == null ? \"null\" : \"not null\") + \"\");");
+                wr.pl(2, "return __internal;");
+                wr.pl(1, "}");
+                wr.pl(1, "protected void __setInternal(Object obj) {");
+                wr.pl(2, "__internal = obj;");
+        wr.pld(2,"System.out.println(this.getClass().getName() + \".__setInternal() = \" + (__internal == null ? \"null\" : \"not null\") + \"\");");
+        //wr.pld(2, "Thread.dumpStack();");
+                wr.pl(1, "}");
+                wr.pl(1, "// List of used instances ");
+                wr.pl(1, "protected static java.util.Hashtable __objList = new java.util.Hashtable();");
+                wr.pl("}");
+                wr.close();
             }
-            proxyPackages.put(pkg, "");
-        }
-        JavaFile wr;
-        for (Enumeration e = agentPackages.keys(); e.hasMoreElements();) {
-            String pkg = (String)e.nextElement();
-            String prefix = pkg.replaceAll("\\.", "_");
-            wr = new JavaFile(agentDir, prefix + "__AgentManager", doTrace);
-            printHeader(wr, pkg);
-            wr.pl("public class " + prefix + "__AgentManager {");
-            wr.pl(1, "private static java.util.Hashtable classList = new java.util.Hashtable();");
-            wr.pl(1, "public static void registerClass(Object homeClass, String className) {");
-            wr.pl(2, "classList.put(className, homeClass);");
-            wr.pl(1, "}");
-            wr.pl(1, "public static Object getHomeClass(String className) {");
-            wr.pl(2, "Object homeClass = classList.get(className);");
-            wr.pl(2, "if (homeClass == null) {");
-            wr.pl(3, "try{");
-            wr.pl(4, "Class.forName(className + \"__AgentClass\");"); 
-            wr.pl(3, "} catch (ClassNotFoundException cnfe) {");
-            wr.pl(4, "throw new RuntimeException(cnfe);");
-            wr.pl(3, "}");
-            wr.pl(2, "}");
-            wr.pl(2, "homeClass = classList.get(className);");
-            wr.pl(2, "if (homeClass == null) {");
-    wr.pld(4,"System.out.println(\"home class not found\");");
-            wr.pl(3, "throw new RuntimeException(\"Cannot load agent class \" + className);");
-            wr.pl(2, "}");
-            wr.pl(2, "return homeClass;");
-            wr.pl(1, "}");
-            wr.pl("}");
-            wr.close();
-            wr = new JavaFile(agentDir, prefix + "__AgentInterface", doTrace);
-            printHeader(wr, pkg);
-            wr.pl("public interface " + prefix + "__AgentInterface {");
-            wr.pl(1, "public Object __invoke(int num, Object obj, Object[] a) throws InvocationTargetException;");
-            wr.pl(1, "public void __setClassLoader(java.lang.ClassLoader cl);");
-            wr.pl("}");
-            wr.close();
-        }
-        for (Enumeration e = proxyPackages.keys(); e.hasMoreElements();) {
-            String pkg = (String)e.nextElement();
-            String className = pkg.replaceAll("\\.", "_") + "__ProxyBase";
-            wr = new JavaFile(tmpDir, className, doTrace);
-            printHeader(wr, pkg);
-            wr.pl("public class " + className + " {");
-            wr.pl(1, "// Internal instance variable");
-            wr.pl(1, "private Object __internal = null;");
-            wr.pl(1, "// Get internal instance");
-            wr.pl(1, "public Object __getInternal() {");
-    wr.pld(2,"System.out.println(this.getClass().getName() + \".__getInternal() = \" + (__internal == null ? \"null\" : \"not null\") + \"\");");
-            wr.pl(2, "return __internal;");
-            wr.pl(1, "}");
-            wr.pl(1, "protected void __setInternal(Object obj) {");
-            wr.pl(2, "__internal = obj;");
-    wr.pld(2,"System.out.println(this.getClass().getName() + \".__setInternal() = \" + (__internal == null ? \"null\" : \"not null\") + \"\");");
-    //wr.pld(2, "Thread.dumpStack();");
-            wr.pl(1, "}");
-            wr.pl(1, "// List of used instances ");
-            wr.pl(1, "protected static java.util.Hashtable __objList = new java.util.Hashtable();");
-            wr.pl("}");
-            wr.close();
+        } catch (Exception e) {
+            System.out.println("Unexpected exception:");
+            e.printStackTrace();
+            System.exit(1);
         }
         System.exit(0);
     }
