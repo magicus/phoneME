@@ -1079,6 +1079,7 @@ InstallDlgProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam) {
     javacall_result res = JAVACALL_FAIL;
 
     HWND hCombobox = GetDlgItem(hwndDlg, IDC_COMBO_FOLDER);
+    HWND hEdit = GetDlgItem(hwndDlg, IDC_EDIT_URL);
 
     switch (uMsg) {
 
@@ -1095,34 +1096,52 @@ InstallDlgProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam) {
         }
 
         case IDOK: {
-            javacall_folder_id jFolderId;
             WPARAM wItem;
+            javacall_folder_id jFolderId = JAVACALL_INVALID_FOLDER_ID;
 
-            wItem = (WPARAM)SendMessage(hCombobox, CB_GETCURSEL, 0, 0);
-            jFolderId = (javacall_folder_id)SendMessage(hCombobox, CB_GETITEMDATA, wItem, 0);
+            WCHAR szUrl[256] /*= L"http://daisy/midlets/HelloMIDlet.jad"*/;
+            int nUrlLen = 0;
 
+            if (hCombobox) {
+                wItem = (WPARAM)SendMessage(hCombobox, CB_GETCURSEL, 0, 0);
+                jFolderId = (javacall_folder_id)SendMessage(hCombobox,
+                                                            CB_GETITEMDATA,
+                                                            wItem, 0);
+            }
             wprintf(_T("The folder to install: %d\n"), (int)jFolderId);
 
-            res = java_ams_install_suite(g_jAppId,
-               JAVACALL_INSTALL_SRC_ANY,
-               L"http://daisy/midlets/HelloMIDlet.jad",
-               JAVACALL_INVALID_STORAGE_ID, JAVACALL_INVALID_STORAGE_ID /*jFolderId*/);
+            if (hEdit) {
+                nUrlLen = (int)SendMessage(hEdit, WM_GETTEXT,
+                                           (WPARAM)sizeof(szUrl),
+                                           (LPARAM)szUrl);
+            }
+            wprintf(_T("The URL to install from: %s\n"), szUrl);
 
-            if (res == JAVACALL_OK) {
-                // IMPL_NOTE: the following code must be refactored
+            if (nUrlLen) {
+                res = java_ams_install_suite(g_jAppId,
+                                             JAVACALL_INSTALL_SRC_ANY,
+                                             (javacall_const_utf16_string)szUrl,
+                                             JAVACALL_INVALID_STORAGE_ID,
+                                             jFolderId);
 
-                // Update application ID
-                g_jAppId++;
+                if (res == JAVACALL_OK) {
+                    // IMPL_NOTE: the following code must be refactored
 
-                // Hide the install path dialog then
-                // show install progress dialog
-                ShowWindow(hwndDlg , SW_HIDE);
-                ShowWindow(g_InstallProgressDlg, SW_SHOW);
+                    // Update application ID
+                    g_jAppId++;
+
+                    // Hide the install path dialog then
+                    // show install progress dialog
+                    ShowWindow(hwndDlg , SW_HIDE);
+                    ShowWindow(g_InstallProgressDlg, SW_SHOW);
+                } else {
+                    TCHAR szBuf[127];
+                    wsprintf(szBuf, _T("Can't start installation process!")
+                             _T("\n\nError code %d"), (int)res);
+                    MessageBox(NULL, szBuf, g_szTitle, NULL);
+                }
             } else {
-                TCHAR szBuf[127];
-                wsprintf(szBuf, _T("Can't start installation process!")
-                        _T("\n\nError code %d"), (int)res);
-                MessageBox(NULL, szBuf, g_szTitle, NULL);
+                MessageBox(NULL, _T("URL is empty!"), g_szTitle, NULL);
             }
 
             break;
@@ -1142,7 +1161,6 @@ InstallDlgProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam) {
                     if (nFolderId != JAVACALL_INVALID_FOLDER_ID) {
                         nItemCount = (int)SendMessage(hCombobox, CB_GETCOUNT,
                                                       0, 0);
-
                         for (int i = 0; i < nItemCount; i++) {
                             nId = (int)SendMessage(hCombobox, CB_GETITEMDATA,
                                                    i, 0);
@@ -1173,27 +1191,18 @@ InstallDlgProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam) {
                 int nLineCount, nCharNum;
                 BOOL fEnable = FALSE;
 
-                nLineCount = SendDlgItemMessage(hwndDlg, 
-                                                IDC_EDIT_URL,
-                                                EM_GETLINECOUNT,
-                                                0, // not used
-                                                0  // not used
-                );
+                if (hEdit) {
+                    nLineCount = SendMessage(hEdit, EM_GETLINECOUNT, 0, 0);
 
-                for (int i = 1; i <= nLineCount; i++) {
-                    nCharNum = SendDlgItemMessage(hwndDlg, 
-                                                  IDC_EDIT_URL,
-                                                  EM_LINELENGTH,
-                                                  i, // line
-                                                  0  // not used
-                    );
+                    for (int i = 1; i <= nLineCount; i++) {
+                        nCharNum = SendMessage(hEdit, EM_LINELENGTH, i, 0);
 
-                    if (nCharNum > 0) {
-                        fEnable = TRUE;
-                        break;
+                        if (nCharNum > 0) {
+                            fEnable = TRUE;
+                            break;
+                        }
                     }
                 }
-
 
                 // Enable OK button if there is a text in the edit control
                 HWND hBtnOK = GetDlgItem(hwndDlg, IDOK);
