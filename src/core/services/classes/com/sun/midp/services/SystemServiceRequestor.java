@@ -41,7 +41,7 @@ public abstract class SystemServiceRequestor {
      * Establishes connection to service
      *
      * @param serviceID unique service ID
-     * @return connection to service
+     * @return connection to service or null if service could not be found
      */
     abstract public SystemServiceConnection requestService(String serviceID);
 

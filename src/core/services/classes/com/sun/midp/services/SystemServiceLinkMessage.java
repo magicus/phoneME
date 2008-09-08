@@ -1,6 +1,4 @@
 /*
- *
- *
  * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
@@ -23,29 +21,25 @@
  * Clara, CA 95054 or visit www.sun.com if you need additional
  * information or have any questions.
  */
-
 package com.sun.midp.services;
 
-import java.io.*;
+import com.sun.midp.links.Link;
 
-final class SystemServiceWriteMessage extends SystemServiceDataMessage {
-    private ByteArrayOutputStream byteStream = null;
-    private DataOutputStream dataStream = null;
+/**
+ * Link message is what is a special kind of passed between service 
+ * and client. It is capable of carrying of single Link object.
+ */
+public abstract class SystemServiceLinkMessage extends SystemServiceMessage {
 
-    SystemServiceWriteMessage() {
-        byteStream = new ByteArrayOutputStream();
-        dataStream = new DataOutputStream(byteStream);
-    }
+    /**
+     * Gets Link object from the body of the message.
+     * 
+     * @return link object obtained from message
+     */
+    abstract public Link getLink();
 
-    public DataInput getDataInput() {
-        throw new IllegalStateException();
-    }
-
-    public DataOutput getDataOutput() {
-        return dataStream;
-    }
-
-    byte[] getData() {
-        return byteStream.toByteArray();
-    }
+    /**
+     * Sets specified Link object into the body of the message.
+     */
+    abstract public void setLink(Link theLink);
 }

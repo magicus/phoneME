@@ -1,6 +1,4 @@
 /*
- *
- *
  * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
@@ -24,28 +22,24 @@
  * information or have any questions.
  */
 
-package com.sun.midp.services;
+package com.sun.midp.io.j2me.pipe.serviceProtocol;
 
-import java.io.*;
+/**
+ *
+ */
+abstract class Endpoint {
+    UserListener connectionListener;
+    Endpoint next;
+    long id;
 
-final class SystemServiceWriteMessage extends SystemServiceDataMessage {
-    private ByteArrayOutputStream byteStream = null;
-    private DataOutputStream dataStream = null;
-
-    SystemServiceWriteMessage() {
-        byteStream = new ByteArrayOutputStream();
-        dataStream = new DataOutputStream(byteStream);
+    Endpoint(UserListener connectionListener, long id) {
+        this.connectionListener = connectionListener;
+        this.id = id;
     }
 
-    public DataInput getDataInput() {
-        throw new IllegalStateException();
-    }
+    abstract void close();
 
-    public DataOutput getDataOutput() {
-        return dataStream;
-    }
-
-    byte[] getData() {
-        return byteStream.toByteArray();
+    long getId() {
+        return id;
     }
 }

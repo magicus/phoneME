@@ -27,10 +27,15 @@
 package com.sun.midp.io.j2me.pipe;
 
 import com.sun.cldc.io.ConnectionBaseInterface;
+import com.sun.midp.security.ImplicitlyTrustedClass;
+import com.sun.midp.security.SecurityInitializer;
 import java.io.IOException;
 import javax.microedition.io.Connection;
+import com.sun.midp.security.SecurityToken;
 
 public class Protocol implements ConnectionBaseInterface {
+    private static class SecurityTrusted implements ImplicitlyTrustedClass {};
+    private static SecurityToken token;
 
     public Connection openPrim(String name, int mode, boolean timeouts) throws IOException {
         if (name.charAt(0) != '/' || name.charAt(1) != '/')
@@ -47,48 +52,36 @@ public class Protocol implements ConnectionBaseInterface {
             throw new IllegalArgumentException("Malformed server protocol name");
         String serverName = name.substring(colon1, colon2);
         String version = name.substring(colon2 + 1, semicolon);
+        
+        if (token == null) {
+            token = SecurityInitializer.requestToken(new SecurityTrusted());
+        }
 
         // check if we deal with server or client connection
         if (colon1 == 2) {
             // check if this is AMS isolate and opens connection for push purposes
             //       or this is user isolate and it needs to checkout connection from AMS
-            // TODO
+            // TODO. no push for now
 
-            return new PipeServerConnectionImpl(serverName, version);
+            PipeServerConnectionImpl connection =
+                    new PipeServerConnectionImpl(serverName, version, token);
+            connection.establish(mode);
+            return connection;
         } else {
             Object suiteId = null;
             if (name.charAt(2) == '*') {
                 if (colon1 != 3)
                     throw new IllegalArgumentException("Malformed protocol name");
+            } else {
+                // TODO parse suite identity into suiteId object
+                // suiteId might change its type
             }
             
             PipeClientConnectionImpl connection = 
-                    new PipeClientConnectionImpl(suiteId, serverName, version);
-            connection.connect(mode);
+                    new PipeClientConnectionImpl(suiteId, serverName, version, token);
+            connection.establish(mode);
             
             return connection;
         }
     }
-
-    /*
-    private static int parseVersion(String str) {
-        int dot1 = str.indexOf('.');
-        int dot2 = str.indexOf('.', dot1 + 1);
-        if (dot1 < 1 || dot2 == dot1+1)
-            throw new IllegalArgumentException("Malformed protocol version");
-        int version = 0;
-        try {
-            if (dot2 < 0)
-                dot2 = str.length();
-            version = Integer.parseInt(str.substring(0, dot1)) * 10000 +
-                    Integer.parseInt(str.substring(dot1+1, dot2)) * 100;
-            if (dot2 < str.length())
-                version += Integer.parseInt(str.substring(dot2));
-        }
-        catch (NumberFormatException ex) {
-            throw new IllegalArgumentException("Malformed protocol version");
-        }
-        return version;
-    }
-     */
 }

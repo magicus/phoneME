@@ -28,7 +28,7 @@ package com.sun.midp.services;
 
 import java.io.*;
 
-final class SystemServiceReadMessage extends SystemServiceMessage {
+final class SystemServiceReadMessage extends SystemServiceDataMessage {
     private DataInputStream dataStream = null;
 
     SystemServiceReadMessage(byte[] data) {

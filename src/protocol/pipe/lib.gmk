@@ -36,40 +36,48 @@
 
 # Adds to global SUBSYSTEMS list
 #
-SUBSYSTEMS += imc
+SUBSYSTEMS += pipe
 
 # Javadoc source path
-SUBSYSTEM_IMC_SOURCEPATH += $(SUBSYSTEM_DIR)/protocol/imc/classes
+SUBSYSTEM_PIPE_SOURCEPATH += $(SUBSYSTEM_DIR)/protocol/pipe/classes
 
-SUBSYSTEM_IMC_PACKAGES = \
-    com.sun.midp.io.j2me.imc 
+SUBSYSTEM_PIPE_PACKAGES = \
+    com.sun.midp.io.j2me.pipe 
 
-MIDP_JAVADOC_SOURCEPATH += $(SUBSYSTEM_IMC_SOURCEPATH)
-MIDP_JAVADOC_PACKAGES +=  $(SUBSYSTEM_IMC_PACKAGES)
+MIDP_JAVADOC_SOURCEPATH += $(SUBSYSTEM_PIPE_SOURCEPATH)
+MIDP_JAVADOC_PACKAGES +=  $(SUBSYSTEM_PIPE_PACKAGES)
 
 GROUP_PROTOCOL_JAVADOC_PACKAGES += \
-	$(SUBSYSTEM_IMC_PACKAGES)
+	$(SUBSYSTEM_PIPE_PACKAGES)
 
-# vpath for ( imc ) subsystem
+# vpath for ( pipe ) subsystem
 #
-#vpath % $(SUBSYSTEM_DIR)/protocol/imc/reference/native
+#vpath % $(SUBSYSTEM_DIR)/protocol/pipe/reference/native
 
-# Java files for the ( imc ) module
+# Java files for the ( pipe ) module
 #
-SUBSYSTEM_IMC_JAVA_FILES += \
-    $(SUBSYSTEM_DIR)/protocol/imc/classes/com/sun/midp/io/imc/IMCConnection.java \
-    $(SUBSYSTEM_DIR)/protocol/imc/classes/com/sun/midp/io/imc/IMCServerConnection.java
+SUBSYSTEM_PIPE_JAVA_FILES += \
+    $(SUBSYSTEM_DIR)/protocol/pipe/classes/com/sun/midp/io/pipe/PipeConnection.java \
+    $(SUBSYSTEM_DIR)/protocol/pipe/classes/com/sun/midp/io/pipe/PipeServerConnection.java \
+    $(SUBSYSTEM_DIR)/protocol/pipe/reference/classes/com/sun/midp/io/j2me/pipe/Protocol.java \
+    $(SUBSYSTEM_DIR)/protocol/pipe/reference/classes/com/sun/midp/io/j2me/pipe/PipeClientConnectionImpl.java \
+    $(SUBSYSTEM_DIR)/protocol/pipe/reference/classes/com/sun/midp/io/j2me/pipe/PipeServerConnectionImpl.java \
+    $(SUBSYSTEM_DIR)/protocol/pipe/reference/classes/com/sun/midp/io/j2me/pipe/serviceProtocol/Endpoint.java \
+    $(SUBSYSTEM_DIR)/protocol/pipe/reference/classes/com/sun/midp/io/j2me/pipe/serviceProtocol/PipeServiceProtocol.java \
+    $(SUBSYSTEM_DIR)/protocol/pipe/reference/classes/com/sun/midp/io/j2me/pipe/serviceProtocol/Dispatcher.java \
+    $(SUBSYSTEM_DIR)/protocol/pipe/reference/classes/com/sun/midp/io/j2me/pipe/serviceProtocol/UserListener.java \
+    $(SUBSYSTEM_DIR)/protocol/pipe/reference/classes/com/sun/midp/io/j2me/pipe/serviceProtocol/ClientEndpoint.java \
+    $(SUBSYSTEM_DIR)/protocol/pipe/reference/classes/com/sun/midp/io/j2me/pipe/serviceProtocol/ServerEndpoint.java
 
-# Native files for the ( imc ) module
+# Native files for the ( pipe ) module
 #
-#ifeq ($(TARGET_VM), cldc_vm)
-#SUBSYSTEM_IMC_NATIVE_FILES += \
-#	imcProtocol.c
-#endif
 
-#ifeq ($(USE_I3_TEST), true)
+ifeq ($(USE_I3_TEST), true)
 
-#SUBSYSTEM_IMC_I3TEST_JAVA_FILES += \
-#    $(SUBSYSTEM_DIR)/protocol/imc/reference/i3test/com/sun/midp/io/j2me/imc/TestInterruptedIO.java
+SUBSYSTEM_PIPE_I3TEST_JAVA_FILES += \
+    $(SUBSYSTEM_DIR)/protocol/pipe/reference/i3test/com/sun/midp/io/j2me/pipe/SecurityTokenProvider.java \
+    $(SUBSYSTEM_DIR)/protocol/pipe/reference/i3test/com/sun/midp/io/j2me/pipe/TestPipeServiceProtocol.java \
+    $(SUBSYSTEM_DIR)/protocol/pipe/reference/i3test/com/sun/midp/io/j2me/pipe/TestPipeConnection.java
+#    $(SUBSYSTEM_DIR)/protocol/pipe/reference/i3test/com/sun/midp/io/j2me/pipe/TestInterruptedIO.java
 
-#endif
+endif

@@ -23,18 +23,24 @@
  */
 package com.sun.midp.io.j2me.pipe;
 
+import com.sun.midp.io.j2me.pipe.serviceProtocol.PipeServiceProtocol;
 import com.sun.midp.io.pipe.PipeServerConnection;
 import java.io.IOException;
 import javax.microedition.io.StreamConnection;
+import com.sun.midp.security.SecurityToken;
 
 class PipeServerConnectionImpl implements PipeServerConnection {
     private String name;
     private String version;
-    private boolean requestedToClose;
+    private SecurityToken token;
+    private PipeServiceProtocol pipe;
+    private boolean requestedToClose = false;
+    private int mode;
 
-    PipeServerConnectionImpl(String serverName, String serverVersion) {
+    PipeServerConnectionImpl(String serverName, String serverVersion, SecurityToken token) {
         name = serverName;
         version = serverVersion;
+        this.token = token;
     }
 
     public String getName() {
@@ -47,15 +53,32 @@ class PipeServerConnectionImpl implements PipeServerConnection {
 
     public StreamConnection acceptAndOpen() throws IOException {
         if (requestedToClose)
-            throw new IOException();
-        // here wait till client comes
+            throw new IOException("Connection closed");
         
-        return new PipeClientConnectionImpl();
+        PipeServiceProtocol ptp = pipe.acceptByServer();
+        PipeClientConnectionImpl conn = new PipeClientConnectionImpl(token, ptp);
+        conn.establishTransfer(mode);
+        
+        return conn;
     }
 
     public void close() throws IOException {
+        pipe.closeServer();
+        
         requestedToClose = true;
-        // TODO interrupt acceptAndOpen
+    }
+
+    /**
+     * Establishes connection with Pipe system service. Registers this
+     * pipe server there so client connection can be bound when opened
+     * @param mode
+     */
+    void establish(int mode) throws IOException {
+        pipe = PipeServiceProtocol.getService(token);
+        
+        pipe.connectServer(name, version);
+
+        this.mode = mode;
     }
 
 }

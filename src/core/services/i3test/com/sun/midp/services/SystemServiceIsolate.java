@@ -53,11 +53,11 @@ public class SystemServiceIsolate  {
 
         try {
             // receive string from service
-            SystemServiceMessage msg = con.receive();
+            SystemServiceDataMessage msg = (SystemServiceDataMessage)con.receive();
             String testString = msg.getDataInput().readUTF();
 
             // convert string to upper case and sent it back to service
-            msg = SystemServiceMessage.newMessage();
+            msg = SystemServiceMessage.newDataMessage();
             msg.getDataOutput().writeUTF(testString.toUpperCase());
             con.send(msg);
         } catch (Throwable t) {

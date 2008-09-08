@@ -1,6 +1,4 @@
 /*
- *
- *
  * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
@@ -26,26 +24,28 @@
 
 package com.sun.midp.services;
 
-import java.io.*;
+import java.io.DataInput;
+import java.io.DataOutput;
 
-final class SystemServiceWriteMessage extends SystemServiceDataMessage {
-    private ByteArrayOutputStream byteStream = null;
-    private DataOutputStream dataStream = null;
+/**
+ * Message is what is passed between service and client. At low 
+ * level message body is just array of bytes. It is also possible 
+ * to write/extract a sequence of primitive types from the message. 
+ * In other words, message body can be seen as data stream from which
+ * you can read/write primitive types.
+ */
+public abstract class SystemServiceDataMessage extends SystemServiceMessage {
+    /**
+     * Gets message body as DataInput.
+     *
+     * @return DataInput interface for reading data from message
+     */
+    abstract public DataInput getDataInput();
 
-    SystemServiceWriteMessage() {
-        byteStream = new ByteArrayOutputStream();
-        dataStream = new DataOutputStream(byteStream);
-    }
-
-    public DataInput getDataInput() {
-        throw new IllegalStateException();
-    }
-
-    public DataOutput getDataOutput() {
-        return dataStream;
-    }
-
-    byte[] getData() {
-        return byteStream.toByteArray();
-    }
+    /**
+     * Gets message body as DataOutput.
+     *
+     * @return DataOutput interface for writing data to message
+     */
+    abstract public DataOutput getDataOutput();
 }

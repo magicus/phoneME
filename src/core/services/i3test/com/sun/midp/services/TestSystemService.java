@@ -72,12 +72,12 @@ public class TestSystemService extends TestCase {
         public void run() {
             try {
                 // send test string to client
-                SystemServiceMessage msg = SystemServiceMessage.newMessage();
+                SystemServiceDataMessage msg = SystemServiceMessage.newDataMessage();
                 msg.getDataOutput().writeUTF(testString);
                 con.send(msg);
 
                 // get a response string from client
-                msg = con.receive();
+                msg = (SystemServiceDataMessage)con.receive();
                 String responseString = msg.getDataInput().readUTF();
 
                 // compare strings
@@ -125,11 +125,11 @@ public class TestSystemService extends TestCase {
 
         try {
             // receive string from service
-            SystemServiceMessage msg = con.receive();
+            SystemServiceDataMessage msg = (SystemServiceDataMessage)con.receive();
             String testString = msg.getDataInput().readUTF();
 
             // convert string to upper case and sent it back to service
-            msg = SystemServiceMessage.newMessage();
+            msg = SystemServiceMessage.newDataMessage();
             msg.getDataOutput().writeUTF(testString.toUpperCase());
             con.send(msg);
         } catch (Throwable t) {

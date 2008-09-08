@@ -59,6 +59,8 @@ SUBSYSTEM_SERVICES_JAVA_FILES += \
     $(SERVICES_DIR)/classes/com/sun/midp/services/SystemServiceConnectionListener.java \
     $(SERVICES_DIR)/classes/com/sun/midp/services/SystemServiceManager.java \
     $(SERVICES_DIR)/classes/com/sun/midp/services/SystemServiceMessage.java \
+    $(SERVICES_DIR)/classes/com/sun/midp/services/SystemServiceDataMessage.java \
+    $(SERVICES_DIR)/classes/com/sun/midp/services/SystemServiceLinkMessage.java \
     $(SERVICES_DIR)/classes/com/sun/midp/services/SystemServiceRequestor.java \
     $(SERVICES_DIR)/classes/com/sun/midp/services/SystemServiceConnectionClosedException.java \
     $(SERVICES_DIR)/reference/classes/com/sun/midp/services/SystemServiceLinkPortal.java \
@@ -73,7 +75,9 @@ SUBSYSTEM_SERVICES_JAVA_FILES += \
     $(SERVICES_DIR)/reference/classes/com/sun/midp/services/SystemServiceRequestorLocal.java \
     $(SERVICES_DIR)/reference/classes/com/sun/midp/services/SystemServiceManagerImpl.java \
     $(SERVICES_DIR)/reference/classes/com/sun/midp/services/SystemServiceReadMessage.java \
-    $(SERVICES_DIR)/reference/classes/com/sun/midp/services/SystemServiceWriteMessage.java
+    $(SERVICES_DIR)/reference/classes/com/sun/midp/services/SystemServiceWriteMessage.java \
+    $(SERVICES_DIR)/reference/classes/com/sun/midp/services/SystemServiceLinkReadMessage.java \
+    $(SERVICES_DIR)/reference/classes/com/sun/midp/services/SystemServiceLinkWriteMessage.java
 
 ifeq ($(USE_I3_TEST), true)
 

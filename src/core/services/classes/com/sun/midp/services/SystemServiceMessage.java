@@ -26,37 +26,24 @@
 
 package com.sun.midp.services;
 
-import java.io.DataInput;
-import java.io.DataOutput;
-
-/**
- * Message is what is passed between service and client. At low 
- * level message body is just array of bytes. It is also possible 
- * to write/extract a sequence of primitive types from the message. 
- * In other words, message body can be seen as data stream from which
- * you can read/write primitive types.
- */
 public abstract class SystemServiceMessage {
+
     /**
-     * Creates an empty message.
+     * Creates an empty message capable of carrying stream of
+     * primitive data.
      *
      * @return empty message
      */
-    public static SystemServiceMessage newMessage() {
+    public static SystemServiceDataMessage newDataMessage() {
         return new SystemServiceWriteMessage();
     }
 
     /**
-     * Gets message body as DataInput.
+     * Creates an empty message capable of carrying Link object.
      *
-     * @return DataInput interface for reading data from message
+     * @return empty message
      */
-    abstract public DataInput getDataInput();
-
-    /**
-     * Gets message body as DataOutput.
-     *
-     * @return DataOutput interface for writing data to message
-     */
-    abstract public DataOutput getDataOutput();
+    public static SystemServiceLinkMessage newLinkMessage() {
+        return new SystemServiceLinkWriteMessage();
+    }
 }
