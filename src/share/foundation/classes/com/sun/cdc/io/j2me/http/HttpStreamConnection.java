@@ -63,6 +63,11 @@ class HttpStreamConnection implements StreamConnection
 
     // Socket handle
     private Socket socket;
+    
+    private InputStream is;
+    private DataInputStream dis;
+    private OutputStream os;
+    private DataOutputStream dos;
 
     public HttpStreamConnection(String host, int port) throws IOException {
 
@@ -107,8 +112,9 @@ class HttpStreamConnection implements StreamConnection
         if (!copen) {
             throw new IOException("Connection closed");
         }
-
-        return new UniversalFilterInputStream(this, socket.getInputStream());
+        if (is == null)
+            is = new UniversalFilterInputStream(this, socket.getInputStream());
+        return is;
     }
     
     /**
@@ -122,8 +128,9 @@ class HttpStreamConnection implements StreamConnection
         if (!copen) {
             throw new IOException("Connection closed");
         }
-
-        return new UniversalFilterOutputStream(this, socket.getOutputStream());
+        if (os == null)
+            os = new UniversalFilterOutputStream(this, socket.getOutputStream());
+        return os;
     }
     
     /**
@@ -133,7 +140,9 @@ class HttpStreamConnection implements StreamConnection
      * @return a DataInputStream object
      */ 
     public DataInputStream openDataInputStream() throws IOException {
-        return new DataInputStream(openInputStream());
+        if (dis == null)
+            dis = new DataInputStream(openInputStream());
+        return dis;
     }
      
     /** 
@@ -143,7 +152,9 @@ class HttpStreamConnection implements StreamConnection
      * @return a DataOutputStream object
      */
     public DataOutputStream openDataOutputStream() throws IOException {
-          return new DataOutputStream(openOutputStream());
+        if (dos == null)
+            dos = new DataOutputStream(openOutputStream());
+        return dos;
     }
             
     /**
@@ -155,6 +166,10 @@ class HttpStreamConnection implements StreamConnection
         if (copen) {
             copen = false;
             socket.close();
+            is = null;
+            os = null;
+            dis = null;
+            dos = null;
         }
         return;
     }

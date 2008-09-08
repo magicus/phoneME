@@ -333,8 +333,10 @@ public abstract class ConnectionBaseAdapter implements ConnectionBaseInterface,
      * @exception IOException if the subclass throws one
      */
     protected void closeInputStream() throws IOException {
-        iStreams--;
-        closeCommon();
+        if (iStreams>0) {
+            iStreams--;
+            closeCommon();
+        }
     }
 
     /**
@@ -346,8 +348,10 @@ public abstract class ConnectionBaseAdapter implements ConnectionBaseInterface,
      * @exception IOException if the subclass throws one
      */
     protected void closeOutputStream() throws IOException {
-        oStreams--;
-        closeCommon();
+        if (oStreams>0) {
+            oStreams--;
+            closeCommon();
+        }
     }
 
     /**

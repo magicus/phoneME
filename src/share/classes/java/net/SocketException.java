@@ -47,6 +47,8 @@ class SocketException extends IOException {
      */
     public SocketException(String msg) {
 	super(msg);
+        System.out.println("---- "+msg);
+        Thread.dumpStack();
     }
 
     /**

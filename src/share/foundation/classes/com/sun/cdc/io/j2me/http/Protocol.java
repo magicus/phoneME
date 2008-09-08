@@ -43,13 +43,16 @@ import java.util.Enumeration;
 import javax.microedition.io.StreamConnection;
 import javax.microedition.io.HttpConnection;
 import javax.microedition.io.Connector;
-import javax.microedition.io.ConnectionNotFoundException;
 
 import com.sun.cdc.io.ConnectionBase;
 import com.sun.cdc.io.DateParser;
 
 import java.security.AccessController;
 import java.security.PrivilegedAction;
+
+import java.util.HashMap;
+import java.util.Map;
+
 /**
  * This class implements the necessary functionality
  * for an HTTP connection. 
@@ -77,18 +80,12 @@ public class Protocol extends ConnectionBase implements HttpConnection {
     /* there should be only one outputstream opened at any time */
     protected boolean outputStreamOpened = false;
     protected boolean requested = false;
+    private boolean closed = false;
     /*
      * In/Out Streams used to buffer input and output
      */
     private PrivateInputStream in;
     private PrivateOutputStream out;
-
-    /*
-     * The data streams provided to the application.
-     * They wrap up the in and out streams.
-     */
-    private DataInputStream appDataIn;
-    private DataOutputStream appDataOut;
 
     /*
      * The streams from the underlying socket connection.
@@ -106,6 +103,12 @@ public class Protocol extends ConnectionBase implements HttpConnection {
     private int proxyPort = 80;
 
     private String http_version = "HTTP/1.1";
+
+    protected static Map persistentConnectionPool;
+    
+    static {
+        persistentConnectionPool = new HashMap();
+    }
 
     /**
      * create a new instance of this class.
@@ -190,14 +193,88 @@ public class Protocol extends ConnectionBase implements HttpConnection {
         }
         return;
     }
+    
+    private boolean match(String src, String alphabet) {
+        src = src.toLowerCase();
+        for (int i=0; i<src.length(); ++i) {
+            if (-1 == alphabet.indexOf(src.charAt(i))) {
+                return false;
+            }
+        }
+        return true;
+    }
+    
+    private void validateHost() {
+        final String ALPHANUM = "0123456789abcdefghijklmnopqrstuvwxyz-";
+        final String DIGITS = "0123456789";
+        final String HEX = "abcdefx";
+        final int TLD = -1;
+        if (host.endsWith(".") || host.startsWith(".")) {
+            throw new IllegalArgumentException("Invalid host name: "+host);
+        }
+        int i=0;
+        int[] ip4addr = new int[4];
+        int ip4n = 0;
+        boolean ip4 = true;
+        try {
+            boolean error = false;
+            do {
+                int n = host.indexOf('.', i+1); // -1 means top-level domain
+
+                String domain = host.substring(i, n==TLD ? host.length() : n);
+                if (domain.equals("") || !match(domain, ALPHANUM)
+                    // Minus sign cannot be first or last symbol
+                    || domain.startsWith("-") || domain.endsWith("-")
+                    // TLD cannot start with a digit
+                    || (n==TLD && !ip4 && match(domain.substring(0, 1), DIGITS))
+                    // Only for numbers in IPv4 address
+                    || (ip4 && ip4n >= 4)) {
+                    error = true;
+                    break;
+                }
+
+                if (ip4 && match(domain, DIGITS+HEX)) {
+                    if (match(domain, DIGITS)) { // decimal
+                        ip4addr[ip4n] = Integer.parseInt(domain, 10);
+                    } else {
+                        if (domain.startsWith("0x")) { // hexadecimal
+                            ip4addr[ip4n] = Integer.parseInt(domain.substring(2), 16);
+                        } else {
+                            ip4 = false;
+                        }
+                    }
+                } else {
+                    ip4 = false;
+                }
+                ip4n++;
+                i = n+1;
+            } while (i!=0);
+            if (error) {
+                throw new IllegalArgumentException("Invalid host name: "+host);
+            }
+        } catch (NumberFormatException e) {
+            throw new IllegalArgumentException("Invalid host name: "+host);
+        }
+
+        // Check IPv4 address range
+        if (ip4 && ip4n == 4) {
+            for (i=0; i<4; ++i) {
+                if (ip4addr[i]<0 || ip4addr[i]>255) {
+                    throw new IllegalArgumentException("Invalid host name: "+host);
+                }
+            }
+        }
+    }
 
     public void open(String url, int mode, boolean timeouts) throws IOException {
         // DEBUG: System.out.println ("open " + url); 
+        System.out.println("open "+this+" connected: "+connected+"\n\turl: "+url);
         if (opens > 0) {
             throw new IOException("already connected");
         }
 
-        opens++;
+        opens = 1;
+        closed = false;
 
         if (mode != Connector.READ && mode != Connector.WRITE
             && mode != Connector.READ_WRITE) {
@@ -207,42 +284,41 @@ public class Protocol extends ConnectionBase implements HttpConnection {
         this.url = url;
         this.mode = mode;
         parseURL();
+        
+        validateHost();
 
-	if ((host.indexOf('/') != -1) || 
-	    (host.indexOf('@') != -1) ||
-	    (host.indexOf('?') != -1) ||
-	    (host.indexOf(';') != -1)) {
-	    throw new IllegalArgumentException("hostname " + 
-  		         host +
-			 " cannot contain \"?\" , \"@\" , \";\", \":\", or \"/\" character.");
-	}
-
-	// Check permission. The permission method wants the URL
-	checkPermission(host, port, file);
-
-        // Try to open connection to test for ConnectionNotFoundException
-        try {
-	    streamConnection=connectSocket();
-            connectStream();
-            // This is only a test of the connection, so close it again
-        } catch (java.net.UnknownHostException e) {
-            throw new ConnectionNotFoundException
-                ("Could not find "+host+":"+port);
-        }
+        // Check permission. The permission method wants the URL
+        checkPermission(host, port, file);
 
     }
 
     public void close() throws IOException {
         // DEBUG: System.out.println ("close " + opens + " " + connected ); 
-        if (--opens == 0 && (connected || requested))
+        System.out.println("close "+this+" connected: "+connected+" responseMsg="+responseMsg);
+        /* Decrement opens only once - there could be multiple close() calls
+         */
+        if (!closed) {
+            --opens;
+            closed = true;
+        }
+        String closePersistentConnection = (String)headerFields.get("connection");
+        if (closePersistentConnection!=null &&
+                closePersistentConnection.equalsIgnoreCase("close")) {
+            System.out.println("close "+this+" got Connection:Close HEADER!");
+        } else {
+            System.out.println("close "+this+" didn't get Connection:Close HEADER!");
+            return;
+        }
+        
+        if (opens == 0 && (connected || requested)) {
             disconnect();
-
+        }
     }
 
     /*
      * Open the input stream if it has not already been opened.
-     * @exception IOException is thrown if it has already been
-     * opened.
+     * @exception IOException is thrown if the connection was
+     * opened for writing
      */
     public InputStream openInputStream() throws IOException {
          // DEBUG: System.out.println ("open input stream");
@@ -285,13 +361,9 @@ public class Protocol extends ConnectionBase implements HttpConnection {
         }
         */
 
-        // TBD: throw in exception if the connection has been closed.
-        if (in == null) {
-            openInputStream();
-        }
+        openInputStream();
 
-        appDataIn = new DataInputStream(in);
-        return appDataIn;
+        return new DataInputStream(in);
     }
 
     public OutputStream openOutputStream() throws IOException {
@@ -312,6 +384,10 @@ public class Protocol extends ConnectionBase implements HttpConnection {
         // data output stream is accessed, throw an IO exception
         if (opens == 0 ){
             throw new IOException("connection is closed");
+        }
+        
+        if (in != null) {
+            throw new IOException("cannot open output stream while input stream is open");
         }
 
         /* CR 6226615: opening another stream should not throw IOException
@@ -537,11 +613,16 @@ public class Protocol extends ConnectionBase implements HttpConnection {
             ch = streamInput.read();
             if (ch != '\n')
                 throw new IOException("missing CRLF");
-        } 
+        }
         
         public void close() throws IOException {
-            // DEBUG:  System.out.println ("close input stream " + opens + " " + connected );
-            if (--opens == 0 && connected) disconnect();
+            // DEBUG:  
+            System.out.println ("close input stream " + opens + " " + connected );
+            if (opens == 0)
+                return;
+
+            if (--opens == 0 && connected)
+                disconnect();
         }
     }
 
@@ -608,6 +689,7 @@ public class Protocol extends ConnectionBase implements HttpConnection {
 
 
         public void flush() throws IOException {
+            System.out.println("Flush "+Protocol.this);
             if (output.size() > 0) {
                 connect();
             }
@@ -623,6 +705,7 @@ public class Protocol extends ConnectionBase implements HttpConnection {
 
         public void close() throws IOException {
              // DEBUG: System.out.println ("close output stream" + opens + " " + connected );
+
             // CR 6216611: If the connection is already closed, just return
             if (opens == 0) return;
             flush();
@@ -684,11 +767,32 @@ public class Protocol extends ConnectionBase implements HttpConnection {
     public String getRequestProperty(String key) {
         return (String)reqProperties.get(key);
     }
+    
+    private static boolean validateProperty(String s) {
+        boolean res = true;
+        if (s.endsWith("\r") || s.endsWith("\n")) {
+            res = false;
+        }
+        else {
+            /* Check spaces after each \r\n */
+            for (int i=s.indexOf('\r'); i!=-1; i=s.indexOf('\r', i+1)) {
+                if (s.charAt(i+1) != '\n' || 
+                        (s.charAt(i+2) != ' ' && s.charAt(i+2) != '\t')) {
+                    res = false;
+                    break;
+                }
+            }
+        }
+        return res;
+    }
 
     public void setRequestProperty(String key, String value) throws IOException {
+        System.out.println("+++ setRequestProperty "+key+": "+value);
         ensureOpen();
         if (connected) throw new IOException("connection already open");
         if (outputStreamOpened) return;
+        if (!validateProperty(value))
+            throw new IllegalArgumentException("Illegal request property");
         reqProperties.put(key, value);
     }
 
@@ -823,60 +927,28 @@ public class Protocol extends ConnectionBase implements HttpConnection {
         }
 
         // Open socket connection.
-        HttpStreamConnection hsc = null;
-        if (proxyHost == null) {
-            hsc = new HttpStreamConnection(host, port);
+        StreamConnection hsc = null;
+        String hp = (proxyHost == null)? host+":"+port : proxyHost+":"+proxyPort;
+        if (persistentConnectionPool.containsKey(hp)) {
+            System.out.println("connectSocket: from connection pool "+hp);
+            hsc = (StreamConnection)persistentConnectionPool.get(hp);
         } else {
-            hsc = new HttpStreamConnection(proxyHost, proxyPort);
+            System.out.println("connectSocket: new connection "+hp);
+            if (proxyHost == null) {
+                hsc = new HttpStreamConnection(host, port);
+            } else {
+                hsc = new HttpStreamConnection(proxyHost, proxyPort);
+            }
+            persistentConnectionPool.put(hp, hsc);
         }
-        return (StreamConnection) hsc;
+        return hsc;
     }
-    
-    protected void connectStream() throws IOException {
-
-	if (streamConnection==null) {
-	    streamConnection=connectSocket();        
-        }
-
-        streamOutput = streamConnection.openDataOutputStream();
-
-        // HTTP 1.1 requests must contain content length for proxies
-        if ((getRequestProperty("Content-Length") == null) ||
-            (getRequestProperty("Content-Length").equals("0"))) {
-            reqProperties.put("Content-Length",
-                               "" + (out == null ? 0 : out.size()));
-        }
-        
-        /* // DEBUG
-        String reqLine ;
-
-        if (proxyHost == null) {
-            reqLine = method + " " + getFile()
-                + (getRef() == null ? "" : "#" + getRef())
-                + (getQuery() == null ? "" : "?" + getQuery())
-                + " " + http_version + "\r\n";
-        } else {
-            reqLine = method + " "  
-                + "http://" + host + ":" + port 
-                + getFile()
-                + (getRef() == null ? "" : "#" + getRef())
-                + (getQuery() == null ? "" : "?" + getQuery())
-                + " " + http_version + "\r\n";
-        }
-
-        // DEBUG:  System.out.print("Request: " + reqLine);
-        // we should not write to the streamoutput as we are in set up state and not connected
-        //streamOutput.write((reqLine).getBytes());
-        */
-
-        requested = true;
-
-    }
-
+    private boolean serverDroppedConnection = false;
     protected void connect() throws IOException {
         if (connected) {
             return;
         }
+        System.out.println("Connect "+this);
 
         if (streamConnection==null) {
             streamConnection=connectSocket();        
@@ -894,19 +966,19 @@ public class Protocol extends ConnectionBase implements HttpConnection {
         String reqLine ;
         
 	if (proxyHost == null) {
-            reqLine = method + " " + getFile()
+            reqLine = method + " "
+                + (getFile() == null ? "/" : getFile())
                 + (getRef() == null ? "" : "#" + getRef())
                 + (getQuery() == null ? "" : "?" + getQuery())
                 + " " + http_version + "\r\n";
         } else {
-            reqLine = method + " "  
-                + "http://" + host + ":" + port 
+            reqLine = method + " http://" + host + ":" + port
                 + (getFile() == null ? "/" : getFile())
                 + (getRef() == null ? "" : "#" + getRef())
                 + (getQuery() == null ? "" : "?" + getQuery())
                 + " " + http_version + "\r\n";
         }
-        // DEBUG:  System.out.print("Request: " + reqLine);
+        System.out.print("Request: " + reqLine);
         streamOutput.write((reqLine).getBytes());
 
         
@@ -914,10 +986,11 @@ public class Protocol extends ConnectionBase implements HttpConnection {
         reqProperties.put ("Host" ,  host + ":" + port );
 
         Enumeration reqKeys = reqProperties.keys();
+        System.out.println("Request property? " + reqKeys.hasMoreElements());
         while (reqKeys.hasMoreElements()) {
             String key = (String)reqKeys.nextElement();
             String reqPropLine = key + ": " + reqProperties.get(key) + "\r\n";
-            // DEBUG: System.out.print("Request: " + reqPropLine);
+            System.out.print("Request property: " + reqPropLine);
 	    streamOutput.write((reqPropLine).getBytes());
         }
 	streamOutput.write("\r\n".getBytes());
@@ -925,13 +998,24 @@ public class Protocol extends ConnectionBase implements HttpConnection {
         if (out != null) {
 	    streamOutput.write(out.toByteArray());
             //***Bug 4485901*** streamOutput.write("\r\n".getBytes());
-            // DEBUG: System.out.println("Request: " + new String(out.toByteArray()));  
+            System.out.println("Request + bytes");
         }
 
         streamOutput.flush();
 
         streamInput = streamConnection.openDataInputStream();
-        readResponseMessage(streamInput);
+        try {
+            System.out.println("Read response message");
+            readResponseMessage(streamInput);
+            serverDroppedConnection = false;
+        } catch (InterruptedIOException ex) {
+            if (serverDroppedConnection)
+                throw ex;
+            serverDroppedConnection = true;
+            disconnect();
+            connect();
+            return;
+        }
         readHeaders(streamInput);
         
         connected = true;
@@ -946,7 +1030,7 @@ public class Protocol extends ConnectionBase implements HttpConnection {
         responseCode = -1;
         responseMsg = null;
 
-        // DEBUG: System.out.println ("Response: " + line); 
+        System.out.println ("Response: " + line); 
 
  malformed: {
             if (line == null)
@@ -975,33 +1059,56 @@ public class Protocol extends ConnectionBase implements HttpConnection {
     
             responseMsg = line.substring(codeEnd + 1);
             return;
-        }  
+        }
 
         throw new InterruptedIOException("malformed response message");
     }
 
     private void readHeaders(InputStream in) throws IOException {
-        String line, key, value;
+        String line, key=null, value=null;
         int index;
 
         for (;;) {
             line = readLine(in);
             // DEBUG: System.out.println ("Response: " + line);   
-
+            
             if (line == null || line.equals(""))
-                return;
+                break;
 
-            index = line.indexOf(':');
-            if (index < 0)
-                throw new IOException("malformed header field");
+            /* There can be multiline values. The line starts with a space
+             * in that case.
+             */
+            if (line.charAt(0)==' ' || line.charAt(0)=='\t') {
+                index = 0;
+                /* Replace multiple spaces with a single space
+                 */
+                while (line.charAt(index)==' ' || line.charAt(index)=='\t') {
+                    ++index;
+                }
+                value += " " + line.substring(index);
+            } else {
+                if (key!=null && value!=null) {
+                    headerFields.put(toLowerCase(key), value);
+                    System.out.println("++ property put: "+key+"="+value);
+                    key = null;
+                    value = null;
+                }
+                index = line.indexOf(':');
+                if (index < 0)
+                    throw new IOException("malformed header field");
 
-            key = line.substring(0, index);
-            if (key.length() == 0)
-                throw new IOException("malformed header field");
+                key = line.substring(0, index);
+                if (key.length() == 0)
+                    throw new IOException("malformed header field");
 
-            if (line.length() <= index + 2) value = "";
-            else value = line.substring(index + 2);
+                if (line.length() <= index + 2) value = "";
+                else value = line.substring(index + 2);
+            }
+        }
+        
+        if (key!=null && value!=null) {
             headerFields.put(toLowerCase(key), value);
+            System.out.println("++ property put: "+key+"="+value);
         }
     }
 
@@ -1034,6 +1141,8 @@ public class Protocol extends ConnectionBase implements HttpConnection {
     }
 
     protected void disconnect() throws IOException {
+        System.out.println("disconnect "+this+" connected: "+connected);
+        //Thread.dumpStack();
 
         if (streamConnection != null) {
             if (streamInput != null) {
@@ -1055,6 +1164,9 @@ public class Protocol extends ConnectionBase implements HttpConnection {
     protected void disconnectSocket() throws IOException {
         if (streamConnection != null) {
             streamConnection.close();
+            String hp = (proxyHost == null)? host+":"+port : proxyHost+":"+proxyPort;
+            System.out.println("disconnectSocket: "+hp);
+            persistentConnectionPool.remove(hp);
         }    
     }
 

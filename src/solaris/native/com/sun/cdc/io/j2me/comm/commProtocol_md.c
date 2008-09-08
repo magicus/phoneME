@@ -53,6 +53,7 @@
 #include <termios.h>
 #include <string.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 #include <commProtocol.h>
 
@@ -503,13 +504,14 @@ Java_com_sun_cdc_io_j2me_comm_Protocol_native_1readBytes(JNIEnv *env,
 {
   char **errorMsg = NULL;
   long bytesRead;
-  jbyte b[256];
+  jbyte* b;
+  b = malloc(len*sizeof(jbyte));
 
   bytesRead = readFromPort(errorMsg, (long)hPort, (char *)b,
 			   (long)len);
 
   (*env)->SetByteArrayRegion(env, bArray, off, off+bytesRead, (jbyte *)b);
-
+  free (b);
   return(bytesRead);
 }
 
@@ -524,15 +526,14 @@ Java_com_sun_cdc_io_j2me_comm_Protocol_native_1writeBytes(JNIEnv *env,
 {
   char **errorMsg = NULL;
   long bytesWritten;
-  jbyte b[256];
-  int leng;
+  jbyte* b;
+  b = malloc(len*sizeof(jbyte*));
   
-  leng = (*env)->GetArrayLength(env, bArray);
-  (*env)->GetByteArrayRegion(env, bArray, off, off+leng, b);
+  (*env)->GetByteArrayRegion(env, bArray, off, off+len, b);
 
   bytesWritten = writeToPort(errorMsg, (long)hPort, (char *)b,
-			     (long)leng);
-
+			     (long)len);
+  free(b);
   return(bytesWritten);
 }
 

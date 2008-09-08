@@ -499,14 +499,13 @@ public class Protocol extends BufferedConnectionAdapter
     protected int nonBufferedRead(byte b[], int off, int len)
         throws IOException {
 
-        int bytesRead;
-
-	if (b == null) {
-	    b = new byte[256];
+        if (b == null || off<0 || len<0 || off+len>b.length) {
+	    throw new ArrayIndexOutOfBoundsException();
 	}
 
+        int bytesRead;
+
 	try {
-	    ///*                bytesRead = native_readBytes(handle, b, off, len);
 	    bytesRead = native_readBytes(handle, b, off, len);
 	} finally {
 	    if (iStreams == 0) {
@@ -524,7 +523,7 @@ public class Protocol extends BufferedConnectionAdapter
 	}
 
 	///            GeneralBase.iowait(); 
-					     return(bytesRead);
+        return(bytesRead);
     }
 
     /**

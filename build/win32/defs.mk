@@ -49,7 +49,7 @@ endif
 override GENERATEMAKEFILES = false  
 TARGET_CCC = $(TARGET_CC)
 
-WIN_LINKLIBS += wininet.lib
+WIN_LINKLIBS += wininet.lib $(call POSIX2HOST, $(JSR_184_DIR)/src/hicorp/share/lib/wince/micro3dv41.lib)
 
 WIN32_PLATFORM ?= win32
 JAVACALL_TARGET ?= $(WIN32_PLATFORM)_$(TARGET_CPU_FAMILY)
@@ -80,6 +80,7 @@ CVM_SRCDIRS   += \
 	$(CVM_TARGETROOT)/native/java/net \
 	$(CVM_TARGETROOT)/native/java/util \
 	$(CVM_TARGETROOT)/native/sun/security/provider \
+        $(JSR_184_DIR)/src/hicorp/share/native
 
 CVM_INCLUDE_DIRS  += \
 	$(CVM_TOP)/src \
@@ -87,6 +88,8 @@ CVM_INCLUDE_DIRS  += \
         $(CVM_TARGETROOT)/native/java/net \
         $(CVM_TARGETROOT)/native/java/util \
         $(CVM_TARGETROOT)/native/common \
+        $(JSR_184_DIR)/src/hicorp/share/native/inc \
+        $(MIDP_OUTPUT_DIR)
 
 #
 # Platform specific objects
@@ -103,7 +106,17 @@ CVM_TARGETOBJS_SPACE += \
 	globals_md.o \
 	java_props_md.o \
 	tchar.o \
-        memory_md.o
+	memory_md.o \
+	m3dMachDecode.o \
+	m3dMachImage.o \
+	m3dMachMalAlloc.o \
+	m3dMachMIStream.o \
+	m3dMachRender.o \
+	v4.o \
+	v4engine.o \
+	v4midp2.o
+
+CVM_DEFINES += -DUSE_JNI
 
 # objects that always link with cvm.exe, even if we build cvmi.dll
 CVMEXE_OBJS = ansi_java_md.o java_md.o tchar.o
