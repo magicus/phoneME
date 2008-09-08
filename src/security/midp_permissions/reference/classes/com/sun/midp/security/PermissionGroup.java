@@ -92,7 +92,7 @@ public final class PermissionGroup {
             runtimeQuestion = "n/a";
         runtimeOneshotQuestion = theRuntimeOneshotQuestion;
         if (runtimeOneshotQuestion == null)
-            runtimeOneshotQuestion = "n/a";
+            runtimeOneshotQuestion = runtimeQuestion;
     }
     /**
      * Get the name string ID.
