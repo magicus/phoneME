@@ -127,6 +127,15 @@ CVM_CNI_CLASSES += com.sun.j2me.crypto.ARC4 \
 endif
 
 ABSTRACTIONS_WRAPPER_CLASSES += \
+     -package com.sun.j2me.proxy.i18n \
+        com.sun.midp.i18n.ResourceConstants \
+        com.sun.midp.i18n.Resource \
+        com.sun.midp.i18n.ResourceBundle \
+     -package com.sun.j2me.proxy.l10n \
+        com.sun.midp.l10n.LocalizedStrings \
+        com.sun.midp.l10n.LocalizedStringsBase
+
+ABSTRACTIONS_WRAPPER_CLASSES0 += \
     -package com.sun.j2me.proxy.security \
         com.sun.midp.security.SecurityToken \
         com.sun.midp.security.SecurityInitializer \
