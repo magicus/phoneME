@@ -666,10 +666,6 @@ CVMJITcompileMethod(CVMExecEnv *ee, CVMMethodBlock* mb)
 	    CVMassert(CVMcmdCallees(cmd) == con.callees);
 #endif
 
-#if  defined(CVM_AOT) || defined(CVM_MTASK)
-            /* AOT/warmup compilation use trap based GC */
-            if (!CVMglobals.jit.isPrecompiling)
-#endif
 #ifdef CVMJIT_PATCH_BASED_GC_CHECKS
 	    {
 	        if (con.gcCheckPcs != NULL) {
