@@ -666,6 +666,16 @@ public final class Isolate {
     private native int id0();
 
     /**
+     * Returns a 64-bit ID that uniquely identifies this Isolate.
+     * The ID is assigned when the Isolate is created and will remain 
+     * unchanged and reserved for this Isolate during the entire 
+     * lifetime of the VM. 
+     */
+    public long uniqueId() {
+      return _uniqueId;
+    }
+
+    /**
      * @return the amount of object heap memory reserved for this Isolate.
      */
     public int reservedMemory() {
