@@ -198,6 +198,7 @@ $(ABSTRACTIONS_NATIVE_LIBRARY) :: $(ABSTRACTIONS_NATIVE_OBJS)
 MKSTUBS_TOOL_DIR = $(ABSTRACTIONS_GENERATED_DIR)/mkstubs
 MKSTUBS_TOOL = $(MKSTUBS_TOOL_DIR)/mkstubs.jar
 MKSTUBS_TOOL_SRC = $(ABSTRACTIONS_DIR)/src/cdc_share/classes/com/sun/utils/mkstubs/MkStubs.java
+MKSTUBS_TOOL_LOG = $(ABSTRACTIONS_GENERATED_DIR)/mkstubs_log.txt
 
 $(MKSTUBS_TOOL): $(MKSTUBS_TOOL_SRC)
 	@echo "Building MkStubs tool: $@"
@@ -237,12 +238,19 @@ $(ABSTRACTIONS_GENERATED_DIR)/.proxy_classes $(ABSTRACTIONS_GENERATED_DIR)/.agen
 	$(AT)mkdir -p $(ABSTRACTIONS_GENERATED_DIR)/proxy_java
 	$(AT)rm -rf $(ABSTRACTIONS_GENERATED_DIR)/agent_java
 	$(AT)mkdir -p $(ABSTRACTIONS_GENERATED_DIR)/agent_java
-	$(AT)$(JAVA_CMD) -Xbootclasspath/a:$(ABSTRACTIONS_BOOTCLASSPATH) \
+	$(AT)if $(JAVA_CMD) -Xbootclasspath/a:$(ABSTRACTIONS_BOOTCLASSPATH) \
         -jar $(MKSTUBS_TOOL) \
         -jarpath $(MIDP_CLASSES_ZIP) \
         -d $(ABSTRACTIONS_GENERATED_DIR)/proxy_java \
         -ad $(ABSTRACTIONS_GENERATED_DIR)/agent_java \
-        $(ABSTRACTIONS_WRAPPER_CLASSES)
+        $(ABSTRACTIONS_WRAPPER_CLASSES) >$(MKSTUBS_TOOL_LOG) 2>&1; then \
+            echo "...successfully finished"; \
+        else \
+            echo "MkStubs tool log:"; \
+            cat $(MKSTUBS_TOOL_LOG); \
+            rm -f $(MKSTUBS_TOOL_LOG); \
+            exit 1; \
+        fi
 	$(AT)find $(ABSTRACTIONS_GENERATED_DIR)/proxy_java -type f -name '*.java' \
         >$(ABSTRACTIONS_GENERATED_DIR)/.proxy_classes
 	$(AT)find $(ABSTRACTIONS_GENERATED_DIR)/agent_java -type f -name '*.java' \
