@@ -121,11 +121,6 @@ HTREEITEM g_htiCopiedSuite = NULL;
 
 javacall_app_id g_jAppId = 1;
 
-// TODO: rewrite the code to store folder id in an item itself
-// (using CB_SETITEMDATA/CB_GETITEMDATA messages) instead of g_pnComboboxIdsMap
-int* g_pnComboboxIdsMap = NULL;
-int  g_pnComboboxIdsNum = 0;
-
 // TODO: place all hPrev* fields in a structure and pass it as
 //  a parameter of AddSuiteToTree
 static HTREEITEM hPrev = (HTREEITEM)TVI_FIRST; 
@@ -234,7 +229,7 @@ static int PermissionValueToIndex(javacall_ams_permission_val jpPermission);
 static HTREEITEM HitTest(HWND hWnd, LPARAM lParam);
 static SIZE GetButtonSize(HWND hBtn);
 static void ShowMidletTreeView(HWND hWnd, BOOL fShow);
-INT AddComboboxItem(HWND hcbWnd, LPCTSTR pcszLabel);
+BOOL AddComboboxItem(HWND hcbWnd, LPCTSTR pcszLabel, javacall_folder_id jFolderId);
 
 static int handleNetworkStreamEvents(WPARAM wParam, LPARAM lParam);
 static int handleNetworkDatagramEvents(WPARAM wParam, LPARAM lParam);
@@ -1028,44 +1023,24 @@ static HWND CreateInstallDialog(HWND hWndParent) {
     hCombobox = GetDlgItem(hDlg, IDC_COMBO_FOLDER);
     if (hCombobox) {
         // Add default folder
-        AddComboboxItem(hCombobox, _T("<Default>"));
+        AddComboboxItem(hCombobox, _T("<Default>"), JAVACALL_INVALID_FOLDER_ID);
 
         // Add all real folders
         res = java_ams_suite_get_all_folders_info(&pFoldersInfo,
                                                     &folderNum);
         if (res == JAVACALL_OK) {
-            int nId;
-            g_pnComboboxIdsMap = (int*)javacall_malloc(
-                sizeof(int) * folderNum * 2);
-            g_pnComboboxIdsNum = folderNum;
-
             for (int f = 0; f < folderNum; f++) {
-                g_pnComboboxIdsMap[f] = pFoldersInfo[f].folderId;
-                g_pnComboboxIdsMap[f + 1] = 0;
-
                 if (pFoldersInfo[f].folderName) {
                     pszFolderName = JavacallUtf16ToTstr(
                         pFoldersInfo[f].folderName);
 
                     if (pszFolderName) {
-                        // IMPL_NOTE: getting item's id as result of
-                        // CB_ADDSTRING operation doesn't work for sorted
-                        // comboboxes since if a new item is insterted before
-                        // a previous one then the previous id is not valid
-                        // anymore. 
-                        nId = AddComboboxItem(hCombobox, pszFolderName);
+                        AddComboboxItem(hCombobox, pszFolderName,
+                                        pFoldersInfo[f].folderId);
 
                         javacall_free(pszFolderName);
-
-                        if (nId > 0) {
-                            g_pnComboboxIdsMap[f + 1] = nId;
-                        }
                     }
                 }
-
-                wprintf(_T("ComboboxIdsMap(%d, %d)\n"),
-                        g_pnComboboxIdsMap[f], g_pnComboboxIdsMap[f + 1]);
-
             }
             java_ams_suite_free_all_folders_info(pFoldersInfo, folderNum);
         }
@@ -1080,12 +1055,24 @@ static HWND CreateInstallDialog(HWND hWndParent) {
     return hDlg;
 }
 
-INT AddComboboxItem(HWND hcbWnd, LPCTSTR pcszLabel) {
-    return (INT)SendMessage(hcbWnd, CB_ADDSTRING, 0, (LPARAM)pcszLabel);
+BOOL AddComboboxItem(HWND hcbWnd, LPCTSTR pcszLabel, javacall_folder_id jFolderId) {
+    LRESULT lResult;
+
+    lResult = SendMessage(hcbWnd, CB_ADDSTRING, 0, (LPARAM)pcszLabel);
+
+    if (lResult >= 0) {
+        lResult = SendMessage(hcbWnd, CB_SETITEMDATA,
+                              (WPARAM)lResult, (LPARAM)jFolderId);
+
+        return lResult != CB_ERR;
+    }
+
+    return FALSE;
 }
 
 INT_PTR CALLBACK
 InstallDlgProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam) {
+    javacall_result res = JAVACALL_FAIL;
 
     HWND hCombobox = GetDlgItem(hwndDlg, IDC_COMBO_FOLDER);
 
@@ -1104,14 +1091,18 @@ InstallDlgProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam) {
         }
 
         case IDOK: {
-//            javacall_result res = java_ams_midlet_start(-1,
-//               g_jAppId,
-//               L"com.sun.midp.installer.DiscoveryApp",
-//               NULL);
-            javacall_result res = java_ams_install_suite(g_jAppId,
+            javacall_folder_id jFolderId;
+            WPARAM wItem;
+
+            wItem = (WPARAM)SendMessage(hCombobox, CB_GETCURSEL, 0, 0);
+            jFolderId = (javacall_folder_id)SendMessage(hCombobox, CB_GETITEMDATA, wItem, 0);
+
+            wprintf(_T("The folder to install: %d\n"), (int)jFolderId);
+
+            res = java_ams_install_suite(g_jAppId,
                JAVACALL_INSTALL_SRC_ANY,
                L"http://daisy/midlets/HelloMIDlet.jad",
-               JAVACALL_INVALID_STORAGE_ID, JAVACALL_INVALID_FOLDER_ID);
+               JAVACALL_INVALID_STORAGE_ID, JAVACALL_INVALID_STORAGE_ID /*jFolderId*/);
 
             if (res == JAVACALL_OK) {
                 // IMPL_NOTE: the following code must be refactored
@@ -1125,8 +1116,8 @@ InstallDlgProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam) {
                 ShowWindow(g_InstallProgressDlg, SW_SHOW);
             } else {
                 TCHAR szBuf[127];
-                wsprintf(szBuf, _T("Can't start installation!\nError code %d."),
-                         (int)res);
+                wsprintf(szBuf, _T("Can't start installation process!")
+                        _T("\n\nError code %d"), (int)res);
                 MessageBox(NULL, szBuf, g_szTitle, NULL);
             }
 
@@ -1137,17 +1128,22 @@ InstallDlgProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam) {
         case IDM_FOLDER_INSTALL_INTO: {
 
             if (hCombobox) {
-                WPARAM wCurSel = 0;
+                int nCurSel = 0;
 
                 if (wCmd == IDM_FOLDER_INSTALL_INTO) {
-                    int nFolderId = (int)lParam;
+                    int nItemCount, nFolderId, nId;
 
-                    if ((g_pnComboboxIdsMap != NULL) &&
-                            (nFolderId != JAVACALL_INVALID_FOLDER_ID)) {
+                    nFolderId = (int)lParam;
 
-                        for (int i = 0; i < g_pnComboboxIdsNum; i++) {
-                            if (g_pnComboboxIdsMap[i] == nFolderId) {
-                                wCurSel = g_pnComboboxIdsMap[i + 1];
+                    if (nFolderId != JAVACALL_INVALID_FOLDER_ID) {
+                        nItemCount = (int)SendMessage(hCombobox, CB_GETCOUNT,
+                                                      0, 0);
+
+                        for (int i = 0; i < nItemCount; i++) {
+                            nId = (int)SendMessage(hCombobox, CB_GETITEMDATA,
+                                                   i, 0);
+                            if (nId == nFolderId) {
+                                nCurSel = i;
                                 break;
                             }
                         }
@@ -1155,8 +1151,8 @@ InstallDlgProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam) {
                 }
 
                 SendMessage(hCombobox, CB_SETCURSEL,
-                            wCurSel, // item id
-                            0        // not used
+                            (WPARAM)nCurSel, // item id
+                            0                // not used
                 );
             }
 
