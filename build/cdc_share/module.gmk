@@ -243,7 +243,7 @@ $(ABSTRACTIONS_GENERATED_DIR)/.proxy_classes $(ABSTRACTIONS_GENERATED_DIR)/.agen
         -jarpath $(MIDP_CLASSES_ZIP) \
         -d $(ABSTRACTIONS_GENERATED_DIR)/proxy_java \
         -ad $(ABSTRACTIONS_GENERATED_DIR)/agent_java \
-        $(ABSTRACTIONS_WRAPPER_CLASSES0) >$(MKSTUBS_TOOL_LOG) 2>&1; then \
+        $(ABSTRACTIONS_WRAPPER_CLASSES) >$(MKSTUBS_TOOL_LOG) 2>&1; then \
             echo "...successfully finished"; \
         else \
             echo "MkStubs tool log:"; \
