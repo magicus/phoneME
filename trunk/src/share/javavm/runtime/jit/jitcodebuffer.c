@@ -1237,6 +1237,15 @@ CVMJITcodeCacheMakeRoomForMethod(CVMJITCompilationContext* con,
     CVMJITGlobalState* jgs = &CVMglobals.jit;
     CVMBool success = CVM_FALSE;
 
+#if defined(CVM_AOT) || defined(CVM_MTASK)
+    if (CVMglobals.jit.isPrecompiling) {
+        CVMconsolePrintf("WARNING: Code cache full and decompilating "
+                         "is disabled during AOT compilation. Please "
+                         "use a larger code cache.\n");
+        goto done;
+    }
+#endif
+
     if (!jgs->policyTriggeredDecompilations) {
 	CVMtraceJITStatus(("JS: Code cache full and decompilation "
 			   "is disabled.\n"));
