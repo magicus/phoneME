@@ -902,8 +902,13 @@ CVMclassFindContainer(JNIEnv *env, jobject this, jstring name) {
 CVMBool
 CVMclassBootClassPathInit(JNIEnv *env)
 {
-    return CVMclassPathInit(env, &CVMglobals.bootClassPath, NULL,
-			    CVM_FALSE, CVM_FALSE);
+    if (CVMglobals.bootClassPath.pathString == NULL) {
+        CVMglobals.bootClassPath.initialized = CVM_TRUE;
+        return CVM_TRUE;
+    } else {
+        return CVMclassPathInit(env, &CVMglobals.bootClassPath, NULL,
+                                CVM_FALSE, CVM_FALSE);
+    }
 }
 
 CVMBool
