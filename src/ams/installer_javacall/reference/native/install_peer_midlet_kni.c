@@ -39,8 +39,6 @@
 #include <javacall_ams_installer.h>
 #include <javacall_ams_platform.h>
 
-#include <stdio.h>
-
 int g_installerIsolateId = -1;
 
 /**

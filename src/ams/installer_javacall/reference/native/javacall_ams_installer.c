@@ -41,8 +41,6 @@
 /* IMPL_NOTE: must be removed! */
 #include <javacall_ams_app_manager.h>
 
-#include <stdio.h>
-
 extern int g_installerIsolateId;
 extern jboolean g_fAnswer, g_fAnswerReady;
 

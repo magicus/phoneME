@@ -67,12 +67,14 @@ javacall_result java_ams_system_start() {
         return JAVACALL_FAIL;
     }
 
-    midp_add_event_listener(midp_listener_ams_operation_completed,
-                            SYSTEM_EVENT_LISTENER);
-    midp_add_event_listener(midp_listener_ams_midlet_ui_state_changed,
-                            DISPLAY_EVENT_LISTENER);
-    midp_add_event_listener(midp_listener_ams_midlet_state_changed,
-                            MIDLET_EVENT_LISTENER);
+    if (midp_add_event_listener(midp_listener_ams_operation_completed,
+                                SYSTEM_EVENT_LISTENER) != ALL_OK ||
+        midp_add_event_listener(midp_listener_ams_midlet_ui_state_changed,
+                                DISPLAY_EVENT_LISTENER) != ALL_OK ||
+        midp_add_event_listener(midp_listener_ams_midlet_state_changed,
+                                MIDLET_EVENT_LISTENER) != ALL_OK) {
+        return JAVACALL_FAIL;
+    }
 
     return (midp_system_start() == ALL_OK) ? JAVACALL_OK : JAVACALL_FAIL;
 }
@@ -406,7 +408,6 @@ void midp_listener_ams_operation_completed(const NamsEventData* pEventData) {
         pResult);
 }
 
-#include <stdio.h>
 /**
  * MIDP proxy for the javacall_ams_midlet_state_changed() listener.
  *
@@ -414,7 +415,6 @@ void midp_listener_ams_operation_completed(const NamsEventData* pEventData) {
  *                   caused this event
  */
 void midp_listener_ams_midlet_state_changed(const NamsEventData* pEventData) {
-printf(">>> state changed!!! pEventData = 0x%08x\n", (long)pEventData);
     if (pEventData == NULL) {
         return;
     }

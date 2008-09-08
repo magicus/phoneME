@@ -214,6 +214,7 @@ static void InitWindows();
 static void CleanupWindows();
 
 static void AddWindowMenuItem(javacall_const_utf16_string jsStr, void* pItemData);
+static void RemoveWindowMenuItem(javacall_app_id appId);
 static void CheckWindowMenuItem(int index, BOOL fChecked);
 static void SetCheckedWindowMenuItem(void* pItemData);
 static void* GetWindowMenuItemData(UINT commandId);
@@ -231,8 +232,11 @@ static SIZE GetButtonSize(HWND hBtn);
 static void ShowMidletTreeView(HWND hWnd, BOOL fShow);
 BOOL AddComboboxItem(HWND hcbWnd, LPCTSTR pcszLabel, javacall_folder_id jFolderId);
 
-static int handleNetworkStreamEvents(WPARAM wParam, LPARAM lParam);
-static int handleNetworkDatagramEvents(WPARAM wParam, LPARAM lParam);
+static int HandleNetworkStreamEvents(WPARAM wParam, LPARAM lParam);
+static int HandleNetworkDatagramEvents(WPARAM wParam, LPARAM lParam);
+
+extern void RemoveMIDletFromRunningList(javacall_app_id appId);
+extern void SwitchToAppManager();
 
 // Functions for debugging
 
@@ -1709,9 +1713,9 @@ MainWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
         }
 
         if (opttarget == SOCK_STREAM) { // TCP socket
-            return handleNetworkStreamEvents(wParam, lParam);
+            return HandleNetworkStreamEvents(wParam, lParam);
         } else {
-            return handleNetworkDatagramEvents(wParam, lParam);
+            return HandleNetworkDatagramEvents(wParam, lParam);
         };
 
         break;
@@ -1904,6 +1908,26 @@ static void AddWindowMenuItem(javacall_const_utf16_string jsStr,
     javacall_free(pszMIDletName);
 }
 
+void RemoveWindowMenuItem(javacall_app_id appId) {
+    TVI_INFO* pInfo;
+    UINT uItem = IDM_WINDOW_FIRST_ITEM + 1; // First item is AppManager
+    HMENU hWindowSubmenu = GetSubMenu(GetMenu(g_hMainWindow),
+                                      WINDOW_SUBMENU_INDEX);
+
+    while (uItem < IDM_WINDOW_LAST_ITEM) {
+        pInfo = (TVI_INFO*)GetWindowMenuItemData(uItem);
+        if (pInfo == NULL) {
+            uItem++;
+            continue;
+        } else if (pInfo->appId == appId) {
+            RemoveMenu(hWindowSubmenu, uItem, MF_BYCOMMAND);
+            CheckWindowMenuItem(0, TRUE);
+            break;
+        }
+        uItem++;
+    }
+}
+
 static TVI_INFO* GetTviInfo(HWND hWnd, HTREEITEM hItem) {
     TVITEM tvi;
     tvi.hItem = hItem;
@@ -1913,6 +1937,14 @@ static TVI_INFO* GetTviInfo(HWND hWnd, HTREEITEM hItem) {
         return (TVI_INFO*)tvi.lParam;
     }
     return NULL;
+}
+
+void RemoveMIDletFromRunningList(javacall_app_id appId) {
+    RemoveWindowMenuItem(appId);
+}
+
+void SwitchToAppManager() {
+    ShowMidletTreeView(NULL, TRUE);
 }
 
 /**
@@ -2700,49 +2732,44 @@ static int mapKey(WPARAM wParam, LPARAM lParam) {
     WORD temp[2];
 
     switch(wParam) {
-    case VK_F1:
-        return JAVACALL_KEY_SOFT1;
+        case VK_F1:
+            return JAVACALL_KEY_SOFT1;
 
-    case VK_F2:
-        return JAVACALL_KEY_SOFT2;
+        case VK_F2:
+            return JAVACALL_KEY_SOFT2;
 
-    case VK_F9:
-        return JAVACALL_KEY_GAMEA;
+        case VK_F9:
+            return JAVACALL_KEY_GAMEA;
 
-    case VK_F10:
-        return JAVACALL_KEY_GAMEB;
+        case VK_F10:
+            return JAVACALL_KEY_GAMEB;
 
-    case VK_F11:
-        return JAVACALL_KEY_GAMEC;
+        case VK_F11:
+            return JAVACALL_KEY_GAMEC;
 
-    case VK_F12:
-        return JAVACALL_KEY_GAMED;
-        break;
+        case VK_F12:
+            return JAVACALL_KEY_GAMED;
 
-    case VK_UP:
-        return JAVACALL_KEY_UP;
+        case VK_UP:
+            return JAVACALL_KEY_UP;
 
-    case VK_DOWN:
-        return JAVACALL_KEY_DOWN;
+        case VK_DOWN:
+            return JAVACALL_KEY_DOWN;
 
-    case VK_LEFT:
-        return JAVACALL_KEY_LEFT;
+        case VK_LEFT:
+            return JAVACALL_KEY_LEFT;
 
-    case VK_RIGHT:
-        return JAVACALL_KEY_RIGHT;
+        case VK_RIGHT:
+            return JAVACALL_KEY_RIGHT;
 
-    case VK_RETURN:
-        return JAVACALL_KEY_SELECT;
+        case VK_RETURN:
+            return JAVACALL_KEY_SELECT;
 
-    case VK_BACK:
-        return JAVACALL_KEY_BACKSPACE;
+        case VK_BACK:
+            return JAVACALL_KEY_BACKSPACE;
 
-    case VK_HOME:
-    case VK_F7:
-//        return MD_KEY_HOME;
-
-    default:
-        break;
+        default:
+            break;
     }
 
     GetKeyboardState(keyStates);
@@ -3075,7 +3102,7 @@ static void RefreshScreen(int x1, int y1, int x2, int y2) {
 /**
  *
  */
-static int handleNetworkStreamEvents(WPARAM wParam, LPARAM lParam) {
+static int HandleNetworkStreamEvents(WPARAM wParam, LPARAM lParam) {
     switch (WSAGETSELECTEVENT(lParam)) {
         case FD_CONNECT: {
             /* Change this to a write. */
@@ -3132,7 +3159,7 @@ extern "C" javacall_result try_process_wma_emulator(javacall_handle handle);
 /**
  *
  */
-static int handleNetworkDatagramEvents(WPARAM wParam, LPARAM lParam) {
+static int HandleNetworkDatagramEvents(WPARAM wParam, LPARAM lParam) {
     switch (WSAGETSELECTEVENT(lParam)) {
         case FD_WRITE: {
             javanotify_datagram_event(

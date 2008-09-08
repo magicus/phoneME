@@ -115,6 +115,9 @@ MIDPError midp_system_initialize(void) {
 
     midpSetConfigDir(pConfDir);
 
+    if (midpInitialize() != 0) {
+        return GENERAL_ERROR;
+    }
 
     return init_listeners_impl();
 }
