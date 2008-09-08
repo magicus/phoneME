@@ -2166,9 +2166,15 @@ CVMinitPathValues(void *propsPtr, CVMpathInfo *pathInfo,
             strcat(p, postBootclasspath);
         }
     }
-    props->sysclasspath = p;
-    /* return a copy back to caller */
-    *userBootclasspath = strdup(p);
+    if (*p == '\0' && *userBootclasspath == NULL
+        && preBootclasspath == NULL && postBootclasspath == NULL)
+    {
+        props->sysclasspath = NULL;
+    } else {
+        props->sysclasspath = p;
+        /* return a copy back to caller */
+        *userBootclasspath = strdup(props->sysclasspath);
+    }
     p += strlen(p) + 1;
 #ifdef CVM_HAS_JCE
     /*
