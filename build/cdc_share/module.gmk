@@ -127,15 +127,6 @@ CVM_CNI_CLASSES += com.sun.j2me.crypto.ARC4 \
 endif
 
 ABSTRACTIONS_WRAPPER_CLASSES += \
-     -package com.sun.j2me.proxy.i18n \
-        com.sun.midp.i18n.ResourceConstants \
-        com.sun.midp.i18n.Resource \
-        com.sun.midp.i18n.ResourceBundle \
-     -package com.sun.j2me.proxy.l10n \
-        com.sun.midp.l10n.LocalizedStrings \
-        com.sun.midp.l10n.LocalizedStringsBase
-
-ABSTRACTIONS_WRAPPER_CLASSES0 += \
     -package com.sun.j2me.proxy.security \
         com.sun.midp.security.SecurityToken \
         com.sun.midp.security.SecurityInitializer \
@@ -252,7 +243,7 @@ $(ABSTRACTIONS_GENERATED_DIR)/.proxy_classes $(ABSTRACTIONS_GENERATED_DIR)/.agen
         -jarpath $(MIDP_CLASSES_ZIP) \
         -d $(ABSTRACTIONS_GENERATED_DIR)/proxy_java \
         -ad $(ABSTRACTIONS_GENERATED_DIR)/agent_java \
-        $(ABSTRACTIONS_WRAPPER_CLASSES) >$(MKSTUBS_TOOL_LOG) 2>&1; then \
+        $(ABSTRACTIONS_WRAPPER_CLASSES0) >$(MKSTUBS_TOOL_LOG) 2>&1; then \
             echo "...successfully finished"; \
         else \
             echo "MkStubs tool log:"; \
