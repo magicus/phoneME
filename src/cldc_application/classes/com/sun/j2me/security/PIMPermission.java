@@ -24,33 +24,37 @@
 
 package com.sun.j2me.security;
 
+import com.sun.j2me.i18n.Resource;
+import com.sun.j2me.i18n.ResourceConstants;
 
 /**
  * PIM access permissions.
  */
 public class PIMPermission extends Permission {
-
-    private static String PIM_CONTACTS = "PIM contact list";
-    private static String PIM_EVENTS   = "PIM event list";
-    private static String PIM_TODO     = "PIM to-do list";
     
-    static public PIMPermission CONTACT_READ  = new PIMPermission(
-        "javax.microedition.pim.ContactList.read", PIM_CONTACTS);
+    static public final PIMPermission CONTACT_READ = new PIMPermission(
+        "javax.microedition.pim.ContactList.read",
+        Resource.getString(ResourceConstants.ABSTRACTIONS_PIM_CONTACTS));
 
-    static public PIMPermission CONTACT_WRITE = new PIMPermission(
-        "javax.microedition.pim.ContactList.write", PIM_CONTACTS);
+    static public final PIMPermission CONTACT_WRITE = new PIMPermission(
+        "javax.microedition.pim.ContactList.write",
+        Resource.getString(ResourceConstants.ABSTRACTIONS_PIM_CONTACTS));
 
-    static public PIMPermission EVENT_READ = new PIMPermission(
-        "javax.microedition.pim.EventList.read", PIM_EVENTS);
+    static public final PIMPermission EVENT_READ = new PIMPermission(
+        "javax.microedition.pim.EventList.read",
+        Resource.getString(ResourceConstants.ABSTRACTIONS_PIM_EVENTS));
 
-    static public PIMPermission EVENT_WRITE = new PIMPermission(
-        "javax.microedition.pim.EventList.write", PIM_EVENTS);
+    static public final PIMPermission EVENT_WRITE = new PIMPermission(
+        "javax.microedition.pim.EventList.write",
+        Resource.getString(ResourceConstants.ABSTRACTIONS_PIM_EVENTS));
 
-    static public PIMPermission TODO_READ = new PIMPermission(
-        "javax.microedition.pim.ToDoList.read", PIM_TODO);
+    static public final PIMPermission TODO_READ = new PIMPermission(
+        "javax.microedition.pim.ToDoList.read",
+        Resource.getString(ResourceConstants.ABSTRACTIONS_PIM_TODO));
 
-    static public PIMPermission TODO_WRITE = new PIMPermission(
-        "javax.microedition.pim.ToDoList.write", PIM_TODO);
+    static public final PIMPermission TODO_WRITE = new PIMPermission(
+        "javax.microedition.pim.ToDoList.write",
+        Resource.getString(ResourceConstants.ABSTRACTIONS_PIM_TODO));
     
     public PIMPermission(String name, String resource) {
         super(name, resource);
