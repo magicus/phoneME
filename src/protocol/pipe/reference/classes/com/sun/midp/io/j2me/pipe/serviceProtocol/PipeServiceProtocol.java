@@ -52,7 +52,7 @@ public class PipeServiceProtocol {
     static final int MAGIC_OK = 0x49587011;
     static final int MAGIC_FAIL = 0x49587012;
     static final int MAGIC_WOULDBLOCK = 0x49587013;
-    private static final boolean DEBUG = true;
+    private static final boolean DEBUG = false;
     private static long nextEndpointIdToIssue;
     private int debugInstanceId;
     private static int nextDebugInstanceId;

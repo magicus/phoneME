@@ -6,7 +6,7 @@ import com.sun.midp.services.SystemServiceConnection;
 
 class Dispatcher implements SystemService {
 
-    private static final boolean DEBUG = true;
+    private static final boolean DEBUG = false;
     private ServerEndpoint servers = null;
     private ClientEndpoint clients = null;
 
@@ -59,9 +59,10 @@ class Dispatcher implements SystemService {
     }
 
     private synchronized void removeEndpointFrom(Endpoint point, Endpoint list) {
-        for (Endpoint cur = list; cur.next != null; cur = cur.next) {
+        for (Endpoint cur = list; cur != null; cur = cur.next) {
             if (cur.next == point) {
                 cur.next = point.next;
+                break;
             }
         }
     }

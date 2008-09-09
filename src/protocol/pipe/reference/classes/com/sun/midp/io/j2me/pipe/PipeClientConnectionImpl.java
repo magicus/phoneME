@@ -30,6 +30,7 @@ import com.sun.midp.links.ClosedLinkException;
 import com.sun.midp.links.Link;
 import com.sun.midp.links.LinkMessage;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InterruptedIOException;
 import javax.microedition.io.Connection;
 import com.sun.midp.security.SecurityToken;
@@ -38,7 +39,7 @@ import java.util.Vector;
 class PipeClientConnectionImpl extends ConnectionBaseAdapter implements PipeConnection {
 
     private static final boolean DEBUG = true;
-    
+    private static final String CLOSE_OUTPUT_COMMAND = "closeOutputStream";
     private PipeServiceProtocol pipe;
     private SecurityToken token;
     private Object suiteId;
@@ -46,12 +47,13 @@ class PipeClientConnectionImpl extends ConnectionBaseAdapter implements PipeConn
     private String version;
     private Link sendLink;
     private Link receiveLink;
-    private byte[] bufferedMsg;
-    private int bufferedMsgOffset;
-    private Thread senderThread;
-    private Sender sender;
-    private Vector sendQueue = new Vector(1);
-    private IOException sendStatus;
+    private Thread receiverThread;
+    private Receiver receiver;
+    private Vector receiveQueue = new Vector(1);
+    private int topReceivedMsgOffset;
+    private IOException receiveStatus = new IOException();
+    private int receiveQueueByteCount;
+    private boolean receivedEOF;
 
     PipeClientConnectionImpl(SecurityToken token, PipeServiceProtocol pipe) {
         this.pipe = pipe;
@@ -70,29 +72,41 @@ class PipeClientConnectionImpl extends ConnectionBaseAdapter implements PipeConn
     void establishTransfer(int mode) throws IOException {
         receiveLink = pipe.getInboundLink();
         sendLink = pipe.getOutboundLink();
-        sender = new Sender();
-        senderThread = new Thread(sender);
-        senderThread.start();
 
         initStreamConnection(mode);
+    }
+
+    public InputStream openInputStream() throws IOException {
+        InputStream is = super.openInputStream();
+
+        receiver = new Receiver();
+        receiverThread = new Thread(receiver);
+        receiveStatus = null;
+        receiverThread.start();
+        
+        return is;
     }
 
     protected void notifyClosedInput() {
         if (DEBUG)
             debugPrint("input closed");
-        
+
         super.notifyClosedInput();
-        
+
         receiveLink.close();
+
+        if (receiveStatus == null) {
+            // input was closed by application, not because of receiver failure
+            receiveStatus = new IOException();
+        }
     }
 
     protected void notifyClosedOutput() {
         if (DEBUG)
             debugPrint("output closed");
-        (new Exception()).printStackTrace();
-        
+
         super.notifyClosedOutput();
-        
+
         sendLink.close();
     }
 
@@ -110,109 +124,143 @@ class PipeClientConnectionImpl extends ConnectionBaseAdapter implements PipeConn
     protected void disconnect() throws IOException {
         if (DEBUG)
             debugPrint("disconnected");
-        
+
         connectionOpen = false;
-        
-        synchronized (sender) {
-            sender.notify();
+
+        synchronized (receiver) {
+            receiver.notify();
         }
     }
 
     public int available() throws IOException {
-        // TODO: prefetch input
-        int len = bufferedMsg == null ? 0 : bufferedMsg.length - bufferedMsgOffset;
 
         if (DEBUG)
-            debugPrint("available " + len + " bytes");
-        
-        return len;
+            debugPrint("available " + receiveQueueByteCount + " bytes");
+
+        return receiveQueueByteCount;
     }
 
     protected synchronized int readBytes(byte[] b, int off, int len) throws IOException {
         if (DEBUG)
-            debugPrint("readBytes len=" + len + ", can read " + (connectionOpen && iStreams > 0));
-        if (!connectionOpen || iStreams == 0)
-            throw new IOException();
+            debugPrint("readBytes len=" + len + ", can read " + (iStreams > 0));
+
+        if (iStreams == 0) {
+            if (DEBUG)
+                debugPrint("readBytes input closed. isEOF " + receivedEOF +
+                        ", status " + receiveStatus);
+
+            if (receivedEOF)
+                return -1;
+
+            throw receiveStatus;
+        }
 
         int originalOffset = off;
-        int bytesRead;
-        if (bufferedMsg != null) {
-            bytesRead = readFromBuffer(b, off, len);
-            len -= bytesRead;
-            off += bytesRead;
-        }
+        synchronized (receiver) {
 
-        while (len > 0) {
-            if (!receiveLink.isOpen()) {
+            while (len > 0) {
+                if (receiveQueue.size() == 0) {
+                    // need more bytes, check if receiver is running
+                    if (receiveStatus == null && !receivedEOF) {
+                        // fine, now wait for data to come
+                        if (DEBUG)
+                            debugPrint("readBytes: waiting for Receiver");
+                        try {
+                            receiver.wait();
+                        } catch (InterruptedException ex) {
+                            try {
+                                closeInputStream();
+                            } catch (IOException iOException) {
+                                // ignore
+                            }
+                            throw new InterruptedIOException(ex.toString());
+                        }
+                    }
+
+                    // check receiver status once more finish processing if no more
+                    // data could be obtained
+                    if (receiveStatus != null || receivedEOF) {
+                        if (DEBUG)
+                            debugPrint("readBytes: Receiver finshed with " + receiveStatus);
+                        // we've got receiver stopped and no more data. close input
+                        try {
+                            closeInputStream();
+                        } catch (IOException iOException) {
+                            // ignore
+                        }
+
+                        if (receivedEOF) {
+                            break;
+                        } else {
+                            throw receiveStatus;
+                        }
+                    }
+                }
+
+                // get bytes from receive queue
+                byte[] bufferedMsg = (byte[]) receiveQueue.elementAt(0);
+                int remainingData = bufferedMsg.length - topReceivedMsgOffset;
                 if (DEBUG)
-                    debugPrint("readBytes: link closed");
-                closeInputStream();
-                return off - originalOffset;
+                    debugPrint("readBytes: fetching data. " + remainingData + " bytes remain in next message");
+                if (remainingData >= len) {
+                    remainingData = len;
+                }
+                System.arraycopy(bufferedMsg, topReceivedMsgOffset, b, off, remainingData);
+                topReceivedMsgOffset += remainingData;
+                if (topReceivedMsgOffset == bufferedMsg.length) {
+                    receiveQueue.removeElementAt(0);
+                    topReceivedMsgOffset = 0;
+                }
+                if (DEBUG)
+                    debugPrint("readBytes len=" + len + ", read " + remainingData);
+                len -= remainingData;
+                off += remainingData;
             }
-            LinkMessage lm = receiveLink.receive();
-            if (!lm.containsData())
-                throw new IOException();
-
-            bufferedMsg = lm.extractData();
-            if (DEBUG)
-                debugPrint("readBytes: received message. " + bufferedMsg.length + " bytes");
-            bufferedMsgOffset = 0;
-            bytesRead = readFromBuffer(b, off, len);
-            len -= bytesRead;
-            off += bytesRead;
         }
-        
+
+
         if (DEBUG)
             debugPrint("readBytes: read " + (off - originalOffset) + " bytes");
-        
-        return off - originalOffset;
+
+        int bytesRead = off - originalOffset;
+
+        return bytesRead == 0 ? -1 : bytesRead;
     }
 
     private void debugPrint(String msg) {
         System.out.println("[pipe client conn " + Integer.toHexString(hashCode()) + "] " + msg);
     }
 
-    private int readFromBuffer(byte[] b, int off, int len) {
-        int remainingData = bufferedMsg.length - bufferedMsgOffset;
-        if (remainingData >= len) {
-            remainingData = len;
-        }
-        System.arraycopy(bufferedMsg, bufferedMsgOffset, b, off, remainingData);
-        bufferedMsgOffset += remainingData;
-        if (bufferedMsgOffset == bufferedMsg.length) {
-            bufferedMsg = null;
-        }
-        if (DEBUG)
-            debugPrint("readFromBuffer len=" + len + ", read " + remainingData);
-        return remainingData;
-    }
-
     protected int writeBytes(byte[] b, int off, int len) throws IOException {
         if (DEBUG)
-            debugPrint("writeBytes len=" + len + " can write " + (connectionOpen && oStreams > 0));
-        if (!connectionOpen || oStreams == 0)
+            debugPrint("writeBytes len=" + len + " can write " + (oStreams > 0));
+
+        if (oStreams == 0)
             throw new IOException();
-        
+
         if (len == 0)
             return 0;
-        
-        LinkMessage lm = LinkMessage.newDataMessage(b, off, len);
 
+        LinkMessage lm = LinkMessage.newDataMessage(b, off, len);
         if (DEBUG)
-            debugPrint("writeBytes: checking status of outbound connection");
-        synchronized (sender) {
-            if (sendStatus != null) {
-                throw sendStatus;
-            }
-            
-            if (DEBUG)
-                debugPrint("writeBytes: sending message");
-            sendQueue.addElement(lm);
-        }
-        
+            debugPrint("writeBytes: sending message");
+        sendLink.send(lm);
+
         if (DEBUG)
             debugPrint("writeBytes: wrote " + len + " bytes");
         return len;
+    }
+
+    protected void closeOutputStream() throws IOException {
+        if (sendLink.isOpen()) {
+            try {
+                LinkMessage lm = LinkMessage.newStringMessage(CLOSE_OUTPUT_COMMAND);
+                sendLink.send(lm);
+            } catch (IOException ex) {
+                // ignore
+            }
+        }
+        super.closeOutputStream();
     }
 
     public String getRequestedServerVersion() {
@@ -223,49 +271,46 @@ class PipeClientConnectionImpl extends ConnectionBaseAdapter implements PipeConn
         return serverName;
     }
 
-    private class Sender implements Runnable {
+    private class Receiver implements Runnable {
 
         public void run() {
-            while (connectionOpen) {
+            while (iStreams > 0 && !receivedEOF && receiveStatus == null) {
                 LinkMessage lm;
-                synchronized (this) {
-
-                    if (sendQueue.size() == 0) {
-                        if (DEBUG)
-                            debugPrint("Sender waiting for data");
-                        try {
-                            wait();
-                        } catch (InterruptedException ex) {
-                            ex.printStackTrace();
-                        }
-                    }
-
-                    lm = (LinkMessage) sendQueue.firstElement();
-                    sendQueue.removeElementAt(0);
-                }
-
+                byte[] data = null;
                 try {
                     if (DEBUG)
-                        debugPrint("Sender now will send message");
-                    sendLink.send(lm);
-                } catch (ClosedLinkException ex) {
-                    // send link has been closed on receive side
-                    sendStatus = new IOException("Outbound connection closed");
-                } catch (InterruptedIOException ex) {
-                    sendStatus = ex;
-                } catch (IOException ex) {
-                    sendStatus = ex;
-                }
-                if (DEBUG)
-                    debugPrint("Sender send message with " + sendStatus);
-                if (sendStatus != null) {
-                    try {
-                        sendStatus.printStackTrace();
-                        closeOutputStream();
-                    } catch (IOException ex1) {
+                        debugPrint("Receiver waiting");
+                    lm = receiveLink.receive();
+                    if (DEBUG)
+                        debugPrint("Receiver got message");
+
+                    if (lm.containsString()) {
+                        String command = lm.extractString();
+                        if (CLOSE_OUTPUT_COMMAND.equals(command)) {
+                            receivedEOF = true;
+                        }
+                    } else {
+                        data = lm.extractData();
                     }
+
+                } catch (IOException iOException) {
+                    if (DEBUG)
+                        debugPrint("Receiver got exception " + iOException);
+                    receiveStatus = iOException;
+                    if (receiveStatus instanceof ClosedLinkException)
+                        receivedEOF = true;
+                }
+
+                synchronized (this) {
+                    if (data != null) {
+                        receiveQueue.addElement(data);
+                        receiveQueueByteCount += data.length;
+                    }
+                    this.notify();
                 }
             }
+            if (DEBUG)
+                debugPrint("Receiver finished");
         }
     }
 }

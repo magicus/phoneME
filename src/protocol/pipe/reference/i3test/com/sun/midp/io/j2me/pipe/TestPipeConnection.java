@@ -26,13 +26,10 @@ package com.sun.midp.io.j2me.pipe;
 import com.sun.midp.i3test.TestCase;
 import com.sun.midp.io.j2me.pipe.serviceProtocol.PipeServiceProtocol;
 import com.sun.midp.io.pipe.PipeConnection;
-import com.sun.midp.io.pipe.PipeConnection;
 import com.sun.midp.io.pipe.PipeServerConnection;
 import com.sun.midp.security.SecurityToken;
 import com.sun.midp.services.SystemServiceManager;
-import java.io.DataInput;
 import java.io.DataInputStream;
-import java.io.DataOutput;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InterruptedIOException;
@@ -44,6 +41,25 @@ import javax.microedition.io.Connector;
 public class TestPipeConnection extends TestCase {
 
     private static SecurityToken token = SecurityTokenProvider.getToken();
+
+    private abstract class Server implements Runnable {
+
+        public void run() {
+            try {
+                PipeServerConnection serverConn =
+                        (PipeServerConnection) Connector.open("pipe://:TestPipeConnection:1.0;");
+
+                PipeConnection dataConn = (PipeConnection) serverConn.acceptAndOpen();
+                communicate(dataConn);
+
+            } catch (IOException ex) {
+                ex.printStackTrace();
+                fail(ex.toString());
+            }
+        }
+
+        abstract void communicate(PipeConnection dataConn) throws IOException;
+    }
 
     void testConnectionOpenClose() throws IOException {
         PipeServiceProtocol.registerService(token);
@@ -111,26 +127,89 @@ public class TestPipeConnection extends TestCase {
     void testLocalTransfer() throws IOException, InterruptedException {
         PipeServiceProtocol.registerService(token);
 
-        new Thread(new Runnable() {
+        new Thread(new Server() {
 
-            public void run() {
-                try {
-                    PipeServerConnection serverConn =
-                            (PipeServerConnection) Connector.open("pipe://:TestPipeConnection:1.0;");
+            void communicate(PipeConnection dataConn) throws IOException {
+                DataInputStream in = dataConn.openDataInputStream();
+                DataOutputStream out = dataConn.openDataOutputStream();
 
-                    PipeConnection dataConn = (PipeConnection) serverConn.acceptAndOpen();
+                out.writeUTF("1");
+                out.close();
+                assertEquals("invalid data response", "2", in.readUTF());
+            }
+        }).start();
 
-                    DataInputStream in = dataConn.openDataInputStream();
-                    DataOutputStream out = dataConn.openDataOutputStream();
+        Thread.sleep(100);
 
-                    out.writeUTF("1");
-                    out.close();
-                    assertEquals("invalid data response", "3", in.readUTF());
+        try {
+            PipeConnection clientConn =
+                    (PipeConnection) Connector.open("pipe://*:TestPipeConnection:1.0;");
 
-                } catch (IOException ex) {
-                    ex.printStackTrace();
-                    fail(ex.toString());
-                }
+            DataInputStream in = clientConn.openDataInputStream();
+            DataOutputStream out = clientConn.openDataOutputStream();
+
+            assertEquals("invalid message from server", "1", in.readUTF());
+            out.writeUTF("2");
+            out.close();
+
+        } catch (IOException ex) {
+            ex.printStackTrace();
+            fail(ex.toString());
+        }
+
+        SystemServiceManager manager = SystemServiceManager.getInstance(token);
+        manager.shutdown();
+    }
+
+    void testLocalTransferClose() throws IOException, InterruptedException {
+        PipeServiceProtocol.registerService(token);
+
+        Thread readerThread = new Thread(new Server() {
+
+            public void communicate(PipeConnection dataConn) throws IOException {
+                DataInputStream in = dataConn.openDataInputStream();
+
+                assertEquals("invalid data response", "1", in.readUTF());
+                assertEquals("expected EOF not found", -1, in.read());
+            }
+        });
+        readerThread.start();
+
+        Thread.sleep(100);
+
+        try {
+            PipeConnection clientConn =
+                    (PipeConnection) Connector.open("pipe://*:TestPipeConnection:1.0;");
+
+            DataOutputStream out = clientConn.openDataOutputStream();
+
+            out.writeUTF("1");
+            out.close();
+
+        } catch (IOException ex) {
+            ex.printStackTrace();
+            fail(ex.toString());
+        }
+        
+        readerThread.join();
+
+        SystemServiceManager manager = SystemServiceManager.getInstance(token);
+        manager.shutdown();
+    }
+
+    void testLocalTransferDeferredOpen() throws IOException, InterruptedException {
+        PipeServiceProtocol.registerService(token);
+
+        new Thread(new Server() {
+
+            void communicate(PipeConnection dataConn) throws IOException {
+                DataOutputStream out = dataConn.openDataOutputStream();
+
+                out.writeUTF("1");
+                out.close();
+
+                DataInputStream in = dataConn.openDataInputStream();
+                assertEquals("invalid data response", "2", in.readUTF());
             }
         }).start();
 
@@ -165,5 +244,11 @@ public class TestPipeConnection extends TestCase {
 
         declare("testLocalTransfer");
         testLocalTransfer();
+
+        declare("testLocalTransferClose");
+        testLocalTransferClose();
+        
+        declare("testLocalTransferDeferredOpen");
+        testLocalTransferDeferredOpen();
     }
 }

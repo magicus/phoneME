@@ -43,7 +43,7 @@ import java.io.IOException;
  */
 public class UserListener implements SystemServiceConnectionListener {
 
-    private static final boolean DEBUG = true;
+    private static final boolean DEBUG = false;
     private SystemServiceConnection conn;
     private Dispatcher dispatcher;
 

@@ -30,7 +30,7 @@ import com.sun.midp.links.Link;
  */
 class ServerEndpoint extends Endpoint {
 
-    private static final boolean DEBUG = true;
+    private static final boolean DEBUG = false;
     private String serverName;
     private String serverVersion;
     private int serverVersionAsInt;
