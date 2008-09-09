@@ -262,9 +262,6 @@ BOOL AddComboboxItem(HWND hcbWnd, LPCTSTR pcszLabel, javacall_folder_id jFolderI
 static int HandleNetworkStreamEvents(WPARAM wParam, LPARAM lParam);
 static int HandleNetworkDatagramEvents(WPARAM wParam, LPARAM lParam);
 
-extern void RemoveMIDletFromRunningList(javacall_app_id appId);
-extern void SwitchToAppManager();
-
 static BOOL ProcessExists(LPCTSTR szName);
 
 // Functions for debugging
@@ -289,6 +286,13 @@ static void ShowSplashScreen() {
     if (g_hSplashScreenBmp != NULL) {
         SetTimer(g_hMainWindow, 1, SPLASH_SCREEN_SHOW_TIME, NULL);
     }
+}
+
+BOOL PostProgressMessage(UINT uMsg, WPARAM wParam, LPARAM lParam) {
+  if (g_hProgressDlg) {
+      return PostMessage(g_hProgressDlg, uMsg, wParam, lParam);
+  }
+  return FALSE;
 }
 
 /**
@@ -1157,8 +1161,21 @@ InstallDlgProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 
     HWND hCombobox = GetDlgItem(hwndDlg, IDC_COMBO_FOLDER);
     HWND hEdit = GetDlgItem(hwndDlg, IDC_EDIT_URL);
+    HWND hBtnOK = GetDlgItem(hwndDlg, IDOK);
 
     switch (uMsg) {
+
+    case WM_INITDIALOG: {
+        if (hEdit) {
+            SendMessage(hEdit, WM_SETTEXT, 0,
+                        (LPARAM)_T("http://daisy/midlets/HelloMIDlet.jad"));
+
+            if (hBtnOK) {
+                EnableWindow(hBtnOK, TRUE);
+            }
+        }
+        break;
+    }
 
     case WM_COMMAND: {
         WORD wCmd = LOWORD(wParam);
@@ -1176,7 +1193,7 @@ InstallDlgProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam) {
             WPARAM wItem;
             javacall_folder_id jFolderId = JAVACALL_INVALID_FOLDER_ID;
 
-            WCHAR szUrl[256] /*= L"http://daisy/midlets/HelloMIDlet.jad"*/;
+            WCHAR szUrl[256];
             int nUrlLen = 0;
 
             if (hCombobox) {
@@ -1282,7 +1299,6 @@ InstallDlgProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam) {
                 }
 
                 // Enable OK button if there is a text in the edit control
-                HWND hBtnOK = GetDlgItem(hwndDlg, IDOK);
                 if (hBtnOK) {
                     EnableWindow(hBtnOK, fEnable);
                 }
@@ -1362,11 +1378,6 @@ INT_PTR CALLBACK
 ProgressDlgProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam) {
     javacall_result res = JAVACALL_FAIL;
 
-    HWND hOperProgess = GetDlgItem(hwndDlg, IDC_PROGRESS_OPERATION);
-    HWND hTotalProgess = GetDlgItem(hwndDlg, IDC_PROGRESS_TOTAL);
-
-//    SendMessage(GetDlgItem(g_hProgressDlg, IDC_PROGRESS_OPERATION),  PBM_SETPOS, 10, 0);
-
     switch (uMsg) {
 
     case WM_COMMAND: {
@@ -1431,6 +1442,39 @@ ProgressDlgProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam) {
         }        
 
         break;
+    }
+
+    case IDM_JAVA_AMS_INSTALL_STATUS: {
+       HWND hOperProgress, hTotalProgress;
+       WORD wCurProgress, wTotalProgress;
+
+       hOperProgress = GetDlgItem(hwndDlg, IDC_PROGRESS_OPERATION);
+       hTotalProgress = GetDlgItem(hwndDlg, IDC_PROGRESS_TOTAL);
+
+       wCurProgress   = LOWORD(wParam);
+       wTotalProgress = HIWORD(wParam);
+
+       // Validate progress values
+       if (wCurProgress < 0) {
+           wCurProgress = 0;
+       } else if (wCurProgress > 100) {
+           wCurProgress = 100;
+       }
+       if (wTotalProgress < 0) {
+           wTotalProgress = 0;
+       } else if (wTotalProgress > 100) {
+           wTotalProgress = 100;
+       }
+       
+       SendMessage(hOperProgress, PBM_SETPOS, (WPARAM)wCurProgress, 0);
+       SendMessage(hTotalProgress, PBM_SETPOS, (WPARAM)wTotalProgress, 0);
+
+       break;
+    }
+
+    case IDM_JAVA_AMS_INSTALL_COMPLETE: {
+       MessageBox(hwndDlg, _T("Installation is completed!"), g_szTitle, NULL);
+       break;
     }
 
     default: {

@@ -36,10 +36,6 @@
 #include "res/appManager_resource.h"
 #include "appManager.h"
 
-void RemoveMIDletFromRunningList(javacall_app_id appId);
-void SwitchToAppManager();
-
-
 extern "C" {
 
 /**
@@ -60,6 +56,11 @@ void java_ams_operation_completed(javacall_opcode operation,
     wprintf(
         _T(">>> java_ams_operation_completed(), operation = %d, appId = %d\n"),
             (int)operation, (int)appId);
+
+    if (operation == JAVACALL_OPCODE_INSTALL_SUITE) {
+        PostProgressMessage(IDM_JAVA_AMS_INSTALL_COMPLETE,
+                            (WPARAM)appId, (LPARAM)pResult);
+    }    
 }
 
 /**
@@ -103,6 +104,12 @@ java_ams_install_report_progress(javacall_ams_install_state* pInstallState,
                                  int currStepPercentDone, int totalPercentDone) {
     wprintf(_T(">>> java_ams_install_report_progress(): %d%%, total: %d%%\n"),
             currStepPercentDone, totalPercentDone);
+
+    WPARAM wParam = (WPARAM)MAKELONG((WORD)currStepPercentDone,
+                                     (WORD)totalPercentDone);
+
+    PostProgressMessage(IDM_JAVA_AMS_INSTALL_STATUS,
+                        wParam, (LPARAM)pInstallState);    
 }
 
 /**
@@ -164,13 +171,12 @@ java_ams_install_ask(javacall_ams_install_request_code requestCode,
                      const javacall_ams_install_data* pRequestData) {
     wprintf(_T(">>> java_ams_install_ask(), requestCode = %d\n"), requestCode);
 
-    if (g_hProgressDlg) {
-        BOOL fRes = PostMessage(g_hProgressDlg, IDM_JAVA_AMS_INSTALL_ASK,
-                                (WPARAM)requestCode, (LPARAM)pInstallState);
-        return (fRes == TRUE) ? JAVACALL_OK : JAVACALL_FAIL;
-    } else {
-        return JAVACALL_FAIL;
-    }
+
+    BOOL fRes = PostProgressMessage(IDM_JAVA_AMS_INSTALL_ASK,
+                                    (WPARAM)requestCode,
+                                    (LPARAM)pInstallState);
+
+    return (fRes == TRUE) ? JAVACALL_OK : JAVACALL_FAIL;
 }
 
 };

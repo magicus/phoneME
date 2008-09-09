@@ -26,11 +26,16 @@
 #ifndef __APP_MANAGER_H
 #define __APP_MANAGER_H
 
+#include <javacall_defs.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-extern HWND g_hProgressDlg;
+BOOL PostProgressMessage(UINT uMsg, WPARAM wParam, LPARAM lParam);
+
+void RemoveMIDletFromRunningList(javacall_app_id appId);
+void SwitchToAppManager();
 
 #ifdef __cplusplus
 }

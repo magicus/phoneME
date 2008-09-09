@@ -29,7 +29,9 @@
 #define  ID_MENU_POPUP_SUITE        15
 #define  ID_MENU_POPUP_FOLDER       20
 
-#define  IDM_JAVA_AMS_INSTALL_ASK   50
+#define  IDM_JAVA_AMS_INSTALL_ASK      50
+#define  IDM_JAVA_AMS_INSTALL_STATUS   60
+#define  IDM_JAVA_AMS_INSTALL_COMPLETE 70
 
 #define  IDM_INFO                  100
 
