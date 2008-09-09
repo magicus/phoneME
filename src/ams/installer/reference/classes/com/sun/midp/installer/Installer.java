@@ -1509,6 +1509,10 @@ public abstract class Installer {
         String installedVersion;
         int cmpResult;
 
+        state.isPreviousVersion = false;
+        state.previousSuite = null;
+        state.previousInstallInfo = null;
+        
         // Check if app already exists
         id = MIDletSuiteStorage.getSuiteID(info.suiteVendor,
                                            info.suiteName);
