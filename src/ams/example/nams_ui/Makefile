@@ -84,9 +84,9 @@ LIBS        += $(JAVACALL_LIB) $(PCSL_LIB) $(CLDC_LIB) $(MIDP_LIB)
 
 ###############################################################################
 
-A = @
+A ?= @
 
-all: appManager background
+all: appManager background splashscreen
 
 appManager: $(MIDP_OBJ_DIR)/appManager$(OBJ) $(MIDP_OBJ_DIR)/javacallImpl$(OBJ) $(MIDP_OBJ_DIR)/appManager_resource.res
 	$(A)$(LD) $(LD_FLAGS) $(DRIVE)$(MIDP_OBJ_DIR)/appManager$(OBJ) $(DRIVE)$(MIDP_OBJ_DIR)/javacallImpl$(OBJ) $(DRIVE)$(MIDP_OBJ_DIR)/appManager_resource.res $(LIBS) $(LD_OUTPUT)$(DRIVE)$(MIDP_OUTPUT_DIR)/bin/i386/appManager$(EXE)
@@ -104,3 +104,6 @@ $(MIDP_OBJ_DIR)/%.res: $(SRC_DIR)/res/%.rc $(SRC_DIR)/res/toolbar.bmp $(SRC_DIR)
 
 background: $(SRC_DIR)/res/background.bmp
 	$(A)cp $(SRC_DIR)/res/background.bmp $(DRIVE)$(MIDP_OUTPUT_DIR)/bin/i386
+
+splashscreen: $(SRC_DIR)/res/splash_screen_240x320.bmp 
+	$(A)cp $(SRC_DIR)/res/splash_screen_240x320.bmp  $(DRIVE)$(MIDP_OUTPUT_DIR)/bin/i386

@@ -64,6 +64,10 @@
 #define TREE_VIEW_ICON_HEIGHT 16
 
 #define DEF_BACKGROUND_FILE _T("background.bmp")
+#define SPLASH_SCREEN_FILE  _T("splash_screen_240x320.bmp")
+
+// in milliseconds
+#define SPLASH_SCREEN_SHOW_TIME 2000
 
 #define DLG_BUTTON_MARGIN 5
 
@@ -115,6 +119,8 @@ HMENU g_hFolderPopupMenu = NULL;
 WNDPROC g_DefTreeWndProc = NULL;
 
 HBITMAP g_hMidletTreeBgBmp = NULL;
+
+HBITMAP g_hSplashScreenBmp = NULL;
 
 // Copied suite, to be pasted into a new folder 
 HTREEITEM g_htiCopiedSuite = NULL;
@@ -254,6 +260,14 @@ extern "C" HWND midpGetWindowHandle() {
 
 //------------------------------------------------------------------------------
 
+static void ShowSplashScreen() {
+    g_hSplashScreenBmp = (HBITMAP)LoadImage(g_hInst, SPLASH_SCREEN_FILE,
+        IMAGE_BITMAP, g_iChildAreaWidth, g_iChildAreaHeight, LR_LOADFROMFILE);
+    if (g_hSplashScreenBmp != NULL) {
+        SetTimer(g_hMainWindow, 1, SPLASH_SCREEN_SHOW_TIME, NULL);
+    }
+}
+
 /**
  * Entry point of the Javacall executable.
  *
@@ -311,6 +325,8 @@ int main(int argc, char* argv[]) {
     InitWindows();
 
     g_hMainWindow = CreateMainView();
+
+    ShowSplashScreen();
 
     // Start JVM in a separate thread
     DWORD dwThreadId; 
@@ -642,7 +658,7 @@ static HWND CreateMidletTreeView(HWND hWndParent) {
     hwndTV = CreateWindowEx(0,                            
                             _T("SysTreeView32"),
                             g_szMidletTreeTitle,
-                            WS_VISIBLE | WS_CHILD | WS_BORDER | TVS_HASLINES |
+                            /*WS_VISIBLE |*/ WS_CHILD | WS_BORDER | TVS_HASLINES |
                                 TVS_HASBUTTONS | TVS_LINESATROOT,
                             0, 
                             TB_BUTTON_HEIGHT + 12,
@@ -1668,9 +1684,32 @@ MainWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
     case WM_PAINT: {
         hdc = BeginPaint(hWnd, &ps);
 
-        DrawBuffer(hdc);
+        if (g_hSplashScreenBmp == NULL) {
+            DrawBuffer(hdc);
+        } else {
+            HDC hCompatibleDC = CreateCompatibleDC(hdc);
+            // IMPL_NOTE: need to create a compatible bitmap!
+            SelectObject(hCompatibleDC, g_hSplashScreenBmp);
+            BitBlt(hdc,
+                    0,0, 
+                    g_iChildAreaWidth, g_iChildAreaHeight, 
+                    hCompatibleDC, 
+                    0,0, 
+                    SRCCOPY);
+            DeleteDC(hCompatibleDC);
+        }
 
         EndPaint(hWnd, &ps);
+        break;
+    }
+
+    case WM_TIMER: {
+        if (g_hSplashScreenBmp != NULL) {
+            // remove the splash screen
+            DeleteObject((HGDIOBJ)g_hSplashScreenBmp);
+            g_hSplashScreenBmp = NULL;
+        }
+        ShowMidletTreeView(NULL, TRUE);
         break;
     }
 
