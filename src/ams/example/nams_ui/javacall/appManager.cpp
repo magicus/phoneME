@@ -1704,6 +1704,7 @@ MainWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
     }
 
     case WM_TIMER: {
+        KillTimer(hWnd, 1);
         if (g_hSplashScreenBmp != NULL) {
             // remove the splash screen
             DeleteObject((HGDIOBJ)g_hSplashScreenBmp);
