@@ -489,13 +489,13 @@ public class GraphicalInstaller extends MIDlet implements CommandListener {
                 return;
             }
                        
-            installer = InstallerResource.getInstaller(url);
-                  
             label = getAppProperty("arg-2");
             if (label == null || label.length() == 0) {
                 label = Resource.getString(ResourceConstants.APPLICATION);
             }
         }
+        
+        installer = InstallerResource.getInstaller(url);
         
         cancelledMessage =
             Resource.getString(ResourceConstants.AMS_GRA_INTLR_INST_CAN);
