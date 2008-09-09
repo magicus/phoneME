@@ -180,15 +180,16 @@ javacall_dom_documenttype_get_internal_subset(javacall_handle handle,
                                               /* INOUT */ javacall_uint32* ret_value_len);
 
 /** 
- * Deletes object representing this documenttype
+ * Decrements ref counter of the native object specified number of times
  * 
- * @param handle Pointer to the object representing this documenttype.
+ * @param handle Pointer to the object representing this node.
+ * @param count number of times to decrement.
  * 
  * @return JAVACALL_OK if all done successfuly,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
-javacall_dom_documenttype_finalize(javacall_handle handle);
+javacall_dom_documenttype_clear_references(javacall_handle handle, javacall_uint32 count);
 
 
 /** @} */

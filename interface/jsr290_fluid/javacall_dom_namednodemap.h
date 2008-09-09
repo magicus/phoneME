@@ -245,15 +245,16 @@ javacall_dom_namednodemap_remove_named_item_ns(javacall_handle handle,
                                                /* OUT */ javacall_dom_exceptions* exception_code);
 
 /** 
- * Deletes object representing this namednodemap
+ * Decrements ref counter of the native object specified number of times
  * 
- * @param handle Pointer to the object representing this namednodemap.
+ * @param handle Pointer to the object representing this node.
+ * @param count number of times to decrement.
  * 
  * @return JAVACALL_OK if all done successfuly,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
-javacall_dom_namednodemap_finalize(javacall_handle handle);
+javacall_dom_namednodemap_clear_references(javacall_handle handle, javacall_uint32 count);
 
 
 /** @} */

@@ -209,15 +209,16 @@ javacall_dom_progressevent_init_progress_event_ns(javacall_handle handle,
                                                   javacall_int32 total_arg);
 
 /** 
- * Deletes object representing this progressevent
+ * Decrements ref counter of the native object specified number of times
  * 
- * @param handle Pointer to the object representing this progressevent.
+ * @param handle Pointer to the object representing this node.
+ * @param count number of times to decrement.
  * 
  * @return JAVACALL_OK if all done successfuly,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
-javacall_dom_progressevent_finalize(javacall_handle handle);
+javacall_dom_progressevent_clear_references(javacall_handle handle, javacall_uint32 count);
 
 
 /** @} */

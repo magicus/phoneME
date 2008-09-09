@@ -758,15 +758,16 @@ javacall_dom_document_get_default_view(javacall_handle handle,
                                        /* OUT */ javacall_handle* ret_value);
 
 /** 
- * Deletes object representing this document
+ * Decrements ref counter of the native object specified number of times
  * 
- * @param handle Pointer to the object representing this document.
+ * @param handle Pointer to the object representing this node.
+ * @param count number of times to decrement.
  * 
  * @return JAVACALL_OK if all done successfuly,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
-javacall_dom_document_finalize(javacall_handle handle);
+javacall_dom_document_clear_references(javacall_handle handle, javacall_uint32 count);
 
 
 /** @} */

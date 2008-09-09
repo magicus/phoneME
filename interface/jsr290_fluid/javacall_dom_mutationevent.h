@@ -212,15 +212,16 @@ javacall_dom_mutationevent_init_mutation_event_ns(javacall_handle handle,
                                                   javacall_int16 attr_change_arg);
 
 /** 
- * Deletes object representing this mutationevent
+ * Decrements ref counter of the native object specified number of times
  * 
- * @param handle Pointer to the object representing this mutationevent.
+ * @param handle Pointer to the object representing this node.
+ * @param count number of times to decrement.
  * 
  * @return JAVACALL_OK if all done successfuly,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
-javacall_dom_mutationevent_finalize(javacall_handle handle);
+javacall_dom_mutationevent_clear_references(javacall_handle handle, javacall_uint32 count);
 
 
 /** @} */

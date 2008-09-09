@@ -77,15 +77,16 @@ javacall_dom_text_split_text(javacall_handle handle,
                              /* OUT */ javacall_dom_exceptions* exception_code);
 
 /** 
- * Deletes object representing this text
+ * Decrements ref counter of the native object specified number of times
  * 
- * @param handle Pointer to the object representing this text.
+ * @param handle Pointer to the object representing this node.
+ * @param count number of times to decrement.
  * 
  * @return JAVACALL_OK if all done successfuly,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
-javacall_dom_text_finalize(javacall_handle handle);
+javacall_dom_text_clear_references(javacall_handle handle, javacall_uint32 count);
 
 
 /** @} */
