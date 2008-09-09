@@ -45,6 +45,8 @@ public class RunningMIDletSuiteInfo extends MIDletSuiteInfo {
     public Image icon = null;
     /** Whether suite is under debug */
     public boolean isDebugMode = false;
+    /** Whether suite is currently running */
+    public MIDletSelector midletSelector = null;
 
     /**
      * Constructs a RunningMIDletSuiteInfo object for a suite.
