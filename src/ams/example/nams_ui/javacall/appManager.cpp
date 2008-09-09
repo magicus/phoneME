@@ -38,6 +38,7 @@
 #include <time.h>
 
 #include "res/appManager_resource.h"
+#include "appManager.h"
 
 #include <javacall_memory.h>
 #include <javautil_unicode.h>
@@ -85,6 +86,7 @@ static TCHAR g_szInfoTitle[] = _T("Info");
 static TCHAR g_szDefaultFolderName[] = _T("Folder");
 static TCHAR g_szDefaultSuiteName[]  = _T("Midlet Suite");
 
+
 static javacall_ams_permission_val g_jpvPermissionValues[] =
     {JAVACALL_AMS_PERMISSION_VAL_BLANKET_DENIED,
      JAVACALL_AMS_PERMISSION_VAL_ONE_SHOT,
@@ -97,10 +99,26 @@ static javacall_ams_permission_val g_jpvPermissionValues[] =
 static LPTSTR g_szPermissionNames[PERMISSION_VAL_NUM] =
     {_T("Deny"), _T("One shot"), _T("Session"), _T("Allow")};
 
+
+static LONG g_szInstallRequestText[][2] = 
+{ 
+{(LONG)JAVACALL_INSTALL_REQUEST_WARNING, (LONG)_T("Warning!")},
+{(LONG)JAVACALL_INSTALL_REQUEST_CONFIRM_JAR_DOWNLOAD, (LONG)_T("Do you want to download the JAR file?")},
+{(LONG)JAVACALL_INSTALL_REQUEST_KEEP_RMS, (LONG)_T("Do you want to keep the RMS?")},
+{(LONG)JAVACALL_INSTALL_REQUEST_CONFIRM_AUTH_PATH, (LONG)_T("Do you trust the authorization path")},
+{(LONG)JAVACALL_INSTALL_REQUEST_CONFIRM_REDIRECTION, (LONG)_T("Do you want to allow redirection?")}
+};
+
+#define INSTALL_REQUEST_NUM \
+    ((int) (sizeof(g_szInstallRequestText) / sizeof(g_szInstallRequestText[0])))
+
+
 // The size of main window calibrated to get 240x320 child area to draw SJWC
 // output to
 const int g_iWidth = 246, g_iHeight = 345;
 const int g_iChildAreaWidth = 240, g_iChildAreaHeight = 300;
+
+#define DYNAMIC_BUTTON_SIZE
 
 HINSTANCE g_hInst = NULL;
 
@@ -109,7 +127,7 @@ HWND g_hMidletTreeView = NULL;
 HWND g_hInfoDlg = NULL;
 HWND g_hPermissionsDlg = NULL;
 HWND g_hInstallDlg = NULL;
-HWND g_InstallProgressDlg = NULL;
+HWND g_hProgressDlg = NULL;
 HWND g_hWndToolbar = NULL;
 
 HMENU g_hMidletPopupMenu = NULL;
@@ -189,6 +207,8 @@ INT_PTR CALLBACK TreeDlgProc(HWND hwndDlg, UINT uMsg, WPARAM wParam,
                              LPARAM lParam);
 INT_PTR CALLBACK InstallDlgProc(HWND hwndDlg, UINT uMsg, WPARAM wParam,
                                 LPARAM lParam) ;
+INT_PTR CALLBACK ProgressDlgProc(HWND hwndDlg, UINT uMsg, WPARAM wParam,
+                                LPARAM lParam) ;
 
 static void RefreshScreen(int x1, int y1, int x2, int y2);
 static void DrawBuffer(HDC hdc);
@@ -203,6 +223,7 @@ static HWND CreateTreeDialog(HWND hWndParent, WORD wDialogIDD, WORD wViewIDC,
                              WNDPROC ViewWndProc);
 
 static HWND CreateInstallDialog(HWND hWndParent);
+static HWND CreateProgressDialog(HWND hWndParent);
 
 static BOOL InitMidletTreeViewItems(HWND hwndTV);
 static void AddSuiteToTree(HWND hwndTV, javacall_suite_id suiteId, int nLevel);
@@ -243,6 +264,8 @@ static int HandleNetworkDatagramEvents(WPARAM wParam, LPARAM lParam);
 
 extern void RemoveMIDletFromRunningList(javacall_app_id appId);
 extern void SwitchToAppManager();
+
+static BOOL ProcessExists(LPCTSTR szName);
 
 // Functions for debugging
 
@@ -289,6 +312,18 @@ DWORD WINAPI javaThread(LPVOID lpParam) {
     return 0; 
 } 
 
+BOOL ProcessExists(LPCTSTR cszName)
+{
+   HANDLE hMutex = CreateMutex (NULL, TRUE, cszName);
+   if (GetLastError() == ERROR_ALREADY_EXISTS)
+   {
+      CloseHandle(hMutex);
+      return TRUE;
+   }
+   return FALSE;
+}
+
+
 #if 1
 int WINAPI WinMain(HINSTANCE hInstance,
                    HINSTANCE hPrevInstance,
@@ -312,7 +347,16 @@ int main(int argc, char* argv[]) {
     HINSTANCE hInstance = NULL;
     int nCmdShow = SW_SHOWNORMAL;
 #endif
-   
+
+    // Check whether an instance of the application is running at the moment
+    if (ProcessExists(g_szTitle)) {
+        TCHAR szBuf[127];
+        wsprintf(szBuf, _T("%s is already running!"), g_szTitle);
+        MessageBox(NULL, szBuf, g_szTitle, MB_OK | MB_ICONERROR);
+        return -1;
+    }
+
+    // Initialize random number generator   
     srand((unsigned)time(NULL));
 
     // Store instance handle in our global variable
@@ -325,6 +369,9 @@ int main(int argc, char* argv[]) {
     InitWindows();
 
     g_hMainWindow = CreateMainView();
+    if (!g_hMainWindow) {
+        return -1;
+    }
 
     ShowSplashScreen();
 
@@ -357,7 +404,7 @@ int main(int argc, char* argv[]) {
 
     // Create and init Java MIDlets tree view
     g_hMidletTreeView = CreateMidletTreeView(g_hMainWindow);
-    if (g_hMidletTreeView == NULL) {
+    if (!g_hMidletTreeView) {
         return -1;
     }
     InitMidletTreeViewItems(g_hMidletTreeView);
@@ -383,6 +430,8 @@ int main(int argc, char* argv[]) {
     }
 
     g_hInstallDlg = CreateInstallDialog(g_hMainWindow);
+
+    g_hProgressDlg = CreateProgressDialog(g_hMainWindow);
 
     // Show the main window 
     ShowWindow(g_hMainWindow, nCmdShow);
@@ -656,7 +705,7 @@ static HWND CreateMidletTreeView(HWND hWndParent) {
     wprintf(_T("Parent window area w=%d, h=%d\n"), rcClient.right, rcClient.bottom);
 
     hwndTV = CreateWindowEx(0,                            
-                            _T("SysTreeView32"),
+                            WC_TREEVIEW,
                             g_szMidletTreeTitle,
                             /*WS_VISIBLE |*/ WS_CHILD | WS_BORDER | TVS_HASLINES |
                                 TVS_HASBUTTONS | TVS_LINESATROOT,
@@ -670,8 +719,8 @@ static HWND CreateMidletTreeView(HWND hWndParent) {
                             NULL); 
 
     if (!hwndTV) {
-        MessageBox(NULL, _T("Create MIDlet tree view failed!"), g_szTitle,
-            NULL);
+        MessageBox(hWndParent, _T("Create MIDlet tree view failed!"),
+                   g_szTitle, NULL);
         return NULL;
     }
 
@@ -768,16 +817,18 @@ static void ShowMidletTreeView(HWND hWnd, BOOL fShow) {
 }
 
 static SIZE GetButtonSize(HWND hBtn) {
-    int nBtnTextLen, nBtnHeight, nBtnWidth;
-    HDC hdc;
-    TEXTMETRIC tm;
-    TCHAR szBuf[127];
     SIZE res;
 
     res.cx = 0;
     res.cx = 0;
-
+    
     if (hBtn) {
+#ifdef DYNAMIC_BUTTON_SIZE
+        int nBtnTextLen, nBtnHeight, nBtnWidth;
+        HDC hdc;
+        TEXTMETRIC tm;
+        TCHAR szBuf[127];
+
         hdc = GetDC(hBtn);
 
         if (GetTextMetrics(hdc, &tm)) {
@@ -795,6 +846,15 @@ static SIZE GetButtonSize(HWND hBtn) {
             res.cx = nBtnWidth;
             res.cy = nBtnHeight;
         }
+#else
+        RECT rc;
+
+        GetClientRect(hBtn, &rc);
+
+        res.cx = rc.right;
+        res.cy = rc.bottom;     
+#endif
+
     }
 
     return res;
@@ -829,7 +889,8 @@ static HWND CreateTreeDialog(HWND hWndParent, WORD wDialogIDD, WORD wViewIDC,
                         hWndParent, TreeDlgProc); 
 
     if (!hDlg) {
-        MessageBox(NULL, _T("Create info dialog failed!"), g_szTitle, NULL);
+        MessageBox(hWndParent, _T("Create info dialog failed!"), g_szTitle,
+                   NULL);
         return NULL;
     }
 
@@ -886,7 +947,8 @@ static HWND CreateTreeDialog(HWND hWndParent, WORD wDialogIDD, WORD wViewIDC,
 
     hView = GetDlgItem(hDlg, wViewIDC);
     if (!hView) {
-        MessageBox(NULL, _T("Can't get window handle to dialog view!"),
+        MessageBox(hWndParent,
+                   _T("Can't get window handle to dialog view!"),
                    g_szTitle, NULL);
     }
 
@@ -967,9 +1029,8 @@ TreeDlgProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 }
 
 static HWND CreateInstallDialog(HWND hWndParent) {
-    HWND hDlg, hCombobox;
+    HWND hDlg, hCombobox, hBtnYes, hBtnNo, hBtnFile, hBtnFolder;
     RECT rcClient;
-    HWND hBtnYes, hBtnNo, hBtnFile, hBtnFolder;
     SIZE sizeButtonY, sizeButtonN; 
     int folderNum;
     javacall_result res;
@@ -980,7 +1041,7 @@ static HWND CreateInstallDialog(HWND hWndParent) {
                         hWndParent, InstallDlgProc);
 
     if (!hDlg) {
-        MessageBox(NULL, _T("Create install path dialog failed!"),
+        MessageBox(hWndParent, _T("Create install path dialog failed!"),
                    g_szTitle, NULL);
         return NULL;
     }
@@ -1148,16 +1209,16 @@ InstallDlgProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 
                     // Hide the install path dialog then
                     // show install progress dialog
-                    ShowWindow(hwndDlg , SW_HIDE);
-                    ShowWindow(g_InstallProgressDlg, SW_SHOW);
+                    ShowWindow(hwndDlg , SW_HIDE);                    
+                    ShowWindow(g_hProgressDlg, SW_SHOW);
                 } else {
                     TCHAR szBuf[127];
                     wsprintf(szBuf, _T("Can't start installation process!")
                              _T("\n\nError code %d"), (int)res);
-                    MessageBox(NULL, szBuf, g_szTitle, NULL);
+                    MessageBox(hwndDlg, szBuf, g_szTitle, NULL);
                 }
             } else {
-                MessageBox(NULL, _T("URL is empty!"), g_szTitle, NULL);
+                MessageBox(hwndDlg, _T("URL is empty!"), g_szTitle, NULL);
             }
 
             break;
@@ -1243,6 +1304,143 @@ InstallDlgProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam) {
     return FALSE;
 }
 
+static HWND CreateProgressDialog(HWND hWndParent) {
+    HWND hDlg;
+    RECT rcClient;
+    HWND hBtnNo;
+    SIZE sizeButtonN; 
+    javacall_result res;
+
+    hDlg = CreateDialog(g_hInst, MAKEINTRESOURCE(IDD_INSTALL_PROGRESS),
+                        hWndParent, ProgressDlgProc);
+
+    if (!hDlg) {
+        MessageBox(hWndParent, _T("Create install progress dialog failed!"),
+                   g_szTitle, NULL);
+        return NULL;
+    }
+
+    // Get the dimensions of the parent window's client area
+    GetClientRect(hWndParent, &rcClient); 
+
+    // Set actual dialog size
+    SetWindowPos(hDlg,
+                 0, // ignored by means of SWP_NOZORDER
+                 0, 0, // x, y
+                 rcClient.right, rcClient.bottom, // w, h
+                 SWP_NOZORDER | SWP_NOOWNERZORDER |
+                     SWP_NOACTIVATE);
+
+    PrintWindowSize(hDlg, _T("Progress dialog"));
+
+    // Get handle to Cancel button (the Cancel button may be absent
+    // on the dialog)
+    hBtnNo = GetDlgItem(hDlg, IDCANCEL);
+
+    if (hBtnNo) {
+        sizeButtonN = GetButtonSize(hBtnNo);
+
+        SetWindowPos(hBtnNo,
+                     0, // ignored by means of SWP_NOZORDER
+                     rcClient.right - sizeButtonN.cx,  // x
+                     rcClient.bottom - sizeButtonN.cy, // y
+                     sizeButtonN.cx, sizeButtonN.cy,   // w, h
+                     SWP_NOZORDER | SWP_NOOWNERZORDER |
+                         SWP_NOACTIVATE);
+
+
+        PrintWindowSize(hBtnNo, _T("Cancel button"));
+    }
+
+    // TODO: implement dynamic positioning and resize for the rest controls of
+    // the dialog.
+
+    return hDlg;
+}
+
+INT_PTR CALLBACK
+ProgressDlgProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam) {
+    javacall_result res = JAVACALL_FAIL;
+
+    HWND hOperProgess = GetDlgItem(hwndDlg, IDC_PROGRESS_OPERATION);
+    HWND hTotalProgess = GetDlgItem(hwndDlg, IDC_PROGRESS_TOTAL);
+
+//    SendMessage(GetDlgItem(g_hProgressDlg, IDC_PROGRESS_OPERATION),  PBM_SETPOS, 10, 0);
+
+    switch (uMsg) {
+
+    case WM_COMMAND: {
+        WORD wCmd = LOWORD(wParam);
+
+        switch (wCmd) {
+
+        case IDCANCEL: {
+            ShowMidletTreeView(hwndDlg, TRUE);
+
+            // TODO: remove the time from "Windows" menu
+
+            break;
+        }
+
+        default: {
+            return FALSE;
+        }
+
+        } // end of switch (wCmd)
+
+        return TRUE;
+    }
+
+    case IDM_JAVA_AMS_INSTALL_ASK: {
+        javacall_ams_install_data resultData;
+        javacall_ams_install_request_code requestCode;
+        javacall_ams_install_state* pInstallState;
+        int nRes;
+        LPTSTR pszText = NULL;
+
+        requestCode = (javacall_ams_install_request_code)wParam;
+        pInstallState = (javacall_ams_install_state*)lParam;
+
+        if (requestCode != JAVACALL_INSTALL_REQUEST_UPDATE_STATUS) {
+            for (int i = 0; i < INSTALL_REQUEST_NUM; i++) {
+                if (g_szInstallRequestText[i][0]  == (LONG)requestCode) {
+                    pszText = (LPTSTR)g_szInstallRequestText[i][1];
+                    break;
+                }
+            }
+
+            if (pszText) {
+                nRes = MessageBox(hwndDlg, pszText, g_szTitle,
+                                  MB_ICONQUESTION | MB_YESNO);
+
+                resultData.fAnswer = (nRes == IDYES) ?
+                    JAVACALL_TRUE : JAVACALL_FALSE;
+            } else {
+                MessageBox(hwndDlg,
+                           _T("Unknown confirmation has been requiested!"),
+                           g_szTitle, NULL);
+                resultData.fAnswer = JAVACALL_TRUE;
+            }
+
+            res = java_ams_install_answer(requestCode, pInstallState, &resultData);
+
+            if (res != JAVACALL_OK) {
+                wprintf(_T("ERROR: java_ams_install_answer() ")
+                        _T("returned %d\n"), (int)res);
+            }
+        }        
+
+        break;
+    }
+
+    default: {
+        return FALSE;
+    }
+
+    } // end of switch (uMsg)
+
+    return TRUE;
+}
 
 static TVI_INFO* CreateTviInfo() {
     TVI_INFO* pInfo = (TVI_INFO*)javacall_malloc(sizeof(TVI_INFO));

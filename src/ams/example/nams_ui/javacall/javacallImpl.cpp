@@ -33,6 +33,9 @@
 #include <javacall_ams_platform.h>
 #include <javacall_ams_installer.h>
 
+#include "res/appManager_resource.h"
+#include "appManager.h"
+
 void RemoveMIDletFromRunningList(javacall_app_id appId);
 void SwitchToAppManager();
 
@@ -161,21 +164,13 @@ java_ams_install_ask(javacall_ams_install_request_code requestCode,
                      const javacall_ams_install_data* pRequestData) {
     wprintf(_T(">>> java_ams_install_ask(), requestCode = %d\n"), requestCode);
 
-    javacall_ams_install_data resultData;
-    resultData.fAnswer = JAVACALL_TRUE;
-
-    if (requestCode != JAVACALL_INSTALL_REQUEST_UPDATE_STATUS) {
-        javacall_result res =
-            java_ams_install_answer(requestCode, pInstallState, &resultData);
-
-        if (res != JAVACALL_OK) {
-            wprintf(_T(">>> Answer was not understood: java_ams_install_answer() ")
-                    _T("returned %d\n"), (int)res);
-            return res;
-        }
+    if (g_hProgressDlg) {
+        BOOL fRes = PostMessage(g_hProgressDlg, IDM_JAVA_AMS_INSTALL_ASK,
+                                (WPARAM)requestCode, (LPARAM)pInstallState);
+        return (fRes == TRUE) ? JAVACALL_OK : JAVACALL_FAIL;
+    } else {
+        return JAVACALL_FAIL;
     }
-
-    return JAVACALL_OK;
 }
 
 };

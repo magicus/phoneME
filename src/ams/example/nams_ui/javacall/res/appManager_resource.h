@@ -24,10 +24,12 @@
  * information or have any questions.
  */
 
-#define  ID_MENU_MAIN         5
-#define  ID_MENU_POPUP_MIDLET 10
-#define  ID_MENU_POPUP_SUITE  15
-#define  ID_MENU_POPUP_FOLDER 20
+#define  ID_MENU_MAIN                5
+#define  ID_MENU_POPUP_MIDLET       10
+#define  ID_MENU_POPUP_SUITE        15
+#define  ID_MENU_POPUP_FOLDER       20
+
+#define  IDM_JAVA_AMS_INSTALL_ASK   50
 
 #define  IDM_INFO                  100
 
@@ -63,6 +65,7 @@
 
 #define  IDC_TREEVIEW_MIDLETS      901
 #define  IDC_TREEVIEW              902
+
 #define  IDC_EDIT_URL              903
 #define  IDC_STATIC_URL            904
 #define  IDC_STATIC_BROWSE         905
@@ -70,7 +73,14 @@
 #define  IDC_COMBO_FOLDER          908
 #define  IDC_BUTTON_FILE           909
 
-#define  IDC_MAIN_TOOLBAR          910
+#define  IDC_PROGRESS_OPERATION    910
+#define  IDC_PROGRESS_TOTAL        911
+#define  IDC_EDIT_INFO             912
+#define  IDC_STATIC_DETAILS        913
+#define  IDC_STATIC_TOTAL          914
+#define  IDC_STATIC_OPERATION      915
+
+#define  IDC_MAIN_TOOLBAR          930
 
 #define  IDB_MAIN_TOOLBAR_BUTTONS  940
 #define  IDB_DEF_SUITE_ICON        950
