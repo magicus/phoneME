@@ -103,10 +103,10 @@ static LPTSTR g_szPermissionNames[PERMISSION_VAL_NUM] =
 static LONG g_szInstallRequestText[][2] = 
 { 
 {(LONG)JAVACALL_INSTALL_REQUEST_WARNING, (LONG)_T("Warning!")},
-{(LONG)JAVACALL_INSTALL_REQUEST_CONFIRM_JAR_DOWNLOAD, (LONG)_T("Do you want to download the JAR file?")},
-{(LONG)JAVACALL_INSTALL_REQUEST_KEEP_RMS, (LONG)_T("Do you want to keep the RMS?")},
-{(LONG)JAVACALL_INSTALL_REQUEST_CONFIRM_AUTH_PATH, (LONG)_T("Do you trust the authorization path")},
-{(LONG)JAVACALL_INSTALL_REQUEST_CONFIRM_REDIRECTION, (LONG)_T("Do you want to allow redirection?")}
+{(LONG)JAVACALL_INSTALL_REQUEST_CONFIRM_JAR_DOWNLOAD, (LONG)_T("Download the JAR file?")},
+{(LONG)JAVACALL_INSTALL_REQUEST_KEEP_RMS, (LONG)_T("Keep the RMS?")},
+{(LONG)JAVACALL_INSTALL_REQUEST_CONFIRM_AUTH_PATH, (LONG)_T("Trust the authorization path?")},
+{(LONG)JAVACALL_INSTALL_REQUEST_CONFIRM_REDIRECTION, (LONG)_T("Allow redirection?")}
 };
 
 #define INSTALL_REQUEST_NUM \
