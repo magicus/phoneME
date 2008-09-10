@@ -359,4 +359,9 @@ public final class EventTypes {
      * Major ID for a request to restart a MIDlet event.
      */
     public static final int RESTART_MIDLET_EVENT = 56;
+
+    /**
+     * This event is used for show or hide java virtual keyboard
+     */
+    public static final int VIRTUAL_KEYBOARD_EVENT = 57;
 }

@@ -828,6 +828,8 @@ public class MIDPWindow extends CWindow {
                 alertWashLayer = new WashLayer();
                 mainLayers[id] = alertWashLayer;
                 break;
+            case KEYBOARD_LAYER:
+                break;
             case BODY_LAYER:
                 bodyLayer = new BodyLayer(tunnel);
                 mainLayers[id] = bodyLayer;

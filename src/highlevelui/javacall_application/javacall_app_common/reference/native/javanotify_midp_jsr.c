@@ -152,7 +152,6 @@ void javanotify_alarm_expiration() {
 void javanotify_network_event(javacall_network_event netEvent) {
     midp_jc_event_union e;
 
-    REPORT_ERROR(LC_AMS, "javanotify_network_event(): Slave Mode method to be revised\n");
     REPORT_INFO(LC_CORE, "javanotify_network_event() >>\n");
     e.eventType = MIDP_JC_EVENT_NETWORK;
     if (netEvent == JAVACALL_NETWORK_UP) {
@@ -240,7 +239,6 @@ void javanotify_incoming_sms(javacall_sms_encoding msgType,
     midp_jc_event_union e;
         SmsMessage* sms;
 
-    REPORT_ERROR(LC_AMS, "javanotify_incoming_sms(): Slave Mode method to be revised\n");
     REPORT_INFO(LC_CORE, "javanotify_incoming_sms() >>\n");
     e.eventType = MIDP_JC_EVENT_SMS_INCOMING;
 
@@ -290,7 +288,6 @@ void javanotify_incoming_mms(
     midp_jc_event_union e;
     MmsMessage* mms;
 
-    REPORT_ERROR(LC_AMS, "javanotify_incoming_mms(): Slave Mode method to be revised\n");
     REPORT_INFO(LC_CORE, "javanotify_incoming_mms() >>\n");
     e.eventType = MIDP_JC_EVENT_MMS_INCOMING;
 
@@ -309,7 +306,6 @@ void javanotify_incoming_mms_available(
     midp_jc_event_union e;
     MmsMessage* mms;
 
-    REPORT_ERROR(LC_AMS, "javanotify_incoming_mms_available(): Slave Mode method to be revised\n");
     REPORT_INFO(LC_CORE, "javanotify_incoming_mms_available() >>\n");
     e.eventType = MIDP_JC_EVENT_MMS_INCOMING;
 
@@ -370,7 +366,6 @@ void javanotify_incoming_cbs(
 
     e.eventType = MIDP_JC_EVENT_CBS_INCOMING;
 
-    REPORT_ERROR(LC_AMS, "javanotify_incoming_cbs(): Slave Mode method to be revised\n");
     REPORT_INFO(LC_CORE, "javanotify_incoming_cbs() >>\n");
     cbs = jsr120_cbs_new_msg_javacall(msgType, msgID, msgBufferLen, msgBuffer);
 
@@ -397,7 +392,6 @@ void javanotify_sms_send_completed(javacall_result result,
                                    int handle) {
     midp_jc_event_union e;
 
-    REPORT_ERROR(LC_AMS, "javanotify_sms_send_completed(): Slave Mode method to be revised\n");
     REPORT_INFO(LC_CORE, "javanotify_sms_send_completed() >>\n");
     e.eventType = MIDP_JC_EVENT_SMS_SENDING_RESULT;
     e.data.smsSendingResultEvent.handle = (void *) handle;
@@ -425,7 +419,6 @@ void javanotify_mms_send_completed(javacall_result result,
                                    int handle) {
     midp_jc_event_union e;
 
-    REPORT_ERROR(LC_AMS, "javanotify_mms_send_completed(): Slave Mode method to be revised\n");
     REPORT_INFO(LC_CORE, "javanotify_mms_send_completed() >>\n");
     e.eventType = MIDP_JC_EVENT_MMS_SENDING_RESULT;
     e.data.mmsSendingResultEvent.handle = (void *) handle;
@@ -445,7 +438,6 @@ void javanotify_carddevice_event(javacall_carddevice_event event,
                                  void *context) {
     midp_jc_event_union e;
 
-    REPORT_ERROR(LC_AMS, "javanotify_carddevice_event(): Slave Mode method to be revised\n");
     REPORT_INFO(LC_CORE, "javanotify_carddevice_event() >>\n");
     e.eventType = MIDP_JC_EVENT_CARDDEVICE;
     switch (event) {
@@ -496,7 +488,6 @@ void javanotify_socket_event(javacall_socket_callback_type type,
 
     midp_jc_event_union e;
 
-    REPORT_ERROR(LC_AMS, "javanotify_socket_event(): Slave Mode method to be revised\n");
     REPORT_INFO(LC_CORE, "javanotify_socket_event() >>\n");
     e.eventType = MIDP_JC_EVENT_SOCKET;
     e.data.socketEvent.handle = socket_handle;
@@ -562,7 +553,6 @@ void /* OPTIONAL */ javanotify_server_socket_event(javacall_server_socket_callba
                                javacall_handle new_socket_handle,
                                javacall_result operation_result) {
     midp_jc_event_union e;
-    REPORT_ERROR(LC_AMS, "javanotify_server_socket_event(): Slave Mode method to be revised\n");
     REPORT_INFO(LC_CORE, "javanotify_server_socket_event() >>\n");
     e.eventType = MIDP_JC_EVENT_SOCKET;
     e.data.socketEvent.handle = socket_handle;
@@ -612,7 +602,6 @@ void javanotify_datagram_event(javacall_datagram_callback_type type,
 
     midp_jc_event_union e;
 
-    REPORT_ERROR(LC_AMS, "javanotify_datagram_event(): Slave Mode method to be revised\n");
     REPORT_INFO(LC_CORE, "javanotify_datagram_event() >>\n");
     e.eventType = MIDP_JC_EVENT_SOCKET;
     e.data.socketEvent.handle = handle;
@@ -654,7 +643,6 @@ void javanotify_on_media_notification(javacall_media_notification_type type,
                                       void *data) {
 #if ENABLE_JSR_135
     midp_jc_event_union e;
-    REPORT_ERROR(LC_AMS, "javanotify_on_media_notification(): Slave Mode method to be revised\n");
     REPORT_INFO4(LC_MMAPI, "javanotify_on_media_notification type=%d appId=%d playerId%d status=%d\n", type, appId, playerId, status);
 
     e.eventType = MIDP_JC_EVENT_MULTIMEDIA;
@@ -682,7 +670,6 @@ void javanotify_on_amms_notification(javacall_amms_notification_type type,
                                      void *data) {
     midp_jc_event_union e;
 
-    REPORT_ERROR(LC_AMS, "javanotify_start(): Slave Mode method to be revised\n");
     e.eventType = MIDP_JC_EVENT_ADVANCED_MULTIMEDIA;
     e.data.multimediaEvent.mediaType = type;
     e.data.multimediaEvent.appId = (int)((processorId >> 32) & 0xFFFF);
@@ -717,7 +704,6 @@ void javanotify_on_amms_notification(javacall_amms_notification_type type,
  * @param result the decoding operation result
  */
 void javanotify_on_image_decode_end(javacall_handle handle, javacall_result result) {
-    REPORT_ERROR(LC_AMS, "javanotify_on_image_decode_end(): Slave Mode method to be revised\n");
     REPORT_INFO(LC_CORE, "javanotify_on_image_decode_end() >>\n");
 
 #ifdef ENABLE_EXTERNAL_IMAGE_DECODER
@@ -742,7 +728,6 @@ void javanotify_on_image_decode_end(javacall_handle handle, javacall_result resu
 void javanotify_fileconnection_root_changed(void) {
 #ifdef ENABLE_JSR_75
     midp_jc_event_union e;
-    REPORT_ERROR(LC_AMS, "javanotify_fileconnection_root_changed(): Slave Mode method to be revised\n");
     REPORT_INFO(LC_CORE, "javanotify_fileconnection_root_changed() >>\n");
     e.eventType = JSR75_FC_JC_EVENT_ROOTCHANGED;
 
@@ -781,7 +766,6 @@ void javanotify_location_event(
         javacall_location_result operation_result) {
     midp_jc_event_union e;
 
-    REPORT_ERROR(LC_AMS, "javanotify_location_event(): Slave Mode method to be revised\n");
     REPORT_INFO(LC_CORE, "javanotify_location_event() >>\n");
 
     e.eventType = JSR179_LOCATION_JC_EVENT;
@@ -830,7 +814,6 @@ void /*OPTIONAL*/javanotify_location_proximity(
 
     midp_jc_event_union e;
 
-    REPORT_ERROR(LC_AMS, "javanotify_location_proximity(): Slave Mode method to be revised\n");
     REPORT_INFO(LC_CORE, "javanotify_location_proximity() >>\n");
 
     e.eventType = JSR179_PROXIMITY_JC_EVENT;
@@ -891,7 +874,6 @@ void javanotify_chapi_platform_finish(
     javacall_chapi_invocation *inv;
     int i;
 
-    REPORT_ERROR(LC_AMS, "javanotify_chapi_platform_finish(): Slave Mode method to be revised\n");
     REPORT_INFO(LC_CORE, "javanotify_chapi_platform_finish() >>\n");
 
     e.eventType = JSR211_JC_EVENT_PLATFORM_FINISH;
@@ -944,7 +926,6 @@ void javanotify_chapi_java_invoke(
     javacall_chapi_invocation *inv;
     int i;
 
-    REPORT_ERROR(LC_AMS, "javanotify_chapi_java_invoke(): Slave Mode method to be revised\n");
     REPORT_INFO(LC_CORE, "javanotify_chapi_java_invoke() >>\n");
 
     e.eventType = JSR211_JC_EVENT_JAVA_INVOKE;
@@ -1033,7 +1014,6 @@ void javanotify_security_permission_dialog_finish(
                          javacall_security_permission_type userPermission) {
     midp_jc_event_union e;
 
-    REPORT_ERROR(LC_AMS, "javanotify_security_permission_dialog_finish(): Slave Mode method to be revised\n");
     REPORT_INFO(LC_CORE, "javanotify_security_permission_dialog_finish() >>\n");
 
     e.eventType = MIDP_JC_EVENT_PERMISSION_DIALOG;
@@ -1052,7 +1032,6 @@ void javanotify_vscl_incoming_event(javacall_vscl_event_type type,
                                     javacall_utf16* str2) {
     midp_jc_event_union e;
 
-    REPORT_ERROR(LC_AMS, "javanotify_vscl_incoming_event(): Slave Mode method to be revised\n");
     REPORT_INFO(LC_CORE, "javanotify_vscl_incoming_event() >>\n");
 
     switch (type) {
@@ -1102,7 +1081,6 @@ void /* OPTIONAL */ javanotify_textfield_phonenumber_selection(char* phoneNumber
     midp_jc_event_union e;
     int length;
 
-    REPORT_ERROR(LC_AMS, "javanotify_textfield_phonenumber_selection(): Slave Mode method to be revised\n");
     REPORT_INFO(LC_CORE, "javanotify_textfield_phonenumber_selection() >>\n");
 
     e.eventType = MIDP_JC_EVENT_PHONEBOOK;
@@ -1125,7 +1103,6 @@ void /* OPTIONAL */ javanotify_textfield_phonenumber_selection(char* phoneNumber
 void /* OPTIONAL */ javanotify_rotation() {
     midp_jc_event_union e;
 
-    REPORT_ERROR(LC_AMS, "javanotify_rotation(): Slave Mode method to be revised\n");
     REPORT_INFO(LC_CORE, "javanotify_rotation() >>\n");
 
     e.eventType = MIDP_JC_EVENT_ROTATION;
@@ -1186,7 +1163,6 @@ void javanotify_peerchanged_event(void) {
 void javanotify_enable_odd() {
      midp_jc_event_union e;
 
-     REPORT_ERROR(LC_AMS, "javanotify_enable_odd(): Slave Mode method to be revised\n");
      REPORT_INFO(LC_CORE, "javanotify_enable_odd() >>\n");
 
      e.eventType = MIDP_JC_ENABLE_ODD_EVENT;

@@ -1,8 +1,27 @@
 /*
- * $LastChangedDate: 2006-03-06 01:36:46 +0900 (월, 06 3 2006) $  
  *
- * Copyright  1990-2006 Sun Microsystems, Inc. All rights reserved.
- * SUN PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ * Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License version
+ * 2 only, as published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * General Public License version 2 for more details (a copy is
+ * included at /legal/license.txt).
+ *
+ * You should have received a copy of the GNU General Public License
+ * version 2 along with this work; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA
+ *
+ * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+ * Clara, CA 95054 or visit www.sun.com if you need additional
+ * information or have any questions.
  */
 
 package com.sun.midp.chameleon.layers;
@@ -12,73 +31,64 @@ import com.sun.midp.configurator.Constants;
 import com.sun.midp.chameleon.input.*;
 import com.sun.midp.chameleon.skins.VirtualKeyboardSkin;
 import com.sun.midp.chameleon.skins.ScreenSkin;
-import com.sun.midp.chameleon.skins.AlertSkin;
-import com.sun.midp.chameleon.skins.PTISkin;
-import com.sun.midp.chameleon.skins.resources.VirtualKeyboardResources;
 import com.sun.midp.chameleon.CLayer;
 import com.sun.midp.chameleon.MIDPWindow;
 import com.sun.midp.chameleon.ChamDisplayTunnel;
-import com.sun.midp.i18n.Resource;
 
 import javax.microedition.lcdui.*;
-import java.util.Vector;
 
 /**
- * This is a popup layer that handles a sub-popup within the text tfContext
+ * This is a popup layer 
  */
 public class VirtualKeyboardLayer extends PopupLayer implements VirtualKeyboardListener {
 
-    /** Instance of current input mode */
-    private TextInputSession iSession;
-
-    /** Instance of Displayable */
-    private ChamDisplayTunnel tunnel = null;
+    /** Instance of current displayable */
+    private VirtualKeyListener listener;
 
     /** the instance of the virtual keyboard */
     private static VirtualKeyboard vk = null;
 
-
     /**
      * Create an instance of KeyboardLayer
-     * @param inputSession current input session
      */
-    public VirtualKeyboardLayer(TextInputSession inputSession) {
-        super(VirtualKeyboardSkin.BG, AlertSkin.COLOR_BG);
-        iSession = inputSession;
-        Maps = VirtualKeyboard.prepareKeyMapTextField();
-        vk = new VirtualKeyboard(Maps, this, true);
-        setAnchor();
+    public VirtualKeyboardLayer() {
+        super(VirtualKeyboardSkin.BG, VirtualKeyboardSkin.COLOR_BG);
     }
 
     /**
-     * Create an instance of KeyboardLayer
-     * @param tunnel BodyLayer needs a "tunnel" class to cross the package
-     *        protection boundary and access methods inside the
-     *        javax.microedition.lcdui package
+     * Method return true if current virtual keybpard implementation supports java virtual keyboard
+     * @return status of java virtual keyboard support
      */
-    public VirtualKeyboardLayer(ChamDisplayTunnel tunnel) {
-        super(AlertSkin.IMAGE_BG, PTISkin.COLOR_BG);
-        this.tunnel = tunnel;
-        Maps = VirtualKeyboard.prepareKeyMapCanvas();
-        vk = new VirtualKeyboard(Maps, this, true);
-        setAnchor();
+    public static boolean isSupportJavaKeyboard() {
+        return VirtualKeyboard.isSupportJavaKeyboard();
     }
 
     /**
-     * Finish initialization of this CLayer. This can
-     * be extended by subclasses. The dimensions of the
-     * CLayer are stored in its bounds[]. The 'x' and 'y'
-     * coordinates are in the coordinate space of the
-     * window which contains this layer. By default, a layer is
-     * located at the origin and is as large as the screen size.
-     *
-     * The X and Y coordinates represent the upper left position
-     * of this CLayer in the containing CWindow's coordinate space.
-     *
+     * Return standalone instance of VirtualKeyboardLayer
+     * @return
      */
-    protected void initialize() {
-        super.initialize();
-        VirtualKeyboardResources.load();
+    public void init() {
+
+        if (VirtualKeyboard.isSupportJavaKeyboard() && vk == null) {
+            vk = VirtualKeyboard.getVirtualKeyboard(this);
+            setAnchor();
+         }
+    }
+
+    /**
+     * Set initial keyboard mode depend on current listener
+     * @param listener - current layer 
+     */
+    public void setVirtualKeyboardLayerListener(VirtualKeyListener listener) {
+        this.listener = listener;
+    }
+
+    /**
+     * Set new keyboard type
+     * @param keyboard
+     */
+    public void setKeyboardType(String keyboard) {
+        vk.changeKeyboad(keyboard);
     }
 
     /**
@@ -90,15 +100,19 @@ public class VirtualKeyboardLayer extends PopupLayer implements VirtualKeyboardL
      *                supports input.
      */
     public void setVisible(boolean visible) {
-        this.visible = visible;
+        if (vk != null && vk.isSupportJavaKeyboard()) {
+            this.visible = visible;
+        } else {
+            this.setVisible(false);
+        }
     }
 
     /**
      * Sets the anchor constants for rendering operation.
      */
     private void setAnchor() {
-        bounds[W] = vk.kbWidth;
-        bounds[H] = vk.kbHeight;
+        bounds[W] = (int)(.95 * ScreenSkin.WIDTH);
+        bounds[H] = VirtualKeyboardSkin.HEIGHT;
         bounds[X] = bounds[X] = (ScreenSkin.WIDTH - bounds[W]) >> 1;
         bounds[Y] = ScreenSkin.HEIGHT - bounds[H];
 
@@ -185,11 +199,6 @@ public class VirtualKeyboardLayer extends PopupLayer implements VirtualKeyboardL
     /** Indicates if this popup layer is shown (true) or hidden (false). */
     boolean open = false;
 
-    /** the list of available keys */
-    //char[][] keys = null;
-    Vector Maps = null;
-
-
     /**
      * key press callback
      * MIDlet that wants the receive events from the virtual
@@ -200,10 +209,8 @@ public class VirtualKeyboardLayer extends PopupLayer implements VirtualKeyboardL
      */
     public void virtualKeyPressed(int keyCode) {
 
-        if (tunnel != null) {
-            tunnel.callKeyPressed(keyCode);
-        } else {
-            iSession.processKey(keyCode, false);
+        if (listener != null) {
+            listener.processKeyPressed(keyCode);
         }
     }
 
@@ -216,8 +223,8 @@ public class VirtualKeyboardLayer extends PopupLayer implements VirtualKeyboardL
      *
      */
     public void virtualKeyReleased(int keyCode) {
-        if (tunnel != null) {
-            tunnel.callKeyReleased(keyCode);
+        if (listener != null) {
+            listener.processKeyReleased(keyCode);
         }
     }
 

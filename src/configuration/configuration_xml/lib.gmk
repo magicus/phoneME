@@ -141,6 +141,13 @@ SUBSYSTEM_CONFIGURATION_SKIN_XML_FILE = $(INT_XML_DIR)/skin.xml
 # Skin description input file
 INT_XML_FILES += $(SUBSYSTEM_CONFIGURATION_SKIN_XML_FILE)
 
+ifeq ($(USE_JAVA_VIRTUAL_KEYBOARD), true)
+SUBSYSTEM_CONFIGURATION_KEYBOARD_SKIN_XML_FILE = $(INT_XML_DIR)/keyboard_skin.xml
+
+# Skin description input file
+INT_XML_FILES += $(SUBSYSTEM_CONFIGURATION_KEYBOARD_SKIN_XML_FILE)
+endif
+
 # Command for invoking transformer
 INT_INVOKE_TRANSFORMER = \
 	$(JAVA_CMD) -jar $(CONFIGURATOR_JAR_FILE)
@@ -273,6 +280,19 @@ GENERATE_PROPERTIES_CALLOUTS = \
 	-xsl $(INT_XSL_DIR)/cldc/propertyCallouts.xsl \
 	-out `$(call fixcygpath, $(GENERATED_DIR)/midp_property_callouts.h)`
 
+ifeq ($(USE_JAVA_VIRTUAL_KEYBOARD), true)
+# transformation for generating .h file with property callouts
+GENERATE_KEYBOARDS_SOURCE = \
+	-xml $(INT_MERGED_XML_FILE) \
+	-xsl $(INT_XSL_DIR)/cldc/keyboardJava.xsl \
+	-out `$(call fixcygpath, $(GENERATED_DIR)/classes/com/sun/midp/chameleon/keyboards/Keyboards.java)`
+
+
+ifndef GENERATE_KEYBOARDS_SOURCE
+  GENERATE_KEYBOARDS_SOURCE = $(GENERATED_DIR)/classes/com/sun/midp/chameleon/keyboards/Keyboards.java
+endif
+endif
+
 ifeq ($(USE_STATIC_PROPERTIES), true)
 # transformation for generating .c file with properties 
 GENERATE_PROPERTIES_STATIC = \
@@ -349,7 +369,8 @@ define generate_configuration
 		$(GENERATE_PROPERTIES_STATIC) \
 		$(GENERATE_PROPERTIES_CALLOUTS) \
 		$(GENERATE_PERMISSIONS_JAVA_SOURCE) \
-		$(GENERATE_PERMISSIONS_NATIVE_SOURCE)
+		$(GENERATE_PERMISSIONS_NATIVE_SOURCE) \
+		$(GENERATE_KEYBOARDS_SOURCE)
 	@echo " ... generating localized strings"
 	@$(INT_INVOKE_L10N_GENERATOR) \
 		$(GENERATE_L10N_STRINGS)

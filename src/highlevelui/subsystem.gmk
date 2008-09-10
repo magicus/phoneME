@@ -109,6 +109,14 @@ else
 endif
 
 #####################################################################
+# Virtual keyboard Subsystem
+# Description: Optional for certain platforms
+#####################################################################
+
+include $(SUBSYSTEM_HIGHUI_DIR)/virtual_keyboard/lib.gmk
+
+
+#####################################################################
 # Application specific Subsystem
 # Description: qte_application, fb_application, win32_app or armsd_app
 #####################################################################
@@ -212,6 +220,10 @@ SUBSYSTEM_HIGHUI_I3TEST_JAVA_FILES += $(SUBSYSTEM_LCDLF_I3TEST_JAVA_FILES)
 SUBSYSTEM_HIGHUI_NATIVE_FILES	+= $(SUBSYSTEM_LCDLF_NATIVE_FILES)
 SUBSYSTEM_HIGHUI_EXTRA_INCLUDES	+= $(SUBSYSTEM_LCDLF_EXTRA_INCLUDES)
 
+# Virtual keyboard
+#
+SUBSYSTEM_HIGHUI_JAVA_FILES     += $(SUBSYSTEM_VIRTUAL_KEYBOARD_JAVA_FILES)
+
 # LFPPORT or LFJPORT
 #
 ifeq ($(SUBSYSTEM_LCDUI_MODULES), platform_widget)
@@ -248,3 +260,4 @@ SUBSYSTEM_HIGHUI_EXTRA_INCLUDES	+= $(SUBSYSTEM_APP_EXTRA_INCLUDES)
 ifeq ($(TARGET_VM), cdc_vm)
 SUBSYSTEM_HIGHUI_JAVA_FILES     += $(SUBSYSTEM_CDCUI_JAVA_FILES)
 endif
+

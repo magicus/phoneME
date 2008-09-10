@@ -340,7 +340,6 @@ void javanotify_install_content(const char * httpUrl,
     midp_jc_event_union e;
     int httpUrlLength, dscFileOffset;
 
-    REPORT_ERROR(LC_AMS, "javanotify_install_content(): Slave Mode method to be revised\n");
     REPORT_INFO(LC_CORE, "javanotify_install_content() >>\n");
 
     if ((httpUrl == NULL) || (httpUrl == NULL)) {

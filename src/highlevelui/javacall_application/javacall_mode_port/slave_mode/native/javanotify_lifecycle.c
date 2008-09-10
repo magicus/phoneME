@@ -529,7 +529,6 @@ void javanotify_start_java_with_arbitrary_args(int argc, char* argv[]) {
 void javanotify_set_vm_args(int argc, char* argv[]) {
     midp_jc_event_union e;
 
-    REPORT_ERROR(LC_AMS, "javanotify_set_vm_args(): Slave Mode method to be revised\n");
     REPORT_INFO(LC_CORE, "javanotify_set_vm_args() >>\n");
 
     if (argc > MIDP_RUNMIDLET_MAXIMUM_ARGS) {
@@ -550,7 +549,6 @@ void javanotify_set_vm_args(int argc, char* argv[]) {
 void javanotify_set_heap_size(int heapsize) {
     midp_jc_event_union e;
 
-    REPORT_ERROR(LC_AMS, "javanotify_set_heap_size(): Slave Mode method to be revised\n");
     REPORT_INFO(LC_CORE, "javanotify_set_heap_size() >>\n");
 
     e.eventType = MIDP_JC_EVENT_SET_HEAP_SIZE;
@@ -564,7 +562,6 @@ void javanotify_set_heap_size(int heapsize) {
 void javanotify_list_midlets(void) {
     midp_jc_event_union e;
 
-    REPORT_ERROR(LC_AMS, "javanotify_list_midlets(): Slave Mode method to be revised\n");
     REPORT_INFO(LC_CORE, "javanotify_list_midlets() >>\n");
 
     e.eventType = MIDP_JC_EVENT_LIST_MIDLETS;
@@ -578,7 +575,6 @@ void javanotify_list_midlets(void) {
 void javanotify_list_storageNames(void) {
     midp_jc_event_union e;
 
-    REPORT_ERROR(LC_AMS, "javanotify_list_storageNames(): Slave Mode method to be revised\n");
     REPORT_INFO(LC_CORE, "javanotify_list_storageName() >>\n");
 
     e.eventType = MIDP_JC_EVENT_LIST_STORAGE_NAMES;
@@ -591,7 +587,6 @@ void javanotify_list_storageNames(void) {
 void javanotify_remove_suite(char* suite_id) {
     midp_jc_event_union e;
 
-    REPORT_ERROR(LC_AMS, "javanotify_remove_suite(): Slave Mode method to be revised\n");
     REPORT_INFO(LC_CORE, "javanotify_remove_suite() >>\n");
 
     e.eventType = MIDP_JC_EVENT_REMOVE_MIDLET;
@@ -607,7 +602,6 @@ void javanotify_transient(char* url) {
     midp_jc_event_union e;
     midp_jc_event_start_arbitrary_arg *data = &e.data.startMidletArbitraryArgEvent;
 
-    REPORT_ERROR(LC_AMS, "javanotify_transient(): Slave Mode method to be revised\n");
     REPORT_INFO(LC_CORE,"javanotify_transient() >>\n");
 
     e.eventType = MIDP_JC_EVENT_START_ARBITRARY_ARG;
@@ -638,7 +632,6 @@ void javanotify_transient(char* url) {
 void javanotify_shutdown(void) {
     midp_jc_event_union e;
 
-    REPORT_ERROR(LC_AMS, "javanotify_shutdown(): Slave Mode method to be revised\n");
     REPORT_INFO(LC_CORE, "javanotify_shutdown() >>\n");
 
     e.eventType = MIDP_JC_EVENT_END;
@@ -655,7 +648,6 @@ void javanotify_shutdown(void) {
 void javanotify_pause(void) {
     midp_jc_event_union e; 
 
-    REPORT_ERROR(LC_AMS, "javanotify_pause(): Slave Mode method to be revised\n");
     REPORT_INFO(LC_CORE, "javanotify_pause() >>\n");
 
     e.eventType = MIDP_JC_EVENT_PAUSE;
@@ -670,7 +662,6 @@ void javanotify_pause(void) {
 void javanotify_resume(void) {
     midp_jc_event_union e; 
 
-    REPORT_ERROR(LC_AMS, "javanotify_resume(): Slave Mode method to be revised\n");
     REPORT_INFO(LC_CORE, "javanotify_resume() >>\n");
 
     e.eventType = MIDP_JC_EVENT_RESUME;
@@ -686,7 +677,6 @@ void javanotify_select_foreground_app(void) {
 #if ENABLE_MULTIPLE_ISOLATES
     midp_jc_event_union e;
 
-    REPORT_ERROR(LC_AMS, "javanotify_select_foreground_app(): Slave Mode method to be revised\n");
     REPORT_INFO(LC_CORE, "javanotify_switchforeground() >>\n");
 
     e.eventType = MIDP_JC_EVENT_SWITCH_FOREGROUND;
@@ -703,7 +693,6 @@ void javanotify_switch_to_ams(void) {
 #if ENABLE_MULTIPLE_ISOLATES
     midp_jc_event_union e;
 
-    REPORT_ERROR(LC_AMS, "javanotify_switch_to_ams(): Slave Mode method to be revised\n");
     REPORT_INFO(LC_CORE, "javanotify_selectapp() >>\n");
 
     e.eventType = MIDP_JC_EVENT_SELECT_APP;
@@ -719,7 +708,6 @@ void javanotify_switch_to_ams(void) {
 void javanotify_internal_pause(void) {
     midp_jc_event_union e;
 
-    REPORT_ERROR(LC_AMS, "javanotify_internal_pause(): Slave Mode method to be revised\n");
     REPORT_INFO(LC_CORE, "javanotify_internal_pause() >>\n");
 
     e.eventType = MIDP_JC_EVENT_INTERNAL_PAUSE;
@@ -734,7 +722,6 @@ void javanotify_internal_pause(void) {
 void javanotify_internal_resume(void) {
     midp_jc_event_union e;
 
-    REPORT_ERROR(LC_AMS, "javanotify_internal_resume(): Slave Mode method to be revised\n");
     REPORT_INFO(LC_CORE, "javanotify_internal_resume() >>\n");
 
     e.eventType = MIDP_JC_EVENT_INTERNAL_RESUME;
@@ -783,7 +770,6 @@ void javanotify_install_content(const char * httpUrl,
     midp_jc_event_union e;
     int httpUrlLength, dscFileOffset;
 
-    REPORT_ERROR(LC_AMS, "javanotify_install_content(): Slave Mode method to be revised\n");
     REPORT_INFO(LC_CORE, "javanotify_install_content() >>\n");
 
     if ((httpUrl == NULL) || (httpUrl == NULL)) {

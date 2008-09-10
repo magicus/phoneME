@@ -23,38 +23,7 @@
  * Clara, CA 95054 or visit www.sun.com if you need additional
  * information or have any questions.
  */
-
-
 package com.sun.midp.lcdui;
 
-import javax.microedition.lcdui.Graphics;
-
-/**
- * This interface should be implemented by a client that needs a popup keyboard.
- * @author Amir Uval
- */
-
-
 public interface VirtualKeyboardListener {
-
-    /**
-     * key press callback
-     * @param keycode char selected by the user from the virtual keyboard
-     */
-    public void virtualKeyPressed(int keycode);
-
-    /**
-     * key release callback
-     * @param keycode char selected by the user from the virtual keyboard
-     */
-    public void virtualKeyReleased(int keycode);
-
-    /**
-     * should trigger a requestRepaint() call to schedule a 
-     * paint() of the VirtualKeyboard
-     */
-    public void repaintVirtualKeyboard();
-     
-
 }
-
