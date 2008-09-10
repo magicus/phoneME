@@ -120,30 +120,33 @@ const int g_iChildAreaWidth = 240, g_iChildAreaHeight = 300;
 
 #define DYNAMIC_BUTTON_SIZE
 
-HINSTANCE g_hInst = NULL;
+static HINSTANCE g_hInst = NULL;
 
-HWND g_hMainWindow = NULL;
-HWND g_hMidletTreeView = NULL;
-HWND g_hInfoDlg = NULL;
-HWND g_hPermissionsDlg = NULL;
-HWND g_hInstallDlg = NULL;
-HWND g_hProgressDlg = NULL;
-HWND g_hWndToolbar = NULL;
+static HWND g_hMainWindow = NULL;
+static HWND g_hMidletTreeView = NULL;
+static HWND g_hInfoDlg = NULL;
+static HWND g_hPermissionsDlg = NULL;
+static HWND g_hInstallDlg = NULL;
+static HWND g_hProgressDlg = NULL;
+static HWND g_hWndToolbar = NULL;
 
-HMENU g_hMidletPopupMenu = NULL;
-HMENU g_hSuitePopupMenu = NULL;
-HMENU g_hFolderPopupMenu = NULL;
+static HMENU g_hMidletPopupMenu = NULL;
+static HMENU g_hSuitePopupMenu = NULL;
+static HMENU g_hFolderPopupMenu = NULL;
 
-WNDPROC g_DefTreeWndProc = NULL;
+static WNDPROC g_DefTreeWndProc = NULL;
 
-HBITMAP g_hMidletTreeBgBmp = NULL;
+static HBITMAP g_hMidletTreeBgBmp = NULL;
 
-HBITMAP g_hSplashScreenBmp = NULL;
+static HBITMAP g_hSplashScreenBmp = NULL;
 
 // Copied suite, to be pasted into a new folder 
-HTREEITEM g_htiCopiedSuite = NULL;
+static HTREEITEM g_htiCopiedSuite = NULL;
 
-javacall_app_id g_jAppId = 1;
+// Turns on/off MIDlet output to the main window
+static BOOL g_fDrawBuffer = FALSE;
+
+static javacall_app_id g_jAppId = 1;
 
 // TODO: place all hPrev* fields in a structure and pass it as
 //  a parameter of AddSuiteToTree
@@ -1226,7 +1229,7 @@ InstallDlgProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 
                     // Hide the install path dialog then
                     // show install progress dialog
-                    ShowWindow(hwndDlg , SW_HIDE);                    
+                    ShowWindow(hwndDlg, SW_HIDE);                    
                     ShowWindow(g_hProgressDlg, SW_SHOW);
                 } else {
                     TCHAR szBuf[127];
@@ -1844,6 +1847,9 @@ MainWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
             case IDM_WINDOW_APP_MANAGER: {
                 java_ams_midlet_switch_background();
 
+                // turn off MIDlet output
+                g_fDrawBuffer = FALSE;
+
                 ShowMidletTreeView(NULL, TRUE);
 
                 // change selected window in the menu
@@ -1913,6 +1919,9 @@ MainWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
                         if (res == JAVACALL_OK) {
                             ShowMidletTreeView(NULL, FALSE);
 
+                            // turn on MIDlet output
+                            g_fDrawBuffer = TRUE;
+
                             SetCheckedWindowMenuItem(pInfo);
                         }
                     }
@@ -1922,13 +1931,18 @@ MainWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
         }
         break;
     }
+    case WM_ERASEBKGND: {
+        // skip backround erasing if there is  any of output to the window 
+        if ((g_hSplashScreenBmp != NULL) || g_fDrawBuffer) {
+             break;
+        }
+        return DefWindowProc(hWnd, message, wParam, lParam);
+    }
 
     case WM_PAINT: {
         hdc = BeginPaint(hWnd, &ps);
 
-        if (g_hSplashScreenBmp == NULL) {
-            DrawBuffer(hdc);
-        } else {
+        if (g_hSplashScreenBmp != NULL) {
             HDC hCompatibleDC = CreateCompatibleDC(hdc);
             // IMPL_NOTE: need to create a compatible bitmap!
             SelectObject(hCompatibleDC, g_hSplashScreenBmp);
@@ -1939,8 +1953,10 @@ MainWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
                     0,0, 
                     SRCCOPY);
             DeleteDC(hCompatibleDC);
+        } else if (g_fDrawBuffer) {
+            DrawBuffer(hdc);
         }
-
+             
         EndPaint(hWnd, &ps);
         break;
     }
@@ -2235,6 +2251,9 @@ void RemoveMIDletFromRunningList(javacall_app_id appId) {
 }
 
 void SwitchToAppManager() {
+    // Turn off MIDlet output
+    g_fDrawBuffer = FALSE;
+
     ShowMidletTreeView(NULL, TRUE);
 }
 
@@ -2267,6 +2286,9 @@ static BOOL StartMidlet(HWND hTreeWnd) {
                 // Hide MIDlet tree view window to show
                 // the MIDlet's output in the main window
                 ShowMidletTreeView(NULL, FALSE);
+
+                // Turn on MIDlet output
+                g_fDrawBuffer = TRUE;
 
                 // Adding a new item to "Windows" menu
                 javacall_const_utf16_string jsLabel =
