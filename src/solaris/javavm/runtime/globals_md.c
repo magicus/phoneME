@@ -163,7 +163,7 @@ CVMBool CVMinitStaticState(CVMpathInfo *pathInfo)
 #endif
 
     {
-	char buf[MAXPATHLEN + 1], *p0, *p;
+	char buf[MAXPATHLEN + 1], *p0, *p, *pEnd;
 
 	Dl_info dlinfo;
 	if (dladdr((void *)CVMinitStaticState, &dlinfo)) {
