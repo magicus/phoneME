@@ -38,7 +38,7 @@ import java.util.Vector;
 
 class PipeClientConnectionImpl extends ConnectionBaseAdapter implements PipeConnection {
 
-    private static final boolean DEBUG = true;
+    private static final boolean DEBUG = false;
     private static final String CLOSE_OUTPUT_COMMAND = "closeOutputStream";
     private PipeServiceProtocol pipe;
     private SecurityToken token;
