@@ -216,18 +216,6 @@ typedef javacall_uint8 javacall_ams_permission_val;
 #define JAVACALL_AMS_PERMISSION_VAL_ONE_SHOT  ((javacall_ams_permission_val) 16)
 #define JAVACALL_AMS_PERMISSION_VAL_BLANKET_DENIED ((javacall_ams_permission_val) 32)
 
-#if 0
-/*
- * @brief Holds all permssion set
- *
- * IMPL_NOTE: currently unused, may be removed later.
- */
-typedef struct _javacall_ams_permission_set {
-    /** Array holding the current value for each permission */
-    javacall_ams_permission_val permission[JAVACALL_AMS_PERMISSION_LAST];
-} javacall_ams_permission_set;
-#endif
-
 /**
  * A structure containing all information about the installed
  * midlet suites that may require at the startup time.
