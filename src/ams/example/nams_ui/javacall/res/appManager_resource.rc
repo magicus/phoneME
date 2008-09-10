@@ -47,10 +47,8 @@ BEGIN
     POPUP "MIDlet"
     BEGIN
         MENUITEM "Launch", IDM_MIDLET_START_STOP
-        MENUITEM "To Foreground", IDM_MIDLET_TO_FOREGROUND
+        MENUITEM "To Foreground", IDM_MIDLET_TO_FOREGROUND, GRAYED
         MENUITEM "Info...", IDM_MIDLET_INFO
-        MENUITEM SEPARATOR
-        MENUITEM "Show Running...", IDM_MIDLET_SHOW_RUNNING
     END
 
     POPUP "Window"

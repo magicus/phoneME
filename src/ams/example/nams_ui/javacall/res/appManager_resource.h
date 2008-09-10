@@ -38,7 +38,6 @@
 #define  IDM_MIDLET_START_STOP     110
 #define  IDM_MIDLET_TO_FOREGROUND  120
 #define  IDM_MIDLET_INFO           130
-#define  IDM_MIDLET_SHOW_RUNNING   140
 
 #define  IDM_SUITE_INFO            200
 #define  IDM_SUITE_SETTINGS        210
