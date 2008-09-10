@@ -143,6 +143,42 @@ void java_ams_midlet_state_changed(javacall_lifecycle_state state,
         SwitchToAppManager();
     }
 }
+/**
+ * Inform on change of the specific MIDlet's lifecycle status.
+ *
+ * Java will invoke this function whenever the running MIDlet has switched
+ * to foreground or background.
+ *
+ * @param state new state of the running MIDlet. Can be either
+ *        <tt>JAVACALL_MIDLET_STATE_UI_FOREGROUND</tt>,
+ *        <tt>JAVACALL_MIDLET_STATE_UI_BACKGROUND</tt>,
+ *        <tt>JAVACALL_MIDLET_STATE_UI_FOREGROUND_REQUEST</tt>,
+ *        <tt>JAVACALL_MIDLET_STATE_UI_BACKGROUND_REQUEST</tt>.
+ * @param appID The ID of the state-changed suite
+ * @param reason The reason why the state change has happened
+ */
+void java_ams_midlet_ui_state_changed(javacall_midlet_ui_state state,
+                                      javacall_app_id appId,
+                                      javacall_change_reason reason) {
+    int appIndex = 0;
+
+    switch (state) {
+        case JAVACALL_MIDLET_UI_STATE_FOREGROUND:
+            wprintf(_T("[NAMS] Midlet state change to foreground\n"));
+            break;
+        case JAVACALL_MIDLET_UI_STATE_BACKGROUND:
+            wprintf(_T("[NAMS] Midlet state change to background\n"));
+            break;
+        case JAVACALL_MIDLET_UI_STATE_FOREGROUND_REQUEST:
+            wprintf(_T("[NAMS] Midlet is requesting foreground\n"));
+            break;
+        case JAVACALL_MIDLET_UI_STATE_BACKGROUND_REQUEST:
+            wprintf(_T("[NAMS] Midlet is requesting background\n"));
+            break;
+        default:
+            break;
+    }
+}
 
 /**
  * This function is called by the installer when some action is required

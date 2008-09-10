@@ -182,8 +182,6 @@ KNIDECL(com_sun_midp_installer_InstallerPeerMIDlet_reportFinished0) {
 
     /* get request type-dependent parameters */
     if (suiteId == UNUSED_SUITE_ID) {
-        pcsl_string_status pcslRes;
-
         GET_PARAMETER_AS_PCSL_STRING(3, errMsgParam)
 
         if (!pcsl_string_is_null(&errMsgParam)) {

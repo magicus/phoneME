@@ -281,6 +281,12 @@ extern "C" HWND midpGetWindowHandle() {
     return g_hMainWindow;
 }
 
+// needed by javacall / annuciator.c
+extern "C" javacall_pixel*
+getTopbarBuffer(int* screenWidth, int* screenHeight) {
+    return NULL;
+}
+
 //------------------------------------------------------------------------------
 
 static void ShowSplashScreen() {

@@ -41,7 +41,7 @@ PCSL_LIB=$(DRIVE)$(PCSL_LIB_DIR)/libpcsl_file.lib \
          $(DRIVE)$(PCSL_LIB_DIR)/libpcsl_print.lib \
          $(DRIVE)$(PCSL_LIB_DIR)/libpcsl_string.lib 
 
-JAVACALL_LIB=$(DRIVE)$(JAVACALL_OUTPUT_DIR)/lib/javacall$(DEBUG_SUFFIX).lib
+JAVACALL_LIB=$(DRIVE)$(JAVACALL_OUTPUT_DIR)/lib/javacall_nams_ui$(DEBUG_SUFFIX).lib
 
 MIDP_OBJ_DIR=$(MIDP_OUTPUT_DIR)/obj$(DEBUG_SUFFIX)/i386
 MIDP_LIB=$(DRIVE)$(MIDP_OBJ_DIR)/libobj.lib
