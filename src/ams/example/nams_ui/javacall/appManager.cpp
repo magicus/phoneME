@@ -2666,7 +2666,7 @@ InfoWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
             TCHAR szBuf[256];
             javacall_ams_suite_info* pSuiteInfo;
             javacall_ams_folder_info* pFolderInfo;
-            TVI_INFO* pInfo = (TVI_INFO*)wParam;
+            TVI_INFO* pInfo = (TVI_INFO*)lParam;
 
             // Clear old content
             TreeView_DeleteAllItems(hWnd);
@@ -2892,7 +2892,7 @@ PermissionWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
         }
 
         case IDM_SUITE_SETTINGS: {
-            TVI_INFO* pInfo = (TVI_INFO*)wParam;
+            TVI_INFO* pInfo = (TVI_INFO*)lParam;
             javacall_ams_permission_val
                 jpvPermissions[JAVACALL_AMS_NUMBER_OF_PERMISSIONS];
             javacall_suite_id suiteId;
