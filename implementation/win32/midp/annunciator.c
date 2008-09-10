@@ -47,7 +47,7 @@ static javacall_bool trustedOn = JAVACALL_FALSE;
 static javacall_bool networkOn = JAVACALL_FALSE;
 static javacall_bool homeOn = JAVACALL_FALSE;
 
-#if 0
+#if 1
 extern javacall_pixel* getTopbarBuffer(int* screenWidth, int* screenHeight);
 #else
 javacall_pixel* getTopbarBuffer(int* screenWidth, int* screenHeight) {

@@ -33,8 +33,6 @@
 #include "javacall_lcd.h"
 #include "javacall_ams_app_manager.h"
 
-/* In case of NAMS UI this function is defined in the sample App Manager. */
-#if !ENABLE_NATIVE_AMS_UI
 /**
  * Inform on completion of the previously requested operation.
  *
@@ -107,8 +105,6 @@ void java_ams_midlet_state_changed(javacall_lifecycle_state state,
     }
 }
 
-#endif /* ENABLE_NATIVE_AMS_UI */
-                                      
 /**
  * Inform on change of the specific MIDlet's lifecycle status.
  *
@@ -281,6 +277,36 @@ java_ams_suite_set_permissions(javacall_suite_id suiteID,
 }
 
 #endif /* ENABLE_NATIVE_AMS_UI */
+
+/**
+ * This function is called by the installer when some action is required
+ * from the user.
+ *
+ * It must be implemented at that side (SJWC or Platform) where the
+ * application manager is located.
+ *
+ * After processing the request, java_ams_install_answer() must
+ * be called to report the result to the installer.
+ *
+ * @param requestCode   identifies the requested action
+ *                      in pair with pInstallState->appId uniquely
+ *                      identifies this request
+ * @param pInstallState pointer to a structure containing all information
+ *                      about the current installation state
+ * @param pRequestData  pointer to request-specific data (may be NULL)
+ *
+ * @return <tt>JAVACALL_OK</tt> if handling of the request was started
+ *                              successfully,
+ *         <tt>JAVACALL_FAIL</tt> otherwise
+ */
+javacall_result
+java_ams_install_ask(javacall_ams_install_request_code requestCode,
+                     const javacall_ams_install_state* pInstallState,
+                     const javacall_ams_install_data* pRequestData) {
+    javacall_print("[NAMS] java_ams_install_ask()\n");
+
+    return JAVACALL_OK;
+}
 
 /**
  * Get specified property value of the suite.
