@@ -108,7 +108,8 @@ public class Protocol extends ConnectionBaseAdapter
     private static final int HTTP_OUTPUT_DATA_OFFSET = 24;
     /** How must extra room for the chunk terminator. */
     private static final int HTTP_OUTPUT_EXTRA_ROOM = 8;
-
+    /** HTTP User-Agent header field value for untrusted mode */
+    private static final String UNTRUSTED = "UNTRUSTED/1.0";
     /**
      * Inner class to request security token from SecurityInitializer.
      * SecurityInitializer should be able to check this inner class name.
@@ -1671,7 +1672,7 @@ public class Protocol extends ConnectionBaseAdapter
          * this field being added to their HTTP(S) requests.
          */
         if (!ownerTrusted) {
-            String newUserAgentValue = "UNTRUSTED/1.0";
+            String newUserAgentValue;
             String origUserAgentValue = 
                     reqProperties.getPropertyIgnoreCase("User-Agent");
             if (origUserAgentValue != null) {
@@ -1680,11 +1681,19 @@ public class Protocol extends ConnectionBaseAdapter
                  * of the "User-Agent" header field should not be ignored in 
                  * this case
                  */
-                newUserAgentValue += " " + origUserAgentValue;
+                newUserAgentValue = origUserAgentValue;
+                if (-1 == origUserAgentValue.indexOf(UNTRUSTED)) {
+                    newUserAgentValue += " " + UNTRUSTED;
+                }
             } else {
                 String platformUA = Configuration.getProperty("User-Agent");
                 if (platformUA != null) {
-                    newUserAgentValue += " " + platformUA;
+                    newUserAgentValue = platformUA;
+                    if (-1 == platformUA.indexOf(UNTRUSTED)) {
+                        newUserAgentValue += " " + UNTRUSTED;
+                    }
+                } else {
+                    newUserAgentValue = UNTRUSTED;
                 }
             }
             reqProperties.setPropertyIgnoreCase("User-Agent", 
