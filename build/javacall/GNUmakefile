@@ -40,6 +40,9 @@ JAVACALL_INCLUDE_DIR=$(JAVACALL_OUTPUT_DIR)/inc
 JAVACALL_LIB_DIR=$(JAVACALL_OUTPUT_DIR)/lib
 JAVACALL_OBJ_DIR=$(JAVACALL_OUTPUT_DIR)/obj$(g)
 
+# Make MIDP depend on Javacall library so that MIDP is re-linked automatically on any Javacall change
+MIDP_DEPS += $(JAVACALL_LIB_DIR)/javacall$(g).lib
+
 EXTRA_CFLAGS += -I$(JAVACALL_INCLUDE_DIR)
 
 include Platform.gmk
