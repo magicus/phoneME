@@ -1003,26 +1003,13 @@ TreeDlgProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 
     switch (uMsg) {
 
-    case IDM_SUITE_SETTINGS:
-    case IDM_INFO:
-    case IDM_FOLDER_INFO:
-    case IDM_SUITE_INFO:
-    case IDM_MIDLET_INFO: {
-
-        ShowMidletTreeView(hwndDlg, FALSE);
-
-        // Delegate message processing to the tree view
-        if (hView) {
-            PostMessage(hView, uMsg, wParam, lParam);
-        }
-
-        return TRUE;
-    } 
-
     case WM_COMMAND: {
         WORD wCmd = LOWORD(wParam);
 
-        if ((wCmd == IDOK) || (wCmd == IDCANCEL)) {
+        switch (wCmd) {
+
+        case IDOK:
+        case IDCANCEL: {
 
             ShowMidletTreeView(hwndDlg, TRUE);
 
@@ -1034,9 +1021,28 @@ TreeDlgProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam) {
             return TRUE;
         }
 
+        case IDM_SUITE_SETTINGS:
+        case IDM_INFO:
+        case IDM_FOLDER_INFO:
+        case IDM_SUITE_INFO:
+        case IDM_MIDLET_INFO: {
+
+            ShowMidletTreeView(hwndDlg, FALSE);
+
+            // Delegate message processing to the tree view
+            if (hView) {
+                PostMessage(hView, uMsg, wParam, lParam);
+            }
+
+            return TRUE;
+        }
+
+        } // end of switch (wCmd)
+
         break;
     }
-    }
+
+    } // end of switch (uMsg)
 
     return FALSE;
 }
@@ -1411,7 +1417,7 @@ ProgressDlgProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam) {
         return TRUE;
     }
 
-    case IDM_JAVA_AMS_INSTALL_ASK: {
+    case WM_JAVA_AMS_INSTALL_ASK: {
         javacall_ams_install_data resultData;
         javacall_ams_install_request_code requestCode;
         javacall_ams_install_state* pInstallState;
@@ -1453,7 +1459,7 @@ ProgressDlgProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam) {
         break;
     }
 
-    case IDM_JAVA_AMS_INSTALL_STATUS: {
+    case WM_JAVA_AMS_INSTALL_STATUS: {
        HWND hOperProgress, hTotalProgress;
        WORD wCurProgress, wTotalProgress;
 
@@ -1481,7 +1487,7 @@ ProgressDlgProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam) {
        break;
     }
 
-    case IDM_JAVA_AMS_INSTALL_COMPLETE: {
+    case WM_JAVA_AMS_INSTALL_COMPLETE: {
        MessageBox(hwndDlg, _T("Installation is completed!"), g_szTitle, NULL);
        break;
     }
@@ -1940,7 +1946,7 @@ MainWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
     case WM_ERASEBKGND: {
         // skip backround erasing if there is  any of output to the window 
         if ((g_hSplashScreenBmp != NULL) || g_fDrawBuffer) {
-             break;
+             return 1;
         }
         return DefWindowProc(hWnd, message, wParam, lParam);
     }
@@ -2443,8 +2449,8 @@ MidletTreeWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
                         if ((nType == TVI_TYPE_UNKNOWN) ||
                                 (pInfo->type == nType)) {
                             // Delegate message processing to MIDlet info view
-                            PostMessage(g_hInfoDlg, (UINT)wCmd,
-                                        (WPARAM)pInfo, 0);
+                            PostMessage(g_hInfoDlg, WM_COMMAND, (WPARAM)wCmd,
+                                        (LPARAM)pInfo);
                         }
                     }
                 }
@@ -2457,8 +2463,8 @@ MidletTreeWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
                     TVI_INFO* pInfo = GetTviInfo(hWnd, hItem);
 
                     if (pInfo && (pInfo->type == TVI_TYPE_SUITE)) {
-                        PostMessage(g_hPermissionsDlg, (UINT)wCmd,
-                                    (WPARAM)pInfo, 0);
+                        PostMessage(g_hPermissionsDlg, WM_COMMAND,
+                                    (WPARAM)wCmd, (LPARAM)pInfo);
                     }
                 }
                 break;
@@ -2518,7 +2524,7 @@ MidletTreeWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
                          jFolderId = pInfo->folderId;
                      }
 
-                     PostMessage(g_hInstallDlg, message, wParam,
+                     PostMessage(g_hInstallDlg, WM_COMMAND, (WPARAM)wCmd,
                                  (LPARAM)jFolderId);
                 }
                 break;
@@ -2649,165 +2655,177 @@ InfoWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
 
     switch (message) {
 
-    case IDM_INFO:
-    case IDM_FOLDER_INFO:
-    case IDM_SUITE_INFO:
-    case IDM_MIDLET_INFO: {
-        TCHAR szBuf[256];
-        javacall_ams_suite_info* pSuiteInfo;
-        javacall_ams_folder_info* pFolderInfo;
-        TVI_INFO* pInfo = (TVI_INFO*)wParam;
+    case WM_COMMAND: {
 
-        // Clear old content
-        TreeView_DeleteAllItems(hWnd);
+        switch (wParam) {
 
-        // Set the position info to default
-        hPrev = (HTREEITEM)TVI_FIRST; 
-        hPrevLev1Item = NULL; 
-        hPrevLev2Item = NULL;
+        case IDM_INFO:
+        case IDM_FOLDER_INFO:
+        case IDM_SUITE_INFO:
+        case IDM_MIDLET_INFO: {
+            TCHAR szBuf[256];
+            javacall_ams_suite_info* pSuiteInfo;
+            javacall_ams_folder_info* pFolderInfo;
+            TVI_INFO* pInfo = (TVI_INFO*)wParam;
 
-        if (pInfo) {
-            switch (pInfo->type) {
+            // Clear old content
+            TreeView_DeleteAllItems(hWnd);
 
-            case TVI_TYPE_SUITE: {
-                res = java_ams_suite_get_info(pInfo->suiteId, &pSuiteInfo);
+            // Set the position info to default
+            hPrev = (HTREEITEM)TVI_FIRST; 
+            hPrevLev1Item = NULL; 
+            hPrevLev2Item = NULL;
 
-    	        if (res == JAVACALL_OK) {
-                    wsprintf(szBuf, _T("Suite: %s"), pInfo->displayName);
-                    AddTreeItem(hWnd, szBuf, 1, NULL);
+            if (pInfo) {
+                switch (pInfo->type) {
 
-                    if (pSuiteInfo->suiteVendor) {
-                        wsprintf(szBuf, _T("Vendor: %s"),
-                            pSuiteInfo->suiteVendor);
-                        AddTreeItem(hWnd, szBuf, 1, NULL);
-                    }
+                case TVI_TYPE_SUITE: {
+                    res = java_ams_suite_get_info(pInfo->suiteId, &pSuiteInfo);
 
-                    if (pSuiteInfo->suiteVersion) {
-                        wsprintf(szBuf, _T("Version: %s"),
-                            pSuiteInfo->suiteVersion);
-                        AddTreeItem(hWnd, szBuf, 1, NULL);
-                    }
-
-                    res = java_ams_suite_get_folder_info(pSuiteInfo->folderId,
-                               &pFolderInfo);
-
-                    if (res == JAVACALL_OK) {
-                        wsprintf(szBuf, _T("Folder: %s"),
-                                 pFolderInfo->folderName);
+    	            if (res == JAVACALL_OK) {
+                        wsprintf(szBuf, _T("Suite: %s"), pInfo->displayName);
                         AddTreeItem(hWnd, szBuf, 1, NULL);
 
-                        java_ams_suite_free_folder_info(pFolderInfo);
-                    }
+                        if (pSuiteInfo->suiteVendor) {
+                            wsprintf(szBuf, _T("Vendor: %s"),
+                                pSuiteInfo->suiteVendor);
+                            AddTreeItem(hWnd, szBuf, 1, NULL);
+                        }
 
-                    LPTSTR pszPreinstalled =
-                        (pSuiteInfo->isPreinstalled == JAVACALL_TRUE) ?
-                        _T("Yes") : _T("No");
-                    wsprintf(szBuf, _T("Preinstalled: %s"), pszPreinstalled);
-                    AddTreeItem(hWnd, szBuf, 1, NULL);
-
-                    LPTSTR pszTrusted =
-                        (pSuiteInfo->isTrusted == JAVACALL_TRUE) ?
-                        _T("Yes") : _T("No");
-                    wsprintf(szBuf, _T("Trusted: %s"), pszTrusted);
-                    AddTreeItem(hWnd, szBuf, 1, NULL);
-
-                    LPTSTR pszEnabled =
-                        (pSuiteInfo->isEnabled == JAVACALL_TRUE) ?
-                        _T("Yes") : _T("No");
-                    wsprintf(szBuf, _T("Enabled: %s"), pszEnabled);
-                    AddTreeItem(hWnd, szBuf, 1, NULL);
-
-                    wsprintf(szBuf, _T("Number of MIDlets: %d"),
-                        (int)pSuiteInfo->numberOfMidlets);
-                    AddTreeItem(hWnd, szBuf, 1, NULL);
-
-                    wsprintf(szBuf, _T("JAD size: %d"),
-                        (int)pSuiteInfo->jadSize);
-                    AddTreeItem(hWnd, szBuf, 1, NULL);
-
-                    wsprintf(szBuf, _T("JAR size: %d"),
-                        (int)pSuiteInfo->jarSize);
-                    AddTreeItem(hWnd, szBuf, 1, NULL);
-
-                    if (pSuiteInfo->installTime) {
-                        time_t time = (time_t)pSuiteInfo->installTime;
-                        // IMPL_NOTE: if wsprintf doesn't convert char* to
-                        // WCHAR* coorect then try to use MultiByteToWideChar
-                        // function for this purpose. 
-                        wsprintf(szBuf, _T("Installed on: %S"), ctime(&time));
-                        AddTreeItem(hWnd, szBuf, 1, NULL);
-                    }
-
-                    java_ams_suite_free_info(pSuiteInfo);
-                }
-
-                break;
-            }
-
-            case TVI_TYPE_MIDLET: {
-                    wsprintf(szBuf, _T("MIDlet: %s"), pInfo->displayName);
-                    AddTreeItem(hWnd, szBuf, 1, NULL);
-
-                    res = java_ams_suite_get_info(pInfo->suiteId, &pSuiteInfo);        
-                    if (res == JAVACALL_OK) {
-                        wsprintf(szBuf, _T("Suite: %s"),
-                                 pSuiteInfo->displayName);
-                        AddTreeItem(hWnd, szBuf, 1, NULL);
+                        if (pSuiteInfo->suiteVersion) {
+                            wsprintf(szBuf, _T("Version: %s"),
+                                pSuiteInfo->suiteVersion);
+                            AddTreeItem(hWnd, szBuf, 1, NULL);
+                        }
 
                         res = java_ams_suite_get_folder_info(
                             pSuiteInfo->folderId, &pFolderInfo);
 
                         if (res == JAVACALL_OK) {
                             wsprintf(szBuf, _T("Folder: %s"),
-                                     pFolderInfo->folderName);
+                                    pFolderInfo->folderName);
                             AddTreeItem(hWnd, szBuf, 1, NULL);
 
                             java_ams_suite_free_folder_info(pFolderInfo);
                         }
 
+                        LPTSTR pszPreinstalled =
+                            (pSuiteInfo->isPreinstalled == JAVACALL_TRUE) ?
+                            _T("Yes") : _T("No");
+                        wsprintf(szBuf, _T("Preinstalled: %s"),
+                            pszPreinstalled);
+                        AddTreeItem(hWnd, szBuf, 1, NULL);
+
+                        LPTSTR pszTrusted =
+                            (pSuiteInfo->isTrusted == JAVACALL_TRUE) ?
+                            _T("Yes") : _T("No");
+                        wsprintf(szBuf, _T("Trusted: %s"), pszTrusted);
+                        AddTreeItem(hWnd, szBuf, 1, NULL);
+
+                        LPTSTR pszEnabled =
+                            (pSuiteInfo->isEnabled == JAVACALL_TRUE) ?
+                            _T("Yes") : _T("No");
+                        wsprintf(szBuf, _T("Enabled: %s"), pszEnabled);
+                        AddTreeItem(hWnd, szBuf, 1, NULL);
+
+                        wsprintf(szBuf, _T("Number of MIDlets: %d"),
+                            (int)pSuiteInfo->numberOfMidlets);
+                        AddTreeItem(hWnd, szBuf, 1, NULL);
+
+                        wsprintf(szBuf, _T("JAD size: %d"),
+                            (int)pSuiteInfo->jadSize);
+                        AddTreeItem(hWnd, szBuf, 1, NULL);
+
+                        wsprintf(szBuf, _T("JAR size: %d"),
+                            (int)pSuiteInfo->jarSize);
+                        AddTreeItem(hWnd, szBuf, 1, NULL);
+
+                        if (pSuiteInfo->installTime) {
+                            time_t time = (time_t)pSuiteInfo->installTime;
+                            // IMPL_NOTE: if wsprintf doesn't convert char* to
+                            // WCHAR* coorect then try to use
+                            // MultiByteToWideChar function for this purpose.
+                            wsprintf(szBuf, _T("Installed on: %S"),
+                                ctime(&time));
+                            AddTreeItem(hWnd, szBuf, 1, NULL);
+                        }
 
                         java_ams_suite_free_info(pSuiteInfo);
                     }
 
-                    LPTSTR pszRunning =
-                        (pInfo->appId != JAVACALL_INVALID_APP_ID) ?
-                        _T("Yes") : _T("No");
-                    wsprintf(szBuf, _T("Running: %s"), pszRunning);
-                    AddTreeItem(hWnd, szBuf, 1, NULL);
+                    break;
+                }
 
-                break;
-            }
-
-            case TVI_TYPE_FOLDER: {
-                    int nSuiteCount;
-                    javacall_suite_id* pSuiteIds;
-
-                    wsprintf(szBuf, _T("Folder: %s"), pInfo->displayName);
-                    AddTreeItem(hWnd, szBuf, 1, NULL);
-
-                    res = java_ams_suite_get_suites_in_folder(pInfo->folderId,
-                                                              &pSuiteIds,
-                                                              &nSuiteCount);
-                    if (res == JAVACALL_OK) {
-                        wsprintf(szBuf, _T("Number of suites: %d"), nSuiteCount);
+                case TVI_TYPE_MIDLET: {
+                        wsprintf(szBuf, _T("MIDlet: %s"), pInfo->displayName);
                         AddTreeItem(hWnd, szBuf, 1, NULL);
 
-                        java_ams_suite_free_suite_ids(pSuiteIds, nSuiteCount);
-                    }
-               
+                        res = java_ams_suite_get_info(pInfo->suiteId,
+                                                      &pSuiteInfo);
+                        if (res == JAVACALL_OK) {
+                            wsprintf(szBuf, _T("Suite: %s"),
+                                    pSuiteInfo->displayName);
+                            AddTreeItem(hWnd, szBuf, 1, NULL);
+
+                            res = java_ams_suite_get_folder_info(
+                                pSuiteInfo->folderId, &pFolderInfo);
+
+                            if (res == JAVACALL_OK) {
+                                wsprintf(szBuf, _T("Folder: %s"),
+                                        pFolderInfo->folderName);
+                                AddTreeItem(hWnd, szBuf, 1, NULL);
+
+                                java_ams_suite_free_folder_info(pFolderInfo);
+                            }
+
+
+                            java_ams_suite_free_info(pSuiteInfo);
+                        }
+
+                        LPTSTR pszRunning =
+                            (pInfo->appId != JAVACALL_INVALID_APP_ID) ?
+                            _T("Yes") : _T("No");
+                        wsprintf(szBuf, _T("Running: %s"), pszRunning);
+                        AddTreeItem(hWnd, szBuf, 1, NULL);
 
                     break;
-            }
+                }
 
-            default: {
-                AddTreeItem(hWnd, _T("Not implemented yet!"), 1, NULL);
+                case TVI_TYPE_FOLDER: {
+                        int nSuiteCount;
+                        javacall_suite_id* pSuiteIds;
 
-                break;
-            }
+                        wsprintf(szBuf, _T("Folder: %s"), pInfo->displayName);
+                        AddTreeItem(hWnd, szBuf, 1, NULL);
 
-            }  // end case
+                        res = java_ams_suite_get_suites_in_folder(
+                            pInfo->folderId, &pSuiteIds, &nSuiteCount);
+                        if (res == JAVACALL_OK) {
+                            wsprintf(szBuf, _T("Number of suites: %d"),
+                                nSuiteCount);
+                            AddTreeItem(hWnd, szBuf, 1, NULL);
 
-        } // end if (pInfo)
+                            java_ams_suite_free_suite_ids(pSuiteIds,
+                                                          nSuiteCount);
+                        }                   
+
+                        break;
+                }
+
+                default: {
+                    AddTreeItem(hWnd, _T("Not implemented yet!"), 1, NULL);
+
+                    break;
+                }
+
+                }  // end case
+
+            } // end if (pInfo)
+
+            break;
+        }
+
+        } // end of switch (wParam)
 
         break;
     }
@@ -2848,14 +2866,16 @@ PermissionWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
 
         WORD wCmd = LOWORD(wParam);
 
-        if (wCmd == IDOK) {
+        switch (wCmd) {
+
+        case IDOK: {
             hItem = TreeView_GetRoot(hWnd);
             while (hItem) {
                 pInfo = GetTviInfo(hWnd, hItem);
                 if (pInfo && (pInfo->type == TVI_TYPE_PERMISSION)) {
                     if (pInfo->modified) {
                         res = java_ams_suite_set_permission(pInfo->suiteId,
-                                                           pInfo->permId,
+                                                            pInfo->permId,
                                                             pInfo->permValue);
 
                         wprintf(_T("java_ams_suite_set_permission(%d, %d, %d)")
@@ -2868,7 +2888,74 @@ PermissionWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
                 hItem = TreeView_GetNextSibling(hWnd, hItem);
             }
 
+            break;
         }
+
+        case IDM_SUITE_SETTINGS: {
+            TVI_INFO* pInfo = (TVI_INFO*)wParam;
+            javacall_ams_permission_val
+                jpvPermissions[JAVACALL_AMS_NUMBER_OF_PERMISSIONS];
+            javacall_suite_id suiteId;
+
+            // Clear old content
+            TreeView_DeleteAllItems(hWnd);
+
+            // Set the position info to default
+            hPrev = (HTREEITEM)TVI_FIRST; 
+            hPrevLev1Item = NULL; 
+            hPrevLev2Item = NULL;
+
+            if (pInfo) {
+                suiteId = pInfo->suiteId;
+
+                wprintf(_T("Displaying settings for suite id=%d...\n"), (int)suiteId);
+
+                res = java_ams_suite_get_permissions(suiteId, jpvPermissions);
+                if (res == JAVACALL_OK) {
+                    javacall_ams_permission_val jpvVal;
+                    TCHAR szBuf[127];
+                    int nIndex;
+
+                    for (int p = 0; p < JAVACALL_AMS_NUMBER_OF_PERMISSIONS; p++) {
+                        jpvVal = jpvPermissions[p];
+
+                        if (jpvVal == JAVACALL_AMS_PERMISSION_VAL_INVALID ||
+                            jpvVal == JAVACALL_AMS_PERMISSION_VAL_NEVER ||
+                            jpvVal == JAVACALL_AMS_PERMISSION_VAL_ALLOW) {
+                            continue;
+                        }
+
+                        nIndex = PermissionValueToIndex(jpvVal);
+                        if ((nIndex < 0) || (nIndex >= PERMISSION_VAL_NUM)) {
+                            continue;
+                        }
+
+                        wsprintf(szBuf, _T("Permission %d"), p);
+
+                        pInfo = CreateTviInfo();
+                        pInfo->type = TVI_TYPE_PERMISSION;
+                        pInfo->suiteId = suiteId;
+                        pInfo->permId = (javacall_ams_permission)p;
+                        pInfo->permValue = jpvVal;
+
+                        AddTreeItem(hWnd, szBuf, 1, pInfo);
+
+                        for (int n = PERMISSION_VAL_NUM; n > 0; n--) {
+                            pInfo = CreateTviInfo();
+                            pInfo->type = TVI_TYPE_PERMISSION;
+                            pInfo->suiteId = suiteId;
+                            pInfo->permId = (javacall_ams_permission)p;
+                            pInfo->permValue = g_jpvPermissionValues[n - 1];
+
+                            AddTreeItem(hWnd, g_szPermissionNames[n - 1], 2, pInfo);
+                        }
+                    }
+                }
+            }
+            break;
+        }
+
+        } // end of switch (wCmd)
 
         break;
     }
@@ -2912,71 +2999,6 @@ PermissionWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
             }
         }
 
-        break;
-    }
-
-
-    case IDM_SUITE_SETTINGS: {
-        TVI_INFO* pInfo = (TVI_INFO*)wParam;
-        javacall_ams_permission_val
-            jpvPermissions[JAVACALL_AMS_NUMBER_OF_PERMISSIONS];
-        javacall_suite_id suiteId;
-
-        // Clear old content
-        TreeView_DeleteAllItems(hWnd);
-
-        // Set the position info to default
-        hPrev = (HTREEITEM)TVI_FIRST; 
-        hPrevLev1Item = NULL; 
-        hPrevLev2Item = NULL;
-
-        if (pInfo) {
-            suiteId = pInfo->suiteId;
-
-            wprintf(_T("Displaying settings for suite id=%d...\n"), (int)suiteId);
-
-            res = java_ams_suite_get_permissions(suiteId, jpvPermissions);
-            if (res == JAVACALL_OK) {
-                javacall_ams_permission_val jpvVal;
-                TCHAR szBuf[127];
-                int nIndex;
-
-                for (int p = 0; p < JAVACALL_AMS_NUMBER_OF_PERMISSIONS; p++) {
-                    jpvVal = jpvPermissions[p];
-
-                    if (jpvVal == JAVACALL_AMS_PERMISSION_VAL_INVALID ||
-                        jpvVal == JAVACALL_AMS_PERMISSION_VAL_NEVER ||
-                        jpvVal == JAVACALL_AMS_PERMISSION_VAL_ALLOW) {
-                        continue;
-                    }
-
-                    nIndex = PermissionValueToIndex(jpvVal);
-                    if ((nIndex < 0) || (nIndex >= PERMISSION_VAL_NUM)) {
-                        continue;
-                    }
-
-                    wsprintf(szBuf, _T("Permission %d"), p);
-
-                    pInfo = CreateTviInfo();
-                    pInfo->type = TVI_TYPE_PERMISSION;
-                    pInfo->suiteId = suiteId;
-                    pInfo->permId = (javacall_ams_permission)p;
-                    pInfo->permValue = jpvVal;
-
-                    AddTreeItem(hWnd, szBuf, 1, pInfo);
-
-                    for (int n = PERMISSION_VAL_NUM; n > 0; n--) {
-                        pInfo = CreateTviInfo();
-                        pInfo->type = TVI_TYPE_PERMISSION;
-                        pInfo->suiteId = suiteId;
-                        pInfo->permId = (javacall_ams_permission)p;
-                        pInfo->permValue = g_jpvPermissionValues[n - 1];
-
-                        AddTreeItem(hWnd, g_szPermissionNames[n - 1], 2, pInfo);
-                    }
-                }
-            }
-        }
         break;
     }
 

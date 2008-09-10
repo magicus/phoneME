@@ -58,7 +58,7 @@ void java_ams_operation_completed(javacall_opcode operation,
             (int)operation, (int)appId);
 
     if (operation == JAVACALL_OPCODE_INSTALL_SUITE) {
-        PostProgressMessage(IDM_JAVA_AMS_INSTALL_COMPLETE,
+        PostProgressMessage(WM_JAVA_AMS_INSTALL_COMPLETE,
                             (WPARAM)appId, (LPARAM)pResult);
     }    
 }
@@ -108,7 +108,7 @@ java_ams_install_report_progress(javacall_ams_install_state* pInstallState,
     WPARAM wParam = (WPARAM)MAKELONG((WORD)currStepPercentDone,
                                      (WORD)totalPercentDone);
 
-    PostProgressMessage(IDM_JAVA_AMS_INSTALL_STATUS,
+    PostProgressMessage(WM_JAVA_AMS_INSTALL_STATUS,
                         wParam, (LPARAM)pInstallState);    
 }
 
@@ -208,7 +208,7 @@ java_ams_install_ask(javacall_ams_install_request_code requestCode,
     wprintf(_T(">>> java_ams_install_ask(), requestCode = %d\n"), requestCode);
 
 
-    BOOL fRes = PostProgressMessage(IDM_JAVA_AMS_INSTALL_ASK,
+    BOOL fRes = PostProgressMessage(WM_JAVA_AMS_INSTALL_ASK,
                                     (WPARAM)requestCode,
                                     (LPARAM)pInstallState);
 
