@@ -104,8 +104,8 @@ public class TestKeyEventSimulation extends TestCase {
 
 
         // simulate 'B'
-        a.simulateKeyEvent('b', AutoKeyState.PRESSED);
-        a.simulateKeyEvent('b', AutoKeyState.RELEASED);
+        a.simulateKeyEvent('b', AutoKeyState.PRESSED, 0);
+        a.simulateKeyEvent('b', AutoKeyState.RELEASED, 0);
         
         try {
             Thread.sleep(500);

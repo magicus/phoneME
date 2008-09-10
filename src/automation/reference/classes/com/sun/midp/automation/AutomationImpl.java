@@ -114,67 +114,92 @@ final class AutomationImpl extends Automation {
         eventQueue.sendNativeEventToIsolate(nativeEvent,forgeroundIsolateId);
     }
 
-    public void simulateEvents(AutoEventSequence events, int speedDivisor) {
+    public void simulateEvents(AutoEventSequence events, 
+            double speedAdjustment) {
+
+        AutoEvent[] arr = events.getEvents();
+        for (int i = 0; i < arr.length; ++i) {
+            AutoEvent event = arr[i];
+
+            if (event.getType() == AutoEventType.DELAY) {
+                AutoDelayEvent delayEvent = (AutoDelayEvent)event;
+                double msec = delayEvent.getMsec();
+                simulateDelayEvent((int)(msec/speedAdjustment));
+            } else {
+                simulateEvents(event);
+            }
+        }        
     }
 
     public void simulateEvents(AutoEventSequence events) {
-        simulateEvents(events, 1);
+        AutoEvent[] arr = events.getEvents();
+        for (int i = 0; i < arr.length; ++i) {
+            simulateEvents(arr[i]);
+        }
     }
     
     
-    public void simulateKeyEvent(AutoKeyCode keyCode, AutoKeyState keyState) {
+    public void simulateKeyEvent(AutoKeyCode keyCode, AutoKeyState keyState, 
+            int delayMsec) {
+
+        if (delayMsec != 0) {
+            simulateDelayEvent(delayMsec);
+        }
+
         AutoEvent e = eventFactory.createKeyEvent(keyCode, keyState);
         simulateEvents(e);
     }
     
-    public void simulateKeyEvent(char keyChar, AutoKeyState keyState) {
+    public void simulateKeyEvent(char keyChar, AutoKeyState keyState, 
+            int delayMsec) {
+
+        if (delayMsec != 0) {
+            simulateDelayEvent(delayMsec);
+        }
+
         AutoEvent e = eventFactory.createKeyEvent(keyChar, keyState);
         simulateEvents(e);
     }
-
-    public void simulateKeyClick(AutoKeyCode keyCode) {
-        simulateKeyClick(keyCode, 0);
-    }
-    
 
     public void simulateKeyClick(AutoKeyCode keyCode, int delayMsec) 
         throws IllegalArgumentException {
 
         AutoEvent e;
 
+        if (delayMsec != 0) {
+            simulateDelayEvent(delayMsec);
+        }        
+
         e = eventFactory.createKeyEvent(keyCode, AutoKeyState.PRESSED);
         simulateEvents(e);
 
         e = eventFactory.createKeyEvent(keyCode, AutoKeyState.RELEASED);
         simulateEvents(e);
-
-        if (delayMsec != 0) {
-            simulateDelayEvent(delayMsec);
-        }
     }
     
-    public void simulateKeyClick(char keyChar) {
-        simulateKeyClick(keyChar, 0);
-    }    
-
     public void simulateKeyClick(char keyChar, int delayMsec) 
         throws IllegalArgumentException {
 
         AutoEvent e;
+
+        if (delayMsec != 0) {
+            simulateDelayEvent(delayMsec);
+        }        
 
         e = eventFactory.createKeyEvent(keyChar, AutoKeyState.PRESSED);
         simulateEvents(e);
 
         e = eventFactory.createKeyEvent(keyChar, AutoKeyState.RELEASED);
         simulateEvents(e);
+    }
+
+    public void simulatePenEvent(int x, int y, AutoPenState penState, 
+            int delayMsec) 
+        throws IllegalStateException {
 
         if (delayMsec != 0) {
             simulateDelayEvent(delayMsec);
-        }
-    }
-
-    public void simulatePenEvent(int x, int y, AutoPenState penState) 
-        throws IllegalStateException {
+        }        
 
         AutoEvent e = eventFactory.createPenEvent(x, y, penState);
         simulateEvents(e);
