@@ -1330,7 +1330,7 @@ InstallDlgProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam) {
         }
     } // end of case WM_COMMAND
 
-    } // end of switch(uMsg)
+    } // end of switch (uMsg)
 
     return FALSE;
 }
@@ -1458,35 +1458,115 @@ ProgressDlgProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam) {
     }
 
     case WM_JAVA_AMS_INSTALL_STATUS: {
-       HWND hOperProgress, hTotalProgress;
+       static nDownloaded = 0;
+
+       HWND hOperProgress, hTotalProgress, hEditInfo;
        WORD wCurProgress, wTotalProgress;
+       javacall_ams_install_status status;
+       TCHAR szBuf[127];
+       LPTSTR pszInfo;
 
        hOperProgress = GetDlgItem(hwndDlg, IDC_PROGRESS_OPERATION);
+
+       if (hOperProgress) {
+           wCurProgress = LOWORD(wParam);
+
+            // Validate progress values
+           if (wCurProgress < 0) {
+               wCurProgress = 0;
+           } else if (wCurProgress > 100) {
+              wCurProgress = 100;
+           }
+       
+           SendMessage(hOperProgress, PBM_SETPOS, (WPARAM)wCurProgress, 0);
+       }
+
        hTotalProgress = GetDlgItem(hwndDlg, IDC_PROGRESS_TOTAL);
 
-       wCurProgress   = LOWORD(wParam);
-       wTotalProgress = HIWORD(wParam);
+       if (hTotalProgress) {
+           wTotalProgress = HIWORD(wParam);
 
-       // Validate progress values
-       if (wCurProgress < 0) {
-           wCurProgress = 0;
-       } else if (wCurProgress > 100) {
-           wCurProgress = 100;
+           if (wTotalProgress < 0) {
+              wTotalProgress = 0;
+           } else if (wTotalProgress > 100) {
+              wTotalProgress = 100;
+           }
+
+           SendMessage(hTotalProgress, PBM_SETPOS, (WPARAM)wTotalProgress, 0);
        }
-       if (wTotalProgress < 0) {
-           wTotalProgress = 0;
-       } else if (wTotalProgress > 100) {
-           wTotalProgress = 100;
+
+       hEditInfo = GetDlgItem(hwndDlg, IDC_EDIT_INFO);
+
+       if (hEditInfo) {
+           status = (javacall_ams_install_status)lParam;
+
+           switch (status) {
+
+           case JAVACALL_INSTALL_STATUS_DOWNLOADING_JAD:
+           case JAVACALL_INSTALL_STATUS_DOWNLOADING_JAR: {
+               nDownloaded = 0;
+
+               pszInfo =  (status == JAVACALL_INSTALL_STATUS_DOWNLOADING_JAD) ?
+                   _T("JAD") : _T("JAR");
+               wsprintf(szBuf, _T("Downloading of the %s is started"), pszInfo);
+               break;
+           }
+
+           case JAVACALL_INSTALL_STATUS_DOWNLOADED_1K_OF_JAD:
+           case JAVACALL_INSTALL_STATUS_DOWNLOADED_1K_OF_JAR: {
+               nDownloaded++;
+
+               wsprintf(szBuf, _T("%dK downloaded"), nDownloaded);
+               break;
+           }
+
+           case JAVACALL_INSTALL_STATUS_VERIFYING_SUITE: {
+               wsprintf(szBuf, _T("Verifing the suite..."));
+               break;
+           }
+
+           case JAVACALL_INSTALL_STATUS_GENERATING_APP_IMAGE: {
+               wsprintf(szBuf, _T("Generating application image..."));
+               break;
+           }
+
+           case JAVACALL_INSTALL_STATUS_VERIFYING_SUITE_CLASSES: {
+               wsprintf(szBuf, _T("Verifing classes of the suite..."));
+               break;
+           }
+
+           case JAVACALL_INSTALL_STATUS_STORING_SUITE: {
+               wsprintf(szBuf, _T("Storing the suite..."));
+               break;
+           }
+
+           default: {
+               // Show no text if status is unknown
+               wsprintf(szBuf, _T(""));
+               break;
+           }
+
+           } // end of switch (installStatus)
+
+            SendMessage(hEditInfo, WM_SETTEXT, 0, (LPARAM)szBuf);
        }
-       
-       SendMessage(hOperProgress, PBM_SETPOS, (WPARAM)wCurProgress, 0);
-       SendMessage(hTotalProgress, PBM_SETPOS, (WPARAM)wTotalProgress, 0);
 
        break;
     }
 
-    case WM_JAVA_AMS_INSTALL_COMPLETE: {
-       MessageBox(hwndDlg, _T("Installation is completed!"), g_szTitle, NULL);
+    case WM_JAVA_AMS_INSTALL_FINISHED: {
+       javacall_ams_install_data* pResult = (javacall_ams_install_data*)lParam;
+
+       if (pResult && 
+               (pResult->installStatus == JAVACALL_INSTALL_STATUS_COMPLETED) &&
+               (pResult->installResultCode == JAVACALL_INSTALL_EXC_ALL_OK)) {
+           MessageBox(hwndDlg, _T("Installation completed!"), g_szTitle,
+                      MB_ICONINFORMATION | MB_OK);
+       } else {
+           MessageBox(hwndDlg, _T("Installation failed!"), g_szTitle,
+                      MB_ICONERROR | MB_OK);
+       }
+
        break;
     }
 
@@ -1853,7 +1933,7 @@ MainWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
     case WM_COMMAND: {
         WORD wCmd = LOWORD(wParam);
 
-        switch(wCmd) {
+        switch (wCmd) {
             case IDM_WINDOW_APP_MANAGER: {
                 java_ams_midlet_switch_background();
 
@@ -2364,7 +2444,7 @@ MidletTreeWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
             TVI_INFO* pInfo = GetTviInfo(hWnd, hItem);
             if (pInfo) {
                 HMENU hSubMenu;
-                switch(pInfo->type)
+                switch (pInfo->type)
                 {
                     case TVI_TYPE_SUITE:
                         hSubMenu = GetSubMenu(g_hSuitePopupMenu, 0);
@@ -2415,7 +2495,7 @@ MidletTreeWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
         // Test for the identifier of a command item.
         WORD wCmd = LOWORD(wParam);
 
-        switch(wCmd)
+        switch (wCmd)
         {
             case IDM_INFO:
             case IDM_FOLDER_INFO:
@@ -2426,7 +2506,7 @@ MidletTreeWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
                     TVI_INFO* pInfo = GetTviInfo(hWnd, hItem);
                     if (pInfo) {
                         tvi_type nType;
-                        switch(wCmd) {
+                        switch (wCmd) {
                             case IDM_MIDLET_INFO:
                                 nType = TVI_TYPE_MIDLET;
                                 break;
@@ -3070,7 +3150,7 @@ static int mapKey(WPARAM wParam, LPARAM lParam) {
     BYTE keyStates[256];
     WORD temp[2];
 
-    switch(wParam) {
+    switch (wParam) {
         case VK_F1:
             return JAVACALL_KEY_SOFT1;
 

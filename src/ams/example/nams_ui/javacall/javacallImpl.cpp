@@ -58,7 +58,7 @@ void java_ams_operation_completed(javacall_opcode operation,
             (int)operation, (int)appId);
 
     if (operation == JAVACALL_OPCODE_INSTALL_SUITE) {
-        PostProgressMessage(WM_JAVA_AMS_INSTALL_COMPLETE,
+        PostProgressMessage(WM_JAVA_AMS_INSTALL_FINISHED,
                             (WPARAM)appId, (LPARAM)pResult);
     }    
 }
@@ -111,7 +111,7 @@ java_ams_install_report_progress(const javacall_ams_install_state* pInstallState
                                      (WORD)totalPercentDone);
 
     PostProgressMessage(WM_JAVA_AMS_INSTALL_STATUS,
-                        wParam, (LPARAM)pInstallState);    
+                        wParam, (LPARAM)installStatus);
 }
 
 /**
