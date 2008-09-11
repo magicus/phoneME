@@ -132,21 +132,31 @@ KNIDECL(com_sun_midp_installer_InstallerPeerMIDlet_sendNativeRequest0) {
             KNI_SAVE_PCSL_STRING_FIELD(javaInstallState, clazz, "jarUrl",
                                        &pcslJarUrl, tmpHandle);
             strSize = pcsl_string_utf16_length(&pcslJarUrl);
-            jcInstallState.jarUrl = javacall_malloc((strSize + 1) << 1);
-            pcslRes = pcsl_string_convert_to_utf16(&pcslJarUrl,
-                (jchar*)jcInstallState.jarUrl, strSize, &convertedLength);
-            if (pcslRes != PCSL_STRING_OK) {
-                break;
+            if (strSize > 0) {
+                strSize++; /* for terminating NULL */
+                jcInstallState.jarUrl = javacall_malloc(strSize << 1);
+                pcslRes = pcsl_string_convert_to_utf16(&pcslJarUrl,
+                    (jchar*)jcInstallState.jarUrl, strSize, &convertedLength);
+                if (pcslRes != PCSL_STRING_OK) {
+                    break;
+                }
+            } else {
+                jcInstallState.jarUrl = NULL;
             }
 
             KNI_SAVE_PCSL_STRING_FIELD(javaInstallState, clazz, "suiteName",
                 &pcslSuiteName, tmpHandle);
             strSize = pcsl_string_utf16_length(&pcslSuiteName);
-            jcInstallState.suiteName = javacall_malloc((strSize + 1) << 1);
-            pcslRes = pcsl_string_convert_to_utf16(&pcslSuiteName,
-                (jchar*)jcInstallState.suiteName, strSize, &convertedLength);
-            if (pcslRes != PCSL_STRING_OK) {
-                break;
+            if (strSize > 0) {
+                strSize++; /* for terminating NULL */
+                jcInstallState.suiteName = javacall_malloc(strSize << 1);
+                pcslRes = pcsl_string_convert_to_utf16(&pcslSuiteName,
+                    (jchar*)jcInstallState.suiteName, strSize, &convertedLength);
+                if (pcslRes != PCSL_STRING_OK) {
+                    break;
+                }
+            } else {
+                jcInstallState.suiteName = NULL;
             }
 
             jcRes = JAVACALL_OK;
@@ -225,7 +235,7 @@ KNIDECL(com_sun_midp_installer_InstallerPeerMIDlet_sendNativeRequest0) {
  */
 KNIEXPORT KNI_RETURNTYPE_BOOLEAN
 KNIDECL(com_sun_midp_installer_InstallerPeerMIDlet_getAnswer0) {
-    if (g_fAnswerReady) {
+    if (g_fAnswerReady == JAVACALL_TRUE) {
         g_fAnswerReady = JAVACALL_FALSE;
         g_installerIsolateId = -1;
         return g_fAnswer;
