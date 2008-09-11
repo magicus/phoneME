@@ -26,7 +26,6 @@ package com.sun.mmedia.rtsp;
 
 import java.io.IOException;
 import java.io.InputStream;
-//import javax.microedition.io.*;
 import javax.microedition.media.Player;
 import javax.microedition.media.MediaException;
 import javax.microedition.media.protocol.SourceStream;
@@ -63,6 +62,9 @@ public class RtspDS extends BasicDS
                     "Accept: application/sdp\r\n" + userAgent + "\r\n\r\n";
 
                 connection.sendData( msg.getBytes() );
+
+                // TODO: determine actual content type
+                setContentType( "audio/x-wav" );
 
                 connected = true;
             } catch( RuntimeException re ) {
