@@ -94,7 +94,7 @@ final class MIDletSelector implements CommandListener {
      * List of midlets executed from this selector.
      */
     private Vector runningMidlets;
-
+    
     /**
      * Create and initialize a new Selector MIDlet.
      * The Display is retrieved and the list of MIDlets read
@@ -121,6 +121,7 @@ final class MIDletSelector implements CommandListener {
         manager = theManager;
         mcount = 0;
         minfo = new MIDletInfo[20];
+        suiteInfo.midletSelector = this;
 
         mss = MIDletSuiteStorage.getMIDletSuiteStorage();
 
@@ -132,7 +133,7 @@ final class MIDletSelector implements CommandListener {
 
         mlist.setCommandListener(this); // Listen for the selection
 
-        display.setCurrent(mlist);
+        show();
         
         runningMidlets = new Vector();
     }
@@ -145,11 +146,12 @@ final class MIDletSelector implements CommandListener {
         return suiteInfo;
     }
 
+    MIDletSuiteImpl msi = null;
     /**
      * Displays this selector on the screen.
      */
     public void show() {
-        selectedMidlet = -1;
+        lockSuite();
         display.setCurrent(mlist);
     }
 
@@ -164,11 +166,41 @@ final class MIDletSelector implements CommandListener {
     }
 
     /**
+     * Locks associated suite to prevent installation of new versions.
+     */
+    private void lockSuite() {
+        try {
+            if (msi == null) {
+                msi = MIDletSuiteStorage.getMIDletSuiteStorage().getMIDletSuite(
+                        suiteInfo.suiteId, false);
+            }
+        } catch (Exception e) {
+            /* not critical */
+        }
+    }
+
+    /**
+     * Unlocks associated suite.
+     */
+    private void unlockSuite() {
+        if (msi != null) {
+            try {
+                msi.close();
+            } catch (Exception e) {
+                /* not critical */
+            }
+            msi = null;
+        }
+    }
+    
+    /**
      * If no MIDlet is running, exit the suite.
      */
     public void exitIfNoMidletRuns() {
         if (runningMidlets.isEmpty()) {
+            unlockSuite();
             manager.notifySuiteExited(suiteInfo);
+            suiteInfo.midletSelector = null;
         }
     }
     
@@ -192,14 +224,10 @@ final class MIDletSelector implements CommandListener {
                 selectedMidlet = mlist.getSelectedIndex();
             }
 
+            unlockSuite();
             runningMidlets.addElement(minfo[selectedMidlet].classname);
             manager.launchSuite(suiteInfo, minfo[selectedMidlet].classname);
-            if (parentDisplayable != null) {
-                display.setCurrent(parentDisplayable);
-            } else {
-                selectedMidlet = -1;
-                display.setCurrent(mlist);
-            }
+            selectedMidlet = -1;
             return;
         }
 

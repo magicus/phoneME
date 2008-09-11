@@ -498,7 +498,7 @@ class AppManagerUIImpl extends Form
     public void showMidletSelector(RunningMIDletSuiteInfo msiToRun) {
         if (msiToRun != null) {
             try {
-                MIDletSelector selector = getMidletSelector(msiToRun.suiteId);
+                MIDletSelector selector = msiToRun.midletSelector;
                 if (selector != null) {
                     selector.show();
                     return;
@@ -574,6 +574,7 @@ class AppManagerUIImpl extends Form
                 } else {
                     appManager.showMidletSelector(msiToRun);
                 }
+                notifySuiteStarted(msiToRun);
                 return;
             }
 
@@ -651,6 +652,7 @@ class AppManagerUIImpl extends Form
         } else {
             appManager.showMidletSelector(msi);
         }        
+        notifySuiteStarted(msi);
     }
     
     /**
@@ -731,14 +733,22 @@ class AppManagerUIImpl extends Form
 
         } else if (c == fgCmd) {
 
-            manager.moveToForeground(msi);
-            display.setCurrent(this);
+            if (msi.proxy == null && msi.midletSelector != null) {
+                msi.midletSelector.show();
+            } else {
+                manager.moveToForeground(msi);
+                display.setCurrent(this);
+            }
 
         } else if (c == endCmd) {
-            exitingMidletSuiteId = msi.proxy.getSuiteId();
-            exitingMidletClassName = msi.proxy.getClassName();
-            manager.exitMidlet(msi);
-            display.setCurrent(this);
+            if (msi.proxy == null && msi.midletSelector != null) {
+                msi.midletSelector.exitIfNoMidletRuns();
+            } else {
+                exitingMidletSuiteId = msi.proxy.getSuiteId();
+                exitingMidletClassName = msi.proxy.getClassName();
+                manager.exitMidlet(msi);
+                display.setCurrent(this);
+            }
         } else if (c == changeFolderCmd) {
             if (foldersOn) {
                 folderList.removeCommand(exitCmd);
@@ -761,6 +771,44 @@ class AppManagerUIImpl extends Form
         // nothing to do    
     }
 
+    private void modifySuiteCommands(MidletCustomItem ci, boolean running) {
+        if (running) {
+            ci.removeCommand(launchCmd);
+            ci.removeCommand(launchInstallCmd);
+
+            if (appManager.caManagerIncluded()) {
+                ci.removeCommand(launchCaManagerCmd);
+            }
+
+            if (appManager.oddEnabled()) {
+                ci.removeCommand(launchODTAgentCmd);
+            }
+
+            ci.setDefaultCommand(fgCmd);
+            ci.addCommand(endCmd);
+        } else {
+            ci.removeCommand(fgCmd);
+            ci.removeCommand(endCmd);
+
+            if (ci.msi.midletToRun != null &&
+                ci.msi.midletToRun.equals(AppManagerPeer.DISCOVERY_APP)) {
+                ci.setDefaultCommand(launchInstallCmd);
+            } else if (appManager.caManagerIncluded() &&
+                ci.msi.midletToRun != null &&
+                ci.msi.midletToRun.equals(AppManagerPeer.CA_MANAGER)) {
+                ci.setDefaultCommand(launchCaManagerCmd);
+            } else if (appManager.oddEnabled() &&
+                ci.msi.midletToRun != null &&
+                ci.msi.midletToRun.equals(AppManagerPeer.ODT_AGENT)) {
+                ci.setDefaultCommand(launchODTAgentCmd);
+            } else {
+                if (ci.msi.enabled) {
+                    ci.setDefaultCommand(launchCmd);
+                }
+            }
+        }
+    }
+    
     /**
      * Called when a new midlet was launched.
      *
@@ -771,21 +819,29 @@ class AppManagerUIImpl extends Form
             MidletCustomItem ci = (MidletCustomItem)mciVector.elementAt(i);
 
             if (ci.msi == si) {
-                ci.removeCommand(launchCmd);
-                ci.removeCommand(launchInstallCmd);
-
-                if (appManager.caManagerIncluded()) {
-                    ci.removeCommand(launchCaManagerCmd);
+                if (si.midletSelector == null) {
+                    modifySuiteCommands(ci, true);
                 }
-
-                if (appManager.oddEnabled()) {
-                    ci.removeCommand(launchODTAgentCmd);
-                }
-
-                ci.setDefaultCommand(fgCmd);
-                ci.addCommand(endCmd);
                 // add item to midlet switcher
                 midletSwitcher.append(ci.msi);
+                return;
+            }
+        }
+    }
+
+    /**
+     * Called when a new suite was launched.
+     *
+     * @param si corresponding midlet suite info
+     */
+    public void notifySuiteStarted(RunningMIDletSuiteInfo si) {
+        for (int i = 0; i < mciVector.size(); i++) {
+            MidletCustomItem ci = (MidletCustomItem)mciVector.elementAt(i);
+
+            if (ci.msi == si) {
+                if (si.midletSelector != null) {
+                    modifySuiteCommands(ci, true);
+                }
                 return;
             }
         }
@@ -825,30 +881,14 @@ class AppManagerUIImpl extends Form
             MidletCustomItem ci = (MidletCustomItem)mciVector.elementAt(i);
 
             if (ci.msi == si) {
-                ci.removeCommand(fgCmd);
-                ci.removeCommand(endCmd);
-
-                if (ci.msi.midletToRun != null &&
-                    ci.msi.midletToRun.equals(AppManagerPeer.DISCOVERY_APP)) {
-                    ci.setDefaultCommand(launchInstallCmd);
-                } else if (appManager.caManagerIncluded() &&
-                    ci.msi.midletToRun != null &&
-                    ci.msi.midletToRun.equals(AppManagerPeer.CA_MANAGER)) {
-                    ci.setDefaultCommand(launchCaManagerCmd);
-                } else if (appManager.oddEnabled() &&
-                    ci.msi.midletToRun != null &&
-                    ci.msi.midletToRun.equals(AppManagerPeer.ODT_AGENT)) {
-                    ci.setDefaultCommand(launchODTAgentCmd);
-                } else {
-                    if (ci.msi.enabled) {
-                        ci.setDefaultCommand(launchCmd);
-                    }
+                if (si.midletSelector == null) {
+                    modifySuiteCommands(ci, false);
                 }
                 midletSwitcher.remove(ci.msi);
                 ci.update();
 
                 /* find appropriate MIDlet selector */
-                MIDletSelector selector = getMidletSelector(si.suiteId);
+                MIDletSelector selector = si.midletSelector;
                 if (selector != null) {
 
                     /* notify the selector that MIDlet was exited */
@@ -880,9 +920,19 @@ class AppManagerUIImpl extends Form
      * @param suiteInfo Suite which just exited
      */
     public void notifySuiteExited(RunningMIDletSuiteInfo suiteInfo) {
-        MIDletSelector selector = getMidletSelector(suiteInfo.suiteId);
+        MIDletSelector selector = suiteInfo.midletSelector;
         if (selector != null) {
             midletSelectors.removeElement(selector);
+            if (suiteInfo.midletSelector != null) {
+                for (int i = 0; i < mciVector.size(); i++) {
+                    MidletCustomItem ci = (MidletCustomItem)mciVector.elementAt(i);
+
+                    if (ci.msi == suiteInfo) {
+                        modifySuiteCommands(ci, false);
+                        break;
+                    }
+                }
+            }            
         }
     }
 
@@ -1492,7 +1542,7 @@ class AppManagerUIImpl extends Form
                 if (text != null && h >= ICON_FONT.getHeight()) {
 
                     int color;
-                    if (msi.proxy == null) {
+                    if (msi.proxy == null && msi.midletSelector == null) {
                         color = hasFocus ? ICON_HL_TEXT : ICON_TEXT;
                     } else {
                         color = hasFocus ?

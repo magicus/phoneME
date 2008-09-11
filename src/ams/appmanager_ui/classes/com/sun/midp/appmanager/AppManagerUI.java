@@ -66,6 +66,13 @@ interface AppManagerUI {
     void notifyMidletStarted(RunningMIDletSuiteInfo si);
 
     /**
+     * Called when a new suite was launched.
+     *
+     * @param si corresponding midlet suite info
+     */
+    void notifySuiteStarted(RunningMIDletSuiteInfo si);
+
+    /**
      * Called when state of a running midlet has changed.
      *
      * @param si corresponding midlet suite info
