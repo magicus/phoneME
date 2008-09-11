@@ -167,6 +167,14 @@ typedef struct _javacall_ams_install_data {
      * of the newly installed midlet suite.
      */
     javacall_suite_id suiteId;
+
+    /**
+     * If the installation is completed, holds the code indicating
+     * the result of the installation (JAVACALL_INSTALL_EXC_ALL_OK
+     * if succeeded).
+     */
+    javacall_ams_install_exception_code installResultCode;
+
     /**
      * This field is valid for JAVACALL_INSTALL_REQUEST_CONFIRM_REDIRECTION request.
      * It contains an URL where the HTTP(S) request is being redirected.
