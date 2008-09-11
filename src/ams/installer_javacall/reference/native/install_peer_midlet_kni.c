@@ -29,8 +29,10 @@
 #include <midpError.h>
 #include <midpUtilKni.h>
 #include <midpServices.h>
+#include <string.h>
 
 #include <suitestore_common.h>
+#include <suitestore_kni_util.h>
 
 #include <pcsl_memory.h> /* to have definition of NULL */
 
@@ -132,17 +134,17 @@ KNIDECL(com_sun_midp_installer_InstallerPeerMIDlet_sendNativeRequest0) {
             strSize = pcsl_string_utf16_length(&pcslJarUrl);
             jcInstallState.jarUrl = javacall_malloc((strSize + 1) << 1);
             pcslRes = pcsl_string_convert_to_utf16(&pcslJarUrl,
-                (jchar*)jarUrl, strSize, &convertedLength);
+                (jchar*)jcInstallState.jarUrl, strSize, &convertedLength);
             if (pcslRes != PCSL_STRING_OK) {
                 break;
             }
 
             KNI_SAVE_PCSL_STRING_FIELD(javaInstallState, clazz, "suiteName",
                 &pcslSuiteName, tmpHandle);
-            strSize = pcsl_string_utf16_length(&pcslsuiteName);
+            strSize = pcsl_string_utf16_length(&pcslSuiteName);
             jcInstallState.suiteName = javacall_malloc((strSize + 1) << 1);
             pcslRes = pcsl_string_convert_to_utf16(&pcslSuiteName,
-                (jchar*)suiteName, strSize, &convertedLength);
+                (jchar*)jcInstallState.suiteName, strSize, &convertedLength);
             if (pcslRes != PCSL_STRING_OK) {
                 break;
             }
