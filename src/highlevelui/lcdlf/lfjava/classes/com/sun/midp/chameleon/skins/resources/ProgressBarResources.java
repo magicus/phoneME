@@ -49,31 +49,31 @@ public class ProgressBarResources {
             return;
         }
         
-        ProgressBarSkin.ORIENTATION = SkinResources.getInt(
+        ProgressBarSkin.ORIENTATION = SkinLoader.getInt(
                 SkinPropertiesIDs.PBAR_ORIENT);
-        ProgressBarSkin.WIDTH = SkinResources.getInt(
+        ProgressBarSkin.WIDTH = SkinLoader.getInt(
                 SkinPropertiesIDs.PBAR_WIDTH);
-        ProgressBarSkin.HEIGHT = SkinResources.getInt(
+        ProgressBarSkin.HEIGHT = SkinLoader.getInt(
                 SkinPropertiesIDs.PBAR_HEIGHT);
-        ProgressBarSkin.METER_X = SkinResources.getInt(
+        ProgressBarSkin.METER_X = SkinLoader.getInt(
                 SkinPropertiesIDs.PBAR_METER_X);
-        ProgressBarSkin.METER_Y = SkinResources.getInt(
+        ProgressBarSkin.METER_Y = SkinLoader.getInt(
                 SkinPropertiesIDs.PBAR_METER_Y);
-        ProgressBarSkin.VALUE_X = SkinResources.getInt(
+        ProgressBarSkin.VALUE_X = SkinLoader.getInt(
                 SkinPropertiesIDs.PBAR_VALUE_X);
-        ProgressBarSkin.VALUE_Y = SkinResources.getInt(
+        ProgressBarSkin.VALUE_Y = SkinLoader.getInt(
                 SkinPropertiesIDs.PBAR_VALUE_Y);
-        ProgressBarSkin.VALUE_WIDTH = SkinResources.getInt(
+        ProgressBarSkin.VALUE_WIDTH = SkinLoader.getInt(
                 SkinPropertiesIDs.PBAR_VALUE_WIDTH);
-        ProgressBarSkin.IMAGE_BG = SkinResources.getImage(
+        ProgressBarSkin.IMAGE_BG = SkinLoader.getImage(
                 SkinPropertiesIDs.PBAR_IMAGE_BG);
-        ProgressBarSkin.IMAGE_METER_EMPTY = SkinResources.getImage(
+        ProgressBarSkin.IMAGE_METER_EMPTY = SkinLoader.getImage(
                 SkinPropertiesIDs.PBAR_IMAGE_MTR_EMPTY);
-        ProgressBarSkin.IMAGE_METER_FULL = SkinResources.getImage(
+        ProgressBarSkin.IMAGE_METER_FULL = SkinLoader.getImage(
                 SkinPropertiesIDs.PBAR_IMAGE_MTR_FULL);
-        ProgressBarSkin.IMAGE_VALUES = SkinResources.getImage(
+        ProgressBarSkin.IMAGE_VALUES = SkinLoader.getImage(
                 SkinPropertiesIDs.PBAR_IMAGE_VALUES);
-        ProgressBarSkin.IMAGE_PERCENTS = SkinResources.getImage(
+        ProgressBarSkin.IMAGE_PERCENTS = SkinLoader.getImage(
                 SkinPropertiesIDs.PBAR_IMAGE_PERCENTS);
             
         init = true;

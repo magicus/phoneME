@@ -48,30 +48,30 @@ public class TitleResources {
             return;
         }
         
-        TitleSkin.HEIGHT = SkinResources.getInt(
+        TitleSkin.HEIGHT = SkinLoader.getInt(
                 SkinPropertiesIDs.TITLE_HEIGHT);
-        TitleSkin.MARGIN = SkinResources.getInt(
+        TitleSkin.MARGIN = SkinLoader.getInt(
                 SkinPropertiesIDs.TITLE_MARGIN);
 
-        int alignX = SkinResources.getInt(
+        int alignX = SkinLoader.getInt(
                 SkinPropertiesIDs.TITLE_TEXT_ALIGN_X);
-        TitleSkin.TEXT_ALIGN_X = SkinResources.resourceConstantsToGraphics(
+        TitleSkin.TEXT_ALIGN_X = SkinLoader.resourceConstantsToGraphics(
                 alignX);
 
-        int shdAlign = SkinResources.getInt(
+        int shdAlign = SkinLoader.getInt(
                 SkinPropertiesIDs.TITLE_TEXT_SHD_ALIGN);
-        TitleSkin.TEXT_SHD_ALIGN = SkinResources.resourceConstantsToGraphics(
+        TitleSkin.TEXT_SHD_ALIGN = SkinLoader.resourceConstantsToGraphics(
                 shdAlign);
 
-        TitleSkin.COLOR_FG = SkinResources.getInt(
+        TitleSkin.COLOR_FG = SkinLoader.getInt(
                 SkinPropertiesIDs.TITLE_COLOR_FG);
-        TitleSkin.COLOR_FG_SHD = SkinResources.getInt(
+        TitleSkin.COLOR_FG_SHD = SkinLoader.getInt(
                 SkinPropertiesIDs.TITLE_COLOR_FG_SHD);
-        TitleSkin.COLOR_BG = SkinResources.getInt(
+        TitleSkin.COLOR_BG = SkinLoader.getInt(
                 SkinPropertiesIDs.TITLE_COLOR_BG);
-        TitleSkin.FONT = SkinResources.getFont(
+        TitleSkin.FONT = SkinLoader.getFont(
                 SkinPropertiesIDs.TITLE_FONT);
-        TitleSkin.IMAGE_BG = SkinResources.getCompositeImage(
+        TitleSkin.IMAGE_BG = SkinLoader.getCompositeImage(
                 SkinPropertiesIDs.TITLE_IMAGE_BG, 3);
 
         init = true;

@@ -59,7 +59,7 @@ SUBSYSTEM_LCDLF_NATIVE_FILES += \
     lfj_image_rom.c	
 
 
-$(GENERATED_DIR)/classes/com/sun/midp/chameleon/skins/resources/SkinResources.java : $(LCDLF_J_DIR)/classes/com/sun/midp/chameleon/skins/resources/SkinResources.jpp
+$(GENERATED_DIR)/classes/com/sun/midp/chameleon/skins/resources/SkinResourcesImpl.java : $(LCDLF_J_DIR)/classes/com/sun/midp/chameleon/skins/resources/SkinResourcesImpl.jpp
 	@$(call runjpp,$^,$@)
 
 $(GENERATED_DIR)/classes/com/sun/midp/chameleon/input/NativeInputMode.java : $(LCDLF_J_DIR)/classes/com/sun/midp/chameleon/input/NativeInputMode.jpp
@@ -161,7 +161,9 @@ SUBSYSTEM_LCDLF_JAVA_FILES += \
     $(LCDLF_J_DIR)/classes/com/sun/midp/chameleon/skins/resources/PTIResources.java \
     $(LCDLF_J_DIR)/classes/com/sun/midp/chameleon/skins/resources/InputModeResources.java \
     $(LCDLF_J_DIR)/classes/com/sun/midp/chameleon/skins/resources/VirtualKeyboardResources.java \
-    $(GENERATED_DIR)/classes/com/sun/midp/chameleon/skins/resources/SkinResources.java \
+    $(GENERATED_DIR)/classes/com/sun/midp/chameleon/skins/resources/SkinResourcesImpl.java \
+    $(LCDLF_J_DIR)/classes/com/sun/midp/chameleon/skins/resources/SkinResources.java \
+    $(LCDLF_J_DIR)/classes/com/sun/midp/chameleon/skins/resources/SkinLoader.java \
     $(LCDLF_J_DIR)/classes/com/sun/midp/chameleon/skins/resources/SkinResourcesConstants.java \
     $(LCDLF_J_DIR)/classes/com/sun/midp/chameleon/layers/AlertLayer.java \
     $(LCDLF_J_DIR)/classes/com/sun/midp/chameleon/layers/TitleLayer.java \
