@@ -430,16 +430,16 @@ override GENERATED_JAVA_LIST=$(MIDP_OUTPUT_DIR)/genjavalist.txt
 # This is not guaranteed to help in all cases, but at least reduce the 
 # possibility of it happening.
 define appendfiles
-    @if [ $(words $?) -gt 200 ]; then \
-        echo "ERROR: Java files list exceeds 200 words limit."; \
+    @if [ $(words $?) -gt 250 ]; then \
+        echo "ERROR: Java files list exceeds 250 words limit."; \
         echo "To increase the limit, edit appendfiles variable definition in Defs.gmk"; \
         exit 1; \
     fi
-    @_javalist="$(wordlist 1,100,$?)"; \
+    @_javalist="$(wordlist 1,125,$?)"; \
     if [ -n "$$_javalist" ]; then \
         echo "$$_javalist" >> $(1); \
     fi
-    @_javalist="$(wordlist 101,200,$?)"; \
+    @_javalist="$(wordlist 126,250,$?)"; \
     if [ -n "$$_javalist" ]; then \
         echo "$$_javalist" >> $(1); \
     fi
