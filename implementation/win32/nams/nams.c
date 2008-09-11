@@ -535,6 +535,33 @@ java_ams_get_suite_id(const javacall_utf16_string vendorName,
 }
 
 /**
+ * Installer invokes this function to inform the application manager about
+ * the current installation progress.
+ *
+ * Note: when installation is completed, javacall_ams_operation_completed()
+ *       will be called to report installation status; its last parameter
+ *       holding a pointer to an operation-specific data will point to a
+ *       javacall_ams_install_data structure.
+ *
+ * @param pInstallState pointer to a structure containing all information
+ *                      about the current installation state
+ * @param installStatus defines current installation step
+ * @param currStepPercentDone percents completed (0 - 100), -1 if unknown
+ * @param totalPercentDone percents completed (0 - 100), -1 if unknown
+ */
+void
+java_ams_install_report_progress(const javacall_ams_install_state* pInstallState,
+                                 javacall_ams_install_status installStatus,
+                                 int currStepPercentDone, int totalPercentDone) {
+    javacall_print("[NAMS] java_ams_install_report_progress()\n");
+
+    (void)pInstallState;
+    (void)installStatus;
+    (void)currStepPercentDone;
+    (void)totalPercentDone;
+}
+
+/**
  * Java invokes this function to get the image cache path.
  *
  * The Platform must always provide an implementation of this function.
