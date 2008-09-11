@@ -197,6 +197,9 @@ typedef struct _javacall_ams_install_data {
  * Installer exception codes.
  */
 typedef enum {
+    /** (-1) Unspecified general error. */
+    JAVACALL_INSTALL_EXC_GENERAL_ERROR,
+
     /** (0) There are no errors. */
     JAVACALL_INSTALL_EXC_ALL_OK,
 
