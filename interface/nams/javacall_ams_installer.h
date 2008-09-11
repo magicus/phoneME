@@ -56,11 +56,52 @@ extern "C" {
  * Codes of requests that the installer may send to the application manager.
  */
 typedef enum {
+    /**
+     * The request is sent to show a warning to the user.
+     * The type of the warning is defined by the exceptionCode field
+     * of the javacall_ams_install_state structure passed in the request.
+     *
+     * If JAVACALL_FALSE is returned as the answer to this request,
+     * the installation will be stopped and an exception with exceptionCode
+     * will be thrown by the Java installer.
+     */
     JAVACALL_INSTALL_REQUEST_WARNING = 1,
+
+    /**
+     * The request is sent to ask the user to confirm the jar download.
+     *
+     * If JAVACALL_FALSE is returned as the answer to this request, the
+     * installation will be stopped and an I/O exception will be thrown
+     * by the Java installer.
+     */
     JAVACALL_INSTALL_REQUEST_CONFIRM_JAR_DOWNLOAD,
-    JAVACALL_INSTALL_REQUEST_UPDATE_STATUS,
+
+    /**
+     * The request is sent to ask the user if he wants to keep the existing
+     * RMS data for the next suite.
+     *
+     * In answer to this request JAVACALL_TRUE should be returned to keep
+     * RMS data, JAVACALL_FALSE - to remove it.
+     */
     JAVACALL_INSTALL_REQUEST_KEEP_RMS,
+
+    /**
+     * The request is sent to ask the user to confirm the authentication path.
+     *
+     * If JAVACALL_FALSE is returned as the answer to this request, the
+     * installation will be stopped and an I/O exception will be thrown
+     * by the Java installer.
+     */
     JAVACALL_INSTALL_REQUEST_CONFIRM_AUTH_PATH,
+
+    /**
+     * The request is sent to ask the user to confirm if he really wants
+     * to install a midlet suite from the new location.
+     *
+     * If JAVACALL_FALSE is returned as the answer to this request, the
+     * installation will be stopped and an I/O exception will be thrown
+     * by the Java installer.
+     */
     JAVACALL_INSTALL_REQUEST_CONFIRM_REDIRECTION
 } javacall_ams_install_request_code;
 
@@ -114,10 +155,34 @@ typedef enum {
  * Installation request/response data.
  */
 typedef struct _javacall_ams_install_data {
+    /*
+     * The following fields are valid when this structure is used
+     * as a request data.
+     */
+
+    /** Identifies the current installation step. */
     javacall_ams_install_status installStatus;
-    javacall_utf16_string newLocation;
-    javacall_bool fAnswer;
+    /**
+     * If the installation is completed, contains the suite ID
+     * of the newly installed midlet suite.
+     */
     javacall_suite_id suiteId;
+    /**
+     * This field is valid for JAVACALL_INSTALL_REQUEST_CONFIRM_REDIRECTION request.
+     * It contains an URL where the HTTP(S) request is being redirected.
+     */
+    javacall_utf16_string newLocation;
+
+    /*
+     * The following fields are valid when this structure is used
+     * as a response data.
+     */
+
+    /**
+     * Contains the user's answer (JAVACALL_TRUE for "Yes",
+     * JAVACALL_FALSE for "No") to the previously asked question.
+     */
+    javacall_bool fAnswer;
 } javacall_ams_install_data;
 
 /**
@@ -509,6 +574,11 @@ typedef enum {
  *                                         pArgs, 2, NULL);
  * </pre>
  *
+ * NOTE: storageId and folderId parameters are mutually exclusive because any
+ *       of them uniquely identifies where the new suite will reside; i. e.,
+ *       if one of these parameters is set to a valid ID, the second must be
+ *       JAVACALL_INVALID_[STORAGE|FOLDER]_ID
+ *
  * @param appId ID that will be used to uniquely identify this operation
  * @param srcType
  *             type of data pointed by installUrl: a JAD file, a JAR file
@@ -574,7 +644,9 @@ java_ams_install_is_ocsp_enabled();
  * the current installation progress.
  *
  * Note: when installation is completed, javacall_ams_operation_completed()
- *       will be called to report installation status.
+ *       will be called to report installation status; its last parameter
+ *       holding a pointer to an operation-specific data will point to a
+ *       javacall_ams_install_data structure.
  *
  * @param pInstallState pointer to a structure containing all information
  *                      about the current installation state
@@ -583,7 +655,7 @@ java_ams_install_is_ocsp_enabled();
  * @param totalPercentDone percents completed (0 - 100), -1 if unknown
  */
 void
-java_ams_install_report_progress(javacall_ams_install_state* pInstallState,
+java_ams_install_report_progress(const javacall_ams_install_state* pInstallState,
                                  javacall_ams_install_status installStatus,
                                  int currStepPercentDone,
                                  int totalPercentDone);
