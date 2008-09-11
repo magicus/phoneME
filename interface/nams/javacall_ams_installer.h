@@ -156,7 +156,7 @@ typedef enum {
  */
 typedef enum {
     /** (-1) Unspecified general error. */
-    JAVACALL_INSTALL_EXC_GENERAL_ERROR,
+    JAVACALL_INSTALL_EXC_GENERAL_ERROR = -1,
 
     /** (0) There are no errors. */
     JAVACALL_INSTALL_EXC_ALL_OK,
