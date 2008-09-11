@@ -44,6 +44,12 @@ import com.sun.midp.midlet.MIDletSuite;
  */
 public class InstallerPeerMIDlet extends MIDlet implements InstallListener,
         Runnable {
+    /*
+     * IMPL_NOTE: the following request codes must have the same values as
+     *            the corresponding JAVACALL_INSTALL_REQUEST_* constants
+     *            defined in javacall_ams_installer.h.
+     */
+
     /**
      * Code of the "Warn User" request to the native callback.
      */
@@ -55,25 +61,30 @@ public class InstallerPeerMIDlet extends MIDlet implements InstallListener,
     private static final int RQ_CONFIRM_JAR_DOWNLOAD = 2;
 
     /**
-     * Code of the "Update Installation Status" request to the native callback. 
-     */
-    private static final int RQ_UPDATE_STATUS        = 3;
-
-    /**
      * Code of the "Ask If The Suite Data Should Be Retained"
      * request to the native callback.
      */
-    private static final int RQ_ASK_KEEP_RMS         = 4;
+    private static final int RQ_ASK_KEEP_RMS         = 3;
 
     /**
      * Code of the "Confirm Authorization Path" request to the native callback.
      */
-    private static final int RQ_CONFIRM_AUTH_PATH    = 5;
+    private static final int RQ_CONFIRM_AUTH_PATH    = 4;
 
     /**
      * Code of the "Confirm Redirection" request to the native callback.
      */
-    private static final int RQ_CONFIRM_REDIRECT     = 6;
+    private static final int RQ_CONFIRM_REDIRECT     = 5;
+
+    /**
+     * Code of the "Update Installation Status" request to the native callback.
+     *
+     * Note that it is not used in java_ams_install_ask/answer and is treated
+     * as other requests for handiness. If this value is changed, the
+     * corresponding value in the native implementation of sendNativeRequest0()
+     * must also be changed.
+     */
+    private static final int RQ_UPDATE_STATUS        = 6;
 
     /** ID assigned to this application by the application manager */
     private int appId; 
@@ -119,7 +130,6 @@ public class InstallerPeerMIDlet extends MIDlet implements InstallListener,
         // parse the arguments
         String arg0 = getAppProperty("arg-0");
         boolean err = false;
-System.out.println(">>> arg0 = '" + arg0 + "'");
         if (arg0 != null) {
             try {
                 appId = Integer.parseInt(arg0);
@@ -131,7 +141,6 @@ System.out.println(">>> arg0 = '" + arg0 + "'");
         }
 
         if (err) {
-System.out.println(">>> (1) ERROR!");
             reportFinished0(-1, MIDletSuite.UNUSED_SUITE_ID,
                             "Application ID is not given or invalid.");
             notifyDestroyed();
@@ -139,7 +148,6 @@ System.out.println(">>> (1) ERROR!");
         }
 
         String url = getAppProperty("arg-1");
-System.out.println(">>> url = '" + url + "'");
         if (url == null) {
             reportFinished0(appId, MIDletSuite.UNUSED_SUITE_ID,
                             "URL to install from is not given.");
@@ -180,7 +188,6 @@ System.out.println(">>> url = '" + url + "'");
 
         if (installer == null) {
             final String errMsg = "'" + scheme + "' URL type is not supported.";
-System.out.println(errMsg);
             reportFinished0(appId, MIDletSuite.UNUSED_SUITE_ID, errMsg);
             notifyDestroyed();
             return;
@@ -198,19 +205,14 @@ System.out.println(errMsg);
                 lastInstalledSuiteId = installer.installJar(url, null,
                     storageId, false, false, this);
             } else {
-System.out.println(">>> Installing JAD...");
                 lastInstalledSuiteId =
                     installer.installJad(url, storageId, false, false, this);
-System.out.println(">>> lastInstalledSuiteId = " + lastInstalledSuiteId);
             }
         } catch (Throwable t) {
-t.printStackTrace();
             errMsg = "Error installing the suite: " + t.getMessage();
             lastInstalledSuiteId = MIDletSuite.UNUSED_SUITE_ID;
-System.out.println(">>> errMsg");
         }
 
-System.out.println(">>> exiting...");
         notifyDestroyed();
         reportFinished0(appId, lastInstalledSuiteId, errMsg);
     }
@@ -255,7 +257,6 @@ System.out.println(">>> warnUser()");
      * @return true if the user wants to continue, false to stop the install
      */
     public boolean confirmJarDownload(InstallState state) {
-System.out.println(">>> confirmJarDownload()");
         sendNativeRequest0(RQ_CONFIRM_JAR_DOWNLOAD, convertInstallState(state),
                            -1, null);
         /*
@@ -273,7 +274,6 @@ System.out.println(">>> confirmJarDownload()");
      * @param state current state of the install.
      */
     public void updateStatus(int status, InstallState state) {
-System.out.println(">>> updateStatus()");
         sendNativeRequest0(RQ_UPDATE_STATUS, convertInstallState(state),
                            status, null);
     }
@@ -290,7 +290,6 @@ System.out.println(">>> updateStatus()");
      * @return true if the user wants to keep the RMS data for the next suite
      */
     public boolean keepRMS(InstallState state) {
-System.out.println(">>> keepRMS()");
         sendNativeRequest0(RQ_ASK_KEEP_RMS, convertInstallState(state),
                            -1, null);
         /*
@@ -311,7 +310,6 @@ System.out.println(">>> keepRMS()");
      * @return true if the user wants to continue, false to stop the install
      */
     public boolean confirmAuthPath(InstallState state) {
-System.out.println(">>> confirmAuthPath()");
         sendNativeRequest0(RQ_CONFIRM_AUTH_PATH, convertInstallState(state),
                            -1, null);
         /*
@@ -385,6 +383,10 @@ System.out.println(">>> confirmAuthPath()");
      *
      * Note: only some of parameters are used, depending on the request code
      *
+     * IMPL_NOTE: the request code passed to this method as an argument must
+     *            be the same as the corresponding JAVACALL_INSTALL_REQUEST_*
+     *            value defined in javacall_ams_installer.h.
+     * 
      * @param requestCode code of the request to the native callback
      * @param state       current installation state
      * @param status      current status of the installation, -1 if not used

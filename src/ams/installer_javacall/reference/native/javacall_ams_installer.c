@@ -69,6 +69,11 @@ extern jboolean g_fAnswer, g_fAnswerReady;
  *                                         pArgs, 2, NULL);
  * </pre>
  *
+ * NOTE: storageId and folderId parameters are mutually exclusive because any
+ *       of them uniquely identifies where the new suite will reside; i. e.,
+ *       if one of these parameters is set to a valid ID, the second must be
+ *       JAVACALL_INVALID_[STORAGE|FOLDER]_ID
+ *
  * @param appId ID that will be used to uniquely identify this operation
  * @param srcType
  *             type of data pointed by installUrl: a JAD file, a JAR file
@@ -236,8 +241,7 @@ java_ams_install_answer(javacall_ams_install_request_code requestCode,
         res = JAVACALL_FAIL;
     }
 
-    if (g_installerIsolateId != -1 &&
-            requestCode != JAVACALL_INSTALL_REQUEST_UPDATE_STATUS) {
+    if (g_installerIsolateId != -1) {
         thread = SNI_GetSpecialThread(g_installerIsolateId);
         if (thread != NULL) {
             SNI_UnblockThread(thread);

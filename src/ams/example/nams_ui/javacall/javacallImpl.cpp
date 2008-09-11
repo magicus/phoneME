@@ -90,7 +90,9 @@ java_ams_is_domain_trusted(javacall_suite_id suiteId,
  * the current installation progress.
  *
  * Note: when installation is completed, javacall_ams_operation_completed()
- *       will be called to report installation status.
+ *       will be called to report installation status; its last parameter
+ *       holding a pointer to an operation-specific data will point to a
+ *       javacall_ams_install_data structure.
  *
  * @param pInstallState pointer to a structure containing all information
  *                      about the current installation state
@@ -99,7 +101,7 @@ java_ams_is_domain_trusted(javacall_suite_id suiteId,
  * @param totalPercentDone percents completed (0 - 100), -1 if unknown
  */
 void
-java_ams_install_report_progress(javacall_ams_install_state* pInstallState,
+java_ams_install_report_progress(const javacall_ams_install_state* pInstallState,
                                  javacall_ams_install_status installStatus,
                                  int currStepPercentDone, int totalPercentDone) {
     wprintf(_T(">>> java_ams_install_report_progress(): %d%%, total: %d%%\n"),

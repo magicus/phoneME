@@ -1427,34 +1427,32 @@ ProgressDlgProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam) {
         requestCode = (javacall_ams_install_request_code)wParam;
         pInstallState = (javacall_ams_install_state*)lParam;
 
-        if (requestCode != JAVACALL_INSTALL_REQUEST_UPDATE_STATUS) {
-            for (int i = 0; i < INSTALL_REQUEST_NUM; i++) {
-                if (g_szInstallRequestText[i][0]  == (LONG)requestCode) {
-                    pszText = (LPTSTR)g_szInstallRequestText[i][1];
-                    break;
-                }
+        for (int i = 0; i < INSTALL_REQUEST_NUM; i++) {
+            if (g_szInstallRequestText[i][0]  == (LONG)requestCode) {
+                pszText = (LPTSTR)g_szInstallRequestText[i][1];
+                break;
             }
+        }
 
-            if (pszText) {
-                nRes = MessageBox(hwndDlg, pszText, g_szTitle,
-                                  MB_ICONQUESTION | MB_YESNO);
+        if (pszText) {
+            nRes = MessageBox(hwndDlg, pszText, g_szTitle,
+                              MB_ICONQUESTION | MB_YESNO);
 
-                resultData.fAnswer = (nRes == IDYES) ?
-                    JAVACALL_TRUE : JAVACALL_FALSE;
-            } else {
-                MessageBox(hwndDlg,
-                           _T("Unknown confirmation has been requiested!"),
-                           g_szTitle, NULL);
-                resultData.fAnswer = JAVACALL_TRUE;
-            }
+            resultData.fAnswer = (nRes == IDYES) ?
+                JAVACALL_TRUE : JAVACALL_FALSE;
+        } else {
+            MessageBox(hwndDlg,
+                       _T("Unknown confirmation has been requiested!"),
+                       g_szTitle, NULL);
+            resultData.fAnswer = JAVACALL_TRUE;
+        }
 
-            res = java_ams_install_answer(requestCode, pInstallState, &resultData);
+        res = java_ams_install_answer(requestCode, pInstallState, &resultData);
 
-            if (res != JAVACALL_OK) {
-                wprintf(_T("ERROR: java_ams_install_answer() ")
-                        _T("returned %d\n"), (int)res);
-            }
-        }        
+        if (res != JAVACALL_OK) {
+            wprintf(_T("ERROR: java_ams_install_answer() ")
+                    _T("returned %d\n"), (int)res);
+        }
 
         break;
     }
