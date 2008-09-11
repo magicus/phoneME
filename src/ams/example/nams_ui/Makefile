@@ -44,6 +44,7 @@ PCSL_LIB=$(DRIVE)$(PCSL_LIB_DIR)/libpcsl_file.lib \
 JAVACALL_LIB=$(DRIVE)$(JAVACALL_OUTPUT_DIR)/lib/javacall_nams_ui$(DEBUG_SUFFIX).lib
 
 MIDP_OBJ_DIR=$(MIDP_OUTPUT_DIR)/obj$(DEBUG_SUFFIX)/i386
+MIDP_EXE_DIR=$(MIDP_OUTPUT_DIR)/bin/i386
 MIDP_LIB=$(DRIVE)$(MIDP_OBJ_DIR)/libobj.lib
 
 RC  = rc
@@ -88,22 +89,19 @@ A ?= @
 
 all: appManager background splashscreen
 
-appManager: $(MIDP_OBJ_DIR)/appManager$(OBJ) $(MIDP_OBJ_DIR)/javacallImpl$(OBJ) $(MIDP_OBJ_DIR)/appManager_resource.res
-	$(A)$(LD) $(LD_FLAGS) $(DRIVE)$(MIDP_OBJ_DIR)/appManager$(OBJ) $(DRIVE)$(MIDP_OBJ_DIR)/javacallImpl$(OBJ) $(DRIVE)$(MIDP_OBJ_DIR)/appManager_resource.res $(LIBS) $(LD_OUTPUT)$(DRIVE)$(MIDP_OUTPUT_DIR)/bin/i386/appManager$(EXE)
-	$(A)cp $(VC_PDB) $(DRIVE)$(MIDP_OUTPUT_DIR)/bin/i386
-#	cp $(MIDP_OUTPUT_DIR)/bin/i386/jwc_properties.ini .
+appManager: $(MIDP_OBJ_DIR)/appManager$(OBJ) $(MIDP_OBJ_DIR)/javacallImpl$(OBJ) $(MIDP_OBJ_DIR)/appManagerPermissions$(OBJ) $(MIDP_OBJ_DIR)/appManager_resource.res
+	$(A)$(LD) $(LD_FLAGS) $(DRIVE)$(MIDP_OBJ_DIR)/appManager$(OBJ) $(DRIVE)$(MIDP_OBJ_DIR)/javacallImpl$(OBJ) $(DRIVE)$(MIDP_OBJ_DIR)/appManagerPermissions$(OBJ) $(DRIVE)$(MIDP_OBJ_DIR)/appManager_resource.res $(LIBS) $(LD_OUTPUT)$(DRIVE)$(MIDP_EXE_DIR)/appManager$(EXE)
+	$(A)cp $(VC_PDB) $(DRIVE)$(MIDP_EXE_DIR)
 
-$(MIDP_OBJ_DIR)/appManager$(OBJ): $(SRC_DIR)/appManager.cpp
-	$(A)$(CPP) $(CFLAGS) $(DEBUG_CFLAGS) $(EXTRA_CFLAGS) $(SRC_DIR)/appManager.cpp $(CC_OUTPUT)$@
-
-$(MIDP_OBJ_DIR)/javacallImpl$(OBJ): $(SRC_DIR)/javacallImpl.cpp
-	$(A)$(CPP) $(CFLAGS) $(DEBUG_CFLAGS) $(EXTRA_CFLAGS) $(SRC_DIR)/javacallImpl.cpp $(CC_OUTPUT)$@
+$(MIDP_OBJ_DIR)/%$(OBJ): $(SRC_DIR)/%.cpp
+	$(A)$(CPP) $(CFLAGS) $(DEBUG_CFLAGS) $(EXTRA_CFLAGS) $< $(CC_OUTPUT)$@
 
 $(MIDP_OBJ_DIR)/%.res: $(SRC_DIR)/res/%.rc $(SRC_DIR)/res/toolbar.bmp $(SRC_DIR)/res/*.ico
 	$(A)$(RC) $(RCFLAGS)  /d "NDEBUG" /fo $@ $<
 
-background: $(SRC_DIR)/res/background.bmp
-	$(A)cp $(SRC_DIR)/res/background.bmp $(DRIVE)$(MIDP_OUTPUT_DIR)/bin/i386
+background: $(MIDP_EXE_DIR)/background.bmp
 
-splashscreen: $(SRC_DIR)/res/splash_screen_240x320.bmp 
-	$(A)cp $(SRC_DIR)/res/splash_screen_240x320.bmp  $(DRIVE)$(MIDP_OUTPUT_DIR)/bin/i386
+splashscreen: $(MIDP_EXE_DIR)/splash_screen_240x320.bmp 
+
+$(MIDP_EXE_DIR)/%.bmp: $(SRC_DIR)/res/%.bmp
+	$(A)cp $< $(DRIVE)$(MIDP_EXE_DIR)

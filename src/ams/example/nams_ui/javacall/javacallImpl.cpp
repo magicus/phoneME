@@ -24,17 +24,11 @@
  * information or have any questions.
  */
 
-#include <windows.h>
-#include <stdlib.h>
-#include <string.h>
-#include <tchar.h>
+#include "appManager.h"
 
-#include <javautil_unicode.h>
 #include <javacall_ams_platform.h>
 #include <javacall_ams_installer.h>
 
-#include "res/appManager_resource.h"
-#include "appManager.h"
 
 extern "C" {
 

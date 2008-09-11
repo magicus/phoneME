@@ -29,21 +29,17 @@
 
 //#define _WIN32_WINNT 0x0500
 
-#include <windows.h>
+#include "appManager.h"
+#include "appManagerPermissions.h"
+
 #include <stdlib.h>
 #include <string.h>
-#include <tchar.h>
-#include <commctrl.h> // common controls for tree view
 
 #include <time.h>
-
-#include "res/appManager_resource.h"
-#include "appManager.h"
 
 #include <javacall_memory.h>
 #include <javautil_unicode.h>
 #include <javacall_lcd.h>
-#include <javacall_ams_suitestore.h>
 #include <javacall_ams_app_manager.h>
 #include <javacall_ams_installer.h>
 #include <javacall_keypress.h>
@@ -85,20 +81,6 @@ static TCHAR g_szInfoTitle[] = _T("Info");
 
 static TCHAR g_szDefaultFolderName[] = _T("Folder");
 static TCHAR g_szDefaultSuiteName[]  = _T("Midlet Suite");
-
-
-static javacall_ams_permission_val g_jpvPermissionValues[] =
-    {JAVACALL_AMS_PERMISSION_VAL_BLANKET_DENIED,
-     JAVACALL_AMS_PERMISSION_VAL_ONE_SHOT,
-     JAVACALL_AMS_PERMISSION_VAL_SESSION,
-     JAVACALL_AMS_PERMISSION_VAL_BLANKET_GRANTED};
-
-#define PERMISSION_VAL_NUM \
-    ((int) (sizeof(g_jpvPermissionValues) / sizeof(g_jpvPermissionValues[0])))
-
-static LPTSTR g_szPermissionNames[PERMISSION_VAL_NUM] =
-    {_T("Deny"), _T("One shot"), _T("Session"), _T("Allow")};
-
 
 static LONG g_szInstallRequestText[][2] = 
 { 
@@ -150,54 +132,9 @@ static javacall_app_id g_jAppId = 1;
 
 // TODO: place all hPrev* fields in a structure and pass it as
 //  a parameter of AddSuiteToTree
-static HTREEITEM hPrev = (HTREEITEM)TVI_FIRST; 
-static HTREEITEM hPrevLev1Item = NULL; 
-static HTREEITEM hPrevLev2Item = NULL; 
-
-
-// The type of a tree item
-typedef enum {    
-    TVI_TYPE_UNKNOWN,
-    TVI_TYPE_SUITE,
-    TVI_TYPE_MIDLET,
-    TVI_TYPE_FOLDER,
-    TVI_TYPE_PERMISSION
-} tvi_type;
-
-typedef struct _TVI_INFO {
-    tvi_type type; // type of the node, valid values are TVI_TYPE_SUITE,
-                   // TVI_TYPE_MIDLET, TVI_TYPE_FOLDER and TVI_TYPE_PERMISSION
-
-    javacall_utf16_string className; // MIDlet class name if item type is
-                                     // TVI_TYPE_MIDLET
-
-    javacall_utf16_string displayName; // Name to display, works for all types
-                                       // but TVI_TYPE_PERMISSION
-
-    javacall_suite_id suiteId; // id of the suite, makes sense if item type is
-                               // TVI_TYPE_MIDLET, TVI_TYPE_SUITE and
-                               // TVI_TYPE_PERMISSION
-
-    javacall_app_id appId; // external application id if item type is
-                           // TVI_TYPE_MIDLET and the MIDlet is running
-
-    javacall_folder_id folderId; // folder ID, applicable for all TVI types but
-                                 // TVI_TYPE_PERMISSION
-
-    javacall_ams_permission permId; // permission ID, used if the type is
-                                    // TVI_TYPE_PERMISSION
-
-    javacall_ams_permission_val permValue; // permission value, used if the
-                                           // type is TVI_TYPE_PERMISSION
-
-    BOOL modified;  // indicates whether the item was modified,
-                    // i.e. the suite storage should be updated accordingly
-
-} TVI_INFO;
-
-static TVI_INFO* CreateTviInfo();
-static void FreeTviInfo(TVI_INFO* pInfo);
-static TVI_INFO* GetTviInfo(HWND hWnd, HTREEITEM hItem);
+HTREEITEM hPrev = (HTREEITEM)TVI_FIRST; 
+HTREEITEM hPrevLev1Item = NULL; 
+HTREEITEM hPrevLev2Item = NULL;
 
 
 // Forward declarations of functions included in this code module:
@@ -205,7 +142,6 @@ static TVI_INFO* GetTviInfo(HWND hWnd, HTREEITEM hItem);
 LRESULT CALLBACK MainWndProc(HWND, UINT, WPARAM, LPARAM);
 LRESULT CALLBACK MidletTreeWndProc(HWND, UINT, WPARAM, LPARAM);
 LRESULT CALLBACK InfoWndProc(HWND, UINT, WPARAM, LPARAM);
-LRESULT CALLBACK PermissionWndProc(HWND, UINT, WPARAM, LPARAM);
 INT_PTR CALLBACK TreeDlgProc(HWND hwndDlg, UINT uMsg, WPARAM wParam,
                              LPARAM lParam);
 INT_PTR CALLBACK InstallDlgProc(HWND hwndDlg, UINT uMsg, WPARAM wParam,
@@ -215,8 +151,6 @@ INT_PTR CALLBACK ProgressDlgProc(HWND hwndDlg, UINT uMsg, WPARAM wParam,
 
 static void RefreshScreen(int x1, int y1, int x2, int y2);
 static void DrawBuffer(HDC hdc);
-static void DrawBackground(HDC hdc, DWORD dwRop);
-static void PaintTreeWithBg(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
 static HWND CreateMainView();
 static void CenterWindow(HWND hDlg);
@@ -232,9 +166,6 @@ static BOOL InitMidletTreeViewItems(HWND hwndTV);
 static void AddSuiteToTree(HWND hwndTV, javacall_suite_id suiteId, int nLevel);
 static void SetImageList(HWND hwndTV, UINT* uResourceIds, UINT uResourceNum);
 
-static HTREEITEM AddTreeItem(HWND hwndTV, LPTSTR lpszItem,
-                               int nLevel, TVI_INFO* pInfo);
-static BOOL UpdateTreeItem(HWND hwndTV, HTREEITEM hItem);
 static void CleanupTreeView(HWND hwndTV, WNDPROC DefWndProc);
 
 static void InitAms();
@@ -256,8 +187,6 @@ static int mapKey(WPARAM wParam, LPARAM lParam);
 static LPTSTR JavacallUtf16ToTstr(javacall_const_utf16_string str);
 static javacall_utf16_string CloneJavacallUtf16(javacall_const_utf16_string str);
 
-static int PermissionValueToIndex(javacall_ams_permission_val jpPermission);
-static HTREEITEM HitTest(HWND hWnd, LPARAM lParam);
 static SIZE GetButtonSize(HWND hBtn);
 static void ShowMidletTreeView(HWND hWnd, BOOL fShow);
 BOOL AddComboboxItem(HWND hcbWnd, LPCTSTR pcszLabel, javacall_folder_id jFolderId);
@@ -622,6 +551,10 @@ static HWND CreateMainView() {
     }
 
     return hWnd;
+}
+
+WNDPROC GetDefTreeWndProc() {
+    return g_DefTreeWndProc;
 }
 
 static void InitAms() {
@@ -1579,7 +1512,7 @@ ProgressDlgProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam) {
     return TRUE;
 }
 
-static TVI_INFO* CreateTviInfo() {
+TVI_INFO* CreateTviInfo() {
     TVI_INFO* pInfo = (TVI_INFO*)javacall_malloc(sizeof(TVI_INFO));
 
     if (pInfo != NULL) {
@@ -1597,7 +1530,7 @@ static TVI_INFO* CreateTviInfo() {
     return pInfo;
 }
 
-static void FreeTviInfo(TVI_INFO* pInfo) {
+void FreeTviInfo(TVI_INFO* pInfo) {
     if (pInfo) {
         if (pInfo->className) {
             javacall_free(pInfo->className);
@@ -1810,10 +1743,7 @@ static javacall_utf16_string CloneJavacallUtf16(javacall_const_utf16_string str)
     return result;
 }
 
-/**
- *
- */
-static HTREEITEM AddTreeItem(HWND hwndTV, LPTSTR lpszItem,
+HTREEITEM AddTreeItem(HWND hwndTV, LPTSTR lpszItem,
                                int nLevel, TVI_INFO* pInfo) {
     TVITEM tvi;
     TVINSERTSTRUCT tvins;
@@ -1895,29 +1825,6 @@ static HTREEITEM AddTreeItem(HWND hwndTV, LPTSTR lpszItem,
     }
 
     return hPrev; 
-}
-
-static BOOL UpdateTreeItem(HWND hwndTV, HTREEITEM hItem) {
-    TVITEM tvi;
-    TVI_INFO* pInfo;
-    int idx;
-
-    pInfo = GetTviInfo(hwndTV, hItem);
-
-    if (pInfo) {
-        if (pInfo->type == TVI_TYPE_PERMISSION) {
-            idx = PermissionValueToIndex(pInfo->permValue);
-            if ((idx >= 0) && (idx < PERMISSION_VAL_NUM)) {
-                tvi.iImage = tvi.iSelectedImage = idx;
-                tvi.hItem = hItem;
-                tvi.mask = TVIF_IMAGE | TVIF_SELECTEDIMAGE;
-
-                return TreeView_SetItem(hwndTV, &tvi);
-            }
-        }
-    }
-
-    return FALSE;
 }
 
 /**
@@ -2138,10 +2045,7 @@ MainWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
     return 0;
 }
 
-/**
- *
- */
-static void DrawBackground(HDC hdc, DWORD dwRop) {
+void DrawBackground(HDC hdc, DWORD dwRop) {
     if (g_hMidletTreeBgBmp != NULL) {
         HDC hdcMem = CreateCompatibleDC(hdc);
 
@@ -2158,7 +2062,7 @@ static void DrawBackground(HDC hdc, DWORD dwRop) {
     }
 }
 
-static void PaintTreeWithBg(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
+void PaintTreeWithBg(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
     RECT r;
     HDC hdc;
    
@@ -2325,7 +2229,7 @@ void RemoveWindowMenuItem(javacall_app_id appId) {
     }
 }
 
-static TVI_INFO* GetTviInfo(HWND hWnd, HTREEITEM hItem) {
+TVI_INFO* GetTviInfo(HWND hWnd, HTREEITEM hItem) {
     TVITEM tvi;
     tvi.hItem = hItem;
     tvi.mask = TVIF_HANDLE | TVIF_PARAM;
@@ -2394,7 +2298,7 @@ static BOOL StartMidlet(HWND hTreeWnd) {
     return FALSE;
 }
 
-static HTREEITEM HitTest(HWND hWnd, LPARAM lParam) {
+HTREEITEM HitTest(HWND hWnd, LPARAM lParam) {
     TV_HITTESTINFO tvH;
     HTREEITEM hItem;
 
@@ -2925,187 +2829,6 @@ InfoWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
     }
 
     return 0;
-}
-
-/**
- *  Processes messages for the permissions window.
- *
- */
-LRESULT CALLBACK
-PermissionWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
-    HDC hdc;
-    javacall_result res;
-    HTREEITEM hItem, hParent;
-
-    switch (message) {
-
-    case WM_COMMAND: {
-        TVI_INFO* pInfo;
-
-        WORD wCmd = LOWORD(wParam);
-
-        switch (wCmd) {
-
-        case IDOK: {
-            hItem = TreeView_GetRoot(hWnd);
-            while (hItem) {
-                pInfo = GetTviInfo(hWnd, hItem);
-                if (pInfo && (pInfo->type == TVI_TYPE_PERMISSION)) {
-                    if (pInfo->modified) {
-                        res = java_ams_suite_set_permission(pInfo->suiteId,
-                                                            pInfo->permId,
-                                                            pInfo->permValue);
-
-                        wprintf(_T("java_ams_suite_set_permission(%d, %d, %d)")
-                                _T(" returned %d\n"),
-                                (int)pInfo->suiteId, (int)pInfo->permId,
-                                (int)pInfo->permValue, (int)res); 
-                    }
-                }
-                                                      
-                hItem = TreeView_GetNextSibling(hWnd, hItem);
-            }
-
-            break;
-        }
-
-        case IDM_SUITE_SETTINGS: {
-            TVI_INFO* pInfo = (TVI_INFO*)lParam;
-            javacall_ams_permission_val
-                jpvPermissions[JAVACALL_AMS_NUMBER_OF_PERMISSIONS];
-            javacall_suite_id suiteId;
-
-            // Clear old content
-            TreeView_DeleteAllItems(hWnd);
-
-            // Set the position info to default
-            hPrev = (HTREEITEM)TVI_FIRST; 
-            hPrevLev1Item = NULL; 
-            hPrevLev2Item = NULL;
-
-            if (pInfo) {
-                suiteId = pInfo->suiteId;
-
-                wprintf(_T("Displaying settings for suite id=%d...\n"), (int)suiteId);
-
-                res = java_ams_suite_get_permissions(suiteId, jpvPermissions);
-                if (res == JAVACALL_OK) {
-                    javacall_ams_permission_val jpvVal;
-                    TCHAR szBuf[127];
-                    int nIndex;
-
-                    for (int p = 0; p < JAVACALL_AMS_NUMBER_OF_PERMISSIONS; p++) {
-                        jpvVal = jpvPermissions[p];
-
-                        if (jpvVal == JAVACALL_AMS_PERMISSION_VAL_INVALID ||
-                            jpvVal == JAVACALL_AMS_PERMISSION_VAL_NEVER ||
-                            jpvVal == JAVACALL_AMS_PERMISSION_VAL_ALLOW) {
-                            continue;
-                        }
-
-                        nIndex = PermissionValueToIndex(jpvVal);
-                        if ((nIndex < 0) || (nIndex >= PERMISSION_VAL_NUM)) {
-                            continue;
-                        }
-
-                        wsprintf(szBuf, _T("Permission %d"), p);
-
-                        pInfo = CreateTviInfo();
-                        pInfo->type = TVI_TYPE_PERMISSION;
-                        pInfo->suiteId = suiteId;
-                        pInfo->permId = (javacall_ams_permission)p;
-                        pInfo->permValue = jpvVal;
-
-                        AddTreeItem(hWnd, szBuf, 1, pInfo);
-
-                        for (int n = PERMISSION_VAL_NUM; n > 0; n--) {
-                            pInfo = CreateTviInfo();
-                            pInfo->type = TVI_TYPE_PERMISSION;
-                            pInfo->suiteId = suiteId;
-                            pInfo->permId = (javacall_ams_permission)p;
-                            pInfo->permValue = g_jpvPermissionValues[n - 1];
-
-                            AddTreeItem(hWnd, g_szPermissionNames[n - 1], 2, pInfo);
-                        }
-                    }
-                }
-            }
-            break;
-        }
-
-        } // end of switch (wCmd)
-
-        break;
-    }
-
-    case WM_LBUTTONDBLCLK: {
-        hItem = HitTest(hWnd, lParam);
-        if (hItem)
-        {
-            hParent = TreeView_GetParent(hWnd, hItem);
-
-            if (hParent) {
-                // collapse child items upon double click on any of them
-                TreeView_Expand(hWnd, hParent, TVE_COLLAPSE);
-            } else {
-                // imitate default tree view behavior if the click is
-                // on a root item
-                TreeView_Expand(hWnd, hItem, TVE_TOGGLE);
-            }
-        }
-
-        break;
-    }
-
-    case WM_LBUTTONDOWN:
-    case WM_RBUTTONDOWN: {
-        hItem = HitTest(hWnd, lParam);
-        if (hItem)
-        {
-            hParent = TreeView_GetParent(hWnd, hItem);
-
-            // If the hitted item represents permission value then
-            // change value of the permission itslef
-            if (hParent) {
-                TVI_INFO* pParentInfo = GetTviInfo(hWnd, hParent);
-                TVI_INFO* pInfo = GetTviInfo(hWnd, hItem);
-
-                pParentInfo->permValue = pInfo->permValue;
-                pParentInfo->modified = TRUE;
-
-                UpdateTreeItem(hWnd, hParent);
-            }
-        }
-
-        break;
-    }
-
-    case WM_ERASEBKGND: {
-        hdc = (HDC)wParam;
-        DrawBackground(hdc, SRCCOPY);
-        return 1;
-    }
-
-    case WM_PAINT: {
-        PaintTreeWithBg(hWnd, message, wParam, lParam);
-        break;
-    }
-
-    default:
-        return CallWindowProc(g_DefTreeWndProc, hWnd, message, wParam,
-            lParam);
-    }
-
-    return 0;
-}
-
-static int PermissionValueToIndex(javacall_ams_permission_val jpPermission) {
-    for (int i = 0; i < PERMISSION_VAL_NUM; i++) {
-        if (g_jpvPermissionValues[i] == jpPermission) {
-            return i;
-        }
-    }
-    return -1;
 }
 
 /**
