@@ -26,6 +26,7 @@
 
 #include "appManager.h"
 
+#include <javacall_memory.h >
 #include <javacall_ams_platform.h>
 #include <javacall_ams_installer.h>
 
@@ -52,8 +53,14 @@ void java_ams_operation_completed(javacall_opcode operation,
             (int)operation, (int)appId);
 
     if (operation == JAVACALL_OPCODE_INSTALL_SUITE) {
+        const size_t dataSize = sizeof(javacall_ams_install_data);
+
+        javacall_ams_install_data* pData = 
+            (javacall_ams_install_data*)javacall_malloc(dataSize);
+        memcpy(pData, pResult, dataSize);
+
         PostProgressMessage(WM_JAVA_AMS_INSTALL_FINISHED,
-                            (WPARAM)appId, (LPARAM)pResult);
+                            (WPARAM)appId, (LPARAM)pData);
     }    
 }
 

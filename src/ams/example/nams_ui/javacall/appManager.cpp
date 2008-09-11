@@ -1439,7 +1439,7 @@ ProgressDlgProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam) {
            case JAVACALL_INSTALL_STATUS_DOWNLOADING_JAR: {
                nDownloaded = 0;
 
-               pszInfo =  (status == JAVACALL_INSTALL_STATUS_DOWNLOADING_JAD) ?
+               pszInfo = (status == JAVACALL_INSTALL_STATUS_DOWNLOADING_JAD) ?
                    _T("JAD") : _T("JAR");
                wsprintf(szBuf, _T("Downloading of the %s is started"), pszInfo);
                break;
@@ -1449,7 +1449,10 @@ ProgressDlgProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam) {
            case JAVACALL_INSTALL_STATUS_DOWNLOADED_1K_OF_JAR: {
                nDownloaded++;
 
-               wsprintf(szBuf, _T("%dK downloaded"), nDownloaded);
+               pszInfo = 
+                   (status == JAVACALL_INSTALL_STATUS_DOWNLOADED_1K_OF_JAD) ?
+                   _T("JAD") : _T("JAR");
+               wsprintf(szBuf, _T("%dK of %s downloaded"), nDownloaded, pszInfo);
                break;
            }
 
@@ -1488,6 +1491,7 @@ ProgressDlgProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam) {
     }
 
     case WM_JAVA_AMS_INSTALL_FINISHED: {
+       TCHAR szBuf[127];
        javacall_ams_install_data* pResult = (javacall_ams_install_data*)lParam;
 
        if (pResult && 
@@ -1496,9 +1500,14 @@ ProgressDlgProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam) {
            MessageBox(hwndDlg, _T("Installation completed!"), g_szTitle,
                       MB_ICONINFORMATION | MB_OK);
        } else {
-           MessageBox(hwndDlg, _T("Installation failed!"), g_szTitle,
-                      MB_ICONERROR | MB_OK);
+           wsprintf(szBuf,
+                    _T("Installation failed!\n\n Error status %d, code %d"),
+                    pResult->installStatus, pResult->installResultCode);
+           MessageBox(hwndDlg, szBuf, g_szTitle, MB_ICONERROR | MB_OK);
        }
+
+       // Free memeory alloced by us in java_ams_operation_completed
+       javacall_free(pResult);
 
        break;
     }
