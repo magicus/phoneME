@@ -102,20 +102,20 @@ final class AutomationImpl extends Automation {
                     eventBase.getType().getName());
         }
 
-        int forgeroundIsolateId;
-        int forgeroundDisplayId;
+        int foregroundIsolateId;
+        int foregroundDisplayId;
         synchronized (foregroundIsolateAndDisplay) {
             getForegroundIsolateAndDisplay(foregroundIsolateAndDisplay);
-            forgeroundIsolateId = foregroundIsolateAndDisplay[0];
-            forgeroundDisplayId = foregroundIsolateAndDisplay[1];
+            foregroundIsolateId = foregroundIsolateAndDisplay[0];
+            foregroundDisplayId = foregroundIsolateAndDisplay[1];
         }
 
-        nativeEvent.intParam4 = forgeroundDisplayId;
-        eventQueue.sendNativeEventToIsolate(nativeEvent,forgeroundIsolateId);
+        nativeEvent.intParam4 = foregroundDisplayId;
+        eventQueue.sendNativeEventToIsolate(nativeEvent,foregroundIsolateId);
     }
 
     public void simulateEvents(AutoEventSequence events, 
-            double speedAdjustment) {
+            double delayDivisor) {
 
         AutoEvent[] arr = events.getEvents();
         for (int i = 0; i < arr.length; ++i) {
@@ -124,7 +124,7 @@ final class AutomationImpl extends Automation {
             if (event.getType() == AutoEventType.DELAY) {
                 AutoDelayEvent delayEvent = (AutoDelayEvent)event;
                 double msec = delayEvent.getMsec();
-                simulateDelayEvent((int)(msec/speedAdjustment));
+                simulateDelayEvent((int)(msec/delayDivisor));
             } else {
                 simulateEvents(event);
             }

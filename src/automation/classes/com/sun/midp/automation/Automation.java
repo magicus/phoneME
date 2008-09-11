@@ -55,7 +55,7 @@ public abstract class Automation {
     public abstract void simulateEvents(AutoEvent event);
 
     public abstract void simulateEvents(AutoEventSequence events, 
-            double speedAdjustment);
+            double delayDivisor);
 
     public abstract void simulateEvents(AutoEventSequence events);
 

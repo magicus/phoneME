@@ -74,3 +74,8 @@ SUBSYSTEM_AUTOMATION_I3TEST_JAVA_FILES += \
 	$(AUTOMATION_MVM_DIR)/reference/i3test/com/sun/midp/automation/TestKeyEventSimulation.java
 endif
 
+ifeq ($(USE_AUTOMATION_EXAMPLE), true)
+SUBSYSTEM_AUTOMATION_JAVA_FILES += \
+	$(AUTOMATION_MVM_DIR)/example/classes/com/sun/midp/automation/example/runner/Runner.java
+endif
+
