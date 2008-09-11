@@ -247,6 +247,9 @@ KNIDECL(com_sun_midp_installer_InstallerPeerMIDlet_getAnswer0) {
  * @param suiteId ID of the newly installed midlet suite, or
  *                MIDletSuite.UNUSED_SUITE_ID if the installation
  *                failed
+ * @param resultCode result of the installation (0 if succeeded or -1 in
+ *                   case of unknown error, or one of the values defined
+ *                   in InvalidJadException)
  * @param errMsg error message if the installation failed, null otherwise
  */
 KNIEXPORT KNI_RETURNTYPE_VOID
@@ -259,9 +262,12 @@ KNIDECL(com_sun_midp_installer_InstallerPeerMIDlet_reportFinished0) {
     KNI_StartHandles(2);
     KNI_DeclareHandle(errMsg);
 
+    jcInstallData.installResultCode =
+        (javacall_ams_install_exception_code)KNI_GetParameterAsInt(3);
+
     /* get request type-dependent parameters */
     if (suiteId == UNUSED_SUITE_ID) {
-        GET_PARAMETER_AS_PCSL_STRING(3, errMsgParam)
+        GET_PARAMETER_AS_PCSL_STRING(4, errMsgParam)
 
         if (!pcsl_string_is_null(&errMsgParam)) {
             /* IMPL_NOTE: pass the error message to the listener */
