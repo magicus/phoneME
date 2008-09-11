@@ -140,12 +140,15 @@ public abstract class Configuration {
     public final static String AUDIO_CAPTURE_LOCATOR = "capture://audio";
     public final static String VIDEO_CAPTURE_LOCATOR = "capture://video";
 
-    public final static String[] INTERNAL_PROTOCOLS = new String[] {    "http",
-                                                                        "https",
-                                                                        // #ifdef USE_FILE_CONNECTION [
-                                                                        "file",
-                                                                        // #endif ]
-                                                                        "rtsp"
+    public final static String[] INTERNAL_PROTOCOLS = new String[] {    
+                                                                     // #ifdef USE_FILE_CONNECTION [
+                                                                     "file",
+                                                                     // #endif ]
+                                                                     // #ifdef USE_RTSP [
+                                                                     "rtsp",
+                                                                     // #endif ]
+                                                                     "http",
+                                                                     "https"
                                                                    };
     /**
      * A hash table of the protocol and content handlers.

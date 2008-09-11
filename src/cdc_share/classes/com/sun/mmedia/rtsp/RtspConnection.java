@@ -31,22 +31,10 @@ import java.net.*;
 
 /**
  * The RtspConnection object encapsulates a TCP/IP connection to an RTSP Server.
- *
- * @author     Marc Owerfeldt
- * @created    September 11, 2002
  */
-public class RtspConnection extends Thread implements Runnable {
-
-    private final boolean RTSP_DEBUG;
-    
-    private final int MAX_RTSP_MESSAGE_SIZE = 1024;
-
-    private Socket socket;
-
-    /**
-     * A handle to the RTSP Manager object.
-     */
-    private RtspManager rtspManager;
+public class RtspConnection extends Thread implements Runnable
+{
+    //private final int MAX_RTSP_MESSAGE_SIZE = 1024;
 
     /**
      * Flag inidicating whether the connection to
@@ -54,45 +42,25 @@ public class RtspConnection extends Thread implements Runnable {
      */
     private boolean connectionIsAlive;
 
-    /**
-     * The RTSP Server host address.
-     */
-    private String host;
-
-    /**
-     * The RTSP Server port (default is 554).
-     */
-    private int port;
-
+    private Socket socket;
 
     /**
      * Creates a new RTSP connection.
      *
-     * @param  rtspManager      The RtspManager object.
-     * @param  host             The hostname, i.e. 129.145.166.64
-     * @param  port             The port (default port = 554)
+     * @param url RTSP URL object
      * @exception  IOException  Throws and IOException if a connection
      *                          to the RTSP server cannot be established.
      */
-    public RtspConnection(RtspManager rtspManager,
-                          String host, int port,
-                          boolean rtsp_debug) throws IOException {
-        this.rtspManager = rtspManager;
-        this.host = host;
-        this.port = port;
-        
-        RTSP_DEBUG = rtsp_debug;
-
+    public RtspConnection( RtspUrl url ) throws IOException {
         connectionIsAlive = true;
 
         try {
-            socket = new Socket(host, port);
-        } catch (IOException e) {
-            // System.out.println("can't connect to " + host + ":" + port);
-            throw new IOException("ConnectException");
+            socket = new Socket( url.getHost(), url.getPort() );
+        } catch( IOException e ) {
+            throw e;
         }
-        
-        if(RTSP_DEBUG) System.out.println( "Local address="+socket.getLocalAddress() );
+
+        connectionIsAlive = true;
 
         start();
     }
@@ -105,19 +73,20 @@ public class RtspConnection extends Thread implements Runnable {
      * @return          Returns true, if the message was sent
      *                  successfully, otherwise false.
      */
-    public boolean sendData(byte message[]) {
-        boolean success = false;
-
+    public boolean sendData( byte[] message ) {
         try {
+            System.out.println( "--------- request  ---------\n"
+                                + new String( message ) +
+                                "----------------------------\n" );
+
             OutputStream out = socket.getOutputStream();
-            out.write(message);
+            out.write( message );
             out.flush();
-            success = true;
-        } catch (IOException e) {
-            System.out.println("Error sending RTSP.");
+            return true;
+        } catch( IOException e ) {
+            System.out.println( "RTSP request send failed: " + e );
+            return false;
         }
-        
-        return success;
     }
 
 
@@ -144,23 +113,23 @@ public class RtspConnection extends Thread implements Runnable {
                 for (int i = 0; i < length; i++) {
                     baos.write(din.readByte());
                 }
+
+                // whole message received.
+    
+                System.out.println( "--------- response ---------\n"
+                                    + baos +
+                                    "----------------------------\n" );
                     
-                if(RTSP_DEBUG) System.out.println("--------- response ---------\n"
-                                                  + baos
-                                                  + "----------------------------\n");
-                    
-                Message msg = new Message(baos.toByteArray());
-                rtspManager.rtspMessageIndication(msg);
-            } catch (Exception e) {
-                if(RTSP_DEBUG) System.out.println("-- exception in run():'"
-                                                  + e 
-                                                  + "', closing RTSP connection." );
-                //if(RTSP_DEBUG) e.printStackTrace();
+                //Message msg = new Message(baos.toByteArray());
+                //rtspManager.rtspMessageIndication(msg);
+            } catch( Exception e ) {
+                System.out.println("*** Exception in RtspConnection.run():'"
+                                   + e + "', closing RTSP connection." );
+                //e.printStackTrace();
                 connectionIsAlive = false;
             }
         }
     }
-
 
     /**
      * Tests whether the end of an RTSP message has been reached.
@@ -169,14 +138,14 @@ public class RtspConnection extends Thread implements Runnable {
      * @return         Returns true, if this buffer contains the end
      *                 of an RTSP message, false otherwise.
      */
-    private boolean eomReached(byte buffer[]) {
+    private static boolean eomReached( byte[] buffer ) {
         boolean endReached = false;
 
         int size = buffer.length;
 
-        if (size >= 4) {
-            if (buffer[size - 4] == '\r' && buffer[size - 3] == '\n' &&
-                buffer[size - 2] == '\r' && buffer[size - 1] == '\n') {
+        if( size >= 4 ) {
+            if( buffer[size - 4] == '\r' && buffer[size - 3] == '\n' &&
+                buffer[size - 2] == '\r' && buffer[size - 1] == '\n' ) {
                 endReached = true;
             }
         }
@@ -184,51 +153,31 @@ public class RtspConnection extends Thread implements Runnable {
         return endReached;
     }
 
-
-    /*
-     *  private boolean eomReached(byte buffer[], int size) {
-     *  boolean endReached = false;
-     *  if (size >= 4) {
-     *
-     *  if (buffer[size - 4] == '\r' && buffer[size - 3] == '\n' &&
-     *  buffer[size - 2] == '\r' && buffer[size - 1] == '\n') {
-     *  endReached = true;
-     *  }
-     *
-     *  if( buffer[size - 2] == '\r' && buffer[size - 1] == '\n') {
-     *  endReached = true;
-     *  }
-     *  }
-     *  return endReached;
-     *  }
-     */
-
     /**
      * Gets the content length of an RTSP message.
      *
      * @param  msg_header  The RTSP message header.
      * @return             Returns the content length in bytes.
      */
-    private int getContentLength(String msg_header) {
+    private static int getContentLength( String msg_header ) {
         int length;
 
-        int start = msg_header.indexOf("Content-length");
+        int start = msg_header.indexOf( "Content-length" );
 
         if (start == -1) {
-            // fix for QTSS:
-            start = msg_header.indexOf("Content-Length");
+            start = msg_header.indexOf( "Content-Length" );
         }
 
         if (start == -1) {
             length = 0;
         } else {
-            start = msg_header.indexOf(':', start) + 2;
+            start = msg_header.indexOf( ':', start ) + 2;
 
-            int end = msg_header.indexOf('\r', start);
+            int end = msg_header.indexOf( '\r', start );
 
-            String length_str = msg_header.substring(start, end);
+            String length_str = msg_header.substring( start, end );
 
-            length = Integer.parseInt(length_str);
+            length = Integer.parseInt( length_str );
         }
 
         return length;
@@ -242,16 +191,15 @@ public class RtspConnection extends Thread implements Runnable {
         connectionIsAlive = false;
 
         try {
-            if (socket != null) {
+            if( null != socket ) {
                 socket.close();
                 socket = null;
             }
-        } catch (IOException e) {
-            // if(RTSP_DEBUG) System.out.println("Exception in RtspConnection.close.");
-            // if(RTSP_DEBUG) e.printStackTrace();
+        } catch( IOException e ) {
+            System.out.println( "Exception in RtspConnection.close()." );
+            e.printStackTrace();
         }
     }
-
 
     /**
      * Indicates whether the connection to the RTSP server

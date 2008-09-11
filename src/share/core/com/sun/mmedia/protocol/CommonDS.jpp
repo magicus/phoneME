@@ -43,6 +43,7 @@ public class CommonDS extends BasicDS implements SourceStream {
     private long contentLength = -1;
     private InputStream inputStream;
     private ContentDescriptor contentDescriptor = null;
+    private boolean connected = false;
 
 
     public void setLocator(String ml) throws MediaException {

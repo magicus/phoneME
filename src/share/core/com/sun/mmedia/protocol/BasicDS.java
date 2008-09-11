@@ -35,9 +35,8 @@ import java.util.Hashtable;
  */
 public abstract class BasicDS extends DataSource {
 
-    String locator = null;
-    boolean connected = false;
-    String contentType = null;
+    protected String locator = null;
+    protected String contentType = null;
 
     public BasicDS() {
         super(null);
@@ -48,37 +47,37 @@ public abstract class BasicDS extends DataSource {
     }
 
     public String getLocator() {
-	return locator;
+        return locator;
     }
 
  
     public String getContentType() {
-	return contentType;
+        return contentType;
     }
 
     public void setContentType(String type) {
-	contentType = type;
+        contentType = type;
     }
 
     public Control[] getControls() {
-	return new Control[0];
+        return new Control[0];
     }
 
     public Control getControl(String controlType) {
-	return null;
+        return null;
     }
  
     /**
      * Parse the protocol part of the locator string.
      */
     static public String getProtocol(String loc) {
-	String proto = "";
-	int idx = loc.indexOf(':');
+        String proto = "";
+        int idx = loc.indexOf(':');
 
-	if( idx != -1) {
-	    proto = loc.substring(0,idx);
-	}
+        if( idx != -1) {
+            proto = loc.substring(0,idx);
+        }
 
-	return proto;
+        return proto;
     }
 }
