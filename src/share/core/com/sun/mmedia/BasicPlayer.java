@@ -349,7 +349,10 @@ public abstract class BasicPlayer
 
     protected void doReceiveRSL()
     {
-        System.out.println( "[basic] received RSL" );
+        if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
+            Logging.report(Logging.INFORMATION, LogChannels.LC_MMAPI,
+            "[basic] received RSL");
+        }
     }
 
     /**

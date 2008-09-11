@@ -403,17 +403,20 @@ public final class DirectRecord implements RecordControl, DirectControls {
     
     ///////////////////////////////////////////////////////////////
 
-	public synchronized void recordSizeLimitReached()
-	{
-		System.out.println( "[drecord] received RSL" );
-		try
-		{
-			commit();
-		}
-		catch( java.io.IOException e )
-		{
-		}
-	}
+    public synchronized void recordSizeLimitReached()
+    {
+        if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
+            Logging.report(Logging.INFORMATION, LogChannels.LC_MMAPI,
+            "[direct] received RSL");
+        }
+        try
+        {
+            commit();
+        }
+        catch( java.io.IOException e )
+        {
+        }
+    }
 
     // Is recording suspended by player?
     private boolean suspended = false;
