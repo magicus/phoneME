@@ -152,48 +152,6 @@ typedef enum {
 } javacall_ams_install_status;
 
 /**
- * Installation request/response data.
- */
-typedef struct _javacall_ams_install_data {
-    /*
-     * The following fields are valid when this structure is used
-     * as a request data.
-     */
-
-    /** Identifies the current installation step. */
-    javacall_ams_install_status installStatus;
-    /**
-     * If the installation is completed, contains the suite ID
-     * of the newly installed midlet suite.
-     */
-    javacall_suite_id suiteId;
-
-    /**
-     * If the installation is completed, holds the code indicating
-     * the result of the installation (JAVACALL_INSTALL_EXC_ALL_OK
-     * if succeeded).
-     */
-    javacall_ams_install_exception_code installResultCode;
-
-    /**
-     * This field is valid for JAVACALL_INSTALL_REQUEST_CONFIRM_REDIRECTION request.
-     * It contains an URL where the HTTP(S) request is being redirected.
-     */
-    javacall_utf16_string newLocation;
-
-    /*
-     * The following fields are valid when this structure is used
-     * as a response data.
-     */
-
-    /**
-     * Contains the user's answer (JAVACALL_TRUE for "Yes",
-     * JAVACALL_FALSE for "No") to the previously asked question.
-     */
-    javacall_bool fAnswer;
-} javacall_ams_install_data;
-
-/**
  * Installer exception codes.
  */
 typedef enum {
@@ -546,6 +504,48 @@ typedef struct _javacall_ams_install_state {
      */
     javacall_const_utf16_string authPath[];
 } javacall_ams_install_state;
+
+/**
+ * Installation request/response data.
+ */
+typedef struct _javacall_ams_install_data {
+    /*
+     * The following fields are valid when this structure is used
+     * as a request data.
+     */
+
+    /** Identifies the current installation step. */
+    javacall_ams_install_status installStatus;
+    /**
+     * If the installation is completed, contains the suite ID
+     * of the newly installed midlet suite.
+     */
+    javacall_suite_id suiteId;
+
+    /**
+     * If the installation is completed, holds the code indicating
+     * the result of the installation (JAVACALL_INSTALL_EXC_ALL_OK
+     * if succeeded).
+     */
+    javacall_ams_install_exception_code installResultCode;
+
+    /**
+     * This field is valid for JAVACALL_INSTALL_REQUEST_CONFIRM_REDIRECTION request.
+     * It contains an URL where the HTTP(S) request is being redirected.
+     */
+    javacall_utf16_string newLocation;
+
+    /*
+     * The following fields are valid when this structure is used
+     * as a response data.
+     */
+
+    /**
+     * Contains the user's answer (JAVACALL_TRUE for "Yes",
+     * JAVACALL_FALSE for "No") to the previously asked question.
+     */
+    javacall_bool fAnswer;
+} javacall_ams_install_data;
 
 /**
  * Source from where the installation is requested:
