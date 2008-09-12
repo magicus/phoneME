@@ -24,10 +24,27 @@
  * information or have any questions.
  */
 
-
 package com.sun.midp.automation;
 
+/**
+ * Represents generic event. Serves as base interface for all specific
+ * event interfaces.
+ */
 public interface AutoEvent {
+    /**
+     * Gets event type.
+     *
+     * @return event type
+     */
     public AutoEventType getType();
+
+    /**
+     * Gets string representation of event. The format is following:
+     * type_name arg1: arg1_value, arg2: arg2_value, ...
+     * where arg1, arg2 and so on are event arguments (like key code 
+     * for key event or pen tip coordinates for pen event).
+     *
+     * @return string representation of event
+     */
     public String toString();
 }

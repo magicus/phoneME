@@ -30,4 +30,6 @@ public interface AutoKeyEvent extends AutoEvent {
     public AutoKeyState getKeyState();
     public AutoKeyCode  getKeyCode();
     public char getKeyChar();
+
+    public String toString();
 }

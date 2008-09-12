@@ -26,25 +26,45 @@
 
 package com.sun.midp.automation;
 
+/**
+ * Represents event type
+ */
 public final class AutoEventType {
-    public final static AutoEventType KEY = 
+    /**
+     * Event type: key event
+     */
+    public static final AutoEventType KEY = 
         new AutoEventType("key");
 
-    public final static AutoEventType PEN = 
+    /**
+     * Event type: pen event
+     */
+    public static final AutoEventType PEN = 
         new AutoEventType("pen");   
 
-    public final static AutoEventType DELAY = 
+    /**
+     * Event type: delay event
+     */
+    public static final AutoEventType DELAY = 
         new AutoEventType("delay");
 
+    /** Type name */
+    private String name;
 
+
+    /**
+     * Gets the type name
+     *
+     * @return type name as string
+     */
     public String getName() {
         return name;
     }
 
-
+    /**
+     * Private constructor to prevent creating class instances
+     */
     private AutoEventType(String name) {
         this.name = name;
     }
-
-    private String name;     
 }
