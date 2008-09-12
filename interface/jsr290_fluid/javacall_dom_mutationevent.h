@@ -221,7 +221,7 @@ javacall_dom_mutationevent_init_mutation_event_ns(javacall_handle handle,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
-javacall_dom_mutationevent_clear_references(javacall_handle handle, javacall_uint32 count);
+javacall_dom_mutationevent_clear_references(javacall_handle handle, javacall_int32 count);
 
 
 /** @} */

@@ -895,7 +895,7 @@ javacall_dom_node_dispatch_event(javacall_handle handle,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
-javacall_dom_node_clear_references(javacall_handle handle, javacall_uint32 count);
+javacall_dom_node_clear_references(javacall_handle handle, javacall_int32 count);
 
 
 /** @} */
