@@ -129,6 +129,7 @@ static HTREEITEM g_htiCopiedSuite = NULL;
 static BOOL g_fDrawBuffer = FALSE;
 
 static javacall_app_id g_jAppId = 1;
+static javacall_app_id g_jInstallerId = -1;
 
 // TODO: place all hPrev* fields in a structure and pass it as
 //  a parameter of AddSuiteToTree
@@ -175,10 +176,12 @@ static void InitWindows();
 static void CleanupWindows();
 
 static void AddWindowMenuItem(javacall_const_utf16_string jsStr, void* pItemData);
-static void RemoveWindowMenuItem(javacall_app_id appId);
+static void* RemoveWindowMenuItem(javacall_app_id appId);
 static void CheckWindowMenuItem(int index, BOOL fChecked);
 static void SetCheckedWindowMenuItem(void* pItemData);
 static void* GetWindowMenuItemData(UINT commandId);
+
+static void RemoveInstaller(HWND hwndDlg);
 
 static void EnablePopupMenuItem(HMENU hSubMenu, UINT uIDM, BOOL fEnabled);
 
@@ -189,7 +192,7 @@ static javacall_utf16_string CloneJavacallUtf16(javacall_const_utf16_string str)
 
 static SIZE GetButtonSize(HWND hBtn);
 static void ShowMidletTreeView(HWND hWnd, BOOL fShow);
-BOOL AddComboboxItem(HWND hcbWnd, LPCTSTR pcszLabel, javacall_folder_id jFolderId);
+static BOOL AddComboboxItem(HWND hcbWnd, LPCTSTR pcszLabel, javacall_folder_id jFolderId);
 
 static int HandleNetworkStreamEvents(WPARAM wParam, LPARAM lParam);
 static int HandleNetworkDatagramEvents(WPARAM wParam, LPARAM lParam);
@@ -1088,7 +1091,7 @@ static HWND CreateInstallDialog(HWND hWndParent) {
     return hDlg;
 }
 
-BOOL AddComboboxItem(HWND hcbWnd, LPCTSTR pcszLabel, javacall_folder_id jFolderId) {
+static BOOL AddComboboxItem(HWND hcbWnd, LPCTSTR pcszLabel, javacall_folder_id jFolderId) {
     LRESULT lResult;
 
     lResult = SendMessage(hcbWnd, CB_ADDSTRING, 0, (LPARAM)pcszLabel);
@@ -1101,6 +1104,22 @@ BOOL AddComboboxItem(HWND hcbWnd, LPCTSTR pcszLabel, javacall_folder_id jFolderI
     }
 
     return FALSE;
+}
+
+static void RemoveInstaller(HWND hwndDlg) {
+    TVI_INFO* pInfo;
+
+    // Remove the time from "Windows" menu
+    if (g_jInstallerId != -1) {
+        pInfo = (TVI_INFO*)RemoveWindowMenuItem(g_jInstallerId);
+        if (pInfo) {
+            FreeTviInfo(pInfo);
+        }
+        g_jInstallerId = -1;
+    }
+
+    // Hide dialog and show MIDlet tree
+    ShowMidletTreeView(hwndDlg, TRUE);
 }
 
 INT_PTR CALLBACK
@@ -1130,10 +1149,7 @@ InstallDlgProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 
         switch (wCmd) {
         case IDCANCEL: {
-            ShowMidletTreeView(hwndDlg, TRUE);
-
-            // TODO: remove the time from "Windows" menu
-
+            RemoveInstaller(hwndDlg);
             break;
         }
 
@@ -1160,7 +1176,7 @@ InstallDlgProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam) {
             wprintf(_T("The URL to install from: %s\n"), szUrl);
 
             if (nUrlLen) {
-                res = java_ams_install_suite(g_jAppId,
+                res = java_ams_install_suite(g_jInstallerId,
                                              JAVACALL_INSTALL_SRC_ANY,
                                              (javacall_const_utf16_string)szUrl,
                                              JAVACALL_INVALID_STORAGE_ID,
@@ -1169,8 +1185,8 @@ InstallDlgProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam) {
                 if (res == JAVACALL_OK) {
                     // IMPL_NOTE: the following code must be refactored
 
-                    // Update application ID
-                    g_jAppId++;
+                    // IMPL_NOTE: no need to update application ID since it's
+                    // done when install dialog is shown.
 
                     // Hide the install path dialog then
                     // show install progress dialog
@@ -1191,6 +1207,7 @@ InstallDlgProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 
         case IDM_SUITE_INSTALL:
         case IDM_FOLDER_INSTALL_INTO: {
+            TVI_INFO* pInfo;
 
             if (hCombobox) {
                 int nCurSel = 0;
@@ -1223,7 +1240,12 @@ InstallDlgProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam) {
             ShowMidletTreeView(hwndDlg, FALSE);
 
             // Adding a new item to "Windows" menu
-            AddWindowMenuItem(L"Installer", NULL);
+            pInfo = CreateTviInfo();
+            if (pInfo) {
+                pInfo->type = TVI_TYPE_DIALOG;
+                g_jInstallerId = pInfo->appId = g_jAppId++;
+            }
+            AddWindowMenuItem(L"Installer", pInfo);
 
             break;
         }
@@ -1334,10 +1356,7 @@ ProgressDlgProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam) {
         switch (wCmd) {
 
         case IDCANCEL: {
-            ShowMidletTreeView(hwndDlg, TRUE);
-
-            // TODO: remove the time from "Windows" menu
-
+            RemoveInstaller(hwndDlg);
             break;
         }
 
@@ -1508,6 +1527,8 @@ ProgressDlgProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 
        // Free memeory alloced by us in java_ams_operation_completed
        javacall_free(pResult);
+
+       RemoveInstaller(hwndDlg);
 
        break;
     }
@@ -2218,8 +2239,8 @@ static void AddWindowMenuItem(javacall_const_utf16_string jsStr,
     javacall_free(pszMIDletName);
 }
 
-void RemoveWindowMenuItem(javacall_app_id appId) {
-    TVI_INFO* pInfo;
+void* RemoveWindowMenuItem(javacall_app_id appId) {
+    TVI_INFO* pInfo = NULL;
     UINT uItem = IDM_WINDOW_FIRST_ITEM + 1; // First item is AppManager
     HMENU hWindowSubmenu = GetSubMenu(GetMenu(g_hMainWindow),
                                       WINDOW_SUBMENU_INDEX);
@@ -2236,6 +2257,8 @@ void RemoveWindowMenuItem(javacall_app_id appId) {
         }
         uItem++;
     }
+
+    return (void*)pInfo;
 }
 
 TVI_INFO* GetTviInfo(HWND hWnd, HTREEITEM hItem) {
@@ -2250,7 +2273,11 @@ TVI_INFO* GetTviInfo(HWND hWnd, HTREEITEM hItem) {
 }
 
 void RemoveMIDletFromRunningList(javacall_app_id appId) {
-    RemoveWindowMenuItem(appId);
+    // Installer's menu item removal is handled in special way 
+    // (see RemoveInstaller function)
+    if (appId != g_jInstallerId) {
+        RemoveWindowMenuItem(appId);
+    }
 }
 
 void SwitchToAppManager() {
@@ -2260,46 +2287,56 @@ void SwitchToAppManager() {
     ShowMidletTreeView(NULL, TRUE);
 }
 
-/**
- * Helper function.
- */
 static BOOL StartMidlet(HWND hTreeWnd) {
     javacall_result res;
     HTREEITEM hItem = TreeView_GetSelection(hTreeWnd);
     TVI_INFO* pInfo = GetTviInfo(hTreeWnd, hItem);
 
     if (pInfo != NULL) {
-        if (pInfo->type == TVI_TYPE_MIDLET && 
-            // check whether the MIDlet is already running
-            pInfo->appId == JAVACALL_INVALID_APP_ID) { 
+        if (pInfo->type == TVI_TYPE_MIDLET) {
+            // the MIDlet is not running yet
+            if (pInfo->appId == JAVACALL_INVALID_APP_ID) {
 
-            wprintf(_T("Launching MIDlet (suiteId=%d, class=%s, appId=%d)...\n"),
-                    pInfo->suiteId, pInfo->className, g_jAppId);
+                wprintf(_T("Launching MIDlet")
+                        _T(" (suiteId=%d, class=%s, appId=%d)...\n"),
+                         pInfo->suiteId, pInfo->className, g_jAppId);
 
-            res = java_ams_midlet_start(pInfo->suiteId, g_jAppId,
-                                        pInfo->className, NULL);
+                res = java_ams_midlet_start(pInfo->suiteId, g_jAppId,
+                                            pInfo->className, NULL);
 
-            wprintf(_T("java_ams_midlet_start res: %d\n"), res);
+                wprintf(_T("java_ams_midlet_start res: %d\n"), res);
 
-            if (res == JAVACALL_OK) {
-                // Update application ID
-                pInfo->appId = g_jAppId;
-                g_jAppId++;
+                if (res == JAVACALL_OK) {
+                    // Update application ID
+                    pInfo->appId = g_jAppId++;
 
-                // Hide MIDlet tree view window to show
-                // the MIDlet's output in the main window
-                ShowMidletTreeView(NULL, FALSE);
+                    // Hide MIDlet tree view window to show
+                    // the MIDlet's output in the main window
+                    ShowMidletTreeView(NULL, FALSE);
 
-                // Turn on MIDlet output
-                g_fDrawBuffer = TRUE;
+                    // Turn on MIDlet output
+                    g_fDrawBuffer = TRUE;
 
-                // Adding a new item to "Windows" menu
-                javacall_const_utf16_string jsLabel =
-                    (pInfo->displayName != NULL) ?
+                    // Adding a new item to "Windows" menu
+                    javacall_const_utf16_string jsLabel =
+                        (pInfo->displayName != NULL) ?
                         pInfo->displayName : pInfo->className;
-                AddWindowMenuItem(jsLabel, pInfo);
+                    AddWindowMenuItem(jsLabel, pInfo);
 
-                return TRUE;
+                    return TRUE;
+                }
+            // Bring the running MIDlet to the foreground
+            } else {
+                res = java_ams_midlet_switch_foreground(pInfo->appId);
+
+                if (res == JAVACALL_OK) {
+                    ShowMidletTreeView(NULL, FALSE);
+
+                    // Turn on MIDlet output
+                    g_fDrawBuffer = TRUE;
+
+                    SetCheckedWindowMenuItem(pInfo);
+                }
             }
         }
     }
@@ -2734,7 +2771,7 @@ InfoWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
                         if (pSuiteInfo->installTime) {
                             time_t time = (time_t)pSuiteInfo->installTime;
                             // IMPL_NOTE: if wsprintf doesn't convert char* to
-                            // WCHAR* coorect then try to use
+                            // WCHAR* correctly then try to use
                             // MultiByteToWideChar function for this purpose.
                             wsprintf(szBuf, _T("Installed on: %S"),
                                 ctime(&time));

@@ -53,28 +53,32 @@ typedef enum {
     TVI_TYPE_SUITE,
     TVI_TYPE_MIDLET,
     TVI_TYPE_FOLDER,
-    TVI_TYPE_PERMISSION
+    TVI_TYPE_PERMISSION,
+    TVI_TYPE_DIALOG
 } tvi_type;
 
 typedef struct _TVI_INFO {
     tvi_type type; // type of the node, valid values are TVI_TYPE_SUITE,
-                   // TVI_TYPE_MIDLET, TVI_TYPE_FOLDER and TVI_TYPE_PERMISSION
+                   // TVI_TYPE_MIDLET, TVI_TYPE_FOLDER, TVI_TYPE_PERMISSION
+                   // and TVI_TYPE_DIALOG
 
     javacall_utf16_string className; // MIDlet class name if item type is
                                      // TVI_TYPE_MIDLET
 
     javacall_utf16_string displayName; // Name to display, works for all types
                                        // but TVI_TYPE_PERMISSION
+                                       // and TVI_TYPE_DIALOG
 
     javacall_suite_id suiteId; // id of the suite, makes sense if item type is
                                // TVI_TYPE_MIDLET, TVI_TYPE_SUITE and
                                // TVI_TYPE_PERMISSION
 
-    javacall_app_id appId; // external application id if item type is
+    javacall_app_id appId; // external application ID if item type is
                            // TVI_TYPE_MIDLET and the MIDlet is running
+                           // or type is TVI_TYPE_DIALOG
 
     javacall_folder_id folderId; // folder ID, applicable for all TVI types but
-                                 // TVI_TYPE_PERMISSION
+                                 // TVI_TYPE_PERMISSION and TVI_TYPE_DIALOG
 
     javacall_ams_permission permId; // permission ID, used if the type is
                                     // TVI_TYPE_PERMISSION
