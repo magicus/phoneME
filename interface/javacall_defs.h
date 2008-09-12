@@ -280,7 +280,7 @@ typedef struct _javacall_ams_properties {
  * @}
  */
 #ifdef __cplusplus
-}
+} // extern "C"
 #endif
 /**
  * @defgroup JTWI JTWI API
@@ -300,4 +300,4 @@ typedef struct _javacall_ams_properties {
  * @}
  */
 
-#endif 
+#endif /* __JAVACALL_DEFINE_H_ */

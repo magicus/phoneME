@@ -273,7 +273,7 @@ void javanotify_rotation(void);
 /** @} */
 
 #ifdef __cplusplus
-} //extern "C"
+} // extern "C"
 #endif
 
-#endif
+#endif /* __JAVACALL_LCD_H */
