@@ -117,8 +117,8 @@ java_ams_install_suite(javacall_app_id appId,
        'M', 'I', 'D', 'l', 'e', 't',
        0
     };
-    const javacall_utf16 argAppIdStr[] = { '1', 0 };
-    javacall_const_utf16_string pArgs[2];
+    javacall_const_utf16_string pArgs[3];
+    javacall_utf16 strAppId[16], strStorageId[16], strFolderId[16];
     javacall_result res = JAVACALL_FAIL;
 
     if (installUrl == NULL) {
@@ -126,14 +126,34 @@ java_ams_install_suite(javacall_app_id appId,
     }
 
     (void)srcType;
-    (void)storageId;
+
+    res = javautil_unicode_from_int32((javacall_int32)appId,
+            strAppId, sizeof(strAppId) / sizeof(javacall_utf16));
+    if (res != JAVACALL_OK) {
+        return res;
+    }
+
+    res = javautil_unicode_from_int32((javacall_int32)storageId,
+            strStorageId, sizeof(strStorageId) / sizeof(javacall_utf16));
+    if (res != JAVACALL_OK) {
+        return res;
+    }
+
+    res = javautil_unicode_from_int32((javacall_int32)folderId,
+            strFolderId, sizeof(strFolderId) / sizeof(javacall_utf16));
+    if (res != JAVACALL_OK) {
+        return res;
+    }
+
+    /* IMPL_NOTE: currently folderId is not used. */
     (void)folderId;
 
-    pArgs[0] = argAppIdStr;
+    pArgs[0] = strAppId;
     pArgs[1] = installUrl;
+    pArgs[2] = strStorageId;
 
     res = java_ams_midlet_start_with_args(-1, appId, installerClass,
-                                          pArgs, 2, NULL);
+                                          pArgs, 3, NULL);
 
     return res;
 }

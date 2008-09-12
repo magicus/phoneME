@@ -1375,7 +1375,7 @@ ProgressDlgProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam) {
                 JAVACALL_TRUE : JAVACALL_FALSE;
         } else {
             MessageBox(hwndDlg,
-                       _T("Unknown confirmation has been requiested!"),
+                       _T("Unknown confirmation has been requested!"),
                        g_szTitle, NULL);
             resultData.fAnswer = JAVACALL_TRUE;
         }

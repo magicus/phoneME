@@ -153,32 +153,23 @@ java_ams_midlet_start_with_args(javacall_suite_id suiteId,
         return JAVACALL_FAIL;
     }
 
-    /* converting the class name from javacall_utf16_string to jchar* */
+    /* javacall_utf16_string and jchar* is actually the same */
     jcRes = javautil_unicode_utf16_ulength(className, &utf16Len);
     if (jcRes != JAVACALL_OK) {
         return JAVACALL_FAIL;
     }
-    //utf16Len <<= 1;
 
-/*
-    jcRes = javautil_unicode_utf16_to_utf8(className, classNameLen,
-        (unsigned char*) pClassName, sizeof(pClassName) / sizeof(jchar) - 1,
-            (javacall_int32*) &classNameLen);
-    if (jcRes != JAVACALL_OK) {
+    if (utf16Len + 1 >= MAX_CLASS_NAME_LEN) {
         return JAVACALL_FAIL;
     }
-*/
-    if ((utf16Len << 1) + 2 >= MAX_CLASS_NAME_LEN) {
-        return JAVACALL_FAIL;
-    }
+
     memcpy((unsigned char*)pClassName, (unsigned char*)className,
            utf16Len << 1);
+
     classNameLen = utf16Len;
+    pClassName[utf16Len] = (jchar)0;
 
-    pClassName[utf16Len]   = 0;
-    pClassName[utf16Len + 1] = 0;
-
-    /* converting the midlet's arguments */
+    /* copying the midlet's arguments */
     for (i = 0; i < argsNum; i++) {
         if (args[i] == 0) {
             return JAVACALL_FAIL;
@@ -189,14 +180,15 @@ java_ams_midlet_start_with_args(javacall_suite_id suiteId,
             return JAVACALL_FAIL;
         }
 
-        jcRes = javautil_unicode_utf16_to_utf8(args[i],
-            utf16Len, (unsigned char*) chArgs[i],
-                MAX_ARG_LEN - 1, (javacall_int32*) &argsLen[i]);
-        if (jcRes != JAVACALL_OK) {
+        if (utf16Len + 1 >= MAX_ARG_LEN) {
             return JAVACALL_FAIL;
         }
 
-        chArgs[i][argsLen[i]] = 0;
+        memcpy((unsigned char*)chArgs[i], (unsigned char*)args[i],
+               utf16Len << 1);
+
+        argsLen[i] = utf16Len;
+        chArgs[i][utf16Len] = (jchar)0;
     }
 
     /*
@@ -209,7 +201,7 @@ java_ams_midlet_start_with_args(javacall_suite_id suiteId,
         mri.usedMemory     = (jint) pRuntimeInfo->usedMemory;
         mri.priority       = (jint) pRuntimeInfo->priority;
 
-        /* converting profileName from javacall_utf16_string to jchar* */
+        /* handling profileName */
         jcRes = javautil_unicode_utf16_ulength(pRuntimeInfo->profileName,
             &utf16Len);
         if (jcRes != JAVACALL_OK) {
@@ -217,17 +209,17 @@ java_ams_midlet_start_with_args(javacall_suite_id suiteId,
         }
 
         if (utf16Len > 0 && pRuntimeInfo->profileName != NULL) {
-            jcRes = javautil_unicode_utf16_to_utf8(pRuntimeInfo->profileName,
-                (javacall_int32) mri.profileNameLen,
-                (unsigned char*) mri.profileName,
-                sizeof(pProfileNameBuf) / sizeof(jchar) - 1,
-                (javacall_int32*) &mri.profileNameLen);
-
-            if (jcRes != JAVACALL_OK) {
+            if (utf16Len + 1 >= MAX_CLASS_NAME_LEN) {
                 return JAVACALL_FAIL;
             }
 
-            pProfileNameBuf[mri.profileNameLen] = 0;
+            memcpy((unsigned char*)pProfileNameBuf,
+                   (unsigned char*)pRuntimeInfo->profileName,
+                   utf16Len << 1);
+
+            mri.profileNameLen = utf16Len;
+            pProfileNameBuf[utf16Len] = 0;
+
             mri.profileName = pProfileNameBuf;
         } else {
             mri.profileNameLen = 0;
