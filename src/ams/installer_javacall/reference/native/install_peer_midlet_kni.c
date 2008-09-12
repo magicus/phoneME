@@ -243,7 +243,7 @@ KNIDECL(com_sun_midp_installer_InstallerPeerMIDlet_getAnswer0) {
         SNI_BlockThread();
     }
 
-    KNI_ReturnBoolean(g_fAnswer);
+    KNI_ReturnBoolean(g_fAnswer == JAVACALL_TRUE ? KNI_TRUE : KNI_FALSE);
 }
 
 /**
@@ -264,13 +264,20 @@ KNIDECL(com_sun_midp_installer_InstallerPeerMIDlet_reportFinished0) {
     pcsl_string errMsgParam = PCSL_STRING_NULL_INITIALIZER;
     jint appId = KNI_GetParameterAsInt(1);
     SuiteIdType suiteId = (SuiteIdType) KNI_GetParameterAsInt(2);
+    jint instResult = KNI_GetParameterAsInt(3);
     javacall_ams_install_data jcInstallData;
 
     KNI_StartHandles(2);
     KNI_DeclareHandle(errMsg);
 
-    jcInstallData.installResultCode =
-        (javacall_ams_install_exception_code)KNI_GetParameterAsInt(3);
+    if (instResult == 0) {
+        jcInstallData.installResultCode = JAVACALL_INSTALL_EXC_ALL_OK;
+    } else if (instResult == -1) {
+        jcInstallData.installResultCode = JAVACALL_INSTALL_EXC_GENERAL_ERROR;
+    } else {
+        jcInstallData.installResultCode =
+            (javacall_ams_install_exception_code)instResult;
+    }
 
     /* get request type-dependent parameters */
     if (suiteId == UNUSED_SUITE_ID) {

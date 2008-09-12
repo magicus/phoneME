@@ -199,12 +199,7 @@ public class InstallerPeerMIDlet extends MIDlet implements InstallListener,
         boolean jarOnly = (len >= 4 &&
             ".jar".equalsIgnoreCase(url.substring(len - 4, len)));
         String errMsg = null;
-
-        /*
-         * IMPL_NOTE: the value bellow errCode must be equal
-         *            to JAVACALL_INSTALL_EXC_ALL_OK.
-         */
-        int errCode = 0;
+        int errCode = 0; // no errors by default
 
         try {
             if (jarOnly) {
