@@ -27,6 +27,7 @@
 #include <kni.h>
 #include <sni.h>
 #include <midpError.h>
+#include <midpEvents.h>
 #include <midpUtilKni.h>
 #include <midpServices.h>
 #include <string.h>
@@ -318,7 +319,7 @@ KNIDECL(com_sun_midp_installer_InstallerPeerMIDlet_notifyRequestHandled0) {
     jint  appId       = KNI_GetParameterAsInt(1);
     jint  requestCode = KNI_GetParameterAsInt(2);
     jint  resultCode  = KNI_GetParameterAsInt(3);
-    jbool result      = KNI_GetParameterAsBoolean(4);
+    jboolean result   = KNI_GetParameterAsBoolean(4);
     javacall_bool jcResult = (result == KNI_TRUE ? JAVACALL_TRUE : JAVACALL_FALSE);
     javacall_opcode operationCode = JAVACALL_OPCODE_INVALID;
 
