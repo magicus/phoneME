@@ -1461,8 +1461,8 @@ CVMclassPathInit(JNIEnv* env, CVMClassPath* classPath,
 		    CVMtraceClassLoading(("CL: Added zip file \"%s\" to the "
 					  "classpath\n", currPath));
 		    currEntry->type = CVM_CPE_ZIP;
-                    /* canonical form not needed */
-		    currEntry->path = strdup(currPath);
+                    /* canonical form *is* needed (6669683) */
+		    currEntry->path = strdup(canonicalPath);
 		    currEntry->zip = zip;
                     /* For classpath entries only */
                     if (initJavaSide) {
