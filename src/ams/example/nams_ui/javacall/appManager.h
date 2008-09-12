@@ -46,7 +46,8 @@ extern "C" {
 #define MAIN_WINDOW_WIDTH  (MAIN_WINDOW_CHILD_AREA_WIDTH + 6)
 #define MAIN_WINDOW_HEIGHT (MAIN_WINDOW_CHILD_AREA_HEIGHT + 45)
 
-
+// The string that appears in the application's title bar.
+const TCHAR g_szTitle[] = _T("NAMS Example");
 
 // TODO: place all hPrev* fields in a structure and pass it as
 //  a parameter of AddSuiteToTree
@@ -112,9 +113,9 @@ void DrawBackground(HDC hdc, DWORD dwRop);
 void PaintTreeWithBg(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 void RefreshScreen(int x1, int y1, int x2, int y2);
 
-BOOL PostProgressMessage(UINT uMsg, WPARAM wParam, LPARAM lParam);
-
 void MIDletTerminated(javacall_app_id appId);
+
+void CloseInstallerDlg(HWND hwndDlg);
 
 #ifdef __cplusplus
 }

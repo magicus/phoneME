@@ -32,6 +32,8 @@
 #include "appManager.h"
 #include "appManagerPermissions.h"
 #include "appManagerLCDUI.h"
+#include "appManagerProgress.h"
+#include "appManagerUtils.h"
 
 #include <stdlib.h>
 #include <string.h>
@@ -67,15 +69,10 @@
 // in milliseconds
 #define SPLASH_SCREEN_SHOW_TIME 2000
 
-#define DLG_BUTTON_MARGIN 5
-
 extern "C" char* _phonenum = "1234567"; // global for javacall MMS subsystem
 
 // The main window class name.
 static TCHAR g_szWindowClass[] = _T("NAMS");
-
-// The string that appears in the application's title bar.
-static TCHAR g_szTitle[] = _T("NAMS Example");
 
 static TCHAR g_szMidletTreeTitle[] = _T("Java MIDlets");
 static TCHAR g_szInfoTitle[] = _T("Info");
@@ -83,29 +80,13 @@ static TCHAR g_szInfoTitle[] = _T("Info");
 static TCHAR g_szDefaultFolderName[] = _T("Folder");
 static TCHAR g_szDefaultSuiteName[]  = _T("Midlet Suite");
 
-static LONG g_szInstallRequestText[][2] = 
-{ 
-{(LONG)JAVACALL_INSTALL_REQUEST_WARNING, (LONG)_T("Warning!")},
-{(LONG)JAVACALL_INSTALL_REQUEST_CONFIRM_JAR_DOWNLOAD, (LONG)_T("Download the JAR file?")},
-{(LONG)JAVACALL_INSTALL_REQUEST_KEEP_RMS, (LONG)_T("Keep the RMS?")},
-{(LONG)JAVACALL_INSTALL_REQUEST_CONFIRM_AUTH_PATH, (LONG)_T("Trust the authorization path?")},
-{(LONG)JAVACALL_INSTALL_REQUEST_CONFIRM_REDIRECTION, (LONG)_T("Allow redirection?")}
-};
-
-#define INSTALL_REQUEST_NUM \
-    ((int) (sizeof(g_szInstallRequestText) / sizeof(g_szInstallRequestText[0])))
-
-
-#define DYNAMIC_BUTTON_SIZE
-
-static HINSTANCE g_hInst = NULL;
+static HINSTANCE g_hInstance = NULL;
 
 static HWND g_hMainWindow = NULL;
 static HWND g_hMidletTreeView = NULL;
 static HWND g_hInfoDlg = NULL;
 static HWND g_hPermissionsDlg = NULL;
 static HWND g_hInstallDlg = NULL;
-static HWND g_hProgressDlg = NULL;
 static HWND g_hWndToolbar = NULL;
 
 static HMENU g_hMidletPopupMenu = NULL;
@@ -143,8 +124,6 @@ INT_PTR CALLBACK TreeDlgProc(HWND hwndDlg, UINT uMsg, WPARAM wParam,
                              LPARAM lParam);
 INT_PTR CALLBACK InstallDlgProc(HWND hwndDlg, UINT uMsg, WPARAM wParam,
                                 LPARAM lParam) ;
-INT_PTR CALLBACK ProgressDlgProc(HWND hwndDlg, UINT uMsg, WPARAM wParam,
-                                LPARAM lParam) ;
 
 static void DrawBuffer(HDC hdc);
 
@@ -156,7 +135,6 @@ static HWND CreateTreeDialog(HWND hWndParent, WORD wDialogIDD, WORD wViewIDC,
                              WNDPROC ViewWndProc);
 
 static HWND CreateInstallDialog(HWND hWndParent);
-static HWND CreateProgressDialog(HWND hWndParent);
 
 static BOOL InitMidletTreeViewItems(HWND hwndTV);
 static void AddSuiteToTree(HWND hwndTV, javacall_suite_id suiteId, int nLevel);
@@ -176,8 +154,6 @@ static void CheckWindowMenuItem(int index, BOOL fChecked);
 static void SetCheckedWindowMenuItem(void* pItemData);
 static void* GetWindowMenuItemData(UINT commandId);
 
-static void RemoveInstaller(HWND hwndDlg);
-
 static void EnablePopupMenuItem(HMENU hSubMenu, UINT uIDM, BOOL fEnabled);
 
 static int mapKey(WPARAM wParam, LPARAM lParam);
@@ -185,7 +161,6 @@ static int mapKey(WPARAM wParam, LPARAM lParam);
 static LPTSTR JavacallUtf16ToTstr(javacall_const_utf16_string str);
 static javacall_utf16_string CloneJavacallUtf16(javacall_const_utf16_string str);
 
-static SIZE GetButtonSize(HWND hBtn);
 static void ShowMidletTreeView(HWND hWnd, BOOL fShow);
 static BOOL AddComboboxItem(HWND hcbWnd, LPCTSTR pcszLabel, javacall_folder_id jFolderId);
 
@@ -193,8 +168,6 @@ static int HandleNetworkStreamEvents(WPARAM wParam, LPARAM lParam);
 static int HandleNetworkDatagramEvents(WPARAM wParam, LPARAM lParam);
 
 static BOOL ProcessExists(LPCTSTR szName);
-
-static void PrintWindowSize(HWND hWnd, LPTSTR pszName);
 
 extern "C" HWND midpGetWindowHandle() {
     return g_hMainWindow;
@@ -209,7 +182,7 @@ getTopbarBuffer(int* screenWidth, int* screenHeight) {
 //------------------------------------------------------------------------------
 
 static void ShowSplashScreen() {
-    g_hSplashScreenBmp = (HBITMAP)LoadImage(g_hInst,
+    g_hSplashScreenBmp = (HBITMAP)LoadImage(g_hInstance,
                                             SPLASH_SCREEN_FILE,
                                             IMAGE_BITMAP,
                                             MAIN_WINDOW_CHILD_AREA_WIDTH,
@@ -218,13 +191,6 @@ static void ShowSplashScreen() {
     if (g_hSplashScreenBmp != NULL) {
         SetTimer(g_hMainWindow, 1, SPLASH_SCREEN_SHOW_TIME, NULL);
     }
-}
-
-BOOL PostProgressMessage(UINT uMsg, WPARAM wParam, LPARAM lParam) {
-  if (g_hProgressDlg) {
-      return PostMessage(g_hProgressDlg, uMsg, wParam, lParam);
-  }
-  return FALSE;
 }
 
 /**
@@ -296,7 +262,7 @@ int main(int argc, char* argv[]) {
     srand((unsigned)time(NULL));
 
     // Store instance handle in our global variable
-    g_hInst = hInstance;
+    g_hInstance = hInstance;
 
     // Ensure that the common control DLL is loaded
     InitCommonControls();
@@ -367,7 +333,7 @@ int main(int argc, char* argv[]) {
 
     g_hInstallDlg = CreateInstallDialog(g_hMainWindow);
 
-    g_hProgressDlg = CreateProgressDialog(g_hMainWindow);
+    CreateProgressDialog(g_hInstance, g_hMainWindow);
 
     // Show the main window 
     ShowWindow(g_hMainWindow, nCmdShow);
@@ -443,7 +409,7 @@ static HWND CreateMainToolbar(HWND hWndParent) {
         0L, 0
     };
 
-    HBITMAP hToolbarBmp = LoadBitmap(g_hInst,
+    HBITMAP hToolbarBmp = LoadBitmap(g_hInstance,
                                      MAKEINTRESOURCE(IDB_MAIN_TOOLBAR_BUTTONS));
 
     if (hToolbarBmp == NULL) {
@@ -453,7 +419,7 @@ static HWND CreateMainToolbar(HWND hWndParent) {
 
     HWND hWndToolbar = CreateToolbarEx(hWndParent,
         WS_CHILD | WS_BORDER | WS_VISIBLE | TBSTYLE_TOOLTIPS, 
-        IDC_MAIN_TOOLBAR, 4, // g_hInst, IDB_MAIN_TOOLBAR_BUTTONS,
+        IDC_MAIN_TOOLBAR, 4, // g_hInstance, IDB_MAIN_TOOLBAR_BUTTONS,
         NULL, (UINT)hToolbarBmp,
         tbButtons, 4, TB_BUTTON_WIDTH, TB_BUTTON_HEIGHT,
         TB_BUTTON_WIDTH, TB_BUTTON_HEIGHT,
@@ -474,7 +440,7 @@ static HWND CreateMainToolbar(HWND hWndParent) {
 /*
     TBADDBITMAP toolbarImg;
 
-    toolbarImg.hInst = g_hInst;
+    toolbarImg.hInst = g_hInstance;
     toolbarImg.nID = IDB_MAIN_TOOLBAR_BUTTONS;
 
     BOOL ok = SendMessage(hWndToolbar, TB_ADDBITMAP, 1,
@@ -510,13 +476,13 @@ static HWND CreateMainView() {
     wcex.lpfnWndProc    = MainWndProc;
     wcex.cbClsExtra     = 0;
     wcex.cbWndExtra     = 0;
-    wcex.hInstance      = g_hInst;
-    wcex.hIcon          = LoadIcon(g_hInst, MAKEINTRESOURCE(IDI_APPLICATION));
+    wcex.hInstance      = g_hInstance;
+    wcex.hIcon          = LoadIcon(g_hInstance, MAKEINTRESOURCE(IDI_APPLICATION));
     wcex.hCursor        = LoadCursor(NULL, IDC_ARROW);
     wcex.hbrBackground  = (HBRUSH)(COLOR_WINDOW + 1);
     wcex.lpszMenuName   = MAKEINTRESOURCE(ID_MENU_MAIN);
     wcex.lpszClassName  = g_szWindowClass;
-    wcex.hIconSm        = LoadIcon(g_hInst, MAKEINTRESOURCE(IDI_APPLICATION));
+    wcex.hIconSm        = LoadIcon(g_hInstance, MAKEINTRESOURCE(IDI_APPLICATION));
 
     if (!RegisterClassEx(&wcex)) {
         MessageBox(NULL,
@@ -536,7 +502,7 @@ static HWND CreateMainView() {
         MAIN_WINDOW_WIDTH, MAIN_WINDOW_HEIGHT,
         NULL,
         NULL,
-        g_hInst,
+        g_hInstance,
         NULL
     );
 
@@ -575,8 +541,8 @@ static void InitWindows() {
     }
     g_hMidletTreeBgBmp = (HBITMAP)LoadResource(NULL, hRes);*/
 
-//   g_hMidletTreeBgBmp = LoadBitmap(g_hInst, MAKEINTRESOURCE(IDB_MIDLET_TREE_BG));
-    g_hMidletTreeBgBmp = (HBITMAP)LoadImage(g_hInst,
+//   g_hMidletTreeBgBmp = LoadBitmap(g_hInstance, MAKEINTRESOURCE(IDB_MIDLET_TREE_BG));
+    g_hMidletTreeBgBmp = (HBITMAP)LoadImage(g_hInstance,
                                             DEF_BACKGROUND_FILE,
                                             IMAGE_BITMAP,
                                             MAIN_WINDOW_CHILD_AREA_WIDTH,
@@ -588,7 +554,7 @@ static void InitWindows() {
     }
 
     // Load context menu shown for a MIDlet item in the tree view
-    g_hMidletPopupMenu = LoadMenu(g_hInst, MAKEINTRESOURCE(ID_MENU_POPUP_MIDLET));
+    g_hMidletPopupMenu = LoadMenu(g_hInstance, MAKEINTRESOURCE(ID_MENU_POPUP_MIDLET));
     if (!g_hMidletPopupMenu) {
         MessageBox(NULL,
             _T("Can't load MIDlet popup menu!"),
@@ -597,7 +563,7 @@ static void InitWindows() {
     }
 
     // Load context menu shown for a suite item in the tree view
-    g_hSuitePopupMenu = LoadMenu(g_hInst, MAKEINTRESOURCE(ID_MENU_POPUP_SUITE));
+    g_hSuitePopupMenu = LoadMenu(g_hInstance, MAKEINTRESOURCE(ID_MENU_POPUP_SUITE));
     if (!g_hSuitePopupMenu) {
         MessageBox(NULL,
             _T("Can't load suite popup menu!"),
@@ -606,7 +572,7 @@ static void InitWindows() {
     }
 
     // Load context menu shown for a folder item in the tree view
-    g_hFolderPopupMenu = LoadMenu(g_hInst, MAKEINTRESOURCE(ID_MENU_POPUP_FOLDER));
+    g_hFolderPopupMenu = LoadMenu(g_hInstance, MAKEINTRESOURCE(ID_MENU_POPUP_FOLDER));
     if (!g_hFolderPopupMenu) {
         MessageBox(NULL,
             _T("Can't load folder popup menu!"),
@@ -629,7 +595,7 @@ static void CleanupWindows() {
     g_hFolderPopupMenu = NULL;
 
     // Unregister main window class
-    UnregisterClass(g_szWindowClass, g_hInst);
+    UnregisterClass(g_szWindowClass, g_hInstance);
 }
 
 static void CleanupTreeView(HWND hwndTV, WNDPROC DefWndProc) {
@@ -663,7 +629,7 @@ static HWND CreateMidletTreeView(HWND hWndParent) {
                             rcClient.bottom - 12,
                             hWndParent, 
                             (HMENU)IDC_TREEVIEW_MIDLETS,
-                            g_hInst, 
+                            g_hInstance, 
                             NULL); 
 
     if (!hwndTV) {
@@ -707,9 +673,9 @@ static void SetImageList(HWND hwndTV, UINT* uResourceIds, UINT uResourceNum) {
     } else {
         // adding icons into the image list
         for (int i = 0; i < uResourceNum; i++) {
-            //HBITMAP hImg = LoadBitmap(g_hInst,
+            //HBITMAP hImg = LoadBitmap(g_hInstance,
             //                          MAKEINTRESOURCE(uResourceIds[i]));
-            HICON hImg = LoadIcon(g_hInst,
+            HICON hImg = LoadIcon(g_hInstance,
                                   MAKEINTRESOURCE(uResourceIds[i]));
 
             if (hImg == NULL) {
@@ -764,68 +730,6 @@ static void ShowMidletTreeView(HWND hWnd, BOOL fShow) {
     }
 }
 
-static SIZE GetButtonSize(HWND hBtn) {
-    SIZE res;
-
-    res.cx = 0;
-    res.cx = 0;
-    
-    if (hBtn) {
-#ifdef DYNAMIC_BUTTON_SIZE
-        int nBtnTextLen, nBtnHeight, nBtnWidth;
-        HDC hdc;
-        TEXTMETRIC tm;
-        TCHAR szBuf[127];
-
-        hdc = GetDC(hBtn);
-
-        if (GetTextMetrics(hdc, &tm)) {
-
-            nBtnTextLen = GetWindowText(hBtn, szBuf, sizeof(szBuf));
-
-            nBtnWidth = (tm.tmAveCharWidth * nBtnTextLen) +
-                (2 * DLG_BUTTON_MARGIN);
-
-            nBtnHeight = (tm.tmHeight + tm.tmExternalLeading) +
-                DLG_BUTTON_MARGIN;
-
-            ReleaseDC(hBtn, hdc);
-
-            res.cx = nBtnWidth;
-            res.cy = nBtnHeight;
-        }
-#else
-        RECT rc;
-
-        GetClientRect(hBtn, &rc);
-
-        res.cx = rc.right;
-        res.cy = rc.bottom;     
-#endif
-
-    }
-
-    return res;
-}
-
-static void PrintWindowSize(HWND hWnd, LPTSTR pszName) {
-    RECT rcWnd, rcOwner;
-    HWND hOwner;
-
-    if ((hOwner = GetParent(hWnd)) == NULL) {
-        hOwner = GetDesktopWindow();
-    }
-
-    GetWindowRect(hOwner, &rcOwner);
-    GetWindowRect(hWnd, &rcWnd);
-
-    wprintf(_T("%s size: x=%d, y=%d, w=%d, h=%d\n"), pszName,
-            rcWnd.left - rcOwner.left,
-            rcWnd.top - rcOwner.top,
-            rcWnd.right - rcWnd.left,
-            rcWnd.bottom - rcWnd.top);
-}
-
 static HWND CreateTreeDialog(HWND hWndParent, WORD wDialogIDD, WORD wViewIDC,
         WNDPROC ViewWndProc) {
 
@@ -833,7 +737,7 @@ static HWND CreateTreeDialog(HWND hWndParent, WORD wDialogIDD, WORD wViewIDC,
     RECT rcClient;
     SIZE sizeButtonY, sizeButtonN;
 
-    hDlg = CreateDialog(g_hInst, MAKEINTRESOURCE(wDialogIDD),
+    hDlg = CreateDialog(g_hInstance, MAKEINTRESOURCE(wDialogIDD),
                         hWndParent, TreeDlgProc); 
 
     if (!hDlg) {
@@ -991,7 +895,7 @@ static HWND CreateInstallDialog(HWND hWndParent) {
     javacall_ams_folder_info* pFoldersInfo;
     LPTSTR pszFolderName;    
 
-    hDlg = CreateDialog(g_hInst, MAKEINTRESOURCE(IDD_INSTALL_PATH),
+    hDlg = CreateDialog(g_hInstance, MAKEINTRESOURCE(IDD_INSTALL_PATH),
                         hWndParent, InstallDlgProc);
 
     if (!hDlg) {
@@ -1132,7 +1036,7 @@ InstallDlgProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 
         switch (wCmd) {
         case IDCANCEL: {
-            RemoveInstaller(hwndDlg);
+            CloseInstallerDlg(hwndDlg);
             break;
         }
 
@@ -1174,7 +1078,7 @@ InstallDlgProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam) {
                     // Hide the install path dialog then
                     // show install progress dialog
                     ShowWindow(hwndDlg, SW_HIDE);                    
-                    ShowWindow(g_hProgressDlg, SW_SHOW);
+                    ShowProgressDialog(TRUE);
                 } else {
                     TCHAR szBuf[127];
                     wsprintf(szBuf, _T("Can't start installation process!")
@@ -1271,258 +1175,6 @@ InstallDlgProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam) {
     } // end of switch (uMsg)
 
     return FALSE;
-}
-
-static HWND CreateProgressDialog(HWND hWndParent) {
-    HWND hDlg;
-    RECT rcClient;
-    HWND hBtnNo;
-    SIZE sizeButtonN; 
-    javacall_result res;
-
-    hDlg = CreateDialog(g_hInst, MAKEINTRESOURCE(IDD_INSTALL_PROGRESS),
-                        hWndParent, ProgressDlgProc);
-
-    if (!hDlg) {
-        MessageBox(hWndParent, _T("Create install progress dialog failed!"),
-                   g_szTitle, NULL);
-        return NULL;
-    }
-
-    // Get the dimensions of the parent window's client area
-    GetClientRect(hWndParent, &rcClient); 
-
-    // Set actual dialog size
-    SetWindowPos(hDlg,
-                 0, // ignored by means of SWP_NOZORDER
-                 0, 0, // x, y
-                 rcClient.right, rcClient.bottom, // w, h
-                 SWP_NOZORDER | SWP_NOOWNERZORDER |
-                     SWP_NOACTIVATE);
-
-    PrintWindowSize(hDlg, _T("Progress dialog"));
-
-    // Get handle to Cancel button (the Cancel button may be absent
-    // on the dialog)
-    hBtnNo = GetDlgItem(hDlg, IDCANCEL);
-
-    if (hBtnNo) {
-        sizeButtonN = GetButtonSize(hBtnNo);
-
-        SetWindowPos(hBtnNo,
-                     0, // ignored by means of SWP_NOZORDER
-                     rcClient.right - sizeButtonN.cx,  // x
-                     rcClient.bottom - sizeButtonN.cy, // y
-                     sizeButtonN.cx, sizeButtonN.cy,   // w, h
-                     SWP_NOZORDER | SWP_NOOWNERZORDER |
-                         SWP_NOACTIVATE);
-
-
-        PrintWindowSize(hBtnNo, _T("Cancel button"));
-    }
-
-    // TODO: implement dynamic positioning and resize for the rest controls of
-    // the dialog.
-
-    return hDlg;
-}
-
-INT_PTR CALLBACK
-ProgressDlgProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam) {
-    javacall_result res = JAVACALL_FAIL;
-
-    switch (uMsg) {
-
-    case WM_COMMAND: {
-        WORD wCmd = LOWORD(wParam);
-
-        switch (wCmd) {
-
-        case IDCANCEL: {
-            RemoveInstaller(hwndDlg);
-            break;
-        }
-
-        default: {
-            return FALSE;
-        }
-
-        } // end of switch (wCmd)
-
-        return TRUE;
-    }
-
-    case WM_JAVA_AMS_INSTALL_ASK: {
-        javacall_ams_install_data resultData;
-        javacall_ams_install_request_code requestCode;
-        javacall_ams_install_state* pInstallState;
-        int nRes;
-        LPTSTR pszText = NULL;
-
-        requestCode = (javacall_ams_install_request_code)wParam;
-        pInstallState = (javacall_ams_install_state*)lParam;
-
-        for (int i = 0; i < INSTALL_REQUEST_NUM; i++) {
-            if (g_szInstallRequestText[i][0]  == (LONG)requestCode) {
-                pszText = (LPTSTR)g_szInstallRequestText[i][1];
-                break;
-            }
-        }
-
-        if (pszText) {
-            nRes = MessageBox(hwndDlg, pszText, g_szTitle,
-                              MB_ICONQUESTION | MB_YESNO);
-
-            resultData.fAnswer = (nRes == IDYES) ?
-                JAVACALL_TRUE : JAVACALL_FALSE;
-        } else {
-            MessageBox(hwndDlg,
-                       _T("Unknown confirmation has been requested!"),
-                       g_szTitle, NULL);
-            resultData.fAnswer = JAVACALL_TRUE;
-        }
-
-        res = java_ams_install_answer(requestCode, pInstallState, &resultData);
-
-        if (res != JAVACALL_OK) {
-            wprintf(_T("ERROR: java_ams_install_answer() ")
-                    _T("returned %d\n"), (int)res);
-        }
-
-        break;
-    }
-
-    case WM_JAVA_AMS_INSTALL_STATUS: {
-       static nDownloaded = 0;
-
-       HWND hOperProgress, hTotalProgress, hEditInfo;
-       WORD wCurProgress, wTotalProgress;
-       javacall_ams_install_status status;
-       TCHAR szBuf[127];
-       LPTSTR pszInfo;
-
-       hOperProgress = GetDlgItem(hwndDlg, IDC_PROGRESS_OPERATION);
-
-       if (hOperProgress) {
-           wCurProgress = LOWORD(wParam);
-
-            // Validate progress values
-           if (wCurProgress < 0) {
-               wCurProgress = 0;
-           } else if (wCurProgress > 100) {
-              wCurProgress = 100;
-           }
-       
-           SendMessage(hOperProgress, PBM_SETPOS, (WPARAM)wCurProgress, 0);
-       }
-
-       hTotalProgress = GetDlgItem(hwndDlg, IDC_PROGRESS_TOTAL);
-
-       if (hTotalProgress) {
-           wTotalProgress = HIWORD(wParam);
-
-           if (wTotalProgress < 0) {
-              wTotalProgress = 0;
-           } else if (wTotalProgress > 100) {
-              wTotalProgress = 100;
-           }
-
-           SendMessage(hTotalProgress, PBM_SETPOS, (WPARAM)wTotalProgress, 0);
-       }
-
-       hEditInfo = GetDlgItem(hwndDlg, IDC_EDIT_INFO);
-
-       if (hEditInfo) {
-           status = (javacall_ams_install_status)lParam;
-
-           switch (status) {
-
-           case JAVACALL_INSTALL_STATUS_DOWNLOADING_JAD:
-           case JAVACALL_INSTALL_STATUS_DOWNLOADING_JAR: {
-               nDownloaded = 0;
-
-               pszInfo = (status == JAVACALL_INSTALL_STATUS_DOWNLOADING_JAD) ?
-                   _T("JAD") : _T("JAR");
-               wsprintf(szBuf, _T("Downloading of the %s is started"), pszInfo);
-               break;
-           }
-
-           case JAVACALL_INSTALL_STATUS_DOWNLOADED_1K_OF_JAD:
-           case JAVACALL_INSTALL_STATUS_DOWNLOADED_1K_OF_JAR: {
-               nDownloaded++;
-
-               pszInfo = 
-                   (status == JAVACALL_INSTALL_STATUS_DOWNLOADED_1K_OF_JAD) ?
-                   _T("JAD") : _T("JAR");
-               wsprintf(szBuf, _T("%dK of %s downloaded"), nDownloaded, pszInfo);
-               break;
-           }
-
-           case JAVACALL_INSTALL_STATUS_VERIFYING_SUITE: {
-               wsprintf(szBuf, _T("Verifing the suite..."));
-               break;
-           }
-
-           case JAVACALL_INSTALL_STATUS_GENERATING_APP_IMAGE: {
-               wsprintf(szBuf, _T("Generating application image..."));
-               break;
-           }
-
-           case JAVACALL_INSTALL_STATUS_VERIFYING_SUITE_CLASSES: {
-               wsprintf(szBuf, _T("Verifing classes of the suite..."));
-               break;
-           }
-
-           case JAVACALL_INSTALL_STATUS_STORING_SUITE: {
-               wsprintf(szBuf, _T("Storing the suite..."));
-               break;
-           }
-
-           default: {
-               // Show no text if status is unknown
-               wsprintf(szBuf, _T(""));
-               break;
-           }
-
-           } // end of switch (installStatus)
-
-            SendMessage(hEditInfo, WM_SETTEXT, 0, (LPARAM)szBuf);
-       }
-
-       break;
-    }
-
-    case WM_JAVA_AMS_INSTALL_FINISHED: {
-       TCHAR szBuf[127];
-       javacall_ams_install_data* pResult = (javacall_ams_install_data*)lParam;
-
-       if (pResult && 
-               (pResult->installStatus == JAVACALL_INSTALL_STATUS_COMPLETED) &&
-               (pResult->installResultCode == JAVACALL_INSTALL_EXC_ALL_OK)) {
-           MessageBox(hwndDlg, _T("Installation completed!"), g_szTitle,
-                      MB_ICONINFORMATION | MB_OK);
-       } else {
-           wsprintf(szBuf,
-                    _T("Installation failed!\n\n Error status %d, code %d"),
-                    pResult->installStatus, pResult->installResultCode);
-           MessageBox(hwndDlg, szBuf, g_szTitle, MB_ICONERROR | MB_OK);
-       }
-
-       // Free memeory alloced by us in java_ams_operation_completed
-       javacall_free(pResult);
-
-       RemoveInstaller(hwndDlg);
-
-       break;
-    }
-
-    default: {
-        return FALSE;
-    }
-
-    } // end of switch (uMsg)
-
-    return TRUE;
 }
 
 TVI_INFO* CreateTviInfo() {
@@ -2259,7 +1911,7 @@ TVI_INFO* GetTviInfo(HWND hWnd, HTREEITEM hItem) {
 void MIDletTerminated(javacall_app_id appId) {
     TVI_INFO* pInfo;
 
-    // Installer is handled in special way (see RemoveInstaller function)
+    // Installer is handled in special way (see CloseInstallerDlg function)
     if (appId != g_jInstallerId) {
         pInfo = (TVI_INFO*)RemoveWindowMenuItem(appId);
         if (pInfo) {
@@ -2273,7 +1925,7 @@ void MIDletTerminated(javacall_app_id appId) {
     }
 }
 
-static void RemoveInstaller(HWND hwndDlg) {
+void CloseInstallerDlg(HWND hwndDlg) {
     TVI_INFO* pInfo;
 
     // Remove the item from "Windows" menu

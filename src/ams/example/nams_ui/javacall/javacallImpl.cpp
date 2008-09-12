@@ -25,6 +25,7 @@
  */
 
 #include "appManager.h"
+#include "appManagerProgress.h"
 
 #include <javacall_memory.h >
 #include <javacall_ams_platform.h>
