@@ -88,140 +88,138 @@ KNIDECL(com_sun_midp_installer_InstallerPeerMIDlet_sendNativeRequest0) {
 
     KNI_GetParameterAsObject(2, javaInstallState);
 
-    if (g_fAnswerReady == JAVACALL_TRUE) {
-        g_fAnswerReady = JAVACALL_FALSE;
-        /* all done, the answer is ready, just return */
-    } else {
-        jcRequestData.installStatus =
-            (javacall_ams_install_status) KNI_GetParameterAsInt(3);
+    /* The request is not sent yet, so the answer is not received. */
+    g_fAnswerReady = JAVACALL_FALSE;
 
-        /*
-         * Converting javaInstallState state object into
-         * the Javacall structure.
-         */
+    jcRequestData.installStatus =
+        (javacall_ams_install_status) KNI_GetParameterAsInt(3);
 
-        /*
-         * This is needed because KNI_SAVE_PCSL_STRING_FIELD() macro
-         * calls pcsl_mem_free(destString) for some reason.
-         */
-        memset((char*)&jcInstallState, 0, sizeof(jcInstallState));
+    /*
+     * Converting javaInstallState state object into
+     * the Javacall structure.
+     */
 
-        jcRes = JAVACALL_FAIL;
+    /*
+     * This is needed because KNI_SAVE_PCSL_STRING_FIELD() macro
+     * calls pcsl_mem_free(destString) for some reason.
+     */
+    memset((char*)&jcInstallState, 0, sizeof(jcInstallState));
 
-        do {
-            pcsl_string_status pcslRes;
-            jsize strSize, convertedLength;
-            jint appId, suiteId, jarSize, exceptionCode;
+    jcRes = JAVACALL_FAIL;
 
-            KNI_GetObjectClass(javaInstallState, clazz);
+    do {
+        pcsl_string_status pcslRes;
+        jsize strSize, convertedLength;
+        jint appId, suiteId, jarSize, exceptionCode;
 
-            KNI_SAVE_INT_FIELD(javaInstallState, clazz, "appId", appId);
-            jcInstallState.appId = (javacall_app_id)appId;
+        KNI_GetObjectClass(javaInstallState, clazz);
 
-            KNI_SAVE_INT_FIELD(javaInstallState, clazz, "suiteId", suiteId);
-            jcInstallState.suiteId = (javacall_suite_id)suiteId;
+        KNI_SAVE_INT_FIELD(javaInstallState, clazz, "appId", appId);
+        jcInstallState.appId = (javacall_app_id)appId;
 
-            KNI_SAVE_INT_FIELD(javaInstallState, clazz, "jarSize", jarSize);
-            jcInstallState.jarSize = (javacall_int32)jarSize;
+        KNI_SAVE_INT_FIELD(javaInstallState, clazz, "suiteId", suiteId);
+        jcInstallState.suiteId = (javacall_suite_id)suiteId;
 
-            KNI_SAVE_INT_FIELD(javaInstallState, clazz, "exceptionCode",
-                               exceptionCode);
-            jcInstallState.exceptionCode =
-                (javacall_ams_install_exception_code)exceptionCode;
+        KNI_SAVE_INT_FIELD(javaInstallState, clazz, "jarSize", jarSize);
+        jcInstallState.jarSize = (javacall_int32)jarSize;
 
-            KNI_SAVE_PCSL_STRING_FIELD(javaInstallState, clazz, "jarUrl",
-                                       &pcslJarUrl, tmpHandle);
-            strSize = pcsl_string_utf16_length(&pcslJarUrl);
-            if (strSize > 0) {
-                strSize++; /* for terminating NULL */
-                jcInstallState.jarUrl = javacall_malloc(strSize << 1);
-                pcslRes = pcsl_string_convert_to_utf16(&pcslJarUrl,
-                    (jchar*)jcInstallState.jarUrl, strSize, &convertedLength);
+        KNI_SAVE_INT_FIELD(javaInstallState, clazz, "exceptionCode",
+                           exceptionCode);
+        jcInstallState.exceptionCode =
+            (javacall_ams_install_exception_code)exceptionCode;
+
+        KNI_SAVE_PCSL_STRING_FIELD(javaInstallState, clazz, "jarUrl",
+                                   &pcslJarUrl, tmpHandle);
+        strSize = pcsl_string_utf16_length(&pcslJarUrl);
+        if (strSize > 0) {
+            strSize++; /* for terminating NULL */
+            jcInstallState.jarUrl = javacall_malloc(strSize << 1);
+            pcslRes = pcsl_string_convert_to_utf16(&pcslJarUrl,
+                (jchar*)jcInstallState.jarUrl, strSize, &convertedLength);
+            if (pcslRes != PCSL_STRING_OK) {
+                break;
+            }
+        } else {
+            jcInstallState.jarUrl = NULL;
+        }
+
+        KNI_SAVE_PCSL_STRING_FIELD(javaInstallState, clazz, "suiteName",
+            &pcslSuiteName, tmpHandle);
+        strSize = pcsl_string_utf16_length(&pcslSuiteName);
+        if (strSize > 0) {
+            strSize++; /* for terminating NULL */
+            jcInstallState.suiteName = javacall_malloc(strSize << 1);
+            pcslRes = pcsl_string_convert_to_utf16(&pcslSuiteName,
+                (jchar*)jcInstallState.suiteName, strSize, &convertedLength);
+            if (pcslRes != PCSL_STRING_OK) {
+                break;
+            }
+        } else {
+            jcInstallState.suiteName = NULL;
+        }
+
+        jcRes = JAVACALL_OK;
+    } while (0);
+
+    pcsl_string_free(&pcslJarUrl);
+    pcsl_string_free(&pcslSuiteName);
+
+    /*
+    TODO:
+    public String[] suiteProperties;
+    public String[] authPath;
+
+    javacall_ams_properties suiteProperties;
+    javacall_const_utf16_string authPath[];
+    */
+
+    if (jcRes == JAVACALL_OK) {
+        if ((int)requestCode == RQ_UPDATE_STATUS) {
+            /* reporting the current installation progress */
+            int currStepDone = 50;
+
+            java_ams_install_report_progress(&jcInstallState,
+                jcRequestData.installStatus, currStepDone,
+                    (int)((int)jcRequestData.installStatus * 100 /
+                          (int) JAVACALL_INSTALL_STATUS_COMPLETED));
+        } else {
+            /* get request type-dependent parameters */
+            if (requestCode ==
+                    JAVACALL_INSTALL_REQUEST_CONFIRM_REDIRECTION) {
+                pcsl_string_status pcslRes;
+                jsize strSize, convertedLength;
+
+                GET_PARAMETER_AS_PCSL_STRING(4, newLocation)
+
+                strSize = pcsl_string_utf16_length(&newLocation);
+                jcRequestData.newLocation =
+                    javacall_malloc((strSize + 1) << 1);
+
+                pcslRes = pcsl_string_convert_to_utf16(&newLocation,
+                    (jchar*)jcRequestData.newLocation, strSize,
+                        &convertedLength);
+
+                RELEASE_PCSL_STRING_PARAMETER
+
                 if (pcslRes != PCSL_STRING_OK) {
-                    break;
+                    jcRes = JAVACALL_FAIL;
                 }
-            } else {
-                jcInstallState.jarUrl = NULL;
             }
 
-            KNI_SAVE_PCSL_STRING_FIELD(javaInstallState, clazz, "suiteName",
-                &pcslSuiteName, tmpHandle);
-            strSize = pcsl_string_utf16_length(&pcslSuiteName);
-            if (strSize > 0) {
-                strSize++; /* for terminating NULL */
-                jcInstallState.suiteName = javacall_malloc(strSize << 1);
-                pcslRes = pcsl_string_convert_to_utf16(&pcslSuiteName,
-                    (jchar*)jcInstallState.suiteName, strSize, &convertedLength);
-                if (pcslRes != PCSL_STRING_OK) {
-                    break;
+            if (jcRes == JAVACALL_OK) {
+                /* sending the request */
+                g_installerIsolateId = -1;
+                jcRes = java_ams_install_ask(requestCode, &jcInstallState,
+                                             &jcRequestData);
+
+                if (jcRes != JAVACALL_OK) {
+                    /* If something is wrong, apply "No" answer */
+                    g_fAnswer = JAVACALL_FALSE;
+                    g_fAnswerReady = JAVACALL_TRUE;
                 }
-            } else {
-                jcInstallState.suiteName = NULL;
             }
-
-            jcRes = JAVACALL_OK;
-        } while (0);
-
-        pcsl_string_free(&pcslJarUrl);
-        pcsl_string_free(&pcslSuiteName);
-
-        /*
-        TODO:
-        public String[] suiteProperties;
-        public String[] authPath;
-
-        javacall_ams_properties suiteProperties;
-        javacall_const_utf16_string authPath[];
-        */
-
-        if (jcRes == JAVACALL_OK) {
-            if ((int)requestCode == RQ_UPDATE_STATUS) {
-                /* reporting the current installation progress */
-                int currStepDone = 50;
-
-                java_ams_install_report_progress(&jcInstallState,
-                    jcRequestData.installStatus, currStepDone,
-                        (int)((int)jcRequestData.installStatus * 100 /
-                              (int) JAVACALL_INSTALL_STATUS_COMPLETED));
-            } else {
-                /* get request type-dependent parameters */
-                if (requestCode ==
-                        JAVACALL_INSTALL_REQUEST_CONFIRM_REDIRECTION) {
-                    pcsl_string_status pcslRes;
-                    jsize strSize, convertedLength;
-
-                    GET_PARAMETER_AS_PCSL_STRING(4, newLocation)
-
-                    strSize = pcsl_string_utf16_length(&newLocation);
-                    jcRequestData.newLocation =
-                        javacall_malloc((strSize + 1) << 1);
-
-                    pcslRes = pcsl_string_convert_to_utf16(&newLocation,
-                        (jchar*)jcRequestData.newLocation, strSize,
-                            &convertedLength);
-
-                    RELEASE_PCSL_STRING_PARAMETER
-
-                    if (pcslRes != PCSL_STRING_OK) {
-                        jcRes = JAVACALL_FAIL;
-                    }
-                }
-
-                if (jcRes == JAVACALL_OK) {
-                    /* sending the request */
-                    g_installerIsolateId = -1;
-                    jcRes = java_ams_install_ask(requestCode, &jcInstallState,
-                                                 &jcRequestData);
-
-                    if (jcRes != JAVACALL_OK) {
-                        /* If something is wrong, apply "No" answer */
-                        g_fAnswer = JAVACALL_FALSE;
-                        g_fAnswerReady = JAVACALL_TRUE;
-                    }
-                }
-            } /* if RQ_UPDATE_REQUEST */
-        } /* if (jcRes == JAVACALL_OK) */
-    }
+        } /* if RQ_UPDATE_REQUEST */
+    } /* if (jcRes == JAVACALL_OK) */
 
     KNI_EndHandles();
 
@@ -236,9 +234,9 @@ KNIDECL(com_sun_midp_installer_InstallerPeerMIDlet_sendNativeRequest0) {
 KNIEXPORT KNI_RETURNTYPE_BOOLEAN
 KNIDECL(com_sun_midp_installer_InstallerPeerMIDlet_getAnswer0) {
     if (g_fAnswerReady == JAVACALL_TRUE) {
+        /* all done, the answer is ready, just return */
         g_fAnswerReady = JAVACALL_FALSE;
         g_installerIsolateId = -1;
-        return g_fAnswer;
     } else {
         /* block the thread only if the request was sent successfully */
         g_installerIsolateId = getCurrentIsolateId();
