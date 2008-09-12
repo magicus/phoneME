@@ -89,8 +89,8 @@ A ?= @
 
 all: appManager background splashscreen
 
-appManager: $(MIDP_OBJ_DIR)/appManager$(OBJ) $(MIDP_OBJ_DIR)/javacallImpl$(OBJ) $(MIDP_OBJ_DIR)/appManagerPermissions$(OBJ) $(MIDP_OBJ_DIR)/appManager_resource.res
-	$(A)$(LD) $(LD_FLAGS) $(DRIVE)$(MIDP_OBJ_DIR)/appManager$(OBJ) $(DRIVE)$(MIDP_OBJ_DIR)/javacallImpl$(OBJ) $(DRIVE)$(MIDP_OBJ_DIR)/appManagerPermissions$(OBJ) $(DRIVE)$(MIDP_OBJ_DIR)/appManager_resource.res $(LIBS) $(LD_OUTPUT)$(DRIVE)$(MIDP_EXE_DIR)/appManager$(EXE)
+appManager: $(MIDP_OBJ_DIR)/appManager$(OBJ) $(MIDP_OBJ_DIR)/javacallImpl$(OBJ) $(MIDP_OBJ_DIR)/appManagerPermissions$(OBJ) $(MIDP_OBJ_DIR)/appManagerLCDUI$(OBJ) $(MIDP_OBJ_DIR)/appManager_resource.res
+	$(A)$(LD) $(LD_FLAGS) $(DRIVE)$(MIDP_OBJ_DIR)/appManager$(OBJ) $(DRIVE)$(MIDP_OBJ_DIR)/javacallImpl$(OBJ) $(DRIVE)$(MIDP_OBJ_DIR)/appManagerPermissions$(OBJ) $(DRIVE)$(MIDP_OBJ_DIR)/appManagerLCDUI$(OBJ) $(DRIVE)$(MIDP_OBJ_DIR)/appManager_resource.res $(LIBS) $(LD_OUTPUT)$(DRIVE)$(MIDP_EXE_DIR)/appManager$(EXE)
 	$(A)cp $(VC_PDB) $(DRIVE)$(MIDP_EXE_DIR)
 
 $(MIDP_OBJ_DIR)/%$(OBJ): $(SRC_DIR)/%.cpp

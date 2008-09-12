@@ -217,4 +217,4 @@ java_ams_install_ask(javacall_ams_install_request_code requestCode,
     return (fRes == TRUE) ? JAVACALL_OK : JAVACALL_FAIL;
 }
 
-};
+};  // extern "C"

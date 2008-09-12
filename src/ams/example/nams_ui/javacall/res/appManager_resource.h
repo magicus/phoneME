@@ -29,9 +29,14 @@
 #define  ID_MENU_POPUP_SUITE        15
 #define  ID_MENU_POPUP_FOLDER       20
 
-#define  WM_JAVA_AMS_INSTALL_ASK      WM_USER + 100
-#define  WM_JAVA_AMS_INSTALL_STATUS   WM_USER + 101
-#define  WM_JAVA_AMS_INSTALL_FINISHED WM_USER + 102
+// was in javacall/lcd.h
+#define  WM_DEBUGGER      (WM_USER)
+#define  WM_HOST_RESOLVED (WM_USER + 1)
+#define  WM_NETWORK       (WM_USER + 2)
+
+#define  WM_JAVA_AMS_INSTALL_ASK      (WM_USER + 100)
+#define  WM_JAVA_AMS_INSTALL_STATUS   (WM_USER + 101)
+#define  WM_JAVA_AMS_INSTALL_FINISHED (WM_USER + 102)
 
 #define  IDM_INFO                  100
 

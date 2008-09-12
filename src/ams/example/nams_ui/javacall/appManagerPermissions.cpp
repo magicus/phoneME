@@ -24,8 +24,8 @@
  * information or have any questions.
  */
 
-#include "appManagerPermissions.h"
 #include "appManager.h"
+#include "appManagerPermissions.h"
 
 static javacall_ams_permission_val g_jpvPermissionValues[] =
     {JAVACALL_AMS_PERMISSION_VAL_BLANKET_DENIED,

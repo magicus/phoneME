@@ -31,6 +31,7 @@
 
 #include "appManager.h"
 #include "appManagerPermissions.h"
+#include "appManagerLCDUI.h"
 
 #include <stdlib.h>
 #include <string.h>
@@ -95,11 +96,6 @@ static LONG g_szInstallRequestText[][2] =
     ((int) (sizeof(g_szInstallRequestText) / sizeof(g_szInstallRequestText[0])))
 
 
-// The size of main window calibrated to get 240x320 child area to draw SJWC
-// output to
-const int g_iWidth = 246, g_iHeight = 345;
-const int g_iChildAreaWidth = 240, g_iChildAreaHeight = 300;
-
 #define DYNAMIC_BUTTON_SIZE
 
 static HINSTANCE g_hInst = NULL;
@@ -150,7 +146,6 @@ INT_PTR CALLBACK InstallDlgProc(HWND hwndDlg, UINT uMsg, WPARAM wParam,
 INT_PTR CALLBACK ProgressDlgProc(HWND hwndDlg, UINT uMsg, WPARAM wParam,
                                 LPARAM lParam) ;
 
-static void RefreshScreen(int x1, int y1, int x2, int y2);
 static void DrawBuffer(HDC hdc);
 
 static HWND CreateMainView();
@@ -199,15 +194,7 @@ static int HandleNetworkDatagramEvents(WPARAM wParam, LPARAM lParam);
 
 static BOOL ProcessExists(LPCTSTR szName);
 
-// Functions for debugging
-
 static void PrintWindowSize(HWND hWnd, LPTSTR pszName);
-
-// was in javacall/lcd.h
-
-#define WM_DEBUGGER      (WM_USER)
-#define WM_HOST_RESOLVED (WM_USER + 1)
-#define WM_NETWORK       (WM_USER + 2)
 
 extern "C" HWND midpGetWindowHandle() {
     return g_hMainWindow;
@@ -222,8 +209,12 @@ getTopbarBuffer(int* screenWidth, int* screenHeight) {
 //------------------------------------------------------------------------------
 
 static void ShowSplashScreen() {
-    g_hSplashScreenBmp = (HBITMAP)LoadImage(g_hInst, SPLASH_SCREEN_FILE,
-        IMAGE_BITMAP, g_iChildAreaWidth, g_iChildAreaHeight, LR_LOADFROMFILE);
+    g_hSplashScreenBmp = (HBITMAP)LoadImage(g_hInst,
+                                            SPLASH_SCREEN_FILE,
+                                            IMAGE_BITMAP,
+                                            MAIN_WINDOW_CHILD_AREA_WIDTH,
+                                            MAIN_WINDOW_CHILD_AREA_HEIGHT,
+                                            LR_LOADFROMFILE);
     if (g_hSplashScreenBmp != NULL) {
         SetTimer(g_hMainWindow, 1, SPLASH_SCREEN_SHOW_TIME, NULL);
     }
@@ -405,6 +396,7 @@ int main(int argc, char* argv[]) {
 
     // Destroy all windows (destroy all child windows then the main window)
     DestroyWindow(g_hMainWindow);
+    g_hMainWindow = NULL;
 
     // Free window resources (menus, background images, etc)
     CleanupWindows();
@@ -541,7 +533,7 @@ static HWND CreateMainView() {
         g_szTitle,
         WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU,
         CW_USEDEFAULT, CW_USEDEFAULT,
-        g_iWidth, g_iHeight,
+        MAIN_WINDOW_WIDTH, MAIN_WINDOW_HEIGHT,
         NULL,
         NULL,
         g_hInst,
@@ -584,8 +576,12 @@ static void InitWindows() {
     g_hMidletTreeBgBmp = (HBITMAP)LoadResource(NULL, hRes);*/
 
 //   g_hMidletTreeBgBmp = LoadBitmap(g_hInst, MAKEINTRESOURCE(IDB_MIDLET_TREE_BG));
-    g_hMidletTreeBgBmp = (HBITMAP)LoadImage(g_hInst, DEF_BACKGROUND_FILE,
-        IMAGE_BITMAP, g_iChildAreaWidth, g_iChildAreaHeight, LR_LOADFROMFILE);
+    g_hMidletTreeBgBmp = (HBITMAP)LoadImage(g_hInst,
+                                            DEF_BACKGROUND_FILE,
+                                            IMAGE_BITMAP,
+                                            MAIN_WINDOW_CHILD_AREA_WIDTH,
+                                            MAIN_WINDOW_CHILD_AREA_HEIGHT,
+                                            LR_LOADFROMFILE);
     if (!g_hMidletTreeBgBmp) {
         DWORD res = GetLastError();
         wprintf(_T("ERROR: LoadBitmap(IDB_MIDLET_TREE_BG) res: %d\n"), res);
@@ -622,12 +618,15 @@ static void InitWindows() {
 static void CleanupWindows() {
     // Clean up resources allocated for MIDlet popup menu 
     DestroyMenu(g_hMidletPopupMenu);
+    g_hMidletPopupMenu = NULL;
 
     // Clean up resources allocated for suite popup menu 
     DestroyMenu(g_hSuitePopupMenu);
+    g_hSuitePopupMenu = NULL;
 
     // Clean up resources allocated for folder popup menu 
     DestroyMenu(g_hFolderPopupMenu);
+    g_hFolderPopupMenu = NULL;
 
     // Unregister main window class
     UnregisterClass(g_szWindowClass, g_hInst);
@@ -1958,10 +1957,11 @@ MainWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
             // IMPL_NOTE: need to create a compatible bitmap!
             SelectObject(hCompatibleDC, g_hSplashScreenBmp);
             BitBlt(hdc,
-                    0,0, 
-                    g_iChildAreaWidth, g_iChildAreaHeight, 
+                    0, 0, 
+                    MAIN_WINDOW_CHILD_AREA_WIDTH,
+                    MAIN_WINDOW_CHILD_AREA_HEIGHT,
                     hCompatibleDC, 
-                    0,0, 
+                    0, 0, 
                     SRCCOPY);
             DeleteDC(hCompatibleDC);
         } else if (g_fDrawBuffer) {
@@ -2975,225 +2975,6 @@ static int mapKey(WPARAM wParam, LPARAM lParam) {
     return 0;
 }
 
-
-// LCD UI stuff
-
-/* This is logical LCDUI putpixel screen buffer. */
-typedef struct {
-    javacall_pixel* hdc;
-    int width;
-    int height;
-} SBuffer;
-
-static SBuffer VRAM = {NULL, 0, 0};
-
-extern "C" {
-
-/**
- * Initialize LCD API
- * Will be called once the Java platform is launched
- *
- * @return <tt>1</tt> on success, <tt>0</tt> on failure
- */
-javacall_result javacall_lcd_init(void) {
-    if (VRAM.hdc == NULL) {
-        VRAM.hdc = (javacall_pixel*) malloc(g_iChildAreaWidth *
-            g_iChildAreaHeight * sizeof(javacall_pixel));
-        if (VRAM.hdc == NULL) {
-            wprintf(_T("ERROR: javacall_lcd_init(): VRAM allocation failed!\n"));
-        }
-
-        VRAM.width  = g_iChildAreaWidth;
-        VRAM.height = g_iChildAreaHeight;
-    }
-
-    return JAVACALL_OK;
-}
-
-/**
- * The function javacall_lcd_finalize is called by during Java VM shutdown,
- * allowing the  * platform to perform device specific lcd-related shutdown
- * operations.
- * The VM guarantees not to call other lcd functions before calling
- * javacall_lcd_init( ) again.
- *
- * @retval JAVACALL_OK      success
- * @retval JAVACALL_FAIL    fail
- */
-javacall_result javacall_lcd_finalize(void) {
-    if (VRAM.hdc != NULL) {
-        VRAM.height = 0;
-        VRAM.width = 0;
-        free(VRAM.hdc);
-        VRAM.hdc = NULL;
-    }
-
-    if (g_hMainWindow != NULL) {
-        DestroyWindow(g_hMainWindow);
-        g_hMainWindow = NULL;
-    }
-
-    return JAVACALL_OK;
-}
-
-/**
- * Get screen raster pointer
- *
- * @param screenType can be any of the following types:
- * <ul>
- *   <li> <code>JAVACALL_LCD_SCREEN_PRIMARY</code> -
- *        return primary screen size information </li>
- *   <li> <code>JAVACALL_LCD_SCREEN_EXTERNAL</code> -
- *        return external screen size information if supported </li>
- * </ul>
- * @param screenWidth output paramter to hold width of screen
- * @param screenHeight output paramter to hold height of screen
- * @param colorEncoding output paramenter to hold color encoding,
- *        which can take one of the following:
- *              -# JAVACALL_LCD_COLOR_RGB565
- *              -# JAVACALL_LCD_COLOR_ARGB
- *              -# JAVACALL_LCD_COLOR_RGBA
- *              -# JAVACALL_LCD_COLOR_RGB888
- *              -# JAVACALL_LCD_COLOR_OTHER
- *
- * @return pointer to video ram mapped memory region of size
- *         ( screenWidth * screenHeight )
- *         or <code>NULL</code> in case of failure
- */
-javacall_pixel* javacall_lcd_get_screen(javacall_lcd_screen_type screenType,
-                                        int* screenWidth,
-                                        int* screenHeight,
-                                        javacall_lcd_color_encoding_type* colorEncoding) {
-    if (g_hMainWindow != NULL) {
-        if (screenWidth != NULL) {
-            *screenWidth = VRAM.width;
-        }
-
-        if (screenHeight != NULL) {
-            *screenHeight = VRAM.height;
-        }
-
-        if (colorEncoding != NULL) {
-            *colorEncoding = JAVACALL_LCD_COLOR_RGB565;
-        }
-
-        wprintf(_T("VRAM.hdc ok\n"));
-        return VRAM.hdc;
-    }
-
-    wprintf(_T("NULL !!!\n"));
-    return NULL;
-}
-
-/**
- * Set or unset full screen mode.
- *
- * This function should return <code>JAVACALL_FAIL</code> if full screen mode
- * is not supported.
- * Subsequent calls to <code>javacall_lcd_get_screen()</code> will return
- * a pointer to the relevant offscreen pixel buffer of the corresponding screen
- * mode as well s the corresponding screen dimensions, after the screen mode has
- * changed.
- *
- * @param useFullScreen if <code>JAVACALL_TRUE</code>, turn on full screen mode.
- *                      if <code>JAVACALL_FALSE</code>, use normal screen mode.
-
- * @retval JAVACALL_OK   success
- * @retval JAVACALL_FAIL failure
- */
-javacall_result javacall_lcd_set_full_screen_mode(javacall_bool useFullScreen) {
-    return JAVACALL_OK;
-}
-
-/**
- * Flush the screen raster to the display.
- * This function should not be CPU intensive and should not perform bulk memory
- * copy operations.
- *
- * @return <tt>1</tt> on success, <tt>0</tt> on failure or invalid screen
- */
-javacall_result javacall_lcd_flush() {
-    RefreshScreen(0, 0, g_iChildAreaWidth, g_iChildAreaHeight); 
-    return JAVACALL_OK;
-}
-/**
- * Flush the screen raster to the display.
- * This function should not be CPU intensive and should not perform bulk memory
- * copy operations.
- * The following API uses partial flushing of the VRAM, thus may reduce the
- * runtime of the expensive flush operation: It should be implemented on
- * platforms that support it
- *
- * @param ystart start vertical scan line to start from
- * @param yend last vertical scan line to refresh
- *
- * @retval JAVACALL_OK      success
- * @retval JAVACALL_FAIL    fail
- */
-javacall_result /*OPTIONAL*/ javacall_lcd_flush_partial(int ystart, int yend) {
-    RefreshScreen(0, 0, g_iChildAreaWidth, g_iChildAreaHeight); 
-    return JAVACALL_OK;
-}
-
-/**
- * Changes display orientation
- */
-javacall_bool javacall_lcd_reverse_orientation() {
-    return JAVACALL_FALSE;
-}
- 
-/**
- * Returns display orientation
- */
-javacall_bool javacall_lcd_get_reverse_orientation() {
-     return JAVACALL_FALSE;
-}
-
-/**
- * checks the implementation supports native softbutton label.
- * 
- * @retval JAVACALL_TRUE   implementation supports native softbutton layer
- * @retval JAVACALL_FALSE  implementation does not support native softbutton layer
- */
-javacall_bool javacall_lcd_is_native_softbutton_layer_supported() {
-    return JAVACALL_FALSE;
-}
-
-
-/**
- * The following function is used to set the softbutton label in the native
- * soft button layer.
- * 
- * @param label the label for the softbutton
- * @param len the length of the label
- * @param index the corresponding index of the command
- * 
- * @retval JAVACALL_OK      success
- * @retval JAVACALL_FAIL    fail
- */
-javacall_result
-javacall_lcd_set_native_softbutton_label(const javacall_utf16* label,
-                                         int len,
-                                         int index) {
-     return JAVACALL_FAIL;
-}
-
-/**
- * Returns available display width
- */
-int javacall_lcd_get_screen_width() {
-    return g_iChildAreaWidth;
-}
-
-/**
- * Returns available display height
- */
-int javacall_lcd_get_screen_height() {
-    return g_iChildAreaHeight;
-}
-
-}; // extern "C"
-
 /**
  * Utility function to request logical screen to be painted
  * to the physical screen.
@@ -3220,10 +3001,13 @@ static void DrawBuffer(HDC hdc) {
     HBITMAP    destHBmp;
     BITMAPINFO bi;
     HGDIOBJ    oobj;
+    SBuffer*   pVRAM;
 
-    int screenWidth = VRAM.width;
-    int screenHeight = VRAM.height;
-    javacall_pixel* screenBuffer = VRAM.hdc;
+    // IMPL_NOTE: pointer to VRAM can't be NULL
+    pVRAM = GetLCDUIBuffer();
+    int screenWidth = pVRAM->width;
+    int screenHeight = pVRAM->height;
+    javacall_pixel* screenBuffer = pVRAM->hdc;
 
     int x1 = 0;
     int y1 = 0;
@@ -3283,7 +3067,7 @@ static void DrawBuffer(HDC hdc) {
     DeleteDC(hdcMem);
 }
 
-static void RefreshScreen(int x1, int y1, int x2, int y2) {
+void RefreshScreen(int x1, int y1, int x2, int y2) {
     InvalidateRect(g_hMainWindow, NULL, FALSE);
     UpdateWindow(g_hMainWindow);
 }

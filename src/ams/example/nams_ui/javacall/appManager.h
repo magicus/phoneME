@@ -39,6 +39,14 @@
 extern "C" {
 #endif
 
+#define MAIN_WINDOW_CHILD_AREA_WIDTH  240
+#define MAIN_WINDOW_CHILD_AREA_HEIGHT 300
+
+// The size of main window calibrated to get the required child area
+#define MAIN_WINDOW_WIDTH  (MAIN_WINDOW_CHILD_AREA_WIDTH + 6)
+#define MAIN_WINDOW_HEIGHT (MAIN_WINDOW_CHILD_AREA_HEIGHT + 45)
+
+
 
 // TODO: place all hPrev* fields in a structure and pass it as
 //  a parameter of AddSuiteToTree
@@ -96,14 +104,13 @@ void FreeTviInfo(TVI_INFO* pInfo);
 TVI_INFO* GetTviInfo(HWND hWnd, HTREEITEM hItem);
 
 HTREEITEM AddTreeItem(HWND hwndTV, LPTSTR lpszItem,
-                               int nLevel, TVI_INFO* pInfo);
-
+                      int nLevel, TVI_INFO* pInfo);
 HTREEITEM HitTest(HWND hWnd, LPARAM lParam);
-
 WNDPROC GetDefTreeWndProc();
 
 void DrawBackground(HDC hdc, DWORD dwRop);
 void PaintTreeWithBg(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
+void RefreshScreen(int x1, int y1, int x2, int y2);
 
 BOOL PostProgressMessage(UINT uMsg, WPARAM wParam, LPARAM lParam);
 
