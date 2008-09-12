@@ -33,7 +33,7 @@ final class AutoEventFactoryImpl implements AutoEventFactory {
     private Hashtable eventFromStringFactories;
     private AutoEventStringParser eventStringParser;
 
-    synchronized static AutoEventFactoryImpl getInstance() {
+    static final synchronized AutoEventFactoryImpl getInstance() {
         if (instance == null) {
             instance = new AutoEventFactoryImpl();
         }            

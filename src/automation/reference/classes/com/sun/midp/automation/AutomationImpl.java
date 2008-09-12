@@ -24,58 +24,49 @@
  * information or have any questions.
  */
 
-
 package com.sun.midp.automation;
 import com.sun.midp.events.*;
 
+/**
+ * Implements Automation class abstract methods.
+ */
 final class AutomationImpl extends Automation {
+    /** The one and only class instance */
     private static AutomationImpl instance = null;
-    private final static Object lock = new Object();
 
+    /** Event queue */
     private EventQueue eventQueue;
+
+    /** Event factory */
     private AutoEventFactoryImpl eventFactory;
+
+    /** index 0: foreground isolate id, index 1: foreground display id */
     private int[] foregroundIsolateAndDisplay;
     
-    private AutomationImpl(EventQueue eventQueue) {
-        this.eventQueue = eventQueue;
-        this.eventFactory = AutoEventFactoryImpl.getInstance();
-        this.foregroundIsolateAndDisplay = new int[2];
-    }
-
-    final static Automation getInstanceImpl() 
-        throws IllegalStateException {
-
-        synchronized (lock) {
-            AutomationInitializer.guaranteeAutomationInitialized();
-
-            if (instance == null) {
-                instance = new AutomationImpl(
-                        AutomationInitializer.getEventQueue());
-            }
-        }
-        
-        return instance;
-    }
 
     /**
      * Gets instance of AutoSuiteStorage class.
      *
      * @return instance of AutoSuiteStorage class
-     * @throws IllegalStateException if Automation API hasn't been
-     * initialized or is not permitted to use
-     */    
-    public AutoSuiteStorage getStorage() 
-        throws IllegalStateException {
-
-            return AutoSuiteStorageImpl.getInstance();
+     */
+    public AutoSuiteStorage getStorage() {
+        return AutoSuiteStorageImpl.getInstance();
     }
 
-    public AutoEventFactory getEventFactory() 
-        throws IllegalStateException {
-
+    /**
+     * Gets instance of AutoEventFactory class.
+     *
+     * @return instance of AutoEventFactory class
+     */
+    public AutoEventFactory getEventFactory() {
         return AutoEventFactoryImpl.getInstance();
     }
 
+    /**
+     * Simulates single event.
+     *
+     * @param event event to simulate
+     */    
     public void simulateEvents(AutoEvent event) 
         throws IllegalArgumentException {
 
@@ -94,6 +85,7 @@ final class AutomationImpl extends Automation {
             return;
         }
 
+        // obtain native event corresponding to this AutoEvent
         AutoEventImplBase eventBase = (AutoEventImplBase)event;
         NativeEvent nativeEvent = eventBase.toNativeEvent();
         if (nativeEvent == null) {
@@ -102,6 +94,7 @@ final class AutomationImpl extends Automation {
                     eventBase.getType().getName());
         }
 
+        // obtain ids of foreground isolate and display
         int foregroundIsolateId;
         int foregroundDisplayId;
         synchronized (foregroundIsolateAndDisplay) {
@@ -110,12 +103,52 @@ final class AutomationImpl extends Automation {
             foregroundDisplayId = foregroundIsolateAndDisplay[1];
         }
 
+        // and send this native event to foreground isolate
         nativeEvent.intParam4 = foregroundDisplayId;
         eventQueue.sendNativeEventToIsolate(nativeEvent,foregroundIsolateId);
     }
 
+    /**
+     * Simulates (replays) sequence of events.
+     *
+     * @param events event sequence to simulate
+     * @throws IllegalArgumentException if some of the specified 
+     * parameters has illegal value
+     */
+    public void simulateEvents(AutoEventSequence events) 
+        throws IllegalArgumentException{
+
+        if (events == null) {
+            throw new IllegalArgumentException("Event sequence is null");
+        }
+        
+        AutoEvent[] arr = events.getEvents();
+        for (int i = 0; i < arr.length; ++i) {
+            simulateEvents(arr[i]);
+        }
+    }
+
+    /**
+     * Simulates (replays) sequence of events.
+     *
+     * @param events event sequence to simulate
+     * @param delayDivisor a double value for adjusting duration 
+     * of delays within the sequence: duration of all delays is 
+     * divided by this value. It allows to control the speed of
+     * sequence replay. For example, to make it replay two times 
+     * faster, specify 2.0 as delay divisor. 
+     */
     public void simulateEvents(AutoEventSequence events, 
-            double delayDivisor) {
+            double delayDivisor) 
+        throws IllegalArgumentException {
+
+        if (events == null) {
+            throw new IllegalArgumentException("Event sequence is null");
+        }
+
+        if (delayDivisor == 0.0) {
+            throw new IllegalArgumentException("Delay divisor is zero");
+        }
 
         AutoEvent[] arr = events.getEvents();
         for (int i = 0; i < arr.length; ++i) {
@@ -131,16 +164,19 @@ final class AutomationImpl extends Automation {
         }        
     }
 
-    public void simulateEvents(AutoEventSequence events) {
-        AutoEvent[] arr = events.getEvents();
-        for (int i = 0; i < arr.length; ++i) {
-            simulateEvents(arr[i]);
-        }
-    }
-    
-    
+    /**
+     * Simulates key event. 
+     *
+     * @param keyCode key code not representable as character 
+     * (soft key, for example)
+     * @param keyState key state 
+     * @param delayMsec delay in milliseconds before simulating the event
+     * @throws IllegalArgumentException if some of the specified 
+     * parameters has illegal value
+     */
     public void simulateKeyEvent(AutoKeyCode keyCode, AutoKeyState keyState, 
-            int delayMsec) {
+            int delayMsec) 
+        throws IllegalArgumentException {
 
         if (delayMsec != 0) {
             simulateDelayEvent(delayMsec);
@@ -150,8 +186,18 @@ final class AutomationImpl extends Automation {
         simulateEvents(e);
     }
     
+    /**
+     * Simulates key event. 
+     *
+     * @param keyChar key character (letter, digit)
+     * @param keyState key state 
+     * @param delayMsec delay in milliseconds before simulating the event
+     * @throws IllegalArgumentException if some of the specified 
+     * parameters has illegal value
+     */
     public void simulateKeyEvent(char keyChar, AutoKeyState keyState, 
-            int delayMsec) {
+            int delayMsec) 
+        throws IllegalArgumentException {
 
         if (delayMsec != 0) {
             simulateDelayEvent(delayMsec);
@@ -161,6 +207,15 @@ final class AutomationImpl extends Automation {
         simulateEvents(e);
     }
 
+    /**
+     * Simulates key click (key pressed and then released). 
+     *
+     * @param keyCode key code not representable as character 
+     * (soft key, for example)
+     * @param delayMsec delay in milliseconds before simulating the click
+     * @throws IllegalArgumentException if some of the specified 
+     * parameters has illegal value
+     */
     public void simulateKeyClick(AutoKeyCode keyCode, int delayMsec) 
         throws IllegalArgumentException {
 
@@ -177,6 +232,14 @@ final class AutomationImpl extends Automation {
         simulateEvents(e);
     }
     
+    /**
+     * Simulates key click (key pressed and then released). 
+     *
+     * @param keyChar key character (letter, digit)
+     * @param delayMsec delay in milliseconds before simulating the click
+     * @throws IllegalArgumentException if some of the specified 
+     * parameters has illegal value
+     */
     public void simulateKeyClick(char keyChar, int delayMsec) 
         throws IllegalArgumentException {
 
@@ -193,9 +256,19 @@ final class AutomationImpl extends Automation {
         simulateEvents(e);
     }
 
+    /**
+     * Simulates pen event.
+     *
+     * @param x x coord of pen tip
+     * @param y y coord of pen tip
+     * @param penState pen state
+     * @param delayMsec delay in milliseconds before simulating the event 
+     * @throws IllegalArgumentException if some of the specified 
+     * parameters has illegal value
+     */
     public void simulatePenEvent(int x, int y, AutoPenState penState, 
             int delayMsec) 
-        throws IllegalStateException {
+        throws IllegalArgumentException {
 
         if (delayMsec != 0) {
             simulateDelayEvent(delayMsec);
@@ -205,7 +278,22 @@ final class AutomationImpl extends Automation {
         simulateEvents(e);
     }
 
-    public void simulatePenClick(int x, int y, int delayMsec) {
+    /**
+     * Simulates pen click (pen tip pressed and then released).
+     *
+     * @param x x coord of pen tip
+     * @param y y coord of pen tip
+     * @param delayMsec delay in milliseconds before simulating the click
+     * @throws IllegalArgumentException if some of the specified 
+     * parameters has illegal value
+     */
+    public void simulatePenClick(int x, int y, int delayMsec) 
+        throws IllegalArgumentException {
+
+        if (delayMsec != 0) {
+            simulateDelayEvent(delayMsec);
+        }
+        
         AutoEvent e;
 
         e = eventFactory.createPenEvent(x, y, AutoPenState.PRESSED);
@@ -213,22 +301,57 @@ final class AutomationImpl extends Automation {
 
         e = eventFactory.createPenEvent(x, y, AutoPenState.RELEASED);
         simulateEvents(e);
-
-        if (delayMsec != 0) {
-            simulateDelayEvent(delayMsec);
-        }
     }
 
-    public void simulatePenClick(int x, int y) {
-        simulatePenClick(x, y, 0);
-    }
+    /**
+     * Simulates delay event.
+     *
+     * @param msec delay value in milliseconds 
+     * @throws IllegalArgumentException if some of the specified 
+     * parameters has illegal value
+     */
+    public void simulateDelayEvent(int msec) 
+        throws IllegalArgumentException {
 
-
-    public void simulateDelayEvent(int msec) {
         AutoEvent e =  eventFactory.createDelayEvent(msec);
         simulateEvents(e);        
     }
     
+    /**
+     * Gets instance of Automation class.
+     *
+     * @return instance of Automation class
+     * @throws IllegalStateException if Automation API hasn't been
+     * initialized or is not permitted to use
+     */
+    static final synchronized Automation getInstanceImpl() 
+        throws IllegalStateException {
+        
+        AutomationInitializer.guaranteeAutomationInitialized();
+        if (instance == null) {
+            instance = new AutomationImpl(
+                    AutomationInitializer.getEventQueue());
+        }
+        
+        return instance;
+    }
+
+    /**
+     * Gets ids of foreground isolate and display
+     *
+     * @param foregroundIsolateAndDisplay array to store ids in
+     */
     private static native void getForegroundIsolateAndDisplay(
             int[] foregroundIsolateAndDisplay);
+
+    /**
+     * Private constructor to prevent creating class instances.
+     *
+     * @param eventQueue event queue
+     */
+    private AutomationImpl(EventQueue eventQueue) {
+        this.eventQueue = eventQueue;
+        this.eventFactory = AutoEventFactoryImpl.getInstance();
+        this.foregroundIsolateAndDisplay = new int[2];
+    } 
 }

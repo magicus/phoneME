@@ -24,15 +24,23 @@
  * information or have any questions.
  */
 
-
 package com.sun.midp.automation;
 
 /**
- *  Represents our Java ME system.
+ * Entry point into Automation API, that is, one starts working
+ * with Automation API by obtaining instance of this class.
+ * Provides methods for events simulation, getting suites storage 
+ * and event factory class instances.
  */
 public abstract class Automation {
-
-    public final static Automation getInstance() 
+    /**
+     * Gets instance of Automation class.
+     *
+     * @return instance of Automation class
+     * @throws IllegalStateException if Automation API hasn't been
+     * initialized or is not permitted to use
+     */
+    public static final Automation getInstance() 
         throws IllegalStateException {
 
         return AutomationImpl.getInstanceImpl();
@@ -42,44 +50,139 @@ public abstract class Automation {
      * Gets instance of AutoSuiteStorage class.
      *
      * @return instance of AutoSuiteStorage class
-     * @throws IllegalStateException if Automation API hasn't been
-     * initialized or is not permitted to use
      */    
-    public abstract AutoSuiteStorage getStorage() 
-        throws IllegalStateException;
+    public abstract AutoSuiteStorage getStorage();
 
-    public abstract AutoEventFactory getEventFactory()
-        throws IllegalStateException;
+    /**
+     * Gets instance of AutoEventFactory class.
+     *
+     * @return instance of AutoEventFactory class
+     */
+    public abstract AutoEventFactory getEventFactory();
 
 
-    public abstract void simulateEvents(AutoEvent event);
+    /*
+     * Group of event simulating methods
+     */
 
+    /**
+     * Simulates single event.
+     *
+     * @param event event to simulate
+     * @throws IllegalArgumentException if some of the specified 
+     * parameters has illegal value
+     */
+    public abstract void simulateEvents(AutoEvent event) 
+        throws IllegalArgumentException;
+
+    /**
+     * Simulates (replays) sequence of events.
+     *
+     * @param events event sequence to simulate
+     * @throws IllegalArgumentException if some of the specified 
+     * parameters has illegal value
+     */
+    public abstract void simulateEvents(AutoEventSequence events) 
+        throws IllegalArgumentException;
+
+    /**
+     * Simulates (replays) sequence of events.
+     *
+     * @param events event sequence to simulate
+     * @param delayDivisor a double value for adjusting duration 
+     * of delays within the sequence: duration of all delays is 
+     * divided by this value. It allows to control the speed of
+     * sequence replay. For example, to make it replay two times 
+     * faster, specify 2.0 as delay divisor. 
+     */
     public abstract void simulateEvents(AutoEventSequence events, 
-            double delayDivisor);
+            double delayDivisor) 
+        throws IllegalArgumentException;
 
-    public abstract void simulateEvents(AutoEventSequence events);
-
-
+    /**
+     * Simulates key event. 
+     *
+     * @param keyCode key code not representable as character 
+     * (soft key, for example)
+     * @param keyState key state 
+     * @param delayMsec delay in milliseconds before simulating the event
+     * @throws IllegalArgumentException if some of the specified 
+     * parameters has illegal value
+     */
     public abstract void simulateKeyEvent(AutoKeyCode keyCode, 
             AutoKeyState keyState, int delayMsec) 
         throws IllegalArgumentException;
 
+    /**
+     * Simulates key event. 
+     *
+     * @param keyChar key character (letter, digit)
+     * @param keyState key state 
+     * @param delayMsec delay in milliseconds before simulating the event
+     * @throws IllegalArgumentException if some of the specified 
+     * parameters has illegal value
+     */
     public abstract void simulateKeyEvent(char keyChar, AutoKeyState keyState, 
             int delayMsec) 
         throws IllegalArgumentException;
 
+    /**
+     * Simulates key click (key pressed and then released). 
+     *
+     * @param keyCode key code not representable as character 
+     * (soft key, for example)
+     * @param delayMsec delay in milliseconds before simulating the click
+     * @throws IllegalArgumentException if some of the specified 
+     * parameters has illegal value
+     */
     public abstract void simulateKeyClick(AutoKeyCode keyCode, int delayMsec) 
         throws IllegalArgumentException;
     
+    /**
+     * Simulates key click (key pressed and then released). 
+     *
+     * @param keyChar key character (letter, digit)
+     * @param delayMsec delay in milliseconds before simulating the click
+     * @throws IllegalArgumentException if some of the specified 
+     * parameters has illegal value
+     */
     public abstract void simulateKeyClick(char keyChar, int delayMsec) 
         throws IllegalArgumentException;
 
+    /**
+     * Simulates pen event.
+     *
+     * @param x x coord of pen tip
+     * @param y y coord of pen tip
+     * @param penState pen state
+     * @param delayMsec delay in milliseconds before simulating the event 
+     * @throws IllegalArgumentException if some of the specified 
+     * parameters has illegal value
+     */
     public abstract void simulatePenEvent(int x, int y, AutoPenState penState, 
             int delayMsec) 
-        throws IllegalStateException;
+        throws IllegalArgumentException;
 
-    public abstract void simulatePenClick(int x, int y, int delayMsec);
+    /**
+     * Simulates pen click (pen tip pressed and then released).
+     *
+     * @param x x coord of pen tip
+     * @param y y coord of pen tip
+     * @param delayMsec delay in milliseconds before simulating the click
+     * @throws IllegalArgumentException if some of the specified 
+     * parameters has illegal value
+     */
+    public abstract void simulatePenClick(int x, int y, int delayMsec)
+        throws IllegalArgumentException;
 
+
+    /**
+     * Simulates delay event.
+     *
+     * @param msec delay value in milliseconds 
+     * @throws IllegalArgumentException if some of the specified 
+     * parameters has illegal value
+     */
     public abstract void simulateDelayEvent(int msec) 
         throws IllegalArgumentException;
 }
