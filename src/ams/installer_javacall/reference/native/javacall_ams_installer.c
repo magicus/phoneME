@@ -244,7 +244,7 @@ java_ams_install_answer(javacall_ams_install_request_code requestCode,
     if (g_installerIsolateId != -1) {
         thread = SNI_GetSpecialThread(g_installerIsolateId);
         if (thread != NULL) {
-            SNI_UnblockThread(thread);
+            midp_thread_unblock(thread);
         } else {
             res = JAVACALL_FAIL;
         }

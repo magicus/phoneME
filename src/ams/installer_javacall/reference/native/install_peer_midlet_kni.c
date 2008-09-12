@@ -238,7 +238,6 @@ KNIDECL(com_sun_midp_installer_InstallerPeerMIDlet_getAnswer0) {
         g_fAnswerReady = JAVACALL_FALSE;
         g_installerIsolateId = -1;
     } else {
-        /* block the thread only if the request was sent successfully */
         g_installerIsolateId = getCurrentIsolateId();
         SNI_SetSpecialThread(g_installerIsolateId);
         SNI_BlockThread();
