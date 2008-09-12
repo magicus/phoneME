@@ -148,8 +148,9 @@ static jint input_mode_ids[] =
     NUMERIC_INPUT_MODE,
     ALPHANUMERIC_INPUT_MODE,
     PREDICTIVE_TEXT_INPUT_MODE,
-    SYMBOL_INPUT_MODE,
-    VIRTUAL_INPUT_MODE
+    SYMBOL_INPUT_MODE
+    //virtual input mode disabled for SDK's early access (not working at this time).
+    //VIRTUAL_INPUT_MODE
     /* native input modes, if any */
 /*
     110,111,120
