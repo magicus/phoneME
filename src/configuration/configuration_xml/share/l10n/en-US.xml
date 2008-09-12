@@ -103,6 +103,8 @@
                 Value="End"/>
 <localized_string Key="OPTIONS"
                 Value="Options"/>
+<localized_string Key="OPEN"
+                Value="Open"/>
 
 <localized_string Key="MANUFACTURER"
                 Value="Manufacturer"/>

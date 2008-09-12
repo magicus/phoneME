@@ -25,16 +25,17 @@
  */
 package com.sun.midp.appmanager;
 
-import javax.microedition.lcdui.*;
-
 import com.sun.midp.i18n.Resource;
 import com.sun.midp.i18n.ResourceConstants;
-
+import com.sun.midp.main.MIDletProxyList;
+import com.sun.midp.main.MIDletProxy;
 import com.sun.midp.midlet.MIDletSuite;
+import com.sun.midp.midletsuite.MIDletInfo;
+import com.sun.midp.midletsuite.MIDletSuiteCorruptedException;
+import com.sun.midp.midletsuite.MIDletSuiteLockedException;
+import com.sun.midp.midletsuite.MIDletSuiteStorage;
 
-import com.sun.midp.midletsuite.*;
-
-
+import javax.microedition.lcdui.*;
 import java.util.Vector;
 
 /**
@@ -85,6 +86,12 @@ final class MIDletSelector implements CommandListener {
     private Command launchCmd = new Command(Resource.getString
                                             (ResourceConstants.LAUNCH),
                                             Command.ITEM, 1);
+
+    /** Command object for "End" midlet. */
+    private Command endCmd = new Command(Resource.getString
+                                         (ResourceConstants.END),
+                                         Command.ITEM, 1);
+
     /**
      * Index of the selected MIDlet, starts at -1 for non-selected.
      */
@@ -128,6 +135,7 @@ final class MIDletSelector implements CommandListener {
         setupList(mss);
 
         mlist.addCommand(launchCmd);
+        mlist.addCommand(endCmd);
         mlist.addCommand(backCmd);
 
         mlist.setCommandListener(this); // Listen for the selection
@@ -150,6 +158,7 @@ final class MIDletSelector implements CommandListener {
      */
     public void show() {
         selectedMidlet = -1;
+        refreshList();
         display.setCurrent(mlist);
     }
 
@@ -168,7 +177,7 @@ final class MIDletSelector implements CommandListener {
      */
     public void exitIfNoMidletRuns() {
         if (runningMidlets.isEmpty()) {
-            manager.notifySuiteExited(suiteInfo);
+            manager.notifySuiteExited(suiteInfo, null);
         }
     }
     
@@ -192,6 +201,12 @@ final class MIDletSelector implements CommandListener {
                 selectedMidlet = mlist.getSelectedIndex();
             }
 
+            String midletClassName = minfo[selectedMidlet].classname;
+            if(runningMidlets.contains(midletClassName)) {
+                manager.moveToForeground(suiteInfo, midletClassName);
+                return;
+            }
+
             runningMidlets.addElement(minfo[selectedMidlet].classname);
             manager.launchSuite(suiteInfo, minfo[selectedMidlet].classname);
             if (parentDisplayable != null) {
@@ -200,17 +215,23 @@ final class MIDletSelector implements CommandListener {
                 selectedMidlet = -1;
                 display.setCurrent(mlist);
             }
-            return;
-        }
 
-        if (c == backCmd) {
+        } else if (c == backCmd) {
             if (parentDisplayable != null) {
                 display.setCurrent(parentDisplayable);
             } else {
                 manager.shutDown();
             }
             exitIfNoMidletRuns();
-            return;
+
+        } else if (c == endCmd) {
+            int selected = mlist.getSelectedIndex();
+            if (selected > 0 && selected < mlist.size()) {
+                String midletClassName = minfo[selected].classname;
+                manager.exitMidlet(suiteInfo, midletClassName);
+            }
+            display.setCurrent(mlist);
+
         }
     }
 
@@ -221,22 +242,51 @@ final class MIDletSelector implements CommandListener {
      * @param mss the midlet suite storage
      */
     private void setupList(MIDletSuiteStorage mss) {
+        MIDletProxyList mpl = MIDletProxyList.getMIDletProxyList();
         if (mlist == null) {
             mlist = new List(Resource.getString
-                             (ResourceConstants.AMS_SELECTOR_SEL_TO_LAUNCH),
-                             Choice.IMPLICIT);
+                    (ResourceConstants.AMS_SELECTOR_SEL_TO_LAUNCH),
+                    Choice.IMPLICIT);
 
             // Add each midlet
             for (int i = 0; i < mcount; i++) {
                 Image icon = null;
                 if (minfo[i].icon != null) {
                     icon = RunningMIDletSuiteInfo.getIcon(suiteInfo.suiteId,
-                        minfo[i].icon, mss);
+                            minfo[i].icon, mss);
                 }
-
-                mlist.append(minfo[i].name, icon);
+                // the MIDlet is running iff the MIDlet proxy is found
+                MIDletProxy mp = mpl.findMIDletProxy(suiteInfo.suiteId, minfo[i].classname);
+                mlist.append(encodeMIDletName(mp, minfo[i].name), icon);
             }
         }
+    }
+
+    /**
+     * Refresh the MIDlet list, showing the updated statuses
+     */
+    private void refreshList() {
+        MIDletProxyList mpl = MIDletProxyList.getMIDletProxyList();
+        for (int i = 0; i < mcount; i++) {
+            Image icon = mlist.getImage(i);
+            MIDletProxy mp = mpl.findMIDletProxy(suiteInfo.suiteId, minfo[i].classname);
+            mlist.set(i,encodeMIDletName(mp, minfo[i].name), icon);
+        }
+    }
+
+    /**
+     * Compose a MIDlet entry title from the MIDlet name and MIDlet status
+     * @param mp the proxy of running MIDlet
+     * @param name the display name of the MIDlet
+     * @return a human-readable string including MIDlet status and name
+     */
+    private String encodeMIDletName(MIDletProxy mp, String name) {
+        int state;
+        return ((mp == null) ? "o "
+            : (MIDletProxy.MIDLET_ACTIVE == (state = mp.getMidletState())) ? "A "
+            : (MIDletProxy.MIDLET_PAUSED == state) ? "P "
+            : (MIDletProxy.MIDLET_DESTROYED == state) ? "D "
+            : "? ") + name;
     }
 
     /**

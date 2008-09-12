@@ -69,8 +69,9 @@ interface AppManagerUI {
      * Called when state of a running midlet has changed.
      *
      * @param si corresponding midlet suite info
+     * @param midlet
      */
-    void notifyMidletStateChanged(RunningMIDletSuiteInfo si);
+    void notifyMidletStateChanged(RunningMIDletSuiteInfo si, MIDletProxy midlet);
 
     /**
      * Called when a running internal midlet exited.
