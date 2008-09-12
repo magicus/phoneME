@@ -151,15 +151,6 @@ endif
 SUBSYSTEM_AMS_LAZY_MAKEFILES += \
 	$(NAMS_EXAMPLES_DIR)/executables.gmk
 
-ifneq ($(CREATE_JAVA_LIB),)
-ifeq ($(CREATE_JAVA_LIB),dll)
-SUBSYSTEM_AMS_EXECUTABLES = $(BINDIR)/java$(g)$(p)$(SHARED_LIB_SUFFIX)
-else
-ifeq ($(CREATE_JAVA_LIB),lib)
-SUBSYSTEM_AMS_EXECUTABLES = $(BINDIR)/java$(g)$(p)$(LIB_SUFFIX)
-endif
-endif
-else  
 SUBSYSTEM_AMS_EXECUTABLES = \
 	$(BINDIR)/runNams$(g)$(p)$(EXE) \
 	$(BINDIR)/listMidlets$(g)$(p)$(EXE) \
@@ -185,8 +176,6 @@ endif
 
 ifeq ($(TARGET_PLATFORM), javacall)
 INCLUDE_SHELL_SCRIPTS = true
-endif
-#end of CREATE_JAVA_LIB=true
 endif
 
 ifdef INCLUDE_SHELL_SCRIPTS

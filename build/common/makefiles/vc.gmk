@@ -44,17 +44,13 @@ CPP		= cl
 CC_OUTPUT	= -Fo
 
 LD 		= link
-ifneq ($(CREATE_JAVA_LIB),)
-ifeq ($(CREATE_JAVA_LIB),true)
-override CREATE_JAVA_LIB=lib
-$(warning CREATE_JAVA_LIB was overridden to : $(CREATE_JAVA_LIB))
+ifneq ($(CREATE_MIDP_LIB),)
+ifeq ($(CREATE_MIDP_LIB),true)
+override CREATE_MIDP_LIB=lib
+$(warning CREATE_MIDP_LIB was overridden to : $(CREATE_MIDP_LIB))
 endif
-ifeq ($(CREATE_JAVA_LIB),lib)
-LD 		= lib
-else
-ifeq ($(CREATE_JAVA_LIB),dll)
+ifeq ($(CREATE_MIDP_LIB),shared_lib)
 LD_FLAGS 	+= /DLL
-endif
 endif
 endif
 

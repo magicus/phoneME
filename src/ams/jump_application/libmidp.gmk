@@ -35,7 +35,4 @@
 #
 # Create a libmidp.so for non-ROMized build.
 #
-$(MIDP_SHARED_LIB): $(OBJ_FILES)
-	@echo " ... linking $@ " $(LOG)
-	@$(LD) $(LD_FLAGS) $(LINKER_OUTPUT)`$(call fixcygpath,$@ \
-	  $(OBJ_FILES) $(LIBS))` $(LOG) 
+MIDP_SHARED_LIB_DEPS = $(OBJ_FILES)

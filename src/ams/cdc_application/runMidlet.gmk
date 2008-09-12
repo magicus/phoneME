@@ -36,10 +36,7 @@
 # Create a libmidp.so if we are not statically linking with cvm
 #
 ifneq ($(CVM_STATICLINK_LIBS), true)
-$(MIDP_SHARED_LIB): $(MIDP_DEPS) $(OBJ_FILES)
-	@echo " ... linking $@ " $(LOG)
-	@$(LD) $(LD_FLAGS) $(LINKER_OUTPUT)`$(call fixcygpath,$@ \
-	  $(OBJ_FILES) $(LIBS))` $(LOG)
+MIDP_SHARED_LIB_DEPS = $(MIDP_DEPS) $(OBJ_FILES)
 endif
 
 #

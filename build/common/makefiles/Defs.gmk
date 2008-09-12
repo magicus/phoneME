@@ -114,6 +114,12 @@ ifeq ($(TARGET_VM), cdc_vm)
    ifneq ($(CVM_STATICLINK_LIBS), true)
       MIDP_SHARED_LIB ?= $(BINDIR)/libmidp$(g)$(p)$(SHARED_LIB_SUFFIX)
    endif
+else
+ifeq ($(CREATE_MIDP_LIB),shared_lib)
+MIDP_LIB_NAME = libmidp$(g)$(p)
+MIDP_SHARED_LIB = $(BINDIR)/$(MIDP_LIB_NAME)$(SHARED_LIB_SUFFIX)
+MIDP_SHARED_LIB_DEPS ?= $(MIDP_DEPS) $(OBJLIB)
+endif
 endif
 
 # Use "_" since it will be used by other modules

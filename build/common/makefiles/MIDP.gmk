@@ -272,6 +272,16 @@ clean::
 
 midp: $(MIDP_DEPS) $(MIDP_RESOURCES)
 
+ifneq ($(MIDP_SHARED_LIB),)
+$(MIDP_SHARED_LIB): $(MIDP_SHARED_LIB_DEPS)
+	@echo " ... linking $@ " $(LOG)
+	$(AT)$(LD) $(LD_FLAGS) $(LINKER_OUTPUT)`$(call fixcygpath,$@ \
+	  $(OBJ_FILES) $(LIBS))` $(LOG) 
+
+ifeq ($(CREATE_MIDP_LIB),shared_lib)
+all:: $(MIDP_SHARED_LIB)
+endif
+endif
 
 # Phonies to avoid accidents.
 #
