@@ -31,7 +31,7 @@ extern "C" {
 #endif
 
 #include "javacall_defs.h"
-
+#include "javacall_security.h"
 /**
  * @file javacall_nams.h
  * @ingroup MandatoryNAMS
@@ -178,123 +178,7 @@ typedef enum {
     JAVACALL_AMS_DOMAIN_TRUSTED = 1
 } javacall_ams_domain;
 
-/**
- * @enum javacall_ams_permission
- */
-/* one to one mapping with Permissions.java */
-typedef enum {
-  /** javax.microedition.io.Connector.http permission ID. */
-  JAVACALL_AMS_PERMISSION_HTTP = 2,
-  /** javax.microedition.io.Connector.socket permission ID. */
-  JAVACALL_AMS_PERMISSION_SOCKET,
-  /** javax.microedition.io.Connector.https permission ID. */
-  JAVACALL_AMS_PERMISSION_HTTPS,
-  /** javax.microedition.io.Connector.ssl permission ID. */
-  JAVACALL_AMS_PERMISSION_SSL,
-  /** javax.microedition.io.Connector.serversocket permission ID. */
-  JAVACALL_AMS_PERMISSION_SERVERSOCKET,
-  /** javax.microedition.io.Connector.datagram permission ID. */
-  JAVACALL_AMS_PERMISSION_DATAGRAM,
-  /** javax.microedition.io.Connector.datagramreceiver permission ID. */
-  JAVACALL_AMS_PERMISSION_DATAGRAMRECEIVER,
-  /** javax.microedition.io.Connector.comm permission ID. */
-  JAVACALL_AMS_PERMISSION_COMM,
-  /** javax.microedition.io.PushRegistry permission ID. */
-  JAVACALL_AMS_PERMISSION_PUSH,
-  /** javax.microedition.io.Connector.sms permission ID. */
-  JAVACALL_AMS_PERMISSION_SMS,
-  /** javax.microedition.io.Connector.cbs permission ID. */
-  JAVACALL_AMS_PERMISSION_CBS,
-  /** javax.wireless.messaging.sms.send permission ID. */
-  JAVACALL_AMS_PERMISSION_SMS_SEND,
-  /** javax.wireless.messaging.sms.receive permission ID. */
-  JAVACALL_AMS_PERMISSION_SMS_RECEIVE,
-  /** javax.wireless.messaging.cbs.receive permission ID. */
-  JAVACALL_AMS_PERMISSION_CBS_RECEIVE,
-  /** javax.microedition.media.RecordControl permission ID. */
-  JAVACALL_AMS_PERMISSION_MM_RECORD,
-  /** javax.microedition.media.VideoControl.getSnapshot permission ID. */
-  JAVACALL_AMS_PERMISSION_MM_CAPTURE,
-  /** javax.microedition.io.Connector.mms permission ID. */
-  JAVACALL_AMS_PERMISSION_MMS,
-  /** javax.wireless.messaging.mms.send permission ID. */ 
-  JAVACALL_AMS_PERMISSION_MMS_SEND,
-  /** javax.wireless.messaging.mms.receive permission ID. */
-  JAVACALL_AMS_PERMISSION_MMS_RECEIVE,
-  /** javax.microedition.apdu.aid permission ID. */
-  JAVACALL_AMS_PERMISSION_APDU_CONNECTION,
-  /** javax.microedition.jcrmi permission ID. */
-  JAVACALL_AMS_PERMISSION_JCRMI_CONNECTION,
-   /**
-    * javax.microedition.securityservice.CMSSignatureService
-    * permission ID.
-    */
-  JAVACALL_AMS_PERMISSION_SIGN_SERVICE,
-  /** javax.microedition.apdu.sat permission ID. */
-  JAVACALL_AMS_PERMISSION_ADPU_CHANNEL0,
-  /** javax.microedition.content.ContentHandler permission ID. */
-  JAVACALL_AMS_PERMISSION_CHAPI,
-  /** javax.microedition.pim.ContactList.read ID. */
-  JAVACALL_AMS_PERMISSION_PIM_CONTACT_READ,
-  /** javax.microedition.pim.ContactList.write ID. */
-  JAVACALL_AMS_PERMISSION_PIM_CONTACT_WRITE,
-  /** javax.microedition.pim.EventList.read ID. */
-  JAVACALL_AMS_PERMISSION_PIM_EVENT_READ,
-  /** javax.microedition.pim.EventList.write ID. */
-  JAVACALL_AMS_PERMISSION_PIM_EVENT_WRITE,
-  /** javax.microedition.pim.ToDoList.read ID. */
-  JAVACALL_AMS_PERMISSION_PIM_TODO_READ,
-  /** javax.microedition.pim.ToDoList.write ID. */
-  JAVACALL_AMS_PERMISSION_PIM_TODO_WRITE,
-  /** javax.microedition.io.Connector.file.read ID. */
-  JAVACALL_AMS_PERMISSION_FILE_READ,
-  /** javax.microedition.io.Connector.file.write ID. */
-  JAVACALL_AMS_PERMISSION_FILE_WRITE,
-  /** javax.microedition.io.Connector.obex.client ID. */
-  JAVACALL_AMS_PERMISSION_OBEX_CLIENT,
-  /** javax.microedition.io.Connector.obex.server ID. */
-  JAVACALL_AMS_PERMISSION_OBEX_SERVER,
-  /** javax.microedition.io.Connector.obex.client.tcp ID. */
-  JAVACALL_AMS_PERMISSION_TCP_OBEX_CLIENT,
-  /** javax.microedition.io.Connector.obex.server.tcp ID. */
-  JAVACALL_AMS_PERMISSION_TCP_OBEX_SERVER,
-  /** javax.microedition.io.Connector.bluetooth.client ID. */
-  JAVACALL_AMS_PERMISSION_BT_CLIENT,
-  /** javax.microedition.io.Connector.bluetooth.server ID. */
-  JAVACALL_AMS_PERMISSION_BT_SERVER,
-  /** javax.bluetooth.RemoteDevice.authorize ID. */
-  JAVACALL_AMS_PERMISSION_BT_AUTHORIZE,
-  /** javax.microedition.location.Location ID. */
-  JAVACALL_AMS_PERMISSION_LOC_LOCATION,
-  /** javax.microedition.location.Orientation ID. */
-  JAVACALL_AMS_PERMISSION_LOC_ORIENTATION,
-  /** javax.microedition.location.ProximityListener ID. */
-  JAVACALL_AMS_PERMISSION_LOC_PROXIMITY,
-  /** javax.microedition.location.LandmarkStore.read ID. */
-  JAVACALL_AMS_PERMISSION_LOC_LANDMARK_READ,
-  /** javax.microedition.location.LandmarkStore.write ID. */
-  JAVACALL_AMS_PERMISSION_LOC_LANDMARK_WRITE,
-  /** javax.microedition.location.LandmarkStore.category ID. */
-  JAVACALL_AMS_PERMISSION_LOC_LANDMARK_CATEGORY,
-  /** javax.microedition.location.LandmarkStore.management ID. */
-  JAVACALL_AMS_PERMISSION_LOC_LANDMARK_MANAGE,
-  /** javax.microedition.io.Connector.sip permission ID. */
-  JAVACALL_AMS_PERMISSION_SIP,
-  /** javax.microedition.io.Connector.sips permission ID. */
-  JAVACALL_AMS_PERMISSION_SIPS,
-  /** javax.microedition.payment.process permission ID. */
-  JAVACALL_AMS_PERMISSION_PAYMENT,
-  /** com.qualcomm.qjae.gps.Gps permission ID. */  
-  JAVACALL_AMS_PERMISSION_GPS,
-  /** javax.microedition.media.protocol.Datasource permission ID. */
-  JAVACALL_AMS_PERMISSION_MM_DATASOURCE,
-  /** javax.microedition.media.Player permission ID. */
-  JAVACALL_AMS_PERMISSION_MM_PLAYER,
-  /** javax.microedition.media.Manager permission ID. */
-  JAVACALL_AMS_PERMISSION_MM_MANAGER,
   
-  JAVACALL_AMS_PERMISSION_LAST
-} javacall_ams_permission;
 
 /**
  * @enum javacall_ams_permission_val
@@ -314,7 +198,7 @@ typedef enum {
  */
 typedef struct _javacall_ams_permission_set {
     /** Array of javacall_ams_permission_val */
-    javacall_ams_permission_val permission[JAVACALL_AMS_PERMISSION_LAST];
+    javacall_ams_permission_val permission[JAVACALL_SECURITY_PERMISSION_LAST];
 } javacall_ams_permission_set;
 
 /**
@@ -716,7 +600,7 @@ javacall_ams_get_permissions(javacall_suite_id suiteID,
  */
 javacall_result
 javacall_ams_set_permission(javacall_suite_id suiteID,
-                            javacall_ams_permission permission,
+                            javacall_security_permission permission,
                             javacall_ams_permission_val value);
 
 /**
