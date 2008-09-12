@@ -352,7 +352,7 @@ class AppManagerUIImpl extends Form
 
         midletSuiteStorage = MIDletSuiteStorage.getMIDletSuiteStorage();
 
-        midletSelectors = new MIDletSelector[1];
+        midletSelectors = new MIDletSelector[4];
         exitingMidletSuiteId = 0;
         exitingMidletClassName = null;
 
