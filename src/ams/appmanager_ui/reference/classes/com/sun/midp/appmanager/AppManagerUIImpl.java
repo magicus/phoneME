@@ -771,6 +771,13 @@ class AppManagerUIImpl extends Form
         // nothing to do    
     }
 
+    /** 
+     * Modifies menu command of a given item.
+     * The commands are modified to either "launch" or to "switch to foreground"
+     * and "end" regarding on whether the suite is running.
+     * @param ci Item to change commands for
+     * @param running Whether the suite corresponding to the item is running.
+     */
     private void modifySuiteCommands(MidletCustomItem ci, boolean running) {
         if (running) {
             ci.removeCommand(launchCmd);

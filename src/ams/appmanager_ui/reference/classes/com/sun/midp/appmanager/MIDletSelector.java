@@ -94,6 +94,11 @@ final class MIDletSelector implements CommandListener {
      * List of midlets executed from this selector.
      */
     private Vector runningMidlets;
+
+    /**
+     * MIDlet suite corresponding to this selector (used for locking).
+     */
+    private MIDletSuiteImpl msi = null;
     
     /**
      * Create and initialize a new Selector MIDlet.
@@ -146,7 +151,6 @@ final class MIDletSelector implements CommandListener {
         return suiteInfo;
     }
 
-    MIDletSuiteImpl msi = null;
     /**
      * Displays this selector on the screen.
      */
