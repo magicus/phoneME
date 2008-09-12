@@ -23,6 +23,9 @@
  */
 package com.sun.mmedia;
 
+import com.sun.j2me.log.Logging;
+import com.sun.j2me.log.LogChannels;
+
 import java.io.*;
 import java.util.Vector;
 import java.util.Enumeration;
