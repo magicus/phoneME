@@ -72,20 +72,23 @@ interface ApplicationManager {
      * foreground.
      * 
      * @param suiteInfo information for the midlet to be put to foreground
+     * @param className the running MIDlet class name
      */
-    void moveToForeground(RunningMIDletSuiteInfo suiteInfo);
+    void moveToForeground(RunningMIDletSuiteInfo suiteInfo, String className);
     
     /**
      * Exit the midlet with the passed in midlet suite info.
      * 
      * @param suiteInfo information for the midlet to be terminated
+     * @param className the running MIDlet class name
      */
-    void exitMidlet(RunningMIDletSuiteInfo suiteInfo);
+    void exitMidlet(RunningMIDletSuiteInfo suiteInfo, String className);
 
     /**
      * Handle exit of MIDlet suite (the only MIDlet in sute exited or MIDlet
      * selector exited).
      * @param suiteInfo Containing ID of exited suite
+     * @param className the running MIDlet class name
      */
-    void notifySuiteExited(RunningMIDletSuiteInfo suiteInfo);
+    void notifySuiteExited(RunningMIDletSuiteInfo suiteInfo, String className);
 }

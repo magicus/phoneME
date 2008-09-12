@@ -26,21 +26,25 @@
 
 package com.sun.midp.appmanager;
 
-import com.sun.midp.main.*;
-import com.sun.midp.midletsuite.*;
-import com.sun.midp.installer.*;
-import javax.microedition.lcdui.*;
 import com.sun.midp.configurator.Constants;
-
-import com.sun.midp.log.Logging;
+import com.sun.midp.installer.GraphicalInstaller;
 import com.sun.midp.log.LogChannels;
-import com.sun.midp.midlet.MIDletSuite;
+import com.sun.midp.log.Logging;
+import com.sun.midp.main.MIDletProxy;
+import com.sun.midp.midletsuite.MIDletInfo;
+import com.sun.midp.midletsuite.MIDletSuiteImpl;
+import com.sun.midp.midletsuite.MIDletSuiteInfo;
+import com.sun.midp.midletsuite.MIDletSuiteStorage;
+
+import javax.microedition.lcdui.Image;
+import java.util.Vector;
 
 
 /** Simple attribute storage for MIDlet suites */
 public class RunningMIDletSuiteInfo extends MIDletSuiteInfo {
-    /** Proxy if running. It is set from AppManagerUI.java. */
-    public MIDletProxy proxy = null;
+    // IMPL_NOTE: currently this value is 4, no need to specify a different initial size.
+    /** The list of MIDlet proxies, one for each running MIDlet. It is set from AppManagerUI.java. */
+    private Vector proxies = new Vector(Constants.MAX_ISOLATES);
     /** Icon for this suite. */
     public Image icon = null;
     /** Whether suite is under debug */
@@ -177,35 +181,8 @@ public class RunningMIDletSuiteInfo extends MIDletSuiteInfo {
         StringBuffer b = new StringBuffer();
         b.append("id = " + suiteId);
         b.append(", midletToRun = " + midletToRun);
-        b.append(", proxy = " + proxy);
+        b.append(", proxies = [" + getProxies()+"]");
         return b.toString();
-    }
-
-    /**
-     * Compares this MIDletSuiteInfo with the passed in MIDletProxy.
-     * Returns true if both belong to the same suite and
-     * if current proxy or midetToRun points to the same class as
-     * in the passed in MIDletProxy.
-     * @param midlet The MIDletProxy to compare with
-     * @return true if The MIDletSuiteInfo points to the same midlet as
-     *         the MIDletProxy, false - otherwise
-     */
-    public boolean equals(MIDletProxy midlet) {
-        if (suiteId == midlet.getSuiteId()) {
-            if (proxy != null) {
-                return proxy == midlet;
-            }
-
-            if ((numberOfMidlets == 1 ||
-                 suiteId == MIDletSuite.INTERNAL_SUITE_ID) &&
-                    midletToRun != null) {
-                return midletToRun.equals(midlet.getClassName());
-            }
-
-            return true;
-        }
-
-        return false;
     }
 
     /** Cache of the suite icon. */
@@ -238,5 +215,147 @@ public class RunningMIDletSuiteInfo extends MIDletSuiteInfo {
                 getImageFromInternalStorage("_ch_suite");
         }
         return multiSuiteIcon;
+    }
+
+    /**
+     * Check if midlet belongs to the same suite.
+     * @param midlet the MIDlet proxy
+     * @return true if the MIDletProxy and this RunningMIDletSuiteInfo have the same suite id.
+     */
+    public boolean sameSuite(MIDletProxy midlet) {
+         return suiteId == midlet.getSuiteId();
+    }
+
+    /**
+     * Check if the suite runs the specified MIDlet.
+     * @param midlet specifies the MIDlet
+     * @return true if the MIDlet proxy is found in the running MIDlet proxy list.
+     */
+    public boolean hasRunning(MIDletProxy midlet) {
+        if (!sameSuite(midlet)) {
+            return false;
+        } else {
+            synchronized (this) {
+                return proxies.contains(midlet);
+            }
+        }
+    }
+
+    /**
+     * Return the first item from the running MIDlet proxy list.
+     * @return Proxy of a running MIDlet, or null
+     */
+    synchronized public MIDletProxy getFirstProxy() {
+            return (proxies.size() != 0) ? (MIDletProxy) proxies.firstElement() : null;
+    }
+
+    /**
+     * If the MIDlet identified by className is running, return its proxy.
+     * @param className MIDlet class name
+     * @return the running MIDlet proxy or null
+     */
+    public MIDletProxy getProxyFor(String className) {
+        if (className == null) {
+            return getFirstProxy();
+        }
+        synchronized (this) {
+            for (int i=0; i<proxies.size(); i++) {
+                if (className.equals(getProxyAt(i).getClassName())) {
+                    return getProxyAt(i);
+                }
+            }
+            return null;
+        }
+    }
+
+    /**
+     * Get the array of proxies for all running MIDlets.
+     * @return the proxy array.
+     */
+    synchronized public MIDletProxy[] getProxies() {
+        MIDletProxy[] proxyArray = new MIDletProxy[proxies.size()];
+        proxies.copyInto(proxyArray);
+        return proxyArray;
+    }
+
+    /**
+     * Add all specified proxies to the list of MIDlet proxies.
+     * @param newList specifies the MIDlet proxies to add
+     */
+    synchronized void addProxies(MIDletProxy[] newList) {
+        for (int i=0; i<newList.length; i++) {
+            if (!proxies.contains(newList[i])) {
+                proxies.addElement(newList[i]);
+            }
+        }
+    }
+
+    /**
+     * Get the i-th MIDlet proxy. An exception happens if i is not a valid proxy index.
+     * @param i The number of MIDlet proxy in the midlet proxy list
+     * @return the MIDlet proxy
+     */
+    synchronized public MIDletProxy getProxyAt(int i) {
+        return (MIDletProxy) proxies.elementAt(i);
+    }
+
+    /**
+     * Find proxy among the list of running MIDlet proxies.
+     * @param proxy proxy for some MIDlet
+     * @return true if this proxy is in the list of running midlets
+     */
+    synchronized public boolean hasProxy(MIDletProxy proxy) {
+        return proxies.contains(proxy);
+    }
+
+    /**
+     * Check the list of running MIDlet proxies for emptiness.
+     * @return true if at least one MIDlet is running
+     */
+    public boolean hasRunningMidlet() {
+        return !proxies.isEmpty();
+    }
+
+    /**
+     * Get the number of entries in the MIDlet proxy list.
+     * @return the number of running MIDlets from this suite
+     */
+    public int numberOfRunningMidlets() {
+        return proxies.size();
+    }
+
+    /**
+     * True if  alert is waiting for the foreground in at
+     * least of one of the MIDlets from this suite.
+     * @return true if there is a waiting alert
+     */
+    public boolean isAnyAlertWaiting() {
+        boolean res = false;
+        synchronized (this) {
+            for (int i=0, n=numberOfRunningMidlets(); i<n && !res; i++) {
+                res = getProxyAt(i).isAlertWaiting();
+            }
+        }
+        return res;
+    }
+
+    /**
+     * Add an item to the list of running MIDlet proxies.
+     * @param proxy the MIDlet proxy to add. Nothing is done when it's null.
+     */
+    public void addProxy(MIDletProxy proxy) {
+        if (proxy != null) {
+            synchronized (this) {
+                proxies.addElement(proxy);
+            }
+        }
+    }
+
+    /**
+     * Remove an item from the running MIDlet proxy list.
+     * @param proxy a MIDlet proxy to remove from the list
+     */
+    synchronized public void removeProxy(MIDletProxy proxy) {
+        proxies.removeElement(proxy);
     }
 }
