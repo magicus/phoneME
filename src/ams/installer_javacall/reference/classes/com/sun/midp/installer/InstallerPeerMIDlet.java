@@ -199,7 +199,12 @@ public class InstallerPeerMIDlet extends MIDlet implements InstallListener,
         boolean jarOnly = (len >= 4 &&
             ".jar".equalsIgnoreCase(url.substring(len - 4, len)));
         String errMsg = null;
-        int errCode = 0; // must be the same as
+
+        /*
+         * IMPL_NOTE: the value bellow errCode must be equal
+         *            to JAVACALL_INSTALL_EXC_ALL_OK.
+         */
+        int errCode = 0;
 
         try {
             if (jarOnly) {
@@ -209,7 +214,7 @@ public class InstallerPeerMIDlet extends MIDlet implements InstallListener,
                 lastInstalledSuiteId =
                     installer.installJad(url, storageId, false, false, this);
             }
-        } catch(InvalidJadException ije) {
+        } catch (InvalidJadException ije) {
             errCode = ije.getReason();
             errMsg = ije.getExtraData();
         } catch (Throwable t) {
@@ -217,8 +222,9 @@ public class InstallerPeerMIDlet extends MIDlet implements InstallListener,
             errMsg = "Error installing the suite: " + t.getMessage();
         }
 
-        notifyDestroyed();
         reportFinished0(appId, lastInstalledSuiteId, errCode, errMsg);
+        
+        notifyDestroyed();
     }
 
     /*

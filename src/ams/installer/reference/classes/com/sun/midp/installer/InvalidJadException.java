@@ -64,7 +64,7 @@ public class InvalidJadException extends java.io.IOException {
     /** (9) The signature of the JAR is invalid. */
     public static final int INVALID_SIGNATURE        =  9;
 
-    /** (10) The content provider certificate is a supported version. */
+    /** (10) The content provider certificate has an unsupported version. */
     public static final int UNSUPPORTED_CERT         = 10;
 
     /**
