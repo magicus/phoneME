@@ -142,8 +142,7 @@ void java_ams_midlet_state_changed(javacall_lifecycle_state state,
 
     if (state == JAVACALL_LIFECYCLE_MIDLET_SHUTDOWN) {
         wprintf(_T(">>> MIDlet with ID %d has exited\n"), appId);
-        RemoveMIDletFromRunningList(appId);
-        SwitchToAppManager();
+        MIDletTerminated(appId);
     }
 }
 /**

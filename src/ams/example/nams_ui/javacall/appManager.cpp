@@ -129,7 +129,7 @@ static HTREEITEM g_htiCopiedSuite = NULL;
 static BOOL g_fDrawBuffer = FALSE;
 
 static javacall_app_id g_jAppId = 1;
-static javacall_app_id g_jInstallerId = -1;
+static javacall_app_id g_jInstallerId = JAVACALL_INVALID_APP_ID;
 
 // TODO: place all hPrev* fields in a structure and pass it as
 //  a parameter of AddSuiteToTree
@@ -1104,22 +1104,6 @@ static BOOL AddComboboxItem(HWND hcbWnd, LPCTSTR pcszLabel, javacall_folder_id j
     }
 
     return FALSE;
-}
-
-static void RemoveInstaller(HWND hwndDlg) {
-    TVI_INFO* pInfo;
-
-    // Remove the time from "Windows" menu
-    if (g_jInstallerId != -1) {
-        pInfo = (TVI_INFO*)RemoveWindowMenuItem(g_jInstallerId);
-        if (pInfo) {
-            FreeTviInfo(pInfo);
-        }
-        g_jInstallerId = -1;
-    }
-
-    // Hide dialog and show MIDlet tree
-    ShowMidletTreeView(hwndDlg, TRUE);
 }
 
 INT_PTR CALLBACK
@@ -2272,19 +2256,37 @@ TVI_INFO* GetTviInfo(HWND hWnd, HTREEITEM hItem) {
     return NULL;
 }
 
-void RemoveMIDletFromRunningList(javacall_app_id appId) {
-    // Installer's menu item removal is handled in special way 
-    // (see RemoveInstaller function)
+void MIDletTerminated(javacall_app_id appId) {
+    TVI_INFO* pInfo;
+
+    // Installer is handled in special way (see RemoveInstaller function)
     if (appId != g_jInstallerId) {
-        RemoveWindowMenuItem(appId);
+        pInfo = (TVI_INFO*)RemoveWindowMenuItem(appId);
+        if (pInfo) {
+            pInfo->appId = JAVACALL_INVALID_APP_ID;
+        }
+
+        // Turn off MIDlet output
+        g_fDrawBuffer = FALSE;
+
+        ShowMidletTreeView(NULL, TRUE);
     }
 }
 
-void SwitchToAppManager() {
-    // Turn off MIDlet output
-    g_fDrawBuffer = FALSE;
+static void RemoveInstaller(HWND hwndDlg) {
+    TVI_INFO* pInfo;
 
-    ShowMidletTreeView(NULL, TRUE);
+    // Remove the item from "Windows" menu
+    if (g_jInstallerId != JAVACALL_INVALID_APP_ID) {
+        pInfo = (TVI_INFO*)RemoveWindowMenuItem(g_jInstallerId);
+        if (pInfo) {
+            FreeTviInfo(pInfo);
+        }
+        g_jInstallerId = JAVACALL_INVALID_APP_ID;
+    }
+
+    // Hide dialog and show MIDlet tree
+    ShowMidletTreeView(hwndDlg, TRUE);
 }
 
 static BOOL StartMidlet(HWND hTreeWnd) {
@@ -2294,7 +2296,7 @@ static BOOL StartMidlet(HWND hTreeWnd) {
 
     if (pInfo != NULL) {
         if (pInfo->type == TVI_TYPE_MIDLET) {
-            // the MIDlet is not running yet
+            // The MIDlet is not running yet
             if (pInfo->appId == JAVACALL_INVALID_APP_ID) {
 
                 wprintf(_T("Launching MIDlet")

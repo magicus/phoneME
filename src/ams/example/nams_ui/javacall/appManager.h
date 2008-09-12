@@ -107,8 +107,7 @@ void PaintTreeWithBg(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
 BOOL PostProgressMessage(UINT uMsg, WPARAM wParam, LPARAM lParam);
 
-void RemoveMIDletFromRunningList(javacall_app_id appId);
-void SwitchToAppManager();
+void MIDletTerminated(javacall_app_id appId);
 
 #ifdef __cplusplus
 }
