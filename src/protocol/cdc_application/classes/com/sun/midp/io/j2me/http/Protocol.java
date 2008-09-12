@@ -37,6 +37,7 @@ import com.sun.j2me.security.AccessController;
 
 public class Protocol extends com.sun.cdc.io.j2me.http.Protocol {
 
+    private static final String UNTRUSTED = "UNTRUSTED/1.0";
     private static final String HTTP_PERMISSION_NAME =
 	"javax.microedition.io.Connector.http";
     
@@ -147,9 +148,12 @@ public class Protocol extends com.sun.cdc.io.j2me.http.Protocol {
                  * of the "User-Agent" header field should not be ignored in 
                  * this case
                  */
-                newUserAgentValue = "UNTRUSTED/1.0 " + origUserAgentValue;
+                newUserAgentValue = origUserAgentValue;
+                if (-1 == origUserAgentValue.indexOf(UNTRUSTED)) {
+                    newUserAgentValue += " " + UNTRUSTED;
+                }
             } else {
-                newUserAgentValue = "UNTRUSTED/1.0";
+                newUserAgentValue = UNTRUSTED;
             }
             reqProperties.put("User-Agent", newUserAgentValue);
         }

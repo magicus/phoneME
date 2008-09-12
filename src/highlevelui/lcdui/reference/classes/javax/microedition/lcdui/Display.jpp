@@ -616,14 +616,14 @@ public class Display {
         GameMap.registerGraphicsAccess(graphicsAccessor);
 
         // #ifdef ENABLE_CHAMELEON
-        SkinResources.initGraphicsAccess(graphicsAccessor);
-        SkinResources.setScreenSize(WIDTH, HEIGHT);
+        SkinLoader.initGraphicsAccess(graphicsAccessor);
+        SkinLoader.setScreenSize(WIDTH, HEIGHT);
 
         // IMPL_NOTE: In the MVM mode it's important to do the first
         //   skin resources loading from the AMS isolate, since they
         //   are shared between all working isolates.
         try {
-            SkinResources.loadSkin(false);
+            SkinLoader.loadSkin(false);
         } catch (IOException e) {
             if (Logging.REPORT_LEVEL <= Logging.CRITICAL) {
                 Logging.report(Logging.CRITICAL, LogChannels.LC_HIGHUI,
@@ -668,7 +668,7 @@ public class Display {
         accessor = new DisplayAccessImpl();
 
         // #ifdef ENABLE_CHAMELEON
-        SkinResources.initDisplayAccess(accessor);
+        SkinLoader.initDisplayAccess(accessor);
         // #endif ENABLE_CHAMELEON
 
         /** create DisplayEventConsumer I/F implementor */
@@ -2209,7 +2209,7 @@ public class Display {
         screenGraphics.reset();
 
         // #ifdef ENABLE_CHAMELEON
-        SkinResources.adjustScreen();
+        SkinLoader.adjustScreen();
         // Notify Chameleon that the current displayable should be shown
         // in fullscreen mode.
         // This call will not result in any call into application code
@@ -3268,7 +3268,7 @@ public class Display {
             }
             
             // #ifdef ENABLE_CHAMELEON
-            SkinResources.adjustScreen();
+            SkinLoader.adjustScreen();
 
             MIDPWindow windowCopy;
             DisplayableLF currentCopy;

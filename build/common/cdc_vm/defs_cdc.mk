@@ -36,7 +36,7 @@ MIDP_CNI_CLASSES += \
         com.sun.midp.chameleon.skins.resources.LoadedSkinData \
         com.sun.midp.chameleon.skins.resources.LoadedSkinProperties \
         com.sun.midp.chameleon.skins.resources.LoadedSkinResources \
-        com.sun.midp.chameleon.skins.resources.SkinResources \
+        com.sun.midp.chameleon.skins.resources.SkinResourcesImpl \
         com.sun.midp.crypto.MD2 \
         com.sun.midp.crypto.MD5 \
         com.sun.midp.crypto.SHA \

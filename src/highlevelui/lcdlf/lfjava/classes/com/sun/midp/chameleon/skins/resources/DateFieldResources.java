@@ -49,38 +49,38 @@ public class DateFieldResources {
             return;
         }
 
-        DateFieldSkin.PAD_H = SkinResources.getInt(
+        DateFieldSkin.PAD_H = SkinLoader.getInt(
                 SkinPropertiesIDs.DATEFIELD_PAD_H);
-        DateFieldSkin.PAD_V = SkinResources.getInt(
+        DateFieldSkin.PAD_V = SkinLoader.getInt(
                 SkinPropertiesIDs.DATEFIELD_PAD_V);
-        DateFieldSkin.BUTTON_BORDER_W = SkinResources.getInt(
+        DateFieldSkin.BUTTON_BORDER_W = SkinLoader.getInt(
                SkinPropertiesIDs.DATEFIELD_BTN_BRDR_W); 
-        DateFieldSkin.FONT = SkinResources.getFont(
+        DateFieldSkin.FONT = SkinLoader.getFont(
                 SkinPropertiesIDs.DATEFIELD_FONT);
-        DateFieldSkin.COLOR_FG = SkinResources.getInt(
+        DateFieldSkin.COLOR_FG = SkinLoader.getInt(
                 SkinPropertiesIDs.DATEFIELD_COLOR_FG);
-        DateFieldSkin.COLOR_BG = SkinResources.getInt(
+        DateFieldSkin.COLOR_BG = SkinLoader.getInt(
                 SkinPropertiesIDs.DATEFIELD_COLOR_BG);
-        DateFieldSkin.COLOR_BORDER = SkinResources.getInt(
+        DateFieldSkin.COLOR_BORDER = SkinLoader.getInt(
                 SkinPropertiesIDs.DATEFIELD_COLOR_BRDR);
-        DateFieldSkin.COLOR_BORDER_LT = SkinResources.getInt(
+        DateFieldSkin.COLOR_BORDER_LT = SkinLoader.getInt(
                 SkinPropertiesIDs.DATEFIELD_COLOR_BRDR_LT);
-        DateFieldSkin.COLOR_BORDER_DK = SkinResources.getInt(
+        DateFieldSkin.COLOR_BORDER_DK = SkinLoader.getInt(
                 SkinPropertiesIDs.DATEFIELD_COLOR_BRDR_DK);
-        DateFieldSkin.COLOR_BORDER_SHD = SkinResources.getInt(
+        DateFieldSkin.COLOR_BORDER_SHD = SkinLoader.getInt(
                 SkinPropertiesIDs.DATEFIELD_COLOR_BRDR_SHD);
         /*
         Uncomment if background image is used
-        DateFieldSkin.IMAGE_BG = SkinResources.getCompositeImage(
+        DateFieldSkin.IMAGE_BG = SkinLoader.getCompositeImage(
                 SkinPropertiesIDs.DATEFIELD_IMAGE_BG, 9);
         */
-        DateFieldSkin.IMAGE_BUTTON_BG = SkinResources.getCompositeImage(
+        DateFieldSkin.IMAGE_BUTTON_BG = SkinLoader.getCompositeImage(
                 SkinPropertiesIDs.DATEFIELD_IMAGE_BTN_BG, 9);
-        DateFieldSkin.IMAGE_ICON_DATE = SkinResources.getImage(
+        DateFieldSkin.IMAGE_ICON_DATE = SkinLoader.getImage(
                 SkinPropertiesIDs.DATEFIELD_IMAGE_ICON_DATE);
-        DateFieldSkin.IMAGE_ICON_TIME = SkinResources.getImage(
+        DateFieldSkin.IMAGE_ICON_TIME = SkinLoader.getImage(
                 SkinPropertiesIDs.DATEFIELD_IMAGE_ICON_TIME);
-        DateFieldSkin.IMAGE_ICON_DATETIME = SkinResources.getImage(
+        DateFieldSkin.IMAGE_ICON_DATETIME = SkinLoader.getImage(
                 SkinPropertiesIDs.DATEFIELD_IMAGE_ICON_DATETIME);
 
         init = true;

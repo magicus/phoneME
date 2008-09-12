@@ -165,7 +165,7 @@ public final class SecurityInitializer {
         "com.sun.midp.main.TrustedMIDletIcon$SecurityTrusted",
 
         // #ifdef ENABLE_CHAMELEON
-        "com.sun.midp.chameleon.skins.resources.SkinResources$SecurityTrusted",
+        "com.sun.midp.chameleon.skins.resources.SkinResourcesImpl$SecurityTrusted",
         // #endif ENABLE_CHAMELEON
 
         // #ifndef ENABLE_CHAMELEON
