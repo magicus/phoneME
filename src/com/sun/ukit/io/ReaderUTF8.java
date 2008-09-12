@@ -43,14 +43,15 @@ import java.io.UnsupportedEncodingException;
  *
  * This reader will return incorrect last character on broken UTF-8 stream. 
  */
-public class ReaderUTF8
-	extends Reader
+public class ReaderUTF8 extends Reader
 {
-	private InputStream is;
+	private static final int maxBytesInUTF8Character = 3;
 
-	private byte[]  buff;
-	private int     bidx = 0;
-	private int     bcnt = 0;
+	final private InputStream is;
+
+	final private byte[]	buff = new byte[128];
+	private int     		bidx = 0;
+	private int     		bcnt = 0;
 
 	/**
 	 * Constructor.
@@ -60,13 +61,25 @@ public class ReaderUTF8
 	public ReaderUTF8(InputStream is)
 	{
 		this.is = is;
-		buff    = new byte[64];
+	}
+	
+	/**
+	 * Fills buffer with data from the source InputStream
+	 * @throws IOException 
+	 */
+	private void fillBuffer() throws IOException {
+		bcnt = bcnt - bidx;
+		if( bcnt > 0 )
+			System.arraycopy(buff, bidx, buff, 0, bcnt);
+		bidx = 0;
+		int count = is.read(buff, bcnt, buff.length - bcnt);
+		if( count > 0 )
+			bcnt += count;
 	}
 
 	/**
 	 * Reads characters into a portion of an array. This method uses internal
-	 * buffer. After the first call to this method, method read which returns 
-	 * next character MUST NOT be called.
+	 * buffer. 
 	 *
 	 * @param cbuf Destination buffer.
 	 * @param off Offset at which to start storing characters.
@@ -75,15 +88,19 @@ public class ReaderUTF8
 	 * @exception UnsupportedEncodingException If UCS-4 character occur in the 
 	 *  stream.
 	 */
-	public int read(char[] cbuf, int off, int len)
-		throws IOException
+	public int read(char[] cbuf, int off, int len) throws IOException
 	{
 		int num = 0;
 		while (num < len) {
-			if (bidx >= bcnt) {
-				if ((bcnt = is.read(buff, 0, buff.length)) < 0)
-					return (num != 0)? num: -1;
-				bidx = 0;
+			if (bcnt - bidx < maxBytesInUTF8Character){
+				if( bidx > bcnt )
+					break;
+				fillBuffer();
+				if( bcnt - bidx == 0 ){
+					if( num == 0 )
+						return -1;
+					break;
+				}
 			}
 			char val = (char)buff[bidx++];
 			if (val <= 0x7f) {
@@ -92,12 +109,12 @@ public class ReaderUTF8
 				switch (val & 0xf0) {
 				case 0xc0:
 				case 0xd0:
-					cbuf[off++] = (char)(((val & 0x1f) << 6) | (getch() & 0x3f));
+					cbuf[off++] = (char)(((val & 0x1f) << 6) | (buff[bidx++] & 0x3f));
 					break;
 	
 				case 0xe0:
 					cbuf[off++] = (char)(((val & 0x0f) << 12) | 
-						((getch() & 0x3f) << 6) | (getch() & 0x3f));
+						((buff[bidx++] & 0x3f) << 6) | (buff[bidx++] & 0x3f));
 					break;
 	
 				case 0xf0:	// UCS-4 character
@@ -109,13 +126,15 @@ public class ReaderUTF8
 			}
 			num++;
 		}
+		if( bidx > bcnt ){ // last input UTF-8 character is wrong 
+			bidx = bcnt = 0;
+			throw new EOFException();
+		}
 		return num;
 	}
 
 	/**
 	 * Reads a single character. This method does not use internal buffer. 
-	 * This method MUST NOT be called once read method which fills an array 
-	 * is called.
 	 *
 	 * @return The character read, as an integer in the range 0 to 65535 
 	 *	(0x00-0xffff), or -1 if the end of the stream has been reached.
@@ -123,22 +142,25 @@ public class ReaderUTF8
 	 * @exception UnsupportedEncodingException If UCS-4 character occur in the 
 	 *  stream.
 	 */
-	public int read()
-		throws IOException
+	public int read() throws IOException
 	{
-		int  val;
-		if ((val = is.read()) < 0)
-			return -1;
+		if (bcnt - bidx < maxBytesInUTF8Character){
+			fillBuffer();
+			if( bcnt - bidx == 0 )
+				return -1;
+		}
+		
+		int val = buff[bidx++];
 		if (val > 0x7f) {
 			switch (val & 0xf0) {
 			case 0xc0:
 			case 0xd0:
-				val = ((val & 0x1f) << 6) | (is.read() & 0x3f);
+				val = ((val & 0x1f) << 6) | (buff[bidx++] & 0x3f);
 				break;
 	
 			case 0xe0:
 				val = ((val & 0x0f) << 12) | 
-					((is.read() & 0x3f) << 6) | (is.read() & 0x3f);
+						((buff[bidx++] & 0x3f) << 6) | (buff[bidx++] & 0x3f);
 				break;
 	
 			case 0xf0:	// UCS-4 character
@@ -147,6 +169,10 @@ public class ReaderUTF8
 			default:
 				throw new UTFDataFormatException();
 			}
+		}
+		if( bidx > bcnt ){ // last input UTF-8 character is wrong
+			bidx = bcnt = 0;
+			throw new EOFException();
 		}
 		return val;
 	}
@@ -160,21 +186,5 @@ public class ReaderUTF8
 		throws IOException
 	{
 		is.close();
-	}
-
-	/**
-	 * Reads next character from the stream buffer.
-	 *
-	 * @exception IOException If any IO errors occur.
-	 */
-	private char getch()
-		throws IOException
-	{
-		if (bidx >= bcnt) {
-			if ((bcnt = is.read(buff, 0, buff.length)) <= 0)
-				throw new EOFException();
-			bidx = 0;
-		}
-		return (char)buff[bidx++];
 	}
 }

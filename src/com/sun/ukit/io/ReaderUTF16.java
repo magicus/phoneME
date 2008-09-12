@@ -32,15 +32,11 @@ import java.io.EOFException;
 /**
  * UTF-16 encoded stream reader.
  */
-public class ReaderUTF16
-	extends Reader
+public class ReaderUTF16 extends Reader
 {
-	private InputStream is;
-	private char        bo;
-
-	private byte[]      buff;
-	private int         bidx = 0;
-	private int         bcnt = 0;
+	final private InputStream	is;
+	final private char			bo;
+	final private byte[]		buff = new byte[128];
 
 	/**
 	 * Constructor.
@@ -53,18 +49,13 @@ public class ReaderUTF16
 	public ReaderUTF16(InputStream is, char bo)
 	{
 		switch (bo) {
-		case 'l':
+		case 'l': case 'b': 
 			break;
-
-		case 'b':
-			break;
-
 		default:
-			throw new IllegalArgumentException("");
+			throw new IllegalArgumentException();
 		}
 		this.bo = bo;
 		this.is = is;
-		buff    = new byte[128];
 	}
 
 	/**
@@ -75,32 +66,34 @@ public class ReaderUTF16
 	 * @param len Maximum number of characters to read.
 	 * @exception IOException If any IO errors occur.
 	 */
-	public int read(char[] cbuf, int off, int len)
-		throws IOException
+	public int read(char[] cbuf, int off, int len) throws IOException
 	{
-		int  num = 0;
+		int num = 0;
+		int bcnt;
 
 		if (bo == 'b') {
 			while (num < len) {
-				if (bidx >= bcnt) {
-					if ((bcnt = is.read(buff, 0, buff.length)) < 0)
-						return (num != 0)? num: -1;
-					bidx = 0;
+				if( (bcnt = is.read(buff, 0, Math.min(buff.length, (len - num) * 2))) < 0 )
+					return (num != 0)? num: -1;
+				if( (bcnt & 1) != 0 )
+					throw new EOFException();
+				bcnt >>= 1;
+				num += bcnt;
+				for( int bidx = 0; bcnt-- > 0;){
+					cbuf[off++] = (char)((buff[bidx++] << 8) | (buff[bidx++] & 0xff));
 				}
-
-				cbuf[off++] = (char)((buff[bidx++] << 8) | (getch() & 0xff));
-				num++;
 			}
 		} else {
 			while (num < len) {
-				if (bidx >= bcnt) {
-					if ((bcnt = is.read(buff, 0, buff.length)) < 0)
-						return (num != 0)? num: -1;
-					bidx = 0;
+				if( (bcnt = is.read(buff, 0, Math.min(buff.length, (len - num) * 2))) < 0 )
+					return (num != 0)? num: -1;
+				if( (bcnt & 1) != 0 )
+					throw new EOFException();
+				bcnt >>= 1;
+				num += bcnt;
+				for( int bidx = 0; bcnt-- > 0;){
+					cbuf[off++] = (char)((buff[bidx++] & 0xff) | (buff[bidx++] << 8));
 				}
-
-				cbuf[off++] = (char)((buff[bidx++] & 0xff) | (getch() << 8));
-				num++;
 			}
 		}
 		return num;
@@ -113,18 +106,20 @@ public class ReaderUTF16
 	 *	(0x0000-0xffff), or -1 if the end of the stream has been reached.
 	 * @exception IOException If any IO errors occur.
 	 */
-	public int read()
-		throws IOException
+	public int read() throws IOException
 	{
-		int  val;
-		if ((val = is.read()) < 0)
-			return -1;
-		if (bo == 'b') {
-			val = (char)((val << 8) | (is.read() & 0xff));
-		} else {
-			val = (char)((is.read() << 8) | (val & 0xff));
+		switch( is.read(buff, 0, 2) ){
+			case 1:
+				throw new EOFException();
+			case 2:
+				break;
+			default:
+				return -1;
 		}
-		return val;
+		
+		if (bo == 'b')
+			return (char)((buff[0] << 8) | (buff[1] & 0xff));
+		return (char)((buff[1] << 8) | (buff[0] & 0xff));
 	}
 
 	/**
@@ -136,21 +131,5 @@ public class ReaderUTF16
 		throws IOException
 	{
 		is.close();
-	}
-
-	/**
-	 * Reads next character from the stream buffer.
-	 *
-	 * @exception IOException If any IO errors occur.
-	 */
-	private char getch()
-		throws IOException
-	{
-		if (bidx >= bcnt) {
-			if ((bcnt = is.read(buff, 0, buff.length)) <= 0)
-				throw new EOFException();
-			bidx = 0;
-		}
-		return (char)buff[bidx++];
 	}
 }

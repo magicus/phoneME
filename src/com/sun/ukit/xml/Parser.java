@@ -3314,25 +3314,26 @@ public abstract class Parser
 			reader = is.getCharacterStream();
 			xml(reader);
 		} else if (is.getByteStream() != null) {
+			BufferedInputStream bis = new BufferedInputStream(is.getByteStream());
 			String expenc;
 			if (is.getEncoding() != null) {
 				//		Ignore encoding in the xml text decl.
 				expenc = is.getEncoding().toUpperCase();
 				if (expenc.equals("UTF-16"))
-					reader = bom(is.getByteStream(), 'U');  // UTF-16 [#4.3.3]
+					reader = bom16(is.getByteStream());  // UTF-16 [#4.3.3]
 				else
 					reader = enc(expenc, is.getByteStream());
 				xml(reader);
 			} else {
 				//		Get encoding from BOM or the xml text decl.
-				reader = bom(is.getByteStream(), ' ');
+				reader = bom(bis);
 				if (reader == null) {
 					//		Encoding is defined by the xml text decl.
-					reader = enc("UTF-8", is.getByteStream());
+					reader = enc("UTF-8", bis.getInputStream());
 					expenc = xml(reader);
 					if (expenc.startsWith("UTF-16"))
 						panic(FAULT);  // UTF-16 must have BOM [#4.3.3]
-					reader = enc(expenc, is.getByteStream());
+					reader = enc(expenc, bis.getInputStream());
 				} else {
 					//		Encoding is defined by the BOM.
 					xml(reader);
@@ -3345,6 +3346,38 @@ public abstract class Parser
 		mInp.src   = reader;
 		mInp.pubid = is.getPublicId();
 		mInp.sysid = is.getSystemId();
+	}
+	
+	/**
+	 * Determines the entity encoding (encoding scheme) in UTF-16 stream.
+	 *
+	 * This method gets encoding from Byte Order Mask [#4.3.3] if any. 
+	 * Note, the first byte returned by the entity's byte stream has 
+	 * to be the first byte in the entity. Also, there is no support 
+	 * for UCS-4.
+	 *
+	 * @param is A byte stream of the entity.
+	 * @return a reader constructed from the BOM.
+	 * @exception Exception is parser specific exception form panic method.
+	 * @exception IOException 
+	 */
+	private Reader bom16(InputStream is) throws Exception {
+		int val = is.read();
+		switch (val) {
+			case 0xfe:     // UTF-16, big-endian
+				if (is.read() != 0xff) 
+					panic(FAULT);
+				return new ReaderUTF16(is, 'b');
+	
+			case 0xff:     // UTF-16, little-endian
+				if (is.read() != 0xfe) 
+					panic(FAULT);
+				return new ReaderUTF16(is, 'l');
+	
+			default:
+				panic(FAULT);
+		}
+		return null;
 	}
 
 	/**
@@ -3361,14 +3394,11 @@ public abstract class Parser
 	 * @exception Exception is parser specific exception form panic method.
 	 * @exception IOException 
 	 */
-	private Reader bom(InputStream is, char hint)
-		throws Exception
+	private Reader bom(BufferedInputStream is) throws Exception
 	{
 		int val = is.read();
 		switch (val) {
 		case 0xef:     // UTF-8
-			if (hint == 'U')  // must be UTF-16
-				panic(FAULT);
 			if (is.read() != 0xbb) 
 				panic(FAULT);
 			if (is.read() != 0xbf) 
@@ -3386,31 +3416,12 @@ public abstract class Parser
 			return new ReaderUTF16(is, 'l');
 
 		case -1:
-			mChars[mChIdx++] = EOS;
+			// mChars[mChIdx++] = EOS;
 			return new ReaderUTF8(is);
 
 		default:
-			if (hint == 'U')	// must be UTF-16
-				panic(FAULT);
-			//		Read the rest of UTF-8 character
-			switch (val & 0xf0) {
-			case 0xc0:
-			case 0xd0:
-				mChars[mChIdx++] = (char)(((val & 0x1f) << 6) | (is.read() & 0x3f));
-				break;
-
-			case 0xe0:
-				mChars[mChIdx++] = (char)(((val & 0x0f) << 12) | 
-					((is.read() & 0x3f) << 6) | (is.read() & 0x3f));
-				break;
-
-			case 0xf0:	// UCS-4 character
-				throw new UnsupportedEncodingException();
-
-			default:
-				mChars[mChIdx++] = (char)val;
-				break;
-			}
+			// put back val character
+			is.putBack( (byte)val );
 			return null;
 		}
 	}
@@ -3641,12 +3652,11 @@ public abstract class Parser
 		//		DO NOT CLOSE current reader if any! 
 		if (name.equals("UTF-8"))
 			return new ReaderUTF8(is);
-		else if (name.equals("UTF-16LE"))
+		if (name.equals("UTF-16LE"))
 			return new ReaderUTF16(is, 'l');
-		else if (name.equals("UTF-16BE"))
+		if (name.equals("UTF-16BE"))
 			return new ReaderUTF16(is, 'b');
-		else
-			return new InputStreamReader(is, name);
+		return new InputStreamReader(is, name);
 	}
 
 	/**
@@ -3840,5 +3850,42 @@ public abstract class Parser
 		bappend((char) (0xD800 | (tmp >> 10)));
 		bappend((char) (0xDC00 | (tmp & 0x3FF)));
 		bflash();
+	}
+
+	private static class BufferedInputStream extends InputStream {
+		final private InputStream is;
+		private int lastChar = -1;
+
+		public BufferedInputStream( InputStream is ){
+			this.is = is;
+		}
+		
+		public void putBack(byte val) {
+			// assert( lastChar == -1 && val != -1 );
+			lastChar = val;
+		}
+
+		public InputStream getInputStream() {
+			if( lastChar == -1 )
+				return is;
+			return this;
+		}
+
+		public int read() throws IOException {
+			if( lastChar == -1 ) return is.read();
+			byte v = (byte)lastChar;
+			lastChar = -1;
+			return v;
+		}
+		
+		public int read(byte[] b, int off, int len) throws IOException {
+			if( len == 0 ) return 0;
+			if( lastChar != -1 ){
+				b[off] = (byte)lastChar;
+				lastChar = -1;
+				return 1 + is.read( b, off + 1, len - 1 ); 
+			}
+			return is.read( b, off, len ); 
+		}
 	}
 }
