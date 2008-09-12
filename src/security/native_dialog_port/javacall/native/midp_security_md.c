@@ -33,7 +33,7 @@
 #include <kni.h>
 #include <midpport_security.h>
 #include <midp_logging.h>
-#include <javacall_nams.h>
+#include <javacall_security.h>
 
 /** permission listener function pointer */
 static MIDP_SECURITY_PERMISSION_LISTENER pListener;
@@ -47,6 +47,14 @@ void midpport_security_set_permission_listener(
 	MIDP_SECURITY_PERMISSION_LISTENER listener) {
     pListener = listener;
 }
+
+/**
+ * Permission check status from
+ * javacall_security_permission_result to MIDP defined values.
+ * <p>
+ * They are the same now.
+ */
+#define CONVERT_PERMISSION_STATUS(x) x
 
 /**
  * Start a security permission checking.
@@ -72,6 +80,7 @@ jint midpport_security_check_permission(jint suiteId, jint permission,
                                                JAVACALL_TRUE,
                                                &result)) {
     case JAVACALL_OK: 
+        result = CONVERT_PERMISSION_STATUS(result);
         break;
     case JAVACALL_WOULD_BLOCK:
         *pHandle = result;
@@ -108,6 +117,7 @@ jint midpport_security_check_permission_status(jint suiteId, jint permission) {
                                                JAVACALL_FALSE,
                                                &result)) {
     case JAVACALL_OK:
+        result = CONVERT_PERMISSION_STATUS(result);
         break;
     case JAVACALL_WOULD_BLOCK:
         /* incorrect behaviour: regardless the fact that NAMS shows user dialog,
@@ -131,6 +141,6 @@ void javanotify_security_permission_check_result(const javacall_suite_id suite_i
     (void)suite_id;
     (void)permission;
     if (NULL != pListener) {
-        pListener(session, (jboolean)result);
+        pListener(session, (jboolean)(CONVERT_PERMISSION_STATUS(result)>0));
     }
 }
