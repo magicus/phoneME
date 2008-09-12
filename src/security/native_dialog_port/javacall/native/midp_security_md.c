@@ -1,7 +1,7 @@
 /*
  *  
  *
- * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
@@ -32,6 +32,8 @@
 
 #include <kni.h>
 #include <midpport_security.h>
+#include <midp_logging.h>
+#include <javacall_security.h>
 
 /** permission listener function pointer */
 static MIDP_SECURITY_PERMISSION_LISTENER pListener;
@@ -45,6 +47,14 @@ void midpport_security_set_permission_listener(
 	MIDP_SECURITY_PERMISSION_LISTENER listener) {
     pListener = listener;
 }
+
+/**
+ * Permission check status from
+ * javacall_security_permission_result to MIDP defined values.
+ * <p>
+ * They are the same now.
+ */
+#define CONVERT_PERMISSION_STATUS(x) x
 
 /**
  * Start a security permission checking.
@@ -63,11 +73,24 @@ void midpport_security_set_permission_listener(
  */
 jint midpport_security_check_permission(jint suiteId, jint permission,
                                         jint* pHandle) {
-    (void)suiteId;
-    (void)permission;
-    (void)pHandle;
 
-    return 1; /* IMPL_NOTE: example grants all permissions */
+    unsigned int result;
+    switch (javacall_security_check_permission((javacall_suite_id)suiteId,
+                                               (javacall_security_permission)permission,
+                                               JAVACALL_TRUE,
+                                               &result)) {
+    case JAVACALL_OK: 
+        result = CONVERT_PERMISSION_STATUS(result);
+        break;
+    case JAVACALL_WOULD_BLOCK:
+        *pHandle = result;
+        result = -1;
+        break;
+    default:
+        result = 0;
+        break;
+    }
+    return (jint)result;
 }
 
 /**
@@ -88,8 +111,36 @@ jint midpport_security_check_permission(jint suiteId, jint permission,
  *          e.g. asking user interaction.
  */
 jint midpport_security_check_permission_status(jint suiteId, jint permission) {
-    (void)suiteId;
-    (void)permission;
+    unsigned int result;
+    switch (javacall_security_check_permission((javacall_suite_id)suiteId,
+                                               (javacall_security_permission)permission,
+                                               JAVACALL_FALSE,
+                                               &result)) {
+    case JAVACALL_OK:
+        result = CONVERT_PERMISSION_STATUS(result);
+        break;
+    case JAVACALL_WOULD_BLOCK:
+        /* incorrect behaviour: regardless the fact that NAMS shows user dialog,
+        application need to get result immediately */
+        result = -1;
+        REPORT_ERROR(LC_SECURITY,
+                     "javacall_ams_check_permission() returns incorrect status");
+        break;
+    default:
+        result = 0;
+        break;
+    }
+    return (jint)result;
+                                    
+}
 
-    return 1; /* IMPL_NOTE: example grants all permissions */                                    
+void javanotify_security_permission_check_result(const javacall_suite_id suite_id, 
+                                                 const javacall_security_permission permission,
+                                                 const unsigned int session,
+                                                 const unsigned int result) {
+    (void)suite_id;
+    (void)permission;
+    if (NULL != pListener) {
+        pListener(session, (jboolean)(CONVERT_PERMISSION_STATUS(result)>0));
+    }
 }
