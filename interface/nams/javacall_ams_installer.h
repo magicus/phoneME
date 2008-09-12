@@ -191,7 +191,7 @@ typedef enum {
     /** (9) The signature of the JAR is invalid. */
     JAVACALL_INSTALL_EXC_INVALID_SIGNATURE,
 
-    /** (10) The content provider certificate is a supported version. */
+    /** (10) The content provider certificate has an unsupported version. */
     JAVACALL_INSTALL_EXC_UNSUPPORTED_CERT,
 
     /**
@@ -627,6 +627,9 @@ java_ams_install_suite(javacall_app_id appId,
  * Application manager invokes this function to enable or disable
  * certificate revocation check using OCSP.
  *
+ * An installation must be started before using this method.
+ * It affects all running installers.
+ *
  * This call is asynchronous, the new OCSP chack state (JAVACALL_TRUE if
  * OCSP is enabled, JAVACALL_FALSE - if disabled) will be reported later
  * via java_ams_operation_completed() with the argument
@@ -634,20 +637,30 @@ java_ams_install_suite(javacall_app_id appId,
  *
  * @param enable JAVACALL_TRUE to enable OCSP check,
  *               JAVACALL_FALSE - to disable it
+ *
+ * @return status code: <tt>JAVACALL_OK</tt> if the operation was
+ *                                           successfully started,
+ *                      <tt>JAVACALL_FAIL</tt> otherwise
  */
-void
+javacall_result
 java_ams_install_enable_ocsp(javacall_bool enable);
 
 /**
  * Application manager invokes this function to find out if OCSP
  * certificate revocation check is enabled.
  *
+ * An installation must be started before using this method.
+ *
  * This call is asynchronous, the current OCSP check state (JAVACALL_TRUE if
  * OCSP is enabled, JAVACALL_FALSE - if disabled) will be reported later
  * via java_ams_operation_completed() with the argument
  * operation == JAVACALL_OPCODE_IS_OCSP_ENABLED.
+ *
+ * @return status code: <tt>JAVACALL_OK</tt> if the operation was
+ *                                           successfully started,
+ *                      <tt>JAVACALL_FAIL</tt> otherwise
  */
-void
+javacall_result
 java_ams_install_is_ocsp_enabled();
 
 /**
