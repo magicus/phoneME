@@ -498,7 +498,7 @@ class AppManagerUIImpl extends Form
     public void showMidletSelector(RunningMIDletSuiteInfo msiToRun) {
         if (msiToRun != null) {
             try {
-                MIDletSelector selector = getMidletSelector(msiToRun.storageId);
+                MIDletSelector selector = getMidletSelector(msiToRun.suiteId);
                 if (selector != null) {
                     selector.show();
                     return;
