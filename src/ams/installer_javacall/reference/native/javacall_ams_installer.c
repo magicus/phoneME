@@ -38,9 +38,13 @@
 
 #include <javautil_unicode.h>
 
-/* IMPL_NOTE: must be removed! */
+/* IMPL_NOTE: must be removed! MIDP API must be used instead. */
 #include <javacall_ams_app_manager.h>
 
+/*
+ * IMPL_NOTE: move to *.h.
+ *            For now, only one running installer at a time is supported.
+ */
 extern int g_installerIsolateId;
 extern jboolean g_fAnswer, g_fAnswerReady;
 
@@ -106,13 +110,6 @@ java_ams_install_suite(javacall_app_id appId,
                        javacall_const_utf16_string installUrl,
                        javacall_storage_id storageId,
                        javacall_folder_id folderId) {
-/*
-    MidpEvent evt;
-    javacall_int32 urlLength;
-    pcsl_string temp;
-    javacall_result res = JAVACALL_FAIL;
-*/
-
     const javacall_utf16 installerClass[] = {
        'c', 'o', 'm', '.', 's', 'u', 'n', '.', 'm', 'i', 'd', 'p', '.',
        'i', 'n', 's', 't', 'a', 'l', 'l', 'e', 'r', '.',
@@ -138,41 +135,46 @@ java_ams_install_suite(javacall_app_id appId,
     res = java_ams_midlet_start_with_args(-1, appId, installerClass,
                                           pArgs, 2, NULL);
 
-/*
+    return res;
+}
+
+/**
+ * Helper for java_ams_install_enable_ocsp() and
+ * java_ams_install_is_ocsp_enabled().
+ *
+ * Sends an event of the given type to all running installers.
+ *
+ * @param eventType type of the event to send
+ * @param param     parameter for the event
+ *
+ * @return status code: <tt>JAVACALL_OK</tt> if the operation was
+ *                                           successfully started,
+ *                      <tt>JAVACALL_FAIL</tt> otherwise
+ */
+static javacall_result send_request_impl(int eventType, int param) {
+    MidpEvent evt;
+
+    if (g_installerIsolateId == -1) {
+        return JAVACALL_FAIL;
+    }
+
     MIDP_EVENT_INITIALIZE(evt);
 
-    evt.type = NATIVE_INSTALL_REQUEST;
-    evt.intParam1 = appId;
-    evt.intParam2 = (int)srcType;
-    evt.intParam3 = (int)storageId;
-    evt.intParam4 = (int)folderId;
+    evt.type = eventType;
+    evt.intParam1 = -1; /* appId is -1: broadcast */
+    evt.intParam2 = param;
 
-    res  = javautil_unicode_utf16_ulength(installUrl, &urlLength);
-    if (res != JAVACALL_OK) {
-        return res;
-    }
+    StoreMIDPEventInVmThread(evt, g_installerIsolateId);
 
-    if (PCSL_STRING_OK == pcsl_string_convert_from_utf16(
-                              installUrl, urlLength, &temp)) {
-        if (pcsl_string_utf16_length(&temp) > 0) {
-            evt.stringParam1 = temp;
-            midpStoreEventAndSignalAms(evt);
-            res = JAVACALL_OK;
-        } else {
-            pcsl_string_free(&temp);
-            res = JAVACALL_FAIL;
-        }
-    } else {
-        res = JAVACALL_FAIL;
-    }
-*/
-
-    return res;
+    return JAVACALL_OK;
 }
 
 /**
  * Application manager invokes this function to enable or disable
  * certificate revocation check using OCSP.
+ *
+ * An installation must be started before using this method.
+ * It affects all running installers.
  *
  * This call is asynchronous, the new OCSP chack state (JAVACALL_TRUE if
  * OCSP is enabled, JAVACALL_FALSE - if disabled) will be reported later
@@ -181,23 +183,35 @@ java_ams_install_suite(javacall_app_id appId,
  *
  * @param enable JAVACALL_TRUE to enable OCSP check,
  *               JAVACALL_FALSE - to disable it
+ *
+ * @return status code: <tt>JAVACALL_OK</tt> if the operation was
+ *                                           successfully started,
+ *                      <tt>JAVACALL_FAIL</tt> otherwise
  */
-void
+javacall_result
 java_ams_install_enable_ocsp(javacall_bool enable) {
-    (void)enable;
+    return send_request_impl(NATIVE_ENABLE_OCSP_REQUEST,
+                             (enable == JAVACALL_TRUE ? 1 : 0));
 }
 
 /**
  * Application manager invokes this function to find out if OCSP
  * certificate revocation check is enabled.
  *
+ * An installation must be started before using this method.
+ *
  * This call is asynchronous, the current OCSP check state (JAVACALL_TRUE if
  * OCSP is enabled, JAVACALL_FALSE - if disabled) will be reported later
  * via java_ams_operation_completed() with the argument
  * operation == JAVACALL_OPCODE_IS_OCSP_ENABLED.
+ *
+ * @return status code: <tt>JAVACALL_OK</tt> if the operation was
+ *                                           successfully started,
+ *                      <tt>JAVACALL_FAIL</tt> otherwise
  */
-void
+javacall_result
 java_ams_install_is_ocsp_enabled() {
+    return send_request_impl(NATIVE_CHECK_OCSP_ENABLED_REQUEST, 0);
 }
 
 /**

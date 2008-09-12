@@ -301,3 +301,39 @@ KNIDECL(com_sun_midp_installer_InstallerPeerMIDlet_reportFinished0) {
 
     KNI_ReturnVoid();
 }
+
+/**
+ * Reports to the party using this installer that the requested
+ * operation has been completed and the result (if any) is available.
+ *
+ * @param appId this application ID
+ * @param requestCode code of the request that was handled
+ * @param resultCode completion code (0 if succeeded or -1 in case
+ *                   of error)
+ * @param result operation-dependent result (for OCSP operations it contains
+ *               the current state (enabled/disabled) of OCSP checks)
+ */
+KNIEXPORT KNI_RETURNTYPE_VOID
+KNIDECL(com_sun_midp_installer_InstallerPeerMIDlet_notifyRequestHandled0) {
+    jint  appId       = KNI_GetParameterAsInt(1);
+    jint  requestCode = KNI_GetParameterAsInt(2);
+    jint  resultCode  = KNI_GetParameterAsInt(3);
+    jbool result      = KNI_GetParameterAsBoolean(4);
+    javacall_bool jcResult = (result == KNI_TRUE ? JAVACALL_TRUE : JAVACALL_FALSE);
+    javacall_opcode operationCode = JAVACALL_OPCODE_INVALID;
+
+    /* IMPL_NOTE: currently unused because the supported operations can't fail */
+    (void)resultCode;
+
+    if (requestCode == NATIVE_ENABLE_OCSP_REQUEST) {
+        operationCode = JAVACALL_OPCODE_ENABLE_OCSP;
+    } else if (requestCode == NATIVE_CHECK_OCSP_ENABLED_REQUEST) {
+        operationCode = JAVACALL_OPCODE_IS_OCSP_ENABLED;
+    }
+
+    java_ams_operation_completed(operationCode,
+                                 (javacall_app_id)appId,
+                                 &jcResult);
+
+    KNI_ReturnVoid();
+}

@@ -27,8 +27,16 @@
 package com.sun.midp.installer;
 
 import javax.microedition.midlet.MIDlet;
-import com.sun.midp.configurator.Constants;
+
 import com.sun.midp.midlet.MIDletSuite;
+
+import com.sun.midp.events.*;
+
+import com.sun.midp.security.SecurityInitializer;
+import com.sun.midp.security.SecurityToken;
+import com.sun.midp.security.ImplicitlyTrustedClass;
+
+import com.sun.midp.configurator.Constants;
 
 /**
  * A MIDlet passing the installer's requests and responses between
@@ -42,8 +50,15 @@ import com.sun.midp.midlet.MIDletSuite;
  *   <li>arg-1: URL of the midlet suite to install
  *   <li>arg-2: a storage ID where to save the suite's jar file
  */
-public class InstallerPeerMIDlet extends MIDlet implements InstallListener,
-        Runnable {
+public class InstallerPeerMIDlet extends MIDlet
+        implements EventListener, InstallListener, Runnable {
+    /**
+     * Inner class to request security token from SecurityInitializer.
+     * SecurityInitializer should be able to check this inner class name.
+     */
+    static private class SecurityTrusted
+        implements ImplicitlyTrustedClass {}
+
     /*
      * IMPL_NOTE: the following request codes must have the same values as
      *            the corresponding JAVACALL_INSTALL_REQUEST_* constants
@@ -86,6 +101,9 @@ public class InstallerPeerMIDlet extends MIDlet implements InstallListener,
      */
     private static final int RQ_UPDATE_STATUS        = 6;
 
+    /** Provides API to install midlets. */
+    private Installer installer;
+
     /** ID assigned to this application by the application manager */
     private int appId; 
 
@@ -93,6 +111,16 @@ public class InstallerPeerMIDlet extends MIDlet implements InstallListener,
      * Create and initialize the MIDlet.
      */
     public InstallerPeerMIDlet() {
+        SecurityToken internalSecurityToken =
+            SecurityInitializer.requestToken(new SecurityTrusted());
+
+        EventQueue eventQueue = EventQueue.getEventQueue(internalSecurityToken);
+
+        eventQueue.registerEventListener(
+            EventTypes.NATIVE_ENABLE_OCSP_REQUEST, this);
+        eventQueue.registerEventListener(
+            EventTypes.NATIVE_CHECK_OCSP_ENABLED_REQUEST, this);
+
         new Thread(this).start();
     }
 
@@ -119,7 +147,6 @@ public class InstallerPeerMIDlet extends MIDlet implements InstallListener,
 
     /** Installs a new MIDlet suite. */
     public void run() {
-        Installer installer = null;
         String installerClassName = null;
         final String supportedUrlTypes[] = {
             "http",  "HttpInstaller",
@@ -379,6 +406,84 @@ public class InstallerPeerMIDlet extends MIDlet implements InstallListener,
         return nis;
     }
 
+    // ==============================================================
+    // ------ Implementation of the EventListener interface
+
+    /**
+     * Preprocess an event that is being posted to the event queue.
+     * This method will get called in the thread that posted the event.
+     *
+     * @param event event being posted
+     *
+     * @param waitingEvent previous event of this type waiting in the
+     *     queue to be processed
+     *
+     * @return true to allow the post to continue, false to not post the
+     *     event to the queue
+     */
+    public boolean preprocess(Event event, Event waitingEvent) {
+        return true;
+    }
+
+    /**
+     * Process an event.
+     * This method will get called in the event queue processing thread.
+     *
+     * @param event event to process
+     */
+    public void process(Event event) {
+        NativeEvent nativeEvent = (NativeEvent)event;
+        // appId of the running installer which the event is intended for
+        int installerAppId = nativeEvent.intParam1;
+
+        if ((installerAppId != appId) && (appId != -1)) { // -1 - broadcast
+            // this event was sent to another installer, ignoring
+            return;
+        }
+
+        switch (nativeEvent.getType()) {
+            case EventTypes.NATIVE_ENABLE_OCSP_REQUEST: {
+                /*
+                 * intParam1 - appId of the running installer,
+                 * intParam2 - 0/1 to enable / disable OCSP
+                 */
+                boolean enable = (nativeEvent.intParam2 != 0);
+                int result;
+
+                if (installer != null) {
+                    installer.enableOCSPCheck(enable);
+                    result = 0;
+                } else {
+                    result = -1;
+                }
+
+                notifyRequestHandled0(appId,
+                        EventTypes.NATIVE_ENABLE_OCSP_REQUEST,
+                                result, enable);
+                break;
+            }
+
+            case EventTypes.NATIVE_CHECK_OCSP_ENABLED_REQUEST: {
+                boolean ocspEnabled;
+                int result;
+
+                if (installer != null) {
+                    ocspEnabled = installer.isOCSPCheckEnabled();
+                    result = 0;
+                } else {
+                    result = -1;
+                    ocspEnabled = false;
+                }
+                
+                notifyRequestHandled0(appId,
+                        EventTypes.NATIVE_CHECK_OCSP_ENABLED_REQUEST,
+                                result, ocspEnabled);
+                break;
+            }
+        }
+    }
+
+    // ==============================================================
     // Native methods.
 
     /**
@@ -396,20 +501,22 @@ public class InstallerPeerMIDlet extends MIDlet implements InstallListener,
      * @param status      current status of the installation, -1 if not used
      * @param newLocation new url of the resource to install; null if not used
      */
-    private native void sendNativeRequest0(int requestCode,
-                                           NativeInstallState state,
-                                           int status, String newLocation);
+    private static native void sendNativeRequest0(
+            int requestCode,
+            NativeInstallState state,
+            int status,
+            String newLocation);
 
     /**
      * Returns yes/no answer from the native callback.
      *
      * @return yes/no answer from the native callback
      */
-    private native boolean getAnswer0();
+    private static native boolean getAnswer0();
 
     /**
      * Reports to the party using this installer that
-     * the operation has been completed.
+     * the installation has been completed.
      *
      * @param appId this application ID
      * @param suiteId ID of the newly installed midlet suite, or
@@ -420,8 +527,22 @@ public class InstallerPeerMIDlet extends MIDlet implements InstallListener,
      *                   in InvalidJadException)
      * @param errMsg error message if the installation failed, null otherwise
      */
-    private native void reportFinished0(int appId, int suiteId, int resultCode,
-                                        String errMsg);
+    private static native void reportFinished0(
+            int appId, int suiteId, int resultCode, String errMsg);
+
+    /**
+     * Reports to the party using this installer that the requested
+     * operation has been completed and the result (if any) is available.
+     *
+     * @param appId this application ID
+     * @param requestCode code of the request that was handled
+     * @param resultCode completion code (0 if succeeded or -1 in case
+     *                   of error)
+     * @param result operation-dependent result (for OCSP operations it contains
+     *               the current state (enabled/disabled) of OCSP checks)
+     */
+    private static native void notifyRequestHandled0(
+        int appId, int requestCode, int resultCode, boolean result);
 }
 
 /**

@@ -355,7 +355,14 @@ public final class EventTypes {
     public static final int MIDP_ODD_SUITE_REMOVED_EVENT = 55;
 
     /**
-     * Installation request coming from a native code.
+     * This event is sent by a native code to the Java installer to
+     * enable or disable OCSP check. 
      */
-    public static final int NATIVE_INSTALL_REQUEST = 56;
+    public static final int NATIVE_ENABLE_OCSP_REQUEST = 56;
+
+    /**
+     * This event is sent by a native code to the Java installer to
+     * check if OCSP is currently enabled.
+     */
+    public static final int NATIVE_CHECK_OCSP_ENABLED_REQUEST = 57;
 }

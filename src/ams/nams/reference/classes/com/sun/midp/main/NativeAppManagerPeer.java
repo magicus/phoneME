@@ -40,14 +40,7 @@ import com.sun.midp.configurator.Constants;
 import com.sun.midp.suspend.SuspendSystemListener;
 import com.sun.midp.suspend.SuspendSystem;
 
-// IMPL_NOTE: decouple from com.sun.midp.installer
-import com.sun.midp.installer.Installer;
-import com.sun.midp.installer.HttpInstaller;
-import com.sun.midp.installer.FileInstaller;
-import com.sun.midp.installer.InternalMIDletSuiteImpl;
-
 import com.sun.cldc.isolate.Isolate;
-import com.sun.j2me.security.AccessController;
 
 /**
  * This is an implementation of the native application manager peer
@@ -186,10 +179,6 @@ public class NativeAppManagerPeer
             EventTypes.NATIVE_MIDLET_GETINFO_REQUEST, this);
         eventQueue.registerEventListener(
             EventTypes.NATIVE_SET_FOREGROUND_REQUEST, this);
-
-        /* Installer events */
-        eventQueue.registerEventListener(
-            EventTypes.NATIVE_INSTALL_REQUEST, this);
 
         IndicatorManager.init(midletProxyList);
     }
@@ -430,52 +419,6 @@ public class NativeAppManagerPeer
                 } else {
                     errorMsg = "Invalid App Id";
                 }
-                break;
-            }
-
-            case EventTypes.NATIVE_INSTALL_REQUEST: {
-                /*
-                 * intParam1 - appId, intParam2 - URL type
-                 * (0 - any [try JAD, then JAR], 1 - JAD, 2 - JAR]):
-                 *
-                 * IMPL_NOTE: possible values of intParam2 are taken from
-                 *            javacall_ams_install_source_type enum.
-                 *
-                 * intParam3 - storageId, intParam4 - folderId
-                 *
-                 * stringParam1 - URL to install from
-                 */
-                final int appId = nativeEvent.intParam1;
-                final String url = nativeEvent.stringParam1;
-
-                final Installer installer = (nativeEvent.intParam2 == 2) ?
-                    ((Installer)new FileInstaller()) :
-                    ((Installer)new HttpInstaller());
-
-                /* Set up permission checking for this suite. */
-                MIDletSuite midletSuite =
-                        InternalMIDletSuiteImpl.create("Installer",
-                                MIDletSuite.INTERNAL_SUITE_ID);
-                AccessController.setAccessControlContext(
-                    new CldcAccessControlContext(midletSuite));
-
-                new Thread() {
-                    public void run() {
-                        // force an overwrite and remove the RMS data
-                        int suiteId;
-
-                        try {
-                             suiteId = installer.installJad(url,
-                                 Constants.INTERNAL_STORAGE_ID,
-                                     true, true, null);
-                         } catch (Exception e) {
-                             suiteId = MIDletSuite.UNUSED_SUITE_ID;
-                         }
-
-                         notifyOperationCompleted(
-                             EventTypes.NATIVE_INSTALL_REQUEST, appId, suiteId);
-                    }
-                }.start();
                 break;
             }
 
