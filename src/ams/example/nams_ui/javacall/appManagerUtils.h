@@ -23,14 +23,14 @@
  * Clara, CA 95054 or visit www.sun.com if you need additional
  * information or have any questions.
  */
-#ifndef __APP_MANAGER_UTULS_H
-#define __APP_MANAGER_UTULS_H
+#ifndef __APP_MANAGER_UTILS_H
+#define __APP_MANAGER_UTILS_H
 
 #include <windows.h>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+//#ifdef __cplusplus
+//extern "C" {
+//#endif
 
 #define DLG_BUTTON_MARGIN 5
 
@@ -38,8 +38,8 @@ SIZE GetButtonSize(HWND hBtn);
 
 void PrintWindowSize(HWND hWnd, LPTSTR pszName);
 
-#ifdef __cplusplus
-}
-#endif
+//#ifdef __cplusplus
+//}
+//#endif
 
-#endif  /* __APP_MANAGER_UTULS_H */
+#endif  /* __APP_MANAGER_UTILS_H */

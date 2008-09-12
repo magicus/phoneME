@@ -28,9 +28,9 @@
 
 #include <javacall_defs.h>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+//#ifdef __cplusplus
+//extern "C" {
+//#endif
 
 /* This is logical LCDUI putpixel screen buffer. */
 typedef struct {
@@ -41,8 +41,8 @@ typedef struct {
 
 SBuffer* GetLCDUIBuffer();
 
-#ifdef __cplusplus
-}
-#endif
+//#ifdef __cplusplus
+//}
+//#endif
 
 #endif  /* __APP_MANAGER_LCDUI_H */

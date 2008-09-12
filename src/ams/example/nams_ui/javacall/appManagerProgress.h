@@ -28,9 +28,9 @@
 
 #include <windows.h>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+//#ifdef __cplusplus
+//extern "C" {
+//#endif
 
 BOOL CreateProgressDialog(HINSTANCE hInstance, HWND hWndParent);
 
@@ -38,8 +38,8 @@ void ShowProgressDialog(BOOL fShow);
 
 BOOL PostProgressMessage(UINT uMsg, WPARAM wParam, LPARAM lParam);
 
-#ifdef __cplusplus
-}
-#endif
+//#ifdef __cplusplus
+//}
+//#endif
 
 #endif  /* __APP_MANAGER_PROGRESS_H */

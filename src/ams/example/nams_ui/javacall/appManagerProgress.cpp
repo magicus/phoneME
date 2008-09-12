@@ -57,7 +57,7 @@ void ShowProgressDialog(BOOL fShow) {
     }
 }
 
-BOOL PostProgressMessage(UINT uMsg, WPARAM wParam, LPARAM lParam) {
+PostProgressMessage(UINT uMsg, WPARAM wParam, LPARAM lParam) {
   if (g_hProgressDlg) {
       return PostMessage(g_hProgressDlg, uMsg, wParam, lParam);
   }

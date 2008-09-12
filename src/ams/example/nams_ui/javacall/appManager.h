@@ -35,9 +35,9 @@
 #include <javacall_defs.h>
 #include <javacall_ams_suitestore.h>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+//#ifdef __cplusplus
+//extern "C" {
+//#endif
 
 #define MAIN_WINDOW_CHILD_AREA_WIDTH  240
 #define MAIN_WINDOW_CHILD_AREA_HEIGHT 300
@@ -114,8 +114,8 @@ void MIDletTerminated(javacall_app_id appId);
 
 void CloseInstallerDlg(HWND hwndDlg);
 
-#ifdef __cplusplus
-}
-#endif
+//#ifdef __cplusplus
+//}
+//#endif
 
 #endif  /* __APP_MANAGER_H */
