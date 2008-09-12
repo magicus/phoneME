@@ -126,7 +126,6 @@ final class MIDletSelector implements CommandListener {
         manager = theManager;
         mcount = 0;
         minfo = new MIDletInfo[20];
-        suiteInfo.midletSelector = this;
 
         mss = MIDletSuiteStorage.getMIDletSuiteStorage();
 
@@ -204,7 +203,6 @@ final class MIDletSelector implements CommandListener {
         if (runningMidlets.isEmpty()) {
             unlockSuite();
             manager.notifySuiteExited(suiteInfo);
-            suiteInfo.midletSelector = null;
         }
     }
     
