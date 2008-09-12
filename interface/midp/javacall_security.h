@@ -221,7 +221,8 @@ typedef enum {
  * @retval JAVACALL_FAIL in case prompting the permission dialog failed.
  * @retval JAVACALL_NOT_IMPLEMENTED in case the native permission dialog
  *         is not implemented by the platform.
- * @deprecated  not used by MIDP or JAVACALL
+ * @deprecated  not used by MIDP or JAVACALL.
+ * @see javacall_security_check_permission
  */
 javacall_result javacall_security_permission_dialog_display(javacall_utf16* message,
                                                             int messageLength,
@@ -358,8 +359,11 @@ typedef enum {
  * The result of permission check.
  */
 typedef enum {
+    /* status can't be checked without user action */
     JAVACALL_SECURITY_UNKNOWN = -1,
+    /* resource access is forbidden */
     JAVACALL_SECURITY_DENY = 0,
+    /* the application is granted to access the resource */
     JAVACALL_SECURITY_GRANT = 1
 }javacall_security_permission_result;
 
@@ -370,25 +374,25 @@ typedef enum {
  * @param enable_block  enable user interaction. If it is
  *                      JAVACALL_FALSE the call should never be blocked.
  * @param result        address of variable to receive the
- *                      security status (JAVACALL_SECURITY_GRANT
- *                      - granted,  JAVACALL_SECURITY_DENY -
- *                      denied), or the handle of check session
- *                      that blocks this call. Actual result
- *                      will be notified through
+ *                      security status or the handle of check
+ *                      session that blocks this call. Actual
+ *                      result will be notified through
  *                      <code>javanotify_security_permission_check_result</code>.
  * 
  * @return JAVACALL_OK if check was performed correctly and
- *         result is stored at <code>result</code>,
+ *         result is stored at <i>result</i>,
  *         JAVACALL_FALSE if the function fails to perform
- *         checking, JAVACALL_WOULD_BLOCK if user intercation
+ *         checking, JAVACALL_WOULD_BLOCK if user interaction
  *         dialog is created and actual result will be delivered
  *         later.
  * @note the function MUST NOT return JAVACALL_WOULD_BLOCK if
- *       <code>enable_block</code> equals to JAVACALL_FALSE
+ *       <i>enable_block</i> equals to JAVACALL_FALSE.
+ *       JAVACALL_SECURITY_UNKNOWN can be returned at
+ *       <i>result</i> in this case.
  * @note it is possible to have several security session in
  *       parallel.
  * @note this function is alternate to
- *       <code>javacall_security_permission_dialog_display/code>
+ *       <code>javacall_security_permission_dialog_display</code>
  *       that is deprecated
  */
 javacall_result

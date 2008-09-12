@@ -539,7 +539,7 @@ javacall_result javacall_security_permission_dialog_display(javacall_utf16* mess
  * @return JAVACALL_OK if check was performed correctly and
  *         result is stored at <code>result</code>,
  *         JAVACALL_FALSE if the function fails to perform
- *         checking, JAVACALL_WOULD_BLOCK if user intercation
+ *         checking, JAVACALL_WOULD_BLOCK if user interaction
  *         dialog is created and actual result will be delivered
  *         later.
  * @note the function MUST NOT return JAVACALL_WOULD_BLOCK if
@@ -559,7 +559,7 @@ javacall_security_check_permission(const javacall_suite_id suite_id,
     (void)permission;
     (void)enable_block;
     *result = JAVACALL_SECURITY_DENY;
-    return JAVACALL_NOT_IMPLEMENTED;
+    return JAVACALL_FALSE;
 }
 
 #ifdef __cplusplus
