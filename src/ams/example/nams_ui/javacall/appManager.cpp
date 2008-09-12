@@ -37,7 +37,6 @@
 
 #include <stdlib.h>
 #include <string.h>
-
 #include <time.h>
 
 #include <javacall_memory.h>
@@ -54,6 +53,10 @@
 #include <stdio.h>
 #include <fcntl.h>
 #endif
+
+// The size of main window calibrated to get the required child area
+#define MAIN_WINDOW_WIDTH  (MAIN_WINDOW_CHILD_AREA_WIDTH + 6)
+#define MAIN_WINDOW_HEIGHT (MAIN_WINDOW_CHILD_AREA_HEIGHT + 45)
 
 #define WINDOW_SUBMENU_INDEX 2
 

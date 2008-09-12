@@ -42,9 +42,6 @@ extern "C" {
 #define MAIN_WINDOW_CHILD_AREA_WIDTH  240
 #define MAIN_WINDOW_CHILD_AREA_HEIGHT 300
 
-// The size of main window calibrated to get the required child area
-#define MAIN_WINDOW_WIDTH  (MAIN_WINDOW_CHILD_AREA_WIDTH + 6)
-#define MAIN_WINDOW_HEIGHT (MAIN_WINDOW_CHILD_AREA_HEIGHT + 45)
 
 // The string that appears in the application's title bar.
 const TCHAR g_szTitle[] = _T("NAMS Example");

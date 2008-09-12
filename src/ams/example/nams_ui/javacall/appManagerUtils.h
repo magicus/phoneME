@@ -34,9 +34,6 @@ extern "C" {
 
 #define DLG_BUTTON_MARGIN 5
 
-#define DYNAMIC_BUTTON_SIZE
-
-
 SIZE GetButtonSize(HWND hBtn);
 
 void PrintWindowSize(HWND hWnd, LPTSTR pszName);

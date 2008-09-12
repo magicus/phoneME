@@ -28,6 +28,10 @@
 
 #include <tchar.h>
 
+
+#define USE_DYNAMIC_BUTTON_SIZE
+
+
 void PrintWindowSize(HWND hWnd, LPTSTR pszName) {
     RECT rcWnd, rcOwner;
     HWND hOwner;
@@ -53,7 +57,7 @@ SIZE GetButtonSize(HWND hBtn) {
     res.cx = 0;
     
     if (hBtn) {
-#ifdef DYNAMIC_BUTTON_SIZE
+#ifdef USE_DYNAMIC_BUTTON_SIZE
         int nBtnTextLen, nBtnHeight, nBtnWidth;
         HDC hdc;
         TEXTMETRIC tm;
