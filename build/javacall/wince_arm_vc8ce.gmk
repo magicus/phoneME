@@ -41,6 +41,10 @@ TARGET_CPU		= arm
 TARGET_COMPILER	= vc8ce
 TARGET_VM		= cldc_vm
 
+# Platform-specific dependencies
+MIDP_DEPS += $(JAVACALL_LIB_DIR)/javacall$(g).lib
+#MIDP_DEPS += $(JAVACALL_LIB_DIR)/emulator.res
+
 # Platform-specific compiler flags
 #EXTRA_CPPFLAGS += /Zm400
 
