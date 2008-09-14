@@ -620,6 +620,15 @@ static int midp_slavemode_handle_events(JVMSPI_BlockedThreadInfo *blocked_thread
             }
             break;
 
+		case COMM_OPEN_SIGNAL:
+		case COMM_READ_SIGNAL:
+		case COMM_WRITE_SIGNAL:
+		case COMM_CLOSE_SIGNAL:
+			eventUnblockJavaThread(blocked_threads, blocked_threads_count,
+				newSignal.waitingFor, newSignal.descriptor,
+				newSignal.status);
+			break;
+
         default:
             break;
         } /* switch */
