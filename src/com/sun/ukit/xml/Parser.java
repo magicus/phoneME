@@ -44,6 +44,13 @@ import com.sun.ukit.io.ReaderUTF16;
 public abstract class Parser
 {
 	public final static String FAULT = "";
+	
+	private static String preprocessMsgText( String msg ) { return msg; }
+	private static final String FAULT_NO_OPENED_ELEMENT = preprocessMsgText("No open element");
+	private static final String FAULT_END_ELEMENT_TAG_MISMATCH = preprocessMsgText("End element tag mismatch");
+	private static final String FAULT_SYNTAX = preprocessMsgText("Syntax error");
+	private static final String FAULT_UNEXPECTED_EOF = preprocessMsgText("Unexpected EOF");
+	private static final String FAULT_UNSUPPORTED_MARKUP_DECLARATION = preprocessMsgText("Unsupported murkup declaration");
 
 	protected final static int BUFFSIZE_READER = 512;
 	protected final static int BUFFSIZE_PARSER = 128;
@@ -390,8 +397,7 @@ public abstract class Parser
 	 * @exception Exception is parser specific exception form panic method.
 	 * @exception IOException 
 	 */
-	protected int step()
-		throws Exception
+	protected int step() throws Exception
 	{
 		mEvt   = EV_NULL;
 		int st = (mPh == PH_DOCELM)? 0: 4;  // skip white space
@@ -409,20 +415,20 @@ public abstract class Parser
 				case '/':  // the end of the element content
 					mEvt = EV_ELME;
 					if (mElm == null)
-						panic(FAULT);
+						panic(FAULT_NO_OPENED_ELEMENT);
 					//		Check element's open/close tags balance
 					mBuffIdx = -1;  // clean parser buffer
 					bname(mIsNSAware);
 					char[] chars = mElm.chars;
 					if (chars.length != (mBuffIdx + 1))  // the same length
-						panic(FAULT);
+						panic(FAULT_END_ELEMENT_TAG_MISMATCH);
 					for (char i = 1; i <= mBuffIdx; i += 1) {
 						if (chars[i] != mBuff[i])
-							panic(FAULT);
+							panic(FAULT_END_ELEMENT_TAG_MISMATCH);
 					}
 					//		Skip white spaces before '>'
 					if (wsskip() != '>')
-						panic(FAULT);
+						panic(FAULT_SYNTAX);
 					getch();  // read '>'
 					break;
 
@@ -487,12 +493,12 @@ public abstract class Parser
 					case '/':
 						getch();  // read '/'
 						if (getch() != '>')  // read '>'
-							panic(FAULT);
+							panic(FAULT_SYNTAX);
 						mEvt = EV_ELM;
 						break;
 
 					default:
-						panic(FAULT);
+						panic(FAULT_SYNTAX);
 					}
 					break;
 				}
@@ -578,7 +584,7 @@ public abstract class Parser
 					break;
 
 				case EOS:
-					panic(FAULT);
+					panic(FAULT_UNEXPECTED_EOF);
 
 				case ' ':  // characters not supported by bappend()
 				case '\"':
@@ -626,11 +632,11 @@ public abstract class Parser
 								break;
 
 							default:
-								panic(FAULT); // unsupported markup declaration
+								panic(FAULT_UNSUPPORTED_MARKUP_DECLARATION); // unsupported markup declaration
 							}
 							wsskip();
 							if (getch() != '>')
-								panic(FAULT);
+								panic(FAULT_SYNTAX);
 						}
 						break;
 
@@ -640,7 +646,7 @@ public abstract class Parser
 						break;
 
 					default:  // 
-						panic(FAULT);
+						panic(FAULT_SYNTAX);
 					}
 					break;
 
@@ -702,7 +708,7 @@ public abstract class Parser
 					break;
 
 				default:
-					panic(FAULT);
+					panic(FAULT_SYNTAX);
 				}
 				break;
 
@@ -722,7 +728,7 @@ public abstract class Parser
 				break;
 
 			default:
-				panic(FAULT);
+				panic(FAULT_SYNTAX);
 			}
 		}
 
@@ -3314,7 +3320,6 @@ public abstract class Parser
 			reader = is.getCharacterStream();
 			xml(reader);
 		} else if (is.getByteStream() != null) {
-			BufferedInputStream bis = new BufferedInputStream(is.getByteStream());
 			String expenc;
 			if (is.getEncoding() != null) {
 				//		Ignore encoding in the xml text decl.
@@ -3325,15 +3330,18 @@ public abstract class Parser
 					reader = enc(expenc, is.getByteStream());
 				xml(reader);
 			} else {
+				BufferedInputStream bis = new BufferedInputStream(is.getByteStream());
 				//		Get encoding from BOM or the xml text decl.
 				reader = bom(bis);
 				if (reader == null) {
 					//		Encoding is defined by the xml text decl.
-					reader = enc("UTF-8", bis.getInputStream());
-					expenc = xml(reader);
+					ReaderUTF8 r = new ReaderUTF8(bis.getInputStream());
+					expenc = xml(r);
 					if (expenc.startsWith("UTF-16"))
 						panic(FAULT);  // UTF-16 must have BOM [#4.3.3]
-					reader = enc(expenc, bis.getInputStream());
+					if( expenc.equals("UTF-8") ){
+						reader = r;
+					} else reader = enc(expenc, r.getByteStream());
 				} else {
 					//		Encoding is defined by the BOM.
 					xml(reader);

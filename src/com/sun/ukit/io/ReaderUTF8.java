@@ -24,12 +24,14 @@
 
 package com.sun.ukit.io;
 
+import java.io.ByteArrayInputStream;
 import java.io.Reader;
 import java.io.InputStream;
 import java.io.IOException;
 import java.io.EOFException;
 import java.io.UTFDataFormatException;
 import java.io.UnsupportedEncodingException;
+import java.util.Vector;
 
 /**
  * UTF-8 transformed UCS-2 character stream reader.
@@ -47,7 +49,7 @@ public class ReaderUTF8 extends Reader
 {
 	private static final int maxBytesInUTF8Character = 3;
 
-	final private InputStream is;
+	private InputStream is;
 
 	final private byte[]	buff = new byte[128];
 	private int     		bidx = 0;
@@ -68,13 +70,19 @@ public class ReaderUTF8 extends Reader
 	 * @throws IOException 
 	 */
 	private void fillBuffer() throws IOException {
-		bcnt = bcnt - bidx;
+		bcnt -= bidx;
 		if( bcnt > 0 )
 			System.arraycopy(buff, bidx, buff, 0, bcnt);
 		bidx = 0;
-		int count = is.read(buff, bcnt, buff.length - bcnt);
-		if( count > 0 )
+		while( buff.length - bcnt > 0 ){
+			int count = is.read(buff, bcnt, buff.length - bcnt);
+			if( count < 0 )
+				break;
 			bcnt += count;
+		}
+System.out.print("fillBuffer[" + bcnt + "]: ");		
+for( int o = bidx; o < bcnt; o++) System.out.print( (char)buff[o] );
+System.out.println();
 	}
 
 	/**
@@ -93,6 +101,7 @@ public class ReaderUTF8 extends Reader
 		int num = 0;
 		while (num < len) {
 			if (bcnt - bidx < maxBytesInUTF8Character){
+System.out.println( "bcnt = " + bcnt + ", bidx = " + bidx + ", num = " + num );				
 				if( bidx > bcnt )
 					break;
 				fillBuffer();
@@ -130,6 +139,9 @@ public class ReaderUTF8 extends Reader
 			bidx = bcnt = 0;
 			throw new EOFException();
 		}
+System.out.print( "ReaderUTF8.read[" + num + "]:" );
+for( int o = off - num; o < off; o++) System.out.print( cbuf[o] );
+System.out.println();
 		return num;
 	}
 
@@ -174,6 +186,7 @@ public class ReaderUTF8 extends Reader
 			bidx = bcnt = 0;
 			throw new EOFException();
 		}
+System.out.println( "ReaderUTF8.read: " + (char)val );
 		return val;
 	}
 
@@ -186,5 +199,40 @@ public class ReaderUTF8 extends Reader
 		throws IOException
 	{
 		is.close();
+	}
+
+	public InputStream getByteStream() {
+		InputStream result = is;
+		if( bidx < bcnt ){
+			MultiInputStream r = new MultiInputStream();
+			r.add( new ByteArrayInputStream( buff, bidx, bcnt - bidx ) );
+			r.add(is);
+			result = r;
+		}
+		is = null;
+		return result;
+	}
+	
+	static class MultiInputStream extends InputStream {
+		protected Vector list = new Vector();
+		
+		public void add( InputStream is ){
+			list.addElement(is);
+		}
+		
+		public int read(byte[] b, int off, int len) throws IOException {
+			int count = -1;
+			while( list.size() != 0 && (count = ((InputStream)list.firstElement()).read(b, off, len)) < 0 )
+				list.removeElementAt(0);
+			return count;
+		}
+
+		final private byte[] buff = new byte[1];
+		public int read() throws IOException {
+			if( read( buff, 0, 1 ) < 0 )
+				return -1;
+			return buff[0] & 0xFF;
+		}
+		
 	}
 }
