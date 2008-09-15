@@ -23,12 +23,13 @@
  */
 
 /*
- * This file presents here for consistency only.
+ * This file contains AMS configuration-dependent macros used to
+ * provide proper javacall/javanotify calling convention suitable
+ * for this particular configuration.
  *
- * Indeed, javacall_ams_config.h is generated when building Javacall and is
- * placed in $JAVACALL_OUTPUT_DIR/inc/ directory. It contains AMS
- * configuration-dependent macros used to provide proper javacall/javanotify
- * calling convention suitable for this particular configuration.
+ * Macros expansion depends on the Javacall build options defining
+ * which AMS components will be implemented on the Java side and
+ * which - on the Platform's side.
  *
  * For example, if the installer is located on the Platform's side and
  * the Application Manager - on the Java side, the declaration of
@@ -49,6 +50,8 @@
  *
  */
 
+#if ENABLE_NATIVE_AMS_UI
+
 /*
  * Configuration for Application Manager UI on the Platform's side + all other
  * components on the Java side:
@@ -59,3 +62,22 @@
 #define JCDECL_SUITESTORE(x)        javanotify_ams_##x
 #define JCDECL_INST_SUITESTORE(x)   NOT_USED##x
 #define JCDECL_APPMGR_SUITESTORE(x) javanotify_ams_##x
+
+#else
+
+/*
+ * IMPL_NOTE: currently Javacall build options allow to automatically implement
+ *            macros for only two configurations: (1) a "big" monolithics NAMS
+ *            (all components are on the Platform's side) and (2) Native UI:
+ *            only Application Manager UI is implemented on the Platform's side.
+ *
+ *            More options will be added in future.
+ */
+#define JCDECL_APPMGR_INST(x)       NOT_USED##x
+#define JCDECL_INST_APPMGR(x)       NOT_USED##x
+
+#define JCDECL_SUITESTORE(x)        NOT_USED##x
+#define JCDECL_INST_SUITESTORE(x)   NOT_USED##x
+#define JCDECL_APPMGR_SUITESTORE(x) NOT_USED##x
+
+#endif /* ENABLE_NATIVE_AMS_UI */
