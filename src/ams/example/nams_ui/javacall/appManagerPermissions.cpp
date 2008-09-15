@@ -90,14 +90,14 @@ PermissionWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
                 pInfo = GetTviInfo(hWnd, hItem);
                 if (pInfo && (pInfo->type == TVI_TYPE_PERMISSION)) {
                     if (pInfo->modified) {
-                        res = java_ams_suite_set_permission(pInfo->suiteId,
-                                                            pInfo->permId,
-                                                            pInfo->permValue);
+                        res = javanotify_ams_suite_set_permission(
+                            pInfo->suiteId, pInfo->permId, pInfo->permValue);
 
-                        wprintf(_T("java_ams_suite_set_permission(%d, %d, %d)")
-                                _T(" returned %d\n"),
-                                (int)pInfo->suiteId, (int)pInfo->permId,
-                                (int)pInfo->permValue, (int)res); 
+                        wprintf(
+                            _T("javanotify_ams_suite_set_permission(%d, %d, %d)")
+                            _T(" returned %d\n"),
+                            (int)pInfo->suiteId, (int)pInfo->permId,
+                            (int)pInfo->permValue, (int)res);
                     }
                 }
                                                       
@@ -124,9 +124,11 @@ PermissionWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
             if (pInfo) {
                 suiteId = pInfo->suiteId;
 
-                wprintf(_T("Displaying settings for suite id=%d...\n"), (int)suiteId);
+                wprintf(_T("Displaying settings for suite id=%d...\n"),
+                        (int)suiteId);
 
-                res = java_ams_suite_get_permissions(suiteId, jpvPermissions);
+                res = javanotify_ams_suite_get_permissions(suiteId,
+                                                           jpvPermissions);
                 if (res == JAVACALL_OK) {
                     javacall_ams_permission_val jpvVal;
                     TCHAR szBuf[127];

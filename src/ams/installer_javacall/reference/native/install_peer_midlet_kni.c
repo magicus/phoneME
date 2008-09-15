@@ -43,7 +43,8 @@
 #include <javacall_ams_platform.h>
 
 /*
- * IMPL_NOTE: this request code is not used in java_ams_install_ask/answer
+ * IMPL_NOTE: this request code is not used in
+ * java[call|notify]_ams_install_ask/answer
  * and is treated as other requests for handiness. If this value is changed,
  * the corresponding value in InstallerMIDletPeer class must also be changed.
  */
@@ -179,7 +180,7 @@ KNIDECL(com_sun_midp_installer_InstallerPeerMIDlet_sendNativeRequest0) {
             /* reporting the current installation progress */
             int currStepDone = 50;
 
-            java_ams_install_report_progress(&jcInstallState,
+            javacall_ams_install_report_progress(&jcInstallState,
                 jcRequestData.installStatus, currStepDone,
                     (int)((int)jcRequestData.installStatus * 100 /
                           (int) JAVACALL_INSTALL_STATUS_COMPLETED));
@@ -210,8 +211,8 @@ KNIDECL(com_sun_midp_installer_InstallerPeerMIDlet_sendNativeRequest0) {
             if (jcRes == JAVACALL_OK) {
                 /* sending the request */
                 g_installerIsolateId = -1;
-                jcRes = java_ams_install_ask(requestCode, &jcInstallState,
-                                             &jcRequestData);
+                jcRes = javacall_ams_install_ask(requestCode, &jcInstallState,
+                                                 &jcRequestData);
 
                 if (jcRes != JAVACALL_OK) {
                     /* If something is wrong, apply "No" answer */

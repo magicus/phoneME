@@ -1396,10 +1396,10 @@ static void AddSuiteToTree(HWND hwndTV, javacall_suite_id suiteId, int nLevel) {
                         _T("returned: %d\n"), res);
             }
 
-            java_ams_suite_free_info(pSuiteInfo);
+            javanotify_ams_suite_free_info(pSuiteInfo);
     } else {
-        wprintf(_T("ERROR: java_ams_suite_get_info(suiteId=%d) returned: "
-                _T("%d\n"), (int)suiteId, res);
+        wprintf(_T("ERROR: javanotify_ams_suite_get_info(suiteId=%d) ")
+                _T("returned: %d\n"), (int)suiteId, res);
     }
 }
                                                        
@@ -1417,7 +1417,7 @@ static BOOL InitMidletTreeViewItems(HWND hwndTV)  {
 
     res = javanotify_ams_suite_get_suite_ids(&pSuiteIds, &suiteNum);
     if (res != JAVACALL_OK) {
-        wprintf(_T("ERROR: javanotify_ams_suite_get_suite_ids() returned: "
+        wprintf(_T("ERROR: javanotify_ams_suite_get_suite_ids() returned: ")
                 _T("%d\n"), res);
         return FALSE;
     }

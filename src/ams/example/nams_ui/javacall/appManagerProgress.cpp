@@ -175,10 +175,11 @@ ProgressDlgProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam) {
             resultData.fAnswer = JAVACALL_TRUE;
         }
 
-        res = java_ams_install_answer(requestCode, pInstallState, &resultData);
+        res = javanotify_ams_install_answer(requestCode, pInstallState,
+                                            &resultData);
 
         if (res != JAVACALL_OK) {
-            wprintf(_T("ERROR: java_ams_install_answer() ")
+            wprintf(_T("ERROR: java_amsnotify_install_answer() ")
                     _T("returned %d\n"), (int)res);
         }
 
