@@ -34,6 +34,7 @@ import com.sun.midp.midletsuite.MIDletInfo;
 import com.sun.midp.midletsuite.MIDletSuiteCorruptedException;
 import com.sun.midp.midletsuite.MIDletSuiteLockedException;
 import com.sun.midp.midletsuite.MIDletSuiteStorage;
+import com.sun.midp.midletsuite.MIDletSuiteImpl;
 
 import javax.microedition.lcdui.*;
 import java.util.Vector;
@@ -103,6 +104,11 @@ final class MIDletSelector implements CommandListener {
     private Vector runningMidlets;
 
     /**
+     * MIDlet suite corresponding to this selector (used for locking).
+     */
+    private MIDletSuiteImpl msi = null;
+    
+    /**
      * Create and initialize a new Selector MIDlet.
      * The Display is retrieved and the list of MIDlets read
      * from the descriptor file.
@@ -140,7 +146,7 @@ final class MIDletSelector implements CommandListener {
 
         mlist.setCommandListener(this); // Listen for the selection
 
-        display.setCurrent(mlist);
+        show();
         
         runningMidlets = new Vector();
     }
@@ -157,7 +163,7 @@ final class MIDletSelector implements CommandListener {
      * Displays this selector on the screen.
      */
     public void show() {
-        selectedMidlet = -1;
+        lockSuite();
         refreshList();
         display.setCurrent(mlist);
     }
@@ -173,11 +179,40 @@ final class MIDletSelector implements CommandListener {
     }
 
     /**
+     * Locks associated suite to prevent installation of new versions.
+     */
+    private void lockSuite() {
+        try {
+            if (msi == null) {
+                msi = MIDletSuiteStorage.getMIDletSuiteStorage().getMIDletSuite(
+                        suiteInfo.suiteId, false);
+            }
+        } catch (Exception e) {
+            /* not critical */
+        }
+    }
+
+    /**
+     * Unlocks associated suite.
+     */
+    private void unlockSuite() {
+        if (msi != null) {
+            try {
+                msi.close();
+            } catch (Exception e) {
+                /* not critical */
+            }
+            msi = null;
+        }
+    }
+    
+    /**
      * If no MIDlet is running, exit the suite.
      */
     public void exitIfNoMidletRuns() {
         if (runningMidlets.isEmpty()) {
             manager.notifySuiteExited(suiteInfo, null);
+            unlockSuite();
         }
     }
     
@@ -206,15 +241,11 @@ final class MIDletSelector implements CommandListener {
                 manager.moveToForeground(suiteInfo, midletClassName);
                 return;
             }
+            unlockSuite();
 
             runningMidlets.addElement(minfo[selectedMidlet].classname);
             manager.launchSuite(suiteInfo, minfo[selectedMidlet].classname);
-            if (parentDisplayable != null) {
-                display.setCurrent(parentDisplayable);
-            } else {
-                selectedMidlet = -1;
-                display.setCurrent(mlist);
-            }
+            selectedMidlet = -1;
 
         } else if (c == backCmd) {
             if (parentDisplayable != null) {

@@ -853,6 +853,7 @@ class AppManagerPeer implements CommandListener {
      * @param suiteId ID of the suite to launch
      * @param midletClassname MIDlet to run, may be null, then will be launched
      *        the single MIDlet or MIDlet selector
+     * @param isDebugMode whether the suite should be launched in debug mode
      */
     void launchSuite(int suiteId, String midletClassname, boolean isDebugMode) {
 
@@ -876,9 +877,10 @@ class AppManagerPeer implements CommandListener {
         msi.isDebugMode = isDebugMode;
         if (midletClassname != null) {
             manager.launchSuite(msi, midletClassname);
-        } else {
+        } else {           
             showMidletSelector(msi);
         }
+        appManagerUI.notifySuiteStarted(msi);
     }
 
     /**

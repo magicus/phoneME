@@ -103,6 +103,15 @@ class AppManagerUIImpl implements AppManagerUI {
     }
 
     /**
+     * Called when a new suite was launched.
+     *
+     * @param si corresponding midlet suite info
+     */
+    public void notifySuiteStarted(RunningMIDletSuiteInfo si) {
+
+    }
+
+    /**
      * Called when state of a running midlet has changed.
      *
      * @param si corresponding midlet suite info
