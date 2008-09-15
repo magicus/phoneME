@@ -54,70 +54,111 @@
 #include <fcntl.h>
 #endif
 
-// The size of main window calibrated to get the required child area
+/** Width of the main window calibrated to get the required child area */
 #define MAIN_WINDOW_WIDTH  (MAIN_WINDOW_CHILD_AREA_WIDTH + 6)
+/** Height of the main window calibrated to get the required child area */
 #define MAIN_WINDOW_HEIGHT (MAIN_WINDOW_CHILD_AREA_HEIGHT + 45)
 
 #define WINDOW_SUBMENU_INDEX 2
 
+/** Width of a button on the toolbar */
 #define TB_BUTTON_WIDTH  16
+/** Height of a button on the toolbar */ 
 #define TB_BUTTON_HEIGHT 16
 
+/** Width of icons used by the tree view */
 #define TREE_VIEW_ICON_WIDTH  16
+/** Height of icons used by the tree view */
 #define TREE_VIEW_ICON_HEIGHT 16
 
+/** Name of the file containing the background image. */
 #define DEF_BACKGROUND_FILE _T("background.bmp")
+/** Name of the file containing the splash screen image. */
 #define SPLASH_SCREEN_FILE  _T("splash_screen_240x320.bmp")
 
-// in milliseconds
+/** Time during which the splash scren is shown, in milliseconds */
 #define SPLASH_SCREEN_SHOW_TIME 2000
 
-extern "C" char* _phonenum = "1234567"; // global for javacall MMS subsystem
+/* This is needed by javacall MMS subsystem */
+extern "C" char* _phonenum = "1234567";
 
 /*
  * IMPL_NOTE: onyl needed to compile with WMA emulator.
  */
 extern "C" javacall_result try_process_wma_emulator(javacall_handle handle);
 
-// The main window class name.
+/** The main window class name */
 static TCHAR g_szWindowClass[] = _T("NAMS");
 
+/** Title of the window with a list of MIDlets */
 static TCHAR g_szMidletTreeTitle[] = _T("Java MIDlets");
+/** Title of the information window */
 static TCHAR g_szInfoTitle[] = _T("Info");
 
+/** Default name of a folder */
 static TCHAR g_szDefaultFolderName[] = _T("Folder");
+/** Default name of a midlet suite */
 static TCHAR g_szDefaultSuiteName[]  = _T("Midlet Suite");
 
+/** Handle to the current instance of the application */
 static HINSTANCE g_hInstance = NULL;
 
+/** Handle to the main application window */
 static HWND g_hMainWindow = NULL;
+/** Handle to the tree view control window */
 static HWND g_hMidletTreeView = NULL;
+/** Handle to the information window */
 static HWND g_hInfoDlg = NULL;
+/** Handle to the "Suite Settings" dialog window */
 static HWND g_hPermissionsDlg = NULL;
+/** Handle to the installation dialog window */
 static HWND g_hInstallDlg = NULL;
+/** Handle to the main toolbar window */
 static HWND g_hWndToolbar = NULL;
 
+/**
+ * Handle to the popup menu associated with a tree item representing
+ * a midlet.
+ */
 static HMENU g_hMidletPopupMenu = NULL;
+
+/**
+ * Handle to the popup menu associated with a tree item representing
+ * a midlet suite.
+ */
 static HMENU g_hSuitePopupMenu = NULL;
+
+/**
+ * Handle to the popup menu associated with a tree item representing
+ * a folder.
+ */
 static HMENU g_hFolderPopupMenu = NULL;
 
+/** Handle to the default window procedure of the tree view control. */
 static WNDPROC g_DefTreeWndProc = NULL;
 
+/** Handle to the background bitmap. */
 static HBITMAP g_hMidletTreeBgBmp = NULL;
 
+/** Handle to the splash screen bitmap. */
 static HBITMAP g_hSplashScreenBmp = NULL;
 
-// Copied suite, to be pasted into a new folder 
+/** Copied suite, to be pasted into a new folder */
 static HTREEITEM g_htiCopiedSuite = NULL;
 
-// Turns on/off MIDlet output to the main window
+/** Turns on/off MIDlet output to the main window */
 static BOOL g_fDrawBuffer = FALSE;
 
+/** Next free ID of a running application (MIDlet) */
 static javacall_app_id g_jAppId = 1;
+
+/** ID of the running installer */
 static javacall_app_id g_jInstallerId = JAVACALL_INVALID_APP_ID;
 
-// TODO: place all hPrev* fields in a structure and pass it as
-//  a parameter of AddSuiteToTree
+/*
+ * IMPL_NOTE: all hPrev* fields should be saved into a structure, and then it
+ *            should be passed as a parameter to AddSuiteToTree
+ */
 HTREEITEM hPrev = (HTREEITEM)TVI_FIRST; 
 HTREEITEM hPrevLev1Item = NULL; 
 HTREEITEM hPrevLev2Item = NULL;
@@ -156,11 +197,12 @@ static void CleanupAms();
 static void InitWindows();
 static void CleanupWindows();
 
-static void AddWindowMenuItem(javacall_const_utf16_string jsStr, void* pItemData);
-static void* RemoveWindowMenuItem(javacall_app_id appId);
+static void AddWindowMenuItem(javacall_const_utf16_string jsStr,
+                              TVI_INFO* pItemData);
+static TVI_INFO* RemoveWindowMenuItem(javacall_app_id appId);
 static void CheckWindowMenuItem(int index, BOOL fChecked);
-static void SetCheckedWindowMenuItem(void* pItemData);
-static void* GetWindowMenuItemData(UINT commandId);
+static void SetCheckedWindowMenuItem(TVI_INFO* pItemData);
+static TVI_INFO* GetWindowMenuItemData(UINT commandId);
 
 static void EnablePopupMenuItem(HMENU hSubMenu, UINT uIDM, BOOL fEnabled);
 
@@ -177,13 +219,28 @@ static int HandleNetworkDatagramEvents(WPARAM wParam, LPARAM lParam);
 
 static BOOL ProcessExists(LPCTSTR szName);
 
+/**
+ * Retrieves a handle to the main application window.
+ * Used by Javacall library for sending messages.
+ *
+ * @return handle to the main application window
+ */
 extern "C" HWND midpGetWindowHandle() {
     return g_hMainWindow;
 }
 
-// needed by javacall / annuciator.c
+/**
+ * Needed by javacall / annuciator.c
+ *
+ * @param screenWidth  not used 
+ * @param screenHeight not used
+ *
+ * @return always NULL
+ */
 extern "C" javacall_pixel*
 getTopbarBuffer(int* screenWidth, int* screenHeight) {
+    (void)screenWidth;
+    (void)screenHeight;
     return NULL;
 }
 
@@ -335,7 +392,7 @@ int main(int argc, char* argv[]) {
         return 1;
     }
     // Let native peer to start
-    // TODO: wait for notification from the peer instead of sleep
+    // IMPL_NOTE: need to wait for notification from the peer instead of sleep
     Sleep(1000);
     
     // Initialize Java AMS
@@ -415,7 +472,7 @@ int main(int argc, char* argv[]) {
 /**
  * Creates a toolbar.
  *
- * @param hWndParent handle of the tollbar parent window
+ * @param hWndParent handle to parent window of the toolbar
  *
  * @return handle of the created toolbar window if succeeded, NULL otherwise
  */
@@ -473,46 +530,13 @@ static HWND CreateMainToolbar(HWND hWndParent) {
         return NULL;
     }
 
-    // Send the TB_BUTTONSTRUCTSIZE message, which is required for 
-    // backward compatibility. 
-    //SendMessage(hWndToolbar, TB_BUTTONSTRUCTSIZE, (WPARAM) sizeof(TBBUTTON), 0);
-
-    //SendMessage(hWndToolbar, TB_SETBITMAPSIZE, 0,
-    //            (LPARAM)MAKELONG(TB_BUTTON_WIDTH, TB_BUTTON_WIDTH));
-
-/*
-    TBADDBITMAP toolbarImg;
-
-    toolbarImg.hInst = g_hInstance;
-    toolbarImg.nID = IDB_MAIN_TOOLBAR_BUTTONS;
-
-    BOOL ok = SendMessage(hWndToolbar, TB_ADDBITMAP, 1,
-                          (LPARAM)(LPTBADDBITMAP)&toolbarImg);
-    if (!ok) {
-        wprintf(_T("ERROR: Can't add a bitmap! Error = %d\n"), GetLastError());
-    }
-
-    TBBUTTON pButtons[2];
-
-    pButtons[0].iBitmap = 0;
-    pButtons[0].idCommand = IDM_HELP_ABOUT;
-    pButtons[0].fsState = TBSTATE_ENABLED;
-    pButtons[0].fsStyle = TBSTYLE_BUTTON | TBSTYLE_AUTOSIZE;
-    pButtons[0].dwData = 0;
-    pButtons[0].iString = -1;
-
-//    ok = SendMessage(hWndToolbar, TB_ADDBUTTONS, 1, (LPARAM)(LPTBBUTTON)pButtons);
-    if (!ok) {
-        wprintf(_T("ERROR: Can't add buttons! Error = %d\n"), GetLastError());
-    }*/
-
     return hWndToolbar;
 }
 
 /**
  * Creates the main window.
  *
- * @return handle of the created window if succeeded, NULL if failed
+ * @return handle to the created window if succeeded, NULL if failed
  */
 static HWND CreateMainView() {
     HWND hWnd;
@@ -659,7 +683,7 @@ static void CleanupWindows() {
 /**
  * Frees resources allocated for tree nodes.
  *
- * @param hwndTV window handle of the tree view control
+ * @param hwndTV window handle to the tree view control
  * @param DefWndProc the original window procedure of the tree view control
  */
 static void CleanupTreeView(HWND hwndTV, WNDPROC DefWndProc) {
@@ -676,9 +700,9 @@ static void CleanupTreeView(HWND hwndTV, WNDPROC DefWndProc) {
 /**
  * Frees resources allocated for tree nodes.
  *
- * @param hWndParent handle of the parent window for the tree view control
+ * @param hWndParent handle to the parent window of the tree view control
  *
- * @return handle of the new window if succeeded, NULL if failed
+ * @return handle to the new window if succeeded, NULL if failed
  */
 static HWND CreateMidletTreeView(HWND hWndParent) {
     RECT rcClient;  // dimensions of client area 
@@ -734,7 +758,12 @@ static HWND CreateMidletTreeView(HWND hWndParent) {
 }
 
 /**
+ * Sets up an image list for the tree view control.
  *
+ * @param hwndTV handle of the tree view control
+ * @param uResourceIds identifiers of the resources with the images to be used
+ *                     for the image list
+ * @param uResourceNum number of entries in uResourceIds array  
  */
 static void SetImageList(HWND hwndTV, UINT* uResourceIds, UINT uResourceNum) {
 
@@ -771,7 +800,12 @@ static void SetImageList(HWND hwndTV, UINT* uResourceIds, UINT uResourceNum) {
 }
 
 /**
+ * Shows or hides the tree view control holding all information about
+ * the folders, midlet suites and midlets belonging to each suite.
  *
+ * @param hWnd handle to the window to show instead of the tree view,
+ *             or to hide if the tree view is shown
+ * @param fShow TRUE to show the tree view, FALSE - to hide it
  */
 static void ShowMidletTreeView(HWND hWnd, BOOL fShow) {
     if (fShow) {
@@ -808,7 +842,16 @@ static void ShowMidletTreeView(HWND hWnd, BOOL fShow) {
 }
 
 /**
+ * Creates a new dialog box showing the information about the item selected
+ * in the main tree view control.
  *
+ * @param hWndParent handle to the parent window of the new dialog box
+ * @param wDialogIDD identifier of the resource describing the dialog
+ *                   box being created
+ * @param wViewIDC ID of the control representing the main view of the dialog
+ * @param ViewWndProc dialog procedure to be set for the created dialog
+ *
+ * @return handle to the new dialog box if succeeded, NULL if failed
  */
 static HWND CreateTreeDialog(HWND hWndParent, WORD wDialogIDD, WORD wViewIDC,
         WNDPROC ViewWndProc) {
@@ -890,7 +933,7 @@ static HWND CreateTreeDialog(HWND hWndParent, WORD wDialogIDD, WORD wViewIDC,
             rcClient.bottom;
 
         SetWindowPos(hView,
-                     0, // ignored by means of SWP_NOZORDER
+                     0,    // ignored by means of SWP_NOZORDER
                      0, 0, // x, y
                      rcClient.right, nInfoHeight, // w, h
                      SWP_NOZORDER | SWP_NOOWNERZORDER |
@@ -916,7 +959,15 @@ static HWND CreateTreeDialog(HWND hWndParent, WORD wDialogIDD, WORD wViewIDC,
 }
 
 /**
+ * Dialog procedure for the tree view control.
  *
+ * hwndDlg [in] handle to the dialog box
+ * uMsg    [in] specifies the message number
+ * wParam  [in] specifies additional message-specific information
+ * lParam  [in] specifies additional message-specific information
+ *
+ * @return the return value specifies the result of the message processing
+ *         and depends on the message sent
  */
 INT_PTR CALLBACK
 TreeDlgProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam) {
@@ -970,7 +1021,11 @@ TreeDlgProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 }
 
 /**
+ * Creates an installation dialog box.
  *
+ * @param hWndParent handle to the parent window of the dialog box
+ *
+ * @return handle to the new dialog box if succeeded, NULL if failed
  */
 static HWND CreateInstallDialog(HWND hWndParent) {
     HWND hDlg, hCombobox, hBtnYes, hBtnNo, hBtnFile, hBtnFolder;
@@ -1041,8 +1096,10 @@ static HWND CreateInstallDialog(HWND hWndParent) {
         PrintWindowSize(hBtnNo, _T("Cancel button"));
     }
 
-    // TODO: implement dynamic positioning and resize for the rest controls of
-    // the dialog.
+    /*
+     * IMPL_NOTE: dynamic positioning and resizing for the rest controls of
+     *            the dialog should be implemented.
+     */
 
     // Fill the folders combobox with existing folders
     hCombobox = GetDlgItem(hDlg, IDC_COMBO_FOLDER);
@@ -1081,7 +1138,13 @@ static HWND CreateInstallDialog(HWND hWndParent) {
 }
 
 /**
+ * Adds a new item into the given combobox control.
  *
+ * @param hcbWnd handle to the combobox window
+ * @param pcszLabel text to show for the new item
+ * @param jFolderId folder ID that will be associated with the new item
+ *
+ * @return TRUE if succeeded, FALSE otherwise
  */
 static BOOL AddComboboxItem(HWND hcbWnd, LPCTSTR pcszLabel,
                             javacall_folder_id jFolderId) {
@@ -1100,7 +1163,15 @@ static BOOL AddComboboxItem(HWND hcbWnd, LPCTSTR pcszLabel,
 }
 
 /**
+ * Dialog procedure for the installation dialog.
  *
+ * hwndDlg [in] handle to the dialog box
+ * uMsg    [in] specifies the message number
+ * wParam  [in] specifies additional message-specific information
+ * lParam  [in] specifies additional message-specific information
+ *
+ * @return the return value specifies the result of the message processing
+ *         and depends on the message sent
  */
 INT_PTR CALLBACK
 InstallDlgProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam) {
@@ -1270,7 +1341,9 @@ InstallDlgProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 }
 
 /**
+ * Creates and initializes a new TVI_INFO structure.
  *
+ * @return pointer to the created structure if succeeded, NULL if failed
  */
 TVI_INFO* CreateTviInfo() {
     TVI_INFO* pInfo = (TVI_INFO*)javacall_malloc(sizeof(TVI_INFO));
@@ -1291,7 +1364,9 @@ TVI_INFO* CreateTviInfo() {
 }
 
 /**
+ * Frees the memory allocated for the given TVI_INFO structure.
  *
+ * @param pointer to the structure to free
  */
 void FreeTviInfo(TVI_INFO* pInfo) {
     if (pInfo) {
@@ -1308,7 +1383,11 @@ void FreeTviInfo(TVI_INFO* pInfo) {
 }
 
 /**
+ * Adds a new item representing a midlet suite into the tree view control.
  *
+ * @param hwndTV handle to the tree view control
+ * @param suiteId ID of the suite to add
+ * @param nLevel nesting level of the tree item to add
  */
 static void AddSuiteToTree(HWND hwndTV, javacall_suite_id suiteId, int nLevel) {
     javacall_result res;
@@ -1321,7 +1400,7 @@ static void AddSuiteToTree(HWND hwndTV, javacall_suite_id suiteId, int nLevel) {
 
     res = javanotify_ams_suite_get_info(suiteId, &pSuiteInfo);
     if (res == JAVACALL_OK) {
-            // TODO: add support for disabled suites
+            // IMPL_NOTE: support for disabled suites should be added
             // javacall_bool enabled = suiteInfo[s].isEnabled;
 
             jsLabel = (pSuiteInfo->displayName != NULL) ?
@@ -1404,7 +1483,12 @@ static void AddSuiteToTree(HWND hwndTV, javacall_suite_id suiteId, int nLevel) {
 }
                                                        
 /**
+ * Initializes the given tree view control with the list of existing folders,
+ * the installed midlet suites and the midlets belonging to each suite. 
  *
+ * @param hwndTV handle to the tree view control to initialize
+ *
+ * @return TRUE if succeeded, FALSE if failed 
  */
 static BOOL InitMidletTreeViewItems(HWND hwndTV)  {
     javacall_suite_id* pSuiteIds;
@@ -1424,7 +1508,7 @@ static BOOL InitMidletTreeViewItems(HWND hwndTV)  {
     wprintf(_T("Total suites found: %d\n"), suiteNum);
 
 
-    /* Add folder and all their content */
+    /* Add folders and all their content */
 
     res = javanotify_ams_suite_get_all_folders_info(&pFoldersInfo, &folderNum);
     if (res == JAVACALL_OK) {
@@ -1491,7 +1575,11 @@ static BOOL InitMidletTreeViewItems(HWND hwndTV)  {
 }
 
 /**
+ * Converts the given Javacall string to the TSTR string. 
  *
+ * @param str string to convert
+ *
+ * @return the converted string if succeeded, NULL if failed
  */
 static LPTSTR JavacallUtf16ToTstr(javacall_const_utf16_string str) {
     LPTSTR result = NULL;
@@ -1510,7 +1598,11 @@ static LPTSTR JavacallUtf16ToTstr(javacall_const_utf16_string str) {
 }
 
 /**
+ * Makes a copy of the given string.
  *
+ * @param str string to clone
+ *
+ * @return a new copy of the given string if succeeded, NULL if failed
  */
 static javacall_utf16_string
 CloneJavacallUtf16(javacall_const_utf16_string str) {
@@ -1526,7 +1618,15 @@ CloneJavacallUtf16(javacall_const_utf16_string str) {
 }
 
 /**
+ * Adds a new item into the tree view control.
  *
+ * @param hwndTV handle to the tree view control into which an item
+ *               should be added
+ * @param lpszItem text to be displayed for the new item
+ * @param nLevel nesting level of the new item
+ * @param pInfo data that will be associated with the new item
+ *
+ * @return handle to the newly added item if succeeded, NULL if failed
  */
 HTREEITEM AddTreeItem(HWND hwndTV, LPTSTR lpszItem,
                       int nLevel, TVI_INFO* pInfo) {
@@ -1557,32 +1657,33 @@ HTREEITEM AddTreeItem(HWND hwndTV, LPTSTR lpszItem,
     
     if (pInfo != NULL) {
         switch (pInfo->type) {
-        case TVI_TYPE_MIDLET:
-            // a midlet's icon by default
-            tvi.iImage = tvi.iSelectedImage =
-                (int) ((rand() / (double)RAND_MAX) * 4);
-            break;
+            case TVI_TYPE_MIDLET:
+                // a midlet's icon by default
+                tvi.iImage = tvi.iSelectedImage =
+                    (int) ((rand() / (double)RAND_MAX) * 4);
+                break;
 
-        case TVI_TYPE_SUITE:
-            tvi.iImage = tvi.iSelectedImage = 4;
-            break;
+            case TVI_TYPE_SUITE:
+                tvi.iImage = tvi.iSelectedImage = 4;
+                break;
 
-        case TVI_TYPE_FOLDER:
-            tvi.iImage = tvi.iSelectedImage = 5;
-            break;
+            case TVI_TYPE_FOLDER:
+                tvi.iImage = tvi.iSelectedImage = 5;
+                break;
 
-        case TVI_TYPE_PERMISSION: {
-            int idx = PermissionValueToIndex(pInfo->permValue);
-            if ((idx >= 0) && (idx < PERMISSION_VAL_NUM)) {
-                tvi.iImage = tvi.iSelectedImage = idx;
+            case TVI_TYPE_PERMISSION: {
+                int idx = PermissionValueToIndex(pInfo->permValue);
+                if ((idx >= 0) && (idx < PERMISSION_VAL_NUM)) {
+                    tvi.iImage = tvi.iSelectedImage = idx;
+                }
+                break;
             }
-            break;
-        }
 
-        default:
-            tvi.mask &= ~TVIF_IMAGE;
-            tvi.mask &= ~TVIF_SELECTEDIMAGE;
-            break;
+            default: {
+                tvi.mask &= ~TVIF_IMAGE;
+                tvi.mask &= ~TVIF_SELECTEDIMAGE;
+                break;
+            }
         }
     }
 
@@ -1615,6 +1716,17 @@ HTREEITEM AddTreeItem(HWND hwndTV, LPTSTR lpszItem,
 /**
  *  Processes messages for the main window.
  *
+ * @param hWnd    [in] handle to the window procedure that received the message
+ * @param message [in] specifies the message
+ * @param wParam  [in] specifies additional message information; the content of
+ *                     this parameter depends on the value of the
+ *                     <code>message</code> parameter.
+ * @param lParam  [in] specifies additional message information; the content of
+ *                     this parameter depends on the value of the
+ *                     <code>message</code> parameter.
+ *
+ * @return the result of the message processing and depends on the message;
+ *         if <code>message</code> is <code>WM_SETTEXT</code>, zero is returned.
  */
 LRESULT CALLBACK
 MainWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
@@ -1672,7 +1784,10 @@ MainWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
             case IDM_SUITE_EXIT: {
                 (void)javanotify_ams_system_stop();
 
-                // TODO: wait for notification from the SJWC thread instead of sleep
+                /*
+                 * IMPL_NOTE: need to wait for notification from the Java thread
+                 *            instead of sleep
+                 */
                 Sleep(1000);
 
                 ShowMidletTreeView(NULL, FALSE);
@@ -1694,7 +1809,7 @@ MainWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
                         wCmd < IDM_WINDOW_LAST_ITEM) {
                     // This is a command from "Window" menu, so
                     // we are switching to the selected window.
-                    TVI_INFO* pInfo = (TVI_INFO*)GetWindowMenuItemData(wCmd);
+                    TVI_INFO* pInfo = GetWindowMenuItemData(wCmd);
                     if (pInfo != NULL) {
                         javacall_result res =
                             javanotify_ams_midlet_switch_foreground(
@@ -1833,7 +1948,10 @@ MainWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
 }
 
 /**
+ * Draws the background image.
  *
+ * @param dc device context where to draw
+ * @param dwRop raster operation to use when drawing
  */
 void DrawBackground(HDC hdc, DWORD dwRop) {
     if (g_hMidletTreeBgBmp != NULL) {
@@ -1844,7 +1962,8 @@ void DrawBackground(HDC hdc, DWORD dwRop) {
         BITMAP bm;
         GetObject(g_hMidletTreeBgBmp, sizeof(bm), &bm);
  
-        //wprintf(_T(">>> bm.bmWidth = %d, bm.bmHeight = %d\n"), bm.bmWidth, bm.bmHeight);
+        // wprintf(_T(">>> bm.bmWidth = %d, bm.bmHeight = %d\n"),
+        //         bm.bmWidth, bm.bmHeight);
         BitBlt(hdc, 0, 0, bm.bmWidth, bm.bmHeight, hdcMem, 0, 0, dwRop);
  
         SelectObject(hdcMem, hbmOld);
@@ -1853,9 +1972,18 @@ void DrawBackground(HDC hdc, DWORD dwRop) {
 }
 
 /**
+ * Draws a tree view control together with a background.
  *
+ * @param hWnd handle to the tree view control to draw
+ * @param uMsg original message (WM_PAINT) to be passed to the default window
+ *             procedure of the tree view
+ * @param wParam original value of wParam to be passed to the default window
+ *               procedure of the tree view
+ * @param lParam original value of lParam to be passed to the default window
+ *               procedure of the tree view
  */
-void PaintTreeWithBg(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
+void
+PaintTreeWithBg(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
     RECT r;
     HDC hdc;
    
@@ -1881,7 +2009,11 @@ void PaintTreeWithBg(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 
 
 /**
+ * Enables or disables a menu item given its command ID and the submenu handle.
  *
+ * @param hSubMenu handle to the submenu containing the item
+ * @param uIDM command ID of the menu item to enable or disable
+ * @param fEnabled TRUE to enable the menu item, FALSE - to disable it
  */
 static void EnablePopupMenuItem(HMENU hSubMenu, UINT uIDM, BOOL fEnabled) {
     MENUITEMINFO mii;
@@ -1894,7 +2026,10 @@ static void EnablePopupMenuItem(HMENU hSubMenu, UINT uIDM, BOOL fEnabled) {
 }
 
 /**
+ * Sets or removes a check mark for the given Windows menu item.
  *
+ * @param index index of the menu item to mark
+ * @param fChecked TRUE to set a check mark, FALSE - to remove it
  */
 static void CheckWindowMenuItem(int index, BOOL fChecked) {
     HMENU hWindowSubmenu = GetSubMenu(GetMenu(g_hMainWindow),
@@ -1913,9 +2048,11 @@ static void CheckWindowMenuItem(int index, BOOL fChecked) {
 }
 
 /**
+ * Sets a check mark in the Window submenu for the given tree item.
  *
+ * @param pItemData pointer to a tree item defining the menu item to mark
  */
-static void SetCheckedWindowMenuItem(void* pItemData) {
+static void SetCheckedWindowMenuItem(TVI_INFO* pItemData) {
     HMENU hWindowSubmenu = GetSubMenu(GetMenu(g_hMainWindow),
                                       WINDOW_SUBMENU_INDEX);
     int numberOfItems = GetMenuItemCount(hWindowSubmenu);
@@ -1938,9 +2075,15 @@ static void SetCheckedWindowMenuItem(void* pItemData) {
 }
 
 /**
+ * Retrieves the item data belonging to the Windows submenu item
+ * having the given command ID.
  *
+ * @param commandId ID of the Windows submenu item
+ *
+ * @return menu item data or NULL if the menu item with the given commandId
+ *         was not found
  */
-static void* GetWindowMenuItemData(UINT commandId) {
+static TVI_INFO* GetWindowMenuItemData(UINT commandId) {
     HMENU hWindowSubmenu = GetSubMenu(GetMenu(g_hMainWindow),
                                       WINDOW_SUBMENU_INDEX);
     int numberOfItems = GetMenuItemCount(hWindowSubmenu);
@@ -1961,10 +2104,13 @@ static void* GetWindowMenuItemData(UINT commandId) {
 }
 
 /**
+ * Adds a new item into the Windows submenu.
  *
+ * @param jsStr name of the started midlet
+ * @param pItemData item data to add
  */
 static void AddWindowMenuItem(javacall_const_utf16_string jsStr,
-                              void* pItemData) {
+                              TVI_INFO* pItemData) {
     LPTSTR pszMIDletName = JavacallUtf16ToTstr(jsStr);
                     
     HMENU hWindowSubmenu = GetSubMenu(GetMenu(g_hMainWindow),
@@ -1998,16 +2144,20 @@ static void AddWindowMenuItem(javacall_const_utf16_string jsStr,
 }
 
 /**
+ * Removes an item from the Windows submenu.
  *
+ * @param appId ID of the terminated application defining the item to remove
+ *
+ * @return data associated with the removed menu item
  */
-void* RemoveWindowMenuItem(javacall_app_id appId) {
+static TVI_INFO* RemoveWindowMenuItem(javacall_app_id appId) {
     TVI_INFO* pInfo = NULL;
     UINT uItem = IDM_WINDOW_FIRST_ITEM + 1; // First item is AppManager
     HMENU hWindowSubmenu = GetSubMenu(GetMenu(g_hMainWindow),
                                       WINDOW_SUBMENU_INDEX);
 
     while (uItem < IDM_WINDOW_LAST_ITEM) {
-        pInfo = (TVI_INFO*)GetWindowMenuItemData(uItem);
+        pInfo = GetWindowMenuItemData(uItem);
         if (pInfo == NULL) {
             uItem++;
             continue;
@@ -2019,11 +2169,16 @@ void* RemoveWindowMenuItem(javacall_app_id appId) {
         uItem++;
     }
 
-    return (void*)pInfo;
+    return pInfo;
 }
 
 /**
+ * Retrieves the data associated with the given tree view item.
  *
+ * @param hWnd  handle to the tree view control
+ * @param hItem handle to the tree item whose info is being retrieved
+ *
+ * @return data associated with the given item if succeeded, NULL if failed
  */
 TVI_INFO* GetTviInfo(HWND hWnd, HTREEITEM hItem) {
     TVITEM tvi;
@@ -2037,14 +2192,16 @@ TVI_INFO* GetTviInfo(HWND hWnd, HTREEITEM hItem) {
 }
 
 /**
+ * Handles notification that a midlet has just terminated.
  *
+ * @param appID application ID of the terminated midlet
  */
 void MIDletTerminated(javacall_app_id appId) {
     TVI_INFO* pInfo;
 
     // Installer is handled in special way (see CloseInstallerDlg function)
     if (appId != g_jInstallerId) {
-        pInfo = (TVI_INFO*)RemoveWindowMenuItem(appId);
+        pInfo = RemoveWindowMenuItem(appId);
         if (pInfo) {
             pInfo->appId = JAVACALL_INVALID_APP_ID;
         }
@@ -2057,14 +2214,16 @@ void MIDletTerminated(javacall_app_id appId) {
 }
 
 /**
+ * Closes the installation dialog.
  *
+ * @param hwndDlg handle
  */
 void CloseInstallerDlg(HWND hwndDlg) {
     TVI_INFO* pInfo;
 
     // Remove the item from "Windows" menu
     if (g_jInstallerId != JAVACALL_INVALID_APP_ID) {
-        pInfo = (TVI_INFO*)RemoveWindowMenuItem(g_jInstallerId);
+        pInfo = RemoveWindowMenuItem(g_jInstallerId);
         if (pInfo) {
             FreeTviInfo(pInfo);
         }
@@ -2076,7 +2235,14 @@ void CloseInstallerDlg(HWND hwndDlg) {
 }
 
 /**
+ * Starts a midlet defined by the currently selected item of the given tree
+ * view control.
  *
+ * @param hTreeWnd handle to the tree view control displaying the folders,
+ *                 suites and midlets
+ *
+ * @return TRUE if the midlet was successefully started or brought to
+ *         foreground, FALSE otherwise
  */
 static BOOL StartMidlet(HWND hTreeWnd) {
     javacall_result res;
@@ -2116,8 +2282,8 @@ static BOOL StartMidlet(HWND hTreeWnd) {
 
                     return TRUE;
                 }
-            // Bring the running MIDlet to the foreground
             } else {
+                // Bring the running MIDlet to the foreground
                 res = javanotify_ams_midlet_switch_foreground(pInfo->appId);
 
                 if (res == JAVACALL_OK) {
@@ -2127,6 +2293,7 @@ static BOOL StartMidlet(HWND hTreeWnd) {
                     g_fDrawBuffer = TRUE;
 
                     SetCheckedWindowMenuItem(pInfo);
+                    return TRUE;
                 }
             }
         }
@@ -2136,7 +2303,12 @@ static BOOL StartMidlet(HWND hTreeWnd) {
 }
 
 /**
+ * Helper function for mouse events.
  *
+ * @param hWnd handle to the window that received a mouse event
+ * @param lParam lParam passed to the window procedure handling the mouse event
+ *
+ * @return the tree item that was clicked or NULL if there is no such item 
  */
 HTREEITEM HitTest(HWND hWnd, LPARAM lParam) {
     TV_HITTESTINFO tvH;
@@ -2145,12 +2317,11 @@ HTREEITEM HitTest(HWND hWnd, LPARAM lParam) {
     tvH.pt.x = LOWORD(lParam);
     tvH.pt.y = HIWORD(lParam);
 
-//    wprintf (_T("Click position (%d, %d)\n"), tvH.pt.x, tvH.pt.y);
+    // wprintf (_T("Click position (%d, %d)\n"), tvH.pt.x, tvH.pt.y);
 
     hItem = TreeView_HitTest(hWnd, &tvH);
-    if (hItem && (tvH.flags & TVHT_ONITEM))
-    {
-//        wprintf (_T("Hit flags hex=%x\n"), tvH.flags);
+    if (hItem && (tvH.flags & TVHT_ONITEM)) {
+        // wprintf (_T("Hit flags hex=%x\n"), tvH.flags);
         return hItem;
     }
 
@@ -2160,6 +2331,17 @@ HTREEITEM HitTest(HWND hWnd, LPARAM lParam) {
 /**
  *  Processes messages for the MIDlet tree window.
  *
+ * @param hWnd    [in] handle to the window procedure that received the message
+ * @param message [in] specifies the message
+ * @param wParam  [in] specifies additional message information; the content of
+ *                     this parameter depends on the value of the
+ *                     <code>message</code> parameter.
+ * @param lParam  [in] specifies additional message information; the content of
+ *                     this parameter depends on the value of the
+ *                     <code>message</code> parameter.
+ *
+ * @return the result of the message processing and depends on the message;
+ *         if <code>message</code> is <code>WM_SETTEXT</code>, zero is returned.
  */
 LRESULT CALLBACK
 MidletTreeWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
@@ -2470,6 +2652,17 @@ MidletTreeWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
 /**
  *  Processes messages for the MIDlet information window.
  *
+ * @param hWnd    [in] handle to the window procedure that received the message
+ * @param message [in] specifies the message
+ * @param wParam  [in] specifies additional message information; the content of
+ *                     this parameter depends on the value of the
+ *                     <code>message</code> parameter.
+ * @param lParam  [in] specifies additional message information; the content of
+ *                     this parameter depends on the value of the
+ *                     <code>message</code> parameter.
+ *
+ * @return the result of the message processing and depends on the message;
+ *         if <code>message</code> is <code>WM_SETTEXT</code>, zero is returned.
  */
 LRESULT CALLBACK
 InfoWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
@@ -2678,7 +2871,7 @@ InfoWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
  * Places the given window in the center of its parent window, or
  * in the center of the desktop if it has no parent.
  *
- * @param hDlg handle of the window to center
+ * @param hDlg handle to the window that must be centered
  */
 static void CenterWindow(HWND hDlg) {
     HWND hwndOwner;
@@ -2781,6 +2974,7 @@ static int mapKey(WPARAM wParam, LPARAM lParam) {
 /**
  * Utility function to request logical screen to be painted
  * to the physical screen.
+ *
  * @param x1 top-left x coordinate of the area to refresh
  * @param y1 top-left y coordinate of the area to refresh
  * @param x2 bottom-right x coordinate of the area to refresh
@@ -2871,17 +3065,23 @@ static void DrawBuffer(HDC hdc) {
 
 /**
  * Forces screen update.
+ *
+ * @param x1 left coordinate of the rectangle to update
+ * @param y1 top coordinate of the rectangle to update
+ * @param x2 right coordinate of the rectangle to update
+ * @param y2 bottom coordinate of the rectangle to update
  */
 void RefreshScreen(int x1, int y1, int x2, int y2) {
     InvalidateRect(g_hMainWindow, NULL, FALSE);
     UpdateWindow(g_hMainWindow);
 }
 
-
 /**
+ * Handles WM_NETWORK event for TCP sockets.
  *
- * @param wParam
- * @param lParam
+ * @param wParam Javacall socket handle
+ * @param lParam lParam given when sending WM_NETWORK message
+ *               (it is generated by WSAMAKESELECTREPLY())
  *
  * @return always 0
  */
@@ -2938,9 +3138,11 @@ static int HandleNetworkStreamEvents(WPARAM wParam, LPARAM lParam) {
 }
 
 /**
+ * Handles WM_NETWORK event for UDP sockets.
  *
- * @param wParam
- * @param lParam
+ * @param wParam Javacall socket handle 
+ * @param lParam lParam given when sending WM_NETWORK message
+ *               (it is generated by WSAMAKESELECTREPLY())
  *
  * @return always 0
  */

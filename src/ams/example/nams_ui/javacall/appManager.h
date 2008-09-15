@@ -35,25 +35,25 @@
 #include <javacall_defs.h>
 #include <javacall_ams_suitestore.h>
 
-//#ifdef __cplusplus
-//extern "C" {
-//#endif
-
+/** Width of the client area of the main window */
 #define MAIN_WINDOW_CHILD_AREA_WIDTH  240
+/** Height of the client area of the main window */
 #define MAIN_WINDOW_CHILD_AREA_HEIGHT 300
 
-
-// The string that appears in the application's title bar.
+/** The string that appears in the application's title bar */
 const TCHAR g_szTitle[] = _T("NAMS Example");
 
-// TODO: place all hPrev* fields in a structure and pass it as
-//  a parameter of AddSuiteToTree
+/*
+ * IMPL_NOTE: all hPrev* fields should be saved into a structure, and then it
+ *            should be passed as a parameter to AddSuiteToTree
+ */
 extern HTREEITEM hPrev;
 extern HTREEITEM hPrevLev1Item;
 extern HTREEITEM hPrevLev2Item;
 
-
-// The type of a tree item
+/**
+ * The type of a tree item.
+ */
 typedef enum {    
     TVI_TYPE_UNKNOWN,
     TVI_TYPE_SUITE,
@@ -63,6 +63,9 @@ typedef enum {
     TVI_TYPE_DIALOG
 } tvi_type;
 
+/**
+ * The type of data associated with a tree item.
+ */
 typedef struct _TVI_INFO {
     tvi_type type; // type of the node, valid values are TVI_TYPE_SUITE,
                    // TVI_TYPE_MIDLET, TVI_TYPE_FOLDER, TVI_TYPE_PERMISSION
@@ -97,25 +100,103 @@ typedef struct _TVI_INFO {
 
 } TVI_INFO;
 
+/**
+ * Creates and initializes a new TVI_INFO structure.
+ *
+ * @return pointer to the created structure if succeeded, NULL if failed
+ */
 TVI_INFO* CreateTviInfo();
+
+/**
+ * Frees the memory allocated for the given TVI_INFO structure.
+ *
+ * @param pointer to the structure to free
+ */
 void FreeTviInfo(TVI_INFO* pInfo);
+
+/**
+ * Retrieves the data associated with the given tree view item.
+ *
+ * @param hWnd  handle to the tree view control
+ * @param hItem handle to the tree item whose info is being retrieved
+ *
+ * @return data associated with the given item if succeeded, NULL if failed
+ */
 TVI_INFO* GetTviInfo(HWND hWnd, HTREEITEM hItem);
 
+/**
+ * Adds a new item into the tree view control.
+ *
+ * @param hwndTV handle to the tree view control into which an item
+ *               should be added
+ * @param lpszItem text to be displayed for the new item
+ * @param nLevel nesting level of the new item
+ * @param pInfo data that will be associated with the new item
+ *
+ * @return handle to the newly added item if succeeded, NULL if failed
+ */
 HTREEITEM AddTreeItem(HWND hwndTV, LPTSTR lpszItem,
                       int nLevel, TVI_INFO* pInfo);
+/**
+ * Helper function for mouse events.
+ *
+ * @param hWnd handle to the window that received a mouse event
+ * @param lParam lParam passed to the window procedure handling the mouse event
+ *
+ * @return the tree item that was clicked or NULL if there is no such item
+ */
 HTREEITEM HitTest(HWND hWnd, LPARAM lParam);
+
+/**
+ * Retrieves the default window procedure of the tree control.
+ *
+ * @return pointer to the default window procedure of the tree control
+ */
 WNDPROC GetDefTreeWndProc();
 
+/**
+ * Draws the background image.
+ *
+ * @param dc device context where to draw
+ * @param dwRop raster operation to use when drawing
+ */
 void DrawBackground(HDC hdc, DWORD dwRop);
+
+/**
+ * Draws a tree view control together with a background.
+ *
+ * @param hWnd handle to the tree view control to draw
+ * @param uMsg original message (WM_PAINT) to be passed to the default window
+ *             procedure of the tree view
+ * @param wParam original value of wParam to be passed to the default window
+ *               procedure of the tree view
+ * @param lParam original value of lParam to be passed to the default window
+ *               procedure of the tree view
+ */
 void PaintTreeWithBg(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
+
+/**
+ * Forces screen update.
+ *
+ * @param x1 left coordinate of the rectangle to update
+ * @param y1 top coordinate of the rectangle to update
+ * @param x2 right coordinate of the rectangle to update
+ * @param y2 bottom coordinate of the rectangle to update
+ */
 void RefreshScreen(int x1, int y1, int x2, int y2);
 
+/**
+ * Handles notification that a midlet has just terminated.
+ *
+ * @param appID application ID of the terminated midlet
+ */
 void MIDletTerminated(javacall_app_id appId);
 
+/**
+ * Closes the installation dialog.
+ *
+ * @param hwndDlg handle
+ */
 void CloseInstallerDlg(HWND hwndDlg);
-
-//#ifdef __cplusplus
-//}
-//#endif
 
 #endif  /* __APP_MANAGER_H */
