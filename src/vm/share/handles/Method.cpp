@@ -1040,11 +1040,19 @@ void Method::check_bytecodes(JVM_SINGLE_ARG_TRAPS) {
                 raw_hi = Bytes::swap_u4(raw_hi);
                 raw_lo = Bytes::swap_u4(raw_lo);
               }
+              // Note: need both comparisons to handle overflow
+              if (raw_lo > raw_hi || raw_hi - raw_lo < 0) {
+                goto error;
+              }
               fields = 3 + raw_hi - raw_lo + 1;
             } else {
               int raw_npairs = get_native_aligned_int(a_bci + wordSize);
               if (Bytes::is_Java_byte_ordering_different()) {
                 raw_npairs = Bytes::swap_u4(raw_npairs);
+              }
+              // Note: need both comparisons to handle overflow
+              if (raw_npairs < 0 || 2 * raw_npairs < 0) {
+                goto error;
               }
               fields = 2 + 2 * raw_npairs;
             }
