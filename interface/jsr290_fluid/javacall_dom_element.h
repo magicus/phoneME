@@ -657,15 +657,16 @@ javacall_dom_element_get_previous_element_sibling(javacall_handle handle,
                                                   /* OUT */ javacall_handle* ret_value);
 
 /** 
- * Deletes object representing this element
+ * Decrements ref counter of the native object specified number of times
  * 
- * @param handle Pointer to the object representing this element.
+ * @param handle Pointer to the object representing this node.
+ * @param count number of times to decrement.
  * 
  * @return JAVACALL_OK if all done successfuly,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
-javacall_dom_element_finalize(javacall_handle handle);
+javacall_dom_element_clear_references(javacall_handle handle, javacall_int32 count);
 
 
 /** @} */

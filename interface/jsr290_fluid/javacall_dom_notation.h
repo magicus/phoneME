@@ -90,15 +90,16 @@ javacall_dom_notation_get_system_id(javacall_handle handle,
                                     /* INOUT */ javacall_uint32* ret_value_len);
 
 /** 
- * Deletes object representing this notation
+ * Decrements ref counter of the native object specified number of times
  * 
- * @param handle Pointer to the object representing this notation.
+ * @param handle Pointer to the object representing this node.
+ * @param count number of times to decrement.
  * 
  * @return JAVACALL_OK if all done successfuly,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
-javacall_dom_notation_finalize(javacall_handle handle);
+javacall_dom_notation_clear_references(javacall_handle handle, javacall_int32 count);
 
 
 /** @} */

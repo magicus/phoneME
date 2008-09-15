@@ -120,15 +120,16 @@ javacall_dom_textevent_init_text_event_ns(javacall_handle handle,
                                           javacall_const_utf16_string data_arg);
 
 /** 
- * Deletes object representing this textevent
+ * Decrements ref counter of the native object specified number of times
  * 
- * @param handle Pointer to the object representing this textevent.
+ * @param handle Pointer to the object representing this node.
+ * @param count number of times to decrement.
  * 
  * @return JAVACALL_OK if all done successfuly,
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
-javacall_dom_textevent_finalize(javacall_handle handle);
+javacall_dom_textevent_clear_references(javacall_handle handle, javacall_int32 count);
 
 
 /** @} */
