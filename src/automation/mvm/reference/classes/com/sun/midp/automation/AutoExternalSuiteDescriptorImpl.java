@@ -30,7 +30,7 @@ import com.sun.midp.midletsuite.*;
 import java.util.*;
 
 /**
- *  AutoSuiteDescriptor implementation for external suite
+ *  AutoSuiteDescriptor interface implementation for external suite.
  */
 class AutoExternalSuiteDescriptorImpl
     extends AutoSuiteDescriptorImpl {

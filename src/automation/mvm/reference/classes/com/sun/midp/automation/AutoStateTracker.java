@@ -27,10 +27,10 @@
 package com.sun.midp.automation;
 
 /**
- * Utility class for tracking states
+ * Utility class for tracking states.
  */
 class AutoStateTracker {
-    /**
+    /*
      * Protected by 'this' lock
      */
     
@@ -44,7 +44,7 @@ class AutoStateTracker {
     private boolean interruptWait;
     
     
-    /**
+    /*
      * Protected by wakeWaitersLock
      */
 

@@ -30,7 +30,7 @@ import com.sun.midp.midletsuite.*;
 import com.sun.midp.main.*;
 
 /**
- *  AutoMIDletDescriptor implementation
+ *  AutoMIDletDescriptor interface implementation.
  */
 final class AutoMIDletDescriptorImpl implements AutoMIDletDescriptor {
     /** MIDlet info */

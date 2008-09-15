@@ -32,7 +32,7 @@ import java.util.*;
 import java.io.*;
 
 /**
- * AutoSuiteDescriptor implementation for internal suite
+ * AutoSuiteDescriptor interface implementation for internal suite.
  */
 final class AutoInternalSuiteDescriptorImpl
     extends AutoSuiteDescriptorImpl {

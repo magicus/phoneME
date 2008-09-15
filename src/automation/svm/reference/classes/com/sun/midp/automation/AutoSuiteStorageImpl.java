@@ -1,5 +1,5 @@
 /*
- *   
+ *
  *
  * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -24,12 +24,33 @@
  * information or have any questions.
  */
 
-
 package com.sun.midp.automation;
 
 /**
- * AutoSuiteStorage interface for SVM. It has no methods because SVM 
- * architecture limitations doesn't allow us to automate it.
+ * AutoSuiteStorage interface implementation.
  */
-public interface AutoSuiteStorage {
+final class AutoSuiteStorageImpl implements AutoSuiteStorage {
+    /** The one and only class instance */
+    private static AutoSuiteStorageImpl instance = null;
+
+
+    /**
+     * Private constructor: this class is singleton
+     */
+    private AutoSuiteStorageImpl() {
+    }
+
+
+    /**
+     * Gets class instance
+     *
+     * @return single AutoSuiteStorage instance
+     */
+    synchronized static AutoSuiteStorageImpl getInstance() {
+        if (instance == null) {
+            instance = new AutoSuiteStorageImpl();
+        }
+
+        return instance;
+    }
 }

@@ -34,7 +34,7 @@ import com.sun.midp.installer.*;
 import com.sun.midp.i18n.*;
 
 /**
- *  Base class for AutoSuiteDescriptor implementation
+ *  Base class for AutoSuiteDescriptor interface implementation.
  */
 abstract class AutoSuiteDescriptorImpl
     extends AutoSuiteDescriptor {

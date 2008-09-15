@@ -33,7 +33,7 @@ import com.sun.midp.installer.*;
 import com.sun.midp.configurator.Constants;
 
 /**
- * AutoSuiteStorage implementation
+ * AutoSuiteStorage interface implementation.
  */
 final class AutoSuiteStorageImpl implements AutoSuiteStorage {
     /** Suites storage */

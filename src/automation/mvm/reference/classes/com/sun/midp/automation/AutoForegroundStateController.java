@@ -30,7 +30,7 @@ import com.sun.midp.main.*;
 import com.sun.midp.events.*;
 
 /**
- * Class controlling foreground
+ * Class controlling foreground.
  */
 final class AutoForegroundStateController
     implements AutoDisplayControllerListener {

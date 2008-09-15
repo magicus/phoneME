@@ -30,7 +30,7 @@ import java.util.*;
 import com.sun.midp.main.*;
 
 /**
- * AutoMIDletInfo list
+ * AutoMIDletInfo list.
  */
 class AutoMIDletInfoList {
     /** Vector of AutoMIDletInfo objects */

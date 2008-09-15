@@ -33,7 +33,7 @@ import com.sun.midp.configurator.Constants;
 import com.sun.cldc.isolate.*;
 
 /**
- * Class controlling states of the MIDlets
+ * Class controlling states of the MIDlets.
  */
 final class AutoMIDletStateController
     implements MIDletProxyListListener {

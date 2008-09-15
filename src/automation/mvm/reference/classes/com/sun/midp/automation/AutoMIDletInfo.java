@@ -30,7 +30,7 @@ import com.sun.midp.main.*;
 import com.sun.cldc.isolate.*;
 
 /**
- * Some info associated with AutoMIDletImpl
+ * Some info associated with AutoMIDletImpl.
  */
 class AutoMIDletInfo {
     /** Suite ID */

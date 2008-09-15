@@ -27,7 +27,7 @@
 package com.sun.midp.automation;
 
 /**
- * AutoMIDlet interface implementation
+ * AutoMIDlet interface implementation.
  */
 final class AutoMIDletImpl implements AutoMIDlet {
     /** MIDlet descriptor for this MIDlet */
