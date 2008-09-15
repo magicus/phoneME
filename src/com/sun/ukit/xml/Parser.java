@@ -45,7 +45,7 @@ public abstract class Parser
 {
 	public final static String FAULT = "";
 	
-	private static String preprocessMsgText( String msg ) { return msg; }
+	private static String preprocessMsgText( String msg ) { return ""; }
 	private static final String FAULT_NO_OPENED_ELEMENT = preprocessMsgText("No open element");
 	private static final String FAULT_END_ELEMENT_TAG_MISMATCH = preprocessMsgText("End element tag mismatch");
 	private static final String FAULT_SYNTAX = preprocessMsgText("Syntax error");

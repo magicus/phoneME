@@ -80,9 +80,9 @@ public class ReaderUTF8 extends Reader
 				break;
 			bcnt += count;
 		}
-System.out.print("fillBuffer[" + bcnt + "]: ");		
-for( int o = bidx; o < bcnt; o++) System.out.print( (char)buff[o] );
-System.out.println();
+//System.out.print("fillBuffer[" + bcnt + "]: ");		
+//for( int o = bidx; o < bcnt; o++) System.out.print( (char)buff[o] );
+//System.out.println();
 	}
 
 	/**
@@ -101,7 +101,7 @@ System.out.println();
 		int num = 0;
 		while (num < len) {
 			if (bcnt - bidx < maxBytesInUTF8Character){
-System.out.println( "bcnt = " + bcnt + ", bidx = " + bidx + ", num = " + num );				
+//System.out.println( "bcnt = " + bcnt + ", bidx = " + bidx + ", num = " + num );				
 				if( bidx > bcnt )
 					break;
 				fillBuffer();
@@ -139,9 +139,9 @@ System.out.println( "bcnt = " + bcnt + ", bidx = " + bidx + ", num = " + num );
 			bidx = bcnt = 0;
 			throw new EOFException();
 		}
-System.out.print( "ReaderUTF8.read[" + num + "]:" );
-for( int o = off - num; o < off; o++) System.out.print( cbuf[o] );
-System.out.println();
+//System.out.print( "ReaderUTF8.read[" + num + "]:" );
+//for( int o = off - num; o < off; o++) System.out.print( cbuf[o] );
+//System.out.println();
 		return num;
 	}
 
@@ -186,7 +186,7 @@ System.out.println();
 			bidx = bcnt = 0;
 			throw new EOFException();
 		}
-System.out.println( "ReaderUTF8.read: " + (char)val );
+//System.out.println( "ReaderUTF8.read: " + (char)val );
 		return val;
 	}
 
