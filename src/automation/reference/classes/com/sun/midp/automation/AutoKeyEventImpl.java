@@ -29,56 +29,67 @@ import java.util.*;
 import com.sun.midp.events.*;
 import com.sun.midp.lcdui.EventConstants;
 
+/**
+ * Implements AutoKeyEvent interface.
+ */
 final class AutoKeyEventImpl 
     extends AutoEventImplBase implements AutoKeyEvent {
     
-    final static String CODE_ARG_NAME = "code";
-    final static String STATE_ARG_NAME = "state";
+    /** Constant for "code" argument name */
+    static final String CODE_ARG_NAME = "code";
 
+    /** Constant for "code" argument name */    
+    static final String STATE_ARG_NAME = "state";
+
+    /** Key code (null if key char is used instead) */
     private AutoKeyCode keyCode = null;
+
+    /** Key char (if key code is used, then the value is unspecified) */
     private char keyChar;
+
+    /** Key state */
     private AutoKeyState keyState = null;   
 
-    AutoKeyEventImpl(AutoKeyCode keyCode, AutoKeyState keyState) {
-        super(AutoEventType.KEY, 
-              createNativeEvent(keyState, keyCode, ' '));
 
-        if (keyCode == null) {
-            throw new IllegalArgumentException("Key code is null");
-        }
-        
-        if (keyState == null) {
-            throw new IllegalArgumentException("Key state is null");
-        }
-        
-        this.keyCode = keyCode;
-        this.keyState = keyState;        
-    }
-
-    AutoKeyEventImpl(char keyChar, AutoKeyState keyState) {
-        super(AutoEventType.KEY, 
-              createNativeEvent(keyState, null, keyChar));
-
-        if (keyState == null) {
-            throw new IllegalArgumentException("Key state is null");
-        }
-
-        this.keyChar = keyChar;
-        this.keyState = keyState;        
-    }    
-
+    /**
+     * Gets key state.
+     *
+     * @return AutoKeyState representing key state
+     */
     public AutoKeyState getKeyState() {
         return keyState;
     }  
 
+    /**
+     * Gets key code.
+     *
+     * @return AutoKeyCode representing key code if event has a key code, 
+     * or null, if event has key char instead
+     */
     public AutoKeyCode getKeyCode() {
         return keyCode;
     }
 
+
+    /**
+     * Gets key char.
+     *
+     * @return key char if event has it, or unspecified,
+     * if event has key code instead
+     */
     public char getKeyChar() {
         return keyChar;
     }
 
+
+    /**
+     * Gets string representation of event. The format is following:
+     *  key code: code_value, state: state_value
+     * where code_value and state_value are string representation 
+     * of key code (key char) and key state. For example:
+     *  key code: soft1, state: pressed
+     *  key code: a, state: pressed
+     */
     public String toString() {
         String typeStr = getType().getName();
         String stateStr = getKeyState().getName();
@@ -97,6 +108,54 @@ final class AutoKeyEventImpl
         return eventStr;
     }
 
+    /**
+     * Constructor. Creates key event with a key code.
+     *
+     * @param keyCode key code
+     * @param keyState key state
+     */
+    AutoKeyEventImpl(AutoKeyCode keyCode, AutoKeyState keyState) {
+        super(AutoEventType.KEY, 
+              createNativeEvent(keyState, keyCode, ' '));
+
+        if (keyCode == null) {
+            throw new IllegalArgumentException("Key code is null");
+        }
+        
+        if (keyState == null) {
+            throw new IllegalArgumentException("Key state is null");
+        }
+        
+        this.keyCode = keyCode;
+        this.keyState = keyState;        
+    }
+
+    /**
+     * Constructor. Creates key event with a key char.
+     *
+     * @param keyChar key char
+     * @param keyState key state
+     */
+    AutoKeyEventImpl(char keyChar, AutoKeyState keyState) {
+        super(AutoEventType.KEY, 
+              createNativeEvent(keyState, null, keyChar));
+
+        if (keyState == null) {
+            throw new IllegalArgumentException("Key state is null");
+        }
+
+        this.keyChar = keyChar;
+        this.keyState = keyState;        
+    }
+
+    /**
+     * Creates native event corresponding to this Automation event.
+     *
+     * @param keyState key state
+     * @param keyCode key code (null if key char is used)
+     * @param keyChar key char (ignored if key code is not null)
+     * @return native event corresponding to this Automation event 
+     */
     private static NativeEvent createNativeEvent(AutoKeyState keyState, 
             AutoKeyCode keyCode, char  keyChar) {
         NativeEvent nativeEvent = new NativeEvent(EventTypes.KEY_EVENT);

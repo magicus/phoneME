@@ -63,7 +63,7 @@ static struct KeyCodeNameToMIDPKeyCode {
 };
 
 KNIEXPORT KNI_RETURNTYPE_INT
-KNIDECL(com_sun_midp_automation_AutoKeyCode_getMIDPKeyCodeFromName) {
+KNIDECL(com_sun_midp_automation_AutoKeyCode_getMIDPKeyCodeForName) {
     int i;
     int sz = sizeof(keyCodeNameToMIDPKeyCode)/
         sizeof(struct KeyCodeNameToMIDPKeyCode);
@@ -86,7 +86,7 @@ KNIDECL(com_sun_midp_automation_AutoKeyCode_getMIDPKeyCodeFromName) {
 
     if (midpKeyCode == KEYMAP_KEY_INVALID) {
          REPORT_ERROR1(LC_CORE, 
-            "AutoKeyEventImpl_getMIDPKeyCodeFromName: unknown key code %s", 
+            "AutoKeyEventImpl_getMIDPKeyCodeForName: unknown key code %s", 
             keyCodeName);
     }
 

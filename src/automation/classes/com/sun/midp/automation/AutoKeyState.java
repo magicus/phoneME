@@ -28,35 +28,74 @@ package com.sun.midp.automation;
 import com.sun.midp.lcdui.EventConstants;
 import java.util.*;
 
+/**
+ * Represents key state.
+ */
 public final class AutoKeyState {
-    public final static AutoKeyState PRESSED = 
+    /**
+     * State: key pressed
+     */
+    public static final AutoKeyState PRESSED = 
         new AutoKeyState("pressed", EventConstants.PRESSED);
 
-    public final static AutoKeyState REPEATED = 
+    /**
+     * State: key repeated
+     */
+    public static final AutoKeyState REPEATED = 
         new AutoKeyState("repeated", EventConstants.REPEATED);
 
-    public final static AutoKeyState RELEASED = 
+    /**
+     * State: key released
+     */
+    public static final AutoKeyState RELEASED = 
         new AutoKeyState("released", EventConstants.RELEASED);
 
 
+    /** All states indexed by name */
     private static Hashtable keyStates; 
 
+    /** State name */
     private String name;
+
+    /** int value used for state by our MIDP implementation */
     private int midpKeyState;    
 
 
+    /**
+     * Gets state name.
+     *
+     * @return state name as string
+     */
     public String getName() {
         return name;
     }
 
+    /**
+     * Gets int value used for state by our MIDP implementation.
+     *
+     * @return int value used for state by our MIDP implementation
+     */
     int getMIDPKeyState() {
         return midpKeyState;
     }
 
+    /**
+     * Gets key state by name.
+     *
+     * @param name key state
+     * @return AutoKeyState representing state with specified name
+     */
     static AutoKeyState getByName(String name) {
         return (AutoKeyState)keyStates.get(name);
     }
 
+
+    /**
+     * Private constructor to prevent creation of class instances.
+     *
+     * @param name key state name
+     * @param midpKeyState int value used for state by our MIDP implementation
+     */
     private AutoKeyState(String name, int midpKeyState) {
         this.name = name;
         this.midpKeyState = midpKeyState;

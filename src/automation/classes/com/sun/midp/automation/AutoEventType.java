@@ -27,7 +27,7 @@
 package com.sun.midp.automation;
 
 /**
- * Represents event type
+ * Represents event type.
  */
 public final class AutoEventType {
     /**

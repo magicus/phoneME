@@ -27,6 +27,9 @@
 package com.sun.midp.automation;
 import java.util.*;
 
+/**
+ * Creates Delay event from string representation.
+ */
 class AutoDelayEventFromStringFactory 
     implements AutoEventFromStringFactory {
 

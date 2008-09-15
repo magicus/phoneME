@@ -28,34 +28,73 @@ package com.sun.midp.automation;
 import com.sun.midp.lcdui.EventConstants;
 import java.util.*;
 
+/**
+ * Represents pen state.
+ */
 public final class AutoPenState {
-    public final static AutoPenState PRESSED = 
+    /**
+     * State: pen tip down
+     */
+    public static final AutoPenState PRESSED = 
         new AutoPenState("pressed", EventConstants.PRESSED);
 
-    public final static AutoPenState REPEATED = 
+    /**
+     * State: pen tip dragged
+     */
+    public static final AutoPenState REPEATED = 
         new AutoPenState("dragged", EventConstants.DRAGGED);
 
-    public final static AutoPenState RELEASED = 
+    /**
+     * State: pen tip released
+     */
+    public static final AutoPenState RELEASED = 
         new AutoPenState("released", EventConstants.RELEASED);
 
 
-    private String name;    
-    private int midpPenState;
-    
+    /** All states indexed by name */
     private static Hashtable penStates;
 
+    /** State name */
+    private String name;
+
+    /** int value used for state by our MIDP implementation */
+    private int midpPenState;
+    
+
+    /**
+     * Gets state name.
+     *
+     * @return state name as string
+     */
     public String getName() {
         return name;
     }
 
+    /**
+     * Gets int value used for state by our MIDP implementation.
+     *
+     * @return int value used for state by our MIDP implementation
+     */
     int getMIDPPenState() {
         return midpPenState;
     }
 
+    /**
+     * Gets pen state by name.
+     *
+     * @param name pen state
+     * @return AutoPenState representing pen state with specified name
+     */
     static AutoPenState getByName(String name) {
         return (AutoPenState)penStates.get(name);
     }
 
+    /**
+     * Private constructor to prevent creation of class instances.
+     *
+     * @param name pen state name
+     * @param midpPenState int value used for state by our MIDP implementation
+     */
     private AutoPenState(String name, int midpPenState) {
         this.name = name;
         this.midpPenState = midpPenState;

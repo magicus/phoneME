@@ -26,10 +26,40 @@
 
 package com.sun.midp.automation;
 
+/**
+ * Represents key event.
+ */
 public interface AutoKeyEvent extends AutoEvent {
+    /**
+     * Gets key state.
+     *
+     * @return AutoKeyState representing key state
+     */
     public AutoKeyState getKeyState();
+
+    /**
+     * Gets key code.
+     *
+     * @return AutoKeyCode representing key code if event has a key code, 
+     * or null, if event has key char instead
+     */
     public AutoKeyCode  getKeyCode();
+
+    /**
+     * Gets key char.
+     *
+     * @return key char if event has it, or unspecified,
+     * if event has key code instead
+     */
     public char getKeyChar();
 
+    /**
+     * Gets string representation of event. The format is following:
+     *  key code: code_value, state: state_value
+     * where code_value and state_value are string representation 
+     * of key code (key char) and key state. For example:
+     *  key code: soft1, state: pressed
+     *  key code: a, state: pressed
+     */
     public String toString();
 }

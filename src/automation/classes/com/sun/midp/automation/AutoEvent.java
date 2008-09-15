@@ -34,7 +34,7 @@ public interface AutoEvent {
     /**
      * Gets event type.
      *
-     * @return event type
+     * @return AutoEventType representing event type
      */
     public AutoEventType getType();
 
