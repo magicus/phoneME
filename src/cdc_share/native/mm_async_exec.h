@@ -76,4 +76,4 @@ do { \
 #define PLAYER_DESCRIPTOR_EVENT_MASK    MAKE_PLAYER_DESCRIPTOR(-1, -1, JAVACALL_EVENT_MEDIA_JAVA_EVENTS_MARKER)
 
 
-#endif __mm_async_exec_H__
+#endif /* __mm_async_exec_H__ */
