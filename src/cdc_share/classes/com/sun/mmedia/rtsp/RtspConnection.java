@@ -21,35 +21,41 @@
  * Clara, CA 95054 or visit www.sun.com if you need additional
  * information or have any questions. 
  */
+
 package com.sun.mmedia.rtsp;
 
-import com.sun.mmedia.rtsp.protocol.Message;
+import com.sun.mmedia.rtsp.protocol.*;
+
+import java.io.*;
+import java.net.*;
 
 /**
- * The listener interface for incoming RTSP requests.
- *
- * @author     Marc Owerfeldt
- * @created    June 7, 2003
+ * The RtspConnection object encapsulates a TCP/IP connection to an RTSP Server.
  */
+public class RtspConnection extends RtspConnectionBase
+{
+    private Socket socket;
 
-public interface RtspListener {
-    /**
-     * Informs the application that an RTSP message has 
-     * been received from the RTSP server.
-     *
-     * @param  connectionId  The connection ID
-     * @param  message       The RTSP message
-     */
-    void rtspMessageIndication(int connectionId, Message message);
+    protected void openStreams( RtspUrl url ) throws IOException {
+        socket = new Socket( url.getHost(), url.getPort() );
+        is = socket.getInputStream();
+        os = socket.getOutputStream();
+    }
 
+    protected void closeStreams() {
+        is = null;
+        os = null;
+        if( null != socket ) {
+            try {
+                socket.close();
+            } catch( IOException e ) {
+                System.out.println( "*** Cannot close socket: " + e );
+            }
+            socket = null;
+        }
+    }
 
-    /**
-     * Informs the application that the connection to 
-     * the RTSP server has been terminated by the server.
-     *
-     * @param  connectionId  The connection ID
-     */
-    void rtspConnectionTerminated(int connectionId);
+    public RtspConnection( RtspUrl url ) throws IOException {
+        super( url );
+    }
 }
-
-

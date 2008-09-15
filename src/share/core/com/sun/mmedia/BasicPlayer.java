@@ -72,7 +72,7 @@ public abstract class BasicPlayer
     /**
      * the state of this player
      */
-    int state = UNREALIZED;
+    protected int state = UNREALIZED;
 
     /**
      * the loopCount of this player
