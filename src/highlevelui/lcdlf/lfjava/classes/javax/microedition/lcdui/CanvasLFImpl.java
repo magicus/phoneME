@@ -51,7 +51,8 @@ class CanvasLFImpl extends DisplayableLFImpl implements CanvasLF {
         if (currentDisplay != null) {
             isDisplayRotated = currentDisplay.wantRotation;
         }
-        addInputCommands();
+        //disabled for SDK's early access - not working yet.
+        //addInputCommands();
     }
 
     // ************************************************************
