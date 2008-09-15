@@ -100,5 +100,5 @@ $(JAVACALL_OUTPUT_LIB_DIR)/javacall$(BUILD_EXT).lib: \
 $(JAVACALL_OUTPUT_LIB_DIR)/notifiers$(BUILD_EXT).lib: \
     $(patsubst %,$(JAVACALL_OUTPUT_OBJ_DIR)/%,$(NOTIFIER_OBJECTS))
 	@echo "...Generating Library: $@"
-	$(AT)$(AR) `$(call fixcygpath, $@)` $(ARFLAGS) `$(call fixcygpath, $^)`
+	$(AT)$(AR) $(ARFLAGS) `$(call fixcygpath, $@)` `$(call fixcygpath, $^)`
 
