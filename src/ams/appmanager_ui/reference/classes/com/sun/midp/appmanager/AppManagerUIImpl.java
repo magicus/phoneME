@@ -320,7 +320,7 @@ class AppManagerUIImpl extends Form
     private MidletCustomItem mciToChangeFolder;
 
     /** running MIDlet selectors indexed by suite id */
-    private MIDletSelector[] midletSelectors;
+    private Hashtable midletSelectors;
     
     /** suite id of midlet exiting from AMS menu */
     int exitingMidletSuiteId;
@@ -352,7 +352,7 @@ class AppManagerUIImpl extends Form
 
         midletSuiteStorage = MIDletSuiteStorage.getMIDletSuiteStorage();
 
-        midletSelectors = new MIDletSelector[4];
+        midletSelectors = new Hashtable();
         exitingMidletSuiteId = 0;
         exitingMidletClassName = null;
 
@@ -498,13 +498,13 @@ class AppManagerUIImpl extends Form
     public void showMidletSelector(RunningMIDletSuiteInfo msiToRun) {
         if (msiToRun != null) {
             try {
-                MIDletSelector selector = getMidletSelector(msiToRun.suiteId);
+                MIDletSelector selector = getMidletSelector(msiToRun);
                 if (selector != null) {
                     selector.show();
                     return;
                 }
                 
-                setMIDletSelector(msiToRun.suiteId, new MIDletSelector(msiToRun, display, this, manager));
+                setMIDletSelector(msiToRun, new MIDletSelector(msiToRun, display, this, manager));
             } catch (Exception e) {
                 if (Logging.REPORT_LEVEL <= Logging.ERROR) {
                     Logging.report(Logging.ERROR, LogChannels.LC_AMS,
@@ -666,7 +666,7 @@ class AppManagerUIImpl extends Form
         if (msi == null) {
             return;
         }
-        MIDletSelector midletSelector = getMidletSelector(msi.suiteId);
+        MIDletSelector midletSelector = getMidletSelector(msi);
 
         if (c == launchInstallCmd) {
 
@@ -827,7 +827,7 @@ class AppManagerUIImpl extends Form
             MidletCustomItem ci = (MidletCustomItem)mciVector.elementAt(i);
 
             if (ci.msi == si) {
-                if (getMidletSelector(si.suiteId) == null) {
+                if (getMidletSelector(si) == null) {
                     modifySuiteCommands(ci, true);
                 }
                 // add item to midlet switcher
@@ -847,7 +847,7 @@ class AppManagerUIImpl extends Form
             MidletCustomItem ci = (MidletCustomItem)mciVector.elementAt(i);
 
             if (ci.msi == si) {
-                if (getMidletSelector(si.suiteId) != null) {
+                if (getMidletSelector(si) != null) {
                     modifySuiteCommands(ci, true);
                 }
                 return;
@@ -889,7 +889,7 @@ class AppManagerUIImpl extends Form
             MidletCustomItem ci = (MidletCustomItem)mciVector.elementAt(i);
 
             if (ci.msi == si) {
-                MIDletSelector selector = getMidletSelector(si.suiteId);
+                MIDletSelector selector = getMidletSelector(si);
 
                 if (selector == null) {
                     modifySuiteCommands(ci, false);
@@ -929,9 +929,9 @@ class AppManagerUIImpl extends Form
      * @param suiteInfo Suite which just exited
      */
     public void notifySuiteExited(RunningMIDletSuiteInfo suiteInfo) {
-        MIDletSelector selector = getMidletSelector(suiteInfo.suiteId);
+        MIDletSelector selector = getMidletSelector(suiteInfo);
         if (selector != null) {
-            removeMIDletSelector(suiteInfo.suiteId);
+            removeMIDletSelector(suiteInfo);
             for (int i = 0; i < mciVector.size(); i++) {
                 MidletCustomItem ci = (MidletCustomItem)mciVector.elementAt(i);
 
@@ -1152,45 +1152,24 @@ class AppManagerUIImpl extends Form
      * @param suiteId ID of the suite
      * @param selector Selector for the suite
      */
-    private void setMIDletSelector(int suiteId, MIDletSelector selector) {
-        if (suiteId < 0) {
-            return;
-        }
-        int length = midletSelectors.length;
-        int nextLength = length;
-        while (suiteId >= nextLength) {
-            nextLength = nextLength * 2;
-        }
-        if (nextLength != length) {
-            MIDletSelector[] newArray = new MIDletSelector[nextLength];
-            for (int i=0; i < length; i++) {
-                newArray[i] = midletSelectors[i];            
-            }
-            midletSelectors = newArray;
-        }
-        
-        midletSelectors[suiteId] = selector;
+    private void setMIDletSelector(RunningMIDletSuiteInfo info, MIDletSelector selector) {
+        midletSelectors.put(info, selector);
     }
 
     /**
      * Removes MIDlet selector of the given suite.
      * @param suiteId ID of the suite to remove selector
      */
-    private void removeMIDletSelector(int suiteId) {
-        if (suiteId >= 0 && suiteId < midletSelectors.length) {
-            midletSelectors[suiteId] = null;
-        }
+    private void removeMIDletSelector(RunningMIDletSuiteInfo info) {
+        midletSelectors.remove(info);
     }
 
     /**
      * Gets MIDlet selector for the given suite Id
      * @return MIDlet selector or null if it is not running
      */
-    private MIDletSelector getMidletSelector(int suiteId) {
-        if (suiteId >= 0 && suiteId < midletSelectors.length) {
-            return midletSelectors[suiteId];
-        }
-        return null;
+    private MIDletSelector getMidletSelector(RunningMIDletSuiteInfo info) {
+        return (MIDletSelector) midletSelectors.get(info);
     }
 
     /**
@@ -1579,7 +1558,7 @@ class AppManagerUIImpl extends Form
                 if (text != null && h >= ICON_FONT.getHeight()) {
 
                     int color;
-                    if (msi.proxy == null && getMidletSelector(msi.suiteId) == null) {
+                    if (msi.proxy == null && getMidletSelector(msi) == null) {
                         color = hasFocus ? ICON_HL_TEXT : ICON_TEXT;
                     } else {
                         color = hasFocus ?
