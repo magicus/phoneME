@@ -514,7 +514,7 @@ javacall_result nams_db_install_app(char* textLine, javacall_utf16_string jarNam
         javacall_print("[NAMS] Make DB home error!\n");
     }
 
-    java_ams_create_resource_cache(suiteID);
+    javanotify_ams_create_resource_cache(suiteID);
 
     installed_suite_count++;
 

@@ -29,6 +29,7 @@ extern "C" {
 #endif
 
 #include "javacall_defs.h"
+#include "javacall_ams_config.h"
 
 /*
  * Functions declared in this file are exported by the Suite Storage.
@@ -401,7 +402,7 @@ typedef struct _javacall_ams_suite_settings {
  *         <tt>JAVACALL_FAIL</tt> otherwise
  */
 javacall_result
-java_ams_suite_storage_init();
+JCDECL_SUITESTORE(suite_storage_init)();
 
 /**
  * Finalizes the SuiteStore subsystem.
@@ -410,7 +411,7 @@ java_ams_suite_storage_init();
  *         <tt>JAVACALL_FAIL</tt> otherwise
  */
 javacall_result
-java_ams_suite_storage_cleanup();
+JCDECL_SUITESTORE(suite_storage_cleanup)();
 
 /**
  * Converts the given suite ID to javacall_string.
@@ -422,7 +423,7 @@ java_ams_suite_storage_cleanup();
  * @return javacall_utf16_string representation of the given suite ID
  */
 const javacall_utf16_string
-java_ams_suite_suiteid2javacall_string(javacall_suite_id value);
+JCDECL_SUITESTORE(suite_suiteid2javacall_string)(javacall_suite_id value);
 
 /**
  * Converts the given suite ID to array of chars.
@@ -435,7 +436,7 @@ java_ams_suite_suiteid2javacall_string(javacall_suite_id value);
  *         or NULL in case of error
  */
 const char*
-java_ams_suite_suiteid2chars(javacall_suite_id value);
+JCDECL_SUITESTORE(suite_suiteid2chars)(javacall_suite_id value);
 
 /**
  * Tells if a suite with the given ID exists.
@@ -450,7 +451,7 @@ java_ams_suite_suiteid2chars(javacall_suite_id value);
  *         but it's corrupted
  */
 javacall_result
-java_ams_suite_exists(javacall_suite_id suiteId);
+JCDECL_SUITESTORE(suite_exists)(javacall_suite_id suiteId);
 
 /**
  * Gets location of the class path for the suite with the specified suiteId.
@@ -471,10 +472,10 @@ java_ams_suite_exists(javacall_suite_id suiteId);
  * </pre>
  */
 javacall_result
-java_ams_suite_get_class_path(javacall_suite_id suiteId,
-                              javacall_storage_id storageId,
-                              javacall_bool checkSuiteExists,
-                              javacall_utf16_string* pClassPath);
+JCDECL_SUITESTORE(suite_get_class_path)(javacall_suite_id suiteId,
+                                        javacall_storage_id storageId,
+                                        javacall_bool checkSuiteExists,
+                                        javacall_utf16_string* pClassPath);
 
 /* #if ENABLE_MONET */
 
@@ -501,9 +502,9 @@ java_ams_suite_get_class_path(javacall_suite_id suiteId,
  * </pre>
 */
 javacall_result
-java_ams_suite_get_bin_app_path(javacall_suite_id suiteId,
-                                javacall_storage_id storageId,
-                                javacall_utf16_string* pClassPath);
+JCDECL_SUITESTORE(suite_get_bin_app_path)(javacall_suite_id suiteId,
+                                          javacall_storage_id storageId,
+                                          javacall_utf16_string* pClassPath);
 /* #endif */
 
 /**
@@ -517,8 +518,8 @@ java_ams_suite_get_bin_app_path(javacall_suite_id suiteId,
  * @return <tt>JAVACALL_OK</tt> on success, an error code otherwise
  */
 javacall_result
-java_ams_suite_get_storage(javacall_suite_id suiteId,
-                           javacall_storage_id* pStorageId);
+JCDECL_SUITESTORE(suite_get_storage)(javacall_suite_id suiteId,
+                                     javacall_storage_id* pStorageId);
 
 /**
  * Retrieves a path to the root of the given storage.
@@ -534,8 +535,8 @@ java_ams_suite_get_storage(javacall_suite_id suiteId,
  * @return <tt>JAVACALL_OK</tt> on success, an error code otherwise
  */
 javacall_result
-java_ams_storage_get_root(javacall_storage_id storageId,
-                          javacall_utf16_string* pStorageRootPath);
+JCDECL_SUITESTORE(storage_get_root)(javacall_storage_id storageId,
+                                    javacall_utf16_string* pStorageRootPath);
 
 /**
  * Retrieves the specified property value of the suite.
@@ -548,10 +549,10 @@ java_ams_storage_get_root(javacall_storage_id storageId,
  * @return <tt>JAVACALL_OK</tt> on success, an error code otherwise
  */
 javacall_result
-java_ams_suite_get_property(javacall_suite_id suiteId,
-                            javacall_const_utf16_string key,
-                            javacall_utf16_string value,
-                            int maxValueLen);
+JCDECL_SUITESTORE(suite_get_property)(javacall_suite_id suiteId,
+                                      javacall_const_utf16_string key,
+                                      javacall_utf16_string value,
+                                      int maxValueLen);
 
 /*----------------- Suite Storage: interface to Installer -------------------*/
 
@@ -568,9 +569,9 @@ java_ams_suite_get_property(javacall_suite_id suiteId,
  * @return <tt>JAVACALL_OK</tt> on success, an error code otherwise
  */
 javacall_result
-java_ams_suite_get_id(javacall_const_utf16_string vendor,
-                      javacall_const_utf16_string name,
-                      javacall_suite_id* pSuiteId);
+JCDECL_INST_SUITESTORE(suite_get_id)(javacall_const_utf16_string vendor,
+                                     javacall_const_utf16_string name,
+                                     javacall_suite_id* pSuiteId);
 
 /**
  * Returns a new unique identifier of MIDlet suite.
@@ -580,7 +581,7 @@ java_ams_suite_get_id(javacall_const_utf16_string vendor,
  * @return <tt>JAVACALL_OK</tt> on success, an error code otherwise
  */
 javacall_result
-java_ams_suite_create_id(javacall_suite_id* pSuiteId);
+JCDECL_INST_SUITESTORE(suite_create_id)(javacall_suite_id* pSuiteId);
 
 /**
  * Installer invokes this function to get the install information
@@ -598,18 +599,18 @@ java_ams_suite_create_id(javacall_suite_id* pSuiteId);
  * @return <tt>JAVACALL_OK</tt> on success, an error code otherwise
  */
 javacall_result
-java_ams_suite_get_install_info(javacall_suite_id suiteId,
-                                javacall_ams_suite_install_info*
-                                    pInstallInfo);
+JCDECL_INST_SUITESTORE(suite_get_install_info)(
+    javacall_suite_id suiteId, javacall_ams_suite_install_info* pInstallInfo);
+    
 /**
  * Installer invokes this function to frees an
  * javacall_ams_suite_install_info struct.
  * Does nothing if passed NULL.
  *
  * @param pInstallInfo installation information returned from
- *                     java_ams_suite_get_install_info
+ *                     JCDECL_INST_SUITESTORE(suite_get_install_info)
  */
-void java_ams_suite_free_install_info(
+void JCDECL_INST_SUITESTORE(suite_free_install_info)(
         javacall_ams_suite_install_info* pInstallInfo);
 
 /**
@@ -661,7 +662,8 @@ void java_ams_suite_free_install_info(
  * @return <tt>JAVACALL_OK</tt> on success, an error code otherwise
  */
 javacall_result
-java_ams_suite_store_suite(const javacall_ams_suite_install_info* pInstallInfo,
+JCDECL_INST_SUITESTORE(suite_store_suite)(
+                           const javacall_ams_suite_install_info* pInstallInfo,
                            const javacall_ams_suite_settings* pSuiteSettings,
                            const javacall_ams_suite_info* pSuiteInfo);
 
@@ -677,7 +679,7 @@ java_ams_suite_store_suite(const javacall_ams_suite_install_info* pInstallInfo,
  * @return <tt>JAVACALL_OK</tt> on success, an error code otherwise
  */
 javacall_result
-java_ams_suite_get_suites_number(int* pNumbefOfSuites);
+JCDECL_APPMGR_SUITESTORE(suite_get_suites_number)(int* pNumbefOfSuites);
 
 /**
  * AppManager invokes this function to get the list of IDs
@@ -685,7 +687,7 @@ java_ams_suite_get_suites_number(int* pNumbefOfSuites);
  *
  * Note that memory for the suite IDs is allocated by the callee,
  * and the caller is responsible for freeing it using
- * java_ams_suite_free_ids().
+ * JCDECL_APPMGR_SUITESTORE(suite_free_ids)().
  *
  * @param ppSuiteIds      [out] on exit will hold an address of the array
  *                              containing suite IDs
@@ -697,19 +699,19 @@ java_ams_suite_get_suites_number(int* pNumbefOfSuites);
  *         <tt>JAVACALL_IO_ERROR</tt> if an IO error
  */
 javacall_result
-java_ams_suite_get_suite_ids(javacall_suite_id** ppSuiteIds,
-                             int* pNumberOfSuites);
+JCDECL_APPMGR_SUITESTORE(suite_get_suite_ids)(javacall_suite_id** ppSuiteIds,
+                                              int* pNumberOfSuites);
 
 /**
  * App Manager invokes this function to free a list of suite IDs allocated
- * during the previous call of java_ams_suite_get_suite_ids().
+ * during the previous call of JCDECL_APPMGR_SUITESTORE(suite_get_suite_ids)().
  *
  * @param pSuiteIds points to an array of suite IDs
  * @param numberOfSuites number of elements in pSuites
  */
 void
-java_ams_suite_free_suite_ids(javacall_suite_id* pSuiteIds,
-                              int numberOfSuites);
+JCDECL_APPMGR_SUITESTORE(suite_free_suite_ids)(javacall_suite_id* pSuiteIds,
+                                               int numberOfSuites);
 
 /**
  * App Manager invokes this function to get an information about the midlets
@@ -723,9 +725,10 @@ java_ams_suite_free_suite_ids(javacall_suite_id* pSuiteIds,
  * @return <tt>JAVACALL_OK</tt> on success, an error code otherwise
  */
 javacall_result
-java_ams_suite_get_midlets_info(javacall_suite_id suiteId,
-                                javacall_ams_midlet_info** ppMidletsInfo,
-                                int* pNumberOfEntries);
+JCDECL_APPMGR_SUITESTORE(get_midlets_info)(
+                                   javacall_suite_id suiteId,
+                                   javacall_ams_midlet_info** ppMidletsInfo,
+                                   int* pNumberOfEntries);
 
 /**
  * App Manager invokes this function to free an array of structures describing
@@ -735,8 +738,8 @@ java_ams_suite_get_midlets_info(javacall_suite_id suiteId,
  * @param numberOfEntries number of elements in pMidletsInfo
  */
 void
-java_ams_suite_free_midlets_info(javacall_ams_midlet_info* pMidletsInfo,
-                                 int numberOfEntries);
+JCDECL_APPMGR_SUITESTORE(suite_free_midlets_info)(
+    javacall_ams_midlet_info* pMidletsInfo, int numberOfEntries);
 
 /**
  * App Manager invokes this function to get information about the midlet suite
@@ -747,14 +750,14 @@ java_ams_suite_free_midlets_info(javacall_ams_midlet_info* pMidletsInfo,
  * @param ppSuiteInfo [out] on exit will hold a pointer to a structure where the
  *                          information about the given midlet suite is stored;
  *                          the caller is responsible for freeing this structure
- *                          using java_ams_suite_free_info() when it is not
- *                          needed anymore
+ *                          using JCDECL_APPMGR_SUITESTORE(suite_free_info) when
+ *                          it is not needed anymore
  *
  * @return <tt>JAVACALL_OK</tt> on success, an error code otherwise
  */
 javacall_result
-java_ams_suite_get_info(javacall_suite_id suiteId,
-                        javacall_ams_suite_info** ppSuiteInfo);
+JCDECL_APPMGR_SUITESTORE(suite_get_info)(javacall_suite_id suiteId,
+                                         javacall_ams_suite_info** ppSuiteInfo);
 
 /**
  * App Manager invokes this function to free a structure describing
@@ -763,7 +766,7 @@ java_ams_suite_get_info(javacall_suite_id suiteId,
  * @param pSuiteInfo points to a structure holding midlet suite info
  */
 void
-java_ams_suite_free_info(javacall_ams_suite_info* pSuiteInfo);
+JCDECL_APPMGR_SUITESTORE(suite_free_info)(javacall_ams_suite_info* pSuiteInfo);
 
 /**
  * App Manager invokes this function to get the domain the suite belongs to.
@@ -775,8 +778,8 @@ java_ams_suite_free_info(javacall_ams_suite_info* pSuiteInfo);
  * @return <tt>JAVACALL_OK</tt> on success, an error code otherwise
  */
 javacall_result
-java_ams_suite_get_domain(javacall_suite_id suiteId,
-                          javacall_ams_domain* pDomainId);
+JCDECL_APPMGR_SUITESTORE(suite_get_domain)(javacall_suite_id suiteId,
+                                           javacall_ams_domain* pDomainId);
 
 /**
  * App Manager invokes this function to disable a suite given its suite ID.
@@ -793,7 +796,7 @@ java_ams_suite_get_domain(javacall_suite_id suiteId,
  *         OUT_OF_MEMORY if out of memory
  */
 javacall_result
-java_ams_suite_disable(javacall_suite_id suiteId);
+JCDECL_APPMGR_SUITESTORE(suite_disable)(javacall_suite_id suiteId);
 
 /**
  * App Manager invokes this function to enable a suite given its suite ID.
@@ -810,7 +813,7 @@ java_ams_suite_disable(javacall_suite_id suiteId);
  *         OUT_OF_MEMORY if out of memory
  */
 javacall_result
-java_ams_suite_enable(javacall_suite_id suiteId);
+JCDECL_APPMGR_SUITESTORE(suite_enable)(javacall_suite_id suiteId);
 
 /**
  * App Manager invokes this function to get permissions of the suite.
@@ -824,8 +827,8 @@ java_ams_suite_enable(javacall_suite_id suiteId);
  * @return <tt>JAVACALL_OK</tt> on success, an error code otherwise
  */
 javacall_result
-java_ams_suite_get_permissions(javacall_suite_id suiteId,
-                               javacall_ams_permission_val* pPermissions);
+JCDECL_APPMGR_SUITESTORE(suite_get_permissions)(
+    javacall_suite_id suiteId, javacall_ams_permission_val* pPermissions);
 
 /**
  * App Manager invokes this function to set a single permission of the suite
@@ -838,9 +841,10 @@ java_ams_suite_get_permissions(javacall_suite_id suiteId,
  * @return <tt>JAVACALL_OK</tt> on success, an error code otherwise
  */
 javacall_result
-java_ams_suite_set_permission(javacall_suite_id suiteId,
-                              javacall_ams_permission permission,
-                              javacall_ams_permission_val value);
+JCDECL_APPMGR_SUITESTORE(suite_set_permission)(
+                                           javacall_suite_id suiteId,
+                                           javacall_ams_permission permission,
+                                           javacall_ams_permission_val value);
 
 /**
  * App Manager invokes this function to set permissions of the suite.
@@ -853,8 +857,8 @@ java_ams_suite_set_permission(javacall_suite_id suiteId,
  * @return <tt>JAVACALL_OK</tt> on success, an error code otherwise
  */
 javacall_result
-java_ams_suite_set_permissions(javacall_suite_id suiteId,
-                               javacall_ams_permission_val* pPermissions);
+JCDECL_APPMGR_SUITESTORE(suite_set_permissions)(
+    javacall_suite_id suiteId, javacall_ams_permission_val* pPermissions);
 
 /**
  * App Manager invokes this function to remove a suite with the given ID.
@@ -865,7 +869,7 @@ java_ams_suite_set_permissions(javacall_suite_id suiteId,
  * @return <tt>JAVACALL_OK</tt> on success, an error code otherwise
  */
 javacall_result
-java_ams_suite_remove(javacall_suite_id suiteId);
+JCDECL_APPMGR_SUITESTORE(suite_remove)(javacall_suite_id suiteId);
 
 /**
  * App Manager invokes this function to move a software package with given
@@ -877,14 +881,14 @@ java_ams_suite_remove(javacall_suite_id suiteId);
  * @return <tt>JAVACALL_OK</tt> on success, an error code otherwise
  */
 javacall_result
-java_ams_suite_change_storage(javacall_suite_id suiteId,
-                              javacall_storage_id newStorageId);
+JCDECL_APPMGR_SUITESTORE(suite_change_storage)(
+    javacall_suite_id suiteId, javacall_storage_id newStorageId);
 
 /**
  * App Manager invokes this function to check if the suite with the given ID
  * is trusted.
  *
- * This is just a helper method, java_ams_suite_get_info()
+ * This is just a helper method, JCDECL_APPMGR_SUITESTORE(suite_get_info)()
  * also can be used for this purpose.
  *
  * @param suiteId unique ID of the MIDlet suite
@@ -893,7 +897,7 @@ java_ams_suite_change_storage(javacall_suite_id suiteId,
  *         <tt>JAVACALL_FALSE</tt> otherwise
  */
 javacall_bool
-java_ams_suite_is_preinstalled(javacall_suite_id suiteId);
+JCDECL_APPMGR_SUITESTORE(suite_is_preinstalled)(javacall_suite_id suiteId);
 
 /**
  * App Manager invokes this function to get the amount of storage
@@ -905,7 +909,8 @@ java_ams_suite_is_preinstalled(javacall_suite_id suiteId);
  * @return number of bytes of storage the suite is using or less than
  *         0 if out of memory
  */
-long java_ams_suite_get_storage_size(javacall_suite_id suiteId);
+long
+JCDECL_APPMGR_SUITESTORE(suite_get_storage_size)(javacall_suite_id suiteId);
 
 /**
  * App Manager invokes this function to check the integrity of the suite
@@ -919,8 +924,8 @@ long java_ams_suite_get_storage_size(javacall_suite_id suiteId);
  * @return <tt>JAVACALL_OK</tt> on success, an error code otherwise
  */
 javacall_result
-java_ams_suite_check_suites_integrity(javacall_bool fullCheck,
-                                      javacall_bool delCorruptedSuites);
+JCDECL_APPMGR_SUITESTORE(suite_check_suites_integrity)(
+    javacall_bool fullCheck, javacall_bool delCorruptedSuites);
 
 /*------------- Getting Information About AMS Folders ---------------*/
 
@@ -935,8 +940,8 @@ java_ams_suite_check_suites_integrity(javacall_bool fullCheck,
  * @return <tt>JAVACALL_OK</tt> on success, an error code otherwise
  */
 javacall_result
-java_ams_suite_get_all_folders_info(javacall_ams_folder_info** ppFoldersInfo,
-                                    int* pNumberOfEntries);
+JCDECL_APPMGR_SUITESTORE(suite_get_all_folders_info)(
+    javacall_ams_folder_info** ppFoldersInfo, int* pNumberOfEntries);
 
 /**
  * App Manager invokes this function to free an array of structures describing
@@ -946,8 +951,8 @@ java_ams_suite_get_all_folders_info(javacall_ams_folder_info** ppFoldersInfo,
  * @param numberOfEntries number of elements in pFoldersInfo
  */
 void
-java_ams_suite_free_all_folders_info(javacall_ams_folder_info* pFoldersInfo,
-                                     int numberOfEntries);
+JCDECL_APPMGR_SUITESTORE(suite_free_all_folders_info)(
+    javacall_ams_folder_info* pFoldersInfo, int numberOfEntries);
 
 /**
  * App Manager invokes this function to get an information about
@@ -955,7 +960,7 @@ java_ams_suite_free_all_folders_info(javacall_ams_folder_info* pFoldersInfo,
  *
  * Note that memory for the out parameter pFolderInfo and its fields is
  * allocated by the callee. The caller is responsible for freeing it using
- * java_ams_suite_free_folder_info().
+ * JCDECL_APPMGR_SUITESTORE(suite_free_folder_info)().
  *
  * @param folderId     [in]  unique ID of the folder
  * @param ppFolderInfo [out] on exit will hold a pointer to a structure
@@ -964,8 +969,8 @@ java_ams_suite_free_all_folders_info(javacall_ams_folder_info* pFoldersInfo,
  * @return <tt>JAVACALL_OK</tt> on success, an error code otherwise
  */
 javacall_result
-java_ams_suite_get_folder_info(javacall_folder_id folderId,
-                               javacall_ams_folder_info** ppFolderInfo);
+JCDECL_APPMGR_SUITESTORE(suite_get_folder_info)(
+    javacall_folder_id folderId, javacall_ams_folder_info** ppFolderInfo);
 
 /**
  * App Manager invokes this function to free the given structure holding
@@ -974,7 +979,8 @@ java_ams_suite_get_folder_info(javacall_folder_id folderId,
  * @param pFolderInfo [in] a pointer to the structure that must be freed
  */
 void
-java_ams_suite_free_folder_info(javacall_ams_folder_info* pFolderInfo);
+JCDECL_APPMGR_SUITESTORE(suite_free_folder_info)(
+    javacall_ams_folder_info* pFolderInfo);
 
 /**
  * AppManager invokes this function to get the list of IDs
@@ -982,7 +988,7 @@ java_ams_suite_free_folder_info(javacall_ams_folder_info* pFolderInfo);
  *
  * Note that memory for the suite IDs is allocated by the callee,
  * and the caller is responsible for freeing it using
- * java_ams_suite_free_ids().
+ * JCDECL_APPMGR_SUITESTORE(suite_free_ids)().
  *
  * @param folderId        [in]  unique ID of the folder
  * @param ppSuiteIds      [out] on exit will hold an address of the array
@@ -996,9 +1002,10 @@ java_ams_suite_free_folder_info(javacall_ams_folder_info* pFolderInfo);
  *         <tt>JAVACALL_FAIL</tt> if other error
  */
 javacall_result
-java_ams_suite_get_suites_in_folder(javacall_folder_id folderId,
-                                    javacall_suite_id** ppSuiteIds,
-                                    int* pNumberOfSuites);
+JCDECL_APPMGR_SUITESTORE(suite_get_suites_in_folder)(
+                                             javacall_folder_id folderId,
+                                             javacall_suite_id** ppSuiteIds,
+                                             int* pNumberOfSuites);
 
 /**
  * App Manager invokes this function to get an ID of the AMS folder where
@@ -1011,8 +1018,8 @@ java_ams_suite_get_suites_in_folder(javacall_folder_id folderId,
  * @return <tt>JAVACALL_OK</tt> on success, an error code otherwise
  */
 javacall_result
-java_ams_suite_get_folder(javacall_suite_id suiteId,
-                          javacall_folder_id* pSuiteFolderId);
+JCDECL_APPMGR_SUITESTORE(suite_get_folder)(javacall_suite_id suiteId,
+                                           javacall_folder_id* pSuiteFolderId);
 
 /**
  * App Manager invokes this function to move the given midlet suite
@@ -1024,8 +1031,8 @@ java_ams_suite_get_folder(javacall_suite_id suiteId,
  * @return <tt>JAVACALL_OK</tt> on success, an error code otherwise
  */
 javacall_result
-java_ams_suite_move_to_folder(javacall_suite_id suiteId,
-                              javacall_folder_id newFolderId);
+JCDECL_APPMGR_SUITESTORE(suite_move_to_folder)(javacall_suite_id suiteId,
+                                               javacall_folder_id newFolderId);
 
 /*-------------------- API to read/write secure resources -------------------*/
 
@@ -1051,7 +1058,8 @@ java_ams_suite_move_to_folder(javacall_suite_id suiteId,
  * </pre>
  */
 javacall_result
-java_ams_suite_read_secure_resource(javacall_suite_id suiteId,
+JCDECL_SUITESTORE(suite_read_secure_resource)(
+                                    javacall_suite_id suiteId,
                                     javacall_const_utf16_string resourceName,
                                     javacall_uint8** ppReturnValue,
                                     javacall_int32* pValueSize);
@@ -1072,7 +1080,8 @@ java_ams_suite_read_secure_resource(javacall_suite_id suiteId,
  * </pre>
  */
 javacall_result
-java_ams_suite_write_secure_resource(javacall_suite_id suiteId,
+JCDECL_SUITESTORE(suite_write_secure_resource)(
+                           javacall_suite_id suiteId,
                            javacall_const_utf16_string resourceName,
                            javacall_uint8* pValue,
                            javacall_int32 valueSize);

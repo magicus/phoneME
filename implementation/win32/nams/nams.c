@@ -41,9 +41,9 @@
  * @param pResult Pointer to a static buffer containing
  *                operation-dependent result
  */
-void java_ams_operation_completed(javacall_opcode operation,
-                                  const javacall_app_id appID,
-                                  void* pResult) {
+void javacall_ams_operation_completed(javacall_opcode operation,
+                                      const javacall_app_id appID,
+                                      void* pResult) {
     (void)operation;
     (void)appID;
     (void)pResult;
@@ -66,9 +66,9 @@ void java_ams_operation_completed(javacall_opcode operation,
  * @param appID The ID of the state-changed suite
  * @param reason The reason why the state change has happened
  */
-void java_ams_midlet_state_changed(javacall_lifecycle_state state,
-                                   javacall_app_id appID,
-                                   javacall_change_reason reason) {
+void javacall_ams_midlet_state_changed(javacall_lifecycle_state state,
+                                       javacall_app_id appID,
+                                       javacall_change_reason reason) {
     int appIndex = 0;
 
     switch (state) {
@@ -119,9 +119,9 @@ void java_ams_midlet_state_changed(javacall_lifecycle_state state,
  * @param appID The ID of the state-changed suite
  * @param reason The reason why the state change has happened
  */
-void java_ams_midlet_ui_state_changed(javacall_midlet_ui_state state,
-                                      javacall_app_id appID,
-                                      javacall_change_reason reason) {
+void javacall_ams_midlet_ui_state_changed(javacall_midlet_ui_state state,
+                                          javacall_app_id appID,
+                                          javacall_change_reason reason) {
     int appIndex = 0;
 
     switch (state) {
@@ -172,8 +172,8 @@ void java_ams_midlet_ui_state_changed(javacall_midlet_ui_state state,
  * @return <tt>JAVACALL_OK</tt> on success,
  *         <tt>JAVACALL_FAIL</tt>
  */
-javacall_result java_ams_get_rms_path(javacall_suite_id suiteID, 
-                                      javacall_utf16_string* pRmsPath) {
+javacall_result javacall_ams_get_rms_path(javacall_suite_id suiteID,
+                                          javacall_utf16_string* pRmsPath) {
 #if 1
     javacall_utf16 path[JAVACALL_MAX_FILE_NAME_LENGTH*2];
     int len;
@@ -282,7 +282,7 @@ java_ams_suite_set_permissions(javacall_suite_id suiteID,
  * This function is called by the installer when some action is required
  * from the user.
  *
- * It must be implemented at that side (SJWC or Platform) where the
+ * It must be implemented at that side (Java or Platform) where the
  * application manager is located.
  *
  * After processing the request, java_ams_install_answer() must
@@ -578,8 +578,8 @@ java_ams_install_report_progress(const javacall_ams_install_state* pInstallState
  *         <tt>JAVACALL_FAIL</tt>
  */
 javacall_result
-java_ams_get_resource_cache_path(javacall_suite_id suiteId,
-                                 javacall_utf16_string* pCachePath) {
+javacall_ams_get_resource_cache_path(javacall_suite_id suiteId,
+                                     javacall_utf16_string* pCachePath) {
 #if 0
     javacall_result res;
     int pathLen;

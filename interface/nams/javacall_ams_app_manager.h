@@ -31,6 +31,7 @@ extern "C" {
 #endif
 
 #include "javacall_defs.h"
+#include "javacall_ams_config.h"
 
 /*
  * Functions declared in this file are exported by the MIDP runtime.
@@ -95,7 +96,7 @@ typedef struct _javacall_midlet_runtime_info {
  * @return <tt>JAVACALL_OK</tt> if successful,
  *         <tt>JAVACALL_FAIL</tt> otherwise
  */
-javacall_result java_ams_system_start();
+javacall_result javanotify_ams_system_start();
 
 /**
  * Platform invokes this function to stop the MIDP system.
@@ -103,7 +104,7 @@ javacall_result java_ams_system_start();
  * @return <tt>JAVACALL_OK</tt> if successful,
  *         <tt>JAVACALL_FAIL</tt> otherwise
  */
-javacall_result java_ams_system_stop();
+javacall_result javanotify_ams_system_stop();
 
 /**
  * App Manager invokes this function to inform Java to start a specific MIDlet
@@ -119,13 +120,13 @@ javacall_result java_ams_system_stop();
  *
  * @note this function just checks the parameters accuracy,
  *       the real status of MIDlet startup will be notified
- *       by <link>java_ams_midlet_state_changed</link>
+ *       by <link>javacall_ams_midlet_state_changed</link>
  */
 javacall_result
-java_ams_midlet_start(javacall_suite_id suiteId,
-                      javacall_app_id appId,
-                      javacall_const_utf16_string className,
-                      const javacall_midlet_runtime_info* pRuntimeInfo);
+javanotify_ams_midlet_start(javacall_suite_id suiteId,
+                            javacall_app_id appId,
+                            javacall_const_utf16_string className,
+                            const javacall_midlet_runtime_info* pRuntimeInfo);
 
 /**
  * App Manager invokes this function to inform Java to start a specific MIDlet
@@ -144,16 +145,16 @@ java_ams_midlet_start(javacall_suite_id suiteId,
  *
  * @note  this function just checks the parameters accuracy, 
  *        the real status of MIDlet startup will be notified by
- *        <link>java_ams_midlet_state_changed</link>
+ *        <link>javacall_ams_midlet_state_changed</link>
  */
 javacall_result
-java_ams_midlet_start_with_args(javacall_suite_id suiteId,
-                                javacall_app_id appId,
-                                javacall_const_utf16_string className,
-                                javacall_const_utf16_string *pArgs,
-                                int argsNum,
-                                const javacall_midlet_runtime_info*
-                                    pRuntimeInfo);
+javanotify_ams_midlet_start_with_args(javacall_suite_id suiteId,
+                                      javacall_app_id appId,
+                                      javacall_const_utf16_string className,
+                                      javacall_const_utf16_string *pArgs,
+                                      int argsNum,
+                                      const javacall_midlet_runtime_info*
+                                          pRuntimeInfo);
 
 /**
  * App Manager invokes this function to inform Java to shutdown a specific
@@ -167,10 +168,10 @@ java_ams_midlet_start_with_args(javacall_suite_id suiteId,
  *         <tt>JAVACALL_FAIL</tt> otherwise
  *
  * @note the real status of operation will be notified by
- *       <link>java_ams_midlet_state_changed</link>
+ *       <link>javacall_ams_midlet_state_changed</link>
  */
 javacall_result
-java_ams_midlet_shutdown(javacall_app_id appId, int timeoutMilliSeconds);
+javanotify_ams_midlet_shutdown(javacall_app_id appId, int timeoutMilliSeconds);
 
 /**
  * App Manager invokes this function to inform Java to switch a specific MIDlet
@@ -182,10 +183,10 @@ java_ams_midlet_shutdown(javacall_app_id appId, int timeoutMilliSeconds);
  *         <tt>JAVACALL_FAIL</tt> otherwise
  *
  * @note the real status of operation will be notified by
- *       <link>java_ams_midlet_state_changed</link>
+ *       <link>javacall_ams_midlet_state_changed</link>
  */
 javacall_result
-java_ams_midlet_switch_foreground(javacall_app_id appId);
+javanotify_ams_midlet_switch_foreground(javacall_app_id appId);
 
 /**
  * App Manager invokes this function to inform Java to switch current MIDlet
@@ -194,9 +195,9 @@ java_ams_midlet_switch_foreground(javacall_app_id appId);
  * @return <tt>JAVACALL_OK</tt> if <code>suiteId</code> has a proper value
  *         <tt>JAVACALL_FAIL</tt> otherwise
  * @note the real status of operation will be notified by
- *       <link>java_ams_midlet_state_changed</link>
+ *       <link>javacall_ams_midlet_state_changed</link>
  */
-javacall_result java_ams_midlet_switch_background();
+javacall_result javanotify_ams_midlet_switch_background();
 
 /**
  * App Manager invokes this function to inform Java to pause a specific MIDlet.
@@ -207,9 +208,9 @@ javacall_result java_ams_midlet_switch_background();
  *         <tt>JAVACALL_FAIL</tt> otherwise
  *
  * @note the real status of operation will be notified by
- *       <link>java_ams_midlet_state_changed</link>
+ *       <link>javacall_ams_midlet_state_changed</link>
  */
-javacall_result java_ams_midlet_pause(javacall_app_id appId);
+javacall_result javanotify_ams_midlet_pause(javacall_app_id appId);
 
 /**
  * App Manager invokes this function to inform Java to resume a specific MIDlet.
@@ -220,9 +221,9 @@ javacall_result java_ams_midlet_pause(javacall_app_id appId);
  *         <tt>JAVACALL_FAIL</tt> otherwise
  *
  * @note the real status of operation will be notified by
- *       <link>java_ams_midlet_state_changed</link>
+ *       <link>javacall_ams_midlet_state_changed</link>
  */
-javacall_result java_ams_midlet_resume(javacall_app_id appId);
+javacall_result javanotify_ams_midlet_resume(javacall_app_id appId);
 
 /**
  * App Manager invokes this function to get runtime information
@@ -237,7 +238,7 @@ javacall_result java_ams_midlet_resume(javacall_app_id appId);
  *                     <tt>JAVACALL_FAIL</tt> otherwise
  */
 javacall_result
-java_ams_midlet_request_runtime_info(javacall_app_id appId);
+javanotify_ams_midlet_request_runtime_info(javacall_app_id appId);
 
 /**
  * App Manager invokes this function to get information about the suite
@@ -251,8 +252,8 @@ java_ams_midlet_request_runtime_info(javacall_app_id appId);
  *                     <tt>JAVACALL_FAIL</tt> otherwise
  */
 javacall_result
-java_ams_midlet_get_app_suite_id(javacall_app_id appId,
-                                 javacall_suite_id* pSuiteId);
+javanotify_ams_midlet_get_app_suite_id(javacall_app_id appId,
+                                       javacall_suite_id* pSuiteId);
 
 /** @} */
 

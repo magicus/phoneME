@@ -29,10 +29,11 @@ extern "C" {
 #endif
 
 #include "javacall_defs.h"
+#include "javacall_ams_config.h"
 
 /*
  * IMPL_NOTE: the following must be removed after refactoring of
- * javacall_lifecycle_state type into two types: SJWC state and MIDlet state.
+ * javacall_lifecycle_state type into two types: Java state and MIDlet state.
  */
 #include "javacall_lifecycle.h"
 
@@ -93,9 +94,9 @@ typedef enum {
  * @param pResult pointer to a static buffer containing
  *                operation-dependent result
  */
-void java_ams_operation_completed(javacall_opcode operation,
-                                  const javacall_app_id appId,
-                                  void* pResult);
+void javacall_ams_operation_completed(javacall_opcode operation,
+                                      const javacall_app_id appId,
+                                      void* pResult);
 
 /**
  * Java invokes this function to get path name of the directory which
@@ -117,8 +118,8 @@ void java_ams_operation_completed(javacall_opcode operation,
  *         <tt>JAVACALL_FAIL</tt>
  */
 javacall_result
-java_ams_get_rms_path(javacall_suite_id suiteId,
-                      javacall_utf16_string* pRmsPath);
+javacall_ams_get_rms_path(javacall_suite_id suiteId,
+                          javacall_utf16_string* pRmsPath);
 
 /**
  * Java invokes this function to get the image cache path.
@@ -137,8 +138,8 @@ java_ams_get_rms_path(javacall_suite_id suiteId,
  *         <tt>JAVACALL_FAIL</tt>
  */
 javacall_result
-java_ams_get_resource_cache_path(javacall_suite_id suiteId,
-                                 javacall_utf16_string* pCachePath);
+javacall_ams_get_resource_cache_path(javacall_suite_id suiteId,
+                                     javacall_utf16_string* pCachePath);
 
 /**
  * Java invokes this function to inform the platform on change of the specific
@@ -160,9 +161,9 @@ java_ams_get_resource_cache_path(javacall_suite_id suiteId,
  * @param appId the ID of the state-changed application
  * @param reason rhe reason why the state change has happened
  */
-void java_ams_midlet_state_changed(javacall_lifecycle_state state,
-                                   javacall_app_id appId,
-                                   javacall_change_reason reason);
+void javacall_ams_midlet_state_changed(javacall_lifecycle_state state,
+                                       javacall_app_id appId,
+                                       javacall_change_reason reason);
 
 /**
  * Java invokes this function to inform the App Manager on change of the
@@ -182,9 +183,9 @@ void java_ams_midlet_state_changed(javacall_lifecycle_state state,
  * @param appId the ID of the state-changed application
  * @param reason the reason why the state change has happened
  */
-void java_ams_midlet_ui_state_changed(javacall_midlet_ui_state state,
-                                      javacall_app_id appId,
-                                      javacall_change_reason reason);
+void javacall_ams_midlet_ui_state_changed(javacall_midlet_ui_state state,
+                                          javacall_app_id appId,
+                                          javacall_change_reason reason);
 
 /**
  * Java invokes this function to check if the given domain is trusted.
@@ -199,8 +200,8 @@ void java_ams_midlet_ui_state_changed(javacall_midlet_ui_state state,
  *         <tt>JAVACALL_FALSE</tt> otherwise
  */
 javacall_bool
-java_ams_is_domain_trusted(javacall_suite_id suiteId,
-                           javacall_const_utf16_string domain);
+javacall_ams_is_domain_trusted(javacall_suite_id suiteId,
+                               javacall_const_utf16_string domain);
 
 /** @} */
 

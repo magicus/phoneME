@@ -29,6 +29,7 @@ extern "C" {
 #endif
 
 #include "javacall_defs.h"
+#include "javacall_ams_config.h"
 
 /*
  * Functions declared in this file are exported by the Installer.
@@ -581,8 +582,8 @@ typedef enum {
  *   pArgs[0] = argInstallStr;
  *   pArgs[1] = urlToInstallFrom;
  *
- *   res = java_ams_midlet_start_with_args(-1, appId, guiInstallerClass,
- *                                         pArgs, 2, NULL);
+ *   res = javanotify_ams_midlet_start_with_args(-1, appId, guiInstallerClass,
+ *                                               pArgs, 2, NULL);
  * </pre>
  *
  * NOTE: storageId and folderId parameters are mutually exclusive because any
@@ -614,10 +615,10 @@ typedef enum {
  * The return of this function only tells if the install process is started
  * successfully. The actual result of if the installation (status and ID of
  * the newly installed suite) will be reported later by
- * java_ams_operation_completed().
+ * javacall_ams_operation_completed().
  */
 javacall_result
-java_ams_install_suite(javacall_app_id appId,
+JCDECL_APPMGR_INST(install_suite)(javacall_app_id appId,
                        javacall_ams_install_source_type srcType,
                        javacall_const_utf16_string installUrl,
                        javacall_storage_id storageId,
@@ -632,7 +633,7 @@ java_ams_install_suite(javacall_app_id appId,
  *
  * This call is asynchronous, the new OCSP chack state (JAVACALL_TRUE if
  * OCSP is enabled, JAVACALL_FALSE - if disabled) will be reported later
- * via java_ams_operation_completed() with the argument
+ * via javacall_ams_operation_completed() with the argument
  * operation == JAVACALL_OPCODE_ENABLE_OCSP.
  *
  * @param enable JAVACALL_TRUE to enable OCSP check,
@@ -643,7 +644,7 @@ java_ams_install_suite(javacall_app_id appId,
  *                      <tt>JAVACALL_FAIL</tt> otherwise
  */
 javacall_result
-java_ams_install_enable_ocsp(javacall_bool enable);
+JCDECL_APPMGR_INST(install_enable_ocsp)(javacall_bool enable);
 
 /**
  * Application manager invokes this function to find out if OCSP
@@ -653,7 +654,7 @@ java_ams_install_enable_ocsp(javacall_bool enable);
  *
  * This call is asynchronous, the current OCSP check state (JAVACALL_TRUE if
  * OCSP is enabled, JAVACALL_FALSE - if disabled) will be reported later
- * via java_ams_operation_completed() with the argument
+ * via javacall_ams_operation_completed() with the argument
  * operation == JAVACALL_OPCODE_IS_OCSP_ENABLED.
  *
  * @return status code: <tt>JAVACALL_OK</tt> if the operation was
@@ -661,7 +662,7 @@ java_ams_install_enable_ocsp(javacall_bool enable);
  *                      <tt>JAVACALL_FAIL</tt> otherwise
  */
 javacall_result
-java_ams_install_is_ocsp_enabled();
+JCDECL_APPMGR_INST(install_is_ocsp_enabled)();
 
 /**
  * Installer invokes this function to inform the application manager about
@@ -679,19 +680,20 @@ java_ams_install_is_ocsp_enabled();
  * @param totalPercentDone percents completed (0 - 100), -1 if unknown
  */
 void
-java_ams_install_report_progress(const javacall_ams_install_state* pInstallState,
-                                 javacall_ams_install_status installStatus,
-                                 int currStepPercentDone,
-                                 int totalPercentDone);
+JCDECL_INST_APPMGR(install_report_progress)(
+                             const javacall_ams_install_state* pInstallState,
+                             javacall_ams_install_status installStatus,
+                             int currStepPercentDone,
+                             int totalPercentDone);
 
 /**
  * This function is called by the installer when some action is required
  * from the user.
  *
- * It must be implemented at that side (SJWC or Platform) where the
+ * It must be implemented at that side (Java or Platform) where the
  * application manager is located.
  *
- * After processing the request, java_ams_install_answer() must
+ * After processing the request, JCDECL_APPMGR_INST(install_answer)() must
  * be called to report the result to the installer.
  *
  * @param requestCode   identifies the requested action
@@ -706,19 +708,17 @@ java_ams_install_report_progress(const javacall_ams_install_state* pInstallState
  *         <tt>JAVACALL_FAIL</tt> otherwise
  */
 javacall_result
-java_ams_install_ask(javacall_ams_install_request_code requestCode,
-                     const javacall_ams_install_state* pInstallState,
-                     const javacall_ams_install_data* pRequestData);
+JCDECL_INST_APPMGR(install_ask)(javacall_ams_install_request_code requestCode,
+                                const javacall_ams_install_state* pInstallState,
+                                const javacall_ams_install_data* pRequestData);
 
 /**
  * This function is called by the application manager to report the results
- * of handling of the request previously sent by java_ams_install_ask().
+ * of handling of the request previously sent by
+ * JCDECL_INST_APPMGR(install_ask)().
  *
- * It must be implemented at that side (SJWC or Platform) where the installer
+ * It must be implemented at that side (Java or Platform) where the installer
  * is located.
- *
- * After processing the request, java_ams_install_answer() must
- * be called to report the result to the installer.
  *
  * @param requestCode   in pair with pInstallState->appId uniquely
  *                      identifies the request for which the results
@@ -731,7 +731,8 @@ java_ams_install_ask(javacall_ams_install_request_code requestCode,
  *         <tt>JAVACALL_FAIL</tt> otherwise
  */
 javacall_result
-java_ams_install_answer(javacall_ams_install_request_code requestCode,
+JCDECL_APPMGR_INST(install_answer)(
+                        javacall_ams_install_request_code requestCode,
                         const javacall_ams_install_state* pInstallState,
                         const javacall_ams_install_data* pResultData);
 
@@ -753,7 +754,7 @@ java_ams_install_answer(javacall_ams_install_request_code requestCode,
  *         <tt>JAVACALL_FAIL</tt>
  */
 javacall_result
-java_ams_create_resource_cache(javacall_suite_id suiteId);
+javanotify_ams_create_resource_cache(javacall_suite_id suiteId);
 
 /** @} */
 /** @} */

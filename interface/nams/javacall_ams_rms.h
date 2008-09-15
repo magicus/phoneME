@@ -29,6 +29,7 @@ extern "C" {
 #endif
 
 #include "javacall_defs.h"
+#include "javacall_ams_config.h"
 
 /*
  * Functions declared in this file are exported by the MIDP runtime.
@@ -67,10 +68,10 @@ extern "C" {
  *         successfully opened, an error code otherwise
  */
 javacall_result
-java_ams_rms_open(javacall_suite_id suiteId,
-                  javacall_utf16_string rmsName,
-                  javacall_bool createIfNecessary,
-                  javacall_rms_id* pRmsId);
+javacall_ams_rms_open(javacall_suite_id suiteId,
+                      javacall_utf16_string rmsName,
+                      javacall_bool createIfNecessary,
+                      javacall_rms_id* pRmsId);
 
 /**
  * Java invokes this function to close a record store.
@@ -81,7 +82,7 @@ java_ams_rms_open(javacall_suite_id suiteId,
  *         successfully closed, an error code otherwise
  */
 javacall_result
-java_ams_rms_close(javacall_rms_id rmsId);
+javacall_ams_rms_close(javacall_rms_id rmsId);
 
 /**
  * App Manager or Java invokes this function to delete a record store.
@@ -93,8 +94,8 @@ java_ams_rms_close(javacall_rms_id rmsId);
  *         successfully deleted, an error code otherwise
  */
 javacall_result
-java_ams_rms_delete(javacall_suite_id suiteId,
-                    javacall_utf16_string rmsName);
+javacall_ams_rms_delete(javacall_suite_id suiteId,
+                        javacall_utf16_string rmsName);
 
 /**
  * Java invokes this function to get a record store size.
@@ -105,8 +106,8 @@ java_ams_rms_delete(javacall_suite_id suiteId,
  * @return <tt>JAVACALL_OK</tt> if successful, an error code otherwise
  */
 javacall_result
-java_ams_rms_get_size(javacall_rms_id rmsId,
-                      javacall_int32* pSize);
+javacall_ams_rms_get_size(javacall_rms_id rmsId,
+                          javacall_int32* pSize);
 
 /**
  * Java invokes this function to get the amount of additional room (in bytes)
@@ -118,8 +119,8 @@ java_ams_rms_get_size(javacall_rms_id rmsId,
  * @return <tt>JAVACALL_OK</tt> if successful, an error code otherwise
  */
 javacall_result
-java_ams_rms_get_size_available(javacall_rms_id rmsId,
-                                javacall_int32* pSize);
+javacall_ams_rms_get_size_available(javacall_rms_id rmsId,
+                                    javacall_int32* pSize);
 
 /**
  * Java invokes this function to get the size of the given record.
@@ -131,9 +132,9 @@ java_ams_rms_get_size_available(javacall_rms_id rmsId,
  * @return <tt>JAVACALL_OK</tt> if successful, an error code otherwise
  */
 javacall_result
-java_ams_rms_get_size(javacall_rms_id rmsId,
-                      javacall_rms_record_id recordId,
-                      javacall_int32* pSize);
+javacall_ams_rms_get_size(javacall_rms_id rmsId,
+                          javacall_rms_record_id recordId,
+                          javacall_int32* pSize);
 
 /**
  * Java invokes this function to get the number of records
@@ -146,8 +147,8 @@ java_ams_rms_get_size(javacall_rms_id rmsId,
  * @return <tt>JAVACALL_OK</tt> if successful, an error code otherwise
  */
 javacall_result
-java_ams_rms_get_number_of_records(javacall_rms_id rmsId,
-                                   javacall_int32* pNumberOfRecords);
+javacall_ams_rms_get_number_of_records(javacall_rms_id rmsId,
+                                       javacall_int32* pNumberOfRecords);
 
 /**
  * Java invokes this function to get a record store version.
@@ -160,8 +161,8 @@ java_ams_rms_get_number_of_records(javacall_rms_id rmsId,
  * @return <tt>JAVACALL_OK</tt> if successful, an error code otherwise
  */
 javacall_result
-java_ams_rms_get_version(javacall_rms_id rmsId,
-                         javacall_int32* pVersion);
+javacall_ams_rms_get_version(javacall_rms_id rmsId,
+                             javacall_int32* pVersion);
 
 /**
  * Java invokes this function to get the name of the record store having
@@ -174,9 +175,9 @@ java_ams_rms_get_version(javacall_rms_id rmsId,
  * @return <tt>JAVACALL_OK</tt> if successful, an error code otherwise
  */
 javacall_result
-java_ams_rms_get_name(javacall_rms_id rmsId,
-                      javacall_utf16_string rmsName,
-                      javacall_in32 maxNameSize);
+javacall_ams_rms_get_name(javacall_rms_id rmsId,
+                          javacall_utf16_string rmsName,
+                          javacall_in32 maxNameSize);
 
 /**
  * Java invokes this function to get a record store modification time.
@@ -189,8 +190,8 @@ java_ams_rms_get_name(javacall_rms_id rmsId,
  * @return <tt>JAVACALL_OK</tt> if successful, an error code otherwise
  */
 javacall_result
-java_ams_rms_get_last_modified(javacall_rms_id rmsId,
-                               javacall_int64* pTime);
+javacall_ams_rms_get_last_modified(javacall_rms_id rmsId,
+                                   javacall_int64* pTime);
 
 /**
  * Java invokes this function to add a new record to the given record store.
@@ -208,11 +209,11 @@ java_ams_rms_get_last_modified(javacall_rms_id rmsId,
  * @return <tt>JAVACALL_OK</tt> if successful, an error code otherwise
  */
 javacall_result
-java_ams_rms_add_record(javacall_rms_id rmsId,
-                        javacall_uint8* pData,
-                        javacall_int32  offset,
-                        javacall_int32  sizeInBytes,
-                        javacall_rms_record_id* pRecordId);
+javacall_ams_rms_add_record(javacall_rms_id rmsId,
+                            javacall_uint8* pData,
+                            javacall_int32  offset,
+                            javacall_int32  sizeInBytes,
+                            javacall_rms_record_id* pRecordId);
 
 /**
  * Java invokes this function to set the data in the given record of the given
@@ -229,10 +230,10 @@ java_ams_rms_add_record(javacall_rms_id rmsId,
  * @return <tt>JAVACALL_OK</tt> if successful, an error code otherwise
  */
 javacall_result
-java_ams_rms_set_record(javacall_rms_id rmsId,
-                        javacall_rms_record_id recordId,
-                        javacall_uint8* pNewData,
-                        javacall_int32  sizeInBytes);
+javacall_ams_rms_set_record(javacall_rms_id rmsId,
+                            javacall_rms_record_id recordId,
+                            javacall_uint8* pNewData,
+                            javacall_int32  sizeInBytes);
 
 /**
  * Java invokes this function to delete the given record from the given
@@ -244,8 +245,8 @@ java_ams_rms_set_record(javacall_rms_id rmsId,
  * @return <tt>JAVACALL_OK</tt> if successful, an error code otherwise
  */
 javacall_result
-java_ams_rms_delete_record(javacall_rms_id rmsId,
-                           javacall_rms_record_id recordId);
+javacall_ams_rms_delete_record(javacall_rms_id rmsId,
+                               javacall_rms_record_id recordId);
 
 /**
  * Java invokes this function to get the data stored in the given record
@@ -259,10 +260,10 @@ java_ams_rms_delete_record(javacall_rms_id rmsId,
  * @return <tt>JAVACALL_OK</tt> if successful, an error code otherwise
  */
 javacall_result
-java_ams_rms_get_record(javacall_rms_id rmsId,
-                        javacall_rms_record_id recordId,
-                        javacall_uint8* pBuffer,
-                        javacall_int32  bufSize);
+javacall_ams_rms_get_record(javacall_rms_id rmsId,
+                            javacall_rms_record_id recordId,
+                            javacall_uint8* pBuffer,
+                            javacall_int32  bufSize);
 
 /**
  * Java invokes this function to the record Id of the next record to be added
@@ -276,8 +277,8 @@ java_ams_rms_get_record(javacall_rms_id rmsId,
  * @return <tt>JAVACALL_OK</tt> if successful, an error code otherwise
  */
 javacall_result
-java_ams_rms_get_next_record_id(javacall_rms_id rmsId,
-                                javacall_rms_record_id* pRecordId);
+javacall_ams_rms_get_next_record_id(javacall_rms_id rmsId,
+                                    javacall_rms_record_id* pRecordId);
 
 /** @} */
 
