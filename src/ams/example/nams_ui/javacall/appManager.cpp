@@ -2096,7 +2096,7 @@ static TVI_INFO* GetWindowMenuItemData(UINT commandId) {
     for (int i = 0; i < numberOfItems; i++) {
         BOOL fRes = GetMenuItemInfo(hWindowSubmenu, i, TRUE, &mii);
         if (fRes && mii.wID == commandId) {
-            return (void*)mii.dwItemData;
+            return (TVI_INFO*)mii.dwItemData;
         }
     }
 
