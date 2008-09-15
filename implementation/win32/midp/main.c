@@ -217,7 +217,7 @@ javacall_bool mainArgumentsHandle(int argc, char *argv[]) {
         javanotify_install_midlet_from_filesystem (utf16Path, pathLen, 0);
         */
 
-        java_ams_install_suite(1, JAVACALL_INSTALL_SRC_ANY, utf16Path,
+        javanotify_ams_install_suite(1, JAVACALL_INSTALL_SRC_ANY, utf16Path,
             JAVACALL_INVALID_STORAGE_ID, JAVACALL_INVALID_FOLDER_ID);
     } else if ((argc == 4) && (strcmp(argv[1], "install_wap") == 0)) {
         {
@@ -259,8 +259,9 @@ javacall_bool mainArgumentsHandle(int argc, char *argv[]) {
                 i++;
                 jadPathUnicode[i + 7] = 0;
 
-                java_ams_install_suite(1, JAVACALL_INSTALL_SRC_ANY, jadPathUnicode,
-                    JAVACALL_INVALID_STORAGE_ID, JAVACALL_INVALID_FOLDER_ID);
+                javanotify_ams_install_suite(1, JAVACALL_INSTALL_SRC_ANY,
+                    jadPathUnicode, JAVACALL_INVALID_STORAGE_ID,
+                        JAVACALL_INVALID_FOLDER_ID);
             }
         }
     } else if ((argc >= 3) && (strcmp(argv[1], "install_content") == 0)) {

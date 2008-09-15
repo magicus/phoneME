@@ -204,8 +204,8 @@ javacall_result javacall_ams_get_rms_path(javacall_suite_id suiteID,
  * @return <tt>JAVACALL_OK</tt> on success, 
  *         <tt>JAVACALL_FAIL</tt>
  */
-javacall_result java_ams_get_domain(javacall_suite_id suiteID,
-                                    javacall_ams_domain* pDomain) {
+javacall_result javacall_ams_get_domain(javacall_suite_id suiteID,
+                                        javacall_ams_domain* pDomain) {
     if (nams_get_midlet_domain(suiteID, pDomain) != JAVACALL_OK) {
         return JAVACALL_FAIL;
     }
@@ -226,8 +226,8 @@ javacall_result java_ams_get_domain(javacall_suite_id suiteID,
  * @return <tt>JAVACALL_OK</tt> on success, an error code otherwise
  */
 javacall_result
-java_ams_suite_get_permissions(javacall_suite_id suiteID,
-                               javacall_ams_permission_val* pPermissions) {
+javacall_ams_suite_get_permissions(javacall_suite_id suiteID,
+                                   javacall_ams_permission_val* pPermissions) {
     if (nams_get_midlet_permissions(suiteID, pPermissions) != JAVACALL_OK) {
         return JAVACALL_FAIL;
     }
@@ -243,9 +243,9 @@ java_ams_suite_get_permissions(javacall_suite_id suiteID,
  *         <tt>JAVACALL_FAIL</tt>
  */
 javacall_result
-java_ams_set_permission(javacall_suite_id suiteID,
-                        javacall_ams_permission permission,
-                        javacall_ams_permission_val value) {
+javacall_ams_set_permission(javacall_suite_id suiteID,
+                            javacall_ams_permission permission,
+                            javacall_ams_permission_val value) {
     if (nams_set_midlet_permission(suiteID, permission, value) != JAVACALL_OK) {
         return JAVACALL_FAIL;
     }
@@ -263,8 +263,8 @@ java_ams_set_permission(javacall_suite_id suiteID,
  * @return <tt>JAVACALL_OK</tt> on success, an error code otherwise
  */
 javacall_result
-java_ams_suite_set_permissions(javacall_suite_id suiteID,
-                               javacall_ams_permission_val* pPermissions) {
+javacall_ams_suite_set_permissions(javacall_suite_id suiteID,
+                                   javacall_ams_permission_val* pPermissions) {
     int i;
     for (i = JAVACALL_AMS_PERMISSION_HTTP;
             i < JAVACALL_AMS_PERMISSION_LAST; i ++) {
@@ -285,7 +285,7 @@ java_ams_suite_set_permissions(javacall_suite_id suiteID,
  * It must be implemented at that side (Java or Platform) where the
  * application manager is located.
  *
- * After processing the request, java_ams_install_answer() must
+ * After processing the request, javanotify_ams_install_answer() must
  * be called to report the result to the installer.
  *
  * @param requestCode   identifies the requested action
@@ -300,10 +300,10 @@ java_ams_suite_set_permissions(javacall_suite_id suiteID,
  *         <tt>JAVACALL_FAIL</tt> otherwise
  */
 javacall_result
-java_ams_install_ask(javacall_ams_install_request_code requestCode,
-                     const javacall_ams_install_state* pInstallState,
-                     const javacall_ams_install_data* pRequestData) {
-    javacall_print("[NAMS] java_ams_install_ask()\n");
+javacall_ams_install_ask(javacall_ams_install_request_code requestCode,
+                         const javacall_ams_install_state* pInstallState,
+                         const javacall_ams_install_data* pRequestData) {
+    javacall_print("[NAMS] javacall_ams_install_ask()\n");
 
     return JAVACALL_OK;
 }
@@ -318,10 +318,10 @@ java_ams_install_ask(javacall_ams_install_request_code requestCode,
  *         <tt>JAVACALL_FAIL</tt>
  */
 javacall_result
-java_ams_get_suite_property(const javacall_suite_id suiteID,
-                            const javacall_utf16_string key,
-                            javacall_utf16_string value,
-                            int maxValue) {
+javacall_ams_get_suite_property(const javacall_suite_id suiteID,
+                                const javacall_utf16_string key,
+                                javacall_utf16_string value,
+                                int maxValue) {
     int   propsNum=0;
     int   i;
     int   jadLineSize;
@@ -345,7 +345,7 @@ java_ams_get_suite_property(const javacall_suite_id suiteID,
 
     if (nams_string_to_utf16(jad, strlen(jad), &uJad, strlen(jad)) !=
             JAVACALL_OK) {
-        javacall_print("[NAMS] java_ams_get_suite_property "
+        javacall_print("[NAMS] javacall_ams_get_suite_property "
                        "nams_string_to_utf16 error\n");
         return JAVACALL_FAIL;
     }
@@ -463,9 +463,9 @@ java_ams_get_suite_property(const javacall_suite_id suiteID,
  *         <tt>JAVACALL_FAIL</tt>
  */
 javacall_result
-java_ams_get_suite_id(const javacall_utf16_string vendorName,
-                      const javacall_utf16_string suiteName,
-                      javacall_suite_id *pSuiteID) {
+javacall_ams_get_suite_id(const javacall_utf16_string vendorName,
+                          const javacall_utf16_string suiteName,
+                          javacall_suite_id *pSuiteID) {
     int index;
     char key1[] = "MIDlet-Vendor";
     char key2[] = "MIDlet-Name";
@@ -478,14 +478,14 @@ java_ams_get_suite_id(const javacall_utf16_string vendorName,
 
     if (nams_string_to_utf16(key1, strlen(key1), &uKey1, strlen(key1)) !=
             JAVACALL_OK) {
-        javacall_print("[NAMS] java_ams_get_suite_id "
+        javacall_print("[NAMS] javacall_ams_get_suite_id "
                        "nams_string_to_utf16 error\n");
         return JAVACALL_FAIL;
     }
 
     if (nams_string_to_utf16(key2, strlen(key2), &uKey2, strlen(key2)) !=
             JAVACALL_OK) {
-        javacall_print("[NAMS] java_ams_get_suite_id "
+        javacall_print("[NAMS] javacall_ams_get_suite_id "
                        "nams_string_to_utf16 error\n");
         return JAVACALL_FAIL;
     }
@@ -497,7 +497,7 @@ java_ams_get_suite_id(const javacall_utf16_string vendorName,
                         cSuiteName, MAX_VALUE_NAME_LEN, NULL, NULL);
 
     for (index = 1; index < MAX_MIDLET_NUM; index ++) {
-        if (java_ams_get_suite_property(index, uKey1, value,
+        if (javacall_ams_get_suite_property(index, uKey1, value,
                 MAX_VALUE_NAME_LEN) != JAVACALL_OK) {
             continue;
         }
@@ -509,7 +509,7 @@ java_ams_get_suite_id(const javacall_utf16_string vendorName,
             continue;
         }
 
-        if (java_ams_get_suite_property(index, uKey2, value,
+        if (javacall_ams_get_suite_property(index, uKey2, value,
                 MAX_VALUE_NAME_LEN) != JAVACALL_OK) {
             WideCharToMultiByte(CP_ACP, WC_COMPOSITECHECK, value, -1,
                                 cValue, MAX_VALUE_NAME_LEN, NULL, NULL);
@@ -550,10 +550,11 @@ java_ams_get_suite_id(const javacall_utf16_string vendorName,
  * @param totalPercentDone percents completed (0 - 100), -1 if unknown
  */
 void
-java_ams_install_report_progress(const javacall_ams_install_state* pInstallState,
-                                 javacall_ams_install_status installStatus,
-                                 int currStepPercentDone, int totalPercentDone) {
-    javacall_print("[NAMS] java_ams_install_report_progress()\n");
+javacall_ams_install_report_progress(
+        const javacall_ams_install_state* pInstallState,
+        javacall_ams_install_status installStatus,
+        int currStepPercentDone, int totalPercentDone) {
+    javacall_print("[NAMS] javacall_ams_install_report_progress()\n");
 
     (void)pInstallState;
     (void)installStatus;

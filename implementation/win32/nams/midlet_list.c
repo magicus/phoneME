@@ -76,7 +76,7 @@ void nams_set_midlet_static_info(int appID, MidletNode* pInfo)
 
     nams_string_to_utf16(key, strlen(key), &uKey, strlen(key));
 
-    if (java_ams_suite_get_property(appID, uKey, uValue,
+    if (javanotify_ams_suite_get_property(appID, uKey, uValue,
             MAX_VALUE_NAME_LEN) == JAVACALL_OK)
     {
         pendingMidletInfo.domain = JAVACALL_AMS_DOMAIN_THIRDPARTY;

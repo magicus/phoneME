@@ -725,7 +725,7 @@ JCDECL_APPMGR_SUITESTORE(suite_free_suite_ids)(javacall_suite_id* pSuiteIds,
  * @return <tt>JAVACALL_OK</tt> on success, an error code otherwise
  */
 javacall_result
-JCDECL_APPMGR_SUITESTORE(get_midlets_info)(
+JCDECL_APPMGR_SUITESTORE(suite_get_midlets_info)(
                                    javacall_suite_id suiteId,
                                    javacall_ams_midlet_info** ppMidletsInfo,
                                    int* pNumberOfEntries);
