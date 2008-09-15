@@ -50,8 +50,8 @@ public class DatagramRecord {
 
     /** Initializes the record structures. */
     public DatagramRecord() {
-	keys = new Vector(INITIAL_SIZE);
-	vals = new Vector(INITIAL_SIZE);
+    keys = new Vector(INITIAL_SIZE);
+    vals = new Vector(INITIAL_SIZE);
     }
 
     /**
@@ -62,19 +62,19 @@ public class DatagramRecord {
      * @see #setHeader
      */
     public String getHeader(String key) {
-	int idx;
-	if (key == null) {
-	    throw new NullPointerException();
-	}
-	for (idx = 0; idx < keys.size(); idx++) {
-	    if (key.equals(keys.elementAt(idx)))
-		break;
-	}
-	String rv = null;
-	if (idx != keys.size()) {
-	    rv = (String)vals.elementAt(idx);
-	}
-	return rv;
+        int idx;
+        if (key == null) {
+            throw new NullPointerException();
+        }
+        for (idx = 0; idx < keys.size(); idx++) {
+            if (key.equals(keys.elementAt(idx)))
+                break;
+        }
+        String rv = null;
+        if (idx != keys.size()) {
+            rv = (String)vals.elementAt(idx);
+        }
+        return rv;
     }
 
     /**
@@ -90,22 +90,22 @@ public class DatagramRecord {
      * @see #getHeader
      */
     public synchronized String setHeader(String key, String value) {
-	int idx;
-	for (idx = 0; idx < keys.size(); idx++) {
-	    if (key.equals(keys.elementAt(idx)))
-		break;
-	}
+        int idx;
+        for (idx = 0; idx < keys.size(); idx++) {
+            if (key.equals(keys.elementAt(idx)))
+                break;
+        }
 
-	String rv = null;
-	if (idx == keys.size()) {
-	    // If I don't have this, add it and return null
-	    keys.addElement(key);
-	    vals.addElement(value);
-	} else {
-	    // Else replace it and return the old one.
-	    rv = (String)vals.elementAt(idx);
-	    vals.setElementAt(value, idx);
-	}
+        String rv = null;
+        if (idx == keys.size()) {
+            // If I don't have this, add it and return null
+            keys.addElement(key);
+            vals.addElement(value);
+        } else {
+            // Else replace it and return the old one.
+            rv = (String)vals.elementAt(idx);
+            vals.setElementAt(value, idx);
+        }
         return rv;
     }
 
@@ -115,7 +115,7 @@ public class DatagramRecord {
      * @see #setData
      */
     public byte[] getData() {
-	return data;
+        return data;
     }
 
     /**
@@ -124,7 +124,7 @@ public class DatagramRecord {
      * @see #getData
      */
     public void setData(byte[] buffer) {
-	data = buffer;
+        data = buffer;
     }
 
     /**
@@ -138,77 +138,77 @@ public class DatagramRecord {
      * @see #setData
      */
     public boolean addData(DatagramRecord rec) throws IOException {
-	/*
-	 * Make sure the the segments are part of the same
-	 * transaction. (Same send time should be sufficient)
-	 */
-	if (rec != null && !rec.getHeader("Date").equals(getHeader("Date"))) {
-	    throw new IOException("Bad fragmentation");
-	}
+        /*
+         * Make sure the the segments are part of the same
+         * transaction. (Same send time should be sufficient)
+         */
+        if (rec != null && !rec.getHeader("Date").equals(getHeader("Date"))) {
+            throw new IOException("Bad fragmentation");
+        }
 
-	String total = (rec != null ? rec.getHeader("Total-Size") : null);
-	String cl = getHeader("Content-Length");
+        String total = (rec != null ? rec.getHeader("Total-Size") : null);
+        String cl = getHeader("Content-Length");
 
-	String fr = getHeader("Fragment-Size");
+        String fr = getHeader("Fragment-Size");
 
-	int len = 0;
-	int contentlength = 0;
-	try {
-	    contentlength = Integer.parseInt(cl);
-	} catch (NumberFormatException npe) {
-	    // TEMP - ignore npe errors
-	}
-	if (total == null) {
-	    len = data.length;
-	    /*
-	     * Make the buffer large enough to handle a full set
-	     * of data.
-	     */
-	    byte[] newbuf = new byte[contentlength];
-	    if (data != null) {
-		System.arraycopy(data, 0, newbuf, 0, data.length);
-	    }
-	    total = String.valueOf(data.length);
-	    setHeader("Total-Size", total);
-	    data = newbuf;
+        int len = 0;
+        int contentlength = 0;
+        try {
+            contentlength = Integer.parseInt(cl);
+        } catch (NumberFormatException npe) {
+            /* IMPL_NOTE - ignore npe errors */
+        }
+        if (total == null) {
+            len = data.length;
+            /*
+             * Make the buffer large enough to handle a full set
+             * of data.
+             */
+            byte[] newbuf = new byte[contentlength];
+            if (data != null) {
+                System.arraycopy(data, 0, newbuf, 0, data.length);
+            }
+            total = String.valueOf(data.length);
+            setHeader("Total-Size", total);
+            data = newbuf;
 
-	} else {
-	    int offset = 0;
-	    int size = 0;
-	    try {
-		offset = Integer.parseInt(getHeader("Fragment-Offset"));
-	    } catch (NumberFormatException npe) {
-		// TEMP - ignore npe errors
-	    }
-	    try {
-		len = Integer.parseInt(getHeader("Fragment-Size"));
-	    } catch (NumberFormatException npe) {
-		// TEMP - ignore npe errors
-	    }
+        } else {
+            int offset = 0;
+            int size = 0;
+            try {
+                offset = Integer.parseInt(getHeader("Fragment-Offset"));
+            } catch (NumberFormatException npe) {
+                /* IMPL_NOTE - ignore npe errors */
+            }
+            try {
+                len = Integer.parseInt(getHeader("Fragment-Size"));
+            } catch (NumberFormatException npe) {
+                /* IMPL_NOTE - ignore npe errors */
+            }
 
-	    /* Use the previous record's data buffer. */
-	    byte[] newbuf = rec.getData();
+            /* Use the previous record's data buffer. */
+            byte[] newbuf = rec.getData();
 
-	    /*
-	     * Copy the data into the expanded buffer
-	     * and update the cumulative size.
-	     */
+            /*
+             * Copy the data into the expanded buffer
+             * and update the cumulative size.
+             */
 
-	    System.arraycopy(data, 0, newbuf, offset, len);
-	    data = newbuf;
+            System.arraycopy(data, 0, newbuf, offset, len);
+            data = newbuf;
 
-	    try {
-		size = Integer.parseInt(total);
-		size += len;
-	    } catch (NumberFormatException npe) {
-		// TEMP - ignore npe errors
-	    }
-	    total = String.valueOf(size);
-	    setHeader("Total-Size", total);
-	    len = size;
-	}
+            try {
+                size = Integer.parseInt(total);
+                size += len;
+            } catch (NumberFormatException npe) {
+                /* IMPL_NOTE - ignore npe errors */
+            }
+            total = String.valueOf(size);
+            setHeader("Total-Size", total);
+            len = size;
+        }
 
-	return len == contentlength;
+        return len == contentlength;
     }
 
     /**
@@ -219,52 +219,52 @@ public class DatagramRecord {
      * @return true if this is a multi-part transmission
      */
     public boolean parseData(byte[] buf, int length) {
-	/*
-	 * Walk through the datagram message looking for
-	 * specific header values.
-	 */
-	int colon = 0;
-	int endofline = 0;
-	int startofline = 0;
-	String field = null;
-	String value = null;
-	int  segments = 0;
-	boolean colon_found = false;
+        /*
+         * Walk through the datagram message looking for
+         * specific header values.
+         */
+        int colon = 0;
+        int endofline = 0;
+        int startofline = 0;
+        String field = null;
+        String value = null;
+        int  segments = 0;
+        boolean colon_found = false;
 
-	for (int i = 0; i < length; i++) {
-	    if (!colon_found && buf[i] == ':') {
-		colon = i;
-		colon_found = true;
-		field = new String(buf, startofline, colon - startofline);
-	    }
-	    if (buf[i] == '\n') {
-		endofline = i;
-		value = new String(buf, colon + 1,
-				   endofline - colon - 1).trim();
+        for (int i = 0; i < length; i++) {
+            if (!colon_found && buf[i] == ':') {
+                colon = i;
+                colon_found = true;
+                field = new String(buf, startofline, colon - startofline);
+            }
+            if (buf[i] == '\n') {
+                endofline = i;
+                value = new String(buf, colon + 1,
+                                   endofline - colon - 1).trim();
 
-		if (field.startsWith("Buffer")) {
-		    int startofdata = endofline + 1;
-		    data = new byte[length - startofdata];
+                if (field.startsWith("Buffer")) {
+                    int startofdata = endofline + 1;
+                    data = new byte[length - startofdata];
 
-		    for (int j = startofdata, k = 0; j < length;
-			 j++, k++, i++) {
-			data[k] = buf[j];
-		    }
+                    for (int j = startofdata, k = 0; j < length;
+                         j++, k++, i++) {
+                        data[k] = buf[j];
+                    }
 
-		} else {
-		    setHeader(field, value);
-		}
-		startofline = endofline + 1;
-		colon_found = false;
-	    }
-	}
-	try {
-	    segments = Integer.parseInt(getHeader("Segments"));
-	} catch (NumberFormatException nfe) {
-	    // TEMP - ignore formatting errors
-	}
+                } else {
+                    setHeader(field, value);
+                }
+                startofline = endofline + 1;
+                colon_found = false;
+            }
+        }
+        try {
+            segments = Integer.parseInt(getHeader("Segments"));
+        } catch (NumberFormatException nfe) {
+            /* IMPL_NOTE - ignore npe errors */
+        }
 
-	return segments > 1;
+        return segments > 1;
     }
 
     /**
@@ -274,22 +274,22 @@ public class DatagramRecord {
      * @return byte array of formatted data
      */
     public byte[] getFormattedData() {
-	ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        ByteArrayOutputStream bos = new ByteArrayOutputStream();
 
-	try {
-	    /* Put the headers in the buffer. */
-	    for (int i = 0; i < keys.size(); i++) {
-		bos.write(((String)keys.elementAt(i) + ": "
-			   + (String)vals.elementAt(i)
-			  + "\n").getBytes());
-	    }
-	    bos.write(("Buffer: \n").getBytes());
-	    bos.write(data);
-	} catch (IOException ioe) {
-	    // TEMP - ignore buffer writing errors
-	}
+        try {
+            /* Put the headers in the buffer. */
+            for (int i = 0; i < keys.size(); i++) {
+                bos.write(((String)keys.elementAt(i) + ": "
+                           + (String)vals.elementAt(i)
+                          + "\n").getBytes());
+            }
+            bos.write(("Buffer: \n").getBytes());
+            bos.write(data);
+        } catch (IOException ioe) {
+            /* IMPL_NOTE - ignore buffer writing errors */
+        }
 
-	return bos.toByteArray();
+        return bos.toByteArray();
     }
 
     /**
@@ -297,30 +297,30 @@ public class DatagramRecord {
      * @return formatted string of headers and values
      */
     public String toString() {
-	StringBuffer sb = new StringBuffer();
+        StringBuffer sb = new StringBuffer();
 
-	/* Add a line for each header. */
-	for (int i = 0; i < keys.size(); i++) {
-	    sb.append(keys.elementAt(i)
-		      + ": "
-		      + (String)vals.elementAt(i)
-		      + "\n");
-	}
+        /* Add a line for each header. */
+        for (int i = 0; i < keys.size(); i++) {
+            sb.append(keys.elementAt(i)
+                      + ": "
+                      + (String)vals.elementAt(i)
+                      + "\n");
+        }
 
-	/* Output a text buffer or placeholder to indicate binary data. */
-	if (getHeader("Content-Type").equals("text")) {
-	    String textbuf;
-	    String te = getHeader("Text-Encoding");
-	    if (te == null || te.equals("ucs2")) {
-		textbuf = TextEncoder.toString(data);
-	    } else {
-		byte[] gsmbytes = TextEncoder.decode(data);
-		textbuf = TextEncoder.toString(gsmbytes);
-	    }
-	    sb.append("Buffer: " + textbuf + "\n");
-	} else {
-	    sb.append("Buffer: (binary)\n" + new String(data) + "\n");
-	}
-	return sb.toString();
+        /* Output a text buffer or placeholder to indicate binary data. */
+        if (getHeader("Content-Type").equals("text")) {
+            String textbuf;
+            String te = getHeader("Text-Encoding");
+            if (te == null || te.equals("ucs2")) {
+                textbuf = TextEncoder.toString(data);
+            } else {
+                byte[] gsmbytes = TextEncoder.decode(data);
+                textbuf = TextEncoder.toString(gsmbytes);
+            }
+            sb.append("Buffer: " + textbuf + "\n");
+        } else {
+            sb.append("Buffer: (binary)\n" + new String(data) + "\n");
+        }
+        return sb.toString();
     }
 }

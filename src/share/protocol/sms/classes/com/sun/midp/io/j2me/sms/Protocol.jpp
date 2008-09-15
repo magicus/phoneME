@@ -131,13 +131,19 @@ public class Protocol extends ProtocolBase {
     };
 
     /**	 DCS: GSM Alphabet  */
-    protected static final int GSM_TEXT = 0;
+    public static final int GSM_TEXT = 0;
 
     /**	 DCS: Binary */
-    protected static final int GSM_BINARY = 1;
+    public static final int GSM_BINARY = 1;
 
     /**	 DCS: Unicode UCS-2 */
-    protected static final int GSM_UCS2 = 2;
+    public static final int GSM_UCS2 = 2;
+
+    /**	 Type encoding of last sent SMS message */
+    protected int messageSendType;
+
+    /**	 Type encoding of last received SMS message */
+    protected int messageRecType;
 
     /** Creates a message connection protocol handler. */
     public Protocol() {
@@ -328,12 +334,13 @@ public class Protocol extends ProtocolBase {
 	    if (length >= 0) {
 	  	String type;
 	  	boolean isTextMessage = true;
-	  	if (smsPacket.messageType == GSM_BINARY)  {
-				type = MessageConnection.BINARY_MESSAGE;
-				isTextMessage = false;
+                messageRecType = smsPacket.messageType;
+	  	if (messageRecType == GSM_BINARY)  {
+		    type = MessageConnection.BINARY_MESSAGE;
+		    isTextMessage = false;
 	        } else {
-				type = MessageConnection.TEXT_MESSAGE;
-				isTextMessage = true;
+		    type = MessageConnection.TEXT_MESSAGE;
+		    isTextMessage = true;
 	        }
 	        message = newMessage(type,
 	        	new String(ADDRESS_PREFIX
@@ -342,7 +349,7 @@ public class Protocol extends ProtocolBase {
 	        String messg = null;
 	        if (isTextMessage) {
 	            if (length > 0) {
-	        	if (smsPacket.messageType == GSM_TEXT) {
+	        	if (messageRecType == GSM_TEXT) {
 	                    messg = new String(TextEncoder.toString(
                                       TextEncoder.decode(smsPacket.message)));
 	        	} else {
@@ -397,6 +404,28 @@ public class Protocol extends ProtocolBase {
         }
         public int port = -1;
         public String host;
+    }
+
+    /**
+     * Gets the host value from message.
+     *
+     * @param     dmsg a <code>Message</code> object
+     * @return    the host value
+     */
+    protected String getMsgHost(Message dmsg) {
+        HttpUrl url = new HttpUrl(dmsg.getAddress());
+        return url.host;
+    }
+
+    /**
+     * Gets the port value from message.
+     *
+     * @param     dmsg a <code>Message</code> object
+     * @return    the port value
+     */
+    protected int getMsgPort(Message dmsg) {
+        HttpUrl url = new HttpUrl(dmsg.getAddress());
+        return url.port;
     }
 
     /**
@@ -487,14 +516,14 @@ public class Protocol extends ProtocolBase {
             throw new IllegalArgumentException("Port is out of range: " + url.port);
         }
 
-	int messageType = GSM_BINARY;
+	messageSendType = GSM_BINARY;
 	byte[] msgBuffer = null;
 
         if (dmsg instanceof TextObject)	 {
             byte[] gsm7bytes;
             msgBuffer = ((TextObject)dmsg).getBytes();
             if (url.port == 0) {
-                messageType = GSM_UCS2;
+                messageSendType = GSM_UCS2;
             } else
 	    if (msgBuffer != null) {
                 /*
@@ -503,12 +532,12 @@ public class Protocol extends ProtocolBase {
                 gsm7bytes = TextEncoder.encode(msgBuffer);
                 if (gsm7bytes != null) {
 		    msgBuffer = gsm7bytes;
-		    messageType = GSM_TEXT;
+		    messageSendType = GSM_TEXT;
                 } else {
                     /*
                      * Encoding attempt failed. Send UCS2 bytes.
                      */
-		    messageType = GSM_UCS2;
+		    messageSendType = GSM_UCS2;
                 }
 	    }
 
@@ -519,7 +548,7 @@ public class Protocol extends ProtocolBase {
 	}
 
         try {
-            send0(connHandle, messageType,
+            send0(connHandle, messageSendType,
                            url.host,
                            url.port,
 			   sourcePort,
