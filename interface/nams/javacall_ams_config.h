@@ -50,7 +50,11 @@
  *
  */
 
-#if ENABLE_NATIVE_AMS_UI
+/*
+ * IMPL_NOTE: javacall_options.h generation will be implemented later,
+ *            for now switch manually.
+ */
+#if 1 /*ENABLE_NATIVE_AMS_UI*/
 
 /*
  * Configuration for Application Manager UI on the Platform's side + all other
