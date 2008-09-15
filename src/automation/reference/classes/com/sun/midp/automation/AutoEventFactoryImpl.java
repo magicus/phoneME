@@ -28,11 +28,20 @@ package com.sun.midp.automation;
 import java.util.*;
 
 final class AutoEventFactoryImpl implements AutoEventFactory {
+    /** The one and only instance */
     private static AutoEventFactoryImpl instance = null;
 
+    /** All EventFromStringFactory instances indexed by prefix */
     private Hashtable eventFromStringFactories;
+
+    /** Event string parser */
     private AutoEventStringParser eventStringParser;
 
+    /**
+     * Gets instance of AutoEventFactoryImpl class.
+     *
+     * @return instance of AutoEventFactoryImpl class
+     */
     static final synchronized AutoEventFactoryImpl getInstance() {
         if (instance == null) {
             instance = new AutoEventFactoryImpl();
@@ -41,13 +50,16 @@ final class AutoEventFactoryImpl implements AutoEventFactory {
         return instance;
     }
 
-
-    public AutoEventSequence createFromString(String eventString)
-        throws IllegalArgumentException {
-
-        return createFromString(eventString, 0);
-    }
-
+    /**
+     * Creates event sequence from string representation.
+     *
+     * @param sequenceString string representation of event sequence
+     * @param offset offset into sequenceString
+     * @return AutoEventSequence corresponding to the specified string 
+     * representation
+     * @throws IllegalArgumentException if specified string isn't valid 
+     * string representation of events sequence
+     */
     public AutoEventSequence createFromString(String eventString, int offset) 
         throws IllegalArgumentException {
 
@@ -69,7 +81,7 @@ final class AutoEventFactoryImpl implements AutoEventFactory {
             events = f.create(eventArgs);
             seq.addEvents(events);            
 
-            curOffset = eventStringParser.getOffset(); 
+            curOffset = eventStringParser.getEndOffset(); 
             eventStringParser.parse(eventString, curOffset);
             eventPrefix = eventStringParser.getEventPrefix();
         }
@@ -77,6 +89,31 @@ final class AutoEventFactoryImpl implements AutoEventFactory {
         return seq;
     }
 
+    /**
+     * Creates event sequence from string representation.
+     *
+     * @param sequenceString string representation of event sequence
+     * @return AutoEventSequence corresponding to the specified string 
+     * representation
+     * @throws IllegalArgumentException if specified string isn't valid 
+     * string representation of events sequence
+     */
+    public AutoEventSequence createFromString(String eventString)
+        throws IllegalArgumentException {
+
+        return createFromString(eventString, 0);
+    }
+
+    /**
+     * Creates key event.
+     *
+     * @param keyCode key code not representable as character 
+     * (soft key, for example) 
+     * @param keyState key state
+     * @return AutoKeyEvent instance representing key event
+     * @throws IllegalArgumentException if some of the specified 
+     * parameters has illegal value
+     */
     public AutoKeyEvent createKeyEvent(AutoKeyCode keyCode, 
             AutoKeyState keyState) 
         throws IllegalArgumentException {
@@ -84,25 +121,54 @@ final class AutoEventFactoryImpl implements AutoEventFactory {
         return new AutoKeyEventImpl(keyCode, keyState);
     }
 
+    /**
+     * Creates key event.
+     *
+     * @param keyChar key char (letter, digit)
+     * @param keyState key state
+     * @return AutoKeyEvent representing key event
+     * @throws IllegalArgumentException if some of the specified 
+     * parameters has illegal value
+     */
     public AutoKeyEvent createKeyEvent(char keyChar, AutoKeyState keyState) 
         throws IllegalArgumentException {
 
         return new AutoKeyEventImpl(keyChar, keyState);
     }
 
+    /**
+     * Creates pen event.
+     *
+     * @param x x coord of pen tip
+     * @param y y coord of pen tip
+     * @param penState pen state
+     * @return AutoPenEvent representing pen event
+     * @throws IllegalArgumentException if some of the specified 
+     * parameters has illegal value
+     */
     public AutoPenEvent createPenEvent(int x, int y, AutoPenState penState) 
         throws IllegalArgumentException {
 
         return new AutoPenEventImpl(x, y, penState);
     }
 
+    /**
+     * Creates delay event.
+     *
+     * @param msec delay value in milliseconds
+     * @return AutoDelayEvent representing delay event
+     * @throws IllegalArgumentException if some of the specified 
+     * parameters has illegal value
+     */
     public AutoDelayEvent createDelayEvent(int msec) 
         throws IllegalArgumentException {
 
         return new AutoDelayEventImpl(msec);
     }
 
-    
+    /**
+     * Registers all AutoEventFromStringFactory factories.
+     */ 
     private void registerEventFromStringFactories() {
         AutoEventFromStringFactory f;
     
@@ -118,7 +184,7 @@ final class AutoEventFactoryImpl implements AutoEventFactory {
 
 
     /**
-     * Private constructor to prevent user from creating an instance.
+     * Private constructor to prevent creating class instances.
      */
     private AutoEventFactoryImpl() {
         eventFromStringFactories = new Hashtable();

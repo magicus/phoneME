@@ -27,13 +27,78 @@
 package com.sun.midp.automation;
 import java.util.Vector;
 
+/**
+ * Implements AutoEventSequence interface.
+ */
 final class AutoEventSequenceImpl implements AutoEventSequence {
+    /** Sequence events */
     private Vector events;
 
-    AutoEventSequenceImpl() {
-        events = new Vector();
+
+    /**
+     * Gets events in this sequence as array.
+     *
+     * @return sequence events as array
+     */
+    public AutoEvent[] getEvents() {
+        int sz = events.size();
+        AutoEvent a[] = new AutoEvent[sz];
+        for (int i = 0; i < sz; ++i) {
+            a[i] = (AutoEvent)events.elementAt(i);
+        }
+
+        return a;
     }
 
+    /**
+     * Tests if this sequence has no events.
+     *
+     * @return true if and only if this sequence has no events, 
+     * false otherwise.
+     */
+    public boolean isEmpty() {
+        return events.isEmpty();
+    }
+
+    /**
+     * Adds single event to the end of this sequence.
+     *
+     * @param event event to add
+     */
+    public void addEvents(AutoEvent event) 
+        throws IllegalArgumentException {
+
+        if (event == null) {
+            throw new IllegalArgumentException("Event is null");
+        }
+
+        events.addElement(event);
+    }
+
+    /**
+     * Adds events to the end of this sequence.
+     *
+     * @param events events to add
+     */
+    public void addEvents(AutoEvent[] arr) 
+        throws IllegalArgumentException {
+
+        if (arr == null) {
+            throw new IllegalArgumentException("Event array is null");
+        }        
+
+        int size = arr.length;
+        for (int i = 0; i < size; ++i) {
+            addEvents(arr[i]);
+        }
+    }
+
+    /**
+     * Gets string representation of this sequence which consists of string
+     * representation of individual events separated by new line character.
+     *
+     * @return string representation of this sequence
+     */
     public String toString() {
         if (isEmpty()) {
             return "";
@@ -51,40 +116,10 @@ final class AutoEventSequenceImpl implements AutoEventSequence {
         return buf.toString();
     }
 
-    public AutoEvent[] getEvents() {
-        int sz = events.size();
-        AutoEvent a[] = new AutoEvent[sz];
-        for (int i = 0; i < sz; ++i) {
-            a[i] = (AutoEvent)events.elementAt(i);
-        }
-
-        return a;
-    }
-
-    public boolean isEmpty() {
-        return events.isEmpty();
-    }
-
-    public void addEvents(AutoEvent event) 
-        throws IllegalArgumentException {
-
-        if (event == null) {
-            throw new IllegalArgumentException("Event is null");
-        }
-
-        events.addElement(event);
-    }
-
-    public void addEvents(AutoEvent[] arr) 
-        throws IllegalArgumentException {
-
-        if (arr == null) {
-            throw new IllegalArgumentException("Event array is null");
-        }        
-
-        int size = arr.length;
-        for (int i = 0; i < size; ++i) {
-            addEvents(arr[i]);
-        }
+    /**
+     * Constructor.
+     */
+    AutoEventSequenceImpl() {
+        events = new Vector();
     }
 }

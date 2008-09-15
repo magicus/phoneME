@@ -26,10 +26,47 @@
 
 package com.sun.midp.automation;
 
+/**
+ * Represents ordered sequence of events.
+ */
 public interface AutoEventSequence {
-    public String toString();
+    /**
+     * Gets events in this sequence as array.
+     *
+     * @return sequence events as array
+     */
     public AutoEvent[] getEvents();
+
+    /**
+     * Tests if this sequence has no events.
+     *
+     * @return true if and only if this sequence has no events, 
+     * false otherwise.
+     */
     public boolean isEmpty();
-    public void addEvents(AutoEvent event);
-    public void addEvents(AutoEvent[] events);
+
+    /**
+     * Adds single event to the end of this sequence.
+     *
+     * @param event event to add
+     */
+    public void addEvents(AutoEvent event) 
+        throws IllegalArgumentException;
+
+    /**
+     * Adds events to the end of this sequence.
+     *
+     * @param events events to add
+     */
+    public void addEvents(AutoEvent[] events)
+        throws IllegalArgumentException;
+
+    /**
+     * Gets string representation of this sequence which consists of string
+     * representation of individual events separated by new line character.
+     *
+     * @return string representation of this sequence
+     */
+    public String toString();
+
 }

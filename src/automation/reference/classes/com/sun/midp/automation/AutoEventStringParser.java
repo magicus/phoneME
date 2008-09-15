@@ -27,11 +27,14 @@
 package com.sun.midp.automation;
 import java.util.*;
 
+/**
+ * Parses event string, breaking it into prefix and arg_name/arg_value pairs.
+ */
 final class AutoEventStringParser {
-    private final static int EOL = -1;
-    private final static String TOKEN_COLON = ":";
-    private final static String TOKEN_COMMA = ",";
-    private final static String TOKEN_NEWLINE = "\n";
+    private static final int EOL = -1;
+    private static final String TOKEN_COLON = ":";
+    private static final String TOKEN_COMMA = ",";
+    private static final String TOKEN_NEWLINE = "\n";
 
     private String eventString;
     private int eventStringLength;   
@@ -44,6 +47,9 @@ final class AutoEventStringParser {
         reset();
     }
 
+    /**
+     * Parses event string, breaking it into prefix and arg/arg_value pairs.
+     */
     void parse(String s, int offset) {
         if (s == null) {
             throw new IllegalArgumentException("String is null");
@@ -66,15 +72,22 @@ final class AutoEventStringParser {
         doParse();
     }
 
+    /**
+     * Gets prefix.
+     */
     String getEventPrefix() {
         return eventPrefix;
     }
 
+    /**
+     * Gets arg_name/arg_value pairs in form of Hashtable 
+     * with "arg_name" used as key.
+     */
     Hashtable getEventArgs() {
         return eventArgs;
     }
 
-    int getOffset() {
+    int getEndOffset() {
         return curOffset;
     }
 

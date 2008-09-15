@@ -35,7 +35,7 @@ import java.util.*;
 import com.sun.midp.midletsuite.MIDletSuiteLockedException;
 import com.sun.midp.midletsuite.MIDletSuiteCorruptedException;
 
-public class Runner extends MIDlet implements Runnable {
+public class Player extends MIDlet implements Runnable {
     private boolean debug = true;
     private String midletURI = null;
     private String scriptURI = null;
@@ -48,7 +48,7 @@ public class Runner extends MIDlet implements Runnable {
     private AutoMIDlet midlet = null;
     private AutoEventSequence script = null;    
 
-    public Runner() {
+    public Player() {
         automation = Automation.getInstance();
         storage = automation.getStorage();
     }
