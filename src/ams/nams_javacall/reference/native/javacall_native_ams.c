@@ -61,7 +61,7 @@ void midp_listener_ams_midlet_ui_state_changed(const NamsEventData* pEventData);
  * @return <tt>JAVACALL_OK</tt> if successful,
  *         <tt>JAVACALL_FAIL</tt> otherwise
  */
-javacall_result java_ams_system_start() {
+javacall_result javanotify_ams_system_start() {
     MIDPError res = midp_system_initialize();
     if (res != ALL_OK) {
         return JAVACALL_FAIL;
@@ -85,7 +85,7 @@ javacall_result java_ams_system_start() {
  * @return <tt>JAVACALL_OK</tt> if successful,
  *         <tt>JAVACALL_FAIL</tt> otherwise
  */
-javacall_result java_ams_system_stop() {
+javacall_result javanotify_ams_system_stop() {
     MIDPError res = midp_system_stop();
     return (res == ALL_OK) ? JAVACALL_OK : JAVACALL_FAIL;
 }
@@ -105,11 +105,11 @@ javacall_result java_ams_system_stop() {
  *       by <link>javacall_ams_midlet_stateChanged</link>
  */
 javacall_result
-java_ams_midlet_start(javacall_suite_id suiteId,
-                      javacall_app_id appId,
-                      javacall_const_utf16_string className,
-                      const javacall_midlet_runtime_info* pRuntimeInfo) {
-    return java_ams_midlet_start_with_args(suiteId, appId,
+javanotify_ams_midlet_start(javacall_suite_id suiteId,
+                            javacall_app_id appId,
+                            javacall_const_utf16_string className,
+                            const javacall_midlet_runtime_info* pRuntimeInfo) {
+    return javanotify_ams_midlet_start_with_args(suiteId, appId,
         className, NULL, 0, pRuntimeInfo);
 }
 
@@ -131,13 +131,13 @@ java_ams_midlet_start(javacall_suite_id suiteId,
  *        <link>javacall_ams_midlet_stateChanged</link>
  */
 javacall_result
-java_ams_midlet_start_with_args(javacall_suite_id suiteId,
-                                javacall_app_id appId,
-                                javacall_const_utf16_string className,
-                                javacall_const_utf16_string *args,
-                                int argsNum,
-                                const javacall_midlet_runtime_info*
-                                    pRuntimeInfo) {
+javanotify_ams_midlet_start_with_args(javacall_suite_id suiteId,
+                                      javacall_app_id appId,
+                                      javacall_const_utf16_string className,
+                                      javacall_const_utf16_string *args,
+                                      int argsNum,
+                                      const javacall_midlet_runtime_info*
+                                      pRuntimeInfo) {
     MIDPError res;                                          
     MidletRuntimeInfo mri, *pMri = NULL;
     javacall_result jcRes;
@@ -248,8 +248,8 @@ java_ams_midlet_start_with_args(javacall_suite_id suiteId,
  *       <link>javacall_ams_midlet_state_changed</link>
  */
 javacall_result
-java_ams_midlet_shutdown(javacall_app_id appId,
-                         int timeoutMillSeconds) {
+javanotify_ams_midlet_shutdown(javacall_app_id appId,
+                               int timeoutMillSeconds) {
     MIDPError res = midp_midlet_destroy((jint)appId, (jint)timeoutMillSeconds);
     return (res == ALL_OK) ? JAVACALL_OK : JAVACALL_FAIL;                                   
 }
@@ -266,7 +266,7 @@ java_ams_midlet_shutdown(javacall_app_id appId,
  *       <link>javacall_ams_midlet_stateChanged</link>
  */
 javacall_result
-java_ams_midlet_switch_foreground(javacall_app_id appId) {
+javanotify_ams_midlet_switch_foreground(javacall_app_id appId) {
     MIDPError res = midp_midlet_set_foreground((jint)appId);
     return (res == ALL_OK) ? JAVACALL_OK : JAVACALL_FAIL;
 }
@@ -280,7 +280,7 @@ java_ams_midlet_switch_foreground(javacall_app_id appId) {
  * @note the real status of operation will be notified by
  *       <link>javacall_ams_midlet_stateChanged</link>
  */
-javacall_result java_ams_midlet_switch_background() {
+javacall_result javanotify_ams_midlet_switch_background() {
     MIDPError res = midp_midlet_set_foreground(MIDLET_APPID_NO_FOREGROUND);
     return (res == ALL_OK) ? JAVACALL_OK : JAVACALL_FAIL;
 }
@@ -294,7 +294,7 @@ javacall_result java_ams_midlet_switch_background() {
  * @note the real status of operation will be notified by
  *       <link>javacall_ams_midlet_stateChanged</link>
  */
-javacall_result java_ams_midlet_pause(javacall_app_id appId) {
+javacall_result javanotify_ams_midlet_pause(javacall_app_id appId) {
     MIDPError res = midp_midlet_pause((jint)appId);
     return (res == ALL_OK) ? JAVACALL_OK : JAVACALL_FAIL;
 }
@@ -308,7 +308,7 @@ javacall_result java_ams_midlet_pause(javacall_app_id appId) {
  * @note the real status of operation will be notified by
  *       <link>javacall_ams_midlet_stateChanged</link>
  */
-javacall_result java_ams_midlet_resume(javacall_app_id appId) {
+javacall_result javanotify_ams_midlet_resume(javacall_app_id appId) {
     MIDPError res = midp_midlet_resume((jint)appId);
     return (res == ALL_OK) ? JAVACALL_OK : JAVACALL_FAIL;
 }
@@ -325,8 +325,8 @@ javacall_result java_ams_midlet_resume(javacall_app_id appId) {
  *                     <tt>JAVACALL_FAIL</tt> otherwise
  */
 javacall_result
-java_ams_midlet_get_app_suite_id(javacall_app_id appId,
-                                 javacall_suite_id* pSuiteId) {
+javanotify_ams_midlet_get_app_suite_id(javacall_app_id appId,
+                                       javacall_suite_id* pSuiteId) {
     MIDPError status;
     SuiteIdType midpSuiteId;
 
@@ -357,7 +357,7 @@ java_ams_midlet_get_app_suite_id(javacall_app_id appId,
  *                     <tt>JAVACALL_FAIL</tt> otherwise
  */
 javacall_result
-java_ams_midlet_request_runtime_info(javacall_app_id appId) {
+javanotify_ams_midlet_request_runtime_info(javacall_app_id appId) {
     MIDPError res = midp_midlet_request_runtime_info((jint)appId);
     return (res == ALL_OK) ? JAVACALL_OK : JAVACALL_FAIL;
 }
@@ -370,7 +370,7 @@ java_ams_midlet_request_runtime_info(javacall_app_id appId) {
  *         <tt>JAVACALL_FAIL</tt>
  */
 javacall_result
-java_ams_create_resource_cache(javacall_suite_id suiteId) {
+javanotify_ams_create_resource_cache(javacall_suite_id suiteId) {
     (void) suiteId;
     return JAVACALL_FAIL;
 }
@@ -394,7 +394,7 @@ void midp_listener_ams_operation_completed(const NamsEventData* pEventData) {
         }
     }
     
-    java_ams_operation_completed(
+    javacall_ams_operation_completed(
         midp_operation2javacall(pEventData->reason),
         (javacall_app_id)pEventData->appId,
         pResult);
@@ -411,7 +411,7 @@ void midp_listener_ams_midlet_state_changed(const NamsEventData* pEventData) {
         return;
     }
 
-    java_ams_midlet_state_changed(
+    javacall_ams_midlet_state_changed(
         midp_midlet_state2javacall(pEventData->state),
         (javacall_app_id)pEventData->appId,
         midp_midlet_event_reason2javacall(pEventData->reason));
@@ -429,7 +429,7 @@ void midp_listener_ams_midlet_ui_state_changed(
         return;
     }
 
-    java_ams_midlet_ui_state_changed(
+    javacall_ams_midlet_ui_state_changed(
         midp_midlet_ui_state2javacall(pEventData->state),
         (javacall_app_id)pEventData->appId,
         midp_midlet_event_reason2javacall(pEventData->reason));

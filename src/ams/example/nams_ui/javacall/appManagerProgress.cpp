@@ -301,7 +301,7 @@ ProgressDlgProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam) {
            MessageBox(hwndDlg, szBuf, g_szTitle, MB_ICONERROR | MB_OK);
        }
 
-       // Free memeory alloced by us in java_ams_operation_completed
+       // Free memeory alloced by us in javacall_ams_operation_completed
        javacall_free(pResult);
 
        CloseInstallerDlg(hwndDlg);

@@ -46,11 +46,11 @@ extern "C" {
  * @param pResult pointer to a static buffer containing
  *                operation-dependent result
  */
-void java_ams_operation_completed(javacall_opcode operation,
-                                  const javacall_app_id appId,
-                                  void* pResult) {
+void javacall_ams_operation_completed(javacall_opcode operation,
+                                      const javacall_app_id appId,
+                                      void* pResult) {
     wprintf(
-        _T(">>> java_ams_operation_completed(), operation = %d, appId = %d\n"),
+        _T(">>> javacall_ams_operation_completed(), operation = %d, appId = %d\n"),
             (int)operation, (int)appId);
 
     if (operation == JAVACALL_OPCODE_INSTALL_SUITE) {
@@ -78,11 +78,11 @@ void java_ams_operation_completed(javacall_opcode operation,
  *         <tt>JAVACALL_FALSE</tt> otherwise
  */
 javacall_bool
-java_ams_is_domain_trusted(javacall_suite_id suiteId,
-                           javacall_const_utf16_string domain) {
+javacall_ams_is_domain_trusted(javacall_suite_id suiteId,
+                               javacall_const_utf16_string domain) {
     (void)suiteId;
 
-    wprintf(_T(">>> java_ams_is_domain_trusted()\n"));
+    wprintf(_T(">>> javacall_ams_is_domain_trusted()\n"));
 
     return JAVACALL_FALSE;
 }
@@ -103,10 +103,11 @@ java_ams_is_domain_trusted(javacall_suite_id suiteId,
  * @param totalPercentDone percents completed (0 - 100), -1 if unknown
  */
 void
-java_ams_install_report_progress(const javacall_ams_install_state* pInstallState,
-                                 javacall_ams_install_status installStatus,
-                                 int currStepPercentDone, int totalPercentDone) {
-    wprintf(_T(">>> java_ams_install_report_progress(): %d%%, total: %d%%\n"),
+javacall_ams_install_report_progress(
+                             const javacall_ams_install_state* pInstallState,
+                             javacall_ams_install_status installStatus,
+                             int currStepPercentDone, int totalPercentDone) {
+    wprintf(_T(">>> javacall_ams_install_report_progress(): %d%%, total: %d%%\n"),
             currStepPercentDone, totalPercentDone);
 
     WPARAM wParam = (WPARAM)MAKELONG((WORD)currStepPercentDone,
@@ -136,9 +137,9 @@ java_ams_install_report_progress(const javacall_ams_install_state* pInstallState
  * @param appId the ID of the state-changed application
  * @param reason rhe reason why the state change has happened
  */
-void java_ams_midlet_state_changed(javacall_lifecycle_state state,
-                                   javacall_app_id appId,
-                                   javacall_change_reason reason) {
+void javacall_ams_midlet_state_changed(javacall_lifecycle_state state,
+                                       javacall_app_id appId,
+                                       javacall_change_reason reason) {
     wprintf(_T(">>> State changed: ID  = %d, state = %d\n"), appId, state);
 
     if (state == JAVACALL_LIFECYCLE_MIDLET_SHUTDOWN) {
@@ -160,9 +161,9 @@ void java_ams_midlet_state_changed(javacall_lifecycle_state state,
  * @param appID The ID of the state-changed suite
  * @param reason The reason why the state change has happened
  */
-void java_ams_midlet_ui_state_changed(javacall_midlet_ui_state state,
-                                      javacall_app_id appId,
-                                      javacall_change_reason reason) {
+void javacall_ams_midlet_ui_state_changed(javacall_midlet_ui_state state,
+                                          javacall_app_id appId,
+                                          javacall_change_reason reason) {
     int appIndex = 0;
 
     switch (state) {
@@ -190,7 +191,7 @@ void java_ams_midlet_ui_state_changed(javacall_midlet_ui_state state,
  * It must be implemented at that side (SJWC or Platform) where the
  * application manager is located.
  *
- * After processing the request, java_ams_install_answer() must
+ * After processing the request, javacall_ams_install_answer() must
  * be called to report the result to the installer.
  *
  * @param requestCode   identifies the requested action
@@ -205,10 +206,10 @@ void java_ams_midlet_ui_state_changed(javacall_midlet_ui_state state,
  *         <tt>JAVACALL_FAIL</tt> otherwise
  */
 javacall_result
-java_ams_install_ask(javacall_ams_install_request_code requestCode,
-                     const javacall_ams_install_state* pInstallState,
-                     const javacall_ams_install_data* pRequestData) {
-    wprintf(_T(">>> java_ams_install_ask(), requestCode = %d\n"), requestCode);
+javacall_ams_install_ask(javacall_ams_install_request_code requestCode,
+                         const javacall_ams_install_state* pInstallState,
+                         const javacall_ams_install_data* pRequestData) {
+    wprintf(_T(">>> javacall_ams_install_ask(), requestCode = %d\n"), requestCode);
 
 
     BOOL fRes = PostProgressMessage(WM_JAVA_AMS_INSTALL_ASK,

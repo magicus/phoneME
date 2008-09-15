@@ -71,7 +71,7 @@ javacall_permission_val2midp(javacall_ams_permission_val jcPermissionVal);
  *         <tt>JAVACALL_FAIL</tt> otherwise
  */
 javacall_result
-java_ams_suite_storage_init() {
+javanotify_ams_suite_storage_init() {
     return midp_error2javacall(midp_suite_storage_init());
 }
 
@@ -82,7 +82,7 @@ java_ams_suite_storage_init() {
  *         <tt>JAVACALL_FAIL</tt> otherwise
  */
 javacall_result
-java_ams_suite_storage_cleanup() {
+javanotify_ams_suite_storage_cleanup() {
     midp_suite_storage_cleanup();
     return JAVACALL_OK;
 }
@@ -97,10 +97,11 @@ java_ams_suite_storage_cleanup() {
  * @return javacall_utf16_string representation of the given suite ID
  */
 const javacall_utf16_string
-java_ams_suite_suiteid2javacall_string(javacall_suite_id value) {
+javanotify_ams_suite_suiteid2javacall_string(javacall_suite_id value) {
     static javacall_utf16_string jsSuiteId = {0};
-    //const pcsl_string* pPcslStrVal =
-    //    midp_suiteid2pcsl_string((SuiteIdType)value);
+    /* IMPL_NOTE: need to implement! */
+    /*const pcsl_string* pPcslStrVal =
+        midp_suiteid2pcsl_string((SuiteIdType)value);*/
     return jsSuiteId;
 }
 
@@ -115,7 +116,7 @@ java_ams_suite_suiteid2javacall_string(javacall_suite_id value) {
  *         or NULL in case of error
  */
 const char*
-java_ams_suite_suiteid2chars(javacall_suite_id value) {
+javanotify_ams_suite_suiteid2chars(javacall_suite_id value) {
     return midp_suiteid2chars((SuiteIdType)value);
 }
 
@@ -132,7 +133,7 @@ java_ams_suite_suiteid2chars(javacall_suite_id value) {
  *         but it's corrupted
  */
 javacall_result
-java_ams_suite_exists(javacall_suite_id suiteId) {
+javanotify_ams_suite_exists(javacall_suite_id suiteId) {
     return midp_error2javacall(midp_suite_exists((SuiteIdType)suiteId));
 }
 
@@ -155,10 +156,10 @@ java_ams_suite_exists(javacall_suite_id suiteId) {
  * </pre>
  */
 javacall_result
-java_ams_suite_get_class_path(javacall_suite_id suiteId,
-                              javacall_storage_id storageId,
-                              javacall_bool checkSuiteExists,
-                              javacall_utf16_string* pClassPath) {
+javanotify_ams_suite_get_class_path(javacall_suite_id suiteId,
+                                    javacall_storage_id storageId,
+                                    javacall_bool checkSuiteExists,
+                                    javacall_utf16_string* pClassPath) {
     pcsl_string pcslStrClassPath;
     MIDPError status = midp_suite_get_class_path((SuiteIdType)suiteId,
                           (StorageIdType)storageId,
@@ -200,9 +201,9 @@ java_ams_suite_get_class_path(javacall_suite_id suiteId,
  * </pre>
 */
 javacall_result
-java_ams_suite_get_bin_app_path(javacall_suite_id suiteId,
-                                javacall_storage_id storageId,
-                                javacall_utf16_string* pClassPath) {
+javanotify_ams_suite_get_bin_app_path(javacall_suite_id suiteId,
+                                      javacall_storage_id storageId,
+                                      javacall_utf16_string* pClassPath) {
     pcsl_string pcslStrClassPath;
     MIDPError status = midp_suite_get_bin_app_path((SuiteIdType)suiteId,
                           (StorageIdType)storageId,
@@ -229,8 +230,8 @@ java_ams_suite_get_bin_app_path(javacall_suite_id suiteId,
  * @return <tt>JAVACALL_OK</tt> on success, an error code otherwise
  */
 javacall_result
-java_ams_suite_get_storage(javacall_suite_id suiteId,
-                           javacall_storage_id* pStorageId) {
+javanotify_ams_suite_get_storage(javacall_suite_id suiteId,
+                                 javacall_storage_id* pStorageId) {
     StorageIdType midpStorageId;
     MIDPError status = midp_suite_get_suite_storage((SuiteIdType)suiteId,
                                                     &midpStorageId);
@@ -257,8 +258,8 @@ java_ams_suite_get_storage(javacall_suite_id suiteId,
  * @return <tt>JAVACALL_OK</tt> on success, an error code otherwise
  */
 javacall_result
-java_ams_storage_get_root(javacall_storage_id storageId,
-                          javacall_utf16_string* pStorageRootPath) {
+javanotify_ams_storage_get_root(javacall_storage_id storageId,
+                                javacall_utf16_string* pStorageRootPath) {
     MIDPError status;                          
     const pcsl_string* pRoot = storage_get_root(storageId);
     if (pRoot == NULL || pRoot == &PCSL_STRING_EMPTY) {
@@ -281,10 +282,10 @@ java_ams_storage_get_root(javacall_storage_id storageId,
  * @return <tt>JAVACALL_OK</tt> on success, an error code otherwise
  */
 javacall_result
-java_ams_suite_get_property(javacall_suite_id suiteId,
-                            javacall_const_utf16_string key,
-                            javacall_utf16_string value,
-                            int maxValueLen) {
+javanotify_ams_suite_get_property(javacall_suite_id suiteId,
+                                  javacall_const_utf16_string key,
+                                  javacall_utf16_string value,
+                                  int maxValueLen) {
     pcsl_string pcslStrKey, pcslStrValue;
     MIDPError status;
 
@@ -314,9 +315,9 @@ java_ams_suite_get_property(javacall_suite_id suiteId,
  * @return <tt>JAVACALL_OK</tt> on success, an error code otherwise
  */
 javacall_result
-java_ams_suite_get_id(javacall_const_utf16_string vendor,
-                      javacall_const_utf16_string name,
-                      javacall_suite_id* pSuiteId) {
+javanotify_ams_suite_get_id(javacall_const_utf16_string vendor,
+                            javacall_const_utf16_string name,
+                            javacall_suite_id* pSuiteId) {
     SuiteIdType midpSuiteId;
     MIDPError status;
     pcsl_string pcslStrVendor, pcslStrName;
@@ -354,7 +355,7 @@ java_ams_suite_get_id(javacall_const_utf16_string vendor,
  * @return <tt>JAVACALL_OK</tt> on success, an error code otherwise
  */
 javacall_result
-java_ams_suite_create_id(javacall_suite_id* pSuiteId) {
+javanotify_ams_suite_create_id(javacall_suite_id* pSuiteId) {
     SuiteIdType midpSuiteId;
     MIDPError status;
 
@@ -384,9 +385,9 @@ java_ams_suite_create_id(javacall_suite_id* pSuiteId) {
  * @return <tt>JAVACALL_OK</tt> on success, an error code otherwise
  */
 javacall_result
-java_ams_suite_get_install_info(javacall_suite_id suiteId,
-                                javacall_ams_suite_install_info*
-                                    pInstallInfo) {
+javanotify_ams_suite_get_install_info(javacall_suite_id suiteId,
+                                      javacall_ams_suite_install_info*
+                                          pInstallInfo) {
     MidpInstallInfo midpInstallInfo;
     MIDPError status;
 
@@ -453,12 +454,12 @@ java_ams_suite_get_install_info(javacall_suite_id suiteId,
             pInstallInfo->pVerifyHash = NULL;
         }
 
-        // TODO !!!
+        /* IMPL_NOTE: to be implemented !!!
         pInstallInfo->jadProps.numberOfProperties = 0;
-//            midpInstallInfo.jadProps.numberOfProperties;
+        /*     midpInstallInfo.jadProps.numberOfProperties; */
 
         pInstallInfo->jarProps.numberOfProperties = 0;
-//            midpInstallInfo.jarProps.numberOfProperties;
+        /*    midpInstallInfo.jarProps.numberOfProperties; */
     } while (0);
 
     midp_free_install_info(&midpInstallInfo);
@@ -472,9 +473,9 @@ java_ams_suite_get_install_info(javacall_suite_id suiteId,
  * Does nothing if passed NULL.
  *
  * @param pInstallInfo installation information returned from
- *                     java_ams_suite_get_install_info
+ *                     javanotify_ams_suite_get_install_info
  */
-void java_ams_suite_free_install_info(
+void javanotify_ams_suite_free_install_info(
         javacall_ams_suite_install_info* pInstallInfo) {
     if (pInstallInfo != NULL) {
         int i;
@@ -553,10 +554,12 @@ void java_ams_suite_free_install_info(
  * @return <tt>JAVACALL_OK</tt> on success, an error code otherwise
  */
 javacall_result
-java_ams_suite_store_suite(const javacall_ams_suite_install_info* pInstallInfo,
+javanotify_ams_suite_store_suite(
+                           const javacall_ams_suite_install_info* pInstallInfo,
                            const javacall_ams_suite_settings* pSuiteSettings,
                            const javacall_ams_suite_info* pSuiteInfo) {
-    return JAVACALL_OK;
+    /* IMPL_NOTE: to be implemented! */
+    return JAVACALL_FAIL;
 }
 
 /*------------- Suite Storage: interface to Application Manager -------------*/
@@ -572,7 +575,7 @@ java_ams_suite_store_suite(const javacall_ams_suite_install_info* pInstallInfo,
  *         <tt>JAVACALL_FAIL</tt> otherwise
  */
 javacall_result
-java_ams_suite_get_suites_number(int* pNumberOfSuites) {
+javanotify_ams_suite_get_suites_number(int* pNumberOfSuites) {
     return midp_error2javacall(midp_get_number_of_suites(pNumberOfSuites));
 }
 
@@ -582,7 +585,7 @@ java_ams_suite_get_suites_number(int* pNumberOfSuites) {
  *
  * Note that memory for the suite IDs is allocated by the callee,
  * and the caller is responsible for freeing it using
- * java_ams_suite_free_ids().
+ * javanotify_ams_suite_free_ids().
  *
  * @param ppSuiteIds      [out] on exit will hold an address of the array
  *                              containing suite IDs
@@ -594,8 +597,8 @@ java_ams_suite_get_suites_number(int* pNumberOfSuites) {
  *         <tt>JAVACALL_IO_ERROR</tt> if an IO error
  */
 javacall_result
-java_ams_suite_get_suite_ids(javacall_suite_id** ppSuiteIds,
-                             int* pNumberOfSuites) {
+javanotify_ams_suite_get_suite_ids(javacall_suite_id** ppSuiteIds,
+                                   int* pNumberOfSuites) {
     int numberOfSuites;
     SuiteIdType* pSuites;
     MIDPError status;
@@ -634,14 +637,14 @@ java_ams_suite_get_suite_ids(javacall_suite_id** ppSuiteIds,
 
 /**
  * App Manager invokes this function to free a list of suite IDs allocated
- * during the previous call of java_ams_suite_get_suite_ids().
+ * during the previous call of javanotify_ams_suite_get_suite_ids().
  *
  * @param pSuiteIds points to an array of suite IDs
  * @param numberOfSuites number of elements in pSuites
  */
 void
-java_ams_suite_free_suite_ids(javacall_suite_id* pSuiteIds,
-                              int numberOfSuites) {
+javanotify_ams_suite_free_suite_ids(javacall_suite_id* pSuiteIds,
+                                    int numberOfSuites) {
     if (pSuiteIds != NULL && numberOfSuites > 0) {
         javacall_free(pSuiteIds);                              
     }
@@ -659,9 +662,9 @@ java_ams_suite_free_suite_ids(javacall_suite_id* pSuiteIds,
  * @return <tt>JAVACALL_OK</tt> on success, an error code otherwise
  */
 javacall_result
-java_ams_suite_get_midlets_info(javacall_suite_id suiteId,
-                                javacall_ams_midlet_info** ppMidletsInfo,
-                                int* pNumberOfEntries) {
+javanotify_ams_suite_get_midlets_info(javacall_suite_id suiteId,
+                                      javacall_ams_midlet_info** ppMidletsInfo,
+                                      int* pNumberOfEntries) {
     javacall_ams_midlet_info* pTmpMidletInfo;
     MidletSuiteData* pMidpSuiteData;
     MIDPError status;
@@ -693,21 +696,21 @@ java_ams_suite_get_midlets_info(javacall_suite_id suiteId,
 
         err = pcsl_string_dup(&midletStr, &midletNAttrName);
 	    if (err != PCSL_STRING_OK) {
-            java_ams_suite_free_midlets_info(*ppMidletsInfo, n);
+            javanotify_ams_suite_free_midlets_info(*ppMidletsInfo, n);
             return JAVACALL_FAIL;
         }
 
         err = pcsl_string_convert_from_jint(n + 1, &midletNum);
 	    if (err != PCSL_STRING_OK) {
 	        pcsl_string_free(&midletNAttrName);
-            java_ams_suite_free_midlets_info(*ppMidletsInfo, n);
+            javanotify_ams_suite_free_midlets_info(*ppMidletsInfo, n);
             return JAVACALL_FAIL;
         }
 
         err = pcsl_string_append(&midletNAttrName, &midletNum);
 	    if (err != PCSL_STRING_OK) {
 	        pcsl_string_free(&midletNum);
-            java_ams_suite_free_midlets_info(*ppMidletsInfo, n);
+            javanotify_ams_suite_free_midlets_info(*ppMidletsInfo, n);
             return JAVACALL_FAIL;
         }
 
@@ -721,7 +724,7 @@ java_ams_suite_get_midlets_info(javacall_suite_id suiteId,
             /* NOT_FOUND means OK: the last MIDlet-<n> attribute was handled */
             if (status != NOT_FOUND) {
                 pcsl_string_free(&midletNAttrValue);
-                java_ams_suite_free_midlets_info(*ppMidletsInfo, n);
+                javanotify_ams_suite_free_midlets_info(*ppMidletsInfo, n);
                 return midp_error2javacall(status);
             }
             break;
@@ -763,8 +766,8 @@ java_ams_suite_get_midlets_info(javacall_suite_id suiteId,
  * @param numberOfEntries number of elements in pMidletsInfo
  */
 void
-java_ams_suite_free_midlets_info(javacall_ams_midlet_info* pMidletsInfo,
-                                 int numberOfEntries) {
+javanotify_ams_suite_free_midlets_info(javacall_ams_midlet_info* pMidletsInfo,
+                                       int numberOfEntries) {
     if (pMidletsInfo != NULL && numberOfEntries > 0) {
         int i;
         for (i = 0; i < numberOfEntries; i++) {
@@ -787,14 +790,14 @@ java_ams_suite_free_midlets_info(javacall_ams_midlet_info* pMidletsInfo,
  * @param ppSuiteInfo [out] on exit will hold a pointer to a structure where the
  *                          information about the given midlet suite is stored;
  *                          the caller is responsible for freeing this structure
- *                          using java_ams_suite_free_info() when it is not
+ *                          using javanotify_ams_suite_free_info() when it is not
  *                          needed anymore
  *
  * @return <tt>JAVACALL_OK</tt> on success, an error code otherwise
  */
 javacall_result
-java_ams_suite_get_info(javacall_suite_id suiteId,
-                        javacall_ams_suite_info** ppSuiteInfo) {
+javanotify_ams_suite_get_info(javacall_suite_id suiteId,
+                              javacall_ams_suite_info** ppSuiteInfo) {
     MIDPError status;
     MidletSuiteData* pMidpSuiteData;
     javacall_ams_suite_info* pTmpSuiteInfo;
@@ -927,7 +930,7 @@ java_ams_suite_get_info(javacall_suite_id suiteId,
  * @param pSuiteInfo points to a structure holding midlet suite info
  */
 void
-java_ams_suite_free_info(javacall_ams_suite_info* pSuiteInfo) {
+javanotify_ams_suite_free_info(javacall_ams_suite_info* pSuiteInfo) {
     if (pSuiteInfo != NULL) {
         FREE_JC_STRING(pSuiteInfo->midletClassName)
         FREE_JC_STRING(pSuiteInfo->displayName)
@@ -949,8 +952,8 @@ java_ams_suite_free_info(javacall_ams_suite_info* pSuiteInfo) {
  * @return <tt>JAVACALL_OK</tt> on success, an error code otherwise
  */
 javacall_result
-java_ams_suite_get_domain(javacall_suite_id suiteId,
-                          javacall_ams_domain* pDomainId) {
+javanotify_ams_suite_get_domain(javacall_suite_id suiteId,
+                                javacall_ams_domain* pDomainId) {
     return JAVACALL_OK;
 }
 
@@ -969,7 +972,7 @@ java_ams_suite_get_domain(javacall_suite_id suiteId,
  *         OUT_OF_MEMORY if out of memory
  */
 javacall_result
-java_ams_suite_disable(javacall_suite_id suiteId) {
+javanotify_ams_suite_disable(javacall_suite_id suiteId) {
     return midp_error2javacall(midp_disable_suite((SuiteIdType)suiteId));
 }
 
@@ -988,7 +991,7 @@ java_ams_suite_disable(javacall_suite_id suiteId) {
  *         OUT_OF_MEMORY if out of memory
  */
 javacall_result
-java_ams_suite_enable(javacall_suite_id suiteId) {
+javanotify_ams_suite_enable(javacall_suite_id suiteId) {
     return midp_error2javacall(midp_enable_suite((SuiteIdType)suiteId));
 }
 
@@ -1004,8 +1007,8 @@ java_ams_suite_enable(javacall_suite_id suiteId) {
  * @return <tt>JAVACALL_OK</tt> on success, an error code otherwise
  */
 javacall_result
-java_ams_suite_get_permissions(javacall_suite_id suiteId,
-                               javacall_ams_permission_val* pPermissions) {
+javanotify_ams_suite_get_permissions(javacall_suite_id suiteId,
+                                     javacall_ams_permission_val* pPermissions) {
     MIDPError status;
     char* pszError = NULL;
     jbyte* pMidpPermissions;
@@ -1050,8 +1053,8 @@ java_ams_suite_get_permissions(javacall_suite_id suiteId,
 }
 
 /**
- * Implementation for java_ams_suite_set_permission and
- * java_ams_suite_set_permissions.
+ * Implementation for javanotify_ams_suite_set_permission and
+ * javanotify_ams_suite_set_permissions.
  *
  * @param suiteId       [in]  unique ID of the MIDlet suite
  * @param pPermissions  [in]  array of JAVACALL_AMS_NUMBER_OF_PERMISSIONS
@@ -1154,9 +1157,9 @@ set_permissions_impl(javacall_suite_id suiteId,
  * @return <tt>JAVACALL_OK</tt> on success, an error code otherwise
  */
 javacall_result
-java_ams_suite_set_permission(javacall_suite_id suiteId,
-                              javacall_ams_permission permission,
-                              javacall_ams_permission_val value) {
+javanotify_ams_suite_set_permission(javacall_suite_id suiteId,
+                                    javacall_ams_permission permission,
+                                    javacall_ams_permission_val value) {
     return set_permissions_impl(suiteId, NULL, permission, value);
 }
 
@@ -1171,8 +1174,8 @@ java_ams_suite_set_permission(javacall_suite_id suiteId,
  * @return <tt>JAVACALL_OK</tt> on success, an error code otherwise
  */
 javacall_result
-java_ams_suite_set_permissions(javacall_suite_id suiteId,
-                               javacall_ams_permission_val* pPermissions) {
+javanotify_ams_suite_set_permissions(javacall_suite_id suiteId,
+                                     javacall_ams_permission_val* pPermissions) {
     if (pPermissions == NULL) {
         return JAVACALL_FAIL;
     }
@@ -1190,7 +1193,7 @@ java_ams_suite_set_permissions(javacall_suite_id suiteId,
  * @return <tt>JAVACALL_OK</tt> on success, an error code otherwise
  */
 javacall_result
-java_ams_suite_remove(javacall_suite_id suiteId) {
+javanotify_ams_suite_remove(javacall_suite_id suiteId) {
     return midp_error2javacall(midp_remove_suite((SuiteIdType)suiteId));
 }
 
@@ -1204,8 +1207,8 @@ java_ams_suite_remove(javacall_suite_id suiteId) {
  * @return <tt>JAVACALL_OK</tt> on success, an error code otherwise
  */
 javacall_result
-java_ams_suite_change_storage(javacall_suite_id suiteId,
-                              javacall_storage_id newStorageId) {
+javanotify_ams_suite_change_storage(javacall_suite_id suiteId,
+                                    javacall_storage_id newStorageId) {
     return midp_error2javacall(midp_change_suite_storage( 
         (SuiteIdType)suiteId, (StorageIdType)newStorageId));
 }
@@ -1214,7 +1217,7 @@ java_ams_suite_change_storage(javacall_suite_id suiteId,
  * App Manager invokes this function to check if the suite with the given ID
  * is trusted.
  *
- * This is just a helper method, java_ams_suite_get_info()
+ * This is just a helper method, javanotify_ams_suite_get_info()
  * also can be used for this purpose.
  *
  * @param suiteId unique ID of the MIDlet suite
@@ -1223,7 +1226,7 @@ java_ams_suite_change_storage(javacall_suite_id suiteId,
  *         <tt>JAVACALL_FALSE</tt> otherwise
  */
 javacall_bool
-java_ams_suite_is_preinstalled(javacall_suite_id suiteId) {
+javanotify_ams_suite_is_preinstalled(javacall_suite_id suiteId) {
     MidletSuiteData* pMidpSuiteData = get_suite_data((SuiteIdType)suiteId);
     if (pMidpSuiteData == NULL) {
         return JAVACALL_FALSE;
@@ -1242,7 +1245,7 @@ java_ams_suite_is_preinstalled(javacall_suite_id suiteId) {
  * @return number of bytes of storage the suite is using or less than
  *         0 if out of memory
  */
-long java_ams_suite_get_storage_size(javacall_suite_id suiteId) {
+long javanotify_ams_suite_get_storage_size(javacall_suite_id suiteId) {
     return midp_get_suite_storage_size((SuiteIdType)suiteId);
 }
 
@@ -1258,8 +1261,8 @@ long java_ams_suite_get_storage_size(javacall_suite_id suiteId) {
  * @return <tt>JAVACALL_OK</tt> on success, an error code otherwise
  */
 javacall_result
-java_ams_suite_check_suites_integrity(javacall_bool fullCheck,
-                                      javacall_bool delCorruptedSuites) {
+javanotify_ams_suite_check_suites_integrity(javacall_bool fullCheck,
+                                            javacall_bool delCorruptedSuites) {
     return midp_error2javacall(midp_check_suites_integrity(
         (fullCheck == JAVACALL_TRUE), (delCorruptedSuites == JAVACALL_TRUE)));
 }
@@ -1277,8 +1280,8 @@ java_ams_suite_check_suites_integrity(javacall_bool fullCheck,
  * @return <tt>JAVACALL_OK</tt> on success, an error code otherwise
  */
 javacall_result
-java_ams_suite_get_all_folders_info(javacall_ams_folder_info** ppFoldersInfo,
-                                    int* pNumberOfEntries) {
+javanotify_ams_suite_get_all_folders_info(
+    javacall_ams_folder_info** ppFoldersInfo, int* pNumberOfEntries) {
 #if ENABLE_AMS_FOLDERS
     MIDPError status;
     javacall_ams_folder_info* pTmpFoldersInfo;
@@ -1343,8 +1346,8 @@ java_ams_suite_get_all_folders_info(javacall_ams_folder_info** ppFoldersInfo,
  * @param numberOfEntries number of elements in pFoldersInfo
  */
 void
-java_ams_suite_free_all_folders_info(javacall_ams_folder_info* pFoldersInfo,
-                                     int numberOfEntries) {
+javanotify_ams_suite_free_all_folders_info(
+        javacall_ams_folder_info* pFoldersInfo, int numberOfEntries) {
     if (pFoldersInfo != NULL && numberOfEntries > 0) {
         int i;
         for (i = 0; i < numberOfEntries; i++) {
@@ -1362,7 +1365,7 @@ java_ams_suite_free_all_folders_info(javacall_ams_folder_info* pFoldersInfo,
  *
  * Note that memory for the out parameter pFolderInfo and its fields is
  * allocated by the callee. The caller is responsible for freeing it using
- * java_ams_suite_free_folder_info().
+ * javanotify_ams_suite_free_folder_info().
  *
  * @param folderId     [in]  unique ID of the folder
  * @param ppFolderInfo [out] on exit will hold a pointer to a structure
@@ -1371,14 +1374,15 @@ java_ams_suite_free_all_folders_info(javacall_ams_folder_info* pFoldersInfo,
  * @return <tt>JAVACALL_OK</tt> on success, an error code otherwise
  */
 javacall_result
-java_ams_suite_get_folder_info(javacall_folder_id folderId,
-                               javacall_ams_folder_info** ppFolderInfo) {
+javanotify_ams_suite_get_folder_info(javacall_folder_id folderId,
+                                     javacall_ams_folder_info** ppFolderInfo) {
     /* IMPL_NOTE: the implementation should be optimized */
     javacall_result res;
     javacall_ams_folder_info* pAllFoldersInfo;
     int foldersNum, i;
 
-    res = java_ams_suite_get_all_folders_info(&pAllFoldersInfo, &foldersNum);
+    res = javanotify_ams_suite_get_all_folders_info(&pAllFoldersInfo,
+                                                    &foldersNum);
     if (res != JAVACALL_OK) {
         return res;
     }
@@ -1404,7 +1408,7 @@ java_ams_suite_get_folder_info(javacall_folder_id folderId,
         }
     }
 
-    java_ams_suite_free_all_folders_info(pAllFoldersInfo, foldersNum);
+    javanotify_ams_suite_free_all_folders_info(pAllFoldersInfo, foldersNum);
 
     return res;
 }
@@ -1416,7 +1420,7 @@ java_ams_suite_get_folder_info(javacall_folder_id folderId,
  * @param pFolderInfo [in] a pointer to the structure that must be freed
  */
 void
-java_ams_suite_free_folder_info(javacall_ams_folder_info* pFolderInfo) {
+javanotify_ams_suite_free_folder_info(javacall_ams_folder_info* pFolderInfo) {
     if (pFolderInfo != NULL) {
         if (pFolderInfo->folderName != NULL) {
             javacall_free(pFolderInfo->folderName);
@@ -1431,7 +1435,7 @@ java_ams_suite_free_folder_info(javacall_ams_folder_info* pFolderInfo) {
  *
  * Note that memory for the suite IDs is allocated by the callee,
  * and the caller is responsible for freeing it using
- * java_ams_suite_free_ids().
+ * javanotify_ams_suite_free_ids().
  *
  * @param folderId        [in]  unique ID of the folder
  * @param ppSuiteIds      [out] on exit will hold an address of the array
@@ -1445,16 +1449,16 @@ java_ams_suite_free_folder_info(javacall_ams_folder_info* pFolderInfo) {
  *         <tt>JAVACALL_FAIL</tt> if other error
  */
 javacall_result
-java_ams_suite_get_suites_in_folder(javacall_folder_id folderId,
-                                    javacall_suite_id** ppSuiteIds,
-                                    int* pNumberOfSuites) {
+javanotify_ams_suite_get_suites_in_folder(javacall_folder_id folderId,
+                                          javacall_suite_id** ppSuiteIds,
+                                          int* pNumberOfSuites) {
     if (ppSuiteIds == NULL || pNumberOfSuites == NULL) {
         return JAVACALL_FAIL; 
     }
 
     if (folderId == JAVACALL_ROOT_FOLDER_ID) {
-        return java_ams_suite_get_suite_ids(ppSuiteIds,
-                                            pNumberOfSuites);
+        return javanotify_ams_suite_get_suite_ids(ppSuiteIds,
+                                                  pNumberOfSuites);
     } else {
         MidletSuiteData *pMidpSuiteData, *pSaveSuiteData;
         int i, n;
@@ -1530,8 +1534,8 @@ java_ams_suite_get_suites_in_folder(javacall_folder_id folderId,
  * @return <tt>JAVACALL_OK</tt> on success, an error code otherwise
  */
 javacall_result
-java_ams_suite_get_folder(javacall_suite_id suiteId,
-                          javacall_folder_id* pSuiteFolderId) {
+javanotify_ams_suite_get_folder(javacall_suite_id suiteId,
+                                javacall_folder_id* pSuiteFolderId) {
     MidletSuiteData* pMidpSuiteData;
 
     if (pSuiteFolderId == NULL) {
@@ -1562,8 +1566,8 @@ java_ams_suite_get_folder(javacall_suite_id suiteId,
  * @return <tt>JAVACALL_OK</tt> on success, an error code otherwise
  */
 javacall_result
-java_ams_suite_move_to_folder(javacall_suite_id suiteId,
-                              javacall_folder_id newFolderId) {
+javanotify_ams_suite_move_to_folder(javacall_suite_id suiteId,
+                                    javacall_folder_id newFolderId) {
     return midp_error2javacall(midp_move_suite_to_folder(
         (SuiteIdType)suiteId, (FolderIdType)newFolderId));
 
@@ -1593,10 +1597,11 @@ java_ams_suite_move_to_folder(javacall_suite_id suiteId,
  * </pre>
  */
 javacall_result
-java_ams_suite_read_secure_resource(javacall_suite_id suiteId,
-                                    javacall_const_utf16_string resourceName,
-                                    javacall_uint8** ppReturnValue,
-                                    javacall_int32* pValueSize) {
+javanotify_ams_suite_read_secure_resource(
+                                   javacall_suite_id suiteId,
+                                   javacall_const_utf16_string resourceName,
+                                   javacall_uint8** ppReturnValue,
+                                   javacall_int32* pValueSize) {
     MIDPError status;
     pcsl_string pcslStrResName;
     jint jintValueSize;
@@ -1636,10 +1641,11 @@ java_ams_suite_read_secure_resource(javacall_suite_id suiteId,
  * </pre>
  */
 javacall_result
-java_ams_suite_write_secure_resource(javacall_suite_id suiteId,
-                           javacall_const_utf16_string resourceName,
-                           javacall_uint8* pValue,
-                           javacall_int32 valueSize) {
+javanotify_ams_suite_write_secure_resource(
+                                   javacall_suite_id suiteId,
+                                   javacall_const_utf16_string resourceName,
+                                   javacall_uint8* pValue,
+                                   javacall_int32 valueSize) {
     MIDPError status;
     pcsl_string pcslStrResName;
 

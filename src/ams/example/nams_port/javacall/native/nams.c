@@ -43,9 +43,9 @@
  * @param pResult Pointer to a static buffer containing
  *                operation-dependent result
  */
-void java_ams_operation_completed(javacall_opcode operation,
-                                  const javacall_app_id appID,
-                                  void* pResult) {
+void javacall_ams_operation_completed(javacall_opcode operation,
+                                      const javacall_app_id appID,
+                                      void* pResult) {
 }
 
 /**
@@ -63,9 +63,9 @@ void java_ams_operation_completed(javacall_opcode operation,
  * @param appID The ID of the state-changed suite
  * @param reason The reason why the state change has happened
  */
-void java_ams_midlet_state_changed(javacall_lifecycle_state state,
-                                   javacall_app_id appID,
-                                   javacall_change_reason reason) {
+void javacall_ams_midlet_state_changed(javacall_lifecycle_state state,
+                                       javacall_app_id appID,
+                                       javacall_change_reason reason) {
 }
                                       
 /**
@@ -82,9 +82,9 @@ void java_ams_midlet_state_changed(javacall_lifecycle_state state,
  * @param appID The ID of the state-changed suite
  * @param reason The reason why the state change has happened
  */
-void java_ams_midlet_ui_state_changed(javacall_midlet_ui_state state,
-                                      javacall_app_id appID,
-                                      javacall_change_reason reason) {
+void javacall_ams_midlet_ui_state_changed(javacall_midlet_ui_state state,
+                                          javacall_app_id appID,
+                                          javacall_change_reason reason) {
 }
 
 /**
@@ -107,8 +107,8 @@ void java_ams_midlet_ui_state_changed(javacall_midlet_ui_state state,
  *         <tt>JAVACALL_FAIL</tt>
  */
 javacall_result
-java_ams_get_rms_path(javacall_suite_id suiteId,
-                      javacall_utf16_string* pRmsPath) {
+javacall_ams_get_rms_path(javacall_suite_id suiteId,
+                          javacall_utf16_string* pRmsPath) {
     return JAVACALL_OK;
 }
 
@@ -212,7 +212,7 @@ java_ams_get_suite_id(javacall_const_utf16_string vendorName,
  *         <tt>JAVACALL_FAIL</tt>
  */
 javacall_result
-java_ams_get_resource_cache_path(javacall_suite_id suiteID,
-                                 javacall_utf16_string* pCachePath) {
+javacall_ams_get_resource_cache_path(javacall_suite_id suiteID,
+                                     javacall_utf16_string* pCachePath) {
     return JAVACALL_OK;
 }

@@ -294,9 +294,9 @@ KNIDECL(com_sun_midp_installer_InstallerPeerMIDlet_reportFinished0) {
     jcInstallData.installStatus = JAVACALL_INSTALL_STATUS_COMPLETED;
     jcInstallData.suiteId = (javacall_suite_id)suiteId;
 
-    java_ams_operation_completed(JAVACALL_OPCODE_INSTALL_SUITE,
-                                 (javacall_app_id)appId,
-                                 &jcInstallData);
+    javacall_ams_operation_completed(JAVACALL_OPCODE_INSTALL_SUITE,
+                                     (javacall_app_id)appId,
+                                     &jcInstallData);
 
     KNI_EndHandles();
 
@@ -332,9 +332,9 @@ KNIDECL(com_sun_midp_installer_InstallerPeerMIDlet_notifyRequestHandled0) {
         operationCode = JAVACALL_OPCODE_IS_OCSP_ENABLED;
     }
 
-    java_ams_operation_completed(operationCode,
-                                 (javacall_app_id)appId,
-                                 &jcResult);
+    javacall_ams_operation_completed(operationCode,
+                                     (javacall_app_id)appId,
+                                     &jcResult);
 
     KNI_ReturnVoid();
 }

@@ -74,6 +74,11 @@
 
 extern "C" char* _phonenum = "1234567"; // global for javacall MMS subsystem
 
+/*
+ * IMPL_NOTE: onyl needed to compile with WMA emulator.
+ */
+extern "C" javacall_result try_process_wma_emulator(javacall_handle handle);
+
 // The main window class name.
 static TCHAR g_szWindowClass[] = _T("NAMS");
 
@@ -184,6 +189,9 @@ getTopbarBuffer(int* screenWidth, int* screenHeight) {
 
 //------------------------------------------------------------------------------
 
+/**
+ * Shows a splash screen.
+ */
 static void ShowSplashScreen() {
     g_hSplashScreenBmp = (HBITMAP)LoadImage(g_hInstance,
                                             SPLASH_SCREEN_FILE,
@@ -205,23 +213,36 @@ static void ShowSplashScreen() {
  * @return the exit value (1 if OK)
  */
 extern "C" javacall_result JavaTaskImpl(int argc, char* argv[]) {
-    javacall_result res = java_ams_system_start();
+    javacall_result res = javanotify_ams_system_start();
 
     wprintf(_T("SJWC exited, code: %d\n"), (int)res);
 
     return res;
 }
 
+/**
+ * Thread function where Java runs.
+ *
+ * @lParam not used
+ *
+ * @return always 0
+ */
 DWORD WINAPI javaThread(LPVOID lpParam) {
     JavaTaskImpl(0, NULL);
     return 0; 
 } 
 
-BOOL ProcessExists(LPCTSTR cszName)
-{
-   HANDLE hMutex = CreateMutex (NULL, TRUE, cszName);
-   if (GetLastError() == ERROR_ALREADY_EXISTS)
-   {
+/**
+ * Checks if another copy of the Application Manager is already running.
+ *
+ * @param cszName name of this Application Manager  
+ *
+ * @return TRUE if a running copy of the Application Manager already exists,
+ *         FALSE otherwise
+ */
+BOOL ProcessExists(LPCTSTR cszName) {
+   HANDLE hMutex = CreateMutex(NULL, TRUE, cszName);
+   if (GetLastError() == ERROR_ALREADY_EXISTS) {
       CloseHandle(hMutex);
       return TRUE;
    }
@@ -230,6 +251,21 @@ BOOL ProcessExists(LPCTSTR cszName)
 
 
 #if 1
+/**
+ * Program entry point.
+ *
+ * @param hInstance     [in] handle to the current instance of the application
+ * @param hPrevInstance [in] handle to the previous instance of the application
+ * @param lpCmdLine     [in] pointer to a null-terminated string that specifies
+ *                           the command line for the application, excluding the
+ *                           program name
+ * @param nShowCmd      [in] specifies how the window is to be shown
+ *
+ * @return the exit value contained in that message?s wParam parameter indicates
+ *         success, and that the function terminates when it receives a WM_QUIT
+ *         message. Zero indicates that the function terminates before entering
+ *         the message loop.
+ */
 int WINAPI WinMain(HINSTANCE hInstance,
                    HINSTANCE hPrevInstance,
                    LPSTR lpCmdLine,
@@ -377,7 +413,11 @@ int main(int argc, char* argv[]) {
 }
 
 /**
+ * Creates a toolbar.
  *
+ * @param hWndParent handle of the tollbar parent window
+ *
+ * @return handle of the created toolbar window if succeeded, NULL otherwise
  */
 static HWND CreateMainToolbar(HWND hWndParent) {
     RECT rcClient;  // dimensions of client area 
@@ -469,6 +509,11 @@ static HWND CreateMainToolbar(HWND hWndParent) {
     return hWndToolbar;
 }
 
+/**
+ * Creates the main window.
+ *
+ * @return handle of the created window if succeeded, NULL if failed
+ */
 static HWND CreateMainView() {
     HWND hWnd;
     WNDCLASSEX wcex;
@@ -517,34 +562,40 @@ static HWND CreateMainView() {
     return hWnd;
 }
 
+/**
+ * Retrieves the default window procedure of the tree control.
+ *
+ * @return pointer to the default window procedure of the tree control  
+ */
 WNDPROC GetDefTreeWndProc() {
     return g_DefTreeWndProc;
 }
 
+/**
+ * Initializes Java AMS subsystems.
+ */
 static void InitAms() {
-    javacall_result res = java_ams_suite_storage_init();
+    javacall_result res = javanotify_ams_suite_storage_init();
     if (res == JAVACALL_FAIL) {
         wprintf(_T("ERROR: Init of suite storage fail!\n"));
     }
 }
 
+/**
+ * Finalizes Java AMS subsystems.
+ */
 static void CleanupAms() {
-    javacall_result res = java_ams_suite_storage_cleanup();
+    javacall_result res = javanotify_ams_suite_storage_cleanup();
     if (res == JAVACALL_FAIL) {
         wprintf(_T("ERROR: Cleanup of suite storage fail!\n"));
     }
 }
 
+/**
+ * Loads the background image and the menus.
+ */
 static void InitWindows() {
     // Load backround image, just ignore if loading fails
-    /*HRSRC hRes = FindResource(NULL, MAKEINTRESOURCE(IDB_MIDLET_TREE_BG), RT_BITMAP);
-    if (!hRes) {
-        DWORD res = GetLastError();
-        wprintf(_T("ERROR: LoadResource() res: %d\n"), res);
-    }
-    g_hMidletTreeBgBmp = (HBITMAP)LoadResource(NULL, hRes);*/
-
-//   g_hMidletTreeBgBmp = LoadBitmap(g_hInstance, MAKEINTRESOURCE(IDB_MIDLET_TREE_BG));
     g_hMidletTreeBgBmp = (HBITMAP)LoadImage(g_hInstance,
                                             DEF_BACKGROUND_FILE,
                                             IMAGE_BITMAP,
@@ -557,7 +608,8 @@ static void InitWindows() {
     }
 
     // Load context menu shown for a MIDlet item in the tree view
-    g_hMidletPopupMenu = LoadMenu(g_hInstance, MAKEINTRESOURCE(ID_MENU_POPUP_MIDLET));
+    g_hMidletPopupMenu =
+        LoadMenu(g_hInstance, MAKEINTRESOURCE(ID_MENU_POPUP_MIDLET));
     if (!g_hMidletPopupMenu) {
         MessageBox(NULL,
             _T("Can't load MIDlet popup menu!"),
@@ -584,6 +636,9 @@ static void InitWindows() {
     }
 }
 
+/**
+ * Frees the resources allocated for the menus.
+ */
 static void CleanupWindows() {
     // Clean up resources allocated for MIDlet popup menu 
     DestroyMenu(g_hMidletPopupMenu);
@@ -601,6 +656,12 @@ static void CleanupWindows() {
     UnregisterClass(g_szWindowClass, g_hInstance);
 }
 
+/**
+ * Frees resources allocated for tree nodes.
+ *
+ * @param hwndTV window handle of the tree view control
+ * @param DefWndProc the original window procedure of the tree view control
+ */
 static void CleanupTreeView(HWND hwndTV, WNDPROC DefWndProc) {
     // IMPL_NOTE: memory allocated by the application is freed in MainWndProc
     // by handling WM_NOTIFY message
@@ -612,6 +673,13 @@ static void CleanupTreeView(HWND hwndTV, WNDPROC DefWndProc) {
     }
 }
 
+/**
+ * Frees resources allocated for tree nodes.
+ *
+ * @param hWndParent handle of the parent window for the tree view control
+ *
+ * @return handle of the new window if succeeded, NULL if failed
+ */
 static HWND CreateMidletTreeView(HWND hWndParent) {
     RECT rcClient;  // dimensions of client area 
     HWND hwndTV;    // handle to tree-view control 
@@ -665,6 +733,9 @@ static HWND CreateMidletTreeView(HWND hWndParent) {
     return hwndTV;
 }
 
+/**
+ *
+ */
 static void SetImageList(HWND hwndTV, UINT* uResourceIds, UINT uResourceNum) {
 
     HIMAGELIST hTreeImageList = ImageList_Create(
@@ -699,6 +770,9 @@ static void SetImageList(HWND hwndTV, UINT* uResourceIds, UINT uResourceNum) {
     }
 }
 
+/**
+ *
+ */
 static void ShowMidletTreeView(HWND hWnd, BOOL fShow) {
     if (fShow) {
         // Hide the window
@@ -733,6 +807,9 @@ static void ShowMidletTreeView(HWND hWnd, BOOL fShow) {
     }
 }
 
+/**
+ *
+ */
 static HWND CreateTreeDialog(HWND hWndParent, WORD wDialogIDD, WORD wViewIDC,
         WNDPROC ViewWndProc) {
 
@@ -838,6 +915,9 @@ static HWND CreateTreeDialog(HWND hWndParent, WORD wDialogIDD, WORD wViewIDC,
     return hDlg;
 }
 
+/**
+ *
+ */
 INT_PTR CALLBACK
 TreeDlgProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 
@@ -889,6 +969,9 @@ TreeDlgProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam) {
     return FALSE;
 }
 
+/**
+ *
+ */
 static HWND CreateInstallDialog(HWND hWndParent) {
     HWND hDlg, hCombobox, hBtnYes, hBtnNo, hBtnFile, hBtnFolder;
     RECT rcClient;
@@ -968,8 +1051,8 @@ static HWND CreateInstallDialog(HWND hWndParent) {
         AddComboboxItem(hCombobox, _T("<Default>"), JAVACALL_INVALID_FOLDER_ID);
 
         // Add all real folders
-        res = java_ams_suite_get_all_folders_info(&pFoldersInfo,
-                                                    &folderNum);
+        res = javanotify_ams_suite_get_all_folders_info(&pFoldersInfo,
+                                                        &folderNum);
         if (res == JAVACALL_OK) {
             for (int f = 0; f < folderNum; f++) {
                 if (pFoldersInfo[f].folderName) {
@@ -984,7 +1067,7 @@ static HWND CreateInstallDialog(HWND hWndParent) {
                     }
                 }
             }
-            java_ams_suite_free_all_folders_info(pFoldersInfo, folderNum);
+            javanotify_ams_suite_free_all_folders_info(pFoldersInfo, folderNum);
         }
 
         // Select default folder as current item
@@ -997,7 +1080,11 @@ static HWND CreateInstallDialog(HWND hWndParent) {
     return hDlg;
 }
 
-static BOOL AddComboboxItem(HWND hcbWnd, LPCTSTR pcszLabel, javacall_folder_id jFolderId) {
+/**
+ *
+ */
+static BOOL AddComboboxItem(HWND hcbWnd, LPCTSTR pcszLabel,
+                            javacall_folder_id jFolderId) {
     LRESULT lResult;
 
     lResult = SendMessage(hcbWnd, CB_ADDSTRING, 0, (LPARAM)pcszLabel);
@@ -1012,6 +1099,9 @@ static BOOL AddComboboxItem(HWND hcbWnd, LPCTSTR pcszLabel, javacall_folder_id j
     return FALSE;
 }
 
+/**
+ *
+ */
 INT_PTR CALLBACK
 InstallDlgProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam) {
     javacall_result res = JAVACALL_FAIL;
@@ -1066,11 +1156,10 @@ InstallDlgProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam) {
             wprintf(_T("The URL to install from: %s\n"), szUrl);
 
             if (nUrlLen) {
-                res = java_ams_install_suite(g_jInstallerId,
-                                             JAVACALL_INSTALL_SRC_ANY,
-                                             (javacall_const_utf16_string)szUrl,
-                                             JAVACALL_INVALID_STORAGE_ID,
-                                             jFolderId);
+                res = javanotify_ams_install_suite(
+                    g_jInstallerId, JAVACALL_INSTALL_SRC_ANY,
+                    (javacall_const_utf16_string)szUrl,
+                    JAVACALL_INVALID_STORAGE_ID, jFolderId);
 
                 if (res == JAVACALL_OK) {
                     // IMPL_NOTE: the following code must be refactored
@@ -1180,6 +1269,9 @@ InstallDlgProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam) {
     return FALSE;
 }
 
+/**
+ *
+ */
 TVI_INFO* CreateTviInfo() {
     TVI_INFO* pInfo = (TVI_INFO*)javacall_malloc(sizeof(TVI_INFO));
 
@@ -1198,6 +1290,9 @@ TVI_INFO* CreateTviInfo() {
     return pInfo;
 }
 
+/**
+ *
+ */
 void FreeTviInfo(TVI_INFO* pInfo) {
     if (pInfo) {
         if (pInfo->className) {
@@ -1212,6 +1307,9 @@ void FreeTviInfo(TVI_INFO* pInfo) {
     }
 }
 
+/**
+ *
+ */
 static void AddSuiteToTree(HWND hwndTV, javacall_suite_id suiteId, int nLevel) {
     javacall_result res;
     javacall_utf16_string jsLabel;
@@ -1221,7 +1319,7 @@ static void AddSuiteToTree(HWND hwndTV, javacall_suite_id suiteId, int nLevel) {
     javacall_int32 midletNum;
 
 
-    res = java_ams_suite_get_info(suiteId, &pSuiteInfo);
+    res = javanotify_ams_suite_get_info(suiteId, &pSuiteInfo);
     if (res == JAVACALL_OK) {
             // TODO: add support for disabled suites
             // javacall_bool enabled = suiteInfo[s].isEnabled;
@@ -1257,8 +1355,8 @@ static void AddSuiteToTree(HWND hwndTV, javacall_suite_id suiteId, int nLevel) {
             }
             AddTreeItem(hwndTV, szSuiteLabel, nLevel, pInfo);
 
-            res = java_ams_suite_get_midlets_info(suiteId, &pMidletsInfo,
-                &midletNum);
+            res = javanotify_ams_suite_get_midlets_info(suiteId, &pMidletsInfo,
+                                                        &midletNum);
             if (res == JAVACALL_OK) {
                     wprintf(_T("Total MIDlets in the suite %d\n"), midletNum);
 
@@ -1291,17 +1389,23 @@ static void AddSuiteToTree(HWND hwndTV, javacall_suite_id suiteId, int nLevel) {
                             javacall_free(pszMIDletName);
                         }
                     }
-                    java_ams_suite_free_midlets_info(pMidletsInfo, midletNum);
+                    javanotify_ams_suite_free_midlets_info(pMidletsInfo,
+                                                           midletNum);
             } else {
-                wprintf(_T("ERROR: java_ams_suite_get_midlets_info() returned: %d\n"), res);
+                wprintf(_T("ERROR: java_ams_suite_get_midlets_info() ")
+                        _T("returned: %d\n"), res);
             }
 
             java_ams_suite_free_info(pSuiteInfo);
     } else {
-        wprintf(_T("ERROR: java_ams_suite_get_info(suiteId=%d) returned: %d\n"), (int)suiteId, res);
+        wprintf(_T("ERROR: java_ams_suite_get_info(suiteId=%d) returned: "
+                _T("%d\n"), (int)suiteId, res);
     }
 }
                                                        
+/**
+ *
+ */
 static BOOL InitMidletTreeViewItems(HWND hwndTV)  {
     javacall_suite_id* pSuiteIds;
     javacall_suite_id* pFolderSuiteIds;
@@ -1311,9 +1415,10 @@ static BOOL InitMidletTreeViewItems(HWND hwndTV)  {
     TVI_INFO* pInfo;
 
 
-    res = java_ams_suite_get_suite_ids(&pSuiteIds, &suiteNum);
+    res = javanotify_ams_suite_get_suite_ids(&pSuiteIds, &suiteNum);
     if (res != JAVACALL_OK) {
-        wprintf(_T("ERROR: java_ams_suite_get_suite_ids() returned: %d\n"), res);
+        wprintf(_T("ERROR: javanotify_ams_suite_get_suite_ids() returned: "
+                _T("%d\n"), res);
         return FALSE;
     }
     wprintf(_T("Total suites found: %d\n"), suiteNum);
@@ -1321,7 +1426,7 @@ static BOOL InitMidletTreeViewItems(HWND hwndTV)  {
 
     /* Add folder and all their content */
 
-    res = java_ams_suite_get_all_folders_info(&pFoldersInfo, &folderNum);
+    res = javanotify_ams_suite_get_all_folders_info(&pFoldersInfo, &folderNum);
     if (res == JAVACALL_OK) {
         wprintf(_T("Total folders found: %d\n"), folderNum);
 
@@ -1345,8 +1450,9 @@ static BOOL InitMidletTreeViewItems(HWND hwndTV)  {
                 javacall_free(pszFolderName);
             }
 
-            res = java_ams_suite_get_suites_in_folder(pFoldersInfo[f].folderId,
-               &pFolderSuiteIds, &folderSuiteNum);
+            res = javanotify_ams_suite_get_suites_in_folder(
+                pFoldersInfo[f].folderId,
+                &pFolderSuiteIds, &folderSuiteNum);
             if (res == JAVACALL_OK) {
                 wprintf(_T("Adding suites to the folder...\n"));
                 for (int fs = 0; fs < folderSuiteNum; fs++) {
@@ -1361,10 +1467,11 @@ static BOOL InitMidletTreeViewItems(HWND hwndTV)  {
                     }
                
                 }
-                java_ams_suite_free_suite_ids(pFolderSuiteIds, folderSuiteNum);
+                javanotify_ams_suite_free_suite_ids(pFolderSuiteIds,
+                                                    folderSuiteNum);
             }
        }
-       java_ams_suite_free_all_folders_info(pFoldersInfo, folderNum);
+       javanotify_ams_suite_free_all_folders_info(pFoldersInfo, folderNum);
     }
 
     /* Add suites that are not in any folder */
@@ -1378,11 +1485,14 @@ static BOOL InitMidletTreeViewItems(HWND hwndTV)  {
         AddSuiteToTree(hwndTV, pSuiteIds[s], 1);
     } // end for
 
-    java_ams_suite_free_suite_ids(pSuiteIds, suiteNum);
+    javanotify_ams_suite_free_suite_ids(pSuiteIds, suiteNum);
 
     return TRUE;
 }
 
+/**
+ *
+ */
 static LPTSTR JavacallUtf16ToTstr(javacall_const_utf16_string str) {
     LPTSTR result = NULL;
 #ifdef UNICODE 
@@ -1399,7 +1509,11 @@ static LPTSTR JavacallUtf16ToTstr(javacall_const_utf16_string str) {
     return result;
 }
 
-static javacall_utf16_string CloneJavacallUtf16(javacall_const_utf16_string str) {
+/**
+ *
+ */
+static javacall_utf16_string
+CloneJavacallUtf16(javacall_const_utf16_string str) {
     javacall_utf16_string result = NULL;
     javacall_int32 len;
     javacall_result res = javautil_unicode_utf16_ulength(str, &len);
@@ -1411,8 +1525,11 @@ static javacall_utf16_string CloneJavacallUtf16(javacall_const_utf16_string str)
     return result;
 }
 
+/**
+ *
+ */
 HTREEITEM AddTreeItem(HWND hwndTV, LPTSTR lpszItem,
-                               int nLevel, TVI_INFO* pInfo) {
+                      int nLevel, TVI_INFO* pInfo) {
     TVITEM tvi;
     TVINSERTSTRUCT tvins;
     HTREEITEM hti;
@@ -1510,7 +1627,7 @@ MainWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
 
         switch (wCmd) {
             case IDM_WINDOW_APP_MANAGER: {
-                java_ams_midlet_switch_background();
+                javanotify_ams_midlet_switch_background();
 
                 // turn off MIDlet output
                 g_fDrawBuffer = FALSE;
@@ -1553,7 +1670,7 @@ MainWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
             }
 
             case IDM_SUITE_EXIT: {
-                (void)java_ams_system_stop();
+                (void)javanotify_ams_system_stop();
 
                 // TODO: wait for notification from the SJWC thread instead of sleep
                 Sleep(1000);
@@ -1579,8 +1696,9 @@ MainWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
                     // we are switching to the selected window.
                     TVI_INFO* pInfo = (TVI_INFO*)GetWindowMenuItemData(wCmd);
                     if (pInfo != NULL) {
-                        javacall_result res = java_ams_midlet_switch_foreground(
-                            pInfo->appId);
+                        javacall_result res =
+                            javanotify_ams_midlet_switch_foreground(
+                                pInfo->appId);
                         if (res == JAVACALL_OK) {
                             ShowMidletTreeView(NULL, FALSE);
 
@@ -1714,6 +1832,9 @@ MainWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
     return 0;
 }
 
+/**
+ *
+ */
 void DrawBackground(HDC hdc, DWORD dwRop) {
     if (g_hMidletTreeBgBmp != NULL) {
         HDC hdcMem = CreateCompatibleDC(hdc);
@@ -1731,6 +1852,9 @@ void DrawBackground(HDC hdc, DWORD dwRop) {
     }
 }
 
+/**
+ *
+ */
 void PaintTreeWithBg(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
     RECT r;
     HDC hdc;
@@ -1755,15 +1879,10 @@ void PaintTreeWithBg(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
     //EndPaint(hWnd, &ps);
 }
 
-/*
-void DrawItem() {
-    RECT rc;
-    *(HTREEITEM*)&rc = hTreeItem;
-    SendMessage(hwndTreeView, TVM_GETITEMRECT, FALSE, (LPARAM)&rc);
-}
-*/
 
-
+/**
+ *
+ */
 static void EnablePopupMenuItem(HMENU hSubMenu, UINT uIDM, BOOL fEnabled) {
     MENUITEMINFO mii;
 
@@ -1878,6 +1997,9 @@ static void AddWindowMenuItem(javacall_const_utf16_string jsStr,
     javacall_free(pszMIDletName);
 }
 
+/**
+ *
+ */
 void* RemoveWindowMenuItem(javacall_app_id appId) {
     TVI_INFO* pInfo = NULL;
     UINT uItem = IDM_WINDOW_FIRST_ITEM + 1; // First item is AppManager
@@ -1900,6 +2022,9 @@ void* RemoveWindowMenuItem(javacall_app_id appId) {
     return (void*)pInfo;
 }
 
+/**
+ *
+ */
 TVI_INFO* GetTviInfo(HWND hWnd, HTREEITEM hItem) {
     TVITEM tvi;
     tvi.hItem = hItem;
@@ -1911,6 +2036,9 @@ TVI_INFO* GetTviInfo(HWND hWnd, HTREEITEM hItem) {
     return NULL;
 }
 
+/**
+ *
+ */
 void MIDletTerminated(javacall_app_id appId) {
     TVI_INFO* pInfo;
 
@@ -1928,6 +2056,9 @@ void MIDletTerminated(javacall_app_id appId) {
     }
 }
 
+/**
+ *
+ */
 void CloseInstallerDlg(HWND hwndDlg) {
     TVI_INFO* pInfo;
 
@@ -1944,6 +2075,9 @@ void CloseInstallerDlg(HWND hwndDlg) {
     ShowMidletTreeView(hwndDlg, TRUE);
 }
 
+/**
+ *
+ */
 static BOOL StartMidlet(HWND hTreeWnd) {
     javacall_result res;
     HTREEITEM hItem = TreeView_GetSelection(hTreeWnd);
@@ -1958,10 +2092,10 @@ static BOOL StartMidlet(HWND hTreeWnd) {
                         _T(" (suiteId=%d, class=%s, appId=%d)...\n"),
                          pInfo->suiteId, pInfo->className, g_jAppId);
 
-                res = java_ams_midlet_start(pInfo->suiteId, g_jAppId,
-                                            pInfo->className, NULL);
+                res = javanotify_ams_midlet_start(pInfo->suiteId, g_jAppId,
+                                                  pInfo->className, NULL);
 
-                wprintf(_T("java_ams_midlet_start res: %d\n"), res);
+                wprintf(_T("javanotify_ams_midlet_start res: %d\n"), res);
 
                 if (res == JAVACALL_OK) {
                     // Update application ID
@@ -1984,7 +2118,7 @@ static BOOL StartMidlet(HWND hTreeWnd) {
                 }
             // Bring the running MIDlet to the foreground
             } else {
-                res = java_ams_midlet_switch_foreground(pInfo->appId);
+                res = javanotify_ams_midlet_switch_foreground(pInfo->appId);
 
                 if (res == JAVACALL_OK) {
                     ShowMidletTreeView(NULL, FALSE);
@@ -2001,6 +2135,9 @@ static BOOL StartMidlet(HWND hTreeWnd) {
     return FALSE;
 }
 
+/**
+ *
+ */
 HTREEITEM HitTest(HWND hWnd, LPARAM lParam) {
     TV_HITTESTINFO tvH;
     HTREEITEM hItem;
@@ -2177,7 +2314,7 @@ MidletTreeWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
 
                         javacall_suite_id suiteId = pInfoSuite->suiteId;
 
-                        res = java_ams_suite_move_to_folder(
+                        res = javanotify_ams_suite_move_to_folder(
                             suiteId, pInfoFolder->folderId);
 
                         if (res == JAVACALL_OK) {
@@ -2227,7 +2364,7 @@ MidletTreeWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
                         MB_ICONQUESTION | MB_OKCANCEL);
 
                     if (nMBRes == IDOK) {
-                        res = java_ams_suite_remove(pInfo->suiteId);
+                        res = javanotify_ams_suite_remove(pInfo->suiteId);
                         if (res == JAVACALL_OK) {
                             TreeView_DeleteItem(hWnd, hItem);
                         }
@@ -2252,7 +2389,7 @@ MidletTreeWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
                         int suiteNum;
                         javacall_suite_id* pSuiteIds;
 
-                        res = java_ams_suite_get_suites_in_folder(
+                        res = javanotify_ams_suite_get_suites_in_folder(
                             pInfo->folderId, &pSuiteIds, &suiteNum);
                         if (res == JAVACALL_OK) {
                             if (suiteNum > 0) {
@@ -2263,13 +2400,14 @@ MidletTreeWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
 
                                 // Delete suites from the DB
                                 for (int s = 0; s < suiteNum; s++) {
-                                    res = java_ams_suite_remove(pSuiteIds[s]);
+                                    res = javanotify_ams_suite_remove(
+                                        pSuiteIds[s]);
                                     if (res == JAVACALL_OK) {
                                         pDelIds[nDelNum++] = pSuiteIds[s];
                                     }
                                 }
-                                java_ams_suite_free_suite_ids(pSuiteIds,
-                                    suiteNum);
+                                javanotify_ams_suite_free_suite_ids(
+                                    pSuiteIds, suiteNum);
 
                                 // Delete the suites from the tree
                                 HTREEITEM hChild = TreeView_GetChild(
@@ -2365,7 +2503,8 @@ InfoWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
                 switch (pInfo->type) {
 
                 case TVI_TYPE_SUITE: {
-                    res = java_ams_suite_get_info(pInfo->suiteId, &pSuiteInfo);
+                    res = javanotify_ams_suite_get_info(pInfo->suiteId,
+                                                        &pSuiteInfo);
 
     	            if (res == JAVACALL_OK) {
                         wsprintf(szBuf, _T("Suite: %s"), pInfo->displayName);
@@ -2383,7 +2522,7 @@ InfoWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
                             AddTreeItem(hWnd, szBuf, 1, NULL);
                         }
 
-                        res = java_ams_suite_get_folder_info(
+                        res = javanotify_ams_suite_get_folder_info(
                             pSuiteInfo->folderId, &pFolderInfo);
 
                         if (res == JAVACALL_OK) {
@@ -2391,7 +2530,7 @@ InfoWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
                                     pFolderInfo->folderName);
                             AddTreeItem(hWnd, szBuf, 1, NULL);
 
-                            java_ams_suite_free_folder_info(pFolderInfo);
+                            javanotify_ams_suite_free_folder_info(pFolderInfo);
                         }
 
                         LPTSTR pszPreinstalled =
@@ -2435,7 +2574,7 @@ InfoWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
                             AddTreeItem(hWnd, szBuf, 1, NULL);
                         }
 
-                        java_ams_suite_free_info(pSuiteInfo);
+                        javanotify_ams_suite_free_info(pSuiteInfo);
                     }
 
                     break;
@@ -2445,14 +2584,14 @@ InfoWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
                         wsprintf(szBuf, _T("MIDlet: %s"), pInfo->displayName);
                         AddTreeItem(hWnd, szBuf, 1, NULL);
 
-                        res = java_ams_suite_get_info(pInfo->suiteId,
-                                                      &pSuiteInfo);
+                        res = javanotify_ams_suite_get_info(pInfo->suiteId,
+                                                            &pSuiteInfo);
                         if (res == JAVACALL_OK) {
                             wsprintf(szBuf, _T("Suite: %s"),
                                     pSuiteInfo->displayName);
                             AddTreeItem(hWnd, szBuf, 1, NULL);
 
-                            res = java_ams_suite_get_folder_info(
+                            res = javanotify_ams_suite_get_folder_info(
                                 pSuiteInfo->folderId, &pFolderInfo);
 
                             if (res == JAVACALL_OK) {
@@ -2460,11 +2599,12 @@ InfoWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
                                         pFolderInfo->folderName);
                                 AddTreeItem(hWnd, szBuf, 1, NULL);
 
-                                java_ams_suite_free_folder_info(pFolderInfo);
+                                javanotify_ams_suite_free_folder_info(
+                                    pFolderInfo);
                             }
 
 
-                            java_ams_suite_free_info(pSuiteInfo);
+                            javanotify_ams_suite_free_info(pSuiteInfo);
                         }
 
                         LPTSTR pszRunning =
@@ -2483,15 +2623,15 @@ InfoWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
                         wsprintf(szBuf, _T("Folder: %s"), pInfo->displayName);
                         AddTreeItem(hWnd, szBuf, 1, NULL);
 
-                        res = java_ams_suite_get_suites_in_folder(
+                        res = javanotify_ams_suite_get_suites_in_folder(
                             pInfo->folderId, &pSuiteIds, &nSuiteCount);
                         if (res == JAVACALL_OK) {
                             wsprintf(szBuf, _T("Number of suites: %d"),
                                 nSuiteCount);
                             AddTreeItem(hWnd, szBuf, 1, NULL);
 
-                            java_ams_suite_free_suite_ids(pSuiteIds,
-                                                          nSuiteCount);
+                            javanotify_ams_suite_free_suite_ids(pSuiteIds,
+                                                                nSuiteCount);
                         }                   
 
                         break;
@@ -2535,7 +2675,10 @@ InfoWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
 }
 
 /**
+ * Places the given window in the center of its parent window, or
+ * in the center of the desktop if it has no parent.
  *
+ * @param hDlg handle of the window to center
  */
 static void CenterWindow(HWND hDlg) {
     HWND hwndOwner;
@@ -2570,7 +2713,12 @@ static void CenterWindow(HWND hDlg) {
 }
 
 /**
+ * Converts the given Windows virtual key code into the Javacall key code.
  *
+ * @param wParam virtual key code to convert
+ * @param lParam hardware scan code of the key
+ *
+ * @return Javacall code of the key
  */
 static int mapKey(WPARAM wParam, LPARAM lParam) {
     BYTE keyStates[256];
@@ -2693,7 +2841,6 @@ static void DrawBuffer(HDC hdc) {
     destHBmp = CreateDIBSection(hdcMem, &bi, DIB_RGB_COLORS,
                                 (void**)&destBits, NULL, 0);
 
-
     if (destBits != NULL) {
         oobj = SelectObject(hdcMem, destHBmp);
         SelectObject(hdcMem, oobj);
@@ -2722,6 +2869,9 @@ static void DrawBuffer(HDC hdc) {
     DeleteDC(hdcMem);
 }
 
+/**
+ * Forces screen update.
+ */
 void RefreshScreen(int x1, int y1, int x2, int y2) {
     InvalidateRect(g_hMainWindow, NULL, FALSE);
     UpdateWindow(g_hMainWindow);
@@ -2730,6 +2880,10 @@ void RefreshScreen(int x1, int y1, int x2, int y2) {
 
 /**
  *
+ * @param wParam
+ * @param lParam
+ *
+ * @return always 0
  */
 static int HandleNetworkStreamEvents(WPARAM wParam, LPARAM lParam) {
     switch (WSAGETSELECTEVENT(lParam)) {
@@ -2783,10 +2937,12 @@ static int HandleNetworkStreamEvents(WPARAM wParam, LPARAM lParam) {
     return 0;
 }
 
-extern "C" javacall_result try_process_wma_emulator(javacall_handle handle);
-
 /**
  *
+ * @param wParam
+ * @param lParam
+ *
+ * @return always 0
  */
 static int HandleNetworkDatagramEvents(WPARAM wParam, LPARAM lParam) {
     switch (WSAGETSELECTEVENT(lParam)) {

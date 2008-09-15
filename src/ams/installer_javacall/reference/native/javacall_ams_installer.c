@@ -69,8 +69,8 @@ extern jboolean g_fAnswer, g_fAnswerReady;
  *   pArgs[0] = argInstallStr;
  *   pArgs[1] = urlToInstallFrom;
  *
- *   res = java_ams_midlet_start_with_args(-1, appId, guiInstallerClass,
- *                                         pArgs, 2, NULL);
+ *   res = javanotify_ams_midlet_start_with_args(-1, appId, guiInstallerClass,
+ *                                               pArgs, 2, NULL);
  * </pre>
  *
  * NOTE: storageId and folderId parameters are mutually exclusive because any
@@ -102,14 +102,14 @@ extern jboolean g_fAnswer, g_fAnswerReady;
  * The return of this function only tells if the install process is started
  * successfully. The actual result of if the installation (status and ID of
  * the newly installed suite) will be reported later by
- * java_ams_operation_completed().
+ * javacall_ams_operation_completed().
  */
 javacall_result
-java_ams_install_suite(javacall_app_id appId,
-                       javacall_ams_install_source_type srcType,
-                       javacall_const_utf16_string installUrl,
-                       javacall_storage_id storageId,
-                       javacall_folder_id folderId) {
+javanotify_ams_install_suite(javacall_app_id appId,
+                             javacall_ams_install_source_type srcType,
+                             javacall_const_utf16_string installUrl,
+                             javacall_storage_id storageId,
+                             javacall_folder_id folderId) {
     const javacall_utf16 installerClass[] = {
        'c', 'o', 'm', '.', 's', 'u', 'n', '.', 'm', 'i', 'd', 'p', '.',
        'i', 'n', 's', 't', 'a', 'l', 'l', 'e', 'r', '.',
@@ -152,15 +152,15 @@ java_ams_install_suite(javacall_app_id appId,
     pArgs[1] = installUrl;
     pArgs[2] = strStorageId;
 
-    res = java_ams_midlet_start_with_args(-1, appId, installerClass,
-                                          pArgs, 3, NULL);
+    res = javanotify_ams_midlet_start_with_args(-1, appId, installerClass,
+                                                pArgs, 3, NULL);
 
     return res;
 }
 
 /**
- * Helper for java_ams_install_enable_ocsp() and
- * java_ams_install_is_ocsp_enabled().
+ * Helper for javanotify_ams_install_enable_ocsp() and
+ * javanotify_ams_install_is_ocsp_enabled().
  *
  * Sends an event of the given type to all running installers.
  *
@@ -198,7 +198,7 @@ static javacall_result send_request_impl(int eventType, int param) {
  *
  * This call is asynchronous, the new OCSP chack state (JAVACALL_TRUE if
  * OCSP is enabled, JAVACALL_FALSE - if disabled) will be reported later
- * via java_ams_operation_completed() with the argument
+ * via javacall_ams_operation_completed() with the argument
  * operation == JAVACALL_OPCODE_ENABLE_OCSP.
  *
  * @param enable JAVACALL_TRUE to enable OCSP check,
@@ -209,7 +209,7 @@ static javacall_result send_request_impl(int eventType, int param) {
  *                      <tt>JAVACALL_FAIL</tt> otherwise
  */
 javacall_result
-java_ams_install_enable_ocsp(javacall_bool enable) {
+javanotify_ams_install_enable_ocsp(javacall_bool enable) {
     return send_request_impl(NATIVE_ENABLE_OCSP_REQUEST,
                              (enable == JAVACALL_TRUE ? 1 : 0));
 }
@@ -222,7 +222,7 @@ java_ams_install_enable_ocsp(javacall_bool enable) {
  *
  * This call is asynchronous, the current OCSP check state (JAVACALL_TRUE if
  * OCSP is enabled, JAVACALL_FALSE - if disabled) will be reported later
- * via java_ams_operation_completed() with the argument
+ * via javacall_ams_operation_completed() with the argument
  * operation == JAVACALL_OPCODE_IS_OCSP_ENABLED.
  *
  * @return status code: <tt>JAVACALL_OK</tt> if the operation was
@@ -230,19 +230,16 @@ java_ams_install_enable_ocsp(javacall_bool enable) {
  *                      <tt>JAVACALL_FAIL</tt> otherwise
  */
 javacall_result
-java_ams_install_is_ocsp_enabled() {
+javanotify_ams_install_is_ocsp_enabled() {
     return send_request_impl(NATIVE_CHECK_OCSP_ENABLED_REQUEST, 0);
 }
 
 /**
  * This function is called by the application manager to report the results
- * of handling of the request previously sent by java_ams_install_ask().
+ * of handling of the request previously sent by javacall_ams_install_ask().
  *
  * It must be implemented at that side (SJWC or Platform) where the installer
  * is located.
- *
- * After processing the request, java_ams_install_answer() must
- * be called to report the result to the installer.
  *
  * @param requestCode   in pair with pInstallState->appId uniquely
  *                      identifies the request for which the results
@@ -255,9 +252,9 @@ java_ams_install_is_ocsp_enabled() {
  *         <tt>JAVACALL_FAIL</tt> otherwise
  */
 javacall_result
-java_ams_install_answer(javacall_ams_install_request_code requestCode,
-                        const javacall_ams_install_state* pInstallState,
-                        const javacall_ams_install_data* pResultData) {
+javanotify_ams_install_answer(javacall_ams_install_request_code requestCode,
+                              const javacall_ams_install_state* pInstallState,
+                              const javacall_ams_install_data* pResultData) {
     JVMSPI_ThreadID thread;
     javacall_result res;
 
