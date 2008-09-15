@@ -54,10 +54,11 @@ public interface AutoKeyEvent extends AutoEvent {
     public char getKeyChar();
 
     /**
-     * Gets string representation of event. The format is following:
+     * Gets string representation of this event. The format is following:
      *  key code: code_value, state: state_value
      * where code_value and state_value are string representation 
-     * of key code (key char) and key state. For example:
+     * of key code (key char) and key state.
+     * For example:
      *  key code: soft1, state: pressed
      *  key code: a, state: pressed
      */

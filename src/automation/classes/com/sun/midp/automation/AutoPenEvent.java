@@ -26,8 +26,38 @@
 
 package com.sun.midp.automation;
 
+/**
+ * Represents pen event.
+ */
 public interface AutoPenEvent extends AutoEvent {
+    /**
+     * Gets pen state.
+     *
+     * @return AutoPenState representing pen state
+     */
     public AutoPenState getPenState();
+
+    /**
+     * Gets X coord of pen tip.
+     *
+     * @return x coord of pen tip
+     */
     public int getX();
+
+    /**
+     * Gets Y coord of pen tip.
+     *
+     * @return y coord of pen tip
+     */
     public int getY();
+
+    /**
+     * Gets string representation of event. The format is following:
+     *  pen x: x_value, y: y_value, state: state_value
+     * where x_value, y_value and state_value are string representation 
+     * of x coord, y coord and pen state.
+     * For example:
+     *  pen x: 10, y: 10, state: pressed
+     */
+    public String toString();
 }

@@ -26,6 +26,23 @@
 
 package com.sun.midp.automation;
 
+/**
+ * Represents delay (pause) event.
+ */
 public interface AutoDelayEvent extends AutoEvent {
+    /**
+     * Gets delay value in milliseconds.
+     *
+     * @return delay value in milliseconds
+     */
     public int getMsec();
+
+    /**
+     * Gets string representation of this event. The format is following:
+     *  delay msec: msec_value
+     * where msec_value is string representation of delay value. 
+     * For example:
+     *  delay msec: 500
+     */
+    public String toString();
 }

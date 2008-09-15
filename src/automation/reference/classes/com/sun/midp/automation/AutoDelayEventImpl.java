@@ -25,16 +25,61 @@
  */
 
 package com.sun.midp.automation;
+import com.sun.midp.events.*;
 
+/**
+ * Implements AutoDelayEvent interface.
+ */
 final class AutoDelayEventImpl 
     extends AutoEventImplBase implements AutoDelayEvent {
 
-    final static String MSEC_ARG_NAME = "msec";
+    /** Constant for "msec" argument name */
+    static final String MSEC_ARG_NAME = "msec";
 
+    /** Delay value in milliseconds */
     private int msec;
 
+
+    /**
+     * Gets delay value in milliseconds.
+     *
+     * @return delay value in milliseconds
+     */    
+    public int getMsec() {
+        return msec;
+    }
+
+    /**
+     * Gets string representation of this event. The format is following:
+     *  delay msec: msec_value
+     * where msec_value is string representation of delay value. 
+     * For example:
+     *  delay msec: 500
+     */
+    public String toString() {
+        String typeStr = getType().getName();
+        String eventStr = typeStr + " " + MSEC_ARG_NAME + ": " + msec;
+
+        return eventStr;
+    }
+
+    /**
+     * Gets native event (used by our MIDP implementation) 
+     * corresponding to this Automation event.
+     *
+     * @return native event corresponding to this Automation event
+     */
+    NativeEvent toNativeEvent() {
+        return null;
+    }
+
+    /**
+     * Constructor.
+     *
+     * @param msec delay value in milliseconds
+     */
     AutoDelayEventImpl(int msec) {
-        super(AutoEventType.DELAY, null);
+        super(AutoEventType.DELAY);
 
         if (msec < 0) {
             throw new IllegalArgumentException(
@@ -44,14 +89,4 @@ final class AutoDelayEventImpl
         this.msec = msec;
     }
 
-    public int getMsec() {
-        return msec;
-    }
-
-    public String toString() {
-        String typeStr = getType().getName();
-        String eventStr = typeStr + " " + MSEC_ARG_NAME + ": " + msec;
-
-        return eventStr;
-    }
 }

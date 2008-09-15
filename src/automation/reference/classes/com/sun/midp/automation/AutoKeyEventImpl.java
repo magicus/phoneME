@@ -115,8 +115,7 @@ final class AutoKeyEventImpl
      * @param keyState key state
      */
     AutoKeyEventImpl(AutoKeyCode keyCode, AutoKeyState keyState) {
-        super(AutoEventType.KEY, 
-              createNativeEvent(keyState, keyCode, ' '));
+        super(AutoEventType.KEY);
 
         if (keyCode == null) {
             throw new IllegalArgumentException("Key code is null");
@@ -131,33 +130,41 @@ final class AutoKeyEventImpl
     }
 
     /**
+     * Gets native event (used by our MIDP implementation) 
+     * corresponding to this Automation event.
+     *
+     * @return native event corresponding to this Automation event
+     */
+    NativeEvent toNativeEvent() {
+        NativeEvent e = createNativeEvent();
+        return e;
+    }
+
+    /**
      * Constructor. Creates key event with a key char.
      *
      * @param keyChar key char
      * @param keyState key state
      */
     AutoKeyEventImpl(char keyChar, AutoKeyState keyState) {
-        super(AutoEventType.KEY, 
-              createNativeEvent(keyState, null, keyChar));
+        super(AutoEventType.KEY);
 
         if (keyState == null) {
             throw new IllegalArgumentException("Key state is null");
         }
 
+        this.keyCode = null;
         this.keyChar = keyChar;
         this.keyState = keyState;        
     }
 
     /**
-     * Creates native event corresponding to this Automation event.
-     *
-     * @param keyState key state
-     * @param keyCode key code (null if key char is used)
-     * @param keyChar key char (ignored if key code is not null)
+     * Creates native event (used by our MIDP implementation) 
+     * corresponding to this Automation event.
+     * 
      * @return native event corresponding to this Automation event 
      */
-    private static NativeEvent createNativeEvent(AutoKeyState keyState, 
-            AutoKeyCode keyCode, char  keyChar) {
+    private NativeEvent createNativeEvent() {
         NativeEvent nativeEvent = new NativeEvent(EventTypes.KEY_EVENT);
 
         nativeEvent.intParam1 = keyState.getMIDPKeyState();

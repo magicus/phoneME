@@ -28,30 +28,37 @@
 package com.sun.midp.automation;
 import com.sun.midp.events.*;
 
+/**
+ * Base class for all event implementation classes. Partially 
+ * implements AutoEvent interface.
+ */
 abstract class AutoEventImplBase implements AutoEvent {
-    AutoEventImplBase() {
-        this.type  = null;
-        this.nativeEvent = null;
-    }
+    /** Event type */
+    private AutoEventType type;
 
-    AutoEventImplBase(AutoEventType type) {
-        this.type  = type;
-        this.nativeEvent = null;
-    }
-
-    AutoEventImplBase(AutoEventType type, NativeEvent nativeEvent) {
-        this.type = type;        
-        this.nativeEvent = nativeEvent;
-    }
-
+    /**
+     * Gets event type.
+     *
+     * @return AutoEventType representing event type
+     */
     public AutoEventType getType() {
         return type;
     }
 
-    NativeEvent toNativeEvent() {
-        return nativeEvent;
-    }
+    /**
+     * Gets native event (used by our MIDP implementation) 
+     * corresponding to this Automation event.
+     *
+     * @return native event corresponding to this Automation event
+     */
+    abstract NativeEvent toNativeEvent();
 
-    private NativeEvent nativeEvent;
-    private AutoEventType type;
+    /**
+     * Constructor.
+     *
+     * @param type event type
+     */
+    protected AutoEventImplBase(AutoEventType type) {
+        this.type  = type;
+    }
 }
