@@ -186,6 +186,12 @@ extern "C" {
  */
 #define NATIVE_CHECK_OCSP_ENABLED_REQUEST 57
 
+/**
+ * This event is sent by a native code to InstallerPeerMIDlet
+ * to unblock the installer thread waiting for a user's answer.
+ */
+#define NATIVE_UNBLOCK_INSTALLER        58
+
 /** @} */
 
 /**

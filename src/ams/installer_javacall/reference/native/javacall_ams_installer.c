@@ -26,7 +26,6 @@
 #include <sni.h>
 #include <midpEvents.h>
 #include <midpEventUtil.h>
-#include <midp_thread.h>
 #include <midpUtilKni.h>
 #include <midpServices.h>
 
@@ -275,7 +274,12 @@ javanotify_ams_install_answer(javacall_ams_install_request_code requestCode,
     if (g_installerIsolateId != -1) {
         thread = SNI_GetSpecialThread(g_installerIsolateId);
         if (thread != NULL) {
-            midp_thread_unblock(thread);
+            /*
+             * we're running in a different thread, so can't unblock the
+             * installer thread directly - sending an event instead
+             */
+            res = send_request_impl(NATIVE_UNBLOCK_INSTALLER,
+                                    (int)thread);
         } else {
             res = JAVACALL_FAIL;
         }

@@ -28,6 +28,7 @@
 #include <sni.h>
 #include <midpError.h>
 #include <midpEvents.h>
+#include <midp_thread.h>
 #include <midpUtilKni.h>
 #include <midpServices.h>
 #include <string.h>
@@ -41,8 +42,6 @@
 #include <javacall_memory.h>
 #include <javacall_ams_installer.h>
 #include <javacall_ams_platform.h>
-
-#include <stdio.h>
 
 /*
  * IMPL_NOTE: this request code is not used in
@@ -341,6 +340,20 @@ KNIDECL(com_sun_midp_installer_InstallerPeerMIDlet_notifyRequestHandled0) {
     javacall_ams_operation_completed(operationCode,
                                      (javacall_app_id)appId,
                                      &jcResult);
+
+    KNI_ReturnVoid();
+}
+
+/**
+ * Unblocks the installer thread.
+ *
+ * @param thread ID of the thread to unblock
+ */
+KNIEXPORT KNI_RETURNTYPE_VOID
+KNIDECL(com_sun_midp_installer_InstallerPeerMIDlet_unblockInstaller0) {
+    JVMSPI_ThreadID thread  = (JVMSPI_ThreadID)KNI_GetParameterAsInt(1);
+
+    midp_thread_unblock(thread);
 
     KNI_ReturnVoid();
 }

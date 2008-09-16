@@ -120,6 +120,8 @@ public class InstallerPeerMIDlet extends MIDlet
             EventTypes.NATIVE_ENABLE_OCSP_REQUEST, this);
         eventQueue.registerEventListener(
             EventTypes.NATIVE_CHECK_OCSP_ENABLED_REQUEST, this);
+        eventQueue.registerEventListener(
+            EventTypes.NATIVE_UNBLOCK_INSTALLER, this);
 
         new Thread(this).start();
     }
@@ -448,6 +450,11 @@ public class InstallerPeerMIDlet extends MIDlet
         }
 
         switch (nativeEvent.getType()) {
+            case EventTypes.NATIVE_UNBLOCK_INSTALLER: {
+                unblockInstaller0(nativeEvent.intParam2);
+                break;
+            }
+
             case EventTypes.NATIVE_ENABLE_OCSP_REQUEST: {
                 /*
                  * intParam1 - appId of the running installer,
@@ -549,6 +556,13 @@ public class InstallerPeerMIDlet extends MIDlet
      */
     private static native void notifyRequestHandled0(
         int appId, int requestCode, int resultCode, boolean result);
+
+    /**
+     * Unblocks the installer thread.
+     *
+     * @param thread ID of the thread to unblock
+     */
+    private static native void unblockInstaller0(int thread);
 }
 
 /**
