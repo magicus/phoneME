@@ -27,9 +27,32 @@
 package com.sun.midp.automation;
 import java.util.*;
 
-interface AutoEventFromStringFactory {
+/**
+ * Factory interface for creating events from string prefix and arguments 
+ * in form of argument name/argument value pairs. Used for creating events 
+ * from string representation after it has been parsed by parser.
+ * Each factory implementing that interface knows about single prefix.
+ *
+ */
+interface AutoEventFromArgsFactory {
+    /**
+     * Gets prefix that this factory knows about.
+     *
+     * @return string prefix
+     */
     public String getPrefix();
 
+    /**
+     * Creates event(s) from arguments. Multiple events can be created,
+     * for example, in case of key click, which consists of two events:
+     * key pressed and key released.
+     *
+     * @param args argument name/argument value pairs in form of Hashtable 
+     * with argument names used as key
+     * @return event(s) created from arguments in form of AutoEvent array
+     * @throws IllegalArgumentException if factory was unable to create
+     * event(s) from these arguments
+     */
     public AutoEvent[] create(Hashtable args) 
         throws IllegalArgumentException;
 }

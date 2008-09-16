@@ -40,9 +40,13 @@ public interface AutoEvent {
 
     /**
      * Gets string representation of event. The format is following:
-     * type_name arg1: arg1_value, arg2: arg2_value, ...
-     * where arg1, arg2 and so on are event arguments (like key code 
-     * for key event or pen tip coordinates for pen event).
+     * type_name arg1_name: arg1_value, arg2_name: arg2_value, ...
+     * where "arg1_name", "arg2_name" and so on are event argument (properties) 
+     * names, and "arg1_value", "arg2_value" and so on are argument values.
+     * For example:
+     *  pen x: 20, y: 100, state: pressed
+     * In this example, "pen" is type name, "x" and "y" are argument names, 
+     * and "20" and "100" are argument values.
      *
      * @return string representation of event
      */

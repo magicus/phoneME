@@ -31,8 +31,8 @@ final class AutoEventFactoryImpl implements AutoEventFactory {
     /** The one and only instance */
     private static AutoEventFactoryImpl instance = null;
 
-    /** All EventFromStringFactory instances indexed by prefix */
-    private Hashtable eventFromStringFactories;
+    /** All EventFromArgsFactory instances indexed by prefix */
+    private Hashtable eventFromArgsFactories;
 
     /** Event string parser */
     private AutoEventStringParser eventStringParser;
@@ -70,8 +70,8 @@ final class AutoEventFactoryImpl implements AutoEventFactory {
         eventStringParser.parse(eventString, curOffset);
         String eventPrefix = eventStringParser.getEventPrefix();
         while (eventPrefix != null) {
-            Object o = eventFromStringFactories.get(eventPrefix);
-            AutoEventFromStringFactory f = (AutoEventFromStringFactory)o;
+            Object o = eventFromArgsFactories.get(eventPrefix);
+            AutoEventFromArgsFactory f = (AutoEventFromArgsFactory)o;
             if (f == null) {
                 throw new IllegalArgumentException(
                         "Illegal event prefix: " + eventPrefix);
@@ -167,19 +167,19 @@ final class AutoEventFactoryImpl implements AutoEventFactory {
     }
 
     /**
-     * Registers all AutoEventFromStringFactory factories.
+     * Registers all AutoEventFromArgsFactory factories.
      */ 
-    private void registerEventFromStringFactories() {
-        AutoEventFromStringFactory f;
+    private void registerEventFromArgsFactories() {
+        AutoEventFromArgsFactory f;
     
-        f = new AutoKeyEventFromStringFactory();
-        eventFromStringFactories.put(f.getPrefix(), f);
+        f = new AutoKeyEventFromArgsFactory();
+        eventFromArgsFactories.put(f.getPrefix(), f);
 
-        f = new AutoPenEventFromStringFactory();
-        eventFromStringFactories.put(f.getPrefix(), f);
+        f = new AutoPenEventFromArgsFactory();
+        eventFromArgsFactories.put(f.getPrefix(), f);
 
-        f = new AutoDelayEventFromStringFactory();
-        eventFromStringFactories.put(f.getPrefix(), f);
+        f = new AutoDelayEventFromArgsFactory();
+        eventFromArgsFactories.put(f.getPrefix(), f);
     }
 
 
@@ -187,9 +187,9 @@ final class AutoEventFactoryImpl implements AutoEventFactory {
      * Private constructor to prevent creating class instances.
      */
     private AutoEventFactoryImpl() {
-        eventFromStringFactories = new Hashtable();
+        eventFromArgsFactories = new Hashtable();
         eventStringParser = new AutoEventStringParser();
 
-        registerEventFromStringFactories();
+        registerEventFromArgsFactories();
     }
 }

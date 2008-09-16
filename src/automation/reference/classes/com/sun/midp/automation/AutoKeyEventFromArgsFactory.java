@@ -27,19 +27,41 @@
 package com.sun.midp.automation;
 import java.util.*;
 
-class AutoKeyEventFromStringFactory 
-    implements AutoEventFromStringFactory {
+/**
+ * Implements AutoEventFromArgsFactory interface for key events.
+ */
+class AutoKeyEventFromArgsFactory 
+    implements AutoEventFromArgsFactory {
 
-    private AutoDelayEventFromStringFactory delayEventFactory;
+    /** 
+     * Delay event factory for handling 
+     * AutoDelayEventImpl.MSEC_ARG_NAME argument 
+     */
+    private AutoDelayEventFromArgsFactory delayEventFactory;
+    
+    /** Special state: "clicked" */
+    private static final String CLICKED_STATE_NAME = "clicked";
 
-    AutoKeyEventFromStringFactory() {
-        delayEventFactory = new  AutoDelayEventFromStringFactory();
-    }
-
+    /**
+     * Gets prefix that this factory knows about.
+     *
+     * @return string prefix
+     */
     public String getPrefix() {
         return AutoEventType.KEY.getName();
     }
 
+    /**
+     * Creates event(s) from arguments. Multiple events can be created,
+     * for example, in case of key click, which consists of two events:
+     * key pressed and key released.
+     *
+     * @param args argument name/argument value pairs in form of Hashtable 
+     * with argument names used as key
+     * @return event(s) created from arguments in form of AutoEvent array
+     * @throws IllegalArgumentException if factory was unable to create
+     * event(s) from these arguments
+     */
     public AutoEvent[] create(Hashtable args)
         throws IllegalArgumentException {
 
@@ -81,7 +103,7 @@ class AutoKeyEventFromStringFactory
             throw new IllegalArgumentException("No key state specified");
         }
 
-        if (stateS.equals("clicked")) {
+        if (stateS.equals(CLICKED_STATE_NAME)) {
             if (keyCode != null) {
                 keyEvent1 = new AutoKeyEventImpl(keyCode, 
                         AutoKeyState.PRESSED);
@@ -126,5 +148,12 @@ class AutoKeyEventFromStringFactory
 
         return events;
     }   
+
+    /**
+     * Constructor.
+     */
+    AutoKeyEventFromArgsFactory() {
+        delayEventFactory = new  AutoDelayEventFromArgsFactory();
+    }
 }
 

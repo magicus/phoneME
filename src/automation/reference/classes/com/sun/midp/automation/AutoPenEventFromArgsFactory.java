@@ -27,19 +27,42 @@
 package com.sun.midp.automation;
 import java.util.*;
 
-class AutoPenEventFromStringFactory 
-    implements AutoEventFromStringFactory {
+/**
+ * Implements AutoEventFromArgsFactory interface for pen events.
+ */
+class AutoPenEventFromArgsFactory 
+    implements AutoEventFromArgsFactory {
 
-    private AutoDelayEventFromStringFactory delayEventFactory;
+    /** 
+     * Delay event factory for handling 
+     * AutoDelayEventImpl.MSEC_ARG_NAME argument 
+     */
+    private AutoDelayEventFromArgsFactory delayEventFactory;
 
-    AutoPenEventFromStringFactory() {
-        delayEventFactory = new  AutoDelayEventFromStringFactory();
-    }
+    /** Special state: "clicked" */
+    private static final String CLICKED_STATE_NAME = "clicked";
 
+
+    /**
+     * Gets prefix that this factory knows about.
+     *
+     * @return string prefix
+     */
     public String getPrefix() {
         return AutoEventType.PEN.getName();
     }
 
+    /**
+     * Creates event(s) from arguments. Multiple events can be created,
+     * for example, in case of key click, which consists of two events:
+     * key pressed and key released.
+     *
+     * @param args argument name/argument value pairs in form of Hashtable 
+     * with argument names used as key
+     * @return event(s) created from arguments in form of AutoEvent array
+     * @throws IllegalArgumentException if factory was unable to create
+     * event(s) from these arguments
+     */
     public AutoEvent[] create(Hashtable args)
         throws IllegalArgumentException {
 
@@ -90,7 +113,7 @@ class AutoPenEventFromStringFactory
             throw new IllegalArgumentException("No state code specified");
         }
 
-        if (stateS.equals("clicked")) {
+        if (stateS.equals(CLICKED_STATE_NAME)) {
             penEvent1 = new AutoPenEventImpl(x, y, AutoPenState.PRESSED);
             penEvent2 = new AutoPenEventImpl(x, y, AutoPenState.RELEASED);
 
@@ -121,5 +144,12 @@ class AutoPenEventFromStringFactory
         }
 
         return events;
+    }
+
+    /**
+     * Constructor.
+     */
+    AutoPenEventFromArgsFactory() {
+        delayEventFactory = new  AutoDelayEventFromArgsFactory();
     }
 }

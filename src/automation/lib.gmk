@@ -71,15 +71,15 @@ SUBSYSTEM_AUTOMATION_JAVA_FILES += \
 	$(SUBSYSTEM_AUTOMATION_DIR)/reference/classes/com/sun/midp/automation/AutomationImpl.java \
 	$(SUBSYSTEM_AUTOMATION_DIR)/reference/classes/com/sun/midp/automation/AutoEventFactoryImpl.java \
 	$(SUBSYSTEM_AUTOMATION_DIR)/reference/classes/com/sun/midp/automation/AutoEventSequenceImpl.java \
-	$(SUBSYSTEM_AUTOMATION_DIR)/reference/classes/com/sun/midp/automation/AutoEventFromStringFactory.java \
+	$(SUBSYSTEM_AUTOMATION_DIR)/reference/classes/com/sun/midp/automation/AutoEventFromArgsFactory.java \
 	$(SUBSYSTEM_AUTOMATION_DIR)/reference/classes/com/sun/midp/automation/AutoEventImplBase.java \
 	$(SUBSYSTEM_AUTOMATION_DIR)/reference/classes/com/sun/midp/automation/AutoKeyEventImpl.java \
 	$(SUBSYSTEM_AUTOMATION_DIR)/reference/classes/com/sun/midp/automation/AutoPenEventImpl.java \
 	$(SUBSYSTEM_AUTOMATION_DIR)/reference/classes/com/sun/midp/automation/AutoDelayEventImpl.java \
 	$(SUBSYSTEM_AUTOMATION_DIR)/reference/classes/com/sun/midp/automation/AutoEventStringParser.java \
-	$(SUBSYSTEM_AUTOMATION_DIR)/reference/classes/com/sun/midp/automation/AutoKeyEventFromStringFactory.java \
-	$(SUBSYSTEM_AUTOMATION_DIR)/reference/classes/com/sun/midp/automation/AutoDelayEventFromStringFactory.java \
-	$(SUBSYSTEM_AUTOMATION_DIR)/reference/classes/com/sun/midp/automation/AutoPenEventFromStringFactory.java
+	$(SUBSYSTEM_AUTOMATION_DIR)/reference/classes/com/sun/midp/automation/AutoKeyEventFromArgsFactory.java \
+	$(SUBSYSTEM_AUTOMATION_DIR)/reference/classes/com/sun/midp/automation/AutoDelayEventFromArgsFactory.java \
+	$(SUBSYSTEM_AUTOMATION_DIR)/reference/classes/com/sun/midp/automation/AutoPenEventFromArgsFactory.java
 
 vpath % $(SUBSYSTEM_AUTOMATION_DIR)/reference/native
 SUBSYSTEM_AUTOMATION_NATIVE_FILES += \

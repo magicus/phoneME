@@ -28,27 +28,53 @@ package com.sun.midp.automation;
 import java.util.*;
 
 /**
- * Parses event string, breaking it into prefix and arg_name/arg_value pairs.
+ * Parses event string, breaking it into prefix and arg name/arg value pairs.
  */
 final class AutoEventStringParser {
+    /** End of line character value */
     private static final int EOL = -1;
+
+    /** Colon token */
     private static final String TOKEN_COLON = ":";
+
+    /** Comma token */
     private static final String TOKEN_COMMA = ",";
+
+    /** New line token */
     private static final String TOKEN_NEWLINE = "\n";
 
+    /** String to parse */
     private String eventString;
-    private int eventStringLength;   
+
+    /** Length of the string to parse */
+    private int eventStringLength;
+
+    /** Parsing result: argument values indexed by argument names */
     private Hashtable eventArgs;
+
+    /** Parsing result: prefix */
     private String eventPrefix;
+
+    /** Current offset into string to parse */
     private int curOffset;
+
+    /** true if end of line has been reached */
     private boolean isEOL;
 
+    /**
+     * Constructor.
+     */
     AutoEventStringParser() {
         reset();
     }
 
     /**
-     * Parses event string, breaking it into prefix and arg/arg_value pairs.
+     * Parses single statement in the form of
+     *    prefix arg1_name: arg1_value, arg2_name: arg2_value, ...
+     * breaking it into prefix and arg name/arg value pairs.
+     *
+     * @param s string to parse
+     * @offset offset into string
      */
     void parse(String s, int offset) {
         if (s == null) {
@@ -73,24 +99,36 @@ final class AutoEventStringParser {
     }
 
     /**
-     * Gets prefix.
+     * Gets parsed prefix.
+     *
+     * @return parsed prefix
      */
     String getEventPrefix() {
         return eventPrefix;
     }
 
     /**
-     * Gets arg_name/arg_value pairs in form of Hashtable 
-     * with "arg_name" used as key.
+     * Gets argument name/argument value pairs in form of Hashtable 
+     * with argument names used as key.
+     *
+     * @return Hashtable containing
      */
     Hashtable getEventArgs() {
         return eventArgs;
     }
 
+    /**
+     * Gets offset into string to parse after parsing has completed.
+     *
+     * @return Hastable containing argument values indexed by argument names.
+     */
     int getEndOffset() {
         return curOffset;
     }
 
+    /**
+     * Resets parser, preparing it for parsing new statement.
+     */
     private void reset() {
         eventArgs = new Hashtable();
         eventPrefix = null;
@@ -98,12 +136,18 @@ final class AutoEventStringParser {
         curOffset = 0;        
     }
 
+    /**
+     * Parses single statement.
+     */
     private void doParse() {
         skipWSNL();
         parsePrefix();
         parseArgs();
     }
 
+    /**
+     * Parses prefix.
+     */
     private void parsePrefix() {
         String t = nextToken();
         if (t != null) {
@@ -111,6 +155,9 @@ final class AutoEventStringParser {
         }
     }
 
+    /**
+     * Parses arguments.
+     */
     private void parseArgs() {
         boolean ok = parseArg();
         while (ok) {
@@ -123,6 +170,12 @@ final class AutoEventStringParser {
         }
     }
 
+    /**
+     * Parses single argument name/value pair.
+     *
+     * @return true if argument name/value pair has been parsed successfully,
+     * false otherwise.
+     */
     private boolean parseArg() {
         String argName = nextToken();
 
@@ -142,7 +195,13 @@ final class AutoEventStringParser {
         return true;
     }
     
-
+    /**
+     * Converts single character into token.
+     *
+     * @param ch character to convert into token
+     * @return if there is a token corresponding to character,
+     * then token constant is returned, otherwise return null.
+     */
     private static String charToToken(int ch) {
         switch (ch) {
             case (int)':':
@@ -159,7 +218,16 @@ final class AutoEventStringParser {
         }
     }
 
+    /**
+     * Tests if specified character can be used as part of word token.
+     *
+     * @param ch character to test
+     * @return true, if specified character can be used as part of word token,
+     * false otherwise.
+     */
     private static boolean isWordTokenChar(int ch) {
+        // There is no isalnum() function in CLDC, so we have to be
+        // fancy.
         if (ch == EOL || ch == (int)' ' || ch == (int)'\t') {
             return false;
         }
@@ -172,6 +240,11 @@ final class AutoEventStringParser {
         return true;
     }
 
+    /**
+     * Reads next token from string.
+     *
+     * @return next token
+     */
     private String nextToken() {
         skipWS();
         if (isEOL) {
@@ -189,6 +262,11 @@ final class AutoEventStringParser {
         return wordToken();
     }
 
+    /**
+     * Reads word token from string.
+     *
+     * @return word token
+     */
     private String wordToken() {
         int startOffset = curOffset;
 
@@ -200,6 +278,9 @@ final class AutoEventStringParser {
         return eventString.substring(startOffset, curOffset);
     }
 
+    /**
+     * Skips whitespaces.
+     */
     private void skipWS() {
         int ch = curChar();
         while (ch == (int)' ' || ch == (int)'\t') {
@@ -207,6 +288,9 @@ final class AutoEventStringParser {
         }        
     }
 
+    /**
+     * Skips whitespaces and newlines
+     */
     private void skipWSNL() {
         int ch = curChar();
         while (ch == (int)' ' || ch == (int)'\t' || ch == (int)'\n') {
@@ -214,6 +298,11 @@ final class AutoEventStringParser {
         }        
     }    
 
+    /**
+     * Advances to the next char within string.
+     *
+     * @return next char
+     */
     private int nextChar() {
         curOffset++;
         if (curOffset < eventStringLength) {
@@ -225,6 +314,11 @@ final class AutoEventStringParser {
         }
     }
 
+    /**
+     * Gets current char withing string.
+     *
+     * @return current char
+     */
     private int curChar() {
         if (isEOL) {
             return EOL;

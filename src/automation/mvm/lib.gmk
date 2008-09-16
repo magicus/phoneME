@@ -66,16 +66,16 @@ SUBSYSTEM_AUTOMATION_JAVA_FILES += \
 # and uncomment the following block.
 
 ifeq ($(USE_I3_TEST), true)
-#SUBSYSTEM_AUTOMATION_I3TEST_JAVA_FILES =
-SUBSYSTEM_AUTOMATION_I3TEST_JAVA_FILES += \
-	$(AUTOMATION_MVM_DIR)/reference/i3test/com/sun/midp/automation/TestAutoSuiteStorage.java \
-	$(AUTOMATION_MVM_DIR)/reference/i3test/com/sun/midp/automation/TestSwitchMidlets.java \
-	$(AUTOMATION_MVM_DIR)/reference/i3test/com/sun/midp/automation/TestPenEventSimulation.java \
-	$(AUTOMATION_MVM_DIR)/reference/i3test/com/sun/midp/automation/TestKeyEventSimulation.java
+SUBSYSTEM_AUTOMATION_I3TEST_JAVA_FILES =
+#SUBSYSTEM_AUTOMATION_I3TEST_JAVA_FILES += \
+#	$(AUTOMATION_MVM_DIR)/reference/i3test/com/sun/midp/automation/TestAutoSuiteStorage.java \
+#	$(AUTOMATION_MVM_DIR)/reference/i3test/com/sun/midp/automation/TestSwitchMidlets.java \
+#	$(AUTOMATION_MVM_DIR)/reference/i3test/com/sun/midp/automation/TestPenEventSimulation.java \
+#	$(AUTOMATION_MVM_DIR)/reference/i3test/com/sun/midp/automation/TestKeyEventSimulation.java
 endif
 
 ifeq ($(USE_AUTOMATION_EXAMPLE), true)
 SUBSYSTEM_AUTOMATION_JAVA_FILES += \
-	$(AUTOMATION_MVM_DIR)/example/classes/com/sun/midp/automation/example/runner/Runner.java
+	$(AUTOMATION_MVM_DIR)/example/classes/com/sun/midp/automation/example/player/Player.java
 endif
 
